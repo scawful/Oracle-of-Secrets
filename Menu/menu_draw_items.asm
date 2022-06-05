@@ -141,31 +141,24 @@ DrawHeartPieces:
 ;===============================================================================
 
 DrawMusicNotes:
-  LDA.w #$01
-  STA.w MusicNoteValue
-  LDA.w #MusicNoteValue
-  LDX.w #menu_offset(17,8)
-	LDY.w #QuarterNoteGFX
-	JSR DrawMenuItem
-
   LDA.w #$02
-  STA.w MusicNoteValue
-  LDA.w #MusicNoteValue
-  LDX.w #menu_offset(17,11)
-	LDY.w #QuarterNoteGFX
-	JSR DrawMenuItem
-
-  LDA.w #$03
   STA.w MusicNoteValue
   LDA.w #MusicNoteValue
   LDX.w #menu_offset(17,14)
 	LDY.w #QuarterNoteGFX
 	JSR DrawMenuItem
 
-  LDA.w #$04
+  LDA.w #$03
   STA.w MusicNoteValue
   LDA.w #MusicNoteValue
   LDX.w #menu_offset(17,17)
+	LDY.w #QuarterNoteGFX
+	JSR DrawMenuItem
+
+  LDA.w #$04
+  STA.w MusicNoteValue
+  LDA.w #MusicNoteValue
+  LDX.w #menu_offset(17,20)
 	LDY.w #QuarterNoteGFX
 	JSR DrawMenuItem
 
