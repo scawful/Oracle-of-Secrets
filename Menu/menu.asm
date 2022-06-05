@@ -13,7 +13,7 @@
 ;===========================================================
 
 pushpc
-org $1BD662 ; update in game hud colors 
+org $1BD662  ; update in game hud colors 
   dw hexto555($814f16), hexto555($552903)
 org $1BD66A
   dw hexto555($d51d00), hexto555($f9f9f9)
@@ -25,83 +25,41 @@ org $1DB682
   dw hexto555($7b7b83), hexto555($bbbbbb)
 org $1DB68A
   dw hexto555($a58100), hexto555($dfb93f)
-org $0098AB : db $D8>>1  
-org $00F877 : db Menu_Entry>>0
-org $00F883 : db Menu_Entry>>8
-org $00F88F : db Menu_Entry>>16
-org $808B6B : LDX.w #$6040
-org $8DDFB2 : LDA.l Menu_ItemIndex, X
+org $0098AB  ; menu override 
+  db $D8>>1  
+org $00F877 
+  db Menu_Entry>>0
+org $00F883 
+  db Menu_Entry>>8
+org $00F88F 
+  db Menu_Entry>>16
+org $808B6B 
+  LDX.w #$6040
+org $8DDFB2 
+  LDA.l Menu_ItemIndex, X
 pullpc
 
 org $248000
 Menu_Tilemap:
   incbin "tilemaps/menu_frame.tilemap"
-
 Menu_QuestIcons:
   incbin "tilemaps/quest_icons.tilemap"
 
 incsrc "menu_gfx_table.asm"
 incsrc "menu_draw_items.asm"
 incsrc "menu_text.asm"
-
-Menu_Palette:
-  ; 7EC502
-  ; first tile blank bc kan said so 
-  dw hexto555($814f16)
-  dw hexto555($552903)
-  dw hexto555($000000)
-  dw hexto555($000000) ; transparent
-  dw hexto555($d51d00)
-  dw hexto555($f9f9f9)
-  dw hexto555($000000)
-  dw hexto555($000000) ; transparent
-  dw hexto555($d1a452)
-  dw hexto555($f9f9f9)
-  dw hexto555($000000)
-  dw hexto555($000000) ; transparent
-  dw hexto555($5987e0)
-  dw hexto555($f9f9f9)
-  dw hexto555($000000)
-  dw hexto555($000000) ; transparent
-  dw hexto555($7b7b83)
-  dw hexto555($bbbbbb)
-  dw hexto555($000000)
-  dw hexto555($000000) ; transparent
-  dw hexto555($a58100)
-  dw hexto555($dfb93f)
-  dw hexto555($000000)
-  dw hexto555($000000) ; transparent
-  dw hexto555($814f16)
-  dw hexto555($013e6e)
-  dw hexto555($000000)
-  dw hexto555($000000) ; transparent
-  dw hexto555($15cd34)
-  dw hexto555($f9f9f9)
-  dw hexto555($000000)
+incsrc "menu_palette.asm"
 
 Menu_Entry:
   PHB : PHK : PLB 
   LDA.w $0200
   ASL
   TAX
-
   JSR (.vectors,X)
-
   SEP #$20
   PLB
   RTL
-
-.vectors
-  dw Menu_InitGraphics  ; 00
-  dw Menu_UploadRight   ; 01
-  dw Menu_UploadLeft    ; 02
-  dw Menu_ScrollDown    ; 03
-  dw Menu_ItemScreen    ; 04
-  dw Menu_ScrollTo      ; 05
-  dw Menu_StatsScreen   ; 06 
-  dw Menu_ScrollFrom    ; 07
-  dw Menu_ScrollUp      ; 08
-  dw Menu_Exit          ; 09
+incsrc "menu_vectors.asm"
 
 ; ===================================================================================
 ; 00 MENU INIT GRAPHICS 
@@ -155,7 +113,6 @@ Menu_UploadLeft:
   JSR DrawYItems
   JSR Menu_DrawSelect
   JSR Menu_DrawItemName
-  ;;JSR Debug_Entry
   
   ; INSERT PALETTE -------
   LDX.w #$3E
@@ -174,13 +131,10 @@ Menu_UploadLeft:
 }
    
 ; ===================================================================================
-; dw 0, -5, -10, -15, -20, -25, -40, -60, -75, -90, -100, -125, -135, -150, -175, -180, -190, -200, -210, -215, -220, -225, -230, -232, -238  
-; dw 0, -5, -10, -15, -20, -40, -60, -75, -90, -100, -125, -150, -175, -190, -200, -210, -220, -225, -230, -232, -250 
+; 03 MENU SCROLL DOWN 
+
 Menu_Scroll:
     dw 0, -3, -5, -7, -10, -12, -15, -20, -28, -40, -50, -60, -75, -90, -100, -125, -150, -175, -190, -200, -210, -220, -225, -230, -232, -234, -238
-
-; ===================================================================================
-; 03 MENU SCROLL DOWN 
 
 Menu_ScrollDown:
 {
