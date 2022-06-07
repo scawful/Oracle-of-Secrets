@@ -1,0 +1,17 @@
+Code was written by Conn (wrong... those guys who created AST ;)
+
+For ALTTP (native and hacks) US, no header
+
+This code will make 2 changes on the pegasus boots:
+- you need the button keep pressed to run
+- you can change direction while running
+
+
+(1) code hijack at
+03/911d: a5 f0 29 0f -> 4c 40 ff ea
+
+
+(2) at 03/ff40
+added adjusted code from AST
+
+(Address 03/FF40 was chosen to make it also compatible with Parallel Worlds)
