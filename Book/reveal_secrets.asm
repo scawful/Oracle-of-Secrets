@@ -11,9 +11,8 @@
 ; c - BG2 enabled
 ; d - (BG1 disabled) --> only works properly if the room uses the feature "BG2 on Top"
 ;
-; WRITTEN: 	by XaserLE
-; THANKS TO: -MathOnNapkins' Zelda Doc's
-;			-wiiqwertyuiop for his Zelda Disassembly
+; Written by XaserLE
+; Edited by scawful
 ;===========================================================
 
 Reveal_Secrets:
