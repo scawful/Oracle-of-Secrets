@@ -4,7 +4,8 @@
 
 namespace FortuneTeller 
 {
-  Main: {
+  Main: 
+  {
 
   }  ; label Main
 }  ; namespace FortuneTeller

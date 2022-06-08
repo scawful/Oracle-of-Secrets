@@ -22,7 +22,8 @@
 
 namespace BunnyHood 
 {
-  Main: {
+  Main: 
+  {
     lorom
     org $87E330
     JSR $FD66

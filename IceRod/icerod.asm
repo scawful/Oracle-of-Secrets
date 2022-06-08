@@ -6,7 +6,8 @@
 
 namespace IceRod
 {
-  Main: {
+  Main: 
+  {
     lorom
 
     org $088a5d ; jsl to main code

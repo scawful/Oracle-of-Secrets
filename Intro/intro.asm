@@ -5,7 +5,8 @@
 
 namespace Intro 
 {
-  Main: {
+  Main: 
+  {
     lorom
 
     ORG $05DF12
@@ -24,7 +25,8 @@ namespace Intro
     RTL
   }  ; label Main
 
-  Items: {
+  Items: 
+  {
     ; SRM Start Modyfier
     ; This ASM was written by Euclid, modified by Conn; thanks to MoN for his banks research
     ; This is a ASM FrontEnd Code for Zelda ALTTP (US, no header) to modify the sram on startup

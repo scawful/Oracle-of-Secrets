@@ -11,21 +11,25 @@
 
 namespace LostSea 
 {
-  Main: {
+  Main: 
+  {
     lorom
     org $A0F000 ; Note at this stage the accumulator contains area currently in, and X contains the area you're moving to.
 
-    LOST_WOOD_HOOK: {
+    LOST_WOOD_HOOK: 
+    {
       CMP #$3A ; are we in the right area?
       BEQ begincode
 
-      normalfinish: {
+      normalfinish: 
+      {
         LDA $02A5EC,x ; not right area so return.
         STZ $1CF7
         RTL
       }  ; label normalfinish
 
-      begincode: {
+      begincode: 
+      {
         CPX #$3B
         BEQ normalfinish
 
@@ -41,7 +45,8 @@ namespace LostSea
         BRA RESOLVE_INCORRECT
       }  ; label begincode
 
-      combo1: {
+      combo1: 
+      {
         CMP #$01
         BNE combo2
         CPX #$39 ; did you get it right?
@@ -51,7 +56,8 @@ namespace LostSea
       }  ; label comb1
 
 
-      combo2: {
+      combo2: 
+      {
         CMP #$02
         BNE combo3
         CPX #$42 ; did you get it right?
@@ -61,7 +67,8 @@ namespace LostSea
       }  ; label comb2
 
 
-      combo3: {
+      combo3: 
+      {
         CPX #$32; did you get it right?
         BNE RESOLVE_INCORRECT ; we want to load the down area, since we complete the combos
         LDA #$1B
@@ -75,7 +82,8 @@ namespace LostSea
         BRA CASE_DOWN
       }  ; label combo3
 
-      DOWN_CORRECT: {
+      DOWN_CORRECT: 
+      {
         INC $1CF7
         CASE_DOWN:
         DEC $21
@@ -96,7 +104,8 @@ namespace LostSea
       }  ; label DOWN_CORRECT
 
 
-      UP_CORRECT: {
+      UP_CORRECT: 
+      {
         INC $1CF7
         CASE_UP:
         INC $21
@@ -117,7 +126,8 @@ namespace LostSea
       }  ; label UP_CORRECT
 
 
-      LEFT_CORRECT: {
+      LEFT_CORRECT: 
+      {
         INC $1CF7
         CASE_LEFT:
         INC $23
@@ -134,7 +144,8 @@ namespace LostSea
         INC $700
       }  ; label LEFT_CORRECT
 
-      all: {
+      all: 
+      {
         LDA #$3A  ; load the same area.
         RTL
       }
