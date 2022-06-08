@@ -31,6 +31,9 @@ namespace Oracle
   incsrc "BunnyHood/bunnyhood.asm"
   print  "End of BunnyHood/bunnyhood.asm  ", pc
 
+  incsrc "Debug/debug.asm"
+  print  "End of Debug/debug.asm          ", pc
+
   incsrc "IceRod/icerod.asm"
   print  "End of IceRod/icerod.asm        ", pc
 
