@@ -208,10 +208,6 @@ DrawYItems:
 	LDY.w #BottlesGFX
 	JSR DrawMenuItem
 
-  LDA.w #$7EF354
-  LDX.w #menu_offset(10,20)
-  LDY.w #PowerGloveGFX
-  JSR DrawMenuItem
 
 	LDA.w #$7EF345
 	LDX.w #menu_offset(10,2)
@@ -248,10 +244,6 @@ DrawYItems:
 	LDY.w #BottlesGFX
 	JSR DrawMenuItem
 
-  LDA.w #$7EF355
-  LDX.w #menu_offset(12,20)
-  LDY.w #PegasusBootsGFX
-  JSR DrawMenuItem
 
 	LDA.w #$7EF350
 	LDX.w #menu_offset(13,2)
@@ -288,10 +280,7 @@ DrawYItems:
 	LDY.w #BottlesGFX
 	JSR DrawMenuItem
 
-  LDA.w #$7EF356
-  LDX.w #menu_offset(14,20)
-  LDY.w #FlippersGFX
-  JSR DrawMenuItem
+
 
   LDA.w #$7EF34C ; ocarina
 	LDX.w #menu_offset(16,2)
@@ -323,11 +312,6 @@ DrawYItems:
 	LDY.w #BottlesGFX
 	JSR DrawMenuItem
 
-  LDA.w #$7EF357
-  LDX.w #menu_offset(16,20)
-  LDY.w #MoonPearlGFX
-  JSR DrawMenuItem
-
 	RTS
 
 Menu_DrawQuestItems:
@@ -351,6 +335,28 @@ Menu_DrawQuestItems:
   LDA.w #MenuItemValueSpoof
   LDX.w #menu_offset(14,8)
   LDY.w #TunicGFX
+  JSR DrawMenuItem
+
+  LDA.w #$7EF354
+  LDX.w #menu_offset(17,2)
+  LDY.w #PowerGloveGFX
+  JSR DrawMenuItem
+
+
+  LDA.w #$7EF355
+  LDX.w #menu_offset(17,5)
+  LDY.w #PegasusBootsGFX
+  JSR DrawMenuItem
+
+
+  LDA.w #$7EF356
+  LDX.w #menu_offset(17,8)
+  LDY.w #FlippersGFX
+  JSR DrawMenuItem
+
+  LDA.w #$7EF357
+  LDX.w #menu_offset(17,11)
+  LDY.w #MoonPearlGFX
   JSR DrawMenuItem
 
   RTS
