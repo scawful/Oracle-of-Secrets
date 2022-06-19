@@ -67,7 +67,7 @@ OcarinaGFX:
 
 ; formerly fishing net
 JumpFeatherGFX:
-    dw $2840, $2841, $3C42, $3C43 ; Roc's Feather
+  dw $2840, $2841, $3C42, $3C43 ; Roc's Feather
 
 BookGFX:
 	dw $3CA5, $3CA6, $3CD8, $3CD9 ; Book of Mudora
