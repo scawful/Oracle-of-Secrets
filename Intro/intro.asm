@@ -34,22 +34,19 @@ namespace Intro
 
     lorom
 
-    org $0cdc5a ; jsr to main code
+    org $0cdc5a
     jsr $ffb1
 
-    org $0cffb1 ; main code
+    org $0cffb1
 
-    LDA #$0201      ; 01=part of the game $3C5 - 02=Progress flags $3C6      
+    LDA #$0000     
     STA $7003C5,x
 
-    LDA #$0201      ; 01=Map indicator $3c7 - 02=Starting entrance $3C8        
+    LDA #$0000   
     STA $7003C7,x
 
-    ;LDA #$0201      ; disabled:01=sword,  02=shield to start with        
-    ;STA $700359,x   ;save disabled: sword/shield save
-
-    ;LDA #$0707       ; disabled: the first 07 is the maximum carrying capacity of arrows (70) the second 07 of bombs (50) in case you renounce on the wishing pond
-    ;STA $700370,x   ; save disabled: enable by deleting the";"
+    LDA #$0101      ; 01=sword,  02 = shield to start with        
+    STA $700359,x   ; sword/shield save
 
     LDY #$0000              
     RTS
