@@ -12,7 +12,7 @@ NothingGFX:
 
 BowsGFX:
 	dw $28BA, $28E9, $28E8, $28CB ; Empty bow
-  dw $297C, $297D, $2849, $284A ; NEW slingshot
+  ; dw $297C, $297D, $2849, $284A ; NEW slingshot
 	dw $28BA, $284A, $2849, $28CB ; Bow and arrows
 	dw $28BA, $28E9, $28E8, $28CB ; Empty silvers bow
 	dw $28BA, $28BB, $24CA, $28CB ; Silver bow and arrows
@@ -20,11 +20,11 @@ BowsGFX:
 BoomsGFX:
 	dw $2CB8, $2CB9, $2CC9, $ACB9 ; NEW Blue boomerang
 	dw $24B8, $24B9, $24C9, $A4B9 ; NEW red boomerang
-  dw $3CB8, $3CB9, $3CC9, $BCB9 ; NEW green boomerang
+  ; dw $3CB8, $3CB9, $3CC9, $BCB9 ; NEW green boomerang
 
 HookGFX:
 	dw $24F5, $24F6, $24C0, $24F5 ; Hookshot
-  dw $2C17, $3531, $2D40, $3541 ; Ball & Chain
+  ; dw $2C17, $3531, $2D40, $3541 ; Ball & Chain
 
 BombsGFX:
 	dw $2CB2, $2CB3, $2CC2, $6CC2 ; Bombs
@@ -59,11 +59,11 @@ HammerGFX:
 
 ShovelGFX:
 	dw $30D0, $20D1, $30E0, $30E1 ; NEW Shovel
-	dw $2CD4, $2CD5, $2CE4, $2CE5 ; Flute
-	dw $2CD4, $2CD5, $2CE4, $2CE5 ; Flute (active)
 
 OcarinaGFX:
   dw $2CD4, $2CD5, $2CE4, $2CE5 ; Flute
+  dw $2CD4, $2CD5, $2CE4, $2CE5
+  dw $2CD4, $2CD5, $2CE4, $2CE5
 
 ; formerly fishing net
 JumpFeatherGFX:

@@ -174,17 +174,17 @@ DrawYItems:
 	REP #$30
 
 	LDA.w #$7EF340
-	LDX.w #menu_offset(7,2)
+	LDX.w #menu_offset(7,3)
 	LDY.w #BowsGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF341
-	LDX.w #menu_offset(7,5)
+	LDX.w #menu_offset(7,6)
 	LDY.w #BoomsGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF342
-	LDX.w #menu_offset(7,8)
+	LDX.w #menu_offset(7,9)
 	LDY.w #HookGFX
 	JSR DrawMenuItem
 
@@ -193,117 +193,132 @@ DrawYItems:
   LDA.w #$0001
   STA.w MenuItemValueSpoof
   LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(7,11)
+  LDX.w #menu_offset(7,13)
   LDY.w #BombsGFX
 	JSR DrawMenuItem
 .no_bomb
 
 	LDA.w #$7EF348
-	LDX.w #menu_offset(7,14)
+	LDX.w #menu_offset(7,16)
 	LDY.w #DekuMaskGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF35C
-	LDX.w #menu_offset(7,17)
+	LDX.w #menu_offset(7,19)
 	LDY.w #BottlesGFX
 	JSR DrawMenuItem
 
+  ;; next row
 
-	LDA.w #$7EF345
-	LDX.w #menu_offset(10,2)
+	LDA.w #$7EF34B 
+	LDX.w #menu_offset(10,3)
+	LDY.w #HammerGFX
+	JSR DrawMenuItem
+
+  LDA.w #$7EF34A
+	LDX.w #menu_offset(10,6)
+	LDY.w #LampGFX
+	JSR DrawMenuItem
+
+  LDA.w #$7EF345
+	LDX.w #menu_offset(10,9)
 	LDY.w #Fire_rodGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF346
-	LDX.w #menu_offset(10,5)
+	LDX.w #menu_offset(10,13)
 	LDY.w #Ice_rodGFX
 	JSR DrawMenuItem
 
-  LDA.w #$7EF34A
-	LDX.w #menu_offset(10,8)
-	LDY.w #LampGFX
-	JSR DrawMenuItem
-
-  LDA.w #$7EF34B
-	LDX.w #menu_offset(10,11)
-	LDY.w #HammerGFX
-	JSR DrawMenuItem
-
 	LDA.w #$7EF347
-	LDX.w #menu_offset(10,14)
+	LDX.w #menu_offset(10,16)
 	LDY.w #GoronMaskGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF35D
-	LDX.w #menu_offset(10,17)
+	LDX.w #menu_offset(10,19)
 	LDY.w #BottlesGFX
 	JSR DrawMenuItem
 
+  ;; next row 
+
+	LDA.w #$7EF34F ; 7EF34C
+	LDX.w #menu_offset(13,3)
+	LDY.w #ShovelGFX
+	JSR DrawMenuItem
+
+  ;LDA.w #$7EF34D
+  LDA.l $7EF34D
+  CMP.w #$00 : BEQ .no_feather
+  LDA.w #$01
+  STA.w ShortSpoof
+  LDA.w #ShortSpoof
+	LDX.w #menu_offset(13,6)
+	LDY.w #JumpFeatherGFX
+	JSR DrawMenuItem
+.no_feather
 
 	LDA.w #$7EF350
-	LDX.w #menu_offset(13,2)
+	LDX.w #menu_offset(13,9)
 	LDY.w #SomariaGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF351
-	LDX.w #menu_offset(13,5)
+	LDX.w #menu_offset(13,13)
 	LDY.w #ByrnaGFX
 	JSR DrawMenuItem
 
-	; LDA.w #$7EF34C
-	; LDX.w #menu_offset(13,8)
-	; LDY.w #ShovelGFX
-	; JSR DrawMenuItem
-
-	LDA.w #$7EF34E
-	LDX.w #menu_offset(13,8)
-	LDY.w #BookGFX
-	JSR DrawMenuItem
-
-  LDA.w #$7EF34D
-	LDX.w #menu_offset(13,11)
-	LDY.w #JumpFeatherGFX
-	JSR DrawMenuItem
-
 	LDA.w #$7EF349
-	LDX.w #menu_offset(13,14)
+	LDX.w #menu_offset(13,16)
 	LDY.w #BunnyHoodGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF35E
-	LDX.w #menu_offset(13,17)
+	LDX.w #menu_offset(13,19)
 	LDY.w #BottlesGFX
 	JSR DrawMenuItem
 
-
-
-  LDA.w #$7EF34C ; ocarina
-	LDX.w #menu_offset(16,2)
-	LDY.w #ShovelGFX
-	JSR DrawMenuItem
-
-	LDA.w #$7EF353
-	LDX.w #menu_offset(16,5)
-	LDY.w #MirrorGFX
-	JSR DrawMenuItem
-
-  LDA.w #$7EF34F
-	LDX.w #menu_offset(16,8)
-	LDY.w #ShovelGFX
-	JSR DrawMenuItem
+  ;; next row
 
   LDA.w #$7EF344
-	LDX.w #menu_offset(16,11)
+	LDX.w #menu_offset(16,3)
 	LDY.w #PowderGFX
 	JSR DrawMenuItem
 
+  ;LDA.w #$7EF34E
+  LDA.l $7EF34E
+  CMP.w #$00 : BEQ .no_book
+  LDA.w #$01
+  STA.w ShortSpoof
+  LDA.w #ShortSpoof
+	LDX.w #menu_offset(13,6)
+	LDY.w #BookGFX
+	JSR DrawMenuItem
+.no_book
+
+  ; LDA.w #$7EF34C ; ocarina
+  LDA.l $7EF34C
+  CMP.w #$00 : BEQ .no_flute
+  LDA.w #$01
+  STA.w ShortSpoof
+  LDA.w #ShortSpoof
+	LDX.w #menu_offset(16,9)
+	LDY.w #OcarinaGFX
+	JSR DrawMenuItem
+.no_flute
+
+	LDA.w #$7EF353
+	LDX.w #menu_offset(16,13)
+	LDY.w #MirrorGFX
+	JSR DrawMenuItem
+
 	LDA.w #$7EF352
-	LDX.w #menu_offset(16,14)
+	LDX.w #menu_offset(16,16)
 	LDY.w #StoneMaskGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF35F
-	LDX.w #menu_offset(16,17)
+	LDX.w #menu_offset(16,19)
 	LDY.w #BottlesGFX
 	JSR DrawMenuItem
 
