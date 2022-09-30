@@ -219,12 +219,7 @@ DrawYItems:
 	LDY.w #Ice_rodGFX
 	JSR DrawMenuItem
 
-  LDA.l $7EF34A
-  CMP.w #$00 : BEQ .no_lamp
-  DEC
-  .no_lamp
-  STA.w MenuItemValueSpoof
-  LDA.w #MenuItemValueSpoof
+  LDA.w #$7EF34A
 	LDX.w #menu_offset(10,8)
 	LDY.w #LampGFX
 	JSR DrawMenuItem
