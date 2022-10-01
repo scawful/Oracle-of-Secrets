@@ -17,7 +17,6 @@
 
 Reveal_Secrets:
 {
-  header
   lorom
 
   ORG $0288FD			  ; go to the code that branches behind the dungeon map load if player didn't press X

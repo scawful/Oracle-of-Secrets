@@ -23,28 +23,28 @@ namespace Oracle
   incsrc "Util/functions.asm"
 
   incsrc "Menu/menu.asm"
-  print  "End of Menu/menu.asm            ", pc
+  print  "End of Menu/menu.asm              ", pc
 
-  incsrc "Book/book.asm"
-  print  "End of Book/Book.asm            ", pc
+  incsrc "Events/intro.asm"
+  print  "End of Events/intro.asm           ", pc
 
-  incsrc "BunnyHood/bunnyhood.asm"
-  print  "End of BunnyHood/bunnyhood.asm  ", pc
+  incsrc "Events/lostsea.asm"
+  print  "End of Events/lostsea.asm         ", pc
 
-  incsrc "Debug/debug.asm"
-  print  "End of Debug/debug.asm          ", pc
+  incsrc "Items/ice_rod.asm"
+  print  "End of Items/ice_rod.asm          ", pc
 
-  incsrc "IceRod/icerod.asm"
-  print  "End of IceRod/icerod.asm        ", pc
-
-  incsrc "Intro/intro.asm"
-  print  "End of Intro/intro.asm          ", pc
+  incsrc "Masks/bunny_hood.asm"
+  print  "End of Masks/bunny_hood.asm       ", pc
 
   incsrc "KeyBlock/keyblock.asm"
-  print  "End of KeyBlock/keyblock.asm    ", pc
+  print  "End of KeyBlock/keyblock.asm      ", pc
 
-  incsrc "LostSea/lostsea.asm"
-  print  "End of LostSea/lostsea.asm      ", pc
+  incsrc "Items/book_of_secrets.asm"
+  print  "End of Items/book_of_secrets.asm  ", pc
+
+  incsrc "Debug/debug.asm"
+  print  "End of Debug/debug.asm            ", pc
 
   print ""
   print "Finished applying patches"

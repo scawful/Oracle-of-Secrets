@@ -73,11 +73,11 @@ namespace Debug
     STA $7EF356
     LDA #$01    ; 0 - nothing. 1 - moon pearl.
     STA $7EF357
-    LDA #$03    ; 0-No sword. 1-Fighter Sword. 2-Master Sword. 3-Tempered Sword. 4-Golden Sword
+    LDA #$04    ; 0-No sword. 1-Fighter Sword. 2-Master Sword. 3-Tempered Sword. 4-Golden Sword
     STA $7EF359
     LDA #$03    ; 0-No shield. 1-Blue Shield. 2-Hero's Shield. 3-Mirror Shield  
     STA $7EF35A
-    LDA #$01    ; 0-Green Jerkin. 1-Blue Mail. 2-Red Mail
+    LDA #$02    ; 0-Green Jerkin. 1-Blue Mail. 2-Red Mail
     STA $7EF35B
     LDA #$02    ; 0-No bottle. 1-Mushroom (no use). 2-Empty bottle. 3-Red Potion. 4-Green Potion. 5-Blue Potion. 6-Fairy. 7-Bee. 8-Good Bee
     STA $7EF35C

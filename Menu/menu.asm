@@ -1,50 +1,39 @@
 ; =============================================================================
-;                    The Legend of Zelda: Oracle of Secrets
-;                    ------------NEW Custom Menu ------------
+;                The Legend of Zelda: Oracle of Secrets
+;                ------------ Custom Menu ------------
 ;
-;            Details:  Complete overhaul of original LTTP menu
-;                      Two Pane Oot/MM inspired design
-;                      Original item layout and designs
-;                      Detailed Quest Status screen
-;                      Player name, location name, and death count
+;        Details:  Complete overhaul of original LTTP menu
+;                  Two Pane Oot/MM inspired design
+;                  Original item layout and designs
+;                  Detailed Quest Status screen
+;                  Player name, location name, and death count
 ;           
 ;            Significant thanks to Kan for helping me craft this menu!
 ;   
 ; =============================================================================
 
 pushpc
-org $1BD662  ; update in game hud colors 
-  dw hexto555($814f16), hexto555($552903)
-org $1BD66A
-  dw hexto555($d51d00), hexto555($f9f9f9)
-org $1DB672
-  dw hexto555($d1a452), hexto555($f9f9f9)
-org $1DB67A
-  dw hexto555($5987e0), hexto555($f9f9f9)
-org $1DB682
-  dw hexto555($7b7b83), hexto555($bbbbbb)
-org $1DB68A
-  dw hexto555($a58100), hexto555($dfb93f)
-org $0098AB  ; hook vanilla menu routine  
-  db $D8>>1  
-org $00F877 
-  db Menu_Entry>>0
-org $00F883 
-  db Menu_Entry>>8
-org $00F88F 
-  db Menu_Entry>>16
-org $808B6B 
-  LDX.w #$6040
-org $8DDFB2 
-  LDA.l Menu_ItemIndex, X
+; update in game hud colors 
+org $1BD662 : dw hexto555($814f16), hexto555($552903)
+org $1BD66A : dw hexto555($d51d00), hexto555($f9f9f9)
+org $1DB672 : dw hexto555($d1a452), hexto555($f9f9f9)
+org $1DB67A : dw hexto555($5987e0), hexto555($f9f9f9)
+org $1DB682 : dw hexto555($7b7b83), hexto555($bbbbbb)
+org $1DB68A : dw hexto555($a58100), hexto555($dfb93f)
+
+; hook vanilla menu routine  
+org $0098AB : db $D8>>1  
+org $00F877 : db Menu_Entry>>0
+org $00F883 : db Menu_Entry>>8
+org $00F88F : db Menu_Entry>>16
+org $808B6B : LDX.w #$6040
+org $8DDFB2 : LDA.l Menu_ItemIndex, X
 pullpc
 
 ; upload tilemaps containing frame of menu and icons 
 org $248000
-Menu_Tilemap: 
-  incbin "tilemaps/menu_frame.tilemap"
-Menu_QuestIcons: 
-  incbin "tilemaps/quest_icons.tilemap"
+Menu_Tilemap:     incbin "tilemaps/menu_frame.tilemap"
+Menu_QuestIcons:  incbin "tilemaps/quest_icons.tilemap"
 incsrc "menu_gfx_table.asm"
 incsrc "menu_draw_items.asm"
 incsrc "menu_text.asm"
