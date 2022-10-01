@@ -41,26 +41,27 @@ pullpc
 
 ; upload tilemaps containing frame of menu and icons 
 org $248000
-Menu_Tilemap:
+Menu_Tilemap: 
   incbin "tilemaps/menu_frame.tilemap"
-Menu_QuestIcons:
+Menu_QuestIcons: 
   incbin "tilemaps/quest_icons.tilemap"
-
 incsrc "menu_gfx_table.asm"
 incsrc "menu_draw_items.asm"
 incsrc "menu_text.asm"
 incsrc "menu_palette.asm"
 
-; Traverse jump table containing routines for Oracle of Secrets menu 
+; Subroutine table in menu_vectors
 Menu_Entry:
+{
   PHB : PHK : PLB 
-  LDA.w $0200
-  ASL
-  TAX
+  LDA.w $0200 : ASL : TAX
+
   JSR (.vectors,X)
+  
   SEP #$20
   PLB
   RTL
+}
 incsrc "menu_vectors.asm"
 
 ; =============================================================================
@@ -136,7 +137,10 @@ Menu_UploadLeft:
 ; 03 MENU SCROLL DOWN 
 
 Menu_Scroll:
-    dw 0, -3, -5, -7, -10, -12, -15, -20, -28, -40, -50, -60, -75, -90, -100, -125, -150, -175, -190, -200, -210, -220, -225, -230, -232, -234, -238
+  dw 0, -3, -5, -7, -10, -12, -15, -20
+  dw -28, -40, -50, -60, -75, -90, -100
+  dw -125, -150, -175, -190, -200, -210
+  dw -220, -225, -230, -232, -234, -238
 
 Menu_ScrollDown:
 {
@@ -160,33 +164,6 @@ Menu_ScrollDown:
 ; =============================================================================
 ; 04 MENU ITEM SCREEN 
 incsrc "menu_select_item.asm"
-
-Menu_InitItemScreen:
-{
-  SEP #$30
-  LDY.w $0202 : BNE .all_good
-
-  .loop
-  INY : CPY.b #$25 : BCS .bad 
-  LDX.w Menu_AddressIndex-1, Y
-  LDA.l $7EF300, X 
-  BEQ .loop 
-
-  STY.w $0202
-  BRA .all_good 
-
-  .bad
-  STZ.w $0202
-
-  .all_good 
-
-  STZ $0207
-  LDA.b #$04
-  STA.w $0200
-  RTS
-}
-
-; -----------------------------------------------------------------------------
 
 Menu_ItemScreen:
 {
@@ -250,7 +227,6 @@ Menu_ItemScreen:
   STA.w $11CE, X 
   BRA .done
 
-
 .no_delete 
   LDA.w #$3060 : STA.w $1108, X ; corner 
   LDA.w #$3070 : STA.w $1148, X
@@ -290,6 +266,7 @@ Menu_ScrollTo:
 
 ; =============================================================================
 ; 06 MENU STATS SCREEN 
+incsrc "menu_scroll.asm"
 
 Menu_StatsScreen:
 {
@@ -297,61 +274,6 @@ Menu_StatsScreen:
   RTS
 }
 
-; -----------------------------------------------------------------------------
-
-Menu_CheckHScroll:
-{
-  LDA.b $F4
-  BIT.b #$10 : BNE .leave_menu
-  LDA.b $F6
-  BIT.b #$20 : BNE .left
-  BIT.b #$10 : BNE .right
-
-  RTS
-
-.left
-  REP #$20
-  LDA.w #$FFF8
-  BRA .merge
-
-.right
-  REP #$20
-  LDA.w #$0008
-
-.merge 
-  STA.w MenuScrollHDirection
-
-  SEP #$30
-  INC.w $0200
-  LDA.b #$06 : STA.w $012F
-  RTS
-
-.leave_menu
-  LDA.b #$08
-  STA.w $0200
-  RTS
-}
-
-; -----------------------------------------------------------------------------
-
-Menu_ScrollHorizontal:
-{
-  REP #$21                    ; set A to 16 bit, clear carry flag
-
-  LDA.w $E4                   ; BG3 Horizontal Scroll Value
-  ADC.w MenuScrollHDirection  ; Direction set by Menu_CheckHScroll
-  AND.w #$01FF                
-  STA.b $E4   
-  AND.w #$00FF
-  BNE .loop
-
-  SEC
-  RTS
-
-.loop
-  CLC 
-  RTS
-}
 
 ; =============================================================================
 ; 07 MENU SCROLL FROM 
@@ -440,8 +362,8 @@ Menu_Exit:
   RTS
 }
 
-; =============================================================================
 incsrc "menu_draw_bg.asm"
 incsrc "lw_map_names.asm"
 incsrc "menu_hud.asm"
+
 ; =============================================================================

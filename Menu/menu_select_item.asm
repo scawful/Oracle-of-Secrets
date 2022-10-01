@@ -157,3 +157,29 @@ Menu_DeleteCursor:
   RTS 
 
 ; -----------------------------------------------------------------------------
+
+Menu_InitItemScreen:
+{
+  SEP #$30
+  LDY.w $0202 : BNE .all_good
+
+.loop
+  INY : CPY.b #$25 : BCS .bad 
+  LDX.w Menu_AddressIndex-1, Y
+  LDA.l $7EF300, X 
+  BEQ .loop 
+
+  STY.w $0202
+  BRA .all_good 
+
+.bad
+  STZ.w $0202
+
+.all_good 
+  STZ $0207
+  LDA.b #$04
+  STA.w $0200
+  RTS
+}
+
+; -----------------------------------------------------------------------------
