@@ -387,8 +387,6 @@ Menu_ScrollUp:
 
 .loop
   DEX : DEX : STX.w MenuScrollLevelV
-
-  JSL Menu_UpdateHudItem
   RTS
 }
 
@@ -426,7 +424,6 @@ Menu_Exit:
 .no_item
   REP #$20
   STZ $0200
-  ;;STZ $11
   LDA.w $010C
   STA.b $10
 
@@ -442,81 +439,9 @@ Menu_Exit:
 
   RTS
 }
-; =============================================================================
-; XX MENU HIJACK HUD 
-
-HudItems:
-  dw BowsGFX
-  dw BoomsGFX
-  dw HookGFX
-  dw BombsGFX
-  dw DekuMaskGFX
-  dw BottlesGFX
-  dw Fire_rodGFX
-  dw Ice_rodGFX
-  dw LampGFX
-  dw HammerGFX
-  dw GoronMaskGFX
-  dw BottlesGFX
-  dw SomariaGFX
-  dw ByrnaGFX
-  dw BookGFX
-  dw JumpFeatherGFX
-  dw BunnyHoodGFX 
-  dw BottlesGFX
-  dw OcarinaGFX
-  dw MirrorGFX
-  dw ShovelGFX
-  dw PowderGFX
-  dw StoneMaskGFX
-  dw BottlesGFX
-
-  ; LDA.w $0202
-  ; ASL : TAX
-  ; LDY.w HudItems-2, X
-
-Menu_UpdateHudItem:
-{
-  PHB
-  PHK
-  PLB
-  ; print pc
-  ; SEP #$30
-  ; LDA.b #$7E : STA.b $0C ; set the indirect bank 
-  ; REP #$30
-
-  ; LDA.w $0202
-  ; ASL : TAX
-  ; LDY.w HudItems-2, X
-  ; STY.b $00 
-
-  ; LDY.w $0202
-  ; LDX.w Menu_AddressIndex-1, Y
-  ; LDA.l $7EF300, X
-  ; STA.w $08
-
-  ; LDA.b [$08]
-  ; ADC.b $00
-  ; TAY 
-
-  REP #$30
-  LDA.w $0202
-  ASL : TAX
-  LDY.w HudItems-2, X
-
-  LDA.w $0000,Y : STA.l $7EC778
-  LDA.w $0002,Y : STA.l $7EC77A
-  LDA.w $0004,Y : STA.l $7EC7B8
-  LDA.w $0006,Y : STA.l $7EC7BA
-  SEP #$30
-
-  PLB
-  RTL
-}
 
 ; =============================================================================
-
 incsrc "menu_draw_bg.asm"
 incsrc "lw_map_names.asm"
-
+incsrc "menu_hud.asm"
 ; =============================================================================
