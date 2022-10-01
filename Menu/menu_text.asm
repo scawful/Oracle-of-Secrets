@@ -1,6 +1,6 @@
-;====================================
-; Text Routines
-;====================================
+; =============================================================================
+;  Text Routines
+; =============================================================================
 
 ; Alphabet manual writing function
 'A' = $2550
@@ -43,7 +43,7 @@
 '9' = $2579
 '_' = $20F5
 
-; ===================================================================================
+; =============================================================================
 
 DeathLabel:
   dw "DEATHS:_"
@@ -59,7 +59,7 @@ DrawDeathCounter:
 
   RTS
 
-; ===================================================================================
+; =============================================================================
 
 ScrollsLabel:
   dw "SCROLLS:_"
@@ -74,7 +74,7 @@ DrawScrollsLabel:
 
   RTS
 
-; ===================================================================================
+; =============================================================================
 
 PlaytimeLabel:
   dw "PLAYTIME:_"
@@ -89,7 +89,7 @@ DrawPlaytimeLabel:
 
   RTS
 
-; ===================================================================================
+; =============================================================================
 
 Menu_ItemNames:
   dw "__SLINGSHOT___  "
@@ -118,6 +118,7 @@ Menu_ItemNames:
   dw "____BOTTLE____  "
 
 Menu_DrawItemName:
+{
   LDA.w $0202 : DEC
   ASL : ASL : ASL : ASL : ASL
   LDY.w #$000
@@ -128,8 +129,9 @@ Menu_DrawItemName:
   INX : INX
   INY : INY : CPY #$001C : BCC .loop
   RTS
+}
 
-; ===================================================================================
+; =============================================================================
 
 ; ;LDX.w $7E00A0 		; load room number
 ;-------------------------------------
@@ -140,7 +142,7 @@ TestLocationName:
 DrawLocationName:
 {
   REP #$30
-  LDA $1B 		; check if indoors or outdoors 
+  LDA $1B 		    ; check if indoors or outdoors 
   AND.w #$00FF    ; isolate bit 
   CMP.w #$01      ; if 1, then indoors 
   BEQ .indoors
@@ -151,7 +153,7 @@ DrawLocationName:
   TAX 
 .loop
   LDA.w OverworldLocationNames, X ; Load your text character
-  STA.w $12CC, Y ; <- into the buffer
+  STA.w $12CC, Y                  ; Store into the buffer
   INX : INX
   INY : INY : CPY #$0020 : BCC .loop
   RTS
@@ -170,9 +172,10 @@ DrawLocationName:
 }
 
 
-; ===================================================================================
+; =============================================================================
 
 Menu_DrawSelect:
+{
   REP #$30
   LDX.w #$16
 
@@ -184,10 +187,12 @@ Menu_DrawSelect:
   BPL .loop
 
   RTS
+}
 
-; ===================================================================================
+; =============================================================================
 
 Menu_DrawQuestStatus:
+{
   REP #$30
   LDX.w #$16
 
@@ -199,10 +204,12 @@ Menu_DrawQuestStatus:
   BPL .loop
 
   RTS
+}
 
-; ===================================================================================
+; =============================================================================
 
 Menu_DrawAreaNameTXT:
+{
   REP #$30
   LDX.w #$26
 
@@ -214,24 +221,35 @@ Menu_DrawAreaNameTXT:
   BPL .loop
 
   RTS
+}
 
-; ===================================================================================
+; =============================================================================
     
 ; Player's Name
-; $3D9-$3E4: See appendix for listing of character codes. Note each of the six letters is represented by a 16-bit number.
-; 00-A 01-B 02-C 03-D 04-E 05-F 06=G 07-H 08-I^ 09-J 0A-K 0B-L 0C-M 0D-N OE-O OF-P 
-; 10-??
-; 20-Q 21-R 22-S 23-T 24-U 25-V 26-W 27-X 28-Y 29-Z 2A-a 2B-b-2C-c 2D-d 2E-e 2F-f
-; 40-g 41-h 42-k 43-j 44-i 45-l 46-m 47-n 48-o 49-p 4A-q 4B-r 4C-s 4D-t 4E-u 4F-v
-
-; 60-w 61-x 62-y 63-z 64-0 65-1 66-2 67-3 68-4 69-5 6A-6 6B-7 6C-8 6D-9 6E-"?" 6F-"!"
-; 80-"-" 81-"." 82-","   85-"(" 86-")" 
-
-;B1-blank^
-
+; $3D9-$3E4: See appendix for listing of character codes. 
+; Note each of the six letters is represented by a 16-bit number.
+;
+; 00-A 01-B 02-C 03-D 04-E 05-F 06=G 07-H 
+; 08-I^ 09-J 0A-K 0B-L 0C-M 0D-N OE-O OF-P 
+; 10-?? 20-Q 21-R 22-S 23-T 24-U 25-V 
+; 26-W 27-X 28-Y 29-Z 
+;
+; 2A-a 2B-b-2C-c 2D-d 2E-e 2F-f 40-g 41-h 
+; 42-k 43-j 44-i 45-l 46-m 47-n 48-o 49-p 
+; 4A-q 4B-r 4C-s 4D-t 4E-u 4F-v 60-w 61-x 62-y 63-z
+;
+; 64-0 65-1 66-2 67-3 68-4 69-5 6A-6 6B-7 6C-8 6D-9 6E-"?" 6F-"!"
+; 80-"-"
+; 81-"." 
+; 82-"," 
+; 85-"(" 86-")" 
+;
+; B1-blank^
+;
 ; ^This code is not the canon encoding of this character. ex. AF is the proper "I". 08 is not.
 
 Menu_DrawCharacterName:
+{
   REP #$30
 
   LDX.w #$C
@@ -254,3 +272,4 @@ Menu_DrawCharacterName:
 
 .fix_lowercase
   LDA.w #$1D : BRA .skip
+}

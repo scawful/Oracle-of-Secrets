@@ -39,7 +39,9 @@ incsrc "menu_draw_items.asm"
 incsrc "menu_text.asm"
 incsrc "menu_palette.asm"
 
-; Subroutine table in menu_vectors
+; =============================================================================
+; SUBROUTINE TABLE
+
 Menu_Entry:
 {
   PHB : PHK : PLB 
@@ -263,7 +265,6 @@ Menu_StatsScreen:
   RTS
 }
 
-
 ; =============================================================================
 ; 07 MENU SCROLL FROM 
 
@@ -302,7 +303,8 @@ Menu_ScrollUp:
 }
 
 ; =============================================================================
-; incomplete :(
+; Custome Bottle Code
+
 Menu_CheckBottle:
 {
   ;; 7F5021 7ED101
@@ -350,6 +352,8 @@ Menu_Exit:
 
   RTS
 }
+
+; =============================================================================
 
 incsrc "menu_draw_bg.asm"
 incsrc "lw_map_names.asm"

@@ -1,11 +1,10 @@
-;===============================================================================
-; Item graphics
-; Lack of an item will be handled by the "NothingGFX" data
-; Everything else will be used as follows:
-;   dw top left, top right, bottom left, bottom right  ; val = 1
-;   dw top left, top right, bottom left, bottom right  ; val = 2
-;   etc
-;===============================================================================
+; =============================================================================
+;  Item Graphics
+;  Lack of an item will be handled by the "NothingGFX" data
+;  Everything else will be used as follows:
+;     dw top left, top right, bottom left, bottom right  ; val = 1
+;     dw top left, top right, bottom left, bottom right  ; val = 2
+; =============================================================================
 
 NothingGFX:
 	dw $20F5, $20F5, $20F5, $20F5 ; Nothing
@@ -18,8 +17,8 @@ BowsGFX:
 	dw $28BA, $28BB, $24CA, $28CB ; Silver bow and arrows
 
 BoomsGFX:
-	dw $2CB8, $2CB9, $2CC9, $ACB9 ; NEW Blue boomerang
-	dw $24B8, $24B9, $24C9, $A4B9 ; NEW red boomerang
+	dw $2CB8, $2CB9, $2CC9, $ACB9 ; Blue boomerang
+	dw $24B8, $24B9, $24C9, $A4B9 ; Red boomerang
   ; dw $3CB8, $3CB9, $3CC9, $BCB9 ; NEW green boomerang
 
 HookGFX:
@@ -31,13 +30,13 @@ BombsGFX:
 
 PowderGFX:
 	dw $2444, $2445, $2446, $2447 ; Mushroom
-	dw $283B, $283C, $283D, $283E ; NEW Powder
+	dw $283B, $283C, $283D, $283E ; Powder
 
 Fire_rodGFX:
-	dw $24B0, $24B1, $24C0, $24C1 ; Fire rod
+	dw $24B0, $24B1, $24C0, $24C1 ; Fire Rod
 
 Ice_rodGFX:
-	dw $2CB0, $2CBE, $2CC0, $2CC1 ; Ice rod
+	dw $2CB0, $2CBE, $2CC0, $2CC1 ; Ice Rod
 
 ; formerly Bombos
 GoronMaskGFX:
@@ -96,7 +95,8 @@ MirrorGFX:
 	dw $2C72, $2C73, $2C62, $2C63 ; Mirror
   dw $2C62, $2C63, $2C72, $2C73 ; Mirror
 
-; Collectibles
+; =============================================================================
+;  Collectibles
 
 QuarterNoteGFX:
   dw $30AA, $306B, $307A, $306A ; Gray Note
@@ -115,10 +115,10 @@ TradeQuestGFX:
 ; Equipped Items
 
 PegasusBootsGFX:
-    dw $2429, $242A, $242B, $242C ; Pegasus Boots 
+  dw $2429, $242A, $242B, $242C ; Pegasus Boots 
 
 PowerGloveGFX:
-  dw $30DA, $30DB, $30EA, $30EB ; Worn-out Glove
+  dw $30DA, $30DB, $30EA, $30EB ; Worn-Out Glove
   dw $28DA, $28DB, $28EA, $28EB ; Power Glove
 
 FlippersGFX:
@@ -146,11 +146,18 @@ TunicGFX:
 ; still some more to go 
 
 SelectItemTXT:
-  dw $2562, $2554, $255B, $2554, $2552, $2563, $2417, $2417, $2558, $2563, $2554, $255C ; Select  Item 
+  dw $2562, $2554, $255B, $2554
+  dw $2552, $2563, $2417, $2417
+  dw $2558, $2563, $2554, $255C
 
 QuestStatusTXT:
-  dw $2560, $2564, $2554, $2562, $2563, $2417, $2562, $2563, $2550, $2563, $2564, $2562 
+  dw $2560, $2564, $2554, $2562
+  dw $2563, $2417, $2562, $2563
+  dw $2550, $2563, $2564, $2562 
 
 AreaNameTXT:
-  dw $243F, $2550, $2561, $2554, $2550, $2417, $255D, $2550, $255C, $2554, $241C, $2430, $2430, $2430, $2430, $2430, $2430, $2430, $2430, $2430 
-  ; 241D  241D  241D  241D  241D  241D  241D  241D 
+  dw $243F, $2550, $2561, $2554
+  dw $2550, $2417, $255D, $2550
+  dw $255C, $2554, $241C, $2430
+  dw $2430, $2430, $2430, $2430
+  dw $2430, $2430, $2430, $2430 
