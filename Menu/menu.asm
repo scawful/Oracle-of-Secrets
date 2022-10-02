@@ -32,8 +32,8 @@ pullpc
 
 ; upload tilemaps containing frame of menu and icons 
 org $248000
-Menu_Tilemap:     incbin "tilemaps/menu_frame.tilemap"
-Menu_QuestIcons:  incbin "tilemaps/quest_icons.tilemap"
+Menu_Tilemap: incbin "tilemaps/menu_frame.tilemap"
+Menu_QuestIcons: incbin "tilemaps/quest_icons.tilemap"
 incsrc "menu_gfx_table.asm"
 incsrc "menu_draw_items.asm"
 incsrc "menu_text.asm"
