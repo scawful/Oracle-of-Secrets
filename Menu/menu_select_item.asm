@@ -1,6 +1,5 @@
 ; =============================================================================
 ;  Item Selection Code
-; =============================================================================
 
 Menu_ItemIndex:
   db $03 ; slingshot
@@ -90,6 +89,7 @@ Menu_ItemCursorPositions:
 ; -----------------------------------------------------------------------------
 
 Menu_FindNextItem:
+{
   LDY.w $0202 : INY 
   CPY.b #$19 : BCC .no_reset 
   LDY.b #$01 
@@ -99,10 +99,12 @@ Menu_FindNextItem:
   LDA.l $7EF300, X
   BEQ Menu_FindNextItem
   RTS
+}
 
 ; -----------------------------------------------------------------------------
 
 Menu_FindPrevItem:
+{
   LDY.w $0202 : DEY : BNE .no_reset 
   LDY.b #$18
 .no_reset 
@@ -111,9 +113,12 @@ Menu_FindPrevItem:
   LDA.l $7EF300, X
   BEQ Menu_FindPrevItem
   RTS
+}
+
 ; -----------------------------------------------------------------------------
 
 Menu_FindNextDownItem:
+{
   LDA.w $0202 : CLC : ADC.b #$06 
   CMP.b #$19 : BCC .no_reset
   SBC.b #$18
@@ -123,10 +128,12 @@ Menu_FindNextDownItem:
   LDA.l $7EF300, X
   BEQ Menu_FindNextItem
   RTS 
+}
 
 ; -----------------------------------------------------------------------------
 
 Menu_FindNextUpItem:
+{
   LDA.w $0202 : SEC : SBC.b #$06 
   BPL .no_reset : BNE .no_reset
   CLC : ADC.b #$18 
@@ -134,12 +141,15 @@ Menu_FindNextUpItem:
   TAY : STY.w $0202
   LDX.w Menu_AddressIndex-1, Y 
   LDA.l $7EF300, X
-  BEQ Menu_FindPrevItem
+  BEQ Menu_FindNextItem
   RTS 
+}
+
 
 ; -----------------------------------------------------------------------------
 
 Menu_DeleteCursor:
+{
   REP #$30
   LDX.w Menu_ItemCursorPositions-2, Y
 
@@ -155,6 +165,7 @@ Menu_DeleteCursor:
   SEP #$30
   STZ $0207
   RTS 
+}
 
 ; -----------------------------------------------------------------------------
 
@@ -183,3 +194,33 @@ Menu_InitItemScreen:
 }
 
 ; -----------------------------------------------------------------------------
+
+; $0303[0x01] -   (Player)
+
+;     In conjunction with the above variable when set to 0x13, matching the above
+;     variable, the cape transformation is complete.
+                
+;     This indicates which secondary item is equipped (aka Y-button
+;     item).
+    
+;     0x00 - Nothing
+;     0x01 - Bombs
+;     0x02 - Boomerang
+;     0x03 - Arrows
+;     0x04 - Hammer
+;     0x05 - Fire Rod
+;     0x06 - Ice Rod
+;     0x07 - Bug catching net
+;     0x08 - Flute
+;     0x09 - Lamp
+;     0x0A - Magic Powder
+;     0x0B - Bottle
+;     0x0C - Book of Mudora
+;     0x0D - Cane of Byrna
+;     0x0E - Hookshot
+;     0x0F - Bombos Medallion
+;     0x10 - Ether Medallion
+;     0x11 - Quake Medallion
+;     0x12 - Cane of Somaria
+;     0x13 - Cape
+;     0x14 - Magic Mirror

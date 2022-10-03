@@ -328,7 +328,7 @@ Menu_CheckBottle:
 Menu_Exit:
 {
   ; set $0303 by using $0202 to index table on exit
-  JSR Menu_CheckBottle
+  ; JSR Menu_CheckBottle
   LDY.w $0202 : BEQ .no_item
   DEY 
   LDA.w Menu_ItemIndex, Y
@@ -342,9 +342,9 @@ Menu_Exit:
 
   LDX.b #$3E
   .loop 
-
-      LDA.l $7EC300, X : STA.l $7EC500, X
-      DEX : DEX 
+    LDA.l $7EC300, X 
+    STA.l $7EC500, X
+    DEX : DEX 
   BPL .loop
 
   INC.b $15
