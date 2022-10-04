@@ -30,12 +30,8 @@ org $808B6B : LDX.w #$6040
 org $8DDFB2 : LDA.l Menu_ItemIndex, X
 pullpc
 
-; upload tilemaps containing frame of menu and icons 
 org $248000
-Menu_Tilemap: incbin "tilemaps/menu_frame.tilemap"
-Menu_QuestIcons: incbin "tilemaps/quest_icons.tilemap"
 incsrc "menu_gfx_table.asm"
-incsrc "menu_draw_items.asm"
 incsrc "menu_text.asm"
 incsrc "menu_palette.asm"
 
@@ -53,7 +49,17 @@ Menu_Entry:
   PLB
   RTL
 }
-incsrc "menu_vectors.asm"
+.vectors
+  dw Menu_InitGraphics  ; 00
+  dw Menu_UploadRight   ; 01
+  dw Menu_UploadLeft    ; 02
+  dw Menu_ScrollDown    ; 03
+  dw Menu_ItemScreen    ; 04
+  dw Menu_ScrollTo      ; 05
+  dw Menu_StatsScreen   ; 06 
+  dw Menu_ScrollFrom    ; 07
+  dw Menu_ScrollUp      ; 08
+  dw Menu_Exit          ; 09
 
 ; =============================================================================
 ; 00 MENU INIT GRAPHICS 
@@ -66,6 +72,7 @@ Menu_InitGraphics:
 
 ; =============================================================================
 ; 01 MENU UPLOAD RIGHT 
+incsrc "menu_draw.asm"
 
 Menu_UploadRight:
 {
@@ -313,12 +320,10 @@ Menu_CheckBottle:
   LDA.b #$0001 : STA.w $7F5021
 
 .not_shovel
-
   LDA.w $0202 : CMP.b #$19 : BNE .not_flute 
   LDA.w $7EF34C : JML $70A31D
 
 .not_flute 
-
   RTS 
 }
 
@@ -355,7 +360,8 @@ Menu_Exit:
 
 ; =============================================================================
 
-incsrc "menu_draw_bg.asm"
+menu_frame: incbin "tilemaps/menu_frame.tilemap"
+quest_icons: incbin "tilemaps/quest_icons.tilemap"
 incsrc "lw_map_names.asm"
 incsrc "menu_hud.asm"
 

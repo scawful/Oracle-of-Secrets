@@ -1,4 +1,38 @@
-;===============================================================================
+; =============================================================================
+;  Tilemap Menu background 
+
+Menu_DrawBackground:
+{
+  REP #$30
+  LDX.w #$FE ; $1700-17FF 
+
+.loop
+  LDA.w menu_frame, X
+  STA.w $1000, X
+  LDA.w menu_frame+$100, X
+  STA.w $1100, X
+  LDA.w menu_frame+$200, X
+  STA.w $1200, X
+  LDA.w menu_frame+$300, X
+  STA.w $1300, X
+  LDA.w menu_frame+$400, X
+  STA.w $1400, X
+  LDA.w menu_frame+$500, X
+  STA.w $1500, X
+  LDA.w menu_frame+$600, X
+  STA.w $1600, X
+  LDA.w menu_frame+$700, X
+  STA.w $1700, X
+
+  DEX : DEX
+  BPL .loop
+
+  RTS
+}
+
+; =============================================================================
+;  Menu Item Draw Routine 
+;  Credit to Kan
 
 DrawMenuItem:
 	STA.b $08
@@ -15,9 +49,7 @@ DrawMenuItem:
 .not_zero
 	DEC
 
-	ASL
-	ASL
-    ASL
+	ASL : ASL : ASL
 	ADC.b $00
 	TAY
 
@@ -29,25 +61,26 @@ DrawMenuItem:
 
 	RTS
 
-;===============================================================================
+; =============================================================================
+;  Quest Icons Tilemap Draw Routine 
 
 DrawQuestIcons:
   LDX.w #$10
 
 .loop
-  LDA.w Menu_QuestIcons, X 
+  LDA.w quest_icons, X 
   STA.w $1364, X 
-  LDA.w Menu_QuestIcons+$10, X 
+  LDA.w quest_icons+$10, X 
   STA.w $13A4, X 
-  LDA.w Menu_QuestIcons+$20, X 
+  LDA.w quest_icons+$20, X 
   STA.w $13E4, X 
-  LDA.w Menu_QuestIcons+$30, X 
+  LDA.w quest_icons+$30, X 
   STA.w $1424, X 
-  LDA.w Menu_QuestIcons+$40, X 
+  LDA.w quest_icons+$40, X 
   STA.w $1464, X 
-  LDA.w Menu_QuestIcons+$50, X 
+  LDA.w quest_icons+$50, X 
   STA.w $14A4, X 
-  LDA.w Menu_QuestIcons+$60, X 
+  LDA.w quest_icons+$60, X 
   STA.w $14E4, X 
   DEX : DEX : BPL .loop
 
@@ -55,7 +88,7 @@ DrawQuestIcons:
 
   RTS
 
-;===============================================================================
+; =============================================================================
 
 DrawTriforceIcon:
   LDA.l $7EF37A 
@@ -167,10 +200,9 @@ DrawMusicNotes:
 ;===============================================================================
 
 DrawYItems:
-	; Set up the bank of our indirect address
+{ 
 	SEP #$30
-	LDA.b #$7E : STA.b $0A
-
+	LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
 	REP #$30
 
 	LDA.w #$7EF340
@@ -247,16 +279,10 @@ DrawYItems:
 	LDY.w #ShovelGFX
 	JSR DrawMenuItem
 
-  ;LDA.w #$7EF34D
-  LDA.l $7EF34D
-  CMP.w #$00 : BEQ .no_feather
-  LDA.w #$01
-  STA.w ShortSpoof
-  LDA.w #ShortSpoof
+  LDA.w #$7EF34D
 	LDX.w #menu_offset(13,6)
 	LDY.w #JumpFeatherGFX
 	JSR DrawMenuItem
-.no_feather
 
 	LDA.w #$7EF350
 	LDX.w #menu_offset(13,9)
@@ -323,6 +349,9 @@ DrawYItems:
 	JSR DrawMenuItem
 
 	RTS
+}
+
+; =============================================================================
 
 Menu_DrawQuestItems:
 	SEP #$30
@@ -352,12 +381,10 @@ Menu_DrawQuestItems:
   LDY.w #PowerGloveGFX
   JSR DrawMenuItem
 
-
   LDA.w #$7EF355
   LDX.w #menu_offset(17,5)
   LDY.w #PegasusBootsGFX
   JSR DrawMenuItem
-
 
   LDA.w #$7EF356
   LDX.w #menu_offset(17,8)
