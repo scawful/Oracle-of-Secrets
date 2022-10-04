@@ -12,7 +12,6 @@
 ;   Lost Sea Area Combo
 ;   
 ;===========================================================
-
 namespace Oracle
 {
   print ""
@@ -45,6 +44,9 @@ namespace Oracle
 
   incsrc "Debug/debug.asm"
   print  "End of Debug/debug.asm            ", pc
+  
+  incsrc "Masks/deku_mask.asm"
+  print  "End of Masks/deku_mask.asm        ", pc
 
   print ""
   print "Finished applying patches"
