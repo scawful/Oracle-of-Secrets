@@ -1,5 +1,30 @@
-; ; Hooks : 
+; Hooks 
 incsrc "../Sprites/sprite_functions_hooks.asm"
+
+; =============================================================================
+org $008A01
+  LDA $BC
+  
+org $07B073    ; *$3B073-$3B086 LOCAL
+Link_CheckNewY_ButtonPress:
+
+org $07A64B
+LinkItem_Quake:
+{
+  JSR Link_CheckNewY_ButtonPress : BCC .return
+
+  LDA $6C : BNE .return ; doorway
+
+  LDA $0FFC : BNE .return ; cantopen menu
+
+  LDA #$40 : STA $BC
+
+.return
+  RTS
+}
+
+org $408000
+incbin deku_link.bin
 
 ; org $07A666
 ; Deku_Entry:
@@ -10,9 +35,6 @@ incsrc "../Sprites/sprite_functions_hooks.asm"
 ;     STZ $0710
 ;     RTS
 ; }
-
-org $008A01
-  LDA $BC
 
 ; org $1BEDF9
 ; JSL Palette_ArmorAndGloves ; 4bytes
@@ -26,7 +48,7 @@ org $008A01
 ; org $06F40C
 ; JSL change_sprite : NOP #$01 ; LDA $0E20, X : CMP.b #$61
 
-; ; ; Code : 
+; Code : 
 ; org $308000
 ; Palette_ArmorAndGloves:
 ; {
@@ -95,23 +117,3 @@ org $008A01
 
 ; changing the DP address $BC would now* change the bank link's gfx is read from 
 
-; =============================================================================
-
-org $07B073    ; *$3B073-$3B086 LOCAL
-Link_CheckNewY_ButtonPress:
-
-org $07A64B
-LinkItem_Quake:
-  JSR Link_CheckNewY_ButtonPress : BCC .return
-
-  LDA $6C : BNE .return ; doorway
-
-  LDA $0FFC : BNE .return ; cantopen menu
-
-  LDA #$40 : STA $BC
-
-  .return
-RTS
-
-org $408000
-incbin deku_link.bin
