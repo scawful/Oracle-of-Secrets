@@ -42,7 +42,6 @@ Menu_Entry:
 {
   PHB : PHK : PLB 
   LDA.w $0200 : ASL : TAX
-  LDA.b #$10 : STA $BC
   JSR (.vectors,X)
   
   SEP #$20

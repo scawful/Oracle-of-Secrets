@@ -264,7 +264,7 @@ DrawYItems:
 
 	LDA.w #$7EF347
 	LDX.w #menu_offset(10,16)
-	LDY.w #GoronMaskGFX
+	LDY.w #ZoraMaskGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF35D
@@ -276,7 +276,7 @@ DrawYItems:
 
 	LDA.w #$7EF34F ; 7EF34C
 	LDX.w #menu_offset(13,3)
-	LDY.w #ShovelGFX
+	LDY.w #WolfMaskGFX
 	JSR DrawMenuItem
 
   LDA.w #$7EF34D

@@ -89,8 +89,8 @@ ShovelGFX:
 
 OcarinaGFX:
   dw $2CD4, $2CD5, $2CE4, $2CE5 
-  dw $2CD4, $2CD5, $2CE4, $2CE5
-  dw $2CD4, $2CD5, $2CE4, $2CE5
+  ; dw $2CD4, $2CD5, $2CE4, $2CE5
+  ; dw $2CD4, $2CD5, $2CE4, $2CE5
 
 ; -------------------------------------
 ; formerly fishing net
@@ -129,6 +129,16 @@ ByrnaGFX:
 
 StoneMaskGFX:
   dw $30B4, $30B5, $30C4, $30C5 ; Stone Mask
+
+; -------------------------------------
+
+WolfMaskGFX:
+  dw $3086, $7086, $3087, $7087
+
+; -------------------------------------
+
+ZoraMaskGFX:
+  dw $2C88, $6C88, $2C89, $6C89
 
 ; -------------------------------------
 

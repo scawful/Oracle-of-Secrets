@@ -2,30 +2,14 @@
 ;  Item Selection Code
 
 Menu_ItemIndex:
-  db $03 ; slingshot
-  db $02 ; boomerang
-  db $0E ; hookshot 
-  db $01 ; bombs
-  db $11 ; deku mask 
-  db $0B ; bottle1
-  db $04 ; hammer 
-  db $09 ; lamp 
-  db $05 ; firerod (nimbus)
-  db $06 ; icerod 
-  db $0F ; bombos / goron 
-  db $4B ; bottle2
-  db $0B ; shovel
-  db $07 ; feather 
-  db $12 ; somaria
-  db $0D ; byrna
-  db $10 ; bunny hood
-  db $8B ; bottle3
-  db $0A ; powder 
-  db $0C ; book 
-  db $08 ; ocarina 
-  db $14 ; mirror
-  db $13 ; stone mask
-  db $CB ; bottle4
+  ;  Bow,    Boomerang, Hookshot, Bombs,   Deku,       Bottle 1
+  db $03,    $02,       $0E,      $01,     $11,        $0B 
+  ;  Hammer, Lamp,      Fire Rod, Ice Rod, Zora,       Bottle 2
+  db $04,    $09,       $05,      $06,     $0F,        $4B 
+  ;  Wolf,   Feather,   Somaria,  Byrna,   Bunny Hood, Bottle3
+  db $0B,    $07,       $12,      $0D,     $10,        $8B 
+  ;  Powder, Book,      Ocarina,  Mirror,  Stone Mask, Bottle4
+  db $0A,    $0C,       $08,      $14,     $13,        $CB 
 
 ; -----------------------------------------------------------------------------
 
@@ -38,15 +22,15 @@ Menu_AddressIndex:
   db $7EF35C ; bottle1
   db $7EF34B ; hammer 
   db $7EF34A ; lamp 
-  db $7EF345 ; firerod (nimbus)
+  db $7EF345 ; firerod
   db $7EF346 ; icerod 
-  db $7EF347 ; bombos / goron 
+  db $7EF347 ; Zora Mask
   db $7EF35D ; bottle2
   db $7EF34F ; shovel
   db $7EF34D ; feather 
   db $7EF350 ; somaria
   db $7EF351 ; byrna
-  db $7EF349 ; bunny hood
+  db $7EF349 ; Bunny Hood
   db $7EF35E ; bottle3
   db $7EF344 ; powder 
   db $7EF34E ; book 

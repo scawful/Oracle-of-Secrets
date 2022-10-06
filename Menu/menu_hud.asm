@@ -458,39 +458,44 @@ HUD_AnimateHeartRefill:
 ; ============================================================================ 
 ; *$6FAFD-$6FB90 LOCAL
 
+HudItems:
+  dw BowsGFX
+  dw BoomsGFX
+  dw HookGFX
+  dw BombsGFX
+  dw DekuMaskGFX
+  dw BottlesGFX
+  dw Fire_rodGFX
+  dw Ice_rodGFX
+  dw LampGFX
+  dw HammerGFX
+  dw GoronMaskGFX
+  dw BottlesGFX
+  dw SomariaGFX
+  dw ByrnaGFX
+  dw BookGFX
+  dw JumpFeatherGFX
+  dw BunnyHoodGFX 
+  dw BottlesGFX
+  dw OcarinaGFX
+  dw MirrorGFX
+  dw ShovelGFX
+  dw PowderGFX
+  dw StoneMaskGFX
+  dw BottlesGFX
+
 HUD_UpdateItemBox:
 {
     SEP #$30
     
     ; Dost thou haveth the the bow?
     LDA $7EF340 : BEQ .havethNoBow
-    
-    ; Dost thou haveth the silver arrows?
-    ; (okay I'll stop soon)
-    ; CMP.b #$03 : BCC .havethNoSilverArrows 
-    
-    ; Draw the arrow guage icon as silver rather than normal wood arrows.
-;     LDA.b #$86 : STA $7EC71E
-;     LDA.b #$24 : STA $7EC71F
-;     LDA.b #$87 : STA $7EC720
-;     LDA.b #$24 : STA $7EC721
-    
     LDX.b #$04
     
     ; check how many arrows the player has
     LDA $7EF377 : BNE .drawBowItemIcon
-    
     LDX.b #$03
-    
     BRA .drawBowItemIcon
-
-; .havethNoSilverArrows
-
-;     LDX.b #$02
-    
-;     LDA $7EF377 : BNE .drawBowItemIcon
-    
-;     LDX.b #$01
 
 .drawBowItemIcon
 
@@ -507,7 +512,7 @@ HUD_UpdateItemBox:
     
     LDX $0202 : BEQ .noEquippedItem
     
-    LDA $7EF33F, X : AND.w #$00FF
+    LDA Menu_ItemIndex, X : AND.w #$00FF
     
     CPX.w #$0004 : BNE .bombsNotEquipped
     
