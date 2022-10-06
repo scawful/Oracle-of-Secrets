@@ -1,18 +1,19 @@
 ; =============================================================================
 ;  Item Selection Code
 
+; Decides which function to jump to.
 Menu_ItemIndex:
   ;  Bow,    Boomerang, Hookshot, Bombs,   Deku,       Bottle 1
   db $03,    $02,       $0E,      $01,     $11,        $0B 
   ;  Hammer, Lamp,      Fire Rod, Ice Rod, Zora,       Bottle 2
   db $04,    $09,       $05,      $06,     $0F,        $4B 
   ;  Wolf,   Feather,   Somaria,  Byrna,   Bunny Hood, Bottle3
-  db $0B,    $07,       $12,      $0D,     $10,        $8B 
+  db $08,    $07,       $12,      $0D,     $10,        $8B 
   ;  Powder, Book,      Ocarina,  Mirror,  Stone Mask, Bottle4
   db $0A,    $0C,       $08,      $14,     $13,        $CB 
 
 ; -----------------------------------------------------------------------------
-
+; Decides which graphics is drawn 
 Menu_AddressIndex:
   db $7EF340 ; bow
   db $7EF341 ; boom
@@ -26,7 +27,7 @@ Menu_AddressIndex:
   db $7EF346 ; icerod 
   db $7EF347 ; Zora Mask
   db $7EF35D ; bottle2
-  db $7EF34F ; shovel
+  db $7EF34C ; shovel 7EF34F
   db $7EF34D ; feather 
   db $7EF350 ; somaria
   db $7EF351 ; byrna

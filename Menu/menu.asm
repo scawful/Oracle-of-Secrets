@@ -326,6 +326,16 @@ Menu_CheckBottle:
   RTS 
 }
 
+Menu_HookItems:
+{
+  STZ.w $7F5021
+  LDA.w $0202 : CMP.b #$13 : BNE .not_wolf_mask
+  LDA.b #$0001 : STA.w $7F5021
+
+.not_wolf_mask
+  RTS
+}
+
 ; =============================================================================
 ; 09 MENU EXIT 
 
@@ -333,8 +343,8 @@ Menu_Exit:
 {
   ; set $0303 by using $0202 to index table on exit
   ; JSR Menu_CheckBottle
-  LDY.w $0202 : BEQ .no_item
-  DEY 
+  JSR Menu_HookItems
+  LDY.w $0202 : BEQ .no_item : DEY 
   LDA.w Menu_ItemIndex, Y
   STA.w $0303
 
