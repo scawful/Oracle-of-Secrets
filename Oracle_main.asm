@@ -33,8 +33,6 @@ namespace Oracle
   incsrc "Items/ice_rod.asm"
   print  "End of Items/ice_rod.asm          ", pc
 
-  incsrc "Masks/bunny_hood.asm"
-  print  "End of Masks/bunny_hood.asm       ", pc
 
   incsrc "KeyBlock/keyblock.asm"
   print  "End of KeyBlock/keyblock.asm      ", pc
@@ -45,8 +43,19 @@ namespace Oracle
   incsrc "Debug/debug.asm"
   print  "End of Debug/debug.asm            ", pc
   
+  incsrc "Masks/mask_routines.asm"
+
   incsrc "Masks/deku_mask.asm"
   print  "End of Masks/deku_mask.asm        ", pc
+
+  incsrc "Masks/zora_mask.asm"
+  print  "End of Masks/zora_mask.asm        ", pc
+
+  incsrc "Masks/wolf_mask.asm"
+  print  "End of Masks/wolf_mask.asm       ", pc
+
+  incsrc "Masks/bunny_hood.asm"
+  print  "End of Masks/bunny_hood.asm       ", pc
 
   print ""
   print "Finished applying patches"
