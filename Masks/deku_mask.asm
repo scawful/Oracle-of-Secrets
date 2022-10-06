@@ -1,14 +1,10 @@
 ; Hooks 
 incsrc "../Sprites/sprite_functions_hooks.asm"
-
 ; =============================================================================
 
 org $008A01
   LDA $BC
   
-org $07B073    ; *$3B073-$3B086 LOCAL
-Link_CheckNewY_ButtonPress:
-
 org $07A64B
 LinkItem_Quake:
 {
@@ -18,15 +14,19 @@ LinkItem_Quake:
 
   LDA $0FFC : BNE .return ; cantopen menu
 
-  LDA #$40 : STA $BC
+  LDY.b #$04
+  LDA.b #$23
+  
+  JSL AddTransformationCloud
+
+  LDA #$35 : STA $BC
 
 .return
   RTS
 }
 
-org $408000
+org $358000
 incbin deku_link.bin
-
 
 org $1BEDF9
 JSL Palette_ArmorAndGloves ; 4bytes

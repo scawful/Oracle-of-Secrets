@@ -20,6 +20,29 @@
 ; TODO: draw sprite on link
 ;===========================================================
 
+org $07A494
+LinkItem_Ether:
+{
+  JSR Link_CheckNewY_ButtonPress : BCC .return
+
+  LDA $6C : BNE .return ; doorway
+
+  LDA $0FFC : BNE .return ; cantopen menu
+  
+  LDY.b #$04
+  LDA.b #$23
+  
+  JSL AddTransformationCloud
+
+  LDA #$37 : STA $BC
+
+.return
+  RTS
+}
+
+org $378000
+incbin bunny_link.4bpp
+
 namespace BunnyHood 
 {
   Main: 
@@ -50,4 +73,5 @@ namespace BunnyHood
     org $20AF70           ; this selects the new speed values
     db $20, $12, $0a, $18, $10, $08, $08, $04, $0c, $10, $09, $19, $14, $0d, $10, $08, $40
   }  ; label Main
+
 }  ; namespace BunnyHood

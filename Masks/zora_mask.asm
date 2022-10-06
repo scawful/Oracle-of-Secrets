@@ -9,11 +9,18 @@ LinkItem_ZoraMask:
 
   LDA $0FFC : BNE .return ; cantopen menu
 
-  LDA #$41 : STA $BC
+  LDY.b #$04
+  LDA.b #$23
+  
+  JSL AddTransformationCloud
+
+  LDA.b #$14 : JSR Player_DoSfx2
+
+  LDA #$36 : STA $BC
 
 .return
   RTS
 }
 
-org $418000
+org $368000
 incbin zora_link.4bpp
