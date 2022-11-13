@@ -3,10 +3,10 @@ org $0EDE29
 ; $75E29-$75E48 DATA
 {
     ; corresponding warp types that lead to special overworld areas
-    dw $0105, $01EF, $00AD, $00B9
+    dw $01EF, $01E4, $00AD, $00B9
     
     ; Lost woods, Hyrule Castle Bridge, Entrance to Zora falls, and in Zora Falls...
-    dw $0000, $002A, $000F, $0081
+    dw $002A, $0000, $000F, $0081
     
     ; Direction Link will face when he enters the special area
     dw $0008, $0008, $0008, $0008
