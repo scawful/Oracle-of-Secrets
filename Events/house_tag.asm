@@ -17,8 +17,13 @@ HouseTag:
   PHX 
   ; -------------------------------
   
+  LDA StoryState : BNE .has_begun 
+  INC.b StoryState
   JSR HouseTag_TelepathicPlea
   JSR HouseTag_WakeUpPlayer
+
+  STZ $02E4 ; awake from slumber 
+.has_begun
 
   ; -------------------------------
   PLX
