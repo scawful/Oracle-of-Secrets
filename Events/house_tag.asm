@@ -18,9 +18,9 @@ HouseTag:
 {
   PHX 
   ; -------------------------------
-  
+  LDA $7EF3C6 : BNE .game_has_begun
   JSR HouseTag_Main
-
+.game_has_begun
   ; -------------------------------
   PLX
   JML HouseTag_Return
@@ -93,6 +93,13 @@ HouseTag_WakeUpPlayer:
 
   ; Make it so Link's uncle never respawns in the house again.
   LDA $7EF3C6 : ORA.b #$10 : STA $7EF3C6
+
+  ; Set the game mode to part 2 
+  LDA #$02
+  STA $7ef3C5   ; store "part 2"
+  LDA #$00
+  STA $7ef3CC   ; disable telepathic message
+  JSL $00FC41   ; fix monsters
   
   RTS
 }
