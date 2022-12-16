@@ -1,6 +1,8 @@
 ; ==============================================================================
 ; NEW: Custom Room Tag to initialize the game without the Uncle sprite.
 ; 
+org $008781
+  UseImplicitRegIndexedLocalJumpTable:
 
 org $05E219
   Sprite_ShowMessageUnconditional:
@@ -17,13 +19,7 @@ HouseTag:
   PHX 
   ; -------------------------------
   
-  LDA StoryState : BNE .has_begun 
-  INC.b StoryState
-  JSR HouseTag_TelepathicPlea
-  JSR HouseTag_WakeUpPlayer
-
-  STZ $02E4 ; awake from slumber 
-.has_begun
+  JSR HouseTag_Main
 
   ; -------------------------------
   PLX
@@ -32,6 +28,18 @@ HouseTag:
 
 ; ==============================================================================
 
+HouseTag_Main:
+{
+  LDA StoryState
+
+  JSL UseImplicitRegIndexedLocalJumpTable
+  
+  dw HouseTag_TelepathicPlea
+  dw HouseTag_WakeUpPlayer
+  dw HouseTag_End
+}
+
+; ==============================================================================
 
 HouseTag_TelepathicPlea:
 {
@@ -46,7 +54,7 @@ HouseTag_TelepathicPlea:
   ; "Accept our quest, Link!"
   LDA.b #$1F : LDY.b #$00
   JSL Sprite_ShowMessageUnconditional
-  INC $0D80, X
+  INC.b StoryState
 
   RTS
 }
@@ -78,7 +86,22 @@ HouseTag_WakeUpPlayer:
   LDA.b #$57 : STA $20
   LDA.b #$21 : STA $21
   
-  LDA.b #$01 : STA $02E4
+  ;LDA.b #$01 : STA $02E4
+
+  STZ $02E4 ; awake from slumber
+  INC.b StoryState 
+
+  ; Make it so Link's uncle never respawns in the house again.
+  LDA $7EF3C6 : ORA.b #$10 : STA $7EF3C6
   
   RTS
 }
+
+; ==============================================================================
+
+HouseTag_End:
+{
+    RTS
+}
+
+; ==============================================================================
