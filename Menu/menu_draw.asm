@@ -230,9 +230,9 @@ DrawYItems:
 	JSR DrawMenuItem
 .no_bomb
 
-	LDA.w #$7EF348
-	LDX.w #menu_offset(7,16)
-	LDY.w #DekuMaskGFX
+  LDA.w #$7EF344
+	LDX.w #menu_offset(7,16) 
+	LDY.w #PowderGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF35C
@@ -262,9 +262,9 @@ DrawYItems:
 	LDY.w #Ice_rodGFX
 	JSR DrawMenuItem
 
-	LDA.w #$7EF347
+  LDA.w #$7EF353
 	LDX.w #menu_offset(10,16)
-	LDY.w #ZoraMaskGFX
+	LDY.w #MirrorGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF35D
@@ -274,42 +274,16 @@ DrawYItems:
 
   ;; next row 
 
-	LDA.w #$7EF34F ; 7EF34C
+  ; LDA.w #$7EF34C ; ocarina
+  LDA.l $7EF34C
+  CMP.w #$00 : BEQ .no_flute
+  LDA.w #$01
+  STA.w ShortSpoof
+  LDA.w #ShortSpoof
 	LDX.w #menu_offset(13,3)
-	LDY.w #WolfMaskGFX
+	LDY.w #OcarinaGFX
 	JSR DrawMenuItem
-
-  LDA.w #$7EF34D
-	LDX.w #menu_offset(13,6)
-	LDY.w #JumpFeatherGFX
-	JSR DrawMenuItem
-
-	LDA.w #$7EF350
-	LDX.w #menu_offset(13,9)
-	LDY.w #SomariaGFX
-	JSR DrawMenuItem
-
-	LDA.w #$7EF351
-	LDX.w #menu_offset(13,13)
-	LDY.w #ByrnaGFX
-	JSR DrawMenuItem
-
-	LDA.w #$7EF349
-	LDX.w #menu_offset(13,16)
-	LDY.w #BunnyHoodGFX
-	JSR DrawMenuItem
-
-	LDA.w #$7EF35E
-	LDX.w #menu_offset(13,19)
-	LDY.w #BottlesGFX
-	JSR DrawMenuItem
-
-  ;; next row
-
-  LDA.w #$7EF344
-	LDX.w #menu_offset(16,3)
-	LDY.w #PowderGFX
-	JSR DrawMenuItem
+.no_flute
 
   ;LDA.w #$7EF34E
   LDA.l $7EF34E
@@ -322,20 +296,46 @@ DrawYItems:
 	JSR DrawMenuItem
 .no_book
 
-  ; LDA.w #$7EF34C ; ocarina
-  LDA.l $7EF34C
-  CMP.w #$00 : BEQ .no_flute
-  LDA.w #$01
-  STA.w ShortSpoof
-  LDA.w #ShortSpoof
-	LDX.w #menu_offset(16,9)
-	LDY.w #OcarinaGFX
+	LDA.w #$7EF350
+	LDX.w #menu_offset(13,9)
+	LDY.w #SomariaGFX
 	JSR DrawMenuItem
-.no_flute
 
-	LDA.w #$7EF353
+	LDA.w #$7EF351
+	LDX.w #menu_offset(13,13)
+	LDY.w #ByrnaGFX
+	JSR DrawMenuItem
+
+  LDA.w #$7EF34D
+	LDX.w #menu_offset(13,16)
+	LDY.w #JumpFeatherGFX
+	JSR DrawMenuItem
+
+	LDA.w #$7EF35E
+	LDX.w #menu_offset(13,19)
+	LDY.w #BottlesGFX
+	JSR DrawMenuItem
+
+  ;; next row
+
+  LDA.w #$7EF348
+	LDX.w #menu_offset(16,3)
+	LDY.w #DekuMaskGFX
+	JSR DrawMenuItem
+
+	LDA.w #$7EF347
+	LDX.w #menu_offset(16,6)
+	LDY.w #ZoraMaskGFX
+	JSR DrawMenuItem
+
+  LDA.w #$7EF34F ; 7EF34C
+	LDX.w #menu_offset(16,9)
+	LDY.w #WolfMaskGFX
+	JSR DrawMenuItem
+
+  LDA.w #$7EF349
 	LDX.w #menu_offset(16,13)
-	LDY.w #MirrorGFX
+	LDY.w #BunnyHoodGFX
 	JSR DrawMenuItem
 
 	LDA.w #$7EF352
