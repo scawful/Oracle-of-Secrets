@@ -1,6 +1,9 @@
 ; ==============================================================================
 ; NEW: Custom Room Tag to initialize the game without the Uncle sprite.
 ; 
+
+incsrc "Util/ram.asm"
+
 org $008781
   UseImplicitRegIndexedLocalJumpTable:
 
