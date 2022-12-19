@@ -1,5 +1,10 @@
 ; =============================================================================
-;  headsup display  
+;  Menu - Headsup Display
+; =============================================================================
+
+
+; ==============================================================================
+; Vanilla HUD Hijack 
 
 org $0DFB91
   JSL HUD_Update
@@ -15,6 +20,9 @@ org $0DDD21
 org $0DF1BC
   JSL HUD_AnimateHeartRefill
   RTS
+
+; ==============================================================================
+; Main HUD Update Loop
 
 org $268000
 HUD_Update:
@@ -72,7 +80,7 @@ HUD_Update:
   ; filling in the full and partially filled hearts (actual health)
   JSR HUD_UpdateHearts
 
-.ignoreHealth ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
+  .ignoreHealth ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
 
   REP #$30
   
@@ -87,13 +95,13 @@ HUD_Update:
 
   ; check player magic (ranges from 0 to 0x7F)
   ; X = ((MP & 0xFF)) + 7) & 0xFFF8)
-  ; LDA $7EF36E : AND.w #$00FF : CLC : ADC #$0007 : AND.w #$FFF8 : TAX
+  LDA $7EF36E : AND.w #$00FF : CLC : ADC #$0007 : AND.w #$FFF8 : TAX
   
   ; these four writes draw the magic power bar based on how much MP you have 
-  ; LDA MagicTilemap+0, X : STA $7EC746
-  ; LDA MagicTilemap+2, X : STA $7EC786
-  ; LDA MagicTilemap+4, X : STA $7EC7C6
-  ; LDA MagicTilemap+6, X : STA $7EC806
+  LDA MagicTilemap+0, X : STA $7EC76C
+  LDA MagicTilemap+2, X : STA $7EC76D
+  LDA MagicTilemap+4, X : STA $7EC76E
+  LDA MagicTilemap+6, X : STA $7EC76F
   
   ; Load how many rupees the player has
   LDA $7EF362
@@ -139,30 +147,21 @@ HUD_Update:
   ;   LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC760
     
   ;   LDA.w #$007F : STA $05
-    
   ;   ; Load number of Keys Link has
   ;   LDA $7EF36F : AND.w #$00FF : CMP.w #$00FF : BEQ .noKeys
-    
   ;   JSR HexToDecimal
-
   ; .noKeys
-  
   ;   REP #$30
-    
   ;   ; The key digit, which is optionally drawn.
   ;   ; Also check to see if the key spot is blank
   ;   LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC764
-    
   ;   CMP.w #$247F : BNE .dontBlankKeyIcon
-    
   ;   ; If the key digit is blank, also blank out the key icon.
   ;   STA $7EC724
-  
   ; .dontBlankKeyIcon
-
   ;   SEP #$30
 
-    RTL
+  RTL
 }
 
 ; =============================================================================
@@ -170,6 +169,41 @@ HUD_Update:
 
 HUD_RefillLogic:
 {
+  ; check the refill magic indicator
+  LDA $7EF373
+
+  BEQ .doneWithMagicRefill
+
+  ; Check the current magic power level we have.
+  ; Is it full?
+  LDA $7EF36E : CMP.b #$80
+
+  BCC .magicNotFull
+  
+  ; If it is full, freeze it at 128 magic pts.
+  ; And stop this refilling nonsense.
+  LDA.b #$80 : STA $7EF36E
+  LDA.b #$00 : STA $7EF373
+  
+  BRA .doneWithMagicRefill
+
+.magicNotFull
+
+  LDA $7EF373 : DEC A : STA $7EF373
+  LDA $7EF36E : INC A : STA $7EF36E
+  
+  ; if((frame_counter % 4) != 0) don't refill this frame
+  LDA $1A : AND.b #$03 : BNE .doneWithMagicRefill
+  
+  ; Is this sound channel in use?
+  LDA $012E : BNE .doneWithMagicRefill
+  
+  ; Play the magic refill sound effect
+  LDA.b #$2D : STA $012E
+
+.doneWithMagicRefill
+
+  REP #$30
   ; Check current rupees (362) against goal rupees (360)
   ; goal refers to how many we really have and current refers to the
   ; number currently being displayed. When you buy something,
@@ -708,4 +742,122 @@ HUD_Tilemap:
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F
+}
+
+; ==============================================================================
+
+; $57CE0 DATA
+org $0AFCE0
+FloorIndicatorNumberHigh:
+{
+  dw $2508, $2509, $2509, $250A, $250B, $250C, $250D, $251D
+  dw $E51C, $250E, $007F
+}
+
+; $57CF6 DATA
+org $0AFCF6
+FloorIndicatorNumberLow:
+{
+  dw $2518, $2519, $A509, $251A, $251B, $251C, $2518, $A51D
+  dw $E50C, $A50E, $007F
+}
+
+
+; *$57D0C-$57DA7 JUMP LOCATION (LONG)
+org $0AFD0C
+FloorIndicator:
+{
+  ; Handles display of the Floor indicator on BG3 (1F, B1, etc)
+  
+  REP #$30
+  
+  LDA $04A0 : AND.w #$00FF : BEQ .hideIndicator
+  
+  INC A : CMP.w #$00C0 : BNE .dontDisable
+  
+  ; if the count up timer reaches 0x00BF frames, disable the floor indicator during the next frame.
+  LDA.w #$0000
+
+.dontDisable
+
+  STA $04A0
+  
+  PHB : PHK : PLB
+  
+  LDA.w #$251E : STA $7EC7F0
+  INC A        : STA $7EC832
+  INC A        : STA $7EC830
+  
+  LDA.w #$250F : STA $7EC7F2
+  
+  LDX.w #$0000
+  
+  ; this confused me at first, but it's actually looking at whether $A4[1]
+  ; has a negative value $A3 has nothing to do with $A4
+  LDA $A3 : BMI .basementFloor
+  
+  ; check which floor Link is on.
+  LDA $A4 : BNE .notFloor1F
+  
+  LDA $A0 : CMP.w #$0002 : BEQ .sanctuaryRatRoom
+  
+  SEP #$20
+  
+  ; Check the world state
+  LDA $7EF3C5 : CMP.b #$02 : BCS .noRainSound
+  
+  ; cause the ambient rain sound to occur (indoor version)
+  LDA.b #$03 : STA $012D
+
+.noRainSound
+
+  REP #$20
+
+.notFloor1F
+.sanctuaryRatRoom
+
+  LDA $A4 : AND.w #$00FF
+  
+  BRA .setFloorIndicatorNumber
+
+.basementFloor
+
+  SEP #$20
+  
+  ; turn off any ambient sound effects
+  LDA.b #$05 : STA $012D
+  
+  REP #$20
+  
+  INX #2
+  
+  LDA $A4 : ORA.w #$FF00 : EOR.w #$FFFF
+
+.setFloorIndicatorNumber
+
+  ASL A : TAY
+  
+  LDA FloorIndicatorNumberHigh, Y : STA $7EC7F0, X
+  LDA FloorIndicatorNumberLow, Y  : STA $7EC830, X
+  
+  SEP #$30
+  
+  PLB
+  
+  ; send a signal indicating that bg3 needs updating
+  INC $16
+  
+  RTL
+
+; *$57D90 ALTERNATE ENTRY POINT
+.hideIndicator
+
+  REP #$20
+  
+  ; disable the display of the floor indicator.
+  LDA.w #$007F : STA $7EC7F0 : STA $7EC830 : STA $7EC7F2 : STA $7EC832
+  
+  SEP #$30
+  
+  RTL
 }
