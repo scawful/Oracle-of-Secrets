@@ -98,11 +98,11 @@ HouseTag_WakeUpPlayer:
   LDA $7EF3C6 : ORA.b #$10 : STA $7EF3C6
 
   ; Set the game mode to part 2 
-  LDA #$02
-  STA $7ef3C5   ; store "part 2"
-  LDA #$00
-  STA $7ef3CC   ; disable telepathic message
-  JSL $00FC41   ; fix monsters
+  ; LDA #$02
+  ; STA $7ef3C5   ; store "part 2"
+  ; LDA #$00
+  ; STA $7ef3CC   ; disable telepathic message
+  ; JSL $00FC41   ; fix monsters
   
   RTS
 }
@@ -115,3 +115,6 @@ HouseTag_End:
 }
 
 ; ==============================================================================
+
+org $05DF3A
+LDA.b #$01 : STA $7EF3CC
