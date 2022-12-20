@@ -2,13 +2,7 @@
 ; NEW: Custom Room Tag to initialize the game without the Uncle sprite.
 ; 
 
-incsrc "Util/ram.asm"
-
-org $008781
-  UseImplicitRegIndexedLocalJumpTable:
-
-org $05E219
-  Sprite_ShowMessageUnconditional:
+StoryState = $7C
 
 org $01CC18 ; override routine 0x39 "Holes(7)"
   JML HouseTag
@@ -16,7 +10,7 @@ org $01CC18 ; override routine 0x39 "Holes(7)"
 org $01CC5A 
   HouseTag_Return:
 
-org $228000
+org $238000
 HouseTag:
 {
   PHX 
@@ -35,7 +29,7 @@ HouseTag_Main:
 {
   LDA StoryState
 
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL $008781
   
   dw HouseTag_TelepathicPlea
   dw HouseTag_WakeUpPlayer
@@ -56,7 +50,7 @@ HouseTag_TelepathicPlea:
       
   ; "Accept our quest, Link!"
   LDA.b #$1F : LDY.b #$00
-  JSL Sprite_ShowMessageUnconditional
+  JSL $05E219
   INC.b StoryState
 
   RTS
@@ -98,11 +92,9 @@ HouseTag_WakeUpPlayer:
   LDA $7EF3C6 : ORA.b #$10 : STA $7EF3C6
 
   ; Set the game mode to part 2 
-  ; LDA #$02
-  ; STA $7ef3C5   ; store "part 2"
-  ; LDA #$00
-  ; STA $7ef3CC   ; disable telepathic message
-  ; JSL $00FC41   ; fix monsters
+  LDA #$02 : STA $7ef3C5   ; store "part 2"
+  LDA #$00 : STA $7ef3CC   ; disable telepathic message
+  JSL $00FC41   ; fix monsters
   
   RTS
 }
