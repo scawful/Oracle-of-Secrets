@@ -46,30 +46,30 @@ Menu_AddressIndex:
 ; -----------------------------------------------------------------------------
 
 Menu_ItemCursorPositions:
-  dw menu_offset(6,2) ; bow
-  dw menu_offset(6,5) ; boom
-  dw menu_offset(6,8) ; hookshot
-  dw menu_offset(6,12) ; bombs
-  dw menu_offset(6,15) ; deku mask
-  dw menu_offset(6,18) ; bottle1
+  dw menu_offset(6,2)   ; bow
+  dw menu_offset(6,5)   ; boom
+  dw menu_offset(6,8)   ; hookshot
+  dw menu_offset(6,12)  ; bombs
+  dw menu_offset(6,15)  ; deku mask
+  dw menu_offset(6,18)  ; bottle1
 
-  dw menu_offset(9,2) ; hammer 
-  dw menu_offset(9,5) ; lamp
-  dw menu_offset(9,8) ; firerod
-  dw menu_offset(9,12) ; icerod
-  dw menu_offset(9,15) ; goron
-  dw menu_offset(9,18) ; bottle2
+  dw menu_offset(9,2)   ; hammer 
+  dw menu_offset(9,5)   ; lamp
+  dw menu_offset(9,8)   ; firerod
+  dw menu_offset(9,12)  ; icerod
+  dw menu_offset(9,15)  ; goron
+  dw menu_offset(9,18)  ; bottle2
 
-  dw menu_offset(12,2) ; shovel 
-  dw menu_offset(12,5) ; feather 
-  dw menu_offset(12,8) ; somaria
+  dw menu_offset(12,2)  ; shovel 
+  dw menu_offset(12,5)  ; feather 
+  dw menu_offset(12,8)  ; somaria
   dw menu_offset(12,12) ; byrna
   dw menu_offset(12,15) ; bunny hood
   dw menu_offset(12,18) ; bottle3
 
-  dw menu_offset(15,2) ; powder 
-  dw menu_offset(15,5) ; book 
-  dw menu_offset(15,8) ; flute
+  dw menu_offset(15,2)  ; powder 
+  dw menu_offset(15,5)  ; book 
+  dw menu_offset(15,8)  ; flute
   dw menu_offset(15,12) ; mirror
   dw menu_offset(15,15) ; stone mask 
   dw menu_offset(15,18) ; bottle4

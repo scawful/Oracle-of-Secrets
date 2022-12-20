@@ -11,6 +11,7 @@
 ;            Significant thanks to Kan for helping me craft this menu!
 ;   
 ; =============================================================================
+incsrc "Util/ram.asm"
 
 pushpc
 ; update in game hud colors 
@@ -263,6 +264,7 @@ Menu_ScrollTo:
 
 ; =============================================================================
 ; 06 MENU STATS SCREEN 
+
 incsrc "menu_scroll.asm"
 
 Menu_StatsScreen:

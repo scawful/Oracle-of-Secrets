@@ -766,73 +766,45 @@ FloorIndicatorNumberLow:
 ; *$57D0C-$57DA7 JUMP LOCATION (LONG)
 org $0AFD0C
 FloorIndicator:
-{
-  ; Handles display of the Floor indicator on BG3 (1F, B1, etc)
-  
-  REP #$30
-  
+{  
+  REP #$30 
   LDA $04A0 : AND.w #$00FF : BEQ .hideIndicator
-  
   INC A : CMP.w #$00C0 : BNE .dontDisable
-  
   ; if the count up timer reaches 0x00BF frames, disable the floor indicator during the next frame.
   LDA.w #$0000
-
 .dontDisable
-
   STA $04A0
-  
   PHB : PHK : PLB
-  
   LDA.w #$251E : STA $7EC7F0
   INC A        : STA $7EC832
   INC A        : STA $7EC830
-  
   LDA.w #$250F : STA $7EC7F2
-  
   LDX.w #$0000
   
   ; this confused me at first, but it's actually looking at whether $A4[1]
   ; has a negative value $A3 has nothing to do with $A4
   LDA $A3 : BMI .basementFloor
-  
   ; check which floor Link is on.
   LDA $A4 : BNE .notFloor1F
-  
   LDA $A0 : CMP.w #$0002 : BEQ .sanctuaryRatRoom
-  
   SEP #$20
-  
   ; Check the world state
   LDA $7EF3C5 : CMP.b #$02 : BCS .noRainSound
-  
   ; cause the ambient rain sound to occur (indoor version)
   LDA.b #$03 : STA $012D
-
 .noRainSound
-
   REP #$20
-
 .notFloor1F
 .sanctuaryRatRoom
-
   LDA $A4 : AND.w #$00FF
-  
   BRA .setFloorIndicatorNumber
-
 .basementFloor
-
   SEP #$20
-  
   ; turn off any ambient sound effects
   LDA.b #$05 : STA $012D
-  
   REP #$20
-  
   INX #2
-  
   LDA $A4 : ORA.w #$FF00 : EOR.w #$FFFF
-
 .setFloorIndicatorNumber
 
   ASL A : TAY
