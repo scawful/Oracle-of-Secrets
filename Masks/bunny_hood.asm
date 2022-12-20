@@ -26,17 +26,22 @@ LinkItem_Ether:
   JSR Link_CheckNewY_ButtonPress : BCC .return
 
   LDA $6C : BNE .return ; doorway
-
-  LDA $0FFC : BNE .return ; cantopen menu
+  LDA $0FFC : BNE .return ; cant open menu
   
   LDY.b #$04
   LDA.b #$23
   
   JSL AddTransformationCloud
-
+  LDA $02B2 : CMP #$01 : BNE .continue ; is the hood already on?
+  LDA #$10 : STA $BC                   ; take the hood off 
+  STZ $02B2 
+  BRA .return ; do not.
+.continue 
   LDA #$37 : STA $BC
+  LDA #$01 : STA $02B2 ; set the bunny hood on 
 
 .return
+  CLC
   RTS
 }
 
@@ -59,7 +64,9 @@ namespace BunnyHood
     org $20AF20
     CPX.b #$11 : BCS end  ; speed value upper bound check
     LDA.w $0202           ; check the current item
-    CMP.b #$11 : BNE end  ; is it the bunny hood?
+    CMP.b #$16 : BNE end  ; is it the bunny hood?
+    LDA.w $02B2           ; did you put it on?
+    BEQ end
     LDA $20AF70,X         ; load new speed values
     CLC
     RTL
