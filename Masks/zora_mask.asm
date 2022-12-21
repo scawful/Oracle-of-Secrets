@@ -18,6 +18,7 @@ LinkItem_ZoraMask:
   LDA #$02 : STA $02B2
   BRA .return
 .unequip
+  JSL Palette_ArmorAndGloves
   LDA #$10 : STA $BC : STZ $02B2        ; take the mask off
 
 .return

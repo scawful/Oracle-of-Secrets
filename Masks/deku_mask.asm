@@ -22,11 +22,12 @@ LinkItem_Quake:
   LDA.b #$14 : JSR Player_DoSfx2
 
   LDA $02B2 : CMP #$01 : BEQ .unequip   ; is the deku mask on?
+  JSL Palette_ArmorAndGloves
   LDA #$35 : STA $BC                    ; put the mask on
   LDA #$01 : STA $02B2
   BRA .return
 .unequip
-
+  JSL Palette_ArmorAndGloves
   LDA #$10 : STA $BC : STZ $02B2        ; take the mask off
 
 .return

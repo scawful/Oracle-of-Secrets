@@ -33,11 +33,13 @@ LinkItem_Ether:
   JSL AddTransformationCloud
   LDA.b #$14 : JSR Player_DoSfx2
   
-  LDA $02B2 : CMP #$04 : BEQ .unequip ; is the hood already on?
-  LDA #$37 : STA $BC                   ; change link's sprite 
+  LDA $02B2 : CMP #$04 : BEQ .unequip   ; is the hood already on?
+  JSL UpdateBunnyPalette
+  LDA #$37 : STA $BC                    ; change link's sprite 
   LDA #$04 : STA $02B2
   BRA .return
 .unequip
+  JSL Palette_ArmorAndGloves
   LDA #$10 : STA $BC : STZ $02B2        ; take the hood off
 
 .return
@@ -47,6 +49,24 @@ LinkItem_Ether:
 
 org $378000
 incbin bunny_link.4bpp
+
+UpdateBunnyPalette:
+{
+  REP #$30 ; change 16bit mode
+  LDX #$001E
+
+  .loop
+  LDA.l bunny_palette, X : STA $7EC6E0, X
+  DEX : DEX : BPL .loop
+
+  SEP #$30 ; go back to 8 bit mode
+  INC $15 ; update the palette
+  RTL ; or RTS depending on where you need it
+}
+
+
+bunny_palette:
+dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$19FD, #$14B6, #$55BB, #$362A, #$3F4E, #$162B, #$22D0, #$2E5A, #$1970, #$7616, #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2, #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357, #$0000
 
 
 org $87E330
