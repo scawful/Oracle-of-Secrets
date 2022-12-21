@@ -4,29 +4,42 @@ incsrc "../Sprites/sprite_functions_hooks.asm"
 
 org $008A01
   LDA $BC
+
   
+; =============================================================================
+
 org $07A64B
 LinkItem_Quake:
 {
   JSR Link_CheckNewY_ButtonPress : BCC .return
+  LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
 
-  LDA $6C : BNE .return ; doorway
+  LDA $6C : BNE .return                 ; in a doorway
+  LDA $0FFC : BNE .return               ; can't open menu
 
-  LDA $0FFC : BNE .return ; cantopen menu
-
-  LDY.b #$04
-  LDA.b #$23
-  
+  LDY.b #$04 : LDA.b #$23
   JSL AddTransformationCloud
+  LDA.b #$14 : JSR Player_DoSfx2
 
-  LDA #$35 : STA $BC
+  LDA $02B2 : CMP #$01 : BEQ .unequip   ; is the deku mask on?
+  LDA #$35 : STA $BC                    ; put the mask on
+  LDA #$01 : STA $02B2
+  BRA .return
+.unequip
+
+  LDA #$10 : STA $BC : STZ $02B2        ; take the mask off
 
 .return
+
   RTS
 }
 
+; =============================================================================
+
 org $358000
 incbin deku_link.bin
+
+; =============================================================================
 
 org $1BEDF9
 JSL Palette_ArmorAndGloves ; 4bytes
@@ -36,6 +49,8 @@ NOP #$01
 org $1BEE1B
 JSL Palette_ArmorAndGloves_part_two
 RTL
+
+; =============================================================================
 
 ; Code : 
 org $308000
@@ -92,14 +107,13 @@ Palette_ArmorAndGloves:
   RTL
 }
 
-
 ; org $07A666
 ; Deku_Entry:
 ; {
 ;     LDA.b #$20 : STA $BC
-;     STA $7EC178
-;     JSL Palette_ArmorAndGloves
-;     STZ $0710
+    ; STA $7EC178
+    ; JSL Palette_ArmorAndGloves
+    ; STZ $0710
 ;     RTS
 ; }
 

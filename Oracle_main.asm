@@ -22,6 +22,9 @@ namespace Oracle
   incsrc "Util/ram.asm"
   incsrc "Util/functions.asm"
 
+  incsrc "Graphics/boat_gfx.asm"
+  print  "End of Graphics/boat_gfx.asm      ", pc
+
   ; ---------------------------------------------------------
   incsrc "KeyBlock/keyblock.asm"
   print  "End of KeyBlock/keyblock.asm      ", pc
@@ -61,15 +64,19 @@ namespace Oracle
   ; ---------------------------------------------------------
   incsrc "Masks/mask_routines.asm"
 
+  ; ---------------------------------------------------------
   incsrc "Masks/deku_mask.asm"
   print  "End of Masks/deku_mask.asm        ", pc
 
+  ; ---------------------------------------------------------
   incsrc "Masks/zora_mask.asm"
   print  "End of Masks/zora_mask.asm        ", pc
 
+  ; ---------------------------------------------------------
   incsrc "Masks/wolf_mask.asm"
   print  "End of Masks/wolf_mask.asm        ", pc
 
+  ; ---------------------------------------------------------
   incsrc "Masks/bunny_hood.asm"
   print  "End of Masks/bunny_hood.asm       ", pc
 
