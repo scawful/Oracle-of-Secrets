@@ -5,11 +5,31 @@ incsrc "../Sprites/sprite_functions_hooks.asm"
 org $008A01
   LDA $BC
 
+org $07983A
+  Player_ResetSwimState:
+
+org $079873
+  Player_ResetSwimCollision:
+
+org $07E8F0
+  HandleIndoorCameraAndDoors:
+
+org $0ED6C0
+  LoadActualGearPalettes:
+
+org $07B64F 
+  Link_HandleDiagonalCollision:
+org $07E245 
+  Link_HandleVelocity:
+org $07B7C7
+  Link_HandleCardinalCollision:
+org $07E6A6
+  Link_HandleMovingAnimation_FullLongEntry:
   
 ; =============================================================================
 
-org $07A64B
-LinkItem_Quake:
+org $07A64B ; formerly Quake
+LinkItem_DekuMask:
 {
   JSR Link_CheckNewY_ButtonPress : BCC .return
   LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
@@ -22,17 +42,147 @@ LinkItem_Quake:
   LDA.b #$14 : JSR Player_DoSfx2
 
   LDA $02B2 : CMP #$01 : BEQ .unequip   ; is the deku mask on?
-  JSL Palette_ArmorAndGloves
+  JSL Palette_ArmorAndGloves            ; set the palette 
+  LDA #$0A : STA $5D                    ; set control handler to mode "using quake"
   LDA #$35 : STA $BC                    ; put the mask on
   LDA #$01 : STA $02B2
   BRA .return
 .unequip
   JSL Palette_ArmorAndGloves
+  STZ $5D
   LDA #$10 : STA $BC : STZ $02B2        ; take the mask off
 
 .return
 
   RTS
+}
+
+org $07A6D6
+JML LinkItem_UsingDekuMask
+
+
+org $228000
+incsrc "link_handler.asm"
+LinkItem_UsingDekuMask:
+{
+  ; SEP #$20
+
+  JSL $07F514 ; $3F514 IN ROM
+  
+  LDA $0345 : BNE .recache
+  LDA $4D : BEQ .recoiling
+  LDA $7EF357 : BEQ .recache
+  
+  STZ $02E0
+
+; *$383C7 LONG BRANCH LOCATION LinkState_Bunny_recache
+.recache
+
+  STZ $03F7
+  STZ $03F5
+  STZ $03F6
+  
+  LDA $7EF357 : BEQ .no_pearl_a
+  
+  STZ $56
+  STZ $4D
+
+.no_pearl_a
+
+  STZ $2E
+  STZ $02E1
+  STZ $50
+  
+  JSL Player_ResetSwimState
+  
+  ; Link hit a wall or an enemy hit him, making him go backwards.
+  LDA.b #$02 : STA $5D
+  
+  LDA $7EF357 : BEQ .no_pearl_b
+  
+  ; this resets link to default state.
+  LDA.b #$00 : STA $5D
+  
+  JSL LoadActualGearPalettes
+
+.no_pearl_b
+
+  BRL .exit 
+
+.recoiling
+
+  LDA $46 : BEQ .wait_maybe_not_recoiling
+  
+  BRL $83A1 ; Permabunny mode.
+
+.wait_maybe_not_recoiling
+
+  LDA.b #$FF : STA $24 : STA $25 : STA $29
+  
+  STZ $02C6
+  
+  LDA $034A : BEQ .not_moving
+  
+  LDA.b #$01 : STA $0335 : STA $0337
+  
+  LDA.b #$80 : STA $0334 : STA $0336
+  
+  BRL $9715
+
+.not_moving
+
+  JSL Player_ResetSwimCollision
+  JSL $9B0E ; $39B0E IN ROM
+  
+  LDA $49 : AND.b #$0F : BNE .movement
+  
+  LDA $F0 : AND.b #$0F : BNE .movement
+  
+  STA $30 : STA $31 : STA $67 : STA $26
+  
+  STZ $2E
+  
+  LDA $48 : AND.b #$F6 : STA $48
+  
+  LDX.b #$20 : STX $0371
+  
+  ; Ledge timer is reset here the same way as for normal link (unbunny).
+  LDX.b #$13 : STX $0375
+  
+  BRA .finish_up
+
+.movement
+
+  STA $67 : CMP $26 : BEQ .directions_match
+  
+  STZ $2A
+  STZ $2B
+  STZ $6B
+  STZ $4B
+  
+  LDX.b #$20 : STX $0371
+  
+  ; Ledge timer is reset here the same way as for normal link (unbunny).
+  LDX.b #$13 : STX $0375
+
+.directions_match
+
+  STA $26
+
+.finish_up
+
+  JSL Link_HandleDiagonalCollision             ; $3B64F IN ROM
+  JSL Link_HandleVelocity                      ; $3E245 IN ROM
+  JSL Link_HandleCardinalCollision             ; $3B7C7 IN ROM
+  JSL Link_HandleMovingAnimation_FullLongEntry ; $3E6A6 IN ROM
+  
+  STZ $0302
+  
+  JSL HandleIndoorCameraAndDoors   ; $3E8F0 IN ROM
+
+.exit:
+
+  RTL
 }
 
 ; =============================================================================
