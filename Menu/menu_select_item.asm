@@ -3,6 +3,7 @@
 
 ; Decides which function to jump to.
 Menu_ItemIndex:
+  db $00
   ;  Bow,     Boomerang, Hookshot, Bombs,      Powder,     Bottle 1
   db $03,     $02,       $0E,      $01,        $0A,        $0B 
   ;  Hammer,  Lamp,      Fire Rod, Ice Rod,    Mirror,     Bottle 2
@@ -10,7 +11,7 @@ Menu_ItemIndex:
   ;  Ocarina, Book,      Somaria,  Byrna,      Feather,    Bottle3
   db $08,     $0C,       $12,      $0D,        $07,        $8B 
   ;  Deku,    Zora,      Wolf,     Bunny Hood, Stone Mask, Bottle4
-  db $11,    $0F,       $08,      $10,        $13,        $CB 
+  db $11,    $0F,       $08,      $10,         $13,        $CB 
 
 ; -----------------------------------------------------------------------------
 ; Decides which graphics is drawn 
