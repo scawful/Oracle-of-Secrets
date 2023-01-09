@@ -303,6 +303,7 @@ Menu_ScrollUp:
   STZ.b $E4
 
   INC.w $0200
+
   RTS
 
 .loop
@@ -318,7 +319,7 @@ Menu_CheckBottle:
   ;; 7F5021 7ED101
   STZ.w $7F5021
   LDA.w $0202 : CMP.b #$15 : BNE .not_shovel 
-  LDA.b #$0001 : STA.w $7F5021
+  LDA.b #$0001 : STA.w $7F5021 
 
 .not_shovel
   LDA.w $0202 : CMP.b #$19 : BNE .not_flute 
@@ -343,18 +344,16 @@ Menu_HookItems:
 
 Menu_Exit:
 {
-  ; set $0303 by using $0202 to index table on exit
-  ; JSR Menu_CheckBottle
-  JSR Menu_HookItems
-  LDY.w $0202 : BEQ .no_item : DEY 
-  LDA.w Menu_ItemIndex, Y
-  STA.w $0303
-
-.no_item
   REP #$20
+  ; reset submodule
   STZ $0200
-  LDA.w $010C
-  STA.b $10
+
+  ; go back to the submodule we came from 
+  LDA.w $010C : STA.b $10
+
+  ; set $0303 by using $0202 to index table on exit
+  LDX $0202 
+  LDA.w Menu_ItemIndex, X : STA $0303
 
   LDX.b #$3E
   .loop 
