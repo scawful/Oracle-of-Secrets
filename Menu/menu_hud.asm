@@ -80,7 +80,7 @@ HUD_Update:
   ; filling in the full and partially filled hearts (actual health)
   JSR HUD_UpdateHearts
 
-  .ignoreHealth ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
+.ignoreHealth ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
 
   REP #$30
   
@@ -118,48 +118,60 @@ HUD_Update:
   
   ; The tile index for the third rupee digit
   LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A0
-  
+
+  ; Check if the user has bombs equipped
+  LDX $0202 
+  LDA $7EF33F, X : AND.w #$00FF
+  CPX.w #$0004 : BNE .not_bombs 
+
   ; Number of bombs Link has.
   LDA $7EF343 : AND.w #$00FF
-  
   JSR HexToDecimal
-  
   REP #$30
-  
+
   ; The tile index for the first bomb digit
   LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
-  
+
   ; The tile index for the second bomb digit
   LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
+
+.not_bombs
+  ; Check if the user has arrows equipped
+  LDX $0202 
+  LDA $7EF33F, X : AND.w #$00FF
+  CPX.w #$0001 : BNE .not_arrows 
   
-  ; ; Number of Arrows Link has.
-  ; LDA $7EF377 : AND.w #$00FF
+  ; Number of Arrows Link has.
+  LDA $7EF377 : AND.w #$00FF
+
+  ; converts hex to up to 3 decimal digits
+  JSR HexToDecimal
+  REP #$30
   
-  ;   ; converts hex to up to 3 decimal digits
-  ;   JSR HexToDecimal
-    
-  ;   REP #$30
-    
-  ;   ; The tile index for the first arrow digit    
-  ;   LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC75E
-    
-  ;   ; The tile index for the second arrow digit   
-  ;   LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC760
-    
-  ;   LDA.w #$007F : STA $05
-  ;   ; Load number of Keys Link has
-  ;   LDA $7EF36F : AND.w #$00FF : CMP.w #$00FF : BEQ .noKeys
-  ;   JSR HexToDecimal
-  ; .noKeys
-  ;   REP #$30
-  ;   ; The key digit, which is optionally drawn.
-  ;   ; Also check to see if the key spot is blank
-  ;   LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC764
-  ;   CMP.w #$247F : BNE .dontBlankKeyIcon
-  ;   ; If the key digit is blank, also blank out the key icon.
-  ;   STA $7EC724
-  ; .dontBlankKeyIcon
-  ;   SEP #$30
+  ; The tile index for the first arrow digit    
+  LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
+
+  ; The tile index for the second arrow digit   
+  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
+
+.not_arrows
+  LDA.w #$007F : STA $05
+  
+  ; Load number of Keys Link has
+  LDA $7EF36F : AND.w #$00FF : CMP.w #$00FF : BEQ .noKeys
+  JSR HexToDecimal
+.noKeys
+  REP #$30
+
+  ; The key digit, which is optionally drawn.
+  ; Also check to see if the key spot is blank
+  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC764
+  CMP.w #$247F : BNE .dontBlankKeyIcon
+
+  ; If the key digit is blank, also blank out the key icon.
+  STA $7EC724
+.dontBlankKeyIcon
+  SEP #$30
 
   RTL
 }
@@ -520,125 +532,91 @@ HudItems:
 
 HUD_UpdateItemBox:
 {
-    SEP #$30
-    
-    ; Dost thou haveth the the bow?
-    LDA $7EF340 : BEQ .havethNoBow
-    LDX.b #$04
-    
-    ; check how many arrows the player has
-    LDA $7EF377 : BNE .drawBowItemIcon
-    LDX.b #$03
-    BRA .drawBowItemIcon
+  SEP #$30
+  ; Dost thou haveth the the bow?
+  LDA $7EF340 : BEQ .havethNoBow
+  LDX.b #$04
+  ; check how many arrows the player has
+  LDA $7EF377 : BNE .drawBowItemIcon
+  LDX.b #$03
+  BRA .drawBowItemIcon
 
 .drawBowItemIcon
-
-    ; values of X correspond to how the icon will end up drawn:
-    ; 0x01 - normal bow with no arrows
-    ; 0x02 - normal bow with arrows
-    ; 0x03 - silver bow with no silver arrows
-    ; 0x04 - silver bow with silver arrows
-    TXA : STA $7EF340
+  ; values of X correspond to how the icon will end up drawn:
+  ; 0x01 - normal bow with no arrows
+  ; 0x02 - normal bow with arrows
+  ; 0x03 - silver bow with no silver arrows
+  ; 0x04 - silver bow with silver arrows
+  TXA : STA $7EF340
 
 .havethNoBow
-
-    REP #$30
-    
-    LDX $0202 : BEQ .noEquippedItem
-    
-    LDA Menu_ItemIndex, X : AND.w #$00FF
-    
-    CPX.w #$0004 : BNE .bombsNotEquipped
-    
-    LDA.w #$0001
-    
+  REP #$30
+  LDX $0202 : BEQ .noEquippedItem
+  LDA $7EF33F, X : AND.w #$00FF
+  CPX.w #$0004 : BNE .bombsNotEquipped
+  LDA.w #$0001
+  
 .bombsNotEquipped
-
-    CPX.w #$0010 : BNE .bottleNotEquipped
-    
-    TXY : TAX : LDA $7EF35B, X : AND.w #$00FF : TYX
+  CPX.w #$0010 : BNE .bottleNotEquipped
+  TXY : TAX : LDA $7EF35B, X : AND.w #$00FF : TYX
 
 .bottleNotEquipped
-
-    STA $02
-    
-    TXA : DEC A : ASL A : TAX
-    
-    LDA $FA93, X : STA $04
-    
-    LDA $02 : ASL #3 : TAY
-    
-    ; These addresses form the item box graphics.
-    LDA ($04), Y : STA $7EC776 : INY #2
-    LDA ($04), Y : STA $7EC778 : INY #2
-    LDA ($04), Y : STA $7EC7B6 : INY #2
-    LDA ($04), Y : STA $7EC7B8 : INY #2
+  STA $02
+  TXA : DEC A : ASL A : TAX
+  LDA $FA93, X : STA $04
+  LDA $02 : ASL #3 : TAY
+  
+  ; These addresses form the item box graphics.
+  LDA ($04), Y : STA $7EC776 : INY #2
+  LDA ($04), Y : STA $7EC778 : INY #2
+  LDA ($04), Y : STA $7EC7B6 : INY #2
+  LDA ($04), Y : STA $7EC7B8 : INY #2
 
 .noEquippedItem
 
-    RTS
+  RTS
 }
 
 ; =============================================================================
 
 HUD_UpdateHearts:
 {
-    ; Draws hearts in a painfully slow loop
-    ; I used DMA to speed it up in my custom code
-    ; (but still needs fixing to work on 1/1/1 hardware)
-    
-    LDX.w #$0000
+  ; Draws hearts in a painfully slow loop
+  ; I used DMA to speed it up in my custom code
+  LDX.w #$0000
 
 .nextHeart
-
-    LDA $00 : CMP.w #$0008 : BCC .lessThanOneHeart
-    
-    ; Notice no SEC was needed since carry is assumedly set.
-    SBC.w #$0008 : STA $00
-    
-    LDY.w #$0004
-    
-    JSR .drawHeart
-    
-    INX #2
-    
-    BRA .nextHeart
+  LDA $00 : CMP.w #$0008 : BCC .lessThanOneHeart
+  ; Notice no SEC was needed since carry is assumedly set.
+  SBC.w #$0008 : STA $00
+  LDY.w #$0004
+  JSR .drawHeart
+  INX #2
+  BRA .nextHeart
 
 .lessThanOneHeart
-
-    CMP.w #$0005 : BCC .halfHeartOrLess
-    
-    LDY.w #$0004
-    
-    BRA .drawHeart
+  CMP.w #$0005 : BCC .halfHeartOrLess
+  LDY.w #$0004
+  BRA .drawHeart
 
 .halfHeartOrLess
-
-    CMP.w #$0001 : BCC .emptyHeart
-    
-    LDY.w #$0002
-    
-    BRA .drawHeart
+  CMP.w #$0001 : BCC .emptyHeart
+  LDY.w #$0002
+  BRA .drawHeart
 
 .emptyHeart
-
-    RTS
+  RTS
 
 .drawHeart
-
-    ; Compare number of hearts so far on current line to 10
-    CPX.w #$0014 : BCC .noLineChange
-    
-    ; if not, we have to move down one tile in the tilemap
-    LDX.w #$0000
-    
-    LDA $07 : CLC : ADC #$0040 : STA $07
+  ; Compare number of hearts so far on current line to 10
+  CPX.w #$0014 : BCC .noLineChange
+  ; if not, we have to move down one tile in the tilemap
+  LDX.w #$0000
+  LDA $07 : CLC : ADC #$0040 : STA $07
 
 .noLineChange
-
-    LDA [$0A], Y : TXY : STA [$07], Y
-    
-    RTS
+  LDA [$0A], Y : TXY : STA [$07], Y
+  RTS
 }
 
 ; =============================================================================
@@ -761,7 +739,6 @@ FloorIndicatorNumberLow:
   dw $2518, $2519, $A509, $251A, $251B, $251C, $2518, $A51D
   dw $E50C, $A50E, $007F
 }
-
 
 ; *$57D0C-$57DA7 JUMP LOCATION (LONG)
 org $0AFD0C
