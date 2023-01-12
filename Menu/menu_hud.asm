@@ -25,6 +25,9 @@ org $0DFC09
   JSL HUD_Update_ignoreHealth
   RTS
 
+org $0DFC1B
+  JSR $F1BC
+
 ; ==============================================================================
 ; New Code Region Starts Here 
 
@@ -44,26 +47,6 @@ org $268000
 ;   dw $3C 5E 
 ; .empty_tile
 ;   dw $3C4C
-
-
-MagicTilemap:
-  dw $3C4C, $3C4C, $3C4C, $3C4C
-  dw $3C4C, $3C4C, $3C4C, $3C5F
-  dw $3C4C, $3C4C, $3C4C, $3C4C
-  dw $3C4C, $3C4C, $3C4C, $3C4D
-  dw $3C4C, $3C4C, $3C4C, $3C4E
-  dw $3C4C, $3C4C, $3C5F, $3C5F
-  dw $3C4C, $3C4C, $3C4C, $3C5F
-  dw $3C4C, $3C4C, $3C4D, $3C5F
-  dw $3C4C, $3C4C, $3C4E, $3C5F
-  dw $3C4C, $3C5F, $3C5F, $3C5F
-  dw $3C4C, $3C4C, $3C5F, $3C5F
-  dw $3C4C, $3C4D, $3C5F, $3C5F
-  dw $3C4C, $3C4E, $3C5F, $3C5F
-  dw $3C5F, $3C5F, $3C5F, $3C5F
-  dw $3C4C, $3C5F, $3C5F, $3C5F
-  dw $3C4D, $3C5F, $3C5F, $3C5F
-  dw $3C4E, $3C5F, $3C5F, $3C5F  
 
 ; ==============================================================================
 ; Main HUD Update Loop
@@ -225,8 +208,30 @@ HUD_Update:
   RTL
 }
 
+MagicTilemap:
+  dw $3C4C, $3C4C, $3C4C, $3C4C
+  dw $3C4C, $3C4C, $3C4C, $3C5F
+  dw $3C4C, $3C4C, $3C4C, $3C4C
+  dw $3C4C, $3C4C, $3C4C, $3C4D
+  dw $3C4C, $3C4C, $3C4C, $3C4E
+  dw $3C4C, $3C4C, $3C5F, $3C5F
+  dw $3C4C, $3C4C, $3C4C, $3C5F
+  dw $3C4C, $3C4C, $3C4D, $3C5F
+  dw $3C4C, $3C4C, $3C4E, $3C5F
+  dw $3C4C, $3C5F, $3C5F, $3C5F
+  dw $3C4C, $3C4C, $3C5F, $3C5F
+  dw $3C4C, $3C4D, $3C5F, $3C5F
+  dw $3C4C, $3C4E, $3C5F, $3C5F
+  dw $3C5F, $3C5F, $3C5F, $3C5F
+  dw $3C4C, $3C5F, $3C5F, $3C5F
+  dw $3C4D, $3C5F, $3C5F, $3C5F
+  dw $3C4E, $3C5F, $3C5F, $3C5F  
+
 ; =============================================================================
 ; *$6F14F-$6F1B2 LOCAL
+
+HUD_HeartDisplayFrames:
+  dw $24A3, $24A4, $24A3, $24A0
 
 HUD_AnimateHeartRefill:
 {
@@ -259,9 +264,9 @@ HUD_AnimateHeartRefill:
   
   TXA : ASL A : TAX
   
-  LDA $0DFA09, X : STA [$00], Y
+  LDA HUD_HeartDisplayFrames, X : STA [$00], Y
   
-  INY : LDA $0DFA0A, X : STA [$00], Y
+  INY : LDA HUD_HeartDisplayFrames+1, X : STA [$00], Y
   
   LDA $0209 : INC A : AND.b #$03 : STA $0209
   
@@ -280,34 +285,48 @@ HUD_AnimateHeartRefill:
   RTS
 }
 
+; *$6FA70-$6FA92 LOCAL
+Rebuild:
+{
+  REP #$30
+  
+  PHB
+  
+  ; Preparing for the MVN transfer
+  LDA.w #$0149
+  LDX.w #HUD_Tilemap
+  LDY.w #$C700
+  
+  MVN $0D, $7E ; $Transfer 0x014A bytes from $6FE77 -> $7EC700
+  
+  PLB ; The above sets up a template for the status bar.
+  
+  PHB : PHK : PLB
+  
+  BRA .alpha
+
+; *$6FA85 ALTERNATE ENTRY POINT
+.updateOnly
+
+  REP #$30
+  
+  PHB : PHK : PLB
+
+.alpha
+
+  JSR HUD_Update
+  
+  PLB
+  
+  SEP #$30
+  
+  INC $16 ; Indicate this shit needs drawing.
+  
+  RTL
+}
+
 ; ============================================================================ 
 ; *$6FAFD-$6FB90 LOCAL
-
-HudItems:
-  dw BowsGFX
-  dw BoomsGFX
-  dw HookGFX
-  dw BombsGFX
-  dw DekuMaskGFX
-  dw BottlesGFX
-  dw Fire_rodGFX
-  dw Ice_rodGFX
-  dw LampGFX
-  dw HammerGFX
-  dw GoronMaskGFX
-  dw BottlesGFX
-  dw SomariaGFX
-  dw ByrnaGFX
-  dw BookGFX
-  dw JumpFeatherGFX
-  dw BunnyHoodGFX 
-  dw BottlesGFX
-  dw OcarinaGFX
-  dw MirrorGFX
-  dw ShovelGFX
-  dw PowderGFX
-  dw StoneMaskGFX
-  dw BottlesGFX
 
 HUD_UpdateItemBox:
 {
@@ -343,6 +362,7 @@ HUD_UpdateItemBox:
   STA $02
   TXA : DEC A : ASL A : TAX
   LDA $FA93, X : STA $04
+  ; LDA.w HudItems, X : STA $04
   LDA $02 : ASL #3 : TAY
   
   ; These addresses form the item box graphics.
@@ -361,7 +381,6 @@ HUD_UpdateItemBox:
 HUD_UpdateHearts:
 {
   ; Draws hearts in a painfully slow loop
-  ; I used DMA to speed it up in my custom code
   LDX.w #$0000
 
 .nextHeart
@@ -444,7 +463,7 @@ HUD_Tilemap:
 
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F, $207F, $207F
+  dw $207F, $3CA8, $FCA8, $207F, $207F, $207F
   
   ; magic bar
   dw $201B, $344B
@@ -490,6 +509,8 @@ FloorIndicatorNumberHigh:
   dw $E51C, $250E, $007F
 }
 
+; ==============================================================================
+
 ; $57CF6 DATA
 org $0AFCF6
 FloorIndicatorNumberLow:
@@ -497,6 +518,8 @@ FloorIndicatorNumberLow:
   dw $2518, $2519, $A509, $251A, $251B, $251C, $2518, $A51D
   dw $E50C, $A50E, $007F
 }
+
+; ==============================================================================
 
 ; *$57D0C-$57DA7 JUMP LOCATION (LONG)
 org $0AFD0C
@@ -567,4 +590,29 @@ FloorIndicator:
   SEP #$30
   
   RTL
+}
+
+; =============================================================================
+
+; dw BowsGFX, BoomsGFX, HookGFX
+; dw BombsGFX, PowderGFX, BottlesGFX
+; dw HammerGFX, LampGFX, Fire_rodGFX
+; dw Ice_rodGFX, MirrorGFX, BottlesGFX
+; dw OcarinaGFX, BookGFX, SomariaGFX
+; dw ByrnaGFX, JumpFeatherGFX, BottlesGFX
+; dw DekuMaskGFX, ZoraMaskGFX, WolfMaskGFX
+; dw BunnyHoodGFX, StoneMaskGFX, BottlesGFX
+
+; $6FA93-$6FAFC DATA
+org $0DFA93
+HudItems:
+{
+  ; bows, boomerang, hookshot, bombs, powder, bottle1
+  dw $F629, $F651, $F669, $F679, $F689, $F751
+  ; hammer, lamp, fire rod, Ice Rod, mirror, bottle2
+  dw $F701, $F6F1, $F6A1, $F6B1, $F7C9, $F751
+  ; flute, book, somaria, byrna, feather, bottle3
+  dw $F711, $F741, $F799,  $F7A9, $F731, $F751
+  ; bombos, quake, ether, stone mask 
+  dw $F6C1, $F6E1, $F6D1, $F7B9, $F811, $F751
 }

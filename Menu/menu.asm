@@ -44,7 +44,7 @@ Menu_Entry:
   PHB : PHK : PLB 
   LDA.w $0200 : ASL : TAX
   JSR (.vectors,X)
-  
+
   SEP #$20
   PLB
   RTL
@@ -72,6 +72,7 @@ Menu_InitGraphics:
 
 ; =============================================================================
 ; 01 MENU UPLOAD RIGHT 
+
 incsrc "menu_draw.asm"
 
 Menu_UploadRight:
@@ -161,6 +162,7 @@ Menu_ScrollDown:
 
 ; =============================================================================
 ; 04 MENU ITEM SCREEN 
+
 incsrc "menu_select_item.asm"
 
 Menu_ItemScreen:
@@ -303,7 +305,7 @@ Menu_ScrollUp:
   STZ.b $E4
 
   INC.w $0200
-
+  
   RTS
 
 .loop
@@ -345,6 +347,7 @@ Menu_HookItems:
 Menu_Exit:
 {
   REP #$20
+
   ; reset submodule
   STZ $0200
 
@@ -356,7 +359,7 @@ Menu_Exit:
   LDA.w Menu_ItemIndex, X : STA $0303
 
   LDX.b #$3E
-  .loop 
+  .loop
     LDA.l $7EC300, X 
     STA.l $7EC500, X
     DEX : DEX 
