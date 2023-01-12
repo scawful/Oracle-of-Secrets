@@ -21,10 +21,53 @@ org $0DF1BC
   JSL HUD_AnimateHeartRefill
   RTS
 
+org $0DFC09
+  JSL HUD_Update_ignoreHealth
+  RTS
+
+; ==============================================================================
+; New Code Region Starts Here 
+
+org $268000
+
+; =============================================================================
+
+; .full_tile
+;   dw $3C5F
+; .mostly_full
+;   dw $3C4D
+; .kinda_full
+;   dw $3C4E
+; .half_empty
+;   dw $3C4F
+; .almost_empty
+;   dw $3C 5E 
+; .empty_tile
+;   dw $3C4C
+
+
+MagicTilemap:
+  dw $3C4C, $3C4C, $3C4C, $3C4C
+  dw $3C4C, $3C4C, $3C4C, $3C5F
+  dw $3C4C, $3C4C, $3C4C, $3C4C
+  dw $3C4C, $3C4C, $3C4C, $3C4D
+  dw $3C4C, $3C4C, $3C4C, $3C4E
+  dw $3C4C, $3C4C, $3C5F, $3C5F
+  dw $3C4C, $3C4C, $3C4C, $3C5F
+  dw $3C4C, $3C4C, $3C4D, $3C5F
+  dw $3C4C, $3C4C, $3C4E, $3C5F
+  dw $3C4C, $3C5F, $3C5F, $3C5F
+  dw $3C4C, $3C4C, $3C5F, $3C5F
+  dw $3C4C, $3C4D, $3C5F, $3C5F
+  dw $3C4C, $3C4E, $3C5F, $3C5F
+  dw $3C5F, $3C5F, $3C5F, $3C5F
+  dw $3C4C, $3C5F, $3C5F, $3C5F
+  dw $3C4D, $3C5F, $3C5F, $3C5F
+  dw $3C4E, $3C5F, $3C5F, $3C5F  
+
 ; ==============================================================================
 ; Main HUD Update Loop
 
-org $268000
 HUD_Update:
 {
   JSR HUD_UpdateItemBox
@@ -98,11 +141,19 @@ HUD_Update:
   LDA $7EF36E : AND.w #$00FF : CLC : ADC #$0007 : AND.w #$FFF8 : TAX
   
   ; these four writes draw the magic power bar based on how much MP you have 
-  LDA MagicTilemap+0, X : STA $7EC76C
-  LDA MagicTilemap+2, X : STA $7EC76D
-  LDA MagicTilemap+4, X : STA $7EC76E
-  LDA MagicTilemap+6, X : STA $7EC76F
+
+  ; LDA MagicTilemap+0, X : STA $7EC76A
+  ; LDA MagicTilemap+2, X : STA $7EC76D
+  ; LDA MagicTilemap+4, X : STA $7EC76D
+  ; LDA MagicTilemap+6, X : STA $7EC76F
+  ; LDA MagicTilemap+8, X : STA $7EC771
   
+  ; LDA #$3C4C : STA $7EC76A
+  ; LDA #$3C4C : STA $7EC76E
+  ; LDA #$3C4C : STA $7EC773
+  ; LDA #$3C4C : STA $7EC777
+  ; LDA #$3C4C : STA $7EC78B
+
   ; Load how many rupees the player has
   LDA $7EF362
   
@@ -120,8 +171,7 @@ HUD_Update:
   LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A0
 
   ; Check if the user has bombs equipped
-  LDX $0202 
-  LDA $7EF33F, X : AND.w #$00FF
+  LDX $0202 : LDA $7EF33F, X : AND.w #$00FF
   CPX.w #$0004 : BNE .not_bombs 
 
   ; Number of bombs Link has.
@@ -137,8 +187,7 @@ HUD_Update:
 
 .not_bombs
   ; Check if the user has arrows equipped
-  LDX $0202 
-  LDA $7EF33F, X : AND.w #$00FF
+  LDX $0202 : LDA $7EF33F, X : AND.w #$00FF
   CPX.w #$0001 : BNE .not_arrows 
   
   ; Number of Arrows Link has.
@@ -156,7 +205,7 @@ HUD_Update:
 
 .not_arrows
   LDA.w #$007F : STA $05
-  
+
   ; Load number of Keys Link has
   LDA $7EF36F : AND.w #$00FF : CMP.w #$00FF : BEQ .noKeys
   JSR HexToDecimal
@@ -175,276 +224,6 @@ HUD_Update:
 
   RTL
 }
-
-; =============================================================================
-; *$6DB92-$6DD29 BRANCH LOCATION
-
-HUD_RefillLogic:
-{
-  ; check the refill magic indicator
-  LDA $7EF373
-
-  BEQ .doneWithMagicRefill
-
-  ; Check the current magic power level we have.
-  ; Is it full?
-  LDA $7EF36E : CMP.b #$80
-
-  BCC .magicNotFull
-  
-  ; If it is full, freeze it at 128 magic pts.
-  ; And stop this refilling nonsense.
-  LDA.b #$80 : STA $7EF36E
-  LDA.b #$00 : STA $7EF373
-  
-  BRA .doneWithMagicRefill
-
-.magicNotFull
-
-  LDA $7EF373 : DEC A : STA $7EF373
-  LDA $7EF36E : INC A : STA $7EF36E
-  
-  ; if((frame_counter % 4) != 0) don't refill this frame
-  LDA $1A : AND.b #$03 : BNE .doneWithMagicRefill
-  
-  ; Is this sound channel in use?
-  LDA $012E : BNE .doneWithMagicRefill
-  
-  ; Play the magic refill sound effect
-  LDA.b #$2D : STA $012E
-
-.doneWithMagicRefill
-
-  REP #$30
-  ; Check current rupees (362) against goal rupees (360)
-  ; goal refers to how many we really have and current refers to the
-  ; number currently being displayed. When you buy something,
-  ; goal rupees are decreased by, say, 100, but it takes a while for the 
-  ; current rupees indicator to catch up. When you get a gift of 300
-  ; rupees, the goal increases, and current has to catch up in the other direction.
-  LDA $7EF362
-  
-  CMP $7EF360 : BEQ .doneWithRupeesRefill
-                BMI .addRupees
-  DEC A       : BPL .subtractRupees
-  
-  LDA.w #$0000 : STA $7EF360
-  
-  BRA .subtractRupees
-
-.addRupees
-
-  ; If current rupees <= 1000 (decimal)
-  INC A : CMP.w #1000 : BCC .subtractRupees
-  
-  ; Otherwise just store 999 to the rupee amount
-  LDA.w #999 : STA $7EF360
-
-.subtractRupees
-
-  STA $7EF362
-  
-  SEP #$30
-  
-  LDA $012E : BNE .doneWithRupeesRefill
-  
-  ; looks like a delay counter of some sort between
-  ; invocations of the rupee fill sound effect
-  LDA $0CFD : INC $0CFD : AND.b #$07 : BNE .skipRupeeSound
-  
-  LDA.b #$29 : STA $012E
-
-  BRA .skipRupeeSound
-
-.doneWithRupeesRefill
-
-  SEP #$30
-  
-  STZ $0CFD
-
-.skipRupeeSound
-
-  LDA $7EF375
-
-  BEQ .doneRefillingBombs
-
-  ; decrease the bomb refill counter
-  LDA $7EF375 : DEC A : STA $7EF375
-
-  ; use the bomb upgrade index to know what max number of bombs Link can carry is
-  LDA $7EF370 : TAY
-
-  ; if it matches the max, you can't have no more bombs, son. It's the law.
-  LDA $7EF343 : CMP $DB48, Y : BEQ .doneRefillingBombs
-  
-  ; You like bombs? I got lotsa bombs!
-  INC A : STA $7EF343
-
-.doneRefillingBombs
-
-  ; check arrow refill counter
-  LDA $7EF376
-  
-  BEQ .doneRefillingArrows
-  
-  LDA $7EF376 : DEC A : STA $7EF376
-  
-  ; check arrow upgrade index to see how our max limit on arrows, just like bombs.
-  LDA $7EF371 : TAY 
-  
-  LDA $7EF377 : CMP $DB58, Y
-  
-  ; I reckon you get no more arrows, pardner.
-  BEQ .arrowsAtMax
-  
-  INC A : STA $7EF377
-
-.arrowsAtMax
-
-  ; see if we even have the bow.
-  LDA $7EF340
-  
-  BEQ .doneRefillingArrows
-  
-  AND.b #$01 : CMP.b #$01
-  
-  BNE .doneRefillingArrows
-  
-  ; changes the icon from a bow without arrows to a bow with arrows.
-  LDA $7EF340 : INC A : STA $7EF340
-  
-  JSL $0DDB7F
-
-.doneRefillingArrows
-
-  ; a frozen Link is an impervious Link, so don't beep.
-  LDA $02E4
-  
-  BNE .doneWithWarningBeep
-  
-  ; if heart refill is in process, we don't beep
-  LDA $7EF372
-  
-  BNE .doneWithWarningBeep
-  
-  LDA $7EF36C : LSR #3 : TAX
-  
-  ; checking current health against capacity health to see
-  ; if we need to put on that annoying beeping noise.
-  LDA $7EF36D : CMP $DB60, X
-  
-  BCS .doneWithWarningBeep
-  
-  LDA $04CA
-  
-  BNE .decrementBeepTimer
-  
-  ; beep incessantly when life is low
-  LDA $012E
-  
-  BNE .doneWithWarningBeep
-  
-  LDA.b #$20 : STA $04CA
-  LDA.b #$2B : STA $012E
-
-.decrementBeepTimer
-
-  ; Timer for the low life beep sound
-  DEC $04CA
-
-.doneWithWarningBeep
-
-  ; if nonzero, indicates that a heart is being "flipped" over
-  ; as in, filling up, currently
-  LDA $020A
-  
-  BNE .waitForHeartFillAnimation
-  
-  ; If no hearts need to be filled, branch
-  LDA $7EF372
-  
-  BEQ .doneRefillingHearts
-  
-  ; check if actual health matches capacity health
-  LDA $7EF36D : CMP $7EF36C
-  
-  BCC .notAtFullHealth
-  
-  ; just set health to full in the event it overflowed past 0xA0 (20 hearts)
-  LDA $7EF36C : STA $7EF36D
-  
-  ; done refilling health so deactivate the health refill variable
-  LDA.b #$00 : STA $7EF372
-  
-  BRA .doneRefillingHearts
-
-.notAtFullHealth
-
-  ; refill health by one heart
-  LDA $7EF36D : CLC : ADC.b #$08 : STA $7EF36D
-  
-  LDA $012F
-  
-  BNE .soundChannelInUse
-  
-  ; play heart refill sound effect
-  LDA.b #$0D : STA $012F
-
-.soundChannelInUse
-
-  ; repeat the same logic from earlier, checking if health's at max and setting it to max
-  ; if it overflowed
-  LDA $7EF36D : CMP $7EF36C
-  
-  BCC .healthDidntOverflow
-  
-  LDA $7EF36C : STA $7EF36D
-
-.healthDidntOverflow
-
-  ; subtract a heart from the refill variable
-  LDA $7EF372 : SEC : SBC.b #$08 : STA $7EF372
-  
-  ; activate heart refill animation
-  ; (which will cause a small delay for the next heart if we still need to fill some up.)
-  INC $020A
-  
-  LDA.b #$07 : STA $0208
-
-.waitForHeartFillAnimation
-
-  REP #$30
-  
-  LDA.w #$FFFF : STA $0E
-  
-  JSL HUD_Update_ignoreHealth
-  
-  JSL HUD_AnimateHeartRefill
-  
-  SEP #$30
-  
-  INC $16
-  
-  PLB
-  
-  RTL
-
-.doneRefillingHearts
-
-  REP #$30
-  
-  LDA.w #$FFFF : STA $0E
-  
-  JSL HUD_Update_ignoreItemBox
-  
-  SEP #$30
-  
-  INC $16
-  
-  PLB
-  
-  RTL
-} 
 
 ; =============================================================================
 ; *$6F14F-$6F1B2 LOCAL
@@ -618,27 +397,6 @@ HUD_UpdateHearts:
   LDA [$0A], Y : TXY : STA [$07], Y
   RTS
 }
-
-; =============================================================================
-
-MagicTilemap:
-  dw $3CF5, $3CF5, $3CF5, $3CF5
-  dw $3CF5, $3CF5, $3CF5, $3C5F
-  dw $3CF5, $3CF5, $3CF5, $3C4C
-  dw $3CF5, $3CF5, $3CF5, $3C4D
-  dw $3CF5, $3CF5, $3CF5, $3C4E
-  dw $3CF5, $3CF5, $3C5F, $3C5E
-  dw $3CF5, $3CF5, $3C4C, $3C5E
-  dw $3CF5, $3CF5, $3C4D, $3C5E
-  dw $3CF5, $3CF5, $3C4E, $3C5E
-  dw $3CF5, $3C5F, $3C5E, $3C5E
-  dw $3CF5, $3C4C, $3C5E, $3C5E
-  dw $3CF5, $3C4D, $3C5E, $3C5E
-  dw $3CF5, $3C4E, $3C5E, $3C5E
-  dw $3C5F, $3C5E, $3C5E, $3C5E
-  dw $3C4C, $3C5E, $3C5E, $3C5E
-  dw $3C4D, $3C5E, $3C5E, $3C5E
-  dw $3C4E, $3C5E, $3C5E, $3C5E  
 
 ; =============================================================================
 
