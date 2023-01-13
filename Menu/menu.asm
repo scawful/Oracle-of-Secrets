@@ -305,7 +305,7 @@ Menu_ScrollUp:
   STZ.b $E4
 
   INC.w $0200
-  
+
   RTS
 
 .loop

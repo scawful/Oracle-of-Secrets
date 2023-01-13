@@ -11,7 +11,7 @@ org $0DFB91
   RTS
 
 newIgnoreItemBox:
-  JSL HUD_Update_ignoreItemBox
+  JSL HUD_Update
   RTS
 
 org $0DDD21
@@ -27,6 +27,20 @@ org $0DFC09
 
 org $0DFC1B
   JSR $F1BC
+
+org $0DDB85
+  JSL HUD_Update
+
+org $0DFDAB
+  JSL HUD_UpdateHearts
+  RTS
+
+; Partial hearts draw position 
+org $0DF14F
+  SEP #$30
+  LDA.b #$44 : STA $00
+  LDA.b #$C7 : STA $01
+  LDA.b #$7E : STA $02
 
 ; ==============================================================================
 ; New Code Region Starts Here 
@@ -95,7 +109,7 @@ HUD_Update:
 .healthUpdated
 
   ; A = actual health + 0x03;
-  LDA $7EF36D : SEC : SBC #$03
+  LDA $7EF36D : CLC : ADC.b #$03
   
   REP #$30
   
@@ -129,13 +143,11 @@ HUD_Update:
   ; LDA MagicTilemap+2, X : STA $7EC76D
   ; LDA MagicTilemap+4, X : STA $7EC76D
   ; LDA MagicTilemap+6, X : STA $7EC76F
-  ; LDA MagicTilemap+8, X : STA $7EC771
   
   ; LDA #$3C4C : STA $7EC76A
   ; LDA #$3C4C : STA $7EC76E
   ; LDA #$3C4C : STA $7EC773
   ; LDA #$3C4C : STA $7EC777
-  ; LDA #$3C4C : STA $7EC78B
 
   ; Load how many rupees the player has
   LDA $7EF362
@@ -225,13 +237,13 @@ MagicTilemap:
   dw $3C5F, $3C5F, $3C5F, $3C5F
   dw $3C4C, $3C5F, $3C5F, $3C5F
   dw $3C4D, $3C5F, $3C5F, $3C5F
-  dw $3C4E, $3C5F, $3C5F, $3C5F  
+  dw $3C4E, $3C5F, $3C5F, $3C5F
 
 ; =============================================================================
 ; *$6F14F-$6F1B2 LOCAL
 
 HUD_HeartDisplayFrames:
-  dw $24A3, $24A4, $24A3, $24A0
+  dw $24A3, $24A4, $24A3, $24A3
 
 HUD_AnimateHeartRefill:
 {
@@ -242,7 +254,7 @@ HUD_AnimateHeartRefill:
   LDA.b #$C7 : STA $01
   LDA.b #$7E : STA $02
   
-  DEC $0208 : BNE .return
+  DEC.w $0208 : BNE .return
   
   REP #$30
   
@@ -254,75 +266,27 @@ HUD_AnimateHeartRefill:
   SBC.w #$0014 : TAY
   
   ; $00[3] = $7EC7A8 (wram address of second row of hearts)
-  LDA $00 : CLC : ADC.w #$0040 : STA $00
+  LDA $00 : CLC : ADC.w #$0040 : STA.b $00
 
 .halfHealthOrLess
 
   SEP #$30
-  
-  LDX $0209 : LDA $0DFA11, X : STA $0208
-  
+  LDX.w $0209 : LDA.l $0DFA11, X : STA.w $0208
   TXA : ASL A : TAX
   
-  LDA HUD_HeartDisplayFrames, X : STA [$00], Y
+  LDA.l HUD_HeartDisplayFrames+0, X : STA.b [$00], Y : INY 
+  LDA.l HUD_HeartDisplayFrames+1, X : STA.b [$00], Y
   
-  INY : LDA HUD_HeartDisplayFrames+1, X : STA [$00], Y
-  
-  LDA $0209 : INC A : AND.b #$03 : STA $0209
-  
+  LDA.w $0209 : INC A : AND.b #$03 : STA.w $0209
   BNE .return
   
   SEP #$30
-  
-  JSL $0DFA70
-  
+  JSL $0DFA70 ; Rebuild Vanilla 
   STZ $020A
 
 .return
-
   CLC
-  
   RTS
-}
-
-; *$6FA70-$6FA92 LOCAL
-Rebuild:
-{
-  REP #$30
-  
-  PHB
-  
-  ; Preparing for the MVN transfer
-  LDA.w #$0149
-  LDX.w #HUD_Tilemap
-  LDY.w #$C700
-  
-  MVN $0D, $7E ; $Transfer 0x014A bytes from $6FE77 -> $7EC700
-  
-  PLB ; The above sets up a template for the status bar.
-  
-  PHB : PHK : PLB
-  
-  BRA .alpha
-
-; *$6FA85 ALTERNATE ENTRY POINT
-.updateOnly
-
-  REP #$30
-  
-  PHB : PHK : PLB
-
-.alpha
-
-  JSR HUD_Update
-  
-  PLB
-  
-  SEP #$30
-  
-  INC $16 ; Indicate this shit needs drawing.
-  
-  RTL
 }
 
 ; ============================================================================ 
@@ -384,9 +348,9 @@ HUD_UpdateHearts:
   LDX.w #$0000
 
 .nextHeart
-  LDA $00 : CMP.w #$0008 : BCC .lessThanOneHeart
+  LDA.b $00 : CMP.w #$0008 : BCC .lessThanOneHeart
   ; Notice no SEC was needed since carry is assumedly set.
-  SBC.w #$0008 : STA $00
+  SBC.w #$0008 : STA.b $00
   LDY.w #$0004
   JSR .drawHeart
   INX #2
@@ -410,10 +374,10 @@ HUD_UpdateHearts:
   CPX.w #$0014 : BCC .noLineChange
   ; if not, we have to move down one tile in the tilemap
   LDX.w #$0000
-  LDA $07 : CLC : ADC #$0040 : STA $07
+  LDA.b $07 : CLC : ADC.w #$0040 : STA.b $07
 
 .noLineChange
-  LDA [$0A], Y : TXY : STA [$07], Y
+  LDA.b [$0A], Y : TXY : STA.b [$07], Y
   RTS
 }
 
@@ -445,6 +409,35 @@ HexToDecimal:
     DEX : BPL .setNextDigitTile
     RTS
 } 
+
+; =============================================================================
+
+; dw BowsGFX, BoomsGFX, HookGFX
+; dw BombsGFX, PowderGFX, BottlesGFX
+; dw HammerGFX, LampGFX, Fire_rodGFX
+; dw Ice_rodGFX, MirrorGFX, BottlesGFX
+; dw OcarinaGFX, BookGFX, SomariaGFX
+; dw ByrnaGFX, JumpFeatherGFX, BottlesGFX
+; dw DekuMaskGFX, ZoraMaskGFX, WolfMaskGFX
+; dw BunnyHoodGFX, StoneMaskGFX, BottlesGFX
+
+; $6FA93-$6FAFC DATA
+org $0DFA93
+HudItems:
+{
+  ; bows, boomerang, hookshot, bombs, powder, bottle1
+  dw $F629, $F651, $F669, $F679, $F689, $F751
+  ; hammer, lamp, fire rod, Ice Rod, mirror, bottle2
+  dw $F701, $F6F1, $F6A1, $F6B1, $F7C9, $F751
+  ; flute, book, somaria, byrna, feather, bottle3
+  dw $F711, $F741, $F799,  $F7A9, $F731, $F751
+  ; bombos, quake, ether, stone mask 
+  dw $F6E1, $F6C1, $F6D1, $F7B9, $F811, $F751
+}
+
+org $0DF651
+  dw $2CB8, $2CB9, $2CF5, $2CC9 ; Blue boomerang
+  dw $24B8, $24B9, $24F5, $24C9 ; Red boomerang
 
 ; =============================================================================
 ; $6FE77-$6FFC0 
@@ -590,29 +583,4 @@ FloorIndicator:
   SEP #$30
   
   RTL
-}
-
-; =============================================================================
-
-; dw BowsGFX, BoomsGFX, HookGFX
-; dw BombsGFX, PowderGFX, BottlesGFX
-; dw HammerGFX, LampGFX, Fire_rodGFX
-; dw Ice_rodGFX, MirrorGFX, BottlesGFX
-; dw OcarinaGFX, BookGFX, SomariaGFX
-; dw ByrnaGFX, JumpFeatherGFX, BottlesGFX
-; dw DekuMaskGFX, ZoraMaskGFX, WolfMaskGFX
-; dw BunnyHoodGFX, StoneMaskGFX, BottlesGFX
-
-; $6FA93-$6FAFC DATA
-org $0DFA93
-HudItems:
-{
-  ; bows, boomerang, hookshot, bombs, powder, bottle1
-  dw $F629, $F651, $F669, $F679, $F689, $F751
-  ; hammer, lamp, fire rod, Ice Rod, mirror, bottle2
-  dw $F701, $F6F1, $F6A1, $F6B1, $F7C9, $F751
-  ; flute, book, somaria, byrna, feather, bottle3
-  dw $F711, $F741, $F799,  $F7A9, $F731, $F751
-  ; bombos, quake, ether, stone mask 
-  dw $F6C1, $F6E1, $F6D1, $F7B9, $F811, $F751
 }
