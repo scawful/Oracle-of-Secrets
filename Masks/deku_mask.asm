@@ -11,21 +11,58 @@ org $07983A
 org $079873
   Player_ResetSwimCollision:
 
-org $07E8F0
-  HandleIndoorCameraAndDoors:
-
 org $0ED6C0
   LoadActualGearPalettes:
 
-org $07B64F 
-  Link_HandleDiagonalCollision:
 org $07E245 
   Link_HandleVelocity:
-org $07B7C7
-  Link_HandleCardinalCollision:
+
+org $07915E
+  LinkState_ExitingDash:
+
 org $07E6A6
   Link_HandleMovingAnimation_FullLongEntry:
   
+; =============================================================================
+
+org $07B64F
+  Link_HandleDiagonalCollision:
+
+; start of free space in bank07 
+org $07F89D
+Link_HandleDiagonalCollision_Long:
+{
+  PHB : PHK : PLB
+  JSR Link_HandleDiagonalCollision
+  PLB
+  RTL
+}
+
+org $07B7C7
+  Link_HandleCardinalCollision:
+
+org $07F8A2
+Link_HandleCardinalCollision_Long:
+{
+  PHB : PHK : PLB
+  JSR Link_HandleCardinalCollision
+  PLB
+  RTL
+}
+
+org $07E8F0
+  HandleIndoorCameraAndDoors:
+
+org $07F8AA
+HandleIndoorCameraAndDoors_Long:
+{
+  PHB : PHK : PLB
+  JSR HandleIndoorCameraAndDoors
+  PLB
+  RTL
+}
+print pc 
+
 ; =============================================================================
 
 org $07A64B ; formerly Quake
@@ -53,16 +90,20 @@ LinkItem_DekuMask:
   LDA #$10 : STA $BC : STZ $02B2        ; take the mask off
 
 .return
-
   RTS
 }
 
+; LinkItem_UsingQuake is 152 (base10) bytes long 
 org $07A6D6
-JML LinkItem_UsingDekuMask
+  JSL LinkItem_UsingDekuMask
+  NOP #152
+; 07A6DB
+  print pc 
+; end of UsingQuake is at 07A773
 
 
-org $228000
-incsrc "link_handler.asm"
+org $288000
+; incsrc "link_handler.asm"
 LinkItem_UsingDekuMask:
 {
   ; SEP #$20
@@ -132,7 +173,7 @@ LinkItem_UsingDekuMask:
 .not_moving
 
   JSL Player_ResetSwimCollision
-  JSL $9B0E ; $39B0E IN ROM
+  JSL $079B0E ; $39B0E IN ROM
   
   LDA $49 : AND.b #$0F : BNE .movement
   
@@ -171,14 +212,14 @@ LinkItem_UsingDekuMask:
 
 .finish_up
 
-  JSL Link_HandleDiagonalCollision             ; $3B64F IN ROM
+  JSL Link_HandleDiagonalCollision_Long
   JSL Link_HandleVelocity                      ; $3E245 IN ROM
-  JSL Link_HandleCardinalCollision             ; $3B7C7 IN ROM
+  JSL Link_HandleCardinalCollision_Long
   JSL Link_HandleMovingAnimation_FullLongEntry ; $3E6A6 IN ROM
   
   STZ $0302
   
-  JSL HandleIndoorCameraAndDoors   ; $3E8F0 IN ROM
+  JSL HandleIndoorCameraAndDoors_Long   ; $3E8F0 IN ROM
 
 .exit:
 
