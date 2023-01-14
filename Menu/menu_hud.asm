@@ -47,21 +47,6 @@ org $0DF14F
 
 org $268000
 
-; =============================================================================
-
-; .full_tile
-;   dw $3C5F
-; .mostly_full
-;   dw $3C4D
-; .kinda_full
-;   dw $3C4E
-; .half_empty
-;   dw $3C4F
-; .almost_empty
-;   dw $3C 5E 
-; .empty_tile
-;   dw $3C4C
-
 ; ==============================================================================
 ; Main HUD Update Loop
 
@@ -138,16 +123,11 @@ HUD_Update:
   LDA $7EF36E : AND.w #$00FF : CLC : ADC #$0007 : AND.w #$FFF8 : TAX
   
   ; these four writes draw the magic power bar based on how much MP you have 
-
-  ; LDA MagicTilemap+0, X : STA $7EC76A
-  ; LDA MagicTilemap+2, X : STA $7EC76D
-  ; LDA MagicTilemap+4, X : STA $7EC76D
-  ; LDA MagicTilemap+6, X : STA $7EC76F
-  
-  ; LDA #$3C4C : STA $7EC76A
-  ; LDA #$3C4C : STA $7EC76E
-  ; LDA #$3C4C : STA $7EC773
-  ; LDA #$3C4C : STA $7EC777
+  LDA.l (MagicTilemap)+0, X : STA $7EC76A
+  LDA.l (MagicTilemap)+2, X : STA $7EC76C
+  LDA.l (MagicTilemap)+4, X : STA $7EC76E
+  LDA.l (MagicTilemap)+6, X : STA $7EC770
+  LDA.l (MagicTilemap)+8, X : STA $7EC772
 
   ; Load how many rupees the player has
   LDA $7EF362
@@ -164,6 +144,10 @@ HUD_Update:
   
   ; The tile index for the third rupee digit
   LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A0
+
+  ; Clear digit tiles 
+  LDA #$A00C : STA $7EC7B0
+  LDA #$A00C : STA $7EC7B2
 
   ; Check if the user has bombs equipped
   LDX $0202 : LDA $7EF33F, X : AND.w #$00FF
@@ -220,30 +204,46 @@ HUD_Update:
   RTL
 }
 
+; =============================================================================
+
+; .full_tile
+;   dw $3C5F
+; .mostly_full
+;   dw $3C4D
+; .kinda_full
+;   dw $3C4E
+; .half_empty
+;   dw $3C4F
+; .almost_empty
+;   dw $3C5E 
+; .empty_tile
+;   dw $3C4C
+
 MagicTilemap:
-  dw $3C4C, $3C4C, $3C4C, $3C4C
-  dw $3C4C, $3C4C, $3C4C, $3C5F
-  dw $3C4C, $3C4C, $3C4C, $3C4C
-  dw $3C4C, $3C4C, $3C4C, $3C4D
-  dw $3C4C, $3C4C, $3C4C, $3C4E
-  dw $3C4C, $3C4C, $3C5F, $3C5F
-  dw $3C4C, $3C4C, $3C4C, $3C5F
-  dw $3C4C, $3C4C, $3C4D, $3C5F
-  dw $3C4C, $3C4C, $3C4E, $3C5F
-  dw $3C4C, $3C5F, $3C5F, $3C5F
-  dw $3C4C, $3C4C, $3C5F, $3C5F
-  dw $3C4C, $3C4D, $3C5F, $3C5F
-  dw $3C4C, $3C4E, $3C5F, $3C5F
-  dw $3C5F, $3C5F, $3C5F, $3C5F
-  dw $3C4C, $3C5F, $3C5F, $3C5F
-  dw $3C4D, $3C5F, $3C5F, $3C5F
-  dw $3C4E, $3C5F, $3C5F, $3C5F
+  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C4C
+  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C5F
+  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C4C
+  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C4D
+  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C4E
+  dw $3C4C, $3C4C, $3C4C, $3C5F, $3C5F
+  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C5F
+  dw $3C4C, $3C4C, $3C4C, $3C4D, $3C5F
+  dw $3C4C, $3C4C, $3C4C, $3C4E, $3C5F
+
+  dw $3C4D, $3C5F, $3C5F, $3C5F, $3C5F
+  dw $3C4E, $3C5F, $3C5F, $3C5F, $3C5F
+  dw $3C4F, $3C5F, $3C5F, $3C5F, $3C5F
+  dw $3C5E, $3C5F, $3C5F, $3C5F, $3C5F 
+  ; value 78 
+  dw $3C5F, $3C5F, $3C5F, $3C5F, $3C5F 
+  ; value 80 
+
 
 ; =============================================================================
 ; *$6F14F-$6F1B2 LOCAL
 
 HUD_HeartDisplayFrames:
-  dw $24A3, $24A4, $24A3, $24A3
+  dw $24A3, $24A4, $24A3, $24A0
 
 HUD_AnimateHeartRefill:
 {
