@@ -59,7 +59,8 @@ Menu_Entry:
   dw Menu_StatsScreen   ; 06 
   dw Menu_ScrollFrom    ; 07
   dw Menu_ScrollUp      ; 08
-  dw Menu_Exit          ; 09
+  dw Menu_CheckBottle   ; 09
+  dw Menu_Exit          ; 0A
 
 ; =============================================================================
 ; 00 MENU INIT GRAPHICS 
@@ -117,6 +118,7 @@ Menu_UploadLeft:
   JSR Menu_DrawItemName
   
   ; INSERT PALETTE -------
+
   LDX.w #$3E
 .loop
   LDA.w Menu_Palette, X
@@ -125,7 +127,9 @@ Menu_UploadLeft:
   BPL .loop
   
   SEP #$30
+  
   ;-----------------------
+
   LDA.b #$22 : STA.w $0116
   LDA.b #$01 : STA.b $17 : STA.b $15 ; added for palette
   INC.w $0200
@@ -314,35 +318,35 @@ Menu_ScrollUp:
 }
 
 ; =============================================================================
-; Custome Bottle Code
+; 09 CHECK BOTTLE 
 
 Menu_CheckBottle:
 {
-  ;; 7F5021 7ED101
-  STZ.w $7F5021
-  LDA.w $0202 : CMP.b #$15 : BNE .not_shovel 
-  LDA.b #$0001 : STA.w $7F5021 
+  LDA.w $0202 : CMP.b #$06 : BNE .not_first 
+  LDA.b #$01 : BRA .prepare_bottle
 
-.not_shovel
-  LDA.w $0202 : CMP.b #$19 : BNE .not_flute 
-  LDA.w $7EF34C : JML $70A31D
+.not_first
+  LDA.w $0202 : CMP.b #$0C : BNE .not_second
+  LDA.b #$02 : BRA .prepare_bottle
 
-.not_flute 
+.not_second 
+  LDA.w $0202 : CMP.b #$12 : BNE .not_third
+  LDA.b #$03 : BRA .prepare_bottle
+
+.not_third
+  LDA.w $0202 : CMP.b #$18 : BNE .not_any
+  LDA.b #$04 : BRA .prepare_bottle
+
+.prepare_bottle
+  STA.l $7EF34F
+
+.not_any 
+  INC.w $0200
   RTS 
 }
 
-Menu_HookItems:
-{
-  STZ.w $7F5021
-  LDA.w $0202 : CMP.b #$13 : BNE .not_wolf_mask
-  LDA.b #$0001 : STA.w $7F5021
-
-.not_wolf_mask
-  RTS
-}
-
 ; =============================================================================
-; 09 MENU EXIT 
+; 0A MENU EXIT 
 
 Menu_Exit:
 {

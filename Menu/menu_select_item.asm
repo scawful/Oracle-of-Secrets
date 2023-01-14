@@ -7,11 +7,11 @@ Menu_ItemIndex:
   ;  Bow,     Boomerang, Hookshot, Bombs,      Powder,     Bottle 1
   db $03,     $02,       $0E,      $01,        $0A,        $0B 
   ;  Hammer,  Lamp,      Fire Rod, Ice Rod,    Mirror,     Bottle 2
-  db $04,     $09,       $05,      $06,        $14,        $4B 
+  db $04,     $09,       $05,      $06,        $14,        $0B 
   ;  Ocarina, Book,      Somaria,  Byrna,      Feather,    Bottle3
-  db $08,     $0C,       $12,      $0D,        $07,        $8B 
+  db $08,     $0C,       $12,      $0D,        $07,        $0B 
   ;  Deku,    Zora,      Wolf,     Bunny Hood, Stone Mask, Bottle4
-  db $11,    $0F,       $08,      $10,         $13,        $CB 
+  db $11,    $0F,       $08,      $10,         $13,        $0B 
 
 ; -----------------------------------------------------------------------------
 ; Decides which graphics is drawn 
