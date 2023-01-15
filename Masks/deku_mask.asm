@@ -206,19 +206,16 @@ LinkItem_UsingDekuMask:
 .recoiling
 
   LDA $46 : BEQ .wait_maybe_not_recoiling
-  
   BRL $0783A1 ; Permabunny mode.
 
 .wait_maybe_not_recoiling
 
   LDA.b #$FF : STA $24 : STA $25 : STA $29
-  
   STZ $02C6
   
   LDA $034A : BEQ .not_moving
   
   LDA.b #$01 : STA $0335 : STA $0337
-  
   LDA.b #$80 : STA $0334 : STA $0336
   
   BRL $9715
@@ -229,15 +226,12 @@ LinkItem_UsingDekuMask:
   JSL Link_HandleYItems_Long ; $39B0E IN ROM
   
   LDA $49 : AND.b #$0F : BNE .movement
-  
   LDA $F0 : AND.b #$0F : BNE .movement
-  
   STA $30 : STA $31 : STA $67 : STA $26
   
   STZ $2E
   
   LDA $48 : AND.b #$F6 : STA $48
-  
   LDX.b #$20 : STX $0371
   
   ; Ledge timer is reset here the same way as for normal link (unbunny).
@@ -281,7 +275,7 @@ LinkItem_UsingDekuMask:
 ; =============================================================================
 
 org $358000
-incbin deku_link.bin
+incbin gfx/deku_link.bin
 
 ; =============================================================================
 

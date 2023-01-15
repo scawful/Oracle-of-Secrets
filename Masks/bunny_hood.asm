@@ -17,7 +17,6 @@
 ;                 (Default = 0D) 
 ;   db (10) $40 - Pegasus boots speed (Default = 40)
 ;
-; TODO: draw sprite on link
 ;===========================================================
 
 org $07A494
@@ -48,7 +47,7 @@ LinkItem_Ether:
 }
 
 org $378000
-incbin bunny_link.4bpp
+incbin gfx/bunny_link.4bpp
 
 UpdateBunnyPalette:
 {

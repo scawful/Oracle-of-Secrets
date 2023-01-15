@@ -27,4 +27,4 @@ LinkItem_ZoraMask:
 }
 
 org $368000
-incbin zora_link.4bpp
+incbin gfx/zora_link.4bpp
