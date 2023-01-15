@@ -8,9 +8,6 @@ org $008A01
 org $07983A
   Player_ResetSwimState:
 
-org $079873
-  Player_ResetSwimCollision:
-
 org $0ED6C0
   LoadActualGearPalettes:
 
@@ -22,6 +19,9 @@ org $07915E
 
 org $07E6A6
   Link_HandleMovingAnimation_FullLongEntry:
+
+org $01FF28
+  Player_CacheStatePriorToHandler:
   
 ; =============================================================================
 
@@ -38,10 +38,12 @@ Link_HandleDiagonalCollision_Long:
   RTL
 }
 
+; =============================================================================
+
 org $07B7C7
   Link_HandleCardinalCollision:
 
-org $07F8A2
+org $07F8A6
 Link_HandleCardinalCollision_Long:
 {
   PHB : PHK : PLB
@@ -50,10 +52,12 @@ Link_HandleCardinalCollision_Long:
   RTL
 }
 
+; =============================================================================
+
 org $07E8F0
   HandleIndoorCameraAndDoors:
 
-org $07F8AA
+org $07F8AE
 HandleIndoorCameraAndDoors_Long:
 {
   PHB : PHK : PLB
@@ -61,6 +65,49 @@ HandleIndoorCameraAndDoors_Long:
   PLB
   RTL
 }
+
+; =============================================================================
+
+org $07F514
+  CheckIndoorStatus:
+
+org $07F8B7
+CheckIndoorStatus_Long:
+{
+  PHB : PHK : PLB
+  JSR CheckIndoorStatus
+  PLB
+  RTL
+}
+
+; =============================================================================
+
+org $079873
+  Player_ResetSwimCollision:
+
+org $07F8C0
+Player_ResetSwimCollision_Long:
+{
+  PHB : PHK : PLB
+  JSR Player_ResetSwimCollision
+  PLB
+  RTL
+}
+
+; =============================================================================
+
+org $079B0E
+  Link_HandleYItems:
+
+org $07F8C9
+Link_HandleYItems_Long:
+{
+  PHB : PHK : PLB
+  JSR Link_HandleYItems
+  PLB
+  RTL
+}
+
 print pc 
 
 ; =============================================================================
@@ -84,6 +131,7 @@ LinkItem_DekuMask:
   LDA #$35 : STA $BC                    ; put the mask on
   LDA #$01 : STA $02B2
   BRA .return
+
 .unequip
   JSL Palette_ArmorAndGloves
   STZ $5D
@@ -93,22 +141,27 @@ LinkItem_DekuMask:
   RTS
 }
 
+; =============================================================================
+
 ; LinkItem_UsingQuake is 152 (base10) bytes long 
 org $07A6D6
+LinkItem_UsingQuake: 
+{
   JSL LinkItem_UsingDekuMask
   NOP #152
-; 07A6DB
+  ; 07A6DB
   print pc 
+}
 ; end of UsingQuake is at 07A773
 
+; =============================================================================
 
 org $288000
-; incsrc "link_handler.asm"
+;incsrc "link_handler.asm"
 LinkItem_UsingDekuMask:
 {
-  ; SEP #$20
-
-  JSL $07F514 ; $3F514 IN ROM
+  SEP #$20
+  JSL CheckIndoorStatus_Long
   
   LDA $0345 : BNE .recache
   LDA $4D : BEQ .recoiling
@@ -154,7 +207,7 @@ LinkItem_UsingDekuMask:
 
   LDA $46 : BEQ .wait_maybe_not_recoiling
   
-  BRL $83A1 ; Permabunny mode.
+  BRL $0783A1 ; Permabunny mode.
 
 .wait_maybe_not_recoiling
 
@@ -172,8 +225,8 @@ LinkItem_UsingDekuMask:
 
 .not_moving
 
-  JSL Player_ResetSwimCollision
-  JSL $079B0E ; $39B0E IN ROM
+  JSL Player_ResetSwimCollision_Long
+  JSL Link_HandleYItems_Long ; $39B0E IN ROM
   
   LDA $49 : AND.b #$0F : BNE .movement
   
@@ -193,7 +246,7 @@ LinkItem_UsingDekuMask:
   BRA .finish_up
 
 .movement
-
+  
   STA $67 : CMP $26 : BEQ .directions_match
   
   STZ $2A
@@ -211,7 +264,6 @@ LinkItem_UsingDekuMask:
   STA $26
 
 .finish_up
-
   JSL Link_HandleDiagonalCollision_Long
   JSL Link_HandleVelocity                      ; $3E245 IN ROM
   JSL Link_HandleCardinalCollision_Long
@@ -254,7 +306,7 @@ Palette_ArmorAndGloves:
   LDA $7EF35B
   JSL $1BEDFF     ; Read Original Palette Code
   RTL
-  .part_two
+.part_two
   SEP #$30
       REP #$30
       LDA $7EF354
