@@ -10,6 +10,28 @@
 ;   Intro skip after leaving house
 ;   Key block link's awakening
 ;   Lost Sea Area Combo
+;
+; Expanded Banks Key:
+;   20 - None
+;   21 - None
+;   22 - None
+;   23 - House Tag 
+;   24 - Menu
+;   25 - None
+;   26 - HUD
+;   27 - Mask Routines(?)
+;   28 - Deku Link Code 
+;   29 - Farore Sprite 
+;   30 - Palette_ArmorAndGloves
+;   31 - None 
+;   32 - Bottle / Net Item 
+;   33 - None
+;   34 - Jump Feather 
+;   35 - Deku Link GFX
+;   36 - Zora Link GFX
+;   37 - Bunny Link GFX
+;   38 - Wolf Link GFX
+;   39 - None 
 ;   
 ;===========================================================
 
@@ -41,6 +63,10 @@ namespace Oracle
   ; ---------------------------------------------------------
   incsrc "Menu/menu.asm"
   print  "End of Menu/menu.asm              ", pc
+
+  ; ---------------------------------------------------------
+  incsrc "Items/bottle_net.asm"
+  print "End of Items/bottle_net.asm        ", pc
 
   ; ---------------------------------------------------------
   incsrc "Events/intro.asm"
