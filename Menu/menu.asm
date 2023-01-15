@@ -287,13 +287,13 @@ Menu_StatsScreen:
   BRA .no_inputs
 
 .move_right
-  JSR Menu_DeleteCursor
-  JSR Menu_FindNextItem
+  JSR Menu_DeleteSongCursor
+  JSR Menu_FindNextSong
   BRA .draw_cursor
   
 .move_left
-  JSR Menu_DeleteCursor
-  JSR Menu_FindPrevItem
+  JSR Menu_DeleteSongCursor
+  JSR Menu_FindPrevSong
   BRA .draw_cursor
 
 .draw_cursor
@@ -304,7 +304,7 @@ Menu_StatsScreen:
   LDA.w $02D5
   ASL : TAY
   REP #$10
-  LDX.w Menu_OcarinaSongPositions-2, Y
+  LDX.w Menu_OcarinaSongPositions, Y
 
   LDA.b #$20 : BIT.w $0207
 
@@ -315,16 +315,16 @@ Menu_StatsScreen:
   LDA.w #$20F5
   STA.w $1108, X
   STA.w $1148, X
-  STA.w $114E, X
-  STA.w $110E, X
-  STA.w $11C8, X
+  STA.w $114E, X 
+  STA.w $110E, X 
+  STA.w $11C8, X 
   STA.w $1188, X
-  STA.w $118E, X
-  STA.w $11CE, X
+  STA.w $118E, X 
+  STA.w $11CE, X 
   BRA .done
 
 .no_delete 
-  
+
   LDA.w #$3060 : STA.w $1108, X ; corner 
   LDA.w #$3070 : STA.w $1148, X
 

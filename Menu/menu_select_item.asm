@@ -77,13 +77,6 @@ Menu_ItemCursorPositions:
 
 ; -----------------------------------------------------------------------------
 
-Menu_OcarinaSongPositions:
-  dw menu_offset(15,12) ; song of 
-  dw menu_offset(15,15) ; song of 
-  dw menu_offset(15,18) ; song of 
-
-; -----------------------------------------------------------------------------
-
 
 Menu_FindNextItem:
 {
@@ -190,34 +183,69 @@ Menu_InitItemScreen:
   RTS
 }
 
+; =============================================================================
+;  Song Selection Code
+
 ; -----------------------------------------------------------------------------
 
-; $0303[0x01] -   (Player)
+Menu_SongAddressIndex:
+  db $01
+  db $02
+  db $03
 
-;     In conjunction with the above variable when set to 0x13, matching the above
-;     variable, the cape transformation is complete.
-                
-;     This indicates which secondary item is equipped (aka Y-button
-;     item).
-    
-;     0x00 - Nothing
-;     0x01 - Bombs
-;     0x02 - Boomerang
-;     0x03 - Arrows
-;     0x04 - Hammer
-;     0x05 - Fire Rod
-;     0x06 - Ice Rod
-;     0x07 - Bug catching net
-;     0x08 - Flute
-;     0x09 - Lamp
-;     0x0A - Magic Powder
-;     0x0B - Bottle
-;     0x0C - Book of Mudora
-;     0x0D - Cane of Byrna
-;     0x0E - Hookshot
-;     0x0F - Bombos Medallion
-;     0x10 - Ether Medallion
-;     0x11 - Quake Medallion
-;     0x12 - Cane of Somaria
-;     0x13 - Cape
-;     0x14 - Magic Mirror
+; -----------------------------------------------------------------------------
+
+Menu_OcarinaSongPositions:
+  dw menu_offset(16,12) ; song of 
+  dw menu_offset(16,15) ; song of 
+  dw menu_offset(16,18) ; song of 
+
+; -----------------------------------------------------------------------------
+
+Menu_FindNextSong:
+{
+  LDY.w $02D5 : INY 
+  CPY.b #$03 : BCC .no_reset 
+  LDY.b #$01 
+.no_reset 
+  STY.w $02D5
+  LDX.w Menu_SongAddressIndex-1, Y
+  LDA.l $7EF407, X
+  BEQ Menu_FindNextSong
+  RTS
+}
+
+; -----------------------------------------------------------------------------
+
+Menu_FindPrevSong:
+{
+  LDY.w $02D5 : DEY : BNE .no_reset 
+  LDY.b #$02
+.no_reset 
+  STY.w $02D5
+  LDX.w Menu_SongAddressIndex-1, Y
+  LDA.l $7EF407, X
+  BEQ Menu_FindPrevSong
+  RTS
+}
+
+; -----------------------------------------------------------------------------
+
+Menu_DeleteSongCursor:
+{
+  REP #$30
+  LDX.w Menu_OcarinaSongPositions-2, Y
+
+  LDA.w #$20F5
+  STA.w $1422, X
+  STA.w $1462, X
+  STA.w $14A2, X
+  STA.w $14E2, X
+  STA.w $11C8, X
+  STA.w $1188, X
+  STA.w $118E, X
+  STA.w $11CE, X
+  SEP #$30
+  STZ $0207
+  RTS 
+}
