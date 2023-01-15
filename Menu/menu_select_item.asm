@@ -77,6 +77,14 @@ Menu_ItemCursorPositions:
 
 ; -----------------------------------------------------------------------------
 
+Menu_OcarinaSongPositions:
+  dw menu_offset(15,12) ; song of 
+  dw menu_offset(15,15) ; song of 
+  dw menu_offset(15,18) ; song of 
+
+; -----------------------------------------------------------------------------
+
+
 Menu_FindNextItem:
 {
   LDY.w $0202 : INY 

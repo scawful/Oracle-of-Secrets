@@ -328,7 +328,7 @@ DrawYItems:
 	LDY.w #ZoraMaskGFX
 	JSR DrawMenuItem
 
-  LDA.w #$7EF34F ; 7EF34C
+  LDA.w #$7EF358
 	LDX.w #menu_offset(16,9)
 	LDY.w #WolfMaskGFX
 	JSR DrawMenuItem

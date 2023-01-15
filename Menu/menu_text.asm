@@ -92,7 +92,7 @@ DrawPlaytimeLabel:
 ; =============================================================================
 
 Menu_ItemNames:
-  dw "__SLINGSHOT___  "
+  dw "_____BOW______  "
   dw "__BOOMERANG___  "
   dw "___HOOKSHOT___  "
   dw "____BOMBS_____  "
@@ -116,6 +116,15 @@ Menu_ItemNames:
   dw "__BUNNY_HOOD__  "
   dw "__STONE_MASK__  "
   dw "____BOTTLE____  "
+
+Menu_BottleIems:
+  dw "___MUSHROOM___  "
+  dw "_EMPTY_BOTTLE_  "
+  dw "__RED_POTION__  "
+  dw "_GREEN_POTION_  "
+  dw "_BLUE_POTION__  "
+  dw "____FAIRY_____  "
+  dw "__GOOD_BEE____  "
 
 Menu_DrawItemName:
 {
