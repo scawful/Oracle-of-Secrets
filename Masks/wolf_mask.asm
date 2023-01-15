@@ -1,5 +1,9 @@
+; =============================================================================
+
 org $07A3DB
 LinkItem_Flute:
+
+; =============================================================================
 
 org $07A313
 LinkItem_ShovelAndFlute:
@@ -8,6 +12,8 @@ LinkItem_ShovelAndFlute:
   LDA $0202 : CMP.b #$0D : BNE LinkItem_WolfMask
   BRL LinkItem_Flute
 }
+
+; =============================================================================
 
 ; TODO: Make sure there's no inaccessible code issues past here 
 ; LinkItem_Shovel 
