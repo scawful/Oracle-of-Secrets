@@ -64,7 +64,7 @@ namespace Debug
     STA $7EF352
     LDA #$02    ; 0 - nothing. 1 - scroll looking thing that works like mirror. 2 - mirror with correct graphic.
     STA $7EF353
-    LDA #$02    ; 0 - normal strength. 1 - Power Gloves. 2 - Titan's Mitt
+    LDA #$00    ; 0 - normal strength. 1 - Power Gloves. 2 - Titan's Mitt
     STA $7EF354
     LDA #$01    ; 0 - nothing. 1 - pegasus boots. 
                 ; *Just having the boots isn't enough to dash. You must have the ability flag corresponding to run set as well. See $379.
@@ -73,13 +73,15 @@ namespace Debug
     STA $7EF356
     LDA #$01    ; 0 - nothing. 1 - moon pearl.
     STA $7EF357
+    LDA #$01 
+    STA $7EF358 ; 0 -nothing. 1 - wolf mask 
     LDA #$01    ; 0-No sword. 1-Fighter Sword. 2-Master Sword. 3-Tempered Sword. 4-Golden Sword
     STA $7EF359
     LDA #$01    ; 0-No shield. 1-Blue Shield. 2-Hero's Shield. 3-Mirror Shield  
     STA $7EF35A
     LDA #$00    ; 0-Green Jerkin. 1-Blue Mail. 2-Red Mail
     STA $7EF35B
-    LDA #$02    ; 0-No bottle. 1-Mushroom (no use). 2-Empty bottle. 3-Red Potion. 4-Green Potion. 5-Blue Potion. 6-Fairy. 7-Bee. 8-Good Bee
+    LDA #$03    ; 0-No bottle. 1-Mushroom (no use). 2-Empty bottle. 3-Red Potion. 4-Green Potion. 5-Blue Potion. 6-Fairy. 7-Bee. 8-Good Bee
     STA $7EF35C
     LDA #$08    ; second bottle
     STA $7EF35D
