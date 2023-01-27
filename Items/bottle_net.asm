@@ -16,8 +16,8 @@ org $1EDCCF
 PlayerItem_ReleaseBee:
 
 ; =============================================================================
-
 ; LinkItem_Bottle
+
 org $07A15B
 {
   BIT $3A : BVS .return ;if Y or B are already pressed
@@ -60,125 +60,101 @@ LinkItem_NewBottle:
 ; *$3A15B-$3A249 JUMP LOCATION
 LinkItem_Bottles:
 {
-  LDA $3A : AND.b #$BF : STA $3A
+  LDA.b $3A : AND.b #$BF : STA.b $3A
   
   ; Check if we have a bottle or not
-  LDA $7EF34F : DEC A : TAX
+  LDA.l $7EF34F : DEC A : TAX
   
-  LDA $7EF35C, X : BEQ .exit  ; (RTS)
-  CMP.b #$03     : BCC .LinkItem_UselessBottle
-  CMP.b #$03     : BEQ .LinkItem_RedPotion
-  CMP.b #$04     : BEQ .LinkItem_GreenPotion
-  CMP.b #$05     : BEQ .LinkItem_BluePotion
-  CMP.b #$06     : BEQ .fairy
+  LDA.l $7EF35C, X : BEQ .exit  ; (RTS)
+  CMP.b #$03       : BCC .LinkItem_UselessBottle
+  CMP.b #$03       : BEQ .LinkItem_RedPotion
+  CMP.b #$04       : BEQ .LinkItem_GreenPotion
+  CMP.b #$05       : BEQ .LinkItem_BluePotion
+  CMP.b #$06       : BEQ .fairy
   
   BRL .LinkItem_BeeBottle
 
 .exit 
-
   RTS
 
 .fairy:
-
   BRL .LinkItem_FairyBottle
 
 .LinkItem_RedPotion:
-
-  LDA $7EF36C : CMP $7EF36D : BNE .can_drink
+  LDA.l $7EF36C : CMP.l $7EF36D : BNE .can_drink_red
 
 .LinkItem_UselessBottle:
+  BRL $07A955 ; LinkGoBeep TODO(scawful): Investigate 
 
-  BRL $07A955
-
-.can_drink:
-
-  LDA.b #$02 : STA $7EF35C, X
+.can_drink_red:
+  LDA.b #$02 : STA.l $7EF35C, X : STZ.w $0301
   
-  STZ $0301
-  
-  LDA.b #$04 : STA $11
-  LDA $10 : STA $010C
-  LDA.b #$0E : STA $10
-  LDA.b #$07 : STA $0208
+  LDA.b #$04 : STA.b $11
+  LDA.b  $10 : STA.w $010C
+  LDA.b #$0E : STA.b $10
+  LDA.b #$07 : STA.w $0208
   
   JSL $0DFA58
   
   RTS
 
 .LinkItem_GreenPotion:
+  LDA $7EF36E : CMP.b #$80 : BNE .can_drink
+  BRL $07A955 ; LinkGoBeep TODO(scawful): Investigate 
 
-  LDA $7EF36E : CMP.b #$80 : BNE .BRANCH_THETA
-  
-  BRL $07A955
-
-.BRANCH_THETA:
-
-  LDA $02 : STA $7EF35C, X
-  
-  STZ $0301
+.can_drink:
+  LDA $02 : STA $7EF35C, X : STZ $0301
   
   ; submodule ????
   LDA.b #$08 : STA $11
-  
   LDA $10 : STA $010C
   
   ; Go to text mode
   LDA.b #$0E : STA $10
-  
   LDA.b #$07 : STA $0208
-  
-  JSL $0DFA58
-  
-  BRA .BRANCH_IOTA
+
+  JSL $0DFA58 ; RebuildHUD_long TODO(scawful)
+  BRA .bottle_exit
 
 .LinkItem_BluePotion:
-
   LDA $7EF36C : CMP $7EF36D : BNE .useBluePotion
-  
   LDA $7EF36E : CMP.b #$80 : BNE .useBluePotion
-  
   BRL $07A955
 
 .useBluePotion
+  LDA.b #$02 : STA $7EF35C, X : STZ $0301
+  
+  ; more submodule code 
+  LDA.b #$09 : STA.b $11
+  LDA.b  $10 : STA.w $010C
 
-  LDA.b #$02 : STA $7EF35C, X
+  ; Go to text mode (?)
+  LDA.b #$0E : STA.b $10
+  LDA.b #$07 : STA.w $0208
   
-  STZ $0301
-  
-  LDA.b #$09 : STA $11
-  LDA $10 : STA $010C
-  LDA.b #$0E : STA $10
-  LDA.b #$07 : STA $0208
-  
-  JSL $0DFA58
-  
-  BRA .BRANCH_IOTA
+  JSL $0DFA58 ; RebuildHUD_Long TODO(scawful)
+  BRA .bottle_exit
 
 .LinkItem_FairyBottle:
-
-  STZ $0301
+  STZ.w $0301
   JSL PlayerItem_SpawnFaerie : BPL .BRANCH_NU
   BRL $07A955
 
 .BRANCH_NU:
-
-  LDA.b #$02 : STA $7EF35C, X
-  JSL $0DFA58
-  BRA .BRANCH_IOTA
+  LDA.b #$02 : STA.l $7EF35C, X
+  JSL $0DFA58 ; RebuildHUD_Long TODO(scawful)
+  BRA .bottle_exit
 
 .LinkItem_BeeBottle:
-
-  STZ $0301
+  STZ.w $0301
   JSL PlayerItem_ReleaseBee : BPL .bee_spawn_success
-  BRL $07A955
+  BRL $07A955 ; LinkGoBeep 
 
 .bee_spawn_success
+  LDA.b #$02 : STA.l $7EF35C, X
+  JSL $0DFA58 ; RebuildHUD_Long TODO(scawful)
 
-  LDA.b #$02 : STA $7EF35C, X
-  JSL $0DFA58
-
-.BRANCH_IOTA:
-
+.bottle_exit:
   RTS
 }
 
