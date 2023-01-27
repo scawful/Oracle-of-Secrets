@@ -73,8 +73,8 @@ namespace Oracle
   print  "End of Events/intro.asm           ", pc
 
   ; ---------------------------------------------------------
-  incsrc "MakuTree/maku_tree.asm"
-  print  "End of MakuTree/maku_tree.asm     ", pc
+  incsrc "Events/maku_tree.asm"
+  print  "End of Events/maku_tree.asm     ", pc
 
   ; ---------------------------------------------------------
   incsrc "Events/lostsea.asm"

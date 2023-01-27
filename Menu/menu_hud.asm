@@ -193,7 +193,7 @@ HUD_Update:
 
   ; The key digit, which is optionally drawn.
   ; Also check to see if the key spot is blank
-  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC764
+  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A4
   CMP.w #$247F : BNE .dontBlankKeyIcon
 
   ; If the key digit is blank, also blank out the key icon.

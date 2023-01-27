@@ -31,6 +31,9 @@ org $808B6B : LDX.w #$6040
 org $8DDFB2 : LDA.l Menu_ItemIndex, X
 pullpc
 
+; =============================================================================
+; Menu Bank 
+
 org $248000
 incsrc "menu_gfx_table.asm"
 incsrc "menu_text.asm"
