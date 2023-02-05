@@ -34,7 +34,7 @@ org $07A15B
 
 ; =============================================================================
 
-org $328000
+org $338000
 LinkItem_NewBottle:
 { 
   ; Check if we have a bottle or not

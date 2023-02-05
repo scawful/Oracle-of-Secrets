@@ -21,17 +21,17 @@
 ;   26 - HUD
 ;   27 - Mask Routines(?)
 ;   28 - Deku Link Code 
-;   29 - Farore Sprite 
-;   30 - Palette_ArmorAndGloves
-;   31 - None 
-;   32 - Bottle / Net Item 
-;   33 - None
+;   29 - Custom Sprite Jump Table
+;   30 - Custom Sprite Functions
+;   31 - None
+;   32 - None
+;   33 - Bottle / Net Item 
 ;   34 - Jump Feather 
 ;   35 - Deku Link GFX
 ;   36 - Zora Link GFX
 ;   37 - Bunny Link GFX
 ;   38 - Wolf Link GFX
-;   39 - None 
+;   39 - Palette_ArmorAndGloves  
 ;   
 ;===========================================================
 
