@@ -1,6 +1,10 @@
-; Hooks 
-incsrc "../Sprites/sprite_functions_hooks.asm"
 ; =============================================================================
+; Deku Mask 
+
+; =============================================================================
+; Hooks 
+
+incsrc "../Sprites/sprite_functions_hooks.asm"
 
 org $008A01
   LDA $BC

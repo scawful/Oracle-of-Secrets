@@ -11,7 +11,7 @@
 ;            Significant thanks to Kan for helping me craft this menu!
 ;   
 ; =============================================================================
-incsrc "Util/ram.asm"
+
 
 pushpc
 ; update in game hud colors 
