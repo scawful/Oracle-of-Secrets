@@ -53,8 +53,8 @@ namespace Oracle
   print  "End of Graphics/boat_gfx.asm      ", pc
 
   ; ---------------------------------------------------------
-  incsrc "KeyBlock/keyblock.asm"
-  print  "End of KeyBlock/keyblock.asm      ", pc
+  incsrc "Dungeons/keyblock.asm"
+  print  "End of Dungeons/keyblock.asm      ", pc
 
   ; ---------------------------------------------------------
   incsrc "Events/house_tag.asm"
