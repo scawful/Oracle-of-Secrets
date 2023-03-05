@@ -143,10 +143,10 @@ Menu_DrawItemName:
 ; =============================================================================
 
 ; ;LDX.w $7E00A0 		; load room number
-;-------------------------------------
+; -------------------------------------
 TestLocationName:
     dw "YOUR_HOUSE__"
-;-------------------------------------
+; -------------------------------------
 
 DrawLocationName:
 {
@@ -160,22 +160,23 @@ DrawLocationName:
   ASL : ASL : ASL : ASL : ASL
   LDY.w #$000
   TAX 
-.loop
+
+.draw_overworld_loop
   LDA.w OverworldLocationNames, X ; Load your text character
   STA.w $12CC, Y                  ; Store into the buffer
   INX : INX
-  INY : INY : CPY #$0020 : BCC .loop
+  INY : INY : CPY #$0020 : BCC .draw_overworld_loop
   RTS
 
 .indoors
   LDX.w #$16
 
-  .loop2
+.draw_indoors_loop
   LDA.w TestLocationName, X
   STA.w $12CC, X
 
   DEX : DEX
-  BPL .loop2
+  BPL .draw_indoors_loop
 
   RTS
 }
