@@ -260,25 +260,33 @@ Menu_DrawAreaNameTXT:
 Menu_DrawCharacterName:
 {
   REP #$30
-
   LDX.w #$C
-.loop
+
+.draw_name_loop
+  ; Player's Name in memory, indexed by X 
   LDA.l $7EF3D9, X
+  
+  ; Check if the character is the special encoding for "I" first.
   CMP.w #$AF : BEQ .fix_i 
-  CMP.w #$10 : BCC .skip ; handle P -> Q gap
+
+  ; Check if it is the gap between the P and Q characters 
+  CMP.w #$10 : BCC .write_to_screen ; handle P, Q gap
   SBC.b #$10
   CLC
   CMP.w #$2A : BCS .fix_lowercase 
-.skip
+  
+.write_to_screen
   CLC : ADC #$2550
   STA.w $138C, X
-  DEX : DEX : BPL .loop
+  DEX : DEX : BPL .draw_name_loop
 
   RTS
 
 .fix_i
-  LDA.w #$08 : BRA .skip 
+  LDA.w #$08 : BRA .write_to_screen 
 
 .fix_lowercase
-  LDA.w #$1D : BRA .skip
+  ; TODO: Convert the lowercase value of 2A or greater inside of the 
+  ; accumulator and convert it to an uppercase value. 
+  LDA.w #$1D : BRA .write_to_screen
 }
