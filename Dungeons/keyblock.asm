@@ -49,3 +49,9 @@ Object_KeyBlock:
   ; 5C - xy mirror
   ; 5E - y mirror
 }
+
+; =============================================================================
+
+; Big chest key for compass 
+org $01EC1A
+  db $66
