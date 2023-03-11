@@ -73,33 +73,58 @@ LinkItem_UsingZoraMask:
 ; May God Give Me Strength 
 
 ; =============================================================================
+; 22E0E0
+
+{
+  LDA $1B
+  BNE $22E0F7
+  LDA $7F500E
+  CMP #$01
+  BNE $22E0F7
+  LDA #$01
+  STA $55
+  STZ $5D
+  LDA #$08
+  STA $5E
+  RTL 
+;-------
+  LDA #$01
+  STA $4D
+  RTL 
+}
+
+; =============================================================================
 ; 22E100
 
-  LDA $2F
-  STA $0323
-  JMP $E5F0
+{
+  LDA $2F     ; The direction the player is currently facing 
+  STA $0323   ; Mirror of $2F 
+  JMP $E5F0 
   NOP 
   NOP 
   NOP 
   NOP 
-  LDA $0345
-  CMP #$01
+  LDA $0345   ; Set to 1 when we are in deep water, 0 otherwise 
+  CMP #$01    ; Are we in deep water? 
   BEQ $22E120
   LDA $7F500E
   CMP #$01
   BEQ $22E11C
   RTL 
+}
 
 ; =============================================================================
 ; 22E120 
 
-  LDA $F0
+{
+  LDA $F0     ; Joypad 1 Register 
   CMP #$40
-  BEQ $22E12D
+  BEQ .alpha  ; $22E12D
   LDA #$00
   STA $7F500F
   RTL 
 ;-------
+.alpha
   LDA $7F500F
   CMP #$01
   BNE $22E136
@@ -116,26 +141,28 @@ LinkItem_UsingZoraMask:
   CMP #$00
   BNE $22E163
   JMP $E320
+}
 
 ; =============================================================================
 ; 22E17D
 
+{
   LDA $7F500E
   CMP #$00
   BNE $22E1A3
-  LDA $5D
+  LDA $5D     ; Player Handler or "State"
   CMP #$04
   BEQ $22E18C
   RTL 
 ;-------
   LDA #$01
   STA $7F500E
-  STZ $5D
+  STZ $5D     ; Player Handler or "State"
   LDA #$01
-  STA $55
+  STA $55     ; Cape flag 
   STA $037B
   LDA #$08
-  STA $5E
+  STA $5E     ; Speed setting for link 
   NOP 
   NOP 
   NOP 
@@ -144,45 +171,97 @@ LinkItem_UsingZoraMask:
   LDA #$00
   JSL $22EF80
   LDA #$04
-  STA $5D
-  STZ $55
-  STZ $5E
+  STA $5D     ; Player Handler or "State"
+  STZ $55     ; Reset cape flag (invisible invincible)
+  STZ $5E     ; Reset Speed
   LDA #$01
-  STA $0345
+  STA $0345   ; Set to 1 when we are in deep water. 0 otherwise 
   STZ $037B
   RTL 
+}
 
 ; =============================================================================
 ; 22E1E0
+; Observed behavior: Triggers when entering and exiting water indoors only
+; Returns to 3C30B below 
+; Noted changes added 
 
-  LDA $1B
+{
+  LDA $1B     ; Flag set to 1 when indoors, 0 otherwise
   BNE $22E1F7
+
   LDA $7F500E
   CMP #$01
   BNE $22E1F7
+
   LDA #$01
-  STA $55
-  STZ $5D
-  LDA #$08
-  STA $5E
+  STA $55 ; Set cape flag (invisible invincible)
+  STZ $5D ; Player Handler or "State"
+  LDA #$08  
+  STA $5E ; Set player speed 
   RTL 
 ;-------
-  LDA #$06
-  STA $5D
+  LDA #$06 ; recoil mode 2 
+  STA $5D ; Player Handler or "State"
   RTL 
+}
+
+; =============================================================================
+; *$3C2C3-$3C30B LOCAL
+
+{
+  LDA $1B : BNE .alpha          ; Set to 1 if indoors, 0 otherwise 
+  LDX #$02
+  BRA .beta
+
+.alpha
+  LDX $1D
+  LDA $047A : BEQ .beta
+  LDX #$00                      ; Modified from vanilla `LDY.b #$00`
+
+.beta
+  STX $00
+  LDA $C2BA, X : TAX 
+  LDA $66 : BNE .gamma
+  TXA : EOR #$FF : INC : TAX 
+
+.gamma
+  STX $27
+  STZ $28
+  LDX $00
+  LDA $C2BD,X
+
+  STA $29     ; vertical resistance 
+  STA $02C7   ; countdown timer 
+  STZ $24     ; z coordinate for link
+  STZ $25     ; ??? No idea 
+
+  LDA $C2C0,X
+  JSL $8EFCE0 ; Dungeon Code (Flippers?)
+  CMP #$02 : BEQ .delta
+  JSL $22E0E0 
+  STZ $0360
+
+.delta
+  JSL $22E1E0
+  RTS 
+}
+
 
 ; =============================================================================
 ; 22E260
 
-  LDA $7EF33C
+{
+  LDA $7EF33C ; fairy flippers save ram 
   AND #$00FF
   CMP #$0001
-  BEQ $22E271
+  BEQ .has_fairy_flippers ; $22E271 
   LDA $7EF357
   RTL 
 
 ; -------
 ; 22E271
+.has_fairy_flippers
   SEP #$30
   LDA #$3C
   STA $1613
@@ -192,6 +271,7 @@ LinkItem_UsingZoraMask:
   REP #$30
   LDA $7EF357
   RTL 
+}
 
 ; =============================================================================
 ; 22E2A0
@@ -239,7 +319,7 @@ FairyFlipper_Prepare:
 
 FairyFlippers_RestoreControlHandler:
 {
-  LDA $5D     ; Player Handler or "State"
+  LDA $5D ; Player Handler or "State"     
   ASL 
   TAX 
   JMP $078106 ; Link_ControlHandler Jump Table Statement 
@@ -248,43 +328,50 @@ FairyFlippers_RestoreControlHandler:
 ; =============================================================================
 ; 22E300
 
+{
   LDA #$00
-  STA $5D
+  STA $5D ; Player Handler or "State"
   STA $7F500E
   STA $7F500F
   STA $5E
   STA $0345
   JSL $00E3FA
   RTL 
+}
 
 ; =============================================================================
 ; 22E340 
 
-  LDA $1B
+{
+  LDA $1B     ; 1 if indoors, 0 otherwise
   BEQ $22E34E
-  LDA $0114
+  LDA $0114   ; Value of the type of tile Link is standing on 
   BEQ $22E34E
   CMP #$08
   BEQ $22E34E
   RTS 
 ;-------
-  LDA #$24
-  STA $012E
+  LDA #$24   ; Splash sound effect 
+  STA $012E  
   RTS 
+}
 
 ; =============================================================================
 ; 22E460
 
-  LDA $02E4
+FairyFlippers_Untitled:
+{
+  LDA $02E4  ; If flag nonzero, Link cannot move 
   AND #$00FF
-  BNE $22E46E
+  BNE .alpha ; $22E46E
   LDA #$0009
   LDX $8C
   RTL 
 ;-------
-  LDA $0202
+.alpha
+  LDA $0202   ; currently selected item 
   AND #$00FF
-  CMP #$000F
+  CMP #$000F  ; what item is F? 
   BNE $22E481
   LDA $02F0
   AND #$00FF
@@ -292,13 +379,17 @@ FairyFlippers_RestoreControlHandler:
   LDA #$0009
   LDX $8C
   RTL 
+}
+
 
 ; =============================================================================
 ; 22E500
 
+{
   CMP #$5A
   BEQ $22E507
   JMP $D00B
+}
 
 ; =============================================================================
 ; 22E530
@@ -337,6 +428,7 @@ FairyFlippers_Main:
 ; =============================================================================
 ; 22E5F0
 
+{
   LDA $7EF33C
   BNE $22E5F7
   RTL 
@@ -346,11 +438,15 @@ FairyFlippers_Main:
   RTL 
 ;-------
   JMP $E108
+}
 
 ; =============================================================================
 ; 22E600
 ; Possibly relevant, unconfirmed 
 
+; Referenced at: 0D:E507
+
+{
   LDA $7EF34A
   AND #$00FF
   CMP #$0001
@@ -374,7 +470,7 @@ FairyFlippers_Main:
   REP #$30
   LDA $7EF35C,X
   RTL 
-
+}
 
 ; =============================================================================
 ; 22E670
@@ -409,6 +505,7 @@ FairyFlippers_HandleMagic:
 ; =============================================================================
 ; 22E700
 
+{
   STA $F6
   STY $FA
   REP #$30
@@ -425,21 +522,25 @@ FairyFlippers_HandleMagic:
   STA $7EE000
   SEP #$30
   RTL 
+}
 
 ; =============================================================================
 ; 22E760
 
+{
   LDA #$0E10
   STA $7EE000
   LDY #$0000
   LDX $00
   RTL 
+}
 
 ; =============================================================================
 ; 22E780
 ; Jesucristo...
 
-    REP #$30
+{
+  REP #$30
   LDY #$0000
   LDA $7EF339
   CMP #$000A
@@ -518,10 +619,12 @@ FairyFlippers_HandleMagic:
   INC $0207
   LDA $F0
   RTL 
+}
 
 ; =============================================================================
 ; 22E830
 
+{
   ADC #$0020
   STA $1CD0
   LDA $10
@@ -537,26 +640,32 @@ FairyFlippers_HandleMagic:
   CMP #$0000
   BNE $22E854
   RTL 
+}
 
 ; =============================================================================
 ; 22EF50
 
+{
   LDA $7EF3CC
   CMP #$0D
   BEQ $22EF59
   RTL 
+}
 
 ; =============================================================================
 ; 22EF80
 
+{
   STA $7F500E ; reset underwater variable 
   STZ $0372   ; link bounce flag 
   RTL 
+}
 
 ; =============================================================================
 ; 22EFA0
 
-  LDA $5D
+{
+  LDA $5D ; Player Handler or "State"
   CMP #$05
   BNE $22EFAA
   STZ $0351
@@ -566,5 +675,6 @@ FairyFlippers_HandleMagic:
   CMP #$01
   BNE $22EFB4
   LDA #$04
-  STA $5D
+  STA $5D ; Player Handler or "State"
   RTS 
+}

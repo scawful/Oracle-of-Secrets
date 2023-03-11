@@ -185,6 +185,13 @@ Menu_ItemScreen:
   LSR : BCS .move_left
   LSR : BCS .move_down
   LSR : BCS .move_up
+
+; Check if A button is pressed
+;   LDA $F6 : AND.b #$80 : BEQ .a_not_pressed
+;   JSR Menu_SubItemScreen
+
+; .a_not_pressed 
+
   BRA .no_inputs
 
 .move_right
@@ -280,70 +287,70 @@ Menu_StatsScreen:
 {
   JSR Menu_CheckHScroll
 
-  ; Increase selector time and check music RAM 
-  INC $0207 : LDA.w $02D5 : BEQ .no_inputs
+;   ; Increase selector time and check music RAM 
+;   INC $0207 : LDA.w $02D5 : BEQ .no_inputs
 
-  ; Scroll through joypad 1 inputs 
-  ASL : TAY : LDA.b $F4 
-  LSR : BCS .move_right
-  LSR : BCS .move_left
-  BRA .no_inputs
+;   ; Scroll through joypad 1 inputs 
+;   ASL : TAY : LDA.b $F4 
+;   LSR : BCS .move_right
+;   LSR : BCS .move_left
+;   BRA .no_inputs
 
-.move_right
-  JSR Menu_DeleteSongCursor
-  JSR Menu_FindNextSong
-  BRA .draw_cursor
+; .move_right
+;   JSR Menu_DeleteSongCursor
+;   JSR Menu_FindNextSong
+;   BRA .draw_cursor
   
-.move_left
-  JSR Menu_DeleteSongCursor
-  JSR Menu_FindPrevSong
-  BRA .draw_cursor
+; .move_left
+;   JSR Menu_DeleteSongCursor
+;   JSR Menu_FindPrevSong
+;   BRA .draw_cursor
 
-.draw_cursor
-  LDA.b #$20 : STA.w $012F ; cursor move sound effect 
+; .draw_cursor
+;   LDA.b #$20 : STA.w $012F ; cursor move sound effect 
 
-.no_inputs
-  SEP #$30
-  LDA.w $02D5
-  ASL : TAY
-  REP #$10
-  LDX.w Menu_OcarinaSongPositions, Y
+; .no_inputs
+;   SEP #$30
+;   LDA.w $02D5
+;   ASL : TAY
+;   REP #$10
+;   LDX.w Menu_OcarinaSongPositions, Y
 
-  LDA.b #$20 : BIT.w $0207
+;   LDA.b #$20 : BIT.w $0207
 
-  REP #$20
+;   REP #$20
 
-  BEQ .no_delete 
+;   BEQ .no_delete 
 
-  LDA.w #$20F5
-  STA.w $1108, X
-  STA.w $1148, X
-  STA.w $114E, X 
-  STA.w $110E, X 
-  STA.w $11C8, X 
-  STA.w $1188, X
-  STA.w $118E, X 
-  STA.w $11CE, X 
-  BRA .done
+;   LDA.w #$20F5
+;   STA.w $1108, X
+;   STA.w $1148, X
+;   STA.w $114E, X 
+;   STA.w $110E, X 
+;   STA.w $11C8, X 
+;   STA.w $1188, X
+;   STA.w $118E, X 
+;   STA.w $11CE, X 
+;   BRA .done
 
-.no_delete 
+; .no_delete 
 
-  LDA.w #$3060 : STA.w $1108, X ; corner 
-  LDA.w #$3070 : STA.w $1148, X
+;   LDA.w #$3060 : STA.w $1108, X ; corner 
+;   LDA.w #$3070 : STA.w $1148, X
 
-  LDA.w #$7060 : STA.w $110E, X ; corner 
-  LDA.w #$7070 : STA.w $114E, X
+;   LDA.w #$7060 : STA.w $110E, X ; corner 
+;   LDA.w #$7070 : STA.w $114E, X
 
-  LDA.w #$3070 : STA.w $1188, X 
-  LDA.w #$B060 : STA.w $11C8, X ; corner 
+;   LDA.w #$3070 : STA.w $1188, X 
+;   LDA.w #$B060 : STA.w $11C8, X ; corner 
 
-  LDA.w #$7070 : STA.w $118E, X 
-  LDA.w #$F060 : STA.w $11CE, X ; corner 
+;   LDA.w #$7070 : STA.w $118E, X 
+;   LDA.w #$F060 : STA.w $11CE, X ; corner 
 
-.done
-  SEP #$20
-  LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17
+; .done
+;   SEP #$20
+;   LDA.b #$22 : STA.w $0116
+;   LDA.b #$01 : STA.b $17
 
   RTS
 }
@@ -448,7 +455,7 @@ Menu_Exit:
 
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
 quest_icons: incbin "tilemaps/quest_icons.tilemap"
-incsrc "lw_map_names.asm"
+incsrc "menu_map_names.asm"
 incsrc "menu_hud.asm"
 
 ; =============================================================================

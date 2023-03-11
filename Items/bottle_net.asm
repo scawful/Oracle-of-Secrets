@@ -2,7 +2,6 @@
 ; Bottle Net Code 
 ; =============================================================================
 
-
 org $07B073
 Link_CheckNewY_ButtonPress:
 
@@ -19,18 +18,123 @@ PlayerItem_ReleaseBee:
 ; LinkItem_Bottle
 
 org $07A15B
+  JMP $FFA0 ; Local Bank Conditional 
+
+; =============================================================================
+; $07FFA0 
+
+org $07FFA0
 {
-  BIT $3A : BVS .return ;if Y or B are already pressed
+  LDA $030D
 
-  LDA $6C : BNE .return ; if we are standing in a dooray or not
+  BNE $07FFBD 
+  LDA $0300
+  BNE $07FFBD 
+  LDA $7F5020
+  TAX 
+  LDA $7EF35B, X
+  CMP #$02
+  BEQ $07FFBD
+  JSR $B073
+  JMP $A15E
 
-  JSR Link_CheckNewY_ButtonPress : BCC .return; Check if we just pressed Y Button  ; 
-  
-  JSL LinkItem_NewBottle
-
-.return
+; 07FFBD 
+  JMP $AFF8 ; LinkItem_BugCatchingNet
+  JMP $FAF0 ; 
+  NOP
+  JSR $B073
+  STZ $030F
   RTS
 }
+
+; =============================================================================
+; LinkItem_BugCatchingNet
+
+org $07AFF8
+{
+  BIT $3A
+  BVS $07B029
+  LDA $6C
+  BNE $07AFB4
+  JSR $B073
+  BCC $07AFB4
+  LDA $2F
+  LSR 
+  TAY 
+  LDX $AFF4,Y
+  LDA $AFCC,X
+  STA $0300
+  LDA #$03
+  STA $3D
+  STZ $030D
+  LDA #$10
+  STA $037A
+  JSL $8EFEF0
+  STZ $2E
+  LDA #$32
+  JSR $8028
+  JSR $AE65
+  LDA $67
+  AND #$F0
+  STA $67
+  DEC $3D
+  BPL $07B072
+  LDX $030D
+  INX 
+  STX $030D
+  LDA #$03
+  STA $3D
+  LDA $2F
+  LSR 
+  TAY 
+  LDA $AFF4,Y
+  CLC 
+  ADC $030D
+  TAY 
+  LDA $AFCC,Y
+  STA $0300
+  CPX #$0A
+  BNE $07B072
+  STZ $030D
+  STZ $0300
+  LDA $3A
+  AND #$80
+  STA $3A
+  STZ $037A
+  JSL $8EFEF8
+  STA $50
+  LDA #$80
+  STA $44
+  STA $45
+  RTS  
+}
+
+; 07B073
+org $07B073
+{
+  BIT $3A
+  BVS $07B085
+  LDA $46
+  BNE $07B085
+  LDA $F4
+  AND #$40
+  BEQ $07B085
+  TSB $3A
+  SEC
+  RTS
+
+; 07B085
+org $07B085
+  CLC
+  RTS
+}
+
+; $8EFEF0
+  LDA #$01
+  TSB $50
+  STA $0112
+  RTL 
+
 
 ; =============================================================================
 

@@ -35,6 +35,7 @@ Menu_DrawBackground:
 ;  Credit to Kan
 
 DrawMenuItem:
+{
 	STA.b $08
 	STY.b $00
 
@@ -60,11 +61,14 @@ DrawMenuItem:
 	LDA.w $0006,Y : STA.w $114A,X 
 
 	RTS
+}
+
 
 ; =============================================================================
 ;  Quest Icons Tilemap Draw Routine 
 
 DrawQuestIcons:
+{
   LDX.w #$10
 
 .loop
@@ -87,10 +91,13 @@ DrawQuestIcons:
   LDA.w #$20F5 : STA.w $13B4 : STA.w $13F4 : STA.w $1474 : STA.w $14B4 
 
   RTS
+}
+
 
 ; =============================================================================
 
 DrawTriforceIcon:
+{
   LDA.l $7EF37A 
   LDX.w #$3534                    
   LDY.w #$3544
@@ -125,24 +132,29 @@ DrawTriforceIcon:
 
 +
   RTS
+}
+
 
 ;===============================================================================
 
 DrawPendantIcons:
-    LDA.l $7EF374
-    LSR : BCC +
-    LDX.w #$2502 : STX.w $14A4 : INX : STX.w $14A6
-    LDX.w #$2512 : STX.w $14E4 : INX : STX.w $14E6
+{
+  LDA.l $7EF374
+  LSR : BCC +
+  LDX.w #$2502 : STX.w $14A4 : INX : STX.w $14A6
+  LDX.w #$2512 : STX.w $14E4 : INX : STX.w $14E6
 
-+   LSR : BCC +
-    LDX.w #$3D00 : STX.w $14AA : INX : STX.w $14AC
-    LDX.w #$3D10 : STX.w $14EA : INX : STX.w $14EC
++ LSR : BCC +
+  LDX.w #$3D00 : STX.w $14AA : INX : STX.w $14AC
+  LDX.w #$3D10 : STX.w $14EA : INX : STX.w $14EC
 
-+   LSR : BCC +
-    LDX.w #$2D06 : STX.w $14B0 : INX : STX.w $14B2
-    LDX.w #$2D16 : STX.w $14F0 : INX : STX.w $14F2
++ LSR : BCC +
+  LDX.w #$2D06 : STX.w $14B0 : INX : STX.w $14B2
+  LDX.w #$2D16 : STX.w $14F0 : INX : STX.w $14F2
 
-+   RTS
++ RTS
+}
+
 
 ;===============================================================================
 
@@ -156,20 +168,23 @@ DrawPendantIcons:
 ; E100 would be T = 16
 
 DrawHeartPieces:
-    LDA.l $7EF36B
-    AND.w #$00FF
-    CMP.w #3 : BEQ .top_right
-    CMP.w #1 : BEQ .top_left
-    BCS .bottom_left
-    RTS
+{
+  LDA.l $7EF36B
+  AND.w #$00FF
+  CMP.w #3 : BEQ .top_right
+  CMP.w #1 : BEQ .top_left
+  BCS .bottom_left
+  RTS
 
 .top_right
-    LDX.w #$64AD : STX.w $14A0
+  LDX.w #$64AD : STX.w $14A0
 .bottom_left
-    LDX.w #$24AE : STX.w $14DE 
+  LDX.w #$24AE : STX.w $14DE 
 .top_left
-    LDX.w #$24AD : STX.w $149E 
-    RTS
+  LDX.w #$24AD : STX.w $149E 
+  RTS
+}
+
 
 ;===============================================================================
 
