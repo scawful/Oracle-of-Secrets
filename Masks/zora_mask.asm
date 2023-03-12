@@ -63,7 +63,7 @@ zora_palette:
 
 ; =============================================================================
 
-LinkItem_UsingZoraMask:
+; LinkItem_UsingZoraMask:
 {
 
 }
@@ -75,19 +75,23 @@ LinkItem_UsingZoraMask:
 ; =============================================================================
 ; 22E0E0
 
+FairyFlippers_E0E0:
 {
-  LDA $1B
-  BNE $22E0F7
-  LDA $7F500E
+  LDA $1B     ; 1 if the player is in indoors and 0 otherwise.
+  BNE .alpha  ; we are outdoors 
+
+  LDA $7F500E ; are we currently underwater? 
   CMP #$01
-  BNE $22E0F7
+  BNE .alpha  ; we are not underwater 
+
   LDA #$01
-  STA $55
-  STZ $5D
+  STA $55     ; activate cape flag (invisible, invincible)
+  STZ $5D     ; reset player to ground state 
   LDA #$08
-  STA $5E
+  STA $5E     ; set the player speed 
   RTL 
 ;-------
+.alpha
   LDA #$01
   STA $4D
   RTL 
@@ -96,6 +100,7 @@ LinkItem_UsingZoraMask:
 ; =============================================================================
 ; 22E100
 
+FairyFlippers_E100:
 {
   LDA $2F     ; The direction the player is currently facing 
   STA $0323   ; Mirror of $2F 
@@ -106,7 +111,7 @@ LinkItem_UsingZoraMask:
   NOP 
   LDA $0345   ; Set to 1 when we are in deep water, 0 otherwise 
   CMP #$01    ; Are we in deep water? 
-  BEQ $22E120
+  BEQ FairyFlippers_E120
   LDA $7F500E
   CMP #$01
   BEQ $22E11C
@@ -116,6 +121,7 @@ LinkItem_UsingZoraMask:
 ; =============================================================================
 ; 22E120 
 
+FairyFlippers_E120:
 {
   LDA $F0     ; Joypad 1 Register 
   CMP #$40
@@ -146,6 +152,7 @@ LinkItem_UsingZoraMask:
 ; =============================================================================
 ; 22E17D
 
+FairyFlippers_E17D:
 {
   LDA $7F500E
   CMP #$00
@@ -186,6 +193,7 @@ LinkItem_UsingZoraMask:
 ; Returns to 3C30B below 
 ; Noted changes added 
 
+FairyFlippers_SetFlipperAbilities:
 {
   LDA $1B     ; Flag set to 1 when indoors, 0 otherwise
   BNE $22E1F7
@@ -209,6 +217,7 @@ LinkItem_UsingZoraMask:
 ; =============================================================================
 ; *$3C2C3-$3C30B LOCAL
 
+Vanilla_UntitledRoutine:
 {
   LDA $1B : BNE .alpha          ; Set to 1 if indoors, 0 otherwise 
   LDX #$02
@@ -251,6 +260,7 @@ LinkItem_UsingZoraMask:
 ; =============================================================================
 ; 22E260
 
+FairyFlippers_E260:
 {
   LDA $7EF33C ; fairy flippers save ram 
   AND #$00FF
@@ -282,7 +292,7 @@ LinkItem_UsingZoraMask:
 ; Observed behavior of preserving the direction link was facing when diving
 ; E.g. face left, dive, turn right underwater, and resurface facing left
 
-FairyFlipper_Prepare:
+FairyFlippers_Prepare:
 {
   JSR FairyFlippers_Main        ; $E530
   JSL FairyFlippers_HandleMagic ; $22E670
@@ -303,7 +313,8 @@ FairyFlipper_Prepare:
 
   LDA #$40
   STA $F0
-  JMP $079657 ; Apart of LinkState_Swimming 
+  ; TODO: RESTORE ME 
+  ; JMP $079657 ; Apart of LinkState_Swimming 
 
 .gamma
   LDA $F0 ; Joypad 1 Register (preserves previous press)
@@ -322,12 +333,14 @@ FairyFlippers_RestoreControlHandler:
   LDA $5D ; Player Handler or "State"     
   ASL 
   TAX 
-  JMP $078106 ; Link_ControlHandler Jump Table Statement 
+  ; TODO: RESTORE ME 
+  ; JMP $078106 ; Link_ControlHandler Jump Table Statement 
 }
 
 ; =============================================================================
 ; 22E300
 
+FairyFlippers_E300:
 {
   LDA #$00
   STA $5D ; Player Handler or "State"
@@ -342,6 +355,7 @@ FairyFlippers_RestoreControlHandler:
 ; =============================================================================
 ; 22E340 
 
+FairyFlippers_E340:
 {
   LDA $1B     ; 1 if indoors, 0 otherwise
   BEQ $22E34E
@@ -359,7 +373,7 @@ FairyFlippers_RestoreControlHandler:
 ; =============================================================================
 ; 22E460
 
-FairyFlippers_Untitled:
+FairyFlippers_E460:
 {
   LDA $02E4  ; If flag nonzero, Link cannot move 
   AND #$00FF
@@ -385,6 +399,7 @@ FairyFlippers_Untitled:
 ; =============================================================================
 ; 22E500
 
+FairyFlippers_E500:
 {
   CMP #$5A
   BEQ $22E507
@@ -428,6 +443,7 @@ FairyFlippers_Main:
 ; =============================================================================
 ; 22E5F0
 
+FairyFlippers_E5F0:
 {
   LDA $7EF33C
   BNE $22E5F7
@@ -446,6 +462,7 @@ FairyFlippers_Main:
 
 ; Referenced at: 0D:E507
 
+FairyFlippers_E600:
 {
   LDA $7EF34A
   AND #$00FF
@@ -487,7 +504,8 @@ FairyFlippers_HandleMagic:
   BNE $22E688 ; branch if != 0 
   LDA #$3C
   STA $012E
-  JMP $22E141
+  ; TODO: RESTORE ME
+  ; JMP $22E141
   LDA $7F500D ; load timer 
   BNE $22E69E ; branch if != 0 
   LDA #$18
@@ -505,6 +523,7 @@ FairyFlippers_HandleMagic:
 ; =============================================================================
 ; 22E700
 
+FairyFlippers_E700:
 {
   STA $F6
   STY $FA
@@ -527,6 +546,7 @@ FairyFlippers_HandleMagic:
 ; =============================================================================
 ; 22E760
 
+FairyFlippers_E760:
 {
   LDA #$0E10
   STA $7EE000
@@ -539,6 +559,7 @@ FairyFlippers_HandleMagic:
 ; 22E780
 ; Jesucristo...
 
+FairyFlippers_E780:
 {
   REP #$30
   LDY #$0000
@@ -624,6 +645,7 @@ FairyFlippers_HandleMagic:
 ; =============================================================================
 ; 22E830
 
+FairyFlippers_E830:
 {
   ADC #$0020
   STA $1CD0

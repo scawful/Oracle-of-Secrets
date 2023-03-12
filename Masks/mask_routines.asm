@@ -1,3 +1,7 @@
+; no glove color 
+org $0DEE24
+ db $80
+
 org $09912C
 AddTransformationCloud:
 
@@ -6,7 +10,6 @@ Link_CheckNewY_ButtonPress:
 
 org $078028
 Player_DoSfx2:
-
 
 org $278000
 StartupMasks:
