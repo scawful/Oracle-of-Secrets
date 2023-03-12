@@ -65,16 +65,12 @@ namespace Oracle
   print  "End of Menu/menu.asm              ", pc
 
   ; ---------------------------------------------------------
-  incsrc "Items/bottle_net.asm"
-  print "End of Items/bottle_net.asm        ", pc
-
-  ; ---------------------------------------------------------
-  incsrc "Events/intro.asm"
-  print  "End of Events/intro.asm           ", pc
+  ; incsrc "Items/bottle_net.asm"
+  ; print "End of Items/bottle_net.asm        ", pc
 
   ; ---------------------------------------------------------
   incsrc "Events/maku_tree.asm"
-  print  "End of Events/maku_tree.asm     ", pc
+  print  "End of Events/maku_tree.asm       ", pc
 
   ; ---------------------------------------------------------
   incsrc "Events/lostsea.asm"
