@@ -10,28 +10,6 @@
   
 ;   fill $763
 ; }
-
-
-
-org $07983A
-  Player_ResetSwimState:
-
-org $079873
-  Player_ResetSwimCollision:
-
-org $0ED6C0
-  LoadActualGearPalettes:
-
-org $07E245 
-  Link_HandleVelocity:
-
-org $07915E
-  LinkState_ExitingDash:
-
-org $07E6A6
-  Link_HandleMovingAnimation_FullLongEntry:
-
-
 ; ==============================================================================
 
 ; *$3D798-$3D7D7 LOCAL
