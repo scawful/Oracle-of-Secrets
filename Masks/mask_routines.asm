@@ -28,6 +28,13 @@ StartupMasks:
   RTL 
 }
 
+CancelMask:
+{
+  JSL Palette_ArmorAndGloves
+  LDA #$10 : STA $BC : STZ $02B2
+  RTL
+}
+
 ; =============================================================================
 
 org $008827

@@ -65,9 +65,6 @@ LinkItem_WolfMask:
   RTS
 }
 
-print "Next address for jump in bank07:  ", pc 
-
-
 ; =============================================================================
 
 org $388000

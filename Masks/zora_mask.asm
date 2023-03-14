@@ -1,14 +1,20 @@
 ; =============================================================================
 ; Zora Mask
 ; Fairy Flippers RAM Position $7EF33C - 01
-
-; Normal Flippers RAM Position $7ef356 - 01
-
+; Normal Flippers RAM Position $7EF356 - 01
+; 
+; Underwater Flag RAM Position $7F500E
 ; =============================================================================
 
 org $07A569
 LinkItem_ZoraMask:
 {
+  LDA $02B2 : CMP #$02 : BNE .equip
+  ; JSR LinkItem_UsingZoraMask
+.equip
+  ; Check for R button held 
+  LDA $F2 : CMP #$10 : BNE .return 
+
   JSR Link_CheckNewY_ButtonPress : BCC .return
   LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
 
@@ -63,10 +69,52 @@ zora_palette:
 
 ; =============================================================================
 
-; LinkItem_UsingZoraMask:
+org $07F93F
+LinkState_UsingZoraMask:
 {
+  ; Check if we are in water or not 
+  LDA $5D : CMP #$04 : BEQ .swimming
+  JMP .return
 
+  ; Check if we are indoors or outdoors 
+.swimming
+  LDA $1B : BEQ .overworld ; z flag is 1 
+
+  ; Check if already underwater
+
+  ; Handle dungeon swimming (hard)
+
+  ; Else, restore to normal swimming state 
+
+  RTL 
+
+.overworld 
+  JSR Link_CheckNewY_ButtonPress : BCC .return
+  LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state
+
+  ; Check if already underwater 
+  LDA $0AAB : BEQ .dive
+  JMP .return
+
+.dive
+  ; Handle overworld underwater swimming 
+  LDA #$01 : STA $55 ; Set cape flag 
+  STA $037B
+  LDA #$08 : STA $5E ; Set underwater speed 
+
+  ; Else, restore to normal swimming state 
+.return
+  JSR $E8F0 ; HandleIndoorCameraAndDoors 
 }
+
+print "Next address for jump in bank07:  ", pc 
+
+; =============================================================================
+
+; End of LinkState_Swimming
+org $079781
+  JSR LinkState_UsingZoraMask
+  RTS
 
 ; =============================================================================
 ; Disassembled/Debugged Code of Conn's Zora Flippers 
@@ -75,6 +123,7 @@ zora_palette:
 ; =============================================================================
 ; 22E0E0
 
+org $228000
 FairyFlippers_E0E0:
 {
   LDA $1B     ; 1 if the player is in indoors and 0 otherwise.
@@ -104,7 +153,7 @@ FairyFlippers_E100:
 {
   LDA $2F     ; The direction the player is currently facing 
   STA $0323   ; Mirror of $2F 
-  JMP $E5F0 
+  JMP FairyFlippers_E5F0 ; $E5F0   
   NOP 
   NOP 
   NOP 
@@ -196,11 +245,11 @@ FairyFlippers_E17D:
 FairyFlippers_SetFlipperAbilities:
 {
   LDA $1B     ; Flag set to 1 when indoors, 0 otherwise
-  BNE $22E1F7
+  BNE .set_player_state
 
-  LDA $7F500E
+  LDA $7F500E ; 
   CMP #$01
-  BNE $22E1F7
+  BNE .set_player_state
 
   LDA #$01
   STA $55 ; Set cape flag (invisible invincible)
@@ -209,6 +258,7 @@ FairyFlippers_SetFlipperAbilities:
   STA $5E ; Set player speed 
   RTL 
 ;-------
+.set_player_state
   LDA #$06 ; recoil mode 2 
   STA $5D ; Player Handler or "State"
   RTL 
@@ -248,11 +298,11 @@ Vanilla_UntitledRoutine:
   LDA $C2C0,X
   JSL $8EFCE0 ; Dungeon Code (Flippers?)
   CMP #$02 : BEQ .delta
-  JSL $22E0E0 
+  JSL FairyFlippers_E0E0 ; $22E0E0 
   STZ $0360
 
 .delta
-  JSL $22E1E0
+  JSL FairyFlippers_SetFlipperAbilities ; $22E1E0
   RTS 
 }
 
@@ -300,9 +350,10 @@ FairyFlippers_Prepare:
   BEQ .underwater
   JMP FairyFlippers_RestoreControlHandler ; $E2F0
 
+  ; if so, restore control 
 .underwater
   LDA $F0 ; Joypad 1 Register (preserves previous press)
-  SEC : SBC #$0B ; ??? Not sure 
+  SEC : SBC #$0B ; up left right it seems 
   BCS .beta
   JMP FairyFlippers_RestoreControlHandler ; $E2F0
 
