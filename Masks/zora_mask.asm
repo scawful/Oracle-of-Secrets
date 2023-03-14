@@ -6,6 +6,9 @@
 ; Underwater Flag RAM Position $7F500E
 ; =============================================================================
 
+org $0998FC
+  AddTransitionSplash:
+
 org $07A569
 LinkItem_ZoraMask:
 {
@@ -74,35 +77,84 @@ LinkState_UsingZoraMask:
 {
   ; Check if we are in water or not 
   LDA $5D : CMP #$04 : BEQ .swimming
+  
+  ; Return to normal state 
+  STZ $55
+  STZ $037B
+  STZ $0351
+  LDA #$00 : STA $5E ; Reset speed to normal 
+  STA $037B
   JMP .return
 
-  ; Check if we are indoors or outdoors 
 .swimming
+; -----------------------------------------------------------------------------
+
+  ; Check if we are indoors or outdoors 
   LDA $1B : BEQ .overworld ; z flag is 1 
 
+  CLC
+  REP #$30
+  JSR Link_CheckNewY_ButtonPress : BCC .return_dungeon
+  LDA $3A : AND.b #$BF : STA $3A
+  SEP #$30
+
   ; Check if already underwater
+  LDA $0AAB : BEQ .dive_dungeon
 
+  JMP .return_dungeon
+  
   ; Handle dungeon swimming (hard)
+.dive_dungeon
+  ; Set underwater walking mode 
+  LDA #$01 : STA $5D
+  STA $0AAB
 
-  ; Else, restore to normal swimming state 
+  ; Splash visual effect 
+  LDA.b #$15 : LDY.b #$00
+  JSL AddTransitionSplash
 
-  RTL 
+  ; Change the layer Link is on to BG2 
+  LDA.b #$00 : STA $EE
+
+.return_dungeon
+  JSR $E8F0 ; HandleIndoorCameraAndDoors
+  RTS
+
+; -----------------------------------------------------------------------------
 
 .overworld 
+  ; Check the Y button and clear state if activated
   JSR Link_CheckNewY_ButtonPress : BCC .return
-  LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state
+  LDA $3A : AND.b #$BF : STA $3A       
 
   ; Check if already underwater 
   LDA $0AAB : BEQ .dive
+
+  STZ $55              ; Reset cape flag 
+  STZ $0AAB            ; Reset underwater flag 
+  STZ $0351            ; Reset ripple flag 
+  LDA #$00 : STA $037B ; Reset invincibility flag
+  LDA #$04 : STA $5D
+
   JMP .return
 
 .dive
   ; Handle overworld underwater swimming 
-  LDA #$01 : STA $55 ; Set cape flag 
-  STA $037B
-  LDA #$08 : STA $5E ; Set underwater speed 
+  LDA #$01 : STA $55   ; Set cape flag 
+  STA $037B            ; Set invincible flag 
+  LDA #$08 : STA $5E   ; Set underwater speed 
+  LDA #$01 : STA $0AAB ; Set underwater flag
+  STA $0351 ; Water ripples around sprite 
 
-  ; Else, restore to normal swimming state 
+  ; Splash visual effect 
+  LDA.b #$15 : LDY.b #$00
+  JSL AddTransitionSplash
+
+  ; Stay in swimming mode 
+  LDA #$04 : STA $5D
+  ; Splash sound effect 
+  ; LDA #$24 : STA $012E  
+
 .return
   JSR $E8F0 ; HandleIndoorCameraAndDoors 
 }
@@ -123,7 +175,7 @@ org $079781
 ; =============================================================================
 ; 22E0E0
 
-org $228000
+org $208000
 FairyFlippers_E0E0:
 {
   LDA $1B     ; 1 if the player is in indoors and 0 otherwise.
