@@ -1,12 +1,64 @@
-lorom
+SprAction    = $0D80
+SprFrame     = $0D90 ; This is also used to do various things in different sprites
+SprMiscA     = $0DA0 ; This can be used to do anything in sprite
+SprMiscB     = $0DB0 ; This can be used to do anything in sprite
+SprMiscC     = $0DE0 ; This can be used to do anything in sprite (Mainly used for sprite direction)
+SprMiscD     = $0E90 ; This can be used to do anything in sprite
+SprMiscE     = $0EB0 ; This can be used to do anything in sprite
+SprMiscF     = $0EC0 ; This can be used to do anything in sprite
+SprMiscG     = $0ED0 ; This can be used to do anything in sprite
 
-!ADD = "CLC : ADC"
-!SUB = "SEC : SBC"
-!BLT = "BCC"
-!BGE = "BCS"
+SprStunTimer = $0B58
+
+SprTimerA    = $0DF0 ; This address value is decreased by one every frames
+SprTimerB    = $0E00 ; This address value is decreased by one every frames
+SprTimerC    = $0E10 ; This address value is decreased by one every frames
+SprTimerD    = $0EE0 ; This address value is decreased by one every frames
+SprTimerE    = $0F10 ; This address value is decreased by one every frames
+SprTimerF    = $0F80 ; This address value is decreased by 2 every frames is also used by the gravity routine
+
+SprPause     = $0F00 ; Can probably be used for anything 
+SprFloor     = $0F20
+SprType      = $0E20 ; This contains the ID of the sprite 00 = raven, 01 = vulture, etc...
+SprSubtype   = $0E30 ; This contains the Sub ID of the sprite
+SprState     = $0DD0 ; This tells if the sprite is alive, dead, frozen, etc...
+
+SprNbrOAM    = $0E40 ; Bits 0-4: define the number of OAM slots used by the sprite
+SprHealth    = $0E50
+SprGfxProps  = $0E60
+SprCollision = $0E70 ; When a sprite hit a wall, this gets set to the direction in which the collision occurred.
+SprDelay     = $0E80 ; Used in sprite state 0x03 (falling in water), used as delay in most of the sprites
+SprRecoil    = $0EA0 ; Recoil Timer
+SprDeath     = $0EF0
+
+SprProps     = $0F50 ; DIWS UUUU - [D boss death][I Impervious to all attacks][W Water slash] [S Draw Shadow] [U Unused]
+SprHitbox    = $0F60 ; ISPH HHHH - [I ignore collisions][S Statis (not alive eg beamos)][P Persist code still run outside of camera][H Hitbox] 
+SprHeight    = $0F70 ; Distance from the shadow
+SprHeightS   = $0F90 ; Distance from the shadow subpixel
+
+SprYRecoil   = $0F30
+SprXRecoil   = $0F40
+
+SprGfx       = $0DC0 ; Determine the GFX used for the sprite
+OAMPtr       = $90
+OAMPtrH      = $92
+
+SprY         = $0D00
+SprX         = $0D10
+SprYH        = $0D20
+SprXH        = $0D30
+
+SprYSpeed    = $0D40
+SprXSpeed    = $0D50
+
+SprYRound    = $0D60
+SprXRound    = $0D70
+
+SprCachedX   = $0FD8 ; This doesn't need to be indexed with X it contains the 16bit position of the sprite
+SprCachedY   = $0FDA ; This doesn't need to be indexed with X it contains the 16bit position of the sprite
 
 
-;=================================================================
+
 org $09AE64
 Sprite_SetSpawnedCoords:
 
@@ -39,7 +91,6 @@ Sprite_AttemptDamageToPlayerPlusRecoil:
 ;Draw the sprite depending of the position of the player (if he has to be over or under link)
 org $06F864
 Sprite_OAM_AllocateDeferToPlayer:
-
 
 org $0DBA80
 OAM_AllocateFromRegionA:
@@ -163,8 +214,14 @@ Sprite_CheckDamageToPlayerIgnoreLayer:
 ;=================================================================
 ;Sound_SetSfx2PanLong LONG
 ;play a sound loaded in A
+org $0DBB6E
+Sound_SetSfx1PanLong:
+
 org $0DBB7C
 Sound_SetSfx2PanLong:
+
+org $0DBB8A
+Sound_SetSfx3PanLong:
 
 ;=================================================================
 ;Sprite_SpawnDynamically LONG
@@ -190,8 +247,8 @@ Sprite_ApplyConveyorAdjustment:
 ;=================================================================
 ;SetupHitBox LONG
 ;set the hitbox of the player (i think)
-org $0683EA
-SetupHitBox:
+;org $0683EA
+;Sprite_SetupHitBoxLong:
 
 ;=================================================================
 ;Dungeon_SpriteInducedTilemapUpdate LONG
@@ -276,3 +333,16 @@ Sprite_ProjectSpeedTowardsEntityLong:
 
 org $0DDA06
 Sprite_SpawnFireball:
+
+org $1D808C
+Sprite_MoveLong:
+
+org $1EFF8D
+Sprite_DrawRippleIfInWater:
+
+org $058008
+Sprite_SpawnSparkleGarnish:
+
+
+org $06EA1A
+Sprite_ProjectSpeedTowardsPlayer:

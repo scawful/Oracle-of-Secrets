@@ -85,38 +85,25 @@ LinkState_UsingZoraMask:
   LDA #$00 : STA $5E ; Reset speed to normal 
   STA $037B
   JMP .return
-
+  
 .swimming
 ; -----------------------------------------------------------------------------
 
   ; Check if we are indoors or outdoors 
   LDA $1B : BEQ .overworld ; z flag is 1 
 
-  CLC
-  REP #$30
-  JSR Link_CheckNewY_ButtonPress : BCC .return_dungeon
-  LDA $3A : AND.b #$BF : STA $3A
-  SEP #$30
-
   ; Check if already underwater
   LDA $0AAB : BEQ .dive_dungeon
-
-  JMP .return_dungeon
   
   ; Handle dungeon swimming (hard)
 .dive_dungeon
-  ; Set underwater walking mode 
-  LDA #$01 : STA $5D
-  STA $0AAB
 
-  ; Splash visual effect 
+  LDA #$01 : STA $5D
+  ; Else, restore to normal swimming state 
   LDA.b #$15 : LDY.b #$00
   JSL AddTransitionSplash
-
-  ; Change the layer Link is on to BG2 
   LDA.b #$00 : STA $EE
 
-.return_dungeon
   JSR $E8F0 ; HandleIndoorCameraAndDoors
   RTS
 
@@ -130,9 +117,9 @@ LinkState_UsingZoraMask:
   ; Check if already underwater 
   LDA $0AAB : BEQ .dive
 
-  STZ $55              ; Reset cape flag 
-  STZ $0AAB            ; Reset underwater flag 
-  STZ $0351            ; Reset ripple flag 
+  STZ $55     ; Reset cape flag 
+  STZ $0AAB   ; Reset underwater flag 
+  STZ $0351   ; Reset ripple flag 
   LDA #$00 : STA $037B ; Reset invincibility flag
   LDA #$04 : STA $5D
 

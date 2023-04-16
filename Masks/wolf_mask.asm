@@ -1,6 +1,9 @@
 ; =============================================================================
 ; Wolf Mask 
-
+; 
+; Talk to animals 
+; Dig for treasure ability (shovel)
+; 
 ; =============================================================================
 
 org $07A3DB
@@ -31,16 +34,9 @@ LinkItem_WolfMask:
   JSR LinkItem_Shovel
 
 .equip 
-  ; JSR Link_CheckNewY_ButtonPress : BCC .return
-
-  ; joypad 1 register (AXLR|????)
-  ; check for R button press
+  ; check for R button held
   LDA $F2 : CMP #$10 : BNE .return 
-  LDA $46 : BNE .return
-  TSB $3A 
-  SEC 
-  ; LDA $F4 : AND.b #$10 : BEQ .return
-
+  JSR Link_CheckNewY_ButtonPress : BCC .return
   LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
 
   LDA $6C : BNE .return                 ; in a doorway

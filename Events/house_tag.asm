@@ -10,7 +10,7 @@ org $01CC18 ; override routine 0x39 "Holes(7)"
 org $01CC5A 
   HouseTag_Return:
 
-org $238000
+org $268000
 HouseTag:
 {
   PHX 
@@ -95,8 +95,8 @@ HouseTag_WakeUpPlayer:
   LDA $7EF3C6 : ORA.b #$10 : STA $7EF3C6
 
   ; Set the game mode
-  LDA #$00 : STA $7ef3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
-  LDA #$00 : STA $7ef3CC   ; disable telepathic message
+  LDA #$00 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
+  LDA #$00 : STA $7EF3CC   ; disable telepathic message
   JSL $00FC41   ; fix monsters
   
   RTS
@@ -110,30 +110,11 @@ HouseTag_End:
 }
 
 ; ==============================================================================
+; Dying Uncle Code Hook
+; Uncle won't remove tagalong when interacting 
 
 org $05DF3A
 LDA.b #$01 : STA $7EF3CC
-
-; =============================================================================
-;  Intro Modifier 
-;  Skips the intro sequence with the rain 
-
-; lorom
-
-; org $05DF12
-; JSL $04ECA0
-; NOP
-; NOP
-
-; org $04ECA0
-; STZ $0DD0,x
-; STZ $02E4     ; repeat native code overwritten by hook
-; LDA #$02
-; STA $7ef3C5   ; store "part 2"
-; LDA #$00
-; STA $7ef3CC   ; disable telepathic message
-; JSL $00FC41   ; fix monsters
-; RTL
 
 ; =============================================================================
 ; SRM Start Modifier

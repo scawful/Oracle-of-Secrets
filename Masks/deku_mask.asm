@@ -4,7 +4,7 @@
 ; =============================================================================
 ; Hooks 
 
-incsrc "../Sprites/sprite_functions_hooks.asm"
+; incsrc "../Sprites/sprite_functions_hooks.asm"
 
 org $008A01
   LDA $BC
@@ -160,7 +160,7 @@ LinkItem_UsingQuake:
 
 ; =============================================================================
 
-org $288000
+org $318000
 ;incsrc "link_handler.asm"
 LinkItem_UsingDekuMask:
 {
