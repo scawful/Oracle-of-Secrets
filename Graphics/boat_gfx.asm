@@ -9,7 +9,7 @@ org $00E19B
 
 ; ==============================================================================
 
-org $2F8000
+org $3F8000
 CheckForChangeGraphicsNormalLoad:
 {
   JSL InitTilesets ;calls $00E19B that was replaced

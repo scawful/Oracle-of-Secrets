@@ -29,7 +29,7 @@ JSL LinkItem_SecretsBook			  ; overwrite it (originally JSL $099F91)
 ; go to expanded space to write our routine 
 ; (keep EveryFrame.asm in mind for the right adresses)
 ; org $3CA600
-org $228000
+org $2B8000
 LinkItem_SecretsBook:
 {
   LDA $1B				    ; load data that tells us whether we are in a building or not

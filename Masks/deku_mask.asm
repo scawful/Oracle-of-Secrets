@@ -161,7 +161,6 @@ LinkItem_UsingQuake:
 ; =============================================================================
 
 org $318000
-;incsrc "link_handler.asm"
 LinkItem_UsingDekuMask:
 {
   SEP #$20

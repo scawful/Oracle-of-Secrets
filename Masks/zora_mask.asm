@@ -162,7 +162,7 @@ org $079781
 ; =============================================================================
 ; 22E0E0
 
-org $208000
+org $348000
 FairyFlippers_E0E0:
 {
   LDA $1B     ; 1 if the player is in indoors and 0 otherwise.

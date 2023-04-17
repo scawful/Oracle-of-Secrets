@@ -10,12 +10,13 @@ incsrc sprite_functions_hooks.asm
 ;==============================================================================
 
 org $298000
-incsrc sprite_jump_table.asm
+incsrc sprite_new_table.asm
 
 ;==============================================================================
 
 org $308000
 incsrc sprite_new_functions.asm
+
 
 ;==============================================================================
 ; Sprite Properties
@@ -29,7 +30,7 @@ incsrc sprite_new_functions.asm
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 1  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 0  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 0  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -211,27 +212,22 @@ RTS
 ;==============================================================================
 
 .start_index
-db $00, $02, $04
+db $00, $02
 .nbr_of_tiles
-db 1, 1, 1
+db 1, 1
 .x_offsets
-dw 0, 0
 dw 0, 0
 dw 0, 0
 .y_offsets
 dw 4, -8
 dw 4, -7
-dw 4, -8
 .chr
-db $AA, $A8
 db $AA, $A8
 db $AA, $A8
 .properties
 db $3B, $3B
-db $7B, $3B
 db $3B, $3B
 .sizes
-db $02, $02
 db $02, $02
 db $02, $02
 }

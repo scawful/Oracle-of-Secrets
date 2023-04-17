@@ -10,7 +10,7 @@ org $01CC18 ; override routine 0x39 "Holes(7)"
 org $01CC5A 
   HouseTag_Return:
 
-org $268000
+org $2F8000
 HouseTag:
 {
   PHX 

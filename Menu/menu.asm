@@ -34,7 +34,7 @@ pullpc
 ; =============================================================================
 ; Menu Bank 
 
-org $248000
+org $2D8000
 incsrc "menu_gfx_table.asm"
 incsrc "menu_text.asm"
 incsrc "menu_palette.asm"

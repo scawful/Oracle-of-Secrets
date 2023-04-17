@@ -14,26 +14,36 @@
 ; 
 ;
 ; Expanded Banks Key:
-;   20 - None
-;   21 - Jump Feather
-;   22 - Book of Secrets
-;   23 - Bottle Net 
-;   24 - Menu
-;   25 - HUD
-;   26 - House Tag
+;   21 - N/A
+;   22 - N/A
+;   23 - N/A
+;   24 - N/A
+;   25 - N/A
+;   26 - N/A
 ;   27 - Mask Routines(?)
 ;   28 - None
 ;   29 - Custom Sprite Jump Table
+;   2A - Jump Feather
+;   2B - Book of Secrets
+;   2C - Bottle Net
+;   2D - Menu
+;   2E - HUD
+;   2F - House Tag
 ;   30 - Custom Sprite Functions
 ;   31 - Deku Link Code
 ;   32 - Farore Sprite Code
 ;   33 - None
-;   34 - None
+;   34 - Zora Link Code
 ;   35 - Deku Link GFX
 ;   36 - Zora Link GFX
 ;   37 - Bunny Link GFX
 ;   38 - Wolf Link GFX
 ;   39 - Palette_ArmorAndGloves  
+;   3A - None
+;   3B - None
+;   3C - None
+;   3D - None
+;   3F - Boat GFX
 ;   
 ;===========================================================
 
@@ -45,7 +55,6 @@ namespace Oracle
 
   incsrc "Util/ram.asm"
   incsrc "Util/functions.asm"
-
 
   incsrc "Sprites/farore_and_maku.asm"
   print  "End of Sprites/farore_and_maku.asm", pc
