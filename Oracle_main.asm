@@ -56,71 +56,87 @@ namespace Oracle
   incsrc "Util/ram.asm"
   incsrc "Util/functions.asm"
 
+  ; ---------------------------------------------------------
+  ; Sprites
+
   incsrc "Sprites/farore_and_maku.asm"
-  print  "End of Sprites/farore_and_maku.asm", pc
+  print  "End of farore_and_maku.asm        ", pc
+
+  incsrc "Sprites/Kydrog/kydrog.asm"
+  print  "End of kydrog.asm                 ", pc
 
   ; ---------------------------------------------------------
+  ; Transformation Masks
+
+  incsrc "Masks/mask_routines.asm"
+
+  incsrc "Masks/deku_mask.asm"
+  print  "End of Masks/deku_mask.asm        ", pc
+
+  incsrc "Masks/zora_mask.asm"
+  print  "End of Masks/zora_mask.asm        ", pc
+
+  incsrc "Masks/wolf_mask.asm"
+  print  "End of Masks/wolf_mask.asm        ", pc
+
+  incsrc "Masks/bunny_hood.asm"
+  print  "End of Masks/bunny_hood.asm       ", pc
+
+
+  ; ---------------------------------------------------------
+  ; Items
+
   incsrc "Items/jump_feather.asm"
   print  "End of Items/jump_feather.asm     ", pc
 
-  ; ---------------------------------------------------------
-  incsrc "Graphics/boat_gfx.asm"
-  print  "End of Graphics/boat_gfx.asm      ", pc
-
-  ; ---------------------------------------------------------
-  incsrc "Dungeons/keyblock.asm"
-  print  "End of Dungeons/keyblock.asm      ", pc
-
-  ; ---------------------------------------------------------
-  incsrc "Events/house_tag.asm"
-  print  "End of Events/house_tag.asm       ", pc
-
-  ; ---------------------------------------------------------
-  incsrc "Menu/menu.asm"
-  print  "End of Menu/menu.asm              ", pc
-
-  ; ---------------------------------------------------------
-  ; incsrc "Items/bottle_net.asm"
-  ; print "End of Items/bottle_net.asm        ", pc
-
-  ; ---------------------------------------------------------
-  incsrc "Events/maku_tree.asm"
-  print  "End of Events/maku_tree.asm       ", pc
-
-  ; ---------------------------------------------------------
-  incsrc "Events/lostsea.asm"
-  print  "End of Events/lostsea.asm         ", pc
-
-  ; ---------------------------------------------------------
   incsrc "Items/ice_rod.asm"
   print  "End of Items/ice_rod.asm          ", pc
 
-  ; ---------------------------------------------------------
   incsrc "Items/book_of_secrets.asm"
   print  "End of Items/book_of_secrets.asm  ", pc
+
+  ; incsrc "Items/bottle_net.asm"
+  ; print "End of Items/bottle_net.asm        ", pc
+
+
+  ; ---------------------------------------------------------
+  ; Events
+
+  incsrc "Events/house_tag.asm"
+  print  "End of Events/house_tag.asm       ", pc
+
+  incsrc "Events/lost_sea.asm"
+  print  "End of Events/lost_sea.asm         ", pc
+
+
+  ; ---------------------------------------------------------
+  ; Graphics
+
+  incsrc "Graphics/boat_gfx.asm"
+  print  "End of Graphics/boat_gfx.asm      ", pc
+
+  incsrc "Events/maku_tree.asm"
+  print  "End of Events/maku_tree.asm       ", pc
+
+
+  ; ---------------------------------------------------------
+  ; Dungeon
+
+  incsrc "Dungeons/keyblock.asm"
+  print  "End of Dungeons/keyblock.asm      ", pc
+
+
+  ; ---------------------------------------------------------
+  ; Custom Menu and HUD
+
+  incsrc "Menu/menu.asm"
+  print  "End of Menu/menu.asm              ", pc
+
 
   ; ---------------------------------------------------------
   incsrc "Debug/debug.asm"
   print  "End of Debug/debug.asm            ", pc
   
-  ; ---------------------------------------------------------
-  incsrc "Masks/mask_routines.asm"
-
-  ; ---------------------------------------------------------
-  incsrc "Masks/deku_mask.asm"
-  print  "End of Masks/deku_mask.asm        ", pc
-
-  ; ---------------------------------------------------------
-  incsrc "Masks/zora_mask.asm"
-  print  "End of Masks/zora_mask.asm        ", pc
-
-  ; ---------------------------------------------------------
-  incsrc "Masks/wolf_mask.asm"
-  print  "End of Masks/wolf_mask.asm        ", pc
-
-  ; ---------------------------------------------------------
-  incsrc "Masks/bunny_hood.asm"
-  print  "End of Masks/bunny_hood.asm       ", pc
 
   print ""
   print "Finished applying patches"
