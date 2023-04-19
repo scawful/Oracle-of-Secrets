@@ -1,31 +1,10 @@
 ; =============================================================================
 ; Deku Mask 
 
-; =============================================================================
-; Hooks 
-
-; incsrc "../Sprites/sprite_functions_hooks.asm"
+; ============================================================================= 
 
 org $008A01
   LDA $BC
-
-org $07983A
-  Player_ResetSwimState:
-
-org $0ED6C0
-  LoadActualGearPalettes:
-
-org $07E245 
-  Link_HandleVelocity:
-
-org $07915E
-  LinkState_ExitingDash:
-
-org $07E6A6
-  Link_HandleMovingAnimation_FullLongEntry:
-
-org $01FF28
-  Player_CacheStatePriorToHandler:
   
 ; =============================================================================
 
@@ -111,8 +90,13 @@ Link_HandleYItems_Long:
   PLB
   RTL
 }
-
 print pc 
+
+org $07F1A3
+Player_ResetState_A:
+
+org $07F1FA
+Player_ResetState_C:
 
 ; =============================================================================
 
@@ -134,11 +118,14 @@ LinkItem_DekuMask:
   LDA #$0A : STA $5D                    ; set control handler to mode "using quake"
   LDA #$35 : STA $BC                    ; put the mask on
   LDA #$01 : STA $02B2
+  
+  LDA #$02 : STA $03FC
   BRA .return
 
 .unequip
   JSL Palette_ArmorAndGloves
   STZ $5D
+  STZ $03FC
   LDA #$10 : STA $BC : STZ $02B2        ; take the mask off
 
 .return
@@ -151,9 +138,10 @@ LinkItem_DekuMask:
 org $07A6D6
 LinkItem_UsingQuake: 
 {
+  JSR $82DA
   JSL LinkItem_UsingDekuMask
+  RTS
   NOP #152
-  ; 07A6DB
   print pc 
 }
 ; end of UsingQuake is at 07A773
@@ -163,31 +151,38 @@ LinkItem_UsingQuake:
 org $318000
 LinkItem_UsingDekuMask:
 {
-  SEP #$20
-  JSL CheckIndoorStatus_Long
+  ; SEP #$20
+  ; JSL CheckIndoorStatus_Long
+
+;   LDA.b $F5
+;   AND.b #$80
+;   BEQ .dont_toggle_oob
+
+;   LDA.w $037F
+;   EOR.b #$01
+;   STA.w $037F
+
+; .dont_toggle_oob
+;   STZ.w $02CA
   
   LDA $0345 : BNE .recache
   LDA $4D : BEQ .recoiling
-  LDA $7EF357 : BEQ .recache
+  ; LDA $7EF357 : BEQ .recache
   
   STZ $02E0
 
 ; *$383C7 LONG BRANCH LOCATION LinkState_Bunny_recache
 .recache
-
-  STZ $03F7
-  STZ $03F5
-  STZ $03F6
   
   LDA $7EF357 : BEQ .no_pearl_a
   
-  STZ $56
+  STZ $56 
   STZ $4D
 
 .no_pearl_a
 
-  STZ $2E
-  STZ $02E1
+  STZ $2E     ; animation steps
+  STZ $02E1   ; 
   STZ $50
   
   JSL Player_ResetSwimState
@@ -209,7 +204,7 @@ LinkItem_UsingDekuMask:
 .recoiling
 
   LDA $46 : BEQ .wait_maybe_not_recoiling
-  BRL $0783A1 ; Permabunny mode.
+  ;BRL $0783A1 ; Permabunny mode.
 
 .wait_maybe_not_recoiling
 
@@ -279,16 +274,3 @@ LinkItem_UsingDekuMask:
 
 org $358000
 incbin gfx/deku_link.bin
-
-; org $07A666
-; Deku_Entry:
-; {
-;     LDA.b #$20 : STA $BC
-    ; STA $7EC178
-    ; JSL Palette_ArmorAndGloves
-    ; STZ $0710
-;     RTS
-; }
-
-; org $06F40C
-; JSL change_sprite : NOP #$01 ; LDA $0E20, X : CMP.b #$61

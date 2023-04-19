@@ -4,6 +4,24 @@
 org $0DEE24
  db $80
 
+org $07983A
+  Player_ResetSwimState:
+
+org $0ED6C0
+  LoadActualGearPalettes:
+
+org $07E245 
+  Link_HandleVelocity:
+
+org $07915E
+  LinkState_ExitingDash:
+
+org $07E6A6
+  Link_HandleMovingAnimation_FullLongEntry:
+
+org $01FF28
+  Player_CacheStatePriorToHandler:
+
 org $09912C
 AddTransformationCloud:
 
@@ -12,6 +30,21 @@ Link_CheckNewY_ButtonPress:
 
 org $078028
 Player_DoSfx2:
+
+
+; =============================================================================
+
+org $008827
+JSL StartupMasks
+
+org $1BEDF9
+JSL Palette_ArmorAndGloves ; 4bytes
+RTL ; 1byte 
+NOP #$01
+
+org $1BEE1B
+JSL Palette_ArmorAndGloves_part_two
+RTL
 
 ; =============================================================================
 
@@ -28,28 +61,14 @@ StartupMasks:
   RTL 
 }
 
+; =============================================================================
+
 CancelMask:
 {
   JSL Palette_ArmorAndGloves
   LDA #$10 : STA $BC : STZ $02B2
   RTL
 }
-
-; =============================================================================
-
-org $008827
-JSL StartupMasks
-
-; =============================================================================
-
-org $1BEDF9
-JSL Palette_ArmorAndGloves ; 4bytes
-RTL ; 1byte 
-NOP #$01
-
-org $1BEE1B
-JSL Palette_ArmorAndGloves_part_two
-RTL
 
 ; =============================================================================
 
