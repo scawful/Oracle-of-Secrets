@@ -29,8 +29,8 @@ incsrc sprite_new_functions.asm
 !Damage             = 0  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
-!SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 1  ; 00 = don't draw shadow, 01 = draw a shadow 
+!SmallShadow        = 01  ; 01 = small shadow, 00 = no shadow
+!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 0  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 0  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -89,6 +89,8 @@ Sprite_Farore_Prep:
 
 ; Movement key bitwise ---- udlr
 
+WALKSPEED = 09
+
 Sprite_Farore_Main:
 {
   LDA.w SprAction, X; Load the SprAction
@@ -100,6 +102,8 @@ Sprite_Farore_Main:
   dw WaitAndMessage
   dw FaroreFollowPlayer
 
+  dw MakuArea_FaroreFollowPlayer
+
 
   IntroStart:
   {
@@ -109,31 +113,34 @@ Sprite_Farore_Main:
 
   MoveUpTowardsFarore:
   {
+    LDA WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
     LDA.b #$08 : STA.b $49 ; Auto-movement north
-
+    
     LDA.b $20 ; Link's Y Position
-    CMP.b #$6C ; Y = 6C
+    CMP.b #$9C ; Y = 6C
     BCC .linkistoofar
 
     %GotoAction(2)
 
   .linkistoofar
+    %PlayAnimation(6, 6, 8) ; Farore look towards Link
     RTS
   }
 
   MoveLeftTowardsFarore:
   {
     ; Move Link Left 
+    LDA WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
     LDA.b #$02 : STA.b $49 
 
     LDA.b $22 ; Link's X position 
-    CMP.b #$1E
+    CMP.b #$1A
     BCS .linkistoofar
 
     STZ.b $49 ; kill automove
     LDA.b #$20
     STA.w SprTimerA, X ; set timer A to 0x10
-
+    %PlayAnimation(0, 0, 8)
     %GotoAction(3)
 
   .linkistoofar
@@ -143,12 +150,12 @@ Sprite_Farore_Main:
 
   WaitAndMessage:
   {
-    %PlayAnimation(2, 3, 8)
+    
+    %PlayAnimation(1, 2, 8)
     %MoveTowardPlayer(15)
     LDA.w SprTimerA, X : BNE +
     %ShowUnconditionalMessage($24)
-    LDA.b #$01
-    STA.l $7EF300 ; prevent intro from playing again with sram set
+    LDA.b #$01 : STA.l $7EF300 ; prevent intro from playing again with sram set
     ; STZ.w $0DD0, X ; Kill the sprite since it's not needed anymore 
     %GotoAction(4)
   +
@@ -178,8 +185,21 @@ Sprite_Farore_Main:
 
   FaroreFollowPlayer:
   {
-    %PlayAnimation(2, 3, 8)
-    %MoveTowardPlayer(10)
+    LDA WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
+    LDA.b #$08 : STA.b $49 ; Auto-movement north
+    %PlayAnimation(3, 4, 8)
+    %MoveTowardPlayer(9)
+
+    LDA #$02 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
+    LDA #$05 : STA $012D ; turn off rain sound
+    LDA #$01 : STA $0728
+    RTS
+  }
+
+  MakuArea_FaroreFollowPlayer:
+  {
+    %PlayAnimation(3, 4, 8)
+    %MoveTowardPlayer(9)
     RTS
   }
 }
@@ -244,34 +264,49 @@ Sprite_Farore_Draw:
 ;==============================================================================
 
 .start_index
-  db $00, $02, $04, $06
+db $00, $02, $04, $06, $08, $0A, $0C
 .nbr_of_tiles
-  db 1, 1, 1, 1
+db 1, 1, 1, 1, 1, 1, 1
 .x_offsets
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
+dw 0, 0
+dw 0, 0
+dw 0, 0
+dw 0, 0
+dw 0, 0
+dw 0, 0
+dw 0, -1
 .y_offsets
-  dw 4, -8
-  dw 4, -7
-  dw 4, -8
-  dw 4, -7
+dw -8, 4
+dw -8, 4
+dw 4, -8
+dw -8, 4
+dw 4, -7
+dw -8, 4
+dw 4, -7
 .chr
-  db $AA, $A8
-  db $AA, $A8
-  db $88, $A8
-  db $88, $A8
+db $A8, $AA
+db $A8, $88
+db $AA, $A8
+db $8A, $8C
+db $8C, $8A
+db $8A, $AC
+db $AA, $86
 .properties
-  db $3B, $3B
-  db $3B, $3B
-  db $3B, $3B
-  db $7B, $3B
+db $3B, $3B
+db $3B, $7B
+db $3B, $3B
+db $3B, $3B
+db $7B, $3B
+db $3B, $3B
+db $3B, $7B
 .sizes
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
+db $02, $02
+db $02, $02
+db $02, $02
+db $02, $02
+db $02, $02
+db $02, $02
+db $02, $02
 }
 
 ;==============================================================================
