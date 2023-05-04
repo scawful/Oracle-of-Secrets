@@ -19,6 +19,9 @@ org $07915E
 org $07E6A6
   Link_HandleMovingAnimation_FullLongEntry:
 
+org $07E69D
+  Link_HandleMovingAnimation_SetFacingDown:
+
 org $01FF28
   Player_CacheStatePriorToHandler:
 
@@ -124,5 +127,90 @@ Palette_ArmorAndGloves:
   PLB
   INC $15
   PLA : PLY : PLX
+  RTL
+}
+
+; =============================================================================
+
+org $07B64F
+  Link_HandleDiagonalCollision:
+
+; start of free space in bank07 
+org $07F89D
+Link_HandleDiagonalCollision_Long:
+{
+  PHB : PHK : PLB
+  JSR Link_HandleDiagonalCollision
+  PLB
+  RTL
+}
+
+; =============================================================================
+
+org $07B7C7
+  Link_HandleCardinalCollision:
+
+org $07F8A6
+Link_HandleCardinalCollision_Long:
+{
+  PHB : PHK : PLB
+  JSR Link_HandleCardinalCollision
+  PLB
+  RTL
+}
+
+; =============================================================================
+
+org $07E8F0
+  HandleIndoorCameraAndDoors:
+
+org $07F8AE
+HandleIndoorCameraAndDoors_Long:
+{
+  PHB : PHK : PLB
+  JSR HandleIndoorCameraAndDoors
+  PLB
+  RTL
+}
+
+; =============================================================================
+
+org $07F514
+  CheckIndoorStatus:
+
+org $07F8B7
+CheckIndoorStatus_Long:
+{
+  PHB : PHK : PLB
+  JSR CheckIndoorStatus
+  PLB
+  RTL
+}
+
+; =============================================================================
+
+org $079873
+  Player_ResetSwimCollision:
+
+org $07F8C0
+Player_ResetSwimCollision_Long:
+{
+  PHB : PHK : PLB
+  JSR Player_ResetSwimCollision
+  PLB
+  RTL
+}
+
+; =============================================================================
+
+org $079B0E
+  Link_HandleYItems:
+
+org $07F8C9
+Link_HandleYItems_Long:
+{
+  PHB : PHK : PLB
+  JSR Link_HandleYItems
+  PLB
   RTL
 }

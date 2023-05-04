@@ -3,100 +3,35 @@
 
 ; ============================================================================= 
 
+; Link Sprite hook
 org $008A01
   LDA $BC
+
+; =============================================================================
+
+org $358000
+incbin gfx/deku_link.bin
+
+; =============================================================================
+
+org $07F8D1
+Link_HandleDekuTransformation:
+{
+  LDA $5D : CMP.b #$0A : BEQ .continue 
+  JSR $82DA
+
+.continue 
+  STZ $03F5
+  STZ $03F6
   
-; =============================================================================
-
-org $07B64F
-  Link_HandleDiagonalCollision:
-
-; start of free space in bank07 
-org $07F89D
-Link_HandleDiagonalCollision_Long:
-{
-  PHB : PHK : PLB
-  JSR Link_HandleDiagonalCollision
-  PLB
-  RTL
+  ; Link can move.
+  CLC
+  
+  RTS
 }
 
-; =============================================================================
-
-org $07B7C7
-  Link_HandleCardinalCollision:
-
-org $07F8A6
-Link_HandleCardinalCollision_Long:
-{
-  PHB : PHK : PLB
-  JSR Link_HandleCardinalCollision
-  PLB
-  RTL
-}
-
-; =============================================================================
-
-org $07E8F0
-  HandleIndoorCameraAndDoors:
-
-org $07F8AE
-HandleIndoorCameraAndDoors_Long:
-{
-  PHB : PHK : PLB
-  JSR HandleIndoorCameraAndDoors
-  PLB
-  RTL
-}
-
-; =============================================================================
-
-org $07F514
-  CheckIndoorStatus:
-
-org $07F8B7
-CheckIndoorStatus_Long:
-{
-  PHB : PHK : PLB
-  JSR CheckIndoorStatus
-  PLB
-  RTL
-}
-
-; =============================================================================
-
-org $079873
-  Player_ResetSwimCollision:
-
-org $07F8C0
-Player_ResetSwimCollision_Long:
-{
-  PHB : PHK : PLB
-  JSR Player_ResetSwimCollision
-  PLB
-  RTL
-}
-
-; =============================================================================
-
-org $079B0E
-  Link_HandleYItems:
-
-org $07F8C9
-Link_HandleYItems_Long:
-{
-  PHB : PHK : PLB
-  JSR Link_HandleYItems
-  PLB
-  RTL
-}
-print pc 
-
-org $07F1A3
-Player_ResetState_A:
-
-org $07F1FA
-Player_ResetState_C:
+org $07811A 
+  JSR Link_HandleDekuTransformation
 
 ; =============================================================================
 
@@ -119,7 +54,7 @@ LinkItem_DekuMask:
   LDA #$35 : STA $BC                    ; put the mask on
   LDA #$01 : STA $02B2
   
-  LDA #$02 : STA $03FC
+  LDA #$00 : STA $03FC
   BRA .return
 
 .unequip
@@ -140,9 +75,11 @@ LinkItem_UsingQuake:
 {
   JSR $82DA
   JSL LinkItem_UsingDekuMask
+
   RTS
-  NOP #152
-  print pc 
+  NOP #149
+  
+  print pc
 }
 ; end of UsingQuake is at 07A773
 
@@ -151,19 +88,18 @@ LinkItem_UsingQuake:
 org $318000
 LinkItem_UsingDekuMask:
 {
-  ; SEP #$20
-  ; JSL CheckIndoorStatus_Long
+  JSL CheckIndoorStatus_Long
 
-;   LDA.b $F5
-;   AND.b #$80
-;   BEQ .dont_toggle_oob
+  LDA.b $F5
+  AND.b #$80
+  BEQ .dont_toggle_oob
 
-;   LDA.w $037F
-;   EOR.b #$01
-;   STA.w $037F
+  LDA.w $037F
+  EOR.b #$01
+  STA.w $037F
 
-; .dont_toggle_oob
-;   STZ.w $02CA
+.dont_toggle_oob
+  STZ.w $02CA
   
   LDA $0345 : BNE .recache
   LDA $4D : BEQ .recoiling
@@ -216,7 +152,7 @@ LinkItem_UsingDekuMask:
   LDA.b #$01 : STA $0335 : STA $0337
   LDA.b #$80 : STA $0334 : STA $0336
   
-  BRL $9715
+  ; BRL $9715
 
 .not_moving
 
@@ -269,8 +205,3 @@ LinkItem_UsingDekuMask:
 
   RTL
 }
-
-; =============================================================================
-
-org $358000
-incbin gfx/deku_link.bin
