@@ -34,27 +34,30 @@
 ;==============================================================================
 
 Sprite_Kydrog_Long:
-PHB : PHK : PLB
+{
+  PHB : PHK : PLB
 
-JSR Sprite_Kydrog_Draw ; Call the draw code
-JSL Sprite_CheckActive   ; Check if game is not paused
-BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
+  JSR Sprite_Kydrog_Draw ; Call the draw code
+  JSL Sprite_CheckActive   ; Check if game is not paused
+  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
-JSR Sprite_Kydrog_Main ; Call the main sprite code
+  JSR Sprite_Kydrog_Main ; Call the main sprite code
 
-.SpriteIsNotActive
-PLB ; Get back the databank we stored previously
-RTL ; Go back to original code
-
+  .SpriteIsNotActive
+  PLB ; Get back the databank we stored previously
+  RTL ; Go back to original code
+}
 ;==============================================================================
 
 Sprite_Kydrog_Prep:
-PHB : PHK : PLB
-   
-    ; Add more code here to initialize data
+{
+  PHB : PHK : PLB
+    
+  ; Add more code here to initialize data
 
-PLB
-RTL
+  PLB
+  RTL
+}
 
 ;==============================================================================
 
@@ -92,7 +95,7 @@ Sprite_Kydrog_Main:
   {
     LDA.w SprTimerA, X : BNE +
     %ShowUnconditionalMessage($21)
-    LDA.b #$00 : STA.b $49 ; Stop Link's auto-movement
+    LDA.b #$02 : STA.b $B6 ; Update story flag for Farore
     %GotoAction(2)
   +
     RTS
@@ -100,18 +103,30 @@ Sprite_Kydrog_Main:
 
   Kydrog_SpawnOffspring:
   {
+    STZ.b $49 ; Stop Link from moving 
     %GotoAction(3)
     RTS
   }
 
   Kydrog_TurnPlayerToDeku:
   {
+    ; LDA.b #$03 : STA.b $B6
+
+    ; JSL AddTransformationCloud
+    ; LDA.b #$14 : JSR Player_DoSfx2
+
+    ; JSL Palette_ArmorAndGloves
+    LDA #$35 : STA $BC
+
     %GotoAction(4)
     RTS
   }
 
   Kydrog_WarpPlayerAway:
   {
+    LDA #$29
+    JSL $02B40F
+
     RTS
   }
 }
@@ -191,3 +206,6 @@ Sprite_Kydrog_Draw:
 .sizes
   db $02, $02, $02, $02, $02, $02
 }
+
+org $02ECF8
+  dw $0029

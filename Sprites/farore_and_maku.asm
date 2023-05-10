@@ -1,6 +1,7 @@
 ;==============================================================================
 ; Farore/Maku Tree - Sprite Uncle/Priest
 ; 
+; STZ.w $0DD0, X ; Kill the sprite since it's not needed anymore 
 ;
 ;==============================================================================
 
@@ -65,7 +66,7 @@ Sprite_Farore_Long:
 
   JSR Sprite_Farore_Main ; Call the main sprite code
 
-  .SpriteIsNotActive
+.SpriteIsNotActive
   PLB ; Get back the databank we stored previously
   RTL ; Go back to original code
 }
@@ -81,6 +82,8 @@ Sprite_Farore_Prep:
   ; 		STZ.w $0DD0, X ; Kill the sprite 
   ; .PlayIntro
 
+  LDA.b #$80 : STA $0CAA, X ; Don't kill Farore when she goes off screen
+
   PLB
   RTL
 }
@@ -89,25 +92,37 @@ Sprite_Farore_Prep:
 
 ; Movement key bitwise ---- udlr
 
-WALKSPEED = 09
+WALKSPEED = 14
+STORY_STATE = $B6
 
 Sprite_Farore_Main:
 {
   LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  JSL UseImplicitRegIndexedLocalJumpTable ; Goto the SprAction we are currently in
 
   dw IntroStart
   dw MoveUpTowardsFarore
   dw MoveLeftTowardsFarore
   dw WaitAndMessage
   dw FaroreFollowPlayer
-
   dw MakuArea_FaroreFollowPlayer
+  dw MakuArea_FaroreWaitForKydrog
 
 
   IntroStart:
   {
+    ; JSR SetupMovieEffect
+    ; JSR MovieEffect
+    LDA $B6 : CMP #$01 : BEQ .maku_area
+              CMP #$02 : BEQ .waiting
+    
     %GotoAction(1)
+    
+  .maku_area
+    JSR MakuArea_FaroreFollowPlayer
+  .waiting
+    JSR MakuArea_FaroreWaitForKydrog
+
     RTS
   }
 
@@ -119,7 +134,6 @@ Sprite_Farore_Main:
     LDA.b $20 ; Link's Y Position
     CMP.b #$9C ; Y = 6C
     BCC .linkistoofar
-
     %GotoAction(2)
 
   .linkistoofar
@@ -149,59 +163,65 @@ Sprite_Farore_Main:
 
 
   WaitAndMessage:
-  {
-    
+  { 
     %PlayAnimation(1, 2, 8)
     %MoveTowardPlayer(15)
     LDA.w SprTimerA, X : BNE +
+    STZ $2F
     %ShowUnconditionalMessage($24)
-    LDA.b #$01 : STA.l $7EF300 ; prevent intro from playing again with sram set
-    ; STZ.w $0DD0, X ; Kill the sprite since it's not needed anymore 
+    
     %GotoAction(4)
   +
     RTS
   }
 
-  ; you could just squeeze it between link and the 1st follower
-  ; by reusing the follow code but with lower delay
-  ; $1A00[0x14] -   (Tagalong)
-      
-  ;     Low bytes of tagalong states' Y coordinates.
-
-  ; $1A14[0x14] -   (Tagalong)
-      
-  ;     High bytes of tagalong states' Y coordinates.
-
-  ; $1A28[0x14] -   (Tagalong)
-      
-  ;     Low bytes of tagalong states' X coordinates.
-
-  ; $1A3C[0x14] -   (Tagalong)
-      
-  ;     High bytes of tagalong states' X coordinates.
-  ; load current follower position divide it by 2
-  ; and use that as index
-
-
+  ; 04
   FaroreFollowPlayer:
   {
     LDA WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
     LDA.b #$08 : STA.b $49 ; Auto-movement north
     %PlayAnimation(3, 4, 8)
-    %MoveTowardPlayer(9)
+    %MoveTowardPlayer(16)
 
     LDA #$02 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
     LDA #$05 : STA $012D ; turn off rain sound
-    LDA #$01 : STA $0728
+    JSL $00FC41   ; fix monsters
+    LDA #$01 : STA $B6 ; Set Story State 
+    %GotoAction(0)
     RTS
   }
 
+  ; 05
   MakuArea_FaroreFollowPlayer:
   {
+  .keep_walking
     %PlayAnimation(3, 4, 8)
-    %MoveTowardPlayer(9)
+    %MoveTowardPlayer(18)
+    LDA $B6 : CMP.b #$02 : BEQ .keep_walking
+    JSR MakuArea_FaroreWaitForKydrog
+
     RTS
   }
+
+  ; 06
+  ; Look at the RAM $0D00 to $0D60, the first few are the actual positions of the sprite that you can just set manually or $0D40 and $0D50 are the "speeds" of the sprites irrc
+  ; You can set one of the speeds and then call the function called Sprite_Move
+  ; And then that will handle it applying the speed for you
+  MakuArea_FaroreWaitForKydrog:
+  {
+    %PlayAnimation(5, 5, 8)
+
+    RTS
+  }
+
+
+  ; 07
+  MakuArea_FaroreWalkToPosition:
+  {
+    %PlayAnimation(3, 4, 8)
+    RTS 
+  }
+
 }
 ;==============================================================================
 
@@ -217,7 +237,7 @@ Sprite_Farore_Draw:
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
-  .nextTile
+.nextTile
 
   PHX ; Save current Tile Index?
       
@@ -239,7 +259,7 @@ Sprite_Farore_Draw:
 
   LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
   STA $0E
-  .on_screen_y
+.on_screen_y
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY

@@ -26,13 +26,13 @@ org $01FF28
   Player_CacheStatePriorToHandler:
 
 org $09912C
-AddTransformationCloud:
+  AddTransformationCloud:
 
 org $07B073
-Link_CheckNewY_ButtonPress:
+  Link_CheckNewY_ButtonPress:
 
 org $078028
-Player_DoSfx2:
+  Player_DoSfx2:
 
 
 ; =============================================================================
