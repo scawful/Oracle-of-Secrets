@@ -12,9 +12,6 @@ org $0998FC
 org $07A569
 LinkItem_ZoraMask:
 {
-  LDA $02B2 : CMP #$02 : BNE .equip
-  ; JSR LinkItem_UsingZoraMask
-.equip
   ; Check for R button held 
   LDA $F2 : CMP #$10 : BNE .return 
 
@@ -75,9 +72,15 @@ zora_palette:
 org $07F93F
 LinkState_UsingZoraMask:
 {
+  ; Check if the mask is equipped 
+  LDA $02B2 : CMP #$02 : BNE .normal
+
+  CLC
+
   ; Check if we are in water or not 
   LDA $5D : CMP #$04 : BEQ .swimming
   
+.normal
   ; Return to normal state 
   STZ $55
   STZ $037B
@@ -87,7 +90,7 @@ LinkState_UsingZoraMask:
   JMP .return
   
 .swimming
-; -----------------------------------------------------------------------------
+  ; ---------------------------------------------------------------------------
 
   ; Check if we are indoors or outdoors 
   LDA $1B : BEQ .overworld ; z flag is 1 
@@ -107,7 +110,7 @@ LinkState_UsingZoraMask:
   JSR $E8F0 ; HandleIndoorCameraAndDoors
   RTS
 
-; -----------------------------------------------------------------------------
+  ; ---------------------------------------------------------------------------
 
 .overworld 
   ; Check the Y button and clear state if activated
