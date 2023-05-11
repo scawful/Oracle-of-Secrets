@@ -73,12 +73,10 @@ org $07F93F
 LinkState_UsingZoraMask:
 {
   ; Check if the mask is equipped 
-  LDA $02B2 : CMP #$02 : BNE .normal
-
-  CLC
+  LDA $02B2 : CMP #$02 : BNE .normal : CLC
 
   ; Check if we are in water or not 
-  LDA $5D : CMP #$04 : BEQ .swimming
+  LDA $5D : CMP #$04 : BEQ .swimming : CLC
   
 .normal
   ; Return to normal state 
@@ -90,27 +88,47 @@ LinkState_UsingZoraMask:
   JMP .return
   
 .swimming
-  ; ---------------------------------------------------------------------------
-
   ; Check if we are indoors or outdoors 
   LDA $1B : BEQ .overworld ; z flag is 1 
 
-  ; Check if already underwater
-  LDA $0AAB : BEQ .dive_dungeon
-  
-  ; Handle dungeon swimming (hard)
-.dive_dungeon
+  ; DUNGEON -------------------------------------------------------------------
+  .dungeon
+  {
+    ; Check if we are in water or not 
+    LDA $5D : CMP #$04 : BNE .return_dungeon : CLC
 
-  LDA #$01 : STA $5D
-  ; Else, restore to normal swimming state 
-  LDA.b #$15 : LDY.b #$00
-  JSL AddTransitionSplash
-  LDA.b #$00 : STA $EE
+    ; Check if already underwater
+    LDA $0AAB : BNE .return_dungeon : CLC 
 
-  JSR $E8F0 ; HandleIndoorCameraAndDoors
-  RTS
+    ; Check the Y button and clear state if activated
+    JSR Link_CheckNewY_ButtonPress : BCC .return_dungeon
+    LDA $3A : AND.b #$BF : STA $3A 
 
-  ; ---------------------------------------------------------------------------
+  .dive_dungeon
+    ; Splash effect 
+    LDA.b #$15 : LDY.b #$00
+    JSL AddTransitionSplash
+
+    STZ $5D     ; reset player to ground state 
+    STZ $EE     ; move link to lower level
+    
+    LDA #$72
+    STA $9A     ; Set layer 
+
+    LDA #$08
+    STA $5E     ; Set the player speed 
+
+    STZ $0345
+
+    LDA #$01
+    STA $0AAB   ; Set the player underwater flag 
+
+  .return_dungeon
+    JSR $E8F0 ; HandleIndoorCameraAndDoors
+    RTS
+  }
+
+  ; OVERWORLD -----------------------------------------------------------------
 
 .overworld 
   ; Check the Y button and clear state if activated
@@ -146,16 +164,57 @@ LinkState_UsingZoraMask:
   ; LDA #$24 : STA $012E  
 
 .return
-  JSR $E8F0 ; HandleIndoorCameraAndDoors 
+  JSR $E8F0 ; HandleIndoorCameraAndDoors
+  RTS
 }
 
 print "Next address for jump in bank07:  ", pc 
 
 ; =============================================================================
 
+.dungeon_resurface
+{
+  ; Check if the player is actually diving 
+  LDA $0AAB : BEQ .return_default
+
+  ; Check the Y button and clear state if activated
+  JSR Link_CheckNewY_ButtonPress : BCC .return_default
+  LDA $3A : AND.b #$BF : STA $3A 
+  {
+    ; Restore Swimming state
+    LDA.b #$15 : LDY.b #$00
+    JSL AddTransitionSplash
+
+    LDA #$04 : STA $5D ; Set Link to Swimming State
+    LDA #$01 : STA $EE ; Set Link to upper level
+    STA $0345 
+    
+    STZ $5E            ; Reset speed to normal
+    STZ $0AAB          ; Reset underwater flag 
+    STZ $0351          ; Reset ripple flag
+    STZ $24            ; Reset z coordinate for link
+    STZ $0372          ; Reset link bounce flag
+    LDA #$62
+    STA $9A
+    JMP .return_default
+  }
+
+.return_default
+  STZ $0302
+  RTS
+}
+
+
 ; End of LinkState_Swimming
 org $079781
   JSR LinkState_UsingZoraMask
+  RTS
+
+; End of LinkState_Default 
+org $0782D2
+  JSR LinkState_UsingZoraMask_dungeon_resurface
+  JSR $E8F0
+  CLC
   RTS
 
 ; =============================================================================
