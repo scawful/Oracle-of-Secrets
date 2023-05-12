@@ -89,9 +89,49 @@ LinkState_UsingZoraMask:
   
 .swimming
   ; Check if we are indoors or outdoors 
-  LDA $1B : BEQ .overworld ; z flag is 1 
+  LDA $1B : BNE .dungeon ; z flag is 1 
 
-  ; DUNGEON -------------------------------------------------------------------
+  ; OVERWORLD -----------------------------------------------------------------
+  .overworld 
+  {
+    ; Check the Y button and clear state if activated
+    JSR Link_CheckNewY_ButtonPress : BCC .return
+    LDA $3A : AND.b #$BF : STA $3A       
+
+    ; Check if already underwater 
+    LDA $0AAB : BEQ .dive
+
+    STZ $55     ; Reset cape flag 
+    STZ $0AAB   ; Reset underwater flag 
+    STZ $0351   ; Reset ripple flag 
+    STZ $037B   ; Reset invincibility flag
+    LDA #$04 : STA $5D ; Put Link in Swimming State
+
+    JMP .return
+
+  .dive
+    ; Handle overworld underwater swimming 
+    LDA #$01 : STA $55   ; Set cape flag 
+    STA $037B            ; Set invincible flag 
+    LDA #$08 : STA $5E   ; Set underwater speed 
+    LDA #$01 : STA $0AAB ; Set underwater flag
+    STA $0351            ; Set ripple flag
+
+    ; Splash visual effect 
+    LDA.b #$15 : LDY.b #$00
+    JSL AddTransitionSplash
+
+    ; Stay in swimming mode 
+    LDA #$04 : STA $5D
+    ; Splash sound effect 
+    ; LDA #$24 : STA $012E  
+    
+  .return
+    JSR $E8F0 ; HandleIndoorCameraAndDoors
+    RTS
+  }
+
+  ; DUNGEON DIVE --------------------------------------------------------------
   .dungeon
   {
     ; Check if we are in water or not 
@@ -99,6 +139,9 @@ LinkState_UsingZoraMask:
 
     ; Check if already underwater
     LDA $0AAB : BNE .return_dungeon : CLC 
+
+    ; Check if we are on a proper tile or not 
+    ; 
 
     ; Check the Y button and clear state if activated
     JSR Link_CheckNewY_ButtonPress : BCC .return_dungeon
@@ -127,75 +170,38 @@ LinkState_UsingZoraMask:
     JSR $E8F0 ; HandleIndoorCameraAndDoors
     RTS
   }
-
-  ; OVERWORLD -----------------------------------------------------------------
-
-.overworld 
-  ; Check the Y button and clear state if activated
-  JSR Link_CheckNewY_ButtonPress : BCC .return
-  LDA $3A : AND.b #$BF : STA $3A       
-
-  ; Check if already underwater 
-  LDA $0AAB : BEQ .dive
-
-  STZ $55     ; Reset cape flag 
-  STZ $0AAB   ; Reset underwater flag 
-  STZ $0351   ; Reset ripple flag 
-  LDA #$00 : STA $037B ; Reset invincibility flag
-  LDA #$04 : STA $5D
-
-  JMP .return
-
-.dive
-  ; Handle overworld underwater swimming 
-  LDA #$01 : STA $55   ; Set cape flag 
-  STA $037B            ; Set invincible flag 
-  LDA #$08 : STA $5E   ; Set underwater speed 
-  LDA #$01 : STA $0AAB ; Set underwater flag
-  STA $0351 ; Water ripples around sprite 
-
-  ; Splash visual effect 
-  LDA.b #$15 : LDY.b #$00
-  JSL AddTransitionSplash
-
-  ; Stay in swimming mode 
-  LDA #$04 : STA $5D
-  ; Splash sound effect 
-  ; LDA #$24 : STA $012E  
-
-.return
-  JSR $E8F0 ; HandleIndoorCameraAndDoors
-  RTS
 }
-
-print "Next address for jump in bank07:  ", pc 
-
-; =============================================================================
 
 .dungeon_resurface
 {
+  LDA $1B : BEQ .return_default ; We are in overworld actually 
+
   ; Check if the player is actually diving 
   LDA $0AAB : BEQ .return_default
+
+  ; Check if the ground level is safe
+  ; Otherwise, eject the player back to the surface
+  LDA $0114 : BNE .remove_dive : CLC
 
   ; Check the Y button and clear state if activated
   JSR Link_CheckNewY_ButtonPress : BCC .return_default
   LDA $3A : AND.b #$BF : STA $3A 
   {
-    ; Restore Swimming state
-    LDA.b #$15 : LDY.b #$00
-    JSL AddTransitionSplash
-
+    ; Restore Swimming Effects
+    LDA.b #$15 : LDY.b #$00 : JSL AddTransitionSplash
+  .remove_dive
     LDA #$04 : STA $5D ; Set Link to Swimming State
     LDA #$01 : STA $EE ; Set Link to upper level
-    STA $0345 
-    
+    STA $0345          ; Set deep water flag 
+
+    ; Remove Diving Effects
+    LDA $67 : AND #$01 : STA $2F
     STZ $5E            ; Reset speed to normal
     STZ $0AAB          ; Reset underwater flag 
     STZ $0351          ; Reset ripple flag
     STZ $24            ; Reset z coordinate for link
     STZ $0372          ; Reset link bounce flag
-    LDA #$62
-    STA $9A
+    LDA #$62 : STA $9A ; Reset dungeon layer
     JMP .return_default
   }
 
@@ -203,6 +209,23 @@ print "Next address for jump in bank07:  ", pc
   STZ $0302
   RTS
 }
+
+
+.dungeon_stairs
+{
+  LDA $02B2 : CMP #$02 : BNE .return_hop
+  STZ $5E            ; Reset speed to normal
+  STZ $0AAB          ; Reset underwater flag 
+  LDA #$62 : STA $9A ; Reset dungeon layer
+.return_hop
+  LDA #$06 : STA $5D ; Set Link to Recoil State
+  RTS
+}
+
+; =============================================================================
+
+
+print "Next address for jump in bank07:  ", pc 
 
 
 ; End of LinkState_Swimming
@@ -216,6 +239,12 @@ org $0782D2
   JSR $E8F0
   CLC
   RTS
+
+; C2C3
+org $07C307
+  JSR LinkState_UsingZoraMask_dungeon_stairs
+  RTS
+
 
 ; =============================================================================
 ; Disassembled/Debugged Code of Conn's Zora Flippers 
