@@ -30,6 +30,8 @@ Link_HandleDekuTransformation:
   RTS
 }
 
+print "here", pc
+
 org $07811A 
   JSR Link_HandleDekuTransformation
 
@@ -38,6 +40,9 @@ org $07811A
 org $07A64B ; formerly Quake
 LinkItem_DekuMask:
 {
+  ; Check for R button held 
+  LDA $F2 : CMP #$10 : BNE .return 
+
   JSR Link_CheckNewY_ButtonPress : BCC .return
   LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
 
@@ -50,18 +55,27 @@ LinkItem_DekuMask:
 
   LDA $02B2 : CMP #$01 : BEQ .unequip   ; is the deku mask on?
   JSL Palette_ArmorAndGloves            ; set the palette 
-  LDA #$0A : STA $5D                    ; set control handler to mode "using quake"
+
+  LDA.l $7EF359 : STA $0AA5 ; Store the current sword 
+  LDA.l $7EF35A : STA $0AAF ; Store the current shield
+  LDA.b #$00 : STA $7EF359 : STA $7EF35A ; Clear the sword and shield
+  LDA #$02 : STA $7E03FC ; Set the override to Bow (pea shooter)
+
   LDA #$35 : STA $BC                    ; put the mask on
   LDA #$01 : STA $02B2
   
-  LDA #$00 : STA $03FC
   BRA .return
 
 .unequip
   JSL Palette_ArmorAndGloves
   STZ $5D
-  STZ $03FC
-  LDA #$10 : STA $BC : STZ $02B2        ; take the mask off
+
+  ; Restore the sword and shield 
+  LDA $0AA5 : STA.l $7EF359
+  LDA $0AAF : STA.l $7EF35A
+  LDA #$00 : STA $7E03FC           ; clear the override
+  LDA #$10 : STA $BC : STZ $02B2   ; take the mask off
+
 
 .return
   RTS
@@ -69,139 +83,104 @@ LinkItem_DekuMask:
 
 ; =============================================================================
 
-; LinkItem_UsingQuake is 152 (base10) bytes long 
-org $07A6D6
-LinkItem_UsingQuake: 
-{
-  JSR $82DA
-  JSL LinkItem_UsingDekuMask
+org $079CD9
+  JSL LinkItem_CheckForSwordSwing_Masks
 
-  RTS
-  NOP #149
-  
-  print pc
-}
-; end of UsingQuake is at 07A773
+org $07A013
+  JSL LinkItem_SlingshotPrepare
 
 ; =============================================================================
 
 org $318000
-LinkItem_UsingDekuMask:
+LinkItem_CheckForSwordSwing_Masks:
 {
-  JSL CheckIndoorStatus_Long
 
-  LDA.b $F5
-  AND.b #$80
-  BEQ .dont_toggle_oob
+  LDA $02B2 : CMP #$01 : BNE .return
 
-  LDA.w $037F
-  EOR.b #$01
-  STA.w $037F
-
-.dont_toggle_oob
-  STZ.w $02CA
-  
-  LDA $0345 : BNE .recache
-  LDA $4D : BEQ .recoiling
-  ; LDA $7EF357 : BEQ .recache
-  
-  STZ $02E0
-
-; *$383C7 LONG BRANCH LOCATION LinkState_Bunny_recache
-.recache
-  
-  LDA $7EF357 : BEQ .no_pearl_a
-  
-  STZ $56 
-  STZ $4D
-
-.no_pearl_a
-
-  STZ $2E     ; animation steps
-  STZ $02E1   ; 
-  STZ $50
-  
-  JSL Player_ResetSwimState
-  
-  ; Link hit a wall or an enemy hit him, making him go backwards.
-  LDA.b #$02 : STA $5D
-  
-  LDA $7EF357 : BEQ .no_pearl_b
-  
-  ; this resets link to default state.
-  LDA.b #$00 : STA $5D
-  
-  JSL LoadActualGearPalettes
-
-.no_pearl_b
-
-  BRL .exit 
-
-.recoiling
-
-  LDA $46 : BEQ .wait_maybe_not_recoiling
-  ;BRL $0783A1 ; Permabunny mode.
-
-.wait_maybe_not_recoiling
-
-  LDA.b #$FF : STA $24 : STA $25 : STA $29
-  STZ $02C6
-  
-  LDA $034A : BEQ .not_moving
-  
-  LDA.b #$01 : STA $0335 : STA $0337
-  LDA.b #$80 : STA $0334 : STA $0336
-  
-  ; BRL $9715
-
-.not_moving
-
-  JSL Player_ResetSwimCollision_Long
-  JSL Link_HandleYItems_Long ; $39B0E IN ROM
-  
-  LDA $49 : AND.b #$0F : BNE .movement
-  LDA $F0 : AND.b #$0F : BNE .movement
-  STA $30 : STA $31 : STA $67 : STA $26
-  
-  STZ $2E
-  
-  LDA $48 : AND.b #$F6 : STA $48
-  LDX.b #$20 : STX $0371
-  
-  ; Ledge timer is reset here the same way as for normal link (unbunny).
-  LDX.b #$13 : STX $0375
-  
-  BRA .finish_up
-
-.movement
-  
-  STA $67 : CMP $26 : BEQ .directions_match
-  
-  STZ $2A
-  STZ $2B
-  STZ $6B
-  STZ $4B
-  
-  LDX.b #$20 : STX $0371
-  
-  ; Ledge timer is reset here the same way as for normal link (unbunny).
-  LDX.b #$13 : STX $0375
-
-.directions_match
-
-  STA $26
-
-.finish_up
-  JSL Link_HandleDiagonalCollision_Long
-  JSL Link_HandleVelocity                      ; $3E245 IN ROM
-  JSL Link_HandleCardinalCollision_Long
-  JSL Link_HandleMovingAnimation_FullLongEntry ; $3E6A6 IN ROM
-  
-  STZ $0302
-  
-  JSL HandleIndoorCameraAndDoors_Long   ; $3E8F0 IN ROM
-
-.exit:
-
+  LDA #$01
   RTL
+
+.return
+  LDA $3B : AND.b #$10
+  RTL
+}
+
+; =============================================================================
+
+
+; Hooked @ [$07A013]
+; $A200
+LinkItem_SlingshotPrepare:
+{
+  LDA #$01 : TSB $50
+  LDA $7EF340
+  BNE .alpha
+  JMP $A270
+.alpha 
+  CMP #$01
+  BNE .void ; unused afaik (RTS?)
+  JMP .beta
+
+; $A214
+.void
+
+
+; $A270
+.beta
+  LDA $7F1060
+  CMP #$10
+  BEQ $20A27B
+  JMP .theta
+
+; $A300
+.theta
+  LDA $7F502E
+  CMP #$01
+  BNE .gamma
+  RTL 
+
+; $A309
+.gamma
+  LDA #$01          ; Load the accumulator with hex value 01
+  STA $7F502E       ; Store the accumulator value at memory address 7F502E
+
+  PHB               ; Push data bank register on stack
+  REP #$30          ; Clear 16-bit accumulator and index registers
+    LDX #$A500      ; Load X register with source address
+    LDY #$9800      ; Load Y register with destination address
+    LDA #$00BF      ; Load the accumulator with the number of bytes to be moved
+    MVN $20, $7E    ; Block move negative - moves 00BF bytes from $A500 to $9800
+  SEP #$30          ; Set 8-bit accumulator and index registers
+  PLB               ; Pull data bank register from stack
+
+.loop
+  LDA $4212 : AND #$80 : BNE .loop   ; Wait for VBlank start (beginning of vertical blanking period)
+.loop2
+  LDA $4212 : AND #$80 : BEQ .loop2  ; Wait for VBlank end
+
+  REP #$30          ; Clear 16-bit accumulator and index registers
+    LDA #$A700 : STA $4302  ; Set DMA source address to $A700
+    LDA #$42A0 : STA $2116  ; Set VRAM (Video RAM) address to $42A0
+  SEP #$30          ; Set 8-bit accumulator and index registers
+
+  LDA #$80 : STA $2115  ; Set VRAM write increment to 2 bytes, and access mode to word access at the specified address
+  LDA #$18 : STA $4301  ; Set DMA destination address to $2118 (VRAM data write)
+  LDA #$20 : STA $4304  ; Set DMA transfer size to 32 bytes
+  LDA #$80 : STA $4305  ; Set DMA transfer size (high byte)
+  LDA #$01 : STA $4300  ; Set DMA mode to 1 (2 registers write once)
+  STA $420B             ; Start DMA on channel 0
+
+  REP #$30                  ; Clear 16-bit accumulator and index registers
+    LDA #$43A0 : STA $2116  ; Set VRAM address to $43A0
+    LDA #$A800 : STA $4302  ; Set DMA source address to $A800
+  SEP #$30                  ; Set 8-bit accumulator and index registers
+
+  LDA #$80 : STA $2115  ; Set VRAM write increment to 2 bytes, and access mode to word access at the specified address
+  LDA #$18 : STA $4301  ; Set DMA destination address to $2118 (VRAM data write)
+  LDA #$20 : STA $4304  ; Set DMA transfer size to 32 bytes
+  LDA #$80 : STA $4305  ; Set DMA transfer size (high byte)
+  LDA #$01 : STA $4300  ; Set DMA mode to 1 (2 registers write once)
+  STA $420B             ; Start DMA on channel 0
+  RTL                   ; Return from subroutine long
+
 }

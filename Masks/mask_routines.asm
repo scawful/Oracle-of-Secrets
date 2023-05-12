@@ -214,3 +214,32 @@ Link_HandleYItems_Long:
   PLB
   RTL
 }
+
+; =============================================================================
+
+org $07FA41
+LinkState_ResetMaskAnimated:
+{
+  LDA $02B2 : BEQ .no_mask
+  CMP #$01 : BNE .transform
+
+  ; Restore the sword, shield, and bow override
+  LDA $0AA5 : STA.l $7EF359
+  LDA $0AAF : STA.l $7EF35A
+  LDA #$00 : STA $7E03FC
+
+.transform
+  LDY.b #$04 : LDA.b #$23
+  JSL AddTransformationCloud
+  LDA.b #$14 : JSR Player_DoSfx2
+
+  JSL Palette_ArmorAndGloves
+  LDA #$10 : STA $BC : STZ $02B2
+.no_mask
+  RTL
+}
+
+print "Next address for jump in bank07:  ", pc 
+
+
+; =============================================================================

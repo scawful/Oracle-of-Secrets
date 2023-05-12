@@ -426,6 +426,8 @@ Menu_CheckBottle:
 
 Menu_Exit:
 {
+  JSL LinkState_ResetMaskAnimated
+
   REP #$20
 
   ; reset submodule
