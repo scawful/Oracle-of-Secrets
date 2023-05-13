@@ -374,6 +374,7 @@ Menu_ScrollFrom:
 
 Menu_ScrollUp:
 { 
+  JSL $0DFA58 ; HUD_Rebuild_Long
   LDA.b #$12 : STA.w $012F ; play menu exit sound effect 
   SEP #$10
   REP #$20
@@ -396,22 +397,23 @@ Menu_ScrollUp:
 ; =============================================================================
 ; 09 CHECK BOTTLE 
 
+print pc
 Menu_CheckBottle:
 {
   LDA.w $0202 : CMP.b #$06 : BNE .not_first 
-  LDA.b #$01 : BRA .prepare_bottle
+  LDA.b #$0001 : JMP .prepare_bottle
 
 .not_first
   LDA.w $0202 : CMP.b #$0C : BNE .not_second
-  LDA.b #$02 : BRA .prepare_bottle
+  LDA.b #$0002 : JMP .prepare_bottle
 
 .not_second 
   LDA.w $0202 : CMP.b #$12 : BNE .not_third
-  LDA.b #$03 : BRA .prepare_bottle
+  LDA.b #$03 : JMP .prepare_bottle
 
 .not_third
   LDA.w $0202 : CMP.b #$18 : BNE .not_any
-  LDA.b #$04 : BRA .prepare_bottle
+  LDA.b #$04
 
 .prepare_bottle
   STA.l $7EF34F
@@ -427,7 +429,6 @@ Menu_CheckBottle:
 Menu_Exit:
 {
   JSL LinkState_ResetMaskAnimated
-
   REP #$20
 
   ; reset submodule

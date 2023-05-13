@@ -105,7 +105,7 @@ BookGFX:
 ; -------------------------------------
 
 BottlesGFX:
-	dw $2044, $2045, $2046, $2047 ; Mushroom
+  dw $2044, $2045, $2046, $2047 ; Mushroom
 	dw $2837, $2838, $2CC3, $2CD3 ; Empty bottle
 	dw $24D2, $64D2, $24E2, $24E3 ; Red potion
 	dw $3CD2, $7CD2, $3CE2, $3CE3 ; Green potion

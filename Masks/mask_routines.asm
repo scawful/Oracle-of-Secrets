@@ -34,22 +34,10 @@ org $07B073
 org $078028
   Player_DoSfx2:
 
-
 ; =============================================================================
 
 org $008827
-JSL StartupMasks
-
-org $1BEDF9
-JSL Palette_ArmorAndGloves ; 4bytes
-RTL ; 1byte 
-NOP #$01
-
-org $1BEE1B
-JSL Palette_ArmorAndGloves_part_two
-RTL
-
-; =============================================================================
+  JSL StartupMasks
 
 org $278000
 StartupMasks:
@@ -66,16 +54,15 @@ StartupMasks:
 
 ; =============================================================================
 
-CancelMask:
-{
-  JSL Palette_ArmorAndGloves
-  LDA #$10 : STA $BC : STZ $02B2
+org $1BEDF9
+  JSL Palette_ArmorAndGloves ; 4bytes
+  RTL ; 1byte 
+  NOP #$01
+
+org $1BEE1B
+  JSL Palette_ArmorAndGloves_part_two
   RTL
-}
 
-; =============================================================================
-
-; Code : 
 org $398000
 Palette_ArmorAndGloves:
 {
@@ -239,7 +226,54 @@ LinkState_ResetMaskAnimated:
   RTL
 }
 
-print "Next address for jump in bank07:  ", pc 
+Link_CheckNewL_ButtonPress:
+{
+  ; Check if the L button is already down.
+  BIT $3B : BVS .noNewInput
+  
+  ; Flag to see if Link is recoiling from damage or other stuff.
+  LDA $46 : BNE .noNewInput
+  
+  ; Check joypad readings for new input during this frame.
+  LDA $F6 : AND.b #$08 : BEQ .noNewInput  ; AND with 00001000 to isolate L
+  
+  TSB $3B
+  
+  SEC
+  
+  RTS
 
+.noNewInput
+
+  ; I'm guessing this is like a cancel indicator.
+  CLC
+  
+  RTS
+}
+
+Link_CheckNewR_ButtonPress:
+{
+  ; Check if the R button is already down.
+  BIT $3B : BVS .noNewInput
+  
+  ; Flag to see if Link is recoiling from damage or other stuff.
+  LDA $46 : BNE .noNewInput
+  
+  ; Check joypad readings for new input during this frame.
+  LDA $F6 : AND.b #$04 : BEQ .noNewInput  ; AND with 00000100 to isolate R
+  
+  TSB $3B
+  
+  SEC
+  
+  RTS
+
+.noNewInput
+
+  ; I'm guessing this is like a cancel indicator.
+  CLC
+  
+  RTS
+}
 
 ; =============================================================================

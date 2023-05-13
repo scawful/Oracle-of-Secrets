@@ -30,8 +30,6 @@ Link_HandleDekuTransformation:
   RTS
 }
 
-print "here", pc
-
 org $07811A 
   JSR Link_HandleDekuTransformation
 

@@ -319,14 +319,27 @@ HUD_UpdateItemBox:
   LDA.w #$0001
   
 .bombsNotEquipped
-  CPX.w #$0010 : BNE .bottleNotEquipped
-  TXY : TAX : LDA $7EF35B, X : AND.w #$00FF : TYX
 
-.bottleNotEquipped
+  CPX.w #$0006 : BNE .bottle1NotEquipped
+  JMP .loadBottleContent
+.bottle1NotEquipped
+  CPX.w #$000C : BNE .bottle2NotEquipped
+  LDA.w #$0002
+  JMP .loadBottleContent
+.bottle2NotEquipped
+  CPX.w #$0012 : BNE .bottle3NotEquipped
+  LDA.w #$0003
+  JMP .loadBottleContent
+.bottle3NotEquipped
+  CPX.w #$0018 : BNE .bottleNotEquipped
+  LDA.w #$0004
+.loadBottleContent
+  TXY : TAX : LDA $7EF35B, X : AND.w #$00FF : TYX
+  
+.bottleNotEquipped  
   STA $02
   TXA : DEC A : ASL A : TAX
   LDA $FA93, X : STA $04
-  ; LDA.w HudItems, X : STA $04
   LDA $02 : ASL #3 : TAY
   
   ; These addresses form the item box graphics.
@@ -412,15 +425,6 @@ HexToDecimal:
 
 ; =============================================================================
 
-; dw BowsGFX, BoomsGFX, HookGFX
-; dw BombsGFX, PowderGFX, BottlesGFX
-; dw HammerGFX, LampGFX, Fire_rodGFX
-; dw Ice_rodGFX, MirrorGFX, BottlesGFX
-; dw OcarinaGFX, BookGFX, SomariaGFX
-; dw ByrnaGFX, JumpFeatherGFX, BottlesGFX
-; dw DekuMaskGFX, ZoraMaskGFX, WolfMaskGFX
-; dw BunnyHoodGFX, StoneMaskGFX, BottlesGFX
-
 ; $6FA93-$6FAFC DATA
 org $0DFA93
 HudItems:
@@ -431,13 +435,70 @@ HudItems:
   dw $F701, $F6F1, $F6A1, $F6B1, $F7C9, $F751
   ; flute, book, somaria, byrna, feather, bottle3
   dw $F711, $F741, $F799,  $F7A9, $F731, $F751
-  ; bombos, quake, ether, stone mask 
-  dw $F6E1, $F6C1, $F6D1, $F7B9, $F811, $F751
+  ; deku,   zora,  wolf,  bunny,  stne 
+  dw $F6E1, $F821, $F6D1, $F7B9, $F811, $F751
 }
 
+org $0DF751
+  dw $20F5, $20F5, $20F5, $20F5 ; No bottle
+  dw $2044, $2045, $2046, $2047 ; Mushroom
+  dw $2837, $2838, $2CC3, $2CD3 ; Empty bottle
+  dw $24D2, $64D2, $24E2, $24E3 ; Red potion
+  dw $3CD2, $7CD2, $3CE2, $3CE3 ; Green potion
+  dw $2CD2, $6CD2, $2CE2, $2CE3 ; Blue potion
+  dw $2855, $6855, $2C57, $2C5A ; Fairy
+  dw $2837, $2838, $2839, $283A ; Bee
+  dw $2837, $2838, $2839, $283A ; Good bee
+
+; Boomerang 
 org $0DF651
-  dw $2CB8, $2CB9, $2CF5, $2CC9 ; Blue boomerang
-  dw $24B8, $24B9, $24F5, $24C9 ; Red boomerang
+  dw $20F5, $20F5, $20F5, $20F5 ; No boomerang
+  dw $2CB8, $2CB9, $2CC9, $ACB9 ; Blue boomerang
+	dw $24B8, $24B9, $24C9, $A4B9 ; Red boomerang
+
+; Powder 
+org $0DF689
+  dw $20F5, $20F5, $20F5, $20F5 ; No powder
+  dw $2444, $2445, $2446, $2447 ; Mushroom
+	dw $283B, $283C, $283D, $283E ; Powder
+
+; Hammer
+org $0DF701
+  dw $20F5, $20F5, $20F5, $20F5 ; No 
+  dw $24B6, $24B7, $20C6, $24C7 ; Hammer
+
+; Mirror 
+org $0DF7C9
+  dw $20F5, $20F5, $20F5, $20F5 ; No mirror
+  dw $2C62, $2C63, $2C72, $2C73 ; Mirror
+
+; Byrna
+org $0DF7A9
+  dw $20F5, $20F5, $20F5, $20F5 ; No Byrna
+  dw $2CDC, $2CDD, $2CEC, $2CED ; Cane of Byrna
+
+org $0DF6E1
+  dw $20F5, $20F5, $20F5, $20F5 ; No bombos
+  dw $2066, $6066, $2076, $6076 ; Deku Mask
+
+; Zora
+org $0DF821
+  dw $20F5, $20F5, $20F5, $20F5 
+  dw $2C88, $6C88, $2C89, $6C89 
+  dw $2C88, $6C88, $2C89, $6C89
+
+; Wolf 
+org $0DF6D1
+  dw $3086, $7086, $3087, $7087
+
+; Bunny 
+org $0DF7B9
+  dw $3469, $7469, $3479, $7479
+
+; Stone Mask
+org $0DF811
+  dw $20F5, $20F5, $20F5, $20F5 
+  dw $30B4, $30B5, $30C4, $30C5
 
 ; =============================================================================
 ; $6FE77-$6FFC0 
@@ -462,7 +523,7 @@ HUD_Tilemap:
   dw $201B, $344B
   dw $344B, $344B, $344B, $344B
   
-   ; item frame left part 
+  ; item frame left part 
   dw $20DE, $207F, $207F, $20DF
                                
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F

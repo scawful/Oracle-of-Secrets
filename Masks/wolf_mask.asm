@@ -31,6 +31,8 @@ LinkItem_WolfMask:
 {
   LDA $02B2 : CMP #$03 : BNE .equip
 
+  ; FIXME: activates whenever you press the Y button
+  ; needs a delay or something?
   JSR LinkItem_Shovel
 
 .equip 
@@ -60,6 +62,8 @@ LinkItem_WolfMask:
   CLC
   RTS
 }
+
+print "End of LinkItem_WolfMask ", pc
 
 ; =============================================================================
 
