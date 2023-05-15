@@ -198,6 +198,7 @@ HUD_Update:
 
   ; If the key digit is blank, also blank out the key icon.
   STA $7EC724
+
 .dontBlankKeyIcon
   SEP #$30
 
@@ -335,8 +336,13 @@ HUD_UpdateItemBox:
   LDA.w #$0004
 .loadBottleContent
   TXY : TAX : LDA $7EF35B, X : AND.w #$00FF : TYX
-  
+
 .bottleNotEquipped  
+  CPX.w #$000D : BNE .fluteNotEquipped
+  LDA $030F
+
+.fluteNotEquipped
+
   STA $02
   TXA : DEC A : ASL A : TAX
   LDA $FA93, X : STA $04
@@ -434,10 +440,18 @@ HudItems:
   ; hammer, lamp, fire rod, Ice Rod, mirror, bottle2
   dw $F701, $F6F1, $F6A1, $F6B1, $F7C9, $F751
   ; flute, book, somaria, byrna, feather, bottle3
-  dw $F711, $F741, $F799,  $F7A9, $F731, $F751
+  dw $F859, $F741, $F799,  $F7A9, $F731, $F751
   ; deku,   zora,  wolf,  bunny,  stne 
   dw $F6E1, $F821, $F6D1, $F7B9, $F811, $F751
 }
+
+; F711
+; Ocarina
+org $0DF859
+  dw $2CD4, $2CD5, $2CE4, $2CE5 
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue 
+  dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
+  dw $24D4, $24D5, $24E4, $24E5 ; Red
 
 org $0DF751
   dw $20F5, $20F5, $20F5, $20F5 ; No bottle
