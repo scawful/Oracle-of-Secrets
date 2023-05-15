@@ -1,29 +1,6 @@
 ; =============================================================================
-
-; no glove color 
-org $0DEE24
- db $80
-
-org $07983A
-  Player_ResetSwimState:
-
-org $0ED6C0
-  LoadActualGearPalettes:
-
-org $07E245 
-  Link_HandleVelocity:
-
-org $07915E
-  LinkState_ExitingDash:
-
-org $07E6A6
-  Link_HandleMovingAnimation_FullLongEntry:
-
-org $07E69D
-  Link_HandleMovingAnimation_SetFacingDown:
-
-org $01FF28
-  Player_CacheStatePriorToHandler:
+; Change Link Sprite with $BC
+; =============================================================================
 
 org $09912C
   AddTransformationCloud:
@@ -66,17 +43,44 @@ org $1BEE1B
 org $398000
 Palette_ArmorAndGloves:
 {
-  LDA.b #$10 
-  STA $BC         ; Load Original Sprite Location
+
+  LDA $02B2 : CMP #$01 : BEQ .deku_mask 
+  CMP.b #$02 : BEQ .zora_mask
+  CMP.b #$03 : BEQ .wolf_mask
+  CMP.b #$04 : BEQ .bunny_hood
+  JMP .original_sprite
+
+.deku_mask
+  LDA.b #$35 : STA $BC         ; Load Deku Mask Location
+  JMP .original_palette
+  
+.zora_mask
+  LDA.b #$36 : STA $BC         ; Load Zora Mask Location
+  JMP .original_palette
+
+.wolf_mask
+  LDA.b #$38 : STA $BC         ; Load Wolf Mask Location
+  JSL $38F000
+  RTL
+
+.bunny_hood
+  LDA.b #$37 : STA $BC         ; Load Bunny Hood Location
+  JSL $37F000
+  RTL
+
+.original_sprite
+  LDA.b #$10 : STA $BC         ; Load Original Sprite Location
+
+.original_palette
   REP #$21
-  LDA $7EF35B
+  LDA $7EF35B     ; Link's armor value 
   JSL $1BEDFF     ; Read Original Palette Code
   RTL
 .part_two
   SEP #$30
-      REP #$30
-      LDA $7EF354
-      JSL $1BEE21 ; Read Original Palette Code
+    REP #$30
+    LDA.w #$0000 ; Ignore glove color modifier $7EF354
+    JSL $1BEE21 ; Read Original Palette Code
   RTL
 
   PHX : PHY : PHA
@@ -118,89 +122,64 @@ Palette_ArmorAndGloves:
 }
 
 ; =============================================================================
-
-org $07B64F
-  Link_HandleDiagonalCollision:
-
-; start of free space in bank07 
-org $07F89D
-Link_HandleDiagonalCollision_Long:
+; Overworld Palette Persist 
+Overworld_CgramAuxToMain_Override:
 {
-  PHB : PHK : PLB
-  JSR Link_HandleDiagonalCollision
-  PLB
+  ; copies the auxiliary CGRAM buffer to the main one and causes NMI to reupload the palette.
+  
+  REP #$20
+  
+  LDX.b #$00
+
+.loop
+  
+  LDA $7EC300, X : STA $7EC500, X
+  LDA $7EC340, X : STA $7EC540, X
+  LDA $7EC380, X : STA $7EC580, X
+  LDA $7EC3C0, X : STA $7EC5C0, X
+  LDA $7EC400, X : STA $7EC600, X
+  LDA $7EC440, X : STA $7EC640, X
+  LDA $7EC480, X : STA $7EC680, X
+
+  LDA $02B2 : BNE .has_mask_palette
+  LDA $7EC4C0, X : STA $7EC6C0, X
+.has_mask_palette
+
+  INX #2 : CPX.b #$40 : BNE .loop
+  
+  SEP #$20
+  
+  ; tell NMI to upload new CGRAM data
+  INC $15
+  
   RTL
 }
 
+org $02C769
+Overworld_CgramAuxToMain:
+{
+  JSL Overworld_CgramAuxToMain_Override
+  RTS
+}
+
+; no glove color (don't think this does anything?)
+org $0DEE24
+ db $80
+
 ; =============================================================================
 
-org $07B7C7
-  Link_HandleCardinalCollision:
+; extra free space in bank07 for longs (no longer used)
+org $07F89D
 
 org $07F8A6
-Link_HandleCardinalCollision_Long:
-{
-  PHB : PHK : PLB
-  JSR Link_HandleCardinalCollision
-  PLB
-  RTL
-}
-
-; =============================================================================
-
-org $07E8F0
-  HandleIndoorCameraAndDoors:
 
 org $07F8AE
-HandleIndoorCameraAndDoors_Long:
-{
-  PHB : PHK : PLB
-  JSR HandleIndoorCameraAndDoors
-  PLB
-  RTL
-}
-
-; =============================================================================
-
-org $07F514
-  CheckIndoorStatus:
 
 org $07F8B7
-CheckIndoorStatus_Long:
-{
-  PHB : PHK : PLB
-  JSR CheckIndoorStatus
-  PLB
-  RTL
-}
-
-; =============================================================================
-
-org $079873
-  Player_ResetSwimCollision:
 
 org $07F8C0
-Player_ResetSwimCollision_Long:
-{
-  PHB : PHK : PLB
-  JSR Player_ResetSwimCollision
-  PLB
-  RTL
-}
-
-; =============================================================================
-
-org $079B0E
-  Link_HandleYItems:
 
 org $07F8C9
-Link_HandleYItems_Long:
-{
-  PHB : PHK : PLB
-  JSR Link_HandleYItems
-  PLB
-  RTL
-}
 
 ; =============================================================================
 
@@ -220,60 +199,11 @@ LinkState_ResetMaskAnimated:
   JSL AddTransformationCloud
   LDA.b #$14 : JSR Player_DoSfx2
 
+  STZ $02B2
   JSL Palette_ArmorAndGloves
-  LDA #$10 : STA $BC : STZ $02B2
+  LDA #$10 : STA $BC
 .no_mask
   RTL
-}
-
-Link_CheckNewL_ButtonPress:
-{
-  ; Check if the L button is already down.
-  BIT $3B : BVS .noNewInput
-  
-  ; Flag to see if Link is recoiling from damage or other stuff.
-  LDA $46 : BNE .noNewInput
-  
-  ; Check joypad readings for new input during this frame.
-  LDA $F6 : AND.b #$08 : BEQ .noNewInput  ; AND with 00001000 to isolate L
-  
-  TSB $3B
-  
-  SEC
-  
-  RTS
-
-.noNewInput
-
-  ; I'm guessing this is like a cancel indicator.
-  CLC
-  
-  RTS
-}
-
-Link_CheckNewR_ButtonPress:
-{
-  ; Check if the R button is already down.
-  BIT $3B : BVS .noNewInput
-  
-  ; Flag to see if Link is recoiling from damage or other stuff.
-  LDA $46 : BNE .noNewInput
-  
-  ; Check joypad readings for new input during this frame.
-  LDA $F6 : AND.b #$04 : BEQ .noNewInput  ; AND with 00000100 to isolate R
-  
-  TSB $3B
-  
-  SEC
-  
-  RTS
-
-.noNewInput
-
-  ; I'm guessing this is like a cancel indicator.
-  CLC
-  
-  RTS
 }
 
 ; =============================================================================

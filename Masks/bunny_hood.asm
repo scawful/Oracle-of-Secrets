@@ -38,8 +38,9 @@ LinkItem_Ether:
   LDA #$04 : STA $02B2
   BRA .return
 .unequip
+  STZ $02B2 
   JSL Palette_ArmorAndGloves
-  LDA #$10 : STA $BC : STZ $02B2        ; take the hood off
+  LDA #$10 : STA $BC                    ; take the hood off
 
 .return
   CLC

@@ -21,7 +21,8 @@ LinkItem_ShovelAndFlute:
   LDA $0202 : CMP.b #$0D : BNE .use_wolf_mask
   BRL LinkItem_Flute
 .use_wolf_mask
-  JSR LinkItem_WolfMask
+  BRL LinkItem_WolfMask
+  
 }
 
 ; =============================================================================
@@ -30,17 +31,11 @@ org $07F8E9
 LinkItem_WolfMask:
 {
   LDA $02B2 : CMP #$03 : BNE .equip
-
-  ; FIXME: activates whenever you press the Y button
-  ; needs a delay or something?
   JSR LinkItem_Shovel
 
 .equip 
-  ; check for R button held
-  LDA $F2 : CMP #$10 : BNE .return 
-  JSR Link_CheckNewY_ButtonPress : BCC .return
-  LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
-
+  ; Check for R button press
+  LDA.b $F6 : BIT.b #$10 : BEQ .return
   LDA $6C : BNE .return                 ; in a doorway
   LDA $0FFC : BNE .return               ; can't open menu
 
@@ -55,8 +50,9 @@ LinkItem_WolfMask:
   BRA .return
 
 .unequip
+  STZ $02B2
   JSL Palette_ArmorAndGloves
-  LDA #$10 : STA $BC : STZ $02B2        ; take the mask off
+  LDA #$10 : STA $BC             ; take the mask off
 
 .return
   CLC
