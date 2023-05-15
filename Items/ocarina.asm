@@ -11,6 +11,11 @@ org $0994FE
 org $098D11
   AddWeathervaneExplosion:
 
+org $078021
+  Player_DoSfx1:
+
+; =============================================================================
+
 ; SFX2_Accomp
 ; SFX2 13 (Previous $3E)
 org $1A8C60
@@ -33,38 +38,55 @@ Song_of_Healing:
   db $00
 }
 
+; =============================================================================
+
 ; D F D - D F D - E F E - F E C
 ; D F d D F d e f e f e c
 ; SFX2_12
-org $1A977D
+; org $1A977D
+
+!Storms_Duration = $0F
+!Storms_Params = $46
+
+!Storms_Duration2 = $1E
+!Storms_Params2 = $3C
+
+; SFX1_18
+org $1A8F93
+Song_of_Storms:
 {
   db $E0, $0D ; set sfx instrument - twee
 
-  db $0F, $46 ; duration 1/4, params
+  db !Storms_Duration
+  db !Storms_Params ; duration 1/4
   db $9A ; play note D3
   db $9D ; play note F3
-  db $1E, $46 ; duration 1/2, params
+  db !Storms_Duration2
+  db !Storms_Params ; duration 1/2
   db $9A ; play note D3
 
-  db $0F, $46 ; duration 1/4, params
+  db !Storms_Duration
+  db !Storms_Params ; duration 1/4
   db $9A ; play note D3
   db $9D ; play note F3
-  db $1E, $46 ; duration 1/2, params
+  db !Storms_Duration2
+  db !Storms_Params ; duration 1/2
   db $9A ; play note D3
   
-  db $0F, $3C ; duration 1/4, params
+  db !Storms_Duration
+  db !Storms_Params2 ; duration 1/4
   db $9C ; play note E3
   db $9D ; play note F3
   db $9C ; play note E3
 
   db $9D ; play note F3
   db $9C ; play note E3
-  db $1E, $3C ; duration 1/2, params
+  db !Storms_Duration2
+  db !Storms_Params2 ; duration 1/2
   db $98 ; play note C3
 
   db $00 ; end sfx
 }
-
 ; =============================================================================
 
 org $07A3DB
@@ -74,10 +96,14 @@ LinkItem_FluteHook:
   RTS
 }
 
+; =============================================================================
+
 ; Free Space Bank07
 org $07FC69
 ReturnFromFluteHook:
   RTS
+
+; =============================================================================
 
 LinkItem_NewFlute:
 {
@@ -106,7 +132,8 @@ LinkItem_NewFlute:
 
 .song_of_storms
   ; Play the Song of Storms SFX
-  LDA.b #$12 : JSR Player_DoSfx2 
+  ; LDA.b #$12 : JSR Player_DoSfx2 
+  LDA.b #$18 : JSR Player_DoSfx1
   JSR OcarinaEffect_SummonStorms
   RTS
 
@@ -128,6 +155,7 @@ LinkItem_NewFlute:
 
   ; Is there already a travel bird effect in this slot?
   LDA $0C4A, X : CMP.b #$27 : BEQ .return
+  
   ; If there isn't one, keep checking.
   DEX : BPL .next_ancillary_slot
 
@@ -249,44 +277,42 @@ OcarinaEffect_SummonStorms:
 org $208100 
 LoadRainEffect:
 {
-	lda $7EE00E
-	bne .On
-	lda $7EE00D
-	bne .Off
-	bra Rain_End
-Rain_On:
-	lda #$01
-	sta $7EE00F
-	sta $7EE00C
-	lda #$01
-	sta $7EE00E
-	bra Rain_End
-Rain_Off:
-	lda #$00
-	sta $7EE00F
-	sta $7EE00C
-	sta $7EE00D
-	bra Rain_End
-Rain_End:
-	lda #$00
-	sta $7EE00E
-	sta $7EE00D
-	lda $7EF3C5
-	rtl
+	LDA $7EE00E : BNE .On
+	LDA $7EE00D : BNE .Off
+	BRA LoadRainEffect_End
+
+LoadRainEffect_On:
+	LDA #$01 : STA $7EE00F : STA $7EE00C
+	LDA #$01 : STA $7EE00E
+	BRA LoadRainEffect_End
+
+LoadRainEffect_Off:
+	LDA #$00
+	STA $7EE00F
+	STA $7EE00C
+	STA $7EE00D
+	BRA LoadRainEffect_End
+
+LoadRainEffect_End:
+	LDA #$00
+	STA $7EE00E
+	STA $7EE00D
+	LDA $7EF3C5
+	RTL
 }
 
 
 org $208200 ; these are executed every frame
 RainOnTime:
-	lda $7EE001
+	LDA $7EE001
 	cmp #$1E
 	bne .End
-	lda $7EE000
+	LDA $7EE000
 	cmp #$01
 	bne .End
-	lda $7EE00B
+	LDA $7EE00B
 	bne .End
-	lda #$01
+	LDA #$01
 	sta $7EE00E
 	sta $7EE00F
 RainOnTime_End:
@@ -294,25 +320,24 @@ RainOnTime_End:
 
 org $208300 ; these are executed every frame
 RainOffTime:
-	lda $7EE001
+	LDA $7EE001
 	cmp #$1E
 	bne .End
-	lda $7EE000
+	LDA $7EE000
 	cmp #$03
 	bne .End
-	lda #$01
+	LDA #$01
 	sta $7EE00D
 RainOffTime_End:
 	rtl
 
-org $20C000 ; moved this function to expanded space to change it, don't think i needed to though :(
-	LDA $8A
-	CMP #$70
-	BEQ BRANCH_EVIL_SWAMP
-	LDA $7EE00F
-	Beq BRANCH_SKIPMOVEMENT
+; moved this function to expanded space to change it, don't think i needed to though :()
+org $20C000 
+	LDA $8A : CMP #$70 : BEQ BRANCH_EVIL_SWAMP
+	LDA $7EE00F : BEQ BRANCH_SKIPMOVEMENT
+
 BRANCH_EVIL_SWAMP:
-	LDA $7EF2F0 ; If misery mire has been opened already, weíre done
+	LDA $7EF2F0 ; If misery mire has been opened already, we're done
 	AND #$20
 	BNE BRANCH_SKIPMOVEMENT
 	LDA $1A ; Check the frame counter.
@@ -361,73 +386,86 @@ BRANCH_SKIPMOVEMENT:
 	RTL
 
 org $02A4CD ; rain animating overlays, thunder lightning, darkness (can do immediate)
-	jsl $20C000
-	bra $59
+	JSL $20C000
+	BRA $59
+
 org $02AC12 ; load overlays OW to OW
-	lda $7EE00C
-	nop #2
-	beq $03
-org $02AFFC ; load overlays dungeon to OW
-	lda $7EE00C
-	nop #06
-	beq $03
-org $02838C ; indoor ambience (can do immediate)
-	lda $7EE00F
-	nop #02
-	beq $1e
-org $02845D ; music routine 
-	lda $7EE00C
-	nop #02
-	beq $02
-org $0284EA ; outdoor ambience
-	lda $7EE00C
-	nop #2
-	beq $02
-org $02C463 ; overworld music routine, modified to use the 'Beginning' music if 7EE00C is not equal to zero (Rain activated)
-	PHB
-	PHK
-	PLB
-	REP #$10
-	LDA #$02
-	STA $00
-	LDX #$0000
 	LDA $7EE00C
-	BNE $25
-	LDY #$00C0
-	LDA $7EF3C5
-	CMP #$03
-	BCS $1D
-	LDY #$0080
-	LDA $7EF359
-	CMP #$02
-	BCS $12
-	LDA #$05
-	STA $00
-	LDY #$0040
-	LDA $7EF3C5
-	CMP #$02
-	BCS $03
-	LDY #$0000
-	LDA $C303,Y
-	STA $7F5B00,X
-	INY
-	INX
-	CPX #$0040
-	BNE $F2
-	LDY #$0000
-	LDA $C403,Y
-	STA $7F5B00,X
-	INX
-	INY
-	CPY #$0060
-	BNE $F2
-	LDA $00
-	STA $7F5B80
+	NOP #2
+	BEQ $03
+
+org $02AFFC ; load overlays dungeon to OW
+	LDA $7EE00C
+	NOP #06
+	BEQ $03
+
+org $02838C ; indoor ambience (can do immediate)
+	LDA $7EE00F
+	NOP #02
+	BEQ $1e
+
+org $02845D ; music routine 
+	LDA $7EE00C
+	NOP #02
+	BEQ $02
+
+org $0284EA ; outdoor ambience
+	LDA $7EE00C
+	NOP #2
+	BEQ $02
+
+; overworld music routine
+; modified to use the 'Beginning' music if 7EE00C is not zero (Rain activated)
+org $02C463 
+	PHB : PHK : PLB
+	REP #$10
+    LDA #$02 : STA $00
+    LDX #$0000
+    LDA $7EE00C
+    BNE $25
+
+    LDY #$00C0
+    LDA $7EF3C5
+    CMP #$03
+    BCS $1D
+
+    LDY #$0080
+    LDA $7EF359
+    CMP #$02
+    BCS $12
+
+    LDA #$05
+    STA $00
+    LDY #$0040
+    LDA $7EF3C5
+    CMP #$02
+    BCS $03
+
+    LDY #$0000
+    LDA $C303,Y
+    STA $7F5B00,X
+    INY
+    INX
+    CPX #$0040
+    BNE $F2
+
+    LDY #$0000
+    LDA $C403,Y
+    STA $7F5B00,X
+    INX
+    INY
+    CPY #$0060
+    BNE $F2
+
+    LDA $00
+    STA $7F5B80
 	SEP #$10
 	PLB
 	RTL
 
-org $02C303 ; Overworld beginning music for each OW Screen changes the music to use heavy rain outside of lost woods, and light rain inside
+; Overworld beginning music for each OW Screen 
+; changes the music to use heavy rain outside of lost woods, and light rain inside
+org $02C303 
 	db $25,$25,$13,$13,$13,$13,$13,$13
 	db $25,$25,$13,$13,$13,$13,$13,$13
 	db $13,$13,$13,$13,$13,$13,$13,$13
@@ -439,5 +477,4 @@ org $02C303 ; Overworld beginning music for each OW Screen changes the music to 
 
 ; executed on dungoen load
 org $028356 ; replaced an LDA $7EF3C5 which is read before we return
-; org $02A4CD
 	JSL $208100
