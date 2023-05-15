@@ -1,148 +1,155 @@
 ;----------------[ Time system ]----------------
+;@xkas
+lorom 
 
-; tiles locations on HUD (status bar)
-!hud_min_low = $7EC79E
-!hud_min_high = $7EC79C
-!hud_hours_low = $7EC798
-!hud_hours_high = $7EC796
+; tiles locations on HUD
+!hud_min_low = $7EC798
+!hud_min_high = $7EC796
+!hud_hours_low = $7EC792
+!hud_hours_high = $7EC790
 !hud_template = $0DFF07
 
 org !hud_template
-	db $10,$24,$11,$24,$12,$24,$90,$24,$90,$24,$13,$24,$90,$24,$90,$24	; HUD Template(adjusts timer's color)
+	db $10,$24,$11,$24
+  db $6C,$25
+  db $90,$24,$90,$24
+  db $6C,$25,$90,$24,$90,$24	; HUD Template(adjusts timer's color)
 	
 org $068361
-	jsl $1CFF30
+	JSL $1CFF30
   ;originally JSL $09B06E, executed every frame
 
 org $1CFF30
-	jsr counter_preroutine
-	ldx #$00
+	JSR counter_preroutine
+	LDX #$00
 debut:
-	ldy #$00
-	lda $7EE000,x
+	LDY #$00
+	LDA $7EE000,x
 
 debut2:
-	cmp #$0A
-	bmi draw
-	sbc #$0A
-	iny
-	bra debut2
+	CMP #$0A
+	BMI draw
+	SBC #$0A
+	INY
+	BRA debut2
 
 draw:
 	adc #$90
-	cpx #$01
-	beq minutes_low
-	sta !hud_hours_low
-	bra 04
+	CPX #$01
+	BEQ minutes_low
+	STA !hud_hours_low
+	BRA 04
 
 minutes_low:
-	sta !hud_min_low
+	STA !hud_min_low
 	tya
 	clc
 	adc #$90
-	cpx #$01
-	beq minutes_high
-	sta !hud_hours_high
-	bra 04
+	CPX #$01
+	BEQ minutes_high
+	STA !hud_hours_high
+	BRA 04
 
 minutes_high:
-	sta !hud_min_high
-	inx
-	cpx #$02
-	bmi debut
-	jsl $09B06E
+	STA !hud_min_high
+	INX
+	CPX #$02
+	BMI debut
+	JSL $09B06E
 	rtl
 
 ;--------------------------------
 
 counter_preroutine:
-	lda $10			;checks current event in game
-	cmp #$07		;dungeon/building?
-	beq counter_increasing
-	cmp #$09		;overworld?
-	beq overworld
-	cmp #$0B
-	beq overworld		;sub-area ? (under the bridge; zora domain...)
-	cmp #$0E		;dialog box?
-	beq dialog
-	rts
+	LDA $10			;checks current event in game
+	CMP #$07		;dungeon/building?
+	BEQ counter_increasing
+	CMP #$09		;overworld?
+	BEQ overworld
+	CMP #$0B
+	BEQ overworld		;sub-area ? (under the bridge; zora domain...)
+	CMP #$0E		;dialog box?
+	BEQ dialog
+	RTS
 
 overworld:
-	lda $11
-	cmp #$23		;hdma transfer? (warping)
+	LDA $11
+	CMP #$23		;hdma transfer? (warping)
 	bne mosaic
 mosaic:
-	cmp #$0D		;mosaic ?
-	bmi counter_increasing
+	CMP #$0D		;mosaic ?
+	BMI counter_increasing
 	rts
 
 dialog:
-	lda $11			;which kind of dialog? (to prevent the counter from increasing if save menu or item menu openned)
-	cmp #$02		;NPC/signs speech
-	beq counter_increasing
+	LDA $11			;which kind of dialog? (to prevent the counter from increasing if save menu or item menu openned)
+	CMP #$02		;NPC/signs speech
+	BEQ counter_increasing
 	rts
 
 counter_increasing:
-	lda $1A
-	and #$1F		;change value (1,3,5,7,F,1F,3F,7F,FF) to have different time speed, #$3F is almost 1 sec = 1 game minute
-	beq increase_minutes
+  ; time speed (1,3,5,7,F,1F,3F,7F,FF) 
+  ; #$3F is almost 1 sec = 1 game minute
+	LDA $1A : AND #$05
+	BEQ increase_minutes
 end:
 	rts
 
 increase_minutes:
-	lda $7EE001
-	inc a
-	sta $7EE001
-	cmp #$3C		; minutes = #60 ?
-	bpl increase_hours
-	rts
+	LDA $7EE001
+	INC A
+	STA $7EE001
+	CMP #$3C		; minutes = #60 ?
+	BPL increase_hours
+	RTS
 
 increase_hours:
-	lda #$00
-	sta $7EE001
-	lda $7EE000
-	inc a
-	sta $7EE000
-	cmp #$18		; hours = #24 ?
-	bpl reset_hours
+	LDA #$00
+	STA $7EE001
+	LDA $7EE000
+	INC A
+	STA $7EE000
+	CMP #$18		; hours = #24 ?
+	BPL reset_hours
 
-	lda $1B			;check indoors/outdoors
-	beq outdoors0
-	rts
+	LDA $1B			;check indoors/outdoors
+	BEQ outdoors0
+	RTS
+
 outdoors0:
-	jsl rom_to_buff		;update buffer palette
-	jsl buff_to_eff		;update effective palette
-	lda $8C
-	cmp #$9F		;rain layer ?
-	beq skip_bg_updt0
-	jsl $0BFE70		;update background color
-	bra inc_hours_end
+	JSL rom_to_buff		;update buffer palette
+	JSL buff_to_eff		;update effective palette
+	LDA $8C
+	CMP #$9F		;rain layer ?
+	BEQ skip_bg_updt0
+	JSL $0BFE70		;update background color
+	BRA inc_hours_end
 	
 skip_bg_updt0:			;prevent the sub layer from disappearing ($1D zeroed)
-	jsl $0BFE72
+	JSL $0BFE72
 inc_hours_end:	
-	rts
+	RTS
 
 reset_hours:
-	lda #$00
-	sta $7EE000
+	LDA #$00
+	STA $7EE000
 
-	lda $1B			;check indoors/outdoors
-	beq outdoors1
-	rts
+	LDA $1B			;check indoors/outdoors
+	BEQ outdoors1
+	RTS
 outdoors1:
-	jsl rom_to_buff
-	jsl buff_to_eff
-	lda $8C
-	cmp #$9F		;rain layer ?
-	beq skip_bg_updt1
-	jsl $0BFE70		;update background color
-	bra reset_end
+	JSL rom_to_buff
+	JSL buff_to_eff
+	LDA $8C
+	CMP #$9F		;rain layer ?
+	BEQ skip_bg_updt1
+	JSL $0BFE70		;update background color
+	BRA reset_end
 	
 skip_bg_updt1:			;prevent the sub layer from disappearing ($1D zeroed)
-	jsl $0BFE72
+	JSL $0BFE72
 reset_end:	
-	rts
+	RTS
 
 ;-----------------------------------------------
 ;----[ Day / Night system * palette effect ]----
@@ -154,17 +161,16 @@ reset_end:
 
 !temp_value = $7EE016
 !pal_color = $7EE018
-!x_reg = $08
 
-org $02FF70		; free space on bank $02
-
+org $02FF80		; free space on bank $02
 buff_to_eff:
-	jsr $C769	; $02:C65F -> palette buffer to effective routine
-	rtl
+	JSR $C769	; $02:C65F -> palette buffer to effective routine
+	RTL
+  
 rom_to_buff:
-	jsr $AAF4	; $02:AAF4 -> change buffer palette of trees,houses,rivers,etc.
-	jsr $C692	; $02:C692 -> rom to palette buffer for other colors
-	rtl
+	JSR $AAF4	; $02:AAF4 -> change buffer palette of trees,houses,rivers,etc.
+	JSR $C692	; $02:C692 -> rom to palette buffer for other colors
+	RTL
 
 ; part of rom pal to buffer routine
 ;$1B/EF61 9F 00 C3 7E STA $7EC300,x[$7E:C422]
@@ -172,55 +178,56 @@ rom_to_buff:
 ;$1B/EF84 9F 00 C3 7E STA $7EC300,x[$7E:C4B2]
 
 org $1BEF3D
-	jsl new_palette_load
+	JSL LoadDayNightPaletteEffect
+
 org $1BEF61
-	jsl new_palette_load
+	JSL LoadDayNightPaletteEffect
+
 org $1BEF84
-	jsl new_palette_load
+	JSL LoadDayNightPaletteEffect
 
-org $1EEE25	; free space
+org $0EEE25	; free space
+LoadDayNightPaletteEffect:
+{
+	STA !pal_color
 
-new_palette_load:
-
-	sta !pal_color
-
-	cpx #$0041
-	bpl title_check
-	sta $7EC300,x
-	rtl
+	CPX #$0041
+	BPL title_check
+	STA $7EC300,X
+	RTL
+  
 title_check:
-	lda $10
-	and #$00FF
-	cmp #$0002	; title or file select screen ?
-	bpl outin_check
-	lda !pal_color
-	sta $7EC300,x
-	rtl
+	LDA $10
+	AND #$00FF
+	CMP #$0002	; title or file select screen ?
+	BPL outin_check
+	LDA !pal_color
+	STA $7EC300,X
+	RTL
+
 outin_check:
-	lda $1B
-	and #$00FF
-	beq outdoors2
-	lda !pal_color
-	sta $7EC300,x
-	rtl
+	LDA $1B : AND #$00FF : BEQ outdoors2
+	LDA !pal_color
+	STA $7EC300,X
+	RTL
 
 outdoors2:
-	phx
-	jsl color_sub_effect
-	plx
-	sta $7EC300,x
-	rtl
-
+	PHX
+	JSL ColorSubEffect
+	PLX
+	STA $7EC300,X
+	RTL
+}
 ;--------------------------------
 
-color_sub_effect:
-	lda $7EE000		; lda #hours
-	and #$00FF
-	clc
-	adc $7EE000		; #hours * 2
-	and #$00FF
-	tax
-
+ColorSubEffect:
+{
+	LDA $7EE000		; LDA #hours
+	AND #$00FF
+	CLC
+	ADC $7EE000		; #hours * 2
+	AND #$00FF
+	TAX
 
 do_blue:
 	LDA !pal_color
@@ -232,8 +239,10 @@ do_blue:
 	AND #$7C00		; mask out everything except the blue bits
 	CMP !temp_value		; overflow ?
 	BEQ no_blue_sign_change
+
 blue_sign_change:
-	LDA #$0400		; lda smallest blue value
+	LDA #$0400		; LDA smallest blue value
+
 no_blue_sign_change:
 	STA !blue_value 
 
@@ -247,8 +256,9 @@ do_green:
 	AND #$03E0		; mask out everything except the green bits
 	CMP !temp_value		; overflow ?
 	BEQ no_green_sign_change
+  
 green_sign_change:
-	LDA #$0020		; lda smallest green value
+	LDA #$0020		; LDA smallest green value
 	no_green_sign_change:
 	STA !green_value
 	
@@ -262,8 +272,10 @@ do_red:
 	AND #$001F		; mask out everything except the red bits
 	CMP !temp_value		; overflow ?
 	BEQ no_red_sign_change
+
 red_sign_change:
-	LDA #$0001		; lda smallest red value
+	LDA #$0001		; LDA smallest red value
+
 no_red_sign_change:
 	STA !red_value
 
@@ -271,8 +283,8 @@ no_red_sign_change:
 	ORA !green_value
 	ORA !red_value
 	
-	rtl
-
+	RTL
+}
 
 ; color_sub_tables : 24 * 2 bytes each = 48 bytes (2 bytes = 1 color sub for each hour)
 
@@ -300,41 +312,49 @@ red_table:
   dw $0000, $0000, $0000, $0002
   dw $0004, $0006, $0008, $0008
 
-background_fix:
-	beq no_effect		;branch if A=#$0000 (transparent bg)
-	jsl color_sub_effect
+BackgroundFix:
+{
+  BEQ .no_effect		;BRAnch if A=#$0000 (transparent bg)
+	JSL ColorSubEffect
   
-no_effect:
-	sta $7EC500
-	sta $7EC300
-	sta $7EC540
-	sta $7EC340
+.no_effect:
+	STA $7EC500
+	STA $7EC300
+	STA $7EC540
+	STA $7EC340
 	rtl
+}
 
-subareas_fix:
-	sta !pal_color
-	phx
-	jsl color_sub_effect
-	plx
+SubAreasFix:
+{
+	STA !pal_color
+	PHX
+	JSL ColorSubEffect
+	PLX
 	STA $7EC300
 	STA $7EC340
 	rtl
+}
 
-gloves_fix:
-	sta !pal_color
-	lda $1B
-	and #$00FF
-	beq outdoors3
-	lda !pal_color
-	STA $7EC4FA
-	rtl
 
-outdoors3:
-	phx
-	jsl color_sub_effect
-	plx
+GlovesFix:
+{
+	STA !pal_color
+	LDA $1B
+	AND #$00FF
+	BEQ .outdoors3
+	LDA !pal_color
 	STA $7EC4FA
-	rtl
+	RTL
+
+.outdoors3:
+	PHX
+	JSL ColorSubEffect
+	PLX
+	STA $7EC4FA
+	RTL
+}
+
 
 ; $0BFE70 -> background color loading routine
 ;Background color write fix - 16 bytes
@@ -344,8 +364,8 @@ outdoors3:
 ;$0B/FEC2 8F 40 C3 7E STA $7EC340
 
 org $0BFEB6
-	sta !pal_color
-	jsl background_fix
+	STA !pal_color
+	JSL BackgroundFix
 	nop #8
 
 ; Subareas background color fix (under the bridge; zora...)
@@ -353,7 +373,7 @@ org $0BFEB6
 ;$0E/D605 8F 40 C3 7E STA $7EC340[$7E:C340]
 
 org $0ED601
-	jsl subareas_fix
+	JSL SubAreasFix
 
 ;--------------------------------
 	
@@ -373,20 +393,4 @@ org $0ED601
 ;$1B/EE39 6B          RTL                     
 
 org $1BEE2D
-	jsl gloves_fix
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	JSL GlovesFix
