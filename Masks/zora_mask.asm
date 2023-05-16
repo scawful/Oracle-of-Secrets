@@ -179,6 +179,10 @@ LinkState_UsingZoraMask:
   ; Check if the player is actually diving 
   LDA $0AAB : BEQ .return_default
 
+  LDA $0114 : CMP #$85 : BEQ .return_default
+  LDA $0114 : CMP #$09 : BEQ .return_default
+  LDA $5B : CMP #$02 : BEQ .player_is_falling
+
   ; Check if the ground level is safe
   ; Otherwise, eject the player back to the surface
   LDA $0114 : BNE .remove_dive : CLC
@@ -191,6 +195,7 @@ LinkState_UsingZoraMask:
     LDA.b #$15 : LDY.b #$00 : JSL AddTransitionSplash
   .remove_dive
     LDA #$04 : STA $5D ; Set Link to Swimming State
+  .player_is_falling
     LDA #$01 : STA $EE ; Set Link to upper level
     STA $0345          ; Set deep water flag 
 
@@ -221,6 +226,7 @@ LinkState_UsingZoraMask:
   LDA #$06 : STA $5D ; Set Link to Recoil State
   RTS
 }
+print "End of Zora Mask Dive Code ", pc
 
 ; =============================================================================
 

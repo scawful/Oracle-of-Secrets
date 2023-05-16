@@ -43,11 +43,11 @@ org $1BEE1B
 org $398000
 Palette_ArmorAndGloves:
 {
-
   LDA $02B2 : CMP #$01 : BEQ .deku_mask 
   CMP.b #$02 : BEQ .zora_mask
   CMP.b #$03 : BEQ .wolf_mask
   CMP.b #$04 : BEQ .bunny_hood
+  CMP.b #$05 : BEQ .minish_form
   JMP .original_sprite
 
 .deku_mask
@@ -66,6 +66,11 @@ Palette_ArmorAndGloves:
 .bunny_hood
   LDA.b #$37 : STA $BC         ; Load Bunny Hood Location
   JSL $37F000
+  RTL
+
+.minish_form
+  LDA.b #$3A : STA $BC         ; Load Minish Form Location
+  JMP .original_palette
   RTL
 
 .original_sprite
@@ -140,7 +145,6 @@ Overworld_CgramAuxToMain_Override:
   LDA $7EC400, X : STA $7EC600, X
   LDA $7EC440, X : STA $7EC640, X
   LDA $7EC480, X : STA $7EC680, X
-
   LDA $02B2 : BNE .has_mask_palette
   LDA $7EC4C0, X : STA $7EC6C0, X
 .has_mask_palette
@@ -170,7 +174,9 @@ org $0DEE24
 
 ; extra free space in bank07 for longs (no longer used)
 org $07F89D
-
+incsrc "minish_form.asm"
+print "==> End of Minish Form insert", pc
+; 07FB8F
 org $07F8A6
 
 org $07F8AE
@@ -183,7 +189,10 @@ org $07F8C9
 
 ; =============================================================================
 
-org $07FA41
+; TODO: Make this so it does not cancel if $0202 is still the same mask 
+;       corresponding to the form the player is in.
+;       Also, prevent this from canceling minish form. 
+org $07FA55
 LinkState_ResetMaskAnimated:
 {
   LDA $02B2 : BEQ .no_mask
@@ -205,5 +214,6 @@ LinkState_ResetMaskAnimated:
 .no_mask
   RTL
 }
+print "End of LinkState_ResetMaskAnimated", pc
 
 ; =============================================================================
