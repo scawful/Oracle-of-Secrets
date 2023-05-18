@@ -16,6 +16,15 @@ org $078028
 org $008827
   JSL StartupMasks
 
+org $1BEDF9
+  JSL Palette_ArmorAndGloves ; 4bytes
+  RTL ; 1byte 
+  NOP #$01
+
+org $1BEE1B
+  JSL Palette_ArmorAndGloves_part_two
+  RTL
+  
 org $278000
 StartupMasks:
 {
@@ -31,14 +40,7 @@ StartupMasks:
 
 ; =============================================================================
 
-org $1BEDF9
-  JSL Palette_ArmorAndGloves ; 4bytes
-  RTL ; 1byte 
-  NOP #$01
 
-org $1BEE1B
-  JSL Palette_ArmorAndGloves_part_two
-  RTL
 
 org $398000
 Palette_ArmorAndGloves:
@@ -169,51 +171,5 @@ Overworld_CgramAuxToMain:
 ; no glove color (don't think this does anything?)
 org $0DEE24
  db $80
-
-; =============================================================================
-
-; extra free space in bank07 for longs (no longer used)
-org $07F89D
-incsrc "minish_form.asm"
-print "==> End of Minish Form insert", pc
-; 07FB8F
-org $07F8A6
-
-org $07F8AE
-
-org $07F8B7
-
-org $07F8C0
-
-org $07F8C9
-
-; =============================================================================
-
-; TODO: Make this so it does not cancel if $0202 is still the same mask 
-;       corresponding to the form the player is in.
-;       Also, prevent this from canceling minish form. 
-org $07FA55
-LinkState_ResetMaskAnimated:
-{
-  LDA $02B2 : BEQ .no_mask
-  CMP #$01 : BNE .transform
-
-  ; Restore the sword, shield, and bow override
-  LDA $0AA5 : STA.l $7EF359
-  LDA $0AAF : STA.l $7EF35A
-  LDA #$00 : STA $7E03FC
-
-.transform
-  LDY.b #$04 : LDA.b #$23
-  JSL AddTransformationCloud
-  LDA.b #$14 : JSR Player_DoSfx2
-
-  STZ $02B2
-  JSL Palette_ArmorAndGloves
-  LDA #$10 : STA $BC
-.no_mask
-  RTL
-}
-print "End of LinkState_ResetMaskAnimated", pc
 
 ; =============================================================================

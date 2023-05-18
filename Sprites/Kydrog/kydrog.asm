@@ -110,12 +110,6 @@ Sprite_Kydrog_Main:
 
   Kydrog_TurnPlayerToDeku:
   {
-    ; LDA.b #$03 : STA.b $B6
-
-    ; JSL AddTransformationCloud
-    ; LDA.b #$14 : JSR Player_DoSfx2
-
-    ; JSL Palette_ArmorAndGloves
     LDA #$35 : STA $BC
 
     %GotoAction(4)
@@ -124,8 +118,54 @@ Sprite_Kydrog_Main:
 
   Kydrog_WarpPlayerAway:
   {
-    LDA #$29
-    JSL $02B40F
+    ; Set game state to part 03 
+    LDA.b #$03 : STA $7EF3C5
+
+    ; Put us in the Dark World.
+    LDA $7EF3CA : EOR.b #$40 : STA $7EF3CA
+
+    JSL $00FC41 ; Sprite_LoadGfxProperties
+   ; JSL $00FC62 ; Sprite_LoadGfxProperties.justLightWorld 
+
+    STZ $037B : STZ $3C : STZ $3A : STZ $03EF
+
+    ; Link can't move
+    LDA.b #$01 : STA $02E4
+
+    ; The module to return to is #$08 (preoverworld)
+    LDA.b #$08 : STA $010C
+
+    ; Set the map I want 
+    LDA.b #$20 : STA $A0 : STZ $A1
+    
+    ; Set us to the warp state 
+    LDA.b #$15 : STA $10
+
+    ; Clear submodules
+    STZ $11 : STZ $B0
+
+    ; Remove Impa
+    LDA.b #$00 : STA $7EF3CC
+
+    ; Mirror Warp Timer 
+    ; #_00D8D2: INC.w $06BA
+
+    ; LDA.w $06BA
+    ; CMP.b #$20
+    ; BEQ .continue
+    ; STZ.w $0200
+    ; RTL
+    ; .continue
+    
+    ; Set the module to magic mirror 
+    ; $10 - 0x15 - Module for Magic Mirror 
+
+    ; LoadOverworldFromSpecialOverworld
+
+    ; #_029D5F: LDY.b #$5A
+    ; #_029D61: JSL DecompressAnimatedOverworldTiles
+
+    ; JSL $00D8D2
 
     RTS
   }
@@ -207,5 +247,30 @@ Sprite_Kydrog_Draw:
   db $02, $02, $02, $02, $02, $02
 }
 
+; I forget what this is lol 
 org $02ECF8
   dw $0029
+
+; ==============================================================================
+
+; 169BC 
+; org $02E9BC
+;   LoadOverworldFromSpecialOverworld:
+
+; org $029E65
+;   JSR LoadOverworldFromSpecialOverworld
+
+; 11E5F
+
+; 029E66
+
+; 00D8A0
+; SetTargetOverworldWarpToPyramid:
+; #_029D56: LDA.b $10
+; #_029D58: CMP.b #$15
+; #_029D5A: BNE .exit
+
+; #_029D5C: JSR LoadOverworldFromUnderworld
+
+; #_029D5F: LDY.b #$5A
+; #_029D61: JSL DecompressAnimatedOverworldTiles

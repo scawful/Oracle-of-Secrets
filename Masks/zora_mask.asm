@@ -6,8 +6,42 @@
 ; Underwater Flag RAM Position $7F500E
 ; =============================================================================
 
+; =============================================================================
+
+org $368000
+incbin gfx/zora_link.4bpp
+
+; =============================================================================
+
+UpdateZoraPalette:
+{
+  REP #$30  ; change 16 bit mode
+  LDX #$001E
+
+  .loop
+  LDA.l zora_palette, X : STA $7EC6E0, X
+  DEX : DEX : BPL .loop
+
+  SEP #$30  ; go back to 8 bit mode
+  INC $15   ; update the palette
+  RTL       
+}
+
+; =============================================================================
+
+; TODO: Change from "bunny palette" to blue zora palette colors 
+zora_palette:
+  dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$19FD, #$14B6
+  dw #$55BB, #$362A, #$3F4E, #$162B, #$22D0, #$2E5A, #$1970, #$7616
+  dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
+  dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357, #$0000
+
+; =============================================================================
+
 org $0998FC
   AddTransitionSplash:
+  
+; =============================================================================
 
 org $07A569
 LinkItem_ZoraMask:
@@ -41,35 +75,29 @@ LinkItem_ZoraMask:
 
 ; =============================================================================
 
-org $368000
-incbin gfx/zora_link.4bpp
+; End of LinkState_Swimming
+org $079781
+  JSR LinkState_UsingZoraMask
+  RTS
+
+; End of LinkState_Default 
+org $0782D2
+  JSR LinkState_UsingZoraMask_dungeon_resurface
+  JSR $E8F0
+  CLC
+  RTS
+
+; C2C3
+org $07C307
+  JSR LinkState_UsingZoraMask_dungeon_stairs
+  RTS
 
 ; =============================================================================
 
-UpdateZoraPalette:
-{
-  REP #$30  ; change 16 bit mode
-  LDX #$001E
 
-  .loop
-  LDA.l zora_palette, X : STA $7EC6E0, X
-  DEX : DEX : BPL .loop
-
-  SEP #$30  ; go back to 8 bit mode
-  INC $15   ; update the palette
-  RTL       
-}
-
-; TODO: Change from "bunny palette" to blue zora palette colors 
-zora_palette:
-  dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$19FD, #$14B6
-  dw #$55BB, #$362A, #$3F4E, #$162B, #$22D0, #$2E5A, #$1970, #$7616
-  dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
-  dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357, #$0000
-
-; =============================================================================
-
-org $07F93F
+; Bank07 Free Space 
+; Predecessor: Wolf Mask I think
+org $07F95D
 LinkState_UsingZoraMask:
 {
   ; Check if the mask is equipped 
@@ -226,25 +254,37 @@ LinkState_UsingZoraMask:
   LDA #$06 : STA $5D ; Set Link to Recoil State
   RTS
 }
-print "End of Zora Mask Dive Code ", pc
+print "==> LinkState_UsingZoraMask       ", pc
 
 ; =============================================================================
 
-; End of LinkState_Swimming
-org $079781
-  JSR LinkState_UsingZoraMask
-  RTS
+; TODO: Make this so it does not cancel if $0202 is still the same mask 
+;       corresponding to the form the player is in.
+;       Also, prevent this from canceling minish form. 
+; org $07FA55
+LinkState_ResetMaskAnimated:
+{
+  LDA $02B2 : BEQ .no_mask
+  CMP #$05 : BEQ .no_mask
+  CMP #$01 : BNE .transform
 
-; End of LinkState_Default 
-org $0782D2
-  JSR LinkState_UsingZoraMask_dungeon_resurface
-  JSR $E8F0
-  CLC
-  RTS
+  ; Restore the sword, shield, and bow override
+  LDA $0AA5 : STA.l $7EF359
+  LDA $0AAF : STA.l $7EF35A
+  LDA #$00 : STA $7E03FC
 
-; C2C3
-org $07C307
-  JSR LinkState_UsingZoraMask_dungeon_stairs
-  RTS
+.transform
+  LDY.b #$04 : LDA.b #$23
+  JSL AddTransformationCloud
+  LDA.b #$14 : JSR Player_DoSfx2
+
+  STZ $02B2
+  JSL Palette_ArmorAndGloves
+  LDA #$10 : STA $BC
+.no_mask
+  RTL
+}
+
+print "==> LinkState_ResetMaskAnimated   ", pc
 
 

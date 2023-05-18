@@ -42,7 +42,9 @@ LinkItem_NewBottle:
 
 ; =============================================================================
 
-org $07FA9F
+; Bank 07 Free Space
+; Previous Zora Mask
+org $07FAAD
 LinkItem_BugCatchingNet_Long:
 {
   PHB : PHK : PLB
@@ -88,7 +90,7 @@ LinkItem_NewBugCatchingNet:
 
 .y_press:
 
-  JSR Unknown ; $3AE65 IN ROM
+  JSR $AE65
   
   LDA $67 : AND.b #$F0 : STA $67
   DEC $3D : BPL .bottle_exit
@@ -109,41 +111,12 @@ LinkItem_NewBugCatchingNet:
   LDA.b #$80 : STA $44 : STA $45
 
 .bottle_exit:
-
-  RTS
-}
-
-; *$3AE65-$3AE87 LOCAL
-Unknown:
-{
-  LDA $AD : CMP.b #$02 : BNE .BRANCH_ALPHA
-  
-  LDA $0322 : AND.b #$03 : CMP.b #$03 : BNE .BRANCH_ALPHA
-  
-  STZ $30
-  STZ $31
-  STZ $67
-  STZ $2A
-  STZ $2B
-  STZ $6B
-
-.BRANCH_ALPHA:
-
-  ; Cane of Somaria transit lines?
-  LDA $02F5 : BEQ .BRANCH_BETA
-  
-  STZ $67
-
-.BRANCH_BETA:
 NetExit:
   RTS
 }
 
-print "Next address for jump in bank07:  ", pc 
-
 ; =============================================================================
 
-org $07FB71
 LinkItem_Bottles_Long:
 {
   PHB : PHK : PLB

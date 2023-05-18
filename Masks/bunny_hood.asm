@@ -19,36 +19,6 @@
 ;
 ; =============================================================================
 
-org $07A494
-LinkItem_Ether:
-{
-  JSR Link_CheckNewY_ButtonPress : BCC .return
-  LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
-
-  LDA $6C : BNE .return                 ; in a doorway
-  LDA $0FFC : BNE .return               ; can't open menu
-
-  LDY.b #$04 : LDA.b #$23
-  JSL AddTransformationCloud
-  LDA.b #$14 : JSR Player_DoSfx2
-  
-  LDA $02B2 : CMP #$04 : BEQ .unequip   ; is the hood already on?
-  JSL UpdateBunnyPalette
-  LDA #$37 : STA $BC                    ; change link's sprite 
-  LDA #$04 : STA $02B2
-  BRA .return
-.unequip
-  STZ $02B2 
-  JSL Palette_ArmorAndGloves
-  LDA #$10 : STA $BC                    ; take the hood off
-
-.return
-  CLC
-  RTS
-}
-
-; =============================================================================
-
 org $378000
 incbin gfx/bunny_link.4bpp
 
@@ -68,6 +38,7 @@ UpdateBunnyPalette:
   RTL ; or RTS depending on where you need it
 }
 
+; =============================================================================
 
 bunny_palette:
   dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$19FD, #$14B6
@@ -103,4 +74,34 @@ end: {
 }
 
 org $20AF70           ; this selects the new speed values
-db $20, $12, $0a, $18, $10, $08, $08, $04, $0c, $10, $09, $19, $14, $0d, $10, $08, $40
+  db $20, $12, $0a, $18, $10, $08, $08, $04, $0c, $10, $09, $19, $14, $0d, $10, $08, $40
+
+; =============================================================================
+
+org $07A494
+LinkItem_Ether:
+{
+  JSR Link_CheckNewY_ButtonPress : BCC .return
+  LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
+
+  LDA $6C : BNE .return                 ; in a doorway
+  LDA $0FFC : BNE .return               ; can't open menu
+
+  LDY.b #$04 : LDA.b #$23
+  JSL AddTransformationCloud
+  LDA.b #$14 : JSR Player_DoSfx2
+  
+  LDA $02B2 : CMP #$04 : BEQ .unequip   ; is the hood already on?
+  JSL UpdateBunnyPalette
+  LDA #$37 : STA $BC                    ; change link's sprite 
+  LDA #$04 : STA $02B2
+  BRA .return
+.unequip
+  STZ $02B2 
+  JSL Palette_ArmorAndGloves
+  LDA #$10 : STA $BC                    ; take the hood off
+
+.return
+  CLC
+  RTS
+}
