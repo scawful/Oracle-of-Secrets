@@ -3,7 +3,7 @@
 ;==============================================================================
 !SPRID              = $7B; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 6 ; Number of tiles used in a frame
-!Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
+!Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 0  ; Number of Health the sprite have
 !Damage             = 0  ; (08 is a whole heart), 04 is half heart
@@ -54,6 +54,10 @@ Sprite_Kydrog_Prep:
   PHB : PHK : PLB
     
   ; Add more code here to initialize data
+  LDA.l $7EF300
+  BEQ .PlayIntro
+    STZ.w $0DD0, X ; Kill the sprite 
+.PlayIntro
 
   PLB
   RTL
@@ -69,7 +73,6 @@ Sprite_Kydrog_Main:
   dw Kydrog_StartCutscene
   dw Kydrog_AttractPlayer
   dw Kydrog_SpawnOffspring
-  dw Kydrog_TurnPlayerToDeku
   dw Kydrog_WarpPlayerAway
 
 
@@ -95,7 +98,6 @@ Sprite_Kydrog_Main:
   {
     LDA.w SprTimerA, X : BNE +
     %ShowUnconditionalMessage($21)
-    LDA.b #$02 : STA.b $B6 ; Update story flag for Farore
     %GotoAction(2)
   +
     RTS
@@ -103,29 +105,22 @@ Sprite_Kydrog_Main:
 
   Kydrog_SpawnOffspring:
   {
+    LDA.b #$02 : STA.b $B6 ; Update story flag for Farore
     STZ.b $49 ; Stop Link from moving 
     %GotoAction(3)
-    RTS
-  }
-
-  Kydrog_TurnPlayerToDeku:
-  {
-    LDA #$35 : STA $BC
-
-    %GotoAction(4)
     RTS
   }
 
   Kydrog_WarpPlayerAway:
   {
     ; Set game state to part 03 
-    LDA.b #$03 : STA $7EF3C5
+    ; LDA.b #$03 : STA $7EF3C5
 
     ; Put us in the Dark World.
     LDA $7EF3CA : EOR.b #$40 : STA $7EF3CA
 
     JSL $00FC41 ; Sprite_LoadGfxProperties
-   ; JSL $00FC62 ; Sprite_LoadGfxProperties.justLightWorld 
+    ; JSL $00FC62 ; Sprite_LoadGfxProperties.justLightWorld 
 
     STZ $037B : STZ $3C : STZ $3A : STZ $03EF
 
@@ -144,28 +139,11 @@ Sprite_Kydrog_Main:
     ; Clear submodules
     STZ $11 : STZ $B0
 
-    ; Remove Impa
+    ; Remove Impa follower 
     LDA.b #$00 : STA $7EF3CC
 
-    ; Mirror Warp Timer 
-    ; #_00D8D2: INC.w $06BA
-
-    ; LDA.w $06BA
-    ; CMP.b #$20
-    ; BEQ .continue
-    ; STZ.w $0200
-    ; RTL
-    ; .continue
-    
-    ; Set the module to magic mirror 
-    ; $10 - 0x15 - Module for Magic Mirror 
-
-    ; LoadOverworldFromSpecialOverworld
-
-    ; #_029D5F: LDY.b #$5A
-    ; #_029D61: JSL DecompressAnimatedOverworldTiles
-
-    ; JSL $00D8D2
+    ; Set the flag to remove Farore and Kydrog from Maku area
+    LDA #$01 : STA.l $7EF300
 
     RTS
   }
@@ -248,8 +226,8 @@ Sprite_Kydrog_Draw:
 }
 
 ; I forget what this is lol 
-org $02ECF8
-  dw $0029
+; org $02ECF8
+;   dw $0029
 
 ; ==============================================================================
 
@@ -259,18 +237,3 @@ org $02ECF8
 
 ; org $029E65
 ;   JSR LoadOverworldFromSpecialOverworld
-
-; 11E5F
-
-; 029E66
-
-; 00D8A0
-; SetTargetOverworldWarpToPyramid:
-; #_029D56: LDA.b $10
-; #_029D58: CMP.b #$15
-; #_029D5A: BNE .exit
-
-; #_029D5C: JSR LoadOverworldFromUnderworld
-
-; #_029D5F: LDY.b #$5A
-; #_029D61: JSL DecompressAnimatedOverworldTiles

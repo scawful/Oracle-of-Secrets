@@ -1,4 +1,4 @@
-;===========================================================
+; =============================================================================
 ;           The Legend of Zelda: Oracle of Secrets
 ;                   Composed by: Scawful
 ;
@@ -10,8 +10,6 @@
 ;   Intro skip after leaving house
 ;   Key block link's awakening
 ;   Lost Sea Area Combo
-
-; 
 ;
 ; Expanded Banks Key:
 ;   21 - N/A
@@ -44,8 +42,14 @@
 ;   3C - None
 ;   3D - None
 ;   3F - Boat GFX
+;
+; Used Free RAM:
+;   $B6   - Cutscene State
+;   $02B2 - Mask Form 
+;   (0 = Human, 1 = Deku, 2 = Zora, 3 = Wolf, 4 = Bunny, 5 = Minish)
+;   $0AAB - Diving Flag
 ;   
-;===========================================================
+; =============================================================================
 
 namespace Oracle
 {
@@ -55,20 +59,57 @@ namespace Oracle
 
   incsrc "Util/ram.asm"
   incsrc "Util/functions.asm"
+  incsrc "Util/music_macros.asm"
+
+  ; ---------------------------------------------------------
+  ; Music 
+
+  ; incsrc "Music/stone_tower_temple.asm"
+  ; print  "End of stone_tower_temple.asm     ", pc
+
+  ; incsrc "Music/frozen_hyrule.asm"
+  ; print  "End of Music/frozen_hyrule.asm    ", pc
+
+  incsrc "Music/lost_woods.asm"
+  print  "End of Music/lost_woods.asm       ", pc
+
+  incsrc "Music/dungeon_theme.asm"
+  print  "End of Music/dungeon_theme.asm    ", pc
+
 
   ; ---------------------------------------------------------
   ; Sprites
 
-  incsrc "Sprites/farore_and_maku.asm"
-  print  "End of farore_and_maku.asm        ", pc
+  ; org $02ECF8
+  ;   dw $0029
+
+  incsrc "Sprites/farore.asm"
+  print  "End of farore.asm        ", pc
 
   incsrc "Sprites/Kydrog/kydrog.asm"
   print  "End of kydrog.asm                 ", pc
 
+  incsrc "Sprites/maku_tree.asm"
+  print  "End of maku_tree.asm              ", pc
+
+  incsrc "Sprites/mask_salesman.asm"
+  print  "End of mask_salesman.asm          ", pc
+
+  print ""
+
   ; ---------------------------------------------------------
   ; Transformation Masks
 
+  print  "  -- Masks --  "
+  print  ""
+
   incsrc "Masks/mask_routines.asm"
+
+  incsrc "Masks/bunny_hood.asm"
+  print  "End of Masks/bunny_hood.asm       ", pc
+  
+  incsrc "Masks/minish_form.asm"
+  print  "End of Masks/minish_form.asm      ", pc
 
   incsrc "Masks/deku_mask.asm"
   print  "End of Masks/deku_mask.asm        ", pc
@@ -79,12 +120,16 @@ namespace Oracle
   incsrc "Masks/wolf_mask.asm"
   print  "End of Masks/wolf_mask.asm        ", pc
 
-  incsrc "Masks/bunny_hood.asm"
-  print  "End of Masks/bunny_hood.asm       ", pc
-
+  print ""
 
   ; ---------------------------------------------------------
   ; Items
+
+  print  "  -- Items --  "
+  print  ""
+
+  incsrc "Items/bottle_net.asm"
+  print  "End of Items/bottle_net.asm       ", pc
 
   incsrc "Items/jump_feather.asm"
   print  "End of Items/jump_feather.asm     ", pc
@@ -95,9 +140,10 @@ namespace Oracle
   incsrc "Items/book_of_secrets.asm"
   print  "End of Items/book_of_secrets.asm  ", pc
 
-  ; incsrc "Items/bottle_net.asm"
-  ; print "End of Items/bottle_net.asm        ", pc
+  incsrc "Items/ocarina.asm"
+  print  "End of Items/ocarina.asm          ", pc
 
+  print ""
 
   ; ---------------------------------------------------------
   ; Events
@@ -106,7 +152,10 @@ namespace Oracle
   print  "End of Events/house_tag.asm       ", pc
 
   incsrc "Events/lost_sea.asm"
-  print  "End of Events/lost_sea.asm         ", pc
+  print  "End of Events/lost_sea.asm        ", pc
+
+  incsrc "Events/snow_overlay.asm"
+  print  "End of Events/snow_overlay.asm    ", pc
 
 
   ; ---------------------------------------------------------
@@ -125,6 +174,9 @@ namespace Oracle
   incsrc "Dungeons/keyblock.asm"
   print  "End of Dungeons/keyblock.asm      ", pc
 
+  incsrc "Dungeons/entrances.asm"
+  print  "End of Dungeons/entrances.asm     ", pc
+
 
   ; ---------------------------------------------------------
   ; Custom Menu and HUD
@@ -136,7 +188,11 @@ namespace Oracle
   ; ---------------------------------------------------------
   incsrc "Debug/debug.asm"
   print  "End of Debug/debug.asm            ", pc
-  
+
+  ; Overworld area which has holes that hurt
+  ; You can change the area to which holes will hurt the player! 
+  ; currently it only allows you to choose one area
+  ; 396DB, should be a 05 - Change to another area hex number
 
   print ""
   print "Finished applying patches"

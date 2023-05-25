@@ -332,7 +332,6 @@ Menu_ScrollUp:
 ; =============================================================================
 ; 09 CHECK BOTTLE 
 
-print pc
 Menu_CheckBottle:
 {
   LDA.w $0202 : CMP.b #$06 : BNE .not_first 

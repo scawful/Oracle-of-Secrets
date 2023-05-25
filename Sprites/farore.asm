@@ -1,7 +1,5 @@
 ;==============================================================================
-; Farore/Maku Tree - Sprite Uncle/Priest
-; 
-; STZ.w $0DD0, X ; Kill the sprite since it's not needed anymore 
+; Farore Sprite 
 ;
 ;==============================================================================
 
@@ -17,7 +15,6 @@ incsrc sprite_new_table.asm
 
 org $308000
 incsrc sprite_new_functions.asm
-
 
 ;==============================================================================
 ; Sprite Properties
@@ -76,13 +73,13 @@ Sprite_Farore_Long:
 Sprite_Farore_Prep:
 {
   PHB : PHK : PLB
-    
-  ;   LDA.l $7EF300
-  ; 	BEQ .PlayIntro
-  ; 		STZ.w $0DD0, X ; Kill the sprite 
-  ; .PlayIntro
-
+  
   LDA.b #$80 : STA $0CAA, X ; Don't kill Farore when she goes off screen
+
+  LDA.l $7EF300
+  BEQ .PlayIntro
+    STZ.w $0DD0, X ; Kill the sprite 
+.PlayIntro
 
   PLB
   RTL
@@ -95,6 +92,7 @@ Sprite_Farore_Prep:
 WALKSPEED = 14
 STORY_STATE = $B6
 
+
 Sprite_Farore_Main:
 {
   LDA.w SprAction, X; Load the SprAction
@@ -104,28 +102,36 @@ Sprite_Farore_Main:
   dw MoveUpTowardsFarore
   dw MoveLeftTowardsFarore
   dw WaitAndMessage
+  dw FaroreGiveSwordAndShield
   dw FaroreFollowPlayer
   dw MakuArea_FaroreFollowPlayer
   dw MakuArea_FaroreWaitForKydrog
+  ; dw MakuArea_FaroreWalkToPosition
 
 
+  ; 00
   IntroStart:
   {
     ; JSR SetupMovieEffect
     ; JSR MovieEffect
-    LDA $B6 : CMP #$01 : BEQ .maku_area
-              CMP #$02 : BEQ .waiting
+    LDA $B6 : CMP.b #$01 : BEQ .maku_area
+              CMP.b #$02 : BEQ .waiting
     
     %GotoAction(1)
-    
+    RTS 
   .maku_area
-    JSR MakuArea_FaroreFollowPlayer
-  .waiting
-    JSR MakuArea_FaroreWaitForKydrog
+    %GotoAction(6)
+    
+    ; JSR MakuArea_FaroreFollowPlayer
+    RTS 
 
+  .waiting
+    %GotoAction(7)
+    ;JSR MakuArea_FaroreWaitForKydrog
     RTS
   }
 
+  ; 01
   MoveUpTowardsFarore:
   {
     LDA WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
@@ -141,6 +147,7 @@ Sprite_Farore_Main:
     RTS
   }
 
+  ; 02
   MoveLeftTowardsFarore:
   {
     ; Move Link Left 
@@ -161,14 +168,17 @@ Sprite_Farore_Main:
     RTS
   }
 
-
+  ; 03
   WaitAndMessage:
   { 
     %PlayAnimation(1, 2, 8)
-    %MoveTowardPlayer(15)
+    LDA.b #$15
+    JSL Sprite_ApplySpeedTowardsPlayer
+    JSL Sprite_MoveVert
     LDA.w SprTimerA, X : BNE +
+
     STZ $2F
-    %ShowUnconditionalMessage($24)
+    %ShowUnconditionalMessage($0E) ; "I am Farore, the Oracle of Secrets."
     
     %GotoAction(4)
   +
@@ -176,34 +186,57 @@ Sprite_Farore_Main:
   }
 
   ; 04
+  FaroreGiveSwordAndShield:
+  {
+    ; Give Link the Sword and shield
+    LDA.w SprTimerA, X : BNE ++
+
+    LDY.b #$00 : STZ $02E9
+    JSL Link_ReceiveItem
+
+    %GotoAction(5)
+  ++
+    RTS
+  }
+
+  ; 05
   FaroreFollowPlayer:
   {
     LDA WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
     LDA.b #$08 : STA.b $49 ; Auto-movement north
     %PlayAnimation(3, 4, 8)
-    %MoveTowardPlayer(16)
+
+
+    LDA.b #$15
+    JSL Sprite_ApplySpeedTowardsPlayer
+    JSL Sprite_MoveVert
 
     LDA #$02 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
     LDA #$05 : STA $012D ; turn off rain sound
-    JSL $00FC41   ; fix monsters
     LDA #$01 : STA $B6 ; Set Story State 
-    %GotoAction(0)
-    RTS
-  }
+    JSL $00FC41   ; fix monsters
 
-  ; 05
-  MakuArea_FaroreFollowPlayer:
-  {
-  .keep_walking
-    %PlayAnimation(3, 4, 8)
-    %MoveTowardPlayer(18)
-    LDA $B6 : CMP.b #$02 : BEQ .keep_walking
-    JSR MakuArea_FaroreWaitForKydrog
-
+    %GotoAction(6)
     RTS
   }
 
   ; 06
+  MakuArea_FaroreFollowPlayer:
+  {
+    ;.keep_walking
+    %PlayAnimation(3, 4, 8)
+
+    LDA.b #$15
+    JSL Sprite_ApplySpeedTowardsPlayer
+    JSL Sprite_MoveVert
+
+    ; LDA $B6 : CMP.b #$02 : BEQ .keep_walking
+    %GotoAction(6)
+
+    RTS
+  }
+
+  ; 07
   ; Look at the RAM $0D00 to $0D60, the first few are the actual positions of the sprite that you can just set manually or $0D40 and $0D50 are the "speeds" of the sprites irrc
   ; You can set one of the speeds and then call the function called Sprite_Move
   ; And then that will handle it applying the speed for you
@@ -211,16 +244,17 @@ Sprite_Farore_Main:
   {
     %PlayAnimation(5, 5, 8)
 
+
     RTS
   }
 
 
-  ; 07
-  MakuArea_FaroreWalkToPosition:
-  {
-    %PlayAnimation(3, 4, 8)
-    RTS 
-  }
+  ; ; 09
+  ; MakuArea_FaroreWalkToPosition:
+  ; {
+  ;   %PlayAnimation(3, 4, 8)
+  ;   RTS 
+  ; }
 
 }
 ;==============================================================================
@@ -284,49 +318,49 @@ Sprite_Farore_Draw:
 ;==============================================================================
 
 .start_index
-db $00, $02, $04, $06, $08, $0A, $0C
+  db $00, $02, $04, $06, $08, $0A, $0C
 .nbr_of_tiles
-db 1, 1, 1, 1, 1, 1, 1
+  db 1, 1, 1, 1, 1, 1, 1
 .x_offsets
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, -1
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, -1
 .y_offsets
-dw -8, 4
-dw -8, 4
-dw 4, -8
-dw -8, 4
-dw 4, -7
-dw -8, 4
-dw 4, -7
+  dw -8, 4
+  dw -8, 4
+  dw 4, -8
+  dw -8, 4
+  dw 4, -7
+  dw -8, 4
+  dw 4, -7
 .chr
-db $A8, $AA
-db $A8, $88
-db $AA, $A8
-db $8A, $8C
-db $8C, $8A
-db $8A, $AC
-db $AA, $86
+  db $A8, $AA
+  db $A8, $88
+  db $AA, $A8
+  db $8A, $8C
+  db $8C, $8A
+  db $8A, $AC
+  db $AA, $86
 .properties
-db $3B, $3B
-db $3B, $7B
-db $3B, $3B
-db $3B, $3B
-db $7B, $3B
-db $3B, $3B
-db $3B, $7B
+  db $3B, $3B
+  db $3B, $7B
+  db $3B, $3B
+  db $3B, $3B
+  db $7B, $3B
+  db $3B, $3B
+  db $3B, $7B
 .sizes
-db $02, $02
-db $02, $02
-db $02, $02
-db $02, $02
-db $02, $02
-db $02, $02
-db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
 }
 
 ;==============================================================================
