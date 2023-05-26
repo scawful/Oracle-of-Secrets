@@ -346,3 +346,6 @@ Sprite_SpawnSparkleGarnish:
 
 org $06EA1A
 Sprite_ProjectSpeedTowardsPlayer:
+
+org $06F2AA
+Sprite_CheckDamageFromPlayerLong:

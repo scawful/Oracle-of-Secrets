@@ -89,6 +89,9 @@ namespace Oracle
   incsrc "Sprites/Kydrog/kydrog.asm"
   print  "End of kydrog.asm                 ", pc
 
+  incsrc "Sprites/Kydrog/kydrog_boss.asm"
+  print  "End of kydrog_boss.asm            ", pc
+
   incsrc "Sprites/maku_tree.asm"
   print  "End of maku_tree.asm              ", pc
 
