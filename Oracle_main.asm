@@ -18,29 +18,29 @@
 ;   24 - N/A
 ;   25 - N/A
 ;   26 - N/A
-;   27 - Mask Routines(?)
-;   28 - None
-;   29 - Custom Sprite Jump Table
+;   27 - N/A
+;   28 - New Sprite Jump Table
+;   29 - Custom Sprites and New Functions
 ;   2A - Jump Feather
 ;   2B - Book of Secrets
-;   2C - Bottle Net
+;   2C - N/A
 ;   2D - Menu
 ;   2E - HUD
 ;   2F - House Tag
-;   30 - Custom Sprite Functions
+;   30 - N/A
 ;   31 - Deku Link Code
-;   32 - Farore Sprite Code
+;   32 - None
 ;   33 - None
 ;   34 - Zora Link Code
 ;   35 - Deku Link GFX
 ;   36 - Zora Link GFX
 ;   37 - Bunny Link GFX
 ;   38 - Wolf Link GFX
-;   39 - Palette_ArmorAndGloves  
-;   3A - None
-;   3B - None
-;   3C - None
-;   3D - None
+;   39 - Minish Link GFX
+;   3A - StartupMasks, Palette_ArmorAndGloves, CgramAuxToMain 
+;   3B - N/A
+;   3C - N/A
+;   3D - N/A
 ;   3F - Boat GFX
 ;
 ; Used Free RAM:
@@ -76,15 +76,20 @@ namespace Oracle
   incsrc "Music/dungeon_theme.asm"
   print  "End of Music/dungeon_theme.asm    ", pc
 
+  ; incsrc "Music/boss_theme.asm"
+  ; print  "End of Music/boss_theme.asm       ", pc
+
+  print "" 
+
 
   ; ---------------------------------------------------------
   ; Sprites
 
-  ; org $02ECF8
-  ;   dw $0029
+  print  "  -- Sprites --  "
+  print  ""
 
   incsrc "Sprites/farore.asm"
-  print  "End of farore.asm        ", pc
+  print  "End of farore.asm                 ", pc
 
   incsrc "Sprites/Kydrog/kydrog.asm"
   print  "End of kydrog.asm                 ", pc
@@ -97,6 +102,12 @@ namespace Oracle
 
   incsrc "Sprites/mask_salesman.asm"
   print  "End of mask_salesman.asm          ", pc
+
+  incsrc "Sprites/deku_scrub.asm"
+  print  "End of deku_scrub.asm             ", pc
+
+  incsrc "Sprites/anti_kirby.asm"
+  print  "End of anti_kirby.asm             ", pc
 
   print ""
 
@@ -151,6 +162,9 @@ namespace Oracle
   ; ---------------------------------------------------------
   ; Events
 
+  print  "  -- Events --  "
+  print  ""
+
   incsrc "Events/house_tag.asm"
   print  "End of Events/house_tag.asm       ", pc
 
@@ -160,9 +174,14 @@ namespace Oracle
   incsrc "Events/snow_overlay.asm"
   print  "End of Events/snow_overlay.asm    ", pc
 
+  print ""
+
 
   ; ---------------------------------------------------------
   ; Graphics
+
+  print  "  -- Graphics --  "
+  print  ""
 
   incsrc "Graphics/boat_gfx.asm"
   print  "End of Graphics/boat_gfx.asm      ", pc
@@ -170,9 +189,13 @@ namespace Oracle
   incsrc "Events/maku_tree.asm"
   print  "End of Events/maku_tree.asm       ", pc
 
+  print ""
 
   ; ---------------------------------------------------------
   ; Dungeon
+
+  print  "  -- Dungeon --  "
+  print  ""
 
   incsrc "Dungeons/keyblock.asm"
   print  "End of Dungeons/keyblock.asm      ", pc
@@ -180,12 +203,20 @@ namespace Oracle
   incsrc "Dungeons/entrances.asm"
   print  "End of Dungeons/entrances.asm     ", pc
 
+  print ""
+
 
   ; ---------------------------------------------------------
   ; Custom Menu and HUD
 
+  print  "  -- Menu --  "
+  print  ""
+
   incsrc "Menu/menu.asm"
   print  "End of Menu/menu.asm              ", pc
+
+  ; incsrc "Menu/rings/bestiary_hooks.asm"
+  ; incsrc "Menu/rings/bestiary.asm"
 
 
   ; ---------------------------------------------------------

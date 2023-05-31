@@ -8,12 +8,12 @@ incsrc sprite_functions_hooks.asm
 
 ;==============================================================================
 
-org $298000
+org $288000
 incsrc sprite_new_table.asm
 
 ;==============================================================================
 
-org $308000
+org $298000
 incsrc sprite_new_functions.asm
 
 ;==============================================================================
@@ -106,7 +106,6 @@ Sprite_Farore_Main:
   dw FaroreFollowPlayer
   dw MakuArea_FaroreFollowPlayer
   dw MakuArea_FaroreWaitForKydrog
-  ; dw MakuArea_FaroreWalkToPosition
 
 
   ; 00
@@ -247,14 +246,6 @@ Sprite_Farore_Main:
 
     RTS
   }
-
-
-  ; ; 09
-  ; MakuArea_FaroreWalkToPosition:
-  ; {
-  ;   %PlayAnimation(3, 4, 8)
-  ;   RTS 
-  ; }
 
 }
 ;==============================================================================

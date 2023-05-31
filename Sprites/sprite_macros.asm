@@ -59,6 +59,12 @@ macro PlayAnimation(frame_start, frame_end, frame_wait)
     +
 endmacro
 
+macro StartOnFrame(frame)
+    LDA.w SprFrame, x : CMP.b #<frame> : BCS +
+    LDA.b #<frame> : STA.w SprFrame, x
+    +
+endmacro
+
 
 ; Show message if the player is facing toward sprite and pressing A
 ; Return Carry Set if message is displayed
@@ -195,4 +201,8 @@ endmacro
 ; Will set the timer F to wait (length) amount of frames
 macro SetTimerF(length)
 LDA.b #<length> : STA.w SprTimerF, X
+endmacro
+
+macro NextAction()
+INC $0D80, X 
 endmacro
