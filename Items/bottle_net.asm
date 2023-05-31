@@ -12,13 +12,14 @@ PlayerItem_ReleaseBee:
 ; LinkItem_Bottle
 
 org $07A15B
-  JSL LinkItem_NewBottle
+  JSR LinkItem_NewBottle
   RTS
 ; *$3A15B-$3A249 FREE SPACE STILL AVAILABLE
 
 ; =============================================================================
 
-org $2C8000
+; Bank 07 Free Space
+org $07FAAD
 LinkItem_NewBottle:
 { 
   ; Check if we have a bottle or not
@@ -29,29 +30,19 @@ LinkItem_NewBottle:
   CMP.b #$03     : BCC .empty_bottle
 
   ; If no, prepare and call the LinkItem_Bottles routine 
-  JSL LinkItem_Bottles_Long
+  JSR LinkItem_Bottles
   BRA .exit
 
 .empty_bottle
   ; Otherwise, prepare and call the LinkItem_BugCatchingNet routine
-  JSL LinkItem_BugCatchingNet_Long
+  JSR LinkItem_NewBugCatchingNet
   
 .exit 
-  RTL
+  RTS
 }
 
 ; =============================================================================
 
-; Bank 07 Free Space
-; Previous Zora Mask
-org $07FAAD
-LinkItem_BugCatchingNet_Long:
-{
-  PHB : PHK : PLB
-  JSR LinkItem_NewBugCatchingNet
-  PLB
-  RTL
-}
 pose_id:
   db $0B, $06, $07, $08, $01, $02, $03, $04, $05, $06 ; up
   db $01, $02, $03, $04, $05, $06, $07, $08, $01, $02 ; down
@@ -65,7 +56,6 @@ pose_offset:
   db $1E ; right
 
 ; *$3AFF8-$3B072 LOCAL
-
 LinkItem_NewBugCatchingNet:
 { 
   BIT $3A : BVS .y_press
@@ -117,14 +107,6 @@ NetExit:
 
 ; =============================================================================
 
-LinkItem_Bottles_Long:
-{
-  PHB : PHK : PLB
-  JSR LinkItem_Bottles
-  PLB
-  RTL
-}
-
 LinkItem_Bottles:
 {
   JSR Link_CheckNewY_ButtonPress : BCC NetExit ; (RTS)
@@ -165,7 +147,6 @@ LinkItem_Bottles:
   RTS
 
 .LinkItem_GreenPotion:
-  JSR $A1A9
   LDA $7EF36E : CMP.b #$80 : BNE .can_drink
   BRL $07A955 ; LinkGoBeep TODO(scawful): Investigate 
 
@@ -181,7 +162,7 @@ LinkItem_Bottles:
   LDA.b #$07 : STA $0208
 
   JSL $0DFA58 ; RebuildHUD_long TODO(scawful)
-  RTS
+  BRA .bottle_exit
 
 .LinkItem_BluePotion:
   LDA $7EF36C : CMP $7EF36D : BNE .useBluePotion
@@ -200,14 +181,14 @@ LinkItem_Bottles:
   LDA.b #$07 : STA.w $0208
   
   JSL $0DFA58 ; RebuildHUD_Long TODO(scawful)
-  RTS
+  BRA .bottle_exit
 
 .LinkItem_FairyBottle:
   STZ.w $0301
-  JSL PlayerItem_SpawnFaerie : BPL .BRANCH_NU
+  JSL PlayerItem_SpawnFaerie : BPL .released
   BRL $07A955
 
-.BRANCH_NU:
+.released:
   LDA.b #$02 : STA.l $7EF35C, X
   JSL $0DFA58 ; RebuildHUD_Long TODO(scawful)
   BRA .bottle_exit
@@ -224,5 +205,7 @@ LinkItem_Bottles:
 .bottle_exit:
   RTS
 }
+
+print pc
 
 ; =============================================================================

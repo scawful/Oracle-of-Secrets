@@ -13,6 +13,10 @@ org $078028
 
 ; =============================================================================
 
+; Link Sprite hook
+org $008A01
+  LDA $BC
+
 org $008827
   JSL StartupMasks
 
@@ -24,8 +28,8 @@ org $1BEDF9
 org $1BEE1B
   JSL Palette_ArmorAndGloves_part_two
   RTL
-  
-org $278000
+
+org $3A8000
 StartupMasks:
 {
   ; from vanilla:
@@ -40,9 +44,6 @@ StartupMasks:
 
 ; =============================================================================
 
-
-
-org $398000
 Palette_ArmorAndGloves:
 {
   LDA $02B2 : CMP #$01 : BEQ .deku_mask 
@@ -161,15 +162,13 @@ Overworld_CgramAuxToMain_Override:
   RTL
 }
 
+; =============================================================================
+
 org $02C769
 Overworld_CgramAuxToMain:
 {
   JSL Overworld_CgramAuxToMain_Override
   RTS
 }
-
-; no glove color (don't think this does anything?)
-org $0DEE24
- db $80
 
 ; =============================================================================

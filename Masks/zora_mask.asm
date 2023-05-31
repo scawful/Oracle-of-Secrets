@@ -1,11 +1,19 @@
 ; =============================================================================
-; Zora Mask
-; Fairy Flippers RAM Position $7EF33C - 01
-; Normal Flippers RAM Position $7EF356 - 01
+; Zora Mask - by scawful
+; Based on the Fairy Flippers item by Conn
+; Special Thanks to Zarby89 for the PaletteArmorAndGloves hook
+;
+; Transforms Link into Zora Link 
+; Allows Link to dive underwater in the overworld and dungeons as Zora Link.
+;
+; How To Use: 
+;   Press R to transform into Zora Link. Press R again to transform back.
+;   Press Y in deep water to dive. Press Y again to resurface.
 ; 
-; Underwater Flag RAM Position $7F500E
-; =============================================================================
-
+; RAM Used:
+; $02B2 - Current Form 
+; $0AAB - Diving Flag
+;
 ; =============================================================================
 
 org $368000
@@ -97,7 +105,8 @@ org $07C307
 
 ; Bank07 Free Space 
 ; Predecessor: Wolf Mask I think
-org $07F95D
+; org $07F95D
+pullpc
 LinkState_UsingZoraMask:
 {
   ; Check if the mask is equipped 
@@ -209,7 +218,7 @@ LinkState_UsingZoraMask:
 
   LDA $0114 : CMP #$85 : BEQ .return_default
   LDA $0114 : CMP #$09 : BEQ .return_default
-  LDA $5B : CMP #$02 : BEQ .player_is_falling
+  LDA $5B : CMP #$02 : BEQ .dungeon_stairs
 
   ; Check if the ground level is safe
   ; Otherwise, eject the player back to the surface
@@ -286,5 +295,4 @@ LinkState_ResetMaskAnimated:
 }
 
 print "==> LinkState_ResetMaskAnimated   ", pc
-
-
+pushpc

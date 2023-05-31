@@ -1,16 +1,58 @@
 ; =============================================================================
-; Deku Mask 
-
+;   Deku Mask 
 ; ============================================================================= 
 
-; Link Sprite hook
-org $008A01
-  LDA $BC
 
 ; =============================================================================
 
 org $358000
 incbin gfx/deku_link.bin
+
+; =============================================================================
+
+org $07A64B ; formerly Quake
+LinkItem_DekuMask:
+{
+  ; Check for R button held 
+  LDA $F2 : CMP #$10 : BNE .return 
+
+  JSR Link_CheckNewY_ButtonPress : BCC .return
+  LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
+
+  LDA $6C : BNE .return                 ; in a doorway
+  LDA $0FFC : BNE .return               ; can't open menu
+
+  LDY.b #$04 : LDA.b #$23
+  JSL AddTransformationCloud
+  LDA.b #$14 : JSR Player_DoSfx2
+
+  LDA $02B2 : CMP #$01 : BEQ .unequip   ; is the deku mask on?
+  JSL Palette_ArmorAndGloves            ; set the palette 
+
+  LDA.l $7EF359 : STA $0AA5 ; Store the current sword 
+  LDA.l $7EF35A : STA $0AAF ; Store the current shield
+  LDA.b #$00 : STA $7EF359 : STA $7EF35A ; Clear the sword and shield
+  LDA #$02 : STA $7E03FC ; Set the override to Bow (pea shooter)
+
+  LDA #$35 : STA $BC                    ; put the mask on
+  LDA #$01 : STA $02B2
+  
+  BRA .return
+
+.unequip
+  JSL Palette_ArmorAndGloves
+  STZ $5D
+
+  ; Restore the sword and shield 
+  LDA $0AA5 : STA.l $7EF359
+  LDA $0AAF : STA.l $7EF35A
+  LDA #$00 : STA $7E03FC           ; clear the override
+  LDA #$10 : STA $BC : STZ $02B2   ; take the mask off
+
+
+.return
+  RTS
+}
 
 ; =============================================================================
 
@@ -113,51 +155,6 @@ LinkItem_SlingshotPrepare:
 
 }
 
-; =============================================================================
-
-org $07A64B ; formerly Quake
-LinkItem_DekuMask:
-{
-  ; Check for R button held 
-  LDA $F2 : CMP #$10 : BNE .return 
-
-  JSR Link_CheckNewY_ButtonPress : BCC .return
-  LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
-
-  LDA $6C : BNE .return                 ; in a doorway
-  LDA $0FFC : BNE .return               ; can't open menu
-
-  LDY.b #$04 : LDA.b #$23
-  JSL AddTransformationCloud
-  LDA.b #$14 : JSR Player_DoSfx2
-
-  LDA $02B2 : CMP #$01 : BEQ .unequip   ; is the deku mask on?
-  JSL Palette_ArmorAndGloves            ; set the palette 
-
-  LDA.l $7EF359 : STA $0AA5 ; Store the current sword 
-  LDA.l $7EF35A : STA $0AAF ; Store the current shield
-  LDA.b #$00 : STA $7EF359 : STA $7EF35A ; Clear the sword and shield
-  LDA #$02 : STA $7E03FC ; Set the override to Bow (pea shooter)
-
-  LDA #$35 : STA $BC                    ; put the mask on
-  LDA #$01 : STA $02B2
-  
-  BRA .return
-
-.unequip
-  JSL Palette_ArmorAndGloves
-  STZ $5D
-
-  ; Restore the sword and shield 
-  LDA $0AA5 : STA.l $7EF359
-  LDA $0AAF : STA.l $7EF35A
-  LDA #$00 : STA $7E03FC           ; clear the override
-  LDA #$10 : STA $BC : STZ $02B2   ; take the mask off
-
-
-.return
-  RTS
-}
 
 ; =============================================================================
 
@@ -165,8 +162,8 @@ org $07811A
   JSR Link_HandleDekuTransformation
 
 ; Bank 07 Free Space
-; Previous function LinkState_CheckMinishTile
-org $07F903
+; TODO: CHECK IF THIS ACTUALLY EXECUTES CAUSE I'M NOT SURE IT DOES
+pullpc
 Link_HandleDekuTransformation:
 {
   LDA $5D : CMP.b #$0A : BEQ .continue 
@@ -181,5 +178,4 @@ Link_HandleDekuTransformation:
   
   RTS
 }
-
-print "==> Link_HandleDekuTransformation ", pc
+pushpc

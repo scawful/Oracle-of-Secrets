@@ -4,7 +4,7 @@
 ; Reacts to Tile ID 64 to transform into Minish Link
 ; =============================================================================
 
-org $3A8000
+org $398000
 incbin gfx/minish_link.4bpp
 
 ; =============================================================================
@@ -12,10 +12,9 @@ incbin gfx/minish_link.4bpp
 org $07DA2A
   TileDetection_OverworldAttributeJumpTable:
 
-; Tile ID 64
 org $07DAF2
-  dw LinkState_CheckForMinishForm
-  dw LinkState_CheckMinishTile
+  dw LinkState_CheckForMinishForm ; Tile ID 64
+  dw LinkState_CheckMinishTile    ; Tile ID 65
 
 ; =============================================================================
 
@@ -49,7 +48,7 @@ LinkState_CheckForMinishForm:
   RTS
 }
 
-print "==> LinkState_CheckForMinishForm  ", pc
+; =============================================================================
 
 LinkState_CheckMinishTile:
 {
@@ -64,5 +63,6 @@ LinkState_CheckMinishTile:
   
   RTS
 }
-
 print "==> LinkState_CheckMinishTile     ", pc
+pushpc
+

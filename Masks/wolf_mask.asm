@@ -57,8 +57,7 @@ LinkItem_ShovelAndFlute:
 ; =============================================================================
 
 ; Bank 07 Free Space
-; Previous routine `Link_HandleDekuTransformation`
-org $07F914
+pullpc
 LinkItem_WolfMask:
 {
   LDA $02B2 : CMP #$03 : BNE .equip
@@ -89,5 +88,3 @@ LinkItem_WolfMask:
   CLC
   RTS
 }
-
-print "==> LinkItem_WolfMask             ", pc
