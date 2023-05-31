@@ -1,6 +1,9 @@
-;==============================================================================
-; Sprite Properties
-;==============================================================================
+; =============================================================================
+; Happy Mask Salesman Sprite
+;
+;
+; =============================================================================
+
 !SPRID              = $E8; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 02 ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
@@ -31,12 +34,8 @@
 
 %Set_Sprite_Properties(Sprite_MaskSalesman_Prep, Sprite_MaskSalesman_Long);
 
-;==================================================================================================
-; Sprite Long Hook for that sprite
-; --------------------------------------------------------------------------------------------------
-; This code can be left unchanged
-; handle the draw code and if the sprite is active and should move or not
-;==================================================================================================
+; =============================================================================
+
 Sprite_MaskSalesman_Long:
 {  
   PHB : PHK : PLB
@@ -52,12 +51,8 @@ Sprite_MaskSalesman_Long:
   RTL ; Go back to original code
 }
 
-;==================================================================================================
-; Sprite initialization
-; --------------------------------------------------------------------------------------------------
-; this code only get called once perfect to initialize sprites substate or timers
-; this code as soon as the room transitions/ overworld transition occurs
-;==================================================================================================
+; =============================================================================
+
 Sprite_MaskSalesman_Prep:
 {
   PHB : PHK : PLB
@@ -67,33 +62,89 @@ Sprite_MaskSalesman_Prep:
   PLB
   RTL
 }
-;==================================================================================================
-; Sprite Main routines code
-; --------------------------------------------------------------------------------------------------
-; This is the main local code of your sprite
-; This contains all the Subroutines of your sprites you can add more below
-;==================================================================================================
+
+; =============================================================================
+
 Sprite_MaskSalesman_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
-  dw Action00
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable 
 
+  dw InquiryHandler
+  dw NoOcarina
+  dw HasOcarina
+  dw TeachLinkSong
+  dw SongQuestComplete
 
-  Action00:
+  InquiryHandler:
   {  
     %PlayAnimation(0, 1, 16)
-    %ShowSolicitedMessage($27)
+    %ShowSolicitedMessage($E5)
+    BCC .didnt_converse
 
+    LDA $1CE8 : BNE .player_said_no
+
+    ; Player wants to buy a mask
+    LDA.l $7EF34C : CMP.b #$02 : BEQ .has_ocarina
+                    CMP.b #$03 : BEQ .has_all_songs
+
+    %GotoAction(1)
+    RTS
+
+  .has_ocarina
+    %GotoAction(2)
+    RTS
+
+  .has_all_songs
+    %GotoAction(3)
+  
+  .didnt_converse
+  .player_said_no
+    RTS
+  }
+
+  ; Link has not yet gotten the Ocarina
+  NoOcarina:
+  {
+    %PlayAnimation(0, 1, 16)
+    %ShowUnconditionalMessage($E9) ; Go get the Ocarina first!
+
+    %GotoAction(0)
+    RTS
+  }
+
+  ; Link has the Ocarina, but not all the songs
+  HasOcarina:
+  {
+    %PlayAnimation(0, 1, 16)
+    %ShowUnconditionalMessage($11C) ; Excellent, you have the Ocarina 
+
+
+
+    %GotoAction(0)
+    RTS
+  }
+
+  TeachLinkSong:
+  {
+
+
+    RTS
+  }
+
+  ; Link has all the songs 
+  SongQuestComplete:
+  {
+    %PlayAnimation(0, 1, 16)
+    %ShowUnconditionalMessage($E9) 
+
+    %GotoAction(0)
     RTS
   }
 }
 
-;==================================================================================================
-; Sprite Draw code
-; --------------------------------------------------------------------------------------------------
-; Draw the tiles on screen with the data provided by the sprite maker editor
-;==================================================================================================
+; =============================================================================
+
 Sprite_MaskSalesman_Draw:
 {  
   JSL Sprite_PrepOamCoord
@@ -150,13 +201,8 @@ Sprite_MaskSalesman_Draw:
 
   RTS
 
+; =============================================================================
 
-
-;==================================================================================================
-; Sprite Draw Generated Data
-; --------------------------------------------------------------------------------------------------
-; This is where the generated Data for the sprite go
-;==================================================================================================
 .start_index
   db $00, $04
 .nbr_of_tiles
