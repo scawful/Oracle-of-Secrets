@@ -3,160 +3,173 @@
 ;
 ; Gives player all items when pressing L (not for main game)
 ; Bank 0x3C used for code
-; WRITTEN: by XaserLE
+; WRITTEN: by XaserLE, refactored by scawful
 ; THANKS TO: -MathOnNapkins' Zelda Doc's
 ; -wiiqwertyuiop for his Zelda Disassembly
 ;===========================================================
 
-namespace Debug
+lorom
+
+!Bow = $7EF340
+!Boomerang = $7EF341
+!Hookshot = $7EF342
+!Bombs = $7EF343
+!MagicPowder = $7EF344
+!FireRod = $7EF345
+!IceRod = $7EF346
+!BunnyMask = $7EF347
+!DekuMask = $7EF348
+!ZoraMask = $7EF349
+!Lamp = $7EF34A
+!MagicHammer = $7EF34B
+!Flute = $7EF34C
+!JumpFeather = $7EF34D
+!BookOfMudora = $7EF34E
+!Bottles = $7EF34F
+!CaneOfSomaria = $7EF350
+!CaneOfByrna = $7EF351
+!MagicCape = $7EF352
+!Mirror = $7EF353
+!TitansMitt = $7EF354
+!PegasusBoots = $7EF355
+!Flippers = $7EF356
+!MoonPearl = $7EF357
+!WolfMask = $7EF358
+!Sword = $7EF359
+!Shield = $7EF35A
+!Mail = $7EF35B
+!Bottle1 = $7EF35C
+!Bottle2 = $7EF35D
+!Bottle3 = $7EF35E
+!Bottle4 = $7EF35F
+!Rupees = $7EF360
+!RupeesGoal = $7EF361
+!HealthCapacity = $7EF36C
+!MagicPower = $7EF36E
+!Hearts = $7EF372
+!Pendants = $7EF374
+!Arrows = $7EF377
+!AbilityFlags = $7EF379
+!Crystals = $7EF37A
+!MagicUsage = $7EF37B
+
+org $068365
+  JSL $3CA62A ; Overwrite JSL executed every frame
+
+org $3CA62A ; Expanded space for our routine
 {
-  Main: 
-  {
-    lorom
+  LDA $F2 : CMP #$20 : BEQ $03 : JMP END ; Check L button
 
-    ORG $068365 ; go to an originally JSL that is executed every frame
-    JSL $3CA62A ; overwrite it (originally JSL $099F91)
+  ; Load items
 
-    ORG $3CA62A ; go to expanded space to write our routine (keep EveryFrame.asm in mind for the right adresses)
+  ; 0 - nothing. 1 - bow w/ no arrows. 2 - bow w/ arrows. 3 - silver arrows
+  LDA #$03 : STA !Bow
 
-    LDA $F2     ; load unfiltered joypad 1 register (AXLR|????)
-    CMP #$20    ; L button pressed?
-    BEQ $03     ; if yes, branch behind the jump that leads to the end and load items instead
-    JMP END
+  ; 0 - nothing. 1 - blue boomerang. 2 - red boomerang
+  LDA #$02 : STA !Boomerang
 
-    LDA #$03    ; 0 - nothing. 1 - bow w/ no arrows. 2 - bow w/ arrows. 3 - silver arrows
-    STA $7EF340
+  ; 0 - nothing. 1 - hookshot
+  LDA #$01 : STA !Hookshot 
 
-    LDA #$02    ; 0 - nothing. 1 - blue boomerang. 2 - red boomerang
-    STA $7EF341
+  ; How many bombs you have. Can exceed 0x50, up to 0xff.
+  LDA #$50 : STA !Bombs
 
-    LDA #$00    ; 0 - nothing. 1 - hookshot.
-    STA $7EF342
+  ; 0 - nothing. 1 - Mushroom. 2 - Magic Powder
+  LDA #$02 : STA !MagicPowder
 
-    LDA #$32    ; How many bombs you have. Can exceed 0x50, up to 0xff.
-    STA $7EF343
+  ; 0 - nothing. 1 - Fire Rod
+  LDA #$01 : STA !FireRod 
+             STA !IceRod 
 
-    LDA #$02    ; 0 - nothing. 1 - Mushroom. 2 - Magic Powder
-    STA $7EF344
+  ; 0 - nothing. 1 - Lamp
+  LDA #$01 : STA !Lamp 
+             STA !MagicHammer
 
-    LDA #$01    ; 0 - nothing. 1 - Fire Rod
-    STA $7EF345
+  LDA #$01 : STA !JumpFeather
 
-    LDA #$01    ; 0 - nothing. 1 - Ice Rod
-    STA $7EF346
+  LDA #$01 : STA !BunnyMask 
 
-    LDA #$01    ; 0 - nothing. 1 - Bombos Medallion
-    STA $7EF347
+  LDA #$01 : STA !DekuMask
+  LDA #$01 : STA !ZoraMask 
+  LDA #$01 : STA !WolfMask
+  LDA #$01 : STA !MagicCape
 
-    LDA #$01    ; 0 - nothing. 1 - Ether Medallion (Deku Mask)
-    STA $7EF348
+  ; 0 - nothing. 1 - shovel. 2 - flute, no bird. 3 - flue, bird activated
+  LDA #$03 : STA !Flute
+  LDA #$01 : STA !BookOfMudora  
+  LDA #$01 : STA !CaneOfByrna 
+             STA !CaneOfSomaria 
 
-    LDA #$01    ; 0 - nothing. 1 - Quake Medallion (Zora Mask)
-    STA $7EF349
+  LDA #$02 : STA !Mirror 
+             STA !TitansMitt
 
-    LDA #$01    ; 0 - nothing. 1 - Torch
-    STA $7EF34A
+  LDA #$01 : STA !PegasusBoots 
+             STA !Flippers 
+             STA !MoonPearl 
+             STA !WolfMask
 
-    LDA #$01    ; 0 - nothing. 1 - Magic Hammer
-    STA $7EF34B
+  ; 0 - nothing. 1 - Fighter Sword. 2 - Master Sword. 3 - Tempered Sword. 4 - Golden Sword
+  LDA #$02 : STA !Sword
 
-    LDA #$03    ; 0 - nothing. 1 - shovel. 2 - flute, no bird. 3 - flue, bird activated
-    STA $7EF34C
+  ; 0 - nothing. 1 - Fighter Shield. 2 - Fire Shield. 3 - Mirror Shield
+  LDA #$01 : STA !Shield
 
-    LDA #$01    ; 0 - nothing. 1 - bug catching net
-    STA $7EF34D
+  ; 0 - nothing. 1 - Green Mail. 2 - Blue Mail. 3 - Red Mail
+  LDA #$00 : STA !Mail
 
-    LDA #$01    ; 0 - nothing. 1 - Book of Mudora
-    STA $7EF34E
+  ; 0-No bottle. 
+  ; 1-Mushroom (no use). 2-Empty bottle. 
+  ; 3-Red Potion. 4-Green Potion. 
+  ; 5-Blue Potion. 6-Fairy. 
+  ; 7-Bee. 8-Good Bee
+  LDA #$01 : STA !Bottles ; has bottles 
+  LDA #$03 : STA !Bottle1 
+  LDA #$05 : STA !Bottle2 
+  LDA #$04 : STA !Bottle3
+  LDA #$06 : STA !Bottle4
 
-    LDA #$01    ; 0 - nothing. 1 - has bottles.
-    STA $7EF34F
-    
-    LDA #$01    ; 0 - nothing. 1 - cane of somaria.
-    STA $7EF350
+  ; How many arrows you have. Can exceed 0x70.
+  LDA #$32 : STA !Arrows
 
-    LDA #$00    ; 0 - nothing. 1 - cane of byrna.
-    STA $7EF351
+  ; 2 bytes for rupees (goal, for counting up)
+  LDA #$E7 : STA !Rupees
+  LDA #$03 : STA !RupeesGoal
 
-    LDA #$01    ; 0 - nothing. 1 - magic cape.
-    STA $7EF352
+  ; health capacity (maximum number of hearts)
+  LDA #$50 : STA !HealthCapacity
 
-    LDA #$02    ; 0 - nothing. 1 - scroll looking thing that works like mirror. 2 - mirror with correct graphic.
-    STA $7EF353
+  ; magic power, maximum is 0x80
+  LDA #$80 : STA !MagicPower
 
-    LDA #$02    ; 0 - normal strength. 1 - Power Gloves. 2 - Titan's Mitt
-    STA $7EF354
+  ; fill all hearts
+  LDA #$A0 : STA !Hearts
 
-    LDA #$00    ; 0 - nothing. 1 - pegasus boots. 
-                ; *Just having the boots isn't enough to dash. 
-                ; You must have the ability flag corresponding to run set as well. See $379.
+  ; Pendants: Bit 0 = Courage, Bit 1 = Wisdom, Bit 2 = Power
+  LDA #$00 : STA !Pendants
 
-    STA $7EF355
-    LDA #$01    ; 0 - nothing. 1 - flippers. 
-                ; Having this allows you to swim, but doesn't make the swim ability text show up by itself. 
-                ; See $379. Unlike the boots, the ability is granted, as long as you have this item.
+  ; Ability Flags: Bit 0: ----. 
+  ; Bit 1: Swim.
+  ; Bit 2: Run / Dash.
+  ; Bit 3: Pull. Bit 4: ----. 
+  ; Bit 5: Talk. 
+  ; Bit 6: Read. Bit 7: ----
+  LDA #$6E : STA !AbilityFlags
 
-    STA $7EF356
-    LDA #$01    ; 0 - nothing. 1 - moon pearl.
-    STA $7EF357
-    LDA #$01 
-    STA $7EF358 ; 0 - nothing. 1 - wolf mask 
+  ; Crystals: 
+  ; Bit 0 = Misery Mire
+  ; Bit 1 = Dark Palace
+  ; Bit 2 = Ice Palace 
+  ; Bit 3 = Turtle Rock
+  ; Bit 4 = Swamp Palace
+  ; Bit 5 = Gargoyle's Domain
+  ; Bit 6 = Skull Woods
+  LDA #$00 : STA !Crystals 
 
-    LDA #$01    ; 0-No sword. 1-Fighter Sword. 2-Master Sword. 3-Tempered Sword. 4-Golden Sword
-    STA $7EF359
-    LDA #$03    ; 0-No shield. 1-Blue Shield. 2-Hero's Shield. 3-Mirror Shield  
-    STA $7EF35A
-    LDA #$00    ; 0-Green Jerkin. 1-Blue Mail. 2-Red Mail
-    STA $7EF35B
-    LDA #$03    ; 0-No bottle. 1-Mushroom (no use). 2-Empty bottle. 3-Red Potion. 4-Green Potion. 
-                ; 5-Blue Potion. 6-Fairy. 7-Bee. 8-Good Bee
-    STA $7EF35C
-    LDA #$00    ; second bottle
-    STA $7EF35D
-    LDA #$00    ; third bottle
-    STA $7EF35E
-    LDA #$00    ; fourth bottle
-    STA $7EF35F
-    LDA #$E7    ; 2 bytes for rupees (goal, for counting up)
-    STA $7EF360
-    LDA #$03
-    STA $7EF361
+  ; Magic usage: 0: normal consumption. 1: 1/2 consumption. 2: 1/4 consumption
+  LDA #$02 : STA !MagicUsage
 
-    ; a few bytes for dungeon items like compasses, maps and big keys are here, we jump over that
+END:
 
-    LDA #$50    ; health capacity (maximum number of hearts)
-    STA $7EF36C
-    LDA #$80    ; magic power, maximum is 0x80
-    STA $7EF36E
-    LDA #$A0    ; Fill all hearts
-    STA $7EF372
-
-    LDA #$00    ; Pendants: Bit 0 = Courage, Bit 1 = Wisdom, Bit 2 = Power
-    STA $7EF374
-
-    LDA #$32    ; How many arrows you have. Can exceed 0x70.
-    STA $7EF377
-
-    LDA #$6E    ; Ability Flags: Bit 0: ----. 
-                ; Bit 1: Swim.
-                ; Bit 2: Run / Dash.
-                ; Bit 3: Pull. Bit 4: ----. 
-                ; Bit 5: Talk. 
-                ; Bit 6: Read. Bit 7: ----
-
-    STA $7EF379
-
-    LDA #$00
-    STA $7EF37A ; Crystals: Bit 0 = Misery Mire, Bit 1 = Dark Palace, Bit 2 = Ice Palace, Bit 3 = Turtle Rock, Bit 4 = Swamp Palace, Bit 5 = Gargoyle's Domain, Bit 6 = Skull Woods
-
-    LDA #$02    ; Magic usage: 0: normal consumption. 1: 1/2 consumption. 2: 1/4 consumption
-    STA $7EF37B
-
-    END:
-
-    JSL $099F91 ; at least execute original code
-
-    RTL
-  }
+  JSL $099F91 ; Execute original code
+  RTL
 }
-namespace off
