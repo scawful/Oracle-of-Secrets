@@ -34,7 +34,7 @@ LinkState_CheckForMinishForm:
   LDA.l $7EF35A : STA $0AAF ; Store the current shield
   LDA.b #$00 : STA $7EF359 : STA $7EF35A ; Clear the sword and shield
 
-  LDA #$3A : STA $BC   ; change link's sprite 
+  LDA #$39 : STA $BC   ; change link's sprite 
   LDA #$05 : STA $02B2 ; Set the current mask form
   REP #$30
   RTS 

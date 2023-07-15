@@ -19,15 +19,15 @@
 ;   25 - N/A
 ;   26 - N/A
 ;   27 - N/A
-;   28 - New Sprite Jump Table
-;   29 - Custom Sprites and New Functions
+;   28 -
+;   29 - New Sprite Jump Table
 ;   2A - Jump Feather
 ;   2B - Book of Secrets
 ;   2C - N/A
 ;   2D - Menu
 ;   2E - HUD
 ;   2F - House Tag
-;   30 - N/A
+;   30 - Custom Sprites and New Functions
 ;   31 - Deku Link Code
 ;   32 - None
 ;   33 - None
