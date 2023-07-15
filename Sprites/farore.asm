@@ -8,12 +8,12 @@ incsrc sprite_functions_hooks.asm
 
 ;==============================================================================
 
-org $288000
+org $298000
 incsrc sprite_new_table.asm
 
 ;==============================================================================
 
-org $298000
+org $308000
 incsrc sprite_new_functions.asm
 
 ;==============================================================================
@@ -111,22 +111,18 @@ Sprite_Farore_Main:
   ; 00
   IntroStart:
   {
-    ; JSR SetupMovieEffect
-    ; JSR MovieEffect
     LDA $B6 : CMP.b #$01 : BEQ .maku_area
               CMP.b #$02 : BEQ .waiting
     
     %GotoAction(1)
     RTS 
+
   .maku_area
-    %GotoAction(6)
-    
-    ; JSR MakuArea_FaroreFollowPlayer
+    %GotoAction(6)    
     RTS 
 
   .waiting
     %GotoAction(7)
-    ;JSR MakuArea_FaroreWaitForKydrog
     RTS
   }
 
