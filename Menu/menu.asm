@@ -84,12 +84,14 @@ Menu_UploadRight:
   JSR Menu_DrawBackground
   JSR Menu_DrawQuestItems
   JSR Menu_DrawCharacterName
+  JSR Menu_DrawBigKey
+  JSR Menu_DrawBigChestKey
+
   JSR DrawQuestIcons
   JSR DrawTriforceIcon
   JSR DrawPendantIcons
-  JSR DrawDeathCounter
+
   JSR DrawPlaytimeLabel
-  JSR DrawScrollsLabel
 
   ;; heart piece empty, move this later 
   LDX.w #$2484 : STX.w $149E    ; draw empty top left
@@ -343,11 +345,11 @@ Menu_CheckBottle:
 
 .not_second 
   LDA.w $0202 : CMP.b #$12 : BNE .not_third
-  LDA.b #$03 : JMP .prepare_bottle
+  LDA.b #$0003 : JMP .prepare_bottle
 
 .not_third
   LDA.w $0202 : CMP.b #$18 : BNE .not_any
-  LDA.b #$04
+  LDA.b #$0004
 
 .prepare_bottle
   STA.l $7EF34F

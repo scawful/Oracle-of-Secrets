@@ -412,3 +412,211 @@ Menu_DrawQuestItems:
   JSR DrawMenuItem
 
   RTS
+
+; =============================================================================
+
+Menu_DrawBigKey:
+{
+  REP #$30
+  
+  LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalace
+  
+  LSR A : TAX
+  
+  ; Check if we have the big key in this palace
+  LDA $7EF366
+
+.locateBigKeyFlag
+
+  ASL A : DEX : BPL .locateBigKeyFlag : BCC .dontHaveBigKey
+  
+  JSR CheckPalaceItemPossession : LDA $02 : BEQ .noTreasureYet
+  
+  SEP #$30
+	LDA.b #$7E : STA.b $0A
+	REP #$30
+
+  LDA.w #$01
+  STA.w ShortSpoof
+  LDA.w #ShortSpoof
+  LDX.w #menu_offset(11,8)
+  LDY.w #TreasureChestGFX
+  JSR DrawMenuItem
+
+.noTreasureYet
+
+  LDA.w #$01
+  STA.w ShortSpoof
+  LDA.w #ShortSpoof
+  ; Draw the big key (or big key with chest if we've gotten the treasure) icon
+  LDX.w #menu_offset(11,2)
+  LDY.w #BigKeyGFX
+  JSR DrawMenuItem
+
+.dontHaveBigKey
+.notInPalace
+
+  LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalaceAgain
+  
+  LSR A : TAX
+  
+  ; Check if we have the map in this dungeon
+  LDA $7EF368
+
+.locateMapFlag
+
+  ASL A : DEX : BPL .locateMapFlag : BCC .dontHaveMap
+  
+  LDA.w #$01
+  STA.w ShortSpoof
+  LDA.w #ShortSpoof
+  ; Draw the big key (or big key with chest if we've gotten the treasure) icon
+  LDX.w #menu_offset(11,11)
+  LDY.w #MapGFX
+  JSR DrawMenuItem
+
+.dontHaveMap
+.notInPalaceAgain
+
+  ; SEP #$30
+  
+  RTS
+}
+
+; =============================================================================
+
+; *$6EEB6-$6EEDB LOCAL
+CheckPalaceItemPossession:
+{
+  SEP #$30
+  
+  LDA $040C : LSR A
+  
+  JSL UseImplicitRegIndexedLocalJumpTable
+  
+  dw .no_item
+  dw .no_item
+  dw .bow
+  dw .power_glove
+  dw .no_item
+  dw .hookshot
+  dw .hammer
+  dw .cane_of_somaria
+  dw .fire_rod
+  dw .blue_mail
+  dw .moon_pearl
+  dw .titans_mitt
+  dw .mirror_shield
+  dw .red_mail
+}
+
+; ==============================================================================
+
+; *$6EEDC-$6EEE0 JUMP LOCATION
+.pool_CheckPalaceItemPossession:
+{
+
+.failure
+
+  STZ $02
+  STZ $03
+  
+  RTS
+
+.bow
+
+  LDA $7EF340
+
+.no_item
+.compare
+
+  BEQ .failure
+
+.success
+
+  LDA.b #$01 : STA $02
+               STZ $03
+  
+  RTS
+
+.power_glove
+
+  LDA $7EF354 : BRA .compare
+
+.hookshot
+
+  LDA $7EF342 : BRA .compare
+
+.hammer
+
+  LDA $7EF34B : BRA .compare
+
+.cane_of_somaria
+
+  LDA $7EF350 : BRA .compare
+
+.fire_rod
+
+  LDA $7EF345 : BRA .compare
+
+.blue_mail
+
+  LDA $7EF35B : BRA .compare
+
+.moon_pearl
+
+  LDA $7EF357 : BRA .compare
+
+.titans_mitt
+
+  LDA $7EF354 : DEC A : BRA .compare
+
+.mirror_shield
+
+  LDA $7EF35A : CMP.b #$03 : BEQ .success
+  
+  STZ $02
+  STZ $03
+  
+  RTS
+
+.red_mail
+
+  LDA $7EF35B : CMP.b #$02 : BEQ .success
+  
+  STZ $02
+  STZ $03
+  
+  RTS
+}
+
+; *$6EF39-$6EF66 LOCAL
+Menu_DrawBigChestKey:
+{  
+  LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalace
+  
+  LSR A : TAX
+  
+  LDA $7EF364
+  
+.locateCompassFlag
+
+  ASL A : DEX : BPL .locateCompassFlag
+                BCC .dontHaveCompass
+  
+  SEP #$30
+	LDA.b #$7E : STA.b $0A
+	REP #$30
+
+  LDA.w #$01
+  STA.w ShortSpoof
+  LDA.w #ShortSpoof
+  LDX.w #menu_offset(11, 5)
+  LDY.w #BigChestKeyGFX
+  JSR DrawMenuItem
+  
+.dontHaveCompass
+.notInPalace
+  
+  RTS
+}

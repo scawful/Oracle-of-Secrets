@@ -88,8 +88,26 @@ ShovelGFX:
 
 OcarinaGFX:
   dw $2CD4, $2CD5, $2CE4, $2CE5 
-  ; dw $2CD4, $2CD5, $2CE4, $2CE5
-  ; dw $2CD4, $2CD5, $2CE4, $2CE5
+
+; -------------------------------------
+
+BigKeyGFX:
+  dw $34D6, $74D6, $34E6, $34E7
+
+; -------------------------------------
+
+BigChestKeyGFX:
+  dw $34BF, $74BF, $34E6, $34E7
+
+; -------------------------------------
+
+MapGFX:
+  dw $2936, $2937, $2946, $2947 
+
+; -------------------------------------
+
+TreasureChestGFX:
+  dw $294B, $294C, $294D, $294E
 
 ; -------------------------------------
 ; formerly fishing net
@@ -156,8 +174,8 @@ MirrorGFX:
 QuarterNoteGFX:
   dw $30AA, $306B, $307A, $306A ; Gray Note
   dw $2CAA, $2C6B, $2C7A, $2C6A ; Blue Note
-  dw $24AA, $246B, $247A, $246A ; Red Note
   dw $3CAA, $3C6B, $3C7A, $3C6A ; Green Note
+  dw $24AA, $246B, $247A, $246A ; Red Note
   dw $34AA, $346B, $347A, $346A ; Gold Note
 
 ; -------------------------------------
