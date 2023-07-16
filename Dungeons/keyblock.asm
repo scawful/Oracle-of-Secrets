@@ -16,7 +16,7 @@
 
 ; Big chest key for compass 
 org $01EC1A
-  db $66
+  db $64
 
 org $01EB8C			
 Object_KeyBlock:
