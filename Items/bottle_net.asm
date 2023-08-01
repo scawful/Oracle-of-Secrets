@@ -132,7 +132,7 @@ LinkItem_Bottles:
   LDA.l $7EF36C : CMP.l $7EF36D : BNE .can_drink_red
 
 .LinkItem_UselessBottle:
-  BRL $07A955 ; LinkGoBeep TODO(scawful): Investigate 
+  BRL LinkGoBeep ; BRL $07A955 ; LinkGoBeep TODO(scawful): Investigate 
 
 .can_drink_red:
   LDA.b #$02 : STA.l $7EF35C, X : STZ.w $0301
@@ -148,18 +148,18 @@ LinkItem_Bottles:
 
 .LinkItem_GreenPotion:
   LDA $7EF36E : CMP.b #$80 : BNE .can_drink
-  BRL $07A955 ; LinkGoBeep TODO(scawful): Investigate 
+  BRL LinkGoBeep ; LinkGoBeep TODO(scawful): Investigate 
 
 .can_drink:
   LDA $02 : STA $7EF35C, X : STZ $0301
-  
+  LDA #$01 : STA.l $7EF373  
   ; submodule ????
-  LDA.b #$08 : STA $11
-  LDA $10 : STA $010C
+  LDA.b #$04 : STA.b $11
+  LDA.b $10 : STA.w $010C
   
   ; Go to text mode
-  LDA.b #$0E : STA $10
-  LDA.b #$07 : STA $0208
+  LDA.b #$0E : STA.b $10
+  LDA.b #$07 : STA.w $0208
 
   JSL $0DFA58 ; RebuildHUD_long TODO(scawful)
   BRA .bottle_exit
@@ -167,7 +167,7 @@ LinkItem_Bottles:
 .LinkItem_BluePotion:
   LDA $7EF36C : CMP $7EF36D : BNE .useBluePotion
   LDA $7EF36E : CMP.b #$80 : BNE .useBluePotion
-  BRL $07A955
+  BRL LinkGoBeep ; BRL $07A955
 
 .useBluePotion
   LDA.b #$02 : STA $7EF35C, X : STZ $0301
@@ -186,7 +186,7 @@ LinkItem_Bottles:
 .LinkItem_FairyBottle:
   STZ.w $0301
   JSL PlayerItem_SpawnFaerie : BPL .released
-  BRL $07A955
+  BRL LinkGoBeep ; BRL $07A955
 
 .released:
   LDA.b #$02 : STA.l $7EF35C, X
@@ -196,7 +196,7 @@ LinkItem_Bottles:
 .LinkItem_BeeBottle:
   STZ.w $0301
   JSL PlayerItem_ReleaseBee : BPL .bee_spawn_success
-  BRL $07A955 ; LinkGoBeep 
+  BRL LinkGoBeep ; BRL $07A955 ; LinkGoBeep 
 
 .bee_spawn_success
   LDA.b #$02 : STA.l $7EF35C, X
@@ -204,6 +204,12 @@ LinkItem_Bottles:
 
 .bottle_exit:
   RTS
+}
+
+LinkGoBeep:
+{
+  LDA.b #$3C : JSR Player_DoSfx2
+  BRA LinkItem_Bottles_bottle_exit
 }
 
 print pc
