@@ -76,6 +76,8 @@ namespace Oracle
   incsrc "Music/dungeon_theme.asm"
   print  "End of Music/dungeon_theme.asm    ", pc
 
+  incsrc "Music/entrance_music_fix.asm"
+
   ; incsrc "Music/boss_theme.asm"
   ; print  "End of Music/boss_theme.asm       ", pc
 
@@ -203,6 +205,9 @@ namespace Oracle
   incsrc "Dungeons/entrances.asm"
   print  "End of Dungeons/entrances.asm     ", pc
 
+  incsrc "Dungeons/mothula.asm"
+  print  "End of Dungeons/mothula.asm       ", pc
+
   print ""
 
 
@@ -220,8 +225,8 @@ namespace Oracle
 
 
   ; ---------------------------------------------------------
-  incsrc "Debug/debug.asm"
-  print  "End of Debug/debug.asm            ", pc
+  incsrc "Util/all_items.asm"
+  print  "End of Util/all_items.asm            ", pc
 
   ; Overworld area which has holes that hurt
   ; You can change the area to which holes will hurt the player! 
