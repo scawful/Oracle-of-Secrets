@@ -61,16 +61,12 @@ HouseTag_TelepathicPlea:
 HouseTag_WakeUpPlayer:
 {
   ; Lighten the screen gradually and then wake Link up partially
-  
   LDA $1A : AND.b #$03 : BNE .delay
-  
   LDA $9C : CMP.b #$20 : BEQ .colorTargetReached
   
-  DEC $9C
-  DEC $9D
+  DEC $9C : DEC $9D
 
 .delay
-
   RTS
 
 .colorTargetReached
@@ -97,6 +93,7 @@ HouseTag_WakeUpPlayer:
   ; Set the game mode
   LDA #$00 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
   LDA #$00 : STA $7EF3CC   ; disable telepathic message
+  LDA #$01 : STA $7EE00E
   JSL $00FC41   ; fix monsters
   
   RTS
@@ -106,7 +103,11 @@ HouseTag_WakeUpPlayer:
 
 HouseTag_End:
 {
-    RTS
+  LDA $B6 : BNE .hasMetFarore
+  LDA #$00 : STA StoryState
+  
+.hasMetFarore
+  RTS
 }
 
 ; ==============================================================================
@@ -179,7 +180,7 @@ STA $7003C7,x
 ;     01 - Blue Shield
 ;     02 - Hero's Shield
 ;     03 - Mirror Shield  
-LDA #$0101      ; 01=sword,  02 = shield to start with
+LDA #$0000      ; 01=sword,  02 = shield to start with
 STA $700359,x   
 
 LDY #$0000
