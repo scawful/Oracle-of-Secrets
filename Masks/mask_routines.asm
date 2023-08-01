@@ -72,7 +72,7 @@ Palette_ArmorAndGloves:
   RTL
 
 .minish_form
-  LDA.b #$3A : STA $BC         ; Load Minish Form Location
+  LDA.b #$39 : STA $BC         ; Load Minish Form Location
   JMP .original_palette
   RTL
 
