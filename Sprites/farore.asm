@@ -3,6 +3,23 @@
 ;
 ;==============================================================================
 
+InCutScene = $7EF303
+
+org $0083F8
+LDA InCutScene : BEQ .notInCutscene
+    STZ $F0
+    STZ $F2
+    STZ $F4
+    STZ $F6
+    STZ $F8
+    STZ $FA ; kill all input
+
+.notInCutscene
+
+RTS
+
+warnpc $00841E
+
 incsrc sprite_macros.asm
 incsrc sprite_functions_hooks.asm
 
@@ -111,6 +128,7 @@ Sprite_Farore_Main:
   ; 00
   IntroStart:
   {
+    LDA #$01 : STA InCutScene
     LDA $B6 : CMP.b #$01 : BEQ .maku_area
               CMP.b #$02 : BEQ .waiting
     
@@ -173,6 +191,7 @@ Sprite_Farore_Main:
     LDA.w SprTimerA, X : BNE +
 
     STZ $2F
+    LDA #$00 : STA InCutScene
     %ShowUnconditionalMessage($0E) ; "I am Farore, the Oracle of Secrets."
     
     %GotoAction(4)
@@ -197,6 +216,7 @@ Sprite_Farore_Main:
   ; 05
   FaroreFollowPlayer:
   {
+    LDA #$01 : STA InCutScene
     LDA WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
     LDA.b #$08 : STA.b $49 ; Auto-movement north
     %PlayAnimation(3, 4, 8)
@@ -238,7 +258,6 @@ Sprite_Farore_Main:
   MakuArea_FaroreWaitForKydrog:
   {
     %PlayAnimation(5, 5, 8)
-
 
     RTS
   }
