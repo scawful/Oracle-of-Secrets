@@ -14,12 +14,9 @@ newIgnoreItemBox:
   JSL HUD_Update
   RTS
 
+; Hooked @ end of RefillLogic *$6DB92-$6DD29
 org $0DDD21
   JSR newIgnoreItemBox
-
-org $0DF1BC
-  JSL HUD_AnimateHeartRefill
-  RTS
 
 org $0DFC09
   JSL HUD_Update_ignoreHealth
@@ -239,57 +236,6 @@ MagicTilemap:
   dw $3C5F, $3C5F, $3C5F, $3C5F, $3C5F 
   ; value 80 
 
-
-; =============================================================================
-; *$6F14F-$6F1B2 LOCAL
-
-HUD_HeartDisplayFrames:
-  dw $24A3, $24A4, $24A3, $24A0
-
-HUD_AnimateHeartRefill:
-{
-  SEP #$30
-  
-  ; $00[3] = $7EC768 (wram address of first row of hearts in tilemap buffer)
-  LDA.b #$44 : STA $00
-  LDA.b #$C7 : STA $01
-  LDA.b #$7E : STA $02
-  
-  DEC.w $0208 : BNE .return
-  
-  REP #$30
-  
-  ; Y = ( ( ( (current_health & 0x00F8) - 1) / 8 ) * 2)
-  LDA $7EF36D : AND.w #$00F8 : DEC A : LSR #3 : ASL A : TAY : CMP.w #$0014
-  
-  BCC .halfHealthOrLess
-  
-  SBC.w #$0014 : TAY
-  
-  ; $00[3] = $7EC7A8 (wram address of second row of hearts)
-  LDA $00 : CLC : ADC.w #$0040 : STA.b $00
-
-.halfHealthOrLess
-
-  SEP #$30
-  LDX.w $0209 : LDA.l $0DFA11, X : STA.w $0208
-  TXA : ASL A : TAX
-  
-  LDA.l HUD_HeartDisplayFrames+0, X : STA.b [$00], Y : INY 
-  LDA.l HUD_HeartDisplayFrames+1, X : STA.b [$00], Y
-  
-  LDA.w $0209 : INC A : AND.b #$03 : STA.w $0209
-  BNE .return
-  
-  SEP #$30
-  JSL $0DFA70 ; Rebuild Vanilla 
-  STZ $020A
-
-.return
-  CLC
-  RTS
-}
-
 ; ============================================================================ 
 ; *$6FAFD-$6FB90 LOCAL
 
@@ -478,7 +424,7 @@ org $0DF689
 
 ; Hammer
 org $0DF701
-  dw $20F5, $20F5, $20F5, $20F5 ; No 
+  dw $24B6, $24B7, $20C6, $24C7 ; Hammer
   dw $24B6, $24B7, $20C6, $24C7 ; Hammer
 
 ; Mirror 
