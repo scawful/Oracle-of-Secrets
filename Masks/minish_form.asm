@@ -24,6 +24,11 @@ LinkState_CheckForMinishForm:
 {
   SEP #$30
 
+  ; Check for the R button (like minish cap)
+  LDA.b $F6 : BIT.b #$10 : BNE .r_button_press
+  BRA .return
+.r_button_press
+
   LDY.b #$04 : LDA.b #$23
   JSL AddTransformationCloud
   LDA.b #$14 : JSR Player_DoSfx2
@@ -36,14 +41,15 @@ LinkState_CheckForMinishForm:
 
   LDA #$39 : STA $BC   ; change link's sprite 
   LDA #$05 : STA $02B2 ; Set the current mask form
-  REP #$30
-  RTS 
+  BRA .return
 
 .already_minish
   STZ $02B2
   LDA $0AA5 : STA.l $7EF359
   LDA $0AAF : STA.l $7EF35A
   LDA #$10 : STA $BC
+
+.return
   REP #$30
   RTS
 }
@@ -63,6 +69,5 @@ LinkState_CheckMinishTile:
   
   RTS
 }
-print "==> LinkState_CheckMinishTile     ", pc
 pushpc
 
