@@ -136,6 +136,8 @@ namespace Oracle
   incsrc "Masks/wolf_mask.asm"
   print  "End of Masks/wolf_mask.asm        ", pc
 
+  warnpc $07FFFF
+
   print ""
 
   ; ---------------------------------------------------------
@@ -207,6 +209,9 @@ namespace Oracle
 
   incsrc "Dungeons/mothula.asm"
   print  "End of Dungeons/mothula.asm       ", pc
+
+  incsrc "Dungeons/together_warp_tag.asm"
+  print  "End of together_warp_tag.asm      ", pc
 
   print ""
 
