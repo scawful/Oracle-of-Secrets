@@ -172,8 +172,8 @@ namespace Oracle
   incsrc "Events/house_tag.asm"
   print  "End of Events/house_tag.asm       ", pc
 
-  incsrc "Events/lost_sea.asm"
-  print  "End of Events/lost_sea.asm        ", pc
+  incsrc "Events/lost_woods.asm"
+  print  "End of Events/lost_woods.asm        ", pc
 
   incsrc "Events/snow_overlay.asm"
   print  "End of Events/snow_overlay.asm    ", pc
