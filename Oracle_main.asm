@@ -215,7 +215,16 @@ namespace Oracle
 
   print ""
 
+  ; ---------------------------------------------------------
+  ; Overworld
 
+  incsrc "Overworld/pit_damage.asm"
+  print  "End of Overworld/pit_damage.asm   ", pc
+
+  incsrc "Dungeons/master_sword.asm"
+  print  "End of master_sword.asm           ", pc
+
+  
   ; ---------------------------------------------------------
   ; Custom Menu and HUD
 
@@ -230,7 +239,7 @@ namespace Oracle
 
 
   ; ---------------------------------------------------------
-  incsrc "Util/all_items.asm"
+  ; incsrc "Util/all_items.asm"
   print  "End of Util/all_items.asm            ", pc
 
   ; Overworld area which has holes that hurt
