@@ -16,22 +16,22 @@
 ;
 ; =============================================================================
 
-org $368000
+org    $368000
 incbin gfx/zora_link.4bpp
 
 ; =============================================================================
 
 UpdateZoraPalette:
 {
-  REP #$30  ; change 16 bit mode
+  REP #$30   ; change 16 bit mode
   LDX #$001E
 
   .loop
   LDA.l zora_palette, X : STA $7EC6E0, X
   DEX : DEX : BPL .loop
 
-  SEP #$30  ; go back to 8 bit mode
-  INC $15   ; update the palette
+  SEP #$30 ; go back to 8 bit mode
+  INC $15  ; update the palette
   RTL       
 }
 
@@ -55,26 +55,21 @@ org $07A569
 LinkItem_ZoraMask:
 {
   ; Check for R button held 
-  LDA $F2 : CMP #$10 : BNE .return 
+  %CheckNewR_ButtonPress() : BEQ .return
 
-  JSR Link_CheckNewY_ButtonPress : BCC .return
-  LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
+  LDA $6C : BNE .return   ; in a doorway
+  LDA $0FFC : BNE .return ; can't open menu
 
-  LDA $6C : BNE .return                 ; in a doorway
-  LDA $0FFC : BNE .return               ; can't open menu
+  %PlayerTransform()
 
-  LDY.b #$04 : LDA.b #$23
-  JSL AddTransformationCloud
-  LDA.b #$14 : JSR Player_DoSfx2
-
-  LDA $02B2 : CMP #$02 : BEQ .unequip   ; is the zora mask on?
-  JSL UpdateZoraPalette
-  LDA #$36 : STA $BC
-  LDA #$02 : STA $02B2
+  LDA $02B2 : CMP #$02 : BEQ .unequip ; is the zora mask on?
+  JSL UpdateZoraPalette               ; change links palette
+  LDA #$36 : STA $BC                  ; change links graphics
+  LDA #$02 : STA $02B2                ; set the zora mask on
   BRA .return
+
 .unequip
-  JSL Palette_ArmorAndGloves
-  LDA #$10 : STA $BC : STZ $02B2        ; take the mask off
+  %ResetToLinkGraphics()
 
 .return
   CLC
@@ -102,11 +97,7 @@ org $07C307
 
 ; =============================================================================
 
-
-; Bank07 Free Space 
-; Predecessor: Wolf Mask I think
-; org $07F95D
-pullpc
+pullpc ; Bank07 Free Space from Deku Mask
 LinkState_UsingZoraMask:
 {
   ; Check if the mask is equipped 
@@ -133,15 +124,15 @@ LinkState_UsingZoraMask:
   {
     ; Check the Y button and clear state if activated
     JSR Link_CheckNewY_ButtonPress : BCC .return
-    LDA $3A : AND.b #$BF : STA $3A       
+    LDA $3A : AND.b #$BF : STA $3A
 
     ; Check if already underwater 
     LDA $0AAB : BEQ .dive
 
-    STZ $55     ; Reset cape flag 
-    STZ $0AAB   ; Reset underwater flag 
-    STZ $0351   ; Reset ripple flag 
-    STZ $037B   ; Reset invincibility flag
+    STZ $55            ; Reset cape flag 
+    STZ $0AAB          ; Reset underwater flag 
+    STZ $0351          ; Reset ripple flag 
+    STZ $037B          ; Reset invincibility flag
     LDA #$04 : STA $5D ; Put Link in Swimming State
 
     JMP .return
@@ -156,7 +147,7 @@ LinkState_UsingZoraMask:
 
     ; Splash visual effect 
     LDA.b #$15 : LDY.b #$00
-    JSL AddTransitionSplash
+    JSL   AddTransitionSplash
 
     ; Stay in swimming mode 
     LDA #$04 : STA $5D
@@ -175,33 +166,33 @@ LinkState_UsingZoraMask:
     LDA $5D : CMP #$04 : BNE .return_dungeon : CLC
 
     ; Check if already underwater
-    LDA $0AAB : BNE .return_dungeon : CLC 
+    LDA $0AAB : BNE .return_dungeon : CLC
 
     ; Check if we are on a proper tile or not 
     ; 
 
     ; Check the Y button and clear state if activated
     JSR Link_CheckNewY_ButtonPress : BCC .return_dungeon
-    LDA $3A : AND.b #$BF : STA $3A 
+    LDA $3A : AND.b #$BF : STA $3A
 
   .dive_dungeon
     ; Splash effect 
     LDA.b #$15 : LDY.b #$00
-    JSL AddTransitionSplash
+    JSL   AddTransitionSplash
 
-    STZ $5D     ; reset player to ground state 
-    STZ $EE     ; move link to lower level
+    STZ $5D ; reset player to ground state 
+    STZ $EE ; move link to lower level
     
     LDA #$72
-    STA $9A     ; Set layer 
+    STA $9A  ; Set layer 
 
     LDA #$08
-    STA $5E     ; Set the player speed 
+    STA $5E  ; Set the player speed 
 
     STZ $0345
 
     LDA #$01
-    STA $0AAB   ; Set the player underwater flag 
+    STA $0AAB ; Set the player underwater flag 
 
   .return_dungeon
     JSR $E8F0 ; HandleIndoorCameraAndDoors
@@ -226,7 +217,7 @@ LinkState_UsingZoraMask:
 
   ; Check the Y button and clear state if activated
   JSR Link_CheckNewY_ButtonPress : BCC .return_default
-  LDA $3A : AND.b #$BF : STA $3A 
+  LDA $3A : AND.b #$BF : STA $3A
   {
     ; Restore Swimming Effects
     LDA.b #$15 : LDY.b #$00 : JSL AddTransitionSplash
@@ -238,12 +229,12 @@ LinkState_UsingZoraMask:
 
     ; Remove Diving Effects
     LDA $67 : AND #$01 : STA $2F
-    STZ $5E            ; Reset speed to normal
-    STZ $0AAB          ; Reset underwater flag 
-    STZ $0351          ; Reset ripple flag
-    STZ $24            ; Reset z coordinate for link
-    STZ $0372          ; Reset link bounce flag
-    LDA #$62 : STA $9A ; Reset dungeon layer
+    STZ $5E                      ; Reset speed to normal
+    STZ $0AAB                    ; Reset underwater flag 
+    STZ $0351                    ; Reset ripple flag
+    STZ $24                      ; Reset z coordinate for link
+    STZ $0372                    ; Reset link bounce flag
+    LDA #$62 : STA $9A           ; Reset dungeon layer
     JMP .return_default
   }
 
@@ -256,21 +247,18 @@ LinkState_UsingZoraMask:
 .dungeon_stairs
 {
   LDA $02B2 : CMP #$02 : BNE .return_hop
-  STZ $5E            ; Reset speed to normal
-  STZ $0AAB          ; Reset underwater flag 
-  LDA #$62 : STA $9A ; Reset dungeon layer
+  STZ $5E                                ; Reset speed to normal
+  STZ $0AAB                              ; Reset underwater flag 
+  LDA #$62 : STA $9A                     ; Reset dungeon layer
 .return_hop
   LDA #$06 : STA $5D ; Set Link to Recoil State
   RTS
 }
 print "==> LinkState_UsingZoraMask       ", pc
 
-; =============================================================================
-
 ; TODO: Make this so it does not cancel if $0202 is still the same mask 
 ;       corresponding to the form the player is in.
 ;       Also, prevent this from canceling minish form. 
-; org $07FA55
 LinkState_ResetMaskAnimated:
 {
   LDA $02B2 : BEQ .no_mask
@@ -284,7 +272,7 @@ LinkState_ResetMaskAnimated:
 
 .transform
   LDY.b #$04 : LDA.b #$23
-  JSL AddTransformationCloud
+  JSL   AddTransformationCloud
   LDA.b #$14 : JSR Player_DoSfx2
 
   STZ $02B2
@@ -294,5 +282,4 @@ LinkState_ResetMaskAnimated:
   RTL
 }
 
-print "==> LinkState_ResetMaskAnimated   ", pc
 pushpc

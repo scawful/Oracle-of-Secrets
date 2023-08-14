@@ -1,5 +1,10 @@
 ; =============================================================================
-; Change Link Sprite with $BC
+;  Oracle of Secrets - Mask Library
+; =============================================================================
+
+!CurrentMask  = $02B2
+!LinkGraphics = $BC
+
 ; =============================================================================
 
 org $09912C
@@ -11,23 +16,49 @@ org $07B073
 org $078028
   Player_DoSfx2:
 
-; =============================================================================
+macro PlayerTransform()
+  LDY.b #$04 : LDA.b #$23
+  JSL   AddTransformationCloud
+  LDA.b #$14 : JSR Player_DoSfx2
+endmacro
 
-; Link Sprite hook
-org $008A01
-  LDA $BC
+macro ResetToLinkGraphics()
+  STZ   !CurrentMask
+  JSL   Palette_ArmorAndGloves
+  LDA.b #$10 : STA !LinkGraphics
+endmacro
+
+macro CheckNewR_ButtonPress()
+  LDA.b $F6 : BIT.b #$10
+endmacro
+
+; =============================================================================
+; Change Link's sprite by setting $BC to the bank containing a spritesheet.
+; =============================================================================
 
 org $008827
   JSL StartupMasks
 
+; Link Sprite hook before game starts
+org $008A01
+  LDA $BC
+
+; =============================================================================
+; Change Link's palette based on $02B2 (mask value)
+; =============================================================================
+
 org $1BEDF9
   JSL Palette_ArmorAndGloves ; 4bytes
-  RTL ; 1byte 
+  RTL                        ; 1byte 
   NOP #$01
 
 org $1BEE1B
   JSL Palette_ArmorAndGloves_part_two
   RTL
+
+; =============================================================================
+; EXPANDED SPACE
+; =============================================================================
 
 org $3A8000
 StartupMasks:
@@ -46,49 +77,50 @@ StartupMasks:
 
 Palette_ArmorAndGloves:
 {
-  LDA $02B2 : CMP #$01 : BEQ .deku_mask 
+  LDA   $02B2 : CMP #$01 : BEQ .deku_mask
   CMP.b #$02 : BEQ .zora_mask
   CMP.b #$03 : BEQ .wolf_mask
   CMP.b #$04 : BEQ .bunny_hood
   CMP.b #$05 : BEQ .minish_form
-  JMP .original_sprite
+  JMP   .original_sprite
 
 .deku_mask
-  LDA.b #$35 : STA $BC         ; Load Deku Mask Location
-  JMP .original_palette
+  ; Load Deku Mask Location
+  LDA.b #$35 : STA $BC : JMP   .original_palette
   
 .zora_mask
-  LDA.b #$36 : STA $BC         ; Load Zora Mask Location
-  JMP .original_palette
+  ; Load Zora Mask Location
+  LDA.b #$36 : STA $BC : JMP   .original_palette
 
 .wolf_mask
-  LDA.b #$38 : STA $BC         ; Load Wolf Mask Location
-  JSL $38F000
+  ; Load Wolf Mask Location
+  LDA.b #$38 : STA $BC : JSL   $38F000
   RTL
 
 .bunny_hood
-  LDA.b #$37 : STA $BC         ; Load Bunny Hood Location
-  JSL $37F000
+  ; Load Bunny Hood Location
+  LDA.b #$37 : STA $BC : JSL   $37F000
   RTL
 
 .minish_form
-  LDA.b #$39 : STA $BC         ; Load Minish Form Location
-  JMP .original_palette
-  RTL
+  ; Load Minish Form Location
+  LDA.b #$39 : STA $BC : JMP   .original_palette
+  ; RTL
 
 .original_sprite
-  LDA.b #$10 : STA $BC         ; Load Original Sprite Location
+ ; Load Original Sprite Location
+  LDA.b #$10 : STA $BC
 
 .original_palette
   REP #$21
-  LDA $7EF35B     ; Link's armor value 
-  JSL $1BEDFF     ; Read Original Palette Code
+  LDA $7EF35B ; Link's armor value 
+  JSL $1BEDFF ; Read Original Palette Code
   RTL
 .part_two
   SEP #$30
-    REP #$30
-    LDA.w #$0000 ; Ignore glove color modifier $7EF354
-    JSL $1BEE21 ; Read Original Palette Code
+    REP   #$30
+    LDA.w #$0000  ; Ignore glove color modifier $7EF354
+    JSL   $1BEE21 ; Read Original Palette Code
   RTL
 
   PHX : PHY : PHA
@@ -131,9 +163,12 @@ Palette_ArmorAndGloves:
 
 ; =============================================================================
 ; Overworld Palette Persist 
+; =============================================================================
+
 Overworld_CgramAuxToMain_Override:
 {
-  ; copies the auxiliary CGRAM buffer to the main one and causes NMI to reupload the palette.
+  ; Copies the auxiliary CGRAM buffer to the main one 
+  ; Causes NMI to reupload the palette.
   
   REP #$20
   
@@ -161,6 +196,7 @@ Overworld_CgramAuxToMain_Override:
   
   RTL
 }
+pushpc
 
 ; =============================================================================
 
@@ -169,6 +205,29 @@ Overworld_CgramAuxToMain:
 {
   JSL Overworld_CgramAuxToMain_Override
   RTS
+}
+
+; =============================================================================
+; Change which mask forms have access to the sword.
+; =============================================================================
+
+org $079CD9
+  JSL LinkItem_CheckForSwordSwing_Masks
+
+; =============================================================================
+
+pullpc
+LinkItem_CheckForSwordSwing_Masks:
+{
+  LDA   $02B2 : BEQ .return
+  CMP.b #$02 : BEQ .return  ; zora mask can use sword
+
+  LDA #$01
+  RTL
+
+.return
+  LDA $3B : AND.b #$10
+  RTL
 }
 
 ; =============================================================================

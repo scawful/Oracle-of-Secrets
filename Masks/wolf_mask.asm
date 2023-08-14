@@ -6,14 +6,14 @@
 ; 
 ; =============================================================================
 
-org $388000
+org    $388000
 incbin gfx/wolf_link.4bpp
 
 ; =============================================================================
 
 UpdateWolfPalette:
 {
-  REP #$30 ; change 16bit mode
+  REP #$30   ; change 16bit mode
   LDX #$001E
 
   .loop
@@ -21,8 +21,8 @@ UpdateWolfPalette:
   DEX : DEX : BPL .loop
 
   SEP #$30 ; go back to 8 bit mode
-  INC $15 ; update the palette
-  RTL ; or RTS depending on where you need it
+  INC $15  ; update the palette
+  RTL      ; or RTS depending on where you need it
 }
 
 ; =============================================================================
@@ -58,33 +58,32 @@ LinkItem_ShovelAndFlute:
 
 ; Bank 07 Free Space
 pullpc
+print pc
 LinkItem_WolfMask:
 {
+  SEP #$30
   LDA $02B2 : CMP #$03 : BNE .equip
   JSR LinkItem_Shovel
 
 .equip 
   ; Check for R button press
-  LDA.b $F6 : BIT.b #$10 : BEQ .return
-  LDA $6C : BNE .return                 ; in a doorway
-  LDA $0FFC : BNE .return               ; can't open menu
+  %CheckNewR_ButtonPress() : BEQ .return
+  LDA $6C : BNE .return   ; in a doorway
+  LDA $0FFC : BNE .return ; can't open menu
 
-  LDY.b #$04 : LDA.b #$23
-  JSL AddTransformationCloud
-  LDA.b #$14 : JSR Player_DoSfx2
+  %PlayerTransform()
 
   LDA $02B2 : CMP #$03 : BEQ .unequip ; is the wolf mask already on?
   JSL UpdateWolfPalette
-  LDA #$38 : STA $BC                   ; change link's sprite 
+  LDA #$38 : STA $BC                  ; change link's sprite 
   LDA #$03 : STA $02B2
   BRA .return
 
 .unequip
-  STZ $02B2
-  JSL Palette_ArmorAndGloves
-  LDA #$10 : STA $BC             ; take the mask off
+  %ResetToLinkGraphics()
 
 .return
-  CLC
+  REP #$30
+  
   RTS
 }

@@ -5,28 +5,28 @@
 ; $7EF349 bunny hood RAM slot
 ; 
 ; Adjustable speed table at the end
-;   db (0) $18: - Horizontal and vertical walking speed 
+; db (0) $18: - Horizontal and vertical walking speed
 ;                 (Default = 18) 
-;   db (1) $10 - Diagonal walking speed 
+; db (1) $10 - Diagonal walking speed
 ;                 (Default = 10) 
-;   db (2) $0a - Stairs walking speed 
+; db (2) $0a - Stairs walking speed
 ;                 (Default = 0A) 
-;   db (0c) $14 - walking through heavy grass speed (also shallow water) 
+; db (0c) $14 - walking through heavy grass speed (also shallow water)
 ;                 (Default = 14) 
-;   db (0d) $0d - walking diagonally through heavy grass speed (also shallow water) 
+; db (0d) $0d - walking diagonally through heavy grass speed (also shallow water)
 ;                 (Default = 0D) 
-;   db (10) $40 - Pegasus boots speed (Default = 40)
+; db (10) $40 - Pegasus boots speed (Default = 40)
 ;
 ; =============================================================================
 
-org $378000
+org    $378000
 incbin gfx/bunny_link.4bpp
 
 ; =============================================================================
 
 UpdateBunnyPalette:
 {
-  REP #$30 ; change 16bit mode
+  REP #$30   ; change 16bit mode
   LDX #$001E
 
   .loop
@@ -34,8 +34,8 @@ UpdateBunnyPalette:
   DEX : DEX : BPL .loop
 
   SEP #$30 ; go back to 8 bit mode
-  INC $15 ; update the palette
-  RTL ; or RTS depending on where you need it
+  INC $15  ; update the palette
+  RTL      ; or RTS depending on where you need it
 }
 
 ; =============================================================================
@@ -49,57 +49,59 @@ bunny_palette:
 ; =============================================================================
 ; Bunny Hood Speed Modification
 
-org $87E330 
+org $87E330
 JSR $FD66
 CLC
 
 org $87FD66
-JSL $20AF20
+JSL LinkState_BunnyHoodRun
 RTS
 
 org $20AF20
-CPX.b #$11 : BCS end  ; speed value upper bound check
-LDA.w $0202           ; check the current item
-CMP.b #$16 : BNE end  ; is it the bunny hood?
-LDA.w $02B2           ; did you put it on?
-BEQ end
-LDA $20AF70,X         ; load new speed values
-CLC
-RTL
+LinkState_BunnyHoodRun:
+{
+  CPX.b #$11 : BCS .end    ; speed value upper bound check
+  LDA.w $0202              ; check the current item
+  CMP.b #$16 : BNE .end    ; is it the bunny hood?
+  LDA.w !CurrentMask       ; did you put it on?
+  BEQ   .end
+  LDA.l BunnySpeedTable, X ; load new speed values
+  CLC
+  RTL
 
-end: {
-  LDA $87E227,X       ; load native speed values
+.end
+  LDA $87E227, X ; load native speed values
   CLC
   RTL
 }
 
-org $20AF70           ; this selects the new speed values
+org $20AF70 ; this selects the new speed values
+BunnySpeedTable:
+{
   db $20, $12, $0a, $18, $10, $08, $08, $04, $0c, $10, $09, $19, $14, $0d, $10, $08, $40
+}
 
+; =============================================================================
+; Press R to transform into bunny form and run faster.
 ; =============================================================================
 
 org $07A494
 LinkItem_Ether:
 {
-  JSR Link_CheckNewY_ButtonPress : BCC .return
-  LDA $3A : AND.b #$BF : STA $3A        ; clear the Y button state 
+  %CheckNewR_ButtonPress() : BEQ .return
+  LDA $6C : BNE .return   ; in a doorway
+  LDA $0FFC : BNE .return ; can't open menu
 
-  LDA $6C : BNE .return                 ; in a doorway
-  LDA $0FFC : BNE .return               ; can't open menu
-
-  LDY.b #$04 : LDA.b #$23
-  JSL AddTransformationCloud
-  LDA.b #$14 : JSR Player_DoSfx2
+  %PlayerTransform()
   
-  LDA $02B2 : CMP #$04 : BEQ .unequip   ; is the hood already on?
+  LDA $02B2 : CMP #$04 : BEQ .unequip ; is the hood already on?
   JSL UpdateBunnyPalette
-  LDA #$37 : STA $BC                    ; change link's sprite 
+  LDA #$37 : STA $BC                  ; change link's sprite 
   LDA #$04 : STA $02B2
   BRA .return
+  
 .unequip
-  STZ $02B2 
-  JSL Palette_ArmorAndGloves
-  LDA #$10 : STA $BC                    ; take the hood off
+  %ResetToLinkGraphics()
 
 .return
   CLC
