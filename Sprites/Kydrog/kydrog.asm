@@ -146,6 +146,9 @@ Sprite_Kydrog_Main:
     ; Set the flag to remove Farore and Kydrog from Maku area
     LDA #$01 : STA.l $7EF300
 
+    ; Set the progress flag for Impa (Zelda) in the sanctuary
+    LDA $7EF3C6 : ORA.b #$04 : STA $7EF3C6
+
     RTS
   }
 }
