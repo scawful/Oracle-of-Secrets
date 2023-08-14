@@ -417,8 +417,6 @@ Menu_DrawQuestItems:
 
 Menu_DrawBigKey:
 {
-  REP #$30
-  
   LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalace
   
   LSR A : TAX
@@ -444,6 +442,10 @@ Menu_DrawBigKey:
   JSR DrawMenuItem
 
 .noTreasureYet
+
+  SEP #$30
+	LDA.b #$7E : STA.b $0A
+	REP #$30
 
   LDA.w #$01
   STA.w ShortSpoof
@@ -477,8 +479,6 @@ Menu_DrawBigKey:
 
 .dontHaveMap
 .notInPalaceAgain
-
-  ; SEP #$30
   
   RTS
 }
