@@ -188,12 +188,6 @@ Menu_ItemScreen:
   LSR : BCS .move_down
   LSR : BCS .move_up
 
-; Check if A button is pressed
-;   LDA $F6 : AND.b #$80 : BEQ .a_not_pressed
-;   JSR Menu_SubItemScreen
-
-; .a_not_pressed 
-
   BRA .no_inputs
 
 .move_right
