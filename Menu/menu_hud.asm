@@ -22,8 +22,8 @@ org $0DFC09
   JSL HUD_Update_ignoreHealth
   RTS
 
-org $0DFC1B
-  JSR $F1BC
+; org $0DFC1B
+;   JSR $F1BC
 
 org $0DDB85
   JSL HUD_Update
@@ -204,18 +204,20 @@ HUD_Update:
 
 ; =============================================================================
 
-; .full_tile
-;   dw $3C5F
-; .mostly_full
-;   dw $3C4D
-; .kinda_full
-;   dw $3C4E
-; .half_empty
-;   dw $3C4F
-; .almost_empty
-;   dw $3C5E 
-; .empty_tile
-;   dw $3C4C
+Full =        $3C5F
+MostlyFull =  $3C4D
+KindaFull =   $3C4E
+HalfEmpty =   $3C4F
+AlmostEmpty = $3C5E 
+Empty =       $3C4C
+
+New_MagicTilemap:
+  dw Empty, Empty, Empty, Empty, Empty
+  dw Empty, Empty, Empty, Empty, AlmostEmpty
+  dw Empty, Empty, Empty, Empty, HalfEmpty
+  dw Empty, Empty, Empty, Empty, KindaFull
+  dw Empty, Empty, Empty, Empty, MostlyFull
+  dw Empty, Empty, Empty, HalfEmpty, Full
 
 MagicTilemap:
   dw $3C4C, $3C4C, $3C4C, $3C4C, $3C4C
@@ -227,14 +229,29 @@ MagicTilemap:
   dw $3C4C, $3C4C, $3C4C, $3C4C, $3C5F
   dw $3C4C, $3C4C, $3C4C, $3C4D, $3C5F
   dw $3C4C, $3C4C, $3C4C, $3C4E, $3C5F
-
   dw $3C4D, $3C5F, $3C5F, $3C5F, $3C5F
   dw $3C4E, $3C5F, $3C5F, $3C5F, $3C5F
   dw $3C4F, $3C5F, $3C5F, $3C5F, $3C5F
   dw $3C5E, $3C5F, $3C5F, $3C5F, $3C5F 
-  ; value 78 
   dw $3C5F, $3C5F, $3C5F, $3C5F, $3C5F 
   ; value 80 
+
+HUD_DrawMagicMeter:
+{
+  ; check player magic (ranges from 0 to 0x7F)
+  ; X = ((MP & 0xFF)) + 7) & 0xFFF8)
+  LDA $7EF36E : AND.w #$00FF : CLC : ADC #$0007 : AND.w #$FFF8 : TAX
+
+  
+  
+.draw_magic_meter
+
+  LDA.l (MagicTilemap)+0, X : STA $7EC76A
+  LDA.l (MagicTilemap)+2, X : STA $7EC76C
+  LDA.l (MagicTilemap)+4, X : STA $7EC76E
+  LDA.l (MagicTilemap)+6, X : STA $7EC770
+  LDA.l (MagicTilemap)+8, X : STA $7EC772
+}
 
 ; ============================================================================ 
 ; *$6FAFD-$6FB90 LOCAL
@@ -399,6 +416,7 @@ org $0DF859
   dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
   dw $24D4, $24D5, $24E4, $24E5 ; Red
 
+; Bottles
 org $0DF751
   dw $20F5, $20F5, $20F5, $20F5 ; No bottle
   dw $2044, $2045, $2046, $2047 ; Mushroom
@@ -427,6 +445,19 @@ org $0DF701
   dw $24B6, $24B7, $20C6, $24C7 ; Hammer
   dw $24B6, $24B7, $20C6, $24C7 ; Hammer
 
+; Lamp
+org $0DF6F1
+  dw $24BC, $24BD, $24CC, $64CC
+
+; Ice Rod
+org $0DF6A1
+ dw $24B0, $24B1, $24C0, $24C1
+
+; Fire Rod
+org $0DF6B1
+ dw $2CB0, $2CBE, $2CC0, $2CC1
+  
+
 ; Mirror 
 org $0DF7C9
   dw $20F5, $20F5, $20F5, $20F5 ; No mirror
@@ -436,6 +467,9 @@ org $0DF7C9
 org $0DF7A9
   dw $20F5, $20F5, $20F5, $20F5 ; No Byrna
   dw $2CDC, $2CDD, $2CEC, $2CED ; Cane of Byrna
+
+org $0DF731
+  dw $2840, $2841, $3C42, $3C43
 
 org $0DF6E1
   dw $20F5, $20F5, $20F5, $20F5 ; No bombos
@@ -450,9 +484,12 @@ org $0DF821
 ; Wolf 
 org $0DF6D1
   dw $3086, $7086, $3087, $7087
+  dw $3086, $7086, $3087, $7087
+  dw $3086, $7086, $3087, $7087
 
 ; Bunny 
 org $0DF7B9
+  dw $3469, $7469, $3479, $7479
   dw $3469, $7469, $3479, $7479
 
 ; Stone Mask
@@ -477,7 +514,10 @@ HUD_Tilemap:
 
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $3CA8, $FCA8, $207F, $207F, $207F
+  dw $207F
+
+  ; rupee icon            key icon
+  dw $3CA8, $FCA8, $207F, $2071, $207F
   
   ; magic bar
   dw $201B, $344B

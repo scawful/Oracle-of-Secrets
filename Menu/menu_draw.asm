@@ -289,16 +289,10 @@ DrawYItems:
 
   ;; next row 
 
-  ; LDA.w #$7EF34C ; ocarina
-  LDA.l $7EF34C
-  CMP.w #$00 : BEQ .no_flute
-  LDA.w #$01
-  STA.w ShortSpoof
-  LDA.w #ShortSpoof
+  LDA.w #$7EF34C
 	LDX.w #menu_offset(13,3)
 	LDY.w #OcarinaGFX
 	JSR DrawMenuItem
-.no_flute
 
   ;LDA.w #$7EF34E
   LDA.l $7EF34E

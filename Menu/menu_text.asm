@@ -101,7 +101,7 @@ Menu_ItemNames:
   dw "__STONE_MASK__  "
   dw "____BOTTLE____  "
 
-Menu_BottleIems:
+Menu_BottleItems:
   dw "___MUSHROOM___  "
   dw "_EMPTY_BOTTLE_  "
   dw "__RED_POTION__  "
@@ -112,17 +112,48 @@ Menu_BottleIems:
 
 Menu_DrawItemName:
 {
+  SEP #$30
+  ; Check if it's a bottle
+  LDA.w $0202 : CMP.b #$06 : BEQ .bottle_1
+  LDA.w $0202 : CMP.b #$0C : BEQ .bottle_2
+  LDA.w $0202 : CMP.b #$12 : BEQ .bottle_3
+  LDA.w $0202 : CMP.b #$18 : BEQ .bottle_4
+  REP #$30
+
   LDA.w $0202 : BEQ .no_items
-  DEC
-  ASL : ASL : ASL : ASL : ASL
+  DEC : ASL #5 : TAX
   LDY.w #$000
-  TAX 
+  
 .loop
   LDA.w Menu_ItemNames, X ; Load your text character
   STA.w $1692, Y ; <- into the buffer
   INX : INX
   INY : INY : CPY #$001C : BCC .loop
 .no_items
+  RTS
+
+; Draw Bottle Description
+.bottle_1
+  REP #$30
+  LDX #$0000 : JMP .draw_bottle
+.bottle_2
+  REP #$30
+  LDX #$0001 : JMP .draw_bottle
+.bottle_3
+  REP #$30
+  LDX #$0002 : JMP .draw_bottle
+.bottle_4
+  REP #$30
+  LDX #$0003
+.draw_bottle
+  LDA.l $7EF35C, X : AND.w #$00FF 
+  DEC : ASL #5 : TAX
+  LDY.w #$0000
+.draw_bottle_loop
+
+  LDA.w Menu_BottleItems, X : STA.w $1692, Y
+  INX : INX 
+  INY : INY : CPY #$001C : BCC .draw_bottle_loop
   RTS
 }
 
@@ -226,7 +257,6 @@ TestLocationName:
 
 ; -------------------------------------
 
-print pc
 DrawLocationName:
 {
   REP #$30

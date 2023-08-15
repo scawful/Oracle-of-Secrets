@@ -4,7 +4,7 @@
 ; Everything else will be used as follows:
 ;   dw top left, top right, bottom left, bottom right  ; val = 1
 ;   dw top left, top right, bottom left, bottom right  ; val = 2
-; -------------------------------------
+; =============================================================================
 
 NothingGFX:
 	dw $20F5, $20F5, $20F5, $20F5
@@ -22,7 +22,6 @@ BowsGFX:
 BoomsGFX:
 	dw $2CB8, $2CB9, $2CC9, $ACB9 ; Blue boomerang
 	dw $24B8, $24B9, $24C9, $A4B9 ; Red boomerang
-  ;dw $3CB8, $3CB9, $3CC9, $BCB9  Green boomerang
 
 ; -------------------------------------
 
@@ -50,12 +49,6 @@ Fire_rodGFX:
 
 Ice_rodGFX:
 	dw $2CB0, $2CBE, $2CC0, $2CC1 ; Ice Rod
-
-; -------------------------------------
-; formerly Bombos
-
-GoronMaskGFX:
-  dw $2867, $6867, $2877, $6877
 
 ; -------------------------------------
 ; formerly Quake
@@ -87,7 +80,9 @@ ShovelGFX:
 ; -------------------------------------
 
 OcarinaGFX:
+  dw $2CD4, $2CD5, $2CE4, $2CE5
   dw $2CD4, $2CD5, $2CE4, $2CE5 
+  dw $2CD4, $2CD5, $2CE4, $2CE5
 
 ; -------------------------------------
 
@@ -136,16 +131,17 @@ BottlesGFX:
 
 SomariaGFX:
 	dw $24DC, $24DD, $24EC, $24ED 
+
 ; -------------------------------------
 
 ByrnaGFX:
 	dw $2CDC, $2CDD, $2CEC, $2CED
 
 ; -------------------------------------
-; formerly Magic Cape
 
+; formerly Magic Cape
 StoneMaskGFX:
-  dw $30B4, $30B5, $30C4, $30C5 ; Stone Mask
+  dw $30B4, $30B5, $30C4, $30C5 
 
 ; -------------------------------------
 
@@ -157,6 +153,7 @@ WolfMaskGFX:
 
 ; -------------------------------------
 
+; Formerly Bombos
 ZoraMaskGFX:
   dw $2C88, $6C88, $2C89, $6C89
 
