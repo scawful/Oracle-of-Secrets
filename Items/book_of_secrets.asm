@@ -57,6 +57,7 @@ LinkItem_SecretsBook:
   JSL $099F91			  ; at least execute original code
   RTL
 }
+pushpc
 
 
 ; =============================================================================
