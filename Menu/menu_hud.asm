@@ -4,7 +4,7 @@
 
 
 ; ==============================================================================
-; Vanilla HUD Hijack 
+; Vanilla HUD Hijack
 
 org $0DFB91
   JSL HUD_Update
@@ -32,15 +32,15 @@ org $0DFDAB
   JSL HUD_UpdateHearts
   RTS
 
-; Partial hearts draw position 
+; Partial hearts draw position
 org $0DF14F
-  SEP #$30
+  SEP   #$30
   LDA.b #$44 : STA $00
   LDA.b #$C7 : STA $01
   LDA.b #$7E : STA $02
 
 ; ==============================================================================
-; New Code Region Starts Here 
+; New Code Region Starts Here
 
 org $2E8000
 
@@ -49,42 +49,44 @@ org $2E8000
 
 HUD_Update:
 {
+  ; JSL LinkState_GameboyForm
+
   JSR HUD_UpdateItemBox
 
 .ignoreItemBox ; ALTERNATE ENTRY POINT
 
   SEP #$30
-  
-  ; need to draw partial heart still though. 
+
+  ; need to draw partial heart still though.
   LDA.b #$FD : STA $0A
   LDA.b #$F9 : STA $0B
   LDA.b #$0D : STA $0C
-  
+
   LDA.b #$44 : STA $07
   LDA.b #$C7 : STA $08
   LDA.b #$7E : STA $09
-  
+
   REP #$30
-  
+
   ; Load Capacity health.
   LDA $7EF36C : AND.w #$00FF : STA $00 : STA $02 : STA $04
-  
+
   ; First, just draw all the empty hearts (capacity health)
   JSR HUD_UpdateHearts
-  
+
   SEP #$30
-  
+
   LDA.b #$03 : STA $0A
   LDA.b #$FA : STA $0B
   LDA.b #$0D : STA $0C
-  
+
   LDA.b #$44 : STA $07
   LDA.b #$C7 : STA $08
   LDA.b #$7E : STA $09
-  
+
   ; Branch if at full health
   LDA $7EF36C : CMP $7EF36D : BEQ .healthUpdated
-  
+
   ; Seems absurd to have a branch of zero bytes, right?
   SEC : SBC #$04 : CMP $7EF36D : BCS .healthUpdated
 
@@ -92,24 +94,24 @@ HUD_Update:
 
   ; A = actual health + 0x03;
   LDA $7EF36D : CLC : ADC.b #$03
-  
+
   REP #$30
-  
+
   AND.w #$00FC : STA $00 : STA $04
-  
+
   LDA $7EF36C : AND.w #$00FF : STA $02
-  
+
   ; filling in the full and partially filled hearts (actual health)
   JSR HUD_UpdateHearts
 
 .ignoreHealth ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
 
   REP #$30
-  
+
   ; Magic amount indicator (normal, 1/2, or 1/4)
   LDA $7EF37B : AND.w #$00FF : CMP.w #$0001 : BCC .normalMagicMeter
-  
-  ; draw 1/2 magic meter 
+
+  ; draw 1/2 magic meter
   LDA.w #$2851 : STA $7EC730
   LDA.w #$28FA : STA $7EC732
 
@@ -118,8 +120,8 @@ HUD_Update:
   ; check player magic (ranges from 0 to 0x7F)
   ; X = ((MP & 0xFF)) + 7) & 0xFFF8)
   LDA $7EF36E : AND.w #$00FF : CLC : ADC #$0007 : AND.w #$FFF8 : TAX
-  
-  ; these four writes draw the magic power bar based on how much MP you have 
+
+  ; these four writes draw the magic power bar based on how much MP you have
   LDA.l (MagicTilemap)+0, X : STA $7EC76A
   LDA.l (MagicTilemap)+2, X : STA $7EC76C
   LDA.l (MagicTilemap)+4, X : STA $7EC76E
@@ -128,27 +130,27 @@ HUD_Update:
 
   ; Load how many rupees the player has
   LDA $7EF362
-  
+
   JSR HexToDecimal
-  
+
   REP #$30
-  
+
   ; The tile index for the first rupee digit
   LDA $03 : AND.w #$00FF : ORA.w #$2400 : STA $7EC79C
-  
+
   ; The tile index for the second rupee digit
   LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC79E
-  
+
   ; The tile index for the third rupee digit
   LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A0
 
-  ; Clear digit tiles 
+  ; Clear digit tiles
   LDA #$A00C : STA $7EC7B0
   LDA #$A00C : STA $7EC7B2
 
   ; Check if the user has bombs equipped
-  LDX $0202 : LDA $7EF33F, X : AND.w #$00FF
-  CPX.w #$0004 : BNE .not_bombs 
+  LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
+  CPX.w #$0004 : BNE .not_bombs
 
   ; Number of bombs Link has.
   LDA $7EF343 : AND.w #$00FF
@@ -163,20 +165,20 @@ HUD_Update:
 
 .not_bombs
   ; Check if the user has arrows equipped
-  LDX $0202 : LDA $7EF33F, X : AND.w #$00FF
-  CPX.w #$0001 : BNE .not_arrows 
-  
+  LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
+  CPX.w #$0001 : BNE .not_arrows
+
   ; Number of Arrows Link has.
   LDA $7EF377 : AND.w #$00FF
 
   ; converts hex to up to 3 decimal digits
   JSR HexToDecimal
   REP #$30
-  
-  ; The tile index for the first arrow digit    
+
+  ; The tile index for the first arrow digit
   LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
 
-  ; The tile index for the second arrow digit   
+  ; The tile index for the second arrow digit
   LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
 
 .not_arrows
@@ -190,7 +192,7 @@ HUD_Update:
 
   ; The key digit, which is optionally drawn.
   ; Also check to see if the key spot is blank
-  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A4
+  LDA   $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A4
   CMP.w #$247F : BNE .dontBlankKeyIcon
 
   ; If the key digit is blank, also blank out the key icon.
@@ -204,12 +206,12 @@ HUD_Update:
 
 ; =============================================================================
 
-Full =        $3C5F
-MostlyFull =  $3C4D
-KindaFull =   $3C4E
-HalfEmpty =   $3C4F
-AlmostEmpty = $3C5E 
-Empty =       $3C4C
+Full        =        $3C5F
+MostlyFull  =  $3C4D
+KindaFull   =   $3C4E
+HalfEmpty   =   $3C4F
+AlmostEmpty = $3C5E
+Empty       =       $3C4C
 
 New_MagicTilemap:
   dw Empty, Empty, Empty, Empty, Empty
@@ -232,9 +234,9 @@ MagicTilemap:
   dw $3C4D, $3C5F, $3C5F, $3C5F, $3C5F
   dw $3C4E, $3C5F, $3C5F, $3C5F, $3C5F
   dw $3C4F, $3C5F, $3C5F, $3C5F, $3C5F
-  dw $3C5E, $3C5F, $3C5F, $3C5F, $3C5F 
-  dw $3C5F, $3C5F, $3C5F, $3C5F, $3C5F 
-  ; value 80 
+  dw $3C5E, $3C5F, $3C5F, $3C5F, $3C5F
+  dw $3C5F, $3C5F, $3C5F, $3C5F, $3C5F
+  ; value 0x80 aka 128
 
 HUD_DrawMagicMeter:
 {
@@ -242,8 +244,6 @@ HUD_DrawMagicMeter:
   ; X = ((MP & 0xFF)) + 7) & 0xFFF8)
   LDA $7EF36E : AND.w #$00FF : CLC : ADC #$0007 : AND.w #$FFF8 : TAX
 
-  
-  
 .draw_magic_meter
 
   LDA.l (MagicTilemap)+0, X : STA $7EC76A
@@ -253,19 +253,29 @@ HUD_DrawMagicMeter:
   LDA.l (MagicTilemap)+8, X : STA $7EC772
 }
 
-; ============================================================================ 
+; ============================================================================
 ; *$6FAFD-$6FB90 LOCAL
 
 HUD_UpdateItemBox:
 {
   SEP #$30
   ; Dost thou haveth the the bow?
-  LDA $7EF340 : BEQ .havethNoBow
-  LDX.b #$04
+  LDA $7EF340 : BEQ .no_bow
+
+  CMP.b #$03 : BCC .no_silver_arrows
+
   ; check how many arrows the player has
-  LDA $7EF377 : BNE .drawBowItemIcon
+  LDA   $7EF377 : BNE .drawBowItemIcon
   LDX.b #$03
-  BRA .drawBowItemIcon
+  BRA   .drawBowItemIcon
+
+.no_silver_arrows
+
+  LDX.b #$02
+  
+  LDA $7EF377 : BNE .drawBowItemIcon
+  
+  LDX.b #$01
 
 .drawBowItemIcon
   ; values of X correspond to how the icon will end up drawn:
@@ -275,34 +285,34 @@ HUD_UpdateItemBox:
   ; 0x04 - silver bow with silver arrows
   TXA : STA $7EF340
 
-.havethNoBow
-  REP #$30
-  LDX $0202 : BEQ .noEquippedItem
-  LDA $7EF33F, X : AND.w #$00FF
+.no_bow
+  REP   #$30
+  LDX   $0202 : BEQ .noEquippedItem
+  LDA   $7EF33F, X : AND.w #$00FF
   CPX.w #$0004 : BNE .bombsNotEquipped
   LDA.w #$0001
-  
+
 .bombsNotEquipped
 
   CPX.w #$0006 : BNE .bottle1NotEquipped
-  JMP .loadBottleContent
+  JMP   .loadBottleContent
 .bottle1NotEquipped
   CPX.w #$000C : BNE .bottle2NotEquipped
   LDA.w #$0002
-  JMP .loadBottleContent
+  JMP   .loadBottleContent
 .bottle2NotEquipped
   CPX.w #$0012 : BNE .bottle3NotEquipped
   LDA.w #$0003
-  JMP .loadBottleContent
+  JMP   .loadBottleContent
 .bottle3NotEquipped
   CPX.w #$0018 : BNE .bottleNotEquipped
   LDA.w #$0004
 .loadBottleContent
   TXY : TAX : LDA $7EF35B, X : AND.w #$00FF : TYX
 
-.bottleNotEquipped  
+.bottleNotEquipped
   CPX.w #$000D : BNE .fluteNotEquipped
-  LDA $030F
+  LDA   $030F
 
 .fluteNotEquipped
 
@@ -310,7 +320,7 @@ HUD_UpdateItemBox:
   TXA : DEC A : ASL A : TAX
   LDA $FA93, X : STA $04
   LDA $02 : ASL #3 : TAY
-  
+
   ; These addresses form the item box graphics.
   LDA ($04), Y : STA $7EC776 : INY #2
   LDA ($04), Y : STA $7EC778 : INY #2
@@ -334,19 +344,19 @@ HUD_UpdateHearts:
   ; Notice no SEC was needed since carry is assumedly set.
   SBC.w #$0008 : STA.b $00
   LDY.w #$0004
-  JSR .drawHeart
-  INX #2
-  BRA .nextHeart
+  JSR   .drawHeart
+  INX   #2
+  BRA   .nextHeart
 
 .lessThanOneHeart
   CMP.w #$0005 : BCC .halfHeartOrLess
   LDY.w #$0004
-  BRA .drawHeart
+  BRA   .drawHeart
 
 .halfHeartOrLess
   CMP.w #$0001 : BCC .emptyHeart
   LDY.w #$0002
-  BRA .drawHeart
+  BRA   .drawHeart
 
 .emptyHeart
   RTS
@@ -367,30 +377,30 @@ HUD_UpdateHearts:
 
 HexToDecimal:
 {
-    REP #$30
-    STZ $0003
+    REP   #$30
+    STZ   $0003
     LDX.w #$0000
     LDY.w #$0002
 .nextDigit
-    CMP $F9F9, Y : BCC .nextLowest10sPlace
+    CMP $F9F9,       Y : BCC .nextLowest10sPlace
     SEC : SBC $F9F9, Y
-    INC $03, X
+    INC $03,         X
     BRA .nextDigit
 .nextLowest10sPlace
-    INX : DEY #2
-    BPL .nextDigit
-    STA $05
-    SEP #$30
+    INX   : DEY #2
+    BPL   .nextDigit
+    STA   $05
+    SEP   #$30
     LDX.b #$02
 .setNextDigitTile
-    LDA $03, X : CMP.b #$7F
-    BEQ .blankDigit
+    LDA   $03, X : CMP.b #$7F
+    BEQ   .blankDigit
     ORA.b #$90
 .blankDigit
     STA $03, X
     DEX : BPL .setNextDigitTile
     RTS
-} 
+}
 
 ; =============================================================================
 
@@ -404,15 +414,23 @@ HudItems:
   dw $F701, $F6F1, $F6A1, $F6B1, $F7C9, $F751
   ; flute, book, somaria, byrna, feather, bottle3
   dw $F859, $F741, $F799,  $F7A9, $F731, $F751
-  ; deku,   zora,  wolf,  bunny,  stne 
+  ; deku,   zora,  wolf,  bunny,  stone, bottle4
   dw $F6E1, $F821, $F6D1, $F7B9, $F811, $F751
 }
 
 ; F711
+
+org $0DF629
+  dw $20F5, $20F5, $20F5, $20F5 ; No bow
+	dw $28BA, $28E9, $28E8, $28CB ; Empty bow
+	dw $28BA, $28BB, $24CA, $28CB ; Bow and arrows
+	dw $28BA, $28E9, $28E8, $28CB ; Empty silvers bow
+	dw $28BA, $28BB, $24CA, $28CB ; Silver bow and arrows
+
 ; Ocarina
 org $0DF859
-  dw $2CD4, $2CD5, $2CE4, $2CE5 
-  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue 
+  dw $2CD4, $2CD5, $2CE4, $2CE5
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
   dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
   dw $24D4, $24D5, $24E4, $24E5 ; Red
 
@@ -428,13 +446,13 @@ org $0DF751
   dw $2837, $2838, $2839, $283A ; Bee
   dw $2837, $2838, $2839, $283A ; Good bee
 
-; Boomerang 
+; Boomerang
 org $0DF651
   dw $20F5, $20F5, $20F5, $20F5 ; No boomerang
   dw $2CB8, $2CB9, $2CC9, $ACB9 ; Blue boomerang
 	dw $24B8, $24B9, $24C9, $A4B9 ; Red boomerang
 
-; Powder 
+; Powder
 org $0DF689
   dw $20F5, $20F5, $20F5, $20F5 ; No powder
   dw $2444, $2445, $2446, $2447 ; Mushroom
@@ -456,9 +474,8 @@ org $0DF6A1
 ; Fire Rod
 org $0DF6B1
  dw $2CB0, $2CBE, $2CC0, $2CC1
-  
 
-; Mirror 
+; Mirror
 org $0DF7C9
   dw $20F5, $20F5, $20F5, $20F5 ; No mirror
   dw $2C62, $2C63, $2C72, $2C73 ; Mirror
@@ -477,28 +494,28 @@ org $0DF6E1
 
 ; Zora
 org $0DF821
-  dw $20F5, $20F5, $20F5, $20F5 
-  dw $2C88, $6C88, $2C89, $6C89 
+  dw $20F5, $20F5, $20F5, $20F5
+  dw $2C88, $6C88, $2C89, $6C89
   dw $2C88, $6C88, $2C89, $6C89
 
-; Wolf 
+; Wolf
 org $0DF6D1
   dw $3086, $7086, $3087, $7087
   dw $3086, $7086, $3087, $7087
   dw $3086, $7086, $3087, $7087
 
-; Bunny 
+; Bunny
 org $0DF7B9
   dw $3469, $7469, $3479, $7479
   dw $3469, $7469, $3479, $7479
 
 ; Stone Mask
 org $0DF811
-  dw $20F5, $20F5, $20F5, $20F5 
+  dw $20F5, $20F5, $20F5, $20F5
   dw $30B4, $30B5, $30C4, $30C5
 
 ; =============================================================================
-; $6FE77-$6FFC0 
+; $6FE77-$6FFC0
 
 org $0DFE77
 HUD_Tilemap:
@@ -506,11 +523,11 @@ HUD_Tilemap:
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F, $207F, $207F, $207F
-  
+
   ; magic bar top part
   dw $200B, $200C, $200C, $200C, $200C, $200C
-  ; item frame top part 
-  dw $206C, $206D, $206E, $206F 
+  ; item frame top part
+  dw $206C, $206D, $206E, $206F
 
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
@@ -518,30 +535,30 @@ HUD_Tilemap:
 
   ; rupee icon            key icon
   dw $3CA8, $FCA8, $207F, $2071, $207F
-  
+
   ; magic bar
   dw $201B, $344B
   dw $344B, $344B, $344B, $344B
-  
-  ; item frame left part 
+
+  ; item frame left part
   dw $20DE, $207F, $207F, $20DF
-                               
+
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F, $207F, $207F, $207F, $207F, $207F
 
-  ; magic bar bottom part 
+  ; magic bar bottom part
   dw $A00B, $A00C
   dw $A00C, $A00C, $A00C, $A00C
 
-  ; item frame right part 
+  ; item frame right part
   dw $20EE, $207F, $207F, $20EF
-                                
+
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
   dw $207F, $207F, $207F, $207F
-  
+
   ; item frame bottom part
   dw $207C, $207D, $207E, $201D
 
@@ -578,30 +595,30 @@ FloorIndicatorNumberLow:
 ; *$57D0C-$57DA7 JUMP LOCATION (LONG)
 org $0AFD0C
 FloorIndicator:
-{  
-  REP #$30 
-  LDA $04A0 : AND.w #$00FF : BEQ .hideIndicator
-  INC A : CMP.w #$00C0 : BNE .dontDisable
+{
+  REP   #$30
+  LDA   $04A0 : AND.w #$00FF : BEQ .hideIndicator
+  INC   A : CMP.w #$00C0 : BNE .dontDisable
   ; if the count up timer reaches 0x00BF frames, disable the floor indicator during the next frame.
   LDA.w #$0000
 .dontDisable
-  STA $04A0
-  PHB : PHK : PLB
+  STA   $04A0
+  PHB   : PHK : PLB
   LDA.w #$251E : STA $7EC7F0
-  INC A        : STA $7EC832
-  INC A        : STA $7EC830
+  INC   A        : STA $7EC832
+  INC   A        : STA $7EC830
   LDA.w #$250F : STA $7EC7F2
   LDX.w #$0000
-  
+
   ; this confused me at first, but it's actually looking at whether $A4[1]
   ; has a negative value $A3 has nothing to do with $A4
-  LDA $A3 : BMI .basementFloor
+  LDA   $A3 : BMI .basementFloor
   ; check which floor Link is on.
-  LDA $A4 : BNE .notFloor1F
-  LDA $A0 : CMP.w #$0002 : BEQ .sanctuaryRatRoom
-  SEP #$20
+  LDA   $A4 : BNE .notFloor1F
+  LDA   $A0 : CMP.w #$0002 : BEQ .sanctuaryRatRoom
+  SEP   #$20
   ; Check the world state
-  LDA $7EF3C5 : CMP.b #$02 : BCS .noRainSound
+  LDA   $7EF3C5 : CMP.b #$02 : BCS .noRainSound
   ; cause the ambient rain sound to occur (indoor version)
   LDA.b #$03 : STA $012D
 .noRainSound
@@ -611,37 +628,37 @@ FloorIndicator:
   LDA $A4 : AND.w #$00FF
   BRA .setFloorIndicatorNumber
 .basementFloor
-  SEP #$20
+  SEP   #$20
   ; turn off any ambient sound effects
   LDA.b #$05 : STA $012D
-  REP #$20
-  INX #2
-  LDA $A4 : ORA.w #$FF00 : EOR.w #$FFFF
+  REP   #$20
+  INX   #2
+  LDA   $A4 : ORA.w #$FF00 : EOR.w #$FFFF
 .setFloorIndicatorNumber
 
   ASL A : TAY
-  
+
   LDA FloorIndicatorNumberHigh, Y : STA $7EC7F0, X
   LDA FloorIndicatorNumberLow, Y  : STA $7EC830, X
-  
+
   SEP #$30
-  
+
   PLB
-  
+
   ; send a signal indicating that bg3 needs updating
   INC $16
-  
+
   RTL
 
 ; *$57D90 ALTERNATE ENTRY POINT
 .hideIndicator
 
   REP #$20
-  
+
   ; disable the display of the floor indicator.
   LDA.w #$007F : STA $7EC7F0 : STA $7EC830 : STA $7EC7F2 : STA $7EC832
-  
+
   SEP #$30
-  
+
   RTL
 }

@@ -1,18 +1,18 @@
 ;==============================================================================
 ; Sprite Properties
 ;==============================================================================
-!SPRID              = $9E; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00 ; Number of tiles used in a frame
+!SPRID              = $9E ; The sprite ID you are overwriting (HEX)
+!NbrTiles           = 00  ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 0  ; Number of Health the sprite have
-!Damage             = 0  ; (08 is a whole heart), 04 is half heart
+!Health             = 0   ; Number of Health the sprite have
+!Damage             = 0   ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
-!Palette            = 0  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 0  ; 00 to 31, can be viewed in sprite draw tool
+!Palette            = 0   ; Unused in this template (can be 0 to 7)
+!Hitbox             = 0   ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -20,7 +20,7 @@
 !DeflectArrow       = 00  ; 01 = deflect arrows
 !WaterSprite        = 00  ; 01 = can only walk shallow water
 !Blockable          = 00  ; 01 = can be blocked by link's shield?
-!Prize              = 0  ; 00-15 = the prize pack the sprite will drop from
+!Prize              = 0   ; 00-15 = the prize pack the sprite will drop from
 !Sound              = 00  ; 01 = Play different sound when taking damage
 !Interaction        = 00  ; ?? No documentation
 !Statue             = 00  ; 01 = Sprite is statue
@@ -53,7 +53,10 @@ Sprite_MakuTree_Prep:
 {
   PHB : PHK : PLB
   
-
+  LDA.l $7EF300
+    BNE .intro_is_done
+      STZ.w $0DD0, X ; Kill the sprite 
+  .intro_is_done
 
   PLB
   RTL
@@ -63,14 +66,39 @@ Sprite_MakuTree_Prep:
 
 Sprite_MakuTree_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  LDA.w SprAction, X                        ; Load the SprAction
+  JSL   UseImplicitRegIndexedLocalJumpTable ; Goto the SprAction we are currently in
 
-  dw MakuTree_Speak
+  dw MakuTree_Handler
+  dw MakuTree_MeetLink
+  dw MakuTree_GiveBow
 
-  MakuTree_Speak:
+  MakuTree_Handler:
   {
-    %ShowSolicitedMessage($20)
+    ; Check the progress flags 
+    LDA $7EF3CB : CMP.b #$01 : BEQ .has_met_link
+    %GotoAction(1)
+    RTS
+
+  .has_met_link
+    %ShowSolicitedMessage($22) 
+    RTS
+  }
+
+  MakuTree_MeetLink:
+  {
+    %ShowSolicitedMessage($20) : BCC .no_talk
+    LDA #$01 : STA $7EF3CB
+    %GotoAction(2)
+  .no_talk
+    RTS
+  }
+
+  MakuTree_GiveBow:
+  {
+    ; Give Link the Bow
+    LDY #$0B : JSL Link_ReceiveItem
+    %GotoAction(0)
     RTS
   }
 
@@ -88,7 +116,7 @@ Sprite_MakuTree_Draw:
 
 
   PHX
-  LDX .nbr_of_tiles, Y ;amount of tiles -1
+  LDX   .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
   .nextTile
 
@@ -98,20 +126,20 @@ Sprite_MakuTree_Draw:
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-  CLC : ADC #$0010 : CMP.w #$0100
-  SEP #$20
-  BCC .on_screen_y
+  CLC   : ADC #$0010 : CMP.w #$0100
+  SEP   #$20
+  BCC   .on_screen_y
 
   LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-  STA $0E
+  STA   $0E
   .on_screen_y
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)

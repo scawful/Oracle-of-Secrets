@@ -11,7 +11,7 @@ Menu_ItemIndex:
   ;  Ocarina, Book,      Somaria,  Byrna,      Feather,    Bottle3
   db $08,     $0C,       $12,      $0D,        $07,        $0B 
   ;  Deku,    Zora,      Wolf,     Bunny Hood, Stone Mask, Bottle4
-  db $11,    $0F,       $08,      $10,         $13,        $0B 
+  db $11,     $0F,       $08,      $10,        $13,        $0B 
 
 ; -----------------------------------------------------------------------------
 ; Decides which graphics is drawn 

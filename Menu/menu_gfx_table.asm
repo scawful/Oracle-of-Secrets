@@ -13,7 +13,7 @@ NothingGFX:
 
 BowsGFX:
 	dw $28BA, $28E9, $28E8, $28CB ; Empty bow
-	dw $28BA, $284A, $2849, $28CB ; Bow and arrows
+	dw $28BA, $28BB, $24CA, $28CB ; Bow and arrows
 	dw $28BA, $28E9, $28E8, $28CB ; Empty silvers bow
 	dw $28BA, $28BB, $24CA, $28CB ; Silver bow and arrows
 
