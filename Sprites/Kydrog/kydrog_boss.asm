@@ -130,11 +130,11 @@ macro StopIfTooClose()
 endmacro
 
 macro RandomStalfosOffspring()
-JSL GetRandomInt : AND.b #$7F : BNE +
+  JSL GetRandomInt : AND.b #$7F : BNE +
   PHX : JSR Sprite_Offspring_Spawn : PLX
 +
 
-JSL GetRandomInt : AND.b #$7F : BNE +
+  JSL GetRandomInt : AND.b #$7F : BNE +
   PHX : JSR Sprite_Offspring_SpawnHead : PLX
 +
 endmacro 
@@ -145,20 +145,17 @@ Sprite_KydrogBoss_Main:
   JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
 
   dw KydrogBoss_Init          ; 00
-
   dw KydrogBoss_WalkState     ; 01
-
   dw KydrogBoss_WalkForward   ; 02
   dw KydrogBoss_WalkLeft      ; 03
   dw KydrogBoss_WalkRight     ; 04
   dw KydrogBoss_WalkBackward  ; 05
-  
   dw KydrogBoss_TakeDamage    ; 06
   dw KydrogBoss_TauntPlayer   ; 07
   dw KydrogBoss_SummonStalfos ; 08
-
   dw KydrogBoss_Death         ; 09
 
+  ; ---------------------------------------------------------------------------
 
   KydrogBoss_Init:
   {
@@ -177,8 +174,6 @@ Sprite_KydrogBoss_Main:
 
   ; ---------------------------------------------------------------------------
 
-
-
   KydrogBoss_WalkState:
   {    
     
@@ -196,8 +191,6 @@ Sprite_KydrogBoss_Main:
     RTS
 
   .no_offspring
-    ; \return       $0E is low byte of player_y_pos - sprite_y_pos
-    ; \return       $0F is low byte of player_x_pos - sprite_x_pos
     LDA #$50 : STA $09, X
     JSL Sprite_DirectionToFacePlayer 
     TYA : CMP.b #$02 : BCC .WalkRight

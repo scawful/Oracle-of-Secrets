@@ -1,40 +1,5 @@
 ;==============================================================================
-; Farore Sprite 
-;
-;==============================================================================
-
-InCutScene = $7EF303
-
-org $0083F8
-LDA InCutScene : BEQ .notInCutscene
-    STZ $F0
-    STZ $F2
-    STZ $F4
-    STZ $F6
-    STZ $F8
-    STZ $FA ; kill all input
-
-.notInCutscene
-
-RTS
-
-warnpc $00841E
-
-incsrc sprite_macros.asm
-incsrc sprite_functions_hooks.asm
-
-;==============================================================================
-
-org $298000
-incsrc sprite_new_table.asm
-
-;==============================================================================
-
-org $308000
-incsrc sprite_new_functions.asm
-
-;==============================================================================
-; Sprite Properties
+; Farore Sprite Properties
 ;==============================================================================
 !SPRID              = $73; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 2 ; Number of tiles used in a frame
