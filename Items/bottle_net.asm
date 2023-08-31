@@ -2,6 +2,8 @@
 ; Bottle Net Code 
 ; =============================================================================
 
+!BottleFlag = $0AA6
+
 org $1EFE33
 PlayerItem_SpawnFaerie:
 
@@ -19,7 +21,8 @@ org $07A15B
 ; =============================================================================
 
 ; Bank 07 Free Space
-org $07FAAD
+; org $07FAAD
+pullpc
 LinkItem_NewBottle:
 { 
   ; Check if we have a bottle or not
@@ -80,7 +83,7 @@ LinkItem_NewBugCatchingNet:
 
 .y_press:
 
-  JSR $AE65
+  JSR  $AE65 ;UnknownRoutine
   
   LDA $67 : AND.b #$F0 : STA $67
   DEC $3D : BPL .bottle_exit
@@ -105,8 +108,36 @@ NetExit:
   RTS
 }
 
-; =============================================================================
+; *$3AE65-$3AE87 LOCAL
+; Link is picking up an item, handle it.
+; Does something more related to how Link's standing / collision with the floor
+UnknownRoutine:
+{
+  LDA $AD : CMP.b #$02 : BNE .BRANCH_ALPHA
+  
+  LDA $0322 : AND.b #$03 : CMP.b #$03 : BNE .BRANCH_ALPHA
+  
+  STZ $30
+  STZ $31
+  STZ $67
+  STZ $2A
+  STZ $2B
+  STZ $6B
 
+.BRANCH_ALPHA:
+
+  ; Cane of Somaria transit lines?
+  LDA $02F5 : BEQ .BRANCH_BETA
+  
+  STZ $67
+
+.BRANCH_BETA:
+
+  RTS
+}
+
+; =============================================================================
+print "       LinkItem_Bottles           ", pc
 LinkItem_Bottles:
 {
   JSR Link_CheckNewY_ButtonPress : BCC NetExit ; (RTS)
@@ -132,7 +163,7 @@ LinkItem_Bottles:
   LDA.l $7EF36C : CMP.l $7EF36D : BNE .can_drink_red
 
 .LinkItem_UselessBottle:
-  BRL LinkGoBeep ; BRL $07A955 ; LinkGoBeep TODO(scawful): Investigate 
+  BRL LinkGoBeep ; BRL $07A955 Investigate 
 
 .can_drink_red:
   LDA.b #$02 : STA.l $7EF35C, X : STZ.w $0301
@@ -147,21 +178,22 @@ LinkItem_Bottles:
   RTS
 
 .LinkItem_GreenPotion:
-  LDA $7EF36E : CMP.b #$80 : BNE .can_drink
-  BRL LinkGoBeep ; LinkGoBeep TODO(scawful): Investigate 
+  LDA.l $7EF36E : CMP.b #$80 : BNE .can_drink
+  BRL LinkGoBeep
 
 .can_drink:
-  LDA $02 : STA $7EF35C, X : STZ $0301
-  LDA #$01 : STA.l $7EF373  
+  ; Set the bottle empty
+  LDA.b #$02 : STA.l $7EF35C, X : STZ.w $0301
+
   ; submodule ????
-  LDA.b #$04 : STA.b $11
+  LDA.b #$08 : STA.b $11
   LDA.b $10 : STA.w $010C
   
   ; Go to text mode
   LDA.b #$0E : STA.b $10
   LDA.b #$07 : STA.w $0208
 
-  JSL $0DFA58 ; RebuildHUD_long TODO(scawful)
+  JSL $0DFA58 ; RebuildHUD_long 
   BRA .bottle_exit
 
 .LinkItem_BluePotion:
@@ -180,27 +212,27 @@ LinkItem_Bottles:
   LDA.b #$0E : STA.b $10
   LDA.b #$07 : STA.w $0208
   
-  JSL $0DFA58 ; RebuildHUD_Long TODO(scawful)
+  JSL $0DFA58 ; RebuildHUD_Long 
   BRA .bottle_exit
 
 .LinkItem_FairyBottle:
-  STZ.w $0301
+  STZ.w $0301 : LDA.b #$02 : STA.l $7EF35C, X
   JSL PlayerItem_SpawnFaerie : BPL .released
   BRL LinkGoBeep ; BRL $07A955
 
 .released:
-  LDA.b #$02 : STA.l $7EF35C, X
-  JSL $0DFA58 ; RebuildHUD_Long TODO(scawful)
+  JSL $0DFB91 ; HUD_Update
+  ; JSL $0DFA58 ; RebuildHUD_Long 
   BRA .bottle_exit
 
 .LinkItem_BeeBottle:
   STZ.w $0301
   JSL PlayerItem_ReleaseBee : BPL .bee_spawn_success
-  BRL LinkGoBeep ; BRL $07A955 ; LinkGoBeep 
+  BRL LinkGoBeep ; BRL $07A955
 
 .bee_spawn_success
   LDA.b #$02 : STA.l $7EF35C, X
-  JSL $0DFA58 ; RebuildHUD_Long TODO(scawful)
+  JSL $0DFA58 ; RebuildHUD_Long 
 
 .bottle_exit:
   RTS
@@ -212,6 +244,4 @@ LinkGoBeep:
   BRA LinkItem_Bottles_bottle_exit
 }
 
-print pc
-
-; =============================================================================
+; pushpc
