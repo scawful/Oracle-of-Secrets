@@ -50,7 +50,7 @@ LinkItem_ShovelAndFlute:
   LDA $0202 : CMP.b #$0D : BNE .use_wolf_mask
   BRL LinkItem_Flute
 .use_wolf_mask
-  BRL LinkItem_WolfMask
+  JMP LinkItem_WolfMask
   
 }
 
@@ -61,7 +61,7 @@ pullpc
 print pc
 LinkItem_WolfMask:
 {
-  SEP #$30
+  ; SEP #$30
   LDA $02B2 : CMP #$03 : BNE .equip
   JSR LinkItem_Shovel
 
@@ -83,7 +83,10 @@ LinkItem_WolfMask:
   %ResetToLinkGraphics()
 
 .return
-  REP #$30
+  ; REP #$30
   
   RTS
 }
+
+print "End of Masks/wolf_mask.asm        ", pc
+pushpc

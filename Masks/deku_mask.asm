@@ -1,6 +1,6 @@
 ; =============================================================================
-;   Deku Mask 
-; ============================================================================= 
+;   Deku Mask
+; =============================================================================
 
 org    $358000
 incbin gfx/deku_link.bin
@@ -10,7 +10,7 @@ incbin gfx/deku_link.bin
 org    $07A64B           ; formerly Quake
 LinkItem_DekuMask:
 {
-  ; Check for R button held 
+  ; Check for R button held
   %CheckNewR_ButtonPress() : BEQ .return
 
   LDA $6C : BNE .return   ; in a doorway
@@ -19,19 +19,19 @@ LinkItem_DekuMask:
   %PlayerTransform()
 
   LDA $02B2 : CMP #$01 : BEQ .unequip ; is the deku mask on?
-  JSL Palette_ArmorAndGloves          ; set the palette 
+  JSL Palette_ArmorAndGloves          ; set the palette
 
   LDA.l $7EF35A : STA $0AAF ; Store the current shield
   LDA.b #$00 : STA $7EF35A  ; Clear the shield
 
   LDA #$35 : STA $BC   ; put the mask on
   LDA #$01 : STA $02B2 ; set the deku mask flag
-  
+
   BRA .return
 
 .unequip
   STZ $5D
-  ; Restore the shield 
+  ; Restore the shield
   LDA $0AAF : STA.l $7EF35A
 
   %ResetToLinkGraphics()
@@ -50,9 +50,10 @@ LinkItem_SlingshotPrepare:
 {
   LDA #$01 : TSB $50
   LDA $7EF340
+
   BNE .alpha
-  JMP $A270
-.alpha 
+  JMP .beta  ; $A270
+.alpha
   CMP #$01
   BNE .void ; unused afaik (RTS?)
   JMP .beta
@@ -71,7 +72,7 @@ LinkItem_SlingshotPrepare:
   LDA $7F502E
   CMP #$01
   BNE .gamma
-  RTL 
+  RTL
 
 ; $A309
 .gamma
@@ -115,7 +116,7 @@ LinkItem_SlingshotPrepare:
   LDA #$80 : STA $4305 ; Set DMA transfer size (high byte)
   LDA #$01 : STA $4300 ; Set DMA mode to 1 (2 registers write once)
   STA $420B            ; Start DMA on channel 0
-  RTL                  ; Return from subroutine long
+  RTL
 
 }
 
@@ -128,17 +129,19 @@ org $07811A
 pullpc                         ; Bank 07 Free Space from minish_form
 Link_HandleDekuTransformation: ; Link_HandleBunnyTransformation
 {
-  ; Check if using Quake Medallion 
+  ; Check if using Quake Medallion
   LDA $5D : CMP.b #$0A : BEQ .continue
   JSR $82DA
 
-.continue 
+.continue
   STZ $03F5
   STZ $03F6
-  
+
   ; Link can move.
   CLC
-  
+
   RTS
 }
+
+print "End of Masks/deku_mask.asm        ", pc
 pushpc

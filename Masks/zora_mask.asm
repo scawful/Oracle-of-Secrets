@@ -282,4 +282,5 @@ LinkState_ResetMaskAnimated:
   RTL
 }
 
+print "End of Masks/zora_mask.asm        ", pc
 pushpc

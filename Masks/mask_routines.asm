@@ -49,7 +49,7 @@ org $008A01
 
 org $1BEDF9
   JSL Palette_ArmorAndGloves ; 4bytes
-  RTL                        ; 1byte 
+  RTL                        ; 1byte
   NOP #$01
 
 org $1BEE1B
@@ -67,10 +67,10 @@ StartupMasks:
   ; bring the screen into force blank after NMI
   LDA.b #$80 : STA $13
 
-  ; set links sprite bank 
+  ; set links sprite bank
   LDA #$10 : STA $BC
 
-  RTL 
+  RTL
 }
 
 ; =============================================================================
@@ -87,7 +87,7 @@ Palette_ArmorAndGloves:
 .deku_mask
   ; Load Deku Mask Location
   LDA.b #$35 : STA $BC : JMP   .original_palette
-  
+
 .zora_mask
   ; Load Zora Mask Location
   LDA.b #$36 : STA $BC : JMP   .original_palette
@@ -113,7 +113,7 @@ Palette_ArmorAndGloves:
 
 .original_palette
   REP #$21
-  LDA $7EF35B ; Link's armor value 
+  LDA $7EF35B ; Link's armor value
   JSL $1BEDFF ; Read Original Palette Code
   RTL
 .part_two
@@ -128,33 +128,32 @@ Palette_ArmorAndGloves:
   PHB : PHK : PLB
 
   REP #$20
-  
+
   ; Check what Link's armor value is.
   LDA $7EF35B : AND.w #$00FF : TAX
-  
+
   LDA $1BEC06, X : AND.w #$00FF : ASL A : ADC.w #$F000 : STA $00
   REP #$10
-  
+
   LDA.w #$01E2 ; Target SP-7 (sprite palette 6)
   LDX.w #$000E ; Palette has 15 colors
-  
+
   TXY : TAX
-  
+
   LDA.b $BC : AND #$00FF : STA $02
 
 .loop
 
   LDA [$00] : STA $7EC300, X : STA $7EC500, X
-  
+
   INC $00 : INC $00
-  
+
   INX #2
-  
+
   DEY : BPL .loop
 
   SEP #$30
-  
-  
+
   PLB
   INC $15
   PLA : PLY : PLX
@@ -162,20 +161,20 @@ Palette_ArmorAndGloves:
 }
 
 ; =============================================================================
-; Overworld Palette Persist 
+; Overworld Palette Persist
 ; =============================================================================
 
 Overworld_CgramAuxToMain_Override:
 {
-  ; Copies the auxiliary CGRAM buffer to the main one 
+  ; Copies the auxiliary CGRAM buffer to the main one
   ; Causes NMI to reupload the palette.
-  
+
   REP #$20
-  
+
   LDX.b #$00
 
 .loop
-  
+
   LDA $7EC300, X : STA $7EC500, X
   LDA $7EC340, X : STA $7EC540, X
   LDA $7EC380, X : STA $7EC580, X
@@ -188,12 +187,12 @@ Overworld_CgramAuxToMain_Override:
 .has_mask_palette
 
   INX #2 : CPX.b #$40 : BNE .loop
-  
+
   SEP #$20
-  
+
   ; tell NMI to upload new CGRAM data
   INC $15
-  
+
   RTL
 }
 pushpc
@@ -221,6 +220,7 @@ LinkItem_CheckForSwordSwing_Masks:
 {
   LDA   $02B2 : BEQ .return
   CMP.b #$02 : BEQ .return  ; zora mask can use sword
+  CMP.b #$06 : BEQ .return 
 
   LDA #$01
   RTL

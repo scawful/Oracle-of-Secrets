@@ -65,5 +65,7 @@ LinkState_CheckMinishTile:
   
   RTS
 }
+
+print  "End of Masks/minish_form.asm      ", pc
 pushpc
 
