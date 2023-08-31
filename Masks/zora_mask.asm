@@ -214,6 +214,7 @@ LinkState_UsingZoraMask:
   ; Check if the ground level is safe
   ; Otherwise, eject the player back to the surface
   LDA $0114 : BNE .remove_dive : CLC
+  CMP.b #$09 : BEQ .remove_dive
 
   ; Check the Y button and clear state if activated
   JSR Link_CheckNewY_ButtonPress : BCC .return_default
