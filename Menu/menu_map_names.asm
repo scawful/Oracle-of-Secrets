@@ -47,16 +47,16 @@ OverworldLocationNames:
   dw "VALLEY__________" ; 2D
   dw "CITY_ROAD_______" ; 2E
   dw "TAIL_PALACE_____" ; 2F
-  dw "PHANTOM_SHIP____" ; 30
-  dw "PHANTOM_SHIP____" ; 31
+  dw "DRAGON_SHIP_____" ; 30
+  dw "DRAGON_SHIP_____" ; 31
   dw "SECRET_BEACH____" ; 32
   dw "LOOM_BEACH______" ; 33
   dw "LOOM_BEACH______" ; 34
   dw "BEACH_PATH______" ; 35
   dw "GARO_DESERT_____" ; 36
   dw "GARO_DESERT_____" ; 37
-  dw "PHANTOM_SHIP____" ; 38
-  dw "PHANTOM_SHIP____" ; 39
+  dw "DRAGON_SHIP_____" ; 38
+  dw "DRAGON_SHIP_____" ; 39
   dw "LOST_SEA________" ; 3A
   dw "LOOM_BEACH______" ; 3B
   dw "LOOM_BEACH______" ; 3C
@@ -133,14 +133,14 @@ DarkWorldLocationNames:
 
 DungeonLocationNames:
   dw "GANONS_LAIR_____", "________________", "________________", "________________" 
-  dw "________________", "ZORA_TEMPLE_____", "________________", "________________"
-  dw "________________", "________________", "________________", "________________"
-  dw "________________", "________________", "________________", "________________" ; 15
+  dw "________________", "________________", "ZORA_TEMPLE_____", "SHRINE_COURAGE__"
+  dw "FAIRY_FOUNTAIN__", "MUSHROOM_GROTTO_", "MUSHROOM_GROTTO_", "MUSHROOM_GROTTO_"
+  dw "________________", "________________", "TAIL_PALACE_____", "________________" ; 15
 
-  dw "________________", "________________", "________________", "________________"
+  dw "________________", "________________", "HALL_OF_SECRETS_", "________________"
   dw "________________", "ZORA_TEMPLE_____", "SHRINE_COURAGE__", "ZORA_TEMPLE_____"
   dw "MUSHROOM_GROTTO_", "MUSHROOM_GROTTO_", "MUSHROOM_GROTTO_", "________________"
-  dw "________________", "________________", "________________", "________________" ; 32 
+  dw "________________", "TAIL_PALACE_____", "________________", "________________" ; 32 
 
   dw "________________", "________________", "________________", "________________"
   dw "________________", "________________", "________________", "________________"
