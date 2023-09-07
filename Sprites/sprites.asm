@@ -51,3 +51,6 @@ print  "End of anti_kirby.asm             ", pc
 
 incsrc "Sprites/VillageDog/village_dog.asm"
 print  "End of village_dog.asm            ",  pc
+
+incsrc "Sprites/Minecart/minecart.asm"
+print  "End of minecart.asm               ",  pc

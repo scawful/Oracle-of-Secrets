@@ -81,20 +81,28 @@ namespace Oracle
   incsrc "Dungeons/keyblock.asm"
   print  "End of Dungeons/keyblock.asm      ", pc
 
-  ; incsrc "Dungeons/entrances.asm"
-  ; print  "End of Dungeons/entrances.asm     ", pc
+  incsrc "Dungeons/sanctuary_transition.asm"
+
+  incsrc "Dungeons/entrances.asm"
+  print  "End of Dungeons/entrances.asm     ", pc
 
   incsrc "Dungeons/mothula.asm"
   print  "End of Dungeons/mothula.asm       ", pc
-
-  ; incsrc "Dungeons/spike_subtype.asm"
-  
 
   incsrc "Dungeons/enemy_damage.asm"
   print  "End of Dungeons/enemy_damage.asm  ", pc
 
   incsrc "Dungeons/together_warp_tag.asm"
   print  "End of together_warp_tag.asm      ", pc
+
+  incsrc "Dungeons/arrghus.asm"
+  print  "End of Dungeons/arrghus.asm       ", pc
+
+  incsrc "Dungeons/Objects/object_handler.asm"
+  print  "End of object_handler.asm         ", pc
+  
+  incsrc "Dungeons/spike_subtype.asm"
+  print  "End of spike_subtype.asm          ", pc
 
   print ""
 
@@ -104,8 +112,8 @@ namespace Oracle
   ; incsrc "Music/stone_tower_temple.asm"
   ; print  "End of stone_tower_temple.asm     ", pc
 
-  ; incsrc "Music/frozen_hyrule.asm"
-  ; print  "End of Music/frozen_hyrule.asm    ", pc
+  incsrc "Music/frozen_hyrule.asm"
+  print  "End of Music/frozen_hyrule.asm    ", pc
 
   incsrc "Music/lost_woods.asm"
   print  "End of Music/lost_woods.asm       ", pc
@@ -193,7 +201,7 @@ namespace Oracle
   incsrc "Items/book_of_secrets.asm"
   print  "End of Items/book_of_secrets.asm  ", pc
 
-  incsrc  "Items/sword_collect.asm"
+  incsrc "Items/sword_collect.asm"
   print  "End of Items/sword_collect.asm    ", pc
 
 
