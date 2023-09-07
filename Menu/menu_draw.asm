@@ -327,7 +327,7 @@ DrawYItems:
 
   ;; next row
 
-  LDA.w #$7EF348
+  LDA.w #$7EF349
 	LDX.w #menu_offset(16,3)
 	LDY.w #DekuMaskGFX
 	JSR DrawMenuItem
@@ -342,7 +342,7 @@ DrawYItems:
 	LDY.w #WolfMaskGFX
 	JSR DrawMenuItem
 
-  LDA.w #$7EF349
+  LDA.w #$7EF348
 	LDX.w #menu_offset(16,13)
 	LDY.w #BunnyHoodGFX
 	JSR DrawMenuItem
