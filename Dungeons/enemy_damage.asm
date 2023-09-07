@@ -31,4 +31,16 @@ org $0DB266+$22
 org $0DB266+$91
   db $04
 
+org $0DB330
+  db $05
+
+; Armos Knight
+org $0DB266+$53
+  db $13
+
+org $0DB1C6 ;  0x53 - ARMOS KNIGHT health 
+  db 64
+
+org $0DB44C+$7F
+  db $64
 
