@@ -76,7 +76,7 @@ Sprite_MakuTree_Main:
   MakuTree_Handler:
   {
     ; Check the progress flags 
-    LDA $7EF3CB : CMP.b #$01 : BEQ .has_met_link
+    LDA $7EF3D4 : CMP.b #$01 : BEQ .has_met_link
     %GotoAction(1)
     RTS
 
@@ -88,7 +88,7 @@ Sprite_MakuTree_Main:
   MakuTree_MeetLink:
   {
     %ShowSolicitedMessage($20) : BCC .no_talk
-    LDA #$01 : STA $7EF3CB
+    LDA #$01 : STA $7EF3D4
     %GotoAction(2)
   .no_talk
     RTS
