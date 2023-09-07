@@ -8,10 +8,6 @@
 ;09,0A,0B,0C,0D,0E = Vertical with speed incrementing
 ;you can edit the ASM to make diagonal spikes too
 ;#ENDPATCH_DESCRIPTION
-lorom
-
-org $288000 ; NEED TO MOVE
-pushpc
 
 org $0691D7 ; SpritePrep_SpikeBlock:
 JSL NewSpikePrep
