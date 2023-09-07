@@ -111,7 +111,7 @@ Sprite_DekuScrub_Main:
   {
     LDA.w SprTimerD, X : BNE +
 
-    LDY   #$0F : STZ $02E9
+    LDY   #$11 : STZ $02E9     ; Give the Deku Mask
     JSL   Link_ReceiveItem
     LDA   #$01 : STA.l $7EF301
     LDA.b #$00 : STA $0DD0, X
