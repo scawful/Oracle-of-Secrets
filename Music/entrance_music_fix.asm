@@ -1,13 +1,14 @@
 pushpc
 
 org $28424
-JML MyNewMusic
+JML EntranceMusicFix
 NOP #02
 MyReturn:
 
 pullpc
 
-MyNewMusic:
+org $328000
+EntranceMusicFix:
 LDA $A0 : CMP #$C9 : BNE +
 JML $028467 ; room was C9 Play village song
 +
@@ -17,14 +18,14 @@ JML $028467 ; room was 11 Play village song
 CMP #$22 : BNE +
 JML $028467 ; room was 22 Play village song
 +
-CMP #$1F : BNE +
+CMP #$39 : BNE +
 JML $028467 ; room was 1F Play village song
 +
 LDX #$05 ; Load Song 05 (Forest)
 CMP #$67 : BNE +
 JML $028467 ; room was 67 Play forest song
 +
-CMP #$59 : BNE +
+CMP #$F3 : BNE +
 JML $028467 ; room was 63 Play forest song
 +
 ; Room was not any of the rooms above
