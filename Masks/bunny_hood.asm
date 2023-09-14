@@ -107,3 +107,5 @@ LinkItem_Ether:
   CLC
   RTS
 }
+
+warnpc $07A4F6

@@ -17,9 +17,9 @@ lorom
 !MagicPowder = $7EF344
 !FireRod = $7EF345
 !IceRod = $7EF346
-!BunnyMask = $7EF347
-!DekuMask = $7EF348
-!ZoraMask = $7EF349
+!BunnyMask = $7EF348
+!DekuMask = $7EF349
+!ZoraMask = $7EF347
 !Lamp = $7EF34A
 !MagicHammer = $7EF34B
 !Flute = $7EF34C
@@ -63,7 +63,7 @@ org $3CA62A ; Expanded space for our routine
   ; Load items
 
   ; 0 - nothing. 1 - bow w/ no arrows. 2 - bow w/ arrows. 3 - silver arrows
-  LDA #$03 : STA !Bow
+  LDA #$02 : STA !Bow
 
   ; 0 - nothing. 1 - blue boomerang. 2 - red boomerang
   LDA #$02 : STA !Boomerang
@@ -115,7 +115,7 @@ org $3CA62A ; Expanded space for our routine
   LDA #$01 : STA !Shield
 
   ; 0 - nothing. 1 - Green Mail. 2 - Blue Mail. 3 - Red Mail
-  LDA #$00 : STA !Mail
+  LDA #$01 : STA !Mail
 
   ; 0-No bottle. 
   ; 1-Mushroom (no use). 2-Empty bottle. 

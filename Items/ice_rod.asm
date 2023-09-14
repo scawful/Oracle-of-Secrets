@@ -7,8 +7,6 @@
 
 LinkItem_IceRod: 
 {
-  lorom
-
   org $088a5d ; jsl to main code
   jsl $0efba0
 

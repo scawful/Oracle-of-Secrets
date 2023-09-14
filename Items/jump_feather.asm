@@ -1,7 +1,7 @@
 ; =============================================================================
 ; Zarby Feather 
 
-org $07AFF8
+org $07AFF8 ; LinkItem_BugCatchingNet
 {
   BIT $3A : BVS .return ;if Y or B are already pressed
 
@@ -17,7 +17,7 @@ org $07AFF8
 
 ; =============================================================================
 
-org $2A8000
+org $2B8000
 NewBookCode:
 {
   JSL $07983A ; Reset swim state
@@ -25,20 +25,27 @@ NewBookCode:
   LDA #$02 : STA $5D ; state recoil
   LDA #$01 : STA $4D ; state recoil 2
 
-  LDA #$20 ; Change this to change the length of the jump
+  ; Length of the jump
+  LDA #$20 
 
   STA $46 
 
-  LDA #$24 ; Change this to change the height of the jump
+  ; Height of the jump
+  LDA #$24 
 
-  STA $29 : STA $02C7
+  ; Set vertical resistance 
+  STA $29
+  STA $02C7
+  ; Set Links direction to right(?)
   LDA #$08 : STA $0340 : STA $67
+
+  ; Reset Link movement offsets 
   STZ $31
   STZ $30
 
   LDA $F4 : AND #$08 : BEQ .noUp
       LDA #-8 ; Change that -8 if you want higher speed moving up
-      STA $27
+      STA $27 ; Vertical recoil
   .noUp
   LDA $F4 : AND #$04 : BEQ .noDown
       LDA #8  ; Change that -8 if you want higher speed moving down
@@ -46,7 +53,7 @@ NewBookCode:
   .noDown
   LDA $F4 : AND #$02 : BEQ .noLeft
       LDA #-8 ; Change that -8 if you want higher speed moving left
-      STA $28
+      STA $28 ; Horizontal recoil
   .noLeft
   LDA $F4 : AND #$01 : BEQ .noRight
       LDA #8  ; Change that 8 if you want higher speed moving right
@@ -55,3 +62,6 @@ NewBookCode:
   .cantuseit
   RTL
 }
+
+print  "End of Items/jump_feather.asm     ", pc
+pushpc

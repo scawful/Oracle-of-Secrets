@@ -5,61 +5,61 @@
 Menu_ItemIndex:
   db $00
   ;  Bow,     Boomerang, Hookshot, Bombs,      Powder,     Bottle 1
-  db $03,     $02,       $0E,      $01,        $0A,        $0B 
+  db $03,     $02,       $0E,      $01,        $0A,        $0B
   ;  Hammer,  Lamp,      Fire Rod, Ice Rod,    Mirror,     Bottle 2
-  db $04,     $09,       $05,      $06,        $14,        $0B 
+  db $04,     $09,       $05,      $06,        $14,        $0B
   ;  Ocarina, Book,      Somaria,  Byrna,      Feather,    Bottle3
-  db $08,     $0C,       $12,      $0D,        $07,        $0B 
+  db $08,     $0C,       $12,      $0D,        $07,        $0B
   ;  Deku,    Zora,      Wolf,     Bunny Hood, Stone Mask, Bottle4
-  db $11,     $0F,       $08,      $10,        $13,        $0B 
+  db $11,     $0F,       $08,      $10,        $13,        $0B
 
 ; -----------------------------------------------------------------------------
 ; Decides which graphics is drawn 
 Menu_AddressIndex:
-  db $7EF340 ; bow
-  db $7EF341 ; boom
-  db $7EF342 ; hookshot 
-  db $7EF343 ; bombs
-  db $7EF344 ; powder 
-  db $7EF35C ; bottle1
+  db $7EF340 ; Bow
+  db $7EF341 ; Boomerang
+  db $7EF342 ; Hookshot 
+  db $7EF343 ; Bombs
+  db $7EF344 ; Powder 
+  db $7EF35C ; Bottle 1
 
-  db $7EF34B ; hammer 
-  db $7EF34A ; lamp 
-  db $7EF345 ; firerod
-  db $7EF346 ; icerod 
-  db $7EF353 ; mirror
-  db $7EF35D ; bottle2
+  db $7EF34B ; Hammer 
+  db $7EF34A ; Lamp 
+  db $7EF345 ; Fire Rod
+  db $7EF346 ; Ice Rod 
+  db $7EF353 ; Magic Mirror
+  db $7EF35D ; Bottle 2
 
   db $7EF34C ; shovel 7EF34F
-  db $7EF34E ; book 
-  db $7EF350 ; somaria
-  db $7EF351 ; byrna
-  db $7EF34D ; feather 
-  db $7EF35E ; bottle3
+  db $7EF34E ; Book 
+  db $7EF350 ; Cane of Somaria
+  db $7EF351 ; Cane of Byrna
+  db $7EF34D ; Roc's Feather 
+  db $7EF35E ; Bottle 3
 
-  db $7EF348 ; deku mask 
+  db $7EF349 ; Deku Mask 
   db $7EF347 ; Zora Mask
-  db $7EF349 ; Bunny Hood
-  db $7EF34C ; ocarina 
-  db $7EF352 ; stone mask
-  db $7EF35F ; bottle4
+  db $7EF358 ; Wolf Mask 
+  db $7EF348 ; Bunny Hood
+  db $7EF352 ; Stone Mask
+  db $7EF35F ; Bottle #4
 
 ; -----------------------------------------------------------------------------
 
 Menu_ItemCursorPositions:
-  dw menu_offset(6,2)   ; bow
-  dw menu_offset(6,5)   ; boom
-  dw menu_offset(6,8)   ; hookshot
-  dw menu_offset(6,12)  ; bombs
-  dw menu_offset(6,15)  ; deku mask
-  dw menu_offset(6,18)  ; bottle1
+  dw menu_offset(6,2)  ; bow
+  dw menu_offset(6,5)  ; boom
+  dw menu_offset(6,8)  ; hookshot
+  dw menu_offset(6,12) ; bombs
+  dw menu_offset(6,15) ; deku mask
+  dw menu_offset(6,18) ; bottle1
 
-  dw menu_offset(9,2)   ; hammer 
-  dw menu_offset(9,5)   ; lamp
-  dw menu_offset(9,8)   ; firerod
-  dw menu_offset(9,12)  ; icerod
-  dw menu_offset(9,15)  ; goron
-  dw menu_offset(9,18)  ; bottle2
+  dw menu_offset(9,2)  ; hammer 
+  dw menu_offset(9,5)  ; lamp
+  dw menu_offset(9,8)  ; firerod
+  dw menu_offset(9,12) ; icerod
+  dw menu_offset(9,15) ; goron
+  dw menu_offset(9,18) ; bottle2
 
   dw menu_offset(12,2)  ; shovel 
   dw menu_offset(12,5)  ; feather 
@@ -80,14 +80,14 @@ Menu_ItemCursorPositions:
 
 Menu_FindNextItem:
 {
-  LDY.w $0202 : INY 
-  CPY.b #$19 : BCC .no_reset 
-  LDY.b #$01 
+  LDY.w $0202 : INY
+  CPY.b #$19 : BCC .no_reset
+  LDY.b #$01
 .no_reset 
   STY.w $0202
   LDX.w Menu_AddressIndex-1, Y
-  LDA.l $7EF300, X
-  BEQ Menu_FindNextItem
+  LDA.l $7EF300,             X
+  BEQ   Menu_FindNextItem
   RTS
 }
 
@@ -95,13 +95,13 @@ Menu_FindNextItem:
 
 Menu_FindPrevItem:
 {
-  LDY.w $0202 : DEY : BNE .no_reset 
+  LDY.w $0202 : DEY : BNE .no_reset
   LDY.b #$18
 .no_reset 
   STY.w $0202
   LDX.w Menu_AddressIndex-1, Y
-  LDA.l $7EF300, X
-  BEQ Menu_FindPrevItem
+  LDA.l $7EF300,             X
+  BEQ   Menu_FindPrevItem
   RTS
 }
 
@@ -109,14 +109,14 @@ Menu_FindPrevItem:
 
 Menu_FindNextDownItem:
 {
-  LDA.w $0202 : CLC : ADC.b #$06 
+  LDA.w $0202 : CLC : ADC.b #$06
   CMP.b #$19 : BCC .no_reset
   SBC.b #$18
 .no_reset 
-  TAY : STY.w $0202
-  LDX.w Menu_AddressIndex-1, Y 
-  LDA.l $7EF300, X
-  BEQ Menu_FindNextItem
+  TAY   : STY.w $0202
+  LDX.w Menu_AddressIndex-1, Y
+  LDA.l $7EF300,             X
+  BEQ   Menu_FindNextItem
   RTS 
 }
 
@@ -124,14 +124,14 @@ Menu_FindNextDownItem:
 
 Menu_FindNextUpItem:
 {
-  LDA.w $0202 : SEC : SBC.b #$06 
-  BPL .no_reset : BNE .no_reset
-  CLC : ADC.b #$18 
+  LDA.w $0202 : SEC : SBC.b #$06
+  BPL   .no_reset : BNE .no_reset
+  CLC   : ADC.b #$18
 .no_reset 
-  TAY : STY.w $0202
-  LDX.w Menu_AddressIndex-1, Y 
-  LDA.l $7EF300, X
-  BEQ Menu_FindNextItem
+  TAY   : STY.w $0202
+  LDX.w Menu_AddressIndex-1, Y
+  LDA.l $7EF300,             X
+  BEQ   Menu_FindNextItem
   RTS 
 }
 
@@ -140,20 +140,20 @@ Menu_FindNextUpItem:
 
 Menu_DeleteCursor:
 {
-  REP #$30
+  REP   #$30
   LDX.w Menu_ItemCursorPositions-2, Y
 
   LDA.w #$20F5
   STA.w $1108, X
   STA.w $1148, X
-  STA.w $114E, X 
-  STA.w $110E, X 
-  STA.w $11C8, X 
+  STA.w $114E, X
+  STA.w $110E, X
+  STA.w $11C8, X
   STA.w $1188, X
-  STA.w $118E, X 
-  STA.w $11CE, X 
-  SEP #$30
-  STZ $0207
+  STA.w $118E, X
+  STA.w $11CE, X
+  SEP   #$30
+  STZ   $0207
   RTS 
 }
 
@@ -161,24 +161,157 @@ Menu_DeleteCursor:
 
 Menu_InitItemScreen:
 {
-  SEP #$30
+  SEP   #$30
   LDY.w $0202 : BNE .all_good
 
 .loop
-  INY : CPY.b #$25 : BCS .bad 
+  INY   : CPY.b #$25 : BCS .bad
   LDX.w Menu_AddressIndex-1, Y
-  LDA.l $7EF300, X 
-  BEQ .loop 
+  LDA.l $7EF300,             X
+  BEQ   .loop
 
   STY.w $0202
-  BRA .all_good 
+  BRA   .all_good
 
 .bad
   STZ.w $0202
 
 .all_good 
-  STZ $0207
+  STZ   $0207
   LDA.b #$04
   STA.w $0200
   RTS
 }
+
+; -----------------------------------------------------------------------------
+
+Menu_AddressLong:
+  dl $7EF340 ; Bow
+  dl $7EF341 ; Boomerang
+  dl $7EF342 ; Hookshot 
+  dl $7EF343 ; Bombs
+  dl $7EF344 ; Powder 
+  dl $7EF35C ; Bottle 1
+
+  dl $7EF34B ; Hammer 
+  dl $7EF34A ; Lamp 
+  dl $7EF345 ; Fire Rod
+  dl $7EF346 ; Ice Rod 
+  dl $7EF353 ; Magic Mirror
+  dl $7EF35D ; Bottle 2
+
+  dl $7EF34C ; shovel 7EF34F
+  dl $7EF34E ; Book 
+  dl $7EF350 ; Cane of Somaria
+  dl $7EF351 ; Cane of Byrna
+  dl $7EF34D ; Roc's Feather 
+  dl $7EF35E ; Bottle 3
+
+  dl $7EF349 ; Deku Mask 
+  dl $7EF347 ; Zora Mask
+  dl $7EF358 ; Wolf Mask 
+  dl $7EF348 ; Bunny Hood
+  dl $7EF352 ; Stone Mask
+  dl $7EF35F ; Bottle #4
+
+GotoNextItem_Override:
+{
+  ; Load our currently equipped item, and move to the next one
+  ; If we reach our limit (21), set it back to the bow and arrow slot.
+  LDA $0202 : INC A : CMP.b #$18 : BCC .dontReset
+  
+  LDA.b #$01
+
+.dontReset
+
+  ; Otherwise try to equip the item in the next slot
+  STA $0202
+  
+  RTS
+}
+
+DoWeHaveThisItem_Override:
+{
+  LDY $0202
+  LDX.w Menu_AddressIndex-1, Y
+  LDA.l $7EF300,             X
+  BNE .have_this_item
+  CLC
+  RTL
+.have_this_item
+  SEC 
+  RTL
+}
+
+TryEquipNextItem_Override:
+{
+.keep_looking
+  JSL GotoNextItem_Override
+  JSL DoWeHaveThisItem_Override : BCC .keep_looking
+  RTL
+}
+
+SearchForEquippedItem_Override:
+{
+    SEP   #$30
+
+    STY.w $0202
+    LDX.w Menu_AddressIndex-1, Y
+    LDA.l $7EF300,             X
+    
+    CMP.b #$00 : BNE .equippableItemAvailable
+    
+    ; In this case we have no equippable items
+    STZ $0202
+    STZ $0203
+    STZ $0204
+
+  .weHaveThatItem
+
+    RTL
+
+  .equippableItemAvailable
+
+    ; Is there an item currently equipped (in the HUD slot)?
+    LDA $0202
+    BNE .alreadyEquipped
+    
+    ; If not, set the equipped item to the Bow and Arrow (even if we don't actually have it)
+    LDA.b #$01
+    STA   $0202
+
+  .alreadyEquipped
+
+    ; Checks to see if we actually have that item
+    ; We're done if we have that item
+    JSR DoWeHaveThisItem_Override
+    BCS .weHaveThatItem
+    
+    JMP TryEquipNextItem_Override
+}
+
+; -----------------------------------------------------------------------------
+
+pushpc 
+
+org $0DDEB0
+DoWeHaveThisItem:
+{
+  JSL DoWeHaveThisItem_Override
+  RTS
+}
+
+org $0DDEE2
+TryEquipNextItem:
+  JSL TryEquipNextItem_Override
+  RTS
+
+org $0DE399
+SearchForEquippedItem:
+{
+  JSL SearchForEquippedItem_Override
+  RTS
+}
+warnpc $0DE3C7
+
+pullpc

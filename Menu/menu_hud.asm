@@ -49,10 +49,7 @@ org $2E8000
 
 HUD_Update:
 {
-  ; JSL LinkState_GameboyForm
-
   JSR HUD_UpdateItemBox
-
 .ignoreItemBox ; ALTERNATE ENTRY POINT
 
   SEP #$30
@@ -122,11 +119,10 @@ HUD_Update:
   LDA $7EF36E : AND.w #$00FF : CLC : ADC #$0007 : AND.w #$FFF8 : TAX
 
   ; these four writes draw the magic power bar based on how much MP you have
-  LDA.l (MagicTilemap)+0, X : STA $7EC76A
-  LDA.l (MagicTilemap)+2, X : STA $7EC76C
-  LDA.l (MagicTilemap)+4, X : STA $7EC76E
-  LDA.l (MagicTilemap)+6, X : STA $7EC770
-  LDA.l (MagicTilemap)+8, X : STA $7EC772
+  LDA.l (MagicTilemap)+0, X : STA $7EC76C
+  LDA.l (MagicTilemap)+2, X : STA $7EC76E
+  LDA.l (MagicTilemap)+4, X : STA $7EC770
+  LDA.l (MagicTilemap)+6, X : STA $7EC772
 
   ; Load how many rupees the player has
   LDA $7EF362
@@ -206,52 +202,31 @@ HUD_Update:
 
 ; =============================================================================
 
-Full        =        $3C5F
+Full        =  $3C5F
 MostlyFull  =  $3C4D
-KindaFull   =   $3C4E
-HalfEmpty   =   $3C4F
+KindaFull   =  $3C4E
+HalfEmpty   =  $3C4F
 AlmostEmpty = $3C5E
-Empty       =       $3C4C
-
-New_MagicTilemap:
-  dw Empty, Empty, Empty, Empty, Empty
-  dw Empty, Empty, Empty, Empty, AlmostEmpty
-  dw Empty, Empty, Empty, Empty, HalfEmpty
-  dw Empty, Empty, Empty, Empty, KindaFull
-  dw Empty, Empty, Empty, Empty, MostlyFull
-  dw Empty, Empty, Empty, HalfEmpty, Full
+Empty       = $3C4C
 
 MagicTilemap:
-  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C4C
-  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C5F
-  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C4C
-  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C4D
-  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C4E
-  dw $3C4C, $3C4C, $3C4C, $3C5F, $3C5F
-  dw $3C4C, $3C4C, $3C4C, $3C4C, $3C5F
-  dw $3C4C, $3C4C, $3C4C, $3C4D, $3C5F
-  dw $3C4C, $3C4C, $3C4C, $3C4E, $3C5F
-  dw $3C4D, $3C5F, $3C5F, $3C5F, $3C5F
-  dw $3C4E, $3C5F, $3C5F, $3C5F, $3C5F
-  dw $3C4F, $3C5F, $3C5F, $3C5F, $3C5F
-  dw $3C5E, $3C5F, $3C5F, $3C5F, $3C5F
-  dw $3C5F, $3C5F, $3C5F, $3C5F, $3C5F
-  ; value 0x80 aka 128
-
-HUD_DrawMagicMeter:
-{
-  ; check player magic (ranges from 0 to 0x7F)
-  ; X = ((MP & 0xFF)) + 7) & 0xFFF8)
-  LDA $7EF36E : AND.w #$00FF : CLC : ADC #$0007 : AND.w #$FFF8 : TAX
-
-.draw_magic_meter
-
-  LDA.l (MagicTilemap)+0, X : STA $7EC76A
-  LDA.l (MagicTilemap)+2, X : STA $7EC76C
-  LDA.l (MagicTilemap)+4, X : STA $7EC76E
-  LDA.l (MagicTilemap)+6, X : STA $7EC770
-  LDA.l (MagicTilemap)+8, X : STA $7EC772
-}
+  dw Empty, Empty, Empty, Empty
+  dw Empty, Empty, Empty, AlmostEmpty
+  dw Empty, Empty, Empty, HalfEmpty
+  dw Empty, Empty, Empty, KindaFull
+  dw Empty, Empty, Empty, MostlyFull
+  dw Empty, Empty, AlmostEmpty, Full
+  dw Empty, Empty, HalfEmpty, Full
+  dw Empty, Empty, KindaFull, Full
+  dw Empty, Empty, MostlyFull, Full
+  dw Empty, AlmostEmpty, Full, Full
+  dw Empty, HalfEmpty, Full, Full
+  dw Empty, KindaFull, Full, Full
+  dw Empty, MostlyFull, Full, Full
+  dw AlmostEmpty, Full, Full, Full
+  dw HalfEmpty, Full, Full, Full
+  dw KindaFull, Full, Full, Full
+  dw MostlyFull, Full, Full, Full
 
 ; ============================================================================
 ; *$6FAFD-$6FB90 LOCAL
@@ -477,12 +452,11 @@ org $0DF6B1
 
 ; Mirror
 org $0DF7C9
-  dw $20F5, $20F5, $20F5, $20F5 ; No mirror
+  dw $2C62, $2C63, $2C72, $2C73 ; Mirror
   dw $2C62, $2C63, $2C72, $2C73 ; Mirror
 
 ; Byrna
 org $0DF7A9
-  dw $20F5, $20F5, $20F5, $20F5 ; No Byrna
   dw $2CDC, $2CDD, $2CEC, $2CED ; Cane of Byrna
 
 org $0DF731
@@ -517,58 +491,59 @@ org $0DF811
 ; =============================================================================
 ; $6FE77-$6FFC0
 
-org $0DFE77
+org    $0DFE77
 HUD_Tilemap:
-{
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F
+incbin tilemaps/hud.tilemap
+; {
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F
 
-  ; magic bar top part
-  dw $200B, $200C, $200C, $200C, $200C, $200C
-  ; item frame top part
-  dw $206C, $206D, $206E, $206F
+;   ; magic bar top part
+; dw $200B, $200C, $200C, $200C, $200C, $200C
+;   ; item frame top part
+; dw $206C, $206D, $206E, $206F
 
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F
 
-  ; rupee icon            key icon
-  dw $3CA8, $FCA8, $207F, $2071, $207F
+;   ; rupee icon            key icon
+; dw $3CA8, $FCA8, $207F, $2071, $207F
 
-  ; magic bar
-  dw $201B, $344B
-  dw $344B, $344B, $344B, $344B
+;   ; magic bar
+; dw $201B, $344B
+; dw $344B, $344B, $344B, $344B
 
-  ; item frame left part
-  dw $20DE, $207F, $207F, $20DF
+;   ; item frame left part
+; dw $20DE, $207F, $207F, $20DF
 
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F
 
-  ; magic bar bottom part
-  dw $A00B, $A00C
-  dw $A00C, $A00C, $A00C, $A00C
+;   ; magic bar bottom part
+; dw $A00B, $A00C
+; dw $A00C, $A00C, $A00C, $A00C
 
-  ; item frame right part
-  dw $20EE, $207F, $207F, $20EF
+;   ; item frame right part
+; dw $20EE, $207F, $207F, $20EF
 
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F
 
-  ; item frame bottom part
-  dw $207C, $207D, $207E, $201D
+;   ; item frame bottom part
+; dw $207C, $207D, $207E, $201D
 
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-  dw $207F
-}
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
+; dw $207F
+; }
 
 ; ==============================================================================
 

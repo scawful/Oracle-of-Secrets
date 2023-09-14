@@ -189,7 +189,11 @@ Sprite_VillageDog_Main:
   Dog_WagTailLeft:
   {
     %PlayAnimation(0,1, 8)
+    LDA $02B2 : CMP.b #$05 : BNE .not_minish
+    %ShowSolicitedMessage($18) : JMP .continue
+  .not_minish
     %ShowSolicitedMessage($1B)
+  .continue
     LDA.w SprTimerD, X : BNE +
     %GotoAction(0)
   +
@@ -200,7 +204,11 @@ Sprite_VillageDog_Main:
   Dog_WagTailRight:
   {
     %PlayAnimation(11,12,8)
+    LDA $02B2 : CMP.b #$05 : BNE .not_minish
+    %ShowSolicitedMessage($18) : JMP .continue
+  .not_minish
     %ShowSolicitedMessage($1B)
+  .continue
     LDA.w SprTimerD, X : BNE +
     %GotoAction(0)
   +

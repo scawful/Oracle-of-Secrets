@@ -26,7 +26,7 @@ UpdateZoraPalette:
   REP #$30   ; change 16 bit mode
   LDX #$001E
 
-  .loop
+.loop
   LDA.l zora_palette, X : STA $7EC6E0, X
   DEX : DEX : BPL .loop
 
@@ -51,9 +51,13 @@ org $0998FC
   
 ; =============================================================================
 
+; Replaces Bombos medallion
 org $07A569
 LinkItem_ZoraMask:
 {
+  ; No removing the mask whilst diving.
+  LDA $0AAB : BNE .return 
+  
   ; Check for R button held 
   %CheckNewR_ButtonPress() : BEQ .return
 
@@ -75,24 +79,15 @@ LinkItem_ZoraMask:
   CLC
   RTS
 }
+print pc, " ==> LinkItem_ZoraMask           ", pc
+
+warnpc $07A5CE
 
 ; =============================================================================
 
 ; End of LinkState_Swimming
-org $079781
+org    $079781
   JSR LinkState_UsingZoraMask
-  RTS
-
-; End of LinkState_Default 
-org $0782D2
-  JSR LinkState_UsingZoraMask_dungeon_resurface
-  JSR $E8F0
-  CLC
-  RTS
-
-; C2C3
-org $07C307
-  JSR LinkState_UsingZoraMask_dungeon_stairs
   RTS
 
 ; =============================================================================
@@ -109,10 +104,9 @@ LinkState_UsingZoraMask:
 .normal
   ; Return to normal state 
   STZ $55
+  STZ $5E     ; Reset speed to normal 
   STZ $037B
   STZ $0351
-  LDA #$00 : STA $5E ; Reset speed to normal 
-  STA $037B
   JMP .return
   
 .swimming
@@ -189,7 +183,7 @@ LinkState_UsingZoraMask:
     LDA #$08
     STA $5E  ; Set the player speed 
 
-    STZ $0345
+    STZ $0345 ; Reset deep water flag
 
     LDA #$01
     STA $0AAB ; Set the player underwater flag 
@@ -199,6 +193,19 @@ LinkState_UsingZoraMask:
     RTS
   }
 }
+
+pushpc
+
+; End of LinkState_Default 
+org $0782D2
+  JSR LinkState_UsingZoraMask_dungeon_resurface
+  JSR $E8F0
+  CLC
+  RTS
+
+warnpc $078364
+
+pullpc
 
 .dungeon_resurface
 {
@@ -214,7 +221,7 @@ LinkState_UsingZoraMask:
   ; Check if the ground level is safe
   ; Otherwise, eject the player back to the surface
   LDA $0114 : BNE .remove_dive : CLC
-  CMP.b #$09 : BEQ .remove_dive
+  ; CMP.b #$09 : BEQ .remove_dive
 
   ; Check the Y button and clear state if activated
   JSR Link_CheckNewY_ButtonPress : BCC .return_default
@@ -244,6 +251,14 @@ LinkState_UsingZoraMask:
   RTS
 }
 
+pushpc
+
+; C2C3
+org $07C307
+  JSR LinkState_UsingZoraMask_dungeon_stairs
+  RTS
+
+pullpc
 
 .dungeon_stairs
 {
@@ -257,19 +272,21 @@ LinkState_UsingZoraMask:
 }
 print "==> LinkState_UsingZoraMask       ", pc
 
+; =============================================================================
+
 ; TODO: Make this so it does not cancel if $0202 is still the same mask 
 ;       corresponding to the form the player is in.
 ;       Also, prevent this from canceling minish form. 
 LinkState_ResetMaskAnimated:
 {
-  LDA $02B2 : BEQ .no_mask
-  CMP #$05 : BEQ .no_mask
-  CMP #$01 : BNE .transform
+  LDA   $02B2 : BEQ .no_mask
+  CMP.b #$05 : BEQ .no_mask
+  CMP.b #$06 : BEQ .gbc_form
+  CMP.b #$02 : BEQ .no_mask
+  CMP   #$01 : BNE .transform
 
   ; Restore the sword, shield, and bow override
-  LDA $0AA5 : STA.l $7EF359
   LDA $0AAF : STA.l $7EF35A
-  LDA #$00 : STA $7E03FC
 
 .transform
   LDY.b #$04 : LDA.b #$23
@@ -280,6 +297,7 @@ LinkState_ResetMaskAnimated:
   JSL Palette_ArmorAndGloves
   LDA #$10 : STA $BC
 .no_mask
+.gbc_form
   RTL
 }
 

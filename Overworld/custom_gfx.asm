@@ -48,7 +48,7 @@ ApplyGraphics1:
   RTS
 
   BoatBitmap:
-  incbin boat.bin
+  incbin gfx/boat.bin
 }
 
 ; ==============================================================================

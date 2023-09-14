@@ -26,10 +26,9 @@ org $068365
 JSL LinkItem_SecretsBook			  ; overwrite it (originally JSL $099F91)
 
 ; =============================================================================
-; go to expanded space to write our routine 
-; (keep EveryFrame.asm in mind for the right adresses)
-; org $3CA600
-org $2B8000
+
+pullpc
+
 LinkItem_SecretsBook:
 {
   LDA $1B				    ; load data that tells us whether we are in a building or not
@@ -57,6 +56,8 @@ LinkItem_SecretsBook:
   JSL $099F91			  ; at least execute original code
   RTL
 }
+
+print  "End of Items/book_of_secrets.asm  ", pc
 pushpc
 
 

@@ -7,9 +7,23 @@ incbin gfx/deku_link.bin
 
 ; =============================================================================
 
+org $07B0AB
+LinkItem_EvaluateMagicCost:
+
 org    $07A64B           ; formerly Quake
 LinkItem_DekuMask:
 {
+  JSR Link_CheckNewY_ButtonPress : BCC .continue
+
+  LDX.b #$01
+  
+  JSR LinkItem_EvaluateMagicCost : BCC .return
+  
+  LDA.b #$0A : STA $5D
+
+  RTS
+
+.continue
   ; Check for R button held
   %CheckNewR_ButtonPress() : BEQ .return
 
@@ -26,6 +40,7 @@ LinkItem_DekuMask:
 
   LDA #$35 : STA $BC   ; put the mask on
   LDA #$01 : STA $02B2 ; set the deku mask flag
+  STA $02F5 ; Somaria platform flag, no dash.
 
   BRA .return
 
@@ -33,12 +48,26 @@ LinkItem_DekuMask:
   STZ $5D
   ; Restore the shield
   LDA $0AAF : STA.l $7EF35A
+  STZ $02F5
 
   %ResetToLinkGraphics()
 
 .return
   RTS
 }
+
+; =========================================================
+
+org $07E370
+  LinkHop_FindArbitraryLandingSpot:
+
+org $07A6D6
+LinkState_UsingQuake:
+{
+
+
+}
+warnpc $07A779
 
 org $318000
 ; org $07A013

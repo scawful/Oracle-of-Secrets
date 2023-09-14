@@ -53,6 +53,7 @@ LinkItem_ShovelAndFlute:
   JMP LinkItem_WolfMask
   
 }
+; warnpc $07A31F
 
 ; =============================================================================
 

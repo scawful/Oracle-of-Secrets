@@ -29,8 +29,6 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-!HVelocity = $06
-
 ;==============================================================================
 
 %Set_Sprite_Properties(Sprite_Minecart_Prep, Sprite_Minecart_Long) 
@@ -59,21 +57,27 @@ Sprite_Minecart_Prep:
 {
   PHB : PHK : PLB
 
+  ; Adjust the Y position so it aligns with the tracks.
+  LDA $0D00, X : SEC : SBC.b #$04 : STA $0D00, X
+
   PLB
   RTL
 }
 
 ;==============================================================================
 
+!MinecartSpeed = 10
+
+print          "Minecart: ", pc
 Sprite_Minecart_Main:
 {
   LDA.w SprAction, X                        ; Load the SprAction
   JSL   UseImplicitRegIndexedLocalJumpTable ; Goto the SprAction we are currently in
 
-  dw   Minecart_Adjust
-  dw   Minecart_Waiting
-  dw   Minecart_Moving
-  dw   Minecart_Moving2
+  dw Minecart_Adjust
+  dw Minecart_Waiting
+  dw Minecart_MoveHorizontal
+  dw Minecart_MoveVertical
 
   Minecart_Adjust:
   {
@@ -86,7 +90,6 @@ Sprite_Minecart_Main:
     LDA #$00 : STA $0CD2, X
     LDA #$00 : STA $0B6B, X ;Set interactive hitbox?
     LDA #$40 : STA $0E00, X
-    LDA #$FF : STA $021B
 
     INC $0D80, X
     
@@ -99,151 +102,173 @@ Sprite_Minecart_Main:
     JSR CheckIfPlayerIsOn : BCC .not_on_platform
         ;Cancel Falling
     JSL Player_HaltDashAttack
-    LDA #$00 : STA $5D : STA $5B : STA $57 : STA $5E
-    STA $59
+    LDA #$02 : STA $02F5
+    LDA $0FDA : SEC : SBC #$0B : STA $20
+    ; LDA #$01 : STA DungeonMainCheck
+    %GotoAction(2)
+    RTS
 
   .not_on_platform
     LDA $0E00,            X : BNE + ;wait before moving
     LDA #$10 : STA $0E00, X         ;Wait before checking first tile on ground!
     INC $0D80,            X
 
-
     LDA.b #$01 : STA $041A
   +
     RTS 
   }
-    
-  Minecart_Moving: ;Check for pixel X+24, Y+16 if tileid = 0D41
+
+  print pc
+  Minecart_MoveHorizontal:
   {
-    JSL Sprite_Move
-    LDA $5D : CMP #$02 : BNE +
-        RTS
-    +
-
-    LDA $021B : CMP #$FF : BEQ .NoPlatformSetted ;if == FF then go check if we're on this platform
-    CPX $021B : BNE .DoNotCheckThisPlatform      ;Is the platform the one we're currently standing on?
-    LDA #$FF : STA $021B
-
-    .NoPlatformSetted
-        
-    JSR CheckIfPlayerIsOn : BCC .NotOnPlatform
-    STX $021B                                  ;We are on that platform so put that in 
+    %PlayAnimation(0,1,8)
+    LDA.b #-!MinecartSpeed : STA $0D50, X
+    JSL   Sprite_MoveHoriz
     
+    ; Make Link move with the minecart 
+    LDA SprX, X : STA $22
 
-    LDY $039D                                 ;Load Hookshot slot
-    LDA $0C4A, Y : CMP #$1F : BNE .noHookshot
-    LDA #$13 : STA $5D                        ;we're in hookshot mode then!!
-    .noHookshot
-
-    LDA $5D : CMP #$13 : BNE .dontstopPlatform ;Hookshotting!! stop the platform
-        ;Prevent platform from moving 
-        STZ $0D50, X : STZ $0D40, X
-        REP #$20
-        STZ $0B7E : STZ $0B7C
-        SEP #$20
-        ;Prevent timers from going down as well
-        INC $0E10, X
-        INC $0E00, X
-
+    JSR DragPlayer
+  
+    ; Set Minecart sprite coords to look for tile attributes
+    LDA.w $0D00, X : STA.b $00
+    LDA.w $0D20, X : STA.b $01
+    
+    LDA.w $0D10, X : STA.b $02
+    LDA.w $0D30, X : STA.b $03
+    
+    LDA.b #$00 : JSL $06E87B
+    
+    ; Check for Top Right Corner Tile
+    LDA $0FA5 : CMP.b #$B1 : BNE .continue
+    %StartOnFrame(2)
+    LDA #$00 : STA $0D50, X ; Reset X Speed
+    INC $0D80,            X
     RTS
-    .dontstopPlatform
-    
+  .continue
+
+    PHX 
+    JSL $07E6A6               ; Link_HandleMovingAnimation_FullLongEntry
+    JSL $07F42F               ; HandleIndoorCameraAndDoors_Long
     JSL Player_HaltDashAttack
-    ;Cancel Falling
-    STZ $5D  : STZ $5B : STZ $57 : STZ $5E : STZ $59
-    
-    LDA $0E10, X : BNE .Waiting
+    PLX 
 
-    JSR CheckPlayerDirection
-
-    .DoNotCheckThisPlatform
-    .NotOnPlatform
-    LDA $5B : CMP #$02 : BEQ .Check5D ;IF $5B == 2 then we're falling!
-        BRA .skip5D
-    .Check5D
-        LDA $5D : CMP #$01 : BEQ .Falling ;Branch if we're falling!
-        
-        .skip5D
-        LDA $0E10, X : BNE .Waiting
-        STZ $0D50, X : STZ $0D40, X ;Not Needed probably
-        LDY $0DB0, X                ;Load Directtion
-        LDA SpeedTableX, Y : STA $0D50, X
-        LDA SpeedTableY, Y : STA $0D40, X
-
-        JSR Sprite_Move
-        JSR GetTileIDAtPosition
-    +
-
-    .Waiting
-    RTS
-    .Falling
-    ;Keep Timer incremented
-    INC $0E10, X
-    INC $0E00, X
-    
     RTS
   }
 
-  Minecart_Moving2: ;Check for pixel X+24, Y+16 if tileid = 0D41 ;04
+  Minecart_MoveVertical:
   {
-    LDY $0DB0, X ;Load Directtion
-    LDA SpeedTableX, Y : STA $0D50, X
-    LDA SpeedTableY, Y : STA $0D40, X
+    %PlayAnimation(2,3,8)
+    LDA.b #-!MinecartSpeed : STA $0D40, X
 
-    JSR Sprite_Move
-    JSR GetTileIDAtPosition
+    JSL Sprite_MoveVert
+    LDA SprY, X : SEC : SBC #$04 : STA $20
+    LDA $0FD8 : CLC : ADC #$02 : STA $22 ; X 
 
-    REP #$20
-    LDA $0FD8 : CLC : ADC #$0010 : STA $00
-    LDA $0FDA : CLC : ADC #$0008 : STA $02
-    SEP #$20
-    DEX
-    LDA $00 : STA $0D10, X                 ;X low
-    LDA $01 : STA $0D30, X                 ;X High
+    JSR DragPlayer
 
-    LDA $02 : STA $0D00, X ;Y low
-    LDA $03 : STA $0D20, X ;Y high
-    INX
-    RTS     
+
+    
+    LDA.w $0D00, X : STA.b $00
+    LDA.w $0D20, X : STA.b $01
+    
+    LDA.w $0D10, X : STA.b $02
+    LDA.w $0D30, X : STA.b $03
+    
+    LDA.b #$00 : JSL $06E87B
+    LDA   $0FA5 : CMP.b #$B4 : BNE .continue
+    LDA $0FDA : SEC : SBC #$0B : STA $20
+    %GotoAction(2)
+    RTS
+  .continue
+
+    PHX 
+    JSL $07E6A6               ; Link_HandleMovingAnimation_FullLongEntry
+    JSL $07F42F               ; HandleIndoorCameraAndDoors_Long
+    JSL Player_HaltDashAttack
+    PLX 
+
+    RTS
   }
-
-
+  
 }
 
-;Up, Right, Down, Left
-SpeedTableX:
-  db 00, 16, 00, -16
-SpeedTableY:
-  db -16, 00, 16, 00
-
-SpeedTableWordX:
-  dw 00, 01, 00, -01
-SpeedTableWordY:
-  dw -01, 00, 01, 00
-
-
-CheckPlayerDirection:
+DragPlayer:
 {
-  REP #$20
-  STZ $0B7E : STZ $0B7C ; Not needed propbably
+  LDY.w $0DE0,                  X
+  LDA.w DragPlayer_drag_x_low,  Y : CLC : ADC.w $0B7C : STA $0B7C
+  LDA.w DragPlayer_drag_x_high, Y : ADC.w $0B7D : STA $0B7D
   
-  LDA $0DB0,           X : AND #$00FF : ASL : TAY ;Load Direction*2
-  LDA SpeedTableWordX, Y : STA $0B7C
-  LDA SpeedTableWordY, Y : STA $0B7E
+  LDA.w DragPlayer_drag_y_low,  Y : CLC : ADC.w $0B7E : STA $0B7E
+  LDA.w DragPlayer_drag_y_high, Y : ADC.w $0B7F : STA $0B7F
 
-  SEP #$20
+.SomariaPlatform_DragLink
+  REP #$20
+  
+  LDA $0FD8 : SEC : SBC.w #$0008 : CMP $22 : BEQ .x_done
+                                        BPL .x_too_low
+  
+  DEC $0B7C
+  
+  BRA .x_done
 
+.x_too_low
+
+  INC $0B7C
+
+.x_done
+  ; Changing the modifier adjusts links position in the cart 
+  LDA $0FDA : SEC : SBC.w #$0008 : CMP $20 : BEQ .y_done
+                                        BPL .y_too_low
+  
+  DEC $0B7E
+  
+  BRA .y_done
+
+.y_too_low
+
+  INC $0B7E
+
+.y_done
+
+  SEP #$30
+      
   RTS
+
+; .drag_x_high
+;   db 0,   0,  -1,   0,  -1
+
+; .drag_x_low
+;   db 0,   0,  -1,   1,  -1,   1,   1
+
+; .drag_y_low
+;   db -1,   1,   0,   0,  -1,   1,  -1,   1
+
+; .drag_y_high
+;   db -1,   0,   0,   0,  -1,   0,  -1,   0
+
+.drag_x_high
+  db 0,   0,  -1,   0
+
+.drag_x_low
+  db 0,   0,  -1,   1
+
+.drag_y_low
+  db -1,   1,   0,   0
+
+.drag_y_high
+  db -1,   0,   0,   0
+
 }
 
 CheckIfPlayerIsOn:
 {
   REP #$20
   LDA $22 : CLC : ADC #$0009 : CMP $0FD8 : BCC .OutsideLeft
-  LDA $22 : SEC : SBC #$002C : CMP $0FD8 : BCS .OutsideRight
+  LDA $22 : SEC : SBC #$0009 : CMP $0FD8 : BCS .OutsideRight
 
   LDA $20 : CLC : ADC #$0012 : CMP $0FDA : BCC .OutsideUp
-  LDA $20 : SEC : SBC #$0016 : CMP $0FDA : BCS .OutsideDown
+  LDA $20 : SEC : SBC #$0012 : CMP $0FDA : BCS .OutsideDown
   SEP #$21
   RTS                                                       ;Return with carry setted
 

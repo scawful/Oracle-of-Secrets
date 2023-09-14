@@ -19,29 +19,31 @@
 ;   25 - N/A
 ;   26 - N/A
 ;   27 - N/A
-;   28 - Spike Subtype
-;   29 - New Sprite Jump Table
-;   2A - Jump Feather
-;   2B - Book of Secrets
-;   2C - N/A
+;   28 - ZS Reserved
+;   29 - ZSprite Jump Table
+;   2A - Custom Sprites: Farore, Kydrog, Maku Tree, Mask Salesman
+;                        Deku Scrub, Anti Kirby, Village Dog, Minecart
+;                        Impa, Bug Net Kid
+;   2B - Custom Items: Feather, Book, Sword Collect
+;   2C - Dungeon Objects, Spike Subtype
 ;   2D - Menu
 ;   2E - HUD
 ;   2F - House Tag
-;   30 - Custom Sprites and New Functions
+;   30 - 
 ;   31 - Deku Link Code
-;   32 - None
-;   33 - None
-;   34 - Zora Link Code
+;   32 - Entrance Music Fix 
+;   33 - Together Warp Tag 
+;   34 - N/A
 ;   35 - Deku Link GFX
 ;   36 - Zora Link GFX
 ;   37 - Bunny Link GFX
 ;   38 - Wolf Link GFX
 ;   39 - Minish Link GFX
 ;   3A - StartupMasks, Palette_ArmorAndGloves, CgramAuxToMain
-;   3B - N/A
+;   3B - GBC Link GFX
 ;   3C - N/A
 ;   3D - N/A
-;   3F - Boat GFX
+;   3F - Load Custom GFX, Boat GFX
 ;
 ; Used Free RAM:
 ;   $B6   - Cutscene State
@@ -69,6 +71,12 @@ namespace Oracle
 
   incsrc "Overworld/master_sword.asm"
   print  "End of master_sword.asm           ", pc
+
+  incsrc "Overworld/custom_gfx.asm"
+  print  "End of custom_gfx.asm             ", pc
+
+  incsrc "Overworld/maku_tree.asm"
+  print  "End of Overworld/maku_tree.asm       ", pc
 
   print ""
 
@@ -109,9 +117,6 @@ namespace Oracle
   ; ---------------------------------------------------------
   ; Music
 
-  ; incsrc "Music/stone_tower_temple.asm"
-  ; print  "End of stone_tower_temple.asm     ", pc
-
   incsrc "Music/frozen_hyrule.asm"
   print  "End of Music/frozen_hyrule.asm    ", pc
 
@@ -122,9 +127,6 @@ namespace Oracle
   print  "End of Music/dungeon_theme.asm    ", pc
 
   incsrc "Music/entrance_music_fix.asm"
-
-  ; incsrc "Music/boss_theme.asm"
-  ; print  "End of Music/boss_theme.asm       ", pc
 
   print ""
 
@@ -145,20 +147,6 @@ namespace Oracle
 
   print ""
 
-  ; ---------------------------------------------------------
-  ; Graphics
-
-  print "  -- Graphics --  "
-  print ""
-
-  incsrc "Graphics/boat_gfx.asm"
-  print  "End of Graphics/boat_gfx.asm      ", pc
-
-  incsrc "Events/maku_tree.asm"
-  print  "End of Events/maku_tree.asm       ", pc
-
-  print ""
-
 
   ; ---------------------------------------------------------
   ; Sprites
@@ -166,7 +154,7 @@ namespace Oracle
   print "  -- Sprites --  "
   print ""
 
-  incsrc "Sprites/sprites.asm"
+  incsrc "Sprites/all_sprites.asm"
 
   print ""
 
@@ -186,24 +174,7 @@ namespace Oracle
   print "  -- Items --  "
   print ""
 
-  incsrc "Items/bottle_net.asm"
-  print  "End of Items/bottle_net.asm       ", pc
-
-  incsrc "Items/ocarina.asm"
-  print  "End of Items/ocarina.asm          ", pc
-
-  incsrc "Items/jump_feather.asm"
-  print  "End of Items/jump_feather.asm     ", pc
-
-  incsrc "Items/ice_rod.asm"
-  print  "End of Items/ice_rod.asm          ", pc
-
-  incsrc "Items/book_of_secrets.asm"
-  print  "End of Items/book_of_secrets.asm  ", pc
-
-  incsrc "Items/sword_collect.asm"
-  print  "End of Items/sword_collect.asm    ", pc
-
+  incsrc "Items/all_items.asm"
 
   print ""
 

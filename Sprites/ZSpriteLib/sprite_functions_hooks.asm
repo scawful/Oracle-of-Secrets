@@ -57,6 +57,8 @@ SprXRound    = $0D70
 SprCachedX   = $0FD8 ; This doesn't need to be indexed with X it contains the 16bit position of the sprite
 SprCachedY   = $0FDA ; This doesn't need to be indexed with X it contains the 16bit position of the sprite
 
+DungeonMainCheck = $021B ;0x01
+SpriteRanCheck = $8E ;0x01
 
 
 org $09AE64
