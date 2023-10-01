@@ -1,6 +1,7 @@
 ;==============================================================================
 ; Sprite Properties
 ;==============================================================================
+
 !SPRID              = $BE            ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 08             ; Number of tiles used in a frame
 !Harmless           = 01             ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
@@ -58,11 +59,10 @@ Sprite_Minecart_Prep:
 {
   PHB : PHK : PLB
 
-  ; Adjust the Y position so it aligns with the tracks.
-  LDA #$00 : STA $0CAA, X
   
   LDA $0D00, X : SEC : SBC.b #$04 : STA $0D00, X ; SprY adjustment 
-
+  
+  LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
   LDA #$04 : STA $0E40, X ; Nbr Oam Entries 
   LDA #$40 : STA $0E60, x ; Impervious props 
   LDA #$E0 : STA $0F60, X ; Persist 
@@ -97,6 +97,7 @@ Sprite_Minecart_Main:
   dw Minecart_MoveNorth ; 0x04
   dw Minecart_MoveSouth ; 0x05
   dw Minecart_MoveEast  ; 0x06
+  dw Minecart_Release   ; 0x07
 
   Minecart_Adjust:
   {
@@ -111,10 +112,12 @@ Sprite_Minecart_Main:
     LDA #$40 : STA $0E00, X ; Set SprTimerB
 
     LDA SprMiscB, X : CMP #$00 : BNE .not_horiz
-    INC $0D80, X  ; Minecart_WaitHoriz
+    INC $0D80,    X                             ; Minecart_WaitHoriz
     RTS
   .not_horiz
+    LDA $0D10, X : SEC : SBC #$04 : STA $0D10, X ; SprX adjustment
     %GotoAction(2) ; Minecart_WaitVert
+  
     RTS
   }
 
@@ -123,6 +126,8 @@ Sprite_Minecart_Main:
     %PlayAnimation(0,1,8)
     JSR CheckIfPlayerIsOn : BCC .not_on_platform
 
+    LDA $012B : BNE .opposite_direction
+
     JSL Player_HaltDashAttack            ; Stop the player from dashing
     LDA #$02 : STA $02F5                 ; Somaria platform and moving 
     LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
@@ -130,6 +135,14 @@ Sprite_Minecart_Main:
 
   .not_on_platform
     RTS 
+
+  .opposite_direction
+    JSL Player_HaltDashAttack            ; Stop the player from dashing
+    LDA #$02 : STA $02F5                 ; Somaria platform and moving 
+    LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
+    %GotoAction(6) ; Minecart_MoveEast
+    RTS
+
   }
   
   Minecart_WaitVert:
@@ -151,6 +164,7 @@ Sprite_Minecart_Main:
     %PlayAnimation(0,1,8)
     LDA.b #-!MinecartSpeed : STA $0D50, X
     JSL   Sprite_MoveHoriz
+    LDA   #$35 : STA $012E
     
     ; Make Link move with the minecart 
     LDA SprX, X : STA $22
@@ -158,7 +172,7 @@ Sprite_Minecart_Main:
     JSR DragPlayer
   
     ; Set Minecart sprite coords to look for tile attributes
-    LDA.w $0D00, X : STA.b $00
+    LDA.w $0D00, X : CLC : ADC.b #$04 : STA.b $00
     LDA.w $0D20, X : STA.b $01
     
     LDA.w $0D10, X : STA.b $02
@@ -170,6 +184,7 @@ Sprite_Minecart_Main:
     LDA $0FA5 : CMP.b #$B1 : BNE .continue
     %StartOnFrame(2)
     LDA #$00 : STA $0D50, X                ; Reset X Speed
+    LDA #$05 : STA $012E
     INC $0D80,            X                ; Minecart_MoveNorth
     RTS
   .continue
@@ -178,10 +193,15 @@ Sprite_Minecart_Main:
     %StartOnFrame(2)
     LDA #$00 : STA $0D50, X                  ; Reset X Speed
     LDA $31 : CLC : ADC.b #$30 : STA $31
+    LDA #$05 : STA $012E
     %GotoAction(5) ; Minecart_MoveSouth
     RTS
-
   .continue_b
+    LDA $0FA5 : CMP.b #$B6 : BNE .continue_c
+    LDA #$16 : STA $012F
+    %GotoAction(7)
+    RTS
+  .continue_c
 
     %HandlePlayerCamera()
 
@@ -192,6 +212,7 @@ Sprite_Minecart_Main:
   {
     %PlayAnimation(2,3,8)
     LDA.b #-!MinecartSpeed : STA $0D40, X
+    LDA   #$35 : STA $012E
 
     JSL Sprite_MoveVert
     LDA SprY, X : SEC : SBC #$04 : STA $20
@@ -211,9 +232,14 @@ Sprite_Minecart_Main:
     ; Check for top right corner 
     LDA $0FA5 : CMP.b #$B4 : BNE .continue
     LDA $0FDA : SEC : SBC #$0B : STA $20
+    LDA #$05 : STA $012E
     %GotoAction(3)
     RTS
   .continue
+
+    LDA $0FA5 : CMP.b #$B6 : BNE .continue_b
+    %GotoAction(7)
+  .continue_b
 
     LDA $40 : SEC : SBC.b #$FF : STA $40
     LDA $68 : SEC : SBC.b #$FF : STA $68
@@ -241,9 +267,9 @@ Sprite_Minecart_Main:
     LDA.w $0D30, X : STA.b $03
     
     LDA.b #$00 : JSL Sprite_GetTileAttr
-    LDA   $0FA5 : CMP.b #$B5 : BNE .continue
-    LDA   $0FDA : SEC : SBC #$0B : STA $20
-    %GotoAction(2) ; Minecart_MoveWest
+    LDA   $0FA5 : CMP.b #$B1 : BNE .continue
+    
+    %GotoAction(6) ; Minecart_MoveWest
     RTS
   .continue
 
@@ -254,7 +280,58 @@ Sprite_Minecart_Main:
   
   Minecart_MoveEast:
   {
+    %PlayAnimation(0,1,8)
+    %HandlePlayerCamera()
+    
+    LDA.b #!MinecartSpeed : STA $0D50, X
+    JSL   Sprite_MoveHoriz
+    LDA   #$35 : STA $012E
+    
+    ; Make Link move with the minecart 
+    LDA SprX, X : STA $22
 
+    JSR DragPlayer
+  
+    ; Set Minecart sprite coords to look for tile attributes
+    LDA.w $0D00, X : STA.b $00
+    LDA.w $0D20, X : STA.b $01
+    
+    LDA.w $0D10, X : STA.b $02
+    LDA.w $0D30, X : STA.b $03
+    
+    LDA.b #$00 : JSL Sprite_GetTileAttr
+    
+   ; Check for top right corner 
+    LDA $0FA5 : CMP.b #$B4 : BNE .continue
+      LDA $0FDA : SEC : SBC #$0B : STA $20
+      LDA #$05 : STA $012E
+      %GotoAction(5)
+      RTS
+  .continue
+    ; Check for top left corner, then go south 
+    LDA $0FA5 : CMP.b #$B2 : BNE .continue_b
+      %StartOnFrame(2)
+      LDA #$00 : STA $0D50, X              ; Reset X Speed
+      LDA $31 : CLC : ADC.b #$30 : STA $31
+      LDA #$05 : STA $012E
+      %GotoAction(5) ; Minecart_MoveSouth
+      RTS
+  .continue_b
+
+    %HandlePlayerCamera()
+
+    RTS
+  }
+
+  Minecart_Release:
+  {
+    
+    STZ   $02F5
+    STZ.w $0D40,                X
+    LDA   #$40 : STA SprTimerD, X
+    LDA   #$01 : STA $012B
+
+    ; %GotoAction(0)
     RTS
   }
   
@@ -527,272 +604,3 @@ Sprite_Minecart_DrawBottom:
     db $02, $02
     db $02, $02
 }
-
-
-;==============================================================================
-; Camera Code copied from vanilla which is called by HandleIndoorCameraAndDoors
-; Could be modified to be a custom Minecart camera which skips the dungeon
-; small room scroll transitions.
-; There's still some code left in bank02 not copied.
-
-!LinkCoordCacheY_High = $40
-!LinkCoordCacheX_High = $41
-
-; Link's absolute coordinates
-; TODO also used during attract (up through around $34)
-!POSY            = $7E0020
-!POSYH           = $7E0021
-!POSX            = $7E0022
-!POSXH           = $7E0023
-
-; The difference in pixels Link moved on each axis
-!DIFFY         = $7E0030
-!DIFFX         = $7E0031
-
-; Caches Link's coordinates for calculations during movement routines.
-!CALCYL          = $7E003E
-!CALCXL          = $7E003F
-!CALCYH          = $7E0040
-!CALCXH          = $7E0041
-
-; Difference of coordinate high bytes for movement calculations.
-!DIFFYH        = $7E0068
-!DIFFXH        = $7E0069
-
-; Camera scroll boundaries for big (B) and small (A) rooms in directions NSEW
-!SCROLLAN        = $7E0600
-!SCROLLANH       = $7E0601
-!SCROLLBN        = $7E0602
-!SCROLLBNH       = $7E0603
-!SCROLLAS        = $7E0604
-!SCROLLASH       = $7E0605
-!SCROLLBS        = $7E0606
-!SCROLLBSH       = $7E0607
-
-!SCROLLAW        = $7E0608
-!SCROLLAWH       = $7E0609
-!SCROLLBW        = $7E060A
-!SCROLLBWH       = $7E060B
-!SCROLLAE        = $7E060C
-!SCROLLAEH       = $7E060D
-!SCROLLBE        = $7E060E
-!SCROLLBEH       = $7E060F
-
-; Called by HandleIndoorCameraAndDoors if Link is not in a doorway.
-ApplyLinksMovementToCamera:
-  PHB : PHK : PLB
-
-  LDA.b $21 : SEC : SBC.b $40 : STA.b $68
-  LDA.b $23 : SEC : SBC.b $41 : STA.b $69
-
-  ; you already have it, doofus
-  LDA.b $69 : BEQ .check_y_movement
-
-  BMI .moved_left
-
-.moved_right
-  JSL AdjustQuadrantAndCamera_right
-  BRA .check_y_movement
-
-.moved_left
-  JSL AdjustQuadrantAndCamera_left
-
-.check_y_movement
-  LDA.b $68 : BEQ .done
-
-  BPL .moved_down
-
-.moved_up
-  JSL AdjustQuadrantAndCamera_up
-
-  PLB
-
-  RTL
-
-.moved_down
-  JSL AdjustQuadrantAndCamera_down
-
-.done
-  PLB
-
-  RTL
-
-QuadrantLayoutFlagBitfield:
-  db $08, $04, $02, $01, $0C, $0C, $03, $03
-  db $0A, $05, $0A, $05, $0F, $0F, $0F, $0F
-
-Underworld_AdjustQuadrant:
-  LDA.w $040E
-  ORA.b $AA
-  ORA.b $A9
-  STA.b $A8
-
-  RTS
-
-;==============================================================================
-
-
-AdjustQuadrantAndCamera_right:
-   LDA.b $A9
-   EOR.b #$01
-   STA.b $A9
-
-   JSR Underworld_AdjustQuadrant
-
-   LDX.b #$08
-   JSR   AdjustCameraBoundaries_DownOrRightQuadrant
-
-;==============================================================================
-
-SetAndSaveVisitedQuadrantFlags:
-   LDA.b $A7
-   ASL   A
-   ASL   A
-   STA.b $00
-
-   LDA.b $A6
-   ASL   A
-   ORA.b $00
-   ORA.b $AA
-   ORA.b $A9
-   TAX
-
-   LDA.l QuadrantLayoutFlagBitfield, X
-   ORA.w $0408
-   STA.w $0408
-
-;==============================================================================
-
-SaveVisitedQuadrantFlags:
-   REP #$30
-
-   LDA.b $A0
-   ASL   A
-   TAX
-
-   LDA.l $7EF000, X
-   ORA.w $0408
-   STA.l $7EF000, X
-
-   SEP #$30
-
-   RTL
-
-;==============================================================================
-
-AdjustQuadrantAndCamera_left:
-   LDA.b $A9
-   EOR.b #$01
-   STA.b $A9
-
-   JSR Underworld_AdjustQuadrant
-
-   LDX.b #$08
-   JSR   AdjustCameraBoundaries_UpOrLeftQuadrant
-
-   BRA SetAndSaveVisitedQuadrantFlags
-
-;==============================================================================
-
-AdjustQuadrantAndCamera_down:
-   LDA.b $AA
-   EOR.b #$02
-   STA.b $AA
-
-   JSR Underworld_AdjustQuadrant
-
-   LDX.b #$00
-   JSR   AdjustCameraBoundaries_DownOrRightQuadrant
-
-   BRA SetAndSaveVisitedQuadrantFlags
-
-;==============================================================================
-
-AdjustQuadrantAndCamera_up:
-   LDA.b $AA
-   EOR.b #$02
-   STA.b $AA
-
-   JSR Underworld_AdjustQuadrant
-
-   LDX.b #$00
-   JSR   AdjustCameraBoundaries_UpOrLeftQuadrant
-
-   BRA SetAndSaveVisitedQuadrantFlags
-
-
-;===================================================================================================
-
-AdjustCameraBoundaries_DownOrRightQuadrant:
-  REP #$20
-
-  LDA.w $0600, X
-  CLC
-  ADC.w #$0100
-  STA.w $0600, X
-
-  LDA.w $0604, X
-  CLC
-  ADC.w #$0100
-  STA.w $0604, X
-
-  SEP #$20
-
-  RTS
-
-;===================================================================================================
-
-AdjustCameraBoundaries_DownOrRightWholeRoom:
-  REP #$20
-
-  LDA.w $0602, X
-  CLC
-  ADC.w #$0200
-  STA.w $0602, X
-
-  LDA.w $0606, X
-  CLC
-  ADC.w #$0200
-  STA.w $0606, X
-
-  SEP #$20
-
-  RTS
-
-;===================================================================================================
-
-AdjustCameraBoundaries_UpOrLeftQuadrant:
-  REP #$20
-
-  LDA.w $0600, X
-  SEC
-  SBC.w #$0100
-  STA.w $0600, X
-
-  LDA.w $0604, X
-  SEC
-  SBC.w #$0100
-  STA.w $0604, X
-
-  SEP #$20
-
-  RTS
-
-;===================================================================================================
-
-AdjustCameraBoundaries_UpOrLeftWholeRoom:
-  REP #$20
-
-  LDA.w $0602, X
-  SEC
-  SBC.w #$0200
-  STA.w $0602, X
-
-  LDA.w $0606, X
-  SEC
-  SBC.w #$0200
-  STA.w $0606, X
-
-  SEP #$20
-
-  RTL
