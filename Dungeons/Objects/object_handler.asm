@@ -68,6 +68,8 @@ NewObjectsCode:
   dw .TopRight-.ObjData    ; 03 
   dw .Bottomleft-.ObjData  ; 04 
   dw .BottomRight-.ObjData ; 05
+  dw .LeftRightFloor-.ObjData ; 06
+  dw .UpDownFloor-.ObjData ; 07
 
 .ObjData
   .LeftRight
@@ -82,6 +84,10 @@ NewObjectsCode:
     incbin track_corner_BL.bin
   .BottomRight
     incbin track_corner_BR.bin
+  .LeftRightFloor
+    incbin track_floor_UD.bin
+  .UpDownFloor
+    incbin track_floor_LR.bin
 
 }
 
