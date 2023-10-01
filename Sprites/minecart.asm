@@ -83,7 +83,8 @@ macro HandlePlayerCamera()
     PLX 
 endmacro
 
-!MinecartSpeed = 20
+!MinecartSpeed     = 20
+!MinecartDirection = $012B
 
 Sprite_Minecart_Main:
 {
@@ -93,58 +94,63 @@ Sprite_Minecart_Main:
   dw Minecart_Adjust    ; 0x00
   dw Minecart_WaitHoriz ; 0x01
   dw Minecart_WaitVert  ; 0x02
-  dw Minecart_MoveWest  ; 0x03
-  dw Minecart_MoveNorth ; 0x04
+  dw Minecart_MoveNorth ; 0x03
+  dw Minecart_MoveEast  ; 0x04
   dw Minecart_MoveSouth ; 0x05
-  dw Minecart_MoveEast  ; 0x06
+  dw Minecart_MoveWest  ; 0x06
   dw Minecart_Release   ; 0x07
 
+  ; 0x00
   Minecart_Adjust:
   {
-    %PlayAnimation(0,1,8)
+    STZ !MinecartDirection ; Reset the direction modifier
 
-    LDA $0D10, X : SEC : SBC #$04 : STA $0D10, X ; SprX adjustment
+    ; 0x00 - Horizontal Moving West
+    ; 0x01 - Horizontal Moving East
+    ; 0x02 - Vertical Moving North
+    ; 0x03 - Vertical Moving South
+    LDA SprSubtype, X : CMP.b #$00 : BEQ .horiz_west
+                        CMP.b #$01 : BEQ .horiz_east
+                        CMP.b #$02 : BEQ .vert_north
+                        CMP.b #$03 : BEQ .vert_south
 
-    ; Store the Subtype in SprMiscB
-    ; This will be set by the editor to decide if it
-    ; should be oriented horizontally or vertically.
-    LDA $0E30, X : STA $0DB0, X 
-    LDA #$40 : STA $0E00, X ; Set SprTimerB
+    .horiz_east
+      LDA #$01 : STA !MinecartDirection
+    .horiz_west
+      INC $0D80, X ; Minecart_WaitHoriz
+      %StartOnFrame(0)
+      LDA $0D10, X : SEC : SBC #$04 : STA $0D10, X ; SprX adjustment
+      RTS
 
-    LDA SprMiscB, X : CMP #$00 : BNE .not_horiz
-    INC $0D80,    X                             ; Minecart_WaitHoriz
-    RTS
-  .not_horiz
-    LDA $0D10, X : SEC : SBC #$04 : STA $0D10, X ; SprX adjustment
-    %GotoAction(2) ; Minecart_WaitVert
-  
-    RTS
+    .vert_north
+      LDA #$02 : STA !MinecartDirection
+    .vert_south
+      %GotoAction(2) ; Minecart_WaitVert
+      %StartOnFrame(2)
+      RTS
   }
 
+  ; 0x01
   Minecart_WaitHoriz:
   {
     %PlayAnimation(0,1,8)
     JSR CheckIfPlayerIsOn : BCC .not_on_platform
 
-    LDA $012B : BNE .opposite_direction
-
     JSL Player_HaltDashAttack            ; Stop the player from dashing
     LDA #$02 : STA $02F5                 ; Somaria platform and moving 
-    LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
-    %GotoAction(3)  ; Minecart_MoveWest
+    LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
+    
+    LDA !MinecartDirection : BNE .opposite_direction
+      %GotoAction(6)  ; Minecart_MoveWest
+      RTS
 
-  .not_on_platform
-    RTS 
-
-  .opposite_direction
-    JSL Player_HaltDashAttack            ; Stop the player from dashing
-    LDA #$02 : STA $02F5                 ; Somaria platform and moving 
-    LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
-    %GotoAction(6) ; Minecart_MoveEast
-    RTS
-
+    .opposite_direction
+      %GotoAction(4) ; Minecart_MoveEast
+    .not_on_platform
+      RTS
   }
   
+  ; 0x02
   Minecart_WaitVert:
   {
     %PlayAnimation(2,3,8)
@@ -153,61 +159,18 @@ Sprite_Minecart_Main:
     JSL Player_HaltDashAttack            ; Stop the player from dashing
     LDA #$02 : STA $02F5                 ; Somaria platform and moving 
     LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
-    %GotoAction(4)  ; Minecart_MoveNorth
-
-  .not_on_platform
-    RTS 
+    
+    LDA !MinecartDirection : BNE .opposite_direction
+      %GotoAction(5)  ; Minecart_MoveSouth
+      RTS
+      
+    .opposite_direction
+      %GotoAction(3)  ; Minecart_MoveNorth
+    .not_on_platform
+      RTS 
   }
 
-  Minecart_MoveWest:
-  {
-    %PlayAnimation(0,1,8)
-    LDA.b #-!MinecartSpeed : STA $0D50, X
-    JSL   Sprite_MoveHoriz
-    LDA   #$35 : STA $012E
-    
-    ; Make Link move with the minecart 
-    LDA SprX, X : STA $22
-
-    JSR DragPlayer
-  
-    ; Set Minecart sprite coords to look for tile attributes
-    LDA.w $0D00, X : CLC : ADC.b #$04 : STA.b $00
-    LDA.w $0D20, X : STA.b $01
-    
-    LDA.w $0D10, X : STA.b $02
-    LDA.w $0D30, X : STA.b $03
-    
-    LDA.b #$00 : JSL Sprite_GetTileAttr
-    
-    ; Check for bottom left corner tile 
-    LDA $0FA5 : CMP.b #$B1 : BNE .continue
-    %StartOnFrame(2)
-    LDA #$00 : STA $0D50, X                ; Reset X Speed
-    LDA #$05 : STA $012E
-    INC $0D80,            X                ; Minecart_MoveNorth
-    RTS
-  .continue
-    ; Check for top left corner, then go south 
-    LDA $0FA5 : CMP.b #$B2 : BNE .continue_b
-    %StartOnFrame(2)
-    LDA #$00 : STA $0D50, X                  ; Reset X Speed
-    LDA $31 : CLC : ADC.b #$30 : STA $31
-    LDA #$05 : STA $012E
-    %GotoAction(5) ; Minecart_MoveSouth
-    RTS
-  .continue_b
-    LDA $0FA5 : CMP.b #$B6 : BNE .continue_c
-    LDA #$16 : STA $012F
-    %GotoAction(7)
-    RTS
-  .continue_c
-
-    %HandlePlayerCamera()
-
-    RTS
-  }
-
+  ; 0x03
   Minecart_MoveNorth:
   {
     %PlayAnimation(2,3,8)
@@ -233,7 +196,7 @@ Sprite_Minecart_Main:
     LDA $0FA5 : CMP.b #$B4 : BNE .continue
     LDA $0FDA : SEC : SBC #$0B : STA $20
     LDA #$05 : STA $012E
-    %GotoAction(3)
+    %GotoAction(6) ; Minecart_MoveWest
     RTS
   .continue
 
@@ -249,35 +212,6 @@ Sprite_Minecart_Main:
     RTS
   }
 
-  Minecart_MoveSouth:
-  {
-    %PlayAnimation(2,3,8)
-    LDA.b #!MinecartSpeed : STA $0D40, X
-
-    JSL Sprite_MoveVert
-    LDA SprY, X : SEC : SBC #$04 : STA $20
-    LDA $0FD8 : CLC : ADC #$02 : STA $22   ; X 
-
-    JSR DragPlayer
-    
-    LDA.w $0D00, X : STA.b $00
-    LDA.w $0D20, X : STA.b $01
-    
-    LDA.w $0D10, X : STA.b $02
-    LDA.w $0D30, X : STA.b $03
-    
-    LDA.b #$00 : JSL Sprite_GetTileAttr
-    LDA   $0FA5 : CMP.b #$B1 : BNE .continue
-    
-    %GotoAction(6) ; Minecart_MoveWest
-    RTS
-  .continue
-
-    %HandlePlayerCamera()
-
-    RTS
-  }
-  
   Minecart_MoveEast:
   {
     %PlayAnimation(0,1,8)
@@ -323,18 +257,99 @@ Sprite_Minecart_Main:
     RTS
   }
 
-  Minecart_Release:
-  {
-    
-    STZ   $02F5
-    STZ.w $0D40,                X
-    LDA   #$40 : STA SprTimerD, X
-    LDA   #$01 : STA $012B
 
-    ; %GotoAction(0)
+  Minecart_MoveSouth:
+  {
+    %PlayAnimation(2,3,8)
+
+    LDA.b #!MinecartSpeed : STA $0D40, X
+
+    JSL Sprite_MoveVert
+    LDA SprY, X : SEC : SBC #$04 : STA $20
+    LDA $0FD8 : CLC : ADC #$02 : STA $22   ; X 
+
+    JSR DragPlayer
+    
+    LDA.w $0D00, X : STA.b $00
+    LDA.w $0D20, X : STA.b $01
+    
+    LDA.w $0D10, X : STA.b $02
+    LDA.w $0D30, X : STA.b $03
+    
+    LDA.b #$00 : JSL Sprite_GetTileAttr
+    LDA   $0FA5 : CMP.b #$B1 : BNE .continue
+    
+    %GotoAction(6) ; Minecart_MoveWest
+    RTS
+  .continue
+
+    %HandlePlayerCamera()
+
     RTS
   }
+
+  Minecart_MoveWest:
+  {
+    %PlayAnimation(0,1,8)
+    LDA.b #-!MinecartSpeed : STA $0D50, X
+    JSL   Sprite_MoveHoriz
+    LDA   #$35 : STA $012E
+    
+    ; Make Link move with the minecart 
+    LDA SprX, X : STA $22
+
+    JSR DragPlayer
   
+    ; Set Minecart sprite coords to look for tile attributes
+    LDA.w $0D00, X : CLC : ADC.b #$04 : STA.b $00
+    LDA.w $0D20, X : STA.b $01
+    
+    LDA.w $0D10, X : STA.b $02
+    LDA.w $0D30, X : STA.b $03
+    
+    LDA.b #$00 : JSL Sprite_GetTileAttr
+    
+    ; Check for bottom left corner tile 
+    LDA $0FA5 : CMP.b #$B1 : BNE .continue
+    %StartOnFrame(2)
+    LDA #$00 : STA $0D50, X                ; Reset X Speed
+    LDA #$05 : STA $012E
+    %GotoAction(3) ; Minecart_MoveNorth
+    RTS
+  .continue
+    ; Check for top left corner, then go south 
+    LDA $0FA5 : CMP.b #$B2 : BNE .continue_b
+    %StartOnFrame(2)
+    LDA #$00 : STA $0D50, X                  ; Reset X Speed
+    LDA $31 : CLC : ADC.b #$30 : STA $31
+    LDA #$05 : STA $012E
+    %GotoAction(5) ; Minecart_MoveSouth
+    RTS
+  .continue_b
+    LDA $0FA5 : CMP.b #$B6 : BNE .continue_c
+    LDA #$16 : STA $012F
+    LDA #$40 : STA SprTimerD,  X
+    LDA #$01 : STA SprSubtype, X
+    %GotoAction(7) ; Minecart_Release
+    RTS
+  .continue_c
+
+    %HandlePlayerCamera()
+
+    RTS
+  }
+
+
+  Minecart_Release:
+  {
+    STZ   $02F5
+    STZ.w $0D40, X
+    
+    LDA SprTimerD, X : BNE .not_ready
+    %GotoAction(0)
+  .not_ready
+    RTS
+  }
 }
 
 ;==============================================================================
