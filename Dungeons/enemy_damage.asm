@@ -41,6 +41,20 @@ org $0DB266+$53
 org $0DB1C6 ;  0x53 - ARMOS KNIGHT health 
   db 64
 
+; Firebar 
 org $0DB44C+$7F
-  db $64
+  db $64 ; persist, same damage
 
+; Zora, Zora Fireball
+org $0DB266+$55
+  db $03, $03
+
+; Arrghus 
+org $0DB266+$8C 
+  db $14
+
+org $0DB266+$8D ; Arrgi
+  db $14
+
+org $0DB266+$5D ; Roller vertical 
+  db $05, $05, $05, $05
