@@ -72,7 +72,7 @@ namespace Oracle
   incsrc "Overworld/master_sword.asm"
   print  "End of master_sword.asm           ", pc
 
-  incsrc "Overworld/custom_gfx.asm"
+  ;incsrc "Overworld/custom_gfx.asm"
   print  "End of custom_gfx.asm             ", pc
 
   incsrc "Overworld/maku_tree.asm"
@@ -112,6 +112,12 @@ namespace Oracle
   incsrc "Dungeons/spike_subtype.asm"
   print  "End of spike_subtype.asm          ", pc
 
+  incsrc "Dungeons/Lanmola.asm"
+  print "End of Dungeons/Lanmola.asm       ", pc
+
+  incsrc "Dungeons/Lanmola_Expanded.asm"
+  print "End of Dungeons/Lanmola_Expanded.asm       ", pc
+
   print ""
 
   ; ---------------------------------------------------------
@@ -126,7 +132,7 @@ namespace Oracle
   incsrc "Music/dungeon_theme.asm"
   print  "End of Music/dungeon_theme.asm    ", pc
 
-  incsrc "Music/entrance_music_fix.asm"
+  ; incsrc "Music/entrance_music_fix.asm"
 
   print ""
 
