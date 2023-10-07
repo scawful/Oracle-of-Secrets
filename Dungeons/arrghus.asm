@@ -8,6 +8,7 @@ AdvancedArrghus:
   LDA.b #$50 : STA $0DF0, X
   RTL
 }
+pushpc
 
 org $1E7F21 
 Sprite3_Move:
