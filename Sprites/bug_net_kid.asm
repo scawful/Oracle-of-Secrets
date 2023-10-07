@@ -11,7 +11,7 @@ BugNetKid_Resting:
     
     JSR Sprite_CheckDamageToPlayer_same_layer : BCC .dont_awaken
     
-    LDA $7EF34C
+    LDA.l $7EF34C
     
     CMP.b #$01 : BCC .no_ocarina
     
