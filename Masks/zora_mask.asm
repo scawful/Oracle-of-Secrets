@@ -214,8 +214,8 @@ pullpc
   ; Check if the player is actually diving 
   LDA $0AAB : BEQ .return_default
 
-  LDA $0114 : CMP #$85 : BEQ .return_default
-  LDA $0114 : CMP #$09 : BEQ .return_default
+  LDA $0114 : CMP #$85 : BEQ .player_is_falling
+  LDA $0114 : CMP #$09 : BEQ .player_is_falling
   LDA $5B : CMP #$02 : BEQ .dungeon_stairs
 
   ; Check if the ground level is safe
@@ -231,11 +231,12 @@ pullpc
     LDA.b #$15 : LDY.b #$00 : JSL AddTransitionSplash
   .remove_dive
     LDA #$04 : STA $5D ; Set Link to Swimming State
-  .player_is_falling
+  
     LDA #$01 : STA $EE ; Set Link to upper level
     STA $0345          ; Set deep water flag 
 
     ; Remove Diving Effects
+  .player_is_falling
     LDA $67 : AND #$01 : STA $2F
     STZ $5E                      ; Reset speed to normal
     STZ $0AAB                    ; Reset underwater flag 
