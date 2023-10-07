@@ -186,33 +186,33 @@ Menu_InitItemScreen:
 ; -----------------------------------------------------------------------------
 
 Menu_AddressLong:
-  dl $7EF340 ; Bow
-  dl $7EF341 ; Boomerang
-  dl $7EF342 ; Hookshot 
-  dl $7EF343 ; Bombs
-  dl $7EF344 ; Powder 
-  dl $7EF35C ; Bottle 1
+  db $7EF340 ; Bow
+  db $7EF341 ; Boomerang
+  db $7EF342 ; Hookshot 
+  db $7EF343 ; Bombs
+  db $7EF344 ; Powder 
+  db $7EF35C ; Bottle 1
 
-  dl $7EF34B ; Hammer 
-  dl $7EF34A ; Lamp 
-  dl $7EF345 ; Fire Rod
-  dl $7EF346 ; Ice Rod 
-  dl $7EF353 ; Magic Mirror
-  dl $7EF35D ; Bottle 2
+  db $7EF34B ; Hammer 
+  db $7EF34A ; Lamp 
+  db $7EF345 ; Fire Rod
+  db $7EF346 ; Ice Rod 
+  db $7EF353 ; Magic Mirror
+  db $7EF35D ; Bottle 2
 
-  dl $7EF34C ; shovel 7EF34F
-  dl $7EF34E ; Book 
-  dl $7EF350 ; Cane of Somaria
-  dl $7EF351 ; Cane of Byrna
-  dl $7EF34D ; Roc's Feather 
-  dl $7EF35E ; Bottle 3
+  db $7EF34C ; shovel 7EF34F
+  db $7EF34E ; Book 
+  db $7EF350 ; Cane of Somaria
+  db $7EF351 ; Cane of Byrna
+  db $7EF34D ; Roc's Feather 
+  db $7EF35E ; Bottle 3
 
-  dl $7EF349 ; Deku Mask 
-  dl $7EF347 ; Zora Mask
-  dl $7EF358 ; Wolf Mask 
-  dl $7EF348 ; Bunny Hood
-  dl $7EF352 ; Stone Mask
-  dl $7EF35F ; Bottle #4
+  db $7EF349 ; Deku Mask 
+  db $7EF347 ; Zora Mask
+  db $7EF358 ; Wolf Mask 
+  db $7EF348 ; Bunny Hood
+  db $7EF352 ; Stone Mask
+  db $7EF35F ; Bottle #4
 
 GotoNextItem_Override:
 {
@@ -233,7 +233,7 @@ GotoNextItem_Override:
 DoWeHaveThisItem_Override:
 {
   LDY $0202
-  LDX.w Menu_AddressIndex-1, Y
+  LDX.w Menu_AddressLong, Y
   LDA.l $7EF300,             X
   BNE .have_this_item
   CLC
@@ -254,17 +254,15 @@ TryEquipNextItem_Override:
 SearchForEquippedItem_Override:
 {
     SEP   #$30
-
-    STY.w $0202
-    LDX.w Menu_AddressIndex-1, Y
+ 
+    LDY $0202
+    LDX.w Menu_AddressLong-1, Y
     LDA.l $7EF300,             X
     
     CMP.b #$00 : BNE .equippableItemAvailable
     
     ; In this case we have no equippable items
-    STZ $0202
-    STZ $0203
-    STZ $0204
+    STZ $0202 : STZ $0203 : STZ $0204
 
   .weHaveThatItem
 
@@ -277,8 +275,7 @@ SearchForEquippedItem_Override:
     BNE .alreadyEquipped
     
     ; If not, set the equipped item to the Bow and Arrow (even if we don't actually have it)
-    LDA.b #$01
-    STA   $0202
+    LDA.b #$01 : STA   $0202
 
   .alreadyEquipped
 
@@ -309,7 +306,9 @@ TryEquipNextItem:
 org $0DE399
 SearchForEquippedItem:
 {
+  PHB : PHK : PLB
   JSL SearchForEquippedItem_Override
+  PLB 
   RTS
 }
 warnpc $0DE3C7
