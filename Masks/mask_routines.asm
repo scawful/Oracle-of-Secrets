@@ -86,13 +86,17 @@ StartupMasks:
 
 ForceResetWorldMap:
 {
-  LDA $7EF280 : BNE .openMap
+ LDA $7EF280 : BNE .openMap
   PLA : PLA : PLA ; Pop the RTL
   JML $02A571 ; check select button 
+
+  .openMap
+  LDA $02B2 : BEQ .still_link
   LDY.b #$04 : LDA.b #$23
   JSL   AddTransformationCloud
   %ResetToLinkGraphics()
-
+  
+.still_link
   STZ.w $0200
   LDA #$07
   RTL

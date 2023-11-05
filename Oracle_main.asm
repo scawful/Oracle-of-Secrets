@@ -1,17 +1,8 @@
-; =============================================================================
+; =========================================================
 ;           The Legend of Zelda: Oracle of Secrets
 ;                   Composed by: Scawful
 ;
-; Hacks Included:
-;   Inventory Screen Overhaul
-;   Book Reveals Secrets
-;   Bunny Hood Item
-;   Ice Rod Freezes Water
-;   Intro skip after leaving house
-;   Key block link's awakening
-;   Lost Sea Area Combo
-;
-; Expanded Banks Key:
+; Expanded Banks:
 ;   21 - N/A
 ;   22 - N/A
 ;   23 - N/A
@@ -20,16 +11,14 @@
 ;   26 - N/A
 ;   27 - N/A
 ;   28 - ZS Reserved
-;   29 - ZSprite Jump Table
-;   2A - Custom Sprites: Farore, Kydrog, Maku Tree, Mask Salesman
-;                        Deku Scrub, Anti Kirby, Village Dog, Minecart
-;                        Impa, Bug Net Kid
-;   2B - Custom Items: Feather, Book, Sword Collect
+;   29 - ZSprite Engine
+;   2A - Sprites: all_sprites.asm
+;   2B - Items: all_items.asm
 ;   2C - Dungeon Objects, Spike Subtype
 ;   2D - Menu
 ;   2E - HUD
 ;   2F - House Tag
-;   30 - 
+;   30 - N/A
 ;   31 - Deku Link Code
 ;   32 - Entrance Music Fix 
 ;   33 - Together Warp Tag 
@@ -45,10 +34,7 @@
 ;   3D - N/A
 ;   3F - Load Custom GFX, Boat GFX
 ;
-; Used Free RAM:
-;   $B6   - Cutscene State
-;
-; =============================================================================
+; =========================================================
 
 namespace Oracle
 {
@@ -60,7 +46,7 @@ namespace Oracle
   incsrc "Util/functions.asm"
   incsrc "Util/music_macros.asm"
 
-  ; ---------------------------------------------------------
+  ; -------------------------------------------------------
   ; Overworld
 
   print "  -- Overworld --  "
@@ -72,15 +58,18 @@ namespace Oracle
   incsrc "Overworld/master_sword.asm"
   print  "End of master_sword.asm           ", pc
 
-  ;incsrc "Overworld/custom_gfx.asm"
+  incsrc "Overworld/custom_gfx.asm"
   print  "End of custom_gfx.asm             ", pc
 
   incsrc "Overworld/maku_tree.asm"
-  print  "End of Overworld/maku_tree.asm       ", pc
+  print  "End of Overworld/maku_tree.asm    ", pc
+
+  incsrc "Overworld/lost_woods.asm"
+  print  "End of Overworld/lost_woods.asm   ", pc
 
   print ""
 
-  ; ---------------------------------------------------------
+  ; -------------------------------------------------------
   ; Dungeon
 
   print "  -- Dungeon --  "
@@ -116,11 +105,14 @@ namespace Oracle
   print "End of Dungeons/Lanmola.asm       ", pc
 
   incsrc "Dungeons/Lanmola_Expanded.asm"
-  print "End of Dungeons/Lanmola_Expanded.asm       ", pc
+  print "End of Dungeons/Lanmola_Expanded.asm ", pc
+  
+  incsrc "Dungeons/house_tag.asm"
+  print  "End of Dungeons/house_tag.asm       ", pc
 
   print ""
 
-  ; ---------------------------------------------------------
+  ; -------------------------------------------------------
   ; Music
 
   incsrc "Music/frozen_hyrule.asm"
@@ -136,25 +128,7 @@ namespace Oracle
 
   print ""
 
-  ; ---------------------------------------------------------
-  ; Events
-
-  print "  -- Events --  "
-  print ""
-
-  incsrc "Events/house_tag.asm"
-  print  "End of Events/house_tag.asm       ", pc
-
-  incsrc "Events/lost_woods.asm"
-  print  "End of Events/lost_woods.asm      ", pc
-
-  incsrc "Events/snow_overlay.asm"
-  print  "End of Events/snow_overlay.asm    ", pc
-
-  print ""
-
-
-  ; ---------------------------------------------------------
+  ; -------------------------------------------------------
   ; Sprites
 
   print "  -- Sprites --  "
@@ -164,7 +138,7 @@ namespace Oracle
 
   print ""
 
-  ; ---------------------------------------------------------
+  ; -------------------------------------------------------
   ; Transformation Masks
 
   print "  -- Masks --  "
@@ -174,7 +148,7 @@ namespace Oracle
 
   print ""
 
-  ; ---------------------------------------------------------
+  ; -------------------------------------------------------
   ; Items
 
   print "  -- Items --  "
@@ -184,7 +158,7 @@ namespace Oracle
 
   print ""
 
-  ; ---------------------------------------------------------
+  ; -------------------------------------------------------
   ; Custom Menu and HUD
 
   print "  -- Menu --  "
@@ -197,7 +171,7 @@ namespace Oracle
   ; incsrc "Menu/rings/bestiary.asm"
 
 
-  ; ---------------------------------------------------------
+  ; -------------------------------------------------------
   incsrc "Util/all_items.asm"
   ; print  "End of Util/all_items.asm         ", pc
 

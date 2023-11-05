@@ -62,14 +62,14 @@ NewObjectsCode:
   RTL
 
 .ObjOffset
-  dw .LeftRight-.ObjData   ; 00 
-  dw .UpDown-.ObjData      ; 01 
-  dw .TopLeft-.ObjData     ; 02 
-  dw .TopRight-.ObjData    ; 03 
-  dw .Bottomleft-.ObjData  ; 04 
-  dw .BottomRight-.ObjData ; 05
+  dw .LeftRight-.ObjData      ; 00 
+  dw .UpDown-.ObjData         ; 01 
+  dw .TopLeft-.ObjData        ; 02 
+  dw .TopRight-.ObjData       ; 03 
+  dw .Bottomleft-.ObjData     ; 04 
+  dw .BottomRight-.ObjData    ; 05
   dw .LeftRightFloor-.ObjData ; 06
-  dw .UpDownFloor-.ObjData ; 07
+  dw .UpDownFloor-.ObjData    ; 07
 
 .ObjData
   .LeftRight
