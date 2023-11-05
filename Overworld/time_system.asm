@@ -1,5 +1,6 @@
 ;----------------[ Time system ]----------------
-;@xkas
+@xkas
+warn xkas off
 lorom 
 
 ; tiles locations on HUD
