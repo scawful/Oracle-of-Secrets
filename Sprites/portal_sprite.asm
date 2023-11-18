@@ -3,7 +3,7 @@
 ; Portal Sprite
 ; =========================================================
 
-!SPRID              = $B6 ; The sprite ID you are overwriting (HEX)
+!SPRID              = $B8 ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 01  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -60,6 +60,7 @@ Sprite_Portal_Prep:
   PHB : PHK : PLB
   
   ; Persist outside of camera  
+  LDA #$00 : STA $0CAA, X 
   LDA SprHitbox, X : AND.b #$20 : STA SprHitbox, X
 
   PLB

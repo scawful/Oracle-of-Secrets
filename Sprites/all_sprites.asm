@@ -56,14 +56,17 @@ incsrc "Sprites/minecart.asm"
 print  "End of minecart.asm               ",  pc
 
 incsrc "Sprites/twinrova.asm"
+print  "End of twinrova.asm               ",  pc
 
 incsrc "Sprites/portal_sprite.asm"
+print  "End of portal_sprite.asm          ",  pc
 
 incsrc "Sprites/impa.asm"
 print  "End of impa.asm                   ",  pc
 
+incsrc "Sprites/poltergeist.asm"
+print  "End of poltergeist.asm            ",  pc
 
 incsrc "Sprites/bug_net_kid.asm"
-
 
 warnpc $2B8000

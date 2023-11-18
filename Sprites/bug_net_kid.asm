@@ -1,3 +1,5 @@
+pushpc
+
 org $07F4D0
 Sprite_CheckIfPlayerPreoccupied:
 
@@ -54,3 +56,5 @@ BugNetKid_GrantBugNet:
     
     RTS
 }
+
+pullpc

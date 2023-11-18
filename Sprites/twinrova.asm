@@ -703,7 +703,6 @@ db $02, $02, $02, $02
 db $02, $02, $02, $02
 }
 
-print "TWINROVA ============ ", pc
 ApplyTwinrovaGraphics:
 {
   PHX 
