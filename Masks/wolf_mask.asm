@@ -59,7 +59,7 @@ LinkItem_ShovelAndFlute:
 
 ; Bank 07 Free Space
 pullpc
-print pc
+
 LinkItem_WolfMask:
 {
   ; SEP #$30

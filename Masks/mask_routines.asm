@@ -86,7 +86,7 @@ StartupMasks:
 
 ForceResetWorldMap:
 {
- LDA $7EF280 : BNE .openMap
+  LDA $7EF280 : BNE .openMap
   PLA : PLA : PLA ; Pop the RTL
   JML $02A571 ; check select button 
 
@@ -278,5 +278,8 @@ LinkItem_CheckForSwordSwing_Masks:
   LDA $3B : AND.b #$10
   RTL
 }
+
+print "End of mask_routines.asm          ", pc
+
 
 ; =============================================================================

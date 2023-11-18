@@ -7,6 +7,8 @@
 org    $398000
 incbin gfx/minish_link.4bpp
 
+print "End of Minish Form GFX            ", pc
+
 ; =========================================================
 org    $07DA2A
   TileDetection_OverworldAttributeJumpTable:

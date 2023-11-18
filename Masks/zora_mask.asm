@@ -79,7 +79,6 @@ LinkItem_ZoraMask:
   CLC
   RTS
 }
-print pc, " ==> LinkItem_ZoraMask           ", pc
 
 warnpc $07A5CE
 
@@ -271,7 +270,6 @@ pullpc
   LDA #$06 : STA $5D ; Set Link to Recoil State
   RTS
 }
-print "==> LinkState_UsingZoraMask       ", pc
 
 ; =============================================================================
 
