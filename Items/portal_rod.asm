@@ -70,7 +70,7 @@ endmacro
 
 LinkItem_FirePortal:
 {
-  LDA.b #$B6
+  LDA.b #$B8
   JSL   Sprite_SpawnDynamically : BPL .continue
   RTS
 .continue

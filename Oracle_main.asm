@@ -175,6 +175,8 @@ namespace Oracle
   incsrc "Util/all_items.asm"
   ; print  "End of Util/all_items.asm         ", pc
 
+  incsrc "Dungeons/house_walls.asm"
+
   print ""
   print "Finished applying patches"
 }
