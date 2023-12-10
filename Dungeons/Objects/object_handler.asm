@@ -1,5 +1,7 @@
 ; Dungeon Object Handler
 
+incsrc Collision/main.asm
+
 org $018262 ;object id 0x31
   dw ExpandedObject
 
