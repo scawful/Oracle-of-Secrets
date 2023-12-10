@@ -64,6 +64,8 @@ Sprite_Minecart_Long:
 !MinecartSpeed     = 20
 !MinecartDirection = $012B
 
+!SpriteDirection   = $0DE0
+
 Sprite_Minecart_Prep:
 {
   PHB : PHK : PLB
@@ -141,6 +143,7 @@ Sprite_Minecart_Main:
     LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
     
     LDA !MinecartDirection : BNE .opposite_direction
+      LDA #$02 : STA $0DE0, X
       %GotoAction(5)  ; Minecart_MoveWest
       RTS
 
@@ -184,10 +187,11 @@ Sprite_Minecart_Main:
     LDA.b #-!MinecartSpeed : STA SprYSpeed, X
     JSL   Sprite_MoveVert
 
-    ; LDA SprY, X : SEC : SBC #$04 : STA $20
-    ; LDA $0FD8 : CLC : ADC #$02 : STA $22   ; X 
+    LDA SprY, X : SEC : SBC #$04 : STA $20
+    LDA SprX, X : CLC : ADC #$02 : STA $22
 
     JSR DragPlayer
+    JSR CheckForPlayerInput
     %HandlePlayerCamera()
     JSR HandleTileDirections
     LDA #$35 : STA $012E
@@ -208,6 +212,7 @@ Sprite_Minecart_Main:
     ; LDA SprX, X : STA $22
     
     JSR DragPlayer
+    JSR CheckForPlayerInput
     %HandlePlayerCamera()
     JSR HandleTileDirections
     LDA #$35 : STA $012E
@@ -225,15 +230,16 @@ Sprite_Minecart_Main:
     JSL   Sprite_MoveVert
 
     ; LDA SprY, X : SEC : SBC #$04 : STA $20
-    ; LDA $0FD8 : CLC : ADC #$02 : STA $22   ; X 
+    ; LDA SprX, X : CLC : ADC #$02 : STA $22 ; X 
 
     JSR DragPlayer
+    JSR CheckForPlayerInput
     %HandlePlayerCamera()
     JSR HandleTileDirections
     LDA #$35 : STA $012E
 
-    LDA $40 : SEC : SBC.b #$FF : STA $40
-    LDA $68 : SEC : SBC.b #$FF : STA $68
+    ; LDA $40 : SEC : SBC.b #$FF : STA $40
+    ; LDA $68 : SEC : SBC.b #$FF : STA $68
 
 
     RTS
@@ -241,6 +247,7 @@ Sprite_Minecart_Main:
 
   ; ---------------------------------------------------------------------------
   ; 0x06
+  print pc
   Minecart_MoveWest:
   {
     %PlayAnimation(0,1,8)
@@ -251,6 +258,7 @@ Sprite_Minecart_Main:
     ; LDA SprX, X : STA $22
 
     JSR DragPlayer
+    JSR CheckForPlayerInput
     %HandlePlayerCamera()
     JSR HandleTileDirections
     LDA #$35 : STA $012E
@@ -288,6 +296,7 @@ macro SwapSubtype()
     STA SprSubtype, X ; Store the new direction subtype
 endmacro
 
+print "HandleTileDirections ", pc
 HandleTileDirections:
 {
     ; Setup Minecart position to look for tile IDs
@@ -318,13 +327,13 @@ HandleTileDirections:
 
       .stop_north
         ; Set the new direction to north and flip the cart's orientation
-        LDA.b South : STA SprSubtype, X
+        LDA.b #South : STA SprSubtype, X
         STZ.w !MinecartDirection
         JMP   .go_vert
       
       .stop_south
         ; Set the new direction to south and flip the cart's orientation
-        LDA.b North : STA SprSubtype, X
+        LDA.b #North : STA SprSubtype, X
         LDA   #$01 : STA !MinecartDirection
         .go_vert
         %SetTimerA($40)
@@ -334,13 +343,13 @@ HandleTileDirections:
       
       .stop_east
         ; Set the new direction to east and flip the cart's orientation
-        LDA.b West : STA SprSubtype, X
+        LDA.b #West : STA SprSubtype, X
         LDA   #$01 : STA !MinecartDirection
         JMP   .go_horiz
       
       .stop_west
         ; Set the new direction to west and flip the cart's orientation
-        LDA.b East : STA SprSubtype, X
+        LDA.b #East : STA SprSubtype, X
         STZ.w !MinecartDirection
         .go_horiz
         %SetTimerA($40)
@@ -449,20 +458,25 @@ HandleTileDirections:
 
 ;==============================================================================
 
+print     "DragPlayer: ", pc
+
+DragYLow  = $0B7C
+DragYHigh = $0B7D
+
 DragPlayer:
 {
     LDY.w $0DE0,                  X
-    LDA.w DragPlayer_drag_x_low,  Y : CLC : ADC.w $0B7C : STA $0B7C
-    LDA.w DragPlayer_drag_x_high, Y : ADC.w $0B7D : STA $0B7D
+    LDA.w DragPlayer_drag_x_low,  Y : CLC : ADC.w DragYLow : STA.w DragYLow
+    LDA.w DragPlayer_drag_x_high, Y : ADC.w DragYHigh : STA DragYHigh
     
-    LDA.w DragPlayer_drag_y_low,  Y : CLC : ADC.w $0B7E : STA $0B7E
-    LDA.w DragPlayer_drag_y_high, Y : ADC.w $0B7F : STA $0B7F
+    LDA.w DragPlayer_drag_y_low,  Y : CLC : ADC.w $0B7E : STA.w $0B7E
+    LDA.w DragPlayer_drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
 
   .SomariaPlatform_DragLink
     REP #$20
     
-    LDA $0FD8 : SEC : SBC.w #$0002 : CMP $22 : BEQ .x_done
-                                          BPL .x_too_low
+    LDA $0FD8 : SEC : SBC.w #$0002
+    CMP $22 : BEQ .x_done : BPL .x_too_low
     
     DEC $0B7C
     
@@ -474,8 +488,8 @@ DragPlayer:
 
   .x_done
     ; Changing the modifier adjusts links position in the cart 
-    LDA $0FDA : SEC : SBC.w #$0008 : CMP $20 : BEQ .y_done
-                                          BPL .y_too_low
+    LDA $0FDA : SEC : SBC.w #$0008
+    CMP $20 : BEQ .y_done : BPL .y_too_low
     
     DEC $0B7E
     
@@ -491,30 +505,104 @@ DragPlayer:
         
     RTS
 
-  .drag_x_high
-    db 0,   0,  -1,   0,  -1
-
-  .drag_x_low
-    db 0,   0,  -1,   1,  -1,   1,   1
-
-  .drag_y_low
-    db -1,   1,   0,   0,  -1,   1,  -1,   1
-
-  .drag_y_high
-    db -1,   0,   0,   0,  -1,   0,  -1,   0
-
   ; .drag_x_high
-  ; db 0,   0,  -1,   0
+  ; db 0,   0,  -1,   0,  -1
 
   ; .drag_x_low
-  ; db 0,   0,  -1,   1
+  ; db 0,   0,  -1,   1,  -1,   1,   1
 
   ; .drag_y_low
-  ; db -1,   1,   0,   0
+  ; db -1,   1,   0,   0,  -1,   1,  -1,   1
 
   ; .drag_y_high
-  ; db -1,   0,   0,   0
+  ; db -1,   0,   0,   0,  -1,   0,  -1,   0
 
+  .drag_x_high
+  db 0,   0,  -1,   0
+
+  .drag_x_low
+  db 0,   0,  -1,   1
+
+  .drag_y_low
+  db -1,   1,   0,   0
+
+  .drag_y_high
+  db -1,   0,   0,   0
+
+}
+  print "HERE", pc
+CheckForPlayerInput:
+{
+  ; Setup Minecart position to look for tile IDs
+  LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
+  LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
+
+  ; Fetch tile attributes based on current coordinates
+  LDA.b #$00 : JSL Sprite_GetTileAttr
+  
+  ; Load the tile index 
+  LDA $0FA5 : CLC : CMP.b #$B6 : BNE .cant_input
+
+  ; Check for input from the user (u,d,l,r)
+    
+    LDY $0DE0, X
+    
+    LDA $F0 : AND .d_pad_press, Y : STA $00 : AND.b #$08 : BEQ .not_pressing_up
+    
+    LDA.b #$00 : STA $0DE0, X ; Moving Up 
+    STA   SprSubtype,       X
+    %GotoAction(2) ; Minecart_MoveNorth
+    
+    BRA .return
+
+.not_pressing_up:
+
+    LDA $00 : AND.b #$04 : BEQ .not_pressing_down
+    
+    LDA.b #$01 : STA $0DE0,      X
+    LDA   #$02 : STA SprSubtype, X
+    %GotoAction(4) ; Minecart_MoveSouth
+
+    
+    BRA .return
+
+.not_pressing_down
+
+    LDA $00 : AND.b #$02 : BEQ .not_pressing_left
+    
+    LDA.b #$02 : STA $0DE0,      X
+    LDA   #$03 : STA SprSubtype, X
+    %GotoAction(5) ; Minecart_MoveWest
+
+    
+    BRA .return
+
+.not_pressing_left
+
+    LDA $00 : AND.b #$01 : BEQ .always
+    
+    LDA.b #$03 : STA $0DE0, X
+    STA   SprSubtype,       X
+    %GotoAction(3) ; Minecart_MoveEast
+
+.always
+
+;   LDA $0DE0, X : CMP.b #$03 : BNE .not_going_right
+    
+;   ; Default heading in reaction to this tile is going up.
+;   ; LDA.b #$00 : STA $0DE0, X
+
+; .not_going_right
+
+;   ;STZ $0D80, X
+
+.return
+    
+.cant_input
+  RTS
+
+.d_pad_press
+  db $0B, $07, $0E, $0D
 }
 
 CheckIfPlayerIsOn:
