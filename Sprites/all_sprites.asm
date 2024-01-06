@@ -15,6 +15,14 @@ RTS
 
 warnpc $00841E
 
+; ==============================================================================
+
+; Fix the capital 'B' debug item cheat.
+org $0CDC26
+    db $80 ; replace a $F0 (BEQ) with a $80 (BRA).
+
+; ==============================================================================
+
 incsrc ZSpriteLib/sprite_macros.asm
 incsrc ZSpriteLib/sprite_functions_hooks.asm
 
@@ -31,19 +39,19 @@ incsrc ZSpriteLib/sprite_new_functions.asm
 incsrc "Sprites/farore.asm"
 print  "End of farore.asm                 ", pc
 
-incsrc "Sprites/Kydrog/kydrog.asm"
+incsrc "Sprites/Bosses/kydrog.asm"
 print  "End of kydrog.asm                 ", pc
 
-incsrc "Sprites/Kydrog/kydrog_boss.asm"
+incsrc "Sprites/Bosses/kydrog_boss.asm"
 print  "End of kydrog_boss.asm            ", pc
 
 incsrc "Sprites/maku_tree.asm"
 print  "End of maku_tree.asm              ", pc
 
-incsrc "Sprites/mask_salesman.asm"
+incsrc "Sprites/NPCs/mask_salesman.asm"
 print  "End of mask_salesman.asm          ", pc
 
-incsrc "Sprites/deku_scrub.asm"
+incsrc "Sprites/NPCs/deku_scrub.asm"
 print  "End of deku_scrub.asm             ", pc
 
 incsrc "Sprites/anti_kirby.asm"
@@ -55,7 +63,7 @@ print  "End of village_dog.asm            ",  pc
 incsrc "Sprites/minecart.asm"
 print  "End of minecart.asm               ",  pc
 
-incsrc "Sprites/twinrova.asm"
+incsrc "Sprites/Bosses/twinrova.asm"
 print  "End of twinrova.asm               ",  pc
 
 incsrc "Sprites/portal_sprite.asm"
@@ -67,6 +75,6 @@ print  "End of impa.asm                   ",  pc
 incsrc "Sprites/poltergeist.asm"
 print  "End of poltergeist.asm            ",  pc
 
-incsrc "Sprites/bug_net_kid.asm"
+incsrc "Sprites/NPCs/bug_net_kid.asm"
 
 warnpc $2B8000

@@ -8,7 +8,6 @@
 !OffspringCount = $AC             ;0x01
 !CurrentDraw    = $7A             ;0x01
 !WalkSpeed      = 10              ;0x01
-!StorePosition  = $030C
 
 ;==============================================================================
 ; Sprite Properties
@@ -745,3 +744,24 @@ Kydrog_ThrowBoneAtPlayer:
 
   RTS
 }
+
+; Y is the sprite index after you spawn it.
+
+; oh right yeah y will be equal to the sprite you spawned for that frame
+; but if you want to do a count what you would do:
+; PHX
+; STZ $00
+
+; LDX.b #$10
+; .loop
+;   DEX
+;   LDA $0E20, X : CMP.b #$skull : BNE .notSkull
+;     LDA $0DD0, X : CMP.b #$09 : BNE .notSkull
+;       INC $00
+
+;   .notSkull
+; CPX.b #$00 : BNE .loop
+
+; PLX
+
+; $00 = your stalfos skull count
