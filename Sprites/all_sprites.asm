@@ -54,8 +54,17 @@ print  "End of mask_salesman.asm          ", pc
 incsrc "Sprites/NPCs/deku_scrub.asm"
 print  "End of deku_scrub.asm             ", pc
 
-incsrc "Sprites/anti_kirby.asm"
+incsrc "Sprites/Enemies/anti_kirby.asm"
 print  "End of anti_kirby.asm             ", pc
+
+incsrc "Sprites/Enemies/sea_urchin.asm"
+print  "End of sea_urchin.asm             ", pc
+
+incsrc "Sprites/switch_track.asm"
+print  "End of switch_track.asm           ", pc
+
+incsrc "Sprites/mineswitch.asm"
+print  "End of mineswitch.asm             ", pc
 
 incsrc "Sprites/VillageDog/village_dog.asm"
 print  "End of village_dog.asm            ",  pc
@@ -72,7 +81,7 @@ print  "End of portal_sprite.asm          ",  pc
 incsrc "Sprites/impa.asm"
 print  "End of impa.asm                   ",  pc
 
-incsrc "Sprites/poltergeist.asm"
+incsrc "Sprites/Enemies/poltergeist.asm"
 print  "End of poltergeist.asm            ",  pc
 
 incsrc "Sprites/NPCs/bug_net_kid.asm"
