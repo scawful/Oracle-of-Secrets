@@ -2,20 +2,20 @@
 ; Sprite Properties
 ;==============================================================================
 !SPRID              = $9F ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 02 ; Number of tiles used in a frame
+!NbrTiles           = 02  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 10  ; Number of Health the sprite have
+!Health             = 20  ; Number of Health the sprite have
 !Damage             = 04  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
-!SmallShadow        = 01  ; 01 = small shadow, 00 = no shadow
+!SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this AntiKirby (can be 0 to 7)
 !Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
-!CollisionLayer     = 01  ; 01 = will check both layer for collision
+!CollisionLayer     = 00  ; 01 = will check both layer for collision
 !CanFall            = 00  ; 01 sprite can fall in hole, 01 = can't fall
 !DeflectArrow       = 00  ; 01 = deflect arrows
 !WaterSprite        = 00  ; 01 = can only walk shallow water
@@ -32,51 +32,83 @@
 
 
 Sprite_AntiKirby_Long:
-PHB : PHK : PLB
+{
+  PHB : PHK : PLB
 
-JSR Sprite_AntiKirby_Draw ; Call the draw code
-JSL Sprite_CheckActive   ; Check if game is not paused
-BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
+  JSR Sprite_AntiKirby_Draw ; Call the draw code
+  JSL Sprite_DrawShadow
+  JSL Sprite_CheckActive   ; Check if game is not paused
+  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
-JSR Sprite_AntiKirby_Main ; Call the main sprite code
+  JSR Sprite_AntiKirby_Main ; Call the main sprite code
 
-.SpriteIsNotActive
-PLB ; Get back the databank we stored previously
-RTL ; Go back to original code
+  .SpriteIsNotActive
+  PLB ; Get back the databank we stored previously
+  RTL ; Go back to original code
+}
 
 
 Sprite_AntiKirby_Prep:
-PHB : PHK : PLB
+{
+  PHB : PHK : PLB
    
-    ; Add more code here to initialize data
+  ; Add more code here to initialize data
 
-PLB
-RTL
+  PLB
+  RTL
+}
 
+!RecoilTime = $30
 
 Sprite_AntiKirby_Main:
 {  
   
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
 
   dw AntiKirby_Start
   dw AntiKirby_WalkRight
   dw AntiKirby_WalkLeft
+  ; dw AntiKirby_Main
+  ; dw AntiKirby_Moving
+  ; dw AntiKirby_Collision
   dw AntiKirby_Hurt
   dw AntiKirby_Suck
   dw AntiKirby_Full
+  dw AntiKirby_Death
 
+  ; AntiKirby_Main:
+  ; {
+  ;   %PlayAnimation(0, 0, 10) ; Idle
 
+  ;   .TileCollision
+  ;   ; Reset some stuff
+
+  ;   JSL Sprite_CheckDamageToPlayer
+  ;   JSL Sprite_CheckDamageFromPlayer
+
+  ;   JSL Sprite_MoveLong
+  ;   JSL Sprite_CheckTileCollision
+
+  ;   LDA $0E70, X : BNE .TileCollision
+
+  ;   RTS
+
+  ; }
 
   AntiKirby_Start:
   {
     ; %PlayAnimation(0, 0, 10) ; Idle
     JSL Sprite_DirectionToFacePlayer 
     TYA : CMP.b #$02 : BCC .WalkRight
+  .WalkLeft
+    ; JSL Sprite_IsBelowPlayer : BCS .WalkRight
+
     %GotoAction(2)
     RTS
   .WalkRight 
+    JSL Sprite_IsBelowPlayer : BCS .WalkLeft
+
     %GotoAction(1)
     RTS
   }
@@ -85,13 +117,21 @@ Sprite_AntiKirby_Main:
   {
     %PlayAnimation(0, 3, 10) ; Walk Right
 
+    ; JSL Sprite_CheckTileCollision : BEQ .Collision
+
     PHX 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+
+    LDA #!RecoilTime : STA SprTimerA, X
+    %GotoAction(3) ; Hurt
+    PLX : RTS
+  .NoDamage
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
     %MoveTowardPlayer(10)
-
+  .Collision
+  
     %GotoAction(0)
 
     RTS
@@ -102,7 +142,11 @@ Sprite_AntiKirby_Main:
     %PlayAnimation(4, 7, 10) ; Walk Left
 
     PHX 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+    LDA #!RecoilTime : STA SprTimerA, X
+    %GotoAction(3) ; Hurt
+    PLX : RTS
+  .NoDamage
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
@@ -117,7 +161,16 @@ Sprite_AntiKirby_Main:
   {
     %PlayAnimation(8, 8, 10) ; Hurt 
 
-    %MoveTowardPlayer(10)
+    ; Check health 
+    LDA SprHealth, X : BNE .NotDead
+    %GotoAction(6)
+    RTS
+
+  .NotDead
+    LDA SprTimerA, X : BNE .NotDone
+    %GotoAction(0)
+
+  .NotDone
 
     RTS
   }
@@ -125,31 +178,37 @@ Sprite_AntiKirby_Main:
   AntiKirby_Suck:
   {
     %PlayAnimation(9, 10, 10) ; Suck
-
-    %MoveTowardPlayer(10)
-
     RTS
   }
 
   AntiKirby_Full:
   {
     %PlayAnimation(11, 11, 10) ; Full
-
-    %MoveTowardPlayer(10)
-
     RTS
   }
 
+  AntiKirby_Death:
+  {
+    %PlayAnimation(8, 8, 10) ; Death
+
+    LDA.b #$06
+    STA.w $0DD0,X
+
+    LDA.b #$0A
+    STA.w $0DF0,X
+
+    STZ.w $0BE0,X
+
+    LDA.b #$09 ; SFX2.1E
+    JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan
+    
+    RTS
+  }
   
   
 }
 
 
-;==================================================================================================
-; Sprite Draw code
-; --------------------------------------------------------------------------------------------------
-; Draw the tiles on screen with the data provided by the sprite maker editor
-;==================================================================================================
 Sprite_AntiKirby_Draw:
 JSL Sprite_PrepOamCoord
 JSL Sprite_OAM_AllocateDeferToPlayer
