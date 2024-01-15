@@ -69,7 +69,7 @@ LinkState_UsingQuake:
 warnpc $07A779
 
 
-org $318000
+org $348000
 ; org $07A013
 ;   JSL LinkItem_SlingshotPrepare
 

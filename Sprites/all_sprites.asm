@@ -28,12 +28,12 @@ incsrc ZSpriteLib/sprite_functions_hooks.asm
 
 ;==============================================================================
 
-org    $298000
+org    $308000
 incsrc ZSpriteLib/sprite_new_table.asm
 
 ;==============================================================================
 
-org    $2A8000
+org    $318000
 incsrc ZSpriteLib/sprite_new_functions.asm
 
 incsrc "Sprites/farore.asm"
@@ -86,4 +86,4 @@ print  "End of poltergeist.asm            ",  pc
 
 incsrc "Sprites/NPCs/bug_net_kid.asm"
 
-warnpc $2B8000
+warnpc $328000

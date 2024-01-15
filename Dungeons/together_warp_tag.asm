@@ -14,7 +14,7 @@
 
 ;relpaces the original tag.
 
-dw $CC1C ; = $CC1C* ; routine 0x3A "Holes(8)"
+; dw $CC1C ; = $CC1C* ; routine 0x3A "Holes(8)"
 
 org $01CC1C
     JML WarpTag
@@ -24,7 +24,9 @@ org $01CC5A
 
 ; ==============================================================================
 
-org $338000
+; org $338000
+pullpc ; Bank 0x2C
+print "Warp Tag", pc
 WarpTag:
 {
     PHX

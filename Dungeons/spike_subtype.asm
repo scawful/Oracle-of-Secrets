@@ -45,3 +45,4 @@ LDA $0D40, X : EOR.b #$FF : INC A : STA $0D40, X
 LDA.b #$05 : JSL $0DBB7C ; Sound_SetSfx2PanLong
 
 RTL
+pushpc
