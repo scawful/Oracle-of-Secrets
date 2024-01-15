@@ -1,4 +1,26 @@
+
+org $01C742
+  JSL Ancilla_SpawnFallingPrize
+
+org $06FA34
+  JSL Ancilla_SpawnFallingPrize
+
+org $098BC1
+  AncillaAdd_FallingPrize:
+
 pullpc
+
+Ancilla_SpawnFallingPrize:
+#_05A51D: PHX
+#_05A51E: TAX
+
+#_05A51F: LDY.b #$04
+#_05A521: LDA.b #$29 ; ANCILLA 29
+#_05A523: JSL AncillaAdd_FallingPrize
+
+#_05A527: PLX
+
+#_05A528: RTL
 
 ; ==============================================================================
 
@@ -327,5 +349,5 @@ CheckIfActive:
 
     RTL
 }
-
+print pc
 ; ==============================================================================

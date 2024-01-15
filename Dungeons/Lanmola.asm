@@ -81,7 +81,6 @@ Lanmola_FinishInitialization:
 
 ; ==============================================================================
 
-print pc
 Sprite_Lanmola:
 {
     ;JSR Sprite2_CheckIfActivePermissive
