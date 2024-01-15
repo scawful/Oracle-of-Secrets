@@ -126,18 +126,17 @@ macro HandlePlayerCamera()
 endmacro
 
 macro InitMovement()
+  LDA.b $22
+  STA.b $3F
 
- LDA.b $22
-STA.b $3F
+  LDA.b $23
+  STA.b $41
 
- LDA.b $23
-STA.b $41
+  LDA.b $20
+  STA.b $3E
 
-LDA.b $20
-STA.b $3E
-
- LDA.b $21
- STA.b $40
+  LDA.b $21
+  STA.b $40
 endmacro
 
 Sprite_Minecart_Main:
@@ -215,11 +214,11 @@ Sprite_Minecart_Main:
 
     LDA $36 : BNE .fast_speed
       LDA.b #-!MinecartSpeed : STA SprYSpeed, X
-      JMP .continue
+      JMP   .continue
     .fast_speed
       LDA.b #-!DoubleSpeed : STA SprYSpeed, X
     .continue
-    JSL   Sprite_MoveVert
+    JSL Sprite_MoveVert
 
     ; LDA SprY, X : SEC : SBC #$04 : STA $20
     ; LDA SprX, X : CLC : ADC #$02 : STA $22
@@ -241,11 +240,11 @@ Sprite_Minecart_Main:
     %InitMovement()
     LDA $36 : BNE .fast_speed
       LDA.b #!MinecartSpeed : STA $0D50, X
-      JMP .continue
+      JMP   .continue
     .fast_speed
       LDA.b #!DoubleSpeed : STA $0D50, X
     .continue
-    JSL   Sprite_MoveHoriz
+    JSL Sprite_MoveHoriz
     
     JSR DragPlayer
     JSR CheckForPlayerInput
@@ -264,11 +263,11 @@ Sprite_Minecart_Main:
     %InitMovement()
     LDA $36 : BNE .fast_speed
       LDA.b #!MinecartSpeed : STA SprYSpeed, X
-      JMP .continue
+      JMP   .continue
     .fast_speed
       LDA.b #!DoubleSpeed : STA SprYSpeed, X
     .continue
-    JSL   Sprite_MoveVert
+    JSL Sprite_MoveVert
 
     JSR DragPlayer
     JSR CheckForPlayerInput
@@ -285,13 +284,13 @@ Sprite_Minecart_Main:
   {
     %PlayAnimation(0,1,8)
     %InitMovement()
-    LDA $36 : BNE .fast_speed
+    LDA   $36 : BNE .fast_speed
     LDA.b #-!MinecartSpeed : STA $0D50, X
             JMP .continue
     .fast_speed
       LDA.b #-!DoubleSpeed : STA $0D50, X
     .continue
-    JSL   Sprite_MoveHoriz
+    JSL Sprite_MoveHoriz
     
     JSR DragPlayer
     JSR CheckForPlayerInput
@@ -328,8 +327,11 @@ print "HandleTileDirections ", pc
 HandleTileDirections:
 {
     ; Setup Minecart position to look for tile IDs
-    LDA.w SprY,  X : STA.b $00 : LDA.w SprYH, X : STA.b $01
-    LDA.w SprX,  X : STA.b $02 : LDA.w SprXH, X : STA.b $03
+    ; LDA.w SprY,  X : STA.b $00 : LDA.w SprYH, X : STA.b $01
+    ; LDA.w SprX,  X : STA.b $02 : LDA.w SprXH, X : STA.b $03
+    ; Setup Minecart position to look for tile IDs
+    LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
+    LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
 
     ; Fetch tile attributes based on current coordinates
     LDA.b #$00 : JSL Sprite_GetTileAttr
@@ -640,15 +642,15 @@ CheckIfPlayerIsOn:
 
     LDA $20 : CLC : ADC #$0012 : CMP $0FDA : BCC .OutsideUp
     LDA $20 : SEC : SBC #$0012 : CMP $0FDA : BCS .OutsideDown
-    SEP #$21
-    RTS                                                       ;Return with carry setted
+    
+    SEP #$21 : RTS ; Return with carry set
 
   .OutsideLeft
   .OutsideRight
   .OutsideDown
   .OutsideUp
     SEP #$20
-    CLC : RTS ;Return with carry cleared
+    CLC : RTS ; Return with carry cleared
 }
 
 ;==============================================================================

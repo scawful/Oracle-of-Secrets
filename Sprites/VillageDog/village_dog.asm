@@ -1,6 +1,4 @@
-;==============================================================================
-; Sprite Properties
-;==============================================================================
+
 !SPRID              = $25 ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 08  ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
@@ -9,7 +7,7 @@
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
-!SmallShadow        = 01  ; 01 = small shadow, 00 = no shadow
+!SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this VillageDog (can be 0 to 7)
 !Hitbox             = 09  ; 00 to 31, can be viewed in sprite draw tool
@@ -31,11 +29,7 @@
 
 %Set_Sprite_Properties(Sprite_VillageDog_Prep, Sprite_VillageDog_Long)
 
-;==============================================================================
-; Sprite Long Hook for that sprite
-; This code can be left unchanged
-; handle the draw code and if the sprite is active and should move or not
-;==============================================================================
+
 Sprite_VillageDog_Long:
 {
   PHB : PHK : PLB
@@ -53,24 +47,14 @@ Sprite_VillageDog_Long:
 }
 
 
-;==============================================================================
-; Sprite initialization
-; this code only get called once perfect to initialize sprites substate or timers
-; this code as soon as the room transitions/ overworld transition occurs
-;==============================================================================
 Sprite_VillageDog_Prep:
-PHB : PHK : PLB
+{
+  PHB : PHK : PLB
    
-    ; Add more code here to initialize data
+  PLB
+  RTL
+}
 
-PLB
-RTL
-
-;==============================================================================
-; Sprite Main routines code
-; This is the main local code of your sprite
-; This contains all the Subroutines of your sprites you can add more below
-;==============================================================================
 Sprite_VillageDog_Main:
 {
   LDA.w SprAction, X                        ; Load the SprAction
@@ -83,6 +67,7 @@ Sprite_VillageDog_Main:
   dw Dog_MoveRightTowardsLink ; 04 
   dw Dog_WagTailLeft          ; 05 
   dw Dog_WagTailRight         ; 06
+  dw Dog_RandomMovement       ; 07
 
   ; 0
   Dog_Handler:
@@ -91,7 +76,7 @@ Sprite_VillageDog_Main:
     LDA #$20 : STA.w SprTimerD, X
 
     JSL Sprite_IsToRightOfPlayer ; Check if sprite is to the right of player
-    TYA : BEQ .WalkRight          ; If so, go to LookLeft
+    TYA : BEQ .WalkRight         ; If so, go to LookLeft
  
     %GotoAction(3)
     RTS
@@ -108,7 +93,7 @@ Sprite_VillageDog_Main:
     
     LDA.w SprTimerD,              X : BNE +
     ; Load the timer for the run
-    LDA   #$40 : STA.w SprTimerD, X
+    LDA   #$60 : STA.w SprTimerD, X
     %GotoAction(3)
   +
     RTS
@@ -121,7 +106,7 @@ Sprite_VillageDog_Main:
 
     LDA.w SprTimerD,              X : BNE +
     ; Load the timer for the run
-    LDA   #$40 : STA.w SprTimerD, X
+    LDA   #$60 : STA.w SprTimerD, X
     %GotoAction(4)
   +
     RTS
@@ -131,11 +116,12 @@ Sprite_VillageDog_Main:
   Dog_MoveLeftTowardsLink:
   {
     %PlayAnimation(2,4,6)
+    JSR CheckForSwitchToRandomMovement
     JSL Sprite_DirectionToFacePlayer
     ; Check if the dog is near link, then wag the tail
-    LDA $0E : CMP.b #$0070 : BCS +
+    LDA $0E : CMP.b #$00A0 : BCS +
     CLC
-    LDA $0F : CMP.b #$0070 : BCS +
+    LDA $0F : CMP.b #$00A0 : BCS +
     %GotoAction(5)
   +
 
@@ -162,11 +148,12 @@ Sprite_VillageDog_Main:
   {
     %PlayAnimation(5,7,6)
 
+    JSR CheckForSwitchToRandomMovement
     JSL Sprite_DirectionToFacePlayer
     ; Check if the dog is near link, then wag the tail
-    LDA $0E : CMP.b #$0070 : BCS +
+    LDA $0E : CMP.b #$00A0 : BCS +
     CLC
-    LDA $0F : CMP.b #$0070 : BCS +
+    LDA $0F : CMP.b #$00A0 : BCS +
     %GotoAction(6)
   +
 
@@ -189,11 +176,7 @@ Sprite_VillageDog_Main:
   Dog_WagTailLeft:
   {
     %PlayAnimation(0,1, 8)
-    LDA $02B2 : CMP.b #$05 : BNE .not_minish
-    %ShowSolicitedMessage($18) : JMP .continue
-  .not_minish
-    %ShowSolicitedMessage($1B)
-  .continue
+    JSR   ShowMessageIfMinish
     LDA.w SprTimerD, X : BNE +
     %GotoAction(0)
   +
@@ -204,155 +187,189 @@ Sprite_VillageDog_Main:
   Dog_WagTailRight:
   {
     %PlayAnimation(11,12,8)
-    LDA $02B2 : CMP.b #$05 : BNE .not_minish
-    %ShowSolicitedMessage($18) : JMP .continue
-  .not_minish
-    %ShowSolicitedMessage($1B)
-  .continue
+    JSR   ShowMessageIfMinish
     LDA.w SprTimerD, X : BNE +
     %GotoAction(0)
   +
     RTS
   }
 
+  ; 07
+  Dog_RandomMovement:
+  {
+    %PlayAnimation(2,4,6)
+    LDA.w SprTimerD,              X : BNE +
+    ; Load the timer for the run
+    LDA   #$60 : STA.w SprTimerD, X
+
+    JSL GetRandomInt
+    AND.b #$03
+    BEQ .move_left
+    BNE .move_right
+  .move_left
+
+    %GotoAction(3)
+    RTS
+  .move_right
+    %GotoAction(4)
+    RTS
+    
+  +
+    RTS
+  }
+
 }
 
-;==============================================================================
-; Sprite Draw code
-; --------------------------------------------------------------------------------------------------
-; Draw the tiles on screen with the data provided by the sprite maker editor
-;==============================================================================
+CheckForSwitchToRandomMovement:
+{
+;   LDA.w SprTimerD,              X : BNE +
+;   LDA   #$60 : STA.w SprTimerD, X
+;   %GotoAction(7)
+; +
+  RTS
+}
+
+
+
+ShowMessageIfMinish:
+{
+  LDA $02B2 : CMP.b #$05 : BNE .not_minish
+  %ShowSolicitedMessage($18) : JMP .continue
+.not_minish
+  %ShowSolicitedMessage($1B)
+.continue
+  RTS
+}
+
 Sprite_VillageDog_Draw:
-JSL   Sprite_PrepOamCoord
-JSL   Sprite_OAM_AllocateDeferToPlayer
+{
+  JSL   Sprite_PrepOamCoord
+  JSL   Sprite_OAM_AllocateDeferToPlayer
 
-LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
-LDA   .start_index,     Y : STA $06
-
-
-PHX
-LDX   .nbr_of_tiles,    Y              ;amount of tiles -1
-LDY.b #$00
-.nextTile
-
-PHX                                    ; Save current Tile Index?
-    
-TXA   : CLC : ADC $06                  ; Add Animation Index Offset
-
-PHA                                    ; Keep the value with animation index offset?
-
-ASL   A : TAX
-
-REP   #$20
-
-LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-AND.w #$0100 : STA $0E
-INY
-LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-CLC   : ADC #$0010 : CMP.w #$0100
-SEP   #$20
-BCC   .on_screen_y
-
-LDA.b #$F0 : STA ($90), Y              ;Put the sprite out of the way
-STA   $0E
-.on_screen_y
-
-PLX                                    ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
-INY
-LDA .chr, X : STA ($90), Y
-INY
-LDA .properties, X : STA ($90), Y
-
-PHY 
-    
-TYA   : LSR #2 : TAY
-    
-LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-    
-PLY   : INY
-    
-PLX   : DEX : BPL .nextTile
-
-PLX
-
-RTS
+  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA   .start_index,     Y : STA $06
 
 
-;==============================================================================
-; Sprite Draw Generated Data
-; This is where the generated Data for the sprite go
-;==============================================================================
-.start_index
-db $00, $04, $08, $0C, $10, $13, $17, $1B, $1F, $20, $21, $22, $26
-.nbr_of_tiles
-db 3, 3, 3, 3, 2, 3, 3, 3, 0, 0, 0, 3, 3
-.x_offsets
-dw -4, -4, 12, 12
-dw -4, -4, 12, 12
-dw -4, -4, 4, 12
-dw -4, -4, 4, 4
-dw -4, 4, 4
-dw 4, -4, 4, -4
-dw 4, -4, 4, -4
-dw 4, -4, -4, -4
-dw 0
-dw 0
-dw 0
-dw 8, 8, 0, 0
-dw 8, 8, 0, 0
-.y_offsets
-dw -4, 4, 4, 12
-dw -4, 4, 4, 12
-dw -8, 0, 0, -8
-dw 0, -8, -8, 0
-dw 0, 0, -16
-dw 0, 0, -8, -8
-dw 0, 0, -16, -8
-dw 0, 0, 8, -8
-dw 0
-dw 0
-dw 0
-dw -4, 4, 4, 12
-dw -4, 4, 4, 12
-.chr
-db $10, $20, $22, $32
-db $10, $20, $02, $12
-db $13, $23, $24, $15
-db $26, $16, $17, $27
-db $29, $2A, $0A
-db $23, $24, $13, $14
-db $26, $27, $06, $18
-db $29, $2B, $3B, $1B
-db $2C
-db $2E
-db $2E
-db $10, $20, $22, $32
-db $10, $20, $02, $12
-.properties
-db $37, $37, $37, $37
-db $37, $37, $37, $37
-db $37, $37, $37, $37
-db $37, $37, $37, $37
-db $37, $37, $37
-db $77, $77, $77, $77
-db $77, $77, $77, $77
-db $77, $77, $77, $77
-db $37
-db $77
-db $37
-db $77, $77, $77, $77
-db $77, $77, $77, $77
-.sizes
-db $02, $02, $00, $00
-db $02, $02, $00, $00
-db $02, $02, $02, $00
-db $02, $02, $02, $02
-db $02, $02, $02
-db $02, $02, $02, $02
-db $02, $02, $02, $00
-db $02, $00, $00, $00
-db $02
-db $02
-db $02
-db $02, $02, $00, $00
-db $02, $02, $00, $00
+  PHX
+  LDX   .nbr_of_tiles,    Y              ;amount of tiles -1
+  LDY.b #$00
+  .nextTile
+
+  PHX                                    ; Save current Tile Index?
+      
+  TXA   : CLC : ADC $06                  ; Add Animation Index Offset
+
+  PHA                                    ; Keep the value with animation index offset?
+
+  ASL   A : TAX
+
+  REP   #$20
+
+  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+  AND.w #$0100 : STA $0E
+  INY
+  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+  CLC   : ADC #$0010 : CMP.w #$0100
+  SEP   #$20
+  BCC   .on_screen_y
+
+  LDA.b #$F0 : STA ($90), Y              ;Put the sprite out of the way
+  STA   $0E
+  .on_screen_y
+
+  PLX                                    ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
+  INY
+  LDA .chr, X : STA ($90), Y
+  INY
+  LDA .properties, X : STA ($90), Y
+
+  PHY 
+      
+  TYA   : LSR #2 : TAY
+      
+  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+      
+  PLY   : INY
+      
+  PLX   : DEX : BPL .nextTile
+
+  PLX
+
+  RTS
+
+
+  .start_index
+    db $00, $04, $08, $0C, $10, $13, $17, $1B, $1F, $20, $21, $22, $26
+  .nbr_of_tiles
+    db 3, 3, 3, 3, 2, 3, 3, 3, 0, 0, 0, 3, 3
+  .x_offsets
+    dw -4, -4, 12, 12
+    dw -4, -4, 12, 12
+    dw -4, -4, 4, 12
+    dw -4, -4, 4, 4
+    dw -4, 4, 4
+    dw 4, -4, 4, -4
+    dw 4, -4, 4, -4
+    dw 4, -4, -4, -4
+    dw 0
+    dw 0
+    dw 0
+    dw 8, 8, 0, 0
+    dw 8, 8, 0, 0
+  .y_offsets
+    dw -4, 4, 4, 12
+    dw -4, 4, 4, 12
+    dw -8, 0, 0, -8
+    dw 0, -8, -8, 0
+    dw 0, 0, -16
+    dw 0, 0, -8, -8
+    dw 0, 0, -16, -8
+    dw 0, 0, 8, -8
+    dw 0
+    dw 0
+    dw 0
+    dw -4, 4, 4, 12
+    dw -4, 4, 4, 12
+  .chr
+    db $10, $20, $22, $32
+    db $10, $20, $02, $12
+    db $13, $23, $24, $15
+    db $26, $16, $17, $27
+    db $29, $2A, $0A
+    db $23, $24, $13, $14
+    db $26, $27, $06, $18
+    db $29, $2B, $3B, $1B
+    db $2C
+    db $2E
+    db $2E
+    db $10, $20, $22, $32
+    db $10, $20, $02, $12
+  .properties
+    db $37, $37, $37, $37
+    db $37, $37, $37, $37
+    db $37, $37, $37, $37
+    db $37, $37, $37, $37
+    db $37, $37, $37
+    db $77, $77, $77, $77
+    db $77, $77, $77, $77
+    db $77, $77, $77, $77
+    db $37
+    db $77
+    db $37
+    db $77, $77, $77, $77
+    db $77, $77, $77, $77
+  .sizes
+    db $02, $02, $00, $00
+    db $02, $02, $00, $00
+    db $02, $02, $02, $00
+    db $02, $02, $02, $02
+    db $02, $02, $02
+    db $02, $02, $02, $02
+    db $02, $02, $02, $00
+    db $02, $00, $00, $00
+    db $02
+    db $02
+    db $02
+    db $02, $02, $00, $00
+    db $02, $02, $00, $00
+}

@@ -2,7 +2,7 @@
 
 incsrc Collision/main.asm
 
-org $018262 ;object id 0x31
+org    $018262            ;object id 0x31
   dw ExpandedObject
 
 
@@ -64,19 +64,19 @@ NewObjectsCode:
   RTL
 
 .ObjOffset
-  dw .LeftRight-.ObjData      ; 00 
-  dw .UpDown-.ObjData         ; 01 
-  dw .TopLeft-.ObjData        ; 02 
-  dw .TopRight-.ObjData       ; 03 
-  dw .Bottomleft-.ObjData     ; 04 
-  dw .BottomRight-.ObjData    ; 05
-  dw .UpDownFloor-.ObjData    ; 06
-  dw .LeftRightFloor-.ObjData ; 07
-  dw .TopLeftFloor-.ObjData   ; 08
-  dw .TopRightFloor-.ObjData  ; 09
-  dw .BottomleftFloor-.ObjData; 10
-  dw .BottomRightFloor-.ObjData;11
-  dw .FloorAny-.ObjData       ; 12
+  dw .LeftRight-.ObjData        ; 00 
+  dw .UpDown-.ObjData           ; 01 
+  dw .TopLeft-.ObjData          ; 02 
+  dw .TopRight-.ObjData         ; 03 
+  dw .Bottomleft-.ObjData       ; 04 
+  dw .BottomRight-.ObjData      ; 05
+  dw .UpDownFloor-.ObjData      ; 06
+  dw .LeftRightFloor-.ObjData   ; 07
+  dw .TopLeftFloor-.ObjData     ; 08
+  dw .TopRightFloor-.ObjData    ; 09
+  dw .BottomleftFloor-.ObjData  ; 10
+  dw .BottomRightFloor-.ObjData ; 11
+  dw .FloorAny-.ObjData         ; 12
 
 .ObjData
   .LeftRight

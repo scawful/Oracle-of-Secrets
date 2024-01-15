@@ -11,18 +11,18 @@
 ;   26 - N/A
 ;   27 - N/A
 ;   28 - ZS Reserved
-;   29 - ZSprite Engine
-;   2A - Sprites: all_sprites.asm
+;   29 - ZS Reserved
+;   2A - ZS Reserved
 ;   2B - Items: all_items.asm
-;   2C - Dungeon Objects, Spike Subtype
+;   2C - Dungeon Objects, Spike Subtype, Together Warp Tag
 ;   2D - Menu
 ;   2E - HUD
 ;   2F - House Tag
-;   30 - N/A
-;   31 - Deku Link Code
-;   32 - Entrance Music Fix 
-;   33 - Together Warp Tag 
-;   34 - N/A
+;   30 - ZSprite Engine
+;   31 - Sprites: all_sprites.asm
+;   32 -                        Entrance Music Fix 
+;   33 - Custom Collision Tables
+;   34 - Deku Link Code
 ;   35 - Deku Link GFX
 ;   36 - Zora Link GFX
 ;   37 - Bunny Link GFX
@@ -75,45 +75,15 @@ namespace Oracle
   print "  -- Dungeon --  "
   print ""
 
-  incsrc "Dungeons/keyblock.asm"
-  print  "End of Dungeons/keyblock.asm      ", pc
-
-  incsrc "Dungeons/sanctuary_transition.asm"
-
-  incsrc "Dungeons/entrances.asm"
-  print  "End of Dungeons/entrances.asm     ", pc
-
-  incsrc "Dungeons/mothula.asm"
-  print  "End of Dungeons/mothula.asm       ", pc
-
-  incsrc "Dungeons/enemy_damage.asm"
-  print  "End of Dungeons/enemy_damage.asm  ", pc
-
-  incsrc "Dungeons/together_warp_tag.asm"
-  print  "End of together_warp_tag.asm      ", pc
-
-  incsrc "Dungeons/arrghus.asm"
-  print  "End of Dungeons/arrghus.asm       ", pc
-
-  incsrc "Dungeons/Objects/object_handler.asm"
-  print  "End of object_handler.asm         ", pc
-  
-  incsrc "Dungeons/spike_subtype.asm"
-  print  "End of spike_subtype.asm          ", pc
-
-  incsrc "Dungeons/Lanmola.asm"
-  print "End of Dungeons/Lanmola.asm       ", pc
-
-  incsrc "Dungeons/Lanmola_Expanded.asm"
-  print "End of Dungeons/Lanmola_Expanded.asm ", pc
-  
-  incsrc "Dungeons/house_tag.asm"
-  print  "End of Dungeons/house_tag.asm       ", pc
+  incsrc "Dungeons/dungeons.asm"
 
   print ""
 
   ; -------------------------------------------------------
   ; Music
+
+  print "  -- Music --  "
+  print ""
 
   incsrc "Music/frozen_hyrule.asm"
   print  "End of Music/frozen_hyrule.asm    ", pc
@@ -173,7 +143,6 @@ namespace Oracle
 
   ; -------------------------------------------------------
   incsrc "Util/all_items.asm"
-  ; print  "End of Util/all_items.asm         ", pc
 
   incsrc "Dungeons/house_walls.asm"
 
