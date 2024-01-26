@@ -11,16 +11,16 @@ org $098BC1
 pullpc
 
 Ancilla_SpawnFallingPrize:
-#_05A51D: PHX
-#_05A51E: TAX
+  PHX
+  TAX
 
-#_05A51F: LDY.b #$04
-#_05A521: LDA.b #$29 ; ANCILLA 29
-#_05A523: JSL AncillaAdd_FallingPrize
+  LDY.b #$04
+  LDA.b #$29 ; ANCILLA 29
+  JSL AncillaAdd_FallingPrize
 
-#_05A527: PLX
+  PLX
 
-#_05A528: RTL
+  RTL
 
 ; ==============================================================================
 
