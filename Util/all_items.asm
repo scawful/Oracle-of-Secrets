@@ -58,7 +58,7 @@ org $068365
 
 org $3CA62A ; Expanded space for our routine
 {
-  LDA $F2 : CMP #$20 : BEQ $03 : JMP END ; Check L button
+  LDA $F2 : CMP #$30 : BEQ $03 : JMP END ; Check L button
 
   ; Load items
 
