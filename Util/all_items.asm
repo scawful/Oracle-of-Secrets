@@ -58,9 +58,7 @@ org $068365
 
 org $3CA62A ; Expanded space for our routine
 {
-  LDA $F2 : CMP #$30 : BEQ $03 : JMP END ; Check L button
-
-  ; Load items
+  LDA $F2 : CMP #$30 : BEQ $03 : JMP END ; Check L and R button
 
   ; 0 - nothing. 1 - bow w/ no arrows. 2 - bow w/ arrows. 3 - silver arrows
   LDA #$02 : STA !Bow
@@ -135,14 +133,7 @@ org $3CA62A ; Expanded space for our routine
   LDA #$E7 : STA !Rupees
   LDA #$03 : STA !RupeesGoal
 
-  ; health capacity (maximum number of hearts)
-  LDA #$50 : STA !HealthCapacity
 
-  ; magic power, maximum is 0x80
-  LDA #$80 : STA !MagicPower
-
-  ; fill all hearts
-  LDA #$A0 : STA !Hearts
 
   ; Pendants: Bit 0 = Courage, Bit 1 = Wisdom, Bit 2 = Power
   LDA #$00 : STA !Pendants
@@ -167,6 +158,15 @@ org $3CA62A ; Expanded space for our routine
 
   ; Magic usage: 0: normal consumption. 1: 1/2 consumption. 2: 1/4 consumption
   LDA #$02 : STA !MagicUsage
+
+  ; health capacity (maximum number of hearts)
+  LDA #$A0 : STA !HealthCapacity
+
+  ; fill all hearts
+  LDA #$A0 : STA !Hearts
+  
+  ; magic power, maximum is 0x80
+  LDA #$80 : STA !MagicPower
 
 END:
 

@@ -311,3 +311,17 @@ MovieEffect:
     db $3F, $00 ;for $20 line set screen brightness to 0
     db $00      ;end the HDMA
 }
+
+
+Link_CheckNewY_ButtonPress_Long:
+{
+    BIT.b $3A : BVS .fail
+    LDA.b $46 : BNE .fail
+    LDA.b $F4 : AND.b #$40 : BEQ .fail
+    TSB.b $3A
+    SEC
+    RTL
+  .fail
+    CLC
+    RTL
+}
