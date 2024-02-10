@@ -1,13 +1,13 @@
 ;----------------[ Time system ]----------------
-@xkas
-warn xkas off
+; @xkas
+; warn xkas off
 lorom 
 
 ; tiles locations on HUD
-!hud_min_low = $7EC798
-!hud_min_high = $7EC796
-!hud_hours_low = $7EC792
-!hud_hours_high = $7EC790
+!hud_min_low = $7EC7CC
+!hud_min_high = $7EC7CA
+!hud_hours_low = $7EC7C6
+!hud_hours_high = $7EC7C4
 !hud_template = $0DFF07
 
 org !hud_template
@@ -17,140 +17,137 @@ org !hud_template
   db $6C,$25,$90,$24,$90,$24	; HUD Template(adjusts timer's color)
 	
 org $068361
-	JSL $1CFF30
+	JSL HUD_ClockDisplay ; $1CFF30
   ;originally JSL $09B06E, executed every frame
 
-org $1CFF30
+; org $1CFF30
+org $328000
+HUD_ClockDisplay:
+{
 	JSR counter_preroutine
 	LDX #$00
-debut:
-	LDY #$00
-	LDA $7EE000,x
+.debut
+	LDY #$00 : LDA $7EE000,x
 
-debut2:
-	CMP #$0A
-	BMI draw
-	SBC #$0A
-	INY
-	BRA debut2
+.debut2
+	CMP #$0A : BMI .draw
+	SBC #$0A : INY : BRA .debut2
 
-draw:
-	adc #$90
-	CPX #$01
-	BEQ minutes_low
+.draw
+	ADC #$90 : CPX #$01 : BEQ .minutes_low
 	STA !hud_hours_low
-	BRA 04
+  LDA #$30 : STA !hud_hours_low+1 ; white palette
+	BRA .continue_draw ; 04
 
-minutes_low:
+.minutes_low
 	STA !hud_min_low
-	tya
-	clc
-	adc #$90
-	CPX #$01
-	BEQ minutes_high
+  LDA #$30 : STA !hud_min_low+1 ; white palette
+.continue_draw
+  TYA
+	CLC : ADC #$90 : CPX #$01
+	BEQ .minutes_high
 	STA !hud_hours_high
-	BRA 04
+  LDA #$30 : STA !hud_hours_high+1 ; white palette
+	BRA .finish_draw ; 04
 
-minutes_high:
-	STA !hud_min_high
-	INX
-	CPX #$02
-	BMI debut
-	JSL $09B06E
-	rtl
+.minutes_high
+	STA !hud_min_high 
+  LDA #$30 : STA !hud_min_high+1 ; white palette
+.finish_draw
+	INX : CPX #$02 : BMI .debut
+	JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
+	RTL
+}
 
 ;--------------------------------
 
 counter_preroutine:
-	LDA $10			;checks current event in game
-	CMP #$07		;dungeon/building?
-	BEQ counter_increasing
-	CMP #$09		;overworld?
-	BEQ overworld
-	CMP #$0B
-	BEQ overworld		;sub-area ? (under the bridge; zora domain...)
-	CMP #$0E		;dialog box?
-	BEQ dialog
-	RTS
+{
+    LDA $10			;checks current event in game
+    CMP #$07		;dungeon/building?
+    BEQ .counter_increasing
+    CMP #$09		;overworld?
+    BEQ .overworld
+    CMP #$0B
+    BEQ .overworld		;sub-area ? (under the bridge; zora domain...)
+    CMP #$0E		;dialog box?
+    BEQ .dialog
+    RTS
 
-overworld:
-	LDA $11
-	CMP #$23		;hdma transfer? (warping)
-	bne mosaic
-mosaic:
-	CMP #$0D		;mosaic ?
-	BMI counter_increasing
-	rts
+  .overworld
+    LDA $11
+    CMP #$23		;hdma transfer? (warping)
+    BNE .mosaic
+  .mosaic
+    CMP #$0D		;mosaic ?
+    BMI .counter_increasing
+    RTS
 
-dialog:
-	LDA $11			;which kind of dialog? (to prevent the counter from increasing if save menu or item menu openned)
-	CMP #$02		;NPC/signs speech
-	BEQ counter_increasing
-	rts
+  .dialog
+    LDA $11			;which kind of dialog? (to prevent the counter from increasing if save menu or item menu openned)
+    CMP #$02		;NPC/signs speech
+    BEQ .counter_increasing
+    RTS
 
-counter_increasing:
-  ; time speed (1,3,5,7,F,1F,3F,7F,FF) 
-  ; #$3F is almost 1 sec = 1 game minute
-	LDA $1A : AND #$05
-	BEQ increase_minutes
-end:
-	rts
+  .counter_increasing
+    ; time speed (1,3,5,7,F,1F,3F,7F,FF) 
+    ; #$3F is almost 1 sec = 1 game minute
+    LDA $1A : AND #$3F ; 05
+    BEQ .increase_minutes
+  .end
+    RTS
 
-increase_minutes:
-	LDA $7EE001
-	INC A
-	STA $7EE001
-	CMP #$3C		; minutes = #60 ?
-	BPL increase_hours
-	RTS
+  .increase_minutes
+    LDA $7EE001 : INC A : STA $7EE001
+    CMP #$3C : BPL .increase_hours ; minutes = #60 ?
+    RTS
 
-increase_hours:
-	LDA #$00
-	STA $7EE001
-	LDA $7EE000
-	INC A
-	STA $7EE000
-	CMP #$18		; hours = #24 ?
-	BPL reset_hours
+  .increase_hours
+    LDA #$00 : STA $7EE001
+    LDA $7EE000 : INC A : STA $7EE000
+    CMP #$18		; hours = #24 ?
+    BPL .reset_hours
 
-	LDA $1B			;check indoors/outdoors
-	BEQ outdoors0
-	RTS
+    ;check indoors/outdoors
+    LDA $1B	: BEQ .outdoors0
+    RTS
 
-outdoors0:
-	JSL rom_to_buff		;update buffer palette
-	JSL buff_to_eff		;update effective palette
-	LDA $8C
-	CMP #$9F		;rain layer ?
-	BEQ skip_bg_updt0
-	JSL $0BFE70		;update background color
-	BRA inc_hours_end
-	
-skip_bg_updt0:			;prevent the sub layer from disappearing ($1D zeroed)
-	JSL $0BFE72
-inc_hours_end:	
-	RTS
+  .outdoors0
+    JSL rom_to_buff		;update buffer palette
+    JSL buff_to_eff		;update effective palette
+    ;rain layer ?
+    LDA $8C : CMP #$9F : BEQ .skip_bg_updt0
+    LDA $8C : CMP #$9E : BEQ .skip_bg_updt0	; canopy layer ?
+    JSL $0BFE70		;update background color
+    BRA .inc_hours_end
+    
+  .skip_bg_updt0			;prevent the sub layer from disappearing ($1D zeroed)
+    JSL $0BFE72
+  .inc_hours_end
+    RTS
 
-reset_hours:
-	LDA #$00
-	STA $7EE000
+  .reset_hours
+    LDA #$00 : STA $7EE000
 
-	LDA $1B			;check indoors/outdoors
-	BEQ outdoors1
-	RTS
-outdoors1:
-	JSL rom_to_buff
-	JSL buff_to_eff
-	LDA $8C
-	CMP #$9F		;rain layer ?
-	BEQ skip_bg_updt1
-	JSL $0BFE70		;update background color
-	BRA reset_end
-	
-skip_bg_updt1:			;prevent the sub layer from disappearing ($1D zeroed)
-	JSL $0BFE72
-reset_end:	
-	RTS
+    ;check indoors/outdoors
+    LDA $1B	: BEQ .outdoors1
+    RTS
+  .outdoors1
+    JSL rom_to_buff
+    JSL buff_to_eff
+    LDA $8C : CMP #$9F		;rain layer ?
+    BEQ .skip_bg_updt1
+    LDA $8C : CMP #$9E : BEQ .skip_bg_updt1	; canopy layer ?
+    JSL $0BFE70		;update background color
+    BRA .reset_end
+    
+  .skip_bg_updt1			;prevent the sub layer from disappearing ($1D zeroed)
+    JSL $0BFE72
+  .reset_end
+    RTS
+}
+
+print pc
 
 ;-----------------------------------------------
 ;----[ Day / Night system * palette effect ]----
@@ -190,34 +187,31 @@ org $1BEF84
 org $0EEE25	; free space
 LoadDayNightPaletteEffect:
 {
-	STA !pal_color
+    STA !pal_color
 
-	CPX #$0041
-	BPL title_check
-	STA $7EC300,X
-	RTL
-  
-title_check:
-	LDA $10
-	AND #$00FF
-	CMP #$0002	; title or file select screen ?
-	BPL outin_check
-	LDA !pal_color
-	STA $7EC300,X
-	RTL
+    CPX #$0041 : BPL .title_check
+    STA $7EC300,X
+    RTL
+    
+  .title_check
+    LDA $10 : AND #$00FF
+    CMP #$0002	; title or file select screen ?
+    BPL .outin_check
+    LDA !pal_color : STA $7EC300,X
+    RTL
 
-outin_check:
-	LDA $1B : AND #$00FF : BEQ outdoors2
-	LDA !pal_color
-	STA $7EC300,X
-	RTL
+  .outin_check
+    LDA $1B : AND #$00FF : BEQ .outdoors2
+    LDA !pal_color
+    STA $7EC300,X
+    RTL
 
-outdoors2:
-	PHX
-	JSL ColorSubEffect
-	PLX
-	STA $7EC300,X
-	RTL
+  .outdoors2
+    PHX
+    JSL ColorSubEffect
+    PLX
+    STA $7EC300,X
+    RTL
 }
 ;--------------------------------
 
@@ -230,54 +224,46 @@ ColorSubEffect:
 	AND #$00FF
 	TAX
 
-do_blue:
-	LDA !pal_color
-	AND #$7C00
-	STA !blue_value
-	SEC
-	SBC blue_table,x	; substract amount to blue field based on a table
-	STA !temp_value
+.do_blue
+	LDA !pal_color : AND #$7C00 : STA !blue_value
+  ; substract amount to blue field based on a table
+	SEC : SBC blue_table, X : STA !temp_value
 	AND #$7C00		; mask out everything except the blue bits
 	CMP !temp_value		; overflow ?
-	BEQ no_blue_sign_change
+	BEQ .no_blue_sign_change
 
-blue_sign_change:
+.blue_sign_change
 	LDA #$0400		; LDA smallest blue value
 
-no_blue_sign_change:
+.no_blue_sign_change
 	STA !blue_value 
 
 do_green:
-	LDA !pal_color
-	AND #$03E0
-	STA !green_value
-	SEC
-	SBC green_table,x	; substract amount to blue field based on a table
+	LDA !pal_color : AND #$03E0 : STA !green_value
+	SEC : SBC green_table,x	; substract amount to blue field based on a table
 	STA !temp_value
-	AND #$03E0		; mask out everything except the green bits
-	CMP !temp_value		; overflow ?
-	BEQ no_green_sign_change
+  ; mask out everything except the green bits
+	AND #$03E0 : CMP !temp_value		; overflow ?
+	BEQ .no_green_sign_change
   
-green_sign_change:
+.green_sign_change
 	LDA #$0020		; LDA smallest green value
-	no_green_sign_change:
+
+.no_green_sign_change
 	STA !green_value
 	
-do_red:
-	LDA !pal_color
-	AND #$001F
-	STA !red_value
-	SEC
-	SBC red_table,x		; substract amount to red field based on a table
+.do_red
+	LDA !pal_color : AND #$001F : STA !red_value
+	SEC : SBC red_table,x		; substract amount to red field based on a table
 	STA !temp_value
 	AND #$001F		; mask out everything except the red bits
 	CMP !temp_value		; overflow ?
-	BEQ no_red_sign_change
+	BEQ .no_red_sign_change
 
-red_sign_change:
+.red_sign_change
 	LDA #$0001		; LDA smallest red value
 
-no_red_sign_change:
+.no_red_sign_change
 	STA !red_value
 
 	LDA !blue_value
@@ -356,6 +342,31 @@ GlovesFix:
 	RTL
 }
 
+CheckIfNight:
+{
+  LDA $7EE000 : CMP.b #$06
+  BCC .night_time
+
+.day_time
+  LDA.l $7EF3C5
+
+  RTL
+.night_time
+
+  LDA $7EE000 : CMP.b #$14
+  BCS .day_time
+
+  LDA.l $7EF3C5
+  CLC
+  ADC #$01
+  RTL
+}
+
+warnpc $0EF3F9  ; free space
+
+org $09C4E3
+  JSL CheckIfNight
+
 
 ; $0BFE70 -> background color loading routine
 ;Background color write fix - 16 bytes
@@ -364,10 +375,12 @@ GlovesFix:
 ;$0B/FEBE 8F 40 C5 7E STA $7EC540
 ;$0B/FEC2 8F 40 C3 7E STA $7EC340
 
-org $0BFEB6
+; org $0BFEB6
+org $2886B0 ; ZS OW Expanded 
 	STA !pal_color
 	JSL BackgroundFix
-	nop #8
+	;NOP #8
+
 
 ; Subareas background color fix (under the bridge; zora...)
 ;$0E/D601 8F 00 C3 7E STA $7EC300[$7E:C300]
