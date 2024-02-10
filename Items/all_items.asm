@@ -14,4 +14,7 @@ incsrc "Items/jump_feather.asm"
 incsrc "Items/book_of_secrets.asm"
 incsrc "Items/portal_rod.asm"
 incsrc "Items/sword_collect.asm"
+
+incsrc "Items/goldstar.asm"
+
 print  "End of Items/sword_collect.asm    ", pc
