@@ -230,10 +230,15 @@ DrawYItems:
 	LDY.w #BoomsGFX
 	JSR DrawMenuItem
 
-	LDA.w #$7EF342
+	LDA.l $7EF342 : CMP.w #$0000 : BEQ .no_hookshot
+  LDA.w GoldstarOrHookshot : BNE .spoof_hookshot
+  LDA #$0001 ; No goldstar, but hookshot
+.spoof_hookshot
+  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
 	LDX.w #menu_offset(7,9)
 	LDY.w #HookGFX
 	JSR DrawMenuItem
+.no_hookshot
 
   LDA.l $7EF343
   CMP.w #$00 : BEQ .no_bomb
@@ -288,18 +293,18 @@ DrawYItems:
 	JSR DrawMenuItem
 
   ;; next row 
-
-  LDA.w #$7EF34C
+  LDA.l $7EF34C : CMP.w #$0000 : BEQ .no_ocarina
+  LDA.w $030F : BNE .spoof_ocarina
+  LDA #$0001 ; Multi-songs not unlocked yet
+.spoof_ocarina 
+  STA.w ShortSpoof : LDA.w #ShortSpoof
 	LDX.w #menu_offset(13,3)
 	LDY.w #OcarinaGFX
 	JSR DrawMenuItem
+.no_ocarina
 
-  ;LDA.w #$7EF34E
-  LDA.l $7EF34E
-  CMP.w #$00 : BEQ .no_book
-  LDA.w #$01
-  STA.w ShortSpoof
-  LDA.w #ShortSpoof
+  LDA.l $7EF34E : CMP.w #$00 : BEQ .no_book
+  LDA.w #$01 : STA.w ShortSpoof : LDA.w #ShortSpoof
 	LDX.w #menu_offset(13,6)
 	LDY.w #BookGFX
 	JSR DrawMenuItem

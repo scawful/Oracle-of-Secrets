@@ -64,6 +64,7 @@ PlaytimeLabel:
   dw "PLAYTIME:_"
 
 DrawPlaytimeLabel:
+{
   LDX.w #$10
 
 .draw2
@@ -71,7 +72,25 @@ DrawPlaytimeLabel:
   STA.w $1692, X 
   DEX : DEX : BPL .draw2
 
+  ; ; Starting at 0 = $2570 we draw the hours 
+  ; ; Get hours 
+  ; LDA $7EE000 
+  
+  ; ; CLC : ADC #$2570 
+
+  
+  ; STA.w $1692+#$12 ; First digit of hour 
+
+  ; STA.w $1692+#$14 ; Second digit of hour 
+
+  ; ; Get minutes
+  ; LDA $7EE001 
+  ; ; CLC : ADC #$2570
+  ; STA.w $1692+#$16  ; First digit of minute
+  ; STA.w $1692+#$18 ; Second digit of minute
+
   RTS
+}
 
 ; =============================================================================
 
@@ -110,16 +129,27 @@ Menu_BottleItems:
   dw "____FAIRY_____  "
   dw "__GOOD_BEE____  "
 
+Menu_GoldstarLabel:
+  dw "__GOLD_STAR___  "
+
+Menu_SongNames:
+  dw "SONG:_SOARING_  "
+  dw "SONG:_HEALING_  "
+  dw "SONG:_STORMS__  "
+
 Menu_DrawItemName:
 {
   SEP #$30
+  LDA.w $0202 : CMP.b #$03 : BEQ .goldstar
+  LDA.w $0202 : CMP.b #$0D : BEQ .ocarina
   ; Check if it's a bottle
   LDA.w $0202 : CMP.b #$06 : BEQ .bottle_1
   LDA.w $0202 : CMP.b #$0C : BEQ .bottle_2
   LDA.w $0202 : CMP.b #$12 : BEQ .bottle_3
   LDA.w $0202 : CMP.b #$18 : BEQ .bottle_4
+  
+.draw_item
   REP #$30
-
   LDA.w $0202 : BEQ .no_items
   DEC : ASL #5 : TAX
   LDY.w #$000
@@ -141,16 +171,53 @@ Menu_DrawItemName:
   REP #$30 : LDX #$0002 : JMP .draw_bottle
 .bottle_4
   REP #$30 : LDX #$0003
-
 .draw_bottle
-  LDA.l $7EF35C, X : AND.w #$00FF 
-  DEC : ASL #5 : TAX
-  LDY.w #$0000
-.draw_bottle_loop
-  LDA.w Menu_BottleItems, X : STA.w $1692, Y
-  INX #2 : INY #2 
-  CPY #$001C : BCC .draw_bottle_loop
+  JSR DrawBottleNames
   RTS
+
+.goldstar
+  LDA GoldstarOrHookshot : CMP.b #$02 : BNE .draw_item
+  JSR MaybeDrawGoldstarName
+  RTS
+
+.ocarina
+  REP #$30
+
+  ; Check the timer and see if we should draw the item name
+  LDA $1A : AND.w #$00FF : CMP #$0080 : BCC .draw_item
+
+  LDA $030F : BEQ .draw_item
+  LDA $030F : AND.w #$00FF : DEC : ASL #5 : TAX 
+  LDY.w #$0000
+.draw_ocarina_loop
+  LDA.w Menu_SongNames, X : STA.w $1692, Y 
+  INX #2 : INY #2 : CPY #$001C : BCC .draw_ocarina_loop
+  RTS
+
+}
+
+DrawBottleNames:
+{
+
+    LDA.l $7EF35C, X : AND.w #$00FF 
+    DEC : ASL #5 : TAX
+    LDY.w #$0000
+  .draw_bottle_loop
+    LDA.w Menu_BottleItems, X : STA.w $1692, Y
+    INX #2 : INY #2 
+    CPY #$001C : BCC .draw_bottle_loop
+    RTS
+}
+
+MaybeDrawGoldstarName: 
+{
+    REP #$30
+    LDX.w #$0000
+    LDY.w #$0000
+  .draw_goldstar_loop
+    LDA.w Menu_GoldstarLabel, X
+    STA.w $1692, X : INX #2 : INY #2 : CPY #$001C : BCC .draw_goldstar_loop
+    RTS
 }
 
 ; =============================================================================

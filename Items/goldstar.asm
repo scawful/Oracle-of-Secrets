@@ -55,9 +55,8 @@ pullpc
 
 HookMaskCheck:
 {
-    LDA.w $0202 : AND.w #$00FF : CMP.w #$000E : BNE .not_mask
-    ; morning star graphics oam tile pattern id 
-    LDA.w $0109 : AND #$FF00 : ORA.w #$004A
+    LDA GoldstarOrHookshot : AND.w #$00FF :  CMP.w #$0002 : BNE .not_mask
+    LDA.w $0109 : AND #$FF00 : ORA.w #$004A ; morning star graphics oam tile pattern id 
     RTL
   .not_mask
     ; return hookshot graphics oam tile pattern id
@@ -95,7 +94,7 @@ pullpc
 ; $22D4C0 - Hooked into AncillaDraw_Hookshot @ _08BF2D
 BallChain_DrawOrReturn:
 {
-    LDA $0202 : CMP #$0E : BEQ + 
+    LDA GoldstarOrHookshot : CMP #$02 : BEQ + 
     LDA #$00 : STA ($92),Y
     RTL
   + ; $22D4CD
@@ -114,13 +113,13 @@ pullpc
 BallChain_ExtraCollisionLogic:
 {
     TAX
-    LDA $0202 : CMP #$0E : BNE + ; Check if turtle
-    TXA : CMP #$0A : BNE ++ ; $22D4F3
-    LDA #$FF : BRA ++ ; $22D4F3
+    LDA GoldstarOrHookshot : CMP #$02 : BNE + ; Check if using goldstar 
+    TXA : CMP #$0A : BNE ++
+    LDA #$FF : BRA ++
   +  ; $22D4F2
     TXA
   ++ ; $22D4F3
-    CMP #$FF : BEQ +++ ; $22D4FB
+    CMP #$FF : BEQ +++
     JML $08BF10 ; AncillaDraw_Hookshot - JSR Ancilla_SetOAM_XY, skips hookshot char
   +++ ; $22D4FB
     JML $08BF32 ; AncillaDraw_Hookshot_skip
@@ -241,7 +240,7 @@ pullpc
 ; Sets Link state to 0x00 and resets the hookshot timer
 BallChain_ResetTimer:
 {
-  LDA $0202 : CMP #$0E : BNE + 
+  LDA GoldstarOrHookshot : CMP #$02 : BNE +
   STZ $7A ; Clear the timer
 +
   STZ $5D ; Return to LinkState_Default
@@ -262,7 +261,7 @@ pullpc
 ; Natively NOPs out the bytes 08BFDA - 08BFEA
 BallChain_DrawChainOrHookshot:
 {
-  LDA $0202 : CMP #$0E : BEQ +
+  LDA GoldstarOrHookshot : CMP #$02 : BEQ +
   LDA #$19 : STA ($90),Y
   JSR BallChainOrHookshot_Modifier ; $D820
   ORA.b #$02
@@ -292,7 +291,7 @@ struct HookshotSpriteData $08BD4C
 endstruct
 
 pushpc
-org $8BF1B ; AncillaDraw_HookshotChain
+org $08BF1B ; AncillaDraw_HookshotChain
   JSL Goldstar_SetChainProperties
   NOP #3
 pullpc 
@@ -300,7 +299,7 @@ pullpc
 ; $22D850 - Modify the palette
 Goldstar_SetChainProperties:
 {
-  LDA $0202 : CMP #$0E : BEQ .ball_chain
+  LDA GoldstarOrHookshot : CMP #$02 : BEQ .ball_chain
   LDA HookshotSpriteData.prop, X
   ORA.b #$02 : ORA.b $65
   RTL
@@ -323,14 +322,14 @@ pullpc
 Link_OAM_Actually:
 {
     REP #$20
-    LDA $0202 : AND #$00FF : CMP #$000E : BEQ +
+    LDA $0202 : AND #$00FF : CMP #$0003 : BEQ +
     LDA $839B,Y
     RTL
   + ; $22D892
     LDA $839B,Y : CMP #$221A : BEQ ++
     RTL
   ++ ; $22D89B
-    LDA $0202 : AND #$00FF : CMP #$000E : BEQ +++ 
+    LDA GoldstarOrHookshot : AND #$00FF : CMP #$0002 : BEQ +++
     LDA $839B,Y
     RTL
   +++ ; $22D8AA
@@ -383,6 +382,8 @@ HookshotChain_AncillaDraw:
   JMP Routine_22D9A0 ; $D9A0
 +++++++ ; 22D951
   CLC : CMP #$05 : BCC ++++++++
+  LDA $F8 : CMP.b #$40 : BEQ +
+
   JMP Routine_22D9A0 ; $D9A0
 ++++++++ ; 22D959
   JMP Routine_22DBD0 ; $DBD0
@@ -700,11 +701,10 @@ org $08BDFD
 pullpc
 
 ; 22DC50
-; Hooked into Hookshot_Extending_ignore_collision @ 08BDFD
 HookshotOrBallChain_Extending_ignore_collision:
 {
   ; Ball Chain Timer
-  LDA $7A  : CMP #$00 : BNE +     ; $22DC5E
+  LDA $7A  : CMP #$00 : BNE + 
   JSL Hookshot_CheckTileCollision ; $07D576
   JML $08BE01 ; Hookshot_Extending_ignore_collision continue
 + ; 22DC5E
@@ -914,20 +914,55 @@ Hookshot_Init:
 
 Goldstar_Begin:
 {
-    BIT $3A : BVS .return
-    LDA $6C : BNE .return
-
-    JSL  Link_CheckNewY_ButtonPress_Long : BCC .return
-
     JSL CheckForBallChain
     JSL Hookshot_Init
     JSL BallChain_StartAnimationFlag
-    LDY.b #$03
-    LDA.b #$1F ; ANCILLA 1F
+    LDY.b #$03 : LDA.b #$1F ; ANCILLA 1F
     JSL $099B10 ; AncillaAdd_Hookshot
     JSL TransferGFXinRAM
-
-  .return
-
     RTL
 }
+
+CheckForSwitchToGoldstar:
+{
+  %CheckNewR_ButtonPress() : BEQ .continue
+  LDA GoldstarOrHookshot : CMP #$01 : BEQ .set_hookshot
+  LDA #$01 : STA GoldstarOrHookshot
+  JMP .continue
+.set_hookshot:
+  LDA #$02 : STA GoldstarOrHookshot
+.continue:
+  ; Restore vanilla code
+  LDA.b $3A : AND.b #$40
+  RTL
+}
+
+BeginGoldstarOrHookshot:
+{
+  LDA GoldstarOrHookshot : CMP #$02 : BEQ .begin_goldstar
+  JMP .return
+
+.begin_goldstar:
+  JSL Goldstar_Begin
+  RTL
+  
+.return
+  JSL Hookshot_Init
+  LDA #$13 : STA $5D ; Set hookshot state
+  LDA #$01 : STA.w $037B
+  LDY.b #$03
+  LDA.b #$1F ; ANCILLA 1F
+  JSL $099B10 ; AncillaAdd_Hookshot
+  RTL
+}
+
+pushpc
+
+org $07AB25
+  JSL CheckForSwitchToGoldstar
+
+org $07AB3A ;$07AB40
+  JSL BeginGoldstarOrHookshot
+  RTS
+
+pullpc

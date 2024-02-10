@@ -273,12 +273,10 @@ HUD_UpdateItemBox:
   JMP   .loadBottleContent
 .bottle1NotEquipped
   CPX.w #$000C : BNE .bottle2NotEquipped
-  LDA.w #$0002
-  JMP   .loadBottleContent
+  LDA.w #$0002 : JMP   .loadBottleContent
 .bottle2NotEquipped
   CPX.w #$0012 : BNE .bottle3NotEquipped
-  LDA.w #$0003
-  JMP   .loadBottleContent
+  LDA.w #$0003 : JMP   .loadBottleContent
 .bottle3NotEquipped
   CPX.w #$0018 : BNE .bottleNotEquipped
   LDA.w #$0004
@@ -291,6 +289,21 @@ HUD_UpdateItemBox:
 
 .fluteNotEquipped
 
+  CPX.w #$0003 : BNE .hookshotNotEquipped
+  LDA.w GoldstarOrHookshot
+  SEC : SBC.b #$01 
+
+.hookshotNotEquipped
+
+  JSR HUD_DrawItem
+
+.noEquippedItem
+
+  RTS
+}
+
+HUD_DrawItem:
+{
   STA $02
   TXA : DEC A : ASL A : TAX
   LDA $FA93, X : STA $04
@@ -301,8 +314,6 @@ HUD_UpdateItemBox:
   LDA ($04), Y : STA $7EC778 : INY #2
   LDA ($04), Y : STA $7EC7B6 : INY #2
   LDA ($04), Y : STA $7EC7B8 : INY #2
-
-.noEquippedItem
 
   RTS
 }
@@ -376,6 +387,8 @@ HexToDecimal:
     DEX : BPL .setNextDigitTile
     RTS
 }
+
+pushpc
 
 ; =============================================================================
 
@@ -488,62 +501,23 @@ org $0DF811
   dw $20F5, $20F5, $20F5, $20F5
   dw $30B4, $30B5, $30C4, $30C5
 
+org $0DF669
+  dw $24F5, $24F6, $24C0, $24F5 ; Hookshot
+  dw $2C17, $3531, $2D40, $3541 ; Ball & Chain
+
 ; =============================================================================
 ; $6FE77-$6FFC0
+
+
 
 org    $0DFE77
 HUD_Tilemap:
 incbin tilemaps/hud.tilemap
-; {
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F
 
-;   ; magic bar top part
-; dw $200B, $200C, $200C, $200C, $200C, $200C
-;   ; item frame top part
-; dw $206C, $206D, $206E, $206F
+; #_02816A: JSL RebuildHUD_Keys
 
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F
-
-;   ; rupee icon            key icon
-; dw $3CA8, $FCA8, $207F, $2071, $207F
-
-;   ; magic bar
-; dw $201B, $344B
-; dw $344B, $344B, $344B, $344B
-
-;   ; item frame left part
-; dw $20DE, $207F, $207F, $20DF
-
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F, $207F, $207F
-
-;   ; magic bar bottom part
-; dw $A00B, $A00C
-; dw $A00C, $A00C, $A00C, $A00C
-
-;   ; item frame right part
-; dw $20EE, $207F, $207F, $20EF
-
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F
-
-;   ; item frame bottom part
-; dw $207C, $207D, $207E, $201D
-
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F, $207F, $207F, $207F, $207F, $207F, $207F, $207F
-; dw $207F
-; }
+; LoadUnderworldRoomRebuildHUD:
+; #_028118: LDA.b #$00 ; reset mosaic level
 
 ; ==============================================================================
 
@@ -637,3 +611,5 @@ FloorIndicator:
 
   RTL
 }
+
+pullpc

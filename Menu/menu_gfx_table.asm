@@ -27,7 +27,7 @@ BoomsGFX:
 
 HookGFX:
 	dw $24F5, $24F6, $24C0, $24F5 ; Hookshot
-  ;dw $2C17, $3531, $2D40, $3541  Ball & Chain
+  dw $2C17, $3531, $2D40, $3541 ; Ball & Chain
 
 ; -------------------------------------
 
@@ -81,8 +81,8 @@ ShovelGFX:
 
 OcarinaGFX:
   dw $2CD4, $2CD5, $2CE4, $2CE5
-  dw $2CD4, $2CD5, $2CE4, $2CE5 
-  dw $2CD4, $2CD5, $2CE4, $2CE5
+  dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
+  dw $24D4, $24D5, $24E4, $24E5 ; Red
 
 ; -------------------------------------
 
