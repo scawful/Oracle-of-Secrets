@@ -35,6 +35,12 @@
 ;   3F - Load Custom GFX, Boat GFX
 ;
 ; =========================================================
+xkas  
+incsrc "Overworld/custom_gfx.asm"
+print  "End of custom_gfx.asm             ", pc
+incsrc "Overworld/ZCustomOverworld.asm"
+print  "End of Overworld/ZCustomOverworld.asm", pc
+incsrc "Overworld/time_system.asm"
 
 namespace Oracle
 {
@@ -57,9 +63,6 @@ namespace Oracle
 
   incsrc "Overworld/master_sword.asm"
   print  "End of master_sword.asm           ", pc
-
-  incsrc "Overworld/custom_gfx.asm"
-  print  "End of custom_gfx.asm             ", pc
 
   incsrc "Overworld/maku_tree.asm"
   print  "End of Overworld/maku_tree.asm    ", pc
@@ -136,10 +139,6 @@ namespace Oracle
 
   incsrc "Menu/menu.asm"
   print  "End of Menu/menu.asm              ", pc
-
-  ; incsrc "Menu/rings/bestiary_hooks.asm"
-  ; incsrc "Menu/rings/bestiary.asm"
-
 
   ; -------------------------------------------------------
   incsrc "Util/all_items.asm"
