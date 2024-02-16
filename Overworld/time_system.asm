@@ -376,7 +376,7 @@ org $09C4E3
 ;$0B/FEC2 8F 40 C3 7E STA $7EC340
 
 ; org $0BFEB6
-org $2886B0 ; ZS OW Expanded 
+org $2886B4 ; ZS OW Expanded 
 	STA !pal_color
 	JSL BackgroundFix
 	;NOP #8
