@@ -175,50 +175,44 @@ Sprite_KydrogBoss_Main:
 
   KydrogBoss_WalkState:
   {    
+      LDA $0DA0 : BEQ .not_flashing
+        LDA.b #$20 : STA.w SprTimerD, X
+        %GotoAction(6) ; Goto KydrogBoss_TakeDamage
+        RTS
+    .not_flashing
+
+      ; LDA !OffspringCount : CMP.b #$05 : BCS .no_offspring
+        JSL GetRandomInt : AND.b #$0F : BNE .not_taunting
+          LDA.b #$10 : STA.w SprTimerD, X
+          %GotoAction(8) ; Goto KydrogBoss_TauntPlayer
+          RTS
+    .not_taunting
+
+      LDA #$50 : STA $09, X
+      JSL Sprite_DirectionToFacePlayer 
+      TYA : CMP.b #$02 : BCC .WalkRight
     
-    LDA $0DA0 : BEQ .not_flashing
-      LDA.b #$20 : STA.w SprTimerD, X
-      %GotoAction(6) ; Goto KydrogBoss_TakeDamage
-    RTS
+    .WalkForward
+      %StopIfTooClose()
+      JSL Sprite_IsBelowPlayer ; Check if sprite is below player
+      TYA : BNE .WalkBackwards ; If 1, go to KydrogBoss_WalkBackwards
+      
+      %GotoAction(2) ; Goto KydrogBoss_WalkForward
+      RTS
 
-  .not_flashing
+    .WalkBackwards
+      %GotoAction(5) ; Goto KydrogBoss_WalkBackwards
+      RTS
 
-    ; LDA !OffspringCount : CMP.b #$05 : BCS .no_offspring
-      JSL GetRandomInt : AND.b #$0F : BNE .no_offspring
-        LDA.b #$10 : STA.w SprTimerD, X
-        %GotoAction(8) ; Goto KydrogBoss_TauntPlayer
-    RTS
-
-  .no_offspring
-    LDA #$50 : STA $09, X
-    JSL Sprite_DirectionToFacePlayer 
-    TYA : CMP.b #$02 : BCC .WalkRight
-
-  
-.WalkForward
-    %StopIfTooClose()
-    JSL Sprite_IsBelowPlayer ; Check if sprite is below player
-    TYA : BNE .WalkBackwards ; If 1, go to KydrogBoss_WalkBackwards
+    .WalkRight
+      %StopIfTooClose()
+      JSL Sprite_IsToRightOfPlayer : TYA : BNE .WalkLeft 
+      %GotoAction(4)
+      RTS
     
-    %GotoAction(2) ; Goto KydrogBoss_WalkForward
-    RTS
-
-  .WalkBackwards
-    %GotoAction(5) ; Goto KydrogBoss_WalkBackwards
-    RTS
-
-.WalkRight
-    %StopIfTooClose()
-    
-    JSL Sprite_IsToRightOfPlayer ; Check if sprite is to the right of player
-    TYA : BNE .WalkLeft ; If so, go to KydrogBoss_WalkLeft
-
-    %GotoAction(4)
-    RTS
-  
-  .WalkLeft
-    %GotoAction(3) ; Goto KydrogBoss_WalkLeft
-    RTS
+    .WalkLeft
+      %GotoAction(3) ; Goto KydrogBoss_WalkLeft
+      RTS
   }
 
   ; ---------------------------------------------------------------------------
@@ -749,19 +743,24 @@ Kydrog_ThrowBoneAtPlayer:
 
 ; oh right yeah y will be equal to the sprite you spawned for that frame
 ; but if you want to do a count what you would do:
-; PHX
-; STZ $00
-
-; LDX.b #$10
-; .loop
-;   DEX
-;   LDA $0E20, X : CMP.b #$skull : BNE .notSkull
-;     LDA $0DD0, X : CMP.b #$09 : BNE .notSkull
-;       INC $00
-
-;   .notSkull
-; CPX.b #$00 : BNE .loop
-
-; PLX
 
 ; $00 = your stalfos skull count
+GetNumberSpawnStalfos:
+{
+  PHX
+  STZ $00
+
+  LDX.b #$10
+  .loop
+    DEX
+    LDA $0E20, X : CMP.b #$skull : BNE .notSkull
+      LDA $0DD0, X : CMP.b #$09 : BNE .notSkull
+        INC $00
+
+    .notSkull
+  CPX.b #$00 : BNE .loop
+
+  PLX
+
+  RTL
+}
