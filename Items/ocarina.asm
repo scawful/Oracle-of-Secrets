@@ -1,9 +1,7 @@
-; =============================================================================
+; =========================================================
 ; Ocarina Multiple Song Select
 ;
-; $7EF3CB - Ocarina Song RAM 
-; 
-; =============================================================================
+; =========================================================
 
 org $0994FE
   AddTravelBird:
@@ -14,7 +12,7 @@ org $098D11
 org $078021
   Player_DoSfx1:
 
-; =============================================================================
+; =========================================================
 ; Song of Healing 
 
 ; SFX2_Accomp
@@ -39,7 +37,7 @@ Song_of_Healing:
   db $00
 }
 
-; =============================================================================
+; =========================================================
 
 ; D F D - D F D - E F E - F E C
 ; D F d D F d e f e f e c
@@ -88,7 +86,7 @@ Song_of_Storms:
 
   db $00 ; end sfx
 }
-; =============================================================================
+; =========================================================
 
 org $07A3DB
 LinkItem_FluteHook:
@@ -97,14 +95,14 @@ LinkItem_FluteHook:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 
 ; Free Space Bank07
 org $07FC69
 ReturnFromFluteHook:
   RTS
 
-; =============================================================================
+; =========================================================
 
 LinkItem_NewFlute:
 {
@@ -137,7 +135,7 @@ LinkItem_NewFlute:
   ; Play the Song of Storms SFX
   ; LDA.b #$12 : JSR Player_DoSfx2 
   LDA.b #$18 : JSR Player_DoSfx1
-  JSR OcarinaEffect_SummonStorms
+  JSL OcarinaEffect_SummonStorms
   RTS
 
 .song_of_soaring
@@ -209,9 +207,7 @@ LinkItem_NewFlute:
   RTS
 }
 
-; =============================================================================
-
-; $7EF3CB - Ocarina Song SRAM
+; =========================================================
 
 ; $030F - Current Song RAM
 ; 00 - No Song
@@ -253,15 +249,101 @@ UpdateFluteSong:
 .notPressed
   RTS
 }
+pushpc
 
+; ZS OW
+; Load the rain overlay by default for the song of storms
+org $02B011
+  LDX #$009F
+
+org $3C8000
 OcarinaEffect_SummonStorms:
 {
-  LDA.l $7EE00C : BEQ .summonStorms
-
-  LDA #$01 : STA $7EE00D
-  RTS
+  LDA.l $7EE00E : BEQ .summonStorms
+  LDA #$FF : STA $8C
+  LDA #$00 : STA $7EE00E
+  STZ $1D
+  STZ $9A
+  RTL
 
 .summonStorms
+  ; LDA #$16 : STA $11
+  LDA #$9F : STA $8C
+  LDA.b #$01 : STA.b $1D
+  LDA.b #$72 : STA.b $9A
   LDA #$01 : STA $7EE00E
-  RTS
+  RTL
 }
+
+CheckRealTable:
+{
+  LDA $7EE00E : CMP #$00 : BEQ .continue
+  JML $02A4CD+12 ; Jump to rain sound effect
+.continue
+  LDA.b $8A : ASL : TAX
+  LDA.l Pool_OverlayTable, X
+  CMP.b #$9F : BEQ .summonStorms
+  RTL
+.summonStorms
+  JML RainAnimation_Overridden_rainOverlaySet
+}
+
+; ZS OW
+org $02A4CD
+RainAnimation_Overridden:
+{
+  JSL CheckRealTable
+    LDA.b $8C : CMP.b #$9F : BEQ .rainOverlaySet
+    ; Check the progress indicator
+    LDA.l $7EF3C5 : CMP.b #$02 : BRA .skipMovement
+  .rainOverlaySet
+
+    ; If misery mire has been opened already, we're done.
+    ;LDA.l $7EF2F0 : AND.b #$20 : BNE .skipMovement
+    ; Check the frame counter.
+    ; On the third frame do a flash of lightning.
+    LDA.b $1A
+
+    CMP.b #$03 : BEQ .lightning ; On the 0x03rd frame, cue the lightning.
+      CMP.b #$05 : BEQ .normalLight ; On the 0x05th frame, normal light level.
+        CMP.b #$24 : BEQ .thunder ; On the 0x24th frame, cue the thunder.
+          CMP.b #$2C : BEQ .normalLight ; On the 0x2Cth frame, normal light level.
+            CMP.b #$58 : BEQ .lightning ; On the 0x58th frame, cue the lightning.
+              CMP.b #$5A : BNE .moveOverlay ; On the 0x5Ath frame, normal light level.
+
+  .normalLight
+
+    ; Keep the screen semi-dark.
+    LDA.b #$72
+
+    BRA .setBrightness
+
+  .thunder
+
+    ; Play the thunder sound when outdoors.
+    LDX.b #$36 : STX.w $012E
+
+  .lightning
+
+    LDA.b #$32 ; Make the screen flash with lightning.
+
+  .setBrightness
+
+    STA.b $9A
+
+  .moveOverlay
+
+    ; Overlay is only moved every 4th frame.
+    LDA.b $1A : AND.b #$03 : BNE .skipMovement
+        LDA.w $0494 : INC A : AND.b #$03 : STA.w $0494 : TAX
+
+        LDA.b $E1 : CLC : ADC.l $02A46D, X : STA.b $E1
+        LDA.b $E7 : CLC : ADC.l $02A471, X : STA.b $E7
+
+  .skipMovement
+
+    RTL
+}
+warnpc $02A52D
+
+pullpc
