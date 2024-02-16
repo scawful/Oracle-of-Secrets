@@ -1,40 +1,21 @@
-org $0AB917 ; after most of the area loading after calling the bird takes place
-    JSL CheckForChangeGraphicsNormalLoad
-
-org $028492 ; after leaving a dungeon
-    JSL CheckForChangeGraphicsNormalLoad
-
-
 org $02E94A
   JSL CheckForSpecialAreaGraphics
 
 org $0ED5A8
   OverworldPalettesLoader:
 
-org $00E19B
-    InitTilesets:
-
 ; ==============================================================================
 
 org $3F8000
-CheckForChangeGraphicsNormalLoad:
+CheckForChangeGraphicsNormalLoadBoat:
 {
-  JSL InitTilesets ;calls $00E19B that was replaced
-  
-  LDA $8A : CMP.b #$30 : BNE .boat_area
-
-  PHB : PHK : PLB
-
-  JSR ApplyGraphics1
-  
-  PLB
-
-  RTL ;goes back to normal
-
+    LDA $8A : CMP.b #$30 : BNE .boat_area
+    PHB : PHK : PLB
+    JSR ApplyGraphics1
+    PLB
+    RTL
   .boat_area
-
-
-  RTL
+    RTL
 }
 
 CheckForSpecialAreaGraphics: 
