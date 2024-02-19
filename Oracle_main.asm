@@ -20,7 +20,7 @@
 ;   2F - House Tag
 ;   30 - ZSprite Engine
 ;   31 - Sprites: all_sprites.asm
-;   32 -                        Entrance Music Fix 
+;   32 - Time System
 ;   33 - Custom Collision Tables
 ;   34 - Deku Link Code
 ;   35 - Deku Link GFX
@@ -96,8 +96,6 @@ namespace Oracle
 
   incsrc "Music/dungeon_theme.asm"
   print  "End of Music/dungeon_theme.asm    ", pc
-
-  ; incsrc "Music/entrance_music_fix.asm"
 
   print ""
 
