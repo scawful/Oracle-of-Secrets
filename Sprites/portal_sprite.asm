@@ -107,6 +107,7 @@ Sprite_Portal_Main:
   StateHandler:
   {
     JSR CheckForDismissPortal
+    JSR RejectOnTileCollision
 
     LDA $7E0FA6 : BNE .BluePortal
     LDA #$01 : STA $0307
@@ -317,6 +318,27 @@ CheckForDismissPortal:
 .return
   INC $06FE ; This ticker needs to be reset when transitioning rooms and maps.
   RTS
+}
+
+RejectOnTileCollision:
+{
+    LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
+    LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
+
+    ; Fetch tile attributes based on current coordinates
+    LDA.b #$00 : JSL Sprite_GetTileAttr
+    
+    ; Load the tile index 
+    LDA $0FA5 : CLC : CMP.b #$00 : BEQ .not_out_of_bounds
+    
+    ; Clear the sprite and make an error sound 
+    LDA #$3C ; SFX2.3C Error beep
+    STA $012E ; Queue sound effect 
+
+    LDA #$00 : STA $0DD0, X
+
+  .not_out_of_bounds
+    RTS
 }
 
 ;==========================================================
