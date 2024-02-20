@@ -35,7 +35,7 @@
 ;   3F - Load Custom GFX, Boat GFX
 ;
 ; =========================================================
-xkas  
+
 incsrc "Overworld/custom_gfx.asm"
 print  "End of custom_gfx.asm             ", pc
 incsrc "Overworld/ZCustomOverworld.asm"

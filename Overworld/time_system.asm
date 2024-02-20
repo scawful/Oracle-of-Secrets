@@ -21,7 +21,7 @@ org $068361
   ;originally JSL $09B06E, executed every frame
 
 ; org $1CFF30
-org $328000
+org $328000 ; Free space
 HUD_ClockDisplay:
 {
 	JSR counter_preroutine
@@ -35,24 +35,24 @@ HUD_ClockDisplay:
 
 .draw
 	ADC #$90 : CPX #$01 : BEQ .minutes_low
-	STA !hud_hours_low
-  LDA #$30 : STA !hud_hours_low+1 ; white palette
+	STA.l !hud_hours_low
+  LDA #$30 : STA.l !hud_hours_low+1 ; white palette
 	BRA .continue_draw ; 04
 
 .minutes_low
-	STA !hud_min_low
-  LDA #$30 : STA !hud_min_low+1 ; white palette
+	STA.l !hud_min_low
+  LDA #$30 : STA.l !hud_min_low+1 ; white palette
 .continue_draw
   TYA
 	CLC : ADC #$90 : CPX #$01
 	BEQ .minutes_high
-	STA !hud_hours_high
-  LDA #$30 : STA !hud_hours_high+1 ; white palette
+	STA.l !hud_hours_high
+  LDA #$30 : STA.l !hud_hours_high+1 ; white palette
 	BRA .finish_draw ; 04
 
 .minutes_high
-	STA !hud_min_high 
-  LDA #$30 : STA !hud_min_high+1 ; white palette
+	STA.l !hud_min_high 
+  LDA #$30 : STA.l !hud_min_high+1 ; white palette
 .finish_draw
 	INX : CPX #$02 : BMI .debut
 	JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
@@ -187,7 +187,7 @@ org $1BEF84
 org $0EEE25	; free space
 LoadDayNightPaletteEffect:
 {
-    STA !pal_color
+    STA.l !pal_color
 
     CPX #$0041 : BPL .title_check
     STA $7EC300,X
@@ -197,12 +197,12 @@ LoadDayNightPaletteEffect:
     LDA $10 : AND #$00FF
     CMP #$0002	; title or file select screen ?
     BPL .outin_check
-    LDA !pal_color : STA $7EC300,X
+    LDA.l !pal_color : STA $7EC300,X
     RTL
 
   .outin_check
     LDA $1B : AND #$00FF : BEQ .outdoors2
-    LDA !pal_color
+    LDA.l !pal_color
     STA $7EC300,X
     RTL
 
@@ -210,7 +210,7 @@ LoadDayNightPaletteEffect:
     PHX
     JSL ColorSubEffect
     PLX
-    STA $7EC300,X
+    STA.l $7EC300,X
     RTL
 }
 ;--------------------------------
@@ -225,9 +225,9 @@ ColorSubEffect:
 	TAX
 
 .do_blue
-	LDA !pal_color : AND #$7C00 : STA !blue_value
+	LDA.l !pal_color : AND #$7C00 : STA !blue_value
   ; substract amount to blue field based on a table
-	SEC : SBC blue_table, X : STA !temp_value
+	SEC : SBC.l blue_table, X : STA !temp_value
 	AND #$7C00		; mask out everything except the blue bits
 	CMP !temp_value		; overflow ?
 	BEQ .no_blue_sign_change
@@ -236,12 +236,12 @@ ColorSubEffect:
 	LDA #$0400		; LDA smallest blue value
 
 .no_blue_sign_change
-	STA !blue_value 
+	STA.l !blue_value 
 
 do_green:
 	LDA !pal_color : AND #$03E0 : STA !green_value
-	SEC : SBC green_table,x	; substract amount to blue field based on a table
-	STA !temp_value
+	SEC : SBC.l green_table,x	; substract amount to blue field based on a table
+	STA.l !temp_value
   ; mask out everything except the green bits
 	AND #$03E0 : CMP !temp_value		; overflow ?
 	BEQ .no_green_sign_change
@@ -250,12 +250,12 @@ do_green:
 	LDA #$0020		; LDA smallest green value
 
 .no_green_sign_change
-	STA !green_value
+	STA.l !green_value
 	
 .do_red
-	LDA !pal_color : AND #$001F : STA !red_value
-	SEC : SBC red_table,x		; substract amount to red field based on a table
-	STA !temp_value
+	LDA.l !pal_color : AND #$001F : STA.l !red_value
+	SEC : SBC.l red_table,x		; substract amount to red field based on a table
+	STA.l !temp_value
 	AND #$001F		; mask out everything except the red bits
 	CMP !temp_value		; overflow ?
 	BEQ .no_red_sign_change
@@ -264,11 +264,11 @@ do_green:
 	LDA #$0001		; LDA smallest red value
 
 .no_red_sign_change
-	STA !red_value
+	STA.l !red_value
 
-	LDA !blue_value
-	ORA !green_value
-	ORA !red_value
+	LDA.l !blue_value
+	ORA.l !green_value
+	ORA.l !red_value
 	
 	RTL
 }
@@ -305,16 +305,16 @@ BackgroundFix:
 	JSL ColorSubEffect
   
 .no_effect:
-	STA $7EC500
-	STA $7EC300
-	STA $7EC540
-	STA $7EC340
+	STA.l $7EC500
+	STA.l $7EC300
+	STA.l $7EC540
+	STA.l $7EC340
 	rtl
 }
 
 SubAreasFix:
 {
-	STA !pal_color
+	STA.l !pal_color
 	PHX
 	JSL ColorSubEffect
 	PLX
@@ -326,11 +326,11 @@ SubAreasFix:
 
 GlovesFix:
 {
-	STA !pal_color
+	STA.l !pal_color
 	LDA $1B
 	AND #$00FF
 	BEQ .outdoors3
-	LDA !pal_color
+	LDA.l !pal_color
 	STA $7EC4FA
 	RTL
 
