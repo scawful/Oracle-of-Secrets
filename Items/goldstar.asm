@@ -956,6 +956,18 @@ BeginGoldstarOrHookshot:
   RTL
 }
 
+MaybeUploadBirdGraphicsToOam:
+{
+  LDY $037A
+  CPY #$0104
+  BEQ .here
+  LDY #$40E0
+  STY $2116
+  JML $008B30
+  .here
+  JML $008B50
+}
+
 pushpc
 
 org $07AB25
@@ -964,5 +976,8 @@ org $07AB25
 org $07AB3A ;$07AB40
   JSL BeginGoldstarOrHookshot
   RTS
+
+org $008B2A
+  JML MaybeUploadBirdGraphicsToOam 
 
 pullpc
