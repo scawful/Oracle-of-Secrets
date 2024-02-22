@@ -9,16 +9,6 @@
 ; How To Use: 
 ;   Press R to transform into Zora Link. Press R again to transform back.
 ;   Press Y in deep water to dive. Press Y again to resurface.
-; 
-; RAM Used:
-; $02B2 - Current Form 
-; $0AAB - Diving Flag
-;
-; =============================================================================
-
-org    $368000
-incbin gfx/zora_link.4bpp
-
 ; =============================================================================
 
 UpdateZoraPalette:
@@ -39,10 +29,16 @@ UpdateZoraPalette:
 
 ; TODO: Change from "bunny palette" to blue zora palette colors 
 zora_palette:
-  dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$19FD, #$14B6
-  dw #$55BB, #$362A, #$3F4E, #$162B, #$22D0, #$2E5A, #$1970, #$7616
-  dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
-  dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357, #$0000
+  dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$4E48, #$3582
+  dw #$55BB, #$6EF7, #$7BDE, #$55C7, #$6ECD, #$2E5A, #$1970, #$7616
+  ; dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
+  ; dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357, #$0000
+
+; zora_palette:
+;   dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$19FD, #$14B6
+;   dw #$55BB, #$362A, #$3F4E, #$162B, #$22D0, #$2E5A, #$1970, #$7616
+;   dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
+;   dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357, #$0000
 
 ; =============================================================================
 
@@ -56,7 +52,7 @@ org $07A569
 LinkItem_ZoraMask:
 {
   ; No removing the mask whilst diving.
-  LDA $0AAB : BNE .return 
+  LDA !ZoraDiving : BNE .return 
   
   ; Check for R button held 
   %CheckNewR_ButtonPress() : BEQ .return
@@ -120,10 +116,10 @@ LinkState_UsingZoraMask:
     LDA $3A : AND.b #$BF : STA $3A
 
     ; Check if already underwater 
-    LDA $0AAB : BEQ .dive
+    LDA !ZoraDiving : BEQ .dive
 
     STZ $55            ; Reset cape flag 
-    STZ $0AAB          ; Reset underwater flag 
+    STZ !ZoraDiving          ; Reset underwater flag 
     STZ $0351          ; Reset ripple flag 
     STZ $037B          ; Reset invincibility flag
     LDA #$04 : STA $5D ; Put Link in Swimming State
@@ -135,7 +131,7 @@ LinkState_UsingZoraMask:
     LDA #$01 : STA $55   ; Set cape flag 
     STA $037B            ; Set invincible flag 
     LDA #$08 : STA $5E   ; Set underwater speed 
-    LDA #$01 : STA $0AAB ; Set underwater flag
+    LDA #$01 : STA !ZoraDiving ; Set underwater flag
     STA $0351            ; Set ripple flag
 
     ; Splash visual effect 
@@ -159,7 +155,7 @@ LinkState_UsingZoraMask:
     LDA $5D : CMP #$04 : BNE .return_dungeon : CLC
 
     ; Check if already underwater
-    LDA $0AAB : BNE .return_dungeon : CLC
+    LDA !ZoraDiving : BNE .return_dungeon : CLC
 
     ; Check if we are on a proper tile or not 
     ; 
@@ -185,7 +181,7 @@ LinkState_UsingZoraMask:
     STZ $0345 ; Reset deep water flag
 
     LDA #$01
-    STA $0AAB ; Set the player underwater flag 
+    STA !ZoraDiving ; Set the player underwater flag 
 
   .return_dungeon
     JSR $E8F0 ; HandleIndoorCameraAndDoors
@@ -198,7 +194,7 @@ pushpc
 ; End of LinkState_Default 
 org $0782D2
   JSR LinkState_UsingZoraMask_dungeon_resurface
-  JSR $E8F0
+  JSR $E8F0  ; HandleIndoorCameraAndDoors
   CLC
   RTS
 
@@ -211,7 +207,7 @@ pullpc
   LDA $1B : BEQ .return_default ; We are in overworld actually 
 
   ; Check if the player is actually diving 
-  LDA $0AAB : BEQ .return_default
+  LDA !ZoraDiving : BEQ .return_default
 
   LDA $0114 : CMP #$85 : BEQ .player_is_falling
   LDA $0114 : CMP #$09 : BEQ .player_is_falling
@@ -238,7 +234,7 @@ pullpc
   .player_is_falling
     LDA $67 : AND #$01 : STA $2F
     STZ $5E                      ; Reset speed to normal
-    STZ $0AAB                    ; Reset underwater flag 
+    STZ !ZoraDiving                    ; Reset underwater flag 
     STZ $0351                    ; Reset ripple flag
     STZ $24                      ; Reset z coordinate for link
     STZ $0372                    ; Reset link bounce flag
@@ -264,7 +260,7 @@ pullpc
 {
   LDA $02B2 : CMP #$02 : BNE .return_hop
   STZ $5E                                ; Reset speed to normal
-  STZ $0AAB                              ; Reset underwater flag 
+  STZ !ZoraDiving                              ; Reset underwater flag 
   LDA #$62 : STA $9A                     ; Reset dungeon layer
 .return_hop
   LDA #$06 : STA $5D ; Set Link to Recoil State

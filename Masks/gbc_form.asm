@@ -1,7 +1,7 @@
-org    $3B8000
-incbin gfx/gbc_link.4bpp
+; ========================================
+; GBC Link
+; ========================================
 
-print pc 
 UpdateGbcPalette:
 {
   REP #$30   ; change 16bit mode
@@ -29,19 +29,19 @@ UpdateGbcPalette:
 
 GameboyLinkPalette:
 {
-  dw #$0000, #$7FFF, #$237E, #$B711, #$369E, #$14A5, #$01FF, #$1078, #$46FF
-  dw #$22A2, #$3B68, #$0A4A, #$12EF, #$2A5C, #$1571, #$7A18
+  dw #$0000, #$7FFF, #$237E, #$B711, #$369E, #$14A5, #$01FF, #$1078
+  dw #$46FF, #$22A2, #$3B68, #$0A4A, #$12EF, #$2A5C, #$1571, #$7A18
 }
 
 GameboyLinkBlueMail:
 {
-  dw #$0000, #$7FFF, #$237E, #$B711, #$369E, #$14A5, #$01FF, #$1078, #$46FF
-  dw #$4D25, #$3B68, #$0A4A, #$12EF, #$2A5C, #$1571, #$7A18
+  dw #$0000, #$7FFF, #$237E, #$B711, #$369E, #$14A5, #$01FF, #$1078
+  dw #$46FF, #$4D25, #$3B68, #$0A4A, #$12EF, #$2A5C, #$1571, #$7A18
 }
 
 LinkState_GameboyInDungeonEntrance:
 {
-
+  ; if link is in the dark world, change his sprite to the gbc one
   LDA $0FFF : CMP #$00 : BEQ .return
     LDA $BC :  CMP #$06 : BEQ .return
    
@@ -89,7 +89,7 @@ LinkState_GameboyForm:
   
 .not_gbc
 .return
-  JSL $07F1E6
+  JSL $07F1E6 
   RTL
 }
 pushpc

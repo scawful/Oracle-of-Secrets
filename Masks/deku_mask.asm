@@ -2,35 +2,20 @@
 ;   Deku Mask
 ; =========================================================
 
-org    $358000
-incbin gfx/deku_link.bin
-
-; =========================================================
-org $07B0AB
-LinkItem_EvaluateMagicCost:
-
 org    $07A64B           ; formerly Quake
 LinkItem_DekuMask:
 {
   JSR Link_CheckNewY_ButtonPress : BCC .continue
-
-  LDX.b #$01
-  
-  JSR LinkItem_EvaluateMagicCost : BCC .return
-  
-  LDA.b #$0A : STA $5D
-
+  LDX.b #$01 : JSR LinkItem_EvaluateMagicCost : BCC .return
+  JSL PrepareQuakeSpell
   RTS
 
 .continue
-  ; Check for R button held
   %CheckNewR_ButtonPress() : BEQ .return
-
   LDA $6C : BNE .return   ; in a doorway
   LDA $0FFC : BNE .return ; can't open menu
 
   %PlayerTransform()
-
   LDA $02B2 : CMP #$01 : BEQ .unequip ; is the deku mask on?
   JSL Palette_ArmorAndGloves          ; set the palette
 
@@ -55,99 +40,7 @@ LinkItem_DekuMask:
   RTS
 }
 
-; =========================================================
-
-org $07E370
-  LinkHop_FindArbitraryLandingSpot:
-
-org $07A6D6
-LinkState_UsingQuake:
-{
-
-
-}
-warnpc $07A779
-
-
-org $348000
-; org $07A013
-;   JSL LinkItem_SlingshotPrepare
-
-; Hooked @ [$07A013]
-; $A200
-LinkItem_SlingshotPrepare:
-{
-  LDA #$01 : TSB $50
-  LDA $7EF340
-
-  BNE .alpha
-  JMP .beta  ; $A270
-.alpha
-  CMP #$01
-  BNE .void ; unused afaik (RTS?)
-  JMP .beta
-
-; $A214
-.void
-; $A270
-.beta
-  LDA $7F1060
-  CMP #$10
-  BEQ $20A27B
-  JMP .theta
-
-; $A300
-.theta
-  LDA $7F502E
-  CMP #$01
-  BNE .gamma
-  RTL
-
-; $A309
-.gamma
-  LDA #$01    ; Load the accumulator with hex value 01
-  STA $7F502E ; Store the accumulator value at memory address 7F502E
-
-  PHB      ; Push data bank register on stack
-  REP #$30 ; Clear 16-bit accumulator and index registers
-    LDX #$A500   ; Load X register with source address
-    LDY #$9800   ; Load Y register with destination address
-    LDA #$00BF   ; Load the accumulator with the number of bytes to be moved
-    MVN $20, $7E ; Block move negative - moves 00BF bytes from $A500 to $9800
-  SEP #$30 ; Set 8-bit accumulator and index registers
-  PLB      ; Pull data bank register from stack
-
-.loop
-  LDA $4212 : AND #$80 : BNE .loop ; Wait for VBlank start (beginning of vertical blanking period)
-.loop2
-  LDA $4212 : AND #$80 : BEQ .loop2 ; Wait for VBlank end
-
-  REP #$30 ; Clear 16-bit accumulator and index registers
-    LDA #$A700 : STA $4302 ; Set DMA source address to $A700
-    LDA #$42A0 : STA $2116 ; Set VRAM (Video RAM) address to $42A0
-  SEP #$30 ; Set 8-bit accumulator and index registers
-
-  LDA #$80 : STA $2115 ; Set VRAM write increment to 2 bytes, and access mode to word access at the specified address
-  LDA #$18 : STA $4301 ; Set DMA destination address to $2118 (VRAM data write)
-  LDA #$20 : STA $4304 ; Set DMA transfer size to 32 bytes
-  LDA #$80 : STA $4305 ; Set DMA transfer size (high byte)
-  LDA #$01 : STA $4300 ; Set DMA mode to 1 (2 registers write once)
-  STA $420B            ; Start DMA on channel 0
-
-  REP #$30 ; Clear 16-bit accumulator and index registers
-    LDA #$43A0 : STA $2116 ; Set VRAM address to $43A0
-    LDA #$A800 : STA $4302 ; Set DMA source address to $A800
-  SEP #$30 ; Set 8-bit accumulator and index registers
-
-  LDA #$80 : STA $2115 ; Set VRAM write increment to 2 bytes, and access mode to word access at the specified address
-  LDA #$18 : STA $4301 ; Set DMA destination address to $2118 (VRAM data write)
-  LDA #$20 : STA $4304 ; Set DMA transfer size to 32 bytes
-  LDA #$80 : STA $4305 ; Set DMA transfer size (high byte)
-  LDA #$01 : STA $4300 ; Set DMA mode to 1 (2 registers write once)
-  STA $420B            ; Start DMA on channel 0
-  RTL
-
-}
+warnpc $07A6BE
 
 ; =========================================================
 
@@ -155,11 +48,11 @@ org $07811A
   JSR Link_HandleDekuTransformation
 
 pullpc                         ; Bank 07 Free Space from minish_form
-Link_HandleDekuTransformation: ; Link_HandleBunnyTransformation
+Link_HandleDekuTransformation: 
 {
   ; Check if using Quake Medallion
   LDA $5D : CMP.b #$0A : BEQ .continue
-  JSR $82DA
+  ; JSR $82DA ; Link_HandleBunnyTransformation
 
 .continue
   STZ $03F5
@@ -173,3 +66,124 @@ Link_HandleDekuTransformation: ; Link_HandleBunnyTransformation
 
 print "End of Masks/deku_mask.asm        ", pc
 pushpc
+
+
+org $07E370
+  LinkHop_FindArbitraryLandingSpot:
+
+org $078926
+  Link_HandleChangeInZVelocity:
+
+org $078932
+  Link_HandleChangeInZVelocity_preset:
+
+org $099589
+  AncillaAdd_QuakeSpell:
+
+org $078028
+  PlaySFX_Set2:
+
+org $07802F
+  PlaySFX_Set3:
+
+org $07A6BE
+LinkState_UsingQuake:
+{
+.anim_step
+  db #$00, #$01, #$02, #$03
+  db #$00, #$01, #$02, #$03
+  db #$10, #$10, #$00, #$00 ; 16
+
+.anim_timer
+  db   5,   5,   5,   5
+  db   5,   5,   5,   5
+  db   5,   5,   5,  19
+
+  ; INC.w $0FC1 ; Keep sprites frozen 
+
+  STZ.b $27 : STZ.b $28 ; Reset recoil X and Y 
+
+  ; SPIN STEP CHECK
+  LDA.w $031D : CMP.b #$0A : BNE .not_ascending
+    LDA.w $0362 : STA.b $29
+    LDA.w $0363 : STA.w $02C7
+    LDA.w $0364 : STA.b $24
+
+    LDA.b #$02 : STA.b $00 : STA.b $4D
+
+    JSR Link_HandleChangeInZVelocity_preset
+    JSL LinkHop_FindArbitraryLandingSpot
+
+    ; Link recoil Z value, hop Z value 
+    LDA.b $29 : STA.w $0362
+    LDA.w $02C7 : STA.w $0363
+
+    ; Z Position of Link
+    LDA.b $24 : STA.w $0364 : BMI .still_ascending
+
+    ; End of ASCEND -----------------------------------------
+      ; Link recoil Z 
+      LDY.b #$00 : LDA.b $29 : BPL .done_ascending
+
+      LDY.b #$00 ; Thrust Sword Down OAM Frame Set
+
+    .done_ascending
+      STY.w $031C : BRA .exit
+    ; -------------------------------------------------------
+
+  .not_ascending
+    DEC.b $3D : BPL .special
+
+    .still_ascending
+      INC.w $031D
+
+      ; $031D - Spin Step
+      LDX.w $031D : CPX.b #$04 : BNE .skip_swish_sfx
+      PHX : LDA.b #$23 : JSR PlaySFX_Set3 : PLX
+
+      .skip_swish_sfx
+        CPX.b #$0A : BNE .skip_ping_sfx
+        ; PHX : LDA.b #$2C : JSR PlaySFX_Set2 : PLX
+
+        .skip_ping_sfx
+          CPX.b #$0B : BNE .skip_boom_sfx
+          ; LDA.b #$0C : JSR PlaySFX_Set2
+
+          .skip_boom_sfx
+            CPX.b #$0C : BNE .dont_reset_step
+            LDA.b #$0B : STA.w $031D
+
+            TAX
+
+            .dont_reset_step
+              LDA.w .anim_timer,X : STA.b $3D
+              LDA.w .anim_step,X : STA.w $031C
+              
+              LDA.w $0324 : BNE .special ; Prevent repeat spellcast check
+              CPX.b #$0B : BNE .special ; Animation step check
+
+                ; -----------------------------------------------------
+                ; Prevent repeat spellcast set
+                LDA.b #$01 : STA.w $0324
+                LDA.b #$12 : STA $24
+                LDA.b #$FF : STA $5C
+                LDA.b #$01 : STA $70
+                ; ; Quake Spell, End Quake State happens during Ancilla
+                ; LDY.b #$00 : LDA.b #$1C ; ANCILLA 1C
+                ; JSL AncillaAdd_QuakeSpell
+
+                ; STZ.b $4D : STZ.w $0046
+                ; -----------------------------------------------------
+
+.exit
+  RTS
+
+.special
+  DEC $5C 
+  ; JSR $F514 ; CacheCameraPropertiesIfOutdoors
+  JSL DekuLink_HoverBasedOnInput
+  ; JSR $E8F0
+  RTS
+}
+
+warnpc $07A779

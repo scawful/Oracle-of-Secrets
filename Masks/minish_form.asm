@@ -4,24 +4,17 @@
 ; Reacts to Tile ID 64 to transform into Minish Link
 ; =========================================================
 
-org    $398000
-incbin gfx/minish_link.4bpp
-
-print "End of Minish Form GFX            ", pc
-
-; =========================================================
 org    $07DA2A
   TileDetection_OverworldAttributeJumpTable:
 
 ; org $07DAEB ; Tile ID 61
-
 org $07DAF2
   dw LinkState_CheckForMinishForm ; Tile ID 64
   dw LinkState_CheckMinishTile    ; Tile ID 65
 
 ; =========================================================
-; Start of free space in bank 07
-org $07F89D
+
+pullpc
 LinkState_CheckForMinishForm:
 {
   SEP #$30

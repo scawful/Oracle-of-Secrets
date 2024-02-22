@@ -1,20 +1,6 @@
-; =============================================================================
-;  Oracle of Secrets - Mask Library
-; =============================================================================
 
-!CurrentMask  = $02B2
-!LinkGraphics = $BC
-
-; =============================================================================
-
-org $09912C
-  AddTransformationCloud:
-
-org $07B073
-  Link_CheckNewY_ButtonPress:
-
-org $078028
-  Player_DoSfx2:
+; =========================================================
+; Macros
 
 macro PlayerTransform()
   LDY.b #$04 : LDA.b #$23
@@ -32,8 +18,8 @@ macro CheckNewR_ButtonPress()
   LDA.b $F6 : BIT.b #$10
 endmacro
 
-org $02A560
-  JSL ForceResetWorldMap : NOP
+; org $02A560
+;   JSL ForceResetWorldMap
 
 ; GameOver_DelayBeforeIris
 org $09F347
@@ -43,9 +29,9 @@ org $09F347
 org $09F7B5
   JSL ForceResetMask_SaveAndQuit
 
-; =============================================================================
+; =========================================================
 ; Change Link's sprite by setting $BC to the bank containing a spritesheet.
-; =============================================================================
+; =========================================================
 
 org $008827
   JSL StartupMasks
@@ -54,9 +40,9 @@ org $008827
 org $008A01
   LDA $BC
 
-; =============================================================================
+; =========================================================
 ; Change Link's palette based on $02B2 (mask value)
-; =============================================================================
+; =========================================================
 
 org $1BEDF9
   JSL Palette_ArmorAndGloves ; 4bytes
@@ -67,9 +53,9 @@ org $1BEE1B
   JSL Palette_ArmorAndGloves_part_two
   RTL
 
-; =============================================================================
+; =========================================================
 ; EXPANDED SPACE
-; =============================================================================
+; =========================================================
 
 org $3A8000
 StartupMasks:
@@ -122,7 +108,7 @@ ForceResetMask_SaveAndQuit:
   RTL
 }
 
-; =============================================================================
+; =========================================================
 
 Palette_ArmorAndGloves:
 {
@@ -209,9 +195,9 @@ Palette_ArmorAndGloves:
   RTL
 }
 
-; =============================================================================
+; =========================================================
 ; Overworld Palette Persist
-; =============================================================================
+; =========================================================
 
 Overworld_CgramAuxToMain_Override:
 {
@@ -246,7 +232,7 @@ Overworld_CgramAuxToMain_Override:
 }
 pushpc
 
-; =============================================================================
+; =========================================================
 
 org $02C769
 Overworld_CgramAuxToMain:
@@ -255,14 +241,15 @@ Overworld_CgramAuxToMain:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 ; Change which mask forms have access to the sword.
-; =============================================================================
+; =========================================================
 
+; Link_CheckForSwordSwing
 org $079CD9
   JSL LinkItem_CheckForSwordSwing_Masks
 
-; =============================================================================
+; =========================================================
 
 pullpc
 LinkItem_CheckForSwordSwing_Masks:
@@ -275,11 +262,159 @@ LinkItem_CheckForSwordSwing_Masks:
   RTL
 
 .return
-  LDA $3B : AND.b #$10
+  LDA $3B : AND.b #$10 ; Restore Link_CheckForSwordSwing
+  RTL
+}
+
+; Modifies the value of the Y register before it indexes the table
+; LinkOAM_AnimationStepDataOffsets
+; This is used to change the animation during 0x0A (Using Quake Medallion)
+DekuLink_SpinOrRecoil:
+{
+  TAY
+  LDA $70 : BEQ .spin
+  TYA
+  LDY.b #$05 ; Recoil
+  JML $0DA435 ;JML $0DA40B
+.spin
+  TYA
+  LDY.b #$1B ; Spin and die 
+  JML $0DA40B
+}
+
+pushpc
+
+; Spin and die, LinkOAM_AnimationStepDataOffsets
+org $0DA3FD
+  JML DekuLink_SpinOrRecoil
+
+pullpc
+
+; Based on LinkItem_Quake.allow_quake
+PrepareQuakeSpell:
+{
+  ; Ancilla setup stuff, not necessary
+  ; #_07A680: LDA.w $0C4A
+  ; #_07A683: ORA.w $0C4B
+  ; #_07A686: ORA.w $0C4C
+
+  ; This would set link to strafe mode
+  ; Probably not necessary
+  ; #_07A696: LDA.b #$01
+  ; #_07A698: TSB.b $50
+
+  ; TODO: Set a check for the Deku Flower sprite before activating this ability.
+
+  LDA.b #$0A : STA $5D
+
+  #_07A69A: LDA #$00
+  #_07A69D: STA.b $3D
+
+  #_07A69F: LDA #$00
+  #_07A6A2: STA.w $031C
+  #_07A6A5: STZ.w $031D
+
+  #_07A6A8: STZ.w $0324
+
+  #_07A6AB: STZ.b $46
+
+  ; Set the spin and jump animation values.
+  #_07A6AD: LDA.b #$28
+  #_07A6AF: STA.w $0362
+  #_07A6B2: STA.w $0363
+  #_07A6B5: STZ.w $0364
+
+  STZ $70
+  
+  RTL
+}
+
+DekuLink_HoverBasedOnInput:
+{
+  JSL $07E6A6
+
+  LDA $5C : AND #$1F : BNE .continue_me
+  DEC $24
+.continue_me
+  
+  LDA $5C : BEQ .auto_cancel
+  
+
+  LDA $F0 : AND #$08 : BEQ .not_up
+    LDA $20 : CLC : ADC #-1 : STA $20
+    LDA #$01 : STA $031C
+    LDA #$05 : STA $3D
+    STZ $2F
+.not_up
+  LDA $F0 : AND #$04 : BEQ .not_down
+    LDA $20 : CLC : ADC #1 : STA $20
+    LDA #$02 : STA $031C
+    LDA #$05 : STA $3D
+    LDA #$02 : STA $2F
+.not_down
+  LDA $F0 : AND #$02 : BEQ .not_left
+    LDA $22 : CLC : ADC #-1 : STA $22
+    LDA #$03 : STA $031C
+    LDA #$05 : STA $3D
+    LDA #$04 : STA $2F
+.not_left
+  LDA $F0 : AND #$01 : BEQ .not_right
+    LDA $22 : CLC : ADC #1 : STA $22
+    LDA #$04 : STA $031C
+    LDA #$05 : STA $3D
+    LDA #$06 : STA $2F
+.not_right
+
+  LDA $70 : BEQ .no_bomb_drop
+  LDA $F0 : AND #%01000000 : BEQ .no_bomb_drop
+
+  #_07A14F: LDY.b #$01
+  #_07A151: LDA.b #$07 ; ANCILLA 07
+  #_07A153: JSL $09811F ; AncillaAdd_Bomb
+
+.no_bomb_drop
+
+  LDA $F0 : AND #%10000000 : BEQ .no_cancel
+
+.auto_cancel
+  
+    STZ $5D
+
+  #_08B6A5: LDA.b #$01
+  #_08B6A7: STA.w $0AAA
+
+  #_08B6AA: STZ.w $0324
+  #_08B6AD: STZ.w $031C
+  #_08B6B0: STZ.w $031D
+
+  #_08B6B3: STZ.b $50
+  #_08B6B5: STZ.b $3D
+
+  #_08B6B7: STZ.w $0FC1
+
+  #_08B6BA: STZ.w $011A
+  #_08B6BD: STZ.w $011B
+  #_08B6C0: STZ.w $011C
+  #_08B6C3: STZ.w $011D
+
+.no_turtle_rock_trigger
+  #_08B6E4: LDY.b #$00
+
+  #_08B6E6: LDA.b $3C
+  #_08B6E8: BEQ .no_sword_charge
+
+  #_08B6EA: LDA.b $F0
+  #_08B6EC: AND.b #$80
+  #_08B6EE: TAY
+
+.no_sword_charge
+  #_08B6EF: STY.b $3A
+
+  #_08B6F1: STZ.b $5E
+  #_08B6F3: STZ.w $0325
+.no_cancel
+
   RTL
 }
 
 print "End of mask_routines.asm          ", pc
-
-
-; =============================================================================
