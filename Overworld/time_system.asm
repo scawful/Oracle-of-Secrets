@@ -150,22 +150,6 @@ RunClock:
     RTS
 }
 
-; WIP mosaic fixes - scawful
-; FixSpecialAreas:
-; {
-;   STA $7EE018
-;   JSL BackgroundFix
-
-;   STA.l $7EC300
-;   RTL
-; }
-
-; org $28871A
-;   JSL FixSpecialAreas
-
-; org $288725
-;   JML FixSpecialAreas
-
 ;-----------------------------------------------
 ;----[ Day / Night system * palette effect ]----
 ;-----------------------------------------------
@@ -392,12 +376,16 @@ org $09C4E3
 ;$0B/FEBE 8F 40 C5 7E STA $7EC540
 ;$0B/FEC2 8F 40 C3 7E STA $7EC340
 
-; org $0BFEB6
-org $2886B4 ; ZS OW Expanded 
+; org $0BFEB6 OLD HOOK
+; ZS OW Expanded - ReplaceBGColor
+org $2886B4 
 	STA !pal_color
 	JSL BackgroundFix
 	;NOP #8
 
+; ZS OW Expanded - CheckForChangeGraphicsTransitionLoad
+org $2885F9
+	JSL SubAreasFix
 
 ; Subareas background color fix (under the bridge; zora...)
 ;$0E/D601 8F 00 C3 7E STA $7EC300[$7E:C300]
