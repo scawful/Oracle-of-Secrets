@@ -17,4 +17,6 @@ incsrc "Items/sword_collect.asm"
 
 incsrc "Items/goldstar.asm"
 
+incsrc "Items/fishing_rod.asm"
+
 print  "End of Items/sword_collect.asm    ", pc
