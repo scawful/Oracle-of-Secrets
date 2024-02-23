@@ -290,7 +290,7 @@ HUD_UpdateItemBox:
 .fluteNotEquipped
 
   CPX.w #$0003 : BNE .hookshotNotEquipped
-  LDA.w GoldstarOrHookshot
+  LDA.w GoldstarOrHookshot : BEQ .hookshotNotEquipped
   SEC : SBC.b #$01 
 
 .hookshotNotEquipped
