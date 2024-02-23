@@ -14,23 +14,17 @@ PlayerItem_ReleaseBee:
 ; LinkItem_Bottle
 
 org $07A15B
-  JSR LinkItem_NewBottle
-  RTS
-; *$3A15B-$3A249 FREE SPACE STILL AVAILABLE
-
-; =============================================================================
-
-; Bank 07 Free Space
-; org $07FAAD
-pullpc
 LinkItem_NewBottle:
 { 
   ; Check if we have a bottle or not
   LDA $7EF34F : DEC A : TAX
   LDA $7EF35C, X : BEQ .exit
-  
+
   ; Check if the bottle is empty 
   CMP.b #$03     : BCC .empty_bottle
+
+  ; Confirm we aren't currently catching
+  LDA $030D : BNE .empty_bottle
 
   ; If no, prepare and call the LinkItem_Bottles routine 
   JSR LinkItem_Bottles
@@ -43,6 +37,12 @@ LinkItem_NewBottle:
 .exit 
   RTS
 }
+
+warnpc $07A249
+
+pullpc
+
+print "     LinkItem_NewBugCatchingNet   ", pc
 
 ; =============================================================================
 
@@ -108,34 +108,6 @@ NetExit:
   RTS
 }
 
-; *$3AE65-$3AE87 LOCAL
-; Link is picking up an item, handle it.
-; Does something more related to how Link's standing / collision with the floor
-UnknownRoutine:
-{
-  LDA $AD : CMP.b #$02 : BNE .BRANCH_ALPHA
-  
-  LDA $0322 : AND.b #$03 : CMP.b #$03 : BNE .BRANCH_ALPHA
-  
-  STZ $30
-  STZ $31
-  STZ $67
-  STZ $2A
-  STZ $2B
-  STZ $6B
-
-.BRANCH_ALPHA:
-
-  ; Cane of Somaria transit lines?
-  LDA $02F5 : BEQ .BRANCH_BETA
-  
-  STZ $67
-
-.BRANCH_BETA:
-
-  RTS
-}
-
 ; =============================================================================
 print "       LinkItem_Bottles           ", pc
 LinkItem_Bottles:
@@ -156,16 +128,16 @@ LinkItem_Bottles:
   
   BRL .LinkItem_BeeBottle
 
-.fairy:
+.fairy
   BRL .LinkItem_FairyBottle
 
-.LinkItem_RedPotion:
+.LinkItem_RedPotion
   LDA.l $7EF36C : CMP.l $7EF36D : BNE .can_drink_red
 
-.LinkItem_UselessBottle:
+.LinkItem_UselessBottle
   BRL LinkGoBeep ; BRL $07A955 Investigate 
 
-.can_drink_red:
+.can_drink_red
   LDA.b #$02 : STA.l $7EF35C, X : STZ.w $0301
   
   LDA.b #$04 : STA.b $11
@@ -177,11 +149,11 @@ LinkItem_Bottles:
   
   RTS
 
-.LinkItem_GreenPotion:
+.LinkItem_GreenPotion
   LDA.l $7EF36E : CMP.b #$80 : BNE .can_drink
   BRL LinkGoBeep
 
-.can_drink:
+.can_drink
   ; Set the bottle empty
   LDA.b #$02 : STA.l $7EF35C, X : STZ.w $0301
 
@@ -196,7 +168,7 @@ LinkItem_Bottles:
   JSL $0DFA58 ; RebuildHUD_long 
   BRA .bottle_exit
 
-.LinkItem_BluePotion:
+.LinkItem_BluePotion
   LDA $7EF36C : CMP $7EF36D : BNE .useBluePotion
   LDA $7EF36E : CMP.b #$80 : BNE .useBluePotion
   BRL LinkGoBeep ; BRL $07A955
@@ -215,17 +187,16 @@ LinkItem_Bottles:
   JSL $0DFA58 ; RebuildHUD_Long 
   BRA .bottle_exit
 
-.LinkItem_FairyBottle:
+.LinkItem_FairyBottle
   STZ.w $0301 : LDA.b #$02 : STA.l $7EF35C, X
   JSL PlayerItem_SpawnFaerie : BPL .released
   BRL LinkGoBeep ; BRL $07A955
 
-.released:
-  JSL $0DFB91 ; HUD_Update
-  ; JSL $0DFA58 ; RebuildHUD_Long 
+.released
+  JSL $0DFA58 ; RebuildHUD_Long 
   BRA .bottle_exit
 
-.LinkItem_BeeBottle:
+.LinkItem_BeeBottle
   STZ.w $0301
   JSL PlayerItem_ReleaseBee : BPL .bee_spawn_success
   BRL LinkGoBeep ; BRL $07A955
@@ -234,7 +205,7 @@ LinkItem_Bottles:
   LDA.b #$02 : STA.l $7EF35C, X
   JSL $0DFA58 ; RebuildHUD_Long 
 
-.bottle_exit:
+.bottle_exit
   RTS
 }
 
@@ -243,5 +214,3 @@ LinkGoBeep:
   LDA.b #$3C : JSR Player_DoSfx2
   BRA LinkItem_Bottles_bottle_exit
 }
-
-; pushpc
