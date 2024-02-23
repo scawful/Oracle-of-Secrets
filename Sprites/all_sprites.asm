@@ -75,6 +75,9 @@ print  "End of minecart.asm               ",  pc
 incsrc "Sprites/Bosses/twinrova.asm"
 print  "End of twinrova.asm               ",  pc
 
+incsrc "Sprites/Bosses/kydreeok.asm"
+incsrc "Sprites/Bosses/kydreeok_head.asm"
+
 incsrc "Sprites/deku_leaf.asm"
 
 incsrc "Sprites/portal_sprite.asm"
