@@ -56,6 +56,7 @@ pullpc
 HookMaskCheck:
 {
     LDA GoldstarOrHookshot : AND.w #$00FF :  CMP.w #$0002 : BNE .not_mask
+    LDA $0202 : AND.w #$00FF : CMP.w #$0003 : BNE .not_mask
     LDA.w $0109 : AND #$FF00 : ORA.w #$004A ; morning star graphics oam tile pattern id 
     RTL
   .not_mask
@@ -979,5 +980,4 @@ org $07AB3A ;$07AB40
 
 org $008B2A
   JML MaybeUploadBirdGraphicsToOam 
-
-pullpc
+  
