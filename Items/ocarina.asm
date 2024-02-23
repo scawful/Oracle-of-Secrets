@@ -86,6 +86,7 @@ Song_of_Storms:
 
   db $00 ; end sfx
 }
+warnpc $1A8FD4
 ; =========================================================
 
 org $07A3DB
@@ -98,7 +99,7 @@ LinkItem_FluteHook:
 ; =========================================================
 
 ; Free Space Bank07
-org $07FC69
+org $07DCD7
 ReturnFromFluteHook:
   RTS
 
