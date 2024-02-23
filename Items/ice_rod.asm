@@ -14,7 +14,7 @@ org $088A5D
 org $0EFBA0 ; main code
 LinkItem_IceRod: 
 {
-   ; load native value
+  ; load native value
   STA $03E4, X : TAY
   
   ; check if you're on overworld 
@@ -129,7 +129,7 @@ org $0EFC80
 ; bug fix to stop gliding on shallow water when leaving ice tile 
 org $07DD1B 
   JSL $0EFC90
-  nop
+  RTS
 
 org $0EFC90
   LDA $0A 

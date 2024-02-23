@@ -214,3 +214,4 @@ LinkGoBeep:
   LDA.b #$3C : JSR Player_DoSfx2
   BRA LinkItem_Bottles_bottle_exit
 }
+pushpc

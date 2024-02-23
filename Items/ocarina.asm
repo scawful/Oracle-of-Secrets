@@ -99,7 +99,7 @@ LinkItem_FluteHook:
 ; =========================================================
 
 ; Free Space Bank07
-org $07DCD7
+pullpc
 ReturnFromFluteHook:
   RTS
 
@@ -108,10 +108,9 @@ ReturnFromFluteHook:
 LinkItem_NewFlute:
 {
   ; Code for the flute item (with or without the bird activated)
-  
-  BIT $3A : BVC .y_button_not_held
-  DEC $03F0 : LDA $03F0 : BNE ReturnFromFluteHook
-  LDA $3A : AND.b #$BF : STA $3A
+  BIT.b $3A : BVC .y_button_not_held
+  DEC.w $03F0 : LDA.w $03F0 : BNE ReturnFromFluteHook
+  LDA.b $3A : AND.b #$BF : STA.b $3A
 
 .y_button_not_held
 
@@ -120,7 +119,7 @@ LinkItem_NewFlute:
   JSR Link_CheckNewY_ButtonPress : BCC ReturnFromFluteHook
   
   ; Success... play the flute.
-  LDA.b #$80 : STA $03F0
+  LDA.b #$80 : STA.w $03F0
   
   LDA $030F
   CMP.b #$01 : BEQ .song_of_soaring
@@ -129,12 +128,11 @@ LinkItem_NewFlute:
 
 .song_of_healing
   LDA.b #$13 : JSR Player_DoSfx2 
-  LDA #$01 : STA $FE
+  LDA.b #$01 : STA $FE
   RTS
 
 .song_of_storms
   ; Play the Song of Storms SFX
-  ; LDA.b #$12 : JSR Player_DoSfx2 
   LDA.b #$18 : JSR Player_DoSfx1
   JSL OcarinaEffect_SummonStorms
   RTS
@@ -143,13 +141,13 @@ LinkItem_NewFlute:
   LDA.b #$3E : JSR Player_DoSfx2
 
   ; Are we indoors?
-  LDA $1B : BNE .return
+  LDA.b $1B : BNE .return
   
   ; Are we in the dark world? The flute doesn't work there.
-  LDA $8A : AND.b #$40 : BNE .return
+  LDA.b $8A : AND.b #$40 : BNE .return
   
   ; Also doesn't work in special areas like Master Sword area.
-  LDA $10 : CMP.b #$0B : BEQ .return
+  LDA.b $10 : CMP.b #$0B : BEQ .return
   
   LDX.b #$04
 
