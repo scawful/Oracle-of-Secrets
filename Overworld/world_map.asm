@@ -25,17 +25,17 @@ org $008FF3
 
 org $3D8000
     LWWorldMap_Tiles:
-    incbin world_map/LWMapTileset.bin
+    incbin world_map/LwMapTileset.bin
 
     LWWorldMap_Gfx:
-    incbin world_map/LWMapGfx.bin
+    incbin world_map/LwMapGfx.bin
 
 org $3E8000
     DWWorldMap_Tiles:
     incbin world_map/DwMapTileset.bin
 
     DWWorldMap_Gfx:
-    incbin world_map/DWMapGfx.bin
+    incbin world_map/DwMapGfx.bin
 
 DMAOwMap:
 {

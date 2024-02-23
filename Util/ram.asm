@@ -12,5 +12,14 @@ MusicNoteValue: skip 2
 OverworldLocationPointer: skip 2
 HasGoldstar: skip 1
 GoldstarOrHookshot: skip 1
+Neck_Index: skip 1
+Neck1_OffsetX: skip 1
+Neck1_OffsetY: skip 1
+Neck2_OffsetX: skip 1
+Neck2_OffsetY: skip 1
+Offspring1_Id: skip 1
+Offspring2_Id: skip 1
+Kydreeok_Id: skip 1
+SomariaOrByrna: skip 1
 
 base off

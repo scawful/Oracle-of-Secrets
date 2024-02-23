@@ -64,6 +64,11 @@ Sprite_Kydreeok_Prep:
   JSR SpawnLeftHead
   JSR SpawnRightHead
 
+  STZ.w Neck1_OffsetX
+  STZ.w Neck1_OffsetY
+  STZ.w Neck2_OffsetX
+  STZ.w Neck2_OffsetY
+
   PLB
   RTL
 }

@@ -523,16 +523,16 @@ org $09B5D6
 org $09B33F
 TrinexxIce_Pool:
 {
-.chr
-db $2E
-db $2E
-db $2C
-db $2C
-.properties
-db $35
-db $35
-db $35
-db $35
+  .chr
+    db $2E
+    db $2E
+    db $2C
+    db $2C
+  .properties
+    db $35
+    db $35
+    db $35
+    db $35
 }
 
 org $09B34F

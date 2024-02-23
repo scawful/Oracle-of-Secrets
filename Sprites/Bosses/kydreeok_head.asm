@@ -90,23 +90,31 @@ Sprite_KydreeokHead_Main:
       LDA.w tableSpeed, Y : STA.w SprYSpeed, X
       ; LDA #$40 : STA.w SprTimerA, X
     .noSpeedChange
-
+      
       JSL Sprite_Move
-      JSR AdjustMovementSpeed
+      ; JSR AdjustMovementSpeed
       JSR KydreeokHead_NeckControl
       JSR MoveWithBody
 
-    ;   JSL GetRandomInt : AND #$7F : BNE .no_attack
-    ;     LDA #$CF 
-    ;     JSL Sprite_SpawnDynamically 
-    ;     JSL Sprite_SetSpawnedCoords
-    ;     JSL $09B020
-    ;     LDA.b #$02 : STA $0D80, Y
-    ;     LDA #$40 : STA.w SprTimerA, Y
-    ;     RTS
-    ; .no_attack
+      JSR RotateHeadUsingSpeedValues
 
-    JSR RandomlyAttack
+    ;   LDA Neck_Index : TAY
+    ;   ; JSL   GetRandomInt : AND #$04 : TAY
+    ;   LDA X_Coords, Y : STA Neck1_OffsetX
+    ;   ; JSL   GetRandomInt : AND #$04 : TAY
+    ;   ; LDA X_Coords, Y : STA Neck2_OffsetX
+    ;   ; JSL   GetRandomInt : AND #$0F : TAY
+    ;   LDA Y_Coords, Y : STA Neck1_OffsetY
+    ;   ; JSL   GetRandomInt : AND #$04 : TAY
+    ;   ; LDA Y_Coords, Y : STA Neck2_OffsetY
+    ;   JSL   GetRandomInt : AND #$3F : BNE .dont_increment
+    ;   INC.w Neck_Index
+    ; .dont_increment
+    ;   CPY #15 : BNE .not_full
+    ;   LDA #0 : STA Neck_Index
+    ; .not_full
+
+      JSR RandomlyAttack
 
       JSL Sprite_IsToRightOfPlayer : TYA : BNE .not_right
       %GotoAction(1)
@@ -132,13 +140,13 @@ Sprite_KydreeokHead_Main:
       LDA.w tableSpeed, Y : STA.w SprYSpeed, X
       ; LDA #$40 : STA.w SprTimerA, X
     .noSpeedChange
-
-
       JSL Sprite_Move
-      JSR AdjustMovementSpeed
+      
+      ; JSR AdjustMovementSpeed
       JSR KydreeokHead_NeckControl
       JSR MoveWithBody
 
+      JSR RotateHeadUsingSpeedValues
       JSR RandomlyAttack
 
       JSL Sprite_IsToRightOfPlayer : TYA : BNE .not_right
@@ -170,6 +178,68 @@ Sprite_KydreeokHead_Main:
 
 }
 
+CoordinateBasedRotation:
+{
+      LDA Neck_Index : TAY
+    ; JSL   GetRandomInt : AND #$04 : TAY
+    ; LDA X_Coords, Y : STA Neck1_OffsetX
+    ; JSL   GetRandomInt : AND #$04 : TAY
+    LDA X_Coords, Y : STA Neck2_OffsetX
+    ; JSL   GetRandomInt : AND #$0F : TAY
+    ; LDA Y_Coords, Y : STA Neck1_OffsetY
+    ; JSL   GetRandomInt : AND #$04 : TAY
+    LDA Y_Coords, Y : STA Neck2_OffsetY
+    JSL   GetRandomInt : AND #$3F : BNE .dont_increment
+    INC.w Neck_Index
+  .dont_increment
+    CPY #15 : BNE .not_full
+    LDA #0 : STA Neck_Index
+  .not_full
+    RTS
+}
+
+; Table for X coordinates (based on a radius of 8)
+X_Coords:
+    db  8, 11,  8,  3, -4, -9, -12, -9, -4,  3,  8, 11,  8,  3, -4, -9  ; X values
+
+; Table for Y coordinates (based on a radius of 8)
+Y_Coords:
+    db  0, -3, -8, -11, -15, -15, -11, -8, -3,  0,  3,  8, 11, 15, 15, 11  ; Y values
+
+RotateHeadUsingSpeedValues:
+{
+  LDY.w Neck_Index
+
+  LDA.w SprXSpeed, X : CLC : ADC.w XSpeedSin, Y : ASL : STA.w SprXSpeed, X
+  LDA.w SprYSpeed, X : CLC : ADC.w YSpeedSin, Y : ASL : STA.w SprYSpeed, X
+
+  INY : CPY #$3F : BNE .not_full
+  LDY.b #$00 
+.not_full
+  STY.w Neck_Index
+  JSL   Sprite_MoveLong
+  
+  RTS
+}
+
+XSpeedSin:
+db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
+db 27,  28,  30,  31,  31,  32
+YSpeedSin:
+db 32,  32,  31,  31
+db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
+db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
+db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
+db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
+db -12,  -9,  -6,  -3 
+db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
+db 27,  28,  30,  31,  31,  32,  32,  32,  31,  31
+db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
+db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
+db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
+db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
+db -12,  -9,  -6,  -3 
+
 RandomlyAttack:
 {
   JSL   GetRandomInt : AND #$7F : BNE .no_attack
@@ -178,6 +248,7 @@ RandomlyAttack:
   LDA   #$CF
   JSL   Sprite_SpawnDynamically
   JSL   Sprite_SetSpawnedCoords
+  ;JSL $09B020
   LDA.b #$02 : STA $0D80,       Y
   LDA   #$10 : STA.w SprTimerA, Y
 .no_attack
@@ -281,6 +352,11 @@ KydreeokHead_NeckControl:
     LDA.w SprSubtype, X : BEQ .DoNeck1
     JMP   .DoNeck2
   .DoNeck1
+    
+    ; Set head pos
+    LDA $19EE : CLC : ADC.w Neck1_OffsetX : STA SprX, X
+    LDA $19EF : CLC : ADC.w Neck1_OffsetY : STA SprY, X
+
     LDA.w SprX, X : STA.w SprMiscC, X
     LDA.w SprY, X : STA.w SprMiscD, X
     LDA.w SprXSpeed, X : STA $08
@@ -371,15 +447,16 @@ KydreeokHead_NeckControl:
     LDA.b $08 : STA.w SprXSpeed, X
     LDA.b $09 : STA.w SprYSpeed, X
 
-    ; Set head pos
-    LDA $19EE : STA SprX, X
-    LDA $19EF : CLC : SBC #$10 : STA SprY, X
     RTS
 
   ; =========================================================
 
   .DoNeck2
         
+    ; Set head pos 
+    LDA $19F4 : CLC : ADC.w Neck2_OffsetX : STA SprX, X
+    LDA $19F5 : CLC : ADC.w Neck2_OffsetY : STA SprY, X
+
     LDA.w SprX, X : STA.w SprMiscC, X
     LDA.w SprY, X : STA.w SprMiscD, X
     LDA.w SprXSpeed, X : STA $08
@@ -462,9 +539,7 @@ KydreeokHead_NeckControl:
     LDA.b $08 : STA.w SprXSpeed, X
     LDA.b $09 : STA.w SprYSpeed, X
 
-    ; Set head pos 
-    LDA $19F4 : STA SprX, X
-    LDA $19F5 : CLC : SBC #$10 : STA SprY, X
+
 
     RTS
 }
