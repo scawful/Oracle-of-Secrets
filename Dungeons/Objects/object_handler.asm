@@ -17,6 +17,8 @@ NewObjectsCode:
 {
   PHB : PHK : PLB
   PHX
+
+  STZ $03 ; 03 will be used to store the object ID for custom config
   LDA $00 : PHA
   LDA $02 : PHA
   ; $00 Will be used for tile count and tile to skip 
@@ -38,8 +40,10 @@ NewObjectsCode:
 
       -- ;Tiles Loop
           INX : INX
-
+          ;  Vhopppcc cccccccc
+          print "Object Handler", pc
           LDA .ObjData, X : BEQ +
+              JSR CustomDrawConfig
               STA [$BF], Y
           +
 
@@ -77,6 +81,9 @@ NewObjectsCode:
   dw .BottomleftFloor-.ObjData  ; 10
   dw .BottomRightFloor-.ObjData ; 11
   dw .FloorAny-.ObjData         ; 12
+  dw .WallSwordHouse-.ObjData   ; 13
+  dw .KydreeokBody-.ObjData     ; 14
+  dw .HeavyPot-.ObjData         ; 15
 
 .ObjData
   .LeftRight
@@ -105,7 +112,34 @@ NewObjectsCode:
     incbin track_floor_corner_BR.bin
   .FloorAny
     incbin track_floor_any.bin
+  .WallSwordHouse
+    incbin wall_sword_house.bin
+  .KydreeokBody
+    incbin kydreeok_body.bin
+  .HeavyPot
+    incbin heavy_pot.bin
 
+}
+
+
+; May need to make this a table 
+; This modifies object 0xOE to use the spritesheets for the object
+CustomDrawConfig:
+{
+  PHA
+  LDA $03 : CMP.w #$000E : BEQ .custom_config
+
+  TYA : LSR : AND #$00FF
+
+  CMP #$000E : BNE .no_spriteset
+    LDA #$000E : STA $03
+  .custom_config
+    PLA
+    ORA.w #$0300 : JMP .return
+.no_spriteset   
+    PLA
+.return
+  RTS
 }
 
 pushpc
