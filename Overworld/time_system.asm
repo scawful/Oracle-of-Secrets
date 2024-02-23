@@ -1,7 +1,4 @@
 ;----------------[ Time system ]----------------
-; @xkas
-; warn xkas off
-lorom 
 
 ; tiles locations on HUD
 !hud_min_low = $7EC7CC
@@ -24,8 +21,15 @@ org $068361
 org $328000 ; Free space
 HUD_ClockDisplay:
 {
-	JSR counter_preroutine
-	LDX #$00
+	JSR RunClock
+	JSR DrawToHud
+	JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
+	RTL
+}
+
+DrawToHud:
+{
+  LDX #$00
 .debut
 	LDY #$00 : LDA $7EE000,x
 
@@ -55,13 +59,12 @@ HUD_ClockDisplay:
   LDA #$30 : STA.l !hud_min_high+1 ; white palette
 .finish_draw
 	INX : CPX #$02 : BMI .debut
-	JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
-	RTL
+  RTS
 }
 
 ;--------------------------------
 
-counter_preroutine:
+RunClock:
 {
     LDA $10			;checks current event in game
     CMP #$07		;dungeon/building?
@@ -147,7 +150,21 @@ counter_preroutine:
     RTS
 }
 
-print pc
+; WIP mosaic fixes - scawful
+; FixSpecialAreas:
+; {
+;   STA $7EE018
+;   JSL BackgroundFix
+
+;   STA.l $7EC300
+;   RTL
+; }
+
+; org $28871A
+;   JSL FixSpecialAreas
+
+; org $288725
+;   JML FixSpecialAreas
 
 ;-----------------------------------------------
 ;----[ Day / Night system * palette effect ]----
