@@ -6,9 +6,6 @@ incsrc "Dungeons/sanctuary_transition.asm"
 incsrc "Dungeons/entrances.asm"
 print  "End of entrances.asm              ", pc
 
-incsrc "Dungeons/mothula.asm"
-print  "End of mothula.asm                ", pc
-
 incsrc "Dungeons/enemy_damage.asm"
 print  "End of enemy_damage.asm           ", pc
 

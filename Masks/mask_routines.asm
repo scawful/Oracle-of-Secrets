@@ -378,7 +378,8 @@ DekuLink_HoverBasedOnInput:
 
 .auto_cancel
   
-    STZ $5D
+  ; Reset LinkState to Default
+  STZ $5D
 
   #_08B6A5: LDA.b #$01
   #_08B6A7: STA.w $0AAA
@@ -412,6 +413,10 @@ DekuLink_HoverBasedOnInput:
 
   #_08B6F1: STZ.b $5E
   #_08B6F3: STZ.w $0325
+  ; Set height at end of hover
+  ; This makes it so the landing animation timer looks correct
+  ; Floating for a bit, then slowly landing on the ground
+  LDA.b #$12 : STA $24 
 .no_cancel
 
   RTL
