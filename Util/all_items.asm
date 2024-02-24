@@ -53,6 +53,8 @@ lorom
 !Crystals = $7EF37A
 !MagicUsage = $7EF37B
 
+!BetaRelease = $01
+
 org $068365
   JSL $3CA62A ; Overwrite JSL executed every frame
 
@@ -60,6 +62,7 @@ org $3CA62A ; Expanded space for our routine
 {
   LDA $F2 : CMP #$30 : BEQ $03 : JMP END ; Check L and R button
 
+if !BetaRelease = 0
   ; 0 - nothing. 1 - bow w/ no arrows. 2 - bow w/ arrows. 3 - silver arrows
   LDA #$02 : STA !Bow
 
@@ -133,8 +136,6 @@ org $3CA62A ; Expanded space for our routine
   LDA #$E7 : STA !Rupees
   LDA #$03 : STA !RupeesGoal
 
-
-
   ; Pendants: Bit 0 = Courage, Bit 1 = Wisdom, Bit 2 = Power
   LDA #$00 : STA !Pendants
 
@@ -161,6 +162,9 @@ org $3CA62A ; Expanded space for our routine
 
   ; health capacity (maximum number of hearts)
   LDA #$A0 : STA !HealthCapacity
+
+endif
+
 
   ; fill all hearts
   LDA #$A0 : STA !Hearts

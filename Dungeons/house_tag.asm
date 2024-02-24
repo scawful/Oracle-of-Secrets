@@ -10,7 +10,6 @@ org $01CC18 ; override routine 0x39 "Holes(7)"
 org $01CC5A 
   HouseTag_Return:
 
-; org $2F8000
 pullpc
 HouseTag:
 {
@@ -41,6 +40,8 @@ HouseTag_Main:
 
 HouseTag_TelepathicPlea:
 {
+  LDA #$06 : STA $7EE000 ; Set the time to 6:00am
+
   ; -------------------------------
   ; Set Link's coordinates to this specific position.
   LDA.b #$40 : STA $0FC2
@@ -63,7 +64,7 @@ HouseTag_WakeUpPlayer:
 {
   ; Lighten the screen gradually and then wake Link up partially
   LDA $1A : AND.b #$03 : BNE .delay
-  LDA $9C : CMP.b #$20 : BEQ .colorTargetReached
+  LDA $9C : CMP.b #$00 : BEQ .colorTargetReached
   
   DEC $9C : DEC $9D
 
