@@ -4,12 +4,10 @@
 ;
 ; $22XXXX - Denotes the source address from all in patch
 
-pushpc
-
 org $07D576
 Hookshot_CheckTileCollision:
 
-org $348000
+pullpc
 TransferGFXinRAM:
 {
   PHX ; keep X
@@ -29,6 +27,7 @@ TransferGFXinRAM:
   .morningstargfx
     incbin morningstar.bin
 }
+pushpc
 
 ; OAM Draw Pattern for spikeball gfx
 org $0085C4

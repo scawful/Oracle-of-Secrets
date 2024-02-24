@@ -51,7 +51,8 @@ Song_of_Healing:
 !Storms_Params2 = $3C
 
 ; SFX1_18
-org $1A8F93
+; org $1A92F7
+org $1A92F7 ; SFX2_2F
 Song_of_Storms:
 {
   db $E0, $0D ; set sfx instrument - twee
@@ -86,7 +87,7 @@ Song_of_Storms:
 
   db $00 ; end sfx
 }
-warnpc $1A8FD4
+; warnpc $1A8FD4
 ; =========================================================
 
 org $07A3DB
@@ -133,7 +134,8 @@ LinkItem_NewFlute:
 
 .song_of_storms
   ; Play the Song of Storms SFX
-  LDA.b #$18 : JSR Player_DoSfx1
+  ; LDA.b #$18 : JSR Player_DoSfx1
+  LDA.b #$2F : JSR Player_DoSfx2
   JSL OcarinaEffect_SummonStorms
   RTS
 
@@ -266,7 +268,6 @@ OcarinaEffect_SummonStorms:
   RTL
 
 .summonStorms
-  ; LDA #$16 : STA $11
   LDA #$9F : STA $8C
   LDA.b #$01 : STA.b $1D
   LDA.b #$72 : STA.b $9A
@@ -274,25 +275,50 @@ OcarinaEffect_SummonStorms:
   RTL
 }
 
+PlayThunderAndRain:
+{
+  LDA.b #$01 : STA $012D
+  LDX.b #$36 : STX.w $012E
+  RTL
+}
+
 CheckRealTable:
 {
   LDA $7EE00E : CMP #$00 : BEQ .continue
-  JML $02A4CD+12 ; Jump to rain sound effect
+  JML RainAnimation_Overridden_rainOverlaySet
 .continue
+  LDA #$05 : STA $012D
   LDA.b $8A : ASL : TAX
   LDA.l Pool_OverlayTable, X
-  CMP.b #$9F : BEQ .summonStorms
+  CMP.b #$9F : BNE .not_rain_area
+  
   RTL
-.summonStorms
-  JML RainAnimation_Overridden_rainOverlaySet
+.not_rain_area
+  
+  JML RainAnimation_Overridden_skipMovement
+}
+
+ResetOcarinaFlag:
+{
+  REP #$30
+  LDA #$0000 : STA.l  $7EE00E
+  SEP #$30
+
+  LDA.w $0416 : ASL A 
+  RTL
+}
+
+org $02F210
+{
+  JSL ResetOcarinaFlag
 }
 
 ; ZS OW
 org $02A4CD
 RainAnimation_Overridden:
 {
-  JSL CheckRealTable
-    LDA.b $8C : CMP.b #$9F : BEQ .rainOverlaySet
+    JSL CheckRealTable : BEQ .rainOverlaySet
+    ; LDA.b $8C : CMP.b #$9F : 
     ; Check the progress indicator
     LDA.l $7EF3C5 : CMP.b #$02 : BRA .skipMovement
   .rainOverlaySet
@@ -320,7 +346,8 @@ RainAnimation_Overridden:
   .thunder
 
     ; Play the thunder sound when outdoors.
-    LDX.b #$36 : STX.w $012E
+    ;LDX.b #$36 : STX.w $012E
+    JSL PlayThunderAndRain
 
   .lightning
 
