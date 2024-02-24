@@ -1,13 +1,3 @@
-pullpc ; Bank 33
-AdvancedArrghus:
-{
-  LDA $0CAA, Y : ORA.b #$08 : STA $0CAA, Y
-  LDA.b #$04 : STA $0CD2, Y
-  
-  JSL Sprite_SpawnFireball
-  LDA.b #$50 : STA $0DF0, X
-  RTL
-}
 pushpc
 
 org $1E7F21 
@@ -24,4 +14,15 @@ Arrghus_ApproachTargetSpeed:
     JSL AdvancedArrghus : NOP
 
 .delay
+}
+
+pullpc
+AdvancedArrghus:
+{
+  LDA $0CAA, Y : ORA.b #$08 : STA $0CAA, Y
+  LDA.b #$04 : STA $0CD2, Y
+  
+  JSL Sprite_SpawnFireball
+  LDA.b #$50 : STA $0DF0, X
+  RTL
 }
