@@ -89,6 +89,12 @@ print  "End of impa.asm                   ",  pc
 incsrc "Sprites/Enemies/poltergeist.asm"
 print  "End of poltergeist.asm            ",  pc
 
+incsrc "Sprites/Bosses/arrghus.asm"
+print  "End of arrghus.asm                ", pc
+
+incsrc "Sprites/Bosses/mothula.asm"
+print  "End of mothula.asm                ", pc
+
 incsrc "Sprites/NPCs/bug_net_kid.asm"
 
 warnpc $328000
