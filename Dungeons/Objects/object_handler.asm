@@ -87,37 +87,37 @@ NewObjectsCode:
 
 .ObjData
   .LeftRight
-    incbin track_LR.bin
+    incbin Data/track_LR.bin
   .UpDown
-    incbin track_UD.bin
+    incbin Data/track_UD.bin
   .TopLeft
-    incbin track_corner_TL.bin
+    incbin Data/track_corner_TL.bin
   .TopRight
-    incbin track_corner_TR.bin
+    incbin Data/track_corner_TR.bin
   .Bottomleft
-    incbin track_corner_BL.bin
+    incbin Data/track_corner_BL.bin
   .BottomRight
-    incbin track_corner_BR.bin
+    incbin Data/track_corner_BR.bin
   .UpDownFloor
-    incbin track_floor_UD.bin
+    incbin Data/track_floor_UD.bin
   .LeftRightFloor
-    incbin track_floor_LR.bin
+    incbin Data/track_floor_LR.bin
   .TopLeftFloor
-    incbin track_floor_corner_TL.bin
+    incbin Data/track_floor_corner_TL.bin
   .TopRightFloor
-    incbin track_floor_corner_TR.bin
+    incbin Data/track_floor_corner_TR.bin
   .BottomleftFloor
-    incbin track_floor_corner_BL.bin
+    incbin Data/track_floor_corner_BL.bin
   .BottomRightFloor
-    incbin track_floor_corner_BR.bin
+    incbin Data/track_floor_corner_BR.bin
   .FloorAny
-    incbin track_floor_any.bin
+    incbin Data/track_floor_any.bin
   .WallSwordHouse
-    incbin wall_sword_house.bin
+    incbin Data/wall_sword_house.bin
   .KydreeokBody
-    incbin kydreeok_body.bin
+    incbin Data/kydreeok_body.bin
   .HeavyPot
-    incbin heavy_pot.bin
+    incbin Data/heavy_pot.bin
 
 }
 
