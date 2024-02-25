@@ -129,6 +129,14 @@ Menu_FindNextUpItem:
   CLC   : ADC.b #$18
 .no_reset 
   TAY   : STY.w $0202
+  CPY.b #$19 : BCS .reset_up
+  LDX.w Menu_AddressIndex-1, Y
+  LDA.l $7EF300,             X
+  BEQ   Menu_FindNextItem
+  RTS 
+.reset_up
+  LDY.b #$01
+  STY.w $0202
   LDX.w Menu_AddressIndex-1, Y
   LDA.l $7EF300,             X
   BEQ   Menu_FindNextItem
