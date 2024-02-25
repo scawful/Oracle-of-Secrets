@@ -351,3 +351,6 @@ Sprite_ProjectSpeedTowardsPlayer:
 
 org $06F2AA
 Sprite_CheckDamageFromPlayerLong:
+
+org $06AA0C
+Sprite_CheckIfLifted:
