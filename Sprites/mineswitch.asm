@@ -4,17 +4,17 @@
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 01  ; Number of Health the sprite have
-!Damage             = 08  ; (08 is a whole heart), 04 is half heart
+!Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 01  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 01  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
-!CanFall            = 00  ; 01 sprite can fall in hole, 01 = can't fall
+!CanFall            = 01  ; 01 sprite can fall in hole, 01 = can't fall
 !DeflectArrow       = 00  ; 01 = deflect arrows
 !WaterSprite        = 00  ; 01 = can only walk shallow water
 !Blockable          = 00  ; 01 = can be blocked by link's shield?
@@ -50,6 +50,7 @@ Sprite_LeverSwitch_Prep:
 {
   PHB : PHK : PLB
    
+  LDA.b #$80 : STA $0CAA, X
   LDA SprSubtype, X : STA SprAction, X
 
   PLB
@@ -71,11 +72,15 @@ Sprite_LeverSwitch_Main:
   {
     %PlayAnimation(0,0,4)
 
+    LDA SprTimerA, X : BNE .NoDamage
+
     JSL Sprite_CheckDamageFromPlayerLong
     BCC .NoDamage
 
     LDA #$25 : STA $012F
-    LDA #$01 : STA $37
+    
+    STZ.w $37
+    LDA #$10 : STA SprTimerA, X
     %GotoAction(1)
 
     .NoDamage
@@ -87,11 +92,14 @@ Sprite_LeverSwitch_Main:
   {
     %PlayAnimation(1,1,4)
 
+    LDA SprTimerA, X : BNE .NoDamage
+
     JSL Sprite_CheckDamageFromPlayerLong
     BCC .NoDamage
 
     LDA #$25 : STA $012F
-    STZ.w $37
+    LDA #$01 : STA $37
+    LDA #$10 : STA SprTimerA, X
     %GotoAction(0)
 
     .NoDamage

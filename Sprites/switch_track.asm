@@ -9,7 +9,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 01  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 01  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -48,11 +48,13 @@ Sprite_RotatingTrack_Long:
 ; 1 = TopRight -> BottomRight
 ; 2 = BottomRight -> BottomLeft
 ; 3 = BottomLeft -> TopLeft
+; 4 = TopRight -> TopLeft
 
 Sprite_RotatingTrack_Prep:
 {
   PHB : PHK : PLB
 
+  LDA.b #$80 : STA $0CAA, X
   LDA SprSubtype,X : STA SprAction,X
    
   PLB
@@ -66,9 +68,10 @@ Sprite_RotatingTrack_Main:
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
   dw TopLeftToTopRight
-  ; dw TopRightToBottomRight
-  ; dw BottomRightToBottomLeft
-  ; dw BottomLeftToTopLeft
+  dw TopRightToBottomRight
+  dw BottomRightToBottomLeft
+  dw BottomLeftToTopLeft
+  dw TopRightToTopLeft
 
   TopLeftToTopRight:
   {
@@ -83,6 +86,65 @@ Sprite_RotatingTrack_Main:
 
     RTS
   }
+
+  TopRightToBottomRight:
+  {
+    LDA SwitchRam : BNE part2_a
+
+    %PlayAnimation(1,1,4)
+  part2_a:
+  
+    %PlayAnimation(2,2,4)
+
+    JSL CheckIfHitBoxesOverlap
+
+    RTS
+  }
+
+  BottomRightToBottomLeft:
+  {
+    LDA SwitchRam : BNE part2_b
+
+    %PlayAnimation(2,2,4)
+  part2_b:
+    
+      %PlayAnimation(3,3,4)
+  
+      JSL CheckIfHitBoxesOverlap
+  
+      RTS
+    }
+
+  BottomLeftToTopLeft:
+  {
+    LDA SwitchRam : BNE part2_c
+
+    %PlayAnimation(3,3,4)
+
+  part2_c:
+
+    %PlayAnimation(0,0,4)
+
+    JSL CheckIfHitBoxesOverlap
+
+    RTS
+  }
+
+  TopRightToTopLeft:
+  {
+    LDA SwitchRam : BNE part2_d
+    
+    %StartOnFrame(1)
+    %PlayAnimation(1,1,4)
+
+  part2_d:
+      %StartOnFrame(0)
+      %PlayAnimation(0,0,4)
+  
+      JSL CheckIfHitBoxesOverlap
+  
+      RTS
+    }
 }
 
 Sprite_RotatingTrack_Draw:
