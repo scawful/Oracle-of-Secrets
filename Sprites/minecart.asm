@@ -1,6 +1,6 @@
-;==============================================================================
+; =========================================================
 ; Sprite Properties
-;==============================================================================
+; =========================================================
 
 !SPRID              = $BE ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 08  ; Number of tiles used in a frame
@@ -30,11 +30,14 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-;==============================================================================
+; =========================================================
 
 %Set_Sprite_Properties(Sprite_Minecart_Prep, Sprite_Minecart_Long) 
 
-;==============================================================================
+; =========================================================
+
+; Link is in cart
+!LinkInCart         = $35
 
 Sprite_Minecart_Long:
 {
@@ -52,7 +55,7 @@ Sprite_Minecart_Long:
   RTL ; Go back to original code
 }
 
-;==============================================================================
+; =========================================================
 
 !MinecartSpeed     = 20
 !DoubleSpeed       = 30
@@ -72,72 +75,106 @@ Sprite_Minecart_Long:
 ;     3 - right
 !SpriteDirection   = $0DE0
 
+; Bitfield for carry-related actions.
+; .... ..tl
+;   t - tossing object
+;   l - lifting object
+!LinkCarryOrToss   = $0309
+
 Sprite_Minecart_Prep:
 {
   PHB : PHK : PLB
-
-  LDA SprY, X : SEC : SBC.b #$04 : STA SprY, X ; SprY adjustment 
   
-  LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
-  LDA #$04 : STA $0E40, X ; Nbr Oam Entries 
-  LDA #$40 : STA $0E60, x ; Impervious props 
-  LDA #$E0 : STA $0F60, X ; Persist 
-  LDA #$00 : STA $0CD2, X ; No bump damage 
-  LDA #$00 : STA $0B6B, X ; Set interactive hitbox? 
+  ; If the subtype is > 4, then it's a dummy cart
+  LDA SprSubtype, X : CMP.b #$04 : BCC .continue
+    LDA SprSubtype, X : SEC : SBC.b #$04 : STA SprSubtype, X
+    ; If link is in a cart, then draw the dummy cart
+    LDA !LinkInCart : BNE .continue
+      STZ.w $0DD0, X ; Otherwise, clear the sprite
+      PLB
+      RTL
 
-  STZ.w $012B
+  .continue
+    LDA SprY, X : SEC : SBC.b #$04 : STA SprY, X
+    
+    LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
+    LDA #$04 : STA $0E40, X ; Nbr Oam Entries 
+    LDA #$40 : STA $0E60, x ; Impervious props 
+    LDA #$E0 : STA $0F60, X ; Persist 
+    LDA #$00 : STA $0CD2, X ; No bump damage 
+    LDA #$00 : STA $0B6B, X ; Set interactive hitbox? 
 
-  LDA SprSubtype, X : CMP.b #$00 : BEQ .north
-                      CMP.b #$01 : BEQ .east
-                      CMP.b #$02 : BEQ .south
-                      CMP.b #$03 : BEQ .west
+    STZ.w $012B
+
+    LDA SprSubtype, X : CMP.b #$00 : BEQ .north
+                        CMP.b #$01 : BEQ .east
+                        CMP.b #$02 : BEQ .south
+                        CMP.b #$03 : BEQ .west
+                        CMP.b #$04 : BEQ .north
+                        CMP.b #$05 : BEQ .east
+                        CMP.b #$06 : BEQ .south
+                        CMP.b #$07 : BEQ .west
 
   .north
     STZ.w !MinecartDirection
-    %GotoAction(1) ; Minecart_MoveNorth
+    %GotoAction(1) ; Minecart_WaitVert
     JMP   .done
   .east
     LDA #$01 : STA !MinecartDirection
-    %GotoAction(0) ; Minecart_MoveEast
+    %GotoAction(0) ; Minecart_WaitHoriz
     JMP .done
   .south
     LDA #$02 : STA !MinecartDirection
-    %GotoAction(1) ; Minecart_MoveSouth
+    %GotoAction(1) ; Minecart_WaitVert
     JMP .done
   .west
     LDA #$03 : STA !MinecartDirection
-    %GotoAction(0) ; Minecart_MoveWest
-    
+    %GotoAction(0) ; Minecart_WaitHoriz
+
   .done
-  PLB
-  RTL
+    
+    PLB
+    RTL
 }
 
-;==============================================================================
+; =========================================================
 
 macro HandlePlayerCamera()
-    LDA $22 : SEC : SBC $3F : STA $31
-    LDA $20 : SEC : SBC $3E : STA $30
-    PHX 
-    JSL $07E6A6                       ; Link_HandleMovingAnimation_FullLongEntry
-    JSL $07F42F                       ; HandleIndoorCameraAndDoors_Long
-    JSL Player_HaltDashAttack
-    PLX 
+  LDA $22 : SEC : SBC $3F : STA $31
+  LDA $20 : SEC : SBC $3E : STA $30
+  PHX 
+  
+  JSL $07E6A6 ; Link_HandleMovingAnimation_FullLongEntry
+  JSL $07F42F ; HandleIndoorCameraAndDoors_Long
+  
+  JSL Player_HaltDashAttack
+  PLX 
 endmacro
 
 macro InitMovement()
-  LDA.b $22
-  STA.b $3F
-
-  LDA.b $23
-  STA.b $41
-
-  LDA.b $20
-  STA.b $3E
-
-  LDA.b $21
-  STA.b $40
+  LDA.b $22 : STA.b $3F
+  LDA.b $23 : STA.b $41
+  LDA.b $20 : STA.b $3E
+  LDA.b $21 : STA.b $40
 endmacro
+
+macro MoveCart()
+  JSR HandleTileDirections
+  JSR HandleDynamicSwitchTileDirections
+  LDA #$35 : STA $012E                  ; Cart SFX
+endmacro
+
+macro HandleLiftAndToss()
+    LDA.w !LinkCarryOrToss : AND #$02 : BNE .not_tossing
+    ; Velocities for cart tossing
+    ; STZ.w SprXSpeed, X : STZ.w SprYSpeed, X : STZ.w $0F90,X
+  .not_tossing
+    JSL Sprite_CheckIfLifted
+
+    JSL Sprite_MoveXyz
+endmacro
+
+; =========================================================
 
 Sprite_Minecart_Main:
 {
@@ -152,19 +189,22 @@ Sprite_Minecart_Main:
   dw Minecart_MoveWest  ; 0x05
   dw Minecart_Release   ; 0x06
 
-  ; ---------------------------------------------------------------------------
-  ; 0x01
+  ; -------------------------------------------------------
+  ; 0x00
   Minecart_WaitHoriz:
   {
     %PlayAnimation(0,1,8)
     LDA SprTimerA, X : BNE .not_ready
 
-    JSR CheckIfPlayerIsOn : BCC .not_on_platform
+    LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
+    JSR CheckIfPlayerIsOn : BCC .not_ready
 
     JSL Player_HaltDashAttack            ; Stop the player from dashing
     LDA #$02 : STA $02F5                 ; Somaria platform and moving 
     LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
-    
+
+    LDA #$01 : STA !LinkInCart
+
     ; Check if the cart is facing east or west
     LDA !MinecartDirection : CMP.b #$03 : BNE .opposite_direction
       LDA #$02 : STA $0DE0, X
@@ -174,25 +214,34 @@ Sprite_Minecart_Main:
     .opposite_direction
       LDA #$03 : STA $0DE0, X
       %GotoAction(3) ; Minecart_MoveEast
-    .not_on_platform
+
     .not_ready
+      RTS
+      
+    .lifting
+      %HandleLiftAndToss()
+
       RTS
   }
   
-  ; ---------------------------------------------------------------------------
-  ; 0x02
+  ; -------------------------------------------------------
+  ; 0x01
   Minecart_WaitVert:
   {
     %PlayAnimation(2,3,8)
     LDA SprTimerA, X : BNE .not_ready
-    JSR CheckIfPlayerIsOn : BCC .not_on_platform
+
+    LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
+    JSR CheckIfPlayerIsOn : BCC .not_ready
 
     JSL Player_HaltDashAttack            ; Stop the player from dashing
     LDA #$02 : STA $02F5                 ; Somaria platform and moving 
     LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
+
+    LDA #$01 : STA !LinkInCart
     
     ; Check if the cart is facing north or south
-    LDA !MinecartDirection : CMP.b #$02 : BNE .opposite_direction
+    LDA !MinecartDirection : BEQ .opposite_direction
       LDA #$01 : STA $0DE0, X
       %GotoAction(4)  ; Minecart_MoveSouth
       RTS
@@ -200,13 +249,16 @@ Sprite_Minecart_Main:
     .opposite_direction
       LDA #$00 : STA $0DE0, X
       %GotoAction(2)  ; Minecart_MoveNorth
-    .not_on_platform
+
     .not_ready
+    .lifting
+      %HandleLiftAndToss()
+
       RTS 
   }
 
-  ; ---------------------------------------------------------------------------
-  ; 0x03
+  ; -------------------------------------------------------
+  ; 0x02
   Minecart_MoveNorth:
   {
     %PlayAnimation(2,3,8)
@@ -220,20 +272,16 @@ Sprite_Minecart_Main:
     .continue
     JSL Sprite_MoveVert
 
-    ; LDA SprY, X : SEC : SBC #$04 : STA $20
-    ; LDA SprX, X : CLC : ADC #$02 : STA $22
-
     JSR DragPlayer
     JSR CheckForPlayerInput
     %HandlePlayerCamera()
-    JSR HandleTileDirections
-    LDA #$35 : STA $012E
+    %MoveCart()
 
     RTS
   }
 
-  ; ---------------------------------------------------------------------------
-  ; 0x04
+  ; -------------------------------------------------------
+  ; 0x03
   Minecart_MoveEast:
   {
     %PlayAnimation(0,1,8)
@@ -249,14 +297,13 @@ Sprite_Minecart_Main:
     JSR DragPlayer
     JSR CheckForPlayerInput
     %HandlePlayerCamera()
-    JSR HandleTileDirections
-    LDA #$35 : STA $012E
+    %MoveCart()
 
     RTS
   }
 
-  ; ---------------------------------------------------------------------------
-  ; 0x05
+  ; -------------------------------------------------------
+  ; 0x04
   Minecart_MoveSouth:
   {
     %PlayAnimation(2,3,8)
@@ -272,14 +319,13 @@ Sprite_Minecart_Main:
     JSR DragPlayer
     JSR CheckForPlayerInput
     %HandlePlayerCamera()
-    JSR HandleTileDirections
-    LDA #$35 : STA $012E     ; Moving sound effect 
+    %MoveCart()
     
     RTS
   }
 
-  ; ---------------------------------------------------------------------------
-  ; 0x06
+  ; -------------------------------------------------------
+  ; 0x05
   Minecart_MoveWest:
   {
     %PlayAnimation(0,1,8)
@@ -295,8 +341,7 @@ Sprite_Minecart_Main:
     JSR DragPlayer
     JSR CheckForPlayerInput
     %HandlePlayerCamera()
-    JSR HandleTileDirections
-    LDA #$35 : STA $012E
+    %MoveCart()
 
     RTS
   }
@@ -305,19 +350,20 @@ Sprite_Minecart_Main:
       STZ   $02F5
       STZ.w SprYSpeed, X
       STZ.w SprXSpeed, X
+      STZ.w !LinkInCart
   endmacro
 
-  ; ---------------------------------------------------------------------------
-  ; 0x07
+  ; -------------------------------------------------------
+  ; 0x06
   Minecart_Release:
   {
     %StopCart()
 
     LDA SprTimerD, X : BNE .not_ready
-
-    %GotoAction(0)
+      LDA #$40 : STA SprTimerA, X
+      %GotoAction(0)
     .not_ready
-    RTS
+      RTS
   }
 }
 
@@ -327,9 +373,7 @@ print "HandleTileDirections ", pc
 HandleTileDirections:
 {
     ; Setup Minecart position to look for tile IDs
-    ; LDA.w SprY,  X : STA.b $00 : LDA.w SprYH, X : STA.b $01
-    ; LDA.w SprX,  X : STA.b $02 : LDA.w SprXH, X : STA.b $03
-    ; Setup Minecart position to look for tile IDs
+    ; We use AND #$F8 to clamp to a 16x16 grid, however this needs work.
     LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
     LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
 
@@ -365,7 +409,7 @@ HandleTileDirections:
         ; Set the new direction to south and flip the cart's orientation
         LDA.b #North : STA SprSubtype, X : STZ.w !MinecartDirection
         LDA   #$00 : STA $0DE0,        X
-        .go_vert
+      .go_vert
           %SetTimerA($40)
           %StopCart()
           %GotoAction(1) ; Minecart_WaitVert
@@ -382,13 +426,13 @@ HandleTileDirections:
         ; Set the new direction to west and flip the cart's orientation
         LDA.b #East : STA SprSubtype, X : STA.w !MinecartDirection
         LDA   #$02 : STA $0DE0,       X
-        .go_horiz
+      .go_horiz
           %SetTimerA($40)
           %StopCart()
           %GotoAction(0) ; Minecart_WaitHoriz
           JSL Player_ResetState
           RTS
-    ; ---------------------------------------------------------------------------
+    ; -------------------------------------------------------
 
   .check_for_movement
     ; Check for movement tiles
@@ -446,6 +490,7 @@ HandleTileDirections:
         TAY
 
     .execute_action
+        ; JSR ClampSpritePositionToGrid
         CPY #$01 : BEQ .move_north
         CPY #$02 : BEQ .move_east
         CPY #$03 : BEQ .move_south
@@ -487,22 +532,118 @@ HandleTileDirections:
     ; db $BE ; + any direction
 }
 
-;==============================================================================
+; Clamp the sprite position to a 16x16 grid
+; Slows the game down if you run it too often :(
+ClampSpritePositionToGrid:
+{
+    ; Check if SprX is already a multiple of 16
+    LDA.w SprX, X : AND #$0F : BEQ .x_aligned
+    LDA.w SprX, X : LSR : ASL : STA.w SprX, X
+  .x_aligned
 
-print     "DragPlayer: ", pc
+    ; Check if SprY is already a multiple of 16
+    LDA.w SprY, X : AND #$0F : BEQ .y_aligned
+    LDA.w SprY, X : LSR : ASL : STA.w SprY, X
+ .y_aligned
+    RTS
+}
 
-DragYLow  = $0B7C
-DragYHigh = $0B7D
+HandleDynamicSwitchTileDirections:
+{
+    ; Find out if the sprite $B0 is in the room
+    JSR CheckSpritePresence : BCC .no_b0
+
+    PHX : LDA $02 : TAX
+    JSR Link_SetupHitBox
+
+    ; X is now the ID of the sprite $B0
+    JSR Sprite_SetupHitBox
+    PLX
+    
+    JSL CheckIfHitBoxesOverlap : BCC .no_b0
+
+    LDA   !MinecartDirection : CMP.b #$00 : BEQ .east_or_west
+    CMP.b #$02 : BEQ .north_or_south
+
+  .east_or_west
+    
+    LDA SwitchRam : BNE .go_west
+
+    LDA #$01 : STA SprSubtype, X
+    LDA #$03 : STA $0DE0,      X
+    %GotoAction(3) ; Minecart_MoveEast
+    RTS
+
+  .go_west
+    LDA #$03 : STA SprSubtype, X
+    LDA #$02 : STA $0DE0,      X
+    %GotoAction(5) ; Minecart_MoveWest
+    RTS
+
+  .north_or_south
+    LDA SwitchRam : BNE .go_south
+    LDA #$00 : STA SprSubtype, X
+    STA $0DE0,                 X
+    %GotoAction(2) ; Minecart_MoveNorth
+    RTS
+
+  .go_south
+    LDA #$02 : STA SprSubtype, X
+    LDA #$01 : STA $0DE0,      X
+    %GotoAction(4) ; Minecart_MoveSouth
+    RTS
+
+  .no_b0
+
+    RTS
+}
+
+; $00 = flag indicating presence of sprite ID $B0
+CheckSpritePresence:
+{
+    PHX
+    CLC ; Assume sprite ID $B0 is not present
+
+    LDX.b #$10
+    
+  .x_loop
+    DEX
+    
+    LDY.b #$04
+    .y_loop
+      DEY
+      LDA $0E20, X : CMP.b #$B0 : BEQ .set_flag
+      BRA .not_b0
+
+    .set_flag
+      SEC         ; Set flag indicating sprite ID $B0 is present
+      STX.w $02
+      BRA   .done
+
+  .not_b0
+    CPY.b #$00 : BNE .y_loop
+    CPX.b #$00 : BNE .x_loop
+  .done
+    PLX
+
+    RTS
+}
+
+; =========================================================
+
+DragYL = $0B7C
+DragYH = $0B7D
 
 DragPlayer:
 {
     ; Get direction of the cart (0 to 3)
-    LDY.w $0DE0,                  X
-    LDA.w DragPlayer_drag_x_low,  Y : CLC : ADC.w DragYLow : STA.w DragYLow
-    LDA.w DragPlayer_drag_x_high, Y : ADC.w DragYHigh : STA DragYHigh
+    LDY.w $0DE0, X
     
-    LDA.w DragPlayer_drag_y_low,  Y : CLC : ADC.w $0B7E : STA.w $0B7E
-    LDA.w DragPlayer_drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
+    LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
+    LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
+    
+    LDA.w .drag_y_low,  Y : CLC : ADC.w $0B7E : STA.w $0B7E
+    LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
 
   .SomariaPlatform_DragLink
     REP #$20
@@ -637,8 +778,8 @@ CheckForPlayerInput:
 CheckIfPlayerIsOn:
 {
     REP #$20
-    LDA $22 : CLC : ADC #$0009 : CMP $0FD8 : BCC .OutsideLeft
-    LDA $22 : SEC : SBC #$0009 : CMP $0FD8 : BCS .OutsideRight
+    LDA $22 : CLC : ADC #$0007 : CMP $0FD8 : BCC .OutsideLeft
+    LDA $22 : SEC : SBC #$0007 : CMP $0FD8 : BCS .OutsideRight
 
     LDA $20 : CLC : ADC #$0012 : CMP $0FDA : BCC .OutsideUp
     LDA $20 : SEC : SBC #$0012 : CMP $0FDA : BCS .OutsideDown
@@ -653,12 +794,12 @@ CheckIfPlayerIsOn:
     CLC : RTS ; Return with carry cleared
 }
 
-;==============================================================================
+; =========================================================
 
 Sprite_Minecart_DrawTop:
 {
     JSL Sprite_PrepOamCoord
-    LDA #$18
+    LDA #$08
     JSL OAM_AllocateFromRegionB
 
     LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
@@ -747,7 +888,7 @@ Sprite_Minecart_DrawTop:
 Sprite_Minecart_DrawBottom:
 {
     JSL Sprite_PrepOamCoord
-    LDA #$18
+    LDA #$08
     JSL OAM_AllocateFromRegionC
 
     LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
