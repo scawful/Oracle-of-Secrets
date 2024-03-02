@@ -435,20 +435,3 @@ Sprite_Portal_Draw:
   db $02
 }
 
-
-; *$37705-$3772E LOCAL
-Link_SetupHitBox:
-{
-; *$3770A ALTERNATE ENTRY POINT
-
-  LDA.b #$08 : STA $02
-                STA $03
-  
-  LDA $22 : CLC : ADC.b #$04 : STA $00
-  LDA $23 : ADC.b #$00 : STA $08
-  
-  LDA $20 : ADC.b #$08 : STA $01
-  LDA $21 : ADC.b #$00 : STA $09
-  
-  RTS
-}
