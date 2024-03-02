@@ -12,7 +12,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 0   ; Unused in this template (can be 0 to 7)
-!Hitbox             = 0   ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 01   ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -89,6 +89,7 @@ Sprite_MakuTree_Main:
   {
     %ShowSolicitedMessage($20) : BCC .no_talk
     LDA #$01 : STA $7EF3D4
+    LDA #$06 : STA $7EF3C7
     %GotoAction(2)
   .no_talk
     RTS
