@@ -4,37 +4,42 @@
 ; By Jeimuzu & Zarby
 ; -----------------------------------------------------------------------------------
 
+org $0E942A
+    JSL Dungeon_LoadCustomTileAttr
+    RTL
 
-    ; *$7142A-$71458 LONG
-    Dungeon_LoadCustomTileAttr:
-    {
-        ; Loads tile attributes that are specific to a tileset type.
-        ; The group loaded is dependent on the value of $0AA2.
-        PHB : PHK : PLB
-        
-        REP #$30
-        
-        LDA $0AA2 : AND.w #$00FF : ASL A : TAX
-        
-        LDA group_offsets, X : TAY
-        
-        LDX.w #$0000
+org $338000
+
+; *$7142A-$71458 LONG
+Dungeon_LoadCustomTileAttr:
+{
+    ; Loads tile attributes that are specific to a tileset type.
+    ; The group loaded is dependent on the value of $0AA2.
+    PHB : PHK : PLB
     
-    .load_loop
+    REP #$30
     
-        LDA.w group00, Y : STA.l $7EFF40, X		;	1st block
-        LDA.w group00+$40, Y : STA.l $7EFF80, X	;	2nd block
-        
-        INY #2
-        
-        INX #2 : CPX.w #$0040 : BNE .load_loop
-        
-        SEP #$30
-        
-        PLB
-        
-        RTL
-    }
+    LDA $0AA2 : AND.w #$00FF : ASL A : TAX
+    
+    LDA group_offsets, X : TAY
+    
+    LDX.w #$0000
+
+.load_loop
+
+    LDA.w group00, Y : STA.l $7EFF40, X		;	1st block
+    LDA.w group00+$40, Y : STA.l $7EFF80, X	;	2nd block
+    
+    INY #2
+    
+    INX #2 : CPX.w #$0040 : BNE .load_loop
+    
+    SEP #$30
+    
+    PLB
+    
+    RTL
+}
 
 
 ; 00 = No collision
@@ -138,6 +143,7 @@ group03:
 	db $02, $02, $02, $01, $02, $02, $08, $08, $08, $08, $09, $09, $09, $09, $09, $09 ; Animated Tiles
 	
 	
+ ; Goron Mines
 group04:
 
 ;		00   01   02   03   04   05   06   07   08   09   0A   0B   0C   0D   0E   0F

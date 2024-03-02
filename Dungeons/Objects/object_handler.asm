@@ -1,6 +1,6 @@
 ; Dungeon Object Handler
 
-incsrc Collision/main.asm
+incsrc Collision/CollisionTablesExpanded.asm
 
 org    $018262            ;object id 0x31
   dw ExpandedObject
@@ -127,7 +127,7 @@ NewObjectsCode:
 CustomDrawConfig:
 {
   PHA
-  LDA $03 : CMP.w #$000E : BEQ .custom_config
+  LDA $03 : AND #$00FF : CMP.w #$000E : BEQ .custom_config
 
   TYA : LSR : AND #$00FF
 
