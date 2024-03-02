@@ -121,6 +121,7 @@ RunClock:
     ;rain layer ?
     LDA $8C : CMP #$9F : BEQ .skip_bg_updt0
     LDA $8C : CMP #$9E : BEQ .skip_bg_updt0	; canopy layer ?
+    CMP #$97 : BEQ .skip_bg_updt0	; fog layer?
     JSL $0BFE70		;update background color
     BRA .inc_hours_end
     
@@ -375,6 +376,13 @@ org $09C4E3
 ;$0B/FEBA 8F 00 C3 7E STA $7EC300
 ;$0B/FEBE 8F 40 C5 7E STA $7EC540
 ;$0B/FEC2 8F 40 C3 7E STA $7EC340
+
+; Custom BG Color Mosaic Background Color fix
+org $028464
+  NOP #6
+
+org $02AE92
+  NOP #6
 
 ; org $0BFEB6 OLD HOOK
 ; ZS OW Expanded - ReplaceBGColor
