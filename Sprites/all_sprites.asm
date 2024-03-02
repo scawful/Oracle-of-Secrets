@@ -89,6 +89,12 @@ print  "End of impa.asm                   ",  pc
 incsrc "Sprites/Enemies/poltergeist.asm"
 print  "End of poltergeist.asm            ",  pc
 
+incsrc "Sprites/pols_voice.asm"
+print  "End of pols_voice.asm             ",  pc
+
+incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
+print  "End of deku_scrub_enemy.asm       ",  pc
+
 incsrc "Sprites/Bosses/arrghus.asm"
 print  "End of arrghus.asm                ", pc
 
