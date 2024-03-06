@@ -24,7 +24,7 @@ org $0CDC26
 ; ==============================================================================
 
 incsrc ZSpriteLib/sprite_macros.asm
-incsrc ZSpriteLib/sprite_functions_hooks.asm
+incsrc ZSpriteLib/sprite_hooks.asm
 
 ;==============================================================================
 

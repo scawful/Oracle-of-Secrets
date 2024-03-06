@@ -64,31 +64,31 @@ SpriteRanCheck = $8E ;0x01
 org $09AE64
 Sprite_SetSpawnedCoords:
 
-;=================================================================
+; =========================================================
 ;Sprite_PrepOamCoord LONG
 ;set the oam coordinate for the sprite draw
 org $06E416
 Sprite_PrepOamCoord:
 
-;=================================================================
+; =========================================================
 ;Sprite_CheckDamageFromPlayer LONG
 ;check if the sprite is getting damage from player or items
 org $06F2AA
 Sprite_CheckDamageFromPlayer:
 
-;=================================================================
+; =========================================================
 ;Sprite_CheckDamageToPlayer LONG
 ;check if the sprite is touching the player to damage
 org $06F121
 Sprite_CheckDamageToPlayer:
 
-;=================================================================
+; =========================================================
 ;Sprite_AttemptDamageToPlayerPlusRecoil LONG
 ;damage the player everywhere on screen?
 org $06F41F
 Sprite_AttemptDamageToPlayerPlusRecoil:
 
-;=================================================================
+; =========================================================
 ;Sprite_OAM_AllocateDeferToPlayer LONG
 ;Draw the sprite depending of the position of the player (if he has to be over or under link)
 org $06F864
@@ -109,14 +109,14 @@ OAM_AllocateFromRegionF:
 
 org $05DF70
 Sprite_DrawMultiple_quantity_preset:
-;=================================================================
+; =========================================================
 ;ApplyRumbleToSprites LONG
 ;makes all the sprites on screen shaking?
 org $0680FA
 ApplyRumbleToSprites:
 
 
-;=================================================================
+; =========================================================
 ;CheckIfHitBoxesOverlap LONG
 ;args : 
 ;!pos1_low  = $00
@@ -131,91 +131,91 @@ ApplyRumbleToSprites:
 org $0683E6
 CheckIfHitBoxesOverlap:
 
-;=================================================================
-;Sprite_Get_16_bit_Coords LONG
-;$0FD8 = sprite's X coordinate, $0FDA = sprite's Y coordinate
+; =========================================================
+; Sprite_Get_16_bit_Coords LONG
+; $0FD8 = sprite's X coordinate, $0FDA = sprite's Y coordinate
 org $0684BD
 Sprite_Get_16_bit_Coords:
 
-;=================================================================
-;Sprite_PrepAndDrawSingleLarge LONG
-;load / draw a  16x16 sprite
+; =========================================================
+; Sprite_PrepAndDrawSingleLarge LONG
+; load / draw a  16x16 sprite
 org $06DBF0
 Sprite_PrepAndDrawSingleLarge:
 
-;=================================================================
-;Sprite_PrepAndDrawSingleSmall LONG
-;load / draw a  8x8 sprite
+; =========================================================
+; Sprite_PrepAndDrawSingleSmall LONG
+; load / draw a  8x8 sprite
 org $06DBF8
 Sprite_PrepAndDrawSingleSmall:
 
-;=================================================================
-;Sprite_DrawShadow LONG
-;draw shadow 
+; =========================================================
+; Sprite_DrawShadow LONG
+; draw shadow 
 org $06DC54
 Sprite_DrawShadow:
 
-;=================================================================
-;Sprite_CheckTileCollision LONG
-;check if the sprite is colliding with a solid tile set $0E70, X
-;----udlr , u = up, d = down, l = left, r = right
+; =========================================================
+; Sprite_CheckTileCollision LONG
+; check if the sprite is colliding with a solid tile set $0E70, X
+; ----udlr , u = up, d = down, l = left, r = right
 org $06E496
 Sprite_CheckTileCollision:
 
-;=================================================================
-;Sprite_GetTileAttr LONG
+; =========================================================
+; Sprite_GetTileAttr LONG
 ; $00[0x02] - Entity Y coordinate
 ; $02[0x03?] - Entity X coordinate
-;$0FA5
+; $0FA5
 org $06E87B
 Sprite_GetTileAttr:
 
-;=================================================================
-;Sprite_CheckSlopedTileCollision LONG
-;check if the sprite is colliding with a solid sloped tile
+; =========================================================
+; Sprite_CheckSlopedTileCollision LONG
+; check if the sprite is colliding with a solid sloped tile
 org $06E8FD
 Sprite_CheckSlopedTileCollision:
 
-;=================================================================
-;Sprite_ApplySpeedTowardsPlayer LONG
-;set the velocity x,y towards the player (A = speed)
+; =========================================================
+; Sprite_ApplySpeedTowardsPlayer LONG
+; set the velocity x,y towards the player (A = speed)
 org $06EA12
 Sprite_ApplySpeedTowardsPlayer:
 
-;=================================================================
-;Sprite_DirectionToFacePlayer LONG
-; \return       $0E is low byte of player_y_pos - sprite_y_pos
-; \return       $0F is low byte of player_x_pos - sprite_x_pos
+; =========================================================
+; Sprite_DirectionToFacePlayer LONG
+; \return $0E is low byte of player_y_pos - sprite_y_pos
+; \return $0F is low byte of player_x_pos - sprite_x_pos
 org $06EAA0
 Sprite_DirectionToFacePlayer:
 
-;=================================================================
-;Sprite_IsToRightOfPlayer LONG
-;if Link is to the left of the sprite, Y = 1, otherwise Y = 0.
+; =========================================================
+; Sprite_IsToRightOfPlayer LONG
+; if Link is to the left of the sprite, Y = 1, otherwise Y = 0.
 org $06EACD
 Sprite_IsToRightOfPlayer:
 
-;=================================================================
-;Sprite_IsBelowPlayer LONG
-;return Y=1 sprite is below player, otherwise Y = 0
+; =========================================================
+; Sprite_IsBelowPlayer LONG
+; return Y=1 sprite is below player, otherwise Y = 0
 org $06EAE4
 Sprite_IsBelowPlayer:
 
-;=================================================================
-;Sprite_CheckDamageToPlayerSameLayer LONG
-;check damage done to player if they collide and if they are on same layer
+; =========================================================
+; Sprite_CheckDamageToPlayerSameLayer LONG
+; check damage done to player if they collide and if they are on same layer
 org $06F129
 Sprite_CheckDamageToPlayerSameLayer:
 
-;=================================================================
-;Sprite_CheckDamageToPlayerIgnoreLayer LONG
-;check damage done to player if they collide even if they are not on same layer
+; =========================================================
+; Sprite_CheckDamageToPlayerIgnoreLayer LONG
+; check damage done to player if they collide even if they are not on same layer
 org $06F131
 Sprite_CheckDamageToPlayerIgnoreLayer:
 
-;=================================================================
-;Sound_SetSfx2PanLong LONG
-;play a sound loaded in A
+; =========================================================
+; Sound_SetSfx2PanLong LONG
+; play a sound loaded in A
 org $0DBB6E
 Sound_SetSfx1PanLong:
 
@@ -225,7 +225,7 @@ Sound_SetSfx2PanLong:
 org $0DBB8A
 Sound_SetSfx3PanLong:
 
-;=================================================================
+; =========================================================
 ;Sprite_SpawnDynamically LONG
 ;spawn a new sprite on screen, A = sprite id
 ;when using this function you have to set the position yourself
@@ -240,72 +240,75 @@ Sprite_SpawnDynamically:
 
 org $07F1A3
 Player_ResetState:
-;=================================================================
-;Sprite_ApplyConveyorAdjustment LONG
-;move the sprite if he stand on a conveyor belt
+
+; =========================================================
+; Sprite_ApplyConveyorAdjustment LONG
+; move the sprite if he stand on a conveyor belt
 org $1D8010
 Sprite_ApplyConveyorAdjustment:
 
-;=================================================================
+; =========================================================
 ;SetupHitBox LONG
 ;set the hitbox of the player (i think)
 ;org $0683EA
 ;Sprite_SetupHitBoxLong:
 
-;=================================================================
-;Dungeon_SpriteInducedTilemapUpdate LONG
-;set tile of dungeon
+; =========================================================
+; Dungeon_SpriteInducedTilemapUpdate LONG
+; set tile of dungeon
 org $01E7A9
 Dungeon_SpriteInducedTilemapUpdate:
-;=================================================================
-;Get random INT LONG
-;GetRandomInt
+
+; =========================================================
+; Get random INT LONG
+; GetRandomInt
 org $0DBA71
 GetRandomInt:
 
-;=================================================================
-;Sprite_PlayerCantPassThrough
-;player can't pass through the sprite
+; =========================================================
+; Sprite_PlayerCantPassThrough
+; player can't pass through the sprite
 org $1EF4F3
 Sprite_PlayerCantPassThrough:
 
-;=================================================================
-;Sprite_NullifyHookshotDrag
-;player can't hookshot to that sprite
+; =========================================================
+; Sprite_NullifyHookshotDrag
+; player can't hookshot to that sprite
 org $0FF540
 Sprite_NullifyHookshotDrag:
 
-;=================================================================
-;Player_HaltDashAttack
-;stop the dash attack of the player
+; =========================================================
+; Player_HaltDashAttack
+; stop the dash attack of the player
 org $0791B9
 Player_HaltDashAttack:
 
-;=================================================================
-;Sprite_ShowMessageUnconditional
-;show a message box without any condition
+; =========================================================
+; Sprite_ShowMessageUnconditional
+; show a message box without any condition
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
 org $05E219
 Sprite_ShowMessageUnconditional:
 
-;=================================================================
-;Link_ReceiveItem
-;Y = item id
+; =========================================================
+; Link_ReceiveItem
+; Y = item id
 org $0799AD
 Link_ReceiveItem:
 
-;=================================================================
-;Sprite_ShowSolicitedMessageIfPlayerFacing
-;show a message if we press A and face the sprite
+; =========================================================
+; Sprite_ShowSolicitedMessageIfPlayerFacing
+; show a message if we press A and face the sprite
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
 org $05E1A7
 Sprite_ShowSolicitedMessageIfPlayerFacing:
 
-;=================================================================
-;Sprite_ShowMessageFromPlayerContact
-;show a message if we touch the sprite should be used with Sprite_PlayerCantPassThrough
+; =========================================================
+; Sprite_ShowMessageFromPlayerContact
+; show a message if we touch the sprite 
+; should be used with Sprite_PlayerCantPassThrough
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
 org $05E1F0
@@ -319,16 +322,15 @@ org $00893D
 EnableForceBlank:
 
 
-;=================================================================
-;Sprite_ProjectSpeedTowardsEntityLong
-;04 = X
-;05 = HighX
-;06 = Y
-;07 = HighY
-;A = Speed
-
-;Return $00 - Y Velocity
-;Return $01 - X Velocity
+; =========================================================
+; Sprite_ProjectSpeedTowardsEntityLong
+; $04 = X
+; $05 = HighX
+; $06 = Y
+; $07 = HighY
+;   A = Speed
+; \return $00 - Y Velocity
+; \return $01 - X Velocity
 
 org $06EA22
 Sprite_ProjectSpeedTowardsEntityLong:
