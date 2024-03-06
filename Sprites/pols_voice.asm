@@ -77,7 +77,8 @@ Sprite_PolsVoice_Main:
     LDA #$02 : STA $08
     JSL Sprite_BounceTowardPlayer
     JSL Sprite_BounceFromTileCollision
-    
+    JSL Sprite_DamageFlash_Long
+
     
     %DoDamageToPlayerSameLayerOnContact()
 
@@ -118,7 +119,8 @@ Sprite_PolsVoice_Main:
 
     JSL Sprite_MoveXyz
     JSL Sprite_BounceFromTileCollision
-    
+    JSL Sprite_DamageFlash_Long
+
     
     %DoDamageToPlayerSameLayerOnContact()
 
@@ -146,6 +148,7 @@ Sprite_PolsVoice_Draw:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
+  LDA $0DA0, X : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -178,7 +181,7 @@ Sprite_PolsVoice_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY 
       
