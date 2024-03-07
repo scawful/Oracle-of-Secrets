@@ -17,12 +17,12 @@
 ;   2C - Dungeon Objects, Spike Subtype, Together Warp Tag
 ;   2D - Menu
 ;   2E - HUD
-;   2F - House Tag
-;   30 - ZSprite Engine
+;   2F - 
+;   30 - 
 ;   31 - Sprites: all_sprites.asm
 ;   32 - Time System
 ;   33 - Custom Collision Tables
-;   34 - Deku Link Code
+;   34 - 
 ;   35 - Deku Link GFX
 ;   36 - Zora Link GFX
 ;   37 - Bunny Link GFX
@@ -30,8 +30,9 @@
 ;   39 - Minish Link GFX
 ;   3A - StartupMasks, Palette_ArmorAndGloves, CgramAuxToMain
 ;   3B - GBC Link GFX
-;   3C - N/A
-;   3D - N/A
+;   3C - Ocarina OW Control Code
+;   3D - LW World Map
+;   3E - DW World Map
 ;   3F - Load Custom GFX, Boat GFX
 ;
 ; =========================================================
@@ -57,6 +58,8 @@ namespace Oracle
 
   print "  -- Overworld --  "
   print ""
+  
+  incsrc "Overworld/world_map.asm"
 
   incsrc "Overworld/pit_damage.asm"
   print  "End of Overworld/pit_damage.asm   ", pc
@@ -87,9 +90,6 @@ namespace Oracle
 
   print "  -- Music --  "
   print ""
-
-  incsrc "Music/frozen_hyrule.asm"
-  print  "End of Music/frozen_hyrule.asm    ", pc
 
   incsrc "Music/lost_woods.asm"
   print  "End of Music/lost_woods.asm       ", pc
