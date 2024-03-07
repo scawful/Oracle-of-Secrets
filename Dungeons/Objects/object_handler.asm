@@ -143,3 +143,10 @@ CustomDrawConfig:
 }
 
 pushpc
+
+; Item ID 22B 
+org $00A9AC
+  dw $0D28, $0D38, $4D28, $4D38
+
+org $01B306 ; RoomDraw_WeirdGloveRequiredPot
+  LDA.w #$1010
