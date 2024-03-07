@@ -66,7 +66,7 @@ print  "End of switch_track.asm           ", pc
 incsrc "Sprites/mineswitch.asm"
 print  "End of mineswitch.asm             ", pc
 
-incsrc "Sprites/VillageDog/village_dog.asm"
+incsrc "Sprites/NPCs/village_dog.asm"
 print  "End of village_dog.asm            ",  pc
 
 incsrc "Sprites/minecart.asm"
