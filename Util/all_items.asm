@@ -63,30 +63,16 @@ org $3CA62A ; Expanded space for our routine
   LDA $F2 : CMP #$30 : BEQ $03 : JMP END ; Check L and R button
 
 if !BetaRelease = 0
-  ; 0 - nothing. 1 - bow w/ no arrows. 2 - bow w/ arrows. 3 - silver arrows
-  LDA #$02 : STA !Bow
-
-  ; 0 - nothing. 1 - blue boomerang. 2 - red boomerang
-  LDA #$02 : STA !Boomerang
-
-  ; 0 - nothing. 1 - hookshot
-  LDA #$01 : STA !Hookshot 
-
   ; How many bombs you have. Can exceed 0x50, up to 0xff.
   LDA #$50 : STA !Bombs
 
   ; 0 - nothing. 1 - Mushroom. 2 - Magic Powder
   LDA #$02 : STA !MagicPowder
+             STA !TitansMitt
 
   ; 0 - nothing. 1 - Fire Rod
   LDA #$01 : STA !FireRod 
              STA !IceRod 
-
-  ; 0 - nothing. 1 - Lamp
-  LDA #$01 : STA !Lamp 
-             STA !MagicHammer
-
-  LDA #$01 : STA !JumpFeather
 
   LDA #$01 : STA !BunnyMask 
 
@@ -96,17 +82,11 @@ if !BetaRelease = 0
   LDA #$01 : STA !MagicCape
 
   ; 0 - nothing. 1 - shovel. 2 - flute, no bird. 3 - flue, bird activated
-  LDA #$03 : STA !Flute
+  
   LDA #$01 : STA !BookOfMudora  
-  LDA #$01 : STA !CaneOfByrna 
-             STA !CaneOfSomaria 
-
-  LDA #$02 : STA !Mirror 
-             STA !TitansMitt
-
+  LDA #$01 : STA !CaneOfSomaria
   LDA #$01 : STA !PegasusBoots 
              STA !Flippers 
-             STA !MoonPearl 
              STA !WolfMask
 
   ; 0 - nothing. 1 - Fighter Sword. 2 - Master Sword. 3 - Tempered Sword. 4 - Golden Sword
@@ -164,7 +144,22 @@ if !BetaRelease = 0
   LDA #$A0 : STA !HealthCapacity
 
 endif
+  LDA #$03 : STA !Flute
+  LDA #$01 : STA !JumpFeather
+  ; 0 - nothing. 1 - bow w/ no arrows. 2 - bow w/ arrows. 3 - silver arrows
+  LDA #$02 : STA !Bow
 
+  ; 0 - nothing. 1 - blue boomerang. 2 - red boomerang
+  LDA #$02 : STA !Boomerang
+             STA !Mirror 
+
+  ; 0 - nothing. 1 - hookshot
+  LDA #$01 : STA !Hookshot 
+  ; 0 - nothing. 1 - Lamp
+  LDA #$01 : STA !Lamp 
+             STA !MagicHammer
+             STA !MoonPearl
+             STA !CaneOfByrna 
 
   ; fill all hearts
   LDA #$A0 : STA !Hearts
