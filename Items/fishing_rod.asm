@@ -29,6 +29,7 @@ LinkItem_CaneOfByrna:
   RTS
 }
 
+warnpc $07AFB4
 
 pullpc
 
