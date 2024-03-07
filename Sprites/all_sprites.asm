@@ -89,7 +89,7 @@ print  "End of impa.asm                   ",  pc
 incsrc "Sprites/Enemies/poltergeist.asm"
 print  "End of poltergeist.asm            ",  pc
 
-incsrc "Sprites/pols_voice.asm"
+incsrc "Sprites/Enemies/pols_voice.asm"
 print  "End of pols_voice.asm             ",  pc
 
 incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
