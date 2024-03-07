@@ -1,5 +1,5 @@
-; ==============================================================================
-; NEW: Custom Room Tag to initialize the game without the Uncle sprite.
+; =========================================================
+; Room tag to initialize the game without the Uncle sprite.
 ; 
 
 StoryState = $7C
@@ -23,7 +23,7 @@ HouseTag:
   JML HouseTag_Return
 }
 
-; ==============================================================================
+; =========================================================
 
 HouseTag_Main:
 {
@@ -36,7 +36,7 @@ HouseTag_Main:
   dw HouseTag_End
 }
 
-; ==============================================================================
+; =========================================================
 
 HouseTag_TelepathicPlea:
 {
@@ -52,13 +52,13 @@ HouseTag_TelepathicPlea:
       
   ; "Accept our quest, Link!"
   LDA.b #$1F : LDY.b #$00
-  JSL $05E219
+  JSL $05E219 ; Sprite_ShowMessageUnconditional
   INC.b StoryState
 
   RTS
 }
 
-; ==============================================================================
+; =========================================================
 
 HouseTag_WakeUpPlayer:
 {
@@ -95,13 +95,13 @@ HouseTag_WakeUpPlayer:
   ; Set the game mode
   LDA #$00 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
   LDA #$00 : STA $7EF3CC   ; disable telepathic message
-  LDA #$01 : STA $7EE00E
+  LDA #$01 : STA $7EE00E   ; Make it rain
   JSL $00FC41   ; fix monsters
   
   RTS
 }
 
-; ==============================================================================
+; =========================================================
 
 HouseTag_End:
 {
@@ -114,14 +114,33 @@ HouseTag_End:
 
 pushpc
 
-; ==============================================================================
+; =========================================================
+; Fixed color fade-in effect
+; TODO: Investigate if this is the best way to fix this.
+
+org $028364
+#_028364: LDA.b #$00 ; Fixed color RGB: #808000
+#_028366: STA.b $9C
+
+#_028368: LDA.b #$00
+#_02836A: STA.b $9D
+
+#_02836C: LDA.b #$00
+#_02836E: STA.b $9E
+#_028370: LDA.b #$00
+#_028372: STA.l $7EC005
+#_028376: STA.l $7EC006
+
+#_02837A: JSL $079A2C ; Link_TuckIntoBed
+
+; =========================================================
 ; Dying Uncle Code Hook
 ; Uncle won't remove tagalong when interacting 
 
 org $05DF3A
 LDA.b #$01 : STA $7EF3CC
 
-; =============================================================================
+; =========================================================
 ; SRM Start Modifier
 ; Credit: Conn, Euclid, MathOnNapkins
 
@@ -129,7 +148,7 @@ org $0cdc5a
 JSR $ffb1
 
 org $0cffb1
-; =============================================================================
+; =========================================================
 ;$3C5: $00: Unset, Will put Link in his bed state at the beginning of the game. (Also can't use sword or shield)
 ;      $01: Start in the castle on start up.
 ;      $02: Indicates you have completed the first Hyrule Castle dungeon.
@@ -150,7 +169,7 @@ org $0cffb1
 LDA #$0000     
 STA $7003C5,x
 
-; =============================================================================
+; =========================================================
 ;$3C7: Map Icons Indicator 2 (value, not bitwise)
 ;    00 - start value (cross at Hyrule Castle)
 ;    01 - cross at Sahasrala's house
@@ -171,7 +190,7 @@ STA $7003C5,x
 LDA #$0000   
 STA $7003C7,x
 
-; =============================================================================
+; =========================================================
 ;$359: Sword you start with
 ;    00 - No sword
 ;    01 - Fighter Sword
