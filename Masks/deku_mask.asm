@@ -44,25 +44,6 @@ warnpc $07A6BE
 
 ; =========================================================
 
-org $07811A
-  JSR Link_HandleDekuTransformation
-
-pullpc                         ; Bank 07 Free Space from minish_form
-Link_HandleDekuTransformation: 
-{
-  ; Check if using Quake Medallion
-  LDA $5D : CMP.b #$0A : BEQ .continue
-  ; JSR $82DA ; Link_HandleBunnyTransformation
-
-.continue
-  STZ $03F5
-  STZ $03F6
-
-  ; Link can move.
-  CLC
-
-  RTS
-}
 
 print "End of Masks/deku_mask.asm        ", pc
 pushpc
