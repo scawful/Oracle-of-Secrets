@@ -40,8 +40,7 @@
 incsrc "Overworld/custom_gfx.asm"
 print  "End of custom_gfx.asm             ", pc
 incsrc "Overworld/ZCustomOverworld.asm"
-print  "End of Overworld/ZCustomOverworld.asm", pc
-incsrc "Overworld/time_system.asm"
+print  "End of ZCustomOverworld.asm       ", pc
 
 namespace Oracle
 {
@@ -72,6 +71,9 @@ namespace Oracle
 
   incsrc "Overworld/lost_woods.asm"
   print  "End of Overworld/lost_woods.asm   ", pc
+  
+  incsrc "Overworld/time_system.asm"
+  print  "End of Overworld/time_system.asm  ", pc
 
   print ""
 
