@@ -1,7 +1,6 @@
 
 ; Inherits Free Space from Bank07
 incsrc "Items/bottle_net.asm"
-print  "End of Items/bottle_net.asm       ", pc
 
 incsrc "Items/ocarina.asm"
 print  "End of Items/ocarina.asm          ", pc

@@ -32,7 +32,7 @@ LinkItem_NewBottle:
 
 .empty_bottle
   ; Otherwise, prepare and call the LinkItem_BugCatchingNet routine
-  JSR LinkItem_NewBugCatchingNet
+  JSR LinkItem_CatchBottle
   
 .exit 
   RTS
@@ -42,7 +42,7 @@ warnpc $07A249
 
 pullpc
 
-print "     LinkItem_NewBugCatchingNet   ", pc
+print "       LinkItem_CatchBottle       ", pc
 
 ; =============================================================================
 
@@ -59,7 +59,7 @@ pose_offset:
   db $1E ; right
 
 ; *$3AFF8-$3B072 LOCAL
-LinkItem_NewBugCatchingNet:
+LinkItem_CatchBottle:
 { 
   BIT $3A : BVS .y_press
   
@@ -214,4 +214,6 @@ LinkGoBeep:
   LDA.b #$3C : JSR Player_DoSfx2
   BRA LinkItem_Bottles_bottle_exit
 }
+
+print  "End of Items/bottle_net.asm       ", pc
 pushpc

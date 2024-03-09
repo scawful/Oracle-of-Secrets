@@ -393,7 +393,6 @@ Sprite_Floater:
   LDA.w $0DB0, X : BEQ .noFishOnLine ; do we already have a fish on line?
   .fishOnlineWait
   LDA.w $0DF0, X : BNE .stillwiggling
-  print pc
   STZ.w $0DB0, X ; no more fish on line took too much time
   JSL $0DBA71 : AND.b #$7F ; GetRandomInt
   CLC : ADC.b #$7F : STA.w $0EE0, X ; reset timer wait until fish is on line
@@ -527,3 +526,5 @@ Sprite_Floater_Draw:
 
 WigglingTable:
 db 08, -10, 06, -8, 12, -14, 18, -20, 10, -12, 04, -6, 08,-10, 14,-16, 08, -10, 06, -8, 12, -14, 18, -20, 10, -12, 04, -6, 08,-10, 14,-16
+
+print  "End of Items/fishing_rod.asm      ", pc
