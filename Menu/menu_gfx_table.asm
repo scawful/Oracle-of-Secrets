@@ -1,10 +1,10 @@
-; =============================================================================
+; =========================================================
 ; Item Graphics
 ; Lack of an item will be handled by the "NothingGFX" data
 ; Everything else will be used as follows:
 ;   dw top left, top right, bottom left, bottom right  ; val = 1
 ;   dw top left, top right, bottom left, bottom right  ; val = 2
-; =============================================================================
+; =========================================================
 
 NothingGFX:
 	dw $20F5, $20F5, $20F5, $20F5
@@ -136,6 +136,12 @@ SomariaGFX:
 
 ByrnaGFX:
 	dw $2CDC, $2CDD, $2CEC, $2CED
+
+FishingRodGFX:
+  dw $2C82, $2C83, $2C8B, $2C8C 
+
+PortalRodGFX:
+  dw $2CF0, $24F1, $30EC, $24F2
 
 ; -------------------------------------
 
