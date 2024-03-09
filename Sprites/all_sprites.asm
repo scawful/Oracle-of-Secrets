@@ -101,6 +101,12 @@ print  "End of arrghus.asm                ", pc
 incsrc "Sprites/Bosses/mothula.asm"
 print  "End of mothula.asm                ", pc
 
+incsrc "Sprites/Bosses/lanmola.asm"
+print "End of Lanmola.asm                 ", pc
+
+incsrc "Sprites/Bosses/lanmola_Expanded.asm"
+print "End of Lanmola_Expanded.asm        ", pc
+
 incsrc "Sprites/NPCs/bug_net_kid.asm"
 
 warnpc $328000

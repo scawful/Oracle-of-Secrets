@@ -21,11 +21,3 @@ print  "End of spike_subtype.asm          ", pc
 
 incsrc "Dungeons/house_tag.asm"
 print  "End of house_tag.asm              ", pc
-
-incsrc "Dungeons/Lanmola.asm"
-print "End of Lanmola.asm                 ", pc
-
-incsrc "Dungeons/Lanmola_Expanded.asm"
-print "End of Lanmola_Expanded.asm        ", pc
-
-
