@@ -206,3 +206,7 @@ endmacro
 macro NextAction()
 INC $0D80, X 
 endmacro
+
+macro GetTilePos(x, y)
+LDX.w #((<y>*$80)+(<x>*$02))
+endmacro
