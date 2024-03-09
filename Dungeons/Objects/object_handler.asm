@@ -82,6 +82,7 @@ NewObjectsCode:
   dw .FloorAny-.ObjData         ; 12
   dw .WallSwordHouse-.ObjData   ; 13
   dw .KydreeokBody-.ObjData     ; 14
+  dw .SmallStatue-.ObjData      ; 15
 
 .ObjData
   .LeftRight
@@ -114,6 +115,8 @@ NewObjectsCode:
     incbin Data/wall_sword_house.bin
   .KydreeokBody
     incbin Data/kydreeok_body.bin
+  .SmallStatue
+    incbin Data/small_statue.bin
 }
 
 
