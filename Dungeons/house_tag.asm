@@ -119,19 +119,21 @@ pushpc
 ; TODO: Investigate if this is the best way to fix this.
 
 org $028364
-#_028364: LDA.b #$00 ; Fixed color RGB: #808000
-#_028366: STA.b $9C
+{
+  #_028364: LDA.b #$00 ; Fixed color RGB: #808000
+  #_028366: STA.b $9C
 
-#_028368: LDA.b #$00
-#_02836A: STA.b $9D
+  #_028368: LDA.b #$00
+  #_02836A: STA.b $9D
 
-#_02836C: LDA.b #$00
-#_02836E: STA.b $9E
-#_028370: LDA.b #$00
-#_028372: STA.l $7EC005
-#_028376: STA.l $7EC006
+  #_02836C: LDA.b #$00
+  #_02836E: STA.b $9E
+  #_028370: LDA.b #$00
+  #_028372: STA.l $7EC005
+  #_028376: STA.l $7EC006
 
-#_02837A: JSL $079A2C ; Link_TuckIntoBed
+  #_02837A: JSL $079A2C ; Link_TuckIntoBed
+}
 
 ; =========================================================
 ; Dying Uncle Code Hook

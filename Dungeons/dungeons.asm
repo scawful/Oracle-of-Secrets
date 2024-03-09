@@ -14,10 +14,7 @@ incsrc "Dungeons/Objects/object_handler.asm"
 print  "End of object_handler.asm         ", pc
 
 incsrc "Dungeons/together_warp_tag.asm"
-print  "End of together_warp_tag.asm      ", pc
-
 incsrc "Dungeons/spike_subtype.asm"
-print  "End of spike_subtype.asm          ", pc
 
 incsrc "Dungeons/house_tag.asm"
 print  "End of house_tag.asm              ", pc

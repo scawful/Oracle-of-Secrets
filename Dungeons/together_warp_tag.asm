@@ -25,7 +25,6 @@ org $01CC5A
 ; ==============================================================================
 
 pullpc ; Bank 0x2C
-print "Warp Tag", pc
 WarpTag:
 {
     PHX
@@ -44,6 +43,7 @@ WarpTag:
     PLX
     JML WarpTag_Return
 }
+print  "End of together_warp_tag.asm      ", pc
 pushpc
 
 ; ==============================================================================

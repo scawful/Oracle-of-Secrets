@@ -229,7 +229,7 @@ SpawnPeaShot:
 {
   LDA.b #$14
   JSL Sprite_SpawnDynamically : BMI .return ;89
-    ;store the sub-type
+
   LDA.b #$01 : STA $0E30, Y
   LDA.b #$06 : STA $0D80, Y
 
@@ -239,17 +239,14 @@ SpawnPeaShot:
   REP #$20
   LDA $0FD8 
   SEP #$20
-  STA $0D10, Y
-  XBA : STA $0D30, Y
+  STA $0D10, Y : XBA : STA $0D30, Y
 
   REP #$20
   LDA $0FDA : CLC : ADC.w #$000C
   SEP #$20
-  STA $0D00, Y
-  XBA : STA $0D20, Y
+  STA $0D00, Y : XBA : STA $0D20, Y
 
   TYX
-
   
   STZ $0D70, X
 
@@ -264,8 +261,6 @@ SpawnPeaShot:
 .return
   RTS
 }
-
-
 
 
 Sprite_DekuScrubEnemy_Draw:
