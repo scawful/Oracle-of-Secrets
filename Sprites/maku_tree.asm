@@ -97,8 +97,8 @@ Sprite_MakuTree_Main:
 
   MakuTree_GiveBow:
   {
-    ; Give Link the Bow
-    LDY #$0B : JSL Link_ReceiveItem
+    ; Give Link the Moon Pearl
+    LDY #$1F : JSL Link_ReceiveItem
     %GotoAction(0)
     RTS
   }
