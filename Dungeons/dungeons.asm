@@ -18,3 +18,6 @@ incsrc "Dungeons/spike_subtype.asm"
 
 incsrc "Dungeons/house_tag.asm"
 print  "End of house_tag.asm              ", pc
+
+incsrc "Dungeons/floor_puzzle.asm"
+print  "End of floor_puzzle.asm           ", pc
