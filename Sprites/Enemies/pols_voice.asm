@@ -3,7 +3,7 @@
 !NbrTiles           = 02 ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 20  ; Number of Health the sprite have
+!Health             = 10  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
@@ -51,8 +51,9 @@ Sprite_PolsVoice_Prep:
 {
   PHB : PHK : PLB
     
-      ; Add more code here to initialize data
-      LDA #$80 : STA SprTimerA, X
+  LDA #$80 : STA SprTimerA, X
+  LDA #$00 : STA $0CAA, X
+  LDA #$00 : STA $0B6B, X
 
   PLB
   RTL
@@ -121,7 +122,6 @@ Sprite_PolsVoice_Main:
     JSL Sprite_BounceFromTileCollision
     JSL Sprite_DamageFlash_Long
 
-    
     %DoDamageToPlayerSameLayerOnContact()
 
     LDA SprTimerA, X : BNE .not_done
