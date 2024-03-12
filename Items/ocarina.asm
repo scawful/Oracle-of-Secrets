@@ -300,15 +300,17 @@ CheckRealTable:
 
 ResetOcarinaFlag:
 {
+  LDA $7EF3C5 : BEQ .continue
+     CMP #$01 : BEQ .continue
   REP #$30
   LDA #$0000 : STA.l  $7EE00E
   SEP #$30
-
+.continue
   LDA.w $0416 : ASL A 
   RTL
 }
 
-org $02F210
+org $02F210 ; OverworldTransitionScrollAndLoadMap
 {
   JSL ResetOcarinaFlag
 }
