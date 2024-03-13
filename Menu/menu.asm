@@ -1,16 +1,13 @@
-; =============================================================================
-;                The Legend of Zelda: Oracle of Secrets
-;                ------------ Custom Menu ------------
+; =========================================================
+;       The Legend of Zelda: Oracle of Secrets
+;        ------------ Custom Menu ------------
 ;
-;        Details:  Complete overhaul of original LTTP menu
-;                  Two Pane Oot/MM inspired design
-;                  Original item layout and designs
-;                  Detailed Quest Status screen
-;                  Player name, location name, and death count
-;           
-;            Significant thanks to Kan for helping me craft this menu!
-;   
-; =============================================================================
+;  - Navigate between two menus with L and R
+;  - New item layout and draw routines
+;  - Detailed quest status screen
+;  - Player name, location names
+;  - Custom HUD with new magic meter
+; =========================================================
 
 
 pushpc
@@ -22,16 +19,23 @@ org $1DB67A : dw hexto555($5987e0), hexto555($f9f9f9)
 org $1DB682 : dw hexto555($7b7b83), hexto555($bbbbbb)
 org $1DB68A : dw hexto555($a58100), hexto555($dfb93f)
 
-; hook vanilla menu routine  
-org $0098AB : db $D8>>1  
+; Free ROM in Bank 00
+org $0098AB : db $D8>>1
+
+; Module RunInterface 0E.01: Item Menu
 org $00F877 : db Menu_Entry>>0
 org $00F883 : db Menu_Entry>>8
 org $00F88F : db Menu_Entry>>16
+
+; NMI_DoUpdates.skip_sprite_updates
+; Stored to VMADDR
 org $808B6B : LDX.w #$6040
+
+; UpdateEquippedItem
 org $8DDFB2 : LDA.l Menu_ItemIndex, X
 pullpc
 
-; =============================================================================
+; =========================================================
 ; Menu Bank 
 
 org $2D8000
@@ -39,7 +43,7 @@ incsrc "menu_gfx_table.asm"
 incsrc "menu_text.asm"
 incsrc "menu_palette.asm"
 
-; =============================================================================
+; =========================================================
 ; SUBROUTINE TABLE
 
 Menu_Entry:
@@ -65,7 +69,7 @@ Menu_Entry:
   dw Menu_CheckBottle   ; 09
   dw Menu_Exit          ; 0A
 
-; =============================================================================
+; =========================================================
 ; 00 MENU INIT GRAPHICS 
 
 Menu_InitGraphics:
@@ -74,7 +78,7 @@ Menu_InitGraphics:
   INC $0200
 }
 
-; =============================================================================
+; =========================================================
 ; 01 MENU UPLOAD RIGHT 
 
 incsrc "menu_draw.asm"
@@ -87,17 +91,11 @@ Menu_UploadRight:
   JSR Menu_DrawBigKey
   JSR Menu_DrawBigChestKey
 
-  JSR DrawQuestIcons
-  JSR DrawTriforceIcon
-  JSR DrawPendantIcons
+  JSR Menu_DrawQuestIcons
+  JSR Menu_DrawTriforceIcons
+  JSR Menu_DrawPendantIcons
 
   JSR DrawPlaytimeLabel
-
-  ;; heart piece empty, move this later 
-  LDX.w #$2484 : STX.w $149E    ; draw empty top left
-  LDX.w #$6484 : STX.w $14A0    ; draw empty top right 
-  LDX.w #$2485 : STX.w $14DE    ; draw empty bottom left
-  LDX.w #$6485 : STX.w $14E0    ; draw empty bottom right
 
   JSR DrawHeartPieces
   JSR DrawMusicNotes
@@ -112,7 +110,7 @@ Menu_UploadRight:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 ; 02 MENU UPLOAD LEFT 
 
 Menu_UploadLeft:
@@ -141,7 +139,7 @@ Menu_UploadLeft:
   RTS       
 }
    
-; =============================================================================
+; =========================================================
 ; 03 MENU SCROLL DOWN 
 
 Menu_Scroll:
@@ -169,7 +167,7 @@ Menu_ScrollDown:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 ; 04 MENU ITEM SCREEN 
 
 incsrc "menu_select_item.asm"
@@ -259,7 +257,7 @@ Menu_ItemScreen:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 ; 05 MENU SCROLL TO 
 
 Menu_ScrollTo:
@@ -274,7 +272,7 @@ Menu_ScrollTo:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 ; 06 MENU STATS SCREEN 
 
 incsrc "menu_scroll.asm"
@@ -286,7 +284,7 @@ Menu_StatsScreen:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 ; 07 MENU SCROLL FROM 
 
 Menu_ScrollFrom:
@@ -300,7 +298,7 @@ Menu_ScrollFrom:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 ; 08 MENU SCROLL UP 
 
 Menu_ScrollUp:
@@ -325,7 +323,7 @@ Menu_ScrollUp:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 ; 09 CHECK BOTTLE 
 
 Menu_CheckBottle:
@@ -353,7 +351,7 @@ Menu_CheckBottle:
   RTS 
 }
 
-; =============================================================================
+; =========================================================
 ; 0A MENU EXIT 
 
 Menu_Exit:
@@ -384,11 +382,9 @@ Menu_Exit:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
 quest_icons: incbin "tilemaps/quest_icons.tilemap"
 incsrc "menu_map_names.asm"
 incsrc "menu_hud.asm"
-
-; =============================================================================
