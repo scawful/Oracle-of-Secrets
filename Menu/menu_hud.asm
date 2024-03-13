@@ -401,13 +401,14 @@ HudItems:
   ; hammer, lamp, fire rod, Ice Rod, mirror, bottle2
   dw $F701, $F6F1, $F6A1, $F6B1, $F7C9, $F751
   ; flute, book, somaria, byrna, feather, bottle3
-  dw $F859, $F741, $F799,  $F7A9, $F731, $F751
+  dw $F859, $F741, $F799, $F7A9, $F731, $F751
   ; deku,   zora,  wolf,  bunny,  stone, bottle4
   dw $F6E1, $F821, $F6D1, $F7B9, $F811, $F751
 }
 
 ; F711
 
+; TODO: Cleanup this table
 org $0DF629
   dw $20F5, $20F5, $20F5, $20F5 ; No bow
 	dw $28BA, $28E9, $28E8, $28CB ; Empty bow
@@ -471,7 +472,9 @@ org $0DF7C9
 ; Byrna
 org $0DF7A9
   dw $2CDC, $2CDD, $2CEC, $2CED ; Cane of Byrna
+  dw $2C82, $2C83, $2C8B, $2C8C ; Fishing Rod
 
+; Roc's Feather (Net)
 org $0DF731
   dw $2840, $2841, $3C42, $3C43
 
@@ -504,6 +507,10 @@ org $0DF811
 org $0DF669
   dw $24F5, $24F6, $24C0, $24F5 ; Hookshot
   dw $2C17, $3531, $2D40, $3541 ; Ball & Chain
+
+; Fishing Rod GFX (Unused slot)
+org $0DF831
+  dw $2C82, $2C83, $2C8B, $2C8C 
 
 ; =============================================================================
 ; $6FE77-$6FFC0
