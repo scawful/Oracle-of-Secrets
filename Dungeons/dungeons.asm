@@ -9,6 +9,9 @@ print  "End of entrances.asm              ", pc
 incsrc "Dungeons/enemy_damage.asm"
 print  "End of enemy_damage.asm           ", pc
 
+incsrc "Collision/CollisionTablesExpanded.asm"
+incsrc "Collision/GlobalCollisionTables.asm"
+
 ; Use of Bank 0x2C begins
 incsrc "Dungeons/Objects/object_handler.asm"
 print  "End of object_handler.asm         ", pc

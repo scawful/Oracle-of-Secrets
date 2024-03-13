@@ -1,16 +1,29 @@
 ; Dungeon Object Handler
 
-incsrc Collision/CollisionTablesExpanded.asm
-
 org    $018262            ;object id 0x31
   dw ExpandedObject
 
+; #_018650: dw RoomDraw_WeirdUglyPot ID 230
+org $018650
+  dw HeavyPot
 
+; Bank01 Free Space
 org $01B53C
   ExpandedObject:
   JSL NewObjectsCode
   RTS
 
+  HeavyPot:
+  LDA.w #$1010
+  PHX : LDX.w $042C
+  LDA.w #$1111 : STA $0500, X
+  ; Store this object's position in the object buffer to $0520, X
+  LDA $BA : STA $0520, X
+  ; Store it's tilemap position.
+  TYA : STA $0540, X
+  JMP $B350
+
+warnpc $01B560
 
 org $2C8000
 NewObjectsCode:
@@ -146,5 +159,5 @@ pushpc
 org $00A9AC
   dw $0D28, $0D38, $4D28, $4D38
 
-org $01B306 ; RoomDraw_WeirdGloveRequiredPot
-  LDA.w #$1010
+; org $01B306 ; RoomDraw_WeirdGloveRequiredPot
+;   LDA.w #$1010
