@@ -1,4 +1,4 @@
-; =============================================================================
+; =========================================================
 ;  Tilemap Menu background 
 
 Menu_DrawBackground:
@@ -30,44 +30,44 @@ Menu_DrawBackground:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 ;  Menu Item Draw Routine 
 ;  Credit to Kan
 
 DrawMenuItem:
 {
-	STA.b $08
-	STY.b $00
+  STA.b $08
+  STY.b $00
 
-	LDA.b [$08]
-	AND.w #$00FF
+  LDA.b [$08]
+  AND.w #$00FF
 
-	BNE .not_zero
+  BNE .not_zero
 
-	LDY.w #NothingGFX
-	BRA .draw
+  LDY.w #NothingGFX
+  BRA .draw
 
 .not_zero
-	DEC
+  DEC
 
-	ASL : ASL : ASL
-	ADC.b $00
-	TAY
+  ASL : ASL : ASL
+  ADC.b $00
+  TAY
 
 .draw
-	LDA.w $0000,Y : STA.w $1108,X 
-	LDA.w $0002,Y : STA.w $110A,X 
-	LDA.w $0004,Y : STA.w $1148,X 
-	LDA.w $0006,Y : STA.w $114A,X 
+  LDA.w $0000,Y : STA.w $1108,X 
+  LDA.w $0002,Y : STA.w $110A,X 
+  LDA.w $0004,Y : STA.w $1148,X 
+  LDA.w $0006,Y : STA.w $114A,X 
 
-	RTS
+  RTS
 }
 
 
-; =============================================================================
+; =========================================================
 ;  Quest Icons Tilemap Draw Routine 
 
-DrawQuestIcons:
+Menu_DrawQuestIcons:
 {
   LDX.w #$10
 
@@ -94,9 +94,9 @@ DrawQuestIcons:
 }
 
 
-; =============================================================================
+; =========================================================
 
-DrawTriforceIcon:
+Menu_DrawTriforceIcons:
 {
   LDA.l $7EF37A 
   LDX.w #$3534                    
@@ -135,9 +135,9 @@ DrawTriforceIcon:
 }
 
 
-;===============================================================================
+; =========================================================
 
-DrawPendantIcons:
+Menu_DrawPendantIcons:
 {
   LDA.l $7EF374
   LSR : BCC +
@@ -156,7 +156,7 @@ DrawPendantIcons:
 }
 
 
-;===============================================================================
+; =========================================================
 
 ; V H O P P P T T    T T T T T T T T <- tile format
 ; V = Vertical Flip
@@ -169,6 +169,12 @@ DrawPendantIcons:
 
 DrawHeartPieces:
 {
+  ; Empty heart containter
+  LDX.w #$2484 : STX.w $149E ; top left
+  LDX.w #$6484 : STX.w $14A0 ; top right 
+  LDX.w #$2485 : STX.w $14DE ; bottom left
+  LDX.w #$6485 : STX.w $14E0 ; bottom right
+
   LDA.l $7EF36B
   AND.w #$00FF
   CMP.w #3 : BEQ .top_right
@@ -186,111 +192,113 @@ DrawHeartPieces:
 }
 
 
-;===============================================================================
+; =========================================================
 
 DrawMusicNotes:
+{
   LDA.w #$02
   STA.w MusicNoteValue
   LDA.w #MusicNoteValue
   LDX.w #menu_offset(17,14)
-	LDY.w #QuarterNoteGFX
-	JSR DrawMenuItem
+  LDY.w #QuarterNoteGFX
+  JSR DrawMenuItem
 
   LDA.w #$03
   STA.w MusicNoteValue
   LDA.w #MusicNoteValue
   LDX.w #menu_offset(17,17)
-	LDY.w #QuarterNoteGFX
-	JSR DrawMenuItem
+  LDY.w #QuarterNoteGFX
+  JSR DrawMenuItem
 
   LDA.w #$04
   STA.w MusicNoteValue
   LDA.w #MusicNoteValue
   LDX.w #menu_offset(17,20)
-	LDY.w #QuarterNoteGFX
-	JSR DrawMenuItem
+  LDY.w #QuarterNoteGFX
+  JSR DrawMenuItem
 
   RTS
+}
 
-;===============================================================================
+; =========================================================
 
 DrawYItems:
 { 
-	SEP #$30
-	LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
-	REP #$30
+  SEP #$30
+  LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
+  REP #$30
 
-	LDA.w #$7EF340
-	LDX.w #menu_offset(7,3)
-	LDY.w #BowsGFX
-	JSR DrawMenuItem
+  LDA.w #$7EF340
+  LDX.w #menu_offset(7,3)
+  LDY.w #BowsGFX
+  JSR DrawMenuItem
 
-	LDA.w #$7EF341
-	LDX.w #menu_offset(7,6)
-	LDY.w #BoomsGFX
-	JSR DrawMenuItem
+  LDA.w #$7EF341
+  LDX.w #menu_offset(7,6)
+  LDY.w #BoomsGFX
+  JSR DrawMenuItem
 
-	LDA.l $7EF342 : CMP.w #$0000 : BEQ .no_hookshot
+  LDA.l $7EF342 : AND.w #$00FF : CMP.w #$0000 : BEQ .no_hookshot
   LDA.w GoldstarOrHookshot : BNE .spoof_hookshot
   LDA #$0001 ; No goldstar, but hookshot
 .spoof_hookshot
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-	LDX.w #menu_offset(7,9)
-	LDY.w #HookGFX
-	JSR DrawMenuItem
+  LDX.w #menu_offset(7,9)
+  LDY.w #HookGFX
+  JSR DrawMenuItem
 .no_hookshot
 
   LDA.l $7EF343
-  CMP.w #$00 : BEQ .no_bomb
+  AND.w #$00FF : CMP.w #$00 : BEQ .no_bomb
   LDA.w #$0001
   STA.w MenuItemValueSpoof
   LDA.w #MenuItemValueSpoof
   LDX.w #menu_offset(7,13)
   LDY.w #BombsGFX
-	JSR DrawMenuItem
+  JSR DrawMenuItem
 .no_bomb
 
   LDA.w #$7EF344
-	LDX.w #menu_offset(7,16) 
-	LDY.w #PowderGFX
-	JSR DrawMenuItem
+  LDX.w #menu_offset(7,16) 
+  LDY.w #PowderGFX
+  JSR DrawMenuItem
 
-	LDA.w #$7EF35C
-	LDX.w #menu_offset(7,19)
-	LDY.w #BottlesGFX
-	JSR DrawMenuItem
+  LDA.w #$7EF35C
+  LDX.w #menu_offset(7,19)
+  LDY.w #BottlesGFX
+  JSR DrawMenuItem
 
   ;; next row
 
-	LDA.w #$7EF34B 
-	LDX.w #menu_offset(10,3)
-	LDY.w #HammerGFX
-	JSR DrawMenuItem
+  LDA.w #$7EF34B 
+  LDX.w #menu_offset(10,3)
+  LDY.w #HammerGFX
+  JSR DrawMenuItem
 
   LDA.w #$7EF34A
-	LDX.w #menu_offset(10,6)
-	LDY.w #LampGFX
-	JSR DrawMenuItem
+  LDX.w #menu_offset(10,6)
+  LDY.w #LampGFX
+  JSR DrawMenuItem
 
   LDA.w #$7EF345
-	LDX.w #menu_offset(10,9)
-	LDY.w #Fire_rodGFX
-	JSR DrawMenuItem
+  LDX.w #menu_offset(10,9)
+  LDY.w #Fire_rodGFX
+  JSR DrawMenuItem
 
-	LDA.w #$7EF346
-	LDX.w #menu_offset(10,13)
-	LDY.w #Ice_rodGFX
-	JSR DrawMenuItem
+  LDA.w #$7EF346
+  LDX.w #menu_offset(10,13)
+  LDY.w #Ice_rodGFX
+  JSR DrawMenuItem
 
   LDA.w #$7EF353
-	LDX.w #menu_offset(10,16)
-	LDY.w #MirrorGFX
-	JSR DrawMenuItem
+  LDX.w #menu_offset(10,16)
+  LDY.w #MirrorGFX
+  JSR DrawMenuItem
 
-	LDA.w #$7EF35D
-	LDX.w #menu_offset(10,19)
-	LDY.w #BottlesGFX
-	JSR DrawMenuItem
+  LDA.w #$7EF35D
+  LDX.w #menu_offset(10,19)
+  LDY.w #BottlesGFX
+  JSR DrawMenuItem
 
   ;; next row 
   LDA.l $7EF34C : CMP.w #$0000 : BEQ .no_ocarina
@@ -298,79 +306,87 @@ DrawYItems:
   LDA #$0001 ; Multi-songs not unlocked yet
 .spoof_ocarina 
   STA.w ShortSpoof : LDA.w #ShortSpoof
-	LDX.w #menu_offset(13,3)
-	LDY.w #OcarinaGFX
-	JSR DrawMenuItem
+  LDX.w #menu_offset(13,3)
+  LDY.w #OcarinaGFX
+  JSR DrawMenuItem
 .no_ocarina
 
   LDA.l $7EF34E : CMP.w #$00 : BEQ .no_book
   LDA.w #$01 : STA.w ShortSpoof : LDA.w #ShortSpoof
-	LDX.w #menu_offset(13,6)
-	LDY.w #BookGFX
-	JSR DrawMenuItem
+  LDX.w #menu_offset(13,6)
+  LDY.w #BookGFX
+  JSR DrawMenuItem
 .no_book
 
-	LDA.w #$7EF350
-	LDX.w #menu_offset(13,9)
-	LDY.w #SomariaGFX
-	JSR DrawMenuItem
+  ; LDA.l $7EF350 : CMP.w #$00 : BEQ .no_somaria
+;   LDA.w SomariaOrByrna : BNE .spoof_somaria
+; .spoof_somaria
+  ; LDA.w #$01 : STA.w ShortSpoof : LDA.w #ShortSpoof
+  LDA.w #$7EF350
+  LDX.w #menu_offset(13,9)
+  LDY.w #SomariaGFX
+  JSR DrawMenuItem
+.no_somaria
 
-	LDA.w #$7EF351
-	LDX.w #menu_offset(13,13)
-	LDY.w #ByrnaGFX
-	JSR DrawMenuItem
+
+  LDA.w #$7EF351
+  LDX.w #menu_offset(13,13)
+  ;LDY.w #ByrnaGFX
+  LDY.w #FishingRodGFX
+  JSR DrawMenuItem
 
   LDA.w #$7EF34D
-	LDX.w #menu_offset(13,16)
-	LDY.w #JumpFeatherGFX
-	JSR DrawMenuItem
+  LDX.w #menu_offset(13,16)
+  LDY.w #JumpFeatherGFX
+  JSR DrawMenuItem
 
-	LDA.w #$7EF35E
-	LDX.w #menu_offset(13,19)
-	LDY.w #BottlesGFX
-	JSR DrawMenuItem
+  LDA.w #$7EF35E
+  LDX.w #menu_offset(13,19)
+  LDY.w #BottlesGFX
+  JSR DrawMenuItem
 
   ;; next row
 
   LDA.w #$7EF349
-	LDX.w #menu_offset(16,3)
-	LDY.w #DekuMaskGFX
-	JSR DrawMenuItem
+  LDX.w #menu_offset(16,3)
+  LDY.w #DekuMaskGFX
+  JSR DrawMenuItem
 
-	LDA.w #$7EF347
-	LDX.w #menu_offset(16,6)
-	LDY.w #ZoraMaskGFX
-	JSR DrawMenuItem
+  LDA.w #$7EF347
+  LDX.w #menu_offset(16,6)
+  LDY.w #ZoraMaskGFX
+  JSR DrawMenuItem
 
   LDA.w #$7EF358
-	LDX.w #menu_offset(16,9)
-	LDY.w #WolfMaskGFX
-	JSR DrawMenuItem
+  LDX.w #menu_offset(16,9)
+  LDY.w #WolfMaskGFX
+  JSR DrawMenuItem
 
   LDA.w #$7EF348
-	LDX.w #menu_offset(16,13)
-	LDY.w #BunnyHoodGFX
-	JSR DrawMenuItem
+  LDX.w #menu_offset(16,13)
+  LDY.w #BunnyHoodGFX
+  JSR DrawMenuItem
 
-	LDA.w #$7EF352
-	LDX.w #menu_offset(16,16)
-	LDY.w #StoneMaskGFX
-	JSR DrawMenuItem
+  LDA.w #$7EF352
+  LDX.w #menu_offset(16,16)
+  LDY.w #StoneMaskGFX
+  JSR DrawMenuItem
 
-	LDA.w #$7EF35F
-	LDX.w #menu_offset(16,19)
-	LDY.w #BottlesGFX
-	JSR DrawMenuItem
+  LDA.w #$7EF35F
+  LDX.w #menu_offset(16,19)
+  LDY.w #BottlesGFX
+  JSR DrawMenuItem
 
-	RTS
+  RTS
 }
 
-; =============================================================================
+; =========================================================
 
 Menu_DrawQuestItems:
-	SEP #$30
-	LDA.b #$7E : STA.b $0A
-	REP #$30
+{
+  SEP #$30
+  LDA.b #$7E : STA.b $0A
+  REP #$30
 
   LDA.w #$7EF359
   LDX.w #menu_offset(14,2)
@@ -411,8 +427,9 @@ Menu_DrawQuestItems:
   JSR DrawMenuItem
 
   RTS
+}
 
-; =============================================================================
+; =========================================================
 
 Menu_DrawBigKey:
 {
@@ -430,8 +447,8 @@ Menu_DrawBigKey:
   JSR CheckPalaceItemPossession : LDA $02 : BEQ .noTreasureYet
   
   SEP #$30
-	LDA.b #$7E : STA.b $0A
-	REP #$30
+  LDA.b #$7E : STA.b $0A
+  REP #$30
 
   LDA.w #$01
   STA.w ShortSpoof
@@ -443,8 +460,8 @@ Menu_DrawBigKey:
 .noTreasureYet
 
   SEP #$30
-	LDA.b #$7E : STA.b $0A
-	REP #$30
+  LDA.b #$7E : STA.b $0A
+  REP #$30
 
   LDA.w #$01
   STA.w ShortSpoof
@@ -482,7 +499,7 @@ Menu_DrawBigKey:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 
 ; *$6EEB6-$6EEDB LOCAL
 CheckPalaceItemPossession:
@@ -509,7 +526,7 @@ CheckPalaceItemPossession:
   dw .red_mail
 }
 
-; ==============================================================================
+; ==========================================================
 
 ; *$6EEDC-$6EEE0 JUMP LOCATION
 .pool_CheckPalaceItemPossession:
@@ -604,8 +621,8 @@ Menu_DrawBigChestKey:
                 BCC .dontHaveCompass
   
   SEP #$30
-	LDA.b #$7E : STA.b $0A
-	REP #$30
+  LDA.b #$7E : STA.b $0A
+  REP #$30
 
   LDA.w #$01
   STA.w ShortSpoof
