@@ -260,7 +260,7 @@ SearchForEquippedItem_Override:
 {
     SEP   #$30
  
-    LDY $0202
+    LDY $0202 
     LDX.w Menu_AddressLong-1, Y
     LDA.l $7EF300,             X
     

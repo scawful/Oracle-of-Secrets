@@ -312,7 +312,7 @@ DrawYItems:
   JSR DrawMenuItem
 .no_ocarina
 
-  LDA.l $7EF34E : CMP.w #$00 : BEQ .no_book
+  LDA.l $7EF34E : AND.w #$00FF : CMP.w #$00 : BEQ .no_book
   LDA.w #$01 : STA.w ShortSpoof : LDA.w #ShortSpoof
   LDX.w #menu_offset(13,6)
   LDY.w #BookGFX

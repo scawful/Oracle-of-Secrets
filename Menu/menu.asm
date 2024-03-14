@@ -224,15 +224,12 @@ Menu_ItemScreen:
 
   BEQ .no_delete 
 
+  ; Delete cursor
   LDA.w #$20F5
-  STA.w $1108, X
-  STA.w $1148, X
-  STA.w $114E, X 
-  STA.w $110E, X 
-  STA.w $11C8, X 
-  STA.w $1188, X
-  STA.w $118E, X 
-  STA.w $11CE, X 
+  STA.w $1108, X : STA.w $1148, X
+  STA.w $114E, X : STA.w $110E, X 
+  STA.w $11C8, X : STA.w $1188, X
+  STA.w $118E, X : STA.w $11CE, X 
   BRA .done
 
 .no_delete 
@@ -310,12 +307,9 @@ Menu_ScrollUp:
 
   LDX.w MenuScrollLevelV
   LDA.w Menu_Scroll, X 
-  STA.b $EA
-  BNE .loop
+  STA.b $EA : BNE .loop
   STZ.b $E4
-
   INC.w $0200
-
   RTS
 
 .loop
