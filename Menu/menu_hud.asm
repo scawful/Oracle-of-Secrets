@@ -1,56 +1,43 @@
-; =============================================================================
+; =========================================================
 ;  Menu - Headsup Display
-; =============================================================================
 
-
-; ==============================================================================
-; Vanilla HUD Hijack
-
-org $0DFB91
+org $0DFB91 ; UpdateHUDBuffer
   JSL HUD_Update
   RTS
 
-newIgnoreItemBox:
+newIgnoreItemBox: ; UpdateHUDBuffer_skip_item
   JSL HUD_Update
   RTS
 
-; Hooked @ end of RefillLogic *$6DB92-$6DD29
-org $0DDD21
+org $0DDD21 ; RefillLogic_heart_refill_done
   JSR newIgnoreItemBox
 
-org $0DFC09
-  JSL HUD_Update_ignoreHealth
+org $0DFC09 ; UpdateHUDBuffer_skip_hearts
+  JSL HUD_Update_ignore_health
   RTS
 
-; org $0DFC1B
-;   JSR $F1BC
-
-org $0DDB85
+org $0DDB85 ; RefreshIcon_long
   JSL HUD_Update
 
-org $0DFDAB
+org $0DFDAB ; UpdateHUDBuffer_UpdateHearts
   JSL HUD_UpdateHearts
   RTS
 
 ; Partial hearts draw position
-org $0DF14F
+org $0DF14F ; AnimateHeartRefill
   SEP   #$30
   LDA.b #$44 : STA $00
   LDA.b #$C7 : STA $01
   LDA.b #$7E : STA $02
 
-; ==============================================================================
-; New Code Region Starts Here
 
-org $2E8000
-
-; ==============================================================================
+; ==========================================================
 ; Main HUD Update Loop
 
+org $2E8000
 HUD_Update:
 {
   JSR HUD_UpdateItemBox
-.ignoreItemBox ; ALTERNATE ENTRY POINT
 
   SEP #$30
 
@@ -101,18 +88,18 @@ HUD_Update:
   ; filling in the full and partially filled hearts (actual health)
   JSR HUD_UpdateHearts
 
-.ignoreHealth ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
+.ignore_health ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
 
   REP #$30
 
   ; Magic amount indicator (normal, 1/2, or 1/4)
-  LDA $7EF37B : AND.w #$00FF : CMP.w #$0001 : BCC .normalMagicMeter
+  LDA $7EF37B : AND.w #$00FF : CMP.w #$0001 : BCC .normal_magic_meter
 
   ; draw 1/2 magic meter
   LDA.w #$2851 : STA $7EC730
   LDA.w #$28FA : STA $7EC732
 
-.normalMagicMeter
+.normal_magic_meter
 
   ; check player magic (ranges from 0 to 0x7F)
   ; X = ((MP & 0xFF)) + 7) & 0xFFF8)
@@ -181,26 +168,26 @@ HUD_Update:
   LDA.w #$007F : STA $05
 
   ; Load number of Keys Link has
-  LDA $7EF36F : AND.w #$00FF : CMP.w #$00FF : BEQ .noKeys
+  LDA $7EF36F : AND.w #$00FF : CMP.w #$00FF : BEQ .no_keys
   JSR HexToDecimal
-.noKeys
+.no_keys
   REP #$30
 
   ; The key digit, which is optionally drawn.
   ; Also check to see if the key spot is blank
   LDA   $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A4
-  CMP.w #$247F : BNE .dontBlankKeyIcon
+  CMP.w #$247F : BNE .dont_blank_key_icon
 
+  ; TODO: Find the proper index of the key icon, this one is outdated.
   ; If the key digit is blank, also blank out the key icon.
   STA $7EC724
 
-.dontBlankKeyIcon
+.dont_blank_key_icon
   SEP #$30
-
   RTL
 }
 
-; =============================================================================
+; =========================================================
 
 Full        =  $3C5F
 MostlyFull  =  $3C4D
@@ -228,7 +215,7 @@ MagicTilemap:
   dw KindaFull, Full, Full, Full
   dw MostlyFull, Full, Full, Full
 
-; ============================================================================
+; =========================================================
 ; *$6FAFD-$6FB90 LOCAL
 
 HUD_UpdateItemBox:
@@ -240,19 +227,19 @@ HUD_UpdateItemBox:
   CMP.b #$03 : BCC .no_silver_arrows
 
   ; check how many arrows the player has
-  LDA   $7EF377 : BNE .drawBowItemIcon
+  LDA   $7EF377 : BNE .draw_bow_item_icon
   LDX.b #$03
-  BRA   .drawBowItemIcon
+  BRA   .draw_bow_item_icon
 
 .no_silver_arrows
 
   LDX.b #$02
   
-  LDA $7EF377 : BNE .drawBowItemIcon
+  LDA $7EF377 : BNE .draw_bow_item_icon
   
   LDX.b #$01
 
-.drawBowItemIcon
+.draw_bow_item_icon
   ; values of X correspond to how the icon will end up drawn:
   ; 0x01 - normal bow with no arrows
   ; 0x02 - normal bow with arrows
@@ -262,42 +249,44 @@ HUD_UpdateItemBox:
 
 .no_bow
   REP   #$30
-  LDX   $0202 : BEQ .noEquippedItem
+  LDX   $0202 : BEQ .no_equipped_item
   LDA   $7EF33F, X : AND.w #$00FF
-  CPX.w #$0004 : BNE .bombsNotEquipped
+  CPX.w #$0004 : BNE .bombs_not_equipped
   LDA.w #$0001
 
-.bombsNotEquipped
+.bombs_not_equipped
+  CPX.w #$0006 : BNE .bottle1_not_equipped
+  JMP   .load_bottle_content
 
-  CPX.w #$0006 : BNE .bottle1NotEquipped
-  JMP   .loadBottleContent
-.bottle1NotEquipped
-  CPX.w #$000C : BNE .bottle2NotEquipped
-  LDA.w #$0002 : JMP   .loadBottleContent
-.bottle2NotEquipped
-  CPX.w #$0012 : BNE .bottle3NotEquipped
-  LDA.w #$0003 : JMP   .loadBottleContent
-.bottle3NotEquipped
-  CPX.w #$0018 : BNE .bottleNotEquipped
+.bottle1_not_equipped
+  CPX.w #$000C : BNE .bottle2_not_equipped
+  LDA.w #$0002 : JMP   .load_bottle_content
+
+.bottle2_not_equipped
+  CPX.w #$0012 : BNE .bottle3_not_equipped
+  LDA.w #$0003 : JMP   .load_bottle_content
+
+.bottle3_not_equipped
+  CPX.w #$0018 : BNE .bottle_not_equipped
   LDA.w #$0004
-.loadBottleContent
+
+.load_bottle_content
   TXY : TAX : LDA $7EF35B, X : AND.w #$00FF : TYX
 
-.bottleNotEquipped
-  CPX.w #$000D : BNE .fluteNotEquipped
+.bottle_not_equipped
+  CPX.w #$000D : BNE .flute_not_equipped
   LDA   $030F
 
-.fluteNotEquipped
+.flute_not_equipped
+  CPX.w #$0003 : BNE .hookshot_not_equipped
+  LDA.w GoldstarOrHookshot : BEQ .hookshot_not_equipped
+  SEC   : SBC.b #$01
 
-  CPX.w #$0003 : BNE .hookshotNotEquipped
-  LDA.w GoldstarOrHookshot : BEQ .hookshotNotEquipped
-  SEC : SBC.b #$01 
-
-.hookshotNotEquipped
+.hookshot_not_equipped
 
   JSR HUD_DrawItem
 
-.noEquippedItem
+.no_equipped_item
 
   RTS
 }
@@ -318,48 +307,48 @@ HUD_DrawItem:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 
 HUD_UpdateHearts:
 {
   ; Draws hearts in a painfully slow loop
   LDX.w #$0000
 
-.nextHeart
-  LDA.b $00 : CMP.w #$0008 : BCC .lessThanOneHeart
+.next_heart
+  LDA.b $00 : CMP.w #$0008 : BCC .less_than_one_heart
   ; Notice no SEC was needed since carry is assumedly set.
   SBC.w #$0008 : STA.b $00
   LDY.w #$0004
-  JSR   .drawHeart
+  JSR   .draw_heart
   INX   #2
-  BRA   .nextHeart
+  BRA   .next_heart
 
-.lessThanOneHeart
-  CMP.w #$0005 : BCC .halfHeartOrLess
+.less_than_one_heart
+  CMP.w #$0005 : BCC .half_heart_or_less
   LDY.w #$0004
-  BRA   .drawHeart
+  BRA   .draw_heart
 
-.halfHeartOrLess
-  CMP.w #$0001 : BCC .emptyHeart
+.half_heart_or_less
+  CMP.w #$0001 : BCC .empty_heart
   LDY.w #$0002
-  BRA   .drawHeart
+  BRA   .draw_heart
 
-.emptyHeart
+.empty_heart
   RTS
 
-.drawHeart
+.draw_heart
   ; Compare number of hearts so far on current line to 10
-  CPX.w #$0014 : BCC .noLineChange
+  CPX.w #$0014 : BCC .no_line_change
   ; if not, we have to move down one tile in the tilemap
   LDX.w #$0000
   LDA.b $07 : CLC : ADC.w #$0040 : STA.b $07
 
-.noLineChange
+.no_line_change
   LDA.b [$0A], Y : TXY : STA.b [$07], Y
   RTS
 }
 
-; =============================================================================
+; =========================================================
 
 HexToDecimal:
 {
@@ -367,30 +356,30 @@ HexToDecimal:
     STZ   $0003
     LDX.w #$0000
     LDY.w #$0002
-.nextDigit
-    CMP $F9F9,       Y : BCC .nextLowest10sPlace
+.next_digit
+    CMP $F9F9,       Y : BCC .next_lowest_10s_place
     SEC : SBC $F9F9, Y
     INC $03,         X
-    BRA .nextDigit
-.nextLowest10sPlace
+    BRA .next_digit
+.next_lowest_10s_place
     INX   : DEY #2
-    BPL   .nextDigit
+    BPL   .next_digit
     STA   $05
     SEP   #$30
     LDX.b #$02
-.setNextDigitTile
+.set_next_digit_tile
     LDA   $03, X : CMP.b #$7F
-    BEQ   .blankDigit
+    BEQ   .blank_digit
     ORA.b #$90
-.blankDigit
+.blank_digit
     STA $03, X
-    DEX : BPL .setNextDigitTile
+    DEX : BPL .set_next_digit_tile
     RTS
 }
 
 pushpc
 
-; =============================================================================
+; =========================================================
 
 ; $6FA93-$6FAFC DATA
 org $0DFA93
@@ -510,9 +499,9 @@ org $0DF669
 
 ; Fishing Rod GFX (Unused slot)
 org $0DF831
-  dw $2C82, $2C83, $2C8B, $2C8C 
+  dw $2C82, $2C83, $2C8B, $2C8C
 
-; =============================================================================
+; =========================================================
 ; $6FE77-$6FFC0
 
 
@@ -526,17 +515,17 @@ incbin tilemaps/hud.tilemap
 ; LoadUnderworldRoomRebuildHUD:
 ; #_028118: LDA.b #$00 ; reset mosaic level
 
-; ==============================================================================
+; ==========================================================
 
 ; $57CE0 DATA
-org $0AFCE0
+org    $0AFCE0
 FloorIndicatorNumberHigh:
 {
   dw $2508, $2509, $2509, $250A, $250B, $250C, $250D, $251D
   dw $E51C, $250E, $007F
 }
 
-; ==============================================================================
+; ==========================================================
 
 ; $57CF6 DATA
 org $0AFCF6
@@ -546,18 +535,19 @@ FloorIndicatorNumberLow:
   dw $E50C, $A50E, $007F
 }
 
-; ==============================================================================
+; ==========================================================
 
 ; *$57D0C-$57DA7 JUMP LOCATION (LONG)
 org $0AFD0C
 FloorIndicator:
 {
   REP   #$30
-  LDA   $04A0 : AND.w #$00FF : BEQ .hideIndicator
-  INC   A : CMP.w #$00C0 : BNE .dontDisable
-  ; if the count up timer reaches 0x00BF frames, disable the floor indicator during the next frame.
+  LDA   $04A0 : AND.w #$00FF : BEQ .hide_indicator
+  INC   A : CMP.w #$00C0 : BNE .dont_disable
+  ; if the count up timer reaches 0x00BF frames
+  ; disable the floor indicator during the next frame.
   LDA.w #$0000
-.dontDisable
+.dont_disable
   STA   $04A0
   PHB   : PHK : PLB
   LDA.w #$251E : STA $7EC7F0
@@ -566,31 +556,37 @@ FloorIndicator:
   LDA.w #$250F : STA $7EC7F2
   LDX.w #$0000
 
-  ; this confused me at first, but it's actually looking at whether $A4[1]
-  ; has a negative value $A3 has nothing to do with $A4
-  LDA   $A3 : BMI .basementFloor
+  ; check whether $A4[1] has a negative value
+  ; $A3 has nothing to do with $A4
+  LDA   $A3 : BMI .basement_floor
+
   ; check which floor Link is on.
-  LDA   $A4 : BNE .notFloor1F
-  LDA   $A0 : CMP.w #$0002 : BEQ .sanctuaryRatRoom
+  LDA   $A4 : BNE .not_floor_1F
+  LDA   $A0 : CMP.w #$0002 : BEQ .sanctuary_rat_room
   SEP   #$20
+
   ; Check the world state
-  LDA   $7EF3C5 : CMP.b #$02 : BCS .noRainSound
+  LDA   $7EF3C5 : CMP.b #$02 : BCS .no_rain_state
+
   ; cause the ambient rain sound to occur (indoor version)
   LDA.b #$03 : STA $012D
-.noRainSound
+
+.no_rain_state
   REP #$20
-.notFloor1F
-.sanctuaryRatRoom
+.not_floor_1F
+.sanctuary_rat_room
   LDA $A4 : AND.w #$00FF
-  BRA .setFloorIndicatorNumber
-.basementFloor
+  BRA .set_floor_indicator_number
+
+.basement_floor
   SEP   #$20
   ; turn off any ambient sound effects
   LDA.b #$05 : STA $012D
   REP   #$20
   INX   #2
   LDA   $A4 : ORA.w #$FF00 : EOR.w #$FFFF
-.setFloorIndicatorNumber
+
+.set_floor_indicator_number
 
   ASL A : TAY
 
@@ -606,8 +602,7 @@ FloorIndicator:
 
   RTL
 
-; *$57D90 ALTERNATE ENTRY POINT
-.hideIndicator
+.hide_indicator ; *$57D90 ALTERNATE ENTRY POINT
 
   REP #$20
 
