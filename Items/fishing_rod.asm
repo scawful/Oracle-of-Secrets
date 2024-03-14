@@ -16,6 +16,7 @@
 
 ; ================= USED FOR THE FLOATER ==================
 
+; TODO: Fix sprite override of RunningBoy or pick new sprite
 org $06C058 ; JSL Sprite_74_RunningBoy
 {
   JSL FloaterBoySpriteCheck
@@ -25,7 +26,7 @@ org $06C058 ; JSL Sprite_74_RunningBoy
 org $07AF3E ; Cane of Byrna - End: $07AFB4
 LinkItem_CaneOfByrna:
 {
-  JSL FishingRod
+  JSL LinkItem_FishingRod
   RTS
 }
 
