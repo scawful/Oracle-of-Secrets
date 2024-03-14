@@ -1,4 +1,4 @@
-; =============================================================================
+; =========================================================
 ;  Item Selection Code
 
 ; Decides which function to jump to.
@@ -13,7 +13,7 @@ Menu_ItemIndex:
   ;  Deku,    Zora,      Wolf,     Bunny Hood, Stone Mask, Bottle4
   db $11,     $0F,       $08,      $10,        $13,        $0B
 
-; -----------------------------------------------------------------------------
+; =========================================================
 ; Decides which graphics is drawn 
 Menu_AddressIndex:
   db $7EF340 ; Bow
@@ -44,7 +44,7 @@ Menu_AddressIndex:
   db $7EF352 ; Stone Mask
   db $7EF35F ; Bottle #4
 
-; -----------------------------------------------------------------------------
+; =========================================================
 
 Menu_ItemCursorPositions:
   dw menu_offset(6,2)  ; bow
@@ -75,7 +75,7 @@ Menu_ItemCursorPositions:
   dw menu_offset(15,15) ; stone mask 
   dw menu_offset(15,18) ; bottle4
 
-; -----------------------------------------------------------------------------
+; =========================================================
 
 
 Menu_FindNextItem:
@@ -91,7 +91,7 @@ Menu_FindNextItem:
   RTS
 }
 
-; -----------------------------------------------------------------------------
+; =========================================================
 
 Menu_FindPrevItem:
 {
@@ -105,7 +105,7 @@ Menu_FindPrevItem:
   RTS
 }
 
-; -----------------------------------------------------------------------------
+; =========================================================
 
 Menu_FindNextDownItem:
 {
@@ -120,7 +120,7 @@ Menu_FindNextDownItem:
   RTS 
 }
 
-; -----------------------------------------------------------------------------
+; =========================================================
 
 Menu_FindNextUpItem:
 {
@@ -144,7 +144,7 @@ Menu_FindNextUpItem:
 }
 
 
-; -----------------------------------------------------------------------------
+; =========================================================
 
 Menu_DeleteCursor:
 {
@@ -152,20 +152,16 @@ Menu_DeleteCursor:
   LDX.w Menu_ItemCursorPositions-2, Y
 
   LDA.w #$20F5
-  STA.w $1108, X
-  STA.w $1148, X
-  STA.w $114E, X
-  STA.w $110E, X
-  STA.w $11C8, X
-  STA.w $1188, X
-  STA.w $118E, X
-  STA.w $11CE, X
+  STA.w $1108, X : STA.w $1148, X
+  STA.w $114E, X : STA.w $110E, X
+  STA.w $11C8, X : STA.w $1188, X
+  STA.w $118E, X : STA.w $11CE, X
   SEP   #$30
   STZ   $0207
   RTS 
 }
 
-; -----------------------------------------------------------------------------
+; =========================================================
 
 Menu_InitItemScreen:
 {
@@ -191,8 +187,8 @@ Menu_InitItemScreen:
   RTS
 }
 
-; -----------------------------------------------------------------------------
-
+; TODO: Decide if this table even needs to exist, considering it's identical
+; to the Menu_AddressIndex table.
 Menu_AddressLong:
   db $7EF340 ; Bow
   db $7EF341 ; Boomerang
@@ -222,6 +218,7 @@ Menu_AddressLong:
   db $7EF352 ; Stone Mask
   db $7EF35F ; Bottle #4
 
+; TODO: Fix all of these routines.
 GotoNextItem_Override:
 {
   ; Load our currently equipped item, and move to the next one
@@ -294,8 +291,6 @@ SearchForEquippedItem_Override:
     
     JMP TryEquipNextItem_Override
 }
-
-; -----------------------------------------------------------------------------
 
 pushpc 
 
