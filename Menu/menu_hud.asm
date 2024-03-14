@@ -387,7 +387,7 @@ HudItems:
 {
   ; bows, boomerang, hookshot, bombs, powder, bottle1
   dw $F629, $F651, $F669, $F679, $F689, $F751
-  ; hammer, lamp, fire rod, Ice Rod, mirror, bottle2
+  ; hammer, lamp, fire rod, ice rod, mirror, bottle2
   dw $F701, $F6F1, $F6A1, $F6B1, $F7C9, $F751
   ; flute, book, somaria, byrna, feather, bottle3
   dw $F859, $F741, $F799, $F7A9, $F731, $F751
@@ -405,30 +405,18 @@ org $0DF629
 	dw $28BA, $28E9, $28E8, $28CB ; Empty silvers bow
 	dw $28BA, $28BB, $24CA, $28CB ; Silver bow and arrows
 
-; Ocarina
-org $0DF859
-  dw $2CD4, $2CD5, $2CE4, $2CE5
-  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
-  dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
-  dw $24D4, $24D5, $24E4, $24E5 ; Red
-
-; Bottles
-org $0DF751
-  dw $20F5, $20F5, $20F5, $20F5 ; No bottle
-  dw $2044, $2045, $2046, $2047 ; Mushroom
-  dw $2837, $2838, $2CC3, $2CD3 ; Empty bottle
-  dw $24D2, $64D2, $24E2, $24E3 ; Red potion
-  dw $3CD2, $7CD2, $3CE2, $3CE3 ; Green potion
-  dw $2CD2, $6CD2, $2CE2, $2CE3 ; Blue potion
-  dw $2855, $6855, $2C57, $2C5A ; Fairy
-  dw $2837, $2838, $2839, $283A ; Bee
-  dw $2837, $2838, $2839, $283A ; Good bee
-
 ; Boomerang
 org $0DF651
   dw $20F5, $20F5, $20F5, $20F5 ; No boomerang
   dw $2CB8, $2CB9, $2CC9, $ACB9 ; Blue boomerang
 	dw $24B8, $24B9, $24C9, $A4B9 ; Red boomerang
+
+; Hookshot
+org $0DF669
+  dw $24F5, $24F6, $24C0, $24F5 ; Hookshot
+  dw $2C17, $3531, $2D40, $3541 ; Ball & Chain
+
+; Bombs (Unchanged)
 
 ; Powder
 org $0DF689
@@ -444,58 +432,78 @@ org $0DF701
 ; Lamp
 org $0DF6F1
   dw $24BC, $24BD, $24CC, $64CC
+  
+; Fire Rod
+org $0DF6B1
+ dw $2CB0, $2CBE, $2CC0, $2CC1
 
 ; Ice Rod
 org $0DF6A1
  dw $24B0, $24B1, $24C0, $24C1
-
-; Fire Rod
-org $0DF6B1
- dw $2CB0, $2CBE, $2CC0, $2CC1
 
 ; Mirror
 org $0DF7C9
   dw $2C62, $2C63, $2C72, $2C73 ; Mirror
   dw $2C62, $2C63, $2C72, $2C73 ; Mirror
 
+; Ocarina
+org $0DF859
+  dw $2CD4, $2CD5, $2CE4, $2CE5
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
+  dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
+  dw $24D4, $24D5, $24E4, $24E5 ; Red
+
+
+; Roc's Feather (Net)
+org $0DF731
+  dw $2840, $2841, $3C42, $3C43 ; Roc's Feather
+
+; Bottles
+org $0DF751
+  dw $20F5, $20F5, $20F5, $20F5 ; No bottle
+  dw $2044, $2045, $2046, $2047 ; Mushroom
+  dw $2837, $2838, $2CC3, $2CD3 ; Empty bottle
+  dw $24D2, $64D2, $24E2, $24E3 ; Red potion
+  dw $3CD2, $7CD2, $3CE2, $3CE3 ; Green potion
+  dw $2CD2, $6CD2, $2CE2, $2CE3 ; Blue potion
+  dw $2855, $6855, $2C57, $2C5A ; Fairy
+  dw $2837, $2838, $2839, $283A ; Bee
+  dw $2837, $2838, $2839, $283A ; Good bee
+
+; Somaria (Unchanged)
+
 ; Byrna
 org $0DF7A9
   dw $2CDC, $2CDD, $2CEC, $2CED ; Cane of Byrna
   dw $2C82, $2C83, $2C8B, $2C8C ; Fishing Rod
 
-; Roc's Feather (Net)
-org $0DF731
-  dw $2840, $2841, $3C42, $3C43
 
+; Deku (Quake)
 org $0DF6E1
   dw $20F5, $20F5, $20F5, $20F5 ; No bombos
   dw $2066, $6066, $2076, $6076 ; Deku Mask
 
-; Zora
+; Zora (Moon Pearl Slot)
 org $0DF821
   dw $20F5, $20F5, $20F5, $20F5
   dw $2C88, $6C88, $2C89, $6C89
   dw $2C88, $6C88, $2C89, $6C89
 
-; Wolf
+; Wolf (Ether)
 org $0DF6D1
   dw $3086, $7086, $3087, $7087
   dw $3086, $7086, $3087, $7087
   dw $3086, $7086, $3087, $7087
 
-; Bunny
+; Bunny (Cape Slot)
 org $0DF7B9
   dw $3469, $7469, $3479, $7479
   dw $3469, $7469, $3479, $7479
 
-; Stone Mask
-org $0DF811
+; Stone Mask (Flippers Slot)
+org $0DF811 
   dw $20F5, $20F5, $20F5, $20F5
   dw $30B4, $30B5, $30C4, $30C5
-
-org $0DF669
-  dw $24F5, $24F6, $24C0, $24F5 ; Hookshot
-  dw $2C17, $3531, $2D40, $3541 ; Ball & Chain
 
 ; Fishing Rod GFX (Unused slot)
 org $0DF831
@@ -503,8 +511,6 @@ org $0DF831
 
 ; =========================================================
 ; $6FE77-$6FFC0
-
-
 
 org    $0DFE77
 HUD_Tilemap:
