@@ -1,5 +1,5 @@
 ; ==============================
-; RAM in Use
+; WRAM in Use
 org $008000
 base $7E0730 ; MAP16OVERFLOW free ram region
 
@@ -23,3 +23,8 @@ Kydreeok_Id: skip 1
 SomariaOrByrna: skip 1
 
 base off
+
+; ==============================
+; SRAM in Use
+
+FishingRod = $7EF38A
