@@ -37,7 +37,7 @@ FishingRodExit:
   PLB
   RTL
 
-FishingRod:
+LinkItem_FishingRod:
 {
   PHB : PHK : PLB
 
