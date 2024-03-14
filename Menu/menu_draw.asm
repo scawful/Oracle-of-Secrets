@@ -167,7 +167,7 @@ Menu_DrawPendantIcons:
 ; E000 is T = 0
 ; E100 would be T = 16
 
-DrawHeartPieces:
+Menu_DrawHeartPieces:
 {
   ; Empty heart containter
   LDX.w #$2484 : STX.w $149E ; top left
@@ -194,7 +194,7 @@ DrawHeartPieces:
 
 ; =========================================================
 
-DrawMusicNotes:
+Menu_DrawMusicNotes:
 {
   LDA.w #$02
   STA.w MusicNoteValue
@@ -268,7 +268,7 @@ DrawYItems:
   LDY.w #BottlesGFX
   JSR DrawMenuItem
 
-  ;; next row
+  ; Row 2 -------------------------------------------------
 
   LDA.w #$7EF34B 
   LDX.w #menu_offset(10,3)
@@ -300,7 +300,8 @@ DrawYItems:
   LDY.w #BottlesGFX
   JSR DrawMenuItem
 
-  ;; next row 
+  ; Row 3 -------------------------------------------------
+
   LDA.l $7EF34C : CMP.w #$0000 : BEQ .no_ocarina
   LDA.w $030F : BNE .spoof_ocarina
   LDA #$0001 ; Multi-songs not unlocked yet
@@ -345,7 +346,7 @@ DrawYItems:
   LDY.w #BottlesGFX
   JSR DrawMenuItem
 
-  ;; next row
+  ; Row 4 -------------------------------------------------
 
   LDA.w #$7EF349
   LDX.w #menu_offset(16,3)

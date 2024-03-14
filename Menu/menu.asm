@@ -95,10 +95,10 @@ Menu_UploadRight:
   JSR Menu_DrawTriforceIcons
   JSR Menu_DrawPendantIcons
 
-  JSR DrawPlaytimeLabel
+  JSR Menu_DrawPlaytimeLabel
 
-  JSR DrawHeartPieces
-  JSR DrawMusicNotes
+  JSR Menu_DrawHeartPieces
+  JSR Menu_DrawMusicNotes
   JSR Menu_DrawQuestStatus
   JSR Menu_DrawAreaNameTXT
   JSR DrawLocationName
