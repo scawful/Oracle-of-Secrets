@@ -1,8 +1,6 @@
-; =============================================================================
+; =========================================================
 ;  Text Routines
-; =============================================================================
 
-; Alphabet manual writing function
 'A' = $2550
 'B' = $2551
 'C' = $2552
@@ -43,22 +41,7 @@
 '9' = $2579
 '_' = $20F5
 
-; =============================================================================
-
-ScrollsLabel:
-  dw "SCROLLS:_"
-
-DrawScrollsLabel:
-  LDX.w #$10
-
-.draw2
-  LDA.w ScrollsLabel, X
-  STA.w $140C, X 
-  DEX : DEX : BPL .draw2
-
-  RTS
-
-; =============================================================================
+; =========================================================
 
 PlaytimeLabel:
   dw "PLAYTIME:_"
@@ -72,27 +55,22 @@ Menu_DrawPlaytimeLabel:
   STA.w $1692, X 
   DEX : DEX : BPL .draw2
 
+  ; TODO: Draw the current time based on the time system ram.
   ; ; Starting at 0 = $2570 we draw the hours 
   ; ; Get hours 
-  ; LDA $7EE000 
-  
-  ; ; CLC : ADC #$2570 
-
-  
+  ; LDA $7EE000 : CLC : ADC #$2570 
   ; STA.w $1692+#$12 ; First digit of hour 
-
   ; STA.w $1692+#$14 ; Second digit of hour 
 
   ; ; Get minutes
-  ; LDA $7EE001 
-  ; ; CLC : ADC #$2570
+  ; LDA $7EE001 : CLC : ADC #$2570
   ; STA.w $1692+#$16  ; First digit of minute
   ; STA.w $1692+#$18 ; Second digit of minute
 
   RTS
 }
 
-; =============================================================================
+; =========================================================
 
 Menu_ItemNames:
   dw "_____BOW______  "
@@ -221,7 +199,7 @@ MaybeDrawGoldstarName:
     RTS
 }
 
-; =============================================================================
+; =========================================================
 
 DrawLocationName:
 {
@@ -258,7 +236,7 @@ DrawLocationName:
 }
 
 
-; =============================================================================
+; =========================================================
 
 Menu_DrawSelect:
 {
@@ -272,7 +250,7 @@ Menu_DrawSelect:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 
 Menu_DrawQuestStatus:
 {
@@ -286,7 +264,7 @@ Menu_DrawQuestStatus:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 
 Menu_DrawAreaNameTXT:
 {
@@ -303,8 +281,8 @@ Menu_DrawAreaNameTXT:
   RTS
 }
 
-; =============================================================================
-    
+; =========================================================
+
 ; Player's Name
 ; $3D9-$3E4: See appendix for listing of character codes. 
 ; Note each of the six letters is represented by a 16-bit number.
@@ -328,6 +306,17 @@ Menu_DrawAreaNameTXT:
 ;
 ; ^This code is not the canon encoding of this character. ex. AF is the proper "I". 08 is not.
 
+AlphabetTable:
+  db $00, $01, $02, $03, $04, $05, $06, $07
+  db $AF, $09, $0A, $0B, $0C, $0D, $0E, $0F
+  db $10, $20, $21, $22, $23, $24, $25, $26
+  db $27, $28, $29, $2A, $2B, $2C, $2D, $2E
+  db $2F, $40, $41, $42, $43, $44, $45, $46
+  db $47, $48, $49, $4A, $4B, $4C, $4D, $4E
+  db $4F, $60, $61, $62, $63, $64, $65, $66
+  db $67, $68, $69, $6A, $6B, $6C, $6D, $6E
+  db $6F, $80, $81, $82, $85, $86, $B1
+
 Menu_DrawCharacterName:
 {
   REP #$30
@@ -347,9 +336,7 @@ Menu_DrawCharacterName:
   CMP.w #$2A : BCS .fix_lowercase 
   
 .write_to_screen
-  CLC : ADC #$2550
-  ; STA.w $138C, X
-  STA.w $134C, X
+  CLC : ADC #$2550 : STA.w $134C, X
   DEX : DEX : BPL .draw_name_loop
 
   RTS
