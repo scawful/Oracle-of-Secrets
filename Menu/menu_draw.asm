@@ -194,6 +194,7 @@ Menu_DrawHeartPieces:
 
 ; =========================================================
 
+; TODO: Attach SRAM values to these for progression
 Menu_DrawMusicNotes:
 {
   LDA.w #$02
