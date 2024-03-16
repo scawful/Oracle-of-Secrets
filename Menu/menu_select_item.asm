@@ -167,24 +167,39 @@ Menu_InitItemScreen:
 {
   SEP   #$30
   LDY.w $0202 : BNE .all_good
+    ; Loop through the SRM of each item to see if we have
+    ; one of them so we can start with that one selected.
+    .loop
+      INY : CPY.b #$25 : BCS .bad
+        LDX.w Menu_AddressIndex-1, Y
+        LDA.l $7EF300,             X
+    BEQ   .loop
 
-.loop
-  INY   : CPY.b #$25 : BCS .bad
+    STY.w $0202
+    BRA .all_good
+
+    .bad
+    ; If we made it here that means there are no items
+    ; available but one was still selected.
+    ; This should never happen.
+    STZ.w $0202
+
+    STZ   $0207
+    LDA.b #$04
+    STA.w $0200
+    RTS
+
+  .all_good 
+  ; Double check we still have the item that was selected.
+  ; This is to prevent a bug where we can get stuck in an
+  ; infinite loop later on.
   LDX.w Menu_AddressIndex-1, Y
   LDA.l $7EF300,             X
-  BEQ   .loop
-
-  STY.w $0202
-  BRA   .all_good
-
-.bad
-  STZ.w $0202
-
-.all_good 
-  STZ   $0207
-  LDA.b #$04
-  STA.w $0200
-  RTS
+  CMP.b #$01 : BCC .bad
+    STZ   $0207
+    LDA.b #$04
+    STA.w $0200
+    RTS
 }
 
 ; =========================================================

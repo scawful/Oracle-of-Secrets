@@ -216,77 +216,81 @@ MagicTilemap:
   dw MostlyFull, Full, Full, Full
 
 ; =========================================================
-; *$6FAFD-$6FB90 LOCAL
-
+; $06FAFD-$06FB90 LOCAL
 HUD_UpdateItemBox:
 {
   SEP #$30
   ; Dost thou haveth the the bow?
   LDA $7EF340 : BEQ .no_bow
+    CMP.b #$03 : BCC .no_silver_arrows
+      ; check how many arrows the player has
+      LDA   $7EF377 : BNE .draw_bow_item_icon
+        LDX.b #$03
+        BRA   .draw_bow_item_icon
 
-  CMP.b #$03 : BCC .no_silver_arrows
+    .no_silver_arrows
 
-  ; check how many arrows the player has
-  LDA   $7EF377 : BNE .draw_bow_item_icon
-  LDX.b #$03
-  BRA   .draw_bow_item_icon
+    LDX.b #$02
+    
+    LDA $7EF377 : BNE .draw_bow_item_icon
+      LDX.b #$01
 
-.no_silver_arrows
+    .draw_bow_item_icon
+    ; values of X correspond to how the icon will end up drawn:
+    ; 0x01 - normal bow with no arrows
+    ; 0x02 - normal bow with arrows
+    ; 0x03 - silver bow with no silver arrows
+    ; 0x04 - silver bow with silver arrows
+    TXA : STA $7EF340
 
-  LDX.b #$02
-  
-  LDA $7EF377 : BNE .draw_bow_item_icon
-  
-  LDX.b #$01
+  .no_bow
 
-.draw_bow_item_icon
-  ; values of X correspond to how the icon will end up drawn:
-  ; 0x01 - normal bow with no arrows
-  ; 0x02 - normal bow with arrows
-  ; 0x03 - silver bow with no silver arrows
-  ; 0x04 - silver bow with silver arrows
-  TXA : STA $7EF340
+  REP #$30
+  LDX $0202 : BEQ .no_equipped_item
+    LDA $7EF33F, X : AND.w #$00FF
+    CPX.w #$0004 : BNE .bombs_not_equipped
+      LDA.w #$0001
 
-.no_bow
-  REP   #$30
-  LDX   $0202 : BEQ .no_equipped_item
-  LDA   $7EF33F, X : AND.w #$00FF
-  CPX.w #$0004 : BNE .bombs_not_equipped
-  LDA.w #$0001
+    .bombs_not_equipped
 
-.bombs_not_equipped
-  CPX.w #$0006 : BNE .bottle1_not_equipped
-  JMP   .load_bottle_content
+    CPX.w #$0006 : BNE .bottle1_not_equipped
+      JMP .load_bottle_content
 
-.bottle1_not_equipped
-  CPX.w #$000C : BNE .bottle2_not_equipped
-  LDA.w #$0002 : JMP   .load_bottle_content
+    .bottle1_not_equipped
 
-.bottle2_not_equipped
-  CPX.w #$0012 : BNE .bottle3_not_equipped
-  LDA.w #$0003 : JMP   .load_bottle_content
+    CPX.w #$000C : BNE .bottle2_not_equipped
+      LDA.w #$0002 : JMP .load_bottle_content
 
-.bottle3_not_equipped
-  CPX.w #$0018 : BNE .bottle_not_equipped
-  LDA.w #$0004
+    .bottle2_not_equipped
 
-.load_bottle_content
-  TXY : TAX : LDA $7EF35B, X : AND.w #$00FF : TYX
+    CPX.w #$0012 : BNE .bottle3_not_equipped
+      LDA.w #$0003 : JMP .load_bottle_content
 
-.bottle_not_equipped
-  CPX.w #$000D : BNE .flute_not_equipped
-  LDA   $030F
+    .bottle3_not_equipped
 
-.flute_not_equipped
-  CPX.w #$0003 : BNE .hookshot_not_equipped
-  LDA.w GoldstarOrHookshot : BEQ .hookshot_not_equipped
-  SEC   : SBC.b #$01
+    CPX.w #$0018 : BNE .bottle_not_equipped
+      LDA.w #$0004
 
-.hookshot_not_equipped
+      .load_bottle_content
 
-  JSR HUD_DrawItem
+      TXY : TAX : LDA $7EF35B, X : AND.w #$00FF : TYX
 
-.no_equipped_item
+    .bottle_not_equipped
+
+    CPX.w #$000D : BNE .flute_not_equipped
+      LDA $030F
+
+    .flute_not_equipped
+
+    CPX.w #$0003 : BNE .hookshot_not_equipped
+      LDA.w GoldstarOrHookshot : BEQ .hookshot_not_equipped
+        SEC : SBC.b #$01
+
+    .hookshot_not_equipped
+
+    JSR HUD_DrawItem
+
+  .no_equipped_item
 
   RTS
 }
@@ -401,7 +405,7 @@ HudItems:
 org $0DF629
   dw $20F5, $20F5, $20F5, $20F5 ; No bow
 	dw $28BA, $28E9, $28E8, $28CB ; Empty bow
-	dw $28BA, $28BB, $24CA, $28CB ; Bow and arrows
+	dw $28BA, $28BB, $28CA, $28CB ; Bow and arrows
 	dw $28BA, $28E9, $28E8, $28CB ; Empty silvers bow
 	dw $28BA, $28BB, $24CA, $28CB ; Silver bow and arrows
 

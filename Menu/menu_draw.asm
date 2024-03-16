@@ -1,30 +1,32 @@
 ; =========================================================
 ;  Tilemap Menu background 
 
+; This function is bled into via the previous menu.asm function.
+
 Menu_DrawBackground:
 {
   REP #$30
   LDX.w #$FE ; $1700-17FF 
 
-.loop
-  LDA.w menu_frame, X
-  STA.w $1000, X
-  LDA.w menu_frame+$100, X
-  STA.w $1100, X
-  LDA.w menu_frame+$200, X
-  STA.w $1200, X
-  LDA.w menu_frame+$300, X
-  STA.w $1300, X
-  LDA.w menu_frame+$400, X
-  STA.w $1400, X
-  LDA.w menu_frame+$500, X
-  STA.w $1500, X
-  LDA.w menu_frame+$600, X
-  STA.w $1600, X
-  LDA.w menu_frame+$700, X
-  STA.w $1700, X
+  .loop
+    LDA.w menu_frame, X
+    STA.w $1000, X
+    LDA.w menu_frame+$100, X
+    STA.w $1100, X
+    LDA.w menu_frame+$200, X
+    STA.w $1200, X
+    LDA.w menu_frame+$300, X
+    STA.w $1300, X
+    LDA.w menu_frame+$400, X
+    STA.w $1400, X
+    LDA.w menu_frame+$500, X
+    STA.w $1500, X
+    LDA.w menu_frame+$600, X
+    STA.w $1600, X
+    LDA.w menu_frame+$700, X
+    STA.w $1700, X
 
-  DEX : DEX
+    DEX : DEX
   BPL .loop
 
   RTS
