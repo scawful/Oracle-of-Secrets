@@ -40,22 +40,19 @@ DrawMenuItem:
   STA.b $08
   STY.b $00
 
-  LDA.b [$08]
-  AND.w #$00FF
+  LDA.b [$08] : AND.w #$00FF : BNE .not_zero
+    LDY.w #NothingGFX
+    BRA .draw
 
-  BNE .not_zero
+  .not_zero
 
-  LDY.w #NothingGFX
-  BRA .draw
-
-.not_zero
   DEC
 
   ASL : ASL : ASL
   ADC.b $00
   TAY
 
-.draw
+  .draw
   LDA.w $0000,Y : STA.w $1108,X 
   LDA.w $0002,Y : STA.w $110A,X 
   LDA.w $0004,Y : STA.w $1148,X 
@@ -303,7 +300,8 @@ DrawYItems:
 
   ; Row 3 -------------------------------------------------
 
-  LDA.l $7EF34C : CMP.w #$0000 : BEQ .no_ocarina
+  print pc
+  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
   LDA.w $030F : BNE .spoof_ocarina
   LDA #$0001 ; Multi-songs not unlocked yet
 .spoof_ocarina 

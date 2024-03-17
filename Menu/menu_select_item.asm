@@ -33,7 +33,7 @@ Menu_AddressIndex:
   db $7EF34C ; shovel 7EF34F
   db $7EF34E ; Book 
   db $7EF350 ; Cane of Somaria
-  db $7EF351 ; Cane of Byrna
+  db $7EF351 ; Cane of Byrna / Fishing rod
   db $7EF34D ; Roc's Feather 
   db $7EF35E ; Bottle 3
 
@@ -64,7 +64,7 @@ Menu_ItemCursorPositions:
   dw menu_offset(12,2)  ; shovel 
   dw menu_offset(12,5)  ; feather 
   dw menu_offset(12,8)  ; somaria
-  dw menu_offset(12,12) ; byrna
+  dw menu_offset(12,12) ; byrna / fishing rod
   dw menu_offset(12,15) ; bunny hood
   dw menu_offset(12,18) ; bottle3
 
@@ -254,39 +254,36 @@ DoWeHaveThisItem_Override:
 {
   LDY $0202 : LDX.w Menu_AddressLong, Y
   LDA.l $7EF33F, X : BNE .have_this_item
-  CLC
-  RTL
-.have_this_item
+    CLC
+    RTL
+  .have_this_item
   SEC 
   RTL
 }
 
 TryEquipNextItem_Override:
 {
-.keep_looking
-  JSR GotoNextItem_Local
+  .keep_looking
+    JSR GotoNextItem_Local
   JSL DoWeHaveThisItem_Override : BCC .keep_looking
   RTS
 }
 
 SearchForEquippedItem_Override:
 {
-    SEP   #$30
+  SEP   #$30
  
-    LDY $0202 : LDX.w Menu_AddressLong-1, Y
-    LDA.l $7EF33F, X : CMP.b #$00 : BNE .item_available
-    
+  LDY $0202 : LDX.w Menu_AddressLong-1, Y
+  LDA.l $7EF33F, X : CMP.b #$00 : BNE .item_available
     ; In this case we have no equippable items
     STZ $0202 : STZ $0203 : STZ $0204
 
-  .we_have_that_item
+    .we_have_that_item
     RTL
 
   .item_available
-    ; Is there an item currently equipped (in the HUD slot)?
-    LDA $0202
-    BNE .alreadyEquipped
-    
+  ; Is there an item currently equipped (in the HUD slot)?
+  LDA $0202 : BNE .alreadyEquipped
     ; If not, set the equipped item to the Bow and Arrow 
     ; (even if we don't actually have it)
     LDA.b #$01 : STA $0202
@@ -297,11 +294,12 @@ SearchForEquippedItem_Override:
     ; We're done if we have that item
   .keep_looking
     JSR GotoNextItem_Local
-    JSL DoWeHaveThisItem_Override : BCC .keep_looking
-    BCS .we_have_that_item
+  JSL DoWeHaveThisItem_Override : BCC .keep_looking
+  BCS .we_have_that_item
     
-    JMP TryEquipNextItem_Override
+  JMP TryEquipNextItem_Override
 }
+
 pushpc 
 
 org $0DDEB0
@@ -320,5 +318,7 @@ SearchForEquippedItem:
   RTS
 }
 warnpc $0DE3C7
+
+; =========================================================
 
 pullpc
