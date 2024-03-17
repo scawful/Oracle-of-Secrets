@@ -396,7 +396,7 @@ Sprite_Twinrova_FireAttack:
     JSL Sprite_CheckTileCollision : BNE .no_collision
     JSL Sprite_Move
   .no_collision
-    JSR Sprite_Twinrova_FireAttack_AddFireGarnish
+    JSR AddFireGarnish
     JMP TrinexxBreath_AltEntry
 }
 
@@ -420,10 +420,10 @@ AddFireGarnish:
     LDA.b #$10 : STA $7FF800, X : STA $0FB4
     TYA : STA $7FF92C, X
     
-    LDA SprX, Y : STA $7FF83C, X
-    LDA SprXH, Y : STA $7FF878, X
-    LDA SprY, Y : CLC : ADC.b #$10 : STA $7FF81E, X
-    LDA SprYH, Y : ADC.b #$00 : STA $7FF85A, X
+    LDA.w SprX, Y : STA $7FF83C, X
+    LDA.w SprXH, Y : STA $7FF878, X
+    LDA.w SprY, Y : CLC : ADC.b #$10 : STA $7FF81E, X
+    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X
     
     LDA.b #$7F : STA $7FF90E, X
     STX $00
@@ -453,10 +453,10 @@ AddIceGarnishV2:
     LDA.b #$0C : STA $7FF800, X : STA $0FB4
     TYA : STA $7FF92C, X
     
-    LDA SprX, Y : STA $7FF83C, X
-    LDA SprXH, Y : STA $7FF878, X
-    LDA SprY, Y : CLC : ADC.b #$10 : STA $7FF81E, X
-    LDA SprYH, Y : ADC.b #$00 : STA $7FF85A, X
+    LDA.w SprX, Y : STA $7FF83C, X
+    LDA.w SprXH, Y : STA $7FF878, X
+    LDA.w SprY, Y : CLC : ADC.b #$10 : STA $7FF81E, X
+    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X
     
     LDA.b #$7F : STA $7FF90E, X : STX $00
     

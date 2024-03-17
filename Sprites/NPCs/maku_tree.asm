@@ -1,6 +1,6 @@
-;==============================================================================
+; =========================================================
 ; Sprite Properties
-;==============================================================================
+; =========================================================
 !SPRID              = $9E ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 00  ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
@@ -31,81 +31,79 @@
 
 %Set_Sprite_Properties(Sprite_MakuTree_Prep, Sprite_MakuTree_Long)
 
-;==============================================================================
+; =========================================================
 
 Sprite_MakuTree_Long:
 {
-  PHB : PHK : PLB
+    PHB : PHK : PLB
 
-  JSR Sprite_MakuTree_Draw ; Call the draw code
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
+    JSR Sprite_MakuTree_Draw ; Call the draw code
+    JSL Sprite_CheckActive   ; Check if game is not paused
+    BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
-  JSR Sprite_MakuTree_Main ; Call the main sprite code
+    JSR Sprite_MakuTree_Main ; Call the main sprite code
 
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+    PLB ; Get back the databank we stored previously
+    RTL ; Go back to original code
 }
-;==============================================================================
+; =========================================================
 
 Sprite_MakuTree_Prep:
 {
-  PHB : PHK : PLB
-  
-  LDA.l $7EF300
-    BNE .intro_is_done
+    PHB : PHK : PLB
+    ; Check if the intro has executed already.
+    LDA.l $7EF300 : BNE .intro_is_done
       STZ.w $0DD0, X ; Kill the sprite 
   .intro_is_done
-
-  PLB
-  RTL
+    PLB
+    RTL
 }
 
-;==============================================================================
+; =========================================================
 
 Sprite_MakuTree_Main:
 {
-  LDA.w SprAction, X                        ; Load the SprAction
-  JSL   UseImplicitRegIndexedLocalJumpTable ; Goto the SprAction we are currently in
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
 
   dw MakuTree_Handler
   dw MakuTree_MeetLink
-  dw MakuTree_GiveBow
+  dw MakuTree_GiveMoonPearl
 
   MakuTree_Handler:
   {
-    ; Check the progress flags 
-    LDA $7EF3D4 : CMP.b #$01 : BEQ .has_met_link
-    %GotoAction(1)
-    RTS
+      ; Check the progress flags 
+      LDA $7EF3D4 : CMP.b #$01 : BEQ .has_met_link
+      %GotoAction(1)
+      RTS
 
-  .has_met_link
-    %ShowSolicitedMessage($22) 
-    RTS
+    .has_met_link
+      %ShowSolicitedMessage($22) 
+      RTS
   }
 
   MakuTree_MeetLink:
   {
-    %ShowSolicitedMessage($20) : BCC .no_talk
-    LDA #$01 : STA $7EF3D4
-    LDA #$06 : STA $7EF3C7
-    %GotoAction(2)
-  .no_talk
-    RTS
+      %ShowSolicitedMessage($20) : BCC .no_talk
+      LDA #$01 : STA $7EF3D4
+      LDA #$06 : STA $7EF3C7
+      %GotoAction(2)
+    .no_talk
+      RTS
   }
 
-  MakuTree_GiveBow:
+  MakuTree_GiveMoonPearl:
   {
-    ; Give Link the Moon Pearl
-    LDY #$1F : JSL Link_ReceiveItem
-    %GotoAction(0)
-    RTS
+      ; Give Link the Moon Pearl
+      LDY #$1F : JSL Link_ReceiveItem
+      %GotoAction(0)
+      RTS
   }
 
 }
 
-;==============================================================================
+; =========================================================
 
 Sprite_MakuTree_Draw:
 {
@@ -163,7 +161,7 @@ Sprite_MakuTree_Draw:
 
   RTS
 
-;==============================================================================
+; =========================================================
 
 .start_index
 .nbr_of_tiles

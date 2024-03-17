@@ -45,7 +45,7 @@ print  "End of kydrog.asm                 ", pc
 incsrc "Sprites/Bosses/kydrog_boss.asm"
 print  "End of kydrog_boss.asm            ", pc
 
-incsrc "Sprites/maku_tree.asm"
+incsrc "Sprites/NPCs/maku_tree.asm"
 print  "End of maku_tree.asm              ", pc
 
 incsrc "Sprites/NPCs/mask_salesman.asm"
