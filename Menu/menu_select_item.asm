@@ -169,19 +169,22 @@ Menu_InitItemScreen:
   LDY.w $0202 : BNE .all_good
     ; Loop through the SRM of each item to see if we have
     ; one of them so we can start with that one selected.
+    .lookForAlternateItem
+    LDY.b #$00
+
     .loop
       INY : CPY.b #$25 : BCS .bad
         LDX.w Menu_AddressIndex-1, Y
         LDA.l $7EF300,             X
-    BEQ   .loop
+    BEQ .loop
 
     STY.w $0202
     BRA .all_good
 
     .bad
     ; If we made it here that means there are no items
-    ; available but one was still selected.
-    ; This should never happen.
+    ; available but one was still selected. This should
+    ; never happen under normal vanilla circumstances.
     STZ.w $0202
 
     STZ   $0207
@@ -195,7 +198,7 @@ Menu_InitItemScreen:
   ; infinite loop later on.
   LDX.w Menu_AddressIndex-1, Y
   LDA.l $7EF300,             X
-  CMP.b #$01 : BCC .bad
+  CMP.b #$01 : BCC .lookForAlternateItem
     STZ   $0207
     LDA.b #$04
     STA.w $0200
