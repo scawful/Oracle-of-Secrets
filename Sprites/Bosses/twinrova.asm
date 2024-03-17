@@ -672,6 +672,8 @@ Sprite_Twinrova_Draw:
     db $02, $02, $02, $02
 }
 
+; =========================================================
+
 ApplyTwinrovaGraphics:
 {
     PHX 
@@ -699,3 +701,309 @@ ApplyTwinrovaGraphics:
   TwinrovaGraphics:
     incbin twinrova.bin
 }
+
+pushpc
+
+; =========================================================
+; Blind Maiden spawn code
+
+org $0DB818
+  SpritePrep_LoadProperties:
+
+; Follower_BasicMover.dont_scare_kiki
+org $09A1E4
+Follower_BasicMover:
+{
+    #_09A1E4: LDA.l $7EF3CC
+    #_09A1E8: CMP.b #$06 ; FOLLOWER 06
+    #_09A1EA: BNE .no_blind_transform
+
+    #_09A1EC: REP #$20
+
+    #_09A1EE: LDA.b $A0
+    #_09A1F0: CMP.w #$00AC ; ROOM 00AC
+    #_09A1F3: BNE .no_blind_transform
+
+    #_09A1F5: LDA.l $7EF0CA
+    #_09A1F9: AND.w #$0100
+    #_09A1FC: BEQ .no_blind_transform
+
+    #_09A1FE: SEP #$20
+
+    #_09A200: JSL Follower_CheckBlindTrigger
+    #_09A204: BCC .no_blind_transform
+  .blind_transform
+    #_09A206: LDX.w $02CF
+
+    #_09A209: LDA.w $1A28,X
+    #_09A20C: STA.b $00
+
+    #_09A20E: LDA.w $1A3C,X
+    #_09A211: STA.b $01
+
+    #_09A213: LDA.w $1A00,X
+    #_09A216: STA.b $02
+
+    #_09A218: LDA.w $1A14,X
+    #_09A21B: STA.b $03
+
+    #_09A21D: LDA.b #$00
+    #_09A21F: STA.l $7EF3CC
+
+    #_09A223: JSL Blind_SpawnFromMaiden
+
+    #_09A227: INC.w $0468
+
+    #_09A22A: STZ.w $068E
+    #_09A22D: STZ.w $0690
+
+    #_09A230: LDA.b #$05
+    #_09A232: STA.b $11
+
+    #_09A234: LDA.b #$15 ; SONG 15
+    #_09A236: STA.w $012C
+
+    #_09A239: RTS
+  .no_blind_transform
+}
+
+; =========================================================
+
+org $099E90
+Follower_CheckBlindTrigger:
+{
+    #_099E90: PHB
+    #_099E91: PHK
+    #_099E92: PLB
+
+    #_099E93: LDX.w $02CF
+
+    #_099E96: LDA.w $1A00,X
+    #_099E99: STA.b $00
+
+    #_099E9B: LDA.w $1A14,X
+    #_099E9E: STA.b $01
+
+    #_099EA0: LDA.w $1A28,X
+    #_099EA3: STA.b $02
+
+    #_099EA5: LDA.w $1A3C,X
+    #_099EA8: STA.b $03
+
+    #_099EAA: STZ.b $0B
+
+    #_099EAC: LDA.w $1A50,X
+    #_099EAF: STA.b $0A
+    #_099EB1: BPL .positive_z
+
+    #_099EB3: LDA.b #$FF
+    #_099EB5: STA.b $0B
+
+  .positive_z
+    #_099EB7: REP #$20
+
+    #_099EB9: LDA.b $00
+    #_099EBB: CLC
+    #_099EBC: ADC.b $0A
+    #_099EBE: CLC
+    #_099EBF: ADC.w #$000C
+    #_099EC2: STA.b $00
+
+    #_099EC4: LDA.b $02
+    #_099EC6: CLC
+    #_099EC7: ADC.w #$0008
+    #_099ECA: STA.b $02
+
+    #_099ECC: LDA.w #$1568
+    #_099ECF: SEC
+    #_099ED0: SBC.b $00
+    #_099ED2: BPL .positive_x
+
+    #_099ED4: EOR.w #$FFFF
+    #_099ED7: INC A
+
+  .positive_x
+    #_099ED8: CMP.w #$0018
+    #_099EDB: BCS .fail
+
+    #_099EDD: LDA.w #$1980
+    #_099EE0: SEC
+    #_099EE1: SBC.b $02
+    #_099EE3: BPL .positive_y
+
+    #_099EE5: EOR.w #$FFFF
+    #_099EE8: INC A
+
+  .positive_y
+    #_099EE9: CMP.w #$0018
+    #_099EEC: BCS .fail
+
+  .success
+    #_099EEE: SEP #$20
+
+    #_099EF0: PLB
+
+    #_099EF1: SEC
+
+    #_099EF2: RTL
+
+  .fail
+    #_099EF3: SEP #$20
+
+    #_099EF5: PLB
+
+    #_099EF6: CLC
+
+    #_099EF7: RTL
+}
+
+; =========================================================
+
+org $1DA03C
+Blind_SpawnFromMaiden:
+{
+  #_1DA03C: LDX.b #$00
+
+  #_1DA03E: LDA.b #$09
+  #_1DA040: STA.w $0DD0,X
+
+  #_1DA043: LDA.b #$CE ; SPRITE CE
+  #_1DA045: STA.w $0E20,X
+
+  #_1DA048: LDA.b $00
+  #_1DA04A: STA.w $0D10,X
+
+  #_1DA04D: LDA.b $01
+  #_1DA04F: STA.w $0D30,X
+
+  #_1DA052: LDA.b $02
+  #_1DA054: SEC
+  #_1DA055: SBC.b #$10
+  #_1DA057: STA.w $0D00,X
+
+  #_1DA05A: LDA.b $03
+  #_1DA05C: STA.w $0D20,X
+
+  #_1DA05F: JSL SpritePrep_LoadProperties
+
+  #_1DA063: LDA.b #$C0
+  #_1DA065: STA.w $0E10,X
+
+  #_1DA068: LDA.b #$15
+  #_1DA06A: STA.w $0DC0,X
+
+  #_1DA06D: LDA.b #$02
+  #_1DA06F: STA.w $0DE0,X
+  #_1DA072: STA.w $0BA0,X
+
+  #_1DA075: LDA.w $0403
+  #_1DA078: ORA.b #$20
+  #_1DA07A: STA.w $0403
+
+  #_1DA07D: STZ.w $0B69
+
+  #_1DA080: RTL
+}
+
+; =========================================================
+
+SpritePrep_Blind_PrepareBattle:
+{
+    #_1DA081: LDA.l $7EF3CC
+    #_1DA085: CMP.b #$06 ; FOLLOWER 06
+    #_1DA087: BEQ .despawn
+
+    #_1DA089: LDA.w $0403
+    #_1DA08C: AND.b #$20
+    #_1DA08E: BEQ .despawn
+
+    #_1DA090: LDA.b #$60
+    #_1DA092: STA.w $0E10,X
+
+    #_1DA095: LDA.b #$01
+    #_1DA097: STA.w $0DB0,X
+
+    #_1DA09A: LDA.b #$02
+    #_1DA09C: STA.w $0DE0,X
+
+    #_1DA09F: LDA.b #$04
+    #_1DA0A1: STA.w $0EB0,X
+
+    #_1DA0A4: LDA.b #$07
+    #_1DA0A6: STA.w $0DC0,X
+
+    #_1DA0A9: STZ.w $0B69
+
+    #_1DA0AC: RTL
+
+  .despawn
+    #_1DA0AD: STZ.w $0DD0,X
+
+    #_1DA0B0: RTL
+}
+; =========================================================
+
+
+BlindLaser_SpawnTrailGarnish:
+{
+    #_1DA0B1: LDA.w $0E80,X
+    #_1DA0B4: AND.b #$00
+    #_1DA0B6: BNE .exit
+
+    #_1DA0B8: PHX
+    #_1DA0B9: TXY
+
+    #_1DA0BA: LDX.b #$1D
+
+  .next_slot
+    #_1DA0BC: LDA.l $7FF800,X
+    #_1DA0C0: BEQ .free_slot
+
+    #_1DA0C2: DEX
+    #_1DA0C3: BPL .next_slot
+
+    #_1DA0C5: DEC.w $0FF8
+    #_1DA0C8: BPL .use_search_index
+
+    #_1DA0CA: LDA.b #$1D
+    #_1DA0CC: STA.w $0FF8
+
+  .use_search_index
+    #_1DA0CF: LDX.w $0FF8
+
+  .free_slot
+    #_1DA0D2: LDA.b #$0F ; GARNISH 0F
+    #_1DA0D4: STA.l $7FF800,X
+    #_1DA0D8: STA.w $0FB4
+
+    #_1DA0DB: LDA.w $0DC0,Y
+    #_1DA0DE: STA.l $7FF9FE,X
+
+    #_1DA0E2: TYA
+    #_1DA0E3: STA.l $7FF92C,X
+
+    #_1DA0E7: LDA.w $0D10,Y
+    #_1DA0EA: STA.l $7FF83C,X
+
+    #_1DA0EE: LDA.w $0D30,Y
+    #_1DA0F1: STA.l $7FF878,X
+
+    #_1DA0F5: LDA.w $0D00,Y
+    #_1DA0F8: CLC
+    #_1DA0F9: ADC.b #$10
+    #_1DA0FB: STA.l $7FF81E,X
+
+    #_1DA0FF: LDA.w $0D20,Y
+    #_1DA102: ADC.b #$00
+    #_1DA104: STA.l $7FF85A,X
+
+    #_1DA108: LDA.b #$0A
+    #_1DA10A: STA.l $7FF90E,X
+
+    #_1DA10E: PLX
+
+  .exit
+    #_1DA10F: RTS
+}
+
+pullpc
