@@ -716,56 +716,40 @@ org $0DB818
 org $09A1E4
 Follower_BasicMover:
 {
-    #_09A1E4: LDA.l $7EF3CC
-    #_09A1E8: CMP.b #$06 ; FOLLOWER 06
-    #_09A1EA: BNE .no_blind_transform
-
-    #_09A1EC: REP #$20
-
-    #_09A1EE: LDA.b $A0
-    #_09A1F0: CMP.w #$00AC ; ROOM 00AC
-    #_09A1F3: BNE .no_blind_transform
-
-    #_09A1F5: LDA.l $7EF0CA
-    #_09A1F9: AND.w #$0100
-    #_09A1FC: BEQ .no_blind_transform
-
-    #_09A1FE: SEP #$20
-
-    #_09A200: JSL Follower_CheckBlindTrigger
-    #_09A204: BCC .no_blind_transform
+    ; Check if the follower is the blind maiden
+    LDA.l $7EF3CC : CMP.b #$06 : BNE .no_blind_transform
+      ; Check if we are in room 0xAC
+      REP #$20 
+      LDA.b $A0 : CMP.w #$00AC : BNE .no_blind_transform
+        ; Check room flag 0x65
+        LDA.l $7EF0CA : AND.w #$0100 : BEQ .no_blind_transform
+          SEP #$20
+          JSL Follower_CheckBlindTrigger : BCC .no_blind_transform
   .blind_transform
-    #_09A206: LDX.w $02CF
+    ; Load follower animation step index from $02CF
+    LDX.w $02CF
+    LDA.w $1A28, X : STA.b $00 ; Follower XL
+    LDA.w $1A3C, X : STA.b $01 ; Follower XH
+    LDA.w $1A00, X : STA.b $02 ; Follower YL
+    LDA.w $1A14, X : STA.b $03 ; Follower YH
 
-    #_09A209: LDA.w $1A28,X
-    #_09A20C: STA.b $00
+    ; Dismiss the follower and spawn Twinrova
+    LDA.b #$00 : STA.l $7EF3CC
+    JSL Blind_SpawnFromMaiden
 
-    #_09A20E: LDA.w $1A3C,X
-    #_09A211: STA.b $01
+    ; Close the shutter door 
+    INC.w $0468
 
-    #_09A213: LDA.w $1A00,X
-    #_09A216: STA.b $02
+    ; Clear door tilemap position for some reason
+    STZ.w $068E : STZ.w $0690
 
-    #_09A218: LDA.w $1A14,X
-    #_09A21B: STA.b $03
+    ; TODO: Find out what submodule this is.
+    LDA.b #$05 : STA.b $11
 
-    #_09A21D: LDA.b #$00
-    #_09A21F: STA.l $7EF3CC
+     ; SONG 15
+    LDA.b #$15 : STA.w $012C
 
-    #_09A223: JSL Blind_SpawnFromMaiden
-
-    #_09A227: INC.w $0468
-
-    #_09A22A: STZ.w $068E
-    #_09A22D: STZ.w $0690
-
-    #_09A230: LDA.b #$05
-    #_09A232: STA.b $11
-
-    #_09A234: LDA.b #$15 ; SONG 15
-    #_09A236: STA.w $012C
-
-    #_09A239: RTS
+    RTS
   .no_blind_transform
 }
 
