@@ -223,7 +223,7 @@ HUD_UpdateItemBox:
   ; Dost thou haveth the the bow?
   LDA $7EF340 : BEQ .no_bow
     CMP.b #$03 : BCC .no_silver_arrows
-      ; check how many arrows the player has
+      ; Check how many arrows the player has:
       LDA   $7EF377 : BNE .draw_bow_item_icon
         LDX.b #$03
         BRA   .draw_bow_item_icon
@@ -236,7 +236,7 @@ HUD_UpdateItemBox:
       LDX.b #$01
 
     .draw_bow_item_icon
-    ; values of X correspond to how the icon will end up drawn:
+    ; Values of X correspond to how the icon will end up drawn:
     ; 0x01 - normal bow with no arrows
     ; 0x02 - normal bow with arrows
     ; 0x03 - silver bow with no silver arrows
@@ -273,7 +273,8 @@ HUD_UpdateItemBox:
 
       .load_bottle_content
 
-      TXY : TAX : LDA $7EF35B, X : AND.w #$00FF : TYX
+      print pc
+      TXY : TAX : LDA $7EF35C, X : AND.w #$00FF : TYX
 
     .bottle_not_equipped
 
