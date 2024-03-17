@@ -78,24 +78,26 @@ Sprite_Twinrova_CheckIfDead:
 
 Sprite_Twinrova_Prep:
 {
-  PHB : PHK : PLB
-  
-  STZ $0D80, X
-  LDA.b #$40 : STA $0E50, X ; Health
-  LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
+    PHB : PHK : PLB
+    
+    ; PrepareBattle
+    LDA.l $7EF3CC : CMP.b #$06 : BEQ .despawn
+      LDA.b #$40 : STA $0E50, X ; Health
+      LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
 
-  %SetSpriteSpeedX(15)
-  %SetSpriteSpeedX(15)
+      %SetSpriteSpeedX(15)
+      %SetSpriteSpeedX(15)
 
-  LDA #$10 : STA $08
-  LDA #$10 : STA $09
+      LDA #$10 : STA $08
+      LDA #$10 : STA $09
+      STZ $0D80, X
 
-  ; TODO: Setup the follower logic with a hook
-  ; rather than dismissing the follower here.
-  LDA #$00 : STA $7EF3CC
-
-  PLB
-  RTL
+      PLB
+      RTL
+  .despawn
+    STZ.w $0DD0, X
+    PLB
+    RTL
 }
 
 ; =========================================================
