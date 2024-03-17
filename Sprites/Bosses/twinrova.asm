@@ -758,89 +758,45 @@ Follower_BasicMover:
 org $099E90
 Follower_CheckBlindTrigger:
 {
-    #_099E90: PHB
-    #_099E91: PHK
-    #_099E92: PLB
+    PHB : PHK : PLB
 
-    #_099E93: LDX.w $02CF
+    ; Cache the follower's position
+    LDX.w $02CF
+    LDA.w $1A00, X : STA.b $00
+    LDA.w $1A14, X : STA.b $01
+    LDA.w $1A28, X : STA.b $02
+    LDA.w $1A3C, X : STA.b $03
+    STZ.b $0B
 
-    #_099E96: LDA.w $1A00,X
-    #_099E99: STA.b $00
-
-    #_099E9B: LDA.w $1A14,X
-    #_099E9E: STA.b $01
-
-    #_099EA0: LDA.w $1A28,X
-    #_099EA3: STA.b $02
-
-    #_099EA5: LDA.w $1A3C,X
-    #_099EA8: STA.b $03
-
-    #_099EAA: STZ.b $0B
-
-    #_099EAC: LDA.w $1A50,X
-    #_099EAF: STA.b $0A
-    #_099EB1: BPL .positive_z
-
-    #_099EB3: LDA.b #$FF
-    #_099EB5: STA.b $0B
+    ; Check if the follower is within the trigger area
+    LDA.w $1A50, X : STA.b $0A : BPL .positive_z
+      LDA.b #$FF : STA.b $0B
 
   .positive_z
-    #_099EB7: REP #$20
+    REP #$20
 
-    #_099EB9: LDA.b $00
-    #_099EBB: CLC
-    #_099EBC: ADC.b $0A
-    #_099EBE: CLC
-    #_099EBF: ADC.w #$000C
-    #_099EC2: STA.b $00
-
-    #_099EC4: LDA.b $02
-    #_099EC6: CLC
-    #_099EC7: ADC.w #$0008
-    #_099ECA: STA.b $02
-
-    #_099ECC: LDA.w #$1568
-    #_099ECF: SEC
-    #_099ED0: SBC.b $00
-    #_099ED2: BPL .positive_x
-
-    #_099ED4: EOR.w #$FFFF
-    #_099ED7: INC A
-
+    LDA.b $00 : CLC : ADC.b $0A : CLC : ADC.w #$000C : STA.b $00
+    LDA.b $02 : CLC : ADC.w #$0008 : STA.b $02
+    LDA.w #$1568 : SEC : SBC.b $00 : BPL .positive_x
+      EOR.w #$FFFF : INC A
   .positive_x
-    #_099ED8: CMP.w #$0018
-    #_099EDB: BCS .fail
-
-    #_099EDD: LDA.w #$1980
-    #_099EE0: SEC
-    #_099EE1: SBC.b $02
-    #_099EE3: BPL .positive_y
-
-    #_099EE5: EOR.w #$FFFF
-    #_099EE8: INC A
+    CMP.w #$0018 : BCS .fail
+      LDA.w #$1980 : SEC : SBC.b $02 : BPL .positive_y
+        EOR.w #$FFFF : INC A
 
   .positive_y
-    #_099EE9: CMP.w #$0018
-    #_099EEC: BCS .fail
+    CMP.w #$0018
+    BCS .fail
 
   .success
-    #_099EEE: SEP #$20
-
-    #_099EF0: PLB
-
-    #_099EF1: SEC
-
-    #_099EF2: RTL
+    SEP #$20
+    PLB : SEC
+    RTL
 
   .fail
-    #_099EF3: SEP #$20
-
-    #_099EF5: PLB
-
-    #_099EF6: CLC
-
-    #_099EF7: RTL
+    SEP #$20
+    PLB : CLC
+    RTL
 }
 
 ; =========================================================
