@@ -848,47 +848,37 @@ Follower_CheckBlindTrigger:
 org $1DA03C
 Blind_SpawnFromMaiden:
 {
-  #_1DA03C: LDX.b #$00
+  LDX.b #$00 ; Load the boss into sprite index 0
 
-  #_1DA03E: LDA.b #$09
-  #_1DA040: STA.w $0DD0,X
+  ; Set the sprite to alive and active
+  LDA.b #$09 : STA.w $0DD0,X
 
-  #_1DA043: LDA.b #$CE ; SPRITE CE
-  #_1DA045: STA.w $0E20,X
+  ; SPRITE CE
+  LDA.b #$CE : STA.w $0E20,X
 
-  #_1DA048: LDA.b $00
-  #_1DA04A: STA.w $0D10,X
+  ; Load the position cache from the maiden follower
+  LDA.b $00 : STA.w $0D10,X
+  LDA.b $01 : STA.w $0D30,X
+  LDA.b $02 : SEC : SBC.b #$10 : STA.w $0D00,X
+  LDA.b $03 : STA.w $0D20,X
+  JSL SpritePrep_LoadProperties
 
-  #_1DA04D: LDA.b $01
-  #_1DA04F: STA.w $0D30,X
+  ; Set SprTimerC
+  LDA.b #$C0 : STA.w $0E10,X
 
-  #_1DA052: LDA.b $02
-  #_1DA054: SEC
-  #_1DA055: SBC.b #$10
-  #_1DA057: STA.w $0D00,X
+  ; Set SprGfx
+  LDA.b #$15 : STA.w $0DC0,X
 
-  #_1DA05A: LDA.b $03
-  #_1DA05C: STA.w $0D20,X
+  ; Set SprMiscC and bulletproof properties
+  LDA.b #$02 : STA.w $0DE0,X : STA.w $0BA0,X
 
-  #_1DA05F: JSL SpritePrep_LoadProperties
+  ; Set the 2nd key / heart piece items taken room flag 
+  LDA.w $0403 : ORA.b #$20 : STA.w $0403
 
-  #_1DA063: LDA.b #$C0
-  #_1DA065: STA.w $0E10,X
+  ; Clear blinds head spin flag
+  STZ.w $0B69
 
-  #_1DA068: LDA.b #$15
-  #_1DA06A: STA.w $0DC0,X
-
-  #_1DA06D: LDA.b #$02
-  #_1DA06F: STA.w $0DE0,X
-  #_1DA072: STA.w $0BA0,X
-
-  #_1DA075: LDA.w $0403
-  #_1DA078: ORA.b #$20
-  #_1DA07A: STA.w $0403
-
-  #_1DA07D: STZ.w $0B69
-
-  #_1DA080: RTL
+  RTL
 }
 
 ; =========================================================
