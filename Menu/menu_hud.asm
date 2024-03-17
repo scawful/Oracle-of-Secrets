@@ -247,7 +247,12 @@ HUD_UpdateItemBox:
 
   REP #$30
   LDX $0202 : BEQ .no_equipped_item
-    LDA $7EF33F, X : AND.w #$00FF
+    TXY
+    LDA.l Menu_AddressIndex-1, X
+    AND.w #$00FF : TAX
+    LDA.l $7EF300, X : AND.w #$00FF
+    TYX
+
     CPX.w #$0004 : BNE .bombs_not_equipped
       LDA.w #$0001
 
@@ -259,21 +264,20 @@ HUD_UpdateItemBox:
     .bottle1_not_equipped
 
     CPX.w #$000C : BNE .bottle2_not_equipped
-      LDA.w #$0002 : JMP .load_bottle_content
+      LDA.w #$0001 : JMP .load_bottle_content
 
     .bottle2_not_equipped
 
     CPX.w #$0012 : BNE .bottle3_not_equipped
-      LDA.w #$0003 : JMP .load_bottle_content
+      LDA.w #$0002 : JMP .load_bottle_content
 
     .bottle3_not_equipped
 
     CPX.w #$0018 : BNE .bottle_not_equipped
-      LDA.w #$0004
+      LDA.w #$0003
 
       .load_bottle_content
 
-      print pc
       TXY : TAX : LDA $7EF35C, X : AND.w #$00FF : TYX
 
     .bottle_not_equipped
