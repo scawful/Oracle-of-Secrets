@@ -119,6 +119,17 @@ Menu_SongNames:
 Menu_DrawItemName:
 {
   SEP #$30
+
+  ; Double check that we have the item.
+  LDY.w $0202
+  LDX.w Menu_AddressIndex-1, Y
+  LDA.l $7EF300,             X
+  CMP.b #$01 : BCS .haveItem
+    REP #$30
+    RTS
+
+  .haveItem
+
   LDA.w $0202 : CMP.b #$03 : BEQ .goldstar
   LDA.w $0202 : CMP.b #$0D : BEQ .ocarina
   ; Check if it's a bottle
@@ -127,52 +138,52 @@ Menu_DrawItemName:
   LDA.w $0202 : CMP.b #$12 : BEQ .bottle_3
   LDA.w $0202 : CMP.b #$18 : BEQ .bottle_4
   
-.draw_item
-  REP #$30
-  LDA.w $0202 : BEQ .no_items
-  DEC : ASL #5 : TAX
-  LDY.w #$000
+  .draw_item
+        REP #$30
+        LDA.w $0202 : BEQ .no_items
+          DEC : ASL #5 : TAX
+          LDY.w #$000
 
-.loop
-  LDA.w Menu_ItemNames, X ; Load your text character
-  STA.w $1692, Y ; <- into the buffer
-  INX : INX
-  INY : INY : CPY #$001C : BCC .loop
-.no_items
-  RTS
+          .loop
+            LDA.w Menu_ItemNames, X ; Load your text character
+            STA.w $1692, Y ; <- into the buffer
+            INX : INX
+          INY : INY : CPY #$001C : BCC .loop
+        .no_items
+        RTS
 
-; Draw Bottle Description
-.bottle_1
-  REP #$30 : LDX #$0000 : JMP .draw_bottle
-.bottle_2
-  REP #$30 : LDX #$0001 : JMP .draw_bottle
-.bottle_3
-  REP #$30 : LDX #$0002 : JMP .draw_bottle
-.bottle_4
-  REP #$30 : LDX #$0003
-.draw_bottle
-  JSR DrawBottleNames
-  RTS
+        ; Draw Bottle Description
+        .bottle_1
+        REP #$30 : LDX #$0000 : JMP .draw_bottle
+          .bottle_2
+          REP #$30 : LDX #$0001 : JMP .draw_bottle
+            .bottle_3
+            REP #$30 : LDX #$0002 : JMP .draw_bottle
+              .bottle_4
+              REP #$30 : LDX #$0003
 
-.goldstar
-  LDA GoldstarOrHookshot : CMP.b #$02 : BNE .draw_item
-  JSR MaybeDrawGoldstarName
-  RTS
+        .draw_bottle
+        JSR DrawBottleNames
+        RTS
 
-.ocarina
-  REP #$30
+        .goldstar
+      LDA GoldstarOrHookshot : CMP.b #$02 : BNE .draw_item
+      JSR MaybeDrawGoldstarName
+      RTS
 
-  ; Check the timer and see if we should draw the item name
-  LDA $1A : AND.w #$00FF : CMP #$0080 : BCC .draw_item
+      .ocarina
+      REP #$30
 
+    ; Check the timer and see if we should draw the item name
+    LDA $1A : AND.w #$00FF : CMP #$0080 : BCC .draw_item
   LDA $030F : BEQ .draw_item
   LDA $030F : AND.w #$00FF : DEC : ASL #5 : TAX 
   LDY.w #$0000
-.draw_ocarina_loop
-  LDA.w Menu_SongNames, X : STA.w $1692, Y 
+
+  .draw_ocarina_loop
+    LDA.w Menu_SongNames, X : STA.w $1692, Y 
   INX #2 : INY #2 : CPY #$001C : BCC .draw_ocarina_loop
   RTS
-
 }
 
 DrawBottleNames:

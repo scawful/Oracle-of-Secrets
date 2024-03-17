@@ -1,8 +1,7 @@
 ; =========================================================
 ;  Tilemap Menu background 
 
-; This function is bled into via the previous menu.asm function.
-
+; This function is bled into via the previous menu.asm file.
 Menu_DrawBackground:
 {
   REP #$30
