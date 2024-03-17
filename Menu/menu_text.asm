@@ -99,6 +99,7 @@ Menu_ItemNames:
   dw "__STONE_MASK__  "
   dw "____BOTTLE____  "
 
+Menu_MushroomLabel:
 Menu_BottleItems:
   dw "___MUSHROOM___  "
   dw "_EMPTY_BOTTLE_  "
@@ -131,12 +132,13 @@ Menu_DrawItemName:
   .haveItem
 
   LDA.w $0202 : CMP.b #$03 : BEQ .goldstar
-  LDA.w $0202 : CMP.b #$0D : BEQ .ocarina
+                CMP.b #$05 : BEQ .mushroom
+                CMP.b #$0D : BEQ .ocarina
   ; Check if it's a bottle
-  LDA.w $0202 : CMP.b #$06 : BEQ .bottle_1
-  LDA.w $0202 : CMP.b #$0C : BEQ .bottle_2
-  LDA.w $0202 : CMP.b #$12 : BEQ .bottle_3
-  LDA.w $0202 : CMP.b #$18 : BEQ .bottle_4
+                CMP.b #$06 : BEQ .bottle_1
+                CMP.b #$0C : BEQ .bottle_2
+                CMP.b #$12 : BEQ .bottle_3
+                CMP.b #$18 : BEQ .bottle_4
   
   .draw_item
         REP #$30
@@ -166,10 +168,15 @@ Menu_DrawItemName:
         JSR DrawBottleNames
         RTS
 
-        .goldstar
+      .goldstar
       LDA GoldstarOrHookshot : CMP.b #$02 : BNE .draw_item
-      JSR MaybeDrawGoldstarName
-      RTS
+        JSR DrawGoldstarName
+        RTS
+
+      .mushroom
+      LDA.l $7EF344 : CMP.b #$02 : BCS .draw_item
+        JSR DrawMushroomName
+        RTS
 
       .ocarina
       REP #$30
@@ -188,25 +195,38 @@ Menu_DrawItemName:
 
 DrawBottleNames:
 {
-
     LDA.l $7EF35C, X : AND.w #$00FF 
     DEC : ASL #5 : TAX
     LDY.w #$0000
-  .draw_bottle_loop
-    LDA.w Menu_BottleItems, X : STA.w $1692, Y
-    INX #2 : INY #2 
+
+    .draw_bottle_loop
+      LDA.w Menu_BottleItems, X : STA.w $1692, Y
+      INX #2 : INY #2 
     CPY #$001C : BCC .draw_bottle_loop
     RTS
 }
 
-MaybeDrawGoldstarName: 
+DrawGoldstarName: 
 {
     REP #$30
     LDX.w #$0000
     LDY.w #$0000
-  .draw_goldstar_loop
-    LDA.w Menu_GoldstarLabel, X
+
+    .draw_goldstar_loop
+      LDA.w Menu_GoldstarLabel, X
     STA.w $1692, X : INX #2 : INY #2 : CPY #$001C : BCC .draw_goldstar_loop
+    RTS
+}
+
+DrawMushroomName: 
+{
+    REP #$30
+    LDX.w #$0000
+    LDY.w #$0000
+
+    .draw_mushroom_loop
+      LDA.w Menu_MushroomLabel, X
+    STA.w $1692, X : INX #2 : INY #2 : CPY #$001C : BCC .draw_mushroom_loop
     RTS
 }
 
