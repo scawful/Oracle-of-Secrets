@@ -60,10 +60,10 @@ print  "End of anti_kirby.asm             ", pc
 incsrc "Sprites/Enemies/sea_urchin.asm"
 print  "End of sea_urchin.asm             ", pc
 
-incsrc "Sprites/switch_track.asm"
+incsrc "Sprites/Objects/switch_track.asm"
 print  "End of switch_track.asm           ", pc
 
-incsrc "Sprites/mineswitch.asm"
+incsrc "Sprites/Objects/mineswitch.asm"
 print  "End of mineswitch.asm             ", pc
 
 incsrc "Sprites/NPCs/village_dog.asm"
@@ -78,7 +78,8 @@ print  "End of twinrova.asm               ",  pc
 incsrc "Sprites/Bosses/kydreeok.asm"
 incsrc "Sprites/Bosses/kydreeok_head.asm"
 
-incsrc "Sprites/deku_leaf.asm"
+incsrc "Sprites/Objects/deku_leaf.asm"
+print  "End of deku_leaf.asm              ",  pc
 
 incsrc "Sprites/portal_sprite.asm"
 print  "End of portal_sprite.asm          ",  pc
