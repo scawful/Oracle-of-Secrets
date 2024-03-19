@@ -20,7 +20,8 @@ org $1DB682 : dw hexto555($7b7b83), hexto555($bbbbbb)
 org $1DB68A : dw hexto555($a58100), hexto555($dfb93f)
 
 ; Free ROM in Bank 00
-org $0098AB : db $D8>>1
+org $0098AB : db $6C
+org $0098AC : db $64
 
 ; Module RunInterface 0E.01: Item Menu
 org $00F877 : db Menu_Entry>>0
@@ -68,6 +69,7 @@ Menu_Entry:
   dw Menu_ScrollUp      ; 08
   dw Menu_CheckBottle   ; 09
   dw Menu_Exit          ; 0A
+  dw Menu_CopyToRight   ; 0B
 
 ; =========================================================
 ; 00 MENU INIT GRAPHICS 
@@ -123,10 +125,10 @@ Menu_UploadLeft:
   ; INSERT PALETTE -------
 
   LDX.w #$3E
-.loop
-  LDA.w Menu_Palette, X
-  STA.l $7EC502, X
-  DEX : DEX
+  .loop
+    LDA.w Menu_Palette, X
+    STA.l $7EC502, X
+    DEX : DEX
   BPL .loop
   
   SEP #$30
@@ -177,40 +179,39 @@ Menu_ItemScreen:
 
   INC $0207
   LDA.w $0202 : BEQ .no_inputs
-
-  ; Scroll through joypad 1 inputs 
-  ASL : TAY : LDA.b $F4 
-  LSR : BCS .move_right
-  LSR : BCS .move_left
-  LSR : BCS .move_down
-  LSR : BCS .move_up
+    ; Scroll through joypad 1 inputs 
+    ASL : TAY : LDA.b $F4 
+    LSR : BCS .move_right
+    LSR : BCS .move_left
+    LSR : BCS .move_down
+    LSR : BCS .move_up
 
   BRA .no_inputs
 
-.move_right
+  .move_right
   JSR Menu_DeleteCursor
   JSR Menu_FindNextItem
   BRA .draw_cursor
   
-.move_left
+  .move_left
   JSR Menu_DeleteCursor
   JSR Menu_FindPrevItem
   BRA .draw_cursor
 
-.move_down 
+  .move_down 
   JSR Menu_DeleteCursor
   JSR Menu_FindNextDownItem
   BRA .draw_cursor
 
-.move_up 
+  .move_up 
   JSR Menu_DeleteCursor
   JSR Menu_FindNextUpItem
   BRA .draw_cursor
 
-.draw_cursor
+  .draw_cursor
   LDA.b #$20 : STA.w $012F ; cursor move sound effect 
 
-.no_inputs
+  .no_inputs
   SEP #$30
   LDA.w $0202
   ASL : TAY
@@ -222,16 +223,15 @@ Menu_ItemScreen:
   REP #$20
 
   BEQ .no_delete 
+    ; Delete cursor
+    LDA.w #$20F5
+    STA.w $1108, X : STA.w $1148, X
+    STA.w $114E, X : STA.w $110E, X 
+    STA.w $11C8, X : STA.w $1188, X
+    STA.w $118E, X : STA.w $11CE, X 
+    BRA .done
 
-  ; Delete cursor
-  LDA.w #$20F5
-  STA.w $1108, X : STA.w $1148, X
-  STA.w $114E, X : STA.w $110E, X 
-  STA.w $11C8, X : STA.w $1188, X
-  STA.w $118E, X : STA.w $11CE, X 
-  BRA .done
-
-.no_delete 
+  .no_delete 
   LDA.w #$3060 : STA.w $1108, X ; corner 
   LDA.w #$3070 : STA.w $1148, X
 
@@ -244,7 +244,7 @@ Menu_ItemScreen:
   LDA.w #$7070 : STA.w $118E, X 
   LDA.w #$F060 : STA.w $11CE, X ; corner 
 
-.done
+  .done
   JSR Menu_DrawItemName
   SEP #$20
   LDA.b #$22 : STA.w $0116
@@ -287,10 +287,9 @@ Menu_ScrollFrom:
 {
   JSR Menu_ScrollHorizontal
   BCC .not_done
+    JMP Menu_InitItemScreen
 
-  JMP Menu_InitItemScreen
-
-.not_done
+  .not_done
   RTS
 }
 
@@ -307,11 +306,11 @@ Menu_ScrollUp:
   LDX.w MenuScrollLevelV
   LDA.w Menu_Scroll, X 
   STA.b $EA : BNE .loop
-  STZ.b $E4
-  INC.w $0200
-  RTS
+    STZ.b $E4
+    INC.w $0200
+    RTS
 
-.loop
+  .loop
   DEX : DEX : STX.w MenuScrollLevelV
   RTS
 }
@@ -376,6 +375,70 @@ Menu_Exit:
 }
 
 ; =========================================================
+; 0B MENU COPY TO RIGHT
+
+Menu_CopyToRight:
+{
+  REP #$20
+
+  ; Clear out the whole buffer.
+  LDX.b #$FE ; $1700-17FF 
+
+  .loop
+    LDA.w #$387F
+    STA.w $1000, X
+    STA.w $1100, X
+    STA.w $1200, X
+    STA.w $1300, X
+    STA.w $1400, X
+    STA.w $1500, X
+    STA.w $1600, X
+    STA.w $1700, X
+
+    DEX : DEX
+  BNE .loop
+
+  ; TODO: The BPL wasn't working so figure out why and fix it.
+  STA.w $1000
+  STA.w $1100
+  STA.w $1200
+  STA.w $1300
+  STA.w $1400
+  STA.w $1500
+  STA.w $1600
+  STA.w $1700
+
+  SEP #$20
+
+  ; The whole HUD fits on 4 rows so I'm only going to copy 4 here.
+
+  LDX.b #$3A
+  .loop1
+    LDA $7EC702, X : STA $1082, X
+  DEX : BNE .loop1
+
+  LDX.b #$3A
+  .loop2
+    LDA $7EC742, X : STA $10C2, X
+  DEX : BNE .loop2
+
+  LDX.b #$3A
+  .loop3
+    LDA $7EC782, X : STA $1102, X
+  DEX : BNE .loop3
+
+  LDX.b #$3A
+  .loop4
+    LDA $7EC7C2, X : STA $1142, X
+  DEX : BNE .loop4
+
+  LDA.b #$24 : STA.w $0116
+  LDA.b #$01 : STA.b $17
+
+  LDA.b #$08 : STA.w $0200
+
+  RTS
+}
 
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
 quest_icons: incbin "tilemaps/quest_icons.tilemap"

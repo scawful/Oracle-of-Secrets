@@ -70,11 +70,10 @@ HUD_Update:
 
   ; Branch if at full health
   LDA $7EF36C : CMP $7EF36D : BEQ .healthUpdated
+    ; Seems absurd to have a branch of zero bytes, right?
+    SEC : SBC #$04 : CMP $7EF36D : BCS .healthUpdated
 
-  ; Seems absurd to have a branch of zero bytes, right?
-  SEC : SBC #$04 : CMP $7EF36D : BCS .healthUpdated
-
-.healthUpdated
+  .healthUpdated
 
   ; A = actual health + 0x03;
   LDA $7EF36D : CLC : ADC.b #$03
@@ -88,18 +87,17 @@ HUD_Update:
   ; filling in the full and partially filled hearts (actual health)
   JSR HUD_UpdateHearts
 
-.ignore_health ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
+  .ignore_health ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
 
   REP #$30
 
   ; Magic amount indicator (normal, 1/2, or 1/4)
   LDA $7EF37B : AND.w #$00FF : CMP.w #$0001 : BCC .normal_magic_meter
+    ; draw 1/2 magic meter
+    LDA.w #$2851 : STA $7EC730
+    LDA.w #$28FA : STA $7EC732
 
-  ; draw 1/2 magic meter
-  LDA.w #$2851 : STA $7EC730
-  LDA.w #$28FA : STA $7EC732
-
-.normal_magic_meter
+  .normal_magic_meter
 
   ; check player magic (ranges from 0 to 0x7F)
   ; X = ((MP & 0xFF)) + 7) & 0xFFF8)
@@ -134,55 +132,56 @@ HUD_Update:
   ; Check if the user has bombs equipped
   LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
   CPX.w #$0004 : BNE .not_bombs
+    ; Number of bombs Link has.
+    LDA $7EF343 : AND.w #$00FF
+    JSR HexToDecimal
+    REP #$30
 
-  ; Number of bombs Link has.
-  LDA $7EF343 : AND.w #$00FF
-  JSR HexToDecimal
-  REP #$30
+    ; The tile index for the first bomb digit
+    LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
 
-  ; The tile index for the first bomb digit
-  LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
+    ; The tile index for the second bomb digit
+    LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
 
-  ; The tile index for the second bomb digit
-  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
+  .not_bombs
 
-.not_bombs
   ; Check if the user has arrows equipped
   LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
   CPX.w #$0001 : BNE .not_arrows
 
-  ; Number of Arrows Link has.
-  LDA $7EF377 : AND.w #$00FF
+    ; Number of Arrows Link has.
+    LDA $7EF377 : AND.w #$00FF
 
-  ; converts hex to up to 3 decimal digits
-  JSR HexToDecimal
-  REP #$30
+    ; converts hex to up to 3 decimal digits
+    JSR HexToDecimal
+    REP #$30
 
-  ; The tile index for the first arrow digit
-  LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
+    ; The tile index for the first arrow digit
+    LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
 
-  ; The tile index for the second arrow digit
-  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
+    ; The tile index for the second arrow digit
+    LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
 
-.not_arrows
+  .not_arrows
   LDA.w #$007F : STA $05
 
   ; Load number of Keys Link has
   LDA $7EF36F : AND.w #$00FF : CMP.w #$00FF : BEQ .no_keys
-  JSR HexToDecimal
-.no_keys
+    JSR HexToDecimal
+  .no_keys
+
   REP #$30
 
   ; The key digit, which is optionally drawn.
   ; Also check to see if the key spot is blank
-  LDA   $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A4
+  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A4
   CMP.w #$247F : BNE .dont_blank_key_icon
+    ; TODO: Find the proper index of the key icon, this one is outdated.
+    ; If the key digit is blank, also blank out the key icon.
+    STA $7EC724
 
-  ; TODO: Find the proper index of the key icon, this one is outdated.
-  ; If the key digit is blank, also blank out the key icon.
-  STA $7EC724
+  .dont_blank_key_icon
 
-.dont_blank_key_icon
   SEP #$30
   RTL
 }
@@ -384,11 +383,6 @@ HexToDecimal:
     STA $03, X
     DEX : BPL .set_next_digit_tile
     RTS
-}
-
-CopyHudToRight:
-{
-
 }
 
 pushpc

@@ -4,32 +4,32 @@ Menu_CheckHScroll:
 {
   LDA.b $F4
   BIT.b #$10 : BNE .leave_menu
-  LDA.b $F6
-  BIT.b #$20 : BNE .left
-  BIT.b #$10 : BNE .right
+    LDA.b $F6
+    BIT.b #$20 : BNE .left
+      BIT.b #$10 : BNE .right
+        RTS
 
-  RTS
+    .left
 
-.left
-  REP #$20
-  LDA.w #$FFF8
-  BRA .merge
+    REP #$20
+    LDA.w #$FFF8
+    BRA .merge
 
-.right
-  REP #$20
-  LDA.w #$0008
+    .right
+    REP #$20
+    LDA.w #$0008
 
-.merge 
-  STA.w MenuScrollHDirection
+    .merge 
+    STA.w MenuScrollHDirection
 
-  SEP #$30
-  INC.w $0200
-  LDA.b #$06 : STA.w $012F
-  RTS
+    SEP #$30
+    INC.w $0200
+    LDA.b #$06 : STA.w $012F
+    RTS
 
-.leave_menu
-  LDA.b #$08
-  STA.w $0200
+  .leave_menu
+
+  LDA.b #$0B : STA.w $0200
   RTS
 }
 
