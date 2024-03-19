@@ -259,7 +259,7 @@ HUD_UpdateItemBox:
     .bombs_not_equipped
 
     CPX.w #$0006 : BNE .bottle1_not_equipped
-      JMP .load_bottle_content
+      LDA.w #$0000 : JMP .load_bottle_content
 
     .bottle1_not_equipped
 
@@ -386,6 +386,11 @@ HexToDecimal:
     RTS
 }
 
+CopyHudToRight:
+{
+
+}
+
 pushpc
 
 ; =========================================================
@@ -394,14 +399,14 @@ pushpc
 org $0DFA93
 HudItems:
 {
-  ; bows, boomerang, hookshot, bombs, powder, bottle1
-  dw $F629, $F651, $F669, $F679, $F689, $F751
-  ; hammer, lamp, fire rod, ice rod, mirror, bottle2
-  dw $F701, $F6F1, $F6A1, $F6B1, $F7C9, $F751
-  ; flute, book, somaria, byrna, feather, bottle3
-  dw $F859, $F741, $F799, $F7A9, $F731, $F751
-  ; deku,   zora,  wolf,  bunny,  stone, bottle4
-  dw $F6E1, $F821, $F6D1, $F7B9, $F811, $F751
+  ;  bows,   boomerang, hookshot, bombs,   powder,  bottle1
+  dw $F629,  $F651,     $F669,    $F679,   $F689,   $F751
+  ;  hammer, lamp,      fire rod, ice rod, mirror,  bottle2
+  dw $F701,  $F6F1,     $F6A1,    $F6B1,   $F7C1,   $F751
+  ;  flute,  book,      somaria,  byrna,   feather, bottle3
+  dw $F859,  $F741,     $F799,    $F7A9,   $F729,   $F751
+  ;  deku,   zora,      wolf,     bunny,   stone,   bottle4
+  dw $F6E1,  $F821,     $F6D1,    $F7B9,   $F811,   $F751
 }
 
 ; F711

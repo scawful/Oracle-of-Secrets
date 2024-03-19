@@ -173,6 +173,8 @@ MirrorGFX:
 ;  Collectibles
 ; ---------------------------------------------------------
 
+; vhopppcc cccccccc
+
 QuarterNoteGFX:
   dw $30AA, $306B, $307A, $306A ; Gray Note
   dw $2CAA, $2C6B, $2C7A, $2C6A ; Blue Note
@@ -218,7 +220,7 @@ SwordGFX:
   dw $2C64, $2CCE, $2C75, $EC64 ; level one 
   dw $2C64, $2C65, $2C74, $2D26 ; level two 
   dw $3464, $3465, $3475, $3429 ; level three
-  dw $3464, $3465, $3475, $3429 ; level four
+  dw $3864, $3865, $3875, $3829 ; level four
 
 ; ---------------------------------------------------------
 

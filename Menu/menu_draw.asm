@@ -69,21 +69,21 @@ Menu_DrawQuestIcons:
 {
   LDX.w #$10
 
-.loop
-  LDA.w quest_icons, X 
-  STA.w $1364, X 
-  LDA.w quest_icons+$10, X 
-  STA.w $13A4, X 
-  LDA.w quest_icons+$20, X 
-  STA.w $13E4, X 
-  LDA.w quest_icons+$30, X 
-  STA.w $1424, X 
-  LDA.w quest_icons+$40, X 
-  STA.w $1464, X 
-  LDA.w quest_icons+$50, X 
-  STA.w $14A4, X 
-  LDA.w quest_icons+$60, X 
-  STA.w $14E4, X 
+  .loop
+    LDA.w quest_icons, X 
+    STA.w $1364, X 
+    LDA.w quest_icons+$10, X 
+    STA.w $13A4, X 
+    LDA.w quest_icons+$20, X 
+    STA.w $13E4, X 
+    LDA.w quest_icons+$30, X 
+    STA.w $1424, X 
+    LDA.w quest_icons+$40, X 
+    STA.w $1464, X 
+    LDA.w quest_icons+$50, X 
+    STA.w $14A4, X 
+    LDA.w quest_icons+$60, X 
+    STA.w $14E4, X 
   DEX : DEX : BPL .loop
 
   LDA.w #$20F5 : STA.w $13B4 : STA.w $13F4 : STA.w $1474 : STA.w $14B4 
@@ -101,58 +101,66 @@ Menu_DrawTriforceIcons:
   LDY.w #$3544
 
   LSR : BCC +                     
-  STX.w $1366 : INX : STX.w $1368 : DEX
-  STY.w $13A6 : INY : STY.w $13A8 : DEY
+    STX.w $1366 : INX : STX.w $1368 : DEX
+    STY.w $13A6 : INY : STY.w $13A8 : DEY
+  +
 
-+ LSR : BCC +
-  STX.w $136A : INX : STX.w $136C : DEX
-  STY.w $13AA : INY : STY.w $13AC : DEY
+  LSR : BCC +
+    STX.w $136A : INX : STX.w $136C : DEX
+    STY.w $13AA : INY : STY.w $13AC : DEY
+  +
 
-+ LSR : BCC +
-  STX.w $136E : INX : STX.w $1370 : DEX
-  STY.w $13AE : INY : STY.w $13B0 : DEY
+  LSR : BCC +
+    STX.w $136E : INX : STX.w $1370 : DEX
+    STY.w $13AE : INY : STY.w $13B0 : DEY
+  +
+  
+  LSR : BCC +
+    STX.w $13E4 : INX : STX.w $13E6 : DEX
+    STY.w $1424 : INY : STY.w $1426 : DEY
+  +
+  
+  LSR : BCC +
+    STX.w $13E8 : INX : STX.w $13EA : DEX
+    STY.w $1428 : INY : STY.w $142A : DEY
+  +
+  
+  LSR : BCC +
+    STX.w $13EC : INX : STX.w $13EE : DEX
+    STY.w $142C : INY : STY.w $142E : DEY
+  +
+  
+  LSR : BCC +
+    STX.w $13F0 : INX : STX.w $13F2 : DEX
+    STY.w $1430 : INY : STY.w $1432 : DEY
+  +
 
-+ LSR : BCC +
-  STX.w $13E4 : INX : STX.w $13E6 : DEX
-  STY.w $1424 : INY : STY.w $1426 : DEY
-
-+ LSR : BCC +
-  STX.w $13E8 : INX : STX.w $13EA : DEX
-  STY.w $1428 : INY : STY.w $142A : DEY
-
-+ LSR : BCC +
-  STX.w $13EC : INX : STX.w $13EE : DEX
-  STY.w $142C : INY : STY.w $142E : DEY
-
-+ LSR : BCC +
-  STX.w $13F0 : INX : STX.w $13F2 : DEX
-  STY.w $1430 : INY : STY.w $1432 : DEY
-
-+
   RTS
 }
-
 
 ; =========================================================
 
 Menu_DrawPendantIcons:
 {
   LDA.l $7EF374
+
   LSR : BCC +
-  LDX.w #$2502 : STX.w $14A4 : INX : STX.w $14A6
-  LDX.w #$2512 : STX.w $14E4 : INX : STX.w $14E6
+    LDX.w #$2502 : STX.w $14A4 : INX : STX.w $14A6
+    LDX.w #$2512 : STX.w $14E4 : INX : STX.w $14E6
+  +
 
-+ LSR : BCC +
-  LDX.w #$3D00 : STX.w $14AA : INX : STX.w $14AC
-  LDX.w #$3D10 : STX.w $14EA : INX : STX.w $14EC
+  LSR : BCC +
+    LDX.w #$3D00 : STX.w $14AA : INX : STX.w $14AC
+    LDX.w #$3D10 : STX.w $14EA : INX : STX.w $14EC
+  +
 
-+ LSR : BCC +
-  LDX.w #$2D06 : STX.w $14B0 : INX : STX.w $14B2
-  LDX.w #$2D16 : STX.w $14F0 : INX : STX.w $14F2
+  LSR : BCC +
+    LDX.w #$2D06 : STX.w $14B0 : INX : STX.w $14B2
+    LDX.w #$2D16 : STX.w $14F0 : INX : STX.w $14F2
+  +
 
-+ RTS
+  RTS
 }
-
 
 ; =========================================================
 
@@ -300,7 +308,6 @@ DrawYItems:
 
   ; Row 3 -------------------------------------------------
 
-  print pc
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
   LDA.w $030F : BNE .spoof_ocarina
   LDA #$0001 ; Multi-songs not unlocked yet
