@@ -554,10 +554,11 @@ FloorIndicator:
   REP   #$30
   LDA   $04A0 : AND.w #$00FF : BEQ .hide_indicator
   INC   A : CMP.w #$00C0 : BNE .dont_disable
-  ; if the count up timer reaches 0x00BF frames
-  ; disable the floor indicator during the next frame.
-  LDA.w #$0000
-.dont_disable
+    ; if the count up timer reaches 0x00BF frames
+    ; disable the floor indicator during the next frame.
+    LDA.w #$0000
+  .dont_disable
+  
   STA   $04A0
   PHB   : PHK : PLB
   LDA.w #$251E : STA $7EC7F0

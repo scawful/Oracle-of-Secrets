@@ -58,18 +58,18 @@ Menu_Entry:
   RTL
 }
 .vectors
-  dw Menu_InitGraphics  ; 00
-  dw Menu_UploadRight   ; 01
-  dw Menu_UploadLeft    ; 02
-  dw Menu_ScrollDown    ; 03
-  dw Menu_ItemScreen    ; 04
-  dw Menu_ScrollTo      ; 05
-  dw Menu_StatsScreen   ; 06 
-  dw Menu_ScrollFrom    ; 07
-  dw Menu_ScrollUp      ; 08
-  dw Menu_CheckBottle   ; 09
-  dw Menu_Exit          ; 0A
-  dw Menu_CopyToRight   ; 0B
+  dw Menu_InitGraphics       ; 00
+  dw Menu_UploadRight        ; 01
+  dw Menu_UploadLeft         ; 02
+  dw Menu_ScrollDown         ; 03
+  dw Menu_ItemScreen         ; 04
+  dw Menu_ScrollTo           ; 05
+  dw Menu_StatsScreen        ; 06 
+  dw Menu_ScrollFrom         ; 07
+  dw Menu_ScrollUp           ; 08
+  dw Menu_CheckBottle        ; 09
+  dw Menu_Exit               ; 0A
+  dw Menu_InitiateScrollDown ; 0B
 
 ; =========================================================
 ; 00 MENU INIT GRAPHICS 
@@ -261,10 +261,9 @@ Menu_ScrollTo:
   SEP #$20 
   JSR Menu_ScrollHorizontal
   BCC .not_done
+    INC.w $0200
 
-  INC.w $0200
-
-.not_done
+  .not_done
   RTS
 }
 
@@ -298,8 +297,6 @@ Menu_ScrollFrom:
 
 Menu_ScrollUp:
 { 
-  JSL $0DFA58 ; HUD_Rebuild_Long
-  LDA.b #$12 : STA.w $012F ; play menu exit sound effect 
   SEP #$10
   REP #$20
 
@@ -377,7 +374,7 @@ Menu_Exit:
 ; =========================================================
 ; 0B MENU COPY TO RIGHT
 
-Menu_CopyToRight:
+Menu_InitiateScrollDown:
 {
   REP #$20
 
@@ -398,7 +395,8 @@ Menu_CopyToRight:
     DEX : DEX
   BNE .loop
 
-  ; TODO: The BPL wasn't working so figure out why and fix it.
+  ; TODO: The BPL wasn't working so figure out why and 
+  ; fix it instead of doing this abomination.
   STA.w $1000
   STA.w $1100
   STA.w $1200
@@ -410,7 +408,15 @@ Menu_CopyToRight:
 
   SEP #$20
 
-  ; The whole HUD fits on 4 rows so I'm only going to copy 4 here.
+  JSL $0DFA58 ; HUD_Rebuild_Long
+
+  ; Draw one frame of the clock so it doesn't just
+  ; pop in when scrolling down.
+  JSL DrawClockToHudLong
+
+  ; The whole HUD fits on 4 rows so I'm only going to
+  ; copy 4 here. Also we start 2 in because thats the
+  ; left we need to go.
 
   LDX.b #$3A
   .loop1
@@ -437,6 +443,8 @@ Menu_CopyToRight:
 
   LDA.b #$08 : STA.w $0200
 
+  LDA.b #$12 : STA.w $012F ; play menu exit sound effect 
+
   RTS
 }
 
@@ -444,3 +452,5 @@ menu_frame: incbin "tilemaps/menu_frame.tilemap"
 quest_icons: incbin "tilemaps/quest_icons.tilemap"
 incsrc "menu_map_names.asm"
 incsrc "menu_hud.asm"
+
+; =========================================================
