@@ -61,7 +61,6 @@ DrawMenuItem:
   RTS
 }
 
-
 ; =========================================================
 ;  Quest Icons Tilemap Draw Routine 
 
@@ -90,7 +89,6 @@ Menu_DrawQuestIcons:
 
   RTS
 }
-
 
 ; =========================================================
 
@@ -184,19 +182,20 @@ Menu_DrawHeartPieces:
   LDA.l $7EF36B
   AND.w #$00FF
   CMP.w #3 : BEQ .top_right
-  CMP.w #1 : BEQ .top_left
-  BCS .bottom_left
-  RTS
+    CMP.w #1 : BEQ .top_left
+      BCS .bottom_left
+        RTS
 
-.top_right
+  .top_right
   LDX.w #$64AD : STX.w $14A0
-.bottom_left
+
+  .bottom_left
   LDX.w #$24AE : STX.w $14DE 
-.top_left
+
+  .top_left
   LDX.w #$24AD : STX.w $149E 
   RTS
 }
-
 
 ; =========================================================
 
@@ -245,24 +244,25 @@ DrawYItems:
   JSR DrawMenuItem
 
   LDA.l $7EF342 : AND.w #$00FF : CMP.w #$0000 : BEQ .no_hookshot
-  LDA.w GoldstarOrHookshot : BNE .spoof_hookshot
-  LDA #$0001 ; No goldstar, but hookshot
-.spoof_hookshot
-  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(7,9)
-  LDY.w #HookGFX
-  JSR DrawMenuItem
-.no_hookshot
+    LDA.w GoldstarOrHookshot : BNE .spoof_hookshot
+      LDA #$0001 ; No goldstar, but hookshot
+    .spoof_hookshot
+
+    STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+    LDX.w #menu_offset(7,9)
+    LDY.w #HookGFX
+    JSR DrawMenuItem
+  .no_hookshot
 
   LDA.l $7EF343
   AND.w #$00FF : CMP.w #$00 : BEQ .no_bomb
-  LDA.w #$0001
-  STA.w MenuItemValueSpoof
-  LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(7,13)
-  LDY.w #BombsGFX
-  JSR DrawMenuItem
-.no_bomb
+    LDA.w #$0001
+    STA.w MenuItemValueSpoof
+    LDA.w #MenuItemValueSpoof
+    LDX.w #menu_offset(7,13)
+    LDY.w #BombsGFX
+    JSR DrawMenuItem
+  .no_bomb
 
   LDA.w #$7EF344
   LDX.w #menu_offset(7,16) 
@@ -309,32 +309,33 @@ DrawYItems:
   ; Row 3 -------------------------------------------------
 
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
-  LDA.w $030F : BNE .spoof_ocarina
-  LDA #$0001 ; Multi-songs not unlocked yet
-.spoof_ocarina 
-  STA.w ShortSpoof : LDA.w #ShortSpoof
-  LDX.w #menu_offset(13,3)
-  LDY.w #OcarinaGFX
-  JSR DrawMenuItem
-.no_ocarina
+    LDA.w $030F : BNE .spoof_ocarina
+      LDA #$0001 ; Multi-songs not unlocked yet
+    .spoof_ocarina 
+
+    STA.w ShortSpoof : LDA.w #ShortSpoof
+    LDX.w #menu_offset(13,3)
+    LDY.w #OcarinaGFX
+    JSR DrawMenuItem
+  .no_ocarina
 
   LDA.l $7EF34E : AND.w #$00FF : CMP.w #$00 : BEQ .no_book
-  LDA.w #$01 : STA.w ShortSpoof : LDA.w #ShortSpoof
-  LDX.w #menu_offset(13,6)
-  LDY.w #BookGFX
-  JSR DrawMenuItem
-.no_book
+    LDA.w #$01 : STA.w ShortSpoof : LDA.w #ShortSpoof
+    LDX.w #menu_offset(13,6)
+    LDY.w #BookGFX
+    JSR DrawMenuItem
+  .no_book
 
   ; LDA.l $7EF350 : CMP.w #$00 : BEQ .no_somaria
-;   LDA.w SomariaOrByrna : BNE .spoof_somaria
-; .spoof_somaria
-  ; LDA.w #$01 : STA.w ShortSpoof : LDA.w #ShortSpoof
-  LDA.w #$7EF350
-  LDX.w #menu_offset(13,9)
-  LDY.w #SomariaGFX
-  JSR DrawMenuItem
-.no_somaria
+  ;   LDA.w SomariaOrByrna : BNE .spoof_somaria
+  ; .spoof_somaria
 
+    ; LDA.w #$01 : STA.w ShortSpoof : LDA.w #ShortSpoof
+    LDA.w #$7EF350
+    LDX.w #menu_offset(13,9)
+    LDY.w #SomariaGFX
+    JSR DrawMenuItem
+  .no_somaria
 
   LDA.w #$7EF351
   LDX.w #menu_offset(13,13)
@@ -441,74 +442,69 @@ Menu_DrawQuestItems:
 Menu_DrawBigKey:
 {
   LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalace
-  
-  LSR A : TAX
-  
-  ; Check if we have the big key in this palace
-  LDA $7EF366
+    LSR A : TAX
+    
+    ; Check if we have the big key in this palace
+    LDA $7EF366
 
-.locateBigKeyFlag
+    .locateBigKeyFlag
 
-  ASL A : DEX : BPL .locateBigKeyFlag : BCC .dontHaveBigKey
-  
-  JSR CheckPalaceItemPossession : LDA $02 : BEQ .noTreasureYet
-  
-  SEP #$30
-  LDA.b #$7E : STA.b $0A
-  REP #$30
+    ASL A : DEX : BPL .locateBigKeyFlag : BCC .dontHaveBigKey
+      JSR CheckPalaceItemPossession : LDA $02 : BEQ .noTreasureYet
+        SEP #$30
+        LDA.b #$7E : STA.b $0A
+        REP #$30
 
-  LDA.w #$01
-  STA.w ShortSpoof
-  LDA.w #ShortSpoof
-  LDX.w #menu_offset(11,8)
-  LDY.w #TreasureChestGFX
-  JSR DrawMenuItem
+        LDA.w #$01
+        STA.w ShortSpoof
+        LDA.w #ShortSpoof
+        LDX.w #menu_offset(11,8)
+        LDY.w #TreasureChestGFX
+        JSR DrawMenuItem
 
-.noTreasureYet
+      .noTreasureYet
 
-  SEP #$30
-  LDA.b #$7E : STA.b $0A
-  REP #$30
+      SEP #$30
+      LDA.b #$7E : STA.b $0A
+      REP #$30
 
-  LDA.w #$01
-  STA.w ShortSpoof
-  LDA.w #ShortSpoof
-  ; Draw the big key (or big key with chest if we've gotten the treasure) icon
-  LDX.w #menu_offset(11,2)
-  LDY.w #BigKeyGFX
-  JSR DrawMenuItem
+      LDA.w #$01
+      STA.w ShortSpoof
+      LDA.w #ShortSpoof
+      ; Draw the big key (or big key with chest if we've gotten the treasure) icon
+      LDX.w #menu_offset(11,2)
+      LDY.w #BigKeyGFX
+      JSR DrawMenuItem
 
-.dontHaveBigKey
-.notInPalace
+    .dontHaveBigKey
+  .notInPalace
 
   LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalaceAgain
-  
-  LSR A : TAX
-  
-  ; Check if we have the map in this dungeon
-  LDA $7EF368
+    LSR A : TAX
+    
+    ; Check if we have the map in this dungeon
+    LDA $7EF368
 
-.locateMapFlag
+    .locateMapFlag
 
-  ASL A : DEX : BPL .locateMapFlag : BCC .dontHaveMap
-  
-  LDA.w #$01
-  STA.w ShortSpoof
-  LDA.w #ShortSpoof
-  ; Draw the big key (or big key with chest if we've gotten the treasure) icon
-  LDX.w #menu_offset(11,11)
-  LDY.w #MapGFX
-  JSR DrawMenuItem
+    ASL A : DEX : BPL .locateMapFlag : BCC .dontHaveMap
+      LDA.w #$01
+      STA.w ShortSpoof
+      LDA.w #ShortSpoof
+      ; Draw the big key (or big key with chest if we've gotten the treasure) icon
+      LDX.w #menu_offset(11,11)
+      LDY.w #MapGFX
+      JSR DrawMenuItem
 
-.dontHaveMap
-.notInPalaceAgain
+    .dontHaveMap
+  .notInPalaceAgain
   
   RTS
 }
 
 ; =========================================================
 
-; *$6EEB6-$6EEDB LOCAL
+; $06EEB6-$06EEDB LOCAL
 CheckPalaceItemPossession:
 {
   SEP #$30
@@ -538,63 +534,62 @@ CheckPalaceItemPossession:
 ; *$6EEDC-$6EEE0 JUMP LOCATION
 .pool_CheckPalaceItemPossession:
 {
-
-.failure
+  .failure
 
   STZ $02
   STZ $03
   
   RTS
 
-.bow
+  .bow
 
   LDA $7EF340
 
-.no_item
-.compare
+  .no_item
+  .compare
 
   BEQ .failure
 
-.success
+  .success
 
   LDA.b #$01 : STA $02
                STZ $03
   
   RTS
 
-.power_glove
+  .power_glove
 
   LDA $7EF354 : BRA .compare
 
-.hookshot
+  .hookshot
 
   LDA $7EF342 : BRA .compare
 
-.hammer
+  .hammer
 
   LDA $7EF34B : BRA .compare
 
-.cane_of_somaria
+  .cane_of_somaria
 
   LDA $7EF350 : BRA .compare
 
-.fire_rod
+  .fire_rod
 
   LDA $7EF345 : BRA .compare
 
-.blue_mail
+  .blue_mail
 
   LDA $7EF35B : BRA .compare
 
-.moon_pearl
+  .moon_pearl
 
   LDA $7EF357 : BRA .compare
 
-.titans_mitt
+  .titans_mitt
 
   LDA $7EF354 : DEC A : BRA .compare
 
-.mirror_shield
+  .mirror_shield
 
   LDA $7EF35A : CMP.b #$03 : BEQ .success
   
@@ -603,7 +598,7 @@ CheckPalaceItemPossession:
   
   RTS
 
-.red_mail
+  .red_mail
 
   LDA $7EF35B : CMP.b #$02 : BEQ .success
   
@@ -617,29 +612,29 @@ CheckPalaceItemPossession:
 Menu_DrawBigChestKey:
 {  
   LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalace
-  
-  LSR A : TAX
-  
-  LDA $7EF364
-  
-.locateCompassFlag
+    LSR A : TAX
+    
+    LDA $7EF364
+    
+    .locateCompassFlag
 
-  ASL A : DEX : BPL .locateCompassFlag
-                BCC .dontHaveCompass
-  
-  SEP #$30
-  LDA.b #$7E : STA.b $0A
-  REP #$30
+    ASL A : DEX : BPL .locateCompassFlag
+                  BCC .dontHaveCompass
+      SEP #$30
+      LDA.b #$7E : STA.b $0A
+      REP #$30
 
-  LDA.w #$01
-  STA.w ShortSpoof
-  LDA.w #ShortSpoof
-  LDX.w #menu_offset(11, 5)
-  LDY.w #BigChestKeyGFX
-  JSR DrawMenuItem
-  
-.dontHaveCompass
-.notInPalace
+      LDA.w #$01
+      STA.w ShortSpoof
+      LDA.w #ShortSpoof
+      LDX.w #menu_offset(11, 5)
+      LDY.w #BigChestKeyGFX
+      JSR DrawMenuItem
+    
+    .dontHaveCompass
+  .notInPalace
   
   RTS
 }
+
+; =========================================================
