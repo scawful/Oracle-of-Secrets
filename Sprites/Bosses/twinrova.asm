@@ -90,7 +90,14 @@ Sprite_Twinrova_Prep:
 
       LDA #$10 : STA $08
       LDA #$10 : STA $09
-      STZ $0D80, X
+      LDA #$0A : STA $0D80, X
+
+      LDA.b #$60 : STA.w $0E10, X
+      LDA.b #$01 : STA.w $0DB0, X
+      LDA.b #$02 : STA.w $0DE0, X
+      LDA.b #$04 : STA.w $0EB0, X
+      LDA.b #$07 : STA.w $0DC0, X
+      STZ.w $0B69
 
       PLB
       RTL
@@ -166,8 +173,6 @@ Sprite_Twinrova_Main:
   ; 0x00
   Twinrova_Init:
   {
-      ; %Twinrova_Front()
-      JSR ApplyTwinrovaGraphics
       %GotoAction(01)
       RTS
   }
@@ -698,7 +703,7 @@ ApplyTwinrovaGraphics:
 
     PLX
 
-    RTS
+    RTL
 
   TwinrovaGraphics:
     incbin twinrova.bin
@@ -721,8 +726,8 @@ Follower_BasicMover:
       ; Check if we are in room 0xAC
       REP #$20 
       LDA.b $A0 : CMP.w #$00AC : BNE .no_blind_transform
-        ; Check room flag 0x65
-        LDA.l $7EF0CA : AND.w #$0100 : BEQ .no_blind_transform
+        ; ; Check room flag 0x65
+        ; LDA.l $7EF0CA : AND.w #$0100 : BEQ .no_blind_transform
           SEP #$20
           JSL Follower_CheckBlindTrigger : BCC .no_blind_transform
   .blind_transform
@@ -750,6 +755,8 @@ Follower_BasicMover:
     LDA.b #$15 : STA.w $012C
 
     RTS
+  
+  org $09A23A
   .no_blind_transform
 }
 
@@ -804,6 +811,9 @@ Follower_CheckBlindTrigger:
 org $1DA03C
 Blind_SpawnFromMaiden:
 {
+  ; Load the Twinrova graphics
+  JSL ApplyTwinrovaGraphics
+
   LDX.b #$00 ; Load the boss into sprite index 0
 
   ; Set the sprite to alive and active
@@ -823,7 +833,7 @@ Blind_SpawnFromMaiden:
   LDA.b #$C0 : STA.w $0E10,X
 
   ; Set SprGfx
-  LDA.b #$15 : STA.w $0DC0,X
+  ; LDA.b #$15 : STA.w $0DC0,X
 
   ; Set SprMiscC and bulletproof properties
   LDA.b #$02 : STA.w $0DE0,X : STA.w $0BA0,X
@@ -839,11 +849,14 @@ Blind_SpawnFromMaiden:
 
 ; =========================================================
 
+; We are using space from this function to insert the 
+; Twinrova graphics above, since the prep is now handled
+; in the custom sprite code.
 SpritePrep_Blind_PrepareBattle:
 {
-    #_1DA081: LDA.l $7EF3CC
-    #_1DA085: CMP.b #$06 ; FOLLOWER 06
-    #_1DA087: BEQ .despawn
+    ; #_1DA081: LDA.l $7EF3CC
+    ; #_1DA085: CMP.b #$06 ; FOLLOWER 06
+    ; #_1DA087: BEQ .despawn
 
     #_1DA089: LDA.w $0403
     #_1DA08C: AND.b #$20
@@ -873,8 +886,10 @@ SpritePrep_Blind_PrepareBattle:
 
     #_1DA0B0: RTL
 }
-; =========================================================
 
+warnpc $1DA0B1
+
+; =========================================================
 
 BlindLaser_SpawnTrailGarnish:
 {
