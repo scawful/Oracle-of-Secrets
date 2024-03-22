@@ -95,6 +95,7 @@ LinkState_UsingQuake:
   db   5,   5,   5,  19
 
   ; INC.w $0FC1 ; Keep sprites frozen 
+  JSR $F514 ; CacheCameraPropertiesIfOutdoors
 
   STZ.b $27 : STZ.b $28 ; Reset recoil X and Y 
 
@@ -175,9 +176,8 @@ LinkState_UsingQuake:
 
 .special
   DEC $5C 
-  ; JSR $F514 ; CacheCameraPropertiesIfOutdoors
   JSL DekuLink_HoverBasedOnInput
-  ; JSR $E8F0
+  JSR $E8F0  ; HandleIndoorCameraAndDoors
   RTS
 }
 
