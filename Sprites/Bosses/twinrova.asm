@@ -1,5 +1,10 @@
 ; =========================================================
 ; Twinrova Boss Sprite
+;
+; Overrides Blind and the Blind Maiden to create a new 
+; boss sequence. 
+;
+;
 ; =========================================================
 
 !SPRID              = $CE ; The sprite ID you are overwriting (HEX)
@@ -35,43 +40,42 @@
 
 Sprite_Twinrova_Long:
 {
-  PHB : PHK : PLB
+    PHB : PHK : PLB
 
-  JSR Sprite_Twinrova_Draw ; Call the draw code
-  JSL Sprite_DrawShadow
+    JSR Sprite_Twinrova_Draw 
+    JSL Sprite_DrawShadow
 
-  JSL Sprite_CheckActive ; Check if game is not paused
-  BCC .SpriteIsNotActive ; Skip Main code is sprite is innactive
+    JSL Sprite_CheckActive : BCC .SpriteIsNotActive 
 
-  JSR Sprite_Twinrova_CheckIfDead ; Check if sprite is dead
-  JSR Sprite_Twinrova_Main        ; Call the main sprite code
+    JSR Sprite_Twinrova_CheckIfDead
+    JSR Sprite_Twinrova_Main       
 
-.SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  .SpriteIsNotActive
+    PLB
+    RTL
 }
 
 ; =========================================================
 
 Sprite_Twinrova_CheckIfDead:
 {
-  LDA $0D80, X : CMP.b #$0A : BEQ .not_dead
+    LDA $0D80, X : CMP.b #$0A : BEQ .not_dead
 
-  ; If health is negative, set back to zero
-  LDA $0E50, X : CMP.b #$44 : BCC .healthNotNegative
-    LDA.b #$00 : STA $0E50, X
+    ; If health is negative, set back to zero
+    LDA $0E50, X : CMP.b #$44 : BCC .health_not_negative
+      LDA.b #$00 : STA $0E50, X
 
-.healthNotNegative
+  .health_not_negative
 
-  LDA $0E50, X : BNE .not_dead
-    PHX 
+    LDA $0E50, X : BNE .not_dead
+      PHX 
 
-    LDA.b #$04 : STA $0DD0, X ; Kill sprite boss style
-    LDA.b #$0A : STA $0D80, X ; Go to Twinrova_Dead stage
+      LDA.b #$04 : STA $0DD0, X ; Kill sprite boss style
+      LDA.b #$0A : STA $0D80, X ; Go to Twinrova_Dead stage
 
-    PLX
-.not_dead
-  RTS
+      PLX
+  .not_dead
+    RTS
 }
 
 ; =========================================================
