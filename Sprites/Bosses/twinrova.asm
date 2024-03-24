@@ -811,6 +811,8 @@ Follower_CheckBlindTrigger:
 }
 
 ; =========================================================
+; Called during the BlindMaiden section of Follower_BasicMover
+; to spawn Twinrova in the room. 
 
 org $1DA03C
 Blind_SpawnFromMaiden:
@@ -852,10 +854,11 @@ Blind_SpawnFromMaiden:
 }
 
 ; =========================================================
-
 ; We are using space from this function to insert the 
 ; Twinrova graphics above, since the prep is now handled
 ; in the custom sprite code.
+
+org $1DA081
 SpritePrep_Blind_PrepareBattle:
 {
     ; #_1DA081: LDA.l $7EF3CC
@@ -895,6 +898,7 @@ warnpc $1DA0B1
 
 ; =========================================================
 
+org $1DA0B1
 BlindLaser_SpawnTrailGarnish:
 {
     #_1DA0B1: LDA.w $0E80,X
