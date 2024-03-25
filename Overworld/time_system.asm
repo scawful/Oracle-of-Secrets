@@ -17,143 +17,161 @@ org $068361
 	JSL HUD_ClockDisplay ; $1CFF30
   ;originally JSL $09B06E, executed every frame
 
+; =========================================================
+
 ; org $1CFF30
 org $328000 ; Free space
 HUD_ClockDisplay:
 {
 	JSR RunClock
-	JSR DrawToHud
+	JSR DrawClockToHud
 	JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
 	RTL
 }
 
-DrawToHud:
+DrawClockToHudLong:
+{
+  JSR DrawClockToHud
+
+  RTL
+}
+
+DrawClockToHud:
 {
   LDX #$00
-.debut
-	LDY #$00 : LDA $7EE000,x
 
-.debut2
-	CMP #$0A : BMI .draw
-	SBC #$0A : INY : BRA .debut2
+  .debut
+    LDY #$00 : LDA $7EE000,x
 
-.draw
-	ADC #$90 : CPX #$01 : BEQ .minutes_low
-	STA.l !hud_hours_low
-  LDA #$30 : STA.l !hud_hours_low+1 ; white palette
-	BRA .continue_draw ; 04
+    .debut2
+      CMP #$0A : BMI .draw
+    SBC #$0A : INY : BRA .debut2
 
-.minutes_low
-	STA.l !hud_min_low
-  LDA #$30 : STA.l !hud_min_low+1 ; white palette
-.continue_draw
-  TYA
-	CLC : ADC #$90 : CPX #$01
-	BEQ .minutes_high
-	STA.l !hud_hours_high
-  LDA #$30 : STA.l !hud_hours_high+1 ; white palette
-	BRA .finish_draw ; 04
+    .draw
 
-.minutes_high
-	STA.l !hud_min_high 
-  LDA #$30 : STA.l !hud_min_high+1 ; white palette
-.finish_draw
+    ADC #$90 : CPX #$01 : BEQ .minutes_low
+      STA.l !hud_hours_low
+      LDA #$30 : STA.l !hud_hours_low+1 ; white palette
+      BRA .continue_draw ; 04
+
+    .minutes_low
+
+    STA.l !hud_min_low
+    LDA #$30 : STA.l !hud_min_low+1 ; white palette
+
+    .continue_draw
+
+    TYA
+    CLC : ADC #$90 : CPX #$01 : BEQ .minutes_high
+      STA.l !hud_hours_high
+      LDA #$30 : STA.l !hud_hours_high+1 ; white palette
+      BRA .finish_draw ; 04
+
+    .minutes_high
+
+    STA.l !hud_min_high 
+    LDA #$30 : STA.l !hud_min_high+1 ; white palette
+
+    .finish_draw
 	INX : CPX #$02 : BMI .debut
+
   RTS
 }
 
-;--------------------------------
+; =========================================================
 
 RunClock:
 {
-    LDA $10			;checks current event in game
-    CMP #$07		;dungeon/building?
-    BEQ .counter_increasing
-    CMP #$09		;overworld?
-    BEQ .overworld
-    CMP #$0B
-    BEQ .overworld		;sub-area ? (under the bridge; zora domain...)
-    CMP #$0E		;dialog box?
-    BEQ .dialog
-    RTS
+  LDA $10	;checks current event in game
+  CMP #$07 : BEQ .counter_increasing ;dungeon/building?
+    CMP #$09 : BEQ .overworld ;overworld?
+    CMP #$0B : BEQ .overworld		;sub-area ? (under the bridge; zora domain...)
+      CMP #$0E : BEQ .dialog ;dialog box?
+        RTS
 
-  .overworld
-    LDA $11
-    CMP #$23		;hdma transfer? (warping)
-    BNE .mosaic
-  .mosaic
-    CMP #$0D		;mosaic ?
-    BMI .counter_increasing
-    RTS
+    .overworld
 
-  .dialog
-    LDA $11			;which kind of dialog? (to prevent the counter from increasing if save menu or item menu openned)
-    CMP #$02		;NPC/signs speech
-    BEQ .counter_increasing
-    RTS
+    LDA $11 : CMP #$23 : BNE .mosaic ;hdma transfer? (warping)
+      ; Lol what?
+    .mosaic
+
+    CMP #$0D : BMI .counter_increasing ;mosaic ?
+      RTS
+
+    .dialog
+    LDA $11 ;which kind of dialog? (to prevent the counter from increasing if save menu or item menu openned)
+    CMP #$02 : BEQ .counter_increasing ;NPC/signs speech
+      RTS
 
   .counter_increasing
-    ; time speed (1,3,5,7,F,1F,3F,7F,FF) 
-    ; #$3F is almost 1 sec = 1 game minute
-    LDA $1A : AND #$3F ; 05
-    BEQ .increase_minutes
-  .end
+
+  ; time speed (1,3,5,7,F,1F,3F,7F,FF) 
+  ; #$3F is almost 1 sec = 1 game minute
+  LDA $1A : AND #$3F : BEQ .increase_minutes ; 05
+    .end
+
     RTS
 
   .increase_minutes
-    LDA $7EE001 : INC A : STA $7EE001
-    CMP #$3C : BPL .increase_hours ; minutes = #60 ?
+  LDA $7EE001 : INC A : STA $7EE001
+  CMP #$3C : BPL .increase_hours ; minutes = #60 ?
     RTS
 
   .increase_hours
-    LDA #$00 : STA $7EE001
-    LDA $7EE000 : INC A : STA $7EE000
-    CMP #$18		; hours = #24 ?
-    BPL .reset_hours
 
+  LDA #$00 : STA $7EE001
+  LDA $7EE000 : INC A : STA $7EE000
+  CMP #$18 : BPL .reset_hours ; hours = #24 ?
     ;check indoors/outdoors
     LDA $1B	: BEQ .outdoors0
-    RTS
+      RTS
 
-  .outdoors0
-    JSL rom_to_buff		;update buffer palette
-    JSL buff_to_eff		;update effective palette
+    .outdoors0
+
+    JSL rom_to_buff	;update buffer palette
+    JSL buff_to_eff	;update effective palette
+
     ;rain layer ?
     LDA $8C : CMP #$9F : BEQ .skip_bg_updt0
-    LDA $8C : CMP #$9E : BEQ .skip_bg_updt0	; canopy layer ?
-    CMP #$97 : BEQ .skip_bg_updt0	; fog layer?
-    JSL $0BFE70		;update background color
-    BRA .inc_hours_end
+      LDA $8C : CMP #$9E : BEQ .skip_bg_updt0	; canopy layer ?
+        CMP #$97 : BEQ .skip_bg_updt0	; fog layer?
+        JSL $0BFE70	;update background color
+        BRA .inc_hours_end
     
-  .skip_bg_updt0			;prevent the sub layer from disappearing ($1D zeroed)
+    .skip_bg_updt0 ;prevent the sub layer from disappearing ($1D zeroed)
     JSL $0BFE72
-  .inc_hours_end
+
+    .inc_hours_end
     RTS
 
   .reset_hours
-    LDA #$00 : STA $7EE000
 
-    ;check indoors/outdoors
-    LDA $1B	: BEQ .outdoors1
+  LDA #$00 : STA $7EE000
+
+  ;check indoors/outdoors
+  LDA $1B	: BEQ .outdoors1
     RTS
   .outdoors1
-    JSL rom_to_buff
-    JSL buff_to_eff
-    LDA $8C : CMP #$9F		;rain layer ?
-    BEQ .skip_bg_updt1
+
+  JSL rom_to_buff
+  JSL buff_to_eff
+
+  LDA $8C : CMP #$9F : BEQ .skip_bg_updt1 ;rain layer ?
     LDA $8C : CMP #$9E : BEQ .skip_bg_updt1	; canopy layer ?
-    JSL $0BFE70		;update background color
-    BRA .reset_end
+      JSL $0BFE70 ;update background color
+      BRA .reset_end
     
-  .skip_bg_updt1			;prevent the sub layer from disappearing ($1D zeroed)
-    JSL $0BFE72
+  .skip_bg_updt1 ;prevent the sub layer from disappearing ($1D zeroed)
+
+  JSL $0BFE72
+
   .reset_end
-    RTS
+  RTS
 }
 
-;-----------------------------------------------
+; =========================================================
 ;----[ Day / Night system * palette effect ]----
-;-----------------------------------------------
+; =========================================================
 
 !blue_value = $7EE010
 !green_value = $7EE012
@@ -189,33 +207,36 @@ org $1BEF84
 org $0EEE25	; free space
 LoadDayNightPaletteEffect:
 {
-    STA.l !pal_color
+  STA.l !pal_color
 
-    CPX #$0041 : BPL .title_check
+  CPX #$0041 : BPL .title_check
     STA $7EC300,X
     RTL
     
   .title_check
-    LDA $10 : AND #$00FF
-    CMP #$0002	; title or file select screen ?
-    BPL .outin_check
+
+  ; title or file select screen ?
+  LDA $10 : AND #$00FF : CMP #$0002	: BPL .outin_check
     LDA.l !pal_color : STA $7EC300,X
     RTL
 
   .outin_check
-    LDA $1B : AND #$00FF : BEQ .outdoors2
+
+  LDA $1B : AND #$00FF : BEQ .outdoors2
     LDA.l !pal_color
     STA $7EC300,X
     RTL
 
   .outdoors2
-    PHX
-    JSL ColorSubEffect
-    PLX
-    STA.l $7EC300,X
-    RTL
+
+  PHX
+  JSL ColorSubEffect
+  PLX
+  STA.l $7EC300,X
+  RTL
 }
-;--------------------------------
+
+; =========================================================
 
 ColorSubEffect:
 {
@@ -226,46 +247,40 @@ ColorSubEffect:
 	AND #$00FF
 	TAX
 
-.do_blue
+  .do_blue
 	LDA.l !pal_color : AND #$7C00 : STA !blue_value
   ; substract amount to blue field based on a table
 	SEC : SBC.l blue_table, X : STA !temp_value
 	AND #$7C00		; mask out everything except the blue bits
-	CMP !temp_value		; overflow ?
-	BEQ .no_blue_sign_change
+	CMP !temp_value : BEQ .no_blue_sign_change; overflow ?
+    .blue_sign_change
+    LDA #$0400		; LDA smallest blue value
 
-.blue_sign_change
-	LDA #$0400		; LDA smallest blue value
-
-.no_blue_sign_change
+  .no_blue_sign_change
 	STA.l !blue_value 
 
-do_green:
+  do_green:
 	LDA !pal_color : AND #$03E0 : STA !green_value
 	SEC : SBC.l green_table,x	; substract amount to blue field based on a table
 	STA.l !temp_value
   ; mask out everything except the green bits
-	AND #$03E0 : CMP !temp_value		; overflow ?
-	BEQ .no_green_sign_change
-  
-.green_sign_change
-	LDA #$0020		; LDA smallest green value
+	AND #$03E0 : CMP !temp_value : BEQ .no_green_sign_change ; overflow ?
+    .green_sign_change
+    LDA #$0020		; LDA smallest green value
 
-.no_green_sign_change
+  .no_green_sign_change
 	STA.l !green_value
 	
-.do_red
+  .do_red
 	LDA.l !pal_color : AND #$001F : STA.l !red_value
 	SEC : SBC.l red_table,x		; substract amount to red field based on a table
 	STA.l !temp_value
 	AND #$001F		; mask out everything except the red bits
-	CMP !temp_value		; overflow ?
-	BEQ .no_red_sign_change
+	CMP !temp_value : BEQ .no_red_sign_change ; overflow ?
+    .red_sign_change
+    LDA #$0001		; LDA smallest red value
 
-.red_sign_change
-	LDA #$0001		; LDA smallest red value
-
-.no_red_sign_change
+  .no_red_sign_change
 	STA.l !red_value
 
 	LDA.l !blue_value
@@ -274,6 +289,8 @@ do_green:
 	
 	RTL
 }
+
+; =========================================================
 
 ; color_sub_tables : 24 * 2 bytes each = 48 bytes (2 bytes = 1 color sub for each hour)
 
@@ -304,9 +321,9 @@ red_table:
 BackgroundFix:
 {
   BEQ .no_effect		;BRAnch if A=#$0000 (transparent bg)
-	JSL ColorSubEffect
-  
-.no_effect:
+    JSL ColorSubEffect
+    
+  .no_effect:
 	STA.l $7EC500
 	STA.l $7EC300
 	STA.l $7EC540
@@ -325,18 +342,15 @@ SubAreasFix:
 	rtl
 }
 
-
 GlovesFix:
 {
 	STA.l !pal_color
-	LDA $1B
-	AND #$00FF
-	BEQ .outdoors3
-	LDA.l !pal_color
-	STA $7EC4FA
-	RTL
+	LDA $1B : AND #$00FF : BEQ .outdoors3
+    LDA.l !pal_color
+    STA $7EC4FA
+    RTL
 
-.outdoors3:
+  .outdoors3:
 	PHX
 	JSL ColorSubEffect
 	PLX
@@ -346,22 +360,18 @@ GlovesFix:
 
 CheckIfNight:
 {
-  LDA $7EE000 : CMP.b #$06
-  BCC .night_time
+  LDA $7EE000 : CMP.b #$06 : BCC .night_time
+    .day_time
+    LDA.l $7EF3C5
 
-.day_time
-  LDA.l $7EF3C5
+    RTL
+  .night_time
 
-  RTL
-.night_time
-
-  LDA $7EE000 : CMP.b #$14
-  BCS .day_time
-
-  LDA.l $7EF3C5
-  CLC
-  ADC #$01
-  RTL
+  LDA $7EE000 : CMP.b #$14 : BCS .day_time
+    LDA.l $7EF3C5
+    CLC
+    ADC #$01
+    RTL
 }
 
 warnpc $0EF3F9  ; free space
@@ -402,7 +412,7 @@ org $2885F9
 org $0ED601
 	JSL SubAreasFix
 
-;--------------------------------
+; =========================================================
 	
 ; Gloves color loading routine
 ;$1B/EE1B C2 30       REP #$30                
@@ -421,3 +431,5 @@ org $0ED601
 
 org $1BEE2D
 	JSL GlovesFix
+
+; =========================================================

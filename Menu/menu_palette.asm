@@ -7,7 +7,7 @@ Menu_Palette:
   dw hexto555($f9f9f9)
   dw hexto555($000000)
   dw hexto555($000000) ; transparent
-  dw hexto555($d1a452)
+  dw hexto555($d0a050)
   dw hexto555($f9f9f9)
   dw hexto555($000000)
   dw hexto555($000000) ; transparent

@@ -14,13 +14,14 @@ pushpc
 ; update in game hud colors 
 org $1BD662 : dw hexto555($814f16), hexto555($552903)
 org $1BD66A : dw hexto555($d51d00), hexto555($f9f9f9)
-org $1DB672 : dw hexto555($d1a452), hexto555($f9f9f9)
+org $1DB672 : dw hexto555($d0a050), hexto555($f9f9f9)
 org $1DB67A : dw hexto555($5987e0), hexto555($f9f9f9)
 org $1DB682 : dw hexto555($7b7b83), hexto555($bbbbbb)
 org $1DB68A : dw hexto555($a58100), hexto555($dfb93f)
 
 ; Free ROM in Bank 00
-org $0098AB : db $D8>>1
+org $0098AB : db $6C
+org $0098AC : db $64
 
 ; Module RunInterface 0E.01: Item Menu
 org $00F877 : db Menu_Entry>>0
@@ -57,17 +58,18 @@ Menu_Entry:
   RTL
 }
 .vectors
-  dw Menu_InitGraphics  ; 00
-  dw Menu_UploadRight   ; 01
-  dw Menu_UploadLeft    ; 02
-  dw Menu_ScrollDown    ; 03
-  dw Menu_ItemScreen    ; 04
-  dw Menu_ScrollTo      ; 05
-  dw Menu_StatsScreen   ; 06 
-  dw Menu_ScrollFrom    ; 07
-  dw Menu_ScrollUp      ; 08
-  dw Menu_CheckBottle   ; 09
-  dw Menu_Exit          ; 0A
+  dw Menu_InitGraphics       ; 00
+  dw Menu_UploadRight        ; 01
+  dw Menu_UploadLeft         ; 02
+  dw Menu_ScrollDown         ; 03
+  dw Menu_ItemScreen         ; 04
+  dw Menu_ScrollTo           ; 05
+  dw Menu_StatsScreen        ; 06 
+  dw Menu_ScrollFrom         ; 07
+  dw Menu_ScrollUp           ; 08
+  dw Menu_CheckBottle        ; 09
+  dw Menu_Exit               ; 0A
+  dw Menu_InitiateScrollDown ; 0B
 
 ; =========================================================
 ; 00 MENU INIT GRAPHICS 
@@ -123,10 +125,10 @@ Menu_UploadLeft:
   ; INSERT PALETTE -------
 
   LDX.w #$3E
-.loop
-  LDA.w Menu_Palette, X
-  STA.l $7EC502, X
-  DEX : DEX
+  .loop
+    LDA.w Menu_Palette, X
+    STA.l $7EC502, X
+    DEX : DEX
   BPL .loop
   
   SEP #$30
@@ -158,11 +160,10 @@ Menu_ScrollDown:
   INX : INX
   LDA.w Menu_Scroll, X 
   STA.b $EA
-  CMP.w #$FF12 : BNE .loop
+  CMP.w #$FF12 : BNE .notDoneScrolling
+    JMP Menu_InitItemScreen
 
-  JMP Menu_InitItemScreen
-
-.loop
+  .notDoneScrolling
   STX.w MenuScrollLevelV
   RTS
 }
@@ -178,40 +179,39 @@ Menu_ItemScreen:
 
   INC $0207
   LDA.w $0202 : BEQ .no_inputs
-
-  ; Scroll through joypad 1 inputs 
-  ASL : TAY : LDA.b $F4 
-  LSR : BCS .move_right
-  LSR : BCS .move_left
-  LSR : BCS .move_down
-  LSR : BCS .move_up
+    ; Scroll through joypad 1 inputs 
+    ASL : TAY : LDA.b $F4 
+    LSR : BCS .move_right
+    LSR : BCS .move_left
+    LSR : BCS .move_down
+    LSR : BCS .move_up
 
   BRA .no_inputs
 
-.move_right
+  .move_right
   JSR Menu_DeleteCursor
   JSR Menu_FindNextItem
   BRA .draw_cursor
   
-.move_left
+  .move_left
   JSR Menu_DeleteCursor
   JSR Menu_FindPrevItem
   BRA .draw_cursor
 
-.move_down 
+  .move_down 
   JSR Menu_DeleteCursor
   JSR Menu_FindNextDownItem
   BRA .draw_cursor
 
-.move_up 
+  .move_up 
   JSR Menu_DeleteCursor
   JSR Menu_FindNextUpItem
   BRA .draw_cursor
 
-.draw_cursor
+  .draw_cursor
   LDA.b #$20 : STA.w $012F ; cursor move sound effect 
 
-.no_inputs
+  .no_inputs
   SEP #$30
   LDA.w $0202
   ASL : TAY
@@ -223,16 +223,15 @@ Menu_ItemScreen:
   REP #$20
 
   BEQ .no_delete 
+    ; Delete cursor
+    LDA.w #$20F5
+    STA.w $1108, X : STA.w $1148, X
+    STA.w $114E, X : STA.w $110E, X 
+    STA.w $11C8, X : STA.w $1188, X
+    STA.w $118E, X : STA.w $11CE, X 
+    BRA .done
 
-  ; Delete cursor
-  LDA.w #$20F5
-  STA.w $1108, X : STA.w $1148, X
-  STA.w $114E, X : STA.w $110E, X 
-  STA.w $11C8, X : STA.w $1188, X
-  STA.w $118E, X : STA.w $11CE, X 
-  BRA .done
-
-.no_delete 
+  .no_delete 
   LDA.w #$3060 : STA.w $1108, X ; corner 
   LDA.w #$3070 : STA.w $1148, X
 
@@ -245,7 +244,7 @@ Menu_ItemScreen:
   LDA.w #$7070 : STA.w $118E, X 
   LDA.w #$F060 : STA.w $11CE, X ; corner 
 
-.done
+  .done
   JSR Menu_DrawItemName
   SEP #$20
   LDA.b #$22 : STA.w $0116
@@ -262,10 +261,9 @@ Menu_ScrollTo:
   SEP #$20 
   JSR Menu_ScrollHorizontal
   BCC .not_done
+    INC.w $0200
 
-  INC.w $0200
-
-.not_done
+  .not_done
   RTS
 }
 
@@ -288,10 +286,9 @@ Menu_ScrollFrom:
 {
   JSR Menu_ScrollHorizontal
   BCC .not_done
+    JMP Menu_InitItemScreen
 
-  JMP Menu_InitItemScreen
-
-.not_done
+  .not_done
   RTS
 }
 
@@ -300,19 +297,17 @@ Menu_ScrollFrom:
 
 Menu_ScrollUp:
 { 
-  JSL $0DFA58 ; HUD_Rebuild_Long
-  LDA.b #$12 : STA.w $012F ; play menu exit sound effect 
   SEP #$10
   REP #$20
 
   LDX.w MenuScrollLevelV
   LDA.w Menu_Scroll, X 
-  STA.b $EA : BNE .loop
-  STZ.b $E4
-  INC.w $0200
-  RTS
+  STA.b $EA : BNE .notDoneScrolling
+    STZ.b $E4
+    INC.w $0200
+    RTS
 
-.loop
+  .notDoneScrolling
   DEX : DEX : STX.w MenuScrollLevelV
   RTS
 }
@@ -377,8 +372,85 @@ Menu_Exit:
 }
 
 ; =========================================================
+; 0B MENU COPY TO RIGHT
+
+Menu_InitiateScrollDown:
+{
+  REP #$20
+
+  ; Clear out the whole buffer.
+  LDX.b #$FE ; $1700-17FF 
+
+  .loop
+    LDA.w #$387F
+    STA.w $1000, X
+    STA.w $1100, X
+    STA.w $1200, X
+    STA.w $1300, X
+    STA.w $1400, X
+    STA.w $1500, X
+    STA.w $1600, X
+    STA.w $1700, X
+
+    DEX : DEX
+  BNE .loop
+
+  ; TODO: The BPL wasn't working so figure out why and 
+  ; fix it instead of doing this abomination.
+  STA.w $1000
+  STA.w $1100
+  STA.w $1200
+  STA.w $1300
+  STA.w $1400
+  STA.w $1500
+  STA.w $1600
+  STA.w $1700
+
+  SEP #$20
+
+  JSL $0DFA58 ; HUD_Rebuild_Long
+
+  ; Draw one frame of the clock so it doesn't just
+  ; pop in when scrolling down.
+  JSL DrawClockToHudLong
+
+  ; The whole HUD fits on 4 rows so I'm only going to
+  ; copy 4 here. Also we start 2 in because thats the
+  ; left we need to go.
+
+  LDX.b #$3A
+  .loop1
+    LDA $7EC702, X : STA $1082, X
+  DEX : BNE .loop1
+
+  LDX.b #$3A
+  .loop2
+    LDA $7EC742, X : STA $10C2, X
+  DEX : BNE .loop2
+
+  LDX.b #$3A
+  .loop3
+    LDA $7EC782, X : STA $1102, X
+  DEX : BNE .loop3
+
+  LDX.b #$3A
+  .loop4
+    LDA $7EC7C2, X : STA $1142, X
+  DEX : BNE .loop4
+
+  LDA.b #$24 : STA.w $0116
+  LDA.b #$01 : STA.b $17
+
+  LDA.b #$08 : STA.w $0200
+
+  LDA.b #$12 : STA.w $012F ; play menu exit sound effect 
+
+  RTS
+}
 
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
 quest_icons: incbin "tilemaps/quest_icons.tilemap"
 incsrc "menu_map_names.asm"
 incsrc "menu_hud.asm"
+
+; =========================================================

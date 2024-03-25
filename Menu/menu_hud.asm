@@ -70,11 +70,10 @@ HUD_Update:
 
   ; Branch if at full health
   LDA $7EF36C : CMP $7EF36D : BEQ .healthUpdated
+    ; Seems absurd to have a branch of zero bytes, right?
+    SEC : SBC #$04 : CMP $7EF36D : BCS .healthUpdated
 
-  ; Seems absurd to have a branch of zero bytes, right?
-  SEC : SBC #$04 : CMP $7EF36D : BCS .healthUpdated
-
-.healthUpdated
+  .healthUpdated
 
   ; A = actual health + 0x03;
   LDA $7EF36D : CLC : ADC.b #$03
@@ -88,18 +87,17 @@ HUD_Update:
   ; filling in the full and partially filled hearts (actual health)
   JSR HUD_UpdateHearts
 
-.ignore_health ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
+  .ignore_health ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
 
   REP #$30
 
   ; Magic amount indicator (normal, 1/2, or 1/4)
   LDA $7EF37B : AND.w #$00FF : CMP.w #$0001 : BCC .normal_magic_meter
+    ; draw 1/2 magic meter
+    LDA.w #$2851 : STA $7EC730
+    LDA.w #$28FA : STA $7EC732
 
-  ; draw 1/2 magic meter
-  LDA.w #$2851 : STA $7EC730
-  LDA.w #$28FA : STA $7EC732
-
-.normal_magic_meter
+  .normal_magic_meter
 
   ; check player magic (ranges from 0 to 0x7F)
   ; X = ((MP & 0xFF)) + 7) & 0xFFF8)
@@ -134,55 +132,56 @@ HUD_Update:
   ; Check if the user has bombs equipped
   LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
   CPX.w #$0004 : BNE .not_bombs
+    ; Number of bombs Link has.
+    LDA $7EF343 : AND.w #$00FF
+    JSR HexToDecimal
+    REP #$30
 
-  ; Number of bombs Link has.
-  LDA $7EF343 : AND.w #$00FF
-  JSR HexToDecimal
-  REP #$30
+    ; The tile index for the first bomb digit
+    LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
 
-  ; The tile index for the first bomb digit
-  LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
+    ; The tile index for the second bomb digit
+    LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
 
-  ; The tile index for the second bomb digit
-  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
+  .not_bombs
 
-.not_bombs
   ; Check if the user has arrows equipped
   LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
   CPX.w #$0001 : BNE .not_arrows
 
-  ; Number of Arrows Link has.
-  LDA $7EF377 : AND.w #$00FF
+    ; Number of Arrows Link has.
+    LDA $7EF377 : AND.w #$00FF
 
-  ; converts hex to up to 3 decimal digits
-  JSR HexToDecimal
-  REP #$30
+    ; converts hex to up to 3 decimal digits
+    JSR HexToDecimal
+    REP #$30
 
-  ; The tile index for the first arrow digit
-  LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
+    ; The tile index for the first arrow digit
+    LDA $04 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B0
 
-  ; The tile index for the second arrow digit
-  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
+    ; The tile index for the second arrow digit
+    LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7B2
 
-.not_arrows
+  .not_arrows
   LDA.w #$007F : STA $05
 
   ; Load number of Keys Link has
   LDA $7EF36F : AND.w #$00FF : CMP.w #$00FF : BEQ .no_keys
-  JSR HexToDecimal
-.no_keys
+    JSR HexToDecimal
+  .no_keys
+
   REP #$30
 
   ; The key digit, which is optionally drawn.
   ; Also check to see if the key spot is blank
-  LDA   $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A4
+  LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A4
   CMP.w #$247F : BNE .dont_blank_key_icon
+    ; TODO: Find the proper index of the key icon, this one is outdated.
+    ; If the key digit is blank, also blank out the key icon.
+    STA $7EC724
 
-  ; TODO: Find the proper index of the key icon, this one is outdated.
-  ; If the key digit is blank, also blank out the key icon.
-  STA $7EC724
+  .dont_blank_key_icon
 
-.dont_blank_key_icon
   SEP #$30
   RTL
 }
@@ -216,77 +215,86 @@ MagicTilemap:
   dw MostlyFull, Full, Full, Full
 
 ; =========================================================
-; *$6FAFD-$6FB90 LOCAL
-
+; $06FAFD-$06FB90 LOCAL
 HUD_UpdateItemBox:
 {
   SEP #$30
   ; Dost thou haveth the the bow?
   LDA $7EF340 : BEQ .no_bow
+    CMP.b #$03 : BCC .no_silver_arrows
+      ; Check how many arrows the player has:
+      LDA   $7EF377 : BNE .draw_bow_item_icon
+        LDX.b #$03
+        BRA   .draw_bow_item_icon
 
-  CMP.b #$03 : BCC .no_silver_arrows
+    .no_silver_arrows
 
-  ; check how many arrows the player has
-  LDA   $7EF377 : BNE .draw_bow_item_icon
-  LDX.b #$03
-  BRA   .draw_bow_item_icon
+    LDX.b #$02
+    
+    LDA $7EF377 : BNE .draw_bow_item_icon
+      LDX.b #$01
 
-.no_silver_arrows
+    .draw_bow_item_icon
+    ; Values of X correspond to how the icon will end up drawn:
+    ; 0x01 - normal bow with no arrows
+    ; 0x02 - normal bow with arrows
+    ; 0x03 - silver bow with no silver arrows
+    ; 0x04 - silver bow with silver arrows
+    TXA : STA $7EF340
 
-  LDX.b #$02
-  
-  LDA $7EF377 : BNE .draw_bow_item_icon
-  
-  LDX.b #$01
+  .no_bow
 
-.draw_bow_item_icon
-  ; values of X correspond to how the icon will end up drawn:
-  ; 0x01 - normal bow with no arrows
-  ; 0x02 - normal bow with arrows
-  ; 0x03 - silver bow with no silver arrows
-  ; 0x04 - silver bow with silver arrows
-  TXA : STA $7EF340
+  REP #$30
+  LDX $0202 : BEQ .no_equipped_item
+    TXY
+    LDA.l Menu_AddressIndex-1, X
+    AND.w #$00FF : TAX
+    LDA.l $7EF300, X : AND.w #$00FF
+    TYX
 
-.no_bow
-  REP   #$30
-  LDX   $0202 : BEQ .no_equipped_item
-  LDA   $7EF33F, X : AND.w #$00FF
-  CPX.w #$0004 : BNE .bombs_not_equipped
-  LDA.w #$0001
+    CPX.w #$0004 : BNE .bombs_not_equipped
+      LDA.w #$0001
 
-.bombs_not_equipped
-  CPX.w #$0006 : BNE .bottle1_not_equipped
-  JMP   .load_bottle_content
+    .bombs_not_equipped
 
-.bottle1_not_equipped
-  CPX.w #$000C : BNE .bottle2_not_equipped
-  LDA.w #$0002 : JMP   .load_bottle_content
+    CPX.w #$0006 : BNE .bottle1_not_equipped
+      LDA.w #$0000 : JMP .load_bottle_content
 
-.bottle2_not_equipped
-  CPX.w #$0012 : BNE .bottle3_not_equipped
-  LDA.w #$0003 : JMP   .load_bottle_content
+    .bottle1_not_equipped
 
-.bottle3_not_equipped
-  CPX.w #$0018 : BNE .bottle_not_equipped
-  LDA.w #$0004
+    CPX.w #$000C : BNE .bottle2_not_equipped
+      LDA.w #$0001 : JMP .load_bottle_content
 
-.load_bottle_content
-  TXY : TAX : LDA $7EF35B, X : AND.w #$00FF : TYX
+    .bottle2_not_equipped
 
-.bottle_not_equipped
-  CPX.w #$000D : BNE .flute_not_equipped
-  LDA   $030F
+    CPX.w #$0012 : BNE .bottle3_not_equipped
+      LDA.w #$0002 : JMP .load_bottle_content
 
-.flute_not_equipped
-  CPX.w #$0003 : BNE .hookshot_not_equipped
-  LDA.w GoldstarOrHookshot : BEQ .hookshot_not_equipped
-  SEC   : SBC.b #$01
+    .bottle3_not_equipped
 
-.hookshot_not_equipped
+    CPX.w #$0018 : BNE .bottle_not_equipped
+      LDA.w #$0003
 
-  JSR HUD_DrawItem
+      .load_bottle_content
 
-.no_equipped_item
+      TXY : TAX : LDA $7EF35C, X : AND.w #$00FF : TYX
+
+    .bottle_not_equipped
+
+    CPX.w #$000D : BNE .flute_not_equipped
+      LDA $030F
+
+    .flute_not_equipped
+
+    CPX.w #$0003 : BNE .hookshot_not_equipped
+      LDA.w GoldstarOrHookshot : BEQ .hookshot_not_equipped
+        SEC : SBC.b #$01
+
+    .hookshot_not_equipped
+
+    JSR HUD_DrawItem
+
+  .no_equipped_item
 
   RTS
 }
@@ -385,14 +393,14 @@ pushpc
 org $0DFA93
 HudItems:
 {
-  ; bows, boomerang, hookshot, bombs, powder, bottle1
-  dw $F629, $F651, $F669, $F679, $F689, $F751
-  ; hammer, lamp, fire rod, ice rod, mirror, bottle2
-  dw $F701, $F6F1, $F6A1, $F6B1, $F7C9, $F751
-  ; flute, book, somaria, byrna, feather, bottle3
-  dw $F859, $F741, $F799, $F7A9, $F731, $F751
-  ; deku,   zora,  wolf,  bunny,  stone, bottle4
-  dw $F6E1, $F821, $F6D1, $F7B9, $F811, $F751
+  ;  bows,   boomerang, hookshot, bombs,   powder,  bottle1
+  dw $F629,  $F651,     $F669,    $F679,   $F689,   $F751
+  ;  hammer, lamp,      fire rod, ice rod, mirror,  bottle2
+  dw $F701,  $F6F1,     $F6A1,    $F6B1,   $F7C1,   $F751
+  ;  flute,  book,      somaria,  byrna,   feather, bottle3
+  dw $F859,  $F741,     $F799,    $F7A9,   $F729,   $F751
+  ;  deku,   zora,      wolf,     bunny,   stone,   bottle4
+  dw $F6E1,  $F821,     $F6D1,    $F7B9,   $F811,   $F751
 }
 
 ; F711
@@ -401,7 +409,7 @@ HudItems:
 org $0DF629
   dw $20F5, $20F5, $20F5, $20F5 ; No bow
 	dw $28BA, $28E9, $28E8, $28CB ; Empty bow
-	dw $28BA, $28BB, $24CA, $28CB ; Bow and arrows
+	dw $28BA, $28BB, $28CA, $28CB ; Bow and arrows
 	dw $28BA, $28E9, $28E8, $28CB ; Empty silvers bow
 	dw $28BA, $28BB, $24CA, $28CB ; Silver bow and arrows
 
@@ -546,10 +554,11 @@ FloorIndicator:
   REP   #$30
   LDA   $04A0 : AND.w #$00FF : BEQ .hide_indicator
   INC   A : CMP.w #$00C0 : BNE .dont_disable
-  ; if the count up timer reaches 0x00BF frames
-  ; disable the floor indicator during the next frame.
-  LDA.w #$0000
-.dont_disable
+    ; if the count up timer reaches 0x00BF frames
+    ; disable the floor indicator during the next frame.
+    LDA.w #$0000
+  .dont_disable
+  
   STA   $04A0
   PHB   : PHK : PLB
   LDA.w #$251E : STA $7EC7F0

@@ -128,7 +128,7 @@ namespace Oracle
   ; -------------------------------------------------------
   incsrc "Util/all_items.asm"
 
-  incsrc "Dungeons/house_walls.asm"
+  ;incsrc "Dungeons/house_walls.asm"
 
   print ""
   print "Finished applying patches"

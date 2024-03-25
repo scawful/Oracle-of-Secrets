@@ -32,8 +32,8 @@ Menu_AddressIndex:
 
   db $7EF34C ; shovel 7EF34F
   db $7EF34E ; Book 
-  db $7EF350 ; Cane of Somaria
-  db $7EF351 ; Cane of Byrna
+  db $7EF350 ; Cane of Somaria / Cane of Byrna
+  db $7EF351 ; Fishing rod
   db $7EF34D ; Roc's Feather 
   db $7EF35E ; Bottle 3
 
@@ -64,7 +64,7 @@ Menu_ItemCursorPositions:
   dw menu_offset(12,2)  ; shovel 
   dw menu_offset(12,5)  ; feather 
   dw menu_offset(12,8)  ; somaria
-  dw menu_offset(12,12) ; byrna
+  dw menu_offset(12,12) ; byrna / fishing rod
   dw menu_offset(12,15) ; bunny hood
   dw menu_offset(12,18) ; bottle3
 
@@ -167,24 +167,42 @@ Menu_InitItemScreen:
 {
   SEP   #$30
   LDY.w $0202 : BNE .all_good
+    ; Loop through the SRM of each item to see if we have
+    ; one of them so we can start with that one selected.
+    .lookForAlternateItem
+    LDY.b #$00
 
-.loop
-  INY   : CPY.b #$25 : BCS .bad
+    .loop
+      INY : CPY.b #$25 : BCS .bad
+        LDX.w Menu_AddressIndex-1, Y
+        LDA.l $7EF300,             X
+    BEQ .loop
+
+    STY.w $0202
+    BRA .all_good
+
+    .bad
+    ; If we made it here that means there are no items
+    ; available but one was still selected. This should
+    ; never happen under normal vanilla circumstances.
+    STZ.w $0202
+
+    STZ   $0207
+    LDA.b #$04
+    STA.w $0200
+    RTS
+
+  .all_good 
+  ; Double check we still have the item that was selected.
+  ; This is to prevent a bug where we can get stuck in an
+  ; infinite loop later on.
   LDX.w Menu_AddressIndex-1, Y
   LDA.l $7EF300,             X
-  BEQ   .loop
-
-  STY.w $0202
-  BRA   .all_good
-
-.bad
-  STZ.w $0202
-
-.all_good 
-  STZ   $0207
-  LDA.b #$04
-  STA.w $0200
-  RTS
+  CMP.b #$01 : BCC .lookForAlternateItem
+    STZ   $0207
+    LDA.b #$04
+    STA.w $0200
+    RTS
 }
 
 ; =========================================================
@@ -206,8 +224,8 @@ Menu_AddressLong:
 
   db $4C ; shovel 4F
   db $4E ; Book 
-  db $50 ; Cane of Somaria
-  db $51 ; Cane of Byrna
+  db $50 ; Cane of Somaria / Cane of Byrna
+  db $51 ; Fishing Rod
   db $4D ; Roc's Feather 
   db $5E ; Bottle 3
 
@@ -236,39 +254,36 @@ DoWeHaveThisItem_Override:
 {
   LDY $0202 : LDX.w Menu_AddressLong, Y
   LDA.l $7EF33F, X : BNE .have_this_item
-  CLC
-  RTL
-.have_this_item
+    CLC
+    RTL
+  .have_this_item
   SEC 
   RTL
 }
 
 TryEquipNextItem_Override:
 {
-.keep_looking
-  JSR GotoNextItem_Local
+  .keep_looking
+    JSR GotoNextItem_Local
   JSL DoWeHaveThisItem_Override : BCC .keep_looking
   RTS
 }
 
 SearchForEquippedItem_Override:
 {
-    SEP   #$30
+  SEP   #$30
  
-    LDY $0202 : LDX.w Menu_AddressLong-1, Y
-    LDA.l $7EF33F, X : CMP.b #$00 : BNE .item_available
-    
+  LDY $0202 : LDX.w Menu_AddressLong-1, Y
+  LDA.l $7EF33F, X : CMP.b #$00 : BNE .item_available
     ; In this case we have no equippable items
     STZ $0202 : STZ $0203 : STZ $0204
 
-  .we_have_that_item
+    .we_have_that_item
     RTL
 
   .item_available
-    ; Is there an item currently equipped (in the HUD slot)?
-    LDA $0202
-    BNE .alreadyEquipped
-    
+  ; Is there an item currently equipped (in the HUD slot)?
+  LDA $0202 : BNE .alreadyEquipped
     ; If not, set the equipped item to the Bow and Arrow 
     ; (even if we don't actually have it)
     LDA.b #$01 : STA $0202
@@ -279,11 +294,12 @@ SearchForEquippedItem_Override:
     ; We're done if we have that item
   .keep_looking
     JSR GotoNextItem_Local
-    JSL DoWeHaveThisItem_Override : BCC .keep_looking
-    BCS .we_have_that_item
+  JSL DoWeHaveThisItem_Override : BCC .keep_looking
+  BCS .we_have_that_item
     
-    JMP TryEquipNextItem_Override
+  JMP TryEquipNextItem_Override
 }
+
 pushpc 
 
 org $0DDEB0
@@ -302,5 +318,7 @@ SearchForEquippedItem:
   RTS
 }
 warnpc $0DE3C7
+
+; =========================================================
 
 pullpc
