@@ -32,8 +32,8 @@ Menu_AddressIndex:
 
   db $7EF34C ; shovel 7EF34F
   db $7EF34E ; Book 
-  db $7EF350 ; Cane of Somaria
-  db $7EF351 ; Cane of Byrna / Fishing rod
+  db $7EF350 ; Cane of Somaria / Cane of Byrna
+  db $7EF351 ; Fishing rod
   db $7EF34D ; Roc's Feather 
   db $7EF35E ; Bottle 3
 
@@ -224,8 +224,8 @@ Menu_AddressLong:
 
   db $4C ; shovel 4F
   db $4E ; Book 
-  db $50 ; Cane of Somaria
-  db $51 ; Cane of Byrna
+  db $50 ; Cane of Somaria / Cane of Byrna
+  db $51 ; Fishing Rod
   db $4D ; Roc's Feather 
   db $5E ; Bottle 3
 

@@ -302,12 +302,12 @@ Menu_ScrollUp:
 
   LDX.w MenuScrollLevelV
   LDA.w Menu_Scroll, X 
-  STA.b $EA : BNE .loop
+  STA.b $EA : BNE .notDoneScrolling
     STZ.b $E4
     INC.w $0200
     RTS
 
-  .loop
+  .notDoneScrolling
   DEX : DEX : STX.w MenuScrollLevelV
   RTS
 }
