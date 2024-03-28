@@ -69,7 +69,7 @@ print  "End of mineswitch.asm             ", pc
 incsrc "Sprites/NPCs/village_dog.asm"
 print  "End of village_dog.asm            ",  pc
 
-incsrc "Sprites/minecart.asm"
+incsrc "Sprites/Objects/minecart.asm"
 print  "End of minecart.asm               ",  pc
 
 incsrc "Sprites/Bosses/twinrova.asm"
