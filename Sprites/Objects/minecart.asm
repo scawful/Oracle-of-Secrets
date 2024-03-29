@@ -2,33 +2,33 @@
 ; Minecart Sprite Properties
 ; =========================================================
 
-!SPRID              = $A3 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 08  ; Number of tiles used in a frame
-!Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
-!HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 00  ; Number of Health the sprite have
-!Damage             = 00  ; (08 is a whole heart), 04 is half heart
-!DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
-!ImperviousAll      = 01  ; 00 = Can be attack, 01 = attack will clink on it
-!SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
-!Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
-!Persist            = 01  ; 01 = your sprite continue to live offscreen
-!Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
-!CollisionLayer     = 00  ; 01 = will check both layer for collision
-!CanFall            = 00  ; 01 sprite can fall in hole, 01 = can't fall
-!DeflectArrow       = 00  ; 01 = deflect arrows
-!WaterSprite        = 00  ; 01 = can only walk shallow water
-!Blockable          = 00  ; 01 = can be blocked by link's shield?
-!Prize              = 00  ; 00-15 = the prize pack the sprite will drop from
-!Sound              = 00  ; 01 = Play different sound when taking damage
-!Interaction        = 00  ; ?? No documentation
-!Statue             = 00  ; 01 = Sprite is statue
-!DeflectProjectiles = 00  ; 01 = Sprite will deflect ALL projectiles
-!ImperviousArrow    = 00  ; 01 = Impervious to arrows
-!ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
-!Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
+!SPRID              = $A3   ; The sprite ID you are overwriting (HEX)
+!NbrTiles           = 08    ; Number of tiles used in a frame
+!Harmless           = 01    ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
+!HVelocity          = 00    ; Is your sprite going super fast? put 01 if it is
+!Health             = 00    ; Number of Health the sprite have
+!Damage             = 00    ; (08 is a whole heart), 04 is half heart
+!DeathAnimation     = 00    ; 00 = normal death, 01 = no death animation
+!ImperviousAll      = 01    ; 00 = Can be attack, 01 = attack will clink on it
+!SmallShadow        = 00    ; 01 = small shadow, 00 = no shadow
+!Shadow             = 00    ; 00 = don't draw shadow, 01 = draw a shadow 
+!Palette            = 00    ; Unused in this template (can be 0 to 7)
+!Hitbox             = 00    ; 00 to 31, can be viewed in sprite draw tool
+!Persist            = 01    ; 01 = your sprite continue to live offscreen
+!Statis             = 00    ; 00 = is sprite is alive?, (kill all enemies room)
+!CollisionLayer     = 00    ; 01 = will check both layer for collision
+!CanFall            = 00    ; 01 sprite can fall in hole, 01 = can't fall
+!DeflectArrow       = 00    ; 01 = deflect arrows
+!WaterSprite        = 00    ; 01 = can only walk shallow water
+!Blockable          = 00    ; 01 = can be blocked by link's shield?
+!Prize              = 00    ; 00-15 = the prize pack the sprite will drop from
+!Sound              = 00    ; 01 = Play different sound when taking damage
+!Interaction        = 00    ; ?? No documentation
+!Statue             = 00    ; 01 = Sprite is statue
+!DeflectProjectiles = 00    ; 01 = Sprite will deflect ALL projectiles
+!ImperviousArrow    = 00    ; 01 = Impervious to arrows
+!ImpervSwordHammer  = 00    ; 01 = Impervious to sword and hammer attacks
+!Boss               = 00    ; 00 = normal sprite, 01 = sprite is a boss
 
 ; =========================================================
 
@@ -38,15 +38,15 @@
 
 ; Link is in cart
 !LinkInCart         = $35
-!MinecartSpeed     = 20
-!DoubleSpeed       = 30
+!MinecartSpeed      = 20
+!DoubleSpeed        = 30
 
 ; nesw
 ; 0 - north
 ; 1 - east
 ; 2 - south
 ; 3 - west
-!MinecartDirection = $012B
+!MinecartDirection  = $012B
 
 ; $0DE0[0x10] - (Sprite) ;functions
 ;     udlr 
@@ -54,13 +54,13 @@
 ;     1 - down
 ;     2 - left
 ;     3 - right
-!SpriteDirection   = $0DE0
+!SpriteDirection    = $0DE0
 
 ; Bitfield for carry-related actions.
 ; .... ..tl
 ;   t - tossing object
 ;   l - lifting object
-!LinkCarryOrToss   = $0309
+!LinkCarryOrToss    = $0309
 
 ; =========================================================
 
@@ -223,15 +223,15 @@ Sprite_Minecart_Main:
     LDA #$01 : STA !LinkInCart
 
     ; Check if the cart is facing east or west
-    LDA SprSubtype,X : CMP.b #$03 : BNE .opposite_direction
+    LDA SprSubtype, X : CMP.b #$03 : BNE .opposite_direction
       STA.w !MinecartDirection
-      LDA #$02 : STA $0DE0, X
+      LDA   #$02 : STA $0DE0, X
       %GotoAction(5)  ; Minecart_MoveWest
       RTS
 
     .opposite_direction
       STA.w !MinecartDirection
-      LDA #$03 : STA $0DE0, X
+      LDA   #$03 : STA $0DE0, X
       %GotoAction(3) ; Minecart_MoveEast
 
     .not_ready
@@ -262,13 +262,13 @@ Sprite_Minecart_Main:
       ; Check if the cart is facing north or south
       LDA SprSubtype, X : BEQ .opposite_direction
         STA.w !MinecartDirection
-        LDA #$01 : STA $0DE0, X
+        LDA   #$01 : STA $0DE0, X
         %GotoAction(4)  ; Minecart_MoveSouth
         RTS
         
       .opposite_direction
         STA.w !MinecartDirection
-        LDA #$00 : STA $0DE0, X
+        LDA   #$00 : STA $0DE0, X
         %GotoAction(2)  ; Minecart_MoveNorth
 
     .not_ready
@@ -399,15 +399,15 @@ SetTileLookupPosBasedOnDirection:
   .north
     LDA.w SprY, X : SEC : SBC.b #$01 : STA.b $00
     LDA.w SprX, X : STA.b $02
-    JMP .return
+    JMP   .return
   .east
     LDA.w SprX, X : CLC : ADC.b #$01 : STA.b $03
     LDA.w SprY, X : STA.b $00
-    JMP .return
+    JMP   .return
   .south
     LDA.w SprY, X : SEC : SBC.b #$01 : STA.b $00
     LDA.w SprX, X : STA.b $02
-    JMP .return
+    JMP   .return
   .west
     LDA.w SprX, X : AND #$F8 : SEC : SBC.b #$01 : STA.b $03
     LDA.w SprY, X : STA.b $00
@@ -416,9 +416,9 @@ SetTileLookupPosBasedOnDirection:
     LDA.w SprYH, X : STA.b $01
     LDA.w SprXH, X : STA.b $03
 
-    LDA.w SprX, X :  STA $0FD8
+    LDA.w SprX,  X :  STA $0FD8
     LDA.w SprXH, X : STA $0FD9
-    LDA.w SprY, X :  STA $0FDA
+    LDA.w SprY,  X :  STA $0FDA
     LDA.w SprYH, X : STA $0FDB
 
     RTS
@@ -656,7 +656,7 @@ HandleDynamicSwitchTileDirections:
 CheckSpritePresence:
 {
     PHX
-    CLC ; Assume sprite ID $B0 is not present
+    CLC        ; Assume sprite ID $B0 is not present
     LDX.b #$10
   .x_loop
     DEX
