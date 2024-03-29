@@ -10,10 +10,12 @@ Build using [Asar](https://github.com/RPGHacker/asar) with `build.bat`
 ![oos55001](https://user-images.githubusercontent.com/47263509/175397658-56358685-74fa-42cd-bca7-b03b2909ab9c.png)
 ![oos55002](https://user-images.githubusercontent.com/47263509/175397677-9199c207-1d8a-4de9-9040-63bf420de49f.png)
 
-## Custom Menu
+## Custom Menu and HUD
 
-![oos69x_004](https://user-images.githubusercontent.com/47263509/175392740-69b44931-298c-4000-b22d-5a2ebf76e1ad.png)
-![oos69x_005](https://user-images.githubusercontent.com/47263509/175392746-263801e4-5353-4fb8-b5cf-2d2e7f1c0282.png)
+![image](https://github.com/scawful/Oracle-of-Secrets/assets/47263509/77e12478-127f-4dbd-b9c8-19da12b75ca2)
+![image](https://github.com/scawful/Oracle-of-Secrets/assets/47263509/a02d8d78-b7ed-4085-809e-59d78319e576)
+![image](https://github.com/scawful/Oracle-of-Secrets/assets/47263509/a6c7e247-f645-4a1c-954a-6c2d9c864d3e)
+
 
 ## Custom Sprites
 
