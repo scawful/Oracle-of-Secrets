@@ -242,46 +242,75 @@ GotoNextItem_Local:
   ; Load our currently equipped item, and move to the next one
   ; If we reach our limit (21), set it back to the bow and arrow slot.
   LDA $0202 : INC A : CMP.b #$18 : BCC .dont_reset
-  LDA.b #$01
+    LDA.b #$01
 
-.dont_reset
+  .dont_reset
   ; Otherwise try to equip the item in the next slot
   STA $0202
   RTS
 }
 
+DoWeHaveThisItem_OverrideLong:
+{
+  PHB : PHK : PLB
+  JSR DoWeHaveThisItem_Override
+  PLB 
+  RTL
+}
+
 DoWeHaveThisItem_Override:
 {
-  LDY $0202 : LDX.w Menu_AddressLong, Y
-  LDA.l $7EF33F, X : BNE .have_this_item
+  LDY $0202 : LDX.w Menu_AddressLong-1, Y
+  LDA.l $7EF300, X : BNE .have_this_item
     CLC
-    RTL
+    RTS
+
   .have_this_item
   SEC 
-  RTL
+  RTS
 }
 
 TryEquipNextItem_Override:
 {
   .keep_looking
+
     JSR GotoNextItem_Local
-  JSL DoWeHaveThisItem_Override : BCC .keep_looking
+  JSR DoWeHaveThisItem_Override : BCC .keep_looking
+
   RTS
+}
+
+SearchForEquippedItem_OverrideLong:
+{
+  PHB : PHK : PLB
+  JSR SearchForEquippedItem_Override
+  PLB 
+  RTL
 }
 
 SearchForEquippedItem_Override:
 {
-  SEP   #$30
- 
-  LDY $0202 : LDX.w Menu_AddressLong-1, Y
-  LDA.l $7EF33F, X : CMP.b #$00 : BNE .item_available
+  SEP #$30
+
+  LDA.b #$00
+  LDY.b #$18
+    
+  .itemCheck 
+
+    LDX Menu_AddressLong-1, Y
+    ORA $7EF300, X
+  DEY : CPY.b #$00 : BNE .itemCheck 
+
+  CMP.b #$00 : BNE .equippableItemAvailable
     ; In this case we have no equippable items
     STZ $0202 : STZ $0203 : STZ $0204
+        
+    .weHaveThatItem
+        
+    RTS
+    
+  .equippableItemAvailable
 
-    .we_have_that_item
-    RTL
-
-  .item_available
   ; Is there an item currently equipped (in the HUD slot)?
   LDA $0202 : BNE .alreadyEquipped
     ; If not, set the equipped item to the Bow and Arrow 
@@ -290,12 +319,9 @@ SearchForEquippedItem_Override:
 
   .alreadyEquipped
 
-    ; Checks to see if we actually have that item
-    ; We're done if we have that item
-  .keep_looking
-    JSR GotoNextItem_Local
-  JSL DoWeHaveThisItem_Override : BCC .keep_looking
-  BCS .we_have_that_item
+  ; Checks to see if we actually have that item
+  ; We're done if we have that item
+  JSR DoWeHaveThisItem_Override : BCS .weHaveThatItem
     
   JMP TryEquipNextItem_Override
 }
@@ -305,16 +331,14 @@ pushpc
 org $0DDEB0
 DoWeHaveThisItem:
 {
-  JSL DoWeHaveThisItem_Override
+  JSL DoWeHaveThisItem_OverrideLong
   RTS
 }
 
 org $0DE399
 SearchForEquippedItem:
 {
-  PHB : PHK : PLB
-  JSL SearchForEquippedItem_Override
-  PLB 
+  JSL SearchForEquippedItem_OverrideLong
   RTS
 }
 warnpc $0DE3C7

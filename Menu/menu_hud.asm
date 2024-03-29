@@ -516,7 +516,7 @@ org $0DF811
 ; =========================================================
 ; $6FE77-$6FFC0
 
-org    $0DFE77
+org $0DFE77
 HUD_Tilemap:
 incbin tilemaps/hud.tilemap
 
@@ -528,7 +528,7 @@ incbin tilemaps/hud.tilemap
 ; ==========================================================
 
 ; $57CE0 DATA
-org    $0AFCE0
+org $0AFCE0
 FloorIndicatorNumberHigh:
 {
   dw $2508, $2509, $2509, $250A, $250B, $250C, $250D, $251D
