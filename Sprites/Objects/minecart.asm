@@ -1,5 +1,5 @@
 ; =========================================================
-; Sprite Properties
+; Minecart Sprite Properties
 ; =========================================================
 
 !SPRID              = $A3 ; The sprite ID you are overwriting (HEX)
