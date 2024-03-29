@@ -51,13 +51,6 @@ Sprite_RotatingTrack_Long:
 
 ; =========================================================
 
-; Modes
-; 0 = TopLeft -> TopRight
-; 1 = TopRight -> BottomRight
-; 2 = BottomRight -> BottomLeft
-; 3 = BottomLeft -> TopLeft
-; 4 = TopRight -> TopLeft
-
 Sprite_RotatingTrack_Prep:
 {
   PHB : PHK : PLB
@@ -70,6 +63,12 @@ Sprite_RotatingTrack_Prep:
 }
 
 ; =========================================================
+; Modes
+; 0 = TopLeft -> TopRight
+; 1 = TopRight -> BottomRight
+; 2 = BottomRight -> BottomLeft
+; 3 = BottomLeft -> TopLeft
+; 4 = TopRight -> TopLeft
 
 SwitchRam = $37
 
@@ -77,12 +76,15 @@ Sprite_RotatingTrack_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
+  
   dw TopLeftToTopRight
   dw TopRightToBottomRight
   dw BottomRightToBottomLeft
   dw BottomLeftToTopLeft
   dw TopRightToTopLeft
 
+  ; -------------------------------------------------------
+  ; 00 = TopLeft -> TopRight
   TopLeftToTopRight:
   {
     LDA SwitchRam : BNE part2
@@ -97,6 +99,8 @@ Sprite_RotatingTrack_Main:
     RTS
   }
 
+  ; -------------------------------------------------------
+  ; 01 = TopRight -> BottomRight
   TopRightToBottomRight:
   {
     LDA SwitchRam : BNE part2_a
@@ -111,6 +115,8 @@ Sprite_RotatingTrack_Main:
     RTS
   }
 
+  ; -------------------------------------------------------
+  ; 02 = BottomRight -> BottomLeft
   BottomRightToBottomLeft:
   {
     LDA SwitchRam : BNE part2_b
@@ -125,6 +131,8 @@ Sprite_RotatingTrack_Main:
       RTS
     }
 
+  ; -------------------------------------------------------
+  ; 03 = BottomLeft -> TopLeft
   BottomLeftToTopLeft:
   {
     LDA SwitchRam : BNE part2_c
@@ -140,6 +148,8 @@ Sprite_RotatingTrack_Main:
     RTS
   }
 
+  ; -------------------------------------------------------
+  ; 04 = TopRight -> TopLeft
   TopRightToTopLeft:
   {
     LDA SwitchRam : BNE part2_d
@@ -156,6 +166,8 @@ Sprite_RotatingTrack_Main:
       RTS
     }
 }
+
+; =========================================================
 
 Sprite_RotatingTrack_Draw:
 {
