@@ -1,18 +1,15 @@
-; =============================================================================
+; =========================================================
 ; Zarby Feather 
 
 org $07AFF8 ; LinkItem_BugCatchingNet
 {
-  BIT $3A : BVS .return ;if Y or B are already pressed
-
-  LDA $6C : BNE .return ; if we are standing in a dooray or not
-
-  ; Link_CheckNewY_ButtonPress
-  JSR $B073 : BCC .return ; Check if we just pressed Y Button  
-  JSL NewBookCode
-
-.return
-  RTS
+    BIT $3A : BVS .return ;if Y or B are already pressed
+      LDA $6C : BNE .return ; if we are standing in a dooray or not
+        ; Link_CheckNewY_ButtonPress
+        JSR $B073 : BCC .return ; Check if we just pressed Y Button  
+          JSL LinkItem_JumpFeather
+  .return
+    RTS
 }
 
 ; =============================================================================
