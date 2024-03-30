@@ -556,29 +556,93 @@ KydreeokHead_NeckControl:
     LDA.b $08 : STA.w SprXSpeed, X
     LDA.b $09 : STA.w SprYSpeed, X
 
-
-
     RTS
 }
 
+; =========================================================
+; This is here for reference.
 
+Sprite_KydreeokHead_DrawNeck_Data:
+{
+  .start_index
+    db $12
+  .nbr_of_tiles
+    db 0
+  .x_offsets
+    dw 0
+  .y_offsets
+    dw 0
+  .chr
+    db $2E
+  .properties
+    db $39
+  .sizes
+    db $02
+}
+
+; =========================================================
 
 Sprite_KydreeokHead_DrawNeck:
 {
-  .start_index
-  db $12
-  .nbr_of_tiles
-  db 0
-  .x_offsets
-  dw 0
-  .y_offsets
-  dw 0
-  .chr
-  db $2E
-  .properties
-  db $39
-  .sizes
-  db $02
+    ; Dumb draw neck code
+    LDA.w SprSubtype, X : BNE .neck2
+      LDA.w $19EA : STA.w $0FD8
+      LDA.w $19EB : STA.w $0FDA
+      JSR   .DrawNeckPart
+
+      LDA.w $19EC : STA.w $0FD8
+      LDA.w $19ED : STA.w $0FDA
+      JSR   .DrawNeckPart
+
+      LDA.w $19EE : STA.w $0FD8
+      LDA.w $19EF : STA.w $0FDA
+      JSR   .DrawNeckPart
+
+    BRA   .skipNeck
+  .neck2
+    ; Dumb draw neck code
+    LDA.w $19F0 : STA.w $0FD8
+    LDA.w $19F1 : STA.w $0FDA
+    JSR   .DrawNeckPart
+
+    LDA.w $19F2 : STA.w $0FD8
+    LDA.w $19F3 : STA.w $0FDA
+    JSR   .DrawNeckPart
+
+    LDA.w $19F4 : STA.w $0FD8
+    LDA.w $19F5 : STA.w $0FDA
+    JSR   .DrawNeckPart
+
+    .skipNeck
+      LDA.b $08 : STA.w $0FD8
+      LDA.b $09 : STA.w $0FDA
+    .skipNeck2
+      RTS
+
+  .DrawNeckPart
+    PHY
+    JSL Sprite_PrepOamCoord
+    PLY
+
+    REP #$20
+    LDA   $00 : STA ($90), Y : AND.w #$0100 : STA $0E : INY
+    LDA   $02 : STA ($90), Y : CLC   : ADC #$0010 : CMP.w #$0100
+    SEP   #$20
+    BCC   .on_screen_y2
+      LDA.b #$F0 : STA ($90), Y ; Put the sprite out of the way
+      STA   $0E
+    .on_screen_y2
+      INY
+      LDA #$2E : STA ($90), Y
+      INY
+      LDA #$39 : STA ($90), Y
+
+      PHY 
+      TYA : LSR #2 : TAY
+      LDA #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
+      PLY : INY
+
+      RTS
 }
 
 ; =========================================================
@@ -630,83 +694,7 @@ Sprite_KydreeokHead_Draw:
 
     PLX
 
-    {
-      ; Dumb draw neck code
-      LDA.w SprSubtype, X : BNE .neck2
-
-      LDA.w $19EA : STA.w $0FD8
-      LDA.w $19EB : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-
-      LDA.w $19EC : STA.w $0FD8
-      LDA.w $19ED : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-      LDA.w $19EE : STA.w $0FD8
-      LDA.w $19EF : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-      BRA   .skipNeck
-      .neck2
-      ; Dumb draw neck code
-      LDA.w $19F0 : STA.w $0FD8
-      LDA.w $19F1 : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-      LDA.w $19F2 : STA.w $0FD8
-      LDA.w $19F3 : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-      LDA.w $19F4 : STA.w $0FD8
-      LDA.w $19F5 : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-      .skipNeck
-
-      LDA.b $08 : STA.w $0FD8
-      LDA.b $09 : STA.w $0FDA
-      .skipNeck2
-      RTS
-
-
-
-      .DrawNeckPart
-      PHY
-      JSL Sprite_PrepOamCoord
-      PLY
-
-      REP #$20
-
-      LDA   $00 : STA ($90), Y
-      AND.w #$0100 : STA $0E
-      INY
-      LDA   $02 : STA ($90), Y
-      CLC   : ADC #$0010 : CMP.w #$0100
-      SEP   #$20
-      BCC   .on_screen_y2
-
-      LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-      STA   $0E
-      .on_screen_y2
-
-      INY
-      LDA #$2E : STA ($90), Y
-      INY
-      LDA #$39 : STA ($90), Y
-
-      PHY 
-          
-      TYA : LSR #2 : TAY
-          
-      LDA #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-          
-      PLY : INY
-
-      RTS
-    }
-
-    RTS
+    JMP Sprite_KydreeokHead_DrawNeck
 
   .start_index
     db $00, $02, $04, $06, $0A, $0E
