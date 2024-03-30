@@ -70,12 +70,12 @@ Sprite_KydreeokHead_Main:
   LDA.w SprAction, X
   JSL   UseImplicitRegIndexedLocalJumpTable
 
-  dw KydreeokHead_ForwardAnim
-  dw KydreeokHead_SideAnim
+  dw KydreeokHead_ForwardAnim ; 0x00
+  dw KydreeokHead_SideAnim    ; 0x01
+  dw KydreeokHead_SummonFire  ; 0x02
 
-  dw KydreeokHead_SummonFire
-
-
+  ; -------------------------------------------------------
+  ; 0x00
   KydreeokHead_ForwardAnim:
   {
       %StartOnFrame(0)
@@ -88,9 +88,9 @@ Sprite_KydreeokHead_Main:
 
       LDA.w SprTimerA, X : BNE .noSpeedChange
       JSL   GetRandomInt : AND #$0F : TAY
-      LDA.w tableSpeed, Y : STA.w SprXSpeed, X
+      LDA.w SpeedTable, Y : STA.w SprXSpeed, X
       JSL   GetRandomInt : AND #$0F : TAY
-      LDA.w tableSpeed, Y : STA.w SprYSpeed, X
+      LDA.w SpeedTable, Y : STA.w SprYSpeed, X
       ; LDA #$40 : STA.w SprTimerA, X
     .noSpeedChange
       
@@ -120,12 +120,13 @@ Sprite_KydreeokHead_Main:
       JSR RandomlyAttack
 
       JSL Sprite_IsToRightOfPlayer : TYA : BNE .not_right
-      %GotoAction(1)
+        %GotoAction(1)
     .not_right
-      
       RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x01
   KydreeokHead_SideAnim:
   {
       %StartOnFrame(3)
@@ -138,9 +139,9 @@ Sprite_KydreeokHead_Main:
 
       LDA.w SprTimerA, X : BNE .noSpeedChange
       JSL   GetRandomInt : AND #$0F : TAY
-      LDA.w tableSpeed, Y : STA.w SprXSpeed, X
+      LDA.w SpeedTable, Y : STA.w SprXSpeed, X
       JSL   GetRandomInt : AND #$0F : TAY
-      LDA.w tableSpeed, Y : STA.w SprYSpeed, X
+      LDA.w SpeedTable, Y : STA.w SprYSpeed, X
       ; LDA #$40 : STA.w SprTimerA, X
     .noSpeedChange
       JSL Sprite_Move
@@ -153,12 +154,14 @@ Sprite_KydreeokHead_Main:
       JSR RandomlyAttack
 
       JSL Sprite_IsToRightOfPlayer : TYA : BNE .not_right
-      RTS
+        RTS
     .not_right
       %GotoAction(0)
       RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x02
   KydreeokHead_SummonFire:
   {
     ; %StartOnFrame(5)
@@ -169,17 +172,17 @@ Sprite_KydreeokHead_Main:
     %DoDamageToPlayerSameLayerOnContact()
 
     JSR Sprite_Twinrova_FireAttack
-
     JSL Sprite_Move
     
     LDA SprTimerA,        X : BNE .not_done
-    LDA #$00 : STA $0DD0, X
-
+      LDA #$00 : STA $0DD0, X
   .not_done
     RTS
   }
 
 }
+
+; =========================================================
 
 CoordinateBasedRotation:
 {
