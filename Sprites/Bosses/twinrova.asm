@@ -4,7 +4,6 @@
 ; Overrides Blind and the Blind Maiden to create a new 
 ; boss sequence. 
 ;
-;
 ; =========================================================
 
 !SPRID              = $CE ; The sprite ID you are overwriting (HEX)
@@ -59,21 +58,17 @@ Sprite_Twinrova_Long:
 
 Sprite_Twinrova_CheckIfDead:
 {
-    LDA $0D80, X : CMP.b #$0A : BEQ .not_dead
+    LDA SprAction, X : CMP.b #$0A : BEQ .not_dead
+      ; If health is negative, set back to zero
+      LDA SprHealth, X : CMP.b #$44 : BCC .health_not_negative
+        LDA.b #$00 : STA SprHealth, X
 
-    ; If health is negative, set back to zero
-    LDA $0E50, X : CMP.b #$44 : BCC .health_not_negative
-      LDA.b #$00 : STA $0E50, X
-
-  .health_not_negative
-
-    LDA $0E50, X : BNE .not_dead
-      PHX 
-
-      LDA.b #$04 : STA $0DD0, X ; Kill sprite boss style
-      LDA.b #$0A : STA $0D80, X ; Go to Twinrova_Dead stage
-
-      PLX
+    .health_not_negative
+      LDA SprHealth, X : BNE .not_dead
+        PHX 
+        LDA.b #$04 : STA $0DD0, X     ; Kill sprite boss style
+        LDA.b #$0A : STA SprAction, X ; Go to Twinrova_Dead stage
+        PLX
   .not_dead
     RTS
 }
@@ -84,9 +79,8 @@ Sprite_Twinrova_Prep:
 {
     PHB : PHK : PLB
     
-    ; PrepareBattle
     LDA.l $7EF3CC : CMP.b #$06 : BEQ .despawn
-      LDA.b #$40 : STA $0E50, X ; Health
+      LDA.b #$40 : STA SprHealth, X ; Health
       LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
 
       %SetSpriteSpeedX(15)
@@ -174,59 +168,62 @@ Sprite_Twinrova_Main:
   dw Twinrova_KotakeMode    ; 0x09
   dw Twinrova_Dead          ; 0x0A
 
-  ; 0x00
+  ; -------------------------------------------------------
+  ; 0x00 
+  ; TODO: Separate MoveState phases into action 0 and 1
   Twinrova_Init:
   {
       %GotoAction(01)
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x01
   Twinrova_MoveState:
   {
-      LDA $0E50, X : CMP.b #$20 : BCS .phase_1
-      ; -------------------------------------------
-      ; Phase 2
-      LDA SprTimerE, X : BNE .kotake
-        LDA #$70 : STA SprTimerD, X
-        %GotoAction(8) ; Koume Mode
-        RTS
-      .kotake
-        LDA #$70 : STA SprTimerD, X
-        %GotoAction(9) ; Kotake Mode
-        RTS
+      LDA SprHealth, X : CMP.b #$20 : BCS .phase_1
+        ; -------------------------------------------
+        ; Phase 2
+        LDA SprTimerE, X : BNE .kotake
+          LDA #$70 : STA SprTimerD, X
+          %GotoAction(8) ; Koume Mode
+          RTS
+        .kotake
+          LDA #$70 : STA SprTimerD, X
+          %GotoAction(9) ; Kotake Mode
+          RTS
 
     ; ---------------------------------------------
     .phase_1
       LDA $0DA0 : BEQ .not_flashing
         LDA.b #$20 : STA.w SprTimerD, X
         %GotoAction(7) ; Goto Twinrova_Hurt
-      RTS
+        RTS
     .not_flashing
 
       JSL GetRandomInt : AND.b #$3F : BNE +
         LDA.b #$20 : STA.w SprTimerD, X
-        STZ   $AC
+        STZ   $AC      ; Set the fire attack
         %GotoAction(4) ; Prepare Attack
         RTS
     +
 
       JSL GetRandomInt : AND.b #$3F : BNE ++
         LDA.b #$20 : STA.w SprTimerD, X
-        LDA   #$01 : STA $AC
+        LDA   #$01 : STA $AC ; Set the ice attack
         %GotoAction(4) ; Prepare Attack
         RTS
     ++
 
-      JSL Sprite_IsBelowPlayer ; Check if sprite is below player
-      TYA : BNE .MoveBackwards ; If 1, 
-        %GotoAction(2)
+      JSL Sprite_IsBelowPlayer : TYA : BNE .MoveBackwards ; If 1, 
+        %GotoAction(2) ; MoveForwards
         RTS
     .MoveBackwards
-      %GotoAction(3)
+      %GotoAction(3) ; MoveBackwards
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x02 - TODO: Implement Twinrova_MoveForwards
   Twinrova_MoveForwards:
   {
@@ -244,6 +241,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x03 - TODO: Implement Twinrova_MoveBackwards
   Twinrova_MoveBackwards:
   {
@@ -261,6 +259,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x04
   Twinrova_PrepareAttack:
   {
@@ -285,6 +284,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x05
   Twinrova_FireAttack:
   {
@@ -299,6 +299,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x06
   Twinrova_IceAttack:
   {
@@ -313,6 +314,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x07
   Twinrova_Hurt:
   {
@@ -332,6 +334,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x08
   Twinrova_KoumeMode:
   {
@@ -352,6 +355,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x09
   Twinrova_KotakeMode:
   {
@@ -372,6 +376,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x0A
   Twinrova_Dead:
   {
@@ -393,7 +398,7 @@ TrinexxBreath_AltEntry:
 
   .no_shake
     JSL Sprite_CheckTileCollision : BEQ .exit
-    JSL Sprite_BounceTowardPlayer
+      JSL Sprite_BounceTowardPlayer
 
   .exit
     RTS
@@ -405,7 +410,7 @@ TrinexxBreath_AltEntry:
 Sprite_Twinrova_FireAttack:
 { 
     JSL Sprite_CheckTileCollision : BNE .no_collision
-    JSL Sprite_Move
+      JSL Sprite_Move
   .no_collision
     JSR AddFireGarnish
     JMP TrinexxBreath_AltEntry
