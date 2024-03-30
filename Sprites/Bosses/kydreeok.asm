@@ -300,87 +300,56 @@ SpawnRightHead:
     RTS
 }
 
+; =========================================================
+; Originally from Trinexx_MoveBody $1DB2E5
 
-; ==============================================================================
 MoveBody:
 {
     ; Handle the shell bg movement
     ; Trinexx_MoveBody
-    #_1DB2E5: LDA.w $0D10, X
-    #_1DB2E8: PHA
+    LDA.w $0D10, X : PHA
+    LDA.w $0D00, X : PHA
 
-    #_1DB2E9: LDA.w $0D00, X
-    #_1DB2EC: PHA
+    JSL Sprite_Move
 
-    #_1DB2ED: JSL Sprite_Move
-
-    #_1DB2F0: PLA
-    #_1DB2F1: LDY.b #$00
-
-    #_1DB2F3: SEC
-    #_1DB2F4: SBC.w $0D00, X
-    #_1DB2F7: STA.w $0310
-    #_1DB2FA: BPL .pos_y_low
-
-    #_1DB2FC: DEY
+    PLA
+    LDY.b #$00 : SEC : SBC.w $0D00, X : STA.w $0310
+    BPL .pos_y_low
+    DEY
 
   .pos_y_low
-    #_1DB2FD: STY.w $0311
+    STY.w $0311
 
     ; -----------------------------------------------------
 
-    #_1DB300: PLA
-    #_1DB301: LDY.b #$00
+    PLA
+    LDY.b #$00 : SEC : SBC.w $0D10, X : STA.w $0312
+    BPL .pos_x_low
 
-    #_1DB303: SEC
-    #_1DB304: SBC.w $0D10, X
-    #_1DB307: STA.w $0312
-    #_1DB30A: BPL .pos_x_low
-
-    #_1DB30C: DEY
+    DEY
 
   .pos_x_low
-    #_1DB30D: STY.w $0313
+    STY.w $0313
 
     ; -----------------------------------------------------
 
-    #_1DB310: LDA.b #$01
-    #_1DB312: STA.w $0428
+    LDA.b #$01 : STA.w $0428
 
+    LDA.w $0D00, X : SEC : SBC.b #$0C : STA.w $0DB0, X
 
-    #_1DB318: LDA.w $0D00, X
-    #_1DB31B: SEC
-    #_1DB31C: SBC.b #$0C
-    #_1DB31E: STA.w $0DB0, X
+    LDA.w $0B08 : SEC : SBC.w $0D10, X
+                  CLC : ADC.b #$02 
+                  CMP.b #$04 : BCS .not_at_target
 
-    #_1DB321: LDA.w $0B08
-    #_1DB324: SEC
-    #_1DB325: SBC.w $0D10, X
-    #_1DB328: CLC
-    #_1DB329: ADC.b #$02
+    LDA.w $0B09 : SEC : SBC.w $0D00, X 
+                  CLC : ADC.b #$02
+                  CMP.b #$04 : BCS .not_at_target
 
-    #_1DB32B: CMP.b #$04
-    #_1DB32D: BCS .not_at_target
-
-    #_1DB32F: LDA.w $0B09
-    #_1DB332: SEC
-    #_1DB333: SBC.w $0D00, X
-    #_1DB336: CLC
-    #_1DB337: ADC.b #$02
-
-    #_1DB339: CMP.b #$04
-    #_1DB33B: BCS .not_at_target
-
-  .adjust_phase
-    #_1DB33D: STZ.w $0D80, X
-
-    #_1DB340: LDA.b #$30
-    #_1DB342: STA.w $0DF0, X
+  .adjust_phase ; Unused?
+    STZ.w $0D80, X
+    LDA.b #$30 : STA.w $0DF0, X
 
   .not_at_target
-
-    ; JSR AdjustChildrenPos
-
     ; LayerEffect_Trinexx $0AFEF0
     REP   #$20
     LDA.w $0422 : CLC : ADC.w $0312 : STA.w $0422
@@ -388,11 +357,10 @@ MoveBody:
     STZ.w $0312 : STZ.w $0310
     SEP   #$20
 
-
     RTS
 }
 
-; ==============================================================================
+; =========================================================
 
 StopIfOutOfBounds:
 {
