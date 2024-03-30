@@ -186,7 +186,7 @@ Sprite_KydreeokHead_Main:
 
 CoordinateBasedRotation:
 {
-      LDA Neck_Index : TAY
+    LDA Neck_Index : TAY
     ; JSL   GetRandomInt : AND #$04 : TAY
     ; LDA X_Coords, Y : STA Neck1_OffsetX
     ; JSL   GetRandomInt : AND #$04 : TAY
@@ -196,21 +196,25 @@ CoordinateBasedRotation:
     ; JSL   GetRandomInt : AND #$04 : TAY
     LDA Y_Coords, Y : STA Neck2_OffsetY
     JSL   GetRandomInt : AND #$3F : BNE .dont_increment
-    INC.w Neck_Index
+      INC.w Neck_Index
   .dont_increment
     CPY #15 : BNE .not_full
-    LDA #0 : STA Neck_Index
+      LDA #0 : STA Neck_Index
   .not_full
     RTS
 }
 
 ; Table for X coordinates (based on a radius of 8)
 X_Coords:
-    db  8, 11,  8,  3, -4, -9, -12, -9, -4,  3,  8, 11,  8,  3, -4, -9  ; X values
+    db  8, 11,  8,  3, -4, -9, -12, -9
+    db -4,  3,  8, 11,  8,  3, -4, -9
 
 ; Table for Y coordinates (based on a radius of 8)
 Y_Coords:
-    db  0, -3, -8, -11, -15, -15, -11, -8, -3,  0,  3,  8, 11, 15, 15, 11  ; Y values
+    db  0, -3, -8, -11, -15, -15, -11, -8
+    db -3,  0,  3,  8, 11, 15, 15, 11
+
+; =========================================================
 
 RotateHeadUsingSpeedValues:
 {
@@ -220,7 +224,7 @@ RotateHeadUsingSpeedValues:
   LDA.w SprYSpeed, X : CLC : ADC.w YSpeedSin, Y : ASL : STA.w SprYSpeed, X
 
   INY : CPY #$3F : BNE .not_full
-  LDY.b #$00 
+    LDY.b #$00 
 .not_full
   STY.w Neck_Index
   JSL   Sprite_MoveLong
@@ -229,22 +233,29 @@ RotateHeadUsingSpeedValues:
 }
 
 XSpeedSin:
-db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
-db 27,  28,  30,  31,  31,  32
+{
+  db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
+  db 27,  28,  30,  31,  31,  32
+}
+
 YSpeedSin:
-db 32,  32,  31,  31
-db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
-db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
-db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
-db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
-db -12,  -9,  -6,  -3 
-db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
-db 27,  28,  30,  31,  31,  32,  32,  32,  31,  31
-db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
-db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
-db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
-db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
-db -12,  -9,  -6,  -3 
+{
+  db 32,  32,  31,  31
+  db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
+  db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
+  db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
+  db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
+  db -12,  -9,  -6,  -3 
+  db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
+  db 27,  28,  30,  31,  31,  32,  32,  32,  31,  31
+  db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
+  db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
+  db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
+  db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
+  db -12,  -9,  -6,  -3 
+}
+
+; =========================================================
 
 RandomlyAttack:
 {
