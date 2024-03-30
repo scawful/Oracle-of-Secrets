@@ -61,6 +61,10 @@ Sprite_KydreeokHead_Prep:
 
 ; =========================================================
 
+SpeedTable:
+  db $00, $02, $04, $06, $07, $01, $06, $03
+  db 0, -2, -4, -6, -7, -1, -6, -3
+
 Sprite_KydreeokHead_Main:
 {
   LDA.w SprAction, X
@@ -342,9 +346,8 @@ AdjustMovementSpeed:
     RTS
 }
 
-tableSpeed:
-  db $00, $02, $04, $06, $07, $01, $06, $03
-  db 0, -2, -4, -6, -7, -1, -6, -3
+; =========================================================
+; Based on Zarby Gleeok code
 
 KydreeokHead_NeckControl:
 {
