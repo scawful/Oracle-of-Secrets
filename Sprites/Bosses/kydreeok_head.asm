@@ -33,18 +33,17 @@
 
 Sprite_KydreeokHead_Long:
 {
-  PHB : PHK : PLB
+    PHB : PHK : PLB
+    LDA SprAction, X : CMP #$02 : BEQ .no_head
+      JSR Sprite_KydreeokHead_Draw
 
-  LDA $0D80, X : CMP #$02 : BEQ .no_head
-  JSR Sprite_KydreeokHead_Draw           ; Call the draw code
-.no_head
-  JSL Sprite_CheckActive       ; Check if game is not paused
-  BCC .SpriteIsNotActive
-  JSR Sprite_KydreeokHead_Main ; Call the main sprite code
+  .no_head
+    JSL Sprite_CheckActive : BCC .not_active
+      JSR Sprite_KydreeokHead_Main
 
-  .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  .not_active
+    PLB ; Get back the databank we stored previously
+    RTL ; Go back to original code
 }
 
 ; =========================================================
