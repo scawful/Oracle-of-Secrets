@@ -387,6 +387,9 @@ Sprite_Twinrova_Main:
 }
 
 ; =========================================================
+; TODO: Create a new parent sprite for the Twinrova attacks
+; so that the velocity and movement aren't applied to the 
+; parent sprite itself.
 
 ; Reused function from TrinexxBreath.
 TrinexxBreath_AltEntry:
