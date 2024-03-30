@@ -86,102 +86,98 @@ Sprite_Kydreeok_Main:
   ; 0x00
   Kydreeok_Start:
   {
-    %StartOnFrame(0)
-    %PlayAnimation(0, 2, 10)
+      %StartOnFrame(0)
+      %PlayAnimation(0, 2, 10)
 
-    JSR ApplyPalette
-    JSL Sprite_PlayerCantPassThrough
+      JSR ApplyPalette
+      JSL Sprite_PlayerCantPassThrough
 
-    LDA SprTimerA,            X : BNE .continue
-    TXA : STA Kydreeok_Id
-    LDA #$40 : STA SprTimerA, X
-    %GotoAction(1)
+      LDA SprTimerA,            X : BNE .continue
+      TXA : STA Kydreeok_Id
+      LDA #$40 : STA SprTimerA, X
+        %GotoAction(1)
     .continue
 
-    RTS
+      RTS
   }
 
   ; -------------------------------------------------------
   ; 0x01
   Kydreeok_StageControl:
   {
-    %StartOnFrame(0)
-    %PlayAnimation(0, 2, 10)
+      %StartOnFrame(0)
+      %PlayAnimation(0, 2, 10)
 
-    PHX
+      PHX
 
-    STZ $0D40 : STZ $0D50 ;set velocitys to 0
-    JSR MoveBody
+      STZ $0D40 : STZ $0D50 ;set velocitys to 0
+      JSR MoveBody
 
-    JSL Sprite_BounceFromTileCollision ; 
-    JSR StopIfOutOfBounds
+      JSL Sprite_BounceFromTileCollision ; 
+      JSR StopIfOutOfBounds
 
-    LDA SprTimerA, X : BNE .continue
-    %GotoAction(2)
+      LDA SprTimerA, X : BNE .continue
+        %GotoAction(2)
     .continue
 
-    PLX
+      PLX
 
-    RTS
+      RTS
   }
 
   ; -------------------------------------------------------
   ; 0x02
   Kydreeok_MoveXandY:
   {
-    %StartOnFrame(0)
-    %PlayAnimation(0, 2, 10)
+      %StartOnFrame(0)
+      %PlayAnimation(0, 2, 10)
 
-    PHX ;saves X so we can use it later
+      PHX ;saves X so we can use it later
 
-    LDA $36
-    JSL Sprite_ApplySpeedTowardsPlayer
-    JSL Sprite_BounceFromTileCollision ; JSR StopIfOutOfBounds
-    JSR StopIfOutOfBounds
-    JSR MoveBody
+      LDA $36
+      JSL Sprite_ApplySpeedTowardsPlayer
+      JSL Sprite_BounceFromTileCollision ; JSR StopIfOutOfBounds
+      JSR StopIfOutOfBounds
+      JSR MoveBody
 
-    JSL Sprite_CheckDamageFromPlayerLong
-    %DoDamageToPlayerSameLayerOnContact()
+      JSL Sprite_CheckDamageFromPlayerLong
+      %DoDamageToPlayerSameLayerOnContact()
 
-    PLX ;restores X
+      PLX ;restores X
 
-    %GotoAction(4)
+      %GotoAction(4)
 
-    RTS
+      RTS
   }
 
   ; -------------------------------------------------------
   ; 0x03
   Kydreeok_MoveXorY:
   {
-    %StartOnFrame(0)
-    %PlayAnimation(0, 2, 10)
+      %StartOnFrame(0)
+      %PlayAnimation(0, 2, 10)
 
-    PHX ;saves X so we can use it later
+      PHX
+      LDA $36 : STA $00
+      JSR Sprite_ApplySpeedTowardsPlayerXOrY
+      JSL Sprite_BounceFromTileCollision     ; JSR StopIfOutOfBounds
+      JSR StopIfOutOfBounds
+      JSR MoveBody
 
-    LDA $36
-    STA $00
-    JSR Sprite_ApplySpeedTowardsPlayerXOrY
-    JSL Sprite_BounceFromTileCollision     ; JSR StopIfOutOfBounds
-    JSR StopIfOutOfBounds
-    JSR MoveBody
+      JSL Sprite_CheckDamageFromPlayerLong
+      %DoDamageToPlayerSameLayerOnContact()
+      PLX
 
-    JSL Sprite_CheckDamageFromPlayerLong
-    %DoDamageToPlayerSameLayerOnContact()
-
-    PLX ;restores X
-
-    %GotoAction(4)
-
-    RTS
+      %GotoAction(4)
+      RTS
   }
 
   ; -------------------------------------------------------
   ; 0x04
   Kydreeok_KeepWalking:
   {
-    %StartOnFrame(0)
-    %PlayAnimation(0, 2, 10)
+      %StartOnFrame(0)
+      %PlayAnimation(0, 2, 10)
 
       PHX
       REP #$20
