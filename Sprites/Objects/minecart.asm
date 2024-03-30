@@ -212,27 +212,26 @@ Sprite_Minecart_Main:
 
       LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
         JSR CheckIfPlayerIsOn : BCC .not_ready
+          LDA $F4 : AND.b #$80 : BEQ .not_ready  ; Check for B button
 
-          JSL Player_HaltDashAttack            ; Stop the player from dashing
-          LDA #$02 : STA $02F5                 ; Somaria platform and moving 
-          LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
-          LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
+            JSL Player_HaltDashAttack            ; Stop the player from dashing
+            LDA #$02 : STA $02F5                 ; Somaria platform and moving 
+            LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
+            LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
 
-          ; Check if the cart is facing east or west
-          LDA SprSubtype, X : CMP.b #$03 : BNE .opposite_direction
-            STA.w !MinecartDirection
-            LDA   #$02 : STA !SpriteDirection, X
-            %GotoAction(5)  ; Minecart_MoveWest
-            RTS
+            ; Check if the cart is facing east or west
+            LDA SprSubtype, X : CMP.b #$03 : BNE .opposite_direction
+              STA.w !MinecartDirection
+              LDA   #$02 : STA !SpriteDirection, X
+              %GotoAction(5)  ; Minecart_MoveWest
+              RTS
 
-        .opposite_direction
-          STA.w !MinecartDirection
-          LDA   #$03 : STA !SpriteDirection, X
-          %GotoAction(3) ; Minecart_MoveEast
+            .opposite_direction
+              STA.w !MinecartDirection
+              LDA   #$03 : STA !SpriteDirection, X
+              %GotoAction(3) ; Minecart_MoveEast
 
       .not_ready
-        RTS
-          
     .lifting
       %HandleLiftAndToss()
       RTS
@@ -247,23 +246,24 @@ Sprite_Minecart_Main:
 
       LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
         JSR CheckIfPlayerIsOn : BCC .not_ready
+          LDA $F4 : AND.b #$80 : BEQ .not_ready  ; Check for B button
 
-          JSL Player_HaltDashAttack            ; Stop the player from dashing
-          LDA #$02 : STA $02F5                 ; Somaria platform and moving 
-          LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
-          LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
-          
-          ; Check if the cart is facing north or south
-          LDA SprSubtype, X : BEQ .opposite_direction
-            STA.w !MinecartDirection
-            LDA   #$01 : STA !SpriteDirection, X
-            %GotoAction(4)  ; Minecart_MoveSouth
-            RTS
+            JSL Player_HaltDashAttack            ; Stop the player from dashing
+            LDA #$02 : STA $02F5                 ; Somaria platform and moving 
+            LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
+            LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
             
-        .opposite_direction
-          STA.w !MinecartDirection
-          LDA   #$00 : STA !SpriteDirection, X
-          %GotoAction(2)  ; Minecart_MoveNorth
+            ; Check if the cart is facing north or south
+            LDA SprSubtype, X : BEQ .opposite_direction
+              STA.w !MinecartDirection
+              LDA   #$01 : STA !SpriteDirection, X
+              %GotoAction(4)  ; Minecart_MoveSouth
+              RTS
+              
+            .opposite_direction
+              STA.w !MinecartDirection
+              LDA   #$00 : STA !SpriteDirection, X
+              %GotoAction(2)  ; Minecart_MoveNorth
 
       .not_ready
     .lifting
@@ -626,7 +626,7 @@ HandleDynamicSwitchTileDirections:
       
       JSL CheckIfHitBoxesOverlap : BCC .no_b0
 
-        LDA   !MinecartDirection : CMP.b #$00 : BEQ .east_or_west
+        LDA !MinecartDirection : CMP.b #$00 : BEQ .east_or_west
           CMP.b #$02 : BEQ .north_or_south
 
       .east_or_west
@@ -786,29 +786,29 @@ CheckForPlayerInput:
     LDA $0FA5 : CLC : CMP.b #$B6 : BNE .cant_input
 
       ; Check for input from the user (u,d,l,r)
-      LDY !SpriteDirection, X
+      LDY !SpriteDirection,       X
       LDA $F0 : AND .d_pad_press, Y : STA $00 : AND.b #$08 : BEQ .not_pressing_up
         LDA.b #$00 : STA !SpriteDirection, X ; Moving Up 
         STA   SprSubtype,                  X
         %GotoAction(2) ; Minecart_MoveNorth
-        BRA .return
+        BRA   .return
 
   .not_pressing_up:
-      LDA $00 : AND.b #$04 : BEQ .not_pressing_down
+      LDA   $00 : AND.b #$04 : BEQ .not_pressing_down
       LDA.b #$01 : STA !SpriteDirection, X
       LDA   #$02 : STA SprSubtype,       X
       %GotoAction(4) ; Minecart_MoveSouth
-      BRA .return
+      BRA   .return
 
   .not_pressing_down
-      LDA $00 : AND.b #$02 : BEQ .not_pressing_left
+      LDA   $00 : AND.b #$02 : BEQ .not_pressing_left
       LDA.b #$02 : STA !SpriteDirection, X
       LDA   #$03 : STA SprSubtype,       X
       %GotoAction(5) ; Minecart_MoveWest
-      BRA .return
+      BRA   .return
 
   .not_pressing_left
-      LDA $00 : AND.b #$01 : BEQ .always
+      LDA   $00 : AND.b #$01 : BEQ .always
       LDA.b #$03 : STA !SpriteDirection, X
       STA   SprSubtype,                  X
       %GotoAction(3) ; Minecart_MoveEast
