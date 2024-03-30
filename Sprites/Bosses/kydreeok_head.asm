@@ -1,4 +1,7 @@
 ; =========================================================
+; Kydreeok Head sprite
+; Child sprite of the Kydreeok boss
+; =========================================================
 
 !SPRID              = $CF ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 06  ; Number of tiles used in a frame
