@@ -52,8 +52,8 @@ Sprite_KydreeokHead_Prep:
 {
   PHB : PHK : PLB
     
-  ; Add more code here to initialize data
-
+  ; TODO: Set sprite properties for damage and health
+  ; TODO: Handle head death in conjunction with Kydreeok
 
   PLB
   RTL
