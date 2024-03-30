@@ -422,68 +422,32 @@ Sprite_Twinrova_FireAttack:
 ; $1DBDD6 - TrinexxFire_AddFireGarnish
 AddFireGarnish:
 {
-    INC $0E80, X : LDA $0E80, X : AND.b #$07 : BNE .return
+    INC.w SprDelay, X : LDA SprDelay, X : AND.b #$07 : BNE .return
       LDA.b #$2A : JSL Sound_SetSfx2PanLong
       LDA.b #$1D : PHX : TXY : TAX : STA $00
 
   .next_slot
-    LDA $7FF800, X : BEQ .free_slot
+    LDA $7FF800, X : BEQ .free_slot ; Search for free Garnish slot
       DEX : BPL .next_slot
         DEC $0FF8 : BPL .use_search_index
           LDA $00 : STA $0FF8
-
-  .use_search_index
-    LDX $0FF8
-
+    .use_search_index
+      LDX $0FF8
   .free_slot
-    LDA.b #$10 : STA $7FF800, X : STA $0FB4
-    TYA : STA $7FF92C, X
-    
-    LDA.w SprX, Y : STA $7FF83C, X
-    LDA.w SprXH, Y : STA $7FF878, X
-    LDA.w SprY, Y : CLC : ADC.b #$10 : STA $7FF81E, X
-    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X
-    
-    LDA.b #$7F : STA $7FF90E, X
-    STX $00
+    ; Set garnish ID, set garnish handled flag, set garnish parent sprite
+    LDA.b #$10 : STA $7FF800, X : STA $0FB4 : TYA : STA $7FF92C, X
+    LDA.w SprX, Y  : STA $7FF83C, X                    ; Garnish XL
+    LDA.w SprXH, Y : STA $7FF878, X                    ; Garnish XH
+    LDA.w SprY, Y  : CLC : ADC.b #$10 : STA $7FF81E, X ; Garnish YL
+    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X       ; Garnish YH
+    LDA.b #$7F : STA $7FF90E, X : STX $00              ; Set garnish timer 
     PLX
 
   .return
     RTS
 }
 
-; $1DBD65 - TrinexxBreath_ice_add_ice_garnish
-AddIceGarnishV2:
-{
-    INC $0E80, X : LDA $0E80, X : AND.b #$07 : BNE .return
-      LDA.b #$14 : JSL Sound_SetSfx3PanLong
-      LDA.b #$1D : PHX : TXY : TAX : STA $00
-
-  .next_slot
-    LDA $7FF800, X : BEQ .free_slot
-      DEX : BPL .next_slot
-        DEC $0FF8 : BPL .use_search_index
-          LDA.b #$00 : STA $0FF8
-
-  .use_search_index
-    LDX $0FF8
-
-  .free_slot
-    LDA.b #$0C : STA $7FF800, X : STA $0FB4
-    TYA : STA $7FF92C, X
-    
-    LDA.w SprX, Y : STA $7FF83C, X
-    LDA.w SprXH, Y : STA $7FF878, X
-    LDA.w SprY, Y : CLC : ADC.b #$10 : STA $7FF81E, X
-    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X
-    
-    LDA.b #$7F : STA $7FF90E, X : STX $00
-    
-    PLX
-
-  .return
-    RTS
-}
+; =========================================================
 
 Sprite_Twinrova_IceAttack:
 {
@@ -494,8 +458,35 @@ Sprite_Twinrova_IceAttack:
     JMP TrinexxBreath_AltEntry
 }
 
-; =========================================================
+; $1DBD65 - TrinexxBreath_ice_add_ice_garnish
+AddIceGarnishV2:
+{
+    INC.w SprDelay, X : LDA SprDelay, X : AND.b #$07 : BNE .return
+      LDA.b #$14 : JSL Sound_SetSfx3PanLong
+      LDA.b #$1D : PHX : TXY : TAX : STA $00
 
+  .next_slot
+    LDA $7FF800, X : BEQ .free_slot ; Search for free Garnish slot
+      DEX : BPL .next_slot
+        DEC $0FF8 : BPL .use_search_index
+          LDA.b #$00 : STA $0FF8
+    .use_search_index
+      LDX $0FF8
+  .free_slot
+    ; Set garnish ID, set garnish handled flag, set garnish parent sprite
+    LDA.b #$0C : STA $7FF800, X : STA $0FB4 : TYA : STA $7FF92C, X
+    LDA.w SprX, Y : STA $7FF83C, X                    ; Garnish XL
+    LDA.w SprXH, Y : STA $7FF878, X                   ; Garnish XH
+    LDA.w SprY, Y : CLC : ADC.b #$10 : STA $7FF81E, X ; Garnish YL
+    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X      ; Garnish YH
+    LDA.b #$7F : STA $7FF90E, X : STX $00             ; Set garnish timer
+    PLX
+
+  .return
+    RTS
+}
+
+; =========================================================
 ; Overwrite vanilla Trinexx ice garnish
 ; Plays like a simple ice cloud animation now.
 
@@ -513,19 +504,17 @@ org $09B459
 org $09B5D6
   Garnish_SetOamPropsAndSmallSize:
 
+; SpriteData_Bump - Ice Garnish 
+org $0DB266+$CD
+  db $04
+
 org $09B33F
 TrinexxIce_Pool:
 {
   .chr
-    db $2E
-    db $2E
-    db $2C
-    db $2C
+    db $2E, $2E, $2C, $2C
   .properties
-    db $35
-    db $35
-    db $35
-    db $35
+    db $35, $35, $35, $35
 }
 
 org $09B34F
@@ -546,10 +535,6 @@ Garnish_TrinexxIce:
   JMP Garnish_SetOamPropsAndLargeSize
 }
 warnpc $09B3B8
-
-; Ice Garnish 
-org $0DB266+$CD
-  db $04
 
 pullpc
 
