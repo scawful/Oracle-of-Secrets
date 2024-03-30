@@ -47,6 +47,7 @@ Sprite_Kydreeok_Long:
 }
 
 ; =========================================================
+; TODO: Handle boss death based on left and right head health
 
 Sprite_Kydreeok_Prep:
 {
