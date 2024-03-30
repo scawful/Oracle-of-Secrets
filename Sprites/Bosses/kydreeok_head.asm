@@ -260,18 +260,19 @@ YSpeedSin:
 RandomlyAttack:
 {
   JSL   GetRandomInt : AND #$7F : BNE .no_attack
-  CLC
-  JSL   GetRandomInt : AND #$0F : BNE .no_attack
-  LDA   #$CF
-  JSL   Sprite_SpawnDynamically
-  JSL   Sprite_SetSpawnedCoords
-  ;JSL $09B020
-  LDA.b #$02 : STA $0D80,       Y
-  LDA   #$10 : STA.w SprTimerA, Y
+    CLC
+    JSL   GetRandomInt : AND #$0F : BNE .no_attack
+      LDA   #$CF
+      JSL   Sprite_SpawnDynamically
+      JSL   Sprite_SetSpawnedCoords
+      ;JSL $09B020 ; Fireball_SpawnTrailGarnish
+      LDA.b #$02 : STA.w SprAction, Y
+      LDA   #$10 : STA.w SprTimerA, Y
 .no_attack
-
   RTS
 }
+
+; =========================================================
 
 Offspring1_Neck1_X = $19EA
 Offspring1_Neck2_X = $19EC
@@ -331,6 +332,10 @@ MoveWithBody:
     RTS
 }
 
+; =========================================================
+; Adjusts the movement speed of the sprite based on its 
+; position. This came from Zarby's Gleeok code and causes 
+; some weird movement with the current implementation.
 
 AdjustMovementSpeed:
 {
@@ -339,24 +344,20 @@ AdjustMovementSpeed:
       LDA #-8 : STA.w SprXSpeed, X
   .biggerthanorigin
 
-
     LDA.w SprX,     X : CLC : ADC #$16       ; X+32
     CMP.w SprMiscA, X : BCS .lowerthanorigin
       LDA #$08 : STA.w SprXSpeed, X
   .lowerthanorigin
-
 
     LDA.w SprY,     X : SEC : SBC #$00         ; X-32
     CMP.w SprMiscB, X : BCC .biggerthanorigin2
       LDA #-8 : STA.w SprYSpeed, X
   .biggerthanorigin2
 
-
     LDA.w SprY,     X : CLC : ADC #$20        ; X+32
     CMP.w SprMiscB, X : BCS .lowerthanorigin2
       LDA #$08 : STA.w SprYSpeed, X
   .lowerthanorigin2
-
     RTS
 }
 
