@@ -1,6 +1,7 @@
 ; =========================================================
 ; Sprite Properties
 ; =========================================================
+
 !SPRID              = $7A ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 10  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
@@ -34,17 +35,15 @@
 
 Sprite_Kydreeok_Long:
 {
-  PHB : PHK : PLB
+    PHB : PHK : PLB
 
-  JSR Sprite_Kydreeok_Draw ; Call the draw code
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Kydreeok_Main ; Call the main sprite code
+    JSR Sprite_Kydreeok_Draw
+    JSL Sprite_CheckActive : BCC .SpriteIsNotActive  
+      JSR Sprite_Kydreeok_Main
 
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+    PLB ; Get back the databank we stored previously
+    RTL ; Go back to original code
 }
 
 ; =========================================================
