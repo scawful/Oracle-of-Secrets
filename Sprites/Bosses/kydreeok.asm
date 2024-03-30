@@ -53,27 +53,23 @@ Sprite_Kydreeok_Prep:
   PHB : PHK : PLB
     
   LDA   #$40 : STA SprTimerA, X
-  LDA.b #$08 : STA $36          ;stores initial movement speeds
-  LDA.b #$06 : STA $0428        ;allows BG1 to move
+  LDA.b #$08 : STA $36          ; Stores initial movement speeds
+  LDA.b #$06 : STA $0428        ; Allows BG1 to move
 
   ; Cache the origin position of the sprite.
   LDA SprX, X : STA SprMiscA, X 
   LDA SprY, X : STA SprMiscB, X
 
-  JSR SpawnLeftHead
-  JSR SpawnRightHead
+  JSR SpawnLeftHead : JSR SpawnRightHead
 
-  STZ.w Neck1_OffsetX
-  STZ.w Neck1_OffsetY
-  STZ.w Neck2_OffsetX
-  STZ.w Neck2_OffsetY
+  STZ.w Neck1_OffsetX : STZ.w Neck1_OffsetY
+  STZ.w Neck2_OffsetX : STZ.w Neck2_OffsetY
 
   PLB
   RTL
 }
 
-; =============================================================================
-
+; =========================================================
 
 Sprite_Kydreeok_Main:
 {
