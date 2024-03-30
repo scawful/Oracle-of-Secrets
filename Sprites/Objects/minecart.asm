@@ -177,14 +177,14 @@ macro StopCart()
     STZ.w !LinkInCart
 endmacro
 
+; TODO: Implement distance and gravity for cart tossing
 macro HandleLiftAndToss()
     LDA.w !LinkCarryOrToss : AND #$02 : BNE .not_tossing
-    ; Velocities for cart tossing
-    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X 
-    STZ.w $0F90, X : STZ.w $0F70, X
+      ; Velocities for cart tossing
+      STZ.w SprXSpeed, X : STZ.w SprYSpeed, X 
+      STZ.w $0F90, X : STZ.w $0F70, X
   .not_tossing
     JSL Sprite_CheckIfLifted
-
     JSL Sprite_MoveXyz
 endmacro
 
