@@ -82,7 +82,8 @@ Sprite_Kydreeok_Main:
   dw Kydreeok_MoveXorY     ; 03
   dw Kydreeok_KeepWalking  ; 04
 
-
+  ; -------------------------------------------------------
+  ; 0x00
   Kydreeok_Start:
   {
     %StartOnFrame(0)
@@ -100,6 +101,8 @@ Sprite_Kydreeok_Main:
     RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x01
   Kydreeok_StageControl:
   {
     %StartOnFrame(0)
@@ -122,6 +125,8 @@ Sprite_Kydreeok_Main:
     RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x02
   Kydreeok_MoveXandY:
   {
     %StartOnFrame(0)
@@ -145,7 +150,8 @@ Sprite_Kydreeok_Main:
     RTS
   }
 
-  
+  ; -------------------------------------------------------
+  ; 0x03
   Kydreeok_MoveXorY:
   {
     %StartOnFrame(0)
@@ -170,6 +176,8 @@ Sprite_Kydreeok_Main:
     RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x04
   Kydreeok_KeepWalking:
   {
     %StartOnFrame(0)
@@ -214,6 +222,8 @@ Sprite_Kydreeok_Main:
   }
 
 }
+
+; =========================================================
 
 SpawnLeftHead:
 {
