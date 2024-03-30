@@ -12,7 +12,20 @@ org $07AFF8 ; LinkItem_BugCatchingNet
     RTS
 }
 
-; =============================================================================
+; =========================================================
+; Prevent Link from taking damage while jumping spikes
+; The game originally differentiates between your armor 
+; for the damage take, however the table has all the same
+; values, so it's effectively useless. 
+
+; TileDetect_MainHandler_no_moon_pearl
+; org $07D23D
+org $07D242
+  JSL CheckIfJumpingForSpikeDamage
+  NOP #2
+warnpc $07D248
+
+; =========================================================
 
 org $2B8000
 LinkItem_JumpFeather:
@@ -57,6 +70,26 @@ LinkItem_JumpFeather:
     
   .cantuseit
     RTL
+}
+
+; =========================================================
+; Y contains our armor value
+; Currently requires a very close jump and will still
+; damage the player midair if you jump from too far away.
+
+CheckIfJumpingForSpikeDamage:
+{
+    PHB : PHK : PLB
+    LDA $29 : BNE .airborne
+      LDA.w .spike_floor_damage, Y : STA.w $0373
+  .airborne
+    PLB
+    RTL
+
+  .spike_floor_damage
+    db $08 ; green
+    db $08 ; blue
+    db $04 ; red
 }
 
 print  "End of Items/jump_feather.asm     ", pc
