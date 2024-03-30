@@ -210,33 +210,32 @@ Sprite_Minecart_Main:
   ; 0x00
   Minecart_WaitHoriz:
   {
-    %PlayAnimation(0,1,8)
-    LDA SprTimerA, X : BNE .not_ready
+      %PlayAnimation(0,1,8)
+      LDA SprTimerA, X : BNE .not_ready
 
-    LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
-    JSR CheckIfPlayerIsOn : BCC .not_ready
+      LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
+      JSR CheckIfPlayerIsOn : BCC .not_ready
 
-    JSL Player_HaltDashAttack            ; Stop the player from dashing
-    LDA #$02 : STA $02F5                 ; Somaria platform and moving 
-    LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
+      JSL Player_HaltDashAttack            ; Stop the player from dashing
+      LDA #$02 : STA $02F5                 ; Somaria platform and moving 
+      LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
+      LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
 
-    LDA #$01 : STA !LinkInCart
-
-    ; Check if the cart is facing east or west
-    LDA SprSubtype, X : CMP.b #$03 : BNE .opposite_direction
-      STA.w !MinecartDirection
-      LDA   #$02 : STA $0DE0, X
-      %GotoAction(5)  ; Minecart_MoveWest
-      RTS
+      ; Check if the cart is facing east or west
+      LDA SprSubtype, X : CMP.b #$03 : BNE .opposite_direction
+        STA.w !MinecartDirection
+        LDA   #$02 : STA !SpriteDirection, X
+        %GotoAction(5)  ; Minecart_MoveWest
+        RTS
 
     .opposite_direction
       STA.w !MinecartDirection
-      LDA   #$03 : STA $0DE0, X
+      LDA   #$03 : STA !SpriteDirection, X
       %GotoAction(3) ; Minecart_MoveEast
 
     .not_ready
       RTS
-      
+        
     .lifting
       %HandleLiftAndToss()
 
@@ -262,13 +261,13 @@ Sprite_Minecart_Main:
       ; Check if the cart is facing north or south
       LDA SprSubtype, X : BEQ .opposite_direction
         STA.w !MinecartDirection
-        LDA   #$01 : STA $0DE0, X
+        LDA   #$01 : STA !SpriteDirection, X
         %GotoAction(4)  ; Minecart_MoveSouth
         RTS
         
       .opposite_direction
         STA.w !MinecartDirection
-        LDA   #$00 : STA $0DE0, X
+        LDA   #$00 : STA !SpriteDirection, X
         %GotoAction(2)  ; Minecart_MoveNorth
 
     .not_ready
@@ -457,14 +456,14 @@ HandleTileDirections:
 
       .stop_north
         ; Set the new direction to north and flip the cart's orientation
-        LDA.b #South : STA SprSubtype, X : STA.w !MinecartDirection
-        LDA   #$01 : STA $0DE0,        X
+        LDA.b #South : STA SprSubtype,       X : STA.w !MinecartDirection
+        LDA   #$01   : STA !SpriteDirection, X
         JMP   .go_vert
       
       .stop_south
         ; Set the new direction to south and flip the cart's orientation
-        LDA.b #North : STA SprSubtype, X : STZ.w !MinecartDirection
-        LDA   #$00 : STA $0DE0,        X
+        LDA.b #North : STA SprSubtype,       X : STZ.w !MinecartDirection
+        LDA   #$00   : STA !SpriteDirection, X
         
       .go_vert
           %SetTimerA($40)
@@ -475,14 +474,14 @@ HandleTileDirections:
       
       .stop_east
         ; Set the new direction to east and flip the cart's orientation
-        LDA.b #West : STA SprSubtype, X : STA.w !MinecartDirection
-        LDA   #$03 : STA $0DE0,       X
+        LDA.b #West : STA SprSubtype,       X : STA.w !MinecartDirection
+        LDA   #$03  : STA !SpriteDirection, X
         JMP   .go_horiz
       
       .stop_west
         ; Set the new direction to west and flip the cart's orientation
-        LDA.b #East : STA SprSubtype, X : STA.w !MinecartDirection
-        LDA   #$02 : STA $0DE0,       X
+        LDA.b #East : STA SprSubtype,       X : STA.w !MinecartDirection
+        LDA   #$02  : STA !SpriteDirection, X
       .go_horiz
           %SetTimerA($40)
           %StopCart()
@@ -555,22 +554,22 @@ HandleTileDirections:
 
   .move_north
       LDA #$00 : STA SprSubtype, X
-      STA $0DE0,                 X
+      STA !SpriteDirection,      X
       %GotoAction(2) ; Minecart_MoveNorth
       RTS
   .move_east
-      LDA #$01 : STA SprSubtype, X
-      LDA #$03 : STA $0DE0,      X
+      LDA #$01 : STA SprSubtype,       X
+      LDA #$03 : STA !SpriteDirection, X
       %GotoAction(3) ; Minecart_MoveEast
       RTS
   .move_south
-      LDA #$02 : STA SprSubtype, X
-      LDA #$01 : STA $0DE0,      X
+      LDA #$02 : STA SprSubtype,       X
+      LDA #$01 : STA !SpriteDirection, X
       %GotoAction(4) ; Minecart_MoveSouth
       RTS
   .move_west
-      LDA #$03 : STA SprSubtype, X
-      LDA #$02 : STA $0DE0,      X
+      LDA #$03 : STA SprSubtype,       X
+      LDA #$02 : STA !SpriteDirection, X
       %GotoAction(5) ; Minecart_MoveWest
   .done
       RTS
@@ -624,27 +623,27 @@ HandleDynamicSwitchTileDirections:
     
     LDA SwitchRam : BNE .go_west
 
-    LDA #$01 : STA SprSubtype, X
-    LDA #$03 : STA $0DE0,      X
+    LDA #$01 : STA SprSubtype,       X
+    LDA #$03 : STA !SpriteDirection, X
     %GotoAction(3) ; Minecart_MoveEast
     RTS
 
   .go_west
-    LDA #$03 : STA SprSubtype, X
-    LDA #$02 : STA $0DE0,      X
+    LDA #$03 : STA SprSubtype,       X
+    LDA #$02 : STA !SpriteDirection, X
     %GotoAction(5) ; Minecart_MoveWest
     RTS
 
   .north_or_south
     LDA SwitchRam : BNE .go_south
     LDA #$00 : STA SprSubtype, X
-    STA $0DE0,                 X
+    STA !SpriteDirection,      X
     %GotoAction(2) ; Minecart_MoveNorth
     RTS
 
   .go_south
-    LDA #$02 : STA SprSubtype, X
-    LDA #$01 : STA $0DE0,      X
+    LDA #$02 : STA SprSubtype,       X
+    LDA #$01 : STA !SpriteDirection, X
     %GotoAction(4) ; Minecart_MoveSouth
     RTS
 
@@ -689,7 +688,7 @@ DragYH = $0B7D
 DragPlayer:
 {
     ; Get direction of the cart (0 to 3)
-    LDY.w $0DE0, X
+    LDY.w !SpriteDirection, X
     
     LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
     LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
@@ -777,12 +776,12 @@ CheckForPlayerInput:
 
     ; Check for input from the user (u,d,l,r)
       
-      LDY $0DE0, X
+      LDY !SpriteDirection, X
       
       LDA $F0 : AND .d_pad_press, Y : STA $00 : AND.b #$08 : BEQ .not_pressing_up
       
-      LDA.b #$00 : STA $0DE0, X ; Moving Up 
-      STA   SprSubtype,       X
+      LDA.b #$00 : STA !SpriteDirection, X ; Moving Up 
+      STA   SprSubtype,                  X
       %GotoAction(2) ; Minecart_MoveNorth
       
       BRA .return
@@ -791,8 +790,8 @@ CheckForPlayerInput:
 
       LDA $00 : AND.b #$04 : BEQ .not_pressing_down
       
-      LDA.b #$01 : STA $0DE0,      X
-      LDA   #$02 : STA SprSubtype, X
+      LDA.b #$01 : STA !SpriteDirection, X
+      LDA   #$02 : STA SprSubtype,       X
       %GotoAction(4) ; Minecart_MoveSouth
 
       
@@ -802,8 +801,8 @@ CheckForPlayerInput:
 
       LDA $00 : AND.b #$02 : BEQ .not_pressing_left
       
-      LDA.b #$02 : STA $0DE0,      X
-      LDA   #$03 : STA SprSubtype, X
+      LDA.b #$02 : STA !SpriteDirection, X
+      LDA   #$03 : STA SprSubtype,       X
       %GotoAction(5) ; Minecart_MoveWest
 
       
@@ -813,16 +812,16 @@ CheckForPlayerInput:
 
       LDA $00 : AND.b #$01 : BEQ .always
       
-      LDA.b #$03 : STA $0DE0, X
-      STA   SprSubtype,       X
+      LDA.b #$03 : STA !SpriteDirection, X
+      STA   SprSubtype,                  X
       %GotoAction(3) ; Minecart_MoveEast
 
   .always
 
-  ;   LDA $0DE0, X : CMP.b #$03 : BNE .not_going_right
+  ;   LDA !SpriteDirection, X : CMP.b #$03 : BNE .not_going_right
       
   ;   ; Default heading in reaction to this tile is going up.
-  ;   ; LDA.b #$00 : STA $0DE0, X
+  ;   ; LDA.b #$00 : STA !SpriteDirection, X
 
   ; .not_going_right
 
