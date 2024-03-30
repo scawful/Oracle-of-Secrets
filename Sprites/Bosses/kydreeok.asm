@@ -435,6 +435,7 @@ StopIfOutOfBounds:
     RTS
 }
 
+; =========================================================
 
 Sprite_ApplySpeedTowardsPlayerXOrY:
 {
@@ -529,6 +530,8 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
                 RTS
 }
 
+; =========================================================
+
 ApplyPalette:
 {
     REP #$20 ;Set A in 16bit mode
@@ -554,85 +557,86 @@ ApplyPalette:
     RTS
 }
 
-; =============================================================================
+; =========================================================
 
 Sprite_Kydreeok_Draw:
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+{
+    JSL Sprite_PrepOamCoord
+    JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
-  LDA .start_index, Y : STA $06
+    LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+    LDA .start_index, Y : STA $06
 
+    PHX
+    LDX   .nbr_of_tiles, Y ;amount of tiles -1
+    LDY.b #$00
+  .next_tile
 
-  PHX
-  LDX   .nbr_of_tiles, Y ;amount of tiles -1
-  LDY.b #$00
-  .nextTile
+    PHX ; Save current Tile Index?
+        
+    TXA : CLC : ADC $06 ; Add Animation Index Offset
 
-  PHX ; Save current Tile Index?
-      
-  TXA : CLC : ADC $06 ; Add Animation Index Offset
+    PHA ; Keep the value with animation index offset?
 
-  PHA ; Keep the value with animation index offset?
+    ASL A : TAX
 
-  ASL A : TAX
+    REP #$20
 
-  REP #$20
+    LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+    AND.w #$0100 : STA $0E
+    INY
+    LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+    CLC   : ADC #$0010 : CMP.w #$0100
+    SEP   #$20
+    BCC   .on_screen_y
 
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E
-  INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-  CLC   : ADC #$0010 : CMP.w #$0100
-  SEP   #$20
-  BCC   .on_screen_y
-
-  LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-  STA   $0E
+    LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
+    STA   $0E
   .on_screen_y
 
-  PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
-  INY
-  LDA .chr, X : STA ($90), Y
-  INY
-  LDA .properties, X : STA ($90), Y
+    PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
+    INY
+    LDA .chr, X : STA ($90), Y
+    INY
+    LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
-  TYA : LSR #2 : TAY
-      
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
-  PLY : INY
-      
-  PLX : DEX : BPL .nextTile
+    PHY 
+        
+    TYA : LSR #2 : TAY
+        
+    LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+        
+    PLY : INY
+        
+    PLX : DEX : BPL .next_tile
 
-  PLX
+    PLX
 
-  RTS
+    RTS
 
 
   .start_index
-  db $00, $0A, $14
+    db $00, $0A, $14
   .nbr_of_tiles
-  db 9, 9, 9
+    db 9, 9, 9
   .x_offsets
-  dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
-  dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
-  dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
+    dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
+    dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
+    dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
   .y_offsets
-  dw 8, -8, 8, -36, -36, 8, -8, 8, -36, -36
-  dw 8, -5, 11, -38, -38, 8, -8, 8, -39, -38
-  dw 8, -8, 8, -36, -36, 8, -5, 11, -36, -36
+    dw 8, -8, 8, -36, -36, 8, -8, 8, -36, -36
+    dw 8, -5, 11, -38, -38, 8, -8, 8, -39, -38
+    dw 8, -8, 8, -36, -36, 8, -5, 11, -36, -36
   .chr
-  db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
-  db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
-  db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
+    db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
+    db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
+    db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
   .properties
-  db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
-  db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
-  db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
+    db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
+    db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
+    db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
   .sizes
-  db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
-  db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
-  db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+}
