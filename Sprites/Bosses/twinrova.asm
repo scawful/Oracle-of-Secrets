@@ -885,11 +885,13 @@ SpritePrep_Blind_PrepareBattle:
 warnpc $1DA0B1
 
 ; =========================================================
+; TODO: Decide if we want to use this garnish in the fight.
+; Currently unused.
 
 org $1DA0B1
 BlindLaser_SpawnTrailGarnish:
 {
-    #_1DA0B1: LDA.w $0E80,X
+    #_1DA0B1: LDA.w SprDelay,X
     #_1DA0B4: AND.b #$00
     #_1DA0B6: BNE .exit
 
