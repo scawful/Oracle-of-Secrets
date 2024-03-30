@@ -235,19 +235,16 @@ SpawnLeftHead:
     LDA.b #$00 : STA $0E30, Y
         
     PHX
-
     ; code that controls where to spawn the offspring.
     REP #$20
     LDA $0FD8 : SEC : SBC.w #$000F
     SEP #$20
-    STA $0D10,       Y
-    XBA : STA $0D30, Y
+    STA $0D10, Y : XBA : STA $0D30, Y
 
     REP #$20
     LDA $0FDA : SEC : SBC.w #$000F
     SEP #$20
-    STA $0D00,       Y
-    XBA : STA $0D20, Y
+    STA $0D00, Y : XBA : STA $0D20, Y
 
     LDA.w SprX,     Y
     STA.w SprMiscA, Y : STA.w $19EA : STA.w $19EC : STA.w $19EE
@@ -258,13 +255,13 @@ SpawnLeftHead:
 
     STZ $0D60, X
     STZ $0D70, X
-        
     PLX
         
   .return
-
     RTS
 }
+
+; =========================================================
 
 SpawnRightHead:
 {
@@ -277,19 +274,16 @@ SpawnRightHead:
     LDA.b #$01 : STA $0E30, Y
         
     PHX
-
     ; code that controls where to spawn the offspring.
     REP #$20
     LDA $0FD8 : CLC : ADC.w #$000C
     SEP #$20
-    STA $0D10,       Y
-    XBA : STA $0D30, Y
+    STA $0D10, Y : XBA : STA $0D30, Y
 
     REP #$20
     LDA $0FDA : SEC : SBC.w #$000F
     SEP #$20
-    STA $0D00,       Y
-    XBA : STA $0D20, Y
+    STA $0D00, Y : XBA : STA $0D20, Y
 
     LDA.w SprX, Y : STA.w SprX, Y
     STA.w SprMiscA, Y : STA.w $19F0 : STA.w $19F2 : STA.w $19F4
@@ -300,11 +294,9 @@ SpawnRightHead:
 
     STZ $0D60, X
     STZ $0D70, X
-        
     PLX
         
   .return
-
     RTS
 }
 
