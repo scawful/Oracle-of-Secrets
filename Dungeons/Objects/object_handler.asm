@@ -1,29 +1,51 @@
+; =========================================================
 ; Dungeon Object Handler
 
-org    $018262            ;object id 0x31
-  dw ExpandedObject
+org $018262
+  dw ExpandedObject ; Object ID 0x31
+  dw SecretObject   ; Object ID 0x32
 
 ; #_018650: dw RoomDraw_WeirdUglyPot ID 230
 org $018650
   dw HeavyPot
 
+; Item ID 22B 
+; Heavy Pot grahics
+; Currently modified to look like normal pot 
+org $00A9AC
+  dw $0D28, $0D38, $4D28, $4D38
+
+; org $01B306 ; RoomDraw_WeirdGloveRequiredPot
+;   LDA.w #$1010
+
 ; Bank01 Free Space
 org $01B53C
   ExpandedObject:
-  JSL NewObjectsCode
-  RTS
+  {
+    JSL NewObjectsCode
+    RTS
+  }
+
+  SecretObject:
+  {
+    JSL HandleSecretObjects
+    RTS
+  }
 
   HeavyPot:
-  LDA.w #$1010
-  PHX : LDX.w $042C
-  LDA.w #$1111 : STA $0500, X
-  ; Store this object's position in the object buffer to $0520, X
-  LDA $BA : STA $0520, X
-  ; Store it's tilemap position.
-  TYA : STA $0540, X
-  JMP $B350
-
+  {
+    LDA.w #$1010
+    PHX : LDX.w $042C
+    LDA.w #$1111 : STA $0500, X
+    ; Store object's position in the object buffer to $0520, X
+    LDA $BA : STA $0520, X
+    ; Store tilemap position.
+    TYA : STA $0540, X
+    JMP $B350
+  }
 warnpc $01B560
+
+; =========================================================
 
 org $2C8000
 NewObjectsCode:
@@ -132,32 +154,34 @@ NewObjectsCode:
     incbin Data/small_statue.bin
 }
 
-
 ; May need to make this a table 
 ; This modifies object 0xOE to use the spritesheets for the object
 CustomDrawConfig:
 {
-  PHA
-  LDA $03 : AND #$00FF : CMP.w #$000E : BEQ .custom_config
+    PHA
+    LDA $03 : AND #$00FF : CMP.w #$000E : BEQ .custom_config
+      TYA : LSR : AND #$00FF
+      CMP #$000E : BNE .no_spriteset
+        LDA #$000E : STA $03
+    .custom_config
+      PLA
+      ORA.w #$0300 : JMP .return
+    .no_spriteset   
+      PLA
+  .return
+    RTS
+}
 
-  TYA : LSR : AND #$00FF
+; =========================================================
+; Secret Object Handler
+; Disappears if Link uses the Book of Secrets near them
 
-  CMP #$000E : BNE .no_spriteset
-    LDA #$000E : STA $03
-  .custom_config
-    PLA
-    ORA.w #$0300 : JMP .return
-.no_spriteset   
-    PLA
-.return
-  RTS
+HandleSecretObjects:
+{
+  ; TODO: Implement the Book of Secrets check
+  ; TODO: Add object draw code 
+  ; TODO: Implement the object's disappearance
+  RTL
 }
 
 pushpc
-
-; Item ID 22B 
-org $00A9AC
-  dw $0D28, $0D38, $4D28, $4D38
-
-; org $01B306 ; RoomDraw_WeirdGloveRequiredPot
-;   LDA.w #$1010
