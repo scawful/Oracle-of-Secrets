@@ -1,5 +1,38 @@
 ; =========================================================
 ; Book of Secrets (Reveal Secrets with Book of Mudora)
+; Interacts with SpecialObject ID 0x32 
+; Makes objects disappear when using the book
+
+org $07A45E
+EXIT_07A45E:
+
+org $07AA6C
+Link_PerformDesertPrayer:
+
+; Restored vanilla book of mudora code
+; TODO: Update to work with special object
+org $07A471
+LinkItem_Book:
+{
+    BIT.b $3A : BVS .exit
+    LDA.b $6C : BNE EXIT_07A45E
+    JSR Link_CheckNewY_ButtonPress : BCC .exit
+
+    LDA.b $3A : AND.b #$BF : STA.b $3A
+    LDA.w $02ED : BNE .do_prayer
+    LDA.b #$3C : JSR PlaySFX_Set2 ; SFX2.3C
+
+    BRA .exit
+
+  .do_prayer
+    BRL Link_PerformDesertPrayer
+
+  .exit
+    RTS
+}
+warnpc $07A494
+
+; =========================================================
 ; Makes BG2 Disappear when holding L in a building
 ; Based on the Parallel Worlds feature
 ;
