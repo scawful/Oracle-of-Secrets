@@ -36,20 +36,27 @@ warnpc $07A494
 ; Makes BG2 Disappear when holding L in a building
 ; Based on the Parallel Worlds feature
 ;
-; Layer Flags: xxxsabcd (i count BG from 1 to 4 - MathOnNapkins RAM-Map counts from 0 to 3)
+; Layer Flags: xxxsabcd 
+; (i count BG from 1 to 4 
+;   - MathOnNapkins RAM-Map counts from 0 to 3)
 ; s - Sprite layer enabled 
 ; a - BG4 enabled
 ; b - BG3 enabled
 ; c - BG2 enabled
-; d - (BG1 disabled) --> only works properly if the room uses the feature "BG2 on Top"
+; d - (BG1 disabled) --> only works properly if the room 
+;                         uses the feature "BG2 on Top"
 ;
 ; Originally by XaserLE, updated by scawful
+; Note: No longer used as part of Book of Secrets globally
+; Likely will be reused for specific events where we can
+; ensure the BG2 will have something secret to show,
+; rather than allowing the ability to be used anywhere.
 
 ; =========================================================
 ; long subroutine that is executed every frame
 
 org $068365			  
-JSL LinkItem_SecretsBook ; overwrite it (originally JSL $099F91)
+JSL LinkItem_SecretsBook ; hook JSL $099F91
 
 ; =========================================================
 
@@ -61,8 +68,7 @@ LinkItem_SecretsBook:
   LDA $1B : AND #$01 : BEQ .end
 
     ; ----------
-    ; Check if we have the book of secrets
-    LDA $7EF34D : CMP #$01 : BNE $0F ; if not, go to enable BG2
+    ; TODO: Add a new condition, such as a RoomTag check
 
     ; load unfiltered joypad 1 register (AXLR|????)
     ; delete all bits except those for L
@@ -79,7 +85,7 @@ LinkItem_SecretsBook:
     ; ----------
 
 .end
-  JSL $099F91			  ; at least execute original code
+  JSL $099F91			  ; restore original code
   RTL
 }
 
