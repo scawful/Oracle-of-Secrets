@@ -1,11 +1,7 @@
-org $07A471 ; Mudora
-  JSR LinkItem_PortalRod
-  RTS
+; portal_rod.asm by scawful
+; TODO: Make the item an alternative to the FishingRod
 
-
-warnpc $07A493
-
-; *$3A50F-$3A568
+; Replace LinkState_UsingEther
 org    $07A50F
 RodAnimationTimer:
   db $03, $03, $05
@@ -109,6 +105,7 @@ LinkItem_FirePortal:
 
   STZ $0D60, X
   STZ $0D70, X
+  LDA #$09 : STA $0DD0, X
       
   PLX
 
@@ -125,6 +122,8 @@ LinkItem_FirePortal:
   RTL
 
 }
+
+; =========================================================
 
 pushpc 
 
