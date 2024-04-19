@@ -1,6 +1,7 @@
 ; =========================================================
 ; Sprite Properties
 ; =========================================================
+
 !SPRID              = $7A ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 10  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
@@ -34,47 +35,42 @@
 
 Sprite_Kydreeok_Long:
 {
-  PHB : PHK : PLB
+    PHB : PHK : PLB
 
-  JSR Sprite_Kydreeok_Draw ; Call the draw code
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Kydreeok_Main ; Call the main sprite code
+    JSR Sprite_Kydreeok_Draw
+    JSL Sprite_CheckActive : BCC .SpriteIsNotActive  
+      JSR Sprite_Kydreeok_Main
 
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+    PLB ; Get back the databank we stored previously
+    RTL ; Go back to original code
 }
 
 ; =========================================================
+; TODO: Handle boss death based on left and right head health
 
 Sprite_Kydreeok_Prep:
 {
   PHB : PHK : PLB
     
   LDA   #$40 : STA SprTimerA, X
-  LDA.b #$08 : STA $36          ;stores initial movement speeds
-  LDA.b #$06 : STA $0428        ;allows BG1 to move
+  LDA.b #$08 : STA $36          ; Stores initial movement speeds
+  LDA.b #$06 : STA $0428        ; Allows BG1 to move
 
   ; Cache the origin position of the sprite.
   LDA SprX, X : STA SprMiscA, X 
   LDA SprY, X : STA SprMiscB, X
 
-  JSR SpawnLeftHead
-  JSR SpawnRightHead
+  JSR SpawnLeftHead : JSR SpawnRightHead
 
-  STZ.w Neck1_OffsetX
-  STZ.w Neck1_OffsetY
-  STZ.w Neck2_OffsetX
-  STZ.w Neck2_OffsetY
+  STZ.w Neck1_OffsetX : STZ.w Neck1_OffsetY
+  STZ.w Neck2_OffsetX : STZ.w Neck2_OffsetY
 
   PLB
   RTL
 }
 
-; =============================================================================
-
+; =========================================================
 
 Sprite_Kydreeok_Main:
 {
@@ -87,98 +83,102 @@ Sprite_Kydreeok_Main:
   dw Kydreeok_MoveXorY     ; 03
   dw Kydreeok_KeepWalking  ; 04
 
-
+  ; -------------------------------------------------------
+  ; 0x00
   Kydreeok_Start:
   {
-    %StartOnFrame(0)
-    %PlayAnimation(0, 2, 10)
+      %StartOnFrame(0)
+      %PlayAnimation(0, 2, 10)
 
-    JSR ApplyPalette
-    JSL Sprite_PlayerCantPassThrough
+      JSR ApplyPalette
+      JSL Sprite_PlayerCantPassThrough
 
-    LDA SprTimerA,            X : BNE .continue
-    TXA : STA Kydreeok_Id
-    LDA #$40 : STA SprTimerA, X
-    %GotoAction(1)
+      LDA SprTimerA,            X : BNE .continue
+      TXA : STA Kydreeok_Id
+      LDA #$40 : STA SprTimerA, X
+        %GotoAction(1)
     .continue
 
-    RTS
+      RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x01
   Kydreeok_StageControl:
   {
-    %StartOnFrame(0)
-    %PlayAnimation(0, 2, 10)
+      %StartOnFrame(0)
+      %PlayAnimation(0, 2, 10)
 
-    PHX
+      PHX
 
-    STZ $0D40 : STZ $0D50 ;set velocitys to 0
-    JSR MoveBody
+      STZ $0D40 : STZ $0D50 ;set velocitys to 0
+      JSR MoveBody
 
-    JSL Sprite_BounceFromTileCollision ; 
-    JSR StopIfOutOfBounds
+      JSL Sprite_BounceFromTileCollision ; 
+      JSR StopIfOutOfBounds
 
-    LDA SprTimerA, X : BNE .continue
-    %GotoAction(2)
+      LDA SprTimerA, X : BNE .continue
+        %GotoAction(2)
     .continue
 
-    PLX
+      PLX
 
-    RTS
+      RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x02
   Kydreeok_MoveXandY:
   {
-    %StartOnFrame(0)
-    %PlayAnimation(0, 2, 10)
+      %StartOnFrame(0)
+      %PlayAnimation(0, 2, 10)
 
-    PHX ;saves X so we can use it later
+      PHX ;saves X so we can use it later
 
-    LDA $36
-    JSL Sprite_ApplySpeedTowardsPlayer
-    JSL Sprite_BounceFromTileCollision ; JSR StopIfOutOfBounds
-    JSR StopIfOutOfBounds
-    JSR MoveBody
+      LDA $36
+      JSL Sprite_ApplySpeedTowardsPlayer
+      JSL Sprite_BounceFromTileCollision ; JSR StopIfOutOfBounds
+      JSR StopIfOutOfBounds
+      JSR MoveBody
 
-    JSL Sprite_CheckDamageFromPlayerLong
-    %DoDamageToPlayerSameLayerOnContact()
+      JSL Sprite_CheckDamageFromPlayerLong
+      %DoDamageToPlayerSameLayerOnContact()
 
-    PLX ;restores X
+      PLX ;restores X
 
-    %GotoAction(4)
+      %GotoAction(4)
 
-    RTS
+      RTS
   }
 
-  
+  ; -------------------------------------------------------
+  ; 0x03
   Kydreeok_MoveXorY:
   {
-    %StartOnFrame(0)
-    %PlayAnimation(0, 2, 10)
+      %StartOnFrame(0)
+      %PlayAnimation(0, 2, 10)
 
-    PHX ;saves X so we can use it later
+      PHX
+      LDA $36 : STA $00
+      JSR Sprite_ApplySpeedTowardsPlayerXOrY
+      JSL Sprite_BounceFromTileCollision     ; JSR StopIfOutOfBounds
+      JSR StopIfOutOfBounds
+      JSR MoveBody
 
-    LDA $36
-    STA $00
-    JSR Sprite_ApplySpeedTowardsPlayerXOrY
-    JSL Sprite_BounceFromTileCollision     ; JSR StopIfOutOfBounds
-    JSR StopIfOutOfBounds
-    JSR MoveBody
+      JSL Sprite_CheckDamageFromPlayerLong
+      %DoDamageToPlayerSameLayerOnContact()
+      PLX
 
-    JSL Sprite_CheckDamageFromPlayerLong
-    %DoDamageToPlayerSameLayerOnContact()
-
-    PLX ;restores X
-
-    %GotoAction(4)
-
-    RTS
+      %GotoAction(4)
+      RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x04
   Kydreeok_KeepWalking:
   {
-    %StartOnFrame(0)
-    %PlayAnimation(0, 2, 10)
+      %StartOnFrame(0)
+      %PlayAnimation(0, 2, 10)
 
       PHX
       REP #$20
@@ -220,6 +220,8 @@ Sprite_Kydreeok_Main:
 
 }
 
+; =========================================================
+
 SpawnLeftHead:
 {
     LDA #$CF
@@ -230,19 +232,16 @@ SpawnLeftHead:
     LDA.b #$00 : STA $0E30, Y
         
     PHX
-
     ; code that controls where to spawn the offspring.
     REP #$20
     LDA $0FD8 : SEC : SBC.w #$000F
     SEP #$20
-    STA $0D10,       Y
-    XBA : STA $0D30, Y
+    STA $0D10, Y : XBA : STA $0D30, Y
 
     REP #$20
     LDA $0FDA : SEC : SBC.w #$000F
     SEP #$20
-    STA $0D00,       Y
-    XBA : STA $0D20, Y
+    STA $0D00, Y : XBA : STA $0D20, Y
 
     LDA.w SprX,     Y
     STA.w SprMiscA, Y : STA.w $19EA : STA.w $19EC : STA.w $19EE
@@ -253,13 +252,13 @@ SpawnLeftHead:
 
     STZ $0D60, X
     STZ $0D70, X
-        
     PLX
         
   .return
-
     RTS
 }
+
+; =========================================================
 
 SpawnRightHead:
 {
@@ -272,19 +271,16 @@ SpawnRightHead:
     LDA.b #$01 : STA $0E30, Y
         
     PHX
-
     ; code that controls where to spawn the offspring.
     REP #$20
     LDA $0FD8 : CLC : ADC.w #$000C
     SEP #$20
-    STA $0D10,       Y
-    XBA : STA $0D30, Y
+    STA $0D10, Y : XBA : STA $0D30, Y
 
     REP #$20
     LDA $0FDA : SEC : SBC.w #$000F
     SEP #$20
-    STA $0D00,       Y
-    XBA : STA $0D20, Y
+    STA $0D00, Y : XBA : STA $0D20, Y
 
     LDA.w SprX, Y : STA.w SprX, Y
     STA.w SprMiscA, Y : STA.w $19F0 : STA.w $19F2 : STA.w $19F4
@@ -295,95 +291,62 @@ SpawnRightHead:
 
     STZ $0D60, X
     STZ $0D70, X
-        
     PLX
         
   .return
-
     RTS
 }
 
+; =========================================================
+; Originally from Trinexx_MoveBody $1DB2E5
 
-; ==============================================================================
 MoveBody:
 {
     ; Handle the shell bg movement
     ; Trinexx_MoveBody
-    #_1DB2E5: LDA.w $0D10, X
-    #_1DB2E8: PHA
+    LDA.w $0D10, X : PHA
+    LDA.w $0D00, X : PHA
 
-    #_1DB2E9: LDA.w $0D00, X
-    #_1DB2EC: PHA
+    JSL Sprite_Move
 
-    #_1DB2ED: JSL Sprite_Move
-
-    #_1DB2F0: PLA
-    #_1DB2F1: LDY.b #$00
-
-    #_1DB2F3: SEC
-    #_1DB2F4: SBC.w $0D00, X
-    #_1DB2F7: STA.w $0310
-    #_1DB2FA: BPL .pos_y_low
-
-    #_1DB2FC: DEY
+    PLA
+    LDY.b #$00 : SEC : SBC.w $0D00, X : STA.w $0310
+    BPL .pos_y_low
+    DEY
 
   .pos_y_low
-    #_1DB2FD: STY.w $0311
+    STY.w $0311
 
     ; -----------------------------------------------------
 
-    #_1DB300: PLA
-    #_1DB301: LDY.b #$00
+    PLA
+    LDY.b #$00 : SEC : SBC.w $0D10, X : STA.w $0312
+    BPL .pos_x_low
 
-    #_1DB303: SEC
-    #_1DB304: SBC.w $0D10, X
-    #_1DB307: STA.w $0312
-    #_1DB30A: BPL .pos_x_low
-
-    #_1DB30C: DEY
+    DEY
 
   .pos_x_low
-    #_1DB30D: STY.w $0313
+    STY.w $0313
 
     ; -----------------------------------------------------
 
-    #_1DB310: LDA.b #$01
-    #_1DB312: STA.w $0428
+    LDA.b #$01 : STA.w $0428
 
+    LDA.w $0D00, X : SEC : SBC.b #$0C : STA.w $0DB0, X
 
-    #_1DB318: LDA.w $0D00, X
-    #_1DB31B: SEC
-    #_1DB31C: SBC.b #$0C
-    #_1DB31E: STA.w $0DB0, X
+    LDA.w $0B08 : SEC : SBC.w $0D10, X
+                  CLC : ADC.b #$02 
+                  CMP.b #$04 : BCS .not_at_target
 
-    #_1DB321: LDA.w $0B08
-    #_1DB324: SEC
-    #_1DB325: SBC.w $0D10, X
-    #_1DB328: CLC
-    #_1DB329: ADC.b #$02
+    LDA.w $0B09 : SEC : SBC.w $0D00, X 
+                  CLC : ADC.b #$02
+                  CMP.b #$04 : BCS .not_at_target
 
-    #_1DB32B: CMP.b #$04
-    #_1DB32D: BCS .not_at_target
-
-    #_1DB32F: LDA.w $0B09
-    #_1DB332: SEC
-    #_1DB333: SBC.w $0D00, X
-    #_1DB336: CLC
-    #_1DB337: ADC.b #$02
-
-    #_1DB339: CMP.b #$04
-    #_1DB33B: BCS .not_at_target
-
-  .adjust_phase
-    #_1DB33D: STZ.w $0D80, X
-
-    #_1DB340: LDA.b #$30
-    #_1DB342: STA.w $0DF0, X
+  .adjust_phase ; Unused?
+    STZ.w $0D80, X
+    LDA.b #$30 : STA.w $0DF0, X
 
   .not_at_target
-
-    ; JSR AdjustChildrenPos
-
     ; LayerEffect_Trinexx $0AFEF0
     REP   #$20
     LDA.w $0422 : CLC : ADC.w $0312 : STA.w $0422
@@ -391,11 +354,10 @@ MoveBody:
     STZ.w $0312 : STZ.w $0310
     SEP   #$20
 
-
     RTS
 }
 
-; ==============================================================================
+; =========================================================
 
 StopIfOutOfBounds:
 {
@@ -470,6 +432,7 @@ StopIfOutOfBounds:
     RTS
 }
 
+; =========================================================
 
 Sprite_ApplySpeedTowardsPlayerXOrY:
 {
@@ -564,6 +527,8 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
                 RTS
 }
 
+; =========================================================
+
 ApplyPalette:
 {
     REP #$20 ;Set A in 16bit mode
@@ -589,85 +554,86 @@ ApplyPalette:
     RTS
 }
 
-; =============================================================================
+; =========================================================
 
 Sprite_Kydreeok_Draw:
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+{
+    JSL Sprite_PrepOamCoord
+    JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
-  LDA .start_index, Y : STA $06
+    LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+    LDA .start_index, Y : STA $06
 
+    PHX
+    LDX   .nbr_of_tiles, Y ;amount of tiles -1
+    LDY.b #$00
+  .next_tile
 
-  PHX
-  LDX   .nbr_of_tiles, Y ;amount of tiles -1
-  LDY.b #$00
-  .nextTile
+    PHX ; Save current Tile Index?
+        
+    TXA : CLC : ADC $06 ; Add Animation Index Offset
 
-  PHX ; Save current Tile Index?
-      
-  TXA : CLC : ADC $06 ; Add Animation Index Offset
+    PHA ; Keep the value with animation index offset?
 
-  PHA ; Keep the value with animation index offset?
+    ASL A : TAX
 
-  ASL A : TAX
+    REP #$20
 
-  REP #$20
+    LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+    AND.w #$0100 : STA $0E
+    INY
+    LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+    CLC   : ADC #$0010 : CMP.w #$0100
+    SEP   #$20
+    BCC   .on_screen_y
 
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E
-  INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-  CLC   : ADC #$0010 : CMP.w #$0100
-  SEP   #$20
-  BCC   .on_screen_y
-
-  LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-  STA   $0E
+    LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
+    STA   $0E
   .on_screen_y
 
-  PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
-  INY
-  LDA .chr, X : STA ($90), Y
-  INY
-  LDA .properties, X : STA ($90), Y
+    PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
+    INY
+    LDA .chr, X : STA ($90), Y
+    INY
+    LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
-  TYA : LSR #2 : TAY
-      
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
-  PLY : INY
-      
-  PLX : DEX : BPL .nextTile
+    PHY 
+        
+    TYA : LSR #2 : TAY
+        
+    LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+        
+    PLY : INY
+        
+    PLX : DEX : BPL .next_tile
 
-  PLX
+    PLX
 
-  RTS
+    RTS
 
 
   .start_index
-  db $00, $0A, $14
+    db $00, $0A, $14
   .nbr_of_tiles
-  db 9, 9, 9
+    db 9, 9, 9
   .x_offsets
-  dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
-  dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
-  dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
+    dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
+    dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
+    dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
   .y_offsets
-  dw 8, -8, 8, -36, -36, 8, -8, 8, -36, -36
-  dw 8, -5, 11, -38, -38, 8, -8, 8, -39, -38
-  dw 8, -8, 8, -36, -36, 8, -5, 11, -36, -36
+    dw 8, -8, 8, -36, -36, 8, -8, 8, -36, -36
+    dw 8, -5, 11, -38, -38, 8, -8, 8, -39, -38
+    dw 8, -8, 8, -36, -36, 8, -5, 11, -36, -36
   .chr
-  db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
-  db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
-  db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
+    db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
+    db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
+    db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
   .properties
-  db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
-  db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
-  db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
+    db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
+    db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
+    db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
   .sizes
-  db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
-  db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
-  db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+}

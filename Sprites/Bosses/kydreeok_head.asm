@@ -1,4 +1,7 @@
 ; =========================================================
+; Kydreeok Head sprite
+; Child sprite of the Kydreeok boss
+; =========================================================
 
 !SPRID              = $CF ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 06  ; Number of tiles used in a frame
@@ -33,18 +36,17 @@
 
 Sprite_KydreeokHead_Long:
 {
-  PHB : PHK : PLB
+    PHB : PHK : PLB
+    LDA SprAction, X : CMP #$02 : BEQ .no_head
+      JSR Sprite_KydreeokHead_Draw
 
-  LDA $0D80, X : CMP #$02 : BEQ .no_head
-  JSR Sprite_KydreeokHead_Draw           ; Call the draw code
-.no_head
-  JSL Sprite_CheckActive       ; Check if game is not paused
-  BCC .SpriteIsNotActive
-  JSR Sprite_KydreeokHead_Main ; Call the main sprite code
+  .no_head
+    JSL Sprite_CheckActive : BCC .not_active
+      JSR Sprite_KydreeokHead_Main
 
-  .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  .not_active
+    PLB ; Get back the databank we stored previously
+    RTL ; Go back to original code
 }
 
 ; =========================================================
@@ -53,8 +55,8 @@ Sprite_KydreeokHead_Prep:
 {
   PHB : PHK : PLB
     
-  ; Add more code here to initialize data
-
+  ; TODO: Set sprite properties for damage and health
+  ; TODO: Handle head death in conjunction with Kydreeok
 
   PLB
   RTL
@@ -62,17 +64,21 @@ Sprite_KydreeokHead_Prep:
 
 ; =========================================================
 
+SpeedTable:
+  db $00, $02, $04, $06, $07, $01, $06, $03
+  db 0, -2, -4, -6, -7, -1, -6, -3
+
 Sprite_KydreeokHead_Main:
 {
   LDA.w SprAction, X
   JSL   UseImplicitRegIndexedLocalJumpTable
 
-  dw KydreeokHead_ForwardAnim
-  dw KydreeokHead_SideAnim
+  dw KydreeokHead_ForwardAnim ; 0x00
+  dw KydreeokHead_SideAnim    ; 0x01
+  dw KydreeokHead_SummonFire  ; 0x02
 
-  dw KydreeokHead_SummonFire
-
-
+  ; -------------------------------------------------------
+  ; 0x00
   KydreeokHead_ForwardAnim:
   {
       %StartOnFrame(0)
@@ -85,9 +91,9 @@ Sprite_KydreeokHead_Main:
 
       LDA.w SprTimerA, X : BNE .noSpeedChange
       JSL   GetRandomInt : AND #$0F : TAY
-      LDA.w tableSpeed, Y : STA.w SprXSpeed, X
+      LDA.w SpeedTable, Y : STA.w SprXSpeed, X
       JSL   GetRandomInt : AND #$0F : TAY
-      LDA.w tableSpeed, Y : STA.w SprYSpeed, X
+      LDA.w SpeedTable, Y : STA.w SprYSpeed, X
       ; LDA #$40 : STA.w SprTimerA, X
     .noSpeedChange
       
@@ -117,12 +123,13 @@ Sprite_KydreeokHead_Main:
       JSR RandomlyAttack
 
       JSL Sprite_IsToRightOfPlayer : TYA : BNE .not_right
-      %GotoAction(1)
+        %GotoAction(1)
     .not_right
-      
       RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x01
   KydreeokHead_SideAnim:
   {
       %StartOnFrame(3)
@@ -135,9 +142,9 @@ Sprite_KydreeokHead_Main:
 
       LDA.w SprTimerA, X : BNE .noSpeedChange
       JSL   GetRandomInt : AND #$0F : TAY
-      LDA.w tableSpeed, Y : STA.w SprXSpeed, X
+      LDA.w SpeedTable, Y : STA.w SprXSpeed, X
       JSL   GetRandomInt : AND #$0F : TAY
-      LDA.w tableSpeed, Y : STA.w SprYSpeed, X
+      LDA.w SpeedTable, Y : STA.w SprYSpeed, X
       ; LDA #$40 : STA.w SprTimerA, X
     .noSpeedChange
       JSL Sprite_Move
@@ -150,12 +157,14 @@ Sprite_KydreeokHead_Main:
       JSR RandomlyAttack
 
       JSL Sprite_IsToRightOfPlayer : TYA : BNE .not_right
-      RTS
+        RTS
     .not_right
       %GotoAction(0)
       RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x02
   KydreeokHead_SummonFire:
   {
     ; %StartOnFrame(5)
@@ -166,21 +175,21 @@ Sprite_KydreeokHead_Main:
     %DoDamageToPlayerSameLayerOnContact()
 
     JSR Sprite_Twinrova_FireAttack
-
     JSL Sprite_Move
     
     LDA SprTimerA,        X : BNE .not_done
-    LDA #$00 : STA $0DD0, X
-
+      LDA #$00 : STA $0DD0, X
   .not_done
     RTS
   }
 
 }
 
+; =========================================================
+
 CoordinateBasedRotation:
 {
-      LDA Neck_Index : TAY
+    LDA Neck_Index : TAY
     ; JSL   GetRandomInt : AND #$04 : TAY
     ; LDA X_Coords, Y : STA Neck1_OffsetX
     ; JSL   GetRandomInt : AND #$04 : TAY
@@ -190,21 +199,25 @@ CoordinateBasedRotation:
     ; JSL   GetRandomInt : AND #$04 : TAY
     LDA Y_Coords, Y : STA Neck2_OffsetY
     JSL   GetRandomInt : AND #$3F : BNE .dont_increment
-    INC.w Neck_Index
+      INC.w Neck_Index
   .dont_increment
     CPY #15 : BNE .not_full
-    LDA #0 : STA Neck_Index
+      LDA #0 : STA Neck_Index
   .not_full
     RTS
 }
 
 ; Table for X coordinates (based on a radius of 8)
 X_Coords:
-    db  8, 11,  8,  3, -4, -9, -12, -9, -4,  3,  8, 11,  8,  3, -4, -9  ; X values
+    db  8, 11,  8,  3, -4, -9, -12, -9
+    db -4,  3,  8, 11,  8,  3, -4, -9
 
 ; Table for Y coordinates (based on a radius of 8)
 Y_Coords:
-    db  0, -3, -8, -11, -15, -15, -11, -8, -3,  0,  3,  8, 11, 15, 15, 11  ; Y values
+    db  0, -3, -8, -11, -15, -15, -11, -8
+    db -3,  0,  3,  8, 11, 15, 15, 11
+
+; =========================================================
 
 RotateHeadUsingSpeedValues:
 {
@@ -214,7 +227,7 @@ RotateHeadUsingSpeedValues:
   LDA.w SprYSpeed, X : CLC : ADC.w YSpeedSin, Y : ASL : STA.w SprYSpeed, X
 
   INY : CPY #$3F : BNE .not_full
-  LDY.b #$00 
+    LDY.b #$00 
 .not_full
   STY.w Neck_Index
   JSL   Sprite_MoveLong
@@ -223,38 +236,46 @@ RotateHeadUsingSpeedValues:
 }
 
 XSpeedSin:
-db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
-db 27,  28,  30,  31,  31,  32
+{
+  db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
+  db 27,  28,  30,  31,  31,  32
+}
+
 YSpeedSin:
-db 32,  32,  31,  31
-db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
-db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
-db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
-db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
-db -12,  -9,  -6,  -3 
-db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
-db 27,  28,  30,  31,  31,  32,  32,  32,  31,  31
-db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
-db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
-db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
-db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
-db -12,  -9,  -6,  -3 
+{
+  db 32,  32,  31,  31
+  db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
+  db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
+  db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
+  db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
+  db -12,  -9,  -6,  -3 
+  db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
+  db 27,  28,  30,  31,  31,  32,  32,  32,  31,  31
+  db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
+  db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
+  db -23, -25, -27, -28, -30, -31, -31, -32, -32, -32
+  db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
+  db -12,  -9,  -6,  -3 
+}
+
+; =========================================================
 
 RandomlyAttack:
 {
   JSL   GetRandomInt : AND #$7F : BNE .no_attack
-  CLC
-  JSL   GetRandomInt : AND #$0F : BNE .no_attack
-  LDA   #$CF
-  JSL   Sprite_SpawnDynamically
-  JSL   Sprite_SetSpawnedCoords
-  ;JSL $09B020
-  LDA.b #$02 : STA $0D80,       Y
-  LDA   #$10 : STA.w SprTimerA, Y
+    CLC
+    JSL   GetRandomInt : AND #$0F : BNE .no_attack
+      LDA   #$CF
+      JSL   Sprite_SpawnDynamically
+      JSL   Sprite_SetSpawnedCoords
+      ;JSL $09B020 ; Fireball_SpawnTrailGarnish
+      LDA.b #$02 : STA.w SprAction, Y
+      LDA   #$10 : STA.w SprTimerA, Y
 .no_attack
-
   RTS
 }
+
+; =========================================================
 
 Offspring1_Neck1_X = $19EA
 Offspring1_Neck2_X = $19EC
@@ -314,6 +335,10 @@ MoveWithBody:
     RTS
 }
 
+; =========================================================
+; Adjusts the movement speed of the sprite based on its 
+; position. This came from Zarby's Gleeok code and causes 
+; some weird movement with the current implementation.
 
 AdjustMovementSpeed:
 {
@@ -322,30 +347,25 @@ AdjustMovementSpeed:
       LDA #-8 : STA.w SprXSpeed, X
   .biggerthanorigin
 
-
     LDA.w SprX,     X : CLC : ADC #$16       ; X+32
     CMP.w SprMiscA, X : BCS .lowerthanorigin
       LDA #$08 : STA.w SprXSpeed, X
   .lowerthanorigin
-
 
     LDA.w SprY,     X : SEC : SBC #$00         ; X-32
     CMP.w SprMiscB, X : BCC .biggerthanorigin2
       LDA #-8 : STA.w SprYSpeed, X
   .biggerthanorigin2
 
-
     LDA.w SprY,     X : CLC : ADC #$20        ; X+32
     CMP.w SprMiscB, X : BCS .lowerthanorigin2
       LDA #$08 : STA.w SprYSpeed, X
   .lowerthanorigin2
-
     RTS
 }
 
-tableSpeed:
-  db $00, $02, $04, $06, $07, $01, $06, $03
-  db 0, -2, -4, -6, -7, -1, -6, -3
+; =========================================================
+; Based on Zarby Gleeok code
 
 KydreeokHead_NeckControl:
 {
@@ -539,29 +559,93 @@ KydreeokHead_NeckControl:
     LDA.b $08 : STA.w SprXSpeed, X
     LDA.b $09 : STA.w SprYSpeed, X
 
-
-
     RTS
 }
 
+; =========================================================
+; This is here for reference.
 
+Sprite_KydreeokHead_DrawNeck_Data:
+{
+  .start_index
+    db $12
+  .nbr_of_tiles
+    db 0
+  .x_offsets
+    dw 0
+  .y_offsets
+    dw 0
+  .chr
+    db $2E
+  .properties
+    db $39
+  .sizes
+    db $02
+}
+
+; =========================================================
 
 Sprite_KydreeokHead_DrawNeck:
 {
-  .start_index
-  db $12
-  .nbr_of_tiles
-  db 0
-  .x_offsets
-  dw 0
-  .y_offsets
-  dw 0
-  .chr
-  db $2E
-  .properties
-  db $39
-  .sizes
-  db $02
+    ; Dumb draw neck code
+    LDA.w SprSubtype, X : BNE .neck2
+      LDA.w $19EA : STA.w $0FD8
+      LDA.w $19EB : STA.w $0FDA
+      JSR   .DrawNeckPart
+
+      LDA.w $19EC : STA.w $0FD8
+      LDA.w $19ED : STA.w $0FDA
+      JSR   .DrawNeckPart
+
+      LDA.w $19EE : STA.w $0FD8
+      LDA.w $19EF : STA.w $0FDA
+      JSR   .DrawNeckPart
+
+    BRA   .skipNeck
+  .neck2
+    ; Dumb draw neck code
+    LDA.w $19F0 : STA.w $0FD8
+    LDA.w $19F1 : STA.w $0FDA
+    JSR   .DrawNeckPart
+
+    LDA.w $19F2 : STA.w $0FD8
+    LDA.w $19F3 : STA.w $0FDA
+    JSR   .DrawNeckPart
+
+    LDA.w $19F4 : STA.w $0FD8
+    LDA.w $19F5 : STA.w $0FDA
+    JSR   .DrawNeckPart
+
+    .skipNeck
+      LDA.b $08 : STA.w $0FD8
+      LDA.b $09 : STA.w $0FDA
+    .skipNeck2
+      RTS
+
+  .DrawNeckPart
+    PHY
+    JSL Sprite_PrepOamCoord
+    PLY
+
+    REP #$20
+    LDA   $00 : STA ($90), Y : AND.w #$0100 : STA $0E : INY
+    LDA   $02 : STA ($90), Y : CLC   : ADC #$0010 : CMP.w #$0100
+    SEP   #$20
+    BCC   .on_screen_y2
+      LDA.b #$F0 : STA ($90), Y ; Put the sprite out of the way
+      STA   $0E
+    .on_screen_y2
+      INY
+      LDA #$2E : STA ($90), Y
+      INY
+      LDA #$39 : STA ($90), Y
+
+      PHY 
+      TYA : LSR #2 : TAY
+      LDA #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
+      PLY : INY
+
+      RTS
 }
 
 ; =========================================================
@@ -613,83 +697,7 @@ Sprite_KydreeokHead_Draw:
 
     PLX
 
-    {
-      ; Dumb draw neck code
-      LDA.w SprSubtype, X : BNE .neck2
-
-      LDA.w $19EA : STA.w $0FD8
-      LDA.w $19EB : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-
-      LDA.w $19EC : STA.w $0FD8
-      LDA.w $19ED : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-      LDA.w $19EE : STA.w $0FD8
-      LDA.w $19EF : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-      BRA   .skipNeck
-      .neck2
-      ; Dumb draw neck code
-      LDA.w $19F0 : STA.w $0FD8
-      LDA.w $19F1 : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-      LDA.w $19F2 : STA.w $0FD8
-      LDA.w $19F3 : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-      LDA.w $19F4 : STA.w $0FD8
-      LDA.w $19F5 : STA.w $0FDA
-      JSR   .DrawNeckPart
-
-      .skipNeck
-
-      LDA.b $08 : STA.w $0FD8
-      LDA.b $09 : STA.w $0FDA
-      .skipNeck2
-      RTS
-
-
-
-      .DrawNeckPart
-      PHY
-      JSL Sprite_PrepOamCoord
-      PLY
-
-      REP #$20
-
-      LDA   $00 : STA ($90), Y
-      AND.w #$0100 : STA $0E
-      INY
-      LDA   $02 : STA ($90), Y
-      CLC   : ADC #$0010 : CMP.w #$0100
-      SEP   #$20
-      BCC   .on_screen_y2
-
-      LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-      STA   $0E
-      .on_screen_y2
-
-      INY
-      LDA #$2E : STA ($90), Y
-      INY
-      LDA #$39 : STA ($90), Y
-
-      PHY 
-          
-      TYA : LSR #2 : TAY
-          
-      LDA #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-          
-      PLY : INY
-
-      RTS
-    }
-
-    RTS
+    JMP Sprite_KydreeokHead_DrawNeck
 
   .start_index
     db $00, $02, $04, $06, $0A, $0E
