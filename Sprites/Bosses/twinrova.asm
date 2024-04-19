@@ -4,7 +4,6 @@
 ; Overrides Blind and the Blind Maiden to create a new 
 ; boss sequence. 
 ;
-;
 ; =========================================================
 
 !SPRID              = $CE ; The sprite ID you are overwriting (HEX)
@@ -59,21 +58,17 @@ Sprite_Twinrova_Long:
 
 Sprite_Twinrova_CheckIfDead:
 {
-    LDA $0D80, X : CMP.b #$0A : BEQ .not_dead
+    LDA SprAction, X : CMP.b #$0A : BEQ .not_dead
+      ; If health is negative, set back to zero
+      LDA SprHealth, X : CMP.b #$44 : BCC .health_not_negative
+        LDA.b #$00 : STA SprHealth, X
 
-    ; If health is negative, set back to zero
-    LDA $0E50, X : CMP.b #$44 : BCC .health_not_negative
-      LDA.b #$00 : STA $0E50, X
-
-  .health_not_negative
-
-    LDA $0E50, X : BNE .not_dead
-      PHX 
-
-      LDA.b #$04 : STA $0DD0, X ; Kill sprite boss style
-      LDA.b #$0A : STA $0D80, X ; Go to Twinrova_Dead stage
-
-      PLX
+    .health_not_negative
+      LDA SprHealth, X : BNE .not_dead
+        PHX 
+        LDA.b #$04 : STA $0DD0, X     ; Kill sprite boss style
+        LDA.b #$0A : STA SprAction, X ; Go to Twinrova_Dead stage
+        PLX
   .not_dead
     RTS
 }
@@ -84,9 +79,8 @@ Sprite_Twinrova_Prep:
 {
     PHB : PHK : PLB
     
-    ; PrepareBattle
     LDA.l $7EF3CC : CMP.b #$06 : BEQ .despawn
-      LDA.b #$40 : STA $0E50, X ; Health
+      LDA.b #$40 : STA SprHealth, X ; Health
       LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
 
       %SetSpriteSpeedX(15)
@@ -174,59 +168,62 @@ Sprite_Twinrova_Main:
   dw Twinrova_KotakeMode    ; 0x09
   dw Twinrova_Dead          ; 0x0A
 
-  ; 0x00
+  ; -------------------------------------------------------
+  ; 0x00 
+  ; TODO: Separate MoveState phases into action 0 and 1
   Twinrova_Init:
   {
       %GotoAction(01)
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x01
   Twinrova_MoveState:
   {
-      LDA $0E50, X : CMP.b #$20 : BCS .phase_1
-      ; -------------------------------------------
-      ; Phase 2
-      LDA SprTimerE, X : BNE .kotake
-        LDA #$70 : STA SprTimerD, X
-        %GotoAction(8) ; Koume Mode
-        RTS
-      .kotake
-        LDA #$70 : STA SprTimerD, X
-        %GotoAction(9) ; Kotake Mode
-        RTS
+      LDA SprHealth, X : CMP.b #$20 : BCS .phase_1
+        ; -------------------------------------------
+        ; Phase 2
+        LDA SprTimerE, X : BNE .kotake
+          LDA #$70 : STA SprTimerD, X
+          %GotoAction(8) ; Koume Mode
+          RTS
+        .kotake
+          LDA #$70 : STA SprTimerD, X
+          %GotoAction(9) ; Kotake Mode
+          RTS
 
     ; ---------------------------------------------
     .phase_1
       LDA $0DA0 : BEQ .not_flashing
         LDA.b #$20 : STA.w SprTimerD, X
         %GotoAction(7) ; Goto Twinrova_Hurt
-      RTS
+        RTS
     .not_flashing
 
       JSL GetRandomInt : AND.b #$3F : BNE +
         LDA.b #$20 : STA.w SprTimerD, X
-        STZ   $AC
+        STZ   $AC      ; Set the fire attack
         %GotoAction(4) ; Prepare Attack
         RTS
     +
 
       JSL GetRandomInt : AND.b #$3F : BNE ++
         LDA.b #$20 : STA.w SprTimerD, X
-        LDA   #$01 : STA $AC
+        LDA   #$01 : STA $AC ; Set the ice attack
         %GotoAction(4) ; Prepare Attack
         RTS
     ++
 
-      JSL Sprite_IsBelowPlayer ; Check if sprite is below player
-      TYA : BNE .MoveBackwards ; If 1, 
-        %GotoAction(2)
+      JSL Sprite_IsBelowPlayer : TYA : BNE .MoveBackwards ; If 1, 
+        %GotoAction(2) ; MoveForwards
         RTS
     .MoveBackwards
-      %GotoAction(3)
+      %GotoAction(3) ; MoveBackwards
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x02 - TODO: Implement Twinrova_MoveForwards
   Twinrova_MoveForwards:
   {
@@ -244,6 +241,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x03 - TODO: Implement Twinrova_MoveBackwards
   Twinrova_MoveBackwards:
   {
@@ -261,6 +259,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x04
   Twinrova_PrepareAttack:
   {
@@ -285,6 +284,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x05
   Twinrova_FireAttack:
   {
@@ -299,6 +299,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x06
   Twinrova_IceAttack:
   {
@@ -313,6 +314,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x07
   Twinrova_Hurt:
   {
@@ -332,6 +334,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x08
   Twinrova_KoumeMode:
   {
@@ -352,6 +355,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x09
   Twinrova_KotakeMode:
   {
@@ -372,6 +376,7 @@ Sprite_Twinrova_Main:
       RTS
   }
 
+  ; -------------------------------------------------------
   ; 0x0A
   Twinrova_Dead:
   {
@@ -382,6 +387,9 @@ Sprite_Twinrova_Main:
 }
 
 ; =========================================================
+; TODO: Create a new parent sprite for the Twinrova attacks
+; so that the velocity and movement aren't applied to the 
+; parent sprite itself.
 
 ; Reused function from TrinexxBreath.
 TrinexxBreath_AltEntry:
@@ -393,7 +401,7 @@ TrinexxBreath_AltEntry:
 
   .no_shake
     JSL Sprite_CheckTileCollision : BEQ .exit
-    JSL Sprite_BounceTowardPlayer
+      JSL Sprite_BounceTowardPlayer
 
   .exit
     RTS
@@ -405,7 +413,7 @@ TrinexxBreath_AltEntry:
 Sprite_Twinrova_FireAttack:
 { 
     JSL Sprite_CheckTileCollision : BNE .no_collision
-    JSL Sprite_Move
+      JSL Sprite_Move
   .no_collision
     JSR AddFireGarnish
     JMP TrinexxBreath_AltEntry
@@ -414,68 +422,32 @@ Sprite_Twinrova_FireAttack:
 ; $1DBDD6 - TrinexxFire_AddFireGarnish
 AddFireGarnish:
 {
-    INC $0E80, X : LDA $0E80, X : AND.b #$07 : BNE .return
+    INC.w SprDelay, X : LDA SprDelay, X : AND.b #$07 : BNE .return
       LDA.b #$2A : JSL Sound_SetSfx2PanLong
       LDA.b #$1D : PHX : TXY : TAX : STA $00
 
   .next_slot
-    LDA $7FF800, X : BEQ .free_slot
+    LDA $7FF800, X : BEQ .free_slot ; Search for free Garnish slot
       DEX : BPL .next_slot
         DEC $0FF8 : BPL .use_search_index
           LDA $00 : STA $0FF8
-
-  .use_search_index
-    LDX $0FF8
-
+    .use_search_index
+      LDX $0FF8
   .free_slot
-    LDA.b #$10 : STA $7FF800, X : STA $0FB4
-    TYA : STA $7FF92C, X
-    
-    LDA.w SprX, Y : STA $7FF83C, X
-    LDA.w SprXH, Y : STA $7FF878, X
-    LDA.w SprY, Y : CLC : ADC.b #$10 : STA $7FF81E, X
-    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X
-    
-    LDA.b #$7F : STA $7FF90E, X
-    STX $00
+    ; Set garnish ID, set garnish handled flag, set garnish parent sprite
+    LDA.b #$10 : STA $7FF800, X : STA $0FB4 : TYA : STA $7FF92C, X
+    LDA.w SprX, Y  : STA $7FF83C, X                    ; Garnish XL
+    LDA.w SprXH, Y : STA $7FF878, X                    ; Garnish XH
+    LDA.w SprY, Y  : CLC : ADC.b #$10 : STA $7FF81E, X ; Garnish YL
+    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X       ; Garnish YH
+    LDA.b #$7F : STA $7FF90E, X : STX $00              ; Set garnish timer 
     PLX
 
   .return
     RTS
 }
 
-; $1DBD65 - TrinexxBreath_ice_add_ice_garnish
-AddIceGarnishV2:
-{
-    INC $0E80, X : LDA $0E80, X : AND.b #$07 : BNE .return
-      LDA.b #$14 : JSL Sound_SetSfx3PanLong
-      LDA.b #$1D : PHX : TXY : TAX : STA $00
-
-  .next_slot
-    LDA $7FF800, X : BEQ .free_slot
-      DEX : BPL .next_slot
-        DEC $0FF8 : BPL .use_search_index
-          LDA.b #$00 : STA $0FF8
-
-  .use_search_index
-    LDX $0FF8
-
-  .free_slot
-    LDA.b #$0C : STA $7FF800, X : STA $0FB4
-    TYA : STA $7FF92C, X
-    
-    LDA.w SprX, Y : STA $7FF83C, X
-    LDA.w SprXH, Y : STA $7FF878, X
-    LDA.w SprY, Y : CLC : ADC.b #$10 : STA $7FF81E, X
-    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X
-    
-    LDA.b #$7F : STA $7FF90E, X : STX $00
-    
-    PLX
-
-  .return
-    RTS
-}
+; =========================================================
 
 Sprite_Twinrova_IceAttack:
 {
@@ -486,8 +458,35 @@ Sprite_Twinrova_IceAttack:
     JMP TrinexxBreath_AltEntry
 }
 
-; =========================================================
+; $1DBD65 - TrinexxBreath_ice_add_ice_garnish
+AddIceGarnishV2:
+{
+    INC.w SprDelay, X : LDA SprDelay, X : AND.b #$07 : BNE .return
+      LDA.b #$14 : JSL Sound_SetSfx3PanLong
+      LDA.b #$1D : PHX : TXY : TAX : STA $00
 
+  .next_slot
+    LDA $7FF800, X : BEQ .free_slot ; Search for free Garnish slot
+      DEX : BPL .next_slot
+        DEC $0FF8 : BPL .use_search_index
+          LDA.b #$00 : STA $0FF8
+    .use_search_index
+      LDX $0FF8
+  .free_slot
+    ; Set garnish ID, set garnish handled flag, set garnish parent sprite
+    LDA.b #$0C : STA $7FF800, X : STA $0FB4 : TYA : STA $7FF92C, X
+    LDA.w SprX, Y : STA $7FF83C, X                    ; Garnish XL
+    LDA.w SprXH, Y : STA $7FF878, X                   ; Garnish XH
+    LDA.w SprY, Y : CLC : ADC.b #$10 : STA $7FF81E, X ; Garnish YL
+    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X      ; Garnish YH
+    LDA.b #$7F : STA $7FF90E, X : STX $00             ; Set garnish timer
+    PLX
+
+  .return
+    RTS
+}
+
+; =========================================================
 ; Overwrite vanilla Trinexx ice garnish
 ; Plays like a simple ice cloud animation now.
 
@@ -505,19 +504,17 @@ org $09B459
 org $09B5D6
   Garnish_SetOamPropsAndSmallSize:
 
+; SpriteData_Bump - Ice Garnish 
+org $0DB266+$CD
+  db $04
+
 org $09B33F
 TrinexxIce_Pool:
 {
   .chr
-    db $2E
-    db $2E
-    db $2C
-    db $2C
+    db $2E, $2E, $2C, $2C
   .properties
-    db $35
-    db $35
-    db $35
-    db $35
+    db $35, $35, $35, $35
 }
 
 org $09B34F
@@ -538,10 +535,6 @@ Garnish_TrinexxIce:
   JMP Garnish_SetOamPropsAndLargeSize
 }
 warnpc $09B3B8
-
-; Ice Garnish 
-org $0DB266+$CD
-  db $04
 
 pullpc
 
@@ -610,8 +603,6 @@ Sprite_Twinrova_Draw:
 
     RTS
 
-
-; =========================================================
   .start_index
     db $00, $04, $08, $0C, $10, $14, $18, $1C, $22, $26, $2A, $2E
   .nbr_of_tiles
@@ -688,25 +679,19 @@ Sprite_Twinrova_Draw:
 ApplyTwinrovaGraphics:
 {
     PHX 
-
-    REP #$20             ; A = 16, XY = 8
-    LDX #$80 : STX $2100 ; turn the screen off (required)
-
+    REP #$20               ; A = 16, XY = 8
+    LDX #$80 : STX $2100   ; turn the screen off (required)
     LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
     LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
     LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register 
                            ; "001 => 2 registers write once (2 bytes: p, p+1)"
     LDA.w #TwinrovaGraphics : STA $4302     ; Source address where you want gfx from ROM
     LDX.b #TwinrovaGraphics>>16 : STX $4304
-    LDA   #$2000 : STA $4305                ; size of the transfer 4 sheets of $800 each
+    LDA   #$2000 : STA $4305                ; Size of the transfer 4 sheets of $800 each
     LDX   #$01 : STX $420B                  ; Do the DMA 
-
-    LDX #$0F : STX $2100 ;turn the screen back on
-
+    LDX #$0F : STX $2100                    ; Turn the screen back on
     SEP #$30
-
     PLX
-
     RTL
 
   TwinrovaGraphics:
@@ -811,13 +796,16 @@ Follower_CheckBlindTrigger:
 }
 
 ; =========================================================
-; Called during the BlindMaiden section of Follower_BasicMover
-; to spawn Twinrova in the room. 
+; Called during Blind Maiden section of Follower_BasicMover
+; to spawn Twinrova from the Blind Maiden.
 
+; TODO: Figure out why the sprite disappears after graphics
+; are transferred in. It seems to be unrelated to the 
+; graphics code, but rather related to the BlindMaiden 
+; spawn code.
 org $1DA03C
 Blind_SpawnFromMaiden:
 {
-  ; Load the Twinrova graphics
   JSL ApplyTwinrovaGraphics
 
   LDX.b #$00 ; Load the boss into sprite index 0
@@ -897,11 +885,13 @@ SpritePrep_Blind_PrepareBattle:
 warnpc $1DA0B1
 
 ; =========================================================
+; TODO: Decide if we want to use this garnish in the fight.
+; Currently unused.
 
 org $1DA0B1
 BlindLaser_SpawnTrailGarnish:
 {
-    #_1DA0B1: LDA.w $0E80,X
+    #_1DA0B1: LDA.w SprDelay,X
     #_1DA0B4: AND.b #$00
     #_1DA0B6: BNE .exit
 
