@@ -29,6 +29,31 @@ HUD_ClockDisplay:
 	RTL
 }
 
+; Zarby Intro and Credits fix
+pushpc
+org $0CC265 ; IntroLogoPaletteFadeIn
+JSL LogoFadeInSetClock
+pullpc
+
+LogoFadeInSetClock:
+JSL $00ED7C ; restore code
+LDA.b #$08 : STA.l $7EE000 ; Set the time to 6:00am
+RTL 
+
+pushpc
+org $0CCA59
+JSL ResetClockTriforceRoom
+
+pullpc
+
+ResetClockTriforceRoom:
+JSL $00E384 ;Restored code
+
+LDA.b #$00 : STA.l $7EE000 ; low hours for palette?
+LDA.b #$00 : STA.l $7EE001 ; high hours for palette?
+
+RTL
+
 DrawClockToHudLong:
 {
   JSR DrawClockToHud
