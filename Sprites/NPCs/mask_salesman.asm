@@ -1,8 +1,4 @@
-; =============================================================================
 ; Happy Mask Salesman Sprite
-;
-;
-; =============================================================================
 
 !SPRID              = $E8; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 02 ; Number of tiles used in a frame
@@ -34,8 +30,6 @@
 
 %Set_Sprite_Properties(Sprite_MaskSalesman_Prep, Sprite_MaskSalesman_Long);
 
-; =============================================================================
-
 Sprite_MaskSalesman_Long:
 {  
   PHB : PHK : PLB
@@ -51,19 +45,14 @@ Sprite_MaskSalesman_Long:
   RTL ; Go back to original code
 }
 
-; =============================================================================
 
 Sprite_MaskSalesman_Prep:
 {
   PHB : PHK : PLB
     
-  ; Add more code here to initialize data
-
   PLB
   RTL
 }
-
-; =============================================================================
 
 Sprite_MaskSalesman_Main:
 {
@@ -78,29 +67,33 @@ Sprite_MaskSalesman_Main:
 
   InquiryHandler:
   {  
-    %PlayAnimation(0, 1, 16)
-    %ShowSolicitedMessage($E5)
-    BCC .didnt_converse
+      %PlayAnimation(0, 1, 16)
 
-    LDA $1CE8 : BNE .player_said_no
+      ; Player has a Lv1 Ocarina, skip to the you got it message
+      LDA.l $7EF34C : CMP.b #$01 : BEQ .has_ocarina
 
-    ; Player wants to buy a mask
-    LDA.l $7EF34C : CMP.b #$02 : BEQ .has_ocarina
-                    CMP.b #$03 : BEQ .has_all_songs
+        ; Player has no Ocarina or Lv2 Ocarina
+        ; Do you want to buy a mask?
+        %ShowSolicitedMessage($E5) : BCC .didnt_converse
+          LDA $1CE8 : BNE .player_said_no
 
-    %GotoAction(1)
-    RTS
+          ; Player wants to buy a mask
+          LDA.l $7EF34C : CMP.b #$02 : BEQ .has_song_healing
 
-  .has_ocarina
-    %GotoAction(2)
-    RTS
+            ; No Ocarina yet
+            %GotoAction(1)
+            RTS
 
-  .has_all_songs
-    %GotoAction(3)
-  
-  .didnt_converse
-  .player_said_no
-    RTS
+    .has_ocarina
+      %GotoAction(2)
+      RTS
+
+    .has_song_healing
+      %GotoAction(4)
+
+    .didnt_converse
+    .player_said_no
+      RTS
   }
 
   ; Link has not yet gotten the Ocarina
@@ -108,7 +101,6 @@ Sprite_MaskSalesman_Main:
   {
     %PlayAnimation(0, 1, 16)
     %ShowUnconditionalMessage($E9) ; Go get the Ocarina first!
-
     %GotoAction(0)
     RTS
   }
@@ -117,33 +109,32 @@ Sprite_MaskSalesman_Main:
   HasOcarina:
   {
     %PlayAnimation(0, 1, 16)
-    %ShowUnconditionalMessage($11C) ; Excellent, you have the Ocarina 
-
-
-
-    %GotoAction(0)
+    %ShowUnconditionalMessage($11C) ; Oh! You got it!
+    %GotoAction(3)
     RTS
   }
 
   TeachLinkSong:
   {
-
-
+    LDA #$02 : STA $7EF34C ; Increment the number of songs Link has
+    LDA.b #$13 
+    STA.w $0CF8
+    JSL $0DBB67 ;  Link_CalculateSFXPan
+    ORA.w $0CF8
+    STA $012E ; Play the song learned sound
+    %GotoAction(0)
     RTS
   }
 
-  ; Link has all the songs 
+  ; Link has the Ocarina and the song of healing
   SongQuestComplete:
   {
     %PlayAnimation(0, 1, 16)
-    %ShowUnconditionalMessage($E9) 
-
+    %ShowUnconditionalMessage($E8) 
     %GotoAction(0)
     RTS
   }
 }
-
-; =============================================================================
 
 Sprite_MaskSalesman_Draw:
 {  
@@ -201,7 +192,6 @@ Sprite_MaskSalesman_Draw:
 
   RTS
 
-; =============================================================================
 
 .start_index
   db $00, $04
