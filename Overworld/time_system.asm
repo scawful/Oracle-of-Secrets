@@ -167,6 +167,11 @@ RunClock:
     JSL $0BFE72
 
     .inc_hours_end
+      ; GBC Link code
+      LDA $0FFF : CMP #$00 : BEQ .light_world
+      JSL UpdateGbcPalette
+      LDA #$3B : STA $BC   ; change link's sprite 
+    .light_world
     RTS
 
   .reset_hours
