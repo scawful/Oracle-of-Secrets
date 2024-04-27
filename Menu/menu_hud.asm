@@ -288,7 +288,7 @@ HUD_UpdateItemBox:
 
     CPX.w #$0003 : BNE .hookshot_not_equipped
       LDA.w GoldstarOrHookshot : BEQ .hookshot_not_equipped
-        SEC : SBC.b #$01
+        SEC : SBC.w #$0001
 
     .hookshot_not_equipped
 
