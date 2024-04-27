@@ -40,7 +40,7 @@ HouseTag_Main:
 
 HouseTag_TelepathicPlea:
 {
-  LDA #$06 : STA $7EE000 ; Set the time to 6:00am
+  LDA #$08 : STA $7EE000 ; Set the time to 8:00am
 
   ; -------------------------------
   ; Set Link's coordinates to this specific position.
