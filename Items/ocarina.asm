@@ -123,9 +123,9 @@ LinkItem_NewFlute:
   LDA.b #$80 : STA.w $03F0
   
   LDA $030F
-  CMP.b #$01 : BEQ .song_of_soaring
+  CMP.b #$01 : BEQ .song_of_storms
   CMP.b #$02 : BEQ .song_of_healing
-  CMP.b #$03 : BEQ .song_of_storms
+  CMP.b #$03 : BEQ .song_of_soaring
 
 .song_of_healing
   LDA.b #$13 : JSR Player_DoSfx2 
