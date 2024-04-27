@@ -101,6 +101,8 @@ print  "End of Ranch Girl.asm             ", pc
 
 incsrc "Sprites/NPCs/bug_net_kid.asm"
 
+incsrc "Sprites/Bosses/king_dodongo.asm"
+
 incsrc "Sprites/Bosses/arrghus.asm"
 print  "End of arrghus.asm                ", pc
 
