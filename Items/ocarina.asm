@@ -311,7 +311,7 @@ UpdateFluteSong_Long:
   ; R Button Pressed - Increment song
   INC $030F        ; increment $030F Song RAM
   LDA $030F        ; load incremented Song RAM
-  CMP.b #$03      
+  CMP.b #$04  
   BCS .wrap_to_min
 .update_song
   RTL
