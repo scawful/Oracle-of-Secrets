@@ -210,44 +210,9 @@ LinkItem_NewFlute:
 
 ; =========================================================
 
-; $030F - Current Song RAM
-; 00 - No Song
-; 01 - Song of Healing
-; 02 - Song of Soaring 
-; 03 - Song of Storms
-
 UpdateFluteSong:
 {
-  LDA $030F : BNE .songExists
-  LDA #$01 : STA $030F  ; if this code is running, we have the flute song 1
-.songExists
-  LDA.b $F6
-  BIT.b #$20 : BNE .left
-  BIT.b #$10 : BNE .right
-
-  RTS
-
-.left
-  ; LDA.b #$13 : JSR Player_DoSfx2
-  DEC $030F
-  LDA $030F
-  BNE .notPressed
-
-  LDA #$03
-  STA $030F
-  JMP .notPressed
-
-.right
-  ; R Button Pressed - Increment song
-  INC $030F        ; increment $030F Song RAM
-  LDA $030F        ; load incremented Song RAM
-  CMP.b #$04       ; compare with 3
-  BCC .notPressed    ; if less than 3, branch to .notFlute
-
-  LDA #$01         ; load value 1
-  STA $030F        ; set Song RAM to 1
-
-.notPressed
+  JSL UpdateFluteSong_Long
   RTS
 }
 pushpc
@@ -307,6 +272,61 @@ ResetOcarinaFlag:
   SEP #$30
 .continue
   LDA.w $0416 : ASL A 
+  RTL
+}
+
+
+; $030F - Current Song RAM
+; 00 - No Song
+; 01 - Song of Storms 
+; 02 - Song of Healing  
+; 03 - Song of Soaring
+
+; Values at $7EF34C determine scrolling behavior 
+; 01 - No scrolling allowed
+; 02 - Scroll between two songs
+; 03 - Scroll between three songs
+
+UpdateFluteSong_Long:
+{
+  LDA $7EF34C : CMP.b #$01 : BEQ .notPressed
+
+  LDA $030F : BNE .songExists
+  LDA #$01 : STA $030F  ; if this code is running, we have the flute song 1
+.songExists
+  LDA.b $F6
+  BIT.b #$20 : BNE .left ; pressed left 
+  BIT.b #$10 : BNE .right ; pressed right
+  RTL
+
+.left
+  ; L Button Pressed - Decrement song
+  ; LDA.b #$13 : JSR Player_DoSfx2
+  DEC $030F
+  LDA $030F
+  CMP #$00 : BEQ .wrap_to_max
+  BRA .update_song
+
+.right
+  ; R Button Pressed - Increment song
+  INC $030F        ; increment $030F Song RAM
+  LDA $030F        ; load incremented Song RAM
+  CMP.b #$03      
+  BCS .wrap_to_min
+.update_song
+  RTL
+
+.wrap_to_max
+  LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_2
+  LDA #$03 : STA $030F : RTL
+
+.set_max_to_2
+  LDA #$02 : STA $030F : RTL
+
+.wrap_to_min
+  LDA #$01 : STA $030F
+
+.notPressed
   RTL
 }
 
