@@ -176,9 +176,8 @@ HUD_Update:
   ; Also check to see if the key spot is blank
   LDA $05 : AND.w #$00FF : ORA.w #$2400 : STA $7EC7A4
   CMP.w #$247F : BNE .dont_blank_key_icon
-    ; TODO: Find the proper index of the key icon, this one is outdated.
     ; If the key digit is blank, also blank out the key icon.
-    STA $7EC724
+    STA $7EC764
 
   .dont_blank_key_icon
 
