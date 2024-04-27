@@ -205,7 +205,8 @@ pullpc
 .dungeon_resurface
 {
   LDA $1B : BEQ .return_default ; We are in overworld actually 
-
+  ; Check if we are swimming 
+  LDA $5D : CMP #$04 : BNE .return_default
   ; Check if the player is actually diving 
   LDA !ZoraDiving : BEQ .return_default
 
