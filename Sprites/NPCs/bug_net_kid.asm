@@ -1,3 +1,19 @@
+; Sick Kid - Bug Net Kid
+; Gives the Boots if the player plays the Song of Healing
+
+SickKid_CheckForSongOfHealing:
+{
+  LDA $FE : CMP.b #$01 : BNE .no_song
+
+  INC $0D80, X
+  INC $02E4
+  STZ $FE
+  
+.no_song
+  
+  RTL
+}
+
 pushpc
 
 org $07F4D0
@@ -6,6 +22,16 @@ Sprite_CheckIfPlayerPreoccupied:
 org $06F154
 Sprite_CheckDamageToPlayer_same_layer:
 
+org $068D7F
+SpritePrep_SickKid:
+{
+    LDA.l $7EF355 : BEQ .no_boots
+    LDA.b #$03 : STA $0D80, X
+  .no_boots
+    INC.w $0BA0, X
+    RTS
+}
+
 org $06B962
 BugNetKid_Resting:
 {
@@ -13,26 +39,18 @@ BugNetKid_Resting:
     
     JSR Sprite_CheckDamageToPlayer_same_layer : BCC .dont_awaken
     
-    LDA.l $7EF34C
+    JSL SickKid_CheckForSongOfHealing
+    LDA.l $7EF355
+    CMP.b #$01 : BCC .no_boots
     
-    CMP.b #$01 : BCC .no_ocarina
-    
-    INC $0D80, X
-    
-    INC $02E4
-
 .dont_awaken
 
     RTS
 
-.no_ocarina
-
-    ; "... Do you have a bottle to keep a bug in? ... I see. You don't..."
+.no_boots
     LDA.b #$04
     LDY.b #$01
-    
     JSL Sprite_ShowSolicitedMessageIfPlayerFacing
-    
     RTS
 }
 
