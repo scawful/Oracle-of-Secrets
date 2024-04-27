@@ -52,10 +52,7 @@ Sprite_MakuTree_Long:
 Sprite_MakuTree_Prep:
 {
     PHB : PHK : PLB
-    ; Check if the intro has executed already.
-    LDA.l $7EF300 : BNE .intro_is_done
-      STZ.w $0DD0, X ; Kill the sprite 
-  .intro_is_done
+
     PLB
     RTL
 }
