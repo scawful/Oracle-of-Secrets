@@ -199,31 +199,42 @@ Menu_DrawHeartPieces:
 
 ; =========================================================
 
-; TODO: Attach SRAM values to these for progression
 Menu_DrawMusicNotes:
 {
-  LDA.w #$02
-  STA.w MusicNoteValue
-  LDA.w #MusicNoteValue
-  LDX.w #menu_offset(17,14)
-  LDY.w #QuarterNoteGFX
-  JSR DrawMenuItem
+    LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0001 : BCC .no_storms
+      LDA.w #$0002 : BRA .draw_storms
+  .no_storms
+    LDA.w #$0001
+  .draw_storms
+    STA.w MusicNoteValue
+    LDA.w #MusicNoteValue
+    LDX.w #menu_offset(17,14)
+    LDY.w #QuarterNoteGFX
+    JSR DrawMenuItem
 
-  LDA.w #$03
-  STA.w MusicNoteValue
-  LDA.w #MusicNoteValue
-  LDX.w #menu_offset(17,17)
-  LDY.w #QuarterNoteGFX
-  JSR DrawMenuItem
+    LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_healing
+      LDA.w #$03 : BRA .draw_healing
+  .no_healing
+    LDA.w #$01
+  .draw_healing
+    STA.w MusicNoteValue
+    LDA.w #MusicNoteValue
+    LDX.w #menu_offset(17,17)
+    LDY.w #QuarterNoteGFX
+    JSR DrawMenuItem
 
-  LDA.w #$04
-  STA.w MusicNoteValue
-  LDA.w #MusicNoteValue
-  LDX.w #menu_offset(17,20)
-  LDY.w #QuarterNoteGFX
-  JSR DrawMenuItem
+    LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0003 : BCC .no_soaring
+      LDA.w #$04 : BRA .draw_soaring
+  .no_soaring
+    LDA.w #$01
+  .draw_soaring
+    STA.w MusicNoteValue
+    LDA.w #MusicNoteValue
+    LDX.w #menu_offset(17,20)
+    LDY.w #QuarterNoteGFX
+    JSR DrawMenuItem
 
-  RTS
+    RTS
 }
 
 ; =========================================================
