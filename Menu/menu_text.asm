@@ -113,9 +113,9 @@ Menu_GoldstarLabel:
   dw "__GOLD_STAR___  "
 
 Menu_SongNames:
-  dw "SONG:_SOARING_  "
-  dw "SONG:_HEALING_  "
   dw "SONG:_STORMS__  "
+  dw "SONG:_HEALING_  "
+  dw "SONG:_SOARING_  "
 
 Menu_DrawItemName:
 {
