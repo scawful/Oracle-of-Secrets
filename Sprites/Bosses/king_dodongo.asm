@@ -1,3 +1,28 @@
+; King Dodongo
+;
+; Health increased to 0x50 (80)
+
+KingDodongo_NewHealthSystem:
+{
+  PHB : PHK : PLB
+  LDA.w $0E50,X
+  LSR A
+  LSR A
+  TAY
+
+  LDA.w .phase_table,Y
+  STA.w $0DB0,X
+  PLB 
+
+  RTL
+
+.phase_table
+  db $03, $03, $03, $03, $03, $03, $03, $03
+  db $03, $03, $03, $03, $03, $03, $03, $03
+  db $02, $02, $01, $01, $00
+}
+
+pushpc
 
 ; Adjust leg position to remove gap
 org $1E87F5
@@ -13,6 +38,9 @@ org $1E87F5
 .prop
 #_1E8801: db $0B, $0B, $4B, $4B
 
+org $1E811A
+JSL KingDodongo_NewHealthSystem
+NOP #7
 
 org $1E86E5
 KingHelmasaur_CheckBombDamage:
@@ -26,3 +54,5 @@ HelmasaurKing_CheckMaskDamageFromHammer:
 JSR KingHelmasaur_CheckBombDamage
 .exit
 RTS
+
+pullpc
