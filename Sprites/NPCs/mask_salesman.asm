@@ -204,6 +204,8 @@ Sprite_MaskSalesman_Main:
           SBC.w #$64 ; Subtract 100 rupees
           STA.l $7EF360
           SEP #$30
+
+          %ShowUnconditionalMessage($063)
       
           %GotoAction(0)
           RTS
@@ -238,6 +240,8 @@ Sprite_MaskSalesman_Main:
           SBC.w #$C8 ; Subtract 200 rupees
           STA.l $7EF360
           SEP #$30
+
+          %ShowUnconditionalMessage($055)
 
           %GotoAction(0)
           RTS
