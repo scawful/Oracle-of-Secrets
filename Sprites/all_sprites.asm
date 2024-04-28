@@ -96,6 +96,8 @@ print  "End of pols_voice.asm             ",  pc
 incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
 print  "End of deku_scrub_enemy.asm       ",  pc
 
+incsrc "Sprites/NPCs/zora_princess.asm"
+
 incsrc "Sprites/NPCs/ranch_girl.asm"
 print  "End of Ranch Girl.asm             ", pc
 
