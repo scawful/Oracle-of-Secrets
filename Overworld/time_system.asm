@@ -143,7 +143,6 @@ RunClock:
     RTS
 
   .increase_hours
-
   LDA #$00 : STA $7EE001
   LDA $7EE000 : INC A : STA $7EE000
   CMP #$18 : BPL .reset_hours ; hours = #24 ?
@@ -198,6 +197,8 @@ RunClock:
   .reset_end
   RTS
 }
+
+pushpc
 
 ; =========================================================
 ;----[ Day / Night system * palette effect ]----
@@ -463,3 +464,35 @@ org $1BEE2D
 	JSL GlovesFix
 
 ; =========================================================
+
+pullpc
+
+FixSaveAndQuit:
+{
+  LDA #$08 : STA $7EE000
+  LDA.l $7EF3C5
+  RTL
+}
+
+FixShockPalette:
+{
+  STA !pal_color
+  PHX
+  JSL ColorSubEffect
+  PLX
+  STA.l $7EC500, X
+    
+  RTL
+}
+
+org $0ABA5A
+  JSL FixShockPalette
+
+org $0ED745
+  JSL FixShockPalette
+
+org $09F604
+GameOver_SaveAndQuit:
+{
+  JSL FixSaveAndQuit
+}
