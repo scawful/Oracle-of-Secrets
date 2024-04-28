@@ -11,7 +11,7 @@
 !SmallShadow        = 01  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this MaskSalesman (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 02  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -63,8 +63,15 @@ Sprite_MaskSalesman_Main:
   dw NoOcarina
   dw HasOcarina
   dw TeachLinkSong
-  dw SongQuestComplete
+  dw OfferBunnyHood
+  dw OfferStoneMask
+  dw PlayerSaidNoToMask
+  dw PlayerHasAllMasks
+  dw BoughtBunnyHood
+  dw BoughtStoneMask
+  dw NotEnoughMoney
 
+  ; 0x00
   InquiryHandler:
   {  
       %PlayAnimation(0, 1, 16)
@@ -78,7 +85,7 @@ Sprite_MaskSalesman_Main:
           LDA $1CE8 : BNE .player_said_no
 
           ; Player wants to buy a mask
-          LDA.l $7EF34C : CMP.b #$02 : BEQ .has_song_healing
+          LDA.l $7EF34C : CMP.b #$02 : BCS .has_song_healing
 
             ; No Ocarina yet
             %GotoAction(1)
@@ -89,14 +96,24 @@ Sprite_MaskSalesman_Main:
       RTS
 
     .has_song_healing
+      LDA.l $7EF348 : CMP.b #$01 : BCS .has_bunny_mask
       %GotoAction(4)
+      RTS
+    .has_bunny_mask
+      LDA.l $7EF352 : CMP.b #$01 : BCS .has_stone_mask
+      %GotoAction(5)
+      RTS
+    .has_stone_mask
+      %GotoAction(7)
+      RTS
 
-    .didnt_converse
     .player_said_no
+      %GotoAction(6)
+    .didnt_converse
       RTS
   }
 
-  ; Link has not yet gotten the Ocarina
+  ; 0x01 - Link has not yet gotten the Ocarina
   NoOcarina:
   {
     %PlayAnimation(0, 1, 16)
@@ -105,15 +122,16 @@ Sprite_MaskSalesman_Main:
     RTS
   }
 
-  ; Link has the Ocarina, but not all the songs
+  ; 0x02 - Link has the Ocarina, but not all the songs
   HasOcarina:
   {
     %PlayAnimation(0, 1, 16)
-    %ShowUnconditionalMessage($11C) ; Oh! You got it!
+    %ShowSolicitedMessage($11C) ; Oh! You got it!
     %GotoAction(3)
     RTS
   }
 
+  ; 0x03 
   TeachLinkSong:
   {
     LDA #$02 : STA $7EF34C ; Increment the number of songs Link has
@@ -126,11 +144,116 @@ Sprite_MaskSalesman_Main:
     RTS
   }
 
-  ; Link has the Ocarina and the song of healing
-  SongQuestComplete:
+  ; 0x04 - Offer Bunny Hood
+  OfferBunnyHood:
+  {    
+      %PlayAnimation(0, 1, 16)
+
+      %ShowUnconditionalMessage($11B) ; Bunny Hood for 100 rupees?
+      %GotoAction(8)
+      RTS
+  }
+
+  ; 0x05 - Offer Stone Mask
+  OfferStoneMask:
+  {    
+      %PlayAnimation(0, 1, 16)
+      %ShowUnconditionalMessage($11E) ; Stone Mask for 200 rupees?
+      %GotoAction(9)
+      RTS
+  }
+
+  ; 0x06 - Player said no to buying a mask
+  PlayerSaidNoToMask:
   {
     %PlayAnimation(0, 1, 16)
-    %ShowUnconditionalMessage($E8) 
+    %ShowUnconditionalMessage($E8)
+    %GotoAction(0)
+    RTS
+  }
+
+  ; 0x07 - Player has all the masks
+  PlayerHasAllMasks:
+  {
+    %PlayAnimation(0, 1, 16)
+    %ShowUnconditionalMessage($11F)
+    %GotoAction(0)
+    RTS
+  }
+
+  BoughtBunnyHood:
+  {
+    %PlayAnimation(0, 1, 16)
+      LDA $1CE8 : BNE .player_said_no
+
+        REP #$20
+        LDA.l $7EF360
+        CMP.w #$64 ; 100 rupees
+        SEP #$30
+        BCC .not_enough_rupees
+
+          LDY.b #$10 ; Bunny Hood
+          STZ.w $02E9
+          PHX
+          JSL Link_ReceiveItem
+          PLX
+
+          REP #$20
+          LDA.l $7EF360
+          SEC
+          SBC.w #$64 ; Subtract 100 rupees
+          STA.l $7EF360
+          SEP #$30
+      
+          %GotoAction(0)
+          RTS
+
+      .not_enough_rupees
+        %GotoAction($0A)
+        RTS
+    .player_said_no  
+      %GotoAction(6)
+      RTS
+  }
+
+  BoughtStoneMask:
+  {
+    %PlayAnimation(0, 1, 16)
+      LDA $1CE8 : BNE .player_said_no
+        REP #$20
+        LDA.l $7EF360
+        CMP.w #$C8 ; 200 rupees
+        SEP #$30
+        BCC .not_enough_rupees
+
+          LDY #$19 ; Stone Mask
+          STZ.w $02E9
+          PHX
+          JSL Link_ReceiveItem
+          PLX
+
+          REP #$20
+          LDA.l $7EF360
+          SEC
+          SBC.w #$C8 ; Subtract 200 rupees
+          STA.l $7EF360
+          SEP #$30
+
+          %GotoAction(0)
+          RTS
+
+      .not_enough_rupees
+        %GotoAction($0A)
+        RTS
+    .player_said_no  
+      %GotoAction(6)
+      RTS
+  }
+
+  NotEnoughMoney:
+  {
+    %PlayAnimation(0, 1, 16)
+    %ShowUnconditionalMessage($120)
     %GotoAction(0)
     RTS
   }
