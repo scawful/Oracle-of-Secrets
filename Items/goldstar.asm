@@ -599,7 +599,7 @@ pullpc
 BallChain_TryAncillaDraw:
 {
   ; Ball Chain timer should be $FF here on first run
-    LDA $7A : AND #$00FF :CMP #$0000 : BEQ + 
+    LDA $7A : AND #$00FF : CMP #$0000 : BEQ + 
       CMP #$0001 : BEQ +
         SEP #$20
         JML HookshotChain_AncillaDraw ; $22D900 
