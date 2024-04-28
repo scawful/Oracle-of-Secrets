@@ -35,7 +35,7 @@ org $02AF19
 org $02FD0D
     LoadSubscreenOverlay:
 
-org $02FD8A
+org $0ED6DD
     LoadGearPalettes_bunny:
 
 
