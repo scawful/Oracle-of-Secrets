@@ -15,23 +15,23 @@ RTS
 
 warnpc $00841E
 
-; ==============================================================================
+; =========================================================
 
 ; Fix the capital 'B' debug item cheat.
 org $0CDC26
     db $80 ; replace a $F0 (BEQ) with a $80 (BRA).
 
-; ==============================================================================
+; =========================================================
 
 incsrc ZSpriteLib/sprite_macros.asm
 incsrc ZSpriteLib/sprite_hooks.asm
 
-;==============================================================================
+;=========================================================
 
 org    $308000
 incsrc ZSpriteLib/sprite_new_table.asm
 
-;==============================================================================
+;=========================================================
 
 org    $318000
 incsrc ZSpriteLib/sprite_new_functions.asm
@@ -97,6 +97,10 @@ incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
 print  "End of deku_scrub_enemy.asm       ",  pc
 
 incsrc "Sprites/NPCs/zora_princess.asm"
+print  "End of zora_princess.asm          ",  pc
+
+incsrc "Sprites/Objects/ice_block.asm"
+print  "End of ice_block.asm              ",  pc
 
 incsrc "Sprites/NPCs/ranch_girl.asm"
 print  "End of Ranch Girl.asm             ", pc
