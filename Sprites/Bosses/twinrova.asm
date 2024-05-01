@@ -78,29 +78,29 @@ Sprite_Twinrova_CheckIfDead:
 Sprite_Twinrova_Prep:
 {
     PHB : PHK : PLB
-    
-    LDA.l $7EF3CC : CMP.b #$06 : BEQ .despawn
-      LDA.b #$40 : STA SprHealth, X ; Health
-      LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
 
-      %SetSpriteSpeedX(15)
-      %SetSpriteSpeedX(15)
+    ; Kill the sprite if the Maiden is present
+    LDA.l $7EF3CC : CMP.b #$06 : BNE .prep_twinrova
+      STZ.w $0DD0, X
 
-      LDA #$10 : STA $08
-      LDA #$10 : STA $09
-      LDA #$0A : STA $0D80, X
+  .prep_twinrova
+    LDA.b #$40 : STA SprHealth, X ; Health
+    LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
 
-      LDA.b #$60 : STA.w $0E10, X
-      LDA.b #$01 : STA.w $0DB0, X
-      LDA.b #$02 : STA.w $0DE0, X
-      LDA.b #$04 : STA.w $0EB0, X
-      LDA.b #$07 : STA.w $0DC0, X
-      STZ.w $0B69
+    %SetSpriteSpeedX(15)
+    %SetSpriteSpeedX(15)
 
-      PLB
-      RTL
-  .despawn
-    STZ.w $0DD0, X
+    ; Blind Boss startup configuration
+    LDA #$10 : STA $08
+    LDA #$10 : STA $09
+
+    LDA.b #$60 : STA.w SprTimerC, X
+    LDA.b #$01 : STA.w SprMiscB, X
+    LDA.b #$02 : STA.w SprMiscC, X
+    LDA.b #$04 : STA.w SprMiscE, X
+    LDA.b #$07 : STA.w SprGfx, X
+    STZ.w $0B69
+
     PLB
     RTL
 }
@@ -740,7 +740,7 @@ Follower_BasicMover:
     ; TODO: Find out what submodule this is.
     LDA.b #$05 : STA.b $11
 
-     ; SONG 15
+    ; SONG 15
     LDA.b #$15 : STA.w $012C
 
     RTS
@@ -821,13 +821,15 @@ Blind_SpawnFromMaiden:
   LDA.b $01 : STA.w $0D30,X
   LDA.b $02 : SEC : SBC.b #$10 : STA.w $0D00,X
   LDA.b $03 : STA.w $0D20,X
-  JSL SpritePrep_LoadProperties
+
+  ; Removed because it was causing the sprite to disappear
+  ; JSL SpritePrep_LoadProperties
 
   ; Set SprTimerC
   LDA.b #$C0 : STA.w $0E10,X
 
   ; Set SprGfx
-  ; LDA.b #$15 : STA.w $0DC0,X
+  LDA.b #$00 : STA.w $0DC0,X
 
   ; Set SprMiscC and bulletproof properties
   LDA.b #$02 : STA.w $0DE0,X : STA.w $0BA0,X
