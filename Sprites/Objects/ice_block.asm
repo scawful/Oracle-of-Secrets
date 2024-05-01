@@ -7,7 +7,7 @@
 !Health             = 00  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
-!ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
+!ImperviousAll      = 01  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
@@ -62,6 +62,8 @@ Sprite_IceBlock_Prep:
   ; Cache Sprite position
   LDA SprX, X : STA SprMiscD, X
   LDA SprY, X : STA SprMiscE, X
+  LDA SprXH, X : STA SprMiscF, X
+  LDA SprYH, X : STA SprMiscG, X
 
   STZ.w $0CAA, X
 
@@ -104,6 +106,8 @@ Sprite_IceBlock_Main:
       BCC .no_damage
         LDA SprMiscD, X : STA SprX, X
         LDA SprMiscE, X : STA SprY, X
+        LDA SprMiscF, X : STA SprXH, X
+        LDA SprMiscG, X : STA SprYH, X
         STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
     .no_damage
 
