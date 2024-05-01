@@ -3,6 +3,9 @@
 org    $018262            ;object id 0x31
   dw ExpandedObject
 
+org $018264
+  dw ExpandedObject2
+
 ; #_018650: dw RoomDraw_WeirdUglyPot ID 230
 org $018650
   dw HeavyPot
@@ -11,6 +14,10 @@ org $018650
 org $01B53C
   ExpandedObject:
   JSL NewObjectsCode
+  RTS
+
+  ExpandedObject2:
+  JSL NewObjectsCode2
   RTS
 
   HeavyPot:
@@ -151,6 +158,73 @@ CustomDrawConfig:
     PLA
 .return
   RTS
+}
+
+NewObjectsCode2:
+{
+  PHB : PHK : PLB
+  PHX
+
+  STZ $03 ; 03 will be used to store the object ID for custom config
+  LDA $00 : PHA
+  LDA $02 : PHA
+  ; $00 Will be used for tile count and tile to skip 
+  LDA $B2 : ASL #2 : ORA $B4
+
+  ;get the offset for the object data based on the object height 
+  ASL : TAX
+  LDA .ObjOffset, X
+  TAX
+
+  .lineLoop
+      LDA .ObjData, X : BNE .continue
+          ;break
+          BRA .Done
+      .continue
+      PHY ; Keep current position in the buffer
+
+      STA $00 ; we save the tile count + tile to skip
+
+      -- ;Tiles Loop
+          INX : INX
+          ;  Vhopppcc cccccccc
+          LDA .ObjData, X : BEQ +
+              
+              STA [$BF], Y
+          +
+
+          INY : INY
+          LDA $00 : DEC : STA $00 : AND #$001F : BNE +
+              LDA $00 : XBA : AND #$00FF : STA $00
+              PLA                                  ;Pull back position
+              CLC : ADC $00 : TAY
+              INX : INX
+              BRA .lineLoop
+          +
+
+      BRA --
+
+  .Done
+
+  PLA : STA $02
+  PLA : STA $00 ;Not sure if needed
+
+  PLX
+  PLB
+  RTL
+
+.ObjOffset
+  dw .IceFurnace-.ObjData       ; 00
+  dw .Firewood-.ObjData         ; 01
+  dw .IceChair-.ObjData         ; 02
+
+.ObjData
+  .IceFurnace
+    incbin Data/furnace.bin
+  .Firewood
+    incbin Data/firewood.bin
+  .IceChair
+    incbin Data/ice_chair.bin
 }
 
 pushpc
