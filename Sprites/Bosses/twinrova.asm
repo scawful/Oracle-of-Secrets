@@ -696,6 +696,83 @@ ApplyTwinrovaGraphics:
     incbin twinrova.bin
 }
 
+; $1DC845
+#Fireball_Configure:
+{
+  LDA.w $0CAA,Y
+  ORA.b #$08
+  STA.w $0CAA,Y
+
+  LDA.b #$04
+  STA.w $0CD2,Y
+
+  .exit
+  RTS
+}
+
+; $1DC879
+ReleaseFireballs:
+{
+
+  JSL Sprite_SpawnFireball
+  BMI .exit_a
+
+  JSR Fireball_Configure
+
+  PHX
+  TYX
+
+  JSL Sprite_DirectionToFacePlayer
+
+  LDA.w .speed_x,Y
+  STA.w $0D50,X
+
+  LDA.w .speed_y,Y
+  STA.w $0D40,X
+
+  LDA.w $0D10,X
+  CLC
+  ADC.w .offset_x_low,Y
+  STA.w $0D10,X
+
+  LDA.w $0D30,X
+  ADC.w .offset_x_high,Y
+  STA.w $0D30,X
+
+  LDA.w $0D00,X
+  CLC
+  ADC.w .offset_y_low,Y
+  STA.w $0D00,X
+
+  LDA.w $0D20,X
+  ADC.w .offset_y_high,Y
+  STA.w $0D20,X
+
+  PLX
+
+  .exit_a
+  RTS
+
+
+  .offset_x_low
+  db  12, -12,   0,   0
+
+  .offset_x_high
+  db   0,  -1,   0,   0
+
+  .offset_y_low
+  db   0,   0,  12, -12
+
+  .offset_y_high
+  db   0,   0,   0,  -1
+
+  .speed_y ; bleeds into next
+  db   0,   0
+
+  .speed_x
+  db  40, -40,   0,   0
+}
+
 pushpc
 
 ; =========================================================
