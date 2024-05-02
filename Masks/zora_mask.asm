@@ -25,7 +25,7 @@ UpdateZoraPalette:
   RTL       
 }
 
-; =============================================================================
+; =========================================================
 
 ; TODO: Change from "bunny palette" to blue zora palette colors 
 zora_palette:
@@ -40,12 +40,12 @@ zora_palette:
 ;   dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
 ;   dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357, #$0000
 
-; =============================================================================
+; =========================================================
 
 org $0998FC
   AddTransitionSplash:
   
-; =============================================================================
+; =========================================================
 
 ; Replaces Bombos medallion
 org $07A569
@@ -78,14 +78,14 @@ LinkItem_ZoraMask:
 
 warnpc $07A5CE
 
-; =============================================================================
+; =========================================================
 
 ; End of LinkState_Swimming
 org    $079781
   JSR LinkState_UsingZoraMask
   RTS
 
-; =============================================================================
+; =========================================================
 
 pullpc ; Bank07 Free Space from Deku Mask
 LinkState_UsingZoraMask:
@@ -108,7 +108,7 @@ LinkState_UsingZoraMask:
   ; Check if we are indoors or outdoors 
   LDA $1B : BNE .dungeon ; z flag is 1 
 
-  ; OVERWORLD -----------------------------------------------------------------
+  ; OVERWORLD ---------------------------------------------
   .overworld 
   {
     ; Check the Y button and clear state if activated
@@ -148,7 +148,7 @@ LinkState_UsingZoraMask:
     RTS
   }
 
-  ; DUNGEON DIVE --------------------------------------------------------------
+  ; DUNGEON DIVE ------------------------------------------
   .dungeon
   {
     ; Check if we are in water or not 
@@ -172,16 +172,10 @@ LinkState_UsingZoraMask:
     STZ $5D ; reset player to ground state 
     STZ $EE ; move link to lower level
     
-    LDA #$72
-    STA $9A  ; Set layer 
-
-    LDA #$08
-    STA $5E  ; Set the player speed 
-
-    STZ $0345 ; Reset deep water flag
-
-    LDA #$01
-    STA !ZoraDiving ; Set the player underwater flag 
+    LDA #$72 : STA $9A  ; Set layer 
+    LDA #$08 : STA $5E  ; Set the player speed 
+    STZ $0345           ; Reset deep water flag
+    LDA #$01 : STA !ZoraDiving ; Set the player underwater flag 
 
   .return_dungeon
     JSR $E8F0 ; HandleIndoorCameraAndDoors
@@ -202,14 +196,17 @@ warnpc $078364
 
 pullpc
 
-.dungeon_resurface
+.dungeon_resurface ; TODO: Fix resurfacing bug.
 {
   LDA $1B : BEQ .return_default ; We are in overworld actually 
+
   ; Check if we are swimming 
   LDA $5D : CMP #$04 : BNE .return_default
+
   ; Check if the player is actually diving 
   LDA !ZoraDiving : BEQ .return_default
 
+  ; Check precise tile types for interaction
   LDA $0114 : CMP #$85 : BEQ .player_is_falling
   LDA $0114 : CMP #$09 : BEQ .player_is_falling
   LDA $5B : CMP #$02 : BEQ .dungeon_stairs
