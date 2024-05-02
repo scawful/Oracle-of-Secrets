@@ -493,6 +493,36 @@ FixShockPalette:
   RTL
 }
 
+FixDungeonMapColors:
+{
+  PHA
+  ; Cache the current time
+  LDA $7EE000 : STA $7EF900
+  LDA $7EE001 : STA $7EF901
+  ; Set the time to 8:00am while map is open
+  LDA #$08 : STA $7EE000
+  LDA #$00 : STA $7EE001
+
+  PLA
+  STA $7EC229
+  RTL
+}
+
+RestoreTimeForDungeonMap:
+{
+  ; Restore the time
+  LDA $7EF900 : STA $7EE000
+  LDA $7EF901 : STA $7EE001
+  LDA.l $7EC017
+  RTL
+}
+
+org $0ED956
+  JSL FixDungeonMapColors
+
+org $0AEFA6
+  JSL RestoreTimeForDungeonMap
+
 org $0ABA5A
   JSL FixShockPalette
 
