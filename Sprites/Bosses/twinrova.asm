@@ -395,17 +395,36 @@ TrinexxBreath_AltEntry:
     LDA $1A : AND.b #$03 : BNE .no_shake
       JSL Sprite_IsToRightOfPlayer
       LDA $0D50, X : CMP .x_speed_targets, Y : BEQ .no_shake
-        CLC : ADC.w $8000, Y : STA $0D50, X
+        CLC : ADC.w .shake_x, Y : STA $0D50, X
 
   .no_shake
     JSL Sprite_CheckTileCollision : BEQ .exit
       JSL Sprite_BounceTowardPlayer
 
   .exit
+    JSL Sprite_BounceFromTileCollision
     RTS
 
   .x_speed_targets
     db 8, -16
+
+  .shake_x
+  db  1, -1
+
+  .shake_y
+  db  0, -1
+
+  .speed_y_high ; bleeds for 2 more values
+  db -1,  0
+
+  .speed_x_low ; bleeds for 2 more values
+  db  0,  0
+
+  .speed_y_low
+  db -1,  1,  0,  0
+
+  .speed_x_high
+  db  0,  0, -1,  0
 }
 
 Sprite_Twinrova_FireAttack:
