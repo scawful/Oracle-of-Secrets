@@ -121,7 +121,9 @@ Palette_ArmorAndGloves:
 
 .deku_mask
   ; Load Deku Mask Location
-  LDA.b #$35 : STA $BC : JMP   .original_palette
+  LDA.b #$35 : STA $BC 
+  JSL UpdateDekuPalette
+  RTL
 
 .zora_mask
   ; Load Zora Mask Location

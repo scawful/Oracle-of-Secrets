@@ -2,6 +2,25 @@
 ;   Deku Mask
 ; =========================================================
 
+UpdateDekuPalette:
+{
+  REP #$30   ; change 16bit mode
+  LDX #$001E
+
+  .loop
+  LDA.l deku_palette, X : STA $7EC6E0, X
+  DEX : DEX : BPL .loop
+
+  SEP #$30 ; go back to 8 bit mode
+  INC $15  ; update the palette
+  RTL      ; or RTS depending on where you need it
+}
+
+deku_palette:
+  dw #$6739, #$15C5, #$150E, #$26C9, #$17AA, #$21F4, #$17DF, #$42DB
+  dw #$14A5, #$14BC, #$14B2, #$14A5, #$7FFF, #$7A18, #$178C
+
+
 org    $07A64B           ; formerly Quake
 LinkItem_DekuMask:
 {
@@ -17,12 +36,12 @@ LinkItem_DekuMask:
 
   %PlayerTransform()
   LDA $02B2 : CMP #$01 : BEQ .unequip ; is the deku mask on?
-  JSL Palette_ArmorAndGloves          ; set the palette
 
   LDA.l $7EF35A : STA $0AAF ; Store the current shield
   LDA.b #$00 : STA $7EF35A  ; Clear the shield
 
   LDA #$35 : STA $BC   ; put the mask on
+  JSL UpdateDekuPalette ; set the palette
   LDA #$01 : STA $02B2 ; set the deku mask flag
   STA $02F5 ; Somaria platform flag, no dash.
 
