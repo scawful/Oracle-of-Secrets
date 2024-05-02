@@ -247,11 +247,19 @@ LoadDayNightPaletteEffect:
   .title_check
 
   ; title or file select screen ?
-  LDA $10 : AND #$00FF : CMP #$0002	: BPL .outin_check
+  LDA $10 : AND #$00FF : CMP #$0002	: BCS .outin_check
     LDA.l !pal_color : STA $7EC300,X
     RTL
 
   .outin_check
+  LDA.b $10 : AND #$00FF
+    CMP.w #$0005 : BCC .restorecode
+    CMP.w #$0012 : BCS .restorecode
+    BRA .overworld
+  .restorecode
+    LDA.l !pal_color : STA.l $7EC300, X
+    RTL
+  .overworld
 
   LDA $1B : AND #$00FF : BEQ .outdoors2
     LDA.l !pal_color
