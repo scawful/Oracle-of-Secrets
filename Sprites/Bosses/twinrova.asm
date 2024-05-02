@@ -224,7 +224,7 @@ Sprite_Twinrova_Main:
   }
 
   ; -------------------------------------------------------
-  ; 0x02 - TODO: Implement Twinrova_MoveForwards
+  ; 0x02 - Twinrova_MoveForwards
   Twinrova_MoveForwards:
   {
       %Twinrova_Front()
@@ -236,13 +236,14 @@ Sprite_Twinrova_Main:
 
       JSL Sprite_DamageFlash_Long
       JSL Sprite_BounceTowardPlayer
+      JSL Sprite_CheckTileCollision
 
       %GotoAction(1)
       RTS
   }
 
   ; -------------------------------------------------------
-  ; 0x03 - TODO: Implement Twinrova_MoveBackwards
+  ; 0x03 - Twinrova_MoveBackwards
   Twinrova_MoveBackwards:
   {
       %Twinrova_Back()
@@ -254,6 +255,7 @@ Sprite_Twinrova_Main:
 
       JSL Sprite_DamageFlash_Long
       JSL Sprite_BounceTowardPlayer
+      JSL Sprite_CheckTileCollision
 
       %GotoAction(1)
       RTS
@@ -321,10 +323,6 @@ Sprite_Twinrova_Main:
       %StartOnFrame(10)
       %Twinrova_Hurt()
       
-      PHX
-      JSL Sprite_CheckDamageFromPlayerLong
-      %DoDamageToPlayerSameLayerOnContact()
-      PLX 
 
       JSL Sprite_DamageFlash_Long
       
@@ -851,37 +849,37 @@ Blind_SpawnFromMaiden:
 org $1DA081
 SpritePrep_Blind_PrepareBattle:
 {
-    ; #_1DA081: LDA.l $7EF3CC
-    ; #_1DA085: CMP.b #$06 ; FOLLOWER 06
-    ; #_1DA087: BEQ .despawn
+    ; LDA.l $7EF3CC
+    ; CMP.b #$06 ; FOLLOWER 06
+    ; BEQ .despawn
 
-    #_1DA089: LDA.w $0403
-    #_1DA08C: AND.b #$20
-    #_1DA08E: BEQ .despawn
+    LDA.w $0403
+    AND.b #$20
+    BEQ .despawn
 
-    #_1DA090: LDA.b #$60
-    #_1DA092: STA.w $0E10,X
+    LDA.b #$60
+    STA.w $0E10,X
 
-    #_1DA095: LDA.b #$01
-    #_1DA097: STA.w $0DB0,X
+    LDA.b #$01
+    STA.w $0DB0,X
 
-    #_1DA09A: LDA.b #$02
-    #_1DA09C: STA.w $0DE0,X
+    LDA.b #$02
+    STA.w $0DE0,X
 
-    #_1DA09F: LDA.b #$04
-    #_1DA0A1: STA.w $0EB0,X
+    LDA.b #$04
+    STA.w $0EB0,X
 
-    #_1DA0A4: LDA.b #$07
-    #_1DA0A6: STA.w $0DC0,X
+    LDA.b #$07
+    STA.w $0DC0,X
 
-    #_1DA0A9: STZ.w $0B69
+    STZ.w $0B69
 
-    #_1DA0AC: RTL
+    RTL
 
   .despawn
-    #_1DA0AD: STZ.w $0DD0,X
+    STZ.w $0DD0,X
 
-    #_1DA0B0: RTL
+    RTL
 }
 
 warnpc $1DA0B1
@@ -893,64 +891,64 @@ warnpc $1DA0B1
 org $1DA0B1
 BlindLaser_SpawnTrailGarnish:
 {
-    #_1DA0B1: LDA.w SprDelay,X
-    #_1DA0B4: AND.b #$00
-    #_1DA0B6: BNE .exit
+    LDA.w SprDelay,X
+    AND.b #$00
+    BNE .exit
 
-    #_1DA0B8: PHX
-    #_1DA0B9: TXY
+    PHX
+    TXY
 
-    #_1DA0BA: LDX.b #$1D
+    LDX.b #$1D
 
   .next_slot
-    #_1DA0BC: LDA.l $7FF800,X
-    #_1DA0C0: BEQ .free_slot
+    LDA.l $7FF800,X
+    BEQ .free_slot
 
-    #_1DA0C2: DEX
-    #_1DA0C3: BPL .next_slot
+    DEX
+    BPL .next_slot
 
-    #_1DA0C5: DEC.w $0FF8
-    #_1DA0C8: BPL .use_search_index
+    DEC.w $0FF8
+    BPL .use_search_index
 
-    #_1DA0CA: LDA.b #$1D
-    #_1DA0CC: STA.w $0FF8
+    LDA.b #$1D
+    STA.w $0FF8
 
   .use_search_index
-    #_1DA0CF: LDX.w $0FF8
+    LDX.w $0FF8
 
   .free_slot
-    #_1DA0D2: LDA.b #$0F ; GARNISH 0F
-    #_1DA0D4: STA.l $7FF800,X
-    #_1DA0D8: STA.w $0FB4
+    LDA.b #$0F ; GARNISH 0F
+    STA.l $7FF800,X
+    STA.w $0FB4
 
-    #_1DA0DB: LDA.w $0DC0,Y
-    #_1DA0DE: STA.l $7FF9FE,X
+    LDA.w $0DC0,Y
+    STA.l $7FF9FE,X
 
-    #_1DA0E2: TYA
-    #_1DA0E3: STA.l $7FF92C,X
+    TYA
+    STA.l $7FF92C,X
 
-    #_1DA0E7: LDA.w $0D10,Y
-    #_1DA0EA: STA.l $7FF83C,X
+    LDA.w $0D10,Y
+    STA.l $7FF83C,X
 
-    #_1DA0EE: LDA.w $0D30,Y
-    #_1DA0F1: STA.l $7FF878,X
+    LDA.w $0D30,Y
+    STA.l $7FF878,X
 
-    #_1DA0F5: LDA.w $0D00,Y
-    #_1DA0F8: CLC
-    #_1DA0F9: ADC.b #$10
-    #_1DA0FB: STA.l $7FF81E,X
+    LDA.w $0D00,Y
+    CLC
+    ADC.b #$10
+    STA.l $7FF81E,X
 
-    #_1DA0FF: LDA.w $0D20,Y
-    #_1DA102: ADC.b #$00
-    #_1DA104: STA.l $7FF85A,X
+    LDA.w $0D20,Y
+    ADC.b #$00
+    STA.l $7FF85A,X
 
-    #_1DA108: LDA.b #$0A
-    #_1DA10A: STA.l $7FF90E,X
+    LDA.b #$0A
+    STA.l $7FF90E,X
 
-    #_1DA10E: PLX
+    PLX
 
   .exit
-    #_1DA10F: RTS
+    RTS
 }
 
 pullpc
