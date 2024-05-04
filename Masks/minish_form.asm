@@ -57,20 +57,18 @@ LinkState_CheckForMinishForm:
   RTS
 }
 
-; =============================================================================
+; =========================================================
 
 LinkState_CheckMinishTile:
 {
-  LDA   $02B2 : BEQ .blocked ; no form
-  CMP.b #$05 : BNE .blocked  ; not minish 
-  
-  LDA $0A : TSB $0343
-  RTS
+    LDA   $02B2 : BEQ .blocked ; no form
+      CMP.b #$05 : BNE .blocked  ; not minish 
+        LDA $0A : TSB $0343
+        RTS
 
-.blocked
-  LDA $0A : TSB $0E ; Blocked
-  
-  RTS
+  .blocked
+    LDA $0A : TSB $0E ; Blocked
+    RTS
 }
 
 print  "End of Masks/minish_form.asm      ", pc

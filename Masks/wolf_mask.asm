@@ -1,26 +1,26 @@
-; =============================================================================
+; =========================================================
 ; Wolf Mask 
 ; 
 ; Talk to animals 
 ; Dig for treasure ability (shovel)
 ; 
-; =============================================================================
+; =========================================================
 
 UpdateWolfPalette:
 {
-  REP #$30   ; change 16bit mode
-  LDX #$001E
+    REP #$30   ; change 16bit mode
+    LDX #$001E
 
   .loop
-  LDA.l WolfPalette, X : STA $7EC6E0, X
-  DEX : DEX : BPL .loop
+    LDA.l WolfPalette, X : STA $7EC6E0, X
+    DEX : DEX : BPL .loop
 
-  SEP #$30 ; go back to 8 bit mode
-  INC $15  ; update the palette
-  RTL      ; or RTS depending on where you need it
+    SEP #$30 ; go back to 8 bit mode
+    INC $15  ; update the palette
+    RTL      ; or RTS depending on where you need it
 }
 
-; =============================================================================
+; =========================================================
 
 WolfPalette:
   dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$1A3D, #$14B6
@@ -28,7 +28,7 @@ WolfPalette:
   dw #$6565, #$7271, #$14B5, #$459B, #$3D95, #$22D0, #$567C, #$1890
   dw #$7616, #$0000
   
-; =============================================================================
+; =========================================================
 
 org $07A3DB
   LinkItem_Flute:
@@ -36,7 +36,7 @@ org $07A3DB
 org $07A32C
   LinkItem_Shovel:
 
-; =============================================================================
+; =========================================================
 
 org $07A313
 LinkItem_ShovelAndFlute:
@@ -50,38 +50,22 @@ LinkItem_ShovelAndFlute:
 }
 ; warnpc $07A31F
 
-; =============================================================================
+; =========================================================
 
 ; Bank 07 Free Space
 pullpc
 
 LinkItem_WolfMask:
 {
-  ; SEP #$30
-  LDA $02B2 : CMP #$03 : BNE .equip
-  JSR LinkItem_Shovel
+    LDA $02B2 : CMP #$03 : BNE .equip
+      JSR LinkItem_Shovel
 
-.equip 
-  ; Check for R button press
-  %CheckNewR_ButtonPress() : BEQ .return
-  LDA $6C : BNE .return   ; in a doorway
-  LDA $0FFC : BNE .return ; can't open menu
+  .equip
+    LDA.b #$03 
+    JSL Link_TransformMask
 
-  %PlayerTransform()
-
-  LDA $02B2 : CMP #$03 : BEQ .unequip ; is the wolf mask already on?
-  JSL UpdateWolfPalette
-  LDA #$38 : STA $BC                  ; change link's sprite 
-  LDA #$03 : STA $02B2
-  BRA .return
-
-.unequip
-  %ResetToLinkGraphics()
-
-.return
-  ; REP #$30
-  
-  RTS
+  .return
+    RTS
 }
 
 print "End of Masks/wolf_mask.asm        ", pc

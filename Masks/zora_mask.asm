@@ -1,4 +1,4 @@
-; =============================================================================
+; =========================================================
 ; Zora Mask - by scawful
 ; Based on the Fairy Flippers item by Conn
 ; Special Thanks to Zarby89 for the PaletteArmorAndGloves hook
@@ -9,20 +9,20 @@
 ; How To Use: 
 ;   Press R to transform into Zora Link. Press R again to transform back.
 ;   Press Y in deep water to dive. Press Y again to resurface.
-; =============================================================================
+; =========================================================
 
 UpdateZoraPalette:
 {
-  REP #$30   ; change 16 bit mode
-  LDX #$001E
+    REP #$30   ; change 16 bit mode
+    LDX #$001E
 
-.loop
-  LDA.l zora_palette, X : STA $7EC6E0, X
-  DEX : DEX : BPL .loop
+  .loop
+    LDA.l zora_palette, X : STA $7EC6E0, X
+    DEX : DEX : BPL .loop
 
-  SEP #$30 ; go back to 8 bit mode
-  INC $15  ; update the palette
-  RTL       
+    SEP #$30 ; go back to 8 bit mode
+    INC $15  ; update the palette
+    RTL       
 }
 
 ; =========================================================
@@ -51,29 +51,13 @@ org $0998FC
 org $07A569
 LinkItem_ZoraMask:
 {
-  ; No removing the mask whilst diving.
-  LDA !ZoraDiving : BNE .return 
-  
-  ; Check for R button held 
-  %CheckNewR_ButtonPress() : BEQ .return
+    ; No removing the mask whilst diving.
+    LDA !ZoraDiving : BNE .return 
+      LDA.b #$02
+      JSL Link_TransformMask
 
-  LDA $6C : BNE .return   ; in a doorway
-  LDA $0FFC : BNE .return ; can't open menu
-
-  %PlayerTransform()
-
-  LDA $02B2 : CMP #$02 : BEQ .unequip ; is the zora mask on?
-  JSL UpdateZoraPalette               ; change links palette
-  LDA #$36 : STA $BC                  ; change links graphics
-  LDA #$02 : STA $02B2                ; set the zora mask on
-  BRA .return
-
-.unequip
-  %ResetToLinkGraphics()
-
-.return
-  CLC
-  RTS
+  .return
+    RTS
 }
 
 warnpc $07A5CE
@@ -248,6 +232,7 @@ pullpc
 pushpc
 
 ; C2C3
+; Link_HopInOrOutOfWater_Vertical
 org $07C307
   JSR LinkState_UsingZoraMask_dungeon_stairs
   RTS
@@ -257,9 +242,9 @@ pullpc
 .dungeon_stairs
 {
   LDA $02B2 : CMP #$02 : BNE .return_hop
-  STZ $5E                                ; Reset speed to normal
-  STZ !ZoraDiving                              ; Reset underwater flag 
-  LDA #$62 : STA $9A                     ; Reset dungeon layer
+    STZ $5E                                ; Reset speed to normal
+    STZ !ZoraDiving                        ; Reset underwater flag 
+    LDA #$62 : STA $9A                     ; Reset dungeon layer
 .return_hop
   LDA #$06 : STA $5D ; Set Link to Recoil State
   RTS

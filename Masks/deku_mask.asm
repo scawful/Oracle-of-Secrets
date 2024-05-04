@@ -4,16 +4,16 @@
 
 UpdateDekuPalette:
 {
-  REP #$30   ; change 16bit mode
-  LDX #$001E
+    REP #$30   ; change 16bit mode
+    LDX #$001E
 
   .loop
-  LDA.l deku_palette, X : STA $7EC6E0, X
-  DEX : DEX : BPL .loop
+    LDA.l deku_palette, X : STA $7EC6E0, X
+    DEX : DEX : BPL .loop
 
-  SEP #$30 ; go back to 8 bit mode
-  INC $15  ; update the palette
-  RTL      ; or RTS depending on where you need it
+    SEP #$30 ; go back to 8 bit mode
+    INC $15  ; update the palette
+    RTL      ; or RTS depending on where you need it
 }
 
 deku_palette:
@@ -30,30 +30,17 @@ LinkItem_DekuMask:
   RTS
 
 .continue
-  %CheckNewR_ButtonPress() : BEQ .return
-  LDA $6C : BNE .return   ; in a doorway
-  LDA $0FFC : BNE .return ; can't open menu
+  LDA #$01
+  JSL Link_TransformMask : BCC .return
+    STA $02F5 ; Somaria platform flag, no dash.
 
-  %PlayerTransform()
-  LDA $02B2 : CMP #$01 : BEQ .unequip ; is the deku mask on?
+; .unequip
+;   STZ $5D
+;   ; Restore the shield
+;   LDA $0AAF : STA.l $7EF35A
+;   STZ $02F5
 
-  LDA.l $7EF35A : STA $0AAF ; Store the current shield
-  LDA.b #$00 : STA $7EF35A  ; Clear the shield
-
-  LDA #$35 : STA $BC   ; put the mask on
-  JSL UpdateDekuPalette ; set the palette
-  LDA #$01 : STA $02B2 ; set the deku mask flag
-  STA $02F5 ; Somaria platform flag, no dash.
-
-  BRA .return
-
-.unequip
-  STZ $5D
-  ; Restore the shield
-  LDA $0AAF : STA.l $7EF35A
-  STZ $02F5
-
-  %ResetToLinkGraphics()
+;   %ResetToLinkGraphics()
 
 .return
   RTS

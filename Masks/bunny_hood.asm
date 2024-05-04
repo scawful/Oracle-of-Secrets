@@ -1,4 +1,4 @@
-; =============================================================================
+; =========================================================
 ; Bunny Hood Item
 ; Makes Link run quicker when holding
 ; Written by Conn (I think)
@@ -17,7 +17,7 @@
 ;                 (Default = 0D) 
 ; db (10) $40 - Pegasus boots speed (Default = 40)
 ;
-; =============================================================================
+; =========================================================
 
 UpdateBunnyPalette:
 {
@@ -33,7 +33,7 @@ UpdateBunnyPalette:
   RTL      ; or RTS depending on where you need it
 }
 
-; =============================================================================
+; =========================================================
 
 bunny_palette:
   dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$19FD, #$14B6
@@ -43,7 +43,7 @@ bunny_palette:
 
 print "End of Bunny Hood GFX             ", pc
 
-; =============================================================================
+; =========================================================
 ; Bunny Hood Speed Modification
 
 org $07E330
@@ -81,30 +81,15 @@ BunnySpeedTable:
   db $20, $12, $0a, $18, $10, $08, $08, $04, $0c, $10, $09, $19, $14, $0d, $10, $08, $40
 }
 
-; =============================================================================
+; =========================================================
 ; Press R to transform into bunny form and run faster.
-; =============================================================================
+; =========================================================
 
 org $07A494
 LinkItem_Ether:
 {
-  %CheckNewR_ButtonPress() : BEQ .return
-  LDA $6C : BNE .return   ; in a doorway
-  LDA $0FFC : BNE .return ; can't open menu
-
-  %PlayerTransform()
-  
-  LDA $02B2 : CMP #$04 : BEQ .unequip ; is the hood already on?
-  JSL UpdateBunnyPalette
-  LDA #$37 : STA $BC                  ; change link's sprite 
-  LDA #$04 : STA $02B2
-  BRA .return
-  
-.unequip
-  %ResetToLinkGraphics()
-
-.return
-  CLC
+  LDA #$04 
+  JSL Link_TransformMask
   RTS
 }
 

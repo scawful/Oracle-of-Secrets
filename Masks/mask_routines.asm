@@ -251,8 +251,6 @@ Overworld_CgramAuxToMain:
 org $079CD9
   JSL LinkItem_CheckForSwordSwing_Masks
 
-; =========================================================
-
 pullpc
 LinkItem_CheckForSwordSwing_Masks:
 {
@@ -267,6 +265,52 @@ LinkItem_CheckForSwordSwing_Masks:
   LDA $3B : AND.b #$10 ; Restore Link_CheckForSwordSwing
   RTL
 }
+
+; =========================================================
+; Common Mask Transformation Routine
+; A = Mask ID
+; Carry clear = no transform press/cant use mask
+
+Link_TransformMask:
+{
+  PHB : PHK : PLB
+  PHA ; save mask ID
+  %CheckNewR_ButtonPress() : BEQ .return
+    LDA $6C : BNE .return   ; in a doorway
+    LDA $0FFC : BNE .return ; can't open menu
+
+    %PlayerTransform()
+    PLA ; restore mask ID
+    TAY
+    ; LDA $02B2 
+    CPY !CurrentMask : BEQ .unequip ; is the deku mask on?
+      
+      STA $02B2 ; set the mask ID
+      TAX ; save mask ID in X
+      LDA .mask_gfx, X : STA $BC    ; put the mask on
+      JSL Palette_ArmorAndGloves ; set the palette
+      
+      STA $02F5             ; Somaria platform flag, no dash.
+
+      PLB
+      SEC 
+      RTL
+
+  .unequip
+    STZ $5D
+    STZ $02F5
+
+    %ResetToLinkGraphics()
+    PLB : CLC : RTL
+
+  .return
+    PLA : PLB : CLC : RTL
+
+.mask_gfx
+  db $00, $35, $36, $38, $37, $39, $3A, $3B
+}
+
+; =========================================================
 
 ; Modifies the value of the Y register before it indexes the table
 ; LinkOAM_AnimationStepDataOffsets
