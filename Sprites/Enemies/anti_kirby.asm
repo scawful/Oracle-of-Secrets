@@ -5,14 +5,14 @@
 !NbrTiles           = 02  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 20  ; Number of Health the sprite have
+!Health             = $08  ; Number of Health the sprite have
 !Damage             = 04  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this AntiKirby (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -28,6 +28,7 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
+
 %Set_Sprite_Properties(Sprite_AntiKirby_Prep, Sprite_AntiKirby_Long);
 
 
@@ -47,15 +48,34 @@ Sprite_AntiKirby_Long:
   RTL ; Go back to original code
 }
 
+; ==============================================================================
 
 Sprite_AntiKirby_Prep:
 {
   PHB : PHK : PLB
-   
-  ; Add more code here to initialize data
+  
+  LDA #$00 : STA $0CAA, X
+  LDA #$00 : STA $0B6B, X
+
+  LDY $0FFF
+
+  LDA .bump_damage, Y : STA $0CD2, X
+
+  LDA .hp, Y : STA $0E50, X
+
+  LDA .prize_pack, Y : STA $0BE0, X
 
   PLB
   RTL
+
+  .bump_damage
+  db $81, $88
+
+  .hp
+  db 4, 8
+
+  .prize_pack
+  db 6, 2
 }
 
 !RecoilTime = $30
@@ -98,43 +118,50 @@ Sprite_AntiKirby_Main:
 
   AntiKirby_Start:
   {
-    ; %PlayAnimation(0, 0, 10) ; Idle
-    JSL Sprite_DirectionToFacePlayer 
-    TYA : CMP.b #$02 : BCC .WalkRight
-  .WalkLeft
-    ; JSL Sprite_IsBelowPlayer : BCS .WalkRight
+      %PlayAnimation(0, 0, 10) ; Idle
 
-    %GotoAction(2)
-    RTS
-  .WalkRight 
-    JSL Sprite_IsBelowPlayer : BCS .WalkLeft
+      ; Check health 
+      LDA SprHealth, X : CMP.b #$01 : BCS .NotDead
+        %GotoAction(6)
+        RTS
+    .NotDead
 
-    %GotoAction(1)
-    RTS
+      JSL Sprite_DirectionToFacePlayer 
+      TYA : CMP.b #$02 : BCC .WalkRight
+
+    .WalkLeft
+      %GotoAction(2)
+      RTS
+
+    .WalkRight 
+      JSL Sprite_IsBelowPlayer : BCS .WalkLeft
+      %GotoAction(1)
+      RTS
   }
 
   AntiKirby_WalkRight:
   {
-    %PlayAnimation(0, 3, 10) ; Walk Right
+      %PlayAnimation(0, 3, 10) ; Walk Right
+      
+      PHX 
+      JSL Sprite_DamageFlash_Long
+      JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
 
-    ; JSL Sprite_CheckTileCollision : BEQ .Collision
+      LDA #!RecoilTime : STA SprTimerA, X
+      %GotoAction(3) ; Hurt
+      PLX 
+      RTS
 
-    PHX 
-    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
-
-    LDA #!RecoilTime : STA SprTimerA, X
-    %GotoAction(3) ; Hurt
-    PLX : RTS
-  .NoDamage
-    %DoDamageToPlayerSameLayerOnContact()
-    PLX 
-
-    %MoveTowardPlayer(10)
-  .Collision
-  
-    %GotoAction(0)
-
-    RTS
+    .NoDamage
+      %DoDamageToPlayerSameLayerOnContact()
+      PLX 
+      %MoveTowardPlayer(10)
+      JSL Sprite_BounceFromTileCollision
+      JSL Sprite_PlayerCantPassThrough
+      
+    .Collision
+      %GotoAction(0)
+      RTS
   }
 
   AntiKirby_WalkLeft:
@@ -142,6 +169,7 @@ Sprite_AntiKirby_Main:
     %PlayAnimation(4, 7, 10) ; Walk Left
 
     PHX 
+    JSL Sprite_DamageFlash_Long
     JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
     LDA #!RecoilTime : STA SprTimerA, X
     %GotoAction(3) ; Hurt
@@ -151,7 +179,8 @@ Sprite_AntiKirby_Main:
     PLX 
 
     %MoveTowardPlayer(10)
-
+    JSL Sprite_BounceFromTileCollision
+    JSL Sprite_PlayerCantPassThrough
     %GotoAction(0)
 
     RTS
@@ -159,20 +188,11 @@ Sprite_AntiKirby_Main:
 
   AntiKirby_Hurt:
   {
-    %PlayAnimation(8, 8, 10) ; Hurt 
-
-    ; Check health 
-    LDA SprHealth, X : BNE .NotDead
-    %GotoAction(6)
-    RTS
-
-  .NotDead
-    LDA SprTimerA, X : BNE .NotDone
-    %GotoAction(0)
-
-  .NotDone
-
-    RTS
+      %PlayAnimation(8, 8, 10) ; Hurt 
+      LDA SprTimerA, X : BNE .NotDone
+      %GotoAction(0)
+    .NotDone
+      RTS
   }
 
   AntiKirby_Suck:
@@ -217,6 +237,7 @@ Sprite_AntiKirby_Draw:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
+  LDA $0DA0, X : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -249,7 +270,7 @@ Sprite_AntiKirby_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY 
       

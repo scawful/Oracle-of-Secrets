@@ -119,7 +119,7 @@ LinkState_UsingZoraMask:
     LDA !ZoraDiving : BEQ .dive
 
     STZ $55            ; Reset cape flag 
-    STZ !ZoraDiving          ; Reset underwater flag 
+    STZ !ZoraDiving    ; Reset underwater flag 
     STZ $0351          ; Reset ripple flag 
     STZ $037B          ; Reset invincibility flag
     LDA #$04 : STA $5D ; Put Link in Swimming State
