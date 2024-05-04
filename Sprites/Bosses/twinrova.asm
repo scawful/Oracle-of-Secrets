@@ -293,8 +293,7 @@ Sprite_Twinrova_Main:
       %StartOnFrame(4)
       %Twinrova_Ready()
 
-      ; JSR Sprite_Twinrova_FireAttack
-      JSR Sidenexx_ExhaleDanger
+      JSR Sprite_Twinrova_FireAttack
 
       ; Random chance to release fireball
       JSL GetRandomInt : AND.b #$3F : BNE ++
@@ -1214,3 +1213,65 @@ BlindLaser_SpawnTrailGarnish:
 }
 
 pullpc
+
+
+; ==============================================================================
+; Mantle and Maiden
+
+pushpc
+
+org $068841
+    JSL NewMantlePrep
+    RTS
+
+org $1AFC52
+    db $06 ; check for maiden instead of zelda
+
+org $1AFCA7
+    ; Tiles
+    db $0C, $0E, $0C, $2C, $2E, $2C
+    ; Mantle Properties : 
+    db $3D, $3D, $7D, $3D, $3D, $7D
+
+pullpc
+
+NewMantlePrep:
+{
+    LDA $0D00, X : CLC : ADC.b #$07 : STA $0D00, X
+    LDA $0D10, X : CLC : ADC.b #$08 : STA $0D10, X
+
+    LDA $7EF0DA : AND #$0F : BEQ +
+        LDA $0D10, X : CLC : ADC.b #$28 : STA $0D10, X
+    +
+
+    RTL
+}
+
+pushpc
+
+org $09A1EC
+    JSL CheckForMaidenInLibrary
+
+pullpc 
+
+CheckForMaidenInLibrary:
+{
+    LDA $A0 : CMP.b #$BD : BNE .notTheLibrary
+        LDA $11 : BNE .notTheLibrary
+            LDA $7FF9D2 : BNE .dialogue_played
+                LDA #$1D : LDY #$00
+                JSL Sprite_ShowMessageUnconditional
+                LDA #$01 : STA $7FF9D2
+
+            .dialogue_played
+
+    .notTheLibrary
+
+    ; Check for blind room vanilla
+    REP #$20
+    LDA.b $A0
+
+    RTL
+}
+
+; ==============================================================================
