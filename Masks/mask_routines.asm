@@ -375,41 +375,20 @@ PrepareQuakeSpell:
   RTL
 }
 
-DekuLink_HoverBasedOnInput:
+HandleCamera:
 {
-  JSL $07E6A6
-
-  LDA $5C : AND #$1F : BNE .continue_me
-  DEC $24
-.continue_me
+  LDA $22 : SEC : SBC $3F : STA $31
+  LDA $20 : SEC : SBC $3E : STA $30
+  PHX 
   
-  LDA $5C : BEQ .auto_cancel
+  JSL $07E6A6 ; Link_HandleMovingAnimation_FullLongEntry
+  JSL $07F42F ; HandleIndoorCameraAndDoors_Long
   
+  JSL Player_HaltDashAttack
+  PLX 
+  RTS
+}
 
-  LDA $F0 : AND #$08 : BEQ .not_up
-    LDA $20 : CLC : ADC #-1 : STA $20
-    LDA #$01 : STA $031C
-    LDA #$05 : STA $3D
-    STZ $2F
-.not_up
-  LDA $F0 : AND #$04 : BEQ .not_down
-    LDA $20 : CLC : ADC #1 : STA $20
-    LDA #$02 : STA $031C
-    LDA #$05 : STA $3D
-    LDA #$02 : STA $2F
-.not_down
-  LDA $F0 : AND #$02 : BEQ .not_left
-    LDA $22 : CLC : ADC #-1 : STA $22
-    LDA #$03 : STA $031C
-    LDA #$05 : STA $3D
-    LDA #$04 : STA $2F
-.not_left
-  LDA $F0 : AND #$01 : BEQ .not_right
-    LDA $22 : CLC : ADC #1 : STA $22
-    LDA #$04 : STA $031C
-    LDA #$05 : STA $3D
-    LDA #$06 : STA $2F
-.not_right
 
   LDA $70 : BEQ .no_bomb_drop
   LDA $F0 : AND #%01000000 : BEQ .no_bomb_drop
