@@ -293,7 +293,13 @@ Sprite_Twinrova_Main:
       %StartOnFrame(4)
       %Twinrova_Ready()
 
-      JSR Sprite_Twinrova_FireAttack
+      ; JSR Sprite_Twinrova_FireAttack
+      JSR Sidenexx_ExhaleDanger
+
+      ; Random chance to release fireball
+      JSL GetRandomInt : AND.b #$3F : BNE ++
+      JSR ReleaseFireballs
+    ++
 
       LDA.w SprTimerD, X : BNE +
         %GotoAction(1)
@@ -344,10 +350,16 @@ Sprite_Twinrova_Main:
       %DoDamageToPlayerSameLayerOnContact()
       PLX 
 
+      JSL GetRandomInt : AND.b #$1F : BNE ++
+        JSR AddPitHazard
+        JSR Ganon_SpawnFallingTilesOverlord
+    ++
+
       JSL Sprite_DamageFlash_Long
-      JSL Sprite_BounceTowardPlayer
+      JSR RageModeMove
 
       LDA SprTimerD, X : BNE +
+        LDA #$70 : STA SprTimerE, X
         %GotoAction(1)
     +
       RTS
@@ -365,8 +377,14 @@ Sprite_Twinrova_Main:
       %DoDamageToPlayerSameLayerOnContact()
       PLX 
 
+      JSL GetRandomInt : AND.b #$3F : BNE ++
+        JSL $1DE612 ; Sprite_SpawnLightning
+        LDA #$30
+        JSL Sprite_ProjectSpeedTowardsPlayer
+      ++
+
       JSL Sprite_DamageFlash_Long
-      JSL Sprite_BounceTowardPlayer
+      JSR RageModeMove
 
       LDA SprTimerD, X : BNE +
         %GotoAction(1)
@@ -384,6 +402,52 @@ Sprite_Twinrova_Main:
   }
 }
 
+RageModeMove:
+{
+  LDA $0E : CMP.b #$0020 : BCS +
+  CLC
+  LDA $0F : CMP.b #$0020 : BCS +
+    ; The sprite is too close to the player 
+
++
+
+  ; Determine horizontal movement based on player's position
+  JSL Sprite_IsToRightOfPlayer
+  BEQ .MoveLeft
+  LDA #$F8           ; Speed to the right if player is to the right
+  STA SprXSpeed, X
+  LDA #$04 : STA SprXRound, X
+  BRA .AdjustY
+
+.MoveLeft:
+  LDA #$08           ; Speed to the left if player is not to the right (negative speed)
+  STA SprXSpeed, X
+  LDA #$FC : STA SprXRound, X
+
+.AdjustY:
+  ; Determine vertical movement based on player's position
+  JSL Sprite_IsBelowPlayer
+  BEQ .MoveUp
+  LDA #$F8           ; Speed downwards if player is below
+  STA SprYSpeed, X
+  LDA #$04 : STA SprXRound, X
+  BRA .UpdatePosition
+
+.MoveUp:
+  LDA #$08           ; Speed upwards if player is not below (negative speed)
+  STA SprYSpeed, X
+  LDA #$FC : STA SprXRound, X
+
+.UpdatePosition:
+  ; Apply calculated speeds to update position
+  JSL Sprite_Move
+
+  ; Check and handle collisions, if necessary
+  JSL Sprite_BounceFromTileCollision
+
+  RTS
+}
+
 ; =========================================================
 ; TODO: Create a new parent sprite for the Twinrova attacks
 ; so that the velocity and movement aren't applied to the 
@@ -392,39 +456,43 @@ Sprite_Twinrova_Main:
 ; Reused function from TrinexxBreath.
 TrinexxBreath_AltEntry:
 {
+  JSL Sprite_BounceFromTileCollision
     LDA $1A : AND.b #$03 : BNE .no_shake
       JSL Sprite_IsToRightOfPlayer
       LDA $0D50, X : CMP .x_speed_targets, Y : BEQ .no_shake
         CLC : ADC.w .shake_x, Y : STA $0D50, X
 
   .no_shake
+    JSL Sprite_IsBelowPlayer 
+      LDA $0D40, X : CMP .x_speed_targets, Y : BEQ .exit
+        CLC : ADC.w .shake_y, Y : STA $0D40, X
+
     JSL Sprite_CheckTileCollision : BEQ .exit
       JSL Sprite_BounceTowardPlayer
 
   .exit
-    JSL Sprite_BounceFromTileCollision
     RTS
 
   .x_speed_targets
-    db 8, -16
+    db 16, -16
 
   .shake_x
-  db  1, -1
+    db  1, -1
 
   .shake_y
-  db  0, -1
+    db  0, -1
 
-  .speed_y_high ; bleeds for 2 more values
-  db -1,  0
+  ; .speed_y_high ; bleeds for 2 more values
+  ;   db -1,  0
 
-  .speed_x_low ; bleeds for 2 more values
-  db  0,  0
+  ; .speed_x_low ; bleeds for 2 more values
+  ;   db  0,  0
 
-  .speed_y_low
-  db -1,  1,  0,  0
+  ; .speed_y_low
+  ;   db -1,  1,  0,  0
 
-  .speed_x_high
-  db  0,  0, -1,  0
+  ; .speed_x_high
+  ;   db  0,  0, -1,  0
 }
 
 Sprite_Twinrova_FireAttack:
@@ -529,29 +597,33 @@ org $09B33F
 TrinexxIce_Pool:
 {
   .chr
-    db $2E, $2E, $2C, $2C
+    db $2E, $2E, $2E, $2E
+    db $2C, $2C, $2C, $2C
+    db $2C, $2C, $2C, $2C
   .properties
     db $35, $35, $35, $35
 }
 
-org $09B34F
-Garnish_TrinexxIce:
-{
-  ; special animation 0x0C
-  LDA $7FF90E, X : LSR #2 : AND.b #$03 : TAY
-  LDA TrinexxIce_Pool_properties, Y : STA $04
-  JSR Garnish_PrepOamCoord
+; org $09B34F
+; Garnish_TrinexxIce:
+; {
+;   ; special animation 0x0C
+;   LDA $7FF90E, X : LSR #2 : AND.b #$03 : TAY
+;   LDA TrinexxIce_Pool_properties, Y : STA $04
+;   JSR Garnish_PrepOamCoord
 
-  LDA $00       : STA ($90), Y
-  LDA $02 : INY : STA ($90), Y
+;   LDA $00       : STA ($90), Y
+;   LDA $02 : INY : STA ($90), Y
   
-  LDA $7FF90E, X : LSR #5 : PHX : TAX
-  LDA TrinexxIce_Pool_chr, X : INY : STA ($90), Y
-  LDA.b #$35 : ORA $04 : PLX
+;   LDA $7FF90E, X : LSR #5 : PHX : TAX
+;   LDA TrinexxIce_Pool_chr, X : INY : STA ($90), Y
+;   LDA.b #$35 : ORA $04 : PLX
   
-  JMP Garnish_SetOamPropsAndLargeSize
-}
-warnpc $09B3B8
+;   JSR Garnish_SetOamPropsAndLargeSize
+;   JMP.w $B495 ; CheckDamageToLink
+; }
+
+; warnpc $09B3B8
 
 pullpc
 
@@ -580,6 +652,74 @@ AddPitHazard:
   PLA
   RTS
 }
+
+
+Ganon_SpawnFallingTilesOverlord:
+#_1D90D0: LDY.b #$07
+
+.next_slot
+#_1D90D2: LDA.w $0B00,Y
+#_1D90D5: BEQ .free_slot
+
+#_1D90D7: DEY
+#_1D90D8: BPL .next_slot
+
+#_1D90DA: RTS
+
+;---------------------------------------------------------------------------------------------------
+
+.free_slot
+#_1D90DB: LDA.w $0EC0,X
+#_1D90DE: CMP.b #$04
+#_1D90E0: BCS .dont_spawn
+
+#_1D90E2: INC.w $0EC0,X
+
+#_1D90E5: PHX
+
+#_1D90E6: TAX
+
+#_1D90E7: LDA.w .overlord_type,X
+#_1D90EA: STA.w $0B00,Y
+
+#_1D90ED: LDA.w .position_x,X
+#_1D90F0: STA.w $0B08,Y
+
+#_1D90F3: LDA.b $23
+#_1D90F5: STA.w $0B10,Y
+
+#_1D90F8: LDA.w .position_y,X
+#_1D90FB: STA.w $0B18,Y
+
+#_1D90FE: LDA.b $21
+#_1D9100: STA.w $0B20,Y
+
+#_1D9103: LDA.b #$00
+#_1D9105: STA.w $0B28,Y
+#_1D9108: STA.w $0B30,Y
+
+#_1D910B: PLX
+
+.dont_spawn
+#_1D910C: RTS
+
+.overlord_type
+#_1D90C4: db $0C ; OVERLORD 0C
+#_1D90C5: db $0D ; OVERLORD 0D
+#_1D90C6: db $0E ; OVERLORD 0E
+#_1D90C7: db $0F ; OVERLORD 0F
+
+.position_x
+#_1D90C8: db $18
+#_1D90C9: db $D8
+#_1D90CA: db $D8
+#_1D90CB: db $18
+
+.position_y
+#_1D90CC: db $20
+#_1D90CD: db $20
+#_1D90CE: db $D0
+#_1D90CF: db $D0
 
 ; =========================================================
 
