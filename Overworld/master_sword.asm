@@ -13,3 +13,6 @@ db $80
 ; At 04/45D4, change 09 into 00
 org $08C5D4
 db $00
+
+org $0589AF
+LDY.b #$03 ; ITEMGET 03
