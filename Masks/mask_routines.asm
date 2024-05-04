@@ -389,6 +389,54 @@ HandleCamera:
   RTS
 }
 
+HandleMovement:
+{
+    LDA $F0 : AND #$08 : BEQ .not_up
+      LDA $20 : CLC : ADC #-1 : STA $20
+      LDY #$00 : JSR DragPlayer_AltEntry
+      LDA #$01 : STA $031C
+      LDA #$05 : STA $3D
+      STZ $2F
+  .not_up
+    LDA $F0 : AND #$04 : BEQ .not_down
+      LDA $20 : CLC : ADC #1 : STA $20
+      LDY #$01 : JSR DragPlayer_AltEntry
+      LDA #$02 : STA $031C
+      LDA #$05 : STA $3D
+      LDA #$02 : STA $2F
+  .not_down
+    LDA $F0 : AND #$02 : BEQ .not_left
+      LDA $22 : CLC : ADC #-1 : STA $22
+      LDY #$02 : JSR DragPlayer_AltEntry
+      LDA #$03 : STA $031C
+      LDA #$05 : STA $3D
+      LDA #$04 : STA $2F
+  .not_left
+    LDA $F0 : AND #$01 : BEQ .not_right
+      LDA $22 : CLC : ADC #1 : STA $22
+      LDY #$03 : JSR DragPlayer_AltEntry
+      LDA #$04 : STA $031C
+      LDA #$05 : STA $3D
+      LDA #$06 : STA $2F
+  .not_right
+    LDA.w $22 : STA $0FD8
+    LDA.w $23 : STA $0FD9
+    LDA.w $20 : STA $0FDA
+    LDA.w $21 : STA $0FDB
+    RTS
+}
+
+DekuLink_HoverBasedOnInput:
+{
+  JSR HandleCamera
+
+  LDA $5C : AND #$1F : BNE .continue_me
+  DEC $24
+.continue_me
+  
+  LDA $5C : BEQ .auto_cancel
+
+  JSR HandleMovement
 
   LDA $70 : BEQ .no_bomb_drop
   LDA $F0 : AND #%01000000 : BEQ .no_bomb_drop
