@@ -102,6 +102,8 @@ print  "End of zora_princess.asm          ",  pc
 incsrc "Sprites/Objects/ice_block.asm"
 print  "End of ice_block.asm              ",  pc
 
+incsrc "Sprites/Objects/whirlpool.asm"
+
 incsrc "Sprites/NPCs/ranch_girl.asm"
 print  "End of Ranch Girl.asm             ", pc
 
