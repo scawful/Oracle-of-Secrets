@@ -54,6 +54,25 @@ LinkState_GameboyInDungeonEntrance:
   RTL
 }
 
+; Retain GBC sprite when exiting DW dungeons
+LoadOverworld_CheckForGbcLink:
+{
+  LDA $0FFF : BEQ .return 
+
+      JSL UpdateGbcPalette
+      LDA #$3B : STA $BC   ; change link's sprite 
+   
+.return
+  STZ.b $B0
+  STZ.b $11
+  RTL
+}
+
+; Module08_02_LoadAndAdvance
+org $02EDC0
+{
+  JSL LoadOverworld_CheckForGbcLink
+}
 
 org $07A9B1
 LinkMode_MagicMirror:
