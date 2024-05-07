@@ -39,6 +39,7 @@ org $3E8000
 
 DMAOwMap:
 {
+  JSL Palette_ArmorAndGloves
     LDA $8A : AND #$40 : BEQ .LWMAP
         JMP .DWMAP
         
@@ -400,7 +401,20 @@ HandleMapDrawIcon:
     RTS
 }
 
-warnpc $0AC387
+FixMaskPaletteOnExit:
+{
+  JSL Palette_ArmorAndGloves
+  LDA.l $7EC229
+  RTL
+}
+
+org $0ABC76
+  JSL FixMaskPaletteOnExit
+
+; warnpc $0AC387
+
+org $0AC589
+  RTS
 
 org $0AC38A
 {

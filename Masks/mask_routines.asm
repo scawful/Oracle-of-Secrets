@@ -18,9 +18,6 @@ macro CheckNewR_ButtonPress()
   LDA.b $F6 : BIT.b #$10
 endmacro
 
-; org $02A560
-;   JSL ForceResetWorldMap
-
 ; GameOver_DelayBeforeIris
 org $09F347
   JSL ForceResetMask_GameOver
@@ -67,24 +64,6 @@ StartupMasks:
   ; set links sprite bank
   LDA #$10 : STA $BC
 
-  RTL
-}
-
-ForceResetWorldMap:
-{
-  LDA $7EF280 : BNE .openMap
-  PLA : PLA : PLA ; Pop the RTL
-  JML $02A571 ; check select button 
-
-  .openMap
-  LDA $02B2 : BEQ .still_link
-  LDY.b #$04 : LDA.b #$23
-  JSL   AddTransformationCloud
-  %ResetToLinkGraphics()
-  
-.still_link
-  STZ.w $0200
-  LDA #$07
   RTL
 }
 
