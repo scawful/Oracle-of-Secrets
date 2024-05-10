@@ -204,6 +204,24 @@ HandleLiftAndToss:
     RTS
 }
 
+HandleTossedCart:
+{
+  LDA SprHeight, X : BEQ .not_tossed
+
+    LDA.w SprTimerB, X : BNE .wait_a_bit
+      ; Decrease the height towards the ground 
+      DEC.w SprHeight, X
+  .wait_a_bit
+    ; If the cart is on the ground, stop tossing
+    LDA SprHeight, X : BNE .not_tossed
+      STZ.w SprMiscG, X
+      STZ.w SprYSpeed, X
+      STZ.w SprXSpeed, X
+      STZ.w SprHeight, X
+      .not_tossed
+      RTS
+
+}
 
 ; =========================================================
 
@@ -225,6 +243,8 @@ Sprite_Minecart_Main:
   Minecart_WaitHoriz:
   {
       %PlayAnimation(0,1,8)
+      
+      JSR HandleTossedCart
       LDA SprTimerA, X : BNE .not_ready
 
       LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
@@ -260,6 +280,8 @@ Sprite_Minecart_Main:
   Minecart_WaitVert:
   {
       %PlayAnimation(2,3,8)
+      JSR HandleTossedCart
+      
       LDA SprTimerA, X : BNE .not_ready
 
       LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
