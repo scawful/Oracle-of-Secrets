@@ -454,11 +454,14 @@ SetTileLookupPosBasedOnDirection:
 print "HandleTileDirections ", pc
 HandleTileDirections:
 {
+    LDA SprTimerA, X : BEQ +
+      RTS
+  +
+
     ; Setup Minecart position to look for tile IDs
     ; We use AND #$F8 to clamp to a 16x16 grid, however this needs work.
     LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
-    LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
-    ; JSR SetTileLookupPosBasedOnDirection
+    LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03    
 
     ; Fetch tile attributes based on current coordinates
     LDA.b #$00 : JSL Sprite_GetTileAttr
