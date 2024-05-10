@@ -550,7 +550,7 @@ HandleTileDirections:
       TAY              ; Transfer to Y to use as an offset for the rows
       LDA.w .DirectionTileLookup, Y : TAY
 
-      ; JSR ClampSpritePositionToGrid
+      JSR ClampSpritePositionToGrid
       CPY #$01 : BEQ .move_north
       CPY #$02 : BEQ .move_east
       CPY #$03 : BEQ .move_south
