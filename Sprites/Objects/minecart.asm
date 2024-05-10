@@ -177,16 +177,33 @@ macro StopCart()
     STZ.w !LinkInCart
 endmacro
 
-; TODO: Implement distance and gravity for cart tossing
-macro HandleLiftAndToss()
-    LDA.w !LinkCarryOrToss : AND #$02 : BNE .not_tossing
-      ; Velocities for cart tossing
-      STZ.w SprXSpeed, X : STZ.w SprYSpeed, X 
-      STZ.w $0F90, X : STZ.w $0F70, X
+HandleLiftAndToss:
+{
+    LDA.w !LinkCarryOrToss : CMP.b #$02 : BNE .not_tossing
+      ; Check links facing direction $2F and apply velocity
+      LDA $2F : CMP.b #$00 : BEQ .toss_north
+                CMP.b #$02 : BEQ .toss_south
+                CMP.b #$04 : BEQ .toss_east
+                CMP.b #$06 : BEQ .toss_west
+      .toss_north
+        LDA.b #-!MinecartSpeed : STA SprYSpeed, X
+        JMP .continue
+      .toss_south 
+        LDA.b #!MinecartSpeed : STA SprYSpeed, X
+        JMP .continue
+      .toss_east
+        LDA.b #-!MinecartSpeed : STA SprXSpeed, X
+        JMP .continue
+      .toss_west
+        LDA.b #!MinecartSpeed : STA SprXSpeed, X
+      .continue
+      LDA #$0F : STA SprTimerB, X
   .not_tossing
     JSL Sprite_CheckIfLifted
     JSL Sprite_MoveXyz
-endmacro
+    RTS
+}
+
 
 ; =========================================================
 
@@ -230,10 +247,11 @@ Sprite_Minecart_Main:
               STA.w !MinecartDirection
               LDA   #$03 : STA !SpriteDirection, X
               %GotoAction(3) ; Minecart_MoveEast
+              RTS
 
       .not_ready
     .lifting
-      %HandleLiftAndToss()
+      JSR HandleLiftAndToss
       RTS
   }
   
@@ -264,10 +282,11 @@ Sprite_Minecart_Main:
               STA.w !MinecartDirection
               LDA   #$00 : STA !SpriteDirection, X
               %GotoAction(2)  ; Minecart_MoveNorth
+              RTS
 
       .not_ready
     .lifting
-      %HandleLiftAndToss()
+      JSR HandleLiftAndToss
       RTS 
   }
 
