@@ -1,34 +1,35 @@
 ; Dungeon Object Handler
 
-org    $018262            ;object id 0x31
+org $018262 ; Object ID 0x31
   dw ExpandedObject
 
-org $018264
+org $018264 ; Object ID 0x32
   dw ExpandedObject2
 
-; #_018650: dw RoomDraw_WeirdUglyPot ID 230
-org $018650
+org $0182A8 ; Object ID 0x54
+  dw SpriteBodyObjects                                       
+
+; RoomDraw_WeirdUglyPot 
+org $018650 ; Object ID 230
   dw HeavyPot
 
 ; Bank01 Free Space
 org $01B53C
   ExpandedObject:
-  JSL NewObjectsCode
-  RTS
+    JSL NewObjectsCode
+    RTS
 
   ExpandedObject2:
-  JSL NewObjectsCode2
-  RTS
+    JSL NewObjectsCode2
+    RTS
+
+  SpriteBodyObjects:
+    JSL SpriteObjectsDraw
+    RTS
 
   HeavyPot:
-  LDA.w #$1010
-  PHX : LDX.w $042C
-  LDA.w #$1111 : STA $0500, X
-  ; Store this object's position in the object buffer to $0520, X
-  LDA $BA : STA $0520, X
-  ; Store it's tilemap position.
-  TYA : STA $0540, X
-  JMP $B350
+    JSL InitHeavyPot
+    JMP $B350
 
 warnpc $01B560
 
@@ -142,15 +143,15 @@ NewObjectsCode:
 
 ; May need to make this a table 
 ; This modifies object 0xOE to use the spritesheets for the object
+print "CustomDrawConfig ", pc
 CustomDrawConfig:
 {
-  PHA
+  PHA ; ObjectData
   LDA $03 : AND #$00FF : CMP.w #$000E : BEQ .custom_config
+    TYA : LSR : AND #$00FF
 
-  TYA : LSR : AND #$00FF
-
-  CMP #$000E : BNE .no_spriteset
-    LDA #$000E : STA $03
+    CMP #$000E : BNE .no_spriteset
+      LDA #$000E : STA $03
   .custom_config
     PLA
     ORA.w #$0300 : JMP .return
@@ -159,6 +160,83 @@ CustomDrawConfig:
 .return
   RTS
 }
+
+InitHeavyPot:
+{
+  LDA.w #$1010
+  PHX : LDX.w $042C
+  LDA.w #$1111 : STA $0500, X
+  ; Store this object's position in the object buffer to $0520, X
+  LDA $BA : STA $0520, X
+  ; Store it's tilemap position.
+  TYA : STA $0540, X
+  RTL
+}
+
+SpriteObjectsDraw:
+{
+  PHB : PHK : PLB
+  PHX
+
+  STZ $03 ; 03 will be used to store the object ID for custom config
+  LDA $00 : PHA
+  LDA $02 : PHA
+  ; $00 Will be used for tile count and tile to skip 
+  LDA $B2 : ASL #2 : ORA $B4
+
+  ;get the offset for the object data based on the object height 
+  ASL : TAX
+  LDA .ObjOffset, X
+  TAX
+
+  .lineLoop
+      LDA .ObjData, X : BNE .continue
+          ;break
+          BRA .Done
+      .continue
+      PHY ; Keep current position in the buffer
+
+      STA $00 ; we save the tile count + tile to skip
+
+      -- ;Tiles Loop
+          INX : INX
+          ;  Vhopppcc cccccccc
+          LDA .ObjData, X : BEQ +
+              ORA.w #$0300
+              STA [$BF], Y
+          +
+
+          INY : INY
+          LDA $00 : DEC : STA $00 : AND #$001F : BNE +
+              LDA $00 : XBA : AND #$00FF : STA $00
+              PLA                                  ;Pull back position
+              CLC : ADC $00 : TAY
+              INX : INX
+              BRA .lineLoop
+          +
+
+      BRA --
+
+  .Done
+
+  PLA : STA $02
+  PLA : STA $00 ;Not sure if needed
+
+  PLX
+  PLB
+  RTL
+
+.ObjOffset
+  dw .KydreeokBody-.ObjData     ; 00
+  dw .ManhandlaBody1-.ObjData   ; 01
+
+.ObjData
+  .KydreeokBody
+    incbin Data/kydreeok_body.bin
+  .ManhandlaBody1
+    incbin Data/manhandla_body1.bin
+}
+
 
 NewObjectsCode2:
 {
