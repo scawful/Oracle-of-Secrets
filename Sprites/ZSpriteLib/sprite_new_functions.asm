@@ -154,6 +154,77 @@ Sprite_BounceFromTileCollision:
 ++ RTL
 }
 
+; =========================================================
+DragYL = $0B7C
+DragYH = $0B7D
+
+; Parameters: Y index contains direction to drag player
+DragPlayer:
+{
+    LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
+    LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
+    
+    LDA.w .drag_y_low,  Y : CLC : ADC.w $0B7E : STA.w $0B7E
+    LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
+
+  .SomariaPlatform_DragLink
+    REP #$20
+    
+    LDA $0FD8 : SEC : SBC.w #$0002
+    CMP $22 : BEQ .x_done : BPL .x_too_low
+    
+    DEC $0B7C
+    
+    BRA .x_done
+
+  .x_too_low
+
+    INC $0B7C
+
+  .x_done
+    ; Changing the modifier adjusts links position in the cart 
+    LDA $0FDA : SEC : SBC.w #$0008
+    CMP $20 : BEQ .y_done : BPL .y_too_low
+    
+    DEC $0B7E
+    
+    BRA .y_done
+
+  .y_too_low
+
+    INC $0B7E
+
+  .y_done
+
+    SEP #$30
+        
+    RTL
+
+  .drag_x_high
+    db 0,   0,  -1,   0
+
+  .drag_x_low
+    db 0,   0,  -1,   1
+
+  .drag_y_low
+    db -1,   1,   0,   0
+
+  .drag_y_high
+    db -1,   0,   0,   0
+
+  ; Alternate drag values provided by Zarby
+  ; .drag_x_high
+  ; db 0,   0,  -1,   0,  -1
+  ; .drag_x_low
+  ; db 0,   0,  -1,   1,  -1,   1,   1
+  ; .drag_y_low
+  ; db -1,   1,   0,   0,  -1,   1,  -1,   1
+  ; .drag_y_high
+  ; db -1,   0,   0,   0,  -1,   0,  -1,   0
+}
+
+; =========================================================
+
 Intro_Dungeon_Main:
 {
     ;test to see if we are at a place where a guardian is present
@@ -299,7 +370,7 @@ SetupMovieEffect:
     RTS
 }
 
-; ; ==============================================================================
+; =========================================================
 
 MovieEffect:
 {
