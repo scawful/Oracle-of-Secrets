@@ -36,7 +36,7 @@ incsrc ZSpriteLib/sprite_new_table.asm
 org    $318000
 incsrc ZSpriteLib/sprite_new_functions.asm
 
-incsrc "Sprites/farore.asm"
+incsrc "Sprites/NPCs/farore.asm"
 print  "End of farore.asm                 ", pc
 
 incsrc "Sprites/Bosses/kydrog.asm"
@@ -81,10 +81,10 @@ incsrc "Sprites/Bosses/kydreeok_head.asm"
 incsrc "Sprites/Objects/deku_leaf.asm"
 print  "End of deku_leaf.asm              ",  pc
 
-incsrc "Sprites/portal_sprite.asm"
+incsrc "Sprites/Objects/portal_sprite.asm"
 print  "End of portal_sprite.asm          ",  pc
 
-incsrc "Sprites/impa.asm"
+incsrc "Sprites/NPCs/impa.asm"
 print  "End of impa.asm                   ",  pc
 
 incsrc "Sprites/Enemies/poltergeist.asm"

@@ -1,11 +1,7 @@
-org $07A471 ; Mudora
-  JSR LinkItem_PortalRod
-  RTS
+; =========================================================
+; Portal Rod Item
 
-
-warnpc $07A493
-
-; *$3A50F-$3A568
+; LinkState_UsingEther
 org    $07A50F
 RodAnimationTimer:
   db $03, $03, $05
@@ -70,7 +66,7 @@ endmacro
 
 LinkItem_FirePortal:
 {
-  LDA.b #$B8
+  LDA.b #$03
   JSL   Sprite_SpawnDynamically : BPL .continue
   RTS
 .continue
