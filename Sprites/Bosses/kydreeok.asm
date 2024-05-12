@@ -66,6 +66,11 @@ Sprite_Kydreeok_Prep:
   STZ.w Neck1_OffsetX : STZ.w Neck1_OffsetY
   STZ.w Neck2_OffsetX : STZ.w Neck2_OffsetY
 
+  JSR ApplyPalette
+
+  ; Final Boss theme 1F 
+  LDA #$1F : STA $012C
+
   PLB
   RTL
 }
