@@ -69,12 +69,18 @@ StartupMasks:
 
 ForceResetMask_GameOver:
 {
-  LDA $02B2 : BEQ .still_link
-  %ResetToLinkGraphics()
-.still_link
-  LDA.b #$30
-  STA.b $98
-  RTL
+    LDA $02B2 : BEQ .still_link
+    CMP.b #$06 : BEQ .gbc_link
+    %ResetToLinkGraphics()
+    JMP .still_link
+  .gbc_link
+      JSL UpdateGbcPalette
+      LDA #$3B : STA $BC   ; change link's sprite 
+
+  .still_link
+    LDA.b #$30
+    STA.b $98
+    RTL
 }
 
 ForceResetMask_SaveAndQuit:
