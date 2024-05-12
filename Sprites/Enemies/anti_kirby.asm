@@ -1,7 +1,8 @@
-;==============================================================================
+; =========================================================
 ; Sprite Properties
-;==============================================================================
-!SPRID              = $9F ; The sprite ID you are overwriting (HEX)
+; =========================================================
+
+!SPRID              = $A8 ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 02  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -48,7 +49,7 @@ Sprite_AntiKirby_Long:
   RTL ; Go back to original code
 }
 
-; ==============================================================================
+; =========================================================
 
 Sprite_AntiKirby_Prep:
 {
@@ -58,24 +59,21 @@ Sprite_AntiKirby_Prep:
   LDA #$00 : STA $0B6B, X
 
   LDY $0FFF
-
   LDA .bump_damage, Y : STA $0CD2, X
-
   LDA .hp, Y : STA $0E50, X
-
   LDA .prize_pack, Y : STA $0BE0, X
 
   PLB
   RTL
 
   .bump_damage
-  db $81, $88
+    db $81, $88
 
   .hp
-  db 4, 8
+    db 8, 16
 
   .prize_pack
-  db 6, 2
+    db 6, 2
 }
 
 !RecoilTime = $30
@@ -89,91 +87,72 @@ Sprite_AntiKirby_Main:
   dw AntiKirby_Start
   dw AntiKirby_WalkRight
   dw AntiKirby_WalkLeft
-  ; dw AntiKirby_Main
-  ; dw AntiKirby_Moving
-  ; dw AntiKirby_Collision
   dw AntiKirby_Hurt
   dw AntiKirby_Suck
   dw AntiKirby_Full
   dw AntiKirby_Death
 
-  ; AntiKirby_Main:
-  ; {
-  ;   %PlayAnimation(0, 0, 10) ; Idle
-
-  ;   .TileCollision
-  ;   ; Reset some stuff
-
-  ;   JSL Sprite_CheckDamageToPlayer
-  ;   JSL Sprite_CheckDamageFromPlayer
-
-  ;   JSL Sprite_MoveLong
-  ;   JSL Sprite_CheckTileCollision
-
-  ;   LDA $0E70, X : BNE .TileCollision
-
-  ;   RTS
-
-  ; }
-
   AntiKirby_Start:
   {
-      %PlayAnimation(0, 0, 10) ; Idle
-
       ; Check health 
       LDA SprHealth, X : CMP.b #$01 : BCS .NotDead
         %GotoAction(6)
         RTS
     .NotDead
 
-      JSL Sprite_DirectionToFacePlayer 
-      TYA : CMP.b #$02 : BCC .WalkRight
+      ; Randomly Suck
+      JSL GetRandomInt : AND #$3F : BNE .not_done
+        LDA #$04 : STA SprTimerA, X
+        %GotoAction(4)
+        RTS
+    .not_done
+      
+      JSL Sprite_IsToRightOfPlayer 
+      TYA : CMP #$01 : BNE .WalkRight
 
     .WalkLeft
       %GotoAction(2)
       RTS
 
     .WalkRight 
-      JSL Sprite_IsBelowPlayer : BCS .WalkLeft
       %GotoAction(1)
       RTS
   }
 
   AntiKirby_WalkRight:
   {
-      %PlayAnimation(0, 3, 10) ; Walk Right
+      %PlayAnimation(0, 2, 10) ; Walk Right
       
       PHX 
       JSL Sprite_DamageFlash_Long
       JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
-
-      LDA #!RecoilTime : STA SprTimerA, X
-      %GotoAction(3) ; Hurt
-      PLX 
-      RTS
-
+        LDA #!RecoilTime : STA SprTimerA, X
+        %GotoAction(3) ; Hurt
+        PLX
+        RTS
+      
     .NoDamage
       %DoDamageToPlayerSameLayerOnContact()
-      PLX 
+      PLX
       %MoveTowardPlayer(10)
       JSL Sprite_BounceFromTileCollision
       JSL Sprite_PlayerCantPassThrough
       
-    .Collision
       %GotoAction(0)
       RTS
   }
 
   AntiKirby_WalkLeft:
   {
-    %PlayAnimation(4, 7, 10) ; Walk Left
+    %PlayAnimation(3, 6, 10) ; Walk Left
 
     PHX 
     JSL Sprite_DamageFlash_Long
     JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
-    LDA #!RecoilTime : STA SprTimerA, X
-    %GotoAction(3) ; Hurt
-    PLX : RTS
+      LDA #!RecoilTime : STA SprTimerA, X
+      %GotoAction(3) ; Hurt
+      PLX 
+      RTS
   .NoDamage
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
@@ -189,33 +168,236 @@ Sprite_AntiKirby_Main:
   AntiKirby_Hurt:
   {
       %PlayAnimation(8, 8, 10) ; Hurt 
+
       LDA SprTimerA, X : BNE .NotDone
       %GotoAction(0)
     .NotDone
+
       RTS
   }
 
   AntiKirby_Suck:
   {
-    %PlayAnimation(9, 10, 10) ; Suck
-    RTS
+      %PlayAnimation(9, 10, 10) ; Suck
+
+      LDA.b $0E : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
+        LDA.b $0F : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
+          INC.w $0D80,X
+
+          LDA.b #$1F
+          JSL Sprite_ProjectSpeedTowardsPlayer
+          JSL Sprite_ConvertVelocityToAngle
+
+          LSR A
+          STA.w $0DE0,X
+
+          LDA.b #$5F
+          STA.w SprTimerA, X
+
+          RTS
+      ; ---------------------------------------------------------
+
+      .dont_tongue_link
+      STZ.w $0D80,X
+
+      LDA.b #$10
+      STA.w SprTimerA, X
+
+      RTS
   }
 
   AntiKirby_Full:
   {
     %PlayAnimation(11, 11, 10) ; Full
+
+    LDA.w SprTimerA, X : BNE .lickylicky
+
+      STZ.w $0D80,X
+
+      LDA.b #$10
+      STA.w SprTimerA, X
+
+      STZ.w $0D90,X
+      STZ.w $0DA0,X
+      STZ.w $0ED0,X
+
+      RTS
+
+    .lickylicky
+    LSR A
+    LSR A
+    PHA
+
+    TAY
+
+    LDA.w .anim,Y : STA.w $0DC0,X
+
+    TYA
+
+    LDY.w $0DE0,X
+    PHY
+
+    CLC : ADC.w .index_offset_x,Y
+    TAY
+
+    LDA.w .pos,Y : STA.w $0D90,X
+
+    STA.b $04
+    STZ.b $05
+
+    BPL .positive_x
+
+    DEC.b $05
+
+    .positive_x
+    PLY
+
+    PLA
+    CLC : ADC.w .index_offset_y,Y
+
+    TAY
+    LDA.w .pos,Y : STA.w $0DA0,X
+
+    STA.b $06
+    STZ.b $07
+    STZ.b $07
+
+    BPL .positive_y
+
+    DEC.b $07
+
+    .positive_y
+    LDA.w $0ED0,X : BNE .exit
+
+    REP #$20
+
+    LDA.w $0FD8
+    CLC : ADC.b $04
+
+    SEC : SBC.b $22
+
+    CLC : ADC.w #$000C
+
+    CMP.w #$0018 : BCS .exit
+
+    LDA.w $0FDA : CLC : ADC.b $06
+
+    SEC : SBC.b $20
+
+    CLC : ADC.w #$000C
+
+    CMP.w #$0020 : BCS .exit
+
+    ; ---------------------------------------------------------
+
+    SEP #$20
+
+    LDA.w SprTimerA, X : CMP.b #$2E : BCS .exit
+
+    ; JSL Link_CalculateSFXPan
+    ; ORA.b #$26 ; SFX2.26
+    ; STA.w $012E
+
+    JSL GetRandomInt
+    AND.b #$03
+    INC A
+    STA.w $0ED0,X
+    STA.w $0E90,X
+
+    CMP.b #$01 : BNE .dont_steal_bomb
+
+    LDA.l $7EF343 : BEQ .dont_steal_anything
+
+    DEC A
+    STA.l $7EF343
+
     RTS
+
+    .dont_steal_anything
+    SEP #$20
+
+    STZ.w $0ED0,X
+
+    RTS
+
+    ; ---------------------------------------------------------
+
+    .dont_steal_bomb
+    CMP.b #$02 : BNE .dont_steal_arrow
+
+    LDA.l $7EF377 : BEQ .dont_steal_anything
+
+    DEC A
+    STA.l $7EF377
+
+    RTS
+
+    ; ---------------------------------------------------------
+
+    .dont_steal_arrow
+    CMP.b #$03 : BNE .dont_steal_rupee
+
+    REP #$20
+
+    LDA.l $7EF360 : BEQ .dont_steal_anything
+
+    DEC A
+    STA.l $7EF360
+
+    .exit
+    SEP #$20
+
+    RTS
+
+    ; ---------------------------------------------------------
+
+    .dont_steal_rupee
+    LDA.l $7EF35A
+    STA.w $0E30,X
+    BEQ .dont_steal_anything
+
+    CMP.b #$03
+    BEQ .dont_steal_anything
+
+    LDA.b #$00
+    STA.l $7EF35A
+
+    RTS
+
+    .anim
+    db $09, $09, $09, $09, $0A, $0A, $0A, $0A
+    db $0A, $0A, $0A, $0A, $0A, $0A, $0A, $0A
+    db $0A, $0A, $0A, $0A, $09, $09, $09, $09
+
+    .pos
+    db   0,   0,   0,   0,   0,   0,   0,   0
+    db   0,   0,   0,   0,   0,   0,   0,   0
+    db   0,   0,   0,   0,   0,   0,   0,   0
+
+    db   0,   0,   0,   0,   0,   0,   0,   0
+    db  12,  16,  24,  32,  32,  24,  16,  12
+    db   0,   0,   0,   0,   0,   0,   0,   0
+
+    db   0,   0,   0,   0,   0,   0,   0,   0
+    db -12, -16, -24, -32, -32, -24, -16, -12
+    db   0,   0,   0,   0,   0,   0,   0,   0
+
+    .index_offset_x
+    db $18, $18, $00, $30, $30, $30, $00, $18
+
+    .index_offset_y
+    db $00, $18, $18, $18, $00, $30, $30, $30
   }
 
   AntiKirby_Death:
   {
-    %PlayAnimation(8, 8, 10) ; Death
+    %PlayAnimation(12, 12, 10) ; Death
 
     LDA.b #$06
     STA.w $0DD0,X
 
     LDA.b #$0A
-    STA.w $0DF0,X
+    STA.w SprTimerA, X
 
     STZ.w $0BE0,X
 
