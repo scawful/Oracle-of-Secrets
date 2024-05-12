@@ -1,5 +1,10 @@
 ; =========================================================
-;   Deku Mask
+; Deku Mask
+; Press R to transform into Deku Link
+; Press Y to perform a spin and jump, allowing you to hover
+; for a short period of time, as well as drop bombs while
+; hovering with the Y button, and cancelling the hover with
+; the B button.
 ; =========================================================
 
 UpdateDekuPalette:
@@ -20,27 +25,21 @@ deku_palette:
   dw #$6739, #$15C5, #$150E, #$26C9, #$17AA, #$21F4, #$17DF, #$42DB
   dw #$14A5, #$14BC, #$14B2, #$14A5, #$7FFF, #$7A18, #$178C
 
+; =========================================================
 
 org    $07A64B           ; formerly Quake
 LinkItem_DekuMask:
 {
   JSR Link_CheckNewY_ButtonPress : BCC .continue
-  LDX.b #$01 : JSR LinkItem_EvaluateMagicCost : BCC .return
-  JSL PrepareQuakeSpell
-  RTS
+    LDX.b #$01 
+    JSR LinkItem_EvaluateMagicCost : BCC .return
+      JSL PrepareQuakeSpell
+      RTS
 
 .continue
   LDA #$01
   JSL Link_TransformMask : BCC .return
-    STA $02F5 ; Somaria platform flag, no dash.
-
-; .unequip
-;   STZ $5D
-;   ; Restore the shield
-;   LDA $0AAF : STA.l $7EF35A
-;   STZ $02F5
-
-;   %ResetToLinkGraphics()
+    LDA #$01 : STA $02F5 ; Somaria platform flag, no dash.
 
 .return
   RTS
@@ -53,7 +52,7 @@ warnpc $07A6BE
 org $07811A
   JSR Link_HandleDekuTransformation
 
-pullpc                         ; Bank 07 Free Space from minish_form
+pullpc ; Free space in bank07 - all_sprites.asm
 Link_HandleDekuTransformation: 
 {
   ; Check if using Quake Medallion
@@ -78,9 +77,6 @@ org $078926
 org $078932
   Link_HandleChangeInZVelocity_preset:
 
-org $099589
-  AncillaAdd_QuakeSpell:
-
 org $078028
   PlaySFX_Set2:
 
@@ -100,7 +96,6 @@ LinkState_UsingQuake:
   db   5,   5,   5,   5
   db   5,   5,   5,  19
 
-  ; INC.w $0FC1 ; Keep sprites frozen 
   JSR $F514 ; CacheCameraPropertiesIfOutdoors
 
   STZ.b $27 : STZ.b $28 ; Reset recoil X and Y 
@@ -170,11 +165,6 @@ LinkState_UsingQuake:
                 LDA.b #$12 : STA $24
                 LDA.b #$FF : STA $5C
                 LDA.b #$01 : STA $70
-                ; ; Quake Spell, End Quake State happens during Ancilla
-                ; LDY.b #$00 : LDA.b #$1C ; ANCILLA 1C
-                ; JSL AncillaAdd_QuakeSpell
-
-                ; STZ.b $4D : STZ.w $0046
                 ; -----------------------------------------------------
 
 .exit
@@ -183,7 +173,6 @@ LinkState_UsingQuake:
 .special
   DEC $5C 
   JSL DekuLink_HoverBasedOnInput
-  JSR $E8F0  ; HandleIndoorCameraAndDoors
   RTS
 }
 

@@ -46,15 +46,15 @@ print "End of Bunny Hood GFX             ", pc
 ; =========================================================
 ; Bunny Hood Speed Modification
 
+; Link_HandleVelocity_load_subvel
 org $07E330
-JSR Link_CheckForBunnyRun
-CLC
+  JSR Link_CheckForBunnyRun
+  CLC
 
-; org $87FD66
 pullpc
 Link_CheckForBunnyRun:
-JSL LinkState_BunnyHoodRun
-RTS
+  JSL LinkState_BunnyHoodRun
+  RTS
 pushpc
 
 org $20AF20

@@ -324,41 +324,27 @@ pullpc
 ; Based on LinkItem_Quake.allow_quake
 PrepareQuakeSpell:
 {
-  ; Ancilla setup stuff, not necessary
-  ; #_07A680: LDA.w $0C4A
-  ; #_07A683: ORA.w $0C4B
-  ; #_07A686: ORA.w $0C4C
-
-  ; This would set link to strafe mode
-  ; Probably not necessary
-  ; #_07A696: LDA.b #$01
-  ; #_07A698: TSB.b $50
-
   ; TODO: Set a check for the Deku Flower sprite before activating this ability.
 
-  LDA.b #$0A : STA $5D
+  LDA.b #$0A : STA.b $5D ; Set Link to the hover state
+  LDA.b #$00 : STA.b $3D ; Clear the animation timer 
 
-  #_07A69A: LDA #$00
-  #_07A69D: STA.b $3D
+  LDA #$00 : STA.w $031C ; Clear the spin animation gfx 
+  STZ.w $031D ; Clear the spin animation step
+  STZ.w $0324 ; Prevent multiple ancillae from being added
+  STZ.b $46 ; Clear the link damage timer 
 
-  #_07A69F: LDA #$00
-  #_07A6A2: STA.w $031C
-  #_07A6A5: STZ.w $031D
+  ; Set low and high of HOPVZ2
+  ; Usually used as the hopping speed for diagonal jumps
+  LDA.b #$28 : STA.w $0362 : STA.w $0363 
+  STZ.w $0364 ; Clear Z-coordinate for the jump
 
-  #_07A6A8: STZ.w $0324
-
-  #_07A6AB: STZ.b $46
-
-  ; Set the spin and jump animation values.
-  #_07A6AD: LDA.b #$28
-  #_07A6AF: STA.w $0362
-  #_07A6B2: STA.w $0363
-  #_07A6B5: STZ.w $0364
-
-  STZ $70
+  STZ $70 ; Clear bomb drop check flag 
   
   RTL
 }
+
+; =========================================================
 
 HandleCamera:
 {
@@ -374,6 +360,8 @@ HandleCamera:
   RTS
 }
 
+; =========================================================
+
 HandleMovement:
 {
     LDA $F0 : AND #$08 : BEQ .not_up
@@ -382,6 +370,7 @@ HandleMovement:
       LDA #$01 : STA $031C
       LDA #$05 : STA $3D
       STZ $2F
+      ; DEC.b $E8
   .not_up
     LDA $F0 : AND #$04 : BEQ .not_down
       LDA $20 : CLC : ADC #1 : STA $20
@@ -389,6 +378,7 @@ HandleMovement:
       LDA #$02 : STA $031C
       LDA #$05 : STA $3D
       LDA #$02 : STA $2F
+      ; INC.b $E8
   .not_down
     LDA $F0 : AND #$02 : BEQ .not_left
       LDA $22 : CLC : ADC #-1 : STA $22
@@ -396,6 +386,7 @@ HandleMovement:
       LDA #$03 : STA $031C
       LDA #$05 : STA $3D
       LDA #$04 : STA $2F
+      ; DEC.b $E2
   .not_left
     LDA $F0 : AND #$01 : BEQ .not_right
       LDA $22 : CLC : ADC #1 : STA $22
@@ -403,81 +394,79 @@ HandleMovement:
       LDA #$04 : STA $031C
       LDA #$05 : STA $3D
       LDA #$06 : STA $2F
+      ; INC.b $E2
   .not_right
-    LDA.w $22 : STA $0FD8
-    LDA.w $23 : STA $0FD9
-    LDA.w $20 : STA $0FDA
-    LDA.w $21 : STA $0FDB
+    LDA.w $22 : STA $0FD8 : LDA.w $23 : STA $0FD9
+    LDA.w $20 : STA $0FDA : LDA.w $21 : STA $0FDB
     RTS
 }
 
+; =========================================================
+
 DekuLink_HoverBasedOnInput:
 {
-  JSR HandleCamera
+    JSR HandleCamera
 
-  LDA $5C : AND #$1F : BNE .continue_me
-  DEC $24
-.continue_me
-  
-  LDA $5C : BEQ .auto_cancel
+    LDA $5C : AND #$1F : BNE .continue_me
+      DEC $24
+    .continue_me
+    
+    LDA $5C : BEQ .auto_cancel
 
-  JSR HandleMovement
+    JSR HandleMovement
 
-  LDA $70 : BEQ .no_bomb_drop
-  LDA $F0 : AND #%01000000 : BEQ .no_bomb_drop
+    LDA $70 : BEQ .no_bomb_drop
+      LDA $F0 : AND #%01000000 : BEQ .no_bomb_drop
+        LDY.b #$01 : LDA.b #$07 ; ANCILLA 07
+        JSL $09811F ; AncillaAdd_Bomb
+    .no_bomb_drop
 
-  #_07A14F: LDY.b #$01
-  #_07A151: LDA.b #$07 ; ANCILLA 07
-  #_07A153: JSL $09811F ; AncillaAdd_Bomb
+    LDA $F0 : AND #%10000000 : BEQ .no_cancel
 
-.no_bomb_drop
+  .auto_cancel
+    
+    ; Reset LinkState to Default
+    STZ $5D
 
-  LDA $F0 : AND #%10000000 : BEQ .no_cancel
+    #_08B6A5: LDA.b #$01
+    #_08B6A7: STA.w $0AAA
 
-.auto_cancel
-  
-  ; Reset LinkState to Default
-  STZ $5D
+    #_08B6AA: STZ.w $0324
+    #_08B6AD: STZ.w $031C
+    #_08B6B0: STZ.w $031D
 
-  #_08B6A5: LDA.b #$01
-  #_08B6A7: STA.w $0AAA
+    #_08B6B3: STZ.b $50
+    #_08B6B5: STZ.b $3D
 
-  #_08B6AA: STZ.w $0324
-  #_08B6AD: STZ.w $031C
-  #_08B6B0: STZ.w $031D
+    #_08B6B7: STZ.w $0FC1
 
-  #_08B6B3: STZ.b $50
-  #_08B6B5: STZ.b $3D
+    #_08B6BA: STZ.w $011A
+    #_08B6BD: STZ.w $011B
+    #_08B6C0: STZ.w $011C
+    #_08B6C3: STZ.w $011D
 
-  #_08B6B7: STZ.w $0FC1
+  .no_turtle_rock_trigger
+    #_08B6E4: LDY.b #$00
 
-  #_08B6BA: STZ.w $011A
-  #_08B6BD: STZ.w $011B
-  #_08B6C0: STZ.w $011C
-  #_08B6C3: STZ.w $011D
+    #_08B6E6: LDA.b $3C
+    #_08B6E8: BEQ .no_sword_charge
 
-.no_turtle_rock_trigger
-  #_08B6E4: LDY.b #$00
+    #_08B6EA: LDA.b $F0
+    #_08B6EC: AND.b #$80
+    #_08B6EE: TAY
 
-  #_08B6E6: LDA.b $3C
-  #_08B6E8: BEQ .no_sword_charge
+  .no_sword_charge
+    #_08B6EF: STY.b $3A
 
-  #_08B6EA: LDA.b $F0
-  #_08B6EC: AND.b #$80
-  #_08B6EE: TAY
+    #_08B6F1: STZ.b $5E
+    #_08B6F3: STZ.w $0325
+    ; Set height at end of hover
+    ; This makes it so the landing animation timer looks correct
+    ; Floating for a bit, then slowly landing on the ground
+    LDA.b #$12 : STA $24 
+  .no_cancel
 
-.no_sword_charge
-  #_08B6EF: STY.b $3A
-
-  #_08B6F1: STZ.b $5E
-  #_08B6F3: STZ.w $0325
-  ; Set height at end of hover
-  ; This makes it so the landing animation timer looks correct
-  ; Floating for a bit, then slowly landing on the ground
-  LDA.b #$12 : STA $24 
-.no_cancel
-
-  RTL
+    RTL
 }
 
 print "End of mask_routines.asm          ", pc
