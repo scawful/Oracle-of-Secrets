@@ -107,7 +107,7 @@ Sprite_DekuScrubEnemy_Main:
       
       LDA SprTimerA, X : BNE .not_done
         JSR SpawnPeaShot
-        LDA #$40 : STA SprTimerA, X
+        LDA #$80 : STA SprTimerA, X
         INC.w SprAction, X
     .not_done
 
@@ -136,9 +136,11 @@ Sprite_DekuScrubEnemy_Main:
     LDA.w $0D00,X :  STA.b $01
     LDA.w $0D20,X : STA.b $09
     
-    LDA Offspring1_Id : TAY
+    PHX 
+    LDA Offspring1_Id : TAX
     JSR Sprite_SetupHitBox
-    
+    PLX
+
     JSL CheckIfHitBoxesOverlap : BCC .no_dano
       INC.w SprAction, X
  .no_dano
@@ -147,6 +149,14 @@ Sprite_DekuScrubEnemy_Main:
     LDA SprTimerA, X : BNE .not_done
       ; If the pea shot and deku scrub hitboxes intersect
       ; We will go to recoil 
+      PHX 
+      LDA Offspring1_Id : TAX
+      JSR Sprite_SetupHitBox
+      PLX
+      JSL CheckIfHitBoxesOverlap : BCC .not_done2
+        %GotoAction(4)
+        RTS
+      .not_done2
   
       ; However, he may also dodge it and try to attack
       ; So if he gets too close, we go back to hiding
@@ -161,9 +171,15 @@ Sprite_DekuScrubEnemy_Main:
       %StartOnFrame(3)
       %PlayAnimation(3,6,6)
 
+      ; Kill the pea shot
+      PHX
+      LDA Offspring1_Id : TAX
+      STZ.w $0DD0, X
+      PLX
+
       ; Play the spinning animation for a bit before proceeding
       LDA SprTimerA, X : BNE .not_done
-      LDA #$20 : STA SprTimerA, X
+      LDA #$40 : STA SprTimerA, X
         INC.w SprAction, X
     .not_done
       
@@ -177,7 +193,7 @@ Sprite_DekuScrubEnemy_Main:
       %PlayAnimation(8,9,11)
 
       LDA SprTimerA, X : BNE .not_done
-        %GotoAction(0)
+        INC.w SprAction, X
     .not_done
 
       RTS 
