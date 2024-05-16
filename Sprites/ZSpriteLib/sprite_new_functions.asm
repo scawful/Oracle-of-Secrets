@@ -141,6 +141,28 @@ Sprite_BounceTowardPlayer:
 	RTL
 }
 
+; A = Speed
+; TODO: Use Y index for height
+Sprite_FloatTowardPlayer:
+{
+    JSL Sprite_ApplySpeedTowardsPlayer
+
+    ; Update horizontal position
+    JSL Sprite_MoveHoriz
+
+    ; Update vertical position
+    JSL Sprite_MoveVert
+
+    ; Check for tile collisions and adjust if necessary
+    JSL Sprite_CheckTileCollision
+
+    ; Maintain altitude (float effect)
+    LDA #$10 : STA.w SprHeight, X
+    JSL Sprite_MoveAltitude
+
+    RTL
+}
+
 Sprite_BounceFromTileCollision:
 {
 	JSL   Sprite_CheckTileCollision : AND.b #$03 : BEQ ++
