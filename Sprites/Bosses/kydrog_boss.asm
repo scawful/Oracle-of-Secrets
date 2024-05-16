@@ -502,33 +502,30 @@ CheckForNextPhase:
 
   .phase_one
     ; Check for phase two
-    LDA SprHealth,X : CMP.b #$60 : BCC .phase_two
+    LDA SprHealth,X : CMP.b #$20 : BCC .phase_two
     RTS
 
   .phase_two
-    LDA SprHealth,X : CMP.b #$40 : BCC .phase_three
+    LDA SprHealth,X : CMP.b #$20 : BCC .phase_three
     LDA !KydrogPhase : CMP.b #$01 : BEQ .return
-    ; LDA #$80 : STA $0E50, X
+    LDA #$80 : STA $0E50, X
     LDA #$01 : STA $0D80, X
     STA !KydrogPhase
     INC $0DA0, X
-    PHX : JSL $01F4A1 : PLX ; Extinguish torch 
     RTS
 
   .phase_three
     LDA SprHealth,X : CMP.b #$20 : BCC .phase_four
     LDA !KydrogPhase : CMP.b #$02 : BEQ .return
-    ; LDA #$80 : STA $0E50, X
+    LDA #$80 : STA $0E50, X
     LDA #$02 : STA $0D80, X
     STA !KydrogPhase
-    PHX : JSL $01F4A1 : PLX ; Extinguish torch 
     RTS
 
   .phase_four
-    LDA #$80 : STA $0E50, X
+
     LDA #$03 : STA $0D80, X
     STA !KydrogPhase
-    PHX : JSL $01F4A1 : PLX ; Extinguish torch 
   .return
     RTS
   
