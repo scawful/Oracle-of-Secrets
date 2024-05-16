@@ -409,8 +409,6 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(0, 0, 10)
 
     JSL $09EF56 ; Kill friends
-
-    ; Change the palette to the next in the cycle for the leg
     LDA $0DA0, X : INC : CMP.b #$08 : BNE .dontReset
       LDA.b #$00
 
@@ -532,6 +530,18 @@ CheckForNextPhase:
 }
 
 ; =========================================================
+
+; TODO: Use a timer to unfreeze the sprite
+CheckIfFrozen:
+{
+  LDA $0DD0, X : CMP.b #$0B : BNE .not_frozen
+
+  LDA.w $0E10, X : BNE .not_frozen
+    LDA.b #$00 : STA.l $7FFA3C,X
+    LDA.b #$09 : STA.w $0DD0, X
+.not_frozen
+  RTS
+}
 
 ;BA: Boomerang
 ;D1: Damage 1
