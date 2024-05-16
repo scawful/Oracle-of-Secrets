@@ -607,6 +607,15 @@ TargetPositions:
 ; Reused function from TrinexxBreath.
 TrinexxBreath_AltEntry:
 {
+    LDA $1A : AND.b #$07 : BNE .no_adjustment
+    JSL GetRandomInt
+    AND.b #$03
+    TAY
+    LDA SpeedAdjustments, Y : CLC : ADC $0D50, X : STA $0D50, X
+    LDA SpeedAdjustments+4, Y : CLC : ADC $0D40, X : STA $0D40, X
+
+.no_adjustment
+
   JSL Sprite_BounceFromTileCollision
     LDA $1A : AND.b #$03 : BNE .no_shake
       JSL Sprite_IsToRightOfPlayer
@@ -619,7 +628,7 @@ TrinexxBreath_AltEntry:
         CLC : ADC.w .shake_y, Y : STA $0D40, X
 
     JSL Sprite_CheckTileCollision : BEQ .exit
-      JSL Sprite_BounceTowardPlayer
+      JSL Sprite_FloatTowardPlayer
 
   .exit
     RTS
@@ -633,17 +642,9 @@ TrinexxBreath_AltEntry:
   .shake_y
     db  0, -1
 
-  ; .speed_y_high ; bleeds for 2 more values
-  ;   db -1,  0
-
-  ; .speed_x_low ; bleeds for 2 more values
-  ;   db  0,  0
-
-  ; .speed_y_low
-  ;   db -1,  1,  0,  0
-
-  ; .speed_x_high
-  ;   db  0,  0, -1,  0
+    SpeedAdjustments:
+    db  $02, $FE, $04, $FC  ; Adjustments for X speeds (small positive, small negative)
+    db  $01, $FF, $02, $FE  ; Adjustments for Y speeds (small positive, small negative)
 }
 
 Sprite_Twinrova_FireAttack:
