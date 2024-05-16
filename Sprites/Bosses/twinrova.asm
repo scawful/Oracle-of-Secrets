@@ -47,7 +47,7 @@ Sprite_Twinrova_Long:
     JSL Sprite_CheckActive : BCC .SpriteIsNotActive 
 
     JSR Sprite_Twinrova_CheckIfDead
-    JSR Sprite_Twinrova_Main       
+    JSR Sprite_Twinrova_Main
 
   .SpriteIsNotActive
     PLB
@@ -60,7 +60,7 @@ Sprite_Twinrova_CheckIfDead:
 {
     LDA SprAction, X : CMP.b #$0A : BEQ .not_dead
       ; If health is negative, set back to zero
-      LDA SprHealth, X : CMP.b #$44 : BCC .health_not_negative
+      LDA SprHealth, X : CMP.b #$C3 : BCC .health_not_negative
         LDA.b #$00 : STA SprHealth, X
 
     .health_not_negative
@@ -68,6 +68,7 @@ Sprite_Twinrova_CheckIfDead:
         PHX 
         LDA.b #$04 : STA $0DD0, X     ; Kill sprite boss style
         LDA.b #$0A : STA SprAction, X ; Go to Twinrova_Dead stage
+        LDA.b #$10 : STA.w $0D90, X
         PLX
   .not_dead
     RTS
@@ -84,8 +85,10 @@ Sprite_Twinrova_Prep:
       STZ.w $0DD0, X
 
   .prep_twinrova
-    LDA.b #$40 : STA SprHealth, X ; Health
+    LDA.b #$5A : STA SprHealth, X ; Health
+    LDA.b #$80 : STA $0CAA, X
     LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
+    LDA $0E60, X : AND.b #$BF : STA $0E60, X ; Not invincible 
 
     %SetSpriteSpeedX(15)
     %SetSpriteSpeedX(15)
@@ -756,27 +759,6 @@ TrinexxIce_Pool:
     db $35, $35, $35, $35
 }
 
-; org $09B34F
-; Garnish_TrinexxIce:
-; {
-;   ; special animation 0x0C
-;   LDA $7FF90E, X : LSR #2 : AND.b #$03 : TAY
-;   LDA TrinexxIce_Pool_properties, Y : STA $04
-;   JSR Garnish_PrepOamCoord
-
-;   LDA $00       : STA ($90), Y
-;   LDA $02 : INY : STA ($90), Y
-  
-;   LDA $7FF90E, X : LSR #5 : PHX : TAX
-;   LDA TrinexxIce_Pool_chr, X : INY : STA ($90), Y
-;   LDA.b #$35 : ORA $04 : PLX
-  
-;   JSR Garnish_SetOamPropsAndLargeSize
-;   JMP.w $B495 ; CheckDamageToLink
-; }
-
-; warnpc $09B3B8
-
 pullpc
 
 AddPitHazard:
@@ -807,71 +789,73 @@ AddPitHazard:
 
 
 Ganon_SpawnFallingTilesOverlord:
-#_1D90D0: LDY.b #$07
+{
+  #_1D90D0: LDY.b #$07
 
-.next_slot
-#_1D90D2: LDA.w $0B00,Y
-#_1D90D5: BEQ .free_slot
+  .next_slot
+  #_1D90D2: LDA.w $0B00,Y
+  #_1D90D5: BEQ .free_slot
 
-#_1D90D7: DEY
-#_1D90D8: BPL .next_slot
+  #_1D90D7: DEY
+  #_1D90D8: BPL .next_slot
 
-#_1D90DA: RTS
+  #_1D90DA: RTS
 
-;---------------------------------------------------------------------------------------------------
+  ;----------------------------------------------------------
 
-.free_slot
-#_1D90DB: LDA.w $0EC0,X
-#_1D90DE: CMP.b #$04
-#_1D90E0: BCS .dont_spawn
+  .free_slot
+  #_1D90DB: LDA.w $0EC0,X
+  #_1D90DE: CMP.b #$04
+  #_1D90E0: BCS .dont_spawn
 
-#_1D90E2: INC.w $0EC0,X
+  #_1D90E2: INC.w $0EC0,X
 
-#_1D90E5: PHX
+  #_1D90E5: PHX
 
-#_1D90E6: TAX
+  #_1D90E6: TAX
 
-#_1D90E7: LDA.w .overlord_type,X
-#_1D90EA: STA.w $0B00,Y
+  #_1D90E7: LDA.w .overlord_type,X
+  #_1D90EA: STA.w $0B00,Y
 
-#_1D90ED: LDA.w .position_x,X
-#_1D90F0: STA.w $0B08,Y
+  #_1D90ED: LDA.w .position_x,X
+  #_1D90F0: STA.w $0B08,Y
 
-#_1D90F3: LDA.b $23
-#_1D90F5: STA.w $0B10,Y
+  #_1D90F3: LDA.b $23
+  #_1D90F5: STA.w $0B10,Y
 
-#_1D90F8: LDA.w .position_y,X
-#_1D90FB: STA.w $0B18,Y
+  #_1D90F8: LDA.w .position_y,X
+  #_1D90FB: STA.w $0B18,Y
 
-#_1D90FE: LDA.b $21
-#_1D9100: STA.w $0B20,Y
+  #_1D90FE: LDA.b $21
+  #_1D9100: STA.w $0B20,Y
 
-#_1D9103: LDA.b #$00
-#_1D9105: STA.w $0B28,Y
-#_1D9108: STA.w $0B30,Y
+  #_1D9103: LDA.b #$00
+  #_1D9105: STA.w $0B28,Y
+  #_1D9108: STA.w $0B30,Y
 
-#_1D910B: PLX
+  #_1D910B: PLX
 
-.dont_spawn
-#_1D910C: RTS
+  .dont_spawn
+  #_1D910C: RTS
 
-.overlord_type
-#_1D90C4: db $0C ; OVERLORD 0C
-#_1D90C5: db $0D ; OVERLORD 0D
-#_1D90C6: db $0E ; OVERLORD 0E
-#_1D90C7: db $0F ; OVERLORD 0F
+  .overlord_type
+  #_1D90C4: db $0C ; OVERLORD 0C
+  #_1D90C5: db $0D ; OVERLORD 0D
+  #_1D90C6: db $0E ; OVERLORD 0E
+  #_1D90C7: db $0F ; OVERLORD 0F
 
-.position_x
-#_1D90C8: db $18
-#_1D90C9: db $D8
-#_1D90CA: db $D8
-#_1D90CB: db $18
+  .position_x
+  #_1D90C8: db $18
+  #_1D90C9: db $D8
+  #_1D90CA: db $D8
+  #_1D90CB: db $18
 
-.position_y
-#_1D90CC: db $20
-#_1D90CD: db $20
-#_1D90CE: db $D0
-#_1D90CF: db $D0
+  .position_y
+  #_1D90CC: db $20
+  #_1D90CD: db $20
+  #_1D90CE: db $D0
+  #_1D90CF: db $D0
+}
 
 ; =========================================================
 
@@ -1136,7 +1120,7 @@ Follower_BasicMover:
     LDX.w $02CF
     LDA.w $1A28, X : STA.b $00 ; Follower XL
     LDA.w $1A3C, X : STA.b $01 ; Follower XH
-    LDA.w $1A00, X : STA.b $02 ; Follower YL
+    LDA.w $1A00, X : SEC : SBC.b #$10 : STA.b $02 ; Follower YL
     LDA.w $1A14, X : STA.b $03 ; Follower YH
 
     ; Dismiss the follower and spawn Twinrova
