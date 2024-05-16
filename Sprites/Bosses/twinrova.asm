@@ -471,56 +471,138 @@ Sprite_Twinrova_Main:
   }
 }
 
-RageModeMove:
-{
-  LDA $0E : CMP.b #$0020 : BCS +
-  CLC
-  LDA $0F : CMP.b #$0020 : BCS +
-    ; The sprite is too close to the player 
-
-+
-
-  ; Determine horizontal movement based on player's position
-  JSL Sprite_IsToRightOfPlayer
-  BEQ .MoveLeft
-  LDA #$F8           ; Speed to the right if player is to the right
-  STA SprXSpeed, X
-  LDA #$04 : STA SprXRound, X
-  BRA .AdjustY
-
-.MoveLeft:
-  LDA #$08           ; Speed to the left if player is not to the right (negative speed)
-  STA SprXSpeed, X
-  LDA #$FC : STA SprXRound, X
-
-.AdjustY:
-  ; Determine vertical movement based on player's position
-  JSL Sprite_IsBelowPlayer
-  BEQ .MoveUp
-  LDA #$F8           ; Speed downwards if player is below
-  STA SprYSpeed, X
-  LDA #$04 : STA SprXRound, X
-  BRA .UpdatePosition
-
-.MoveUp:
-  LDA #$08           ; Speed upwards if player is not below (negative speed)
-  STA SprYSpeed, X
-  LDA #$FC : STA SprXRound, X
-
-.UpdatePosition:
-  ; Apply calculated speeds to update position
-  JSL Sprite_Move
-
-  ; Check and handle collisions, if necessary
-  JSL Sprite_BounceFromTileCollision
-
-  RTS
-}
 
 ; =========================================================
-; TODO: Create a new parent sprite for the Twinrova attacks
-; so that the velocity and movement aren't applied to the 
-; parent sprite itself.
+; Handles dynamic floaty movement for Twinrova
+; =========================================================
+
+RageModeMove:
+{
+    ; If timer is zero, determine a new movement mode
+    LDA SprTimerA, X : BEQ .DetermineMovementMode
+
+    ; Execute current movement mode
+    LDA SprMiscA, X
+    CMP #$01 : BEQ .MoveTowardsPlayer
+    CMP #$02 : BEQ .RandomStrafe
+    CMP #$03 : BEQ .RandomDodge
+    CMP #$04 : BEQ .StayInPlace
+
+    JMP .UpdatePosition
+
+.DetermineMovementMode
+    ; Determine random movement mode with weighted probabilities
+    JSL GetRandomInt
+    AND.b #$0F
+    CMP.b #$05
+    BCC .SetMoveTowardsPlayer  ; 0-5 -> Predictive movement towards player
+    CMP.b #$0A
+    BCC .SetRandomStrafe       ; 6-10 -> Random strafe
+    CMP.b #$0E
+    BCC .SetRandomDodge        ; 11-14 -> Random dodge
+    ; 15 -> Stay in place
+    LDA.b #$04 : STA SprMiscA, X
+    LDA.b #$30 : STA SprTimerA, X  ; Set timer for 48 frames
+    RTS
+    BRA .StayInPlace
+
+.SetMoveTowardsPlayer
+    LDA.b #$01 : STA SprMiscA, X
+    LDA.b #$30 : STA SprTimerA, X  ; Set timer for 48 frames
+    BRA .MoveTowardsPlayer
+
+.SetRandomStrafe
+    LDA.b #$02 : STA SprMiscA, X
+    LDA.b #$30 : STA SprTimerA, X  ; Set timer for 48 frames
+    BRA .RandomStrafe
+
+.SetRandomDodge
+    LDA.b #$03 : STA SprMiscA, X
+    LDA.b #$30 : STA SprTimerA, X  ; Set timer for 48 frames
+    BRA .RandomDodge
+
+.MoveTowardsPlayer
+    ; Predictive movement towards player with altitude increase
+    JSL Sprite_DirectionToFacePlayer
+    JSL Sprite_ApplySpeedTowardsPlayer
+    LDA.b #$10 : STA.w SprHeight, X ; Set height
+    BRA .UpdatePosition
+
+.RandomStrafe
+    JSR DoRandomStrafe
+    BRA .UpdatePosition
+
+.RandomDodge
+    ; Random dodge with controlled movement
+    JSL GetRandomInt
+    AND.b #$03
+    TAY
+    LDA VelocityOffsets+4, Y : STA SprXSpeed, X
+    INY
+    LDA VelocityOffsets, Y : STA SprYSpeed, X
+    LDA.b #$10 : STA.w SprHeight, X ; Set height
+    BRA .UpdatePosition
+
+.StayInPlace
+    ; Stay in place to prepare for attack or other action
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+    LDA.b #$10 : STA.w SprHeight, X ; Set height
+    BRA .UpdatePosition
+
+.Evasive
+    ; Evasive action if too close to player
+    JSL GetRandomInt
+    AND.b #$03
+    TAY
+    LDA VelocityOffsets, Y : EOR #$FF : INC : STA SprXSpeed, X
+    INY
+    LDA VelocityOffsets+4, Y : EOR #$FF : INC : STA SprYSpeed, X
+    LDA.b #$10 : STA.w SprHeight, X ; Set height
+    BRA .UpdatePosition
+
+.UpdatePosition
+    ; Handle floaty movement with controlled altitude
+    LDA.w SprHeight, X : CMP #$10 : BNE .CheckGrounded
+      DEC.w SprHeight, X
+      DEC.w $0F90, X
+
+.CheckGrounded
+    ; Move sprite
+    JSL Sprite_Move
+
+    ; Check for tile collision and bounce if necessary
+    JSL Sprite_BounceFromTileCollision
+
+    ; Reduce the state timer and reset state if necessary
+    DEC.w SprTimerA, X
+    RTS
+}
+
+DoRandomStrafe:
+{
+    ; Random strafe with controlled movement
+    JSL GetRandomInt
+    AND.b #$03
+    TAY
+    LDA VelocityOffsets, Y : STA SprXSpeed, X
+    INY
+    LDA VelocityOffsets+4, Y : STA SprYSpeed, X
+    LDA.b #$10 : STA.w SprHeight, X ; Set height
+    RTS
+}
+
+; Velocity offsets table
+VelocityOffsets:
+    db $08, $F8, $08, $F8  ; X speeds (right, left, down, up)
+    db $04, $FC, $04, $FC  ; Y speeds (down, up, right, left)
+
+; Target positions table (relative to the player)
+TargetPositions:
+    dw $0040, $FFC0  ; Right, Left
+    dw $0040, $FFC0  ; Down, Up
+
+; =========================================================
 
 ; Reused function from TrinexxBreath.
 TrinexxBreath_AltEntry:
