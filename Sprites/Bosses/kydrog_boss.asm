@@ -566,7 +566,7 @@ KydrogBoss_Set_Damage:
   RTS
 
 .damageProperties
-  db $00, $01, $01, $01, $01, $01, $01, $00, $04, $01, $00, $01, $02, $01, $00, $01
+  db $00, $01, $01, $01, $01, $01, $01, $00, $04, $01, $00, $01, $03, $01, $00, $01
       ;BA   D1   D2   D3   D4   D5   AR   HS   BM   SA   PD   FR   IR   BB   ET   QU
 }
 
