@@ -170,7 +170,7 @@ Sprite_Twinrova_Main:
 
   ; -------------------------------------------------------
   ; 0x00 
-  ; TODO: Separate MoveState phases into action 0 and 1
+  ; TODO: Play the cutscene and transition from Maiden sprite
   Twinrova_Init:
   {
       %GotoAction(01)
@@ -181,6 +181,7 @@ Sprite_Twinrova_Main:
   ; 0x01
   Twinrova_MoveState:
   {
+      STZ.w $0360
       LDA SprHealth, X : CMP.b #$20 : BCS .phase_1
         ; -------------------------------------------
         ; Phase 2
@@ -215,9 +216,20 @@ Sprite_Twinrova_Main:
         RTS
     ++
 
-      JSL Sprite_IsBelowPlayer : TYA : BNE .MoveBackwards ; If 1, 
-        %GotoAction(2) ; MoveForwards
+    JSL GetRandomInt : AND.b #$0F : BEQ .random_strafe
+        JSL Sprite_IsBelowPlayer : TYA : BNE .MoveBackwards
+        %GotoAction(2) ; Move Forwards
         RTS
+    .random_strafe
+        JSL GetRandomInt : AND.b #$01 : BEQ .strafe_left
+            LDA #$10 : STA SprXSpeed, X
+            %GotoAction(2) ; Move Forwards with strafe
+            RTS
+        .strafe_left
+            LDA #$F0 : STA SprXSpeed, X
+            %GotoAction(2) ; Move Forwards with strafe
+            RTS
+
     .MoveBackwards
       %GotoAction(3) ; MoveBackwards
       RTS
@@ -235,8 +247,11 @@ Sprite_Twinrova_Main:
       PLX 
 
       JSL Sprite_DamageFlash_Long
-      JSL Sprite_BounceTowardPlayer
+
+      LDA #$10  ; Set speed
+      JSL Sprite_FloatTowardPlayer
       JSL Sprite_CheckTileCollision
+      JSL Sprite_PlayerCantPassThrough
 
       %GotoAction(1)
       RTS
@@ -254,8 +269,11 @@ Sprite_Twinrova_Main:
       PLX 
 
       JSL Sprite_DamageFlash_Long
-      JSL Sprite_BounceTowardPlayer
+
+      LDA #$20
+      JSL Sprite_FloatTowardPlayer
       JSL Sprite_CheckTileCollision
+      JSL Sprite_PlayerCantPassThrough
 
       %GotoAction(1)
       RTS
@@ -268,10 +286,9 @@ Sprite_Twinrova_Main:
       %StartOnFrame(7)
       %Twinrova_Attack()
 
-      PHX 
-      JSL Sprite_CheckDamageFromPlayerLong
-      %DoDamageToPlayerSameLayerOnContact()
-      PLX 
+      LDA #$01 : STA $0360
+
+      JSL Sprite_PlayerCantPassThrough
 
       LDA $0CAA : AND.b #$03 : STA $0CAA
       LDA SprTimerD, X : BNE +
@@ -294,6 +311,7 @@ Sprite_Twinrova_Main:
       %Twinrova_Ready()
 
       JSR Sprite_Twinrova_FireAttack
+      JSL Sprite_PlayerCantPassThrough
 
       ; Random chance to release fireball
       JSL GetRandomInt : AND.b #$3F : BNE ++
@@ -314,6 +332,7 @@ Sprite_Twinrova_Main:
       %Twinrova_Ready()
 
       JSR Sprite_Twinrova_IceAttack
+      JSL Sprite_PlayerCantPassThrough
 
       LDA.w SprTimerD, X : BNE +
         %GotoAction(1)
@@ -328,13 +347,56 @@ Sprite_Twinrova_Main:
       %StartOnFrame(10)
       %Twinrova_Hurt()
       
-
       JSL Sprite_DamageFlash_Long
+      JSL Sprite_PlayerCantPassThrough
       
-      LDA.w SprTimerD, X : BNE +
-        %GotoAction(1)
-    +
-      RTS
+       ; Check if hurt timer is zero, if not keep flashing hurt animation
+      LDA.w SprTimerD, X : BNE .HurtAnimation
+
+      ; Determine dodge or retaliate behavior
+      JSL GetRandomInt
+      AND.b #$07  ; 1 in 8 chance for dodge/retaliate
+      BNE .DodgeOrRetaliate
+      BRA .ResumeNormalState
+
+      .DodgeOrRetaliate
+          ; Determine whether to dodge or retaliate
+          JSL GetRandomInt
+          AND.b #$01
+          BEQ .PerformDodge
+          BRA .PerformRetaliate
+
+      .PerformDodge
+          JSR DoRandomStrafe
+          LDA.b #$20 : STA.w SprTimerA, X  ; Set timer for dodge duration
+          LDA.b #$02 : STA SprMiscA, X  ; Set state to random strafe
+          RTS
+
+      .PerformRetaliate
+          ; Immediate retaliation with fire or ice attack
+          JSL GetRandomInt
+          AND.b #$01
+          BEQ .FireAttack
+          BRA .IceAttack
+
+      .FireAttack
+          LDA.b #$20 : STA.w SprTimerD, X
+          STZ $AC  ; Set fire attack
+          %GotoAction(4) ; Prepare Attack
+          RTS
+
+      .IceAttack
+          LDA.b #$20 : STA.w SprTimerD, X
+          LDA.b #$01 : STA $AC  ; Set ice attack
+          %GotoAction(4) ; Prepare Attack
+          RTS
+
+      .ResumeNormalState
+          %GotoAction(1)  ; Resume normal movement state
+          RTS
+
+      .HurtAnimation
+        RTS
   }
 
   ; -------------------------------------------------------
@@ -349,10 +411,15 @@ Sprite_Twinrova_Main:
       %DoDamageToPlayerSameLayerOnContact()
       PLX 
 
-      JSL GetRandomInt : AND.b #$1F : BNE ++
+      JSL GetRandomInt : AND.b #$3F : BNE ++
         JSR AddPitHazard
         JSR Ganon_SpawnFallingTilesOverlord
-    ++
+      ++
+
+      ; Random chance to release fireball
+      JSL GetRandomInt : AND.b #$3F : BNE +++
+        JSL Sprite_SpawnFireball
+      +++
 
       JSL Sprite_DamageFlash_Long
       JSR RageModeMove
@@ -376,11 +443,14 @@ Sprite_Twinrova_Main:
       %DoDamageToPlayerSameLayerOnContact()
       PLX 
 
-      JSL GetRandomInt : AND.b #$3F : BNE ++
-        JSL $1DE612 ; Sprite_SpawnLightning
-        LDA #$30
-        JSL Sprite_ProjectSpeedTowardsPlayer
-      ++
+      JSL Sprite_IsBelowPlayer 
+      CPY #$01 : BEQ .not_below
+        JSL GetRandomInt : AND.b #$3F : BNE ++
+          JSL $1DE612 ; Sprite_SpawnLightning
+          LDA #$30
+          JSL Sprite_ProjectSpeedTowardsPlayer
+        ++
+      .not_below
 
       JSL Sprite_DamageFlash_Long
       JSR RageModeMove
@@ -395,7 +465,7 @@ Sprite_Twinrova_Main:
   ; 0x0A
   Twinrova_Dead:
   {
-      %StartOnFrame(10)
+      %StartOnFrame(11)
       %Twinrova_Hurt()
       RTS
   }
