@@ -43,8 +43,43 @@
 
 ; =========================================================
 
+TimeLabels:
+  dw "00", "01", "02", "03", "04", "05", "06", "07", "08"
+  dw "09", "10", "11", "12", "13", "14", "15", "16", "17"
+  dw "18", "19", "20", "21", "22", "23", "24", "25", "26"
+  dw "27", "28", "29", "30", "31", "32", "33", "34", "35"
+  dw "36", "37", "38", "39", "40", "41", "42", "43", "44"
+  dw "45", "46", "47", "48", "49", "50", "51", "52", "53"
+  dw "54", "55", "56", "57", "58", "59"
+
 PlaytimeLabel:
-  dw "PLAYTIME:_"
+  dw "TIME:_____"
+
+Menu_DrawHourDigit:
+{
+  SEP #$30
+  LDA.l $7EE000 
+  ASL A : ASL A
+  TAX
+  REP #$30
+  LDA.w TimeLabels, X : STA.w $1692+$12
+  INX : INX
+  LDA.w TimeLabels, X : STA.w $1692+$14
+  RTS
+}
+
+Menu_DrawMinuteDigit:
+{
+  SEP #$30
+  LDA.l $7EE001 
+  ASL A : ASL A
+  TAX
+  REP #$30
+  LDA.w TimeLabels, X : STA.w $1692+$18
+  INX : INX
+  LDA.w TimeLabels, X : STA.w $1692+$1A
+  RTS
+}
 
 Menu_DrawPlaytimeLabel:
 {
@@ -55,17 +90,16 @@ Menu_DrawPlaytimeLabel:
   STA.w $1692, X 
   DEX : DEX : BPL .draw2
 
-  ; TODO: Draw the current time based on the time system ram.
-  ; ; Starting at 0 = $2570 we draw the hours 
-  ; ; Get hours 
-  ; LDA $7EE000 : CLC : ADC #$2570 
-  ; STA.w $1692+#$12 ; First digit of hour 
-  ; STA.w $1692+#$14 ; Second digit of hour 
+  ; Draw the current time based on the time system RAM
+  JSR Menu_DrawHourDigit
 
-  ; ; Get minutes
-  ; LDA $7EE001 : CLC : ADC #$2570
-  ; STA.w $1692+#$16  ; First digit of minute
-  ; STA.w $1692+#$18 ; Second digit of minute
+  ; Draw colon
+  LDA.w #$256B
+  STA.w $1692+$16
+
+  ; LDX #$18
+  JSR Menu_DrawMinuteDigit
+
 
   RTS
 }
