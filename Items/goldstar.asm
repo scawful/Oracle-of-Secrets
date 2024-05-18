@@ -321,18 +321,18 @@ pullpc
 Link_OAM_Actually:
 {
     REP #$20
-    LDA $0202 : AND #$00FF : CMP #$0003 : BEQ +
-    LDA $839B,Y
+    LDA.w $0202 : AND.w #$00FF : CMP.w #$0003 : BEQ +
+    LDA $839B,Y ; LinkOAM_WeaponTiles
     RTL
   + ; $22D892
-    LDA $839B,Y : CMP #$221A : BEQ ++
+    LDA $839B,Y : CMP.w #$221A : BEQ ++
     RTL
   ++ ; $22D89B
-    LDA GoldstarOrHookshot : AND #$00FF : CMP #$0002 : BEQ +++
-    LDA $839B,Y
+    LDA GoldstarOrHookshot : AND.w #$00FF : CMP.w #$0002 : BEQ +++
+    LDA $839B,Y ; LinkOAM_WeaponTiles
     RTL
   +++ ; $22D8AA
-    LDA #$241E
+    LDA.w #$241E
     RTL
 }
 
@@ -359,7 +359,7 @@ HookshotChain_AncillaDraw:
       LDA Hookshot_box_size_y, X
       JML $08BFB5 ; AncillaDraw_HookshotChain  
   ++
-    JSR Routine_22E5A0 ; CheckAndClearAncillaId has set the timer in A
+    JSR CheckForSomariaBlock ; CheckAndClearAncillaId has set the timer in A
 
     SEP #$30
     ; Compare rotation progress
@@ -825,7 +825,7 @@ CheckAndClearAncillaId:
 ; TODO: Replace the JMP $E5DB with the proper code 
 ; to handle the somaria block case.
 
-Routine_22E5A0:
+CheckForSomariaBlock:
 {
     SEP #$30
     JMP CheckForSomariaBlast ; $EE80
@@ -899,7 +899,7 @@ CheckForSomariaBlast:
       ;JMP $EEC0
 
   ++++++ ; 22EEBA
-    JMP Routine_22E5A0_22E5A5 ; $E5A5
+    JMP CheckForSomariaBlock_22E5A5 ; $E5A5
 }
 
 ; =========================================================
