@@ -173,11 +173,14 @@ Sprite_Twinrova_Main:
 
   ; -------------------------------------------------------
   ; 0x00 
-  ; TODO: Play the cutscene and transition from Maiden sprite
   Twinrova_Init:
   {
-      %GotoAction(01)
-      RTS
+      %ShowUnconditionalMessage($123)
+      LDA.w SprTimerD, X : BNE +
+        LDA.b #$20 : STA.w SprTimerD, X
+        %GotoAction(1)
+      +
+        RTS
   }
 
   ; -------------------------------------------------------
@@ -1282,6 +1285,11 @@ SpritePrep_Blind_PrepareBattle:
 
 warnpc $1DA0B1
 
+org $01B3E1
+  RoomDraw_BombableFloor:
+    LDA.b $A0
+    CMP.w #$00AD
+
 ; =========================================================
 ; TODO: Decide if we want to use this garnish in the fight.
 ; Currently unused.
@@ -1346,7 +1354,7 @@ BlindLaser_SpawnTrailGarnish:
     PLX
 
   .exit
-    RTS
+    RTL
 }
 
 pullpc
