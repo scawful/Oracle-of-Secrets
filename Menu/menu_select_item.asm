@@ -18,7 +18,7 @@ Menu_ItemIndex:
 Menu_AddressIndex:
   db $7EF340 ; Bow
   db $7EF341 ; Boomerang
-  db $7EF342 ; Hookshot 
+  db $7EF342 ; Hookshot / Goldstar
   db $7EF343 ; Bombs
   db $7EF344 ; Powder 
   db $7EF35C ; Bottle 1
@@ -30,10 +30,10 @@ Menu_AddressIndex:
   db $7EF353 ; Magic Mirror
   db $7EF35D ; Bottle 2
 
-  db $7EF34C ; shovel 7EF34F
-  db $7EF34E ; Book 
+  db $7EF34C ; Ocarina ; shovel 7EF34F
+  db $7EF34E ; Book of Secrets
   db $7EF350 ; Cane of Somaria / Cane of Byrna
-  db $7EF351 ; Fishing rod
+  db $7EF351 ; Fishing Rod / Portal Rod
   db $7EF34D ; Roc's Feather 
   db $7EF35E ; Bottle 3
 
@@ -222,7 +222,7 @@ Menu_AddressLong:
   db $53 ; Magic Mirror
   db $5D ; Bottle 2
 
-  db $4C ; shovel 4F
+  db $4C ; Ocarina (formerly shovel 4F)
   db $4E ; Book 
   db $50 ; Cane of Somaria / Cane of Byrna
   db $51 ; Fishing Rod
@@ -236,7 +236,6 @@ Menu_AddressLong:
   db $52 ; Stone Mask
   db $5F ; Bottle #4
 
-; TODO: Fix all of these routines.
 GotoNextItem_Local:
 {
   ; Load our currently equipped item, and move to the next one
@@ -244,7 +243,7 @@ GotoNextItem_Local:
   LDA $0202 : INC A : CMP.b #$18 : BCC .dont_reset
   LDA.b #$01
 
-.dont_reset
+  .dont_reset
   ; Otherwise try to equip the item in the next slot
   STA $0202
   RTS
@@ -252,8 +251,8 @@ GotoNextItem_Local:
 
 DoWeHaveThisItem_Override:
 {
-  LDY $0202 : LDX.w Menu_AddressLong, Y
-  LDA.l $7EF33F, X : BNE .have_this_item
+  LDY.w $0202 : LDX.w Menu_AddressLong-1, Y 
+  LDA.l $7EF300, X : CMP.b #$00 : BNE .have_this_item
     CLC
     RTL
   .have_this_item
@@ -271,39 +270,48 @@ TryEquipNextItem_Override:
 
 SearchForEquippedItem_Override:
 {
+  PHB : PHK : PLB
   SEP   #$30
- 
-  LDY $0202 : LDX.w Menu_AddressLong-1, Y
-  LDA.l $7EF33F, X : CMP.b #$00 : BNE .item_available
-    ; In this case we have no equippable items
-    STZ $0202 : STZ $0203 : STZ $0204
 
-    .we_have_that_item
-    RTL
+  LDY.b #$18
+  .next_check
+  LDX.w Menu_AddressLong-1, Y
+  LDA.l $7EF300, X : CMP.b #$00 : BNE .item_available
+  DEY : BPL .next_check
+
+  ; In this case we have no equippable items
+  STZ $0202 : STZ $0203 : STZ $0204
+
+  .we_have_that_item
+  REP #$30
+  PLB
+  RTL
 
   .item_available
   ; Is there an item currently equipped (in the HUD slot)?
-  LDA $0202 : BNE .alreadyEquipped
-    ; If not, set the equipped item to the Bow and Arrow 
-    ; (even if we don't actually have it)
-    LDA.b #$01 : STA $0202
+  LDA.w $0202 : BNE .alreadyEquipped
+  ; If not, set the equipped item to the Bow and Arrow 
+  ; (even if we don't actually have it)
+  LDA.b #$01 : STA $0202
 
   .alreadyEquipped
-
-    ; Checks to see if we actually have that item
-    ; We're done if we have that item
+  JMP .exit
   .keep_looking
-    JSR GotoNextItem_Local
+  JSR GotoNextItem_Local
   JSL DoWeHaveThisItem_Override : BCC .keep_looking
   BCS .we_have_that_item
-    
-  JMP TryEquipNextItem_Override
+  JSR TryEquipNextItem_Override
+  .exit
+  
+  REP #$30
+  PLB 
+  RTL
 }
 
 pushpc 
 
 org $0DDEB0
-DoWeHaveThisItem:
+ItemMenu_CheckForOwnership:
 {
   JSL DoWeHaveThisItem_Override
   RTS
@@ -312,9 +320,7 @@ DoWeHaveThisItem:
 org $0DE399
 SearchForEquippedItem:
 {
-  PHB : PHK : PLB
   JSL SearchForEquippedItem_Override
-  PLB 
   RTS
 }
 warnpc $0DE3C7
