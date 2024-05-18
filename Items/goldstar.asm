@@ -1025,6 +1025,16 @@ MaybeUploadBirdGraphicsToOam:
     JML $008B50
 }
 
+ApplyGoldstarDamageClass:
+{
+  ; If the goldstar is active swap in the damage class
+  LDA GoldstarOrHookshot : CMP #$02 : BNE .return
+    LDA #$03
+.return
+  JSL $06ED25 ; .apply
+  RTL
+}
+
 pushpc
 
 ; =========================================================
@@ -1032,6 +1042,9 @@ pushpc
 
 org $07AB25
   JSL CheckForSwitchToGoldstar
+
+org $06ECF2
+  JSL ApplyGoldstarDamageClass
 
 org $07AB3A ;$07AB40
   JSL BeginGoldstarOrHookshot
