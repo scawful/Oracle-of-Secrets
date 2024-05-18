@@ -83,6 +83,8 @@ Sprite_DekuScrubEnemy_Main:
       %StartOnFrame(13)
       %PlayAnimation(13,13,1)
 
+      JSL Sprite_PlayerCantPassThrough
+
       JSL Sprite_IsBelowPlayer : TYA
         CMP #$00 : BNE .is_below_player
           ; Check if the player is too close
@@ -104,6 +106,8 @@ Sprite_DekuScrubEnemy_Main:
   {
       %StartOnFrame(0)
       %PlayAnimation(0,2,8)
+
+      JSL Sprite_PlayerCantPassThrough
       
       LDA SprTimerA, X : BNE .not_done
         JSR SpawnPeaShot
@@ -126,6 +130,8 @@ Sprite_DekuScrubEnemy_Main:
   {
     %StartOnFrame(0)
     %PlayAnimation(0,0,4)
+
+    JSL Sprite_PlayerCantPassThrough
 
     LDA.w $0D10,X : STA.b $00
     LDA.w $0D30,X  : STA.b $08
@@ -171,6 +177,8 @@ Sprite_DekuScrubEnemy_Main:
       %StartOnFrame(3)
       %PlayAnimation(3,6,6)
 
+      JSL Sprite_PlayerCantPassThrough
+
       ; Kill the pea shot
       PHX
       LDA Offspring1_Id : TAX
@@ -192,6 +200,8 @@ Sprite_DekuScrubEnemy_Main:
       %StartOnFrame(8)
       %PlayAnimation(8,9,11)
 
+      JSL Sprite_PlayerCantPassThrough
+
       LDA SprTimerA, X : BNE .not_done
         INC.w SprAction, X
     .not_done
@@ -205,6 +215,7 @@ Sprite_DekuScrubEnemy_Main:
     %StartOnFrame(7)
     %PlayAnimation(7,7,1)
 
+    JSL Sprite_PlayerCantPassThrough
 
     RTS 
   }
