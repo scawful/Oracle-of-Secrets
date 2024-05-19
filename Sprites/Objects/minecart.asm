@@ -85,7 +85,7 @@ Sprite_Minecart_Long:
 Sprite_Minecart_Prep:
 {
     PHB : PHK : PLB
-    
+    STZ.w SprMiscG, X
     ; If the subtype is > 4, then it's a dummy cart
     LDA SprSubtype, X : CMP.b #$04 : BCC .continue
       LDA SprSubtype, X : SEC : SBC.b #$04 : STA SprSubtype, X
@@ -179,6 +179,7 @@ endmacro
 
 HandleLiftAndToss:
 {
+  JSR CheckIfPlayerIsOn : BCC .not_tossing
     LDA.w !LinkCarryOrToss : CMP.b #$02 : BNE .not_tossing
       ; Check links facing direction $2F and apply velocity
       LDA $2F : CMP.b #$00 : BEQ .toss_north
@@ -197,29 +198,30 @@ HandleLiftAndToss:
       .toss_west
         LDA.b #!MinecartSpeed : STA SprXSpeed, X
       .continue
-      LDA #$0F : STA SprTimerB, X
+      LDA #$01 : STA SprMiscG, X
+      LDA #$20 : STA SprTimerC, X
   .not_tossing
     JSL Sprite_CheckIfLifted
-    JSL Sprite_MoveXyz
+    JSL Sprite_Move
     RTS
 }
 
 HandleTossedCart:
 {
-  LDA SprHeight, X : BEQ .not_tossed
-
-    LDA.w SprTimerB, X : BNE .wait_a_bit
-      ; Decrease the height towards the ground 
+  LDA.w SprMiscG, X : BEQ .not_tossed
+    LDA.w SprHeight, X : BEQ .low_enough
       DEC.w SprHeight, X
-  .wait_a_bit
-    ; If the cart is on the ground, stop tossing
-    LDA SprHeight, X : BNE .not_tossed
+      RTS
+    .low_enough
+
+    LDA.w SprTimerC, X : BNE .not_tossed
+
       STZ.w SprMiscG, X
       STZ.w SprYSpeed, X
       STZ.w SprXSpeed, X
       STZ.w SprHeight, X
-      .not_tossed
-      RTS
+  .not_tossed
+    RTS
 
 }
 
@@ -243,10 +245,7 @@ Sprite_Minecart_Main:
   Minecart_WaitHoriz:
   {
       %PlayAnimation(0,1,8)
-      
-      JSR HandleTossedCart
       LDA SprTimerA, X : BNE .not_ready
-
       LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
         JSR CheckIfPlayerIsOn : BCC .not_ready
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
@@ -272,6 +271,7 @@ Sprite_Minecart_Main:
       .not_ready
     .lifting
       JSR HandleLiftAndToss
+      JSR HandleTossedCart
       RTS
   }
   
@@ -280,10 +280,7 @@ Sprite_Minecart_Main:
   Minecart_WaitVert:
   {
       %PlayAnimation(2,3,8)
-      JSR HandleTossedCart
-      
       LDA SprTimerA, X : BNE .not_ready
-
       LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
         JSR CheckIfPlayerIsOn : BCC .not_ready
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
@@ -309,6 +306,8 @@ Sprite_Minecart_Main:
       .not_ready
     .lifting
       JSR HandleLiftAndToss
+      JSR HandleTossedCart
+
       RTS 
   }
 
