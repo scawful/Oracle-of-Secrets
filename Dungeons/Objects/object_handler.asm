@@ -7,11 +7,30 @@ org $018264 ; Object ID 0x32
   dw ExpandedObject2
 
 org $0182A8 ; Object ID 0x54
-  dw SpriteBodyObjects                                       
+  dw SpriteBodyObjects
 
 ; RoomDraw_WeirdUglyPot 
 org $018650 ; Object ID 230
   dw HeavyPot
+
+org $07DC54
+  TileBehavior_Nothing:
+
+org $07D938
+#_07D938: dw TileBehavior_Nothing ; 0xB0 UW
+#_07D93A: dw TileBehavior_Nothing ; 0xB1 UW
+#_07D93C: dw TileBehavior_Nothing ; 0xB2 UW
+#_07D93E: dw TileBehavior_Nothing ; 0xB3 UW
+#_07D940: dw TileBehavior_Nothing ; 0xB4 UW
+#_07D942: dw TileBehavior_Nothing ; 0xB5 UW
+#_07D944: dw TileBehavior_Nothing ; 0xB6 UW
+#_07D946: dw TileBehavior_Nothing ; 0xB7 UW
+#_07D948: dw TileBehavior_Nothing ; 0xB8 UW
+#_07D94A: dw TileBehavior_Nothing ; 0xB9 UW
+#_07D94C: dw TileBehavior_Nothing ; 0xBA UW
+#_07D94E: dw TileBehavior_Nothing ; 0xBB UW
+#_07D950: dw TileBehavior_Nothing ; 0xBC UW
+#_07D952: dw TileBehavior_Nothing   
 
 ; Bank01 Free Space
 org $01B53C
