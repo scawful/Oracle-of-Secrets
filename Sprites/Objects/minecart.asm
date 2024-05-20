@@ -861,6 +861,12 @@ FLWBGFXBH       = $7E0AF3
 ; Index from 0x00 to 0x13 for follower animation step index. Used for reading data.
 FLWANIMIR       = $7E02CF
 
+; Cache of follower properties
+FOLLOWCYL       = $7EF3CD
+FOLLOWCYH       = $7EF3CE
+FOLLOWCXL       = $7EF3CF
+FOLLOWCXH       = $7EF3D0
+
 FollowerDraw_CalculateOAMCoords:
 {
   REP #$20
@@ -888,7 +894,55 @@ FollowerDraw_CalculateOAMCoords:
 
 MinecartFollower_Top:
 {
+    SEP #$30
     JSR FollowerDraw_CalculateOAMCoords
+    LDA #$08
+    JSL OAM_AllocateFromRegionB
+
+    LDA $02CF : TAY 
+    LDA .start_index, Y : STA $06
+    
+    PHX
+    LDX .nbr_of_tiles, Y ; amount of tiles -1
+    LDY.b #$00
+  .nextTile
+
+    PHX                 ; Save current Tile index
+    TXA : CLC : ADC $06 ; Add Animation Index Offset
+    PHA                 ; Keep the value with animation index offset
+
+    ASL A : TAX
+
+    REP #$20
+
+    LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+    AND.w #$0100 : STA $0E
+    INY
+    LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+    CLC   : ADC #$0010 : CMP.w #$0100
+    SEP   #$20
+    BCC   .on_screen_y
+
+    LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
+    STA   $0E
+  .on_screen_y
+
+    PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
+    INY
+    LDA .chr, X : STA ($90), Y
+    INY
+    LDA .properties, X : STA ($90), Y
+
+    PHY 
+        
+    TYA : LSR #2 : TAY
+        
+    LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+        
+    PLY : INY
+    PLX : DEX : BPL .nextTile
+
+    PLX
 
     RTS
 
@@ -928,207 +982,52 @@ MinecartFollower_Bottom:
     SEP #$30
 
     JSR FollowerDraw_CalculateOAMCoords
-    
-    LDA.w .chr+0, X : STA.b ($90), Y
-    INY 
+    LDA #$08
+    JSL OAM_AllocateFromRegionC
+    LDA $02CF : TAY 
+    LDA .start_index, Y : STA $06
 
-    LDA.w .chr+1, X : STA.b ($90), Y
+    PHX
+    LDX .nbr_of_tiles, Y ; amount of tiles -1
+    LDY.b #$00
+  .nextTile
+
+    PHX ; Save current Tile Index?
+    TXA : CLC : ADC $06 ; Add Animation Index Offset
+    PHA ; Keep the value with animation index offset?
+
+    ASL A : TAX
+
+    REP #$20
+
+    LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+    AND.w #$0100 : STA $0E
     INY
+    LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+    CLC   : ADC #$0010 : CMP.w #$0100
+    SEP   #$20
+    BCC   .on_screen_y
+
+    LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
+    STA   $0E
+  .on_screen_y
+
+    PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
+    INY
+    LDA .chr, X : STA ($90), Y
+    INY
+    LDA .properties, X : STA ($90), Y
 
     PHY 
-      TYA : SEC : SBC.b #$04 
-      LSR #2 : TAY
-      LDA.b #$00 : ORA.b $75 : STA.b ($92), Y
-    PLY
+        
+    TYA : LSR #2 : TAY
+        
+    LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+        
+    PLY : INY
+    PLX : DEX : BPL .nextTile
 
-    #_09AACE: REP #$20
-
-    #_09AAD0: LDA.b $02
-    #_09AAD2: CLC
-    #_09AAD3: ADC.w #$0008
-    #_09AAD6: STA.b $02
-
-    #_09AAD8: STZ.b $74
-
-    #_09AADA: SEP #$20
-
-    #_09AADC: JSR FollowerDraw_CalculateOAMCoords
-
-    #_09AADF: LDA.w .chr+2,X
-    #_09AAE2: STA.b ($90),Y
-
-    #_09AAE4: INY
-
-    #_09AAE5: LDA.w .chr+3,X
-    #_09AAE8: STA.b ($90),Y
-
-    #_09AAEA: INY
-
-    #_09AAEB: PHY
-
-      #_09AAEC: TYA
-      #_09AAED: SEC
-      #_09AAEE: SBC.b #$04
-
-      #_09AAF0: LSR A
-      #_09AAF1: LSR A
-      #_09AAF2: TAY
-
-      #_09AAF3: LDA.b #$00
-      #_09AAF5: ORA.b $75
-      #_09AAF7: STA.b ($92),Y
-
-    #_09AAF9: PLY
-
-    #_09AB34: REP #$30
-
-    ; #_09AB36: PHY
-
-    ; #_09AB37: LDA.b $04
-    ; #_09AB39: AND.w #$00FF
-    ; #_09AB3C: ASL A
-    ; #_09AB3D: ASL A
-    ; #_09AB3E: ASL A
-    ; #_09AB3F: TAY
-
-    ; #_09AB40: LDA.l $7EF3CC
-    ; #_09AB44: AND.w #$00FF
-    ; #_09AB47: ASL A
-    ; #_09AB48: TAX
-
-    ; #_09AB49: TYA
-    ; #_09AB4A: CLC
-    ; #_09AB4B: ADC.w .char_data_offset,X
-    ; #_09AB4E: TAX
-
-    ; #_09AB4F: LDA.w .x_offsets+0,X
-    ; #_09AB52: CLC
-    ; #_09AB53: ADC.b $06
-    ; #_09AB55: STA.b $00
-
-    ; #_09AB57: LDA.w .x_offsets+2,X
-    ; #_09AB5A: CLC
-    ; #_09AB5B: ADC.b $08
-    ; #_09AB5D: STA.b $02
-
-    ; #_09AB5F: PLY
-
-    #_09AB60: SEP #$30
-
-    #_09AB62: JSR FollowerDraw_CalculateOAMCoords
-
-    #_09AB65: LDA.b #$20
-    #_09AB67: STA.b ($90),Y
-
-    #_09AB69: INY
-
-    #_09AB6A: LDA.b $04
-    #_09AB6C: ASL A
-    #_09AB6D: CLC
-    #_09AB6E: ADC.b $04
-    #_09AB70: TAX
-
-    #_09AB71: LDA.w .properties+0,X
-    #_09AB74: STA.w $0AE8
-
-    #_09AB77: LDA.w .properties+2,X
-    #_09AB7A: AND.b #$F0
-    #_09AB7C: ORA.b $72
-    #_09AB7E: ORA.b $65
-    #_09AB80: STA.b ($90),Y
-
-    #_09AB82: INY
-    #_09AB83: PHY
-
-      #_09AB84: TYA
-      #_09AB85: SEC
-      #_09AB86: SBC.b #$04
-      #_09AB88: LSR A
-      #_09AB89: LSR A
-      #_09AB8A: TAY
-
-      #_09AB8B: LDA.b #$02
-      #_09AB8D: ORA.b $75
-      #_09AB8F: STA.b ($92),Y
-
-    #_09AB91: PLY
-
-    .bomb_or_chest
-    ; #_09AB92: REP #$30
-    ; #_09AB94: PHY
-
-    ; #_09AB95: LDA.b $04
-    ; #_09AB97: AND.w #$00FF
-    ; #_09AB9A: ASL A
-    ; #_09AB9B: ASL A
-    ; #_09AB9C: ASL A
-    ; #_09AB9D: TAY
-
-    ; #_09AB9E: LDA.l $7EF3CC
-    ; #_09ABA2: AND.w #$00FF
-    ; #_09ABA5: ASL A
-    ; #_09ABA6: TAX
-
-    ; #_09ABA7: TYA
-    ; #_09ABA8: CLC
-    ; #_09ABA9: ADC.w .char_data_offset,X
-    ; #_09ABAC: TAX
-
-    ; #_09ABAD: LDA.w .x_offsets+4,X
-    ; #_09ABB0: CLC
-    ; #_09ABB1: ADC.b $06
-    ; #_09ABB3: CLC
-    ; #_09ABB4: ADC.w #$0008
-    ; #_09ABB7: STA.b $00
-
-    ; #_09ABB9: LDA.w .x_offsets+6,X
-    ; #_09ABBC: CLC
-    ; #_09ABBD: ADC.b $08
-    ; #_09ABBF: STA.b $02
-
-    ; #_09ABC1: PLY
-    ; #_09ABC2: SEP #$30
-
-    #_09ABC4: JSR FollowerDraw_CalculateOAMCoords
-
-    #_09ABC7: LDA.b #$22
-    #_09ABC9: STA.b ($90),Y
-
-    #_09ABCB: INY
-
-    #_09ABCC: LDA.b $04
-    #_09ABCE: ASL A
-    #_09ABCF: CLC
-    #_09ABD0: ADC.b $04
-    #_09ABD2: TAX
-
-    #_09ABD3: LDA.w .properties+1,X
-    #_09ABD6: STA.w $0AEA
-
-    #_09ABD9: LDA.w .properties+2,X
-    #_09ABDC: AND.b #$0F
-
-    #_09ABDE: ASL A
-    #_09ABDF: ASL A
-    #_09ABE0: ASL A
-    #_09ABE1: ASL A
-
-    #_09ABE2: ORA.b $72
-    #_09ABE4: ORA.b $65
-    #_09ABE6: STA.b ($90),Y
-
-    #_09ABE8: INY
-
-    #_09ABE9: TYA
-    #_09ABEA: SEC
-    #_09ABEB: SBC.b #$04
-    #_09ABED: LSR A
-    #_09ABEE: LSR A
-    #_09ABEF: TAY
-
-    #_09ABF0: LDA.b #$02
-    #_09ABF2: ORA.b $75
-    #_09ABF4: STA.b ($92),Y
+    PLX
 
     RTS
 
@@ -1165,13 +1064,10 @@ MinecartFollower_Bottom:
 
 DrawMinecartFollower:
 {
-  LDA POSX  : STA $05  
-  LDA POSXH : STA $06  
-  LDA POSY  : STA $07  
-  LDA POSYH : STA $08  
+  JSL $099EFC
 
-  ; JSR FollowerDraw_CachePosition
-  ; JSR MinecartFollower_Top
+  JSR FollowerDraw_CachePosition
+  JSR MinecartFollower_Top
 
   JSR FollowerDraw_CachePosition
   JSR MinecartFollower_Bottom
@@ -1182,6 +1078,7 @@ DrawMinecartFollower:
 FollowerDraw_CachePosition:
 {
   LDX.b #$00
+
   LDA.w $1A00, X : STA.b $00
   LDA.w $1A14, X : STA.b $01
   LDA.w $1A28, X : STA.b $02
@@ -1231,6 +1128,16 @@ FollowerDraw_CachePosition:
   LDA $02 : SEC : SBC $E2 : STA $08
   
   SEP #$20
+
+  #_09AA85: LDA.w $02D7
+  #_09AA88: INC A
+  #_09AA89: CMP.b #$03
+  #_09AA8B: BNE .set_repri
+
+  #_09AA8D: LDA.b #$00
+
+  .set_repri
+  #_09AA8F: STA.w $02D7
 
   LDA $02D7 : ASL #2 : STA $05
   TXA : CLC : ADC $05 : TAX
