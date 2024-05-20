@@ -825,22 +825,456 @@ CheckIfPlayerIsOn:
 }
 
 
-; FollowerDraw_Minecart:
-; {
-;   JSL Minecart_DrawTop
-;   JSL Minecart_DrawBottom
-;   RTL
-; }
+POSY            = $7E0020
+POSYH           = $7E0021
+POSX            = $7E0022
+POSXH           = $7E0023
 
-; pushpc
+; 20 steps of animation and movement caching for followers
+FOLLOWERYL      = $7E1A00
+FOLLOWERYH      = $7E1A14
 
-; org $09A41F
-; Follower_Minecart:
-; {
+FOLLOWERXL      = $7E1A28
+FOLLOWERXH      = $7E1A3C
 
-; }
+FOLLOWERZ       = $7E1A50
+FOLLOWERLAYER   = $7E1A64
 
-; pullpc
+; Follower head/body gfx offsets
+FLWHO           = $7E0AE8
+FLWHOH          = $7E0AE9
+FLWBO           = $7E0AEA
+FLWBOH          = $7E0AEB
+
+; Follower head
+FLWHGFXT        = $7E0AEC
+FLWHGFXTH       = $7E0AED
+FLWHGFXB        = $7E0AEE
+FLWHGFXBH       = $7E0AEF
+
+; Follower body
+FLWBGFXT        = $7E0AF0
+FLWBGFXTH       = $7E0AF1
+FLWBGFXB        = $7E0AF2
+FLWBGFXBH       = $7E0AF3
+
+; Index from 0x00 to 0x13 for follower animation step index. Used for reading data.
+FLWANIMIR       = $7E02CF
+
+FollowerDraw_CalculateOAMCoords:
+{
+  REP #$20
+  LDA.b $02 : STA.b ($90),Y
+  INY
+
+  CLC : ADC.w #$0080
+  CMP.w #$0180 : BCS .off_screen
+
+  LDA.b $02 : AND.w #$0100 : STA.b $74
+  LDA.b $00 : STA.b ($90),Y
+
+  CLC : ADC.w #$0010
+  CMP.w #$0100 : BCC .on_screen
+
+.off_screen:
+  LDA.w #$00F0 : STA.b ($90),Y
+
+.on_screen:
+  SEP #$20
+  INY
+  RTS
+}
+
+
+MinecartFollower_Top:
+{
+    JSR FollowerDraw_CalculateOAMCoords
+
+    RTS
+
+  .start_index:
+      db $00, $02, $04, $06
+  .nbr_of_tiles:
+      db 1, 1, 1, 1
+  .x_offsets:
+      dw -8, 8
+      dw -8, 8
+      dw -8, 8
+      dw -8, 8
+  .y_offsets:
+      dw -12, -12
+      dw -11, -11
+      dw -8, -8
+      dw -7, -7
+  .chr:
+      db $40, $40
+      db $40, $40
+      db $42, $42
+      db $42, $42
+  .properties:
+      db $3D, $7D
+      db $3D, $7D
+      db $3D, $7D
+      db $3D, $7D
+  .sizes:
+      db $02, $02
+      db $02, $02
+      db $02, $02
+      db $02, $02
+}
+
+MinecartFollower_Bottom:
+{
+    SEP #$30
+
+    JSR FollowerDraw_CalculateOAMCoords
+    
+    LDA.w .chr+0, X : STA.b ($90), Y
+    INY 
+
+    LDA.w .chr+1, X : STA.b ($90), Y
+    INY
+
+    PHY 
+      TYA : SEC : SBC.b #$04 
+      LSR #2 : TAY
+      LDA.b #$00 : ORA.b $75 : STA.b ($92), Y
+    PLY
+
+    #_09AACE: REP #$20
+
+    #_09AAD0: LDA.b $02
+    #_09AAD2: CLC
+    #_09AAD3: ADC.w #$0008
+    #_09AAD6: STA.b $02
+
+    #_09AAD8: STZ.b $74
+
+    #_09AADA: SEP #$20
+
+    #_09AADC: JSR FollowerDraw_CalculateOAMCoords
+
+    #_09AADF: LDA.w .chr+2,X
+    #_09AAE2: STA.b ($90),Y
+
+    #_09AAE4: INY
+
+    #_09AAE5: LDA.w .chr+3,X
+    #_09AAE8: STA.b ($90),Y
+
+    #_09AAEA: INY
+
+    #_09AAEB: PHY
+
+      #_09AAEC: TYA
+      #_09AAED: SEC
+      #_09AAEE: SBC.b #$04
+
+      #_09AAF0: LSR A
+      #_09AAF1: LSR A
+      #_09AAF2: TAY
+
+      #_09AAF3: LDA.b #$00
+      #_09AAF5: ORA.b $75
+      #_09AAF7: STA.b ($92),Y
+
+    #_09AAF9: PLY
+
+    #_09AB34: REP #$30
+
+    ; #_09AB36: PHY
+
+    ; #_09AB37: LDA.b $04
+    ; #_09AB39: AND.w #$00FF
+    ; #_09AB3C: ASL A
+    ; #_09AB3D: ASL A
+    ; #_09AB3E: ASL A
+    ; #_09AB3F: TAY
+
+    ; #_09AB40: LDA.l $7EF3CC
+    ; #_09AB44: AND.w #$00FF
+    ; #_09AB47: ASL A
+    ; #_09AB48: TAX
+
+    ; #_09AB49: TYA
+    ; #_09AB4A: CLC
+    ; #_09AB4B: ADC.w .char_data_offset,X
+    ; #_09AB4E: TAX
+
+    ; #_09AB4F: LDA.w .x_offsets+0,X
+    ; #_09AB52: CLC
+    ; #_09AB53: ADC.b $06
+    ; #_09AB55: STA.b $00
+
+    ; #_09AB57: LDA.w .x_offsets+2,X
+    ; #_09AB5A: CLC
+    ; #_09AB5B: ADC.b $08
+    ; #_09AB5D: STA.b $02
+
+    ; #_09AB5F: PLY
+
+    #_09AB60: SEP #$30
+
+    #_09AB62: JSR FollowerDraw_CalculateOAMCoords
+
+    #_09AB65: LDA.b #$20
+    #_09AB67: STA.b ($90),Y
+
+    #_09AB69: INY
+
+    #_09AB6A: LDA.b $04
+    #_09AB6C: ASL A
+    #_09AB6D: CLC
+    #_09AB6E: ADC.b $04
+    #_09AB70: TAX
+
+    #_09AB71: LDA.w .properties+0,X
+    #_09AB74: STA.w $0AE8
+
+    #_09AB77: LDA.w .properties+2,X
+    #_09AB7A: AND.b #$F0
+    #_09AB7C: ORA.b $72
+    #_09AB7E: ORA.b $65
+    #_09AB80: STA.b ($90),Y
+
+    #_09AB82: INY
+    #_09AB83: PHY
+
+      #_09AB84: TYA
+      #_09AB85: SEC
+      #_09AB86: SBC.b #$04
+      #_09AB88: LSR A
+      #_09AB89: LSR A
+      #_09AB8A: TAY
+
+      #_09AB8B: LDA.b #$02
+      #_09AB8D: ORA.b $75
+      #_09AB8F: STA.b ($92),Y
+
+    #_09AB91: PLY
+
+    .bomb_or_chest
+    ; #_09AB92: REP #$30
+    ; #_09AB94: PHY
+
+    ; #_09AB95: LDA.b $04
+    ; #_09AB97: AND.w #$00FF
+    ; #_09AB9A: ASL A
+    ; #_09AB9B: ASL A
+    ; #_09AB9C: ASL A
+    ; #_09AB9D: TAY
+
+    ; #_09AB9E: LDA.l $7EF3CC
+    ; #_09ABA2: AND.w #$00FF
+    ; #_09ABA5: ASL A
+    ; #_09ABA6: TAX
+
+    ; #_09ABA7: TYA
+    ; #_09ABA8: CLC
+    ; #_09ABA9: ADC.w .char_data_offset,X
+    ; #_09ABAC: TAX
+
+    ; #_09ABAD: LDA.w .x_offsets+4,X
+    ; #_09ABB0: CLC
+    ; #_09ABB1: ADC.b $06
+    ; #_09ABB3: CLC
+    ; #_09ABB4: ADC.w #$0008
+    ; #_09ABB7: STA.b $00
+
+    ; #_09ABB9: LDA.w .x_offsets+6,X
+    ; #_09ABBC: CLC
+    ; #_09ABBD: ADC.b $08
+    ; #_09ABBF: STA.b $02
+
+    ; #_09ABC1: PLY
+    ; #_09ABC2: SEP #$30
+
+    #_09ABC4: JSR FollowerDraw_CalculateOAMCoords
+
+    #_09ABC7: LDA.b #$22
+    #_09ABC9: STA.b ($90),Y
+
+    #_09ABCB: INY
+
+    #_09ABCC: LDA.b $04
+    #_09ABCE: ASL A
+    #_09ABCF: CLC
+    #_09ABD0: ADC.b $04
+    #_09ABD2: TAX
+
+    #_09ABD3: LDA.w .properties+1,X
+    #_09ABD6: STA.w $0AEA
+
+    #_09ABD9: LDA.w .properties+2,X
+    #_09ABDC: AND.b #$0F
+
+    #_09ABDE: ASL A
+    #_09ABDF: ASL A
+    #_09ABE0: ASL A
+    #_09ABE1: ASL A
+
+    #_09ABE2: ORA.b $72
+    #_09ABE4: ORA.b $65
+    #_09ABE6: STA.b ($90),Y
+
+    #_09ABE8: INY
+
+    #_09ABE9: TYA
+    #_09ABEA: SEC
+    #_09ABEB: SBC.b #$04
+    #_09ABED: LSR A
+    #_09ABEE: LSR A
+    #_09ABEF: TAY
+
+    #_09ABF0: LDA.b #$02
+    #_09ABF2: ORA.b $75
+    #_09ABF4: STA.b ($92),Y
+
+    RTS
+
+  .start_index:
+      db $00, $02, $04, $06
+  .nbr_of_tiles:
+      db 1, 1, 1, 1
+  .x_offsets:
+      dw -8, 8
+      dw -8, 8
+      dw -8, 8
+      dw -8, 8
+  .y_offsets:
+      dw 4, 4
+      dw 5, 5
+      dw 8, 8
+      dw 9, 9
+  .chr:
+      db $60, $60
+      db $60, $60
+      db $62, $62
+      db $62, $62
+  .properties:
+      db $3D, $7D
+      db $3D, $7D
+      db $3D, $7D
+      db $3D, $7D
+  .sizes:
+      db $02, $02
+      db $02, $02
+      db $02, $02
+      db $02, $02
+}
+
+DrawMinecartFollower:
+{
+  LDA POSX  : STA $05  
+  LDA POSXH : STA $06  
+  LDA POSY  : STA $07  
+  LDA POSYH : STA $08  
+
+  ; JSR FollowerDraw_CachePosition
+  ; JSR MinecartFollower_Top
+
+  JSR FollowerDraw_CachePosition
+  JSR MinecartFollower_Bottom
+
+  RTS
+}
+
+FollowerDraw_CachePosition:
+{
+  LDX.b #$00
+  LDA.w $1A00, X : STA.b $00
+  LDA.w $1A14, X : STA.b $01
+  LDA.w $1A28, X : STA.b $02
+  LDA.w $1A3C, X : STA.b $03
+  LDA.w $1A64, X : STA.b $05
+
+  ; -------------------------
+  #_09A95B: AND.b #$20
+  #_09A95D: LSR A
+  #_09A95E: LSR A
+  #_09A95F: TAY
+
+  #_09A960: LDA.b $05
+  #_09A962: AND.b #$03
+  #_09A964: STA.b $04
+
+  #_09A966: STZ.b $72
+  ; Vanilla game would check some priority and collision
+  ; variables based on the follower here and manipulate $72
+  ; if the player was immobile. 
+  
+  CLC : ADC $04 : STA $04
+  TYA : CLC : ADC $04 : STA $04
+  ; -------------------------
+  
+  REP #$20
+  LDA $0FB3 : AND.w #$00FF : ASL A : TAY
+  LDA $20 : CMP $00 : BEQ .check_priority_for_region
+                      BCS .use_region_b
+      BRA .use_region_a
+  .check_priority_for_region
+    LDA $05 : AND.w #$0003 : BNE .use_region_b
+    .use_region_a
+      LDA.w .oam_region_offsets_a, Y
+      BRA   .set_region
+    .use_region_b
+      LDA.w .oam_region_offsets_b, Y
+
+  .set_region
+
+  PHA
+  
+  LSR #2 : CLC : ADC.w #$0A20 : STA $92
+  PLA    : CLC : ADC.w #$0800 : STA $90
+  
+  LDA $00 : SEC : SBC $E8 : STA $06
+  LDA $02 : SEC : SBC $E2 : STA $08
+  
+  SEP #$20
+
+  LDA $02D7 : ASL #2 : STA $05
+  TXA : CLC : ADC $05 : TAX
+  
+  REP #$20
+  
+  LDA $06 : CLC : ADC.w #$0010 : STA $00
+  LDA $08 : STA $02
+  STZ $74
+  
+  SEP #$20
+
+  RTS
+
+  .oam_region_offsets_a
+    dw $0170
+    dw $00C0
+
+  .oam_region_offsets_b
+    dw $01C0
+    dw $0110
+}
+
+
+CheckForMinecartFollowerDraw:
+{
+  PHB : PHK : PLB
+  LDA.l $7EF3CC : CMP.b #$0B : BNE .not_minecart
+    JSR DrawMinecartFollower
+    
+  .not_minecart
+    LDA.b #$10
+    STA.b $5E
+    PLB 
+    RTL
+}
+
+pushpc
+
+; Follower_OldManUnused
+org $09A41F
+  JSL CheckForMinecartFollowerDraw
+
+pullpc
 
 ; =========================================================
 ; Draw the portion of the cart which is behind the player
@@ -851,19 +1285,16 @@ Sprite_Minecart_DrawTop:
     LDA #$08
     JSL OAM_AllocateFromRegionB
 
-    LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+    LDA $0DC0, X : CLC : ADC $0D90, X : TAY ; Animation Frame
     LDA .start_index, Y : STA $06
 
-
     PHX
-    LDX   .nbr_of_tiles, Y ;amount of tiles -1
+    LDX .nbr_of_tiles, Y ; amount of tiles -1
     LDY.b #$00
   .nextTile
 
     PHX ; Save current Tile Index?
-        
     TXA : CLC : ADC $06 ; Add Animation Index Offset
-
     PHA ; Keep the value with animation index offset?
 
     ASL A : TAX
@@ -895,7 +1326,6 @@ Sprite_Minecart_DrawTop:
     LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
         
     PLY : INY
-        
     PLX : DEX : BPL .nextTile
 
     PLX
