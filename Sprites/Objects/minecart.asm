@@ -1005,13 +1005,33 @@ DrawMinecartFollower:
 {
   JSL $099EFC
 
+  LDX $012B 
+  LDA .direction_to_anim, X
+  STA $02CF
+
   JSR FollowerDraw_CachePosition
   JSR MinecartFollower_Top
-
-  JSR FollowerDraw_CachePosition
   JSR MinecartFollower_Bottom
 
+  LDA.b $11 : BNE .dont_spawn
+    LDA !LinkInCart : BEQ .dont_spawn
+      LDA.b #$A3 
+      JSL Sprite_SpawnDynamically
+      TYX
+      JSL Sprite_SetSpawnedCoords
+      LDA POSY : STA SprY, X
+      LDA POSYH : STA SprYH, X
+      LDA POSX : STA SprX, X
+      LDA POSXH : STA SprXH, X
+      LDA.w !MinecartDirection : CLC : ADC.b #$04 : STA.w SprSubtype, X
+      
+      JSL Sprite_Minecart_Prep
+      LDA.b #$00 : STA.l $7EF3CC
+  .dont_spawn
   RTS
+
+.direction_to_anim
+  db $02, $00, $02, $00
 }
 
 FollowerDraw_CachePosition:
