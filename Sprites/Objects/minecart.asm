@@ -1128,10 +1128,21 @@ CheckForMinecartFollowerDraw:
     JSR DrawMinecartFollower
     
   .not_minecart
-    LDA.b #$10
-    STA.b $5E
+    ; LDA.b #$10
+    ; STA.b $5E
     PLB 
     RTL
+}
+
+CheckForFollowerInterroomTransition:
+{
+  PHB : PHK : PLB
+  LDA.w !LinkInCart : BEQ .not_in_cart
+    LDA.b #$0B : STA $7EF3CC
+  .not_in_cart
+  PLB
+  JSL $01873A ; Underworld_LoadRoom
+  RTL
 }
 
 pushpc
@@ -1139,6 +1150,11 @@ pushpc
 ; Follower_OldManUnused
 org $09A41F
   JSL CheckForMinecartFollowerDraw
+  RTS
+
+; Module07_02_01_LoadNextRoom
+org $028A5B
+  JSL CheckForFollowerInterroomTransition
 
 pullpc
 
