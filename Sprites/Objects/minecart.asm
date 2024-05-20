@@ -1303,45 +1303,6 @@ Sprite_Minecart_DrawBottom:
 
     PLX
 
-    ; Debug box which draws in the location of the hitbox from
-    ; the code in HandleTileDirections / SetTileLookupPosBasedOnDirection
-    ; The latter of which is an experimental function
-    ; {
-    ;   LDA $0FD8 : STA $00
-    ;   LDA $0FDA : STA $02
-
-    ;   PHY
-    ;   JSL Sprite_PrepOamCoord
-    ;   PLY
-
-    ;   REP #$20
-
-    ;   LDA   $00 : STA ($90), Y
-    ;   AND.w #$0100 : STA $0E
-    ;   INY
-    ;   LDA   $02 : STA ($90), Y
-    ;   CLC   : ADC #$0010 : CMP.w #$0100
-    ;   SEP   #$20
-    ;   BCC   .on_screen_y2
-
-    ;   LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-    ;   STA   $0E
-    ;   .on_screen_y2
-
-    ;   INY
-    ;   LDA #$3A : STA ($90), Y
-    ;   INY
-    ;   LDA #$B9 : STA ($90), Y
-
-    ;   PHY 
-          
-    ;   TYA : LSR #2 : TAY
-          
-    ;   LDA #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-          
-    ;   PLY : INY
-    ; }
-
     RTS
 
   .start_index
