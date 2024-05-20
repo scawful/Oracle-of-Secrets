@@ -426,59 +426,12 @@ Sprite_Minecart_Main:
 }
 
 ; =========================================================
-; The purpose of this routine is to determine the direction
-; the sprite is facing and then adjust the X and Y positions
-; of the tile interaction lookup based on that direction.
-; If implemented correctly this would make sure the sprite
-; stays centered on the tracks when it makes corner turns.
-; Currently, depending on where the tile is placed the 
-; cart may make a turn too early and appear to be off center.
 
 North = $00
 East  = $01
 South = $02
 West  = $03
 
-SetTileLookupPosBasedOnDirection:
-{
-    ; Based on the direction of the Minecart, adjust the 
-    ; lookup position to be in front of the sprite
-    LDA.w !MinecartDirection : CMP.b #$00 : BEQ .north
-                               CMP.b #$01 : BEQ .east
-                               CMP.b #$02 : BEQ .south
-                               CMP.b #$03 : BEQ .west
-
-  .north
-    LDA.w SprY, X : SEC : SBC.b #$01 : STA.b $00
-    LDA.w SprX, X : STA.b $02
-    JMP   .return
-  .east
-    LDA.w SprX, X : CLC : ADC.b #$01 : STA.b $03
-    LDA.w SprY, X : STA.b $00
-    JMP   .return
-  .south
-    LDA.w SprY, X : SEC : SBC.b #$01 : STA.b $00
-    LDA.w SprX, X : STA.b $02
-    JMP   .return
-  .west
-    LDA.w SprX, X : AND #$F8 : SEC : SBC.b #$01 : STA.b $03
-    LDA.w SprY, X : STA.b $00
-
-  .return
-    LDA.w SprYH, X : STA.b $01
-    LDA.w SprXH, X : STA.b $03
-
-    LDA.w SprX,  X : STA $0FD8
-    LDA.w SprXH, X : STA $0FD9
-    LDA.w SprY,  X : STA $0FDA
-    LDA.w SprYH, X : STA $0FDB
-
-    RTS
-}
-
-; =========================================================
-
-print "HandleTileDirections ", pc
 HandleTileDirections:
 {
     LDA SprTimerA, X : BEQ +
