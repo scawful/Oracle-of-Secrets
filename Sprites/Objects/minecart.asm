@@ -833,7 +833,6 @@ FollowerDraw_CalculateOAMCoords:
   RTS
 }
 
-
 MinecartFollower_Top:
 {
     SEP #$30
@@ -852,15 +851,14 @@ MinecartFollower_Top:
     PHX                 ; Save current Tile index
     TXA : CLC : ADC $06 ; Add Animation Index Offset
     PHA                 ; Keep the value with animation index offset
-
     ASL A : TAX
 
     REP #$20
 
-    LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+    LDA $02 : CLC : ADC .x_offsets, X : STA ($90), Y
     AND.w #$0100 : STA $0E
     INY
-    LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+    LDA $00 : CLC : ADC .y_offsets, X : STA ($90), Y
     CLC   : ADC #$0010 : CMP.w #$0100
     SEP   #$20
     BCC   .on_screen_y
@@ -937,15 +935,14 @@ MinecartFollower_Bottom:
     PHX ; Save current Tile Index?
     TXA : CLC : ADC $06 ; Add Animation Index Offset
     PHA ; Keep the value with animation index offset?
-
     ASL A : TAX
 
     REP #$20
 
-    LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+    LDA $02 : CLC : ADC .x_offsets, X : STA ($90), Y
     AND.w #$0100 : STA $0E
     INY
-    LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+    LDA $00 : CLC : ADC .y_offsets, X : STA ($90), Y
     CLC   : ADC #$0010 : CMP.w #$0100
     SEP   #$20
     BCC   .on_screen_y
