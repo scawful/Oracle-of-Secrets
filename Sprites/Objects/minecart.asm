@@ -244,8 +244,9 @@ Sprite_Minecart_Main:
       LDA SprTimerA, X : BNE .not_ready
       LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
         JSR CheckIfPlayerIsOn : BCC .not_ready
+        LDA.w SprMiscF, X : BNE .active_cart
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
-
+          .active_cart
             JSL Player_HaltDashAttack            ; Stop the player from dashing
             LDA #$02 : STA $02F5                 ; Somaria platform and moving 
             LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
@@ -279,8 +280,9 @@ Sprite_Minecart_Main:
       LDA SprTimerA, X : BNE .not_ready
       LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
         JSR CheckIfPlayerIsOn : BCC .not_ready
+        LDA.w SprMiscF, X : BNE .active_cart
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
-
+        .active_cart
             JSL Player_HaltDashAttack            ; Stop the player from dashing
             LDA #$02 : STA $02F5                 ; Somaria platform and moving 
             LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
