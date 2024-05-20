@@ -85,24 +85,15 @@ Sprite_Minecart_Long:
 Sprite_Minecart_Prep:
 {
     PHB : PHK : PLB
-    STZ.w SprMiscG, X
-    ; If the subtype is > 4, then it's a dummy cart
+
+    STZ.w SprMiscF, X ; Clear the auto-move flag
+    STZ.w SprMiscG, X ; Clear the active tossing flag
+
+    ; If the subtype is > 4, then it's an active cart
     LDA SprSubtype, X : CMP.b #$04 : BCC .continue
       LDA SprSubtype, X : SEC : SBC.b #$04 : STA SprSubtype, X
-      ; If link is in a cart, then draw the dummy cart
-
-      LDA !LinkInCart : BNE .dummy_continue
-        ; .clear_cart
-        STZ.w $0DD0, X ; Otherwise, clear the sprite
-        PLB
-        RTL
-
-  .continue
-    ; Unused dummy cart code
-    ; LDA.w !LinkInCart : AND.b #$FF : BEQ .dummy_continue
-    ; JMP .clear_cart
-  .dummy_continue
-    
+      LDA.b #$01 : STA SprMiscF, X ; Set the auto-move flag
+    .continue
     LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
     LDA #$04 : STA $0E40, X ; Nbr Oam Entries 
     LDA #$40 : STA $0E60, x ; Impervious props 
@@ -116,28 +107,24 @@ Sprite_Minecart_Prep:
                         CMP.b #$01 : BEQ .east
                         CMP.b #$02 : BEQ .south
                         CMP.b #$03 : BEQ .west
-                        CMP.b #$04 : BEQ .north
-                        CMP.b #$05 : BEQ .east
-                        CMP.b #$06 : BEQ .south
-                        CMP.b #$07 : BEQ .west
 
-  .north
-    STZ.w !MinecartDirection
-    %GotoAction(1) ; Minecart_WaitVert
-    JMP   .done
-  .east
-    LDA #$01 : STA !MinecartDirection
-    %GotoAction(0) ; Minecart_WaitHoriz
-    JMP .done
-  .south
-    LDA #$02 : STA !MinecartDirection
-    %GotoAction(1) ; Minecart_WaitVert
-    JMP .done
-  .west
-    LDA #$03 : STA !MinecartDirection
-    %GotoAction(0) ; Minecart_WaitHoriz
+    .north
+      STZ.w !MinecartDirection
+      %GotoAction(1) ; Minecart_WaitVert
+      JMP   .done
+    .east
+      LDA #$01 : STA !MinecartDirection
+      %GotoAction(0) ; Minecart_WaitHoriz
+      JMP .done
+    .south
+      LDA #$02 : STA !MinecartDirection
+      %GotoAction(1) ; Minecart_WaitVert
+      JMP .done
+    .west
+      LDA #$03 : STA !MinecartDirection
+      %GotoAction(0) ; Minecart_WaitHoriz
 
-  .done
+    .done
     PLB
     RTL
 }
