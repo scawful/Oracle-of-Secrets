@@ -739,15 +739,6 @@ CheckSpritePresence:
 
 CheckForPlayerInput:
 {
-    LDA $5D : CMP #$02 : BEQ .release
-      CMP #$06 : BNE .continue
-  .release
-    ; Release player in recoil
-    %GotoAction(6) ; Minecart_Release
-    RTS
-
-  .continue
-
     ; Setup Minecart position to look for tile IDs
     LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
     LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
