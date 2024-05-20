@@ -13,7 +13,7 @@
 !SmallShadow        = 00    ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00    ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00    ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00    ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 14    ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 01    ; 01 = your sprite continue to live offscreen
 !Statis             = 00    ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00    ; 01 = will check both layer for collision
@@ -102,7 +102,6 @@ Sprite_Minecart_Prep:
     ; LDA.w !LinkInCart : AND.b #$FF : BEQ .dummy_continue
     ; JMP .clear_cart
   .dummy_continue
-    LDA SprY, X : SEC : SBC.b #$04 : STA SprY, X
     
     LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
     LDA #$04 : STA $0E40, X ; Nbr Oam Entries 
