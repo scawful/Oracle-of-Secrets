@@ -187,19 +187,29 @@ HandleLiftAndToss:
                 CMP.b #$04 : BEQ .toss_east
                 CMP.b #$06 : BEQ .toss_west
       .toss_north
-        LDA.b #-!MinecartSpeed : STA SprYSpeed, X
+        LDA.b #-!DoubleSpeed : STA SprYSpeed, X
+        LDA #$00 : STA SprSubtype,       X
+        LDA #$02 : STA !SpriteDirection, X
         JMP .continue
       .toss_south 
-        LDA.b #!MinecartSpeed : STA SprYSpeed, X
+        LDA.b #!DoubleSpeed : STA SprYSpeed, X
+        LDA #$02 : STA SprSubtype,       X
+        LDA #$01 : STA !SpriteDirection, X
         JMP .continue
       .toss_east
-        LDA.b #-!MinecartSpeed : STA SprXSpeed, X
+        LDA.b #-!DoubleSpeed : STA SprXSpeed, X
+        LDA #$03 : STA SprSubtype,       X
+        LDA #$02 : STA !SpriteDirection, X
         JMP .continue
       .toss_west
-        LDA.b #!MinecartSpeed : STA SprXSpeed, X
+        LDA.b #!DoubleSpeed : STA SprXSpeed, X
+        LDA #$03 : STA SprSubtype,       X
+        LDA #$03 : STA !SpriteDirection, X
       .continue
+      
       LDA #$01 : STA SprMiscG, X
-      LDA #$20 : STA SprTimerC, X
+      LDA #$10 : STA SprTimerC, X
+      STA SprYRound, X : STA SprXRound, X
   .not_tossing
     JSL Sprite_CheckIfLifted
     JSL Sprite_Move
