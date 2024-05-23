@@ -1016,12 +1016,19 @@ DrawMinecartFollower:
       JSL Sprite_SpawnDynamically
       TYX
       JSL Sprite_SetSpawnedCoords
-      LDA POSY : STA SprY, X
+      LDA.w !MinecartDirection : CMP.b #$00 : BEQ .vert_adjust
+                                 CMP.b #$02 : BEQ .vert_adjust
+        LDA POSY : CLC : ADC #$08 : STA SprY, X
+        LDA POSX : STA SprX, X
+        JMP .finish_prep
+      .vert_adjust
+        LDA POSY : STA SprY, X
+        LDA POSX : CLC : ADC #$02 : STA SprX, X
+      .finish_prep
       LDA POSYH : STA SprYH, X
-      LDA POSX : STA SprX, X
       LDA POSXH : STA SprXH, X
       LDA.w !MinecartDirection : CLC : ADC.b #$04 : STA.w SprSubtype, X
-      
+      LDA .direction_to_anim, X : STA $0D90, X
       JSL Sprite_Minecart_Prep
       LDA.b #$00 : STA.l $7EF3CC
   .dont_spawn
