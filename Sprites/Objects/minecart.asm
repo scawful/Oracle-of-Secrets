@@ -101,7 +101,7 @@ Sprite_Minecart_Prep:
     LDA #$00 : STA $0CD2, X ; No bump damage 
     LDA #$00 : STA $0B6B, X ; Set interactive hitbox? 
 
-    STZ.w $012B
+    STZ.w !MinecartDirection
 
     LDA SprSubtype, X : CMP.b #$00 : BEQ .north
                         CMP.b #$01 : BEQ .east
@@ -109,7 +109,6 @@ Sprite_Minecart_Prep:
                         CMP.b #$03 : BEQ .west
 
     .north
-      STZ.w !MinecartDirection
       %GotoAction(1) ; Minecart_WaitVert
       JMP   .done
     .east
@@ -157,49 +156,64 @@ macro MoveCart()
 endmacro
 
 macro StopCart()
-    STZ   $02F5
+    STZ.w $02F5
     STZ.w SprYSpeed, X
     STZ.w SprXSpeed, X
     STZ.w !LinkInCart
 endmacro
 
+; =========================================================
+; Handle the tossing of the cart
+; Changes the subtype of the cart to indicate the direction
+; the cart is facing and sets the velocity of the cart
+; based on the direction it is facing.
+
+HandleToss:
+{
+  ; Check links facing direction $2F and apply velocity
+  LDA $2F : CMP.b #$00 : BEQ .toss_north
+            CMP.b #$02 : BEQ .toss_south
+            CMP.b #$04 : BEQ .toss_east
+            CMP.b #$06 : BEQ .toss_west
+  .toss_north
+    LDA.b #-!DoubleSpeed : STA SprYSpeed, X
+    LDA #$00 : STA SprSubtype, X : STA !SpriteDirection, X
+    %GotoAction(1) ; Minecart_WaitVert
+    JMP .continue
+  .toss_south 
+    LDA.b #!DoubleSpeed : STA SprYSpeed, X
+    LDA #$02 : STA SprSubtype,       X
+    LDA #$01 : STA !SpriteDirection, X
+    %GotoAction(1) ; Minecart_WaitVert
+    JMP .continue
+  .toss_east
+    LDA.b #-!DoubleSpeed : STA SprXSpeed, X
+    LDA #$01 : STA SprSubtype,       X
+    LDA #$03 : STA !SpriteDirection, X
+    %GotoAction(0) ; Minecart_WaitHoriz
+    JMP .continue
+  .toss_west
+    LDA.b #!DoubleSpeed : STA SprXSpeed, X
+    LDA #$03 : STA SprSubtype,       X
+    LDA #$02 : STA !SpriteDirection, X
+    %GotoAction(0) ; Minecart_WaitHoriz
+  .continue
+  LDA #$01 : STA SprMiscG, X
+  LDA #$10 : STA SprTimerC, X
+  STA SprYRound, X : STA SprXRound, X
+  RTS
+}
+
 HandleLiftAndToss:
 {
   JSR CheckIfPlayerIsOn : BCC .not_tossing
     LDA.w !LinkCarryOrToss : CMP.b #$02 : BNE .not_tossing
-      ; Check links facing direction $2F and apply velocity
-      LDA $2F : CMP.b #$00 : BEQ .toss_north
-                CMP.b #$02 : BEQ .toss_south
-                CMP.b #$04 : BEQ .toss_east
-                CMP.b #$06 : BEQ .toss_west
-      .toss_north
-        LDA.b #-!DoubleSpeed : STA SprYSpeed, X
-        LDA #$00 : STA SprSubtype,       X
-        LDA #$02 : STA !SpriteDirection, X
-        JMP .continue
-      .toss_south 
-        LDA.b #!DoubleSpeed : STA SprYSpeed, X
-        LDA #$02 : STA SprSubtype,       X
-        LDA #$01 : STA !SpriteDirection, X
-        JMP .continue
-      .toss_east
-        LDA.b #-!DoubleSpeed : STA SprXSpeed, X
-        LDA #$03 : STA SprSubtype,       X
-        LDA #$02 : STA !SpriteDirection, X
-        JMP .continue
-      .toss_west
-        LDA.b #!DoubleSpeed : STA SprXSpeed, X
-        LDA #$03 : STA SprSubtype,       X
-        LDA #$03 : STA !SpriteDirection, X
-      .continue
-      
-      LDA #$01 : STA SprMiscG, X
-      LDA #$10 : STA SprTimerC, X
-      STA SprYRound, X : STA SprXRound, X
+      JSR HandleToss
   .not_tossing
-    JSL Sprite_CheckIfLifted
-    JSL Sprite_Move
-    RTS
+  JSL Sprite_CheckIfLifted
+  JSL Sprite_Move
+  JSR HandleTossedCart
+  RTS
 }
 
 HandleTossedCart:
