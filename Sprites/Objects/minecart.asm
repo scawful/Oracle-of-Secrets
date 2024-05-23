@@ -550,23 +550,25 @@ HandleTileDirections:
           LDA #$00 : STA SprSubtype, X : STA !MinecartDirection
           STA !SpriteDirection,      X
           %GotoAction(2) ; Minecart_MoveNorth
+          LDA SprX, X : AND #$F8 : STA SprX, X
           RTS
         .move_east
           LDA #$01 : STA SprSubtype, X : STA !MinecartDirection
           STA !MinecartDirection
           LDA #$03 : STA !SpriteDirection, X
-          LDA SprY, X : SEC : SBC.b #$04 : STA SprY, X
+          LDA SprY, X : AND #$F8 : STA SprY, X
           %GotoAction(3) ; Minecart_MoveEast
           RTS
         .move_south
           LDA #$02 : STA SprSubtype, X : STA !MinecartDirection
           LDA #$01 : STA !SpriteDirection, X
           %GotoAction(4) ; Minecart_MoveSouth
+          LDA SprX, X : AND #$F8 : STA SprX, X
           RTS
         .move_west
           LDA #$03 : STA SprSubtype, X : STA !MinecartDirection
           LDA #$02 : STA !SpriteDirection, X
-          LDA SprY, X : SEC : SBC.b #$04 : STA SprY, X
+          LDA SprY, X : AND #$F8 : STA SprY, X
           %GotoAction(5) ; Minecart_MoveWest
       .done
         RTS
