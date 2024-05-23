@@ -588,7 +588,7 @@ HandleTileDirections:
   .unused_tile_ids 
   {    
       ;    TL,  BL,  TR,  BR
-      db   $B2, $B3, $B4, $B5
+      ; db $B2, $B3, $B4, $B5
       ; db $B0  - Horiz
       ; db $B1  | Vert 
       ; db $B8  Stop North
@@ -597,23 +597,6 @@ HandleTileDirections:
       ; db $BB  Stop West
       ; db $BE  + any direction
   }
-}
-
-; =========================================================
-; Clamp the sprite position to a 16x16 grid
-; Slows the game down if you run it too often :(
-
-ClampSpritePositionToGrid:
-{
-    ; Check if SprX is already a multiple of 16
-    LDA.w SprX, X : AND #$0F : BEQ .x_aligned
-      LDA.w SprX, X : LSR : ASL : STA.w SprX, X
-  .x_aligned
-    ; Check if SprY is already a multiple of 16
-    LDA.w SprY, X : AND #$0F : BEQ .y_aligned
-      LDA.w SprY, X : LSR : ASL : STA.w SprY, X
-  .y_aligned
-    RTS
 }
 
 ; =========================================================
