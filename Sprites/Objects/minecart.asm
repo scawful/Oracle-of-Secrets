@@ -225,14 +225,14 @@ HandleTossedCart:
     .low_enough
 
     LDA.w SprTimerC, X : BNE .not_tossed
-
+      LDA SprX, X : AND.b #$F8 : STA SprX, X
+      LDA SprY, X : AND.b #$F8 : STA SprY, X
       STZ.w SprMiscG, X
       STZ.w SprYSpeed, X
       STZ.w SprXSpeed, X
       STZ.w SprHeight, X
   .not_tossed
-    RTS
-
+  RTS
 }
 
 ; =========================================================
