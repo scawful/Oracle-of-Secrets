@@ -282,7 +282,6 @@ Sprite_Minecart_Main:
       .not_ready
     .lifting
       JSR HandleLiftAndToss
-      JSR HandleTossedCart
       RTS
   }
   
@@ -318,8 +317,6 @@ Sprite_Minecart_Main:
       .not_ready
     .lifting
       JSR HandleLiftAndToss
-      JSR HandleTossedCart
-
       RTS 
   }
 
@@ -337,7 +334,6 @@ Sprite_Minecart_Main:
       LDA.b #-!DoubleSpeed : STA SprYSpeed, X
     .continue
       JSL Sprite_MoveVert
-      JSL Sprite_BounceFromTileCollision
 
       ; Get direction of the cart (0 to 3)
       LDY.w !SpriteDirection, X
@@ -355,6 +351,7 @@ Sprite_Minecart_Main:
   {
       %PlayAnimation(0,1,8)
       %InitMovement()
+
       LDA $36 : BNE .fast_speed
         LDA.b #!MinecartSpeed : STA $0D50, X
         JMP   .continue
@@ -362,7 +359,6 @@ Sprite_Minecart_Main:
         LDA.b #!DoubleSpeed : STA $0D50, X
     .continue
       JSL Sprite_MoveHoriz
-      JSL Sprite_BounceFromTileCollision
       
       ; Get direction of the cart (0 to 3)
       LDY.w !SpriteDirection, X
@@ -380,6 +376,7 @@ Sprite_Minecart_Main:
   {
       %PlayAnimation(2,3,8)
       %InitMovement()
+
       LDA $36 : BNE .fast_speed
         LDA.b #!MinecartSpeed : STA SprYSpeed, X
         JMP   .continue
@@ -387,7 +384,6 @@ Sprite_Minecart_Main:
         LDA.b #!DoubleSpeed : STA SprYSpeed, X
     .continue
       JSL Sprite_MoveVert
-      JSL Sprite_BounceFromTileCollision
 
       ; Get direction of the cart (0 to 3)
       LDY.w !SpriteDirection, X
@@ -405,6 +401,7 @@ Sprite_Minecart_Main:
   {
       %PlayAnimation(0,1,8)
       %InitMovement()
+
       LDA   $36 : BNE .fast_speed
       LDA.b #-!MinecartSpeed : STA $0D50, X
               JMP .continue
@@ -412,7 +409,6 @@ Sprite_Minecart_Main:
         LDA.b #-!DoubleSpeed : STA $0D50, X
     .continue
       JSL Sprite_MoveHoriz
-      JSL Sprite_BounceFromTileCollision
       
       ; Get direction of the cart (0 to 3)
       LDY.w !SpriteDirection, X
