@@ -455,36 +455,33 @@ HandleTileDirections:
       RTS
     +
 
+    ; If the cart got disconnected from the player, release them.
+    JSR CheckIfPlayerIsOn : BCS .player_on_cart
+      %GotoAction(6) ; Minecart_Release
+      RTS
+    .player_on_cart
+
     ; Setup Minecart position to look for tile IDs
     ; We use AND #$F8 to clamp to a 16x16 grid, however this needs work.
     LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
-    LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03    
+    LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
 
     ; Fetch tile attributes based on current coordinates
-    LDA.b #$00 : JSL Sprite_GetTileAttr
-    
-    ; Load the tile index 
-    LDA $0FA5 : CMP.b #$01 : BNE .not_out_of_bounds
-    
+    LDA.b #$00 : JSL Sprite_GetTileAttr : LDA $0FA5 
+
+    CMP.b #$02 : BNE .not_out_of_bounds
       ; If the tile is out of bounds, release the cart
       LDA #$40 : STA SprTimerD, X
       %GotoAction(6) ; Minecart_Release
       RTS
-    .out_of_bounds
-      JSR ClampSpritePositionToGrid
-      RTS
     
     .not_out_of_bounds
     ; Check if the tile is a stop tile
-    CMP.b #$B7 : BCS .check_stop ; If tile ID is >= $B8, check for stop tiles
-      
-    .check_stop
     CMP.b #$B7 : BEQ .stop_north
     CMP.b #$B8 : BEQ .stop_south
     CMP.b #$B9 : BEQ .stop_west
     CMP.b #$BA : BEQ .stop_east
-    CMP.b #$20 : BEQ .out_of_bounds
-      JMP .check_for_movement ; if none of the above, continue with normal logic
+    JMP .check_for_movement ; if none of the above, continue with normal logic
 
     .stop_north
       ; Set the new direction to north and flip the cart's orientation
