@@ -429,9 +429,16 @@ Sprite_Minecart_Main:
 
       LDA SprTimerD, X : BNE .not_ready
         LDA #$40 : STA SprTimerA, X
-        %GotoAction(0)
-    .not_ready
-      RTS
+        LDA.w !SpriteDirection, X : CMP.b #$00 : BEQ .vert
+          CMP.b #$02 : BEQ .vert
+          JMP .horiz
+        .vert
+          %GotoAction(1) ; Minecart_WaitVert
+          RTS
+        .horiz
+          %GotoAction(0)
+      .not_ready
+        RTS
   }
 }
 
