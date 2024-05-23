@@ -540,7 +540,6 @@ HandleTileDirections:
       TAY              ; Transfer to Y to use as an offset for the rows
       LDA.w .DirectionTileLookup, Y : TAY
 
-      JSR ClampSpritePositionToGrid
       CPY #$01 : BEQ .move_north
       CPY #$02 : BEQ .move_east
       CPY #$03 : BEQ .move_south
@@ -548,23 +547,24 @@ HandleTileDirections:
         JMP .done
 
         .move_north
-          LDA #$00 : STA SprSubtype, X
+          LDA #$00 : STA SprSubtype, X : STA !MinecartDirection
           STA !SpriteDirection,      X
           %GotoAction(2) ; Minecart_MoveNorth
           RTS
         .move_east
-          LDA #$01 : STA SprSubtype,       X
+          LDA #$01 : STA SprSubtype, X : STA !MinecartDirection
+          STA !MinecartDirection
           LDA #$03 : STA !SpriteDirection, X
           LDA SprY, X : SEC : SBC.b #$04 : STA SprY, X
           %GotoAction(3) ; Minecart_MoveEast
           RTS
         .move_south
-          LDA #$02 : STA SprSubtype,       X
+          LDA #$02 : STA SprSubtype, X : STA !MinecartDirection
           LDA #$01 : STA !SpriteDirection, X
           %GotoAction(4) ; Minecart_MoveSouth
           RTS
         .move_west
-          LDA #$03 : STA SprSubtype,       X
+          LDA #$03 : STA SprSubtype, X : STA !MinecartDirection
           LDA #$02 : STA !SpriteDirection, X
           LDA SprY, X : SEC : SBC.b #$04 : STA SprY, X
           %GotoAction(5) ; Minecart_MoveWest
