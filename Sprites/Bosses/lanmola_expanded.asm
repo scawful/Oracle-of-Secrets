@@ -179,16 +179,21 @@ Sprite_Lanmola_Init_Data:
 
     ;$7EEA28
     .propertiesBody
-    db $F3, $F3, $F3, $F3, $B3, $B3, $B3, $B3, $33, $33, $33, $33, $73, $73, $73, $73
-    ;db $C0, $C0, $C0, $C0, $80, $80, $80, $80, $00, $00, $00, $00, $40, $40, $40, $40
+    ;db $F3, $F3, $F3, $F3, $B3, $B3, $B3, $B3, $33, $33, $33, $33, $73, $73, $73, $73
     ; 1 yellow, green, pink
+    ;db $F1, $F1, $F1, $F1, $B1, $B1, $B1, $B1, $31, $31, $31, $31, $71, $71, $71, $71
     ; 3 metroid colors
     ; 5 ice blue
+    ; db $F5, $F5, $F5, $F5, $B5, $B5, $B5, $B5, $35, $35, $35, $35, $75, $75, $75, $75
     ; 7 red and yellow
+    ; db $F7, $F7, $F7, $F7, $B7, $B7, $B7, $B7, $37, $37, $37, $37, $77, $77, $77, $77
     ; 9 blue and red
+    ; db $F9, $F9, $F9, $F9, $B9, $B9, $B9, $B9, $39, $39, $39, $39, $79, $79, $79, $79
     ; B neon green and yellow
     ; D silver and yellow
+    db $FD, $FD, $FD, $FD, $BD, $BD, $BD, $BD, $3D, $3D, $3D, $3D, $7D, $7D, $7D, $7D
     ; F yellow and red
+    ; db $FF, $FF, $FF, $FF, $BF, $BF, $BF, $BF, $3F, $3F, $3F, $3F, $7F, $7F, $7F, $7F
 
     ;$7EEA38
     .oamCoord90
@@ -205,7 +210,8 @@ Sprite_Lanmola_Init_Data:
     
     ;$7EEA4E
     .propertiesMound
-    db $39, $79, $39, $79, $39, $79
+    ; db $39, $79, $39, $79, $39, $79
+    db $3D, $7D, $3D, $7D, $3D, $7D
     ;db $31, $71, $31, $71, $31, $71
 
     ;$7EEA54
