@@ -87,15 +87,12 @@ Sprite_RotatingTrack_Main:
   ; 00 = TopLeft -> TopRight
   TopLeftToTopRight:
   {
-    LDA SwitchRam : BNE part2
+    LDA SwitchRam : BEQ part2
 
     %PlayAnimation(0,0,4)
   part2:
 
     %PlayAnimation(1,1,4)
-
-    JSL CheckIfHitBoxesOverlap
-
     RTS
   }
 
@@ -109,9 +106,6 @@ Sprite_RotatingTrack_Main:
   part2_a:
   
     %PlayAnimation(2,2,4)
-
-    JSL CheckIfHitBoxesOverlap
-
     RTS
   }
 
@@ -125,9 +119,6 @@ Sprite_RotatingTrack_Main:
   part2_b:
     
       %PlayAnimation(3,3,4)
-  
-      JSL CheckIfHitBoxesOverlap
-  
       RTS
     }
 
@@ -142,9 +133,6 @@ Sprite_RotatingTrack_Main:
   part2_c:
 
     %PlayAnimation(0,0,4)
-
-    JSL CheckIfHitBoxesOverlap
-
     RTS
   }
 
@@ -160,9 +148,6 @@ Sprite_RotatingTrack_Main:
   part2_d:
       %StartOnFrame(0)
       %PlayAnimation(0,0,4)
-  
-      JSL CheckIfHitBoxesOverlap
-  
       RTS
     }
 }
