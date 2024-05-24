@@ -72,21 +72,30 @@ returnPos:
 
 
 org $348000
-
 NewDesertCheck:
-; LDA.b #$02 : STA.w $037A ; set link in praying mode
+{
+  ; LDA.b #$02 : STA.w $037A ; set link in praying mode
   ; LDA #$FF : STA $8C
   ; LDA #$00 : STA $7EE00E
   ; STZ $1D
   ; STZ $9A
   ; STZ.w $012D
+  LDA $8A : CMP.b #$1E : BEQ .zora
+    CMP.b #$1B : BEQ .castle
+      JMP.continue
+    .castle
+    LDA.b #$02 : STA.w $04C6
+    JMP .continue
+  .zora
+  LDA.b #$01 : STA.w $04C6 ; set entrance animation
 
-LDA.b #$01 : STA.w $04C6 ; set entrance animation
-STZ.b $B0
-STZ.b $C8
+  .continue
+  STZ.b $B0
+  STZ.b $C8
 
-+
-JML $07A493 ; returnPos ; do not !
+  +
+  JML $07A493 ; returnPos ; do not !
+}
 
 pushpc
 
