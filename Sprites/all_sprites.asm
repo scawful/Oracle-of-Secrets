@@ -136,6 +136,8 @@ print  "End of Lanmola.asm                ", pc
 incsrc "Sprites/Bosses/lanmola_Expanded.asm"
 print  "End of Lanmola_Expanded.asm       ", pc
 
+incsrc "Sprites/NPCs/old_man.asm"
+
 ; incsrc "Sprites/Bosses/octoboss.asm"
 ; print  "End of octoboss.asm               ", pc
 
