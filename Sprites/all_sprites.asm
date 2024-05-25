@@ -26,6 +26,19 @@ org $0CDC26
 incsrc ZSpriteLib/sprite_macros.asm
 incsrc ZSpriteLib/sprite_hooks.asm
 
+; SpritePrep_HauntedGroveOstritch
+org $068BB2
+NOP #11
+
+; HauntedGroveRabbit_Idle
+org $1E9A8F
+NOP #5
+
+; MedallionTablet (Goron)
+; Responds to the hammer now instead of the sword.
+org $05F274
+  LDA.l $7EF34B
+
 ;=========================================================
 
 org    $308000
