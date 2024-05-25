@@ -31,16 +31,16 @@ incsrc ZSpriteLib/sprite_hooks.asm
 org    $308000
 incsrc ZSpriteLib/sprite_new_table.asm
 
-;=========================================================
-
-org    $318000
-incsrc ZSpriteLib/sprite_new_functions.asm
-
 incsrc "Sprites/NPCs/farore.asm"
 print  "End of farore.asm                 ", pc
 
 incsrc "Sprites/Bosses/kydrog.asm"
 print  "End of kydrog.asm                 ", pc
+
+;=========================================================
+
+org    $318000
+incsrc ZSpriteLib/sprite_new_functions.asm
 
 incsrc "Sprites/Bosses/kydrog_boss.asm"
 print  "End of kydrog_boss.asm            ", pc
