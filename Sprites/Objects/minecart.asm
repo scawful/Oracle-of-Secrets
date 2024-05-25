@@ -623,36 +623,44 @@ HandleDynamicSwitchTileDirections:
       JSL CheckIfHitBoxesOverlap : BCC .no_b0
 
         LDA !MinecartDirection : CMP.b #$00 : BEQ .east_or_west
-          CMP.b #$02 : BEQ .north_or_south
+          CMP.b #$01 : BEQ .north_or_south
+          CMP.b #$02 : BEQ .east_or_west
+          CMP.b #$03 : BEQ .north_or_south
+
+      .no_b0
+        RTS
 
       .east_or_west
-        LDA SwitchRam : BEQ .go_west
+        LDA SwitchRam : BNE .go_west
         LDA #$01 : STA SprSubtype,       X
         LDA #$03 : STA !SpriteDirection, X
         %GotoAction(3) ; Minecart_MoveEast
+        LDA SprY, X : AND #$F8 : STA SprY, X
         RTS
 
       .go_west
         LDA #$03 : STA SprSubtype,       X
         LDA #$02 : STA !SpriteDirection, X
         %GotoAction(5) ; Minecart_MoveWest
+        LDA SprY, X : AND #$F8 : STA SprY, X
         RTS
 
       .north_or_south
-        LDA SwitchRam : BNE .go_south
+        LDA SwitchRam : BEQ .go_south
         LDA #$00 : STA SprSubtype, X
         STA !SpriteDirection,      X
         %GotoAction(2) ; Minecart_MoveNorth
+        LDA SprX, X : AND #$F8 : STA SprX, X
         RTS
 
       .go_south
         LDA #$02 : STA SprSubtype,       X
         LDA #$01 : STA !SpriteDirection, X
         %GotoAction(4) ; Minecart_MoveSouth
+        LDA SprX, X : AND #$F8 : STA SprX, X
         RTS
 
-  .no_b0
-    RTS
+
 }
 
 ; =========================================================
