@@ -113,14 +113,17 @@ Sprite_Minecart_Prep:
       JMP   .done
     .east
       LDA #$01 : STA !MinecartDirection
+      LDA #$03 : STA !SpriteDirection, X
       %GotoAction(0) ; Minecart_WaitHoriz
       JMP .done
     .south
       LDA #$02 : STA !MinecartDirection
+      LDA #$01 : STA !SpriteDirection, X
       %GotoAction(1) ; Minecart_WaitVert
       JMP .done
     .west
       LDA #$03 : STA !MinecartDirection
+      LDA #$02 : STA !SpriteDirection, X
       %GotoAction(0) ; Minecart_WaitHoriz
 
     .done
