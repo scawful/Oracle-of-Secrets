@@ -82,7 +82,7 @@ NewDesertCheck:
   ; STZ.w $012D
   LDA $8A : CMP.b #$1E : BEQ .zora
     CMP.b #$1B : BEQ .castle
-      JMP.continue
+      JMP .continue
     .castle
     LDA.b #$02 : STA.w $04C6
     JMP .continue
