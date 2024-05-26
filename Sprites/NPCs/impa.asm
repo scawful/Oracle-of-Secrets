@@ -14,8 +14,14 @@ org $029E2E
 org $05ED43
 Zelda_BecomeFollower:
 STZ.w $02E4
-NOP #$6
+NOP #6
 ; #_05ED46: LDA.b #$02
 ; #_05ED48: STA.l $7EF3C8
+
+; Prevent Impa from changing the song
+org $05ED63
+NOP #5
+; #_05ED63: LDA.b #$10 ; SONG 10
+; #_05ED65: STA.w $012C
 
 pullpc
