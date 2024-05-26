@@ -112,6 +112,9 @@ print  "End of deku_scrub_enemy.asm       ",  pc
 incsrc "Sprites/NPCs/zora_princess.asm"
 print  "End of zora_princess.asm          ",  pc
 
+incsrc "Sprites/Bosses/wolfos.asm"
+print  "End of wolfos.asm                 ",  pc
+
 incsrc "Sprites/Objects/ice_block.asm"
 print  "End of ice_block.asm              ",  pc
 
