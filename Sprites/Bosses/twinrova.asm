@@ -1397,6 +1397,12 @@ pushpc
 org $09A1EC
     JSL CheckForMaidenInLibrary
 
+; Prevent mantle from setting spawn point
+org $1AFC6D
+NOP #6
+; LDA.b #$04
+; STA.l $7EF3C8
+
 pullpc 
 
 CheckForMaidenInLibrary:
