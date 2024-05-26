@@ -20,3 +20,9 @@ org $1BBD3C
 ; Underworld_LoadEntrance
 org $02D98B
   CMP.w #$02
+
+; Module05_LoadFile
+; Check for goldstar instead of mirror for mountain spawn option
+org $0281E2
+  LDA.l $7EF342
+  CMP.b #$02
