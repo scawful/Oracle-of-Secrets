@@ -10,6 +10,12 @@ org $029E2E
 #_029E32: ORA.b #$20
 #_029E34: STA.l $7EF2A3
 
-
+; Prevent Impa from setting spawn point
+org $05ED43
+Zelda_BecomeFollower:
+STZ.w $02E4
+NOP #$6
+; #_05ED46: LDA.b #$02
+; #_05ED48: STA.l $7EF3C8
 
 pullpc
