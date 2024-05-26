@@ -166,8 +166,11 @@ RunClock:
     JSL $0BFE72
 
     .inc_hours_end
-      ; GBC Link code
-      LDA $0FFF : CMP #$00 : BEQ .light_world
+    ; Reload Sprite Gfx Properties
+    JSL $00FC62 ; Sprite_LoadGraphicsProperties
+
+    ; GBC Link code
+    LDA $0FFF : CMP #$00 : BEQ .light_world
       JSL UpdateGbcPalette
       LDA #$3B : STA $BC   ; change link's sprite 
     .light_world
@@ -418,6 +421,9 @@ warnpc $0EF3F9  ; free space
 org $09C4E3
   JSL CheckIfNight
 
+org $00FC6A
+  JSL CheckIfNight16Bit
+
 
 ; $0BFE70 -> background color loading routine
 ;Background color write fix - 16 bytes
@@ -474,6 +480,22 @@ org $1BEE2D
 ; =========================================================
 
 pullpc
+
+CheckIfNight16Bit:
+{
+  LDA $7EE000 : AND.w #$00FF : CMP.w #$0006 : BCC .night_time
+    .day_time
+    LDA.l $7EF3C5
+
+    RTL
+  .night_time
+
+  LDA $7EE000 : AND.w #$00FF : CMP.w #$14 : BCS .day_time
+    LDA.l $7EF3C5
+    CLC
+    ADC #$0001
+    RTL
+}
 
 FixSaveAndQuit:
 {
