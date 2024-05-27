@@ -90,7 +90,7 @@ Sprite_VillageDog_Main:
       
       .walk_right
         %GotoAction(2)
-  .lifting
+    .lifting
     JSL Sprite_CheckIfLifted
     JSL Sprite_Move
     RTS
@@ -100,8 +100,8 @@ Sprite_VillageDog_Main:
   Dog_LookLeftAtLink:
   {
     %PlayAnimation(9,9,8)
-     JSR HandleTossedDog
-    LDA.w SprTimerD,              X : BNE +
+    JSR HandleTossedDog
+    LDA.w SprTimerD, X : BNE +
       ; Load the timer for the run
       LDA   #$60 : STA.w SprTimerD, X
       %GotoAction(3)
@@ -113,8 +113,8 @@ Sprite_VillageDog_Main:
   Dog_LookRightAtLink:
   {
     %PlayAnimation(10,10,8)
-         JSR HandleTossedDog
-    LDA.w SprTimerD,              X : BNE +
+    JSR HandleTossedDog
+    LDA.w SprTimerD, X : BNE +
       ; Load the timer for the run
       LDA   #$60 : STA.w SprTimerD, X
       %GotoAction(4)
@@ -126,7 +126,7 @@ Sprite_VillageDog_Main:
   Dog_MoveLeftTowardsLink:
   {
     %PlayAnimation(2,4,6)
-     JSR HandleTossedDog
+    JSR HandleTossedDog
     ; Check if the dog is near link, then wag the tail
     JSR CheckIfPlayerIsNearby : BCC +
       %GotoAction(5)
@@ -138,16 +138,15 @@ Sprite_VillageDog_Main:
       %GotoAction(0)
     .no_collision
 
-    LDA.b #$0A                           ; Speed
+    LDA.b #$0A
     JSL   Sprite_ApplySpeedTowardsPlayer
     STZ   $06 : STZ $07
     JSL   Sprite_MoveLong
     JSL Sprite_CheckIfLifted
 
     LDA.w SprTimerD, X : BNE +
-
-    %GotoAction(0)
-  +
+      %GotoAction(0)
+    +
     RTS
   }
 
@@ -155,7 +154,7 @@ Sprite_VillageDog_Main:
   Dog_MoveRightTowardsLink:
   {
     %PlayAnimation(5,7,6)
-     JSR HandleTossedDog
+    JSR HandleTossedDog
     JSR CheckIfPlayerIsNearby : BCC +
       %GotoAction(6)
     +
@@ -166,7 +165,7 @@ Sprite_VillageDog_Main:
       %GotoAction(0)
     .no_collision
 
-    LDA.b #$0A                           ; Speed
+    LDA.b #$0A
     JSL   Sprite_ApplySpeedTowardsPlayer
     STZ   $06 : STZ $07
     JSL   Sprite_MoveLong
@@ -184,7 +183,7 @@ Sprite_VillageDog_Main:
     %PlayAnimation(0,1, 8)
     JSR   ShowMessageIfMinish
     JSL   Sprite_CheckIfLifted
-     JSR HandleTossedDog
+    JSR HandleTossedDog
     LDA.w SprTimerD, X : BNE +
       %GotoAction(0)
     +
@@ -197,7 +196,7 @@ Sprite_VillageDog_Main:
     %PlayAnimation(11,12,8)
     JSR   ShowMessageIfMinish
     JSL   Sprite_CheckIfLifted
-     JSR HandleTossedDog
+    JSR HandleTossedDog
     LDA.w SprTimerD, X : BNE +
       %GotoAction(0)
     +
@@ -208,32 +207,27 @@ Sprite_VillageDog_Main:
 
 CheckIfPlayerIsNearby:
 {
-    REP #$20
-    LDA $22 : CLC : ADC #$0012 : CMP $0FD8 : BCC .left
-    LDA $22 : SEC : SBC #$0012 : CMP $0FD8 : BCS .right
+  REP #$20
+  LDA $22 : CLC : ADC #$0012 : CMP $0FD8 : BCC .out
+  LDA $22 : SEC : SBC #$0012 : CMP $0FD8 : BCS .out
+  LDA $20 : CLC : ADC #$001A : CMP $0FDA : BCC .out
+  LDA $20 : SEC : SBC #$001A : CMP $0FDA : BCS .out
+  SEP #$21 
+  RTS ; Return with carry set
 
-    LDA $20 : CLC : ADC #$001A : CMP $0FDA : BCC .up
-    LDA $20 : SEC : SBC #$001A : CMP $0FDA : BCS .down
-    
-    SEP #$21 : RTS ; Return with carry set
-
-  .left
-  .right
-  .up
-  .down
-    SEP #$20
-    CLC : RTS ; Return with carry cleared
+  .out
+  SEP #$20
+  CLC 
+  RTS ; Return with carry cleared
 }
-
-
 
 ShowMessageIfMinish:
 {
   LDA $02B2 : CMP.b #$05 : BNE .not_minish
-  %ShowSolicitedMessage($18) : JMP .continue
-.not_minish
+    %ShowSolicitedMessage($18) : JMP .continue
+  .not_minish
   %ShowSolicitedMessage($1B)
-.continue
+  .continue
   RTS
 }
 
@@ -242,12 +236,12 @@ Sprite_VillageDog_Draw:
   JSL   Sprite_PrepOamCoord
   JSL   Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA $0DC0, X : CLC : ADC $0D90, X : TAY ; Animation Frame
   LDA   .start_index,     Y : STA $06
 
 
   PHX
-  LDX   .nbr_of_tiles,    Y              ;amount of tiles -1
+  LDX   .nbr_of_tiles,    Y              ; amount of tiles -1
   LDY.b #$00
   .nextTile
 
