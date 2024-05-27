@@ -50,6 +50,12 @@ print  "End of farore.asm                 ", pc
 incsrc "Sprites/Bosses/kydrog.asm"
 print  "End of kydrog.asm                 ", pc
 
+incsrc "Sprites/NPCs/maku_tree.asm"
+print  "End of maku_tree.asm              ", pc
+
+incsrc "Sprites/NPCs/mask_salesman.asm"
+print  "End of mask_salesman.asm          ", pc
+
 ;=========================================================
 
 org    $318000
@@ -57,12 +63,6 @@ incsrc ZSpriteLib/sprite_new_functions.asm
 
 incsrc "Sprites/Bosses/kydrog_boss.asm"
 print  "End of kydrog_boss.asm            ", pc
-
-incsrc "Sprites/NPCs/maku_tree.asm"
-print  "End of maku_tree.asm              ", pc
-
-incsrc "Sprites/NPCs/mask_salesman.asm"
-print  "End of mask_salesman.asm          ", pc
 
 incsrc "Sprites/NPCs/deku_scrub.asm"
 print  "End of deku_scrub.asm             ", pc
