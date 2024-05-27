@@ -16,6 +16,7 @@ org $018650 ; Object ID 230
 org $07DC54
   TileBehavior_Nothing:
 
+; Minecart Track tiletypes
 org $07D938
 #_07D938: dw TileBehavior_Nothing ; 0xB0 UW
 #_07D93A: dw TileBehavior_Nothing ; 0xB1 UW
@@ -82,7 +83,6 @@ NewObjectsCode:
           INX : INX
           ;  Vhopppcc cccccccc
           LDA .ObjData, X : BEQ +
-              JSR CustomDrawConfig
               STA [$BF], Y
           +
 
@@ -121,7 +121,7 @@ NewObjectsCode:
   dw .BottomRightFloor-.ObjData ; 11
   dw .FloorAny-.ObjData         ; 12
   dw .WallSwordHouse-.ObjData   ; 13
-  dw .KydreeokBody-.ObjData     ; 14
+  dw .KydreeokBody-.ObjData     ; 14 TODO: Replace with a different object
   dw .SmallStatue-.ObjData      ; 15
 
 .ObjData
@@ -159,27 +159,7 @@ NewObjectsCode:
     incbin Data/small_statue.bin
 }
 
-
-; May need to make this a table 
-; This modifies object 0xOE to use the spritesheets for the object
-print "CustomDrawConfig ", pc
-CustomDrawConfig:
-{
-  PHA ; ObjectData
-  LDA $03 : AND #$00FF : CMP.w #$000E : BEQ .custom_config
-    TYA : LSR : AND #$00FF
-
-    CMP #$000E : BNE .no_spriteset
-      LDA #$000E : STA $03
-  .custom_config
-    PLA
-    ORA.w #$0300 : JMP .return
-.no_spriteset   
-    PLA
-.return
-  RTS
-}
-
+; TODO: Fix the graphics used for the heavy pot in game
 InitHeavyPot:
 {
   LDA.w #$1010
