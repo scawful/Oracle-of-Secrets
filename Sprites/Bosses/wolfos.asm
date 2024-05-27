@@ -3,10 +3,10 @@
 ; =========================================================
 
 !SPRID              = $A9 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 04  ; Number of tiles used in a frame
+!NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 20  ; Number of Health the sprite have
+!Health             = 90  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
@@ -55,10 +55,9 @@ Sprite_Wolfos_Prep:
   PHB : PHK : PLB
     
   LDA.b #$40 : STA.w SprTimerA, X
-  LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
-  LDA #$04 : STA $0E40, X ; Nbr Oam Entries 
-  LDA #$40 : STA $0E60, x ; Impervious props 
-  LDA #$E0 : STA $0F60, X ; Persist 
+  LDA.b #$00 : STA.w $0CAA, X ; Sprite persist in dungeon
+  LDA.b #$08 : STA.w $0E40, X ; Nbr Oam Entries 
+  LDA.b #$E0 : STA.w $0F60, X ; Persist 
 
   PLB
   RTL
@@ -66,22 +65,61 @@ Sprite_Wolfos_Prep:
 
 ; =========================================================
 
+macro Wolfos_Move()
+  JSL Sprite_DamageFlash_Long
+  JSL Sprite_CheckDamageFromPlayerLong
+  JSL Sprite_PlayerCantPassThrough
+
+  JSL Sprite_Move
+  JSR Wolfos_Move
+endmacro
+
+Wolfos_Move:
+{
+  LDA SprTimerA, X : BNE + 
+  JSL Sprite_IsToRightOfPlayer : TYA : BEQ .right
+    LDA.b #$20 : STA.w SprTimerA, X
+    %GotoAction(3) ; Walk Left
+    RTS
+  .right
+    LDA.b #$20 : STA.w SprTimerA, X
+    %GotoAction(2) ; Walk Right
+  +
+
+  JSL Sprite_IsBelowPlayer : TYA : BEQ .above_player
+    LDA.b #$40 : STA.w SprTimerA, X
+    %GotoAction(1) ; Attack Back
+    RTS
+
+  .above_player
+    LDA.b #$40 : STA.w SprTimerA, X
+    %GotoAction(0) ; Attack Forward
+    RTS
+
+}
+
+!NormalSpeed = $06
+!AttackSpeed = $0B
+
 Sprite_Wolfos_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
-  dw Wolfos_Main
-  dw Wolfos_AttackBack
+  dw Wolfos_AttackForward ; 0x00
+  dw Wolfos_AttackBack    ; 0x01
+  dw Wolfos_WalkRight     ; 0x02
+  dw Wolfos_WalkLeft      ; 0x03
+  dw Wolfos_AttackRight   ; 0x04
+  dw Wolfos_AttackLeft    ; 0x05
 
-  Wolfos_Main:
+  Wolfos_AttackForward:
   {
     %PlayAnimation(0, 2, 10)
+    %Wolfos_Move()
 
-    LDA SprTimerA, X : BNE .end
-    LDA.b #$40 : STA.w SprTimerA, X
-      %GotoAction(1)
-    .end
+    LDA #!NormalSpeed : STA.w SprYSpeed, X
+    STZ.w SprXSpeed, X
 
     RTS
   }
@@ -89,11 +127,63 @@ Sprite_Wolfos_Main:
   Wolfos_AttackBack:
   {
     %PlayAnimation(3, 5, 10)
+    %Wolfos_Move()
 
-    LDA SprTimerA, X : BNE .end
-    LDA.b #$40 : STA.w SprTimerA, X
-      %GotoAction(0)
-    .end
+    LDA #-!NormalSpeed : STA.w SprYSpeed, X
+    STZ.w SprXSpeed, X
+    
+    RTS
+  }
+
+  Wolfos_WalkRight:
+  {
+    %PlayAnimation(6, 8, 10)
+    %Wolfos_Move()
+
+    LDA #!NormalSpeed : STA.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+
+    JSL GetRandomInt : AND.b #$3F : BNE +
+      %GotoAction(4)
+    +
+
+    RTS
+  }
+
+  Wolfos_WalkLeft:
+  {
+    %PlayAnimation(9, 11, 10)
+    %Wolfos_Move()
+
+    LDA #-!NormalSpeed : STA.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+
+    JSL GetRandomInt : AND.b #$3F : BNE +
+      %GotoAction(5)
+    +
+
+    RTS
+  }
+
+  Wolfos_AttackRight:
+  {
+    %PlayAnimation(12, 13, 10)
+    %Wolfos_Move()
+
+
+    LDA #!AttackSpeed : STA.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+
+    RTS
+  }
+
+  Wolfos_AttackLeft:
+  {
+    %PlayAnimation(14, 15, 10)
+    %Wolfos_Move()
+
+    LDA #-!AttackSpeed : STA.w SprXSpeed, X
+    STZ.w SprYSpeed, X
 
     RTS
   }
@@ -115,6 +205,9 @@ Sprite_Wolfos_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
+
+  ; Store Palette thing 
+  LDA $0DA0, X : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -147,7 +240,8 @@ Sprite_Wolfos_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  ; Set palette flash modifier 
+  LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY 
       
@@ -174,10 +268,10 @@ Sprite_Wolfos_Draw:
   dw 0, 0
   dw 0, 0
   dw 0, 0
-  dw 8, 8, -8, -8
+  dw 8, -8, -8, 8
   dw -8, 8, 8, -8
   dw -8, 8, -8, 8
-  dw -8, -8, 8, 8
+  dw -8, 8, 8, -8
   dw 8, -8, -8, 8
   dw 8, -8, 8, -8
   dw -8, 8, 8, -8
@@ -191,10 +285,10 @@ Sprite_Wolfos_Draw:
   dw 0, -16
   dw 0, -16
   dw 0, -16
-  dw -8, 0, 0, -16
+  dw 0, 0, -16, -16
   dw 0, 0, -16, -16
   dw -16, -16, 0, 0
-  dw -8, 0, 0, -16
+  dw 0, 0, -16, -16
   dw 0, 0, -16, -16
   dw -16, -16, 0, 0
   dw 0, 0, -16, -16
@@ -208,10 +302,10 @@ Sprite_Wolfos_Draw:
   db $E2, $C2
   db $E8, $C8
   db $EA, $CA
-  db $92, $A2, $A0, $80
+  db $A2, $A0, $80, $82
   db $A4, $A6, $86, $84
   db $88, $8A, $A8, $AA
-  db $92, $A2, $A0, $80
+  db $A2, $A0, $80, $82
   db $A4, $A6, $86, $84
   db $88, $8A, $A8, $AA
   db $AC, $AE, $8E, $8C
@@ -252,4 +346,5 @@ Sprite_Wolfos_Draw:
   db $02, $02, $02
   db $02, $02, $02, $02
   db $02, $02, $02
+
 }
