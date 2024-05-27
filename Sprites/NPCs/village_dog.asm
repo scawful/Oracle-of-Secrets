@@ -46,13 +46,20 @@ Sprite_VillageDog_Long:
   RTL ; Go back to original code
 }
 
-
 Sprite_VillageDog_Prep:
 {
   PHB : PHK : PLB
    
   PLB
   RTL
+}
+
+HandleTossedDog:
+{
+  LDA.w SprHeight, X : BEQ .on_ground
+    DEC.w SprHeight, X
+  .on_ground
+  RTS
 }
 
 Sprite_VillageDog_Main:
@@ -67,22 +74,25 @@ Sprite_VillageDog_Main:
   dw Dog_MoveRightTowardsLink ; 04 
   dw Dog_WagTailLeft          ; 05 
   dw Dog_WagTailRight         ; 06
-  dw Dog_RandomMovement       ; 07
 
   ; 0
   Dog_Handler:
   {
     %PlayAnimation(8,8,8) ; Sitting
-    LDA #$20 : STA.w SprTimerD, X
 
-    JSL Sprite_IsToRightOfPlayer ; Check if sprite is to the right of player
-    TYA : BEQ .WalkRight         ; If so, go to LookLeft
- 
-    %GotoAction(3)
-    RTS
-  
-  .WalkRight
-    %GotoAction(4)
+    JSR HandleTossedDog
+
+    LDA $0309 : AND #$03 : BNE .lifting
+      LDA #$20 : STA.w SprTimerD, X
+      JSL Sprite_IsToRightOfPlayer : TYA : BEQ .walk_right
+        %GotoAction(1)
+        JMP .lifting
+      
+      .walk_right
+        %GotoAction(2)
+  .lifting
+    JSL Sprite_CheckIfLifted
+    JSL Sprite_Move
     RTS
   }
 
@@ -90,12 +100,12 @@ Sprite_VillageDog_Main:
   Dog_LookLeftAtLink:
   {
     %PlayAnimation(9,9,8)
-    
+     JSR HandleTossedDog
     LDA.w SprTimerD,              X : BNE +
-    ; Load the timer for the run
-    LDA   #$60 : STA.w SprTimerD, X
-    %GotoAction(3)
-  +
+      ; Load the timer for the run
+      LDA   #$60 : STA.w SprTimerD, X
+      %GotoAction(3)
+    +
     RTS
   }
 
@@ -103,12 +113,12 @@ Sprite_VillageDog_Main:
   Dog_LookRightAtLink:
   {
     %PlayAnimation(10,10,8)
-
+         JSR HandleTossedDog
     LDA.w SprTimerD,              X : BNE +
-    ; Load the timer for the run
-    LDA   #$60 : STA.w SprTimerD, X
-    %GotoAction(4)
-  +
+      ; Load the timer for the run
+      LDA   #$60 : STA.w SprTimerD, X
+      %GotoAction(4)
+    +
     RTS
   }
 
@@ -116,25 +126,23 @@ Sprite_VillageDog_Main:
   Dog_MoveLeftTowardsLink:
   {
     %PlayAnimation(2,4,6)
-    JSR CheckForSwitchToRandomMovement
-    JSL Sprite_DirectionToFacePlayer
+     JSR HandleTossedDog
     ; Check if the dog is near link, then wag the tail
-    LDA $0E : CMP.b #$00A0 : BCS +
-    CLC
-    LDA $0F : CMP.b #$00A0 : BCS +
-    %GotoAction(5)
-  +
+    JSR CheckIfPlayerIsNearby : BCC +
+      %GotoAction(5)
+    +
 
     ; Check for collision
     JSL Sprite_CheckTileCollision
     LDA $0E70, X : BEQ .no_collision
-    %GotoAction(0)
-.no_collision
+      %GotoAction(0)
+    .no_collision
 
     LDA.b #$0A                           ; Speed
     JSL   Sprite_ApplySpeedTowardsPlayer
     STZ   $06 : STZ $07
     JSL   Sprite_MoveLong
+    JSL Sprite_CheckIfLifted
 
     LDA.w SprTimerD, X : BNE +
 
@@ -147,28 +155,26 @@ Sprite_VillageDog_Main:
   Dog_MoveRightTowardsLink:
   {
     %PlayAnimation(5,7,6)
-
-    JSR CheckForSwitchToRandomMovement
-    JSL Sprite_DirectionToFacePlayer
-    ; Check if the dog is near link, then wag the tail
-    LDA $0E : CMP.b #$00A0 : BCS +
-    CLC
-    LDA $0F : CMP.b #$00A0 : BCS +
-    %GotoAction(6)
-  +
+     JSR HandleTossedDog
+    JSR CheckIfPlayerIsNearby : BCC +
+      %GotoAction(6)
+    +
 
     ; Check for collision
     JSL Sprite_CheckTileCollision
     LDA $0E70, X : BEQ .no_collision
-    %GotoAction(0)
-.no_collision
+      %GotoAction(0)
+    .no_collision
+
     LDA.b #$0A                           ; Speed
     JSL   Sprite_ApplySpeedTowardsPlayer
     STZ   $06 : STZ $07
     JSL   Sprite_MoveLong
+    JSL   Sprite_CheckIfLifted
+
     LDA.w SprTimerD, X : BNE ++
-    %GotoAction(0)
-  ++
+      %GotoAction(0)
+    ++
     RTS
   }
 
@@ -177,9 +183,11 @@ Sprite_VillageDog_Main:
   {
     %PlayAnimation(0,1, 8)
     JSR   ShowMessageIfMinish
+    JSL   Sprite_CheckIfLifted
+     JSR HandleTossedDog
     LDA.w SprTimerD, X : BNE +
-    %GotoAction(0)
-  +
+      %GotoAction(0)
+    +
     RTS
   }
   
@@ -188,45 +196,33 @@ Sprite_VillageDog_Main:
   {
     %PlayAnimation(11,12,8)
     JSR   ShowMessageIfMinish
+    JSL   Sprite_CheckIfLifted
+     JSR HandleTossedDog
     LDA.w SprTimerD, X : BNE +
-    %GotoAction(0)
-  +
-    RTS
-  }
-
-  ; 07
-  Dog_RandomMovement:
-  {
-    %PlayAnimation(2,4,6)
-    LDA.w SprTimerD,              X : BNE +
-    ; Load the timer for the run
-    LDA   #$60 : STA.w SprTimerD, X
-
-    JSL GetRandomInt
-    AND.b #$03
-    BEQ .move_left
-    BNE .move_right
-  .move_left
-
-    %GotoAction(3)
-    RTS
-  .move_right
-    %GotoAction(4)
-    RTS
-    
-  +
+      %GotoAction(0)
+    +
     RTS
   }
 
 }
 
-CheckForSwitchToRandomMovement:
+CheckIfPlayerIsNearby:
 {
-;   LDA.w SprTimerD,              X : BNE +
-;   LDA   #$60 : STA.w SprTimerD, X
-;   %GotoAction(7)
-; +
-  RTS
+    REP #$20
+    LDA $22 : CLC : ADC #$0012 : CMP $0FD8 : BCC .left
+    LDA $22 : SEC : SBC #$0012 : CMP $0FD8 : BCS .right
+
+    LDA $20 : CLC : ADC #$001A : CMP $0FDA : BCC .up
+    LDA $20 : SEC : SBC #$001A : CMP $0FDA : BCS .down
+    
+    SEP #$21 : RTS ; Return with carry set
+
+  .left
+  .right
+  .up
+  .down
+    SEP #$20
+    CLC : RTS ; Return with carry cleared
 }
 
 
