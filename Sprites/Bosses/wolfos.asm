@@ -6,7 +6,7 @@
 !NbrTiles           = 04  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 00  ; Number of Health the sprite have
+!Health             = 20  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
@@ -26,7 +26,7 @@
 !Interaction        = 00  ; ?? No documentation
 !Statue             = 00  ; 01 = Sprite is statue
 !DeflectProjectiles = 00  ; 01 = Sprite will deflect ALL projectiles
-!ImperviousArrow    = 00  ; 01 = Impervious to arrows
+!ImperviousArrow    = 01  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 %Set_Sprite_Properties(Sprite_Wolfos_Prep, Sprite_Wolfos_Long)
@@ -37,7 +37,7 @@ Sprite_Wolfos_Long:
 {
   PHB : PHK : PLB
 
-  JSR Sprite_Wolfos_Draw ; Call the draw code
+  JSR Sprite_Wolfos_Draw
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
@@ -54,7 +54,11 @@ Sprite_Wolfos_Prep:
 {
   PHB : PHK : PLB
     
-      ; Add more code here to initialize data
+  LDA.b #$40 : STA.w SprTimerA, X
+  LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
+  LDA #$04 : STA $0E40, X ; Nbr Oam Entries 
+  LDA #$40 : STA $0E60, x ; Impervious props 
+  LDA #$E0 : STA $0F60, X ; Persist 
 
   PLB
   RTL
@@ -66,13 +70,30 @@ Sprite_Wolfos_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
-  dw Wolfos_Main
 
+  dw Wolfos_Main
+  dw Wolfos_AttackBack
 
   Wolfos_Main:
   {
     %PlayAnimation(0, 2, 10)
 
+    LDA SprTimerA, X : BNE .end
+    LDA.b #$40 : STA.w SprTimerA, X
+      %GotoAction(1)
+    .end
+
+    RTS
+  }
+
+  Wolfos_AttackBack:
+  {
+    %PlayAnimation(3, 5, 10)
+
+    LDA SprTimerA, X : BNE .end
+    LDA.b #$40 : STA.w SprTimerA, X
+      %GotoAction(0)
+    .end
 
     RTS
   }
@@ -92,9 +113,8 @@ Sprite_Wolfos_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA $0DC0, X : CLC : ADC $0D90, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
