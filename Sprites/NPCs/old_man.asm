@@ -86,3 +86,15 @@ SpritePrep_OldMan:
 
   RTS
 }
+
+; Updated old man cave trigger
+org $09A4C8
+  dw $00E5 
+
+org $09A54E
+  dw $0005 ; OW 03 - West DM
+
+; Update position
+org $09A554
+ dw $0178, $0A63, $0001, $009D, $0004 ; Old man - MESSAGE 009D
+
