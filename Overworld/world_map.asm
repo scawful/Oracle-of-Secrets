@@ -287,7 +287,7 @@ MapIconDraw:
       LDA.b #$00 : STA.l $7EC10B
       LDA.b #$87 : STA.l $7EC10A
       ; Y position
-      LDA.b #$06 : STA.l $7EC109
+      LDA.b #$04 : STA.l $7EC109
       LDA.b #$01 : STA.l $7EC108
       ; Tile GFX
       LDA.b #$64 : STA.b $0D
@@ -299,22 +299,20 @@ MapIconDraw:
 
     .skip_draw_0
 
-
-    ; Draw Crystal 3
+    ; Draw Crystal 2
     LDA.l $7EF37A : AND #$10 : BNE .skip_draw_1
       ; X position (2)
       LDA.b #$1E : STA.l $7EC10B
-      LDA.b #$3E : STA.l $7EC10A
+      LDA.b #$A0 : STA.l $7EC10A
       ; Y position (2)
       LDA.b #$09 : STA.l $7EC109
       LDA.b #$74 : STA.l $7EC108
 
-      ; Icon 3
       LDA.b #$64 : STA.b $0D
       LDA.b #$34 : STA.b $0C ; Tile GFX
 
       LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
-      LDA.b #$0D : STA.l $7EC025
+      LDA.b #$08 : STA.l $7EC025
 
       JSR HandleMapDrawIcon
 
@@ -323,17 +321,17 @@ MapIconDraw:
     ; Draw Crystal 3
     LDA.l $7EF37A : AND #$40 : BNE .skip_draw_2
       ; X position
-      LDA.b #$09 : STA.l $7EC10B
-      LDA.b #$34 : STA.l $7EC10A
+      LDA.b #$08 : STA.l $7EC10B
+      LDA.b #$10 : STA.l $7EC10A
       ; Y position
-      LDA.b #$00 : STA.l $7EC109
+      LDA.b #$04 : STA.l $7EC109
       LDA.b #$0E : STA.l $7EC108
-      ; Icon 7 
+
       LDA.b #$64 : STA.b $0D
-      LDA.b #$32 : STA.b $0C ; Tile GFX
+      LDA.b #$34 : STA.b $0C ; Tile GFX
 
       LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
-      LDA.b #$0C : STA.l $7EC025
+      LDA.b #$0D : STA.l $7EC025
 
       JSR HandleMapDrawIcon
 
@@ -344,9 +342,9 @@ MapIconDraw:
     LDA.l $7EF37A : AND #$01 : BNE .skip_draw_3
       ; X position
       LDA.b #$0E : STA.l $7EC10B
-      LDA.b #$3E : STA.l $7EC10A
+      LDA.b #$5E : STA.l $7EC10A
       ; Y position
-      LDA.b #$04 : STA.l $7EC109
+      LDA.b #$06 : STA.l $7EC109
       LDA.b #$68 : STA.l $7EC108
 
       LDA.b #$64 : STA.b $0D
@@ -362,19 +360,19 @@ MapIconDraw:
     ; Draw Crystal 5
     LDA.l $7EF37A : AND #$20 : BNE .skip_draw_4
       ; X position
-      LDA.b #$09 : STA.l $7EC10B
-      LDA.b #$00 : STA.l $7EC10A
+      LDA.b #$0C : STA.l $7EC10B
+      LDA.b #$34 : STA.l $7EC10A
       ; Y position
-      LDA.b #$02 : STA.l $7EC109
-      LDA.b #$74 : STA.l $7EC108
+      LDA.b #$00 : STA.l $7EC109
+      LDA.b #$0E : STA.l $7EC108
 
       LDA.b #$64 : STA.b $0D
-      LDA.b #$3C : STA.b $0C ; Tile GFX
+      LDA.b #$34 : STA.b $0C ; Tile GFX
 
-      LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
-      LDA.b #$0A : STA.l $7EC025
+      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+      LDA.b #$09 : STA.l $7EC025
 
-      JSR HandleMapDrawIcon_noflash
+      JSR HandleMapDrawIcon
 
     .skip_draw_4
 
@@ -391,7 +389,7 @@ MapIconDraw:
       LDA.b #$32 : STA.b $0C ; Tile GFX
 
       LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
-      LDA.b #$09 : STA.l $7EC025
+      LDA.b #$0A : STA.l $7EC025
 
       JSR HandleMapDrawIcon
     .skip_draw_5
@@ -400,36 +398,37 @@ MapIconDraw:
     LDA.l $7EF37A : AND #$08 : BNE .skip_draw_6
       ; X position
       LDA.b #$00 : STA.l $7EC10B
-      LDA.b #$87 : STA.l $7EC10A
+      LDA.b #$F4 : STA.l $7EC10A
       ; Y position
-      LDA.b #$04 : STA.l $7EC109
-      LDA.b #$68 : STA.l $7EC108
+      LDA.b #$0D : STA.l $7EC109
+      LDA.b #$0E : STA.l $7EC108
 
       LDA.b #$64 : STA.b $0D
-      LDA.b #$34 : STA.b $0C ; Tile GFX
+      LDA.b #$32 : STA.b $0C ; Tile GFX
 
-      LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
-      LDA.b #$08 : STA.l $7EC025
+      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+      LDA.b #$0C : STA.l $7EC025
 
-      JSR HandleMapDrawIcon_noflash
+      JSR HandleMapDrawIcon
     .skip_draw_6
 
-    LDA.l $7EF37A : AND #$20 : BNE .skip_draw_x
-      ; X position
-      LDA.b #$0A : STA.l $7EC10B
-      LDA.b #$00 : STA.l $7EC10A
-      ; Y position
-      LDA.b #$04 : STA.l $7EC109
-      LDA.b #$74 : STA.l $7EC108
+    ; ; Hall of Secrets X
+    ; LDA.l $7EF37A : AND #$20 : BNE .skip_draw_x
+    ;   ; X position
+    ;   LDA.b #$0D : STA.l $7EC10B
+    ;   LDA.b #$00 : STA.l $7EC10A
+    ;   ; Y position
+    ;   LDA.b #$03 : STA.l $7EC109
+    ;   LDA.b #$54 : STA.l $7EC108
 
-      LDA.b #$68 : STA.b $0D
-      LDA.b #$34 : STA.b $0C ; Tile GFX
+    ;   LDA.b #$68 : STA.b $0D
+    ;   LDA.b #$34 : STA.b $0C ; Tile GFX
 
-      LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
-      LDA.b #$07 : STA.l $7EC025
+    ;   LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+    ;   LDA.b #$07 : STA.l $7EC025
 
-      JSR HandleMapDrawIcon_noflash
-    .skip_draw_x
+    ;   JSR HandleMapDrawIcon_noflash
+    ; .skip_draw_x
 
     JMP restore_coords_and_exit
 }
