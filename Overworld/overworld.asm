@@ -7,6 +7,11 @@ org $02DB74
 org $02DC51
   db $14
 
+; Remove rain sound effects from beginning
+org $02838C
+LDA.l $7EF3C5
+CMP.b #$00
+
 org $0EF581
 EXIT_0EF581:
 
