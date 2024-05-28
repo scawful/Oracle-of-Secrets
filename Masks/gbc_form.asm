@@ -101,7 +101,6 @@ LinkState_GameboyForm:
 {
   SEP #$30
   LDA $02B2 : CMP.b #$06 : BEQ .already_gbc
-  LDA $7EF357 : BEQ .return                 ; doesnt have the pearl
   LDA $0FFF : BEQ .return                   ; not in dark world
 
 .transform
