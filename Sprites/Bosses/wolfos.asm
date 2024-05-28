@@ -69,6 +69,7 @@ macro Wolfos_Move()
   JSL Sprite_DamageFlash_Long
   JSL Sprite_CheckDamageFromPlayerLong
   JSL Sprite_PlayerCantPassThrough
+  JSL Sprite_BounceFromTileCollision
 
   JSL Sprite_Move
   JSR Wolfos_Move
@@ -76,26 +77,22 @@ endmacro
 
 Wolfos_Move:
 {
-  LDA SprTimerA, X : BNE + 
+  JSL Sprite_ApplySpeedTowardsPlayer
+
   JSL Sprite_IsToRightOfPlayer : TYA : BEQ .right
-    LDA.b #$20 : STA.w SprTimerA, X
     %GotoAction(3) ; Walk Left
     RTS
   .right
-    LDA.b #$20 : STA.w SprTimerA, X
     %GotoAction(2) ; Walk Right
-  +
-
+    RTS
+  
   JSL Sprite_IsBelowPlayer : TYA : BEQ .above_player
-    LDA.b #$40 : STA.w SprTimerA, X
     %GotoAction(1) ; Attack Back
     RTS
 
   .above_player
-    LDA.b #$40 : STA.w SprTimerA, X
     %GotoAction(0) ; Attack Forward
     RTS
-
 }
 
 !NormalSpeed = $06
@@ -119,7 +116,6 @@ Sprite_Wolfos_Main:
     %Wolfos_Move()
 
     LDA #!NormalSpeed : STA.w SprYSpeed, X
-    STZ.w SprXSpeed, X
 
     RTS
   }
@@ -130,7 +126,6 @@ Sprite_Wolfos_Main:
     %Wolfos_Move()
 
     LDA #-!NormalSpeed : STA.w SprYSpeed, X
-    STZ.w SprXSpeed, X
     
     RTS
   }
@@ -139,9 +134,14 @@ Sprite_Wolfos_Main:
   {
     %PlayAnimation(6, 8, 10)
     %Wolfos_Move()
+    JSL Sprite_IsBelowPlayer : TYA : BEQ .above_player
+      %GotoAction(1) ; Attack Back
+      RTS
 
+    .above_player
+      %GotoAction(0) ; Attack Forward
+      RTS
     LDA #!NormalSpeed : STA.w SprXSpeed, X
-    STZ.w SprYSpeed, X
 
     JSL GetRandomInt : AND.b #$3F : BNE +
       %GotoAction(4)
@@ -155,8 +155,15 @@ Sprite_Wolfos_Main:
     %PlayAnimation(9, 11, 10)
     %Wolfos_Move()
 
+    JSL Sprite_IsBelowPlayer : TYA : BEQ .above_player
+      %GotoAction(1) ; Attack Back
+      RTS
+
+    .above_player
+      %GotoAction(0) ; Attack Forward
+      RTS
+
     LDA #-!NormalSpeed : STA.w SprXSpeed, X
-    STZ.w SprYSpeed, X
 
     JSL GetRandomInt : AND.b #$3F : BNE +
       %GotoAction(5)
@@ -170,9 +177,7 @@ Sprite_Wolfos_Main:
     %PlayAnimation(12, 13, 10)
     %Wolfos_Move()
 
-
     LDA #!AttackSpeed : STA.w SprXSpeed, X
-    STZ.w SprYSpeed, X
 
     RTS
   }
@@ -183,7 +188,6 @@ Sprite_Wolfos_Main:
     %Wolfos_Move()
 
     LDA #-!AttackSpeed : STA.w SprXSpeed, X
-    STZ.w SprYSpeed, X
 
     RTS
   }
