@@ -102,6 +102,7 @@ Palette_ArmorAndGloves:
   CMP.b #$03 : BEQ .wolf_mask
   CMP.b #$04 : BEQ .bunny_hood
   CMP.b #$05 : BEQ .minish_form
+  CMP.b #$06 : BEQ .gbc_form
   JMP   .original_sprite
 
 .deku_mask
@@ -128,6 +129,11 @@ Palette_ArmorAndGloves:
   ; Load Minish Form Location
   LDA.b #$39 : STA $BC : JMP   .original_palette
   ; RTL
+
+.gbc_form
+  ; Load GBC Link Location
+  LDA.b #$3B : STA $BC : JSL UpdateGbcPalette
+  RTL
 
 .original_sprite
  ; Load Original Sprite Location
