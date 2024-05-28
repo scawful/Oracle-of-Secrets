@@ -1,5 +1,12 @@
 ; Overworld.asm
 
+; Spawn Point 03 - Room 0005
+org $02DB74
+  dw $0005
+
+org $02DC51
+  db $14
+
 org $0EF581
 EXIT_0EF581:
 
