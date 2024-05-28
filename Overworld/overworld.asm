@@ -1,11 +1,18 @@
 ; Overworld.asm
 
-; Module15_0C
-; Change overlay that Impa activates after intro
-org $029E2E
-#_029E2E: LDA.l $7EF2A3
-#_029E32: ORA.b #$20
-#_029E34: STA.l $7EF2A3
+org $0EF581
+EXIT_0EF581:
+
+; FlashGanonTowerPalette
+org $0EF587
+  LDA.b $8A
+  CMP.b #$57 ; OW 43
+  BEQ .on_dark_dm
+  CMP.b #$57 ; OW 45
+  BEQ .on_dark_dm
+  CMP.b #$57 ; OW 47
+  BNE EXIT_0EF581
+  .on_dark_dm
 
 incsrc "Overworld/world_map.asm"
 
