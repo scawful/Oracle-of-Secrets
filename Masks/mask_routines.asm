@@ -5,7 +5,11 @@
 macro PlayerTransform()
   LDY.b #$04 : LDA.b #$23
   JSL   AddTransformationCloud
-  LDA.b #$14 : JSR Player_DoSfx2
+  LDA.b #$14 
+  STA.w $0CF8
+  JSL $0DBB67 ; Link_CalculateSFXPan
+  ORA.w $0CF8
+  STA $012E
 endmacro
 
 macro ResetToLinkGraphics()
