@@ -109,46 +109,51 @@ Palette_ArmorAndGloves:
   CMP.b #$06 : BEQ .gbc_form
   JMP   .original_sprite
 
-.deku_mask
-  ; Load Deku Mask Location
-  LDA.b #$35 : STA $BC 
-  JSL UpdateDekuPalette
-  RTL
+  .deku_mask
+    ; Load Deku Mask Location
+    LDA.b #$35 : STA $BC 
+    JSL UpdateDekuPalette
+    RTL
 
-.zora_mask
-  ; Load Zora Mask Location
-  LDA.b #$36 : STA $BC : JMP   .original_palette
+  .zora_mask
+    ; Load Zora Mask Location
+    LDA.b #$36 : STA $BC
+    JSL UpdateZoraPalette
+    RTL
 
-.wolf_mask
-  ; Load Wolf Mask Location
-  LDA.b #$38 : STA $BC : JSL   $38F000
-  RTL
+  .wolf_mask
+    ; Load Wolf Mask Location
+    LDA.b #$38 : STA $BC 
+    JSL $38F000
+    RTL
 
-.bunny_hood
-  ; Load Bunny Hood Location
-  LDA.b #$37 : STA $BC : JSL   $37F000
-  RTL
+  .bunny_hood
+    ; Load Bunny Hood Location
+    LDA.b #$37 : STA $BC 
+    JSL $37F000
+    RTL
 
-.minish_form
-  ; Load Minish Form Location
-  LDA.b #$39 : STA $BC : JMP   .original_palette
-  ; RTL
+  .minish_form
+    ; Load Minish Form Location
+    LDA.b #$39 : STA $BC : JMP .original_palette
 
-.gbc_form
-  ; Load GBC Link Location
-  LDA.b #$3B : STA $BC : JSL UpdateGbcPalette
-  RTL
+  .gbc_form
+    ; Load GBC Link Location
+    LDA.b #$3B : STA $BC 
+    JSL UpdateGbcPalette
+    RTL
 
-.original_sprite
- ; Load Original Sprite Location
+  .original_sprite
+  ; Load Original Sprite Location
   LDA.b #$10 : STA $BC
 
-.original_palette
+  .original_palette
   REP #$21
   LDA $7EF35B ; Link's armor value
   JSL $1BEDFF ; Read Original Palette Code
   RTL
-.part_two
+
+  .part_two
   SEP #$30
     REP   #$30
     LDA.w #$0000  ; Ignore glove color modifier $7EF354
@@ -174,14 +179,10 @@ Palette_ArmorAndGloves:
 
   LDA.b $BC : AND #$00FF : STA $02
 
-.loop
-
-  LDA [$00] : STA $7EC300, X : STA $7EC500, X
-
-  INC $00 : INC $00
-
-  INX #2
-
+  .loop
+    LDA [$00] : STA $7EC300, X : STA $7EC500, X
+    INC $00 : INC $00
+    INX #2
   DEY : BPL .loop
 
   SEP #$30
@@ -480,3 +481,5 @@ DekuLink_HoverBasedOnInput:
 }
 
 print "End of mask_routines.asm          ", pc
+
+; LinkOAM_DrawShield _0DA780
