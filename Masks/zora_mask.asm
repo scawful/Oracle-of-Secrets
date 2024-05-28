@@ -13,32 +13,32 @@
 
 UpdateZoraPalette:
 {
-    REP #$30   ; change 16 bit mode
-    LDX #$001E
+  REP #$30   ; change 16 bit mode
+  LDX #$001E
 
   .loop
-    LDA.l zora_palette, X : STA $7EC6E0, X
-    DEX : DEX : BPL .loop
+  LDA.l zora_palette, X : STA $7EC6E0, X
+  DEX : DEX : BPL .loop
 
-    SEP #$30 ; go back to 8 bit mode
-    INC $15  ; update the palette
-    RTL       
+  SEP #$30 ; go back to 8 bit mode
+  INC $15  ; update the palette
+  RTL       
 }
 
 ; =========================================================
 
-; TODO: Change from "bunny palette" to blue zora palette colors 
+; TODO: Finish the Zora palette
 zora_palette:
   dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$4E48, #$3582
   dw #$55BB, #$6EF7, #$7BDE, #$55C7, #$6ECD, #$2E5A, #$1970, #$7616
-  ; dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
-  ; dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357, #$0000
+; dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
+; dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357
 
 ; zora_palette:
 ;   dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$19FD, #$14B6
 ;   dw #$55BB, #$362A, #$3F4E, #$162B, #$22D0, #$2E5A, #$1970, #$7616
 ;   dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
-;   dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357, #$0000
+;   dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357
 
 ; =========================================================
 
@@ -76,11 +76,10 @@ LinkState_UsingZoraMask:
 {
   ; Check if the mask is equipped 
   LDA $02B2 : CMP #$02 : BNE .normal : CLC
-
-  ; Check if we are in water or not 
-  LDA $5D : CMP #$04 : BEQ .swimming : CLC
+    ; Check if we are in water or not 
+    LDA $5D : CMP #$04 : BEQ .swimming : CLC
   
-.normal
+  .normal
   ; Return to normal state 
   STZ $55
   STZ $5E     ; Reset speed to normal 
@@ -88,7 +87,7 @@ LinkState_UsingZoraMask:
   STZ $0351
   JMP .return
   
-.swimming
+  .swimming
   ; Check if we are indoors or outdoors 
   LDA $1B : BNE .dungeon ; z flag is 1 
 
@@ -137,31 +136,26 @@ LinkState_UsingZoraMask:
   {
     ; Check if we are in water or not 
     LDA $5D : CMP #$04 : BNE .return_dungeon : CLC
+      ; Check if already underwater
+      LDA !ZoraDiving : BNE .return_dungeon : CLC
+        ; Check the Y button and clear state if activated
+        JSR Link_CheckNewY_ButtonPress : BCC .return_dungeon
+          LDA $3A : AND.b #$BF : STA $3A
 
-    ; Check if already underwater
-    LDA !ZoraDiving : BNE .return_dungeon : CLC
+          .dive_dungeon
+          ; Splash effect 
+          LDA.b #$15 : LDY.b #$00
+          JSL   AddTransitionSplash
 
-    ; Check if we are on a proper tile or not 
-    ; 
+          STZ $5D ; reset player to ground state 
+          STZ $EE ; move link to lower level
+          
+          LDA #$72 : STA $9A  ; Set layer 
+          LDA #$08 : STA $5E  ; Set the player speed 
+          STZ $0345           ; Reset deep water flag
+          LDA #$01 : STA !ZoraDiving ; Set the player underwater flag 
 
-    ; Check the Y button and clear state if activated
-    JSR Link_CheckNewY_ButtonPress : BCC .return_dungeon
-    LDA $3A : AND.b #$BF : STA $3A
-
-  .dive_dungeon
-    ; Splash effect 
-    LDA.b #$15 : LDY.b #$00
-    JSL   AddTransitionSplash
-
-    STZ $5D ; reset player to ground state 
-    STZ $EE ; move link to lower level
-    
-    LDA #$72 : STA $9A  ; Set layer 
-    LDA #$08 : STA $5E  ; Set the player speed 
-    STZ $0345           ; Reset deep water flag
-    LDA #$01 : STA !ZoraDiving ; Set the player underwater flag 
-
-  .return_dungeon
+    .return_dungeon
     JSR $E8F0 ; HandleIndoorCameraAndDoors
     RTS
   }
@@ -180,12 +174,9 @@ warnpc $078364
 
 pullpc
 
-.dungeon_resurface ; TODO: Fix resurfacing bug.
+.dungeon_resurface
 {
   LDA $1B : BEQ .return_default ; We are in overworld actually 
-
-  ; Check if we are swimming 
-  LDA $5D : CMP #$04 : BNE .return_default
 
   ; Check if the player is actually diving 
   LDA !ZoraDiving : BEQ .return_default
@@ -206,17 +197,17 @@ pullpc
   {
     ; Restore Swimming Effects
     LDA.b #$15 : LDY.b #$00 : JSL AddTransitionSplash
-  .remove_dive
+    .remove_dive
     LDA #$04 : STA $5D ; Set Link to Swimming State
   
     LDA #$01 : STA $EE ; Set Link to upper level
     STA $0345          ; Set deep water flag 
 
     ; Remove Diving Effects
-  .player_is_falling
+    .player_is_falling
     LDA $67 : AND #$01 : STA $2F
     STZ $5E                      ; Reset speed to normal
-    STZ !ZoraDiving                    ; Reset underwater flag 
+    STZ !ZoraDiving              ; Reset underwater flag 
     STZ $0351                    ; Reset ripple flag
     STZ $24                      ; Reset z coordinate for link
     STZ $0372                    ; Reset link bounce flag
@@ -224,7 +215,8 @@ pullpc
     JMP .return_default
   }
 
-.return_default
+  .return_default
+  STZ !ZoraDiving
   STZ $0302
   RTS
 }
@@ -245,7 +237,7 @@ pullpc
     STZ $5E                                ; Reset speed to normal
     STZ !ZoraDiving                        ; Reset underwater flag 
     LDA #$62 : STA $9A                     ; Reset dungeon layer
-.return_hop
+  .return_hop
   LDA #$06 : STA $5D ; Set Link to Recoil State
   RTS
 }
@@ -262,11 +254,10 @@ LinkState_ResetMaskAnimated:
   CMP.b #$06 : BEQ .gbc_form
   CMP.b #$02 : BEQ .no_mask
   CMP   #$01 : BNE .transform
+    ; Restore the sword, shield, and bow override
+    LDA $0AAF : STA.l $7EF35A
 
-  ; Restore the sword, shield, and bow override
-  LDA $0AAF : STA.l $7EF35A
-
-.transform
+  .transform
   LDY.b #$04 : LDA.b #$23
   JSL   AddTransformationCloud
   LDA.b #$14 : JSR Player_DoSfx2
@@ -274,8 +265,8 @@ LinkState_ResetMaskAnimated:
   STZ $02B2
   JSL Palette_ArmorAndGloves
   LDA #$10 : STA $BC
-.no_mask
-.gbc_form
+  .no_mask
+  .gbc_form
   RTL
 }
 
