@@ -68,11 +68,26 @@ LoadOverworld_CheckForGbcLink:
   RTL
 }
 
+OverworldTransition_CheckForGbcLink:
+{
+  LDA $0FFF : BEQ .return 
+
+      JSL UpdateGbcPalette
+      LDA #$3B : STA $BC   ; change link's sprite
+      LDA #$06 : STA $02B2
+      .return
+      JSL $07E6A6
+      RTL
+}
+
 ; Module08_02_LoadAndAdvance
 org $02EDC0
 {
   JSL LoadOverworld_CheckForGbcLink
 }
+
+org $02ABDA
+  JSL OverworldTransition_CheckForGbcLink
 
 org $07A9B1
 LinkMode_MagicMirror:
