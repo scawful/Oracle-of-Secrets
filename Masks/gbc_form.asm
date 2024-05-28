@@ -57,12 +57,17 @@ LinkState_GameboyInDungeonEntrance:
 ; Retain GBC sprite when exiting DW dungeons
 LoadOverworld_CheckForGbcLink:
 {
-  LDA $0FFF : BEQ .return 
+  LDA $0FFF : BEQ .return_lw
 
-      JSL UpdateGbcPalette
-      LDA #$3B : STA $BC   ; change link's sprite 
+      LDA.b #$06 : STA $02B2
+      LDA.b #$3B : STA $BC   ; change link's sprite 
+      JMP .return
    
+.return_lw
+  STZ.w $02B2
+  
 .return
+  JSL Palette_ArmorAndGloves
   STZ.b $B0
   STZ.b $11
   RTL
@@ -71,10 +76,9 @@ LoadOverworld_CheckForGbcLink:
 OverworldTransition_CheckForGbcLink:
 {
   LDA $0FFF : BEQ .return 
-
-      JSL UpdateGbcPalette
       LDA #$3B : STA $BC   ; change link's sprite
       LDA #$06 : STA $02B2
+      JSL Palette_ArmorAndGloves
       .return
       JSL $07E6A6
       RTL
@@ -121,15 +125,16 @@ LinkState_GameboyForm:
 .transform
   %PlayerTransform()
 
-  JSL UpdateGbcPalette
   LDA #$3B : STA $BC   ; change link's sprite 
   LDA #$06 : STA $02B2
+  JSL Palette_ArmorAndGloves
   BRA .return
 
 .already_gbc
   %PlayerTransform()
   LDA #$10 : STA $BC
   STZ $02B2
+  JSL Palette_ArmorAndGloves
   
 .not_gbc
 .return
