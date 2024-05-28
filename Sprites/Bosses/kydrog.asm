@@ -150,6 +150,10 @@ Sprite_Kydrog_Main:
     ; Set the progress flag for Impa (Zelda) in the sanctuary
     LDA $7EF3C6 : ORA.b #$04 : STA $7EF3C6
 
+    ; Set Link to GBC form
+    LDA.b #$06 : STA $02B2
+
+
     RTS
   }
 }
