@@ -172,7 +172,8 @@ RunClock:
     ; GBC Link code
     LDA $0FFF : CMP #$00 : BEQ .light_world
       JSL UpdateGbcPalette
-      LDA #$3B : STA $BC   ; change link's sprite 
+      LDA.b #$3B : STA $BC   ; change link's sprite 
+      LDA.b #$06 : STA $02B2 ; set the form id 
     .light_world
     RTS
 
@@ -538,6 +539,8 @@ RestoreTimeForDungeonMap:
   LDA.l $7EC017
   RTL
 }
+
+pushpc
 
 org $0ED956
   JSL FixDungeonMapColors
