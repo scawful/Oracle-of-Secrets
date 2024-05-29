@@ -10,6 +10,32 @@ macro SetTempo(v)
 db $E7, <v>
 endmacro
 
+; 00 Unknown
+; 01 Rain
+; 02 Tympani
+; 03 Square wave
+; 04 Saw wave
+; 05 Sine wave
+; 06 Double saw wave 1
+; 07 Double save wave 2
+; 08 Tweet
+; 09 Strings
+; 0A Same as 9
+; 0B Trombone
+; 0C Cymbal
+; 0D Ocarina
+; 0E Chime
+; 0F harp
+; 10 Splash
+; 11 Trumpet
+; 12 Horn
+; 13 Snare
+; 14 Same as 13
+; 15 Choir
+; 16 Flute
+; 17 Oof
+; 18 Guitar
+
 macro SetInstrument(v)
 db $E0, <v>
 endmacro
@@ -107,6 +133,20 @@ endmacro
 macro PercussionPatchBass(instrument)
 db $FA, <instrument>
 endmacro
+
+;1/4 = $48
+;1/4 double = $6C
+;1/4 triplet = $30
+;1/8 = $24
+;1/8 double = $36
+;1/8 triplet = $18
+;1/16 = $12
+;1/16 double = $1B
+;1/32 = $09
+; To make a whole note you tie 4 1/4 so something like
+;%SetDuration(48)
+;db !C4, !Tie, !Tie, !Tie ; will play a whole note (1/1)
+;db !C4, !Tie ; will play a half note (1/2)
 
 macro SetDuration(v) ; $48 = 1/4, $24 = 1/8, $12 = 1/16, $09 = 1/32
 db <v>
