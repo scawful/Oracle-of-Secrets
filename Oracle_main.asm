@@ -3,16 +3,7 @@
 ;                   Composed by: Scawful
 ;
 ; Expanded Banks:
-;   21 - N/A
-;   22 - N/A
-;   23 - N/A
-;   24 - N/A
-;   25 - N/A
-;   26 - N/A
-;   27 - N/A
-;   28 - ZS Reserved
-;   29 - ZS Reserved
-;   2A - ZS Reserved
+;  21-2A ZS Reserved
 ;   2B - Items: all_items.asm
 ;   2C - Dungeon Objects, Spike Subtype, Together Warp Tag
 ;   2D - Menu
@@ -22,7 +13,7 @@
 ;   31 - Sprites: all_sprites.asm
 ;   32 - Time System
 ;   33 - Custom Collision Tables
-;   34 - 
+;   34 - Custom Overworld Overlays
 ;   35 - Deku Link GFX
 ;   36 - Zora Link GFX
 ;   37 - Bunny Link GFX
@@ -85,6 +76,7 @@ namespace Oracle
   print  "End of Music/dungeon_theme.asm    ", pc
 
   incsrc "Music/stone_tower_temple.asm"
+  print  "End of stone_tower_temple.asm     ", pc
 
 
   print ""
@@ -130,8 +122,6 @@ namespace Oracle
 
   ; -------------------------------------------------------
   incsrc "Util/all_items.asm"
-
-  ;incsrc "Dungeons/house_walls.asm"
 
   print ""
   print "Finished applying patches"
