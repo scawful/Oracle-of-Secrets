@@ -579,7 +579,7 @@ FloorIndicator:
   LDA   $7EF3C5 : CMP.b #$02 : BCS .no_rain_state
 
   ; cause the ambient rain sound to occur (indoor version)
-  LDA.b #$03 : STA $012D
+  LDA.b #$05 : STA $012D
 
 .no_rain_state
   REP #$20
