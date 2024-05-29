@@ -26,10 +26,15 @@ org $0EF587
   BNE EXIT_0EF581
   .on_dark_dm
 
-incsrc "Overworld/world_map.asm"
+; Pit hole leads to room only in area 4F (final boss)
+; TODO: Make this index a table of areas 
+org $0794D9
+  LDA $8A : CMP #$4F : BEQ .overworld_pit_transition
+  JSL $01FFD9 ; TakeDamageFromPit
+  RTS
+.overworld_pit_transition
 
-incsrc "Overworld/pit_damage.asm"
-print  "End of Overworld/pit_damage.asm   ", pc
+incsrc "Overworld/world_map.asm"
 
 incsrc "Overworld/master_sword.asm"
 print  "End of master_sword.asm           ", pc
