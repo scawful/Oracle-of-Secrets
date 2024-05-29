@@ -84,6 +84,9 @@ namespace Oracle
   incsrc "Music/dungeon_theme.asm"
   print  "End of Music/dungeon_theme.asm    ", pc
 
+  incsrc "Music/stone_tower_temple.asm"
+
+
   print ""
 
   ; -------------------------------------------------------
