@@ -54,11 +54,10 @@ Sprite_Kydrog_Prep:
 {
   PHB : PHK : PLB
     
-  ; Add more code here to initialize data
   LDA.l $7EF300
   BEQ .PlayIntro
     STZ.w $0DD0, X ; Kill the sprite 
-.PlayIntro
+  .PlayIntro
 
   PLB
   RTL
@@ -68,8 +67,8 @@ Sprite_Kydrog_Prep:
 
 Sprite_Kydrog_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
 
   dw Kydrog_StartCutscene
   dw Kydrog_AttractPlayer
@@ -85,12 +84,9 @@ Sprite_Kydrog_Main:
     LDA.b $20 ; Link's Y Position
     CMP.b #72 ; Y = 6C
     BCC .linkistoofar
-
-    LDA.b #$80
-    STA.w SprTimerA, X ; set timer A to 0x10
-    %GotoAction(1)
-
-  .linkistoofar
+      LDA.b #$80 : STA.w SprTimerA, X
+      %GotoAction(1)
+    .linkistoofar
 
     RTS
   }
@@ -98,10 +94,10 @@ Sprite_Kydrog_Main:
   Kydrog_AttractPlayer:
   {
     LDA.w SprTimerA, X : BNE +
-    LDA #$00 : STA $7EF303
-    %ShowUnconditionalMessage($21)
-    %GotoAction(2)
-  +
+      LDA #$00 : STA $7EF303
+      %ShowUnconditionalMessage($21)
+      %GotoAction(2)
+    +
     RTS
   }
 
@@ -115,14 +111,10 @@ Sprite_Kydrog_Main:
 
   Kydrog_WarpPlayerAway:
   {
-    ; Set game state to part 03 
-    ; LDA.b #$03 : STA $7EF3C5
-
     ; Put us in the Dark World.
     LDA $7EF3CA : EOR.b #$40 : STA $7EF3CA
 
     JSL $00FC41 ; Sprite_LoadGfxProperties
-    ; JSL $00FC62 ; Sprite_LoadGfxProperties.justLightWorld 
 
     STZ $037B : STZ $3C : STZ $3A : STZ $03EF
 
@@ -149,10 +141,6 @@ Sprite_Kydrog_Main:
 
     ; Set the progress flag for Impa (Zelda) in the sanctuary
     LDA $7EF3C6 : ORA.b #$04 : STA $7EF3C6
-
-    ; Set Link to GBC form
-    LDA.b #$06 : STA $02B2
-
 
     RTS
   }
@@ -218,18 +206,18 @@ Sprite_Kydrog_Draw:
 
 ; =========================================================
 
-.start_index
-  db $00
-.nbr_of_tiles
-  db 5
-.x_offsets
-  dw -8, 8, 8, -8, -8, 8
-.y_offsets
-  dw -12, -12, 4, 4, 20, 20
-.chr
-  db $CC, $CE, $EE, $EC, $E8, $EA
-.properties
-  db $3B, $3B, $3B, $3B, $3B, $3B
-.sizes
-  db $02, $02, $02, $02, $02, $02
+  .start_index
+    db $00
+  .nbr_of_tiles
+    db 5
+  .x_offsets
+    dw -8, 8, 8, -8, -8, 8
+  .y_offsets
+    dw -12, -12, 4, 4, 20, 20
+  .chr
+    db $CC, $CE, $EE, $EC, $E8, $EA
+  .properties
+    db $3B, $3B, $3B, $3B, $3B, $3B
+  .sizes
+    db $02, $02, $02, $02, $02, $02
 }
