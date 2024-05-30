@@ -51,11 +51,13 @@ print  "End of Overworld/time_system.asm  ", pc
 pullpc
 LoadDarkWorldIntro:
 {
-  ; Check for moon pearl
-  LDA.l $7EF357 : CMP.b #$01 : BEQ .has_pearl
-    STZ.w $1B
-    LDA.b #$40 : STA.l $7EF3CA
-    RTL
+  LDA.l $7EF3C5 : CMP.b #$02 : BNE .continue
+    ; Check for moon pearl
+    LDA.l $7EF357 : CMP.b #$01 : BEQ .has_pearl
+      STZ.w $1B
+      LDA.b #$40 : STA.l $7EF3CA
+      RTL
+    .continue
   .has_pearl
   LDA.l $7EF3CA
   RTL
