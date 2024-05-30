@@ -129,6 +129,14 @@ RunClock:
       RTS
 
   .counter_increasing
+  ; GBC Link code
+    LDA $0FFF : CMP #$00 : BEQ .light_world
+      LDA $02B2 : CMP.b #$05 : BCS .already_gbc_or_minish
+        JSL UpdateGbcPalette
+        LDA.b #$3B : STA $BC   ; change link's sprite 
+        LDA.b #$06 : STA $02B2 ; set the form id 
+  .light_world
+  .already_gbc_or_minish
 
   ; time speed (1,3,5,7,F,1F,3F,7F,FF) 
   ; #$3F is almost 1 sec = 1 game minute
@@ -169,12 +177,7 @@ RunClock:
     ; Reload Sprite Gfx Properties
     JSL $00FC62 ; Sprite_LoadGraphicsProperties
 
-    ; GBC Link code
-    LDA $0FFF : CMP #$00 : BEQ .light_world
-      JSL UpdateGbcPalette
-      LDA.b #$3B : STA $BC   ; change link's sprite 
-      LDA.b #$06 : STA $02B2 ; set the form id 
-    .light_world
+    
     RTS
 
   .reset_hours
