@@ -375,41 +375,46 @@ HandleCamera:
 
 HandleMovement:
 {
-    LDA $F0 : AND #$08 : BEQ .not_up
-      LDA $20 : CLC : ADC #-1 : STA $20
-      LDY #$00 : JSL DragPlayer
-      LDA #$01 : STA $031C
-      LDA #$05 : STA $3D
-      STZ $2F
-      ; DEC.b $E8
+  ; TODO: Check for collision here and prevent movement
+
+  LDA $F0 : AND #$08 : BEQ .not_up
+    LDA $20 : CLC : ADC #-1 : STA $20
+    LDY #$00 : JSL DragPlayer
+    LDA #$01 : STA $031C
+    LDA #$05 : STA $3D
+    STZ $2F
+    ; TODO: Handle overworld scroll camera gracefully
+    ; DEC.b $E8
+    ; DEC.w $0618 : DEC.w $0618 
+    ; DEC.w $061A : DEC.w $061A
   .not_up
-    LDA $F0 : AND #$04 : BEQ .not_down
-      LDA $20 : CLC : ADC #1 : STA $20
-      LDY #$01 : JSL DragPlayer
-      LDA #$02 : STA $031C
-      LDA #$05 : STA $3D
-      LDA #$02 : STA $2F
-      ; INC.b $E8
+  LDA $F0 : AND #$04 : BEQ .not_down
+    LDA $20 : CLC : ADC #1 : STA $20
+    LDY #$01 : JSL DragPlayer
+    LDA #$02 : STA $031C
+    LDA #$05 : STA $3D
+    LDA #$02 : STA $2F
+    ; INC.b $E8
+    ; DEC.w $0618 : DEC.w $0618 
+    ; DEC.w $061A : DEC.w $061A
   .not_down
-    LDA $F0 : AND #$02 : BEQ .not_left
-      LDA $22 : CLC : ADC #-1 : STA $22
-      LDY #$02 : JSL DragPlayer
-      LDA #$03 : STA $031C
-      LDA #$05 : STA $3D
-      LDA #$04 : STA $2F
-      ; DEC.b $E2
+  LDA $F0 : AND #$02 : BEQ .not_left
+    LDA $22 : CLC : ADC #-1 : STA $22
+    LDY #$02 : JSL DragPlayer
+    LDA #$03 : STA $031C
+    LDA #$05 : STA $3D
+    LDA #$04 : STA $2F
+    ; DEC.b $E2
   .not_left
-    LDA $F0 : AND #$01 : BEQ .not_right
-      LDA $22 : CLC : ADC #1 : STA $22
-      LDY #$03 : JSL DragPlayer
-      LDA #$04 : STA $031C
-      LDA #$05 : STA $3D
-      LDA #$06 : STA $2F
-      ; INC.b $E2
+  LDA $F0 : AND #$01 : BEQ .not_right
+    LDA $22 : CLC : ADC #1 : STA $22
+    LDY #$03 : JSL DragPlayer
+    LDA #$04 : STA $031C
+    LDA #$05 : STA $3D
+    LDA #$06 : STA $2F
+    ; INC.b $E2
   .not_right
-    LDA.w $22 : STA $0FD8 : LDA.w $23 : STA $0FD9
-    LDA.w $20 : STA $0FDA : LDA.w $21 : STA $0FDB
-    RTS
+  RTS
 }
 
 ; =========================================================
@@ -439,38 +444,27 @@ DekuLink_HoverBasedOnInput:
     ; Reset LinkState to Default
     STZ $5D
 
-    #_08B6A5: LDA.b #$01
-    #_08B6A7: STA.w $0AAA
+    LDA.b #$01 : STA.w $0AAA
 
-    #_08B6AA: STZ.w $0324
-    #_08B6AD: STZ.w $031C
-    #_08B6B0: STZ.w $031D
+    STZ.w $0324 : STZ.w $031C : STZ.w $031D
 
-    #_08B6B3: STZ.b $50
-    #_08B6B5: STZ.b $3D
+    STZ.b $50 : STZ.b $3D
 
-    #_08B6B7: STZ.w $0FC1
+    STZ.w $0FC1
 
-    #_08B6BA: STZ.w $011A
-    #_08B6BD: STZ.w $011B
-    #_08B6C0: STZ.w $011C
-    #_08B6C3: STZ.w $011D
+    STZ.w $011A : STZ.w $011B : STZ.w $011C : STZ.w $011D
 
   .no_turtle_rock_trigger
-    #_08B6E4: LDY.b #$00
+    LDY.b #$00
 
-    #_08B6E6: LDA.b $3C
-    #_08B6E8: BEQ .no_sword_charge
+    LDA.b $3C : BEQ .no_sword_charge
 
-    #_08B6EA: LDA.b $F0
-    #_08B6EC: AND.b #$80
-    #_08B6EE: TAY
+    LDA.b $F0 : AND.b #$80 : TAY
 
   .no_sword_charge
-    #_08B6EF: STY.b $3A
+    STY.b $3A
 
-    #_08B6F1: STZ.b $5E
-    #_08B6F3: STZ.w $0325
+    STZ.b $5E : STZ.w $0325
     ; Set height at end of hover
     ; This makes it so the landing animation timer looks correct
     ; Floating for a bit, then slowly landing on the ground
