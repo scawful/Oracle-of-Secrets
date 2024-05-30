@@ -29,7 +29,7 @@ org $0EF587
 ; Pit hole leads to room only in area 4F (final boss)
 ; TODO: Make this index a table of areas 
 org $0794D9
-  LDA $8A : CMP #$4F : BEQ .overworld_pit_transition
+  LDA $8A : CMP #$57 : BEQ .overworld_pit_transition
   JSL $01FFD9 ; TakeDamageFromPit
   RTS
 .overworld_pit_transition
