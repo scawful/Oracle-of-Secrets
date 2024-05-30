@@ -61,8 +61,8 @@ LinkState_CheckForMinishForm:
 
 LinkState_CheckMinishTile:
 {
-    LDA   $02B2 : BEQ .blocked ; no form
-      CMP.b #$05 : BNE .blocked  ; not minish 
+    LDA $02B2 : BEQ .blocked ; no form
+      CMP.w #$0005 : BNE .blocked  ; not minish 
         LDA $0A : TSB $0343
         RTS
 
