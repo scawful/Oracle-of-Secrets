@@ -12,6 +12,14 @@ print  "End of enemy_damage.asm           ", pc
 incsrc "Collision/CollisionTablesExpanded.asm"
 incsrc "Collision/GlobalCollisionTables.asm"
 
+pullpc ; Bank 0x33
+
+; incsrc "Dungeons/house_walls.asm"
+
+; Pendant from chest position
+org $098823
+  LDY.b #$68
+
 ; Use of Bank 0x2C begins
 incsrc "Dungeons/Objects/object_handler.asm"
 print  "End of object_handler.asm         ", pc
