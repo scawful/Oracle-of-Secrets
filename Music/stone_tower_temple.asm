@@ -172,4 +172,4 @@ db $00 ; End of the channel
 db A2, Tie, Tie, Tie, Tie, Tie, Tie, Tie
 db $00 ; End
 
-print pc
+warnpc $1AB4D5
