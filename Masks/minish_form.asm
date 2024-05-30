@@ -37,7 +37,7 @@ LinkState_CheckForMinishForm:
 
   LDA   !CurrentMask
   CMP.b #$05 : BEQ .already_minish ; return to human form
-  CMP.b #$00 : BNE .return         ; don't transform if not human
+  CMP.b #$06 : BCC .return         ; don't transform if not human
   %PlayerTransform()
 
   LDA.l $7EF35A : STA $0AAF ; Store the current shield
