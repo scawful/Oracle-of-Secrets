@@ -64,3 +64,6 @@ pushpc
 org $028192
   JSL LoadDarkWorldIntro
 
+
+incsrc "Overworld/overlays.asm"
+print  "End of Overworld/overlays.asm     ", pc
