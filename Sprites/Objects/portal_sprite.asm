@@ -141,7 +141,7 @@ Sprite_Portal_Main:
     LDA SprTimerD, X : BNE .NoOverlap
 
     
-    JSR Link_SetupHitBox
+    JSL Link_SetupHitBox
     JSL $0683EA          ; Sprite_SetupHitbox_long 
     
     JSL CheckIfHitBoxesOverlap : BCC .NoOverlap
@@ -172,7 +172,7 @@ Sprite_Portal_Main:
     CLC
     LDA SprTimerD, X : BNE .NoOverlap
     
-    JSR Link_SetupHitBox
+    JSL Link_SetupHitBox
     JSL $0683EA          ; Sprite_SetupHitbox_long 
     
     JSL CheckIfHitBoxesOverlap : BCC .NoOverlap

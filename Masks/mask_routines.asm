@@ -332,26 +332,66 @@ org $0DA3FD
 
 pullpc
 
+
+CheckDekuFlowerPresence:
+{
+    PHX
+    CLC        ; Assume sprite ID $B0 is not present
+    LDX.b #$10
+  .x_loop
+    DEX
+    
+    LDY.b #$04
+    .y_loop
+      DEY
+      LDA $0E20, X : CMP.b #$C0 : BEQ .set_flag
+      BRA .not_b0
+
+    .set_flag
+      SEC         ; Set flag indicating sprite ID $B0 is present
+      STX.w $02
+      BRA   .done
+
+  .not_b0
+    CPY.b #$00 : BNE .y_loop
+    CPX.b #$00 : BNE .x_loop
+  .done
+    PLX
+
+    RTS
+}
+
 ; Based on LinkItem_Quake.allow_quake
 PrepareQuakeSpell:
 {
   ; TODO: Set a check for the Deku Flower sprite before activating this ability.
+  ; Find out if the sprite $C0 is in the room
+  JSR CheckDekuFlowerPresence : BCC .no_c0
 
-  LDA.b #$0A : STA.b $5D ; Set Link to the hover state
-  LDA.b #$00 : STA.b $3D ; Clear the animation timer 
+    PHX : LDA $02 : TAX
+    JSL Link_SetupHitBox
 
-  LDA #$00 : STA.w $031C ; Clear the spin animation gfx 
-  STZ.w $031D ; Clear the spin animation step
-  STZ.w $0324 ; Prevent multiple ancillae from being added
-  STZ.b $46 ; Clear the link damage timer 
+    ; X is now the ID of the sprite $B0
+    JSL Sprite_SetupHitBox
+    PLX
+    
+    JSL CheckIfHitBoxesOverlap : BCC .no_c0
 
-  ; Set low and high of HOPVZ2
-  ; Usually used as the hopping speed for diagonal jumps
-  LDA.b #$28 : STA.w $0362 : STA.w $0363 
-  STZ.w $0364 ; Clear Z-coordinate for the jump
+      LDA.b #$0A : STA.b $5D ; Set Link to the hover state
+      LDA.b #$00 : STA.b $3D ; Clear the animation timer 
 
-  STZ $70 ; Clear bomb drop check flag 
-  
+      LDA #$00 : STA.w $031C ; Clear the spin animation gfx 
+      STZ.w $031D ; Clear the spin animation step
+      STZ.w $0324 ; Prevent multiple ancillae from being added
+      STZ.b $46 ; Clear the link damage timer 
+
+      ; Set low and high of HOPVZ2
+      ; Usually used as the hopping speed for diagonal jumps
+      LDA.b #$28 : STA.w $0362 : STA.w $0363 
+      STZ.w $0364 ; Clear Z-coordinate for the jump
+
+      STZ $70 ; Clear bomb drop check flag 
+  .no_c0
   RTL
 }
 

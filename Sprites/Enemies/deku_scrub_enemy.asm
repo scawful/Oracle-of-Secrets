@@ -144,7 +144,7 @@ Sprite_DekuScrubEnemy_Main:
     
     PHX 
     LDA Offspring1_Id : TAX
-    JSR Sprite_SetupHitBox
+    JSL Sprite_SetupHitBox
     PLX
 
     JSL CheckIfHitBoxesOverlap : BCC .no_dano
@@ -157,7 +157,7 @@ Sprite_DekuScrubEnemy_Main:
       ; We will go to recoil 
       PHX 
       LDA Offspring1_Id : TAX
-      JSR Sprite_SetupHitBox
+      JSL Sprite_SetupHitBox
       PLX
       JSL CheckIfHitBoxesOverlap : BCC .not_done2
         %GotoAction(4)

@@ -443,7 +443,7 @@ Link_SetupHitBox:
   LDA $20 : ADC.b #$08 : STA $01
   LDA $21 : ADC.b #$00 : STA $09
   
-  RTS
+  RTL
 }
 
 
@@ -490,7 +490,7 @@ Sprite_SetupHitBox:
 
 #_06F82F: PLY
 
-#_06F830: RTS
+#_06F830: RTL
 
 ; ---------------------------------------------------------
 
@@ -498,7 +498,7 @@ Sprite_SetupHitBox:
 #_06F831: LDA.b #$80
 #_06F833: STA.b $0A
 
-#_06F835: RTS
+#_06F835: RTL
 
 .offset_x_low
 #_06F72F: db 2   ; 0x00

@@ -614,10 +614,10 @@ HandleDynamicSwitchTileDirections:
     JSR CheckSpritePresence : BCC .no_b0
 
       PHX : LDA $02 : TAX
-      JSR Link_SetupHitBox
+      JSL Link_SetupHitBox
 
       ; X is now the ID of the sprite $B0
-      JSR Sprite_SetupHitBox
+      JSL Sprite_SetupHitBox
       PLX
       
       JSL CheckIfHitBoxesOverlap : BCC .no_b0
