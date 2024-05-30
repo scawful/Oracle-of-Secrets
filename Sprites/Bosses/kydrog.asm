@@ -78,6 +78,7 @@ Sprite_Kydrog_Main:
 
   Kydrog_StartCutscene:
   {
+    LDA #$03 : STA $012C ; Play music
     LDA WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
     LDA.b #$08 : STA.b $49 ; Auto-movement north
 
