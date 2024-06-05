@@ -556,8 +556,8 @@ org $0ED956
 org $0AEFA6
   JSL RestoreTimeForDungeonMap
 
-org $0ABA5A
-  JSL FixShockPalette
+; org $0ABA5A
+; TODO: Handle overworld map palette for flashing icons
 
 org $0ED745
   JSL FixShockPalette
