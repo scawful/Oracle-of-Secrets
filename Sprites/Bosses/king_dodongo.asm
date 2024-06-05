@@ -19,7 +19,8 @@ KingDodongo_NewHealthSystem:
 .phase_table
   db $03, $03, $03, $03, $03, $03, $03, $03
   db $03, $03, $03, $03, $02, $02, $02, $02
-  db $02, $02, $01, $01, $00
+  db $02, $02, $01, $01, $00, $00, $00, $00
+  db $00, $00, $00, $00, $00, $00, $00, $00
 }
 
 pushpc
@@ -40,6 +41,6 @@ org $1E87F5
 
 org $1E811A
 JSL KingDodongo_NewHealthSystem
-NOP #6
+NOP #5
 
 pullpc
