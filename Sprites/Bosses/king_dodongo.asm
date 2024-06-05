@@ -39,6 +39,13 @@ org $1E87F5
 .prop
 #_1E8801: db $0B, $0B, $4B, $4B
 
+org $1E818C
+.speed_x
+#_1E818C: db -16, -16,  -8,   0,   8,  16,  16,   0
+
+.speed_y
+#_1E8194: db   0,   8,  16,  16,  16,   8,   0,  16
+
 org $1E811A
 JSL KingDodongo_NewHealthSystem
 NOP #5
