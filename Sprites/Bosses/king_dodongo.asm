@@ -39,6 +39,9 @@ org $1E87F5
 .prop
 #_1E8801: db $0B, $0B, $4B, $4B
 
+org $1E8266
+AND.b #$15
+
 org $1E818C
 .speed_x
 #_1E818C: db -16, -16,  -8,   0,   8,  16,  16,   0
