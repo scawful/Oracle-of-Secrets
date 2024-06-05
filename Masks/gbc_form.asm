@@ -8,6 +8,7 @@ UpdateGbcPalette:
   LDX #$001E
 
   LDA $7EF35B : AND.w #$00FF : CMP #$0001 : BEQ .blue_mail
+  LDA $7EF35B : AND.w #$00FF : CMP #$0002 : BEQ .red_mail
 
   .loop
   LDA.l GameboyLinkPalette, X : STA $7EC6E0, X
@@ -25,6 +26,14 @@ UpdateGbcPalette:
   SEP #$30 ; go back to 8 bit mode
   INC $15  ; update the palette
   RTL      ; or RTS depending on where you need it
+.red_mail
+  LDX #$001E
+  .loop3
+  LDA.l GameboyLinkRedMail, X : STA $7EC6E0, X
+  DEX : DEX : BPL .loop3
+  SEP #$30 ; go back to 8 bit mode
+  INC $15  ; update the palette
+  RTL      ; or RTS depending on where you need it
 }
 
 GameboyLinkPalette:
@@ -37,6 +46,12 @@ GameboyLinkBlueMail:
 {
   dw #$0000, #$7FFF, #$237E, #$B711, #$369E, #$14A5, #$01FF, #$1078
   dw #$46FF, #$4D25, #$3B68, #$0A4A, #$12EF, #$2A5C, #$1571, #$7A18
+}
+
+GameboyLinkRedMail:
+{
+  dw #$0000, #$7FFF, #$237E, #$B711, #$369E, #$14A5, #$01FF, #$1078
+  dw #$46FF, #$081D, #$3B68, #$0A4A, #$12EF, #$2A5C, #$1571, #$7A18
 }
 
 LinkState_GameboyInDungeonEntrance:
@@ -61,6 +76,7 @@ LoadOverworld_CheckForGbcLink:
 
       LDA.b #$06 : STA $02B2
       LDA.b #$3B : STA $BC   ; change link's sprite 
+      JSL UpdateGbcPalette
       JMP .return
    
 .return_lw
@@ -127,7 +143,7 @@ LinkState_GameboyForm:
 
   LDA #$3B : STA $BC   ; change link's sprite 
   LDA #$06 : STA $02B2
-  JSL Palette_ArmorAndGloves
+  JSL UpdateGbcPalette
   BRA .return
 
 .already_gbc
