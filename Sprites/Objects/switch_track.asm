@@ -56,7 +56,10 @@ Sprite_RotatingTrack_Prep:
   PHB : PHK : PLB
 
   LDA.b #$80 : STA $0CAA, X
-  LDA SprSubtype,X : STA SprAction,X
+  LDA SprSubtype, X : STA SprAction,X
+  LDA SprSubtype, X : CMP.b #$02 : BNE .notTrack
+    LDA SprX, X : SEC : SBC.b #$08 : STA SprX, X
+  .notTrack
    
   PLB
   RTL
