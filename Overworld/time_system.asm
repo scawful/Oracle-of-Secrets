@@ -510,13 +510,17 @@ FixSaveAndQuit:
 
 FixShockPalette:
 {
+  PHA
   LDA $1B : BNE .indoors
+  PLA
   STA !pal_color
   PHX
   JSL ColorSubEffect
   PLX
   STA.l $7EC500, X
+  RTL
   .indoors
+  PLA
   RTL
 }
 
