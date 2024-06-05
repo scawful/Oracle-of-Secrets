@@ -203,7 +203,7 @@ Sprite_Twinrova_Main:
     ; ---------------------------------------------
     .phase_1
       LDA $0DA0 : BEQ .not_flashing
-        LDA.b #$20 : STA.w SprTimerD, X
+        LDA.b #$30 : STA.w SprTimerD, X
         %GotoAction(7) ; Goto Twinrova_Hurt
         RTS
     .not_flashing
