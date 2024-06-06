@@ -95,11 +95,11 @@ Sprite_KydrogBoss_Prep:
     
   LDA #$00 : STA !KydrogPhase
 
-  LDA.b #$80 : STA $0E50, X ; health
+  LDA.b #$A0 : STA $0E50, X ; health
   LDA.b #$80 : STA $0CAA, X
 
   LDA.b #$03 : STA $0F60, X ; hitbox settings 
-  LDA.b #$04 : STA $0CD2, X ; bump damage type 
+  LDA.b #$07 : STA $0CD2, X ; bump damage type 
   LDA $0E60, X : AND.b #$BF : STA $0E60, X ; Not invincible 
 
   JSR KydrogBoss_Set_Damage ; Set the damage table
