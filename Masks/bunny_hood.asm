@@ -63,8 +63,7 @@ LinkState_BunnyHoodRun:
   CPX.b #$11 : BCS .end    ; speed value upper bound check
   LDA.w $0202              ; check the current item
   CMP.b #$16 : BNE .end    ; is it the bunny hood?
-  LDA.w !CurrentMask       ; did you put it on?
-  BEQ   .end
+  LDA.w !CurrentMask : BEQ .end
   LDA.l BunnySpeedTable, X ; load new speed values
   CLC
   RTL
@@ -78,7 +77,36 @@ LinkState_BunnyHoodRun:
 org $20AF70 ; this selects the new speed values
 BunnySpeedTable:
 {
-  db $20, $12, $0a, $18, $10, $08, $08, $04, $0c, $10, $09, $19, $14, $0d, $10, $08, $40
+  db $20 ; 0x00 - walking on ground 
+  db $12 ; 0x01 - walking diagonally
+  db $0A ; 0x02 - walking on stairs
+  db $18 ; 0x03 - walking on stairs diagonally, impossible to reach
+  db $10 ; 0x04 - soft slipping
+  db $08 ; 0x05 - soft slipping diagonally
+  db $08 ; 0x06 - entering underworld/hard slipping
+  db $04 ; 0x07 - hard slipping diagonally
+  db $0C ; 0x08 - pushing statue
+  db $10 ; 0x09 - pushing statue diagonally
+  db $09 ; 0x0A - intraroom stairs
+  db $19
+  db $14 ; 0x0C - walking with sword out/carrying/sloshing
+  db $0D ; 0x0D - walking with sword out/carrying/sloshing diagonally
+  db $10 ; 0x0E - sword out/carry sloshing
+  db $08 ; 0x0F - sword out/carry sloshing diagonally
+  db $40 ; 0x10 - dashing
+  db $2A ; 0x11 - dashing diagonally
+  db $10 ; 0x12 - pushing block
+  db $08 ; 0x13 - pushing block diagonally
+  db $04 ; 0x14 - pulling statue/walking to triforce
+  db $02 ; 0x15 - pulling statue diagonally
+  db $30 ; 0x16 - slosh dashing
+  db $18 ; 0x17 - slosh dashing diagonally
+  db $20 ; 0x18 - dashing on ice
+  db $15 ; 0x19 - dashing on ice diagonally
+  db $F0 ; 0x1A - 
+  db $00 ; 0x1B - 
+  db $F0 ; 0x1C - 
+  db $01 ; 0x1D - 
 }
 
 ; =========================================================
