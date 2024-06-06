@@ -42,9 +42,6 @@ LinkState_CheckForMinishForm:
   .transform
   %PlayerTransform()
 
-  LDA.l $7EF35A : STA $0AAF ; Store the current shield
-  LDA.b #$00 : STA $7EF35A  ; Clear the shield
-
   LDA #$39 : STA $BC   ; Change link's sprite 
   LDA #$05 : STA $02B2 ; Set the current mask form
   BRA .return
@@ -52,7 +49,6 @@ LinkState_CheckForMinishForm:
 .already_minish
   %PlayerTransform()
   %ResetToLinkGraphics()
-  LDA $0AAF : STA.l $7EF35A ; restore the shield 
 
 .return
   REP #$30
