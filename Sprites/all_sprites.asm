@@ -59,6 +59,9 @@ print  "End of maku_tree.asm              ", pc
 incsrc "Sprites/NPCs/mask_salesman.asm"
 print  "End of mask_salesman.asm          ", pc
 
+incsrc "Sprites/Bosses/dark_link.asm"
+print "End of dark_link.asm               ", pc
+
 ;=========================================================
 
 org    $318000
