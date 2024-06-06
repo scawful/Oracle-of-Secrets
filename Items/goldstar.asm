@@ -1028,11 +1028,12 @@ MaybeUploadBirdGraphicsToOam:
 ApplyGoldstarDamageClass:
 {
   PHA
+  ; If the hookshot is active
   LDA $0202 : CMP.b #$03 : BNE .return
-    ; If the goldstar is active swap in the damage class
+    ; If the goldstar is active, swap in the damage class
     LDA GoldstarOrHookshot : CMP #$02 : BNE .return
       PLA
-      LDA #$03 
+      LDA #$02
       JMP .apply
 .return
   PLA
