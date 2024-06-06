@@ -47,7 +47,7 @@ Sprite_KydrogBoss_Long:
   PHB : PHK : PLB
 
   JSR Sprite_KydrogBoss_Draw ; Call the draw code
-  ; JSL Sprite_DrawShadow
+  JSR Sprite_CheckIfFrozen
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
@@ -532,14 +532,13 @@ CheckForNextPhase:
 ; =========================================================
 
 ; TODO: Use a timer to unfreeze the sprite
-CheckIfFrozen:
+Sprite_CheckIfFrozen:
 {
   LDA $0DD0, X : CMP.b #$0B : BNE .not_frozen
-
-  LDA.w $0E10, X : BNE .not_frozen
-    LDA.b #$00 : STA.l $7FFA3C,X
-    LDA.b #$09 : STA.w $0DD0, X
-.not_frozen
+    LDA.w $0E10, X : BNE .not_frozen
+      LDA.b #$00 : STA.l $7FFA3C,X
+      LDA.b #$09 : STA.w $0DD0, X
+    .not_frozen
   RTS
 }
 
@@ -597,22 +596,18 @@ Sprite_DamageFlash_Long:
 Sprite_Damage_Flash:
 {
   LDA $0EF0, X : BEQ .dontFlash
-
     ; Change the palette to the next in the cycle
     LDA $0DA0, X : INC : CMP.b #$08 : BNE .dontReset
       LDA.b #$00
     
   .dontReset
     STA $0DA0, X
-
     BRA .flash
 
 .dontFlash
-
   STZ $0DA0, X
 
 .flash
-
   RTS
 }
 
@@ -621,10 +616,10 @@ Sprite_Damage_Flash:
 Sprite_Offspring_SpawnHead:
 {
   JSL GetRandomInt : AND.b #$3F : BNE .normal_head
-  LDA.b #$02 : BRA .alt_entry
+    LDA.b #$02 : BRA .alt_entry
   .normal_head
   LDA.b #$7C 
-.alt_entry
+  .alt_entry
   BRA Sprite_Offspring_Spawn_alt_entry
   RTS
 }
@@ -633,11 +628,11 @@ Sprite_Offspring_SpawnHead:
 Sprite_Offspring_Spawn:
 {
   JSL GetRandomInt : AND.b #$3F : BNE .normal_stalfos
-  LDA.b #$85 : BRA .alt_entry
-.normal_stalfos
+    LDA.b #$85 : BRA .alt_entry
+  .normal_stalfos
   ; Spawn the stalfos offspring
   LDA.b #$A7 
-.alt_entry
+  .alt_entry
   JSL Sprite_SpawnDynamically : BMI .return ;89
 
   ;store the sub-type
@@ -665,7 +660,7 @@ Sprite_Offspring_Spawn:
       
   PLX
       
-.return
+  .return
 
   RTS
 }
@@ -710,11 +705,7 @@ Kydrog_ThrowBoneAtPlayer:
   RTS
 }
 
-; Y is the sprite index after you spawn it.
-
-; oh right yeah y will be equal to the sprite you spawned for that frame
-; but if you want to do a count what you would do:
-
+; Y   = sprite index after you spawn it.
 ; $00 = your stalfos skull count
 GetNumberSpawnStalfos:
 {
