@@ -331,6 +331,7 @@ Sprite_KydrogBoss_Main:
       LDA.b #$28 ; SFX3.28
       JSL $0DBB8A  ; SpriteSFX_QueueSFX3WithPan
       %GotoAction($0A) ; Goto KydrogBoss_Ascend
+      JSL $09EF56 ; Kill friends
       RTS
     .continue
 
