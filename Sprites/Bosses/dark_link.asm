@@ -538,7 +538,7 @@ Sprite_DarkLink_Main:
     LDA #$03 : STA.w $012E
 
 
-    LDA #$88 ; SET THE RIGHT SPRITE ID!! ======================CHANGE========================
+    LDA #$C1 ; SET THE RIGHT SPRITE ID!! ======================CHANGE========================
     JSL Sprite_SpawnDynamically
     JSL Sprite_SetSpawnedCoords
     PHX
@@ -1545,7 +1545,7 @@ Sprite_DarkLink_Draw:
 
 GanonInit:
 {
-LDA #$88
+LDA #$C1
 JSL Sprite_SpawnDynamically
     LDA #$05 : STA.w SprSubtype, Y
     LDA $00 : STA $0D10, Y
