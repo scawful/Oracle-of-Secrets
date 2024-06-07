@@ -17,6 +17,8 @@ Neck1_OffsetX: skip 1
 Neck1_OffsetY: skip 1
 Neck2_OffsetX: skip 1
 Neck2_OffsetY: skip 1
+Neck3_OffsetX: skip 1
+Neck3_OffsetY: skip 1
 Offspring1_Id: skip 1
 Offspring2_Id: skip 1
 Offspring3_Id: skip 1
