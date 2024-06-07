@@ -38,6 +38,7 @@ Sprite_Wolfos_Long:
   PHB : PHK : PLB
 
   JSR Sprite_Wolfos_Draw
+  JSR Sprite_Wolfos_CheckIfDefeated
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
@@ -65,10 +66,11 @@ Sprite_Wolfos_Prep:
 
 Sprite_Wolfos_CheckIfDefeated:
 {
-  LDA SprHealth, X : BEQ .defeated
-  RTS
-  .defeated
-  
+  LDA SprHealth, X : BNE .not_defeated
+    LDA.b #$06 : STA SprAction, X ; Set to defeated
+    LDA.b #$01 : STA SprHealth, X ; Refill the health of the sprite
+    RTS
+  .not_defeated
   RTS
 }
 
