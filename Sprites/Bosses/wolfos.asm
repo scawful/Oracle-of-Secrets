@@ -54,9 +54,15 @@ Sprite_Wolfos_Long:
 Sprite_Wolfos_Prep:
 {
   PHB : PHK : PLB
-    
+
+  ; Check if the wolfos has been defeated
+  LDA.l $7EF303 : CMP.b #$01 : BNE .spawn_wolfos
+    STZ.w SprState, X ; Don't spawn the sprite 
+    PLB
+    RTL
+  .spawn_wolfos
   LDA.b #$40 : STA.w SprTimerA, X
-  LDA.b #$00 : STA.w $0CAA, X ; Sprite persist in dungeon
+  LDA.b #$00 : STA.w $0CAA, X ; Sprite persist
   LDA.b #$08 : STA.w $0E40, X ; Nbr Oam Entries 
   LDA.b #$E0 : STA.w $0F60, X ; Persist 
 
