@@ -1679,27 +1679,24 @@ PLX
 RTS
 
 
-;==================================================================================================
-; Sprite Draw Generated Data
-; --------------------------------------------------------------------------------------------------
-; This is where the generated Data for the sprite go
-;==================================================================================================
-.start_index
-db $00, $0C
-.nbr_of_tiles
-db 11, 11
-.x_offsets
-dw 0, 16, 28, 28, 0, 0, 16, 16, 0, 16, -12, -12
-dw 22, 22, -5, -5, -3, 18, 0, 16, 0, 16, 0, 16
-.y_offsets
-dw 7, 7, -9, 7, -16, 0, 0, -16, -19, -19, -9, 7
-dw 10, 26, 11, 27, -21, -21, -11, -11, 5, 5, 10, 10
-.chr
-db $E0, $E0, $C4, $E4, $C2, $E2, $E2, $C2, $C0, $C0, $C4, $E4
-db $C4, $E4, $C4, $E4, $E6, $E6, $C8, $C8, $E8, $E8, $C6, $C6
-.properties
-db $3D, $7D, $7D, $7D, $3B, $3B, $7B, $7B, $3D, $7D, $3D, $3D
-db $7D, $7D, $3D, $3D, $3D, $7D, $3B, $7B, $3B, $7B, $3D, $7D
-.sizes
-db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
-db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+ApplyDarkLinkGraphics:
+{
+    PHX 
+    REP #$20               ; A = 16, XY = 8
+    LDX #$80 : STX $2100   ; turn the screen off (required)
+    LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
+    LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
+    LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register 
+                           ; "001 => 2 registers write once (2 bytes: p, p+1)"
+    LDA.w #DarkLinkGraphics : STA $4302     ; Source address where you want gfx from ROM
+    LDX.b #DarkLinkGraphics>>16 : STX $4304
+    LDA   #$2000 : STA $4305                ; Size of the transfer 4 sheets of $800 each
+    LDX   #$01 : STX $420B                  ; Do the DMA 
+    LDX #$0F : STX $2100                    ; Turn the screen back on
+    SEP #$30
+    PLX
+    RTS
+
+  DarkLinkGraphics:
+    incbin dark_link.bin
+}
