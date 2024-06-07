@@ -59,11 +59,18 @@ print  "End of maku_tree.asm              ", pc
 incsrc "Sprites/NPCs/mask_salesman.asm"
 print  "End of mask_salesman.asm          ", pc
 
-incsrc "Sprites/Bosses/dark_link.asm"
-print  "End of dark_link.asm              ", pc
 
-incsrc "Sprites/NPCs/korok.asm"
-print  "End of korok.asm                  ", pc
+incsrc "Sprites/Bosses/twinrova.asm"
+print  "End of twinrova.asm               ",  pc
+
+incsrc "Sprites/Bosses/kydreeok.asm"
+print  "End of kydreeok.asm               ",  pc
+
+incsrc "Sprites/Bosses/kydreeok_head.asm"
+print  "End of kydreeok_head.asm          ",  pc
+
+incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
+print  "End of deku_scrub_enemy.asm       ",  pc
 
 ;=========================================================
 
@@ -94,11 +101,12 @@ print  "End of village_dog.asm            ",  pc
 incsrc "Sprites/Objects/minecart.asm"
 print  "End of minecart.asm               ",  pc
 
-incsrc "Sprites/Bosses/twinrova.asm"
-print  "End of twinrova.asm               ",  pc
+incsrc "Sprites/Bosses/dark_link.asm"
+print  "End of dark_link.asm              ", pc
 
-incsrc "Sprites/Bosses/kydreeok.asm"
-incsrc "Sprites/Bosses/kydreeok_head.asm"
+incsrc "Sprites/NPCs/korok.asm"
+print  "End of korok.asm                  ", pc
+
 
 incsrc "Sprites/Objects/deku_leaf.asm"
 print  "End of deku_leaf.asm              ",  pc
@@ -115,8 +123,7 @@ print  "End of poltergeist.asm            ",  pc
 incsrc "Sprites/Enemies/pols_voice.asm"
 print  "End of pols_voice.asm             ",  pc
 
-incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
-print  "End of deku_scrub_enemy.asm       ",  pc
+
 
 incsrc "Sprites/NPCs/zora_princess.asm"
 print  "End of zora_princess.asm          ",  pc
