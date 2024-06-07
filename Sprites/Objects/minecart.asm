@@ -524,7 +524,7 @@ HandleTileDirections:
       JSL Player_ResetState
       RTS
 
-    ; -------------------------------------------------------
+    ; -----------------------------------------------------
     .check_for_movement
     CMP.b #$B2 : BEQ .check_direction
     CMP.b #$B3 : BEQ .check_direction
@@ -593,6 +593,7 @@ HandleTileDirections:
           LDA SprY, X : AND #$F8 : STA SprY, X
           %GotoAction(5) ; Minecart_MoveWest
       .done
+        LDA #$04 : STA SprTimerA, X
         RTS
 
   ; Direction to move on tile collision
