@@ -80,9 +80,10 @@ LinkItem_JumpFeather:
 CheckIfJumpingForSpikeDamage:
 {
     PHB : PHK : PLB
-    LDA $29 : BNE .airborne
+    ; Check Z pos of Link
+    LDA $24 : BNE .airborne
       LDA.w .spike_floor_damage, Y : STA.w $0373
-  .airborne
+    .airborne
     PLB
     RTL
 
