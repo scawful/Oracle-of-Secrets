@@ -409,74 +409,73 @@ MoveBody:
 
 StopIfOutOfBounds:
 {
-    ; Set A to 00 if outside of certain bounds
-
-    REP #$20
-    LDA SprCachedX : CMP.w #$0A22 : BCS .notOutOfBoundsLeft
-        SEP #$20
-        LDA.w SprXSpeed : CMP.b #$7F : BCC .notOutOfBoundsLeft
-            LDA.b #-10 : STA.w SprXSpeed : STA SprXRound
-            LDA $19EA : SEC : SBC #$04 : STA $19EA
-            LDA $19EC : SEC : SBC #$04 : STA $19EC
-            LDA $19EE : SEC : SBC #$04 : STA $19EE
-
-            LDA $19F0 : SEC : SBC #$04 : STA $19F0
-            LDA $19F2 : SEC : SBC #$04 : STA $19F2
-            LDA $19F4 : SEC : SBC #$04 : STA $19F4
-
-  .notOutOfBoundsLeft
+  ; Set A to 00 if outside of certain bounds
+  REP #$20
+  LDA SprCachedX : CMP.w #$0118 : BCS .not_out_of_bounds_Left
     SEP #$20
+    LDA.w SprXSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Left
+      LDA.b #-10 : STA.w SprXSpeed : STA SprXRound
+      LDA $19EA : SEC : SBC #$04 : STA $19EA
+      LDA $19EC : SEC : SBC #$04 : STA $19EC
+      LDA $19EE : SEC : SBC #$04 : STA $19EE
 
-    REP #$20
-    LDA SprCachedX : CMP.w #$1B00 : BCC .notOutOfBoundsRight
-        SEP #$20
-        LDA.w SprXSpeed : CMP.b #$80 : BCS .notOutOfBoundsRight
-            LDA.b #$00 : STA.w SprXSpeed : STA SprXRound
-            LDA $19EA : CLC : ADC #$04 : STA $19EA
-            LDA $19EC : CLC : ADC #$04 : STA $19EC
-            LDA $19EE : CLC : ADC #$04 : STA $19EE
+      LDA $19F0 : SEC : SBC #$04 : STA $19F0
+      LDA $19F2 : SEC : SBC #$04 : STA $19F2
+      LDA $19F4 : SEC : SBC #$04 : STA $19F4
 
-            LDA $19F0 : CLC : ADC #$04 : STA $19F0
-            LDA $19F2 : CLC : ADC #$04 : STA $19F2
-            LDA $19F4 : CLC : ADC #$04 : STA $19F4
+  .not_out_of_bounds_Left
+  SEP #$20
 
-  .notOutOfBoundsRight
+  REP #$20
+  LDA SprCachedX : CMP.w #$01D8 : BCC .not_out_of_bounds_Right
     SEP #$20
+    LDA.w SprXSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Right
+      LDA.b #$00 : STA.w SprXSpeed : STA SprXRound
+      LDA $19EA : CLC : ADC #$04 : STA $19EA
+      LDA $19EC : CLC : ADC #$04 : STA $19EC
+      LDA $19EE : CLC : ADC #$04 : STA $19EE
 
-    ; Upper bound
-    REP #$20
-    LDA SprCachedY : CMP.w #$0150 : BCS .notOutOfBoundsUp
-        SEP #$20
-        LDA.w SprYSpeed : CMP.b #$7F : BCC .notOutOfBoundsUp
-            LDA.b #$00 : STA.w SprYSpeed : STA SprYRound
-            LDA $19EA : SEC : SBC #$04 : STA $19EA
-            LDA $19EC : SEC : SBC #$04 : STA $19EC
-            LDA $19EE : SEC : SBC #$04 : STA $19EE
+      LDA $19F0 : CLC : ADC #$04 : STA $19F0
+      LDA $19F2 : CLC : ADC #$04 : STA $19F2
+      LDA $19F4 : CLC : ADC #$04 : STA $19F4
 
-  .notOutOfBoundsUp
+  .not_out_of_bounds_Right
+  SEP #$20
+
+  ; Upper bound
+  REP #$20
+  LDA SprCachedY : CMP.w #$0020 : BCS .not_out_of_bounds_Up
     SEP #$20
+    LDA.w SprYSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Up
+      LDA.b #$00 : STA.w SprYSpeed : STA SprYRound
+      LDA $19EA : SEC : SBC #$04 : STA $19EA
+      LDA $19EC : SEC : SBC #$04 : STA $19EC
+      LDA $19EE : SEC : SBC #$04 : STA $19EE
 
-    REP   #$20
-    LDA   SprCachedY : CMP.w #$01A0 : BCC .notOutOfBoundsDown
-        SEP #$20
-        LDA.w SprYSpeed : CMP.b #$80 : BCS .notOutOfBoundsDown
-            LDA.b #-10 : STA.w SprYSpeed : STA SprYRound ; Reverse the direction
+  .not_out_of_bounds_Up
+  SEP #$20
 
-            ; Modify the neck position
-            ; Makes them move away from each other a bit
-            LDA $19EA : SEC : SBC #$04 : STA $19EA
-            LDA $19EC : SEC : SBC #$04 : STA $19EC
-            LDA $19EE : SEC : SBC #$04 : STA $19EE
-
-            LDA $19F0 : CLC : ADC #$04 : STA $19F0
-            LDA $19F2 : CLC : ADC #$04 : STA $19F2
-            LDA $19F4 : CLC : ADC #$04 : STA $19F4
-            
-
-  .notOutOfBoundsDown
+  REP   #$20
+  LDA   SprCachedY : CMP.w #$00D0 : BCC .not_out_of_bounds_Down
     SEP #$20
+    LDA.w SprYSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Down
+        LDA.b #-10 : STA.w SprYSpeed : STA SprYRound ; Reverse the direction
 
-    RTS
+        ; Modify the neck position
+        ; Makes them move away from each other a bit
+        LDA $19EA : SEC : SBC #$04 : STA $19EA
+        LDA $19EC : SEC : SBC #$04 : STA $19EC
+        LDA $19EE : SEC : SBC #$04 : STA $19EE
+
+        LDA $19F0 : CLC : ADC #$04 : STA $19F0
+        LDA $19F2 : CLC : ADC #$04 : STA $19F2
+        LDA $19F4 : CLC : ADC #$04 : STA $19F4
+          
+
+  .not_out_of_bounds_Down
+  SEP #$20
+
+  RTS
 }
 
 ; =========================================================
