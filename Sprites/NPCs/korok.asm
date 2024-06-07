@@ -34,7 +34,20 @@ Sprite_Korok_Long:
 {
   PHB : PHK : PLB
 
-  JSR Sprite_Korok_Draw ; Call the draw code
+  LDA.w SprSubtype, X : CMP.b #$00 : BEQ .draw_makar
+                        CMP.b #$01 : BEQ .draw_hollo
+                        CMP.b #$02 : BEQ .draw_rown
+  .draw_makar
+  JSL Sprite_Korok_DrawMakar
+  BRA .done
+  .draw_hollo
+  JSL Sprite_Korok_DrawHollo
+  BRA .done
+  .draw_rown
+  JSL Sprite_Korok_DrawRown
+  BRA .done
+  .done
+  
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
@@ -49,7 +62,7 @@ Sprite_Korok_Prep:
 {
   PHB : PHK : PLB
 
-  LDA SprSubtype,X : STA SprAction,X
+  LDA SprSubtype, X : STA SprAction,X
    
   PLB
   RTL
@@ -65,12 +78,11 @@ Sprite_Korok_Main:
 
   Sprite_Korok_Idle:
   {
-    
+    %PlayAnimation(0,0, 10)
     RTS
   }
 
 }
-
 
 ; =========================================================
 ; Korok Draw Codes
