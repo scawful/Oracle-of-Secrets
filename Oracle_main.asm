@@ -121,6 +121,13 @@ namespace Oracle
   print  "End of Menu/menu.asm              ", pc
 
   ; -------------------------------------------------------
+  ; Misc
+  
+  ; LinkState_Bunny.not_moving
+  org $078427 
+    JSR $9BAA ; Link_HandleAPress
+
+  ; -------------------------------------------------------
   incsrc "Util/all_items.asm"
 
   print ""
