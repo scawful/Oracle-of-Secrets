@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = $7A ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 10  ; Number of tiles used in a frame
+!NbrTiles           = 08  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -53,13 +53,13 @@ Sprite_Kydreeok_Prep:
 {
   PHB : PHK : PLB
     
-  LDA   #$40 : STA SprTimerA, X
+  LDA   #$40 : STA.w SprTimerA, X
   LDA.b #$08 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
 
   ; Cache the origin position of the sprite.
-  LDA SprX, X : STA SprMiscA, X 
-  LDA SprY, X : STA SprMiscB, X
+  LDA SprX, X : STA.w SprMiscA, X 
+  LDA SprY, X : STA.w SprMiscB, X
 
   JSR SpawnLeftHead 
   JSR SpawnCenterHead
@@ -67,6 +67,7 @@ Sprite_Kydreeok_Prep:
 
   STZ.w Neck1_OffsetX : STZ.w Neck1_OffsetY
   STZ.w Neck2_OffsetX : STZ.w Neck2_OffsetY
+  STZ.w Neck3_OffsetX : STZ.w Neck3_OffsetY
 
   JSR ApplyPalette
 
@@ -102,7 +103,7 @@ Sprite_Kydreeok_Main:
 
       LDA SprTimerA,            X : BNE .continue
       TXA : STA Kydreeok_Id
-      LDA #$40 : STA SprTimerA, X
+      LDA #$40 : STA.w SprTimerA, X
         %GotoAction(1)
     .continue
 
@@ -118,7 +119,7 @@ Sprite_Kydreeok_Main:
 
       PHX
 
-      STZ $0D40 : STZ $0D50 ;set velocitys to 0
+      STZ.w SprYSpeed : STZ.w SprXSpeed ;set velocitys to 0
       JSR MoveBody
 
       JSL Sprite_BounceFromTileCollision ; 
@@ -191,7 +192,7 @@ Sprite_Kydreeok_Main:
       REP #$20
 
       ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
-      LDA $20 : SBC $0FDA : CMP.w #$FFFB : BCC .notEqualY
+      LDA $20 : SBC SprCachedY : CMP.w #$FFFB : BCC .notEqualY
         
         SEP #$20
         %GotoAction(2) ; Kydreeok_MoveXandY
@@ -200,7 +201,7 @@ Sprite_Kydreeok_Main:
     .notEqualY
 
       ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
-      LDA $22 : SBC $0FD8 : CMP.w #$FFFB : BCC .notEqualX
+      LDA $22 : SBC SprCachedX : CMP.w #$FFFB : BCC .notEqualX
         SEP #$20
         %GotoAction(2) ; Kydreeok_MoveXandY
 
@@ -209,8 +210,8 @@ Sprite_Kydreeok_Main:
       JSL Sprite_BounceFromTileCollision ; JSR StopIfOutOfBounds
 
       ;if both velocities are 0 go back to the Stalk_Player_XORY to re-set the course
-      LDA $0D40 : BNE .notZero
-      LDA $0D50 : BNE .notZero
+      LDA.w SprYSpeed : BNE .notZero
+      LDA.w SprXSpeed : BNE .notZero
         %GotoAction(3) ; Kydreeok_MoveXorY
 
     .notZero
@@ -241,14 +242,14 @@ SpawnLeftHead:
     PHX
     ; code that controls where to spawn the offspring.
     REP #$20
-    LDA $0FD8 : SEC : SBC.w #$000F
+    LDA SprCachedX : SEC : SBC.w #$000F
     SEP #$20
-    STA $0D10, Y : XBA : STA $0D30, Y
+    STA.w SprX, Y : XBA : STA.w SprXH, Y
 
     REP #$20
-    LDA $0FDA : SEC : SBC.w #$000F
+    LDA SprCachedY : SEC : SBC.w #$000F
     SEP #$20
-    STA $0D00, Y : XBA : STA $0D20, Y
+    STA.w SprY, Y : XBA : STA.w SprYH, Y
 
     LDA.w SprX,     Y
     STA.w SprMiscA, Y : STA.w $19EA : STA.w $19EC : STA.w $19EE
@@ -257,8 +258,8 @@ SpawnLeftHead:
 
     TYX
 
-    STZ $0D60, X
-    STZ $0D70, X
+    STZ.w SprYRound, X
+    STZ.w SprXRound, X
     PLX
         
   .return
@@ -280,24 +281,24 @@ SpawnCenterHead:
     PHX
     ; code that controls where to spawn the offspring.
     REP #$20
-    LDA $0FD8 : CLC : ADC.w #$0006
+    LDA SprCachedX : CLC : ADC.w #$0006
     SEP #$20
-    STA $0D10, Y : XBA : STA $0D30, Y
+    STA.w SprX, Y : XBA : STA.w SprXH, Y
 
     REP #$20
-    LDA $0FDA : SEC : SBC.w #$0006
+    LDA SprCachedY : SEC : SBC.w #$000F
     SEP #$20
-    STA $0D00, Y : XBA : STA $0D20, Y
+    STA.w SprY, Y : XBA : STA.w SprYH, Y
 
     LDA.w SprX, Y : STA.w SprX, Y
-    STA.w SprMiscA, Y : STA.w $19F0 : STA.w $19F2 : STA.w $19F4
-    LDA.w SprY, Y : STA.w $19F1 : STA.w $19F3 : STA.w $19F5 : STA.w SprY, Y
+    STA.w SprMiscA, Y : STA.w $1A78 : STA.w $1A7A : STA.w $1A7C
+    LDA.w SprY, Y : STA.w $1A79 : STA.w $1A7B : STA.w $1A7D : STA.w SprY, Y
     STA.w SprMiscB, Y
 
     TYX
 
-    STZ $0D60, X
-    STZ $0D70, X
+    STZ.w SprYRound, X
+    STZ.w SprXRound, X
     PLX
         
   .return
@@ -320,14 +321,14 @@ SpawnRightHead:
     PHX
     ; code that controls where to spawn the offspring.
     REP #$20
-    LDA $0FD8 : CLC : ADC.w #$000C
+    LDA SprCachedX : CLC : ADC.w #$000C
     SEP #$20
-    STA $0D10, Y : XBA : STA $0D30, Y
+    STA.w SprX, Y : XBA : STA.w SprXH, Y
 
     REP #$20
-    LDA $0FDA : SEC : SBC.w #$000F
+    LDA SprCachedY : SEC : SBC.w #$000F
     SEP #$20
-    STA $0D00, Y : XBA : STA $0D20, Y
+    STA.w SprY, Y : XBA : STA.w SprYH, Y
 
     LDA.w SprX, Y : STA.w SprX, Y
     STA.w SprMiscA, Y : STA.w $19F0 : STA.w $19F2 : STA.w $19F4
@@ -336,8 +337,8 @@ SpawnRightHead:
 
     TYX
 
-    STZ $0D60, X
-    STZ $0D70, X
+    STZ.w SprYRound, X
+    STZ.w SprXRound, X
     PLX
         
   .return
@@ -351,13 +352,13 @@ MoveBody:
 {
     ; Handle the shell bg movement
     ; Trinexx_MoveBody
-    LDA.w $0D10, X : PHA
-    LDA.w $0D00, X : PHA
+    LDA.w SprX, X : PHA
+    LDA.w SprY, X : PHA
 
     JSL Sprite_Move
 
     PLA
-    LDY.b #$00 : SEC : SBC.w $0D00, X : STA.w $0310
+    LDY.b #$00 : SEC : SBC.w SprY, X : STA.w $0310
     BPL .pos_y_low
     DEY
 
@@ -367,7 +368,7 @@ MoveBody:
     ; -----------------------------------------------------
 
     PLA
-    LDY.b #$00 : SEC : SBC.w $0D10, X : STA.w $0312
+    LDY.b #$00 : SEC : SBC.w SprX, X : STA.w $0312
     BPL .pos_x_low
 
     DEY
@@ -379,13 +380,13 @@ MoveBody:
 
     LDA.b #$01 : STA.w $0428
 
-    LDA.w $0D00, X : SEC : SBC.b #$0C : STA.w $0DB0, X
+    LDA.w SprY, X : SEC : SBC.b #$0C : STA.w $0DB0, X
 
-    LDA.w $0B08 : SEC : SBC.w $0D10, X
+    LDA.w $0B08 : SEC : SBC.w SprX, X
                   CLC : ADC.b #$02 
                   CMP.b #$04 : BCS .not_at_target
 
-    LDA.w $0B09 : SEC : SBC.w $0D00, X 
+    LDA.w $0B09 : SEC : SBC.w SprY, X 
                   CLC : ADC.b #$02
                   CMP.b #$04 : BCS .not_at_target
 
@@ -411,10 +412,10 @@ StopIfOutOfBounds:
     ; Set A to 00 if outside of certain bounds
 
     REP #$20
-    LDA $0FD8 : CMP.w #$0A22 : BCS .notOutOfBoundsLeft
+    LDA SprCachedX : CMP.w #$0A22 : BCS .notOutOfBoundsLeft
         SEP #$20
-        LDA $0D50 : CMP.b #$7F : BCC .notOutOfBoundsLeft
-            LDA.b #-10 : STA $0D50 : STA $0D70
+        LDA.w SprXSpeed : CMP.b #$7F : BCC .notOutOfBoundsLeft
+            LDA.b #-10 : STA.w SprXSpeed : STA SprXRound
             LDA $19EA : SEC : SBC #$04 : STA $19EA
             LDA $19EC : SEC : SBC #$04 : STA $19EC
             LDA $19EE : SEC : SBC #$04 : STA $19EE
@@ -427,10 +428,10 @@ StopIfOutOfBounds:
     SEP #$20
 
     REP #$20
-    LDA $0FD8 : CMP.w #$1B00 : BCC .notOutOfBoundsRight
+    LDA SprCachedX : CMP.w #$1B00 : BCC .notOutOfBoundsRight
         SEP #$20
-        LDA $0D50 : CMP.b #$80 : BCS .notOutOfBoundsRight
-            LDA.b #$00 : STA $0D50 : STA $0D70
+        LDA.w SprXSpeed : CMP.b #$80 : BCS .notOutOfBoundsRight
+            LDA.b #$00 : STA.w SprXSpeed : STA SprXRound
             LDA $19EA : CLC : ADC #$04 : STA $19EA
             LDA $19EC : CLC : ADC #$04 : STA $19EC
             LDA $19EE : CLC : ADC #$04 : STA $19EE
@@ -444,10 +445,10 @@ StopIfOutOfBounds:
 
     ; Upper bound
     REP #$20
-    LDA $0FDA : CMP.w #$0150 : BCS .notOutOfBoundsUp
+    LDA SprCachedY : CMP.w #$0150 : BCS .notOutOfBoundsUp
         SEP #$20
-        LDA $0D40 : CMP.b #$7F : BCC .notOutOfBoundsUp
-            LDA.b #$00 : STA $0D40 : STA $0D60
+        LDA.w SprYSpeed : CMP.b #$7F : BCC .notOutOfBoundsUp
+            LDA.b #$00 : STA.w SprYSpeed : STA SprYRound
             LDA $19EA : SEC : SBC #$04 : STA $19EA
             LDA $19EC : SEC : SBC #$04 : STA $19EC
             LDA $19EE : SEC : SBC #$04 : STA $19EE
@@ -455,12 +456,11 @@ StopIfOutOfBounds:
   .notOutOfBoundsUp
     SEP #$20
 
-    print "CHECK DOWNS", pc
     REP   #$20
-    LDA   $0FDA : CMP.w #$01A0 : BCC .notOutOfBoundsDown
+    LDA   SprCachedY : CMP.w #$01A0 : BCC .notOutOfBoundsDown
         SEP #$20
-        LDA $0D40 : CMP.b #$80 : BCS .notOutOfBoundsDown
-            LDA.b #-10 : STA $0D40 : STA $0D60 ; Reverse the direction
+        LDA.w SprYSpeed : CMP.b #$80 : BCS .notOutOfBoundsDown
+            LDA.b #-10 : STA.w SprYSpeed : STA SprYRound ; Reverse the direction
 
             ; Modify the neck position
             ; Makes them move away from each other a bit
@@ -487,7 +487,7 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
         ;playerAbove
 
         REP #$20
-        LDA $0FDA : SEC : SBC $20 : CLC : ADC.w #$0006 : STA $01 ;delta Y
+        LDA SprCachedY : SEC : SBC $20 : CLC : ADC.w #$0006 : STA $01 ;delta Y
         ;added an extra 6 pixels because aparently if link.y is 6 above sprite.y it is concidered below ¯\_(ツ)_/¯
         SEP #$20
 
@@ -495,44 +495,44 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
             ;playerToTheLeft
 
             REP #$20
-            LDA $0FD8 : SEC : SBC $22 ;delta X
+            LDA SprCachedX : SEC : SBC $22 ;delta X
             
 
             CMP $01 : BCS .XGreaterThanY1
                 ;YGreaterThanX
                 SEP   #$20
-                LDA.b #$00 : SEC : SBC $00 : STA $0D40
-                STZ   $0D50
+                LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
+                STZ.w SprXSpeed
                 RTS
 
             .XGreaterThanY1
                 SEP   #$20
-                LDA.b #$00 : SEC : SBC $00 : STA $0D50
-                STZ   $0D40
+                LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
+                STZ.w SprYSpeed
                 RTS
 
 
         .playerToTheRight1
             REP #$20
-            LDA $22 : SEC : SBC $0FD8 ;delta X
+            LDA $22 : SEC : SBC SprCachedX ;delta X
 
             CMP $01 : BCS .XGreaterThanY2
                 ;YGreaterThanX
                 SEP   #$20
-                LDA.b #$00 : SEC : SBC $00 : STA $0D40
-                STZ   $0D50
+                LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
+                STZ.w SprXSpeed
                 RTS
 
             .XGreaterThanY2
                 SEP   #$20
-                LDA.b #$00 : CLC : ADC $00 : STA $0D50
-                STZ   $0D40
+                LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
+                STZ.w SprYSpeed
                 RTS
 
 
     .playerBelow
         REP #$20
-        LDA $20 : SEC : SBC $0FDA : CLC : ADC.w #$0006 : STA $01 ;delta Y
+        LDA $20 : SEC : SBC SprCachedY : CLC : ADC.w #$0006 : STA $01 ;delta Y
         ;added an extra 6 pixels because aparently if link.y is 6 above sprite.y it is concidered below ¯\_(ツ)_/¯
         SEP #$20
 
@@ -540,37 +540,37 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
             ;playerToTheLeft
 
             REP #$20
-            LDA $0FD8 : SEC : SBC $22 ;delta X
+            LDA SprCachedX : SEC : SBC $22 ;delta X
 
             CMP $01 : BCS .XGreaterThanY3
                 ;YGreaterThanX
                 SEP   #$20
-                LDA.b #$00 : CLC : ADC $00 : STA $0D40
-                STZ   $0D50
+                LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
+                STZ.w SprXSpeed
                 RTS
 
             .XGreaterThanY3
                 SEP   #$20
-                LDA.b #$00 : SEC : SBC $00 : STA $0D50
-                STZ   $0D40
+                LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
+                STZ.w SprYSpeed
                 RTS
 
 
         .playerToTheRight2
             REP #$20
-            LDA $22 : SEC : SBC $0FD8 ;delta X
+            LDA $22 : SEC : SBC SprCachedX ;delta X
 
             CMP $01 : BCS .XGreaterThanY4
                 ;YGreaterThanX
                 SEP   #$20
-                LDA.b #$00 : CLC : ADC $00 : STA $0D40
-                STZ   $0D50
+                LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
+                STZ.w SprXSpeed
                 RTS
 
             .XGreaterThanY4
                 SEP   #$20
-                LDA.b #$00 : CLC : ADC $00 : STA $0D50
-                STZ   $0D40
+                LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
+                STZ.w SprYSpeed
                 RTS
 }
 
