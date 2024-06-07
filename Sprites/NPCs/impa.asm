@@ -1,3 +1,23 @@
+
+; Bitfield of less important progression
+; .fbh .zsu
+;   u - Uncle visited in secret passage; controls spawn (0: spawn | 1: gone)
+;   s - Priest visited in sanc after Zelda is kidnapped again
+;   z - Zelda brought to sanc
+;   h - Uncle has left Link's house; controls spawn (0: spawn | 1: gone)
+;   b - Book of Mudora obtained/mentioned; controls Aginah dialog
+;   f - Flipped by fortune tellers to decide which fortune set to give
+PROGLITE        = $7EF3C6
+
+; 0x00 - Link's house
+; 0x01 - Sanctuary (Hall of Secrets)
+; 0x02 - Prison
+; 0x03 - Uncle
+; 0x04 - Throne
+; 0x05 - Old man cave
+; 0x06 - Old man home
+SPAWNPT         = $7EF3C8
+
 pushpc
 ; Impa Fix
 org $05EBCF
