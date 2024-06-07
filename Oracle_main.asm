@@ -72,8 +72,8 @@ namespace Oracle
   incsrc "Music/lost_woods.asm"
   print  "End of Music/lost_woods.asm       ", pc
 
-  incsrc "Music/dungeon_theme.asm"
-  print  "End of Music/dungeon_theme.asm    ", pc
+  incsrc "Music/color_dungeon_theme.asm"
+  print  "End of Music/color_dungeon_theme.asm    ", pc
 
   incsrc "Music/stone_tower_temple.asm"
   print  "End of stone_tower_temple.asm     ", pc
