@@ -73,7 +73,7 @@ LinkState_GameboyInDungeonEntrance:
 LoadOverworld_CheckForGbcLink:
 {
   LDA $0FFF : BEQ .return_lw
-
+    LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
       LDA.b #$06 : STA $02B2
       LDA.b #$3B : STA $BC   ; change link's sprite 
       JSL UpdateGbcPalette
@@ -92,33 +92,28 @@ LoadOverworld_CheckForGbcLink:
 OverworldTransition_CheckForGbcLink:
 {
   LDA $0FFF : BEQ .return 
+    LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
       LDA #$3B : STA $BC   ; change link's sprite
       LDA #$06 : STA $02B2
       JSL Palette_ArmorAndGloves
-      .return
-      JSL $07E6A6
-      RTL
+  .return
+  JSL $07E6A6 ; Link_HandleMovingAnimation_FullLongEntry
+  RTL
 }
 
 ; Module08_02_LoadAndAdvance
 org $02EDC0
-{
   JSL LoadOverworld_CheckForGbcLink
-}
 
 org $02ABDA
   JSL OverworldTransition_CheckForGbcLink
 
 org $07A9B1
 LinkMode_MagicMirror:
-{
   JSL LinkState_GameboyForm
-}
 
 org $0287A4
-{
   JSL LinkState_GameboyInDungeonEntrance
-}
 
 org $1EE48E
   ; TODO: Check a status flag to dismiss villager girl
@@ -136,24 +131,22 @@ LinkState_GameboyForm:
 {
   SEP #$30
   LDA $02B2 : CMP.b #$06 : BEQ .already_gbc
-  LDA $0FFF : BEQ .return                   ; not in dark world
+    LDA $0FFF : BEQ .return ; not in dark world
+      .transform
+      %PlayerTransform()
 
-.transform
-  %PlayerTransform()
+      LDA #$3B : STA $BC   ; change link's sprite 
+      LDA #$06 : STA $02B2
+      JSL UpdateGbcPalette
+      BRA .return
 
-  LDA #$3B : STA $BC   ; change link's sprite 
-  LDA #$06 : STA $02B2
-  JSL UpdateGbcPalette
-  BRA .return
-
-.already_gbc
+  .already_gbc
   %PlayerTransform()
   LDA #$10 : STA $BC
   STZ $02B2
   JSL Palette_ArmorAndGloves
   
-.not_gbc
-.return
+  .return
   JSL $07F1E6 
   RTL
 }
