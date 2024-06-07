@@ -60,6 +60,36 @@ SprCachedY   = $0FDA ; This doesn't need to be indexed with X it contains the 16
 DungeonMainCheck = $021B ;0x01
 SpriteRanCheck = $8E ;0x01
 
+; Primarily deals with bump damage
+; tzpd bbbb
+;   t - TODO
+;   z - High priority target for bees to give hints
+;   p - Powder interaction (0: normal | 1: ignore)
+;   d - Behavior when a boss spawns (0: die | 1: live)
+;   b - bump damage class
+;   Bump damage classes are read from a table at $06F42D
+;   Each table entry has 3 values, for green, blue, and red mails
+;   class   g    b    r
+;   0x00    2    1    1
+;   0x01    4    4    4
+;   0x02    0    0    0
+;   0x03    8    4    2
+;   0x04    8    8    8
+;   0x05   16    8    4
+;   0x06   32   16    8
+;   0x07   32   24   16
+;   0x08   24   16    8
+;   0x09   64   48   24
+;
+; Higher values are invalid, but here's what they are:
+;   0x0A  169   48   32
+;   0x0B  142  246  169
+;   0x0C  144  133   71
+;   0x0D  169   16  133
+;   0x0E   70  169   33
+;   0x0F   34  124  187
+SprBump      = $0CD2
+
 
 org $09AE64
 Sprite_SetSpawnedCoords:
