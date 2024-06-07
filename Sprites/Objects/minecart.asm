@@ -98,7 +98,7 @@ Sprite_Minecart_Prep:
     LDA #$04 : STA $0E40, X ; Nbr Oam Entries 
     LDA #$40 : STA $0E60, x ; Impervious props 
     LDA #$E0 : STA $0F60, X ; Persist 
-    LDA #$00 : STA $0CD2, X ; No bump damage 
+    LDA #$00 : STA SprBump, X ; No bump damage 
     LDA #$00 : STA $0B6B, X ; Set interactive hitbox? 
 
     STZ.w !MinecartDirection
