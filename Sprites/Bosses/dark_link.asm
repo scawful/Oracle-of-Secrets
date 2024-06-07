@@ -38,46 +38,43 @@ Sprite_DarkLink_Long:
 
   ; ADD GANON CODE if subtype == 05
   LDA.w SprSubtype, X : CMP #$05 : BNE .NotGanon
-  JSR Sprite_Ganon_Draw 
-  JSL Sprite_CheckActive   ; Check if game is not paused (Prevent timers from running if game is paused)
-  BCC .SpriteIsNotActive2   ; Skip Main code is sprite is innactive
-  JSR Sprite_Ganon_Main ; do ganon instead
-  .SpriteIsNotActive2
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+    JSR Sprite_Ganon_Draw 
+    JSL Sprite_CheckActive   ; Check if game is not paused (Prevent timers from running if game is paused)
+    BCC .SpriteIsNotActive2   ; Skip Main code is sprite is innactive
+    JSR Sprite_Ganon_Main ; do ganon instead
+    .SpriteIsNotActive2
+    PLB ; Get back the databank we stored previously
+    RTL ; Go back to original code
 
   .NotGanon
-  LDA.w SprAction, X : CMP.b #$01 : BNE .normaldraw
-  ;JSR Sprite_DarkLink_Draw ; Call the draw code
-  .sworddraw
-  JSR Sprite_DarkLink_Draw_Sprite_SwordAttack_Draw
-  BRA .skipnormaldraw
-  .normaldraw
-  CMP.b #$09 : BEQ .sworddraw
-  LDA.w SprSubtype, X : BNE .skipnormaldraw
-  JSR Sprite_DarkLink_Draw 
-  .skipnormaldraw
+  LDA.w SprAction, X : CMP.b #$01 : BNE .normal_draw
+    ; JSR Sprite_DarkLink_Draw ; Call the draw code
+    .sword_draw
+    JSR Sprite_DarkLink_Draw_Sprite_SwordAttack_Draw
+    BRA .skipnormal_draw
+  .normal_draw
+  CMP.b #$09 : BEQ .sword_draw
+  LDA.w SprSubtype, X : BNE .skipnormal_draw
+    JSR Sprite_DarkLink_Draw 
+  .skipnormal_draw
 
   LDA.w SprAction, X : CMP.b #11 : BCS .notdying
-  LDA.w SprHealth, X : CMP.b #$10 : BCS .notdying
+    LDA.w SprHealth, X : CMP.b #$10 : BCS .notdying
+      LDA.w SprMiscC, X : BNE +
+        ; check if action is 00 otherwise wait
+        LDA.w SprAction, X : BNE .notdying 
+          %GotoAction(15) ; enraging instead
+          BRA .SpriteIsNotActive
+      +
 
-  LDA.w SprMiscC, X : BNE +
-  ; check if action is 00 otherwise wait
-  LDA.w SprAction, X : BNE .notdying 
-  ; enraging instead
-  %GotoAction(15)
-  BRA .SpriteIsNotActive
-  +
-
-    LDA #$30 : STA.w SprTimerA, X
-    LDA #$08 : STA.w SprTimerB, X
-    STZ.w SprFrame, X
-    STZ.w SprMiscF, X
-    STZ.w SprMiscD, X
-    %GotoAction(11)
-    BRA .SpriteIsNotActive
+      LDA #$30 : STA.w SprTimerA, X
+      LDA #$08 : STA.w SprTimerB, X
+      STZ.w SprFrame, X
+      STZ.w SprMiscF, X
+      STZ.w SprMiscD, X
+      %GotoAction(11)
+      BRA .SpriteIsNotActive
   .notdying
-
 
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
@@ -96,12 +93,11 @@ Sprite_DarkLink_Prep:
   PHB : PHK : PLB
 
   REP #$20 ; P is still on stack, so we don't even need to fix this
-    LDX #$20
-    --
-    LDA dlinkPal, X : STA $7EC600, X
-    DEX : DEX : BNE --
-    INC $15 ;Refresh Palettes
-      
+  LDX #$20
+  --
+    LDA DarkLink_Palette, X : STA $7EC600, X
+  DEX : DEX : BNE --
+  INC $15 ; Refresh Palettes
   SEP #$20
 
   PLB
@@ -111,27 +107,26 @@ Sprite_DarkLink_Prep:
   LDA #$CF : STA.w SprTimerA, X ; wait timer before falling
   LDA #$7F : STA.w SprHeight, X
 
-  %GotoAction(4)
   LDA #$78 : STA.w SprX, X
   LDA #$58 : STA.w SprY, X
 
   LDA #$00 : STA.w SprMiscE, X
   LDA #$00 : STA.w SprMiscC, X ; Enraging 
   LDA #$50 : STA.w SprHealth, X
-
+  %GotoAction(4)
 
   RTL
 }
 
-dlinkPal:
-dw #$7FFF, #$14A5, #$2108, #$294A, #$1CF5, #$7E4E, #$3DEF, #$6FF4
+DarkLink_Palette:
+  dw #$7FFF, #$14A5, #$2108, #$294A, #$1CF5, #$7E4E, #$3DEF, #$6FF4
 
 ; =========================================================
 
 Sprite_DarkLink_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  LDA.w SprAction, X : JSL UseImplicitRegIndexedLocalJumpTable
+
   dw Handler
   dw SwordSlash
   dw JumpBack
@@ -152,30 +147,29 @@ Sprite_DarkLink_Main:
   Handler:
   {  
     LDA.w SprSubtype, X : CMP #$01 : BNE +
-    %SetTimerA(16)
-    %GotoAction(10)
-    RTS
+      %SetTimerA(16)
+      %GotoAction(10)
+      RTS
     +
 
-    LDA.w SprMiscF, X : BNE .nodamage
-    JSL Sprite_CheckDamageFromPlayer : BCC .nodamage
-    LDA.w SprTimerA, X : BNE .alreadytakingdamage
-    LDA.w $02B2 : CMP #$03 : BNE .notmoredamage
-    LDA.w SprHealth, X : SEC : SBC #$04 : STA.w SprHealth, X
-    .notmoredamage
-    .alreadytakingdamage
+    LDA.w SprMiscF, X : BNE .no_damage
+      JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+        LDA.w SprTimerA, X : BNE .already_taking_damage
+          LDA.w $02B2 : CMP #$03 : BNE .not_more_damage
+            LDA.w SprHealth, X : SEC : SBC #$04 : STA.w SprHealth, X
+        .not_more_damage
+        .already_taking_damage
 
-
-    LDA #$20
-    JSL Sprite_ApplySpeedTowardsPlayer
-    LDA.w SprXSpeed, X : EOR #$FF : STA.w SprXSpeed, X
-    LDA.w SprYSpeed, X : EOR #$FF : STA.w SprYSpeed, X
-    LDA.b #$10 : STA.w $0F80,X
-    LDA.b #$20 : STA.w SprTimerA, X
-    LDA #$26 : STA.w $012E
-    %GotoAction(8)
-    RTS
-    .nodamage
+        LDA #$20
+        JSL Sprite_ApplySpeedTowardsPlayer
+        LDA.w SprXSpeed, X : EOR #$FF : STA.w SprXSpeed, X
+        LDA.w SprYSpeed, X : EOR #$FF : STA.w SprYSpeed, X
+        LDA.b #$10 : STA.w $0F80,X
+        LDA.b #$20 : STA.w SprTimerA, X
+        LDA #$26 : STA.w $012E
+        %GotoAction(8)
+        RTS
+    .no_damage
     JSL Sprite_CheckDamageToPlayer
 
 
@@ -203,29 +197,27 @@ Sprite_DarkLink_Main:
     .dosword
     SEP #$20
     LDA.w SprTimerC, X : BNE ++
-    ; attempt a slash if we can
+      ; attempt a slash if we can
 
-    LDA.w SprMiscD, X : BNE +
-    STZ.w SprFrame, X
-    BRA .skipdirections
-    +
-    LDA.w SprMiscD, X : CMP #$01 : BNE +
-    LDA.b #06 : STA.w SprFrame, X
-    BRA .skipdirections
-    +
-    LDA.w SprMiscD, X : CMP #$02 : BNE +
-    LDA.b #12 : STA.w SprFrame, X
-    BRA .skipdirections
-    +
-    LDA.b #18 : STA.w SprFrame, X
-    +
+      LDA.w SprMiscD, X : BNE +
+      STZ.w SprFrame, X
+      BRA .skipdirections
+      +
+      LDA.w SprMiscD, X : CMP #$01 : BNE +
+      LDA.b #06 : STA.w SprFrame, X
+      BRA .skipdirections
+      +
+      LDA.w SprMiscD, X : CMP #$02 : BNE +
+      LDA.b #12 : STA.w SprFrame, X
+      BRA .skipdirections
+      +
+      LDA.b #18 : STA.w SprFrame, X
+      +
 
-    .skipdirections
+      .skipdirections
 
-
-    JSR SpawnSwordDamage
-
-    %GotoAction(1)
+      JSR SpawnSwordDamage
+      %GotoAction(1)
     ++
     REP #$20
     .toofarsword
@@ -431,114 +423,120 @@ Sprite_DarkLink_Main:
 
 
     Bomb:
-    TYX ; get back sprite index
+    {
+      TYX ; get back sprite index
 
-    ;second guess itself because it can spawn too many bombs
-    LDA $1A : AND #$01 : BNE .spawn_failed ; 50/50 chances
+      ;second guess itself because it can spawn too many bombs
+      LDA $1A : AND #$01 : BNE .spawn_failed ; 50/50 chances
 
-    LDA.b #$4A
-    LDY.b #$0B
-    JSL $1DF65F : BMI .spawn_failed
+      LDA.b #$4A
+      LDY.b #$0B
+      JSL $1DF65F : BMI .spawn_failed
 
-    JSL $09AE64
+      JSL $09AE64
 
-    ; ... but once spawned, transmute it to an enemy bomb.
-    JSL $06AD50
-    JSL GetRandomInt : AND #$7F : CLC : ADC #$20
-    STA $0E00, Y
-    .spawn_failed
-    RTS
+      ; ... but once spawned, transmute it to an enemy bomb.
+      JSL $06AD50
+      JSL GetRandomInt : AND #$7F : CLC : ADC #$20
+      STA $0E00, Y
+      .spawn_failed
+      RTS
+    }
 
     BombThrow:
-    TYX ; get back sprite index
+    {
+      TYX ; get back sprite index
 
-    ;second guess itself because it can spawn too many bombs
-    LDA $1A : AND #$01 : BNE .spawn_failed ; 50/50 chances
+      ;second guess itself because it can spawn too many bombs
+      LDA $1A : AND #$01 : BNE .spawn_failed ; 50/50 chances
 
-    LDA.b #$4A
-    LDY.b #$0B
-    JSL $1DF65F : BMI .spawn_failed
-    JSL $09AE64
-    ; ... but once spawned, transmute it to an enemy bomb.
-    JSL $06AD50
+      LDA.b #$4A
+      LDY.b #$0B
+      JSL $1DF65F : BMI .spawn_failed
+      JSL $09AE64
+      ; ... but once spawned, transmute it to an enemy bomb.
+      JSL $06AD50
 
-    PHX
-    TYX
-    LDA.b #$28 : JSL Sprite_ApplySpeedTowardsPlayer
-    LDA.b #$01 : STA $0DB0, X
-    LDA.b #$16 : STA $0F80, X
-    JSL GetRandomInt : AND #$7F : CLC : ADC #$20
-    STA $0E00, X
-    PLX
+      PHX
+      TYX
+      LDA.b #$28 : JSL Sprite_ApplySpeedTowardsPlayer
+      LDA.b #$01 : STA $0DB0, X
+      LDA.b #$16 : STA $0F80, X
+      JSL GetRandomInt : AND #$7F : CLC : ADC #$20
+      STA $0E00, X
+      PLX
 
-    .spawn_failed
-    RTS
+      .spawn_failed
+      RTS
+    }
 
 
     Cape:
-    TYX ; get back sprite index
-    LDA.w SprMiscF, X : BNE +
-    LDA $1A : AND #$01 : BNE .nocape ; 50/50 chances
-    +
-    JSL $05AB9C
-    LDA.w SprMiscF, X : EOR #$01 : STA.w SprMiscF, X
-    .nocape
-    RTS
+    {
+      TYX ; get back sprite index
+      LDA.w SprMiscF, X : BNE +
+      LDA $1A : AND #$01 : BNE .nocape ; 50/50 chances
+      +
+      JSL $05AB9C
+      LDA.w SprMiscF, X : EOR #$01 : STA.w SprMiscF, X
+      .nocape
+      RTS
 
-    Walk:
-    TYX ; get back sprite index
-    %GotoAction(7)
-    JSL GetRandomInt : AND #$1F : CLC : ADC #$18
-    STA.w SprTimerA, X
-    JSL GetRandomInt
-    AND #$03
-    TAY
-    LDA speedTableX, Y : STA SprXSpeed, X
-    LDA speedTableY, Y : STA SprYSpeed, X
+      Walk:
+      TYX ; get back sprite index
+      %GotoAction(7)
+      JSL GetRandomInt : AND #$1F : CLC : ADC #$18
+      STA.w SprTimerA, X
+      JSL GetRandomInt
+      AND #$03
+      TAY
+      LDA speedTableX, Y : STA SprXSpeed, X
+      LDA speedTableY, Y : STA SprYSpeed, X
 
-
-    RTS
+      RTS
+    }
 
 
     JumpAttack:
-    TYX ; get back sprite index
-    LDA #$20
-    JSL Sprite_ApplySpeedTowardsPlayer
-    LDA.b #$28 : STA.w $0F80,X
-    LDA.b #$10 : STA.w SprTimerA, X
-    %GotoAction(5)
-    JSL GetRandomInt : AND #$3F : CLC : ADC #$50
-    STA.w SprTimerD, X
-    ; that one is popping the RTS to end sprite entirely
-    ;PLA : PLA
-    RTS
-
+    {
+      TYX ; get back sprite index
+      LDA #$20
+      JSL Sprite_ApplySpeedTowardsPlayer
+      LDA.b #$28 : STA.w $0F80,X
+      LDA.b #$10 : STA.w SprTimerA, X
+      %GotoAction(5)
+      JSL GetRandomInt : AND #$3F : CLC : ADC #$50
+      STA.w SprTimerD, X
+      ; that one is popping the RTS to end sprite entirely
+      ;PLA : PLA
+      RTS
+    }
 
 
     SpawnSwordDamage:
-
-    LDA #24 : STA.w SprTimerC, X
-    LDA.w SprMiscC, X : BEQ +
-    LDA #15 : STA.w SprTimerC, X ;faster if enraged
-    +
-    LDA #$06 : STA.w SprTimerB, X
-    LDA #$03 : STA.w $012E
-
-
-    LDA #$C1 ; SET THE RIGHT SPRITE ID!! ======================CHANGE========================
-    JSL Sprite_SpawnDynamically
-    JSL Sprite_SetSpawnedCoords
-    PHX
-    LDA #$01 : STA.w SprSubtype, Y
-    LDA.w SprMiscD, X
-    TYX
-    TAY
-    LDA.w SprX, X : CLC : ADC.w DirOffsetX, Y : STA.w SprX, X
-    LDA.w SprY, X : CLC : ADC.w DirOffsetY, Y : STA.w SprY, X
+    {
+      LDA #24 : STA.w SprTimerC, X
+      LDA.w SprMiscC, X : BEQ +
+      LDA #15 : STA.w SprTimerC, X ;faster if enraged
+      +
+      LDA #$06 : STA.w SprTimerB, X
+      LDA #$03 : STA.w $012E
 
 
-    PLX
-    RTS
+      LDA #$C1 ; SPRID
+      JSL Sprite_SpawnDynamically
+      JSL Sprite_SetSpawnedCoords
+      PHX
+      LDA #$01 : STA.w SprSubtype, Y
+      LDA.w SprMiscD, X
+      TYX
+      TAY
+      LDA.w SprX, X : CLC : ADC.w DirOffsetX, Y : STA.w SprX, X
+      LDA.w SprY, X : CLC : ADC.w DirOffsetY, Y : STA.w SprY, X
+
+      PLX
+      RTS
+    }
 
     DirOffsetX:
     db $00, $00, $0E, $F2
@@ -548,12 +546,12 @@ Sprite_DarkLink_Main:
 
   SwordSlash:
   {
-    JSL Sprite_CheckDamageFromPlayer : BCC .nodamage
-    LDA.w SprTimerA, X : BNE .alreadytakingdamage
-    LDA.w $02B2 : CMP #$03 : BNE .notmoredamage
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+    LDA.w SprTimerA, X : BNE .already_taking_damage
+    LDA.w $02B2 : CMP #$03 : BNE .not_more_damage
     LDA.w SprHealth, X : SEC : SBC #$04 : STA.w SprHealth, X
-    .notmoredamage
-    .alreadytakingdamage
+    .not_more_damage
+    .already_taking_damage
 
       LDA #$05 : STA.w $012E ; clinking sound
       LDA #$20
@@ -576,7 +574,7 @@ Sprite_DarkLink_Main:
         
       RTS
 
-    .nodamage
+    .no_damage
 
     ;LDA.w SprTimerD, X : BEQ +
 
@@ -770,8 +768,6 @@ Sprite_DarkLink_Main:
     LDA.b #$1F : STA $012C
     .nomessage
 
-
-
     ; IF health is a certain level spawn crumbling tiles
     ;2, 3, 4, 5
     LDA.w SprMiscC, X : BEQ .tilesAreFallingAlready
@@ -807,12 +803,12 @@ Sprite_DarkLink_Main:
 
   WalkAction:
   {
-    JSL Sprite_CheckDamageFromPlayer : BCC .nodamage
-    LDA.w SprTimerA, X : BNE .alreadytakingdamage
-    LDA.w $02B2 : CMP #$03 : BNE .notmoredamage
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+    LDA.w SprTimerA, X : BNE .already_taking_damage
+    LDA.w $02B2 : CMP #$03 : BNE .not_more_damage
     LDA.w SprHealth, X : SEC : SBC #$04 : STA.w SprHealth, X
-    .notmoredamage
-    .alreadytakingdamage
+    .not_more_damage
+    .already_taking_damage
 
     LDA #$20
     JSL Sprite_ApplySpeedTowardsPlayer
@@ -823,9 +819,8 @@ Sprite_DarkLink_Main:
 
     %GotoAction(8)
     RTS
-    .nodamage
+    .no_damage
     JSL Sprite_CheckDamageToPlayer
-
 
     LDA.w SprTimerA, X : BNE +
 
@@ -834,7 +829,6 @@ Sprite_DarkLink_Main:
       %GotoAction(00)
 
     +
-
 
     STZ $02 ; x direction if non zero = negative
     STZ $03 ; y direction
@@ -873,9 +867,7 @@ Sprite_DarkLink_Main:
     +
     DEC.w SprYSpeed, X
 
-
     .next
-
 
     LDA.w SprXSpeed, X : BPL +
     INC.w SprXSpeed, X
@@ -929,8 +921,6 @@ Sprite_DarkLink_Main:
     CMP #$10 : BCS + ; only check for damage if sword has reached halfway
     JSL Sprite_CheckDamageToPlayer
     +
-
-
     RTS
   }
 
@@ -962,62 +952,66 @@ Sprite_DarkLink_Main:
   db $00, $02, $01, $03
 
   DeadDespawn:
-  LDA.w SprTimerB, X : BNE +
-    LDA.b #45 : STA.w SprFrame, X
+  {
+    LDA.w SprTimerB, X : BNE +
+      LDA.b #45 : STA.w SprFrame, X
 
-  +
-
-
-  LDA.w SprTimerA, X : CMP #$28 : BCS +
-  AND #$04
-  STA.w SprMiscF, X
-  +
+    +
 
 
-  LDA.w SprTimerA, X : BNE +
-  %GotoAction(13)
-  +
-    
-  RTS
+    LDA.w SprTimerA, X : CMP #$28 : BCS +
+    AND #$04
+    STA.w SprMiscF, X
+    +
+
+
+    LDA.w SprTimerA, X : BNE +
+    %GotoAction(13)
+    +
+      
+    RTS
+  }
 
   OpenDoor:
-  INC.w SprMiscF, X
-  ;LDA #$1A : STA.b $11 ; ganon open door routine
-  ; handled by the room tag?
-  STZ.w $0DD0, X
+  {
+    INC.w SprMiscF, X
+    ;LDA #$1A : STA.b $11 ; ganon open door routine
+    ; handled by the room tag?
+    STZ.w $0DD0, X
 
-  %GotoAction(14)
+    %GotoAction(14)
 
-  RTS
+    RTS
+  }
 
   Dead:
-
-
-  RTS
+  {
+    RTS
+  }
 
   Enraging:
+  {
+    PHX
+    REP #$20 ; P is still on stack, so we don't even need to fix this
+        LDX #$20
+        --
+        LDA dlinkPalRed, X : STA $7EC600, X
+        DEX : DEX : BNE --
+        INC $15 ;Refresh Palettes
+        
+    SEP #$20
+    PLX
 
-  PHX
-  REP #$20 ; P is still on stack, so we don't even need to fix this
-      LDX #$20
-      --
-      LDA dlinkPalRed, X : STA $7EC600, X
-      DEX : DEX : BNE --
-      INC $15 ;Refresh Palettes
-      
-  SEP #$20
-  PLX
+    INC.w SprMiscC, X ; Enraging
 
-  INC.w SprMiscC, X ; Enraging
+    LDA #$50 : STA.w SprHealth, X
 
-  LDA #$50 : STA.w SprHealth, X
+    %ShowUnconditionalMessage($170)
 
-  %ShowUnconditionalMessage($170)
+    %GotoAction(00)
 
-  %GotoAction(00)
-
-  RTS
-
+    RTS
+  }
 
   dlinkPalRed:
   dw #$7FFF, #$14A5, #$2108, #$294A, #$1CF5, #$7E4E, #$001D, #$6FF4
@@ -1546,59 +1540,61 @@ GanonInit:
 
 Sprite_Ganon_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  LDA.w SprAction, X : JSL UseImplicitRegIndexedLocalJumpTable
+
   dw Wait
   dw ShowMessage
   dw Fall
   dw FellWait
   dw FadingAwait
 
-
   Wait:
-  LDA.w SprTimerA, X : BNE .wait
-  LDA.b #$30 : STA.w SprTimerA, X
-  %ShowUnconditionalMessage($46)
-  %GotoAction(1)
-  .wait
-
-  RTS
+  {
+    JSR ApplyDarkLinkGraphics
+    LDA.w SprTimerA, X : BNE .wait
+      LDA.b #$30 : STA.w SprTimerA, X
+      %ShowUnconditionalMessage($46)
+      %GotoAction(1)
+    .wait
+    RTS
+  }
 
   ShowMessage:
-  LDA.w SprTimerA, X : BNE .wait
-  LDA.b #$90 : STA.w SprTimerA, X
-  %GotoAction(2)
-  .wait
-
-  RTS
+  {
+    LDA.w SprTimerA, X : BNE .wait
+      LDA.b #$90 : STA.w SprTimerA, X
+      %GotoAction(2)
+    .wait
+    RTS
+  }
 
   Fall:
-  LDA.w SprTimerA, X : BNE .wait
-  LDA.b #$50 : STA.w SprTimerA, X
-  LDA #$01 : STA.w SprFrame, X
-  INC.w SprMiscA, X
-  %GotoAction(3)
-  .wait
-
-
-  RTS
+  {
+    LDA.w SprTimerA, X : BNE .wait
+      LDA.b #$50 : STA.w SprTimerA, X
+      LDA #$01 : STA.w SprFrame, X
+      INC.w SprMiscA, X
+      %GotoAction(3)
+    .wait
+    RTS
+  }
 
   FellWait:
-  LDA.w SprTimerA, X : BNE .wait
-  LDA.b #$30 : STA.w SprTimerA, X
-  %GotoAction(4)
-  .wait
-
-
-  RTS
+  {
+    LDA.w SprTimerA, X : BNE .wait
+      LDA.b #$30 : STA.w SprTimerA, X
+      %GotoAction(4)
+    .wait
+    RTS
+  }
 
   FadingAwait:
-  LDA.w SprTimerA, X : BNE .wait
-  STZ.w SprState, X
-  .wait
-
-
-  RTS
+  {
+    LDA.w SprTimerA, X : BNE .wait
+      STZ.w SprState, X
+    .wait
+    RTS
+  }
 }
 
 ; =========================================================
