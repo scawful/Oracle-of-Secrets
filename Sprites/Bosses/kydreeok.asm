@@ -121,8 +121,6 @@ Sprite_Kydreeok_Main:
 
       STZ.w SprYSpeed : STZ.w SprXSpeed ;set velocitys to 0
       JSR MoveBody
-
-      JSL Sprite_BounceFromTileCollision ; 
       JSR StopIfOutOfBounds
 
       LDA SprTimerA, X : BNE .continue
@@ -145,7 +143,6 @@ Sprite_Kydreeok_Main:
 
       LDA $36
       JSL Sprite_ApplySpeedTowardsPlayer
-      JSL Sprite_BounceFromTileCollision ; JSR StopIfOutOfBounds
       JSR StopIfOutOfBounds
       JSR MoveBody
 
@@ -169,7 +166,6 @@ Sprite_Kydreeok_Main:
       PHX
       LDA $36 : STA $00
       JSR Sprite_ApplySpeedTowardsPlayerXOrY
-      JSL Sprite_BounceFromTileCollision     ; JSR StopIfOutOfBounds
       JSR StopIfOutOfBounds
       JSR MoveBody
 
@@ -207,7 +203,7 @@ Sprite_Kydreeok_Main:
 
     .notEqualX
       SEP #$20
-      JSL Sprite_BounceFromTileCollision ; JSR StopIfOutOfBounds
+      JSR StopIfOutOfBounds
 
       ;if both velocities are 0 go back to the Stalk_Player_XORY to re-set the course
       LDA.w SprYSpeed : BNE .notZero
@@ -229,6 +225,30 @@ Sprite_Kydreeok_Main:
 }
 
 ; =========================================================
+
+Offspring1_Neck1_X = $19EA
+Offspring1_Neck2_X = $19EC
+Offspring1_Neck3_X = $19EE
+
+Offspring1_Neck1_Y = $19EB
+Offspring1_Neck2_Y = $19ED
+Offspring1_Neck3_Y = $19EF
+
+Offspring2_Neck1_X = $19F0
+Offspring2_Neck2_X = $19F2
+Offspring2_Neck3_X = $19F4
+
+Offspring2_Neck1_Y = $19F1
+Offspring2_Neck2_Y = $19F3
+Offspring2_Neck3_Y = $19F5
+
+Offspring3_Neck1_X = $1A78
+Offspring3_Neck2_X = $1A7A
+Offspring3_Neck3_X = $1A7C
+
+Offspring3_Neck1_Y = $1A79
+Offspring3_Neck2_Y = $1A7B
+Offspring3_Neck3_Y = $1A7D
 
 SpawnLeftHead:
 {
@@ -281,7 +301,7 @@ SpawnCenterHead:
     PHX
     ; code that controls where to spawn the offspring.
     REP #$20
-    LDA SprCachedX : CLC : ADC.w #$0006
+    LDA SprCachedX : CLC : ADC.w #$0004
     SEP #$20
     STA.w SprX, Y : XBA : STA.w SprXH, Y
 
@@ -423,6 +443,10 @@ StopIfOutOfBounds:
       LDA $19F2 : SEC : SBC #$04 : STA $19F2
       LDA $19F4 : SEC : SBC #$04 : STA $19F4
 
+      LDA Offspring3_Neck1_X : SEC : SBC #$04 : STA Offspring3_Neck1_X
+      LDA Offspring3_Neck2_X : SEC : SBC #$04 : STA Offspring3_Neck2_X
+      LDA Offspring3_Neck3_X : SEC : SBC #$04 : STA Offspring3_Neck3_X
+
   .not_out_of_bounds_Left
   SEP #$20
 
@@ -439,6 +463,10 @@ StopIfOutOfBounds:
       LDA $19F2 : CLC : ADC #$04 : STA $19F2
       LDA $19F4 : CLC : ADC #$04 : STA $19F4
 
+      LDA Offspring3_Neck1_X : CLC : ADC #$04 : STA Offspring3_Neck1_X
+      LDA Offspring3_Neck2_X : CLC : ADC #$04 : STA Offspring3_Neck2_X
+      LDA Offspring3_Neck3_X : CLC : ADC #$04 : STA Offspring3_Neck3_X
+
   .not_out_of_bounds_Right
   SEP #$20
 
@@ -451,6 +479,10 @@ StopIfOutOfBounds:
       LDA $19EA : SEC : SBC #$04 : STA $19EA
       LDA $19EC : SEC : SBC #$04 : STA $19EC
       LDA $19EE : SEC : SBC #$04 : STA $19EE
+
+      LDA Offspring3_Neck1_Y : SEC : SBC #$04 : STA Offspring3_Neck1_Y
+      LDA Offspring3_Neck2_Y : SEC : SBC #$04 : STA Offspring3_Neck2_Y
+      LDA Offspring3_Neck3_Y : SEC : SBC #$04 : STA Offspring3_Neck3_Y
 
   .not_out_of_bounds_Up
   SEP #$20
@@ -470,6 +502,10 @@ StopIfOutOfBounds:
         LDA $19F0 : CLC : ADC #$04 : STA $19F0
         LDA $19F2 : CLC : ADC #$04 : STA $19F2
         LDA $19F4 : CLC : ADC #$04 : STA $19F4
+
+        LDA Offspring3_Neck1_Y : CLC : ADC #$04 : STA Offspring3_Neck1_Y
+        LDA Offspring3_Neck2_Y : CLC : ADC #$04 : STA Offspring3_Neck2_Y
+        LDA Offspring3_Neck3_Y : CLC : ADC #$04 : STA Offspring3_Neck3_Y
           
 
   .not_out_of_bounds_Down
@@ -482,95 +518,95 @@ StopIfOutOfBounds:
 
 Sprite_ApplySpeedTowardsPlayerXOrY:
 {
-    JSL Sprite_IsBelowPlayer : BEQ .playerBelow
-        ;playerAbove
+  JSL Sprite_IsBelowPlayer : BEQ .playerBelow
+      ;playerAbove
 
-        REP #$20
-        LDA SprCachedY : SEC : SBC $20 : CLC : ADC.w #$0006 : STA $01 ;delta Y
-        ;added an extra 6 pixels because aparently if link.y is 6 above sprite.y it is concidered below ¯\_(ツ)_/¯
-        SEP #$20
+      REP #$20
+      LDA SprCachedY : SEC : SBC $20 : CLC : ADC.w #$0006 : STA $01 ;delta Y
+      ;added an extra 6 pixels because aparently if link.y is 6 above sprite.y it is concidered below ¯\_(ツ)_/¯
+      SEP #$20
 
-        JSL Sprite_IsToRightOfPlayer : BEQ .playerToTheRight1
-            ;playerToTheLeft
+      JSL Sprite_IsToRightOfPlayer : BEQ .playerToTheRight1
+          ;playerToTheLeft
 
-            REP #$20
-            LDA SprCachedX : SEC : SBC $22 ;delta X
-            
+          REP #$20
+          LDA SprCachedX : SEC : SBC $22 ;delta X
+          
 
-            CMP $01 : BCS .XGreaterThanY1
-                ;YGreaterThanX
-                SEP   #$20
-                LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
-                STZ.w SprXSpeed
-                RTS
+          CMP $01 : BCS .XGreaterThanY1
+              ;YGreaterThanX
+              SEP   #$20
+              LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
+              STZ.w SprXSpeed
+              RTS
 
-            .XGreaterThanY1
-                SEP   #$20
-                LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
-                STZ.w SprYSpeed
-                RTS
-
-
-        .playerToTheRight1
-            REP #$20
-            LDA $22 : SEC : SBC SprCachedX ;delta X
-
-            CMP $01 : BCS .XGreaterThanY2
-                ;YGreaterThanX
-                SEP   #$20
-                LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
-                STZ.w SprXSpeed
-                RTS
-
-            .XGreaterThanY2
-                SEP   #$20
-                LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
-                STZ.w SprYSpeed
-                RTS
+          .XGreaterThanY1
+              SEP   #$20
+              LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
+              STZ.w SprYSpeed
+              RTS
 
 
-    .playerBelow
-        REP #$20
-        LDA $20 : SEC : SBC SprCachedY : CLC : ADC.w #$0006 : STA $01 ;delta Y
-        ;added an extra 6 pixels because aparently if link.y is 6 above sprite.y it is concidered below ¯\_(ツ)_/¯
-        SEP #$20
+      .playerToTheRight1
+          REP #$20
+          LDA $22 : SEC : SBC SprCachedX ;delta X
 
-        JSL Sprite_IsToRightOfPlayer : BEQ .playerToTheRight2
-            ;playerToTheLeft
+          CMP $01 : BCS .XGreaterThanY2
+              ;YGreaterThanX
+              SEP   #$20
+              LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
+              STZ.w SprXSpeed
+              RTS
 
-            REP #$20
-            LDA SprCachedX : SEC : SBC $22 ;delta X
-
-            CMP $01 : BCS .XGreaterThanY3
-                ;YGreaterThanX
-                SEP   #$20
-                LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
-                STZ.w SprXSpeed
-                RTS
-
-            .XGreaterThanY3
-                SEP   #$20
-                LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
-                STZ.w SprYSpeed
-                RTS
+          .XGreaterThanY2
+              SEP   #$20
+              LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
+              STZ.w SprYSpeed
+              RTS
 
 
-        .playerToTheRight2
-            REP #$20
-            LDA $22 : SEC : SBC SprCachedX ;delta X
+  .playerBelow
+      REP #$20
+      LDA $20 : SEC : SBC SprCachedY : CLC : ADC.w #$0006 : STA $01 ;delta Y
+      ;added an extra 6 pixels because aparently if link.y is 6 above sprite.y it is concidered below ¯\_(ツ)_/¯
+      SEP #$20
 
-            CMP $01 : BCS .XGreaterThanY4
-                ;YGreaterThanX
-                SEP   #$20
-                LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
-                STZ.w SprXSpeed
-                RTS
+      JSL Sprite_IsToRightOfPlayer : BEQ .playerToTheRight2
+          ;playerToTheLeft
 
-            .XGreaterThanY4
-                SEP   #$20
-                LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
-                STZ.w SprYSpeed
-                RTS
+          REP #$20
+          LDA SprCachedX : SEC : SBC $22 ;delta X
+
+          CMP $01 : BCS .XGreaterThanY3
+              ;YGreaterThanX
+              SEP   #$20
+              LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
+              STZ.w SprXSpeed
+              RTS
+
+          .XGreaterThanY3
+              SEP   #$20
+              LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
+              STZ.w SprYSpeed
+              RTS
+
+
+      .playerToTheRight2
+          REP #$20
+          LDA $22 : SEC : SBC SprCachedX ;delta X
+
+          CMP $01 : BCS .XGreaterThanY4
+              ;YGreaterThanX
+              SEP   #$20
+              LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
+              STZ.w SprXSpeed
+              RTS
+
+          .XGreaterThanY4
+              SEP   #$20
+              LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
+              STZ.w SprYSpeed
+              RTS
 }
 
 ; =========================================================
@@ -605,7 +641,9 @@ ApplyPalette:
 Sprite_Kydreeok_Draw:
 {
     JSL Sprite_PrepOamCoord
-    JSL Sprite_OAM_AllocateDeferToPlayer
+    ; JSL Sprite_OAM_AllocateDeferToPlayer
+    LDA.b #$08
+    JSL OAM_AllocateFromRegionE
 
     LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
     LDA .start_index, Y : STA $06
