@@ -55,8 +55,9 @@ Sprite_KydreeokHead_Prep:
 {
   PHB : PHK : PLB
     
-  ; TODO: Set sprite properties for damage and health
-  ; TODO: Handle head death in conjunction with Kydreeok
+  
+  LDA.b #$80 : STA.w SprHealth, X
+  LDA.b #$09 : STA.w SprBump, X       ; bump damage type 
 
   PLB
   RTL
