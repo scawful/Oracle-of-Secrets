@@ -19,6 +19,16 @@ org $0AC51C
 ;   0x08 - Skull on GT        | Climb Ganon's Tower
 MAPICON         = $7EF3C7
 
+; .wbs tipm
+;   p - Palace of Darkness
+;   s - Swamp Palace
+;   w - Skull Woods
+;   b - Thieves' Town
+;   i - Ice Palace
+;   m - Misery Mire
+;   t - Turtle Rock
+CRYSTALS        = $7EF37A
+
 ; Removed mirror portal draw and pyramid open code
 org $0ABF90
 MapIconDraw:
