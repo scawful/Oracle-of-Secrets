@@ -972,6 +972,7 @@ Sprite_DarkLink_Main:
     RTS
   }
 
+  ; TODO: Trigger cutscene for ending Fortress of Secrets
   OpenDoor:
   {
     INC.w SprMiscF, X
