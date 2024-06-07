@@ -253,9 +253,6 @@ Sprite_Wolfos_Main:
     RTS
   }
 
-
-
-
   Wolfos_Subdued:
   {
     %PlayAnimation(0, 0, 10)
@@ -263,20 +260,31 @@ Sprite_Wolfos_Main:
     STZ.w SprYSpeed, X
 
     ; Run the dialogue and wait for a song of healing flag to be set
-
-    LDA   $FE : BEQ .ninguna_cancion
-      STZ   $FE
-      LDA.b #$C0 : STA.w SprTimerD, X
-      %GotoAction(7)
-    .ninguna_cancion
+    LDA SprMiscD, X : BEQ .wait
+    %ShowSolicitedMessage($20) : BCC .no_hablaba
+      LDA.b #$01 : STA SprMiscD, X
+      .wait
+      LDA   $FE : BEQ .ninguna_cancion
+        STZ   $FE
+        LDA.b #$C0 : STA.w SprTimerD, X
+        %GotoAction(7)
+      .ninguna_cancion
+    .no_hablaba
     RTS
   }
 
   Wolfos_GrantMask:
   {
+    %PlayAnimation(0, 0, 10)
+
     LDY   #$13 : STZ $02E9     ; Give the Wolf Mask
     JSL   Link_ReceiveItem
     LDA   #$01 : STA.l $7EF303 ; Set the special flag
+
+    LDA SprTimerD, X : BEQ .no_dialogue
+      LDA.b #$06 : STA $0DD0, X ; kill sprite normal style
+    .no_dialogue
+    RTS
   }
 }
 
