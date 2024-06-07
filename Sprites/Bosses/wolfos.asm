@@ -144,7 +144,8 @@ Sprite_Wolfos_Main:
   dw Wolfos_WalkLeft      ; 0x03
   dw Wolfos_AttackRight   ; 0x04
   dw Wolfos_AttackLeft    ; 0x05
-  dw Wolfos_Subdued
+  dw Wolfos_Subdued       ; 0x06
+  dw Wolfos_GrantMask     ; 0x07
 
   Wolfos_AttackForward:
   {
@@ -252,6 +253,9 @@ Sprite_Wolfos_Main:
     RTS
   }
 
+
+
+
   Wolfos_Subdued:
   {
     %PlayAnimation(0, 0, 10)
@@ -260,7 +264,19 @@ Sprite_Wolfos_Main:
 
     ; Run the dialogue and wait for a song of healing flag to be set
 
+    LDA   $FE : BEQ .ninguna_cancion
+      STZ   $FE
+      LDA.b #$C0 : STA.w SprTimerD, X
+      %GotoAction(7)
+    .ninguna_cancion
     RTS
+  }
+
+  Wolfos_GrantMask:
+  {
+    LDY   #$13 : STZ $02E9     ; Give the Wolf Mask
+    JSL   Link_ReceiveItem
+    LDA   #$01 : STA.l $7EF303 ; Set the special flag
   }
 }
 
