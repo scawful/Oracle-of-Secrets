@@ -530,7 +530,26 @@ HandleTileDirections:
     CMP.b #$B3 : BEQ .check_direction
     CMP.b #$B4 : BEQ .check_direction
     CMP.b #$B5 : BEQ .check_direction
+    CMP.b #$B0 : BEQ .horiz
+    CMP.b #$B1 : BEQ .vert
       JMP .done
+
+    .horiz
+      ; Are we moving left or right?
+      LDA SprSubtype, X : CMP.b #$03 : BEQ .inverse_horiz_velocity
+        LDA.b #!MinecartSpeed : STA SprXSpeed, X
+        JMP .done
+      .inverse_horiz_velocity
+        LDA.b #-!MinecartSpeed : STA SprXSpeed, X
+        JMP .done
+    .vert
+      ; Are we moving up or down?
+      LDA SprSubtype, X : CMP.b #$00 : BEQ .inverse_vert_velocity
+        LDA.b #!MinecartSpeed : STA SprYSpeed, X
+        JMP .done
+    .inverse_vert_velocity
+        LDA.b #-!MinecartSpeed : STA SprYSpeed, X
+        JMP .done
         
     .check_direction
       LDA SprSubtype, X
