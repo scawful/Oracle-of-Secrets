@@ -61,7 +61,9 @@ Sprite_Kydreeok_Prep:
   LDA SprX, X : STA SprMiscA, X 
   LDA SprY, X : STA SprMiscB, X
 
-  JSR SpawnLeftHead : JSR SpawnRightHead
+  JSR SpawnLeftHead 
+  JSR SpawnCenterHead
+  JSR SpawnRightHead
 
   STZ.w Neck1_OffsetX : STZ.w Neck1_OffsetY
   STZ.w Neck2_OffsetX : STZ.w Neck2_OffsetY
@@ -261,6 +263,46 @@ SpawnLeftHead:
         
   .return
     RTS
+}
+
+; =========================================================
+
+SpawnCenterHead:
+{
+    LDA #$CF
+
+    JSL Sprite_SpawnDynamically : BMI .return
+    TYA : STA Offspring3_Id
+
+    ;store the sub-type
+    LDA.b #$02 : STA $0E30, Y
+        
+    PHX
+    ; code that controls where to spawn the offspring.
+    REP #$20
+    LDA $0FD8 : CLC : ADC.w #$0006
+    SEP #$20
+    STA $0D10, Y : XBA : STA $0D30, Y
+
+    REP #$20
+    LDA $0FDA : SEC : SBC.w #$0006
+    SEP #$20
+    STA $0D00, Y : XBA : STA $0D20, Y
+
+    LDA.w SprX, Y : STA.w SprX, Y
+    STA.w SprMiscA, Y : STA.w $19F0 : STA.w $19F2 : STA.w $19F4
+    LDA.w SprY, Y : STA.w $19F1 : STA.w $19F3 : STA.w $19F5 : STA.w SprY, Y
+    STA.w SprMiscB, Y
+
+    TYX
+
+    STZ $0D60, X
+    STZ $0D70, X
+    PLX
+        
+  .return
+    RTS
+
 }
 
 ; =========================================================

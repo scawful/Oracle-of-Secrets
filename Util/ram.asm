@@ -19,6 +19,7 @@ Neck2_OffsetX: skip 1
 Neck2_OffsetY: skip 1
 Offspring1_Id: skip 1
 Offspring2_Id: skip 1
+Offspring3_Id: skip 1
 Kydreeok_Id: skip 1
 SomariaOrByrna: skip 1
 
