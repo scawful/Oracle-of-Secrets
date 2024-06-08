@@ -53,7 +53,7 @@ lorom
 !Crystals = $7EF37A
 !MagicUsage = $7EF37B
 
-!BetaRelease = $01
+!BetaRelease = $00
 
 org $068365
   JSL $3CA62A ; Overwrite JSL executed every frame
@@ -90,13 +90,13 @@ if !BetaRelease = 0
              STA !WolfMask
 
   ; 0 - nothing. 1 - Fighter Sword. 2 - Master Sword. 3 - Tempered Sword. 4 - Golden Sword
-  LDA #$02 : STA !Sword
+  LDA #$04 : STA !Sword
 
   ; 0 - nothing. 1 - Fighter Shield. 2 - Fire Shield. 3 - Mirror Shield
-  LDA #$01 : STA !Shield
+  LDA #$03 : STA !Shield
 
   ; 0 - nothing. 1 - Green Mail. 2 - Blue Mail. 3 - Red Mail
-  LDA #$01 : STA !Mail
+  LDA #$02 : STA !Mail
 
   ; 0-No bottle. 
   ; 1-Mushroom (no use). 2-Empty bottle. 
@@ -137,6 +137,9 @@ if !BetaRelease = 0
   ; Bit 6 = Skull Woods
   LDA #$00 : STA !Crystals 
 
+  ; 0 - nothing. 1 - hookshot
+  LDA #$01 : STA !Hookshot 
+
   ; Magic usage: 0: normal consumption. 1: 1/2 consumption. 2: 1/4 consumption
   LDA #$02 : STA !MagicUsage
 
@@ -153,8 +156,6 @@ endif
   LDA #$02 : STA !Boomerang
              STA !Mirror 
 
-  ; 0 - nothing. 1 - hookshot
-  LDA #$01 : STA !Hookshot 
   ; 0 - nothing. 1 - Lamp
   LDA #$01 : STA !Lamp 
              STA !MagicHammer

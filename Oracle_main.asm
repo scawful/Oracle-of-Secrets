@@ -127,8 +127,9 @@ namespace Oracle
   org $078427 
     JSR $9BAA ; Link_HandleAPress
 
+  incsrc "Util/item_cheat.asm"
+
   ; -------------------------------------------------------
-  incsrc "Util/all_items.asm"
 
   print ""
   print "Finished applying patches"
