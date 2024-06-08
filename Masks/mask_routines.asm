@@ -52,7 +52,7 @@ org $09F347
 
 ; Module17_SaveAndQuit
 org $09F7B5
-  JSL ForceResetMask_SaveAndQuits
+  JSL ForceResetMask_SaveAndQuit
 
 ; =========================================================
 ; EXPANDED SPACE
@@ -90,7 +90,7 @@ ForceResetMask_SaveAndQuit:
 {
   LDA $02B2 : BEQ .still_link
   %ResetToLinkGraphics()
-.still_link
+  .still_link
   LDA.b #$0F
   STA.b $95
   RTL
