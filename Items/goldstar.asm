@@ -313,23 +313,25 @@ Goldstar_SetChainProperties:
 
 pushpc
 org $0DA6E3
-  JSL Link_OAM_Actually
+  JSL LinkOAM_GoldstarWeaponTiles
   NOP 
 pullpc
 
+LinkOAM_WeaponTiles = $0D839B
+
 ; 22D880
-Link_OAM_Actually:
+LinkOAM_GoldstarWeaponTiles:
 {
   REP #$20
   LDA.w $0202 : AND.w #$00FF : CMP.w #$0003 : BEQ +
-    LDA $839B,Y ; LinkOAM_WeaponTiles
+    LDA.w LinkOAM_WeaponTiles, Y
     RTL
   + ; $22D892
-  LDA $839B,Y : CMP.w #$221A : BEQ ++
+  LDA.w LinkOAM_WeaponTiles, Y : CMP.w #$221A : BEQ ++
     RTL
   ++ ; $22D89B
-  LDA GoldstarOrHookshot : AND.w #$00FF : CMP.w #$0002 : BEQ +++
-    LDA $839B,Y ; LinkOAM_WeaponTiles
+  LDA.w GoldstarOrHookshot : AND.w #$00FF : CMP.w #$0002 : BEQ +++
+    LDA.w LinkOAM_WeaponTiles, Y
     RTL
   +++ ; $22D8AA
   LDA.w #$241E
@@ -780,8 +782,8 @@ BallChain_SFX_Control:
 Routine_22DCA0:
 {
   LDA $7A : CMP #$00 : BNE + ;$A2DCAB
-  LDA $0DBB5B,X
-  RTL
+    LDA $0DBB5B, X
+    RTL
   +
   LDA #$00
   RTL
@@ -789,33 +791,29 @@ Routine_22DCA0:
 
 ; =========================================================
 ; 22DD90
-; TODO: Investigate the purpose of the $7A timer here
 
 CheckAndClearAncillaId:
 {
-    SEP #$30
-    ; Check if hookshot ancillae in this slot
-    LDA $0C4A : CMP #$1F : BEQ + ; $22DDC9
-      LDA $0C4C : CMP #$1F : BEQ ++ ; $22DDB1
-        LDA $0C4D : CMP #$1F : BEQ +++ ; $22DDB9
-          LDA $0C4B : CMP #$1F : BEQ ++++ ; $22DDC1
-            LDA $7A ; Ball Chain Timer
-            RTS
-      ++ ; 22DDB1
-        NOP : NOP
-        STZ $0C4C : LDA $7A
-        RTS
-        +++ ; 22DDB9
-          NOP : NOP
-          STZ $0C4D : LDA $7A
+  SEP #$30
+  ; Check if hookshot ancillae in this slot
+  LDA $0C4A : CMP #$1F : BEQ + ; $22DDC9
+    LDA $0C4C : CMP #$1F : BEQ ++ ; $22DDB1
+      LDA $0C4D : CMP #$1F : BEQ +++ ; $22DDB9
+        LDA $0C4B : CMP #$1F : BEQ ++++ ; $22DDC1
+          LDA $7A ; Ball Chain Timer
           RTS
-          ++++ ; 22DDC1
-            NOP : NOP
-            STZ $0C4B : LDA $7A
-            RTS
+    ++ ; 22DDB1
+      STZ $0C4C : LDA $7A
+      RTS
+      +++ ; 22DDB9
+        STZ $0C4D : LDA $7A
+        RTS
+        ++++ ; 22DDC1
+          STZ $0C4B : LDA $7A
+          RTS
   + ; 22DDC9
-    STZ $0C4A : LDA $7A
-    RTS
+  STZ $0C4A : LDA $7A
+  RTS
 }
 
 ; =========================================================
@@ -854,18 +852,6 @@ CheckForSomariaBlock:
   +++++ ; 22E5E0
     JSR CheckAndClearAncillaId ; $DD90
     RTS
-}
-
-; 22E5F0 doesnt execute?
-Routine_22E5F0:
-{
-  LDA $7EF33C : BNE + ;$22E5F7
-    RTL
-  + ; 22E5F7
-  LDA $4D : BEQ ++ ; $22E5FC
-    RTL
-  ++ ; 22E5FC
-  JMP $E108
 }
 
 ; =========================================================
@@ -966,8 +952,12 @@ Hookshot_Init:
 
 ; =========================================================
 
-Goldstar_Begin:
+BeginGoldstarOrHookshot:
 {
+  LDA GoldstarOrHookshot : CMP #$02 : BEQ .begin_goldstar
+    JMP .begin_hookshot
+
+  .begin_goldstar:
   JSL CheckForBallChain
   JSL Hookshot_Init
   JSL BallChain_StartAnimationFlag
@@ -975,40 +965,12 @@ Goldstar_Begin:
   JSL $099B10 ; AncillaAdd_Hookshot
   JSL TransferGFXinRAM
   RTL
-}
-
-; =========================================================
-
-CheckForSwitchToGoldstar:
-{
-  %CheckNewR_ButtonPress() : BEQ .continue
-    LDA GoldstarOrHookshot : CMP #$01 : BEQ .set_hookshot
-      LDA #$01 : STA GoldstarOrHookshot 
-      JMP .continue
-    .set_hookshot:
-    LDA #$02 : STA GoldstarOrHookshot
-  .continue:
-  LDA.b $3A : AND.b #$40 ; Restore vanilla code
-  RTL
-}
-
-; =========================================================
-
-BeginGoldstarOrHookshot:
-{
-  LDA GoldstarOrHookshot : CMP #$02 : BEQ .begin_goldstar
-    JMP .return
-
-  .begin_goldstar:
-  JSL Goldstar_Begin
-  RTL
   
-  .return
+  .begin_hookshot
   JSL Hookshot_Init
-  LDA #$13 : STA $5D ; Set hookshot state
-  LDA #$01 : STA.w $037B
-  LDY.b #$03
-  LDA.b #$1F ; ANCILLA 1F
+  LDA.b #$13 : STA $5D ; Set hookshot state
+  LDA.b #$01 : STA.w $037B
+  LDY.b #$03 : LDA.b #$1F ; ANCILLA 1F
   JSL $099B10 ; AncillaAdd_Hookshot
   RTL
 }
@@ -1041,17 +1003,35 @@ ApplyGoldstarDamageClass:
   RTL
 }
 
+; =========================================================
+
+CheckForSwitchToGoldstar:
+{
+  %CheckNewR_ButtonPress() : BEQ .continue
+    LDA GoldstarOrHookshot : CMP #$01 : BEQ .set_hookshot
+      LDA #$01 : STA GoldstarOrHookshot 
+      JMP .continue
+    .set_hookshot:
+    LDA #$02 : STA GoldstarOrHookshot
+  .continue:
+  LDA.b $3A : AND.b #$40 ; Restore vanilla code
+  RTL
+}
+
 pushpc
 
 ; =========================================================
 ; Main Hookshot/Goldstar hooks
 
+; LinkItem_Hookshot
 org $07AB25
   JSL CheckForSwitchToGoldstar
 
+; Ancilla_CheckDamageToSprite.not_airborne
 org $06ECF2
   JSL ApplyGoldstarDamageClass
 
+; LinkItem_Hookshot
 org $07AB3A ;$07AB40
   JSL BeginGoldstarOrHookshot
   RTS
