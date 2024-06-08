@@ -1,4 +1,3 @@
-
 ; =========================================================
 ; Macros
 
@@ -22,18 +21,10 @@ macro CheckNewR_ButtonPress()
   LDA.b $F6 : BIT.b #$10
 endmacro
 
-; GameOver_DelayBeforeIris
-org $09F347
-  JSL ForceResetMask_GameOver
-
-; Module17_SaveAndQuit
-org $09F7B5
-  JSL ForceResetMask_SaveAndQuit
-
 ; =========================================================
-; Change Link's sprite by setting $BC to the bank containing a spritesheet.
-; =========================================================
+; Change Link's sprite by setting $BC to the bank with the gfx
 
+; InitializeMemoryAndSRAM
 org $008827
   JSL StartupMasks
 
@@ -43,7 +34,6 @@ org $008A01
 
 ; =========================================================
 ; Change Link's palette based on $02B2 (mask value)
-; =========================================================
 
 org $1BEDF9
   JSL Palette_ArmorAndGloves ; 4bytes
@@ -55,8 +45,17 @@ org $1BEE1B
   RTL
 
 ; =========================================================
-; EXPANDED SPACE
+
+; GameOver_DelayBeforeIris
+org $09F347
+  JSL ForceResetMask_GameOver
+
+; Module17_SaveAndQuit
+org $09F7B5
+  JSL ForceResetMask_SaveAndQuits
+
 ; =========================================================
+; EXPANDED SPACE
 
 org $3A8000
 StartupMasks:
@@ -73,18 +72,18 @@ StartupMasks:
 
 ForceResetMask_GameOver:
 {
-    LDA $02B2 : BEQ .still_link
+  LDA $02B2 : BEQ .still_link
     CMP.b #$06 : BEQ .gbc_link
-    %ResetToLinkGraphics()
-    JMP .still_link
-  .gbc_link
-      JSL UpdateGbcPalette
-      LDA #$3B : STA $BC   ; change link's sprite 
+      %ResetToLinkGraphics()
+      JMP .still_link
+    .gbc_link
+    JSL UpdateGbcPalette
+    LDA #$3B : STA $BC   ; change link's sprite 
 
   .still_link
-    LDA.b #$30
-    STA.b $98
-    RTL
+  LDA.b #$30
+  STA.b $98
+  RTL
 }
 
 ForceResetMask_SaveAndQuit:
@@ -206,8 +205,7 @@ Overworld_CgramAuxToMain_Override:
 
   LDX.b #$00
 
-.loop
-
+  .loop
   LDA $7EC300, X : STA $7EC500, X
   LDA $7EC340, X : STA $7EC540, X
   LDA $7EC380, X : STA $7EC580, X
@@ -216,9 +214,8 @@ Overworld_CgramAuxToMain_Override:
   LDA $7EC440, X : STA $7EC640, X
   LDA $7EC480, X : STA $7EC680, X
   LDA $02B2 : BNE .has_mask_palette
-  LDA $7EC4C0, X : STA $7EC6C0, X
-.has_mask_palette
-
+    LDA $7EC4C0, X : STA $7EC6C0, X
+  .has_mask_palette
   INX #2 : CPX.b #$40 : BNE .loop
 
   SEP #$20
@@ -234,10 +231,8 @@ pushpc
 
 org $02C769
 Overworld_CgramAuxToMain:
-{
   JSL Overworld_CgramAuxToMain_Override
   RTS
-}
 
 ; =========================================================
 ; Change which mask forms have access to the sword.
@@ -250,14 +245,13 @@ org $079CD9
 pullpc
 LinkItem_CheckForSwordSwing_Masks:
 {
-  LDA   $02B2 : BEQ .return
-  CMP.b #$02 : BEQ .return  ; zora mask can use sword
-  CMP.b #$06 : BEQ .return 
+  LDA   $02B2 : BEQ .return 
+    CMP.b #$02 : BEQ .return  ; zora mask can use sword
+      CMP.b #$06 : BEQ .return ; gbc link can use sword
+        LDA #$01
+        RTL
 
-  LDA #$01
-  RTL
-
-.return
+  .return
   LDA $3B : AND.b #$10 ; Restore Link_CheckForSwordSwing
   RTL
 }
@@ -279,20 +273,15 @@ Link_TransformMask:
     PLA ; restore mask ID
     TAY
     ; LDA $02B2 
-    CPY !CurrentMask : BEQ .unequip ; is the deku mask on?
+    CPY !CurrentMask : BEQ .unequip ; check if mask is on
       
-      STA $02B2 ; set the mask ID
-      TAX ; save mask ID in X
-      LDA .mask_gfx, X : STA $BC    ; put the mask on
+      STA $02B2 : TAX
+      LDA .mask_gfx, X : STA $BC ; set the mask gfx
       JSL Palette_ArmorAndGloves ; set the palette
-      
-      STA $02F5             ; Somaria platform flag, no dash.
+      STA $02F5                  ; Somaria platform flag, no dash
+      PLB : CLC : RTL
 
-      PLB
-      SEC 
-      RTL
-
-  .unequip
+    .unequip
     STZ $5D
     STZ $02F5
 
@@ -300,10 +289,10 @@ Link_TransformMask:
     PLB : CLC : RTL
 
   .return
-    PLA : PLB : CLC : RTL
+  PLA : PLB : CLC : RTL
 
-.mask_gfx
-  db $00, $35, $36, $38, $37, $39, $3A, $3B
+  .mask_gfx
+    db $00, $35, $36, $38, $37, $39, $3A, $3B
 }
 
 ; =========================================================
@@ -315,26 +304,24 @@ DekuLink_SpinOrRecoil:
 {
   TAY
   LDA $70 : BEQ .spin
-  TYA
-  LDY.b #$05 ; Recoil
-  JML $0DA435 ;JML $0DA40B
-.spin
+    TYA
+    LDY.b #$05 ; Recoil
+    JML $0DA435 ; JML $0DA40B
+  .spin
   TYA
   LDY.b #$1B ; Spin and die 
   JML $0DA40B
 }
 
 pushpc
-
 ; Spin and die, LinkOAM_AnimationStepDataOffsets
 org $0DA3FD
   JML DekuLink_SpinOrRecoil
-
 pullpc
-
 
 CheckDekuFlowerPresence:
 {
+  REP #$20
     PHX
     CLC        ; Assume sprite ID $B0 is not present
     LDX.b #$10
@@ -344,7 +331,7 @@ CheckDekuFlowerPresence:
     LDY.b #$04
     .y_loop
       DEY
-      LDA $0E20, X : CMP.b #$C0 : BEQ .set_flag
+      LDA.w $0E20, X : AND.w #$00FF : CMP.w #$00C0 : BEQ .set_flag
       BRA .not_b0
 
     .set_flag
@@ -357,14 +344,13 @@ CheckDekuFlowerPresence:
     CPX.b #$00 : BNE .x_loop
   .done
     PLX
-
+    SEP #$20
     RTS
 }
 
 ; Based on LinkItem_Quake.allow_quake
 PrepareQuakeSpell:
 {
-  ; TODO: Set a check for the Deku Flower sprite before activating this ability.
   ; Find out if the sprite $C0 is in the room
   JSR CheckDekuFlowerPresence : BCC .no_c0
 
@@ -461,49 +447,42 @@ HandleMovement:
 
 DekuLink_HoverBasedOnInput:
 {
-    JSR HandleCamera
+  JSR HandleCamera
 
-    LDA $5C : AND #$1F : BNE .continue_me
-      DEC $24
-    .continue_me
-    
-    LDA $5C : BEQ .auto_cancel
+  LDA $5C : AND #$1F : BNE .continue_me
+    DEC $24
+  .continue_me
+  
+  LDA $5C : BEQ .auto_cancel
 
-    JSR HandleMovement
+  JSR HandleMovement
 
-    LDA $70 : BEQ .no_bomb_drop
-      LDA $F0 : AND #%01000000 : BEQ .no_bomb_drop
-        LDY.b #$01 : LDA.b #$07 ; ANCILLA 07
-        JSL $09811F ; AncillaAdd_Bomb
-    .no_bomb_drop
+  LDA $70 : BEQ .no_bomb_drop
+    LDA $F0 : AND #%01000000 : BEQ .no_bomb_drop
+      LDY.b #$01 : LDA.b #$07 ; ANCILLA 07
+      JSL $09811F ; AncillaAdd_Bomb
+  .no_bomb_drop
 
-    LDA $F0 : AND #%10000000 : BEQ .no_cancel
-
-  .auto_cancel
+  LDA $F0 : AND #%10000000 : BEQ .no_cancel
+    .auto_cancel
     
     ; Reset LinkState to Default
     STZ $5D
 
     LDA.b #$01 : STA.w $0AAA
-
     STZ.w $0324 : STZ.w $031C : STZ.w $031D
-
     STZ.b $50 : STZ.b $3D
-
     STZ.w $0FC1
-
     STZ.w $011A : STZ.w $011B : STZ.w $011C : STZ.w $011D
 
-  .no_turtle_rock_trigger
+    .no_turtle_rock_trigger
     LDY.b #$00
 
     LDA.b $3C : BEQ .no_sword_charge
+      LDA.b $F0 : AND.b #$80 : TAY
+    .no_sword_charge
 
-    LDA.b $F0 : AND.b #$80 : TAY
-
-  .no_sword_charge
     STY.b $3A
-
     STZ.b $5E : STZ.w $0325
     ; Set height at end of hover
     ; This makes it so the landing animation timer looks correct
@@ -511,7 +490,7 @@ DekuLink_HoverBasedOnInput:
     LDA.b #$12 : STA $24 
   .no_cancel
 
-    RTL
+  RTL
 }
 
 print "End of mask_routines.asm          ", pc
