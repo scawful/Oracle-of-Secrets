@@ -461,6 +461,10 @@ Sprite_Twinrova_Main:
       JSL Sprite_DamageFlash_Long
       JSR RageModeMove
 
+      JSL GetRandomInt : AND.b #$0F : BNE +++
+        JSR RestoreFloorTile
+      +++
+
       LDA SprTimerD, X : BNE +
         %GotoAction(1)
     +
@@ -763,6 +767,33 @@ TrinexxIce_Pool:
 }
 
 pullpc
+
+RestoreFloorTile:
+{
+  PHA 
+  LDA.l $7FF83C,X
+  STA.b $00
+  LDA.l $7FF83C,X
+  STA.b $00
+
+  LDA.l $7FF878,X
+  STA.b $01
+
+  LDA.l $7FF81E,X
+  SEC
+  SBC.b #$10
+  STA.b $02
+
+  LDA.l $7FF85A,X
+  SBC.b #$00
+  STA.b $03
+
+  LDY.b #$00
+  JSL $01E7A9 ; Underworld_UpdateTilemapWithCommonTile
+
+  PLA
+  RTS
+}
 
 AddPitHazard:
 {
