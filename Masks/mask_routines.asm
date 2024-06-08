@@ -345,65 +345,46 @@ org $0DA3FD
   JML DekuLink_SpinOrRecoil
 pullpc
 
-CheckDekuFlowerPresence:
+PrepareMagicBubble:
 {
-  REP #$20
-    PHX
-    CLC        ; Assume sprite ID $B0 is not present
-    LDX.b #$10
-  .x_loop
-    DEX
-    
-    LDY.b #$04
-    .y_loop
-      DEY
-      LDA.w $0E20, X : AND.w #$00FF : CMP.w #$00C0 : BEQ .set_flag
-      BRA .not_b0
+  #_07A049: LDA.b $20
+  #_07A04B: STA.b $72
 
-    .set_flag
-      SEC         ; Set flag indicating sprite ID $B0 is present
-      STX.w $02
-      BRA   .done
+  #_07A04D: LDA.b $21
+  #_07A04F: STA.b $73
 
-  .not_b0
-    CPY.b #$00 : BNE .y_loop
-    CPX.b #$00 : BNE .x_loop
-  .done
-    PLX
-    SEP #$20
-    RTS
+  #_07A051: LDA.b $22
+  #_07A053: STA.b $74
+
+  #_07A055: LDA.b $23
+  #_07A057: STA.b $75
+
+  #_07A059: LDX.b $2F
+
+  #_07A05B: LDY.b #$02
+  #_07A05D: LDA.b #$09 ; ANCILLA 09
+  #_07A05F: JSL $0990A4 ; AncillaAdd_Arrow
+  RTL
 }
 
 ; Based on LinkItem_Quake.allow_quake
 PrepareQuakeSpell:
 {
-  ; Find out if the sprite $C0 is in the room
-  JSR CheckDekuFlowerPresence : BCC .no_c0
+  LDA.b #$0A : STA.b $5D ; Set Link to the hover state
+  LDA.b #$00 : STA.b $3D ; Clear the animation timer 
 
-    PHX : LDA $02 : TAX
-    JSL Link_SetupHitBox
+  LDA #$00 : STA.w $031C ; Clear the spin animation gfx 
+  STZ.w $031D ; Clear the spin animation step
+  STZ.w $0324 ; Prevent multiple ancillae from being added
+  STZ.b $46 ; Clear the link damage timer 
 
-    ; X is now the ID of the sprite $B0
-    JSL Sprite_SetupHitBox
-    PLX
-    
-    JSL CheckIfHitBoxesOverlap : BCC .no_c0
+  ; Set low and high of HOPVZ2
+  ; Usually used as the hopping speed for diagonal jumps
+  LDA.b #$28 : STA.w $0362 : STA.w $0363 
+  STZ.w $0364 ; Clear Z-coordinate for the jump
 
-      LDA.b #$0A : STA.b $5D ; Set Link to the hover state
-      LDA.b #$00 : STA.b $3D ; Clear the animation timer 
+  STZ $70 ; Clear bomb drop check flag 
 
-      LDA #$00 : STA.w $031C ; Clear the spin animation gfx 
-      STZ.w $031D ; Clear the spin animation step
-      STZ.w $0324 ; Prevent multiple ancillae from being added
-      STZ.b $46 ; Clear the link damage timer 
-
-      ; Set low and high of HOPVZ2
-      ; Usually used as the hopping speed for diagonal jumps
-      LDA.b #$28 : STA.w $0362 : STA.w $0363 
-      STZ.w $0364 ; Clear Z-coordinate for the jump
-
-      STZ $70 ; Clear bomb drop check flag 
-  .no_c0
   RTL
 }
 
