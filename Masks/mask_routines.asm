@@ -230,7 +230,7 @@ Overworld_CgramAuxToMain_Override:
 
 LinkState_ResetMaskAnimated:
 {
-  LDA.w $02B2
+  LDA.w $02B2 : BEQ .no_transform
   CMP.b #$01 : BEQ .check_item_slot
   CMP.b #$02 : BEQ .no_transform
   CMP.b #$03 : BEQ .check_item_slot
