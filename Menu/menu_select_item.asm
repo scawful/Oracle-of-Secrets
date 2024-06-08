@@ -290,14 +290,13 @@ SearchForEquippedItem_Override:
   .item_available
   ; Is there an item currently equipped (in the HUD slot)?
   LDA.w $0202 : BNE .alreadyEquipped
-  ; If not, set the equipped item to the Bow and Arrow 
-  ; (even if we don't actually have it)
-  LDA.b #$01 : STA $0202
+    ; If not, set the equipped item to the Lamp
+    LDA.b #$08 : STA $0202
 
   .alreadyEquipped
   JMP .exit
   .keep_looking
-  JSR GotoNextItem_Local
+    JSR GotoNextItem_Local
   JSL DoWeHaveThisItem_Override : BCC .keep_looking
   BCS .we_have_that_item
   JSR TryEquipNextItem_Override
