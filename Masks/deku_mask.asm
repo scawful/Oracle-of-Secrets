@@ -9,16 +9,16 @@
 
 UpdateDekuPalette:
 {
-    REP #$30   ; change 16bit mode
-    LDX #$001E
+  REP #$30   ; change 16bit mode
+  LDX #$001E
 
   .loop
-    LDA.l deku_palette, X : STA $7EC6E0, X
-    DEX : DEX : BPL .loop
+  LDA.l deku_palette, X : STA $7EC6E0, X
+  DEX : DEX : BPL .loop
 
-    SEP #$30 ; go back to 8 bit mode
-    INC $15  ; update the palette
-    RTL      ; or RTS depending on where you need it
+  SEP #$30 ; go back to 8 bit mode
+  INC $15  ; update the palette
+  RTL      ; or RTS depending on where you need it
 }
 
 deku_palette:
@@ -26,6 +26,12 @@ deku_palette:
   dw #$14A5, #$14BC, #$14B2, #$14A5, #$7FFF, #$7A18, #$178C
 
 ; =========================================================
+
+; Indicates somaria platform status.
+;   0x00 - Not on platform
+;   0x01 - On platform
+;   0x02 - On platform and moving
+SOMPLAT         = $7E02F5
 
 org    $07A64B           ; formerly Quake
 LinkItem_DekuMask:
@@ -36,12 +42,13 @@ LinkItem_DekuMask:
       JSL PrepareQuakeSpell
       RTS
 
-.continue
-  LDA #$01
+  .continue
+  LDA.b #$01
   JSL Link_TransformMask : BCC .return
-    LDA #$01 : STA $02F5 ; Somaria platform flag, no dash.
-
-.return
+    LDA.b #$01 : STA.w SOMPLAT
+    RTS
+  .return
+  STZ.w SOMPLAT
   RTS
 }
 
@@ -58,7 +65,7 @@ Link_HandleDekuTransformation:
   ; Check if using Quake Medallion
   LDA $5D : CMP.b #$0A : BEQ .continue
 
-.continue
+  .continue
   JSR $82DA ; Link_HandleBunnyTransformation
 
   RTS
