@@ -242,33 +242,5 @@ pullpc
   RTS
 }
 
-; =============================================================================
-
-; TODO: Make this so it does not cancel if $0202 is still the same mask 
-;       corresponding to the form the player is in.
-;       Also, prevent this from canceling minish form. 
-LinkState_ResetMaskAnimated:
-{
-  LDA   $02B2 : BEQ .no_mask
-  CMP.b #$05 : BEQ .no_mask
-  CMP.b #$06 : BEQ .gbc_form
-  CMP.b #$02 : BEQ .no_mask
-  CMP   #$01 : BNE .transform
-    ; Restore the sword, shield, and bow override
-    LDA $0AAF : STA.l $7EF35A
-
-  .transform
-  LDY.b #$04 : LDA.b #$23
-  JSL   AddTransformationCloud
-  LDA.b #$14 : JSR Player_DoSfx2
-
-  STZ $02B2
-  JSL Palette_ArmorAndGloves
-  LDA #$10 : STA $BC
-  .no_mask
-  .gbc_form
-  RTL
-}
-
 print "End of Masks/zora_mask.asm        ", pc
 pushpc

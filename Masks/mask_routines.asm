@@ -194,7 +194,7 @@ Palette_ArmorAndGloves:
 
 ; =========================================================
 ; Overworld Palette Persist
-; =========================================================
+
 
 Overworld_CgramAuxToMain_Override:
 {
@@ -225,6 +225,32 @@ Overworld_CgramAuxToMain_Override:
 
   RTL
 }
+
+; =========================================================
+
+LinkState_ResetMaskAnimated:
+{
+  LDA.w $02B2
+  CMP.b #$01 : BEQ .check_item_slot
+  CMP.b #$02 : BEQ .no_transform
+  CMP.b #$03 : BEQ .check_item_slot
+  CMP.b #$04 : BEQ .check_item_slot
+  CMP.b #$05 : BEQ .no_transform
+  CMP.b #$06 : BEQ .gbc_form
+  
+  .check_item_slot
+  LDA.w $0202 : SEC : SBC.b #$13 : BEQ .no_transform
+
+  .transform
+  %PlayerTransform()
+  %ResetToLinkGraphics()
+
+  .gbc_form
+  .no_transform
+  RTL
+  
+}
+
 pushpc
 
 ; =========================================================
