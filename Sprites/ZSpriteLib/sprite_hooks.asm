@@ -90,6 +90,8 @@ SpriteRanCheck = $8E ;0x01
 ;   0x0F   34  124  187
 SprBump      = $0CD2
 
+; Damage sprite is enduring
+SprDmg       = $0CE2
 
 org $09AE64
 Sprite_SetSpawnedCoords:
