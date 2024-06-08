@@ -95,131 +95,128 @@ Sprite_Kydreeok_Main:
   ; 0x00
   Kydreeok_Start:
   {
-      %StartOnFrame(0)
-      %PlayAnimation(0, 2, 10)
+    %StartOnFrame(0)
+    %PlayAnimation(0, 2, 10)
 
-      JSR ApplyPalette
-      JSL Sprite_PlayerCantPassThrough
+    JSR ApplyPalette
+    JSL Sprite_PlayerCantPassThrough
 
-      LDA SprTimerA,            X : BNE .continue
+    LDA SprTimerA,            X : BNE .continue
       TXA : STA Kydreeok_Id
       LDA #$40 : STA.w SprTimerA, X
-        %GotoAction(1)
+      %GotoAction(1)
     .continue
 
-      RTS
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x01
   Kydreeok_StageControl:
   {
-      %StartOnFrame(0)
-      %PlayAnimation(0, 2, 10)
+    %StartOnFrame(0)
+    %PlayAnimation(0, 2, 10)
 
-      PHX
+    PHX
 
-      STZ.w SprYSpeed : STZ.w SprXSpeed ;set velocitys to 0
-      JSR MoveBody
-      JSR StopIfOutOfBounds
+    STZ.w SprYSpeed : STZ.w SprXSpeed ;set velocitys to 0
+    JSR MoveBody
+    JSR StopIfOutOfBounds
 
-      LDA SprTimerA, X : BNE .continue
-        %GotoAction(2)
+    LDA SprTimerA, X : BNE .continue
+      %GotoAction(2)
     .continue
 
-      PLX
+    PLX
 
-      RTS
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x02
   Kydreeok_MoveXandY:
   {
-      %StartOnFrame(0)
-      %PlayAnimation(0, 2, 10)
+    %StartOnFrame(0)
+    %PlayAnimation(0, 2, 10)
 
-      PHX ;saves X so we can use it later
+    PHX ;saves X so we can use it later
 
-      LDA $36
-      JSL Sprite_ApplySpeedTowardsPlayer
-      JSR StopIfOutOfBounds
-      JSR MoveBody
+    LDA $36
+    JSL Sprite_ApplySpeedTowardsPlayer
+    JSR StopIfOutOfBounds
+    JSR MoveBody
 
-      JSL Sprite_CheckDamageFromPlayerLong
-      %DoDamageToPlayerSameLayerOnContact()
+    JSL Sprite_CheckDamageFromPlayerLong
+    %DoDamageToPlayerSameLayerOnContact()
 
-      PLX ;restores X
+    PLX ;restores X
 
-      %GotoAction(4)
+    %GotoAction(4)
 
-      RTS
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x03
   Kydreeok_MoveXorY:
   {
-      %StartOnFrame(0)
-      %PlayAnimation(0, 2, 10)
+    %StartOnFrame(0)
+    %PlayAnimation(0, 2, 10)
 
-      PHX
-      LDA $36 : STA $00
-      JSR Sprite_ApplySpeedTowardsPlayerXOrY
-      JSR StopIfOutOfBounds
-      JSR MoveBody
+    PHX
+    LDA $36 : STA $00
+    JSR Sprite_ApplySpeedTowardsPlayerXOrY
+    JSR StopIfOutOfBounds
+    JSR MoveBody
 
-      JSL Sprite_CheckDamageFromPlayerLong
-      %DoDamageToPlayerSameLayerOnContact()
-      PLX
+    JSL Sprite_CheckDamageFromPlayerLong
+    %DoDamageToPlayerSameLayerOnContact()
+    PLX
 
-      %GotoAction(4)
-      RTS
+    %GotoAction(4)
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x04
   Kydreeok_KeepWalking:
   {
-      %StartOnFrame(0)
-      %PlayAnimation(0, 2, 10)
+    %StartOnFrame(0)
+    %PlayAnimation(0, 2, 10)
 
-      PHX
-      REP #$20
+    PHX
+    REP #$20
 
-      ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
-      LDA $20 : SBC SprCachedY : CMP.w #$FFFB : BCC .notEqualY
-        
-        SEP #$20
-        %GotoAction(2) ; Kydreeok_MoveXandY
-        BRA .notEqualX
-
+    ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
+    LDA $20 : SBC SprCachedY : CMP.w #$FFFB : BCC .notEqualY
+      SEP #$20
+      %GotoAction(2) ; Kydreeok_MoveXandY
+      BRA .notEqualX
     .notEqualY
 
-      ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
-      LDA $22 : SBC SprCachedX : CMP.w #$FFFB : BCC .notEqualX
-        SEP #$20
-        %GotoAction(2) ; Kydreeok_MoveXandY
-
-    .notEqualX
+    ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
+    LDA $22 : SBC SprCachedX : CMP.w #$FFFB : BCC .notEqualX
       SEP #$20
-      JSR StopIfOutOfBounds
+      %GotoAction(2) ; Kydreeok_MoveXandY
+    .notEqualX
 
-      ;if both velocities are 0 go back to the Stalk_Player_XORY to re-set the course
-      LDA.w SprYSpeed : BNE .notZero
+    SEP #$20
+    JSR StopIfOutOfBounds
+
+    ;if both velocities are 0 go back to the Stalk_Player_XORY to re-set the course
+    LDA.w SprYSpeed : BNE .notZero
       LDA.w SprXSpeed : BNE .notZero
         %GotoAction(3) ; Kydreeok_MoveXorY
-
     .notZero
 
-      JSR MoveBody
+    JSR MoveBody
 
-      JSL Sprite_CheckDamageFromPlayerLong
-      %DoDamageToPlayerSameLayerOnContact()
+    JSL Sprite_CheckDamageFromPlayerLong
+    %DoDamageToPlayerSameLayerOnContact()
 
-      PLX ;restores X
+    PLX ;restores X
 
-      RTS
+    RTS
   }
 
 }
@@ -252,9 +249,9 @@ Offspring3_Neck3_Y = $1A7D
 
 SpawnLeftHead:
 {
-    LDA #$CF
+  LDA #$CF
 
-    JSL   Sprite_SpawnDynamically : BMI .return
+  JSL   Sprite_SpawnDynamically : BMI .return
     TYA   : STA Offspring1_Id
     ;store the sub-type
     LDA.b #$00 : STA $0E30, Y
@@ -281,23 +278,23 @@ SpawnLeftHead:
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX
-        
+      
   .return
-    RTS
+  RTS
 }
 
 ; =========================================================
 
 SpawnCenterHead:
 {
-    LDA #$CF
+  LDA #$CF
 
-    JSL Sprite_SpawnDynamically : BMI .return
+  JSL Sprite_SpawnDynamically : BMI .return
     TYA : STA Offspring3_Id
 
     ;store the sub-type
     LDA.b #$02 : STA $0E30, Y
-        
+
     PHX
     ; code that controls where to spawn the offspring.
     REP #$20
@@ -320,24 +317,21 @@ SpawnCenterHead:
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX
-        
-  .return
-    RTS
 
+  .return
+  RTS
 }
 
 ; =========================================================
 
 SpawnRightHead:
 {
-    LDA #$CF
-
-    JSL Sprite_SpawnDynamically : BMI .return
+  LDA #$CF
+  JSL Sprite_SpawnDynamically : BMI .return
     TYA : STA Offspring2_Id
 
     ;store the sub-type
     LDA.b #$01 : STA $0E30, Y
-        
     PHX
     ; code that controls where to spawn the offspring.
     REP #$20
@@ -360,9 +354,8 @@ SpawnRightHead:
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX
-        
   .return
-    RTS
+  RTS
 }
 
 ; =========================================================
@@ -370,59 +363,59 @@ SpawnRightHead:
 
 MoveBody:
 {
-    ; Handle the shell bg movement
-    ; Trinexx_MoveBody
-    LDA.w SprX, X : PHA
-    LDA.w SprY, X : PHA
+  ; Handle the shell bg movement
+  ; Trinexx_MoveBody
+  LDA.w SprX, X : PHA
+  LDA.w SprY, X : PHA
 
-    JSL Sprite_Move
+  JSL Sprite_Move
 
-    PLA
-    LDY.b #$00 : SEC : SBC.w SprY, X : STA.w $0310
-    BPL .pos_y_low
-    DEY
+  PLA
+  LDY.b #$00 : SEC : SBC.w SprY, X : STA.w $0310
+  BPL .pos_y_low
+  DEY
 
   .pos_y_low
-    STY.w $0311
+  STY.w $0311
 
-    ; -----------------------------------------------------
+  ; -----------------------------------------------------
 
-    PLA
-    LDY.b #$00 : SEC : SBC.w SprX, X : STA.w $0312
-    BPL .pos_x_low
+  PLA
+  LDY.b #$00 : SEC : SBC.w SprX, X : STA.w $0312
+  BPL .pos_x_low
 
-    DEY
+  DEY
 
   .pos_x_low
-    STY.w $0313
+  STY.w $0313
 
-    ; -----------------------------------------------------
+  ; -----------------------------------------------------
 
-    LDA.b #$01 : STA.w $0428
+  LDA.b #$01 : STA.w $0428
 
-    LDA.w SprY, X : SEC : SBC.b #$0C : STA.w $0DB0, X
+  LDA.w SprY, X : SEC : SBC.b #$0C : STA.w $0DB0, X
 
-    LDA.w $0B08 : SEC : SBC.w SprX, X
-                  CLC : ADC.b #$02 
-                  CMP.b #$04 : BCS .not_at_target
+  LDA.w $0B08 : SEC : SBC.w SprX, X
+                CLC : ADC.b #$02 
+                CMP.b #$04 : BCS .not_at_target
 
-    LDA.w $0B09 : SEC : SBC.w SprY, X 
-                  CLC : ADC.b #$02
-                  CMP.b #$04 : BCS .not_at_target
+  LDA.w $0B09 : SEC : SBC.w SprY, X 
+                CLC : ADC.b #$02
+                CMP.b #$04 : BCS .not_at_target
 
   .adjust_phase ; Unused?
-    STZ.w $0D80, X
-    LDA.b #$30 : STA.w $0DF0, X
+  STZ.w $0D80, X
+  LDA.b #$30 : STA.w $0DF0, X
 
   .not_at_target
-    ; LayerEffect_Trinexx $0AFEF0
-    REP   #$20
-    LDA.w $0422 : CLC : ADC.w $0312 : STA.w $0422
-    LDA.w $0424 : CLC : ADC.w $0310 : STA.w $0424
-    STZ.w $0312 : STZ.w $0310
-    SEP   #$20
+  ; LayerEffect_Trinexx $0AFEF0
+  REP   #$20
+  LDA.w $0422 : CLC : ADC.w $0312 : STA.w $0422
+  LDA.w $0424 : CLC : ADC.w $0310 : STA.w $0424
+  STZ.w $0312 : STZ.w $0310
+  SEP   #$20
 
-    RTS
+  RTS
 }
 
 ; =========================================================
