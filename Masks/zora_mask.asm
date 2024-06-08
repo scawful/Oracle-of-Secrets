@@ -176,7 +176,7 @@ pullpc
 
 .dungeon_resurface
 {
-  LDA $1B : BEQ .return_default ; We are in overworld actually 
+  LDA $1B : BEQ .return_overworld ; We are in overworld actually 
 
   ; Check if the player is actually diving 
   LDA !ZoraDiving : BEQ .return_default
@@ -215,8 +215,9 @@ pullpc
     JMP .return_default
   }
 
-  .return_default
+  .return_overworld
   STZ !ZoraDiving
+  .return_default
   STZ $0302
   RTS
 }
