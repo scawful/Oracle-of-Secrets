@@ -64,27 +64,22 @@ Sprite_KydrogBoss_Long:
 
 Sprite_KydrogBoss_CheckIfDead:
 {
-    LDA $0D80, X : CMP.b #$09 : BEQ .not_dead
+  LDA $0D80, X : CMP.b #$09 : BEQ .not_dead
+    ; If health is negative, set back to zero
+    LDA $0E50, X : CMP.b #$C3 : BCC .health_not_negative
+      LDA.b #$00 : STA $0E50, X
+    .health_not_negative
 
-      ; If health is negative, set back to zero
-      LDA $0E50, X : CMP.b #$C3 : BCC .healthNotNegative
-        LDA.b #$00 : STA $0E50, X
+    LDA $0E50, X : BNE .not_dead
+      PHX 
+      LDA.b #$04 : STA $0DD0, X ;kill sprite boss style
+      LDA.b #$09 : STA $0D80, X ;go to KydrogBoss_Death stage
+      STZ.w $0D90,X
 
-    .healthNotNegative
-      LDA $0E50, X : BNE .not_dead
-
-        PHX 
-
-        LDA.b #$04 : STA $0DD0, X ;kill sprite boss style
-        LDA.b #$09 : STA $0D80, X ;go to KydrogBoss_Death stage
-        STZ.w $0D90,X
-
-        LDA.b #$E0 : STA.w $0DF0,X
-
-
-        PLX
+      LDA.b #$E0 : STA.w $0DF0,X
+      PLX
   .not_dead
-    RTS
+  RTS
 }
 
 ; =========================================================
