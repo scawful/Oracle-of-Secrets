@@ -72,10 +72,11 @@ Sprite_Wolfos_Prep:
 
 Sprite_Wolfos_CheckIfDefeated:
 {
-  LDA.w SprHealth, X : BNE .not_defeated
+  LDA.w SprHealth, X : CMP.b #$10 : BCS .not_defeated
     LDA.b #$06 : STA SprAction, X ; Set to defeated
     LDA.b #$09 : STA SprState, X 
     LDA.b #$40 : STA SprHealth, X ; Refill the health of the sprite
+    STZ.w SprMiscD, X
     RTS
   .not_defeated
   RTS
@@ -266,17 +267,20 @@ Sprite_Wolfos_Main:
     STZ.w SprXSpeed, X
     STZ.w SprYSpeed, X
 
+    JSL Sprite_DamageFlash_Long
+    JSL Sprite_PlayerCantPassThrough
+
     ; Run the dialogue and wait for a song of healing flag to be set
-    LDA SprMiscD, X : BEQ .wait
-    %ShowSolicitedMessage($20) : BCC .no_hablaba
+    LDA SprMiscD, X : BNE .wait
+      %ShowUnconditionalMessage($20)
       LDA.b #$01 : STA SprMiscD, X
-      .wait
-      LDA   $FE : BEQ .ninguna_cancion
-        STZ   $FE
-        LDA.b #$C0 : STA.w SprTimerD, X
-        %GotoAction(7)
-      .ninguna_cancion
-    .no_hablaba
+    .wait
+    LDA   $FE : BEQ .ninguna_cancion
+      STZ   $FE
+      LDA.b #$40 : STA.w SprTimerD, X
+      %GotoAction(7)
+    .ninguna_cancion
+    
     RTS
   }
 
@@ -284,13 +288,17 @@ Sprite_Wolfos_Main:
   {
     %PlayAnimation(0, 0, 10)
 
-    LDY   #$13 : STZ $02E9     ; Give the Wolf Mask
+    JSL Sprite_PlayerCantPassThrough
+
+    LDY   #$3A : STZ $02E9     ; Give the Wolf Mask
     JSL   Link_ReceiveItem
+    LDA.b #$01 : STA.l $7EF358
     LDA   #$01 : STA.l $7EF303 ; Set the special flag
 
-    LDA SprTimerD, X : BEQ .no_dialogue
       LDA.b #$06 : STA $0DD0, X ; kill sprite normal style
-    .no_dialogue
+      STZ.w SprAction, X
+      STZ.w SprHealth, X
+
     RTS
   }
 }
