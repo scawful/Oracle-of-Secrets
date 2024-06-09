@@ -419,48 +419,59 @@ HandleCamera:
 
 ; =========================================================
 
-BG2V            = $7E00E8
-BG2H            = $7E00E2
-
 HandleMovement:
 {
   ; TODO: Check for collision here and prevent movement
 
   LDA $F0 : AND #$08 : BEQ .not_up
     
-    LDY #$00 : JSL DragPlayer
+    LDY #$00 
+    LDA.w .drag_y_low,  Y : STA.w $0B7E
+
     LDA #$01 : STA $031C
     LDA #$05 : STA $3D
     STZ $2F
-    ; TODO: Handle overworld scroll camera gracefully
-    ; DEC.b $E8
-    ; DEC.w $0618
-    ; DEC.w $061A
   .not_up
   LDA $F0 : AND #$04 : BEQ .not_down
-    LDY #$01 : JSL DragPlayer
+  
+    LDY #$01
+    LDA.w .drag_y_low,  Y : STA.w $0B7E
+
     LDA #$02 : STA $031C
     LDA #$05 : STA $3D
     LDA #$02 : STA $2F
-    ; INC.b $E8
-    ; DEC.w $0618
-    ; DEC.w $061A
   .not_down
   LDA $F0 : AND #$02 : BEQ .not_left
-    LDY #$02 : JSL DragPlayer
+    
+    LDY #$02
+    LDA.w .drag_x_low,  Y  : STA.w DragYL
     LDA #$03 : STA $031C
     LDA #$05 : STA $3D
     LDA #$04 : STA $2F
-    ; DEC.b $E2
   .not_left
   LDA $F0 : AND #$01 : BEQ .not_right
-    LDY #$03 : JSL DragPlayer
+    
+    LDY #$03
+    LDA.w .drag_x_low,  Y  : STA.w DragYL
+    
+    
     LDA #$04 : STA $031C
     LDA #$05 : STA $3D
     LDA #$06 : STA $2F
-    ; INC.b $E2
   .not_right
   RTS
+
+.drag_x_high
+  db 0,   0,  -1,   0
+
+.drag_x_low
+  db 0,   0,  -1,   1
+
+.drag_y_low
+  db -1,   1,   0,   0
+
+.drag_y_high
+  db -1,   0,   0,   0
 }
 
 ; =========================================================
