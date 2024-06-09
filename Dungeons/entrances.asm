@@ -1,3 +1,330 @@
+
+Map16Definitions = $0F8000
+Overworld_DrawMap16_Persist = $1BC97C
+Overworld_DrawMap16_Anywhere = $1BC983
+Interface_PrepAndDisplayMessage = $0FFDAA
+Overworld_EntranceTileIndex = $1BBA71
+Overworld_EntranceScreens = $1BB96F
+Overworld_Entrance_ID = $1BBB73
+
+pushpc
+org $1BBBF4
+  JSL Overworld_UseEntranceEntry
+  RTL
+pullpc
+
+Overworld_UseEntranceEntry:
+{
+  PHB : PHK : PLB
+  JSL Overworld_UseEntrance
+  PLB 
+  RTL
+}
+
+Overworld_UseEntrance:
+REP #$31
+
+LDA.b $20
+CLC
+ADC.w #$0007
+STA.b $00
+
+SEC
+SBC.w $0708
+AND.w $070A
+ASL A
+ASL A
+ASL A
+STA.b $06
+
+LDA.b $22
+LSR A
+LSR A
+LSR A
+STA.b $02
+
+SEC
+SBC.w $070C
+AND.w $070E
+CLC
+ADC.b $06
+
+TAY
+TAX
+
+LDA.l $7E2000,X
+ASL A
+ASL A
+ASL A
+TAX
+
+LDA.b $2F
+AND.w #$00FF
+BNE .not_facing_up
+
+LDA.l Map16Definitions+2,X
+AND.w #$41FF
+CMP.w #$00E9
+BEQ .open_door
+
+CMP.w #$0149
+BEQ .left_side_castle_door
+
+CMP.w #$0169
+BEQ .left_side_castle_door
+
+TYX
+
+LDA.l $7E2002,X
+ASL A
+ASL A
+ASL A
+TAX
+
+LDA.l Map16Definitions+0,X
+AND.w #$41FF
+CMP.w #$4149
+BEQ .right_side_castle_door
+
+CMP.w #$4169
+BEQ .right_side_castle_door
+
+CMP.w #$40E9
+BNE .check_door_type
+
+DEY
+DEY
+
+.open_door
+TYX
+
+LDA.w #$0DA4
+JSL Overworld_DrawMap16_Persist
+
+LDA.w #$0DA6
+STA.l $7E2002,X
+
+LDY.w #$0002
+JSL Overworld_DrawMap16_Anywhere
+
+SEP #$30
+
+LDA.b #$15 ; SFX3.15
+STA.w $012F
+
+LDA.b #$01
+STA.b $14
+
+RTL
+
+
+
+.not_facing_up
+BRA .check_door_type
+
+.right_side_castle_door
+DEY
+DEY
+
+.left_side_castle_door
+STZ.w $0692
+
+AND.w #$03FF
+CMP.w #$0169
+BNE .open_this_castle_door
+
+LDA.l $7EF3C5
+AND.w #$000F
+CMP.w #$0003
+BCS .check_door_type
+
+LDA.w #$0018
+STA.w $0692
+
+.open_this_castle_door
+TYA
+SEC
+SBC.w #$0080
+STA.w $0698
+
+SEP #$20
+
+LDA.b #$15 ; SFX3.15
+STA.w $012F
+
+STZ.b $B0
+STZ.w $0690
+
+LDA.b #$0C
+STA.b $11
+
+SEP #$30
+
+RTL
+
+
+
+.check_door_type
+LDA.l Map16Definitions+4,X
+AND.w #$01FF
+STA.b $00
+
+LDA.l Map16Definitions+6,X
+AND.w #$01FF
+STA.b $02
+
+LDX.w #$0058
+
+.check_next
+LDA.b $00
+CMP.l ValidDoorTypesExpanded_low,X
+BNE .low_byte_fail
+
+LDA.b $02
+CMP.l ValidDoorTypesExpanded_high,X
+BEQ FindEntrance
+
+.low_byte_fail
+DEX
+DEX
+BPL .check_next
+
+STZ.w $04B8
+
+.message_received
+SEP #$30
+
+RTL
+
+
+#Overworld_ForbidEntry:
+LDA.w $04B8
+BNE .message_received
+
+INC.w $04B8
+
+LDA.w #$0005 ; MESSAGE 0005
+STA.w $1CF0
+
+SEP #$30
+
+JML Interface_PrepAndDisplayMessage
+
+
+FindEntrance:
+TYA
+STA.b $00
+
+LDX.w #$0102
+
+.next_check
+LDA.b $00
+
+.tile_fail
+DEX
+DEX
+BMI .no_entrance_found
+
+CMP.l Overworld_EntranceTileIndex,X
+BNE .tile_fail
+
+LDA.w $040A
+CMP.l Overworld_EntranceScreens,X
+BNE .next_check
+
+LDA.l $7EF3D3
+AND.w #$00FF
+BNE .entry_allowed
+
+LDA.w $02DA
+AND.w #$00FF
+CMP.w #$0001
+BEQ Overworld_ForbidEntry
+
+
+
+LDA.l $7EF3CC
+AND.w #$00FF
+BEQ .entry_allowed
+
+CMP.w #$05 ; FOLLOWER 05
+BEQ .entry_allowed
+
+CMP.w #$0E ; FOLLOWER 0E
+BEQ .entry_allowed
+
+CMP.w #$01 ; FOLLOWER 01
+BEQ .entry_allowed
+
+CMP.w #$07 ; FOLLOWER 07
+BEQ .check_single_entrance
+
+CMP.w #$08 ; FOLLOWER 08
+
+BNE Overworld_ForbidEntry
+
+.check_single_entrance
+CPX.w #$0076
+BCC Overworld_ForbidEntry
+
+
+
+.entry_allowed
+TXA
+LSR A
+TAX
+
+SEP #$20
+
+LDA.l Overworld_Entrance_ID,X
+STA.w $010E
+
+STZ.b $4D
+STZ.b $46
+
+LDA.b #$0F
+STA.b $10
+
+LDA.b #$06
+STA.w $010C
+
+STZ.b $11
+STZ.b $B0
+
+.no_entrance_found
+SEP #$30
+
+RTL
+
+; $DB8BF-$DB916 - chr types indicating door entrances
+org $1BB8BF
+ValidDoorTypesExpanded_low:
+ dw $00FE, $00C5, $00FE, $0114 ; 00: ???, House Door, ???, ???
+ dw $0115, $0175, $0156, $00F5 ; 01: 
+ dw $00E2, $01EF, $0119, $00FE ; 02: ???, ???, ???, Desert Door
+ dw $0172, $0177, $013F, $0172 ; 03: 
+ dw $0112, $0161, $0172, $014C ; 04: ???, ???, Dam Door, ???
+ dw $0156, $01EF, $00FE, $00FE ; 05:
+ dw $00FE, $010B, $0173, $0143 ; 06: ???, ???, ???, Tower of Hera
+ dw $0149, $0175, $0103, $0100 ; 07:
+ dw $01C6, $015E, $0167, $0128 ; 08: Waterfall, ???, ???, ???
+ dw $0131, $0112, $016D, $0163 ; 09:
+ dw $0173, $00FE, $0113, $0177 ; 10:
+
+ValidDoorTypesExpanded_high:
+ dw $014A, $00C4, $014F, $0115 ; ???, House Door, ???, ???
+ dw $0114, $0174, $0155, $00F5 ; 01:
+ dw $00EE, $01EB, $0118, $0146 ; ???, ???, ???, Desert Door
+ dw $0171, $0155, $0137, $0174 ; 03:
+ dw $0173, $0121, $0164, $0155 ; ???, ???, Dam Door, ???
+ dw $0157, $0128, $0114, $0123 ; 05:
+ dw $0113, $0109, $0118, $0161 ; ???, ???, ???, Tower of Hera
+ dw $0149, $0117, $0174, $0101 ; 07:
+ dw $01C6, $0131, $0051, $014E ; Waterfall, ???, ???, ???
+ dw $0131, $0112, $017A, $0163 ; 09:
+ dw $0172, $01BD, $0152, $0167 ; 10:
+
+
 ; $DB8BF (0x2C entries, 2 bytes each) - valid map8 (CHR) values for entrances (left side)
 ; $DB917 (0x2C entries, 2 bytes each) - valid map8 (CHR) values for entrances (right side)
 
@@ -16,7 +343,7 @@ ValidDoorTypes_low:
  dw $0131, $0112, $016D, $0163 ; 09:
  dw $0173, $00FE, $0113, $0177 ; 10:
 
-;---------------------------------------------------------------------------------------------------
+
 
 ValidDoorTypes_high:
  dw $014A, $00C4, $014F, $0115 ; ???, House Door, ???, ???
@@ -30,6 +357,7 @@ ValidDoorTypes_high:
  dw $01C6, $0131, $0051, $014E ; Waterfall, ???, ???, ???
  dw $0131, $0112, $017A, $0163 ; 09:
  dw $0172, $01BD, $0152, $0167 ; 10:
+
 
 
 ; 0x00 - OW 
