@@ -17,17 +17,10 @@
 
 ; =========================================================
 
-org $09912C
-  AddTransformationCloud:
-
-org $07B073
-  Link_CheckNewY_ButtonPress:
-
-org $07B0AB
-  LinkItem_EvaluateMagicCost:
-
-org $078028
-  Player_DoSfx2:
+AddTransformationCloud = $09912C
+Link_CheckNewY_ButtonPress = $07B073
+LinkItem_EvaluateMagicCost = $07B0AB
+Player_DoSfx2 = $078028
 
 ; =========================================================
 
