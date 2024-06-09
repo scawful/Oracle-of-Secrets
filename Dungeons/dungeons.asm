@@ -1,13 +1,16 @@
 incsrc "Dungeons/keyblock.asm"
 print  "End of keyblock.asm               ", pc
 
+; Pendant from chest position
+org $098823
+  LDY.b #$68
+
 ; Disable Code
 ; ------------
 org $028BE7
 db $EA, $EA
 
 ; Load Sanctuary music during Room 02 to 12 transition
-; ----------------------------------------------------
 ;org $028BDA
 ;db $14
 
@@ -16,7 +19,6 @@ db $EA, $EA
 ;db $12
 
 ; Load Hyrule Castle music during Room 12 to 02 transition
-; --------------------------------------------------------
 ;org $028BE3
 ;db $16
 
@@ -24,8 +26,6 @@ db $EA, $EA
 ;org $028BE5
 ;db $02
 
-incsrc "Dungeons/entrances.asm"
-print  "End of entrances.asm              ", pc
 
 incsrc "Dungeons/enemy_damage.asm"
 print  "End of enemy_damage.asm           ", pc
@@ -35,11 +35,10 @@ incsrc "Collision/GlobalCollisionTables.asm"
 
 pullpc ; Bank 0x33
 
-; incsrc "Dungeons/house_walls.asm"
+incsrc "Dungeons/entrances.asm"
+print  "End of entrances.asm              ", pc
 
-; Pendant from chest position
-org $098823
-  LDY.b #$68
+; incsrc "Dungeons/house_walls.asm"
 
 ; Use of Bank 0x2C begins
 incsrc "Dungeons/Objects/object_handler.asm"
