@@ -8,6 +8,7 @@
 ; 03 = Wolf
 ; 04 = Bunny Hood 
 ; 05 = Minish Form
+; 06 = GBC Form
 !CurrentMask  = $02B2
 
 ; Indexed by the bank number

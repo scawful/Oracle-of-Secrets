@@ -35,11 +35,13 @@ org $008A01
 ; =========================================================
 ; Change Link's palette based on $02B2 (mask value)
 
+; Palettes_Load_LinkArmorAndGloves
 org $1BEDF9
   JSL Palette_ArmorAndGloves ; 4bytes
   RTL                        ; 1byte
   NOP #$01
 
+; Palettes_Load_LinkGloves
 org $1BEE1B
   JSL Palette_ArmorAndGloves_part_two
   RTL
@@ -370,6 +372,8 @@ PrepareMagicBubble:
 ; Based on LinkItem_Quake.allow_quake
 PrepareQuakeSpell:
 {
+  JSR InitCamera
+
   LDA.b #$0A : STA.b $5D ; Set Link to the hover state
   LDA.b #$00 : STA.b $3D ; Clear the animation timer 
 
@@ -390,6 +394,15 @@ PrepareQuakeSpell:
 
 ; =========================================================
 
+InitCamera:
+{
+  LDA.b $22 : STA.b $3F
+  LDA.b $23 : STA.b $41
+  LDA.b $20 : STA.b $3E
+  LDA.b $21 : STA.b $40
+  RTS
+}
+
 HandleCamera:
 {
   LDA $22 : SEC : SBC $3F : STA $31
@@ -406,33 +419,34 @@ HandleCamera:
 
 ; =========================================================
 
+BG2V            = $7E00E8
+BG2H            = $7E00E2
+
 HandleMovement:
 {
   ; TODO: Check for collision here and prevent movement
 
   LDA $F0 : AND #$08 : BEQ .not_up
-    LDA $20 : CLC : ADC #-1 : STA $20
+    
     LDY #$00 : JSL DragPlayer
     LDA #$01 : STA $031C
     LDA #$05 : STA $3D
     STZ $2F
     ; TODO: Handle overworld scroll camera gracefully
     ; DEC.b $E8
-    ; DEC.w $0618 : DEC.w $0618 
-    ; DEC.w $061A : DEC.w $061A
+    ; DEC.w $0618
+    ; DEC.w $061A
   .not_up
   LDA $F0 : AND #$04 : BEQ .not_down
-    LDA $20 : CLC : ADC #1 : STA $20
     LDY #$01 : JSL DragPlayer
     LDA #$02 : STA $031C
     LDA #$05 : STA $3D
     LDA #$02 : STA $2F
     ; INC.b $E8
-    ; DEC.w $0618 : DEC.w $0618 
-    ; DEC.w $061A : DEC.w $061A
+    ; DEC.w $0618
+    ; DEC.w $061A
   .not_down
   LDA $F0 : AND #$02 : BEQ .not_left
-    LDA $22 : CLC : ADC #-1 : STA $22
     LDY #$02 : JSL DragPlayer
     LDA #$03 : STA $031C
     LDA #$05 : STA $3D
@@ -440,7 +454,6 @@ HandleMovement:
     ; DEC.b $E2
   .not_left
   LDA $F0 : AND #$01 : BEQ .not_right
-    LDA $22 : CLC : ADC #1 : STA $22
     LDY #$03 : JSL DragPlayer
     LDA #$04 : STA $031C
     LDA #$05 : STA $3D
