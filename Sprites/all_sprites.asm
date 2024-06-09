@@ -1,17 +1,16 @@
 InCutScene = $7EF303
 
-org        $0083F8
-LDA        InCutScene : BEQ .notInCutscene
+; Player2JoypadReturn
+org $0083F8
+  LDA InCutScene : BEQ .notInCutscene
     STZ $F0
     STZ $F2
     STZ $F4
     STZ $F6
     STZ $F8
     STZ $FA ; kill all input
-
-.notInCutscene
-
-RTS
+  .notInCutscene
+  RTS
 
 warnpc $00841E
 
@@ -122,8 +121,6 @@ print  "End of poltergeist.asm            ",  pc
 
 incsrc "Sprites/Enemies/pols_voice.asm"
 print  "End of pols_voice.asm             ",  pc
-
-
 
 incsrc "Sprites/NPCs/zora_princess.asm"
 print  "End of zora_princess.asm          ",  pc
