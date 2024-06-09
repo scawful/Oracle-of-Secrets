@@ -81,7 +81,7 @@ CheckIfJumpingForSpikeDamage:
 {
     PHB : PHK : PLB
     ; Check Z pos of Link
-    LDA $24 : BNE .airborne
+    LDA $5D : CMP.b #$02 : BEQ .airborne
       LDA.w .spike_floor_damage, Y : STA.w $0373
     .airborne
     PLB
