@@ -38,7 +38,7 @@ Sprite_DarkLink_Long:
 
   ; ADD GANON CODE if subtype == 05
   LDA.w SprSubtype, X : CMP #$05 : BNE .NotGanon
-    JSR Sprite_Ganon_Draw 
+    ; JSR Sprite_Ganon_Draw 
     JSL Sprite_CheckActive   ; Check if game is not paused (Prevent timers from running if game is paused)
     BCC .SpriteIsNotActive2   ; Skip Main code is sprite is innactive
     JSR Sprite_Ganon_Main ; do ganon instead
@@ -92,13 +92,13 @@ Sprite_DarkLink_Prep:
 {
   PHB : PHK : PLB
 
-  REP #$20 ; P is still on stack, so we don't even need to fix this
-  LDX #$20
-  --
-    LDA DarkLink_Palette, X : STA $7EC600, X
-  DEX : DEX : BNE --
-  INC $15 ; Refresh Palettes
-  SEP #$20
+  ; REP #$20 ; P is still on stack, so we don't even need to fix this
+  ; LDX #$10
+  ; --
+  ;   LDA.l DarkLink_Palette, X : STA $7EC600, X
+  ; DEX : DEX : BNE --
+  ; INC $15 ; Refresh Palettes
+  ; SEP #$20
 
   PLB
 
@@ -765,7 +765,7 @@ Sprite_DarkLink_Main:
     LDA #$01 : STA.w SprMiscA, X
     %ShowUnconditionalMessage($016F)
 
-    LDA.b #$1F : STA $012C
+    LDA.b #$15 : STA $012C
     .nomessage
 
     ; IF health is a certain level spawn crumbling tiles
@@ -1533,7 +1533,7 @@ GanonInit:
   LDA $03 : STA.w $0D20, Y
 
   LDA.b #$30 : STA.w SprTimerA, Y  
-  LDA #$1E : STA.w $012C
+  LDA #$1C : STA.w $012C
   RTL
 }
 
@@ -1551,8 +1551,8 @@ Sprite_Ganon_Main:
 
   Wait:
   {
-    JSR ApplyDarkLinkGraphics
     LDA.w SprTimerA, X : BNE .wait
+      JSR ApplyDarkLinkGraphics
       LDA.b #$30 : STA.w SprTimerA, X
       %ShowUnconditionalMessage($46)
       %GotoAction(1)
