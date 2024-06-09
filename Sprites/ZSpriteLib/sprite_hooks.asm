@@ -21,6 +21,20 @@ SprPause     = $0F00 ; Can probably be used for anything
 SprFloor     = $0F20
 SprType      = $0E20 ; This contains the ID of the sprite 00 = raven, 01 = vulture, etc...
 SprSubtype   = $0E30 ; This contains the Sub ID of the sprite
+
+; 0x00 - Sprite is dead, totally inactive
+; 0x01 - Sprite falling into a pit with generic animation.
+; 0x02 - Sprite transforms into a puff of smoke, often producing an item
+; 0x03 - Sprite falling into deep water (optionally making a fish jump up?)
+; 0x04 - Death Mode for Bosses (lots of explosions).
+; 0x05 - Sprite falling into a pit that has a special animation (e.g. Soldier)
+; 0x06 - Death Mode for normal creatures.
+; 0x08 - Sprite is being spawned at load time. An initialization routine will
+;         be run for one frame, and then move on to the active state (0x09) the
+;         very next frame.
+; 0x09 - Sprite is in the normal, active mode.
+; 0x0A - Sprite is being carried by the player.
+; 0x0B - Sprite is frozen and / or stunned.
 SprState     = $0DD0 ; This tells if the sprite is alive, dead, frozen, etc...
 
 SprNbrOAM    = $0E40 ; Bits 0-4: define the number of OAM slots used by the sprite
