@@ -37,8 +37,14 @@ print  "End of Overworld/maku_tree.asm    ", pc
 incsrc "Overworld/lost_woods.asm"
 print  "End of Overworld/lost_woods.asm   ", pc
 
+org $348000 ; Free space
+pushpc
 incsrc "Overworld/time_system.asm"
 print  "End of Overworld/time_system.asm  ", pc
+
+incsrc "Overworld/overlays.asm"
+print  "End of Overworld/overlays.asm     ", pc
+
 
 pullpc
 LoadDarkWorldIntro:
@@ -82,5 +88,3 @@ org $0794D9
 
 ; incsrc "Overworld/special_areas.asm"
 
-incsrc "Overworld/overlays.asm"
-print  "End of Overworld/overlays.asm     ", pc
