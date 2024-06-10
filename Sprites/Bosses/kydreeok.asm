@@ -140,6 +140,7 @@ Sprite_Kydreeok_Main:
   dw Kydreeok_MoveXorY     ; 03
   dw Kydreeok_KeepWalking  ; 04
   dw Kydreeok_Dead         ; 05
+  dw Kydreeok_Flying       ; 06
 
   ; -------------------------------------------------------
   ; 0x00
@@ -230,6 +231,12 @@ Sprite_Kydreeok_Main:
     %StartOnFrame(0)
     %PlayAnimation(0, 2, 10)
 
+    JSL GetRandomInt : AND.b #$7F : BNE .dont_fly
+      LDA.b #$40 : STA.w SprTimerA, X
+      %GotoAction(6)
+      RTS
+    .dont_fly
+
     PHX
     REP #$20
 
@@ -304,6 +311,29 @@ Sprite_Kydreeok_Main:
       
     .continue
     RTS
+  }
+
+  Kydreeok_Flying:
+  {
+    %StartOnFrame(0)
+    %PlayAnimation(0, 2, 05)
+
+    LDA $36 : CLC : ADC.b #$02
+    JSL Sprite_ApplySpeedTowardsPlayer
+    JSR StopIfOutOfBounds
+    JSR MoveBody
+
+    LDA.b #$04 : STA.w SprHeight, X
+
+    JSL Sprite_CheckDamageFromPlayerLong
+    %DoDamageToPlayerSameLayerOnContact()
+
+    LDA.w SprTimerA, X : BNE .continue
+      STZ.w SprHeight, X
+      %GotoAction(2)
+    .continue
+    RTS
+  
   }
 
 }
