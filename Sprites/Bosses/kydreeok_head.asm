@@ -37,14 +37,15 @@
 Sprite_KydreeokHead_Long:
 {
     PHB : PHK : PLB
-    LDA SprAction, X : CMP #$02 : BEQ .no_head
-      JSR Sprite_KydreeokHead_Draw
 
-  .no_head
+    LDA SprAction, X : CMP #$03 : BEQ .no_head
+      JSR Sprite_KydreeokHead_Draw
+    .no_head
+
     JSL Sprite_CheckActive : BCC .not_active
       JSR Sprite_KydreeokHead_Main
+    .not_active
 
-  .not_active
     PLB ; Get back the databank we stored previously
     RTL ; Go back to original code
 }
@@ -55,7 +56,7 @@ Sprite_KydreeokHead_Prep:
 {
   PHB : PHK : PLB
 
-  LDA.b #$80 : STA.w SprHealth, X
+  LDA.b #$C0 : STA.w SprHealth, X
   LDA.b #$09 : STA.w SprBump,   X ; bump damage type 
 
   PLB
@@ -74,8 +75,9 @@ Sprite_KydreeokHead_Main:
   JSL   UseImplicitRegIndexedLocalJumpTable
 
   dw KydreeokHead_ForwardAnim ; 0x00
-  dw KydreeokHead_SideAnim    ; 0x01
-  dw KydreeokHead_SummonFire  ; 0x02
+  dw KydreeokHead_RightAnim   ; 0x01
+  dw KydreeokHead_LeftAnim    ; 0x02
+  dw KydreeokHead_SummonFire  ; 0x03
 
   ; -------------------------------------------------------
   ; 0x00
@@ -89,15 +91,14 @@ Sprite_KydreeokHead_Main:
       JSL Sprite_CheckDamageFromPlayerLong
       %DoDamageToPlayerSameLayerOnContact()
 
-      LDA.w SprTimerA, X : BNE .noSpeedChange
-      JSL   GetRandomInt : AND #$0F : TAY
-      LDA.w SpeedTable, Y : STA.w SprXSpeed, X
-      JSL   GetRandomInt : AND #$0F : TAY
-      LDA.w SpeedTable, Y : STA.w SprYSpeed, X
-      ; LDA #$40 : STA.w SprTimerA, X
-    .noSpeedChange
-      
+      LDA.w SprTimerA, X : BNE .no_speed_change
+        JSL   GetRandomInt : AND #$0F : TAY
+        LDA.w SpeedTable, Y : STA.w SprXSpeed, X
+        JSL   GetRandomInt : AND #$0F : TAY
+        LDA.w SpeedTable, Y : STA.w SprYSpeed, X
+      .no_speed_change
       JSL Sprite_Move
+
       ; JSR AdjustMovementSpeed
       JSR KydreeokHead_NeckControl
       JSR MoveWithBody
@@ -108,13 +109,16 @@ Sprite_KydreeokHead_Main:
 
       JSL Sprite_IsToRightOfPlayer : TYA : BNE .not_right
         %GotoAction(1)
+        RTS
     .not_right
+        LDA.b #$40 : STA.w SprTimerA, X
+        %GotoAction(2)
       RTS
   }
 
   ; -------------------------------------------------------
   ; 0x01
-  KydreeokHead_SideAnim:
+  KydreeokHead_RightAnim:
   {
       %StartOnFrame(3)
       %PlayAnimation(3,5,10)
@@ -124,13 +128,12 @@ Sprite_KydreeokHead_Main:
       JSL Sprite_CheckDamageFromPlayerLong
       %DoDamageToPlayerSameLayerOnContact()
 
-      LDA.w SprTimerA, X : BNE .noSpeedChange
+      LDA.w SprTimerA, X : BNE .no_speed_change
       JSL   GetRandomInt : AND #$0F : TAY
       LDA.w SpeedTable, Y : STA.w SprXSpeed, X
       JSL   GetRandomInt : AND #$0F : TAY
       LDA.w SpeedTable, Y : STA.w SprYSpeed, X
-      ; LDA #$40 : STA.w SprTimerA, X
-    .noSpeedChange
+      .no_speed_change
       JSL Sprite_Move
       
       ; JSR AdjustMovementSpeed
@@ -149,11 +152,30 @@ Sprite_KydreeokHead_Main:
 
   ; -------------------------------------------------------
   ; 0x02
+  KydreeokHead_LeftAnim:
+  {
+    %StartOnFrame(6)
+    %PlayAnimation(6,8,10)
+
+    JSL Sprite_CheckDamageFromPlayerLong
+    %DoDamageToPlayerSameLayerOnContact()
+
+    JSR KydreeokHead_NeckControl
+    JSR MoveWithBody
+
+    JSR RandomlyAttack
+
+    LDA.w SprTimerA, X : BNE .not_yet
+      %GotoAction(0)
+    .not_yet
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x03
   KydreeokHead_SummonFire:
   {
-    ; %StartOnFrame(5)
-    ; %PlayAnimation(5,5,10)
-    %MoveTowardPlayer(24)
+    %MoveTowardPlayer(15)
 
     JSL Sprite_CheckDamageFromPlayerLong
     %DoDamageToPlayerSameLayerOnContact()
@@ -254,9 +276,9 @@ RandomlyAttack:
       LDA   #$CF
       JSL   Sprite_SpawnDynamically
       JSL   Sprite_SetSpawnedCoords
-      ; JSL $09B020 ; Fireball_SpawnTrailGarnish
-      LDA.b #$02 : STA.w SprAction, Y
-      LDA   #$10 : STA.w SprTimerA, Y
+      JSL $09B020 ; Fireball_SpawnTrailGarnish
+      LDA.b #$03 : STA.w SprAction, Y
+      LDA   #$20 : STA.w SprTimerA, Y
   .no_attack
   RTS
 }
@@ -353,8 +375,9 @@ Neck1_Control:
     LDA.w SprXSpeed, X : STA $08
     LDA.w SprYSpeed, X : STA $09
 
-    LDA.w $19EA : STA $02; x
-    LDA.w $19EB : STA $03; y
+    LDA.w $19EA : STA $02 ; x
+    LDA.w $19EB : STA $03 ; y
+
     LDA.w SprX, X : STA $04
     LDA.w SprY, X : STA $05
     JSR   GetDistance8bit : CMP #$08 : BCC .TooCloseToHead ; is body1 too close to the head?
@@ -381,8 +404,9 @@ Neck1_Control:
 
     ; Do body part 2
 
-    LDA.w $19EC : STA $02; x
-    LDA.w $19ED : STA $03; y
+    LDA.w $19EC : STA $02 ; x
+    LDA.w $19ED : STA $03 ; y
+    
     LDA.w $19EA : STA $04
     LDA.w $19EB : STA $05
     JSR   GetDistance8bit : CMP #$0D : BCC .TooCloseToBodyPart1 ; is body1 too close to the head?
@@ -409,8 +433,9 @@ Neck1_Control:
 
     ; Do body part 2
 
-    LDA.w $19EE : STA $02; x
-    LDA.w $19EF : STA $03; y
+    LDA.w $19EE : STA $02 ; x
+    LDA.w $19EF : STA $03 ; y
+
     LDA.w $19EC : STA $04
     LDA.w $19ED : STA $05
     JSR   GetDistance8bit : CMP #$14 : BCC .TooCloseToBodyPart2 ; is body1 too close to the head?
@@ -455,6 +480,7 @@ Neck2_Control:
 
     LDA.w $19F0 : STA $02 ; x
     LDA.w $19F1 : STA $03 ; y
+    
     LDA.w SprX, X : STA $04
     LDA.w SprY, X : STA $05
     JSR   GetDistance8bit : CMP #$08 : BCC .TooCloseToHead2 ; is body1 too close to the head?
@@ -478,6 +504,7 @@ Neck2_Control:
 
     LDA.w $19F2 : STA $02 ; x
     LDA.w $19F3 : STA $03 ; y
+
     LDA.w $19F0 : STA $04
     LDA.w $19F1 : STA $05
     JSR   GetDistance8bit : CMP #$0D : BCC .TooCloseToBodyPart12 ; is body1 too close to the head?
@@ -503,6 +530,7 @@ Neck2_Control:
     ; Do body part 2
     LDA.w $19F4 : STA $02 ; x
     LDA.w $19F5 : STA $03 ; y
+    
     LDA.w $19F2 : STA $04
     LDA.w $19F3 : STA $05
     JSR   GetDistance8bit : CMP #$14 : BCC .TooCloseToBodyPart22 ; is body1 too close to the head?
@@ -794,9 +822,9 @@ Sprite_KydreeokHead_Draw:
     JMP Sprite_KydreeokHead_DrawNeck
 
   .start_index
-    db $00, $02, $04, $06, $0A, $0E
+    db $00, $02, $04, $06, $0A, $0E, $12, $16, $1A, $1E
   .nbr_of_tiles
-    db 1, 1, 1, 3, 3, 3
+    db 1, 1, 1, 3, 3, 3, 3, 3, 3
   .x_offsets
     dw 0, 0
     dw 0, 0
@@ -804,6 +832,9 @@ Sprite_KydreeokHead_Draw:
     dw 8, -8, -8, 8
     dw 8, -8, -8, 8
     dw 8, -8, -8, 8
+    dw -8, 8, -8, 8
+dw 8, -8, -8, 8
+dw -8, 8, 8, -8
   .y_offsets
     dw -8, 8
     dw -8, 8
@@ -811,6 +842,9 @@ Sprite_KydreeokHead_Draw:
     dw 4, 4, -12, -12
     dw -8, -8, 8, 8
     dw -8, -8, 8, 8
+    dw -8, -8, 8, 8
+dw -8, -8, 8, 8
+dw -8, -8, 8, 8
   .chr
     db $40, $60
     db $42, $62
@@ -818,6 +852,9 @@ Sprite_KydreeokHead_Draw:
     db $68, $66, $46, $48
     db $0A, $08, $28, $2A
     db $4C, $4A, $6A, $6C
+    db $48, $46, $68, $66
+db $08, $0A, $2A, $28
+db $4C, $4A, $6A, $6C
   .properties
     db $39, $39
     db $39, $39
@@ -825,6 +862,9 @@ Sprite_KydreeokHead_Draw:
     db $39, $39, $39, $39
     db $39, $39, $39, $39
     db $39, $39, $39, $39
+    db $79, $79, $79, $79
+db $79, $79, $79, $79
+db $79, $79, $79, $79
   .sizes
     db $02, $02
     db $02, $02
@@ -832,6 +872,9 @@ Sprite_KydreeokHead_Draw:
     db $02, $02, $02, $02
     db $02, $02, $02, $02
     db $02, $02, $02, $02
+    db $02, $02, $02, $02
+db $02, $02, $02, $02
+db $02, $02, $02, $02
 }
 
 GetDistance8bit:
