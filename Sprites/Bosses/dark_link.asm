@@ -59,7 +59,7 @@ Sprite_DarkLink_Long:
   .skipnormal_draw
 
   LDA.w SprAction, X : CMP.b #11 : BCS .notdying
-    LDA.w SprHealth, X : CMP.b #$10 : BCS .notdying
+    LDA.w SprHealth, X : CMP.b #$20 : BCS .notdying
       LDA.w SprMiscC, X : BNE +
         ; check if action is 00 otherwise wait
         LDA.w SprAction, X : BNE .notdying 
@@ -112,7 +112,7 @@ Sprite_DarkLink_Prep:
 
   LDA #$00 : STA.w SprMiscE, X
   LDA #$00 : STA.w SprMiscC, X ; Enraging 
-  LDA #$50 : STA.w SprHealth, X
+  LDA #$C0 : STA.w SprHealth, X
   %GotoAction(4)
 
   RTL
@@ -155,7 +155,7 @@ Sprite_DarkLink_Main:
     LDA.w SprMiscF, X : BNE .no_damage
       JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
         LDA.w SprTimerA, X : BNE .already_taking_damage
-          LDA.w $02B2 : CMP #$03 : BNE .not_more_damage
+          LDA.w $0224 : CMP #$03 : BNE .not_more_damage
             LDA.w SprHealth, X : SEC : SBC #$04 : STA.w SprHealth, X
         .not_more_damage
         .already_taking_damage
@@ -548,7 +548,7 @@ Sprite_DarkLink_Main:
   {
     JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
     LDA.w SprTimerA, X : BNE .already_taking_damage
-    LDA.w $02B2 : CMP #$03 : BNE .not_more_damage
+    LDA.w $0224 : CMP #$03 : BNE .not_more_damage
     LDA.w SprHealth, X : SEC : SBC #$04 : STA.w SprHealth, X
     .not_more_damage
     .already_taking_damage
@@ -805,7 +805,7 @@ Sprite_DarkLink_Main:
   {
     JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
     LDA.w SprTimerA, X : BNE .already_taking_damage
-    LDA.w $02B2 : CMP #$03 : BNE .not_more_damage
+    LDA.w $0224 : CMP #$03 : BNE .not_more_damage
     LDA.w SprHealth, X : SEC : SBC #$04 : STA.w SprHealth, X
     .not_more_damage
     .already_taking_damage
@@ -978,8 +978,8 @@ Sprite_DarkLink_Main:
     INC.w SprMiscF, X
     ;LDA #$1A : STA.b $11 ; ganon open door routine
     ; handled by the room tag?
-    STZ.w $0DD0, X
-
+    LDA #$04 : STZ.w $0DD0, X
+    LDA.b #$80 : STA $0403
     %GotoAction(14)
 
     RTS
@@ -987,6 +987,7 @@ Sprite_DarkLink_Main:
 
   Dead:
   {
+    
     RTS
   }
 
@@ -1005,7 +1006,7 @@ Sprite_DarkLink_Main:
 
     INC.w SprMiscC, X ; Enraging
 
-    LDA #$50 : STA.w SprHealth, X
+    LDA #$80 : STA.w SprHealth, X
 
     %ShowUnconditionalMessage($170)
 
@@ -1554,7 +1555,7 @@ Sprite_Ganon_Main:
     LDA.w SprTimerA, X : BNE .wait
       JSR ApplyDarkLinkGraphics
       LDA.b #$30 : STA.w SprTimerA, X
-      %ShowUnconditionalMessage($46)
+      %ShowUnconditionalMessage($13E)
       %GotoAction(1)
     .wait
     RTS
