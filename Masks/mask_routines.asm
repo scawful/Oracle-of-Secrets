@@ -372,8 +372,6 @@ PrepareMagicBubble:
 ; Based on LinkItem_Quake.allow_quake
 PrepareQuakeSpell:
 {
-  JSR InitCamera
-
   LDA.b #$0A : STA.b $5D ; Set Link to the hover state
   LDA.b #$00 : STA.b $3D ; Clear the animation timer 
 
@@ -405,6 +403,11 @@ InitCamera:
 
 HandleCamera:
 {
+  JSL $07E6A6 ; Link_HandleMovingAnimation_FullLongEntry
+  JSR InitCamera
+
+  #_0790BA: JSL $07E3DD ; Link_HandleVelocityAndSandDrag_long
+
   LDA $22 : SEC : SBC $3F : STA $31
   LDA $20 : SEC : SBC $3E : STA $30
   PHX 
@@ -426,7 +429,8 @@ HandleMovement:
   LDA $F0 : AND #$08 : BEQ .not_up
     
     LDY #$00 
-    LDA.w .drag_y_low,  Y : STA.w $0B7E
+    LDA.w .drag_y_low,  Y : CLC : ADC.w $0B7E : STA.w $0B7E
+    LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
 
     LDA #$01 : STA $031C
     LDA #$05 : STA $3D
@@ -435,8 +439,8 @@ HandleMovement:
   LDA $F0 : AND #$04 : BEQ .not_down
   
     LDY #$01
-    LDA.w .drag_y_low,  Y : STA.w $0B7E
-
+    LDA.w .drag_y_low,  Y : CLC : ADC.w $0B7E : STA.w $0B7E
+    LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
     LDA #$02 : STA $031C
     LDA #$05 : STA $3D
     LDA #$02 : STA $2F
@@ -444,7 +448,8 @@ HandleMovement:
   LDA $F0 : AND #$02 : BEQ .not_left
     
     LDY #$02
-    LDA.w .drag_x_low,  Y  : STA.w DragYL
+    LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
+    LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
     LDA #$03 : STA $031C
     LDA #$05 : STA $3D
     LDA #$04 : STA $2F
@@ -452,8 +457,8 @@ HandleMovement:
   LDA $F0 : AND #$01 : BEQ .not_right
     
     LDY #$03
-    LDA.w .drag_x_low,  Y  : STA.w DragYL
-    
+    LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
+    LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
     
     LDA #$04 : STA $031C
     LDA #$05 : STA $3D
