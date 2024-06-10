@@ -40,8 +40,9 @@ Sprite_Kydreeok_Long:
     JSR Sprite_Kydreeok_Draw
     JSL Sprite_CheckActive : BCC .SpriteIsNotActive  
       JSR Sprite_Kydreeok_Main
+      JSR Sprite_Kydreeok_CheckIfDead
 
-  .SpriteIsNotActive
+    .SpriteIsNotActive
     PLB ; Get back the databank we stored previously
     RTL ; Go back to original code
 }
@@ -62,7 +63,7 @@ Sprite_Kydreeok_Prep:
   LDA SprY, X : STA.w SprMiscB, X
 
   JSR SpawnLeftHead 
-  JSR SpawnCenterHead
+  ; JSR SpawnCenterHead
   JSR SpawnRightHead
 
   STZ.w Neck1_OffsetX : STZ.w Neck1_OffsetY
@@ -76,6 +77,23 @@ Sprite_Kydreeok_Prep:
 
   PLB
   RTL
+}
+
+Sprite_Kydreeok_CheckIfDead:
+{
+  LDA Offspring1_Id : TAY
+  LDA.w SprState, Y : BEQ .offspring1_dead
+    JMP .not_dead
+  .offspring1_dead
+  LDA Offspring2_Id : TAY
+  LDA.w SprState, Y : BEQ .offspring2_dead
+    JMP .not_dead
+  .offspring2_dead
+  LDY #$01 : JSR ApplyKydreeokGraphics
+  JSR SpawnLeftHead 
+  JSR SpawnRightHead
+  .not_dead
+  RTS
 }
 
 ; =========================================================
@@ -98,6 +116,12 @@ Sprite_Kydreeok_Main:
     %StartOnFrame(0)
     %PlayAnimation(0, 2, 10)
 
+    LDA SprMiscD, X : BNE .go
+      LDY #$00
+      JSR ApplyKydreeokGraphics
+      LDA.b #$01 : STA SprMiscD, X
+    .go
+
     JSR ApplyPalette
     JSL Sprite_PlayerCantPassThrough
 
@@ -117,8 +141,6 @@ Sprite_Kydreeok_Main:
     %StartOnFrame(0)
     %PlayAnimation(0, 2, 10)
 
-    PHX
-
     STZ.w SprYSpeed : STZ.w SprXSpeed ;set velocitys to 0
     JSR MoveBody
     JSR StopIfOutOfBounds
@@ -126,8 +148,6 @@ Sprite_Kydreeok_Main:
     LDA SprTimerA, X : BNE .continue
       %GotoAction(2)
     .continue
-
-    PLX
 
     RTS
   }
@@ -139,7 +159,6 @@ Sprite_Kydreeok_Main:
     %StartOnFrame(0)
     %PlayAnimation(0, 2, 10)
 
-    PHX ;saves X so we can use it later
 
     LDA $36
     JSL Sprite_ApplySpeedTowardsPlayer
@@ -148,8 +167,6 @@ Sprite_Kydreeok_Main:
 
     JSL Sprite_CheckDamageFromPlayerLong
     %DoDamageToPlayerSameLayerOnContact()
-
-    PLX ;restores X
 
     %GotoAction(4)
 
@@ -163,7 +180,6 @@ Sprite_Kydreeok_Main:
     %StartOnFrame(0)
     %PlayAnimation(0, 2, 10)
 
-    PHX
     LDA $36 : STA $00
     JSR Sprite_ApplySpeedTowardsPlayerXOrY
     JSR StopIfOutOfBounds
@@ -171,7 +187,6 @@ Sprite_Kydreeok_Main:
 
     JSL Sprite_CheckDamageFromPlayerLong
     %DoDamageToPlayerSameLayerOnContact()
-    PLX
 
     %GotoAction(4)
     RTS
@@ -612,8 +627,8 @@ ApplyPalette:
     ;will fade the colors into 7EC500 based on the colors found in 7EC300
 
     LDA #$7FFF : STA $7EC5E2 ;BG2
-    LDA #$318C : STA $7EC5E4
-    LDA #$4E73 : STA $7EC5E6
+    LDA #$319B : STA $7EC5E4
+    LDA #$15B6 : STA $7EC5E6
     LDA #$0C79 : STA $7EC5E8
     LDA #$14A5 : STA $7EC5EA
     LDA #$7E56 : STA $7EC5EC
@@ -724,8 +739,14 @@ ApplyKydreeokGraphics:
     LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
     LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register 
                            ; "001 => 2 registers write once (2 bytes: p, p+1)"
-    LDA.w #KydreeokGraphics : STA $4302     ; Source address where you want gfx from ROM
-    LDX.b #KydreeokGraphics>>16 : STX $4304
+    CPY #$01 : BEQ .phase2
+      LDA.w #KydreeokGraphics : STA $4302
+      LDX.b #KydreeokGraphics>>16 : STX $4304
+      JMP .continue
+    .phase2
+    LDA.w #KydreeokPhase2Graphics : STA $4302
+    LDX.b #KydreeokPhase2Graphics>>16 : STX $4304
+    .continue
     LDA   #$2000 : STA $4305                ; Size of the transfer 4 sheets of $800 each
     LDX   #$01 : STX $420B                  ; Do the DMA 
     LDX #$0F : STX $2100                    ; Turn the screen back on
@@ -735,4 +756,7 @@ ApplyKydreeokGraphics:
 
   KydreeokGraphics:
     incbin kydreeok.bin
+
+  KydreeokPhase2Graphics:
+    incbin kydreeok_phase2.bin
 }
