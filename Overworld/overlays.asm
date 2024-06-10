@@ -71,7 +71,7 @@ JML NewDesertCheck
 returnPos:
 
 
-org $348000
+pullpc
 NewDesertCheck:
 {
   ; LDA.b #$02 : STA.w $037A ; set link in praying mode
@@ -913,3 +913,5 @@ Castle_Frame3:
   .wait
   RTS
 }
+
+pushpc

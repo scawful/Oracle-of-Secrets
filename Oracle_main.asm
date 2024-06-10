@@ -9,11 +9,11 @@
 ;   2D - Menu
 ;   2E - HUD
 ;   2F - 
-;   30 - 
+;   30 - Sprites: all_sprites.asm
 ;   31 - Sprites: all_sprites.asm
-;   32 - Time System
+;   32 - Sprites: all_sprites.asm
 ;   33 - Custom Collision Tables
-;   34 - Custom Overworld Overlays
+;   34 - Time System, Custom Overworld Overlays
 ;   35 - Deku Link GFX
 ;   36 - Zora Link GFX
 ;   37 - Bunny Link GFX

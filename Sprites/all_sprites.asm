@@ -25,6 +25,8 @@ org $0CDC26
 incsrc ZSpriteLib/sprite_macros.asm
 incsrc ZSpriteLib/sprite_hooks.asm
 
+; TODO: Sprite_AttemptKillingOfKin
+
 ; SpritePrep_HauntedGroveOstritch
 org $068BB2
 NOP #11
@@ -57,19 +59,6 @@ print  "End of maku_tree.asm              ", pc
 
 incsrc "Sprites/NPCs/mask_salesman.asm"
 print  "End of mask_salesman.asm          ", pc
-
-
-incsrc "Sprites/Bosses/twinrova.asm"
-print  "End of twinrova.asm               ",  pc
-
-incsrc "Sprites/Bosses/kydreeok.asm"
-print  "End of kydreeok.asm               ",  pc
-
-incsrc "Sprites/Bosses/kydreeok_head.asm"
-print  "End of kydreeok_head.asm          ",  pc
-
-incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
-print  "End of deku_scrub_enemy.asm       ",  pc
 
 ;=========================================================
 
@@ -159,6 +148,18 @@ incsrc "Sprites/NPCs/fortune_teller.asm"
 ; incsrc "Sprites/Bosses/octoboss.asm"
 ; print  "End of octoboss.asm               ", pc
 
-
-
 warnpc $328000
+
+org $328000
+
+incsrc "Sprites/Bosses/twinrova.asm"
+print  "End of twinrova.asm               ",  pc
+
+incsrc "Sprites/Bosses/kydreeok.asm"
+print  "End of kydreeok.asm               ",  pc
+
+incsrc "Sprites/Bosses/kydreeok_head.asm"
+print  "End of kydreeok_head.asm          ",  pc
+
+incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
+print  "End of deku_scrub_enemy.asm       ",  pc

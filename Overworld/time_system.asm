@@ -20,7 +20,7 @@ org $068361
 ; =========================================================
 
 ; org $1CFF30
-org $328000 ; Free space
+pullpc
 HUD_ClockDisplay:
 {
 	JSR RunClock
