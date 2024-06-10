@@ -89,9 +89,16 @@ Sprite_Kydreeok_CheckIfDead:
   LDA.w SprState, Y : BEQ .offspring2_dead
     JMP .not_dead
   .offspring2_dead
-  LDY #$01 : JSR ApplyKydreeokGraphics
-  JSR SpawnLeftHead 
-  JSR SpawnRightHead
+  LDA.w SprMiscD, X : CMP.b #$02 : BEQ .dead
+    LDA.b #$02 : STA.w SprMiscD, X
+    LDY.b #$01 : JSR ApplyKydreeokGraphics
+    JSR SpawnLeftHead 
+    JSR SpawnRightHead
+    RTS
+  .dead
+    LDA.b #$60 : STA.w SprTimerA, X
+    LDA.b #$05 : STA SprAction, X
+
   .not_dead
   RTS
 }
@@ -108,6 +115,7 @@ Sprite_Kydreeok_Main:
   dw Kydreeok_MoveXandY    ; 02
   dw Kydreeok_MoveXorY     ; 03
   dw Kydreeok_KeepWalking  ; 04
+  dw Kydreeok_Dead         ; 05
 
   ; -------------------------------------------------------
   ; 0x00
@@ -234,6 +242,52 @@ Sprite_Kydreeok_Main:
     RTS
   }
 
+  Kydreeok_Dead:
+  {
+    #_1DDC30: LDA.b #$00 ; SPRITE 00
+    #_1DDC32: JSL Sprite_SpawnDynamically
+    #_1DDC36: BMI .no_space
+
+    #_1DDC38: LDA.b #$0B
+    #_1DDC3A: STA.w $0AAA
+
+    #_1DDC3D: LDA.b #$04
+    #_1DDC3F: STA.w $0DD0,Y
+
+    #_1DDC42: LDA.b #$03
+    #_1DDC44: STA.w $0E40,Y
+
+    #_1DDC47: LDA.b #$0C
+    #_1DDC49: STA.w $0F50,Y
+
+    #_1DDC4C: LDA.w $0FD8
+    #_1DDC4F: STA.w $0D10,Y
+
+    #_1DDC52: LDA.w $0FD9
+    #_1DDC55: STA.w $0D30,Y
+
+    #_1DDC58: LDA.w $0FDA
+    #_1DDC5B: STA.w $0D00,Y
+
+    #_1DDC5E: LDA.w $0FDB
+    #_1DDC61: STA.w $0D20,Y
+
+    #_1DDC64: LDA.b #$1F
+    #_1DDC66: STA.w $0DF0,Y
+    #_1DDC69: STA.w $0D90,Y
+
+    #_1DDC6C: LDA.b #$02
+    #_1DDC6E: STA.w $0F20,Y
+    .no_space
+
+    LDA SprTimerA, X : BNE .continue
+      STZ.w $0422
+      STZ.w $0424
+      STZ.w $0DD0, X ; GG
+    .continue
+    RTS
+  }
+
 }
 
 ; =========================================================
@@ -274,7 +328,7 @@ SpawnLeftHead:
     PHX
     ; code that controls where to spawn the offspring.
     REP #$20
-    LDA SprCachedX : SEC : SBC.w #$000F
+    LDA SprCachedX : SEC : SBC.w #$0010
     SEP #$20
     STA.w SprX, Y : XBA : STA.w SprXH, Y
 
@@ -300,42 +354,42 @@ SpawnLeftHead:
 
 ; =========================================================
 
-SpawnCenterHead:
-{
-  LDA #$CF
+; SpawnCenterHead:
+; {
+;   LDA #$CF
 
-  JSL Sprite_SpawnDynamically : BMI .return
-    TYA : STA Offspring3_Id
+;   JSL Sprite_SpawnDynamically : BMI .return
+;     TYA : STA Offspring3_Id
 
-    ;store the sub-type
-    LDA.b #$02 : STA $0E30, Y
+;     ;store the sub-type
+;     LDA.b #$02 : STA $0E30, Y
 
-    PHX
-    ; code that controls where to spawn the offspring.
-    REP #$20
-    LDA SprCachedX : CLC : ADC.w #$0004
-    SEP #$20
-    STA.w SprX, Y : XBA : STA.w SprXH, Y
+;     PHX
+;     ; code that controls where to spawn the offspring.
+;     REP #$20
+;     LDA SprCachedX : CLC : ADC.w #$0004
+;     SEP #$20
+;     STA.w SprX, Y : XBA : STA.w SprXH, Y
 
-    REP #$20
-    LDA SprCachedY : SEC : SBC.w #$000F
-    SEP #$20
-    STA.w SprY, Y : XBA : STA.w SprYH, Y
+;     REP #$20
+;     LDA SprCachedY : SEC : SBC.w #$000F
+;     SEP #$20
+;     STA.w SprY, Y : XBA : STA.w SprYH, Y
 
-    LDA.w SprX, Y : STA.w SprX, Y
-    STA.w SprMiscA, Y : STA.w $1A78 : STA.w $1A7A : STA.w $1A7C
-    LDA.w SprY, Y : STA.w $1A79 : STA.w $1A7B : STA.w $1A7D : STA.w SprY, Y
-    STA.w SprMiscB, Y
+;     LDA.w SprX, Y : STA.w SprX, Y
+;     STA.w SprMiscA, Y : STA.w $1A78 : STA.w $1A7A : STA.w $1A7C
+;     LDA.w SprY, Y : STA.w $1A79 : STA.w $1A7B : STA.w $1A7D : STA.w SprY, Y
+;     STA.w SprMiscB, Y
 
-    TYX
+;     TYX
 
-    STZ.w SprYRound, X
-    STZ.w SprXRound, X
-    PLX
+;     STZ.w SprYRound, X
+;     STZ.w SprXRound, X
+;     PLX
 
-  .return
-  RTS
-}
+;   .return
+;   RTS
+; }
 
 ; =========================================================
 
@@ -350,7 +404,7 @@ SpawnRightHead:
     PHX
     ; code that controls where to spawn the offspring.
     REP #$20
-    LDA SprCachedX : CLC : ADC.w #$000C
+    LDA SprCachedX : CLC : ADC.w #$000D
     SEP #$20
     STA.w SprX, Y : XBA : STA.w SprXH, Y
 
@@ -527,50 +581,50 @@ StopIfOutOfBounds:
 Sprite_ApplySpeedTowardsPlayerXOrY:
 {
   JSL Sprite_IsBelowPlayer : BEQ .playerBelow
-      ;playerAbove
+    ;playerAbove
+
+    REP #$20
+    LDA SprCachedY : SEC : SBC $20 : CLC : ADC.w #$0006 : STA $01 ;delta Y
+    ;added an extra 6 pixels because aparently if link.y is 6 above sprite.y it is concidered below ¯\_(ツ)_/¯
+    SEP #$20
+
+    JSL Sprite_IsToRightOfPlayer : BEQ .playerToTheRight1
+      ;playerToTheLeft
 
       REP #$20
-      LDA SprCachedY : SEC : SBC $20 : CLC : ADC.w #$0006 : STA $01 ;delta Y
-      ;added an extra 6 pixels because aparently if link.y is 6 above sprite.y it is concidered below ¯\_(ツ)_/¯
-      SEP #$20
+      LDA SprCachedX : SEC : SBC $22 ;delta X
+      
 
-      JSL Sprite_IsToRightOfPlayer : BEQ .playerToTheRight1
-          ;playerToTheLeft
+      CMP $01 : BCS .XGreaterThanY1
+        ;YGreaterThanX
+        SEP   #$20
+        LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
+        STZ.w SprXSpeed
+        RTS
 
-          REP #$20
-          LDA SprCachedX : SEC : SBC $22 ;delta X
-          
-
-          CMP $01 : BCS .XGreaterThanY1
-              ;YGreaterThanX
-              SEP   #$20
-              LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
-              STZ.w SprXSpeed
-              RTS
-
-          .XGreaterThanY1
-              SEP   #$20
-              LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
-              STZ.w SprYSpeed
-              RTS
+      .XGreaterThanY1
+        SEP   #$20
+        LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
+        STZ.w SprYSpeed
+        RTS
 
 
-      .playerToTheRight1
-          REP #$20
-          LDA $22 : SEC : SBC SprCachedX ;delta X
+  .playerToTheRight1
+      REP #$20
+      LDA $22 : SEC : SBC SprCachedX ;delta X
 
-          CMP $01 : BCS .XGreaterThanY2
-              ;YGreaterThanX
-              SEP   #$20
-              LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
-              STZ.w SprXSpeed
-              RTS
+      CMP $01 : BCS .XGreaterThanY2
+        ;YGreaterThanX
+        SEP   #$20
+        LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
+        STZ.w SprXSpeed
+        RTS
 
-          .XGreaterThanY2
-              SEP   #$20
-              LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
-              STZ.w SprYSpeed
-              RTS
+      .XGreaterThanY2
+        SEP   #$20
+        LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
+        STZ.w SprYSpeed
+        RTS
 
 
   .playerBelow
@@ -586,17 +640,17 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
           LDA SprCachedX : SEC : SBC $22 ;delta X
 
           CMP $01 : BCS .XGreaterThanY3
-              ;YGreaterThanX
-              SEP   #$20
-              LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
-              STZ.w SprXSpeed
-              RTS
+            ;YGreaterThanX
+            SEP   #$20
+            LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
+            STZ.w SprXSpeed
+            RTS
 
           .XGreaterThanY3
-              SEP   #$20
-              LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
-              STZ.w SprYSpeed
-              RTS
+            SEP   #$20
+            LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
+            STZ.w SprYSpeed
+            RTS
 
 
       .playerToTheRight2
@@ -604,17 +658,17 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
           LDA $22 : SEC : SBC SprCachedX ;delta X
 
           CMP $01 : BCS .XGreaterThanY4
-              ;YGreaterThanX
-              SEP   #$20
-              LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
-              STZ.w SprXSpeed
-              RTS
+            ;YGreaterThanX
+            SEP   #$20
+            LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
+            STZ.w SprXSpeed
+            RTS
 
           .XGreaterThanY4
-              SEP   #$20
-              LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
-              STZ.w SprYSpeed
-              RTS
+            SEP   #$20
+            LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
+            STZ.w SprYSpeed
+            RTS
 }
 
 ; =========================================================
@@ -629,7 +683,7 @@ ApplyPalette:
     LDA #$7FFF : STA $7EC5E2 ;BG2
     LDA #$319B : STA $7EC5E4
     LDA #$15B6 : STA $7EC5E6
-    LDA #$0C79 : STA $7EC5E8
+    LDA #$369E : STA $7EC5E8
     LDA #$14A5 : STA $7EC5EA
     LDA #$7E56 : STA $7EC5EC
     LDA #$65CA : STA $7EC5EE
@@ -703,31 +757,30 @@ Sprite_Kydreeok_Draw:
 
     RTS
 
-
-  .start_index
-    db $00, $0A, $14
-  .nbr_of_tiles
-    db 9, 9, 9
-  .x_offsets
-    dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
-    dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
-    dw -8, -16, -16, -16, -32, 8, 16, 16, 16, 32
-  .y_offsets
-    dw 8, -8, 8, -36, -36, 8, -8, 8, -36, -36
-    dw 8, -5, 11, -38, -38, 8, -8, 8, -39, -38
-    dw 8, -8, 8, -36, -36, 8, -5, 11, -36, -36
-  .chr
-    db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
-    db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
-    db $23, $00, $20, $0E, $0C, $23, $00, $20, $0E, $0C
-  .properties
-    db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
-    db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
-    db $39, $39, $39, $39, $39, $79, $79, $79, $79, $79
-  .sizes
-    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
-    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
-    db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+.start_index
+db $00, $08, $10
+.nbr_of_tiles
+db 7, 7, 7
+.x_offsets
+dw -16, -16, 16, 16, -16, -16, 16, 16
+dw -12, -28, 12, 28, -16, -16, 16, 16
+dw -16, -16, 16, 16, -16, -16, 16, 16
+.y_offsets
+dw -52, -36, -52, -36, -8, 8, -8, 8
+dw -36, -36, -36, -36, -6, 10, -8, 8
+dw -36, -20, -36, -20, -8, 8, -6, 10
+.chr
+db $CE, $EE, $CE, $EE, $00, $20, $00, $20
+db $0E, $0C, $0E, $0C, $00, $20, $00, $20
+db $CC, $EC, $CC, $EC, $00, $20, $00, $20
+.properties
+db $39, $39, $79, $79, $39, $39, $79, $79
+db $39, $39, $79, $79, $39, $39, $79, $79
+db $39, $39, $79, $79, $39, $39, $79, $79
+.sizes
+db $02, $02, $02, $02, $02, $02, $02, $02
+db $02, $02, $02, $02, $02, $02, $02, $02
+db $02, $02, $02, $02, $02, $02, $02, $02
 }
 
 ApplyKydreeokGraphics:
