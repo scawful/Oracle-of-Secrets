@@ -41,6 +41,7 @@ Sprite_Kydreeok_Long:
     JSL Sprite_CheckActive : BCC .SpriteIsNotActive  
       JSR Sprite_Kydreeok_Main
       JSR Sprite_Kydreeok_CheckIfDead
+      JSR MaybeRespawnHead
 
     .SpriteIsNotActive
     LDA.w SprState, X : BNE .not_inactive
@@ -89,10 +90,12 @@ Sprite_Kydreeok_CheckIfDead:
   LDA.w SprState, Y : BEQ .offspring1_dead
     JMP .not_dead
   .offspring1_dead
+
   LDA Offspring2_Id : TAY
   LDA.w SprState, Y : BEQ .offspring2_dead
     JMP .not_dead
   .offspring2_dead
+
   LDA.w SprMiscD, X : CMP.b #$02 : BEQ .dead
     LDA.b #$02 : STA.w SprMiscD, X
     LDY.b #$01 : JSR ApplyKydreeokGraphics
@@ -106,6 +109,23 @@ Sprite_Kydreeok_CheckIfDead:
   .not_dead
   RTS
 }
+
+; Head may respawn if the other isn't killed in time 
+MaybeRespawnHead:
+{
+  LDA.w Offspring1_Id : TAY 
+  LDA.w SprState, Y : BNE .offspring1_alive
+      JSL GetRandomInt : AND.b #$7F : BNE .offspring1_alive
+        JSR SpawnLeftHead
+  .offspring1_alive
+  LDA.w Offspring2_Id : TAY
+  LDA.w SprState, Y : BNE .offspring2_alive
+      JSL GetRandomInt : AND.b #$7F : BNE .offspring2_alive
+        JSR SpawnRightHead
+    .offspring2_alive
+  RTS
+}
+
 
 ; =========================================================
 
@@ -131,10 +151,10 @@ Sprite_Kydreeok_Main:
     LDA SprMiscD, X : BNE .go
       LDY #$00
       JSR ApplyKydreeokGraphics
+      JSR ApplyPalette
       LDA.b #$01 : STA SprMiscD, X
     .go
 
-    JSR ApplyPalette
     JSL Sprite_PlayerCantPassThrough
 
     LDA SprTimerA,            X : BNE .continue
@@ -170,7 +190,6 @@ Sprite_Kydreeok_Main:
   {
     %StartOnFrame(0)
     %PlayAnimation(0, 2, 10)
-
 
     LDA $36
     JSL Sprite_ApplySpeedTowardsPlayer
