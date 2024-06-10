@@ -63,7 +63,7 @@ LinkState_BunnyHoodRun:
   CPX.b #$11 : BCS .end    ; speed value upper bound check
   LDA.w $0202              ; check the current item
   CMP.b #$16 : BNE .end    ; is it the bunny hood?
-  LDA.w !CurrentMask : BEQ .end
+  LDA.w !CurrentMask : CMP.b #$04 : BNE .end
   LDA.l BunnySpeedTable, X ; load new speed values
   CLC
   RTL
