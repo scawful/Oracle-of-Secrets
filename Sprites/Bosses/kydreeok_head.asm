@@ -4,7 +4,7 @@
 ; =========================================================
 
 !SPRID              = $CF ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 05  ; Number of tiles used in a frame
+!NbrTiles           = 07  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = $C0 ; Number of Health the sprite have
@@ -89,8 +89,10 @@ Sprite_KydreeokHead_Main:
       %StartOnFrame(0)
       %PlayAnimation(0,2,10)
 
+      PHX
       JSL Sprite_CheckDamageFromPlayerLong
       %DoDamageToPlayerSameLayerOnContact()
+      PLX
 
       JSR KydreeokHead_RotationMove
       JSR RandomlyAttack
@@ -119,9 +121,11 @@ Sprite_KydreeokHead_Main:
       %StartOnFrame(3)
       %PlayAnimation(3,5,10)
 
+      PHX
       JSL Sprite_CheckDamageFromPlayerLong
       %DoDamageToPlayerSameLayerOnContact()
-
+      PLX
+      
       JSR KydreeokHead_RotationMove
       JSR RandomlyAttack
 
@@ -163,7 +167,7 @@ Sprite_KydreeokHead_Main:
     %DoDamageToPlayerSameLayerOnContact()
 
     JSR KydreeokHead_RotationMove
-    
+    JSR RandomlyAttack
     LDA SprTimerA, X : BNE .not_done
       %GotoAction(0)
     .not_done
@@ -177,11 +181,13 @@ Sprite_KydreeokHead_Main:
     %PlayAnimation(12,14,10)
     %MoveTowardPlayer(15)
 
+    PHX
     JSL Sprite_CheckDamageFromPlayerLong
     %DoDamageToPlayerSameLayerOnContact()
+    PLX
 
     JSR KydreeokHead_RotationMove
-    
+    JSR RandomlyAttack
     LDA SprTimerA, X : BNE .not_done
        %GotoAction(0)
     .not_done
@@ -235,8 +241,25 @@ KydreeokHead_RotationMove:
   ;   LDA.b #$01 : STA.w SprMiscE, X
   ;   LDA.b #$10 : STA.w SprTimerE, X
   ; .no_independent
-
   
+  RTS
+}
+
+Sprite_KydreeokHead_Damage_Flash:
+{
+  LDA.w $0EB0, X : BEQ .dontFlash
+    ; Change the palette to the next in the cycle
+    LDA.w $0EB0, X : INC : CMP.b #$08 : BNE .dontReset
+      LDA.b #$00
+    
+  .dontReset
+    STA.w $0EB0, X
+    BRA .flash
+
+.dontFlash
+  STZ.w $0EB0, X
+
+.flash
   RTS
 }
 
@@ -316,6 +339,7 @@ YSpeedSin:
 
 RandomlyAttack:
 {
+  JSR Sprite_KydreeokHead_Damage_Flash
   JSL GetRandomInt : AND #$7F : BNE .no_attack
     CLC
     JSL GetRandomInt : AND #$0F : BNE .no_attack
@@ -588,55 +612,48 @@ Sprite_KydreeokHead_DrawNeck:
 {
     ; Dumb draw neck code
     LDA.w SprSubtype, X : CMP.b #$01 : BEQ .neck2
-    CMP.b #$02 : BEQ .neck3
-      LDA.w $19EA : STA.w $0FD8
-      LDA.w $19EB : STA.w $0FDA
+
+      LDA.w $19EE : STA.w SprCachedX
+      LDA.w $19EF : CLC : ADC.b #$06 : STA.w SprCachedY
       JSR   .DrawNeckPart
 
-      LDA.w $19EC : STA.w $0FD8
-      LDA.w $19ED : STA.w $0FDA
+      LDA.w $19EC : STA.w SprCachedX
+      LDA.w $19ED : STA.w SprCachedY
       JSR   .DrawNeckPart
+      LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
+      JSR  .DrawNeckPart
 
-      LDA.w $19EE : STA.w $0FD8
-      LDA.w $19EF : STA.w $0FDA
+      LDA.w $19EA : STA.w SprCachedX
+      LDA.w $19EB : SEC : SBC.b #$04 : STA.w SprCachedY
       JSR   .DrawNeckPart
+      LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
+      JSR  .DrawNeckPart
 
-    BRA .skipNeck
+      BRA .skipNeck
+
   .neck2
-    ; Dumb draw neck code
-    LDA.w $19F0 : STA.w $0FD8
-    LDA.w $19F1 : STA.w $0FDA
+
+    LDA.w $19F4 : STA.w SprCachedX
+    LDA.w $19F5 : CLC : ADC.b #$06 : STA.w SprCachedY
     JSR   .DrawNeckPart
 
-    LDA.w $19F2 : CLC : ADC.w Neck2_OffsetX : STA.w $0FD8
-    LDA.w $19F3 : CLC : ADC.w Neck2_OffsetY : STA.w $0FDA
+    LDA.w $19F2 : STA.w SprCachedX
+    LDA.w $19F3 : STA.w SprCachedY
     JSR   .DrawNeckPart
+    LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
+    JSR  .DrawNeckPart
 
-    LDA.w $19F4 : STA.w $0FD8
-    LDA.w $19F5 : STA.w $0FDA
+    LDA.w $19F0 : STA.w SprCachedX
+    LDA.w $19F1 : SEC : SBC.b #$04 : STA.w SprCachedY
     JSR   .DrawNeckPart
+    LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
+    JSR  .DrawNeckPart
 
     .skipNeck
-      LDA.b $08 : STA.w $0FD8
-      LDA.b $09 : STA.w $0FDA
+      LDA.b $08 : STA.w SprCachedX
+      LDA.b $09 : STA.w SprCachedY
     .skipNeck2
       RTS
-  
-  .neck3
-    ; Dumb draw neck code
-    LDA.w $1A78 : STA.w $0FD8
-    LDA.w $1A79 : STA.w $0FDA
-    JSR   .DrawNeckPart
-
-    LDA.w $1A7A : STA.w $0FD8
-    LDA.w $1A7B : STA.w $0FDA
-    JSR   .DrawNeckPart
-
-    LDA.w $1A7C : STA.w $0FD8
-    LDA.w $1A7D : STA.w $0FDA
-    JSR   .DrawNeckPart
-
-    BRA .skipNeck2
 
   .DrawNeckPart
     PHY
@@ -654,7 +671,7 @@ Sprite_KydreeokHead_DrawNeck:
       INY
       LDA #$2E : STA ($90), Y ; Set the Char 
       INY
-      LDA #$39 : STA ($90), Y ; Set the Properties
+      LDA #$39 : ORA $08 : STA ($90), Y ; Set the Properties
 
       PHY 
       TYA : LSR #2 : TAY
@@ -673,6 +690,8 @@ Sprite_KydreeokHead_Draw:
 
     LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
     LDA .start_index, Y : STA $06
+
+    LDA.w $0EB0, X : STA $08
 
     PHX
     ; amount of tiles - 1
@@ -702,7 +721,7 @@ Sprite_KydreeokHead_Draw:
 
     PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
     INY : LDA .chr, X : STA ($90), Y : INY
-    LDA .properties, X : STA ($90), Y
+    LDA .properties, X : ORA $08 : STA ($90), Y
 
     PHY 
         
