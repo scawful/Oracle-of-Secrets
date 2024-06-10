@@ -631,28 +631,24 @@ Sprite_Offspring_Spawn:
   .alt_entry
   JSL Sprite_SpawnDynamically : BMI .return ;89
 
-  ;store the sub-type
-  LDA.b #$02 : STA $0E30, Y
+  LDA.b #$02 : STA.w SprSubtype, Y
       
   PHX
       
-  ;code that controls where to spawn the offspring.
   REP #$20
   LDA $0FD8 : CLC : ADC.w #$000C
   SEP #$20
-  STA $0D10, Y
-  XBA : STA $0D30, Y
+  STA.w SprX, Y : XBA : STA.w SprXH, Y
 
   REP #$20
   LDA $0FDA : CLC : ADC.w #$001E
   SEP #$20
-  STA $0D00, Y
-  XBA : STA $0D20, Y
+  STA.w SprY, Y : XBA : STA.w SprYH, Y
 
   TYX
 
-  STZ $0D60, X
-  STZ $0D70, X
+  STZ $0D60, X : STZ $0D70, X
+  LDA.b #$05 : STA.w SprBump, X
       
   PLX
       
