@@ -43,12 +43,15 @@ Sprite_Kydreeok_Long:
       JSR Sprite_Kydreeok_CheckIfDead
 
     .SpriteIsNotActive
+    LDA.w SprState, X : BNE .not_inactive
+      JSR ApplyEndPalette
+    .not_inactive
+
     PLB ; Get back the databank we stored previously
     RTL ; Go back to original code
 }
 
 ; =========================================================
-; TODO: Handle boss death based on left and right head health
 
 Sprite_Kydreeok_Prep:
 {
@@ -57,6 +60,7 @@ Sprite_Kydreeok_Prep:
   LDA   #$40 : STA.w SprTimerA, X
   LDA.b #$08 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
+  LDA.b #$09 : STA.w SprBump,   X ; bump damage type
 
   ; Cache the origin position of the sprite.
   LDA SprX, X : STA.w SprMiscA, X 
@@ -98,7 +102,7 @@ Sprite_Kydreeok_CheckIfDead:
   .dead
     LDA.b #$60 : STA.w SprTimerA, X
     LDA.b #$05 : STA SprAction, X
-
+    LDA.b #$13 : STA $012C
   .not_dead
   RTS
 }
@@ -244,46 +248,41 @@ Sprite_Kydreeok_Main:
 
   Kydreeok_Dead:
   {
-    #_1DDC30: LDA.b #$00 ; SPRITE 00
-    #_1DDC32: JSL Sprite_SpawnDynamically
-    #_1DDC36: BMI .no_space
+    
+    LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
+    ; Flicker the body every other frame using the timer 
+    LDA SprTimerA, X : AND.b #$01 : BEQ .flicker
+      LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
+    .flicker
 
-    #_1DDC38: LDA.b #$0B
-    #_1DDC3A: STA.w $0AAA
+    ; Spawn the explosion
+    LDA.b #$00 ; SPRITE 00
+    JSL Sprite_SpawnDynamically
+    BMI .no_space
 
-    #_1DDC3D: LDA.b #$04
-    #_1DDC3F: STA.w $0DD0,Y
+    LDA.b #$0B : STA.w $0AAA
+    LDA.b #$04 : STA.w $0DD0,Y
+    LDA.b #$03 : STA.w $0E40,Y
+    LDA.b #$0C : STA.w $0F50,Y
+    LDA.w $0FD8 : STA.w $0D10,Y
+    LDA.w $0FD9 : STA.w $0D30,Y
+    LDA.w $0FDA : STA.w $0D00,Y
+    LDA.w $0FDB : STA.w $0D20,Y
 
-    #_1DDC42: LDA.b #$03
-    #_1DDC44: STA.w $0E40,Y
+    LDA.b #$1F
+    STA.w $0DF0,Y
+    STA.w $0D90,Y
 
-    #_1DDC47: LDA.b #$0C
-    #_1DDC49: STA.w $0F50,Y
-
-    #_1DDC4C: LDA.w $0FD8
-    #_1DDC4F: STA.w $0D10,Y
-
-    #_1DDC52: LDA.w $0FD9
-    #_1DDC55: STA.w $0D30,Y
-
-    #_1DDC58: LDA.w $0FDA
-    #_1DDC5B: STA.w $0D00,Y
-
-    #_1DDC5E: LDA.w $0FDB
-    #_1DDC61: STA.w $0D20,Y
-
-    #_1DDC64: LDA.b #$1F
-    #_1DDC66: STA.w $0DF0,Y
-    #_1DDC69: STA.w $0D90,Y
-
-    #_1DDC6C: LDA.b #$02
-    #_1DDC6E: STA.w $0F20,Y
+    LDA.b #$02 : STA.w $0F20,Y
+      
     .no_space
 
     LDA SprTimerA, X : BNE .continue
       STZ.w $0422
       STZ.w $0424
+      LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
       STZ.w $0DD0, X ; GG
+      
     .continue
     RTS
   }
@@ -684,6 +683,31 @@ ApplyPalette:
     LDA #$319B : STA $7EC5E4
     LDA #$15B6 : STA $7EC5E6
     LDA #$369E : STA $7EC5E8
+    LDA #$14A5 : STA $7EC5EA
+    LDA #$7E56 : STA $7EC5EC
+    LDA #$65CA : STA $7EC5EE
+    ; LDA #$14A5 : STA $7EC5F0
+    ; LDA #$7E56 : STA $7EC5F2 
+    ; LDA #$65CA : STA $7EC5F4
+
+    INC $15
+ 
+    SEP #$20 ;Set A in 8bit mode
+
+    RTS
+}
+
+ApplyEndPalette:
+{
+    REP #$20 ;Set A in 16bit mode
+
+    ;note, this uses adresses like 7EC300 and not 7EC500 because the game 
+    ;will fade the colors into 7EC500 based on the colors found in 7EC300
+
+    LDA #$1084 : STA $7EC5E2 ;BG2
+    LDA #$210D : STA $7EC5E4
+    LDA #$3191 : STA $7EC5E6
+    LDA #$4E78 : STA $7EC5E8
     LDA #$14A5 : STA $7EC5EA
     LDA #$7E56 : STA $7EC5EC
     LDA #$65CA : STA $7EC5EE
