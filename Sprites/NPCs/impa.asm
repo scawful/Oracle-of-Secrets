@@ -30,6 +30,12 @@ org $029E2E
 #_029E32: ORA.b #$20
 #_029E34: STA.l $7EF2A3
 
+org $05EBCF
+NOP #8
+; LDA.l $7EF359
+; #_05EBD3: CMP.b #$02
+; #_05EBD5: BCS .have_master_sword
+
 ; Prevent Impa from setting spawn point
 org $05ED43
 Zelda_BecomeFollower:
