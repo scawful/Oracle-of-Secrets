@@ -28,6 +28,30 @@ Attract_DrawKidnappedMaiden = $0CFA30
 HandleScreenFlash = $1DE9B6
 FadeMusicAndResetSRAMMirror = $0CC2F0
 
+org $0CF9E6
+  db $3D
+  db $3D
+
+org $0CFA27
+.head_char
+#_0CFA27: db $06
+
+.body_char
+#_0CFA28: db $08, $0C
+
+.offset_y
+#_0CFA2A: db   0,   1
+
+.body_offset_y
+#_0CFA2C: db  10,   9
+
+.head_prop
+#_0CFA2E: db $39
+
+.body_prop
+#_0CFA2F: db $39
+
+
 org $0CEF4E
 AttractScene_ThroneRoom:
 {
@@ -1598,7 +1622,7 @@ AttractOAMData:
   #_0CF8B3: db $2A, $2A, $0A, $0A
 
   .king_prop
-  #_0CF8B7: db $7B, $3B, $7B, $3B
+  #_0CF8B7: db $79, $39, $79, $39
 
   ; ==========================================================
 
@@ -1624,44 +1648,44 @@ AttractAgahnimOAM:
   #_0CF8D9: db $02, $02, $02, $02, $02, $02
 
   .offset_x
-  #_0CF8DF: db   5,  11,   0,  16,   0,  16
+  #_0CF8DF: db  0, 16, 0, 16, 0, 16
 
   .offset_y
-  #_0CF8E5: db  25,  25,   0,   0,  16,  16
+  #_0CF8E5: db  12,  12, -12,  -12, -4,   -4
 
   ; ==========================================================
 
   .char_step3
-  #_0CF8EB: db $6C, $6C, $82, $82, $A2, $A2
+  #_0CF8EB: db $EC, $EE, $C7, $C7, $D7, $D7
 
   .char_step5
-  #_0CF8F1: db $6C, $6C, $80, $82, $A0, $A2
+  #_0CF8F1: db $EC, $EE, $C7, $C7, $D7, $D7
 
   .char_step6
-  #_0CF8F7: db $6C, $6C, $82, $80, $A2, $A0
+  #_0CF8F7: db $EC, $EE, $C7, $C7, $D7, $D7
 
   .char_step4
-  #_0CF8FD: db $6C, $6C, $80, $80, $A0, $A0
+  #_0CF8FD: db $EC, $EE, $C7, $C7, $D7, $D7
 
   .char_step0
-  #_0CF903: db $6C, $6C, $84, $84, $A4, $A4
+  #_0CF903: db $EC, $EE, $C7, $C7, $D7, $D7
 
   .char_step1
-  #_0CF909: db $6C, $6C, $C4, $C2, $E4, $E6
+  #_0CF909: db $EC, $EE, $C7, $C7, $D7, $D7
 
   .char_step2
-  #_0CF90F: db $6C, $6C, $88, $8A, $A8, $AA
+  #_0CF90F: db $EC, $EE, $C7, $C7, $D7, $D7
 
   ; ==========================================================
 
   .prop_step0
-  #_0CF915: db $38, $38, $3B, $7B, $3B, $7B
+  #_0CF915: db $39, $39, $39, $79, $39, $79
 
   .prop_step1
-  #_0CF91B: db $38, $38, $3B, $3B, $3B, $3B
+  #_0CF91B: db $39, $39, $39, $79, $39, $79
 
   .prop_step2
-  #_0CF921: db $38, $38, $3B, $3B, $3B, $3B
+  #_0CF921: db $39, $39, $39, $79, $39, $79
 }
 
 ; ==========================================================
