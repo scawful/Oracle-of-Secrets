@@ -529,6 +529,40 @@ DekuLink_HoverBasedOnInput:
   RTL
 }
 
+pushpc
+
+LinkOAM_SetEquipmentVRAMOffsets = $0DABE6
+LinkOAM_DrawShadow = $0DA857
+
+org $0DA782
+  JSL LinkOAM_CheckForDrawShield
+
+  NOP #3
+  BEQ .no_shield
+
+  LDA.l $7EF35A
+  AND.w #$00FF
+  BEQ .no_shield
+
+  JSR LinkOAM_SetEquipmentVRAMOffsets
+  BCC .shield_continue
+
+  .no_shield
+  BRL LinkOAM_DrawShadow
+
+  .shield_continue
+
+
+pullpc
+
+LinkOAM_CheckForDrawShield:
+{
+  LDA.w $02B2 : AND.w #$00FF : CMP.w #$0005 : BNE .shield
+  LDA.w #$0000
+  .shield
+  RTL
+}
+
 print "End of mask_routines.asm          ", pc
 
 ; LinkOAM_DrawShield _0DA780
