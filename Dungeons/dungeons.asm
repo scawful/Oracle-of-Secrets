@@ -52,3 +52,6 @@ print  "End of house_tag.asm              ", pc
 
 incsrc "Dungeons/floor_puzzle.asm"
 print  "End of floor_puzzle.asm           ", pc
+
+incsrc "Dungeons/attract_scenes.asm"
+print  "End of attract_scenes.asm         ", pc
