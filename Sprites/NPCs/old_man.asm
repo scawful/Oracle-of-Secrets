@@ -89,7 +89,7 @@ SpritePrep_OldMan:
 
 ; Updated old man cave trigger
 org $09A4C8
-  dw $00E5 
+  dw $00D1
 
 org $09A54E
   dw $0005 ; OW 03 - West DM
