@@ -222,7 +222,7 @@ HUD_UpdateItemBox:
   LDA $7EF340 : BEQ .no_bow
     CMP.b #$03 : BCC .no_silver_arrows
       ; Check how many arrows the player has:
-      LDA   $7EF377 : BNE .draw_bow_item_icon
+      LDA   $7EF377 : BNE .silver_with_arrows
         LDX.b #$03
         BRA   .draw_bow_item_icon
 
@@ -233,6 +233,8 @@ HUD_UpdateItemBox:
     LDA $7EF377 : BNE .draw_bow_item_icon
       LDX.b #$01
 
+    .silver_with_arrows
+    LDX.b #$04
     .draw_bow_item_icon
     ; Values of X correspond to how the icon will end up drawn:
     ; 0x01 - normal bow with no arrows
