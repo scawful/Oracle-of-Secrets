@@ -306,7 +306,7 @@ Sprite_Kydreeok_Main:
     LDA SprTimerA, X : BNE .continue
       STZ.w $0422
       STZ.w $0424
-      LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
+      LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
       STZ.w $0DD0, X ; GG
       
     .continue
