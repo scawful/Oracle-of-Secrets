@@ -563,6 +563,24 @@ LinkOAM_CheckForDrawShield:
   RTL
 }
 
+pushpc
+
+org $07A94F
+  JSL CheckForTwoWayMirror
+
+pullpc
+
+CheckForTwoWayMirror:
+{
+  LDA.l $7EF374 : CMP.b #$07 : BNE .vanilla_code
+    LDA.b #$01
+    RTL
+  .vanilla_code
+  #_07A94F: LDA.b $8A
+  #_07A951: AND.b #$40
+  RTL
+}
+
 print "End of mask_routines.asm          ", pc
 
 ; LinkOAM_DrawShield _0DA780
