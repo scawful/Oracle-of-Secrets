@@ -36,6 +36,14 @@ org $07A3DB
 org $07A32C
   LinkItem_Shovel:
 
+; LinkItem_Shovel
+org $07A3B2
+  NOP #5
+
+; DigGame_SpawnPrize
+org $1DFD5E
+  NOP #5
+
 ; =========================================================
 
 org $07A313
