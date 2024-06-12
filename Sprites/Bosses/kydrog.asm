@@ -95,6 +95,7 @@ Sprite_Kydrog_Main:
   Kydrog_AttractPlayer:
   {
     LDA.w SprTimerA, X : BNE +
+      LDA.b #$0C : STA $012D
       LDA #$00 : STA $7EF303
       %ShowUnconditionalMessage($21)
       %GotoAction(2)
