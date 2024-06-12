@@ -1229,10 +1229,6 @@ Follower_CheckBlindTrigger:
 ; Called during Blind Maiden section of Follower_BasicMover
 ; to spawn Twinrova from the Blind Maiden.
 
-; TODO: Figure out why the sprite disappears after graphics
-; are transferred in. It seems to be unrelated to the 
-; graphics code, but rather related to the BlindMaiden 
-; spawn code.
 org $1DA03C
 Blind_SpawnFromMaiden:
 {
