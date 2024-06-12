@@ -45,6 +45,11 @@ NOP #6
 ; #_05ED48: STA.l $7EF3C8
 
 ; Prevent Impa from changing the song
+org $05ED10
+NOP #5
+
+; LDA.b #$19 ; SONG 19
+;#_05ED12: STA.w $012C
 org $05ED63
 NOP #5
 ; #_05ED63: LDA.b #$10 ; SONG 10
