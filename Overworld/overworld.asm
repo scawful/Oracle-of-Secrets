@@ -70,6 +70,8 @@ pullpc
 LoadOverworldPitAreas:
 {
   LDA $8A : CMP.b #$0F : BEQ .allow_transition
+            CMP.b #$11 : BEQ .allow_transition
+            CMP.b #$23 : BEQ .allow_transition
             CMP.b #$57 : BEQ .allow_transition
   SEC ; fall in the pit
   RTL
