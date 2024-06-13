@@ -52,11 +52,23 @@ Sprite_DekuScrub_Prep:
 {
   PHB : PHK : PLB
 
+  LDA.w SprSubtype, X : CMP.b #$01 : BEQ .DekuButler
+                        CMP.b #$02 : BEQ .DekuPrincess
+
   LDA.l $7EF301
   BEQ   .PlayIntro
     LDA.b #$04 : STA.w SprAction, X
   .PlayIntro
 
+  PLB
+  RTL
+
+  .DekuButler
+  LDA.b #$05 : STA.w SprAction, X
+  PLB
+  RTL
+  .DekuPrincess
+  LDA.b #$06 : STA.w SprAction, X
   PLB
   RTL
 }
@@ -65,8 +77,8 @@ Sprite_DekuScrub_Prep:
 
 Sprite_DekuScrub_Main:
 {
-  LDA.w SprAction, X                        ; Load the SprAction
-  JSL   UseImplicitRegIndexedLocalJumpTable ; Goto the SprAction we are currently in
+  LDA.w SprAction, X                       
+  JSL   UseImplicitRegIndexedLocalJumpTable
 
   dw EstadoInactivo
   dw QuiereCuracion
@@ -118,8 +130,8 @@ Sprite_DekuScrub_Main:
 
     LDY   #$11 : STZ $02E9     ; Give the Deku Mask
     JSL   Link_ReceiveItem
-    LDA   #$01 : STA.l $7EF301
-    LDA.b #$00 : STA $0DD0, X
+    LDA.b #$01 : STA.l $7EF301
+    %GotoAction(4)
   +
     RTS
   }
