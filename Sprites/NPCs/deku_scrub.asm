@@ -54,8 +54,8 @@ Sprite_DekuScrub_Prep:
 
   LDA.l $7EF301
   BEQ   .PlayIntro
-    STZ.w $0DD0, X ; Kill the sprite 
-.PlayIntro
+    LDA.b #$04 : STA.w SprAction, X
+  .PlayIntro
 
   PLB
   RTL
@@ -71,11 +71,15 @@ Sprite_DekuScrub_Main:
   dw EstadoInactivo
   dw QuiereCuracion
   dw DarMascara
-  dw Untitled
+  dw Regalo
+  dw Withered
+  dw DekuButler
+  dw DekuPrincess
 
   EstadoInactivo:
   {
     %PlayAnimation(0, 1, 16)
+    JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($140) : BCC .no_hablaba
     %GotoAction(1)
 
@@ -86,6 +90,7 @@ Sprite_DekuScrub_Main:
   QuiereCuracion:
   {
     %PlayAnimation(0, 1, 16)
+    JSL Sprite_PlayerCantPassThrough
     LDA   $FE : BEQ .ninguna_cancion
     STZ   $FE
     LDA.b #$C0 : STA.w SprTimerD, X
@@ -107,7 +112,7 @@ Sprite_DekuScrub_Main:
     RTS
   }
 
-  Untitled:
+  Regalo:
   {
     LDA.w SprTimerD, X : BNE +
 
@@ -116,6 +121,27 @@ Sprite_DekuScrub_Main:
     LDA   #$01 : STA.l $7EF301
     LDA.b #$00 : STA $0DD0, X
   +
+    RTS
+  }
+
+  Withered:
+  {
+    %PlayAnimation(2, 2, 10)
+    JSL Sprite_PlayerCantPassThrough
+    RTS
+  }
+
+  DekuButler:
+  {
+    %PlayAnimation(3, 3, 10)
+    JSL Sprite_PlayerCantPassThrough
+    RTS
+  }
+
+  DekuPrincess:
+  {
+    %PlayAnimation(4, 4, 10)
+    JSL Sprite_PlayerCantPassThrough
     RTS
   }
 }
@@ -178,23 +204,58 @@ Sprite_DekuScrub_Draw:
 
   RTS
 
-.start_index
-  db $00, $04
-.nbr_of_tiles
-  db 3, 3
-.x_offsets
-  dw 4, -4, -4, 4
-  dw 4, -4, -4, 4
-.y_offsets
-  dw 0, 0, -8, -8
-  dw 0, 0, -8, -8
-.chr
-  db $2C, $2C, $0C, $0C
-  db $2E, $2E, $0E, $0E
-.properties
-  db $33, $73, $33, $73
-  db $33, $73, $33, $73
-.sizes
-  db $02, $02, $02, $02
-  db $02, $02, $02, $02
+  .start_index
+    db $00, $04, $08, $0C, $10
+  .nbr_of_tiles
+    db 3, 3, 3, 3, 3
+  .x_offsets
+    dw 4, 4, -4, -4
+    dw 4, -4, -4, 4
+    dw -8, -8, 8, 8
+    dw -4, 4, -4, 4
+    dw -4, -4, 4, 4
+  .y_offsets
+    dw 4, -4, -4, 4
+    dw 4, 4, -4, -4
+    dw 4, -12, -12, 4
+    dw -12, -12, 4, 4
+    dw 4, -12, 4, -12
+  .chr
+    db $2E, $0E, $0E, $2E
+    db $2C, $2C, $0C, $0C
+    db $20, $00, $02, $22
+    db $04, $05, $24, $25
+    db $27, $07, $27, $07
+  .properties
+    db $3B, $7B, $3B, $7B
+    db $3B, $7B, $3B, $7B
+    db $3B, $3B, $3B, $3B
+    db $3B, $3B, $3B, $3B
+    db $3B, $3B, $7B, $7B
+  .sizes
+    db $02, $02, $02, $02
+    db $02, $02, $02, $02
+    db $02, $02, $02, $02
+    db $02, $02, $02, $02
+    db $02, $02, $02, $02
+
+; .start_index
+;   db $00, $04
+; .nbr_of_tiles
+;   db 3, 3
+; .x_offsets
+;   dw 4, -4, -4, 4
+;   dw 4, -4, -4, 4
+; .y_offsets
+;   dw 0, 0, -8, -8
+;   dw 0, 0, -8, -8
+; .chr
+;   db $2C, $2C, $0C, $0C
+;   db $2E, $2E, $0E, $0E
+; .properties
+;   db $33, $73, $33, $73
+;   db $33, $73, $33, $73
+; .sizes
+;   db $02, $02, $02, $02
+;   db $02, $02, $02, $02
 }
