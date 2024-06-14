@@ -101,6 +101,41 @@ Sprite_BeanVendor_Main:
     %StartOnFrame(1)
     %PlayAnimation(1,1,1)
     
+    ; TODO: Finish bottle logic
+    LDA.w SprMiscE, X : CMP.b #$01 : BEQ .not_lifting
+    LDA.w $0309 : CMP.b #$02 : BNE .not_lifting
+
+      LDA.l $7EF35C : BEQ .bottle1_available
+      LDA.l $7EF35D : BEQ .bottle2_available
+      LDA.l $7EF35E : BEQ .bottle3_available
+      LDA.l $7EF35F : BEQ .bottle4_available
+      
+      %ShowUnconditionalMessage($033)
+      LDA.b #$01 : STA.w SprMiscE, X
+      JMP .not_lifting
+
+      .bottle1_available
+      LDA.b #$09 : STA.l $7EF35C
+      %ShowUnconditionalMessage($034)
+      LDA.b #$01 : STA.w SprMiscE, X
+      RTS
+      .bottle2_available
+      LDA.b #$09 : STA.l $7EF35D
+      %ShowUnconditionalMessage($034)
+      LDA.b #$01 : STA.w SprMiscE, X
+      RTS
+      .bottle3_available
+      LDA.b #$09 : STA.l $7EF35E
+      %ShowUnconditionalMessage($034)
+      LDA.b #$01 : STA.w SprMiscE, X
+      RTS
+      .bottle4_available
+      LDA.b #$09 : STA.l $7EF35F
+      %ShowUnconditionalMessage($034)
+      LDA.b #$01 : STA.w SprMiscE, X
+      RTS
+
+    .not_lifting
     JSL Sprite_CheckIfLifted
     
     RTS
@@ -167,6 +202,13 @@ Sprite_BeanVendor_Main:
     %ShowUnconditionalMessage($146)
     RTS 
   }
+}
+
+ReleaseMagicBean:
+{
+  %ShowUnconditionalMessage($030)
+  ; TODO: Release the magic bean sprite to be used on another map
+  RTL
 }
 
 ; =========================================================

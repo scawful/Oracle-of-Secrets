@@ -82,8 +82,7 @@ LinkItem_CatchBottle:
   LDA.b #$32 : JSR Player_DoSfx2
 
 .y_press:
-
-  JSR  $AE65 ;UnknownRoutine
+  JSR  $AE65 ; HaltLinkWhenUsingItems
   
   LDA $67 : AND.b #$F0 : STA $67
   DEC $3D : BPL .bottle_exit
@@ -125,8 +124,13 @@ LinkItem_Bottles:
   CMP.b #$04       : BEQ .LinkItem_GreenPotion
   CMP.b #$05       : BEQ .LinkItem_BluePotion
   CMP.b #$06       : BEQ .fairy
+  CMP.b #$09       : BEQ .magic_bean
   
   BRL .LinkItem_BeeBottle
+
+.magic_bean
+  JSL ReleaseMagicBean
+  RTS
 
 .fairy
   BRL .LinkItem_FairyBottle
