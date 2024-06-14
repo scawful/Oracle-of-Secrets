@@ -98,6 +98,7 @@ Sprite_BeanVendor_Main:
   ; 0x01 - Liftable Magic Bean
   MagicBean:
   {
+    %StartOnFrame(1)
     %PlayAnimation(1,1,1)
     
     JSL Sprite_CheckIfLifted
@@ -132,13 +133,15 @@ Sprite_BeanVendor_Main:
         STA.l $7EF360
         SEP #$30
 
-        LDA.b #$07 
-        JSL Sprite_SpawnDynamically
-        LDA.b #$02 : STA.w SprAction, Y
-        LDA.w SprX, X : CLC : ADC.b #$08 : STA $00
+        LDA.w SprX, X : CLC : ADC.b #$16 : STA $00
         LDA.w SprY, X : STA $02
         LDA.w SprYH, X : STA $03
         LDA.w SprXH, X : STA $01
+        LDA.b #$07 
+        JSL   Sprite_SpawnDynamically
+        JSL   Sprite_SetSpawnedCoords
+        LDA.b #$01 : STA.w SprAction, Y
+
         ; TODO: Set a flag that says you've got the magic bean
         %ShowUnconditionalMessage($145)
         %GotoAction(0)
