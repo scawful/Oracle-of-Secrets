@@ -914,4 +914,104 @@ Castle_Frame3:
   RTS
 }
 
+;===============================================
+
+TailPalace_EntranceAnimation:
+{
+
+  LDA.b $B0 ; Get animation state
+  ASL A
+  TAX ; x2
+
+  JSR.w (.AnimationFrames, X)
+
+  RTL
+
+  .AnimationFrames
+    dw TailPalace_Frame0
+    dw TailPalace_Frame1
+    dw TailPalace_Frame2
+
+  TailPalace_Frame0:
+  {
+    LDA.b $C8 : BEQ .doInit ; Load the timer
+    JMP .notfirstframe
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$0A8C
+    LDX.w #$02A2
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    .wait
+    RTS
+  }
+
+  TailPalace_Frame1:
+  {
+    LDA.b $C8 : BEQ .doInit ; Load the timer
+    JMP .notfirstframe
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$0AF3
+    LDX.w #$0328
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    .wait
+    RTS
+  }
+
+  TailPalace_Frame2:
+  {
+    LDA.b $C8 : BEQ .doInit ; Load the timer
+    JMP .notfirstframe
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$0AF1
+    LDX.w #$0328
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0AF3
+    LDX.w #$03A8
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    JSR ShakeScreen ; make the screen shake
+    INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    STZ.w $04C6
+    STZ.b $B0
+    STZ.w $0710
+    STZ.w $02E4
+    STZ.w $0FC1
+    STZ.w $011A
+    STZ.w $011B
+    STZ.w $011C
+    STZ.w $011D
+    ; set the overlay
+    LDX.b $8A
+    LDA.l $7EF280,X
+    ORA.b #$20
+    STA.l $7EF280,X
+    .wait
+    RTS
+  }
+}
+
 pushpc
