@@ -2,8 +2,8 @@
 ; Sprite Properties
 ; =========================================================
 
-!SPRID              = $00; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00 ; Number of tiles used in a frame
+!SPRID              = $CC ; The sprite ID you are overwriting (HEX)
+!NbrTiles           = 00  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -29,7 +29,9 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
-%Set_Sprite_Properties(Sprite_Booki_Prep, Sprite_Booki_Long);
+
+%Set_Sprite_Properties(Sprite_Booki_Prep, Sprite_Booki_Long)
+
 ; =========================================================
 
 Sprite_Booki_Long:
@@ -53,7 +55,7 @@ Sprite_Booki_Prep:
 {
   PHB : PHK : PLB
     
-      ; Add more code here to initialize data
+  LDA.b #$80 : STA.w SprDefl, X
 
   PLB
   RTL
@@ -65,13 +67,53 @@ Sprite_Booki_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
-  dw Action00
 
+  dw StalkPlayer
+  dw HideFromPlayer
+  dw HiddenFromPlayer
+  dw ApproachPlayer
 
-  Action00:
+  StalkPlayer:
+  {
+    %PlayAnimation(0,1,16)
 
+    RTS
+  }
 
-  RTS
+  HideFromPlayer:
+  {
+    %PlayAnimation(0,5,16)
+    RTS
+  }
+
+  HiddenFromPlayer:
+  {
+    %PlayAnimation(5,5,16)
+    RTS
+  }
+
+  ApproachPlayer:
+  {
+    %PlayAnimation(6,10,16)
+  }
+}
+
+Sprite_Booki_Move:
+{
+  JSL Sprite_Move
+  JSL Sprite_BounceFromTileCollision
+  JSL Sprite_PlayerCantPassThrough
+
+  LDA.w SprMiscB, X
+  JSL UseImplicitRegIndexedLocalJumpTable
+
+  dw SlowFloat
+
+  SlowFloat:
+  {
+
+    RTS
+  }
 }
 
 

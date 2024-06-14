@@ -2,8 +2,8 @@
 ; Sprite Properties
 ; ========================================================= 
 
-!SPRID              = $00; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00 ; Number of tiles used in a frame
+!SPRID              = $CD ; The sprite ID you are overwriting (HEX)
+!NbrTiles           = 02  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -34,6 +34,7 @@
 ; =========================================================
 
 Sprite_ThunderGhost_Long:
+{
   PHB : PHK : PLB
 
   JSR Sprite_ThunderGhost_Draw ; Call the draw code
@@ -45,35 +46,40 @@ Sprite_ThunderGhost_Long:
   .SpriteIsNotActive
   PLB ; Get back the databank we stored previously
   RTL ; Go back to original code
+}
 
 
-
-  Sprite_ThunderGhost_Prep:
+Sprite_ThunderGhost_Prep:
+{
   PHB : PHK : PLB
     
-      ; Add more code here to initialize data
 
   PLB
   RTL
+}
 
 ; =========================================================
 
 Sprite_ThunderGhost_Main:
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
-  dw Action00
+{
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
+  dw ThunderGhostHandler
 
 
-  Action00:
+  ThunderGhostHandler:
+  {
+    %PlayAnimation(0, 7, 16)
 
 
-
-  RTS
-
+    RTS
+  }
+}
 
 ; =========================================================
 
 Sprite_ThunderGhost_Draw:
+{
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
@@ -179,3 +185,4 @@ Sprite_ThunderGhost_Draw:
   db $02, $00, $00
   db $02, $00, $00
   db $02, $00, $00
+}

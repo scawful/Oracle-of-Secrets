@@ -100,6 +100,10 @@ print  "End of sea_urchin.asm             ", pc
 incsrc "Sprites/Enemies/helmet_chuchu.asm"
 print  "End of helmet_chuchu.asm          ", pc
 
+incsrc "Sprites/Enemies/booki.asm"
+
+incsrc "Sprites/Enemies/thunder_ghost.asm"
+
 incsrc "Sprites/Objects/switch_track.asm"
 print  "End of switch_track.asm           ", pc
 
