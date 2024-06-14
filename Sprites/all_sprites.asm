@@ -60,6 +60,9 @@ print  "End of maku_tree.asm              ", pc
 incsrc "Sprites/NPCs/mask_salesman.asm"
 print  "End of mask_salesman.asm          ", pc
 
+incsrc "Sprites/NPCs/bean_vendor.asm"
+print  "End of bean_vendor.asm            ", pc
+
 ;=========================================================
 
 org    $318000
@@ -76,6 +79,9 @@ print  "End of anti_kirby.asm             ", pc
 
 incsrc "Sprites/Enemies/sea_urchin.asm"
 print  "End of sea_urchin.asm             ", pc
+
+incsrc "Sprites/Enemies/helmet_chuchu.asm"
+print  "End of helmet_chuchu.asm          ", pc
 
 incsrc "Sprites/Objects/switch_track.asm"
 print  "End of switch_track.asm           ", pc
