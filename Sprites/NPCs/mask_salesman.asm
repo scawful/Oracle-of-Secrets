@@ -126,7 +126,7 @@ Sprite_MaskSalesman_Main:
   HasOcarina:
   {
     %PlayAnimation(0, 1, 16)
-    %ShowSolicitedMessage($11C) ; Oh! You got it!
+    %ShowSolicitedMessage($080) ; Oh! You got it!
     %GotoAction(3)
     RTS
   }
@@ -149,7 +149,7 @@ Sprite_MaskSalesman_Main:
   {    
       %PlayAnimation(0, 1, 16)
 
-      %ShowUnconditionalMessage($11B) ; Bunny Hood for 100 rupees?
+      %ShowUnconditionalMessage($07F) ; Bunny Hood for 100 rupees?
       %GotoAction(8)
       RTS
   }
@@ -158,7 +158,7 @@ Sprite_MaskSalesman_Main:
   OfferStoneMask:
   {    
       %PlayAnimation(0, 1, 16)
-      %ShowUnconditionalMessage($11E) ; Stone Mask for 200 rupees?
+      %ShowUnconditionalMessage($082) ; Stone Mask for 650 rupees?
       %GotoAction(9)
       RTS
   }
@@ -176,7 +176,7 @@ Sprite_MaskSalesman_Main:
   PlayerHasAllMasks:
   {
     %PlayAnimation(0, 1, 16)
-    %ShowUnconditionalMessage($11F)
+    %ShowUnconditionalMessage($028)
     %GotoAction(0)
     RTS
   }
@@ -257,7 +257,7 @@ Sprite_MaskSalesman_Main:
   NotEnoughMoney:
   {
     %PlayAnimation(0, 1, 16)
-    %ShowUnconditionalMessage($120)
+    %ShowUnconditionalMessage($029)
     %GotoAction(0)
     RTS
   }

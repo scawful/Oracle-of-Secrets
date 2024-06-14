@@ -20,7 +20,7 @@ RanchGirl_Message:
   LDA #$01 : STA SprMiscD, X
   RTL
 .has_ocarina
-  %ShowUnconditionalMessage($011D)
+  %ShowUnconditionalMessage($010E)
   RTL
 }
 
