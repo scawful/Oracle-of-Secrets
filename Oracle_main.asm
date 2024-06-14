@@ -33,6 +33,8 @@ print  "End of custom_gfx.asm             ", pc
 incsrc "Overworld/ZCustomOverworld.asm"
 print  "End of ZCustomOverworld.asm       ", pc
 
+incsrc "Core/ram.asm"
+
 namespace Oracle
 {
   print ""
