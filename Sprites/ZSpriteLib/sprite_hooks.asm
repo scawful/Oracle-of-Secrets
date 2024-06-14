@@ -143,6 +143,10 @@ SprPrize     = $0BE0
 ;   p - idk
 SprTileDie   = $0B6B
 
+; If nonzero, ancillae do not interact with the sprite
+; Bulletproof
+SprBulletproof = $0BA0
+
 org $09AE64
 Sprite_SetSpawnedCoords:
 
