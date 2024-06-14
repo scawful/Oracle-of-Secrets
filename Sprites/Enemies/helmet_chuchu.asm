@@ -7,7 +7,7 @@
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = $20 ; Number of Health the sprite have
-!Damage             = 08  ; (08 is a whole heart), 04 is half heart
+!Damage             = 04  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
@@ -61,6 +61,7 @@ Sprite_HelmetChuchu_Prep:
 
   LDA.b #$80 : STA.w SprHealth, X
   JSL GetRandomInt : AND.b #$02 : STA SprAction, X
+  STZ.w SprMiscB, X
 
   PLB
   RTL
@@ -111,12 +112,46 @@ Sprite_HelmetChuchu_Main:
 
 Sprite_Chuchu_Move:
 {
-  JSL Sprite_PlayerCantPassThrough 
-  JSL GetRandomInt : AND.b #$08 : STA $09 ; Speed
-  JSL GetRandomInt : AND.b #$06 : STA $08 ; Height
-  JSL Sprite_BounceTowardPlayer
-  JSL Sprite_BounceFromTileCollision
-  RTS
+  LDA.w SprMiscB, X 
+  JSL UseImplicitRegIndexedLocalJumpTable
+
+  dw BounceTowardPlayer
+  dw RecoilFromPlayer
+
+  BounceTowardPlayer:
+  {
+    JSL Sprite_PlayerCantPassThrough 
+    JSL GetRandomInt : AND.b #$08 : STA $09 ; Speed
+    JSL GetRandomInt : AND.b #$06 : STA $08 ; Height
+    JSL Sprite_BounceTowardPlayer
+    JSL Sprite_BounceFromTileCollision
+
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+      INC.w SprMiscB, X
+      LDA.b #$40 : STA.w SprTimerB, X
+    .no_damage
+
+    RTS
+  }
+
+  RecoilFromPlayer:
+  {
+    JSL GetRandomInt : AND.b #$08 : STA $09 ; Speed
+    LDA SprX, X : CLC : ADC $09 : STA $04
+    LDA SprY, X : CLC : ADC $08 : STA $06
+    LDA SprXH, X : ADC #$00 : STA $05
+    LDA SprYH, X : ADC #$00 : STA $07
+    LDA $09 : STA $00 : STA $01
+    JSL Sprite_ProjectSpeedTowardsEntityLong
+    JSL Sprite_Move
+    JSL Sprite_BounceFromTileCollision
+
+    LDA.w SprTimerB, X : BNE .not_done
+      STZ.w SprMiscB, X
+    .not_done
+
+    RTS
+  }
 }
 
 ; =========================================================
