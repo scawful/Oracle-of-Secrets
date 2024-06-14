@@ -50,6 +50,7 @@ MapIconDraw:
 
     .draw_prizes
     LDA.b $8A : AND.b #$40 : BEQ .lwprizes
+      ; TODO: Place the pendant positions
       ; X position
       LDA.b #$00 : STA.l $7EC10B
       LDA.b #$89 : STA.l $7EC10A ; Upper nybble control Zoomed low X pos
@@ -69,6 +70,28 @@ MapIconDraw:
 
     .lwprizes
 
+    LDA.l $7EF3C7 : CMP.b #$01 : BEQ .hall_of_secrets
+    JMP .draw_crystals
+    .hall_of_secrets
+    ; Draw Hall of Secrets
+    LDA.l $7EF37A : AND #$20 : BNE .skip_hall_draw
+      ; X position
+      LDA.b #$0D : STA.l $7EC10B
+      LDA.b #$34 : STA.l $7EC10A
+      ; Y position
+      LDA.b #$03 : STA.l $7EC109
+      LDA.b #$0E : STA.l $7EC108
+      ; Tile GFX
+      LDA.b #$68 : STA.b $0D
+      LDA.b #$34 : STA.b $0C
+      ; Tile Size
+      LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+      LDA.b #$07 : STA.l $7EC025
+      JSR HandleMapDrawIcon
+      JMP restore_coords_and_exit
+    .skip_hall_draw
+
+    .draw_crystals
     ; Draw Crystal 1 
     LDA.l $7EF37A : AND #$02 : BNE .skip_draw_0
       ; X position

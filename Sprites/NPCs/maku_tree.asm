@@ -84,7 +84,7 @@ Sprite_MakuTree_Main:
   {
       %ShowSolicitedMessage($20) : BCC .no_talk
       LDA #$01 : STA $7EF3D4
-      LDA #$06 : STA $7EF3C7
+      LDA #$01 : STA $7EF3C7 ; Mark the Hall of Secrets
       %GotoAction(2)
     .no_talk
       RTS
