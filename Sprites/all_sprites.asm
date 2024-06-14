@@ -20,6 +20,11 @@ warnpc $00841E
 org $0CDC26
     db $80 ; replace a $F0 (BEQ) with a $80 (BRA).
 
+; Follower_Disable
+; Don't disable Kiki so we can switch maps with him.
+org $09ACF3
+  LDA.l $7EF3CC
+  CMP.b #$0E
 ; =========================================================
 
 incsrc ZSpriteLib/sprite_macros.asm
