@@ -116,11 +116,6 @@ SprDmg       = $0CE2
 ;         usage, however, the best deduction I can make is that this was a flag
 ;         intended to signal that a sprite is an interactive object that Link can
 ;         push against, pull on, or otherwise exerts a physical presence.
-        
-;         In general, it might have indicated some kind of A button (action
-;         button) affinity for the sprite, but I think this is merely informative
-;         rather than something relevant to gameplay.
-    
 ;     d - If hit from front, deflect Ice Rod, Somarian missile,
 ;         boomerang, hookshot, and sword beam, and arrows stick in
 ;         it harmlessly.  If bit 1 is also set, frontal arrows will
@@ -129,10 +124,24 @@ SprDmg       = $0CE2
 ;         enough to include.
 ;     e - If set, makes the sprite collide with less tiles than usual
 ;     f - If set, makes sprite impervious to sword and hammer type attacks
-;     g - ???? Seems to make sprite impervious to arrows, but may have other
-;         additional meanings.
-;     h - disabled???
+;     g - If set, makes sprite impervious to arrows, but may have other additional meanings.
+;     h - Handles behavior with previous deaths flagged in $7F:DF80 (0: default | 1: ignore)
 SprDefl      = $0CAA
+
+; iwbs pppp
+;   i - disable tile interaction
+;   w - something water
+;   b - sprite is blocked by shield
+;   s - taking damage sfx to use TODO name
+;   p - prize pack
+SprPrize     = $0BE0
+
+; tttt a.bp
+;   t - tile hitbox TODO ???
+;   a - deflect arrows TODO VERIFY
+;   b - boss death
+;   p - idk
+SprTileDie   = $0B6B
 
 org $09AE64
 Sprite_SetSpawnedCoords:
