@@ -124,6 +124,10 @@ Sprite_HelmetChuchu_Main:
 
 Sprite_Chuchu_Move:
 {
+  JSL Sprite_Move
+  JSL Sprite_BounceFromTileCollision
+  JSL Sprite_PlayerCantPassThrough
+
   LDA.w SprMiscB, X 
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -132,11 +136,20 @@ Sprite_Chuchu_Move:
 
   BounceTowardPlayer:
   {
-    JSL Sprite_PlayerCantPassThrough 
-    JSL GetRandomInt : AND.b #$04 : STA $09 ; Speed
+    JSL GetRandomInt : AND.b #$02 : STA $09 ; Speed
     JSL GetRandomInt : AND.b #$07 : STA $08 ; Height
-    JSL Sprite_BounceTowardPlayer
-    JSL Sprite_BounceFromTileCollision
+
+    JSL Sprite_MoveAltitude
+    DEC.w $0F80,X : DEC.w $0F80,X
+    LDA.w $0F70, X : BPL .aloft
+      STZ.w $0F70, X
+      LDA.b $08 : STA.w $0F80, X ; set height from 08
+      LDA.b $09
+      JSL Sprite_ApplySpeedTowardsPlayer
+    .aloft
+    LDA.w $0F70, X : BEQ .dontmove
+      JSL Sprite_Move
+    .dontmove
 
     JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
       INC.w SprMiscB, X
@@ -153,15 +166,13 @@ Sprite_Chuchu_Move:
 
   RecoilFromPlayer:
   {
-    JSL GetRandomInt : AND.b #$04 : STA $09 ; Speed
+    JSL GetRandomInt : AND.b #$02 : STA $09 ; Speed
     LDA SprX, X : CLC : ADC $09 : STA $04
     LDA SprY, X : SEC : SBC $09 : STA $06
     LDA SprXH, X : ADC #$00 : STA $05
     LDA SprYH, X : ADC #$00 : STA $07
     LDA $09 : STA $00 : STA $01
     JSL Sprite_ProjectSpeedTowardsEntityLong
-    JSL Sprite_Move
-    JSL Sprite_BounceFromTileCollision
 
     LDA.w SprTimerB, X : BNE .not_done
       STZ.w SprMiscB, X
