@@ -55,13 +55,13 @@ Sprite_AntiKirby_Prep:
 {
   PHB : PHK : PLB
   
-  LDA #$00 : STA $0CAA, X
-  LDA #$00 : STA $0B6B, X
+  LDA #$00 : STA.w SprDefl, X
+  LDA #$00 : STA.w SprTileDie, X
 
   LDY $0FFF
-  LDA .bump_damage, Y : STA $0CD2, X
-  LDA .hp, Y : STA $0E50, X
-  LDA .prize_pack, Y : STA $0BE0, X
+  LDA .bump_damage, Y : STA.w SprBump, X
+  LDA .health, Y : STA.w SprHealth, X
+  LDA .prize_pack, Y : STA SprPrize, X
 
   PLB
   RTL
@@ -69,7 +69,7 @@ Sprite_AntiKirby_Prep:
   .bump_damage
     db $81, $88
 
-  .hp
+  .health
     db 8, 16
 
   .prize_pack
@@ -167,13 +167,12 @@ Sprite_AntiKirby_Main:
 
   AntiKirby_Hurt:
   {
-      %PlayAnimation(8, 8, 10) ; Hurt 
-
-      LDA SprTimerA, X : BNE .NotDone
+    %PlayAnimation(8, 8, 10) ; Hurt 
+    LDA SprTimerA, X : BNE .NotDone
       %GotoAction(0)
     .NotDone
 
-      RTS
+    RTS
   }
 
   AntiKirby_Suck:
@@ -182,23 +181,23 @@ Sprite_AntiKirby_Main:
 
       LDA.b $0E : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
         LDA.b $0F : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
-          INC.w $0D80,X
+          INC.w SprAction, X
 
           LDA.b #$1F
           JSL Sprite_ProjectSpeedTowardsPlayer
           JSL Sprite_ConvertVelocityToAngle
 
           LSR A
-          STA.w $0DE0,X
+          STA.w SprMiscC,X
 
           LDA.b #$5F
           STA.w SprTimerA, X
 
           RTS
-      ; ---------------------------------------------------------
+      ; -----------------------------------------------------
 
       .dont_tongue_link
-      STZ.w $0D80,X
+      STZ.w SprAction, X
 
       LDA.b #$10
       STA.w SprTimerA, X
@@ -212,14 +211,14 @@ Sprite_AntiKirby_Main:
 
     LDA.w SprTimerA, X : BNE .lickylicky
 
-      STZ.w $0D80,X
+      STZ.w SprAction, X
 
       LDA.b #$10
       STA.w SprTimerA, X
 
-      STZ.w $0D90,X
-      STZ.w $0DA0,X
-      STZ.w $0ED0,X
+      STZ.w SprFrame, X
+      STZ.w SprMiscA, X
+      STZ.w SprMiscG, X
 
       RTS
 
@@ -229,18 +228,16 @@ Sprite_AntiKirby_Main:
     PHA
 
     TAY
-
-    LDA.w .anim,Y : STA.w $0DC0,X
-
+    LDA.w .anim,Y : STA.w SprGfx, X
     TYA
 
-    LDY.w $0DE0,X
+    LDY.w SprMiscC, X
     PHY
 
-    CLC : ADC.w .index_offset_x,Y
+    CLC : ADC.w .index_offset_x, Y
     TAY
 
-    LDA.w .pos,Y : STA.w $0D90,X
+    LDA.w .pos, Y : STA.w SprFrame, X
 
     STA.b $04
     STZ.b $05
@@ -253,10 +250,10 @@ Sprite_AntiKirby_Main:
     PLY
 
     PLA
-    CLC : ADC.w .index_offset_y,Y
+    CLC : ADC.w .index_offset_y, Y
 
     TAY
-    LDA.w .pos,Y : STA.w $0DA0,X
+    LDA.w .pos, Y : STA.w SprMiscA, X
 
     STA.b $06
     STZ.b $07
@@ -267,28 +264,21 @@ Sprite_AntiKirby_Main:
     DEC.b $07
 
     .positive_y
-    LDA.w $0ED0,X : BNE .exit
+    LDA.w SprMiscG, X : BNE .exit
 
     REP #$20
 
     LDA.w $0FD8
     CLC : ADC.b $04
-
     SEC : SBC.b $22
+    CLC : ADC.w #$000C : CMP.w #$0018 : BCS .exit
 
-    CLC : ADC.w #$000C
-
-    CMP.w #$0018 : BCS .exit
-
-    LDA.w $0FDA : CLC : ADC.b $06
-
+    LDA.w $0FDA 
+    CLC : ADC.b $06
     SEC : SBC.b $20
+    CLC : ADC.w #$000C : CMP.w #$0020 : BCS .exit
 
-    CLC : ADC.w #$000C
-
-    CMP.w #$0020 : BCS .exit
-
-    ; ---------------------------------------------------------
+    ; -----------------------------------------------------
 
     SEP #$20
 
@@ -301,59 +291,43 @@ Sprite_AntiKirby_Main:
     JSL GetRandomInt
     AND.b #$03
     INC A
-    STA.w $0ED0,X
-    STA.w $0E90,X
+    STA.w SprMiscG, X
+    STA.w SprMiscD, X
 
     CMP.b #$01 : BNE .dont_steal_bomb
-
-    LDA.l $7EF343 : BEQ .dont_steal_anything
-
-    DEC A
-    STA.l $7EF343
-
-    RTS
-
-    .dont_steal_anything
-    SEP #$20
-
-    STZ.w $0ED0,X
-
-    RTS
-
-    ; ---------------------------------------------------------
-
+      LDA.l $7EF343 : BEQ .dont_steal_anything
+        DEC A
+        STA.l $7EF343
+        RTS
+      .dont_steal_anything
+      SEP #$20
+      STZ.w SprMiscG,X
+      RTS
     .dont_steal_bomb
+
     CMP.b #$02 : BNE .dont_steal_arrow
-
-    LDA.l $7EF377 : BEQ .dont_steal_anything
-
-    DEC A
-    STA.l $7EF377
-
-    RTS
-
-    ; ---------------------------------------------------------
-
+      LDA.l $7EF377 : BEQ .dont_steal_anything
+        DEC A
+        STA.l $7EF377
+        RTS
     .dont_steal_arrow
+
     CMP.b #$03 : BNE .dont_steal_rupee
 
     REP #$20
 
     LDA.l $7EF360 : BEQ .dont_steal_anything
-
-    DEC A
-    STA.l $7EF360
-
+      DEC A
+      STA.l $7EF360
     .exit
     SEP #$20
-
     RTS
 
-    ; ---------------------------------------------------------
+    ; -----------------------------------------------------
 
     .dont_steal_rupee
     LDA.l $7EF35A
-    STA.w $0E30,X
+    STA.w SprSubtype, X
     BEQ .dont_steal_anything
 
     CMP.b #$03
@@ -393,21 +367,16 @@ Sprite_AntiKirby_Main:
   {
     %PlayAnimation(12, 12, 10) ; Death
 
-    LDA.b #$06
-    STA.w $0DD0,X
+    LDA.b #$06 : STA.w SprState, X
+    LDA.b #$0A : STA.w SprTimerA, X
 
-    LDA.b #$0A
-    STA.w SprTimerA, X
-
-    STZ.w $0BE0,X
+    STZ.w SprPrize,X
 
     LDA.b #$09 ; SFX2.1E
     JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan
     
     RTS
   }
-  
-  
 }
 
 
@@ -416,10 +385,10 @@ Sprite_AntiKirby_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA SprGfx, X : CLC : ADC SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
-  LDA $0DA0, X : STA $08
+  LDA SprMiscA, X : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
