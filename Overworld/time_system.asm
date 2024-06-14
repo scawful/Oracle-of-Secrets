@@ -115,6 +115,8 @@ RunClock:
         RTS
 
     .overworld
+    ; Reload Sprite Gfx Properties
+    JSL $00FC62 ; Sprite_LoadGraphicsProperties
 
     LDA $11 : CMP #$23 : BNE .mosaic ;hdma transfer? (warping)
       ; Lol what?
@@ -174,8 +176,7 @@ RunClock:
     JSL $0BFE72
 
     .inc_hours_end
-    ; Reload Sprite Gfx Properties
-    JSL $00FC62 ; Sprite_LoadGraphicsProperties
+
 
     
     RTS
@@ -409,14 +410,10 @@ CheckIfNight:
   LDA $7EE000 : CMP.b #$06 : BCC .night_time
     .day_time
     LDA.l $7EF3C5
-
     RTL
   .night_time
-
-  LDA $7EE000 : CMP.b #$14 : BCS .day_time
-    LDA.l $7EF3C5
-    CLC
-    ADC #$01
+  LDA $7EE000 : CMP.b #$12 : BCS .day_time
+    LDA.b #$03
     RTL
 }
 
@@ -494,7 +491,7 @@ CheckIfNight16Bit:
     RTL
   .night_time
 
-  LDA $7EE000 : AND.w #$00FF : CMP.w #$14 : BCS .day_time
+  LDA $7EE000 : AND.w #$00FF : CMP.w #$0012 : BCS .day_time
     LDA.l $7EF3C5
     CLC
     ADC #$0001
