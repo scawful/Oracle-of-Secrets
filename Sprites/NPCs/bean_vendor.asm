@@ -3,7 +3,7 @@
 ; ========================================================= 
 
 !SPRID              = $07 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00  ; Number of tiles used in a frame
+!NbrTiles           = 04  ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -29,6 +29,7 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
+
 %Set_Sprite_Properties(Sprite_BeanVendor_Prep, Sprite_BeanVendor_Long)
 
 ; =========================================================
@@ -88,11 +89,7 @@ Sprite_BeanVendor_Main:
     JSL Sprite_PlayerCantPassThrough
 
     %ShowSolicitedMessage($142) : BCC .no_message
-      LDA $1CE8 : BNE .player_said_no
-        %GotoAction(3)
-        RTS
-      .player_said_no
-      %GotoAction(4)
+      %GotoAction(3)
     .no_message
     RTS
   }
@@ -121,32 +118,32 @@ Sprite_BeanVendor_Main:
   SpawnMagicBean:
   {
     %PlayAnimation(0,0,1)
-
-    REP #$20
-    LDA.l $7EF360
-    CMP.w #$64 ; 100 rupees
-    SEP #$30
-    BCC .not_enough_rupees
-
+    LDA $1CE8 : BNE .player_said_no_or_not_enough_rupees
       REP #$20
       LDA.l $7EF360
-      SEC
-      SBC.w #$64 ; Subtract 100 rupees
-      STA.l $7EF360
+      CMP.w #$64 ; 100 rupees
       SEP #$30
+      BCC .player_said_no_or_not_enough_rupees
 
-      LDA.b #$07 
-      JSL Sprite_SpawnDynamically
-      LDA.b #$02 : STA.w SprAction, Y
-      LDA.w SprX, X : CLC : ADC.b #$08 : STA $00
-      LDA.w SprY, X : STA $02
-      LDA.w SprYH, X : STA $03
-      LDA.w SprXH, X : STA $01
-      ; TODO: Set a flag that says you've got the magic bean
-      %ShowUnconditionalMessage($145)
-      %GotoAction(0)
-      RTS
-    .not_enough_rupees
+        REP #$20
+        LDA.l $7EF360
+        SEC
+        SBC.w #$64 ; Subtract 100 rupees
+        STA.l $7EF360
+        SEP #$30
+
+        LDA.b #$07 
+        JSL Sprite_SpawnDynamically
+        LDA.b #$02 : STA.w SprAction, Y
+        LDA.w SprX, X : CLC : ADC.b #$08 : STA $00
+        LDA.w SprY, X : STA $02
+        LDA.w SprYH, X : STA $03
+        LDA.w SprXH, X : STA $01
+        ; TODO: Set a flag that says you've got the magic bean
+        %ShowUnconditionalMessage($145)
+        %GotoAction(0)
+        RTS
+    .player_said_no_or_not_enough_rupees
     %GotoAction(4)
     RTS
   }
