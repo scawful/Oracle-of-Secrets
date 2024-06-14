@@ -122,16 +122,32 @@ Sprite_BeanVendor_Main:
   {
     %PlayAnimation(0,0,1)
 
-    LDA.b #$07 
-    JSL Sprite_SpawnDynamically
-    LDA.b #$02 : STA.w SprAction, Y
-    LDA.w SprX, X : CLC : ADC.b #$08 : STA $00
-    LDA.w SprY, X : STA $02
-    LDA.w SprYH, X : STA $03
-    LDA.w SprXH, X : STA $01
-    ; TODO: Set a flag that says you've got the magic bean
-    %ShowUnconditionalMessage($144)
-    %GotoAction(0)
+    REP #$20
+    LDA.l $7EF360
+    CMP.w #$64 ; 100 rupees
+    SEP #$30
+    BCC .not_enough_rupees
+
+      REP #$20
+      LDA.l $7EF360
+      SEC
+      SBC.w #$64 ; Subtract 100 rupees
+      STA.l $7EF360
+      SEP #$30
+
+      LDA.b #$07 
+      JSL Sprite_SpawnDynamically
+      LDA.b #$02 : STA.w SprAction, Y
+      LDA.w SprX, X : CLC : ADC.b #$08 : STA $00
+      LDA.w SprY, X : STA $02
+      LDA.w SprYH, X : STA $03
+      LDA.w SprXH, X : STA $01
+      ; TODO: Set a flag that says you've got the magic bean
+      %ShowUnconditionalMessage($145)
+      %GotoAction(0)
+      RTS
+    .not_enough_rupees
+    %GotoAction(4)
     RTS
   }
 
@@ -139,7 +155,7 @@ Sprite_BeanVendor_Main:
   PlayerSaidNo:
   {
     %PlayAnimation(0,0,1)
-    %ShowUnconditionalMessage($145)
+    %ShowUnconditionalMessage($144)
     %GotoAction(0)
     RTS
   }
