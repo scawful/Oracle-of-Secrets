@@ -2,8 +2,8 @@
 ; Sprite Properties
 ; ========================================================= 
 
-!SPRID              = $00; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00 ; Number of tiles used in a frame
+!SPRID              = $07 ; The sprite ID you are overwriting (HEX)
+!NbrTiles           = 00  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -34,6 +34,7 @@
 ; =========================================================
 
 Sprite_BeanVendor_Long:
+{
   PHB : PHK : PLB
 
   JSR Sprite_BeanVendor_Draw ; Call the draw code
@@ -45,35 +46,105 @@ Sprite_BeanVendor_Long:
   .SpriteIsNotActive
   PLB ; Get back the databank we stored previously
   RTL ; Go back to original code
+}
 
 
-
-  Sprite_BeanVendor_Prep:
+Sprite_BeanVendor_Prep:
+{
   PHB : PHK : PLB
     
-      ; Add more code here to initialize data
+  LDA.w SprSubtype, X : STA SprAction, X
 
   PLB
   RTL
+}
 
 ; =========================================================
 
 Sprite_BeanVendor_Main:
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
-  dw Action00
+{
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
 
+  dw BeanVendor
+  dw MagicBean
+  dw VillageElder
+  dw SpawnMagicBean
+  dw PlayerSaidNo
 
-  Action00:
+  ; 0x00 - Bean Vendor
+  BeanVendor:
+  {
+    %PlayAnimation(0,0,1)
 
+    JSL Sprite_PlayerCantPassThrough
 
+    %ShowSolicitedMessage($142) : BCC .no_message
+      LDA $1CE8 : BNE .player_said_no
+        %GotoAction(3)
+        RTS
+      .player_said_no
+      %GotoAction(4)
+    .no_message
+    RTS
+  }
 
-  RTS
+  
+  ; 0x01 - Liftable Magic Bean
+  MagicBean:
+  {
+    %PlayAnimation(1,1,1)
+    
+    JSL Sprite_CheckIfLifted
+    
+    RTS
+  }
 
+  ; 0x02 - Village Elder
+  VillageElder:
+  {
+    %PlayAnimation(2,3,8)
+    JSL Sprite_PlayerCantPassThrough
+
+    %ShowSolicitedMessage($143) : BCC .no_message
+    
+    .no_message
+
+    RTS
+  }
+
+  ; 0x03 - Spawn Magic Bean
+  SpawnMagicBean:
+  {
+    %PlayAnimation(0,0,1)
+
+    LDA.b #$07 
+    JSL Sprite_SpawnDynamically
+    LDA.b #$02 : STA.w SprAction, Y
+    LDA.w SprX, X : CLC : ADC.b #$08 : STA $00
+    LDA.w SprY, X : STA $02
+    LDA.w SprYH, X : STA $03
+    LDA.w SprXH, X : STA $01
+    ; TODO: Set a flag that says you've got the magic bean
+    %ShowUnconditionalMessage($144)
+    %GotoAction(0)
+    RTS
+  }
+
+  ; 0x04 - Player Said No
+  PlayerSaidNo:
+  {
+    %PlayAnimation(0,0,1)
+    %ShowUnconditionalMessage($145)
+    %GotoAction(0)
+    RTS
+  }
+}
 
 ; =========================================================
 
 Sprite_BeanVendor_Draw:
+{
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
@@ -159,3 +230,4 @@ Sprite_BeanVendor_Draw:
   db $02
   db $02, $02, $02, $02, $00, $00
   db $02, $02, $02, $02, $00, $00
+}
