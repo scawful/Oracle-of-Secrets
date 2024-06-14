@@ -52,6 +52,7 @@ Sprite_DekuScrub_Prep:
 {
   PHB : PHK : PLB
 
+  LDA.b #$80 : STA.w $0CAA, X
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .DekuButler
                         CMP.b #$02 : BEQ .DekuPrincess
 
@@ -147,6 +148,7 @@ Sprite_DekuScrub_Main:
   {
     %PlayAnimation(3, 3, 10)
     JSL Sprite_PlayerCantPassThrough
+    %ShowSolicitedMessage($080)
     RTS
   }
 
@@ -154,6 +156,7 @@ Sprite_DekuScrub_Main:
   {
     %PlayAnimation(4, 4, 10)
     JSL Sprite_PlayerCantPassThrough
+     %ShowSolicitedMessage($0C3)
     RTS
   }
 }
