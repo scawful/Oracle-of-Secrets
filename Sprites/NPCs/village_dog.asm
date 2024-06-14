@@ -91,7 +91,11 @@ Sprite_VillageDog_Main:
       .walk_right
         %GotoAction(2)
     .lifting
-    JSL Sprite_CheckIfLifted
+    LDA.w $02B2 : CMP.b #$03 : BEQ .wolf
+                  CMP.b #$05 : BEQ .minish
+      JSL Sprite_CheckIfLifted
+    .wolf
+    .minish
     JSL Sprite_Move
     RTS
   }
