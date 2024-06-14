@@ -60,7 +60,10 @@ org $068365
 
 org $3CA62A ; Expanded space for our routine
 {
-  LDA $F2 : CMP #$30 : BEQ $03 : JMP END ; Check L and R button
+  LDA.l $7EF3C5 : CMP.b #$02 : BCS .continue ; Check if in main game 
+  RTL
+  .continue
+  LDA $F2 : CMP #$70 : BEQ $03 : JMP END ; Check L, R and X button
 
 if !BetaRelease = 0
   ; How many bombs you have. Can exceed 0x50, up to 0xff.
@@ -150,7 +153,7 @@ endif
   LDA #$03 : STA !Flute
   LDA #$01 : STA !JumpFeather
   ; 0 - nothing. 1 - bow w/ no arrows. 2 - bow w/ arrows. 3 - silver arrows
-  LDA #$02 : STA !Bow
+  LDA #$03 : STA !Bow
 
   ; 0 - nothing. 1 - blue boomerang. 2 - red boomerang
   LDA #$02 : STA !Boomerang
