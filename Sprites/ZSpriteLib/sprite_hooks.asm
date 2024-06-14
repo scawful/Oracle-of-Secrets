@@ -107,6 +107,33 @@ SprBump      = $0CD2
 ; Damage sprite is enduring
 SprDmg       = $0CE2
 
+; Sprite Deflection Properties
+;     abcdefgh
+;     a - If set... creates some condition where it may or may not die
+;     b - Same as bit 'a' in some contexts (Zora in particular)
+;     c - While this is set and unset in a lot of places for various sprites, its
+;         status doesn't appear to ever be queried. Based on the pattern of its
+;         usage, however, the best deduction I can make is that this was a flag
+;         intended to signal that a sprite is an interactive object that Link can
+;         push against, pull on, or otherwise exerts a physical presence.
+        
+;         In general, it might have indicated some kind of A button (action
+;         button) affinity for the sprite, but I think this is merely informative
+;         rather than something relevant to gameplay.
+    
+;     d - If hit from front, deflect Ice Rod, Somarian missile,
+;         boomerang, hookshot, and sword beam, and arrows stick in
+;         it harmlessly.  If bit 1 is also set, frontal arrows will
+;         instead disappear harmlessly.  No monsters have bit 4 set
+;         in the ROM data, but it was functional and interesting
+;         enough to include.
+;     e - If set, makes the sprite collide with less tiles than usual
+;     f - If set, makes sprite impervious to sword and hammer type attacks
+;     g - ???? Seems to make sprite impervious to arrows, but may have other
+;         additional meanings.
+;     h - disabled???
+SprDefl      = $0CAA
+
 org $09AE64
 Sprite_SetSpawnedCoords:
 
