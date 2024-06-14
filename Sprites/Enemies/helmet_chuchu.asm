@@ -77,6 +77,7 @@ Sprite_HelmetChuchu_Main:
   dw HelmetGreen
   dw NoHelmetGreen
   dw MaskRed
+  dw NoMaskRed
   
   HelmetGreen:
   {
@@ -91,6 +92,7 @@ Sprite_HelmetChuchu_Main:
 
   NoHelmetGreen:
   {
+    %StartOnFrame(0)
     %PlayAnimation(0, 1, 16)
     JSL Sprite_CheckDamageFromPlayer
     JSR Sprite_Chuchu_Move
@@ -99,11 +101,21 @@ Sprite_HelmetChuchu_Main:
 
   MaskRed:
   {
+    %StartOnFrame(2)
     %PlayAnimation(2, 3, 16)
 
     JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
-      %GotoAction(1)
+      %GotoAction(3)
     .no_damage
+    JSR Sprite_Chuchu_Move
+    RTS
+  }
+
+  NoMaskRed:
+  {
+    %StartOnFrame(4)
+    %PlayAnimation(4, 5, 16)
+    JSL Sprite_CheckDamageFromPlayer
     JSR Sprite_Chuchu_Move
     RTS
   }
@@ -121,24 +133,29 @@ Sprite_Chuchu_Move:
   BounceTowardPlayer:
   {
     JSL Sprite_PlayerCantPassThrough 
-    JSL GetRandomInt : AND.b #$08 : STA $09 ; Speed
-    JSL GetRandomInt : AND.b #$06 : STA $08 ; Height
+    JSL GetRandomInt : AND.b #$04 : STA $09 ; Speed
+    JSL GetRandomInt : AND.b #$07 : STA $08 ; Height
     JSL Sprite_BounceTowardPlayer
     JSL Sprite_BounceFromTileCollision
 
     JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
       INC.w SprMiscB, X
-      LDA.b #$40 : STA.w SprTimerB, X
+      LDA.b #$20 : STA.w SprTimerB, X
     .no_damage
+
+    JSL Sprite_CheckDamageToPlayer : BCC .no_attack
+      INC.w SprMiscB, X
+      LDA.b #$20 : STA.w SprTimerB, X
+    .no_attack
 
     RTS
   }
 
   RecoilFromPlayer:
   {
-    JSL GetRandomInt : AND.b #$08 : STA $09 ; Speed
+    JSL GetRandomInt : AND.b #$04 : STA $09 ; Speed
     LDA SprX, X : CLC : ADC $09 : STA $04
-    LDA SprY, X : CLC : ADC $08 : STA $06
+    LDA SprY, X : SEC : SBC $09 : STA $06
     LDA SprXH, X : ADC #$00 : STA $05
     LDA SprYH, X : ADC #$00 : STA $07
     LDA $09 : STA $00 : STA $01
@@ -219,9 +236,9 @@ Sprite_HelmetChuchu_Draw:
   ; Helmet  $08     $3B
 
   .start_index
-  db $00, $02, $03, $06, $08, $0A
+  db $00, $02, $03, $06, $08, $0A, $0C, $0E
   .nbr_of_tiles
-  db 1, 0, 2, 1, 1, 1
+  db 1, 0, 2, 1, 1, 1, 1, 0
   .y_offsets
   dw 0, -8
   dw 0
@@ -229,6 +246,8 @@ Sprite_HelmetChuchu_Draw:
   dw 0, -4
   dw 0, -8
   dw 0, -4
+  dw 0, -8
+  dw 0
   .chr
   ; No Helmet Green
   db $26, $16
@@ -239,6 +258,9 @@ Sprite_HelmetChuchu_Draw:
   ; Helmet Green
   db $26, $08
   db $24, $08
+  ; No Helmet Green
+  db $26, $16
+  db $24
   .properties
   db $3B, $3B
   db $3B
@@ -246,4 +268,6 @@ Sprite_HelmetChuchu_Draw:
   db $37, $37
   db $3B, $39
   db $3B, $39
+  db $37, $37
+  db $37
 }
