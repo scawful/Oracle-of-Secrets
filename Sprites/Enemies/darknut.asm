@@ -2,8 +2,8 @@
 ; Sprite Properties
 ; ========================================================= 
 
-!SPRID              = $00; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00 ; Number of tiles used in a frame
+!SPRID              = $00 ; The sprite ID you are overwriting (HEX)
+!NbrTiles           = 00  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -29,11 +29,13 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
+
 %Set_Sprite_Properties(Sprite_Darknut_Prep, Sprite_Darknut_Long)
 
 ; =========================================================
 
 Sprite_Darknut_Long:
+{
   PHB : PHK : PLB
 
   JSR Sprite_Darknut_Draw ; Call the draw code
@@ -45,35 +47,71 @@ Sprite_Darknut_Long:
   .SpriteIsNotActive
   PLB ; Get back the databank we stored previously
   RTL ; Go back to original code
-
-
-
-  Sprite_Darknut_Prep:
-  PHB : PHK : PLB
-    
-      ; Add more code here to initialize data
-
-  PLB
-  RTL
+}
 
 ; =========================================================
 
+Sprite_Darknut_Prep:
+{
+  PHB : PHK : PLB
+    
+
+  PLB
+  RTL
+}
+
+; =========================================================
+
+DarknutSpeed = $04
+
 Sprite_Darknut_Main:
+{
   LDA.w SprAction, X; Load the SprAction
   JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
-  dw Action00
+  dw MoveDown
+  dw MoveUp
+  dw MoveLeft
+  dw MoveRight
 
 
-  Action00:
+  MoveDown:
+  {
+    %PlayAnimation(0,1,10)
+    LDA #DarknutSpeed : STA.w SprSpeedY, X
+    JSL Sprite_Move
+    RTS
+  }
 
+  MoveUp:
+  {
+    %PlayAnimation(2,3,10)
+    LDA #-DarknutSpeed : STA.w SprSpeedY, X
+    JSL Sprite_Move
+    RTS
+  }
 
+  MoveLeft:
+  {
+    %PlayAnimation(4,5,10)
+    LDA #-DarknutSpeed : STA.w SprSpeedX, X
+    JSL Sprite_Move
+    RTS
+  }
 
-  RTS
+  MoveRight:
+  {
+    %PlayAnimation(6,7,10)
+    LDA #DarknutSpeed : STA.w SprSpeedX, X
+    JSL Sprite_Move
+    RTS
+  }
 
+}
 
 ; =========================================================
 
 Sprite_Darknut_Draw:
+{
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
@@ -180,3 +218,4 @@ Sprite_Darknut_Draw:
   db $02, $02
   db $02, $02
   db $02, $02
+}
