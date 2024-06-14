@@ -145,7 +145,7 @@ Sprite_HelmetChuchu_Draw:
 
   REP #$20
 
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+  LDA $00 : STA ($90), Y
   AND.w #$0100 : STA $0E 
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
@@ -167,7 +167,7 @@ Sprite_HelmetChuchu_Draw:
       
   TYA : LSR #2 : TAY
       
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
       
   PLY : INY
       
@@ -187,13 +187,6 @@ Sprite_HelmetChuchu_Draw:
   db $00, $02, $03, $06, $08, $0A
   .nbr_of_tiles
   db 1, 0, 2, 1, 1, 1
-  .x_offsets
-  dw 0, 0
-  dw 0
-  dw 0, 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
   .y_offsets
   dw 0, -8
   dw 0
@@ -218,11 +211,4 @@ Sprite_HelmetChuchu_Draw:
   db $37, $37
   db $3B, $39
   db $3B, $39
-  .sizes
-  db $02, $02
-  db $02
-  db $02, $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
 }
