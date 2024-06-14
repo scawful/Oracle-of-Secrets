@@ -2,12 +2,12 @@
 ; Sprite Properties
 ; ========================================================= 
 
-!SPRID              = $00; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00 ; Number of tiles used in a frame
+!SPRID              = $05 ; The sprite ID you are overwriting (HEX)
+!NbrTiles           = 05  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 00  ; Number of Health the sprite have
-!Damage             = 00  ; (08 is a whole heart), 04 is half heart
+!Health             = $20 ; Number of Health the sprite have
+!Damage             = 08  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
@@ -29,14 +29,21 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
+
 %Set_Sprite_Properties(Sprite_HelmetChuchu_Prep, Sprite_HelmetChuchu_Long)
 
 ; =========================================================
 
+; 0-1: No Helmet Green
+; 2-3: Mask Red
+; 4-5: Helmet Green
+
 Sprite_HelmetChuchu_Long:
+{
   PHB : PHK : PLB
 
   JSR Sprite_HelmetChuchu_Draw ; Call the draw code
+  JSL Sprite_DrawShadow
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
@@ -45,35 +52,77 @@ Sprite_HelmetChuchu_Long:
   .SpriteIsNotActive
   PLB ; Get back the databank we stored previously
   RTL ; Go back to original code
+}
 
 
-
-  Sprite_HelmetChuchu_Prep:
+Sprite_HelmetChuchu_Prep:
+{
   PHB : PHK : PLB
-    
-      ; Add more code here to initialize data
+
+  LDA.b #$80 : STA.w SprHealth, X
+  JSL GetRandomInt : AND.b #$02 : STA SprAction, X
 
   PLB
   RTL
+}
 
 ; =========================================================
 
 Sprite_HelmetChuchu_Main:
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
-  dw Action00
+{
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
 
+  dw HelmetGreen
+  dw NoHelmetGreen
+  dw MaskRed
+  
+  HelmetGreen:
+  {
+    %StartOnFrame(4)
+    %PlayAnimation(4, 5, 16)
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+      %GotoAction(1)
+    .no_damage
+    JSR Sprite_Chuchu_Move    
+    RTS
+  }
 
-  Action00:
+  NoHelmetGreen:
+  {
+    %PlayAnimation(0, 1, 16)
+    JSL Sprite_CheckDamageFromPlayer
+    JSR Sprite_Chuchu_Move
+    RTS
+  }
 
+  MaskRed:
+  {
+    %PlayAnimation(2, 3, 16)
 
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+      %GotoAction(1)
+    .no_damage
+    JSR Sprite_Chuchu_Move
+    RTS
+  }
 
+}
+
+Sprite_Chuchu_Move:
+{
+  JSL Sprite_PlayerCantPassThrough 
+  JSL GetRandomInt : AND.b #$08 : STA $09 ; Speed
+  JSL GetRandomInt : AND.b #$06 : STA $08 ; Height
+  JSL Sprite_BounceTowardPlayer
+  JSL Sprite_BounceFromTileCollision
   RTS
-
+}
 
 ; =========================================================
 
 Sprite_HelmetChuchu_Draw:
+{
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
@@ -130,6 +179,9 @@ Sprite_HelmetChuchu_Draw:
 
 
   ; =======================================================
+  ;         chr     prop
+  ; Mask    $04     $37
+  ; Helmet  $08     $3B
 
   .start_index
   db $00, $02, $03, $06, $08, $0A
@@ -150,10 +202,13 @@ Sprite_HelmetChuchu_Draw:
   dw 0, -8
   dw 0, -4
   .chr
+  ; No Helmet Green
   db $26, $16
   db $24
+  ; Mask Red
   db $26, $16, $04
   db $24, $04
+  ; Helmet Green
   db $26, $08
   db $24, $08
   .properties
@@ -170,3 +225,4 @@ Sprite_HelmetChuchu_Draw:
   db $02, $02
   db $02, $02
   db $02, $02
+}
