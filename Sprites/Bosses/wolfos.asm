@@ -154,6 +154,7 @@ Sprite_Wolfos_Main:
   dw Wolfos_AttackLeft    ; 0x05
   dw Wolfos_Subdued       ; 0x06
   dw Wolfos_GrantMask     ; 0x07
+  dw Wolfos_Dismiss       ; 0x08
 
   Wolfos_AttackForward:
   {
@@ -277,7 +278,7 @@ Sprite_Wolfos_Main:
     .wait
     LDA   $FE : BEQ .ninguna_cancion
       STZ   $FE
-      LDA.b #$40 : STA.w SprTimerD, X
+      LDA.b #$20 : STA.w SprTimerD, X
       %GotoAction(7)
     .ninguna_cancion
     
@@ -288,17 +289,29 @@ Sprite_Wolfos_Main:
   {
     %PlayAnimation(0, 0, 10)
 
+
+    LDA SprTimerD, X : BNE .wait
+      %ShowUnconditionalMessage($01F)
+      LDA.b #$01 : STA.l $7EF358
+      %GotoAction(8)
+    .wait
+    RTS
+  }
+
+  Wolfos_Dismiss:
+  {
+    %PlayAnimation(0, 0, 10)
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+
     JSL Sprite_PlayerCantPassThrough
 
-    LDY   #$3A : STZ $02E9     ; Give the Wolf Mask
-    JSL   Link_ReceiveItem
-    LDA.b #$01 : STA.l $7EF358
-    LDA   #$01 : STA.l $7EF303 ; Set the special flag
-
-      LDA.b #$06 : STA $0DD0, X ; kill sprite normal style
+    LDA SprTimerD, X : BNE .dismiss
+      LDA.b #$00 : STA $0DD0, X ; kill sprite normal style
       STZ.w SprAction, X
       STZ.w SprHealth, X
-
+      RTS
+    .dismiss
     RTS
   }
 }
