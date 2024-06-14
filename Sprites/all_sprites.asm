@@ -25,6 +25,18 @@ org $0CDC26
 org $09ACF3
   LDA.l $7EF3CC
   CMP.b #$0E
+
+; Kiki, don't care if we're not in dark world
+org $099FEB
+#_099FEB: LDA.b $8A
+#_099FED: AND.b #$FF
+
+org $1EE48E
+  NOP #6
+
+; Kiki activate cutscene 3 (tail palace)
+org $1EE630
+LDA.b #$03 : STA.w $04C6
 ; =========================================================
 
 incsrc ZSpriteLib/sprite_macros.asm
