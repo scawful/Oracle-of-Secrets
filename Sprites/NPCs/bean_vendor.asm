@@ -146,7 +146,13 @@ Sprite_BeanVendor_Main:
   {
     %PlayAnimation(2,3,16)
     JSL Sprite_PlayerCantPassThrough
-    %ShowSolicitedMessage($143)
+    LDA.l $7EF3C7 : CMP.b #$03 : BCS .already_met
+      %ShowSolicitedMessage($143) : BCC .no_message
+        LDA.b #$03 : STA.l $7EF3C7
+      .no_message
+
+    .already_met
+    %ShowSolicitedMessage($019)
     RTS
   }
 
