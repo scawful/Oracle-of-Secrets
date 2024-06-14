@@ -58,9 +58,12 @@ lorom
 org $068365
   JSL $3CA62A ; Overwrite JSL executed every frame
 
+Follower_Main = $099F91
+
 org $3CA62A ; Expanded space for our routine
 {
   LDA.l $7EF3C5 : CMP.b #$02 : BCS .continue ; Check if in main game 
+  JSL Follower_Main
   RTL
   .continue
   LDA $F2 : CMP #$70 : BEQ $03 : JMP END ; Check L, R and X button
@@ -173,6 +176,6 @@ endif
 
 END:
 
-  JSL $099F91 ; Execute original code
+  JSL Follower_Main
   RTL
 }
