@@ -4,7 +4,7 @@
 
 !SPRID              = $07 ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 00  ; Number of tiles used in a frame
-!Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
+!Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
@@ -13,7 +13,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -58,8 +58,9 @@ Sprite_BeanVendor_Long:
 Sprite_BeanVendor_Prep:
 {
   PHB : PHK : PLB
-    
-  LDA.w SprSubtype, X : STA SprAction, X
+
+  LDA.b #$80 : STA $0CAA, X ; Persist in dungeons
+  LDA.w SprSubtype, X : STA.w SprAction, X
 
   PLB
   RTL
@@ -110,13 +111,9 @@ Sprite_BeanVendor_Main:
   ; 0x02 - Village Elder
   VillageElder:
   {
-    %PlayAnimation(2,3,8)
+    %PlayAnimation(2,3,16)
     JSL Sprite_PlayerCantPassThrough
-
-    %ShowSolicitedMessage($143) : BCC .no_message
-    
-    .no_message
-
+    %ShowSolicitedMessage($143)
     RTS
   }
 
@@ -151,6 +148,7 @@ Sprite_BeanVendor_Main:
   KaeoporaGaebora:
   {
     %PlayAnimation(0,0,1)
+    %ShowUnconditionalMessage($146)
     RTS 
   }
 }
