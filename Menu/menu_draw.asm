@@ -338,20 +338,13 @@ DrawYItems:
     JSR DrawMenuItem
   .no_book
 
-  ; LDA.l $7EF350 : CMP.w #$00 : BEQ .no_somaria
-  ;   LDA.w SomariaOrByrna : BNE .spoof_somaria
-  ; .spoof_somaria
-
-    ; LDA.w #$01 : STA.w ShortSpoof : LDA.w #ShortSpoof
-    LDA.w #$7EF350
-    LDX.w #menu_offset(13,9)
-    LDY.w #SomariaGFX
-    JSR DrawMenuItem
-  .no_somaria
+  LDA.w #$7EF350
+  LDX.w #menu_offset(13,9)
+  LDY.w #SomariaGFX
+  JSR DrawMenuItem
 
   LDA.w #$7EF351
   LDX.w #menu_offset(13,13)
-  ;LDY.w #ByrnaGFX
   LDY.w #FishingRodGFX
   JSR DrawMenuItem
 

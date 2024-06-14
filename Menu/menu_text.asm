@@ -141,7 +141,9 @@ Menu_BottleItems:
   dw "_GREEN_POTION_  "
   dw "_BLUE_POTION__  "
   dw "____FAIRY_____  "
+  dw "_____BEE______  "
   dw "__GOOD_BEE____  "
+  dw "_MAGIC_BEAN___  "
 
 Menu_GoldstarLabel:
   dw "__GOLD_STAR___  "
