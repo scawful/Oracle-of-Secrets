@@ -1312,10 +1312,6 @@ SpritePrep_Blind_PrepareBattle:
 
 warnpc $1DA0B1
 
-; Kydreeok Head die like Sidenexx
-org $06EFFF
-#_06EFFF: CMP.b #$CF ; SPRITE CF
-
 org $01B3E1
   RoomDraw_BombableFloor:
     LDA.b $A0

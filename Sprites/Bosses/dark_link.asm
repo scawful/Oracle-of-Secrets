@@ -1685,14 +1685,6 @@ Sprite_Ganon_Draw:
   db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
 }
 
-pushpc 
-
-; Make Dark Link die like sidenexx
-org $06F003
-CMP.b #$C1 ; SPRITE C1
-
-pullpc
-
 ; =========================================================
 
 ApplyDarkLinkGraphics:

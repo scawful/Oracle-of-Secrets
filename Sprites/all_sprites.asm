@@ -16,6 +16,25 @@ warnpc $00841E
 
 ; =========================================================
 
+; Sprite 
+
+; Kydreeok Head die like Sidenexx
+org $06EFFF
+  CMP.b #$CF
+
+org $06F003
+  CMP.b #$CF
+
+; Make Dark Link die like sidenexx
+org $06F003
+  CMP.b #$C1
+
+; Make Helmet ChuChu recoil link
+org $06F37D
+  CMP.b #$05 ; SPRITE CD
+
+; =========================================================
+
 ; Fix the capital 'B' debug item cheat.
 org $0CDC26
     db $80 ; replace a $F0 (BEQ) with a $80 (BRA).
