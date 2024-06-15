@@ -31,7 +31,11 @@ org $06F003
 
 ; Make Helmet ChuChu recoil link
 org $06F37D
-  CMP.b #$05 ; SPRITE CD
+  CMP.b #$05
+
+; Make Kydreeok head recoil Link
+org $06F381
+  CMP.b #$CF
 
 ; =========================================================
 
