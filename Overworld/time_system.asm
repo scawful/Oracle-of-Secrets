@@ -407,6 +407,7 @@ GlovesFix:
 
 CheckIfNight:
 {
+  LDA.l $7EF3C5 : CMP.b #$02 : BCC .day_time
   LDA $7EE000 : CMP.b #$06 : BCC .night_time
     .day_time
     LDA.l $7EF3C5
@@ -415,6 +416,8 @@ CheckIfNight:
   LDA $7EE000 : CMP.b #$12 : BCS .day_time
     LDA.b #$03
     RTL
+  .dont_change
+
 }
 
 warnpc $0EF3F9  ; free space
@@ -484,6 +487,7 @@ pullpc
 
 CheckIfNight16Bit:
 {
+  LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCC .day_time
   LDA $7EE000 : AND.w #$00FF : CMP.w #$0006 : BCC .night_time
     .day_time
     LDA.l $7EF3C5
