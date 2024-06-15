@@ -115,17 +115,6 @@ LinkMode_MagicMirror:
 org $0287A4
   JSL LinkState_GameboyInDungeonEntrance
 
-org $1EE48E
-  ; TODO: Check a status flag to dismiss villager girl
-  NOP #6
-
-org $09ACFF
-  ; TODO: Decide if we want to disable other followers
-  LDA.b #$0A
-
-org $09A903
-  db $02 ; Kiki palette
-
 pullpc
 LinkState_GameboyForm:
 {
