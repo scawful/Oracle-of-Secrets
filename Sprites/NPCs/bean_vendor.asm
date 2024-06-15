@@ -95,6 +95,7 @@ Sprite_BeanVendor_Main:
   dw SpawnMagicBean
   dw PlayerSaidNo
   dw KaeoporaGaebora
+  dw KaeoporaGaebora_Respond
   dw KaeoporaGaebora_FlyAway
 
   ; 0x00 - Bean Vendor
@@ -222,14 +223,23 @@ Sprite_BeanVendor_Main:
   KaeoporaGaebora:
   {
     %PlayAnimation(0,0,1)
-    
     LDA.w SprTimerA, X : BNE .not_ready
       %ShowUnconditionalMessage($146)
       %GotoAction(6)
-      LDA.b #$60 : STA.w SprTimerA, X
-      LDA.b #$03 : STA.l $7EF34C
     .not_ready
     RTS 
+  }
+
+  KaeoporaGaebora_Respond:
+  {
+    LDA $1CE8 : BNE .player_said_no
+      %GotoAction(5)
+      RTS
+    .player_said_no
+      %GotoAction(7)
+      LDA.b #$60 : STA.w SprTimerA, X
+      LDA.b #$03 : STA.l $7EF34C
+      RTS
   }
 
   FlyAwaySpeed = 10
