@@ -86,18 +86,32 @@ Sprite_Booki_Main:
   HideFromPlayer:
   {
     %PlayAnimation(0,4,16)
+
+    LDA.w SprTimerA, X : BNE +
+      INC.w SprAction, X
+    +
     RTS
   }
 
   HiddenFromPlayer:
   {
     %PlayAnimation(4,4,16)
+
+    JSR Sprite_Booki_Move
+
+    JSL GetRandomInt : AND.b #$03 : BEQ +
+      INC.w SprAction, X
+    +
     RTS
   }
 
   ApproachPlayer:
   {
     %PlayAnimation(5,9,16)
+
+    JSR Sprite_Booki_Move
+
+    RTS
   }
 }
 
@@ -133,9 +147,12 @@ Sprite_Booki_Move:
 
     PHX
     JSL Sprite_DirectionToFacePlayer
-    LDA.b $0E : CMP.b #$08 : BCS .NotTooClose
-    LDA.b $0F : CMP.b #$08 : BCS .NotTooClose
+    print pc
+    LDA.b $0E : CMP.b #$11 : BCS .NotTooClose
+    LDA.b $0F : CMP.b #$11 : BCS .NotTooClose
       LDA.b #$01 : STA.w SprMiscB, X
+      LDA.b #$20 : STA.w SprTimerA, X
+      %GotoAction(1)
     .NotTooClose
     PLX
 
@@ -155,9 +172,10 @@ Sprite_Booki_Move:
 
     PHX
     JSL Sprite_DirectionToFacePlayer
-    LDA.b $0E : CMP.b #$10 : BCC .NotTooClose
-    LDA.b $0F : CMP.b #$10 : BCC .NotTooClose
+    LDA.b $0E : CMP.b #$16 : BCC .NotTooClose
+    LDA.b $0F : CMP.b #$16 : BCC .NotTooClose
       LDA.b #$00 : STA.w SprMiscB, X
+      %GotoAction(0)
     .NotTooClose
     PLX
 
