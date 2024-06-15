@@ -48,7 +48,7 @@ Sprite_SeaUrchin_Prep:
 {
   PHB : PHK : PLB
 
-  
+  LDA #$02 : STA.w SprPrize, X
 
   PLB
   RTL
