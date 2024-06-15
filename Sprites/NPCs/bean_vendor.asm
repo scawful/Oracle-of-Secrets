@@ -256,6 +256,7 @@ Sprite_BeanVendor_Main:
 
 ReleaseMagicBean:
 {
+  ; X is the bottle ID 
   LDA.b $8A : CMP.b #$00 : BNE .not_the_ranch
     LDA.b #$07
     JSL Sprite_SpawnDynamically
@@ -268,6 +269,7 @@ ReleaseMagicBean:
 
     LDA.b #$01 : STA.w SprAction, Y
     STA.w SprSubtype, Y
+    LDA.b #$02 : STA.l $7EF35C, X
     RTL
 
   .not_the_ranch
