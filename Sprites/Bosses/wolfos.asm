@@ -273,7 +273,7 @@ Sprite_Wolfos_Main:
 
     ; Run the dialogue and wait for a song of healing flag to be set
     LDA SprMiscD, X : BNE .wait
-      %ShowUnconditionalMessage($20)
+      %ShowUnconditionalMessage($0F)
       LDA.b #$01 : STA SprMiscD, X
     .wait
     LDA   $FE : BEQ .ninguna_cancion
@@ -291,7 +291,7 @@ Sprite_Wolfos_Main:
 
 
     LDA SprTimerD, X : BNE .wait
-      %ShowUnconditionalMessage($01F)
+      %ShowUnconditionalMessage($10F)
       LDA.b #$01 : STA.l $7EF358
       %GotoAction(8)
     .wait
