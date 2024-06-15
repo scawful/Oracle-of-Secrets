@@ -51,7 +51,8 @@ Sprite_DekuScrubEnemy_Prep:
 
     LDA SprSubtype, X : CMP #$01 : BNE .normal_scrub
       LDA #$06 : STA SprAction, X ; Pea Shot State
-  .normal_scrub 
+      LDA.b #$20 : STA.b SprPrize, X
+    .normal_scrub 
 
     PLB
     RTL
@@ -216,6 +217,7 @@ Sprite_DekuScrubEnemy_Main:
     %PlayAnimation(7,7,1)
 
     JSL Sprite_PlayerCantPassThrough
+    JSL Sprite_CheckDamageFromPlayer
 
     RTS 
   }
