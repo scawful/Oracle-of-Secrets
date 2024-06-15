@@ -38,9 +38,13 @@ Sprite_BeanVendor_Long:
 {
   PHB : PHK : PLB
 
-  LDA.w SprSubtype, X : CMP.b #$05 : BNE .NotGaebora
-    JSR Sprite_KaeoporaGaebora_Draw
-    JMP .HandleSprite
+  ; If it is not the Hall of Secrets map
+  LDA.b $8A : CMP.b #$0E : BNE .NotGaebora
+    ; If the map doesn't have the 6 crystals
+    LDA.l $7EF37A : CMP.b #$7B : BNE .Despawn
+      LDA.b #$05 : STA.w SprSubtype, X
+      JSR Sprite_KaeoporaGaebora_Draw
+      JMP .HandleSprite
   .NotGaebora
   JSR Sprite_BeanVendor_Draw
   .HandleSprite
@@ -52,6 +56,10 @@ Sprite_BeanVendor_Long:
   .SpriteIsNotActive
   PLB ; Get back the databank we stored previously
   RTL ; Go back to original code
+
+  .Despawn
+    STZ.w SprState, X
+    PLB : RTL
 }
 
 ; =========================================================
@@ -62,6 +70,11 @@ Sprite_BeanVendor_Prep:
 
   LDA.b #$80 : STA $0CAA, X ; Persist in dungeons
   LDA.w SprSubtype, X : STA.w SprAction, X
+  LDA.b #$40 : STA.w SprTimerA, X
+
+  LDA.b $8A : CMP.b #$0E : BNE .NotGaebora
+    LDA.b #$05 : STA.w SprAction, X
+  .NotGaebora
 
   PLB
   RTL
@@ -80,6 +93,7 @@ Sprite_BeanVendor_Main:
   dw SpawnMagicBean
   dw PlayerSaidNo
   dw KaeoporaGaebora
+  dw KaeoporaGaebora_FlyAway
 
   ; 0x00 - Bean Vendor
   BeanVendor:
@@ -205,8 +219,25 @@ Sprite_BeanVendor_Main:
   KaeoporaGaebora:
   {
     %PlayAnimation(0,0,1)
-    %ShowUnconditionalMessage($146)
+    
+    LDA.w SprTimerA, X : BNE .not_ready
+      %ShowUnconditionalMessage($146)
+      %GotoAction(6)
+      LDA.b #$60 : STA.w SprTimerA, X
+      LDA.b #$03 : STA.l $7EF34C
+    .not_ready
     RTS 
+  }
+
+  FlyAwaySpeed = 10
+  KaeoporaGaebora_FlyAway:
+  {
+    LDA.b #-FlyAwaySpeed : STA.w SprYSpeed, X
+    JSL Sprite_Move
+    LDA.w SprTimerA, X : BNE .not_ready
+      STZ.w SprState, X
+    .not_ready
+    RTS
   }
 }
 
