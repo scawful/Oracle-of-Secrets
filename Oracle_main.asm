@@ -71,8 +71,8 @@ namespace Oracle
   print "  -- Music --  "
   print ""
 
-  incsrc "Music/lost_woods.asm"
-  print  "End of Music/lost_woods.asm       ", pc
+  incsrc "Music/lost_woods_v2.asm"
+  print  "End of Music/lost_woods_v2.asm       ", pc
 
   incsrc "Music/color_dungeon_theme.asm"
   print  "End of Music/color_dungeon_theme.asm    ", pc
