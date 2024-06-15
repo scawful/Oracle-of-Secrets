@@ -121,34 +121,35 @@ Sprite_BeanVendor_Main:
     LDA.w SprMiscE, X : CMP.b #$01 : BEQ .not_lifting
     LDA.w $0309 : CMP.b #$02 : BNE .not_lifting
 
-      LDA.l $7EF35C : BEQ .bottle1_available
-      LDA.l $7EF35D : BEQ .bottle2_available
-      LDA.l $7EF35E : BEQ .bottle3_available
-      LDA.l $7EF35F : BEQ .bottle4_available
+      LDA.l $7EF35C : CMP.b #$02 : BEQ .bottle1_available
+      LDA.l $7EF35D : CMP.b #$02 : BEQ .bottle2_available
+      LDA.l $7EF35E : CMP.b #$02 : BEQ .bottle3_available
+      LDA.l $7EF35F : CMP.b #$02 : BEQ .bottle4_available
       
       %ShowUnconditionalMessage($033)
-      LDA.b #$01 : STA.w SprMiscE, X
       JMP .not_lifting
 
       .bottle1_available
       LDA.b #$09 : STA.l $7EF35C
       %ShowUnconditionalMessage($034)
-      LDA.b #$01 : STA.w SprMiscE, X
-      RTS
+      JMP .finish_storage
+
       .bottle2_available
       LDA.b #$09 : STA.l $7EF35D
       %ShowUnconditionalMessage($034)
-      LDA.b #$01 : STA.w SprMiscE, X
-      RTS
+      JMP .finish_storage
+      
       .bottle3_available
       LDA.b #$09 : STA.l $7EF35E
       %ShowUnconditionalMessage($034)
-      LDA.b #$01 : STA.w SprMiscE, X
-      RTS
+      JMP .finish_storage
+
       .bottle4_available
       LDA.b #$09 : STA.l $7EF35F
       %ShowUnconditionalMessage($034)
+      .finish_storage
       LDA.b #$01 : STA.w SprMiscE, X
+      STZ.w SprState, X
       RTS
 
     .not_lifting
@@ -245,8 +246,22 @@ Sprite_BeanVendor_Main:
 
 ReleaseMagicBean:
 {
+  LDA.b $8A : CMP.b #$00 : BNE .not_the_ranch
+    LDA.b #$07
+    JSL Sprite_SpawnDynamically
+    BMI .not_the_ranch
+
+    LDA $20 : STA.w SprY, Y
+    LDA $21 : STA.w SprYH, Y
+    LDA $22 : STA.w SprX, Y
+    LDA $23 : STA.w SprXH, Y
+
+    LDA.b #$01 : STA.w SprAction, Y
+    STA.w SprSubtype, Y
+    RTL
+
+  .not_the_ranch
   %ShowUnconditionalMessage($030)
-  ; TODO: Release the magic bean sprite to be used on another map
   RTL
 }
 
