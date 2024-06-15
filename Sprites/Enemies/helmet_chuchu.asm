@@ -77,7 +77,6 @@ Sprite_HelmetChuchu_Main:
   dw HelmetGreen
   dw NoHelmetGreen
   dw MaskRed
-  dw NoMaskRed
   
   HelmetGreen:
   {
@@ -103,23 +102,10 @@ Sprite_HelmetChuchu_Main:
   {
     %StartOnFrame(2)
     %PlayAnimation(2, 3, 16)
-
-    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
-      %GotoAction(3)
-    .no_damage
-    JSR Sprite_Chuchu_Move
-    RTS
-  }
-
-  NoMaskRed:
-  {
-    %StartOnFrame(4)
-    %PlayAnimation(4, 5, 16)
     JSL Sprite_CheckDamageFromPlayer
     JSR Sprite_Chuchu_Move
     RTS
   }
-
 }
 
 Sprite_Chuchu_Move:
@@ -279,6 +265,6 @@ Sprite_HelmetChuchu_Draw:
   db $37, $37
   db $3B, $39
   db $3B, $39
-  db $37, $37
-  db $37
+  db $39, $39
+  db $39
 }
