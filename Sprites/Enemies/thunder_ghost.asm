@@ -64,13 +64,74 @@ Sprite_ThunderGhost_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
-  dw ThunderGhostHandler
+
+  dw ThunderGhostFaceForward
+  dw ThunderGhostLeft
+  dw ThunderGhostRight
+  dw CastThunderLeft
+  dw CastThunderRight
 
 
-  ThunderGhostHandler:
+  ThunderGhostFaceForward:
   {
-    %PlayAnimation(0, 7, 16)
+    %PlayAnimation(0, 1, 16)
+    JSR Sprite_ThunderGhost_Move
+    RTS
+  }
 
+  ThunderGhostLeft:
+  {
+    %PlayAnimation(2, 3, 16)
+    JSR Sprite_ThunderGhost_Move
+    RTS
+  }
+
+  ThunderGhostRight:
+  {
+    %PlayAnimation(4, 5, 16)
+    JSR Sprite_ThunderGhost_Move
+    RTS
+  }
+
+  CastThunderLeft:
+  {
+    %PlayAnimation(6, 6, 16)
+    RTS
+  }
+
+  CastThunderRight:
+  {
+    %PlayAnimation(7, 7, 16)
+    RTS
+  }
+}
+
+
+Sprite_ThunderGhost_Move:
+{
+  JSL Sprite_Move
+  JSL Sprite_BounceFromTileCollision
+  JSL Sprite_PlayerCantPassThrough
+
+  JSL Sprite_IsToRightOfPlayer : CPY.b #$01 : BNE .ToRight
+    %GotoAction(1)
+    JMP .Continue
+  .ToRight
+  %GotoAction(2)
+  .Continue
+
+  LDA.w SprMiscB, X
+  JSL UseImplicitRegIndexedLocalJumpTable
+
+  dw ThunderGhostMove
+
+  ThunderGhostMove:
+  {
+    JSL GetRandomInt : AND.b #$06
+    JSL Sprite_FloatTowardPlayer
+
+    JSL Sprite_CheckDamageFromPlayer
+    JSL Sprite_CheckDamageToPlayer
 
     RTS
   }
