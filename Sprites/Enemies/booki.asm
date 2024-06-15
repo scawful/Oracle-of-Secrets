@@ -55,7 +55,8 @@ Sprite_Booki_Prep:
 {
   PHB : PHK : PLB
     
-  LDA.b #$80 : STA.w SprDefl, X
+  
+  STZ.w SprMiscB, X
 
   PLB
   RTL
@@ -117,9 +118,48 @@ Sprite_Booki_Move:
   JSL UseImplicitRegIndexedLocalJumpTable
 
   dw SlowFloat
+  dw FloatAway
 
   SlowFloat:
   {
+    JSL GetRandomInt : AND.b #$04
+    JSL Sprite_FloatTowardPlayer
+
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+      LDA.b #$01 : STA.w SprMiscB, X
+    .no_damage
+
+    JSL Sprite_CheckDamageToPlayer
+
+    PHX
+    JSL Sprite_DirectionToFacePlayer
+    LDA.b $0E : CMP.b #$08 : BCS .NotTooClose
+    LDA.b $0F : CMP.b #$08 : BCS .NotTooClose
+      LDA.b #$01 : STA.w SprMiscB, X
+    .NotTooClose
+    PLX
+
+    RTS
+  }
+
+  FloatAway:
+  {
+    JSL GetRandomInt : AND.b #$04
+    JSL Sprite_FloatAwayFromPlayer
+
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+      LDA.b #$01 : STA.w SprMiscB, X
+    .no_damage
+    
+    JSL Sprite_CheckDamageToPlayer
+
+    PHX
+    JSL Sprite_DirectionToFacePlayer
+    LDA.b $0E : CMP.b #$10 : BCC .NotTooClose
+    LDA.b $0F : CMP.b #$10 : BCC .NotTooClose
+      LDA.b #$00 : STA.w SprMiscB, X
+    .NotTooClose
+    PLX
 
     RTS
   }
