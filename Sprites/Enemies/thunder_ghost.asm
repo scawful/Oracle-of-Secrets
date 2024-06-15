@@ -3,10 +3,10 @@
 ; ========================================================= 
 
 !SPRID              = $CD ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 02  ; Number of tiles used in a frame
+!NbrTiles           = 04  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 00  ; Number of Health the sprite have
+!Health             = 10  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
@@ -38,6 +38,7 @@ Sprite_ThunderGhost_Long:
   PHB : PHK : PLB
 
   JSR Sprite_ThunderGhost_Draw ; Call the draw code
+  JSL Sprite_DrawShadow
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
@@ -53,6 +54,8 @@ Sprite_ThunderGhost_Prep:
 {
   PHB : PHK : PLB
     
+  LDA.b #$08 : STA.w SprTimerA, X
+  LDA.b #$08 : STA.w SprTimerB, X
 
   PLB
   RTL
@@ -76,6 +79,7 @@ Sprite_ThunderGhost_Main:
   {
     %PlayAnimation(0, 1, 16)
     JSR Sprite_ThunderGhost_Move
+
     RTS
   }
 
@@ -95,13 +99,25 @@ Sprite_ThunderGhost_Main:
 
   CastThunderLeft:
   {
+    %StartOnFrame(6)
     %PlayAnimation(6, 6, 16)
+    JSL Sprite_CheckDamageToPlayer
+    JSL Sprite_Move
+    LDA.w SprTimerA, X : BNE +
+      STZ.w SprState, X
+    +
     RTS
   }
 
   CastThunderRight:
   {
+    %StartOnFrame(6)
     %PlayAnimation(7, 7, 16)
+    JSL Sprite_CheckDamageToPlayer
+    JSL Sprite_Move
+    LDA.w SprTimerA, X : BNE +
+      STZ.w SprState, X
+    +
     RTS
   }
 }
@@ -113,11 +129,21 @@ Sprite_ThunderGhost_Move:
   JSL Sprite_BounceFromTileCollision
   JSL Sprite_PlayerCantPassThrough
 
-  JSL Sprite_IsToRightOfPlayer : CPY.b #$01 : BNE .ToRight
-    %GotoAction(1)
+  
+  JSL GetRandomInt : AND #$7F : BNE ++
+    JSR SpawnLightningAttack
+  ++
+
+  LDA.w SprTimerA, X : BNE +
+    JSL Sprite_IsToRightOfPlayer : CPY.b #$01 : BNE .ToRight
+      %GotoAction(1)
+      JMP .Continue
+    .ToRight
+    %GotoAction(2)
+    LDA.b #$20 : STA.w SprTimerA, X
     JMP .Continue
-  .ToRight
-  %GotoAction(2)
+  +
+  %GotoAction(0)
   .Continue
 
   LDA.w SprMiscB, X
@@ -127,14 +153,60 @@ Sprite_ThunderGhost_Move:
 
   ThunderGhostMove:
   {
-    JSL GetRandomInt : AND.b #$06
-    JSL Sprite_FloatTowardPlayer
+    JSL GetRandomInt : AND.b #$03
+    JSL Sprite_ApplySpeedTowardsPlayer
+    JSL Sprite_CheckTileCollision
 
     JSL Sprite_CheckDamageFromPlayer
     JSL Sprite_CheckDamageToPlayer
 
     RTS
   }
+}
+
+SpawnLightningAttack:
+{
+  PHX 
+  LDA.b #$CD 
+  JSL Sprite_SpawnDynamically
+  BMI .no_space
+
+  ; Use SprXSpeed, SprYSpeed, SprXRound, SprYRound
+  ; SprX, SprY, SprXH, SprY, to cast the lightning spell
+  ; and make it move off to the bottom left or bottom right
+
+  ; Y is the ID of the new attack sprite
+  ; X is the ID of the current source sprite 
+
+  ; Left 0 or Right 1
+  PHY
+  JSL Sprite_IsToRightOfPlayer : TAY : CMP.b #$01 : BEQ +
+    LDA.b #$00
+    JMP .Continue
+  +
+  LDA.b #$01
+  .Continue
+  CLC : ADC.b #$03
+  PLY
+  STA.w SprSubtype, Y
+  STA.w SprAction, Y
+
+  LDA.w SprX, X : STA.w SprX, Y
+  LDA.w SprY, X : STA.w SprY, Y
+  LDA.w SprXH, X : STA.w SprXH, Y
+  LDA.w SprYH, X : STA.w SprYH, Y
+
+  LDA.w SprXSpeed, X : STA.w SprXSpeed, Y
+  LDA.w SprYSpeed, X : STA.w SprYSpeed, Y
+  LDA.b #$02 : STA.w SprXRound, Y
+  LDA.b #$02 : STA.w SprYRound, Y
+  LDA.b #$30 : STA.w SprTimerA, Y
+  LDA.b #$30 : STA.w SprTimerB, Y
+  .no_space
+
+  PLX
+
+  RTS
 }
 
 ; =========================================================
