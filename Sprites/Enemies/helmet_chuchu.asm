@@ -6,7 +6,7 @@
 !NbrTiles           = 05  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = $20 ; Number of Health the sprite have
+!Health             = $10 ; Number of Health the sprite have
 !Damage             = 04  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
@@ -59,7 +59,7 @@ Sprite_HelmetChuchu_Prep:
 {
   PHB : PHK : PLB
 
-  LDA.b #$80 : STA.w SprHealth, X
+  LDA.b #$20 : STA.w SprHealth, X
   JSL GetRandomInt : AND.b #$02 : STA SprAction, X
   STZ.w SprMiscB, X
 
