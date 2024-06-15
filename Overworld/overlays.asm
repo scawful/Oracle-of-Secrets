@@ -80,12 +80,17 @@ NewDesertCheck:
   ; STZ $1D
   ; STZ $9A
   ; STZ.w $012D
+
   LDA $8A : CMP.b #$1E : BEQ .zora
-    CMP.b #$1B : BEQ .castle
-      JMP .continue
-    .castle
-    LDA.b #$02 : STA.w $04C6
-    JMP .continue
+            CMP.b #$1B : BEQ .castle
+            CMP.b #$2F : BEQ .tail_palace
+            JMP + ; returnPos
+  .tail_palace
+  LDA.b #$03 : STA.w $04C6
+  JMP .continue
+  .castle
+  LDA.b #$02 : STA.w $04C6
+  JMP .continue
   .zora
   LDA.b #$01 : STA.w $04C6 ; set entrance animation
 
@@ -105,6 +110,10 @@ RTS
 
 org $1BCBA6
 JSL Castle_EntranceAnimation
+RTS
+
+org $1BCCD4
+JSL TailPalace_EntranceAnimation
 RTS
 
 pullpc
