@@ -77,24 +77,26 @@ Sprite_Booki_Main:
   {
     %PlayAnimation(0,1,16)
 
+    JSR Sprite_Booki_Move
+
     RTS
   }
 
   HideFromPlayer:
   {
-    %PlayAnimation(0,5,16)
+    %PlayAnimation(0,4,16)
     RTS
   }
 
   HiddenFromPlayer:
   {
-    %PlayAnimation(5,5,16)
+    %PlayAnimation(4,4,16)
     RTS
   }
 
   ApproachPlayer:
   {
-    %PlayAnimation(6,10,16)
+    %PlayAnimation(5,9,16)
   }
 }
 
@@ -103,6 +105,13 @@ Sprite_Booki_Move:
   JSL Sprite_Move
   JSL Sprite_BounceFromTileCollision
   JSL Sprite_PlayerCantPassThrough
+
+  JSL Sprite_IsToRightOfPlayer : CPY.b #$01 : BNE .ToRight
+    LDA.b #$01 : STA.w SprMiscC, X
+    JMP .Continue
+  .ToRight
+  STZ.w SprMiscC, X
+  .Continue
 
   LDA.w SprMiscB, X
   JSL UseImplicitRegIndexedLocalJumpTable
@@ -127,9 +136,10 @@ Sprite_Booki_Draw:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
+  LDA.w SprMiscC, X : STA $09
 
   PHX
-  LDX .nbr_of_tiles, Y ;amount of tiles -1
+  LDX .nbr_of_tiles, Y ; amount of tiles -1
   LDY.b #$00
   .nextTile
 
@@ -143,10 +153,10 @@ Sprite_Booki_Draw:
 
   REP #$20
 
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+  LDA $00 : STA ($90), Y
   AND.w #$0100 : STA $0E 
   INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+  LDA $02 : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
   SEP #$20
   BCC .on_screen_y
@@ -159,13 +169,19 @@ Sprite_Booki_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+
+  LDA.b $09 : BEQ .ToRight
+  LDA.b #$39 : JMP .Prop
+  .ToRight
+  LDA.b #$79
+  .Prop
+  STA ($90), Y
 
   PHY 
       
   TYA : LSR #2 : TAY
       
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
       
   PLY : INY
       
@@ -182,59 +198,15 @@ Sprite_Booki_Draw:
   db $00, $01, $02, $03, $04, $05, $06, $07, $08, $09
   .nbr_of_tiles
   db 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-  .x_offsets
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  .y_offsets
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
   .chr
   db $0E
   db $0C
   db $0A
   db $2C
   db $2E
-  db $0E
-  db $0C
+  db $2E
   db $0A
   db $2C
-  db $2E
-  .properties
-  db $39
-  db $39
-  db $39
-  db $39
-  db $39
-  db $79
-  db $79
-  db $79
-  db $79
-  db $79
-  .sizes
-  db $02
-  db $02
-  db $02
-  db $02
-  db $02
-  db $02
-  db $02
-  db $02
-  db $02
-  db $02
+  db $0C
+  db $0E
 }
