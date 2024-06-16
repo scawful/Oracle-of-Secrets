@@ -41,6 +41,10 @@
 !MinecartSpeed      = 20
 !DoubleSpeed        = 30
 
+North = $00
+East  = $01
+South = $02
+West  = $03
 ; nesw
 ; 0 - north
 ; 1 - east
@@ -48,6 +52,10 @@
 ; 3 - west
 !MinecartDirection  = $012B
 
+Up = $00
+Down = $01
+Left = $02
+Right = $03
 ; $0DE0[0x10] - (Sprite) ;functions
 ;     udlr 
 ;     0 - up
@@ -90,8 +98,8 @@ Sprite_Minecart_Prep:
     STZ.w SprMiscG, X ; Clear the active tossing flag
 
     ; If the subtype is > 4, then it's an active cart
-    LDA SprSubtype, X : CMP.b #$04 : BCC .continue
-      LDA SprSubtype, X : SEC : SBC.b #$04 : STA SprSubtype, X
+    LDA.w SprSubtype, X : CMP.b #$04 : BCC .continue
+      LDA.w SprSubtype, X : SEC : SBC.b #$04 : STA.w SprSubtype, X
       LDA.b #$01 : STA SprMiscF, X ; Set the auto-move flag
     .continue
     LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
@@ -112,8 +120,8 @@ Sprite_Minecart_Prep:
       %GotoAction(1) ; Minecart_WaitVert
       JMP   .done
     .east
-      LDA #$01 : STA !MinecartDirection
-      LDA #$03 : STA !SpriteDirection, X
+      LDA.b #East : STA !MinecartDirection
+      LDA.b #Right : STA !SpriteDirection, X
       %GotoAction(0) ; Minecart_WaitHoriz
       JMP .done
     .south
@@ -122,8 +130,8 @@ Sprite_Minecart_Prep:
       %GotoAction(1) ; Minecart_WaitVert
       JMP .done
     .west
-      LDA #$03 : STA !MinecartDirection
-      LDA #$02 : STA !SpriteDirection, X
+      LDA.b #West : STA !MinecartDirection
+      LDA.b #Left : STA !SpriteDirection, X
       %GotoAction(0) ; Minecart_WaitHoriz
 
     .done
