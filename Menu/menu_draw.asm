@@ -142,16 +142,18 @@ Menu_DrawPendantIcons:
 {
   LDA.l $7EF374
 
+  ; Power
   LSR : BCC +
     LDX.w #$2502 : STX.w $14A4 : INX : STX.w $14A6
     LDX.w #$2512 : STX.w $14E4 : INX : STX.w $14E6
   +
 
   LSR : BCC +
-    LDX.w #$3D00 : STX.w $14AA : INX : STX.w $14AC
-    LDX.w #$3D10 : STX.w $14EA : INX : STX.w $14EC
+    LDX.w #$3D3D : STX.w $14AA : INX : STX.w $14AC
+    LDX.w #$BD3D : STX.w $14EA : INX : STX.w $14EC
   +
 
+  ; Wisdom
   LSR : BCC +
     LDX.w #$2D06 : STX.w $14B0 : INX : STX.w $14B2
     LDX.w #$2D16 : STX.w $14F0 : INX : STX.w $14F2
@@ -201,40 +203,40 @@ Menu_DrawHeartPieces:
 
 Menu_DrawMusicNotes:
 {
-    LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0001 : BCC .no_storms
-      LDA.w #$0002 : BRA .draw_storms
+  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0001 : BCC .no_storms
+    LDA.w #$0002 : BRA .draw_storms
   .no_storms
-    LDA.w #$0001
+  LDA.w #$0001
   .draw_storms
-    STA.w MusicNoteValue
-    LDA.w #MusicNoteValue
-    LDX.w #menu_offset(17,14)
-    LDY.w #QuarterNoteGFX
-    JSR DrawMenuItem
+  STA.w MusicNoteValue
+  LDA.w #MusicNoteValue
+  LDX.w #menu_offset(17,20)
+  LDY.w #QuarterNoteGFX
+  JSR DrawMenuItem
 
-    LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_healing
-      LDA.w #$03 : BRA .draw_healing
+  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_healing
+    LDA.w #$03 : BRA .draw_healing
   .no_healing
-    LDA.w #$01
+  LDA.w #$01
   .draw_healing
-    STA.w MusicNoteValue
-    LDA.w #MusicNoteValue
-    LDX.w #menu_offset(17,17)
-    LDY.w #QuarterNoteGFX
-    JSR DrawMenuItem
+  STA.w MusicNoteValue
+  LDA.w #MusicNoteValue
+  LDX.w #menu_offset(17,17)
+  LDY.w #QuarterNoteGFX
+  JSR DrawMenuItem
 
-    LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0003 : BCC .no_soaring
-      LDA.w #$04 : BRA .draw_soaring
+  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0003 : BCC .no_soaring
+    LDA.w #$04 : BRA .draw_soaring
   .no_soaring
-    LDA.w #$01
+  LDA.w #$01
   .draw_soaring
-    STA.w MusicNoteValue
-    LDA.w #MusicNoteValue
-    LDX.w #menu_offset(17,20)
-    LDY.w #QuarterNoteGFX
-    JSR DrawMenuItem
+  STA.w MusicNoteValue
+  LDA.w #MusicNoteValue
+  LDX.w #menu_offset(17,14)
+  LDY.w #QuarterNoteGFX
+  JSR DrawMenuItem
 
-    RTS
+  RTS
 }
 
 ; =========================================================
