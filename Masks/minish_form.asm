@@ -7,10 +7,15 @@
 org    $07DA2A
   TileDetection_OverworldAttributeJumpTable:
 
-; org $07DAEB ; Tile ID 61
+; Overworld Collision Tables
 org $07DAF2
   dw LinkState_CheckForMinishForm ; Tile ID 64
   dw LinkState_CheckMinishTile    ; Tile ID 65
+
+; Underworld Collision Tables
+org $07D8A0
+  dw LinkState_CheckForMinishForm
+  dw LinkState_CheckMinishTile
 
 ; =========================================================
 
