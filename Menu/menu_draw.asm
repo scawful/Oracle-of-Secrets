@@ -426,14 +426,14 @@ Menu_DrawQuestItems:
   LDY.w #PowerGloveGFX
   JSR DrawMenuItem
 
-  LDA.w #$7EF355
+  LDA.w #$7EF356
   LDX.w #menu_offset(17,5)
-  LDY.w #PegasusBootsGFX
+  LDY.w #FlippersGFX
   JSR DrawMenuItem
 
-  LDA.w #$7EF356
+  LDA.w #$7EF355
   LDX.w #menu_offset(17,8)
-  LDY.w #FlippersGFX
+  LDY.w #PegasusBootsGFX
   JSR DrawMenuItem
 
   LDA.w #$7EF357
