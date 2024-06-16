@@ -55,8 +55,10 @@ Sprite_LeverSwitch_Prep:
 {
   PHB : PHK : PLB
    
-  LDA.b #$80 : STA $0CAA, X
+  LDA.b #$80 : STA.w SprDefl, X
   LDA SprSubtype, X : STA SprAction, X
+  LDA.b #$00 : STA.w SprTileDie, X
+  STZ.w SprBulletproof, X
 
   PLB
   RTL
@@ -78,18 +80,24 @@ Sprite_LeverSwitch_Main:
   {
     %PlayAnimation(0,0,4)
 
+    JSL Sprite_PlayerCantPassThrough
     LDA SprTimerA, X : BNE .NoDamage
-
-    JSL Sprite_CheckDamageFromPlayerLong
-    BCC .NoDamage
-
-    LDA #$25 : STA $012F
     
-    STZ.w $37
-    LDA #$10 : STA SprTimerA, X
-    %GotoAction(1)
-
+    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+      .BoomHit
+      LDA #$25 : STA $012F
+      
+      STZ.w $37
+      LDA #$10 : STA SprTimerA, X
+      JSL $1EA007 ; GarnishSpawn_Sparkle
+      %GotoAction(1)
     .NoDamage
+
+    ; Check for boomerang intersection 
+    LDA.w SprX, X : CMP.w $0399 : BNE .NoBoomHit
+    LDA.w SprY, X : CMP.w $039B : BNE .NoBoomHit
+      JMP .BoomHit
+    .NoBoomHit
 
     RTS
   }
@@ -97,7 +105,7 @@ Sprite_LeverSwitch_Main:
   SwitchOn:
   {
     %PlayAnimation(1,1,4)
-
+    JSL Sprite_PlayerCantPassThrough
     LDA SprTimerA, X : BNE .NoDamage
 
     JSL Sprite_CheckDamageFromPlayerLong
