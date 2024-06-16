@@ -121,7 +121,7 @@ NewObjectsCode:
   dw .BottomRightFloor-.ObjData ; 11
   dw .FloorAny-.ObjData         ; 12
   dw .WallSwordHouse-.ObjData   ; 13
-  dw .KydreeokBody-.ObjData     ; 14 TODO: Replace with a different object
+  dw .TrackAny-.ObjData         ; 14 
   dw .SmallStatue-.ObjData      ; 15
 
 .ObjData
@@ -153,8 +153,8 @@ NewObjectsCode:
     incbin Data/track_floor_any.bin
   .WallSwordHouse
     incbin Data/wall_sword_house.bin
-  .KydreeokBody
-    incbin Data/kydreeok_body.bin
+  .TrackAny
+    incbin Data/track_any.bin
   .SmallStatue
     incbin Data/small_statue.bin
 }
