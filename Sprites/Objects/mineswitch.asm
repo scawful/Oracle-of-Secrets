@@ -55,7 +55,7 @@ Sprite_LeverSwitch_Prep:
 {
   PHB : PHK : PLB
    
-  LDA.b #$80 : STA.w SprDefl, X
+  LDA.b #$00 : STA.w SprDefl, X
   LDA SprSubtype, X : STA SprAction, X
   LDA.b #$00 : STA.w SprTileDie, X
   STZ.w SprBulletproof, X
@@ -89,15 +89,8 @@ Sprite_LeverSwitch_Main:
       
       STZ.w $37
       LDA #$10 : STA SprTimerA, X
-      JSL $1EA007 ; GarnishSpawn_Sparkle
       %GotoAction(1)
     .NoDamage
-
-    ; Check for boomerang intersection 
-    LDA.w SprX, X : CMP.w $0399 : BNE .NoBoomHit
-    LDA.w SprY, X : CMP.w $039B : BNE .NoBoomHit
-      JMP .BoomHit
-    .NoBoomHit
 
     RTS
   }

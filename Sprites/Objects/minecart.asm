@@ -210,7 +210,7 @@ HandleToss:
     %GotoAction(0) ; Minecart_WaitHoriz
   .continue
   LDA #$01 : STA SprMiscG, X
-  LDA #$10 : STA SprTimerC, X
+  LDA #$12 : STA SprTimerC, X
   STA SprYRound, X : STA SprXRound, X
   RTS
 }
@@ -1049,9 +1049,10 @@ MinecartFollower_Bottom:
       db $02, $02
 }
 
+; Minecart Follower Main Routine and Draw
 DrawMinecartFollower:
 {
-  JSL $099EFC
+  JSL $099EFC ; Follower_Initialize
 
   LDX $012B 
   LDA .direction_to_anim, X
