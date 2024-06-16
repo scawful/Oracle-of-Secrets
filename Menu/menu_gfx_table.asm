@@ -221,7 +221,7 @@ SwordGFX:
   dw $2C64, $2CCE, $2C75, $EC64 ; level one 
   dw $2C64, $2C65, $2C74, $2D26 ; level two 
   dw $3464, $3465, $3475, $3429 ; level three
-  dw $3864, $3865, $3875, $3829 ; level four
+  dw $3464, $3465, $3475, $3429 ; level four
 
 ; ---------------------------------------------------------
 
@@ -235,7 +235,7 @@ ShieldGFX:
 TunicGFX:
   dw $3C68, $7C68, $3C78, $7C78 ; green tunic
   dw $2C68, $6C68, $2C78, $6C78 ; blue tunic
-  dw $3468, $7468, $3478, $7478 ; gold tunic
+  dw $2468, $6468, $2478, $6478 ; red tunic
 
 ; =============================================================================
 ; Static Text on the Menu 
