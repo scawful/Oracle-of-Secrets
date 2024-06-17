@@ -33,22 +33,24 @@
 
 
 Sprite_Mermaid_Long:
-PHB : PHK : PLB
+{
+  PHB : PHK : PLB
 
-LDA.w SprMiscE, X : BEQ .MermaidDraw
-  JSR Sprite_Maple_Draw
-  JMP .Continue
-.MermaidDraw
-JSR Sprite_Mermaid_Draw ; Call the draw code
-.Continue
-JSL Sprite_CheckActive   ; Check if game is not paused
-BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
+  LDA.w SprMiscE, X : BEQ .MermaidDraw
+    JSR Sprite_Maple_Draw
+    JMP .Continue
+  .MermaidDraw
+  JSR Sprite_Mermaid_Draw ; Call the draw code
+  .Continue
+  JSL Sprite_CheckActive   ; Check if game is not paused
+  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
-JSR Sprite_Mermaid_Main ; Call the main sprite code
+  JSR Sprite_Mermaid_Main ; Call the main sprite code
 
-.SpriteIsNotActive
-PLB ; Get back the databank we stored previously
-RTL ; Go back to original code
+  .SpriteIsNotActive
+  PLB ; Get back the databank we stored previously
+  RTL ; Go back to original code
+}
 
 
 Sprite_Mermaid_Prep:
@@ -67,57 +69,57 @@ Sprite_Mermaid_Prep:
 
 
 Sprite_Mermaid_Main:
-LDA.w SprAction, X; Load the SprAction
-JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
-dw MermaidWait
-dw MermaidDive
-dw MermaidSwim
-dw MapleIdle
-
-
-MermaidWait:
 {
-%PlayAnimation(0,0, 20)
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
+  dw MermaidWait
+  dw MermaidDive
+  dw MermaidSwim
+  dw MapleIdle
 
-LDA.w SprTimerA, X : BNE +
-LDA.b #$20 : STA.w SprTimerA, X
-INC.w SprAction, X
-+
-RTS
-}
+  MermaidWait:
+  {
+    %PlayAnimation(0,0, 20)
+    JSL Sprite_PlayerCantPassThrough
+    
+    LDA.w SprTimerA, X : BNE +
+    LDA.b #$20 : STA.w SprTimerA, X
+    INC.w SprAction, X
+    +
+    RTS
+  }
 
-MermaidDive:
-{
-%PlayAnimation(1,2, 14)
+  MermaidDive:
+  {
+    %PlayAnimation(1,2, 14)
 
-LDA.w SprTimerA, X : BNE +
-INC.w SprAction, X
-LDA.b #-10 : STA.w SprXSpeed, X
-LDA.b #$02 : STA.w SprTimerA, X
-+
+    LDA.w SprTimerA, X : BNE +
+    INC.w SprAction, X
+    LDA.b #-10 : STA.w SprXSpeed, X
+    LDA.b #$02 : STA.w SprTimerA, X
+    +
 
-RTS
-}
+    RTS
+  }
 
-MermaidSwim:
-{
+  MermaidSwim:
+  {
+    %PlayAnimation(3,3, 20)
+    JSL Sprite_Move
 
-%PlayAnimation(3,3, 20)
-JSL Sprite_Move
+    LDA.w SprTimerA, X : BEQ +
+      JSR SpawnSplash
+    +
 
-LDA.w SprTimerA, X : BEQ +
-  JSR SpawnSplash
-+
+    RTS
+  }
 
-RTS
-
-}
-
-MapleIdle:
-{
-  %PlayAnimation(0,1,16)
-  JSL Sprite_PlayerCantPassThrough
-  RTS
+  MapleIdle:
+  {
+    %PlayAnimation(0,1,16)
+    JSL Sprite_PlayerCantPassThrough
+    RTS
+  }
 }
 
 Sprite_Mermaid_Draw:
