@@ -57,6 +57,7 @@ Sprite_AntiKirby_Prep:
   
   LDA #$00 : STA.w SprDefl, X
   LDA #$00 : STA.w SprTileDie, X
+  STZ.w SprMiscB, X
 
   LDY $0FFF
   LDA .bump_damage, Y : STA.w SprBump, X
@@ -80,94 +81,63 @@ Sprite_AntiKirby_Prep:
 
 Sprite_AntiKirby_Main:
 {  
-  
+  JSL Sprite_IsToRightOfPlayer 
+  TYA : CMP #$01 : BNE .WalkRight
+  .WalkLeft
+  LDA.b #$40 : STA.w SprMiscC, X
+  JMP +
+  .WalkRight
+  STZ.w SprMiscC, X
+  +
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
-  dw AntiKirby_Start
-  dw AntiKirby_WalkRight
-  dw AntiKirby_WalkLeft
+  dw AntiKirby_Main
   dw AntiKirby_Hurt
   dw AntiKirby_Suck
   dw AntiKirby_Full
   dw AntiKirby_Death
 
-  AntiKirby_Start:
+  AntiKirby_Main:
   {
-      ; Check health 
-      LDA SprHealth, X : CMP.b #$01 : BCS .NotDead
-        %GotoAction(6)
-        RTS
+    ; Check health 
+    LDA SprHealth, X : CMP.b #$01 : BCS .NotDead
+      %GotoAction(4)
+      RTS
     .NotDead
 
-      ; Randomly Suck
-      JSL GetRandomInt : AND #$3F : BNE .not_done
-        LDA #$04 : STA SprTimerA, X
-        %GotoAction(4)
-        RTS
-    .not_done
-      
-      JSL Sprite_IsToRightOfPlayer 
-      TYA : CMP #$01 : BNE .WalkRight
-
-    .WalkLeft
+    ; Randomly Suck
+    JSL GetRandomInt : AND #$3F : BNE .not_done
+      LDA #$04 : STA SprTimerA, X
       %GotoAction(2)
       RTS
+    .not_done
 
-    .WalkRight 
-      %GotoAction(1)
-      RTS
-  }
-
-  AntiKirby_WalkRight:
-  {
-      %PlayAnimation(0, 2, 10) ; Walk Right
-      
-      PHX 
-      JSL Sprite_DamageFlash_Long
-      JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
-        LDA #!RecoilTime : STA SprTimerA, X
-        %GotoAction(3) ; Hurt
-        PLX
-        RTS
-      
-    .NoDamage
-      %DoDamageToPlayerSameLayerOnContact()
-      PLX
-      %MoveTowardPlayer(10)
-      JSL Sprite_BounceFromTileCollision
-      JSL Sprite_PlayerCantPassThrough
-      
-      %GotoAction(0)
-      RTS
-  }
-
-  AntiKirby_WalkLeft:
-  {
-    %PlayAnimation(3, 6, 10) ; Walk Left
-
-    PHX 
+    %PlayAnimation(0, 2, 10) ; Start
+    
     JSL Sprite_DamageFlash_Long
     JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
       LDA #!RecoilTime : STA SprTimerA, X
-      %GotoAction(3) ; Hurt
-      PLX 
+      %GotoAction(1) ; Hurt
       RTS
-  .NoDamage
-    %DoDamageToPlayerSameLayerOnContact()
-    PLX 
+    .NoDamage
 
+    %DoDamageToPlayerSameLayerOnContact()
     %MoveTowardPlayer(10)
     JSL Sprite_BounceFromTileCollision
     JSL Sprite_PlayerCantPassThrough
-    %GotoAction(0)
+    
 
     RTS
   }
 
   AntiKirby_Hurt:
   {
-    %PlayAnimation(8, 8, 10) ; Hurt 
+    %PlayAnimation(3, 3, 10) ; Hurt 
+
+    JSL Sprite_DamageFlash_Long
+
     LDA SprTimerA, X : BNE .NotDone
       %GotoAction(0)
     .NotDone
@@ -177,7 +147,8 @@ Sprite_AntiKirby_Main:
 
   AntiKirby_Suck:
   {
-      %PlayAnimation(9, 10, 10) ; Suck
+      %PlayAnimation(4, 5, 10) ; Suck
+      
 
       LDA.b $0E : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
         LDA.b $0F : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
@@ -188,7 +159,7 @@ Sprite_AntiKirby_Main:
           JSL Sprite_ConvertVelocityToAngle
 
           LSR A
-          STA.w SprMiscC,X
+          STA.w SprMiscD,X
 
           LDA.b #$5F
           STA.w SprTimerA, X
@@ -197,27 +168,26 @@ Sprite_AntiKirby_Main:
       ; -----------------------------------------------------
 
       .dont_tongue_link
-      STZ.w SprAction, X
 
-      LDA.b #$10
-      STA.w SprTimerA, X
+      
+
+      LDA.w SprTimerA, X : BNE + 
+        STZ.w SprAction, X
+      +
 
       RTS
   }
 
   AntiKirby_Full:
   {
-    %PlayAnimation(11, 11, 10) ; Full
+    ; %PlayAnimation(6, 6, 10) ; Full
 
     LDA.w SprTimerA, X : BNE .lickylicky
-
       STZ.w SprAction, X
 
       LDA.b #$10
       STA.w SprTimerA, X
-
       STZ.w SprFrame, X
-      STZ.w SprMiscA, X
       STZ.w SprMiscG, X
 
       RTS
@@ -228,10 +198,10 @@ Sprite_AntiKirby_Main:
     PHA
 
     TAY
-    LDA.w .anim,Y : STA.w SprGfx, X
+    LDA.w .anim, Y : STA.w SprGfx, X
     TYA
 
-    LDY.w SprMiscC, X
+    LDY.w SprMiscD, X
     PHY
 
     CLC : ADC.w .index_offset_x, Y
@@ -253,7 +223,7 @@ Sprite_AntiKirby_Main:
     CLC : ADC.w .index_offset_y, Y
 
     TAY
-    LDA.w .pos, Y : STA.w SprMiscA, X
+    LDA.w .pos, Y : STA.w SprMiscE, X
 
     STA.b $06
     STZ.b $07
@@ -292,7 +262,7 @@ Sprite_AntiKirby_Main:
     AND.b #$03
     INC A
     STA.w SprMiscG, X
-    STA.w SprMiscD, X
+    STA.w SprMiscE, X
 
     CMP.b #$01 : BNE .dont_steal_bomb
       LDA.l $7EF343 : BEQ .dont_steal_anything
@@ -313,16 +283,13 @@ Sprite_AntiKirby_Main:
     .dont_steal_arrow
 
     CMP.b #$03 : BNE .dont_steal_rupee
-
-    REP #$20
-
-    LDA.l $7EF360 : BEQ .dont_steal_anything
-      DEC A
-      STA.l $7EF360
-    .exit
-    SEP #$20
-    RTS
-
+      REP #$20
+      LDA.l $7EF360 : BEQ .dont_steal_anything
+        DEC A
+        STA.l $7EF360
+      .exit
+      SEP #$20
+      RTS
     ; -----------------------------------------------------
 
     .dont_steal_rupee
@@ -339,9 +306,9 @@ Sprite_AntiKirby_Main:
     RTS
 
     .anim
-    db $09, $09, $09, $09, $0A, $0A, $0A, $0A
-    db $0A, $0A, $0A, $0A, $0A, $0A, $0A, $0A
-    db $0A, $0A, $0A, $0A, $09, $09, $09, $09
+    db $04, $04, $04, $04, $05, $05, $05, $05
+    db $05, $05, $05, $05, $05, $05, $05, $05
+    db $05, $05, $05, $05, $04, $04, $04, $04
 
     .pos
     db   0,   0,   0,   0,   0,   0,   0,   0
@@ -357,20 +324,22 @@ Sprite_AntiKirby_Main:
     db   0,   0,   0,   0,   0,   0,   0,   0
 
     .index_offset_x
-    db $18, $18, $00, $30, $30, $30, $00, $18
+    ; db $18, $18, $00, $30, $30, $30, $00, $18
+    db $00, $00, $00, $00, $00, $00, $00, $00
 
     .index_offset_y
-    db $00, $18, $18, $18, $00, $30, $30, $30
+    ; db $00, $18, $18, $18, $00, $30, $30, $30
+    db $00, $00, $00, $00, $00, $00, $00, $00
   }
 
   AntiKirby_Death:
   {
-    %PlayAnimation(12, 12, 10) ; Death
+    %PlayAnimation(3, 3, 10) ; Death
 
     LDA.b #$06 : STA.w SprState, X
     LDA.b #$0A : STA.w SprTimerA, X
 
-    STZ.w SprPrize,X
+    STZ.w SprPrize, X
 
     LDA.b #$09 ; SFX2.1E
     JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan
@@ -379,6 +348,8 @@ Sprite_AntiKirby_Main:
   }
 }
 
+; 7-9: Walking with hat
+; 10: Hurt with hat
 
 Sprite_AntiKirby_Draw:
 {
@@ -388,7 +359,8 @@ Sprite_AntiKirby_Draw:
   LDA SprGfx, X : CLC : ADC SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
-  LDA SprMiscA, X : STA $08
+  LDA.w SprMiscA, X : STA $08
+  LDA.w SprMiscC, X : STA $09
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -421,7 +393,7 @@ Sprite_AntiKirby_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : ORA $08 : STA ($90), Y
+  LDA .properties, X : ORA $08 : AND.b #$FF : ORA $09 : STA ($90), Y
 
   PHY 
       
@@ -437,76 +409,68 @@ Sprite_AntiKirby_Draw:
 
   RTS
 
+  ; Anti-Kirby V2 draw
+
   .start_index
-  db $00, $01, $02, $03, $05, $06, $07, $08, $0A, $0B, $0D, $0F, $11
+  db $00, $01, $02, $03, $04, $06, $08, $0A, $0C, $0E, $10
   .nbr_of_tiles
-  db 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1
+  db 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1
   .x_offsets
   dw 0
-  dw 1
   dw 0
-  dw 0, 16
   dw 0
-  dw -1
   dw 0
-  dw 0, -16
-  dw 0
-  dw 0, 16
-  dw 0, 16
-  dw -4, 12
-  dw -4, 12
+  dw 0, 8
+  dw 0, 8
+  dw -4, 4
+  dw 0, -4
+  dw 0, -4
+  dw 0, -4
+  dw 0, -4
   .y_offsets
   dw 0
   dw 0
   dw 0
-  dw 0, 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0, 0
   dw 0
   dw 0, 0
   dw 0, 0
   dw 0, 0
-  dw 0, 0
+  dw 0, -8
+  dw 0, -8
+  dw 0, -8
+  dw 0, -6
   .chr
-  db $00
   db $02
   db $00
-  db $04, $06
-  db $00
-  db $02
-  db $00
-  db $04, $06
+  db $04
   db $20
-  db $08, $0A
-  db $28, $2A
-  db $22, $24
-  db $22, $24
+  db $08, $09
+  db $28, $29
+  db $22, $23
+  db $02, $25
+  db $00, $25
+  db $04, $25
+  db $20, $25
   .properties
   db $37
   db $37
   db $37
-  db $37, $37
-  db $77
-  db $77
-  db $77
-  db $77, $77
   db $37
   db $37, $37
   db $37, $37
   db $37, $37
-  db $37, $37
+  db $37, $3B
+  db $37, $3B
+  db $37, $3B
+  db $37, $3B
   .sizes
   db $02
   db $02
   db $02
-  db $02, $02
-  db $02
-  db $02
   db $02
   db $02, $02
-  db $02
+  db $02, $02
+  db $02, $02
   db $02, $02
   db $02, $02
   db $02, $02
