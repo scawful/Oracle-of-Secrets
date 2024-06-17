@@ -156,3 +156,4 @@ Follower_HandleTriggerData:
   .ow_boundaries_check
   #_09A596: dw $0000, $000A, $0028, $0032
 }
+
