@@ -3,13 +3,13 @@ org $0EDE29
 ; $75E29-$75E48 DATA
 {
     ; corresponding warp types that lead to special overworld areas
-    dw $01EF, $01E4, $00AD, $00B9
+    dw $01EF, $01EF, $00AD, $00B9
     
     ; Lost woods, Hyrule Castle Bridge, Entrance to Zora falls, and in Zora Falls...
-    dw $002A, $002D, $000F, $0081
+    dw $002A, $0018, $000F, $0081
     
     ; Direction Link will face when he enters the special area
-    dw $0008, $0002, $0008, $0008
+    dw $0008, $0008, $0008, $0008
     
     ; Exit value for the special area. In Hyrule Magic these are those White markers.
     dw $0180, $0181, $0182, $0189
@@ -43,7 +43,7 @@ org $02E841 : db $01 ; PC Address $016841
 ; =========================================================
 
 ; Sprite GFX
-org $02E812 : db $13 ; PC Address $016812
+org $02E812 : db $25 ; PC Address $016812
 
 ; Background GFX
 org $02E822 : db $2F ; PC Address $016822
