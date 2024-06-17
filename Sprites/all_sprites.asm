@@ -145,6 +145,8 @@ print  "End of dark_link.asm              ", pc
 incsrc "Sprites/NPCs/korok.asm"
 print  "End of korok.asm                  ", pc
 
+incsrc "Sprites/Enemies/puffstool.asm"
+print  "End of puffstool.asm              ", pc
 
 incsrc "Sprites/Objects/deku_leaf.asm"
 print  "End of deku_leaf.asm              ",  pc
