@@ -279,6 +279,11 @@ Sprite_Wolfos_Main:
     LDA   $FE : BEQ .ninguna_cancion
       STZ   $FE
       LDA.b #$20 : STA.w SprTimerD, X
+      LDA.w POSX : STA.w SprX, X
+      LDA.w POSXH : STA.w SprXH, X
+      LDA.w POSY : SEC : SBC.b #$08 : STA.w SprY, X
+      LDA.w POSYH : STA.w SprYH, X
+      
       %GotoAction(7)
     .ninguna_cancion
     
@@ -287,10 +292,10 @@ Sprite_Wolfos_Main:
 
   Wolfos_GrantMask:
   {
-    %PlayAnimation(0, 0, 10)
-
+    LDA.b #16 : STA.w SprFrame, X
 
     LDA SprTimerD, X : BNE .wait
+      LDA.b #$01 : STA.w BRANDISH
       %ShowUnconditionalMessage($10F)
       LDA.b #$01 : STA.l $7EF358
       %GotoAction(8)
@@ -300,7 +305,6 @@ Sprite_Wolfos_Main:
 
   Wolfos_Dismiss:
   {
-    %PlayAnimation(0, 0, 10)
     STZ.w SprXSpeed, X
     STZ.w SprYSpeed, X
 
@@ -310,22 +314,11 @@ Sprite_Wolfos_Main:
       LDA.b #$00 : STA $0DD0, X ; kill sprite normal style
       STZ.w SprAction, X
       STZ.w SprHealth, X
+      STZ.w BRANDISH
       RTS
     .dismiss
     RTS
   }
-}
-
-Sprite_TimerAction:
-{
-  LDA.w SprTimerA, X : BEQ .reset_timer
-    DEC.w SprTimerA, X
-  RTS
-
-  .reset_timer
-  LDA #$30 : STA SprTimerA, X
-  %GotoAction(0) ; Default to attack forward
-  RTS
 }
 
 
@@ -398,9 +391,9 @@ Sprite_Wolfos_Draw:
   RTS
 
   .start_index
-  db $00, $02, $04, $06, $08, $0A, $0C, $10, $14, $18, $1C, $20, $24, $28, $2B, $2F
+  db $00, $02, $04, $06, $08, $0A, $0C, $10, $14, $18, $1C, $20, $24, $28, $2B, $2F, $32
   .nbr_of_tiles
-  db 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 2, 3, 2
+  db 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 2, 3, 2, 1
   .x_offsets
   dw 0, 0
   dw 0, 0
@@ -418,6 +411,7 @@ Sprite_Wolfos_Draw:
   dw -8, 8, 8
   dw 8, -8, -8, 8
   dw 8, -8, -8
+  dw 0
   .y_offsets
   dw 0, -16
   dw 0, -16
@@ -435,6 +429,7 @@ Sprite_Wolfos_Draw:
   dw 0, 0, -16
   dw 0, 0, -16, -16
   dw 0, 0, -16
+  dw 0
   .chr
   db $E0, $C0
   db $E4, $C4
@@ -452,6 +447,7 @@ Sprite_Wolfos_Draw:
   db $EC, $EE, $CE
   db $AC, $AE, $8E, $8C
   db $EC, $EE, $CE
+  db $CC ; Wolf Mask
   .properties
   db $39, $39
   db $39, $39
@@ -469,6 +465,7 @@ Sprite_Wolfos_Draw:
   db $39, $39, $39
   db $79, $79, $79, $79
   db $79, $79, $79
+  db $39
   .sizes
   db $02, $02
   db $02, $02
@@ -486,5 +483,5 @@ Sprite_Wolfos_Draw:
   db $02, $02, $02
   db $02, $02, $02, $02
   db $02, $02, $02
-
+  db $02
 }
