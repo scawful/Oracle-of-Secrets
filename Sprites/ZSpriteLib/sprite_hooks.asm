@@ -37,11 +37,20 @@ SprSubtype   = $0E30 ; This contains the Sub ID of the sprite
 ; 0x0B - Sprite is frozen and / or stunned.
 SprState     = $0DD0 ; This tells if the sprite is alive, dead, frozen, etc...
 
-SprNbrOAM    = $0E40 ; Bits 0-4: define the number of OAM slots used by the sprite
+; Bits 0-4: define the number of OAM slots used by the sprite
+; Bit 5: Causes enemies to go towards the walls? strange...
+; Bit 6: No idea but the master sword ceremony sprites seem to use them....?
+; Bit 7: If set, enemy is harmless. Otherwise you take damage from contact.
+SprNbrOAM    = $0E40 
+
 SprHealth    = $0E50
 SprGfxProps  = $0E60
-SprCollision = $0E70 ; When a sprite hit a wall, this gets set to the direction in which the collision occurred.
-SprDelay     = $0E80 ; Used in sprite state 0x03 (falling in water), used as delay in most of the sprites
+
+; Direction of sprite collision with wall
+SprCollision = $0E70 
+
+; Used in sprite state 0x03 (falling in water), used as delay in most of the sprites
+SprDelay     = $0E80
 SprRecoil    = $0EA0 ; Recoil Timer
 SprDeath     = $0EF0
 
@@ -147,35 +156,25 @@ SprTileDie   = $0B6B
 ; Bulletproof
 SprBulletproof = $0BA0
 
-org $09AE64
-Sprite_SetSpawnedCoords:
+Sprite_SetSpawnedCoords = $09AE64
 
 ; =========================================================
-;Sprite_PrepOamCoord LONG
-;set the oam coordinate for the sprite draw
-org $06E416
-Sprite_PrepOamCoord:
+; set the oam coordinate for the sprite draw
+Sprite_PrepOamCoord =  $06E416
 
 ; =========================================================
-;Sprite_CheckDamageFromPlayer LONG
-;check if the sprite is getting damage from player or items
-org $06F2AA
-Sprite_CheckDamageFromPlayer:
+; check if the sprite is getting damage from player or items
+Sprite_CheckDamageFromPlayer = $06F2AA
 
 ; =========================================================
-;Sprite_CheckDamageToPlayer LONG
-;check if the sprite is touching the player to damage
-org $06F121
-Sprite_CheckDamageToPlayer:
+; check if the sprite is touching the player to damage
+Sprite_CheckDamageToPlayer = $06F121
 
 ; =========================================================
-;Sprite_AttemptDamageToPlayerPlusRecoil LONG
-;damage the player everywhere on screen?
-org $06F41F
-Sprite_AttemptDamageToPlayerPlusRecoil:
+; damage the player everywhere on screen?
+Sprite_AttemptDamageToPlayerPlusRecoil = $06F41F
 
 ; =========================================================
-;Sprite_OAM_AllocateDeferToPlayer LONG
 ;Draw the sprite depending of the position of the player (if he has to be over or under link)
 org $06F864
 Sprite_OAM_AllocateDeferToPlayer:
@@ -195,112 +194,88 @@ OAM_AllocateFromRegionF:
 
 org $05DF70
 Sprite_DrawMultiple_quantity_preset:
+
 ; =========================================================
-;ApplyRumbleToSprites LONG
 ;makes all the sprites on screen shaking?
 org $0680FA
 ApplyRumbleToSprites:
 
-
 ; =========================================================
-;CheckIfHitBoxesOverlap LONG
-;args : 
-;!pos1_low  = $00
-;!pos1_size = $02
-;!pos2_low  = $04
-;!pos2_size = $06
-;!pos1_high = $08
-;!pos2_high = $0A
-;!ans_low   = $0F
-;!ans_high  = $0C
+; args : 
+; !pos1_low  = $00
+; !pos1_size = $02
+; !pos2_low  = $04
+; !pos2_size = $06
+; !pos1_high = $08
+; !pos2_high = $0A
+; !ans_low   = $0F
+; !ans_high  = $0C
 ;returns carry clear if there was no overlap
-org $0683E6
-CheckIfHitBoxesOverlap:
+CheckIfHitBoxesOverlap = $0683E6
 
 ; =========================================================
-; Sprite_Get_16_bit_Coords LONG
-; $0FD8 = sprite's X coordinate, $0FDA = sprite's Y coordinate
-org $0684BD
-Sprite_Get_16_bit_Coords:
+; $0FD8 = sprite's X coordinate
+; $0FDA = sprite's Y coordinate
+Sprite_Get_16_bit_Coords = $0684BD
 
 ; =========================================================
-; Sprite_PrepAndDrawSingleLarge LONG
-; load / draw a  16x16 sprite
-org $06DBF0
-Sprite_PrepAndDrawSingleLarge:
+; load / draw a 16x16 sprite
+Sprite_PrepAndDrawSingleLarge = $06DBF0
 
 ; =========================================================
-; Sprite_PrepAndDrawSingleSmall LONG
-; load / draw a  8x8 sprite
-org $06DBF8
-Sprite_PrepAndDrawSingleSmall:
+; load / draw a 8x8 sprite
+Sprite_PrepAndDrawSingleSmall = $06DBF8
 
 ; =========================================================
-; Sprite_DrawShadow LONG
-; draw shadow 
-org $06DC54
-Sprite_DrawShadow:
+; draw shadow (requires additional oam allocation)
+Sprite_DrawShadow = $06DC54
 
 ; =========================================================
-; Sprite_CheckTileCollision LONG
 ; check if the sprite is colliding with a solid tile set $0E70, X
 ; ----udlr , u = up, d = down, l = left, r = right
-org $06E496
-Sprite_CheckTileCollision:
+Sprite_CheckTileCollision = $06E496
 
 ; =========================================================
-; Sprite_GetTileAttr LONG
 ; $00[0x02] - Entity Y coordinate
 ; $02[0x03?] - Entity X coordinate
 ; $0FA5
-org $06E87B
-Sprite_GetTileAttr:
+Sprite_GetTileAttr = $06E87B
 
 ; =========================================================
-; Sprite_CheckSlopedTileCollision LONG
 ; check if the sprite is colliding with a solid sloped tile
-org $06E8FD
-Sprite_CheckSlopedTileCollision:
+Sprite_CheckSlopedTileCollision = $06E8FD
 
 ; =========================================================
-; Sprite_ApplySpeedTowardsPlayer LONG
 ; set the velocity x,y towards the player (A = speed)
-org $06EA12
-Sprite_ApplySpeedTowardsPlayer:
+Sprite_ApplySpeedTowardsPlayer = $06EA12
 
 ; =========================================================
-; Sprite_DirectionToFacePlayer LONG
 ; \return $0E is low byte of player_y_pos - sprite_y_pos
 ; \return $0F is low byte of player_x_pos - sprite_x_pos
-org $06EAA0
-Sprite_DirectionToFacePlayer:
+Sprite_DirectionToFacePlayer = $06EAA0
 
 ; =========================================================
-; Sprite_IsToRightOfPlayer LONG
 ; if Link is to the left of the sprite, Y = 1, otherwise Y = 0.
-org $06EACD
-Sprite_IsToRightOfPlayer:
+Sprite_IsToRightOfPlayer = $06EACD
 
 ; =========================================================
-; Sprite_IsBelowPlayer LONG
 ; return Y=1 sprite is below player, otherwise Y = 0
-org $06EAE4
-Sprite_IsBelowPlayer:
+Sprite_IsBelowPlayer = $06EAE4
 
 ; =========================================================
-; Sprite_CheckDamageToPlayerSameLayer LONG
-; check damage done to player if they collide and if they are on same layer
-org $06F129
-Sprite_CheckDamageToPlayerSameLayer:
+; $06 = sprite's Y coordinate
+; $07 = sprite's X coordinate
+Sprite_IsBelowLocation = $06EB1D
 
 ; =========================================================
-; Sprite_CheckDamageToPlayerIgnoreLayer LONG
+; check damage done to player if they collide on same layer
+Sprite_CheckDamageToPlayerSameLayer = $06F129
+
+; =========================================================
 ; check damage done to player if they collide even if they are not on same layer
-org $06F131
-Sprite_CheckDamageToPlayerIgnoreLayer:
+Sprite_CheckDamageToPlayerIgnoreLayer = $06F131
 
 ; =========================================================
-; Sound_SetSfx2PanLong LONG
 ; play a sound loaded in A
 org $0DBB6E
 Sound_SetSfx1PanLong:
@@ -312,7 +287,6 @@ org $0DBB8A
 Sound_SetSfx3PanLong:
 
 ; =========================================================
-;Sprite_SpawnDynamically LONG
 ;spawn a new sprite on screen, A = sprite id
 ;when using this function you have to set the position yourself
 ;these values belong to the sprite who used that function not the new one 
@@ -321,95 +295,66 @@ Sound_SetSfx3PanLong:
 ;$04 height, $05 low x (overlord)
 ;$06 high x (overlord), $07 low y (overlord)
 ;$08 high y (overlord)
-org $1DF65D
-Sprite_SpawnDynamically:
+Sprite_SpawnDynamically = $1DF65D
 
-org $07F1A3
-Player_ResetState:
+Player_ResetState = $07F1A3
 
 ; =========================================================
-; Sprite_ApplyConveyorAdjustment LONG
 ; move the sprite if he stand on a conveyor belt
-org $1D8010
-Sprite_ApplyConveyorAdjustment:
+Sprite_ApplyConveyorAdjustment = $1D8010
 
 ; =========================================================
-;SetupHitBox LONG
 ;set the hitbox of the player (i think)
 ;org $0683EA
 ;Sprite_SetupHitBoxLong:
 
 ; =========================================================
-; Dungeon_SpriteInducedTilemapUpdate LONG
 ; set tile of dungeon
-org $01E7A9
-Dungeon_SpriteInducedTilemapUpdate:
+Dungeon_SpriteInducedTilemapUpdate = $01E7A9
+
 
 ; =========================================================
-; Get random INT LONG
-; GetRandomInt
-org $0DBA71
-GetRandomInt:
-
-; =========================================================
-; Sprite_PlayerCantPassThrough
 ; player can't pass through the sprite
-org $1EF4F3
-Sprite_PlayerCantPassThrough:
+Sprite_PlayerCantPassThrough = $1EF4F3
 
 ; =========================================================
-; Sprite_NullifyHookshotDrag
 ; player can't hookshot to that sprite
-org $0FF540
-Sprite_NullifyHookshotDrag:
+Sprite_NullifyHookshotDrag = $0FF540
 
 ; =========================================================
-; Player_HaltDashAttack
 ; stop the dash attack of the player
-org $0791B9
-Player_HaltDashAttack:
+Player_HaltDashAttack = $0791B9
 
 ; =========================================================
-; Sprite_ShowMessageUnconditional
 ; show a message box without any condition
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
-org $05E219
-Sprite_ShowMessageUnconditional:
+Sprite_ShowMessageUnconditional = $05E219
 
 ; =========================================================
-; Link_ReceiveItem
 ; Y = item id
-org $0799AD
-Link_ReceiveItem:
+Link_ReceiveItem = $0799AD
 
 ; =========================================================
-; Sprite_ShowSolicitedMessageIfPlayerFacing
 ; show a message if we press A and face the sprite
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
-org $05E1A7
-Sprite_ShowSolicitedMessageIfPlayerFacing:
+Sprite_ShowSolicitedMessageIfPlayerFacing = $05E1A7
 
 ; =========================================================
-; Sprite_ShowMessageFromPlayerContact
 ; show a message if we touch the sprite 
 ; should be used with Sprite_PlayerCantPassThrough
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
-org $05E1F0
-Sprite_ShowMessageFromPlayerContact:
+Sprite_ShowMessageFromPlayerContact = $05E1F0
 
 ; Parameters: Stack, A
-org $008781
-UseImplicitRegIndexedLocalJumpTable:
+UseImplicitRegIndexedLocalJumpTable = $008781
 
-org $00893D
-EnableForceBlank:
+EnableForceBlank = $00893D
 
 
 ; =========================================================
-; Sprite_ProjectSpeedTowardsEntityLong
 ; $04 = X
 ; $05 = HighX
 ; $06 = Y
@@ -418,27 +363,33 @@ EnableForceBlank:
 ; \return $00 - Y Velocity
 ; \return $01 - X Velocity
 
-org $06EA22
-Sprite_ProjectSpeedTowardsEntityLong:
+Sprite_ProjectSpeedTowardsEntityLong = $06EA22
 
-org $0DDA06
-Sprite_SpawnFireball:
+; =========================================================
+; Misc long functions 
 
-org $1D808C
-Sprite_MoveLong:
+Sprite_SpawnFireball = $0DDA06
 
-org $1EFF8D
-Sprite_DrawRippleIfInWater:
+Sprite_MoveLong = $1D808C
 
-org $058008
-Sprite_SpawnSparkleGarnish:
+Sprite_DrawRippleIfInWater = $1EFF8D
 
+Sprite_SpawnSparkleGarnish = $058008
 
-org $06EA1A
-Sprite_ProjectSpeedTowardsPlayer:
+GetRandomInt = $0DBA71
 
-org $06F2AA
-Sprite_CheckDamageFromPlayerLong:
+Sprite_ProjectSpeedTowardsPlayer = $06EA1A
 
-org $06AA0C
-Sprite_CheckIfLifted:
+Sprite_CheckDamageFromPlayerLong = $06F2AA
+
+Sprite_CheckIfLifted = $06AA0C
+
+Sprite_TransmuteToBomb = $06AD50
+
+Sprite_SetSpawnedCoordinates = $09AE64
+
+Guard_ParrySwordAttacks = $06EB5E
+
+; =========================================================
+; Local functions which may be useful for sprites
+; Sprite_AttemptZapDamage - 06EC02
