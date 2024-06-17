@@ -390,6 +390,8 @@ Sprite_SetSpawnedCoordinates = $09AE64
 
 Guard_ParrySwordAttacks = $06EB5E
 
+ThrownSprite_TileAndSpriteInteraction_long = $06DFF2
+
 ; =========================================================
 ; Local functions which may be useful for sprites
 ; Sprite_AttemptZapDamage - 06EC02

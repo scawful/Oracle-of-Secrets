@@ -80,12 +80,13 @@ Sprite_Puffstool_Main:
 
     JSL Sprite_Move
     JSL Sprite_DamageFlash_Long
+    JSL ThrownSprite_TileAndSpriteInteraction_long
 
     JSL Sprite_CheckDamageFromPlayer : BCC .no_dano
       
       %GotoAction(1)
       LDA.b #$60 : STA.w SprTimerA, X
-      LDA.b #$60 : STA.w SprTimerF, X
+      LDA.b #$20 : STA.w SprTimerF, X
     .no_dano
 
     RTS
@@ -97,6 +98,7 @@ Sprite_Puffstool_Main:
 
     JSL Sprite_CheckIfLifted
     JSL Sprite_DamageFlash_Long
+    JSL ThrownSprite_TileAndSpriteInteraction_long
 
     LDA.w SprTimerA, X : BNE + 
       %GotoAction(0)
