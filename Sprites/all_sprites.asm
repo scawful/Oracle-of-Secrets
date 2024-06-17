@@ -106,6 +106,9 @@ print  "End of bean_vendor.asm            ", pc
 incsrc "Sprites/Bosses/octoboss.asm"
 print  "End of octoboss.asm               ", pc
 
+; TODO: Make a parent sprite for per map NPCs
+incsrc "Sprites/NPCs/Mermaid.asm"
+
 ;=========================================================
 
 org    $318000
