@@ -50,8 +50,8 @@ Sprite_DekuScrubEnemy_Prep:
     PHB : PHK : PLB
 
     LDA SprSubtype, X : CMP #$01 : BNE .normal_scrub
-      LDA #$06 : STA SprAction, X ; Pea Shot State
-      LDA.b #$20 : STA.b SprPrize, X
+      LDA.b #$06 : STA SprAction, X ; Pea Shot State
+      LDA.b #$A0 : STA.b SprPrize, X
     .normal_scrub 
 
     PLB
@@ -85,6 +85,7 @@ Sprite_DekuScrubEnemy_Main:
       %PlayAnimation(13,13,1)
 
       JSL Sprite_PlayerCantPassThrough
+      JSR CheckForPeaShotRedirect
 
       JSL Sprite_IsBelowPlayer : TYA
         CMP #$00 : BNE .is_below_player
@@ -93,7 +94,7 @@ Sprite_DekuScrubEnemy_Main:
           LDA $20 : STA $03
           LDA SprX, X : STA $04
           LDA SprY, X : STA $05
-          JSR GetDistance8bit : CMP.b #$18 : BCC .too_close
+          JSR GetDistance8bit : CMP.b #$24 : BCC .too_close
             ; The player is below the scrub, so it should pop up
             LDA #$20 : STA SprTimerA, X
             %GotoAction(1)
@@ -110,9 +111,10 @@ Sprite_DekuScrubEnemy_Main:
 
       JSL Sprite_PlayerCantPassThrough
       
+      
       LDA SprTimerA, X : BNE .not_done
         JSR SpawnPeaShot
-        LDA #$80 : STA SprTimerA, X
+        LDA #$40 : STA SprTimerA, X
         INC.w SprAction, X
     .not_done
 
@@ -133,42 +135,8 @@ Sprite_DekuScrubEnemy_Main:
     %PlayAnimation(0,0,4)
 
     JSL Sprite_PlayerCantPassThrough
-
-    LDA.w $0D10,X : STA.b $00
-    LDA.w $0D30,X  : STA.b $08
-
-    LDA.b #$04 : STA.b $02
-    STZ $03
-
-    LDA.w $0D00,X :  STA.b $01
-    LDA.w $0D20,X : STA.b $09
+    JSR CheckForPeaShotRedirect
     
-    PHX 
-    LDA Offspring1_Id : TAX
-    JSL Sprite_SetupHitBox
-    PLX
-
-    JSL CheckIfHitBoxesOverlap : BCC .no_dano
-      INC.w SprAction, X
- .no_dano
-    ; Wait while the pea shot is on screen
-    ; Link may redirect it towards us 
-    LDA SprTimerA, X : BNE .not_done
-      ; If the pea shot and deku scrub hitboxes intersect
-      ; We will go to recoil 
-      PHX 
-      LDA Offspring1_Id : TAX
-      JSL Sprite_SetupHitBox
-      PLX
-      JSL CheckIfHitBoxesOverlap : BCC .not_done2
-        %GotoAction(4)
-        RTS
-      .not_done2
-  
-      ; However, he may also dodge it and try to attack
-      ; So if he gets too close, we go back to hiding
-      %GotoAction(0)
-  .not_done
     RTS
   }
 
@@ -238,6 +206,46 @@ Sprite_DekuScrubEnemy_Main:
     .no_damage
       RTS 
   }
+}
+
+CheckForPeaShotRedirect:
+{
+    LDA.w $0D10, X : STA.b $00
+    LDA.w $0D30, X  : STA.b $08
+
+    LDA.b #$04 : STA.b $02
+    STZ $03
+
+    LDA.w $0D00, X : STA.b $01
+    LDA.w $0D20, X : STA.b $09
+    
+    PHX 
+    LDA.w Offspring1_Id : TAX
+    JSL Sprite_SetupHitBox
+    PLX
+
+    JSL CheckIfHitBoxesOverlap : BCC .no_dano
+      INC.w SprAction, X
+    .no_dano
+    ; Wait while the pea shot is on screen
+    ; Link may redirect it towards us 
+    LDA SprTimerA, X : BNE .not_done
+      ; If the pea shot and deku scrub hitboxes intersect
+      ; We will go to recoil 
+      PHX 
+      LDA.w Offspring1_Id : TAX
+      JSL Sprite_SetupHitBox
+      PLX
+      JSL CheckIfHitBoxesOverlap : BCC .not_done2
+        %GotoAction(3)
+        RTS
+      .not_done2
+  
+      ; However, he may also dodge it and try to attack
+      ; So if he gets too close, we go back to hiding
+      %GotoAction(0)
+  .not_done
+  RTS
 }
 
 SpawnPeaShot:
