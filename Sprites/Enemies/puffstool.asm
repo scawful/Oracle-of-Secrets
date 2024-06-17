@@ -1,17 +1,17 @@
 ; =========================================================
 
-!SPRID              = $00; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 0 ; Number of tiles used in a frame
+!SPRID              = $B1 ; The sprite ID you are overwriting (HEX)
+!NbrTiles           = 02  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 0  ; Number of Health the sprite have
-!Damage             = 0  ; (08 is a whole heart), 04 is half heart
+!Health             = 0   ; Number of Health the sprite have
+!Damage             = 0   ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
-!Palette            = 0  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 0  ; 00 to 31, can be viewed in sprite draw tool
+!Palette            = 0   ; Unused in this template (can be 0 to 7)
+!Hitbox             = 0   ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -19,7 +19,7 @@
 !DeflectArrow       = 00  ; 01 = deflect arrows
 !WaterSprite        = 00  ; 01 = can only walk shallow water
 !Blockable          = 00  ; 01 = can be blocked by link's shield?
-!Prize              = 0  ; 00-15 = the prize pack the sprite will drop from
+!Prize              = 0   ; 00-15 = the prize pack the sprite will drop from
 !Sound              = 00  ; 01 = Play different sound when taking damage
 !Interaction        = 00  ; ?? No documentation
 !Statue             = 00  ; 01 = Sprite is statue
@@ -37,6 +37,7 @@ Sprite_Puffstool_Long:
   PHB : PHK : PLB
 
   JSR Sprite_Puffstool_Draw ; Call the draw code
+  JSL Sprite_DrawShadow
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
@@ -53,7 +54,7 @@ Sprite_Puffstool_Prep:
 {
   PHB : PHK : PLB
     
-
+  LDA.b #$80 : STA.w SprHealth, X
 
   PLB
   RTL
@@ -72,12 +73,42 @@ Sprite_Puffstool_Main:
   Puffstool_Walking:
   {
     %PlayAnimation(0,6,10)
+    JSL Sprite_PlayerCantPassThrough
+
+    LDA.b #$02
+    JSL Sprite_ApplySpeedTowardsPlayer
+
+    JSL Sprite_Move
+    JSL Sprite_DamageFlash_Long
+
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_dano
+      
+      %GotoAction(1)
+      LDA.b #$60 : STA.w SprTimerA, X
+      LDA.b #$60 : STA.w SprTimerF, X
+    .no_dano
+
     RTS
   }
 
   Puffstool_Stunned:
   {
     %PlayAnimation(7,7,10)
+
+    JSL Sprite_CheckIfLifted
+    JSL Sprite_DamageFlash_Long
+
+    LDA.w SprTimerA, X : BNE + 
+      %GotoAction(0)
+
+      LDA.b #$4A ; SPRITE 4A
+      LDY.b #$0B
+      JSL Sprite_SpawnDynamically : BMI .no_space
+        JSL Sprite_SetSpawnedCoordinates
+        JSL Sprite_TransmuteToBomb
+      .no_space
+      
+    +
     RTS
   }
 }
@@ -92,7 +123,7 @@ Sprite_Puffstool_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
+  LDA.w SprMiscA, X : STA $08 ; Palette damage flash
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -125,7 +156,7 @@ Sprite_Puffstool_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY 
       
