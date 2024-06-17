@@ -1391,3 +1391,44 @@ Sprite_Minecart_DrawBottom:
     db $02, $02
     db $02, $02
 }
+
+RoomTag_ShutterDoorRequiresCart:
+{
+  LDA.w !LinkInCart : BEQ .no_cart
+    #_01C49E: REP #$30
+
+    #_01C4A0: LDX.w #$0000
+    #_01C4A3: CPX.w $0468
+    #_01C4A6: BEQ .exit
+
+    #_01C4A8: STZ.w $0468
+
+    #_01C4AB: STZ.w $068E
+    #_01C4AE: STZ.w $0690
+
+    #_01C4B1: SEP #$30
+
+    #_01C4B3: LDA.b #$1B ; SFX3.1B
+    #_01C4B5: STA.w $012F
+
+    #_01C4B8: LDA.b #$05
+    #_01C4BA: STA.b $11
+
+    .exit
+    #_01C4BC: SEP #$30
+  .no_cart
+    JML $01CC5A
+}
+
+
+pushpc
+
+
+; JML to return here 01CC5A
+org $01CC08
+RoomTag_Holes3:
+JML RoomTag_ShutterDoorRequiresCart
+; #_01CC08: LDA.b #$06
+; #_01CC0A: BRA RoomTag_TriggerHoles
+
+pullpc
