@@ -324,11 +324,9 @@ Sprite_AntiKirby_Main:
     db   0,   0,   0,   0,   0,   0,   0,   0
 
     .index_offset_x
-    ; db $18, $18, $00, $30, $30, $30, $00, $18
     db $00, $00, $00, $00, $00, $00, $00, $00
 
     .index_offset_y
-    ; db $00, $18, $18, $18, $00, $30, $30, $30
     db $00, $00, $00, $00, $00, $00, $00, $00
   }
 
@@ -409,70 +407,75 @@ Sprite_AntiKirby_Draw:
 
   RTS
 
-  ; Anti-Kirby V2 draw
-
+  ; Anti-Kirby V3 draw
   .start_index
-  db $00, $01, $02, $03, $04, $06, $08, $0A, $0C, $0E, $10
+  db $00, $01, $02, $03, $04, $05, $06, $08, $0A, $0C, $0E, $10
   .nbr_of_tiles
-  db 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1
+  db 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1
   .x_offsets
   dw 0
   dw 0
   dw 0
   dw 0
-  dw 0, 8
-  dw 0, 8
+  dw 0
+  dw 0
+  dw 0, -4
+  dw 0, -4
+  dw 0, -4
+  dw 0, -4
   dw -4, 4
-  dw 0, -4
-  dw 0, -4
-  dw 0, -4
-  dw 0, -4
+  dw 4, -4
   .y_offsets
   dw 0
   dw 0
   dw 0
   dw 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
+  dw 0
+  dw 0
   dw 0, -8
   dw 0, -8
   dw 0, -8
   dw 0, -6
+  dw 0, 0
+  dw 0, 0
   .chr
-  db $02
   db $00
+  db $02
   db $04
   db $20
-  db $08, $09
-  db $28, $29
-  db $22, $23
-  db $02, $25
+  db $07
+  db $27
   db $00, $25
+  db $02, $25
   db $04, $25
   db $20, $25
+  db $22, $23
+  db $22, $23
   .properties
-  db $37
-  db $37
-  db $37
-  db $37
-  db $37, $37
-  db $37, $37
-  db $37, $37
-  db $37, $3B
-  db $37, $3B
-  db $37, $3B
-  db $37, $3B
+  db $33
+  db $33
+  db $33
+  db $33
+  db $33
+  db $33
+  db $3B, $3B
+  db $3B, $3B
+  db $3B, $3B
+  db $3B, $3B
+  db $3B, $3B
+  db $7B, $7B
   .sizes
   db $02
   db $02
   db $02
   db $02
+  db $02
+  db $02
   db $02, $02
   db $02, $02
   db $02, $02
   db $02, $02
   db $02, $02
   db $02, $02
-  db $02, $02
+
 }
