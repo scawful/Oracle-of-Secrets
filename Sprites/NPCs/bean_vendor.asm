@@ -78,6 +78,13 @@ Sprite_BeanVendor_Prep:
     LDA.b #$05 : STA.w SprAction, X
   .NotGaebora
 
+  LDA.b $8A : CMP.b #$00 : BEQ .RanchFlower
+
+  PLB
+  RTL
+
+  .RanchFlower
+  LDA.b #$08 : STA.w SprAction, X
   PLB
   RTL
 }
@@ -97,6 +104,7 @@ Sprite_BeanVendor_Main:
   dw KaeoporaGaebora
   dw KaeoporaGaebora_Respond
   dw KaeoporaGaebora_FlyAway
+  dw MagicBean_RanchFlower
 
   ; 0x00 - Bean Vendor
   BeanVendor:
@@ -252,6 +260,12 @@ Sprite_BeanVendor_Main:
     .not_ready
     RTS
   }
+
+  MagicBean_RanchFlower:
+  {
+    LDA.b #$04 : STA.w SprFrame, X
+    RTS
+  }
 }
 
 ReleaseMagicBean:
@@ -338,34 +352,39 @@ Sprite_BeanVendor_Draw:
 
   ; =======================================================
   .start_index
-  db $00, $04, $05, $0B
+  db $00, $04, $05, $0B, $11
   .nbr_of_tiles
-  db 3, 0, 5, 5
+  db 3, 0, 5, 5, 3
   .x_offsets
   dw -4, 4, 4, -4
   dw 0
   dw -4, -4, 4, 4, -4, -4
   dw -4, -4, 4, 4, -4, -4
+  dw -8, 8, -8, 8 ; Flower
   .y_offsets
   dw 4, 4, -4, -4
   dw 0
   dw 4, -4, 4, -4, 8, 16
   dw -4, 4, 4, -4, 8, 16
+  dw 8, 8, -8, -8 ; Flower
   .chr
   db $A8, $A9, $99, $98
   db $A6
   db $9B, $8B, $9B, $8B, $BB, $BC
   db $8B, $8D, $8D, $8B, $BB, $BC
+  db $A8, $A8, $A4, $A4 ; Flower
   .properties
   db $3B, $3B, $3B, $3B
   db $3B
   db $3B, $3B, $7B, $7B, $3B, $3B
   db $3B, $3B, $7B, $7B, $3B, $3B
+  db $3B, $7B, $3B, $7B ; Flower
   .sizes
   db $02, $02, $02, $02
   db $02
   db $02, $02, $02, $02, $00, $00
   db $02, $02, $02, $02, $00, $00
+  db $02, $02, $02, $02 ; Flower
 }
 
 Sprite_KaeoporaGaebora_Draw:
