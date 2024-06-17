@@ -103,6 +103,9 @@ print  "End of mask_salesman.asm          ", pc
 incsrc "Sprites/NPCs/bean_vendor.asm"
 print  "End of bean_vendor.asm            ", pc
 
+incsrc "Sprites/Bosses/octoboss.asm"
+print  "End of octoboss.asm               ", pc
+
 ;=========================================================
 
 org    $318000
@@ -193,12 +196,11 @@ print  "End of Lanmola.asm                ", pc
 incsrc "Sprites/Bosses/lanmola_Expanded.asm"
 print  "End of Lanmola_Expanded.asm       ", pc
 
-incsrc "Sprites/NPCs/old_man.asm"
+incsrc "Sprites/NPCs/followers.asm"
+print  "End of followers.asm              ", pc
 
 incsrc "Sprites/NPCs/fortune_teller.asm"
-
-; incsrc "Sprites/Bosses/octoboss.asm"
-; print  "End of octoboss.asm               ", pc
+print  "End of fortune_teller.asm         ", pc
 
 warnpc $328000
 
