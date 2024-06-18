@@ -44,6 +44,11 @@ print  "End of Overworld/time_system.asm  ", pc
 
 incsrc "Overworld/overlays.asm"
 print  "End of Overworld/overlays.asm     ", pc
+pushpc
+
+pullpc
+incsrc "Overworld/entrances.asm"
+print  "End of Overworld/entrances.asm    ", pc
 
 
 pullpc

@@ -1023,4 +1023,3 @@ TailPalace_EntranceAnimation:
   }
 }
 
-pushpc

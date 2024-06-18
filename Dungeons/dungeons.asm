@@ -35,8 +35,7 @@ incsrc "Collision/GlobalCollisionTables.asm"
 
 pullpc ; Bank 0x33
 
-incsrc "Dungeons/entrances.asm"
-print  "End of entrances.asm              ", pc
+
 
 incsrc "Dungeons/house_walls.asm"
 

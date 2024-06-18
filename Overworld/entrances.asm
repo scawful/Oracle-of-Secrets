@@ -13,6 +13,7 @@ org $1BBBF4
   RTL
 pullpc
 
+
 Overworld_UseEntranceEntry:
 {
   PHB : PHK : PLB
@@ -22,282 +23,206 @@ Overworld_UseEntranceEntry:
 }
 
 Overworld_UseEntrance:
-REP #$31
+{
+  REP #$31
 
-LDA.b $20
-CLC
-ADC.w #$0007
-STA.b $00
+  LDA.b $20 : CLC : ADC.w #$0007 : STA.b $00
+  SEC : SBC.w $0708 : AND.w $070A
+  ASL #3
+  STA.b $06
 
-SEC
-SBC.w $0708
-AND.w $070A
-ASL A
-ASL A
-ASL A
-STA.b $06
+  LDA.b $22 : LSR #3 : STA.b $02
+  SEC : SBC.w $070C : AND.w $070E
+  CLC : ADC.b $06
 
-LDA.b $22
-LSR A
-LSR A
-LSR A
-STA.b $02
+  TAY
+  TAX
 
-SEC
-SBC.w $070C
-AND.w $070E
-CLC
-ADC.b $06
+  LDA.l $7E2000, X
+  ASL #3
+  TAX
 
-TAY
-TAX
+  LDA.b $2F : AND.w #$00FF : BNE .not_facing_up
 
-LDA.l $7E2000,X
-ASL A
-ASL A
-ASL A
-TAX
+    LDA.l Map16Definitions+2, X 
+    AND.w #$41FF : CMP.w #$00E9 : BEQ .open_door
+    CMP.w #$0149 : BEQ .left_side_castle_door
+    CMP.w #$0169 : BEQ .left_side_castle_door
 
-LDA.b $2F
-AND.w #$00FF
-BNE .not_facing_up
+    TYX
 
-LDA.l Map16Definitions+2,X
-AND.w #$41FF
-CMP.w #$00E9
-BEQ .open_door
+    LDA.l $7E2002, X
+    ASL #3
+    TAX
 
-CMP.w #$0149
-BEQ .left_side_castle_door
+    LDA.l Map16Definitions+0, X
+    AND.w #$41FF : CMP.w #$4149 : BEQ .right_side_castle_door
 
-CMP.w #$0169
-BEQ .left_side_castle_door
+    CMP.w #$4169 : BEQ .right_side_castle_door
 
-TYX
+    CMP.w #$40E9 :  BNE .check_door_type
 
-LDA.l $7E2002,X
-ASL A
-ASL A
-ASL A
-TAX
+    DEY
+    DEY
 
-LDA.l Map16Definitions+0,X
-AND.w #$41FF
-CMP.w #$4149
-BEQ .right_side_castle_door
+    .open_door
+    TYX
 
-CMP.w #$4169
-BEQ .right_side_castle_door
+    LDA.w #$0DA4 : JSL Overworld_DrawMap16_Persist
 
-CMP.w #$40E9
-BNE .check_door_type
+    LDA.w #$0DA6 : STA.l $7E2002, X
 
-DEY
-DEY
+    LDY.w #$0002
+    JSL Overworld_DrawMap16_Anywhere
 
-.open_door
-TYX
+    SEP #$30
 
-LDA.w #$0DA4
-JSL Overworld_DrawMap16_Persist
+    ; SFX3.15
+    LDA.b #$15 : STA.w $012F
 
-LDA.w #$0DA6
-STA.l $7E2002,X
+    LDA.b #$01 : STA.b $14
 
-LDY.w #$0002
-JSL Overworld_DrawMap16_Anywhere
+    RTL
 
-SEP #$30
+  .not_facing_up
+  BRA .check_door_type
 
-LDA.b #$15 ; SFX3.15
-STA.w $012F
+  .right_side_castle_door
+  DEY
+  DEY
 
-LDA.b #$01
-STA.b $14
+  .left_side_castle_door
+  STZ.w $0692 : AND.w #$03FF : CMP.w #$0169 : BNE .open_this_castle_door
+    LDA.l $7EF3C5 : AND.w #$000F : CMP.w #$0002 : BCS .check_door_type
+      LDA.w #$0018 : STA.w $0692
+  .open_this_castle_door
+  TYA : SEC : SBC.w #$0080 : STA.w $0698
 
-RTL
+  SEP #$20
 
+  ; SFX3.15
+  LDA.b #$15 : STA.w $012F
 
+  STZ.b $B0
+  STZ.w $0690
 
-.not_facing_up
-BRA .check_door_type
+  LDA.b #$0C : STA.b $11
 
-.right_side_castle_door
-DEY
-DEY
+  SEP #$30
 
-.left_side_castle_door
-STZ.w $0692
+  RTL
 
-AND.w #$03FF
-CMP.w #$0169
-BNE .open_this_castle_door
+  .check_door_type
+  LDA.l Map16Definitions+4, X : AND.w #$01FF : STA.b $00
+  LDA.l Map16Definitions+6, X : AND.w #$01FF : STA.b $02
 
-LDA.l $7EF3C5
-AND.w #$000F
-CMP.w #$0003
-BCS .check_door_type
+  ; Size of ValidDoorTypes
+  LDX.w #$0058
 
-LDA.w #$0018
-STA.w $0692
+  .check_next
+    LDA.b $00 : CMP.l ValidDoorTypesExpanded_low, X : BNE .low_byte_fail
+      LDA.b $02 : CMP.l ValidDoorTypesExpanded_high, X : BEQ FindEntrance
 
-.open_this_castle_door
-TYA
-SEC
-SBC.w #$0080
-STA.w $0698
+    .low_byte_fail
+    DEX
+    DEX
+  BPL .check_next
 
-SEP #$20
+  STZ.w $04B8
 
-LDA.b #$15 ; SFX3.15
-STA.w $012F
+  .message_received
+  SEP #$30
 
-STZ.b $B0
-STZ.w $0690
-
-LDA.b #$0C
-STA.b $11
-
-SEP #$30
-
-RTL
-
-
-
-.check_door_type
-LDA.l Map16Definitions+4,X
-AND.w #$01FF
-STA.b $00
-
-LDA.l Map16Definitions+6,X
-AND.w #$01FF
-STA.b $02
-
-LDX.w #$0058
-
-.check_next
-LDA.b $00
-CMP.l ValidDoorTypesExpanded_low,X
-BNE .low_byte_fail
-
-LDA.b $02
-CMP.l ValidDoorTypesExpanded_high,X
-BEQ FindEntrance
-
-.low_byte_fail
-DEX
-DEX
-BPL .check_next
-
-STZ.w $04B8
-
-.message_received
-SEP #$30
-
-RTL
-
+  RTL
+}
 
 #Overworld_ForbidEntry:
-LDA.w $04B8
-BNE .message_received
+{
+  LDA.w $04B8 : BNE .message_received
 
-INC.w $04B8
+  INC.w $04B8
 
-LDA.w #$0005 ; MESSAGE 0005
-STA.w $1CF0
+  ; MESSAGE 0005
+  LDA.w #$0005 : STA.w $1CF0
 
-SEP #$30
+  SEP #$30
 
-JML Interface_PrepAndDisplayMessage
-
+  JML Interface_PrepAndDisplayMessage
+}
 
 FindEntrance:
-TYA
-STA.b $00
+{
+  TYA
+  STA.b $00
 
-LDX.w #$0102
+  LDX.w #$0102
 
-.next_check
-LDA.b $00
+  .next_check
+  LDA.b $00
 
-.tile_fail
-DEX
-DEX
-BMI .no_entrance_found
+  .tile_fail
+  DEX
+  DEX
+  BMI .no_entrance_found
 
-CMP.l Overworld_EntranceTileIndex,X
-BNE .tile_fail
+  CMP.l Overworld_EntranceTileIndex, X : BNE .tile_fail
 
-LDA.w $040A
-CMP.l Overworld_EntranceScreens,X
-BNE .next_check
+  LDA.w $040A : CMP.l Overworld_EntranceScreens, X : BNE .next_check
 
-LDA.l $7EF3D3
-AND.w #$00FF
-BNE .entry_allowed
+  LDA.l $7EF3D3 : AND.w #$00FF : BNE .entry_allowed
 
-LDA.w $02DA
-AND.w #$00FF
-CMP.w #$0001
-BEQ Overworld_ForbidEntry
+  LDA.w $02DA : AND.w #$00FF : CMP.w #$0001 : BEQ Overworld_ForbidEntry
 
+  LDA.l $7EF3CC : AND.w #$00FF : BEQ .entry_allowed
 
+  ; FOLLOWER 05
+  CMP.w #$05 : BEQ .entry_allowed
 
-LDA.l $7EF3CC
-AND.w #$00FF
-BEQ .entry_allowed
+  ; FOLLOWER 0E
+  CMP.w #$0E : BEQ .entry_allowed
 
-CMP.w #$05 ; FOLLOWER 05
-BEQ .entry_allowed
+  ; FOLLOWER 01
+  CMP.w #$01 : BEQ .entry_allowed
 
-CMP.w #$0E ; FOLLOWER 0E
-BEQ .entry_allowed
+  ; FOLLOWER 07
+  CMP.w #$07 : BEQ .check_single_entrance
 
-CMP.w #$01 ; FOLLOWER 01
-BEQ .entry_allowed
+  CMP.w #$08 ; FOLLOWER 08
 
-CMP.w #$07 ; FOLLOWER 07
-BEQ .check_single_entrance
+  BNE Overworld_ForbidEntry
 
-CMP.w #$08 ; FOLLOWER 08
-
-BNE Overworld_ForbidEntry
-
-.check_single_entrance
-CPX.w #$0076
-BCC Overworld_ForbidEntry
+  .check_single_entrance
+  CPX.w #$0076 : BCC Overworld_ForbidEntry
 
 
+  .entry_allowed
+  TXA
+  LSR A
+  TAX
 
-.entry_allowed
-TXA
-LSR A
-TAX
+  SEP #$20
 
-SEP #$20
+  LDA.l Overworld_Entrance_ID,X
+  STA.w $010E
 
-LDA.l Overworld_Entrance_ID,X
-STA.w $010E
+  STZ.b $4D : STZ.b $46
 
-STZ.b $4D
-STZ.b $46
+  LDA.b #$0F : STA.b $10
 
-LDA.b #$0F
-STA.b $10
+  LDA.b #$06 : STA.w $010C
 
-LDA.b #$06
-STA.w $010C
+  STZ.b $11 : STZ.b $B0
 
-STZ.b $11
-STZ.b $B0
+  .no_entrance_found
+  print pc 
+  SEP #$30
 
-.no_entrance_found
-SEP #$30
+  RTL
+}
 
-RTL
 
 ; $DB8BF-$DB916 - chr types indicating door entrances
-org $1BB8BF
+
 ValidDoorTypesExpanded_low:
  dw $00FE, $00C5, $00FE, $0114 ; 00: ???, House Door, ???, ???
  dw $0115, $0175, $0156, $00F5 ; 01: 
@@ -310,6 +235,7 @@ ValidDoorTypesExpanded_low:
  dw $01C6, $015E, $0167, $0128 ; 08: Waterfall, ???, ???, ???
  dw $0131, $0112, $016D, $0163 ; 09:
  dw $0173, $00FE, $0113, $0177 ; 10:
+
 
 ValidDoorTypesExpanded_high:
  dw $014A, $00C4, $014F, $0115 ; ???, House Door, ???, ???
@@ -324,6 +250,7 @@ ValidDoorTypesExpanded_high:
  dw $0131, $0112, $017A, $0163 ; 09:
  dw $0172, $01BD, $0152, $0167 ; 10:
 
+pushpc
 
 ; $DB8BF (0x2C entries, 2 bytes each) - valid map8 (CHR) values for entrances (left side)
 ; $DB917 (0x2C entries, 2 bytes each) - valid map8 (CHR) values for entrances (right side)
