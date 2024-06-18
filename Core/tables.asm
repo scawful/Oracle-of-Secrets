@@ -95,17 +95,22 @@ dw Garnish15_ArrghusSplash
 dw Garnish16_ThrownItemDebris
 
 
-#_01B625: LDA.l UnderworldPaletteSets+0,X
-#_01B629: STA.w $0AB6 ; PALBG
+; Liftable object palettes
+; Sprites Aux 2 #8 for DW
+; Sprites Aux 2 #6 for LW
+; #7 and #9 are the yellow bush palettes
 
-#_01B62C: LDA.l UnderworldPaletteSets+1,X
-#_01B630: STA.w $0AAC ; PALSPR0
+LDA.l UnderworldPaletteSets+0,X
+STA.w $0AB6 ; PALBG
 
-#_01B633: LDA.l UnderworldPaletteSets+2,X
-#_01B637: STA.w $0AAD ; PALSPR1
+LDA.l UnderworldPaletteSets+1,X
+STA.w $0AAC ; PALSPR0
 
-#_01B63A: LDA.l UnderworldPaletteSets+3,X
-#_01B63E: STA.w $0AAE ; PALSPR2
+LDA.l UnderworldPaletteSets+2,X
+STA.w $0AAD ; PALSPR1
+
+LDA.l UnderworldPaletteSets+3,X
+STA.w $0AAE ; PALSPR2
 
 ; PALBG
 ; 0x00 - Kalyxo Castle
@@ -128,163 +133,159 @@ dw Garnish16_ThrownItemDebris
 ; 0x (19) - 
 
 UnderworldPaletteSets:
-#_0ED460: db $00, $00, $03, $01 ; 0x00
-#_0ED464: db $02, $00, $03, $01 ; 0x01
-#_0ED468: db $04, $00, $0A, $01 ; 0x02 House
-#_0ED46C: db $06, $00, $01, $07 ; 0x03 Fortress of Secrets
-#_0ED470: db $0A, $02, $02, $07 ; 0x04 Zora Temple
-#_0ED474: db $04, $04, $03, $0A ; 0x05 House
-#_0ED478: db $0C, $05, $08, $14 ; 0x06 Tail Palace
-#_0ED47C: db $0E, $00, $03, $0A ; 0x07 Goron Mines/Caves
-#_0ED480: db $02, $00, $0F, $14 ; 0x08 Castle Basement
-#_0ED484: db $0A, $02, $00, $07 ; 0x09 
-#_0ED488: db $02, $00, $0F, $0C ; 0x0A
-#_0ED48C: db $06, $00, $06, $07 ; 0x0B
-#_0ED490: db $00, $00, $0E, $12 ; 0x0C Kalyxo Castle
-#_0ED494: db $12, $05, $05, $0B ; 0x0D
-#_0ED498: db $12, $00, $02, $0C ; 0x0E
-#_0ED49C: db $10, $05, $0A, $07 ; 0x0F Mushroom Grotto
-#_0ED4A0: db $10, $00, $10, $0C ; 0x10 Ranch?
-#_0ED4A4: db $16, $07, $02, $07 ; 0x11 Hall of Secrets
-#_0ED4A8: db $16, $00, $07, $0F ; 0x12
-#_0ED4AC: db $08, $00, $04, $0C ; 0x13 Glacia Estate
-#_0ED4B0: db $08, $00, $04, $09 ; 0x14
-#_0ED4B4: db $04, $00, $03, $01 ; 0x15 House
-#_0ED4B8: db $14, $00, $04, $04 ; 0x16
-#_0ED4BC: db $14, $00, $14, $0C ; 0x17 
-#_0ED4C0: db $18, $05, $07, $0B ; 0x18 Lava Lands Cave/Turtle Rock
-#_0ED4C4: db $18, $06, $10, $0C ; 0x19
-#_0ED4C8: db $1A, $05, $08, $14 ; 0x1A Dragon Ship
-#_0ED4CC: db $1A, $02, $00, $07 ; 0x1B Dragon Ship
-#_0ED4D0: db $06, $00, $03, $0A ; 0x1C
-#_0ED4D4: db $1C, $00, $03, $01 ; 0x1D
-#_0ED4D8: db $1E, $00, $0B, $11 ; 0x1E Swordsmith
-#_0ED4DC: db $04, $00, $0B, $11 ; 0x1F
-#_0ED4E0: db $0E, $00, $00, $02 ; 0x20 
-#_0ED4E4: db $20, $08, $13, $0D ; 0x21 Ganondorf Boss
-#_0ED4E8: db $0A, $00, $03, $0A ; 0x22 Zora Temple
-#_0ED4EC: db $14, $00, $04, $04 ; 0x23
-#_0ED4F0: db $1A, $02, $02, $07 ; 0x24 Dragon Ship
-#_0ED4F4: db $1A, $0A, $00, $00 ; 0x25 Dragon Ship
-#_0ED4F8: db $00, $00, $03, $02 ; 0x26
-#_0ED4FC: db $0E, $00, $03, $07 ; 0x27
-#_0ED500: db $1A, $05, $05, $0B ; 0x28 Dragon Ship
+db $00, $00, $03, $01 ; 0x00
+db $02, $00, $03, $01 ; 0x01
+db $04, $00, $0A, $01 ; 0x02 House
+db $06, $00, $01, $07 ; 0x03 Fortress of Secrets
+db $0A, $02, $02, $07 ; 0x04 Zora Temple
+db $04, $04, $03, $0A ; 0x05 House
+db $0C, $05, $08, $14 ; 0x06 Tail Palace
+db $0E, $00, $03, $0A ; 0x07 Goron Mines/Caves
+db $02, $00, $0F, $14 ; 0x08 Castle Basement
+db $0A, $02, $00, $07 ; 0x09 
+db $02, $00, $0F, $0C ; 0x0A
+db $06, $00, $06, $07 ; 0x0B
+db $00, $00, $0E, $12 ; 0x0C Kalyxo Castle
+db $12, $05, $05, $0B ; 0x0D
+db $12, $00, $02, $0C ; 0x0E
+db $10, $05, $0A, $07 ; 0x0F Mushroom Grotto
+db $10, $00, $10, $0C ; 0x10 Ranch?
+db $16, $07, $02, $07 ; 0x11 Hall of Secrets
+db $16, $00, $07, $0F ; 0x12
+db $08, $00, $04, $0C ; 0x13 Glacia Estate
+db $08, $00, $04, $09 ; 0x14
+db $04, $00, $03, $01 ; 0x15 House
+db $14, $00, $04, $04 ; 0x16
+db $14, $00, $14, $0C ; 0x17 
+db $18, $05, $07, $0B ; 0x18 Lava Lands Cave/Turtle Rock
+db $18, $06, $10, $0C ; 0x19
+db $1A, $05, $08, $14 ; 0x1A Dragon Ship
+db $1A, $02, $00, $07 ; 0x1B Dragon Ship
+db $06, $00, $03, $0A ; 0x1C
+db $1C, $00, $03, $01 ; 0x1D
+db $1E, $00, $0B, $11 ; 0x1E Swordsmith
+db $04, $00, $0B, $11 ; 0x1F
+db $0E, $00, $00, $02 ; 0x20 
+db $20, $08, $13, $0D ; 0x21 Ganondorf Boss
+db $0A, $00, $03, $0A ; 0x22 Zora Temple
+db $14, $00, $04, $04 ; 0x23
+db $1A, $02, $02, $07 ; 0x24 Dragon Ship
+db $1A, $0A, $00, $00 ; 0x25 Dragon Ship
+db $00, $00, $03, $02 ; 0x26
+db $0E, $00, $03, $07 ; 0x27
+db $1A, $05, $05, $0B ; 0x28 Dragon Ship
 
 
 OverworldPaletteSet:
-#_0ED504: db $00, $FF, $07, $FF ; 0x00
-#_0ED508: db $00, $01, $07, $FF ; 0x01
-#_0ED50C: db $00, $02, $07, $FF ; 0x02
-#_0ED510: db $00, $03, $07, $FF ; 0x03
-#_0ED514: db $00, $04, $07, $FF ; 0x04
-#_0ED518: db $00, $05, $07, $FF ; 0x05
-#_0ED51C: db $00, $06, $07, $FF ; 0x06
-#_0ED520: db $07, $06, $05, $FF ; 0x07
-#_0ED524: db $00, $08, $07, $FF ; 0x08
-#_0ED528: db $00, $09, $07, $FF ; 0x09
-#_0ED52C: db $00, $0A, $07, $FF ; 0x0A
-#_0ED530: db $00, $0B, $07, $FF ; 0x0B
-#_0ED534: db $00, $FF, $07, $FF ; 0x0C
-#_0ED538: db $00, $FF, $07, $FF ; 0x0D
-#_0ED53C: db $03, $04, $07, $FF ; 0x0E
-#_0ED540: db $04, $04, $03, $FF ; 0x0F
-#_0ED544: db $10, $FF, $06, $FF ; 0x10
-#_0ED548: db $10, $01, $06, $FF ; 0x11
-#_0ED54C: db $10, $11, $06, $FF ; 0x12
-#_0ED550: db $10, $03, $06, $FF ; 0x13
-#_0ED554: db $10, $04, $06, $FF ; 0x14
-#_0ED558: db $10, $05, $06, $FF ; 0x15
-#_0ED55C: db $10, $06, $06, $FF ; 0x16
-#_0ED560: db $12, $13, $04, $FF ; 0x17
-#_0ED564: db $12, $05, $04, $FF ; 0x18
-#_0ED568: db $10, $09, $06, $FF ; 0x19
-#_0ED56C: db $10, $0B, $06, $FF ; 0x1A
-#_0ED570: db $10, $0C, $06, $FF ; 0x1B
-#_0ED574: db $10, $0D, $06, $FF ; 0x1C
-#_0ED578: db $10, $0E, $06, $FF ; 0x1D
-#_0ED57C: db $10, $0F, $06, $FF ; 0x1E
+db $00, $FF, $07, $FF ; 0x00
+db $00, $01, $07, $FF ; 0x01
+db $00, $02, $07, $FF ; 0x02
+db $00, $03, $07, $FF ; 0x03
+db $00, $04, $07, $FF ; 0x04
+db $00, $05, $07, $FF ; 0x05
+db $00, $06, $07, $FF ; 0x06
+db $07, $06, $05, $FF ; 0x07
+db $00, $08, $07, $FF ; 0x08
+db $00, $09, $07, $FF ; 0x09
+db $00, $0A, $07, $FF ; 0x0A
+db $00, $0B, $07, $FF ; 0x0B
+db $00, $FF, $07, $FF ; 0x0C
+db $00, $FF, $07, $FF ; 0x0D
+db $03, $04, $07, $FF ; 0x0E
+db $04, $04, $03, $FF ; 0x0F
+db $10, $FF, $06, $FF ; 0x10
+db $10, $01, $06, $FF ; 0x11
+db $10, $11, $06, $FF ; 0x12
+db $10, $03, $06, $FF ; 0x13
+db $10, $04, $06, $FF ; 0x14
+db $10, $05, $06, $FF ; 0x15
+db $10, $06, $06, $FF ; 0x16
+db $12, $13, $04, $FF ; 0x17
+db $12, $05, $04, $FF ; 0x18
+db $10, $09, $06, $FF ; 0x19
+db $10, $0B, $06, $FF ; 0x1A
+db $10, $0C, $06, $FF ; 0x1B
+db $10, $0D, $06, $FF ; 0x1C
+db $10, $0E, $06, $FF ; 0x1D
+db $10, $0F, $06, $FF ; 0x1E
 
 
-pool Module09_Overworld
-
-.submodules
-#_02A40D: dw Module09_00_PlayerControl              ; 0x00
-#_02A40F: dw Module09_LoadAuxGFX                    ; 0x01
-#_02A411: dw Module09_TriggerTilemapUpdate          ; 0x02
-#_02A413: dw Module09_LoadNewMapAndGFX              ; 0x03
-#_02A415: dw Module09_LoadNewSprites                ; 0x04
-#_02A417: dw Overworld_StartScrollTransition        ; 0x05
-#_02A419: dw Overworld_RunScrollTransition          ; 0x06
-#_02A41B: dw Overworld_EaseOffScrollTransition      ; 0x07
-#_02A41D: dw Overworld_FinalizeEntryOntoScreen      ; 0x08
-#_02A41F: dw Module09_09_OpenBigDoorFromExiting     ; 0x09
-#_02A421: dw Module09_0A_WalkFromExiting_FacingDown ; 0x0A
-#_02A423: dw Module09_0B_WalkFromExiting_FacingUp   ; 0x0B
-#_02A425: dw Module09_0C_OpenBigDoor                ; 0x0C
-#_02A427: dw Overworld_StartMosaicTransition        ; 0x0D
-#_02A429: dw Overworld_LoadSubscreenAndSilenceSFX1  ; 0x0E
-#_02A42B: dw Module09_LoadAuxGFX                    ; 0x0F
-#_02A42D: dw Module09_TriggerTilemapUpdate          ; 0x10
-#_02A42F: dw Module09_LoadNewMapAndGFX              ; 0x11
-#_02A431: dw Module09_LoadNewSprites                ; 0x12
-#_02A433: dw Overworld_StartScrollTransition        ; 0x13
-#_02A435: dw Overworld_RunScrollTransition          ; 0x14
-#_02A437: dw Overworld_EaseOffScrollTransition      ; 0x15
-#_02A439: dw Module09_FadeBackInFromMosaic          ; 0x16
-#_02A43B: dw Overworld_StartMosaicTransition        ; 0x17
-#_02A43D: dw Module09_18                            ; 0x18
-#_02A43F: dw Module09_19                            ; 0x19
-#_02A441: dw Module09_LoadAuxGFX                    ; 0x1A
-#_02A443: dw Module09_TriggerTilemapUpdate          ; 0x1B
-#_02A445: dw Module09_1C                            ; 0x1C
-#_02A447: dw Module09_1D                            ; 0x1D
-#_02A449: dw Module09_1E                            ; 0x1E
-#_02A44B: dw Module09_1F                            ; 0x1F
-#_02A44D: dw Overworld_ReloadSubscreenOverlay       ; 0x20
-#_02A44F: dw Module09_21                            ; 0x21
-#_02A451: dw Module09_22                            ; 0x22
-#_02A453: dw Module09_MirrorWarp                    ; 0x23
-#_02A455: dw Overworld_StartMosaicTransition        ; 0x24
-#_02A457: dw Module09_25                            ; 0x25
-#_02A459: dw Module09_LoadAuxGFX                    ; 0x26
-#_02A45B: dw Module09_TriggerTilemapUpdate          ; 0x27
-#_02A45D: dw Overworld_LoadAndBuildScreen           ; 0x28
-#_02A45F: dw Module09_FadeBackInFromMosaic          ; 0x29
-#_02A461: dw Module09_2A_RecoverFromDrowning        ; 0x2A
-#_02A463: dw Module09_2B                            ; 0x2B
-#_02A465: dw Module09_MirrorWarp                    ; 0x2C
-#_02A467: dw Module09_2D_WaitForBird                ; 0x2D
-#_02A469: dw Module09_2E_Whirlpool                  ; 0x2E
-#_02A46B: dw Module09_2F   
+Module09_Overworld
+dw Module09_00_PlayerControl              ; 0x00
+dw Module09_LoadAuxGFX                    ; 0x01
+dw Module09_TriggerTilemapUpdate          ; 0x02
+dw Module09_LoadNewMapAndGFX              ; 0x03
+dw Module09_LoadNewSprites                ; 0x04
+dw Overworld_StartScrollTransition        ; 0x05
+dw Overworld_RunScrollTransition          ; 0x06
+dw Overworld_EaseOffScrollTransition      ; 0x07
+dw Overworld_FinalizeEntryOntoScreen      ; 0x08
+dw Module09_09_OpenBigDoorFromExiting     ; 0x09
+dw Module09_0A_WalkFromExiting_FacingDown ; 0x0A
+dw Module09_0B_WalkFromExiting_FacingUp   ; 0x0B
+dw Module09_0C_OpenBigDoor                ; 0x0C
+dw Overworld_StartMosaicTransition        ; 0x0D
+dw Overworld_LoadSubscreenAndSilenceSFX1  ; 0x0E
+dw Module09_LoadAuxGFX                    ; 0x0F
+dw Module09_TriggerTilemapUpdate          ; 0x10
+dw Module09_LoadNewMapAndGFX              ; 0x11
+dw Module09_LoadNewSprites                ; 0x12
+dw Overworld_StartScrollTransition        ; 0x13
+dw Overworld_RunScrollTransition          ; 0x14
+dw Overworld_EaseOffScrollTransition      ; 0x15
+dw Module09_FadeBackInFromMosaic          ; 0x16
+dw Overworld_StartMosaicTransition        ; 0x17
+dw Module09_18                            ; 0x18
+dw Module09_19                            ; 0x19
+dw Module09_LoadAuxGFX                    ; 0x1A
+dw Module09_TriggerTilemapUpdate          ; 0x1B
+dw Module09_1C                            ; 0x1C
+dw Module09_1D                            ; 0x1D
+dw Module09_1E                            ; 0x1E
+dw Module09_1F                            ; 0x1F
+dw Overworld_ReloadSubscreenOverlay       ; 0x20
+dw Module09_21                            ; 0x21
+dw Module09_22                            ; 0x22
+dw Module09_MirrorWarp                    ; 0x23
+dw Overworld_StartMosaicTransition        ; 0x24
+dw Module09_25                            ; 0x25
+dw Module09_LoadAuxGFX                    ; 0x26
+dw Module09_TriggerTilemapUpdate          ; 0x27
+dw Overworld_LoadAndBuildScreen           ; 0x28
+dw Module09_FadeBackInFromMosaic          ; 0x29
+dw Module09_2A_RecoverFromDrowning        ; 0x2A
+dw Module09_2B                            ; 0x2B
+dw Module09_MirrorWarp                    ; 0x2C
+dw Module09_2D_WaitForBird                ; 0x2D
+dw Module09_2E_Whirlpool                  ; 0x2E
+dw Module09_2F   
 
 
-pool Module07_Underworld
-
-.submodules
-#_02876C: dw Module07_00_PlayerControl                    ; 0x00
-#_02876E: dw Module07_01_IntraroomTransition              ; 0x01
-#_028770: dw Module07_02_InterroomTransition              ; 0x02
-#_028772: dw Module07_03_OverlayChange                    ; 0x03
-#_028774: dw Module07_04_UnlockDoor                       ; 0x04
-#_028776: dw Module07_05_ControlShutters                  ; 0x05
-#_028778: dw Module07_06_FatInterRoomStairs               ; 0x06
-#_02877A: dw Module07_07_FallingTransition                ; 0x07
-#_02877C: dw Module07_08_NorthIntraRoomStairs             ; 0x08
-#_02877E: dw Module07_09_OpenCrackedDoor                  ; 0x09
-#_028780: dw Module07_0A_ChangeBrightness                 ; 0x0A
-#_028782: dw Module07_0B_DrainSwampPool                   ; 0x0B
-#_028784: dw Module07_0C_FloodSwampWater                  ; 0x0C
-#_028786: dw Module07_0D_FloodDam                         ; 0x0D
-#_028788: dw Module07_0E_SpiralStairs                     ; 0x0E
-#_02878A: dw Module07_0F_LandingWipe                      ; 0x0F
-#_02878C: dw Module07_10_SouthIntraRoomStairs             ; 0x10
-#_02878E: dw Module07_11_StraightInterroomStairs          ; 0x11
-#_028790: dw Module07_11_StraightInterroomStairs          ; 0x12
-#_028792: dw Module07_11_StraightInterroomStairs          ; 0x13
-#_028794: dw Module07_14_RecoverFromFall                  ; 0x14
-#_028796: dw Module07_15_WarpPad                          ; 0x15
-#_028798: dw Module07_16_UpdatePegs                       ; 0x16
-#_02879A: dw Module07_17_PressurePlate                    ; 0x17
-#_02879C: dw Module07_18_RescuedMaiden                    ; 0x18
-#_02879E: dw Module07_19_MirrorFade                       ; 0x19
-#_0287A0: dw Module07_1A_RoomDraw_OpenTriforceDoor_bounce ; 0x1A
+Module07_Underworld
+dw Module07_00_PlayerControl                    ; 0x00
+dw Module07_01_IntraroomTransition              ; 0x01
+dw Module07_02_InterroomTransition              ; 0x02
+dw Module07_03_OverlayChange                    ; 0x03
+dw Module07_04_UnlockDoor                       ; 0x04
+dw Module07_05_ControlShutters                  ; 0x05
+dw Module07_06_FatInterRoomStairs               ; 0x06
+dw Module07_07_FallingTransition                ; 0x07
+dw Module07_08_NorthIntraRoomStairs             ; 0x08
+dw Module07_09_OpenCrackedDoor                  ; 0x09
+dw Module07_0A_ChangeBrightness                 ; 0x0A
+dw Module07_0B_DrainSwampPool                   ; 0x0B
+dw Module07_0C_FloodSwampWater                  ; 0x0C
+dw Module07_0D_FloodDam                         ; 0x0D
+dw Module07_0E_SpiralStairs                     ; 0x0E
+dw Module07_0F_LandingWipe                      ; 0x0F
+dw Module07_10_SouthIntraRoomStairs             ; 0x10
+dw Module07_11_StraightInterroomStairs          ; 0x11
+dw Module07_11_StraightInterroomStairs          ; 0x12
+dw Module07_11_StraightInterroomStairs          ; 0x13
+dw Module07_14_RecoverFromFall                  ; 0x14
+dw Module07_15_WarpPad                          ; 0x15
+dw Module07_16_UpdatePegs                       ; 0x16
+dw Module07_17_PressurePlate                    ; 0x17
+dw Module07_18_RescuedMaiden                    ; 0x18
+dw Module07_19_MirrorFade                       ; 0x19
+dw Module07_1A_RoomDraw_OpenTriforceDoor_bounce ; 0x1A
