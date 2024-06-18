@@ -62,10 +62,25 @@ HandleTossedDog:
   RTS
 }
 
+macro LiftOrTalk()
+  LDA.w $02B2 : BEQ .lifting
+                CMP.b #$03 : BEQ .wolf
+                CMP.b #$05 : BEQ .minish
+                JMP .lifting
+  .wolf
+  .minish
+  JSR   ShowMessageIfMinish
+  JMP +
+  .lifting
+    JSL Sprite_CheckIfLifted
+    JSL ThrownSprite_TileAndSpriteInteraction_long
+    +
+endmacro
+
 Sprite_VillageDog_Main:
 {
-  LDA.w SprAction, X                        ; Load the SprAction
-  JSL   UseImplicitRegIndexedLocalJumpTable ; Goto the SprAction we are currently in
+  LDA.w SprAction, X
+  JSL   UseImplicitRegIndexedLocalJumpTable
 
   dw Dog_Handler              ; 00 
   dw Dog_LookLeftAtLink       ; 01 
@@ -90,12 +105,9 @@ Sprite_VillageDog_Main:
       
       .walk_right
         %GotoAction(2)
-    .lifting
-    LDA.w $02B2 : CMP.b #$03 : BEQ .wolf
-                  CMP.b #$05 : BEQ .minish
-      JSL Sprite_CheckIfLifted
-    .wolf
-    .minish
+
+      %LiftOrTalk()
+
     JSL Sprite_Move
     RTS
   }
@@ -146,7 +158,8 @@ Sprite_VillageDog_Main:
     JSL   Sprite_ApplySpeedTowardsPlayer
     STZ   $06 : STZ $07
     JSL   Sprite_MoveLong
-    JSL Sprite_CheckIfLifted
+
+    %LiftOrTalk()
 
     LDA.w SprTimerD, X : BNE +
       %GotoAction(0)
@@ -173,7 +186,7 @@ Sprite_VillageDog_Main:
     JSL   Sprite_ApplySpeedTowardsPlayer
     STZ   $06 : STZ $07
     JSL   Sprite_MoveLong
-    JSL   Sprite_CheckIfLifted
+    %LiftOrTalk()
 
     LDA.w SprTimerD, X : BNE ++
       %GotoAction(0)
@@ -185,8 +198,9 @@ Sprite_VillageDog_Main:
   Dog_WagTailLeft:
   {
     %PlayAnimation(0,1, 8)
-    JSR   ShowMessageIfMinish
-    JSL   Sprite_CheckIfLifted
+    
+    %LiftOrTalk()
+
     JSR HandleTossedDog
     LDA.w SprTimerD, X : BNE +
       %GotoAction(0)
@@ -198,8 +212,8 @@ Sprite_VillageDog_Main:
   Dog_WagTailRight:
   {
     %PlayAnimation(11,12,8)
-    JSR   ShowMessageIfMinish
-    JSL   Sprite_CheckIfLifted
+    %LiftOrTalk()
+
     JSR HandleTossedDog
     LDA.w SprTimerD, X : BNE +
       %GotoAction(0)
