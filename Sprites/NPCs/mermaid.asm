@@ -111,13 +111,13 @@ Sprite_Mermaid_Main:
     %PlayAnimation(3,3,20)
     JSL Sprite_Move
     LDA.b #10 : STA.w SprXSpeed, X
-
+    JSR SpawnSplash
       LDA.w SprMiscD,X : BNE ++
         STZ.w SprState, X
       ++
 
       LDA.w SprTimerA, X : BEQ +
-        JSR SpawnSplash
+        
 
         LDA.b #-10 : STA.w SprYSpeed, X
         STZ.w SprXSpeed, X
