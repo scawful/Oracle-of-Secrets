@@ -110,10 +110,10 @@ LinkItem_NewFlute:
 {
   ; Code for the flute item (with or without the bird activated)
   BIT.b $3A : BVC .y_button_not_held
-  DEC.w $03F0 : LDA.w $03F0 : BNE ReturnFromFluteHook
-  LDA.b $3A : AND.b #$BF : STA.b $3A
+    DEC.w $03F0 : LDA.w $03F0 : BNE ReturnFromFluteHook
+    LDA.b $3A : AND.b #$BF : STA.b $3A
 
-.y_button_not_held
+  .y_button_not_held
 
   ; Check for Switch Swong 
   JSR UpdateFluteSong
@@ -122,24 +122,23 @@ LinkItem_NewFlute:
   ; Success... play the flute.
   LDA.b #$80 : STA.w $03F0
   
-  LDA $030F
+  LDA.w $030F
   CMP.b #$01 : BEQ .song_of_storms
   CMP.b #$02 : BEQ .song_of_healing
   CMP.b #$03 : BEQ .song_of_soaring
 
-.song_of_healing
+  .song_of_healing
   LDA.b #$13 : JSR Player_DoSfx2 
   LDA.b #$01 : STA $FE
   RTS
 
-.song_of_storms
+  .song_of_storms
   ; Play the Song of Storms SFX
-  ; LDA.b #$18 : JSR Player_DoSfx1
   LDA.b #$2F : JSR Player_DoSfx2
   JSL OcarinaEffect_SummonStorms
   RTS
 
-.song_of_soaring
+  .song_of_soaring
   LDA.b #$3E : JSR Player_DoSfx2
 
   ; Are we indoors?
@@ -153,7 +152,7 @@ LinkItem_NewFlute:
   
   LDX.b #$04
 
-.next_ancillary_slot
+  .next_ancillary_slot
 
   ; Is there already a travel bird effect in this slot?
   LDA $0C4A, X : CMP.b #$27 : BEQ .return
@@ -191,19 +190,19 @@ LinkItem_NewFlute:
   LDA.b #$37
   JSL AddWeathervaneExplosion
 
-.not_weathervane_trigger
+  .not_weathervane_trigger
 
   SEP #$20
   BRA .return
 
-.travel_bird_already_released
+  .travel_bird_already_released
 
   LDY.b #$04
   LDA.b #$27
   JSL AddTravelBird
   STZ $03F8
 
-.return
+  .return
 
   RTS
 }
@@ -225,19 +224,38 @@ org $02B011
 org $3C8000
 OcarinaEffect_SummonStorms:
 {
-  LDA.l $7EE00E : BEQ .summonStorms
-  LDA #$FF : STA $8C
-  LDA #$00 : STA $7EE00E
-  STZ $1D
-  STZ $9A
-  RTL
+  ; Dismiss the rain in the Zora area where it is already raining
+  LDA.w $8A : CMP.b #$1E : BEQ .dismissStorms
+              CMP.b #$2E : BEQ .dismissStorms
+              CMP.b #$2F : BEQ .dismissStorms
+    ; Check for areas which should not be allowed to have rain
+    CMP.b #$05 : BEQ .errorBeep
+    CMP.b #$06 : BEQ .errorBeep
+    CMP.b #$07 : BEQ .errorBeep
+    CMP.b #$10 : BEQ .errorBeep
+    CMP.b #$18 : BEQ .errorBeep
+    CMP.b #$28 : BEQ .errorBeep
+    CMP.b #$29 : BEQ .errorBeep
+    
+    ; If the rain is already summoned, dismiss it
+    LDA.l $7EE00E : BEQ .summonStorms
+      .dismissStorms
+      LDA #$FF : STA $8C
+      LDA #$00 : STA $7EE00E
+      STZ $1D
+      STZ $9A
+      RTL
 
-.summonStorms
-  LDA #$9F : STA $8C
-  LDA.b #$01 : STA.b $1D
-  LDA.b #$72 : STA.b $9A
-  LDA #$01 : STA $7EE00E
-  RTL
+    .summonStorms
+    LDA #$9F : STA $8C
+    LDA.b #$01 : STA.b $1D
+    LDA.b #$72 : STA.b $9A
+    LDA #$01 : STA $7EE00E
+    RTL
+
+  .errorBeep
+    LDA.b #$3C : STA.w $012E ; Error beep
+    RTL
 }
 
 PlayThunderAndRain:
@@ -250,15 +268,14 @@ PlayThunderAndRain:
 CheckRealTable:
 {
   LDA $7EE00E : CMP #$00 : BEQ .continue
-  JML RainAnimation_Overridden_rainOverlaySet
-.continue
+    JML RainAnimation_Overridden_rainOverlaySet
+  .continue
   LDA #$05 : STA $012D
   LDA.b $8A : ASL : TAX
   LDA.l Pool_OverlayTable, X
   CMP.b #$9F : BNE .not_rain_area
-  
-  RTL
-.not_rain_area
+    RTL
+  .not_rain_area
   
   JML RainAnimation_Overridden_skipMovement
 }
@@ -268,7 +285,7 @@ ResetOcarinaFlag:
   LDA $7EF3C5 : BEQ .continue
      CMP #$01 : BEQ .continue
   REP #$30
-  LDA #$0000 : STA.l  $7EE00E
+  LDA #$0000 : STA.l $7EE00E
   SEP #$30
 .continue
   LDA.w $0416 : ASL A 
@@ -292,14 +309,15 @@ UpdateFluteSong_Long:
   LDA $7EF34C : CMP.b #$01 : BEQ .notPressed
 
   LDA $030F : BNE .songExists
-  LDA #$01 : STA $030F  ; if this code is running, we have the flute song 1
-.songExists
+    ; if this code is running, we have the flute song 1
+    LDA #$01 : STA $030F  
+  .songExists
   LDA.b $F6
   BIT.b #$20 : BNE .left ; pressed left 
   BIT.b #$10 : BNE .right ; pressed right
   RTL
 
-.left
+  .left
   ; L Button Pressed - Decrement song
   ; LDA.b #$13 : JSR Player_DoSfx2
   DEC $030F
@@ -307,28 +325,30 @@ UpdateFluteSong_Long:
   CMP #$00 : BEQ .wrap_to_max
   BRA .update_song
 
-.right
+  .right
   ; R Button Pressed - Increment song
   INC $030F        ; increment $030F Song RAM
   LDA $030F        ; load incremented Song RAM
   CMP.b #$04  
   BCS .wrap_to_min
-.update_song
+  .update_song
   RTL
 
-.wrap_to_max
+  .wrap_to_max
   LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_2
   LDA #$03 : STA $030F : RTL
 
-.set_max_to_2
+  .set_max_to_2
   LDA #$02 : STA $030F : RTL
 
-.wrap_to_min
+  .wrap_to_min
   LDA #$01 : STA $030F
 
-.notPressed
+  .notPressed
   RTL
 }
+
+warnpc $3CA62A
 
 org $02F210 ; OverworldTransitionScrollAndLoadMap
 {
