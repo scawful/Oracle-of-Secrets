@@ -24,6 +24,8 @@ LinkState_CheckForMinishForm:
 {
   SEP #$30
 
+  JSL $0FF979 ; AncillaSpawn_SwordChargeSparkle
+
   ; Check for the R button (like minish cap)
   %CheckNewR_ButtonPress() : BEQ .return
 
@@ -56,6 +58,7 @@ LinkState_CheckForMinishForm:
   %ResetToLinkGraphics()
 
 .return
+  
   REP #$30
   RTS
 }
