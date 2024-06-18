@@ -58,6 +58,7 @@ Sprite_Mermaid_Prep:
   PHB : PHK : PLB
   LDA.b #$40 : STA.w SprTimerA, X
   STZ.w SprMiscE, X
+  LDA.b #$07 : STA.w SprHitbox, X
   LDA.w SprSubtype, X : CMP.b #$01 : BNE +
     ; Maple Sprite
     LDA.b #$01 : STA.w SprMiscE, X
@@ -81,11 +82,13 @@ Sprite_Mermaid_Main:
   {
     %PlayAnimation(0,0, 20)
     JSL Sprite_PlayerCantPassThrough
-    
-    LDA.w SprTimerA, X : BNE +
-    LDA.b #$20 : STA.w SprTimerA, X
-    INC.w SprAction, X
-    +
+
+    %ShowMessageOnContact($047) : BCC .didnt_talk
+      LDA.w SprTimerA, X : BNE +
+      LDA.b #$20 : STA.w SprTimerA, X
+      INC.w SprAction, X
+      +
+    .didnt_talk
     RTS
   }
 
@@ -93,10 +96,11 @@ Sprite_Mermaid_Main:
   {
     %PlayAnimation(1,2, 14)
 
+    LDA.w SprX, X : INC : STA.w SprX, X
     LDA.w SprTimerA, X : BNE +
-    INC.w SprAction, X
-    LDA.b #-10 : STA.w SprXSpeed, X
-    LDA.b #$02 : STA.w SprTimerA, X
+      INC.w SprAction, X
+      
+      LDA.b #$04 : STA.w SprTimerA, X
     +
 
     RTS
@@ -104,12 +108,24 @@ Sprite_Mermaid_Main:
 
   MermaidSwim:
   {
-    %PlayAnimation(3,3, 20)
+    %PlayAnimation(3,3,20)
     JSL Sprite_Move
+    LDA.b #10 : STA.w SprXSpeed, X
 
-    LDA.w SprTimerA, X : BEQ +
-      JSR SpawnSplash
-    +
+      LDA.w SprMiscD,X : BNE ++
+        STZ.w SprState, X
+      ++
+
+      LDA.w SprTimerA, X : BEQ +
+        JSR SpawnSplash
+
+        LDA.b #-10 : STA.w SprYSpeed, X
+        STZ.w SprXSpeed, X
+        LDA.b #$01 : STA.w SprMiscD, X
+        LDA.b #$04 : STA.w SprTimerA, X
+      +
+      
+
 
     RTS
   }
@@ -185,7 +201,7 @@ Sprite_Mermaid_Draw:
   db 1, 1, 0, 1
   .x_offsets
   dw 0, 0
-  dw -4, 4
+  dw 4, -4
   dw 0
   dw 0, 0
   .y_offsets
@@ -199,10 +215,10 @@ Sprite_Mermaid_Draw:
   db $2B
   db $09, $29
   .properties
-  db $39, $39
-  db $39, $39
-  db $39
-  db $39, $39
+  db $79, $79
+  db $79, $79
+  db $79
+  db $79, $79
   .sizes
   db $02, $02
   db $02, $02
