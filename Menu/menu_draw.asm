@@ -345,10 +345,15 @@ DrawYItems:
   LDY.w #SomariaGFX
   JSR DrawMenuItem
 
-  LDA.w #$7EF351
-  LDX.w #menu_offset(13,13)
-  LDY.w #FishingRodGFX
-  JSR DrawMenuItem
+  ; LDA.w #$7EF351
+  LDA.l $7EF351 : AND.w #$00FF : CMP.w #$00 : BEQ .no_rods
+    LDA.w FishingOrPortalRod 
+    INC A 
+    STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+    LDX.w #menu_offset(13,13)
+    LDY.w #FishingRodGFX
+    JSR DrawMenuItem
+  .no_rods
 
   LDA.w #$7EF34D
   LDX.w #menu_offset(13,16)

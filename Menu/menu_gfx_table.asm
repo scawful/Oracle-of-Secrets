@@ -141,7 +141,7 @@ FishingRodGFX:
   dw $2C82, $2C83, $2C8B, $2C8C 
 
 PortalRodGFX:
-  dw $2CF0, $24F1, $30EC, $24F2
+  dw $2CF0, $24F1, $30EC, $E4F0
 
 ; ---------------------------------------------------------
 
@@ -186,12 +186,7 @@ QuarterNoteGFX:
 ; ---------------------------------------------------------
 
 TradeQuestGFX:
-  dw $3D36, $3D37, $3D46, $3D47 ; Yoshi Doll
-  dw $28DE, $28DF, $28EE, $28EF ; Tasty Meat
-  dw $346C, $346D, $347C, $347D ; This shit is Bananas!
   dw $241E, $241F, $242E, $242F ; Pretty Bow
-  dw $3D7E, $3D7F, $356C, $756C ; Pineapple
-
 
 ; =========================================================
 ; Equipped Items

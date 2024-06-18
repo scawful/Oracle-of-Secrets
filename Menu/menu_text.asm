@@ -148,6 +148,9 @@ Menu_BottleItems:
 Menu_GoldstarLabel:
   dw "__GOLD_STAR___  "
 
+Menu_PortalRodItems:
+  dw "__PORTAL_ROD__  "
+
 Menu_SongNames:
   dw "SONG:_STORMS__  "
   dw "SONG:_HEALING_  "
@@ -170,6 +173,7 @@ Menu_DrawItemName:
   LDA.w $0202 : CMP.b #$03 : BEQ .goldstar
                 CMP.b #$05 : BEQ .mushroom
                 CMP.b #$0D : BEQ .ocarina
+                CMP.b #$10 : BEQ .custom_rods
   ; Check if it's a bottle
                 CMP.b #$06 : BEQ .bottle_1
                 CMP.b #$0C : BEQ .bottle_2
@@ -204,6 +208,11 @@ Menu_DrawItemName:
         JSR DrawBottleNames
         RTS
 
+      .custom_rods
+      LDA.w FishingOrPortalRod : CMP.b #$01 : BNE .draw_item
+        JSR DrawPortalRodName
+        RTS
+
       .goldstar
       LDA GoldstarOrHookshot : CMP.b #$02 : BNE .draw_item
         JSR DrawGoldstarName
@@ -226,6 +235,19 @@ Menu_DrawItemName:
   .draw_ocarina_loop
     LDA.w Menu_SongNames, X : STA.w $1692, Y 
   INX #2 : INY #2 : CPY #$001C : BCC .draw_ocarina_loop
+  RTS
+}
+
+DrawPortalRodName:
+{
+    REP #$30
+    LDX.w #$0000
+    LDY.w #$0000
+
+    .draw_portal_rod_loop
+      LDA.w Menu_PortalRodItems, X : STA.w $1692, Y
+      INX #2 : INY #2 
+    CPY #$001C : BCC .draw_portal_rod_loop
   RTS
 }
 

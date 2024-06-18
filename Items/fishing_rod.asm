@@ -23,10 +23,35 @@ org $06C058 ; JSL Sprite_74_RunningBoy
   RTS
 }
 
-org $07AF3E ; Cane of Byrna - End: $07AFB4
-LinkItem_CaneOfByrna:
+org $07AF3E ; Cane of Byrna
+LinkItem_FishingRodAndPortalRod:
 {
-  JSL LinkItem_FishingRod
+  ; If the sram slot is 02, we can swap between the fishing rod and the portal rod
+  LDA.l $7EF351 : CMP.b #$02 : BEQ +
+    JSL LinkItem_FishingRod
+    RTS
+  +
+
+  LDA.w FishingOrPortalRod : BNE .portal_rod
+    JSL LinkItem_FishingRod
+    JMP ++
+  .portal_rod
+  JSR LinkItem_PortalRod
+  ++
+  LDA.b $F6
+  BIT.b #$20 : BNE .left ; pressed left 
+  BIT.b #$10 : BNE .right ; pressed right
+  RTS
+  
+  ; Swap the ram variable FishingOrPortalRod based on left or right
+  ; 00 = fishing rod, 01 = portal rod
+  .left
+  LDA.w FishingOrPortalRod : CMP #$00 : BEQ .right
+  LDA.b #$00 : STA.w FishingOrPortalRod
+  RTS
+  .right
+  LDA.w FishingOrPortalRod : CMP #$01 : BEQ .left
+  LDA.b #$01 : STA.w FishingOrPortalRod
   RTS
 }
 

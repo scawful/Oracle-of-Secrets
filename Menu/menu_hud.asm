@@ -290,8 +290,13 @@ HUD_UpdateItemBox:
     CPX.w #$0003 : BNE .hookshot_not_equipped
       LDA.w GoldstarOrHookshot : BEQ .hookshot_not_equipped
         SEC : SBC.w #$0001
-
     .hookshot_not_equipped
+
+    CPX.w #$0010 : BNE .custom_rod_not_equipped
+      LDA.w FishingOrPortalRod
+        
+
+    .custom_rod_not_equipped
 
     JSR HUD_DrawItem
 
@@ -399,7 +404,7 @@ HudItems:
   ;  hammer, lamp,      fire rod, ice rod, mirror,  bottle2
   dw $F701,  $F6F1,     $F6A1,    $F6B1,   $F7C1,   $F751
   ;  flute,  book,      somaria,  byrna,   feather, bottle3
-  dw $F859,  $F741,     $F7A1,    $F7A9,   $F729,   $F751
+  dw $F859,  $F741,     $F7A1,    $F8A9,   $F729,   $F751
   ;  deku,   zora,      wolf,     bunny,   stone,   bottle4
   dw $F6E1,  $F821,     $F6D1,    $F7B9,   $F811,   $F751
 }
@@ -490,8 +495,10 @@ org $0DF7A1
 ; Byrna
 ; org $0DF7A9
   ; dw $2CDC, $2CDD, $2CEC, $2CED ; Cane of Byrna
-org $0DF7B1
+; org $0DF7B1
+org $0DF8A9
   dw $2C82, $2C83, $2C8B, $2C8C ; Fishing Rod
+  dw $2CF0, $24F1, $30EC, $E4F0 ; Portal Rod
 
 ; Deku (Quake)
 org $0DF6E1
