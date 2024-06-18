@@ -63,8 +63,15 @@ org $07866D
 ; SEP #$20
 
 ; ================================================
+; Overlays $04C6
+; 01 - Zora Temple (OW 1E)
+; 02 - Kalyxo Castle Bridge
+; 03 - Tail Palace
+; 04 - TODO: Shrines
+; 05 - TODO: Fortress of Secrets
 
-;Desert Book activation trigger
+; LinkItem_Book
+; Desert Book activation trigger
 org $07A484 ; LDA $02ED : BNE BRANCH_BETA
 NOP #01
 JML NewDesertCheck
@@ -81,20 +88,10 @@ NewDesertCheck:
   ; STZ $9A
   ; STZ.w $012D
 
-  LDA $8A : CMP.b #$1E : BEQ .zora
-            CMP.b #$1B : BEQ .castle
-            CMP.b #$2F : BEQ .tail_palace
-            JMP + ; returnPos
-  .tail_palace
-  LDA.b #$03 : STA.w $04C6
-  JMP .continue
+  LDA $8A : CMP.b #$1B : BEQ .castle
+    JMP +
   .castle
   LDA.b #$02 : STA.w $04C6
-  JMP .continue
-  .zora
-  LDA.b #$01 : STA.w $04C6 ; set entrance animation
-
-  .continue
   STZ.b $B0
   STZ.b $C8
 
