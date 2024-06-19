@@ -105,58 +105,49 @@ LinkItem_FirePortal:
 {
   LDA.b #$03
   JSL   Sprite_SpawnDynamically : BPL .continue
-  RTS
-.continue
+    RTS
+  .continue
 
   PHX
-
   LDA   $7E0FA6 : BEQ .spawn_blue
-  STZ.w $0FA6
-  JMP   .check_direction
-.spawn_blue
+    STZ.w $0FA6
+    JMP   .check_direction
+  .spawn_blue
   LDA #$01 : STA $7E0FA6
-.check_direction
+  .check_direction
 
   LDA $2F : CMP.b #$00 : BEQ .facing_up
-  LDA $2F : CMP.b #$02 : BEQ .facing_down
-  LDA $2F : CMP.b #$04 : BEQ .facing_left
-  LDA $2F : CMP.b #$06 : BEQ .facing_right
-      
+    LDA $2F : CMP.b #$02 : BEQ .facing_down
+      LDA $2F : CMP.b #$04 : BEQ .facing_left
+        LDA $2F : CMP.b #$06 : BEQ .facing_right
+            
   ; Portal Spawn Location 
 
-.facing_up
-  %SpawnPortal($0000, -0020)
-  JMP .finish
-.facing_down
-  %SpawnPortal($0000, $001F)
-  JMP .finish
-.facing_left
-  %SpawnPortal(-0020, $0000)
-  JMP .finish
-.facing_right
-  %SpawnPortal(0020, $0000)
-  JMP .finish
+  .facing_up
+    %SpawnPortal($0000, -0020)
+    JMP .finish
+  .facing_down
+    %SpawnPortal($0000, $001F)
+    JMP .finish
+  .facing_left
+    %SpawnPortal(-0020, $0000)
+    JMP .finish
+  .facing_right
+    %SpawnPortal(0020, $0000)
 
-.finish
-  TYX
-
-  STZ $0D60, X
-  STZ $0D70, X
-      
+  .finish
+  TYX 
+  STZ $0D60, X : STZ $0D70, X
   PLX
 
-.return
+  .return
   ; Delay the spin attack for some amount of time?
   LDA RodAnimationTimer : STA $3D
   
-  STZ $2E
-  STZ $0300
-  STZ $0301
-  
+  STZ $2E 
+  STZ $0300 : STZ $0301
   LDA.b #$01 : TSB $0301
-
   RTL
-
 }
 
 pushpc 
@@ -269,206 +260,8 @@ ScrollToPortal:
   RTL
 }
 
-
-Ancilla_MoveXYWithPortal:
-{
-  ; Increments X_reg by 0x0A so that X coordinates will be handled next
-  TXA : CLC : ADC.b #$0A : TAX
-  
-; MoveVertical
-  LDA $0C22, X : ASL #4 : CLC : ADC $0C36, X : STA $0C36, X
-  
-  LDY.b #$00
-  
-  ; upper 4 bits are pixels per frame. lower 4 bits are 1/16ths of a pixel per frame.
-  ; store the carry result of adding to $0C36, X
-  ; check if the y pixel change per frame is negative
-  LDA $0C22, X : PHP : LSR #4 : PLP : BPL .moving_down
-  
-  ; sign extend from 4-bits to 8-bits
-  ORA.b #$F0
-  
-  DEY
-
-.moving_down
-
-  ; modifies the y coordinates of the special object
-        ADC $0BFA, X : STA $0BFA, X
-  TYA : ADC $0C0E, X : STA $0C0E, X
-
-  LDX.w $0FA0
-
-
-  RTL
-}
-
-; #_088087: db $50 ; 0x18 - ETHER SPELL
-; #_088088: db $00 ; 0x19 - BOMBOS SPELL  
-; LDA.b #$18               ; Ether Spell
-; LDY.b #$01
-; JSL   Ancilla_PortalShot
-
 print "End of Items/portal_rod.asm       ", pc
 pushpc
-
-
-; org $0997DE
-;   AddSilverArrowSparkle:
-
-; org $088D68
-;   Ancilla_CheckSpriteCollision:
-
-; org $088981
-;   Ancilla_CheckTileCollision:
-
-; org $088027
-;   Ancilla_DoSfx2:
-
-; org $08A121
-; Ancilla_Arrow:
-; {
-; .y_offsets
-; dw -4,  2,  0,  0
-
-; .x_offsets
-; dw 0,  0, -4,  4
-
-;   LDA.b $11 : BEQ .normal_submode
-  
-;   BRL .draw
-
-; .normal_submode
-
-;   DEC.w $0C5E, X : LDA.w $0C5E, X : BMI .timer_elapsed
-;                    CMP.b #$04     : BCC .begin_moving
-  
-;   ; The object doesn't even start being drawn until this timer counts
-;   ; down.
-;   BRL .do_nothing
-
-; .timer_elapsed
-
-;   LDA.b #$FF : STA.w $0C5E, X
-
-; .begin_moving
-
-;   ; JSL Ancilla_MoveXYWithPortal
-;   JSR $908B
-;   JSR $9080
-  
-;   LDA.l $7EF340 : AND.b #$04 : BEQ .dont_spawn_sparkle
-  
-;   LDA.b $1A : AND.b #$01 : BNE .dont_spawn_sparkle
-  
-;   PHX
-  
-;   JSL AddSilverArrowSparkle
-  
-;   PLX
-
-; .dont_spawn_sparkle
-
-;   LDA.b #$FF : STA $03A9, X
-  
-;   JSR Ancilla_CheckSpriteCollision : BCS .sprite_collision
-  
-;   JSR Ancilla_CheckTileCollision : BCS .tile_collision
-  
-;   BRL .draw
-
-; .tile_collision
-
-;   TYA : STA $03C5, X
-  
-;   LDA $0C72, X : AND.b #$03 : ASL A : TAY
-  
-;   LDA.w .y_offsets+0, Y : CLC : ADC.w $0BFA, X : STA.w $0BFA, X
-;   LDA.w .y_offsets+1, Y : ADC.w $0C0E, X : STA.w $0C0E, X
-  
-;   LDA.w .x_offsets+0, Y : CLC : ADC.w $0C04, X : STA.w $0C04, X
-;   LDA.w .x_offsets+1, Y : ADC.w $0C18, X : STA.w $0C18, X
-  
-;   STZ.w $0B88
-  
-;   BRA .transmute_to_halted_arrow
-
-; .sprite_collision
-
-;   LDA $0C04, X : SEC : SBC $0D10, Y : STA $0C2C, X
-  
-;   LDA $0BFA, X : SEC : SBC $0D00, Y : CLC : ADC $0F70, Y : STA $0C22, X
-  
-;   TYA : STA $03A9, X
-  
-;   LDA $0E20, Y : CMP.b #$65 : BNE .not_archery_game_sprite
-  
-;   LDA $0D90, Y : CMP.b #$01 : BNE .not_archery_target_mop
-  
-;   LDA.b #$2D : STA $012F
-  
-;   ; Set a delay for the archery game proprietor and set a timer for the 
-;   ; target that was hit (indicating it was hit)
-;   LDA.b #$80 : STA $0E10, Y : STA $0F10
-  
-;   ; \tcrf In conjunction with the ArcheryGameGuy sprite code, this is
-;   ; another lead the suggested that there were 9 game prize values
-;   ; instead of just the normal 5.
-;   LDA $0B88 : CMP.b #$09 : BCS .prize_index_maxed_out
-  
-;   INC $0B88
-
-; .prize_index_maxed_out
-
-;   LDA $0B88 : STA $0DA0, Y
-  
-;   LDA $0ED0, Y : INC A : STA $0ED0, Y
-  
-;   BRA .transmute_to_halted_arrow
-
-; .not_archery_target_mop
-
-;   LDA.b #$04 : STA $0EE0, Y
-
-; .not_archery_game_sprite
-
-;   STZ $0B88
-
-; .transmute_to_halted_arrow
-
-;   LDA $0E20, Y : CMP.b #$1B : BEQ .hit_enemy_arrow_no_sfx
-  
-;   LDA.b #$08 : JSR Ancilla_DoSfx2
-
-; .hit_enemy_arrow_no_sfx
-
-;   STZ $0C5E, X
-  
-;   LDA.b #$0A : STA $0C4A, X
-;   LDA.b #$01 : STA $03B1, X
-  
-;   LDA $03C5, X : BEQ .draw
-  
-;   REP #$20
-  
-;   LDA $E0 : SEC : SBC  $E2 : CLC : ADC $0C04, X : STA $00
-;   LDA $E6 : SEC : SBC  $E8 : CLC : ADC $0BFA, X : STA $02
-  
-;   SEP #$20
-  
-;   LDA $00 : STA $0C04, X
-;   LDA $02 : STA $0BFA, X
-  
-;   BRA .draw
-
-; .do_nothing
-
-;   RTS
-
-; .draw
-
-;   BRL $09236E ; Arrow_Draw
-; }
-; warnpc $08A24E
 
 ; ; Portal Rod logic based on Fire Rod
 ; Ancilla_PortalShot:
