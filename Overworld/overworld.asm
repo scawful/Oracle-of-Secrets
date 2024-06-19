@@ -86,12 +86,14 @@ LoadOverworldPitAreas:
   RTL
 }
 
+pushpc
+
+incsrc "Overworld/special_areas.asm"
+
 org $0794D9
   ; LDA $8A : CMP #$57 : BEQ .overworld_pit_transition
   JSL LoadOverworldPitAreas : BCC .overworld_pit_transition
   JSL $01FFD9 ; TakeDamageFromPit
   RTS
 .overworld_pit_transition
-
-; incsrc "Overworld/special_areas.asm"
 
