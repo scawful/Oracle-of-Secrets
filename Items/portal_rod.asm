@@ -48,7 +48,44 @@ LinkItem_PortalRod:
 
 warnpc $07A568
 
+; Ancilla_CheckSpriteCollision
+org $088DC3
+JSL Ancilla_HandlePortalCollision : NOP
+
 pullpc
+
+Ancilla_HandlePortalCollision:
+{
+   LDA.w $0E20, Y : CMP.b #$03 : BNE .not_portal_arrow
+      ; Check if Y is the orange or blue portal
+      LDA.w SprSubtype, Y : CMP.b #$02 : BEQ .blue_portal
+                            CMP.b #$01 : BEQ .orange_portal
+      .orange_portal
+      PHY
+        LDY.w $0632 ; Blue Sprite ID
+        LDA.w SprX, Y : CLC : ADC.b #$10 : STA.w ANC0XL, X
+        LDA.w SprY, Y : STA.w ANC0YL, X
+        LDA.w SprXH, Y : STA.w ANC0XH, X
+        LDA.w SprYH, Y : STA.w ANC0YH, X
+      PLY
+      JMP .continue
+
+      .blue_portal
+      PHY
+        LDY.w $0633 ; Orange Sprite ID
+        LDA.w SprX, Y : STA.w ANC0XL, X
+        LDA.w SprY, Y : CLC : ADC.b #$10 : STA.w ANC0YL, X
+        LDA.w SprXH, Y : STA.w ANC0XH, X
+        LDA.w SprYH, Y : STA.w ANC0YH, X
+      PLY
+      .continue
+      LDA.b #$08
+      RTL
+  .not_portal_arrow
+  ; Restore arrow deflection sprite code from $088DC3
+  LDA.w $0B6B,Y : AND.b #$08
+  RTL
+}
 
 macro  SpawnPortal(x_offset, y_offset)
   REP #$20

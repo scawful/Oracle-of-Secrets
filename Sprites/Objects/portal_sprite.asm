@@ -61,7 +61,9 @@ Sprite_Portal_Prep:
   
   ; Persist outside of camera  
   LDA #$00 : STA $0CAA, X 
-  LDA SprHitbox, X : AND.b #$20 : STA SprHitbox, X
+  LDA SprHitbox, X : AND.b #$C0 : STA SprHitbox, X
+  STZ.w $0B6B, X
+  LDA.b #$FF : STA.w $0BA0, X
 
   PLB
   RTL
@@ -114,6 +116,7 @@ Sprite_Portal_Main:
     TXA : STA OrangeSpriteIndex
     LDA $0D00, X : STA OrangePortal_X
     LDA $0D10, X : STA OrangePortal_Y
+    LDA.b #$01 : STA.w SprSubtype, X
     
     %GotoAction(2)
     RTS
@@ -122,6 +125,7 @@ Sprite_Portal_Main:
     TXA : STA BlueSpriteIndex
     LDA $0D00, X : STA BluePortal_X
     LDA $0D10, X : STA BluePortal_Y
+    LDA.b #$02 : STA.w SprSubtype, X
     
     %GotoAction(1)
     RTS
@@ -305,6 +309,7 @@ CheckForDismissPortal:
   PHX
     LDA   BlueSpriteIndex : TAX
     STZ.w $0DD0, X
+    DEC.w $06FE
   PLX
   JMP .return
 
@@ -313,6 +318,7 @@ CheckForDismissPortal:
   PHX
     LDA   OrangeSpriteIndex : TAX
     STZ.w $0DD0, X
+    DEC.w $06FE
   PLX
 
 .return
