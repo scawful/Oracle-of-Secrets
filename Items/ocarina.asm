@@ -225,7 +225,7 @@ org $3C8000
 OcarinaEffect_SummonStorms:
 {
   ; Dismiss the rain in the Zora area where it is already raining
-  LDA.w $8A : CMP.b #$1E : BEQ .dismissStorms
+  LDA.w $8A : CMP.b #$1E : BEQ .checkForEvent
               CMP.b #$2E : BEQ .dismissStorms
               CMP.b #$2F : BEQ .dismissStorms
     ; Check for areas which should not be allowed to have rain
@@ -256,6 +256,20 @@ OcarinaEffect_SummonStorms:
   .errorBeep
     LDA.b #$3C : STA.w $012E ; Error beep
     RTL
+
+  .checkForEvent
+    JSR CheckForZoraEvent
+    JMP .dismissStorms
+}
+
+; Y: E8 06, X: 48 0C
+CheckForZoraEvent:
+{
+  LDA $20 : CMP.w #$06E8 : BNE .notZora
+  LDA $22 : CMP.w #$0C48 : BNE .notZora
+  LDA.b #$01 : STA $04C6
+  .notZora
+  RTS
 }
 
 PlayThunderAndRain:
