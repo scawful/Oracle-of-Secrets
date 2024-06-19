@@ -55,6 +55,7 @@ Sprite_Puffstool_Prep:
   PHB : PHK : PLB
     
   LDA.b #$20 : STA.w SprHealth, X
+  LDA.b #$80 : STA.w SprDefl, X
 
   PLB
   RTL
