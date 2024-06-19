@@ -78,6 +78,7 @@ Sprite_Puffstool_Main:
     LDA.b #$02
     JSL Sprite_ApplySpeedTowardsPlayer
 
+    JSL Sprite_BounceFromTileCollision
     JSL Sprite_Move
     JSL Sprite_DamageFlash_Long
     JSL ThrownSprite_TileAndSpriteInteraction_long
