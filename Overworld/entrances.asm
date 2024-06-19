@@ -93,7 +93,7 @@ Overworld_UseEntrance:
 
   .left_side_castle_door
   STZ.w $0692 : AND.w #$03FF : CMP.w #$0169 : BNE .open_this_castle_door
-    LDA.l $7EF3C5 : AND.w #$000F : CMP.w #$0002 : BCS .check_door_type
+    LDA.l $7EF3C5 : AND.w #$000F : CMP.w #$0003 : BCS .check_door_type
       LDA.w #$0018 : STA.w $0692
   .open_this_castle_door
   TYA : SEC : SBC.w #$0080 : STA.w $0698
@@ -117,7 +117,7 @@ Overworld_UseEntrance:
   LDA.l Map16Definitions+6, X : AND.w #$01FF : STA.b $02
 
   ; Size of ValidDoorTypes
-  LDX.w #$0058
+  LDX.w #$0060
 
   .check_next
     LDA.b $00 : CMP.l ValidDoorTypesExpanded_low, X : BNE .low_byte_fail
@@ -235,7 +235,7 @@ ValidDoorTypesExpanded_low:
  dw $01C6, $015E, $0167, $0128 ; 08: Waterfall, ???, ???, ???
  dw $0131, $0112, $016D, $0163 ; 09:
  dw $0173, $00FE, $0113, $0177 ; 10:
-
+ dw $00EA, $013B               ; 11: Lava Land Large, Lava Land Small
 
 ValidDoorTypesExpanded_high:
  dw $014A, $00C4, $014F, $0115 ; ???, House Door, ???, ???
@@ -249,6 +249,7 @@ ValidDoorTypesExpanded_high:
  dw $01C6, $0131, $0051, $014E ; Waterfall, ???, ???, ???
  dw $0131, $0112, $017A, $0163 ; 09:
  dw $0172, $01BD, $0152, $0167 ; 10:
+ dw $00EB, $013A
 
 pushpc
 
