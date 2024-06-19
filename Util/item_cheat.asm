@@ -96,7 +96,7 @@ if !BetaRelease = 0
              STA !WolfMask
 
   ; 0 - nothing. 1 - Fighter Sword. 2 - Master Sword. 3 - Tempered Sword. 4 - Golden Sword
-  LDA #$04 : STA !Sword
+  LDA #$02 : STA !Sword
 
   ; 0 - nothing. 1 - Fighter Shield. 2 - Fire Shield. 3 - Mirror Shield
   LDA #$03 : STA !Shield
@@ -123,7 +123,7 @@ if !BetaRelease = 0
   LDA #$03 : STA !RupeesGoal
 
   ; Pendants: Bit 0 = Courage, Bit 1 = Wisdom, Bit 2 = Power
-  LDA #$00 : STA !Pendants
+  LDA #$07 : STA !Pendants
 
   ; Ability Flags: Bit 0: ----. 
   ; Bit 1: Swim.
@@ -161,12 +161,13 @@ endif
   ; 0 - nothing. 1 - blue boomerang. 2 - red boomerang
   LDA #$02 : STA !Boomerang
              STA !Mirror 
+             STA !CaneOfByrna 
 
   ; 0 - nothing. 1 - Lamp
   LDA #$01 : STA !Lamp 
              STA !MagicHammer
              STA !MoonPearl
-             STA !CaneOfByrna 
+             
 
   ; fill all hearts
   LDA #$A0 : STA !Hearts
