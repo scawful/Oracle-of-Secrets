@@ -123,6 +123,8 @@ pullpc
 
 ZoraTemple_EntranceAnimation:
 {
+  ; If $B0 is 8, then we move the camera back to the origin
+  LDA.b $B0 : CMP.b #$08 : BCS .lastframe
   REP #$20
   LDA $0618 : CMP.w #$0630 : BCC +
     DEC.b $E8 ; Increment camera vertical
@@ -130,7 +132,15 @@ ZoraTemple_EntranceAnimation:
     DEC.w $061A : DEC.w $061A
   +
   SEP #$20
+  JMP .do_anim
+  .lastframe
+  REP #$20
+  LDA #$06F3 : STA.w $0618
+  LDA #$06F1 : STA.w $061A
+  LDA.w #$0692 : STA.b $E8
+  SEP #$20
 
+  .do_anim
   LDA.b $B0 ; Get animation state
   ASL A
   TAX ; x2
@@ -148,6 +158,7 @@ ZoraTemple_EntranceAnimation:
   dw Frame5
   dw Frame6
   dw Frame7
+  dw Frame8
 }
 
 ; =========================================================
@@ -644,6 +655,15 @@ Frame7:
   BNE .wait
   INC.b $B0 ; increase frame
   STZ.b $C8 ; reset timer for next frame
+  .wait
+  RTS
+}
+
+Frame8:
+{
+  JSR ShakeScreen ; make the screen shake
+  INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+  BNE .wait
   STZ.w $04C6
   STZ.b $B0
   STZ.w $0710
