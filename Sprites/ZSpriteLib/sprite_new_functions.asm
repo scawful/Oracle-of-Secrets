@@ -1,6 +1,5 @@
-;==========================================================
+; =========================================================
 ;Long function, return Carry Set if Active
-;==========================================================
 
 Sprite_CheckActive:
 {
@@ -24,9 +23,9 @@ Sprite_CheckActive:
     RTL
 }
 
-
+; =========================================================
 ; make the sprite move X axis
-;==========================================================
+
 Sprite_MoveHoriz:
 {
     LDA.w $0D50, X : BEQ .no_velocity
@@ -48,10 +47,8 @@ Sprite_MoveHoriz:
     RTL
 }
 
-;==========================================================
-
+; =========================================================
 ; make the sprite move both directions (also height)
-;==========================================================
 
 Sprite_MoveXyz:
 	JSL Sprite_MoveAltitude
@@ -59,9 +56,8 @@ Sprite_Move:
 	JSL Sprite_MoveHoriz
 	; no RTL, just continue into Sprite_MoveVert
 
-;==========================================================
+; =========================================================
 ; make the sprite move Y axis
-;==========================================================
 
 Sprite_MoveVert:
 {
@@ -84,9 +80,8 @@ Sprite_MoveVert:
     RTL
 }
 
-;==========================================================
+; =========================================================
 ; make the sprite move Z axis (height)
-;==========================================================
 
 Sprite_MoveZ:
 Sprite_MoveAltitude:
@@ -107,11 +102,11 @@ Sprite_MoveAltitude:
 }
 
 
-;==========================================================
+; =========================================================
 ; make the sprite bounce toward player (like vitreous)
 ; Movement, Collision are handled by this function (height:20 = vitreous)
 ; $09 = speed, $08 = max height
-;==========================================================
+
 
 Sprite_BounceTowardPlayer:
 {
@@ -130,7 +125,7 @@ Sprite_BounceTowardPlayer:
 
 	JSL Sprite_ApplySpeedTowardsPlayer
 
-	LDA.b #$21 : JSL Sound_SetSfx2PanLong
+	; LDA.b #$21 : JSL Sound_SetSfx2PanLong
 
 .aloft
 	LDA.w $0F70, X : BEQ .dontmove
@@ -158,6 +153,16 @@ Sprite_FloatTowardPlayer:
 
     ; Maintain altitude (float effect)
     LDA #$10 : STA.w SprHeight, X
+    JSL Sprite_MoveAltitude
+
+    RTL
+}
+
+Sprite_FloatAwayFromPlayer:
+{
+    LDA $0D50, X : EOR.b #$FF : INC : STA $0D50, X
+    LDA $0D40, X : EOR.b #$FF : INC : STA $0D40, X
+
     JSL Sprite_MoveAltitude
 
     RTL

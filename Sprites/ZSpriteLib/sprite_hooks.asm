@@ -44,6 +44,15 @@ SprState     = $0DD0 ; This tells if the sprite is alive, dead, frozen, etc...
 SprNbrOAM    = $0E40 
 
 SprHealth    = $0E50
+
+; Mostly controls graphics
+; nios pppt
+;   n - if set, don't draw extra death anim
+;   i - impervious to attacks and collision? TODO
+;   o - shadow size (0: normal | 1: small)
+;   s - shadow (0: no shadow | 1: shadow)
+;   p - palette used for OAM props
+;   t - name table used for OAM props
 SprGfxProps  = $0E60
 
 ; Direction of sprite collision with wall
