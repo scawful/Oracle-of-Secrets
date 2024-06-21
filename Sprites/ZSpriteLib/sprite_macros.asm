@@ -75,6 +75,12 @@ macro ShowSolicitedMessage(message_id)
     JSL Sprite_ShowSolicitedMessageIfPlayerFacing
 endmacro
 
+macro ShowMessageOnContact(message_id)
+    LDY.b #(<message_id>)>>8
+    LDA.b #<message_id>
+    JSL $05E1F0 ; Sprite_ShowMessageOnContact
+endmacro
+
 ; Show message no matter what (should not be used without code condition)
 macro ShowUnconditionalMessage(message_id)
     LDY.b #(<message_id>)>>8
