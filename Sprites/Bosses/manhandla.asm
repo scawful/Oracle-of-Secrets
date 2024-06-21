@@ -2,13 +2,13 @@
 ; Sprite Properties
 ; =========================================================
 
-!SPRID              = $A2 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00  ; Number of tiles used in a frame
+!SPRID              = $88 ; The sprite ID you are overwriting (HEX)
+!NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
-!DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
+!DeathAnimation     = 01  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
@@ -28,31 +28,33 @@
 !DeflectProjectiles = 00  ; 01 = Sprite will deflect ALL projectiles
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
-!Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
+!Boss               = 01  ; 00 = normal sprite, 01 = sprite is a boss
 
 %Set_Sprite_Properties(Sprite_Manhandla_Prep, Sprite_Manhandla_Long)
 
-; =========================================================
-; Sprite Long Hook for that sprite
-; This code can be left unchanged
-; handle the draw code and if the sprite is active and should move or not
 ; =========================================================
 
 Sprite_Manhandla_Long:
 {
   PHB : PHK : PLB
 
-  JSR Sprite_Manhandla_Draw ; Call the draw code
+  JSR Sprite_Manhandla_CheckForNextPhaseOrDeath
+
+  LDA.w SprMiscD, X : BEQ .phase1
+    JSR Sprite_BigChuchu_Draw
+    JMP .continue
+  .phase1
+    JSR Sprite_Manhandla_Draw
+  .continue
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
   JSR Sprite_Manhandla_Main ; Call the main sprite code
-
+  
   .SpriteIsNotActive
   PLB ; Get back the databank we stored previously
   RTL ; Go back to original code
 }
-
 
 ; =========================================================
 
@@ -60,7 +62,11 @@ Sprite_Manhandla_Prep:
 {
   PHB : PHK : PLB
     
+  LDA.b #$04 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
+  LDA.b #$80 : STA.w SprDefl, X
+  LDA.b #$20 : STA.w SprHealth, X
+  LDA.w SprSubtype, X : STA.w SprAction, X
 
   PLB
   RTL
