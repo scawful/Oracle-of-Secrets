@@ -175,7 +175,7 @@ Sprite_Kydreeok_Main:
     %PlayAnimation(0, 2, 10)
 
     STZ.w SprYSpeed : STZ.w SprXSpeed ;set velocitys to 0
-    JSR MoveBody
+    JSL MoveBody
     JSR StopIfOutOfBounds
 
     LDA SprTimerA, X : BNE .continue
@@ -195,7 +195,7 @@ Sprite_Kydreeok_Main:
     LDA $36
     JSL Sprite_ApplySpeedTowardsPlayer
     JSR StopIfOutOfBounds
-    JSR MoveBody
+    JSL MoveBody
 
     JSL Sprite_CheckDamageFromPlayerLong
     %DoDamageToPlayerSameLayerOnContact()
@@ -215,7 +215,7 @@ Sprite_Kydreeok_Main:
     LDA $36 : STA $00
     JSR Sprite_ApplySpeedTowardsPlayerXOrY
     JSR StopIfOutOfBounds
-    JSR MoveBody
+    JSL MoveBody
 
     JSL Sprite_CheckDamageFromPlayerLong
     %DoDamageToPlayerSameLayerOnContact()
@@ -262,7 +262,7 @@ Sprite_Kydreeok_Main:
         %GotoAction(3) ; Kydreeok_MoveXorY
     .notZero
 
-    JSR MoveBody
+    JSL MoveBody
 
     JSL Sprite_CheckDamageFromPlayerLong
     %DoDamageToPlayerSameLayerOnContact()
@@ -321,7 +321,7 @@ Sprite_Kydreeok_Main:
     LDA $36 : CLC : ADC.b #$02
     JSL Sprite_ApplySpeedTowardsPlayer
     JSR StopIfOutOfBounds
-    JSR MoveBody
+    JSL MoveBody
 
     LDA.b #$04 : STA.w SprHeight, X
 
@@ -532,7 +532,7 @@ MoveBody:
   STZ.w $0312 : STZ.w $0310
   SEP   #$20
 
-  RTS
+  RTL
 }
 
 ; =========================================================
