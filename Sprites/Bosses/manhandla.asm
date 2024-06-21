@@ -40,7 +40,7 @@ Sprite_Manhandla_Long:
 
   JSR Sprite_Manhandla_CheckForNextPhaseOrDeath
 
-  LDA.w SprMiscD, X : BEQ .phase1
+  LDA.w SprMiscD, X : CMP.b #$02 : BCC .phase1
     JSR Sprite_BigChuchu_Draw
     JMP .continue
   .phase1
@@ -65,7 +65,7 @@ Sprite_Manhandla_Prep:
   LDA.b #$04 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
   LDA.b #$80 : STA.w SprDefl, X
-  LDA.b #$20 : STA.w SprHealth, X
+  LDA.b #$80 : STA.w SprHealth, X
   LDA.w SprSubtype, X : STA.w SprAction, X
 
   PLB
@@ -76,35 +76,41 @@ Sprite_Manhandla_Prep:
 ; Then we transition to the chuchu phase.
 Sprite_Manhandla_CheckForNextPhaseOrDeath:
 {
+  ; All three heads need to be dead before we become big chuchu
   LDA Offspring1_Id : TAY
   LDA.w SprState, Y : BEQ .offspring1_dead
     JMP .not_dead
   .offspring1_dead
+  LDA.b #$05 : STA.w $36
 
   LDA Offspring2_Id : TAY
   LDA.w SprState, Y : BEQ .offspring2_dead
     JMP .not_dead
   .offspring2_dead
+  LDA.b #$06 : STA.w $36
+
+  LDA Offspring3_Id : TAY
+  LDA.w SprState, Y : BEQ .offspring3_dead
+    JMP .not_dead
+  .offspring3_dead
+  LDA.b #$07 : STA.w $36
   
   LDA.w SprMiscD, X : BNE .phase2
-    LDA.w SprHealth, X : CMP.b #$08 : BCS .not_dead
-      
-      LDA.b #$01 : STA.w SprMiscD, X
-      LDA.b #$20 : STA.w SprHealth, X
-      LDA.b #$08 : STA.w SprNbrOAM, X 
-
+      LDA.b #$01 : STA.w SprMiscD, X 
+      LDA.b #$40 : STA.w SprTimerA, X 
+      LDA.b #$20 : STA.w SprHealth, X ; Refill the health
+      LDA.b #$08 : STA.w SprNbrOAM, X ; Give more OAM 
+      LDA.b #$07 : STA.w SprAction, X ; Chuchu Emerge
     .not_dead
     RTS
   .phase2
-  LDA.w SprMiscD, X : CMP.b #$02 : BEQ +
-
-    LDA.w SprHealth, X : CMP.b #$08 : BCS .phase2_not_dead
-      LDA.b #$20 : STA.w SprTimerA, X 
-      LDA.b #$05 : STA.w SprAction, X
+  LDA.w SprMiscD, X : CMP.b #$03 : BEQ +
+    LDA.w SprHealth, X : CMP.b #$04 : BCS .phase2_not_dead
+      LDA.b #$50 : STA.w SprTimerA, X 
+      LDA.b #$09 : STA.w SprAction, X
       LDA.b #$13 : STA $012C
-      LDA.b #$02 : STA.w SprMiscD, X
-
-  .phase2_not_dead
+      LDA.b #$04 : STA.w SprMiscD, X
+    .phase2_not_dead
   +
   
   RTS
@@ -136,17 +142,33 @@ macro SetRightHeadPos()
     STA.w SprY, Y : XBA : STA.w SprYH, Y
 endmacro
 
+macro SetCenterHeadPos() 
+    REP #$20
+    LDA SprCachedX
+    SEP #$20
+    STA.w SprX, Y : XBA : STA.w SprXH, Y
+
+    REP #$20
+    LDA SprCachedY 
+    SEP #$20
+    STA.w SprY, Y : XBA : STA.w SprYH, Y
+endmacro
+
 Sprite_Manhandla_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
   dw Manhandla_Intro
-  dw Manhandla_FrontHead
-  dw Manhandla_LeftHead
-  dw Manhandla_RightHead
-  dw BigChuchu_Main
-  dw BigChuChu_Dead
+  dw Manhandla_FrontHead ; 0x01
+  dw Manhandla_LeftHead  ; 0x02
+  dw Manhandla_RightHead ; 0x03
+  dw BigChuchu_Main      ; 0x04 
+  dw Flower_Flicker      ; 0x05
+  dw Manhandla_Body      ; 0x06
+  dw BigChuchu_Emerge    ; 0x07
+  dw BigChuchu_Flower    ; 0x08
+  dw BigChuchu_Dead      ; 0x09
 
   Manhandla_Intro:
   {
@@ -156,9 +178,12 @@ Sprite_Manhandla_Main:
       JSR ApplyManhandlaPalette
       JSR SpawnLeftManhandlaHead
       JSR SpawnRightManhandlaHead
-      INC.w SprAction, X 
+      JSR SpawnCenterMandhandlaHead
+      LDA.b #$06 : STA.w SprFrame, X 
+      %GotoAction(6) ; Manhandla_Body
       RTS
     .not_main
+    
     LDA.w SprSubtype, X : STA.w SprAction, X
     RTS
   }
@@ -167,30 +192,11 @@ Sprite_Manhandla_Main:
   {
     %PlayAnimation(0,1,16)
 
-    JSL GetRandomInt : AND.b #$7F : BNE + 
-      JSR Mothula_SpawnBeams
-    +
-
-    JSR Sprite_Manhandla_Move
+    JSL Sprite_Move
     JSL Sprite_DamageFlash_Long
 
     JSL Sprite_CheckDamageFromPlayerLong
     %DoDamageToPlayerSameLayerOnContact()
-
-    PHX
-    LDY.w Offspring1_Id
-    LDA.w SprType, Y : CMP.b #$88 : BNE .not_head
-    LDA.w SprState, Y : BEQ .offspring1_dead
-      %SetLeftHeadPos()
-    .offspring1_dead
-    .not_head
-    LDY.w Offspring2_Id
-    LDA.w SprType, Y : CMP.b #$88 : BNE .not_head2
-    LDA.w SprState, Y : BEQ .offspring2_dead
-      %SetRightHeadPos()
-    .offspring2_dead
-    .not_head2
-    PLX 
 
     RTS
   }
@@ -237,11 +243,19 @@ Sprite_Manhandla_Main:
     %DoDamageToPlayerSameLayerOnContact()
     PLX
 
+    LDY.w Offspring3_Id
+    LDA.w SprType, Y : CMP.b #$88 : BNE .not_head3
+    LDA.w SprState, Y : BEQ .offspring3_dead
+      %SetCenterHeadPos()
+      .offspring3_dead
+    .not_head3
+
     RTS
   }
 
-  BigChuChu_Dead:
+  Flower_Flicker:
   {
+    %PlayAnimation(11, 12, 10)
     LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
     ; Flicker the body every other frame using the timer 
     LDA SprTimerA, X : AND.b #$01 : BEQ .flicker
@@ -252,10 +266,98 @@ Sprite_Manhandla_Main:
       STZ.w $0422
       STZ.w $0424
       LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
-      LDA.b #$04 : STA.w SprState, X 
-      STZ.w SprHealth, X
-      
+      %GotoAction($04)
+      LDA.b #$8D : STA.w SprHitbox, X 
+      LDA #$88
+      JSL Sprite_SpawnDynamically : BMI .return
+        TYA : STA Offspring3_Id
+
+        PHX
+        %SetCenterHeadPos()
+
+        LDA.b #$08 : STA.w SprSubtype, Y
+        STA.w SprAction, Y
+        LDA.b #$20 : STA.w SprHealth, Y
+        LDA.b #$07 : STA.w SprNbrOAM, Y
+
+        TYX
+
+        STZ.w SprYRound, X
+        STZ.w SprXRound, X
+        PLX
+        
+
+      .return
+
     .continue
+    RTS
+  }
+
+  Manhandla_Body:
+  {
+    %PlayAnimation(6,8,16)
+
+    PHX
+    JSR Sprite_Manhandla_Move
+    JSL Sprite_DamageFlash_Long
+
+    JSL GetRandomInt : AND.b #$7F : BNE + 
+      JSL GetRandomInt : AND.b #$0F : BNE +
+      JSR Mothula_SpawnBeams
+    +
+
+    JSL Sprite_CheckDamageFromPlayerLong
+    %DoDamageToPlayerSameLayerOnContact()
+    
+    LDY.w Offspring1_Id
+    LDA.w SprType, Y : CMP.b #$88 : BNE .not_head
+    LDA.w SprState, Y : BEQ .offspring1_dead
+      %SetLeftHeadPos()
+    .offspring1_dead
+    .not_head
+    LDY.w Offspring2_Id
+    LDA.w SprType, Y : CMP.b #$88 : BNE .not_head2
+    LDA.w SprState, Y : BEQ .offspring2_dead
+      %SetRightHeadPos()
+    .offspring2_dead
+    .not_head2
+
+    LDY.w Offspring3_Id
+    LDA.w SprType, Y : CMP.b #$88 : BNE .not_head3
+    LDA.w SprState, Y : BEQ .offspring3_dead
+      %SetCenterHeadPos()
+      .offspring3_dead
+    .not_head3
+
+    PLX 
+
+    RTS
+  }
+
+  BigChuchu_Emerge:
+  {
+    %PlayAnimation(9, 12, 10)
+
+    LDA.w SprTimerA, X : BNE + 
+      LDA.b #$02 : STA.w SprMiscD, X ; Set phase flag 
+      LDA.b #$20 : STA.w SprTimerA, X 
+      %GotoAction($05)
+    +
+
+    RTS
+  }
+
+  BigChuchu_Flower:
+  {
+    %PlayAnimation(12, 12, 1)
+
+    RTS
+  }
+
+  BigChuchu_Dead:
+  {
+    LDA.b #$04 : STA.w SprState, X 
+    STZ.w SprHealth, X
     RTS
   }
 }
@@ -342,10 +444,10 @@ Manhandla_StopIfOutOfBounds:
 {
   ; Set A to 00 if outside of certain bounds
   REP #$20
-  LDA SprCachedX : CMP.w #$1528 : BCS .not_out_of_bounds_Left
+  LDA SprCachedX : CMP.w #$153A : BCS .not_out_of_bounds_Left
     SEP #$20
     LDA.w SprXSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Left
-      LDA.b #-10 : STA.w SprXSpeed : STA SprXRound
+      LDA.b #-08 : STA.w SprXSpeed : STA SprXRound
 
   .not_out_of_bounds_Left
   SEP #$20
@@ -354,26 +456,26 @@ Manhandla_StopIfOutOfBounds:
   LDA SprCachedX : CMP.w #$15C8 : BCC .not_out_of_bounds_Right
     SEP #$20
     LDA.w SprXSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Right
-      LDA.b #$00 : STA.w SprXSpeed : STA SprXRound
+      LDA.b #$08 : STA.w SprXSpeed : STA SprXRound
 
   .not_out_of_bounds_Right
   SEP #$20
 
   ; Upper bound
   REP #$20
-  LDA SprCachedY : CMP.w #$0B30 : BCS .not_out_of_bounds_Up
+  LDA SprCachedY : CMP.w #$0B3A : BCS .not_out_of_bounds_Up
     SEP #$20
     LDA.w SprYSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Up
-      LDA.b #$00 : STA.w SprYSpeed : STA SprYRound
+      LDA.b #$08 : STA.w SprYSpeed : STA SprYRound
 
   .not_out_of_bounds_Up
   SEP #$20
 
   REP   #$20
-  LDA   SprCachedY : CMP.w #$0BC0 : BCC .not_out_of_bounds_Down
+  LDA   SprCachedY : CMP.w #$0BA6 : BCC .not_out_of_bounds_Down
     SEP #$20
     LDA.w SprYSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Down
-        LDA.b #-10 : STA.w SprYSpeed : STA SprYRound ; Reverse the direction
+        LDA.b #-08 : STA.w SprYSpeed : STA SprYRound ; Reverse the direction
 
   .not_out_of_bounds_Down
   SEP #$20
@@ -443,9 +545,9 @@ Sprite_Manhandla_Draw:
   ; =========================================================
 
   .start_index
-  db $00, $02, $04, $08, $0C, $10, $14, $17, $1A
+  db $00, $02, $04, $08, $0C, $10, $14, $17, $1A, $1D, $23, $29, $33
   .nbr_of_tiles
-  db 1, 1, 3, 3, 3, 3, 2, 2, 2
+  db 1, 1, 3, 3, 3, 3, 2, 2, 2, 5, 5, 9, 7
   .x_offsets
   dw 0, 0
   dw 0, 0
@@ -456,6 +558,11 @@ Sprite_Manhandla_Draw:
   dw -12, -4, 12
   dw -12, -4, 12
   dw 12, 4, -12
+
+  dw -12, -4, -12, -4, 12, 12
+  dw -12, -4, -12, -4, 12, 12
+  dw -16, -8, -16, -8, 16, 8, 16, 8, -12, 12
+  dw -16, -8, -16, -8, 16, 8, 16, 8
   .y_offsets
   dw -8, 8
   dw 0, 16
@@ -466,6 +573,11 @@ Sprite_Manhandla_Draw:
   dw 0, 0, 0
   dw 0, 0, 0
   dw 0, 0, 0
+
+  dw -28, -28, -12, -12, -28, -12
+  dw -24, -24, -8, -8, -24, -8
+  dw -24, -24, -8, -8, -8, -8, -24, -24, -32, -32
+  dw -24, -24, -8, -8, -8, -8, -24, -24
   .chr
   db $00, $20
   db $02, $22
@@ -476,6 +588,11 @@ Sprite_Manhandla_Draw:
   db $40, $41, $40
   db $43, $44, $46
   db $43, $44, $46
+
+  db $4D, $4E, $6D, $6E, $4D, $6D
+  db $8D, $8E, $AD, $AE, $8D, $AD
+  db $CD, $CE, $ED, $EE, $ED, $EE, $CD, $CE, $AE, $AE
+  db $CD, $CE, $ED, $EE, $ED, $EE, $CD, $CE
   .properties
   db $33, $33
   db $33, $33
@@ -486,6 +603,11 @@ Sprite_Manhandla_Draw:
   db $33, $33, $73
   db $33, $33, $73
   db $73, $73, $33
+
+  db $33, $33, $33, $33, $73, $73
+  db $33, $33, $33, $33, $73, $73
+  db $33, $33, $33, $33, $73, $73, $73, $73, $32, $72
+  db $33, $33, $33, $33, $73, $73, $73, $73
   .sizes
   db $02, $02
   db $02, $02
@@ -496,6 +618,11 @@ Sprite_Manhandla_Draw:
   db $02, $02, $02
   db $02, $02, $02
   db $02, $02, $02
+
+  db $02, $02, $02, $02, $02, $02
+  db $02, $02, $02, $02, $02, $02
+  db $02, $02, $02, $02, $02, $02, $02, $02, $02, $02
+  db $02, $02, $02, $02, $02, $02, $02, $02
 }
 
 Sprite_BigChuchu_Draw:
@@ -639,14 +766,13 @@ SpawnLeftManhandlaHead:
     TYA   : STA Offspring1_Id
 
     PHX
-
     %SetLeftHeadPos()
     ; store the sub-type
-    LDA.b #$03 : STA.w $0E30, Y
-    STA.w SprSubtype, Y
+    LDA.b #$03 : STA.w SprSubtype, Y
+    STA.w SprAction, Y
     LDA.b #$10 : STA.w SprHealth, Y
     LDA.b #$90 : STA.w SprTileDie, Y
-
+    LDA.w SprGfxProps : ORA.b #$80 : STA.w SprGfxProps, Y
     TYX
 
     STZ.w SprYRound, X
@@ -657,7 +783,6 @@ SpawnLeftManhandlaHead:
   RTS
 }
 
-
 SpawnRightManhandlaHead:
 {
   LDA #$88
@@ -667,10 +792,34 @@ SpawnRightManhandlaHead:
     PHX
     %SetRightHeadPos()
 
-    LDA.b #$02 : STA $0E30, Y
+    LDA.b #$02
     STA.w SprSubtype, Y
     LDA.b #$10 : STA.w SprHealth, Y
     LDA.b #$90 : STA.w SprTileDie, Y
+    LDA.w SprGfxProps : AND.b #$80 : STA.w SprGfxProps, Y
+    TYX
+
+    STZ.w SprYRound, X
+    STZ.w SprXRound, X
+    PLX
+  .return
+  RTS
+}
+
+SpawnCenterMandhandlaHead:
+{
+  LDA #$88
+  JSL Sprite_SpawnDynamically : BMI .return
+    TYA : STA Offspring3_Id
+
+    PHX
+    %SetCenterHeadPos()
+
+    LDA.b #$01
+    STA.w SprSubtype, Y
+    LDA.b #$10 : STA.w SprHealth, Y
+    LDA.b #$90 : STA.w SprTileDie, Y
+    LDA.w SprGfxProps : AND.b #$80 : STA.w SprGfxProps, Y
 
     TYX
 
@@ -702,7 +851,6 @@ ApplyManhandlaPalette:
 
     RTS
 }
-
 
 ApplyManhandlaGraphics:
 {
