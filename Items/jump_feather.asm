@@ -27,7 +27,7 @@ warnpc $07D248
 
 ; =========================================================
 
-org $2B8000
+pullpc
 LinkItem_JumpFeather:
 {
   JSL $07983A ; Reset swim state

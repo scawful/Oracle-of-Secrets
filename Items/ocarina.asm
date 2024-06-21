@@ -214,14 +214,14 @@ UpdateFluteSong:
   JSL UpdateFluteSong_Long
   RTS
 }
-pushpc
+print "Bank07 Free Space: ", pc
 
 ; ZS OW
 ; Load the rain overlay by default for the song of storms
 org $02B011
   LDX #$009F
 
-org $3C8000
+org $2B8000
 OcarinaEffect_SummonStorms:
 {
   ; Dismiss the rain in the Zora area where it is already raining
@@ -362,7 +362,7 @@ UpdateFluteSong_Long:
   RTL
 }
 
-warnpc $3CA62A
+pushpc ; Bank2B freespace
 
 org $02F210 ; OverworldTransitionScrollAndLoadMap
 {
@@ -427,5 +427,3 @@ RainAnimation_Overridden:
     RTL
 }
 warnpc $02A52D
-
-pullpc
