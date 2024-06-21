@@ -681,3 +681,49 @@ SpawnRightManhandlaHead:
   RTS
 }
 
+ApplyManhandlaPalette:
+{
+    REP #$20 ;Set A in 16bit mode
+
+    ;note, this uses adresses like 7EC300 and not 7EC500 because the game 
+    ;will fade the colors into 7EC500 based on the colors found in 7EC300
+
+    LDA #$7FFF : STA $7EC5E2 ;BG2
+    LDA #$08D9 : STA $7EC5E4
+    LDA #$1E07 : STA $7EC5E6
+    LDA #$4ACA : STA $7EC5E8
+    LDA #$14A5 : STA $7EC5EA
+    LDA #$133F : STA $7EC5EC
+    LDA #$19DF : STA $7EC5EE
+
+    INC $15
+ 
+    SEP #$20 ;Set A in 8bit mode
+
+    RTS
+}
+
+
+ApplyManhandlaGraphics:
+{
+    PHX 
+    REP #$20               ; A = 16, XY = 8
+    LDX #$80 : STX $2100   ; turn the screen off (required)
+    LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
+    LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
+    LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register 
+                           ; "001 => 2 registers write once (2 bytes: p, p+1)"
+
+    LDA.w #ManhandlaGraphics : STA $4302
+    LDX.b #ManhandlaGraphics>>16 : STX $4304
+
+    LDA   #$2000 : STA $4305                ; Size of the transfer 4 sheets of $800 each
+    LDX   #$01 : STX $420B                  ; Do the DMA 
+    LDX #$0F : STX $2100                    ; Turn the screen back on
+    SEP #$30
+    PLX
+    RTS
+
+  ManhandlaGraphics:
+    incbin manhandla.bin
+}
