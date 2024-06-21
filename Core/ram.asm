@@ -1,4 +1,10 @@
 ; =========================================================
+; The Legend of Zelda: A Link to the Past (SNES) - Symbols
+; Compilation of wram.asm, sram.asm, Zelda_3_RAM.log,
+; music.txt, sfx.txt, registers.asm
+; Credit to spannerisms and MathOnNapkins
+
+; =========================================================
 ; ---------------------------------------------------------
 ; USING THIS SYMBOLS MAP
 ; ---------------------------------------------------------
@@ -8237,6 +8243,539 @@ SAVEICKSML      = $7EF4FE
 SAVEICKSMH      = $7EF4FF
 
 ; =========================================================
+; Music 
+
+; Transfers (+4 for first byte of data)
+; ---------------------------------------------------------
+; ROM        Size     ARAM     Data
+; ---------------------------------------------------------
+; $198000    $0070    $3C00    Sample pointers
+; $198074    $7AA0    $4000    Sample data
+; $19FB18    $00AE    $3D00    Instrument data
+; $19FBCA    $0F9E    $0800    Engine
+; $1A8B6C    $1090    $17C0    Sound effects instructions/Data/Pointers
+; $1A9C00    $00E1    $3E00    Sound effects instruments
+; $1A9CE5    $020C    $2880    Faerie theme
+
+; $1A9EF5    $2DAE    $D000    Overworld main songs bank
+; $1ACCA7    $0688    $2B00    Overworld auxiliary songs
+; $1AD333    $0000    $0800    End transfer
+
+; $1B8000    $2CBF    $D000    Underworld main songs bank
+; $1BACC3    $050C    $2B00    Underworld auxiliary songs
+; $1BB1D3    $0000    $0800    End transfer
+
+; $1AD380    $1060    $D000    Credits main songs bank
+; $1AE3E4    $1038    $2900    Credits auxiliary songs
+; $1AF420    $0000    $0800    End transfer
+
+; =========================================================
+
+; Free APU RAM
+; ---------------------------------------------------------
+; Addr     Size
+; ---------------------------------------------------------
+; $040F    $03F1    After variables
+; $2850    $0030    Before fairy theme
+; $2A8C    $0074    After fairy theme
+; $3188    $0A78    After auxiliary songs (Credits extend to $3938, leaving only $02C8)
+; $BAA0    $0560    After sample data
+
+; =========================================================
+
+; Track commands
+; ---------------------------------------------------------
+; Command  Action
+; ---------------------------------------------------------
+; F0       Mute
+; F1       Fade out
+; F2       Half volume
+; F3       Max volume
+; FF       Initiate transfer
+
+; =========================================================
+
+; Overworld song bank
+
+; Song       ARAM     ROM         Name
+; ---------------------------------------------------------
+; SONG 01    $D036    $1A9F2F     Triforce opening
+; SONG 02    $D0FF    $1A9FF8     Light World
+; SONG 03    $D86A    $1AA763     Rain
+; SONG 04    $DCA7    $1AB4D5     Bunny Link
+; SONG 05    $DEE5    $1AADDE     Lost woods
+; SONG 06    $E36A    $1AB263     Legends theme (attract mode)
+; SONG 07    $E8DC    $1AB7D5     Kakariko Village
+; SONG 08    $EE11    $1ABD0A     Mirror warp
+; SONG 09    $EF6D    $1ABE66     Dark World
+; SONG 0A    $F813    $1AC70C     Restoring the Master Sword
+; SONG 0B    $2880    $1A9CE9     Faerie theme
+; SONG 0C    $F8F6    $1AC7EF     Chase theme
+; SONG 0D    $2B00    $1ACCAB     Skull Woods
+; SONG 0E    $2FA6    $1AD151     Game theme
+; SONG 0F    $FAFA    $1AC9F3     Intro no Triforce
+; SONG 10    $0000    -------     nothing
+; SONG 11    $0000    -------     nothing
+; SONG 12    $0000    -------     nothing
+; SONG 13    $0000    -------     nothing
+; SONG 14    $0000    -------     nothing
+; SONG 15    $0000    -------     nothing
+; SONG 16    $0000    -------     nothing
+; SONG 17    $0000    -------     nothing
+; SONG 18    $0000    -------     nothing
+; SONG 19    $0000    -------     nothing
+; SONG 1A    $0000    -------     nothing
+; SONG 1B    $0000    -------     nothing
+
+; ---------------------------------------------------------
+
+; Underworld song bank
+
+; Song       ARAM     ROM         Name
+; ---------------------------------------------------------
+; SONG 01    $0000    -------     nothing
+; SONG 02    $0000    -------     nothing
+; SONG 03    $0000    -------     nothing
+; SONG 04    $0000    -------     nothing
+; SONG 05    $0000    -------     nothing
+; SONG 06    $0000    -------     nothing
+; SONG 07    $0000    -------     nothing
+; SONG 08    $0000    -------     nothing
+; SONG 09    $0000    -------     nothing
+; SONG 0A    $0000    -------     nothing
+; SONG 0B    $2880    $1A9CE9     Faerie theme
+; SONG 0C    $0000    -------     nothing
+; SONG 0D    $0000    -------     nothing
+; SONG 0E    $0000    -------     nothing
+; SONG 0F    $0000    -------     nothing
+; SONG 10    $D046    $1B804A     Hyrule Castle
+; SONG 11    $DBEC    $1B8BF0     Light World dungeon
+; SONG 12    $E13A    $1B913E     Caves
+; SONG 13    $E431    $1B9435     Fanfare
+; SONG 14    $E6F9    $1B96FD     Sanctuary
+; SONG 15    $E91E    $1B9922     Boss theme
+; SONG 16    $EC0B    $1B9C0F     Dark World dungeon
+; SONG 17    $F1D1    $1BA1D5     Fortune teller
+; SONG 18    $E13A    $1B913E     Caves
+; SONG 19    $F304    $1BA308     Zelda rescue
+; SONG 1A    $F580    $1BA584     Crystal theme
+; SONG 1B    $F909    $1BA90D     Faerie theme w/ arpeggio
+; SONG 1C    $FB6A    $1BAB6E     Pre-Agahnim theme
+; SONG 1D    $2B00    $1BACC7     Agahnim escape
+; SONG 1E    $2F59    $1BB120     Pre-Ganon theme
+; SONG 1F    $2BB3    $1BAD7A     Ganondorf the Thief
+; SONG 20    $0000    -------     nothing
+; SONG 21    $2B00    $1BACC7     Agahnim escape duplicate (unused)
+; SONG 22    $2F59    $1BB120     Pre-Ganon theme duplicate (unused)
+; SONG 23    $2BB3    $1BAD7A     Ganondorf the Thief duplicate (unused)
+
+; ---------------------------------------------------------
+
+; Credits song bank
+
+; Song       ARAM     ROM         Name
+; ---------------------------------------------------------
+; SONG 01    $0000    -------     nothing
+; SONG 02    $0000    -------     nothing
+; SONG 03    $0000    -------     nothing
+; SONG 04    $0000    -------     nothing
+; SONG 05    $0000    -------     nothing
+; SONG 06    $0000    -------     nothing
+; SONG 07    $0000    -------     nothing
+; SONG 08    $0000    -------     nothing
+; SONG 09    $0000    -------     nothing
+; SONG 0A    $0000    -------     nothing
+; SONG 0B    $0000    -------     nothing
+; SONG 0C    $0000    -------     nothing
+; SONG 0D    $0000    -------     nothing
+; SONG 0E    $0000    -------     nothing
+; SONG 0F    $0000    -------     nothing
+; SONG 10    $0000    -------     nothing
+; SONG 11    $0000    -------     nothing
+; SONG 12    $0000    -------     nothing
+; SONG 13    $0000    -------     nothing
+; SONG 14    $0000    -------     nothing
+; SONG 15    $0000    -------     nothing
+; SONG 16    $0000    -------     nothing
+; SONG 17    $0000    -------     nothing
+; SONG 18    $0000    -------     nothing
+; SONG 19    $0000    -------     nothing
+; SONG 1A    $0000    -------     nothing
+; SONG 1B    $0000    -------     nothing
+; SONG 1C    $0000    -------     nothing
+; SONG 1D    $0000    -------     nothing
+; SONG 1E    $0000    -------     nothing
+; SONG 1F    $0000    -------     nothing
+; SONG 20    $D046    $1AD3CA     Triforce room
+; SONG 21    $2900    $1AE3E8     Grabbing Triforce and Epilogue
+; SONG 22    $D2FD    $1AD681     Credits
+; SONG 23    $0000    -------     nothing
+
+; =========================================================
+
+; Instruments:
+;   LTTP has 1:1 correspondence of instrument:sample refrences
+;   ADSR, Gain, and Mult only apply to song instruments
+;   Everything else applies to the sample as a whole
+
+; * = Sample has no loop (loop point is end)
+; ^ = Pitch multiplier is in big endian
+
+; ---------------------------------------------------------
+;      ID      Addr   Loop  (off)      ADSR  Gain  Mult^     Name            Usage (M=Song | S=SFX)
+; ---------------------------------------------------------
+; SRCN 00     $4000  $4012  $0012     $FF $E0 $B8  $0470     Noise           - S
+; SRCN 01     $4048  $4063  $001B     $FF $E0 $B8  $0790     Rain            M S
+; SRCN 02     $47F2  $5395  $0BA3     $FF $E0 $B8  $09C0     Timpani         M S
+; SRCN 03     $5395  $53B0  $001B     $FF $E0 $B8  $0400     Square wave     - S
+; SRCN 04     $53D4  $53EF  $001B     $FF $E0 $B8  $0400     Saw wave        - S
+; SRCN 05     $5413  $542E  $001B     $FF $E0 $B8  $0470     Clink           - S
+; SRCN 06     $5476  $54A3  $002D     $FF $E0 $B8  $0470     Wobbly lead     M S
+; SRCN 07     $550F  $5521  $0012     $FF $E0 $B8  $0470     Compound Saw    - S
+; SRCN 08     $55B1  $5B2D  $057C*    $FF $E0 $B8  $07A0     Tweet           - S
+; SRCN 09     $5B2D  $60BB  $058E     $8F $E9 $B8  $01E0     Strings A       M -
+; SRCN 0A     $5B2D  $60BB  $058E     $8A $E9 $B8  $01E0     Strings B       M S
+; SRCN 0B     $68AD  $6C9D  $03F0     $FF $E0 $B8  $0300     Trombone        M S
+; SRCN 0C     $6CD3  $7A65  $0D92*    $FF $E0 $B8  $03A0     Cymbal          M S
+; SRCN 0D     $7A65  $7BFA  $0195     $FF $E0 $B8  $0100     Ocarina         - S
+; SRCN 0E     $7C03  $7C78  $0075     $FF $EF $B8  $0EA0     Chimes          M S
+; SRCN 0F     $7CDB  $7EA6  $01CB     $FF $EF $B8  $0600     Harp            M S
+; SRCN 10     $7EC1  $867D  $07BC*    $FF $E0 $B8  $03D0     Splash          M S
+; SRCN 11     $867D  $8D6A  $06ED     $8F $E0 $B8  $0300     Trumpet         M -
+; SRCN 12     $8D85  $944E  $06C9     $8F $E0 $B8  $06F0     Horn            M -
+; SRCN 13     $948D  $A1BC  $0D2F*    $FD $E0 $B8  $07A0     Snare A         M -
+; SRCN 14     $948D  $A1BC  $0D2F*    $FF $E0 $B8  $07A0     Snare B         M S
+; SRCN 15     $A1BC  $A6E7  $052B     $FF $E0 $B8  $03D0     Choir           M S
+; SRCN 16     $AEB5  $B0D1  $021C     $8F $E0 $B8  $0300     Flute           M -
+; SRCN 17     $B0EC  $B32C  $0240*    $FF $E0 $B8  $02C0     Oof             - S
+; SRCN 18     $B32C  $BA61  $0735     $FE $8F $B8  $06F0     Piano           M -
+
+; =========================================================
+; SFX instruments - Table: ARAM $3E00, ROM $1A:9C04
+
+; ID     VOL L,R     Pitch    SRCN     ADSR      Gain    Mult   Name
+; -----------------------------------------------------------------------------
+; $00    $70, $70    $1000    $00      $F6 $6A   $B8     $03    Fwoosh
+; $01    $70, $70    $1000    $01      $8E $E0   $B8     $02    Swish
+; $02    $70, $70    $1000    $14      $FE $6A   $B8     $02    Bomp
+; $03    $70, $70    $1000    $03      $FE $F8   $B8     $0D    Ting
+; $04    $70, $70    $1000    $04      $FE $6A   $7F     $03    Rrrrr
+; $05    $70, $70    $1000    $02      $FE $6A   $7F     $03    Clunk
+; $06    $70, $70    $1000    $05      $FE $6A   $70     $03    Ching
+; $07    $70, $70    $1000    $06      $FE $6A   $70     $03    Fwomp
+; $08    $70, $70    $1000    $08      $FA $6A   $70     $03    Squee
+; $09    $70, $70    $1000    $06      $FE $6A   $70     $01    Unused
+; $0A    $70, $70    $1000    $07      $FE $6A   $70     $05    Bzzzrt
+; $0B    $70, $70    $1000    $0B      $FE $6A   $B8     $03    Brrfft
+; $0C    $70, $70    $1000    $0C      $FE $E0   $B8     $02    Brrwwww
+; $0D    $70, $70    $1000    $0D      $F9 $6E   $B8     $03    Twee
+; $0E    $70, $70    $1000    $0E      $FE $F5   $B8     $07    Pwing
+; $0F    $70, $70    $1000    $0F      $FE $F5   $B8     $06    Pling
+; $10    $70, $70    $1000    $01      $FE $FC   $B8     $03    Chshtsh
+; $11    $70, $70    $1000    $10      $8E $E0   $B8     $03    Splssh
+; $12    $70, $70    $1000    $08      $8E $E0   $B8     $02    Weewoo
+; $13    $70, $70    $1000    $14      $8E $E0   $B8     $02    Brbrbrb
+; $14    $70, $70    $1000    $0A      $88 $E0   $B8     $02    Bwow
+; $15    $70, $70    $1000    $17      $8E $E0   $B8     $02    Uughf
+; $16    $70, $70    $1000    $15      $FF $E0   $B8     $04    Aaaaaa
+; $17    $70, $70    $1000    $03      $DF $11   $B8     $0F    Twing
+; $18    $70, $70    $1000    $01      $88 $E0   $B8     $01    Whooo
+
+; -----------------------------------------------------------------------------
+
+; SFX instruments by usage
+
+; $00   SFX1.13, SFX1.14
+;       SFX2.07, SFX2.09, SFX2.0D, SFX2.0E, SFX2.2C, SFX2.3A
+;       SFX3.05, SFX3.26
+;       SFXU2533
+
+; $01   SFX1.01, SFX1.02, SFX1.03, SFX1.04
+;       SFX2.01, SFX2.02, SFX2.12, SFX2.1A, SFX2.1E, SFX2.1F
+;       SFX2.21, SFX2.23, SFX2.29, SFX2.32, SFX2.39
+;       SFX3.02, SFX3.1E, SFX3.23, SFX3.31
+
+; $02   SFX2.03, SFX2.04, SFX2.08, SFX2.0B, SFX2.12, SFX2.1F, SFX2.21
+;       SFX3.06, SFX3.0E
+;       SFXU2831
+
+; $03   SFX2.06
+;       SFX3.0A, SFX3.30
+
+; $04   SFX2.3C
+;       SFX3.32
+;       SFXU2831
+
+; $05   SFX2.10, SFX2.11, SFX2.22
+;       SFX3.18, SFX3.3E
+;       SFXU252D
+
+; $06   SFX2.05, SFX2.0A, SFX2.0F, SFX2.3B
+;       SFX3.04, SFX3.14, SFX3.25
+
+; $07   SFX2.14, SFX2.15, SFX2.33
+;       SFX3.01, SFX3.11, SFX3.12, SFX3.19, SFX3.27, SFX3.28, SFX3.29, SFX3.35, SFX3.39
+;       SFXU26A2
+
+; $08   SFX3.17
+
+; $09   nothing
+
+; $0A   SFX1.15, SFX1.16
+;       SFX3.1C, SFX3.2A, SFX3.2B, SFX3.2C
+
+; $0B   SFX2.27
+;       SFX3.0B, SFX3.0F, SFX3.2E, SFX3.34, SFX3.35, SFX3.36, SFX3.3C, SFX3.3D, SFX3.3F
+
+; $0C   SFX2.2A
+;       SFX3.07, SFX3.08, SFX3.09
+
+; $0D   SFX1.0B, SFX1.0C, SFX1.17, SFX1.18, SFX1.1B, SFX1.1C
+;       SFX2.13, SFX2.20, SFX2.31, SFX2.3E, SFX2.3F
+;       SFX3.0C, SFX3.13, SFX3.24
+;       SFXU1EE2, SFXU279D, SFXU27F6, SFXU2807, SFXU2818
+
+; $0E   SFX1.0D, SFX1.0E, SFX1.0F, SFX1.10, SFX1.1D, SFX1.1E, SFX1.1F, SFX1.20
+;       SFX2.2B, SFX2.37
+;       SFX3.0D, SFX3.10, SFX3.1B, SFX3.2F, SFX3.33, SFX3.3A, SFX3.3B
+
+; $0F   SFX2.2D
+;       SFX3.1A, SFX3.1D, SFX3.20, SFX3.2D, SFX3.37
+;       SFXU1D1C
+
+; $10   SFX2.16, SFX2.17, SFX2.18, SFX2.19
+
+; $11   SFX2.1B, SFX2.1C, SFX2.24, SFX2.25, SFX2.28, SFX2.2E, SFX2.34, SFX3.28, SFX2.3D
+
+; $12   SFX3.04
+
+; $13   SFX1.07, SFX1.08
+;       SFX2.0C, SFX2.35, SFX2.36
+;       SFX3.03, SFX3.15, SFX3.16, SFX3.25, SFX3.38
+
+; $14   SFX3.21, SFX3.22
+;       SFXU277E
+
+; $15   SFX2.26, SFX2.30
+;       SFXU1F13
+
+; $16   SFX1.11, SFX1.12
+;       SFX2.1D
+;       SFX3.1F
+
+; $17   SFX2.2C, SFX2.3A
+
+; $18   SFX1.09, SFX1.0A
+
+; -----------------------------------------------------------------------------
+
+; SFX1 - queued via $012D | Table: ARAM $17C0, ROM $1A:8B70
+
+; ID          ARAM      ROM         Name
+; -----------------------------------------------------------------------------
+; SFX1.01     $2652     $1A9A02     Rain / Zora area
+; SFX1.02     $2662     $1A9A12     Rain / Zora area (packaged with $01)
+; SFX1.03     $2677     $1A9A27     Rain
+; SFX1.04     $2687     $1A9A37     Rain (packaged with $03)
+; SFX1.05     $284F     $1A9BFF     Silence
+; SFX1.06     $284F     $1A9BFF     Silence (packaged with $05)
+; SFX1.07     $2739     $1A9AE9     The Rumbling
+; SFX1.08     $2736     $1A9AE6     The Rumbling (packaged with $08)
+; SFX1.09     $1C8E     $1A903E     Wind
+; SFX1.0A     $1CBC     $1A906C     Wind (packaged with $09 by APU)
+; SFX1.0B     $1BA3     $1A8F53     Flute song by flute boy
+; SFX1.0C     $1B62     $1A8F12     Flute song by flute boy (packaged with $0B)
+; SFX1.0D     $1B0E     $1A8EBE     Magic jingle
+; SFX1.0E     $1B1D     $1A8ECD     Magic jingle (packaged with $0D)
+; SFX1.0F     $1B2C     $1A8EDC     Crystal / Save and quit
+; SFX1.10     $1B3E     $1A8EEE     Crystal / Save and quit (packaged with $0F)
+; SFX1.11     $1EAC     $1A925C     Choir melody
+; SFX1.12     $1EC8     $1A9278     Choir countermelody (packaged with $11)
+; SFX1.13     $1AD2     $1A8E82     Large boss swoosh
+; SFX1.14     $1AE1     $1A8E91     Large boss swoosh (packaged with $13)
+; SFX1.15     $1AF0     $1A8EA0     Triforce door / Pyramid hole opening
+; SFX1.16     $1AFF     $1A8EAF     VOMP (packaged with $15)
+; SFX1.17     $1C24     $1A8FD4     Flute song for weathervane
+; SFX1.18     $1BE3     $1A8F93     Flute song for weathervane (packaged with $17)
+; SFX1.19     $0000     -------     Nothing (unused)
+; SFX1.1A     $0000     -------     Nothing (unused; packaged with $19)
+; SFX1.1B     $1BA3     $1A8F53     Flute song by flute boy duplicate (unused)
+; SFX1.1C     $1B62     $1A8F12     Flute song by flute boy duplicate (unused; packaged with $1B)
+; SFX1.1D     $1B0E     $1A8EBE     Magic jingle duplicate (unused)
+; SFX1.1E     $1B1D     $1A8ECD     Magic jingle duplicate (unused; packaged with $1D)
+; SFX1.1F     $1B2C     $1A8EDC     Crystal / Save and quit duplicate (unused)
+; SFX1.20     $1B3E     $1A8EEE     Crystal / Save and quit duplicate (unused; packaged with $1F)
+
+; $80..$FF          Initiates a fade to half volume for SFX1
+
+; -----------------------------------------------------------------------------
+
+; SFX2 - queued via $012E | Table: ARAM $1820, ROM $1A:8BD0
+
+; ID          ARAM      ROM         Name
+; -----------------------------------------------------------------------------
+;      00     $0020     -------     Undefined; when queued value of $40, $C0, $80
+; SFX2.01     $2614     $1A99C4     Slash
+; SFX2.02     $2625     $1A99D5     Slash
+; SFX2.03     $2634     $1A99E4     Slash
+; SFX2.04     $2643     $1A99F3     Slash
+; SFX2.05     $25DD     $1A998D     Clink
+; SFX2.06     $25D7     $1A9987     Bombable door clink
+; SFX2.07     $25B7     $1A9967     Fwoosh
+; SFX2.08     $25E3     $1A9993     Arrow smash
+; SFX2.09     $25AD     $1A995D     Boomerang fwish
+; SFX2.0A     $25C7     $1A9977     Hookshot clink
+; SFX2.0B     $2478     $1A9828     Placing bomb
+; SFX2.0C     $269C     $1A9A4C     Explosion
+; SFX2.0D     $2414     $1A97C4     Powder (paired $0D→$3F)
+; SFX2.0E     $2404     $1A97B4     Fire rod shot
+; SFX2.0F     $24C3     $1A9873     Ice rod shot
+; SFX2.10     $23FA     $1A97AA     Hammer use
+; SFX2.11     $23F0     $1A97A0     Hammering peg
+; SFX2.12     $23CD     $1A977D     Digging
+; SFX2.13     $23A0     $1A9750     Flute (paired $13→$3E)
+; SFX2.14     $2380     $1A9730     Cape on
+; SFX2.15     $2390     $1A9740     Cape off / Wallmaster grab
+; SFX2.16     $232C     $1A96DC     Staircase
+; SFX2.17     $2344     $1A96F4     Staircase
+; SFX2.18     $2356     $1A9706     Staircase
+; SFX2.19     $236E     $1A971E     Staircase
+; SFX2.1A     $2316     $1A96C6     Tall grass / Hammer hitting bush
+; SFX2.1B     $2307     $1A96B7     Shallow water
+; SFX2.1C     $2301     $1A96B1     Mire shallow water
+; SFX2.1D     $22BB     $1A966B     Lifting object
+; SFX2.1E     $2577     $1A9927     Cutting grass
+; SFX2.1F     $22E9     $1A9699     Item breaking
+; SFX2.20     $22DA     $1A968A     Item falling in pit
+; SFX2.21     $22CF     $1A967F     Bomb hitting ground / General thud
+; SFX2.22     $2107     $1A94B7     Pushing object / Armos bounce
+; SFX2.23     $22B1     $1A9661     Boots dust
+; SFX2.24     $22A5     $1A9655     Splashing (paired $24→$3D)
+; SFX2.25     $2296     $1A9646     Mire shallow water again?
+; SFX2.26     $2844     $1A9BF4     Link taking damage
+; SFX2.27     $2252     $1A9602     Fainting
+; SFX2.28     $2287     $1A9637     Item splash
+; SFX2.29     $243F     $1A97EF     Rupee refill (paired $29→$3B)
+; SFX2.2A     $2033     $1A93E3     Fire splash / Bombos spell
+; SFX2.2B     $1FF2     $1A93A2     Heart beep / Text box
+; SFX2.2C     $1FD9     $1A9389     Sword up (paired $2C→$3A) (also uses instrument $17)
+; SFX2.2D     $20A6     $1A9456     Magic drain
+; SFX2.2E     $1FCA     $1A937A     GT opening (paired $2E→$39)
+; SFX2.2F     $1F47     $1A92F7     GT opening / Water drain (paired $2F→$38)
+; SFX2.30     $1EF1     $1A92A1     Cucco
+; SFX2.31     $20CE     $1A947E     Fairy
+; SFX2.32     $1D47     $1A90F7     Bug net
+; SFX2.33     $1CDC     $1A908C     Teleport (paired $34→$33)
+; SFX2.34     $1F6F     $1A931F     Teleport (paired $34→$33)
+; SFX2.35     $1C67     $1A9017     Shaking
+; SFX2.36     $1C64     $1A9014     Mire entrance (extends above; paired $35→$36)
+; SFX2.37     $1A43     $1A8DF3     Spin charged
+; SFX2.38     $1F6F     $1A931F     Water sound (paired $2F→$38)
+; SFX2.39     $1F9C     $1A934C     Thunder (paired $2E→$39)
+; SFX2.3A     $1FE7     $1A9397     Sword up (paired $2C→$3A)
+; SFX2.3B     $2462     $1A9812     Rupee refill (paired $29→$3B)
+; SFX2.3C     $1A37     $1A8DE7     Error beep
+; SFX2.3D     $22AB     $1A965B     Big splash (paired $24→$3D)
+; SFX2.3E     $23B5     $1A9765     Flute (paired $13→$3E)
+; SFX2.3F     $2435     $1A97E5     Powder (paired $0D→$3F)
+
+; -----------------------------------------------------------------------------
+
+; SFX3 - queued via $012F |  Table: ARAM $191C, ROM $1A:8CCC
+
+; ID          ARAM      ROM         Name
+; -----------------------------------------------------------------------------
+;      00     $003C     -------     Undefined; when queued value of $40, $C0, $80
+; SFX3.01     $1A18     $1A8DC8     Sword beam
+; SFX3.02     $254E     $1A98FE     TR opening
+; SFX3.03     $224A     $1A95FA     Pyramid hole
+; SFX3.04     $220E     $1A95BE     Angry soldier
+; SFX3.05     $25B7     $1A9967     Lynel shot / Javelin toss
+; SFX3.06     $21F5     $1A95A5     Swoosh
+; SFX3.07     $223D     $1A95ED     Cannon fire
+; SFX3.08     $21E6     $1A9596     Damage to enemy; $0BEX.4=1
+; SFX3.09     $21C1     $1A9571     Enemy death
+; SFX3.0A     $21A9     $1A9559     Collecting rupee
+; SFX3.0B     $2198     $1A9548     Collecting heart
+; SFX3.0C     $218E     $1A953E     Non-blank text character
+; SFX3.0D     $21B5     $1A9565     HUD heart
+; SFX3.0E     $2182     $1A9532     Opening chest
+; SFX3.0F     $24B9     $1A9869     ♪Do do do doooooo♫ (paired $0F→$3C→$3D→$3E→$3F)
+; SFX3.10     $216D     $1A951D     Map (paired $10→$3B)
+; SFX3.11     $214F     $1A94FF     Opening item menu / Bomb shop guy breathing
+; SFX3.12     $215E     $1A950E     Closing item menu / Bomb shop guy breathing
+; SFX3.13     $213B     $1A94EB     Throwing object / Stalfos jump
+; SFX3.14     $246C     $1A981C     Key door
+; SFX3.15     $212F     $1A94DF     Door / Chest (used with SFX2.29)
+; SFX3.16     $2123     $1A94D3     Armos Knight thud
+; SFX3.17     $25A6     $1A9956     Rat squeak
+; SFX3.18     $20DD     $1A948D     Dragging
+; SFX3.19     $250A     $1A98BA     Fireball / Laser shot
+; SFX3.1A     $1E8A     $1A923A     Chest reveal jingle (paired $1A→$38)
+; SFX3.1B     $20B6     $1A9466     Puzzle jingle (paired $1B→$3A)
+; SFX3.1C     $1A62     $1A8E12     Damage to enemy
+; SFX3.1D     $20A6     $1A9456     Magic meter
+; SFX3.1E     $2091     $1A9441     Wing flapping
+; SFX3.1F     $204B     $1A93FB     Link falling
+; SFX3.20     $276C     $1A9B1C     Menu / Text cursor moved
+; SFX3.21     $27E2     $1A9B92     Damage to boss
+; SFX3.22     $26CF     $1A9A7F     Boss dying / Deleting file
+; SFX3.23     $2001     $1A93B1     Spin attack swoosh (paired $23→$39)
+; SFX3.24     $2043     $1A93F3     OW map perspective change
+; SFX3.25     $1E9D     $1A924D     Pressure switch (also uses instrument $06)
+; SFX3.26     $1E7B     $1A922B     Lightning / Game over / Laser / Ganon bat / Trinexx lunge
+; SFX3.27     $1E40     $1A91F0     Agahnim charge
+; SFX3.28     $26F7     $1A9AA7     Agahnim / Ganon teleport
+; SFX3.29     $1E21     $1A91D1     Agahnim shot
+; SFX3.2A     $1E12     $1A91C2     Somaria / Byrna / Ether spell / Helma fire ball
+; SFX3.2B     $1DF3     $1A91A3     Electrocution
+; SFX3.2C     $1DC0     $1A9170     Bees
+; SFX3.2D     $1DA9     $1A9159     Milestone jingle (paired $2D→$37)
+; SFX3.2E     $1D5D     $1A910D     Heart container jingle (paired $2E→$35→$34)
+; SFX3.2F     $1D80     $1A9130     Key jingle (paired $2F→$33)
+; SFX3.30     $1B53     $1A8F03     Magic zap / Plop
+; SFX3.31     $1ACA     $1A8E7A     Sprite falling / Moldorm shuffle
+; SFX3.32     $1A78     $1A8E28     BOING
+; SFX3.33     $1D93     $1A9143     Key jingle (paired $2F→$33)
+; SFX3.34     $1D66     $1A9116     Heart container jingle (paired $2E→$35→$34)
+; SFX3.35     $1D73     $1A9123     Heart container jingle (paired $2E→$35→$34)
+; SFX3.36     $1AA7     $1A8E57     Magic attack
+; SFX3.37     $1DB4     $1A9164     Milestone jingle (paired $2D→$37)
+; SFX3.38     $1E93     $1A9243     Chest reveal jingle (paired $1A→$38)
+; SFX3.39     $2017     $1A93C7     Swish (paired $23→$39)
+; SFX3.3A     $20C0     $1A9470     Puzzle jingle (paired $1B→$3A)
+; SFX3.3B     $2176     $1A9526     Map (paired $10→$3B)
+; SFX3.3C     $248A     $1A983A     Item jingle (paired $0F→$3C→$3D→$3E→$3F)
+; SFX3.3D     $2494     $1A9844     Item jingle ($0F→$3C→$3D→$3E→$3F)
+; SFX3.3E     $249E     $1A984E     Item jingle (paired $0F→$3C→$3D→$3E→$3F)
+; SFX3.3F     $2480     $1A9830     Item jingle (paired $0F→$3C→$3D→$3E→$3F)
+
+; -----------------------------------------------------------------------------
+
+; Unused SFX
+
+; ARAM      ROM         Description
+; -----------------------------------------------------------------------------
+; $1A5B     $1A8E0B     Noisy fsssh; bleeds into SFX3.1C
+; $1D1C     $1A90CC     Radar ping
+; $1EE2     $1A9292     Slide whistle / Chirp
+; $1F13     $1A92C3     Cucco clucking
+; $252D     $1A98DD     Brighter hammer peg
+; $2533     $1A98E3     Bat wings flapping
+; $2657     $1A9A07     Broken static
+; $267C     $1A9A2C     Static; Loops
+; $26A2     $1A9A52     Tuba jingle followed by a roar
+; $277E     $1A9B2E     UFO winding up
+; $279D     $1A9B4D     Distant whistling
+; $27C9     $1A9B79     Bwuuuoow
+; $27F6     $1A9BA6     Cat call
+; $2807     $1A9BB7     Higher pitched cat call
+; $2818     $1A9BC8     Reverse cat call
+; $2829     $1A9BD9     Dial-up
+; $2831     $1A9BE1     Bumper peg
+
+; =========================================================
+; Registers
 
 INIDISP = $002100
 OBSEL = $002101
