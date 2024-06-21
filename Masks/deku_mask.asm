@@ -143,36 +143,27 @@ LinkState_UsingQuake:
 
       ; $031D - Spin Step
       LDX.w $031D : CPX.b #$04 : BNE .skip_swish_sfx
-      PHX : LDA.b #$23 : JSR PlaySFX_Set3 : PLX
-
+        PHX : LDA.b #$23 : JSR PlaySFX_Set3 : PLX
       .skip_swish_sfx
-        CPX.b #$0A : BNE .skip_ping_sfx
-        ; PHX : LDA.b #$2C : JSR PlaySFX_Set2 : PLX
+        CPX.b #$0C : BNE .dont_reset_step
+        LDA.b #$0B : STA.w $031D
 
-        .skip_ping_sfx
-          CPX.b #$0B : BNE .skip_boom_sfx
-          ; LDA.b #$0C : JSR PlaySFX_Set2
+        TAX
 
-          .skip_boom_sfx
-            CPX.b #$0C : BNE .dont_reset_step
-            LDA.b #$0B : STA.w $031D
+        .dont_reset_step
+          LDA.w .anim_timer,X : STA.b $3D
+          LDA.w .anim_step,X : STA.w $031C
+          
+          LDA.w $0324 : BNE .special ; Prevent repeat spellcast check
+          CPX.b #$0B : BNE .special ; Animation step check
 
-            TAX
-
-            .dont_reset_step
-              LDA.w .anim_timer,X : STA.b $3D
-              LDA.w .anim_step,X : STA.w $031C
-              
-              LDA.w $0324 : BNE .special ; Prevent repeat spellcast check
-              CPX.b #$0B : BNE .special ; Animation step check
-
-                ; -----------------------------------------------------
-                ; Prevent repeat spellcast set
-                LDA.b #$01 : STA.w $0324
-                LDA.b #$12 : STA $24
-                LDA.b #$FF : STA $5C
-                LDA.b #$01 : STA $70
-                ; -----------------------------------------------------
+            ; -----------------------------------------------------
+            ; Prevent repeat spellcast set
+            LDA.b #$01 : STA.w $0324
+            LDA.b #$12 : STA $24
+            LDA.b #$FF : STA $5C
+            LDA.b #$01 : STA $70
+            ; -----------------------------------------------------
 
 .exit
   RTS
