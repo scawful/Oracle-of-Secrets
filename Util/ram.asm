@@ -23,7 +23,7 @@ Offspring1_Id: skip 1
 Offspring2_Id: skip 1
 Offspring3_Id: skip 1
 Kydreeok_Id: skip 1
-SomariaOrByrna: skip 1
+FishingOrPortalRod: skip 1
 
 base off
 
