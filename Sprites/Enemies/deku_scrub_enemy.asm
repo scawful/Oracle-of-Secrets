@@ -1,3 +1,5 @@
+; =========================================================
+; Deku Scrub Bro Enemy
 
 !SPRID              = $14 ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 03  ; Number of tiles used in a frame
@@ -10,7 +12,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -44,6 +46,7 @@ Sprite_DekuScrubEnemy_Long:
     RTL ; Go back to original code
 }
 
+; =========================================================
 
 Sprite_DekuScrubEnemy_Prep:
 {
@@ -57,6 +60,8 @@ Sprite_DekuScrubEnemy_Prep:
   PLB
   RTL
 }
+
+; =========================================================
 
 ; 0-2 - Spitting
 ; 3-6 - Spinning
@@ -81,51 +86,51 @@ Sprite_DekuScrubEnemy_Main:
   ; 0x00
   DekuScrubEnemy_Hiding:
   {
-      %StartOnFrame(13)
-      %PlayAnimation(13,13,1)
+    %StartOnFrame(13)
+    %PlayAnimation(13,13,1)
 
-      JSL Sprite_PlayerCantPassThrough
-      JSR CheckForPeaShotRedirect
+    JSL Sprite_PlayerCantPassThrough
+    JSR CheckForPeaShotRedirect
 
-      JSL Sprite_IsBelowPlayer : TYA
-      CMP #$00 : BNE .is_below_player
-          ; Check if the player is too close
-          LDA $22 : STA $02
-          LDA $20 : STA $03
-          LDA SprX, X : STA $04
-          LDA SprY, X : STA $05
-          JSR GetDistance8bit : CMP.b #$24 : BCC .too_close
-            ; The player is below the scrub, so it should pop up
-            LDA #$20 : STA SprTimerA, X
-            %GotoAction(1)
-        .too_close
-      .is_below_player
-      RTS
+    JSL Sprite_IsBelowPlayer : TYA
+    CMP #$00 : BNE .is_below_player
+        ; Check if the player is too close
+        LDA $22 : STA $02
+        LDA $20 : STA $03
+        LDA SprX, X : STA $04
+        LDA SprY, X : STA $05
+        JSL GetDistance8bit_Long : CMP.b #$24 : BCC .too_close
+          ; The player is below the scrub, so it should pop up
+          LDA #$20 : STA SprTimerA, X
+          %GotoAction(1)
+      .too_close
+    .is_below_player
+    RTS
   }
 
   ; 0x01
   DekuScrubEnemy_Attack:
   {
-      %StartOnFrame(0)
-      %PlayAnimation(0,2,8)
+    %StartOnFrame(0)
+    %PlayAnimation(0,2,8)
 
-      JSL Sprite_PlayerCantPassThrough
-      JSR CheckForPeaShotRedirect
-      
-      LDA SprTimerA, X : BNE .not_done
-        JSR SpawnPeaShot
-        LDA #$50 : STA SprTimerA, X
-        INC.w SprAction, X
-      .not_done
+    JSL Sprite_PlayerCantPassThrough
+    JSR CheckForPeaShotRedirect
+    
+    LDA SprTimerA, X : BNE .not_done
+      JSR SpawnPeaShot
+      LDA #$50 : STA SprTimerA, X
+      INC.w SprAction, X
+    .not_done
 
-      LDA POSX : STA $02
-      LDA POSY : STA $03
-      LDA SprX, X : STA $04
-      LDA SprY, X : STA $05
-      JSR GetDistance8bit : CMP #$18 : BCS .not_too_close
-        %GotoAction(0)
-      .not_too_close
-      RTS 
+    LDA POSX : STA $02
+    LDA POSY : STA $03
+    LDA SprX, X : STA $04
+    LDA SprY, X : STA $05
+    JSL GetDistance8bit_Long : CMP #$18 : BCS .not_too_close
+      %GotoAction(0)
+    .not_too_close
+    RTS 
   }
 
   ; 0x02
@@ -147,39 +152,39 @@ Sprite_DekuScrubEnemy_Main:
   ; 0x03
   DekuScrubEnemy_Recoil:
   {
-      %StartOnFrame(3)
-      %PlayAnimation(3,6,6)
+    %StartOnFrame(3)
+    %PlayAnimation(3,6,6)
 
-      JSL Sprite_PlayerCantPassThrough
+    JSL Sprite_PlayerCantPassThrough
 
-      ; Kill the pea shot
-      PHX
-      LDA Offspring1_Id : TAX
-      STZ.w $0DD0, X
-      PLX
+    ; Kill the pea shot
+    PHX
+    LDA Offspring1_Id : TAX
+    STZ.w $0DD0, X
+    PLX
 
-      ; Play the spinning animation for a bit before proceeding
-      LDA SprTimerA, X : BNE .not_done
-      LDA #$40 : STA SprTimerA, X
-        INC.w SprAction, X
-      .not_done
-        
-      RTS 
+    ; Play the spinning animation for a bit before proceeding
+    LDA SprTimerA, X : BNE .not_done
+    LDA #$40 : STA SprTimerA, X
+      INC.w SprAction, X
+    .not_done
+      
+    RTS 
   }
 
   ; 0x04
   DekuScrubEnemy_Dazed:
   {
-      %StartOnFrame(8)
-      %PlayAnimation(8,9,11)
+    %StartOnFrame(8)
+    %PlayAnimation(8,9,11)
 
-      JSL Sprite_PlayerCantPassThrough
+    JSL Sprite_PlayerCantPassThrough
 
-      LDA SprTimerA, X : BNE .not_done
-        INC.w SprAction, X
-      .not_done
+    LDA SprTimerA, X : BNE .not_done
+      INC.w SprAction, X
+    .not_done
 
-      RTS 
+    RTS 
   }
 
   ; 0x05
@@ -187,9 +192,15 @@ Sprite_DekuScrubEnemy_Main:
   {
     %StartOnFrame(7)
     %PlayAnimation(7,7,1)
+    %SetHarmless(1)
 
     JSL Sprite_PlayerCantPassThrough
-    JSL Sprite_CheckDamageFromPlayer
+
+    LDA.w SprMiscD, X : BNE .no_talk
+    %ShowSolicitedMessage($12D) : BCC .no_talk
+      JSR DekuScrub_GiveRandomPrize
+      LDA.b #$01 : STA.w SprMiscD, X
+    .no_talk
 
     RTS 
   }
@@ -214,6 +225,22 @@ Sprite_DekuScrubEnemy_Main:
     .no_damage
     RTS 
   }
+}
+
+; =========================================================
+
+DekuScrub_GiveRandomPrize:
+{
+  JSL GetRandomInt : AND.b #$05 
+  TAY
+  LDA.w .prizes, Y
+  TAY : STZ $02E9
+  JSL Link_ReceiveItem
+
+  RTS
+
+  .prizes
+    db $40, $41, $42, $43, $44, $45
 }
 
 CheckForPeaShotRedirect:
@@ -256,6 +283,8 @@ SpawnPeaShot:
 
     LDA.b #$01 : STA $0E30, Y
     LDA.b #$06 : STA $0D80, Y
+    LDA.b #$20 : STA.w SprPrize, Y
+    LDA.b #$02 : STA.w SprMiscC, Y
 
     PHX
         
@@ -285,6 +314,7 @@ SpawnPeaShot:
     RTS
 }
 
+; =========================================================
 
 Sprite_DekuScrubEnemy_Draw:
 {
