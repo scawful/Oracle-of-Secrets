@@ -233,7 +233,7 @@ SpriteObjectsDraw:
   .KydreeokBody
     incbin Data/kydreeok_body.bin
   .ManhandlaBody1
-    incbin Data/manhandla_body1.bin
+    incbin Data/manhandla_body_1a.bin
 }
 
 
