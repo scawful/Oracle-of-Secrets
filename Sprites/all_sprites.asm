@@ -112,6 +112,9 @@ print  "End of mermaid.asm                ", pc
 incsrc "Sprites/Bosses/Manhandla.asm"
 print  "End of manhandla.asm              ", pc
 
+incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
+print  "End of deku_scrub_enemy.asm       ",  pc
+
 ;=========================================================
 
 org    $318000
@@ -220,6 +223,3 @@ print  "End of kydreeok.asm               ",  pc
 
 incsrc "Sprites/Bosses/kydreeok_head.asm"
 print  "End of kydreeok_head.asm          ",  pc
-
-incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
-print  "End of deku_scrub_enemy.asm       ",  pc
