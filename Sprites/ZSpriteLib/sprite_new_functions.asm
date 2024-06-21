@@ -814,3 +814,23 @@ Sprite_ApplySpeedTowardsPlayerXOrY_Long:
           STZ.w SprYSpeed
           RTL
 }
+
+
+GetDistance8bit_Long:
+{
+  LDA   $04        ; Sprite X
+  SEC   : SBC $02  ; - Player X
+  BPL   +
+  EOR.b #$FF : INC
+  +
+  STA   $00        ; Distance X (ABS)
+
+  LDA   $05                 ; Sprite Y
+  SEC   : SBC $03           ; - Player Y
+  BPL   +
+  EOR.b #$FF : INC
+  +
+  ; Add it back to X Distance
+  CLC   : ADC $00 : STA $00 ; distance total X, Y (ABS)
+  RTL
+}
