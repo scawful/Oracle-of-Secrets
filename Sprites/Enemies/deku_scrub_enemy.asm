@@ -47,15 +47,15 @@ Sprite_DekuScrubEnemy_Long:
 
 Sprite_DekuScrubEnemy_Prep:
 {
-    PHB : PHK : PLB
+  PHB : PHK : PLB
 
-    LDA SprSubtype, X : CMP #$01 : BNE .normal_scrub
-      LDA.b #$06 : STA SprAction, X ; Pea Shot State
-      LDA.b #$A0 : STA.b SprPrize, X
-    .normal_scrub 
+  LDA SprSubtype, X : CMP #$01 : BNE .normal_scrub
+    LDA.b #$06 : STA SprAction, X ; Pea Shot State
+    LDA.b #$20 : STA.b SprPrize, X
+  .normal_scrub 
 
-    PLB
-    RTL
+  PLB
+  RTL
 }
 
 ; 0-2 - Spitting
@@ -88,7 +88,7 @@ Sprite_DekuScrubEnemy_Main:
       JSR CheckForPeaShotRedirect
 
       JSL Sprite_IsBelowPlayer : TYA
-        CMP #$00 : BNE .is_below_player
+      CMP #$00 : BNE .is_below_player
           ; Check if the player is too close
           LDA $22 : STA $02
           LDA $20 : STA $03
@@ -98,8 +98,8 @@ Sprite_DekuScrubEnemy_Main:
             ; The player is below the scrub, so it should pop up
             LDA #$20 : STA SprTimerA, X
             %GotoAction(1)
-      .too_close
-    .is_below_player
+        .too_close
+      .is_below_player
       RTS
   }
 
@@ -110,21 +110,21 @@ Sprite_DekuScrubEnemy_Main:
       %PlayAnimation(0,2,8)
 
       JSL Sprite_PlayerCantPassThrough
-      
+      JSR CheckForPeaShotRedirect
       
       LDA SprTimerA, X : BNE .not_done
         JSR SpawnPeaShot
-        LDA #$40 : STA SprTimerA, X
+        LDA #$50 : STA SprTimerA, X
         INC.w SprAction, X
-    .not_done
+      .not_done
 
-      LDA $22 : STA $02
-      LDA $20 : STA $03
+      LDA POSX : STA $02
+      LDA POSY : STA $03
       LDA SprX, X : STA $04
       LDA SprY, X : STA $05
       JSR GetDistance8bit : CMP #$18 : BCS .not_too_close
         %GotoAction(0)
-    .not_too_close
+      .not_too_close
       RTS 
   }
 
@@ -136,6 +136,10 @@ Sprite_DekuScrubEnemy_Main:
 
     JSL Sprite_PlayerCantPassThrough
     JSR CheckForPeaShotRedirect
+
+    LDA.w SprTimerA, X : BNE +
+      %GotoAction(0)
+    +
     
     RTS
   }
@@ -158,8 +162,8 @@ Sprite_DekuScrubEnemy_Main:
       LDA SprTimerA, X : BNE .not_done
       LDA #$40 : STA SprTimerA, X
         INC.w SprAction, X
-    .not_done
-      
+      .not_done
+        
       RTS 
   }
 
@@ -173,7 +177,7 @@ Sprite_DekuScrubEnemy_Main:
 
       LDA SprTimerA, X : BNE .not_done
         INC.w SprAction, X
-    .not_done
+      .not_done
 
       RTS 
   }
@@ -193,18 +197,22 @@ Sprite_DekuScrubEnemy_Main:
   ; 0x06
   DekuScrubEnemy_PeaShot:
   {
-      %StartOnFrame(10)
-      %PlayAnimation(10,12,3)
+    %StartOnFrame(10)
+    %PlayAnimation(10,12,3)
 
-      %DoDamageToPlayerSameLayerOnContact()
+    %DoDamageToPlayerSameLayerOnContact()
 
-      JSL Sprite_MoveVert
+    JSL Sprite_MoveVert
+    JSL Sprite_CheckTileCollision
+    LDA.w SprCollision, X : BEQ .no_collision
+      STZ.w SprState, X
+    .no_collision
 
-      JSL Sprite_CheckDamageFromPlayerLong : BCC .no_damage
-        ; Apply force in the opposite direction
-        LDA #-16 : STA SprYSpeed, X
+    JSL Sprite_CheckDamageFromPlayerLong : BCC .no_damage
+      ; Apply force in the opposite direction
+      LDA #-16 : STA SprYSpeed, X
     .no_damage
-      RTS 
+    RTS 
   }
 }
 
@@ -225,26 +233,19 @@ CheckForPeaShotRedirect:
     PLX
 
     JSL CheckIfHitBoxesOverlap : BCC .no_dano
-      INC.w SprAction, X
+      %GotoAction(3)
+      RTS
     .no_dano
-    ; Wait while the pea shot is on screen
-    ; Link may redirect it towards us 
-    LDA SprTimerA, X : BNE .not_done
-      ; If the pea shot and deku scrub hitboxes intersect
-      ; We will go to recoil 
-      PHX 
-      LDA.w Offspring1_Id : TAX
-      JSL Sprite_SetupHitBox
-      PLX
-      JSL CheckIfHitBoxesOverlap : BCC .not_done2
-        %GotoAction(3)
-        RTS
-      .not_done2
-  
-      ; However, he may also dodge it and try to attack
-      ; So if he gets too close, we go back to hiding
-      %GotoAction(0)
-  .not_done
+    ; If the pea shot and deku scrub hitboxes intersect
+    ; We will go to recoil 
+    PHX 
+    LDA.w Offspring1_Id : TAX
+    JSL Sprite_SetupHitBox
+    PLX
+    JSL CheckIfHitBoxesOverlap : BCC .not_done2
+      %GotoAction(3)
+      RTS
+    .not_done2
   RTS
 }
 
