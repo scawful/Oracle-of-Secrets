@@ -755,6 +755,41 @@ Sprite_BigChuchu_Draw:
   db $02
 }
 
+Chuchu_SpawnBlast:
+{
+  PHX
+  LDA.b #$88
+  JSL Sprite_SpawnDynamically : BMI .return
+    
+    LDA.b #$0A : STA.w SprSubtype, Y
+    STA.w SprAction, Y
+
+    JSL GetRandomInt : AND.b #$01 : TAX
+
+    LDA.w .speed_and_offset_x, X : STA.w SprXSpeed, Y
+    LDA.w SprX, Y : CLC : ADC.w .speed_and_offset_x, X : STA.w SprX, Y
+    STA.w SprXRound, Y
+    LDA.w .speed_y, X : STA.w SprYSpeed, Y
+    STA.w SprYRound, Y
+    LDA.b #$02 : STA.w SprMiscD, Y
+    LDA.b #$00 : STA.w SprTileDie, Y
+    LDA.b #$40 : STA.w SprProps, Y
+    LDA.b #$04 : STA.w SprFrame, Y 
+    LDA.b #$10 : STA.w SprTimerB, Y
+    LDA.b #$00 : STA.w SprNbrOAM, Y
+    LDA.b #$03 : STA.w SprHitbox, Y
+
+  .return 
+  PLX
+  RTS
+
+
+  .speed_and_offset_x
+  db -16, 16
+
+  .speed_y
+  db  24, 24
+}
 
 Mothula_SpawnBeams:
 {
@@ -800,7 +835,7 @@ Mothula_SpawnBeams:
 
   RTS
   .speed_and_offset_x
-  db -16,   0,  16
+  db -20,   0,  20
 
   .speed_y
   db  24,  32,  24
@@ -817,7 +852,7 @@ SpawnLeftManhandlaHead:
     ; store the sub-type
     LDA.b #$03 : STA.w SprSubtype, Y
     STA.w SprAction, Y
-    LDA.b #$10 : STA.w SprHealth, Y
+    LDA.b #$14 : STA.w SprHealth, Y
     LDA.b #$90 : STA.w SprTileDie, Y
     LDA.w SprGfxProps : ORA.b #$80 : STA.w SprGfxProps, Y
     TYX
@@ -841,7 +876,7 @@ SpawnRightManhandlaHead:
 
     LDA.b #$02
     STA.w SprSubtype, Y
-    LDA.b #$10 : STA.w SprHealth, Y
+    LDA.b #$14 : STA.w SprHealth, Y
     LDA.b #$90 : STA.w SprTileDie, Y
     LDA.w SprGfxProps : AND.b #$80 : STA.w SprGfxProps, Y
     TYX
@@ -864,7 +899,7 @@ SpawnCenterMandhandlaHead:
 
     LDA.b #$01
     STA.w SprSubtype, Y
-    LDA.b #$10 : STA.w SprHealth, Y
+    LDA.b #$14 : STA.w SprHealth, Y
     LDA.b #$90 : STA.w SprTileDie, Y
     LDA.w SprGfxProps : AND.b #$80 : STA.w SprGfxProps, Y
 
