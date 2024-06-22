@@ -250,7 +250,6 @@ LinkState_ResetMaskAnimated:
   .gbc_form
   .no_transform
   RTL
-  
 }
 
 pushpc
@@ -401,97 +400,92 @@ InitCamera:
   RTS
 }
 
-HandleCamera:
-{
-  JSL $07E6A6 ; Link_HandleMovingAnimation_FullLongEntry
-  JSR InitCamera
-
-  #_0790BA: JSL $07E3DD ; Link_HandleVelocityAndSandDrag_long
-
-  LDA $22 : SEC : SBC $3F : STA $31
-  LDA $20 : SEC : SBC $3E : STA $30
-  PHX 
-  
-  JSL $07E6A6 ; Link_HandleMovingAnimation_FullLongEntry
-  JSL $07F42F ; HandleIndoorCameraAndDoors_Long
-  
-  JSL Player_HaltDashAttack
-  PLX 
-  RTS
-}
-
 ; =========================================================
 
 HandleMovement:
 {
-  ; TODO: Check for collision here and prevent movement
-
   LDA $F0 : AND #$08 : BEQ .not_up
-    
     LDY #$00 
     LDA.w .drag_y_low,  Y : CLC : ADC.w $0B7E : STA.w $0B7E
     LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
-
     LDA #$01 : STA $031C
     LDA #$05 : STA $3D
     STZ $2F
+    
   .not_up
   LDA $F0 : AND #$04 : BEQ .not_down
-  
     LDY #$01
     LDA.w .drag_y_low,  Y : CLC : ADC.w $0B7E : STA.w $0B7E
     LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
     LDA #$02 : STA $031C
     LDA #$05 : STA $3D
     LDA #$02 : STA $2F
+    
   .not_down
   LDA $F0 : AND #$02 : BEQ .not_left
-    
     LDY #$02
     LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
     LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
     LDA #$03 : STA $031C
     LDA #$05 : STA $3D
     LDA #$04 : STA $2F
+    
   .not_left
   LDA $F0 : AND #$01 : BEQ .not_right
-    
     LDY #$03
     LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
     LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
-    
     LDA #$04 : STA $031C
     LDA #$05 : STA $3D
     LDA #$06 : STA $2F
+    
   .not_right
   RTS
 
-.drag_x_high
-  db 0,   0,  -1,   0
+  .drag_x_high
+    db 0,   0,  -1,   0
 
-.drag_x_low
-  db 0,   0,  -1,   1
+  .drag_x_low
+    db 0,   0,  -1,   1
 
-.drag_y_low
-  db -1,   1,   0,   0
+  .drag_y_low
+    db -1,   1,   0,   0
 
-.drag_y_high
-  db -1,   0,   0,   0
+  .drag_y_high
+    db -1,   0,   0,   0
 }
 
 ; =========================================================
 
 DekuLink_HoverBasedOnInput:
 {
-  JSR HandleCamera
+  PHB : PHK : PLB
+
+  #_0782A7: STZ.b $2A
+  #_0782A9: STZ.b $2B
+  #_0782AB: STZ.b $6B
+  #_0782AD: STZ.b $48
+
+  JSR HandleMovement
+  
+  JSL Link_HandleCardinalCollision_Long
+  JSL $07E245 ; Link_HandleVelocity
+  JSL $07E6A6 ; Link_HandleMovingAnimation_FullLongEntry
+
+  STZ.w $0302
+
+  JSL $07F42F ; HandleIndoorCameraAndDoors_Long
+  
+  JSL Player_HaltDashAttack
+  
+  LDA $22 : SEC : SBC $3F : STA $31
+  LDA $20 : SEC : SBC $3E : STA $30
 
   LDA $5C : AND #$1F : BNE .continue_me
     DEC $24
   .continue_me
   
   LDA $5C : BEQ .auto_cancel
-
-  JSR HandleMovement
 
   LDA $70 : BEQ .no_bomb_drop
     LDA $F0 : AND #%01000000 : BEQ .no_bomb_drop
@@ -526,6 +520,7 @@ DekuLink_HoverBasedOnInput:
     LDA.b #$12 : STA $24 
   .no_cancel
 
+  PLB
   RTL
 }
 

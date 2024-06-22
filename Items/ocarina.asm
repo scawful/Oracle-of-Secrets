@@ -214,6 +214,15 @@ UpdateFluteSong:
   JSL UpdateFluteSong_Long
   RTS
 }
+
+Link_HandleCardinalCollision_Long:
+{
+  PHB : PHK : PLB
+  JSR $B7C7
+  PLB
+  RTL
+}
+
 print "Bank07 Free Space: ", pc
 
 ; ZS OW
