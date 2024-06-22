@@ -667,8 +667,8 @@ Sprite_BigChuchu_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
-  LDA .start_index, Y : STA $06
+  LDA $0DC0, X : CLC : ADC $0D90, X : TAY ; Animation Frame
+  LDA.w .start_index, Y : STA $06
   LDA.w SprMiscA, X : STA $08
 
   PHX
@@ -720,29 +720,39 @@ Sprite_BigChuchu_Draw:
 
   ; =======================================================
   .start_index
-  db $00, $09, $12
+  db $00, $09, $12, $1B, $1C
   .nbr_of_tiles
-  db 8, 8, 8
+  db 8, 8, 8, 0, 0
   .x_offsets
   dw -12, 4, 20, -12, 4, 12, -12, 4, 12
   dw -12, 4, 20, -12, 4, 12, -12, 4, 12
   dw -12, 4, 20, -12, 4, 12, -8, 8, 16
+  dw 0
+  dw 0
   .y_offsets
   dw 8, 8, 8, 16, 16, 16, 32, 32, 32
   dw 8, 8, 8, 16, 16, 16, 32, 32, 32
   dw 8, 8, 8, 16, 16, 16, 32, 32, 32
+  dw 0
+  dw 0
   .chr
   db $80, $82, $84, $90, $92, $93, $B0, $B2, $B3
   db $80, $82, $84, $90, $92, $93, $D0, $D2, $D3
   db $80, $82, $84, $90, $92, $93, $D6, $D8, $D9
+  db $88
+  db $A8
   .properties
   db $33, $33, $33, $33, $33, $33, $33, $33, $33
   db $33, $33, $33, $33, $33, $33, $33, $33, $33
   db $33, $33, $33, $33, $33, $33, $33, $33, $33
+  db $33
+  db $33
   .sizes
   db $02, $02, $02, $02, $02, $02, $02, $02, $02
   db $02, $02, $02, $02, $02, $02, $02, $02, $02
   db $02, $02, $02, $02, $02, $02, $02, $02, $02
+  db $02
+  db $02
 }
 
 
