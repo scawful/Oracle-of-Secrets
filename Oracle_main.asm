@@ -80,6 +80,9 @@ namespace Oracle
   incsrc "Music/stone_tower_temple_v2.asm"
   print  "End of stone_tower_temple.asm     ", pc
 
+  incsrc "Music/song_of_healing.asm"
+  print  "End of Music/song_of_healing.asm    ", pc
+
 
   print ""
 
