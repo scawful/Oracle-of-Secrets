@@ -98,7 +98,7 @@ Sprite_Manhandla_CheckForNextPhaseOrDeath:
   LDA.w SprMiscD, X : BNE .phase2
       LDA.b #$01 : STA.w SprMiscD, X 
       LDA.b #$40 : STA.w SprTimerA, X 
-      LDA.b #$20 : STA.w SprHealth, X ; Refill the health
+      LDA.b #$40 : STA.w SprHealth, X ; Refill the health
       LDA.b #$08 : STA.w SprNbrOAM, X ; Give more OAM 
       LDA.b #$07 : STA.w SprAction, X ; Chuchu Emerge
     .not_dead
@@ -169,11 +169,12 @@ Sprite_Manhandla_Main:
   dw BigChuchu_Emerge    ; 0x07
   dw BigChuchu_Flower    ; 0x08
   dw BigChuchu_Dead      ; 0x09
+  dw ChuchuBlast         ; 0x0A
 
   Manhandla_Intro:
   {
     LDA.w SprSubtype, X : BNE .not_main
-      LDA.w SprX : SEC : SBC.b #$04 : STA.w SprX 
+      LDA.w SprX, X : SEC : SBC.b #$04 : STA.w SprX, X
       JSR ApplyManhandlaGraphics
       JSR ApplyManhandlaPalette
       JSR SpawnLeftManhandlaHead
@@ -235,6 +236,15 @@ Sprite_Manhandla_Main:
   {
     %PlayAnimation(0,2,16)
 
+    LDA.w SprTimerC, X : BEQ +
+      RTS
+    +
+
+    JSL GetRandomInt : AND.b #$3F : BNE ++
+      JSR Chuchu_SpawnBlast
+      ; JSR Mothula_SpawnBeams
+    ++
+
     PHX
     JSR Sprite_Manhandla_Move
     JSL Sprite_DamageFlash_Long
@@ -267,7 +277,10 @@ Sprite_Manhandla_Main:
       STZ.w $0424
       LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
       %GotoAction($04)
+
+      LDA.b #$10 : STA.w SprTimerC, X
       LDA.b #$8D : STA.w SprHitbox, X 
+      
       LDA #$88
       JSL Sprite_SpawnDynamically : BMI .return
         TYA : STA Offspring3_Id
@@ -279,6 +292,9 @@ Sprite_Manhandla_Main:
         STA.w SprAction, Y
         LDA.b #$20 : STA.w SprHealth, Y
         LDA.b #$07 : STA.w SprNbrOAM, Y
+
+        LDA.w SprY, Y : CLC : ADC.b #$20 : STA.w SprY, Y
+        LDA.b #$10 : STA.w SprTimerC, Y
 
         TYX
 
@@ -302,7 +318,7 @@ Sprite_Manhandla_Main:
     JSL Sprite_DamageFlash_Long
 
     JSL GetRandomInt : AND.b #$7F : BNE + 
-      JSL GetRandomInt : AND.b #$0F : BNE +
+      JSL GetRandomInt : AND.b #$04 : BNE +
       JSR Mothula_SpawnBeams
     +
 
@@ -338,6 +354,8 @@ Sprite_Manhandla_Main:
   {
     %PlayAnimation(9, 12, 10)
 
+    JSL Sprite_DamageFlash_Long
+
     LDA.w SprTimerA, X : BNE + 
       LDA.b #$02 : STA.w SprMiscD, X ; Set phase flag 
       LDA.b #$20 : STA.w SprTimerA, X 
@@ -351,13 +369,32 @@ Sprite_Manhandla_Main:
   {
     %PlayAnimation(12, 12, 1)
 
+    JSL Sprite_DamageFlash_Long
+
+    LDA.w SprTimerC, X : BEQ +
+        LDA.w SprY, X : DEC : STA.w SprY, X
+    +
+
     RTS
   }
 
   BigChuchu_Dead:
   {
+    #_068517: LDA.b #$FF
+    #_068519: STA.w $0BC0, X
     LDA.b #$04 : STA.w SprState, X 
     STZ.w SprHealth, X
+    RTS
+  }
+
+  ChuchuBlast:
+  {
+    %PlayAnimation(3, 4, 4)
+
+    JSL Sprite_Move
+
+    %DoDamageToPlayerSameLayerOnContact()
+
     RTS
   }
 }
