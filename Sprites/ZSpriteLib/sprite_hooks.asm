@@ -184,28 +184,21 @@ Sprite_CheckDamageToPlayer = $06F121
 Sprite_AttemptDamageToPlayerPlusRecoil = $06F41F
 
 ; =========================================================
-;Draw the sprite depending of the position of the player (if he has to be over or under link)
-org $06F864
-Sprite_OAM_AllocateDeferToPlayer:
+; Draw the sprite depending of the position of the player 
+; (if he has to be over or under link)
+Sprite_OAM_AllocateDeferToPlayer = $06F864
 
-org $0DBA80
-OAM_AllocateFromRegionA:
-org $0DBA84
-OAM_AllocateFromRegionB:
-org $0DBA88
-OAM_AllocateFromRegionC:
-org $0DBA8C
-OAM_AllocateFromRegionD:
-org $0DBA90
-OAM_AllocateFromRegionE:
-org $0DBA94
-OAM_AllocateFromRegionF:
+OAM_AllocateFromRegionA = $0DBA80 ; Above
+OAM_AllocateFromRegionB = $0DBA84 ; Below
+OAM_AllocateFromRegionC = $0DBA88 ; Above
+OAM_AllocateFromRegionD = $0DBA8C ; Above
+OAM_AllocateFromRegionE = $0DBA90 ; Above
+OAM_AllocateFromRegionF = $0DBA94 ; Above
 
-org $05DF70
-Sprite_DrawMultiple_quantity_preset:
+Sprite_DrawMultiple_quantity_preset = $05DF70
 
 ; =========================================================
-;makes all the sprites on screen shaking?
+; makes all the sprites on screen shaking
 org $0680FA
 ApplyRumbleToSprites:
 
