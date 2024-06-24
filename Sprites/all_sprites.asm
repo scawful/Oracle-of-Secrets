@@ -83,7 +83,7 @@ org $05F274
 org $08C2E3
   dw $006F ; BUTTER SWORD DIALOGUE
 
-;=========================================================
+; =========================================================
 
 org    $308000
 incsrc ZSpriteLib/sprite_new_table.asm
@@ -115,7 +115,19 @@ print  "End of manhandla.asm              ", pc
 incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
 print  "End of deku_scrub_enemy.asm       ",  pc
 
-;=========================================================
+PutRollerBeneathLink:
+{
+  JSL Sprite_OAM_AllocateDeferToPlayer
+  LDA.w $0DC0,X
+  ASL A
+  RTL
+}
+
+; SpriteDraw_Roller
+org $058EE6
+  JSL PutRollerBeneathLink
+
+; =========================================================
 
 org    $318000
 incsrc ZSpriteLib/sprite_new_functions.asm
@@ -212,6 +224,8 @@ incsrc "Sprites/NPCs/fortune_teller.asm"
 print  "End of fortune_teller.asm         ", pc
 
 warnpc $328000
+
+; =========================================================
 
 org $328000
 
