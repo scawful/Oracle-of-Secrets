@@ -43,7 +43,8 @@ namespace Oracle
 
   incsrc "Util/ram.asm"
   incsrc "Util/functions.asm"
-  incsrc "Util/music_macros.asm"
+  incsrc "Core/music_macros.asm"
+
 
   ; -------------------------------------------------------
   ; Overworld
