@@ -13,10 +13,11 @@ org $0182A8 ; Object ID 0x54
 org $018650 ; Object ID 230
   dw HeavyPot
 
-org $07DC54
-  TileBehavior_Nothing:
+; Tile types
+TileBehavior_Nothing = $07DC54
+TileBehavior_Pit = $07DA6A
 
-; Minecart Track tiletypes
+; Minecart Track tile types
 org $07D938
 #_07D938: dw TileBehavior_Nothing ; 0xB0 UW
 #_07D93A: dw TileBehavior_Nothing ; 0xB1 UW
