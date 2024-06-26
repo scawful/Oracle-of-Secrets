@@ -1,79 +1,4 @@
-SprAction    = $0D80
-SprFrame     = $0D90 ; This is also used to do various things in different sprites
-SprMiscA     = $0DA0 ; This can be used to do anything in sprite
-SprMiscB     = $0DB0 ; This can be used to do anything in sprite
-SprMiscC     = $0DE0 ; This can be used to do anything in sprite (Mainly used for sprite direction)
-SprMiscD     = $0E90 ; This can be used to do anything in sprite
-SprMiscE     = $0EB0 ; This can be used to do anything in sprite
-SprMiscF     = $0EC0 ; This can be used to do anything in sprite
-SprMiscG     = $0ED0 ; This can be used to do anything in sprite
-
-SprStunTimer = $0B58
-
-SprTimerA    = $0DF0 ; This address value is decreased by one every frames
-SprTimerB    = $0E00 ; This address value is decreased by one every frames
-SprTimerC    = $0E10 ; This address value is decreased by one every frames
-SprTimerD    = $0EE0 ; This address value is decreased by one every frames
-SprTimerE    = $0F10 ; This address value is decreased by one every frames
-SprTimerF    = $0F80 ; This address value is decreased by 2 every frames is also used by the gravity routine
-
-SprPause     = $0F00 ; Can probably be used for anything 
-SprFloor     = $0F20
-SprType      = $0E20 ; This contains the ID of the sprite 00 = raven, 01 = vulture, etc...
-SprSubtype   = $0E30 ; This contains the Sub ID of the sprite
-
-; 0x00 - Sprite is dead, totally inactive
-; 0x01 - Sprite falling into a pit with generic animation.
-; 0x02 - Sprite transforms into a puff of smoke, often producing an item
-; 0x03 - Sprite falling into deep water (optionally making a fish jump up?)
-; 0x04 - Death Mode for Bosses (lots of explosions).
-; 0x05 - Sprite falling into a pit that has a special animation (e.g. Soldier)
-; 0x06 - Death Mode for normal creatures.
-; 0x08 - Sprite is being spawned at load time. An initialization routine will
-;         be run for one frame, and then move on to the active state (0x09) the
-;         very next frame.
-; 0x09 - Sprite is in the normal, active mode.
-; 0x0A - Sprite is being carried by the player.
-; 0x0B - Sprite is frozen and / or stunned.
-SprState     = $0DD0 ; This tells if the sprite is alive, dead, frozen, etc...
-
-; Bits 0-4: define the number of OAM slots used by the sprite
-; Bit 5: Causes enemies to go towards the walls? strange...
-; Bit 6: No idea but the master sword ceremony sprites seem to use them....?
-; Bit 7: If set, enemy is harmless. Otherwise you take damage from contact.
-SprNbrOAM    = $0E40 
-
-SprHealth    = $0E50
-
-; Mostly controls graphics
-; nios pppt
-;   n - if set, don't draw extra death anim
-;   i - impervious to attacks and collision? TODO
-;   o - shadow size (0: normal | 1: small)
-;   s - shadow (0: no shadow | 1: shadow)
-;   p - palette used for OAM props
-;   t - name table used for OAM props
-SprGfxProps  = $0E60
-
-; Direction of sprite collision with wall
-SprCollision = $0E70 
-
-; Used in sprite state 0x03 (falling in water), used as delay in most of the sprites
-SprDelay     = $0E80
-SprRecoil    = $0EA0 ; Recoil Timer
-SprDeath     = $0EF0
-
-SprProps     = $0F50 ; DIWS UUUU - [D boss death][I Impervious to all attacks][W Water slash] [S Draw Shadow] [U Unused]
-SprHitbox    = $0F60 ; ISPH HHHH - [I ignore collisions][S Statis (not alive eg beamos)][P Persist code still run outside of camera][H Hitbox] 
-SprHeight    = $0F70 ; Distance from the shadow
-SprHeightS   = $0F90 ; Distance from the shadow subpixel
-
-SprYRecoil   = $0F30
-SprXRecoil   = $0F40
-
-SprGfx       = $0DC0 ; Determine the GFX used for the sprite
-OAMPtr       = $90
-OAMPtrH      = $92
+; Sprite RAM and Functions
 
 SprY         = $0D00
 SprX         = $0D10
@@ -86,11 +11,112 @@ SprXSpeed    = $0D50
 SprYRound    = $0D60
 SprXRound    = $0D70
 
-SprCachedX   = $0FD8 ; This doesn't need to be indexed with X it contains the 16bit position of the sprite
-SprCachedY   = $0FDA ; This doesn't need to be indexed with X it contains the 16bit position of the sprite
+SprCachedX   = $0FD8
+SprCachedY   = $0FDA
 
-DungeonMainCheck = $021B ;0x01
-SpriteRanCheck = $8E ;0x01
+SprAction    = $0D80 ; Indexes the action jump table
+SprFrame     = $0D90 ; Indexes the SprGfx for drawing
+SprGfx       = $0DC0 ; Determine the GFX used for the sprite
+
+SprMiscA     = $0DA0 ; Sprite_DamageFlash palette index
+SprMiscB     = $0DB0 ; 
+SprMiscC     = $0DE0 ; Cardinal direction the sprite is facing
+SprMiscD     = $0E90 ;
+SprMiscE     = $0EB0 ;
+SprMiscF     = $0EC0 ;
+SprMiscG     = $0ED0 ;
+
+SprTimerA    = $0DF0 ; Action,    decreased by 1 each frame
+SprTimerB    = $0E00 ; Animation, decreased by 1 each frame
+SprTimerC    = $0E10 ;            decreased by 1 each frame
+SprTimerD    = $0EE0 ;            decreased by 1 each frame
+SprTimerE    = $0F10 ;            decreased by 1 each frame
+SprTimerF    = $0F80 ; Gravity,   decreased by 2 each frame
+
+SprStunTimer = $0B58 ; counts down from 0xFF
+
+SprPause     = $0F00 ; Inactive if nonzero
+SprFloor     = $0F20 ; Layer the sprite is on
+SprType      = $0E20 ; Sprite ID
+SprSubtype   = $0E30 ; Sprite subtype
+
+; hmwo oooo
+;   o - define the number of OAM slots used by the sprite
+;   w - Causes enemies to go towards the walls
+;   m - Master sword ceremony sprite flag
+;   h - If set, harmless. Unset you take damage from contact.
+SprNbrOAM    = $0E40 
+SprHealth    = $0E50
+
+; 0x00 - Sprite is dead, totally inactive
+; 0x01 - Sprite falling into a pit with generic animation.
+; 0x02 - Sprite transforms into a puff of smoke, often producing an item
+; 0x03 - Sprite falling into deep water (optionally making a fish jump up?)
+; 0x04 - Death mode for bosses
+; 0x05 - Sprite falling into a pit that has a special animation 
+; 0x06 - Death Mode for normal creatures.
+; 0x08 - Sprite is being spawned at load time. 
+;      An initialization routine will be run for one frame, 
+;      and then move on to the active state (0x09) next frame.
+; 0x09 - Sprite is in the normal, active mode.
+; 0x0A - Sprite is being carried by the player.
+; 0x0B - Sprite is frozen and / or stunned.
+SprState     = $0DD0
+
+; nios pppt
+;   n - if set, don't draw extra death anim
+;   i - impervious to attacks and collision? TODO
+;   o - shadow size (0: normal | 1: small)
+;   s - shadow (0: no shadow | 1: shadow)
+;   p - palette used for OAM props
+;   t - name table used for OAM props
+SprGfxProps  = $0E60
+
+; Direction of sprite collision with wall
+SprCollision = $0E70 
+
+; Used in sprite state 0x03 (falling in water)
+; used as delay in most of the sprites
+SprDelay     = $0E80
+
+; Definitely closely tied to the process of a sprite taking damage. 
+; Seems to serve as a palette cycling index, or a state variable.
+; When this value is positive
+; 0x80 -  Signal that the recoil process has finished
+;         and will terminate during this frame.
+SprRecoil    = $0EA0 ; Recoil Timer
+
+; abbbbbbb:
+;   a - start death timer
+;   b - death timer
+SprDeath     = $0EF0
+
+SprYRecoil   = $0F30
+SprXRecoil   = $0F40
+
+; DIWS UUUU 
+;   D - boss death
+;   I - Impervious to all attacks
+;   W - Water slash
+;   S - Draw Shadow
+;   U - Unused
+SprProps     = $0F50
+
+; ISPH HHHH 
+;   I - ignore collisions
+;   S - Statis (not alive eg beamos)
+;   P - Persist code still run outside of camera
+;   H - Hitbox
+SprHitbox    = $0F60
+SprHeight    = $0F70 ; Distance from the shadow
+SprHeightS   = $0F90 ; Distance from the shadow subpixel
+
+OAMPtr       = $90
+OAMPtrH      = $92
+
+
+DungeonMainCheck = $021B
+SpriteRanCheck = $8E
 
 ; Primarily deals with bump damage
 ; tzpd bbbb
