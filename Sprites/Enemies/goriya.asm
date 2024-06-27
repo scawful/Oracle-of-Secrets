@@ -61,7 +61,7 @@ Sprite_Goriya_Prep:
 {
   PHB : PHK : PLB
 
-  LDA.b #$20 : STA.w SprHealth, X
+  LDA.b #$30 : STA.w SprHealth, X
 
   PLB
   RTL
@@ -193,8 +193,10 @@ Sprite_Goriya_Move:
 
   JSR Goriya_HandleTileCollision
 
-  JSL GetRandomInt : AND.b #$9F : BNE ++
-    JSR Goriya_BoomerangAttack
+  LDA.w SprTimerD, X : BNE ++
+    JSL GetRandomInt : AND.b #$9F : BNE ++
+      %SetTimerD(40)
+      JSR Goriya_BoomerangAttack
   ++
 
   LDA.w SprTimerC, X : BNE +
