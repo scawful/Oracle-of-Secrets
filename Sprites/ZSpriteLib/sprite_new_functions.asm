@@ -175,9 +175,51 @@ Sprite_BounceFromTileCollision:
   ++ RTL
 }
 
+; =========================================================
 
-Sprite_ProjectSpeedRandomly:
-{
+Sprite_BounceOffWall:
+  LDA.w $0E70,X
+  AND.b #$03
+  BEQ .no_horizontal_collision
+
+  JSR Sprite_InvertSpeed_X
+
+.no_horizontal_collision
+  LDA.w $0E70,X
+  AND.b #$0C
+  BEQ .no_vertical_collision
+
+  JSR Sprite_InvertSpeed_Y
+
+.no_vertical_collision
+  RTS
+
+; =========================================================
+
+Sprite_InvertSpeed_XY:
+  JSR Sprite_InvertSpeed_Y
+
+; =========================================================
+
+Sprite_InvertSpeed_X:
+  LDA.w $0D50,X
+  EOR.b #$FF
+  INC A
+  STA.w $0D50,X
+
+  RTS
+
+; =========================================================
+
+Sprite_InvertSpeed_Y:
+  LDA.w $0D40,X
+  EOR.b #$FF
+  INC A
+  STA.w $0D40,X
+
+  RTS
+
+; =========================================================
 
 }
 
