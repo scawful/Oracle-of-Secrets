@@ -192,11 +192,11 @@ Sprite_Darknut_Draw:
   dw -12, 0
   dw -12, 0
   .chr
-  db $EA, $C0
-  db $EA, $C0
-  db $EC, $C2
+  db $E6, $C0
+  db $E6, $C0
+  db $E8, $C2
   db $E4, $C2
-  db $EC, $C2
+  db $E8, $C2
   db $E4, $C2
   db $C0, $EE
   db $C0, $EE
