@@ -1,6 +1,6 @@
 
 !SPRID              = $A4 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 02 ; Number of tiles used in a frame
+!NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 10  ; Number of Health the sprite have
@@ -51,9 +51,9 @@ Sprite_PolsVoice_Prep:
 {
   PHB : PHK : PLB
     
-  LDA #$80 : STA SprTimerA, X
-  LDA #$00 : STA $0CAA, X
-  LDA #$00 : STA $0B6B, X
+  LDA.b #$80 : STA.w SprTimerA, X
+  LDA.b #$00 : STA.w SprDefl, X
+  LDA.b #$00 : STA.w SprTileDie, X
 
   PLB
   RTL
@@ -62,11 +62,11 @@ Sprite_PolsVoice_Prep:
 ; =========================================================
 Sprite_PolsVoice_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
+
   dw PolsVoice_MoveAround
   dw PolsVoice_HopAround
-
 
   PolsVoice_MoveAround:
   {
@@ -83,32 +83,29 @@ Sprite_PolsVoice_Main:
     
     %DoDamageToPlayerSameLayerOnContact()
 
-
     JSL GetRandomInt : AND #$3F : BNE .not_done
-    LDA #$04 : STA SprTimerA, X
-    %GotoAction(1)
-  .not_done
+      LDA #$04 : STA SprTimerA, X
+      %GotoAction(1)
+    .not_done
 
-    JSL Sprite_CheckDamageFromPlayerLong
-    BCC .no_damage
-    ; Get the direction to recoil from the player
-    ;Sprite_DirectionToFacePlayer LONG
-    ; \return       $0E is low byte of player_y_pos - sprite_y_pos
-    ; \return       $0F is low byte of player_x_pos - sprite_x_pos
-    JSL Sprite_DirectionToFacePlayer
-    ; Apply the speed positive or negative speed
-    LDA $0E : BPL .not_up
-    LDA #$20 : STA.w SprYSpeed, X : BRA .not_down
-  .not_up
-    LDA #$E0 : STA.w SprYSpeed, X
-  .not_down
-    LDA $0F : BPL .not_right
-    LDA #$20 : STA.w SprXSpeed, X : BRA .not_left
-  .not_right
-    LDA #$E0 : STA SprXSpeed, X
-  .not_left
-    LDA #$04 : STA SprTimerA, X
-    %GotoAction(1)
+    JSL Sprite_CheckDamageFromPlayerLong : BCC .no_damage
+      JSL Sprite_DirectionToFacePlayer
+      
+      ; Apply the speed positive or negative speed
+      LDA $0E : BPL .not_up
+        LDA #$20 : STA.w SprYSpeed, X 
+        BRA .not_down
+      .not_up
+      LDA #$E0 : STA.w SprYSpeed, X
+      .not_down
+      LDA $0F : BPL .not_right
+        LDA #$20 : STA.w SprXSpeed, X
+        BRA .not_left
+      .not_right
+      LDA #$E0 : STA SprXSpeed, X
+      .not_left
+      LDA #$04 : STA SprTimerA, X
+      %GotoAction(1)
     .no_damage
     RTS
   }
@@ -125,12 +122,10 @@ Sprite_PolsVoice_Main:
     %DoDamageToPlayerSameLayerOnContact()
 
     LDA SprTimerA, X : BNE .not_done
-    
-    %GotoAction(0)
-  .not_done
-    JSL Sprite_CheckDamageFromPlayerLong
-    BCC .no_damage
-
+      %GotoAction(0)
+    .not_done
+    JSL Sprite_CheckDamageFromPlayerLong : BCC .no_damage
+      
     .no_damage
     RTS
   }
@@ -198,7 +193,7 @@ Sprite_PolsVoice_Draw:
   RTS
 
 
-  ; =========================================================
+  ; =======================================================
 
   .start_index
     db $00, $01, $02, $03, $04
