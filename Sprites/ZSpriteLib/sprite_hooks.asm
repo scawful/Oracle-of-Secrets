@@ -19,10 +19,10 @@ SprFrame     = $0D90 ; Indexes the SprGfx for drawing
 SprGfx       = $0DC0 ; Determine the GFX used for the sprite
 
 SprMiscA     = $0DA0 ; Sprite_DamageFlash palette index
-SprMiscB     = $0DB0 ; 
+SprMiscB     = $0DB0 ; Various usages, truly auxiliary
 SprMiscC     = $0DE0 ; Cardinal direction the sprite is facing
 SprMiscD     = $0E90 ;
-SprMiscE     = $0EB0 ;
+SprMiscE     = $0EB0 ; Head direction 0123 -> udlr
 SprMiscF     = $0EC0 ;
 SprMiscG     = $0ED0 ;
 
