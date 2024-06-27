@@ -144,7 +144,7 @@ Sprite_SeaUrchin_Draw:
       
   TYA : LSR #2 : TAY
       
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
       
   PLY : INY
       
@@ -178,14 +178,14 @@ Sprite_SeaUrchin_Draw:
     dw 0
     dw -1
   .chr
-    db $E6
-    db $E8
-    db $E6
-    db $E8
-    db $E6
-    db $E8
-    db $E6
-    db $E8
+    db $EA
+    db $EC
+    db $EA
+    db $EC
+    db $EA
+    db $EC
+    db $EA
+    db $EC
   .properties
     db $39
     db $39
@@ -195,13 +195,4 @@ Sprite_SeaUrchin_Draw:
     db $39
     db $79
     db $79
-  .sizes
-    db $02
-    db $02
-    db $02
-    db $02
-    db $02
-    db $02
-    db $02
-    db $02
 }
