@@ -1,26 +1,22 @@
 ; =========================================================
-;Long function, return Carry Set if Active
+; return carry set if active
 
 Sprite_CheckActive:
 {
-    ; Deactivates the sprite in certain situations
-    LDA $0DD0, X : CMP.b #$09 : BNE .inactive
-    
+  ; Deactivates the sprite in certain situations
+  LDA $0DD0, X : CMP.b #$09 : BNE .inactive
     LDA $0FC1 : BNE .inactive
-    
-    LDA $11 : BNE .inactive
-    
-    LDA $0CAA, X : BMI .active
-    
-    LDA $0F00, X : BEQ .active
+      LDA $11 : BNE .inactive
+        LDA $0CAA, X : BMI .active
+          LDA $0F00, X : BEQ .active
 
   .inactive
-    CLC
-    RTL
+  CLC
+  RTL
 
   .active
-    SEC
-    RTL
+  SEC
+  RTL
 }
 
 ; =========================================================
@@ -28,23 +24,23 @@ Sprite_CheckActive:
 
 Sprite_MoveHoriz:
 {
-    LDA.w $0D50, X : BEQ .no_velocity
+  LDA.w SprXSpeed, X : BEQ .no_velocity
     ASL   : ASL : ASL : ASL
-    CLC : ADC.w $0D70,X : STA.w $0D70,X
+    CLC : ADC.w $0D70, X : STA.w $0D70, X
 
     LDY.b #$00
-    LDA.w $0D50, X
+    LDA.w SprXSpeed, X
     PHP   : LSR : LSR : LSR : LSR : PLP
     BPL   ++
 
     ORA.b #$F0
     DEY
 
-  ++	ADC.w $0D10,X : STA.w $0D10,X
-    TYA : ADC.w $0D30,X : STA.w $0D30,X
+    ++	ADC.w $0D10, X : STA.w $0D10, X
+    TYA : ADC.w $0D30, X : STA.w $0D30, X
 
   .no_velocity
-    RTL
+  RTL
 }
 
 ; =========================================================
@@ -61,23 +57,23 @@ Sprite_Move:
 
 Sprite_MoveVert:
 {
-    LDA.w $0D40, X : BEQ .no_velocity
-    ASL   : ASL : ASL : ASL
+  LDA.w SprYSpeed, X : BEQ .no_velocity
+    ASL : ASL : ASL : ASL
     CLC : ADC.w $0D60,X : STA.w $0D60,X
 
     LDY.b #$00
-    LDA.w $0D40, X
+    LDA.w SprYSpeed, X
     PHP   : LSR : LSR : LSR : LSR : PLP
     BPL   ++
 
     ORA.b #$F0
     DEY
 
-  ++	ADC.w $0D00,X : STA.w $0D00,X
+    ++	ADC.w $0D00,X : STA.w $0D00,X
     TYA : ADC.w $0D20,X : STA.w $0D20,X
 
   .no_velocity
-    RTL
+  RTL
 }
 
 ; =========================================================
@@ -86,19 +82,17 @@ Sprite_MoveVert:
 Sprite_MoveZ:
 Sprite_MoveAltitude:
 {
-    LDA.w $0F80, X : ASL : ASL : ASL : ASL
-    CLC : ADC.w $0F90,X : STA.w $0F90,X
+  LDA.w $0F80, X : ASL : ASL : ASL : ASL
+  CLC : ADC.w $0F90, X : STA.w $0F90, X
 
-    LDA.w $0F80, X : PHP
-    LSR   : LSR : LSR : LSR
-    PLP   : BPL .positive
-
+  LDA.w $0F80, X : PHP
+  LSR   : LSR : LSR : LSR
+  PLP   : BPL .positive
     ORA.b #$F0
-
   .positive
-    ADC.w $0F70,X : STA.w $0F70,X
+  ADC.w $0F70,X : STA.w $0F70,X
 
-    RTL
+  RTL
 }
 
 
@@ -140,45 +134,51 @@ Sprite_BounceTowardPlayer:
 ; TODO: Use Y index for height
 Sprite_FloatTowardPlayer:
 {
-    JSL Sprite_ApplySpeedTowardsPlayer
+  JSL Sprite_ApplySpeedTowardsPlayer
 
-    ; Update horizontal position
-    JSL Sprite_MoveHoriz
+  ; Update horizontal position
+  JSL Sprite_MoveHoriz
 
-    ; Update vertical position
-    JSL Sprite_MoveVert
+  ; Update vertical position
+  JSL Sprite_MoveVert
 
-    ; Check for tile collisions and adjust if necessary
-    JSL Sprite_CheckTileCollision
+  ; Check for tile collisions and adjust if necessary
+  JSL Sprite_CheckTileCollision
 
-    ; Maintain altitude (float effect)
-    LDA #$10 : STA.w SprHeight, X
-    JSL Sprite_MoveAltitude
+  ; Maintain altitude (float effect)
+  LDA #$10 : STA.w SprHeight, X
+  JSL Sprite_MoveAltitude
 
-    RTL
+  RTL
 }
 
 Sprite_FloatAwayFromPlayer:
 {
-    LDA $0D50, X : EOR.b #$FF : INC : STA $0D50, X
-    LDA $0D40, X : EOR.b #$FF : INC : STA $0D40, X
+  LDA SprXSpeed, X : EOR.b #$FF : INC : STA SprXSpeed, X
+  LDA SprYSpeed, X : EOR.b #$FF : INC : STA SprYSpeed, X
 
-    JSL Sprite_MoveAltitude
+  JSL Sprite_MoveAltitude
 
-    RTL
+  RTL
 }
 
 Sprite_BounceFromTileCollision:
 {
-	JSL   Sprite_CheckTileCollision : AND.b #$03 : BEQ ++
-	LDA.w $0D50,X : EOR.b #$FF : INC : STA.w $0D50,X
-	INC.w $0ED0, X
+  JSL   Sprite_CheckTileCollision : AND.b #$03 : BEQ ++
+    LDA.w SprXSpeed, X : EOR.b #$FF : INC : STA.w SprXSpeed, X
+    INC.w $0ED0, X
 
-++ LDA.w $0E70, X : AND.b #$0C : BEQ ++
-	LDA.w $0D40,X : EOR.b #$FF : INC : STA.w $0D40,X
-	INC.w $0ED0, X
+  ++ LDA.w $0E70, X : AND.b #$0C : BEQ ++
+      LDA.w SprYSpeed, X : EOR.b #$FF : INC : STA.w SprYSpeed, X
+      INC.w $0ED0, X
 
-++ RTL
+  ++ RTL
+}
+
+
+Sprite_ProjectSpeedRandomly:
+{
+
 }
 
 ; =========================================================
@@ -254,38 +254,36 @@ DragPlayer:
 
 Intro_Dungeon_Main:
 {
-    ;test to see if we are at a place where a guardian is present
-    LDA $0E20 : CMP.b #$92 : BNE .notGuardian
-        LDA $0E30 : BEQ .notGuardian
+  LDA $0E20 : CMP.b #$92 : BNE .not_sprite_body_boss
+      LDA $0E30 : BEQ .not_sprite_body_boss
+ LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
 
-            LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
+ ; free ram used to check if the sprite ran this frame, if 0, it didn't run
+ LDA.b SpriteRanCheck : BEQ .didNotRun
+     LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
 
-            ;free ram used to check if the sprite ran this frame, if 0, it didn't run
-            LDA.b SpriteRanCheck : BEQ .didNotRun
-                LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
+ .didNotRun
+ 
+ STZ.b SpriteRanCheck
 
-            .didNotRun
-            
-            STZ.b SpriteRanCheck
+  .not_sprite_body_boss
 
-    .notGuardian
+  REP #$21 : LDA.w DungeonMainCheck : BNE .intro ;<- load that free ram you are using if it's not zero then we're doing intro thing
+      LDA $E2 : RTL ;return to normal intro
 
-    REP #$21 : LDA.w DungeonMainCheck : BNE .intro ;<- load that free ram you are using if it's not zero then we're doing intro thing
-        LDA $E2 : RTL ;return to normal intro
+  .intro
 
-    .intro
+  PLA ;Pop 2byte from stack
+  ;skip all the BGs codes
 
-    PLA ;Pop 2byte from stack
-    ;skip all the BGs codes
+  SEP #$20
+  PLA ;Pop 1 byte from the stack
+  JSL $07F0AC ; $3F0AC IN ROM. Handle the sprites of pushed blocks.
+  JSL $068328 ;Sprite_Main
+  JSL $0DA18E ;PlayerOam_Main
+  JSL $0DDB75 ;HUD.RefillLogicLong
 
-    SEP #$20
-    PLA ;Pop 1 byte from the stack
-    JSL $07F0AC ; $3F0AC IN ROM. Handle the sprites of pushed blocks.
-    JSL $068328 ;Sprite_Main
-    JSL $0DA18E ;PlayerOam_Main
-    JSL $0DDB75 ;HUD.RefillLogicLong
-
-    JML $0AFD0C ;FloorIndicator ; $57D0C IN ROM. Handles HUD floor indicator
+  JML $0AFD0C ;FloorIndicator ; $57D0C IN ROM. Handles HUD floor indicator
 }
 
 ;uses $00 as the Y coordinate and $02 as the X
@@ -298,26 +296,26 @@ MoveCamera:
 
   BCS .CameraBelowPointY
   ;CameraAbovePoint
-            ADC.w #$0001 : STA $E8 : STA $E6 : STA $0122 : STA $0124 ;move the camera down by 1
+   ADC.w #$0001 : STA $E8 : STA $E6 : STA $0122 : STA $0124 ;move the camera down by 1
       BRA .dontMoveY
 
-.CameraBelowPointY
+  .CameraBelowPointY
       SEC : SBC.w #$0001 : STA $E8 : STA $E6 : STA $0122 : STA $0124 ;move the camera up by 1
 
-.dontMoveY
+  .dontMoveY
 
   ;move the camera right or left until a point is reached
   LDA $E2 : CMP.w $02 : BEQ .dontMoveX ;if equals that point, dont move x
 
   BCS .CameraBelowPointX ;left
   ;CameraAbovePoint ;right
-            ADC.w #$0001 : STA $E2 : STA $E0 : STA $011E : STA $0120 ;move the camera right by 1
+   ADC.w #$0001 : STA $E2 : STA $E0 : STA $011E : STA $0120 ;move the camera right by 1
       BRA .dontMoveX
   
-.CameraBelowPointX
+  .CameraBelowPointX
       SEC : SBC.w #$0001 : STA $E2 : STA $E0 : STA $011E : STA $0120 ;move the camera left by 1
 
-.dontMoveX
+  .dontMoveX
 
   ;if link is outside of a certain range of the camera, make him dissapear so he doesnt appear on the other side
   LDA $20 : SEC : SBC $E8 : CMP.w #$00E0 : BCS .MakeLinkInvisible
@@ -327,7 +325,7 @@ MoveCamera:
   LDA.b #$00 : STA $4B ;make link visible
   RTS
 
-.MakeLinkInvisible
+  .MakeLinkInvisible
 
   SEP   #$20
   LDA.b #$0C : STA $4B ;make link invisible
@@ -361,81 +359,81 @@ MovieEffectE     = $7EF90E ;0x01
 
 SetupMovieEffect:
 {
-    ;setup HDMA RAM
-    ;Top Dark Row
-    LDA.b #$01 : STA.l MovieEffect0
-    LDA.b #$00 : STA.l MovieEffect1
+  ;setup HDMA RAM
+  ;Top Dark Row
+  LDA.b #$01 : STA.l MovieEffect0
+  LDA.b #$00 : STA.l MovieEffect1
 
-    ;Top Dark Row Buffer
-    LDA.b #$1F : STA.l MovieEffect2
-    LDA.b #$0F : STA.l MovieEffect3
+  ;Top Dark Row Buffer
+  LDA.b #$1F : STA.l MovieEffect2
+  LDA.b #$0F : STA.l MovieEffect3
 
-    ;Middle Unaffected Area
-    LDA.b #$50 : STA.l MovieEffect4
-    LDA.b #$0F : STA.l MovieEffect5
-    LDA.b #$50 : STA.l MovieEffect6
-    LDA.b #$0F : STA.l MovieEffect7
+  ;Middle Unaffected Area
+  LDA.b #$50 : STA.l MovieEffect4
+  LDA.b #$0F : STA.l MovieEffect5
+  LDA.b #$50 : STA.l MovieEffect6
+  LDA.b #$0F : STA.l MovieEffect7
 
-    ;Bottom Drak Row Buffer
-    LDA.b #$1F : STA.l MovieEffect8
-    LDA.b #$0F : STA.l MovieEffect9
+  ;Bottom Drak Row Buffer
+  LDA.b #$1F : STA.l MovieEffect8
+  LDA.b #$0F : STA.l MovieEffect9
 
-    ;Bottom Dark Row
-    LDA.b #$01 : STA.l MovieEffectA
-    LDA.b #$00 : STA.l MovieEffectB
+  ;Bottom Dark Row
+  LDA.b #$01 : STA.l MovieEffectA
+  LDA.b #$00 : STA.l MovieEffectB
 
-    ;Below screen 
-    LDA.b #$20 : STA.l MovieEffectC
-    LDA.b #$0F : STA.l MovieEffectD
+  ;Below screen 
+  LDA.b #$20 : STA.l MovieEffectC
+  LDA.b #$0F : STA.l MovieEffectD
 
-    ;End
-    LDA.b #$00 : STA.l MovieEffectE
+  ;End
+  LDA.b #$00 : STA.l MovieEffectE
 
-    ;start timer
-    LDA.b #$01 : STA.l MovieEffectTimer
+  ;start timer
+  LDA.b #$01 : STA.l MovieEffectTimer
 
-    RTS
+  RTS
 }
 
 ; =========================================================
 
 MovieEffect:
 {
-    REP #$20
-    LDX #$00 : STX $4350 ;Set the transfer mode into 1 byte to 1 register
-    LDX #$00 : STX $4351 ;Set register to 00 ($21 00)
+  REP #$20
+  LDX #$00 : STX $4350 ;Set the transfer mode into 1 byte to 1 register
+  LDX #$00 : STX $4351 ;Set register to 00 ($21 00)
 
-    LDA.w #MovieEffectArray : STA $4352 ;set address of the hdma table
-    LDX.b #MovieEffectBank : STX $4354  ;set the bank of HDMA table
+  LDA.w #MovieEffectArray : STA $4352 ;set address of the hdma table
+  LDX.b #MovieEffectBank : STX $4354  ;set the bank of HDMA table
 
-    SEP   #$20
-    LDA.b #$20 : STA $9B ;Do the HDMA instead of $420C
+  SEP   #$20
+  LDA.b #$20 : STA $9B ;Do the HDMA instead of $420C
 
-    ; LDA $9B : ORA #$20 : STA $9B 
-    ; LDA.b #$02 : STA $13 ;controls the brightness of the screen
+  ; LDA $9B : ORA #$20 : STA $9B 
+  ; LDA.b #$02 : STA $13 ;controls the brightness of the screen
 
-    RTS
+  RTS
 
-    HDMATable: ;values cannot go above 80 or it will read as continuous mode
-    db $20, $00 ;for $20 line set screen brightness to 0
-    db $50, $0F ;for $A0 line set screen brightness to 15 full
-    db $50, $0F ;for $A0 line set screen brightness to 15 full
-    db $3F, $00 ;for $20 line set screen brightness to 0
-    db $00      ;end the HDMA
+  HDMATable: ;values cannot go above 80 or it will read as continuous mode
+  db $20, $00 ;for $20 line set screen brightness to 0
+  db $50, $0F ;for $A0 line set screen brightness to 15 full
+  db $50, $0F ;for $A0 line set screen brightness to 15 full
+  db $3F, $00 ;for $20 line set screen brightness to 0
+  db $00      ;end the HDMA
 }
 
 
 Link_CheckNewY_ButtonPress_Long:
 {
-    BIT.b $3A : BVS .fail
+  BIT.b $3A : BVS .fail
     LDA.b $46 : BNE .fail
-    LDA.b $F4 : AND.b #$40 : BEQ .fail
-    TSB.b $3A
-    SEC
-    RTL
+      LDA.b $F4 : AND.b #$40 : BEQ .fail
+        TSB.b $3A
+        SEC
+        RTL
   .fail
-    CLC
-    RTL
+  CLC
+  RTL
 }
 
 Link_SetupHitBox:
@@ -453,61 +451,35 @@ Link_SetupHitBox:
 
 
 Sprite_SetupHitBox:
+{
   PHB : PHK : PLB
-  LDA.w $0F70,          X
-  BMI .too_high
+  LDA.w $0F70, X : BMI .too_high
 
   PHY
+    LDA.w $0F60, X : AND.b #$1F : TAY
+    LDA.w $0D10, X : CLC : ADC.w .offset_x_low, Y : STA.b $04
 
-  LDA.w $0F60,          X
-  AND.b #$1F
-  TAY
+    LDA.w $0D30, X : ADC.w .offset_x_high, Y : STA.b $0A
 
-  LDA.w $0D10,          X
-  CLC
-  ADC.w .offset_x_low,  Y
-  STA.b $04
+    LDA.w $0D00, X : CLC : ADC.w .offset_y_low, Y
 
-  LDA.w $0D30,          X
-  ADC.w .offset_x_high, Y
-  STA.b $0A
+    PHP
+    SEC : SBC.w $0F70, X : STA.b $05
+    LDA.w $0D20, X : SBC.b #$00
 
-  LDA.w $0D00,          X
-  CLC
-  ADC.w .offset_y_low,  Y
+    PLP
+    ADC.w .offset_y_high, Y : STA.b $0B
 
-  PHP
-  SEC
-  SBC.w $0F70,          X
-  STA.b $05
-
-  LDA.w $0D20,          X
-  SBC.b #$00
-
-  PLP
-  ADC.w .offset_y_high, Y
-  STA.b $0B
-
-  LDA.w .width,         Y
-  STA.b $06
-
-  LDA.w .height,        Y
-  STA.b $07
-
+    LDA.w .width, Y : STA.b $06
+    LDA.w .height, Y : STA.b $07
   PLY
-
   PLB
-
   RTL
 
-; ---------------------------------------------------------
 
-.too_high
-  LDA.b #$80
-  STA.b $0A
-
+  .too_high
+  LDA.b #$80 : STA.b $0A
   PLB
-
   RTL
 
 .offset_x_low
@@ -729,7 +701,9 @@ Sprite_SetupHitBox:
   db 48  ; 0x1D
   db 8   ; 0x1E
   db 12  ; 0x1F
+}
 
+; =========================================================
 
 Sprite_ApplySpeedTowardsPlayerXOrY_Long:
 {
@@ -830,8 +804,8 @@ GetDistance8bit_Long:
   +
   STA   $00        ; Distance X (ABS)
 
-  LDA   $05                 ; Sprite Y
-  SEC   : SBC $03           ; - Player Y
+  LDA   $05        ; Sprite Y
+  SEC   : SBC $03  ; - Player Y
   BPL   +
   EOR.b #$FF : INC
   +
