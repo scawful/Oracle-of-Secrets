@@ -118,9 +118,14 @@ Sprite_Goriya_Main:
       ; TODO: Project speed back towards origin entity.
       STZ.w SprState, X
     .no_dano
-    LDA.b #$10
+
+    JSL Sprite_CheckDamageFromPlayer : BCC +
+      STZ.w SprState, X
+    +
+    LDA.b #$12
     JSL Sprite_ApplySpeedTowardsPlayer
     JSL Sprite_Move
+    JSL Sprite_SpawnSparkleGarnish
     RTS
   }
 }
@@ -167,6 +172,10 @@ Goriya_BoomerangAttack:
   JSL Sprite_SpawnDynamically : BMI +
     LDA.b #$01 : STA.w SprSubtype, Y
     LDA.b #$04 : STA.w SprAction, Y
+    LDA.w SprX, X : STA.w SprX, Y
+    LDA.w SprY, X : STA.w SprY, Y
+    LDA.w SprXH, X : STA.w SprXH, Y
+    LDA.w SprYH, X : STA.w SprYH, Y
   +
   RTS
 }
@@ -184,7 +193,7 @@ Sprite_Goriya_Move:
 
   JSR Goriya_HandleTileCollision
 
-  JSL GetRandomInt : AND.b #$3F : BNE ++
+  JSL GetRandomInt : AND.b #$9F : BNE ++
     JSR Goriya_BoomerangAttack
   ++
 
