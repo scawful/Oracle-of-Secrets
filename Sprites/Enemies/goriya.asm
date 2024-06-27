@@ -69,27 +69,35 @@ Sprite_Goriya_Main:
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
-  dw Goriya_WalkingDown
-  dw Goriya_WalkingLeftOrRight
   dw Goriya_WalkingUp
+  dw Goriya_WalkingDown
+  dw Goriya_WalkingLeft
+  dw Goriya_WalkingRight
 
-  Goriya_WalkingDown:
+  Goriya_WalkingUp:
   {
     %PlayAnimation(0, 1, 10)
     JSR Sprite_Goriya_Move
     RTS
   }
 
-  Goriya_WalkingLeftOrRight:
+  Goriya_WalkingDown:
   {
     %PlayAnimation(2, 3, 10)
     JSR Sprite_Goriya_Move
     RTS
   }
 
-  Goriya_WalkingUp:
+  Goriya_WalkingLeft:
   {
     %PlayAnimation(4, 5, 10)
+    JSR Sprite_Goriya_Move
+    RTS
+  }
+
+  Goriya_WalkingRight:
+  {
+    %PlayAnimation(6, 7, 10)
     JSR Sprite_Goriya_Move
     RTS
   }
@@ -111,7 +119,7 @@ Sprite_Goriya_Move:
   LDA.w SprTimerC, X : BNE +
     JSL GetRandomInt : AND.b #$03
     STA.w SprMiscB, X
-    %SetTimerC(30)
+    %SetTimerC(60)
   +
 
   LDA.w SprMiscB, X
@@ -126,7 +134,7 @@ Sprite_Goriya_Move:
   {
     LDA.b #-GoriyaMovementSpeed : STA.w SprYSpeed, X
     STZ.w SprXSpeed, X
-    %GotoAction(2)
+    %GotoAction(0)
     LDA.b #$00 : STA.w SprMiscE, X
     RTS 
   }
@@ -135,7 +143,7 @@ Sprite_Goriya_Move:
   {
     LDA.b #GoriyaMovementSpeed : STA.w SprYSpeed, X
     STZ.w SprXSpeed, X
-    %GotoAction(0)
+    %GotoAction(1)
     LDA.b #$01 : STA.w SprMiscE, X
     RTS 
   }
@@ -144,7 +152,7 @@ Sprite_Goriya_Move:
   {
     STZ.w SprYSpeed, X
     LDA.b #GoriyaMovementSpeed : STA.w SprXSpeed, X
-    %GotoAction(1)
+    %GotoAction(2)
     LDA.b #$02 : STA.w SprMiscE, X
     RTS 
   }
@@ -153,7 +161,7 @@ Sprite_Goriya_Move:
   {
     STZ.w SprYSpeed, X
     LDA.b #-GoriyaMovementSpeed : STA.w SprXSpeed, X
-    %GotoAction(1)
+    %GotoAction(3)
     LDA.b #$03 : STA.w SprMiscE, X
     RTS 
   }
@@ -179,9 +187,6 @@ Sprite_Goriya_Draw:
   LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
   LDA.w .start_index, Y : STA $06
   LDA.w SprMiscA, X : STA $08
-  LDA.w SprMiscE, X : CMP.b #$02 : BCC .not_right
-  LDA.b $08 : EOR.b #$40 : STA.b $08
-  .not_right
 
   PHX
     LDX .nbr_of_tiles, Y ;amount of tiles - 1
@@ -226,9 +231,9 @@ Sprite_Goriya_Draw:
   ; =========================================================
 
   .start_index
-  db $00, $02, $04, $06, $08, $0A
+  db $00, $02, $04, $06, $08, $0A, $0C, $0E
   .nbr_of_tiles
-  db 1, 1, 1, 1, 1, 1
+  db 1, 1, 1, 1, 1, 1, 1, 1
   .x_offsets
   dw 0, 0
   dw 0, 0
@@ -236,25 +241,42 @@ Sprite_Goriya_Draw:
   dw 0, 0
   dw 0, 0
   dw 0, 0
+  dw 0, 0
+  dw 0, 0
   .y_offsets
+  dw 0, -9
+  dw 0, -9
   dw 0, -10
   dw 0, -10
   dw 0, -10
+  dw 0, -9
+  dw 0, -9
   dw -1, -10
-  dw 0, -8
-  dw 0, -8 
   .chr
+  db $E4, $C0
+  db $E4, $C0
   db $C6, $C2
   db $C6, $C2
   db $E2, $C4
   db $E0, $C4
-  db $E4, $C0
-  db $E4, $C0
+  db $E2, $C4
+  db $E0, $C4
   .properties
-  db $63, $63
-  db $73, $63
-  db $63, $63
-  db $73, $63
-  db $63, $63
-  db $73, $63
+  db $3D, $3D
+  db $7D, $3D
+  db $3D, $3D
+  db $7D, $3D
+  db $3D, $3D
+  db $3D, $3D
+  db $7D, $7D
+  db $7D, $7D
+  .sizes
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
 }
