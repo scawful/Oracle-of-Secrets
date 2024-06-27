@@ -105,6 +105,40 @@ Sprite_Goriya_Main:
 
 GoriyaMovementSpeed = 10
 
+Goriya_HandleTileCollision:
+{
+  JSL Sprite_CheckTileCollision
+  LDA.w SprCollision, X : CMP.b #$08 : BEQ .up
+  LDA.w SprCollision, X : CMP.b #$04 : BEQ .down
+  LDA.w SprCollision, X : CMP.b #$02 : BEQ .left
+  LDA.w SprCollision, X : CMP.b #$01 : BEQ .right
+  JMP +
+
+  .up
+    %GotoAction(0)
+    STA.w SprMiscE, X
+    %SetTimerC(60)
+    JMP +
+  .down 
+    %GotoAction(1)
+    STA.w SprMiscE, X
+    %SetTimerC(60)
+    JMP +
+  .left
+    %GotoAction(2)
+    STA.w SprMiscE, X
+    %SetTimerC(60)
+    JMP +
+  .right
+    %GotoAction(3)
+    STA.w SprMiscE, X
+    %SetTimerC(60)
+    JMP +
+  +
+
+  RTS
+}
+
 Sprite_Goriya_Move:
 {
   JSL Sprite_Move
@@ -115,6 +149,8 @@ Sprite_Goriya_Move:
 
   JSL Sprite_CheckDamageToPlayer
   JSL Sprite_CheckDamageFromPlayer
+
+  JSR Goriya_HandleTileCollision
 
   LDA.w SprTimerC, X : BNE +
     JSL GetRandomInt : AND.b #$03
