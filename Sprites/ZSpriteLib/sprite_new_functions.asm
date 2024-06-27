@@ -221,6 +221,31 @@ Sprite_InvertSpeed_Y:
 
 ; =========================================================
 
+Sprite_SelectNewDirection:
+{
+  JSL GetRandomInt
+  AND.b #$07
+  TAY
+
+  LDA.w .speed_x,Y
+  STA.w $0D50,X
+
+  LDA.w .speed_y,Y
+  STA.w $0D40,X
+
+  LDA.w .timers,Y
+  STA.w $0DF0,X
+
+  RTL
+
+.speed_x
+  db  8,  6, -6,  8, -6,  6,  0,  0
+
+.speed_y
+  db  0,  6,  6,  0, -6, -6,  0,  0
+
+.timers
+  db 48, 48, 48, 48, 48, 48, 64, 64
 }
 
 ; =========================================================
