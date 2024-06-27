@@ -74,18 +74,20 @@ Sprite_Puffstool_Main:
   Puffstool_Walking:
   {
     %PlayAnimation(0,6,10)
+
     JSL Sprite_PlayerCantPassThrough
 
-    LDA.b #$02
-    JSL Sprite_ApplySpeedTowardsPlayer
-
-    JSL Sprite_BounceFromTileCollision
+    LDA.w SprTimerA, X : BNE +
+      JSL Sprite_SelectNewDirection
+    +
+    
     JSL Sprite_Move
+    JSL Sprite_BounceFromTileCollision
+    JSR Sprite_BounceOffWall
     JSL Sprite_DamageFlash_Long
     JSL ThrownSprite_TileAndSpriteInteraction_long
 
     JSL Sprite_CheckDamageFromPlayer : BCC .no_dano
-      
       %GotoAction(1)
       LDA.b #$60 : STA.w SprTimerA, X
       LDA.b #$20 : STA.w SprTimerF, X
