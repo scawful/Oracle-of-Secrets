@@ -77,7 +77,7 @@ Sprite_Darknut_Main:
   MoveDown:
   {
     %PlayAnimation(0,1,10)
-    LDA #DarknutSpeed : STA.w SprSpeedY, X
+    LDA #DarknutSpeed : STA.w SprYSpeed, X
     JSL Sprite_Move
     RTS
   }
@@ -85,7 +85,7 @@ Sprite_Darknut_Main:
   MoveUp:
   {
     %PlayAnimation(2,3,10)
-    LDA #-DarknutSpeed : STA.w SprSpeedY, X
+    LDA #-DarknutSpeed : STA.w SprYSpeed, X
     JSL Sprite_Move
     RTS
   }
@@ -93,7 +93,7 @@ Sprite_Darknut_Main:
   MoveLeft:
   {
     %PlayAnimation(4,5,10)
-    LDA #-DarknutSpeed : STA.w SprSpeedX, X
+    LDA #-DarknutSpeed : STA.w SprXSpeed, X
     JSL Sprite_Move
     RTS
   }
@@ -101,7 +101,7 @@ Sprite_Darknut_Main:
   MoveRight:
   {
     %PlayAnimation(6,7,10)
-    LDA #DarknutSpeed : STA.w SprSpeedX, X
+    LDA #DarknutSpeed : STA.w SprXSpeed, X
     JSL Sprite_Move
     RTS
   }
