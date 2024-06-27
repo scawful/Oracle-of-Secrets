@@ -118,6 +118,9 @@ print  "End of deku_scrub_enemy.asm       ",  pc
 incsrc "Sprites/Enemies/goriya.asm"
 print  "End of goriya.asm                 ",  pc
 
+incsrc "Sprites/Enemies/darknut.asm"
+print  "End of darknut.asm                ",  pc
+
 PutRollerBeneathLink:
 {
   JSL Sprite_OAM_AllocateDeferToPlayer

@@ -2,11 +2,11 @@
 ; Sprite Properties
 ; ========================================================= 
 
-!SPRID              = $00 ; The sprite ID you are overwriting (HEX)
+!SPRID              = $1D ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 00  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 00  ; Number of Health the sprite have
+!Health             = 40  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
@@ -156,7 +156,7 @@ Sprite_Darknut_Draw:
       
   TYA : LSR #2 : TAY
       
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
       
   PLY : INY
       
@@ -209,13 +209,4 @@ Sprite_Darknut_Draw:
   db $79, $39
   db $F9, $39
   db $F9, $79
-  .sizes
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
 }
