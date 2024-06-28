@@ -82,6 +82,7 @@ Sprite_DekuScrubEnemy_Main:
   dw DekuScrubEnemy_Subdued
 
   dw DekuScrubEnemy_PeaShot
+  dw DekuScrubEnemy_HidingDefeated
 
   ; 0x00
   DekuScrubEnemy_Hiding:
@@ -181,6 +182,7 @@ Sprite_DekuScrubEnemy_Main:
     JSL Sprite_PlayerCantPassThrough
 
     LDA SprTimerA, X : BNE .not_done
+      %SetHarmless(1)
       INC.w SprAction, X
     .not_done
 
@@ -192,14 +194,13 @@ Sprite_DekuScrubEnemy_Main:
   {
     %StartOnFrame(7)
     %PlayAnimation(7,7,1)
-    %SetHarmless(1)
-
-    JSL Sprite_PlayerCantPassThrough
 
     LDA.w SprMiscD, X : BNE .no_talk
-    %ShowSolicitedMessage($12D) : BCC .no_talk
-      JSR DekuScrub_GiveRandomPrize
-      LDA.b #$01 : STA.w SprMiscD, X
+      JSL Sprite_PlayerCantPassThrough
+      %ShowSolicitedMessage($12D) : BCC .no_talk
+        JSR DekuScrub_GiveRandomPrize
+        LDA.b #$01 : STA.w SprMiscD, X
+        %GotoAction(7)
     .no_talk
 
     RTS 
@@ -224,6 +225,17 @@ Sprite_DekuScrubEnemy_Main:
       LDA #-16 : STA SprYSpeed, X
     .no_damage
     RTS 
+  }
+
+  DekuScrubEnemy_HidingDefeated:
+  {
+    %StartOnFrame(13)
+    %PlayAnimation(13,13,1)
+    
+    JSL Sprite_CheckIfLifted
+    JSL ThrownSprite_TileAndSpriteInteraction_long
+
+    RTS
   }
 }
 
