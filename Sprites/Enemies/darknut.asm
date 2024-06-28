@@ -66,13 +66,15 @@ DarknutSpeed = $04
 
 Sprite_Darknut_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  JSL Guard_ParrySwordAttacks
+
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
+
   dw MoveDown
   dw MoveUp
   dw MoveLeft
   dw MoveRight
-
 
   MoveDown:
   {
