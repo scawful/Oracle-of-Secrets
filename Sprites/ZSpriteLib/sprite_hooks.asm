@@ -33,6 +33,8 @@ SprTimerD    = $0EE0 ;            decreased by 1 each frame
 SprTimerE    = $0F10 ;            decreased by 1 each frame
 SprTimerF    = $0F80 ; Gravity,   decreased by 2 each frame
 
+SprSlot      = $0FA0 ; Current sprite slot being executed
+
 SprStunTimer = $0B58 ; counts down from 0xFF
 
 SprPause     = $0F00 ; Inactive if nonzero
@@ -110,10 +112,10 @@ SprProps     = $0F50
 SprHitbox    = $0F60
 SprHeight    = $0F70 ; Distance from the shadow
 SprHeightS   = $0F90 ; Distance from the shadow subpixel
+SprFreeze    = $0FC1 ; Seems to freeze sprites
 
 OAMPtr       = $90
 OAMPtrH      = $92
-
 
 DungeonMainCheck = $021B
 SpriteRanCheck = $8E
