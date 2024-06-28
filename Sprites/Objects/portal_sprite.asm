@@ -311,7 +311,7 @@ CheckForDismissPortal:
     STZ.w $0DD0, X
     DEC.w $06FE
   PLX
-  JMP .return
+  
 
 .DespawnOrange  
 
@@ -320,6 +320,7 @@ CheckForDismissPortal:
     STZ.w $0DD0, X
     DEC.w $06FE
   PLX
+  RTS
 
 .return
   INC $06FE ; This ticker needs to be reset when transitioning rooms and maps.
@@ -336,12 +337,14 @@ RejectOnTileCollision:
     
     ; Load the tile index 
     LDA $0FA5 : CLC : CMP.b #$00 : BEQ .not_out_of_bounds
+                      CMP.b #$48 : BEQ .not_out_of_bounds
     
     ; Clear the sprite and make an error sound 
     LDA #$3C ; SFX2.3C Error beep
     STA $012E ; Queue sound effect 
 
     LDA #$00 : STA $0DD0, X
+    DEC $06FE
 
   .not_out_of_bounds
     RTS
