@@ -80,6 +80,23 @@ Menu_InitGraphics:
   LDA.w $0202 : CMP.b #$10 : BNE .not_fishing
     JSL DismissRodFromMenu
   .not_fishing
+  ; 6, C, 12, 18 
+  CMP.b #$06 : BEQ .bottle
+  CMP.b #$0C : BEQ .bottle
+  CMP.b #$12 : BEQ .bottle
+  CMP.b #$18 : BEQ .bottle
+  BRA +
+  .bottle
+  STZ $030D
+  STZ $0300
+  
+  LDA $3A : AND.b #$80 : STA $3A
+  STZ $037A
+  
+  LDA $50 : AND.b #$FE : STA $50
+  LDA.b #$80 : STA $44 : STA $45
+
+  +
   INC $0200
 }
 
