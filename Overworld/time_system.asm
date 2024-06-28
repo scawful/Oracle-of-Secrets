@@ -408,12 +408,12 @@ GlovesFix:
 CheckIfNight:
 {
   LDA.l $7EF3C5 : CMP.b #$02 : BCC .day_time
+  LDA $7EE000 : CMP.b #$12 : BCS .night_time
   LDA $7EE000 : CMP.b #$06 : BCC .night_time
     .day_time
     LDA.l $7EF3C5
     RTL
   .night_time
-  LDA $7EE000 : CMP.b #$12 : BCS .day_time
     LDA.b #$03
     RTL
 }
@@ -487,17 +487,17 @@ CheckIfNight16Bit:
 {
   ; Don't change the spriteset during the intro sequence
   LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCC .day_time
-    ; If it's less than 6 am, jump to night time
-    LDA $7EE000 : AND.w #$00FF : CMP.w #$0006 : BCC .night_time
+    ; 0x12 = 18 hours or 6 pm
+    LDA $7EE000 : AND.w #$00FF : CMP.w #$0012 : BCS .night_time
+      ; If it's less than 6 am, jump to night time
+      LDA $7EE000 : AND.w #$00FF : CMP.w #$0006 : BCC .night_time
   .day_time
   LDA.l $7EF3C5
   RTL
   .night_time
-  ; 0x12 = 18 hours or 6 pm
-  LDA $7EE000 : AND.w #$00FF : CMP.w #$0012 : BCS .day_time
-    ; Load the gamestate 03 spritesets, but don't change the save ram
-    LDA.l $7EF3C5 : CLC : ADC #$0001
-    RTL
+  ; Load the gamestate 03 spritesets, but don't change the save ram
+  LDA.l $7EF3C5 : CLC : ADC #$0001
+  RTL
 }
 
 FixSaveAndQuit:
