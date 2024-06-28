@@ -81,7 +81,7 @@ Sprite_Puffstool_Main:
       JSL Sprite_SelectNewDirection
     +
     
-    JSL Sprite_Move
+    JSL Sprite_MoveXyz
     JSL Sprite_BounceFromTileCollision
     JSR Sprite_BounceOffWall
     JSL Sprite_DamageFlash_Long
@@ -89,8 +89,8 @@ Sprite_Puffstool_Main:
 
     JSL Sprite_CheckDamageFromPlayer : BCC .no_dano
       %GotoAction(1)
-      LDA.b #$60 : STA.w SprTimerA, X
-      LDA.b #$20 : STA.w SprTimerF, X
+      %SetTimerA($60)
+      %SetTimerF($20)
     .no_dano
 
     RTS
