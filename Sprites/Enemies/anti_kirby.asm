@@ -83,19 +83,23 @@ Sprite_AntiKirby_Main:
 {  
   JSL Sprite_IsToRightOfPlayer 
   TYA : CMP #$01 : BNE .WalkRight
-  .WalkLeft
-  LDA.b #$40 : STA.w SprMiscC, X
-  JMP +
+    .WalkLeft
+    LDA.b #$40 : STA.w SprMiscC, X
+    JMP +
   .WalkRight
   STZ.w SprMiscC, X
   +
+
+  JSL Sprite_DamageFlash_Long
+
 
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
   dw AntiKirby_Main
   dw AntiKirby_Hurt
-  dw AntiKirby_Suck
+  dw AntiKirby_BeginSuck
+  dw AntiKirby_Sucking
   dw AntiKirby_Full
   dw AntiKirby_Death
 
@@ -116,7 +120,6 @@ Sprite_AntiKirby_Main:
 
     %PlayAnimation(0, 2, 10) ; Start
     
-    JSL Sprite_DamageFlash_Long
     JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
       LDA #!RecoilTime : STA SprTimerA, X
       %GotoAction(1) ; Hurt
@@ -135,9 +138,7 @@ Sprite_AntiKirby_Main:
   AntiKirby_Hurt:
   {
     %PlayAnimation(3, 3, 10) ; Hurt 
-
-    JSL Sprite_DamageFlash_Long
-
+    
     LDA SprTimerA, X : BNE .NotDone
       %GotoAction(0)
     .NotDone
@@ -145,11 +146,10 @@ Sprite_AntiKirby_Main:
     RTS
   }
 
-  AntiKirby_Suck:
+  AntiKirby_BeginSuck:
   {
       %PlayAnimation(4, 5, 10) ; Suck
       
-
       LDA.b $0E : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
         LDA.b $0F : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
           INC.w SprAction, X
@@ -169,8 +169,6 @@ Sprite_AntiKirby_Main:
 
       .dont_tongue_link
 
-      
-
       LDA.w SprTimerA, X : BNE + 
         STZ.w SprAction, X
       +
@@ -178,9 +176,35 @@ Sprite_AntiKirby_Main:
       RTS
   }
 
+  AntiKirby_Sucking:
+  {
+    %PlayAnimation(5, 5, 10) ; Sucking
+    ; Get the direction of link relative to the anti kirby 
+    ; Invert the direction and store it in A, call DragPlayer
+    ; when Link is close enough
+
+    JSL Sprite_DirectionToFacePlayer
+    LDA.b $0E : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
+      LDA.b $0F : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
+        LDA.w SprMiscC, X
+        JSL DragPlayer
+    .dont_tongue_link
+
+    JSL Sprite_DirectionToFacePlayer
+    LDA.b $0E : CLC : ADC.b #$10 : CMP.b #$10 : BCS .NotDone
+      LDA.b $0F : CLC : ADC.b #$10 : CMP.b #$10 : BCS .NotDone
+          INC.w SprAction, X 
+        RTS
+    .NotDone
+    LDA.w SprTimerA, X : BNE +
+      %GotoAction(0)
+    +
+    RTS
+  }
+
   AntiKirby_Full:
   {
-    ; %PlayAnimation(6, 6, 10) ; Full
+    %PlayAnimation(6, 6, 10) ; Full
 
     LDA.w SprTimerA, X : BNE .lickylicky
       STZ.w SprAction, X
@@ -193,71 +217,43 @@ Sprite_AntiKirby_Main:
       RTS
 
     .lickylicky
-    LSR A
-    LSR A
-    PHA
 
-    TAY
-    LDA.w .anim, Y : STA.w SprGfx, X
-    TYA
 
-    LDY.w SprMiscD, X
-    PHY
+    RTS
+  }
 
-    CLC : ADC.w .index_offset_x, Y
-    TAY
+  AntiKirby_Death:
+  {
+    %PlayAnimation(3, 3, 10) ; Death
 
-    LDA.w .pos, Y : STA.w SprFrame, X
+    LDA.b #$06 : STA.w SprState, X
+    LDA.b #$0A : STA.w SprTimerA, X
 
-    STA.b $04
-    STZ.b $05
+    STZ.w SprPrize, X
 
-    BPL .positive_x
+    LDA.b #$09 ; SFX2.1E
+    JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan
+    
+    RTS
+  }
+}
 
-    DEC.b $05
+AntiKirby_StealItem:
+{
+  REP #$20
 
-    .positive_x
-    PLY
+  LDA.w $0FD8
+  CLC : ADC.b $04
+  SEC : SBC.b $22
+  CLC : ADC.w #$000C : CMP.w #$0018 : BCS .exit
 
-    PLA
-    CLC : ADC.w .index_offset_y, Y
+  LDA.w $0FDA 
+  CLC : ADC.b $06
+  SEC : SBC.b $20
+  CLC : ADC.w #$000C : CMP.w #$0020 : BCS .exit
 
-    TAY
-    LDA.w .pos, Y : STA.w SprMiscE, X
-
-    STA.b $06
-    STZ.b $07
-    STZ.b $07
-
-    BPL .positive_y
-
-    DEC.b $07
-
-    .positive_y
-    LDA.w SprMiscG, X : BNE .exit
-
-    REP #$20
-
-    LDA.w $0FD8
-    CLC : ADC.b $04
-    SEC : SBC.b $22
-    CLC : ADC.w #$000C : CMP.w #$0018 : BCS .exit
-
-    LDA.w $0FDA 
-    CLC : ADC.b $06
-    SEC : SBC.b $20
-    CLC : ADC.w #$000C : CMP.w #$0020 : BCS .exit
-
-    ; -----------------------------------------------------
-
-    SEP #$20
-
-    LDA.w SprTimerA, X : CMP.b #$2E : BCS .exit
-
-    ; JSL Link_CalculateSFXPan
-    ; ORA.b #$26 ; SFX2.26
-    ; STA.w $012E
-
+  SEP #$20
+  LDA.w SprTimerA, X : CMP.b #$2E : BCS .exit
     JSL GetRandomInt
     AND.b #$03
     INC A
@@ -287,63 +283,22 @@ Sprite_AntiKirby_Main:
       LDA.l $7EF360 : BEQ .dont_steal_anything
         DEC A
         STA.l $7EF360
-      .exit
-      SEP #$20
-      RTS
-    ; -----------------------------------------------------
-
-    .dont_steal_rupee
-    LDA.l $7EF35A
-    STA.w SprSubtype, X
-    BEQ .dont_steal_anything
-
-    CMP.b #$03
-    BEQ .dont_steal_anything
-
-    LDA.b #$00
-    STA.l $7EF35A
-
+    .exit
+    SEP #$20
     RTS
+  ; -----------------------------------------------------
 
-    .anim
-    db $04, $04, $04, $04, $05, $05, $05, $05
-    db $05, $05, $05, $05, $05, $05, $05, $05
-    db $05, $05, $05, $05, $04, $04, $04, $04
+  .dont_steal_rupee
+  LDA.l $7EF35A
+  STA.w SprSubtype, X
+  BEQ .dont_steal_anything
 
-    .pos
-    db   0,   0,   0,   0,   0,   0,   0,   0
-    db   0,   0,   0,   0,   0,   0,   0,   0
-    db   0,   0,   0,   0,   0,   0,   0,   0
+  CMP.b #$03
+  BEQ .dont_steal_anything
 
-    db   0,   0,   0,   0,   0,   0,   0,   0
-    db  12,  16,  24,  32,  32,  24,  16,  12
-    db   0,   0,   0,   0,   0,   0,   0,   0
-
-    db   0,   0,   0,   0,   0,   0,   0,   0
-    db -12, -16, -24, -32, -32, -24, -16, -12
-    db   0,   0,   0,   0,   0,   0,   0,   0
-
-    .index_offset_x
-    db $00, $00, $00, $00, $00, $00, $00, $00
-
-    .index_offset_y
-    db $00, $00, $00, $00, $00, $00, $00, $00
-  }
-
-  AntiKirby_Death:
-  {
-    %PlayAnimation(3, 3, 10) ; Death
-
-    LDA.b #$06 : STA.w SprState, X
-    LDA.b #$0A : STA.w SprTimerA, X
-
-    STZ.w SprPrize, X
-
-    LDA.b #$09 ; SFX2.1E
-    JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan
-    
-    RTS
-  }
+  LDA.b #$00
+  STA.l $7EF35A
+  RTS
 }
 
 ; 7-9: Walking with hat
