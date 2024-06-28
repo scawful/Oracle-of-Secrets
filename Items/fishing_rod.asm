@@ -554,4 +554,23 @@ Sprite_Floater_Draw:
 WigglingTable:
 db 08, -10, 06, -8, 12, -14, 18, -20, 10, -12, 04, -6, 08,-10, 14,-16, 08, -10, 06, -8, 12, -14, 18, -20, 10, -12, 04, -6, 08,-10, 14,-16
 
+DismissRodFromMenu:
+{
+  STZ.w $0300
+  STZ.b $3D
+  LDA #$00
+  STA.l $7F5BA2
+  LDA.l $7F5BA3 : TAX
+  STZ.w $0DD0, X
+  STZ.b $5E
+  STZ.w $0300
+  STZ.b $3D
+  STZ.w $0350
+  STZ.w $037A
+  LDA.b $3A
+  AND.b #$BF
+  STA.b $3A
+  RTL
+}
+
 print  "End of Items/fishing_rod.asm      ", pc

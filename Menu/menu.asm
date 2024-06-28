@@ -77,6 +77,9 @@ Menu_Entry:
 Menu_InitGraphics:
 {
   LDA.w $0780 : STA.w $00
+  LDA.w $0202 : CMP.b #$10 : BNE .not_fishing
+    JSL DismissRodFromMenu
+  .not_fishing
   INC $0200
 }
 
