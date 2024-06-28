@@ -128,9 +128,6 @@ Sprite_FloatTowardPlayer:
   ; Update vertical position
   JSL Sprite_MoveVert
 
-  ; Check for tile collisions and adjust if necessary
-  JSL Sprite_CheckTileCollision
-
   ; Maintain altitude (float effect)
   LDA #$10 : STA.w SprHeight, X
   JSL Sprite_MoveAltitude
@@ -168,22 +165,22 @@ Sprite_BounceOffWall:
   AND.b #$03
   BEQ .no_horizontal_collision
 
-  JSR Sprite_InvertSpeed_X
+  JSL Sprite_InvertSpeed_X
 
 .no_horizontal_collision
   LDA.w SprCollision, X
   AND.b #$0C
   BEQ .no_vertical_collision
 
-  JSR Sprite_InvertSpeed_Y
+  JSL Sprite_InvertSpeed_Y
 
 .no_vertical_collision
-  RTS
+  RTL
 
 ; =========================================================
 
 Sprite_InvertSpeed_XY:
-  JSR Sprite_InvertSpeed_Y
+  JSL Sprite_InvertSpeed_Y
 
 ; =========================================================
 
@@ -193,7 +190,7 @@ Sprite_InvertSpeed_X:
   INC A
   STA.w SprXSpeed, X
 
-  RTS
+  RTL
 
 ; =========================================================
 
@@ -203,7 +200,7 @@ Sprite_InvertSpeed_Y:
   INC A
   STA.w SprYSpeed,X
 
-  RTS
+  RTL
 
 ; =========================================================
 
