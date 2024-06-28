@@ -56,6 +56,8 @@ Sprite_MaskSalesman_Prep:
 
 Sprite_MaskSalesman_Main:
 {
+  JSL Sprite_PlayerCantPassThrough
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable 
 
