@@ -113,19 +113,32 @@ Sprite_Goriya_Main:
   BoomerangAttack:
   {
     %PlayAnimation(0, 3, 6)
+
+
+    JSL Sprite_Move
+    JSL Sprite_SpawnSparkleGarnish
     JSL Sprite_PlayerCantPassThrough
+
     JSL Sprite_CheckDamageToPlayer : BCC .no_dano
-      ; TODO: Project speed back towards origin entity.
-      STZ.w SprState, X
+      JSL Sprite_InvertSpeed_XY
     .no_dano
 
     JSL Sprite_CheckDamageFromPlayer : BCC +
+      JSL Sprite_InvertSpeed_XY
+    +
+
+    LDA.w SprTimerD, X : BNE + 
+      LDA.b #$14
+      JSL Sprite_ApplySpeedTowardsPlayer
+      %SetTimerD($FF)
+    +
+
+    JSL Sprite_CheckTileCollision
+    LDA.w SprCollision, X : BEQ +
       STZ.w SprState, X
     +
-    LDA.b #$12
-    JSL Sprite_ApplySpeedTowardsPlayer
-    JSL Sprite_Move
-    JSL Sprite_SpawnSparkleGarnish
+
+
     RTS
   }
 }
