@@ -63,6 +63,13 @@ Sprite_HelmetChuchu_Prep:
   JSL GetRandomInt : AND.b #$02 : STA SprAction, X
   STZ.w SprMiscB, X
 
+  LDA.w SprAction, X : BNE +
+    LDA.b #$04 : STA.w SprFrame, X
+  +
+  CMP.b #$02 : BNE +
+    LDA.b #$02 : STA.w SprFrame, X
+  +
+
   PLB
   RTL
 }
