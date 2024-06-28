@@ -3,7 +3,7 @@
 ; ========================================================= 
 
 !SPRID              = $1D ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00  ; Number of tiles used in a frame
+!NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 40  ; Number of Health the sprite have
@@ -55,6 +55,9 @@ Sprite_Darknut_Prep:
 {
   PHB : PHK : PLB
     
+  LDA.b #$80 : STA.w SprDefl, X
+  LDA.b #$60 : STA.w SprHealth, X 
+  LDA.b #%00010000 : STA.w SprTileDie, X
 
   PLB
   RTL
@@ -62,49 +65,65 @@ Sprite_Darknut_Prep:
 
 ; =========================================================
 
-DarknutSpeed = $04
+DarknutSpeed = 04
 
 Sprite_Darknut_Main:
 {
   JSL Guard_ParrySwordAttacks
+  JSL Sprite_Move
+  JSL Sprite_BounceFromTileCollision
+  JSL Sprite_PlayerCantPassThrough
+  JSL Sprite_DamageFlash_Long
+
+  LDA.w SprTimerA, X : BNE +
+    LDA.b #$04
+    JSL Sprite_ApplySpeedTowardsPlayer
+    JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
+    %SetTimerA($A0)
+  +
+
+  JSR Goriya_HandleTileCollision
 
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
-  dw MoveDown
   dw MoveUp
+  dw MoveDown
   dw MoveLeft
   dw MoveRight
 
-  MoveDown:
+  MoveUp:
   {
     %PlayAnimation(0,1,10)
-    LDA #DarknutSpeed : STA.w SprYSpeed, X
-    JSL Sprite_Move
+    LDA.b #-DarknutSpeed : STA.w SprYSpeed, X
+    STZ.w SprXSpeed, X
     RTS
   }
 
-  MoveUp:
+  MoveDown:
   {
+    %StartOnFrame(2)
     %PlayAnimation(2,3,10)
-    LDA #-DarknutSpeed : STA.w SprYSpeed, X
-    JSL Sprite_Move
+    LDA.b #DarknutSpeed : STA.w SprYSpeed, X
+    STZ.w SprXSpeed, X
     RTS
   }
 
   MoveLeft:
   {
+    %StartOnFrame(4)
     %PlayAnimation(4,5,10)
-    LDA #-DarknutSpeed : STA.w SprXSpeed, X
-    JSL Sprite_Move
+    LDA.b #-DarknutSpeed : STA.w SprXSpeed, X
+    STZ.w SprYSpeed, X
     RTS
   }
 
   MoveRight:
   {
+    %StartOnFrame(6)
     %PlayAnimation(6,7,10)
-    LDA #DarknutSpeed : STA.w SprXSpeed, X
-    JSL Sprite_Move
+    LDA.b #DarknutSpeed : STA.w SprXSpeed, X
+    STZ.w SprYSpeed, X
     RTS
   }
 
@@ -119,6 +138,7 @@ Sprite_Darknut_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
+  LDA.w SprMiscA, X : STA $08
 
 
   PHX
@@ -152,7 +172,7 @@ Sprite_Darknut_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY 
       
@@ -170,45 +190,45 @@ Sprite_Darknut_Draw:
 
 
   ; =======================================================
-    
+      
   .start_index
-  db $00, $02, $04, $06, $08, $0A, $0C, $0E
+    db $00, $02, $04, $06, $08, $0A, $0C, $0E
   .nbr_of_tiles
-  db 1, 1, 1, 1, 1, 1, 1, 1
+    db 1, 1, 1, 1, 1, 1, 1, 1
   .x_offsets
-  dw 0, -4
-  dw 0, -4
-  dw 0, -12
-  dw 0, -12
-  dw 0, 12
-  dw 0, 12
-  dw 0, 0
-  dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0, -12
+    dw 0, -12
+    dw 0, 12
+    dw 0, 12
   .y_offsets
-  dw 0, 8
-  dw 0, 8
-  dw 0, 8
-  dw 0, 8
-  dw 0, 8
-  dw 0, 8
-  dw -12, 0
-  dw -12, 0
+    dw -11, 0
+    dw -11, 0
+    dw 0, 12
+    dw 0, 12
+    dw 0, 8
+    dw 0, 8
+    dw 0, 8
+    dw 0, 8
   .chr
-  db $E6, $C0
-  db $E6, $C0
-  db $E8, $C2
-  db $E4, $C2
-  db $E8, $C2
-  db $E4, $C2
-  db $C0, $EE
-  db $C0, $EE
+    db $C0, $EE
+    db $C0, $EE
+    db $E6, $C0
+    db $E6, $C0
+    db $E8, $C2
+    db $E4, $C2
+    db $E8, $C2
+    db $E4, $C2
   .properties
-  db $39, $39
-  db $79, $39
-  db $39, $79
-  db $39, $79
-  db $79, $39
-  db $79, $39
-  db $F9, $39
-  db $F9, $79
+    db $FD, $3D
+    db $FD, $7D
+    db $3D, $3D
+    db $7D, $3D
+    db $3D, $7D
+    db $3D, $7D
+    db $7D, $3D
+    db $7D, $3D
 }
