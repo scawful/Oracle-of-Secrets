@@ -78,6 +78,8 @@ Sprite_HelmetChuchu_Prep:
 
 Sprite_HelmetChuchu_Main:
 {
+  JSL Sprite_DamageFlash_Long
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -119,11 +121,15 @@ Sprite_HelmetChuchu_Main:
 
   HelmetSubtype:
   {
+    JSL Sprite_CheckIfLifted
+    JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
 
   MaskSubtype:
   {
+    JSL Sprite_CheckIfLifted
+    JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
 }
@@ -195,9 +201,9 @@ Sprite_HelmetChuchu_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA SprGfx, X : CLC : ADC SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
+  LDA.w SprMiscA, X : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -230,7 +236,7 @@ Sprite_HelmetChuchu_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY 
       
