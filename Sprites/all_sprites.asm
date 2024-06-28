@@ -149,7 +149,7 @@ org $058EE6
 ; =========================================================
 
 org    $318000
-incsrc ZSpriteLib/sprite_new_functions.asm
+incsrc ZSpriteLib/sprite_functions.asm
 
 incsrc "Sprites/Bosses/kydrog_boss.asm"
 print  "End of kydrog_boss.asm            ", pc
