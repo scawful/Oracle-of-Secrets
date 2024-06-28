@@ -121,6 +121,16 @@ print  "End of goriya.asm                 ",  pc
 incsrc "Sprites/Enemies/darknut.asm"
 print  "End of darknut.asm                ",  pc
 
+DontTeleportWithoutFlippers:
+{
+  LDA.l $7EF356 : BNE +
+    RTL
+  +
+  #_1EEEE4: LDA.b #$2E
+  #_1EEEE6: STA.b $11
+  RTL
+}
+
 PutRollerBeneathLink:
 {
   JSL Sprite_OAM_AllocateDeferToPlayer
@@ -128,6 +138,9 @@ PutRollerBeneathLink:
   ASL A
   RTL
 }
+
+org $1EEEE4
+  JSL DontTeleportWithoutFlippers
 
 ; SpriteDraw_Roller
 org $058EE6
