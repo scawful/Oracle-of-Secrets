@@ -4,16 +4,14 @@
 Sprite_CheckActive:
 {
   ; Deactivates the sprite in certain situations
-  LDA $0DD0, X : CMP.b #$09 : BNE .inactive
-    LDA $0FC1 : BNE .inactive
+  LDA.w SprState, X : CMP.b #$09 : BNE .inactive
+    LDA.w SprFreeze : BNE .inactive
       LDA $11 : BNE .inactive
-        LDA $0CAA, X : BMI .active
-          LDA $0F00, X : BEQ .active
-
+        LDA.w SprDefl, X : BMI .active
+          LDA.w SprPause, X : BEQ .active
   .inactive
   CLC
   RTL
-
   .active
   SEC
   RTL
@@ -26,7 +24,7 @@ Sprite_MoveHoriz:
 {
   LDA.w SprXSpeed, X : BEQ .no_velocity
     ASL   : ASL : ASL : ASL
-    CLC : ADC.w $0D70, X : STA.w $0D70, X
+    CLC : ADC.w SprXRound, X : STA.w SprXRound, X
 
     LDY.b #$00
     LDA.w SprXSpeed, X
@@ -36,8 +34,8 @@ Sprite_MoveHoriz:
     ORA.b #$F0
     DEY
 
-    ++	ADC.w $0D10, X : STA.w $0D10, X
-    TYA : ADC.w $0D30, X : STA.w $0D30, X
+    ++	ADC.w SprX, X : STA.w SprX, X
+    TYA : ADC.w SprXH, X : STA.w SprXH, X
 
   .no_velocity
   RTL
@@ -69,8 +67,8 @@ Sprite_MoveVert:
     ORA.b #$F0
     DEY
 
-    ++	ADC.w $0D00,X : STA.w $0D00,X
-    TYA : ADC.w $0D20,X : STA.w $0D20,X
+    ++	ADC.w SprY,X : STA.w SprY,X
+    TYA : ADC.w SprYH,X : STA.w SprYH,X
 
   .no_velocity
   RTL
@@ -82,51 +80,39 @@ Sprite_MoveVert:
 Sprite_MoveZ:
 Sprite_MoveAltitude:
 {
-  LDA.w $0F80, X : ASL : ASL : ASL : ASL
+  LDA.w SprTimerF, X : ASL : ASL : ASL : ASL
   CLC : ADC.w $0F90, X : STA.w $0F90, X
 
-  LDA.w $0F80, X : PHP
+  LDA.w SprTimerF, X : PHP
   LSR   : LSR : LSR : LSR
   PLP   : BPL .positive
     ORA.b #$F0
   .positive
-  ADC.w $0F70,X : STA.w $0F70,X
+  ADC.w SprHeight,X : STA.w SprHeight,X
 
   RTL
 }
 
 
 ; =========================================================
-; make the sprite bounce toward player (like vitreous)
-; Movement, Collision are handled by this function (height:20 = vitreous)
-; $09 = speed, $08 = max height
+; make the sprite bounce toward player
+; movement, collision are handled by this function 
+; $09 = speed, $08 = max height ( e.g. height:20 = vitreous)
 
 
 Sprite_BounceTowardPlayer:
 {
 	JSL Sprite_MoveAltitude
-
-	DEC.w $0F80,X : DEC.w $0F80,X
-
-	LDA.w $0F70, X : BPL .aloft
-
-	STZ.w $0F70, X
-
-	LDA.b $08 : STA.w $0F80, X ; set height from 08
-
-	;LDA.b $09
-  LDA.b #$20
-
-	JSL Sprite_ApplySpeedTowardsPlayer
-
-	; LDA.b #$21 : JSL Sound_SetSfx2PanLong
-
-.aloft
-	LDA.w $0F70, X : BEQ .dontmove
-
-	JSL Sprite_Move
-
-.dontmove
+	DEC.w SprTimerF, X : DEC.w SprTimerF, X
+	LDA.w SprHeight, X : BPL .aloft
+    STZ.w SprHeight, X
+    LDA.b $08 : STA.w SprTimerF, X ; set height from 08
+    LDA.b $09 : JSL Sprite_ApplySpeedTowardsPlayer
+    ; LDA.b #$21 : JSL Sound_SetSfx2PanLong
+  .aloft
+  LDA.w SprHeight, X : BEQ .dontmove
+    JSL Sprite_Move
+  .dontmove
 	RTL
 }
 
@@ -168,7 +154,7 @@ Sprite_BounceFromTileCollision:
     LDA.w SprXSpeed, X : EOR.b #$FF : INC : STA.w SprXSpeed, X
     INC.w $0ED0, X
 
-  ++ LDA.w $0E70, X : AND.b #$0C : BEQ ++
+  ++ LDA.w SprCollision, X : AND.b #$0C : BEQ ++
       LDA.w SprYSpeed, X : EOR.b #$FF : INC : STA.w SprYSpeed, X
       INC.w $0ED0, X
 
@@ -178,14 +164,14 @@ Sprite_BounceFromTileCollision:
 ; =========================================================
 
 Sprite_BounceOffWall:
-  LDA.w $0E70,X
+  LDA.w SprCollision, X
   AND.b #$03
   BEQ .no_horizontal_collision
 
   JSR Sprite_InvertSpeed_X
 
 .no_horizontal_collision
-  LDA.w $0E70,X
+  LDA.w SprCollision, X
   AND.b #$0C
   BEQ .no_vertical_collision
 
@@ -202,20 +188,20 @@ Sprite_InvertSpeed_XY:
 ; =========================================================
 
 Sprite_InvertSpeed_X:
-  LDA.w $0D50,X
+  LDA.w SprXSpeed, X
   EOR.b #$FF
   INC A
-  STA.w $0D50,X
+  STA.w SprXSpeed, X
 
   RTS
 
 ; =========================================================
 
 Sprite_InvertSpeed_Y:
-  LDA.w $0D40,X
+  LDA.w SprYSpeed,X
   EOR.b #$FF
   INC A
-  STA.w $0D40,X
+  STA.w SprYSpeed,X
 
   RTS
 
@@ -223,76 +209,62 @@ Sprite_InvertSpeed_Y:
 
 Sprite_SelectNewDirection:
 {
-  JSL GetRandomInt
-  AND.b #$07
-  TAY
-
-  LDA.w .speed_x,Y
-  STA.w $0D50,X
-
-  LDA.w .speed_y,Y
-  STA.w $0D40,X
-
-  LDA.w .timers,Y
-  STA.w $0DF0,X
-
+  JSL GetRandomInt : AND.b #$07 : TAY
+  LDA.w .speed_x, Y : STA.w SprXSpeed, X
+  LDA.w .speed_y, Y : STA.w SprYSpeed, X
+  LDA.w .timers, Y : STA.w SprTimerA, X
   RTL
 
-.speed_x
-  db  8,  6, -6,  8, -6,  6,  0,  0
+  .speed_x
+    db  8,  6, -6,  8, -6,  6,  0,  0
 
-.speed_y
-  db  0,  6,  6,  0, -6, -6,  0,  0
+  .speed_y
+    db  0,  6,  6,  0, -6, -6,  0,  0
 
-.timers
-  db 48, 48, 48, 48, 48, 48, 64, 64
+  .timers
+    db 48, 48, 48, 48, 48, 48, 64, 64
 }
 
 ; =========================================================
+; Parameters: Y index contains direction to drag player
+; 0 = up, 1 = down, 2 = left, 3 = right
+
 DragYL = $0B7C
 DragYH = $0B7D
+DragXL = $0B7E
+DragXH = $0B7F
 
-; Parameters: Y index contains direction to drag player
 DragPlayer:
 {
-    LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
-    LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
-    
-    LDA.w .drag_y_low,  Y : CLC : ADC.w $0B7E : STA.w $0B7E
-    LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
+  LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
+  LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
+
+  LDA.w .drag_y_low,  Y : CLC : ADC.w DragXL : STA.w DragXL
+  LDA.w .drag_y_high, Y : ADC.w DragXH : STA.w DragXH
 
   .SomariaPlatform_DragLink
-    REP #$20
-    
-    LDA $0FD8 : SEC : SBC.w #$0002
-    CMP $22 : BEQ .x_done : BPL .x_too_low
-    
-    DEC $0B7C
-    
-    BRA .x_done
+  REP #$20
 
-  .x_too_low
-
-    INC $0B7C
+  LDA SprCachedX : SEC : SBC.w #$0002
+  CMP $22 : BEQ .x_done : BPL .x_too_low
+      DEC.w DragYL
+      BRA .x_done
+    .x_too_low
+    INC.w DragYL
 
   .x_done
-    ; Changing the modifier adjusts links position in the cart 
-    LDA $0FDA : SEC : SBC.w #$0008
-    CMP $20 : BEQ .y_done : BPL .y_too_low
-    
-    DEC $0B7E
-    
-    BRA .y_done
-
-  .y_too_low
-
-    INC $0B7E
+  ; Changing the modifier adjusts links position in the cart 
+  LDA SprCachedY : SEC : SBC.w #$0008
+  CMP $20 : BEQ .y_done : BPL .y_too_low
+      DEC.w DragXL
+      BRA .y_done
+    .y_too_low
+    INC.w DragXL
 
   .y_done
 
-    SEP #$30
-        
-    RTL
+  SEP #$30
+  RTL
 
   .drag_x_high
     db 0,   0,  -1,   0
@@ -353,6 +325,8 @@ Intro_Dungeon_Main:
   JML $0AFD0C ;FloorIndicator ; $57D0C IN ROM. Handles HUD floor indicator
 }
 
+; =========================================================
+
 ;uses $00 as the Y coordinate and $02 as the X
 MoveCamera:
 {
@@ -399,6 +373,8 @@ MoveCamera:
 
   RTS
 }
+
+; =========================================================
 
 MovieEffectTimer = $7EF500 ;0x01
 
@@ -516,33 +492,32 @@ Link_SetupHitBox:
   RTL
 }
 
+; =========================================================
 
 Sprite_SetupHitBox:
 {
   PHB : PHK : PLB
-  LDA.w $0F70, X : BMI .too_high
-
-  PHY
+  LDA.w SprHeight, X : BMI .too_high
+    PHY
     LDA.w $0F60, X : AND.b #$1F : TAY
-    LDA.w $0D10, X : CLC : ADC.w .offset_x_low, Y : STA.b $04
+    LDA.w SprX, X : CLC : ADC.w .offset_x_low, Y : STA.b $04
 
-    LDA.w $0D30, X : ADC.w .offset_x_high, Y : STA.b $0A
+    LDA.w SprXH, X : ADC.w .offset_x_high, Y : STA.b $0A
 
-    LDA.w $0D00, X : CLC : ADC.w .offset_y_low, Y
+    LDA.w SprY, X : CLC : ADC.w .offset_y_low, Y
 
     PHP
-    SEC : SBC.w $0F70, X : STA.b $05
-    LDA.w $0D20, X : SBC.b #$00
+    SEC : SBC.w SprHeight, X : STA.b $05
+    LDA.w SprYH, X : SBC.b #$00
 
     PLP
     ADC.w .offset_y_high, Y : STA.b $0B
 
     LDA.w .width, Y : STA.b $06
     LDA.w .height, Y : STA.b $07
-  PLY
-  PLB
-  RTL
-
+    PLY
+    PLB
+    RTL
 
   .too_high
   LDA.b #$80 : STA.b $0A
