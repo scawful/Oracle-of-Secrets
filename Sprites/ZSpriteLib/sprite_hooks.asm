@@ -21,10 +21,12 @@ SprGfx       = $0DC0 ; Determine the GFX used for the sprite
 SprMiscA     = $0DA0 ; Sprite_DamageFlash palette index
 SprMiscB     = $0DB0 ; Various usages, truly auxiliary
 SprMiscC     = $0DE0 ; Cardinal direction the sprite is facing
-SprMiscD     = $0E90 ;
+SprMiscD     = $0E90 ; Pikit stolen item, misc usage
 SprMiscE     = $0EB0 ; Head direction 0123 -> udlr
 SprMiscF     = $0EC0 ;
 SprMiscG     = $0ED0 ;
+
+SprMiscH     = $0FC7 ; Luck based prize pack
 
 SprTimerA    = $0DF0 ; Action,    decreased by 1 each frame
 SprTimerB    = $0E00 ; Animation, decreased by 1 each frame
@@ -117,6 +119,8 @@ SprFreeze    = $0FC1 ; Seems to freeze sprites
 OAMPtr       = $90
 OAMPtrH      = $92
 
+OamBackup   = $0FEC
+
 DungeonMainCheck = $021B
 SpriteRanCheck = $8E
 
@@ -183,11 +187,17 @@ SprDefl      = $0CAA
 SprPrize     = $0BE0
 
 ; tttt a.bp
-;   t - tile hitbox TODO ???
+;   t - tile interaction hitbox 
 ;   a - deflect arrows TODO VERIFY
 ;   b - boss death
-;   p - idk
+;   p - Sprite ignores falling into a pit when frozen?
 SprTileDie   = $0B6B
+
+SprPriority  = $0B89
+
+; For sprites that interact with speical objects (arrows in particular)
+; the special object will identify its type to the sprite via this location.
+SprSpecial   = $0BB0
 
 ; If nonzero, ancillae do not interact with the sprite
 ; Bulletproof
