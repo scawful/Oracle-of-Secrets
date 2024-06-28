@@ -81,11 +81,14 @@ Sprite_HelmetChuchu_Main:
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
-  dw HelmetGreen
-  dw NoHelmetGreen
-  dw MaskRed
+  dw GreenChuchu_Helmet
+  dw GreenChuchu_NoHelmet
+  dw RedChuchu_Masked
+  ; TODO: Add subtypes of just the helmet/mask gfx which can be hookshoted/hammered/lifted
+  dw HelmetSubtype
+  dw MaskSubtype
   
-  HelmetGreen:
+  GreenChuchu_Helmet:
   {
     %StartOnFrame(4)
     %PlayAnimation(4, 5, 16)
@@ -96,7 +99,7 @@ Sprite_HelmetChuchu_Main:
     RTS
   }
 
-  NoHelmetGreen:
+  GreenChuchu_NoHelmet:
   {
     %StartOnFrame(0)
     %PlayAnimation(0, 1, 16)
@@ -105,12 +108,22 @@ Sprite_HelmetChuchu_Main:
     RTS
   }
 
-  MaskRed:
+  RedChuchu_Masked:
   {
     %StartOnFrame(2)
     %PlayAnimation(2, 3, 16)
     JSL Sprite_CheckDamageFromPlayer
     JSR Sprite_Chuchu_Move
+    RTS
+  }
+
+  HelmetSubtype:
+  {
+    RTS
+  }
+
+  MaskSubtype:
+  {
     RTS
   }
 }
