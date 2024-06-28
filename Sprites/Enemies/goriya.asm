@@ -189,10 +189,14 @@ Goriya_BoomerangAttack:
     LDA.w SprY, X : STA.w SprY, Y
     LDA.w SprXH, X : STA.w SprXH, Y
     LDA.w SprYH, X : STA.w SprYH, Y
+    LDA.b #$01 : STA.w SprNbrOAM, Y
+    LDA.b #$80 : STA.w SprHealth, Y
+    LDA.b #$00 : STA.w SprHitbox, Y
   +
   RTS
 }
 
+; TODO: Add chase and head detection animation
 Sprite_Goriya_Move:
 {
   JSL Sprite_Move
@@ -208,8 +212,10 @@ Sprite_Goriya_Move:
 
   LDA.w SprTimerD, X : BNE ++
     JSL GetRandomInt : AND.b #$9F : BNE ++
-      %SetTimerD(40)
+      LDA.b #$04 : STA.w SprMiscB, X
+      %SetTimerD($FF)
       JSR Goriya_BoomerangAttack
+      JMP +
   ++
 
   LDA.w SprTimerC, X : BNE +
@@ -225,6 +231,7 @@ Sprite_Goriya_Move:
   dw Goriya_MoveDown
   dw Goriya_MoveLeft
   dw Goriya_MoveRight
+  dw Goriya_Wait
 
   Goriya_MoveUp:
   {
@@ -260,6 +267,14 @@ Sprite_Goriya_Move:
     %GotoAction(3)
     LDA.b #$03 : STA.w SprMiscE, X
     RTS 
+  }
+
+  Goriya_Wait:
+  {
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+    %GotoAction(0)
+    RTS
   }
 }
 
