@@ -71,10 +71,10 @@ Sprite_AntiKirby_Prep:
     db $81, $88
 
   .health
-    db 8, 16
+    db 30, 60
 
   .prize_pack
-    db 6, 2
+    db 6, 3
 }
 
 !RecoilTime = $30
@@ -150,32 +150,38 @@ Sprite_AntiKirby_Main:
 
   AntiKirby_BeginSuck:
   {
-      %PlayAnimation(4, 5, 10) ; Suck
-      
-      LDA.b $0E : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
-        LDA.b $0F : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
-          INC.w SprAction, X
+    %PlayAnimation(4, 5, 10) ; Suck
 
-          LDA.b #$1F
-          JSL Sprite_ProjectSpeedTowardsPlayer
-          JSL Sprite_ConvertVelocityToAngle
-
-          LSR A
-          STA.w SprMiscD,X
-
-          LDA.b #$5F
-          STA.w SprTimerA, X
-
-          RTS
-      ; -----------------------------------------------------
-
-      .dont_tongue_link
-
-      LDA.w SprTimerA, X : BNE + 
-        STZ.w SprAction, X
-      +
-
+    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+      LDA #!RecoilTime : STA SprTimerA, X
+      %GotoAction(1) ; Hurt
       RTS
+    .NoDamage
+      
+    LDA.b $0E : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
+      LDA.b $0F : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
+        INC.w SprAction, X
+
+        LDA.b #$1F
+        JSL Sprite_ProjectSpeedTowardsPlayer
+        JSL Sprite_ConvertVelocityToAngle
+
+        LSR A
+        STA.w SprMiscD,X
+
+        LDA.b #$5F
+        STA.w SprTimerA, X
+
+        RTS
+    ; -----------------------------------------------------
+
+    .dont_tongue_link
+
+    LDA.w SprTimerA, X : BNE + 
+      STZ.w SprAction, X
+    +
+
+    RTS
   }
 
   AntiKirby_Sucking:
@@ -186,8 +192,8 @@ Sprite_AntiKirby_Main:
     ; when Link is close enough
 
     JSL Sprite_DirectionToFacePlayer
-    LDA.b $0E : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
-      LDA.b $0F : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
+    LDA.b $0E : CLC : ADC.b #$30 : CMP.b #$50 : BCS .dont_tongue_link
+      LDA.b $0F : CLC : ADC.b #$30 : CMP.b #$50 : BCS .dont_tongue_link
         LDA.w SprMiscC, X
         JSL DragPlayer
     .dont_tongue_link
@@ -195,7 +201,7 @@ Sprite_AntiKirby_Main:
     JSL Sprite_DirectionToFacePlayer
     LDA.b $0E : CMP.b #$10 : BCS .NotDone
       LDA.b $0F : CMP.b #$10 : BCS .NotDone
-          %SetTimerA($60)
+          %SetTimerA($80)
           INC.w SprAction, X 
         RTS
     .NotDone
@@ -209,12 +215,12 @@ Sprite_AntiKirby_Main:
   {
     %PlayAnimation(6, 6, 10) ; Full
 
-    LDA.w SprTimerA, X : BNE .lickylicky
+    LDA.w SprTimerA, X : BNE +
       INC.w SprAction, X
       %SetTimerA($60)
       STZ.w SprMiscG, X
       RTS
-    .lickylicky
+    +
     RTS
   }
 
@@ -241,7 +247,7 @@ Sprite_AntiKirby_Main:
     %PlayAnimation(10, 10, 10) ; Hatted Hurt
 
     LDA SprTimerA, X : BNE .NotDone
-      LDA.b #$07 : STA.w SprFrame, X 
+      LDA.b #$06 : STA.w SprFrame, X 
       %GotoAction(5)
     .NotDone
 
@@ -355,10 +361,16 @@ Sprite_AntiKirby_Draw:
   ASL A : TAX 
 
   REP #$20
-
+  LDA $09 : AND.w #$00FF : CMP.w #$0040 : BNE +
+    LDA $00 : CLC : ADC .x_offsets_2, X : STA ($90), Y
+    AND.w #$0100 : STA $0E 
+    INY
+    BRA ++
+  +
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
   AND.w #$0100 : STA $0E 
   INY
+  ++
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
   SEP #$20
@@ -460,5 +472,19 @@ Sprite_AntiKirby_Draw:
   db $02, $02
   db $02, $02
   db $02, $02
+
+  .x_offsets_2
+  dw 0
+  dw 0
+  dw 0
+  dw 0
+  dw 0
+  dw 0
+  dw 0, 4
+  dw 0, 4
+  dw 0, 4
+  dw 0, 4
+  dw -4, 4
+  dw 4, -4
 
 }
