@@ -75,7 +75,7 @@ LinkItem_FishingRod:
 
   JSR CheckYButtonPress
   BCC FishingRodExit
-  JSR AltLinkUsingItem
+  
   LDA.b $67
   AND.b #$F0
   STA.b $67
@@ -96,6 +96,7 @@ LinkItem_FishingRod:
 
 
   .holding_y
+  JSR HaltLinkWhenUsingItems
   LDA.b #$26 : STA.w $0107 ; Sword DMA to Floater Hammer
 
 
@@ -249,7 +250,7 @@ CheckYButtonPress:
 }
 
 
-AltLinkUsingItem:
+HaltLinkWhenUsingItems:
 {
     LDA.b $AD : CMP.b #$02 : BNE .skip
 
