@@ -101,6 +101,8 @@ Sprite_AntiKirby_Main:
   dw AntiKirby_BeginSuck
   dw AntiKirby_Sucking
   dw AntiKirby_Full
+  dw AntiKirby_Hatted
+  dw AntiKirby_HattedHurt
   dw AntiKirby_Death
 
   AntiKirby_Main:
@@ -127,7 +129,7 @@ Sprite_AntiKirby_Main:
     .NoDamage
 
     %DoDamageToPlayerSameLayerOnContact()
-    %MoveTowardPlayer(10)
+    %MoveTowardPlayer(8)
     JSL Sprite_BounceFromTileCollision
     JSL Sprite_PlayerCantPassThrough
     
@@ -191,8 +193,9 @@ Sprite_AntiKirby_Main:
     .dont_tongue_link
 
     JSL Sprite_DirectionToFacePlayer
-    LDA.b $0E : CLC : ADC.b #$10 : CMP.b #$10 : BCS .NotDone
-      LDA.b $0F : CLC : ADC.b #$10 : CMP.b #$10 : BCS .NotDone
+    LDA.b $0E : CMP.b #$10 : BCS .NotDone
+      LDA.b $0F : CMP.b #$10 : BCS .NotDone
+          %SetTimerA($60)
           INC.w SprAction, X 
         RTS
     .NotDone
@@ -207,17 +210,40 @@ Sprite_AntiKirby_Main:
     %PlayAnimation(6, 6, 10) ; Full
 
     LDA.w SprTimerA, X : BNE .lickylicky
-      STZ.w SprAction, X
-
-      LDA.b #$10
-      STA.w SprTimerA, X
-      STZ.w SprFrame, X
+      INC.w SprAction, X
+      %SetTimerA($60)
       STZ.w SprMiscG, X
-
       RTS
-
     .lickylicky
+    RTS
+  }
 
+  AntiKirby_Hatted:
+  {
+    %PlayAnimation(7, 9, 10) ; Hatted
+
+    %DoDamageToPlayerSameLayerOnContact()
+    %MoveTowardPlayer(8)
+    JSL Sprite_BounceFromTileCollision
+    JSL Sprite_PlayerCantPassThrough
+
+    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+      LDA #!RecoilTime : STA SprTimerA, X
+      %GotoAction(7) ; Hurt
+      RTS
+    .NoDamage
+
+    RTS
+  }
+
+  AntiKirby_HattedHurt:
+  {
+    %PlayAnimation(10, 10, 10) ; Hatted Hurt
+
+    LDA SprTimerA, X : BNE .NotDone
+      LDA.b #$07 : STA.w SprFrame, X 
+      %GotoAction(5)
+    .NotDone
 
     RTS
   }
@@ -407,12 +433,14 @@ Sprite_AntiKirby_Draw:
   db $22, $23
   db $22, $23
   .properties
+  ; Normal Kirby
   db $33
   db $33
   db $33
   db $33
   db $33
   db $33
+  ; Link hat kirby
   db $3B, $3B
   db $3B, $3B
   db $3B, $3B
