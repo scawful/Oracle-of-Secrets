@@ -252,7 +252,8 @@ DekuScrub_GiveRandomPrize:
   RTS
 
   .prizes
-    db $40, $41, $42, $43, $44, $45
+    ;   5    20  heart arrow  10 arrows  magic
+    db $35, $36, $42,  $43,   $44,       $45
 }
 
 CheckForPeaShotRedirect:
