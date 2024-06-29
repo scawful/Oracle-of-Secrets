@@ -16,15 +16,9 @@ endwhile
 org !addr+1
 db #$80
 
-
-org $05DE66
-LDA.b #$8D
-LDY.b #$01
-
 org $0ED436
   JML MessageExpand
   NOP #$06
-
 
 org $3C8000
   MessageExpand:
@@ -46,5 +40,6 @@ MessageExpandedData:
     db $3A, $7F
     db $FF ; end of message pointers checks
 
+print "End of expanded dialogue          ", pc
 
 warnpc $3CA62A
