@@ -112,17 +112,17 @@ Sprite_Portal_Main:
     JSR RejectOnTileCollision
 
     LDA $7E0FA6 : BNE .BluePortal
-    LDA #$01 : STA $0307
-    TXA : STA OrangeSpriteIndex
-    LDA $0D00, X : STA OrangePortal_X
-    LDA $0D10, X : STA OrangePortal_Y
-    LDA.b #$01 : STA.w SprSubtype, X
-    
-    %GotoAction(2)
-    RTS
-  .BluePortal
+      LDA #$01 : STA $0307
+      TXA : STA.w OrangeSpriteIndex
+      LDA $0D00, X : STA OrangePortal_X
+      LDA $0D10, X : STA OrangePortal_Y
+      LDA.b #$01 : STA.w SprSubtype, X
+      
+      %GotoAction(2)
+      RTS
+    .BluePortal
     LDA #$02 : STA $0307
-    TXA : STA BlueSpriteIndex
+    TXA : STA.w BlueSpriteIndex
     LDA $0D00, X : STA BluePortal_X
     LDA $0D10, X : STA BluePortal_Y
     LDA.b #$02 : STA.w SprSubtype, X
@@ -270,7 +270,7 @@ Sprite_Portal_Main:
     
     PLX
 
-        LDA #$01 : STA $5D
+    LDA #$01 : STA $5D
    ;LDA #$2A : STA $11
 
     %GotoAction(1) ; Return to BluePortal
