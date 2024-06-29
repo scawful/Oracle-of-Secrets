@@ -3,7 +3,7 @@
 ; ========================================================= 
 
 !SPRID              = $CD ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 04  ; Number of tiles used in a frame
+!NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 10  ; Number of Health the sprite have
@@ -56,6 +56,7 @@ Sprite_ThunderGhost_Prep:
     
   LDA.b #$08 : STA.w SprTimerA, X
   LDA.b #$08 : STA.w SprTimerB, X
+  LDA.b #$10 : STA.w SprHealth, X 
 
   PLB
   RTL
