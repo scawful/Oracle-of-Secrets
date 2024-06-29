@@ -63,8 +63,8 @@ pullpc
 LoadDarkWorldIntro:
 {
   LDA.l $7EF3C5 : CMP.b #$02 : BNE .continue
-    ; Check for moon pearl
-    LDA.l $7EF357 : CMP.b #$01 : BEQ .has_pearl
+    ; Check for maku tree progress flag
+    LDA.l $7EF3CB : CMP.b #$04 : BCS .has_pearl 
       STZ.w $1B
       LDA.b #$40 : STA.l $7EF3CA
       RTL
