@@ -18,8 +18,9 @@ PROGLITE        = $7EF3C6
 ; 0x06 - Old man home
 SPAWNPT         = $7EF3C8
 
-; .... ..h.
+; .... m.h.
 ;  h - hall of secrets
+;  m - maku tree
 OOSPROG         = $7EF3CB
 
 ; set spawn point flag for hall of secrets by impa
