@@ -56,7 +56,7 @@ Sprite_Booki_Prep:
 {
   PHB : PHK : PLB
     
-  
+  LDA.b #$08 : STA.w SprHealth, X
   STZ.w SprMiscB, X
 
   PLB
