@@ -56,6 +56,15 @@ Sprite_Manhandla_Long:
   RTL ; Go back to original code
 }
 
+pushpc
+
+; Sprite_DoTheDeath#PrepareEnemyDrop.post_death_stuff
+org $06FA25
+  #_06FA25: LDA.w $0E20,X
+  #_06FA28: CMP.b #$88
+
+pullpc
+
 ; =========================================================
 
 Sprite_Manhandla_Prep:
