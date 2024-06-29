@@ -73,6 +73,25 @@ MapIconDraw:
     LDA.l $7EF3C7 : CMP.b #$01 : BEQ .hall_of_secrets
                     CMP.b #$02 : BEQ .draw_crystals
                     CMP.b #$03 : BCS .draw_secret
+
+    ; Pyramid of Power
+    LDA.l $7EF37A : AND #$20 : BNE .skip_draw_x
+      ; X position
+      LDA.b #$05 : STA.l $7EC10B
+      LDA.b #$00 : STA.l $7EC10A
+      ; Y position
+      LDA.b #$00 : STA.l $7EC109
+      LDA.b #$54 : STA.l $7EC108
+
+      LDA.b #$68 : STA.b $0D
+      LDA.b #$34 : STA.b $0C ; Tile GFX
+
+      LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+      LDA.b #$07 : STA.l $7EC025
+
+      JSR HandleMapDrawIcon_noflash
+    .skip_draw_x
+
     .hall_of_secrets
     ; Draw Hall of Secrets
     LDA.l $7EF37A : AND #$20 : BNE .skip_hall_draw
@@ -93,24 +112,6 @@ MapIconDraw:
     .skip_hall_draw
 
     .draw_secret
-
-    ; Pyramid of Power
-    LDA.l $7EF37A : AND #$20 : BNE .skip_draw_x
-      ; X position
-      LDA.b #$05 : STA.l $7EC10B
-      LDA.b #$00 : STA.l $7EC10A
-      ; Y position
-      LDA.b #$00 : STA.l $7EC109
-      LDA.b #$54 : STA.l $7EC108
-
-      LDA.b #$68 : STA.b $0D
-      LDA.b #$34 : STA.b $0C ; Tile GFX
-
-      LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
-      LDA.b #$07 : STA.l $7EC025
-
-      JSR HandleMapDrawIcon_noflash
-    .skip_draw_x
 
     .draw_crystals
     ; Draw Crystal 1 
