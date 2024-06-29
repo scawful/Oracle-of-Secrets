@@ -70,7 +70,6 @@ Sprite_Puffstool_Main:
   dw Puffstool_Walking
   dw Puffstool_Stunned
 
-
   Puffstool_Walking:
   {
     %PlayAnimation(0,6,10)
@@ -83,7 +82,7 @@ Sprite_Puffstool_Main:
     
     JSL Sprite_MoveXyz
     JSL Sprite_BounceFromTileCollision
-    JSR Sprite_BounceOffWall
+    JSL Sprite_BounceOffWall
     JSL Sprite_DamageFlash_Long
     JSL ThrownSprite_TileAndSpriteInteraction_long
 
