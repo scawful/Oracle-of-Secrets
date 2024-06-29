@@ -77,7 +77,7 @@ Sprite_MakuTree_Main:
 
     .has_met_link
       %ShowSolicitedMessage($22)
-      LDA.l $7EFC3B : ORA.b #$04 : STA.l $7EFC3B
+      LDA.l $7EF3D6 : ORA.b #$04 : STA.l $7EF3D6
       RTS
   }
 
@@ -86,7 +86,7 @@ Sprite_MakuTree_Main:
     %ShowSolicitedMessage($20) : BCC .no_talk
       LDA #$01 : STA $7EF3D4
       LDA #$01 : STA $7EF3C7 ; Mark the Hall of Secrets
-      LDA.l $7EFC3B : ORA.b #$04 : STA.l $7EFC3B
+      LDA.l $7EF3D6 : ORA.b #$04 : STA.l $7EF3D6
       %GotoAction(2)
     .no_talk
     RTS
