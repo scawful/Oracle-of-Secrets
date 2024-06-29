@@ -149,11 +149,9 @@ Sprite_BounceFromTileCollision:
 {
   JSL   Sprite_CheckTileCollision : AND.b #$03 : BEQ ++
     LDA.w SprXSpeed, X : EOR.b #$FF : INC : STA.w SprXSpeed, X
-    INC.w SprFrame, X
 
   ++ LDA.w SprCollision, X : AND.b #$0C : BEQ ++
       LDA.w SprYSpeed, X : EOR.b #$FF : INC : STA.w SprYSpeed, X
-      INC.w SprFrame, X
 
   ++ RTL
 }
