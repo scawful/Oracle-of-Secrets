@@ -1420,40 +1420,7 @@ RoomTag_ShutterDoorRequiresCart:
     JML $01CC5A
 }
 
-; TODO: Move this to Dungeons
-RoomTag_MinishShutterDoor:
-{
-  LDA.w $02B2 : CMP.b #$05 : BNE .no_minish
-    REP #$30
-
-    LDX.w #$0000
-    CPX.w $0468
-    BEQ .exit
-
-    STZ.w $0468
-
-    STZ.w $068E
-    STZ.w $0690
-
-    SEP #$30
-
-    LDA.b #$1B ; SFX3.1B
-    STA.w $012F
-
-    LDA.b #$05
-    STA.b $11
-
-    .exit
-    SEP #$30
-  .no_minish
-    JML $01CC5A
-}
-
 pushpc
-
-org $01CC10
-RoomTag_Holes5:
-JML RoomTag_MinishShutterDoor
 
 ; JML to return here 01CC5A
 org $01CC08

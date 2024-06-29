@@ -5,27 +5,9 @@ print  "End of keyblock.asm               ", pc
 org $098823
   LDY.b #$68
 
-; Disable Code
-; ------------
+; Disable hardcoded sanctuary song
 org $028BE7
-db $EA, $EA
-
-; Load Sanctuary music during Room 02 to 12 transition
-;org $028BDA
-;db $14
-
-; Room Number (Sanctuary)
-;org $028BDE
-;db $12
-
-; Load Hyrule Castle music during Room 12 to 02 transition
-;org $028BE3
-;db $16
-
-; Room Number (Sewers)
-;org $028BE5
-;db $02
-
+  NOP #2
 
 incsrc "Dungeons/enemy_damage.asm"
 print  "End of enemy_damage.asm           ", pc
@@ -33,9 +15,31 @@ print  "End of enemy_damage.asm           ", pc
 incsrc "Collision/CollisionTablesExpanded.asm"
 incsrc "Collision/GlobalCollisionTables.asm"
 
+RoomTag_MinishShutterDoor:
+{
+  LDA.w $02B2 : CMP.b #$05 : BNE .no_minish
+    REP #$30
+
+    LDX.w #$0000 : CPX.w $0468 : BEQ .exit
+      STZ.w $0468
+      STZ.w $068E : STZ.w $0690
+
+      SEP #$30
+
+      LDA.b #$1B : STA.w $012F
+      LDA.b #$05 : STA.b $11
+
+    .exit
+    SEP #$30
+  .no_minish
+  JML $01CC5A ; RoomTag_TriggerHoles return
+}
+
 pullpc ; Bank 0x33
 
-
+org $01CC10
+RoomTag_Holes5:
+  JML RoomTag_MinishShutterDoor
 
 incsrc "Dungeons/house_walls.asm"
 
