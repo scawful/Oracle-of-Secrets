@@ -552,17 +552,20 @@ LinkOAM_DrawShield:
 
   .shield_continue
 }
-
+warnpc $0DA79C
 
 pullpc
 
 ; Minish, Deku, Wolf don't draw shield
 LinkOAM_CheckForDrawShield:
 {
-  LDA.w $02B2 : AND.w #$00FF : CMP.w #$0005 : BNE .shield
-                               CMP.w #$0001 : BNE .shield
-                               CMP.w #$0003 : BNE .shield
+  LDA.w $02B2 : AND.w #$00FF : CMP.w #$0005 : BNE +
+  .no_shield
   LDA.w #$0000
+  RTL
+  +
+  CMP.w #$0001 : BEQ .no_shield
+  CMP.w #$0003 : BEQ .no_shield
   .shield
   RTL
 }
