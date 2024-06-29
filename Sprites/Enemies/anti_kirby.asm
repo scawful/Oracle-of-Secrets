@@ -214,8 +214,7 @@ Sprite_AntiKirby_Main:
 
   AntiKirby_Full:
   {
-    
-    %PlayAnimation(10, 10, 10) ; Hatted Hurt
+    %PlayAnimation(10, 10, 10)
 
     LDA.w SprTimerA, X : BNE +
       INC.w SprAction, X
@@ -246,27 +245,19 @@ Sprite_AntiKirby_Main:
   AntiKirby_HattedHurt:
   {
     %PlayAnimation(9, 9, 10) 
-
     LDA SprTimerA, X : BNE .NotDone
-      
       %GotoAction(5)
     .NotDone
-
     RTS
   }
 
   AntiKirby_Death:
   {
     %PlayAnimation(3, 3, 10) ; Death
-
     LDA.b #$06 : STA.w SprState, X
-    LDA.b #$0A : STA.w SprTimerA, X
-
-    STZ.w SprPrize, X
 
     LDA.b #$09 ; SFX2.1E
     JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan
-    
     RTS
   }
 }
