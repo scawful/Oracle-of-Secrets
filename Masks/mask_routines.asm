@@ -585,6 +585,18 @@ CheckForTwoWayMirror:
   RTL
 }
 
+CheckNewRButtonPress:
+{
+  LDA $F6 : BIT #$10 : BEQ .fail
+
+  SEC 
+  RTL 
+
+  .fail
+  CLC
+  RTL
+}
+
 print "End of mask_routines.asm          ", pc
 
 ; LinkOAM_DrawShield _0DA780
