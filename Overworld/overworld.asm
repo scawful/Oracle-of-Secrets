@@ -64,7 +64,7 @@ LoadDarkWorldIntro:
 {
   LDA.l $7EF3C5 : CMP.b #$02 : BNE .continue
     ; Check for maku tree progress flag
-    LDA.l $7EF3D6 : CMP.b #$04 : BCS .has_pearl 
+    LDA.l $7EF3D6 : CMP.b #$02 : BCS .has_pearl 
       STZ.w $1B
       LDA.b #$40 : STA.l $7EF3CA
       RTL
@@ -86,7 +86,7 @@ org $0281E2
 
 ; Check for hall of secrets spawn pt flag
 org $0281CD
-  LDA.l $7EF3D6 : CMP.b #$02
+  LDA.l $7EF3D6 : CMP.b #$04
 
 pullpc
 
