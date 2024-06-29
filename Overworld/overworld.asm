@@ -18,11 +18,11 @@ EXIT_0EF581:
 ; FlashGanonTowerPalette
 org $0EF587
   LDA.b $8A
-  CMP.b #$57 ; OW 43
+  CMP.b #$73 
   BEQ .on_dark_dm
-  CMP.b #$57 ; OW 45
+  CMP.b #$75
   BEQ .on_dark_dm
-  CMP.b #$57 ; OW 47
+  CMP.b #$7D
   BNE EXIT_0EF581
   .on_dark_dm
 
