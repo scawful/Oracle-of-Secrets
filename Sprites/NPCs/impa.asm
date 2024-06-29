@@ -21,13 +21,13 @@ SPAWNPT         = $7EF3C8
 ; .... m.h.
 ;  h - hall of secrets
 ;  m - maku tree
-OOSPROG         = $7EF3CB
+OOSPROG         = $7EF3D6
 
 ; set spawn point flag for hall of secrets by impa
 Impa_SetSpawnPointFlag:
 {
   STA.l $7EF372
-  LDA.l $7EF3CB : ORA.b #$02 : STA.l $7EF3CB
+  LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
   RTL
 }
 
