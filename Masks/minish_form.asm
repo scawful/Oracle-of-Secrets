@@ -37,7 +37,8 @@ LinkState_CheckForMinishForm:
 
   ; Check if the value in A (from $0202) is GTE to $16.
   CMP.b #$17 : BCS .continue
-
+  
+  LDA.b #$3C : STA.w $012E ; Error beep
   JMP .return
 
 .continue
