@@ -202,6 +202,7 @@ Sprite_AntiKirby_Main:
     LDA.b $0E : CMP.b #$10 : BCS .NotDone
       LDA.b $0F : CMP.b #$10 : BCS .NotDone
           %SetTimerA($80)
+          LDA.b #$0A : STA.w SprFrame, X 
           INC.w SprAction, X 
         RTS
     .NotDone
@@ -213,7 +214,8 @@ Sprite_AntiKirby_Main:
 
   AntiKirby_Full:
   {
-    %PlayAnimation(6, 6, 10) ; Full
+    
+    %PlayAnimation(10, 10, 10) ; Hatted Hurt
 
     LDA.w SprTimerA, X : BNE +
       INC.w SprAction, X
@@ -226,7 +228,7 @@ Sprite_AntiKirby_Main:
 
   AntiKirby_Hatted:
   {
-    %PlayAnimation(7, 9, 10) ; Hatted
+    %PlayAnimation(6, 8, 10) ; Hatted
 
     %DoDamageToPlayerSameLayerOnContact()
     %MoveTowardPlayer(8)
@@ -235,8 +237,7 @@ Sprite_AntiKirby_Main:
 
     JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
       LDA #!RecoilTime : STA SprTimerA, X
-      %GotoAction(7) ; Hurt
-      RTS
+      %GotoAction(6) ; Hurt
     .NoDamage
 
     RTS
@@ -244,10 +245,10 @@ Sprite_AntiKirby_Main:
 
   AntiKirby_HattedHurt:
   {
-    %PlayAnimation(10, 10, 10) ; Hatted Hurt
+    %PlayAnimation(9, 9, 10) 
 
     LDA SprTimerA, X : BNE .NotDone
-      LDA.b #$06 : STA.w SprFrame, X 
+      
       %GotoAction(5)
     .NotDone
 
@@ -446,12 +447,12 @@ Sprite_AntiKirby_Draw:
   db $22, $23
   .properties
   ; Normal Kirby
-  db $33
-  db $33
-  db $33
-  db $33
-  db $33
-  db $33
+  db $3B
+  db $3B
+  db $3B
+  db $3B
+  db $3B
+  db $3B
   ; Link hat kirby
   db $3B, $3B
   db $3B, $3B
@@ -484,7 +485,7 @@ Sprite_AntiKirby_Draw:
   dw 0, 4
   dw 0, 4
   dw 0, 4
-  dw -4, 4
   dw 4, -4
+  dw -4, 4
 
 }
