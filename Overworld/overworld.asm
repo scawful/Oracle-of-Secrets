@@ -75,8 +75,18 @@ LoadDarkWorldIntro:
 }
 pushpc
 
+; Module05_LoadFile
 org $028192
   JSL LoadDarkWorldIntro
+
+; Module05_LoadFile
+; Check for goldstar instead of mirror for mountain spawn option
+org $0281E2
+  LDA.l $7EF342 : CMP.b #$02
+
+; Check for hall of secrets spawn pt flag
+org $0281CD
+  LDA.l $7EF3CB : CMP.b #$02
 
 pullpc
 

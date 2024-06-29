@@ -32,11 +32,6 @@ Impa_SetSpawnPointFlag:
 
 pushpc
 
-; Check for hall of secrets spawn pt flag
-org $0281CD
-  LDA.l $7EF3CB
-  CMP.b #$02
-
 ; Zelda_AtSanctuary
 org $05EE46
   JSL Impa_SetSpawnPointFlag
