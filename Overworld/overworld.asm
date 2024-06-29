@@ -26,6 +26,14 @@ org $0EF587
   BNE EXIT_0EF581
   .on_dark_dm
 
+org $0EF531
+Palettes_GanonTowerFlash:
+  dw  $7FFF,  $0884,  $1CC8,  $1DCE,  $3694,  $4718,  $1D4A,  $18AC
+  dw  $7FFF,  $1908,  $2D2F,  $3614,  $4EDA,  $471F,  $1D4A,  $390F
+  dw  $7FFF,  $34CD,  $5971,  $5635,  $7F1B,  $7FFF,  $1D4A,  $3D54
+  dw  $7FFF,  $1908,  $2D2F,  $3614,  $4EDA,  $471F,  $1D4A,  $390F
+  dw  $7FFF,  $0884,  $052A,  $21EF,  $3AB5,  $4B39,  $1D4C,  $18AC
+
 incsrc "Overworld/world_map.asm"
 
 incsrc "Overworld/master_sword.asm"
