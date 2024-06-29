@@ -91,6 +91,7 @@ MapIconDraw:
 
       JSR HandleMapDrawIcon_noflash
     .skip_draw_x
+    JMP .skip_draw_6
 
     .hall_of_secrets
     ; Draw Hall of Secrets
@@ -110,6 +111,7 @@ MapIconDraw:
       JSR HandleMapDrawIcon
       JMP restore_coords_and_exit
     .skip_hall_draw
+    JMP .skip_draw_6
 
     .draw_secret
 
