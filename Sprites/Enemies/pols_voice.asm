@@ -1,6 +1,6 @@
 
 !SPRID              = $A4 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 03  ; Number of tiles used in a frame
+!NbrTiles           = 02  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 10  ; Number of Health the sprite have
@@ -125,7 +125,7 @@ Sprite_PolsVoice_Main:
       %GotoAction(0)
     .not_done
     JSL Sprite_CheckDamageFromPlayerLong : BCC .no_damage
-      
+      JSL Sprite_InvertSpeed_XY
     .no_damage
     RTS
   }
