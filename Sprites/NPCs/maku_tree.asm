@@ -82,20 +82,21 @@ Sprite_MakuTree_Main:
 
   MakuTree_MeetLink:
   {
-      %ShowSolicitedMessage($20) : BCC .no_talk
+    %ShowSolicitedMessage($20) : BCC .no_talk
       LDA #$01 : STA $7EF3D4
       LDA #$01 : STA $7EF3C7 ; Mark the Hall of Secrets
+      LDA.l $7EFC3B : ORA.b #$04 : STA.l $7EFC3B
       %GotoAction(2)
     .no_talk
-      RTS
+    RTS
   }
 
   MakuTree_GiveMoonPearl:
   {
-      ; Give Link a heart container
-      LDY #$3E : JSL Link_ReceiveItem
-      %GotoAction(0)
-      RTS
+    ; Give Link a heart container
+    LDY #$3E : JSL Link_ReceiveItem
+    %GotoAction(0)
+    RTS
   }
 
 }
