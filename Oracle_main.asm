@@ -21,7 +21,7 @@
 ;   39 - Minish Link GFX
 ;   3A - StartupMasks, Palette_ArmorAndGloves, CgramAuxToMain
 ;   3B - GBC Link GFX
-;   3C - Ocarina OW Control Code
+;   3C - Expanded Dialogue
 ;   3D - LW World Map
 ;   3E - DW World Map
 ;   3F - Load Custom GFX, Boat GFX
@@ -45,6 +45,7 @@ namespace Oracle
   incsrc "Util/functions.asm"
   incsrc "Core/music_macros.asm"
 
+  incsrc "Core/message.asm"
 
   ; -------------------------------------------------------
   ; Overworld
