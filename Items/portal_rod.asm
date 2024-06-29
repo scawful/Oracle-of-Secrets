@@ -12,37 +12,33 @@ LinkItem_PortalRod:
   LDA $6C : BNE .return
 
   JSR   Link_CheckNewY_ButtonPress : BCC .return
-  LDX.b #$00
-  JSR   LinkItem_EvaluateMagicCost : BCC .insufficient_mp
-  
-  LDA.b #$30 : JSR $802F    ; Sfx3
-  JSL   LinkItem_FirePortal
-  
-.y_button_held
+    LDX.b #$00
+    JSR   LinkItem_EvaluateMagicCost : BCC .insufficient_mp
+      LDA.b #$30 : JSR $802F    ; Sfx3
+      JSL   LinkItem_FirePortal
+      
+      .y_button_held
 
-  JSR $AE65 ; HaltLinkWhenUsingItems
-  
-  ; What's the point of this?
-  ; LDA $67 : AND.b #$F0 : STA $67
-  
-  DEC $3D : BPL .return
-  
-  LDA $0300 : INC A : STA $0300 : TAX
-  
-  LDA RodAnimationTimer, X : STA $3D
-  
-  CPX.b #$03 : BNE .return
-  
-  STZ $5E
-  STZ $0300
-  STZ $3D
-  
-  LDA $0301 : AND.b #$FE : STA $0301
+      JSR $AE65 ; HaltLinkWhenUsingItems
+      
+      DEC $3D : BPL .return
+      
+      LDA $0300 : INC A : STA $0300 : TAX
+      
+      LDA RodAnimationTimer, X : STA $3D
+      
+      CPX.b #$03 : BNE .return
+      
+      STZ $0300
+      STZ $5E      
+      STZ $3D
+      
+      LDA $0301 : AND.b #$FE : STA $0301
 
-.insufficient_mp
-  LDA $3A : AND.b #$BF : STA $3A
+    .insufficient_mp
+    LDA $3A : AND.b #$BF : STA $3A
 
-.return
+  .return
   RTS
 }
 
@@ -56,31 +52,31 @@ pullpc
 
 Ancilla_HandlePortalCollision:
 {
-   LDA.w $0E20, Y : CMP.b #$03 : BNE .not_portal_arrow
-      ; Check if Y is the orange or blue portal
-      LDA.w SprSubtype, Y : CMP.b #$02 : BEQ .blue_portal
-                            CMP.b #$01 : BEQ .orange_portal
-      .orange_portal
-      PHY
-        LDY.w $0632 ; Blue Sprite ID
-        LDA.w SprX, Y : CLC : ADC.b #$10 : STA.w ANC0XL, X
-        LDA.w SprY, Y : STA.w ANC0YL, X
-        LDA.w SprXH, Y : STA.w ANC0XH, X
-        LDA.w SprYH, Y : STA.w ANC0YH, X
-      PLY
-      JMP .continue
+  LDA.w $0E20, Y : CMP.b #$03 : BNE .not_portal_arrow
+    ; Check if Y is the orange or blue portal
+    LDA.w SprSubtype, Y : CMP.b #$02 : BEQ .blue_portal
+                          CMP.b #$01 : BEQ .orange_portal
+    .orange_portal
+    PHY
+      LDY.w $0632 ; Blue Sprite ID
+      LDA.w SprX, Y : CLC : ADC.b #$10 : STA.w ANC0XL, X
+      LDA.w SprY, Y : STA.w ANC0YL, X
+      LDA.w SprXH, Y : STA.w ANC0XH, X
+      LDA.w SprYH, Y : STA.w ANC0YH, X
+    PLY
+    JMP .continue
 
-      .blue_portal
-      PHY
-        LDY.w $0633 ; Orange Sprite ID
-        LDA.w SprX, Y : STA.w ANC0XL, X
-        LDA.w SprY, Y : CLC : ADC.b #$10 : STA.w ANC0YL, X
-        LDA.w SprXH, Y : STA.w ANC0XH, X
-        LDA.w SprYH, Y : STA.w ANC0YH, X
-      PLY
-      .continue
-      LDA.b #$08
-      RTL
+    .blue_portal
+    PHY
+      LDY.w $0633 ; Orange Sprite ID
+      LDA.w SprX, Y : STA.w ANC0XL, X
+      LDA.w SprY, Y : CLC : ADC.b #$10 : STA.w ANC0YL, X
+      LDA.w SprXH, Y : STA.w ANC0XH, X
+      LDA.w SprYH, Y : STA.w ANC0YH, X
+    PLY
+    .continue
+    LDA.b #$08
+    RTL
   .not_portal_arrow
   ; Restore arrow deflection sprite code from $088DC3
   LDA.w $0B6B,Y : AND.b #$08
@@ -183,66 +179,43 @@ ScrollToPortal:
   STZ $02
   
   LDA $22 : CMP $7EC186 : BEQ .set_x : BCC .x_low
-  
-  DEC $02
-  
-  DEC A : CMP $7EC186 : BEQ .set_x
-  
-  DEC $02
-  
-  DEC A
-  
-  BRA .set_x
-
-.x_low
+    DEC $02
+    DEC A : CMP $7EC186 : BEQ .set_x
+    DEC $02
+    DEC A
+    BRA .set_x
+  .x_low
 
   INC $02
-  
   INC A : CMP $7EC186 : BEQ .set_x
-  
   INC $02
-  
   INC A
 
-.set_x
+  .set_x
 
   STA $22
   
   LDA $20 : CMP $7EC184 : BEQ .set_y : BCC .y_low
-  
-  DEC $00
-  
-  DEC A : CMP $7EC184 : BEQ .set_y
-  
-  DEC $00
-  
-  DEC A
-  
-  BRA .set_y
-
-.y_low
+    DEC $00
+    DEC A : CMP $7EC184 : BEQ .set_y
+    DEC $00
+    DEC A
+    BRA .set_y
+  .y_low
 
   INC $00
-  
   INC A : CMP $7EC184 : BEQ .set_y
-  
   INC $00
-  
   INC A
 
-.set_y
+  .set_y
 
   STA $20
-  
   CMP $7EC184 : BNE .delay_advance
-  
-  LDA $22 : CMP $7EC186 : BNE .delay_advance
-  
-  INC $B0
-  
-  STZ $46
-
-.delay_advance
+    LDA $22 : CMP $7EC186 : BNE .delay_advance
+      INC $B0
+      STZ $46
+  .delay_advance
 
   SEP #$20
   
@@ -252,10 +225,8 @@ ScrollToPortal:
   JSL Overworld_OperateCameraScroll_Long ; $13B90 IN ROM
   
   LDA $0416 : BEQ .exit
-  
-  JSL Overworld_ScrollMap_Long ; $17273 IN ROM
-
-.exit
+    JSL Overworld_ScrollMap_Long ; $17273 IN ROM
+  .exit
 
   RTL
 }
