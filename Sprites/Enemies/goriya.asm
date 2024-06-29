@@ -61,7 +61,7 @@ Sprite_Goriya_Prep:
 {
   PHB : PHK : PLB
 
-  LDA.b #$30 : STA.w SprHealth, X
+  LDA.b #$08 : STA.w SprHealth, X
 
   PLB
   RTL
