@@ -15,6 +15,8 @@ print  "End of enemy_damage.asm           ", pc
 incsrc "Collision/CollisionTablesExpanded.asm"
 incsrc "Collision/GlobalCollisionTables.asm"
 
+pullpc ; Bank 0x33
+
 RoomTag_MinishShutterDoor:
 {
   LDA.w $02B2 : CMP.b #$05 : BNE .no_minish
@@ -35,11 +37,13 @@ RoomTag_MinishShutterDoor:
   JML $01CC5A ; RoomTag_TriggerHoles return
 }
 
-pullpc ; Bank 0x33
+pushpc
 
 org $01CC10
 RoomTag_Holes5:
   JML RoomTag_MinishShutterDoor
+
+pullpc
 
 incsrc "Dungeons/house_walls.asm"
 
