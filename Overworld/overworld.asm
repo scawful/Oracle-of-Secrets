@@ -15,6 +15,13 @@ CMP.b #$00
 org $0EF581
 EXIT_0EF581:
 
+
+; Credits_LoadNextScene_Overworld
+; Skip end cutscene until it's ready
+org $0E9889
+    LDA #$20 : STA $11
+    RTS
+
 ; FlashGanonTowerPalette
 org $0EF587
   LDA.b $8A
