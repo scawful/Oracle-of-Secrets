@@ -114,6 +114,11 @@ Sprite_Goriya_Main:
   {
     %PlayAnimation(0, 3, 6)
 
+    LDA.w SprTimerD, X : BNE + 
+      LDA.b #$16
+      JSL Sprite_ApplySpeedTowardsPlayer
+      %SetTimerD($FF)
+    +
 
     JSL Sprite_Move
     JSL Sprite_SpawnSparkleGarnish
@@ -127,17 +132,10 @@ Sprite_Goriya_Main:
       JSL Sprite_InvertSpeed_XY
     +
 
-    LDA.w SprTimerD, X : BNE + 
-      LDA.b #$14
-      JSL Sprite_ApplySpeedTowardsPlayer
-      %SetTimerD($FF)
-    +
-
     JSL Sprite_CheckTileCollision
     LDA.w SprCollision, X : BEQ +
       STZ.w SprState, X
     +
-
 
     RTS
   }
