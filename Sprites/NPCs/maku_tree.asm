@@ -76,7 +76,8 @@ Sprite_MakuTree_Main:
       RTS
 
     .has_met_link
-      %ShowSolicitedMessage($22) 
+      %ShowSolicitedMessage($22)
+      LDA.l $7EFC3B : ORA.b #$04 : STA.l $7EFC3B
       RTS
   }
 
