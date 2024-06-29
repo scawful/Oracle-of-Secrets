@@ -27,7 +27,7 @@ LinkState_CheckForMinishForm:
   JSL $0FF979 ; AncillaSpawn_SwordChargeSparkle
 
   ; Check for the R button (like minish cap)
-  %CheckNewR_ButtonPress() : BEQ .return
+  JSL CheckNewRButtonPress : BCC .return
 
   ; Skip the code if you have a mask item out
   LDA $0202
