@@ -18,10 +18,36 @@ PROGLITE        = $7EF3C6
 ; 0x06 - Old man home
 SPAWNPT         = $7EF3C8
 
+; .... ..h.
+;  h - hall of secrets
+OOSPROG         = $7EF3CB
+
+; set spawn point flag for hall of secrets by impa
+Impa_SetSpawnPointFlag:
+{
+  STA.l $7EF372
+  LDA.l $7EF3CB : ORA.b #$02 : STA.l $7EF3CB
+  RTL
+}
+
 pushpc
-; Impa Fix
+
+; Check for hall of secrets spawn pt flag
+org $0281CD
+  LDA.l $7EF3CB
+  CMP.b #$02
+
+; Zelda_AtSanctuary
+org $05EE46
+  JSL Impa_SetSpawnPointFlag
+
+; Impa Check for Master Sword
 org $05EBCF
   LDA $7EF359 : CMP.b #$04
+
+; .have_master_sword former STZ.w $0DD0, X
+org $05EC0F
+  NOP #3
 
 ; Module15_0C
 ; Change overlay that Impa activates after intro
@@ -30,19 +56,12 @@ org $029E2E
 #_029E32: ORA.b #$20
 #_029E34: STA.l $7EF2A3
 
-org $05EBCF
-NOP #8
-; LDA.l $7EF359
-; #_05EBD3: CMP.b #$02
-; #_05EBD5: BCS .have_master_sword
-
 ; Prevent Impa from setting spawn point
 org $05ED43
 Zelda_BecomeFollower:
 STZ.w $02E4
-NOP #6
-; #_05ED46: LDA.b #$02
-; #_05ED48: STA.l $7EF3C8
+#_05ED46: LDA.b #$00
+#_05ED48: STA.l $7EF3C8
 
 ; Prevent Impa from changing the song
 org $05ED10
