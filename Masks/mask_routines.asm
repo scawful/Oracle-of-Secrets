@@ -478,6 +478,7 @@ DekuLink_HoverBasedOnInput:
   
   JSL Player_HaltDashAttack
   
+  ; Pos - Cache Pos = difference
   LDA $22 : SEC : SBC $3F : STA $31
   LDA $20 : SEC : SBC $3E : STA $30
 
@@ -529,7 +530,11 @@ pushpc
 LinkOAM_SetEquipmentVRAMOffsets = $0DABE6
 LinkOAM_DrawShadow = $0DA857
 
-org $0DA782
+
+org $0DA780
+LinkOAM_DrawShield:
+{
+  REP #$30
   JSL LinkOAM_CheckForDrawShield
 
   NOP #3
@@ -546,13 +551,17 @@ org $0DA782
   BRL LinkOAM_DrawShadow
 
   .shield_continue
+}
 
 
 pullpc
 
+; Minish, Deku, Wolf don't draw shield
 LinkOAM_CheckForDrawShield:
 {
   LDA.w $02B2 : AND.w #$00FF : CMP.w #$0005 : BNE .shield
+                               CMP.w #$0001 : BNE .shield
+                               CMP.w #$0003 : BNE .shield
   LDA.w #$0000
   .shield
   RTL
