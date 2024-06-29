@@ -107,7 +107,6 @@ print pc
 LoadOverworldSongsExpanded:
 {
   LDA.w $0FFF : BEQ .light_world
-    PHB : PHK : PLB 
     LDA.b #SongBank_OverworldExpanded_Main>>0
     STA.b $00
 
@@ -116,7 +115,6 @@ LoadOverworldSongsExpanded:
 
     LDA.b #SongBank_OverworldExpanded_Main>>16
     STA.b $02
-    PLB
     RTL
   .light_world 
   #_008913: LDA.b #SongBank_Overworld_Main>>0
