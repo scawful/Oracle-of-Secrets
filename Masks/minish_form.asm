@@ -78,6 +78,22 @@ LinkState_CheckMinishTile:
     RTS
 }
 
+; Prevent lifting while minish
+CheckForMinishLift:
+{
+  PHA
+  LDA.w $02B2 : CMP.b #$05 : BNE .return
+    PLA
+    AND.l $7EF379 : AND.b #$80
+    RTL
+  .return
+  PLA
+  AND.l $7EF379
+  RTL
+}
+
 print  "End of Masks/minish_form.asm      ", pc
 pushpc
 
+org $079C32
+  JSL CheckForMinishLift
