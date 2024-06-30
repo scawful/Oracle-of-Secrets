@@ -370,6 +370,7 @@ UpdateFluteSong_Long:
   .notPressed
   RTL
 }
+print  "End of Items/ocarina.asm          ", pc
 
 pushpc ; Bank2B freespace
 
