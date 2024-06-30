@@ -58,61 +58,61 @@ Sprite_Twinrova_Long:
 
 Sprite_Twinrova_CheckIfDead:
 {
-    LDA SprAction, X : CMP.b #$0A : BEQ .not_dead
-      ; If health is negative, set back to zero
-      LDA SprHealth, X : CMP.b #$C3 : BCC .health_not_negative
-        LDA.b #$00 : STA.w SprHealth, X
+  LDA SprAction, X : CMP.b #$0A : BEQ .not_dead
+    ; If health is negative, set back to zero
+    LDA SprHealth, X : CMP.b #$C3 : BCC .health_not_negative
+      LDA.b #$00 : STA.w SprHealth, X
 
-    .health_not_negative
-      LDA SprHealth, X : BNE .not_dead
-        PHX 
-        LDA.b #$04 : STA $0DD0, X     ; Kill sprite boss style
-        LDA.b #$0A : STA.w SprAction, X ; Go to Twinrova_Dead stage
-        LDA.b #$10 : STA.w $0D90, X
-        PLX
+  .health_not_negative
+    LDA SprHealth, X : BNE .not_dead
+      PHX 
+      LDA.b #$04 : STA $0DD0, X     ; Kill sprite boss style
+      LDA.b #$0A : STA.w SprAction, X ; Go to Twinrova_Dead stage
+      LDA.b #$10 : STA.w $0D90, X
+      PLX
   .not_dead
-    RTS
+  RTS
 }
 
 ; =========================================================
 
 Sprite_Twinrova_Prep:
 {
-    PHB : PHK : PLB
+  PHB : PHK : PLB
 
-    ; Kill the sprite if the Maiden is present
-    LDA.l $7EF3CC : CMP.b #$06 : BNE .prep_twinrova
-      STZ.w $0DD0, X
-
+  ; Kill the sprite if the Maiden is present
+  LDA.l $7EF3CC : CMP.b #$06 : BNE .prep_twinrova
+    STZ.w $0DD0, X
   .prep_twinrova
-    LDA.b #$5A : STA.w SprHealth, X ; Health
-    LDA.b #$80 : STA $0CAA, X
-    LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
-    LDA $0E60, X : AND.b #$BF : STA $0E60, X ; Not invincible 
 
-    %SetSpriteSpeedX(15)
-    %SetSpriteSpeedX(15)
+  LDA.b #$5A : STA.w SprHealth, X ; Health
+  LDA.b #$80 : STA $0CAA, X
+  LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
+  LDA.w $0E60, X : AND.b #$BF : STA.w $0E60, X ; Not invincible 
 
-    ; Blind Boss startup configuration
-    LDA #$10 : STA $08
-    LDA #$10 : STA $09
+  %SetSpriteSpeedX(15)
+  %SetSpriteSpeedX(15)
 
-    LDA.b #$60 : STA.w SprTimerC, X
-    LDA.b #$01 : STA.w SprMiscB, X
-    LDA.b #$02 : STA.w SprMiscC, X
-    LDA.b #$04 : STA.w SprMiscE, X
-    LDA.b #$07 : STA.w SprGfx, X
-    STZ.w $0B69
+  ; Blind Boss startup configuration
+  LDA.b #$10 : STA $08
+  LDA.b #$10 : STA $09
 
-    PLB
-    RTL
+  LDA.b #$60 : STA.w SprTimerC, X
+  LDA.b #$01 : STA.w SprMiscB, X
+  LDA.b #$02 : STA.w SprMiscC, X
+  LDA.b #$04 : STA.w SprMiscE, X
+  LDA.b #$07 : STA.w SprGfx, X
+  STZ.w $0B69
+
+  PLB
+  RTL
 }
 
 ; =========================================================
 
 !AnimSpeed = 8
 
-macro      Twinrova_Front()
+macro Twinrova_Front()
   %PlayAnimation(0,1,!AnimSpeed)
 endmacro
 
@@ -156,6 +156,9 @@ endmacro
 
 Sprite_Twinrova_Main:
 {
+  JSL Sprite_PlayerCantPassThrough
+  JSL Sprite_DamageFlash_Long
+
   LDA.w SprAction, X
   JSL   UseImplicitRegIndexedLocalJumpTable
   
@@ -175,51 +178,51 @@ Sprite_Twinrova_Main:
   ; 0x00 
   Twinrova_Init:
   {
-      %ShowUnconditionalMessage($123)
-      LDA.w SprTimerD, X : BNE +
-        LDA.b #$20 : STA.w SprTimerD, X
-        %GotoAction(1)
-      +
-        RTS
+    %ShowUnconditionalMessage($123)
+    LDA.w SprTimerD, X : BNE +
+      LDA.b #$20 : STA.w SprTimerD, X
+      %GotoAction(1)
+    +
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x01
   Twinrova_MoveState:
   {
-      STZ.w $0360
-      LDA SprHealth, X : CMP.b #$20 : BCS .phase_1
-        ; -------------------------------------------
-        ; Phase 2
-        LDA SprTimerE, X : BNE .kotake
-          LDA #$70 : STA.w SprTimerD, X
-          %GotoAction(8) ; Koume Mode
-          RTS
-        .kotake
-          LDA #$70 : STA.w SprTimerD, X
-          %GotoAction(9) ; Kotake Mode
-          RTS
+    STZ.w $0360
+    LDA SprHealth, X : CMP.b #$20 : BCS .phase_1
+      ; -------------------------------------------
+      ; Phase 2
+      LDA SprTimerE, X : BNE .kotake
+        LDA #$70 : STA.w SprTimerD, X
+        %GotoAction(8) ; Koume Mode
+        RTS
+      .kotake
+        LDA #$70 : STA.w SprTimerD, X
+        %GotoAction(9) ; Kotake Mode
+        RTS
 
     ; ---------------------------------------------
     .phase_1
-      LDA $0DA0 : BEQ .not_flashing
-        LDA.b #$30 : STA.w SprTimerD, X
-        %GotoAction(7) ; Goto Twinrova_Hurt
-        RTS
+    LDA $0DA0 : BEQ .not_flashing
+      LDA.b #$30 : STA.w SprTimerD, X
+      %GotoAction(7) ; Goto Twinrova_Hurt
+      RTS
     .not_flashing
 
-      JSL GetRandomInt : AND.b #$3F : BNE +
-        LDA.b #$20 : STA.w SprTimerD, X
-        STZ   $AC      ; Set the fire attack
-        %GotoAction(4) ; Prepare Attack
-        RTS
+    JSL GetRandomInt : AND.b #$3F : BNE +
+      LDA.b #$20 : STA.w SprTimerD, X
+      STZ   $AC      ; Set the fire attack
+      %GotoAction(4) ; Prepare Attack
+      RTS
     +
 
-      JSL GetRandomInt : AND.b #$3F : BNE ++
-        LDA.b #$20 : STA.w SprTimerD, X
-        LDA   #$01 : STA $AC ; Set the ice attack
-        %GotoAction(4) ; Prepare Attack
-        RTS
+    JSL GetRandomInt : AND.b #$3F : BNE ++
+      LDA.b #$20 : STA.w SprTimerD, X
+      LDA   #$01 : STA $AC ; Set the ice attack
+      %GotoAction(4) ; Prepare Attack
+      RTS
     ++
 
     JSL GetRandomInt : AND.b #$0F : BEQ .random_strafe
@@ -245,44 +248,38 @@ Sprite_Twinrova_Main:
   ; 0x02 - Twinrova_MoveForwards
   Twinrova_MoveForwards:
   {
-      %Twinrova_Front()
+    %Twinrova_Front()
 
-      PHX 
-      JSL Sprite_CheckDamageFromPlayerLong
-      %DoDamageToPlayerSameLayerOnContact()
-      PLX 
+    PHX 
+    JSL Sprite_CheckDamageFromPlayerLong
+    %DoDamageToPlayerSameLayerOnContact()
+    PLX 
 
-      JSL Sprite_DamageFlash_Long
+    LDA #$10  ; Set speed
+    JSL Sprite_FloatTowardPlayer
+    JSL Sprite_CheckTileCollision
 
-      LDA #$10  ; Set speed
-      JSL Sprite_FloatTowardPlayer
-      JSL Sprite_CheckTileCollision
-      JSL Sprite_PlayerCantPassThrough
-
-      %GotoAction(1)
-      RTS
+    %GotoAction(1)
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x03 - Twinrova_MoveBackwards
   Twinrova_MoveBackwards:
   {
-      %Twinrova_Back()
+    %Twinrova_Back()
 
-      PHX 
-      JSL Sprite_CheckDamageFromPlayerLong
-      %DoDamageToPlayerSameLayerOnContact()
-      PLX 
+    PHX 
+    JSL Sprite_CheckDamageFromPlayerLong
+    %DoDamageToPlayerSameLayerOnContact()
+    PLX 
 
-      JSL Sprite_DamageFlash_Long
+    LDA #$20
+    JSL Sprite_FloatTowardPlayer
+    JSL Sprite_CheckTileCollision
 
-      LDA #$20
-      JSL Sprite_FloatTowardPlayer
-      JSL Sprite_CheckTileCollision
-      JSL Sprite_PlayerCantPassThrough
-
-      %GotoAction(1)
-      RTS
+    %GotoAction(1)
+    RTS
   }
 
   ; -------------------------------------------------------
@@ -293,8 +290,6 @@ Sprite_Twinrova_Main:
       %Twinrova_Attack()
 
       LDA #$01 : STA $0360
-
-      JSL Sprite_PlayerCantPassThrough
 
       LDA $0CAA : AND.b #$03 : STA $0CAA
       LDA SprTimerD, X : BNE +
@@ -313,171 +308,165 @@ Sprite_Twinrova_Main:
   ; 0x05
   Twinrova_FireAttack:
   {
-      %StartOnFrame(4)
-      %Twinrova_Ready()
+    %StartOnFrame(4)
+    %Twinrova_Ready()
 
-      JSR Sprite_Twinrova_FireAttack
-      JSL Sprite_PlayerCantPassThrough
+    JSR Sprite_Twinrova_FireAttack
 
-      ; Random chance to release fireball
-      JSL GetRandomInt : AND.b #$3F : BNE ++
+    ; Random chance to release fireball
+    JSL GetRandomInt : AND.b #$3F : BNE ++
       JSR ReleaseFireballs
     ++
 
-      LDA.w SprTimerD, X : BNE +
-        %GotoAction(1)
+    LDA.w SprTimerD, X : BNE +
+      %GotoAction(1)
     +
-      RTS
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x06
   Twinrova_IceAttack:
   {
-      %StartOnFrame(4)
-      %Twinrova_Ready()
+    %StartOnFrame(4)
+    %Twinrova_Ready()
 
-      JSR Sprite_Twinrova_IceAttack
-      JSL Sprite_PlayerCantPassThrough
+    JSR Sprite_Twinrova_IceAttack
 
-      LDA.w SprTimerD, X : BNE +
-        %GotoAction(1)
+    LDA.w SprTimerD, X : BNE +
+      %GotoAction(1)
     +
-      RTS
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x07
   Twinrova_Hurt:
   {
-      %StartOnFrame(10)
-      %Twinrova_Hurt()
-      
-      JSL Sprite_DamageFlash_Long
-      JSL Sprite_PlayerCantPassThrough
-      
-       ; Check if hurt timer is zero, if not keep flashing hurt animation
-      LDA.w SprTimerD, X : BNE .HurtAnimation
+    %StartOnFrame(10)
+    %Twinrova_Hurt()
+    
+    ; Check if hurt timer is zero, if not keep flashing hurt animation
+    LDA.w SprTimerD, X : BNE .HurtAnimation
 
-      ; Determine dodge or retaliate behavior
-      JSL GetRandomInt
-      AND.b #$07  ; 1 in 8 chance for dodge/retaliate
-      BNE .DodgeOrRetaliate
-      BRA .ResumeNormalState
+    ; Determine dodge or retaliate behavior
+    JSL GetRandomInt
+    AND.b #$07  ; 1 in 8 chance for dodge/retaliate
+    BNE .DodgeOrRetaliate
+    BRA .ResumeNormalState
 
-      .DodgeOrRetaliate
-          ; Determine whether to dodge or retaliate
-          JSL GetRandomInt
-          AND.b #$01
-          BEQ .PerformDodge
-          BRA .PerformRetaliate
+    .DodgeOrRetaliate
+        ; Determine whether to dodge or retaliate
+        JSL GetRandomInt
+        AND.b #$01
+        BEQ .PerformDodge
+        BRA .PerformRetaliate
 
-      .PerformDodge
-          JSR DoRandomStrafe
-          LDA.b #$20 : STA.w SprTimerA, X  ; Set timer for dodge duration
-          LDA.b #$02 : STA.w SprMiscA, X  ; Set state to random strafe
-          RTS
-
-      .PerformRetaliate
-          ; Immediate retaliation with fire or ice attack
-          JSL GetRandomInt
-          AND.b #$01
-          BEQ .FireAttack
-          BRA .IceAttack
-
-      .FireAttack
-          LDA.b #$20 : STA.w SprTimerD, X
-          STZ $AC  ; Set fire attack
-          %GotoAction(4) ; Prepare Attack
-          RTS
-
-      .IceAttack
-          LDA.b #$20 : STA.w SprTimerD, X
-          LDA.b #$01 : STA $AC  ; Set ice attack
-          %GotoAction(4) ; Prepare Attack
-          RTS
-
-      .ResumeNormalState
-          %GotoAction(1)  ; Resume normal movement state
-          RTS
-
-      .HurtAnimation
+    .PerformDodge
+        JSR DoRandomStrafe
+        LDA.b #$20 : STA.w SprTimerA, X  ; Set timer for dodge duration
+        LDA.b #$02 : STA.w SprMiscA, X  ; Set state to random strafe
         RTS
+
+    .PerformRetaliate
+        ; Immediate retaliation with fire or ice attack
+        JSL GetRandomInt
+        AND.b #$01
+        BEQ .FireAttack
+        BRA .IceAttack
+
+    .FireAttack
+        LDA.b #$20 : STA.w SprTimerD, X
+        STZ $AC  ; Set fire attack
+        %GotoAction(4) ; Prepare Attack
+        RTS
+
+    .IceAttack
+        LDA.b #$20 : STA.w SprTimerD, X
+        LDA.b #$01 : STA $AC  ; Set ice attack
+        %GotoAction(4) ; Prepare Attack
+        RTS
+
+    .ResumeNormalState
+        %GotoAction(1)  ; Resume normal movement state
+        RTS
+
+    .HurtAnimation
+      RTS
   }
 
   ; -------------------------------------------------------
   ; 0x08
   Twinrova_KoumeMode:
   {
-      %StartOnFrame(8)
-      %Show_Koume()
+    %StartOnFrame(8)
+    %Show_Koume()
 
-      PHX
-      JSL Sprite_CheckDamageFromPlayerLong
-      %DoDamageToPlayerSameLayerOnContact()
-      PLX 
+    PHX
+    JSL Sprite_CheckDamageFromPlayerLong
+    %DoDamageToPlayerSameLayerOnContact()
+    PLX 
 
-      JSL GetRandomInt : AND.b #$3F : BNE ++
-        JSR AddPitHazard
-        JSR Ganon_SpawnFallingTilesOverlord
-      ++
+    JSL GetRandomInt : AND.b #$3F : BNE ++
+      JSR AddPitHazard
+      JSR Ganon_SpawnFallingTilesOverlord
+    ++
 
-      ; Random chance to release fireball
-      JSL GetRandomInt : AND.b #$3F : BNE +++
-        JSL Sprite_SpawnFireball
-      +++
+    ; Random chance to release fireball
+    JSL GetRandomInt : AND.b #$3F : BNE +++
+      JSL Sprite_SpawnFireball
+    +++
 
-      JSL Sprite_DamageFlash_Long
-      JSR RageModeMove
+    
+    JSR RageModeMove
 
-      LDA SprTimerD, X : BNE +
-        LDA #$70 : STA.w SprTimerE, X
-        %GotoAction(1)
+    LDA SprTimerD, X : BNE +
+      LDA #$70 : STA.w SprTimerE, X
+      %GotoAction(1)
     +
-      RTS
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x09
   Twinrova_KotakeMode:
   {
-      %StartOnFrame(9)
-      %Show_Kotake()
+    %StartOnFrame(9)
+    %Show_Kotake()
 
-      PHX
-      JSL Sprite_CheckDamageFromPlayerLong
-      %DoDamageToPlayerSameLayerOnContact()
-      PLX 
+    PHX
+    JSL Sprite_CheckDamageFromPlayerLong
+    %DoDamageToPlayerSameLayerOnContact()
+    PLX 
 
-      JSL Sprite_IsBelowPlayer 
-      CPY #$01 : BEQ .not_below
-        JSL GetRandomInt : AND.b #$3F : BNE ++
-          JSL $1DE612 ; Sprite_SpawnLightning
-          LDA #$30
-          JSL Sprite_ProjectSpeedTowardsPlayer
-        ++
-      .not_below
+    JSL Sprite_IsBelowPlayer 
+    CPY #$01 : BEQ .not_below
+      JSL GetRandomInt : AND.b #$3F : BNE ++
+        JSL $1DE612 ; Sprite_SpawnLightning
+        LDA #$30
+        JSL Sprite_ProjectSpeedTowardsPlayer
+      ++
+    .not_below
 
-      JSL Sprite_DamageFlash_Long
-      JSR RageModeMove
+    JSR RageModeMove
 
-      JSL GetRandomInt : AND.b #$0F : BNE +++
-        JSR RestoreFloorTile
-      +++
+    JSL GetRandomInt : AND.b #$0F : BNE +++
+      JSR RestoreFloorTile
+    +++
 
-      LDA SprTimerD, X : BNE +
-        %GotoAction(1)
+    LDA SprTimerD, X : BNE +
+      %GotoAction(1)
     +
-      RTS
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x0A
   Twinrova_Dead:
   {
-      %StartOnFrame(11)
-      %Twinrova_Hurt()
-      RTS
+    %StartOnFrame(11)
+    %Twinrova_Hurt()
+    RTS
   }
 }
 
@@ -488,118 +477,118 @@ Sprite_Twinrova_Main:
 
 RageModeMove:
 {
-    ; If timer is zero, determine a new movement mode
-    LDA SprTimerA, X : BEQ .DetermineMovementMode
+  ; If timer is zero, determine a new movement mode
+  LDA SprTimerA, X : BEQ .DetermineMovementMode
 
-    ; Execute current movement mode
-    LDA SprMiscA, X
-    CMP #$01 : BEQ .MoveTowardsPlayer
-    CMP #$02 : BEQ .RandomStrafe
-    CMP #$03 : BEQ .RandomDodge
-    CMP #$04 : BEQ .StayInPlace
+  ; Execute current movement mode
+  LDA SprMiscA, X
+  CMP #$01 : BEQ .MoveTowardsPlayer
+  CMP #$02 : BEQ .RandomStrafe
+  CMP #$03 : BEQ .RandomDodge
+  CMP #$04 : BEQ .StayInPlace
 
-    JMP .UpdatePosition
+  JMP .UpdatePosition
 
-.DetermineMovementMode
-    ; Determine random movement mode with weighted probabilities
-    JSL GetRandomInt
-    AND.b #$0F
-    CMP.b #$05
-    BCC .SetMoveTowardsPlayer  ; 0-5 -> Predictive movement towards player
-    CMP.b #$0A
-    BCC .SetRandomStrafe       ; 6-10 -> Random strafe
-    CMP.b #$0E
-    BCC .SetRandomDodge        ; 11-14 -> Random dodge
-    ; 15 -> Stay in place
-    LDA.b #$04 : STA.w SprMiscA, X
-    LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
-    RTS
-    BRA .StayInPlace
+  .DetermineMovementMode
+  ; Determine random movement mode with weighted probabilities
+  JSL GetRandomInt
+  AND.b #$0F
+  CMP.b #$05
+  BCC .SetMoveTowardsPlayer  ; 0-5 -> Predictive movement towards player
+  CMP.b #$0A
+  BCC .SetRandomStrafe       ; 6-10 -> Random strafe
+  CMP.b #$0E
+  BCC .SetRandomDodge        ; 11-14 -> Random dodge
+  ; 15 -> Stay in place
+  LDA.b #$04 : STA.w SprMiscA, X
+  LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
+  RTS
+  BRA .StayInPlace
 
-.SetMoveTowardsPlayer
-    LDA.b #$01 : STA.w SprMiscA, X
-    LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
-    BRA .MoveTowardsPlayer
+  .SetMoveTowardsPlayer
+  LDA.b #$01 : STA.w SprMiscA, X
+  LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
+  BRA .MoveTowardsPlayer
 
-.SetRandomStrafe
-    LDA.b #$02 : STA.w SprMiscA, X
-    LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
-    BRA .RandomStrafe
+  .SetRandomStrafe
+  LDA.b #$02 : STA.w SprMiscA, X
+  LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
+  BRA .RandomStrafe
 
-.SetRandomDodge
-    LDA.b #$03 : STA.w SprMiscA, X
-    LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
-    BRA .RandomDodge
+  .SetRandomDodge
+  LDA.b #$03 : STA.w SprMiscA, X
+  LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
+  BRA .RandomDodge
 
-.MoveTowardsPlayer
-    ; Predictive movement towards player with altitude increase
-    JSL Sprite_DirectionToFacePlayer
-    JSL Sprite_ApplySpeedTowardsPlayer
-    LDA.b #$10 : STA.w SprHeight, X ; Set height
-    BRA .UpdatePosition
+  .MoveTowardsPlayer
+  ; Predictive movement towards player with altitude increase
+  JSL Sprite_DirectionToFacePlayer
+  JSL Sprite_ApplySpeedTowardsPlayer
+  LDA.b #$10 : STA.w SprHeight, X ; Set height
+  BRA .UpdatePosition
 
-.RandomStrafe
-    JSR DoRandomStrafe
-    BRA .UpdatePosition
+  .RandomStrafe
+  JSR DoRandomStrafe
+  BRA .UpdatePosition
 
-.RandomDodge
-    ; Random dodge with controlled movement
-    JSL GetRandomInt
-    AND.b #$03
-    TAY
-    LDA VelocityOffsets+4, Y : STA.w SprXSpeed, X
-    INY
-    LDA VelocityOffsets, Y : STA.w SprYSpeed, X
-    LDA.b #$10 : STA.w SprHeight, X ; Set height
-    BRA .UpdatePosition
+  .RandomDodge
+  ; Random dodge with controlled movement
+  JSL GetRandomInt
+  AND.b #$03
+  TAY
+  LDA VelocityOffsets+4, Y : STA.w SprXSpeed, X
+  INY
+  LDA VelocityOffsets, Y : STA.w SprYSpeed, X
+  LDA.b #$10 : STA.w SprHeight, X ; Set height
+  BRA .UpdatePosition
 
-.StayInPlace
-    ; Stay in place to prepare for attack or other action
-    STZ.w SprXSpeed, X
-    STZ.w SprYSpeed, X
-    LDA.b #$10 : STA.w SprHeight, X ; Set height
-    BRA .UpdatePosition
+  .StayInPlace
+  ; Stay in place to prepare for attack or other action
+  STZ.w SprXSpeed, X
+  STZ.w SprYSpeed, X
+  LDA.b #$10 : STA.w SprHeight, X ; Set height
+  BRA .UpdatePosition
 
-.Evasive
-    ; Evasive action if too close to player
-    JSL GetRandomInt
-    AND.b #$03
-    TAY
-    LDA VelocityOffsets, Y : EOR #$FF : INC : STA.w SprXSpeed, X
-    INY
-    LDA VelocityOffsets+4, Y : EOR #$FF : INC : STA.w SprYSpeed, X
-    LDA.b #$10 : STA.w SprHeight, X ; Set height
-    BRA .UpdatePosition
+  .Evasive
+  ; Evasive action if too close to player
+  JSL GetRandomInt
+  AND.b #$03
+  TAY
+  LDA VelocityOffsets, Y : EOR #$FF : INC : STA.w SprXSpeed, X
+  INY
+  LDA VelocityOffsets+4, Y : EOR #$FF : INC : STA.w SprYSpeed, X
+  LDA.b #$10 : STA.w SprHeight, X ; Set height
+  BRA .UpdatePosition
 
-.UpdatePosition
-    ; Handle floaty movement with controlled altitude
-    LDA.w SprHeight, X : CMP #$10 : BNE .CheckGrounded
-      DEC.w SprHeight, X
-      DEC.w $0F90, X
+  .UpdatePosition
+  ; Handle floaty movement with controlled altitude
+  LDA.w SprHeight, X : CMP #$10 : BNE .CheckGrounded
+    DEC.w SprHeight, X
+    DEC.w $0F90, X
 
-.CheckGrounded
-    ; Move sprite
-    JSL Sprite_Move
+  .CheckGrounded
+  ; Move sprite
+  JSL Sprite_Move
 
-    ; Check for tile collision and bounce if necessary
-    JSL Sprite_BounceFromTileCollision
+  ; Check for tile collision and bounce if necessary
+  JSL Sprite_BounceFromTileCollision
 
-    ; Reduce the state timer and reset state if necessary
-    DEC.w SprTimerA, X
-    RTS
+  ; Reduce the state timer and reset state if necessary
+  DEC.w SprTimerA, X
+  RTS
 }
 
 DoRandomStrafe:
 {
-    ; Random strafe with controlled movement
-    JSL GetRandomInt
-    AND.b #$03
-    TAY
-    LDA VelocityOffsets, Y : STA.w SprXSpeed, X
-    INY
-    LDA VelocityOffsets+4, Y : STA.w SprYSpeed, X
-    LDA.b #$10 : STA.w SprHeight, X ; Set height
-    RTS
+  ; Random strafe with controlled movement
+  JSL GetRandomInt
+  AND.b #$03
+  TAY
+  LDA VelocityOffsets, Y : STA.w SprXSpeed, X
+  INY
+  LDA VelocityOffsets+4, Y : STA.w SprYSpeed, X
+  LDA.b #$10 : STA.w SprHeight, X ; Set height
+  RTS
 }
 
 ; Velocity offsets table
@@ -617,31 +606,30 @@ TargetPositions:
 ; Reused function from TrinexxBreath.
 TrinexxBreath_AltEntry:
 {
-    LDA $1A : AND.b #$07 : BNE .no_adjustment
+  LDA $1A : AND.b #$07 : BNE .no_adjustment
     JSL GetRandomInt
     AND.b #$03
     TAY
     LDA SpeedAdjustments, Y : CLC : ADC $0D50, X : STA $0D50, X
     LDA SpeedAdjustments+4, Y : CLC : ADC $0D40, X : STA $0D40, X
-
-.no_adjustment
+  .no_adjustment
 
   JSL Sprite_BounceFromTileCollision
-    LDA $1A : AND.b #$03 : BNE .no_shake
-      JSL Sprite_IsToRightOfPlayer
-      LDA $0D50, X : CMP .x_speed_targets, Y : BEQ .no_shake
-        CLC : ADC.w .shake_x, Y : STA $0D50, X
+  LDA $1A : AND.b #$03 : BNE .no_shake
+    JSL Sprite_IsToRightOfPlayer
+    LDA $0D50, X : CMP .x_speed_targets, Y : BEQ .no_shake
+      CLC : ADC.w .shake_x, Y : STA $0D50, X
 
   .no_shake
-    JSL Sprite_IsBelowPlayer 
-      LDA $0D40, X : CMP .x_speed_targets, Y : BEQ .exit
-        CLC : ADC.w .shake_y, Y : STA $0D40, X
+  JSL Sprite_IsBelowPlayer 
+    LDA $0D40, X : CMP .x_speed_targets, Y : BEQ .exit
+      CLC : ADC.w .shake_y, Y : STA $0D40, X
 
-    JSL Sprite_CheckTileCollision : BEQ .exit
-      JSL Sprite_FloatTowardPlayer
+  JSL Sprite_CheckTileCollision : BEQ .exit
+    JSL Sprite_FloatTowardPlayer
 
   .exit
-    RTS
+  RTS
 
   .x_speed_targets
     db 16, -16
@@ -652,18 +640,19 @@ TrinexxBreath_AltEntry:
   .shake_y
     db  0, -1
 
-    SpeedAdjustments:
-    db  $02, $FE, $04, $FC  ; Adjustments for X speeds (small positive, small negative)
-    db  $01, $FF, $02, $FE  ; Adjustments for Y speeds (small positive, small negative)
+  ; Adjustments for xy speeds (small positive, small negative)
+  SpeedAdjustments:
+  db  $02, $FE, $04, $FC ; X
+  db  $01, $FF, $02, $FE ; Y
 }
 
 Sprite_Twinrova_FireAttack:
 { 
-    JSL Sprite_CheckTileCollision : BNE .no_collision
-      JSL Sprite_Move
+  JSL Sprite_CheckTileCollision : BNE .no_collision
+    JSL Sprite_Move
   .no_collision
-    JSR AddFireGarnish
-    JMP TrinexxBreath_AltEntry
+  JSR AddFireGarnish
+  JMP TrinexxBreath_AltEntry
 }
 
 ; $1DBDD6 - TrinexxFire_AddFireGarnish
@@ -698,11 +687,11 @@ AddFireGarnish:
 
 Sprite_Twinrova_IceAttack:
 {
-    JSL Sprite_CheckTileCollision : BNE .no_collision
-      JSL Sprite_Move
+  JSL Sprite_CheckTileCollision : BNE .no_collision
+    JSL Sprite_Move
   .no_collision
-    JSR AddIceGarnishV2
-    JMP TrinexxBreath_AltEntry
+  JSR AddIceGarnishV2
+  JMP TrinexxBreath_AltEntry
 }
 
 ; $1DBD65 - TrinexxBreath_ice_add_ice_garnish
