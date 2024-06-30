@@ -85,6 +85,43 @@ org $08C2E3
 
 ; =========================================================
 
+; Shop item heart OAM
+; SpriteDraw_ShopItem
+org $1EF42E
+  dw  -4,  16 : db $03, $02, $00, $00 ; 3
+  dw  -4,  16 : db $03, $02, $00, $00 ; 3
+  dw   4,  16 : db $30, $02, $00, $00 ; 0
+  dw   0,   0 : db $A8, $02, $00, $02 ; item
+  dw   4,  11 : db $38, $03, $00, $00 ; shadow
+
+org $1EF27D
+ShopItem_Banana:
+{
+  JSR $F4CE   ; SpriteDraw_ShopItem
+  JSR $FE78   ; Sprite_CheckIfActive_Bank1E
+  JSL $1EF4F3 ; Sprite_BehaveAsBarrier
+  JSR $F391   ; ShopItem_CheckForAPress
+  BCC .exit
+
+    ; TODO: Add check for if Link has too many bananas
+    LDA.b #$1E : LDY.b #$00
+    JSR $F39E ; ShopItem_HandleCost
+    BCC $F1A1 ; ShopItem_GiveFailureMessage
+
+    STZ.w $0DD0,X
+
+    LDY.b #$42
+    JSR $F366 ; ShopItem_HandleReceipt
+
+  .exit
+  RTS
+
+  JSR $F38A ; ShopItem_PlayBeep
+}
+warnpc $1EF2AB
+
+; =========================================================
+
 org    $308000
 incsrc ZSpriteLib/sprite_new_table.asm
 
