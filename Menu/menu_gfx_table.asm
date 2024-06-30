@@ -186,10 +186,15 @@ QuarterNoteGFX:
 ; ---------------------------------------------------------
 
 BananaGFX:
-  dw $241E, $241F, $242E, $242F ; Banana
+  dw $341E, $341F, $342E, $342F ; Banana
 
 RingGFX:
-  dw $2449, $244A, $2449, $244A ; Ring
+  dw $2449, $244A, $A449, $A44A ; Red Ring
+  dw $2C49, $2C4A, $AC49, $AC4A ; Blue Ring
+  dw $3C49, $3C4A, $BC49, $BC4A ; Green Ring
+
+PineappleGFX:
+  dw $3D7C, $3D7D, $356C, $756C ; Pineapple
 
 ; =========================================================
 ; Equipped Items

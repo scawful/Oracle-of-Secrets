@@ -649,6 +649,39 @@ Menu_DrawBigChestKey:
   RTS
 }
 
+
+Menu_DrawSongMenu:
+{
+  REP #$30
+  LDX.w #$FE ; $1700-17FF 
+
+  .loop
+    LDA.w .magic_bag_tilemap, X
+    STA.w $1000, X
+    LDA.w .magic_bag_tilemap+$100, X
+    STA.w $1100, X
+    LDA.w .magic_bag_tilemap+$200, X
+    STA.w $1200, X
+    LDA.w .magic_bag_tilemap+$300, X
+    STA.w $1300, X
+    LDA.w .magic_bag_tilemap+$400, X
+    STA.w $1400, X
+    LDA.w .magic_bag_tilemap+$500, X
+    STA.w $1500, X
+    LDA.w .magic_bag_tilemap+$600, X
+    STA.w $1600, X
+    LDA.w .magic_bag_tilemap+$700, X
+    STA.w $1700, X
+
+    DEX : DEX
+  BPL .loop
+  
+  RTS
+
+  .magic_bag_tilemap
+    incbin "tilemaps/song_menu.tilemap"
+}
+
 Menu_DrawMagicBag:
 {
   REP #$30

@@ -71,6 +71,7 @@ Menu_Entry:
   dw Menu_Exit               ; 0A
   dw Menu_InitiateScrollDown ; 0B
   dw Menu_MagicBag           ; 0C
+  dw Menu_SongMenu
 
 ; =========================================================
 ; 00 MENU INIT GRAPHICS 
@@ -212,10 +213,16 @@ Menu_ItemScreen:
     LSR : BCS .move_down
     LSR : BCS .move_up
 
+    
     LDA.w $0202 : CMP.b #$05 : BNE +
       LDA.b $F6 : BIT.b #$80 : BEQ +
         LDA.b #$0C : STA.w $0200 ; Magic Bag
     +
+    LDA.w $0202 : CMP.b #$0D : BNE ++
+      LDA.b $F6 : BIT.b #$80 : BEQ ++
+        LDA.b #$0D : STA.w $0200
+    ++
+
   BRA .no_inputs
 
   .move_right
@@ -495,10 +502,27 @@ Menu_MagicBag:
   RTS
 }
 
+Menu_SongMenu:
+{
+  JSR Menu_DrawSongMenu
+
+  SEP #$30
+
+  LDA.b $F6 : BIT.b #$80 : BEQ +
+    LDA.b #$02 : STA.w $0200
+  +
+
+  LDA.b #$22 : STA.w $0116
+  LDA.b #$01 : STA.b $17
+
+  RTS
+}
 
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
 quest_icons: incbin "tilemaps/quest_icons.tilemap"
 incsrc "menu_map_names.asm"
+print  "End of Menu/menu.asm              ", pc
 incsrc "menu_hud.asm"
+print  "End of Menu/menu_ud.asm           ", pc
 
 ; =========================================================

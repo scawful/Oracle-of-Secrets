@@ -125,7 +125,7 @@ namespace Oracle
   print ""
 
   incsrc "Menu/menu.asm"
-  print  "End of Menu/menu.asm              ", pc
+  
 
   ; -------------------------------------------------------
   ; Misc
