@@ -16,10 +16,10 @@ pullpc
 RanchGirl_Message:
 {
   LDA $7EF34C : CMP.b #$01 : BCS .has_ocarina
-  %ShowUnconditionalMessage($017D)
-  LDA #$01 : STA SprMiscD, X
-  RTL
-.has_ocarina
+    %ShowUnconditionalMessage($017D)
+    LDA #$01 : STA.w SprMiscD, X
+    RTL
+  .has_ocarina
   %ShowUnconditionalMessage($010E)
   RTL
 }
@@ -68,27 +68,27 @@ pushpc
 org $01AFECF
 ChickenLady:
 {
-    #_1AFECF: JSR .main
+  #_1AFECF: JSR .main
 
-    #_1AFED2: RTL
+  #_1AFED2: RTL
 
   .main
-    #_1AFED3: LDA.b #$01
-    #_1AFED5: STA.w $0DE0,X
+  #_1AFED3: LDA.b #$01
+  #_1AFED5: STA.w $0DE0,X
 
-    #_1AFED8: JSL SpriteDraw_RaceGameLady
-    #_1AFEDC: JSR Sprite_CheckIfActive_Bank1A
+  #_1AFED8: JSL SpriteDraw_RaceGameLady
+  #_1AFEDC: JSR Sprite_CheckIfActive_Bank1A
 
-    #_1AFEDF: LDA.w $0DF0,X
-    #_1AFEE2: CMP.b #$01
-    #_1AFEE4: BNE .no_message
+  #_1AFEDF: LDA.w $0DF0,X
+  #_1AFEE2: CMP.b #$01
+  #_1AFEE4: BNE .no_message
 
-    JSL RanchGirl_Message
+  JSL RanchGirl_Message
 
   .no_message
-    JSL RanchGirl_TeachSong
+  JSL RanchGirl_TeachSong
   .return
-    #_1AFEFF: RTS
+  #_1AFEFF: RTS
 }
 
 warnpc $01AFEFF

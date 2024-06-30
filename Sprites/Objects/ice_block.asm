@@ -32,27 +32,27 @@
 
 Sprite_IceBlock_Long:
 {
-    PHB : PHK : PLB
+  PHB : PHK : PLB
 
-    LDA.w $0DE0, X : BEQ .not_being_pushed
-      STZ.w $0DE0, X
-      STZ.b $5E : STZ.b $48
+  LDA.w SprMiscC, X : BEQ .not_being_pushed
+    STZ.w SprMiscC, X
+    STZ.b $5E : STZ.b $48
   .not_being_pushed
-    LDA.w $0DF0, X : BEQ .retain_momentum
-      LDA.b #$01 : STA.w $0DE0, X
-      LDA #$84 : STA $48 
-      LDA.b #$04 : STA.b $5E
+  LDA.w $0DF0, X : BEQ .retain_momentum
+    LDA.b #$01 : STA.w SprMiscC, X
+    LDA.b #$84 : STA $48 
+    LDA.b #$04 : STA.b $5E
   .retain_momentum
 
-    JSR Sprite_IceBlock_Draw ; Call the draw code
-    JSL Sprite_CheckActive   ; Check if game is not paused
-    BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
+  JSR Sprite_IceBlock_Draw ; Call the draw code
+  JSL Sprite_CheckActive   ; Check if game is not paused
+  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
-    JSR Sprite_IceBlock_Main ; Call the main sprite code
+  JSR Sprite_IceBlock_Main ; Call the main sprite code
 
   .SpriteIsNotActive
-    PLB ; Get back the databank we stored previously
-    RTL ; Go back to original code
+  PLB ; Get back the databank we stored previously
+  RTL ; Go back to original code
 }
 
 Sprite_IceBlock_Prep:
@@ -60,17 +60,16 @@ Sprite_IceBlock_Prep:
   PHB : PHK : PLB
     
   ; Cache Sprite position
-  LDA SprX, X : STA SprMiscD, X
-  LDA SprY, X : STA SprMiscE, X
-  LDA SprXH, X : STA SprMiscF, X
-  LDA SprYH, X : STA SprMiscG, X
+  LDA SprX, X : STA.w SprMiscD, X
+  LDA SprY, X : STA.w SprMiscE, X
+  LDA SprXH, X : STA.w SprMiscF, X
+  LDA SprYH, X : STA.w SprMiscG, X
 
   STZ.w $0CAA, X
 
   PLB
   RTL
 }
-
 
 StatueDirection:
 db $04, $06, $00, $02
@@ -85,8 +84,6 @@ db -16,  16 ; bleeds into next
 .y
 db   0,   0, -16,  16
 
-
-
 Sprite_IceBlock_Main:
 {
   LDA.w SprAction, X
@@ -98,54 +95,53 @@ Sprite_IceBlock_Main:
   ; 0x00
   MovementHandler:
   {
-      %PlayAnimation(0, 0, 1)
+    %PlayAnimation(0, 0, 1)
 
-      JSR Statue_BlockSprites
+    JSR Statue_BlockSprites
 
-      JSL Sprite_CheckDamageFromPlayerLong
-      BCC .no_damage
-        LDA SprMiscD, X : STA SprX, X
-        LDA SprMiscE, X : STA SprY, X
-        LDA SprMiscF, X : STA SprXH, X
-        LDA SprMiscG, X : STA SprYH, X
-        STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    JSL Sprite_CheckDamageFromPlayerLong
+    BCC .no_damage
+      LDA SprMiscD, X : STA.w SprX, X
+      LDA SprMiscE, X : STA.w SprY, X
+      LDA SprMiscF, X : STA.w SprXH, X
+      LDA SprMiscG, X : STA.w SprYH, X
+      STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
     .no_damage
 
-      ; JSR IceBlock_CheckForGround
+    ; JSR IceBlock_CheckForGround
 
-      STZ.w $0642
-      JSR Sprite_IceBlock_CheckForSwitch : BCC .no_switch
-        STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
-        LDA.b #$01 : STA.w $0642
-
+    STZ.w $0642
+    JSR Sprite_IceBlock_CheckForSwitch : BCC .no_switch
+      STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+      LDA.b #$01 : STA.w $0642
     .no_switch
 
-      JSL Sprite_Move ; Sprite MoveXY 
-      JSL Sprite_Get_16_bit_Coords ; Get 16bit coords
-      JSL Sprite_CheckTileCollision ; Check Tile collision
-      JSL Sprite_CheckDamageToPlayerSameLayer
-      BCC NotInContact
-      JSR ApplyPush
-      ; Set timer 
-      LDA.b #$07 : STA.w $0DF0, X
+    JSL Sprite_Move ; Sprite MoveXY 
+    JSL Sprite_Get_16_bit_Coords ; Get 16bit coords
+    JSL Sprite_CheckTileCollision ; Check Tile collision
+    JSL Sprite_CheckDamageToPlayerSameLayer
+    BCC NotInContact
+    JSR ApplyPush
+    ; Set timer 
+    LDA.b #$07 : STA.w $0DF0, X
 
-      JSL $079291 ; Sprite_RepelDash_long
+    JSL $079291 ; Sprite_RepelDash_long
 
-      LDA.w $0E00,X : BNE Statue_CancelHookshot
-      ; JSL Sprite_DirectionToFacePlayer
-      ; LDA.w StatueSpeed_x,Y
-      ; STA.w $0D50,X
-      ; LDA.w StatueSpeed_y,Y
-      ; STA.w $0D40,X
-      ; JSR Statue_HandleGrab
-      
-      LDA SprX, X : AND #$F0 : STA SprX, X
-      LDA SprY, X : AND #$F0 : STA SprY, X
-      RTS
+    LDA.w $0E00,X : BNE Statue_CancelHookshot
+    ; JSL Sprite_DirectionToFacePlayer
+    ; LDA.w StatueSpeed_x,Y
+    ; STA.w SprXSpeed,X
+    ; LDA.w StatueSpeed_y,Y
+    ; STA.w SprYSpeed,X
+    ; JSR Statue_HandleGrab
+    
+    LDA SprX, X : AND #$F0 : STA.w SprX, X
+    LDA SprY, X : AND #$F0 : STA.w SprY, X
+    RTS
     .not_in_contact
-      %GotoAction(1)
+    %GotoAction(1)
     .dont_move
-      RTS
+    RTS
   }
 
   Statue_CancelHookshot:
@@ -164,12 +160,12 @@ Sprite_IceBlock_Main:
     .delay_timer
 
     REP #$20
-    LDA.w $0FD8
+    LDA.w SprCachedX
     SEC : SBC.b $22
     CLC : ADC.w #$0010
     CMP.w #$0023 : BCS .reset_contact
 
-    LDA.w $0FDA
+    LDA.w SprCachedY
     SEC : SBC.b $20
     CLC : ADC.w #$000C
     CMP.w #$0024 : BCS .reset_contact
@@ -181,7 +177,7 @@ Sprite_IceBlock_Main:
     ; CMP.w StatueDirection,Y : BNE .reset_contact
     ; LDA.w $0372 : BNE .reset_contact
     ; LDA.b #$01 : STA.w $02FA
-    ; LDA.b #$01 : STA.w $0D90,X
+    ; LDA.b #$01 : STA.w SprFrame,X
     ; LDA.w $0376 : AND.b #$02 : BEQ .exit
 
     ; LDA.b $F0 : AND.w StatuePressMask,Y : BEQ .exit
@@ -190,17 +186,17 @@ Sprite_IceBlock_Main:
 
     ; TYA : EOR.b #$01 : TAY
 
-    ; LDA.w StatueSpeed_x,Y : STA.w $0D50,X
+    ; LDA.w StatueSpeed_x,Y : STA.w SprXSpeed,X
 
-    ; LDA.w StatueSpeed_y,Y : STA.w $0D40,X
+    ; LDA.w StatueSpeed_y,Y : STA.w SprYSpeed,X
 
     ; JMP.w Statue_HandleGrab
 
     .reset_contact
     SEP #$30
 
-    LDA.w $0D90,X : BEQ .exit
-    STZ.w $0D90,X
+    LDA.w SprFrame,X : BEQ .exit
+    STZ.w SprFrame,X
 
     STZ.b $5E
     STZ.w $0376
@@ -222,20 +218,20 @@ Sprite_IceBlock_Main:
       CMP.b #$08 : BEQ .push_up
 
     .push_right
-      LDA #16 : STA.w $0D50,X
-      LDA #00 : STA.w $0D40,X
+      LDA #16 : STA.w SprXSpeed,X
+      LDA #00 : STA.w SprYSpeed,X
       JMP .push_done
     .push_left
-      LDA #-16 : STA.w $0D50,X
-      LDA #00 : STA.w $0D40,X
+      LDA #-16 : STA.w SprXSpeed,X
+      LDA #00 : STA.w SprYSpeed,X
       JMP .push_done
     .push_down
-      LDA #00 : STA.w $0D50,X
-      LDA #16 : STA.w $0D40,X
+      LDA #00 : STA.w SprXSpeed,X
+      LDA #16 : STA.w SprYSpeed,X
       JMP .push_done
     .push_up
-      LDA #00 : STA.w $0D50,X
-      LDA #-16 : STA.w $0D40,X
+      LDA #00 : STA.w SprXSpeed,X
+      LDA #-16 : STA.w SprYSpeed,X
 
     .push_done
 
@@ -247,10 +243,10 @@ Sprite_IceBlock_Main:
 ; Currently unused as it doesnt play well with the hitbox choices
 IceBlock_CheckForGround:
 {
-  LDA.w $0D00,X : CLC : ADC.b #$08 : STA.b $00
-  LDA.w $0D20,X : ADC.b #$00 : STA.b $01
-  LDA.w $0D10,X : STA.b $02
-  LDA.w $0D30,X : ADC.b #$00 : STA.b $03
+  LDA.w SprY,X : CLC : ADC.b #$08 : STA.b $00
+  LDA.w SprYH,X : ADC.b #$00 : STA.b $01
+  LDA.w SprX,X : STA.b $02
+  LDA.w SprXH,X : ADC.b #$00 : STA.b $03
   LDA.w $0F20,X
   PHY
   JSL $06E87B ; GetTileType_long
@@ -261,43 +257,43 @@ IceBlock_CheckForGround:
   SEC
   RTS
 .stop
-  STZ.w $0D50,X
-  STZ.w $0D40,X
+  STZ.w SprXSpeed,X
+  STZ.w SprYSpeed,X
   CLC
   RTS
 }
 
 Sprite_IceBlock_CheckForSwitch:
 {
-    LDY.b #$03
+  LDY.b #$03
 
   .next_tile
-    LDA.w $0D00,X : CLC : ADC.w .offset_y,Y : STA.b $00
-    LDA.w $0D20,X : ADC.b #$00 : STA.b $01
-    LDA.w $0D10,X : CLC : ADC.w .offset_x,Y : STA.b $02
-    LDA.w $0D30,X : ADC.b #$00 : STA.b $03
-    LDA.w $0F20,X
+  LDA.w SprY,X : CLC : ADC.w .offset_y,Y : STA.b $00
+  LDA.w SprYH,X : ADC.b #$00 : STA.b $01
+  LDA.w SprX,X : CLC : ADC.w .offset_x,Y : STA.b $02
+  LDA.w SprXH,X : ADC.b #$00 : STA.b $03
+  LDA.w $0F20,X
 
-    PHY
-    JSL $06E87B ; GetTileType_long
-    PLY
+  PHY
+  JSL $06E87B ; GetTileType_long
+  PLY
 
-    LDA.w $0FA5
-    CMP.w .tile_id+0 : BEQ .switch_tile
-    CMP.w .tile_id+1 : BEQ .switch_tile
-    CMP.w .tile_id+2 : BEQ .switch_tile
-    CMP.w .tile_id+3 : BNE .fail
+  LDA.w $0FA5
+  CMP.w .tile_id+0 : BEQ .switch_tile
+  CMP.w .tile_id+1 : BEQ .switch_tile
+  CMP.w .tile_id+2 : BEQ .switch_tile
+  CMP.w .tile_id+3 : BNE .fail
 
   .switch_tile
-    DEY
-    BPL .next_tile
+  DEY
+  BPL .next_tile
 
-    SEC
-    RTS
+  SEC
+  RTS
 
   .fail
-    CLC
-    RTS
+  CLC
+  RTS
 
   .offset_x
     db   3,  12,   3,  12
@@ -331,21 +327,21 @@ Statue_BlockSprites:
   CMP.b #$09
   BCC .skip
 
-  LDA.w $0D10,Y
+  LDA.w SprX,Y
   STA.b $04
 
-  LDA.w $0D30,Y
+  LDA.w SprXH,Y
   STA.b $05
 
-  LDA.w $0D00,Y
+  LDA.w SprY,Y
   STA.b $06
 
-  LDA.w $0D20,Y
+  LDA.w SprYH,Y
   STA.b $07
 
   REP #$20
 
-  LDA.w $0FD8
+  LDA.w SprCachedX
   SEC
   SBC.b $04
   CLC
@@ -354,7 +350,7 @@ Statue_BlockSprites:
   CMP.w #$0018
   BCS .skip
 
-  LDA.w $0FDA
+  LDA.w SprCachedY
   SEC
   SBC.b $06
   CLC
@@ -396,7 +392,7 @@ Sprite_IceBlock_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA $0DC0, X : CLC : ADC SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
 

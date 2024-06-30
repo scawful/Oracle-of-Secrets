@@ -125,10 +125,10 @@ LinkItem_FishingRod:
   LDA.b #$74
   JSL $1DF65D ; Sprite_SpawnDynamically because whatever
 
-  LDA.b $22 : STA.w $0D10, Y
-  LDA.b $23 : STA.w $0D30, Y
-  LDA.b $20 : STA.w $0D00, Y
-  LDA.b $21 : STA.w $0D20, Y
+  LDA.b $22 : STA.w SprX, Y
+  LDA.b $23 : STA.w SprXH, Y
+  LDA.b $20 : STA.w SprY, Y
+  LDA.b $21 : STA.w SprYH, Y
   LDA.b #$01 : STA.w $0E70, Y ; is floater
   TYA : STA.l $7F5BA3 ; keep the index of the sprite
   TYX

@@ -180,7 +180,7 @@ Sprite_Octoboss_Main:
         LDA.b #$49
         LDY.b #$00
         JSL Sprite_ShowMessageUnconditional
-        LDA #$16 : STA SprTimerC, X
+        LDA #$16 : STA.w SprTimerC, X
         INC.w SprAction, X
     +
     RTS
@@ -919,20 +919,20 @@ SpawnBossPoof:
   LDA.b $00
   CLC
   ADC.b #$10
-  STA.w $0D10,Y
+  STA.w SprX,Y
 
   LDA.b $01
   ADC.b #$00
-  STA.w $0D30,Y
+  STA.w SprXH,Y
 
   LDA.b $02
   CLC
   ADC.b #$08
-  STA.w $0D00,Y
+  STA.w SprY,Y
 
   LDA.b $03
   ADC.b #$00
-  STA.w $0D20,Y
+  STA.w SprYH,Y
 
   LDA.b #$0F
   STA.w $0DC0,Y
@@ -978,18 +978,18 @@ HandleMovingSplash:
   STA.l $7FF800,X
   STA.w $0FB4
 
-  LDA.w $0D10,Y
+  LDA.w SprX,Y
   STA.l $7FF83C,X
 
-  LDA.w $0D30,Y
+  LDA.w SprXH,Y
   STA.l $7FF878,X
 
-  LDA.w $0D00,Y
+  LDA.w SprY,Y
   CLC
   ADC.b #$18
   STA.l $7FF81E,X
 
-  LDA.w $0D20,Y
+  LDA.w SprYH,Y
   STA.l $7FF85A,X
 
   LDA.b #$0F

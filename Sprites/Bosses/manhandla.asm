@@ -493,7 +493,7 @@ Manhandla_StopIfOutOfBounds:
   LDA SprCachedX : CMP.w #$153A : BCS .not_out_of_bounds_Left
     SEP #$20
     LDA.w SprXSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Left
-      LDA.b #-08 : STA.w SprXSpeed : STA SprXRound
+      LDA.b #-08 : STA.w SprXSpeed : STA.w SprXRound
 
   .not_out_of_bounds_Left
   SEP #$20
@@ -502,7 +502,7 @@ Manhandla_StopIfOutOfBounds:
   LDA SprCachedX : CMP.w #$15C8 : BCC .not_out_of_bounds_Right
     SEP #$20
     LDA.w SprXSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Right
-      LDA.b #$08 : STA.w SprXSpeed : STA SprXRound
+      LDA.b #$08 : STA.w SprXSpeed : STA.w SprXRound
 
   .not_out_of_bounds_Right
   SEP #$20
@@ -512,7 +512,7 @@ Manhandla_StopIfOutOfBounds:
   LDA SprCachedY : CMP.w #$0B3A : BCS .not_out_of_bounds_Up
     SEP #$20
     LDA.w SprYSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Up
-      LDA.b #$08 : STA.w SprYSpeed : STA SprYRound
+      LDA.b #$08 : STA.w SprYSpeed : STA.w SprYRound
 
   .not_out_of_bounds_Up
   SEP #$20
@@ -521,7 +521,7 @@ Manhandla_StopIfOutOfBounds:
   LDA   SprCachedY : CMP.w #$0BA6 : BCC .not_out_of_bounds_Down
     SEP #$20
     LDA.w SprYSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Down
-        LDA.b #-08 : STA.w SprYSpeed : STA SprYRound ; Reverse the direction
+        LDA.b #-08 : STA.w SprYSpeed : STA.w SprYRound ; Reverse the direction
 
   .not_out_of_bounds_Down
   SEP #$20
@@ -817,7 +817,7 @@ Mothula_SpawnBeams:
 
   LDA.b $02 : SEC : SBC.b $04
 
-  CLC : ADC.b #$03 : STA.w $0D00,Y
+  CLC : ADC.b #$03 : STA.w SprY,Y
 
   LDA.b #$10 : STA.w $0DF0,Y : STA.w $0BA0,Y
 
@@ -826,7 +826,7 @@ Mothula_SpawnBeams:
   LDX.w $0FB5
 
   LDA.b $00 : CLC : ADC.w .speed_and_offset_x,X
-  STA.w $0D10,Y
+  STA.w SprX,Y
 
   LDA.w .speed_and_offset_x,X : STA.w $0D50,Y
 

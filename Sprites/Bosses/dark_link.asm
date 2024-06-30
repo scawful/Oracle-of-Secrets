@@ -490,8 +490,8 @@ Sprite_DarkLink_Main:
       JSL GetRandomInt
       AND #$03
       TAY
-      LDA speedTableX, Y : STA SprXSpeed, X
-      LDA speedTableY, Y : STA SprYSpeed, X
+      LDA speedTableX, Y : STA.w SprXSpeed, X
+      LDA speedTableY, Y : STA.w SprYSpeed, X
 
       RTS
     }
@@ -1527,11 +1527,11 @@ GanonInit:
   LDA #$C1
   JSL Sprite_SpawnDynamically
   LDA #$05 : STA.w SprSubtype, Y
-  LDA $00 : STA $0D10, Y
-  LDA $01 : STA.w $0D30, Y
+  LDA $00 : STA.w SprX, Y
+  LDA $01 : STA.w SprXH, Y
   
-  LDA $02 : STA.w $0D00, Y
-  LDA $03 : STA.w $0D20, Y
+  LDA $02 : STA.w SprY, Y
+  LDA $03 : STA.w SprYH, Y
 
   LDA.b #$30 : STA.w SprTimerA, Y  
   LDA #$1C : STA.w $012C

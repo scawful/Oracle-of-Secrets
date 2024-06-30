@@ -73,9 +73,9 @@ Sprite_Wolfos_Prep:
 Sprite_Wolfos_CheckIfDefeated:
 {
   LDA.w SprHealth, X : CMP.b #$10 : BCS .not_defeated
-    LDA.b #$06 : STA SprAction, X ; Set to defeated
-    LDA.b #$09 : STA SprState, X 
-    LDA.b #$40 : STA SprHealth, X ; Refill the health of the sprite
+    LDA.b #$06 : STA.w SprAction, X ; Set to defeated
+    LDA.b #$09 : STA.w SprState, X 
+    LDA.b #$40 : STA.w SprHealth, X ; Refill the health of the sprite
     STZ.w SprMiscD, X
     RTS
   .not_defeated
@@ -104,9 +104,9 @@ Wolfos_DecideAction:
 
   JSL Sprite_DirectionToFacePlayer
   LDA $0E ; y distance from player
-  STA SprMiscC, X
+  STA.w SprMiscC, X
   LDA $0F ; x distance from player
-  STA SprMiscB, X
+  STA.w SprMiscB, X
 
   LDA SprMiscC, X
   CMP #$10 ; Check if y distance is significant
@@ -165,7 +165,7 @@ Sprite_Wolfos_Main:
     STA.w SprYSpeed, X
 
     LDA #$30
-    STA SprTimerA, X
+    STA.w SprTimerA, X
 
     RTS
   }
@@ -179,7 +179,7 @@ Sprite_Wolfos_Main:
     STA.w SprYSpeed, X
 
     LDA #$30
-    STA SprTimerA, X
+    STA.w SprTimerA, X
 
     RTS
   }
@@ -199,7 +199,7 @@ Sprite_Wolfos_Main:
     +
 
     LDA #$30
-    STA SprTimerA, X
+    STA.w SprTimerA, X
 
     RTS
   }
@@ -219,7 +219,7 @@ Sprite_Wolfos_Main:
     +
 
     LDA #$30
-    STA SprTimerA, X
+    STA.w SprTimerA, X
 
     RTS
   }
@@ -274,7 +274,7 @@ Sprite_Wolfos_Main:
     ; Run the dialogue and wait for a song of healing flag to be set
     LDA SprMiscD, X : BNE .wait
       %ShowUnconditionalMessage($0F)
-      LDA.b #$01 : STA SprMiscD, X
+      LDA.b #$01 : STA.w SprMiscD, X
     .wait
     LDA   $FE : BEQ .ninguna_cancion
       STZ   $FE

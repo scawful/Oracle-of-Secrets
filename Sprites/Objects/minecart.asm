@@ -100,13 +100,13 @@ Sprite_Minecart_Prep:
     ; If the subtype is > 4, then it's an active cart
     LDA.w SprSubtype, X : CMP.b #$04 : BCC .continue
       LDA.w SprSubtype, X : SEC : SBC.b #$04 : STA.w SprSubtype, X
-      LDA.b #$01 : STA SprMiscF, X ; Set the auto-move flag
+      LDA.b #$01 : STA.w SprMiscF, X ; Set the auto-move flag
     .continue
     LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
     LDA #$04 : STA $0E40, X ; Nbr Oam Entries 
     LDA #$40 : STA $0E60, x ; Impervious props 
     LDA #$E0 : STA $0F60, X ; Persist 
-    LDA #$00 : STA SprBump, X ; No bump damage 
+    LDA #$00 : STA.w SprBump, X ; No bump damage 
     LDA #$00 : STA $0B6B, X ; Set interactive hitbox? 
 
     STZ.w !MinecartDirection
@@ -187,31 +187,31 @@ HandleToss:
             CMP.b #$04 : BEQ .toss_east
             CMP.b #$06 : BEQ .toss_west
   .toss_north
-    LDA.b #-!DoubleSpeed : STA SprYSpeed, X
-    LDA #$00 : STA SprSubtype, X : STA !SpriteDirection, X
+    LDA.b #-!DoubleSpeed : STA.w SprYSpeed, X
+    LDA #$00 : STA.w SprSubtype, X : STA !SpriteDirection, X
     %GotoAction(1) ; Minecart_WaitVert
     JMP .continue
   .toss_south 
-    LDA.b #!DoubleSpeed : STA SprYSpeed, X
-    LDA #$02 : STA SprSubtype,       X
+    LDA.b #!DoubleSpeed : STA.w SprYSpeed, X
+    LDA #$02 : STA.w SprSubtype,       X
     LDA #$01 : STA !SpriteDirection, X
     %GotoAction(1) ; Minecart_WaitVert
     JMP .continue
   .toss_east
-    LDA.b #-!DoubleSpeed : STA SprXSpeed, X
-    LDA #$01 : STA SprSubtype,       X
+    LDA.b #-!DoubleSpeed : STA.w SprXSpeed, X
+    LDA #$01 : STA.w SprSubtype,       X
     LDA #$03 : STA !SpriteDirection, X
     %GotoAction(0) ; Minecart_WaitHoriz
     JMP .continue
   .toss_west
-    LDA.b #!DoubleSpeed : STA SprXSpeed, X
-    LDA #$03 : STA SprSubtype,       X
+    LDA.b #!DoubleSpeed : STA.w SprXSpeed, X
+    LDA #$03 : STA.w SprSubtype,       X
     LDA #$02 : STA !SpriteDirection, X
     %GotoAction(0) ; Minecart_WaitHoriz
   .continue
-  LDA #$01 : STA SprMiscG, X
-  LDA #$12 : STA SprTimerC, X
-  STA SprYRound, X : STA SprXRound, X
+  LDA #$01 : STA.w SprMiscG, X
+  LDA #$12 : STA.w SprTimerC, X
+  STA.w SprYRound, X : STA.w SprXRound, X
   RTS
 }
 
@@ -236,8 +236,8 @@ HandleTossedCart:
     .low_enough
 
     LDA.w SprTimerC, X : BNE .not_tossed
-      LDA SprX, X : AND.b #$F8 : STA SprX, X
-      LDA SprY, X : AND.b #$F8 : STA SprY, X
+      LDA SprX, X : AND.b #$F8 : STA.w SprX, X
+      LDA SprY, X : AND.b #$F8 : STA.w SprY, X
       STZ.w SprMiscG, X
       STZ.w SprYSpeed, X
       STZ.w SprXSpeed, X
@@ -339,10 +339,10 @@ Sprite_Minecart_Main:
       %InitMovement()
 
       LDA $36 : BNE .fast_speed
-        LDA.b #-!MinecartSpeed : STA SprYSpeed, X
+        LDA.b #-!MinecartSpeed : STA.w SprYSpeed, X
         JMP   .continue
     .fast_speed
-      LDA.b #-!DoubleSpeed : STA SprYSpeed, X
+      LDA.b #-!DoubleSpeed : STA.w SprYSpeed, X
     .continue
       JSL Sprite_MoveVert
 
@@ -389,10 +389,10 @@ Sprite_Minecart_Main:
       %InitMovement()
 
       LDA $36 : BNE .fast_speed
-        LDA.b #!MinecartSpeed : STA SprYSpeed, X
+        LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
         JMP   .continue
     .fast_speed
-        LDA.b #!DoubleSpeed : STA SprYSpeed, X
+        LDA.b #!DoubleSpeed : STA.w SprYSpeed, X
     .continue
       JSL Sprite_MoveVert
 
@@ -439,7 +439,7 @@ Sprite_Minecart_Main:
       %StopCart()
 
       LDA SprTimerD, X : BNE .not_ready
-        LDA #$40 : STA SprTimerA, X
+        LDA #$40 : STA.w SprTimerA, X
         LDA.w !SpriteDirection, X : CMP.b #$00 : BEQ .vert
           CMP.b #$02 : BEQ .vert
           JMP .horiz
@@ -478,7 +478,7 @@ HandleTileDirections:
 
     CMP.b #$02 : BNE .not_out_of_bounds
       ; If the tile is out of bounds, release the cart
-      LDA #$40 : STA SprTimerD, X
+      LDA #$40 : STA.w SprTimerD, X
       %GotoAction(6) ; Minecart_Release
       RTS
     
@@ -492,13 +492,13 @@ HandleTileDirections:
 
     .stop_north
       ; Set the new direction to north and flip the cart's orientation
-      LDA.b #South : STA SprSubtype,       X : STA.w !MinecartDirection
+      LDA.b #South : STA.w SprSubtype,       X : STA.w !MinecartDirection
       LDA   #$01   : STA !SpriteDirection, X
       JMP   .go_vert
     
     .stop_south
       ; Set the new direction to south and flip the cart's orientation
-      LDA.b #North : STA SprSubtype,       X : STZ.w !MinecartDirection
+      LDA.b #North : STA.w SprSubtype,       X : STZ.w !MinecartDirection
       LDA   #$00   : STA !SpriteDirection, X
       
     ; -----------------------------------------------
@@ -511,13 +511,13 @@ HandleTileDirections:
     
     .stop_east
       ; Set the new direction to east and flip the cart's orientation
-      LDA.b #West : STA SprSubtype,       X : STA.w !MinecartDirection
+      LDA.b #West : STA.w SprSubtype,       X : STA.w !MinecartDirection
       LDA   #$02  : STA !SpriteDirection, X
       JMP   .go_horiz
     
     .stop_west
       ; Set the new direction to west and flip the cart's orientation
-      LDA.b #East : STA SprSubtype,       X : STA.w !MinecartDirection
+      LDA.b #East : STA.w SprSubtype,       X : STA.w !MinecartDirection
       LDA   #$03  : STA !SpriteDirection, X
       
     ; -----------------------------------------------
@@ -541,20 +541,20 @@ HandleTileDirections:
     .horiz
       ; Are we moving left or right?
       LDA SprSubtype, X : CMP.b #$03 : BEQ .inverse_horiz_velocity
-        LDA.b #!MinecartSpeed : STA SprXSpeed, X
+        LDA.b #!MinecartSpeed : STA.w SprXSpeed, X
         LDA.b #East : STA !MinecartDirection
         JMP .done
       .inverse_horiz_velocity
-        LDA.b #-!MinecartSpeed : STA SprXSpeed, X
+        LDA.b #-!MinecartSpeed : STA.w SprXSpeed, X
         LDA.b #West : STA !MinecartDirection
         JMP .done
     .vert
       ; Are we moving up or down?
       LDA SprSubtype, X : CMP.b #$00 : BEQ .inverse_vert_velocity
-        LDA.b #!MinecartSpeed : STA SprYSpeed, X
+        LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
         JMP .done
     .inverse_vert_velocity
-        LDA.b #-!MinecartSpeed : STA SprYSpeed, X
+        LDA.b #-!MinecartSpeed : STA.w SprYSpeed, X
         JMP .done
         
     .check_direction
@@ -575,31 +575,31 @@ HandleTileDirections:
         JMP .done
 
         .move_north
-          LDA #$00 : STA SprSubtype, X : STA !MinecartDirection
+          LDA #$00 : STA.w SprSubtype, X : STA !MinecartDirection
           STA !SpriteDirection,      X
           %GotoAction(2) ; Minecart_MoveNorth
-          LDA SprX, X : AND #$F8 : STA SprX, X
+          LDA SprX, X : AND #$F8 : STA.w SprX, X
           RTS
         .move_east
-          LDA #$01 : STA SprSubtype, X : STA !MinecartDirection
+          LDA #$01 : STA.w SprSubtype, X : STA !MinecartDirection
           STA !MinecartDirection
           LDA #$03 : STA !SpriteDirection, X
-          LDA SprY, X : AND #$F8 : STA SprY, X
+          LDA SprY, X : AND #$F8 : STA.w SprY, X
           %GotoAction(3) ; Minecart_MoveEast
           RTS
         .move_south
-          LDA #$02 : STA SprSubtype, X : STA !MinecartDirection
+          LDA #$02 : STA.w SprSubtype, X : STA !MinecartDirection
           LDA #$01 : STA !SpriteDirection, X
           %GotoAction(4) ; Minecart_MoveSouth
-          LDA SprX, X : AND #$F8 : STA SprX, X
+          LDA SprX, X : AND #$F8 : STA.w SprX, X
           RTS
         .move_west
-          LDA #$03 : STA SprSubtype, X : STA !MinecartDirection
+          LDA #$03 : STA.w SprSubtype, X : STA !MinecartDirection
           LDA #$02 : STA !SpriteDirection, X
-          LDA SprY, X : AND #$F8 : STA SprY, X
+          LDA SprY, X : AND #$F8 : STA.w SprY, X
           %GotoAction(5) ; Minecart_MoveWest
       .done
-        LDA #$04 : STA SprTimerA, X
+        LDA #$04 : STA.w SprTimerA, X
         RTS
 
   ; Direction to move on tile collision
@@ -658,36 +658,36 @@ HandleDynamicSwitchTileDirections:
 
       .east_or_west
         LDA SwitchRam : BNE .go_west
-        LDA #$01 : STA SprSubtype,       X
+        LDA #$01 : STA.w SprSubtype,       X
         STA.w !MinecartDirection
         LDA #$03 : STA !SpriteDirection, X
         %GotoAction(3) ; Minecart_MoveEast
-        ; LDA SprY, X : AND #$F8 : STA SprY, X
+        ; LDA SprY, X : AND #$F8 : STA.w SprY, X
         RTS
 
       .go_west
-        LDA #$03 : STA SprSubtype,       X
+        LDA #$03 : STA.w SprSubtype,       X
         STA.w !MinecartDirection
         LDA #$02 : STA !SpriteDirection, X
         %GotoAction(5) ; Minecart_MoveWest
-        ; LDA SprY, X : AND #$F8 : STA SprY, X
+        ; LDA SprY, X : AND #$F8 : STA.w SprY, X
         RTS
 
       .north_or_south
         LDA SwitchRam : BNE .go_south
-        LDA #$00 : STA SprSubtype, X
+        LDA #$00 : STA.w SprSubtype, X
         STA.w !MinecartDirection
         STA !SpriteDirection,      X
         %GotoAction(2) ; Minecart_MoveNorth
-        ; LDA SprX, X : AND #$F8 : STA SprX, X
+        ; LDA SprX, X : AND #$F8 : STA.w SprX, X
         RTS
 
       .go_south
-        LDA #$02 : STA SprSubtype,       X
+        LDA #$02 : STA.w SprSubtype,       X
         STA.w !MinecartDirection
         LDA #$01 : STA !SpriteDirection, X
         %GotoAction(4) ; Minecart_MoveSouth
-        ; LDA SprX, X : AND #$F8 : STA SprX, X
+        ; LDA SprX, X : AND #$F8 : STA.w SprX, X
         RTS
 
 
@@ -753,7 +753,7 @@ CheckForPlayerInput:
       LDA.b #$01 : STA !SpriteDirection, X
 
       LDA.b #South : STA !MinecartDirection
-      STA SprSubtype, X
+      STA.w SprSubtype, X
       %GotoAction(4) ; Minecart_MoveSouth
       BRA   .return
 
@@ -762,7 +762,7 @@ CheckForPlayerInput:
       LDA.b #$02 : STA !SpriteDirection, X
       
       LDA.b  #West : STA !MinecartDirection
-      STA SprSubtype, X
+      STA.w SprSubtype, X
       %GotoAction(5) ; Minecart_MoveWest
       BRA   .return
 
@@ -1070,15 +1070,15 @@ DrawMinecartFollower:
       JSL Sprite_SetSpawnedCoords
       LDA.w !MinecartDirection : CMP.b #$00 : BEQ .vert_adjust
                                  CMP.b #$02 : BEQ .vert_adjust
-        LDA POSY : CLC : ADC #$08 : STA SprY, X
-        LDA POSX : STA SprX, X
+        LDA POSY : CLC : ADC #$08 : STA.w SprY, X
+        LDA POSX : STA.w SprX, X
         JMP .finish_prep
       .vert_adjust
-        LDA POSY : STA SprY, X
-        LDA POSX : CLC : ADC #$02 : STA SprX, X
+        LDA POSY : STA.w SprY, X
+        LDA POSX : CLC : ADC #$02 : STA.w SprX, X
       .finish_prep
-      LDA POSYH : STA SprYH, X
-      LDA POSXH : STA SprXH, X
+      LDA POSYH : STA.w SprYH, X
+      LDA POSXH : STA.w SprXH, X
       LDA.w !MinecartDirection : CLC : ADC.b #$04 : STA.w SprSubtype, X
       LDA .direction_to_anim, X : STA $0D90, X
       JSL Sprite_Minecart_Prep

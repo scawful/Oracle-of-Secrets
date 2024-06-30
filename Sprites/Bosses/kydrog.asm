@@ -196,7 +196,7 @@ Sprite_Kydrog_Draw:
       
   TYA : LSR #2 : TAY
       
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
       
   PLY : INY
       
@@ -220,6 +220,4 @@ Sprite_Kydrog_Draw:
     db $CC, $CE, $EE, $EC, $E8, $EA
   .properties
     db $39, $39, $39, $39, $39, $39
-  .sizes
-    db $02, $02, $02, $02, $02, $02
 }

@@ -61,7 +61,7 @@ Sprite_Portal_Prep:
   
   ; Persist outside of camera  
   LDA #$00 : STA $0CAA, X 
-  LDA SprHitbox, X : AND.b #$C0 : STA SprHitbox, X
+  LDA SprHitbox, X : AND.b #$C0 : STA.w SprHitbox, X
   STZ.w $0B6B, X
   LDA.b #$FF : STA.w $0BA0, X
 
@@ -114,8 +114,8 @@ Sprite_Portal_Main:
     LDA $7E0FA6 : BNE .BluePortal
       LDA #$01 : STA $0307
       TXA : STA.w OrangeSpriteIndex
-      LDA $0D00, X : STA OrangePortal_X
-      LDA $0D10, X : STA OrangePortal_Y
+      LDA SprY, X : STA OrangePortal_X
+      LDA SprX, X : STA OrangePortal_Y
       LDA.b #$01 : STA.w SprSubtype, X
       
       %GotoAction(2)
@@ -123,8 +123,8 @@ Sprite_Portal_Main:
     .BluePortal
     LDA #$02 : STA $0307
     TXA : STA.w BlueSpriteIndex
-    LDA $0D00, X : STA BluePortal_X
-    LDA $0D10, X : STA BluePortal_Y
+    LDA SprY, X : STA BluePortal_X
+    LDA SprX, X : STA BluePortal_Y
     LDA.b #$02 : STA.w SprSubtype, X
     
     %GotoAction(1)
@@ -211,10 +211,10 @@ Sprite_Portal_Main:
   
     PHX
     LDA OrangeSpriteIndex : TAX
-    LDA #$40 : STA SprTimerD, X
-    LDA $0D00,                X : STA $7EC184
+    LDA #$40 : STA.w SprTimerD, X
+    LDA SprY,                X : STA $7EC184
     STA BluePortal_Y
-    LDA $0D10,                X : STA $7EC186
+    LDA SprX,                X : STA $7EC186
     STA BluePortal_X
     PLX
 
@@ -240,10 +240,10 @@ Sprite_Portal_Main:
 
     PHX
     LDA BlueSpriteIndex : TAX
-    LDA #$40 : STA SprTimerD, X
-    LDA $0D00,                X : STA $7EC184
+    LDA #$40 : STA.w SprTimerD, X
+    LDA SprY,                X : STA $7EC184
     STA OrangePortal_Y
-    LDA $0D10,                X : STA $7EC186
+    LDA SprX,                X : STA $7EC186
     STA OrangePortal_X
     PLX
 
@@ -266,7 +266,7 @@ Sprite_Portal_Main:
 
     PHX ; Infinite loop prevention protocol
     LDA OrangeSpriteIndex : TAX
-    LDA #$40 : STA SprTimerD, X
+    LDA #$40 : STA.w SprTimerD, X
     
     PLX
 
@@ -290,7 +290,7 @@ Sprite_Portal_Main:
 
     PHX
     LDA BlueSpriteIndex : TAX
-    LDA #$40 : STA SprTimerD, X
+    LDA #$40 : STA.w SprTimerD, X
     PLX
 
     LDA #$01 : STA $5D

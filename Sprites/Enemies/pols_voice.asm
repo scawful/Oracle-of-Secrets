@@ -84,7 +84,7 @@ Sprite_PolsVoice_Main:
     %DoDamageToPlayerSameLayerOnContact()
 
     JSL GetRandomInt : AND #$3F : BNE .not_done
-      LDA #$04 : STA SprTimerA, X
+      LDA #$04 : STA.w SprTimerA, X
       %GotoAction(1)
     .not_done
 
@@ -102,9 +102,9 @@ Sprite_PolsVoice_Main:
         LDA #$20 : STA.w SprXSpeed, X
         BRA .not_left
       .not_right
-      LDA #$E0 : STA SprXSpeed, X
+      LDA #$E0 : STA.w SprXSpeed, X
       .not_left
-      LDA #$04 : STA SprTimerA, X
+      LDA #$04 : STA.w SprTimerA, X
       %GotoAction(1)
     .no_damage
     RTS

@@ -137,8 +137,8 @@ Sprite_FloatTowardPlayer:
 
 Sprite_FloatAwayFromPlayer:
 {
-  LDA SprXSpeed, X : EOR.b #$FF : INC : STA SprXSpeed, X
-  LDA SprYSpeed, X : EOR.b #$FF : INC : STA SprYSpeed, X
+  LDA SprXSpeed, X : EOR.b #$FF : INC : STA.w SprXSpeed, X
+  LDA SprYSpeed, X : EOR.b #$FF : INC : STA.w SprYSpeed, X
 
   JSL Sprite_MoveAltitude
 
@@ -159,20 +159,12 @@ Sprite_BounceFromTileCollision:
 ; =========================================================
 
 Sprite_BounceOffWall:
-  LDA.w SprCollision, X
-  AND.b #$03
-  BEQ .no_horizontal_collision
-
-  JSL Sprite_InvertSpeed_X
-
-.no_horizontal_collision
-  LDA.w SprCollision, X
-  AND.b #$0C
-  BEQ .no_vertical_collision
-
-  JSL Sprite_InvertSpeed_Y
-
-.no_vertical_collision
+  LDA.w SprCollision, X : AND.b #$03 : BEQ .no_horizontal_collision
+    JSL Sprite_InvertSpeed_X
+  .no_horizontal_collision
+  LDA.w SprCollision, X : AND.b #$0C : BEQ .no_vertical_collision
+    JSL Sprite_InvertSpeed_Y
+  .no_vertical_collision
   RTL
 
 ; =========================================================

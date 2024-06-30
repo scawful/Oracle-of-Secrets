@@ -87,14 +87,14 @@ macro  SpawnPortal(x_offset, y_offset)
   REP #$20
   LDA $22 : CLC : ADC.w #<x_offset>
   SEP #$20
-  STA $0D10,       Y                ; SprX
-  XBA : STA $0D30, Y                ; SprXH
+  STA.w SprX,       Y                ; SprX
+  XBA : STA.w SprXH, Y                ; SprXH
 
   REP #$20
   LDA $20 : CLC : ADC.w #<y_offset>
   SEP #$20
-  STA $0D00,       Y                ; SprY
-  XBA : STA $0D20, Y                ; SprYH
+  STA.w SprY,       Y                ; SprY
+  XBA : STA.w SprYH, Y                ; SprYH
 endmacro
 
 LinkItem_FirePortal:

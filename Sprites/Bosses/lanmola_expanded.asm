@@ -292,10 +292,10 @@ Lanmola_MoveSegment:
         
     ; Store the current position, angle, and hieght of the sprite 
     ; so that we can set the other segments to them later.
-    LDA $0D30, X : PHA ;high x
-    LDA $0D20, X : PHA ;high y
-    LDA $0D10, X : PHA ;lower x
-    LDA $0D00, X : PHA ;lower y
+    LDA SprXH, X : PHA ;high x
+    LDA SprYH, X : PHA ;high y
+    LDA SprX, X : PHA ;lower x
+    LDA SprY, X : PHA ;lower y
 
     LDA $0F70, X : PHA ;height
     LDA $0F      : PHA ;angle

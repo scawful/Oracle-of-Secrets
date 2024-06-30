@@ -62,7 +62,7 @@ Sprite_AntiKirby_Prep:
   LDY $0FFF
   LDA .bump_damage, Y : STA.w SprBump, X
   LDA .health, Y : STA.w SprHealth, X
-  LDA .prize_pack, Y : STA SprPrize, X
+  LDA .prize_pack, Y : STA.w SprPrize, X
 
   PLB
   RTL
@@ -115,7 +115,7 @@ Sprite_AntiKirby_Main:
 
     ; Randomly Suck
     JSL GetRandomInt : AND #$3F : BNE .not_done
-      LDA #$04 : STA SprTimerA, X
+      LDA #$04 : STA.w SprTimerA, X
       %GotoAction(2)
       RTS
     .not_done
@@ -123,7 +123,7 @@ Sprite_AntiKirby_Main:
     %PlayAnimation(0, 2, 10) ; Start
     
     JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
-      LDA #!RecoilTime : STA SprTimerA, X
+      LDA #!RecoilTime : STA.w SprTimerA, X
       %GotoAction(1) ; Hurt
       RTS
     .NoDamage
@@ -153,7 +153,7 @@ Sprite_AntiKirby_Main:
     %PlayAnimation(4, 5, 10) ; Suck
 
     JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
-      LDA #!RecoilTime : STA SprTimerA, X
+      LDA #!RecoilTime : STA.w SprTimerA, X
       %GotoAction(1) ; Hurt
       RTS
     .NoDamage
@@ -235,7 +235,7 @@ Sprite_AntiKirby_Main:
     JSL Sprite_PlayerCantPassThrough
 
     JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
-      LDA #!RecoilTime : STA SprTimerA, X
+      LDA #!RecoilTime : STA.w SprTimerA, X
       %GotoAction(6) ; Hurt
     .NoDamage
 

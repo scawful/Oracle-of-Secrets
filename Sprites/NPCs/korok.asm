@@ -63,7 +63,7 @@ Sprite_Korok_Prep:
 {
   PHB : PHK : PLB
 
-  LDA SprSubtype, X : STA SprAction,X
+  LDA SprSubtype, X : STA.w SprAction,X
    
   PLB
   RTL

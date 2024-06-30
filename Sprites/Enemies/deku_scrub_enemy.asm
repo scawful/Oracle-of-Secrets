@@ -53,7 +53,7 @@ Sprite_DekuScrubEnemy_Prep:
   PHB : PHK : PLB
 
   LDA SprSubtype, X : CMP #$01 : BNE .normal_scrub
-    LDA.b #$06 : STA SprAction, X ; Pea Shot State
+    LDA.b #$06 : STA.w SprAction, X ; Pea Shot State
     LDA.b #$20 : STA.b SprPrize, X
   .normal_scrub 
 
@@ -102,7 +102,7 @@ Sprite_DekuScrubEnemy_Main:
         LDA SprY, X : STA $05
         JSL GetDistance8bit_Long : CMP.b #$24 : BCC .too_close
           ; The player is below the scrub, so it should pop up
-          LDA #$20 : STA SprTimerA, X
+          LDA #$20 : STA.w SprTimerA, X
           %GotoAction(1)
       .too_close
     .is_below_player
@@ -120,7 +120,7 @@ Sprite_DekuScrubEnemy_Main:
     
     LDA SprTimerA, X : BNE .not_done
       JSR SpawnPeaShot
-      LDA #$50 : STA SprTimerA, X
+      LDA #$50 : STA.w SprTimerA, X
       INC.w SprAction, X
     .not_done
 
@@ -166,7 +166,7 @@ Sprite_DekuScrubEnemy_Main:
 
     ; Play the spinning animation for a bit before proceeding
     LDA SprTimerA, X : BNE .not_done
-    LDA #$40 : STA SprTimerA, X
+    LDA #$40 : STA.w SprTimerA, X
       INC.w SprAction, X
     .not_done
       
@@ -222,7 +222,7 @@ Sprite_DekuScrubEnemy_Main:
 
     JSL Sprite_CheckDamageFromPlayerLong : BCC .no_damage
       ; Apply force in the opposite direction
-      LDA #-16 : STA SprYSpeed, X
+      LDA #-16 : STA.w SprYSpeed, X
     .no_damage
     RTS 
   }
@@ -258,14 +258,14 @@ DekuScrub_GiveRandomPrize:
 
 CheckForPeaShotRedirect:
 {
-    LDA.w $0D10, X : STA.b $00
-    LDA.w $0D30, X  : STA.b $08
+    LDA.w SprX, X : STA.b $00
+    LDA.w SprXH, X  : STA.b $08
 
     LDA.b #$04 : STA.b $02
     STZ $03
 
-    LDA.w $0D00, X : STA.b $01
-    LDA.w $0D20, X : STA.b $09
+    LDA.w SprY, X : STA.b $01
+    LDA.w SprYH, X : STA.b $09
     
     PHX 
     LDA.w Offspring1_Id : TAX
@@ -305,19 +305,19 @@ SpawnPeaShot:
     REP #$20
     LDA $0FD8 
     SEP #$20
-    STA $0D10, Y : XBA : STA $0D30, Y
+    STA.w SprX, Y : XBA : STA.w SprXH, Y
 
     REP #$20
     LDA $0FDA : CLC : ADC.w #$000C
     SEP #$20
-    STA $0D00, Y : XBA : STA $0D20, Y
+    STA.w SprY, Y : XBA : STA.w SprYH, Y
 
     TYX
     
     STZ $0D70, X
 
-    LDA #$10 : STA SprYSpeed, X
-    STA SprYRound, X
+    LDA #$10 : STA.w SprYSpeed, X
+    STA.w SprYRound, X
 
     STX.w Offspring1_Id
         

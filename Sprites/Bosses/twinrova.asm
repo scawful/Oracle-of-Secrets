@@ -61,13 +61,13 @@ Sprite_Twinrova_CheckIfDead:
     LDA SprAction, X : CMP.b #$0A : BEQ .not_dead
       ; If health is negative, set back to zero
       LDA SprHealth, X : CMP.b #$C3 : BCC .health_not_negative
-        LDA.b #$00 : STA SprHealth, X
+        LDA.b #$00 : STA.w SprHealth, X
 
     .health_not_negative
       LDA SprHealth, X : BNE .not_dead
         PHX 
         LDA.b #$04 : STA $0DD0, X     ; Kill sprite boss style
-        LDA.b #$0A : STA SprAction, X ; Go to Twinrova_Dead stage
+        LDA.b #$0A : STA.w SprAction, X ; Go to Twinrova_Dead stage
         LDA.b #$10 : STA.w $0D90, X
         PLX
   .not_dead
@@ -85,7 +85,7 @@ Sprite_Twinrova_Prep:
       STZ.w $0DD0, X
 
   .prep_twinrova
-    LDA.b #$5A : STA SprHealth, X ; Health
+    LDA.b #$5A : STA.w SprHealth, X ; Health
     LDA.b #$80 : STA $0CAA, X
     LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
     LDA $0E60, X : AND.b #$BF : STA $0E60, X ; Not invincible 
@@ -192,11 +192,11 @@ Sprite_Twinrova_Main:
         ; -------------------------------------------
         ; Phase 2
         LDA SprTimerE, X : BNE .kotake
-          LDA #$70 : STA SprTimerD, X
+          LDA #$70 : STA.w SprTimerD, X
           %GotoAction(8) ; Koume Mode
           RTS
         .kotake
-          LDA #$70 : STA SprTimerD, X
+          LDA #$70 : STA.w SprTimerD, X
           %GotoAction(9) ; Kotake Mode
           RTS
 
@@ -228,11 +228,11 @@ Sprite_Twinrova_Main:
         RTS
     .random_strafe
         JSL GetRandomInt : AND.b #$01 : BEQ .strafe_left
-            LDA #$10 : STA SprXSpeed, X
+            LDA #$10 : STA.w SprXSpeed, X
             %GotoAction(2) ; Move Forwards with strafe
             RTS
         .strafe_left
-            LDA #$F0 : STA SprXSpeed, X
+            LDA #$F0 : STA.w SprXSpeed, X
             %GotoAction(2) ; Move Forwards with strafe
             RTS
 
@@ -375,7 +375,7 @@ Sprite_Twinrova_Main:
       .PerformDodge
           JSR DoRandomStrafe
           LDA.b #$20 : STA.w SprTimerA, X  ; Set timer for dodge duration
-          LDA.b #$02 : STA SprMiscA, X  ; Set state to random strafe
+          LDA.b #$02 : STA.w SprMiscA, X  ; Set state to random strafe
           RTS
 
       .PerformRetaliate
@@ -431,7 +431,7 @@ Sprite_Twinrova_Main:
       JSR RageModeMove
 
       LDA SprTimerD, X : BNE +
-        LDA #$70 : STA SprTimerE, X
+        LDA #$70 : STA.w SprTimerE, X
         %GotoAction(1)
     +
       RTS
@@ -511,24 +511,24 @@ RageModeMove:
     CMP.b #$0E
     BCC .SetRandomDodge        ; 11-14 -> Random dodge
     ; 15 -> Stay in place
-    LDA.b #$04 : STA SprMiscA, X
-    LDA.b #$30 : STA SprTimerA, X  ; Set timer for 48 frames
+    LDA.b #$04 : STA.w SprMiscA, X
+    LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
     RTS
     BRA .StayInPlace
 
 .SetMoveTowardsPlayer
-    LDA.b #$01 : STA SprMiscA, X
-    LDA.b #$30 : STA SprTimerA, X  ; Set timer for 48 frames
+    LDA.b #$01 : STA.w SprMiscA, X
+    LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
     BRA .MoveTowardsPlayer
 
 .SetRandomStrafe
-    LDA.b #$02 : STA SprMiscA, X
-    LDA.b #$30 : STA SprTimerA, X  ; Set timer for 48 frames
+    LDA.b #$02 : STA.w SprMiscA, X
+    LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
     BRA .RandomStrafe
 
 .SetRandomDodge
-    LDA.b #$03 : STA SprMiscA, X
-    LDA.b #$30 : STA SprTimerA, X  ; Set timer for 48 frames
+    LDA.b #$03 : STA.w SprMiscA, X
+    LDA.b #$30 : STA.w SprTimerA, X  ; Set timer for 48 frames
     BRA .RandomDodge
 
 .MoveTowardsPlayer
@@ -547,9 +547,9 @@ RageModeMove:
     JSL GetRandomInt
     AND.b #$03
     TAY
-    LDA VelocityOffsets+4, Y : STA SprXSpeed, X
+    LDA VelocityOffsets+4, Y : STA.w SprXSpeed, X
     INY
-    LDA VelocityOffsets, Y : STA SprYSpeed, X
+    LDA VelocityOffsets, Y : STA.w SprYSpeed, X
     LDA.b #$10 : STA.w SprHeight, X ; Set height
     BRA .UpdatePosition
 
@@ -565,9 +565,9 @@ RageModeMove:
     JSL GetRandomInt
     AND.b #$03
     TAY
-    LDA VelocityOffsets, Y : EOR #$FF : INC : STA SprXSpeed, X
+    LDA VelocityOffsets, Y : EOR #$FF : INC : STA.w SprXSpeed, X
     INY
-    LDA VelocityOffsets+4, Y : EOR #$FF : INC : STA SprYSpeed, X
+    LDA VelocityOffsets+4, Y : EOR #$FF : INC : STA.w SprYSpeed, X
     LDA.b #$10 : STA.w SprHeight, X ; Set height
     BRA .UpdatePosition
 
@@ -595,9 +595,9 @@ DoRandomStrafe:
     JSL GetRandomInt
     AND.b #$03
     TAY
-    LDA VelocityOffsets, Y : STA SprXSpeed, X
+    LDA VelocityOffsets, Y : STA.w SprXSpeed, X
     INY
-    LDA VelocityOffsets+4, Y : STA SprYSpeed, X
+    LDA VelocityOffsets+4, Y : STA.w SprYSpeed, X
     LDA.b #$10 : STA.w SprHeight, X ; Set height
     RTS
 }
@@ -1085,23 +1085,23 @@ ReleaseFireballs:
   LDA.w .speed_y,Y
   STA.w $0D40,X
 
-  LDA.w $0D10,X
+  LDA.w SprX,X
   CLC
   ADC.w .offset_x_low,Y
-  STA.w $0D10,X
+  STA.w SprX,X
 
-  LDA.w $0D30,X
+  LDA.w SprXH,X
   ADC.w .offset_x_high,Y
-  STA.w $0D30,X
+  STA.w SprXH,X
 
-  LDA.w $0D00,X
+  LDA.w SprY,X
   CLC
   ADC.w .offset_y_low,Y
-  STA.w $0D00,X
+  STA.w SprY,X
 
-  LDA.w $0D20,X
+  LDA.w SprYH,X
   ADC.w .offset_y_high,Y
-  STA.w $0D20,X
+  STA.w SprYH,X
 
   PLX
 
@@ -1243,10 +1243,10 @@ Blind_SpawnFromMaiden:
   LDA.b #$CE : STA.w $0E20,X
 
   ; Load the position cache from the maiden follower
-  LDA.b $00 : STA.w $0D10,X
-  LDA.b $01 : STA.w $0D30,X
-  LDA.b $02 : SEC : SBC.b #$10 : STA.w $0D00,X
-  LDA.b $03 : STA.w $0D20,X
+  LDA.b $00 : STA.w SprX,X
+  LDA.b $01 : STA.w SprXH,X
+  LDA.b $02 : SEC : SBC.b #$10 : STA.w SprY,X
+  LDA.b $03 : STA.w SprYH,X
 
   ; Removed because it was causing the sprite to disappear
   ; JSL SpritePrep_LoadProperties
@@ -1360,18 +1360,18 @@ BlindLaser_SpawnTrailGarnish:
     TYA
     STA.l $7FF92C,X
 
-    LDA.w $0D10,Y
+    LDA.w SprX,Y
     STA.l $7FF83C,X
 
-    LDA.w $0D30,Y
+    LDA.w SprXH,Y
     STA.l $7FF878,X
 
-    LDA.w $0D00,Y
+    LDA.w SprY,Y
     CLC
     ADC.b #$10
     STA.l $7FF81E,X
 
-    LDA.w $0D20,Y
+    LDA.w SprYH,Y
     ADC.b #$00
     STA.l $7FF85A,X
 
@@ -1409,11 +1409,11 @@ pullpc
 
 NewMantlePrep:
 {
-    LDA $0D00, X : CLC : ADC.b #$07 : STA $0D00, X
-    LDA $0D10, X : CLC : ADC.b #$08 : STA $0D10, X
+    LDA SprY, X : CLC : ADC.b #$07 : STA.w SprY, X
+    LDA SprX, X : CLC : ADC.b #$08 : STA.w SprX, X
 
     LDA $7EF0DA : AND #$0F : BEQ +
-        LDA $0D10, X : CLC : ADC.b #$28 : STA $0D10, X
+        LDA SprX, X : CLC : ADC.b #$28 : STA.w SprX, X
     +
 
     RTL

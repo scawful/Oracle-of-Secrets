@@ -104,7 +104,7 @@ Sprite_Kydreeok_CheckIfDead:
     RTS
   .dead
     LDA.b #$60 : STA.w SprTimerA, X
-    LDA.b #$05 : STA SprAction, X
+    LDA.b #$05 : STA.w SprAction, X
     LDA.b #$13 : STA $012C
   .not_dead
   RTS
@@ -153,7 +153,7 @@ Sprite_Kydreeok_Main:
       LDY #$00
       JSR ApplyKydreeokGraphics
       JSR ApplyPalette
-      LDA.b #$01 : STA SprMiscD, X
+      LDA.b #$01 : STA.w SprMiscD, X
     .go
 
     JSL Sprite_PlayerCantPassThrough
@@ -290,10 +290,10 @@ Sprite_Kydreeok_Main:
     LDA.b #$04 : STA.w $0DD0,Y
     LDA.b #$03 : STA.w $0E40,Y
     LDA.b #$0C : STA.w $0F50,Y
-    LDA.w $0FD8 : STA.w $0D10,Y
-    LDA.w $0FD9 : STA.w $0D30,Y
-    LDA.w $0FDA : STA.w $0D00,Y
-    LDA.w $0FDB : STA.w $0D20,Y
+    LDA.w $0FD8 : STA.w SprX,Y
+    LDA.w $0FD9 : STA.w SprXH,Y
+    LDA.w $0FDA : STA.w SprY,Y
+    LDA.w $0FDB : STA.w SprYH,Y
 
     LDA.b #$1F
     STA.w $0DF0,Y
@@ -543,7 +543,7 @@ StopIfOutOfBounds:
   LDA SprCachedX : CMP.w #$0118 : BCS .not_out_of_bounds_Left
     SEP #$20
     LDA.w SprXSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Left
-      LDA.b #-10 : STA.w SprXSpeed : STA SprXRound
+      LDA.b #-10 : STA.w SprXSpeed : STA.w SprXRound
       LDA $19EA : SEC : SBC #$04 : STA $19EA
       LDA $19EC : SEC : SBC #$04 : STA $19EC
       LDA $19EE : SEC : SBC #$04 : STA $19EE
@@ -559,7 +559,7 @@ StopIfOutOfBounds:
   LDA SprCachedX : CMP.w #$01D8 : BCC .not_out_of_bounds_Right
     SEP #$20
     LDA.w SprXSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Right
-      LDA.b #$00 : STA.w SprXSpeed : STA SprXRound
+      LDA.b #$00 : STA.w SprXSpeed : STA.w SprXRound
       LDA $19EA : CLC : ADC #$04 : STA $19EA
       LDA $19EC : CLC : ADC #$04 : STA $19EC
       LDA $19EE : CLC : ADC #$04 : STA $19EE
@@ -576,7 +576,7 @@ StopIfOutOfBounds:
   LDA SprCachedY : CMP.w #$0020 : BCS .not_out_of_bounds_Up
     SEP #$20
     LDA.w SprYSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Up
-      LDA.b #$00 : STA.w SprYSpeed : STA SprYRound
+      LDA.b #$00 : STA.w SprYSpeed : STA.w SprYRound
       LDA $19EA : SEC : SBC #$04 : STA $19EA
       LDA $19EC : SEC : SBC #$04 : STA $19EC
       LDA $19EE : SEC : SBC #$04 : STA $19EE
@@ -588,7 +588,7 @@ StopIfOutOfBounds:
   LDA   SprCachedY : CMP.w #$00D0 : BCC .not_out_of_bounds_Down
     SEP #$20
     LDA.w SprYSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Down
-        LDA.b #-10 : STA.w SprYSpeed : STA SprYRound ; Reverse the direction
+        LDA.b #-10 : STA.w SprYSpeed : STA.w SprYRound ; Reverse the direction
 
         ; Modify the neck position
         ; Makes them move away from each other a bit

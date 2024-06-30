@@ -147,11 +147,11 @@ Lanmola_Mound: ;0x01
         ; ALTERNATE ENTRY POINT
         .Lanmola_SetScatterSandPosition
 
-        LDA $0D30, X : STA $0DC0, X
-        LDA $0D20, X : STA $0EB0, X
+        LDA SprXH, X : STA $0DC0, X
+        LDA SprYH, X : STA $0EB0, X
         
-        LDA $0D10, X : STA $0DE0, X
-        LDA $0D00, X : STA $0E70, X
+        LDA SprX, X : STA $0DE0, X
+        LDA SprY, X : STA $0E70, X
             
         LDA.b #$4A : STA $0E00, X
     
@@ -196,13 +196,13 @@ Lanmola_Fly: ;0x02
     .dontSwitchDirections
     
     LDA $0DA0, X : STA $04
-    LDA $0D30, X : STA $05
+    LDA SprXH, X : STA $05
     LDA $0DB0, X : STA $06
-    LDA $0D20, X : STA $07
-    LDA $0D10, X : STA $00
-    LDA $0D30, X : STA $01
-    LDA $0D00, X : STA $02
-    LDA $0D20, X : STA $03
+    LDA SprYH, X : STA $07
+    LDA SprX, X : STA $00
+    LDA SprXH, X : STA $01
+    LDA SprY, X : STA $02
+    LDA SprYH, X : STA $03
         
     REP #$20
         
@@ -272,10 +272,10 @@ Lanmola_Reset: ;0x04
         
         TXY
         JSL GetRandomInt : AND.b #$07 : TAX
-        LDA $7EEAA8, X : STA $0D10, Y ; Get random X pos to have the lanmola fly to. ;.randXPos
+        LDA $7EEAA8, X : STA.w SprX, Y ; Get random X pos to have the lanmola fly to. ;.randXPos
             
         JSL GetRandomInt : AND.b #$07 : TAX
-        LDA $7EEAB0, X : STA $0D00, Y ; Get random Y pos to have the lanmola fly to. ;.randYPos
+        LDA $7EEAB0, X : STA.w SprY, Y ; Get random Y pos to have the lanmola fly to. ;.randYPos
         TYX
     
     .wait
@@ -348,10 +348,10 @@ Lanmola_Death: ;0x05
             
             LDA.b #$1F : STA $0DF0, Y : STA $0D90, Y
         
-            LDA $0A : STA $0D10, Y
-            LDA $0B : STA $0D30, Y
-            LDA $0C : STA $0D00, Y
-            LDA $0D : STA $0D20, Y
+            LDA $0A : STA.w SprX, Y
+            LDA $0B : STA.w SprXH, Y
+            LDA $0C : STA.w SprY, Y
+            LDA $0D : STA.w SprYH, Y
             
             LDA.b #$03 : STA $0E40, Y
             

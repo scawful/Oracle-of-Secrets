@@ -400,8 +400,8 @@ MoveWithBody:
 Neck1_Control:
 {
     ; Set head pos
-    LDA $19EE : STA SprX, X
-    LDA $19EF : STA SprY, X
+    LDA $19EE : STA.w SprX, X
+    LDA $19EF : STA.w SprY, X
 
     LDA.w SprX, X : STA.w SprMiscC, X
     LDA.w SprY, X : STA.w SprMiscD, X
@@ -503,8 +503,8 @@ Neck1_Control:
 Neck2_Control:
 {
     ; Set head pos 
-    LDA $19F4  : STA SprX, X
-    LDA $19F5  : STA SprY, X
+    LDA $19F4  : STA.w SprX, X
+    LDA $19F5  : STA.w SprY, X
 
     LDA.w SprX, X : STA.w SprMiscC, X
     LDA.w SprY, X : STA.w SprMiscD, X

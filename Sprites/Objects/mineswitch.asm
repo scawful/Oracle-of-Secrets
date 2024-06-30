@@ -56,7 +56,7 @@ Sprite_LeverSwitch_Prep:
   PHB : PHK : PLB
    
   LDA.b #$00 : STA.w SprDefl, X
-  LDA SprSubtype, X : STA SprAction, X
+  LDA SprSubtype, X : STA.w SprAction, X
   LDA.b #$00 : STA.w SprTileDie, X
   STZ.w SprBulletproof, X
 
@@ -88,7 +88,7 @@ Sprite_LeverSwitch_Main:
       LDA #$25 : STA $012F
       
       STZ.w $37
-      LDA #$10 : STA SprTimerA, X
+      LDA #$10 : STA.w SprTimerA, X
       %GotoAction(1)
     .NoDamage
 
@@ -106,7 +106,7 @@ Sprite_LeverSwitch_Main:
 
     LDA #$25 : STA $012F
     LDA #$01 : STA $37
-    LDA #$10 : STA SprTimerA, X
+    LDA #$10 : STA.w SprTimerA, X
     %GotoAction(0)
 
     .NoDamage

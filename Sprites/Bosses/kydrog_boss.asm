@@ -94,7 +94,7 @@ Sprite_KydrogBoss_Prep:
   LDA.b #$80 : STA $0CAA, X
 
   LDA.b #$03 : STA $0F60, X ; hitbox settings 
-  LDA.b #$07 : STA SprBump, X ; bump damage type 
+  LDA.b #$07 : STA.w SprBump, X ; bump damage type 
   LDA $0E60, X : AND.b #$BF : STA $0E60, X ; Not invincible 
 
   JSR KydrogBoss_Set_Damage ; Set the damage table
@@ -103,7 +103,7 @@ Sprite_KydrogBoss_Prep:
   %SetSpriteSpeedX(15)
   %SetHarmless(00)
 
-  LDA #$80 : STA SprTimerD, X ; intro timer
+  LDA #$80 : STA.w SprTimerD, X ; intro timer
 
   PLB
   RTL
@@ -423,9 +423,9 @@ Sprite_KydrogBoss_Main:
 
     ; Increase the Z for a bit until he is off screen 
     LDA SprHeight, X : CLC : ADC.b #$04 
-    STA SprHeight, X : CMP.b #$B0 : BCC .not_off_screen
+    STA.w SprHeight, X : CMP.b #$B0 : BCC .not_off_screen
       ; 
-      LDA #$40 : STA SprTimerD, X
+      LDA #$40 : STA.w SprTimerD, X
       %GotoAction($0B)
     .not_off_screen
 
@@ -441,15 +441,15 @@ Sprite_KydrogBoss_Main:
 
       LDA SprTimerD, X : BEQ .no_track_player
 
-      LDA $20 : STA SprY, X
-      LDA $22 : STA SprX, X
+      LDA $20 : STA.w SprY, X
+      LDA $22 : STA.w SprX, X
       ; PHX : JSL $01F3EC : PLX ; Light Torch
 
       LDA SprTimerD, X : BNE .wait_a_second
     .no_track_player
 
       ; Decrease the Z for a bit until he is at level with Link
-      LDA SprHeight, X : SEC : SBC.b #$04 : STA SprHeight, X 
+      LDA SprHeight, X : SEC : SBC.b #$04 : STA.w SprHeight, X 
       CMP.b #$04 : BCS .not_off_screen
         %GotoAction(1)
     .not_off_screen
@@ -669,8 +669,8 @@ Kydrog_ThrowBoneAtPlayer:
   
   TYX
 
-  LDA SprX, X : CLC : ADC.b #$10 : STA SprX, X
-  LDA SprY, X : SEC : SBC.b #$04 : STA SprY, X
+  LDA SprX, X : CLC : ADC.b #$10 : STA.w SprX, X
+  LDA SprY, X : SEC : SBC.b #$04 : STA.w SprY, X
   
   LDA.b #$20 : JSL Sprite_ApplySpeedTowardsPlayer
   
@@ -680,13 +680,13 @@ Kydrog_ThrowBoneAtPlayer:
   
   LDA.b #$48 : STA $0CAA, X
   
-  LDA.b #$10 : STA SprTimerC, X
+  LDA.b #$10 : STA.w SprTimerC, X
   
   LDA.b #$14 : STA $0F60, X
   
   LDA.b #$07 : STA $0F50, X
   
-  LDA.b #$20 : STA SprBump, X
+  LDA.b #$20 : STA.w SprBump, X
   
   PLX
   
