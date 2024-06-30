@@ -925,7 +925,7 @@ MinecartFollower_Top:
         
     TYA : LSR #2 : TAY
         
-    LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+    LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
         
     PLY : INY
     PLX : DEX : BPL .nextTile
@@ -958,11 +958,6 @@ MinecartFollower_Top:
       db $3D, $7D
       db $3D, $7D
       db $3D, $7D
-  .sizes:
-      db $02, $02
-      db $02, $02
-      db $02, $02
-      db $02, $02
 }
 
 MinecartFollower_Bottom:
@@ -1009,7 +1004,7 @@ MinecartFollower_Bottom:
         
     TYA : LSR #2 : TAY
         
-    LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+    LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
         
     PLY : INY
     PLX : DEX : BPL .nextTile
@@ -1042,11 +1037,6 @@ MinecartFollower_Bottom:
       db $3D, $7D
       db $3D, $7D
       db $3D, $7D
-  .sizes:
-      db $02, $02
-      db $02, $02
-      db $02, $02
-      db $02, $02
 }
 
 ; Minecart Follower Main Routine and Draw
