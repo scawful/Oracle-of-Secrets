@@ -3,14 +3,33 @@ incsrc "Items/bottle_net.asm"
 
 ; Starts Expanded Bank 0x2B
 incsrc "Items/ocarina.asm"
-print  "End of Items/ocarina.asm          ", pc
-
 incsrc "Items/jump_feather.asm"
 incsrc "Items/book_of_secrets.asm"
 incsrc "Items/sword_collect.asm"
 incsrc "Items/goldstar.asm"
 incsrc "Items/portal_rod.asm"
 incsrc "Items/fishing_rod.asm"
+
+BananaBeanGfx:
+  incbin "gfx/banana_bean.bin"
+
+BananaBeanSwapDynamicGfx:
+{
+  PHX 
+  PHP
+
+  REP #$30
+
+  LDX #$01BE
+  --
+  LDA.l BananaBeanGfx, X : STA.l $7EA480, X
+  DEX : DEX
+  BPL --
+
+  PLP
+  PLX
+  RTL
+}
 
 ; League of its own
 incsrc "Items/ice_rod.asm"
