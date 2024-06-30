@@ -6,7 +6,7 @@
 !NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 90  ; Number of Health the sprite have
+!Health             = 40  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
@@ -55,6 +55,9 @@ Sprite_Wolfos_Prep:
 {
   PHB : PHK : PLB
 
+  LDA.b $1B : BEQ .outdoors
+    JMP .spawn_wolfos
+  .outdoors
   ; Check if the wolfos has been defeated
   LDA.l $7EF303 : CMP.b #$01 : BNE .spawn_wolfos
     STZ.w SprState, X ; Don't spawn the sprite 
@@ -72,13 +75,15 @@ Sprite_Wolfos_Prep:
 
 Sprite_Wolfos_CheckIfDefeated:
 {
-  LDA.w SprHealth, X : CMP.b #$10 : BCS .not_defeated
-    LDA.b #$06 : STA.w SprAction, X ; Set to defeated
-    LDA.b #$09 : STA.w SprState, X 
-    LDA.b #$40 : STA.w SprHealth, X ; Refill the health of the sprite
-    STZ.w SprMiscD, X
-    RTS
-  .not_defeated
+  LDA.b $1B : BNE .outdoors
+    LDA.w SprHealth, X : CMP.b #$10 : BCS .not_defeated
+      LDA.b #$06 : STA.w SprAction, X ; Set to defeated
+      LDA.b #$09 : STA.w SprState, X 
+      LDA.b #$40 : STA.w SprHealth, X ; Refill the health of the sprite
+      STZ.w SprMiscD, X
+      RTS
+    .not_defeated
+  .outdoors
   RTS
 }
 
