@@ -521,7 +521,6 @@ MoveBody:
                 CMP.b #$04 : BCS .not_at_target
 
   .adjust_phase ; Unused?
-  STZ.w $0D80, X
   LDA.b #$30 : STA.w $0DF0, X
 
   .not_at_target
