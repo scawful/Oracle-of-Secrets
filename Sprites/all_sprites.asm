@@ -139,6 +139,21 @@ PutRollerBeneathLink:
   RTL
 }
 
+Graphics_Transfer:
+{
+  LDA.b $A0 : CMP.b #$5A : BNE +
+    JSR ApplyManhandlaGraphics
+    JSR ApplyManhandlaPalette
+  +
+  #_02BE5E: LDA.b $11
+  #_02BE60: CMP.b #$02
+  RTL
+}
+
+; UnderworldTransition_ScrollRoom
+org $02BE5E
+  JSL Graphics_Transfer
+
 org $1EEEE4
   JSL DontTeleportWithoutFlippers
 
