@@ -70,6 +70,7 @@ Menu_Entry:
   dw Menu_CheckBottle        ; 09
   dw Menu_Exit               ; 0A
   dw Menu_InitiateScrollDown ; 0B
+  dw Menu_MagicBag           ; 0C
 
 ; =========================================================
 ; 00 MENU INIT GRAPHICS 
@@ -211,6 +212,10 @@ Menu_ItemScreen:
     LSR : BCS .move_down
     LSR : BCS .move_up
 
+    LDA.w $0202 : CMP.b #$05 : BNE +
+      LDA.b $F6 : BIT.b #$80 : BEQ +
+        LDA.b #$0C : STA.w $0200 ; Magic Bag
+    +
   BRA .no_inputs
 
   .move_right
@@ -472,6 +477,24 @@ Menu_InitiateScrollDown:
 
   RTS
 }
+
+Menu_MagicBag:
+{
+  
+  JSR Menu_DrawMagicBag
+  JSR Menu_DrawMagicItems
+  SEP #$30
+
+  LDA.b $F6 : BIT.b #$80 : BEQ +
+    LDA.b #$02 : STA.w $0200
+  +
+
+  LDA.b #$22 : STA.w $0116
+  LDA.b #$01 : STA.b $17
+
+  RTS
+}
+
 
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
 quest_icons: incbin "tilemaps/quest_icons.tilemap"
