@@ -184,8 +184,6 @@ Sprite_Manhandla_Main:
   {
     LDA.w SprSubtype, X : BNE .not_main
       LDA.w SprX, X : SEC : SBC.b #$04 : STA.w SprX, X
-      JSR ApplyManhandlaGraphics
-      JSR ApplyManhandlaPalette
       JSR SpawnLeftManhandlaHead
       JSR SpawnRightManhandlaHead
       JSR SpawnCenterMandhandlaHead
