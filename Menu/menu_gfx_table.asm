@@ -188,6 +188,9 @@ QuarterNoteGFX:
 BananaGFX:
   dw $241E, $241F, $242E, $242F ; Banana
 
+RingGFX:
+  dw $2449, $244A, $2449, $244A ; Ring
+
 ; =========================================================
 ; Equipped Items
 
