@@ -67,25 +67,25 @@ Sprite_MakuTree_Main:
   dw MakuTree_Handler
   dw MakuTree_MeetLink
   dw MakuTree_GiveMoonPearl
+  dw MakuTree_HasMetLink
 
   MakuTree_Handler:
   {
       ; Check the progress flags 
-      LDA $7EF3D4 : CMP.b #$01 : BEQ .has_met_link
+      LDA.l $7EF3D4 : CMP.b #$01 : BEQ .has_met_link
       %GotoAction(1)
       RTS
 
     .has_met_link
-      %ShowSolicitedMessage($22)
-      LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
+      %GotoAction(3)
       RTS
   }
 
   MakuTree_MeetLink:
   {
     %ShowSolicitedMessage($20) : BCC .no_talk
-      LDA #$01 : STA $7EF3D4
-      LDA #$01 : STA $7EF3C7 ; Mark the Hall of Secrets
+      LDA.b #$01 : STA.l $7EF3D4
+      LDA.b #$01 : STA.l $7EF3C7 ; Mark the Hall of Secrets
       LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
       %GotoAction(2)
     .no_talk
@@ -96,7 +96,15 @@ Sprite_MakuTree_Main:
   {
     ; Give Link a heart container
     LDY #$3E : JSL Link_ReceiveItem
-    %GotoAction(0)
+    %GotoAction(3)
+    RTS
+  }
+
+  MakuTree_HasMetLink:
+  {
+    %ShowSolicitedMessage($22) : BCC .no_talk
+      LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
+    .no_talk
     RTS
   }
 
