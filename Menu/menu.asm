@@ -77,10 +77,10 @@ Menu_Entry:
 Menu_InitGraphics:
 {
   LDA.w $0780 : STA.w $00
-  LDA.w $0202 : CMP.b #$10 : BNE .not_fishing
+  LDA.w $0202 
+  CMP.b #$10 : BNE .not_fishing
     JSL DismissRodFromMenu
   .not_fishing
-  ; 6, C, 12, 18 
   CMP.b #$06 : BEQ .bottle
   CMP.b #$0C : BEQ .bottle
   CMP.b #$12 : BEQ .bottle
@@ -88,31 +88,19 @@ Menu_InitGraphics:
   CMP.b #$15 : BEQ .wolf_shovel
   BRA +
   .bottle
-  STZ $030D
-  STZ $0300
-  
-  LDA $3A : AND.b #$80 : STA $3A
-  STZ $037A
-  
-  LDA $50 : AND.b #$FE : STA $50
-  LDA.b #$80 : STA $44 : STA $45
+    STZ $030D
+    STZ $0300
+    STZ $037A
+    LDA $3A : AND.b #$80 : STA $3A
+    LDA $50 : AND.b #$FE : STA $50
+    LDA.b #$80 : STA $44 : STA $45
   BRA + 
   .wolf_shovel
-  
-  STZ.w $030D
-  STZ.w $0300
-
-  LDA.b $3A
-  AND.b #$80
-  STA.b $3A
-
-  STZ.w $037A
-
-  LDA.b $50
-  AND.b #$FE
-  STA.b $50
-
-
+    STZ.w $030D
+    STZ.w $0300
+    STZ.w $037A
+    LDA.b $3A : AND.b #$80 : STA.b $3A
+    LDA.b $50 : AND.b #$FE : STA.b $50
   +
   INC $0200
 }
