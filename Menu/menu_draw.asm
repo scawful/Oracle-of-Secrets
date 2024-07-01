@@ -754,4 +754,35 @@ Menu_DrawMagicItems:
   RTS
 }
 
+Menu_DrawCursor:
+{
+  LDA.b #$20 : BIT.w $0207
+  REP #$20
+  BEQ .no_delete 
+    ; Delete cursor
+    LDA.w #$20F5
+    STA.w $1108, X : STA.w $1148, X
+    STA.w $114E, X : STA.w $110E, X 
+    STA.w $11C8, X : STA.w $1188, X
+    STA.w $118E, X : STA.w $11CE, X 
+    BRA .done
+
+  .no_delete 
+  LDA.w #$3060 : STA.w $1108, X ; corner 
+  LDA.w #$3070 : STA.w $1148, X
+
+  LDA.w #$7060 : STA.w $110E, X ; corner 
+  LDA.w #$7070 : STA.w $114E, X
+
+  LDA.w #$3070 : STA.w $1188, X 
+  LDA.w #$B060 : STA.w $11C8, X ; corner 
+
+  LDA.w #$7070 : STA.w $118E, X 
+  LDA.w #$F060 : STA.w $11CE, X ; corner 
+
+  .done
+  SEP #$20
+  RTS
+}
+
 ; =========================================================

@@ -255,34 +255,8 @@ Menu_ItemScreen:
   ASL : TAY
   REP #$10
   LDX.w Menu_ItemCursorPositions-2, Y
+  JSR Menu_DrawCursor
 
-  LDA.b #$20 : BIT.w $0207
-
-  REP #$20
-
-  BEQ .no_delete 
-    ; Delete cursor
-    LDA.w #$20F5
-    STA.w $1108, X : STA.w $1148, X
-    STA.w $114E, X : STA.w $110E, X 
-    STA.w $11C8, X : STA.w $1188, X
-    STA.w $118E, X : STA.w $11CE, X 
-    BRA .done
-
-  .no_delete 
-  LDA.w #$3060 : STA.w $1108, X ; corner 
-  LDA.w #$3070 : STA.w $1148, X
-
-  LDA.w #$7060 : STA.w $110E, X ; corner 
-  LDA.w #$7070 : STA.w $114E, X
-
-  LDA.w #$3070 : STA.w $1188, X 
-  LDA.w #$B060 : STA.w $11C8, X ; corner 
-
-  LDA.w #$7070 : STA.w $118E, X 
-  LDA.w #$F060 : STA.w $11CE, X ; corner 
-
-  .done
   JSR Menu_DrawItemName
   SEP #$20
   LDA.b #$22 : STA.w $0116
@@ -525,35 +499,8 @@ Menu_MagicBag:
   ASL : TAY
   REP #$10
   LDX.w Menu_MagicBagCursorPositions-2, Y
-
-  LDA.b #$20 : BIT.w $0207
-
-  REP #$20
-
-  BEQ .no_delete 
-    ; Delete cursor
-    LDA.w #$20F5
-    STA.w $1108, X : STA.w $1148, X
-    STA.w $114E, X : STA.w $110E, X 
-    STA.w $11C8, X : STA.w $1188, X
-    STA.w $118E, X : STA.w $11CE, X 
-    BRA .done
-
-  .no_delete 
-  LDA.w #$3060 : STA.w $1108, X ; corner 
-  LDA.w #$3070 : STA.w $1148, X
-
-  LDA.w #$7060 : STA.w $110E, X ; corner 
-  LDA.w #$7070 : STA.w $114E, X
-
-  LDA.w #$3070 : STA.w $1188, X 
-  LDA.w #$B060 : STA.w $11C8, X ; corner 
-
-  LDA.w #$7070 : STA.w $118E, X 
-  LDA.w #$F060 : STA.w $11CE, X ; corner 
-
-  .done
-  SEP #$20
+  JSR Menu_DrawCursor
+  
   ; Return to the item menu if they press A
   LDA.b $F6 : BIT.b #$80 : BEQ +
     LDA.b #$02 : STA.w $0200
