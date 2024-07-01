@@ -216,6 +216,7 @@ Menu_ItemScreen:
     
     LDA.w $0202 : CMP.b #$05 : BNE +
       LDA.b $F6 : BIT.b #$80 : BEQ +
+        STZ.w $020B
         LDA.b #$0C : STA.w $0200 ; Magic Bag
     +
     LDA.w $0202 : CMP.b #$0D : BNE ++
@@ -494,6 +495,65 @@ Menu_MagicBag:
   JSR Menu_DrawMagicItems
   SEP #$30
 
+  LDA.b $F4 
+  LSR : BCS .move_right
+  LSR : BCS .move_left
+  LSR : BCS .move_down
+  LSR : BCS .move_up
+  BRA .continue
+
+  .move_right
+    LDA.w $020B : CMP.b #$05 : BCS .zero
+    INC.w $020B
+    BRA .continue
+
+  .move_left
+    LDA.w $020B : CMP.b #$00 : BEQ .continue
+    DEC.w $020B
+    BRA .continue
+
+  .move_down
+
+  .move_up
+
+  .zero
+    STZ.w $020B
+
+  .continue
+
+  LDA.w $020B
+  ASL : TAY
+  REP #$10
+  LDX.w Menu_MagicBagCursorPositions-2, Y
+
+  LDA.b #$20 : BIT.w $0207
+
+  REP #$20
+
+  BEQ .no_delete 
+    ; Delete cursor
+    LDA.w #$20F5
+    STA.w $1108, X : STA.w $1148, X
+    STA.w $114E, X : STA.w $110E, X 
+    STA.w $11C8, X : STA.w $1188, X
+    STA.w $118E, X : STA.w $11CE, X 
+    BRA .done
+
+  .no_delete 
+  LDA.w #$3060 : STA.w $1108, X ; corner 
+  LDA.w #$3070 : STA.w $1148, X
+
+  LDA.w #$7060 : STA.w $110E, X ; corner 
+  LDA.w #$7070 : STA.w $114E, X
+
+  LDA.w #$3070 : STA.w $1188, X 
+  LDA.w #$B060 : STA.w $11C8, X ; corner 
+
+  LDA.w #$7070 : STA.w $118E, X 
+  LDA.w #$F060 : STA.w $11CE, X ; corner 
+
+  .done
+  SEP #$20
   ; Return to the item menu if they press A
   LDA.b $F6 : BIT.b #$80 : BEQ +
     LDA.b #$02 : STA.w $0200
@@ -509,6 +569,14 @@ Menu_MagicBag:
 
   RTS
 }
+
+Menu_MagicBagCursorPositions:
+  dw menu_offset(6,2)  ; bow
+  dw menu_offset(6,5)  ; boom
+  dw menu_offset(6,8)  ; hookshot
+  dw menu_offset(6,11) ; bombs
+  dw menu_offset(6,14) ; deku mask
+  dw menu_offset(6,17) ; bottle1
 
 ; =========================================================
 ; 0D MENU SONG MENU
