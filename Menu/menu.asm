@@ -500,7 +500,39 @@ Menu_MagicBag:
   REP #$10
   LDX.w Menu_MagicBagCursorPositions-2, Y
   JSR Menu_DrawCursor
-  
+  JSR Submenu_Return
+
+  LDA.b #$22 : STA.w $0116
+  LDA.b #$01 : STA.b $17
+
+  RTS
+}
+
+Menu_MagicBagCursorPositions:
+  dw menu_offset(6,2)  ; banana
+  dw menu_offset(6,5)  ; pineapple
+  dw menu_offset(6,8)  ; 
+  dw menu_offset(6,11) ; 
+  dw menu_offset(6,14) ;
+  dw menu_offset(6,17) ; 
+
+; =========================================================
+; 0D MENU SONG MENU
+
+Menu_SongMenu:
+{
+  JSR Menu_DrawSongMenu
+  SEP #$30
+  JSR Submenu_Return
+
+  LDA.b #$22 : STA.w $0116
+  LDA.b #$01 : STA.b $17
+
+  RTS
+}
+
+Submenu_Return:
+{
   ; Return to the item menu if they press A
   LDA.b $F6 : BIT.b #$80 : BEQ +
     LDA.b #$02 : STA.w $0200
@@ -510,37 +542,6 @@ Menu_MagicBag:
   LDA.b $F4 : BIT.b #$10 : BEQ +
     LDA.b #$08 : STA.w $0200
   +
-
-  LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17
-
-  RTS
-}
-
-Menu_MagicBagCursorPositions:
-  dw menu_offset(6,2)  ; bow
-  dw menu_offset(6,5)  ; boom
-  dw menu_offset(6,8)  ; hookshot
-  dw menu_offset(6,11) ; bombs
-  dw menu_offset(6,14) ; deku mask
-  dw menu_offset(6,17) ; bottle1
-
-; =========================================================
-; 0D MENU SONG MENU
-
-Menu_SongMenu:
-{
-  JSR Menu_DrawSongMenu
-
-  SEP #$30
-
-  LDA.b $F6 : BIT.b #$80 : BEQ +
-    LDA.b #$02 : STA.w $0200
-  +
-
-  LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17
-
   RTS
 }
 
