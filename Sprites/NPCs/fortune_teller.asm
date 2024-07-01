@@ -48,8 +48,8 @@ FortuneTeller_PerformPseudoScience:
 
 #_0DC84F: STZ.b $03
 
-#_0DC851: LDA.l $7EF3C7
-#_0DC855: CMP.b #$03
+#_0DC851: LDA.l $7EF3D6
+#_0DC855: CMP.b #$02
 #_0DC857: BCS .map_icon_past_pendants
 
 #_0DC859: STZ.b $00
