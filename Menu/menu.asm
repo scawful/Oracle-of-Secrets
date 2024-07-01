@@ -526,15 +526,71 @@ Menu_MagicBagCursorPositions:
 
 Menu_SongMenu:
 {
-  JSR Menu_DrawSongMenu
+  INC $0207
+  LDA.w $030F : BEQ .continue
+  ASL : TAY 
+  LDA.b $F4 
+  LSR : BCS .move_right
+  LSR : BCS .move_left
+  LSR : BCS .move_down
+  LSR : BCS .move_up
+  BRA .continue
+
+  .move_right
+  .move_up
+    JSR SongMenu_DeleteCursor
+    LDA.w $030F : CMP.b #$04 : BEQ .reset
+      
+      INC.w $030F
+      BRA .continue
+
+  .move_left
+  .move_down
+    JSR SongMenu_DeleteCursor
+    LDA.w $030F : CMP.b #$01 : BEQ .reset
+      DEC.w $030F
+      BRA .continue
+
+  .reset
+    LDA #$01 : STA $030F
+
+  .continue
   SEP #$30
+  LDA.w $030F
+  ASL : TAY
+  REP #$10
+  LDX.w Menu_SongIconCursorPositions-2, Y
+  JSR Menu_DrawCursor
+
   JSR Submenu_Return
+  SEP #$20
 
   LDA.b #$22 : STA.w $0116
   LDA.b #$01 : STA.b $17
 
   RTS
 }
+
+SongMenu_DeleteCursor:
+{
+  REP   #$30
+  LDX.w Menu_SongIconCursorPositions-2, Y
+
+  LDA.w #$20F5
+  STA.w $1108, X : STA.w $1148, X
+  STA.w $114E, X : STA.w $110E, X
+  STA.w $11C8, X : STA.w $1188, X
+  STA.w $118E, X : STA.w $11CE, X
+  SEP   #$30
+  STZ   $0207
+  RTS 
+}
+
+Menu_SongIconCursorPositions:
+  dw menu_offset(8,4)
+  dw menu_offset(8,8)
+  dw menu_offset(8,12) 
+  dw menu_offset(8,16)
 
 Submenu_Return:
 {
