@@ -188,7 +188,7 @@ Goriya_BoomerangAttack:
     LDA.w SprXH, X : STA.w SprXH, Y
     LDA.w SprYH, X : STA.w SprYH, Y
     LDA.b #$01 : STA.w SprNbrOAM, Y
-    LDA.b #$80 : STA.w SprHealth, Y
+    LDA.b #$40 : STA.w SprHealth, Y
     LDA.b #$00 : STA.w SprHitbox, Y
   +
   RTS

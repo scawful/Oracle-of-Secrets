@@ -56,7 +56,7 @@ Sprite_Darknut_Prep:
   PHB : PHK : PLB
     
   LDA.b #$80 : STA.w SprDefl, X
-  LDA.b #$60 : STA.w SprHealth, X 
+  LDA.b #$0C : STA.w SprHealth, X 
   LDA.b #%00010000 : STA.w SprTileDie, X
 
   PLB

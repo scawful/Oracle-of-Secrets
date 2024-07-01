@@ -56,7 +56,7 @@ Sprite_ThunderGhost_Prep:
     
   LDA.b #$08 : STA.w SprTimerA, X
   LDA.b #$08 : STA.w SprTimerB, X
-  LDA.b #$10 : STA.w SprHealth, X 
+  LDA.b #$08 : STA.w SprHealth, X 
 
   PLB
   RTL
