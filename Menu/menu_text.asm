@@ -122,7 +122,6 @@ Menu_ItemNames:
   dw "___OCARINA____  "
   dw "_SECRET_TOME__  "
   dw "___SOMARIA____  "
-  ; dw "____BYRNA_____  "
   dw "_FISHING_ROD__  "
   dw "_ROCS_FEATHER_  "
   dw "____BOTTLE____  "
