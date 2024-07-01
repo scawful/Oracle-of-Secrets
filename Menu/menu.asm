@@ -355,24 +355,24 @@ Menu_ScrollUp:
 Menu_CheckBottle:
 {
   LDA.w $0202 : CMP.b #$06 : BNE .not_first 
-  LDA.b #$0001 : JMP .prepare_bottle
+    LDA.b #$0001 : JMP .prepare_bottle
+  .not_first
 
-.not_first
   LDA.w $0202 : CMP.b #$0C : BNE .not_second
-  LDA.b #$0002 : JMP .prepare_bottle
+    LDA.b #$0002 : JMP .prepare_bottle
+  .not_second
 
-.not_second 
   LDA.w $0202 : CMP.b #$12 : BNE .not_third
-  LDA.b #$0003 : JMP .prepare_bottle
+    LDA.b #$0003 : JMP .prepare_bottle
+  .not_third
 
-.not_third
   LDA.w $0202 : CMP.b #$18 : BNE .not_any
-  LDA.b #$0004
+    LDA.b #$0004
+  .prepare_bottle
 
-.prepare_bottle
   STA.l $7EF34F
 
-.not_any 
+  .not_any 
   INC.w $0200
   RTS 
 }
@@ -485,15 +485,23 @@ Menu_InitiateScrollDown:
   RTS
 }
 
+; =========================================================
+; 0C MENU MAGIC BAG
+
 Menu_MagicBag:
 {
-  
   JSR Menu_DrawMagicBag
   JSR Menu_DrawMagicItems
   SEP #$30
 
+  ; Return to the item menu if they press A
   LDA.b $F6 : BIT.b #$80 : BEQ +
     LDA.b #$02 : STA.w $0200
+  +
+
+  ; Close the menu if the player presses start
+  LDA.b $F4 : BIT.b #$10 : BEQ +
+    LDA.b #$08 : STA.w $0200
   +
 
   LDA.b #$22 : STA.w $0116
@@ -501,6 +509,9 @@ Menu_MagicBag:
 
   RTS
 }
+
+; =========================================================
+; 0D MENU SONG MENU
 
 Menu_SongMenu:
 {
@@ -523,6 +534,6 @@ quest_icons: incbin "tilemaps/quest_icons.tilemap"
 incsrc "menu_map_names.asm"
 print  "End of Menu/menu.asm              ", pc
 incsrc "menu_hud.asm"
-print  "End of Menu/menu_ud.asm           ", pc
+print  "End of Menu/menu_hud.asm          ", pc
 
 ; =========================================================
