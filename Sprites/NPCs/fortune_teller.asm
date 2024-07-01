@@ -68,28 +68,27 @@ FortuneTeller_PerformPseudoScience:
 #_0DC86D: JMP.w FortuneTeller_DisplayMessage
 
 .have_shroom_or_powder
-#_0DC870: LDA.l $7EF37A
-#_0DC874: AND.b #$10
-#_0DC876: BNE .beaten_tail_palace
-
-#_0DC878: LDA.b #$01
-#_0DC87A: JSR FortuneTeller_PrepareNextMessage
-#_0DC87D: BCC .beaten_tail_palace
-
-#_0DC87F: JMP.w FortuneTeller_DisplayMessage
-
-.beaten_tail_palace
 #_0DC882: LDA.l $7EF344
 #_0DC886: CMP.b #$02
 #_0DC888: BCS .have_powder
 
-#_0DC88A: LDA.b #$03
-#_0DC88C: JSR FortuneTeller_PrepareNextMessage
-#_0DC88F: BCC .have_powder
+#_0DC878: LDA.b #$01
+#_0DC87A: JSR FortuneTeller_PrepareNextMessage
+#_0DC87D: BCC .have_powder
 
-#_0DC891: JMP.w FortuneTeller_DisplayMessage
+#_0DC87F: JMP.w FortuneTeller_DisplayMessage
 
 .have_powder
+#_0DC870: LDA.l $7EF37A
+#_0DC874: AND.b #$10
+#_0DC876: BNE .beaten_tail_palace
+
+#_0DC88A: LDA.b #$03
+#_0DC88C: JSR FortuneTeller_PrepareNextMessage
+#_0DC88F: BCC .beaten_tail_palace
+
+#_0DC891: JMP.w FortuneTeller_DisplayMessage
+.beaten_tail_palace
 
 LDA.l $7EF355
 BNE .have_boots
