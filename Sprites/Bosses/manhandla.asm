@@ -110,6 +110,7 @@ Sprite_Manhandla_CheckForNextPhaseOrDeath:
       LDA.b #$40 : STA.w SprHealth, X ; Refill the health
       LDA.b #$08 : STA.w SprNbrOAM, X ; Give more OAM 
       LDA.b #$07 : STA.w SprAction, X ; Chuchu Emerge
+      LDA.b #$0A : STA.w $36
     .not_dead
     RTS
   .phase2
@@ -119,6 +120,7 @@ Sprite_Manhandla_CheckForNextPhaseOrDeath:
       LDA.b #$09 : STA.w SprAction, X
       LDA.b #$13 : STA $012C
       LDA.b #$04 : STA.w SprMiscD, X
+      LDA.b #$0A : STA.w $36
     .phase2_not_dead
   +
   
