@@ -37,13 +37,9 @@ pushpc
 org $05EE46
   JSL Impa_SetSpawnPointFlag
 
-; Impa Check for Master Sword
+; TODO: Figure out what to do with this
 org $05EBCF
-  LDA $7EF359 : CMP.b #$04
-
-; .have_master_sword former STZ.w $0DD0, X
-org $05EC0F
-  NOP #3
+  LDA $7EF359 : CMP.b #$05
 
 ; Module15_0C
 ; Change overlay that Impa activates after intro
