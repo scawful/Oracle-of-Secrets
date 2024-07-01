@@ -222,6 +222,10 @@ Menu_ItemScreen:
     LDA.w $0202 : CMP.b #$0D : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
         LDA.b #$0D : STA.w $0200
+          JSR Menu_DeleteCursor
+          JSR Menu_DrawSongMenu
+          SEP #$30
+          JMP .exit
     ++
 
   BRA .no_inputs
@@ -259,6 +263,7 @@ Menu_ItemScreen:
 
   JSR Menu_DrawItemName
   SEP #$20
+  .exit
   LDA.b #$22 : STA.w $0116
   LDA.b #$01 : STA.b $17
 
