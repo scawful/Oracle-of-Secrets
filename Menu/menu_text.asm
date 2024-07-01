@@ -154,6 +154,7 @@ Menu_SongNames:
   dw "SONG:_STORMS__  "
   dw "SONG:_HEALING_  "
   dw "SONG:_SOARING_  "
+  dw "SONG:_TIME____  "
 
 Menu_DrawItemName:
 {

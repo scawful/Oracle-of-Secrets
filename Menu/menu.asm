@@ -555,15 +555,16 @@ Menu_SongMenu:
     LDA #$01 : STA $030F
 
   .continue
+  JSR Menu_DrawItemName
   SEP #$30
   LDA.w $030F
   ASL : TAY
   REP #$10
   LDX.w Menu_SongIconCursorPositions-2, Y
   JSR Menu_DrawCursor
-
   JSR Submenu_Return
   SEP #$20
+ 
 
   LDA.b #$22 : STA.w $0116
   LDA.b #$01 : STA.b $17
