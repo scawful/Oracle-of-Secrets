@@ -63,7 +63,7 @@ LDA.b #$03 : STA.w $04C6
 ; =========================================================
 
 incsrc ZSpriteLib/sprite_macros.asm
-incsrc ZSpriteLib/sprite_hooks.asm
+incsrc ZSpriteLib/sprites.asm
 
 ; TODO: Sprite_AttemptKillingOfKin
 
