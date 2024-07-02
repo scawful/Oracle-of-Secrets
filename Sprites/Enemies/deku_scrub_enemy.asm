@@ -3,7 +3,7 @@
 
 !SPRID              = $14 ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 03  ; Number of tiles used in a frame
-!Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
+!Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 08  ; Number of Health the sprite have
 !Damage             = 04  ; (08 is a whole heart), 04 is half heart
@@ -33,17 +33,17 @@
 
 Sprite_DekuScrubEnemy_Long:
 {
-    PHB : PHK : PLB
+  PHB : PHK : PLB
 
-    JSR Sprite_DekuScrubEnemy_Draw ; Call the draw code
-    JSL Sprite_CheckActive   ; Check if game is not paused
-    BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
+  JSR Sprite_DekuScrubEnemy_Draw ; Call the draw code
+  JSL Sprite_CheckActive   ; Check if game is not paused
+  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
-    JSR Sprite_DekuScrubEnemy_Main ; Call the main sprite code
+  JSR Sprite_DekuScrubEnemy_Main ; Call the main sprite code
 
   .SpriteIsNotActive
-    PLB ; Get back the databank we stored previously
-    RTL ; Go back to original code
+  PLB ; Get back the databank we stored previously
+  RTL ; Go back to original code
 }
 
 ; =========================================================
@@ -258,70 +258,70 @@ DekuScrub_GiveRandomPrize:
 
 CheckForPeaShotRedirect:
 {
-    LDA.w SprX, X : STA.b $00
-    LDA.w SprXH, X  : STA.b $08
+  LDA.w SprX, X : STA.b $00
+  LDA.w SprXH, X  : STA.b $08
 
-    LDA.b #$04 : STA.b $02
-    STZ $03
+  LDA.b #$04 : STA.b $02
+  STZ $03
 
-    LDA.w SprY, X : STA.b $01
-    LDA.w SprYH, X : STA.b $09
-    
-    PHX 
-    LDA.w Offspring1_Id : TAX
-    JSL Sprite_SetupHitBox
-    PLX
+  LDA.w SprY, X : STA.b $01
+  LDA.w SprYH, X : STA.b $09
+  
+  PHX 
+  LDA.w Offspring1_Id : TAX
+  JSL Sprite_SetupHitBox
+  PLX
 
-    JSL CheckIfHitBoxesOverlap : BCC .no_dano
-      %GotoAction(3)
-      RTS
-    .no_dano
-    ; If the pea shot and deku scrub hitboxes intersect
-    ; We will go to recoil 
-    PHX 
-    LDA.w Offspring1_Id : TAX
-    JSL Sprite_SetupHitBox
-    PLX
-    JSL CheckIfHitBoxesOverlap : BCC .not_done2
-      %GotoAction(3)
-      RTS
-    .not_done2
+  JSL CheckIfHitBoxesOverlap : BCC .no_dano
+    %GotoAction(3)
+    RTS
+  .no_dano
+  ; If the pea shot and deku scrub hitboxes intersect
+  ; We will go to recoil 
+  PHX 
+  LDA.w Offspring1_Id : TAX
+  JSL Sprite_SetupHitBox
+  PLX
+  JSL CheckIfHitBoxesOverlap : BCC .not_done2
+    %GotoAction(3)
+    RTS
+  .not_done2
   RTS
 }
 
 SpawnPeaShot:
 {
-    LDA.b #$14
-    JSL Sprite_SpawnDynamically : BMI .return ;89
+  LDA.b #$14
+  JSL Sprite_SpawnDynamically : BMI .return ;89
 
-    LDA.b #$01 : STA $0E30, Y
-    LDA.b #$06 : STA $0D80, Y
-    LDA.b #$20 : STA.w SprPrize, Y
-    LDA.b #$02 : STA.w SprMiscC, Y
+  LDA.b #$01 : STA $0E30, Y
+  LDA.b #$06 : STA $0D80, Y
+  LDA.b #$20 : STA.w SprPrize, Y
+  LDA.b #$02 : STA.w SprMiscC, Y
 
-    PHX
-        
-    ; Spawn Location
-    REP #$20
-    LDA $0FD8 
-    SEP #$20
-    STA.w SprX, Y : XBA : STA.w SprXH, Y
+  PHX
+      
+  ; Spawn Location
+  REP #$20
+  LDA $0FD8 
+  SEP #$20
+  STA.w SprX, Y : XBA : STA.w SprXH, Y
 
-    REP #$20
-    LDA $0FDA : CLC : ADC.w #$000C
-    SEP #$20
-    STA.w SprY, Y : XBA : STA.w SprYH, Y
+  REP #$20
+  LDA $0FDA : CLC : ADC.w #$000C
+  SEP #$20
+  STA.w SprY, Y : XBA : STA.w SprYH, Y
 
-    TYX
-    
-    STZ $0D70, X
+  TYX
+  
+  STZ $0D70, X
 
-    LDA #$10 : STA.w SprYSpeed, X
-    STA.w SprYRound, X
+  LDA #$10 : STA.w SprYSpeed, X
+  STA.w SprYRound, X
 
-    STX.w Offspring1_Id
-        
-    PLX
+  STX.w Offspring1_Id
+      
+  PLX
 
   .return
     RTS
