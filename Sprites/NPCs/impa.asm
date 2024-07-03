@@ -11,8 +11,8 @@ PROGLITE        = $7EF3C6
 
 ; 0x00 - Link's house
 ; 0x01 - Sanctuary (Hall of Secrets)
-; 0x02 - Prison
-; 0x03 - Uncle
+; 0x02 - Castle Prison
+; 0x03 - Castle Basement
 ; 0x04 - Throne
 ; 0x05 - Old man cave
 ; 0x06 - Old man home
