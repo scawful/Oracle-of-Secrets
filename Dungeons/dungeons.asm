@@ -43,6 +43,14 @@ org $01CC10
 RoomTag_Holes5:
   JML RoomTag_MinishShutterDoor
 
+; RoomTag_GetHeartForPrize
+; Swap LW/DW check on spawn falling prize
+org $01C71B
+  LDA.l $7EF37A ; Crystals in LW
+
+org $01C727
+  LDA.l $7EF374 ; Pendants in DW
+
 pullpc
 
 incsrc "Dungeons/house_walls.asm"
