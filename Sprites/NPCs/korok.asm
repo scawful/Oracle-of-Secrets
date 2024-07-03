@@ -1,7 +1,7 @@
 ; =========================================================
 ; Korok Sprite 
 
-!SPRID              = $B1 ; The sprite ID you are overwriting (HEX)
+!SPRID              = $F1 ; The sprite ID you are overwriting (HEX)
 !NbrTiles           = 08  ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -10,7 +10,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 01  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 01  ; 01 = your sprite continue to live offscreen
@@ -39,16 +39,17 @@ Sprite_Korok_Long:
                         CMP.b #$01 : BEQ .draw_hollo
                         CMP.b #$02 : BEQ .draw_rown
   .draw_makar
-  JSL Sprite_Korok_DrawMakar
+  JSR Sprite_Korok_DrawMakar
   BRA .done
   .draw_hollo
-  JSL Sprite_Korok_DrawHollo
+  JSR Sprite_Korok_DrawHollo
   BRA .done
   .draw_rown
-  JSL Sprite_Korok_DrawRown
+  JSR Sprite_Korok_DrawRown
   BRA .done
   .done
   
+  JSL Sprite_DrawShadow
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
@@ -63,8 +64,8 @@ Sprite_Korok_Prep:
 {
   PHB : PHK : PLB
 
-  LDA SprSubtype, X : STA.w SprAction,X
-   
+  JSL GetRandomInt : AND.b #$02 : STA.w SprSubtype, X
+  STZ.w SprMiscE, X
   PLB
   RTL
 }
@@ -72,6 +73,8 @@ Sprite_Korok_Prep:
 
 Sprite_Korok_Main:
 {
+  JSL Sprite_PlayerCantPassThrough
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -79,7 +82,41 @@ Sprite_Korok_Main:
 
   Sprite_Korok_Idle:
   {
-    %PlayAnimation(0,0, 10)
+    LDA.w SprMiscE, X : BNE +
+      PHX
+      JSL ApplyKorokSpriteSheets
+      PLX
+      LDA.b #$01 : STA.w SprMiscE, X
+    +
+    %PlayAnimation(0, 0, 10)
+    RTS
+  }
+
+  Sprite_Korok_WalkingDown:
+  {
+
+    %PlayAnimation(0, 2, 10)
+    RTS
+  }
+
+  Sprite_Korok_WalkingUp:
+  {
+
+    %PlayAnimation(3, 5, 10)
+    RTS
+  }
+
+  Sprite_Korok_WalkingLeft:
+  {
+
+    %PlayAnimation(6, 8, 10)
+    RTS
+  }
+
+  Sprite_Korok_WalkingRight:
+  {
+
+    %PlayAnimation(9, 11, 10)
     RTS
   }
 
@@ -87,6 +124,11 @@ Sprite_Korok_Main:
 
 ; =========================================================
 ; Korok Draw Codes
+
+; 0-2 : Walking Down
+; 3-5 : Walking Up
+; 6-8 : Walking Left
+; 9-11 : Walking Right
 
 Sprite_Korok_DrawMakar:
 {
