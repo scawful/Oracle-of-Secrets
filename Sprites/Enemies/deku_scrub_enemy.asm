@@ -2,7 +2,7 @@
 ; Deku Scrub Bro Enemy
 
 !SPRID              = $14 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 03  ; Number of tiles used in a frame
+!NbrTiles           = 04  ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 08  ; Number of Health the sprite have
@@ -36,6 +36,7 @@ Sprite_DekuScrubEnemy_Long:
   PHB : PHK : PLB
 
   JSR Sprite_DekuScrubEnemy_Draw ; Call the draw code
+  JSL Sprite_DrawShadow
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
