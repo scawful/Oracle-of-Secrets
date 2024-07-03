@@ -50,8 +50,6 @@ Song_of_Healing:
 !Storms_Duration2 = $1E
 !Storms_Params2 = $3C
 
-; SFX1_18
-; org $1A92F7
 org $1A92F7 ; SFX2_2F
 Song_of_Storms:
 {
@@ -126,6 +124,11 @@ LinkItem_NewFlute:
   CMP.b #$01 : BEQ .song_of_storms
   CMP.b #$02 : BEQ .song_of_healing
   CMP.b #$03 : BEQ .song_of_soaring
+  CMP.b #$04 : BEQ .song_of_time
+
+  .song_of_time
+  LDA.b #$3C : JSR Player_DoSfx2
+  RTS
 
   .song_of_healing
   LDA.b #$13 : JSR Player_DoSfx2 
