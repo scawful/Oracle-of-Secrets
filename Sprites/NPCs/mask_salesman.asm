@@ -226,7 +226,7 @@ Sprite_MaskSalesman_Main:
       LDA $1CE8 : BNE .player_said_no
         REP #$20
         LDA.l $7EF360
-        CMP.w #$28A ; 650 rupees
+        CMP.w #$352 ; 850 rupees
         SEP #$30
         BCC .not_enough_rupees
 
@@ -239,7 +239,7 @@ Sprite_MaskSalesman_Main:
           REP #$20
           LDA.l $7EF360
           SEC
-          SBC.w #$28A ; Subtract 650 rupees
+          SBC.w #$352 ; Subtract 850 rupees
           STA.l $7EF360
           SEP #$30
 
