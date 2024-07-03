@@ -60,6 +60,12 @@ org $1EE48E
 ; Kiki activate cutscene 3 (tail palace)
 org $1EE630
 LDA.b #$03 : STA.w $04C6
+
+; Kid at ranch checks for flute
+org $05FF7D
+  LDA.l $7EF34C
+  CMP.b #$01
+
 ; =========================================================
 
 incsrc ZSpriteLib/sprite_macros.asm
