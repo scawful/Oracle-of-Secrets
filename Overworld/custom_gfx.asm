@@ -26,7 +26,7 @@ CheckForSpecialAreaGraphics:
   LDA $8A : CMP.b #$81 : BNE .korok_area
 
   PHB : PHK : PLB
-  JSR ApplyKorokSpriteSheets
+  JSL ApplyKorokSpriteSheets
   PLB
 
   .korok_area
@@ -82,6 +82,7 @@ ApplyGraphics2:
 ApplyKorokSpriteSheets:
 {
   REP #$20               ; A = 16, XY = 8
+  LDX #$80 : STX $2100   ; turn the screen off (required)
   LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
   LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
   LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register 
@@ -90,10 +91,10 @@ ApplyKorokSpriteSheets:
   LDX.b #KorokSpriteSheets>>16 : STX $4304
   LDA   #$1800 : STA $4305                 ; size of the transfer 4 sheets of $800 each
   LDX   #$01 : STX $420B                   ; Do the DMA 
-
+  LDX #$0F : STX $2100                    ; Turn the screen back on
   SEP #$30
 
-  RTS
+  RTL
 
   KorokSpriteSheets:
   incbin gfx/korok.bin
