@@ -82,9 +82,8 @@ org $1E9A8F
 NOP #5
 
 ; MedallionTablet (Goron)
-; Responds to the hammer now instead of the sword.
 org $05F274
-  LDA.l $7EF34B
+  LDA.l $7EF378 ; Unused SRAM
 
 org $08C2E3
   dw $006F ; BUTTER SWORD DIALOGUE
@@ -164,6 +163,9 @@ print  "End of goriya.asm                 ",  pc
 incsrc "Sprites/Enemies/darknut.asm"
 print  "End of darknut.asm                ",  pc
 
+incsrc "Sprites/NPCs/korok.asm"
+print  "End of korok.asm                  ", pc
+
 DontTeleportWithoutFlippers:
 {
   LDA.l $7EF356 : BNE +
@@ -242,9 +244,6 @@ print  "End of minecart.asm               ",  pc
 
 incsrc "Sprites/Bosses/dark_link.asm"
 print  "End of dark_link.asm              ", pc
-
-incsrc "Sprites/NPCs/korok.asm"
-print  "End of korok.asm                  ", pc
 
 incsrc "Sprites/Enemies/puffstool.asm"
 print  "End of puffstool.asm              ", pc
