@@ -186,7 +186,7 @@ Pool:
     ; Default is $FF
     org $288146 ; $140146
     .EnableBeginningRain
-    db $FF
+    db $00
 
     ; When non 0 this will disable the ambiant sound that plays in the mire area after the event is triggered.
     ; Default is $FF
@@ -1169,7 +1169,7 @@ Func02AF58:
     ; Check if we are in the beginning phase, if not, no rain.
     ; If $7EF3C5 >= 0x02
     LDA.l Pool_EnableBeginningRain : BEQ .noRain
-        LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCS .noRain
+        LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0000 : BCS .noRain
             ; The rain overlay
             LDX.w #$009F
         
