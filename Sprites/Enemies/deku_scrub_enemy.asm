@@ -121,7 +121,7 @@ Sprite_DekuScrubEnemy_Main:
     
     LDA SprTimerA, X : BNE .not_done
       JSR SpawnPeaShot
-      LDA #$50 : STA.w SprTimerA, X
+      LDA #$F0 : STA.w SprTimerA, X
       INC.w SprAction, X
     .not_done
 
@@ -167,7 +167,7 @@ Sprite_DekuScrubEnemy_Main:
 
     ; Play the spinning animation for a bit before proceeding
     LDA SprTimerA, X : BNE .not_done
-    LDA #$40 : STA.w SprTimerA, X
+      LDA #$40 : STA.w SprTimerA, X
       INC.w SprAction, X
     .not_done
       
@@ -244,7 +244,7 @@ Sprite_DekuScrubEnemy_Main:
 
 DekuScrub_GiveRandomPrize:
 {
-  JSL GetRandomInt : AND.b #$05 
+  JSL GetRandomInt : AND.b #$03
   TAY
   LDA.w .prizes, Y
   TAY : STZ $02E9
@@ -253,8 +253,8 @@ DekuScrub_GiveRandomPrize:
   RTS
 
   .prizes
-    ;   5    20  heart arrow  10 arrows  magic
-    db $35, $36, $42,  $43,   $44,       $45
+    ; heart arrow  10 arrows  magic
+    db $42,  $43,   $44,       $45
 }
 
 CheckForPeaShotRedirect:
