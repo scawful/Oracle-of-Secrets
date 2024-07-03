@@ -192,7 +192,7 @@ Pool:
     ; Default is $FF
     org $288147 ; $140147
     .EnableRainMireEvent
-    db $FF
+    db $00
     
     ; The rest of these are extra bytes that can be used for anything else later on.
     ;db $00, $00, $00, $00, $00, $00, $00, $00
