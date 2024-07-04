@@ -28,7 +28,9 @@
 ;
 ; =========================================================
 
-; ...p h.m.
+; .fmp h.i.
+;  f - fortress of secrets
+;  m - master sword
 ;  p - pendant quest
 ;  h - hall of secrets
 ;  i - intro over, maku tree
