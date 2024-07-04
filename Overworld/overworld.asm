@@ -40,8 +40,7 @@ Palettes_GanonTowerFlash:
   dw  $7FFF,  $34CD,  $5971,  $5635,  $7F1B,  $7FFF,  $1D4A,  $3D54
   dw  $7FFF,  $1908,  $2D2F,  $3614,  $4EDA,  $471F,  $1D4A,  $390F
   dw  $7FFF,  $0884,  $052A,  $21EF,  $3AB5,  $4B39,  $1D4C,  $18AC
-
-incsrc "Overworld/world_map.asm"
+  ; dw $7FFF,   $0C63,  $40A5,  $5D67, $7EAE, $7F18, $7A6B, $7B5C
 
 incsrc "Overworld/master_sword.asm"
 print  "End of master_sword.asm           ", pc
@@ -60,6 +59,9 @@ print  "End of Overworld/time_system.asm  ", pc
 incsrc "Overworld/overlays.asm"
 print  "End of Overworld/overlays.asm     ", pc
 pushpc
+
+incsrc "Overworld/world_map.asm"
+print "End of world_map.asm              ", pc
 
 pullpc
 incsrc "Overworld/entrances.asm"
