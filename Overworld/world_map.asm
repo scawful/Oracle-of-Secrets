@@ -50,22 +50,36 @@ MapIconDraw:
 
     .draw_prizes
     LDA.b $8A : AND.b #$40 : BEQ .lwprizes
-      ; TODO: Place the pendant positions
-      ; X position
-      LDA.b #$00 : STA.l $7EC10B
-      LDA.b #$89 : STA.l $7EC10A ; Upper nybble control Zoomed low X pos
-      ; Y position
-      LDA.b #$00 : STA.l $7EC109
-      LDA.b #$E4 : STA.l $7EC108 ; Upper nybble control Zoomed low Y pos
-      ; Tile GFX
-      LDA.b #$66 : STA.b $0D
-      LDA.b #$34 : STA.b $0C
-      ; Tile Size
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
-      LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
 
-      JSR HandleMapDrawIcon
+      ; TODO: Draw the pendants and master sword based on progression
+      LDA.l OOSPROG : AND.b #$10 : BNE .check_master_sword
 
+      .check_master_sword
+      ; TODO: Draw the master sword on the light world
+      LDA.l OOSPROG : AND.b #$20 : BNE .check_fortress
+
+      .check_fortress
+      
+      LDA.l OOSPROG : AND.b #$40 : BNE .check_final_boss
+
+      .check_final_boss
+      AND.b #$80 : BNE .exit_dw
+        ; This is a skull icon, use this for the fortress or final boss?
+        ; X position
+        LDA.b #$00 : STA.l $7EC10B
+        LDA.b #$89 : STA.l $7EC10A ; Upper nybble control Zoomed low X pos
+        ; Y position
+        LDA.b #$00 : STA.l $7EC109
+        LDA.b #$E4 : STA.l $7EC108 ; Upper nybble control Zoomed low Y pos
+        ; Tile GFX
+        LDA.b #$66 : STA.b $0D
+        LDA.b #$34 : STA.b $0C
+        ; Tile Size
+        LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+        LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
+
+        JSR HandleMapDrawIcon
+    .exit_dw
       JMP restore_coords_and_exit
 
     .lwprizes
@@ -277,6 +291,8 @@ FixMaskPaletteOnExit:
   LDA.l $7EC229
   RTL
 }
+
+warnpc $0AC387
 
 org $0ABC76
   JSL FixMaskPaletteOnExit
