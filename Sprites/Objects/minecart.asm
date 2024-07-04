@@ -536,6 +536,8 @@ HandleTileDirections:
     CMP.b #$B5 : BEQ .check_direction
     CMP.b #$B0 : BEQ .horiz
     CMP.b #$B1 : BEQ .vert
+    CMP.b #$BB : BEQ .horiz
+    CMP.b #$BC : BEQ .vert
       JMP .done
 
     .horiz
