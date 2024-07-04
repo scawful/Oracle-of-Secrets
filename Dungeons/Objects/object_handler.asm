@@ -19,20 +19,20 @@ TileBehavior_Pit = $07DA6A
 
 ; Minecart Track tile types
 org $07D938
-#_07D938: dw TileBehavior_Nothing ; 0xB0 UW
-#_07D93A: dw TileBehavior_Nothing ; 0xB1 UW
-#_07D93C: dw TileBehavior_Nothing ; 0xB2 UW
-#_07D93E: dw TileBehavior_Nothing ; 0xB3 UW
-#_07D940: dw TileBehavior_Nothing ; 0xB4 UW
-#_07D942: dw TileBehavior_Nothing ; 0xB5 UW
-#_07D944: dw TileBehavior_Nothing ; 0xB6 UW
-#_07D946: dw TileBehavior_Nothing ; 0xB7 UW
-#_07D948: dw TileBehavior_Nothing ; 0xB8 UW
-#_07D94A: dw TileBehavior_Nothing ; 0xB9 UW
-#_07D94C: dw TileBehavior_Nothing ; 0xBA UW
-#_07D94E: dw TileBehavior_Nothing ; 0xBB UW
-#_07D950: dw TileBehavior_Nothing ; 0xBC UW
-#_07D952: dw TileBehavior_Nothing   
+#_07D938: dw TileBehavior_Nothing ; 0xB0 UW LR
+#_07D93A: dw TileBehavior_Nothing ; 0xB1 UW UD
+#_07D93C: dw TileBehavior_Nothing ; 0xB2 UW TL
+#_07D93E: dw TileBehavior_Nothing ; 0xB3 UW BL
+#_07D940: dw TileBehavior_Nothing ; 0xB4 UW TR
+#_07D942: dw TileBehavior_Nothing ; 0xB5 UW BR
+#_07D944: dw TileBehavior_Nothing ; 0xB6 UW Any
+#_07D946: dw TileBehavior_Nothing ; 0xB7 UW Stop Top
+#_07D948: dw TileBehavior_Nothing ; 0xB8 UW Stop Bottom
+#_07D94A: dw TileBehavior_Nothing ; 0xB9 UW Stop Left
+#_07D94C: dw TileBehavior_Nothing ; 0xBA UW Stop Right
+#_07D94E: dw TileBehavior_Pit     ; 0xBB UW Pit LR
+#_07D950: dw TileBehavior_Pit     ; 0xBC UW Pit UD
+#_07D952: dw TileBehavior_Pit     ; 0xBD UW Any
 
 ; Bank01 Free Space
 org $01B53C
