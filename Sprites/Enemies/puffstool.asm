@@ -32,10 +32,18 @@
 
 ; =========================================================
 
+pushpc
+org $06DBB5 
+  db $00 ; Puffstool single small char
+pullpc
+
 Sprite_Puffstool_Long:
 {
   PHB : PHK : PLB
 
+  LDA.w SprSubtype, X : BEQ + 
+    JSL Sprite_PrepAndDrawSingleSmall
+  +
   JSR Sprite_Puffstool_Draw ; Call the draw code
   JSL Sprite_DrawShadow
   JSL Sprite_CheckActive   ; Check if game is not paused
@@ -67,8 +75,11 @@ Sprite_Puffstool_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
+
   dw Puffstool_Walking
   dw Puffstool_Stunned
+
+  dw Puffstool_Spores
 
   Puffstool_Walking:
   {
@@ -116,6 +127,14 @@ Sprite_Puffstool_Main:
     +
     RTS
   }
+
+  Puffstool_Spores:
+  {
+    JSL Sprite_PlayerCantPassThrough
+    JSL Sprite_MoveXyz
+    RTS
+  }
+}
 
 Puffstool_SpawnSpores:
 {
