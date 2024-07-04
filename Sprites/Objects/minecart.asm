@@ -80,10 +80,8 @@ Sprite_Minecart_Long:
   JSR Sprite_Minecart_DrawBottom ; Draw the bottom half in front of Link
   JSL Sprite_CheckActive         ; Check if game is not paused
   BCC .SpriteIsNotActive         ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Minecart_Main ; Call the main sprite code
-
-.SpriteIsNotActive
+    JSR Sprite_Minecart_Main ; Call the main sprite code
+  .SpriteIsNotActive
   PLB ; Get back the databank we stored previously
   RTL ; Go back to original code
 }
@@ -167,10 +165,10 @@ macro MoveCart()
 endmacro
 
 macro StopCart()
-    STZ.w $02F5
-    STZ.w SprYSpeed, X
-    STZ.w SprXSpeed, X
-    STZ.w !LinkInCart
+  STZ.w $02F5
+  STZ.w SprYSpeed, X
+  STZ.w SprXSpeed, X
+  STZ.w !LinkInCart
 endmacro
 
 ; =========================================================
@@ -581,27 +579,27 @@ HandleTileDirections:
           STA !SpriteDirection,      X
           %GotoAction(2) ; Minecart_MoveNorth
           LDA SprX, X : AND #$F8 : STA.w SprX, X
-          RTS
+          JMP .done
         .move_east
           LDA #$01 : STA.w SprSubtype, X : STA !MinecartDirection
           STA !MinecartDirection
           LDA #$03 : STA !SpriteDirection, X
           LDA SprY, X : AND #$F8 : STA.w SprY, X
           %GotoAction(3) ; Minecart_MoveEast
-          RTS
+          JMP .done
         .move_south
           LDA #$02 : STA.w SprSubtype, X : STA !MinecartDirection
           LDA #$01 : STA !SpriteDirection, X
           %GotoAction(4) ; Minecart_MoveSouth
           LDA SprX, X : AND #$F8 : STA.w SprX, X
-          RTS
+          JMP .done
         .move_west
           LDA #$03 : STA.w SprSubtype, X : STA !MinecartDirection
           LDA #$02 : STA !SpriteDirection, X
           LDA SprY, X : AND #$F8 : STA.w SprY, X
           %GotoAction(5) ; Minecart_MoveWest
       .done
-        LDA #$04 : STA.w SprTimerA, X
+        LDA #$0F : STA.w SprTimerA, X
         RTS
 
   ; Direction to move on tile collision
