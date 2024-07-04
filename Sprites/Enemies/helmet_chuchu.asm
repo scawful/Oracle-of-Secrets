@@ -134,6 +134,36 @@ Sprite_HelmetChuchu_Main:
   }
 }
 
+; Based on Sprite_CancelHookshot
+; This is the hookshot check for the helmet/mask chuchu
+; Returns carry clear if hookshotting active
+Sprite_CheckForHookshot:
+{
+  #_0FF544: LDX.b #$04
+
+  .next_ancilla
+  #_0FF546: LDA.w $0C4A,X
+  #_0FF549: CMP.b #$1F ; ANCILLA 1F
+  #_0FF54B: BNE .not_hooker
+
+  .yes_hooker
+  #_0FF54D: LDA.w $037E
+  #_0FF550: BEQ .not_hooker
+
+  .active_hooker
+  ; #_0FF552: STZ.w $037E
+  ; #_0FF555: BRA .stop_hooking
+  CLC 
+  RTS
+
+  .not_hooker
+  #_0FF557: DEX
+  #_0FF558: BPL .next_ancilla
+
+  SEC
+  RTS
+}
+
 Sprite_Chuchu_Move:
 {
   JSL Sprite_Move
