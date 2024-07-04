@@ -129,7 +129,7 @@ Sprite_ThunderGhost_Move:
   JSL Sprite_Move
   JSL Sprite_BounceFromTileCollision
   JSL Sprite_PlayerCantPassThrough
-
+  JSL Sprite_DamageFlash_Long
   
   JSL GetRandomInt : AND #$7F : BNE ++
     JSR SpawnLightningAttack
@@ -219,6 +219,7 @@ Sprite_ThunderGhost_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
+  LDA.w SprMiscA, X : STA $08
 
 
   PHX
@@ -252,7 +253,7 @@ Sprite_ThunderGhost_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY 
       
