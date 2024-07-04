@@ -203,6 +203,7 @@ SpawnLightningAttack:
   LDA.b #$02 : STA.w SprYRound, Y
   LDA.b #$30 : STA.w SprTimerA, Y
   LDA.b #$30 : STA.w SprTimerB, Y
+  LDA.b #$1A : STA.w SprHitbox, Y
   .no_space
 
   PLX
