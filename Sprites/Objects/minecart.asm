@@ -97,7 +97,7 @@ Sprite_Minecart_Prep:
 
     ; If the subtype is > 4, then it's an active cart
     LDA.w SprSubtype, X : CMP.b #$04 : BCC .continue
-      LDA.w SprSubtype, X : SEC : SBC.b #$04 : STA.w SprSubtype, X
+      LDA.w SprSubtype, X : SEC : SBC.b #$03 : STA.w SprSubtype, X
       LDA.b #$01 : STA.w SprMiscF, X ; Set the auto-move flag
     .continue
     LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
@@ -1058,7 +1058,8 @@ DrawMinecartFollower:
       .finish_prep
       LDA POSYH : STA.w SprYH, X
       LDA POSXH : STA.w SprXH, X
-      LDA.w !MinecartDirection : CLC : ADC.b #$04 : STA.w SprSubtype, X
+      LDA.w !MinecartDirection : CLC : ADC.b #$03 : STA.w SprSubtype, X
+
       LDA .direction_to_anim, X : STA $0D90, X
       JSL Sprite_Minecart_Prep
       LDA.b #$00 : STA.l $7EF3CC
