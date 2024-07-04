@@ -28,6 +28,21 @@
 ;
 ; =========================================================
 
+; .... h.m.
+;  h - hall of secrets
+;  m - maku tree
+OOSPROG         = $7EF3D6
+
+; Bitfield of less important progression
+; .fbh .zsu
+;   u - Uncle visited in secret passage; controls spawn (0: spawn | 1: gone)
+;   s - Priest visited in sanc after Zelda is kidnapped again
+;   z - Zelda brought to sanc
+;   h - Uncle has left Link's house; controls spawn (0: spawn | 1: gone)
+;   b - Book of Mudora obtained/mentioned; controls Aginah dialog
+;   f - Flipped by fortune tellers to decide which fortune set to give
+OOSPROG2       = $7EF3C6
+
 incsrc "Overworld/custom_gfx.asm"
 print  "End of custom_gfx.asm             ", pc
 incsrc "Overworld/ZCustomOverworld.asm"

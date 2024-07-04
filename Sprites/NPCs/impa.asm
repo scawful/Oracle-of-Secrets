@@ -1,13 +1,4 @@
 
-; Bitfield of less important progression
-; .fbh .zsu
-;   u - Uncle visited in secret passage; controls spawn (0: spawn | 1: gone)
-;   s - Priest visited in sanc after Zelda is kidnapped again
-;   z - Zelda brought to sanc
-;   h - Uncle has left Link's house; controls spawn (0: spawn | 1: gone)
-;   b - Book of Mudora obtained/mentioned; controls Aginah dialog
-;   f - Flipped by fortune tellers to decide which fortune set to give
-PROGLITE        = $7EF3C6
 
 ; 0x00 - Link's house
 ; 0x01 - Sanctuary (Hall of Secrets)
@@ -17,11 +8,6 @@ PROGLITE        = $7EF3C6
 ; 0x05 - Old man cave
 ; 0x06 - Old man home
 SPAWNPT         = $7EF3C8
-
-; .... h.m.
-;  h - hall of secrets
-;  m - maku tree
-OOSPROG         = $7EF3D6
 
 ; set spawn point flag for hall of secrets by impa
 Impa_SetSpawnPointFlag:
