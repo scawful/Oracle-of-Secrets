@@ -116,8 +116,57 @@ Sprite_Puffstool_Main:
     +
     RTS
   }
-}
 
+Puffstool_SpawnSpores:
+{
+  LDA.b #$0C ; SFX2.0C
+  JSL $0DBB7C ; SpriteSFX_QueueSFX2WithPan
+
+  LDA.b #$03
+  STA.b $0D
+
+  .nth_child
+  LDA.b #$B1 ; SPRITE 10
+  JSL Sprite_SpawnDynamically
+  BMI .no_space
+
+  JSL Sprite_SetSpawnedCoordinates
+
+  PHX
+
+  LDX.b $0D
+
+  LDA.w .speed_x,X
+  STA.w $0D50,Y
+
+  LDA.w .speed_y,X
+  STA.w $0D40, Y
+
+  LDA.b #$30
+  STA.w $0F80, Y
+
+  LDA.b #$FF
+  STA.w $0E80, Y
+
+  LDA.b #$01
+  STA.w SprSubtype, Y
+
+  LDA.b #$02
+  STA.w SprAction, Y
+
+  PLX
+
+  .no_space
+  DEC.b $0D
+  BPL .nth_child
+  RTS
+
+.speed_x
+  db  16, -11, -16, 11
+
+.speed_y
+  db   0,  11,   0, -11
+}
 
 ; =========================================================
 
