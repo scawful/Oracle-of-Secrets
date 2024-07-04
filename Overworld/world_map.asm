@@ -101,7 +101,19 @@ DrawMasterSwordIcon:
 
 DrawFortressOfSecretsIcon:
 {
-  ; TODO: Draw Fortress of Secrets Icon
+  ; X position
+  LDA.b #$0E : STA.l $7EC10B
+  LDA.b #$5E : STA.l $7EC10A
+  ; Y position
+  LDA.b #$06 : STA.l $7EC109
+  LDA.b #$68 : STA.l $7EC108
+
+  LDA.b #$66 : STA.b $0D
+  LDA.b #$34 : STA.b $0C ; Tile GFX
+
+  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$0B : STA.l $7EC025
+
   RTL
 }
 
@@ -111,7 +123,7 @@ DrawFinalBossIcon:
   LDA.b #$0E : STA.l $7EC10B
   LDA.b #$5E : STA.l $7EC10A
   ; Y position
-  LDA.b #$06 : STA.l $7EC109
+  LDA.b #$04 : STA.l $7EC109
   LDA.b #$68 : STA.l $7EC108
   ; Tile GFX (Skull Icon)
   LDA.b #$66 : STA.b $0D
