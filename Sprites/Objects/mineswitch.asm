@@ -13,7 +13,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 01  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -68,6 +68,8 @@ Sprite_LeverSwitch_Prep:
 
 Sprite_LeverSwitch_Main:
 {
+  JSL Sprite_PlayerCantPassThrough
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -79,70 +81,49 @@ Sprite_LeverSwitch_Main:
   SwitchOff:
   {
     %PlayAnimation(0,0,4)
-
-    JSL Sprite_PlayerCantPassThrough
     LDA SprTimerA, X : BNE .NoDamage
-    
-    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
-      .BoomHit
-      LDA #$25 : STA $012F
-      
-      STZ.w $37
-      LDA #$10 : STA.w SprTimerA, X
-      %GotoAction(1)
+      JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+        LDA #$25 : STA $012F
+        
+        STZ.w $37
+        LDA #$10 : STA.w SprTimerA, X
+        %GotoAction(1)
     .NoDamage
-
     RTS
   }
 
   SwitchOn:
   {
     %PlayAnimation(1,1,4)
-    JSL Sprite_PlayerCantPassThrough
     LDA SprTimerA, X : BNE .NoDamage
-
-    JSL Sprite_CheckDamageFromPlayerLong
-    BCC .NoDamage
-
-    LDA #$25 : STA $012F
-    LDA #$01 : STA $37
-    LDA #$10 : STA.w SprTimerA, X
-    %GotoAction(0)
-
+      JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+        LDA #$25 : STA $012F
+        LDA #$01 : STA $37
+        LDA #$10 : STA.w SprTimerA, X
+        %GotoAction(0)
     .NoDamage
-
     RTS
   }
 
   SpeedSwitchOff:
   {
     %PlayAnimation(0,0,4)
-
-    JSL Sprite_CheckDamageFromPlayerLong
-    BCC .NoDamage
-
-    LDA #$25 : STA $012F
-    LDA.b #$01 : STA $36
-    %GotoAction(3)
-
+    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+      LDA.b #$25 : STA $012F
+      LDA.b #$01 : STA $36
+      %GotoAction(3)
     .NoDamage
-
     RTS
   }
 
   SpeedSwitchOn:
   {
     %PlayAnimation(1,1,4)
-
-    JSL Sprite_CheckDamageFromPlayerLong
-    BCC .NoDamage
-
-    LDA #$25 : STA $012F
-    STZ.w $36
-    %GotoAction(2)
-
+    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+      LDA #$25 : STA $012F
+      STZ.w $36
+      %GotoAction(2)
     .NoDamage
-
     RTS
   }
 }
@@ -195,7 +176,7 @@ Sprite_LeverSwitch_Draw:
         
     TYA : LSR #2 : TAY
         
-    LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+    LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
         
     PLY : INY
         
@@ -222,7 +203,4 @@ Sprite_LeverSwitch_Draw:
   .properties
     db $37
     db $37
-  .sizes
-    db $02
-    db $02
 }
