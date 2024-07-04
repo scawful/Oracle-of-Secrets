@@ -327,14 +327,14 @@ org $0DBB8A
 Sound_SetSfx3PanLong:
 
 ; =========================================================
-;spawn a new sprite on screen, A = sprite id
-;when using this function you have to set the position yourself
-;these values belong to the sprite who used that function not the new one 
-;$00 low x, $01 high x
-;$02 low y, $03 high y
-;$04 height, $05 low x (overlord)
-;$06 high x (overlord), $07 low y (overlord)
-;$08 high y (overlord)
+; spawn a new sprite on screen, A = sprite id
+; when using this function you have to set the position yourself
+; these values belong to the sprite who used that function not the new one 
+; $00 low x, $01 high x
+; $02 low y, $03 high y
+; $04 height, $05 low x (overlord)
+; $06 high x (overlord), $07 low y (overlord)
+; $08 high y (overlord)
 Sprite_SpawnDynamically = $1DF65D
 
 Player_ResetState = $07F1A3
@@ -344,14 +344,12 @@ Player_ResetState = $07F1A3
 Sprite_ApplyConveyorAdjustment = $1D8010
 
 ; =========================================================
-;set the hitbox of the player (i think)
-;org $0683EA
-;Sprite_SetupHitBoxLong:
+; Setup sprite hitbox for comparison with scrap ram
+Sprite_SetupHitBoxLong = $0683EA
 
 ; =========================================================
 ; set tile of dungeon
 Dungeon_SpriteInducedTilemapUpdate = $01E7A9
-
 
 ; =========================================================
 ; player can't pass through the sprite
@@ -392,7 +390,6 @@ Sprite_ShowMessageFromPlayerContact = $05E1F0
 UseImplicitRegIndexedLocalJumpTable = $008781
 
 EnableForceBlank = $00893D
-
 
 ; =========================================================
 ; $04 = X
