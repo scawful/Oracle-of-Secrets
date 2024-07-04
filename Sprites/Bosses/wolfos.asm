@@ -65,9 +65,8 @@ Sprite_Wolfos_Prep:
     RTL
   .spawn_wolfos
   LDA.b #$40 : STA.w SprTimerA, X
-  LDA.b #$00 : STA.w $0CAA, X ; Sprite persist
+  LDA.b #$80 : STA.w $0CAA, X ; Sprite persist
   LDA.b #$08 : STA.w $0E40, X ; Nbr Oam Entries 
-  LDA.b #$E0 : STA.w $0F60, X ; Persist 
 
   PLB
   RTL
@@ -148,6 +147,10 @@ Wolfos_DecideAction:
 
 Sprite_Wolfos_Main:
 {
+  JSL Sprite_PlayerCantPassThrough
+  JSL Sprite_BounceFromTileCollision
+  JSL Sprite_DamageFlash_Long
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -233,8 +236,6 @@ Sprite_Wolfos_Main:
   {
     %StartOnFrame(12)
     %PlayAnimation(12, 13, 10)
-    JSL Sprite_PlayerCantPassThrough
-    JSL Sprite_BounceFromTileCollision
 
     JSL Sprite_Move
 
@@ -252,8 +253,6 @@ Sprite_Wolfos_Main:
   {
     %StartOnFrame(14)
     %PlayAnimation(14, 15, 10)
-    JSL Sprite_PlayerCantPassThrough
-    JSL Sprite_BounceFromTileCollision
 
     JSL Sprite_Move
 
@@ -272,9 +271,6 @@ Sprite_Wolfos_Main:
     %PlayAnimation(0, 0, 10)
     STZ.w SprXSpeed, X
     STZ.w SprYSpeed, X
-
-    JSL Sprite_DamageFlash_Long
-    JSL Sprite_PlayerCantPassThrough
 
     ; Run the dialogue and wait for a song of healing flag to be set
     LDA SprMiscD, X : BNE .wait
@@ -312,8 +308,6 @@ Sprite_Wolfos_Main:
   {
     STZ.w SprXSpeed, X
     STZ.w SprYSpeed, X
-
-    JSL Sprite_PlayerCantPassThrough
 
     LDA SprTimerD, X : BNE .dismiss
       LDA.b #$00 : STA $0DD0, X ; kill sprite normal style
