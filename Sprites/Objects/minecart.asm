@@ -725,6 +725,7 @@ CheckSpritePresence:
 }
 
 ; =========================================================
+; Check for input from the user (u,d,l,r) on tile B6, BD
 
 CheckForPlayerInput:
 {
@@ -736,54 +737,42 @@ CheckForPlayerInput:
   LDA.b #$00 : JSL Sprite_GetTileAttr
   
   ; Load the tile index 
-  LDA $0FA5 : CLC : CMP.b #$B6 : BNE .cant_input
+  LDA $0FA5 : CLC : CMP.b #$B6 : BEQ .can_input
+                    CMP.b #$BD : BEQ .can_input
+    BRA .cant_input
+  .can_input
+  
+  LDY !SpriteDirection,       X
+  LDA $F0 : AND .d_pad_press, Y : STA $00 : AND.b #$08 : BEQ .not_pressing_up
+    LDA.b #$00 : STA !SpriteDirection, X ; Moving Up
+    LDA.b #North : STA !MinecartDirection
+    STA   SprSubtype, X
+    %GotoAction(2) ; Minecart_MoveNorth
+    BRA   .return
 
-    ; Check for input from the user (u,d,l,r)
-    LDY !SpriteDirection,       X
-    LDA $F0 : AND .d_pad_press, Y : STA $00 : AND.b #$08 : BEQ .not_pressing_up
-      LDA.b #$00 : STA !SpriteDirection, X ; Moving Up
+  .not_pressing_up
+  LDA.b $00 : AND.b #$04 : BEQ .not_pressing_down
+    LDA.b #$01 : STA !SpriteDirection, X
+    LDA.b #South : STA !MinecartDirection
+    STA.w SprSubtype, X
+    %GotoAction(4) ; Minecart_MoveSouth
+    BRA   .return
 
-      LDA.b #North : STA !MinecartDirection
-      STA   SprSubtype, X
-      %GotoAction(2) ; Minecart_MoveNorth
-      BRA   .return
+  .not_pressing_down
+  LDA.b $00 : AND.b #$02 : BEQ .not_pressing_left
+    LDA.b #$02 : STA !SpriteDirection, X
+    LDA.b  #West : STA !MinecartDirection
+    STA.w SprSubtype, X
+    %GotoAction(5) ; Minecart_MoveWest
+    BRA   .return
 
-    .not_pressing_up:
-    LDA   $00 : AND.b #$04 : BEQ .not_pressing_down
-      LDA.b #$01 : STA !SpriteDirection, X
-
-      LDA.b #South : STA !MinecartDirection
-      STA.w SprSubtype, X
-      %GotoAction(4) ; Minecart_MoveSouth
-      BRA   .return
-
-    .not_pressing_down
-    LDA   $00 : AND.b #$02 : BEQ .not_pressing_left
-      LDA.b #$02 : STA !SpriteDirection, X
-      
-      LDA.b  #West : STA !MinecartDirection
-      STA.w SprSubtype, X
-      %GotoAction(5) ; Minecart_MoveWest
-      BRA   .return
-
-    .not_pressing_left
-      LDA   $00 : AND.b #$01 : BEQ .always
-      LDA.b #$03 : STA !SpriteDirection, X
-      
-      LDA.b #East : STA !MinecartDirection
-      STA   SprSubtype, X
-      %GotoAction(3) ; Minecart_MoveEast
-
-    .always
-
-  ;   LDA !SpriteDirection, X : CMP.b #$03 : BNE .not_going_right
-  ;   ; Default heading in reaction to this tile is going up.
-  ;   ; LDA.b #$00 : STA !SpriteDirection, X
-  ; .not_going_right
-  ;   ;STZ $0D80, X
-
+  .not_pressing_left
+  LDA.b $00 : AND.b #$01 : BEQ .return
+    LDA.b #$03 : STA !SpriteDirection, X
+    LDA.b #East : STA !MinecartDirection
+    STA   SprSubtype, X
+    %GotoAction(3) ; Minecart_MoveEast
   .return
-      
   .cant_input
     RTS
 
