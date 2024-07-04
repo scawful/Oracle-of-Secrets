@@ -1182,6 +1182,17 @@ CheckForFollowerInterroomTransition:
   RTL
 }
 
+CheckForFollowerIntraroomTransition:
+{
+  STA.l $7EC007
+  PHB : PHK : PLB
+  LDA.w !LinkInCart : BEQ .not_in_cart
+    LDA.b #$0B : STA $7EF3CC
+  .not_in_cart
+  PLB
+  RTL
+}
+
 pushpc
 
 ; Follower_OldManUnused
@@ -1192,6 +1203,9 @@ org $09A41F
 ; Module07_02_01_LoadNextRoom
 org $028A5B
   JSL CheckForFollowerInterroomTransition
+
+org $0289BF
+  JSL CheckForFollowerIntraroomTransition
 
 pullpc
 
