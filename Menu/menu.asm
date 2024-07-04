@@ -372,8 +372,9 @@ Menu_Exit:
   LDA.w $010C : STA.b $10
 
   ; set $0303 by using $0202 to index table on exit
+  ; set $0304 to prevent item + 1 animation exploits
   LDX $0202 
-  LDA.w Menu_ItemIndex, X : STA $0303
+  LDA.w Menu_ItemIndex, X : STA $0303 : STA.w $0304
 
   LDX.b #$3E
   .loop
