@@ -121,6 +121,7 @@ Sprite_Booki_Move:
   JSL Sprite_Move
   JSL Sprite_BounceFromTileCollision
   JSL Sprite_PlayerCantPassThrough
+  JSL Sprite_DamageFlash_Long
 
   JSL Sprite_IsToRightOfPlayer : CPY.b #$01 : BNE .ToRight
     LDA.b #$01 : STA.w SprMiscC, X
@@ -194,7 +195,7 @@ Sprite_Booki_Draw:
 
   LDA SprGfx, X : CLC : ADC SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
+  LDA.w SprMiscA, X : STA $08
   LDA.w SprMiscC, X : STA $09
 
   PHX
@@ -234,7 +235,7 @@ Sprite_Booki_Draw:
   .ToRight
   LDA.b #$79
   .Prop
-  STA ($90), Y
+  ORA $08 : STA ($90), Y
 
   PHY 
       
