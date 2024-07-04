@@ -90,17 +90,15 @@ Menu_InitGraphics:
   CMP.b #$15 : BEQ .wolf_shovel
   BRA +
   .bottle
-    STZ $030D
-
     LDA $3A : AND.b #$80 : STA $3A
     LDA $50 : AND.b #$FE : STA $50
     LDA.b #$80 : STA $44 : STA $45
   BRA + 
   .wolf_shovel
-    STZ.w $030D
     LDA.b $3A : AND.b #$80 : STA.b $3A
     LDA.b $50 : AND.b #$FE : STA.b $50
   +
+  STZ.w $030D ; SWEAT
   STZ.w $0300 ; ITEMSTEP
   STZ.w $037A ; USEY2
   STZ.w $0301 ; USEY1
