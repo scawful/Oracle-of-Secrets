@@ -82,13 +82,20 @@ Sprite_Korok_Main:
 
   Sprite_Korok_Idle:
   {
+    %PlayAnimation(0, 0, 10)
+    
     LDA.w SprMiscE, X : BNE +
       PHX
       JSL ApplyKorokSpriteSheets
       PLX
       LDA.b #$01 : STA.w SprMiscE, X
     +
-    %PlayAnimation(0, 0, 10)
+    
+    %ShowSolicitedMessage($001D)
+    JSL Sprite_CheckIfLifted
+    JSL ThrownSprite_TileAndSpriteInteraction_long
+    JSL Sprite_Move
+    
     RTS
   }
 
