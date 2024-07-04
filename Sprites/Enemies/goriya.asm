@@ -389,6 +389,7 @@ Sprite_Boomerang_Draw:
 
   LDA SprGfx, X : CLC : ADC SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
+  LDA.w SprMiscA, X : STA $08
 
 
   PHX
@@ -422,7 +423,7 @@ Sprite_Boomerang_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY 
       
