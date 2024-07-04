@@ -46,6 +46,14 @@ OOSPROG         = $7EF3D6
 ;   f - Flipped by fortune tellers to decide which fortune set to give
 OOSPROG2       = $7EF3C6
 
+; Mushroom Grotto ID 0x0C (Palace of Darkness)
+; Tail Palace ID 0x0A (Swamp Palace)
+; Kalyxo Castle ID 0x10 (Skull Woods)
+; Zora Temple ID 0x16 (Thieves Town)
+; Glacia Estate 0x12 (Ice Palace)
+; Goron Mines 0x0E (Misery Mire)
+; Dragon Ship 0x18 (Turtle Rock)
+
 incsrc "Overworld/custom_gfx.asm"
 print  "End of custom_gfx.asm             ", pc
 incsrc "Overworld/ZCustomOverworld.asm"
