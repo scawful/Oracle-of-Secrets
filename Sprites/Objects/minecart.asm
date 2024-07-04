@@ -248,8 +248,8 @@ HandleTossedCart:
 
 Sprite_Minecart_Main:
 {
-  LDA.w SprAction, X                        ; Load the SprAction
-  JSL   UseImplicitRegIndexedLocalJumpTable ; Goto the SprAction
+  LDA.w SprAction, X
+  JSL   UseImplicitRegIndexedLocalJumpTable
 
   dw Minecart_WaitHoriz ; 0x00
   dw Minecart_WaitVert  ; 0x01
@@ -263,34 +263,35 @@ Sprite_Minecart_Main:
   ; 0x00
   Minecart_WaitHoriz:
   {
-      %PlayAnimation(0,1,8)
+    %PlayAnimation(0,1,8)
+    LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
       LDA SprTimerA, X : BNE .not_ready
-      LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
         JSR CheckIfPlayerIsOn : BCC .not_ready
         LDA.w SprMiscF, X : BNE .active_cart
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
-          .active_cart
-            JSL Player_HaltDashAttack            ; Stop the player from dashing
-            LDA #$02 : STA $02F5                 ; Somaria platform and moving 
-            LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
-            LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
+        .active_cart
+        JSL Player_HaltDashAttack            ; Stop the player from dashing
+        LDA #$02 : STA $02F5                 ; Somaria platform and moving 
+        LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
+        LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
 
-            ; Check if the cart is facing east or west
-            LDA SprSubtype, X : CMP.b #$03 : BNE .opposite_direction
-              STA.w !MinecartDirection
-              LDA   #$02 : STA !SpriteDirection, X
-              %GotoAction(5)  ; Minecart_MoveWest
-              RTS
+        ; Check if the cart is facing east or west
+        LDA SprSubtype, X : CMP.b #$03 : BNE .opposite_direction
+          STA.w !MinecartDirection
+          LDA   #$02 : STA !SpriteDirection, X
+          %GotoAction(5)  ; Minecart_MoveWest
+          RTS
 
-            .opposite_direction
-              STA.w !MinecartDirection
-              LDA   #$03 : STA !SpriteDirection, X
-              %GotoAction(3) ; Minecart_MoveEast
-              RTS
+        .opposite_direction
+          STA.w !MinecartDirection
+          LDA   #$03 : STA !SpriteDirection, X
+          %GotoAction(3) ; Minecart_MoveEast
+          RTS
 
-      .not_ready
+    .not_ready
     .lifting
       JSR HandleLiftAndToss
+      JSL ThrownSprite_TileAndSpriteInteraction_long
       RTS
   }
   
@@ -298,34 +299,35 @@ Sprite_Minecart_Main:
   ; 0x01
   Minecart_WaitVert:
   {
-      %PlayAnimation(2,3,8)
+    %PlayAnimation(2,3,8)
+    LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
       LDA SprTimerA, X : BNE .not_ready
-      LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
         JSR CheckIfPlayerIsOn : BCC .not_ready
         LDA.w SprMiscF, X : BNE .active_cart
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
         .active_cart
-            JSL Player_HaltDashAttack            ; Stop the player from dashing
-            LDA #$02 : STA $02F5                 ; Somaria platform and moving 
-            LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
-            LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
-            
-            ; Check if the cart is facing north or south
-            LDA SprSubtype, X : BEQ .opposite_direction
-              STA.w !MinecartDirection
-              LDA   #$01 : STA !SpriteDirection, X
-              %GotoAction(4)  ; Minecart_MoveSouth
-              RTS
-              
-            .opposite_direction
-              STA.w !MinecartDirection
-              LDA   #$00 : STA !SpriteDirection, X
-              %GotoAction(2)  ; Minecart_MoveNorth
-              RTS
+        JSL Player_HaltDashAttack            ; Stop the player from dashing
+        LDA #$02 : STA $02F5                 ; Somaria platform and moving 
+        LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
+        LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
+        
+        ; Check if the cart is facing north or south
+        LDA SprSubtype, X : BEQ .opposite_direction
+          STA.w !MinecartDirection
+          LDA   #$01 : STA !SpriteDirection, X
+          %GotoAction(4)  ; Minecart_MoveSouth
+          RTS
+          
+        .opposite_direction
+          STA.w !MinecartDirection
+          LDA   #$00 : STA !SpriteDirection, X
+          %GotoAction(2)  ; Minecart_MoveNorth
+          RTS
 
       .not_ready
     .lifting
       JSR HandleLiftAndToss
+      JSL ThrownSprite_TileAndSpriteInteraction_long
       RTS 
   }
 
@@ -333,100 +335,100 @@ Sprite_Minecart_Main:
   ; 0x02
   Minecart_MoveNorth:
   {
-      %PlayAnimation(2,3,8)
-      %InitMovement()
+    %PlayAnimation(2,3,8)
+    %InitMovement()
 
-      LDA $36 : BNE .fast_speed
-        LDA.b #-!MinecartSpeed : STA.w SprYSpeed, X
-        JMP   .continue
+    LDA $36 : BNE .fast_speed
+      LDA.b #-!MinecartSpeed : STA.w SprYSpeed, X
+      JMP   .continue
     .fast_speed
-      LDA.b #-!DoubleSpeed : STA.w SprYSpeed, X
+    LDA.b #-!DoubleSpeed : STA.w SprYSpeed, X
     .continue
-      JSL Sprite_MoveVert
+    JSL Sprite_MoveVert
 
-      ; Get direction of the cart (0 to 3)
-      LDY.w !SpriteDirection, X
-      JSL DragPlayer
-      JSR CheckForPlayerInput
-      %HandlePlayerCamera()
-      %MoveCart()
+    ; Get direction of the cart (0 to 3)
+    LDY.w !SpriteDirection, X
+    JSL DragPlayer
+    JSR CheckForPlayerInput
+    %HandlePlayerCamera()
+    %MoveCart()
 
-      RTS
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x03
   Minecart_MoveEast:
   {
-      %PlayAnimation(0,1,8)
-      %InitMovement()
+    %PlayAnimation(0,1,8)
+    %InitMovement()
 
-      LDA $36 : BNE .fast_speed
-        LDA.b #!MinecartSpeed : STA $0D50, X
-        JMP   .continue
+    LDA $36 : BNE .fast_speed
+      LDA.b #!MinecartSpeed : STA $0D50, X
+      JMP   .continue
     .fast_speed
-        LDA.b #!DoubleSpeed : STA $0D50, X
+    LDA.b #!DoubleSpeed : STA $0D50, X
     .continue
-      JSL Sprite_MoveHoriz
-      
-      ; Get direction of the cart (0 to 3)
-      LDY.w !SpriteDirection, X
-      JSL DragPlayer
-      JSR CheckForPlayerInput
-      %HandlePlayerCamera()
-      %MoveCart()
+    JSL Sprite_MoveHoriz
+    
+    ; Get direction of the cart (0 to 3)
+    LDY.w !SpriteDirection, X
+    JSL DragPlayer
+    JSR CheckForPlayerInput
+    %HandlePlayerCamera()
+    %MoveCart()
 
-      RTS
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x04
   Minecart_MoveSouth:
   {
-      %PlayAnimation(2,3,8)
-      %InitMovement()
+    %PlayAnimation(2,3,8)
+    %InitMovement()
 
-      LDA $36 : BNE .fast_speed
-        LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
-        JMP   .continue
+    LDA $36 : BNE .fast_speed
+      LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
+      JMP   .continue
     .fast_speed
-        LDA.b #!DoubleSpeed : STA.w SprYSpeed, X
+      LDA.b #!DoubleSpeed : STA.w SprYSpeed, X
     .continue
-      JSL Sprite_MoveVert
+    JSL Sprite_MoveVert
 
-      ; Get direction of the cart (0 to 3)
-      LDY.w !SpriteDirection, X
-      JSL DragPlayer
-      JSR CheckForPlayerInput
-      %HandlePlayerCamera()
-      %MoveCart()
-      
-      RTS
+    ; Get direction of the cart (0 to 3)
+    LDY.w !SpriteDirection, X
+    JSL DragPlayer
+    JSR CheckForPlayerInput
+    %HandlePlayerCamera()
+    %MoveCart()
+    
+    RTS
   }
 
   ; -------------------------------------------------------
   ; 0x05
   Minecart_MoveWest:
   {
-      %PlayAnimation(0,1,8)
-      %InitMovement()
+    %PlayAnimation(0,1,8)
+    %InitMovement()
 
-      LDA   $36 : BNE .fast_speed
-      LDA.b #-!MinecartSpeed : STA $0D50, X
-              JMP .continue
+    LDA   $36 : BNE .fast_speed
+    LDA.b #-!MinecartSpeed : STA $0D50, X
+            JMP .continue
     .fast_speed
-        LDA.b #-!DoubleSpeed : STA $0D50, X
+    LDA.b #-!DoubleSpeed : STA $0D50, X
     .continue
-      JSL Sprite_MoveHoriz
-      
-      ; Get direction of the cart (0 to 3)
-      LDY.w !SpriteDirection, X
-      JSL DragPlayer
-      JSR CheckForPlayerInput
-      %HandlePlayerCamera()
-      %MoveCart()
+    JSL Sprite_MoveHoriz
+    
+    ; Get direction of the cart (0 to 3)
+    LDY.w !SpriteDirection, X
+    JSL DragPlayer
+    JSR CheckForPlayerInput
+    %HandlePlayerCamera()
+    %MoveCart()
 
-      RTS
+    RTS
   }
 
 
@@ -434,25 +436,24 @@ Sprite_Minecart_Main:
   ; 0x06
   Minecart_Release:
   {
-      %StopCart()
+    %StopCart()
 
-      LDA SprTimerD, X : BNE .not_ready
-        LDA #$40 : STA.w SprTimerA, X
-        LDA.w !SpriteDirection, X : CMP.b #$00 : BEQ .vert
-          CMP.b #$02 : BEQ .vert
-          JMP .horiz
-        .vert
-          %GotoAction(1) ; Minecart_WaitVert
-          RTS
-        .horiz
-          %GotoAction(0)
-      .not_ready
+    LDA SprTimerD, X : BNE .not_ready
+      LDA #$40 : STA.w SprTimerA, X
+      LDA.w !SpriteDirection, X : CMP.b #$00 : BEQ .vert
+        CMP.b #$02 : BEQ .vert
+        JMP .horiz
+      .vert
+        %GotoAction(1) ; Minecart_WaitVert
         RTS
+      .horiz
+        %GotoAction(0)
+    .not_ready
+      RTS
   }
 }
 
 ; =========================================================
-
 
 HandleTileDirections:
 {
@@ -616,18 +617,6 @@ HandleTileDirections:
       db $00, $02, $00, $04 ; South
       db $03, $01, $00, $00 ; West
   }
-  .unused_tile_ids 
-  {    
-      ;    TL,  BL,  TR,  BR
-      ; db $B2, $B3, $B4, $B5
-      ; db $B0  - Horiz
-      ; db $B1  | Vert 
-      ; db $B8  Stop North
-      ; db $B9  Stop South
-      ; db $BA  Stop East
-      ; db $BB  Stop West
-      ; db $BE  + any direction
-  }
 }
 
 ; =========================================================
@@ -636,61 +625,51 @@ HandleTileDirections:
 
 HandleDynamicSwitchTileDirections:
 {
-    ; Find out if the sprite $B0 is in the room
-    JSR CheckSpritePresence : BCC .no_b0
+  ; Find out if the sprite $B0 is in the room
+  JSR CheckSpritePresence : BCC .no_b0
+    PHX 
+    LDA $02 : TAX
+    JSL Link_SetupHitBox
+    JSL Sprite_SetupHitBox ; X is now the ID of the sprite $B0
+    PLX
+    
+    JSL CheckIfHitBoxesOverlap : BCC .no_b0
+      LDA !MinecartDirection : CMP.b #$00 : BEQ .east_or_west
+                               CMP.b #$01 : BEQ .north_or_south
+                               CMP.b #$02 : BEQ .east_or_west
+                               CMP.b #$03 : BEQ .north_or_south
+  .no_b0
+    RTS
 
-      PHX : LDA $02 : TAX
-      JSL Link_SetupHitBox
+    .east_or_west
+      LDA SwitchRam : BNE .go_west
+      LDA #$01 : STA.w SprSubtype,       X
+      STA.w !MinecartDirection
+      LDA #$03 : STA !SpriteDirection, X
+      %GotoAction(3) ; Minecart_MoveEast
+      RTS
 
-      ; X is now the ID of the sprite $B0
-      JSL Sprite_SetupHitBox
-      PLX
-      
-      JSL CheckIfHitBoxesOverlap : BCC .no_b0
+    .go_west
+      LDA #$03 : STA.w SprSubtype,       X
+      STA.w !MinecartDirection
+      LDA #$02 : STA !SpriteDirection, X
+      %GotoAction(5) ; Minecart_MoveWest
+      RTS
 
-        LDA !MinecartDirection : CMP.b #$00 : BEQ .east_or_west
-                                 CMP.b #$01 : BEQ .north_or_south
-                                 CMP.b #$02 : BEQ .east_or_west
-                                 CMP.b #$03 : BEQ .north_or_south
+    .north_or_south
+      LDA SwitchRam : BNE .go_south
+      LDA #$00 : STA.w SprSubtype, X
+      STA.w !MinecartDirection
+      STA !SpriteDirection,      X
+      %GotoAction(2) ; Minecart_MoveNorth
+      RTS
 
-      .no_b0
-        RTS
-
-      .east_or_west
-        LDA SwitchRam : BNE .go_west
-        LDA #$01 : STA.w SprSubtype,       X
-        STA.w !MinecartDirection
-        LDA #$03 : STA !SpriteDirection, X
-        %GotoAction(3) ; Minecart_MoveEast
-        ; LDA SprY, X : AND #$F8 : STA.w SprY, X
-        RTS
-
-      .go_west
-        LDA #$03 : STA.w SprSubtype,       X
-        STA.w !MinecartDirection
-        LDA #$02 : STA !SpriteDirection, X
-        %GotoAction(5) ; Minecart_MoveWest
-        ; LDA SprY, X : AND #$F8 : STA.w SprY, X
-        RTS
-
-      .north_or_south
-        LDA SwitchRam : BNE .go_south
-        LDA #$00 : STA.w SprSubtype, X
-        STA.w !MinecartDirection
-        STA !SpriteDirection,      X
-        %GotoAction(2) ; Minecart_MoveNorth
-        ; LDA SprX, X : AND #$F8 : STA.w SprX, X
-        RTS
-
-      .go_south
-        LDA #$02 : STA.w SprSubtype,       X
-        STA.w !MinecartDirection
-        LDA #$01 : STA !SpriteDirection, X
-        %GotoAction(4) ; Minecart_MoveSouth
-        ; LDA SprX, X : AND #$F8 : STA.w SprX, X
-        RTS
-
-
+    .go_south
+      LDA #$02 : STA.w SprSubtype,       X
+      STA.w !MinecartDirection
+      LDA #$01 : STA !SpriteDirection, X
+      %GotoAction(4) ; Minecart_MoveSouth
+      RTS
 }
 
 ; =========================================================
@@ -786,21 +765,20 @@ CheckForPlayerInput:
 
 CheckIfPlayerIsOn:
 {
-    REP #$20
-    LDA $22 : CLC : ADC #$0009 : CMP $0FD8 : BCC .left
-    LDA $22 : SEC : SBC #$0009 : CMP $0FD8 : BCS .right
-
-    LDA $20 : CLC : ADC #$0012 : CMP $0FDA : BCC .up
-    LDA $20 : SEC : SBC #$0012 : CMP $0FDA : BCS .down
-    
-    SEP #$21 : RTS ; Return with carry set
-
+  REP #$20
+  LDA $22 : CLC : ADC #$0009 : CMP $0FD8 : BCC .left
+  LDA $22 : SEC : SBC #$0009 : CMP $0FD8 : BCS .right
+  LDA $20 : CLC : ADC #$0012 : CMP $0FDA : BCC .up
+  LDA $20 : SEC : SBC #$0012 : CMP $0FDA : BCS .down
+    SEP #$21 
+    RTS ; Return with carry set
   .left
   .right
   .up
   .down
-    SEP #$20
-    CLC : RTS ; Return with carry cleared
+  SEP #$20
+  CLC 
+  RTS ; Return with carry cleared
 }
 
 
@@ -852,19 +830,16 @@ FollowerDraw_CalculateOAMCoords:
   LDA.b $02 : STA.b ($90),Y
   INY
 
-  CLC : ADC.w #$0080
-  CMP.w #$0180 : BCS .off_screen
+  CLC : ADC.w #$0080 : CMP.w #$0180 : BCS .off_screen
+    LDA.b $02 : AND.w #$0100 : STA.b $74
+    LDA.b $00 : STA.b ($90),Y
 
-  LDA.b $02 : AND.w #$0100 : STA.b $74
-  LDA.b $00 : STA.b ($90),Y
+    CLC : ADC.w #$0010 : CMP.w #$0100 : BCC .on_screen
 
-  CLC : ADC.w #$0010
-  CMP.w #$0100 : BCC .on_screen
-
-.off_screen:
+  .off_screen:
   LDA.w #$00F0 : STA.b ($90),Y
 
-.on_screen:
+  .on_screen:
   SEP #$20
   INY
   RTS

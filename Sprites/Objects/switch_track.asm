@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = $B0 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 04  ; Number of tiles used in a frame
+!NbrTiles           = 02  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 01  ; Number of Health the sprite have
@@ -13,7 +13,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = $1C  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 01  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -87,11 +87,9 @@ Sprite_RotatingTrack_Main:
   ; 00 = TopLeft -> TopRight
   TopLeftToTopRight:
   {
-    LDA SwitchRam : BEQ part2
-
-    %PlayAnimation(0,0,4)
-  part2:
-
+    LDA SwitchRam : BNE part2
+      %PlayAnimation(0,0,4)
+    part2:
     %PlayAnimation(1,1,4)
     RTS
   }
@@ -101,10 +99,8 @@ Sprite_RotatingTrack_Main:
   TopRightToBottomRight:
   {
     LDA SwitchRam : BNE part2_a
-
-    %PlayAnimation(1,1,4)
-  part2_a:
-  
+      %PlayAnimation(1,1,4)
+    part2_a:
     %PlayAnimation(2,2,4)
     RTS
   }
@@ -114,24 +110,19 @@ Sprite_RotatingTrack_Main:
   BottomRightToBottomLeft:
   {
     LDA SwitchRam : BNE part2_b
-
-    %PlayAnimation(2,2,4)
-  part2_b:
-    
-      %PlayAnimation(3,3,4)
-      RTS
-    }
+      %PlayAnimation(2,2,4)
+    part2_b:
+    %PlayAnimation(3,3,4)
+    RTS
+  }
 
   ; -------------------------------------------------------
   ; 03 = BottomLeft -> TopLeft
   BottomLeftToTopLeft:
   {
     LDA SwitchRam : BNE part2_c
-
-    %PlayAnimation(3,3,4)
-
-  part2_c:
-
+      %PlayAnimation(3,3,4)
+    part2_c:
     %PlayAnimation(0,0,4)
     RTS
   }
@@ -141,15 +132,13 @@ Sprite_RotatingTrack_Main:
   TopRightToTopLeft:
   {
     LDA SwitchRam : BNE part2_d
-    
-    %StartOnFrame(1)
-    %PlayAnimation(1,1,4)
-
-  part2_d:
-      %StartOnFrame(0)
-      %PlayAnimation(0,0,4)
-      RTS
-    }
+      %StartOnFrame(1)
+      %PlayAnimation(1,1,4)
+    part2_d:
+    %StartOnFrame(0)
+    %PlayAnimation(0,0,4)
+    RTS
+  }
 }
 
 ; =========================================================
@@ -178,10 +167,10 @@ Sprite_RotatingTrack_Draw:
 
     REP #$20
 
-    LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+    LDA $00 : STA ($90), Y
     AND.w #$0100 : STA $0E 
     INY
-    LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+    LDA $02 : STA ($90), Y
     CLC : ADC #$0010 : CMP.w #$0100
     SEP #$20
     BCC .on_screen_y
@@ -200,7 +189,7 @@ Sprite_RotatingTrack_Draw:
         
     TYA : LSR #2 : TAY
         
-    LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+    LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
         
     PLY : INY
         
@@ -215,16 +204,6 @@ Sprite_RotatingTrack_Draw:
     db $00, $01, $02, $03
   .nbr_of_tiles
     db 0, 0, 0, 0
-  .x_offsets
-    dw 0
-    dw 0
-    dw 0
-    dw 0
-  .y_offsets
-    dw 0
-    dw 0
-    dw 0
-    dw 0
   .chr
     db $44
     db $44
@@ -235,9 +214,4 @@ Sprite_RotatingTrack_Draw:
     db $3D
     db $FD
     db $BD
-  .sizes
-    db $02
-    db $02
-    db $02
-    db $02
 }
