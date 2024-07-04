@@ -52,7 +52,7 @@ Sprite_ZoraPrincess_Prep:
     LDA.l $7EF302
     BEQ   .doesnt_have_mask
       STZ.w $0DD0, X ; Kill the sprite 
-  .doesnt_have_mask
+    .doesnt_have_mask
 
     LDA #$00 : STA $0CAA, X
     LDA #$00 : STA $0B6B, X
@@ -64,22 +64,22 @@ Sprite_ZoraPrincess_Prep:
 
 Sprite_ZoraPrincess_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  JSL Sprite_PlayerCantPassThrough
+
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
+
   dw WaitForLink
   dw CheckForSongOfHealing
   dw ThanksMessage
   dw GiveZoraMask
 
-
   WaitForLink:
   {
     %PlayAnimation(0, 1, 10)
     %ShowSolicitedMessage($0C5) : BCC .no_hablaba
-    %GotoAction(1)
-
-  .no_hablaba
-    
+      %GotoAction(1)
+    .no_hablaba
     RTS
   }
 
@@ -87,40 +87,35 @@ Sprite_ZoraPrincess_Main:
   {
     %PlayAnimation(0, 1, 10)
     LDA   $FE : BEQ .ninguna_cancion
-    STZ   $FE
-    LDA.b #$C0 : STA.w SprTimerD, X
-    %GotoAction(2)
-  .ninguna_cancion
+      STZ   $FE
+      LDA.b #$C0 : STA.w SprTimerD, X
+      %GotoAction(2)
+    .ninguna_cancion
     RTS
   }
 
   ThanksMessage:
   {
     %PlayAnimation(0, 1, 10)
-
     LDA.w SprTimerD,              X : BNE +
-    %ShowUnconditionalMessage($0C6) 
-    LDA.b #$C0 : STA.w SprTimerD, X
-    %GotoAction(3)
-  +
+      %ShowUnconditionalMessage($0C6) 
+      LDA.b #$C0 : STA.w SprTimerD, X
+      %GotoAction(3)
+    +
     RTS
   }
 
   GiveZoraMask:
   {
     LDA.w SprTimerD, X : BNE +
-
-    LDY   #$0F : STZ $02E9     ; Give the Deku Mask
-    JSL   Link_ReceiveItem
-    LDA   #$01 : STA.l $7EF302
-    LDA.b #$00 : STA $0DD0, X
-  +
+      LDY   #$0F : STZ $02E9     ; Give the Zora Mask
+      JSL   Link_ReceiveItem
+      LDA   #$01 : STA.l $7EF302
+      LDA.b #$00 : STA $0DD0, X
+    +
     RTS
   }
-
-
 }
-
 
 
 Sprite_ZoraPrincess_Draw:
