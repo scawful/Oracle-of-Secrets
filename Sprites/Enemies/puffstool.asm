@@ -43,8 +43,10 @@ Sprite_Puffstool_Long:
 
   LDA.w SprSubtype, X : BEQ + 
     JSL Sprite_PrepAndDrawSingleSmall
+    JMP ++
   +
   JSR Sprite_Puffstool_Draw ; Call the draw code
+  ++
   JSL Sprite_DrawShadow
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
@@ -61,12 +63,16 @@ Sprite_Puffstool_Long:
 Sprite_Puffstool_Prep:
 {
   PHB : PHK : PLB
-    
-  LDA.b #$0A : STA.w SprHealth, X
+  
+  LDA.l $7EF359 : TAY
+  LDA.w .health, Y : STA.w SprHealth, X
   LDA.b #$80 : STA.w SprDefl, X
 
   PLB
   RTL
+
+.health
+  db $0A, $10, $1A, $20
 }
 
 ; =========================================================
@@ -117,6 +123,10 @@ Sprite_Puffstool_Main:
     LDA.w SprTimerA, X : BNE + 
       %GotoAction(0)
 
+      JSL GetRandomInt : AND.b #$1F : BEQ .bomb
+        JSR Puffstool_SpawnSpores
+        RTS
+      .bomb
       LDA.b #$4A ; SPRITE 4A
       LDY.b #$0B
       JSL Sprite_SpawnDynamically : BMI .no_space
@@ -130,8 +140,12 @@ Sprite_Puffstool_Main:
 
   Puffstool_Spores:
   {
-    JSL Sprite_PlayerCantPassThrough
     JSL Sprite_MoveXyz
+    JSL Sprite_CheckDamageToPlayerSameLayer
+
+    LDA.w SprTimerC, X : BNE + 
+      STZ.w SprState, X
+    +
     RTS
   }
 }
@@ -166,6 +180,8 @@ Puffstool_SpawnSpores:
 
   LDA.b #$FF
   STA.w $0E80, Y
+
+  LDA.b #$40 : STA.w SprTimerC, Y
 
   LDA.b #$01
   STA.w SprSubtype, Y
