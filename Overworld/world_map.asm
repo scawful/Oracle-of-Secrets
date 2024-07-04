@@ -85,14 +85,14 @@ DrawCouragePendant:
 DrawMasterSwordIcon:
 {
   ; X position
-  LDA.b #$00 : STA.l $7EC10B
-  LDA.b #$8D : STA.l $7EC10A ; Upper nybble control Zoomed low X pos
+  LDA.b #$02 : STA.l $7EC10B
+  LDA.b #$FD : STA.l $7EC10A ; Upper nybble control Zoomed low X pos
   ; Y position
   LDA.b #$00 : STA.l $7EC109
   LDA.b #$E4 : STA.l $7EC108 ; Upper nybble control Zoomed low Y pos
 
-  LDA.b #$60 : STA.b $0D
-  LDA.b #$32 : STA.b $0C ; Tile GFX
+  LDA.b #$62 : STA.b $0D
+  LDA.b #$34 : STA.b $0C ; Tile GFX
 
   LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
   LDA.b #$0B : STA.l $7EC025
