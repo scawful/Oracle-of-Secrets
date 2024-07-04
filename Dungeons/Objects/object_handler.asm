@@ -15,7 +15,8 @@ org $018650 ; Object ID 230
 
 ; Tile types
 TileBehavior_Nothing = $07DC54
-TileBehavior_Pit = $07DA6A
+TileBehavior_Pit = $07DC8B
+TileBehavior_Door = $07DD0A
 
 ; Minecart Track tile types
 org $07D938
