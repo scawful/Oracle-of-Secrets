@@ -61,6 +61,8 @@ Sprite_MakuTree_Prep:
 
 Sprite_MakuTree_Main:
 {
+  JSL Sprite_PlayerCantPassThrough
+  
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
