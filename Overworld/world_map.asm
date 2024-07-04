@@ -29,6 +29,56 @@ MAPICON         = $7EF3C7
 ;   t - Turtle Rock
 CRYSTALS        = $7EF37A
 
+pullpc
+
+DrawPendants:
+{
+  ; TODO: Draw pendants
+  RTL
+}
+
+DrawMasterSwordIcon:
+{
+  ; X position
+  LDA.b #$00 : STA.l $7EC10B
+  LDA.b #$89 : STA.l $7EC10A ; Upper nybble control Zoomed low X pos
+  ; Y position
+  LDA.b #$00 : STA.l $7EC109
+  LDA.b #$E4 : STA.l $7EC108 ; Upper nybble control Zoomed low Y pos
+
+  LDA.b #$64 : STA.b $0D
+  LDA.b #$3C : STA.b $0C ; Tile GFX
+
+  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$0B : STA.l $7EC025
+  RTL
+}
+
+DrawFortressOfSecretsIcon:
+{
+  ; TODO: Draw Fortress of Secrets Icon
+  RTL
+}
+
+DrawFinalBossIcon:
+{
+  ; X position
+  LDA.b #$0E : STA.l $7EC10B
+  LDA.b #$5E : STA.l $7EC10A
+  ; Y position
+  LDA.b #$06 : STA.l $7EC109
+  LDA.b #$68 : STA.l $7EC108
+  ; Tile GFX (Skull Icon)
+  LDA.b #$66 : STA.b $0D
+  LDA.b #$34 : STA.b $0C
+  ; Tile Size
+  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
+  RTL
+}
+
+pushpc
+
 ; Removed mirror portal draw and pyramid open code
 org $0ABF90
 MapIconDraw:
@@ -50,38 +100,26 @@ MapIconDraw:
 
     .draw_prizes
     LDA.b $8A : AND.b #$40 : BEQ .lwprizes
-
-      ; TODO: Draw the pendants and master sword based on progression
       LDA.l OOSPROG : AND.b #$10 : BNE .check_master_sword
-
-      .check_master_sword
-      ; TODO: Draw the master sword on the light world
-      LDA.l OOSPROG : AND.b #$20 : BNE .check_fortress
-
-      .check_fortress
-      
-      LDA.l OOSPROG : AND.b #$40 : BNE .check_final_boss
-
-      .check_final_boss
-      AND.b #$80 : BNE .exit_dw
-        ; This is a skull icon, use this for the fortress or final boss?
-        ; X position
-        LDA.b #$00 : STA.l $7EC10B
-        LDA.b #$89 : STA.l $7EC10A ; Upper nybble control Zoomed low X pos
-        ; Y position
-        LDA.b #$00 : STA.l $7EC109
-        LDA.b #$E4 : STA.l $7EC108 ; Upper nybble control Zoomed low Y pos
-        ; Tile GFX
-        LDA.b #$66 : STA.b $0D
-        LDA.b #$34 : STA.b $0C
-        ; Tile Size
-        LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
-        LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
-
+        JSL DrawPendants
         JSR HandleMapDrawIcon
-    .exit_dw
-      JMP restore_coords_and_exit
-
+        JMP restore_coords_and_exit
+      .check_master_sword
+      LDA.l OOSPROG : AND.b #$20 : BNE .check_fortress
+        JSL DrawMasterSwordIcon
+        JSR HandleMapDrawIcon
+        JMP restore_coords_and_exit
+      .check_fortress
+      LDA.l OOSPROG : AND.b #$40 : BNE .check_final_boss
+        JSL DrawFortressOfSecretsIcon
+        JSR HandleMapDrawIcon
+        JMP restore_coords_and_exit
+      .check_final_boss
+      LDA.l OOSPROG : AND.b #$80 : BNE .exit_dw
+        JSL DrawFinalBossIcon
+        JSR HandleMapDrawIcon
+      .exit_dw
+        JMP restore_coords_and_exit
     .lwprizes
 
     LDA.l $7EF3C7 : CMP.b #$01 : BEQ .hall_of_secrets
@@ -291,6 +329,8 @@ FixMaskPaletteOnExit:
   LDA.l $7EC229
   RTL
 }
+
+print pc
 
 warnpc $0AC387
 
