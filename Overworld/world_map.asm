@@ -188,7 +188,7 @@ MapIconDraw:
 
 
     ; Draw Crystal 4
-    LDA.l $7EF37A : AND #$01 : BNE .skip_draw_3
+    LDA.l $7EF37A : AND #$20 : BNE .skip_draw_3
       ; X position
       LDA.b #$0E : STA.l $7EC10B
       LDA.b #$5E : STA.l $7EC10A
@@ -207,7 +207,7 @@ MapIconDraw:
     .skip_draw_3
 
     ; Draw Crystal 5
-    LDA.l $7EF37A : AND #$20 : BNE .skip_draw_4
+    LDA.l $7EF37A : AND #$04 : BNE .skip_draw_4
       ; X position
       LDA.b #$0C : STA.l $7EC10B
       LDA.b #$34 : STA.l $7EC10A
@@ -226,7 +226,7 @@ MapIconDraw:
     .skip_draw_4
 
     ; Draw Crystal 6
-    LDA.l $7EF37A : AND #$04 : BNE .skip_draw_5
+    LDA.l $7EF37A : AND #$01 : BNE .skip_draw_5
       ; X position (6)
       LDA.b #$0D : STA.l $7EC10B
       LDA.b #$05 : STA.l $7EC10A
