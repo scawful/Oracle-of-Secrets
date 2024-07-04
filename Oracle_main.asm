@@ -31,7 +31,7 @@
 ; ...p h.m.
 ;  p - pendant quest
 ;  h - hall of secrets
-;  m - maku tree
+;  i - intro over, maku tree
 OOSPROG         = $7EF3D6
 
 ; Bitfield of less important progression
