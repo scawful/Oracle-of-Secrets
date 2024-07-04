@@ -277,7 +277,6 @@ Sprite_BeanVendor_Main:
 
 ReleaseMagicBean:
 {
-  JSL BananaBeanSwapDynamicGfx
   ; X is the bottle ID 
   LDA.b $8A : CMP.b #$00 : BNE .not_the_ranch
     LDA.b #$07
