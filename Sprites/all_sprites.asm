@@ -206,6 +206,11 @@ org $1EEEE4
 org $058EE6
   JSL PutRollerBeneathLink
 
+; Octoballoon_FormBabby
+; Reduce by half the number of babies spawned
+org $06D814
+  LDA.b #$02
+
 ; =========================================================
 
 org    $318000
