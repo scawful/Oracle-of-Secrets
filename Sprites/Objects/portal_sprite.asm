@@ -85,8 +85,6 @@ OrangeActive      = $7E06FD
 OrangeSpriteIndex = $7E0633
 BlueSpriteIndex   = $7E0632
 
-
-
 ; =========================================================
 ; Main Sprite Code 
 ; =========================================================
@@ -95,6 +93,7 @@ Sprite_Portal_Main:
 {
   LDA.w SprAction, X
   JSL   UseImplicitRegIndexedLocalJumpTable
+
   dw StateHandler
   dw BluePortal
   dw OrangePortal
@@ -104,7 +103,6 @@ Sprite_Portal_Main:
 
   dw BluePortal_WarpOverworld
   dw OrangePortal_WarpOverworld
-
 
   StateHandler:
   {
@@ -136,33 +134,26 @@ Sprite_Portal_Main:
     %StartOnFrame(0)
     %PlayAnimation(0,1,8)
 
-    
     LDA $11 : CMP.b #$2A : BNE .not_warped_yet
-    STZ $11
-  .not_warped_yet
-  CLC
-
-    LDA SprTimerD, X : BNE .NoOverlap
-
-    
-    JSL Link_SetupHitBox
-    JSL $0683EA          ; Sprite_SetupHitbox_long 
-    
-    JSL CheckIfHitBoxesOverlap : BCC .NoOverlap
+      STZ $11
+    .not_warped_yet
     CLC
 
-    LDA $1B : BEQ .outdoors
+    LDA SprTimerD, X : BNE .NoOverlap
+      JSL Link_SetupHitBox
+      JSL $0683EA          ; Sprite_SetupHitbox_long 
+      
+      JSL CheckIfHitBoxesOverlap : BCC .NoOverlap
+      CLC
 
-    %GotoAction(3) ; BluePortal_WarpDungeon
-  .NoOverlap
+      LDA $1B : BEQ .outdoors
+
+      %GotoAction(3) ; BluePortal_WarpDungeon
+    .NoOverlap
     RTS
 
-  .outdoors
-
+    .outdoors
     %GotoAction(5) ; BluePortal_WarpOverworld
-
-
-
     RTS
   }
 
@@ -171,11 +162,10 @@ Sprite_Portal_Main:
     %StartOnFrame(2)
     %PlayAnimation(2,3,8)
     LDA $11 : CMP.b #$2A : BNE .not_warped_yet
-    STZ $11
-  .not_warped_yet
+      STZ $11
+    .not_warped_yet
     CLC
     LDA SprTimerD, X : BNE .NoOverlap
-    
     JSL Link_SetupHitBox
     JSL $0683EA          ; Sprite_SetupHitbox_long 
     
@@ -186,10 +176,10 @@ Sprite_Portal_Main:
     LDA $1B : BEQ .outdoors
     %GotoAction(4) ; OrangePortal_WarpDungeon
     
-  .NoOverlap
+    .NoOverlap
     RTS
 
-  .outdoors
+    .outdoors
     %GotoAction(6) ; OrangePortal_WarpOverworld
 
     RTS
@@ -304,40 +294,36 @@ Sprite_Portal_Main:
 CheckForDismissPortal:
 {
   LDA $06FE : CMP.b #$02 : BCC .return
-  LDA $7E0FA6 : BEQ .DespawnOrange     ; Check what portal is spawning next 
-  
-  PHX
-    LDA   BlueSpriteIndex : TAX
-    STZ.w $0DD0, X
-    DEC.w $06FE
-  PLX
-  
-
-.DespawnOrange  
-
-  PHX
-    LDA   OrangeSpriteIndex : TAX
-    STZ.w $0DD0, X
-    DEC.w $06FE
-  PLX
+    LDA $7E0FA6 : BEQ .DespawnOrange ; Check what portal is spawning next 
+      PHX
+        LDA   BlueSpriteIndex : TAX
+        STZ.w $0DD0, X
+        DEC.w $06FE
+      PLX
+    .DespawnOrange  
+    PHX
+      LDA   OrangeSpriteIndex : TAX
+      STZ.w $0DD0, X
+      DEC.w $06FE
+    PLX
   RTS
 
-.return
+  .return
   INC $06FE ; This ticker needs to be reset when transitioning rooms and maps.
   RTS
 }
 
 RejectOnTileCollision:
 {
-    LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
-    LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
+  LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
+  LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
 
-    ; Fetch tile attributes based on current coordinates
-    LDA.b #$00 : JSL Sprite_GetTileAttr
-    
-    ; Load the tile index 
-    LDA $0FA5 : CLC : CMP.b #$00 : BEQ .not_out_of_bounds
-                      CMP.b #$48 : BEQ .not_out_of_bounds
+  ; Fetch tile attributes based on current coordinates
+  LDA.b #$00 : JSL Sprite_GetTileAttr
+  
+  ; Load the tile index 
+  LDA $0FA5 : CLC : CMP.b #$00 : BEQ .not_out_of_bounds
+                    CMP.b #$48 : BEQ .not_out_of_bounds
     
     ; Clear the sprite and make an error sound 
     LDA #$3C ; SFX2.3C Error beep
@@ -347,7 +333,7 @@ RejectOnTileCollision:
     DEC $06FE
 
   .not_out_of_bounds
-    RTS
+  RTS
 }
 
 ;==========================================================
@@ -400,7 +386,7 @@ Sprite_Portal_Draw:
       
   TYA : LSR #2 : TAY
       
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
       
   PLY : INY
       
@@ -437,10 +423,5 @@ Sprite_Portal_Draw:
   db $74
   db $32
   db $72
-.sizes
-  db $02
-  db $02
-  db $02
-  db $02
 }
 
