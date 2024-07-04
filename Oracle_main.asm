@@ -28,7 +28,8 @@
 ;
 ; =========================================================
 
-; .... h.m.
+; ...p h.m.
+;  p - pendant quest
 ;  h - hall of secrets
 ;  m - maku tree
 OOSPROG         = $7EF3D6
@@ -152,6 +153,10 @@ namespace Oracle
   incsrc "Util/item_cheat.asm"
 
   ; -------------------------------------------------------
+
+  ; incsrc "Music/ww_ganondorf.asm"
+
+  ; incsrc "Music/great_sea.asm"
 
   print ""
   print "Finished applying patches"
