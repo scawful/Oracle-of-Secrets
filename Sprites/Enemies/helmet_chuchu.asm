@@ -121,6 +121,7 @@ Sprite_HelmetChuchu_Main:
 
   HelmetSubtype:
   {
+    JSL Sprite_Move
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
@@ -128,10 +129,41 @@ Sprite_HelmetChuchu_Main:
 
   MaskSubtype:
   {
+    JSL Sprite_Move
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
+}
+
+HelmetChuchu_SpawnHookshotDrag:
+{
+  ; Based on the subtype either spawn the helmet or the mask
+  LDA.w SprAction, X
+  CMP.b #$03
+  BEQ .spawn_helmet
+  CMP.b #$04
+  BEQ .spawn_mask
+
+  .spawn_helmet
+  JSL Sprite_SpawnDynamically : BMI .no_space
+    LDA.b #$03 : STA.w SprAction, Y
+    LDA.b #$04 : STA.w SprFrame, Y
+    LDA.b #$04 : STA.w SprHealth, Y
+    LDA.b #$00 : STA.w SprMiscB, Y
+    LDA.b #$80 : STA.w SprTimerA, Y
+  .no_space
+  RTS
+
+  .spawn_mask
+  JSL Sprite_SpawnDynamically : BMI .no_space2
+    LDA.b #$04 : STA.w SprAction, Y
+    LDA.b #$02 : STA.w SprFrame, Y
+    LDA.b #$04 : STA.w SprHealth, Y
+    LDA.b #$00 : STA.w SprMiscB, Y
+    LDA.b #$80 : STA.w SprTimerA, Y
+  .no_space2
+  RTS
 }
 
 ; Based on Sprite_CancelHookshot
