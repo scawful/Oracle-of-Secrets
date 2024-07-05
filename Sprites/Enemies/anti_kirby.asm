@@ -71,7 +71,7 @@ Sprite_AntiKirby_Prep:
     db $81, $88
 
   .health
-    db 30, 60
+    db 10, 20
 
   .prize_pack
     db 6, 3
