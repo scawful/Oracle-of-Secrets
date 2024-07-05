@@ -362,11 +362,13 @@ ResetOcarinaFlag:
 ; 01 - Song of Storms 
 ; 02 - Song of Healing  
 ; 03 - Song of Soaring
+; 04 - Song of Time
 
 ; Values at $7EF34C determine scrolling behavior 
 ; 01 - No scrolling allowed
 ; 02 - Scroll between two songs
 ; 03 - Scroll between three songs
+; 04 - Scroll between four songs
 
 UpdateFluteSong_Long:
 {
@@ -393,13 +395,17 @@ UpdateFluteSong_Long:
   ; R Button Pressed - Increment song
   INC $030F        ; increment $030F Song RAM
   LDA $030F        ; load incremented Song RAM
-  CMP.b #$04  
+  CMP.b #$05
   BCS .wrap_to_min
   .update_song
   RTL
 
   .wrap_to_max
   LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_2
+                CMP.b #$03 : BEQ .set_max_to_3
+  LDA #$04 : STA $030F : RTL
+
+  .set_max_to_3
   LDA #$03 : STA $030F : RTL
 
   .set_max_to_2
