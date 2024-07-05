@@ -544,6 +544,23 @@ Menu_SongMenu:
     LDA.w $030F : CMP.b #$04 : BEQ .reset
       
       INC.w $030F
+      LDA $030F        ; load incremented Song RAM
+      CMP.b #$05
+      BCS .wrap_to_min
+      .wrap_to_max
+      LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_2
+                    CMP.b #$03 : BEQ .set_max_to_3
+      LDA #$04 : STA $030F : JMP .continue
+
+      .set_max_to_3
+      LDA #$03 : STA $030F : JMP .continue
+
+      .set_max_to_2
+      LDA #$02 : STA $030F : JMP .continue
+
+      .wrap_to_min
+      LDA #$01 : STA $030F
+      
       BRA .continue
 
   .move_left
@@ -551,12 +568,16 @@ Menu_SongMenu:
     JSR SongMenu_DeleteCursor
     LDA.w $030F : CMP.b #$01 : BEQ .reset
       DEC.w $030F
+      LDA $030F
+      CMP #$00 : BEQ .wrap_to_max
       BRA .continue
 
   .reset
     LDA #$01 : STA $030F
 
   .continue
+
+
   JSR Menu_DrawItemName
   SEP #$30
   LDA.w $030F
