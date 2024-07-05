@@ -134,6 +134,11 @@ Sprite_Booki_Move:
   STZ.w SprMiscC, X
   .Continue
 
+  JSL Sprite_CheckDamageToPlayer
+  JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+    LDA.b #$01 : STA.w SprMiscB, X
+  .no_damage
+
   LDA.w SprMiscB, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -142,20 +147,15 @@ Sprite_Booki_Move:
 
   SlowFloat:
   {
+    LDY #$04
     JSL GetRandomInt : AND.b #$04
     JSL Sprite_FloatTowardPlayer
 
-    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
-      LDA.b #$01 : STA.w SprMiscB, X
-    .no_damage
-
-    JSL Sprite_CheckDamageToPlayer
-
     PHX
     JSL Sprite_DirectionToFacePlayer
-    print pc
-    LDA.b $0E : CMP.b #$11 : BCS .NotTooClose
-    LDA.b $0F : CMP.b #$11 : BCS .NotTooClose
+    
+    LDA.b $0E : CMP.b #$1A : BCS .NotTooClose
+    LDA.b $0F : CMP.b #$1A : BCS .NotTooClose
       LDA.b #$01 : STA.w SprMiscB, X
       LDA.b #$20 : STA.w SprTimerA, X
       %GotoAction(1)
@@ -169,17 +169,11 @@ Sprite_Booki_Move:
   {
     JSL GetRandomInt : AND.b #$04
     JSL Sprite_FloatAwayFromPlayer
-
-    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
-      LDA.b #$01 : STA.w SprMiscB, X
-    .no_damage
     
-    JSL Sprite_CheckDamageToPlayer
-
     PHX
     JSL Sprite_DirectionToFacePlayer
-    LDA.b $0E : CMP.b #$16 : BCC .NotTooClose
-    LDA.b $0F : CMP.b #$16 : BCC .NotTooClose
+    LDA.b $0E : CMP.b #$1B : BCC .NotTooClose
+    LDA.b $0F : CMP.b #$1B : BCC .NotTooClose
       LDA.b #$00 : STA.w SprMiscB, X
       %GotoAction(0)
     .NotTooClose
@@ -237,7 +231,7 @@ Sprite_Booki_Draw:
   LDA.b $09 : BEQ .ToRight
   LDA.b #$29 : JMP .Prop
   .ToRight
-  LDA.b #$59
+  LDA.b #$69
   .Prop
   ORA $08 : STA ($90), Y
 
