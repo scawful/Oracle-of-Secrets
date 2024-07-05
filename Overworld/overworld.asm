@@ -126,10 +126,197 @@ pushpc
 
 incsrc "Overworld/special_areas.asm"
 
+; DetermineConsequencesOfFalling
 org $0794D9
-  ; LDA $8A : CMP #$57 : BEQ .overworld_pit_transition
   JSL LoadOverworldPitAreas : BCC .overworld_pit_transition
-  JSL $01FFD9 ; TakeDamageFromPit
-  RTS
+    JSL $01FFD9 ; TakeDamageFromPit
+    RTS
 .overworld_pit_transition
 
+; TODO: Fix camera scroll boundaries so sprites appear for 0x05
+org $02DB6E
+SpawnPointData:
+.room_id
+#_02DB6E: dw $0104 ; 0x00 - Link's house   - ROOM 0104
+#_02DB70: dw $0012 ; 0x01 - Sanctuary      - ROOM 0012
+#_02DB72: dw $0080 ; 0x02 - Prison         - ROOM 0080
+#_02DB74: dw $0055 ; 0x03 - Uncle          - ROOM 0055
+#_02DB76: dw $0051 ; 0x04 - Throne         - ROOM 0051
+#_02DB78: dw $00D0 ; 0x05 - Old man cave   - ROOM 00D0
+#_02DB7A: dw $00E4 ; 0x06 - Old man home   - ROOM 00E4
+
+; ---------------------------------------------------------
+
+.camera_scroll_boundaries
+#_02DB7C: db $21, $20, $21, $21, $09, $09, $09, $0A ; 0x00 - Link's house
+#_02DB84: db $02, $02, $02, $03, $04, $04, $04, $05 ; 0x01 - Sanctuary
+#_02DB8C: db $10, $10, $10, $11, $01, $00, $01, $01 ; 0x02 - Prison
+#_02DB94: db $0A, $0A, $0A, $0B, $0B, $0A, $0B, $0B ; 0x03 - Uncle
+#_02DB9C: db $0A, $0A, $0A, $0B, $02, $02, $02, $03 ; 0x04 - Throne
+#_02DBA4: db $1E, $1E, $1E, $1F, $01, $00, $01, $01 ; 0x05 - Old man cave
+#_02DBAC: db $1D, $1C, $1D, $1D, $08, $08, $08, $09 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.horizontal_scroll
+#_02DBB4: dw $0900 ; 0x00 - Link's house
+#_02DBB6: dw $0480 ; 0x01 - Sanctuary
+#_02DBB8: dw $00DB ; 0x02 - Prison
+#_02DBBA: dw $0A8E ; 0x03 - Uncle
+#_02DBBC: dw $0280 ; 0x04 - Throne
+#_02DBBE: dw $0100 ; 0x05 - Old man cave
+#_02DBC0: dw $0800 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.vertical_scroll
+#_02DBC2: dw $2110 ; 0x00 - Link's house
+#_02DBC4: dw $0231 ; 0x01 - Sanctuary
+#_02DBC6: dw $1000 ; 0x02 - Prison
+#_02DBC8: dw $0A03 ; 0x03 - Uncle
+#_02DBCA: dw $0A22 ; 0x04 - Throne
+#_02DBCC: dw $1E8C ; 0x05 - Old man cave
+#_02DBCE: dw $1D10 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.y_coordinate
+#_02DBD0: dw $2178 ; 0x00 - Link's house
+#_02DBD2: dw $029C ; 0x01 - Sanctuary
+#_02DBD4: dw $1041 ; 0x02 - Prison
+#_02DBD6: dw $0A70 ; 0x03 - Uncle
+#_02DBD8: dw $0A8F ; 0x04 - Throne
+#_02DBDA: dw $1EF8 ; 0x05 - Old man cave
+#_02DBDC: dw $1D98 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.x_coordinate
+#_02DBDE: dw $0978 ; 0x00 - Link's house
+#_02DBE0: dw $04F8 ; 0x01 - Sanctuary
+#_02DBE2: dw $0160 ; 0x02 - Prison
+#_02DBE4: dw $0B06 ; 0x03 - Uncle
+#_02DBE6: dw $02F8 ; 0x04 - Throne
+#_02DBE8: dw $01A8 ; 0x05 - Old man cave
+#_02DBEA: dw $0878 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.camera_trigger_y
+#_02DBEC: dw $017F ; 0x00 - Link's house
+#_02DBEE: dw $00A7 ; 0x01 - Sanctuary
+#_02DBF0: dw $0083 ; 0x02 - Prison
+#_02DBF2: dw $007B ; 0x03 - Uncle
+#_02DBF4: dw $009A ; 0x04 - Throne
+#_02DBF6: dw $0103 ; 0x05 - Old man cave
+#_02DBF8: dw $0187 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.camera_trigger_x
+#_02DBFA: dw $017F ; 0x00 - Link's house
+#_02DBFC: dw $00FF ; 0x01 - Sanctuary
+#_02DBFE: dw $0167 ; 0x02 - Prison
+#_02DC00: dw $010D ; 0x03 - Uncle
+#_02DC02: dw $00FF ; 0x04 - Throne
+#_02DC04: dw $017F ; 0x05 - Old man cave
+#_02DC06: dw $007F ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.main_GFX
+#_02DC08: db $03 ; 0x00 - Link's house
+#_02DC09: db $04 ; 0x01 - Sanctuary
+#_02DC0A: db $04 ; 0x02 - Prison
+#_02DC0B: db $01 ; 0x03 - Uncle
+#_02DC0C: db $04 ; 0x04 - Throne
+#_02DC0D: db $06 ; 0x05 - Old man cave
+#_02DC0E: db $14 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.floor
+#_02DC0F: db $00 ; 0x00 - Link's house
+#_02DC10: db $00 ; 0x01 - Sanctuary
+#_02DC11: db $FD ; 0x02 - Prison
+#_02DC12: db $FF ; 0x03 - Uncle
+#_02DC13: db $01 ; 0x04 - Throne
+#_02DC14: db $00 ; 0x05 - Old man cave
+#_02DC15: db $00 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.dungeon_id
+#_02DC16: db $FF ; 0x00 - Link's house
+#_02DC17: db $00 ; 0x01 - Sanctuary
+#_02DC18: db $02 ; 0x02 - Prison
+#_02DC19: db $FF ; 0x03 - Uncle
+#_02DC1A: db $02 ; 0x04 - Throne
+#_02DC1B: db $FF ; 0x05 - Old man cave
+#_02DC1C: db $FF ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.layer
+#_02DC1D: db $00 ; 0x00 - Link's house
+#_02DC1E: db $00 ; 0x01 - Sanctuary
+#_02DC1F: db $00 ; 0x02 - Prison
+#_02DC20: db $01 ; 0x03 - Uncle
+#_02DC21: db $00 ; 0x04 - Throne
+#_02DC22: db $00 ; 0x05 - Old man cave
+#_02DC23: db $01 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.camera_scroll_controller
+#_02DC24: db $00 ; 0x00 - Link's house
+#_02DC25: db $22 ; 0x01 - Sanctuary
+#_02DC26: db $20 ; 0x02 - Prison
+#_02DC27: db $20 ; 0x03 - Uncle
+#_02DC28: db $22 ; 0x04 - Throne
+#_02DC29: db $02 ; 0x05 - Old man cave
+#_02DC2A: db $02 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.quadrant
+#_02DC2B: db $02 ; 0x00 - Link's house
+#_02DC2C: db $00 ; 0x01 - Sanctuary
+#_02DC2D: db $10 ; 0x02 - Prison
+#_02DC2E: db $10 ; 0x03 - Uncle
+#_02DC2F: db $00 ; 0x04 - Throne
+#_02DC30: db $10 ; 0x05 - Old man cave
+#_02DC31: db $02 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.overworld_door_tilemap
+#_02DC32: dw $0816 ; 0x00 - Link's house
+#_02DC34: dw $0000 ; 0x01 - Sanctuary
+#_02DC36: dw $0000 ; 0x02 - Prison
+#_02DC38: dw $0000 ; 0x03 - Uncle
+#_02DC3A: dw $0000 ; 0x04 - Throne
+#_02DC3C: dw $0000 ; 0x05 - Old man cave
+#_02DC3E: dw $0000 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.entrance_id
+#_02DC40: dw $0000 ; 0x00 - Link's house
+#_02DC42: dw $0002 ; 0x01 - Sanctuary
+#_02DC44: dw $0002 ; 0x02 - Prison
+#_02DC46: dw $0032 ; 0x03 - Uncle
+#_02DC48: dw $0004 ; 0x04 - Throne
+#_02DC4A: dw $004F ; 0x05 - Old man cave
+#_02DC4C: dw $0030 ; 0x06 - Old man home
+
+; ---------------------------------------------------------
+
+.song
+#_02DC4E: db $07 ; 0x00 - Link's house - SONG 07
+#_02DC4F: db $14 ; 0x01 - Sanctuary    - SONG 14
+#_02DC50: db $10 ; 0x02 - Prison       - SONG 10
+#_02DC51: db $03 ; 0x03 - Uncle        - SONG 03
+#_02DC52: db $10 ; 0x04 - Throne       - SONG 10
+#_02DC53: db $12 ; 0x05 - Old man cave - SONG 12
+#_02DC54: db $12 ; 0x06 - Old man home - SONG 12
