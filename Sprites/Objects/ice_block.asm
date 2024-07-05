@@ -454,7 +454,7 @@ Sprite_IceBlock_Draw:
   .chr
   db $E9, $E9, $E9, $E9
   .properties
-  db $34, $74, $B4, $F4
+  db $24, $64, $A4, $E4
   .sizes
   db $00, $00, $00, $00
 }

@@ -147,7 +147,7 @@ Sprite_DekuLeaf_Draw:
 .chr
   db $A0, $A2, $82, $80
 .properties
-  db $33, $33, $33, $33
+  db $23, $23, $23, $23
 .sizes
   db $02, $02, $02, $02
 }

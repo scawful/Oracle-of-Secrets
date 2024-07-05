@@ -419,9 +419,9 @@ Sprite_Portal_Draw:
   db $EE
   db $EE
 .properties
-  db $34
-  db $74
-  db $32
-  db $72
+  db $24
+  db $64
+  db $22
+  db $62
 }
 

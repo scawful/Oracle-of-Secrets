@@ -201,9 +201,9 @@ Sprite_Whirlpool_Draw:
   db $C4, $C6, $E4, $E6
   db $C4, $C6, $E4, $E6
   .properties
-  db $39, $39, $39, $39
-  db $79, $79, $79, $79
-  db $B9, $B9, $B9, $B9
+  db $29, $29, $29, $29
+  db $69, $69, $69, $69
+  db $A9, $A9, $A9, $A9
   .sizes
   db $02, $02, $02, $02
   db $02, $02, $02, $02
