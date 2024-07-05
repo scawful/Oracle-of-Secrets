@@ -404,7 +404,7 @@ HudItems:
   ;  hammer, lamp,      fire rod, ice rod, mirror,  bottle2
   dw $F701,  $F6F1,     $F6A1,    $F6B1,   $F7C1,   $F751
   ;  flute,  book,      somaria,  byrna,   feather, bottle3
-  dw $F859,  $F741,     $F7A1,    $F8A9,   $F729,   $F751
+  dw $F859,  $F741,     $F7A9,    $F8A9,   $F729,   $F751
   ;  deku,   zora,      wolf,     bunny,   stone,   bottle4
   dw $F6E1,  $F821,     $F6D1,    $F7B9,   $F811,   $F751
 }
@@ -485,18 +485,12 @@ org $0DF751
   dw $2837, $2838, $2839, $283A ; Bee
   dw $2837, $2838, $2839, $283A ; Good bee
   dw $2837, $2838, $3CF7, $3CF8 ; Magic Bean
+  dw $2837, $2838, $3CFB, $3CFC ; Milk Bottle
 
-; Somaria (Unchanged)
-; org $0DF799
-;   dw $20F5, $20F5, $20F5, $20F5 ; No somaria
-org $0DF7A1
+org $0DF7A9
   dw $20F5, $20F5, $20F5, $20F5 ; No somaria
   dw $24DC, $24DD, $24EC, $24ED ; Cane of Somaria
 
-; Byrna
-; org $0DF7A9
-  ; dw $2CDC, $2CDD, $2CEC, $2CED ; Cane of Byrna
-; org $0DF7B1
 org $0DF8A9
   dw $2C82, $2C83, $2C8B, $2C8C ; Fishing Rod
   dw $2CF0, $24F1, $30EC, $E4F0 ; Portal Rod

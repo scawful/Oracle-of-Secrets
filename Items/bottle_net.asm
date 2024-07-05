@@ -125,8 +125,14 @@ LinkItem_Bottles:
   CMP.b #$05       : BEQ .LinkItem_BluePotion
   CMP.b #$06       : BEQ .fairy
   CMP.b #$09       : BEQ .magic_bean
-  
+  CMP.b #$0A       : BEQ .milk_bottle
+
   BRL .LinkItem_BeeBottle
+
+.milk_bottle
+  LDA.l $7EF36C : CMP.l $7EF36D : BEQ .LinkItem_UselessBottle
+    JSL Bottle_DrinkMilk
+    RTS
 
 .magic_bean
   JSL ReleaseMagicBean
@@ -217,6 +223,13 @@ LinkGoBeep:
 {
   LDA.b #$3C : JSR Player_DoSfx2
   BRA LinkItem_Bottles_bottle_exit
+}
+
+Bottle_DrinkMilk:
+{
+  LDA.b #$28 : STA.l $7EF372 ; Heal 5 hearts
+  LDA.b #$02 : STA.l $7EF35C, X : STZ.w $0301
+  RTL
 }
 
 print  "End of Items/bottle_net.asm       ", pc

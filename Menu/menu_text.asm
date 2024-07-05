@@ -143,6 +143,7 @@ Menu_BottleItems:
   dw "_____BEE______  "
   dw "__GOOD_BEE____  "
   dw "_MAGIC_BEAN___  "
+  dw "_MILK_BOTTLE__  "
 
 Menu_GoldstarLabel:
   dw "__GOLD_STAR___  "
