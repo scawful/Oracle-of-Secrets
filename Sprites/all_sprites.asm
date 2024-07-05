@@ -236,8 +236,10 @@ incsrc "Sprites/Enemies/helmet_chuchu.asm"
 print  "End of helmet_chuchu.asm          ", pc
 
 incsrc "Sprites/Enemies/booki.asm"
+print  "End of booki.asm                  ", pc
 
 incsrc "Sprites/Enemies/thunder_ghost.asm"
+print  "End of thunder_ghost.asm          ", pc
 
 incsrc "Sprites/Objects/switch_track.asm"
 print  "End of switch_track.asm           ", pc
