@@ -165,6 +165,7 @@ LinkItem_NewFlute:
 
   .song_of_time
   LDA.b #$27 : JSR $802F ; Player_DoSfx3
+  LDA.b #$02 : STA $FE
   RTS
 
   .song_of_healing

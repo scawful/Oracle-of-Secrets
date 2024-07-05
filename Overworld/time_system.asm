@@ -148,6 +148,7 @@ RunClock:
   .light_world
   .already_gbc_or_minish
 
+  JSR CheckForSongOfTime
   ; time speed (1,3,5,7,F,1F,3F,7F,FF) 
   ; #$3F is almost 1 sec = 1 game minute
   LDA $1A : AND TimeSpeed : BEQ .increase_minutes ; 05
@@ -211,6 +212,22 @@ RunClock:
   JSL $0BFE72
 
   .reset_end
+  RTS
+}
+
+CheckForSongOfTime:
+{
+  LDA $FE : CMP.b #$02 : BNE +
+    LDA.b #$00 : STA.l $7EE002
+
+    LDA.l $7EE000 : CMP.b #$06 : BNE ++
+      LDA.b #$3F : STA.l $7EE002
+    ++
+
+    LDA.l $7EE000 : CMP.b #$12 : BNE ++
+      LDA.b #$3F : STA.l $7EE002
+    ++
+  +
   RTS
 }
 
