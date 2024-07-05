@@ -51,10 +51,10 @@ Sprite_MakuTree_Long:
 
 Sprite_MakuTree_Prep:
 {
-    PHB : PHK : PLB
+  PHB : PHK : PLB
 
-    PLB
-    RTL
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -68,19 +68,19 @@ Sprite_MakuTree_Main:
 
   dw MakuTree_Handler
   dw MakuTree_MeetLink
-  dw MakuTree_GiveMoonPearl
+  dw MakuTree_SpawnHeartContainer
   dw MakuTree_HasMetLink
 
   MakuTree_Handler:
   {
-      ; Check the progress flags 
-      LDA.l $7EF3D4 : CMP.b #$01 : BEQ .has_met_link
+    ; Check the progress flags 
+    LDA.l $7EF3D4 : CMP.b #$01 : BEQ .has_met_link
       %GotoAction(1)
       RTS
 
     .has_met_link
-      %GotoAction(3)
-      RTS
+    %GotoAction(3) 
+    RTS
   }
 
   MakuTree_MeetLink:
@@ -94,7 +94,7 @@ Sprite_MakuTree_Main:
     RTS
   }
 
-  MakuTree_GiveMoonPearl:
+  MakuTree_SpawnHeartContainer:
   {
     ; Give Link a heart container
     LDY #$3E : JSL Link_ReceiveItem
