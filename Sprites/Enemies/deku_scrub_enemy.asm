@@ -437,20 +437,20 @@ Sprite_DekuScrubEnemy_Draw:
     db $97
     db $94, $84
   .properties
-    db $3B, $3B, $3B
-    db $3B, $3B
-    db $3B, $3B
-    db $3B, $3B
-    db $3B, $3B
-    db $3B, $3B
-    db $7B, $7B
-    db $3B, $3B
-    db $3B, $3B, $3B, $3B
-    db $3B, $3B, $3B, $3B
-    db $3B
-    db $3B
-    db $3B
-    db $3B, $3B
+    db $2B, $2B, $2B
+    db $2B, $2B
+    db $2B, $2B
+    db $2B, $2B
+    db $2B, $2B
+    db $2B, $2B
+    db $6B, $6B
+    db $2B, $2B
+    db $2B, $2B, $2B, $2B
+    db $2B, $2B, $2B, $2B
+    db $2B
+    db $2B
+    db $2B
+    db $2B, $2B
   .sizes
     db $02, $00, $00
     db $02, $02
