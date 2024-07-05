@@ -46,6 +46,19 @@ OOSPROG         = $7EF3D6
 ;   f - Flipped by fortune tellers to decide which fortune set to give
 OOSPROG2       = $7EF3C6
 
+; .... ...m
+;   m - maku tree has met link (0: no | 1: yes) 
+OOSPROG3       = $7EF3D4
+
+; 01 - Red Ring
+; 02 - Green Ring
+; 03 - Blue Ring
+MAGICRINGS     = $7EF3D8
+
+; 01 - Fishing Rod
+; 02 - Portal Rod
+CUSTOMRODS     = $7EF351
+
 ; Mushroom Grotto ID 0x0C (Palace of Darkness)
 ; Tail Palace ID 0x0A (Swamp Palace)
 ; Kalyxo Castle ID 0x10 (Skull Woods)
