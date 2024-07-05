@@ -79,7 +79,10 @@ LoadDarkWorldIntro:
       RTL
     .continue
   .has_pearl
-  LDA.l $7EF3CA
+  ; Check if the player was in a dungeon when they saved
+  LDA.b $1B : BNE .indoors
+    LDA.l $7EF3CA
+   .indoors
   RTL
 }
 pushpc
