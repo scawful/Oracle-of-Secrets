@@ -86,7 +86,7 @@ Sprite_HelmetChuchu_Main:
   dw GreenChuchu_Helmet
   dw GreenChuchu_NoHelmet
   dw RedChuchu_Masked
-  ; TODO: Add subtypes of just the helmet/mask gfx which can be hookshoted/hammered/lifted
+  dw RedChuchu_NoMask
   dw HelmetSubtype
   dw MaskSubtype
   
@@ -95,7 +95,7 @@ Sprite_HelmetChuchu_Main:
     %StartOnFrame(4)
     %PlayAnimation(4, 5, 16)
     JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
-      %GotoAction(1)
+        %GotoAction(1)
     .no_damage
     JSR Sprite_Chuchu_Move    
     RTS
@@ -114,6 +114,17 @@ Sprite_HelmetChuchu_Main:
   {
     %StartOnFrame(2)
     %PlayAnimation(2, 3, 16)
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+        %GotoAction(3)
+    .no_damage
+    JSR Sprite_Chuchu_Move
+    RTS
+  }
+
+  RedChuchu_NoMask:
+  {
+    %StartOnFrame(6)
+    %PlayAnimation(6, 7, 16)
     JSL Sprite_CheckDamageFromPlayer
     JSR Sprite_Chuchu_Move
     RTS
@@ -343,7 +354,7 @@ Sprite_HelmetChuchu_Draw:
   ; Helmet Green
   db $26, $08
   db $24, $08
-  ; No Helmet Green
+  ; No Helmet Red
   db $26, $16
   db $24
   .properties
@@ -353,6 +364,6 @@ Sprite_HelmetChuchu_Draw:
   db $37, $37
   db $3B, $39
   db $3B, $39
-  db $39, $39
-  db $39
+  db $37, $37
+  db $37
 }
