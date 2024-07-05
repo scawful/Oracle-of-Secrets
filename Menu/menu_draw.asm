@@ -772,19 +772,19 @@ Menu_DrawMagicItems:
 
   LDA.w #$0001
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(7,3)
+  LDX.w #menu_offset(9,7)
   LDY.w #BananaGFX
   JSR DrawMenuItem
 
   LDA.w #$0001
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(7,6)
+  LDX.w #menu_offset(9,11)
   LDY.w #PineappleGFX
   JSR DrawMenuItem
 
   LDA.w #$0001
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(7,9)
+  LDX.w #menu_offset(9,15)
   LDY.w #RockMeatGFX
   JSR DrawMenuItem
 

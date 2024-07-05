@@ -480,7 +480,7 @@ Menu_MagicBag:
   BRA .continue
 
   .move_right
-    LDA.w $020B : CMP.b #$06 : BCS .zero
+    LDA.w $020B : CMP.b #$03 : BCS .zero
     INC.w $020B
     BRA .continue
 
@@ -512,12 +512,9 @@ Menu_MagicBag:
 }
 
 Menu_MagicBagCursorPositions:
-  dw menu_offset(6,2)  ; banana
-  dw menu_offset(6,5)  ; pineapple
-  dw menu_offset(6,8)  ; 
-  dw menu_offset(6,11) ; 
-  dw menu_offset(6,14) ;
-  dw menu_offset(6,17) ; 
+  dw menu_offset(8,6)   ; banana
+  dw menu_offset(8,10)  ; pineapple
+  dw menu_offset(8,14)  ; goron rock meat
 
 ; =========================================================
 ; 0D MENU SONG MENU
