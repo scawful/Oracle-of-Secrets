@@ -54,12 +54,16 @@ Sprite_ThunderGhost_Prep:
 {
   PHB : PHK : PLB
     
-  LDA.b #$08 : STA.w SprTimerA, X
+  LDA.l SWORD : DEC A : TAY 
+  LDA.w .health : STA.w SprHealth, X 
   LDA.b #$08 : STA.w SprTimerB, X
-  LDA.b #$08 : STA.w SprHealth, X 
+  LDA.b #$08 : STA.w SprTimerA, X
 
   PLB
   RTL
+
+  .health
+    db $08, $10, $20, $40
 }
 
 ; =========================================================
@@ -102,7 +106,7 @@ Sprite_ThunderGhost_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(6, 6, 16)
-    JSL Sprite_CheckDamageToPlayer
+    JSL Sprite_CheckDamageToPlayerSameLayer
     JSL Sprite_Move
     LDA.w SprTimerA, X : BNE +
       STZ.w SprState, X
@@ -114,7 +118,7 @@ Sprite_ThunderGhost_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(7, 7, 16)
-    JSL Sprite_CheckDamageToPlayer
+    JSL Sprite_CheckDamageToPlayerSameLayer
     JSL Sprite_Move
     LDA.w SprTimerA, X : BNE +
       STZ.w SprState, X
