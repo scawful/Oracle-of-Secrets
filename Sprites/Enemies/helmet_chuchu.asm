@@ -59,7 +59,8 @@ Sprite_HelmetChuchu_Prep:
 {
   PHB : PHK : PLB
 
-  LDA.b #$0C : STA.w SprHealth, X
+  LDA.l $7EF359 : DEC A : TAY 
+  LDA.w .health, Y : STA.w SprHealth, X
   JSL GetRandomInt : AND.b #$02 : STA.w SprAction, X
   STZ.w SprMiscB, X
 
@@ -72,6 +73,9 @@ Sprite_HelmetChuchu_Prep:
 
   PLB
   RTL
+
+  .health
+    db $0C, $10, $80, $C0
 }
 
 ; =========================================================
