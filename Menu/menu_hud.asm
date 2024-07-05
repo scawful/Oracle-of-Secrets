@@ -466,6 +466,7 @@ org $0DF859
   dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
   dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
   dw $24D4, $24D5, $24E4, $24E5 ; Red
+  dw $34D4, $34D5, $34E4, $34E5 ; Gold
 
 
 ; Roc's Feather (Net)
