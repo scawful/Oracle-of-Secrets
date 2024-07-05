@@ -4,6 +4,25 @@
 
 LoadFollowerGraphics = $00D423
 
+; org $099F99
+; #Follower_AIVectors:
+;   #_099F99: dw Follower_BasicMover   ; 0x01 - Zelda (Impa)
+;   #_099F9B: dw Follower_OldMan       ; 0x02 - Old man that stops following you
+;   #_099F9D: dw Follower_OldManUnused ; 0x03 - Unused old man
+;   #_099F9F: dw Follower_OldMan       ; 0x04 - Normal old man
+;   #_099FA1: dw Follower_Telepathy    ; 0x05 - Zelda rescue telepathy
+;   #_099FA3: dw Follower_BasicMover   ; 0x06 - Blind maiden
+;   #_099FA5: dw Follower_BasicMover   ; 0x07 - Frogsmith
+;   #_099FA7: dw Follower_BasicMover   ; 0x08 - Smithy
+;   #_099FA9: dw Follower_BasicMover   ; 0x09 - Locksmith
+;   #_099FAB: dw Follower_BasicMover   ; 0x0A - Kiki
+;   #_099FAD: dw Follower_OldManUnused ; 0x0B - Minecart Follower
+;   #_099FAF: dw Follower_BasicMover   ; 0x0C - Purple chest
+;   #_099FB1: dw Follower_BasicMover   ; 0x0D - Super bomb
+;   #_099FB3: dw Follower_Telepathy    ; 0x0E - Master Sword telepathy
+
+; ---------------------------------------------------------
+
 print "OldMan_ExpandedPrep ", pc
 ; Old man sprite wont spawn in his home room 
 ; if you have the follower 
@@ -81,17 +100,6 @@ SpritePrep_OldMan:
 
   RTS
 }
-
-; Updated old man cave trigger
-org $09A4C8
-  dw $00D1
-
-org $09A54E
-  dw $0005 ; OW 03 - West DM
-
-; Update position
-org $09A554
- dw $0178, $0A63, $0001, $009D, $0004 ; Old man - MESSAGE 009D
 
 
 org $09A4C8
