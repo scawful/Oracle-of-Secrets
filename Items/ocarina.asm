@@ -308,7 +308,7 @@ OcarinaEffect_SummonStorms:
     RTL
 
   .checkForEvent
-    JSR CheckForZoraEvent
+    JSR CheckForZoraEvent : BCC .errorBeep
     JMP .dismissStorms
 }
 
@@ -317,8 +317,11 @@ CheckForZoraEvent:
 {
   LDA $20 : CMP.w #$06E8 : BNE .notZora
   LDA $22 : CMP.w #$0C48 : BNE .notZora
-  LDA.b #$01 : STA $04C6
+    LDA.b #$01 : STA $04C6
+    SEC 
+    RTS
   .notZora
+  CLC
   RTS
 }
 
