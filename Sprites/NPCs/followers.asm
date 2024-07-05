@@ -107,9 +107,9 @@ Follower_HandleTriggerData:
   #_09A4D4: dw $0022 ; ROOM 0022 - sewer rats
 
   .coordinates_uw
-  #_09A4D6: dw $1EF0, $0288, $0001, $0099, $0004 ; Old man - MESSAGE 0099
-  #_09A4E0: dw $1E58, $02F0, $0002, $009A, $0004 ; Old man - MESSAGE 009A
-  #_09A4EA: dw $1EA8, $03B8, $0004, $009B, $0004 ; Old man - MESSAGE 009B
+  #_09A4D6: dw $1A78, $0233, $0001, $0099, $0004 ; Old man - MESSAGE 0099
+  #_09A4E0: dw $1BC0, $0378, $0002, $009A, $0004 ; Old man - MESSAGE 009A
+  #_09A4EA: dw $1A78, $0334, $0004, $009B, $0004 ; Old man - MESSAGE 009B
 
   #_09A4F4: dw $1FF8, $039D, $0001, $0021, $0001 ; Zelda - MESSAGE 0021
   #_09A4FE: dw $1FF8, $039D, $0002, $0021, $0001 ; Zelda - MESSAGE 0021
