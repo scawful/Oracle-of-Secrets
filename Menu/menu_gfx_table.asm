@@ -190,6 +190,7 @@ BananaGFX:
   dw $341E, $341F, $342E, $342F ; Banana
 
 RingGFX:
+  dw $3049, $304A, $B049, $B04A ; Gray Ring
   dw $2449, $244A, $A449, $A44A ; Red Ring
   dw $2C49, $2C4A, $AC49, $AC4A ; Blue Ring
   dw $3C49, $3C4A, $BC49, $BC4A ; Green Ring

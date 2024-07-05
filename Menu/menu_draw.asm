@@ -731,19 +731,31 @@ Menu_DrawMagicBag:
 
 Menu_DrawMagicRings:
 {
+  LDA.l $7EF3D8 : AND.w #$00FF : CMP.w #$0001 : BCC .no_attack
+    LDA.w #$0002 : BRA .draw_storms
+  .no_attack
   LDA.w #$0001
+  .draw_storms
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
   LDX.w #menu_offset(17,14)
   LDY.w #RingGFX
   JSR DrawMenuItem
 
-  LDA.w #$0003
+  LDA.l $7EF3D8 : AND.w #$00FF : CMP.w #$0001 : BCC .no_defense
+    LDA.w #$0003 : BRA .draw_defense
+  .no_defense
+  LDA.w #$0001
+  .draw_defense
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
   LDX.w #menu_offset(17,17)
   LDY.w #RingGFX
   JSR DrawMenuItem
 
-  LDA.w #$0002
+  LDA.l $7EF3D8 : AND.w #$00FF : CMP.w #$0001 : BCC .no_luck
+    LDA.w #$0004 : BRA .draw_luck
+  .no_luck
+  LDA.w #$0001
+  .draw_luck
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
   LDX.w #menu_offset(17,20)
   LDY.w #RingGFX
