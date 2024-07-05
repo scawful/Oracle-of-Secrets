@@ -86,6 +86,43 @@ Song_of_Storms:
   db $00 ; end sfx
 }
 ; warnpc $1A8FD4
+
+; A, D, F, A, D, F
+; SFX3_27 Agahnim charge
+; 0x003B
+org $1A91F0 
+Song_of_Time:
+{
+  !Time4th = $2A
+  !TimeParams = $46
+
+  db $E0, $0D ; set sfx instrument - twee
+
+  db !Time4th    ; duration 1/4
+  db !TimeParams ; params
+  db $9A ; play note D3
+
+  db $54         ; duration 1/2
+  db !TimeParams ; params
+  db $9D ; play note F3
+
+  db !Time4th    ; duration 1/4
+  db !TimeParams ; params
+  db $9F ; play note A3
+  db $9A ; play note D3
+
+  db $54 ; duration 1/2
+  db !TimeParams ; params
+  db $9D ; play note F3
+
+  db !Time4th    ; duration 1/4
+  db !TimeParams ; params
+  db $9F ; play note A3
+
+  db $00 ; end sfx
+}
+warnpc $1A922B
+
 ; =========================================================
 
 org $07A3DB
@@ -127,7 +164,7 @@ LinkItem_NewFlute:
   CMP.b #$04 : BEQ .song_of_time
 
   .song_of_time
-  LDA.b #$3C : JSR Player_DoSfx2
+  LDA.b #$27 : JSR $802F ; Player_DoSfx3
   RTS
 
   .song_of_healing
