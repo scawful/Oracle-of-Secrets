@@ -55,7 +55,7 @@ Sprite_ThunderGhost_Prep:
   PHB : PHK : PLB
     
   LDA.l SWORD : DEC A : TAY 
-  LDA.w .health : STA.w SprHealth, X 
+  LDA.w .health, Y : STA.w SprHealth, X 
   LDA.b #$08 : STA.w SprTimerB, X
   LDA.b #$08 : STA.w SprTimerA, X
 
@@ -63,7 +63,7 @@ Sprite_ThunderGhost_Prep:
   RTL
 
   .health
-    db $08, $10, $20, $40
+    db $08, $10, $20, $C0
 }
 
 ; =========================================================
