@@ -227,8 +227,8 @@ MoonPearlGFX:
 SwordGFX:
   dw $2C64, $2CCE, $2C75, $EC64 ; level one 
   dw $2C64, $2C65, $2C74, $2D26 ; level two 
-  dw $3464, $3465, $3475, $3429 ; level three
-  dw $3464, $3465, $3475, $3429 ; level four
+  dw $248A, $2465, $3C74, $2D48 ; level three
+  dw $288A, $2865, $2C74, $2D39 ; level four
 
 ; ---------------------------------------------------------
 
