@@ -121,7 +121,7 @@ Menu_UploadRight:
   JSR Menu_DrawQuestIcons
   JSR Menu_DrawTriforceIcons
   JSR Menu_DrawPendantIcons
-
+  JSR Menu_DrawMagicRings
   JSR Menu_DrawPlaytimeLabel
 
   JSR Menu_DrawHeartPieces

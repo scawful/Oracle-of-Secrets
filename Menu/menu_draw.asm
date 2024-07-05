@@ -729,6 +729,29 @@ Menu_DrawMagicBag:
     incbin "tilemaps/magic_bag.tilemap"
 }
 
+Menu_DrawMagicRings:
+{
+  LDA.w #$0001
+  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(17,14)
+  LDY.w #RingGFX
+  JSR DrawMenuItem
+
+  LDA.w #$0003
+  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(17,17)
+  LDY.w #RingGFX
+  JSR DrawMenuItem
+
+  LDA.w #$0002
+  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(17,20)
+  LDY.w #RingGFX
+  JSR DrawMenuItem
+
+  RTS
+}
+
 Menu_DrawMagicItems:
 { 
   SEP #$30
@@ -751,25 +774,6 @@ Menu_DrawMagicItems:
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
   LDX.w #menu_offset(7,9)
   LDY.w #RockMeatGFX
-  JSR DrawMenuItem
-
-
-  LDA.w #$0001
-  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(7,12)
-  LDY.w #RingGFX
-  JSR DrawMenuItem
-
-  LDA.w #$0002
-  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(7,15)
-  LDY.w #RingGFX
-  JSR DrawMenuItem
-
-  LDA.w #$0003
-  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(7,18)
-  LDY.w #RingGFX
   JSR DrawMenuItem
 
   RTS
