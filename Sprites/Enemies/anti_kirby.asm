@@ -438,19 +438,19 @@ Sprite_AntiKirby_Draw:
   db $22, $23
   .properties
   ; Normal Kirby
-  db $3B
-  db $3B
-  db $3B
-  db $3B
-  db $3B
-  db $3B
+  db $2B
+  db $2B
+  db $2B
+  db $2B
+  db $2B
+  db $2B
   ; Link hat kirby
-  db $3B, $3B
-  db $3B, $3B
-  db $3B, $3B
-  db $3B, $3B
-  db $3B, $3B
-  db $7B, $7B
+  db $2B, $2B
+  db $2B, $2B
+  db $2B, $2B
+  db $2B, $2B
+  db $2B, $2B
+  db $6B, $6B
   .sizes
   db $02
   db $02
