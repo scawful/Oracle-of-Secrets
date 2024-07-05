@@ -34,7 +34,9 @@
 
 pushpc
 org $06DBB5 
-  db $00 ; Puffstool single small char
+  db $0D ; Puffstool single small char
+org $06DABA
+  db $BD, $C8, $26, $20
 pullpc
 
 Sprite_Puffstool_Long:
@@ -286,12 +288,12 @@ Sprite_Puffstool_Draw:
   db $D4, $C4
   db $D6
   .properties
-  db $33, $33
-  db $33, $33
-  db $33, $33
-  db $33, $33
-  db $33, $33
-  db $73, $73
-  db $73, $73
-  db $3D
+  db $23, $23
+  db $23, $23
+  db $23, $23
+  db $23, $23
+  db $23, $23
+  db $63, $63
+  db $63, $63
+  db $2D
 }
