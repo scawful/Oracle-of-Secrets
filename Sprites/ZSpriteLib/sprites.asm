@@ -205,21 +205,33 @@ SprBulletproof = $0BA0
 
 Sprite_SetSpawnedCoords = $09AE64
 
+; The record format for the low table is 4 bytes:
+
+; byte OBJ*4+0: xxxxxxxx
+; byte OBJ*4+1: yyyyyyyy
+; byte OBJ*4+2: cccccccc
+; byte OBJ*4+3: vhoopppN
+
+; The record format for the high table is 2 bits:
+
+; bit 0/2/4/6 of byte OBJ/4: X
+; bit 1/3/5/7 of byte OBJ/4: s
+
+; Xxxxxxxxx = X position of the sprite. signed but see below.
+; yyyyyyyy  = Y position of the sprite.
+; cccccccc  = First tile of the sprite.
+; N         = Name table of the sprite. See below for VRAM address calculation 
+; ppp       = Palette of the sprite. The first palette index is 128+ppp*16.
+; oo        = Sprite priority. See below for details.
+; h/v       = Horizontal/Vertical flip flags.
+; s         = Sprite size flag. See below for details.
+
+SpriteData_OAMProp = $0DB359
+
 ; =========================================================
 ; set the oam coordinate for the sprite draw
 Sprite_PrepOamCoord =  $06E416
 
-; =========================================================
-; check if the sprite is getting damage from player or items
-Sprite_CheckDamageFromPlayer = $06F2AA
-
-; =========================================================
-; check if the sprite is touching the player to damage
-Sprite_CheckDamageToPlayer = $06F121
-
-; =========================================================
-; damage the player everywhere on screen?
-Sprite_AttemptDamageToPlayerPlusRecoil = $06F41F
 
 ; =========================================================
 ; Draw the sprite depending of the position of the player 
@@ -236,21 +248,32 @@ OAM_AllocateFromRegionF = $0DBA94 ; Above
 Sprite_DrawMultiple_quantity_preset = $05DF70
 
 ; =========================================================
-; makes all the sprites on screen shaking
-org $0680FA
-ApplyRumbleToSprites:
+; check if the sprite is getting damage from player or items
+Sprite_CheckDamageFromPlayer = $06F2AA
 
 ; =========================================================
-; args : 
-; !pos1_low  = $00
-; !pos1_size = $02
-; !pos2_low  = $04
-; !pos2_size = $06
-; !pos1_high = $08
-; !pos2_high = $0A
-; !ans_low   = $0F
-; !ans_high  = $0C
-;returns carry clear if there was no overlap
+; check if the sprite is touching the player to damage
+Sprite_CheckDamageToPlayer = $06F121
+
+; =========================================================
+; damage the player everywhere on screen?
+Sprite_AttemptDamageToPlayerPlusRecoil = $06F41F
+
+; =========================================================
+; makes all the sprites on screen shaking
+ApplyRumbleToSprites = $0680FA
+
+; =========================================================
+; args: 
+; pos1_low  = $00
+; pos1_size = $02
+; pos2_low  = $04
+; pos2_size = $06
+; pos1_high = $08
+; pos2_high = $0A
+; ans_low   = $0F
+; ans_high  = $0C
+; returns carry clear if there was no overlap
 CheckIfHitBoxesOverlap = $0683E6
 
 ; =========================================================
