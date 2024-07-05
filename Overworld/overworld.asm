@@ -15,6 +15,9 @@ CMP.b #$00
 org $0EF581
 EXIT_0EF581:
 
+org $01C769
+#_01C769: LDA.w $0DD0,X
+#_01C76C: CMP.b #$02
 
 ; Credits_LoadNextScene_Overworld
 ; Skip end cutscene until it's ready
@@ -226,7 +229,7 @@ SpawnPointData:
 
 .main_GFX
 #_02DC08: db $03 ; 0x00 - Link's house
-#_02DC09: db $04 ; 0x01 - Sanctuary
+#_02DC09: db $03 ; 0x01 - Sanctuary
 #_02DC0A: db $04 ; 0x02 - Prison
 #_02DC0B: db $01 ; 0x03 - Uncle
 #_02DC0C: db $04 ; 0x04 - Throne
