@@ -76,7 +76,10 @@ Sprite_Mermaid_Main:
   dw MermaidWait
   dw MermaidDive
   dw MermaidSwim
+
   dw MapleIdle
+  dw Maple_BoughtMilkBottle
+  dw Maple_NotEnoughRupees
 
   MermaidWait:
   {
@@ -134,6 +137,68 @@ Sprite_Mermaid_Main:
   {
     %PlayAnimation(0,1,16)
     JSL Sprite_PlayerCantPassThrough
+
+    %ShowSolicitedMessage($0187) : BCC .didnt_talk
+      LDA $1CE8 : BNE .player_said_no
+        %GotoAction(4)
+        RTS
+
+      .player_said_no
+      %ShowUnconditionalMessage($018B) ; Come back again!
+    .didnt_talk
+    RTS
+  }
+
+  Maple_BoughtMilkBottle:
+  {
+    REP #$20
+    LDA.l $7EF360
+    CMP.w #$13 ; 30 rupees
+    SEP #$30
+    BCC .not_enough_rupees
+
+      LDA.l $7EF35C : CMP.b #$02 : BEQ .bottle1_available
+      LDA.l $7EF35D : CMP.b #$02 : BEQ .bottle2_available
+      LDA.l $7EF35E : CMP.b #$02 : BEQ .bottle3_available
+      LDA.l $7EF35F : CMP.b #$02 : BEQ .bottle4_available
+        %ShowUnconditionalMessage($033)
+        %GotoAction(3)
+        RTS
+
+      .bottle1_available
+      LDA.b #$0A : STA.l $7EF35C
+      JMP .finish_storage
+
+      .bottle2_available
+      LDA.b #$0A : STA.l $7EF35D
+      JMP .finish_storage
+      
+      .bottle3_available
+      LDA.b #$0A : STA.l $7EF35E
+      JMP .finish_storage
+
+      .bottle4_available
+      LDA.b #$0A : STA.l $7EF35F
+      .finish_storage
+
+      REP #$20
+      LDA.l $7EF360
+      SEC
+      SBC.w #$1E ; Subtract 30 rupees
+      STA.l $7EF360
+      SEP #$30
+
+      %ShowUnconditionalMessage($0188) ; Thank you!
+      %GotoAction(3)
+      RTS
+    .not_enough_rupees
+    %GotoAction(6)
+    RTS
+  }
+
+  Maple_NotEnoughRupees:
+  {
+    %ShowUnconditionalMessage($0189) ; You don't have enough rupees!
     RTS
   }
 }
