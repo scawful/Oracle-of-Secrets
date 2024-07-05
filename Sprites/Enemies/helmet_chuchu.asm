@@ -3,7 +3,7 @@
 ; ========================================================= 
 
 !SPRID              = $05 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 05  ; Number of tiles used in a frame
+!NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = $10 ; Number of Health the sprite have
@@ -63,6 +63,7 @@ Sprite_HelmetChuchu_Prep:
   LDA.w .health, Y : STA.w SprHealth, X
   JSL GetRandomInt : AND.b #$02 : STA.w SprAction, X
   STZ.w SprMiscB, X
+  STZ.w SprMiscD, X
 
   LDA.w SprAction, X : BNE +
     LDA.b #$04 : STA.w SprFrame, X
@@ -98,9 +99,11 @@ Sprite_HelmetChuchu_Main:
   {
     %StartOnFrame(4)
     %PlayAnimation(4, 5, 16)
-    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+    JSR Sprite_CheckForHookshot : BCC +
+      LDA.w SprMiscA, X : BEQ + 
         %GotoAction(1)
-    .no_damage
+    +
+    JSL Sprite_CheckDamageFromPlayer
     JSR Sprite_Chuchu_Move    
     RTS
   }
@@ -109,6 +112,10 @@ Sprite_HelmetChuchu_Main:
   {
     %StartOnFrame(0)
     %PlayAnimation(0, 1, 16)
+    LDA.w SprMiscD, X : BNE + 
+      JSR HelmetChuchu_SpawnHookshotDrag
+      LDA.b #$01 : STA.w SprMiscD, X
+    +
     JSL Sprite_CheckDamageFromPlayer
     JSR Sprite_Chuchu_Move
     RTS
@@ -118,9 +125,11 @@ Sprite_HelmetChuchu_Main:
   {
     %StartOnFrame(2)
     %PlayAnimation(2, 3, 16)
-    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+    JSR Sprite_CheckForHookshot : BCC +
+      LDA.w SprMiscA, X : BEQ + 
         %GotoAction(3)
-    .no_damage
+    +
+    JSL Sprite_CheckDamageFromPlayer
     JSR Sprite_Chuchu_Move
     RTS
   }
@@ -129,6 +138,10 @@ Sprite_HelmetChuchu_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(6, 7, 16)
+    LDA.w SprMiscD, X : BNE + 
+      JSR HelmetChuchu_SpawnHookshotDrag
+      LDA.b #$01 : STA.w SprMiscD, X
+    +
     JSL Sprite_CheckDamageFromPlayer
     JSR Sprite_Chuchu_Move
     RTS
@@ -136,6 +149,8 @@ Sprite_HelmetChuchu_Main:
 
   HelmetSubtype:
   {
+    %StartOnFrame(8)
+    %PlayAnimation(8, 8, 16)
     JSL Sprite_Move
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
@@ -144,6 +159,8 @@ Sprite_HelmetChuchu_Main:
 
   MaskSubtype:
   {
+    %StartOnFrame(8)
+    %PlayAnimation(9, 9, 16)
     JSL Sprite_Move
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
@@ -154,31 +171,42 @@ Sprite_HelmetChuchu_Main:
 HelmetChuchu_SpawnHookshotDrag:
 {
   ; Based on the subtype either spawn the helmet or the mask
+  PHX
   LDA.w SprAction, X
-  CMP.b #$03
+  CMP.b #$01
   BEQ .spawn_helmet
-  CMP.b #$04
+  CMP.b #$03
   BEQ .spawn_mask
 
   .spawn_helmet
+  LDA.b #$05
   JSL Sprite_SpawnDynamically : BMI .no_space
-    LDA.b #$03 : STA.w SprAction, Y
-    LDA.b #$04 : STA.w SprFrame, Y
-    LDA.b #$04 : STA.w SprHealth, Y
-    LDA.b #$00 : STA.w SprMiscB, Y
-    LDA.b #$80 : STA.w SprTimerA, Y
+    LDA.b #$05 : STA.w SprAction, Y
+    JMP .prepare_mask
   .no_space
-  RTS
+  JMP .no_space2
 
   .spawn_mask
+  LDA.b #$05
   JSL Sprite_SpawnDynamically : BMI .no_space2
-    LDA.b #$04 : STA.w SprAction, Y
-    LDA.b #$02 : STA.w SprFrame, Y
-    LDA.b #$04 : STA.w SprHealth, Y
+  LDA.b #$04 : STA.w SprAction, Y
+  .prepare_mask
+    JSL Sprite_SetSpawnedCoordinates
+    LDA.b #$10 : STA.w SprHealth, Y
     LDA.b #$00 : STA.w SprMiscB, Y
     LDA.b #$80 : STA.w SprTimerA, Y
+    LDA.b #$01 : STA.w SprNbrOAM,  Y
+    LDA.w .speed_x, X : STA.w $0D50, Y
+    LDA.w .speed_y, X : STA.w $0D40, Y
   .no_space2
+  PLX
   RTS
+
+.speed_x
+  db  16, -11, -16, 11
+
+.speed_y
+  db   0,  11,   0, -11
 }
 
 ; Based on Sprite_CancelHookshot
@@ -186,27 +214,22 @@ HelmetChuchu_SpawnHookshotDrag:
 ; Returns carry set if hookshotting active
 Sprite_CheckForHookshot:
 {
-  #_0FF544: LDX.b #$04
+  PHX
+  #_0FF544: LDX.b #$0A
 
   .next_ancilla
   #_0FF546: LDA.w $0C4A,X
   #_0FF549: CMP.b #$1F ; ANCILLA 1F
   #_0FF54B: BNE .not_hooker
 
-  .yes_hooker
-  #_0FF54D: LDA.w $037E
-  #_0FF550: BEQ .not_hooker
-
-  .active_hooker
-  ; #_0FF552: STZ.w $037E
-  ; #_0FF555: BRA .stop_hooking
+  PLX
   SEC 
   RTS
 
   .not_hooker
   #_0FF557: DEX
   #_0FF558: BPL .next_ancilla
-
+  PLX
   CLC
   RTS
 }
@@ -337,9 +360,9 @@ Sprite_HelmetChuchu_Draw:
   ; Helmet  $08     $3B
 
   .start_index
-  db $00, $02, $03, $06, $08, $0A, $0C, $0E
+  db $00, $02, $03, $06, $08, $0A, $0C, $0E, $0F, $10
   .nbr_of_tiles
-  db 1, 0, 2, 1, 1, 1, 1, 0
+  db 1, 0, 2, 1, 1, 1, 1, 0, 0, 0
   .y_offsets
   dw 0, -8
   dw 0
@@ -348,6 +371,8 @@ Sprite_HelmetChuchu_Draw:
   dw 0, -8
   dw 0, -4
   dw 0, -8
+  dw 0
+  dw 0
   dw 0
   .chr
   ; No Helmet Green
@@ -362,13 +387,21 @@ Sprite_HelmetChuchu_Draw:
   ; No Helmet Red
   db $26, $16
   db $24
+  ; Mask
+  db $04
+  ; Helmet
+  db $08
   .properties
   db $2B, $2B
   db $2B
-  db $27, $27, $27
-  db $27, $27
+  db $25, $25, $27
+  db $25, $27
   db $2B, $29
   db $2B, $29
-  db $27, $27
+  db $25, $25
+  db $25
+  ; mask
   db $27
+  ; helmet
+  db $29
 }
