@@ -197,6 +197,9 @@ RingGFX:
 PineappleGFX:
   dw $3D7C, $3D7D, $356C, $756C ; Pineapple
 
+RockMeatGFX:
+  dw $20D0, $20D1, $20E0, $20E1 ; Rock Meat
+
 ; =========================================================
 ; Equipped Items
 

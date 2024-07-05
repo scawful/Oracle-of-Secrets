@@ -481,7 +481,7 @@ Menu_MagicBag:
   BRA .continue
 
   .move_right
-    LDA.w $020B : CMP.b #$05 : BCS .zero
+    LDA.w $020B : CMP.b #$06 : BCS .zero
     INC.w $020B
     BRA .continue
 

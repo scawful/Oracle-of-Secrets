@@ -732,22 +732,28 @@ Menu_DrawMagicItems:
   LDY.w #PineappleGFX
   JSR DrawMenuItem
 
-
   LDA.w #$0001
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
   LDX.w #menu_offset(7,9)
-  LDY.w #RingGFX
+  LDY.w #RockMeatGFX
   JSR DrawMenuItem
 
-  LDA.w #$0002
+
+  LDA.w #$0001
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
   LDX.w #menu_offset(7,12)
   LDY.w #RingGFX
   JSR DrawMenuItem
 
-  LDA.w #$0003
+  LDA.w #$0002
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
   LDX.w #menu_offset(7,15)
+  LDY.w #RingGFX
+  JSR DrawMenuItem
+
+  LDA.w #$0003
+  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(7,18)
   LDY.w #RingGFX
   JSR DrawMenuItem
 
