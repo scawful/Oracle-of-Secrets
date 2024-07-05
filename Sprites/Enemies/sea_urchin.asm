@@ -187,12 +187,12 @@ Sprite_SeaUrchin_Draw:
     db $EA
     db $EC
   .properties
-    db $39
-    db $39
-    db $79
-    db $79
-    db $39
-    db $39
-    db $79
-    db $79
+    db $29
+    db $29
+    db $69
+    db $69
+    db $29
+    db $29
+    db $69
+    db $69
 }

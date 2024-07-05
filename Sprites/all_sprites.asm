@@ -167,6 +167,9 @@ print  "End of goriya.asm                 ",  pc
 incsrc "Sprites/Enemies/darknut.asm"
 print  "End of darknut.asm                ",  pc
 
+incsrc "Sprites/Enemies/sea_urchin.asm"
+print  "End of sea_urchin.asm             ", pc
+
 incsrc "Sprites/NPCs/korok.asm"
 print  "End of korok.asm                  ", pc
 
@@ -228,9 +231,6 @@ print  "End of deku_scrub.asm             ", pc
 
 incsrc "Sprites/Enemies/anti_kirby.asm"
 print  "End of anti_kirby.asm             ", pc
-
-incsrc "Sprites/Enemies/sea_urchin.asm"
-print  "End of sea_urchin.asm             ", pc
 
 incsrc "Sprites/Enemies/helmet_chuchu.asm"
 print  "End of helmet_chuchu.asm          ", pc
