@@ -71,6 +71,12 @@ print  "End of Overworld/entrances.asm    ", pc
 pullpc
 LoadDarkWorldIntro:
 {
+  ; If we have the old man, set us indoors and dark world
+  LDA.l $7EF3C8 : CMP.b #$05 : BNE .not_dw_spawn
+    LDA.b #$01 : STA.b $1B
+    LDA.b #$40 : STA.l $7EF3CA
+    RTL
+  .not_dw_spawn
   LDA.l $7EF3C5 : CMP.b #$02 : BNE .continue
     ; Check for maku tree progress flag
     LDA.l $7EF3D6 : CMP.b #$02 : BCS .has_pearl 
