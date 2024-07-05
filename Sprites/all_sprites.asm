@@ -99,6 +99,8 @@ org $1EF42E
   dw   0,   0 : db $E5, $03, $00, $02 ; item
   dw   4,  11 : db $38, $03, $00, $00 ; shadow
 
+Bananas = $7EF38B
+
 org $1EF27D
 ShopItem_Banana:
 {
@@ -108,19 +110,21 @@ ShopItem_Banana:
   JSR $F391   ; ShopItem_CheckForAPress
   BCC .exit
 
-    ; TODO: Add check for if Link has too many bananas
+    LDA.l Bananas : CMP.b #$0A : BCS .error
     LDA.b #$1E : LDY.b #$00
     JSR $F39E ; ShopItem_HandleCost
     BCC $F1A1 ; ShopItem_GiveFailureMessage
 
     STZ.w $0DD0,X
 
+    INC.b Bananas
+
     LDY.b #$42
     JSR $F366 ; ShopItem_HandleReceipt
 
   .exit
   RTS
-
+  .error
   JSR $F38A ; ShopItem_PlayBeep
 }
 warnpc $1EF2AB
