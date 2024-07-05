@@ -308,14 +308,14 @@ Sprite_ThunderGhost_Draw:
   db $28, $2A, $2B
   db $28, $2A, $2B
   .properties
-  db $3B, $3B, $3B
-  db $7B, $7B, $7B
-  db $3B, $3B, $3B
-  db $3B, $3B, $3B
-  db $7B, $7B, $7B
-  db $7B, $7B, $7B
-  db $3B, $3B, $3B
-  db $7B, $3B, $3B
+  db $2B, $2B, $2B
+  db $6B, $6B, $6B
+  db $2B, $2B, $2B
+  db $2B, $2B, $2B
+  db $6B, $6B, $6B
+  db $6B, $6B, $6B
+  db $2B, $2B, $2B
+  db $6B, $2B, $2B
   .sizes
   db $00, $02, $00
   db $00, $02, $00
