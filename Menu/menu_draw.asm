@@ -203,6 +203,10 @@ Menu_DrawHeartPieces:
 
 Menu_DrawMusicNotes:
 {
+  SEP #$30
+  LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
+  REP #$30
+
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0001 : BCC .no_storms
     LDA.w #$0002 : BRA .draw_storms
   .no_storms
@@ -210,7 +214,7 @@ Menu_DrawMusicNotes:
   .draw_storms
   STA.w MusicNoteValue
   LDA.w #MusicNoteValue
-  LDX.w #menu_offset(17,20)
+  LDX.w #menu_offset(9,5)
   LDY.w #QuarterNoteGFX
   JSR DrawMenuItem
 
@@ -221,7 +225,7 @@ Menu_DrawMusicNotes:
   .draw_healing
   STA.w MusicNoteValue
   LDA.w #MusicNoteValue
-  LDX.w #menu_offset(17,17)
+  LDX.w #menu_offset(9,9)
   LDY.w #QuarterNoteGFX
   JSR DrawMenuItem
 
@@ -232,7 +236,18 @@ Menu_DrawMusicNotes:
   .draw_soaring
   STA.w MusicNoteValue
   LDA.w #MusicNoteValue
-  LDX.w #menu_offset(17,14)
+  LDX.w #menu_offset(9,13)
+  LDY.w #QuarterNoteGFX
+  JSR DrawMenuItem
+
+  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0004 : BCC .no_songs
+    LDA.w #$05 : BRA .draw_songs
+  .no_songs
+  LDA.w #$01
+  .draw_songs
+  STA.w MusicNoteValue
+  LDA.w #MusicNoteValue
+  LDX.w #menu_offset(9,17)
   LDY.w #QuarterNoteGFX
   JSR DrawMenuItem
 

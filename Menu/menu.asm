@@ -125,7 +125,6 @@ Menu_UploadRight:
   JSR Menu_DrawPlaytimeLabel
 
   JSR Menu_DrawHeartPieces
-  JSR Menu_DrawMusicNotes
   JSR Menu_DrawQuestStatus
   JSR Menu_DrawAreaNameTXT
   JSR DrawLocationName
@@ -525,6 +524,10 @@ Menu_MagicBagCursorPositions:
 
 Menu_SongMenu:
 {
+  REP #$30
+  JSR Menu_DrawMusicNotes
+  
+
   INC $0207
   LDA.w $030F : BEQ .continue
   ASL : TAY 
@@ -563,7 +566,6 @@ Menu_SongMenu:
   JSR Menu_DrawCursor
   JSR Submenu_Return
   SEP #$20
- 
 
   LDA.b #$22 : STA.w $0116
   LDA.b #$01 : STA.b $17
