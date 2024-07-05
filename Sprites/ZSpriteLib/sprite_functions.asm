@@ -136,11 +136,9 @@ Sprite_FloatTowardPlayer:
 
 Sprite_FloatAwayFromPlayer:
 {
-  LDA SprXSpeed, X : EOR.b #$FF : INC : STA.w SprXSpeed, X
-  LDA SprYSpeed, X : EOR.b #$FF : INC : STA.w SprYSpeed, X
-
+  JSL Sprite_InvertSpeed_XY
   JSL Sprite_MoveAltitude
-
+  JSL Sprite_Move
   RTL
 }
 
