@@ -7,6 +7,10 @@
 !hud_hours_high = $7EC7C4
 !hud_template = $0DFF07
 
+Hours = $7EE000
+Minutes = $7EE001
+TimeSpeed = $7EE002
+
 org !hud_template
 	db $10,$24,$11,$24
   db $6C,$25
@@ -36,23 +40,27 @@ JSL LogoFadeInSetClock
 pullpc
 
 LogoFadeInSetClock:
-JSL $00ED7C ; restore code
-LDA.b #$08 : STA.l $7EE000 ; Set the time to 6:00am
-RTL 
+{
+  JSL $00ED7C ; restore code
+  LDA.b #$08 : STA.l $7EE000 ; Set the time to 6:00am
+  LDA.b #$3F : STA.l $7EE002 ; Set the time speed
+  RTL 
+}
 
 pushpc
 org $0CCA59
 JSL ResetClockTriforceRoom
-
 pullpc
 
 ResetClockTriforceRoom:
-JSL $00E384 ;Restored code
+{
+  JSL $00E384 ;Restored code
 
-LDA.b #$00 : STA.l $7EE000 ; low hours for palette?
-LDA.b #$00 : STA.l $7EE001 ; high hours for palette?
+  LDA.b #$00 : STA.l $7EE000 ; low hours for palette?
+  LDA.b #$00 : STA.l $7EE001 ; high hours for palette?
 
-RTL
+  RTL
+}
 
 DrawClockToHudLong:
 {
@@ -142,7 +150,7 @@ RunClock:
 
   ; time speed (1,3,5,7,F,1F,3F,7F,FF) 
   ; #$3F is almost 1 sec = 1 game minute
-  LDA $1A : AND #$3F : BEQ .increase_minutes ; 05
+  LDA $1A : AND TimeSpeed : BEQ .increase_minutes ; 05
     .end
 
     RTS
