@@ -56,11 +56,15 @@ Sprite_Booki_Prep:
 {
   PHB : PHK : PLB
     
-  LDA.b #$08 : STA.w SprHealth, X
+  LDA.l SWORD : DEC A : TAY
+  LDA.w .health, Y : STA.w SprHealth, X
   STZ.w SprMiscB, X
 
   PLB
   RTL
+
+  .health
+    db $08, $0F, $10, $18
 }
 
 ; =========================================================
@@ -231,9 +235,9 @@ Sprite_Booki_Draw:
   INY
 
   LDA.b $09 : BEQ .ToRight
-  LDA.b #$39 : JMP .Prop
+  LDA.b #$29 : JMP .Prop
   .ToRight
-  LDA.b #$79
+  LDA.b #$59
   .Prop
   ORA $08 : STA ($90), Y
 
