@@ -183,7 +183,7 @@ HelmetChuchu_SpawnHookshotDrag:
 
 ; Based on Sprite_CancelHookshot
 ; This is the hookshot check for the helmet/mask chuchu
-; Returns carry clear if hookshotting active
+; Returns carry set if hookshotting active
 Sprite_CheckForHookshot:
 {
   #_0FF544: LDX.b #$04
@@ -200,14 +200,14 @@ Sprite_CheckForHookshot:
   .active_hooker
   ; #_0FF552: STZ.w $037E
   ; #_0FF555: BRA .stop_hooking
-  CLC 
+  SEC 
   RTS
 
   .not_hooker
   #_0FF557: DEX
   #_0FF558: BPL .next_ancilla
 
-  SEC
+  CLC
   RTS
 }
 
@@ -264,6 +264,7 @@ Sprite_Chuchu_Move:
     JSL Sprite_ProjectSpeedTowardsEntityLong
 
     LDA.w SprTimerB, X : BNE .not_done
+    JSR HelmetChuchu_SpawnHookshotDrag
       STZ.w SprMiscB, X
     .not_done
 
@@ -362,12 +363,12 @@ Sprite_HelmetChuchu_Draw:
   db $26, $16
   db $24
   .properties
-  db $3B, $3B
-  db $3B
-  db $37, $37, $37
-  db $37, $37
-  db $3B, $39
-  db $3B, $39
-  db $37, $37
-  db $37
+  db $2B, $2B
+  db $2B
+  db $27, $27, $27
+  db $27, $27
+  db $2B, $29
+  db $2B, $29
+  db $27, $27
+  db $27
 }
