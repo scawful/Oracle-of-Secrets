@@ -255,7 +255,8 @@ Sprite_Twinrova_Main:
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
-    LDA #$10  ; Set speed
+    LDA #$10 ; speed
+    LDY #$10 ; height
     JSL Sprite_FloatTowardPlayer
     JSL Sprite_CheckTileCollision
 
@@ -274,7 +275,7 @@ Sprite_Twinrova_Main:
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
-    LDA #$20
+    LDA #$20 : LDY #$10 
     JSL Sprite_FloatTowardPlayer
     JSL Sprite_CheckTileCollision
 
@@ -626,6 +627,7 @@ TrinexxBreath_AltEntry:
       CLC : ADC.w .shake_y, Y : STA $0D40, X
 
   JSL Sprite_CheckTileCollision : BEQ .exit
+    LDY #$10
     JSL Sprite_FloatTowardPlayer
 
   .exit

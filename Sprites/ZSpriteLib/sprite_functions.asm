@@ -117,9 +117,12 @@ Sprite_BounceTowardPlayer:
 }
 
 ; A = Speed
-; TODO: Use Y index for height
 Sprite_FloatTowardPlayer:
 {
+  ; Maintain altitude (float effect)
+  TYA : STA.w SprHeight, X
+  JSL Sprite_MoveAltitude
+
   JSL Sprite_ApplySpeedTowardsPlayer
 
   ; Update horizontal position
@@ -127,10 +130,6 @@ Sprite_FloatTowardPlayer:
 
   ; Update vertical position
   JSL Sprite_MoveVert
-
-  ; Maintain altitude (float effect)
-  LDA #$10 : STA.w SprHeight, X
-  JSL Sprite_MoveAltitude
 
   RTL
 }
@@ -842,3 +841,108 @@ GetDistance8bit_Long:
   CLC   : ADC $00 : STA $00 ; distance total X, Y (ABS)
   RTL
 }
+
+
+
+
+; ---------------------------------------------------------
+EXIT_06DF5D:
+RTS
+
+CarriedSprite_CheckForThrow:
+  #_06DF6D: LDA.w $0010
+  #_06DF70: CMP.b #$0E
+  #_06DF72: BEQ EXIT_06DF5D
+
+  #_06DF74: LDA.b $5B
+  #_06DF76: CMP.b #$02
+  #_06DF78: BEQ .forced_throw
+
+  #_06DF7A: LDA.b $4D
+  #_06DF7C: AND.b #$01
+
+  #_06DF7E: LDY.w $037B
+  #_06DF81: BNE .link_not_hittable
+
+  #_06DF83: ORA.w $0046
+
+.link_not_hittable
+  #_06DF86: ORA.w $0345
+  #_06DF89: ORA.w $02E0
+  #_06DF8C: ORA.w $02DA
+  #_06DF8F: BNE .forced_throw
+
+  #_06DF91: LDA.l $7FFA1C,X
+  #_06DF95: CMP.b #$03
+  #_06DF97: BNE .no_throw
+
+  #_06DF99: LDA.b $F4
+  #_06DF9B: ORA.b $F6
+  #_06DF9D: BPL .no_throw
+
+  #_06DF9F: ASL.b $F6
+  #_06DFA1: LSR.b $F6
+
+; ---------------------------------------------------------
+
+.forced_throw
+  ; #_06DFA3: LDA.b #$13 ; SFX3.13
+  ; #_06DFA5: JSL SpriteSFX_QueueSFX3WithPan
+
+  #_06DFA9: LDA.b #$02
+  #_06DFAB: STA.w $0309
+
+  #_06DFAE: LDA.l $7FFA2C,X
+  #_06DFB2: STA.w $0DD0,X
+
+  #_06DFB5: STZ.w $0F80,X
+
+  #_06DFB8: LDA.b #$00
+  #_06DFBA: STA.l $7FFA1C,X
+
+; ---------------------------------------------------------
+
+  #_06DFBE: PHX
+
+  #_06DFBF: LDA.w $0E20,X
+  #_06DFC2: TAX
+
+  #_06DFC3: LDA.l SpriteData_OAMProp,X
+
+  #_06DFC7: PLX
+
+  #_06DFC8: AND.b #$10
+  #_06DFCA: STA.b $00
+
+  #_06DFCC: LDA.w $0E60,X
+  #_06DFCF: AND.b #$EF
+  #_06DFD1: ORA.b $00
+  #_06DFD3: STA.w $0E60,X
+
+  #_06DFD6: LDA.b $2F
+  #_06DFD8: LSR A
+  #_06DFD9: TAY
+
+  #_06DFDA: LDA.w .throw_speed_x,Y
+  #_06DFDD: STA.w $0D50,X
+
+  #_06DFE0: LDA.w .throw_speed_y,Y
+  #_06DFE3: STA.w $0D40,X
+
+  #_06DFE6: LDA.w .throw_speed_z,Y
+  #_06DFE9: STA.w $0F80,X
+
+  #_06DFEC: LDA.b #$00
+  #_06DFEE: STA.w $0F10,X
+
+.no_throw
+  #_06DFF1: RTL
+
+.throw_speed_x
+  #_06DF61: db   0,   0, -62,  63
+
+.throw_speed_y
+  #_06DF65: db -62,  63,   0,   0
+
+.throw_speed_z
+  #_06DF69: db   4,   4,   4,   4
