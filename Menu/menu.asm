@@ -545,10 +545,12 @@ Menu_SongMenu:
       
       INC.w $030F
       LDA $030F        ; load incremented Song RAM
-      CMP.b #$05
+      CMP.b #$04
       BCS .wrap_to_min
+      JMP .continue
       .wrap_to_max
-      LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_2
+      LDA $7EF34C : CMP.b #$01 : BEQ .wrap_to_min
+                    CMP.b #$02 : BEQ .set_max_to_2
                     CMP.b #$03 : BEQ .set_max_to_3
       LDA #$04 : STA $030F : JMP .continue
 
