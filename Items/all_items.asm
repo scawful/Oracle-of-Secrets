@@ -10,10 +10,10 @@ incsrc "Items/goldstar.asm"
 incsrc "Items/portal_rod.asm"
 incsrc "Items/fishing_rod.asm"
 
-BananaBeanGfx:
-  incbin "gfx/banana_bean.bin"
+MagicBeanGfx:
+  incbin "gfx/magic_bean.bin"
 
-BananaBeanSwapDynamicGfx:
+MagicBeanSwapDynamicGfx:
 {
   PHX 
   PHP
@@ -22,7 +22,7 @@ BananaBeanSwapDynamicGfx:
 
   LDX #$01BE
   --
-  LDA.l BananaBeanGfx, X : STA.l $7EA480, X
+  LDA.l MagicBeanGfx, X : STA.l $7EA480, X
   DEX : DEX
   BPL --
 
