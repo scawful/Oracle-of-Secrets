@@ -117,7 +117,7 @@ Sprite_Goriya_Main:
     LDA.w SprTimerD, X : BNE + 
       LDA.b #$16
       JSL Sprite_ApplySpeedTowardsPlayer
-      %SetTimerD($FF)
+      %SetTimerD($50)
     +
 
     JSL Sprite_Move
@@ -372,14 +372,14 @@ Sprite_Goriya_Draw:
   db $E2, $C4
   db $E0, $C4
   .properties
-  db $3D, $3D
-  db $7D, $3D
-  db $3D, $3D
-  db $7D, $3D
-  db $3D, $3D
-  db $3D, $3D
-  db $7D, $7D
-  db $7D, $7D
+  db $2D, $2D
+  db $6D, $2D
+  db $2D, $2D
+  db $6D, $2D
+  db $2D, $2D
+  db $2D, $2D
+  db $6D, $6D
+  db $6D, $6D
 }
 
 Sprite_Boomerang_Draw:
@@ -450,8 +450,8 @@ Sprite_Boomerang_Draw:
   db $26
   db $26
   .properties
-  db $32
-  db $B2
-  db $F2
-  db $72
+  db $22
+  db $A2
+  db $E2
+  db $62
 }
