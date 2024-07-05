@@ -2,6 +2,7 @@ Zarby89 - ZScream, Code, Graphics
 Jared Brian - Shrine of Power, ZScream, Code
 Jeimuzu - Shrine of Wisdom, Tail Palace
 Letterbomb - Shrine of Courage, Music, Graphics
+NEONswift - Legends of Hyrule Maps
 
 SePH - Overworld, Graphics
 Ghillie - Overworld, Graphics
@@ -14,3 +15,6 @@ Fruttielicious - Beta Testing
 LEGO_Vince - Beta Testing
 Spacewiki - Beta Testing
 Evolvingfetus - Beta Testing
+Discodragn - Beta Testing
+BIGLOU - Beta Testing
+HonorThyFamily - Beta Testing
