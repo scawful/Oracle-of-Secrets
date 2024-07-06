@@ -224,6 +224,21 @@ Sprite_Mermaid_Main:
     RTS
   }
 
+
+Librarian_CheckForAllMaps:
+{
+  LDA.l DNGMAP1
+  CMP.l #$FFFC
+  BNE .not_all_maps
+  LDA.l DNGMAP2
+  CMP.l #$FFFF
+  BEQ .all_maps
+  .not_all_maps
+  CLC
+  RTS
+  .all_maps
+  SEC
+  RTS
 }
 
 Sprite_Mermaid_Draw:
