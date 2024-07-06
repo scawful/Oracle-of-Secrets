@@ -1015,6 +1015,13 @@ CheckForSwitchToGoldstar:
   RTL
 }
 
+Goldstar_GetDragged:
+{
+  JSL LinkHop_FindArbitraryLandingSpot
+  STZ.w $0112
+  RTL
+}
+
 pushpc
 
 ; =========================================================
@@ -1035,4 +1042,8 @@ org $07AB3A ;$07AB40
 
 org $008B2A
   JML MaybeUploadBirdGraphicsToOam 
+
+org $07AD49
+LinkHookshot_GetDragged:
+  JSL Goldstar_GetDragged
   
