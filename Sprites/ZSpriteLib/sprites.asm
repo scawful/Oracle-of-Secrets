@@ -1,3 +1,4 @@
+; =========================================================
 ; Sprite RAM and Functions
 
 SprY         = $0D00
@@ -40,7 +41,7 @@ SprSlot      = $0FA0 ; Current sprite slot being executed
 SprStunTimer = $0B58 ; counts down from 0xFF
 
 SprPause     = $0F00 ; Inactive if nonzero
-SprFloor     = $0F20 ; Layer the sprite is on
+SprFloor     = $0F20 ; 0 (top layer), 1 (bottom layer)
 SprType      = $0E20 ; Sprite ID
 SprSubtype   = $0E30 ; Sprite subtype
 
@@ -155,7 +156,7 @@ SpriteRanCheck = $8E
 SprBump      = $0CD2
 
 ; Damage sprite is enduring
-SprDmg       = $0CE2
+SprDmgTaken       = $0CE2
 
 ; Sprite Deflection Properties
 ;     abcdefgh
@@ -203,7 +204,10 @@ SprSpecial   = $0BB0
 ; Bulletproof
 SprBulletproof = $0BA0
 
-Sprite_SetSpawnedCoords = $09AE64
+SprRoom      = $0C9A ;X W Contains the area or room id the sprite has been loaded in
+SprDrop      = $0CBA ;X W 00: Drop nothing, 01: drop normal key, 03: Drop green rupee, OtherValues: Drop big key
+
+; =========================================================
 
 ; The record format for the low table is 4 bytes:
 
@@ -231,7 +235,6 @@ SpriteData_OAMProp = $0DB359
 ; =========================================================
 ; set the oam coordinate for the sprite draw
 Sprite_PrepOamCoord =  $06E416
-
 
 ; =========================================================
 ; Draw the sprite depending of the position of the player 
@@ -340,14 +343,9 @@ Sprite_CheckDamageToPlayerIgnoreLayer = $06F131
 
 ; =========================================================
 ; play a sound loaded in A
-org $0DBB6E
-Sound_SetSfx1PanLong:
-
-org $0DBB7C
-Sound_SetSfx2PanLong:
-
-org $0DBB8A
-Sound_SetSfx3PanLong:
+Sound_SetSfx1PanLong = $0DBB6E
+Sound_SetSfx2PanLong = $0DBB7C
+Sound_SetSfx3PanLong = $0DBB8A
 
 ; =========================================================
 ; spawn a new sprite on screen, A = sprite id
@@ -360,7 +358,8 @@ Sound_SetSfx3PanLong:
 ; $08 high y (overlord)
 Sprite_SpawnDynamically = $1DF65D
 
-Player_ResetState = $07F1A3
+Sprite_SetSpawnedCoords = $09AE64
+Sprite_SetSpawnedCoordinates = $09AE64
 
 ; =========================================================
 ; move the sprite if he stand on a conveyor belt
@@ -428,15 +427,19 @@ Sprite_ProjectSpeedTowardsEntityLong = $06EA22
 ; =========================================================
 ; Misc long functions 
 
+GetRandomInt = $0DBA71
+
 Sprite_SpawnFireball = $0DDA06
 
 Sprite_MoveLong = $1D808C
 
 Sprite_DrawRippleIfInWater = $1EFF8D
 
-Sprite_SpawnSparkleGarnish = $058008
+SpriteDraw_WaterRipple = $059FFA
 
-GetRandomInt = $0DBA71
+Sprite_SpawnSmallSplash = $1EA820
+
+Sprite_SpawnSparkleGarnish = $058008
 
 Sprite_ProjectSpeedTowardsPlayer = $06EA1A
 
@@ -445,8 +448,6 @@ Sprite_CheckDamageFromPlayerLong = $06F2AA
 Sprite_CheckIfLifted = $06AA0C
 
 Sprite_TransmuteToBomb = $06AD50
-
-Sprite_SetSpawnedCoordinates = $09AE64
 
 Guard_ParrySwordAttacks = $06EB5E
 
