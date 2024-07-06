@@ -365,8 +365,8 @@ Sprite_Goriya_Draw:
   ; Body  Head
   db $E4, $C0
   db $E4, $C0
-  db $C6, $C2
-  db $C6, $C2
+  db $E6, $C2
+  db $E6, $C2
   db $E2, $C4
   db $E0, $C4
   db $E2, $C4
