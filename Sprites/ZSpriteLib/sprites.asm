@@ -470,3 +470,31 @@ AreaIndex    = $8A ; Return the current overworld area ID
 ; set the mosaic setting ($2106) XXXXDCBA 
 ;   [ABCD BG1/BG2/BG3/BG4][X size of the mosaic pixels 0-16]
 Mosaic       = $95 
+
+; =========================================================
+; Controllers
+
+; BYSTUDLR 
+;   [B BButton][Y YButton]
+;   [SSelect Button][TStart Button]
+;   [UDLR dpad buttons Up, Down, Left, Right]
+RawJoypad1L  = $F0
+; AXLRIIII 
+;   [A AButton][X Xbutton][L LButton][R RButton][I = controller ID] 
+RawJoypad1H  = $F2
+
+; BYSTUDLR 
+;  [B BButton][Y YButton]
+;  [SSelect Button][TStart Button]
+;  [UDLR dpad buttons Up, Down, Left, Right]
+PressPad1L   = $F4
+
+; AXLRIIII 
+;  [A AButton][X Xbutton]
+;  [L LButton][R RButton][I = controller ID]
+PressPad1H   = $F6 
+
+ButtonAFlag  = $3B ; bit7: Button A is down (A-------)
+
+
+; =========================================================
