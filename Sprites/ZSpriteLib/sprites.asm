@@ -549,3 +549,101 @@ Link_ResetProperties_B = $07F1E6
 Link_ResetProperties_C = $07F1FA
 
 ; =========================================================
+; Ancilla
+
+AnciOAMPrior = $0280 ; Ancilla oam priority if non zero use highest priority for draw
+AnciColTimer = $028A ; Ancilla collision timer to prevent doing collision code too often set to 06 after a collision
+AnciZSpeed   = $0294 ; Ancilla Z Speed
+AnciHeight   = $029E ; Ancilla Height how far it is from its shadow
+AnciHeightH  = $02A8 ; Ancilla Height hight byte how far it is from its shadow
+
+AnciMiscA    = $0BF0 ; This can be used to do anything in ancilla
+AnciMiscB    = $0C54 ; This can be used to do anything in ancilla
+AnciMiscC    = $0C5E ; This can be used to do anything in ancilla (often used to track item received)
+AnciMiscD    = $0C72 ; This can be used to do anything in ancilla (often used to track direction)
+
+AnciTimerA   = $0C68 ; This is a timer, value is decreased by 1 every frame
+
+AnciY        = $0BFA ; Position Y of the ancilla (Up to Down)
+AnciX        = $0C04 ; Position X of the ancilla (Left to Right) 
+AnciYH       = $0C0E ; High (often determine the room) Position Y of the ancilla (Up to Down)
+AnciXH       = $0C18 ; High (often determine the room) Position X of the ancilla (Left to Right) 
+AnciXSpeed   = $0C22 ; Y Speed of the ancilla can go negative to go up
+AnciYSpeed   = $0C2C ; X Speed of the ancilla can go negative to go left
+AnciLayer    = $0C7C ; return the floor where the ancilla is
+AnciOamBuf   = $0C86 ; Oam buffer?
+AnciOAMNbr   = $0C90 ; Number of OAM slots used
+
+AnciYsub     = $0C36 ; sub pixel for Y position for ancilla
+AnciXsub     = $0C40 ; sub pixel for X position for ancilla
+
+; Ancilla IDs
+; db $00 ; 0x00 - NOTHING
+; db $08 ; 0x01 - SOMARIA BULLET
+; db $0C ; 0x02 - FIRE ROD SHOT
+; db $10 ; 0x03 - UNUSED
+; db $10 ; 0x04 - BEAM HIT
+; db $04 ; 0x05 - BOOMERANG
+; db $10 ; 0x06 - WALL HIT
+; db $18 ; 0x07 - BOMB
+; db $08 ; 0x08 - DOOR DEBRIS
+; db $08 ; 0x09 - ARROW
+; db $08 ; 0x0A - ARROW IN THE WALL
+; db $00 ; 0x0B - ICE ROD SHOT
+; db $14 ; 0x0C - SWORD BEAM_BOUNCE
+; db $00 ; 0x0D - SPIN ATTACK FULL CHARGE SPARK
+; db $10 ; 0x0E - BLAST WALL EXPLOSION
+; db $28 ; 0x0F - BLAST WALL EXPLOSION
+; db $18 ; 0x10 - BLAST WALL EXPLOSION
+; db $10 ; 0x11 - ICE ROD WALL HIT
+; db $10 ; 0x12 - BLAST WALL EXPLOSION
+; db $10 ; 0x13 - ICE ROD SPARKLE
+; db $10 ; 0x14 - BAD POINTER
+; db $0C ; 0x15 - SPLASH
+; db $08 ; 0x16 - HIT STARS
+; db $08 ; 0x17 - SHOVEL DIRT
+; db $50 ; 0x18 - ETHER SPELL
+; db $00 ; 0x19 - BOMBOS SPELL
+; db $10 ; 0x1A - POWDER DUST
+; db $08 ; 0x1B - SWORD WALL HIT
+; db $40 ; 0x1C - QUAKE SPELL
+; db $00 ; 0x1D - SCREEN SHAKE
+; db $0C ; 0x1E - DASH DUST
+; db $24 ; 0x1F - HOOKSHOT
+; db $10 ; 0x20 - BLANKET
+; db $0C ; 0x21 - SNORE
+; db $08 ; 0x22 - ITEM GET
+; db $10 ; 0x23 - LINK POOF
+; db $10 ; 0x24 - GRAVESTONE
+; db $04 ; 0x25 - BAD POINTER
+; db $0C ; 0x26 - SWORD SWING SPARKLE
+; db $1C ; 0x27 - DUCK
+; db $00 ; 0x28 - WISH POND ITEM
+; db $10 ; 0x29 - MILESTONE ITEM GET
+; db $14 ; 0x2A - SPIN ATTACK SPARKLE A
+; db $14 ; 0x2B - SPIN ATTACK SPARKLE B
+; db $10 ; 0x2C - SOMARIA BLOCK
+; db $08 ; 0x2D - SOMARIA BLOCK FIZZ
+; db $20 ; 0x2E - SOMARIA BLOCK FISSION
+; db $10 ; 0x2F - LAMP FLAME
+; db $10 ; 0x30 - BYRNA WINDUP SPARK
+; db $10 ; 0x31 - BYRNA SPARK
+; db $04 ; 0x32 - BLAST WALL FIREBALL
+; db $00 ; 0x33 - BLAST WALL EXPLOSION
+; db $80 ; 0x34 - SKULL WOODS FIRE
+; db $10 ; 0x35 - MASTER SWORD GET
+; db $04 ; 0x36 - FLUTE
+; db $30 ; 0x37 - WEATHERVANE EXPLOSION
+; db $14 ; 0x38 - CUTSCENE DUCK
+; db $10 ; 0x39 - SOMARIA PLATFORM POOF
+; db $00 ; 0x3A - BIG BOMB EXPLOSION
+; db $10 ; 0x3B - SWORD UP SPARKLE
+; db $00 ; 0x3C - SPIN ATTACK CHARGE SPARKLE
+; db $00 ; 0x3D - ITEM SPLASH
+; db $08 ; 0x3E - RISING CRYSTAL
+; db $00 ; 0x3F - BUSH POOF
+; db $10 ; 0x40 - DWARF POOF
+; db $08 ; 0x41 - WATERFALL SPLASH
+; db $78 ; 0x42 - HAPPINESS POND RUPEES
+; db $80 ; 0x43 - GANONS TOWER CUTSCENE
+AnciType     = $0C4A
