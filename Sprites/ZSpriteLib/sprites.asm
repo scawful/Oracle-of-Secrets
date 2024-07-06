@@ -498,3 +498,54 @@ ButtonAFlag  = $3B ; bit7: Button A is down (A-------)
 
 
 ; =========================================================
+; Link RAM and Functions
+
+LinkY        = $20 ; Position Y of link
+LinkYH       = $21 ; High position Y of link
+LinkX        = $22 ; Position X of link
+LinkXH       = $23 ; High position X of link
+
+LinkPushDir  = $26 ; ----UDLR [U Up][D Down][L Left][R Right] Direction link is pushing against 
+LinkFaceDir  = $2F ; Direction link is facing 00:Up, 02:Down, 04:Left, 06:Right
+LinkLastDir  = $66 ; Last direction link moved towards 00:Up, 01:Down, 02:Left, 03:Right
+LinkMoveDir  = $67 ; ----UDLR [U Up][D Down][L Left][R Right] direction link is "walking towards"
+LinkMoveInfo = $6A ; 0: Not moving, 1: Moving but NOT diagonally, 2: Moving diagonally
+
+LinkRecoilY  = $27 ; Recoiling speed Y of link
+LinkRecoilX  = $28 ; Recoiling speed X of link
+
+LinkVisible  = $4B ; if set to 0x0C link will be invisible
+LinkBunnyGfx = $56 ; if set to 1 link will be bunny, otherwise link
+
+LinkSpeed    = $57 ; 0x00: normal speed, 0x01-0x0F: slow,�> 0x10:fast
+LinkSpeedTbl = $5E ; 0x00: normal speed, 0x02: walking on stair speed, 0x10: dashing speed
+LinkFalling  = $5B ; if is set to 0x02 or 0x03 link is falling
+
+LinkState    = $5D ; See documentation for that address (0x00 = normal ground state, 0x01 falling, 0x02 recoil, 0x03 spin attack) and many more
+LinkDoorway  = $6C ; 0: Link is not in a doorway, 1: is in a vertical doorway, 2: is in horizontal doorway
+
+
+LinkGrabGfx  = $02DA ; 0: Nothing, 1: a hand in the air, 2: 2 hands in the air (like getting triforce)
+LinkPoofGfx  = $02E1 ; if not 0 add a poof gfx on link
+LinkBunTimer = $02E2 ; Bunny timer for link how many time you will stay in bunny before transforming back
+LinkMenuMove = $02E4 ; if not 0 prevent link from moving and opening the menu
+LinkDamage   = $037B ; if not 0 prevent link from getting any damages from sprites
+
+LinkColChest = $02E5 ; ----CCCC [C Touching chest id]
+LinkSomaria  = $02F5 ; 0: Not on somaria platform, 2: On somaria platform
+LinkItemUse  = $0301 ; BP-AETHR [B Boomerang][P Powder][A Bow&Arrows][E UnusedItem][T UnusedItem][H Hammer][R Rods]
+LinkItemY    = $0303 ; Currently equipped item on the Y button
+LinkCarrying = $0308 ; 0: Nothing, 1:Picking up something, 2: Throwing something
+
+LinkAnim     = $037A ; 0: Normal, 1: Shovel, 2: Praying, 4:Hookshot, 8:Somaria, 10: Bug net, 20: Read book, 40: Tree pull
+
+LinkWallCheat = $037F ; If non zero can walk through walls
+
+
+Link_ResetProperties_A = $07F1A3
+
+Link_ResetProperties_B = $07F1E6
+
+Link_ResetProperties_C = $07F1FA
+
+; =========================================================
