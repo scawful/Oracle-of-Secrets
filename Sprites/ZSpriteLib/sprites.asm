@@ -456,3 +456,17 @@ ThrownSprite_TileAndSpriteInteraction_long = $06DFF2
 ; =========================================================
 ; Local functions which may be useful for sprites
 ; Sprite_AttemptZapDamage - 06EC02
+
+; =========================================================
+; Misc RAM
+
+FrameCounter = $1A ; value that is increasing every frame and loop forever
+Indoor       = $1B ; 0: outside, 1: indoor
+UpdPalFlag   = $15 ; Update all palettes from values in $7EC500-$7EC700 if non-zero
+
+RoomIndex    = $A0 ; Return the current room ID
+AreaIndex    = $8A ; Return the current overworld area ID
+
+; set the mosaic setting ($2106) XXXXDCBA 
+;   [ABCD BG1/BG2/BG3/BG4][X size of the mosaic pixels 0-16]
+Mosaic       = $95 
