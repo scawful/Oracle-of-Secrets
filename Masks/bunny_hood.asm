@@ -68,7 +68,7 @@ LinkState_BunnyHoodRun:
   CLC
   RTL
 
-.end
+  .end
   LDA $87E227, X ; load native speed values
   CLC
   RTL
@@ -118,6 +118,10 @@ LinkItem_Ether:
 {
   LDA #$04 
   JSL Link_TransformMask
+  LDA $0114 : CMP.b #$20 : BNE +
+    LDA.b #$03 : STA $5B
+    JSR $9427
+  +
   RTS
 }
 
