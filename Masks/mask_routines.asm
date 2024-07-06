@@ -348,19 +348,19 @@ pullpc
 
 PrepareMagicBubble:
 {
-  #_07A049: LDA.b $20
+  #_07A049: LDA.b LinkY
   #_07A04B: STA.b $72
 
-  #_07A04D: LDA.b $21
+  #_07A04D: LDA.b LinkYH
   #_07A04F: STA.b $73
 
-  #_07A051: LDA.b $22
+  #_07A051: LDA.b LinkX
   #_07A053: STA.b $74
 
-  #_07A055: LDA.b $23
+  #_07A055: LDA.b LinkXH
   #_07A057: STA.b $75
 
-  #_07A059: LDX.b $2F
+  #_07A059: LDX.b LinkFaceDir
 
   #_07A05B: LDY.b #$02
   #_07A05D: LDA.b #$09 ; ANCILLA 09
@@ -395,8 +395,8 @@ InitCamera:
 {
   LDA.b $22 : STA.b $3F
   LDA.b $23 : STA.b $41
-  LDA.b $20 : STA.b $3E
-  LDA.b $21 : STA.b $40
+  LDA.b LinkY : STA.b $3E
+  LDA.b LinkYH : STA.b $40
   RTS
 }
 
@@ -410,7 +410,7 @@ HandleMovement:
     LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
     LDA #$01 : STA $031C
     LDA #$05 : STA $3D
-    STZ $2F
+    STZ.w LinkFaceDir
     
   .not_up
   LDA $F0 : AND #$04 : BEQ .not_down
@@ -419,7 +419,7 @@ HandleMovement:
     LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
     LDA #$02 : STA $031C
     LDA #$05 : STA $3D
-    LDA #$02 : STA $2F
+    LDA #$02 : STA LinkFaceDir
     
   .not_down
   LDA $F0 : AND #$02 : BEQ .not_left
@@ -428,7 +428,7 @@ HandleMovement:
     LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
     LDA #$03 : STA $031C
     LDA #$05 : STA $3D
-    LDA #$04 : STA $2F
+    LDA #$04 : STA LinkFaceDir
     
   .not_left
   LDA $F0 : AND #$01 : BEQ .not_right
@@ -437,7 +437,7 @@ HandleMovement:
     LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
     LDA #$04 : STA $031C
     LDA #$05 : STA $3D
-    LDA #$06 : STA $2F
+    LDA #$06 : STA LinkFaceDir
     
   .not_right
   RTS
@@ -479,8 +479,8 @@ DekuLink_HoverBasedOnInput:
   JSL Link_CancelDash
   
   ; Pos - Cache Pos = difference
-  LDA $22 : SEC : SBC $3F : STA $31
-  LDA $20 : SEC : SBC $3E : STA $30
+  LDA LinkX : SEC : SBC $3F : STA $31
+  LDA LinkY : SEC : SBC $3E : STA $30
 
   LDA $5C : AND #$1F : BNE .continue_me
     DEC $24
@@ -506,7 +506,6 @@ DekuLink_HoverBasedOnInput:
     STZ.w $0FC1
     STZ.w $011A : STZ.w $011B : STZ.w $011C : STZ.w $011D
 
-    .no_turtle_rock_trigger
     LDY.b #$00
 
     LDA.b $3C : BEQ .no_sword_charge
@@ -514,7 +513,7 @@ DekuLink_HoverBasedOnInput:
     .no_sword_charge
 
     STY.b $3A
-    STZ.b $5E : STZ.w $0325
+    STZ.b $5E
     ; Set height at end of hover
     ; This makes it so the landing animation timer looks correct
     ; Floating for a bit, then slowly landing on the ground

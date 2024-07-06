@@ -172,3 +172,9 @@ LinkState_UsingQuake:
 }
 
 warnpc $07A779
+
+; LinkHop_FindArbitraryLandingSpot
+; Allow LinkState 0x0A to use velocity
+; Previously would skip velocity for LinkState 0x0A
+org $07E38B
+  LDA.b $5D : CMP.b #$09

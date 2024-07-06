@@ -516,6 +516,12 @@ LinkXH       = $23 ; High position X of link
 ;  Direction link is pushing against 
 LinkPushDir  = $26
 
+; Link's subpixel velocity
+; when this value overflows, Link's main velocity gains an extra pixel
+; reset on direction change, so not really a positional subpixel
+LinkSubVelY  = $2A
+LinkSubVelX  = $2B
+
 ; Direction link is facing 
 ; 00:Up, 02:Down, 04:Left, 06:Right
 LinkFaceDir  = $2F
@@ -658,7 +664,7 @@ ApplyLinksMovementToCamera = $07E9D3
 
 HandleIndoorCameraAndDoors = $07F42F
 
-Link_HandleVelocityAndSandDrag = $07E3E0
+Link_HandleVelocityAndSandDrag = $07E3DD
 
 Link_HandleMovingAnimation_FullLongEntry = $07E6A6
 Link_HandleMovingAnimation_General = $07E765
