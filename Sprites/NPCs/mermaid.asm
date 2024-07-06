@@ -46,6 +46,7 @@ Sprite_Mermaid_Long:
   .MermaidDraw
   JSR Sprite_Mermaid_Draw ; Call the draw code
   .Continue
+  JSL Sprite_DrawShadow
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
