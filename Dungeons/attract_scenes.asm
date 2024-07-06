@@ -19,7 +19,6 @@ AttractScene_AdvanceFromDungeon = $0CEFC0
 Underworld_LoadAllPalettes = $02C55E
 PuppetSoldier = $1DEB84
 Attract_DrawPreloadedSprite = $0CF9B5
-SpritePrep_ResetProperties = $0DB871
 Attract_SetUpConclusionHDMA = $0ABC33
 Attract_DoTextInDungeonScene = $0CF766
 Attract_FadeInStep = $0CEEA6

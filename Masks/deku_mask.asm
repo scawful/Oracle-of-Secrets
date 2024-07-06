@@ -75,9 +75,6 @@ print "End of Masks/deku_mask.asm        ", pc
 pushpc
 
 
-org $07E370
-  LinkHop_FindArbitraryLandingSpot:
-
 org $078926
   Link_HandleChangeInZVelocity:
 

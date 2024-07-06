@@ -232,6 +232,9 @@ SprDrop      = $0CBA ;X W 00: Drop nothing, 01: drop normal key, 03: Drop green 
 
 SpriteData_OAMProp = $0DB359
 
+; Clear all properties for sprites
+SpritePrep_ResetProperties = $0DB871
+
 ; =========================================================
 ; set the oam coordinate for the sprite draw
 Sprite_PrepOamCoord =  $06E416
@@ -569,6 +572,8 @@ Link_HandleMovingAnimation_FullLongEntry = $07E6A6
 Link_HandleMovingAnimation_General = $07E765
 Link_HandleMovingAnimationSwimming = $07E7FA
 
+LinkHop_FindArbitraryLandingSpot = $07E370
+
 HandleFollowersAfterMirroring = $07AAA2
 
 TileDetect_BigArea_long = $07CF0A
@@ -705,3 +710,5 @@ AncillaAdd_SwordSwingSparkle = $0993C2
 AncillaAdd_QuakeSpell = $099589
 AncillaAdd_IceRodShot = $099863
 AncillaAdd_Splash = $0998FC
+
+DeleteBoomAndByrnaSparks = $0FFD86
