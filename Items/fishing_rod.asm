@@ -16,8 +16,8 @@
 
 ; ================= USED FOR THE FLOATER ==================
 
-; TODO: Fix sprite override of RunningBoy or pick new sprite
-org $06C058 ; JSL Sprite_74_RunningBoy
+; Sprite_2D_NecklessMan_bounce
+org $06C0B2
 {
   JSL FloaterBoySpriteCheck
   RTS
@@ -122,7 +122,7 @@ LinkItem_FishingRod:
   CPX.b #$01 : BNE +
   ; spawn floater
   PHX
-  LDA.b #$74
+  LDA.b #$2D
   JSL $1DF65D ; Sprite_SpawnDynamically because whatever
 
   LDA.b $22 : STA.w SprX, Y
