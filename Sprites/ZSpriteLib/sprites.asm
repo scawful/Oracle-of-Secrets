@@ -159,24 +159,20 @@ SprBump      = $0CD2
 SprDmgTaken       = $0CE2
 
 ; Sprite Deflection Properties
-;     abcdefgh
-;     a - If set... creates some condition where it may or may not die
-;     b - Same as bit 'a' in some contexts (Zora in particular)
-;     c - While this is set and unset in a lot of places for various sprites, its
-;         status doesn't appear to ever be queried. Based on the pattern of its
-;         usage, however, the best deduction I can make is that this was a flag
-;         intended to signal that a sprite is an interactive object that Link can
-;         push against, pull on, or otherwise exerts a physical presence.
-;     d - If hit from front, deflect Ice Rod, Somarian missile,
-;         boomerang, hookshot, and sword beam, and arrows stick in
-;         it harmlessly.  If bit 1 is also set, frontal arrows will
-;         instead disappear harmlessly.  No monsters have bit 4 set
-;         in the ROM data, but it was functional and interesting
-;         enough to include.
-;     e - If set, makes the sprite collide with less tiles than usual
-;     f - If set, makes sprite impervious to sword and hammer type attacks
-;     g - If set, makes sprite impervious to arrows, but may have other additional meanings.
-;     h - Handles behavior with previous deaths flagged in $7F:DF80 (0: default | 1: ignore)
+;   abcdefgh
+;   a - If set, sprite is active 
+;   b - Same as bit 'a' for Zora.
+;   c - Never queried, pushable interaction flag
+;   d - If hit from front, deflect Ice Rod, Somarian missile,
+;       boomerang, hookshot, and sword beam, and arrows stick in
+;       it harmlessly.  If bit 1 is also set, frontal arrows will
+;       instead disappear harmlessly.  No monsters have bit 4 set
+;       in the ROM data, but it was functional and interesting
+;       enough to include.
+;   e - If set, sprite collides with less tiles than usual
+;   f - If set, impervious to sword and hammer type attacks
+;   g - If set, impervious to arrows, but may have other additional meanings.
+;   h - Handles behavior with previous deaths flagged in $7FDF80 (0: default | 1: ignore)
 SprDefl      = $0CAA
 
 ; iwbs pppp
@@ -210,16 +206,14 @@ SprDrop      = $0CBA ;X W 00: Drop nothing, 01: drop normal key, 03: Drop green 
 ; =========================================================
 
 ; The record format for the low table is 4 bytes:
-
-; byte OBJ*4+0: xxxxxxxx
-; byte OBJ*4+1: yyyyyyyy
-; byte OBJ*4+2: cccccccc
-; byte OBJ*4+3: vhoopppN
+;   byte OBJ*4+0: xxxxxxxx
+;   byte OBJ*4+1: yyyyyyyy
+;   byte OBJ*4+2: cccccccc
+;   byte OBJ*4+3: vhoopppN
 
 ; The record format for the high table is 2 bits:
-
-; bit 0/2/4/6 of byte OBJ/4: X
-; bit 1/3/5/7 of byte OBJ/4: s
+;   bit 0/2/4/6 of byte OBJ/4: X
+;   bit 1/3/5/7 of byte OBJ/4: s
 
 ; Xxxxxxxxx = X position of the sprite. signed but see below.
 ; yyyyyyyy  = Y position of the sprite.
@@ -464,9 +458,9 @@ Sprite_RepelDash = $079291
 ; =========================================================
 ; Misc RAM
 
-FrameCounter = $1A ; value that is increasing every frame and loop forever
+FrameCounter = $1A ; value that is increasing every frame
 Indoor       = $1B ; 0: outside, 1: indoor
-UpdPalFlag   = $15 ; Update all palettes from values in $7EC500-$7EC700 if non-zero
+UpdPalFlag   = $15 ; Update all palettes $7EC500-$7EC700 if non-zero
 
 RoomIndex    = $A0 ; Return the current room ID
 AreaIndex    = $8A ; Return the current overworld area ID
@@ -474,6 +468,14 @@ AreaIndex    = $8A ; Return the current overworld area ID
 ; set the mosaic setting ($2106) XXXXDCBA 
 ;   [ABCD BG1/BG2/BG3/BG4][X size of the mosaic pixels 0-16]
 Mosaic       = $95 
+
+; Underworld:
+;    Flags sprite deaths in underworld based on slot.
+;    Indexed by 2 * room ID.
+; Overworld:
+;    Holds ID+1 of sprite with each position being assigned a unique byte
+;    0x00 indicates no sprite in this slot
+UWDEATH         = $7FDF80
 
 ; =========================================================
 ; Controllers
