@@ -406,6 +406,12 @@ UseImplicitRegIndexedLocalJumpTable = $008781
 
 EnableForceBlank = $00893D
 
+Snitch_SpawnGuard = $09C02F
+
+Sprite_KillFriends = $09EF56
+
+Sprite_KillSelf = $09F1F8
+
 ; =========================================================
 ; $04 = X
 ; $05 = HighX
