@@ -6,9 +6,6 @@
 ; $22XXXX - Denotes the source address from all in patch
 ; =========================================================
 
-org $07D576
-  Hookshot_CheckTileCollision:
-
 pullpc
 TransferGFXinRAM:
 {

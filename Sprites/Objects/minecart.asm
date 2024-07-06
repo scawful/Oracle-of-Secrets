@@ -145,9 +145,9 @@ macro HandlePlayerCamera()
   PHX 
   
   JSL $07E6A6 ; Link_HandleMovingAnimation_FullLongEntry
-  JSL $07F42F ; HandleIndoorCameraAndDoors_Long
+  JSL HandleIndoorCameraAndDoors
   
-  JSL Player_HaltDashAttack
+  JSL Link_CancelDash
   PLX 
 endmacro
 
@@ -270,7 +270,7 @@ Sprite_Minecart_Main:
         LDA.w SprMiscF, X : BNE .active_cart
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
         .active_cart
-        JSL Player_HaltDashAttack            ; Stop the player from dashing
+        JSL Link_CancelDash            ; Stop the player from dashing
         LDA #$02 : STA $02F5                 ; Somaria platform and moving 
         LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
         LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
@@ -306,7 +306,7 @@ Sprite_Minecart_Main:
         LDA.w SprMiscF, X : BNE .active_cart
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
         .active_cart
-        JSL Player_HaltDashAttack            ; Stop the player from dashing
+        JSL Link_CancelDash            ; Stop the player from dashing
         LDA #$02 : STA $02F5                 ; Somaria platform and moving 
         LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos 
         LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
@@ -505,7 +505,7 @@ HandleTileDirections:
       %SetTimerA($40)
       %StopCart()
       %GotoAction(1) ; Minecart_WaitVert
-      JSL Player_ResetState
+      JSL Link_ResetProperties_A
       RTS
     
     .stop_east
@@ -524,7 +524,7 @@ HandleTileDirections:
       %SetTimerA($40)
       %StopCart()
       %GotoAction(0) ; Minecart_WaitHoriz
-      JSL Player_ResetState
+      JSL Link_ResetProperties_A
       RTS
 
     ; -----------------------------------------------------

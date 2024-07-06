@@ -469,14 +469,14 @@ DekuLink_HoverBasedOnInput:
   JSR HandleMovement
   
   JSL Link_HandleCardinalCollision_Long
-  JSL $07E245 ; Link_HandleVelocity
-  JSL $07E6A6 ; Link_HandleMovingAnimation_FullLongEntry
+  JSL Link_HandleVelocityAndSandDrag
+  JSL Link_HandleMovingAnimation_FullLongEntry
 
   STZ.w $0302
 
-  JSL $07F42F ; HandleIndoorCameraAndDoors_Long
+  JSL HandleIndoorCameraAndDoors
   
-  JSL Player_HaltDashAttack
+  JSL Link_CancelDash
   
   ; Pos - Cache Pos = difference
   LDA $22 : SEC : SBC $3F : STA $31
