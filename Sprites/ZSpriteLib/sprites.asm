@@ -382,18 +382,11 @@ Sprite_PlayerCantPassThrough = $1EF4F3
 Sprite_NullifyHookshotDrag = $0FF540
 
 ; =========================================================
-; stop the dash attack of the player
-Player_HaltDashAttack = $0791B9
-
-; =========================================================
 ; show a message box without any condition
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
 Sprite_ShowMessageUnconditional = $05E219
 
-; =========================================================
-; Y = item id
-Link_ReceiveItem = $0799AD
 
 ; =========================================================
 ; show a message if we press A and face the sprite
@@ -452,6 +445,8 @@ Sprite_TransmuteToBomb = $06AD50
 Guard_ParrySwordAttacks = $06EB5E
 
 ThrownSprite_TileAndSpriteInteraction_long = $06DFF2
+
+Sprite_RepelDash = $079291
 
 ; =========================================================
 ; Local functions which may be useful for sprites
@@ -541,12 +536,39 @@ LinkAnim     = $037A ; 0: Normal, 1: Shovel, 2: Praying, 4:Hookshot, 8:Somaria, 
 
 LinkWallCheat = $037F ; If non zero can walk through walls
 
+; =========================================================
 
+Link_ReceiveItem = $0799AD ; Y = item id
+
+Link_CancelDash = $0791B9
+
+Link_Initialize = $07F13C
 Link_ResetProperties_A = $07F1A3
-
 Link_ResetProperties_B = $07F1E6
-
 Link_ResetProperties_C = $07F1FA
+Link_ResetSwimmingState = $07983A
+Link_ResetStateAfterDamagingPit = $07984B
+Link_ItemReset_FromOverworldThings = $07B107
+
+; Used by Agahnim2 fight
+CallForDuckIndoors = $07A45F
+
+ApplyLinksMovementToCamera = $07E9D3
+
+HandleIndoorCameraAndDoors = $07F42F
+
+Link_HandleVelocityAndSandDrag = $07E3E0
+
+Link_HandleMovingAnimation_FullLongEntry = $07E6A6
+Link_HandleMovingAnimation_General = $07E765
+Link_HandleMovingAnimationSwimming = $07E7FA
+
+HandleFollowersAfterMirroring = $07AAA2
+
+TileDetect_BigArea_long = $07CF0A
+
+Hookshot_CheckTileCollision = $07D576
+
 
 ; =========================================================
 ; Ancilla
