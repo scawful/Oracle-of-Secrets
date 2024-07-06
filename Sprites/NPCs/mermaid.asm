@@ -92,6 +92,7 @@ Sprite_Mermaid_Main:
   dw Maple_NotEnoughRupees
 
   dw LibrarianIdle
+  dw Librarian_OfferTranslation
 
   MermaidWait:
   {
@@ -218,12 +219,21 @@ Sprite_Mermaid_Main:
   {
     %PlayAnimation(0,1,16)
     JSL Sprite_PlayerCantPassThrough
-    LDA.l $7EF34E : BNE + 
-      %ShowSolicitedMessage($0127)
+    %ShowSolicitedMessage($012E)
+    JSR Librarian_CheckForAllMaps : BCC +
+      INC.w SprAction, X
     +
     RTS
   }
 
+  Librarian_OfferTranslation:
+  {
+    %PlayAnimation(0,1,16)
+    JSL Sprite_PlayerCantPassThrough
+    %ShowUnconditionalMessage($012C)
+    RTS
+  }
+}
 
 Librarian_CheckForAllMaps:
 {
