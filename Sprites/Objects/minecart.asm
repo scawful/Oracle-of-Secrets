@@ -64,12 +64,6 @@ Right = $03
 ;     3 - right
 !SpriteDirection    = $0DE0
 
-; Bitfield for carry-related actions.
-; .... ..tl
-;   t - tossing object
-;   l - lifting object
-!LinkCarryOrToss    = $0309
-
 ; =========================================================
 
 Sprite_Minecart_Long:
@@ -216,7 +210,7 @@ HandleToss:
 HandleLiftAndToss:
 {
   JSR CheckIfPlayerIsOn : BCC .not_tossing
-    LDA.w !LinkCarryOrToss : CMP.b #$02 : BNE .not_tossing
+    LDA.w LinkCarryOrToss : CMP.b #$02 : BNE .not_tossing
       JSR HandleToss
   .not_tossing
   JSL Sprite_CheckIfLifted
@@ -264,7 +258,7 @@ Sprite_Minecart_Main:
   Minecart_WaitHoriz:
   {
     %PlayAnimation(0,1,8)
-    LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
+    LDA LinkCarryOrToss : AND #$03 : BNE .lifting
       LDA SprTimerA, X : BNE .not_ready
         JSR CheckIfPlayerIsOn : BCC .not_ready
         LDA.w SprMiscF, X : BNE .active_cart
@@ -300,7 +294,7 @@ Sprite_Minecart_Main:
   Minecart_WaitVert:
   {
     %PlayAnimation(2,3,8)
-    LDA !LinkCarryOrToss : AND #$03 : BNE .lifting
+    LDA LinkCarryOrToss : AND #$03 : BNE .lifting
       LDA SprTimerA, X : BNE .not_ready
         JSR CheckIfPlayerIsOn : BCC .not_ready
         LDA.w SprMiscF, X : BNE .active_cart
