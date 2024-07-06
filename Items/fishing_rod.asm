@@ -10,11 +10,6 @@
 ; $7F5BA3 RAM Index for the fishing floater
 ; Modify the code of the sprite "RunningBoy" 0x74
 ; =========================================================
-; Values
-;#$400 ; to show fishing hud
-;#$14A ; only the hud
-
-; ================= USED FOR THE FLOATER ==================
 
 ; Sprite_2D_NecklessMan_bounce
 org $06C0B2
@@ -47,8 +42,8 @@ LinkItem_FishingRodAndPortalRod:
   ; 00 = fishing rod, 01 = portal rod
   .left
   LDA.w FishingOrPortalRod : CMP #$00 : BEQ .right
-  LDA.b #$00 : STA.w FishingOrPortalRod
-  RTS
+    LDA.b #$00 : STA.w FishingOrPortalRod
+    RTS
   .right
   LDA.w FishingOrPortalRod : CMP #$01 : BEQ .left
   LDA.b #$01 : STA.w FishingOrPortalRod
@@ -67,47 +62,35 @@ LinkItem_FishingRod:
 {
   PHB : PHK : PLB
 
-  BIT.b $3A
-  BVS .holding_y
+  BIT.b $3A : BVS .holding_y
+    LDA.b $6C : BNE FishingRodExit
+    JSR CheckYButtonPress : BCC FishingRodExit
+    
+    LDA.b $67 : AND.b #$F0 : STA.b $67
 
-  LDA.b $6C
-  BNE FishingRodExit
+    JSL FishingSwapCaneBlockHammerGfx
 
-  JSR CheckYButtonPress
-  BCC FishingRodExit
-  
-  LDA.b $67
-  AND.b #$F0
-  STA.b $67
+    STZ.b $69
+    STZ.b $68
+    LDA.b #$08
+    TSB.w $037A
+    STZ.b $2E
+    STZ.w $0300
+    STZ.w $0301
 
-  JSL FishingSwapCaneBlockHammerGfx
-
-
-  STZ.b $69
-  STZ.b $68
-  LDA.b #$08
-  TSB.w $037A
-  STZ.b $2E
-  STZ.w $0300
-  STZ.w $0301
-
-  LDA.w RodAndCaneAnimationTimer
-  STA.b $3D
-
+    LDA.w RodAndCaneAnimationTimer : STA.b $3D
 
   .holding_y
   JSR HaltLinkWhenUsingItems
   LDA.b #$26 : STA.w $0107 ; Sword DMA to Floater Hammer
 
-
   LDA.w $0300 : CMP #$02 : BEQ +
-  DEC.b $3D ; decrease timer
-  BPL FishingRodExit
+    DEC.b $3D ; decrease timer
+    BPL FishingRodExit
   +
 
-
   LDA.l $7F5BA2 : CMP #$02 : BNE +
-      JMP EndFishing
+    JMP EndFishing
   +
   CMP #$01 : BEQ .waitforend
 
@@ -117,29 +100,26 @@ LinkItem_FishingRod:
 
   TAX
 
-  LDA.w RodAndCaneAnimationTimer, X  ; load timer for current frame animation state
-  STA.b $3D ; timer
+  ; load timer for current frame animation state
+  LDA.w RodAndCaneAnimationTimer, X : STA.b $3D ; timer
   CPX.b #$01 : BNE +
-  ; spawn floater
-  PHX
-  LDA.b #$2D
-  JSL $1DF65D ; Sprite_SpawnDynamically because whatever
+    ; spawn floaters
+    PHX
+    LDA.b #$2D
+    JSL Sprite_SpawnDynamically
 
-  LDA.b $22 : STA.w SprX, Y
-  LDA.b $23 : STA.w SprXH, Y
-  LDA.b $20 : STA.w SprY, Y
-  LDA.b $21 : STA.w SprYH, Y
-  LDA.b #$01 : STA.w $0E70, Y ; is floater
-  TYA : STA.l $7F5BA3 ; keep the index of the sprite
-  TYX
-  JSL SpritePrep_Floater ; just call it there
-  PLX
-
+    LDA.b $22 : STA.w SprX, Y
+    LDA.b $23 : STA.w SprXH, Y
+    LDA.b $20 : STA.w SprY, Y
+    LDA.b $21 : STA.w SprYH, Y
+    LDA.b #$01 : STA.w SprCollision, Y ; is floater
+    TYA : STA.l $7F5BA3 ; keep the index of the sprite
+    TYX
+    JSL SpritePrep_Floater ; just call it there
+    PLX
   +
-  CPX.b #$02
-  BCC .exit
-  LDA #$01
-  STA.l $7F5BA2 ; set fishing rod state to rod is out
+  CPX.b #$02 : BCC .exit
+  LDA #$01 : STA.l $7F5BA2 ; set fishing rod state to rod is out
   LDA.b #$FE : STA $3D ;set timer to 8 frames
   ; wait for Y press
   .waitforend
@@ -156,32 +136,30 @@ LinkItem_FishingRod:
   LDA.b #$10 : STA.w $0F80, X ; Gravity
 
 
-  ;===========================================================
+  ; =======================================================
   ; We got something spawn it and pull it at us
   LDA.w $0DB0, X : BEQ .noPrize
-  JSL $0DBA71 : AND #$0F ; get random int
-  TAY : LDA Prizes, Y : BEQ .noPrize
+  JSL GetRandomInt : AND #$0F : TAY : LDA Prizes, Y : BEQ .noPrize
+    JSL Sprite_SpawnDynamically
+    JSL Sprite_SetSpawnedCoordinates
 
-  JSL $1DF65D ; Sprite_SpawnDynamically because whatever
-  JSL $09AE64 ; Sprite_SetSpawnedCoords
+    LDA.w $0E20, Y : CMP.b #$D2 : BNE .notafish
+      LDA #$04 : STA.w $0F70, Y
+      LDA #$01 : STA.w $0D80, Y
+    .notafish
 
-  LDA.w $0E20, Y : CMP.b #$D2 : BNE .notafish
-  LDA #$04 : STA.w $0F70, Y
-  LDA #$01 : STA.w $0D80, Y
-  .notafish
+    PHX
+    LDX.b $66
+    LDA.w DirSpeedsY, X : STA.w $0D40, Y ; YSpeed
+    LDA.w DirSpeedsX, X : STA.w $0D50, Y ; YSpeed
 
-  PHX
-  LDX.b $66
-  LDA.w DirSpeedsY, X : STA.w $0D40, Y ; YSpeed
-  LDA.w DirSpeedsX, X : STA.w $0D50, Y ; YSpeed
-
-  PLX
-  LDA.b #$FF : STA.w $0EE0, Y
-  LDA.b #$20 : STA.w $0F80, Y ; Gravity
-  ;LDA.b #$06 : STA.w $0F70, Y
+    PLX
+    LDA.b #$FF : STA.w $0EE0, Y
+    LDA.b #$20 : STA.w $0F80, Y ; Gravity
+    ;LDA.b #$06 : STA.w $0F70, Y
 
   .noPrize
-  LDA.b #$02 : STA.l $7F5BA2 ; set fishing rod state to pulling back 
+  LDA.b #$02 : STA.l $7F5BA2 ; set fishing rod state to pulling back
 
 
   .exit
@@ -237,42 +215,35 @@ hammergfx:
 
 CheckYButtonPress:
 {
-    BIT.b $3A : BVS .fail
-    LDA.b $46 : BNE .fail
-    LDA.b $F4 : AND.b #$40 : BEQ .fail
+  BIT.b $3A : BVS .fail
+  LDA.b $46 : BNE .fail
+  LDA.b $F4 : AND.b #$40 : BEQ .fail
     TSB.b $3A 
     SEC
     RTS
 
   .fail
-    CLC
-    RTS
+  CLC
+  RTS
 }
 
 
 HaltLinkWhenUsingItems:
 {
-    LDA.b $AD : CMP.b #$02 : BNE .skip
-
+  LDA.b $AD : CMP.b #$02 : BNE .skip
     LDA.w $0322 : AND.b #$03 : CMP.b #$03 : BNE .skip
-
-    STZ.b $30
-    STZ.b $31
-
-    STZ.b $67
-
-    STZ.b $2A
-    STZ.b $2B
-
-    STZ.b $6B
+      STZ.b $30
+      STZ.b $31
+      STZ.b $67
+      STZ.b $2A
+      STZ.b $2B
+      STZ.b $6B
 
   .skip
-    LDA.w $02F5 : BEQ .return
-
+  LDA.w $02F5 : BEQ .return
     STZ.b $67
-
   .return
-    RTS
+  RTS
 }
 
 FishingSwapCaneBlockHammerGfx:
@@ -327,193 +298,168 @@ FloaterBoySpriteCheck:
 
 Sprite_CheckIfActive:
 {
-    LDA.w $0FC1 ; Remove that if want to be able to pause all other sprites
-    BNE .inactive
+  LDA.w $0FC1 ; Remove that if want to be able to pause all other sprites
+  BNE .inactive
 
-    LDA.b $11
-    BNE .inactive
+  LDA.b $11
+  BNE .inactive
 
-    LDA.w $0CAA,X
-    BMI .active
+  LDA.w $0CAA, X
+  BMI .active
 
-    LDA.w $0F00,X
-    BEQ .active
+  LDA.w $0F00, X
+  BEQ .active
 
   .inactive
-    PLA
-    PLA
+  PLA
+  PLA
 
   .active
-    RTS
+  RTS
 }
 
-;======================================================================
-;Floater sprite code
+; =========================================================
+; Floater sprite code
+
 SpritePrep_Floater:
 {
-    LDA.b $66 : CMP.b #$03 : BNE .notRight
+  LDA.b $66 : CMP.b #$03 : BNE .notRight
     LDA.b #$12 : STA.w $0D50, X ; XSpeed
     BRA .DoInitFloater
-    .notRight
-    CMP.b #$02 : BNE .notLeft
+  .notRight
+  CMP.b #$02 : BNE .notLeft
     LDA.b #$ED : STA.w $0D50, X ; XSpeed
     BRA .DoInitFloater
-    .notLeft
-    CMP.b #$01 : BNE .notDown
+  .notLeft
+  CMP.b #$01 : BNE .notDown
     LDA.b #$12 : STA.w $0D40, X ; YSpeed
     BRA .DoInitFloater
-    .notDown
-    CMP.b #$00 : BNE .notUp
+  .notDown
+  CMP.b #$00 : BNE .notUp
     LDA.b #$ED : STA.w $0D40, X ; YSpeed
     BRA .DoInitFloater
-    .notUp
-
+  .notUp
 
   .DoInitFloater
 
-    LDA.b #$08 : STA.w $0F70, X ; Height
-    LDA.b #$10 : STA.w $0F80, X ; Gravity
-    LDA.b #$00 : STA.w $0ED0, X ; is it in water?
-    LDA.b #$00 : STA.w $0EB0, X ; Wiggling Velocity index
-    LDA.b #$00 : STA.w $0E90, X ; just for a check
-    LDA.b #$00 : STA.w $0DB0, X ; if we have a fish on line
+  LDA.b #$08 : STA.w $0F70, X    ; Height
+  LDA.b #$10 : STA.w $0F80, X    ; Gravity
+  LDA.b #$00 : STA.w SprMiscG, X ; is it in water?
+  LDA.b #$00 : STA.w $0EB0, X    ; Wiggling Velocity index
+  LDA.b #$00 : STA.w $0E90, X    ; just for a check
+  LDA.b #$00 : STA.w $0DB0, X    ; if we have a fish on line
 
-    ;$0EE0 Timer for when floater is in water waiting for a fish to catch
+  ;$0EE0 Timer for when floater is in water waiting for a fish to catch
 
-    RTL
+  RTL
 }
 
-;---------------------------------------------------------------------
+; ---------------------------------------------------------
 
 Sprite_Floater:
 {
   ; Floater Draw, allocate 4 tiles to use for the hud
-  LDA $0ED0, X : BEQ +
-  JSL $059FFA ; draw water ripple
+  LDA SprMiscG, X : BEQ +
+    JSL SpriteDraw_WaterRipple
   +
   JSR Sprite_Floater_Draw
 
-  LDA $0ED0, X : BNE +
-  JSL $06DC54 ; shadow
+  LDA SprMiscG, X : BNE +
+    JSL Sprite_DrawShadow
   +
 
   JSR Sprite_CheckIfActive
 
-  LDA.w $0ED0, X : BEQ .noFishOnLine ; is the floater in water?
+  LDA.w SprMiscG, X : BEQ .noFishOnLine ; is the floater in water?
+
+    LDA.w $0EE0, X : BNE .noWigglingYet ; timerD wait until fish is on line
+
+      LDA.w $0DB0, X : BNE .fishOnlineWait
+      ; start another random timer for the time it'll last
+      JSL GetRandomInt : AND #$3F
+      CLC : ADC.b #$0F : STA.w $0DF0, X ; wiggling timer
+      INC.w $0DB0, X ; we have a fish on line
+
+    .noWigglingYet
+
+    LDA.w $0DB0, X : BEQ .noFishOnLine ; do we already have a fish on line?
+    .fishOnlineWait
+    LDA.w $0DF0, X : BNE .still_wiggling
+    STZ.w $0DB0, X ; no more fish on line took too much time
+    JSL GetRandomInt : AND.b #$7F
+    CLC : ADC.b #$7F : STA.w $0EE0, X ; reset timer wait until fish is on line
+    STZ.w $0D50, X
+    STZ.w $0D40, X
+    BRA .noFishOnLine
+    .still_wiggling
 
 
-  LDA.w $0EE0, X : BNE .noWigglingYet; timerD wait until fish is on line
-
-  LDA.w $0DB0, X : BNE .fishOnlineWait
-  ; start another random timer for the time it'll last
-  JSL $0DBA71 : AND #$3F ; GetRandomInt
-  CLC : ADC.b #$0F : STA.w $0DF0, X ; wiggling timer
-  INC.w $0DB0, X ; we have a fish on line
-
-  .noWigglingYet
-
-
-  LDA.w $0DB0, X : BEQ .noFishOnLine ; do we already have a fish on line?
-  .fishOnlineWait
-  LDA.w $0DF0, X : BNE .stillwiggling
-  STZ.w $0DB0, X ; no more fish on line took too much time
-  JSL $0DBA71 : AND.b #$7F ; GetRandomInt
-  CLC : ADC.b #$7F : STA.w $0EE0, X ; reset timer wait until fish is on line
-  STZ.w $0D50, X
-  STZ.w $0D40, X
-  BRA .noFishOnLine
-  .stillwiggling
-
-
-
-  LDY.w $0E10, X
-  LDA.w WigglingTable, Y : STA.w $0D50,X
-  LDA.w WigglingTable, Y : STA.w $0D40,X
-  LDY.w $0E10, X : BNE + ; use timer to do wiggling
-  ; if = 0 then put it back to F
-  LDA.b #$0F : STA.w $0E10, X ; wiggling timer
-  +
-
-
-
+    LDY.w $0E10, X
+    LDA.w WigglingTable, Y : STA.w $0D50, X
+    LDA.w WigglingTable, Y : STA.w $0D40, X
+    LDY.w $0E10, X : BNE + ; use timer to do wiggling
+    ; if = 0 then put it back to F
+    LDA.b #$0F : STA.w $0E10, X ; wiggling timer
+    +
 
   .noFishOnLine
 
-
-
-  JSL $1D808C ; Sprite_Move_XY
+  JSL Sprite_MoveLong
   JSL Sprite_MoveAltitude
 
-  LDA.w $0F80,X
-  SEC
-  SBC.b #$01
-  STA.w $0F80,X
+  LDA.w $0F80, X : SEC : SBC.b #$01 : STA.w $0F80, X
 
-  LDA.w $0F70,X
-  BPL .aloft
+  LDA.w $0F70, X : BPL .aloft
 
-  STZ.w $0F70,X
+  STZ.w $0F70, X
 
-  LDA.w $0D50,X
-  ASL A
-  ROR.w $0D50,X
+  LDA.w $0D50, X : ASL A : ROR.w $0D50, X
 
-  LDA.w $0D40,X
-  ASL A
-  ROR.w $0D40,X
+  LDA.w $0D40, X : ASL A : ROR.w $0D40, X
 
-  LDA.w $0F80,X
-  EOR.b #$FF
-  INC A
+  LDA.w $0F80, X : EOR.b #$FF : INC A
 
   LSR A
   CMP.b #$09
   BCS .no_bounce
 
+  LDA.w $0E90, X : BNE .not_water_tile_last
+    INC.w $0E90, X 
+    JSL Sprite_CheckTileCollision
+    LDA.w $0FA5
+    CMP.b #$08 : BEQ .water_tile_last
+    CMP.b #$09 : BNE .not_water_tile_last
+    .water_tile_last
+    INC.w SprMiscG, X ; Set that so we know floater is in water!
+    JSL Sprite_SpawnSmallSplash
 
+    JSL GetRandomInt : AND #$3F
+    CLC : ADC #$3F : STA.w $0EE0, X
 
-  LDA.w $0E90, X : BNE .not_water_tileLast
-  INC.w $0E90, X 
-  JSL $06E496 ; Sprite_CheckTileCollision
-  LDA.w $0FA5
-  CMP.b #$08 ; TILETYPE 08
-  BEQ .water_tileLast
-  CMP.b #$09 ; TILETYPE 09
-  BNE .not_water_tileLast
-  .water_tileLast
-  INC.w $0ED0, X ; Set that so we know floater is in water!
-  JSL $1EA820 ; Sprite_SpawnSmallSplash
-
-  JSL $0DBA71 : AND #$3F ; GetRandomInt
-  CLC : ADC #$3F : STA.w $0EE0, X
-
-  .not_water_tileLast
-  STZ.w $0F80,X
-  STZ.w $0D50,X
-  STZ.w $0D40,X
+  .not_water_tile_last
+  STZ.w $0F80, X
+  STZ.w $0D50, X
+  STZ.w $0D40, X
 
   BRA .aloft
 
   .no_bounce
-  STA.w $0F80,X
+  STA.w $0F80, X
 
-  JSL $06E496 ; Sprite_CheckTileCollision
+  JSL Sprite_CheckTileCollision
   LDA.w $0FA5
-  CMP.b #$08 ; TILETYPE 08
-  BEQ .water_tile
-
-  CMP.b #$09 ; TILETYPE 09
-  BNE .not_water_tile
+  CMP.b #$08 : BEQ .water_tile
+  CMP.b #$09 : BNE .not_water_tile
 
   .water_tile
-  ;STZ.w $0F80,X
+  ;STZ.w $0F80, X
 
-  JSL $1EA820 ; Sprite_SpawnSmallSplash
+  JSL Sprite_SpawnSmallSplash
 
   .not_water_tile
   .aloft
 
-  LDA.b #$01 : STA.w $0E70, X ; restore floater sprite seems to be overwriten
+  LDA.b #$01 : STA.w SprCollision, X ; restore floater sprite seems to be overwriten
   RTS
 }
 
@@ -548,7 +494,10 @@ Sprite_Floater_Draw:
 
 
 WigglingTable:
-db 08, -10, 06, -8, 12, -14, 18, -20, 10, -12, 04, -6, 08,-10, 14,-16, 08, -10, 06, -8, 12, -14, 18, -20, 10, -12, 04, -6, 08,-10, 14,-16
+  db 08, -10, 06, -8, 12, -14, 18, -20
+  db 10, -12, 04, -6, 08,-10, 14,-16, 08
+  db -10, 06, -8, 12, -14, 18, -20, 10
+  db -12, 04, -6, 08,-10, 14,-16
 
 DismissRodFromMenu:
 {
