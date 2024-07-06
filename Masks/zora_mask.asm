@@ -220,6 +220,7 @@ pullpc
   STZ $0302
   RTS
   .fall_into_pit
+  LDA.b #$03 : STA $5B
   JSR $9427
   JMP .return_default
 }
