@@ -319,13 +319,9 @@ RestoreCaneBlockHammerGfx:
 
 FloaterBoySpriteCheck:
 {
-  LDA.w $0E70, X : BEQ .noThatsRunningBoy
   PHB : PHK : PLB
   JSR Sprite_Floater
   PLB
-  RTL
-.noThatsRunningBoy
-  JSL $05E8A2 ; Sprite_74_RunningBoy
   RTL
 }
 
