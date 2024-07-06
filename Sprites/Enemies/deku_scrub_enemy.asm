@@ -299,6 +299,8 @@ SpawnPeaShot:
   LDA.b #$06 : STA $0D80, Y
   LDA.b #$20 : STA.w SprPrize, Y
   LDA.b #$02 : STA.w SprMiscC, Y
+  LDA.b #$01 : STA.w SprBump, Y
+  LDA.b #$01 : STA.w SprNbrOAM, Y
 
   PHX
       
