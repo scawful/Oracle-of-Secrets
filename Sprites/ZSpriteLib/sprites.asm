@@ -675,3 +675,33 @@ AnciXsub     = $0C40 ; sub pixel for X position for ancilla
 ; db $78 ; 0x42 - HAPPINESS POND RUPEES
 ; db $80 ; 0x43 - GANONS TOWER CUTSCENE
 AnciType     = $0C4A
+
+AncillaInit_SetCoordsAndExit = $0980C3
+
+AncillaAdd_Snoring = $0980C8
+AncillaAdd_Bomb = $09811F
+AncillaAdd_Boomerang = $09820F
+AncillaAdd_BoomerangAsClink = $098345
+AddHappinessPondRupees = $098AE0
+AncillaAdd_DugUpFlute = $098C73
+AncillaAdd_ChargedSpinAttackSparkle = $098CB1
+AncillaAdd_ExplodingWeatherVane = $098D11
+AncillaAdd_CutsceneDuck = $098D90
+AncillaAdd_SomariaPlatformPoof = $098DD2
+AncillaAdd_SuperBombExplosion = $098DF9
+ConfigureRevivalAncillae = $098E4E
+AncillaAdd_CaneOfByrnaInitSpark = $098EE0
+AncillaAdd_LampFlame = $098F1C
+AncillaAdd_ShovelDirt = $098F5B
+AncillaAdd_BlastWallFireball = $099031
+AncillaAdd_Arrow = $0990A4
+AncillaAdd_CapePoof = $09912C
+AncillaAdd_BushPoof = $0991C3
+AncillaAdd_EtherSpell = $0991FC
+AncillaAdd_VictorySpin = $0992AC
+AncillaAdd_MagicPowder = $0992F0
+AncillaAdd_WallTapSpark = $099395
+AncillaAdd_SwordSwingSparkle = $0993C2
+AncillaAdd_QuakeSpell = $099589
+AncillaAdd_IceRodShot = $099863
+AncillaAdd_Splash = $0998FC
