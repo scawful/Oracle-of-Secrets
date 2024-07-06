@@ -65,70 +65,70 @@ OverworldLocationNames:
   dw "GARO_DESERT_____" ; 3F
 
 DarkWorldLocationNames:
-  dw "_______________" ; 00
-  dw "_______________" ; 01
-  dw "_______________" ; 02
-  dw "_______________" ; 03
-  dw "_______________" ; 04 
-  dw "_______________" ; 05 
-  dw "_______________" ; 06
-  dw "_______________" ; 07
-  dw "_______________" ; 08
-  dw "_______________" ; 09
-  dw "_______________" ; 0A
-  dw "_______________" ; 0B
-  dw "_______________" ; 0C
-  dw "_______________" ; 0D
-  dw "_______________" ; 0E
-  dw "_______________" ; 0F
-  dw "_______________" ; 10
+  dw "TEMPORAL_GATE__" ; 00
+  dw "TEMPORAL_GATE__" ; 01
+  dw "PYRAMID_OF_EONS" ; 02
+  dw "LAVA_LANDS_____" ; 03
+  dw "LAVA_LANDS_____" ; 04 
+  dw "LAVA_LANDS_____" ; 05 
+  dw "LAVA_LANDS_____" ; 06
+  dw "LAVA_LANDS_____" ; 07
+  dw "TEMPORAL_GATE__" ; 08
+  dw "TEMPORAL_GATE__" ; 09
+  dw "LUPO_WATERFALL_" ; 0A
+  dw "LUPO_MOUNTAIN__" ; 0B
+  dw "LUPO_MOUNTAIN__" ; 0C
+  dw "LUPO_MOUNTAIN__" ; 0D
+  dw "LAVA_LANDS_____" ; 0E
+  dw "LAVA_LANDS_____" ; 0F
+  dw "SHRINE_COURAGE_" ; 10
   dw "_______________" ; 11
   dw "_______________" ; 12 
-  dw "_______________" ; 13
-  dw "_______________" ; 14
-  dw "_______________" ; 15
-  dw "_______________" ; 16
-  dw "_______________" ; 17
+  dw "LUPO_MOUNTAIN__" ; 13
+  dw "LUPO_MOUNTAIN__" ; 14
+  dw "LUPO_MOUNTAIN__" ; 15
+  dw "LAVA_LANDS_____" ; 16
+  dw "LAVA_LANDS_____" ; 17
   dw "_______________" ; 18
   dw "_______________" ; 19
   dw "_______________" ; 1A
   dw "_______________" ; 1B
   dw "_______________" ; 1C
   dw "_______________" ; 1D
-  dw "_______________" ; 1E
-  dw "_______________" ; 1F
+  dw "THE_FORTRESS___" ; 1E
+  dw "THE_FORTRESS___" ; 1F
   dw "_______________" ; 20
   dw "_______________" ; 21
   dw "_______________" ; 22
-  dw "_______________" ; 23
-  dw "_______________" ; 24
+  dw "WISDOM_SWAMP___" ; 23
+  dw "WISDOM_SWAMP___" ; 24
   dw "_______________" ; 25
-  dw "_______________" ; 26
-  dw "_______________" ; 27
+  dw "THE_FORTRESS___" ; 26
+  dw "THE_FORTRESS___" ; 27
   dw "_______________" ; 28
   dw "_______________" ; 29
   dw "_______________" ; 2A
-  dw "_______________" ; 2B
-  dw "_______________" ; 2C
+  dw "WISDOM_SWAMP___" ; 2B
+  dw "WISDOM_SWAMP___" ; 2C
   dw "_______________" ; 2D
   dw "_______________" ; 2E
   dw "_______________" ; 2F
-  dw "_______________" ; 30
-  dw "_______________" ; 31
-  dw "_______________" ; 32
-  dw "_______________" ; 33
-  dw "_______________" ; 34
-  dw "_______________" ; 35
-  dw "_______________" ; 36
-  dw "_______________" ; 37
-  dw "_______________" ; 38
-  dw "_______________" ; 39
-  dw "_______________" ; 3A
-  dw "_______________" ; 3B
-  dw "_______________" ; 3C
-  dw "_______________" ; 3D
-  dw "_______________" ; 3E
-  dw "_______________" ; 3F
+  dw "UNDERWATER_____" ; 30
+  dw "UNDERWATER_____" ; 31
+  dw "UNDERWATER_____" ; 32
+  dw "UNDERWATER_____" ; 33
+  dw "UNDERWATER_____" ; 34
+  dw "UNDERWATER_____" ; 35
+  dw "ABYSS_BEACH____" ; 36
+  dw "ABYSS_BEACH____" ; 37
+  dw "UNDERWATER_____" ; 38
+  dw "UNDERWATER_____" ; 39
+  dw "UNDERWATER_____" ; 3A
+  dw "UNDERWATER_____" ; 3B
+  dw "UNDERWATER_____" ; 3C
+  dw "UNDERWATER_____" ; 3D
+  dw "ABYSS_BEACH____" ; 3E
+  dw "ABYSS_BEACH____" ; 3F
 
 
 DungeonLocationNames:
