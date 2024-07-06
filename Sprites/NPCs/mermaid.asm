@@ -61,6 +61,7 @@ Sprite_Mermaid_Long:
 Sprite_Mermaid_Prep:
 {
   PHB : PHK : PLB
+  LDA.b #$80 : STA.w SprDefl, X
   LDA.b #$40 : STA.w SprTimerA, X
   STZ.w SprMiscE, X
   LDA.b #$07 : STA.w SprHitbox, X
@@ -230,7 +231,7 @@ Sprite_Mermaid_Main:
   {
     %PlayAnimation(0,1,16)
     JSL Sprite_PlayerCantPassThrough
-    %ShowUnconditionalMessage($012C)
+    %ShowSolicitedMessage($012C)
     RTS
   }
 }
@@ -238,10 +239,10 @@ Sprite_Mermaid_Main:
 Librarian_CheckForAllMaps:
 {
   LDA.l DNGMAP1
-  CMP.l #$FFFC
+  CMP.w #$FFFC
   BNE .not_all_maps
   LDA.l DNGMAP2
-  CMP.l #$FFFF
+  CMP.w #$FFFF
   BEQ .all_maps
   .not_all_maps
   CLC
