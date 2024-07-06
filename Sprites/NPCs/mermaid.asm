@@ -218,6 +218,9 @@ Sprite_Mermaid_Main:
   {
     %PlayAnimation(0,1,16)
     JSL Sprite_PlayerCantPassThrough
+    LDA.l $7EF34E : BNE + 
+      %ShowSolicitedMessage($0127)
+    +
     RTS
   }
 
