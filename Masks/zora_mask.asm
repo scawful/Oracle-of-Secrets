@@ -75,9 +75,9 @@ pullpc ; Bank07 Free Space from Deku Mask
 LinkState_UsingZoraMask:
 {
   ; Check if the mask is equipped 
-  LDA $02B2 : CMP #$02 : BNE .normal : CLC
+  LDA $02B2 : CMP #$02 : BNE .normal
     ; Check if we are in water or not 
-    LDA $5D : CMP #$04 : BEQ .swimming : CLC
+    LDA $5D : CMP #$04 : BEQ .swimming
   
   .normal
   ; Return to normal state 
@@ -135,9 +135,9 @@ LinkState_UsingZoraMask:
   .dungeon
   {
     ; Check if we are in water or not 
-    LDA $5D : CMP #$04 : BNE .return_dungeon : CLC
+    LDA $5D : CMP #$04 : BNE .return_dungeon
       ; Check if already underwater
-      LDA !ZoraDiving : BNE .return_dungeon : CLC
+      LDA !ZoraDiving : BNE .return_dungeon
         ; Check the Y button and clear state if activated
         JSR Link_CheckNewY_ButtonPress : BCC .return_dungeon
           LDA $3A : AND.b #$BF : STA $3A
@@ -170,7 +170,7 @@ org $0782D2
   CLC
   RTS
 
-warnpc $078364
+warnpc $0782DA
 
 pullpc
 
@@ -183,13 +183,12 @@ pullpc
 
   ; Check precise tile types for interaction
   LDA $0114 : CMP #$85 : BEQ .player_is_falling
-  LDA $0114 : CMP #$09 : BEQ .player_is_falling
-  LDA $5B : CMP #$02 : BEQ .dungeon_stairs
+              CMP #$09 : BEQ .player_is_falling
+              CMP #$20 : BEQ .fall_into_pit
 
   ; Check if the ground level is safe
   ; Otherwise, eject the player back to the surface
-  LDA $0114 : BNE .remove_dive : CLC
-  ; CMP.b #$09 : BEQ .remove_dive
+  LDA $0114 : BNE .remove_dive
 
   ; Check the Y button and clear state if activated
   JSR Link_CheckNewY_ButtonPress : BCC .return_default
@@ -220,6 +219,9 @@ pullpc
   .return_default
   STZ $0302
   RTS
+  .fall_into_pit
+  JSR $9427
+  JMP .return_default
 }
 
 pushpc
