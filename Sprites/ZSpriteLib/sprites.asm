@@ -510,11 +510,19 @@ LinkY        = $20 ; Position Y of link
 LinkYH       = $21 ; High position Y of link
 LinkX        = $22 ; Position X of link
 LinkXH       = $23 ; High position X of link
+LinkZ        = $24 ; Position Z of link
 
 ; ----UDLR 
 ;  [U Up][D Down][L Left][R Right] 
 ;  Direction link is pushing against 
-LinkPushDir  = $26
+LinkPushDir   = $26
+
+; Link's recoiling speed
+; By themselves, these do not do much
+; They will be reset every frame Link is not in recoil state
+LinkRecoilY   = $27
+LinkRecoilX   = $28
+LinkRecoilZ   = $29
 
 ; Link's subpixel velocity
 ; when this value overflows, Link's main velocity gains an extra pixel
@@ -538,9 +546,6 @@ LinkMoveDir  = $67
 ; 0: Not moving, 1: Moving cardinal, 2: Moving diagonally
 LinkMoveInfo = $6A
 
-LinkRecoilY  = $27 ; Recoiling speed Y of link
-LinkRecoilX  = $28 ; Recoiling speed X of link
-
 LinkVisible  = $4B ; if set to 0x0C link will be invisible
 LinkBunnyGfx = $56 ; if set to 1 link will be bunny, otherwise link
 
@@ -552,6 +557,7 @@ LinkSpeedTbl = $5E
 
 ; if is set to 0x02 or 0x03 link is falling 
 LinkFalling  = $5B
+FallTimer    = $5C
 
 ; LinkState_Default                  : 0x00
 ; LinkState_Pits                     : 0x01
@@ -642,6 +648,10 @@ LinkCarryOrToss = $0309
 LinkAnim     = $037A
 
 LinkWallCheat = $037F ; If non zero can walk through walls
+
+; Animation step/graphics for spin attack animations; including medallions.
+LinkSpinGfx   = $031C
+LinkSpinStep  = $031D
 
 ; =========================================================
 
