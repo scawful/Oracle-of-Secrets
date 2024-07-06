@@ -41,7 +41,7 @@ Sprite_BeanVendor_Long:
   ; If it is not the Hall of Secrets map
   LDA.b $8A : CMP.b #$0E : BNE .NotGaebora
     ; If the map doesn't have the 6 crystals
-    LDA.l $7EF37A : CMP.b #$7B : BNE .Despawn
+    LDA.l $7EF37A : CMP.b #$77 : BNE .Despawn
       ; If the player has the Song of Soaring, despawn
       LDA.l $7EF3FC : CMP.b #$03 : BEQ .Despawn
       LDA.b #$05 : STA.w SprSubtype, X
