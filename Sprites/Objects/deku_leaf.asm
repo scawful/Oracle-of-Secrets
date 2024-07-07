@@ -62,15 +62,21 @@ Sprite_DekuLeaf_Main:
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
-  dw Action00
+  dw WaitForPlayer
 
-  Action00:
+  WaitForPlayer:
   {
     %StartOnFrame(0)
     %PlayAnimation(0, 0, 10)
+
+    JSR CheckIfPlayerIsOn : BCC +
+      LDA.b #$01 : STA.b $71
+      RTS
+    +
+    STZ.b $71
+    RTS
   }
 
-  RTS
 }
 
 ; =========================================================
@@ -123,7 +129,7 @@ Sprite_DekuLeaf_Draw:
       
   TYA : LSR #2 : TAY
       
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
       
   PLY : INY
       
@@ -148,6 +154,4 @@ Sprite_DekuLeaf_Draw:
   db $A0, $A2, $82, $80
 .properties
   db $23, $23, $23, $23
-.sizes
-  db $02, $02, $02, $02
 }
