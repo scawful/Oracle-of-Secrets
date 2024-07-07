@@ -876,6 +876,532 @@ Ancilla_BoundsCheck:
     db $20, $10
 }
 
+AncillaAdd_MagicBubbleShot:
+{
+  LDY.b #$01
+
+  STA.b $00
+
+  JSL Ancilla_CheckForAvailableSlot
+  BPL .free_slot
+
+  LDA.b $00
+  CMP.b #$01
+  BEQ .no_refund_magic
+
+  LDX.b #$00
+  JSL Refund_Magic
+
+  .no_refund_magic
+  BRL .exit_a
+
+
+  .free_slot
+  PHB
+  PHK
+  PLB
+
+  PHX
+
+  LDA.b $00
+  CMP.b #$01
+  BEQ .no_sfx
+
+  PHY
+
+  LDA.b #$0E ; SFX2.0E
+  JSR Ancilla_SFX2_Near
+
+  PLY
+
+
+  .no_sfx
+  LDA.b $00
+  STA.w AnciType,Y
+
+  TAX
+
+  LDA.w AncillaObjectAllocation,X
+  STA.w AnciOAMNbr,Y
+
+  LDA.b #$03
+  STA.w AnciTimerA,Y
+
+  LDA.b #$00
+  STA.w AnciMiscB,Y
+  STA.w $0C5E,Y
+
+  STA.w $0280,Y
+  STA.w $028A,Y
+
+  LDA.b $2F
+  LSR A
+  STA.w $0C72,Y
+
+
+  TAX
+
+  PHY
+  PHX
+
+  TYX
+  JSL Ancilla_CheckInitialTile_A
+
+  PLX
+  PLY
+
+  BCS .disperse_on_spawn
+
+
+  LDA.w $0022
+  CLC
+  ADC.w .init_check_offset_x_low,X
+  STA.w $0C04,Y
+
+  LDA.w $0023
+  ADC.w .init_check_offset_x_high,X
+  STA.w $0C18,Y
+
+  LDA.w $0020
+  CLC
+  ADC.w .init_check_offset_y_low,X
+  STA.w $0BFA,Y
+
+  LDA.w $0021
+  ADC.w .init_check_offset_y_high,X
+  STA.w $0C0E,Y
+
+
+  LDA.w AnciType,Y
+  CMP.b #$01 ; ANCILLA 01
+  BEQ .is_somaria_bullet
+
+  LDA.w .flame_speed_x,X
+  STA.w AnciYSpeed,Y
+
+  LDA.w .flame_speed_y,X
+
+  BRA .speed_set
+
+
+  .is_somaria_bullet
+  LDA.l $7EF359
+  DEC A
+  DEC A
+
+  ASL A
+  ASL A
+
+  STA.b $0F
+
+  TXA
+  CLC
+  ADC.b $0F
+  TAX
+
+  LDA.w SomariaBulletSpeedX,X
+  STA.w AnciYSpeed,Y
+
+  LDA.w SomariaBulletSpeedY,X
+
+
+  .speed_set
+  STA.w AnciXSpeed,Y
+
+  LDA.w $00EE
+  STA.w AnciLayer,Y
+
+  LDA.w $0476
+  STA.w AnciMiscJ,Y
+
+  PLX
+  PLB
+
+  .exit_a
+  RTL
+
+  .disperse_on_spawn
+  LDA.w AnciType,Y
+  CMP.b #$01 ; ANCILLA 01
+  BNE .not_bullet
+
+  LDA.b #$04 ; ANCILLA 04
+  STA.w AnciType,Y
+
+  LDA.b #$07
+  STA.w AnciTimerA,Y
+
+  LDA.b #$10
+  STA.w AnciOAMNbr,Y
+
+  BRA .exit_b
+
+
+  .not_bullet
+  LDA.b #$01
+  STA.w AnciMiscB,Y
+
+  LDA.b #$1F
+  STA.w AnciTimerA,Y
+
+  LDA.b #$08
+  STA.w AnciOAMNbr,Y
+
+  LDA.b #$2A ; SFX2.2A
+  JSR Ancilla_SFX2_Pan
+
+  .exit_b
+  PLX
+  PLB
+
+  RTL
+
+  .init_check_offset_x_low
+    db   0,   0,  -8,  16
+
+  .init_check_offset_x_high
+    db   0,   0,  -1,   0
+
+  .init_check_offset_y_low
+    db  -8,  16,   3,   3
+
+  .init_check_offset_y_high
+    db  -1,   0,   0,   0
+
+  .flame_speed_x
+    db   0,   0, -64,  64
+
+  .flame_speed_y
+    db -64,  64,   0
+}
+
+Ancilla0E_MagicBubbleLong:
+{
+  PHP : PHK : PLB
+  JSR Ancilla_MagicBubbleShot
+  PLB 
+  RTL
+}
+
+Ancilla_MagicBubbleShot:
+{
+  LDA.w $0C54,X
+  BEQ MagicBubbleShot_Moving
+
+  JMP.w MagicBubbleShot_Halted
+
+; =========================================================
+
+#MagicBubbleShot_Moving:
+  LDA.b $11
+  BNE .draw
+
+  STZ.w $0385,X
+
+  JSR Ancilla_Move_X
+  JSR Ancilla_Move_Y
+
+  JSL Ancilla_CheckSpriteCollision_long
+  BCS .collision
+
+  ; -------------------------------------------------------
+
+  LDA.w $0C72,X
+  ORA.b #$08
+  STA.w $0C72,X
+
+  JSL Ancilla_CheckTileCollision_long
+  PHP
+
+  LDA.w $03E4,X
+  STA.w $0385,X
+
+  PLP
+  BCS .collision
+
+  LDA.w $0C72,X
+  ORA.b #$0C
+  STA.w $0C72,X
+
+  LDA.w $028A,X
+  STA.b $74
+
+  JSL Ancilla_CheckTileCollision_long
+  PHP
+
+  LDA.b $74
+  STA.w $028A,X
+
+  PLP
+  BCC .no_collision
+
+  .collision
+  INC.w $0C54,X
+
+  LDA.b #$1F
+  STA.w $0C68,X
+
+  LDA.b #$08
+  STA.w $0C90,X
+
+  LDA.b #$2A ; SFX2.2A
+  JSR Ancilla_SFX2_Pan
+
+  ; ---------------------------------------------------------
+
+  .no_collision
+  INC.w $0C5E,X
+
+  LDA.w $0C72,X
+  AND.b #$F3
+  STA.w $0C72,X
+
+  LDA.w $0385,X
+  STA.w $0333
+
+  AND.b #$F0
+  CMP.b #$C0
+  BEQ .torch
+
+  LDA.w $03E4,X
+  STA.w $0333
+
+  AND.b #$F0
+  CMP.b #$C0
+  BNE .draw
+
+  .torch
+  ; PHX
+  ; JSL Underworld_LightTorch
+  ; PLX
+
+  ; ---------------------------------------------------------
+
+  .draw
+  JSR AncillaDraw_MagicBubbleShot
+
+  RTS
+}
+
+; =========================================================
+
+AncillaDraw_MagicBubbleShot:
+{
+  JSR Ancilla_BoundsCheck
+
+  LDA.w $0280,X
+  BEQ .default_priority
+    LDA.b #$30
+    TSB.b $04
+  .default_priority
+  LDA.w $0C5E,X
+  AND.b #$0C
+  STA.b $02
+
+  PHX
+
+  LDX.b #$02
+  LDY.b #$00
+
+  .next_object
+  STX.b $03
+
+  TXA
+  ORA.b $02
+  TAX
+
+  LDA.b $00
+  CLC
+  ADC.w .offset_x,X
+  STA.b ($90),Y
+
+  LDA.b $01
+  CLC
+  ADC.w .offset_y,X
+  INY
+  STA.b ($90),Y
+
+  LDX.b $03
+
+  LDA.w .char,X
+  INY
+  STA.b ($90),Y
+
+  LDA.b $04
+  ORA.b #$02
+  INY
+  STA.b ($90),Y
+
+  PHY
+
+  TYA
+  LSR A
+  LSR A
+  TAY
+
+  LDA.b #$00
+  STA.b ($92),Y
+
+  PLY
+  INY
+
+  DEX
+  BPL .next_object
+
+  PLX
+
+  RTS
+
+.offset_x
+  db   7,   0,   8,   0
+  db   8,   4,   0,   0
+  db   2,   8,   0,   0
+  db   1,   4,   9,   0
+
+.offset_y
+  db   1,   4,   9,   0
+  db   7,   0,   8,   0
+  db   8,   4,   0,   0
+  db   2,   8,   0,   0
+
+.char
+  db $8D, $9D, $9C
+}
+
+#SomariaBulletSpeedX:
+  db   0,   0, -40,  40
+  db   0,   0, -48,  48
+  db   0,   0, -64,  64
+
+#SomariaBulletSpeedY:
+  db -40,  40,   0,   0
+  db -48,  48,   0,   0
+  db -64,  64,   0,   0
+
+; =========================================================
+
+MagicBubbleShot_Dissipate:
+{
+  LDA.w $0C4A,X
+
+  STZ.w $0C4A,X
+
+  CMP.b #$2F ; ANCILLA 2F
+  BEQ .no_burn
+
+  LDA.b $8A
+  CMP.b #$40 ; OW 40
+  BNE .no_burn
+
+  LDA.w $03E4,X
+  CMP.b #$43 ; TILETYPE 43
+  BNE .no_burn
+
+  ; PHX
+
+  ; JSL FireRodShot_BecomeSkullWoodsFire
+
+  ; PLX
+
+  .no_burn
+  RTS
+}
+
+
+Ancilla_RestoreIndex:
+{
+  LDX.w $0FA0
+
+  RTS
+}
+
+; =========================================================
+
+MagicBubbleShot_Halted:
+{
+  JSR Ancilla_CheckBasicSpriteCollision
+  JSR Ancilla_BoundsCheck
+
+  LDY.b #$00
+  LDA.w $0C68,X
+  BEQ MagicBubbleShot_Dissipate
+
+  LSR A
+  LSR A
+  LSR A
+  BEQ .dying
+
+  TAX
+
+  LDA.b $00
+  STA.b ($90),Y
+
+  LDA.b $01
+  INY
+  STA.b ($90),Y
+
+  LDA.w .char-1,X
+  INY
+  STA.b ($90),Y
+
+  LDA.b #$02
+  ORA.b $04
+  INY
+  STA.b ($90),Y
+
+  LDA.b #$02
+  STA.b ($92)
+
+  BRL Ancilla_RestoreIndex
+
+  .dying
+  TYA
+  STA.b ($92),Y
+
+  INY
+  STA.b ($92),Y
+
+  DEY
+
+  LDA.b $00
+  STA.b ($90),Y
+
+  CLC
+  ADC.b #$08
+  LDY.b #$04
+  STA.b ($90),Y
+
+  LDA.b $01
+  CLC
+  ADC.b #$FD
+  LDY.b #$01
+  STA.b ($90),Y
+
+  LDY.b #$05
+  STA.b ($90),Y
+
+  LDA.b #$A4
+  LDY.b #$02
+  STA.b ($90),Y
+
+  INC A
+  LDY.b #$06
+  STA.b ($90),Y
+
+  LDA.b #$02
+  ORA.b $04
+  LDY.b #$03
+  STA.b ($90),Y
+
+  LDY.b #$07
+  STA.b ($90),Y
+
+  RTS
+
+  .char
+  db $A2, $A0, $8E
+}
+
 pushpc
 
 LinkOAM_SetEquipmentVRAMOffsets = $0DABE6
