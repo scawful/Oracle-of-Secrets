@@ -421,11 +421,19 @@ Sprite_KillSelf = $09F1F8
 Sprite_ProjectSpeedTowardsEntityLong = $06EA22
 
 ; =========================================================
+; Guard and Prober functions
+
+Guard_ChaseLinkOnOneAxis = $05C542
+Guard_ParrySwordAttacks = $06EB5E
+Sprite_SpawnProbeAlways_long = $05C66E
+Probe_CheckTileSolidity = $0DC26E
+
+; =========================================================
 ; Misc long functions 
 
 GetRandomInt = $0DBA71
 
-Sprite_SpawnProbeAlways_long = $05C66E
+Sprite_TrackBodyToHead = $05DCA2
 
 Sprite_SpawnFireball = $0DDA06
 
@@ -447,13 +455,9 @@ Sprite_CheckIfLifted = $06AA0C
 
 Sprite_TransmuteToBomb = $06AD50
 
-Guard_ParrySwordAttacks = $06EB5E
-
-ThrownSprite_TileAndSpriteInteraction_long = $06DFF2
-
 Sprite_RepelDash = $079291
 
-Probe_CheckTileSolidity = $0DC26E
+ThrownSprite_TileAndSpriteInteraction_long = $06DFF2
 
 ; =========================================================
 ; Local functions which may be useful for sprites
