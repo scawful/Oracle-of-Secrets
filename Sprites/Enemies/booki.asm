@@ -193,7 +193,8 @@ Sprite_Booki_Draw:
 
   LDA SprGfx, X : CLC : ADC SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprMiscA, X : STA $08
+  
+  LDA.w SprFlash, X : STA $08
   LDA.w SprMiscC, X : STA $09
 
   PHX

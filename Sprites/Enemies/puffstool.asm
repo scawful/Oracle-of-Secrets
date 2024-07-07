@@ -214,7 +214,7 @@ Sprite_Puffstool_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprMiscA, X : STA $08 ; Palette damage flash
+  LDA.w SprFlash, X : STA $08 ; Palette damage flash
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1

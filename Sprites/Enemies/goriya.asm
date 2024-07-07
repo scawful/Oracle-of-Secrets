@@ -295,7 +295,7 @@ Sprite_Goriya_Draw:
 
   LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
   LDA.w .start_index, Y : STA $06
-  LDA.w SprMiscA, X : STA $08
+  LDA.w SprFlash, X : STA $08
 
   PHX
     LDX .nbr_of_tiles, Y ;amount of tiles - 1
@@ -389,7 +389,7 @@ Sprite_Boomerang_Draw:
 
   LDA SprGfx, X : CLC : ADC SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprMiscA, X : STA $08
+  LDA.w SprFlash, X : STA $08
 
 
   PHX

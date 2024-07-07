@@ -405,11 +405,10 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(0, 0, 10)
 
     JSL Sprite_KillFriends
-    LDA $0DA0, X : INC : CMP.b #$08 : BNE .dontReset
+    LDA.w SprFlash, X : INC : CMP.b #$08 : BNE .dontReset
       LDA.b #$00
-
-  .dontReset
-    STA $0DA0, X
+    .dontReset
+    STA.w SprFlash, X
 
     RTS
   }
@@ -424,7 +423,6 @@ Sprite_KydrogBoss_Main:
     ; Increase the Z for a bit until he is off screen 
     LDA SprHeight, X : CLC : ADC.b #$04 
     STA.w SprHeight, X : CMP.b #$B0 : BCC .not_off_screen
-      ; 
       LDA #$40 : STA.w SprTimerD, X
       %GotoAction($0B)
     .not_off_screen
@@ -505,7 +503,7 @@ CheckForNextPhase:
     LDA #$80 : STA $0E50, X
     LDA #$01 : STA $0D80, X
     STA !KydrogPhase
-    INC $0DA0, X
+    INC.w SprFlash, X
     RTS
 
   .phase_three
@@ -573,38 +571,6 @@ KydrogBoss_Set_Damage:
 .damageProperties
   db $00, $01, $01, $01, $01, $01, $01, $00, $04, $01, $00, $01, $03, $01, $00, $01
       ;BA   D1   D2   D3   D4   D5   AR   HS   BM   SA   PD   FR   IR   BB   ET   QU
-}
-
-; =========================================================
-
-Sprite_DamageFlash_Long:
-{
-  PHB : PHK : PLB
-
-  JSR Sprite_Damage_Flash
-
-  PLB
-  RTL
-}
-
-; =========================================================
-
-Sprite_Damage_Flash:
-{
-  LDA $0EF0, X : BEQ .dontFlash
-    ; Change the palette to the next in the cycle
-    LDA $0DA0, X : INC : CMP.b #$08 : BNE .dontReset
-      LDA.b #$00
-    
-  .dontReset
-    STA $0DA0, X
-    BRA .flash
-
-.dontFlash
-  STZ $0DA0, X
-
-.flash
-  RTS
 }
 
 ; =========================================================
@@ -744,8 +710,7 @@ Sprite_KydrogBoss_Draw:
     LDA .start_index, Y : STA $06 ; Needs to be 16 bit ; Y = 00, 02, 04, 06
     SEP #$20
 
-    ; Store Palette thing 
-    LDA $0DA0, X : STA $08
+    LDA.w SprFlash, X : STA $08
 
     PHX ; Store Sprite ID
     

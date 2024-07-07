@@ -337,9 +337,7 @@ Sprite_Wolfos_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
-
-  ; Store Palette thing 
-  LDA $0DA0, X : STA $08
+  LDA.w SprFlash, X : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
