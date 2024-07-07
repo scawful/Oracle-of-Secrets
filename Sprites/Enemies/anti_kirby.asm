@@ -122,7 +122,7 @@ Sprite_AntiKirby_Main:
 
     %PlayAnimation(0, 2, 10) ; Start
     
-    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+    JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
       LDA #!RecoilTime : STA.w SprTimerA, X
       %GotoAction(1) ; Hurt
       RTS
@@ -152,7 +152,7 @@ Sprite_AntiKirby_Main:
   {
     %PlayAnimation(4, 5, 10) ; Suck
 
-    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+    JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
       LDA #!RecoilTime : STA.w SprTimerA, X
       %GotoAction(1) ; Hurt
       RTS
@@ -234,7 +234,7 @@ Sprite_AntiKirby_Main:
     JSL Sprite_BounceFromTileCollision
     JSL Sprite_PlayerCantPassThrough
 
-    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+    JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
       LDA #!RecoilTime : STA.w SprTimerA, X
       %GotoAction(6) ; Hurt
     .NoDamage

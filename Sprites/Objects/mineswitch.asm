@@ -82,7 +82,7 @@ Sprite_LeverSwitch_Main:
   {
     %PlayAnimation(0,0,4)
     LDA SprTimerA, X : BNE .NoDamage
-      JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+      JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
         LDA #$25 : STA $012F
         
         STZ.w $37
@@ -96,7 +96,7 @@ Sprite_LeverSwitch_Main:
   {
     %PlayAnimation(1,1,4)
     LDA SprTimerA, X : BNE .NoDamage
-      JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+      JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
         LDA #$25 : STA $012F
         LDA #$01 : STA $37
         LDA #$10 : STA.w SprTimerA, X
@@ -108,7 +108,7 @@ Sprite_LeverSwitch_Main:
   SpeedSwitchOff:
   {
     %PlayAnimation(0,0,4)
-    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+    JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
       LDA.b #$25 : STA $012F
       LDA.b #$01 : STA $36
       %GotoAction(3)
@@ -119,7 +119,7 @@ Sprite_LeverSwitch_Main:
   SpeedSwitchOn:
   {
     %PlayAnimation(1,1,4)
-    JSL Sprite_CheckDamageFromPlayerLong : BCC .NoDamage
+    JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
       LDA #$25 : STA $012F
       STZ.w $36
       %GotoAction(2)

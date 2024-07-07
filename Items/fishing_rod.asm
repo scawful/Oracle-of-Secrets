@@ -360,7 +360,7 @@ Sprite_Floater:
 {
   ; Floater Draw, allocate 4 tiles to use for the hud
   LDA SprMiscG, X : BEQ +
-    JSL SpriteDraw_WaterRipple
+    JSL Sprite_DrawWaterRipple
   +
   JSR Sprite_Floater_Draw
 

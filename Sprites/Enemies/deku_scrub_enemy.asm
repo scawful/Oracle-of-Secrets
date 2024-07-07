@@ -221,7 +221,7 @@ Sprite_DekuScrubEnemy_Main:
       STZ.w SprState, X
     .no_collision
 
-    JSL Sprite_CheckDamageFromPlayerLong : BCC .no_damage
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
       ; Apply force in the opposite direction
       LDA #-16 : STA.w SprYSpeed, X
     .no_damage

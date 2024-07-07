@@ -251,7 +251,7 @@ Sprite_Twinrova_Main:
     %Twinrova_Front()
 
     PHX 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
@@ -271,7 +271,7 @@ Sprite_Twinrova_Main:
     %Twinrova_Back()
 
     PHX 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
@@ -404,7 +404,7 @@ Sprite_Twinrova_Main:
     %Show_Koume()
 
     PHX
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
@@ -436,7 +436,7 @@ Sprite_Twinrova_Main:
     %Show_Kotake()
 
     PHX
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 

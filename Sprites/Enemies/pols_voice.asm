@@ -88,7 +88,7 @@ Sprite_PolsVoice_Main:
       %GotoAction(1)
     .not_done
 
-    JSL Sprite_CheckDamageFromPlayerLong : BCC .no_damage
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
       JSL Sprite_DirectionToFacePlayer
       
       ; Apply the speed positive or negative speed
@@ -124,7 +124,7 @@ Sprite_PolsVoice_Main:
     LDA SprTimerA, X : BNE .not_done
       %GotoAction(0)
     .not_done
-    JSL Sprite_CheckDamageFromPlayerLong : BCC .no_damage
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
       JSL Sprite_InvertSpeed_XY
     .no_damage
     RTS

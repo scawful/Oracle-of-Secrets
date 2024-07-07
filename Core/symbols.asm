@@ -261,6 +261,15 @@ Sprite_AttemptDamageToPlayerPlusRecoil = $06F41F
 ApplyRumbleToSprites = $0680FA
 
 ; =========================================================
+
+Sprite_MoveLong = $1D808C
+
+Sprite_ProjectSpeedTowardsPlayer = $06EA1A
+
+Sprite_Decelerate_X = $05E657
+Sprite_Decelerate_Y = $05E666
+
+; =========================================================
 ; args: 
 ; pos1_low  = $00
 ; pos1_size = $02
@@ -289,6 +298,9 @@ Sprite_PrepAndDrawSingleSmall = $06DBF8
 ; =========================================================
 ; draw shadow (requires additional oam allocation)
 Sprite_DrawShadow = $06DC54
+
+Sprite_DrawWaterRipple = $059FFA
+Sprite_DrawRippleIfInWater = $1EFF8D
 
 ; =========================================================
 ; check if the sprite is colliding with a solid tile set $0E70, X
@@ -381,7 +393,6 @@ Sprite_NullifyHookshotDrag = $0FF540
 ; Y = high byte of message ID to use.
 Sprite_ShowMessageUnconditional = $05E219
 
-
 ; =========================================================
 ; show a message if we press A and face the sprite
 ; A = low byte of message ID to use.
@@ -422,34 +433,22 @@ Sprite_ProjectSpeedTowardsEntityLong = $06EA22
 
 Guard_ChaseLinkOnOneAxis = $05C542
 Guard_ParrySwordAttacks = $06EB5E
-Sprite_SpawnProbeAlways_long = $05C66E
 Probe_CheckTileSolidity = $0DC26E
+
+Sprite_SpawnProbeAlways_long = $05C66E
+
+Sprite_TrackBodyToHead = $05DCA2
 
 ; =========================================================
 ; Misc long functions 
 
 GetRandomInt = $0DBA71
 
-Sprite_TrackBodyToHead = $05DCA2
-
-Sprite_Decelerate_X = $05E657
-Sprite_Decelerate_Y = $05E666
-
 Sprite_SpawnFireball = $0DDA06
-
-Sprite_MoveLong = $1D808C
-
-Sprite_DrawRippleIfInWater = $1EFF8D
-
-SpriteDraw_WaterRipple = $059FFA
 
 Sprite_SpawnSmallSplash = $1EA820
 
 Sprite_SpawnSparkleGarnish = $058008
-
-Sprite_ProjectSpeedTowardsPlayer = $06EA1A
-
-Sprite_CheckDamageFromPlayerLong = $06F2AA
 
 Sprite_CheckIfLifted = $06AA0C
 

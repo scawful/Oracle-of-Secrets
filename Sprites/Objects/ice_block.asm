@@ -99,7 +99,7 @@ Sprite_IceBlock_Main:
 
     JSR Statue_BlockSprites
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     BCC .no_damage
       LDA SprMiscD, X : STA.w SprX, X
       LDA SprMiscE, X : STA.w SprY, X

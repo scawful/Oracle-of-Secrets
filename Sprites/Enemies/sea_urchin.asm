@@ -69,7 +69,7 @@ Sprite_SeaUrchin_Main:
 
     %DoDamageToPlayerSameLayerOnContact()
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     BCC .NoDamage
 
     %GotoAction(1)

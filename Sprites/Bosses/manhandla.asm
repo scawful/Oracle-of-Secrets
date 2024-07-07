@@ -205,7 +205,7 @@ Sprite_Manhandla_Main:
     JSL Sprite_Move
     JSL Sprite_DamageFlash_Long
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
 
     RTS
@@ -219,7 +219,7 @@ Sprite_Manhandla_Main:
     JSL Sprite_Move
     JSL Sprite_DamageFlash_Long
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     
     RTS
@@ -234,7 +234,7 @@ Sprite_Manhandla_Main:
     JSL Sprite_Move
     JSL Sprite_DamageFlash_Long
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX
     
@@ -258,7 +258,7 @@ Sprite_Manhandla_Main:
     JSR Sprite_Manhandla_Move
     JSL Sprite_DamageFlash_Long
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX
 
@@ -331,7 +331,7 @@ Sprite_Manhandla_Main:
       JSR Mothula_SpawnBeams
     +
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     
     LDY.w Offspring1_Id

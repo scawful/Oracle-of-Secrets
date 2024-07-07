@@ -197,7 +197,7 @@ Sprite_Kydreeok_Main:
     JSR StopIfOutOfBounds
     JSL MoveBody
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
 
     %GotoAction(4)
@@ -217,7 +217,7 @@ Sprite_Kydreeok_Main:
     JSR StopIfOutOfBounds
     JSL MoveBody
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
 
     %GotoAction(4)
@@ -264,7 +264,7 @@ Sprite_Kydreeok_Main:
 
     JSL MoveBody
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
 
     PLX ;restores X
@@ -325,7 +325,7 @@ Sprite_Kydreeok_Main:
 
     LDA.b #$04 : STA.w SprHeight, X
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
 
     LDA.w SprTimerA, X : BNE .continue

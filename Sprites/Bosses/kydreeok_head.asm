@@ -90,7 +90,7 @@ Sprite_KydreeokHead_Main:
       %PlayAnimation(0,2,10)
 
       PHX
-      JSL Sprite_CheckDamageFromPlayerLong
+      JSL Sprite_CheckDamageFromPlayer
       %DoDamageToPlayerSameLayerOnContact()
       PLX
 
@@ -122,7 +122,7 @@ Sprite_KydreeokHead_Main:
       %PlayAnimation(3,5,10)
 
       PHX
-      JSL Sprite_CheckDamageFromPlayerLong
+      JSL Sprite_CheckDamageFromPlayer
       %DoDamageToPlayerSameLayerOnContact()
       PLX
       
@@ -143,7 +143,7 @@ Sprite_KydreeokHead_Main:
     %StartOnFrame(6)
     %PlayAnimation(6,8,10)
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
 
     JSR KydreeokHead_RotationMove
@@ -163,7 +163,7 @@ Sprite_KydreeokHead_Main:
     %PlayAnimation(9,11,10)
     %MoveTowardPlayer(15)
 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
 
     JSR KydreeokHead_RotationMove
@@ -182,7 +182,7 @@ Sprite_KydreeokHead_Main:
     %MoveTowardPlayer(15)
 
     PHX
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX
 

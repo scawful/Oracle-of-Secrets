@@ -90,7 +90,7 @@ Sprite_Wolfos_CheckIfDefeated:
 
 macro Wolfos_Move()
   JSL Sprite_DamageFlash_Long
-  JSL Sprite_CheckDamageFromPlayerLong : BCC + 
+  JSL Sprite_CheckDamageFromPlayer : BCC + 
 
   +
   JSL Sprite_PlayerCantPassThrough

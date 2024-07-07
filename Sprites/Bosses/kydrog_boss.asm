@@ -240,7 +240,7 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(0, 2, 8)
 
     PHX 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
@@ -260,7 +260,7 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(3, 5, 8)
 
     PHX 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
@@ -280,7 +280,7 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(6, 8, 8)
 
     PHX 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
@@ -300,7 +300,7 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(9, 11, 8)
 
     PHX 
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
@@ -331,7 +331,7 @@ Sprite_KydrogBoss_Main:
     .continue
 
     PHX
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
@@ -361,7 +361,7 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(15, 16, 8) ; Arms Crossed Animation 
     
     PHX
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
@@ -381,7 +381,7 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(17, 17, 10)
     
     PHX
-    JSL Sprite_CheckDamageFromPlayerLong
+    JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX 
 
