@@ -536,6 +536,23 @@ org $08FFDA ; Bank 08 Free space
 
 pullpc
 
+DekuLink_ShootBubbleOrStartHover:
+{
+  ; If we are standing on a deku flower, do the hover
+  LDA.b $71 : BEQ + 
+    JSL PrepareQuakeSpell
+    RTL
+  +
+  ; Otherwise, shoot the magic bubble 
+  LDA.b #$0E
+  JSL AncillaAdd_MagicBubbleShot
+
+  ; TODO: Update the draw code to use dynamic magic bubble
+  ; JSL MagicBubbleSwapDynamicGfx
+  ; INC.w $02C3 ; block anim step
+  RTL
+}
+
 Ancilla_SFX2_Near:
   JSR Ancilla_SFX_Near
   STA.w $012E
