@@ -460,6 +460,8 @@ Sprite_TransmuteToBomb = $06AD50
 
 Sprite_RepelDash = $079291
 
+Sprite_SpawnPoofGarnish = $05AB9C
+
 ThrownSprite_TileAndSpriteInteraction_long = $06DFF2
 
 ; =========================================================
@@ -815,7 +817,17 @@ AnciXsub     = $0C40 ; sub pixel for X position for ancilla
 AnciType     = $0C4A
 
 AncillaInit_SetCoordsAndExit = $0980C3
+Ancilla_PrepOAMCoord_long = $08F6D9
+Ancilla_SetOAM_XY_long = $08F6FE
+Ancilla_GetRadialProjection_long = $08FB23
 
+Ancilla_CheckSpriteCollision_long = $088DA2
+
+Ancilla_CheckTileCollision_long = $08923B
+Ancilla_CheckTileCollision_Class2_long = $089243
+
+AncillaAdd_BombosSpell = $08AF66
+AncillaAdd_FireRodShot = $0880B3
 AncillaAdd_Snoring = $0980C8
 AncillaAdd_Bomb = $09811F
 AncillaAdd_Boomerang = $09820F
@@ -845,3 +857,5 @@ AncillaAdd_IceRodShot = $099863
 AncillaAdd_Splash = $0998FC
 
 DeleteBoomAndByrnaSparks = $0FFD86
+
+Sparkle_PrepOAMFromRadial = $08DA17
