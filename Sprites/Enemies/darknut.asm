@@ -55,12 +55,16 @@ Sprite_Darknut_Prep:
 {
   PHB : PHK : PLB
     
+  LDA.l $7EF359 : TAY
+  LDA.w .health, Y : STA.w SprHealth, X 
   LDA.b #$80 : STA.w SprDefl, X
-  LDA.b #$0C : STA.w SprHealth, X 
   LDA.b #%01100000 : STA.w SprTileDie, X
 
   PLB
   RTL
+
+.health
+  db $0C, $1C, $2C, $3C
 }
 
 ; =========================================================
@@ -69,6 +73,7 @@ DarknutSpeed = 04
 
 Sprite_Darknut_Main:
 {
+  JSL Sprite_SpawnProbeAlways_long
   JSL Guard_ParrySwordAttacks
   JSL Sprite_Move
   JSL Sprite_BounceFromTileCollision
