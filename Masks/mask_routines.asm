@@ -502,6 +502,16 @@ DekuLink_HoverBasedOnInput:
   RTL
 } 
 
+DekuLink_CheckForDash:
+{
+  LDA.w $02B2 : CMP.b #$01 : BNE +
+    STZ.b $F2
+  +
+  LDA.b #$00
+  STA.b $4F
+  RTL
+}
+
 pushpc
 
 org $088399
@@ -512,6 +522,9 @@ org $08FFDA ; Bank 08 Free space
     JSL Ancilla0E_MagicBubbleLong
     RTS
 
+org $07903F
+  JSL DekuLink_CheckForDash
+  
 pullpc
 
 DekuLink_ShootBubbleOrStartHover:
