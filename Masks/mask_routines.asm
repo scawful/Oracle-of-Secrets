@@ -549,6 +549,11 @@ Ancilla_SFX2_Near:
   STA.w $012E
   RTS
 
+Ancilla_SFX3_Near:
+  JSR Ancilla_SFX_Near
+  STA.w $012F
+  RTS
+
 Ancilla_SFX_Near:
   STA.w $0CF8
   JSL Link_CalculateSFXPan
@@ -850,8 +855,8 @@ AncillaAdd_MagicBubbleShot:
 
   LDA.b $00 : CMP.b #$01 : BEQ .no_sfx
     PHY
-    LDA.b #$0E ; SFX2.0E
-    JSR Ancilla_SFX2_Near
+    LDA.b #$05
+    JSR Ancilla_SFX3_Near
     PLY
   .no_sfx
   LDA.b $00 : STA.w AnciType, Y
