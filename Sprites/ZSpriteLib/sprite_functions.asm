@@ -275,6 +275,38 @@ DragPlayer:
 
 ; =========================================================
 
+Sprite_DamageFlash_Long:
+{
+  PHB : PHK : PLB
+
+  JSR Sprite_Damage_Flash
+
+  PLB
+  RTL
+}
+
+; =========================================================
+
+Sprite_Damage_Flash:
+{
+  LDA $0EF0, X : BEQ .dontFlash
+    ; Change the palette to the next in the cycle
+    LDA.w SprFlash, X : INC : CMP.b #$08 : BNE .dontReset
+      LDA.b #$00
+    
+  .dontReset
+    STA.w SprFlash, X
+    BRA .flash
+
+.dontFlash
+  STZ.w SprFlash, X
+
+.flash
+  RTS
+}
+
+; =========================================================
+
 Intro_Dungeon_Main:
 {
   LDA $0E20 : CMP.b #$92 : BNE .not_sprite_body_boss
