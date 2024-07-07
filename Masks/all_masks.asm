@@ -15,6 +15,13 @@
 !LinkGraphics = $BC
 !ZoraDiving = $0AAB
 
+; If set, deku is hovering and can drop bombs
+DekuFloating   = $70
+
+; If set, on deku platform and can hover
+; Unset, will shoot deku bubble instead
+DekuHover      = $71
+
 ; =========================================================
 
 AddTransformationCloud = $09912C

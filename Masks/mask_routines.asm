@@ -330,7 +330,7 @@ Link_TransformMask:
 DekuLink_SpinOrRecoil:
 {
   TAY
-  LDA $70 : BEQ .spin
+  LDA DekuFloating : BEQ .spin
     TYA
     LDY.b #$05 ; Recoil
     JML $0DA435 ; JML $0DA40B
@@ -362,7 +362,7 @@ PrepareQuakeSpell:
   LDA.b #$28 : STA.w $0362 : STA.w $0363 
   STZ.w $0364 ; Clear Z-coordinate for the jump
 
-  STZ $70 ; Clear bomb drop check flag 
+  STZ.w DekuFloating ; Clear the hover flag
 
   RTL
 }
@@ -466,7 +466,7 @@ DekuLink_HoverBasedOnInput:
   
   LDA $5C : BEQ .auto_cancel
 
-  LDA $70 : BEQ .no_bomb_drop
+  LDA DekuFloating : BEQ .no_bomb_drop
     LDA $F0 : AND #%01000000 : BEQ .no_bomb_drop
       LDY.b #$01 : LDA.b #$07 ; ANCILLA 07
       JSL $09811F ; AncillaAdd_Bomb

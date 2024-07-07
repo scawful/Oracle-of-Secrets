@@ -129,15 +129,17 @@ LinkState_UsingQuake:
       LDA.b #$01 : STA.w $0324
       LDA.b #$12 : STA LinkZ
       LDA.b #$FF : STA FallTimer
-      LDA.b #$01 : STA $70
+      LDA.b #$01 : STA DekuFloating
       ; -------------------------------------------------
 
   .exit
   RTS
 
   .special
-  DEC $5C 
-  JSL DekuLink_HoverBasedOnInput
+  LDA.b DekuFloating : BEQ +
+    DEC $5C 
+    JSL DekuLink_HoverBasedOnInput
+  +
   RTS
 }
 
