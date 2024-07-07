@@ -553,6 +553,10 @@ LinkOAM_DrawShield:
 }
 warnpc $0DA79C
 
+; Hide sword while deku hover
+org $0DA5EA
+  CMP.w #$0009
+
 pullpc
 
 ; Minish, Deku, Wolf don't draw shield
