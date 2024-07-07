@@ -522,7 +522,29 @@ DekuLink_HoverBasedOnInput:
 
   PLB
   RTL
-}
+
+Ancilla_SFX2_Near:
+  JSR Ancilla_SFX_Near
+  STA.w $012E
+  RTS
+
+Ancilla_SFX_Near:
+  STA.w $0CF8
+  JSL Link_CalculateSFXPan
+  ORA.w $0CF8
+  RTS
+
+Ancilla_SFX2_Pan:
+  JSR Ancilla_SFX_SetPan
+  STA.w $012E
+  RTS
+
+Ancilla_SFX_SetPan:
+  STA.w $0CF8
+  JSL Ancilla_CalculateSFXPan
+  ORA.w $0CF8
+  RTS
+
 
 pushpc
 
