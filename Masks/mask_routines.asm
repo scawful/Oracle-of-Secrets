@@ -709,6 +709,42 @@ Ancilla_CheckBasicSpriteCollision_Single:
   RTS
 }
 
+Ancilla_SetupBasicHitBox:
+{
+  LDA.w $0C04,X
+  SEC
+  SBC.b #$08
+  STA.b $00
+
+  LDA.w $0C18,X
+  SBC.b #$00
+  STA.b $08
+
+  LDA.w $0BFA,X
+  SEC
+  SBC.b #$08
+  PHP
+
+  SEC
+  SBC.w $029E,X
+  STA.b $01
+
+  LDA.w $0C0E,X
+  SBC.b #$00
+
+  PLP
+  SBC.b #$00
+  STA.b $09
+
+  LDA.b #$0F
+  STA.b $02
+
+  LDA.b #$0F
+  STA.b $03
+
+  RTS
+}
+
 pushpc
 
 LinkOAM_SetEquipmentVRAMOffsets = $0DABE6
