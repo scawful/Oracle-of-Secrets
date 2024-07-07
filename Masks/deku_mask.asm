@@ -40,6 +40,7 @@ LinkItem_DekuMask:
 {
   LDA.w $02B2 : CMP.b #$01 : BNE .continue
     JSR Link_CheckNewY_ButtonPress : BCC .continue
+      LDA $3A : AND.b #$BF : STA $3A
       LDX.b #$02
       JSR LinkItem_EvaluateMagicCost : BCC .return
         JSL DekuLink_ShootBubbleOrStartHover
