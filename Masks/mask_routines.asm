@@ -537,10 +537,7 @@ DekuLink_ShootBubbleOrStartHover:
   ; Otherwise, shoot the magic bubble 
   LDA.b #$0E
   JSL AncillaAdd_MagicBubbleShot
-
-  ; TODO: Update the draw code to use dynamic magic bubble
-  ; JSL MagicBubbleSwapDynamicGfx
-  ; INC.w $02C3 ; block anim step
+  JSL MagicBubbleSwapDynamicGfx
   RTL
 }
 
@@ -1144,6 +1141,7 @@ MagicBubbleShot_Dissipate:
         ; JSL FireRodShot_BecomeSkullWoodsFire
         ; PLX
   .no_burn
+  JSL RestoreCaneBlockHammerGfx
   RTS
 }
 
@@ -1161,6 +1159,11 @@ MagicBubbleShot_Halted:
 {
   JSR Ancilla_CheckBasicSpriteCollision
   JSR Ancilla_BoundsCheck
+
+  INC.w $02C3 ; block anim step
+  LDA.w $02C3 : CMP.b #$02 : BNE +
+    STZ.w $02C3
+  +
 
   LDY.b #$00
   LDA.w AnciTimerA, X
@@ -1225,7 +1228,8 @@ MagicBubbleShot_Halted:
   RTS
 
   .char
-  db $A2, $A0, $8E
+  ; db $A2, $A0, $8E
+  db $0C, $0C, $0C
 }
 
 MagicBubbleGfx:
