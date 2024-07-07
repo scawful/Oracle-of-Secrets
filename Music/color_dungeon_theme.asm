@@ -350,7 +350,3 @@ db $00 ; End of the channel
 .subA01               ;]
 db Tie                ;]----- Tie Repeats
 db $00 ; End          ;]
-
-
-
-print pc
