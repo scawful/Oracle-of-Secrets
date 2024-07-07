@@ -435,6 +435,9 @@ GetRandomInt = $0DBA71
 
 Sprite_TrackBodyToHead = $05DCA2
 
+Sprite_Decelerate_X = $05E657
+Sprite_Decelerate_Y = $05E666
+
 Sprite_SpawnFireball = $0DDA06
 
 Sprite_MoveLong = $1D808C
