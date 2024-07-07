@@ -386,8 +386,6 @@ FixMaskPaletteOnExit:
   RTL
 }
 
-print pc
-
 warnpc $0AC387
 
 org $0ABC76

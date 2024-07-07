@@ -114,16 +114,16 @@ namespace Oracle
   print ""
 
   incsrc "Music/lost_woods_v2.asm"
-  print  "End of Music/lost_woods_v2.asm       ", pc
+  print  "End of Music/lost_woods_v2.asm    ", pc
 
   incsrc "Music/color_dungeon_theme.asm"
-  print  "End of Music/color_dungeon_theme.asm    ", pc
+  print  "End of color_dungeon_theme.asm    ", pc
 
   incsrc "Music/stone_tower_temple_v2.asm"
   print  "End of stone_tower_temple.asm     ", pc
 
   incsrc "Music/song_of_healing.asm"
-  print  "End of Music/song_of_healing.asm    ", pc
+  print  "End of Music/song_of_healing.asm  ", pc
 
 
   print ""

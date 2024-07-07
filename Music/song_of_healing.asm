@@ -249,7 +249,3 @@ db $00 ; End
 .subA01
 db Tie
 db $00 ; End
-
-
-
-print pc

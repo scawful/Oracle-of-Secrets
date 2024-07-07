@@ -214,7 +214,6 @@ FindEntrance:
   STZ.b $11 : STZ.b $B0
 
   .no_entrance_found
-  print pc 
   SEP #$30
 
   RTL

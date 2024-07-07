@@ -231,7 +231,3 @@ db $00 ; End
 .subA01
 db Rest
 db $00 ; End
-
-
-
-print pc
