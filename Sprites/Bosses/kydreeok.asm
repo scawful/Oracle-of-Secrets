@@ -213,7 +213,7 @@ Sprite_Kydreeok_Main:
     %PlayAnimation(0, 2, 10)
 
     LDA $36 : STA $00
-    JSR Sprite_ApplySpeedTowardsPlayerXOrY
+    JSL Sprite_ApplySpeedTowardsPlayerXOrY
     JSR StopIfOutOfBounds
     JSL MoveBody
 
@@ -604,97 +604,6 @@ StopIfOutOfBounds:
   SEP #$20
 
   RTS
-}
-
-; =========================================================
-
-Sprite_ApplySpeedTowardsPlayerXOrY:
-{
-  JSL Sprite_IsBelowPlayer : BEQ .player_below
-    ;playerAbove
-
-    REP #$20
-    ; if link.y is 6 above sprite.y it is considered below
-    LDA SprCachedY : SEC : SBC $20 : CLC : ADC.w #$0006 : STA $01 ;delta Y
-    SEP #$20
-
-    JSL Sprite_IsToRightOfPlayer : BEQ .player_to_the_Right1
-      ;player_to_the_Left
-      REP #$20
-      LDA SprCachedX : SEC : SBC $22 ; delta X
-      
-      CMP $01 : BCS .XGreaterThanY1
-        ;YGreaterThanX
-        SEP   #$20
-        LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
-        STZ.w SprXSpeed
-        RTS
-
-      .XGreaterThanY1
-        SEP   #$20
-        LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
-        STZ.w SprYSpeed
-        RTS
-
-  .player_to_the_Right1
-      REP #$20
-      LDA $22 : SEC : SBC SprCachedX ; delta X
-
-      CMP $01 : BCS .XGreaterThanY2
-        ;YGreaterThanX
-        SEP   #$20
-        LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
-        STZ.w SprXSpeed
-        RTS
-
-      .XGreaterThanY2
-        SEP   #$20
-        LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
-        STZ.w SprYSpeed
-        RTS
-
-
-  .player_below
-      REP #$20
-      ; if link.y is 6 above sprite.y it is considered below
-      LDA $20 : SEC : SBC SprCachedY : CLC : ADC.w #$0006 : STA $01 ; delta Y
-      SEP #$20
-
-      JSL Sprite_IsToRightOfPlayer : BEQ .player_to_the_Right2
-        ;player_to_the_Left
-        REP #$20
-        LDA SprCachedX : SEC : SBC $22 ; delta X
-
-        CMP $01 : BCS .XGreaterThanY3
-          ;YGreaterThanX
-          SEP   #$20
-          LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
-          STZ.w SprXSpeed
-          RTS
-
-        .XGreaterThanY3
-          SEP   #$20
-          LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
-          STZ.w SprYSpeed
-          RTS
-
-
-      .player_to_the_Right2
-        REP #$20
-        LDA $22 : SEC : SBC SprCachedX ; delta X
-
-        CMP $01 : BCS .XGreaterThanY4
-          ;YGreaterThanX
-          SEP   #$20
-          LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
-          STZ.w SprXSpeed
-          RTS
-
-        .XGreaterThanY4
-          SEP   #$20
-          LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
-          STZ.w SprYSpeed
-          RTS
 }
 
 ; =========================================================

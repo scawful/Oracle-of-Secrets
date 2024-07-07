@@ -763,7 +763,7 @@ Sprite_SetupHitBox:
 
 ; =========================================================
 
-Sprite_ApplySpeedTowardsPlayerXOrY_Long:
+Sprite_ApplySpeedTowardsPlayerXOrY:
 {
   JSL Sprite_IsBelowPlayer : BEQ .player_below
     ;playerAbove

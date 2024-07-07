@@ -443,7 +443,7 @@ Sprite_Manhandla_Move:
   MoveXorY:
   {
     LDA $36 : STA $00
-    JSL Sprite_ApplySpeedTowardsPlayerXOrY_Long
+    JSL Sprite_ApplySpeedTowardsPlayerXOrY
     JSR Manhandla_StopIfOutOfBounds
     JSL MoveBody
 
