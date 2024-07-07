@@ -43,7 +43,7 @@ endmacro
 
 ; Go to the action specified ID can be Hex or Decimal
 macro GotoAction(action)
-    LDA.b #<action> : STA.w SprAction, X
+  LDA.b #<action> : STA.w SprAction, X
 endmacro
 
 
@@ -51,18 +51,18 @@ endmacro
 ; reset to (frame_start) when reaching (frame_end)
 ; This is using SprTimerB
 macro PlayAnimation(frame_start, frame_end, frame_wait)
-    LDA.w SprTimerB, X : BNE +
-        LDA.w SprFrame, X : INC : STA.w SprFrame, X : CMP.b #<frame_end>+1 : BCC .noframereset
-        LDA.b #<frame_start> : STA.w SprFrame, X
-        .noframereset
-        LDA.b #<frame_wait> : STA.w SprTimerB, X
-    +
+  LDA.w SprTimerB, X : BNE +
+    LDA.w SprFrame, X : INC : STA.w SprFrame, X : CMP.b #<frame_end>+1 : BCC .noframereset
+    LDA.b #<frame_start> : STA.w SprFrame, X
+    .noframereset
+    LDA.b #<frame_wait> : STA.w SprTimerB, X
+  +
 endmacro
 
 macro StartOnFrame(frame)
-    LDA.w SprFrame, x : CMP.b #<frame> : BCS +
+  LDA.w SprFrame, x : CMP.b #<frame> : BCS +
     LDA.b #<frame> : STA.w SprFrame, x
-    +
+  +
 endmacro
 
 
@@ -76,143 +76,143 @@ macro ShowSolicitedMessage(message_id)
 endmacro
 
 macro ShowMessageOnContact(message_id)
-    LDY.b #(<message_id>)>>8
-    LDA.b #<message_id>
-    JSL $05E1F0 ; Sprite_ShowMessageOnContact
+  LDY.b #(<message_id>)>>8
+  LDA.b #<message_id>
+  JSL $05E1F0 ; Sprite_ShowMessageOnContact
 endmacro
 
 ; Show message no matter what (should not be used without code condition)
 macro ShowUnconditionalMessage(message_id)
-    LDY.b #(<message_id>)>>8
-    LDA.b #<message_id>
-    JSL Sprite_ShowMessageUnconditional
+  LDY.b #(<message_id>)>>8
+  LDA.b #<message_id>
+  JSL Sprite_ShowMessageUnconditional
 endmacro
 
 ; Make the sprite move towards the player at a speed of (speed)
 macro MoveTowardPlayer(speed)
-    LDA.b #<speed>
-    JSL Sprite_ApplySpeedTowardsPlayer
-    JSL Sprite_MoveLong
+  LDA.b #<speed>
+  JSL Sprite_ApplySpeedTowardsPlayer
+  JSL Sprite_MoveLong
 endmacro
 
 ; Prevent the player from passing through sprite hitbox
 macro PlayerCantPassThrough()
-    JSL Sprite_PlayerCantPassThrough
+  JSL Sprite_PlayerCantPassThrough
 endmacro
 
 ; Do damage to player on contact if sprite is on same layer as player
 macro DoDamageToPlayerSameLayerOnContact()
-    JSL Sprite_CheckDamageToPlayerSameLayer
+  JSL Sprite_CheckDamageToPlayerSameLayer
 endmacro
 
 ; Set harmless flag, 0 = harmful, 1 = harmless
 macro SetHarmless(value)
-    LDA.w SprNbrOAM, X
-    AND #$7F
-    if <value> != 0
-        ORA.b #(<value>)<<7 
-    endif
-    STA.w SprNbrOAM, X
+  LDA.w SprNbrOAM, X
+  AND #$7F
+  if <value> != 0
+      ORA.b #(<value>)<<7 
+  endif
+  STA.w SprNbrOAM, X
 endmacro
 
 ; Set Room Flag (Chest 6) 
 ; Do not use if you have more than 5 chests or a small key under a pot
 ; in that room unless you want it to be already opened/taken
 macro SetRoomFlag(value)
-    if <value> != 0
+  if <value> != 0
     LDA $0403 : ORA #$20 : STA $0403
-    else
+  else
     LDA $0403 : AND #$DF : STA $0403
-    endif
+  endif
 endmacro
 
 ; Will prevent the player from moving or opening his menu
 macro PreventPlayerMovement()
-LDA #$01 : STA $02E4
+  LDA #$01 : STA $02E4
 endmacro
 
 ; Will allow the player to move or open his menu
 macro AllowPlayerMovement()
-STZ.w $02E4
+  STZ.w $02E4
 endmacro
 
 ; Enter 16bit mode
 macro Set16bitmode()
-REP #$30
+  REP #$30
 endmacro
 
 ; Enter 8bit mode
 macro Set8bitmode()
-SEP #$30
+  SEP #$30
 endmacro
 
 ; This is a 16 bit will load A with current rupee count
 ; to use with instructions CMP and BCC/BCS
 macro GetPlayerRupees()
-LDA $7EF360
+  LDA $7EF360
 endmacro
 
 ; Set the velocity Y of the sprite at (speed) value
 ; this require the use of the function JSL Sprite_MoveLong
 macro SetSpriteSpeedY(speed)
-LDA.b #<speed> : STA.w SprYSpeed, x
+  LDA.b #<speed> : STA.w SprYSpeed, x
 endmacro
 
 ; Set the velocity X of the sprite at (speed) value
 ; this require the use of the function JSL Sprite_MoveLong
 macro SetSpriteSpeedX(speed)
-LDA.b #<speed> : STA.w SprXSpeed, x
+  LDA.b #<speed> : STA.w SprXSpeed, x
 endmacro
 
 ; Will play a sound SFX 1 See Zelda_3_RAM.log for more informations
 macro PlaySFX1(sfxid)
-LDA.b #<sfxid> : STA $012E
+  LDA.b #<sfxid> : STA $012E
 endmacro
 
 ; Will play a sound SFX 2 See Zelda_3_RAM.log for more informations
 macro PlaySFX2(sfxid)
-LDA.b #<sfxid> : STA $012F
+  LDA.b #<sfxid> : STA $012F
 endmacro
 
 ; Will play a music See Zelda_3_RAM.log for more informations
 macro PlayMusic(musicid)
-LDA.b #<musicid> : STA $012C
+  LDA.b #<musicid> : STA $012C
 endmacro
 
 ; Will set the timer A to wait (length) amount of frames
 macro SetTimerA(length)
-LDA.b #<length> : STA.w SprTimerA, X
+  LDA.b #<length> : STA.w SprTimerA, X
 endmacro
 
 ; Will set the timer B to wait (length) amount of frames
 macro SetTimerB(length)
-LDA.b #<length> : STA.w SprTimerB, X
+  LDA.b #<length> : STA.w SprTimerB, X
 endmacro
 
 ; Will set the timer C to wait (length) amount of frames
 macro SetTimerC(length)
-LDA.b #<length> : STA.w SprTimerC, X
+  LDA.b #<length> : STA.w SprTimerC, X
 endmacro
 
 ; Will set the timer D to wait (length) amount of frames
 macro SetTimerD(length)
-LDA.b #<length> : STA.w SprTimerD, X
+  LDA.b #<length> : STA.w SprTimerD, X
 endmacro
 
 ; Will set the timer E to wait (length) amount of frames
 macro SetTimerE(length)
-LDA.b #<length> : STA.w SprTimerE, X
+  LDA.b #<length> : STA.w SprTimerE, X
 endmacro
 
 ; Will set the timer F to wait (length) amount of frames
 macro SetTimerF(length)
-LDA.b #<length> : STA.w SprTimerF, X
+  LDA.b #<length> : STA.w SprTimerF, X
 endmacro
 
 macro NextAction()
-INC $0D80, X 
+  INC $0D80, X 
 endmacro
 
 macro GetTilePos(x, y)
-LDX.w #((<y>*$80)+(<x>*$02))
+  LDX.w #((<y>*$80)+(<x>*$02))
 endmacro
