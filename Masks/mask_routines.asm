@@ -851,6 +851,28 @@ Ancilla_Move_Z:
 }
 
 
+MagicBubbleGfx:
+  incbin "gfx/magic_bubble.bin"
+
+MagicBubbleSwapDynamicGfx:
+{
+  PHX 
+  PHP
+
+  REP #$30
+
+  LDX #$01BE
+  --
+  LDA.l MagicBubbleGfx, X : STA.l $7EA480, X
+  DEX : DEX
+  BPL --
+
+  PLP
+  PLX
+  RTL
+}
+
+
 Ancilla_Killa:
   PLA
   PLA
