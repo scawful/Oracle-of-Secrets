@@ -6,14 +6,14 @@
 !NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 40  ; Number of Health the sprite have
+!Health             = 12  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 12  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -57,7 +57,7 @@ Sprite_Darknut_Prep:
     
   LDA.b #$80 : STA.w SprDefl, X
   LDA.b #$0C : STA.w SprHealth, X 
-  LDA.b #%00010000 : STA.w SprTileDie, X
+  LDA.b #%01100000 : STA.w SprTileDie, X
 
   PLB
   RTL
