@@ -745,6 +745,99 @@ Ancilla_SetupBasicHitBox:
   RTS
 }
 
+Ancilla_Move_X:
+{
+  TXA
+  CLC
+  ADC.b #$0A
+  TAX
+
+  JSR Ancilla_Move_Y
+
+  BRL Ancilla_RestoreIndex
+}
+
+; ---------------------------------------------------------
+
+Ancilla_Move_Y:
+{
+  LDA.w $0C22,X
+
+  ASL A
+  ASL A
+  ASL A
+  ASL A
+
+  CLC
+  ADC.w $0C36,X
+  STA.w $0C36,X
+
+  LDY.b #$00
+
+  LDA.w $0C22,X
+  PHP
+
+  LSR A
+  LSR A
+  LSR A
+  LSR A
+
+  PLP
+  BPL .other_way
+
+  ORA.b #$F0
+  DEY
+
+  .other_way
+  ADC.w $0BFA,X
+  STA.w $0BFA,X
+
+  TYA
+  ADC.w $0C0E,X
+  STA.w $0C0E,X
+
+  RTS
+}
+
+; =========================================================
+
+Ancilla_Move_Z:
+{
+  LDA.w $0294,X
+
+  ASL A
+  ASL A
+  ASL A
+  ASL A
+
+  CLC
+  ADC.w $02A8,X
+  STA.w $02A8,X
+
+  LDY.b #$00
+
+  LDA.w $0294,X
+  PHP
+
+  LSR A
+  LSR A
+  LSR A
+  LSR A
+
+  PLP
+  BPL .other_way
+
+  ORA.b #$F0
+  DEY
+
+  .other_way
+  ADC.w $029E,X
+  STA.w $029E,X
+
+  RTS
+}
+
+
 pushpc
 
 LinkOAM_SetEquipmentVRAMOffsets = $0DABE6
