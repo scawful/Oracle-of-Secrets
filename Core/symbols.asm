@@ -699,6 +699,8 @@ Link_ResetSwimmingState = $07983A
 Link_ResetStateAfterDamagingPit = $07984B
 Link_ItemReset_FromOverworldThings = $07B107
 
+Link_CalculateSFXPan = $0DBB67
+
 ; Used by Agahnim2 fight
 CallForDuckIndoors = $07A45F
 
@@ -720,6 +722,8 @@ TileDetect_BigArea_long = $07CF0A
 
 Hookshot_CheckTileCollision = $07D576
 
+Refund_Magic = $07B0E9
+
 
 ; =========================================================
 ; Ancilla
@@ -734,6 +738,14 @@ AnciMiscA    = $0BF0 ; This can be used to do anything in ancilla
 AnciMiscB    = $0C54 ; This can be used to do anything in ancilla
 AnciMiscC    = $0C5E ; This can be used to do anything in ancilla (often used to track item received)
 AnciMiscD    = $0C72 ; This can be used to do anything in ancilla (often used to track direction)
+
+; General use variable for ancillae. Only intended for front slots.
+; LENGTH: 0x05
+AnciMiscJ    = $03CA
+
+; General use variable for ancillae.
+; LENGTH: 0x0A
+ANC0MISCB    = $0385
 
 AnciTimerA   = $0C68 ; This is a timer, value is decreased by 1 every frame
 
@@ -826,10 +838,20 @@ Ancilla_PrepOAMCoord_long = $08F6D9
 Ancilla_SetOAM_XY_long = $08F6FE
 Ancilla_GetRadialProjection_long = $08FB23
 
+Ancilla_CheckForAvailableSlot = $0FF577
+Ancilla_CheckInitialTile_A = $099DD3
+
 Ancilla_CheckSpriteCollision_long = $088DA2
 
 Ancilla_CheckTileCollision_long = $08923B
 Ancilla_CheckTileCollision_Class2_long = $089243
+
+Ancilla_CalculateSFXPan = $0DBB5E
+
+Ancilla_CheckDamageToSprite = $06ECB7
+
+; Table of ancilla properties
+AncillaObjectAllocation = $08806F
 
 AncillaAdd_BombosSpell = $08AF66
 AncillaAdd_FireRodShot = $0880B3
