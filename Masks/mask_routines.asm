@@ -575,24 +575,24 @@ Ancilla_CheckBasicSpriteCollision:
   EOR.b $1A
   AND.b #$03
 
-  ORA.w $0F00,Y
-  ORA.w $0EF0,Y
+  ORA.w $0F00, Y
+  ORA.w $0EF0, Y
   BNE .skip
 
-  LDA.w $0DD0,Y : CMP.b #$09 : BCC .skip
+  LDA.w $0DD0, Y : CMP.b #$09 : BCC .skip
 
-  LDA.w $0CAA,Y : AND.b #$02 : BNE .sprite_ignores_priority
+  LDA.w $0CAA, Y : AND.b #$02 : BNE .sprite_ignores_priority
 
-  LDA.w $0280,X : BNE .skip
+  LDA.w $0280, X : BNE .skip
 
   .sprite_ignores_priority
-  LDA.w $0C7C,X : CMP.w $0F20,Y : BNE .skip
+  LDA.w AnciLayer, X : CMP.w $0F20, Y : BNE .skip
 
   ; ANCILLA 2C
-  LDA.w $0C4A,X : CMP.b #$2C : BNE .not_somaria_block
+  LDA.w AnciType, X : CMP.b #$2C : BNE .not_somaria_block
 
   ; SPRITE 1E
-  LDA.w $0E20,Y : CMP.b #$1E : BEQ .skip
+  LDA.w $0E20, Y : CMP.b #$1E : BEQ .skip
 
   ; SPRITE 90
   CMP.b #$90  : BEQ .skip
@@ -628,33 +628,33 @@ Ancilla_CheckBasicSpriteCollision_Single:
   BCC .fail
 
   ; SPRITE 92
-  LDA.w $0E20,Y : CMP.b #$92 : BNE .not_king_helma
+  LDA.w $0E20, Y : CMP.b #$92 : BNE .not_king_helma
 
-  LDA.w $0DB0,Y : CMP.b #$03 : BCC .success
+  LDA.w $0DB0, Y : CMP.b #$03 : BCC .success
 
   .not_king_helma
   ; SPRITE 80
-  LDA.w $0E20,Y : CMP.b #$80 : BNE .dont_reverse_fire_snake
+  LDA.w $0E20, Y : CMP.b #$80 : BNE .dont_reverse_fire_snake
 
-  LDA.w $0F10,Y : BNE .dont_reverse_fire_snake
+  LDA.w $0F10, Y : BNE .dont_reverse_fire_snake
 
-  LDA.b #$18 : STA.w $0F10,Y
+  LDA.b #$18 : STA.w $0F10, Y
 
-  LDA.w $0DE0,Y : EOR.b #$01 : STA.w $0DE0,Y
+  LDA.w $0DE0, Y : EOR.b #$01 : STA.w $0DE0, Y
 
   .dont_reverse_fire_snake
-  LDA.w $0BA0,Y : BNE .fail
+  LDA.w $0BA0, Y : BNE .fail
 
-  LDA.w $0C04,X : SEC : SBC.b #$08 : STA.b $04
+  LDA.w AnciX, X : SEC : SBC.b #$08 : STA.b $04
 
-  LDA.w $0C18,X : SBC.b #$00 : STA.b $05
+  LDA.w AnciXH, X : SBC.b #$00 : STA.b $05
 
-  LDA.w $0BFA,X : SEC : SBC.b #$08
+  LDA.w AnciY, X : SEC : SBC.b #$08
   PHP
 
-  SEC : SBC.w $029E,X : STA.b $06
+  SEC : SBC.w AnciHeight, X : STA.b $06
 
-  LDA.w $0C0E,X : SBC.b #$00
+  LDA.w AnciYH, X : SBC.b #$00
 
   PLP
   SBC.b #$00
@@ -671,12 +671,12 @@ Ancilla_CheckBasicSpriteCollision_Single:
   PLX
   PLY
 
-  LDA.b $00 : EOR.b #$FF : STA.w $0F30,Y
-  LDA.b $01 : EOR.b #$FF : STA.w $0F40,Y
+  LDA.b $00 : EOR.b #$FF : STA.w $0F30, Y
+  LDA.b $01 : EOR.b #$FF : STA.w $0F40, Y
 
   PHX
 
-  LDA.w $0C4A,X
+  LDA.w AnciType, X
 
   TYX
   JSL Ancilla_CheckDamageToSprite
@@ -699,14 +699,14 @@ Ancilla_CheckBasicSpriteCollision_Single:
 
 Ancilla_SetupBasicHitBox:
 {
-  LDA.w $0C04,X : SEC : SBC.b #$08 : STA.b $00
-  LDA.w $0C18,X : SBC.b #$00 : STA.b $08
-  LDA.w $0BFA,X : SEC : SBC.b #$08
+  LDA.w AnciX, X : SEC : SBC.b #$08 : STA.b $00
+  LDA.w AnciXH, X : SBC.b #$00 : STA.b $08
+  LDA.w AnciY, X : SEC : SBC.b #$08
   PHP
 
-  SEC : SBC.w $029E,X : STA.b $01
+  SEC : SBC.w AnciHeight, X : STA.b $01
 
-  LDA.w $0C0E,X : SBC.b #$00
+  LDA.w AnciYH, X : SBC.b #$00
 
   PLP
   SBC.b #$00 : STA.b $09
@@ -733,18 +733,18 @@ Ancilla_Move_X:
 
 Ancilla_Move_Y:
 {
-  LDA.w $0C22,X
+  LDA.w $0C22, X
 
   ASL A
   ASL A
   ASL A
   ASL A
 
-  CLC : ADC.w $0C36,X : STA.w $0C36,X
+  CLC : ADC.w $0C36, X : STA.w $0C36, X
 
   LDY.b #$00
 
-  LDA.w $0C22,X
+  LDA.w $0C22, X
   PHP
 
   LSR A
@@ -759,10 +759,10 @@ Ancilla_Move_Y:
   DEY
 
   .other_way
-  ADC.w $0BFA,X : STA.w $0BFA,X
+  ADC.w AnciY, X : STA.w AnciY, X
 
   TYA
-  ADC.w $0C0E,X : STA.w $0C0E,X
+  ADC.w AnciYH, X : STA.w AnciYH, X
 
   RTS
 }
@@ -771,18 +771,18 @@ Ancilla_Move_Y:
 
 Ancilla_Move_Z:
 {
-  LDA.w $0294,X
+  LDA.w AnciZSpeed, X
 
   ASL A
   ASL A
   ASL A
   ASL A
 
-  CLC : ADC.w $02A8,X : STA.w $02A8,X
+  CLC : ADC.w AnciHeightH, X : STA.w AnciHeightH, X
 
   LDY.b #$00
 
-  LDA.w $0294,X
+  LDA.w AnciZSpeed, X
   PHP
 
   LSR A
@@ -797,55 +797,51 @@ Ancilla_Move_Z:
   DEY
 
   .other_way
-  ADC.w $029E,X : STA.w $029E,X
+  ADC.w AnciHeight, X : STA.w AnciHeight, X
 
   RTS
 }
-
-
 
 Ancilla_Killa:
   PLA
   PLA
 
-  STZ.w $0C4A,X
+  STZ.w AnciType, X
 
   RTS
 
 Ancilla_BoundsCheck:
 {
-  LDY.w $0C7C,X
+  LDY.w AnciLayer, X
+  LDA.w .data, Y : STA.b $04
+  LDY.w AnciOamBuf, X
+  LDA.w AnciX, X : SEC : SBC.b $E2 : CMP.b #$F4 : BCS Ancilla_Killa
+    STA.b $00
 
-  LDA.w .data,Y : STA.b $04
+  LDA.w AnciY, X : SEC : SBC.b $E8 : CMP.b #$F0 : BCS Ancilla_Killa
+    STA.b $01
+    RTS
 
-  LDY.w $0C86,X
-
-  LDA.w $0C04,X : SEC : SBC.b $E2 : CMP.b #$F4 : BCS Ancilla_Killa
-
-  STA.b $00
-
-  LDA.w $0BFA,X : SEC : SBC.b $E8 : CMP.b #$F0 : BCS Ancilla_Killa
-
-  STA.b $01
-
-  RTS
   .data
     db $20, $10
 }
 
+; =========================================================
+
+print pc 
 AncillaAdd_MagicBubbleShot:
 {
-  LDY.b #$00
-
+  LDY.b #$03
   STA.b $00
 
   JSL Ancilla_CheckForAvailableSlot : BPL .free_slot
     LDA.b $00 : CMP.b #$01 : BEQ .no_refund_magic
-      LDX.b #$00
+      LDX.b #$02
       JSL Refund_Magic
     .no_refund_magic
     BRL .exit_a
   .free_slot
+  INY ; Increment ancilla slot, due to 0x1E
   PHB
   PHK
   PLB
@@ -858,49 +854,37 @@ AncillaAdd_MagicBubbleShot:
     JSR Ancilla_SFX2_Near
     PLY
   .no_sfx
-  LDA.b $00 : STA.w AnciType,Y
+  LDA.b $00 : STA.w AnciType, Y
 
   TAX
 
-  ; LDA.w AncillaObjectAllocation, X : STA.w AnciOAMNbr,Y
-  LDA.b #$0C : STA.w AnciOAMNbr,Y
-  LDA.b #$03 : STA.w AnciTimerA,Y
-  LDA.b #$00 : STA.w AnciMiscB,Y : STA.w $0C5E,Y
-  STA.w $0280,Y : STA.w $028A,Y
-  LDA.b $2F : LSR A : STA.w AnciMiscD,Y
+  ; LDA.w AncillaObjectAllocation, X : STA.w AnciOAMNbr, Y
+  LDA.b #$0C : STA.w AnciOAMNbr, Y
+  LDA.b #$03 : STA.w AnciTimerA, Y
+  LDA.b #$00 : STA.w AnciMiscB, Y : STA.w AnciMiscC, Y
+  STA.w $0280, Y : STA.w $028A, Y
+  LDA.b $2F : LSR A : STA.w AnciMiscD, Y
 
   TAX
-
-  PHY
-  PHX
-
+  PHY : PHX
   TYX
   JSL Ancilla_CheckInitialTile_A
-
-  PLX
-  PLY
+  PLX : PLY
 
   BCS .disperse_on_spawn
 
 
-  LDA.w $0022 : CLC : ADC.w .init_check_offset_x_low,X : STA.w $0C04,Y
-
-  LDA.w $0023 : ADC.w .init_check_offset_x_high,X : STA.w $0C18,Y
-
-  LDA.w $0020 : CLC : ADC.w .init_check_offset_y_low,X : STA.w $0BFA,Y
-
-  LDA.w $0021 : ADC.w .init_check_offset_y_high,X : STA.w $0C0E,Y
+  LDA.w $0022 : CLC : ADC.w .init_check_offset_x_low, X : STA.w AnciX, Y
+  LDA.w $0023 : ADC.w .init_check_offset_x_high, X : STA.w AnciXH, Y
+  LDA.w $0020 : CLC : ADC.w .init_check_offset_y_low, X : STA.w AnciY, Y
+  LDA.w $0021 : ADC.w .init_check_offset_y_high, X : STA.w AnciYH, Y
 
   ; ANCILLA 01
-  LDA.w AnciType,Y : CMP.b #$01 : BEQ .is_somaria_bullet
+  LDA.w AnciType, Y : CMP.b #$01 : BEQ .is_somaria_bullet
+    LDA.w .flame_speed_x, X : STA.w AnciYSpeed, Y
+    LDA.w .flame_speed_y, X
 
-  LDA.w .flame_speed_x,X : STA.w AnciYSpeed,Y
-
-  LDA.w .flame_speed_y,X
-
-  BRA .speed_set
-
-
+    BRA .speed_set
   .is_somaria_bullet
   LDA.l $7EF359
   DEC A
@@ -911,21 +895,17 @@ AncillaAdd_MagicBubbleShot:
 
   STA.b $0F
 
-  TXA
-  CLC
-  ADC.b $0F
-  TAX
+  TXA : CLC : ADC.b $0F : TAX
 
-  LDA.w SomariaBulletSpeedX,X : STA.w AnciYSpeed,Y
-
-  LDA.w SomariaBulletSpeedY,X
+  LDA.w SomariaBulletSpeedX, X : STA.w AnciYSpeed, Y
+  LDA.w SomariaBulletSpeedY, X
 
 
   .speed_set
-  STA.w AnciXSpeed,Y
+  STA.w AnciXSpeed, Y
 
-  LDA.w $00EE : STA.w AnciLayer,Y
-  LDA.w $0476 : STA.w AnciMiscJ,Y
+  LDA.w $00EE : STA.w AnciLayer, Y
+  LDA.w $0476 : STA.w AnciMiscJ, Y
 
   PLX
   PLB
@@ -935,21 +915,21 @@ AncillaAdd_MagicBubbleShot:
 
   .disperse_on_spawn
   ; ANCILLA 01
-  LDA.w AnciType,Y : CMP.b #$01 : BNE .not_bullet
+  LDA.w AnciType, Y : CMP.b #$01 : BNE .not_bullet
 
     LDA.b #$04 ; ANCILLA 04
-    STA.w AnciType,Y
+    STA.w AnciType, Y
 
-    LDA.b #$07 : STA.w AnciTimerA,Y
-    LDA.b #$10 : STA.w AnciOAMNbr,Y
+    LDA.b #$07 : STA.w AnciTimerA, Y
+    LDA.b #$10 : STA.w AnciOAMNbr, Y
 
     BRA .exit_b
 
 
   .not_bullet
-  LDA.b #$01 : STA.w AnciMiscB,Y
-  LDA.b #$1F : STA.w AnciTimerA,Y
-  LDA.b #$08 : STA.w AnciOAMNbr,Y
+  LDA.b #$01 : STA.w AnciMiscB, Y
+  LDA.b #$1F : STA.w AnciTimerA, Y
+  LDA.b #$08 : STA.w AnciOAMNbr, Y
 
   ; SFX2.2A
   LDA.b #$2A : JSR Ancilla_SFX2_Pan
@@ -991,14 +971,14 @@ Ancilla0E_MagicBubbleLong:
 
 Ancilla_MagicBubbleShot:
 {
-  LDA.w AnciMiscB,X : BEQ MagicBubbleShot_Moving
+  LDA.w AnciMiscB, X : BEQ MagicBubbleShot_Moving
 
   JMP.w MagicBubbleShot_Halted
 
   #MagicBubbleShot_Moving:
   LDA.b $11 : BNE .draw
 
-  STZ.w $0385,X
+  STZ.w $0385, X
 
   JSR Ancilla_Move_X
   JSR Ancilla_Move_Y
@@ -1008,32 +988,32 @@ Ancilla_MagicBubbleShot:
 
   ; -------------------------------------------------------
 
-  LDA.w AnciMiscD,X : ORA.b #$08 : STA.w AnciMiscD,X
+  LDA.w AnciMiscD, X : ORA.b #$08 : STA.w AnciMiscD, X
 
   JSL Ancilla_CheckTileCollision_long
   PHP
 
-  LDA.w $03E4,X : STA.w $0385,X
+  LDA.w $03E4, X : STA.w $0385, X
 
   PLP
   BCS .collision
 
-  LDA.w AnciMiscD,X : ORA.b #$0C : STA.w AnciMiscD,X
-  LDA.w $028A,X : STA.b $74
+  LDA.w AnciMiscD, X : ORA.b #$0C : STA.w AnciMiscD, X
+  LDA.w $028A, X : STA.b $74
 
   JSL Ancilla_CheckTileCollision_long
   PHP
 
-  LDA.b $74 : STA.w $028A,X
+  LDA.b $74 : STA.w $028A, X
 
   PLP
   BCC .no_collision
 
   .collision
-  INC.w AnciMiscB,X
+  INC.w AnciMiscB, X
 
-  LDA.b #$1F : STA.w AnciTimerA,X
-  LDA.b #$08 : STA.w $0C90,X
+  LDA.b #$1F : STA.w AnciTimerA, X
+  LDA.b #$08 : STA.w AnciOAMNbr, X
 
   LDA.b #$2A ; SFX2.2A
   JSR Ancilla_SFX2_Pan
@@ -1041,12 +1021,12 @@ Ancilla_MagicBubbleShot:
   ; ---------------------------------------------------------
 
   .no_collision
-  INC.w $0C5E,X
+  INC.w AnciMiscC, X
 
-  LDA.w AnciMiscD,X : AND.b #$F3 : STA.w AnciMiscD,X
-    LDA.w $0385,X : STA.w $0333
+  LDA.w AnciMiscD, X : AND.b #$F3 : STA.w AnciMiscD, X
+    LDA.w $0385, X : STA.w $0333
     AND.b #$F0 : CMP.b #$C0 : BEQ .torch
-      LDA.w $03E4,X : STA.w $0333
+      LDA.w $03E4, X : STA.w $0333
       AND.b #$F0 : CMP.b #$C0 : BNE .draw
 
   .torch
@@ -1068,12 +1048,12 @@ AncillaDraw_MagicBubbleShot:
 {
   JSR Ancilla_BoundsCheck
 
-  LDA.w $0280,X
+  LDA.w $0280, X
   BEQ .default_priority
     LDA.b #$30
     TSB.b $04
   .default_priority
-  LDA.w $0C5E, X : AND.b #$0C : STA.b $02
+  LDA.w AnciMiscC, X : AND.b #$0C : STA.b $02
 
   PHX
 
@@ -1088,7 +1068,6 @@ AncillaDraw_MagicBubbleShot:
   TAX
 
   LDA.b $00 : CLC : ADC.w .offset_x, X : STA.b ($90), Y
-
   LDA.b $01 : CLC : ADC.w .offset_y, X : INY : STA.b ($90), Y
 
   LDX.b $03
@@ -1104,7 +1083,7 @@ AncillaDraw_MagicBubbleShot:
   LSR A
   TAY
 
-  LDA.b #$00 : STA.b ($92),Y
+  LDA.b #$00 : STA.b ($92), Y
 
   PLY
   INY
@@ -1146,16 +1125,16 @@ AncillaDraw_MagicBubbleShot:
 
 MagicBubbleShot_Dissipate:
 {
-  LDA.w $0C4A,X
+  LDA.w AnciType, X
 
-  STZ.w $0C4A,X
+  STZ.w AnciType, X
 
   ; ANCILLA 2F
   CMP.b #$2F : BEQ .no_burn
     ; OW 40
     LDA.b $8A : CMP.b #$40 : BNE .no_burn
       ; TILETYPE 43
-      LDA.w $03E4,X : CMP.b #$43 : BNE .no_burn
+      LDA.w $03E4, X : CMP.b #$43 : BNE .no_burn
         ; PHX
         ; JSL FireRodShot_BecomeSkullWoodsFire
         ; PLX
@@ -1190,17 +1169,17 @@ MagicBubbleShot_Halted:
   TAX
 
   LDA.b $00
-  STA.b ($90),Y
+  STA.b ($90), Y
 
   LDA.b $01
   INY
-  STA.b ($90),Y
+  STA.b ($90), Y
 
-  LDA.w .char-1,X
+  LDA.w .char-1, X
   INY
-  STA.b ($90),Y
+  STA.b ($90), Y
 
-  LDA.b #$0A : ORA.b $04 : INY : STA.b ($90),Y
+  LDA.b #$0A : ORA.b $04 : INY : STA.b ($90), Y
 
   LDA.b #$02 : STA.b ($92)
 
@@ -1208,35 +1187,35 @@ MagicBubbleShot_Halted:
 
   .dying
   TYA
-  STA.b ($92),Y
+  STA.b ($92), Y
 
   INY
-  STA.b ($92),Y
+  STA.b ($92), Y
 
   DEY
 
-  LDA.b $00 : STA.b ($90),Y
+  LDA.b $00 : STA.b ($90), Y
 
   CLC
   ADC.b #$08
-  LDY.b #$04 : STA.b ($90),Y
+  LDY.b #$04 : STA.b ($90), Y
 
   LDA.b $01 : CLC : ADC.b #$FD
-  LDY.b #$01 : STA.b ($90),Y
+  LDY.b #$01 : STA.b ($90), Y
 
-  LDY.b #$05 : STA.b ($90),Y
+  LDY.b #$05 : STA.b ($90), Y
 
-  LDA.b #$A4 : LDY.b #$02 : STA.b ($90),Y
+  LDA.b #$A4 : LDY.b #$02 : STA.b ($90), Y
 
   INC A
   LDY.b #$06
-  STA.b ($90),Y
+  STA.b ($90), Y
 
   ; Palette
-  LDA.b #$0A : ORA.b $04 : LDY.b #$03 : STA.b ($90),Y
+  LDA.b #$0A : ORA.b $04 : LDY.b #$03 : STA.b ($90), Y
 
   LDY.b #$07
-  STA.b ($90),Y
+  STA.b ($90), Y
 
   RTS
 
