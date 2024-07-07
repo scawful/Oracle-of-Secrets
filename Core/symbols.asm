@@ -27,7 +27,12 @@ SprMiscE     = $0EB0 ; Head direction 0123 -> udlr
 SprMiscF     = $0EC0 ;
 SprMiscG     = $0ED0 ;
 
-SprMiscH     = $0FC7 ; Luck based prize pack
+; Used in sprite state 0x03 (falling in water)
+; used as delay in most of the sprites
+SprDelay     = $0E80
+
+; Enemy color flash buffer
+SprFlash     = $0B89
 
 SprTimerA    = $0DF0 ; Action,    decreased by 1 each frame
 SprTimerB    = $0E00 ; Animation, decreased by 1 each frame
@@ -80,9 +85,6 @@ SprGfxProps  = $0E60
 ; Direction of sprite collision with wall
 SprCollision = $0E70 
 
-; Used in sprite state 0x03 (falling in water)
-; used as delay in most of the sprites
-SprDelay     = $0E80
 
 ; Definitely closely tied to the process of a sprite taking damage. 
 ; Seems to serve as a palette cycling index, or a state variable.
@@ -116,14 +118,6 @@ SprHitbox    = $0F60
 SprHeight    = $0F70 ; Distance from the shadow
 SprHeightS   = $0F90 ; Distance from the shadow subpixel
 SprFreeze    = $0FC1 ; Seems to freeze sprites
-
-OAMPtr       = $90
-OAMPtrH      = $92
-
-OamBackup   = $0FEC
-
-DungeonMainCheck = $021B
-SpriteRanCheck = $8E
 
 ; Primarily deals with bump damage
 ; tzpd bbbb
@@ -190,8 +184,6 @@ SprPrize     = $0BE0
 ;   p - Sprite ignores falling into a pit when frozen?
 SprTileDie   = $0B6B
 
-SprPriority  = $0B89
-
 ; For sprites that interact with speical objects (arrows in particular)
 ; the special object will identify its type to the sprite via this location.
 SprSpecial   = $0BB0
@@ -223,6 +215,11 @@ SprDrop      = $0CBA ;X W 00: Drop nothing, 01: drop normal key, 03: Drop green 
 ; oo        = Sprite priority. See below for details.
 ; h/v       = Horizontal/Vertical flip flags.
 ; s         = Sprite size flag. See below for details.
+
+OAMPtr       = $90
+OAMPtrH      = $92
+
+OamBackup   = $0FEC
 
 SpriteData_OAMProp = $0DB359
 
@@ -483,6 +480,9 @@ AreaIndex    = $8A ; Return the current overworld area ID
 ; set the mosaic setting ($2106) XXXXDCBA 
 ;   [ABCD BG1/BG2/BG3/BG4][X size of the mosaic pixels 0-16]
 Mosaic       = $95 
+
+DungeonMainCheck = $021B
+SpriteRanCheck = $8E
 
 ; Underworld:
 ;    Flags sprite deaths in underworld based on slot.
