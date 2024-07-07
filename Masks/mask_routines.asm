@@ -522,6 +522,19 @@ DekuLink_HoverBasedOnInput:
 
   PLB
   RTL
+} 
+
+pushpc
+
+org $088399
+  dw Ancilla0E_MagicBubble
+
+org $08FFDA ; Bank 08 Free space
+  Ancilla0E_MagicBubble:
+    JSL Ancilla0E_MagicBubbleLong
+    RTS
+
+pullpc
 
 Ancilla_SFX2_Near:
   JSR Ancilla_SFX_Near
