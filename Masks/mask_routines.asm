@@ -541,11 +541,6 @@ DekuLink_ShootBubbleOrStartHover:
   RTL
 }
 
-Ancilla_SFX2_Near:
-  JSR Ancilla_SFX_Near
-  STA.w $012E
-  RTS
-
 Ancilla_SFX3_Near:
   JSR Ancilla_SFX_Near
   STA.w $012F
@@ -560,6 +555,11 @@ Ancilla_SFX_Near:
 Ancilla_SFX2_Pan:
   JSR Ancilla_SFX_SetPan
   STA.w $012E
+  RTS
+
+Ancilla_SFX3_Pan:
+  JSR Ancilla_SFX_SetPan
+  STA.w $012F
   RTS
 
 Ancilla_SFX_SetPan:
@@ -1017,8 +1017,8 @@ Ancilla_MagicBubbleShot:
   LDA.b #$1F : STA.w AnciTimerA, X
   LDA.b #$08 : STA.w AnciOAMNbr, X
 
-  LDA.b #$2A ; SFX2.2A
-  JSR Ancilla_SFX2_Pan
+  LDA.b #$2A ; SFX3.2A
+  JSR Ancilla_SFX3_Pan
 
   ; ---------------------------------------------------------
 
