@@ -36,7 +36,9 @@ Sprite_DekuScrubEnemy_Long:
   PHB : PHK : PLB
 
   JSR Sprite_DekuScrubEnemy_Draw ; Call the draw code
-  JSL Sprite_DrawShadow
+  LDA.w SprSubtype, X : CMP #$01 : BNE .normal_scrub
+    JSL Sprite_DrawShadow
+  .normal_scrub
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
