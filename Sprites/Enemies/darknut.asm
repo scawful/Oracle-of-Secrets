@@ -190,45 +190,45 @@ Sprite_Darknut_Draw:
 
 
   ; =======================================================
-      
+        
   .start_index
-    db $00, $02, $04, $06, $08, $0A, $0C, $0E
+  db $00, $02, $04, $06, $08, $0A, $0C, $0E
   .nbr_of_tiles
-    db 1, 1, 1, 1, 1, 1, 1, 1
+  db 1, 1, 1, 1, 1, 1, 1, 1
   .x_offsets
-    dw 0, 0
-    dw 0, 0
-    dw 0, 0
-    dw 0, 0
-    dw 0, -12
-    dw 0, -12
-    dw 0, 12
-    dw 0, 12
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, -12
+  dw 0, -12
+  dw 0, 12
+  dw 0, 12
   .y_offsets
-    dw -11, 0
-    dw -11, 0
-    dw 0, 12
-    dw 0, 12
-    dw 0, 8
-    dw 0, 8
-    dw 0, 8
-    dw 0, 8
+  dw -12, 0
+  dw -12, 0
+  dw 0, 12
+  dw 0, 12
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
   .chr
-    db $C0, $EE
-    db $C0, $EE
-    db $E6, $C0
-    db $E6, $C0
-    db $E8, $C2
-    db $E4, $C2
-    db $E8, $C2
-    db $E4, $C2
+  db $C0, $E6
+  db $C0, $E6
+  db $E2, $C0
+  db $E2, $C0
+  db $E4, $C2
+  db $E0, $C2
+  db $E4, $C2
+  db $E0, $C2
   .properties
-    db $FD, $3D
-    db $FD, $7D
-    db $3D, $3D
-    db $7D, $3D
-    db $3D, $7D
-    db $3D, $7D
-    db $7D, $3D
-    db $7D, $3D
+  db $B9, $39
+  db $B9, $79
+  db $39, $79
+  db $79, $79
+  db $39, $F9
+  db $39, $F9
+  db $79, $B9
+  db $79, $B9
 }
