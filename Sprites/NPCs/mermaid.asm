@@ -239,10 +239,10 @@ Sprite_Mermaid_Main:
 Librarian_CheckForAllMaps:
 {
   LDA.l DNGMAP1
-  CMP.w #$FFFC
+  CMP.b #$FC
   BNE .not_all_maps
   LDA.l DNGMAP2
-  CMP.w #$FFFF
+  CMP.b #$FF
   BEQ .all_maps
   .not_all_maps
   CLC
