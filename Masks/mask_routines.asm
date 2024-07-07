@@ -843,7 +843,7 @@ AncillaAdd_MagicBubbleShot:
     .no_refund_magic
     BRL .exit_a
   .free_slot
-  INY ; Increment ancilla slot, due to 0x1E
+  INY #4 ; Increment ancilla slot, due to 0x1E
   PHB
   PHK
   PLB
@@ -1166,8 +1166,7 @@ MagicBubbleShot_Halted:
   +
 
   LDY.b #$00
-  LDA.w AnciTimerA, X
-  BEQ MagicBubbleShot_Dissipate
+  LDA.w AnciTimerA, X : BEQ MagicBubbleShot_Dissipate
 
   LSR A
   LSR A
@@ -1204,8 +1203,7 @@ MagicBubbleShot_Halted:
 
   LDA.b $00 : STA.b ($90), Y
 
-  CLC
-  ADC.b #$08
+  CLC : ADC.b #$08
   LDY.b #$04 : STA.b ($90), Y
 
   LDA.b $01 : CLC : ADC.b #$FD
@@ -1213,6 +1211,7 @@ MagicBubbleShot_Halted:
 
   LDY.b #$05 : STA.b ($90), Y
 
+  ; Character
   LDA.b #$A4 : LDY.b #$02 : STA.b ($90), Y
 
   INC A

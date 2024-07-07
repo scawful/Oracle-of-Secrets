@@ -29,30 +29,26 @@ print "End of Masks/deku_mask.asm        ", pc
 
 ; =========================================================
 
-; Indicates somaria platform status.
-;   0x00 - Not on platform
-;   0x01 - On platform
-;   0x02 - On platform and moving
-SOMPLAT         = $7E02F5
-
-org    $07A64B           ; formerly Quake
+org $07A64B           ; formerly Quake
 LinkItem_DekuMask:
 {
+  ; Don't use magic unless deku form
   LDA.w $02B2 : CMP.b #$01 : BNE .continue
-    JSR Link_CheckNewY_ButtonPress : BCC .continue
-      LDA $3A : AND.b #$BF : STA $3A
-      LDX.b #$02
-      JSR LinkItem_EvaluateMagicCost : BCC .return
-        JSL DekuLink_ShootBubbleOrStartHover
-        RTS
+    ; Don't shoot while transform is active
+    LDA.w $0C4E : BNE .continue 
+      JSR Link_CheckNewY_ButtonPress : BCC .continue
+        LDA $3A : AND.b #$BF : STA $3A
+        LDX.b #$02
+        JSR LinkItem_EvaluateMagicCost : BCC .return
+          JSL DekuLink_ShootBubbleOrStartHover
+          RTS
 
   .continue
-  LDA.b #$01
-  JSL Link_TransformMask : BCC .return
-    LDA.b #$01 : STA.w SOMPLAT
-    RTS
+  ; Don't transform while shooting
+  LDA.w $0C52 : CMP.b #$0E : BEQ .return
+    LDA.b #$01
+    JSL Link_TransformMask
   .return
-  STZ.w SOMPLAT
   RTS
 }
 
