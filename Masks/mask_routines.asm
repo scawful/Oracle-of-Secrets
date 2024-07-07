@@ -838,6 +838,44 @@ Ancilla_Move_Z:
 }
 
 
+Ancilla_Killa:
+  PLA
+  PLA
+
+  STZ.w $0C4A,X
+
+  RTS
+
+Ancilla_BoundsCheck:
+{
+  LDY.w $0C7C,X
+
+  LDA.w .data,Y
+  STA.b $04
+
+  LDY.w $0C86,X
+
+  LDA.w $0C04,X
+  SEC
+  SBC.b $E2
+  CMP.b #$F4
+  BCS Ancilla_Killa
+
+  STA.b $00
+
+  LDA.w $0BFA,X
+  SEC
+  SBC.b $E8
+  CMP.b #$F0
+  BCS Ancilla_Killa
+
+  STA.b $01
+
+  RTS
+  .data
+    db $20, $10
+}
+
 pushpc
 
 LinkOAM_SetEquipmentVRAMOffsets = $0DABE6
