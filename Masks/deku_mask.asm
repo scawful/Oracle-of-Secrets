@@ -41,7 +41,7 @@ LinkItem_DekuMask:
   JSR Link_CheckNewY_ButtonPress : BCC .continue
     LDX.b #$01 
     JSR LinkItem_EvaluateMagicCost : BCC .return
-      JSL PrepareQuakeSpell
+      JSL DekuLink_ShootBubbleOrStartHover
       RTS
 
   .continue
