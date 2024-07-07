@@ -545,6 +545,169 @@ Ancilla_SFX_SetPan:
   ORA.w $0CF8
   RTS
 
+Ancilla_CheckBasicSpriteCollision:
+{
+  LDY.b #$0F
+
+  .next_sprite
+  TYA
+  EOR.b $1A
+  AND.b #$03
+
+  ORA.w $0F00,Y
+  ORA.w $0EF0,Y
+  BNE .skip
+
+  LDA.w $0DD0,Y
+  CMP.b #$09
+  BCC .skip
+
+  LDA.w $0CAA,Y
+  AND.b #$02
+  BNE .sprite_ignores_priority
+
+  LDA.w $0280,X
+  BNE .skip
+
+  .sprite_ignores_priority
+  LDA.w $0C7C,X
+  CMP.w $0F20,Y
+  BNE .skip
+
+  LDA.w $0C4A,X
+  CMP.b #$2C ; ANCILLA 2C
+  BNE .not_somaria_block
+
+  LDA.w $0E20,Y
+  CMP.b #$1E ; SPRITE 1E
+  BEQ .skip
+
+  CMP.b #$90 ; SPRITE 90
+  BEQ .skip
+
+  .not_somaria_block
+  JSR Ancilla_CheckBasicSpriteCollision_Single
+
+  .skip
+  DEY
+  BPL .next_sprite
+
+  CLC
+
+  RTS
+}
+
+; =========================================================
+
+Ancilla_CheckBasicSpriteCollision_Single:
+{
+  JSR Ancilla_SetupBasicHitBox
+
+  PHY
+  PHX
+
+  TYX
+  JSL Sprite_SetupHitBoxLong
+
+  PLX
+  PLY
+
+  JSL CheckIfHitBoxesOverlap
+  BCC .fail
+
+  LDA.w $0E20,Y
+  CMP.b #$92 ; SPRITE 92
+  BNE .not_king_helma
+
+  LDA.w $0DB0,Y
+  CMP.b #$03
+  BCC .success
+
+  .not_king_helma
+  LDA.w $0E20,Y
+  CMP.b #$80 ; SPRITE 80
+  BNE .dont_reverse_fire_snake
+
+  LDA.w $0F10,Y
+  BNE .dont_reverse_fire_snake
+
+  LDA.b #$18
+  STA.w $0F10,Y
+
+  LDA.w $0DE0,Y
+  EOR.b #$01
+  STA.w $0DE0,Y
+
+  .dont_reverse_fire_snake
+  LDA.w $0BA0,Y
+  BNE .fail
+
+  LDA.w $0C04,X
+  SEC
+  SBC.b #$08
+  STA.b $04
+
+  LDA.w $0C18,X
+  SBC.b #$00
+  STA.b $05
+
+  LDA.w $0BFA,X
+  SEC
+  SBC.b #$08
+  PHP
+
+  SEC
+  SBC.w $029E,X
+  STA.b $06
+
+  LDA.w $0C0E,X
+  SBC.b #$00
+
+  PLP
+  SBC.b #$00
+  STA.b $07
+
+  LDA.b #$50
+
+  PHY
+  PHX
+
+  TYX
+  JSL Sprite_ProjectSpeedTowardsEntityLong
+
+  PLX
+  PLY
+
+  LDA.b $00
+  EOR.b #$FF
+  STA.w $0F30,Y
+
+  LDA.b $01
+  EOR.b #$FF
+  STA.w $0F40,Y
+
+  PHX
+
+  LDA.w $0C4A,X
+
+  TYX
+  JSL Ancilla_CheckDamageToSprite
+
+  PLX
+
+  .success
+  PLA
+  PLA
+
+  SEC
+
+  RTS
+
+  .fail
+  CLC
+
+  RTS
+}
 
 pushpc
 
