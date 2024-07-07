@@ -959,7 +959,7 @@ BeginGoldstarOrHookshot:
   JSL Hookshot_Init
   JSL BallChain_StartAnimationFlag
   LDY.b #$03 : LDA.b #$1F ; ANCILLA 1F
-  JSL $099B10 ; AncillaAdd_Hookshot
+  JSL AncillaAdd_Hookshot
   JSL TransferGFXinRAM
   RTL
   
@@ -968,7 +968,7 @@ BeginGoldstarOrHookshot:
   LDA.b #$13 : STA $5D ; Set hookshot state
   LDA.b #$01 : STA.w $037B
   LDY.b #$03 : LDA.b #$1F ; ANCILLA 1F
-  JSL $099B10 ; AncillaAdd_Hookshot
+  JSL AncillaAdd_Hookshot
   RTL
 }
 

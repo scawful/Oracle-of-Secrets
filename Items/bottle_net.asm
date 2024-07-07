@@ -4,11 +4,8 @@
 
 !BottleFlag = $0AA6
 
-org $1EFE33
-PlayerItem_SpawnFaerie:
-
-org $1EDCCF
-PlayerItem_ReleaseBee:
+PlayerItem_SpawnFaerie = $1EFE33
+PlayerItem_ReleaseBee = $1EDCCF
 
 ; =============================================================================
 ; LinkItem_Bottle
@@ -155,7 +152,7 @@ LinkItem_Bottles:
   LDA.b #$0E : STA.b $10
   LDA.b #$07 : STA.w $0208
   
-  JSL $0DFA58
+  JSL RebuildHUD_long
   
   RTS
 
@@ -175,7 +172,7 @@ LinkItem_Bottles:
   LDA.b #$0E : STA.b $10
   LDA.b #$07 : STA.w $0208
 
-  JSL $0DFA58 ; RebuildHUD_long 
+  JSL RebuildHUD_long
   BRA .bottle_exit
 
 .LinkItem_BluePotion
@@ -194,7 +191,7 @@ LinkItem_Bottles:
   LDA.b #$0E : STA.b $10
   LDA.b #$07 : STA.w $0208
   
-  JSL $0DFA58 ; RebuildHUD_Long 
+  JSL RebuildHUD_long
   BRA .bottle_exit
 
 .LinkItem_FairyBottle
@@ -203,7 +200,7 @@ LinkItem_Bottles:
   BRL LinkGoBeep ; BRL $07A955
 
 .released
-  JSL $0DFA58 ; RebuildHUD_Long 
+  JSL RebuildHUD_long
   BRA .bottle_exit
 
 .LinkItem_BeeBottle
@@ -213,7 +210,7 @@ LinkItem_Bottles:
 
 .bee_spawn_success
   LDA.b #$02 : STA.l $7EF35C, X
-  JSL $0DFA58 ; RebuildHUD_Long 
+  JSL RebuildHUD_long
 
 .bottle_exit
   RTS

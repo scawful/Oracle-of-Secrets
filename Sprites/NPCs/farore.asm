@@ -195,7 +195,7 @@ Sprite_Farore_Main:
     LDA #$02 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
     LDA #$05 : STA $012D ; turn off rain sound
     LDA #$01 : STA $B6 ; Set Story State 
-    JSL $00FC41   ; fix monsters
+    JSL Sprite_LoadGfxProperties
 
     %GotoAction(6)
     RTS

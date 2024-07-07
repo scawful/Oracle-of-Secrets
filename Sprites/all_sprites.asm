@@ -69,7 +69,6 @@ org $05FF7D
 ; =========================================================
 
 incsrc ZSpriteLib/sprite_macros.asm
-incsrc ZSpriteLib/sprites.asm
 
 ; TODO: Sprite_AttemptKillingOfKin
 

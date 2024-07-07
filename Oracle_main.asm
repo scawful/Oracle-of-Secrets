@@ -83,6 +83,7 @@ namespace Oracle
   incsrc "Util/ram.asm"
   incsrc "Util/functions.asm"
   incsrc "Core/music_macros.asm"
+  incsrc "Sprites/ZSpriteLib/sprites.asm"
 
   incsrc "Core/message.asm"
 

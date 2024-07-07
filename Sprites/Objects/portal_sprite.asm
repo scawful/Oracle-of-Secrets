@@ -252,7 +252,7 @@ Sprite_Portal_Main:
     LDA $7EC194 : STA $0614
     LDA $7EC196 : STA $0616
 
-    JSL $07E9D3 ; ApplyLinksMovementToCamera
+    JSL ApplyLinksMovementToCamera
 
     PHX ; Infinite loop prevention protocol
     LDA OrangeSpriteIndex : TAX
@@ -276,7 +276,7 @@ Sprite_Portal_Main:
     LDA $7EC194 : STA $0614
     LDA $7EC196 : STA $0616
 
-    JSL $07E9D3 ; ApplyLinksMovementToCamera
+    JSL ApplyLinksMovementToCamera
 
     PHX
     LDA BlueSpriteIndex : TAX

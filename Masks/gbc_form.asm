@@ -98,7 +98,7 @@ OverworldTransition_CheckForGbcLink:
       LDA #$06 : STA $02B2
       JSL Palette_ArmorAndGloves
   .return
-  JSL $07E6A6 ; Link_HandleMovingAnimation_FullLongEntry
+  JSL Link_HandleMovingAnimation_FullLongEntry
   RTL
 }
 

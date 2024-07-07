@@ -346,7 +346,7 @@ RandomlyAttack:
       LDA   #$CF
       JSL   Sprite_SpawnDynamically
       JSL   Sprite_SetSpawnedCoords
-      JSL $09B020 ; Fireball_SpawnTrailGarnish
+      JSL   Fireball_SpawnTrailGarnish
       LDA.b #$05 : STA.w SprAction, Y
       LDA   #$20 : STA.w SprTimerA, Y
   .no_attack

@@ -138,7 +138,7 @@ macro HandlePlayerCamera()
   LDA $20 : SEC : SBC $3E : STA $30
   PHX 
   
-  JSL $07E6A6 ; Link_HandleMovingAnimation_FullLongEntry
+  JSL Link_HandleMovingAnimation_FullLongEntry
   JSL HandleIndoorCameraAndDoors
   
   JSL Link_CancelDash

@@ -116,7 +116,7 @@ Sprite_Kydrog_Main:
     ; Put us in the Dark World.
     LDA $7EF3CA : EOR.b #$40 : STA $7EF3CA
 
-    JSL $00FC41 ; Sprite_LoadGfxProperties
+    JSL Sprite_LoadGfxProperties
 
     STZ $037B : STZ $3C : STZ $3A : STZ $03EF
 

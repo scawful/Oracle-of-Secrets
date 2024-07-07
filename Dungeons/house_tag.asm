@@ -95,7 +95,7 @@ HouseTag_WakeUpPlayer:
   ; Set the game mode
   LDA #$00 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
   LDA #$00 : STA $7EF3CC   ; disable telepathic message
-  JSL $00FC41   ; fix monsters
+  JSL Sprite_LoadGfxProperties
   
   RTS
 }

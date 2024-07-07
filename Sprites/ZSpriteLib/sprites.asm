@@ -462,6 +462,8 @@ Sprite_RepelDash = $079291
 
 Sprite_SpawnPoofGarnish = $05AB9C
 
+Sprite_LoadGfxProperties = $00FC41
+
 ThrownSprite_TileAndSpriteInteraction_long = $06DFF2
 
 ; =========================================================
@@ -489,6 +491,10 @@ Mosaic       = $95
 ;    Holds ID+1 of sprite with each position being assigned a unique byte
 ;    0x00 indicates no sprite in this slot
 UWDEATH         = $7FDF80
+
+; =========================================================
+
+RebuildHUD_long = $0DFA58
 
 ; =========================================================
 ; Controllers
@@ -855,7 +861,10 @@ AncillaAdd_SwordSwingSparkle = $0993C2
 AncillaAdd_QuakeSpell = $099589
 AncillaAdd_IceRodShot = $099863
 AncillaAdd_Splash = $0998FC
+AncillaAdd_Hookshot = $099B10
 
 DeleteBoomAndByrnaSparks = $0FFD86
 
 Sparkle_PrepOAMFromRadial = $08DA17
+
+Fireball_SpawnTrailGarnish = $09B020
