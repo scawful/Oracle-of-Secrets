@@ -425,6 +425,8 @@ Sprite_ProjectSpeedTowardsEntityLong = $06EA22
 
 GetRandomInt = $0DBA71
 
+Sprite_SpawnProbeAlways_long = $05C66E
+
 Sprite_SpawnFireball = $0DDA06
 
 Sprite_MoveLong = $1D808C
@@ -450,6 +452,8 @@ Guard_ParrySwordAttacks = $06EB5E
 ThrownSprite_TileAndSpriteInteraction_long = $06DFF2
 
 Sprite_RepelDash = $079291
+
+Probe_CheckTileSolidity = $0DC26E
 
 ; =========================================================
 ; Local functions which may be useful for sprites
@@ -502,6 +506,20 @@ PressPad1H   = $F6
 
 ButtonAFlag  = $3B ; bit7: Button A is down (A-------)
 
+; Timer for B button
+; ssss tttt
+;   s - spin attack in action; set to 0x9
+;   t - sword swing timer
+;       0x00 - No swing
+;      —0x08 - Sword swing
+;       0x09 - Sword primed
+;      —0x0C - Poking wall
+;
+; Also used as a 16-bit countdown for various cutscenes:
+;   Ether tablet:  0x00C0
+;   Bombos tablet: 0x00E0
+;   Desert tablet: 0x0001
+BFLAG           = $3C
 
 ; =========================================================
 ; Link RAM and Functions

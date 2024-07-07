@@ -206,6 +206,7 @@ Graphics_Transfer:
 org $02BE5E
   JSL Graphics_Transfer
 
+; Whirlpool
 org $1EEEE4
   JSL DontTeleportWithoutFlippers
 
@@ -220,8 +221,13 @@ org $06D814
 
 ; =========================================================
 
+print  ""
+print  "Bank 31 Sprites"
+print  ""
+
 org    $318000
 incsrc ZSpriteLib/sprite_functions.asm
+print  "End of sprite_functions.asm       ", pc
 
 incsrc "Sprites/Bosses/kydrog_boss.asm"
 print  "End of kydrog_boss.asm            ", pc
@@ -313,6 +319,10 @@ print  "End of fortune_teller.asm         ", pc
 warnpc $328000
 
 ; =========================================================
+
+print  ""
+print  "Bank 32 Sprites"
+print  ""
 
 org $328000
 
