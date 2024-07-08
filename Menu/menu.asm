@@ -202,7 +202,7 @@ Menu_ItemScreen:
   JSR Menu_CheckHScroll
 
   INC $0207
-  LDA.w $0202 : BEQ .no_inputs
+  LDA.w $0202 : BEQ .do_no_input
     ; Scroll through joypad 1 inputs 
     ASL : TAY : LDA.b $F4 
     LSR : BCS .move_right
@@ -210,7 +210,6 @@ Menu_ItemScreen:
     LSR : BCS .move_down
     LSR : BCS .move_up
 
-    
     LDA.w $0202 : CMP.b #$05 : BNE +
       LDA.b $F6 : BIT.b #$80 : BEQ +
         STZ.w $020B
@@ -225,6 +224,14 @@ Menu_ItemScreen:
           JMP .exit
     ++
 
+    LDA.b $F6 : BIT.b #$40 : BEQ +++
+      JSR Menu_DeleteCursor
+      JSR Menu_DrawRingBox
+      STZ.w $020B
+      LDA.b #$09 : STA.w $0200 ; Ring Box
+      JMP .exit
+    +++
+  .do_no_input
   BRA .no_inputs
 
   .move_right
@@ -612,6 +619,76 @@ Menu_SongIconCursorPositions:
   dw menu_offset(8,8)
   dw menu_offset(8,12) 
   dw menu_offset(8,16)
+
+; =========================================================
+; 09 MENU RING BOX
+
+Menu_RingBox:
+{
+  JSR Menu_DrawRingBox
+  JSR Menu_DrawMagicRingsInBox
+  INC $0207
+
+  LDA.b $F4 
+  LSR : BCS .move_right
+  LSR : BCS .move_left
+  LSR : BCS .move_down
+  LSR : BCS .move_up
+  BRA .continue
+
+  .move_up
+  .move_right
+    JSR RingMenu_DeleteCursor
+    INC.w $020B
+    LDA.w $020B : CMP.b #$06 : BCS .zero
+    BRA .continue
+  .move_left
+  .move_down
+    JSR RingMenu_DeleteCursor
+    LDA.w $020B : CMP.b #$00 : BEQ .continue
+    DEC.w $020B
+    BRA .continue
+  .zero
+    STZ.w $020B
+  .continue
+
+  JSR DrawMagicRingNames
+  LDA.w $020B
+  ASL : TAY
+  REP #$10
+  LDX.w Menu_RingIconCursorPositions, Y
+  JSR Menu_DrawCursor
+  JSR Submenu_Return
+  SEP #$20
+
+  LDA.b #$22 : STA.w $0116
+  LDA.b #$01 : STA.b $17
+
+  RTS
+}
+
+RingMenu_DeleteCursor:
+{
+  REP   #$30
+  LDX.w Menu_RingIconCursorPositions-2, Y
+
+  LDA.w #$20F5
+  STA.w $1108, X : STA.w $1148, X
+  STA.w $114E, X : STA.w $110E, X
+  STA.w $11C8, X : STA.w $1188, X
+  STA.w $118E, X : STA.w $11CE, X
+  SEP   #$30
+  STZ   $0207
+  RTS 
+}
+
+Menu_RingIconCursorPositions:
+  dw menu_offset(8,6)
+  dw menu_offset(8,10)
+  dw menu_offset(8,14)
+  dw menu_offset(12,6)
+  dw menu_offset(12,10)
+  dw menu_offset(12,14)
 
 Submenu_Return:
 {

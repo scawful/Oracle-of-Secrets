@@ -729,6 +729,38 @@ Menu_DrawMagicBag:
     incbin "tilemaps/magic_bag.tilemap"
 }
 
+Menu_DrawRingBox:
+{
+  REP #$30
+  LDX.w #$FE ; $1700-17FF 
+
+  .loop
+    LDA.w .ring_box_tilemap, X
+    STA.w $1000, X
+    LDA.w .ring_box_tilemap+$100, X
+    STA.w $1100, X
+    LDA.w .ring_box_tilemap+$200, X
+    STA.w $1200, X
+    LDA.w .ring_box_tilemap+$300, X
+    STA.w $1300, X
+    LDA.w .ring_box_tilemap+$400, X
+    STA.w $1400, X
+    LDA.w .ring_box_tilemap+$500, X
+    STA.w $1500, X
+    LDA.w .ring_box_tilemap+$600, X
+    STA.w $1600, X
+    LDA.w .ring_box_tilemap+$700, X
+    STA.w $1700, X
+
+    DEX : DEX
+  BPL .loop
+  SEP #$30
+  RTS
+
+  .ring_box_tilemap
+    incbin "tilemaps/ring_box.tilemap"
+}
+
 Menu_DrawMagicRings:
 {
   LDA.l $7EF3D8 : AND.w #$00FF : CMP.w #$0001 : BCC .no_attack
