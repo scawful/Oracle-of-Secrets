@@ -9,6 +9,7 @@ incsrc "Items/sword_collect.asm"
 incsrc "Items/goldstar.asm"
 incsrc "Items/portal_rod.asm"
 incsrc "Items/fishing_rod.asm"
+incsrc "Items/magic_rings.asm"
 
 MagicBeanGfx:
   incbin "gfx/magic_bean.bin"

@@ -19,7 +19,7 @@
 ;   37 - Bunny Link GFX
 ;   38 - Wolf Link GFX
 ;   39 - Minish Link GFX
-;   3A - StartupMasks, Palette_ArmorAndGloves, CgramAuxToMain
+;   3A - Mask Routines, Custom Ancillae (Deku Bubble)
 ;   3B - GBC Link GFX
 ;   3C - Expanded Dialogue
 ;   3D - LW World Map
@@ -50,9 +50,13 @@ OOSPROG2       = $7EF3C6
 ;   m - maku tree has met link (0: no | 1: yes) 
 OOSPROG3       = $7EF3D4
 
-; 01 - Red Ring
-; 02 - Green Ring
-; 03 - Blue Ring
+; ..pa slbh
+;   p - power 
+;   a - armor  
+;   s - steadfast
+;   l - light 
+;   b - blast
+;   h - heart
 MAGICRINGS     = $7EF3D8
 
 ; 01 - Fishing Rod
