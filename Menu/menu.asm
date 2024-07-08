@@ -357,6 +357,7 @@ Menu_CheckBottle:
 Menu_Exit:
 {
   JSL LinkState_ResetMaskAnimated
+  JSR Menu_CheckBottle
   REP #$20
 
   ; reset submodule
@@ -469,6 +470,7 @@ Menu_MagicBag:
   JSR Menu_DrawMagicItems
   SEP #$30
 
+  INC $0207
   LDA.b $F4 
   LSR : BCS .move_right
   LSR : BCS .move_left
