@@ -543,7 +543,9 @@ Menu_SongMenu:
 
   .move_right
   .move_up
-    JSR SongMenu_DeleteCursor
+    REP   #$30
+    LDX.w Menu_SongIconCursorPositions-2, Y
+    JSR Menu_DeleteCursor_AltEntry
     LDA.w $030F : CMP.b #$04 : BEQ .reset
       
       INC.w $030F
@@ -570,7 +572,10 @@ Menu_SongMenu:
 
   .move_left
   .move_down
-    JSR SongMenu_DeleteCursor
+    REP   #$30
+    LDX.w Menu_SongIconCursorPositions-2, Y
+    JSR Menu_DeleteCursor_AltEntry
+    
     LDA.w $030F : CMP.b #$01 : BEQ .reset
       DEC.w $030F
       LDA $030F
@@ -599,21 +604,6 @@ Menu_SongMenu:
   RTS
 }
 
-SongMenu_DeleteCursor:
-{
-  REP   #$30
-  LDX.w Menu_SongIconCursorPositions-2, Y
-
-  LDA.w #$20F5
-  STA.w $1108, X : STA.w $1148, X
-  STA.w $114E, X : STA.w $110E, X
-  STA.w $11C8, X : STA.w $1188, X
-  STA.w $118E, X : STA.w $11CE, X
-  SEP   #$30
-  STZ   $0207
-  RTS 
-}
-
 Menu_SongIconCursorPositions:
   dw menu_offset(8,4)
   dw menu_offset(8,8)
@@ -638,13 +628,17 @@ Menu_RingBox:
 
   .move_up
   .move_right
-    JSR RingMenu_DeleteCursor
+    REP   #$30
+    LDX.w Menu_RingIconCursorPositions-2, Y
+    JSR Menu_DeleteCursor_AltEntry
     INC.w $020B
     LDA.w $020B : CMP.b #$06 : BCS .zero
     BRA .continue
   .move_left
   .move_down
-    JSR RingMenu_DeleteCursor
+    REP   #$30
+    LDX.w Menu_RingIconCursorPositions-2, Y
+    JSR Menu_DeleteCursor_AltEntry
     LDA.w $020B : CMP.b #$00 : BEQ .continue
     DEC.w $020B
     BRA .continue
@@ -665,21 +659,6 @@ Menu_RingBox:
   LDA.b #$01 : STA.b $17
 
   RTS
-}
-
-RingMenu_DeleteCursor:
-{
-  REP   #$30
-  LDX.w Menu_RingIconCursorPositions-2, Y
-
-  LDA.w #$20F5
-  STA.w $1108, X : STA.w $1148, X
-  STA.w $114E, X : STA.w $110E, X
-  STA.w $11C8, X : STA.w $1188, X
-  STA.w $118E, X : STA.w $11CE, X
-  SEP   #$30
-  STZ   $0207
-  RTS 
 }
 
 Menu_RingIconCursorPositions:
