@@ -151,6 +151,7 @@ Menu_DeleteCursor:
   REP   #$30
   LDX.w Menu_ItemCursorPositions-2, Y
 
+Menu_DeleteCursor_AltEntry:
   LDA.w #$20F5
   STA.w $1108, X : STA.w $1148, X
   STA.w $114E, X : STA.w $110E, X
