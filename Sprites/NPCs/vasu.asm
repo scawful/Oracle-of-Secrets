@@ -63,7 +63,7 @@ Sprite_Vasu_Prep:
   LDA.b #$80 : STA.w SprDefl, X
 
   LDA.w SprSubtype, X : BEQ +
-    LDA.b #$02 : STA.w SprAction, X
+    LDA.b #$03 : STA.w SprAction, X
   +
 
   PLB
@@ -81,6 +81,7 @@ Sprite_Vasu_Main:
 
   dw Vasu_Idle
   dw Vasu_MessageHandler
+  dw Vasu_AppraiseRing
 
   dw Error_Idle
 
@@ -107,7 +108,20 @@ Sprite_Vasu_Main:
     RTS
     .appraise_rings
     %ShowUnconditionalMessage($00AB)
-    %GotoAction(0)
+    %GotoAction(2)
+    RTS
+  }
+
+  Vasu_AppraiseRing:
+  {
+    %PlayAnimation(0,1,20)
+    ; Check the found rings and set the saved rings
+    ; Get the bit from found rings and set it in MAGICRINGS
+    LDA.l FOUNDRINGS
+    ORA.l MAGICRINGS
+    STA.l MAGICRINGS
+
+
     RTS
   }
 
