@@ -1,10 +1,21 @@
 ; =========================================================
 ; Magic Rings
 
+; ..pa slbh
+;   p - power 
+;   a - armor  
+;   s - steadfast
+;   l - light 
+;   b - blast
+;   h - heart
+MAGICRINGS     = $7EF3D8
+
 ; Power     - Attack Up, Defense Down
 ; Armor     - Defense Up, Attack Down
 
+; =========================================================
 ; Steadfast - Less knockback
+
 MagicRing_CheckForSteadfast:
 {
   LDA.l MAGICRINGS : AND.b #$08 : BEQ +
@@ -23,6 +34,7 @@ org $07E1BE
   JSL MagicRing_CheckForSteadfast
 pullpc
 
+; =========================================================
 ; Light     - Sword beam at -2 hearts
 
 MagicRing_CheckForLight:
@@ -45,6 +57,7 @@ org $079C77
   JSL MagicRing_CheckForLight
 pullpc 
 
+; =========================================================
 ; Blast     - Bomb Damage up
 
 MagicRing_CheckForBlast:
@@ -65,7 +78,9 @@ org $06ECBF
   JSL MagicRing_CheckForBlast
 pullpc
 
+; =========================================================
 ; Heart     - Slowly regenerate hearts
+
 MagicRings_CheckForHeart:
 {
   LDA.l MAGICRINGS : AND.b #$01 : BEQ ++

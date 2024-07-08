@@ -48,15 +48,6 @@ OOSPROG2       = $7EF3C6
 ;   m - maku tree has met link (0: no | 1: yes) 
 OOSPROG3       = $7EF3D4
 
-; ..pa slbh
-;   p - power 
-;   a - armor  
-;   s - steadfast
-;   l - light 
-;   b - blast
-;   h - heart
-MAGICRINGS     = $7EF3D8
-
 ; 01 - Fishing Rod
 ; 02 - Portal Rod
 CUSTOMRODS     = $7EF351
