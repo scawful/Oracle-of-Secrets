@@ -13,7 +13,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 09  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -62,7 +62,7 @@ Sprite_Vasu_Prep:
     
   LDA.b #$80 : STA.w SprDefl, X
 
-  LDA.w SprSubtype, X : BNE +
+  LDA.w SprSubtype, X : BEQ +
     LDA.b #$02 : STA.w SprAction, X
   +
 
@@ -96,14 +96,17 @@ Sprite_Vasu_Main:
   Vasu_MessageHandler:
   {
     %PlayAnimation(0,1,20)
-    LDA.w MsgChoice : CMP.b #$02 : BEQ .appraise_rings
-                      CMP.b #$01 : BEQ .explain_rings
+    LDA.w MsgChoice : BEQ .appraise_rings
+         CMP.b #$01 : BEQ .explain_rings
       ; Player said nevermind.
       %GotoAction(0)
       RTS
     .explain_rings
-    .appraise_rings
     %ShowUnconditionalMessage($00AA)
+    %GotoAction(0)
+    RTS
+    .appraise_rings
+    %ShowUnconditionalMessage($00AB)
     %GotoAction(0)
     RTS
   }
