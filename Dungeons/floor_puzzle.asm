@@ -84,6 +84,7 @@ update_star_tile:
 
   LDA.b #$01
   STA.b $14
+  LDA.b #$0C : STA.w $012F
   REP #$30
   RTS
 }
@@ -99,6 +100,8 @@ update_red_star_tile:
 
   LDA.b #$01
   STA.b $14
+  LDA.b #$3C : STA.w $012E
+
   REP #$30
   RTS
 }
@@ -327,4 +330,5 @@ SearchToRedStar:
   BRA --
 }
 
+print  "End of floor_puzzle.asm           ", pc
 pushpc
