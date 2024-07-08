@@ -66,3 +66,21 @@ org $06ECBF
 pullpc
 
 ; Heart     - Slowly regenerate hearts
+MagicRings_CheckForHeart:
+{
+  LDA.l MAGICRINGS : AND.b #$01 : BEQ ++
+    LDA.l CURHP : CMP.l MAXHP : BCS ++
+      LDA.l FrameCounter : LSR #2 : AND.b #$3F : BEQ +
+        JMP ++
+      +
+      LDA.l CURHP : CLC : ADC.b #$01 : STA.l CURHP
+  ++
+  LDA.b $F5
+  AND.b #$80
+  RTL
+}
+
+pushpc
+org $07810C
+  JSL MagicRings_CheckForHeart
+pullpc
