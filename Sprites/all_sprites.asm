@@ -172,6 +172,9 @@ print  "End of sea_urchin.asm             ", pc
 incsrc "Sprites/NPCs/korok.asm"
 print  "End of korok.asm                  ", pc
 
+incsrc "Sprites/NPCs/vasu.asm"
+print  "End of vasu.asm                   ", pc
+
 DontTeleportWithoutFlippers:
 {
   LDA.l $7EF356 : BNE +
