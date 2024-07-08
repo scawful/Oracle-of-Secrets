@@ -100,7 +100,7 @@ Sprite_HelmetChuchu_Main:
     %StartOnFrame(4)
     %PlayAnimation(4, 5, 16)
     JSR Sprite_CheckForHookshot : BCC +
-      LDA.w SprMiscA, X : BEQ + 
+      LDA.w SprFlash, X : BEQ + 
         %GotoAction(1)
     +
     JSL Sprite_CheckDamageFromPlayer
@@ -126,7 +126,7 @@ Sprite_HelmetChuchu_Main:
     %StartOnFrame(2)
     %PlayAnimation(2, 3, 16)
     JSR Sprite_CheckForHookshot : BCC +
-      LDA.w SprMiscA, X : BEQ + 
+      LDA.w SprFlash, X : BEQ + 
         %GotoAction(3)
     +
     JSL Sprite_CheckDamageFromPlayer
@@ -304,7 +304,7 @@ Sprite_HelmetChuchu_Draw:
 
   LDA SprGfx, X : CLC : ADC SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprMiscA, X : STA $08
+  LDA.w SprFlash, X : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
