@@ -476,6 +476,8 @@ UpdPalFlag   = $15 ; Update all palettes $7EC500-$7EC700 if non-zero
 RoomIndex    = $A0 ; Return the current room ID
 AreaIndex    = $8A ; Return the current overworld area ID
 
+MsgChoice    = $1CE8 ; Choice made in a message box
+
 ; set the mosaic setting ($2106) XXXXDCBA 
 ;   [ABCD BG1/BG2/BG3/BG4][X size of the mosaic pixels 0-16]
 Mosaic       = $95 
