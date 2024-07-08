@@ -157,6 +157,22 @@ Menu_SongNames:
   dw "SONG:_SOARING_  "
   dw "SONG:_TIME____  "
 
+Menu_RingNames:
+  dw "____POWER_____  "
+  dw "____ARMOR_____  "
+  dw "____HEART_____  "
+  dw "____LIGHT_____  "
+  dw "____BLAST_____  "
+  dw "___STEADFAST__  "
+
+Menu_RingDescriptions:
+  dw "ATK_UP__DEF_DOWN"
+  dw "ATK_DOWN__DEF_UP"
+  dw "SLOW_HEART_REGEN"
+  dw "SWD_BEAM_2_HRTS_"
+  dw "_BOMB_DAMAGE_UP_"
+  dw "__NO_KNOCKBACK__"
+
 Menu_DrawItemName:
 {
   SEP #$30
@@ -262,6 +278,29 @@ DrawBottleNames:
       LDA.w Menu_BottleItems, X : STA.w $1692, Y
       INX #2 : INY #2 
     CPY #$001C : BCC .draw_bottle_loop
+    RTS
+}
+
+DrawMagicRingNames:
+{
+    REP #$30
+    LDA.w $020B : ASL #5 : TAX
+    LDY.w #$0000
+
+    .draw_ring_loop
+      LDA.w Menu_RingNames, X : STA.w $1692, Y
+      INX #2 : INY #2 
+    CPY #$001C : BCC .draw_ring_loop
+
+    LDA.w $020B : ASL #5 : TAX
+    LDY.w #$0000
+
+    .draw_ring_desc_loop
+      LDA.w Menu_RingDescriptions, X : STA.w $1590, Y
+      INX #2 : INY #2
+    CPY #$0020 : BCC .draw_ring_desc_loop
+
+    SEP #$30
     RTS
 }
 
