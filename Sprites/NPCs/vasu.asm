@@ -62,6 +62,10 @@ Sprite_Vasu_Prep:
     
   LDA.b #$80 : STA.w SprDefl, X
 
+  LDA.w SprSubtype, X : BNE +
+    LDA.b #$02 : STA.w SprAction, X
+  +
+
   PLB
   RTL
 }
@@ -76,15 +80,40 @@ Sprite_Vasu_Main:
   JSL UseImplicitRegIndexedLocalJumpTable
 
   dw Vasu_Idle
+  dw Vasu_MessageHandler
+
+  dw Error_Idle
 
   Vasu_Idle:
   {
     %PlayAnimation(0,1,20)
+    %ShowSolicitedMessage($00A9) : BCC .didnt_talk
+      %GotoAction(1)
+    .didnt_talk
+    RTS
+  }
 
+  Vasu_MessageHandler:
+  {
+    %PlayAnimation(0,1,20)
+    LDA.w MsgChoice : CMP.b #$02 : BEQ .appraise_rings
+                      CMP.b #$01 : BEQ .explain_rings
+      ; Player said nevermind.
+      %GotoAction(0)
+      RTS
+    .explain_rings
+    .appraise_rings
+    %ShowUnconditionalMessage($00AA)
+    %GotoAction(0)
+    RTS
+  }
+
+  Error_Idle:
+  {
+    %PlayAnimation(0,1,24)
     RTS
   }
 }
-
 
 ; =========================================================
 
@@ -164,6 +193,8 @@ Sprite_Vasu_Draw:
   db $02, $02
   db $02, $02
 }
+
+; =========================================================
 
 Sprite_Error_Draw:
 {
