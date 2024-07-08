@@ -111,6 +111,8 @@ HouseTag_End:
   RTS
 }
 
+print  "End of house_tag.asm              ", pc
+
 pushpc
 
 ; =========================================================

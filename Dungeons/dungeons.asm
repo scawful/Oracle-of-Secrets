@@ -12,6 +12,22 @@ org $028BE7
 incsrc "Dungeons/enemy_damage.asm"
 print  "End of enemy_damage.asm           ", pc
 
+incsrc "Dungeons/house_walls.asm"
+
+; Use of Bank 0x2C begins
+incsrc "Dungeons/Objects/object_handler.asm"
+print  "End of object_handler.asm         ", pc
+
+incsrc "Dungeons/together_warp_tag.asm"
+incsrc "Dungeons/spike_subtype.asm"
+
+incsrc "Dungeons/house_tag.asm"
+
+incsrc "Dungeons/floor_puzzle.asm"
+
+incsrc "Dungeons/attract_scenes.asm"
+print  "End of attract_scenes.asm         ", pc
+
 incsrc "Collision/CollisionTablesExpanded.asm"
 incsrc "Collision/GlobalCollisionTables.asm"
 
@@ -37,6 +53,8 @@ RoomTag_MinishShutterDoor:
   JML $01CC5A ; RoomTag_TriggerHoles return
 }
 
+print "End of dungeons.asm               ", pc
+
 pushpc
 
 org $01CC10
@@ -51,22 +69,4 @@ org $01C71B
 org $01C727
   LDA.l $7EF374 ; Pendants in DW
 
-pullpc
-
-incsrc "Dungeons/house_walls.asm"
-
-; Use of Bank 0x2C begins
-incsrc "Dungeons/Objects/object_handler.asm"
-print  "End of object_handler.asm         ", pc
-
-incsrc "Dungeons/together_warp_tag.asm"
-incsrc "Dungeons/spike_subtype.asm"
-
-incsrc "Dungeons/house_tag.asm"
-print  "End of house_tag.asm              ", pc
-
-incsrc "Dungeons/floor_puzzle.asm"
-print  "End of floor_puzzle.asm           ", pc
-
-incsrc "Dungeons/attract_scenes.asm"
-print  "End of attract_scenes.asm         ", pc
+; pullpc

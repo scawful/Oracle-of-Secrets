@@ -3,28 +3,26 @@
 ;                   Composed by: Scawful
 ;
 ; Expanded Banks:
-;  21-2A ZS Reserved
-;   2B - Items: all_items.asm
-;   2C - Dungeon Objects, Spike Subtype, Together Warp Tag
-;   2D - Menu
-;   2E - HUD
-;   2F - 
-;   30 - Sprites: all_sprites.asm
-;   31 - Sprites: all_sprites.asm
-;   32 - Sprites: all_sprites.asm
-;   33 - Custom Collision Tables
-;   34 - Time System, Custom Overworld Overlays
-;   35 - Deku Link GFX
-;   36 - Zora Link GFX
-;   37 - Bunny Link GFX
-;   38 - Wolf Link GFX
-;   39 - Minish Link GFX
-;   3A - Mask Routines, Custom Ancillae (Deku Bubble)
-;   3B - GBC Link GFX
-;   3C - Expanded Dialogue
-;   3D - LW World Map
-;   3E - DW World Map
-;   3F - Load Custom GFX, Boat GFX
+;   21-2A ZS Reserved
+;   2B  - Items: all_items.asm
+;   2C  - Underworld (Dungeons): dungeons.asm
+;   2D  - Menu
+;   2E  - HUD
+;   2F  - Unused
+;   30-32 Sprites: all_sprites.asm
+;   33  - Unused
+;   34  - Time System, Custom Overworld Overlays
+;   35  - Deku Link Gfx and Palette
+;   36  - Zora Link Gfx and Palette
+;   37  - Bunny Link Gfx and Palette
+;   38  - Wolf Link Gfx and Palette
+;   39  - Minish Link Gfx
+;   3A  - Mask Routines, Custom Ancillae (Deku Bubble)
+;   3B  - GBC Link Gfx
+;   3C  - Expanded Dialogue
+;   3D  - LW World Map
+;   3E  - DW World Map
+;   3F  - Load Custom Gfx, Boat Gfx
 ;
 ; =========================================================
 
