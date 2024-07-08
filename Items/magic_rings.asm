@@ -24,5 +24,28 @@ org $07E1BE
 pullpc
 
 ; Light     - Sword beam at -2 hearts
+
+MagicRing_CheckForLight:
+{
+  PHA 
+  LDA.l MAGICRINGS : AND.b #$04 : BEQ +
+    PLA
+    SEC
+    SBC.b #$10
+    CMP.l $7EF36D
+    RTL
+  +
+  PLA
+  CMP.l $7EF36D
+  RTL
+}
+
+pushpc
+
+org $079C77
+  JSL MagicRing_CheckForLight
+
+pullpc 
+
 ; Blast     - Bomb Damage up
 ; Heart     - Slowly regenerate hearts
