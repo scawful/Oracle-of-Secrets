@@ -67,11 +67,11 @@ Menu_Entry:
   dw Menu_StatsScreen        ; 06 
   dw Menu_ScrollFrom         ; 07
   dw Menu_ScrollUp           ; 08
-  dw Menu_CheckBottle        ; 09
+  dw Menu_RingBox            ; 09
   dw Menu_Exit               ; 0A
   dw Menu_InitiateScrollDown ; 0B
   dw Menu_MagicBag           ; 0C
-  dw Menu_SongMenu
+  dw Menu_SongMenu           ; 0D
 
 ; =========================================================
 ; 00 MENU INIT GRAPHICS 
@@ -318,7 +318,7 @@ Menu_ScrollUp:
   LDA.w Menu_Scroll, X 
   STA.b $EA : BNE .notDoneScrolling
     STZ.b $E4
-    INC.w $0200
+    LDA.w #$000A : STA.w $0200
     RTS
 
   .notDoneScrolling
@@ -327,7 +327,7 @@ Menu_ScrollUp:
 }
 
 ; =========================================================
-; 09 CHECK BOTTLE 
+; CHECK BOTTLE 
 
 Menu_CheckBottle:
 {
@@ -346,11 +346,8 @@ Menu_CheckBottle:
   LDA.w $0202 : CMP.b #$18 : BNE .not_any
     LDA.b #$0004
   .prepare_bottle
-
   STA.l $7EF34F
-
   .not_any 
-  INC.w $0200
   RTS 
 }
 
