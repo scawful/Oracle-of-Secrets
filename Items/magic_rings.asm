@@ -8,6 +8,7 @@
 ;   l - light 
 ;   b - blast
 ;   h - heart
+FOUNDRINGS     = $7EF3D7
 MAGICRINGS     = $7EF3D8
 
 ; Power     - Attack Up, Defense Down
