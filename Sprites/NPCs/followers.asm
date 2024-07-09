@@ -117,6 +117,18 @@ CheckForZoraBabyFollower:
   RTL
 }
 
+UploadZoraBabyGraphicsPrep:
+{
+  PHX
+  LDA.b #$09 : STA.l $7EF3CC
+  LDA.b #$A0 : STA.w $0AEA
+  JSL $00D423
+  LDA.b #$00 : STA.l $7EF3CC
+  PLX
+  #_068D71: LDA.l $7EF3C9
+  RTL
+}
+
 pushpc 
 
 ; Make Zora sway like a girl
@@ -158,7 +170,7 @@ SpritePrep_Locksmith:
     #_068D6E: STA.w $0D80,X
 
   .no_purple_chest
-    #_068D71: LDA.l $7EF3C9
+    JSL UploadZoraBabyGraphicsPrep
     #_068D75: AND.b #$10
     #_068D77: BEQ .exit
 
