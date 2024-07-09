@@ -185,9 +185,12 @@ LinkItem_NewFlute:
   ; Are we indoors?
   LDA.b $1B : BNE .return
   
-  ; Are we in the dark world? The flute doesn't work there.
-  LDA.b $8A : AND.b #$40 : BNE .return
-  
+  ; Are we in the dark world? Then become Moosh form.
+  LDA.b $8A : AND #$40 : BEQ .light_world
+    JSL Link_TransformMoosh
+    RTS
+  .light_world
+
   ; Also doesn't work in special areas like Master Sword area.
   LDA.b $10 : CMP.b #$0B : BEQ .return
   
@@ -398,7 +401,7 @@ UpdateFluteSong_Long:
   ; R Button Pressed - Increment song
   INC $030F        ; increment $030F Song RAM
   LDA $030F        ; load incremented Song RAM
-  CMP.b #$04
+  CMP.b #$05
   BCS .wrap_to_min
   .update_song
   RTL

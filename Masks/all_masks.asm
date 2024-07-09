@@ -61,3 +61,7 @@ org $388000
 org $3B8000
   incbin gfx/gbc_link.4bpp
   incsrc "Masks/gbc_form.asm"
+
+org $338000
+  incbin gfx/moosh.4bpp
+  incsrc "Masks/moosh.asm"

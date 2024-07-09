@@ -108,6 +108,7 @@ Palette_ArmorAndGloves:
   CMP.b #$04 : BEQ .bunny_hood
   CMP.b #$05 : BEQ .minish_form
   CMP.b #$06 : BEQ .gbc_form
+  CMP.b #$07 : BEQ .moosh_form
   JMP   .original_sprite
 
   .deku_mask
@@ -139,9 +140,11 @@ Palette_ArmorAndGloves:
     LDA.b #$39 : STA $BC : JMP .original_palette
 
   .gbc_form
-    ; Load GBC Link Location
-    LDA.b #$3B : STA $BC 
     JSL UpdateGbcPalette
+    RTL
+
+  .moosh_form
+    JSL UpdateMooshPalette
     RTL
 
   .original_sprite
@@ -301,11 +304,10 @@ Link_TransformMask:
     TAY
     ; LDA $02B2 
     CPY !CurrentMask : BEQ .unequip ; check if mask is on
-      
       STA $02B2 : TAX
       LDA .mask_gfx, X : STA $BC ; set the mask gfx
       JSL Palette_ArmorAndGloves ; set the palette
-      STA $02F5                  ; Somaria platform flag, no dash
+      ; STA $02F5                  ; Somaria platform flag, no dash
       PLB : CLC : RTL
 
     .unequip
@@ -322,6 +324,20 @@ Link_TransformMask:
     db $00, $35, $36, $38, $37, $39, $3A, $3B
 }
 
+; TODO: Return to normal Link.
+Link_TransformMoosh:
+{
+  PHB : PHK : PLB
+  
+  LDA.b #$07 : STA.w !CurrentMask
+  LDA.b #$33 : STA $BC
+  %PlayerTransform()
+  JSL Palette_ArmorAndGloves
+
+  PLB 
+  RTL
+}
+
 ; =========================================================
 
 ; Modifies the value of the Y register before it indexes the table
@@ -335,6 +351,12 @@ DekuLink_SpinOrRecoil:
     LDY.b #$05 ; Recoil
     JML $0DA435 ; JML $0DA40B
   .spin
+  ; Moosh form configuration
+  LDA.w $02B2 : CMP.b #$07 : BEQ +
+    TYA
+    LDY.b #$16 ; Pushing
+    JML $0DA435
+  +
   TYA
   LDY.b #$1B ; Spin and die 
   JML $0DA40B
@@ -1302,6 +1324,7 @@ LinkOAM_CheckForDrawShield:
   +
   CMP.w #$0001 : BEQ .no_shield
   CMP.w #$0003 : BEQ .no_shield
+  CMP.w #$0007 : BEQ .no_shield
   .shield
   RTL
 }

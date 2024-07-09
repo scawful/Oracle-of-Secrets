@@ -10,7 +10,7 @@
 ;   2E  - HUD
 ;   2F  - Unused
 ;   30-32 Sprites: all_sprites.asm
-;   33  - Unused
+;   33  - Moosh Form Gfx and Palette
 ;   34  - Time System, Custom Overworld Overlays
 ;   35  - Deku Link Gfx and Palette
 ;   36  - Zora Link Gfx and Palette
