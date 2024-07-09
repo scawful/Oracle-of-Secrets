@@ -331,6 +331,11 @@ Link_TransformMoosh:
 {
   PHB : PHK : PLB
   
+  LDA.w !CurrentMask : CMP.b #$07 : BNE +
+    %PlayerTransform()
+    %ResetToLinkGraphics()
+    PLB : RTL
+  +
   LDA.b #$07 : STA.w !CurrentMask
   LDA.b #$33 : STA $BC
   %PlayerTransform()
