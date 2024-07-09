@@ -170,9 +170,6 @@ incsrc "Sprites/Bosses/king_dodongo.asm"
 incsrc "Sprites/Bosses/arrghus.asm"
 print  "End of arrghus.asm                ", pc
 
-incsrc "Sprites/Bosses/mothula.asm"
-print  "End of mothula.asm                ", pc
-
 incsrc "Sprites/Bosses/lanmola.asm"
 print  "End of Lanmola.asm                ", pc
 
