@@ -28,7 +28,7 @@ Link_HoverIfMooshWantsToDash:
   JSL Link_HandleMovingAnimation_FullLongEntry
   RTL
 }
-print "End of Masks/moosh.asm             ", pc
+print "End of Masks/moosh.asm            ", pc
 
 org $079093
   JSL Link_HoverIfMooshWantsToDash

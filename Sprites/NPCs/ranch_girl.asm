@@ -2,6 +2,7 @@
 ; Ranch Girl (Chicken Easter Egg Sprite)
 ; Gives Link the Ocarina
 
+pushpc 
 org $05FA8E
 Sprite_ShowMessageMinimal:
 
@@ -92,3 +93,4 @@ ChickenLady:
 }
 
 warnpc $01AFEFF
+pullpc

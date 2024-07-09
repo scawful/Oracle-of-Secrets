@@ -93,6 +93,8 @@ Graphics_Transfer:
   RTL
 }
 
+print "End of Sprites Bank 30            ", pc
+
 ; UnderworldTransition_ScrollRoom
 org $02BE5E
   JSL Graphics_Transfer
@@ -204,25 +206,6 @@ print  "End of whirlpool.asm              ",  pc
 incsrc "Sprites/NPCs/ranch_girl.asm"
 print  "End of Ranch Girl.asm             ", pc
 
-incsrc "Sprites/NPCs/bug_net_kid.asm"
-
-incsrc "Sprites/Bosses/king_dodongo.asm"
-
-incsrc "Sprites/Bosses/arrghus.asm"
-print  "End of arrghus.asm                ", pc
-
-incsrc "Sprites/Bosses/lanmola.asm"
-print  "End of Lanmola.asm                ", pc
-
-incsrc "Sprites/Bosses/lanmola_Expanded.asm"
-print  "End of Lanmola_Expanded.asm       ", pc
-
-incsrc "Sprites/NPCs/followers.asm"
-print  "End of followers.asm              ", pc
-
-incsrc "Sprites/NPCs/fortune_teller.asm"
-print  "End of fortune_teller.asm         ", pc
-
 warnpc $328000
 
 ; =========================================================
@@ -244,6 +227,35 @@ print  "End of kydreeok.asm               ",  pc
 Sprite_KydreeokHead = $CF
 incsrc "Sprites/Bosses/kydreeok_head.asm"
 print  "End of kydreeok_head.asm          ",  pc
+
+; =========================================================
+
+incsrc "Sprites/NPCs/bug_net_kid.asm"
+print "End of bug_net_kid.asm            ", pc
+
+incsrc "Sprites/Bosses/king_dodongo.asm"
+print "End of king_dodongo.asm           ", pc
+
+incsrc "Sprites/Bosses/arrghus.asm"
+print  "End of arrghus.asm                ", pc
+
+; =========================================================
+
+print ""
+print "Bank 2C Sprites"
+print ""
+
+incsrc "Sprites/Bosses/lanmola.asm"
+print  "End of Lanmola.asm                ", pc
+
+incsrc "Sprites/Bosses/lanmola_Expanded.asm"
+print  "End of Lanmola_Expanded.asm       ", pc
+
+incsrc "Sprites/NPCs/followers.asm"
+print  "End of followers.asm              ", pc
+
+incsrc "Sprites/NPCs/fortune_teller.asm"
+print  "End of fortune_teller.asm         ", pc
 
 ; =========================================================
 

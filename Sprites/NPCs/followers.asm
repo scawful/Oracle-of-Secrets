@@ -23,7 +23,6 @@ LoadFollowerGraphics = $00D423
 
 ; ---------------------------------------------------------
 
-print "OldMan_ExpandedPrep ", pc
 ; Old man sprite wont spawn in his home room 
 ; if you have the follower 
 OldMan_ExpandedPrep:
@@ -37,6 +36,8 @@ OldMan_ExpandedPrep:
   SEC
   RTL
 }
+
+pushpc 
 
 ; Old man gives link the "shovel" 
 ; Now the goldstar hookshot upgrade
@@ -160,3 +161,4 @@ Follower_HandleTriggerData:
   #_09A596: dw $0000, $000A, $0028, $0032
 }
 
+pullpc
