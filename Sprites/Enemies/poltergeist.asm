@@ -1,5 +1,8 @@
+; ========================================================= 
+; Sprite Properties
+; ========================================================= 
 
-!SPRID              = $EF ; The sprite ID you are overwriting (HEX)
+!SPRID              = Sprite_Poltergeist
 !NbrTiles           = 4   ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -26,8 +29,8 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
-%Set_Sprite_Properties(Sprite_Poltergeist_Prep, Sprite_Poltergeist_Long)
 
+%Set_Sprite_Properties(Sprite_Poltergeist_Prep, Sprite_Poltergeist_Long)
 
 Sprite_Poltergeist_Long:
 {
@@ -52,12 +55,8 @@ Sprite_Poltergeist_Long:
     RTL ; Go back to original code
 }
 
-;==================================================================================================
-; Sprite initialization
-; --------------------------------------------------------------------------------------------------
-; this code only get called once perfect to initialize sprites substate or timers
-; this code as soon as the room transitions/ overworld transition occurs
-;==================================================================================================
+; ========================================================= 
+
 Sprite_Poltergeist_Prep:
 {
     PHB : PHK : PLB
@@ -550,11 +549,7 @@ Sprite_Poltergeist_Draw:
     RTS
 }
 
-;==================================================================================================
-; Sprite Draw Generated Data
-; --------------------------------------------------------------------------------------------------
-; This is where the generated Data for the sprite go
-;==================================================================================================
+; ========================================================= 
   
     .start_index
     db $00, $02, $04, $06, $08, $09, $0F, $15, $16, $17, $18, $19, $1A, $1B, $1C, $1D, $1F, $20, $22, $23, $25, $26, $28, $29, $2A, $2B, $2C, $2D, $2E, $2F, $30, $31, $33, $35, $37, $39, $3B, $3F, $41, $42, $44, $45, $47, $48, $4A

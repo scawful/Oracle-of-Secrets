@@ -1,6 +1,6 @@
 ; =========================================================
 
-!SPRID              = $B1 ; The sprite ID you are overwriting (HEX)
+!SPRID              = Sprite_Puffstool
 !NbrTiles           = 02  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is

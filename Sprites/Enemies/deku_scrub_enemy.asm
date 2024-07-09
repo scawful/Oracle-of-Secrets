@@ -1,8 +1,8 @@
 ; =========================================================
 ; Deku Scrub Bro Enemy
 
-!SPRID              = $14 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 04  ; Number of tiles used in a frame
+!SPRID              = Sprite_DekuScrubEnemy
+!NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 08  ; Number of Health the sprite have
@@ -197,9 +197,9 @@ Sprite_DekuScrubEnemy_Main:
   {
     %StartOnFrame(7)
     %PlayAnimation(7,7,1)
+    JSL Sprite_PlayerCantPassThrough
 
-    LDA.w SprMiscD, X : BNE .no_talk
-      JSL Sprite_PlayerCantPassThrough
+    LDA.w SprMiscD, X : BNE .no_talk  
       %ShowSolicitedMessage($12D) : BCC .no_talk
         JSR DekuScrub_GiveRandomPrize
         LDA.b #$01 : STA.w SprMiscD, X

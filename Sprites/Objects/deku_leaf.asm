@@ -1,7 +1,8 @@
 ; =========================================================
 ; Sprite Properties
 ; =========================================================
-!SPRID              = $77 ; The sprite ID you are overwriting (HEX)
+
+!SPRID              = Sprite_DekuLeaf
 !NbrTiles           = 00  ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -28,32 +29,36 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
-%Set_Sprite_Properties(Sprite_DekuLeaf_Prep, Sprite_DekuLeaf_Long);
+
+%Set_Sprite_Properties(Sprite_DekuLeaf_Prep, Sprite_DekuLeaf_Long)
 
 ; =========================================================
 
 Sprite_DekuLeaf_Long:
-PHB : PHK : PLB
+{
+  PHB : PHK : PLB
 
-JSR Sprite_DekuLeaf_Draw ; Call the draw code
-JSL Sprite_CheckActive   ; Check if game is not paused
-BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
+  JSR Sprite_DekuLeaf_Draw ; Call the draw code
+  JSL Sprite_CheckActive   ; Check if game is not paused
+  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
-JSR Sprite_DekuLeaf_Main ; Call the main sprite code
+  JSR Sprite_DekuLeaf_Main ; Call the main sprite code
 
-.SpriteIsNotActive
-PLB ; Get back the databank we stored previously
-RTL ; Go back to original code
+  .SpriteIsNotActive
+  PLB ; Get back the databank we stored previously
+  RTL ; Go back to original code
+}
 
 ; =========================================================
 
 Sprite_DekuLeaf_Prep:
-PHB : PHK : PLB
-   
-    ; Add more code here to initialize data
+{
+  PHB : PHK : PLB
+    
 
-PLB
-RTL
+  PLB
+  RTL
+}
 
 ; =========================================================
 

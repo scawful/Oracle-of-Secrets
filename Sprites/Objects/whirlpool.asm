@@ -1,7 +1,8 @@
-;==============================================================================
+; =========================================================
 ; Sprite Properties
-;==============================================================================
-!SPRID              = $52; The sprite ID you are overwriting (HEX)
+; =========================================================
+
+!SPRID              = Sprite_Whirlpool
 !NbrTiles           = 04 ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -28,7 +29,10 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
-%Set_Sprite_Properties(Sprite_Whirlpool_Prep, Sprite_Whirlpool_Long);
+
+%Set_Sprite_Properties(Sprite_Whirlpool_Prep, Sprite_Whirlpool_Long)
+
+; =========================================================
 
 pushpc
 
@@ -52,13 +56,17 @@ Sprite_Whirlpool_Long:
   RTL ; Go back to original code
 }
 
+; =========================================================
+
 Sprite_Whirlpool_Prep:
-PHB : PHK : PLB
-   
+{
+  PHB : PHK : PLB
+    
 
-PLB
-RTL
-
+  PLB
+  RTL
+}
+; =========================================================
 
 Sprite_Whirlpool_Main:
 {
@@ -127,6 +135,8 @@ Sprite_Whirlpool_Main:
   }
 }
 
+; =========================================================
+
 Sprite_Whirlpool_Draw:
 {
   JSL Sprite_PrepOamCoord
@@ -172,7 +182,7 @@ Sprite_Whirlpool_Draw:
       
   TYA : LSR #2 : TAY
       
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
       
   PLY : INY
       
@@ -204,8 +214,4 @@ Sprite_Whirlpool_Draw:
   db $29, $29, $29, $29
   db $69, $69, $69, $69
   db $A9, $A9, $A9, $A9
-  .sizes
-  db $02, $02, $02, $02
-  db $02, $02, $02, $02
-  db $02, $02, $02, $02
 }

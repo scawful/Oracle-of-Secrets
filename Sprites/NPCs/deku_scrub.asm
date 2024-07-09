@@ -1,6 +1,8 @@
-; =============================================================================
+; =========================================================
+; Sprite Properties
+; =========================================================
 
-!SPRID              = $A0 ; The sprite ID you are overwriting (HEX)
+!SPRID              = Sprite_DekuScrubNPCs
 !NbrTiles           = 06  ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -29,7 +31,7 @@
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 %Set_Sprite_Properties(Sprite_DekuScrub_Prep, Sprite_DekuScrub_Long);
 
-; =============================================================================
+; =========================================================
 
 Sprite_DekuScrub_Long:
 {  
@@ -46,7 +48,7 @@ Sprite_DekuScrub_Long:
   RTL ; Go back to original code
 }
 
-; =============================================================================
+; =========================================================
 
 Sprite_DekuScrub_Prep:
 {
@@ -74,7 +76,7 @@ Sprite_DekuScrub_Prep:
   RTL
 }
 
-; =============================================================================
+; =========================================================
 
 Sprite_DekuScrub_Main:
 {
@@ -161,7 +163,7 @@ Sprite_DekuScrub_Main:
   }
 }
 
-; =============================================================================
+; =========================================================
 
 Sprite_DekuScrub_Draw:
 {

@@ -1,7 +1,8 @@
 ; =========================================================
 ; Sprite Properties
 ; =========================================================
-!SPRID              = $9E ; The sprite ID you are overwriting (HEX)
+
+!SPRID              = Sprite_MakuTree
 !NbrTiles           = 00  ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is

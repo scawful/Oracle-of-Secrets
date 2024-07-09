@@ -3,7 +3,7 @@
 ; Portal Sprite
 ; =========================================================
 
-!SPRID              = $03 ; The sprite ID you are overwriting (HEX)
+!SPRID              = Sprite_Portal
 !NbrTiles           = 01  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is

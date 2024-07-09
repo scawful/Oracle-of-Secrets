@@ -3,7 +3,7 @@
 ; Child sprite of the Kydreeok boss
 ; =========================================================
 
-!SPRID              = $CF ; The sprite ID you are overwriting (HEX)
+!SPRID              = Sprite_KydreeokHead
 !NbrTiles           = 07  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is

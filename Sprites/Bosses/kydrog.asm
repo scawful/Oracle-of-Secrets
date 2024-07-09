@@ -2,18 +2,18 @@
 ; Cutscene Kydrog Sprite Properties
 ; =========================================================
 
-!SPRID              = $7B; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 6 ; Number of tiles used in a frame
+!SPRID              = Sprite_KydrogNPC
+!NbrTiles           = 6   ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 0  ; Number of Health the sprite have
-!Damage             = 0  ; (08 is a whole heart), 04 is half heart
+!Health             = 0   ; Number of Health the sprite have
+!Damage             = 0   ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
-!Palette            = 0  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 0  ; 00 to 31, can be viewed in sprite draw tool
+!Palette            = 0   ; Unused in this template (can be 0 to 7)
+!Hitbox             = 0   ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -21,7 +21,7 @@
 !DeflectArrow       = 00  ; 01 = deflect arrows
 !WaterSprite        = 00  ; 01 = can only walk shallow water
 !Blockable          = 00  ; 01 = can be blocked by link's shield?
-!Prize              = 0  ; 00-15 = the prize pack the sprite will drop from
+!Prize              = 0   ; 00-15 = the prize pack the sprite will drop from
 !Sound              = 00  ; 01 = Play different sound when taking damage
 !Interaction        = 00  ; ?? No documentation
 !Statue             = 00  ; 01 = Sprite is statue

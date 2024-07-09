@@ -2,7 +2,7 @@
 ; Minecart Sprite Properties
 ; =========================================================
 
-!SPRID              = $A3   ; The sprite ID you are overwriting (HEX)
+!SPRID              = Sprite_Minecart
 !NbrTiles           = 08    ; Number of tiles used in a frame
 !Harmless           = 01    ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00    ; Is your sprite going super fast? put 01 if it is
@@ -29,8 +29,6 @@
 !ImperviousArrow    = 00    ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00    ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00    ; 00 = normal sprite, 01 = sprite is a boss
-
-; =========================================================
 
 %Set_Sprite_Properties(Sprite_Minecart_Prep, Sprite_Minecart_Long) 
 

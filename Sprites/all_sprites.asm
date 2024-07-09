@@ -5,45 +5,62 @@ incsrc ZSpriteLib/sprite_macros.asm
 org    $308000
 incsrc ZSpriteLib/sprite_new_table.asm
 
+Sprite_Farore    = $73
 incsrc "Sprites/NPCs/farore.asm"
 print  "End of farore.asm                 ", pc
 
+Sprite_KydrogNPC = $7B
 incsrc "Sprites/Bosses/kydrog.asm"
 print  "End of kydrog.asm                 ", pc
 
+Sprite_MakuTree = $9E
 incsrc "Sprites/NPCs/maku_tree.asm"
 print  "End of maku_tree.asm              ", pc
 
+Sprite_MaskSalesman = $E8
 incsrc "Sprites/NPCs/mask_salesman.asm"
 print  "End of mask_salesman.asm          ", pc
 
+Sprite_BeanVendor     = $07
+Sprite_VillageElder   = $07
+Sprite_KaeporaGaebora = $07
 incsrc "Sprites/NPCs/bean_vendor.asm"
 print  "End of bean_vendor.asm            ", pc
 
 incsrc "Sprites/Bosses/octoboss.asm"
 print  "End of octoboss.asm               ", pc
 
-incsrc "Sprites/NPCs/Mermaid.asm"
+Sprite_Mermaid   = $F0 
+Sprite_Maple     = $F0 ; Subtype 1
+Sprite_Librarian = $F0 ; Subtype 2
+incsrc "Sprites/NPCs/mermaid.asm"
 print  "End of mermaid.asm                ", pc
 
-incsrc "Sprites/Bosses/Manhandla.asm"
+Sprite_Manhandla = $88 
+incsrc "Sprites/Bosses/manhandla.asm"
 print  "End of manhandla.asm              ", pc
 
+Sprite_DekuScrubEnemy = $14
 incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
 print  "End of deku_scrub_enemy.asm       ",  pc
 
+Sprite_Goriya = $2C
 incsrc "Sprites/Enemies/goriya.asm"
 print  "End of goriya.asm                 ",  pc
 
+Sprite_Darknut = $1D
 incsrc "Sprites/Enemies/darknut.asm"
 print  "End of darknut.asm                ",  pc
 
+Sprite_SeaUrchin = $AE
 incsrc "Sprites/Enemies/sea_urchin.asm"
 print  "End of sea_urchin.asm             ", pc
 
+Sprite_Korok = $F1
 incsrc "Sprites/NPCs/korok.asm"
 print  "End of korok.asm                  ", pc
 
+Sprite_Vasu = $D7
 incsrc "Sprites/NPCs/vasu.asm"
 print  "End of vasu.asm                   ", pc
 
@@ -98,67 +115,91 @@ org    $318000
 incsrc ZSpriteLib/sprite_functions.asm
 print  "End of sprite_functions.asm       ", pc
 
+Sprite_KydrogBoss = $CB
 incsrc "Sprites/Bosses/kydrog_boss.asm"
 print  "End of kydrog_boss.asm            ", pc
 
+Sprite_DekuScrubNPCs = $A0
 incsrc "Sprites/NPCs/deku_scrub.asm"
 print  "End of deku_scrub.asm             ", pc
 
+Sprite_AntiKirby = $A8
 incsrc "Sprites/Enemies/anti_kirby.asm"
 print  "End of anti_kirby.asm             ", pc
 
+Sprite_HelmetChuchu = $05
 incsrc "Sprites/Enemies/helmet_chuchu.asm"
 print  "End of helmet_chuchu.asm          ", pc
 
+Sprite_Booki = $CC
 incsrc "Sprites/Enemies/booki.asm"
 print  "End of booki.asm                  ", pc
 
+Sprite_ThunderGhost = $CD
 incsrc "Sprites/Enemies/thunder_ghost.asm"
 print  "End of thunder_ghost.asm          ", pc
 
+Sprite_SwitchTrack = $B0
 incsrc "Sprites/Objects/switch_track.asm"
 print  "End of switch_track.asm           ", pc
 
+Sprite_Mineswitch = $AF
 incsrc "Sprites/Objects/mineswitch.asm"
 print  "End of mineswitch.asm             ", pc
 
+Sprite_VillageDog = $25
 incsrc "Sprites/NPCs/village_dog.asm"
 print  "End of village_dog.asm            ",  pc
 
+Sprite_Minecart = $A3
 incsrc "Sprites/Objects/minecart.asm"
 print  "End of minecart.asm               ",  pc
 
+Sprite_DarkLink = $C1
 incsrc "Sprites/Bosses/dark_link.asm"
 print  "End of dark_link.asm              ", pc
 
+Sprite_Puffstool = $B1
 incsrc "Sprites/Enemies/puffstool.asm"
 print  "End of puffstool.asm              ", pc
 
+Sprite_DekuLeaf = $77
 incsrc "Sprites/Objects/deku_leaf.asm"
 print  "End of deku_leaf.asm              ",  pc
 
+Sprite_Portal = $03
 incsrc "Sprites/Objects/portal_sprite.asm"
 print  "End of portal_sprite.asm          ",  pc
 
 incsrc "Sprites/NPCs/impa.asm"
 print  "End of impa.asm                   ",  pc
 
+Sprite_Poltergeist = $EF
 incsrc "Sprites/Enemies/poltergeist.asm"
 print  "End of poltergeist.asm            ",  pc
 
+Sprite_PolsVoice = $A4
 incsrc "Sprites/Enemies/pols_voice.asm"
 print  "End of pols_voice.asm             ",  pc
 
+Sprite_ZoraPrincess = $B8
 incsrc "Sprites/NPCs/zora_princess.asm"
 print  "End of zora_princess.asm          ",  pc
 
+Sprite_Wolfos = $A9
 incsrc "Sprites/Bosses/wolfos.asm"
 print  "End of wolfos.asm                 ",  pc
 
+; TODO: Change from digging game guy?
+Sprite_IceBlock = $D5 
 incsrc "Sprites/Objects/ice_block.asm"
 print  "End of ice_block.asm              ",  pc
 
+Sprite_Whirlpool = $52
 incsrc "Sprites/Objects/whirlpool.asm"
+print  "End of whirlpool.asm              ",  pc
+
+; =========================================================
 
 incsrc "Sprites/NPCs/ranch_girl.asm"
 print  "End of Ranch Girl.asm             ", pc
@@ -192,12 +233,15 @@ print  ""
 
 org $328000
 
+Sprite_Twinrova = $CE
 incsrc "Sprites/Bosses/twinrova.asm"
 print  "End of twinrova.asm               ",  pc
 
+Sprite_Kydreeok = $7A
 incsrc "Sprites/Bosses/kydreeok.asm"
 print  "End of kydreeok.asm               ",  pc
 
+Sprite_KydreeokHead = $CF
 incsrc "Sprites/Bosses/kydreeok_head.asm"
 print  "End of kydreeok_head.asm          ",  pc
 
