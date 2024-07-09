@@ -84,7 +84,8 @@ ZoraBaby_RevertToSprite:
   LDA.w $1A3C,X : ADC.b #$00 : STA.w $0D30,Y
   LDA.b $EE : STA.w $0F20,Y
   LDA.b #$01 : STA.w $0BA0,Y : STA.w $0E80,Y
-  LDA.b #$05 : STA.w $0D80, Y
+  LDA.b #$04 : STA.w $0D80, Y
+  LDA.b #$FF : STA.w SprTimerB, Y
   PLX
 
   LDA.b #$00
@@ -125,7 +126,18 @@ UploadZoraBabyGraphicsPrep:
   JSL $00D423
   LDA.b #$00 : STA.l $7EF3CC
   PLX
-  #_068D71: LDA.l $7EF3C9
+  LDA.b #$02 : STA.w SprAction, X 
+  LDA.l $7EF3C9
+  RTL
+}
+
+ZoraBaby_GlobalBehavior:
+{
+  JSL Sprite_BehaveAsBarrier
+  LDA.w SprAction, X : CMP.b #$02 : BEQ +
+    JSL Sprite_CheckIfLifted
+    JSL ThrownSprite_TileAndSpriteInteraction_long
+  +
   RTL
 }
 
@@ -152,34 +164,190 @@ org $06BD9C
 org $068D59
 SpritePrep_Locksmith:
 {
-    #_068D59: INC.w $0BA0,X
+  INC.w $0BA0,X
 
-    #_068D5C: LDA.l $7EF3CC
-    #_068D60: CMP.b #$09 ; FOLLOWER 09
-    #_068D62: BNE .not_already_following
+  LDA.l $7EF3CC
+  CMP.b #$09 ; FOLLOWER 09
+  BNE .not_already_following
 
-    #_068D64: STZ.w $0DD0,X
+  STZ.w $0DD0,X
 
-    #_068D67: RTS
+  RTS
 
   .not_already_following
-    #_068D68: CMP.b #$0C ; FOLLOWER 0C
-    #_068D6A: BNE .no_purple_chest
+  CMP.b #$0C ; FOLLOWER 0C
+  BNE .no_purple_chest
 
-    #_068D6C: LDA.b #$02
-    #_068D6E: STA.w $0D80,X
+  LDA.b #$02
+  STA.w $0D80,X
 
   .no_purple_chest
-    JSL UploadZoraBabyGraphicsPrep
-    #_068D75: AND.b #$10
-    #_068D77: BEQ .exit
+  JSL UploadZoraBabyGraphicsPrep
+  AND.b #$10
+  BEQ .exit
 
-    #_068D79: LDA.b #$04
-    #_068D7B: STA.w $0D80,X
+  LDA.b #$04
+  STA.w $0D80,X
 
   .exit
-    #_068D7E: RTS
+  RTS
 }
+
+SpriteDraw_Locksmith = $06BDAC
+Sprite_CheckIfActive_Bank06 = $06D9EC
+
+org $06BCAC
+Sprite_39_Locksmith:
+  JSR SpriteDraw_Locksmith
+  JSR Sprite_CheckIfActive_Bank06
+            JSL ZoraBaby_GlobalBehavior
+
+  LDA.w $0D80,X
+  JSL JumpTableLocal
+  dw LockSmith_Chillin
+  dw LockSmith_FollowLink
+  dw LockSmith_OfferService
+  dw LockSmith_RespondToAnswer
+  dw LockSmith_JustPromiseOkay
+  dw LockSmith_SilentDismay
+
+; =========================================================
+
+LockSmith_Chillin:
+  LDA.b #$07 ; MESSAGE 0107
+  LDY.b #$01
+  JSL Sprite_ShowSolicitedMessage 
+
+  LDA.w $0D10,X
+  PHA
+
+  SEC
+  SBC.b #$10
+  STA.w $0D10,X
+
+  JSR Sprite_Get16BitCoords_Local
+
+  LDA.b #$01
+  STA.w $0D50,X
+  STA.w $0D40,X
+
+  JSL Sprite_CheckTileCollision_long
+  BNE .dont_stalk_link
+
+  INC.w $0D80,X
+
+  LDA.l $7EF3CC
+  CMP.b #$00
+  BEQ .dont_stalk_link
+
+  LDA.b #$05
+  STA.w $0D80,X
+
+  .dont_stalk_link
+  PLA
+  STA.w $0D10,X
+
+  RTS
+
+; =========================================================
+
+LockSmith_FollowLink:
+  LDA.b #$09 ; FOLLOWER 09
+  STA.l $7EF3CC
+
+  PHX
+
+  STZ.w $02F9
+
+  JSL LoadFollowerGraphics
+  JSL Follower_Initialize
+
+  PLX
+
+  LDA.b #$40
+  STA.w $02CD
+  STZ.w $02CE
+
+  STZ.w $0DD0,X
+
+  RTS
+
+; =========================================================
+
+LockSmith_OfferService:
+  JSL CheckIfLinkIsBusy
+  BCS .exit
+
+  LDA.b #$09 ; MESSAGE 0109
+  LDY.b #$01
+  JSL Sprite_ShowSolicitedMessage
+  BCC .exit
+
+  .continue
+  INC.w $0D80,X
+
+  .exit
+  RTS
+
+; =========================================================
+
+LockSmith_RespondToAnswer:
+  LDA.w $1CE8
+  BNE .rejected
+
+  LDA.b #$0C ; MESSAGE 010C
+  LDY.b #$01
+  JSL Sprite_ShowMessageUnconditional
+
+  LDA.b #$01
+  STA.w $0D80,X
+
+  RTS
+
+; ---------------------------------------------------------
+
+  ; LDA.l $7EF3C9
+  ; ORA.b #$10
+  ; STA.l $7EF3C9
+
+
+; ---------------------------------------------------------
+
+.rejected
+  LDA.b #$0A ; MESSAGE 010A
+  LDY.b #$01
+  JSL Sprite_ShowMessageUnconditional
+
+  ; LDA.b #$02
+  ; STA.w $0D80,X
+            LDA.b #$FF : STA.w SprTimerB, X
+  INC.w $0D80,X
+
+  RTS
+
+; =========================================================
+
+LockSmith_JustPromiseOkay:
+  LDA.b #$0B ; MESSAGE 010B
+  LDY.b #$01
+  JSL Sprite_ShowSolicitedMessage
+
+            LDA.w SprTimerB, X : BNE +
+              STZ.w SprAction, X
+            +
+
+  RTS
+
+; =========================================================
+
+LockSmith_SilentDismay:
+  LDA.b #$07 ; MESSAGE 0107
+  LDY.b #$01
+  JSL Sprite_ShowSolicitedMessage
+
+  RTS
+
+warnpc $06BD9C
 
 pullpc
 
