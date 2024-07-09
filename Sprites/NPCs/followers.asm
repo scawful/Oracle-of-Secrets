@@ -63,7 +63,50 @@ LoadFollowerGraphics = $00D423
 ;   #_099FB1: dw Follower_BasicMover   ; 0x0D - Super bomb
 ;   #_099FB3: dw Follower_Telepathy    ; 0x0E - Master Sword telepathy
 
-; ---------------------------------------------------------
+; =========================================================
+; Zora Baby Follower Sprite
+; Uses Sprite 0x39 Locksmith in Bank06
+
+ZoraBaby_RevertToSprite:
+{  
+  PHA
+
+  LDA.b #$39 : JSL Sprite_SpawnDynamically
+  JSL SpritePrep_ResetProperties
+
+  PLA
+
+  PHX
+  TAX
+  LDA.w $1A64,X : AND.b #$03 : STA.w $0EB0,Y : STA.w $0DE0,Y
+  LDA.w $1A00,X : CLC : ADC.b #$02 : STA.w $0D00,Y
+  LDA.w $1A14,X : ADC.b #$00 : STA.w $0D20,Y
+  LDA.w $1A28,X : CLC : ADC.b #$10 : STA.w $0D10,Y
+  LDA.w $1A3C,X : ADC.b #$00 : STA.w $0D30,Y
+  LDA.b $EE : STA.w $0F20,Y
+  LDA.b #$01 : STA.w $0BA0,Y : STA.w $0E80,Y
+  LDA.b #$05 : STA.w $0D80, Y
+  PLX
+
+  LDA.b #$00
+  STA.l $7EF3CC
+
+  STZ.b $5E
+
+  RTS
+}
+
+CheckForZoraBabyTransitionToSprite:
+{
+  LDA.w $0114 : CMP.b #$3B : BNE +
+    LDA.b #$00
+    JSR ZoraBaby_RevertToSprite
+  +
+  LDX.b $10
+  LDY.b $11
+  RTL
+}
+
 
 ; Old man sprite wont spawn in his home room 
 ; if you have the follower 
