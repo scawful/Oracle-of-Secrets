@@ -63,7 +63,7 @@ Sprite_Vasu_Prep:
   LDA.b #$80 : STA.w SprDefl, X
 
   LDA.w SprSubtype, X : BEQ +
-    LDA.b #$03 : STA.w SprAction, X
+    LDA.b #$04 : STA.w SprAction, X
   +
 
   PLB
@@ -82,6 +82,7 @@ Sprite_Vasu_Main:
   dw Vasu_Idle
   dw Vasu_MessageHandler
   dw Vasu_AppraiseRing
+  dw Vasu_RingAppraised
 
   dw Error_Idle
 
@@ -107,7 +108,7 @@ Sprite_Vasu_Main:
     %GotoAction(0)
     RTS
     .appraise_rings
-    %ShowUnconditionalMessage($00AB)
+    LDA.b #$40 : STA.w SprTimerB, X
     %GotoAction(2)
     RTS
   }
@@ -115,20 +116,42 @@ Sprite_Vasu_Main:
   Vasu_AppraiseRing:
   {
     %PlayAnimation(0,1,20)
+
+    ; Check if the player has any rings
+    LDA.l MAGICRINGS : BEQ .no_rings
+
+      ; TODO: Subtract 20 rupees from the player's wallet
+
+    .no_rings
+    %ShowUnconditionalMessage($00AB) ; 'First one is free!'
+
     ; Check the found rings and set the saved rings
     ; Get the bit from found rings and set it in MAGICRINGS
     LDA.l FOUNDRINGS
     ORA.l MAGICRINGS
     STA.l MAGICRINGS
 
+    %GotoAction(3)
 
+    RTS
+  }
+
+  Vasu_RingAppraised:
+  {
+    %PlayAnimation(0,1,20)
+    %ShowUnconditionalMessage($00AC) ; 'Come back later for more appraisals!'
+
+    %GotoAction(0)
     RTS
   }
 
   Error_Idle:
   {
     %PlayAnimation(0,1,24)
-    %ShowSolicitedMessage($0121) ; "I am Error"
+     ; "I am Error"
+    %ShowSolicitedMessage($0121) : BCC +
+      JSL GetRandomInt : AND.b #$3F : STA.l FOUNDRINGS
+    +
     RTS
   }
 }
