@@ -347,19 +347,15 @@ Link_TransformMoosh:
 ; This is used to change the animation during 0x0A (Using Quake Medallion)
 DekuLink_SpinOrRecoil:
 {
-  TAY
   LDA DekuFloating : BEQ .spin
-    TYA
+    LDA.w !CurrentMask : CMP.b #$07 : BNE +
+      LDY.b #$1C
+      JML $0DA435 ; JML $0DA40B
+    +
     LDY.b #$05 ; Recoil
     JML $0DA435 ; JML $0DA40B
   .spin
   ; Moosh form configuration
-  LDA.w $02B2 : CMP.b #$07 : BEQ +
-    TYA
-    LDY.b #$16 ; Pushing
-    JML $0DA435
-  +
-  TYA
   LDY.b #$1B ; Spin and die 
   JML $0DA40B
 }
@@ -463,16 +459,15 @@ DekuLink_HoverBasedOnInput:
 {
   PHB : PHK : PLB
 
-  #_0782A7: STZ.b $2A
-  #_0782A9: STZ.b $2B
-  #_0782AB: STZ.b $6B
-  #_0782AD: STZ.b $48
+  STZ.b $2A
+  STZ.b $2B
+  STZ.b $6B
+  STZ.b $48
 
   JSR HandleMovement
   
   JSL Link_HandleCardinalCollision_Long
   JSL Link_HandleVelocityAndSandDrag
-  JSL Link_HandleMovingAnimation_FullLongEntry
 
   STZ.w $0302
 

@@ -23,8 +23,7 @@ Link_HoverIfMooshWantsToDash:
 {
   LDA.w !CurrentMask : CMP.b #$07 : BNE .return
     JSL PrepareQuakeSpell
-    LDA.b #$0A : STA.b $5D
-    
+    RTL    
   .return
   JSL Link_HandleMovingAnimation_FullLongEntry
   RTL
