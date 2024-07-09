@@ -90,7 +90,7 @@ ForceResetMask_GameOver:
 
 ForceResetMask_SaveAndQuit:
 {
-  LDA $02B2 : BEQ .still_link
+  LDA !CurrentMask : BEQ .still_link
   %ResetToLinkGraphics()
   .still_link
   LDA.b #$0F
@@ -102,7 +102,7 @@ ForceResetMask_SaveAndQuit:
 
 Palette_ArmorAndGloves:
 {
-  LDA   $02B2 : CMP #$01 : BEQ .deku_mask
+  LDA   !CurrentMask : CMP #$01 : BEQ .deku_mask
   CMP.b #$02 : BEQ .zora_mask
   CMP.b #$03 : BEQ .wolf_mask
   CMP.b #$04 : BEQ .bunny_hood
@@ -218,7 +218,7 @@ Overworld_CgramAuxToMain_Override:
   LDA $7EC400, X : STA $7EC600, X
   LDA $7EC440, X : STA $7EC640, X
   LDA $7EC480, X : STA $7EC680, X
-  LDA $02B2 : BNE .has_mask_palette
+  LDA !CurrentMask : BNE .has_mask_palette
     LDA $7EC4C0, X : STA $7EC6C0, X
   .has_mask_palette
   INX #2 : CPX.b #$40 : BNE .loop
@@ -235,7 +235,8 @@ Overworld_CgramAuxToMain_Override:
 
 LinkState_ResetMaskAnimated:
 {
-  LDA.w $02B2 : BEQ .no_transform
+  STZ.b $55
+  LDA.w !CurrentMask : BEQ .no_transform
   CMP.b #$01 : BEQ .check_item_slot
   CMP.b #$02 : BEQ .no_transform
   CMP.b #$03 : BEQ .check_item_slot
@@ -277,7 +278,7 @@ org $079CD9
 pullpc
 LinkItem_CheckForSwordSwing_Masks:
 {
-  LDA   $02B2 : BEQ .return 
+  LDA   !CurrentMask : BEQ .return 
     CMP.b #$02 : BEQ .return  ; zora mask can use sword
       CMP.b #$06 : BEQ .return ; gbc link can use sword
         LDA #$01
@@ -304,9 +305,8 @@ Link_TransformMask:
     %PlayerTransform()
     PLA ; restore mask ID
     TAY
-    ; LDA $02B2 
     CPY !CurrentMask : BEQ .unequip ; check if mask is on
-      STA $02B2 : TAX
+      STA !CurrentMask : TAX
       LDA .mask_gfx, X : STA $BC ; set the mask gfx
       JSL Palette_ArmorAndGloves ; set the palette
       ; STA $02F5                  ; Somaria platform flag, no dash
@@ -326,7 +326,8 @@ Link_TransformMask:
     db $00, $35, $36, $38, $37, $39, $3A, $3B
 }
 
-; TODO: Return to normal Link.
+; =========================================================
+
 Link_TransformMoosh:
 {
   PHB : PHK : PLB
@@ -528,7 +529,7 @@ DekuLink_HoverBasedOnInput:
 
 DekuLink_CheckForDash:
 {
-  LDA.w $02B2 : CMP.b #$01 : BNE +
+  LDA.w !CurrentMask : CMP.b #$01 : BNE +
     STZ.b $F2
   +
   LDA.b #$00
@@ -1319,7 +1320,7 @@ pullpc
 ; Minish, Deku, Wolf don't draw shield
 LinkOAM_CheckForDrawShield:
 {
-  LDA.w $02B2 : AND.w #$00FF : CMP.w #$0005 : BNE +
+  LDA.w !CurrentMask : AND.w #$00FF : CMP.w #$0005 : BNE +
   .no_shield
   LDA.w #$0000
   RTL
