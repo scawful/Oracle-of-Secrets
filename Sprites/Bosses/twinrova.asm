@@ -1130,15 +1130,15 @@ org $0DB818
 org $09A1E4
 Follower_BasicMover:
 {
-    ; Check if the follower is the blind maiden
-    LDA.l $7EF3CC : CMP.b #$06 : BNE .no_blind_transform
-      ; Check if we are in room 0xAC
-      REP #$20 
-      LDA.b $A0 : CMP.w #$00AC : BNE .no_blind_transform
-        ; ; Check room flag 0x65
-        ; LDA.l $7EF0CA : AND.w #$0100 : BEQ .no_blind_transform
-          SEP #$20
-          JSL Follower_CheckBlindTrigger : BCC .no_blind_transform
+  ; Check if the follower is the blind maiden
+  LDA.l $7EF3CC : CMP.b #$06 : BNE .no_blind_transform
+    ; Check if we are in room 0xAC
+    REP #$20 
+    LDA.b $A0 : CMP.w #$00AC : BNE .no_blind_transform
+      ; ; Check room flag 0x65
+      ; LDA.l $7EF0CA : AND.w #$0100 : BEQ .no_blind_transform
+        SEP #$20
+        JSL Follower_CheckBlindTrigger : BCC .no_blind_transform
   .blind_transform
     ; Load follower animation step index from $02CF
     LDX.w $02CF
@@ -1164,6 +1164,7 @@ Follower_BasicMover:
     LDA.b #$15 : STA.w $012C
 
     RTS
+    warnpc $09A23A
   
   org $09A23A
   .no_blind_transform
@@ -1258,6 +1259,8 @@ Blind_SpawnFromMaiden:
 
   RTL
 }
+
+warnpc $1DA081
 
 ; =========================================================
 ; We are using space from this function to insert the 
@@ -1374,13 +1377,8 @@ BlindLaser_SpawnTrailGarnish:
     RTL
 }
 
-pullpc
-
-
-; ==============================================================================
+; =========================================================
 ; Mantle and Maiden
-
-pushpc
 
 org $068841
     JSL NewMantlePrep
@@ -1424,22 +1422,20 @@ pullpc
 
 CheckForMaidenInLibrary:
 {
-    LDA $A0 : CMP.b #$BD : BNE .notTheLibrary
-        LDA $11 : BNE .notTheLibrary
-            LDA $7FF9D2 : BNE .dialogue_played
-                LDA #$1D : LDY #$00
-                JSL Sprite_ShowMessageUnconditional
-                LDA #$01 : STA $7FF9D2
+  LDA $A0 : CMP.b #$BD : BNE .notTheLibrary
+      LDA $11 : BNE .notTheLibrary
+          LDA $7FF9D2 : BNE .dialogue_played
+              LDA #$1D : LDY #$00
+              JSL Sprite_ShowMessageUnconditional
+              LDA #$01 : STA $7FF9D2
 
-            .dialogue_played
+          .dialogue_played
 
-    .notTheLibrary
+  .notTheLibrary
 
-    ; Check for blind room vanilla
-    REP #$20
-    LDA.b $A0
+  ; Check for blind room vanilla
+  REP #$20
+  LDA.b $A0
 
-    RTL
+  RTL
 }
-
-; ==============================================================================
