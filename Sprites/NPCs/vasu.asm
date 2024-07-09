@@ -128,6 +128,7 @@ Sprite_Vasu_Main:
   Error_Idle:
   {
     %PlayAnimation(0,1,24)
+    %ShowSolicitedMessage($0121) ; "I am Error"
     RTS
   }
 }
