@@ -117,14 +117,40 @@ Sprite_Vasu_Main:
   {
     %PlayAnimation(0,1,20)
 
-    ; Check if the player has any rings
-    LDA.l MAGICRINGS : BEQ .no_rings
+    ; Check if the player has found any rings to appraise
+    LDA.l FOUNDRINGS : BEQ .no_rings
+      ; Check if the player has any rings, if not give them one for free
+      LDA.l MAGICRINGS : BEQ .no_rings_yet
+        REP #$20
+        LDA.l $7EF360
+        CMP.w #$14 ; 20 rupees
+        SEP #$30
+        BCC .not_enough_rupees
 
-      ; TODO: Subtract 20 rupees from the player's wallet
+          REP #$20
+          LDA.l $7EF360
+          SEC
+          SBC.w #$14 ; Subtract 20 rupees
+          STA.l $7EF360
+          SEP #$30
+
+          JMP .appraise_me
+
+        .not_enough_rupees
+          %ShowUnconditionalMessage($0189) ; 'You don't have enough rupees!'
+          %GotoAction(0)
+          RTS
+      
+      .no_rings_yet
+      %ShowUnconditionalMessage($00AB) ; 'First one is free!'
+      JMP .appraise_me
 
     .no_rings
-    %ShowUnconditionalMessage($00AB) ; 'First one is free!'
+    %ShowUnconditionalMessage($00AD) ; 'You don't have any rings!'
+    %GotoAction(0)
+    RTS
 
+    .appraise_me
     ; Check the found rings and set the saved rings
     ; Get the bit from found rings and set it in MAGICRINGS
     LDA.l FOUNDRINGS
