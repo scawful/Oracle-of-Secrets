@@ -242,6 +242,7 @@ LinkState_ResetMaskAnimated:
   CMP.b #$04 : BEQ .check_item_slot
   CMP.b #$05 : BEQ .no_transform
   CMP.b #$06 : BEQ .gbc_form
+  CMP.b #$07 : BEQ .moosh_form
   
   .check_item_slot
   LDA.w $0202 : SEC : SBC.b #$13 : BEQ .no_transform
@@ -252,6 +253,7 @@ LinkState_ResetMaskAnimated:
 
   .gbc_form
   .no_transform
+  .moosh_form
   RTL
 }
 
