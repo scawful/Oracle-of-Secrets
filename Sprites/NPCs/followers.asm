@@ -131,7 +131,11 @@ org $09A902
   db $02
 
 org $09A8CF
-  org $0180
+  org $00C0
+
+org $06BD9C
+  dw   0,  -8 : db $20, $03, $00, $02
+  dw   0,   0 : db $22, $03, $00, $02
 
 org $068D59
 SpritePrep_Locksmith:
