@@ -56,7 +56,7 @@ LoadFollowerGraphics = $00D423
 ;   #_099FA3: dw Follower_BasicMover   ; 0x06 - Blind maiden
 ;   #_099FA5: dw Follower_BasicMover   ; 0x07 - Frogsmith
 ;   #_099FA7: dw Follower_BasicMover   ; 0x08 - Smithy
-;   #_099FA9: dw Follower_BasicMover   ; 0x09 - Locksmith
+;   #_099FA9: dw Follower_BasicMover   ; 0x09 - Locksmith (Zora Baby)
 ;   #_099FAB: dw Follower_BasicMover   ; 0x0A - Kiki
 ;   #_099FAD: dw Follower_OldManUnused ; 0x0B - Minecart Follower
 ;   #_099FAF: dw Follower_BasicMover   ; 0x0C - Purple chest
@@ -79,7 +79,21 @@ OldMan_ExpandedPrep:
   RTL
 }
 
+CheckForZoraBabyFollower:
+{
+  LDA.l $7EF3CC : CMP.b #$09 : BNE .not_zora
+    LDA.b #$00
+  .not_zora
+  #_09AA5E: LDA.b $05
+  #_09AA60: AND.b #$20
+  RTL
+}
+
 pushpc 
+
+; Make Zora sway like a girl
+org $09AA5E
+  JSL CheckForZoraBabyFollower
 
 ; Old man gives link the "shovel" 
 ; Now the goldstar hookshot upgrade
