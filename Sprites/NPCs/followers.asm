@@ -77,14 +77,14 @@ ZoraBaby_RevertToSprite:
 
   PHX
   TAX
-  LDA.w $1A64,X : AND.b #$03 : STA.w $0EB0,Y : STA.w $0DE0,Y
-  LDA.w $1A00,X : CLC : ADC.b #$02 : STA.w $0D00,Y
-  LDA.w $1A14,X : ADC.b #$00 : STA.w $0D20,Y
-  LDA.w $1A28,X : CLC : ADC.b #$10 : STA.w $0D10,Y
-  LDA.w $1A3C,X : ADC.b #$00 : STA.w $0D30,Y
+  LDA.w $1A64, X : AND.b #$03 : STA.w $0EB0,Y : STA.w $0DE0,Y
+  LDA.w $1A00, X : CLC : ADC.b #$02 : STA.w $0D00,Y
+  LDA.w $1A14, X : ADC.b #$00 : STA.w $0D20,Y
+  LDA.w $1A28, X : CLC : ADC.b #$10 : STA.w $0D10,Y
+  LDA.w $1A3C, X : ADC.b #$00 : STA.w $0D30,Y
   LDA.b $EE : STA.w $0F20,Y
   LDA.b #$01 : STA.w $0BA0,Y : STA.w $0E80,Y
-  LDA.b #$04 : STA.w $0D80, Y
+  LDA.b #$04 : STA.w SprAction, Y
   LDA.b #$FF : STA.w SprTimerB, Y
   PLX
 
@@ -164,46 +164,45 @@ org $06BD9C
 org $068D59
 SpritePrep_Locksmith:
 {
-  INC.w $0BA0,X
+  INC.w $0BA0, X
 
-  LDA.l $7EF3CC
-  CMP.b #$09 ; FOLLOWER 09
-  BNE .not_already_following
+  LDA.l $7EF3CC : CMP.b #$09 : BNE .not_already_following
 
-  STZ.w $0DD0,X
+  STZ.w SprState, X
 
   RTS
 
   .not_already_following
-  CMP.b #$0C ; FOLLOWER 0C
+  CMP.b #$0C
   BNE .no_purple_chest
 
-  LDA.b #$02
-  STA.w $0D80,X
+  LDA.b #$02 : STA.w SprAction, X
 
   .no_purple_chest
   JSL UploadZoraBabyGraphicsPrep
   AND.b #$10
   BEQ .exit
 
-  LDA.b #$04
-  STA.w $0D80,X
+  LDA.b #$04 : STA.w SprAction, X
 
   .exit
   RTS
 }
+warnpc $068D7F
 
 SpriteDraw_Locksmith = $06BDAC
 Sprite_CheckIfActive_Bank06 = $06D9EC
 
 org $06BCAC
 Sprite_39_Locksmith:
+{
   JSR SpriteDraw_Locksmith
   JSR Sprite_CheckIfActive_Bank06
-            JSL ZoraBaby_GlobalBehavior
+  JSL ZoraBaby_GlobalBehavior
 
-  LDA.w $0D80,X
+  LDA.w SprAction, X
   JSL JumpTableLocal
+
   dw LockSmith_Chillin
   dw LockSmith_FollowLink
   dw LockSmith_OfferService
@@ -211,147 +210,147 @@ Sprite_39_Locksmith:
   dw LockSmith_JustPromiseOkay
   dw LockSmith_SilentDismay
 
-; =========================================================
+  ; =======================================================
 
-LockSmith_Chillin:
-  LDA.b #$07 ; MESSAGE 0107
-  LDY.b #$01
-  JSL Sprite_ShowSolicitedMessage 
+  LockSmith_Chillin:
+    LDA.b #$07 ; MESSAGE 0107
+    LDY.b #$01
+    JSL Sprite_ShowSolicitedMessage 
 
-  LDA.w $0D10,X
-  PHA
+    LDA.w $0D10, X
+    PHA
 
-  SEC
-  SBC.b #$10
-  STA.w $0D10,X
+    SEC
+    SBC.b #$10
+    STA.w $0D10, X
 
-  JSR Sprite_Get16BitCoords_Local
+    JSR Sprite_Get16BitCoords_Local
 
-  LDA.b #$01
-  STA.w $0D50,X
-  STA.w $0D40,X
+    LDA.b #$01
+    STA.w $0D50, X
+    STA.w $0D40, X
 
-  JSL Sprite_CheckTileCollision_long
-  BNE .dont_stalk_link
+    JSL Sprite_CheckTileCollision_long
+    BNE .dont_stalk_link
 
-  INC.w $0D80,X
+    INC.w SprAction, X
 
-  LDA.l $7EF3CC
-  CMP.b #$00
-  BEQ .dont_stalk_link
+    LDA.l $7EF3CC
+    CMP.b #$00
+    BEQ .dont_stalk_link
 
-  LDA.b #$05
-  STA.w $0D80,X
+    LDA.b #$05
+    STA.w SprAction, X
 
-  .dont_stalk_link
-  PLA
-  STA.w $0D10,X
+    .dont_stalk_link
+    PLA
+    STA.w $0D10, X
 
-  RTS
+    RTS
 
-; =========================================================
+  ; =======================================================
 
-LockSmith_FollowLink:
-  LDA.b #$09 ; FOLLOWER 09
-  STA.l $7EF3CC
+  LockSmith_FollowLink:
+    LDA.b #$09 ; FOLLOWER 09
+    STA.l $7EF3CC
 
-  PHX
+    PHX
 
-  STZ.w $02F9
+    STZ.w $02F9
 
-  JSL LoadFollowerGraphics
-  JSL Follower_Initialize
+    JSL LoadFollowerGraphics
+    JSL Follower_Initialize
 
-  PLX
+    PLX
 
-  LDA.b #$40
-  STA.w $02CD
-  STZ.w $02CE
+    LDA.b #$40
+    STA.w $02CD
+    STZ.w $02CE
 
-  STZ.w $0DD0,X
+    STZ.w SprState, X
 
-  RTS
+    RTS
 
-; =========================================================
+  ; =======================================================
 
-LockSmith_OfferService:
-  JSL CheckIfLinkIsBusy
-  BCS .exit
+  LockSmith_OfferService:
+    JSL CheckIfLinkIsBusy
+    BCS .exit
 
-  LDA.b #$09 ; MESSAGE 0109
-  LDY.b #$01
-  JSL Sprite_ShowSolicitedMessage
-  BCC .exit
+    LDA.b #$09 ; MESSAGE 0109
+    LDY.b #$01
+    JSL Sprite_ShowSolicitedMessage
+    BCC .exit
 
-  .continue
-  INC.w $0D80,X
+    .continue
+    INC.w SprAction, X
 
-  .exit
-  RTS
+    .exit
+    RTS
 
-; =========================================================
+  ; =======================================================
 
-LockSmith_RespondToAnswer:
-  LDA.w $1CE8
-  BNE .rejected
+  LockSmith_RespondToAnswer:
+    LDA.w $1CE8
+    BNE .rejected
 
-  LDA.b #$0C ; MESSAGE 010C
-  LDY.b #$01
-  JSL Sprite_ShowMessageUnconditional
+    LDA.b #$0C ; MESSAGE 010C
+    LDY.b #$01
+    JSL Sprite_ShowMessageUnconditional
 
-  LDA.b #$01
-  STA.w $0D80,X
+    LDA.b #$01
+    STA.w SprAction, X
 
-  RTS
+    RTS
 
-; ---------------------------------------------------------
+  ; -------------------------------------------------------
 
-  ; LDA.l $7EF3C9
-  ; ORA.b #$10
-  ; STA.l $7EF3C9
+    ; LDA.l $7EF3C9
+    ; ORA.b #$10
+    ; STA.l $7EF3C9
 
+  ; -------------------------------------------------------
 
-; ---------------------------------------------------------
+  .rejected
+    LDA.b #$0A ; MESSAGE 010A
+    LDY.b #$01
+    JSL Sprite_ShowMessageUnconditional
 
-.rejected
-  LDA.b #$0A ; MESSAGE 010A
-  LDY.b #$01
-  JSL Sprite_ShowMessageUnconditional
+    ; LDA.b #$02
+    ; STA.w SprAction, X
+              LDA.b #$FF : STA.w SprTimerB, X
+    INC.w SprAction, X
 
-  ; LDA.b #$02
-  ; STA.w $0D80,X
-            LDA.b #$FF : STA.w SprTimerB, X
-  INC.w $0D80,X
+    RTS
 
-  RTS
+  ; =======================================================
 
-; =========================================================
+  LockSmith_JustPromiseOkay:
+    LDA.b #$0B ; MESSAGE 010B
+    LDY.b #$01
+    JSL Sprite_ShowSolicitedMessage
 
-LockSmith_JustPromiseOkay:
-  LDA.b #$0B ; MESSAGE 010B
-  LDY.b #$01
-  JSL Sprite_ShowSolicitedMessage
+    LDA.w SprTimerB, X : BNE +
+      STZ.w SprAction, X
+    +
 
-            LDA.w SprTimerB, X : BNE +
-              STZ.w SprAction, X
-            +
+    RTS
 
-  RTS
+  ; =======================================================
 
-; =========================================================
+  LockSmith_SilentDismay:
+    LDA.b #$07 ; MESSAGE 0107
+    LDY.b #$01
+    JSL Sprite_ShowSolicitedMessage
 
-LockSmith_SilentDismay:
-  LDA.b #$07 ; MESSAGE 0107
-  LDY.b #$01
-  JSL Sprite_ShowSolicitedMessage
-
-  RTS
-
+    RTS
+}
+print "End of Sprite 39 Locksmith          ", pc
 warnpc $06BD9C
 
 pullpc
 
-; =================================================
+; =========================================================
 ; Old Man Follower Sprite
 
 ; Old man sprite wont spawn in his home room 
@@ -387,20 +386,18 @@ org $02D98B
 org $1EE8F1
 SpritePrep_OldMan:
 {
-  PHB
-  PHK
-  PLB
+  PHB : PHK : PLB
   JSR .main
   PLB
   RTL
 
   .main
-  INC.w $0BA0,X
+  INC.w $0BA0, X
 
   
   ; LDA.b $A0 : CMP.b #$E4 ; ROOM 00E4
   JSL OldMan_ExpandedPrep : BCS .not_home
-    LDA.b #$02 : STA.w $0E80,X
+    LDA.b #$02 : STA.w $0E80, X
     RTS
 
   .not_home
@@ -409,7 +406,7 @@ SpritePrep_OldMan:
   ; Check for lv2 hookshot instead of mirror
   LDA.l $7EF342 : CMP.b #$02 : BNE .spawn
 
-  STZ.w $0DD0,X
+  STZ.w SprState, X
 
   .spawn
   ; FOLLOWER 04
@@ -424,7 +421,7 @@ SpritePrep_OldMan:
 
   RTS
   .dont_spawn
-  STZ.w $0DD0,X
+  STZ.w SprState, X
 
   PHX
   JSL LoadFollowerGraphics
@@ -465,7 +462,7 @@ Follower_HandleTriggerData:
 
   dw $05AC, $04FC, $0001, $0029, $0001 ; Zelda - MESSAGE 0029
 
-  ; ---------------------------------------------------------
+  ; -------------------------------------------------------
 
   .overworld_id
   dw $0005 ; OW 05 - West DM (Updated)
@@ -481,7 +478,7 @@ Follower_HandleTriggerData:
 
   dw $00E8, $0090, $0000, $0028, $000E ; MS telepathy - MESSAGE 0028
 
-  ; ---------------------------------------------------------
+  ; -------------------------------------------------------
 
   .room_boundaries_check
   dw $0000, $001E, $003C, $0046
