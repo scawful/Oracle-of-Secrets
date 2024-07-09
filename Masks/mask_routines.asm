@@ -1256,6 +1256,21 @@ MagicBubbleShot_Halted:
   db $0C, $0C, $0C
 }
 
+DekuLink_CancelBeforeTransition:
+{
+  LDA.w DekuFloating : BEQ +
+    STZ.b $5D
+  +
+  STZ.b $27
+  STZ.b $28
+  RTL
+}
+
+pushpc
+org $07F452
+  JSL DekuLink_CancelBeforeTransition
+pullpc
+
 MagicBubbleGfx:
   incbin "gfx/magic_bubble.bin"
 
