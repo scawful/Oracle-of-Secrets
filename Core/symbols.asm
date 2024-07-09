@@ -285,6 +285,7 @@ CheckIfHitBoxesOverlap = $0683E6
 ; =========================================================
 ; $0FD8 = sprite's X coordinate
 ; $0FDA = sprite's Y coordinate
+Sprite_Get16BitCoords = $0684BD
 Sprite_Get_16_bit_Coords = $0684BD
 
 ; =========================================================
@@ -306,6 +307,7 @@ Sprite_DrawRippleIfInWater = $1EFF8D
 ; check if the sprite is colliding with a solid tile set $0E70, X
 ; ----udlr , u = up, d = down, l = left, r = right
 Sprite_CheckTileCollision = $06E496
+Sprite_CheckTileCollision_long = $06E496
 
 ; =========================================================
 ; $00[0x02] - Entity Y coordinate
@@ -381,6 +383,7 @@ Dungeon_SpriteInducedTilemapUpdate = $01E7A9
 
 ; =========================================================
 ; player can't pass through the sprite
+Sprite_BehaveAsBarrier = $1EF4F3
 Sprite_PlayerCantPassThrough = $1EF4F3
 
 ; =========================================================
@@ -397,6 +400,7 @@ Sprite_ShowMessageUnconditional = $05E219
 ; show a message if we press A and face the sprite
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
+Sprite_ShowSolicitedMessage = $05E1A7
 Sprite_ShowSolicitedMessageIfPlayerFacing = $05E1A7
 
 ; =========================================================
@@ -404,9 +408,11 @@ Sprite_ShowSolicitedMessageIfPlayerFacing = $05E1A7
 ; should be used with Sprite_PlayerCantPassThrough
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
+Sprite_ShowMessageOnContact = $05E1F0
 Sprite_ShowMessageFromPlayerContact = $05E1F0
 
 ; Parameters: Stack, A
+JumpTableLocal = $008781
 UseImplicitRegIndexedLocalJumpTable = $008781
 
 EnableForceBlank = $00893D
@@ -726,6 +732,9 @@ Hookshot_CheckTileCollision = $07D576
 
 Refund_Magic = $07B0E9
 
+CheckIfLinkIsBusy = $07F4D0
+
+Follower_Initialize = $099EFC
 
 ; =========================================================
 ; Ancilla
