@@ -95,6 +95,13 @@ pushpc
 org $09AA5E
   JSL CheckForZoraBabyFollower
 
+; Make Zora follower blue palette
+org $09A902
+  db $02
+
+org $09A8CF
+  org $0180
+
 ; Old man gives link the "shovel" 
 ; Now the goldstar hookshot upgrade
 org $1EE9FF
