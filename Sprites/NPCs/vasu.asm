@@ -118,7 +118,11 @@ Sprite_Vasu_Main:
     %PlayAnimation(0,1,20)
 
     ; Check if the player has found any rings to appraise
-    LDA.l FOUNDRINGS : BEQ .no_rings
+    REP #$30
+    LDA.l FOUNDRINGS 
+    AND.w #$00FF
+    SEP #$30
+    BEQ .no_rings
       ; Check if the player has any rings, if not give them one for free
       LDA.l MAGICRINGS : BEQ .no_rings_yet
         REP #$20
@@ -176,7 +180,7 @@ Sprite_Vasu_Main:
     %PlayAnimation(0,1,24)
      ; "I am Error"
     %ShowSolicitedMessage($0121) : BCC +
-      JSL GetRandomInt : AND.b #$3F : STA.l FOUNDRINGS
+      JSL GetRandomInt : AND.b #$06 : STA.l FOUNDRINGS
     +
     RTS
   }
