@@ -148,7 +148,7 @@ ZoraBaby_CheckForWaterGateSwitch:
 
   LDX #$10 
   -
-  LDA.w SprType, X : CMP.b #$03 : BEQ .found_switch
+  LDA.w SprType, X : CMP.b #$04 : BEQ .found_switch
   DEX : BPL -
   ; Water gate switch not found
   PLX
@@ -163,10 +163,10 @@ ZoraBaby_CheckForWaterGateSwitch:
   ; X is the Zora baby Sprite
   ; Y is the Water gate switch Sprite
   ; Check if the Zora baby is on top of the switch
-  LDA.w SprX, X : CMP.w SprX, Y : BNE .not_on_switch
-  LDA.w SprY, X : CMP.w SprY, Y : BNE .not_on_switch
-  LDA.w SprYH, X : CMP.w SprYH, Y : BNE .not_on_switch
-  LDA.w SprXH, X : CMP.w SprXH, Y : BNE .not_on_switch
+  LDA.w SprX, X : CLC : ADC #$09 : CMP.w SprX, Y : BCC .not_on_switch
+  LDA.w SprX, X : SEC : SBC #$09 : CMP.w SprX, Y : BCS .not_on_switch
+  LDA.w SprY, X : CLC : ADC #$12 : CMP.w SprY, Y : BCC .not_on_switch
+  LDA.w SprY, X : SEC : SBC #$12 : CMP.w SprY, Y : BCS .not_on_switch
 
   SEC
   RTS
@@ -179,6 +179,14 @@ ZoraBaby_GlobalBehavior:
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
     JSL Sprite_Move
+
+    JSR ZoraBaby_CheckForWaterGateSwitch : BCC +
+      ; Set end of switch graphics 
+      LDA.b #$0D : STA.w SprGfx, Y
+      ; Set the water gate tag
+      LDA.b #$01 : STA.w $0642
+      ; Goto ZoraBaby_PullSwitch
+      LDA.b #$05 : STA.w SprAction, X
   +
   RTL
 }
@@ -225,7 +233,7 @@ SpritePrep_Locksmith:
   JSL UploadZoraBabyGraphicsPrep : AND.b #$10 : BEQ .exit
     LDA.b #$04 : STA.w SprAction, X
   .exit
-  
+
   RTS
 }
 warnpc $068D7F
@@ -249,7 +257,7 @@ Sprite_39_ZoraBaby:
   dw ZoraBaby_OfferService        ; I can help! (Follow/Stay)
   dw ZoraBaby_RespondToAnswer     ; Goto FollowLink or JustPromiseOkay
   dw ZoraBaby_AgreeToWait
-  dw LockSmith_SilentDismay
+  dw ZoraBaby_PullSwitch
 
   ; =======================================================
 
@@ -368,7 +376,7 @@ Sprite_39_ZoraBaby:
 
   ; =======================================================
 
-  LockSmith_SilentDismay:
+  ZoraBaby_PullSwitch:
   {
     LDA.b #$07 ; MESSAGE 0107
     LDY.b #$01
