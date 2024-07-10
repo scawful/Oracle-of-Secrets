@@ -56,22 +56,23 @@ Menu_Entry:
   SEP #$20
   PLB
   RTL
+
+  .vectors
+    dw Menu_InitGraphics       ; 00
+    dw Menu_UploadRight        ; 01
+    dw Menu_UploadLeft         ; 02
+    dw Menu_ScrollDown         ; 03
+    dw Menu_ItemScreen         ; 04
+    dw Menu_ScrollTo           ; 05
+    dw Menu_StatsScreen        ; 06 
+    dw Menu_ScrollFrom         ; 07
+    dw Menu_ScrollUp           ; 08
+    dw Menu_RingBox            ; 09
+    dw Menu_Exit               ; 0A
+    dw Menu_InitiateScrollDown ; 0B
+    dw Menu_MagicBag           ; 0C
+    dw Menu_SongMenu           ; 0D
 }
-.vectors
-  dw Menu_InitGraphics       ; 00
-  dw Menu_UploadRight        ; 01
-  dw Menu_UploadLeft         ; 02
-  dw Menu_ScrollDown         ; 03
-  dw Menu_ItemScreen         ; 04
-  dw Menu_ScrollTo           ; 05
-  dw Menu_StatsScreen        ; 06 
-  dw Menu_ScrollFrom         ; 07
-  dw Menu_ScrollUp           ; 08
-  dw Menu_RingBox            ; 09
-  dw Menu_Exit               ; 0A
-  dw Menu_InitiateScrollDown ; 0B
-  dw Menu_MagicBag           ; 0C
-  dw Menu_SongMenu           ; 0D
 
 ; =========================================================
 ; 00 MENU INIT GRAPHICS 
@@ -529,7 +530,6 @@ Menu_SongMenu:
 {
   REP #$30
   JSR Menu_DrawMusicNotes
-  
 
   INC $0207
   LDA.w $030F : BEQ .continue
