@@ -18,12 +18,16 @@ incsrc "Dungeons/house_walls.asm"
 incsrc "Dungeons/Objects/object_handler.asm"
 print  "End of object_handler.asm         ", pc
 
+; Tag: Holes8
 incsrc "Dungeons/together_warp_tag.asm"
 incsrc "Dungeons/spike_subtype.asm"
 
+; Tag: Holes7
 incsrc "Dungeons/house_tag.asm"
 
+; Tag: Holes0
 incsrc "Dungeons/floor_puzzle.asm"
+print "End of floor_puzzle.asm           ", pc
 
 incsrc "Dungeons/attract_scenes.asm"
 print  "End of attract_scenes.asm         ", pc
@@ -69,4 +73,3 @@ org $01C71B
 org $01C727
   LDA.l $7EF374 ; Pendants in DW
 
-; pullpc
