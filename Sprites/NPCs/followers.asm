@@ -78,7 +78,6 @@ ZoraBaby_RevertToSprite:
   PHA
 
   LDA.b #$39 : JSL Sprite_SpawnDynamically
-  JSL SpritePrep_ResetProperties
 
   PLA
 
@@ -142,13 +141,29 @@ UploadZoraBabyGraphicsPrep:
 ; Check if the Zora baby is on top of the water gate switch
 ; Returns carry set if the Zora baby is on top of the switch
 
+ZoraBaby_CheckForWaterSwitchSprite:
+{
+  PHX
+
+  LDX #$10 
+  -
+  LDA.w SprType, X 
+  CMP #$21 : BEQ ZoraBaby_CheckForWaterGateSwitch_found_switch
+  DEX : BPL -
+  ; Water gate switch not found
+  PLX
+  .not_on_switch
+  CLC
+  RTS
+}
+
 ZoraBaby_CheckForWaterGateSwitch:
 {
   PHX
 
   LDX #$10 
   -
-  LDA.w SprType, X : CMP.b #$04 : BEQ .found_switch
+  LDA.w SprType, X : CMP #$04 : BEQ .found_switch
   DEX : BPL -
   ; Water gate switch not found
   PLX
@@ -180,11 +195,18 @@ ZoraBaby_GlobalBehavior:
     JSL ThrownSprite_TileAndSpriteInteraction_long
     JSL Sprite_Move
 
-    JSR ZoraBaby_CheckForWaterGateSwitch : BCC +
+    JSR ZoraBaby_CheckForWaterGateSwitch : BCC ++
       ; Set end of switch graphics 
       LDA.b #$0D : STA.w SprGfx, Y
       ; Set the water gate tag
       LDA.b #$01 : STA.w $0642
+      ; Goto ZoraBaby_PullSwitch
+      LDA.b #$05 : STA.w SprAction, X
+    ++
+
+    JSR ZoraBaby_CheckForWaterSwitchSprite : BCC +
+      ; Set end of switch graphics 
+      LDA.b #$01 : STA.w SprAction, Y
       ; Goto ZoraBaby_PullSwitch
       LDA.b #$05 : STA.w SprAction, X
   +
