@@ -205,12 +205,15 @@ ZoraBaby_CheckForWaterGateSwitch:
 ZoraBaby_GlobalBehavior:
 {
   JSL Sprite_BehaveAsBarrier
+  JSR Follower_WatchLink
   LDA.w SprAction, X : CMP.b #$02 : BEQ +
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
     JSL Sprite_Move
 
     JSR ZoraBaby_CheckForWaterGateSwitch : BCC ++
+      ; Face head up towards switch
+      LDA.b #$20 : STA.w FollowerHeadOffset
       ; Set end of switch graphics 
       LDA.b #$0D : STA.w SprGfx, Y
       ; Set the water gate tag
@@ -224,6 +227,7 @@ ZoraBaby_GlobalBehavior:
       LDA.b #$01 : STA.w SprAction, Y
       ; Goto ZoraBaby_PullSwitch
       LDA.b #$05 : STA.w SprAction, X
+      LDA.w SprX, X : CLC : ADC #$10 : STA.w SprX, X
   +
   RTL
 }
@@ -299,6 +303,7 @@ Sprite_39_ZoraBaby:
   ; =======================================================
 
   LockSmith_Chillin:
+  {
     LDA.b #$07 ; MESSAGE 0107
     LDY.b #$01
     JSL Sprite_ShowSolicitedMessage 
@@ -306,33 +311,22 @@ Sprite_39_ZoraBaby:
     LDA.w $0D10, X
     PHA
 
-    SEC
-    SBC.b #$10
-    STA.w $0D10, X
+    SEC : SBC.b #$10 : STA.w $0D10, X
 
     JSR Sprite_Get16BitCoords_Local
 
-    LDA.b #$01
-    STA.w $0D50, X
-    STA.w $0D40, X
+    LDA.b #$01 : STA.w $0D50, X : STA.w $0D40, X
 
-    JSL Sprite_CheckTileCollision_long
-    BNE .dont_stalk_link
-
-    INC.w SprAction, X
-
-    LDA.l $7EF3CC
-    CMP.b #$00
-    BEQ .dont_stalk_link
-
-    LDA.b #$05
-    STA.w SprAction, X
-
+    JSL Sprite_CheckTileCollision_long : BNE .dont_stalk_link
+      INC.w SprAction, X
+      LDA.l $7EF3CC : CMP.b #$00 : BEQ .dont_stalk_link
+        LDA.b #$05 : STA.w SprAction, X
     .dont_stalk_link
     PLA
     STA.w $0D10, X
 
     RTS
+  }
 
   ; =======================================================
 
@@ -404,6 +398,7 @@ Sprite_39_ZoraBaby:
   {
     LDA.b #$0B ; MESSAGE 010B
     LDY.b #$01
+    LDA.b #$A0 : STA.w $0AEA
     JSL Sprite_ShowSolicitedMessage
     LDA.w SprTimerB, X : BNE +
       STZ.w SprAction, X
