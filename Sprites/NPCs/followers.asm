@@ -131,12 +131,47 @@ UploadZoraBabyGraphicsPrep:
   RTL
 }
 
+; =========================================================
+; Check if the Zora baby is on top of the water gate switch
+; Returns carry set if the Zora baby is on top of the switch
+
+ZoraBaby_CheckForWaterGateSwitch:
+{
+  PHX
+
+  LDX #$10 
+  -
+  LDA.w SprType, X : CMP.b #$03 : BEQ .found_switch
+  DEX : BPL -
+  ; Water gate switch not found
+  PLX
+  .not_on_switch
+  CLC
+  RTS
+
+  .found_switch
+  TXY
+  PLX
+
+  ; X is the Zora baby Sprite
+  ; Y is the Water gate switch Sprite
+  ; Check if the Zora baby is on top of the switch
+  LDA.w SprX, X : CMP.w SprX, Y : BNE .not_on_switch
+  LDA.w SprY, X : CMP.w SprY, Y : BNE .not_on_switch
+  LDA.w SprYH, X : CMP.w SprYH, Y : BNE .not_on_switch
+  LDA.w SprXH, X : CMP.w SprXH, Y : BNE .not_on_switch
+
+  SEC
+  RTS
+}
+
 ZoraBaby_GlobalBehavior:
 {
   JSL Sprite_BehaveAsBarrier
   LDA.w SprAction, X : CMP.b #$02 : BEQ +
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
+    JSL Sprite_Move
   +
   RTL
 }
