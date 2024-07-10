@@ -185,6 +185,7 @@ pullpc
   LDA $0114 : CMP #$85 : BEQ .player_is_falling
               CMP #$09 : BEQ .player_is_falling
               CMP #$20 : BEQ .fall_into_pit
+              CMP #$23 : BEQ .return_default
 
   ; Check if the ground level is safe
   ; Otherwise, eject the player back to the surface
