@@ -57,6 +57,20 @@ RoomTag_MinishShutterDoor:
   JML $01CC5A ; RoomTag_TriggerHoles return
 }
 
+NewWaterOverlayData:
+; Horizontal
+db $1B, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 06, 28 } | Size: 0D
+db $51, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 14, 28 } | Size: 05
+db $71, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 1C, 28 } | Size: 05
+db $92, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 24, 28 } | Size: 09
+db $A2, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 24, 28 } | Size: 09
+db $C1, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 0C } | Size: 07
+
+; Vertical 
+db $A1, $33, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 0C } | Size: 07
+db $A1, $72, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 1C } | Size: 06
+db $FF, $FF ; End
+
 print "End of dungeons.asm               ", pc
 
 pushpc
@@ -73,3 +87,8 @@ org $01C71B
 org $01C727
   LDA.l $7EF374 ; Pendants in DW
 
+; RoomTag_WaterGate
+org $01CBAC
+LDA.w #NewWaterOverlayData>>16
+STA.b $B9
+LDA.w #NewWaterOverlayData>>0
