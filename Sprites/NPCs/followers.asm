@@ -12,10 +12,25 @@ FollowerZ       = $7E1A50
 FollowerLayer   = $7E1A64
 
 ; Follower head/body gfx offsets
-Flwho           = $7E0AE8
-Flwoh           = $7E0AE9
-Flwbo           = $7E0AEA
-Flwboh          = $7E0AEB
+; Down:0x00 LR:0x80 Up:0x20
+FollowerHeadOffset    = $7E0AE8
+FollowerHeadOffsetH   = $7E0AE9
+
+; Walk LR:0x60,0x80 0xA0:Down 0xC0:Up
+FollowerBodyOffset    = $7E0AEA
+FollowerBodyOffsetH   = $7E0AEB
+
+Follower_WatchLink:
+{
+  JSL Sprite_IsToRightOfPlayer : TYA : BEQ .right
+    LDA.b #$40 : STA.w FollowerHeadOffset
+    LDA.b #$60 : STA.w FollowerBodyOffset
+    RTS
+  .right
+  LDA.b #$00 : STA.w FollowerHeadOffset
+  LDA.b #$A0 : STA.w FollowerBodyOffset
+  RTS
+}
 
 ; Follower head
 Flwhgfxt        = $7E0AEC
