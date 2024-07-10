@@ -1,47 +1,54 @@
 ; =========================================================
 ; Followers
 
-POSY            = $7E0020
-POSYH           = $7E0021
-POSX            = $7E0022
-POSXH           = $7E0023
-
 ; 20 steps of animation and movement caching for followers
-FOLLOWERYL      = $7E1A00
-FOLLOWERYH      = $7E1A14
+FollowerYL      = $7E1A00
+FollowerYH      = $7E1A14
 
-FOLLOWERXL      = $7E1A28
-FOLLOWERXH      = $7E1A3C
+FollowerXL      = $7E1A28
+FollowerXH      = $7E1A3C
 
-FOLLOWERZ       = $7E1A50
-FOLLOWERLAYER   = $7E1A64
+FollowerZ       = $7E1A50
+FollowerLayer   = $7E1A64
 
 ; Follower head/body gfx offsets
-FLWHO           = $7E0AE8
-FLWHOH          = $7E0AE9
-FLWBO           = $7E0AEA
-FLWBOH          = $7E0AEB
+Flwho           = $7E0AE8
+Flwoh           = $7E0AE9
+Flwbo           = $7E0AEA
+Flwboh          = $7E0AEB
 
 ; Follower head
-FLWHGFXT        = $7E0AEC
-FLWHGFXTH       = $7E0AED
-FLWHGFXB        = $7E0AEE
-FLWHGFXBH       = $7E0AEF
+Flwhgfxt        = $7E0AEC
+Flwhgfxth       = $7E0AED
+Flwhgfxb        = $7E0AEE
+Flwhgfxbh       = $7E0AEF
 
 ; Follower body
-FLWBGFXT        = $7E0AF0
-FLWBGFXTH       = $7E0AF1
-FLWBGFXB        = $7E0AF2
-FLWBGFXBH       = $7E0AF3
+Flwbgfxt        = $7E0AF0
+Flwbgfxth       = $7E0AF1
+Flwbgfxb        = $7E0AF2
+Flwbgfxbh       = $7E0AF3
 
 ; Index from 0x00 to 0x13 for follower animation step index. Used for reading data.
-FLWANIMIR       = $7E02CF
+Flwanimir       = $7E02CF
+
+; Flag set when using hookshot with a follower. Forces game mode check.
+FollowerHook    = $7E02D0
+
+; Caches FLWANIMIW when hookshotting is finished.
+FollowerHookI   = $7E02D1
+
+; Countdown timer preventing followers from being regrabbed after dropping for a brief period.
+FLWGRABTIME     = $7E02D2
+
+; Index from 0x00 to 0x13 for follower animation step index. Used for writing data.
+FLWANIMIW       = $7E02D3
 
 ; Cache of follower properties
-FOLLOWCYL       = $7EF3CD
-FOLLOWCYH       = $7EF3CE
-FOLLOWCXL       = $7EF3CF
-FOLLOWCXH       = $7EF3D0
+FollowCacheYL   = $7EF3CD
+FollowCacheYH   = $7EF3CE
+FollowCacheXL   = $7EF3CF
+FollowCacheXH   = $7EF3D0
 
 LoadFollowerGraphics = $00D423
 
