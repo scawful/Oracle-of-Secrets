@@ -24,6 +24,8 @@ RingSlot3      = $7EF38E
 MagicRing_CheckForSteadfast:
 {
   LDA.l RingSlot1 : AND.b #$07 : BEQ +
+  LDA.l RingSlot2 : AND.b #$07 : BEQ +
+  LDA.l RingSlot3 : AND.b #$07 : BEQ +
     STZ.b LinkRecoilX
     STZ.b LinkRecoilY
   +
@@ -46,6 +48,8 @@ MagicRing_CheckForLight:
 {
   PHA 
   LDA.l RingSlot1 : AND.b #$05 : BEQ +
+  LDA.l RingSlot2 : AND.b #$05 : BEQ +
+  LDA.l RingSlot3 : AND.b #$05 : BEQ +
     PLA
     SEC
     SBC.b #$10
@@ -69,6 +73,8 @@ MagicRing_CheckForBlast:
 {
   CPX #$07 : BNE +
     LDA.l RingSlot1 : AND.b #$06 : BEQ +
+    LDA.l RingSlot2 : AND.b #$06 : BEQ +
+    LDA.l RingSlot3 : AND.b #$06 : BEQ +
       LDA.b #$0D
       RTL
   +
@@ -89,6 +95,8 @@ pullpc
 MagicRings_CheckForHeart:
 {
   LDA.l RingSlot1 : AND.b #$04 : BEQ ++
+  LDA.l RingSlot2 : AND.b #$04 : BEQ ++
+  LDA.l RingSlot3 : AND.b #$04 : BEQ ++
     LDA.l CURHP : CMP.l MAXHP : BCS ++
       LDA.l FrameCounter : LSR #2 : AND.b #$3F : BEQ +
         JMP ++
