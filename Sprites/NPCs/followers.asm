@@ -119,16 +119,18 @@ ZoraBaby_RevertToSprite:
 
 CheckForZoraBabyTransitionToSprite:
 {
-  ; If we are standing on a star tile
-  LDA.w $0114 : CMP.b #$3B : BNE +
-    LDA.b #$00
-    JSR ZoraBaby_RevertToSprite
-  +
+  LDA.l $7EF3CC : CMP.b #$09 : BNE .not_zora
+    ; If we are standing on a star tile
+    LDA.w $0114 : CMP.b #$3B : BNE +
+      LDA.b #$00
+      JSR ZoraBaby_RevertToSprite
+    +
 
-  ; If we are outdoors, clear the follower
-  LDA.b $1B : BNE +
-    LDA.b #$00 : STA.l $7EF3CC
-  +
+    ; If we are outdoors, clear the follower
+    LDA.b $1B : BNE +
+      LDA.b #$00 : STA.l $7EF3CC
+    +
+  .not_zora
   LDX.b $10
   LDY.b $11
   RTL
