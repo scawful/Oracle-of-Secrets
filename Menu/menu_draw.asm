@@ -764,7 +764,7 @@ Menu_DrawRingBox:
 Menu_DrawMagicRings:
 {
   LDA.l RingSlot1 : AND.w #$00FF : CMP.w #$0001 : BCC .no_attack
-    LDA.w #$0002 : BRA .draw_storms
+    BRA .draw_storms
   .no_attack
   LDA.w #$0001
   .draw_storms
@@ -774,7 +774,7 @@ Menu_DrawMagicRings:
   JSR DrawMenuItem
 
   LDA.l RingSlot2 : AND.w #$00FF : CMP.w #$0001 : BCC .no_defense
-    LDA.w #$0003 : BRA .draw_defense
+    BRA .draw_defense
   .no_defense
   LDA.w #$0001
   .draw_defense
@@ -784,7 +784,7 @@ Menu_DrawMagicRings:
   JSR DrawMenuItem
 
   LDA.l RingSlot3 : AND.w #$00FF : CMP.w #$0001 : BCC .no_luck
-    LDA.w #$0004 : BRA .draw_luck
+    BRA .draw_luck
   .no_luck
   LDA.w #$0001
   .draw_luck

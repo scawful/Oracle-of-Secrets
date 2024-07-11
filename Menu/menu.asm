@@ -652,7 +652,7 @@ Menu_RingBox:
   REP #$10
   LDX.w Menu_RingIconCursorPositions, Y
   JSR Menu_DrawCursor
-  JSR Submenu_Return
+  JSR RingMenu_Controls
   SEP #$20
 
   LDA.b #$22 : STA.w $0116
@@ -668,6 +668,40 @@ Menu_RingIconCursorPositions:
   dw menu_offset(12,6)
   dw menu_offset(12,10)
   dw menu_offset(12,14)
+
+RingMenu_Controls:
+{
+  ; Load the current ring selected (0-5) into A
+  REP #$30
+  LDA.w $020B
+  AND.w #$00FF
+  SEP #$30
+  ; Set the current ring to the cursor position
+  TAY                     ; Transfer A to Y for indexing
+  LDA.b $F6 : BIT.b #$80 : BEQ +  ; Check if the confirm button is pressed
+    print pc
+    LDA .rings, Y         ; Load the ring bitmask
+    AND.l MAGICRINGS      ; Check if the ring is owned
+    BEQ +                 ; If not, skip setting the ring
+      INY #2
+      TYA                 ; Transfer Y to A
+      STA.l RingSlot1     ; Set RingSlot1 to the selected ring bitmask
+  +
+
+  ; Return to item menu if player presses X
+  LDA.b $F6 : BIT.b #$40 : BEQ + 
+    LDA.b #$01 : STA.w $0200
+  +
+
+  ; Close the menu if the player presses start
+  LDA.b $F4 : BIT.b #$10 : BEQ +
+    LDA.b #$08 : STA.w $0200
+  +
+  RTS
+
+  .rings
+    db $20, $10, $08, $04, $02, $01
+}
 
 Submenu_Return:
 {
