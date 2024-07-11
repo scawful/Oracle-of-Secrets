@@ -717,7 +717,7 @@ RingMenu_Controls:
     BEQ +                 ; If not, skip setting the ring
       INY #2
       TYA                 ; Transfer Y to A
-      JSR StoreRingToSlotStack
+      JSR RingMenu_StoreRingToSlotStack
   +
 
   ; Return to item menu if player presses X

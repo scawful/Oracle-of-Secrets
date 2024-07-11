@@ -802,7 +802,7 @@ Menu_DrawMagicRingsInBox:
   LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
   REP #$30
 
-  LDA.l FOUNDRINGS : AND.w #$00FF : BIT.w #$0020 : BEQ .no_attack
+  LDA.l MAGICRINGS : AND.w #$00FF : BIT.w #$0020 : BEQ .no_attack
     LDA.w #$0002 : BRA +
   .no_attack
   LDA.w #$0001
@@ -812,7 +812,7 @@ Menu_DrawMagicRingsInBox:
   LDY.w #RingGFX
   JSR DrawMenuItem
 
-  LDA.l FOUNDRINGS : AND.w #$00FF : BIT.w #$0010 : BEQ .no_defense
+  LDA.l MAGICRINGS : AND.w #$00FF : BIT.w #$0010 : BEQ .no_defense
     LDA.w #$0003 : BRA +
   .no_defense
   LDA.w #$0001
@@ -822,7 +822,7 @@ Menu_DrawMagicRingsInBox:
   LDY.w #RingGFX
   JSR DrawMenuItem
 
-  LDA.l FOUNDRINGS : AND.w #$00FF : BIT.w #$0008 : BEQ .no_steadfast
+  LDA.l MAGICRINGS : AND.w #$00FF : BIT.w #$0008 : BEQ .no_steadfast
     LDA.w #$0004 : BRA +
   .no_steadfast
   LDA.w #$0001
@@ -832,7 +832,7 @@ Menu_DrawMagicRingsInBox:
   LDY.w #RingGFX
   JSR DrawMenuItem
 
-  LDA.l FOUNDRINGS : AND.w #$00FF : BIT.w #$0004 : BEQ .no_light
+  LDA.l MAGICRINGS : AND.w #$00FF : BIT.w #$0004 : BEQ .no_light
     LDA.w #$0005 : BRA +
   .no_light
   LDA.w #$0001
@@ -842,7 +842,7 @@ Menu_DrawMagicRingsInBox:
   LDY.w #RingGFX
   JSR DrawMenuItem
 
-  LDA.l FOUNDRINGS : AND.w #$00FF : BIT.w #$0002 : BEQ .no_blast
+  LDA.l MAGICRINGS : AND.w #$00FF : BIT.w #$0002 : BEQ .no_blast
     LDA.w #$0006 : BRA +
   .no_blast
   LDA.w #$0001
@@ -852,7 +852,7 @@ Menu_DrawMagicRingsInBox:
   LDY.w #RingGFX
   JSR DrawMenuItem
 
-  LDA.l FOUNDRINGS : AND.w #$00FF : BIT.w #$0001 : BEQ .no_heart
+  LDA.l MAGICRINGS : AND.w #$00FF : BIT.w #$0001 : BEQ .no_heart
     LDA.w #$0007 : BRA +
   .no_heart
   LDA.w #$0001
