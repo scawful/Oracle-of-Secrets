@@ -173,6 +173,9 @@ Menu_RingDescriptions:
   dw "_BOMB_DAMAGE_UP_"
   dw "__NO_KNOCKBACK__"
 
+Menu_RingsFound:
+  dw "NEW_RING_FOUND__"
+
 Menu_DrawItemName:
 {
   SEP #$30
@@ -299,6 +302,14 @@ DrawMagicRingNames:
       LDA.w Menu_RingDescriptions, X : STA.w $1590, Y
       INX #2 : INY #2
     CPY #$0020 : BCC .draw_ring_desc_loop
+
+    LDA.l MAGICRINGS : AND.w #$00FF : STA.b $00
+    LDA.l FOUNDRINGS : AND.w #$00FF : CMP.b $00 : BEQ +
+      LDY.w #$0000
+      .draw_found_ring
+      LDA.w Menu_RingsFound, Y : STA.w $1692, Y
+      INY #2 : CPY #$001C : BCC .draw_found_ring
+    +
 
     SEP #$30
     RTS
