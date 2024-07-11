@@ -14,6 +14,7 @@ MAGICRINGS     = $7EF3D8
 RingSlot1      = $7EF38C
 RingSlot2      = $7EF38D
 RingSlot3      = $7EF38E
+RingSlotsNum   = $7EF38F
 
 ; Power     - Attack Up, Defense Down
 ; Armor     - Defense Up, Attack Down

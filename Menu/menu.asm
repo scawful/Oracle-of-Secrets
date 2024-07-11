@@ -671,6 +671,8 @@ Menu_RingIconCursorPositions:
 
 RingMenu_StoreRingToSlotStack:
 {
+  ; TODO: Check how many ring slots we currently have 
+
   ; Check if the ring is already in a slot
   STA.b $00
   LDA.b $00 : CMP.l RingSlot1 : BEQ .return
