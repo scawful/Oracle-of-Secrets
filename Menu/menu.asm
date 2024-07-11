@@ -669,6 +669,39 @@ Menu_RingIconCursorPositions:
   dw menu_offset(12,10)
   dw menu_offset(12,14)
 
+RingMenu_StoreRingToSlotStack:
+{
+  ; Check if the ring is already in a slot
+  STA.b $00
+  LDA.b $00 : CMP.l RingSlot1 : BEQ .return
+  LDA.b $00 : CMP.l RingSlot2 : BEQ .return
+  LDA.b $00 : CMP.l RingSlot3 : BEQ .return
+  PHA
+  
+  ; Check the SRAM for an available ring slot
+  ; If none is available we shift the stack
+  ; $7EF38C-7EF38E (Size 03)
+
+  LDA.l RingSlot1 : BEQ .slot1_available
+  LDA.l RingSlot2 : BEQ .slot2_available
+  LDA.l RingSlot3 : BEQ .slot3_available
+
+  ; Shift the stack
+  LDA.l RingSlot2 : STA.l RingSlot1
+  LDA.l RingSlot3 : STA.l RingSlot2
+  .slot3_available
+  PLA : STA.l RingSlot3
+  .return
+  RTS
+  
+  .slot1_available
+  PLA : STA.l RingSlot1
+  RTS
+  .slot2_available
+  PLA : STA.l RingSlot2
+  RTS
+}
+
 RingMenu_Controls:
 {
   ; Load the current ring selected (0-5) into A
@@ -679,13 +712,12 @@ RingMenu_Controls:
   ; Set the current ring to the cursor position
   TAY                     ; Transfer A to Y for indexing
   LDA.b $F6 : BIT.b #$80 : BEQ +  ; Check if the confirm button is pressed
-    print pc
     LDA .rings, Y         ; Load the ring bitmask
     AND.l MAGICRINGS      ; Check if the ring is owned
     BEQ +                 ; If not, skip setting the ring
       INY #2
       TYA                 ; Transfer Y to A
-      STA.l RingSlot1     ; Set RingSlot1 to the selected ring bitmask
+      JSR StoreRingToSlotStack
   +
 
   ; Return to item menu if player presses X
