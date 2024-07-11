@@ -73,7 +73,9 @@ LinkState_CheckForMinishForm:
 LinkState_CheckMinishTile:
 {
     LDA $02B2 : BEQ .blocked ; no form
+      CMP.w #$0007 : BEQ .allowed  ; moosh can fly over
       CMP.w #$0005 : BNE .blocked  ; not minish 
+      .allowed
         LDA $0A : TSB $0343
         RTS
 
