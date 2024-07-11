@@ -11,6 +11,10 @@
 FOUNDRINGS     = $7EF3D7
 MAGICRINGS     = $7EF3D8
 
+RingSlot1      = $7EF38C
+RingSlot2      = $7EF38D
+RingSlot3      = $7EF38E
+
 ; Power     - Attack Up, Defense Down
 ; Armor     - Defense Up, Attack Down
 
@@ -19,7 +23,7 @@ MAGICRINGS     = $7EF3D8
 
 MagicRing_CheckForSteadfast:
 {
-  LDA.l MAGICRINGS : AND.b #$08 : BEQ +
+  LDA.l RingSlot1 : AND.b #$07 : BEQ +
     STZ.b LinkRecoilX
     STZ.b LinkRecoilY
   +
@@ -41,7 +45,7 @@ pullpc
 MagicRing_CheckForLight:
 {
   PHA 
-  LDA.l MAGICRINGS : AND.b #$04 : BEQ +
+  LDA.l RingSlot1 : AND.b #$05 : BEQ +
     PLA
     SEC
     SBC.b #$10
@@ -64,7 +68,7 @@ pullpc
 MagicRing_CheckForBlast:
 {
   CPX #$07 : BNE +
-    LDA.l MAGICRINGS : AND.b #$02 : BEQ +
+    LDA.l RingSlot1 : AND.b #$06 : BEQ +
       LDA.b #$0D
       RTL
   +
@@ -84,7 +88,7 @@ pullpc
 
 MagicRings_CheckForHeart:
 {
-  LDA.l MAGICRINGS : AND.b #$01 : BEQ ++
+  LDA.l RingSlot1 : AND.b #$04 : BEQ ++
     LDA.l CURHP : CMP.l MAXHP : BCS ++
       LDA.l FrameCounter : LSR #2 : AND.b #$3F : BEQ +
         JMP ++
