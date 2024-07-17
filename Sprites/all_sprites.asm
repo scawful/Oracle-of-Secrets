@@ -368,6 +368,11 @@ org $08C2E3
 org $0CDC26
     db $80 ; replace a $F0 (BEQ) with a $80 (BRA).
 
+; Update Catfish Item Get to Bottle
+org $1DE184
+#_1DE184: LDA.b #$16 ; ITEMGET 11
+#_1DE186: STA.w $0D90,X
+
 ; Follower_Disable
 ; Don't disable Kiki so we can switch maps with him.
 org $09ACF3
