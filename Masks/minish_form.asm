@@ -88,7 +88,9 @@ LinkState_CheckMinishTile:
 CheckForMinishLift:
 {
   PHA
+  LDA.w $02E0 : BNE .no_lift ; bunny form
   LDA.w $02B2 : CMP.b #$05 : BNE .return
+  .no_lift
     PLA
     AND.l $7EF379 : AND.b #$80
     RTL
