@@ -54,7 +54,7 @@ Sprite_DekuScrub_Prep:
 {
   PHB : PHK : PLB
 
-  LDA.b #$80 : STA.w $0CAA, X
+  LDA.b #$80 : STA.w SprDefl, X
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .DekuButler
                         CMP.b #$02 : BEQ .DekuPrincess
 

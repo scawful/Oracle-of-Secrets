@@ -285,7 +285,7 @@ CheckIfHitBoxesOverlap = $0683E6
 ; =========================================================
 ; $0FD8 = sprite's X coordinate
 ; $0FDA = sprite's Y coordinate
-Sprite_Get16BitCoords = $0684BD
+Sprite_Get16BitCoords_Local = $0684C1
 Sprite_Get_16_bit_Coords = $0684BD
 
 ; =========================================================

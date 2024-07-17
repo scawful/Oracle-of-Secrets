@@ -162,10 +162,6 @@ namespace Oracle
 
   ; -------------------------------------------------------
   ; Misc
-  
-  ; LinkState_Bunny.not_moving
-  org $078427 
-    JSR $9BAA ; Link_HandleAPress
 
   incsrc "Util/item_cheat.asm"
 
