@@ -109,6 +109,7 @@ Sprite_MakuTree_Main:
   {
     %ShowSolicitedMessage($22) : BCC .no_talk
       LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
+      INC.w SprAction, X
     .no_talk
     RTS
   }
@@ -137,25 +138,25 @@ Sprite_MakuTree_Main:
 
     ; TODO: Check if Link has the essence for the dream
     .mushroom_grotto
-    LDA.b #$01 : STA.w CurrentDream
+    LDA.b #$00 : STA.w CurrentDream
     JMP .enter_dream
     .tail_palace
-    LDA.b #$02 : STA.w CurrentDream
+    LDA.b #$01 : STA.w CurrentDream
     JMP .enter_dream
     .kalyxo_castle
-    LDA.b #$04 : STA.w CurrentDream
+    LDA.b #$02 : STA.w CurrentDream
     JMP .enter_dream
     .zora_temple
-    LDA.b #$08 : STA.w CurrentDream
+    LDA.b #$03 : STA.w CurrentDream
     JMP .enter_dream
     .glacia_estate
-    LDA.b #$10 : STA.w CurrentDream
+    LDA.b #$04 : STA.w CurrentDream
     JMP .enter_dream
     .goron_mines
-    LDA.b #$20 : STA.w CurrentDream
+    LDA.b #$05 : STA.w CurrentDream
     JMP .enter_dream
     .dragon_ship
-    LDA.b #$40 : STA.w CurrentDream
+    LDA.b #$06 : STA.w CurrentDream
     .enter_dream
     JSL Link_EnterDream
 
