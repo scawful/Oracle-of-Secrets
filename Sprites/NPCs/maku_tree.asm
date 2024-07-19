@@ -124,7 +124,6 @@ Sprite_MakuTree_Main:
     CMP.b #$10 : BCC .glacia_estate
     CMP.b #$20 : BCC .goron_mines
     CMP.b #$40 : BCC .dragon_ship
-    RTS
 
     ; .kzt dimg
     ;   m - Mushroom Grotto
@@ -138,12 +137,27 @@ Sprite_MakuTree_Main:
 
     ; TODO: Check if Link has the essence for the dream
     .mushroom_grotto
+    LDA.b #$01 : STA.w CurrentDream
+    JMP .enter_dream
     .tail_palace
+    LDA.b #$02 : STA.w CurrentDream
+    JMP .enter_dream
     .kalyxo_castle
+    LDA.b #$04 : STA.w CurrentDream
+    JMP .enter_dream
     .zora_temple
+    LDA.b #$08 : STA.w CurrentDream
+    JMP .enter_dream
     .glacia_estate
+    LDA.b #$10 : STA.w CurrentDream
+    JMP .enter_dream
     .goron_mines
+    LDA.b #$20 : STA.w CurrentDream
+    JMP .enter_dream
     .dragon_ship
+    LDA.b #$40 : STA.w CurrentDream
+    .enter_dream
+    JSL Link_EnterDream
 
     RTS
   }
