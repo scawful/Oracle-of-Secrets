@@ -72,6 +72,8 @@ Sprite_MakuTree_Main:
   dw MakuTree_SpawnHeartContainer
   dw MakuTree_HasMetLink
 
+  dw MakuTree_HandleDreams
+
   MakuTree_Handler:
   {
     ; Check the progress flags 
@@ -108,6 +110,41 @@ Sprite_MakuTree_Main:
     %ShowSolicitedMessage($22) : BCC .no_talk
       LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
     .no_talk
+    RTS
+  }
+
+  MakuTree_HandleDreams:
+  {
+    ; Check if Link has seen the dream
+    LDA.l DREAMS
+    CMP.b #$01 : BCC .mushroom_grotto
+    CMP.b #$02 : BCC .tail_palace
+    CMP.b #$04 : BCC .kalyxo_castle
+    CMP.b #$08 : BCC .zora_temple
+    CMP.b #$10 : BCC .glacia_estate
+    CMP.b #$20 : BCC .goron_mines
+    CMP.b #$40 : BCC .dragon_ship
+    RTS
+
+    ; .kzt dimg
+    ;   m - Mushroom Grotto
+    ;   t - Tail Palace
+    ;   k - Kalyxo Castle
+    ;   z - Zora Temple
+    ;   i - Glacia Estate
+    ;   g - Goron Mines
+    ;   d - Dragon Ship
+    ;  CRYSTALS        = $7EF37A
+
+    ; TODO: Check if Link has the essence for the dream
+    .mushroom_grotto
+    .tail_palace
+    .kalyxo_castle
+    .zora_temple
+    .glacia_estate
+    .goron_mines
+    .dragon_ship
+
     RTS
   }
 
