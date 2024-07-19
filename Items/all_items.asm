@@ -32,6 +32,8 @@ MagicBeanSwapDynamicGfx:
   RTL
 }
 
+pushpc
 ; League of its own
 incsrc "Items/ice_rod.asm"
 print  "End of Items/ice_rod.asm          ", pc
+pullpc

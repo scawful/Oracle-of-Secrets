@@ -60,3 +60,5 @@ Link_EnterDream:
     RTS
   }
 }
+
+print "End of all_dreams.asm             ", pc

@@ -165,6 +165,15 @@ namespace Oracle
   print ""
 
   ; -------------------------------------------------------
+
+  print "  -- Dreams --  "
+  print ""
+
+  incsrc "Dreams/all_dreams.asm"
+
+  print ""
+
+  ; -------------------------------------------------------
   ; Custom Menu and HUD
 
   print "  -- Menu --  "
