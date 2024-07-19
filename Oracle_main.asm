@@ -48,7 +48,7 @@ OOSPROG2       = $7EF3C6
 ;   m - maku tree has met link (0: no | 1: yes) 
 OOSPROG3       = $7EF3D4
 
-; .kzt dimg
+; .dgi zktm
 ;   m - Mushroom Grotto
 ;   t - Tail Palace
 ;   k - Kalyxo Castle
@@ -57,6 +57,9 @@ OOSPROG3       = $7EF3D4
 ;   g - Goron Mines
 ;   d - Dragon Ship
 DREAMS         = $7EF410
+
+; Current Dream ID (0x00-0x07)
+CurrentDream   = $0426
 
 ; 01 - Fishing Rod
 ; 02 - Portal Rod
