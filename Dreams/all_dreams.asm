@@ -7,6 +7,18 @@
 
 Link_EnterDream:
 {
+  PHB : PHK : PLB
+
+  JSR Link_HandleDreams
+
+  PLB 
+
+  RTL
+}
+
+Link_HandleDreams:
+{
+  LDA.b #$16 : STA.b $5D
   LDA.w CurrentDream
   JSL JumpTableLocal
 
