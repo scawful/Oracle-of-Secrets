@@ -48,6 +48,16 @@ OOSPROG2       = $7EF3C6
 ;   m - maku tree has met link (0: no | 1: yes) 
 OOSPROG3       = $7EF3D4
 
+; .kzt dimg
+;   m - Mushroom Grotto
+;   t - Tail Palace
+;   k - Kalyxo Castle
+;   z - Zora Temple
+;   i - Glacia Estate
+;   g - Goron Mines
+;   d - Dragon Ship
+DREAMS         = $7EF410
+
 ; 01 - Fishing Rod
 ; 02 - Portal Rod
 CUSTOMRODS     = $7EF351
