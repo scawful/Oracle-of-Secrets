@@ -32,23 +32,11 @@
 
 ; =========================================================
 
-pushpc
-org $06DBB5 
-  db $0D ; Puffstool single small char
-org $06DABA
-  db $BD, $C8, $26, $20
-pullpc
-
 Sprite_Puffstool_Long:
 {
   PHB : PHK : PLB
 
-  LDA.w SprSubtype, X : BEQ + 
-    JSL Sprite_PrepAndDrawSingleSmall
-    JMP ++
-  +
   JSR Sprite_Puffstool_Draw ; Call the draw code
-  ++
   JSL Sprite_DrawShadow
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
