@@ -130,6 +130,8 @@ Sprite_Puffstool_Main:
 
   Puffstool_Spores:
   {
+    %PlayAnimation(8,11,10)
+
     JSL Sprite_MoveXyz
     JSL Sprite_CheckDamageToPlayerSameLayer
 
