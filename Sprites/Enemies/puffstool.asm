@@ -219,7 +219,7 @@ Sprite_Puffstool_Draw:
 
   REP #$20
 
-  LDA $00 : STA ($90), Y
+  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
   AND.w #$0100 : STA $0E 
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
@@ -241,7 +241,7 @@ Sprite_Puffstool_Draw:
       
   TYA : LSR #2 : TAY
       
-  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
       
   PLY : INY
       
@@ -254,9 +254,22 @@ Sprite_Puffstool_Draw:
   ; =========================================================
 
   .start_index
-  db $00, $02, $04, $06, $08, $0A, $0C, $0E
+  db $00, $02, $04, $06, $08, $0A, $0C, $0E, $0F, $10, $11, $12
   .nbr_of_tiles
-  db 1, 1, 1, 1, 1, 1, 1, 0
+  db 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0
+  .x_offsets
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0
+  dw 0
+  dw 0
+  dw 0
+  dw 4
   .y_offsets
   dw -8, 0
   dw 0, -8
@@ -266,6 +279,10 @@ Sprite_Puffstool_Draw:
   dw 0, -8
   dw 0, -8
   dw 0
+  dw 0
+  dw 0
+  dw 0
+  dw 4
   .chr
   db $C0, $D0
   db $D2, $C2
@@ -275,13 +292,34 @@ Sprite_Puffstool_Draw:
   db $D2, $C2
   db $D4, $C4
   db $D6
+  db $EA
+  db $C8
+  db $E8
+  db $F7
   .properties
-  db $23, $23
-  db $23, $23
-  db $23, $23
-  db $23, $23
-  db $23, $23
-  db $63, $63
-  db $63, $63
-  db $2D
+  db $33, $33
+  db $33, $33
+  db $33, $33
+  db $33, $33
+  db $33, $33
+  db $73, $73
+  db $73, $73
+  db $3D
+  db $33
+  db $33
+  db $33
+  db $33
+  .sizes
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02
+  db $02
+  db $02
+  db $02
+  db $00
 }
