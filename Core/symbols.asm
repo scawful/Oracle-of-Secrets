@@ -894,9 +894,12 @@ AncillaAdd_QuakeSpell = $099589
 AncillaAdd_IceRodShot = $099863
 AncillaAdd_Splash = $0998FC
 AncillaAdd_Hookshot = $099B10
+AncillaAdd_Blanket = $098091
 
 DeleteBoomAndByrnaSparks = $0FFD86
 
 Sparkle_PrepOAMFromRadial = $08DA17
 
 Fireball_SpawnTrailGarnish = $09B020
+
+SpriteSFX_QueueSFX2WithPan = $0DBB7C
