@@ -258,6 +258,12 @@ print  "End of Lanmola_Expanded.asm       ", pc
 incsrc "Sprites/NPCs/followers.asm"
 print  "End of followers.asm              ", pc
 
+incsrc "Sprites/Enemies/octorok.asm"
+print "End of octorok.asm                 ", pc
+
+incsrc "Sprites/NPCs/piratian.asm"
+print  "End of piratian.asm               ", pc
+
 Sprite_EonOwl   = $0A
 incsrc "Sprites/NPCs/eon_owl.asm"
 print "End of eon_owl.asm                ", pc
