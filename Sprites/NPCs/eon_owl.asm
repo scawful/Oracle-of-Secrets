@@ -1,7 +1,8 @@
 ; =========================================================
 ; Sprite Properties
 ; =========================================================
-!SPRID              = $F6 ; The sprite ID you are overwriting (HEX)
+
+!SPRID              = Sprite_EonOwl
 !NbrTiles           = 00  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -50,38 +51,63 @@ Sprite_EonOwl_Long:
 ; =========================================================
 
 Sprite_EonOwl_Prep:
+{
   PHB : PHK : PLB
     
-      ; Add more code here to initialize data
 
   PLB
   RTL
+}
 
 ; =========================================================
 
 Sprite_EonOwl_Main:
+{
   LDA.w SprAction, X; Load the SprAction
   JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+
   dw EonOwl_Idle
-  dw EonOwl_Flying
+  dw EonOwl_IntroDialogue
+
+  dw EonOwl_FlyingAway
 
 
   EonOwl_Idle:
   {
     %PlayAnimation(0,1,16)
+
+    LDA POSX : STA $02
+    LDA POSY : STA $03
+    LDA SprX, X : STA $04
+    LDA SprY, X : STA $05
+    JSL GetDistance8bit_Long : CMP #$18 : BCS .not_too_close
+      %GotoAction(1)
+    .not_too_close
+
+    RTS
+  }
+
+  EonOwl_IntroDialogue:
+  {
+    %PlayAnimation(0,1,16)
+
+    ; TODO: Pick a dialogue ID and display it
+    
     RTS
   }
 
 
   EonOwl_Flying: 
   {
-     %PlayAnimation(2,3,16)
+    %PlayAnimation(2,3,16)
     RTS
   }
+}
 
 ; =========================================================
 
 Sprite_EonOwl_Draw:
+{
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
@@ -165,3 +191,4 @@ Sprite_EonOwl_Draw:
   db $02, $02
   db $02, $02
   db $02, $02
+}
