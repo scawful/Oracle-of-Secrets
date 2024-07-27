@@ -72,13 +72,83 @@ Sprite_EonScrub_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
-  dw Action00
 
+  dw EonScrub_Stalking
+  dw EonScrub_Attack
+  dw EonScrub_PostAttack
+  dw EonScrub_Recoil
+  dw EonScrub_Dazed
 
-  Action00:
+  EonScrub_Stalking:
+  {
+    %PlayAnimation(0,1,16)
 
+    JSL Sprite_PlayerCantPassThrough
 
-  RTS
+    JSL Sprite_IsBelowPlayer : TYA
+    CMP #$00 : BNE .is_below_player
+      ; Check if the player is too close
+      LDA $22 : STA $02
+      LDA $20 : STA $03
+      LDA SprX, X : STA $04
+      LDA SprY, X : STA $05
+      JSL GetDistance8bit_Long : CMP.b #$24 : BCC .too_close
+        ; The player is below the scrub, so it should pop up
+        LDA #$20 : STA.w SprTimerA, X
+        %GotoAction(1)
+      .too_close
+    .is_below_player
+
+    RTS
+  }
+
+  EonScrub_Attack:
+  {
+    %PlayAnimation(2,6,16)
+    RTS
+  }
+
+  EonScrub_PostAttack:
+  {
+    %PlayAnimation(2,2,16)
+    RTS
+  }
+
+  EonScrub_Recoil:
+  {
+    %PlayAnimation(7,10,16)
+
+    JSL Sprite_PlayerCantPassThrough
+
+    ; Play the spinning animation for a bit before proceeding
+    LDA SprTimerA, X : BNE .not_done
+      LDA #$40 : STA.w SprTimerA, X
+      INC.w SprAction, X
+    .not_done
+
+    RTS
+  }
+
+  EonScrub_Dazed:
+  {
+    %PlayAnimation(11,12,16)
+
+    JSL Sprite_PlayerCantPassThrough
+
+    LDA SprTimerA, X : BNE .not_done
+      %SetHarmless(1)
+      INC.w SprAction, X
+    .not_done
+
+    RTS
+  }
+
+  EonScrub_Subdued:
+  {
+    %PlayAnimation(2,2,16)
+
+    RTS
+  }
 }
 
 
