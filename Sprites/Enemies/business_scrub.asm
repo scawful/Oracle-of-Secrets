@@ -296,7 +296,7 @@ SpawnPeaShot:
 {
   LDA.b #$14
   JSL Sprite_SpawnDynamically : BMI .return ;89
-
+.AltEntry
   LDA.b #$01 : STA $0E30, Y
   LDA.b #$06 : STA $0D80, Y
   LDA.b #$20 : STA.w SprPrize, Y

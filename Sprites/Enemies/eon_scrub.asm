@@ -53,6 +53,10 @@ Sprite_EonScrub_Prep:
 {
   PHB : PHK : PLB
     
+  LDA SprSubtype, X : CMP #$01 : BNE .normal_scrub
+    LDA.b #$06 : STA.w SprAction, X ; Pea Shot State
+    LDA.b #$20 : STA.b SprPrize, X
+  .normal_scrub 
 
   PLB
   RTL
@@ -78,6 +82,9 @@ Sprite_EonScrub_Main:
   dw EonScrub_PostAttack
   dw EonScrub_Recoil
   dw EonScrub_Dazed
+  dw EonScrub_Subdued
+
+  dw EonScrub_PeaShot
 
   EonScrub_Stalking:
   {
@@ -105,12 +112,16 @@ Sprite_EonScrub_Main:
   EonScrub_Attack:
   {
     %PlayAnimation(2,6,16)
+    JSL Sprite_PlayerCantPassThrough
+
     RTS
   }
 
   EonScrub_PostAttack:
   {
     %PlayAnimation(2,2,16)
+    JSL Sprite_PlayerCantPassThrough
+
     RTS
   }
 
@@ -147,10 +158,47 @@ Sprite_EonScrub_Main:
   {
     %PlayAnimation(2,2,16)
 
+    JSL Sprite_PlayerCantPassThrough
+
+    LDA.w SprMiscD, X : BNE .no_talk  
+      
+    .no_talk
+
+    RTS
+  }
+
+  EonScrub_PeaShot:
+  {
+    %StartOnFrame(13)
+    %PlayAnimation(13,13,3)
+
+    %DoDamageToPlayerSameLayerOnContact()
+
+    JSL Sprite_MoveVert
+    JSL Sprite_CheckTileCollision
+    LDA.w SprCollision, X : BEQ .no_collision
+      STZ.w SprState, X
+    .no_collision
+
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+      ; Apply force in the opposite direction
+      LDA #-16 : STA.w SprYSpeed, X
+    .no_damage
+    RTS 
+
     RTS
   }
 }
 
+
+EonScrub_SpawnPeaShot:
+{
+  LDA.b Sprite_EonScrub
+  JSL Sprite_SpawnDynamically : BMI .return ;89
+    JSR SpawnPeaShot_AltEntry
+  .return
+  RTS
+}
 
 ; =========================================================
 
