@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_EonOwl
-!NbrTiles           = 00  ; Number of tiles used in a frame
+!NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -97,7 +97,7 @@ Sprite_EonOwl_Main:
   }
 
 
-  EonOwl_Flying: 
+  EonOwl_FlyingAway: 
   {
     %PlayAnimation(2,3,16)
     RTS
