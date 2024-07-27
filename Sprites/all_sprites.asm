@@ -44,6 +44,10 @@ Sprite_BusinessScrub = $14
 incsrc "Sprites/Enemies/business_scrub.asm"
 print  "End of business_scrub.asm         ",  pc
 
+Sprite_EonScrub = $22
+incsrc "Sprites/Enemies/eon_scrub.asm"
+print  "End of eon_scrub.asm              ",  pc
+
 Sprite_Goriya = $2C
 incsrc "Sprites/Enemies/goriya.asm"
 print  "End of goriya.asm                 ",  pc
