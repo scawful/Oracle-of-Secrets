@@ -876,3 +876,102 @@ MovieEffect:
   db $3F, $00 ;for $20 line set screen brightness to 0
   db $00      ;end the HDMA
 }
+
+Sprite_CheckIfRecoiling:
+  LDA.w $0EA0,X
+  BEQ .exit
+
+  AND.b #$7F
+  BEQ .recoil_over
+
+  LDA.w $0D40,X
+  PHA
+
+  LDA.w $0D50,X
+  PHA
+
+  DEC.w $0EA0,X
+  BNE .still_recoiling
+
+  LDA.w $0F40,X
+  CLC
+  ADC.b #$20
+  CMP.b #$40
+  BCS .no_adjust
+
+  LDA.w $0F30,X
+  CLC
+  ADC.b #$20
+  CMP.b #$40
+  BCC .still_recoiling
+
+.no_adjust
+  LDA.b #$90
+  STA.w $0EA0,X
+
+.still_recoiling
+  LDA.w $0EA0,X
+  BMI .no_movement
+
+  LSR A
+  LSR A
+  TAY
+
+  LDA.b $1A
+  AND.w .masks,Y
+  BNE .no_movement
+
+  LDA.w $0F30,X
+  STA.w $0D40,X
+
+  LDA.w $0F40,X
+  STA.w $0D50,X
+
+  LDA.w $0CD2,X
+  BMI .handle_movement
+
+  JSL Sprite_CheckTileCollision_long
+
+  LDA.w $0E70,X
+  AND.b #$0F
+  BEQ .handle_movement
+
+.stop_horizontal_movement
+  CMP.b #$04
+  BCS .stop_vertical_movement
+
+  STZ.w $0F40,X
+  STZ.w $0D50,X
+
+  BRA .movement_stopped
+
+.stop_vertical_movement
+  STZ.w $0F30,X
+  STZ.w $0D40,X
+
+.movement_stopped
+  BRA .no_movement
+
+.handle_movement
+  JSL Sprite_Move
+
+.no_movement
+  PLA
+  STA.w $0D50,X
+
+  PLA
+  STA.w $0D40,X
+
+  PLA
+  PLA
+
+.exit
+  RTL
+
+.recoil_over
+  STZ.w $0EA0,X
+
+  RTL
+
+.masks
+  db $03, $01, $00, $00, $0C, $03
