@@ -130,6 +130,7 @@ Sprite_Puffstool_Main:
 
   Puffstool_Spores:
   {
+    %StartOnFrame(8)
     %PlayAnimation(8,11,10)
 
     JSL Sprite_MoveXyz
@@ -167,7 +168,7 @@ Puffstool_SpawnSpores:
   LDA.w .speed_y,X
   STA.w $0D40, Y
 
-  LDA.b #$30
+  LDA.b #$20
   STA.w $0F80, Y
 
   LDA.b #$FF
@@ -189,7 +190,7 @@ Puffstool_SpawnSpores:
   RTS
 
 .speed_x
-  db  16, -11, -16, 11
+  db  11, -11, -11, 11
 
 .speed_y
   db   0,  11,   0, -11
