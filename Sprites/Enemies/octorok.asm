@@ -29,6 +29,7 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
+
 %Set_Sprite_Properties(Sprite_Octorok_Prep, Sprite_Octorok_Long)
 
 ; =========================================================
@@ -63,6 +64,8 @@ Sprite_Octorok_Prep:
 
 Sprite_Octorok_Main:
 {
+  JSR Sprite_Octorok_Move
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -70,12 +73,10 @@ Sprite_Octorok_Main:
   dw Octorok_MoveUp
   dw Octorok_MoveLeft
   dw Octorok_MoveRight
-  dw Octorok_Stone
 
   Octorok_MoveDown:
   {
     %PlayAnimation(0,1,10)
-
 
     RTS
   }
@@ -100,6 +101,92 @@ Sprite_Octorok_Main:
 
     RTS
   }
+}
+
+Sprite_Octorok_Move:
+{
+
+  JSL Sprite_CheckIfRecoiling
+  JSL Sprite_Move
+  JSL Sprite_CheckDamageFromPlayer
+  JSL Sprite_CheckDamageToPlayer
+
+  LDA.w SprAction, X : AND.b #$01 : BNE .octorok_used_barrage
+    LDA.w SprMiscC, X : AND.b #$02 : ASL A : STA.b $00
+    INC.w SprDelay, X
+    LDA.w SprDelay, X
+    LSR A
+    LSR A
+    LSR A
+    AND.b #$03
+    ORA.b $00
+    STA.w SprGfx, X
+
+    LDA.w SprTimerA, X : BNE .wait
+      INC.w SprAction,X
+
+      LDY.w SprType,X
+      LDA.w .timer-8,Y : STA.w SprTimerA,X
+
+      RTS
+
+  .wait
+  LDY.w SprMiscC, X
+
+  LDA.w .speed_x, Y : STA.w $0D50,X
+
+  LDA.w .speed_y, Y : STA.w $0D40,X
+
+  JSL Sprite_CheckTileCollision
+  LDA.w $0E70, X : BEQ .no_collision
+    LDA.w SprMiscC,X : EOR.b #$01 : STA.w SprMiscC,X
+    BRA .exit
+  .no_collision
+  RTS
+
+  ; ---------------------------------------------------------
+
+  .octorok_used_barrage
+  #_06CF5D: STZ.w $0D50,X
+  #_06CF60: STZ.w $0D40,X
+
+  LDA.w SprTimerA, X : BNE Octorock_ShootEmUp
+
+  INC.w SprAction,X
+
+  LDA.w SprMiscC,X
+  PHA
+
+  JSL GetRandomInt : AND.b #$3F : ADC.b #$30 : STA.w SprTimerA,X
+
+  AND.b #$03 : STA.w SprMiscC,X
+
+  PLA
+  CMP.w SprMiscC,X : BEQ .exit
+
+  EOR.w SprMiscC,X : BNE .exit
+
+  LDA.b #$08 : STA.w SprTimerB,X
+
+  .exit
+  RTS
+
+.direction
+  db   3,   2,   0,   1
+
+.speed_x
+  db  24, -24,   0,   0
+
+.speed_y
+  db   0,   0,  24, -24
+
+.unused
+  db $01, $02, $04, $08
+
+.timer
+  db  60, 128, 160, 128
+
+}
 
 ; TODO: Make this randomized behavior to free up Sprite 0A
 Octorock_ShootEmUp:
