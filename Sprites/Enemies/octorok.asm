@@ -101,12 +101,108 @@ Sprite_Octorok_Main:
     RTS
   }
 
-  Octorok_Stone:
-  {
-    %PlayAnimation(8,8,10)
+; TODO: Make this randomized behavior to free up Sprite 0A
+Octorock_ShootEmUp:
+{
+  LDA.w SprType,X : SEC : SBC.b #$08
 
-    RTS
-  }
+  REP #$30
+
+  AND.w #$00FF
+  ASL A
+  TAY
+
+  LDA.w .vectors, Y : DEC A : PHA
+
+  SEP #$30
+
+  RTS
+
+  .vectors
+    dw Octorok_ShootSingle ; Sprite 08
+    dw $0000
+    dw Octorok_Shoot4Ways ; Sprite 0A
+}
+
+; =========================================================
+
+Octorok_ShootSingle:
+{
+  LDA.w SprTimerA,X : CMP.b #$1C : BNE .bide_time
+    PHA
+    JSR Octorok_FireLoogie
+    PLA
+
+  .bide_time
+  LSR A
+  LSR A
+  LSR A
+  TAY
+
+  LDA.w .mouth_anim_step,Y
+  STA.w SprMiscB,X
+
+  RTS
+
+.mouth_anim_step
+  db $00, $02, $02, $02
+  db $01, $01, $01, $00
+  db $00, $00, $00, $00
+  db $02, $02, $02, $02
+  db $02, $01, $01, $00
+
+}
+
+; ---------------------------------------------------------
+
+Octorok_Shoot4Ways:
+{
+  LDA.w SprTimerA,X
+  PHA
+
+  CMP.b #$80
+  BCS .animate
+
+  AND.b #$0F
+  BNE .delay_turn
+
+  PHA
+
+  LDY.w SprMiscC,X
+
+  LDA.w .next_direction,Y
+  STA.w SprMiscC,X
+
+  PLA
+
+.delay_turn
+  CMP.b #$08
+  BNE .animate
+
+  JSR Octorok_FireLoogie
+
+.animate
+  PLA
+  LSR A
+  LSR A
+  LSR A
+  LSR A
+  TAY
+
+  LDA.w .mouth_anim_step,Y
+  STA.w SprMiscB,X
+
+  RTS
+
+.next_direction
+  db $02, $03, $01, $00
+
+.mouth_anim_step
+  db $02, $02, $02, $02
+  db $02, $02, $02, $02
+  db $01, $00
+}
+
 }
 
 ; =========================================================
