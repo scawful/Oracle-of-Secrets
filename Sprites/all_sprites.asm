@@ -40,9 +40,9 @@ Sprite_Manhandla = $88
 incsrc "Sprites/Bosses/manhandla.asm"
 print  "End of manhandla.asm              ", pc
 
-Sprite_DekuScrubEnemy = $14
-incsrc "Sprites/Enemies/deku_scrub_enemy.asm"
-print  "End of deku_scrub_enemy.asm       ",  pc
+Sprite_BusinessScrub = $14
+incsrc "Sprites/Enemies/business_scrub.asm"
+print  "End of business_scrub.asm         ",  pc
 
 Sprite_Goriya = $2C
 incsrc "Sprites/Enemies/goriya.asm"
