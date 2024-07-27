@@ -107,12 +107,15 @@ Sprite_Octorok_Main:
 Sprite_Octorok_Move:
 {
 
-  JSL Sprite_CheckIfRecoiling
+  JSL Sprite_DamageFlash_Long
   JSL Sprite_Move
   JSL Sprite_CheckDamageFromPlayer
   JSL Sprite_CheckDamageToPlayer
 
-  LDA.w SprAction, X : AND.b #$01 : BNE .octorok_used_barrage
+  ; Set the SprAction based on the direction 
+  LDA.w SprMiscC, X : AND.b #$03 : TAY : LDA.w .direction, Y : STA.w SprAction, X
+
+  LDA.w SprMiscF, X : AND.b #$01 : BNE .octorok_used_barrage
     LDA.w SprMiscC, X : AND.b #$02 : ASL A : STA.b $00
     INC.w SprDelay, X
     LDA.w SprDelay, X
@@ -124,7 +127,7 @@ Sprite_Octorok_Move:
     STA.w SprGfx, X
 
     LDA.w SprTimerA, X : BNE .wait
-      INC.w SprAction,X
+      INC.w SprMiscF,X
 
       LDY.w SprType,X
       LDA.w .timer-8,Y : STA.w SprTimerA,X
@@ -148,26 +151,22 @@ Sprite_Octorok_Move:
   ; ---------------------------------------------------------
 
   .octorok_used_barrage
-  #_06CF5D: STZ.w $0D50,X
-  #_06CF60: STZ.w $0D40,X
+  STZ.w $0D50, X : STZ.w $0D40,X
 
   LDA.w SprTimerA, X : BNE Octorock_ShootEmUp
+    INC.w SprMiscF, X
 
-  INC.w SprAction,X
+    LDA.w SprMiscC, X
+    PHA
 
-  LDA.w SprMiscC,X
-  PHA
+    JSL GetRandomInt : AND.b #$3F : ADC.b #$30 : STA.w SprTimerA, X
+    AND.b #$03 : STA.w SprMiscC, X
 
-  JSL GetRandomInt : AND.b #$3F : ADC.b #$30 : STA.w SprTimerA,X
+    PLA
+    CMP.w SprMiscC, X : BEQ .exit
+    EOR.w SprMiscC, X : BNE .exit
 
-  AND.b #$03 : STA.w SprMiscC,X
-
-  PLA
-  CMP.w SprMiscC,X : BEQ .exit
-
-  EOR.w SprMiscC,X : BNE .exit
-
-  LDA.b #$08 : STA.w SprTimerB,X
+    LDA.b #$08 : STA.w SprTimerB,X
 
   .exit
   RTS
@@ -351,7 +350,7 @@ Sprite_Octorok_Draw:
 
   LDA.w SprFrame, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
-
+  LDA.w SprFlash : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -384,7 +383,7 @@ Sprite_Octorok_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY 
       
