@@ -1,8 +1,8 @@
 ; =========================================================
 ; Sprite Properties
 ; =========================================================
-!SPRID              = $00; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00 ; Number of tiles used in a frame
+!SPRID              = $0E ; The sprite ID you are overwriting (HEX)
+!NbrTiles           = 02 ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -36,6 +36,7 @@ Sprite_Piratian_Long:
   PHB : PHK : PLB
 
   JSR Sprite_Piratian_Draw ; Call the draw code
+  JSL Sprite_DrawShadow ; Draw the shadow
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
@@ -61,8 +62,10 @@ Sprite_Piratian_Prep:
 
 Sprite_Piratian_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  JSR Sprite_Piratian_Move ; Call the move code
+
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
 
   dw Piratian_MoveDown
   dw Piratian_MoveUp
@@ -101,6 +104,27 @@ Sprite_Piratian_Main:
     %PlayAnimation(8,9,16)
     RTS
   }
+}
+
+Sprite_Piratian_Move:
+{
+  LDA.w SprTimerA, X : BNE +
+    JSL Sprite_SelectNewDirection
+  +
+
+  JSL Sprite_MoveXyz
+  JSL Sprite_BounceFromTileCollision
+  JSL Sprite_BounceOffWall
+  JSL Sprite_DamageFlash_Long
+  JSL ThrownSprite_TileAndSpriteInteraction_long
+
+  JSL Sprite_CheckDamageFromPlayer : BCC .no_dano
+    %GotoAction(1)
+    %SetTimerA($60)
+    %SetTimerF($20)
+  .no_dano
+
+  RTS
 }
 
 ; =========================================================
