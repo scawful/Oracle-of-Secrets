@@ -8237,6 +8237,7 @@ GAMESPLAYED     = $7EF401
 
 ; Big unused block
 UNUSED_7EF403   = $7EF403
+DEATHS_MAXED    = $7EF405
 
 ; Inverse checksum for save file
 SAVEICKSML      = $7EF4FE
