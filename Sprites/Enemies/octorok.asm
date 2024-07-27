@@ -130,7 +130,7 @@ Octorok_ShootSingle:
 {
   LDA.w SprTimerA,X : CMP.b #$1C : BNE .bide_time
     PHA
-    JSR Octorok_FireLoogie
+    JSR Octorok_SpawnRock
     PLA
 
   .bide_time
@@ -179,7 +179,7 @@ Octorok_Shoot4Ways:
   CMP.b #$08
   BNE .animate
 
-  JSR Octorok_FireLoogie
+  JSR Octorok_SpawnRock
 
 .animate
   PLA
@@ -203,6 +203,68 @@ Octorok_Shoot4Ways:
   db $01, $00
 }
 
+; =========================================================
+
+Octorok_SpawnRock:
+{
+  LDA.b #$07 : JSL SpriteSFX_QueueSFX2WithPan
+
+  LDA.b #$0C : JSL Sprite_SpawnDynamically : BMI .fired_a_blank
+
+    PHX
+
+    LDA.w SprMiscC,X
+    TAX
+
+    LDA.b $00
+    CLC
+    ADC.w .offset_x_low,X
+    STA.w $0D10,Y
+
+    LDA.b $01
+    ADC.w .offset_x_high,X
+    STA.w $0D30,Y
+
+    LDA.b $02
+    CLC
+    ADC.w .offset_y_low,X
+    STA.w $0D00,Y
+
+    LDA.b $03
+    ADC.w .offset_y_high,X
+    STA.w $0D20,Y
+
+    LDA.w SprMiscC,Y
+    TAX
+
+    LDA.w .rock_speed_x,X
+    STA.w $0D50,Y
+
+    LDA.w .rock_speed_y,X
+    STA.w $0D40,Y
+
+    PLX
+
+  .fired_a_blank
+  RTS
+
+  .offset_x_low
+    db  12, -12,   0,   0
+
+  .offset_x_high
+    db   0,  -1,   0,   0
+
+  .offset_y_low
+    db   4,   4,  12, -12
+
+  .offset_y_high
+    db   0,   0,   0,  -1
+
+  .rock_speed_x
+    db  44, -44,   0,   0
+
+  .rock_speed_y
+    db   0,   0,  44, -44
 }
 
 ; =========================================================
