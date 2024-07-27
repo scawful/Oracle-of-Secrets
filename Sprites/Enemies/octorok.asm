@@ -171,11 +171,10 @@ Sprite_Octorok_Draw:
 ; =========================================================
 
 .start_index
-db $00, $01, $02, $03, $04, $05, $06, $07, $08
+db $00, $01, $02, $03, $04, $05, $06, $07
 .nbr_of_tiles
-db 0, 0, 0, 0, 0, 0, 0, 0, 0
+db 0, 0, 0, 0, 0, 0, 0, 0
 .x_offsets
-dw 0
 dw 0
 dw 0
 dw 0
@@ -193,7 +192,6 @@ dw 0
 dw 0
 dw 0
 dw 0
-dw 0
 .chr
 db $80
 db $80
@@ -203,7 +201,6 @@ db $A0
 db $A2
 db $A0
 db $A2
-db $84
 .properties
 db $3D
 db $7D
@@ -213,9 +210,7 @@ db $3D
 db $3D
 db $7D
 db $7D
-db $3D
 .sizes
-db $02
 db $02
 db $02
 db $02
