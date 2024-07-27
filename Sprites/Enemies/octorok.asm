@@ -189,27 +189,14 @@ Sprite_Octorok_Move:
 
 }
 
-; TODO: Make this randomized behavior to free up Sprite 0A
 Octorock_ShootEmUp:
 {
-  LDA.w SprType,X : SEC : SBC.b #$08
-
-  REP #$30
-
-  AND.w #$00FF
-  ASL A
-  TAY
-
-  LDA.w .vectors, Y : DEC A : PHA
-
-  SEP #$30
-
+  JSL GetRandomInt : AND.b #$01 : BEQ .single_shot
+    JSR Octorok_Shoot4Ways
+    RTS
+  .single_shot
+  JSR Octorok_ShootSingle
   RTS
-
-  .vectors
-    dw Octorok_ShootSingle ; Sprite 08
-    dw $0000
-    dw Octorok_Shoot4Ways ; Sprite 0A
 }
 
 ; =========================================================
