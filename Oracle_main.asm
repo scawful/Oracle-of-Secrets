@@ -73,6 +73,14 @@ CUSTOMRODS     = $7EF351
 ; Goron Mines 0x0E (Misery Mire)
 ; Dragon Ship 0x18 (Turtle Rock)
 
+; Collectibles
+Bananas    = $7EF38B
+Pineapples = $7EF38D
+RockMeat   = $7EF38F
+Seashells  = $7EF391
+Honeycomb  = $7EF393
+DekuSticks = $7EF395
+
 incsrc "Overworld/custom_gfx.asm"
 print  "End of custom_gfx.asm             ", pc
 incsrc "Overworld/ZCustomOverworld.asm"
