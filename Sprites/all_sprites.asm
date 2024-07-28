@@ -264,6 +264,9 @@ print "End of octorok.asm                 ", pc
 incsrc "Sprites/NPCs/piratian.asm"
 print  "End of piratian.asm               ", pc
 
+incsrc "Sprites/Objects/collectible.asm"
+print  "End of collectible.asm            ", pc
+
 Sprite_EonOwl   = $0A
 incsrc "Sprites/NPCs/eon_owl.asm"
 print "End of eon_owl.asm                ", pc
