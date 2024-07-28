@@ -155,8 +155,8 @@ Menu_DrawPendantIcons:
 
   ; Wisdom
   LSR : BCC +
-    LDX.w #$2D06 : STX.w $14B0 : INX : STX.w $14B2
-    LDX.w #$2D16 : STX.w $14F0 : INX : STX.w $14F2
+    LDX.w #$2D23 : STX.w $14B0 : INX : STX.w $14B2
+    LDX.w #$AD23 : STX.w $14F0 : INX : STX.w $14F2
   +
 
   RTS
@@ -889,6 +889,24 @@ Menu_DrawMagicItems:
   STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
   LDX.w #menu_offset(9,15)
   LDY.w #RockMeatGFX
+  JSR DrawMenuItem
+
+  LDA.w #$0001
+  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(13,7)
+  LDY.w #SeashellGFX
+  JSR DrawMenuItem
+
+  LDA.w #$0001
+  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(13,11)
+  LDY.w #HoneycombGFX
+  JSR DrawMenuItem
+
+  LDA.w #$0001
+  STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(13,15)
+  LDY.w #DekuStickGFX
   JSR DrawMenuItem
 
   RTS

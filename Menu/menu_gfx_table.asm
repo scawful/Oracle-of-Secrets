@@ -205,6 +205,15 @@ PineappleGFX:
 RockMeatGFX:
   dw $20D0, $20D1, $20E0, $20E1 ; Rock Meat
 
+SeashellGFX:
+  dw $2D06, $2D07, $2D16, $2D17 ; Seashell
+
+HoneycombGFX:
+  dw $28F9, $68F9, $28FB, $28FC ; Honeycomb
+
+DekuStickGFX:
+  dw $2067, $20F5, $2077, $20F5 ; Deku Stick
+
 ; =========================================================
 ; Equipped Items
 
