@@ -1,8 +1,9 @@
 ; =========================================================
 ; Sprite Properties
 ; =========================================================
+
 !SPRID              = $0E ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 02 ; Number of tiles used in a frame
+!NbrTiles           = 02  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -110,6 +111,11 @@ Sprite_Piratian_Move:
 {
   LDA.w SprTimerA, X : BNE +
     JSL Sprite_SelectNewDirection
+    TYA 
+    CMP.b #$03 : BCC ++
+      SEC : SBC.b #$03
+    ++
+    STA.w SprAction, X
   +
 
   JSL Sprite_MoveXyz
@@ -119,7 +125,6 @@ Sprite_Piratian_Move:
   JSL ThrownSprite_TileAndSpriteInteraction_long
 
   JSL Sprite_CheckDamageFromPlayer : BCC .no_dano
-    %GotoAction(1)
     %SetTimerA($60)
     %SetTimerF($20)
   .no_dano
