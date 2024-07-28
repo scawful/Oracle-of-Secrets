@@ -1,6 +1,7 @@
 ; =========================================================
 ; Sprite Properties
 ; =========================================================
+
 !SPRID              = Sprite_EonScrub
 !NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
@@ -37,6 +38,9 @@ Sprite_EonScrub_Long:
   PHB : PHK : PLB
 
   JSR Sprite_EonScrub_Draw ; Call the draw code
+  LDA.w SprSubtype, X : CMP #$01 : BNE .normal_scrub
+    JSL Sprite_DrawShadow
+  .normal_scrub
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
@@ -112,7 +116,23 @@ Sprite_EonScrub_Main:
   EonScrub_Attack:
   {
     %PlayAnimation(2,6,16)
+
     JSL Sprite_PlayerCantPassThrough
+    JSR CheckForPeaShotRedirect
+
+    LDA SprTimerA, X : BNE .not_done
+      JSR EonScrub_SpawnPeaShot
+      LDA #$F0 : STA.w SprTimerA, X
+      INC.w SprAction, X
+    .not_done
+
+    LDA POSX : STA $02
+    LDA POSY : STA $03
+    LDA SprX, X : STA $04
+    LDA SprY, X : STA $05
+    JSL GetDistance8bit_Long : CMP #$18 : BCS .not_too_close
+      %GotoAction(0)
+    .not_too_close
 
     RTS
   }
@@ -121,7 +141,11 @@ Sprite_EonScrub_Main:
   {
     %PlayAnimation(2,2,16)
     JSL Sprite_PlayerCantPassThrough
+    JSR CheckForPeaShotRedirect
 
+    LDA.w SprTimerA, X : BNE +
+      %GotoAction(0)
+    +
     RTS
   }
 
@@ -130,6 +154,12 @@ Sprite_EonScrub_Main:
     %PlayAnimation(7,10,16)
 
     JSL Sprite_PlayerCantPassThrough
+
+    ; Kill the pea shot
+    PHX
+    LDA Offspring1_Id : TAX
+    STZ.w $0DD0, X
+    PLX
 
     ; Play the spinning animation for a bit before proceeding
     LDA SprTimerA, X : BNE .not_done
@@ -193,10 +223,11 @@ Sprite_EonScrub_Main:
 
 EonScrub_SpawnPeaShot:
 {
-  LDA.b Sprite_EonScrub
+  LDA.b #Sprite_EonScrub
   JSL Sprite_SpawnDynamically : BMI .return ;89
     JSR SpawnPeaShot_AltEntry
   .return
+  LDA.w Offspring1_Id, X : TAY
   RTS
 }
 
@@ -262,9 +293,9 @@ Sprite_EonScrub_Draw:
 ; =========================================================
 
 .start_index
-db $00, $02, $04, $06, $08, $0A, $0C, $0E, $10, $12, $14, $16, $18
+db $00, $02, $04, $06, $08, $0A, $0C, $0E, $10, $12, $14, $16, $18, $1A
 .nbr_of_tiles
-db 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+db 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0
 .x_offsets
 dw 0, 0
 dw 0, 0
@@ -279,6 +310,7 @@ dw 0, 0
 dw 0, 0
 dw 0, 0
 dw 0, 0
+dw 0
 .y_offsets
 dw 0, -8
 dw 0, -8
@@ -293,6 +325,7 @@ dw 0, -8
 dw 0, -4
 dw 0, -16
 dw 0, -16
+dw 0
 .chr
 db $20, $0A
 db $20, $0A
@@ -307,6 +340,7 @@ db $28, $0A
 db $26, $0A
 db $2C, $0C
 db $2C, $0C
+db $2A
 .properties
 db $33, $33
 db $73, $33
@@ -321,6 +355,7 @@ db $33, $33
 db $33, $33
 db $33, $33
 db $73, $73
+db $33
 .sizes
 db $02, $02
 db $02, $02
@@ -335,4 +370,5 @@ db $02, $02
 db $02, $02
 db $02, $02
 db $02, $02
+db $02
 }
