@@ -68,12 +68,25 @@ Sprite_Collectible_Main:
   JSL   UseImplicitRegIndexedLocalJumpTable 
 
   dw Pineapple
+  dw Seashell
 
   Pineapple:
   {
     JSL Sprite_Move
-    JSL Sprite_CheckIfLifted
-    JSL ThrownSprite_TileAndSpriteInteraction_long
+    JSL Sprite_CheckDamageToPlayer : BCC +
+      LDA.l Pineapples : INC A : STA.l Pineapples
+      STZ.w SprState, X
+    +
+    RTS
+  }
+
+  Seashell:
+  {
+    JSL Sprite_Move
+    JSL Sprite_CheckDamageToPlayer : BCC +
+      LDA.l Seashells : INC A : STA.l Seashells
+      STZ.w SprState, X
+    +
     RTS
   }
 
