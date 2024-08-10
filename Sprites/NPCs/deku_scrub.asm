@@ -105,7 +105,6 @@ Sprite_DekuScrub_Main:
   QuiereCuracion:
   {
     %PlayAnimation(0, 1, 16)
-    JSL Sprite_PlayerCantPassThrough
     LDA   $FE : BEQ .ninguna_cancion
     STZ   $FE
     LDA.b #$C0 : STA.w SprTimerD, X
@@ -142,7 +141,6 @@ Sprite_DekuScrub_Main:
   Withered:
   {
     %PlayAnimation(2, 2, 10)
-    JSL Sprite_PlayerCantPassThrough
     RTS
   }
 
