@@ -3,8 +3,8 @@
 ; =========================================================
 
 !SPRID              = $2D ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00  ; Number of tiles used in a frame
-!Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
+!NbrTiles           = 03  ; Number of tiles used in a frame
+!Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
@@ -65,8 +65,10 @@ Sprite_Collectible_Prep:
   LDA.b $8A : CMP.b #$58 : BNE .not_intro_sword
     LDA.l $7EF359 : BEQ +
       STZ.w SprState, X
+    +
+    LDA.b #$02 : STA.w SprAction, X
   .not_intro_sword
-  +
+
     
   PLB
   RTL
