@@ -38,7 +38,12 @@ Sprite_Collectible_Long:
 {
   PHB : PHK : PLB
 
+  LDA.b $8A : CMP.b #$58 : BNE .not_intro_sword
+    JSR Sprite_SwordShield_Draw
+    BRA +
+  .not_intro_sword
   JSR Sprite_Pineapple_Draw
+  +
   JSL Sprite_DrawShadow
   JSL Sprite_CheckActive
   BCC .SpriteIsNotActive
@@ -55,6 +60,13 @@ Sprite_Collectible_Long:
 Sprite_Collectible_Prep:
 {
   PHB : PHK : PLB
+
+  ; Don't spawn the sword if we have it.
+  LDA.b $8A : CMP.b #$58 : BNE .not_intro_sword
+    LDA.l $7EF359 : BEQ +
+      STZ.w SprState, X
+  .not_intro_sword
+  +
     
   PLB
   RTL
@@ -69,7 +81,7 @@ Sprite_Collectible_Main:
 
   dw Pineapple
   dw Seashell
-  dw Lv1_Sword
+  dw SwordShield
 
   Pineapple:
   {
@@ -91,11 +103,13 @@ Sprite_Collectible_Main:
     RTS
   }
 
-  Lv1_Sword:
+  SwordShield:
   {
+    %PlayAnimation(0,0,1)
     JSL Sprite_Move
     JSL Sprite_CheckDamageToPlayer : BCC +
-      ; TODO: Add sword to player's inventory
+      LDY.b #$00 : STZ $02E9
+      JSL Link_ReceiveItem
       STZ.w SprState, X
     +
     RTS
