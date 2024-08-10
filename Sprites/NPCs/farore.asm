@@ -85,7 +85,7 @@ Sprite_Farore_Main:
   dw MoveUpTowardsFarore
   dw MoveLeftTowardsFarore
   dw WaitAndMessage
-  dw FaroreGiveSwordAndShield
+  dw Farore_ProceedWithCutscene
   dw FaroreFollowPlayer
   dw MakuArea_FaroreFollowPlayer
   dw MakuArea_FaroreWaitForKydrog
@@ -166,16 +166,11 @@ Sprite_Farore_Main:
   }
 
   ; 04
-  FaroreGiveSwordAndShield:
+  Farore_ProceedWithCutscene:
   {
-    ; Give Link the Sword and shield
     LDA.w SprTimerA, X : BNE ++
-
-    LDY.b #$00 : STZ $02E9
-    JSL Link_ReceiveItem
-
-    %GotoAction(5)
-  ++
+      %GotoAction(5)
+    ++
     RTS
   }
 
