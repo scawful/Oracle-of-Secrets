@@ -69,6 +69,7 @@ Sprite_Collectible_Main:
 
   dw Pineapple
   dw Seashell
+  dw Lv1_Sword
 
   Pineapple:
   {
@@ -85,6 +86,16 @@ Sprite_Collectible_Main:
     JSL Sprite_Move
     JSL Sprite_CheckDamageToPlayer : BCC +
       LDA.l Seashells : INC A : STA.l Seashells
+      STZ.w SprState, X
+    +
+    RTS
+  }
+
+  Lv1_Sword:
+  {
+    JSL Sprite_Move
+    JSL Sprite_CheckDamageToPlayer : BCC +
+      ; TODO: Add sword to player's inventory
       STZ.w SprState, X
     +
     RTS
