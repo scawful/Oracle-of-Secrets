@@ -38,8 +38,8 @@ Sprite_EonOwl_Long:
   PHB : PHK : PLB
 
   JSR Sprite_EonOwl_Draw ; Call the draw code
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
+  JSL Sprite_CheckActive ; Check if game is not paused
+  BCC .SpriteIsNotActive ; Skip Main code is sprite is innactive
 
   JSR Sprite_EonOwl_Main ; Call the main sprite code
 
@@ -53,6 +53,8 @@ Sprite_EonOwl_Long:
 Sprite_EonOwl_Prep:
 {
   PHB : PHK : PLB
+
+  ; If Map 0x50, don't spawn after intro
     
 
   PLB
@@ -63,8 +65,8 @@ Sprite_EonOwl_Prep:
 
 Sprite_EonOwl_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  LDA.w SprAction, X                        ; Load the SprAction
+  JSL   UseImplicitRegIndexedLocalJumpTable ; Goto the SprAction we are currently in
 
   dw EonOwl_Idle
   dw EonOwl_IntroDialogue
@@ -80,7 +82,7 @@ Sprite_EonOwl_Main:
     LDA POSY : STA $03
     LDA SprX, X : STA $04
     LDA SprY, X : STA $05
-    JSL GetDistance8bit_Long : CMP #$18 : BCS .not_too_close
+    JSL GetDistance8bit_Long : CMP #$28 : BCS .not_too_close
       %GotoAction(1)
     .not_too_close
 
@@ -91,7 +93,9 @@ Sprite_EonOwl_Main:
   {
     %PlayAnimation(0,1,16)
 
-    ; TODO: Pick a dialogue ID and display it
+    %ShowUnconditionalMessage($00E6)
+
+    %GotoAction(2)
     
     RTS
   }
@@ -100,6 +104,10 @@ Sprite_EonOwl_Main:
   EonOwl_FlyingAway: 
   {
     %PlayAnimation(2,3,16)
+
+    LDA.b #$FC : STA.w SprYSpeed, X
+    JSL   Sprite_Move
+
     RTS
   }
 }
@@ -111,12 +119,12 @@ Sprite_EonOwl_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA.w SprFrame, X : TAY ;Animation Frame
-  LDA .start_index, Y : STA $06
+  LDA.w SprFrame,     X : TAY     ;Animation Frame
+  LDA   .start_index, Y : STA $06
 
 
   PHX
-  LDX .nbr_of_tiles, Y ;amount of tiles -1
+  LDX   .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
   .nextTile
 
@@ -126,20 +134,20 @@ Sprite_EonOwl_Draw:
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-  CLC : ADC #$0010 : CMP.w #$0100
-  SEP #$20
-  BCC .on_screen_y
+  CLC   : ADC #$0010 : CMP.w #$0100
+  SEP   #$20
+  BCC   .on_screen_y
 
   LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-  STA $0E
+  STA   $0E
   .on_screen_y
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
