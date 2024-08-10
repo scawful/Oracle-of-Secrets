@@ -116,10 +116,8 @@ Sprite_Mermaid_Main:
     LDA.w SprX, X : INC : STA.w SprX, X
     LDA.w SprTimerA, X : BNE +
       INC.w SprAction, X
-      
       LDA.b #$04 : STA.w SprTimerA, X
     +
-
     RTS
   }
 
@@ -134,16 +132,11 @@ Sprite_Mermaid_Main:
       ++
 
       LDA.w SprTimerA, X : BEQ +
-        
-
         LDA.b #-10 : STA.w SprYSpeed, X
         STZ.w SprXSpeed, X
         LDA.b #$01 : STA.w SprMiscD, X
         LDA.b #$04 : STA.w SprTimerA, X
       +
-      
-
-
     RTS
   }
 
@@ -213,6 +206,7 @@ Sprite_Mermaid_Main:
   Maple_NotEnoughRupees:
   {
     %ShowUnconditionalMessage($0189) ; You don't have enough rupees!
+    %GotoAction(3)
     RTS
   }
 
