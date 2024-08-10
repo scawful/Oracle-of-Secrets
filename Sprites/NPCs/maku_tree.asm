@@ -88,12 +88,17 @@ Sprite_MakuTree_Main:
 
   MakuTree_MeetLink:
   {
-    %ShowSolicitedMessage($20) : BCC .no_talk
+    LDA POSX : STA $02
+    LDA POSY : STA $03
+    LDA SprX, X : STA $04
+    LDA SprY, X : STA $05
+    JSL GetDistance8bit_Long : CMP #$28 : BCS .not_too_close
+      %ShowUnconditionalMessage($20)
       LDA.b #$01 : STA.l $7EF3D4
       LDA.b #$01 : STA.l $7EF3C7 ; Mark the Hall of Secrets
       LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
       %GotoAction(2)
-    .no_talk
+    .not_too_close
     RTS
   }
 
