@@ -109,7 +109,6 @@ Sprite_MakuTree_Main:
   {
     %ShowSolicitedMessage($22) : BCC .no_talk
       LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
-      INC.w SprAction, X
     .no_talk
     RTS
   }
