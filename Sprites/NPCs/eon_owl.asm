@@ -95,6 +95,7 @@ Sprite_EonOwl_Main:
 
     %ShowUnconditionalMessage($00E6)
 
+    LDA.b #$A0 : STA.w SprTimerA, X
     %GotoAction(2)
     
     RTS
@@ -103,10 +104,14 @@ Sprite_EonOwl_Main:
 
   EonOwl_FlyingAway: 
   {
-    %PlayAnimation(2,3,16)
+    %PlayAnimation(2,3,10)
 
-    LDA.b #$FC : STA.w SprYSpeed, X
+    LDA.b #$F8 : STA.w SprYSpeed, X
     JSL   Sprite_Move
+
+    LDA.w SprTimerA, X : BNE .not_done
+      STZ.w SprState, X
+    .not_done
 
     RTS
   }
