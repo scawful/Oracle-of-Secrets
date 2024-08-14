@@ -54,8 +54,13 @@ Sprite_EonOwl_Prep:
 {
   PHB : PHK : PLB
 
-  ; If Map 0x50, don't spawn after intro
-    
+  LDA AreaIndex : CMP.b #$50 : BNE .not_intro
+    ; If Map 0x50, don't spawn after intro
+    LDA.l GAMESTATE : BEQ .continue
+      STZ.w SprState, X
+  .not_intro
+
+  .continue
 
   PLB
   RTL
