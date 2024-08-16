@@ -1019,7 +1019,7 @@ PreOverworld_LoadProperties_LoadMain:
     .no_music_load_needed
 
     ; PLACE CUSTOM GFX LOAD HERE!
-    ;JSL CheckForChangeGraphicsNormalLoadCastle
+    JSL CheckForChangeGraphicsNormalLoadBoat
     
     RTS
 }
@@ -2202,7 +2202,7 @@ CheckForChangeGraphicsNormalLoad:
     ;JSL DecompOwAnimatedTiles 
 
     ; PLACE CUSTOM GFX LOAD HERE!
-    ;JSL CheckForChangeGraphicsNormalLoadCastle
+    JSL CheckForChangeGraphicsNormalLoadBoat
         
     PLB
 
@@ -2252,7 +2252,7 @@ Func0AB8F5:
     STX.w $012C
 
     ; PLACE CUSTOM GFX LOAD HERE!
-    ;JSL CheckForChangeGraphicsNormalLoadCastle
+    JSL CheckForChangeGraphicsNormalLoadBoat
         
     RTL
 }
@@ -2410,6 +2410,10 @@ ReplaceBGColor:
 
     LDA.b $8A : ASL : TAX ; Get area code and times it by 2.
     LDA.w Pool_BGColorTable, X ; Get the color.
+
+    ; ORACLE TIME SYSTEM 
+    STA $7EE018
+    JSL $0EEF94 ; Background Fix
 
     ;STA.l $7EC300 : STA.l $7EC340 ; Set the BG color.
     STA.l $7EC500 : STA.l $7EC540
