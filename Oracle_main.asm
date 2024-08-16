@@ -83,7 +83,14 @@ DekuSticks = $7EF395
 
 incsrc "Overworld/custom_gfx.asm"
 print  "End of custom_gfx.asm             ", pc
+
+ZS_CUSTOM_OW_V2 = 1
+
+if ZS_CUSTOM_OW_V2 = 1
+incsrc "Overworld/ZCustomOverworld2.asm"
+else
 incsrc "Overworld/ZCustomOverworld.asm"
+endif
 print  "End of ZCustomOverworld.asm       ", pc
 
 incsrc "Core/ram.asm"
