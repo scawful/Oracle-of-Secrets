@@ -407,7 +407,9 @@ SubAreasFix:
 {
 	STA.l !pal_color
 	PHX
-	JSL ColorSubEffect
+    REP #$20
+      JSL ColorSubEffect
+    SEP #$20
 	PLX
 	STA $7EC300
 	STA $7EC340
@@ -471,11 +473,7 @@ org $02AE92
 ; org $0BFEB6 VANILLA DAY/NIGHT HOOK
 
 ; ZS OW - ReplaceBGColor
-if ZS_CUSTOM_OW_V2 = 1
-org $28960B
-; TODO: Implement custom background color for ZS OW V2
-  NOP #8
-else
+if ZS_CUSTOM_OW_V2 = 0
 org $2886B4 
   STA !pal_color
   JSL BackgroundFix
@@ -484,7 +482,7 @@ endif
 
 ; ZS OW - CheckForChangeGraphicsTransitionLoad
 if ZS_CUSTOM_OW_V2 = 1
-org $2893FD ; V1 $2885F9
+org $2893FD
 	JSL SubAreasFix
 else
 org $2885F9
