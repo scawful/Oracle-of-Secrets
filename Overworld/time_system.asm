@@ -461,9 +461,11 @@ org $00FC6A
 ;$0B/FEBE 8F 40 C5 7E STA $7EC540
 ;$0B/FEC2 8F 40 C3 7E STA $7EC340
 
+if ZS_CUSTOM_OW_V2 = 0
 ; Custom BG Color Mosaic Background Color fix
 org $028464
   NOP #6
+endif
 
 org $02AE92
   NOP #6
