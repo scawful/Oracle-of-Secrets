@@ -466,16 +466,30 @@ org $028464
 org $02AE92
   NOP #6
 
-; org $0BFEB6 OLD HOOK
-; ZS OW Expanded - ReplaceBGColor
-org $2886B4 
-	STA !pal_color
-	JSL BackgroundFix
-	;NOP #8
+; =========================================================
 
-; ZS OW Expanded - CheckForChangeGraphicsTransitionLoad
-org $2885F9
+; org $0BFEB6 VANILLA DAY/NIGHT HOOK
+
+; ZS OW - ReplaceBGColor
+if ZS_CUSTOM_OW_V2 = 1
+org $28960B
+; TODO: Implement custom background color for ZS OW V2
+  NOP #8
+else
+org $2886B4 
+  STA !pal_color
+  JSL BackgroundFix
+  ;NOP #8
+endif
+
+; ZS OW - CheckForChangeGraphicsTransitionLoad
+if ZS_CUSTOM_OW_V2 = 1
+org $2893FD ; V1 $2885F9
 	JSL SubAreasFix
+else
+org $2885F9
+  JSL SubAreasFix
+endif
 
 ; Subareas background color fix (under the bridge; zora...)
 ;$0E/D601 8F 00 C3 7E STA $7EC300[$7E:C300]
