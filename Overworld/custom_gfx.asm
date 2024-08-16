@@ -1,10 +1,3 @@
-org $02E94A
-  JSL CheckForSpecialAreaGraphics
-
-org $0ED5A8
-  OverworldPalettesLoader:
-
-; ==============================================================================
 
 org $3F8000
 CheckForChangeGraphicsNormalLoadBoat:
@@ -17,22 +10,6 @@ CheckForChangeGraphicsNormalLoadBoat:
     RTL
   .boat_area
     RTL
-}
-
-CheckForSpecialAreaGraphics: 
-{
-  JSL OverworldPalettesLoader
-  
-  LDA $8A : CMP.b #$81 : BNE .korok_area
-
-  PHB : PHK : PLB
-  JSL ApplyKorokSpriteSheets
-  PLB
-
-  .korok_area
-
-  RTL
-
 }
 
 ; ==============================================================================

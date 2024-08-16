@@ -147,13 +147,13 @@ Pool:
     ; phase. Default is $FF.
     org $288146 ; $140146
     .EnableBeginningRain ; 0x01
-    db $FF
+    db $00
 
     ; When non 0 this will disable the ambiant sound that plays in the mire
     ; area after the event is triggered. Default is $FF.
     org $288147 ; $140147
     .EnableRainMireEvent ; 0x01
-    db $FF
+    db $00
 
     ; When non 0 this will make the game reload all gfx in between OW
     ; transitions. Default is $FF.
@@ -989,7 +989,7 @@ PreOverworld_LoadProperties_LoadMain:
     STZ.b $EE   ; Reset Link layer to BG2
     STZ.w $0476 ; Another layer flag
         
-    INC.b $11 ; SCAWFUL: We should verify what submodule this is moving to.
+    INC.b $11 ; Move to Overworld_LoadSubscreenAndSilenceSFX1
     INC.b $16 ; NMI HUD Update flag
         
     STZ.w $0402 : STZ.w $0403

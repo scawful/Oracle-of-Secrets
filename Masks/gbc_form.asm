@@ -80,10 +80,10 @@ LoadOverworld_CheckForGbcLink:
       JSL UpdateGbcPalette
       JMP .return
    
-.return_lw
+  .return_lw
   STZ.w $02B2
   
-.return
+  .return
   JSL Palette_ArmorAndGloves
   STZ.b $B0
   STZ.b $11

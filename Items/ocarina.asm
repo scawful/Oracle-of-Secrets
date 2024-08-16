@@ -271,8 +271,8 @@ print "Bank07 Free Space: ", pc
 
 ; ZS OW
 ; Load the rain overlay by default for the song of storms
-org $02B011
-  LDX #$009F
+; org $02B011
+;   LDX #$009F
 
 org $2B8000
 OcarinaEffect_SummonStorms:
@@ -335,6 +335,9 @@ PlayThunderAndRain:
   RTL
 }
 
+if ZS_CUSTOM_OW_V2 = 1
+; TODO: Setup Song of Storms and Rain Overlay for V2
+else
 CheckRealTable:
 {
   LDA $7EE00E : CMP #$00 : BEQ .continue
@@ -349,6 +352,7 @@ CheckRealTable:
   
   JML RainAnimation_Overridden_skipMovement
 }
+endif
 
 ResetOcarinaFlag:
 {
@@ -432,6 +436,9 @@ org $02F210 ; OverworldTransitionScrollAndLoadMap
   JSL ResetOcarinaFlag
 }
 
+if ZS_CUSTOM_OW_V2 = 1
+; TODO: Setup Song of Storms and Rain Overlay for V2
+else 
 ; ZS OW
 org $02A4CD
 RainAnimation_Overridden:
@@ -490,3 +497,4 @@ RainAnimation_Overridden:
     RTL
 }
 warnpc $02A52D
+endif
