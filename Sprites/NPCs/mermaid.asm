@@ -65,11 +65,13 @@ Sprite_Mermaid_Prep:
   LDA.b #$40 : STA.w SprTimerA, X
   STZ.w SprMiscE, X
   LDA.b #$07 : STA.w SprHitbox, X
+
   LDA.w SprSubtype, X : CMP.b #$01 : BNE +
     ; Maple Sprite
     LDA.b #$01 : STA.w SprMiscE, X
     LDA.b #$03 : STA.w SprAction, X
   +
+
   CMP.b #$02 : BNE ++
     ; Librarian Sprite
     LDA.b #$02 : STA.w SprMiscE, X
@@ -84,6 +86,7 @@ Sprite_Mermaid_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
+
   dw MermaidWait
   dw MermaidDive
   dw MermaidSwim
@@ -94,6 +97,9 @@ Sprite_Mermaid_Main:
 
   dw LibrarianIdle
   dw Librarian_OfferTranslation
+
+  dw Maple_HandlePlayerResponse
+  dw Maple_ComeBackAgain
 
   MermaidWait:
   {
@@ -146,12 +152,7 @@ Sprite_Mermaid_Main:
     JSL Sprite_PlayerCantPassThrough
 
     %ShowSolicitedMessage($0187) : BCC .didnt_talk
-      LDA $1CE8 : BNE .player_said_no
-        %GotoAction(4)
-        RTS
-
-      .player_said_no
-      %ShowUnconditionalMessage($018B) ; Come back again!
+      %GotoAction(8) ; Handle player response
     .didnt_talk
     RTS
   }
@@ -160,7 +161,7 @@ Sprite_Mermaid_Main:
   {
     REP #$20
     LDA.l $7EF360
-    CMP.w #$13 ; 30 rupees
+    CMP.w #$1E ; 30 rupees
     SEP #$30
     BCC .not_enough_rupees
 
@@ -226,6 +227,23 @@ Sprite_Mermaid_Main:
     %PlayAnimation(0,1,16)
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($012C)
+    RTS
+  }
+
+  Maple_HandlePlayerResponse:
+  {
+    LDA $1CE8 : BEQ .player_said_yes
+      %GotoAction(9)
+      RTS
+    .player_said_yes
+    %GotoAction(4)
+    RTS
+  }
+
+  Maple_ComeBackAgain:
+  {
+    %ShowUnconditionalMessage($018B) ; Come back again!
+    %GotoAction(3)
     RTS
   }
 }
