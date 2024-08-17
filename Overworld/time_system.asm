@@ -1,4 +1,4 @@
-;----------------[ Time system ]----------------
+; ---------------------[ Time system ]---------------------
 
 ; tiles locations on HUD
 !hud_min_low = $7EC7CC
@@ -17,13 +17,10 @@ org !hud_template
   db $90,$24,$90,$24
   db $6C,$25,$90,$24,$90,$24	; HUD Template(adjusts timer's color)
 	
+; Sprite_Main.dont_reset_drag
+; Executes every frame to update the clock
 org $068361
-	JSL HUD_ClockDisplay ; $1CFF30
-  ;originally JSL $09B06E, executed every frame
-
-; =========================================================
-
-; org $1CFF30
+	JSL HUD_ClockDisplay
 pullpc
 HUD_ClockDisplay:
 {
@@ -49,16 +46,13 @@ LogoFadeInSetClock:
 
 pushpc
 org $0CCA59
-JSL ResetClockTriforceRoom
+  JSL ResetClockTriforceRoom
 pullpc
-
 ResetClockTriforceRoom:
 {
-  JSL $00E384 ;Restored code
-
+  JSL $00E384 ; LoadCommonSprites_long
   LDA.b #$00 : STA.l $7EE000 ; low hours for palette?
   LDA.b #$00 : STA.l $7EE001 ; high hours for palette?
-
   RTL
 }
 
@@ -457,6 +451,13 @@ CheckIfNight:
     LDA.b #$03
     RTL
 }
+
+ColorBgFix:
+{
+  JSL ColorSubEffect
+  STA.l PaletteCgram_HUD
+  STA.l PaletteCgram_BG
+  RTL
 }
 
 pushpc
@@ -479,6 +480,10 @@ if ZS_CUSTOM_OW_V2 = 0
 ; Custom BG Color Mosaic Background Color fix
 org $028464
   NOP #6
+else 
+; SetBGColorMainBuffer
+org $0ED5F9
+  JSL ColorBgFix
 endif
 
 org $02AE92
@@ -529,6 +534,7 @@ org $0ED601
 ;$1B/EE37 E6 15       INC $15    [$00:0015]   
 ;$1B/EE39 6B          RTL                     
 
+; Palettes_Load_LinkGloves
 org $1BEE2D
 	JSL GlovesFix
 
