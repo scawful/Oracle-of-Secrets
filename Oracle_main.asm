@@ -5,10 +5,10 @@
 ; Expanded Banks:
 ;   21-2A ZS Reserved
 ;   2B  - Items: all_items.asm
-;   2C  - Underworld (Dungeons): dungeons.asm
+;   2C  - Underworld: dungeons.asm
 ;   2D  - Menu
 ;   2E  - HUD
-;   2F  - Unused
+;   2F  - Expanded Message Bank
 ;   30-32 Sprites: all_sprites.asm
 ;   33  - Moosh Form Gfx and Palette
 ;   34  - Time System, Custom Overworld Overlays
@@ -19,7 +19,7 @@
 ;   39  - Minish Link Gfx
 ;   3A  - Mask Routines, Custom Ancillae (Deku Bubble)
 ;   3B  - GBC Link Gfx
-;   3C  - Expanded Dialogue
+;   3C  - Unused
 ;   3D  - LW World Map
 ;   3E  - DW World Map
 ;   3F  - Load Custom Gfx, Boat Gfx
@@ -81,18 +81,22 @@ Seashells  = $7EF391
 Honeycomb  = $7EF393
 DekuSticks = $7EF395
 
+; TODO: Move to Oracle namespace, free up the bank.
 incsrc "Overworld/custom_gfx.asm"
 print  "End of custom_gfx.asm             ", pc
 
+; ZSCustomOverworld version
+; Kept in case of serious issues which impedes progress
 ZS_CUSTOM_OW_V2 = 1
-
 if ZS_CUSTOM_OW_V2 = 1
-incsrc "Overworld/ZCustomOverworld2.asm"
+  incsrc "Overworld/ZCustomOverworld2.asm"
+  print  "End of ZCustomOverworld2.asm      ", pc
 else
-incsrc "Overworld/ZCustomOverworld.asm"
+  incsrc "Overworld/ZCustomOverworld.asm"
+  print  "End of ZCustomOverworld.asm       ", pc
 endif
-print  "End of ZCustomOverworld.asm       ", pc
 
+; Vanilla WRAM and SRAM
 incsrc "Core/ram.asm"
 
 namespace Oracle
