@@ -155,12 +155,6 @@ Sprite_EonScrub_Main:
 
     JSL Sprite_PlayerCantPassThrough
 
-    ; Kill the pea shot
-    PHX
-    LDA Offspring1_Id : TAX
-    STZ.w $0DD0, X
-    PLX
-
     ; Play the spinning animation for a bit before proceeding
     LDA SprTimerA, X : BNE .not_done
       LDA #$40 : STA.w SprTimerA, X

@@ -161,12 +161,6 @@ Sprite_DekuScrubEnemy_Main:
 
     JSL Sprite_PlayerCantPassThrough
 
-    ; Kill the pea shot
-    PHX
-    LDA Offspring1_Id : TAX
-    STZ.w $0DD0, X
-    PLX
-
     ; Play the spinning animation for a bit before proceeding
     LDA SprTimerA, X : BNE .not_done
       LDA #$40 : STA.w SprTimerA, X
@@ -276,6 +270,7 @@ CheckForPeaShotRedirect:
   PLX
 
   JSL CheckIfHitBoxesOverlap : BCC .no_dano
+    JSR KillPeaShot
     %GotoAction(3)
     RTS
   .no_dano
@@ -286,9 +281,20 @@ CheckForPeaShotRedirect:
   JSL Sprite_SetupHitBox
   PLX
   JSL CheckIfHitBoxesOverlap : BCC .not_done2
+    JSR KillPeaShot
     %GotoAction(3)
     RTS
   .not_done2
+  RTS
+}
+
+KillPeaShot:
+{
+  ; Kill the pea shot
+  PHX
+  LDA Offspring1_Id : TAX
+  STZ.w $0DD0, X
+  PLX
   RTS
 }
 
