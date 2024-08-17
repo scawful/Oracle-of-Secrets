@@ -13,14 +13,20 @@ while !looprun == $00
   !addr #= !addr-1
 endwhile
 
+; Temporary fix for the message bank
+; ZS does not clear message data when bank is changed
+; So the end of the data bank is not as easily searchable.
+org $0EEE75
+  db #$80
+
 org !addr+1
-db #$80
+  db #$80
 
 org $0ED436
   JML MessageExpand
   NOP #$06
 
-org $3C8000
+org $2F8000
   MessageExpand:
   LDA.b $02 : AND.w #$00FF : CMP.w #$000E : BNE + ; are we already in expanded bank?
     LDA.w #MessageExpandedData : STA.b $00
