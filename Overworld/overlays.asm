@@ -6,69 +6,29 @@
 ; Animated Entrances:
 ; Module09_00_PlayerControl
 ; -> Overworld_AnimateEntrance
-
-; Overworld entrance cutscene to play
-; OWENTSC         = $7E04C6
+; =========================================================
 
 ; Trigger Zora Temple from Tablet 
-
 org $1EE061
   CMP.b #$1E ; Zora Temple Map 
 
 ; InitiateDesertCutscene
 org $07866D
-#_07866D: REP #$20
-
-#_07866F: LDA.w #$0001
-#_078672: STA.b $3C
-
-#_078674: SEP #$20
-
-#_078676: LDA.b #$1B ; LINKSTATE 1B
-#_078678: STA.b $5D
-
-#_07867A: RTL
-
-
-; =========================================================
-
-; ; before the intro keep value of $061E (not even sure if it's needed to move that)
-; REP #$20
-; LDA.w $061E : STA.w $0632 ; keep value of 061E
-; SEP #$20
-
-
-; ; move the camera to the right until position is 0980
-; REP #$20
-; INC.w $061C
-; INC.w $061E
-; INC.b $E2 ; that's the camera
-
-; LDA.w $061E : CMP.w #$0980 : BNE +
-; SEP #$20
-; INC.b $B0
-; +
-
-; SEP #$20
-; RTS
-
-
-; ; move camera back until it's back to $0632 (position we were at)
-; REP #$20
-; DEC.w $061C
-; DEC.w $061E
-; DEC.b $E2
-
-; LDA.w $061E : CMP.w $0632 : BNE +
-; SEP #$20
+  REP #$20
+  LDA.w #$0001 : STA.b $3C
+  SEP #$20
+  LDA.b #$1B : STA.b $5D
+  RTL
 
 ; ================================================
 ; Overlays $04C6
 ; 01 - Zora Temple (OW 1E)
-; 02 - Kalyxo Castle Bridge
-; 03 - Tail Palace
+; 02 - Castle Bridge (OW 1B)
+; 03 - Tail Palace (OW 2F)
 ; 04 - TODO: Shrines
-; 05 - TODO: Fortress of Secrets
+; 05 - TODO: Fortress of Secrets (OW 5E)
+
+CameraCache = $0632
 
 ; LinkItem_Book
 ; Desert Book activation trigger
@@ -77,24 +37,27 @@ NOP #01
 JML NewDesertCheck
 returnPos:
 
-
 pullpc
 NewDesertCheck:
 {
-  ; LDA.b #$02 : STA.w $037A ; set link in praying mode
+  ; set link in praying mode
+  ; LDA.b #$02 : STA.w $037A 
   ; LDA #$FF : STA $8C
   ; LDA #$00 : STA $7EE00E
-  ; STZ $1D
-  ; STZ $9A
+  ; STZ $1D : STZ $9A
   ; STZ.w $012D
 
-  LDA $8A : CMP.b #$1B : BEQ .castle
-    JMP +
-  .castle
-  LDA.b #$02 : STA.w $04C6
-  STZ.b $B0
-  STZ.b $C8
-
+  ; Are we on the castle map?
+  LDA $8A : CMP.b #$1B : BNE +
+    ; Is there an overlay playing?
+    LDA $04C6 : BNE +
+      ; If not, start the castle entrance animation
+      LDA.b #$02 : STA.w $04C6 ; Set the overlay
+      STZ.b $B0 : STZ.b $C8
+      ; Cache the camera
+      REP #$20
+      LDA.w $0618 : STA.w CameraCache
+      SEP #$20
   +
   JML $07A493 ; returnPos ; do not !
 }
@@ -687,14 +650,15 @@ Frame8:
 
 Castle_EntranceAnimation:
 {
+  LDA.b $B0 : CMP.b #$04 : BEQ .last_frame
   REP #$20
   LDA $0618 : CMP.w #$0630 : BCC +
     DEC.b $E8 ; Increment camera vertical
     DEC.w $0618 : DEC.w $0618 
     DEC.w $061A : DEC.w $061A
   +
-
   SEP #$20
+  .last_frame
 
   LDA.b $B0 ; Get animation state
   ASL A
@@ -709,6 +673,47 @@ Castle_EntranceAnimation:
   dw Castle_Frame3
   dw Castle_Frame1
   dw Castle_Frame2
+  dw Castle_RestoreCamera
+}
+
+Castle_EndAnimation:
+{
+  INC.b $B0 ; increase frame
+  STZ.b $C8 ; reset timer for next frame
+  STZ.w $04C6
+  STZ.b $B0
+  STZ.w $0710
+  STZ.w $02E4
+  STZ.w $0FC1
+  STZ.w $011A
+  STZ.w $011B
+  STZ.w $011C
+  STZ.w $011D
+  LDA.b #$1B ; SFX3.1B
+  STA.w $012F
+  ; set the overlay
+  LDX.b $8A
+  LDA.l $7EF280,X
+  ORA.b #$20
+  STA.l $7EF280,X
+  RTS
+}
+
+Castle_RestoreCamera:
+{
+  REP #$20
+
+  INC.w $061A : INC.w $061A
+  INC.w $0618 : INC.w $0618
+  INC.b $E8
+
+  LDA.w $0618 : CMP.w CameraCache : BNE +
+    SEP #$20
+    JSR Castle_EndAnimation
+    RTS
+  +
+  SEP #$20
+  RTS
 }
 
 Castle_Frame0:
@@ -876,22 +881,6 @@ Castle_Frame2:
   BNE .wait
   INC.b $B0 ; increase frame
   STZ.b $C8 ; reset timer for next frame
-  STZ.w $04C6
-  STZ.b $B0
-  STZ.w $0710
-  STZ.w $02E4
-  STZ.w $0FC1
-  STZ.w $011A
-  STZ.w $011B
-  STZ.w $011C
-  STZ.w $011D
-  #_1BCF40: LDA.b #$1B ; SFX3.1B
-  #_1BCF42: STA.w $012F
-  ; set the overlay
-  LDX.b $8A
-  LDA.l $7EF280,X
-  ORA.b #$20
-  STA.l $7EF280,X
   .wait
   RTS
 }
@@ -935,7 +924,6 @@ Castle_Frame3:
   BNE .wait
   INC.b $B0 ; increase frame
   STZ.b $C8 ; reset timer for next frame
-
   .wait
   RTS
 }
