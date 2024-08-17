@@ -2413,7 +2413,7 @@ ReplaceBGColor:
 
     ; ORACLE TIME SYSTEM 
     STA $7EE018
-    JSL $34816E ; Background Fix
+    JSL Oracle_BackgroundFix ; $3482DD ; Background Fix
 
     ;STA.l $7EC300 : STA.l $7EC340 ; Set the BG color.
     STA.l $7EC500 : STA.l $7EC540
