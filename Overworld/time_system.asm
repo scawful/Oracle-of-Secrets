@@ -268,7 +268,7 @@ org $1BEF61
 org $1BEF84
 	JSL LoadDayNightPaletteEffect
 
-org $0EEE25	; free space
+pullpc
 LoadDayNightPaletteEffect:
 {
   STA.l !pal_color
@@ -445,7 +445,7 @@ CheckIfNight:
     RTL
 }
 
-warnpc $0EF3F9  ; free space
+pushpc
 
 org $09C4E3
   JSL CheckIfNight
