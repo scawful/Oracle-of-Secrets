@@ -411,6 +411,10 @@ org $05FF7D
   LDA.l $7EF34C
   CMP.b #$01
   
+; Raven Damage (LW/DW)
+org $068963
+  db $81, $84
+
 ; Running Man draw palette
 org $05E9CD
 SpriteDraw_RunningBoy:
