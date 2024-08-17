@@ -254,17 +254,28 @@ rom_to_buff:
 	JSR $C692	; $02:C692 -> rom to palette buffer for other colors
 	RTL
 
+PaletteBuffer_HUD = $7EC300
+PaletteBuffer_BG = $7EC340
+PaletteBuffer_Spr = $7EC400
+
+PaletteCgram_HUD = $7EC500
+PaletteCgram_BG = $7EC540
+PaletteCgram_Spr = $7EC600
+
 ; part of rom pal to buffer routine
 ;$1B/EF61 9F 00 C3 7E STA $7EC300,x[$7E:C422]
 ;$1B/EF3D 9F 00 C3 7E STA $7EC300,x[$7E:C412]
 ;$1B/EF84 9F 00 C3 7E STA $7EC300,x[$7E:C4B2]
 
+; Palettes_LoadSingle.next_color
 org $1BEF3D
 	JSL LoadDayNightPaletteEffect
 
+; Palettes_LoadMultiple.next_color
 org $1BEF61
 	JSL LoadDayNightPaletteEffect
 
+; Palettes_LoadMultiple_Arbitrary.next_color
 org $1BEF84
 	JSL LoadDayNightPaletteEffect
 
@@ -274,14 +285,14 @@ LoadDayNightPaletteEffect:
   STA.l !pal_color
 
   CPX #$0041 : BPL .title_check
-    STA $7EC300,X
+    STA PaletteBuffer_HUD,X
     RTL
     
   .title_check
 
   ; title or file select screen ?
   LDA $10 : AND #$00FF : CMP #$0002	: BCS .outin_check
-    LDA.l !pal_color : STA $7EC300,X
+    LDA.l !pal_color : STA PaletteBuffer_HUD,X
     RTL
 
   .outin_check
@@ -290,13 +301,13 @@ LoadDayNightPaletteEffect:
     CMP.w #$0012 : BCS .restorecode
     BRA .overworld
   .restorecode
-    LDA.l !pal_color : STA.l $7EC300, X
+    LDA.l !pal_color : STA.l PaletteBuffer_HUD, X
     RTL
   .overworld
 
   LDA $1B : AND #$00FF : BEQ .outdoors2
     LDA.l !pal_color
-    STA $7EC300,X
+    STA PaletteBuffer_HUD,X
     RTL
 
   .outdoors2
@@ -304,7 +315,7 @@ LoadDayNightPaletteEffect:
   PHX
   JSL ColorSubEffect
   PLX
-  STA.l $7EC300,X
+  STA.l PaletteBuffer_HUD,X
   RTL
 }
 
@@ -396,24 +407,26 @@ BackgroundFix:
     JSL ColorSubEffect
     
   .no_effect:
-	STA.l $7EC500
-	STA.l $7EC300
-	STA.l $7EC540
-	STA.l $7EC340
-	rtl
+  STA.l PaletteCgram_HUD
+  STA.l PaletteBuffer_HUD
+  STA.l PaletteCgram_BG
+  STA.l PaletteBuffer_BG
+  RTL
 }
 
 SubAreasFix:
 {
+  BEQ .no_effect
 	STA.l !pal_color
 	PHX
     REP #$20
       JSL ColorSubEffect
     SEP #$20
 	PLX
-	STA $7EC300
-	STA $7EC340
-	rtl
+  .no_effect
+	STA PaletteBuffer_HUD
+	STA PaletteBuffer_BG
+	RTL
 }
 
 GlovesFix:
@@ -443,6 +456,7 @@ CheckIfNight:
   .night_time
     LDA.b #$03
     RTL
+}
 }
 
 pushpc
@@ -555,7 +569,7 @@ FixShockPalette:
   PHX
   JSL ColorSubEffect
   PLX
-  STA.l $7EC500, X
+  STA.l PaletteCgram_HUD, X
   RTL
   .indoors
   PLA
