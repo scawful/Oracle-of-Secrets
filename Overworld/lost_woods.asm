@@ -18,7 +18,8 @@
 
 ; ==========================================================
 
-org           $02AA7D
+; OverworldHandleTransitions
+org $02AA7D
   JSL LOST_WOOD_HOOK
 
 ; At this stage the accumulator contains area currently in
@@ -31,6 +32,8 @@ LOST_WOOD_HOOK:
 
   normalfinish: 
   {
+    ; Overworld_ActualScreenID
+    ; Gets the small/large map true ID of the current screen
     LDA $02A5EC, x    ; not right area so return.
     STZ !ComboCounter
     RTL
@@ -158,4 +161,38 @@ LOST_WOOD_HOOK:
     LDA #$29 ; load the same area.
     RTL
   }
+
+  ; TODO: Restore camera values on invalid combinations.
+  RestoreCameraNorth:
+  {
+    LDA $700
+    SEC
+    SBC #$10
+    STA $700
+    RTS
+  }
+
+  RestoreCameraSouth:
+  {
+    LDA $700
+    CLC
+    ADC #$10
+    STA $700
+    RTS
+  }
+
+  RestoreCameraWest:
+  {
+    DEC $700
+    DEC $700
+    RTS
+  }
+
+  RestoreCameraEast:
+  {
+    INC $700
+    INC $700
+    RTS
+  }
+
 } ; label LOST_WOOD_HOOK
