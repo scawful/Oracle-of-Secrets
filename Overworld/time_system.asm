@@ -32,13 +32,12 @@ HUD_ClockDisplay:
 
 ; Zarby Intro and Credits fix
 pushpc
-org $0CC265 ; IntroLogoPaletteFadeIn
-JSL LogoFadeInSetClock
+org $0CC265 ; Intro_FadeLogoIn
+  JSL LogoFadeInSetClock
 pullpc
-
 LogoFadeInSetClock:
 {
-  JSL $00ED7C ; restore code
+  JSL $00ED7C ; IntroLogoPaletteFadeIn
   LDA.b #$08 : STA.l $7EE000 ; Set the time to 6:00am
   LDA.b #$3F : STA.l $7EE002 ; Set the time speed
   RTL 
@@ -486,6 +485,7 @@ org $0ED5F9
   JSL ColorBgFix
 endif
 
+; OverworldMosaicTransition_HandleScreensAndLoadShroom
 org $02AE92
   NOP #6
 
