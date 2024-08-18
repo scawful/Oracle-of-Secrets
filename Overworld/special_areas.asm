@@ -121,10 +121,7 @@ Overworld_CheckForSpecialOverworldTrigger:
 
 GetMap16Tile:
 {
-  LDA.b $20
-  CLC
-  ADC.w #$000C
-  STA.b $00
+  LDA.b $20 : CLC : ADC.w #$000C : STA.b $00
 
   SEC
   SBC.w $0708
@@ -135,21 +132,17 @@ GetMap16Tile:
   ASL A
   STA.b $06
 
-  LDA.b $22
-  CLC
-  ADC.w #$0008
+  LDA.b $22 : CLC : ADC.w #$0008
 
   LSR A
   LSR A
   LSR A
   STA.b $02
 
-  SEC
-  SBC.w $070C
+  SEC : SBC.w $070C
 
   AND.w $070E
-  CLC
-  ADC.b $06
+  CLC : ADC.b $06
 
   TAY
   TAX
@@ -176,9 +169,7 @@ SpecialOverworld_CheckForReturnTrigger:
 
   JSR GetMap16Tile
 
-  LDA.l Map16Definitions,X
-  AND.w #$01FF
-  STA.b $00
+  LDA.l Map16Definitions,X : AND.w #$01FF : STA.b $00
 
   LDX.w #$000C ; Size of table
 
@@ -190,17 +181,13 @@ SpecialOverworld_CheckForReturnTrigger:
   DEX
   BMI EXIT_0EDEE0
 
-  CMP.l .tile_type,X
-  BNE .check_next_tile
+  CMP.l .tile_type, X : BNE .check_next_tile
 
-  LDA.b $8A
-  CMP.l .screen_id,X
-  BNE .check_next_screen
+  LDA.b $8A : CMP.l .screen_id, X : BNE .check_next_screen
 
   SEP #$30
 
-  LDA.l .direction,X
-  STA.b $67
+  LDA.l .direction, X : STA.b $67
 
   LDX.b #$04
 
@@ -214,7 +201,6 @@ SpecialOverworld_CheckForReturnTrigger:
   STA.w $0418
 
   LDA.b $67
-
   LDX.b #$04
 
   .just_keep_shifting
@@ -226,11 +212,8 @@ SpecialOverworld_CheckForReturnTrigger:
   TXA
   STA.w $069C
 
-  LDA.b #$24
-  STA.b $11
-
-  STZ.b $B0
-  STZ.b $A0
+  LDA.b #$24 : STA.b $11
+  STZ.b $B0 : STZ.b $A0
 
   RTL
 
@@ -240,17 +223,20 @@ SpecialOverworld_CheckForReturnTrigger:
   dw $00AD
   dw $00B9
   dw $01EF
+  dw $00B7
 
   .screen_id
   dw $0080 ; OW 80
   dw $0080 ; OW 80
   dw $0081 ; OW 81
   dw $0081 ; OW 81
-  dw $0091 ; OW 91
+  dw $0080 ; OW 91
+  dw $0091
 
   .direction
   dw $0004
   dw $0001
+  dw $0004
   dw $0004
   dw $0004
   dw $0004
@@ -266,22 +252,23 @@ org $02E90C ; LoadSpecialOverworld interrupt
 
 pullpc
 
+; Table of overworld transition points
+OverworldTransitionPositionY = $02A8C4
+OverworldTransitionPositionX = $02A944
+
 ; Interrupts the vanilla LoadSpecialOverworld function
 ; after LoadOverworldFromUnderworld is called.
 ; Adds additional data to the table for more special areas
 
 ; Overworld ID $A0 is set to the special area ID 
 ; To support 0x91, the special area ID will need to index to row 5 of the table
-; 
 
 LoadSpecialOverworld:
 {
   REP #$20
   LDA.b $A0 : CMP.w #$1010 : BNE .not_zora
-
-  LDA.w #$0182 ; OW 82
-  STA.b $A0
-
+    LDA.w #$0182 ; OW 82
+    STA.b $A0
   .not_zora
   SEP #$20
 
@@ -307,32 +294,39 @@ LoadSpecialOverworld:
   LDA.l .gfx_AA2, X : STA.w $0AA2
 
   PHX
-
   LDA.l .palette_prop_b, X : STA.b $00
   LDA.l .palette_prop_a, X : JSL OverworldPalettesLoader
-
   PLX
 
   REP #$30
 
+  ; Store the size of a big screen in $00 if ID < 5
+  LDA.b $A0 : AND.w #$00FF : CMP.w #$0005 : BCC .large_map
+    LDA.w #$01F0 : STA.b $00 ; Small map size
+    JMP +
+  .large_map
   LDA.w #$03F0 : STA.b $00
+  +
 
+  ; Load overworld ID 
   LDA.b $A0 : AND.w #$003F : ASL A : TAX
 
+  ; Overworld camera boundaries Y edge
   LDA.l .camera600, X : STA.w $0708
 
+  ; X edge
   LDA.l .camera70C, X
-  LSR A
-  LSR A
-  LSR A
+  LSR A : LSR A : LSR A
   STA.w $070C
 
+  ; Y BG size
+  ; 0x01F0 on small screens, 0x03F0 on big screens
   LDA.b $00 : STA.w $070A
 
+  ; X BG size
+  ; 0x003E on small screens , 0x007E on big screens
   LDA.b $00
-  LSR A
-  LSR A
-  LSR A
+  LSR A : LSR A : LSR A
   STA.w $070E
 
   ; ---------------------------------------------------------
