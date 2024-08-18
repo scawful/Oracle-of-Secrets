@@ -180,7 +180,7 @@ SpecialOverworld_CheckForReturnTrigger:
   AND.w #$01FF
   STA.b $00
 
-  LDX.w #$0006
+  LDX.w #$000C ; Size of table
 
   .check_next_screen
   LDA.b $00
@@ -238,15 +238,21 @@ SpecialOverworld_CheckForReturnTrigger:
   dw $017C
   dw $01E4
   dw $00AD
+  dw $00B9
+  dw $01EF
 
   .screen_id
   dw $0080 ; OW 80
   dw $0080 ; OW 80
   dw $0081 ; OW 81
+  dw $0081 ; OW 81
+  dw $0091 ; OW 91
 
   .direction
   dw $0004
   dw $0001
+  dw $0004
+  dw $0004
   dw $0004
 }
 
