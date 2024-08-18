@@ -18,7 +18,6 @@ Link_EnterDream:
 
 Link_HandleDreams:
 {
-  LDA.b #$16 : STA.b $5D
   LDA.w CurrentDream
   JSL JumpTableLocal
 
@@ -82,12 +81,13 @@ Link_FallIntoDungeon:
   STA.w $010E
   STZ.w $010F
 
+  LDA.b #$01 : STA LinkState
   LDA.b #$11 : STA.b $10
   STZ.b $11 : STZ.b $B0
 
   RTS
 .entrance
-  db $7B, $01
+  db $79, $01
 }
 
 print "End of all_dreams.asm             ", pc

@@ -59,6 +59,9 @@ Sprite_MakuTree_Prep:
 
 ; =========================================================
 
+PaletteFilter_StartBlindingWhite = $00EEF1
+
+
 Sprite_MakuTree_Main:
 {
   JSL Sprite_PlayerCantPassThrough
@@ -72,6 +75,7 @@ Sprite_MakuTree_Main:
   dw MakuTree_HasMetLink
 
   dw MakuTree_HandleDreams
+  dw MakuTree_DreamTransition
 
   MakuTree_Handler:
   {
