@@ -367,7 +367,7 @@ LoadSpecialOverworld:
   dw $0200, $0200, $0000, $0000
   dw $0000, $0000, $0000, $0000
   dw $0000, $0000, $0000, $0000
-  dw $0000, $0000, $0000, $0000 ; OW 91
+  dw $0400, $0400, $0400, $0400 ; OW 91
 
   .camera602 ; Camera Scroll Boundary Large North
   dw $0120, $0020, $0320, $0020 ; OW 80
@@ -375,7 +375,7 @@ LoadSpecialOverworld:
   dw $0320, $0220, $0000, $0000 ; OW 82
   dw $0000, $0000, $0320, $0320 
   dw $0320, $0220, $0000, $0000 ; OW 81
-  dw $0000, $0000, $0320, $0320 ; OW 91
+  dw $051E, $0000, $051E, $051E ; OW 91
 
   .camera604 ; Camera Scroll Boundary South
   dw $0000, $0100, $0200, $0600
@@ -391,7 +391,7 @@ LoadSpecialOverworld:
   dw $0000, $0100, $0400, $0600
   dw $0600, $0A00, $0C00, $0C00
   dw $0000, $0100, $0500, $0600
-  dw $0600, $0A00, $0C00, $0C00
+  dw $0300, $0A00, $0C00, $0C00
 
   .camera610 ; Overworld target position for transition north
   dw $FF20, $FF20, $FF20, $FF20
@@ -399,7 +399,7 @@ LoadSpecialOverworld:
   dw $FF20, $FF20, $0120, $FF20
   dw $FF20, $FF20, $FF20, $0120
   dw $FF20, $FF20, $FF20, $FF20
-  dw $FF20, $FF20, $FF20, $FF20
+  dw $0320, $0320, $0320, $0320
 
   .camera614 ; Overworld target position for transition west
   dw $FFFC, $0100, $0300, $0100
@@ -407,7 +407,7 @@ LoadSpecialOverworld:
   dw $FFFC, $0100, $0300, $0500
   dw $0500, $0900, $0B00, $0B00
   dw $FFFC, $0100, $0300, $0100
-  dw $0500, $0900, $0B00, $0B00
+  dw $0100, $0900, $0B00, $0B00
 
   .camera612 ; Overworld target position for transition south
   dw $FF20, $FF20, $FF20, $FF20
@@ -415,7 +415,7 @@ LoadSpecialOverworld:
   dw $FF20, $FF20, $0120, $FF20
   dw $FF20, $FF20, $0400, $0400
   dw $FF20, $FF20, $FF20, $FF20
-  dw $FF20, $FF20, $FF20, $FF20
+  dw $FF20, $FF20, $0400, $0400
 
   .camera616 ; Overworld target position for transition east
   dw $0004, $0104, $0300, $0100
@@ -423,7 +423,7 @@ LoadSpecialOverworld:
   dw $0004, $0104, $0300, $0100
   dw $0500, $0900, $0B00, $0B00
   dw $0004, $0104, $0300, $0100
-  dw $0500, $0900, $0B00, $0B00
+  dw $0400, $0900, $0B00, $0B00
 
   .camera70C ; Overworld X Edge 
   dw $0000, $0000, $0200, $0600
@@ -431,7 +431,7 @@ LoadSpecialOverworld:
   dw $0000, $0000, $0200, $0600
   dw $0600, $0A00, $0C00, $0C00
   dw $0000, $0000, $0200, $0600
-  dw $0600, $0A00, $0C00, $0C00
+  dw $0000, $0000, $0000, $0000
 
   ; ---------------------------------------------------------
 
