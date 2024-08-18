@@ -16,7 +16,7 @@ Overworld_CheckForSpecialOverworldTrigger:
 
   LDA.l Map16Definitions,X : AND.w #$01FF : STA.b $00
 
-  LDX.w #$000A
+  LDX.w #$000C ; Size of table
 
   .check_next_screen
   LDA.b $00
@@ -93,19 +93,29 @@ Overworld_CheckForSpecialOverworldTrigger:
 
   ; corresponding warp types that lead to special overworld areas
   .tile_type
-  dw $01EF, $01EF, $00AD, $00B9, $01EF
+  dw $01EF ; Maku Tree Entrance
+  dw $01EF ; Tree House Entrance
+  dw $00AD ; Zora Falls Entrance
+  dw $00B9
+  dw $01EF ; Tree House Entrance
+  dw $00B7 ; Tiny House Entrance
   
   ; Lost woods, Hyrule Castle Bridge, Entrance to Zora falls, and in Zora Falls...
   .screen_id
-  dw $002A, $0018, $000F, $0081, $0017
+  dw $002A ; Maku Tree
+  dw $0018 ; Mushroom Grotto
+  dw $000F ; Graveyard
+  dw $0081
+  dw $0017 ; South of Graveyard
+  dw $0033 ; Loom Beach
   
   ; Direction Link will face when he enters the special area
   .direction
-  dw $0008, $0008, $0008, $0008, $0008
+  dw $0008, $0008, $0008, $0008, $0008, $0008
   
   ; Exit value for the special area. In Hyrule Magic these are those White markers.
   .special_id
-  dw $0180, $0181, $0182, $0189, $0181
+  dw $0180, $0181, $0182, $0189, $0181, $0191
 }
 
 
