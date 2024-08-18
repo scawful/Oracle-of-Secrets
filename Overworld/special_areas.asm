@@ -256,13 +256,228 @@ SpecialOverworld_CheckForReturnTrigger:
   dw $0004
 }
 
-LoadExpandedSpecialArea:
-{
-  LDA.b $A0 : CMP.w #$0191 : BNE .not_minish_woods
-    LDA.w #$0180 : STA.b $A0
-  .not_minish_woods
-  RTL
-}
+pushpc
 
-org $02E90E
-JSL LoadExpandedSpecialArea : NOP
+OverworldPalettesLoader = $0ED5A8
+
+org $02E90C ; LoadSpecialOverworld interrupt
+  JSL LoadSpecialOverworld
+  RTS
+
+pullpc
+
+; Interrupts the vanilla LoadSpecialOverworld function
+; after LoadOverworldFromUnderworld is called.
+; Adds additional data to the table for more special areas
+
+; Overworld ID $A0 is set to the special area ID 
+; To support 0x91, the special area ID will need to index to row 5 of the table
+; 
+
+LoadSpecialOverworld:
+{
+  REP #$20
+  LDA.b $A0 : CMP.w #$1010 : BNE .not_zora
+
+  LDA.w #$0182 ; OW 82
+  STA.b $A0
+
+  .not_zora
+  SEP #$20
+
+  PHB : PHK : PLB
+
+  LDA.b $A0
+  PHA
+
+  SEC : SBC.b #$80 : STA.b $A0
+
+  ; Check if the special area is 0x91
+  LDA.b $A0 : CMP.b #$11 : BNE .not_tiny_house
+    ; Subtract by 5 to index to row 5 of the table
+    SEC : SBC.b #$05 : STA.b $A0
+  .not_tiny_house
+
+  TAX
+
+  LDA.l .direction, X : STA.b $2F
+  STZ.w $0412
+
+  LDA.l .gfx_AA3, X : STA.w $0AA3
+  LDA.l .gfx_AA2, X : STA.w $0AA2
+
+  PHX
+
+  LDA.l .palette_prop_b, X : STA.b $00
+  LDA.l .palette_prop_a, X : JSL OverworldPalettesLoader
+
+  PLX
+
+  REP #$30
+
+  LDA.w #$03F0 : STA.b $00
+
+  LDA.b $A0 : AND.w #$003F : ASL A : TAX
+
+  LDA.l .camera600, X : STA.w $0708
+
+  LDA.l .camera70C, X
+  LSR A
+  LSR A
+  LSR A
+  STA.w $070C
+
+  LDA.b $00 : STA.w $070A
+
+  LDA.b $00
+  LSR A
+  LSR A
+  LSR A
+  STA.w $070E
+
+  ; ---------------------------------------------------------
+
+  LDA.b $A0 : ASL A : TAY
+
+  SEP #$10
+  LDA.w .camera600, Y : STA.w $0600
+  LDA.w .camera602, Y : STA.w $0602
+  LDA.w .camera604, Y : STA.w $0604
+  LDA.w .camera606, Y : STA.w $0606
+  LDA.w .camera610, Y : STA.w $0610
+  LDA.w .camera612, Y : STA.w $0612
+  LDA.w .camera614, Y : STA.w $0614
+  LDA.w .camera616, Y : STA.w $0616
+  SEP #$20
+
+  PLA
+  STA.b $A0
+
+  PLB
+
+  JSL $0ED61D ; Overworld_SetScreenBGColorCacheOnly
+
+  RTL
+
+  ; row 0 - maku tree, left half of small map 80
+  ; row 1 - tree house, top right quarter of small map 80
+  ; row 2 - zora falls, large map 81
+  ; row 3 - also zora falls?
+  ; row 4 - tree house, top right quarter of small map 80 (mirror)
+  ; row 5 - tiny house, small map 91 (512x512)
+
+  ; Affects $0600 and $0708
+  .camera600 ; Camera Scroll Boundary Small North
+  dw $0000, $0000, $0000, $0000
+  dw $0000, $0000, $0000, $0000
+  dw $0200, $0200, $0000, $0000
+  dw $0000, $0000, $0000, $0000
+  dw $0000, $0000, $0000, $0000
+  dw $0000, $0000, $0000, $0000 ; OW 91
+
+  .camera602 ; Camera Scroll Boundary Large North
+  dw $0120, $0020, $0320, $0020 ; OW 80
+  dw $0000, $0000, $0320, $0320 ; OW 81
+  dw $0320, $0220, $0000, $0000 ; OW 82
+  dw $0000, $0000, $0320, $0320 
+  dw $0320, $0220, $0000, $0000 ; OW 81
+  dw $0000, $0000, $0320, $0320 ; OW 91
+
+  .camera604 ; Camera Scroll Boundary South
+  dw $0000, $0100, $0200, $0600
+  dw $0600, $0A00, $0C00, $0C00
+  dw $0000, $0100, $0200, $0600
+  dw $0600, $0A00, $0C00, $0C00
+  dw $0000, $0100, $0200, $0600
+  dw $0600, $0A00, $0C00, $0C00
+
+  .camera606 ; Camera Scroll Boundary Large South
+  dw $0000, $0100, $0500, $0600
+  dw $0600, $0A00, $0C00, $0C00
+  dw $0000, $0100, $0400, $0600
+  dw $0600, $0A00, $0C00, $0C00
+  dw $0000, $0100, $0500, $0600
+  dw $0600, $0A00, $0C00, $0C00
+
+  .camera610 ; Overworld target position for transition north
+  dw $FF20, $FF20, $FF20, $FF20
+  dw $FF20, $FF20, $FF20, $FF20
+  dw $FF20, $FF20, $0120, $FF20
+  dw $FF20, $FF20, $FF20, $0120
+  dw $FF20, $FF20, $FF20, $FF20
+  dw $FF20, $FF20, $FF20, $FF20
+
+  .camera614 ; Overworld target position for transition west
+  dw $FFFC, $0100, $0300, $0100
+  dw $0500, $0900, $0B00, $0B00
+  dw $FFFC, $0100, $0300, $0500
+  dw $0500, $0900, $0B00, $0B00
+  dw $FFFC, $0100, $0300, $0100
+  dw $0500, $0900, $0B00, $0B00
+
+  .camera612 ; Overworld target position for transition south
+  dw $FF20, $FF20, $FF20, $FF20
+  dw $FF20, $FF20, $0400, $0400
+  dw $FF20, $FF20, $0120, $FF20
+  dw $FF20, $FF20, $0400, $0400
+  dw $FF20, $FF20, $FF20, $FF20
+  dw $FF20, $FF20, $FF20, $FF20
+
+  .camera616 ; Overworld target position for transition east
+  dw $0004, $0104, $0300, $0100
+  dw $0500, $0900, $0B00, $0B00
+  dw $0004, $0104, $0300, $0100
+  dw $0500, $0900, $0B00, $0B00
+  dw $0004, $0104, $0300, $0100
+  dw $0500, $0900, $0B00, $0B00
+
+  .camera70C ; Overworld X Edge 
+  dw $0000, $0000, $0200, $0600
+  dw $0600, $0A00, $0C00, $0C00
+  dw $0000, $0000, $0200, $0600
+  dw $0600, $0A00, $0C00, $0C00
+  dw $0000, $0000, $0200, $0600
+  dw $0600, $0A00, $0C00, $0C00
+
+  ; ---------------------------------------------------------
+
+  .direction
+  db $00, $04, $00, $00
+  db $00, $00, $00, $00
+  db $00, $00, $00, $00
+  db $00, $00, $00, $00
+  db $00, $00, $00, $00
+  db $00, $00, $00, $00
+
+  .gfx_AA3
+  db $0C, $0C, $0E, $0E
+  db $0E, $10, $10, $10
+  db $0E, $0E, $0E, $0E
+  db $10, $10, $10, $10
+  db $0E, $0E, $0E, $0E
+  db $10, $10, $10, $10
+
+  .gfx_AA2
+  db $2F, $2F, $2F, $2F
+  db $2F, $2F, $2F, $2F
+  db $2F, $2F, $2F, $2F
+  db $2F, $2F, $2F, $2F
+  db $2F, $2F, $2F, $2F
+  db $2F, $2F, $2F, $2F
+
+  .palette_prop_a
+  db $0A, $0A, $0A, $0A
+  db $02, $02, $02, $0A
+  db $02, $02, $0A, $02
+  db $02, $02, $02, $0A
+  db $02, $02, $02, $0A
+  db $02, $02, $02, $0A
+
+  .palette_prop_b
+  db $01, $08, $08, $08
+  db $00, $00, $00, $00
+  db $00, $00, $08, $00
+  db $00, $00, $00, $02
+  db $00, $00, $00, $00
+  db $00, $00, $00, $00
+}
