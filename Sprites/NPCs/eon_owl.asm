@@ -55,12 +55,12 @@ Sprite_EonOwl_Prep:
   PHB : PHK : PLB
 
   LDA AreaIndex : CMP.b #$50 : BNE .not_intro
-    ; If Map 0x50, don't spawn after intro
-    LDA.l GAMESTATE : BEQ .continue
+    ; If Map 0x50, don't spawn after meeting Maku Tree
+    LDA.l OOSPROG : AND.b #$02 : BEQ .continue
       STZ.w SprState, X
+    .continue
   .not_intro
 
-  .continue
 
   PLB
   RTL
