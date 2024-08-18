@@ -1028,6 +1028,7 @@ warnpc $02856A ; $01056A
 ; ==============================================================================
 
 ; Changes a function that loads animated tiles under certain conditions.
+; Credits_LoadScene_Overworld_PrepGFX
 org $028632 ; $010632
 Func028632:
 {
@@ -1087,6 +1088,7 @@ warnpc $028697
 
 ; Changes part of a function that changes the sub mask color when leaving
 ; dungeons.
+; Spotlight_ConfigureTableAndControl_dont_restore_y_coord
 org $029AA6 ; $011AA6
 Func029AA6:
 {
@@ -1704,6 +1706,7 @@ warnpc $02A52D ; $01252D
 
 ; Main Mosaic Hook. Changes it to use a table instead of hardcoded to the woods
 ; areas.
+; OverworldHandleTransitions.shift
 org $02AADB ; $012ADB
     JML MosaicAreaCheck
 
@@ -1742,11 +1745,12 @@ pushpc
 ; ==============================================================================
 
 ; Repairs an old ZS call.
+; Module09_LoadAuxGFX
 org $02ABB8 ; $012BB8
 db $A9, $09, $80, $02
 
 
-
+; Module09_TriggerTilemapUpdate
 org $02ABBE ; $012BBE
     JSL NewOverworld_FinishTransGfx
     NOP : NOP : NOP
@@ -2180,7 +2184,7 @@ pushpc
 ; ==============================================================================
 
 
-
+; WorldMap_ExitMap
 org $0ABC5A ; $053C5A
     JSL CheckForChangeGraphicsNormalLoad
 
@@ -2215,6 +2219,7 @@ pushpc
 
 
 ; Loads different animated tiles when returning from bird travel.
+; FluteMenu_LoadSelectedScreen
 org $0AB8F5 ; $0538F5
 Func0AB8F5:
 {
@@ -2619,7 +2624,9 @@ NewLoadTransAuxGFX:
 {
     PHB : PHK : PLB
 
+    LDA $1B : BNE .normal_load
     LDA.w Pool_EnableTransitionGFXGroupLoad : BNE .notNormalLoad
+    .normal_load
         ; Replaced code:
         LDA.b #$60 : STA.b $01
 
