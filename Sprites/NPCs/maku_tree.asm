@@ -119,6 +119,8 @@ Sprite_MakuTree_Main:
 
   MakuTree_HandleDreams:
   {
+    JSL PaletteFilter_StartBlindingWhite
+
     ; Check if Link has seen the dream
     LDA.l DREAMS
     CMP.b #$01 : BCC .mushroom_grotto
@@ -161,8 +163,26 @@ Sprite_MakuTree_Main:
     .dragon_ship
     LDA.b #$06 : STA.w CurrentDream
     .enter_dream
-    JSL Link_EnterDream
+    PHX 
+    LDA.b #$16 : STA.b $5D ; Set Link to sleeping
+    LDA.b #$20 : JSL AncillaAdd_Blanket
+    LDA.b $20 : STA.w $0BFA,X
+    LDA.b $21 : STA.w $0C0E,X
+    LDA.b $22 : SEC : SBC.b #$08 : STA.w $0C04,X
+    LDA.b $23 : STA.w $0C18,X
+    JSL PaletteFilter_StartBlindingWhite
+    PLX 
 
+    LDA.b #$30 : STA.w SprTimerB, X
+    INC.w SprAction, X
+    RTS
+  }
+
+  MakuTree_DreamTransition:
+  {
+    LDA.w SprTimerB, X : BNE +
+      JSL Link_EnterDream
+    +
     RTS
   }
 
