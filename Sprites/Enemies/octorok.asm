@@ -78,35 +78,33 @@ Sprite_Octorok_Main:
   Octorok_MoveDown:
   {
     %PlayAnimation(0,1,10)
-
     RTS
   }
 
   Octorok_MoveUp:
   {
+    %StartOnFrame(2)
     %PlayAnimation(2,3,10)
-
     RTS
   }
 
   Octorok_MoveLeft:
   {
+    %StartOnFrame(4)
     %PlayAnimation(4,5,10)
-
     RTS
   }
 
   Octorok_MoveRight:
   {
+    %StartOnFrame(6)
     %PlayAnimation(6,7,10)
-
     RTS
   }
 }
 
 Sprite_Octorok_Move:
 {
-
   JSL Sprite_DamageFlash_Long
   JSL Sprite_Move
   JSL Sprite_CheckDamageFromPlayer
@@ -171,26 +169,31 @@ Sprite_Octorok_Move:
   .exit
   RTS
 
-.direction
-  db   3,   2,   0,   1
+  .direction
+    db   3,   2,   0,   1
 
-.speed_x
-  db  24, -24,   0,   0
+  .speed_x
+    db  24, -24,   0,   0
 
-.speed_y
-  db   0,   0,  24, -24
+  .speed_y
+    db   0,   0,  24, -24
 
-.unused
-  db $01, $02, $04, $08
-
-.timer
-  db  60, 128, 160, 128
-
+  .timer
+    db  60, 128, 160, 128
 }
 
 Octorock_ShootEmUp:
 {
-  JSL GetRandomInt : AND.b #$01 : BEQ .single_shot
+  ; Use SprMiscD as a flag to shoot 4 ways for awhile before going back to single shot
+
+  LDA.w SprMiscD, X : BEQ .continue
+    LDA.w SprTimerD, X : BNE .four_ways
+      LDA.b #$01 : STA.w SprMiscD, X    
+  .continue
+  JSL GetRandomInt : AND.b #$1F : BNE .single_shot
+  .four_ways
+    LDA.b #$01 : STA.w SprMiscD, X
+    LDA.b #$20 : STA.w SprTimerD, X
     JSR Octorok_Shoot4Ways
     RTS
   .single_shot
@@ -218,13 +221,12 @@ Octorok_ShootSingle:
 
   RTS
 
-.mouth_anim_step
-  db $00, $02, $02, $02
-  db $01, $01, $01, $00
-  db $00, $00, $00, $00
-  db $02, $02, $02, $02
-  db $02, $01, $01, $00
-
+  .mouth_anim_step
+    db $00, $02, $02, $02
+    db $01, $01, $01, $00
+    db $00, $00, $00, $00
+    db $02, $02, $02, $02
+    db $02, $01, $01, $00
 }
 
 ; ---------------------------------------------------------
@@ -234,22 +236,16 @@ Octorok_Shoot4Ways:
   LDA.w SprTimerA,X
   PHA
 
-  CMP.b #$80
-  BCS .animate
+  CMP.b #$80 : BCS .animate
 
-  AND.b #$0F
-  BNE .delay_turn
+  AND.b #$0F : BNE .delay_turn
+    PHA
 
-  PHA
+    LDY.w SprMiscC,X
+    LDA.w .next_direction,Y : STA.w SprMiscC,X
 
-  LDY.w SprMiscC,X
-
-  LDA.w .next_direction,Y
-  STA.w SprMiscC,X
-
-  PLA
-
-.delay_turn
+    PLA
+  .delay_turn
   CMP.b #$08
   BNE .animate
 
@@ -263,8 +259,7 @@ Octorok_Shoot4Ways:
   LSR A
   TAY
 
-  LDA.w .mouth_anim_step,Y
-  STA.w SprMiscB,X
+  LDA.w .mouth_anim_step,Y : STA.w SprMiscB,X
 
   RTS
 
