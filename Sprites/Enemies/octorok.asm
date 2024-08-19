@@ -367,10 +367,10 @@ Sprite_Octorok_Draw:
 
   REP #$20
 
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+  LDA $00 : STA ($90), Y
   AND.w #$0100 : STA $0E 
   INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+  LDA $02 : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
   SEP #$20
   BCC .on_screen_y
@@ -389,7 +389,7 @@ Sprite_Octorok_Draw:
       
   TYA : LSR #2 : TAY
       
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
       
   PLY : INY
       
@@ -406,24 +406,6 @@ Sprite_Octorok_Draw:
 db $00, $01, $02, $03, $04, $05, $06, $07
 .nbr_of_tiles
 db 0, 0, 0, 0, 0, 0, 0, 0
-.x_offsets
-dw 0
-dw 0
-dw 0
-dw 0
-dw 0
-dw 0
-dw 0
-dw 0
-.y_offsets
-dw 0
-dw 0
-dw 0
-dw 0
-dw 0
-dw 0
-dw 0
-dw 0
 .chr
 db $80
 db $80
@@ -434,21 +416,12 @@ db $A2
 db $A0
 db $A2
 .properties
-db $3D
-db $7D
-db $3D
-db $7D
-db $3D
-db $3D
-db $7D
-db $7D
-.sizes
-db $02
-db $02
-db $02
-db $02
-db $02
-db $02
-db $02
-db $02
+db $2D
+db $6D
+db $2D
+db $6D
+db $2D
+db $2D
+db $6D
+db $6D
 }
