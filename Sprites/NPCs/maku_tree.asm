@@ -60,7 +60,7 @@ Sprite_MakuTree_Prep:
 ; =========================================================
 
 PaletteFilter_StartBlindingWhite = $00EEF1
-
+ApplyPaletteFilter = $00E914
 
 Sprite_MakuTree_Main:
 {
@@ -74,6 +74,8 @@ Sprite_MakuTree_Main:
   dw MakuTree_SpawnHeartContainer
   dw MakuTree_HasMetLink
 
+  dw MakuTree_OfferTheDreamer
+  dw MakuTree_HandleResponse
   dw MakuTree_HandleDreams
   dw MakuTree_DreamTransition
 
@@ -117,14 +119,35 @@ Sprite_MakuTree_Main:
   {
     %ShowSolicitedMessage($22) : BCC .no_talk
       LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
+      LDA.l CRYSTALS : BNE .no_essences
+        INC.w SprAction, X
+      .no_essences
     .no_talk
+    RTS
+  }
+
+  MakuTree_OfferTheDreamer:
+  {
+    %ShowUnconditionalMessage($013C) 
+    INC.w SprAction, X
+    RTS
+  }
+
+  MakuTree_HandleResponse:
+  {
+    LDA.w MsgChoice : BEQ .become_dreamer
+    CMP.b #$01 : BEQ .said_no
+      RTS
+    .become_dreamer
+    INC.w SprAction, X
+    RTS
+    .said_no
+    %GotoAction(3)
     RTS
   }
 
   MakuTree_HandleDreams:
   {
-    JSL PaletteFilter_StartBlindingWhite
-
     ; Check if Link has seen the dream
     LDA.l DREAMS
     CMP.b #$01 : BCC .mushroom_grotto
@@ -170,14 +193,15 @@ Sprite_MakuTree_Main:
     PHX 
     LDA.b #$16 : STA.b $5D ; Set Link to sleeping
     LDA.b #$20 : JSL AncillaAdd_Blanket
-    LDA.b $20 : STA.w $0BFA,X
+    LDA.b $20 : CLC : ADC.b #$04 : STA.w $0BFA,X
     LDA.b $21 : STA.w $0C0E,X
     LDA.b $22 : SEC : SBC.b #$08 : STA.w $0C04,X
     LDA.b $23 : STA.w $0C18,X
     JSL PaletteFilter_StartBlindingWhite
+    JSL ApplyPaletteFilter
     PLX 
 
-    LDA.b #$30 : STA.w SprTimerB, X
+    LDA.b #$60 : STA.w SprTimerB, X
     INC.w SprAction, X
     RTS
   }
