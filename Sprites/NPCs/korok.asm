@@ -12,7 +12,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 01  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -35,18 +35,20 @@ Sprite_Korok_Long:
 {
   PHB : PHK : PLB
 
-  LDA.w SprSubtype, X : CMP.b #$00 : BEQ .draw_makar
-                        CMP.b #$01 : BEQ .draw_hollo
-                        CMP.b #$02 : BEQ .draw_rown
-  .draw_makar
-  JSR Sprite_Korok_DrawMakar
-  BRA .done
-  .draw_hollo
-  JSR Sprite_Korok_DrawHollo
-  BRA .done
-  .draw_rown
-  JSR Sprite_Korok_DrawRown
-  BRA .done
+  LDA $0AA5 : BEQ .done
+    LDA.w SprSubtype, X 
+    CMP.b #$00 : BEQ .draw_makar
+    CMP.b #$01 : BEQ .draw_hollo
+    CMP.b #$02 : BEQ .draw_rown
+    .draw_makar
+      JSR Sprite_Korok_DrawMakar
+      BRA .done
+    .draw_hollo
+      JSR Sprite_Korok_DrawHollo
+      BRA .done
+    .draw_rown
+      JSR Sprite_Korok_DrawRown
+      BRA .done
   .done
   
   JSL Sprite_DrawShadow
@@ -63,38 +65,42 @@ Sprite_Korok_Long:
 Sprite_Korok_Prep:
 {
   PHB : PHK : PLB
-
   JSL GetRandomInt : AND.b #$02 : STA.w SprSubtype, X
-  STZ.w SprMiscE, X
   PLB
   RTL
 }
 
+KorokWalkSpeed = $02
 
 Sprite_Korok_Main:
 {
-  JSL Sprite_PlayerCantPassThrough
-
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
   dw Sprite_Korok_Idle
+  dw Sprite_Korok_WalkingDown
+  dw Sprite_Korok_WalkingUp
+  dw Sprite_Korok_WalkingLeft
+  dw Sprite_Korok_WalkingRight
+  dw Sprite_Korok_Liftable
 
   Sprite_Korok_Idle:
   {
     %PlayAnimation(0, 0, 10)
-    
-    LDA.w SprMiscE, X : BNE +
+
+    LDA $0AA5 : BNE + 
       PHX
       JSL ApplyKorokSpriteSheets
       PLX
-      LDA.b #$01 : STA.w SprMiscE, X
+      LDA.b #$01 : STA.w $0AA5
     +
     
-    %ShowSolicitedMessage($001D)
-    JSL Sprite_CheckIfLifted
-    JSL ThrownSprite_TileAndSpriteInteraction_long
-    JSL Sprite_Move
+    %ShowSolicitedMessage($001D) : BCC .no_talk
+      JSL GetRandomInt : AND.b #$03 
+      STA.w SprAction, X
+      RTS
+    .no_talk
+    JSL Sprite_PlayerCantPassThrough
     
     RTS
   }
