@@ -107,29 +107,54 @@ Sprite_Korok_Main:
 
   Sprite_Korok_WalkingDown:
   {
-
     %PlayAnimation(0, 2, 10)
+    LDA.b #KorokWalkSpeed : STA SprYSpeed, X
+    JSL Sprite_Move
+    LDA.w SprTimerB, X : BNE + 
+      JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
+    +
     RTS
   }
 
   Sprite_Korok_WalkingUp:
   {
-
     %PlayAnimation(3, 5, 10)
+    LDA.b #-KorokWalkSpeed : STA SprYSpeed, X
+    JSL Sprite_Move
+    LDA.w SprTimerB, X : BNE + 
+      JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
+    +
     RTS
   }
 
   Sprite_Korok_WalkingLeft:
   {
-
     %PlayAnimation(6, 8, 10)
+    LDA.b #KorokWalkSpeed : STA SprXSpeed, X
+    JSL Sprite_Move
+    LDA.w SprTimerB, X : BNE + 
+      JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
+    +
     RTS
   }
 
   Sprite_Korok_WalkingRight:
   {
-
     %PlayAnimation(9, 11, 10)
+    LDA.b #-KorokWalkSpeed : STA SprXSpeed, X
+    JSL Sprite_Move
+
+    LDA.w SprTimerB, X : BNE + 
+      JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
+    +
+    RTS
+  }
+
+  Sprite_Korok_Liftable:
+  {
+    JSL Sprite_Move
+    JSL Sprite_CheckIfLifted
+    JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
 
@@ -244,18 +269,18 @@ Sprite_Korok_DrawMakar:
   db $24, $28, $29
   db $26, $28, $29
   .properties
-  db $3B, $3B
-  db $3B, $3B
-  db $3B, $7B, $7B
-  db $3B, $3B, $3B
-  db $3B, $3B, $3B
-  db $3B, $3B, $3B
-  db $3B, $3B, $3B
-  db $3B, $3B, $3B
-  db $3B, $3B, $3B
-  db $7B, $7B, $7B
-  db $7B, $7B, $7B
-  db $7B, $7B, $7B
+  db $2B, $2B
+  db $2B, $2B
+  db $2B, $6B, $6B
+  db $2B, $2B, $2B
+  db $2B, $2B, $2B
+  db $2B, $2B, $2B
+  db $2B, $2B, $2B
+  db $2B, $2B, $2B
+  db $2B, $2B, $2B
+  db $6B, $6B, $6B
+  db $6B, $6B, $6B
+  db $6B, $6B, $6B
   .sizes
   db $02, $02
   db $02, $02
@@ -372,18 +397,18 @@ Sprite_Korok_DrawHollo:
   db $6C, $7E
   db $4A, $7E
   .properties
-  db $3B, $3B
-  db $3B, $3B
-  db $3B, $3B
-  db $3B, $3B, $3B
-  db $3B, $3B, $3B
-  db $3B, $3B
-  db $3B, $3B
-  db $3B, $3B
-  db $3B, $3B
-  db $7B, $7B
-  db $7B, $7B
-  db $7B, $7B
+  db $2B, $2B
+  db $2B, $2B
+  db $2B, $2B
+  db $2B, $2B, $2B
+  db $2B, $2B, $2B
+  db $2B, $2B
+  db $2B, $2B
+  db $2B, $2B
+  db $2B, $2B
+  db $6B, $6B
+  db $6B, $6B
+  db $6B, $6B
   .sizes
   db $02, $02
   db $02, $02
@@ -500,18 +525,18 @@ Sprite_Korok_DrawRown:
   db $8A, $88
   db $8C, $88
   .properties
-  db $37, $37
-  db $37, $37
-  db $37, $37
-  db $37, $37, $37
-  db $37, $37, $37
-  db $77, $37, $37
-  db $37, $37
-  db $37, $37
-  db $37, $37
-  db $77, $77
-  db $77, $77
-  db $77, $77
+  db $27, $27
+  db $27, $27
+  db $27, $27
+  db $27, $27, $27
+  db $27, $27, $27
+  db $67, $27, $27
+  db $27, $27
+  db $27, $27
+  db $27, $27
+  db $67, $67
+  db $67, $67
+  db $67, $67
   .sizes
   db $02, $02
   db $02, $02
