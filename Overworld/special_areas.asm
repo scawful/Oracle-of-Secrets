@@ -265,6 +265,8 @@ OverworldTransitionPositionX = $02A944
 
 LoadSpecialOverworld:
 {
+  STZ.w $0AA5 ; Clear the custom gfx flag for koroks
+
   REP #$20
   LDA.b $A0 : CMP.w #$1010 : BNE .not_zora
     LDA.w #$0182 ; OW 82
