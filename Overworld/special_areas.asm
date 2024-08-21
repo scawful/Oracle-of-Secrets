@@ -462,17 +462,17 @@ LoadSpecialOverworld:
   db $2F, $2F, $2F, $2F
 
   .palette_prop_a
-  db $0A, $0A, $0A, $0A
-  db $02, $02, $02, $0A
-  db $02, $02, $0A, $02
-  db $02, $02, $02, $0A
-  db $02, $02, $02, $0A
-  db $02, $02, $02, $0A
+  db $0A, $0A, $0A, $0A ; 0x00 - Maku Tree
+  db $02, $02, $02, $0A ; 0x01 - Tree House
+  db $01, $01, $04, $01 ; 0x02 - Zora Falls
+  db $02, $02, $02, $0A ; 0x03 - Zora Falls
+  db $02, $02, $02, $0A ; 0x04 - Tree House
+  db $02, $02, $02, $0A ; 0x05 - Tiny House
 
   .palette_prop_b
   db $01, $08, $08, $08
   db $00, $00, $00, $00
-  db $00, $00, $08, $00
+  db $00, $00, $00, $00
   db $00, $00, $00, $02
   db $00, $00, $00, $00
   db $00, $00, $00, $00

@@ -64,7 +64,7 @@ Sprite_KydrogBoss_Long:
 
 Sprite_KydrogBoss_CheckIfDead:
 {
-  LDA $0D80, X : CMP.b #$09 : BEQ .not_dead
+  LDA.w SprAction, X : CMP.b #$09 : BEQ .not_dead
     ; If health is negative, set back to zero
     LDA $0E50, X : CMP.b #$C3 : BCC .health_not_negative
       LDA.b #$00 : STA $0E50, X
@@ -73,7 +73,7 @@ Sprite_KydrogBoss_CheckIfDead:
     LDA $0E50, X : BNE .not_dead
       PHX 
       LDA.b #$04 : STA $0DD0, X ;kill sprite boss style
-      LDA.b #$09 : STA $0D80, X ;go to KydrogBoss_Death stage
+      LDA.b #$09 : STA.w SprAction, X ;go to KydrogBoss_Death stage
       STZ.w $0D90,X
 
       LDA.b #$E0 : STA.w $0DF0,X
@@ -501,7 +501,7 @@ CheckForNextPhase:
     LDA SprHealth,X : CMP.b #$20 : BCC .phase_three
     LDA !KydrogPhase : CMP.b #$01 : BEQ .return
     LDA #$80 : STA $0E50, X
-    LDA #$01 : STA $0D80, X
+    LDA #$01 : STA SprAction, X
     STA !KydrogPhase
     INC.w SprFlash, X
     RTS
@@ -510,13 +510,13 @@ CheckForNextPhase:
     LDA SprHealth,X : CMP.b #$20 : BCC .phase_four
     LDA !KydrogPhase : CMP.b #$02 : BEQ .return
     LDA #$80 : STA $0E50, X
-    LDA #$02 : STA $0D80, X
+    LDA #$02 : STA SprAction, X
     STA !KydrogPhase
     RTS
 
   .phase_four
 
-    LDA #$03 : STA $0D80, X
+    LDA #$03 : STA SprAction, X
     STA !KydrogPhase
   .return
     RTS

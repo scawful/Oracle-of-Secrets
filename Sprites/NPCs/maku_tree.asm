@@ -53,6 +53,9 @@ Sprite_MakuTree_Prep:
 {
   PHB : PHK : PLB
 
+  ; Play the Maku Song
+  LDA.b #$03 : STA.w $012C
+
   PLB
   RTL
 }
@@ -128,8 +131,9 @@ Sprite_MakuTree_Main:
 
   MakuTree_OfferTheDreamer:
   {
-    %ShowUnconditionalMessage($013C) 
-    INC.w SprAction, X
+    %ShowSolicitedMessage($013C) : BCC .no_talk
+      INC.w SprAction, X
+    .no_talk
     RTS
   }
 
@@ -142,7 +146,7 @@ Sprite_MakuTree_Main:
     INC.w SprAction, X
     RTS
     .said_no
-    %GotoAction(3)
+    %GotoAction(4)
     RTS
   }
 

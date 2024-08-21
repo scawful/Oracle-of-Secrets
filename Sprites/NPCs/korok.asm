@@ -65,7 +65,7 @@ Sprite_Korok_Long:
 Sprite_Korok_Prep:
 {
   PHB : PHK : PLB
-  JSL GetRandomInt : AND.b #$02 : STA.w SprSubtype, X
+  JSL GetRandomInt : AND.b #$03 : STA.w SprSubtype, X
   PLB
   RTL
 }
