@@ -174,29 +174,19 @@ Ah, [L]! I felt your presence.
 # 2C Toadstool Woods Elder Woman Main
 Long ago, the Zora elders
 [2]discovered ancient truths
-[3]about the Eon Abyss[…] [K]
-[V]The Abyss is a realm
+[3]about the Eon Abyss[...][K]
+[V]The Eon Abyss is a realm
 [V]where dreams and reality
-[V]merge, a place where
-[V]time stands still. Deep within
+[V]merge, a place where time[K]
+[V]stands still. Deep within
 [V]lies a fortress of secrets,
-[V]the source of immense power[…][K]
+[V]the source of immense power[...][K]
 [V]The Triforce, the Pendants,
 [V]and the Master Sword are all
-[V]linked to this power.
+[V]linked to this power.[K]
 [V]The essences are the key to
 [V]locking away this power and
-[V]sealing the Abyss.[…][K]
-[V]Kydrog, once a regular man
-[V]from the Abyss, tried to harness
-[V]this power through crystals
-[V]mined by the Goron and used
-[V]by the Zora and the magic mirror.
-[V]This attempt led to his demise
-[V]and transformation into evil.[…][K]
-[V]He now seeks the essences to
-[V]break the seal and gain control
-[V]over the Abyss’s power.
+[V]sealing the Abyss.[...][K]
 [V]Do you understand the stakes?
 [V]    > Yes
 [V]       Not at all[CH2I]
@@ -228,7 +218,7 @@ Press [B] to activate the cart.
 [3]telepathically from the[K]
 [V]Hall of Secrets. Farore has
 [V]been taken by Kydrog and 
-[V]I had to flee. I'm safe now[...][K]
+[V]I had to flee. I'm safe now[...]
 
 # 36 Impa Telepathic Abyss 
 [W:02][S:03]I sense your despair[...]
@@ -238,11 +228,11 @@ Press [B] to activate the cart.
 [V]Moon Pearl. It will protect you
 [V]against the dark magic here.[K]
 [V]Without it, you will be unable
-[V]to defend yourself. Once you have 
-[V]returned to Kalyxo, seek out the[K]
-[V]Maku Tree once again. He will
-[V]know what to do next. Good luck,
-[V][L][...]
+[V]to defend yourself. Once you
+[V]have returned to Kalyxo, seek[K]
+[V]out the Maku Tree once again. 
+[V]He will know what to do next.
+[V]Good luck, [L][...]
 
 # 37
 A helpful item for crossing the
@@ -275,7 +265,7 @@ Hey there, Mr. Strong Hero.
 [V]grow some gills! Hehehe.
 
 # 54
-He gave you the Goldstar!
+He gave you the Gold Star!
 [2]Switch to this item with L or R
 [3]when using your hookshot to 
 [V]summon a spiky ball and chain!
@@ -485,7 +475,7 @@ Uhh[...]  These are dangerous
 [V]Anyway[...]  Thank you for your[K]
 [V]kindness to an old man like me.
 [V]Escort me back to my cave and
-[V]I will give you a reward[K]
+[V]I will give you a reward.
 
 # 9E Old Man Mountain
 All I can do for you now is to
