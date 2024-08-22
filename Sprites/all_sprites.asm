@@ -169,6 +169,7 @@ Sprite_Puffstool = $B1
 incsrc "Sprites/Enemies/puffstool.asm"
 print  "End of puffstool.asm              ", pc
 
+; Also beach whirlpool
 Sprite_DekuLeaf = $77
 incsrc "Sprites/Objects/deku_leaf.asm"
 print  "End of deku_leaf.asm              ",  pc
@@ -200,10 +201,6 @@ print  "End of wolfos.asm                 ",  pc
 Sprite_IceBlock = $D5 
 incsrc "Sprites/Objects/ice_block.asm"
 print  "End of ice_block.asm              ",  pc
-
-Sprite_Whirlpool = $52
-incsrc "Sprites/Objects/whirlpool.asm"
-print  "End of whirlpool.asm              ",  pc
 
 ; =========================================================
 
