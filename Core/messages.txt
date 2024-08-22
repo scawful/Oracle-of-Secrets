@@ -1,3 +1,6 @@
+; General TODOs
+; - Replace references of gates, portals to rifts
+
 ; 20
 [W:02][S:03]Ah, [L]!
 [2]Thank the Goddesses you are
@@ -6,18 +9,15 @@
 [V]Kydrog, the Pirate King, has
 [V]seized Farore and threatens 
 [V]our great island of Kalyxo.[K]
-[V]But why, you may ask? Let me
-[V]share with you a tale, the
-[V]legend of Kalyxo.[K]
 [V][...] [...] [...] 
 [V]
 [V][K]
 [V]Long ago, the island of Kalyxo
 [V]was chosen by the Goddess
 [V]Farore as her resting place.[K]
-[V]The ancient tribes of Kalyxo
-[V]built gates between this world
-[V]and the Abyss in her honor.[K]
+[V]The Triforce's essences were
+[V]hidden here to protect them
+[V]from evil forces.[K]
 [V][...] [...] [...]
 [V]
 [V][K]
@@ -45,30 +45,20 @@
 [V]begins. Good luck, [K]
 [V]and have courage, [L].[SFX:2D]
 
-; 21
+; 21 Kydrog Intro
 Well, well, what a surprise!
 [2]Look who walked into me trap,
 [3]and with Farore, no less.[K]
 [V]The lass I've been seekin'.
-[V]Ah, Farore, your knowledge is
-[V]the key to the secrets[...][K]
-[V]Huehuehue[...] 
-[V]The treasure I seek lies
-[V]within your grasp.[K]
-[V]And ye, lad, ye've done me a 
-[V]grand favor. The actions of
-[V]your Hylian kingdom here in[K]
-[V]Kalyxo have freed me.
-[V]So I must thank ye, truly.
-[V]Oh, ye'll see soon enough.[K]
-[V]I think it's only fair to 
-[V]give ye the same fate. 
-[V]Consider it a parting gift.[K]
+[V]
+[V]I'm Kydrog, the Pirate King,[K]
+[V]and I've been waitin' for ye
+[V]to show up. Hehehe![K]
 [V]Prepare yourself, lad! Ye're
 [V]about to be cast away to the
 [V]Eon Abyss, just as I was.[K]
 [V]A fitting end for a pesky hero,
-[V]don't ye think? Hohoho!
+[V]don't ye think? Hehehe!
 [V][...][K]
 [V]Oh, and before I forget, let me
 [V]leave ye with a joke. Why did
@@ -117,91 +107,80 @@ Each time you find a new
 [V]Sword.  I am confident that you
 [V]can defeat Kydrog!
 
-; 2B 
-Ah, [L]! It's you!
-[2]You're here about Farore, I
-[3]presume? Such dreadful news![K]
-[V]I've poured through many
-[V]scrolls and what's unfolding[K]
-[V]now is eerily similar to legends
-[V]passed down in ancient texts.
+; 2B Toadstool Woods Elder Woman Intro
+Ah, [L]! I felt your presence.
+[2]You’ve escaped the Abyss,
+[3]but its shadow lingers...[K]
+[V]The winds whisper secrets,
+[V]echoes of what’s hidden.
+[V]The island remembers, [L].
 
-; 2C
-Long ago, the scholars within
-[2]the Zora Temple discovered
-[3]that Kalyxo hums with energy[K]
-[V]from ancient times, when the 
-[V]Goddesses created the lands. 
-[V][...][...][...][K]
-[V]Their studies led them to a
-[V]gateway - a tear in reality.
-[V]They named this enigma[K]
-[V]The Eon Abyss.
-[V]Inside it, they found wonders
-[V]an ancient Triforce and Master[K]
-[V]Sword, but in a primitive form!
-[V]Such discoveries were not to
-[V]remain hidden. The presence of[K]
-[V]this ancient power called to
-[V]the mighty Hylian Empire. 
-[V]Farore, always the diplomat,[K]
-[V]tried to broker peace, but 
-[V]Hyrule ordered all research be
-[V]halted and outlawed trade,[K]
-[V]destroying our mines and
-[V]causing people to flee from
-[V]Kalyxo in droves.[K]
-[V]Kydrog is seizing on this
-[V]weakness to find the gate
-[V]and steal the Triforce![K]
+; 2C Toadstool Woods Elder Woman Main
+Long ago, the Zora elders
+[2]discovered ancient truths
+[3]about the Eon Abyss[…] [K]
+[V]The Abyss is a realm
+[V]where dreams and reality
+[V]merge, a place where
+[V]time stands still. Deep within
+[V]lies a fortress of secrets,
+[V]the source of immense power[…][K]
+[V]The Triforce, the Pendants,
+[V]and the Master Sword are all
+[V]linked to this power.
+[V]The essences are the key to
+[V]locking away this power and
+[V]sealing the Abyss.[…][K]
+[V]Kydrog, once a regular man
+[V]from the Abyss, tried to harness
+[V]this power through crystals
+[V]mined by the Goron and used
+[V]by the Zora and the magic mirror.
+[V]This attempt led to his demise
+[V]and transformation into evil.[…][K]
+[V]He now seeks the essences to
+[V]break the seal and gain control
+[V]over the Abyss’s power.
 [V]Do you understand the stakes?
 [V]    > Yes
 [V]       Not at all[CH2I]
 
-; 2D
-Anyway, if you think that
-[2]the Master Sword would be
-[3]of use to you then you[K]
-[V]should find the gate to
-[V]the Eon Abyss.
+; 2D Toadstool Woods Elder Woman End
+You must find the Triforce's
+[2]essences and stop Kydrog.
+[3]The first is in the Mushroom[K]
+[V]Grotto, just north of here.
 [V]You take care now, [L][...]
 
-; 35
-[W:02][S:03][L], its Impa.
-[2]I'm reaching out to you
-[3]across the void through[K]
-[V]telepathy[...] You are now in
-[V]the Eon Abyss, a realm frozen
-[V]in time. This world was[K]
-[V]created by the Goddesses to
-[V]protect the Triforce. Kydrog,
-[V]the Stalfos pirate king, was[K]
-[V]sealed away here before he
-[V]broke free.
+; 35 Impa Telepathic Abyss 
+[W:02][S:03][L], it's Impa.
+[2]I'm speaking to you 
+[3]telepathically from the[K]
+[V]Hall of Secrets. Farore has
+[V]been taken by Kydrog and 
+[V]I had to flee. I'm safe now[...][K]
 
-; 36
+; 36 Impa Telepathic Abyss 
 [W:02][S:03]I sense your despair[...]
-[2]Fear not, [L]. The sages of
-[3]Kalyxo left rifts in time.[K]
-[V]These rifts, scattered across
-[V]the Eon Abyss, will help you
-[V]return. First, find the Moon[K]
-[V]Pearl. It will protect you
-[V]against the dark magic here.
-[V]Without it, you cant defend[K]
-[V]yourself. Return now, [L].
-[V]Navigate the abyss and return
-[V]to Kalyxo. Our islands future,[K]
-[V]and the Triforce depend on
-[V]your courage.
+[2]Kydrog has cast you into the
+[3]Eon Abyss, a place where time[K]
+[V]stands still. You must find the 
+[V]Moon Pearl. It will protect you
+[V]against the dark magic here.[K]
+[V]Without it, you will be unable
+[V]to defend yourself. Once you have 
+[V]returned to Kalyxo, seek out the[K]
+[V]Maku Tree once again. He will
+[V]know what to do next. Good luck,
+[V][L][...]
 
-; 6F
+; 6F Master Sword
 [W:02][S:03]You've obtained the legendary
 [2]Master Sword! With it, you can
 [3]vanquish the darkness of the[K]
 [V]Eon Abyss and save Farore!
 
-; 70
+; 70 Meadow Blade Kalyxo Castle Telepathy
 [W:02][S:03]As you grasp the hilt,
 [2]a familiar essence stirs[...]
 [3][...] [...] [...][K]
@@ -225,15 +204,15 @@ Surprisingly, the Goddesses
 [V]the gate to the Triforce
 [V]rests in this land.
 
-; 80
+; 80 Deku Butler
 Through this way and you will
 [2]find the place we once called
 [3]home[...][K]
-[V]Tail Palace is infested with 
+[V]The Tail Palace is infested with 
 [V]stalfos pirates and the native
 [V]moldorm are most displeased[...]
 
-; 99
+; 99 Old Man Mountain
 Uhhh[...]  Watch your step.
 [2]There are so many monsters.
 [3]Could you turn right here?[K]
@@ -242,15 +221,14 @@ Uhhh[...]  Watch your step.
 [V]of the Eon Abyss?
 [V]Legend has it that collecting
 [V]all three marks the hero, and
-[V]allows him to wield the [K]
-[V]mythical Master Sword.
-[V]
+[V]allows them to wield the[K]
+[V]legendary Master Sword.
 [V][K]
-[V]I don't want to steer you
-[V]wrong, so please don't get too
-[V]involved in such a mad quest.
+[V][...]  [...]  [...]
+[V]Is it the same one as the
+[V]the one in Hyrule? I wonder[...]
 
-; 9A
+; 9A Old Man Mountain
 Uhh[...]  Once we go out there, 
 [2]you will need to warp us back
 [3]to Kalyxo with your mirror.[K]
@@ -258,7 +236,7 @@ Uhh[...]  Once we go out there,
 [V]is out, so we need to find
 [V]the right spot to warp.
 
-; 9B
+; 9B Old Man Mountain
 Uhh[...]  Turn right here[...]   [...]
 [2]You know, I have a
 [3]granddaughter who is your[K]
@@ -271,14 +249,14 @@ Uhh[...]  Turn right here[...]   [...]
 [V]island and its people.
 [V][...]
 
-; 9C
+; 9C Old Man Mountain
 I don't know who you are, but
 [2]I was sent to this wicked place
 [3]by the evil witch, Twinrova.[K]
 [V]Will you take me back home?  
-[V]I lost my lamp, so[...]
+[V]I lost my lamp[...]
 
-; 9D
+; 9D Old Man Mountain
 Uhh[...]  These are dangerous
 [2]times[...]  I talked too much.
 [3]I used to be a soldier, back[K]
@@ -287,14 +265,14 @@ Uhh[...]  These are dangerous
 [V]Anyway[...]  Thank you for your[K]
 [V]kindness to an old man like me.
 [V]Escort me back to my cave and
-[V]I will give you my old weapon.[K]
+[V]I will give you a reward[K]
 
-; 9E
+; 9E Old Man Mountain
 All I can do for you now is to
 [2]comfort your weariness[...]
 [3]Come back here any time.
 
-; 9F
+; 9F Old Man Mountain
 The Gold Star will protect you
 [2]from dangerous enemies which
 [3]lie ahead of you in your quest.[K]
@@ -303,7 +281,7 @@ The Gold Star will protect you
 [V]comfort your weariness[...] [K]
 [V]Come back here any time.
 
-; A0
+; A0 Old Man Mountain
 [L], I think the elders
 [2]connected the two worlds
 [3]deep in the Hall of Secrets.[K]
@@ -344,7 +322,7 @@ Would you keep the flute?
 [V]I can see her once more[...]
 
 ; C3
-Tail Palace used to be a place
+The Tail Palace used to be a place
 [2]where the Deku and Moldorm
 [3]lived in peace[...]
 
@@ -379,7 +357,7 @@ Hello, young hero. I am the
 
 [P:01]Abracadabra alakazam!
 [2]The true Hero will save the
-[3]old man lost in the abyss,[K]
+[3]old man lost in the Eon Abyss,[K]
 [V]amidst a sea of lava!
 
 [P:01]Hocus pocus!
@@ -391,7 +369,7 @@ Hello, young hero. I am the
 [P:01]Abracadabra alakazam!
 [2]The true Hero will find the
 [3]strength to proceed in the[K]
-[V]mountains of the abyss!
+[V]mountains of the Eon Abyss!
 
 [P:01]Hocus pocus!
 [2]You will be attacked by a
@@ -431,7 +409,7 @@ Hello, young hero. I am the
 
 [P:01]Abracadabra alakazam!
 [2]You will need Silver Arrows to
-[3]give Kydrog his last moment.
+[3]give Kydrog his final moment.
 
 ; FF
 Hah! Thank you. They say
@@ -483,9 +461,8 @@ Hah!  Thank you.  To tell you
 [V]But as years passed, the zeal
 [V]to protect waned into neglect.
 [V]The guardians grew complacent[...]
-[V]Portals grew unstable and the
-[V]darkness began to pour in from
-[V]the dreaded Eon Abyss[...]
+[V]Dark forces emerged from a
+[V]place called the Eon Abyss[...]
 
 [W:02][C:07][S:03]
 [1]The spirit of the Pirate King,
@@ -500,7 +477,7 @@ Hah!  Thank you.  To tell you
 [V]Oracles magic.[WT:05]
 
 [W:02][C:07][S:03]
-[1]And the time of destiny for
+[1]And the destiny for
 [2]the Oracle of Secrets is
 [3]drawing near.[WT:05]
 
@@ -540,7 +517,7 @@ I am Zeniea.  I sense something
 [V]to complete his plan.[K]
 [V]He comes from the dreaded Eon
 [V]Abyss, a place where time
-[V]stands still forever.[K]
+[V]stands still.[K]
 [V]If we are united, we can beat
 [V]Kydrog. Our magic can awaken
 [V]the true power of the Triforce.[K]
@@ -584,12 +561,12 @@ I am Zeniea.  I sense something
 [V]to the Kingdom of Kalyxo?
 [V]This is the way I heard it[...][K]
 [V]When the Kingdom of Hyrule
-[V]discovered the entrance to the
-[V]Eon Abyss, they invaded[...][K]
+[V]discovered the Eon Abyss,
+[V]they invaded Kalyxo[...][K]
 [V][...]seeking to protect the
 [V]Triforce from evil, they took
-[V]control of the island of Kalyxo.[K]
-[V]Over time the empires of Hyrule
+[V]control of the island[K]
+[V]Over time, the Kingdom of Hyrule
 [V]grew vast, and they paid less
 [V]attention to this small island.[K]
 [V]Falling into ruin and decay,
@@ -609,25 +586,23 @@ I am Zeniea.  I sense something
 [V]of time through hidden [K]
 [V]technologies. The Ocarina you
 [V]wield, and even the Hookshot,
-[V]a tool of our invention,[K]
-[V]signify our mastery over both
-[V]time and space. With these, 
-[V]we navigated our vast domain[K]
-[V]effortlessly. The Zora Mask,
-[V]and your aid too our princess, 
-[V]speaks of a bond between[K]
-[V]you and our kind[...]
-[V]Yet, there's more to discover.
-[V]Hidden within the cascading[K]
+[V]are tools of our invention,[K]
+[V]With these tools, we navigated 
+[V]through spacetime effortlessly. 
+[V]The Zora Mask and your aid to[K]
+[V]our princess, speaks of a bond
+[V]between you and our kind[...]
+[V]Yet, there's more to discover.[K]
+[V]Hidden within the cascading
 [V]waters of our waterfalls is
-[V]another part of this temple, 
-[V]untouched by Kydrog's evil[K]
-[V]Another invention of the Zora
-[V]which should protect you on
-[V]your dangerous quest.[K]
+[V]another part of this temple,[K]
+[V]untouched by Kydrog's evil,
+[V]lies another invention of the Zora
+[V]which should protect you on[K]
+[V]your dangerous quest.
 [V]Once you leave this place, head
-[V]directly west and dive from
-[V]our highest cliff to find it.[K]
+[V]directly west and dive from[K]
+[V]our highest cliff to find it.
 [V] [...] [...] [...] [...] [...][SFX:2D]
 
 [S:02][P:01][W:02][L], because of you, I can
@@ -639,7 +614,7 @@ I am Zeniea.  I sense something
 [V]in hiding out here, but the 
 [V]arrival of the Hylian forces
 [V]drew attention to her presence[K]
-[V]on the island of Kalyxo[...]
+[V]on the island[...]
 
 [S:02][P:01][W:02][L], because of you, I am
 [2]finally freed from Kydrog's 
@@ -659,7 +634,7 @@ I am Zeniea.  I sense something
 [V]I have felt this from the first
 [V]time we met.
 [V][...]  [...]  [...][K]
-[V]However, Kydrogs undead form 
+[V]However, Kydrog's undead form 
 [V]allows him to cheat death. 
 [V]Surely now his spirit has fled[K]
 [V]to the Eon Abyss with
@@ -681,7 +656,7 @@ Welcome, young one, to this
 [V]This is truly a terrible fate.[K]
 [V]To truly take on the forces of
 [V]Kydrog, you will need to return
-[V]to the abyss for strength[...][K]
-[V]There is a gate, left by my
+[V]to the Eon Abyss for strength[...][K]
+[V]There is a rift, found by my
 [V]ancestors in the mountains. I 
 [V]will mark the spot on your map.[SFX:2D]
