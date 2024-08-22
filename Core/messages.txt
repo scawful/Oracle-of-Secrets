@@ -1,5 +1,52 @@
-; General TODOs
-; - Replace references of gates, portals to rifts
+; Oracle of Secrets Non-Vanilla Dialogue
+
+; 0F
+Press L or R in your menu to 
+[2]see the status of your quest
+[3]and all your items!
+
+; 10
+Got a map, huh? (Press [X] to
+[2]see your map). Don't get lost,
+[3]or you might find our hideout![...]
+
+; 11
+You look pretty strong. 
+[2]Can you lift stuff? 
+[3](Press [A] to lift things). [K]
+[V]Bet you can't out-lift me![...]
+
+; 12
+Excited to use a sword?
+[2](Press [B] to swing your sword
+[3]when you get one). [K]
+[V]Try not to trip![...]
+
+; 13
+That mark on your map must be
+[2]your destination.
+
+; 14
+You can often find valuables
+[2]in chests.  (Press the [A]
+[3]Button in front of a chest to[K]
+[V]open it.)
+
+; 15
+Why so serious, kid? We Stalfos
+[2]love a good laugh. Stick around,
+[3]you might even learn something!
+
+; 19
+If you defeat Kydrog, the
+[2]island will be free to prosper
+[3]once again.[K]
+[V]Go, seek the Essences!
+
+; 1F
+[W:02][S:03]... 
+[2]...[WT:01]
+[3]Accept our quest, [L]![K]
 
 ; 20
 [W:02][S:03]Ah, [L]!
@@ -77,6 +124,11 @@ Well, well, what a surprise!
 [V]will guide you when in doubt.
 [V]I have faith in you, [L][...]
 
+; 23
+You've defeated the evil spirit
+[2]of the Wolfos! Play the Song of
+[3]Healing to free its soul!
+
 ; 25
 I've been sent by Princess
 [2]Zelda to speak with the Oracle
@@ -152,6 +204,20 @@ You must find the Triforce's
 [V]Grotto, just north of here.
 [V]You take care now, [L][...]
 
+; 2F
+Imperial scum! We don't want
+[2]you here in our home! Someone!
+[3]Come teach him a lesson!
+
+; 30
+You can't plant that here.
+[2]Take it to the Ranch.
+
+; 32
+Press [B] to activate the cart.
+[2]Using [UP][DOWN][LEFT][RIGHT] can redirect your
+[3]path at crossroads.
+
 ; 35 Impa Telepathic Abyss 
 [W:02][S:03][L], it's Impa.
 [2]I'm speaking to you 
@@ -173,6 +239,130 @@ You must find the Triforce's
 [V]Maku Tree once again. He will
 [V]know what to do next. Good luck,
 [V][L][...]
+
+; 37
+A helpful item for crossing the
+[2]water is hidden in the swamps
+[3]of the Eon Abyss. Get it!
+
+; 38 
+Shrine of Origins
+[2]
+[3][K]
+[V]The True Hero will reveal the 
+[V]path forward by pressing the
+[V]R Button on the magical pot.
+
+; 39
+[W:02]    Milk and Egg Storage
+[2]
+[3]          Keep out!!!
+
+; 3A
+I will give 500 Rupees to the
+[2]man who finds the imperial dog
+[3]in the green tights. [LFL][LFR][K]
+[V]     - PIRATE KING KYDROG - 
+
+; 47
+Hey there, Mr. Strong Hero.
+[2]Feeling lucky? How about you
+[3]come back when you grow[K]
+[V]grow some gills! Hehehe.
+
+; 54
+He gave you the Goldstar!
+[2]Switch to this item with L or R
+[3]when using your hookshot to 
+[V]summon a spiky ball and chain!
+
+; 55
+This is the Stone Mask!
+[2]You are invisible when you wear
+[3]it! Watch your Magic Meter!
+
+; 59
+You got the Pendant Of
+[2]Courage! It feels strangely
+[3]familiar[...]
+
+; 5A
+You got the Pendant Of Power!
+[2]With it, you are closer
+[3]to claiming the Master Sword!
+
+; 5B
+You got the Pendant Of Wisdom!
+[2]With this, you have collected
+[3]all three Pendants!  Go now to[K]
+[V]the Temporal Pyramid
+[V]the Master Sword!
+
+; 
+You found the Book of Secrets!
+[2]You can use it to read the
+[3]ancient language of Kalyxo!
+
+; 60
+You found a secret letter!
+[2]It is written in ancient hylian,
+[3]so you will need to take it to[K]
+[V]be translated in the village!
+
+; 
+You got the Bunny Hood!
+[2]Press R to take the form of a
+[3]Bunny and run as fast as the[K]
+[V]wind!
+
+; 
+This is the Zora Mask!
+[2]Press the R button to take the
+[3]form of a Zora.[K]
+[V]While swimming, press [Y] to dive
+[V]under the water. Press R again
+[V]to return to your normal form.
+
+;
+This is the Deku Mask!
+[2]Press R to take the form of a
+[3]Deku Scrub and press [Y] to [K]
+[V]shoot magic bubbles at foes!
+[V]Press R again to return to your
+[V]normal form.
+
+; 
+She gave you the Ocarina!
+[2]Press [A] in the menu on your
+[3]new instrument to view songs!
+
+;
+You found the Mirror of Time!
+[2]It will bring you back to
+[3]your home time when you[K]
+[V]stumble into eons lost to
+[V]the abyss[...]
+
+; 74
+You got the Roc's Feather!
+[2]Press [Y] to jump over pits and
+[3]dodge enemies!
+
+;
+You got the Fishing Rod!
+[2]Cast it into the water and
+[3]wait for your catch!
+
+; 
+Very well, for the low cost of
+[2]100 Rupees, the magical Bunny
+[3]Hood will be all yours.[K]
+[V]With it, you will find yourself 
+[V]to be quicker on your feet.
+[V][...][K]
+[V]  What do you say?
+[V]    > I'll take it!
+[V]       I'm okay for now.[CH2I]
 
 ; 6F Master Sword
 [W:02][S:03]You've obtained the legendary
@@ -211,6 +401,32 @@ Through this way and you will
 [V]The Tail Palace is infested with 
 [V]stalfos pirates and the native
 [V]moldorm are most displeased[...]
+
+; 81
+Oh! Oh!! Oh!!! 
+[2]You got it!! You got it!!
+[3]You got it!! You got it!![K]
+[V]Now listen to me. Please play
+[V]this song I am about to perform
+[V]and remember it well[...][K]
+[V]This is a melody that heals evil
+[V]magic and troubled spirits, 
+[V]turning them into masks.
+
+; 83
+You got the Pendant Of Power!
+[2]Your newfounded abilities will
+[3]allow you to clear the path[K]
+[V]forward towards the Legendary
+[V]Master Sword!
+
+; 84
+You got the Pendant Of Wisdom!
+[2]This legendary artifact bears
+[3]a striking resemblance to the[K]
+[V]one you collected back home in
+[V]the Kingdom of Hyrule[...][K]
+[V][...]surely a coincidence.
 
 ; 99 Old Man Mountain
 Uhhh[...]  Watch your step.
@@ -321,10 +537,126 @@ Would you keep the flute?
 [V][...]But still, I yearn for the day
 [V]I can see her once more[...]
 
+; A6
+I can't believe you found me!
+[2]With your speed, escaping the
+[3]pirates must be easy[...][K]
+[V]You don't seem like a bad guy,
+[V]though[...]
+[V]Anyway, because you're so
+[V]fast, you should try running
+[V]into things[...][K]
+[V]For example, the trees at this
+[V]ranch have many useful things
+[V]hanging in their branches[...]
+
+; A9
+Do come in!
+[2]Welcome to Vasu Jewelers.
+[3]What can I do?[K]
+[V]> Appraise rings
+[V]   Explain rings
+[V]   Nevermind[CH3]
+
+; AA
+There are many magical rings 
+[2]in this land, but just finding 
+[3]one does grant its powers.[K]
+[V]Until a ring has been appraised
+[V]and its power understood, it
+[V]cannot be used.[K]
+[V]Vasu does appraisals. Once
+[V]appraised, pick from the List
+[V]in your Ring Box. ([X] in Menu)[K]
+[V]And remember to wear the
+[V]ring you will use. That is all.
+[V]That is all. 
+
+; AB
+I'll appraise it for free this
+[2]time, but after this, it will be
+[3]20 Rupees per ring.[K]
+[V]When you want to use a ring,
+[V]press [X] to open your ring box
+[V]and press [A] on the ring.
+
+; AC
+Check your Ring Box to see
+[2]the ring, and come back later 
+[3]for more appraisals!
+
+; AD
+I'm afraid you have no rings
+[2]left for me to appraise!
+[3]Come back later!
+
+; B5
+[W:02][C:06]       [HY0][HY1][HY2] ZORA TEMPLE [HY0][HY1][HY2]
+[2]       EXPERIMENT NO. 65816
+[3][K]
+[V]The Hookshot - Enable user to
+[V]grapple far away surfaces and
+[V]be pulled towards the target.[K]
+[V]
+[V] TEST SUBJECTS BEWARE! 
+[V] High likelihood of bone injury.
+
+; B8
+[W:02][C:06]      [HY0][HY1][HY2] ZORA TEMPLE [HY0][HY1][HY2]
+[2]  [HY0][HY1][HY2] EXPERIMENT NO. 6502[HY1][HY0][HY2]
+[3][K]
+[V]Big Chest Key - Enable users
+[V]to hide their valuables without
+[V]compromising Big Key security.[K]
+[V]
+[V]   FOR ZORA RESEARCHERS AND
+[V]   TEST SUBJECTS ONLY
+
+; B9
+[W:02][C:06]    [HY0][HY1][HY2] ZORA TEMPLE [HY1][HY2][HY0]
+[2] [HY0][HY1][HY2] EXPERIMENT NO. 1991 [HY1][HY0][HY2]
+[3][K]
+[V]Advanced Arrghus - Enable a 
+[V]more robust defense strategy,
+[V]equipping Arrghus with lasers.[K]
+[V]
+[V]       EXPERIMENTAL STATE
+[V]             UNSTABLE[K]
+
+; BA
+[W:02]To navigate Toadstool Woods,
+[2]first, head north, then
+[3]west, south, and west again.[K]
+[V]There you will find the
+[V]Mushroom Grotto, north of the
+[V]thieves hideout.
+
+; BB
+[W:02][C:06]    [HY0][HY1][HY2] ZORA TEMPLE [HY1][HY2][HY0]
+[2] [HY0][HY1][HY2] EXPERIMENT NO. 2001 [HY1][HY0][HY2]
+[3][K]
+[V]Eon Abyss Rift - Proven to be
+[V]a parallel reality with the 
+[V]Sacred Realm. Access to [K]
+[V]artifacts such as the Triforce
+[V]and Master Sword confirmed.
+
+; BF
+[W:02][L], can you hear me?
+[2]It's me, Farore.  I am locked
+[3]away somewhere on this ship.[K]
+[V]I know you are doing
+[V]your best, but please hurry[...]
+
 ; C3
 The Tail Palace used to be a place
 [2]where the Deku and Moldorm
 [3]lived in peace[...]
+
+; C4 Glacia Estate Hint
+[W:02]The power of fire lies hidden
+[2]within in the icy catacombs.
+[3]Seek it to overcome the cold.
 
 ; C5
 Hello, young hero. I am the
@@ -333,6 +665,67 @@ Hello, young hero. I am the
 [V]the pirate they call Kydrog
 [V]invaded the island. I've grown
 [V]awfully tired and wish to rest.
+
+; DF
+If my lost partner returns
+[2]from the mining operation
+[3]we can temper your sword, [K]
+[V]but now, I can't do anything 
+[V]for you.
+
+; E5 Happy Mask Salesman
+A delightful meeting,
+[2][L]! Intrigued by my
+[3]wondrous collection?[K]
+[V]Each mask whispers a story,
+[V]craves an adventure! Would you
+[V]like to let one speak to you?[K]
+[V]In your journey, you may find
+[V]these masks more than just
+[V]a trinket or charm.[K]
+[V]Are you here to buy a mask?
+[V]    > Yes
+[V]       No way[CH2I]
+
+; E6 Eon Abyss Owl
+Hoo hoo! [L], lost in
+[2]this dark abyss, are you?[K]
+[V]This realm is a mirror,
+[V]a reflection of forgotten
+[V]dreams and shadowed paths.[K]
+[V]Though you hold the Moon
+[V]Pearl, beware, for not all
+[V]is as it seems in the Abyss.[K]
+[V]Deep in the Forest of Dreams,
+[V]where echoes of the old
+[V]world still linger.[K]
+[V]There, a sword awaits you,
+[V]a blade to cut through the
+[V]veil of deception.[K]
+[V]But remember, young one,
+[V]even the sharpest blade
+[V]cannot sever all bonds.[K]
+[V]Hoo hoo![K]
+
+; E9 Happy Mask Salesman
+Oh my, oh my! [L], my dear
+[2]friend, it appears that you
+[3]lack an essential tool.[K]
+[V]You see, masks are not
+[V]just props or disguises. They
+[V]possess a deep magic.[K]
+[V]But, to channel this magic,
+[V]you require an Ocarina. It's
+[V]the key to awaken the masks.[K]
+[V]Now where to find one?
+[V][...] [...] [...]
+[V][K]
+[V]                        [...] Ah, yes!
+[V]There's a lass, quite a musical
+[V]soul, living on Toto Ranch.[K]
+[V]She may just know where to
+[V]find an Ocarina. I recommend
+[V]you seek her out, [L].[K]
 
 ; Fortune teller
 [P:01]Hocus pocus!
@@ -445,6 +838,37 @@ Hah!  Thank you.  To tell you
 [V]You can't get in with a
 [V]standard bomb, they say[...]
 
+; 108 Zora Baby 
+Please, hurry[...]
+[2]The Zora Princess is trapped[...]
+
+; 109 Zora Baby
+I can help you! Do you want me
+[2]to follow you?
+[3][K]
+[V]What do you think ?
+[V]    > Follow me.
+[V]       Stay here.[CH2I]
+
+; 10A Zora Baby
+OK, if that's what you want,
+[2]I will stay right here!
+
+; 10B Zora Baby
+
+; 10C Zora Baby
+All right, I'll follow you!
+[2]If you want me to stay put,
+[3]drop me off at a star tile.
+
+; 10E Ranch Girl
+It seems your magic powder
+[2]only helps for so long, as I 
+[3]reverted back to a Cucoo.[K]
+[V]I think that only defeating
+[V]the evil on the island will
+[V]free me of the curse.
+
 ; 112
 [SPD:00][C:07][S:03][W:02][IMG]Not long ago, the kingdom of
 [2]Hyrule was aided by a mythical
@@ -480,6 +904,16 @@ Hah!  Thank you.  To tell you
 [1]And the destiny for
 [2]the Oracle of Secrets is
 [3]drawing near.[WT:05]
+
+; 122 Twinrova Maiden
+Ohh, thank you very much!
+[2]You saved my life.  Please take
+[3]me outside.
+
+; 123 Twinrova
+Hohoho! Foolish boy!
+[2]You've stumbled right into my
+[3]trap! Prepare to die!
 
 ; 125
 I am Zeniea.  I sense something
@@ -660,3 +1094,120 @@ Welcome, young one, to this
 [V]There is a rift, found by my
 [V]ancestors in the mountains. I 
 [V]will mark the spot on your map.[SFX:2D]
+
+; 15B
+Oh? Who are you, stranger?
+[2]This place is the Eon Abyss,
+[3]a dark reflection of Kalyxo.[K]
+[V]Evil magic has twisted it
+[V]into something sinister and
+[V]dangerous.[K]
+[V]The Golden Power here can
+[V]change your form to match
+[V]your heart and mind.[K]
+[V]I am always changing my mind,
+[V]so I turned into a ball.[...]
+[V]But if you find a magic stump,[K]
+[V]use the R button to shrink
+[V]and navigate through small
+[V]spaces in this dark world.[K]
+
+; 15C
+You didn't change your shape?
+[2]Well, don't forget, if you want
+[3]to get through tight spaces, [K]
+[V]stand on a stump and press
+[V]the R button!
+
+; 15D
+What do you want?!
+[2]Do you have something to say
+[3]to me, little hero?![K]
+[V]I came here seeking the power
+[V]of the Golden Triforce, but now
+[V]I'm stuck in this twisted[K]
+[V]form! If I only had the Moon
+[V]Pearl from the Shrine of
+[V]Origins, I could regain my[K]
+[V]true shape! I've got every
+[V]reason to be stressed out!
+[V]So back off! Go away!
+
+; 16F Dark Link
+The dark lord Kydrog reigns 
+[2]supreme, moreso than Ganon
+[3]ever could.[K]
+[V]Soon, he will have the Triforce
+[V]and with it, you and all your
+[V]descendants will be erased[K]
+[V]from existence, never to
+[V]reincarnate again. This will be
+[V]your final battle[...][K]
+[V]Ready for a dance, [L]?
+[V]Let's tango.
+
+; 172 Mayor Nepotism Son
+Ah, an agent of the empire!
+[2]You're not here to collect any
+[3]taxes, are you?[K]
+[V]Well, if you're curious about 
+[V]how to navigate Kalyxo, there
+[V]are some old texts in the [K]
+[V]basement that may be useful.
+
+; 175
+Many won't take kindly to you
+[2]around these parts[...]
+[3]We don't like the Empire[...][K]
+[V]It might be controversial to
+[V]call it an Empire to you.
+[V]But, that's just how I feel.
+
+; 177
+Check out the mask shop east
+[2]of village. The mask salesman
+[3]is a strange but helpful fellow[...]
+
+; 17D Ranch Girl
+Cluck cluck[...]  What?!
+[2]I'm finally back to normal!
+[3]Thank you so much![K]
+[V]An evil witch came asking about
+[V]'essences' and then used her 
+[V]magic to transform me into a[K]
+[V]Cucoo when I didn't have any
+[V]answers for her[...]
+[V]Since you went to the trouble[K]
+[V]of changing me back, I'd
+[V]like to give you this Ocarina
+[V]as a token of my thanks![K]
+[V]I'll even teach you the song
+[V]I use to water my plants!
+[V]Here, let me play it for you![K]
+
+; 182 Bush Yard Guy
+Hi, [L].  Sorry about my
+[2]yard.  It's a little over
+[3]grown.  Thanks for visiting.[K]
+[V]I'm glad to have company to
+[V]talk to.  I will tell you an
+[V]interesting story.[K]
+[V]There is a swamp to the east, 
+[V]not far from the village with
+[V]an ancient temple.[K]
+[V]Story goes the treasure turns
+[V]people into birds.  Heh heh heh.
+[V]I'd love to see that.
+
+; 183
+I haven't had a chance to trim
+[2]my hedges recently.  Thanks
+[3]for visiting anyway[...][K]
+[V]Not long ago, the Goron Mines
+[V]would extract special crystals
+[V]from the earth.[K]
+[V]The Zora scholars used those
+[V]crystals to create magical
+[V]gates to the Eon Abyss[...][K]
+[V]The Hylians didn't care
+[V]for that at all[...]
