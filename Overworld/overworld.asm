@@ -45,9 +45,6 @@ Palettes_GanonTowerFlash:
   dw  $7FFF,  $0884,  $052A,  $21EF,  $3AB5,  $4B39,  $1D4C,  $18AC
   ; dw $7FFF,   $0C63,  $40A5,  $5D67, $7EAE, $7F18, $7A6B, $7B5C
 
-incsrc "Overworld/master_sword.asm"
-print  "End of master_sword.asm           ", pc
-
 incsrc "Overworld/maku_tree.asm"
 print  "End of Overworld/maku_tree.asm    ", pc
 
@@ -69,7 +66,25 @@ print "End of world_map.asm              ", pc
 pullpc
 incsrc "Overworld/entrances.asm"
 print  "End of Overworld/entrances.asm    ", pc
+pushpc
 
+; =========================================================
+; Get Lv2 Sword from chest
+; Get Lv4 Sword from pedestal
+; =========================================================
+
+; At 04/87CA, change D0 into 80
+org $0987CA
+db $80
+
+; Disable wind blowing sfx:
+; At 04/45D4, change 09 into 00
+org $08C5D4
+db $00
+
+; MasterSword_HandleReceipt
+org $0589AF
+LDY.b #$03 ; ITEMGET 03
 
 pullpc
 LoadDarkWorldIntro:
@@ -128,6 +143,8 @@ LoadOverworldPitAreas:
 pushpc
 
 incsrc "Overworld/special_areas.asm"
+
+Overworld_GetPitDestination = $1BB860
 
 ; DetermineConsequencesOfFalling
 org $0794D9
