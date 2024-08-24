@@ -592,6 +592,34 @@ JSL Kiki_CheckIfScared
 BCC dont_scare_kiki
 NOP #3
 
+; TODO: Update Kiki jump pos
+org $1EE2E9
+Kiki_WalkOnRoof:
+.speed_x ; bleeds into next
+  db   0,   0
+
+.speed_y
+  db  -9,   9,   0,   0
+
+org $1EE576
+Kiki_HopToSpot:
+.target_y
+  dw $0661
+  dw $064C
+  dw $0624
+
+.target_x
+  dw $0F4F
+  dw $0F70
+  dw $0F5D
+
+org $1EE5E9
+Kiki_WalkOnRoof_Ext:
+.step
+  db $02, $01, $FF
+.timer
+  db  82,   0
+
 pullpc
 
 ; =========================================================
