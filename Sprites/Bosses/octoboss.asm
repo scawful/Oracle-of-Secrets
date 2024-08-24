@@ -1,8 +1,14 @@
 ; =========================================================
 ; Octoboss by Zarby89
 
-; TODO: Find a sprite to inject this into
-; JSL Sprite_Octoboss_Long
+pushpc
+
+; Sprite_A2_Kholdstare
+org $1E9518
+JSL Sprite_Octoboss_Long
+RTS
+
+pullpc
 
 BrotherSpr = $0EB0
 
