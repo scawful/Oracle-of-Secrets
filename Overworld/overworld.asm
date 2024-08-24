@@ -66,7 +66,6 @@ print "End of world_map.asm              ", pc
 pullpc
 incsrc "Overworld/entrances.asm"
 print  "End of Overworld/entrances.asm    ", pc
-pushpc
 
 ; =========================================================
 ; Get Lv2 Sword from chest
@@ -125,7 +124,6 @@ org $0281CD
   LDA.l $7EF3D6 : CMP.b #$04
 
 pullpc
-
 LoadOverworldPitAreas:
 {
   LDA $8A : CMP.b #$0F : BEQ .allow_transition
@@ -139,7 +137,6 @@ LoadOverworldPitAreas:
   CLC ; allow transition
   RTL
 }
-
 pushpc
 
 incsrc "Overworld/special_areas.asm"
