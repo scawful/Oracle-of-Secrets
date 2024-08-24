@@ -569,6 +569,31 @@ Follower_HandleTriggerData:
 
 pullpc
 
+Kiki_CheckIfScared:
+{
+  ; If Links health is too low, kiki will run away from him
+  ; rather than when he takes damage as it currently is.
+  LDA.b $4D : BEQ .not_scared
+  LDA.w $031F : BEQ .not_scared
+  LDA.l $7EF36D : CMP.b #$02 : BNE .not_scared
+    SEC
+    RTL
+  .not_scared
+  CLC
+  RTL
+}
+
+pushpc
+
+; Kiki
+dont_scare_kiki = $09A1E4
+org $09A1C6
+JSL Kiki_CheckIfScared
+BCC dont_scare_kiki
+NOP #3
+
+pullpc
+
 ; =========================================================
 ; Minecart Follower Sprite
 
