@@ -2812,13 +2812,17 @@ InitTilesetsLongCalls:
     ; TODO: This will eventually be changed when changing the dungeon GFX.
     ; Only trigger the new code when in the:
     LDA.b $10 : CMP.b #$08 : BEQ .outdoors ; Pre-overworld main module
-                CMP.b #$0E : BEQ .outdoors ; Text Mode/Item Screen/Map module
+                CMP.b #$0E : BEQ .interface ; Text Mode/Item Screen/Map module
+        .dungeon_map_restore_normal
         REP #$30
         LDA.w $0AA1 : AND.w #$00FF ; Replaced code.
 
         PLB
 
         JML $00E227 ; $006227 Return to normal code.
+
+    .interface
+    LDA.b $11 : CMP.b #$03 : BEQ .dungeon_map_restore_normal
 
     .outdoors
 
