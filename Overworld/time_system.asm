@@ -214,11 +214,15 @@ CheckForSongOfTime:
     LDA.b #$00 : STA.l $7EE002
 
     LDA.l $7EE000 : CMP.b #$06 : BNE ++
-      LDA.b #$3F : STA.l $7EE002
+      LDA.l $7EE001 : BNE ++
+        LDA.b #$3F : STA.l $7EE002
+        STZ $FE
     ++
 
     LDA.l $7EE000 : CMP.b #$12 : BNE ++
-      LDA.b #$3F : STA.l $7EE002
+      LDA.l $7EE001 : BNE ++
+        LDA.b #$3F : STA.l $7EE002
+        STZ $FE
     ++
   +
   RTS
@@ -503,7 +507,7 @@ endif
 
 ; ZS OW - CheckForChangeGraphicsTransitionLoad
 if ZS_CUSTOM_OW_V2 = 1
-org $2893FD
+org $289447
 	JSL SubAreasFix
 else
 org $2885F9
