@@ -56,14 +56,17 @@ Palette_OverworldBgMain                   = $9BEEC7
 ; ==============================================================================
 
 ; Loads the transparent color under some load conditions.
+; Overworld_SetFixedColAndScroll
 org $0BFEB6
     STA.l $7EC500
 
 ; Main Palette loading routine.
+; OverworldPalettesLoader.dont_change_e
 org $0ED5E7
     JSL $9BEEA8 ; Palette_OverworldBgAux3
 
 ; After leaving special areas like Zora's and the Master Sword area.
+; LoadSpecialOverworld
 org $02E94A
     JSL $8ED5A8 ; Overworld_LoadPalettes
 
@@ -758,6 +761,7 @@ pushpc
 ; TODO: This is done in the vanilla I think as just a precaution at the apex of
 ; the fade to white to make sure all of the colors truly are white but it may
 ; not actually be needed.
+; PaletteFilter_InitializeWhiteFilter
 org $00EEBB ; $006EBB
 Func00EEBB:
 {
@@ -793,6 +797,7 @@ pushpc
 
 
 ; Controls the BG scrolling for HC and the pyramid area.
+; MirrorWarp_BuildDewavingHDMATable
 org $00FF7C ; $007F7C
 Func00FF7C:
 {
@@ -846,7 +851,7 @@ org $029D1E ; $011D1E
 
 warnpc $029D21
 
-; GanonEmerges_LOadPyramidArea:
+; GanonEmerges_LoadPyramidArea:
 org $029F82 ; $011F82
     JSR.w PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
