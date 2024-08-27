@@ -421,24 +421,26 @@ SubAreasFix:
     SEP #$20
 	PLX
   .no_effect
-	STA PaletteBuffer_HUD
-	STA PaletteBuffer_BG
+	STA.l PaletteBuffer_HUD
+	STA.l PaletteBuffer_BG
 	RTL
 }
+
+GlovePalettePosition = $7EC4FA
 
 GlovesFix:
 {
 	STA.l !pal_color
 	LDA $1B : AND #$00FF : BEQ .outdoors3
     LDA.l !pal_color
-    STA $7EC4FA
+    STA GlovePalettePosition
     RTL
 
   .outdoors3:
 	PHX
 	JSL ColorSubEffect
 	PLX
-	STA $7EC4FA
+	STA GlovePalettePosition
 	RTL
 }
 
@@ -457,9 +459,21 @@ CheckIfNight:
 
 ColorBgFix:
 {
+  PHA
+  SEP #$30
+  ; Check for save and quit
+  LDA.b $10 : CMP.b #$17 : BEQ .vanilla
+  REP #$30
+  PLA 
   JSL ColorSubEffect
   STA.l PaletteCgram_HUD
   STA.l PaletteCgram_BG
+  RTL
+
+  .vanilla
+  REP #$30
+  PLA
+  STA.l PaletteCgram_HUD
   RTL
 }
 
