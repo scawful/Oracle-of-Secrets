@@ -86,9 +86,6 @@ HouseTag_WakeUpPlayer:
   STZ $02E4 ; awake from slumber
   INC.b StoryState 
 
-  ; TODO: Make it so "uncle" respawns when the player dies
-  ; and experiences a game over
-  
   ; Make it so Link's uncle never respawns in the house again.
   LDA $7EF3C6 : ORA.b #$10 : STA $7EF3C6
 
