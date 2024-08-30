@@ -1,7 +1,8 @@
+; Goron Sprite
 
-!SPRID              = $00; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00 ; Number of tiles used in a frame
-!Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
+!SPRID              = $F2 ; The sprite ID you are overwriting (HEX)
+!NbrTiles           = 04  ; Number of tiles used in a frame
+!Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
@@ -38,7 +39,7 @@ Sprite_Goron_Long:
   .kalyxo
   JSR Sprite_KalyxoGoron_Draw
   +
-
+  JSL Sprite_DrawShadow
   JSL Sprite_CheckActive
   BCC .SpriteIsNotActive
 
@@ -64,15 +65,35 @@ Sprite_Goron_Main:
   JSL UseImplicitRegIndexedLocalJumpTable
 
   dw KalyxoGoron_Main
+
   dw EonGoron_Main
+  dw EonGoron_Sing
+  dw EonGoron_Punch
 
   KalyxoGoron_Main:
   {
+    JSL Sprite_PlayerCantPassThrough
     RTS
   }
 
   EonGoron_Main:
   {
+    %PlayAnimation(0, 1, 10)
+    JSL Sprite_PlayerCantPassThrough
+    RTS
+  }
+
+  EonGoron_Sing:
+  {
+    %PlayAnimation(2, 3, 10)
+    JSL Sprite_PlayerCantPassThrough
+    RTS
+  }
+
+  EonGoron_Punch:
+  {
+    %PlayAnimation(4, 5, 10)
+    JSL Sprite_PlayerCantPassThrough
     RTS
   }
 }

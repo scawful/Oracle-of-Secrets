@@ -271,6 +271,9 @@ print "End of eon_owl.asm                ", pc
 incsrc "Sprites/NPCs/fortune_teller.asm"
 print  "End of fortune_teller.asm         ", pc
 
+incsrc "Sprites/NPCs/goron.asm"
+print  "End of goron.asm                  ", pc
+
 ; =========================================================
 
 ; Sprite Recoil and Death
