@@ -144,8 +144,8 @@ namespace Oracle
   incsrc "Music/color_dungeon_theme.asm"
   print  "End of color_dungeon_theme.asm    ", pc
 
-  incsrc "Music/stone_tower_temple_v2.asm"
-  print  "End of stone_tower_temple.asm     ", pc
+  incsrc "Music/deku_theme.asm"
+  print  "End of Music/deku_theme.asm        ", pc
 
   incsrc "Music/song_of_healing.asm"
   print  "End of Music/song_of_healing.asm  ", pc
