@@ -128,7 +128,9 @@ Sprite_Collectible_Main:
   RockSirloin:
   {
     JSL Sprite_Move
-    JSL ThrownSprite_TileAndSpriteInteraction_long
+    LDA.l $7EF354 : BEQ .do_you_even_lift_bro
+      JSL ThrownSprite_TileAndSpriteInteraction_long
+    .do_you_even_lift_bro
     RTS
   }
 
