@@ -226,7 +226,6 @@ Sprite_EonGoron_Draw:
 
   RTS
 
-
   .start_index
   db $00, $01, $02, $03, $04, $06
   .nbr_of_tiles
@@ -246,19 +245,19 @@ Sprite_EonGoron_Draw:
   dw 0, -8
   dw 0, -8
   .chr
-  db $CC
-  db $CC
-  db $EC
-  db $EC
-  db $EA, $F9
-  db $EA, $F9
+  db $8C
+  db $8C
+  db $AC
+  db $AC
+  db $AA, $B9
+  db $AA, $B9
   .properties
-  db $3D
-  db $7D
-  db $3D
-  db $7D
-  db $3D, $3D
-  db $7D, $7D
+  db $37
+  db $77
+  db $37
+  db $77
+  db $37, $37
+  db $77, $77
   .sizes
   db $02
   db $02
