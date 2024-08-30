@@ -549,6 +549,10 @@ I can't believe you found me!
 [V]ranch have many useful things
 [V]hanging in their branches[...]
 
+# A7
+
+[2]         Vasu's Ring Shop
+
 # A9
 Do come in!
 [2]Welcome to Vasu Jewelers.
