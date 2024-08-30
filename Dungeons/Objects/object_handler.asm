@@ -1,5 +1,27 @@
 ; Dungeon Object Handler
 
+; Tile types
+TileBehavior_Nothing = $07DC54
+TileBehavior_Pit = $07DC8B
+TileBehavior_Door = $07DD0A
+
+; Minecart Track tile types
+org $07D938
+  dw TileBehavior_Nothing ; 0xB0 UW LR
+  dw TileBehavior_Nothing ; 0xB1 UW UD
+  dw TileBehavior_Nothing ; 0xB2 UW TL
+  dw TileBehavior_Nothing ; 0xB3 UW BL
+  dw TileBehavior_Nothing ; 0xB4 UW TR
+  dw TileBehavior_Nothing ; 0xB5 UW BR
+  dw TileBehavior_Nothing ; 0xB6 UW Any
+  dw TileBehavior_Nothing ; 0xB7 UW Stop Top
+  dw TileBehavior_Nothing ; 0xB8 UW Stop Bottom
+  dw TileBehavior_Nothing ; 0xB9 UW Stop Left
+  dw TileBehavior_Nothing ; 0xBA UW Stop Right
+  dw TileBehavior_Pit     ; 0xBB UW Pit LR
+  dw TileBehavior_Pit     ; 0xBC UW Pit UD
+  dw TileBehavior_Pit     ; 0xBD UW Any
+
 org $018262 ; Object ID 0x31
   dw ExpandedObject
 
@@ -13,27 +35,8 @@ org $0182A8 ; Object ID 0x54
 org $018650 ; Object ID 230
   dw HeavyPot
 
-; Tile types
-TileBehavior_Nothing = $07DC54
-TileBehavior_Pit = $07DC8B
-TileBehavior_Door = $07DD0A
-
-; Minecart Track tile types
-org $07D938
-#_07D938: dw TileBehavior_Nothing ; 0xB0 UW LR
-#_07D93A: dw TileBehavior_Nothing ; 0xB1 UW UD
-#_07D93C: dw TileBehavior_Nothing ; 0xB2 UW TL
-#_07D93E: dw TileBehavior_Nothing ; 0xB3 UW BL
-#_07D940: dw TileBehavior_Nothing ; 0xB4 UW TR
-#_07D942: dw TileBehavior_Nothing ; 0xB5 UW BR
-#_07D944: dw TileBehavior_Nothing ; 0xB6 UW Any
-#_07D946: dw TileBehavior_Nothing ; 0xB7 UW Stop Top
-#_07D948: dw TileBehavior_Nothing ; 0xB8 UW Stop Bottom
-#_07D94A: dw TileBehavior_Nothing ; 0xB9 UW Stop Left
-#_07D94C: dw TileBehavior_Nothing ; 0xBA UW Stop Right
-#_07D94E: dw TileBehavior_Pit     ; 0xBB UW Pit LR
-#_07D950: dw TileBehavior_Pit     ; 0xBC UW Pit UD
-#_07D952: dw TileBehavior_Pit     ; 0xBD UW Any
+; Heavy rock object draw code
+DrawBigGraySegment_hook = $01B350
 
 ; Bank01 Free Space
 org $01B53C
@@ -51,11 +54,27 @@ org $01B53C
 
   HeavyPot:
     JSL InitHeavyPot
-    JMP $B350
+    JMP DrawBigGraySegment_hook
 
 warnpc $01B560
 
 org $2C8000
+; TODO: Fix the graphics used for the heavy pot in game
+InitHeavyPot:
+{
+  LDA.w #$1010
+  PHX 
+  LDX.w $042C ; MANIPINDEX
+  LDA.w #$1111 : STA $0500, X ; M16BUFF500
+
+  ; Store this object's position in the object buffer to $0520, X
+  LDA $BA : STA $0520, X
+
+  ; Store it's tilemap position.
+  TYA : STA $0540, X
+  RTL
+}
+
 CustomObjectHandler:
 {
   PHB : PHK : PLB
@@ -159,22 +178,6 @@ CustomObjectHandler:
       incbin Data/track_any.bin
     .SmallStatue
       incbin Data/small_statue.bin
-}
-
-; TODO: Fix the graphics used for the heavy pot in game
-InitHeavyPot:
-{
-  LDA.w #$1010
-  PHX 
-  LDX.w $042C ; MANIPINDEX
-  LDA.w #$1111 : STA $0500, X ; M16BUFF500
-
-  ; Store this object's position in the object buffer to $0520, X
-  LDA $BA : STA $0520, X
-
-  ; Store it's tilemap position.
-  TYA : STA $0540, X
-  RTL
 }
 
 SpriteObjectsDraw:
@@ -319,24 +322,24 @@ org $00A9AC
 
 ; Normal Door
 ; #obj2716:
-; #_00C268: dw $2888, $0808, $0818, $2889
-; #_00C270: dw $09EF, $0878, $6889, $09EF
-; #_00C278: dw $4878, $6888, $4808, $4818
+;   dw $2888, $0808, $0818, $2889
+;   dw $09EF, $0878, $6889, $09EF
+;   dw $4878, $6888, $4808, $4818
 
 ; Unused door 3A
 ; #obj2866:
 org $00C3B8
-#_00C3B8: dw $2888, $0808, $0818, $2889
-        ;             09
-#_00C3C0: dw $282C, $082D, $6889, $682C
-        ;      10
-#_00C3C8: dw $482D, $6888, $4808, $4818
+  dw $2888, $0808, $0818, $2889
+;             09
+  dw $282C, $082D, $6889, $682C
+;      10
+  dw $482D, $6888, $4808, $4818
 
 ; 282D
 ; 682D
 ; $682C
 
 ; #obj2866:
-; #_00C3B8: dw $282C, $0808, $080D, $282D
-; #_00C3C0: dw $09EF, $0878, $682D, $09EF
-; #_00C3C8: dw $4878, $682C, $4808, $480D
+;   dw $282C, $0808, $080D, $282D
+;   dw $09EF, $0878, $682D, $09EF
+;   dw $4878, $682C, $4808, $480D
