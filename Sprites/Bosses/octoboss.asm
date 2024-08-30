@@ -86,8 +86,9 @@ Sprite_Octoboss_Long:
 
 Sprite_Octoboss_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
+
   dw WaitForPlayerToApproach ; 00
   dw Emerge ; 01
   dw EmergedShowMessage ; 02
@@ -107,11 +108,10 @@ Sprite_Octoboss_Main:
   dw SubmergeForeverKill ; 0E
 
 
+Sprite_Octoboss_Secondary:
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
 
-
-  Sprite_Octoboss_Secondary:
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
   dw WaitForPlayerToApproach ; 00
   dw Emerge ; 01
   dw WaitDialog ; 02
@@ -570,12 +570,8 @@ Sprite_Octoboss_Main:
 }
 
 
-
-
 ; =========================================================
-; Sprite Draw code
-; Draw the tiles on screen with the data provided by the sprite maker editor
-; =========================================================
+
 Sprite_Octoboss_Draw:
 {
   JSL Sprite_PrepOamCoord
@@ -730,9 +726,7 @@ Sprite_Octoboss_Draw:
 }
 
 ; =========================================================
-; Sprite Draw code
-; Draw the tiles on screen with the data provided by the sprite maker editor
-; =========================================================
+
 Sprite_Octoboss_Draw2:
 {
   JSL Sprite_PrepOamCoord
@@ -789,13 +783,8 @@ Sprite_Octoboss_Draw2:
 
   RTS
 
-
-
   ; =========================================================
-  ; Sprite Draw Generated Data
-  
-  ; This is where the generated Data for the sprite go
-  ; =========================================================
+
   .start_index
   db $00, $04, $0A, $10, $16, $1C, $20, $24, $28, $2C, $30, $34, $38, $3C, $40, $44
   .nbr_of_tiles
