@@ -72,6 +72,9 @@ Sprite_Collectible_Prep:
     +
     LDA.b #$02 : STA.w SprAction, X
   .not_intro_sword
+  LDA.b $8A : CMP.b #$4B : BNE .not_lupo_mountain
+    LDA.b #$03 : STA.w SprAction, X
+  .not_lupo_mountain
 
     
   PLB
@@ -88,6 +91,7 @@ Sprite_Collectible_Main:
   dw Pineapple
   dw Seashell
   dw SwordShield
+  dw RockSirloin
 
   Pineapple:
   {
@@ -118,6 +122,13 @@ Sprite_Collectible_Main:
       JSL Link_ReceiveItem
       STZ.w SprState, X
     +
+    RTS
+  }
+
+  RockSirloin:
+  {
+    JSL Sprite_Move
+    JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
 
