@@ -264,6 +264,11 @@ Hey there, Mr. Strong Hero.
 [3]come back when you grow[K]
 [V]grow some gills! Hehehe.
 
+# 48 Sword and Shield Message
+You found a small sword and
+[2]shield! With this you are one
+[3]step closer to saving Farore!
+
 # 54
 He gave you the Gold Star!
 [2]Switch to this item with L or R
