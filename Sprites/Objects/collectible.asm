@@ -130,6 +130,8 @@ Sprite_Collectible_Main:
     JSL Sprite_Move
     LDA.l $7EF354 : BEQ .do_you_even_lift_bro
       JSL ThrownSprite_TileAndSpriteInteraction_long
+      LDA.l RockMeat : INC A : STA.l RockMeat
+      STZ.w SprState, X
     .do_you_even_lift_bro
     RTS
   }
