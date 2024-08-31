@@ -8,10 +8,9 @@
 ; Size 0x0098 (152 Decimal)
 ;==========================================================
 
-; TODO: Decide what song to override or use expanded music
-; org $1A9FF8; Sections?
+org $1AA763; Sections?
 GreatDekuTreeTheme: 
-!ARAMAddr = $D0FF
+!ARAMAddr = $D86A
 dw !ARAMAddr+$08
 dw $00FF
 dw !ARAMAddr
@@ -82,7 +81,3 @@ db $00 ; End of the channel
 .subA01
 db Tie
 db $00 ; End
-
-
-
-print pc
