@@ -274,15 +274,15 @@ Sprite_SwordShield_Draw:
   .nbr_of_tiles
   db 2
   .x_offsets
-  dw 8, 8, 0
+  dw 0, 8, 8
   .y_offsets
-  dw 0, 8, 0
+  dw 0, 0, 8
   .chr
-  db $EC, $FC, $C0
+  db $C0, $EC, $FC
   .properties
-  db $33, $33, $B3
+  db $B5, $35, $35
   .sizes
-  db $00, $00, $02
+  db $02, $00, $00
 }
 
 Sprite_RockSirloin_Draw:
