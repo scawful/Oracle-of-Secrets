@@ -41,6 +41,7 @@ HouseTag_Main:
 HouseTag_TelepathicPlea:
 {
   LDA #$08 : STA $7EE000 ; Set the time to 8:00am
+  LDA.b #$03 : STA.w $012C ; Play the deku tree music
 
   ; -------------------------------
   ; Set Link's coordinates to this specific position.
