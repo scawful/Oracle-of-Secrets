@@ -55,10 +55,16 @@ Sprite_DekuScrubEnemy_Prep:
 {
   PHB : PHK : PLB
 
-  LDA SprSubtype, X : CMP #$01 : BNE .normal_scrub
+  LDA SprSubtype, X : CMP.b #$01 : BEQ .pea_shot
+                      CMP.b #$02 : BEQ .cutscene_scrub
+  JMP +
+  .pea_shot 
     LDA.b #$06 : STA.w SprAction, X ; Pea Shot State
     LDA.b #$20 : STA.b SprPrize, X
-  .normal_scrub 
+    JMP +
+  .cutscene_scrub
+    LDA.b #$08 : STA.w SprAction, X
+  +
 
   PLB
   RTL
@@ -86,6 +92,8 @@ Sprite_DekuScrubEnemy_Main:
 
   dw DekuScrubEnemy_PeaShot
   dw DekuScrubEnemy_HidingDefeated
+
+  dw DekuScrubEnemy_CutsceneStart 
 
   ; 0x00
   DekuScrubEnemy_Hiding:
@@ -232,6 +240,12 @@ Sprite_DekuScrubEnemy_Main:
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
 
+    RTS
+  }
+
+  DekuScrubEnemy_CutsceneStart:
+  {
+    ; TODO: Add deku dream cutscene
     RTS
   }
 }
