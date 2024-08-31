@@ -154,12 +154,11 @@ GanondorfBattle:
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.silence+!ARAMC, 4)
 
-      ; %TremoloOn(10, 4, 50)
         %CallSubroutine(.horn01+!ARAMC, 1)
         %CallSubroutine(.horns02+!ARAMC, 1)
         %CallSubroutine(.horns03+!ARAMC, 1)
         %CallSubroutine(.horns02+!ARAMC, 1)
-      ; %TremoloOff()
+
       %CallSubroutine(.silence+!ARAMC, 72)
       
       db $00
@@ -170,12 +169,11 @@ GanondorfBattle:
       %SetDurationN(!4th, $7F) ; 1/4
       
       %CallSubroutine(.silence+!ARAMC, 4)
-      ; %TremoloOn(10, 4, 10)
+      
         %CallSubroutine(.horn01+!ARAMC, 1)
         %CallSubroutine(.horns02+!ARAMC, 1)
         %CallSubroutine(.horns03+!ARAMC, 1)
         %CallSubroutine(.horns02+!ARAMC, 1)
-      ; %TremoloOff()
 
       %CallSubroutine(.intro+!ARAMC, 1)
       %CallSubroutine(.silence+!ARAMC, 4)
