@@ -31,7 +31,7 @@ org $018264 ; Object ID 0x32
 org $0182A8 ; Object ID 0x54
   dw SpriteBodyObjects
 
-; RoomDraw_WeirdUglyPot 
+; RoomDraw_WeirdUglyPot
 org $018650 ; Object ID 230
   dw HeavyPot
 
@@ -63,7 +63,7 @@ org $2C8000
 InitHeavyPot:
 {
   LDA.w #$1010
-  PHX 
+  PHX
   LDX.w $042C ; MANIPINDEX
   LDA.w #$1111 : STA $0500, X ; M16BUFF500
 
@@ -83,10 +83,10 @@ CustomObjectHandler:
   STZ $03 ; 03 will be used to store the object ID for custom config
   LDA $00 : PHA
   LDA $02 : PHA
-  ; $00 Will be used for tile count and tile to skip 
+  ; $00 Will be used for tile count and tile to skip
   LDA $B2 : ASL #2 : ORA $B4
 
-  ;get the offset for the object data based on the object height 
+  ;get the offset for the object data based on the object height
   ASL : TAX
   LDA .ObjOffset, X
   TAX
@@ -128,11 +128,11 @@ CustomObjectHandler:
   RTL
 
   .ObjOffset
-    dw .LeftRight-.ObjData        ; 00 
-    dw .UpDown-.ObjData           ; 01 
-    dw .TopLeft-.ObjData          ; 02 
-    dw .TopRight-.ObjData         ; 03 
-    dw .Bottomleft-.ObjData       ; 04 
+    dw .LeftRight-.ObjData        ; 00
+    dw .UpDown-.ObjData           ; 01
+    dw .TopLeft-.ObjData          ; 02
+    dw .TopRight-.ObjData         ; 03
+    dw .Bottomleft-.ObjData       ; 04
     dw .BottomRight-.ObjData      ; 05
     dw .UpDownFloor-.ObjData      ; 06
     dw .LeftRightFloor-.ObjData   ; 07
@@ -142,7 +142,7 @@ CustomObjectHandler:
     dw .BottomRightFloor-.ObjData ; 11
     dw .FloorAny-.ObjData         ; 12
     dw .WallSwordHouse-.ObjData   ; 13
-    dw .TrackAny-.ObjData         ; 14 
+    dw .TrackAny-.ObjData         ; 14
     dw .SmallStatue-.ObjData      ; 15
 
   .ObjData
@@ -188,10 +188,10 @@ SpriteObjectsDraw:
   STZ $03 ; 03 will be used to store the object ID for custom config
   LDA $00 : PHA
   LDA $02 : PHA
-  ; $00 Will be used for tile count and tile to skip 
+  ; $00 Will be used for tile count and tile to skip
   LDA $B2 : ASL #2 : ORA $B4
 
-  ;get the offset for the object data based on the object height 
+  ;get the offset for the object data based on the object height
   ASL : TAX
   LDA .ObjOffset, X
   TAX
@@ -253,10 +253,10 @@ CustomObjectHandler2:
   STZ $03 ; 03 will be used to store the object ID for custom config
   LDA $00 : PHA
   LDA $02 : PHA
-  ; $00 Will be used for tile count and tile to skip 
+  ; $00 Will be used for tile count and tile to skip
   LDA $B2 : ASL #2 : ORA $B4
 
-  ;get the offset for the object data based on the object height 
+  ;get the offset for the object data based on the object height
   ASL : TAX
   LDA .ObjOffset, X
   TAX
@@ -313,7 +313,7 @@ CustomObjectHandler2:
 
 pushpc
 
-; Item ID 22B 
+; Item ID 22B
 org $00A9AC
   dw $0D28, $0D38, $4D28, $4D38
 

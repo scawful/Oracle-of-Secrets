@@ -28,7 +28,7 @@ org $0E9889
 ; FlashGanonTowerPalette
 org $0EF587
   LDA.b $8A
-  CMP.b #$73 
+  CMP.b #$73
   BEQ .on_dark_dm
   CMP.b #$75
   BEQ .on_dark_dm

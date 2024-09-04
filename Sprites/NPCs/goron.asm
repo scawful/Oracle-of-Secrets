@@ -53,8 +53,6 @@ Sprite_Goron_Long:
 Sprite_Goron_Prep:
 {
   PHB : PHK : PLB
-    
-
   PLB
   RTL
 }
