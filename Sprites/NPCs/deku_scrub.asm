@@ -55,6 +55,16 @@ Sprite_DekuScrub_Prep:
   PHB : PHK : PLB
 
   LDA.b #$80 : STA.w SprDefl, X
+
+  LDA.b $8A : CMP.b #$2E : BNE .check_next
+    LDA.b #$07 : STA.w SprAction, X
+    JMP .PlayIntro
+  .check_next
+  CMP.b #$2F : BNE .continue
+    LDA.b #$08 : STA.w SprAction, X
+    JMP .PlayIntro
+  .continue
+
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .DekuButler
                         CMP.b #$02 : BEQ .DekuPrincess
 
@@ -90,6 +100,10 @@ Sprite_DekuScrub_Main:
   dw Withered
   dw DekuButler
   dw DekuPrincess
+
+  dw DekuButler_Peacetime
+  dw DekuPrinces_Peacetime
+
 
   EstadoInactivo:
   {
@@ -157,6 +171,24 @@ Sprite_DekuScrub_Main:
     %PlayAnimation(4, 4, 10)
     JSL Sprite_PlayerCantPassThrough
      %ShowSolicitedMessage($0C3)
+    RTS
+  }
+
+  DekuButler_Peacetime:
+  {
+    %StartOnFrame(3)
+    %PlayAnimation(3, 3, 10)
+    JSL Sprite_PlayerCantPassThrough
+    ; %ShowSolicitedMessage($0C4)
+    RTS
+  }
+
+  DekuPrinces_Peacetime:
+  {
+    %StartOnFrame(4)
+    %PlayAnimation(4, 4, 10)
+    JSL Sprite_PlayerCantPassThrough
+    ; %ShowSolicitedMessage($0C5)
     RTS
   }
 }
