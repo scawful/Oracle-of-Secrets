@@ -1,0 +1,155 @@
+#+title: Oracle of Secrets
+#+author: @scawful
+
+* Overview
+The Legend of Zelda: Oracle of Secrets is a ROM hack of Link to the Past for the Super Nintendo.
+
+The game has been in development since 2011 and is nearing completion.
+
+This document aims to compile all the information on the game for reference as well as in tasks which are left to do before the release of the game.
+
+Discord: https://discord.gg/MBFkMTPEmk
+Plot Doc: https://docs.google.com/document/d/106e_dnY0EAjm3l416l4NDnpRjlUMFH8EKN_o7eiC77c
+Data Sheet: https://docs.google.com/spreadsheets/d/17mfAUalrYgu6Is1LNPlRBbqniAvRg5eNPOg7AQZ-b4U/
+
+* Tasks
+
+** TODO Add Dream Sequences [0/7]
+- [ ] Deku Business Scrub Dream
+- [ ] Twinrova Ranch Girl Dream
+- [ ] Hyrule Castle Dream
+- [ ] Zora King Dream
+- [ ] Kydrog Sealing Dream
+- [ ] Mine Collapse Dream
+- [ ] Final Dream ????
+
+** TODO Fortress of Secrets Opening Cutscene
+** TODO Add Dungeon Maps
+** TODO 
+
+* Levels
+** Shrine of Origins
+** [#D1] Mushroom Grotto
+** [#D2] Tail Palace
+** [#D3] Kalyxo Castle
+** Shrine of Wisdom
+** [#D4] Zora Temple
+** [#D5] Glacia Estate
+** Shrine of Power
+** [#D6] Goron Mines
+** [#D7] Dragon Ship
+** Shrine of Courage
+** Fortress of Secrets
+** Shrine of ?????
+* Items
+** Y Items
+| Name            | Description                                  |
+|-----------------+----------------------------------------------|
+| Bow             | Vanilla                                      |
+| Boomerang       | Vanilla                                      |
+| Hookshot        | Goldstar ball and chain upgrade, L/R to swap |
+| Bombs           | Vanilla                                      |
+| Magic Powder    | Press A on menu to open Magic Bag            |
+| Hammer          | Vanilla                                      |
+| Lamp            | Vanilla                                      |
+| Fire Rod        | Vanilla                                      |
+| Ice Rod         | Freezes water tiles to walk on               |
+| Magic Mirror    | Allows dual warping with all essences        |
+| Ocarina         | Song of Storms, Soaring, Time, Healing       |
+| Book of Secrets | Activates special overworld events           |
+| Cane of Byrna   | Vanilla                                      |
+| Fishing Rod     | Press Y to cast reel in water                |
+| Roc's Feather   | Press Y to jump                              |
+| Deku Mask       | Shoot magic bubbles, interact with Deku leaf |
+| Zora Mask       | Press Y to dive underwater                   |
+| Wolf Mask       | Press Y to dig for treasure                  |
+| Bunny Hood      | Press R to transform and run faster          |
+| Stone Mask      | Reskinned Magic Cape                         |
+| Bottles         | No longer requires Bug Catching Net to use   |
+
+** Equipment
+| Name                 | Location                 |
+|----------------------+--------------------------|
+| Moon Pearl           | Shrine of Origins        |
+| Small Sword    (Lv1) | Forest of Dreams         |
+| Small Shield   (Lv1) | Forest of Dreams         |
+| Meadow Blade   (Lv2) | Kalyxo Castle            |
+| Tempered Blade (Lv3) | Swordsmiths Hut          |
+| Master Sword   (Lv4) | Temporal Pyramid         |
+| Hero Shield          |                          |
+| Mirror Shield        |                          |
+| Blue Tunic           | Zora Sanctuary Waterfall |
+| Red Tunic            | Shrine of ??????         |
+| Power Glove          | Shrine of Power          |
+| Titans Mitt          | Fortress of Secrets?     |
+| Running Boots        | Sick Kid Wayward Village |
+
+** Rings
+| Name           | Description                      |
+|----------------+----------------------------------|
+| Power Ring     | Increase attack                  |
+| Armor Ring     | Increase defense                 |
+| Heart Ring     | Slowly regenerate health         |
+| Light Ring     | Sword beams work at -2 hearts    |
+| Blast Ring     | Higher bomb damage, bombos class |
+| Steadfast Ring | No knockback                     |
+* Quests
+** Main Quests
+*** Lost Ranch Girl Quest
+1) Get Mushroom from Old Woman house in Mushroom Grotto
+2) Trade Mushroom to Potion Shop
+3) Leave Mountains and return to Potion Shop later for Magic Powder
+4) Use Magic Powder on Cucco in the Ranch House for Ocarina
+
+*** Mask Salesman Quest
+1) Requires Ocarina from Lost Ranch Girl Quest
+2) Mask Salesman teaches Song of Healing
+3) Play Song of Healing for Deku NPC near the shop for Deku Mask
+
+*** TODO Tail Palace Kiki Quest [0/2]
+1) [ ] Kiki asks for Bananas instead of Rupees
+2) [ ] Deku NPCs inhabit Tail Palace OW after dungeon completion
+
+*** Book of Secrets
+1) Play Song of Healing for sick village child for Running Boots
+2) Use Running Boots to get the Book from the village library.
+
+*** TODO Kalyxo Castle
+**** Bridge Opening
++ Requires Book of Secrets from Wayward Village library.
+**** TODO Prison Sequence [0/2]
+1) [ ] Occurs after obtaining the Meadow Blade in Kalyxo Castle
+2) [ ] Ambushed by castle guards and locked away in castle prison
+
+*** TODO Zora Sanctuary
+**** TODO Sea and River Zora Conflict
+**** TODO Waterfall Song of Storms Event
+
+*** Old Man Mountain Quest
+1) Take the warp portal at the northwest most point on Mount Snowpeak
+2) Enter the Lava Lands cave to find the Old Man.
+3) Escort the Old Man to a rock formation on the mountain and use your magic mirror.
+4) Receive the Goldstar before continuing to Glacia Estate
+
+*** TODO Goron Mines Quest [0/2]
+1) [ ] Collectible Goron Rock Meat from Lupo Mountain
+   - Requires Power Glove from Shrine of Power
+2) [ ] Kalyxian Goron NPC in the desert asks for five sirloins to open the mines.
+
+** Side Quests
+*** Masks for Sale
+**** Bunny Hood - 100 Rupees
+**** Stone Mask - 850 Rupees
+*** Wolf Mask Quest
+1) Wolfos appears outside of Kalyxo Castle at Night, defeat and play Song of Healing for Wolf Mask.
+*** TODO Magic Bean Quest [1/4]
+1) [X] Buy Magic Bean from Bean Vendor, requires Bottle.
+2) [ ] Take Magic Bean to the Ranch and plant it in empty soil north of the houses.
+3) [ ] Requires rain (Song of Storms), Pollination (Good Bee) and three days in game time.
+4) [ ] Player receives flower item when all conditions are met, can be traded for Fishing Rod
+*** TODO Swordsmith Rescue [0/3]
+1) [ ] Use the Bomb Shop Big Bomb in the Eon Abyss Beach
+2) [ ] Return the Lost Brother to the Smiths house west of Waywrd Village
+3) [ ] Swordsmith brothers improve your Meadow Blade to the Tempered Sword (Lv3)
+*** TODO Korok Cove
+*** TODO Fishing Minigame
