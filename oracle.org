@@ -1,5 +1,6 @@
 #+title: Oracle of Secrets
 #+author: @scawful
+#+todo: TODO ACTIVE | DONE
 
 * Overview
 The Legend of Zelda: Oracle of Secrets is a ROM hack of Link to the Past for the Super Nintendo.
@@ -8,12 +9,11 @@ The game has been in development since 2011 and is nearing completion.
 
 This document aims to compile all the information on the game for reference as well as in tasks which are left to do before the release of the game.
 
-Discord: https://discord.gg/MBFkMTPEmk
-Plot Doc: https://docs.google.com/document/d/106e_dnY0EAjm3l416l4NDnpRjlUMFH8EKN_o7eiC77c
-Data Sheet: https://docs.google.com/spreadsheets/d/17mfAUalrYgu6Is1LNPlRBbqniAvRg5eNPOg7AQZ-b4U/
+- Discord: https://discord.gg/MBFkMTPEmk
+- Plot Doc: https://docs.google.com/document/d/106e_dnY0EAjm3l416l4NDnpRjlUMFH8EKN_o7eiC77c
+- Data Sheet: https://docs.google.com/spreadsheets/d/17mfAUalrYgu6Is1LNPlRBbqniAvRg5eNPOg7AQZ-b4U/
 
 * Tasks
-
 ** TODO Add Dream Sequences [0/7]
 - [ ] Deku Business Scrub Dream
 - [ ] Twinrova Ranch Girl Dream
@@ -24,8 +24,35 @@ Data Sheet: https://docs.google.com/spreadsheets/d/17mfAUalrYgu6Is1LNPlRBbqniAvR
 - [ ] Final Dream ????
 
 ** TODO Fortress of Secrets Opening Cutscene
-** TODO Add Dungeon Maps
-** TODO 
+Should use the Ganons Tower Crystal Cutscene as the base.
+
+** TODO Add Dungeon Maps [0/8]
+- [ ] Mushroom Grotto
+- [ ] Tail Palace
+- [ ] Kalyxo Castle
+- [ ] Zora Temple
+- [ ] Glacia Estate
+- [ ] Goron Mines
+- [ ] Dragon Ship
+- [ ] Fortress of Secrets
+
+** TODO Update Kydrog boss [0/3]
+- [ ] Track offspring sprites spawned, more dynamic spawns
+- [ ] Improve Kydrog movement, add additional stage in fight
+- [ ] Cinematic opening and ending cutscene with dialogue
+
+** TODO Update Kydreeok boss [0/2]
+- [ ] Improve fireball attack
+- [ ] Improve head/neck rotation
+
+** TODO Goron Mines Opening Animation [0/2]
+- [ ] Setup Goron Sprite
+  - [ ] Kalyxian Variant
+  - [ ] Eon Abyss Variant
+- [ ] Animate mines opening animation
+
+** TODO Fix Minecart mechanics
+** TODO End Credits
 
 * Levels
 ** Shrine of Origins
