@@ -45,7 +45,7 @@ OOSPROG         = $7EF3D6
 OOSPROG2       = $7EF3C6
 
 ; .... ...m
-;   m - maku tree has met link (0: no | 1: yes) 
+;   m - maku tree has met link (0: no | 1: yes)
 OOSPROG3       = $7EF3D4
 
 ; .dgi zktm
@@ -117,7 +117,7 @@ namespace Oracle
 
   print "  -- Overworld --  "
   print ""
-  
+
   incsrc "Overworld/overworld.asm"
 
   print ""
@@ -149,7 +149,6 @@ namespace Oracle
 
   incsrc "Music/song_of_healing.asm"
   print  "End of Music/song_of_healing.asm  ", pc
-
 
   print ""
 
@@ -199,7 +198,6 @@ namespace Oracle
   print ""
 
   incsrc "Menu/menu.asm"
-  
 
   ; -------------------------------------------------------
   ; Misc

@@ -1,7 +1,7 @@
 # Oracle of Secrets Non-Vanilla Dialogue
 
 # 0F
-Press L or R in your menu to 
+Press L or R in your menu to
 [2]see the status of your quest
 [3]and all your items!
 
@@ -11,8 +11,8 @@ Got a map, huh? (Press [X] to
 [3]or you might find our hideout![...]
 
 # 11
-You look pretty strong. 
-[2]Can you lift stuff? 
+You look pretty strong.
+[2]Can you lift stuff?
 [3](Press [A] to lift things). [K]
 [V]Bet you can't out-lift me![...]
 
@@ -48,7 +48,7 @@ If you defeat Kydrog, the
 [2]I know you can save Kalyxo!
 
 # 1F
-[W:02][S:03]... 
+[W:02][S:03]...
 [2]...[WT:01]
 [3]Accept our quest, [L]![K]
 
@@ -58,9 +58,9 @@ If you defeat Kydrog, the
 [3]alright. I feared the worst.
 [V]A dark shadow has befallen us.[K]
 [V]Kydrog, the Pirate King, has
-[V]seized Farore and threatens 
+[V]seized Farore and threatens
 [V]our great island of Kalyxo.[K]
-[V][...] [...] [...] 
+[V][...] [...] [...]
 [V]
 [V][K]
 [V]Long ago, the island of Kalyxo
@@ -84,7 +84,7 @@ If you defeat Kydrog, the
 [V][L], you must gather the
 [V]Triforce's essences if you
 [V]wish to defeat Kydrog. [K]
-[V]The first will be in the 
+[V]The first will be in the
 [V]Mushroom Grotto to the west.
 [V]Impa has returned to the Hall[K]
 [V]of Secrets, go to her when you
@@ -122,7 +122,7 @@ Well, well, what a surprise!
 [2]How fares your journey?
 [3]Remember, you must seek out[K]
 [V]the Triforce's essences from
-[V]across Kalyxo and the Abyss 
+[V]across Kalyxo and the Abyss
 [V]to thwart Kydrog's plans.[K]
 [V]Impa in the Hall of Secrets
 [V]will guide you when in doubt.
@@ -148,7 +148,7 @@ I've been sent by Princess
 [V]       Not at all[CH2I]
 
 # 26
-Each time you find a new 
+Each time you find a new
 [2]essence, return here and
 [3]explore the hall further.[K]
 [V]If you don't know what to do
@@ -212,25 +212,25 @@ Press [B] to activate the cart.
 [2]Using [UP][DOWN][LEFT][RIGHT] can redirect your
 [3]path at crossroads.
 
-# 35 Impa Telepathic Abyss 
+# 35 Impa Telepathic Abyss
 [W:02][S:03][L], it's Impa.
-[2]I'm speaking to you 
+[2]I'm speaking to you
 [3]telepathically from the[K]
 [V]Hall of Secrets. Farore has
-[V]been taken by Kydrog and 
+[V]been taken by Kydrog and
 [V]I had to flee. I'm safe now[...]
 
-# 36 Impa Telepathic Abyss 
+# 36 Impa Telepathic Abyss
 [W:02][S:03]I sense your despair[...]
 [2]Kydrog has cast you into the
 [3]Eon Abyss, a place where time[K]
-[V]stands still. You must find the 
+[V]stands still. You must find the
 [V]Moon Pearl. It will protect you
 [V]against the dark magic here.[K]
 [V]Without it, you will be unable
 [V]to defend yourself. Once you
 [V]have returned to Kalyxo, seek[K]
-[V]out the Maku Tree once again. 
+[V]out the Maku Tree once again.
 [V]He will know what to do next.
 [V]Good luck, [L][...]
 
@@ -239,11 +239,11 @@ A helpful item for crossing the
 [2]water is hidden in the swamps
 [3]of the Eon Abyss. Get it!
 
-# 38 
+# 38
 Shrine of Origins
 [2]
 [3][K]
-[V]The True Hero will reveal the 
+[V]The True Hero will reveal the
 [V]path forward by pressing the
 [V]R Button on the magical pot.
 
@@ -256,7 +256,7 @@ Shrine of Origins
 I will give 500 Rupees to the
 [2]man who finds the imperial dog
 [3]in the green tights. [LFL][LFR][K]
-[V]     - PIRATE KING KYDROG - 
+[V]     - PIRATE KING KYDROG -
 
 # 47
 Hey there, Mr. Strong Hero.
@@ -272,7 +272,7 @@ You found a small sword and
 # 54
 He gave you the Gold Star!
 [2]Switch to this item with L or R
-[3]when using your hookshot to 
+[3]when using your hookshot to
 [V]summon a spiky ball and chain!
 
 # 55
@@ -297,7 +297,7 @@ You got the Pendant Of Wisdom!
 [V]the Temporal Pyramid
 [V]the Master Sword!
 
-# 
+#
 You found the Book of Secrets!
 [2]You can use it to read the
 [3]ancient language of Kalyxo!
@@ -308,13 +308,13 @@ You found a secret letter!
 [3]so you will need to take it to[K]
 [V]be translated in the village!
 
-# 
+#
 You got the Bunny Hood!
 [2]Press R to take the form of a
 [3]Bunny and run as fast as the[K]
 [V]wind!
 
-# 
+#
 This is the Zora Mask!
 [2]Press the R button to take the
 [3]form of a Zora.[K]
@@ -330,7 +330,7 @@ This is the Deku Mask!
 [V]Press R again to return to your
 [V]normal form.
 
-# 
+#
 She gave you the Ocarina!
 [2]Press [A] in the menu on your
 [3]new instrument to view songs!
@@ -352,11 +352,11 @@ You got the Fishing Rod!
 [2]Cast it into the water and
 [3]wait for your catch!
 
-# 
+#
 Very well, for the low cost of
 [2]100 Rupees, the magical Bunny
 [3]Hood will be all yours.[K]
-[V]With it, you will find yourself 
+[V]With it, you will find yourself
 [V]to be quicker on your feet.
 [V][...][K]
 [V]  What do you say?
@@ -397,19 +397,19 @@ Surprisingly, the Goddesses
 Through this way and you will
 [2]find the place we once called
 [3]home[...][K]
-[V]The Tail Palace is infested with 
+[V]The Tail Palace is infested with
 [V]stalfos pirates and the native
 [V]moldorm are most displeased[...]
 
 # 81
-Oh! Oh!! Oh!!! 
+Oh! Oh!! Oh!!!
 [2]You got it!! You got it!!
 [3]You got it!! You got it!![K]
 [V]Now listen to me. Please play
 [V]this song I am about to perform
 [V]and remember it well[...][K]
 [V]This is a melody that heals evil
-[V]magic and troubled spirits, 
+[V]magic and troubled spirits,
 [V]turning them into masks.
 
 # 83
@@ -431,7 +431,7 @@ You got the Pendant Of Wisdom!
 Uhhh[...]  Watch your step.
 [2]There are so many monsters.
 [3]Could you turn right here?[K]
-[V]Young man, are you perhaps 
+[V]Young man, are you perhaps
 [V]looking for the pendants
 [V]of the Eon Abyss?
 [V]Legend has it that collecting
@@ -444,7 +444,7 @@ Uhhh[...]  Watch your step.
 [V]the one in Hyrule? I wonder[...]
 
 # 9A Old Man Mountain
-Uhh[...]  Once we go out there, 
+Uhh[...]  Once we go out there,
 [2]you will need to warp us back
 [3]to Kalyxo with your mirror.[K]
 [V]But the bridge to my cave
@@ -468,7 +468,7 @@ Uhh[...]  Turn right here[...]   [...]
 I don't know who you are, but
 [2]I was sent to this wicked place
 [3]by the evil witch, Twinrova.[K]
-[V]Will you take me back home?  
+[V]Will you take me back home?
 [V]I lost my lamp[...]
 
 # 9D Old Man Mountain
@@ -522,7 +522,7 @@ The Gold Star will protect you
 [V][...] [...] [...] [...]
 [V][K]
 [V]Oh, I see[...]  Well, I'm rooting for
-[V]you to lift the curse on this 
+[V]you to lift the curse on this
 [V]island and save us all!
 
 # A3
@@ -562,8 +562,8 @@ Do come in!
 [V]   Nevermind[CH3]
 
 # AA
-There are many magical rings 
-[2]in this land, but just finding 
+There are many magical rings
+[2]in this land, but just finding
 [3]one does grant its powers.[K]
 [V]Until a ring has been appraised
 [V]and its power understood, it
@@ -573,7 +573,7 @@ There are many magical rings
 [V]in your Ring Box. ([X] in Menu)[K]
 [V]And remember to wear the
 [V]ring you will use. That is all.
-[V]That is all. 
+[V]That is all.
 
 # AB
 I'll appraise it for free this
@@ -585,7 +585,7 @@ I'll appraise it for free this
 
 # AC
 Check your Ring Box to see
-[2]the ring, and come back later 
+[2]the ring, and come back later
 [3]for more appraisals!
 
 # AD
@@ -601,7 +601,7 @@ I'm afraid you have no rings
 [V]grapple far away surfaces and
 [V]be pulled towards the target.[K]
 [V]
-[V] TEST SUBJECTS BEWARE! 
+[V] TEST SUBJECTS BEWARE!
 [V] High likelihood of bone injury.
 
 # B8
@@ -619,7 +619,7 @@ I'm afraid you have no rings
 [W:02][C:06]    [HY0][HY1][HY2] ZORA TEMPLE [HY1][HY2][HY0]
 [2] [HY0][HY1][HY2] EXPERIMENT NO. 1991 [HY1][HY0][HY2]
 [3][K]
-[V]Advanced Arrghus - Enable a 
+[V]Advanced Arrghus - Enable a
 [V]more robust defense strategy,
 [V]equipping Arrghus with lasers.[K]
 [V]
@@ -639,7 +639,7 @@ I'm afraid you have no rings
 [2] [HY0][HY1][HY2] EXPERIMENT NO. 2001 [HY1][HY0][HY2]
 [3][K]
 [V]Eon Abyss Rift - Proven to be
-[V]a parallel reality with the 
+[V]a parallel reality with the
 [V]Sacred Realm. Access to [K]
 [V]artifacts such as the Triforce
 [V]and Master Sword confirmed.
@@ -677,7 +677,7 @@ Hello, young hero. I am the
 If my lost partner returns
 [2]from the mining operation
 [3]we can temper your sword, [K]
-[V]but now, I can't do anything 
+[V]but now, I can't do anything
 [V]for you.
 
 # E5 Happy Mask Salesman
@@ -845,7 +845,7 @@ Hah!  Thank you.  To tell you
 [V]You can't get in with a
 [V]standard bomb, they say[...]
 
-# 108 Zora Baby 
+# 108 Zora Baby
 Please, hurry[...]
 [2]The Zora Princess is trapped[...]
 
@@ -870,7 +870,7 @@ All right, I'll follow you!
 
 # 10E Ranch Girl
 It seems your magic powder
-[2]only helps for so long, as I 
+[2]only helps for so long, as I
 [3]reverted back to a Cucoo.[K]
 [V]I think that only defeating
 [V]the evil on the island will
@@ -962,7 +962,7 @@ Hey [L], did you come from
 
 # 132
 [S:02][P:01][W:02][L], because of you, I am
-[2]finally freed from Kydrog's 
+[2]finally freed from Kydrog's
 [3]evil forces. Thank you![K]
 [V][...]This island, Kalyxo, was the
 [V]hidden sanctuary of the seven
@@ -988,7 +988,7 @@ Hey [L], did you come from
 
 # 133
 [S:02][P:01][W:02][L], because of you, I am
-[2]finally freed from Kydrog's 
+[2]finally freed from Kydrog's
 [3]evil forces. Thank you![K]
 [V]It's said Tail Palace was once a
 [V]place of great rituals, where
@@ -1015,7 +1015,7 @@ Hey [L], did you come from
 
 # 134
 [S:02][P:01][W:02][L], because of you, I am
-[2]finally freed from Kydrog's 
+[2]finally freed from Kydrog's
 [3]evil forces. Thank you![K]
 [V][...]Do you know what happened
 [V]to the Kingdom of Kalyxo?
@@ -1048,8 +1048,8 @@ Hey [L], did you come from
 [V]technologies. The Ocarina you
 [V]wield, and even the Hookshot,
 [V]are tools of our invention,[K]
-[V]With these tools, we navigated 
-[V]through spacetime effortlessly. 
+[V]With these tools, we navigated
+[V]through spacetime effortlessly.
 [V]The Zora Mask and your aid to[K]
 [V]our princess, speaks of a bond
 [V]between you and our kind[...]
@@ -1073,14 +1073,14 @@ Hey [L], did you come from
 [V]Her failed attempts to revive
 [V]Ganon lead her to join forces
 [V]with Kydrog. Farore was wise[K]
-[V]in hiding out here, but the 
+[V]in hiding out here, but the
 [V]arrival of the Hylian forces
 [V]drew attention to her presence[K]
 [V]on the island[...]
 
 # 137
 [S:02][P:01][W:02][L], because of you, I am
-[2]finally freed from Kydrog's 
+[2]finally freed from Kydrog's
 [3]evil forces. Thank you![K]
 [V]These mines were once thriving
 [V]with Goron, but the instability
@@ -1098,8 +1098,8 @@ Hey [L], did you come from
 [V]I have felt this from the first
 [V]time we met.
 [V][...]  [...]  [...][K]
-[V]However, Kydrog's undead form 
-[V]allows him to cheat death. 
+[V]However, Kydrog's undead form
+[V]allows him to cheat death.
 [V]Surely now his spirit has fled[K]
 [V]to the Eon Abyss with
 [V]knowledge of the resting place
@@ -1107,7 +1107,7 @@ Hey [L], did you come from
 [V]To defeat Kydrog, once and for
 [V]all, you must obtain the Master
 [V]Sword from the Eon Abyss and[K]
-[V]then you will find him in the 
+[V]then you will find him in the
 [V]Fortress of Secrets[...]
 [V][...]  [...]  [...][SFX:2D]
 
@@ -1115,12 +1115,12 @@ Hey [L], did you come from
 [S:02][P:01][W:02]Go forth and don't forget to
 [2]have courage, [L]!
 
-# 13C Maku Tree Dream 
+# 13C Maku Tree Dream
 Ah, [L]!
 [2]It appears you've collected a
 [3]new essence of the Triforce.[K]
 [V]With this sacred magic, you
-[V]will be able to enter the 
+[V]will be able to enter the
 [V]Realm of the Dreamer.[K]
 [V]Are you ready?
 [V]    > I'm the dreamer!
@@ -1131,10 +1131,10 @@ Looking for someone?
 
 # 140 Deku Scrub NPC for Deku Mask
 Oh, [L]... I'm afraid that
-[2]my roots have grown weak. The 
+[2]my roots have grown weak. The
 [3]island no longer fills me with[K]
-[V]the joy it once did. I feel as 
-[V]though I'm wilting, drying up in 
+[V]the joy it once did. I feel as
+[V]though I'm wilting, drying up in
 [V]the sunlight...
 
 # 141
@@ -1154,10 +1154,10 @@ Oh... what is this?
 [V]even in despair, hope grows.
 
 # 142
-Chomp chomp chomp... 
-[2]We have...Magic Beans! 
+Chomp chomp chomp...
+[2]We have...Magic Beans!
 [3]Do you want them...huh? Huh?[K]
-[V]100 Rupees for one piece! 
+[V]100 Rupees for one piece!
 [V]    >  I'll take it!
 [V]        Sounds like a scam.[CH2I]
 
@@ -1172,19 +1172,19 @@ Welcome, young one, to this
 [V]Kydrog, you will need to return
 [V]to the Eon Abyss for strength[...][K]
 [V]There is a rift, found by my
-[V]ancestors in the mountains. I 
+[V]ancestors in the mountains. I
 [V]will mark the spot on your map.[SFX:2D]
 
 # 144
-You'll regret it if you don't 
-[2]buy them now! This could be 
+You'll regret it if you don't
+[2]buy them now! This could be
 [3]your last chance![K]
 [V]Come back when you want some
 [V][...]Magic Beans!
 
 # 145
 Well...chomp, chomp...
-[2]Here ya go! They sprout leaves 
+[2]Here ya go! They sprout leaves
 [3]as soon as you water them.[K]
 [V]That they do, they do. Mmm,
 [V]You'll need to find soft soil,
@@ -1208,7 +1208,7 @@ Hoo hoot! [L]...
 [V]       Yes, totally![CH2I]
 
 # 147
-My sister has been acting 
+My sister has been acting
 [2]strange lately[...]
 [3][K]
 [V]She used to be outside tending
@@ -1272,7 +1272,7 @@ What do you want?!
 [V]So back off! Go away!
 
 # 16F Dark Link
-The dark lord Kydrog reigns 
+The dark lord Kydrog reigns
 [2]supreme, moreso than Ganon
 [3]ever could.[K]
 [V]Soon, he will have the Triforce
@@ -1294,7 +1294,7 @@ You are doing well, lad.  But
 Ah, an agent of the empire!
 [2]You're not here to collect any
 [3]taxes, are you?[K]
-[V]Well, if you're curious about 
+[V]Well, if you're curious about
 [V]how to navigate Kalyxo, there
 [V]are some old texts in the [K]
 [V]basement that may be useful.
@@ -1317,7 +1317,7 @@ Cluck cluck[...]  What?!
 [2]I'm finally back to normal!
 [3]Thank you so much![K]
 [V]An evil witch came asking about
-[V]'essences' and then used her 
+[V]'essences' and then used her
 [V]magic to transform me into a[K]
 [V]Cucoo when I didn't have any
 [V]answers for her[...]
@@ -1336,7 +1336,7 @@ Hi, [L].  Sorry about my
 [V]I'm glad to have company to
 [V]talk to.  I will tell you an
 [V]interesting story.[K]
-[V]There is a swamp to the east, 
+[V]There is a swamp to the east,
 [V]not far from the village with
 [V]an ancient temple.[K]
 [V]Story goes the treasure turns
