@@ -359,12 +359,12 @@ SpritePrep_Floater:
 Sprite_Floater:
 {
   ; Floater Draw, allocate 4 tiles to use for the hud
-  LDA SprMiscG, X : BEQ +
+  LDA.w SprMiscG, X : BEQ +
     JSL Sprite_DrawWaterRipple
   +
   JSR Sprite_Floater_Draw
 
-  LDA SprMiscG, X : BNE +
+  LDA.w SprMiscG, X : BNE +
     JSL Sprite_DrawShadow
   +
 

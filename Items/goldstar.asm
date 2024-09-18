@@ -52,7 +52,7 @@ pullpc
 
 HookMaskCheck:
 {
-  LDA GoldstarOrHookshot : AND.w #$00FF :  CMP.w #$0002 : BNE .not_mask
+  LDA.w GoldstarOrHookshot : AND.w #$00FF :  CMP.w #$0002 : BNE .not_mask
     LDA $0202 : AND.w #$00FF : CMP.w #$0003 : BNE .not_mask
         ; morning star graphics oam tile pattern id 
       LDA.w $0109 : AND #$FF00 : ORA.w #$004A
@@ -88,7 +88,7 @@ pullpc
 ; $22D4C0 - Hooked into AncillaDraw_Hookshot @ _08BF2D
 BallChain_DrawOrReturn:
 {
-  LDA GoldstarOrHookshot : CMP #$02 : BEQ + 
+  LDA.w GoldstarOrHookshot : CMP #$02 : BEQ + 
     LDA #$00 : STA ($92),Y
     RTL
   + ; $22D4CD
@@ -107,7 +107,7 @@ pullpc
 BallChain_ExtraCollisionLogic:
 {
   TAX
-  LDA GoldstarOrHookshot : CMP #$02 : BNE + ; Check if using goldstar 
+  LDA.w GoldstarOrHookshot : CMP #$02 : BNE + ; Check if using goldstar 
     TXA : CMP #$0A : BNE ++
       LDA #$FF : BRA ++
   +  ; $22D4F2
@@ -236,7 +236,7 @@ pullpc
 ; Sets Link state to 0x00 and resets the hookshot timer
 BallChain_ResetTimer:
 {
-  LDA GoldstarOrHookshot : CMP #$02 : BNE .dont_clear_timer
+  LDA.w GoldstarOrHookshot : CMP #$02 : BNE .dont_clear_timer
     STZ $7A ; Clear the timer
   .dont_clear_timer
   STZ $5D ; Return to LinkState_Default
@@ -257,7 +257,7 @@ pullpc
 ; Natively NOPs out the bytes 08BFDA - 08BFEA
 BallChain_DrawChainOrHookshot:
 {
-  LDA GoldstarOrHookshot : CMP #$02 : BEQ +
+  LDA.w GoldstarOrHookshot : CMP #$02 : BEQ +
     LDA #$19 : STA ($90),Y
     JSR BallChainOrHookshot_Modifier ; $D820
     ORA.b #$02
@@ -295,7 +295,7 @@ pullpc
 ; $22D850 - Modify the palette
 Goldstar_SetChainProperties:
 {
-  LDA GoldstarOrHookshot : CMP #$02 : BEQ .ball_chain
+  LDA.w GoldstarOrHookshot : CMP #$02 : BEQ .ball_chain
     LDA HookshotSpriteData.prop, X
     ORA.b #$02 : ORA.b $65
     RTL
@@ -951,7 +951,7 @@ Hookshot_Init:
 
 BeginGoldstarOrHookshot:
 {
-  LDA GoldstarOrHookshot : CMP #$02 : BEQ .begin_goldstar
+  LDA.w GoldstarOrHookshot : CMP #$02 : BEQ .begin_goldstar
     JMP .begin_hookshot
 
   .begin_goldstar:
@@ -987,9 +987,9 @@ ApplyGoldstarDamageClass:
 {
   PHA
   ; If the hookshot is active
-  LDA $0202 : CMP.b #$03 : BNE .return
+  LDA.w $0202 : CMP.b #$03 : BNE .return
     ; If the goldstar is active, swap in the damage class
-    LDA GoldstarOrHookshot : CMP #$02 : BNE .return
+    LDA.w GoldstarOrHookshot : CMP.b #$02 : BNE .return
       PLA
       LDA #$02
       JMP .apply
@@ -1005,11 +1005,11 @@ ApplyGoldstarDamageClass:
 CheckForSwitchToGoldstar:
 {
   %CheckNewR_ButtonPress() : BEQ .continue
-    LDA GoldstarOrHookshot : CMP #$01 : BEQ .set_hookshot
-      LDA #$01 : STA GoldstarOrHookshot 
+    LDA.w GoldstarOrHookshot : CMP.b #$01 : BEQ .set_hookshot
+      LDA.b #$01 : STA.w GoldstarOrHookshot 
       JMP .continue
     .set_hookshot:
-    LDA #$02 : STA GoldstarOrHookshot
+    LDA.b #$02 : STA.w GoldstarOrHookshot
   .continue:
   LDA.b $3A : AND.b #$40 ; Restore vanilla code
   RTL

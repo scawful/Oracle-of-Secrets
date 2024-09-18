@@ -353,7 +353,7 @@ Link_TransformMoosh:
 ; This is used to change the animation during 0x0A (Using Quake Medallion)
 DekuLink_SpinOrRecoil:
 {
-  LDA DekuFloating : BEQ .spin
+  LDA.w DekuFloating : BEQ .spin
     LDA.w !CurrentMask : CMP.b #$07 : BNE +
       LDY.b #$1C
       JML $0DA435 ; JML $0DA40B
@@ -423,25 +423,25 @@ HandleMovement:
     LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
     LDA #$02 : STA $031C
     LDA #$05 : STA $3D
-    LDA #$02 : STA LinkFaceDir
+    LDA #$02 : STA.w LinkFaceDir
     
   .not_down
   LDA $F0 : AND #$02 : BEQ .not_left
     LDY #$02
     LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
-    LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
+    LDA.w .drag_x_high, Y : ADC.w DragYH : STA.w DragYH
     LDA #$03 : STA $031C
     LDA #$05 : STA $3D
-    LDA #$04 : STA LinkFaceDir
+    LDA #$04 : STA.w LinkFaceDir
     
   .not_left
   LDA $F0 : AND #$01 : BEQ .not_right
     LDY #$03
     LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
-    LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
+    LDA.w .drag_x_high, Y : ADC.w DragYH : STA.w DragYH
     LDA #$04 : STA $031C
     LDA #$05 : STA $3D
-    LDA #$06 : STA LinkFaceDir
+    LDA #$06 : STA.w LinkFaceDir
     
   .not_right
   RTS
@@ -482,8 +482,8 @@ DekuLink_HoverBasedOnInput:
   JSL Link_CancelDash
   
   ; Pos - Cache Pos = difference
-  LDA LinkX : SEC : SBC $3F : STA $31
-  LDA LinkY : SEC : SBC $3E : STA $30
+  LDA.w LinkX : SEC : SBC $3F : STA $31
+  LDA.w LinkY : SEC : SBC $3E : STA $30
 
   LDA $5C : AND #$1F : BNE .continue_me
     DEC $24
@@ -491,7 +491,7 @@ DekuLink_HoverBasedOnInput:
   
   LDA $5C : BEQ .auto_cancel
 
-  LDA DekuFloating : BEQ .no_bomb_drop
+  LDA.w DekuFloating : BEQ .no_bomb_drop
     LDA $F0 : AND #%01000000 : BEQ .no_bomb_drop
       LDY.b #$01 : LDA.b #$07 ; ANCILLA 07
       JSL $09811F ; AncillaAdd_Bomb

@@ -234,7 +234,7 @@ Menu_DrawItemName:
         RTS
 
       .goldstar
-      LDA GoldstarOrHookshot : CMP.b #$02 : BNE .draw_item
+      LDA.w GoldstarOrHookshot : CMP.b #$02 : BNE .draw_item
         JSR DrawGoldstarName
         RTS
 

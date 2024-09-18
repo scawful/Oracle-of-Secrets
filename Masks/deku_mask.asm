@@ -127,9 +127,9 @@ LinkState_UsingQuake:
       ; -------------------------------------------------
       ; Prevent repeat spellcast set
       LDA.b #$01 : STA.w $0324
-      LDA.b #$12 : STA LinkZ
-      LDA.b #$FF : STA FallTimer
-      LDA.b #$01 : STA DekuFloating
+      LDA.b #$12 : STA.w LinkZ
+      LDA.b #$FF : STA.w FallTimer
+      LDA.b #$01 : STA.w DekuFloating
       ; -------------------------------------------------
 
   .exit

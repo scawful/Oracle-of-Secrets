@@ -498,7 +498,7 @@ org $00FC6A
 ;$0B/FEBE 8F 40 C5 7E STA $7EC540
 ;$0B/FEC2 8F 40 C3 7E STA $7EC340
 
-if ZS_CUSTOM_OW_V2 = 0
+if ZS_CUSTOM_OW_V2 == 0
 ; Custom BG Color Mosaic Background Color fix
 org $028464
   NOP #6
@@ -517,7 +517,7 @@ org $02AE92
 ; org $0BFEB6 VANILLA DAY/NIGHT HOOK
 
 ; ZS OW - ReplaceBGColor
-if ZS_CUSTOM_OW_V2 = 0
+if ZS_CUSTOM_OW_V2 == 0
 org $2886B4 
   STA !pal_color
   JSL BackgroundFix
@@ -525,7 +525,7 @@ org $2886B4
 endif
 
 ; ZS OW - CheckForChangeGraphicsTransitionLoad
-if ZS_CUSTOM_OW_V2 = 1
+if ZS_CUSTOM_OW_V2 == 1
 org $289447
 	JSL SubAreasFix
 else
