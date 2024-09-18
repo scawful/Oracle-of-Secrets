@@ -88,7 +88,7 @@ print  "End of custom_gfx.asm             ", pc
 ; ZSCustomOverworld version
 ; Kept in case of serious issues which impedes progress
 ZS_CUSTOM_OW_V2 = 1
-if ZS_CUSTOM_OW_V2 = 1
+if ZS_CUSTOM_OW_V2 == 1
   incsrc "Overworld/ZCustomOverworld2.asm"
   print  "End of ZCustomOverworld2.asm      ", pc
 else
