@@ -86,19 +86,19 @@ Sprite_Manhandla_Prep:
 Sprite_Manhandla_CheckForNextPhaseOrDeath:
 {
   ; All three heads need to be dead before we become big chuchu
-  LDA Offspring1_Id : TAY
+  LDA.w Offspring1_Id : TAY
   LDA.w SprState, Y : BEQ .offspring1_dead
     JMP .not_dead
   .offspring1_dead
   LDA.b #$05 : STA.w $36
 
-  LDA Offspring2_Id : TAY
+  LDA.w Offspring2_Id : TAY
   LDA.w SprState, Y : BEQ .offspring2_dead
     JMP .not_dead
   .offspring2_dead
   LDA.b #$06 : STA.w $36
 
-  LDA Offspring3_Id : TAY
+  LDA.w Offspring3_Id : TAY
   LDA.w SprState, Y : BEQ .offspring3_dead
     JMP .not_dead
   .offspring3_dead
@@ -131,36 +131,36 @@ Sprite_Manhandla_CheckForNextPhaseOrDeath:
 
 macro SetLeftHeadPos()
     REP #$20
-    LDA SprCachedX : SEC : SBC.w #$0016
+    LDA.w SprCachedX : SEC : SBC.w #$0016
     SEP #$20
     STA.w SprX, Y : XBA : STA.w SprXH, Y
 
     REP #$20
-    LDA SprCachedY : SEC : SBC.w #$000F
+    LDA.w SprCachedY : SEC : SBC.w #$000F
     SEP #$20
     STA.w SprY, Y : XBA : STA.w SprYH, Y
 endmacro 
 
 macro SetRightHeadPos()
     REP #$20
-    LDA SprCachedX : CLC : ADC.w #$0016
+    LDA.w SprCachedX : CLC : ADC.w #$0016
     SEP #$20
     STA.w SprX, Y : XBA : STA.w SprXH, Y
 
     REP #$20
-    LDA SprCachedY : SEC : SBC.w #$000F
+    LDA.w SprCachedY : SEC : SBC.w #$000F
     SEP #$20
     STA.w SprY, Y : XBA : STA.w SprYH, Y
 endmacro
 
 macro SetCenterHeadPos() 
     REP #$20
-    LDA SprCachedX
+    LDA.w SprCachedX
     SEP #$20
     STA.w SprX, Y : XBA : STA.w SprXH, Y
 
     REP #$20
-    LDA SprCachedY 
+    LDA.w SprCachedY 
     SEP #$20
     STA.w SprY, Y : XBA : STA.w SprYH, Y
 endmacro
@@ -277,11 +277,11 @@ Sprite_Manhandla_Main:
     %PlayAnimation(11, 12, 10)
     LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
     ; Flicker the body every other frame using the timer 
-    LDA SprTimerA, X : AND.b #$01 : BEQ .flicker
+    LDA.w SprTimerA, X : AND.b #$01 : BEQ .flicker
       LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
     .flicker
 
-    LDA SprTimerA, X : BNE .continue
+    LDA.w SprTimerA, X : BNE .continue
       STZ.w $0422
       STZ.w $0424
       LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
@@ -292,7 +292,7 @@ Sprite_Manhandla_Main:
       
       LDA #$88
       JSL Sprite_SpawnDynamically : BMI .return
-        TYA : STA Offspring3_Id
+        TYA : STA.w Offspring3_Id
 
         PHX
         %SetCenterHeadPos()
@@ -423,7 +423,7 @@ Sprite_Manhandla_Move:
     STZ.w SprYSpeed : STZ.w SprXSpeed ;set velocitys to 0
     JSL MoveBody
     JSR Manhandla_StopIfOutOfBounds
-    LDA SprTimerA, X : BNE .continue
+    LDA.w SprTimerA, X : BNE .continue
       INC.w SprMiscC, X
     .continue
     RTS
@@ -457,7 +457,7 @@ Sprite_Manhandla_Move:
     REP #$20
 
     ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
-    LDA $20 : SBC SprCachedY : CMP.w #$FFFB : BCC .notEqualY
+    LDA $20 : SBC.w SprCachedY : CMP.w #$FFFB : BCC .notEqualY
       SEP #$20
       LDA.b #$02 : STA.w SprMiscC, X
       
@@ -465,7 +465,7 @@ Sprite_Manhandla_Move:
     .notEqualY
 
     ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
-    LDA $22 : SBC SprCachedX : CMP.w #$FFFB : BCC .notEqualX
+    LDA $22 : SBC.w SprCachedX : CMP.w #$FFFB : BCC .notEqualX
       SEP #$20
       LDA.b #$02 : STA.w SprMiscC, X
     .notEqualX
@@ -490,7 +490,7 @@ Manhandla_StopIfOutOfBounds:
 {
   ; Set A to 00 if outside of certain bounds
   REP #$20
-  LDA SprCachedX : CMP.w #$153A : BCS .not_out_of_bounds_Left
+  LDA.w SprCachedX : CMP.w #$153A : BCS .not_out_of_bounds_Left
     SEP #$20
     LDA.w SprXSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Left
       LDA.b #-08 : STA.w SprXSpeed : STA.w SprXRound
@@ -499,7 +499,7 @@ Manhandla_StopIfOutOfBounds:
   SEP #$20
 
   REP #$20
-  LDA SprCachedX : CMP.w #$15C8 : BCC .not_out_of_bounds_Right
+  LDA.w SprCachedX : CMP.w #$15C8 : BCC .not_out_of_bounds_Right
     SEP #$20
     LDA.w SprXSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Right
       LDA.b #$08 : STA.w SprXSpeed : STA.w SprXRound
@@ -509,7 +509,7 @@ Manhandla_StopIfOutOfBounds:
 
   ; Upper bound
   REP #$20
-  LDA SprCachedY : CMP.w #$0B3A : BCS .not_out_of_bounds_Up
+  LDA.w SprCachedY : CMP.w #$0B3A : BCS .not_out_of_bounds_Up
     SEP #$20
     LDA.w SprYSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Up
       LDA.b #$08 : STA.w SprYSpeed : STA.w SprYRound
@@ -518,7 +518,7 @@ Manhandla_StopIfOutOfBounds:
   SEP #$20
 
   REP   #$20
-  LDA   SprCachedY : CMP.w #$0BA6 : BCC .not_out_of_bounds_Down
+  LDA.w SprCachedY : CMP.w #$0BA6 : BCC .not_out_of_bounds_Down
     SEP #$20
     LDA.w SprYSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Down
         LDA.b #-08 : STA.w SprYSpeed : STA.w SprYRound ; Reverse the direction
@@ -854,7 +854,7 @@ SpawnLeftManhandlaHead:
 {
   LDA #$88
   JSL   Sprite_SpawnDynamically : BMI .return
-    TYA   : STA Offspring1_Id
+    TYA   : STA.w Offspring1_Id
 
     PHX
     %SetLeftHeadPos()
@@ -878,7 +878,7 @@ SpawnRightManhandlaHead:
 {
   LDA #$88
   JSL Sprite_SpawnDynamically : BMI .return
-    TYA : STA Offspring2_Id
+    TYA : STA.w Offspring2_Id
 
     PHX
     %SetRightHeadPos()
@@ -901,7 +901,7 @@ SpawnCenterMandhandlaHead:
 {
   LDA #$88
   JSL Sprite_SpawnDynamically : BMI .return
-    TYA : STA Offspring3_Id
+    TYA : STA.w Offspring3_Id
 
     PHX
     %SetCenterHeadPos()

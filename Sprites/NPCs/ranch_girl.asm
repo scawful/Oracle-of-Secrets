@@ -27,7 +27,7 @@ RanchGirl_Message:
 
 RanchGirl_TeachSong: 
 {
-  LDA SprMiscD, X : CMP.b #$01 : BNE .not_started
+  LDA.w SprMiscD, X : CMP.b #$01 : BNE .not_started
   LDA $10 : CMP.b #$0E : BEQ .running_dialog
   LDA $7EF34C : CMP.b #$01 : BCS .has_song
 

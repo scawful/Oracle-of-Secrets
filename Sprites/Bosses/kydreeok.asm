@@ -64,8 +64,8 @@ Sprite_Kydreeok_Prep:
   LDA.b #$09 : STA.w SprBump,   X ; bump damage type
 
   ; Cache the origin position of the sprite.
-  LDA SprX, X : STA.w SprMiscA, X 
-  LDA SprY, X : STA.w SprMiscB, X
+  LDA.w SprX, X : STA.w SprMiscA, X 
+  LDA.w SprY, X : STA.w SprMiscB, X
 
   JSR SpawnLeftHead 
   ; JSR SpawnCenterHead
@@ -86,12 +86,12 @@ Sprite_Kydreeok_Prep:
 
 Sprite_Kydreeok_CheckIfDead:
 {
-  LDA Offspring1_Id : TAY
+  LDA.w Offspring1_Id : TAY
   LDA.w SprState, Y : BEQ .offspring1_dead
     JMP .not_dead
   .offspring1_dead
 
-  LDA Offspring2_Id : TAY
+  LDA.w Offspring2_Id : TAY
   LDA.w SprState, Y : BEQ .offspring2_dead
     JMP .not_dead
   .offspring2_dead
@@ -149,7 +149,7 @@ Sprite_Kydreeok_Main:
     %StartOnFrame(0)
     %PlayAnimation(0, 2, 10)
 
-    LDA SprMiscD, X : BNE .go
+    LDA.w SprMiscD, X : BNE .go
       LDY #$00
       JSR ApplyKydreeokGraphics
       JSR ApplyPalette
@@ -158,8 +158,8 @@ Sprite_Kydreeok_Main:
 
     JSL Sprite_PlayerCantPassThrough
 
-    LDA SprTimerA,            X : BNE .continue
-      TXA : STA Kydreeok_Id
+    LDA.w SprTimerA,            X : BNE .continue
+      TXA : STA.w Kydreeok_Id
       LDA #$40 : STA.w SprTimerA, X
       %GotoAction(1)
     .continue
@@ -178,7 +178,7 @@ Sprite_Kydreeok_Main:
     JSL MoveBody
     JSR StopIfOutOfBounds
 
-    LDA SprTimerA, X : BNE .continue
+    LDA.w SprTimerA, X : BNE .continue
       %GotoAction(2)
     .continue
 
@@ -241,14 +241,14 @@ Sprite_Kydreeok_Main:
     REP #$20
 
     ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
-    LDA $20 : SBC SprCachedY : CMP.w #$FFFB : BCC .notEqualY
+    LDA $20 : SBC.w SprCachedY : CMP.w #$FFFB : BCC .notEqualY
       SEP #$20
       %GotoAction(2) ; Kydreeok_MoveXandY
       BRA .notEqualX
     .notEqualY
 
     ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
-    LDA $22 : SBC SprCachedX : CMP.w #$FFFB : BCC .notEqualX
+    LDA $22 : SBC.w SprCachedX : CMP.w #$FFFB : BCC .notEqualX
       SEP #$20
       %GotoAction(2) ; Kydreeok_MoveXandY
     .notEqualX
@@ -277,7 +277,7 @@ Sprite_Kydreeok_Main:
     
     LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
     ; Flicker the body every other frame using the timer 
-    LDA SprTimerA, X : AND.b #$01 : BEQ .flicker
+    LDA.w SprTimerA, X : AND.b #$01 : BEQ .flicker
       LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
     .flicker
 
@@ -303,7 +303,7 @@ Sprite_Kydreeok_Main:
       
     .no_space
 
-    LDA SprTimerA, X : BNE .continue
+    LDA.w SprTimerA, X : BNE .continue
       STZ.w $0422
       STZ.w $0424
       LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
@@ -369,19 +369,19 @@ SpawnLeftHead:
   LDA #$CF
 
   JSL   Sprite_SpawnDynamically : BMI .return
-    TYA   : STA Offspring1_Id
+    TYA   : STA.w Offspring1_Id
     ;store the sub-type
     LDA.b #$00 : STA $0E30, Y
         
     PHX
     ; code that controls where to spawn the offspring.
     REP #$20
-    LDA SprCachedX : SEC : SBC.w #$0010
+    LDA.w SprCachedX : SEC : SBC.w #$0010
     SEP #$20
     STA.w SprX, Y : XBA : STA.w SprXH, Y
 
     REP #$20
-    LDA SprCachedY : SEC : SBC.w #$000F
+    LDA.w SprCachedY : SEC : SBC.w #$000F
     SEP #$20
     STA.w SprY, Y : XBA : STA.w SprYH, Y
 
@@ -407,7 +407,7 @@ SpawnLeftHead:
 ;   LDA #$CF
 
 ;   JSL Sprite_SpawnDynamically : BMI .return
-;     TYA : STA Offspring3_Id
+;     TYA : STA.w Offspring3_Id
 
 ;     ;store the sub-type
 ;     LDA.b #$02 : STA $0E30, Y
@@ -415,12 +415,12 @@ SpawnLeftHead:
 ;     PHX
 ;     ; code that controls where to spawn the offspring.
 ;     REP #$20
-;     LDA SprCachedX : CLC : ADC.w #$0004
+;     LDA.w SprCachedX : CLC : ADC.w #$0004
 ;     SEP #$20
 ;     STA.w SprX, Y : XBA : STA.w SprXH, Y
 
 ;     REP #$20
-;     LDA SprCachedY : SEC : SBC.w #$000F
+;     LDA.w SprCachedY : SEC : SBC.w #$000F
 ;     SEP #$20
 ;     STA.w SprY, Y : XBA : STA.w SprYH, Y
 
@@ -445,19 +445,19 @@ SpawnRightHead:
 {
   LDA #$CF
   JSL Sprite_SpawnDynamically : BMI .return
-    TYA : STA Offspring2_Id
+    TYA : STA.w Offspring2_Id
 
     ;store the sub-type
     LDA.b #$01 : STA $0E30, Y
     PHX
     ; code that controls where to spawn the offspring.
     REP #$20
-    LDA SprCachedX : CLC : ADC.w #$000D
+    LDA.w SprCachedX : CLC : ADC.w #$000D
     SEP #$20
     STA.w SprX, Y : XBA : STA.w SprXH, Y
 
     REP #$20
-    LDA SprCachedY : SEC : SBC.w #$000F
+    LDA.w SprCachedY : SEC : SBC.w #$000F
     SEP #$20
     STA.w SprY, Y : XBA : STA.w SprYH, Y
 
@@ -540,7 +540,7 @@ StopIfOutOfBounds:
 {
   ; Set A to 00 if outside of certain bounds
   REP #$20
-  LDA SprCachedX : CMP.w #$0118 : BCS .not_out_of_bounds_Left
+  LDA.w SprCachedX : CMP.w #$0118 : BCS .not_out_of_bounds_Left
     SEP #$20
     LDA.w SprXSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Left
       LDA.b #-10 : STA.w SprXSpeed : STA.w SprXRound
@@ -556,7 +556,7 @@ StopIfOutOfBounds:
   SEP #$20
 
   REP #$20
-  LDA SprCachedX : CMP.w #$01D8 : BCC .not_out_of_bounds_Right
+  LDA.w SprCachedX : CMP.w #$01D8 : BCC .not_out_of_bounds_Right
     SEP #$20
     LDA.w SprXSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Right
       LDA.b #$00 : STA.w SprXSpeed : STA.w SprXRound
@@ -573,7 +573,7 @@ StopIfOutOfBounds:
 
   ; Upper bound
   REP #$20
-  LDA SprCachedY : CMP.w #$0020 : BCS .not_out_of_bounds_Up
+  LDA.w SprCachedY : CMP.w #$0020 : BCS .not_out_of_bounds_Up
     SEP #$20
     LDA.w SprYSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Up
       LDA.b #$00 : STA.w SprYSpeed : STA.w SprYRound
@@ -585,7 +585,7 @@ StopIfOutOfBounds:
   SEP #$20
 
   REP   #$20
-  LDA   SprCachedY : CMP.w #$00D0 : BCC .not_out_of_bounds_Down
+  LDA.w SprCachedY : CMP.w #$00D0 : BCC .not_out_of_bounds_Down
     SEP #$20
     LDA.w SprYSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Down
         LDA.b #-10 : STA.w SprYSpeed : STA.w SprYRound ; Reverse the direction

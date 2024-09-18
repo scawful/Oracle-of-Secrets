@@ -56,7 +56,7 @@ Sprite_RotatingTrack_Prep:
   PHB : PHK : PLB
 
   LDA.b #$80 : STA $0CAA, X
-  LDA SprSubtype, X : STA.w SprAction,X
+  LDA.w SprSubtype, X : STA.w SprAction,X
    
   PLB
   RTL
@@ -87,7 +87,7 @@ Sprite_RotatingTrack_Main:
   ; 00 = TopLeft -> TopRight
   TopLeftToTopRight:
   {
-    LDA SwitchRam : BNE part2
+    LDA.w SwitchRam : BNE part2
       %PlayAnimation(0,0,4)
     part2:
     %PlayAnimation(1,1,4)
@@ -98,7 +98,7 @@ Sprite_RotatingTrack_Main:
   ; 01 = TopRight -> BottomRight
   TopRightToBottomRight:
   {
-    LDA SwitchRam : BNE part2_a
+    LDA.w SwitchRam : BNE part2_a
       %PlayAnimation(1,1,4)
     part2_a:
     %PlayAnimation(2,2,4)
@@ -109,7 +109,7 @@ Sprite_RotatingTrack_Main:
   ; 02 = BottomRight -> BottomLeft
   BottomRightToBottomLeft:
   {
-    LDA SwitchRam : BNE part2_b
+    LDA.w SwitchRam : BNE part2_b
       %PlayAnimation(2,2,4)
     part2_b:
     %PlayAnimation(3,3,4)
@@ -120,7 +120,7 @@ Sprite_RotatingTrack_Main:
   ; 03 = BottomLeft -> TopLeft
   BottomLeftToTopLeft:
   {
-    LDA SwitchRam : BNE part2_c
+    LDA.w SwitchRam : BNE part2_c
       %PlayAnimation(3,3,4)
     part2_c:
     %PlayAnimation(0,0,4)
@@ -131,7 +131,7 @@ Sprite_RotatingTrack_Main:
   ; 04 = TopRight -> TopLeft
   TopRightToTopLeft:
   {
-    LDA SwitchRam : BNE part2_d
+    LDA.w SwitchRam : BNE part2_d
       %StartOnFrame(1)
       %PlayAnimation(1,1,4)
     part2_d:

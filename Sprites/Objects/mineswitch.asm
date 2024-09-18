@@ -56,7 +56,7 @@ Sprite_LeverSwitch_Prep:
   PHB : PHK : PLB
    
   LDA.b #$00 : STA.w SprDefl, X
-  LDA SprSubtype, X : STA.w SprAction, X
+  LDA.w SprSubtype, X : STA.w SprAction, X
   LDA.b #$00 : STA.w SprTileDie, X
   STZ.w SprBulletproof, X
 
@@ -81,7 +81,7 @@ Sprite_LeverSwitch_Main:
   SwitchOff:
   {
     %PlayAnimation(0,0,4)
-    LDA SprTimerA, X : BNE .NoDamage
+    LDA.w SprTimerA, X : BNE .NoDamage
       JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
         LDA #$25 : STA $012F
         
@@ -95,7 +95,7 @@ Sprite_LeverSwitch_Main:
   SwitchOn:
   {
     %PlayAnimation(1,1,4)
-    LDA SprTimerA, X : BNE .NoDamage
+    LDA.w SprTimerA, X : BNE .NoDamage
       JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
         LDA #$25 : STA $012F
         LDA #$01 : STA $37

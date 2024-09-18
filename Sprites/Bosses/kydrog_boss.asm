@@ -421,7 +421,7 @@ Sprite_KydrogBoss_Main:
     %RandomStalfosOffspring()
 
     ; Increase the Z for a bit until he is off screen 
-    LDA SprHeight, X : CLC : ADC.b #$04 
+    LDA.w SprHeight, X : CLC : ADC.b #$04 
     STA.w SprHeight, X : CMP.b #$B0 : BCC .not_off_screen
       LDA #$40 : STA.w SprTimerD, X
       %GotoAction($0B)
@@ -437,17 +437,17 @@ Sprite_KydrogBoss_Main:
 
       %RandomStalfosOffspring()
 
-      LDA SprTimerD, X : BEQ .no_track_player
+      LDA.w SprTimerD, X : BEQ .no_track_player
 
       LDA $20 : STA.w SprY, X
       LDA $22 : STA.w SprX, X
       ; PHX : JSL $01F3EC : PLX ; Light Torch
 
-      LDA SprTimerD, X : BNE .wait_a_second
+      LDA.w SprTimerD, X : BNE .wait_a_second
     .no_track_player
 
       ; Decrease the Z for a bit until he is at level with Link
-      LDA SprHeight, X : SEC : SBC.b #$04 : STA.w SprHeight, X 
+      LDA.w SprHeight, X : SEC : SBC.b #$04 : STA.w SprHeight, X 
       CMP.b #$04 : BCS .not_off_screen
         %GotoAction(1)
     .not_off_screen
@@ -465,13 +465,13 @@ Sprite_KydrogBoss_Main:
     JSL GetRandomInt : AND.b #$3F : BNE +
     LDA.b $0D50 : CLC : ADC.b #$08 : STA $0D50
     LDA.b $0D70 : CLC : ADC.b #$02 : STA $0D70
-    LDA SprTimerD, X : BNE .not_done
+    LDA.w SprTimerD, X : BNE .not_done
     %GotoAction(1)
     RTS
   +
     LDA.b $0D40 : CLC : ADC.b #$08 : STA $0D40
     LDA.b $0D60 : CLC : ADC.b #$02 : STA $0D60
-    LDA SprTimerD, X : BNE .not_done
+    LDA.w SprTimerD, X : BNE .not_done
     %GotoAction(1)
 
   .not_done
@@ -494,29 +494,29 @@ CheckForNextPhase:
 
   .phase_one
     ; Check for phase two
-    LDA SprHealth,X : CMP.b #$20 : BCC .phase_two
+    LDA.w SprHealth,X : CMP.b #$20 : BCC .phase_two
     RTS
 
   .phase_two
-    LDA SprHealth,X : CMP.b #$20 : BCC .phase_three
+    LDA.w SprHealth,X : CMP.b #$20 : BCC .phase_three
     LDA !KydrogPhase : CMP.b #$01 : BEQ .return
     LDA #$80 : STA $0E50, X
-    LDA #$01 : STA SprAction, X
+    LDA #$01 : STA.w SprAction, X
     STA !KydrogPhase
     INC.w SprFlash, X
     RTS
 
   .phase_three
-    LDA SprHealth,X : CMP.b #$20 : BCC .phase_four
+    LDA.w SprHealth,X : CMP.b #$20 : BCC .phase_four
     LDA !KydrogPhase : CMP.b #$02 : BEQ .return
     LDA #$80 : STA $0E50, X
-    LDA #$02 : STA SprAction, X
+    LDA #$02 : STA.w SprAction, X
     STA !KydrogPhase
     RTS
 
   .phase_four
 
-    LDA #$03 : STA SprAction, X
+    LDA #$03 : STA.w SprAction, X
     STA !KydrogPhase
   .return
     RTS
@@ -635,8 +635,8 @@ Kydrog_ThrowBoneAtPlayer:
   
   TYX
 
-  LDA SprX, X : CLC : ADC.b #$10 : STA.w SprX, X
-  LDA SprY, X : SEC : SBC.b #$04 : STA.w SprY, X
+  LDA.w SprX, X : CLC : ADC.b #$10 : STA.w SprX, X
+  LDA.w SprY, X : SEC : SBC.b #$04 : STA.w SprY, X
   
   LDA.b #$20 : JSL Sprite_ApplySpeedTowardsPlayer
   

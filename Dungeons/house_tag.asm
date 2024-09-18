@@ -27,7 +27,7 @@ HouseTag:
 
 HouseTag_Main:
 {
-  LDA StoryState
+  LDA.w StoryState
 
   JSL $008781
   
@@ -103,7 +103,7 @@ HouseTag_WakeUpPlayer:
 HouseTag_End:
 {
   LDA $B6 : BNE .hasMetFarore
-  LDA #$00 : STA StoryState
+  LDA #$00 : STA.w StoryState
   
 .hasMetFarore
   RTS

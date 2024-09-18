@@ -108,7 +108,7 @@ Sprite_AntiKirby_Main:
   AntiKirby_Main:
   {
     ; Check health 
-    LDA SprHealth, X : CMP.b #$01 : BCS .NotDead
+    LDA.w SprHealth, X : CMP.b #$01 : BCS .NotDead
       %GotoAction(4)
       RTS
     .NotDead
@@ -141,7 +141,7 @@ Sprite_AntiKirby_Main:
   {
     %PlayAnimation(3, 3, 10) ; Hurt 
     
-    LDA SprTimerA, X : BNE .NotDone
+    LDA.w SprTimerA, X : BNE .NotDone
       %GotoAction(0)
     .NotDone
 
@@ -245,7 +245,7 @@ Sprite_AntiKirby_Main:
   AntiKirby_HattedHurt:
   {
     %PlayAnimation(9, 9, 10) 
-    LDA SprTimerA, X : BNE .NotDone
+    LDA.w SprTimerA, X : BNE .NotDone
       %GotoAction(5)
     .NotDone
     RTS
@@ -333,7 +333,7 @@ Sprite_AntiKirby_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA SprGfx, X : CLC : ADC SprFrame, X : TAY;Animation Frame
+  LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
   LDA.w SprFlash, X : STA $08

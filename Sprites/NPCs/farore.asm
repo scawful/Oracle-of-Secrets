@@ -113,7 +113,7 @@ Sprite_Farore_Main:
   ; 01
   MoveUpTowardsFarore:
   {
-    LDA WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
+    LDA.w WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
     LDA.b #$08 : STA.b $49 ; Auto-movement north
     
     LDA.b $20 ; Link's Y Position
@@ -130,7 +130,7 @@ Sprite_Farore_Main:
   MoveLeftTowardsFarore:
   {
     ; Move Link Left 
-    LDA WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
+    LDA.w WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
     LDA.b #$02 : STA.b $49 
 
     LDA.b $22 ; Link's X position 
@@ -178,7 +178,7 @@ Sprite_Farore_Main:
   FaroreFollowPlayer:
   {
     LDA #$01 : STA InCutScene
-    LDA WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
+    LDA.w WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
     LDA.b #$08 : STA.b $49 ; Auto-movement north
     %PlayAnimation(3, 4, 8)
 

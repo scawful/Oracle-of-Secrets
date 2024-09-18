@@ -82,7 +82,7 @@ Link_FallIntoDungeon:
   STZ.w $010F
 
   LDA.b #$20 : STA.b $5C
-  LDA.b #$01 : STA LinkState
+  LDA.b #$01 : STA.b LinkState
   LDA.b #$11 : STA.b $10
   STZ.b $11 : STZ.b $B0
 

@@ -387,7 +387,7 @@ Sprite_Boomerang_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA SprGfx, X : CLC : ADC SprFrame, X : TAY;Animation Frame
+  LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
   LDA.w SprFlash, X : STA $08
 

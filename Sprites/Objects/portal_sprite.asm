@@ -61,7 +61,7 @@ Sprite_Portal_Prep:
   
   ; Persist outside of camera  
   LDA #$00 : STA $0CAA, X 
-  LDA SprHitbox, X : AND.b #$C0 : STA.w SprHitbox, X
+  LDA.w SprHitbox, X : AND.b #$C0 : STA.w SprHitbox, X
   STZ.w $0B6B, X
   LDA.b #$FF : STA.w $0BA0, X
 
@@ -112,8 +112,8 @@ Sprite_Portal_Main:
     LDA $7E0FA6 : BNE .BluePortal
       LDA #$01 : STA $0307
       TXA : STA.w OrangeSpriteIndex
-      LDA SprY, X : STA OrangePortal_X
-      LDA SprX, X : STA OrangePortal_Y
+      LDA.w SprY, X : STA.w OrangePortal_X
+      LDA.w SprX, X : STA.w OrangePortal_Y
       LDA.b #$01 : STA.w SprSubtype, X
       
       %GotoAction(2)
@@ -121,8 +121,8 @@ Sprite_Portal_Main:
     .BluePortal
     LDA #$02 : STA $0307
     TXA : STA.w BlueSpriteIndex
-    LDA SprY, X : STA BluePortal_X
-    LDA SprX, X : STA BluePortal_Y
+    LDA.w SprY, X : STA.w BluePortal_X
+    LDA.w SprX, X : STA.w BluePortal_Y
     LDA.b #$02 : STA.w SprSubtype, X
     
     %GotoAction(1)
@@ -139,7 +139,7 @@ Sprite_Portal_Main:
     .not_warped_yet
     CLC
 
-    LDA SprTimerD, X : BNE .NoOverlap
+    LDA.w SprTimerD, X : BNE .NoOverlap
       JSL Link_SetupHitBox
       JSL $0683EA          ; Sprite_SetupHitbox_long 
       
@@ -165,7 +165,7 @@ Sprite_Portal_Main:
       STZ $11
     .not_warped_yet
     CLC
-    LDA SprTimerD, X : BNE .NoOverlap
+    LDA.w SprTimerD, X : BNE .NoOverlap
     JSL Link_SetupHitBox
     JSL $0683EA          ; Sprite_SetupHitbox_long 
     
@@ -200,12 +200,12 @@ Sprite_Portal_Main:
     ; LDA $7EC196 : STA $0616
   
     PHX
-    LDA OrangeSpriteIndex : TAX
+    LDA.w OrangeSpriteIndex : TAX
     LDA #$40 : STA.w SprTimerD, X
-    LDA SprY,                X : STA $7EC184
-    STA BluePortal_Y
-    LDA SprX,                X : STA $7EC186
-    STA BluePortal_X
+    LDA.w SprY,                X : STA $7EC184
+    STA.w BluePortal_Y
+    LDA.w SprX,                X : STA $7EC186
+    STA.w BluePortal_X
     PLX
 
     LDA #$14 : STA $11
@@ -229,12 +229,12 @@ Sprite_Portal_Main:
     ; LDA $7EC196 : STA $0616
 
     PHX
-    LDA BlueSpriteIndex : TAX
+    LDA.w BlueSpriteIndex : TAX
     LDA #$40 : STA.w SprTimerD, X
-    LDA SprY,                X : STA $7EC184
-    STA OrangePortal_Y
-    LDA SprX,                X : STA $7EC186
-    STA OrangePortal_X
+    LDA.w SprY,                X : STA $7EC184
+    STA.w OrangePortal_Y
+    LDA.w SprX,                X : STA $7EC186
+    STA.w OrangePortal_X
     PLX
 
 
@@ -245,8 +245,8 @@ Sprite_Portal_Main:
 
   BluePortal_WarpOverworld:
   {
-    LDA OrangePortal_X : STA $20
-    LDA OrangePortal_Y : STA $22
+    LDA.w OrangePortal_X : STA $20
+    LDA.w OrangePortal_Y : STA $22
     LDA $7EC190 : STA $0610 
     LDA $7EC192 : STA $0612
     LDA $7EC194 : STA $0614
@@ -255,7 +255,7 @@ Sprite_Portal_Main:
     JSL ApplyLinksMovementToCamera
 
     PHX ; Infinite loop prevention protocol
-    LDA OrangeSpriteIndex : TAX
+    LDA.w OrangeSpriteIndex : TAX
     LDA #$40 : STA.w SprTimerD, X
     
     PLX
@@ -269,8 +269,8 @@ Sprite_Portal_Main:
 
   OrangePortal_WarpOverworld:
   {
-    LDA BluePortal_X : STA $20
-    LDA BluePortal_Y : STA $22
+    LDA.w BluePortal_X : STA $20
+    LDA.w BluePortal_Y : STA $22
     LDA $7EC190 : STA $0610 
     LDA $7EC192 : STA $0612
     LDA $7EC194 : STA $0614
@@ -279,7 +279,7 @@ Sprite_Portal_Main:
     JSL ApplyLinksMovementToCamera
 
     PHX
-    LDA BlueSpriteIndex : TAX
+    LDA.w BlueSpriteIndex : TAX
     LDA #$40 : STA.w SprTimerD, X
     PLX
 
@@ -296,13 +296,13 @@ CheckForDismissPortal:
   LDA $06FE : CMP.b #$02 : BCC .return
     LDA $7E0FA6 : BEQ .DespawnOrange ; Check what portal is spawning next 
       PHX
-        LDA   BlueSpriteIndex : TAX
+        LDA.w BlueSpriteIndex : TAX
         STZ.w $0DD0, X
         DEC.w $06FE
       PLX
     .DespawnOrange  
     PHX
-      LDA   OrangeSpriteIndex : TAX
+      LDA.w OrangeSpriteIndex : TAX
       STZ.w $0DD0, X
       DEC.w $06FE
     PLX

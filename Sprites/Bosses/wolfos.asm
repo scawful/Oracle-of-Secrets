@@ -102,7 +102,7 @@ endmacro
 
 Wolfos_DecideAction:
 {
-  LDA SprTimerA, X : BNE .decide_new_action
+  LDA.w SprTimerA, X : BNE .decide_new_action
     RTS
   .decide_new_action
 
@@ -112,10 +112,10 @@ Wolfos_DecideAction:
   LDA $0F ; x distance from player
   STA.w SprMiscB, X
 
-  LDA SprMiscC, X
+  LDA.w SprMiscC, X
   CMP #$10 ; Check if y distance is significant
   BCS .adjust_y
-  LDA SprMiscB, X
+  LDA.w SprMiscB, X
   CMP #$10 ; Check if x distance is significant
   BCS .adjust_x
 
@@ -242,7 +242,7 @@ Sprite_Wolfos_Main:
     LDA #!AttackSpeed
     STA.w SprXSpeed, X
 
-    LDA SprTimerA, X : BNE +
+    LDA.w SprTimerA, X : BNE +
       %GotoAction(2)
     +
 
@@ -259,7 +259,7 @@ Sprite_Wolfos_Main:
     LDA #-!AttackSpeed
     STA.w SprXSpeed, X
 
-     LDA SprTimerA, X : BNE +
+     LDA.w SprTimerA, X : BNE +
       %GotoAction(3)
     +
 
@@ -273,7 +273,7 @@ Sprite_Wolfos_Main:
     STZ.w SprYSpeed, X
 
     ; Run the dialogue and wait for a song of healing flag to be set
-    LDA SprMiscD, X : BNE .wait
+    LDA.w SprMiscD, X : BNE .wait
       %ShowUnconditionalMessage($23)
       LDA.b #$01 : STA.w SprMiscD, X
     .wait
@@ -295,7 +295,7 @@ Sprite_Wolfos_Main:
   {
     LDA.b #16 : STA.w SprFrame, X
 
-    LDA SprTimerD, X : BNE .wait
+    LDA.w SprTimerD, X : BNE .wait
       LDA.b #$01 : STA.w BRANDISH
       %ShowUnconditionalMessage($10F)
       LDA.b #$01 : STA.l $7EF358
@@ -309,7 +309,7 @@ Sprite_Wolfos_Main:
     STZ.w SprXSpeed, X
     STZ.w SprYSpeed, X
 
-    LDA SprTimerD, X : BNE .dismiss
+    LDA.w SprTimerD, X : BNE .dismiss
       LDA.b #$00 : STA $0DD0, X ; kill sprite normal style
       STZ.w SprAction, X
       STZ.w SprHealth, X

@@ -101,7 +101,7 @@ Sprite_Minecart_Prep:
 
     STZ.w !MinecartDirection
 
-    LDA SprSubtype, X : CMP.b #$00 : BEQ .north
+    LDA.w SprSubtype, X : CMP.b #$00 : BEQ .north
                         CMP.b #$01 : BEQ .east
                         CMP.b #$02 : BEQ .south
                         CMP.b #$03 : BEQ .west
@@ -226,8 +226,8 @@ HandleTossedCart:
     .low_enough
 
     LDA.w SprTimerC, X : BNE .not_tossed
-      LDA SprX, X : AND.b #$F8 : STA.w SprX, X
-      LDA SprY, X : AND.b #$F8 : STA.w SprY, X
+      LDA.w SprX, X : AND.b #$F8 : STA.w SprX, X
+      LDA.w SprY, X : AND.b #$F8 : STA.w SprY, X
       STZ.w SprMiscG, X
       STZ.w SprYSpeed, X
       STZ.w SprXSpeed, X
@@ -256,8 +256,8 @@ Sprite_Minecart_Main:
   Minecart_WaitHoriz:
   {
     %PlayAnimation(0,1,8)
-    LDA LinkCarryOrToss : AND #$03 : BNE .lifting
-      LDA SprTimerA, X : BNE .not_ready
+    LDA.w LinkCarryOrToss : AND #$03 : BNE .lifting
+      LDA.w SprTimerA, X : BNE .not_ready
         JSR CheckIfPlayerIsOn : BCC .not_ready
         LDA.w SprMiscF, X : BNE .active_cart
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
@@ -268,7 +268,7 @@ Sprite_Minecart_Main:
         LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
 
         ; Check if the cart is facing east or west
-        LDA SprSubtype, X : CMP.b #$03 : BNE .opposite_direction
+        LDA.w SprSubtype, X : CMP.b #$03 : BNE .opposite_direction
           STA.w !MinecartDirection
           LDA   #$02 : STA !SpriteDirection, X
           %GotoAction(5)  ; Minecart_MoveWest
@@ -292,8 +292,8 @@ Sprite_Minecart_Main:
   Minecart_WaitVert:
   {
     %PlayAnimation(2,3,8)
-    LDA LinkCarryOrToss : AND #$03 : BNE .lifting
-      LDA SprTimerA, X : BNE .not_ready
+    LDA.w LinkCarryOrToss : AND #$03 : BNE .lifting
+      LDA.w SprTimerA, X : BNE .not_ready
         JSR CheckIfPlayerIsOn : BCC .not_ready
         LDA.w SprMiscF, X : BNE .active_cart
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
@@ -304,7 +304,7 @@ Sprite_Minecart_Main:
         LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
         
         ; Check if the cart is facing north or south
-        LDA SprSubtype, X : BEQ .opposite_direction
+        LDA.w SprSubtype, X : BEQ .opposite_direction
           STA.w !MinecartDirection
           LDA   #$01 : STA !SpriteDirection, X
           %GotoAction(4)  ; Minecart_MoveSouth
@@ -430,7 +430,7 @@ Sprite_Minecart_Main:
   {
     %StopCart()
 
-    LDA SprTimerD, X : BNE .not_ready
+    LDA.w SprTimerD, X : BNE .not_ready
       LDA #$40 : STA.w SprTimerA, X
       LDA.w !SpriteDirection, X : CMP.b #$00 : BEQ .vert
         CMP.b #$02 : BEQ .vert
@@ -449,7 +449,7 @@ Sprite_Minecart_Main:
 
 HandleTileDirections:
 {
-    LDA SprTimerA, X : BEQ +
+    LDA.w SprTimerA, X : BEQ +
       RTS
     +
 
@@ -533,7 +533,7 @@ HandleTileDirections:
 
     .horiz
       ; Are we moving left or right?
-      LDA SprSubtype, X : CMP.b #$03 : BEQ .inverse_horiz_velocity
+      LDA.w SprSubtype, X : CMP.b #$03 : BEQ .inverse_horiz_velocity
         LDA.b #!MinecartSpeed : STA.w SprXSpeed, X
         LDA.b #East : STA !MinecartDirection
         JMP .done
@@ -543,7 +543,7 @@ HandleTileDirections:
         JMP .done
     .vert
       ; Are we moving up or down?
-      LDA SprSubtype, X : CMP.b #$00 : BEQ .inverse_vert_velocity
+      LDA.w SprSubtype, X : CMP.b #$00 : BEQ .inverse_vert_velocity
         LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
         JMP .done
     .inverse_vert_velocity
@@ -551,7 +551,7 @@ HandleTileDirections:
         JMP .done
         
     .check_direction
-      LDA SprSubtype, X
+      LDA.w SprSubtype, X
       ASL #2  ; Multiply by 4 (shifting left by 2 bits) to offset rows in the lookup table
       STA $07 ; Store the action index in $07
 
@@ -571,25 +571,25 @@ HandleTileDirections:
           LDA #$00 : STA.w SprSubtype, X : STA !MinecartDirection
           STA !SpriteDirection,      X
           %GotoAction(2) ; Minecart_MoveNorth
-          LDA SprX, X : AND #$F8 : STA.w SprX, X
+          LDA.w SprX, X : AND #$F8 : STA.w SprX, X
           JMP .done
         .move_east
           LDA #$01 : STA.w SprSubtype, X : STA !MinecartDirection
           STA !MinecartDirection
           LDA #$03 : STA !SpriteDirection, X
-          LDA SprY, X : AND #$F8 : STA.w SprY, X
+          LDA.w SprY, X : AND #$F8 : STA.w SprY, X
           %GotoAction(3) ; Minecart_MoveEast
           JMP .done
         .move_south
           LDA #$02 : STA.w SprSubtype, X : STA !MinecartDirection
           LDA #$01 : STA !SpriteDirection, X
           %GotoAction(4) ; Minecart_MoveSouth
-          LDA SprX, X : AND #$F8 : STA.w SprX, X
+          LDA.w SprX, X : AND #$F8 : STA.w SprX, X
           JMP .done
         .move_west
           LDA #$03 : STA.w SprSubtype, X : STA !MinecartDirection
           LDA #$02 : STA !SpriteDirection, X
-          LDA SprY, X : AND #$F8 : STA.w SprY, X
+          LDA.w SprY, X : AND #$F8 : STA.w SprY, X
           %GotoAction(5) ; Minecart_MoveWest
       .done
         LDA #$0F : STA.w SprTimerA, X
@@ -634,7 +634,7 @@ HandleDynamicSwitchTileDirections:
     RTS
 
     .east_or_west
-      LDA SwitchRam : BNE .go_west
+      LDA.w SwitchRam : BNE .go_west
       LDA #$01 : STA.w SprSubtype,       X
       STA.w !MinecartDirection
       LDA #$03 : STA !SpriteDirection, X
@@ -649,7 +649,7 @@ HandleDynamicSwitchTileDirections:
       RTS
 
     .north_or_south
-      LDA SwitchRam : BNE .go_south
+      LDA.w SwitchRam : BNE .go_south
       LDA #$00 : STA.w SprSubtype, X
       STA.w !MinecartDirection
       STA !SpriteDirection,      X
@@ -717,7 +717,7 @@ CheckForPlayerInput:
   LDA $F0 : AND .d_pad_press, Y : STA $00 : AND.b #$08 : BEQ .not_pressing_up
     LDA.b #$00 : STA !SpriteDirection, X ; Moving Up
     LDA.b #North : STA !MinecartDirection
-    STA   SprSubtype, X
+    STA.w SprSubtype, X
     %GotoAction(2) ; Minecart_MoveNorth
     BRA   .return
 
@@ -741,7 +741,7 @@ CheckForPlayerInput:
   LDA.b $00 : AND.b #$01 : BEQ .return
     LDA.b #$03 : STA !SpriteDirection, X
     LDA.b #East : STA !MinecartDirection
-    STA   SprSubtype, X
+    STA.w SprSubtype, X
     %GotoAction(3) ; Minecart_MoveEast
   .return
   .cant_input

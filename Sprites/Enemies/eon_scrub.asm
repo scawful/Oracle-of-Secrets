@@ -57,7 +57,7 @@ Sprite_EonScrub_Prep:
 {
   PHB : PHK : PLB
     
-  LDA SprSubtype, X : CMP #$01 : BNE .normal_scrub
+  LDA.w SprSubtype, X : CMP #$01 : BNE .normal_scrub
     LDA.b #$06 : STA.w SprAction, X ; Pea Shot State
     LDA.b #$20 : STA.b SprPrize, X
   .normal_scrub 
@@ -101,8 +101,8 @@ Sprite_EonScrub_Main:
       ; Check if the player is too close
       LDA $22 : STA $02
       LDA $20 : STA $03
-      LDA SprX, X : STA $04
-      LDA SprY, X : STA $05
+      LDA.w SprX, X : STA $04
+      LDA.w SprY, X : STA $05
       JSL GetDistance8bit_Long : CMP.b #$24 : BCC .too_close
         ; The player is below the scrub, so it should pop up
         LDA #$20 : STA.w SprTimerA, X
@@ -120,16 +120,16 @@ Sprite_EonScrub_Main:
     JSL Sprite_PlayerCantPassThrough
     JSR CheckForPeaShotRedirect
 
-    LDA SprTimerA, X : BNE .not_done
+    LDA.w SprTimerA, X : BNE .not_done
       JSR EonScrub_SpawnPeaShot
       LDA #$F0 : STA.w SprTimerA, X
       INC.w SprAction, X
     .not_done
 
-    LDA POSX : STA $02
-    LDA POSY : STA $03
-    LDA SprX, X : STA $04
-    LDA SprY, X : STA $05
+    LDA.w POSX : STA $02
+    LDA.w POSY : STA $03
+    LDA.w SprX, X : STA $04
+    LDA.w SprY, X : STA $05
     JSL GetDistance8bit_Long : CMP #$18 : BCS .not_too_close
       %GotoAction(0)
     .not_too_close
@@ -156,7 +156,7 @@ Sprite_EonScrub_Main:
     JSL Sprite_PlayerCantPassThrough
 
     ; Play the spinning animation for a bit before proceeding
-    LDA SprTimerA, X : BNE .not_done
+    LDA.w SprTimerA, X : BNE .not_done
       LDA #$40 : STA.w SprTimerA, X
       INC.w SprAction, X
     .not_done
@@ -170,7 +170,7 @@ Sprite_EonScrub_Main:
 
     JSL Sprite_PlayerCantPassThrough
 
-    LDA SprTimerA, X : BNE .not_done
+    LDA.w SprTimerA, X : BNE .not_done
       %SetHarmless(1)
       INC.w SprAction, X
     .not_done

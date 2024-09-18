@@ -279,10 +279,10 @@ Sprite_Chuchu_Move:
   RecoilFromPlayer:
   {
     JSL GetRandomInt : AND.b #$02 : STA $09 ; Speed
-    LDA SprX, X : CLC : ADC $09 : STA $04
-    LDA SprY, X : SEC : SBC $09 : STA $06
-    LDA SprXH, X : ADC #$00 : STA $05
-    LDA SprYH, X : ADC #$00 : STA $07
+    LDA.w SprX, X : CLC : ADC $09 : STA $04
+    LDA.w SprY, X : SEC : SBC $09 : STA $06
+    LDA.w SprXH, X : ADC #$00 : STA $05
+    LDA.w SprYH, X : ADC #$00 : STA $07
     LDA $09 : STA $00 : STA $01
     JSL Sprite_ProjectSpeedTowardsEntityLong
 
@@ -302,7 +302,7 @@ Sprite_HelmetChuchu_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA SprGfx, X : CLC : ADC SprFrame, X : TAY;Animation Frame
+  LDA.w SprGfx, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
   LDA.w SprFlash, X : STA $08
 

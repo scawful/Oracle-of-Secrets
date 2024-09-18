@@ -66,7 +66,7 @@ LinkItem_CatchBottle:
 
   LDA $2F : LSR A : TAY
   LDX pose_offset, Y
-  LDA pose_id, X : STA $0300
+  LDA.w pose_id, X : STA $0300
   LDA.b #$03 : STA $3D
   
   STZ $030D, X
@@ -86,8 +86,8 @@ LinkItem_CatchBottle:
   LDX $030D : INX : STX $030D
   LDA.b #$03 : STA $3D
   LDA $2F : LSR A : TAY
-  LDA pose_offset, Y : CLC : ADC $030D : TAY
-  LDA pose_id, Y : STA $0300
+  LDA.w pose_offset, Y : CLC : ADC $030D : TAY
+  LDA.w pose_id, Y : STA $0300
   CPX.b #$0A : BNE .bottle_exit
   
   STZ $030D

@@ -825,15 +825,15 @@ DrawMinecartFollower:
       JSL Sprite_SetSpawnedCoords
       LDA.w !MinecartDirection : CMP.b #$00 : BEQ .vert_adjust
                                  CMP.b #$02 : BEQ .vert_adjust
-        LDA POSY : CLC : ADC #$08 : STA.w SprY, X
-        LDA POSX : STA.w SprX, X
+        LDA.w POSY : CLC : ADC #$08 : STA.w SprY, X
+        LDA.w POSX : STA.w SprX, X
         JMP .finish_prep
       .vert_adjust
-        LDA POSY : STA.w SprY, X
-        LDA POSX : CLC : ADC #$02 : STA.w SprX, X
+        LDA.w POSY : STA.w SprY, X
+        LDA.w POSX : CLC : ADC #$02 : STA.w SprX, X
       .finish_prep
-      LDA POSYH : STA.w SprYH, X
-      LDA POSXH : STA.w SprXH, X
+      LDA.w POSYH : STA.w SprYH, X
+      LDA.w POSXH : STA.w SprXH, X
       LDA.w !MinecartDirection : CLC : ADC.b #$03 : STA.w SprSubtype, X
 
       LDA .direction_to_anim, X : STA $0D90, X

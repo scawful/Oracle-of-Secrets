@@ -38,7 +38,7 @@ Sprite_KydreeokHead_Long:
 {
   PHB : PHK : PLB
 
-  LDA SprAction, X : CMP #$05 : BEQ .no_head
+  LDA.w SprAction, X : CMP #$05 : BEQ .no_head
     JSR Sprite_KydreeokHead_Draw
   .no_head
 
@@ -168,7 +168,7 @@ Sprite_KydreeokHead_Main:
 
     JSR KydreeokHead_RotationMove
     JSR RandomlyAttack
-    LDA SprTimerA, X : BNE .not_done
+    LDA.w SprTimerA, X : BNE .not_done
       %GotoAction(0)
     .not_done
     RTS
@@ -188,7 +188,7 @@ Sprite_KydreeokHead_Main:
 
     JSR KydreeokHead_RotationMove
     JSR RandomlyAttack
-    LDA SprTimerA, X : BNE .not_done
+    LDA.w SprTimerA, X : BNE .not_done
        %GotoAction(0)
     .not_done
     RTS
@@ -204,7 +204,7 @@ Sprite_KydreeokHead_Main:
     JSR Sprite_Twinrova_FireAttack
     JSL Sprite_Move
     
-    LDA SprTimerA, X : BNE .not_done
+    LDA.w SprTimerA, X : BNE .not_done
       LDA #$00 : STA $0DD0, X
     .not_done
     RTS
@@ -267,19 +267,19 @@ Sprite_KydreeokHead_Damage_Flash:
 
 CoordinateBasedRotation:
 {
-    LDA Neck_Index : TAY
+    LDA.w Neck_Index : TAY
     ; JSL   GetRandomInt : AND #$04 : TAY
-    LDA X_Coords, Y : STA Neck1_OffsetX
-    LDA X_Coords, Y : STA Neck2_OffsetX
-    LDA X_Coords, Y : STA Neck3_OffsetX
-    LDA Y_Coords, Y : STA Neck1_OffsetY
-    LDA Y_Coords, Y : STA Neck2_OffsetY
-    LDA Y_Coords, Y : STA Neck3_OffsetY
+    LDA.w X_Coords, Y : STA.w Neck1_OffsetX
+    LDA.w X_Coords, Y : STA.w Neck2_OffsetX
+    LDA.w X_Coords, Y : STA.w Neck3_OffsetX
+    LDA.w Y_Coords, Y : STA.w Neck1_OffsetY
+    LDA.w Y_Coords, Y : STA.w Neck2_OffsetY
+    LDA.w Y_Coords, Y : STA.w Neck3_OffsetY
     JSL GetRandomInt : AND #$3F : BNE .dont_increment
       INC.w Neck_Index
   .dont_increment
     CPY #15 : BNE .not_full
-      LDA #0 : STA Neck_Index
+      LDA #0 : STA.w Neck_Index
   .not_full
     RTS
 }
@@ -357,7 +357,7 @@ RandomlyAttack:
 
 MoveWithBody:
 {
-  LDA   Kydreeok_Id : TAY
+  LDA.w Kydreeok_Id : TAY
   CPX.w Offspring2_Id : BEQ .neck2_move
 
     LDA.w SprX, Y : SEC : SBC #$0F

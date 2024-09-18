@@ -108,7 +108,7 @@ Sprite_Korok_Main:
   Sprite_Korok_WalkingDown:
   {
     %PlayAnimation(0, 2, 10)
-    LDA.b #KorokWalkSpeed : STA SprYSpeed, X
+    LDA.b #KorokWalkSpeed : STA.w SprYSpeed, X
     JSL Sprite_Move
     LDA.w SprTimerB, X : BNE + 
       JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
@@ -119,7 +119,7 @@ Sprite_Korok_Main:
   Sprite_Korok_WalkingUp:
   {
     %PlayAnimation(3, 5, 10)
-    LDA.b #-KorokWalkSpeed : STA SprYSpeed, X
+    LDA.b #-KorokWalkSpeed : STA.w SprYSpeed, X
     JSL Sprite_Move
     LDA.w SprTimerB, X : BNE + 
       JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
@@ -130,7 +130,7 @@ Sprite_Korok_Main:
   Sprite_Korok_WalkingLeft:
   {
     %PlayAnimation(6, 8, 10)
-    LDA.b #KorokWalkSpeed : STA SprXSpeed, X
+    LDA.b #KorokWalkSpeed : STA.w SprXSpeed, X
     JSL Sprite_Move
     LDA.w SprTimerB, X : BNE + 
       JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
@@ -141,7 +141,7 @@ Sprite_Korok_Main:
   Sprite_Korok_WalkingRight:
   {
     %PlayAnimation(9, 11, 10)
-    LDA.b #-KorokWalkSpeed : STA SprXSpeed, X
+    LDA.b #-KorokWalkSpeed : STA.w SprXSpeed, X
     JSL Sprite_Move
 
     LDA.w SprTimerB, X : BNE + 

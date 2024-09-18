@@ -54,7 +54,7 @@ Sprite_EonOwl_Prep:
 {
   PHB : PHK : PLB
 
-  LDA AreaIndex : CMP.b #$50 : BNE .not_intro
+  LDA.w AreaIndex : CMP.b #$50 : BNE .not_intro
     ; If Map 0x50, don't spawn after meeting Maku Tree
     LDA.l OOSPROG : AND.b #$02 : BEQ .continue
       STZ.w SprState, X
@@ -83,10 +83,10 @@ Sprite_EonOwl_Main:
   {
     %PlayAnimation(0,1,16)
 
-    LDA POSX : STA $02
-    LDA POSY : STA $03
-    LDA SprX, X : STA $04
-    LDA SprY, X : STA $05
+    LDA.w POSX : STA $02
+    LDA.w POSY : STA $03
+    LDA.w SprX, X : STA $04
+    LDA.w SprY, X : STA $05
     JSL GetDistance8bit_Long : CMP #$28 : BCS .not_too_close
       %GotoAction(1)
     .not_too_close

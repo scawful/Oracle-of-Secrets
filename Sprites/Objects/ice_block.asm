@@ -60,10 +60,10 @@ Sprite_IceBlock_Prep:
   PHB : PHK : PLB
     
   ; Cache Sprite position
-  LDA SprX, X : STA.w SprMiscD, X
-  LDA SprY, X : STA.w SprMiscE, X
-  LDA SprXH, X : STA.w SprMiscF, X
-  LDA SprYH, X : STA.w SprMiscG, X
+  LDA.w SprX, X : STA.w SprMiscD, X
+  LDA.w SprY, X : STA.w SprMiscE, X
+  LDA.w SprXH, X : STA.w SprMiscF, X
+  LDA.w SprYH, X : STA.w SprMiscG, X
 
   STZ.w $0CAA, X
 
@@ -101,10 +101,10 @@ Sprite_IceBlock_Main:
 
     JSL Sprite_CheckDamageFromPlayer
     BCC .no_damage
-      LDA SprMiscD, X : STA.w SprX, X
-      LDA SprMiscE, X : STA.w SprY, X
-      LDA SprMiscF, X : STA.w SprXH, X
-      LDA SprMiscG, X : STA.w SprYH, X
+      LDA.w SprMiscD, X : STA.w SprX, X
+      LDA.w SprMiscE, X : STA.w SprY, X
+      LDA.w SprMiscF, X : STA.w SprXH, X
+      LDA.w SprMiscG, X : STA.w SprYH, X
       STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
     .no_damage
 
@@ -135,8 +135,8 @@ Sprite_IceBlock_Main:
     ; STA.w SprYSpeed,X
     ; JSR Statue_HandleGrab
     
-    LDA SprX, X : AND #$F0 : STA.w SprX, X
-    LDA SprY, X : AND #$F0 : STA.w SprY, X
+    LDA.w SprX, X : AND #$F0 : STA.w SprX, X
+    LDA.w SprY, X : AND #$F0 : STA.w SprY, X
     RTS
     .not_in_contact
     %GotoAction(1)
@@ -392,7 +392,7 @@ Sprite_IceBlock_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC SprFrame, X : TAY;Animation Frame
+  LDA $0DC0, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
 

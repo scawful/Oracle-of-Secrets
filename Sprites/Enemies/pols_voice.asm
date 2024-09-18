@@ -125,7 +125,7 @@ Sprite_PolsVoice_Main:
 
     %DoDamageToPlayerSameLayerOnContact()
 
-    LDA SprTimerA, X : BNE .not_done
+    LDA.w SprTimerA, X : BNE .not_done
       %GotoAction(0)
     .not_done
     JSL Sprite_CheckDamageFromPlayer : BCC .no_damage

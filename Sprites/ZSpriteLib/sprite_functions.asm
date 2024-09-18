@@ -221,7 +221,7 @@ DragXH = $0B7F
 DragPlayer:
 {
   LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
-  LDA.w .drag_x_high, Y : ADC.w DragYH : STA DragYH
+  LDA.w .drag_x_high, Y : ADC.w DragYH : STA.w DragYH
 
   LDA.w .drag_y_low,  Y : CLC : ADC.w DragXL : STA.w DragXL
   LDA.w .drag_y_high, Y : ADC.w DragXH : STA.w DragXH
@@ -229,7 +229,7 @@ DragPlayer:
   .SomariaPlatform_DragLink
   REP #$20
 
-  LDA SprCachedX : SEC : SBC.w #$0002
+  LDA.w SprCachedX : SEC : SBC.w #$0002
   CMP $22 : BEQ .x_done : BPL .x_too_low
       DEC.w DragYL
       BRA .x_done
@@ -238,7 +238,7 @@ DragPlayer:
 
   .x_done
   ; Changing the modifier adjusts links position in the cart 
-  LDA SprCachedY : SEC : SBC.w #$0008
+  LDA.w SprCachedY : SEC : SBC.w #$0008
   CMP $20 : BEQ .y_done : BPL .y_too_low
       DEC.w DragXL
       BRA .y_done
@@ -597,13 +597,13 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
 
     REP #$20
     ; if link.y is 6 above sprite.y it is considered below
-    LDA SprCachedY : SEC : SBC $20 : CLC : ADC.w #$0006 : STA $01 ;delta Y
+    LDA.w SprCachedY : SEC : SBC $20 : CLC : ADC.w #$0006 : STA $01 ;delta Y
     SEP #$20
 
     JSL Sprite_IsToRightOfPlayer : BEQ .player_to_the_Right1
       ;player_to_the_Left
       REP #$20
-      LDA SprCachedX : SEC : SBC $22 ; delta X
+      LDA.w SprCachedX : SEC : SBC $22 ; delta X
       
       CMP $01 : BCS .XGreaterThanY1
         ;YGreaterThanX
@@ -620,7 +620,7 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
 
   .player_to_the_Right1
       REP #$20
-      LDA $22 : SEC : SBC SprCachedX ; delta X
+      LDA $22 : SEC : SBC.w SprCachedX ; delta X
 
       CMP $01 : BCS .XGreaterThanY2
         ;YGreaterThanX
@@ -639,13 +639,13 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
   .player_below
       REP #$20
       ; if link.y is 6 above sprite.y it is considered below
-      LDA $20 : SEC : SBC SprCachedY : CLC : ADC.w #$0006 : STA $01 ; delta Y
+      LDA $20 : SEC : SBC.w SprCachedY : CLC : ADC.w #$0006 : STA $01 ; delta Y
       SEP #$20
 
       JSL Sprite_IsToRightOfPlayer : BEQ .player_to_the_Right2
         ;player_to_the_Left
         REP #$20
-        LDA SprCachedX : SEC : SBC $22 ; delta X
+        LDA.w SprCachedX : SEC : SBC $22 ; delta X
 
         CMP $01 : BCS .XGreaterThanY3
           ;YGreaterThanX
@@ -663,7 +663,7 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
 
       .player_to_the_Right2
         REP #$20
-        LDA $22 : SEC : SBC SprCachedX ; delta X
+        LDA $22 : SEC : SBC.w SprCachedX ; delta X
 
         CMP $01 : BCS .XGreaterThanY4
           ;YGreaterThanX

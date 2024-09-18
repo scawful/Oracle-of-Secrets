@@ -58,13 +58,13 @@ Sprite_Twinrova_Long:
 
 Sprite_Twinrova_CheckIfDead:
 {
-  LDA SprAction, X : CMP.b #$0A : BEQ .not_dead
+  LDA.w SprAction, X : CMP.b #$0A : BEQ .not_dead
     ; If health is negative, set back to zero
-    LDA SprHealth, X : CMP.b #$C3 : BCC .health_not_negative
+    LDA.w SprHealth, X : CMP.b #$C3 : BCC .health_not_negative
       LDA.b #$00 : STA.w SprHealth, X
 
   .health_not_negative
-    LDA SprHealth, X : BNE .not_dead
+    LDA.w SprHealth, X : BNE .not_dead
       PHX 
       LDA.b #$04 : STA $0DD0, X     ; Kill sprite boss style
       LDA.b #$0A : STA.w SprAction, X ; Go to Twinrova_Dead stage
@@ -191,10 +191,10 @@ Sprite_Twinrova_Main:
   Twinrova_MoveState:
   {
     STZ.w $0360
-    LDA SprHealth, X : CMP.b #$20 : BCS .phase_1
+    LDA.w SprHealth, X : CMP.b #$20 : BCS .phase_1
       ; -------------------------------------------
       ; Phase 2
-      LDA SprTimerE, X : BNE .kotake
+      LDA.w SprTimerE, X : BNE .kotake
         LDA #$70 : STA.w SprTimerD, X
         %GotoAction(8) ; Koume Mode
         RTS
@@ -293,7 +293,7 @@ Sprite_Twinrova_Main:
       LDA #$01 : STA $0360
 
       LDA $0CAA : AND.b #$03 : STA $0CAA
-      LDA SprTimerD, X : BNE +
+      LDA.w SprTimerD, X : BNE +
         LDA $0CAA : ORA.b #$03 : STA $0CAA
         LDA.b #$40 : STA.w SprTimerD, X
         LDA   $AC : BEQ .fire
@@ -421,7 +421,7 @@ Sprite_Twinrova_Main:
     
     JSR RageModeMove
 
-    LDA SprTimerD, X : BNE +
+    LDA.w SprTimerD, X : BNE +
       LDA #$70 : STA.w SprTimerE, X
       %GotoAction(1)
     +
@@ -455,7 +455,7 @@ Sprite_Twinrova_Main:
       JSR RestoreFloorTile
     +++
 
-    LDA SprTimerD, X : BNE +
+    LDA.w SprTimerD, X : BNE +
       %GotoAction(1)
     +
     RTS
@@ -479,10 +479,10 @@ Sprite_Twinrova_Main:
 RageModeMove:
 {
   ; If timer is zero, determine a new movement mode
-  LDA SprTimerA, X : BEQ .DetermineMovementMode
+  LDA.w SprTimerA, X : BEQ .DetermineMovementMode
 
   ; Execute current movement mode
-  LDA SprMiscA, X
+  LDA.w SprMiscA, X
   CMP #$01 : BEQ .MoveTowardsPlayer
   CMP #$02 : BEQ .RandomStrafe
   CMP #$03 : BEQ .RandomDodge
@@ -660,7 +660,7 @@ Sprite_Twinrova_FireAttack:
 ; $1DBDD6 - TrinexxFire_AddFireGarnish
 AddFireGarnish:
 {
-    INC.w SprDelay, X : LDA SprDelay, X : AND.b #$07 : BNE .return
+    INC.w SprDelay, X : LDA.w SprDelay, X : AND.b #$07 : BNE .return
       LDA.b #$2A : JSL Sound_SetSfx2PanLong
       LDA.b #$1D : PHX : TXY : TAX : STA $00
 
@@ -699,7 +699,7 @@ Sprite_Twinrova_IceAttack:
 ; $1DBD65 - TrinexxBreath_ice_add_ice_garnish
 AddIceGarnishV2:
 {
-    INC.w SprDelay, X : LDA SprDelay, X : AND.b #$07 : BNE .return
+    INC.w SprDelay, X : LDA.w SprDelay, X : AND.b #$07 : BNE .return
       LDA.b #$14 : JSL Sound_SetSfx3PanLong
       LDA.b #$1D : PHX : TXY : TAX : STA $00
 
@@ -1397,11 +1397,11 @@ pullpc
 
 NewMantlePrep:
 {
-    LDA SprY, X : CLC : ADC.b #$07 : STA.w SprY, X
-    LDA SprX, X : CLC : ADC.b #$08 : STA.w SprX, X
+    LDA.w SprY, X : CLC : ADC.b #$07 : STA.w SprY, X
+    LDA.w SprX, X : CLC : ADC.b #$08 : STA.w SprX, X
 
     LDA $7EF0DA : AND #$0F : BEQ +
-        LDA SprX, X : CLC : ADC.b #$28 : STA.w SprX, X
+        LDA.w SprX, X : CLC : ADC.b #$28 : STA.w SprX, X
     +
 
     RTL

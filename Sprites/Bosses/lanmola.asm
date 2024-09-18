@@ -147,11 +147,11 @@ Lanmola_Mound: ;0x01
         ; ALTERNATE ENTRY POINT
         .Lanmola_SetScatterSandPosition
 
-        LDA SprXH, X : STA $0DC0, X
-        LDA SprYH, X : STA $0EB0, X
+        LDA.w SprXH, X : STA $0DC0, X
+        LDA.w SprYH, X : STA $0EB0, X
         
-        LDA SprX, X : STA $0DE0, X
-        LDA SprY, X : STA $0E70, X
+        LDA.w SprX, X : STA $0DE0, X
+        LDA.w SprY, X : STA $0E70, X
             
         LDA.b #$4A : STA $0E00, X
     
@@ -196,13 +196,13 @@ Lanmola_Fly: ;0x02
     .dontSwitchDirections
     
     LDA $0DA0, X : STA $04
-    LDA SprXH, X : STA $05
+    LDA.w SprXH, X : STA $05
     LDA $0DB0, X : STA $06
-    LDA SprYH, X : STA $07
-    LDA SprX, X : STA $00
-    LDA SprXH, X : STA $01
-    LDA SprY, X : STA $02
-    LDA SprYH, X : STA $03
+    LDA.w SprYH, X : STA $07
+    LDA.w SprX, X : STA $00
+    LDA.w SprXH, X : STA $01
+    LDA.w SprY, X : STA $02
+    LDA.w SprYH, X : STA $03
         
     REP #$20
         
