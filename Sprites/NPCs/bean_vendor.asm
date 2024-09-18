@@ -1,6 +1,6 @@
-; ========================================================= 
+; =========================================================
 ; Sprite Properties
-; ========================================================= 
+; =========================================================
 
 !SPRID              = Sprite_BeanVendor
 !NbrTiles           = 04  ; Number of tiles used in a frame
@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -74,13 +74,13 @@ Sprite_BeanVendor_Prep:
   LDA.b #$40 : STA.w SprTimerA, X
   LDA.w SprSubtype, X : STA.w SprAction, X
   CMP.b #$02 : BEQ .OldMan
-  
+
   LDA.b $8A : CMP.b #$0E : BNE .NotGaebora
     LDA.b #$05 : STA.w SprAction, X
   .NotGaebora
 
   LDA.b $8A : CMP.b #$00 : BEQ .RanchFlower
-  
+
   .OldMan
   PLB
   RTL

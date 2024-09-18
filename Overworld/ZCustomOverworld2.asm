@@ -107,7 +107,7 @@ Pool:
     ;dw $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
     ;dw $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
     ;dw $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
-    warnpc $288140
+    assert pc() <= $288140
 
     org $288140 ; $140140
     .EnableTable ; 0x20
@@ -175,7 +175,7 @@ Pool:
     ;db $00, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00
-    warnpc $288160
+    assert pc() <= $288160
 
     org $288160 ; $140160
     .MainPaletteTable ; 0xA0
@@ -211,7 +211,7 @@ Pool:
     ;db $04, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
-    warnpc $288200
+    assert pc() <= $288200
     
     org $288200 ; $140200
     .MosaicTable ; 0xA0
@@ -241,7 +241,7 @@ Pool:
     ;db $01, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
-    warnpc $2882A0
+    assert pc() <= $2882A0
 
     ; Not the same as OWGFXGroupTable_sheet7. The game uses a combination of $59
     ; and $5B to create the sheet in sheet #7. This is done by first transfering
@@ -280,7 +280,7 @@ Pool:
     ;db $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B
     ;db $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B
     ;db $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B
-    warnpc $288340
+    assert pc() <= $288340
 
     org $288340 ; $140340
     .OverlayTable ; 0x140
@@ -323,7 +323,7 @@ Pool:
     ;dw $0093, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF
     ;dw $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF
     ;dw $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF
-    warnpc $288480
+    assert pc() <= $288480
 
     org $288480 ; $140480
     .OWGFXGroupTable ; 0x500 (0xA0 * 0x08)
@@ -546,7 +546,7 @@ Pool:
     ;db $3A, $3B, $3C, $3D, $53, $57, $4C, $5B ; 0x9D
     ;db $3A, $3B, $3C, $3D, $57, $4C, $3E, $5B ; 0x9E
     ;db $3A, $3B, $3C, $3D, $53, $4D, $3E, $5B ; 0x9F
-    warnpc $288980
+    assert pc() <= $288980
 
     ; TODO: Add a way to edit these within ZS? Unsure.
     org $288980 ; $140980
@@ -591,7 +591,7 @@ Pool:
     ; SW
     db $3A, $3B, $3C, $3D, $47, $48, $3E, $5B
 
-    warnpc $288998 ; $140998
+    assert pc() <= $288998 ; $140998
 }
 
 ; Start of expanded space.
@@ -618,7 +618,7 @@ AnimateMirrorWarp_DecompressAnimatedTiles:
             
     RTL
 }
-warnpc $00D8EE
+assert pc() <= $00D8EE
 
 pullpc
 ReadAnimatedTable:
@@ -697,7 +697,7 @@ AnimateMirrorWarp_LoadSubscreen:
         
     RTL
 }
-warnpc $00DABB
+assert pc() <= $00DABB
 
 
 pullpc
@@ -780,7 +780,7 @@ Func00EEBB:
         
     RTL
 }
-warnpc $00EEE0
+assert pc() <= $00EEE0
 
 
 pullpc
@@ -825,7 +825,7 @@ Func00FF7C:
     RTL
 }
 ; This end point also uses up a null block at the end of the function.
-warnpc $00FFC0
+assert pc() <= $00FFC0
 
 
 ; ==============================================================================
@@ -837,25 +837,25 @@ warnpc $00FFC0
 org $028027 ; $010027
     JSR.w PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-warnpc $02802B
+assert pc() <= $02802B
 
 ; Dungeon_LoadSongBankIfNeeded:
 org $029C0C ; $011C0C
     JMP PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-warnpc $029C0F
+assert pc() <= $029C0F
 
 ; Mirror_LoadMusic:
 org $029D1E ; $011D1E
     JSR.w PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-warnpc $029D21
+assert pc() <= $029D21
 
 ; GanonEmerges_LoadPyramidArea:
 org $029F82 ; $011F82
     JSR.w PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-warnpc $029F85
+assert pc() <= $029F85
 
 ; Changes the function that loads overworld properties when exiting a dungeon.
 ; Includes removing asm that plays music in certain areas and changing how
@@ -1028,7 +1028,7 @@ PreOverworld_LoadProperties_LoadMain:
     
     RTS
 }
-warnpc $02856A ; $01056A
+assert pc() <= $02856A ; $01056A
 
 ; ==============================================================================
 
@@ -1085,7 +1085,7 @@ Func028632:
         
     RTS
 }
-warnpc $028697
+assert pc() <= $028697
 
 ; ==============================================================================
 
@@ -1120,7 +1120,7 @@ Func029AA6:
         
     RTS
 }
-warnpc $029AD3
+assert pc() <= $029AD3
 
 ; ==============================================================================
 
@@ -1346,7 +1346,7 @@ CustomOverworld_LoadSubscreenOverlay_PostInit:
         
     RTS
 }
-warnpc $02B0D2 ; $0130D2
+assert pc() <= $02B0D2 ; $0130D2
 
 ; ==============================================================================
 
@@ -1364,7 +1364,7 @@ Func02B2D4:
 
     RTL
 }
-warnpc $02B2E6 ; $0132E6
+assert pc() <= $02B2E6 ; $0132E6
 
 pullpc
 EnableSubScreenCheckForPyramid:
@@ -1441,7 +1441,7 @@ Func02B3A1:
     
     RTL
 }
-warnpc $02B40A ; $01340A
+assert pc() <= $02B40A ; $01340A
 
 
 ; ==============================================================================
@@ -1457,12 +1457,12 @@ Func02BC44:
         JSL BGControl
         BRA .BRANCH_IOTA
     
-    warnpc $02BC60 ; $013C60
+    assert pc() <= $02BC60 ; $013C60
 
     org $02BC60 ; $013C60
     .BRANCH_IOTA
 }
-warnpc $02BC60
+assert pc() <= $02BC60
 
 pullpc
 ReadOverlayArray:
@@ -1539,7 +1539,7 @@ Func02C02D:
     
     .dontMoveBg1
 }
-warnpc $02C039 ; $014039
+assert pc() <= $02C039 ; $014039
 
 pullpc
 ReadOverlayArray2:
@@ -1569,7 +1569,7 @@ pushpc
 org $02A07A ; $01207A
     JSR.w Overworld_LoadAreaPalettes
 
-warnpc $02A07D ; $01207D
+assert pc() <= $02A07D ; $01207D
 
 ; The main overworld palette loading routine un-hardcoded to load the custom
 ; main palette.
@@ -1634,7 +1634,7 @@ Overworld_LoadAreaPalettes:
         
     RTS
 }
-warnpc $02C6EB ; $0146EB
+assert pc() <= $02C6EB ; $0146EB
 
 ; ==============================================================================
 
@@ -1703,7 +1703,7 @@ RainAnimation:
 
     RTL
 }
-warnpc $02A52D ; $01252D
+assert pc() <= $02A52D ; $01252D
 
 ; ==============================================================================
 
@@ -1715,7 +1715,7 @@ warnpc $02A52D ; $01252D
 org $02AADB ; $012ADB
     JML MosaicAreaCheck
 
-warnpc $02AADF ; $012ADF
+assert pc() <= $02AADF ; $012ADF
 
 pullpc
 MosaicAreaCheck:
@@ -1760,7 +1760,7 @@ org $02ABBE ; $012BBE
     JSL NewOverworld_FinishTransGfx
     NOP : NOP : NOP
 
-warnpc $02ABC5 ; $012BC5
+assert pc() <= $02ABC5 ; $012BC5
 
 pullpc
 ; Loads the animated tiles after most of the transition gfx changes take place.
@@ -2193,7 +2193,7 @@ pushpc
 org $0ABC5A ; $053C5A
     JSL CheckForChangeGraphicsNormalLoad
 
-warnpc $0ABC5E ; $053C5E
+assert pc() <= $0ABC5E ; $053C5E
 
 ; Loads the animated tiles after the overworld map is closed.
 pullpc
@@ -2266,7 +2266,7 @@ Func0AB8F5:
         
     RTL
 }
-warnpc $0AB948 ; $053948
+assert pc() <= $0AB948 ; $053948
 
 pullpc
 LoadAmbientSound:
@@ -2395,7 +2395,7 @@ Overworld_LoadBGColorAndSubscreenOverlay:
         
     RTL
 }
-warnpc $0BFFA8 ; $05FFA8
+assert pc() <= $0BFFA8 ; $05FFA8
 
 pullpc
 print "ReplaceBGColor: ", pc
@@ -2481,7 +2481,7 @@ org $0ED627 ; $075627
     JML InitColorLoad2
     NOP
 
-warnpc $0ED62C ; $07562C
+assert pc() <= $0ED62C ; $07562C
 
 org $0ED652
 InitColorLoad2_Return:
@@ -2562,7 +2562,7 @@ Func0ED8AE:
         
     RTL
 }
-warnpc $0ED8FB ; $0758FB
+assert pc() <= $0ED8FB ; $0758FB
 
 ; ==============================================================================
 
@@ -2572,12 +2572,12 @@ warnpc $0ED8FB ; $0758FB
 org $00D673 ; $005673
     JML NewLoadTransAuxGFX
 
-warnpc $00D677 ; $005677
+assert pc() <= $00D677 ; $005677
 
 org $008C8A ; $000C8A
 dw NMI_UpdateChr_Bg2HalfAndAnimated
 
-warnpc $00D677 ; $005677
+assert pc() <= $00D677 ; $005677
 
 ; Replaces the UNREACHABLE_00D585 which is unused.
 org $00D585 ; $005585
@@ -2621,7 +2621,7 @@ NMI_UpdateChr_Bg2HalfAndAnimated:
     RTS
 }
 
-warnpc $00D5CB ; $0055CB
+assert pc() <= $00D5CB ; $0055CB
 
 pullpc
 
@@ -2788,22 +2788,22 @@ pushpc
 org $00E221 ; $006221
     JML InitTilesetsLongCalls
 
-warnpc $00E225 ; $006225
+assert pc() <= $00E225 ; $006225
 
 org $00D904 ; $005904
     JML AnimateMirrorWarp_DecompressNewTileSetsLongCalls
 
-warnpc $00D908 ; $005908
+assert pc() <= $00D908 ; $005908
 
 org $00D97D ; $00597D
     JML AnimateMirrorWarp_DecompressNewTileSetsLongCalls2
 
-warnpc $00D981 ; $005981
+assert pc() <= $00D981 ; $005981
 
 org $00D9BC ; $0059BC
     JML AnimateMirrorWarp_DecompressBackgroundsALongCalls
 
-warnpc $00D9C1 ; $0059C1
+assert pc() <= $00D9C1 ; $0059C1
 
 org $00DA2F ; $005A2F
     JML AnimateMirrorWarp_DecompressBackgroundsCLongCalls

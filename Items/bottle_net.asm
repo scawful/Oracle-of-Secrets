@@ -35,7 +35,7 @@ LinkItem_NewBottle:
   RTS
 }
 
-warnpc $07A249
+assert pc() <= $07A249
 
 pullpc
 

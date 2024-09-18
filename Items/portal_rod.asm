@@ -42,7 +42,7 @@ LinkItem_PortalRod:
   RTS
 }
 
-warnpc $07A568
+assert pc() <= $07A568
 
 ; Ancilla_CheckSpriteCollision
 org $088DC3

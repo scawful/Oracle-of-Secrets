@@ -187,4 +187,4 @@ JMP.w FortuneTeller_DisplayMessage
 #_0DC92A: LDA.b #$0F
 #_0DC92C: JSR FortuneTeller_PrepareNextMessage
 
-warnpc $0DC92F
+assert pc() <= $0DC92F

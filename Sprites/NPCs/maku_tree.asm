@@ -122,9 +122,10 @@ Sprite_MakuTree_Main:
   {
     %ShowSolicitedMessage($22) : BCC .no_talk
       LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
-      LDA.l CRYSTALS : BNE .no_essences
-        INC.w SprAction, X
-      .no_essences
+      ; TODO: Activate when dreams are implemented
+      ; LDA.l CRYSTALS : BNE .no_essences
+      ;   INC.w SprAction, X
+      ; .no_essences
     .no_talk
     RTS
   }

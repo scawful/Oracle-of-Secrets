@@ -386,7 +386,7 @@ FixMaskPaletteOnExit:
   RTL
 }
 
-warnpc $0AC387
+assert pc() <= $0AC387
 
 org $0ABC76
   JSL FixMaskPaletteOnExit

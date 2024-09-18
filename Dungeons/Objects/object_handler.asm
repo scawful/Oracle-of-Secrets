@@ -56,7 +56,7 @@ org $01B53C
     JSL InitHeavyPot
     JMP DrawBigGraySegment_hook
 
-warnpc $01B560
+assert pc() <= $01B560
 
 org $2C8000
 ; TODO: Fix the graphics used for the heavy pot in game

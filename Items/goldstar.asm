@@ -82,7 +82,7 @@ CheckForBallChain:
 pushpc
 org $08BF2D
   JSL BallChain_DrawOrReturn
-  warnpc $08BF32
+  assert pc() <= $08BF32
 pullpc
 
 ; $22D4C0 - Hooked into AncillaDraw_Hookshot @ _08BF2D

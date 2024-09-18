@@ -125,4 +125,4 @@ LinkItem_Ether:
   RTS
 }
 
-warnpc $07A4F6
+assert pc() <= $07A4F6

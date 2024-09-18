@@ -92,5 +92,5 @@ ChickenLady:
   #_1AFEFF: RTS
 }
 
-warnpc $01AFEFF
+assert pc() <= $01AFEFF
 pullpc

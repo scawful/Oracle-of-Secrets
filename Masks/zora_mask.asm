@@ -60,7 +60,7 @@ LinkItem_ZoraMask:
     RTS
 }
 
-warnpc $07A5CE
+assert pc() <= $07A5CE
 
 ; =========================================================
 
@@ -170,7 +170,7 @@ org $0782D2
   CLC
   RTS
 
-warnpc $0782DA
+assert pc() <= $0782DA
 
 pullpc
 

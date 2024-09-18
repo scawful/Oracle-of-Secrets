@@ -135,7 +135,7 @@ AttractScene_ThroneRoom:
 
   #_0CEFBE: SEP #$20
 }
-warnpc $0CEFC0
+assert pc() <= $0CEFC0
 
 ; ==========================================================
 

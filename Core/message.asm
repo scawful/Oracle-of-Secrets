@@ -48,4 +48,4 @@ MessageExpandedData:
 
 print "End of expanded dialogue          ", pc
 
-warnpc $3CA62A
+assert pc() <= $3CA62A

@@ -142,7 +142,7 @@ Pool:
     ;dw $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
     ;dw $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
     ;dw $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
-    ;warnpc $288140
+    ;assert pc() <= $288140
 
     ; ZS is weird with SW areas, so we are marking the bridge one specifically so we can find it later.
     org $288128
@@ -198,7 +198,7 @@ Pool:
     ;db $00, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
-    ;warnpc $288160
+    ;assert pc() <= $288160
 
     org $288160 ; $140160
     .MainPaletteTable ; 0xA0
@@ -234,7 +234,7 @@ Pool:
     ;db $04, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
-    ;warnpc $288200
+    ;assert pc() <= $288200
     
     org $288200 ; $140200
     .MosaicTable ; 0xA0
@@ -264,7 +264,7 @@ Pool:
     ;db $01, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
-    ;warnpc $2882A0
+    ;assert pc() <= $2882A0
 
     org $2882A0 ; $1402A0
     .AnimatedTable ; 0xA0
@@ -295,7 +295,7 @@ Pool:
     ;db $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B
     ;db $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B
     ;db $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B
-    ;warnpc $288340
+    ;assert pc() <= $288340
 
     org $288340 ; $140340
     .OverlayTable ; 0x140
@@ -338,7 +338,7 @@ Pool:
     ;dw $0093, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF
     ;dw $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF
     ;dw $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF
-    ;warnpc $288480
+    ;assert pc() <= $288480
 }
 
 ; Debug addresses
@@ -424,7 +424,7 @@ Func00D8D5:
             
     RTL
 }
-;warnpc $00D8EE
+;assert pc() <= $00D8EE
 
 else
 
@@ -473,7 +473,7 @@ Func00DA63:
         
     RTL
 }
-;warnpc $00DABB
+;assert pc() <= $00DABB
 
 else
 
@@ -572,7 +572,7 @@ Func00EEBB:
         
     RTL
 }
-;warnpc $00EEE0
+;assert pc() <= $00EEE0
 
 else
 
@@ -627,7 +627,7 @@ Func00FF7C:
         
     RTL
 }
-;warnpc $00FFC0 ; This end point also uses up a null block at the end of the function.
+;assert pc() <= $00FFC0 ; This end point also uses up a null block at the end of the function.
 
 else
 
@@ -654,25 +654,25 @@ if !Func0283EE = 1
 org $028027 ; $010027
     JSR PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-;warnpc $02802B
+;assert pc() <= $02802B
 
 ; Dungeon_LoadSongBankIfNeeded:
 org $029C0C ; $011C0C
     JMP PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-;warnpc $029C0F
+;assert pc() <= $029C0F
 
 ; Mirror_LoadMusic:
 org $029D1E ; $011D1E
     JSR PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-;warnpc $029D21
+;assert pc() <= $029D21
 
 ; GanonEmerges_LOadPyramidArea:
 org $029F82 ; $011F82
     JSR PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-;warnpc $029F85
+;assert pc() <= $029F85
 
 ; Changes the function that loads overworld properties when exiting a dungeon.
 ; Includes removing asm that plays music in certain areas and changing how animated tiles are loaded.
@@ -844,7 +844,7 @@ PreOverworld_LoadProperties_LoadMain:
     
     RTS
 }
-;warnpc $02856A ; $01056A
+;assert pc() <= $02856A ; $01056A
 
 else
 
@@ -977,7 +977,7 @@ Func028632:
         
     RTS
 }
-;warnpc $028697
+;assert pc() <= $028697
 
 else
 
@@ -1033,7 +1033,7 @@ Func029AA6:
         
     RTS
 }
-;warnpc $029AD3
+;assert pc() <= $029AD3
 
 else
 
@@ -1265,7 +1265,7 @@ Func02AF58:
         
     RTS
 }
-;warnpc $02B0D2 ; $0130D2
+;assert pc() <= $02B0D2 ; $0130D2
 
 else
 
@@ -1338,7 +1338,7 @@ Func02B2D4:
 
     RTL
 }
-;warnpc $02B2E6 ; $0132E6
+;assert pc() <= $02B2E6 ; $0132E6
 
 else
 
@@ -1429,7 +1429,7 @@ Func02B3A1:
     
     RTL
 }
-;warnpc $02B40A ; $01340A
+;assert pc() <= $02B40A ; $01340A
 
 else
 
@@ -1465,12 +1465,12 @@ Func02BC44:
         JSL BGControl
         BRA .BRANCH_IOTA
     
-    ;warnpc $02BC60 ; $013C60
+    ;assert pc() <= $02BC60 ; $013C60
 
     org $02BC60 ; $013C60
     .BRANCH_IOTA
 }
-;warnpc $02BC60
+;assert pc() <= $02BC60
 
 else
 
@@ -1544,7 +1544,7 @@ Func02C02D:
     
     .dontMoveBg1
 }
-;warnpc $02C039 ; $014039
+;assert pc() <= $02C039 ; $014039
 
 else
 
@@ -1583,7 +1583,7 @@ if !Func02C692 = 1
 org $02A07A ; $01207A
     JSR Overworld_LoadAreaPalettes
 
-;warnpc $02A07D ; $01207D
+;assert pc() <= $02A07D ; $01207D
 
 ; The main overworld palette loading routine un-hardcoded to load the custom main palette.
 org $02C692 ; $014692
@@ -1621,7 +1621,7 @@ Overworld_LoadAreaPalettes:
         
     RTS
 }
-;warnpc $02C6EB ; $0146EB
+;assert pc() <= $02C6EB ; $0146EB
 
 else
 
@@ -1705,7 +1705,7 @@ RainAnimation:
 
     RTL
 }
-;warnpc $02A52D ; $01252D
+;assert pc() <= $02A52D ; $01252D
 
 else
 
@@ -1734,7 +1734,7 @@ if !Func02AADB = 1
 org $02AADB ; $012ADB
     JML MosaicAreaCheck
 
-;warnpc $02AADF ; $012ADF
+;assert pc() <= $02AADF ; $012ADF
 
 else
 
@@ -1781,7 +1781,7 @@ if !Func02ABB8 = 1
 org $02ABB8 ; $012BB8
     JML CheckForChangeGraphicsTransitionLoad
 
-;warnpc $02ABBC ; $012BBC
+;assert pc() <= $02ABBC ; $012BBC
 
 else
 
@@ -1994,7 +1994,7 @@ if !Func0ABC5A = 1
 org $0ABC5A ; $053C5A
     JSL CheckForChangeGraphicsNormalLoad
 
-;warnpc $0ABC5E ; $053C5E
+;assert pc() <= $0ABC5E ; $053C5E
 
 else
 
@@ -2091,7 +2091,7 @@ Func0AB8F5:
         
     RTL
 }
-;warnpc $0AB948 ; $053948
+;assert pc() <= $0AB948 ; $053948
 
 else
 
@@ -2235,7 +2235,7 @@ Overworld_LoadBGColorAndSubscreenOverlay:
         
     RTL
 }
-;warnpc $0BFFA8 ; $05FFA8
+;assert pc() <= $0BFFA8 ; $05FFA8
 
 else
 
@@ -2350,7 +2350,7 @@ org $0ED627 ; $075627
     JML InitColorLoad2
     NOP
 
-;warnpc $0ED62C ; $07562C
+;assert pc() <= $0ED62C ; $07562C
 
 else 
 
@@ -2438,7 +2438,7 @@ Func0ED8AE:
         
     RTL
 }
-;warnpc $0ED8FB ; $0758FB
+;assert pc() <= $0ED8FB ; $0758FB
 
 else
 

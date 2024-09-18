@@ -323,7 +323,7 @@ SearchForEquippedItem:
   JSL SearchForEquippedItem_Override
   RTS
 }
-warnpc $0DE3C7
+assert pc() <= $0DE3C7
 
 ; =========================================================
 

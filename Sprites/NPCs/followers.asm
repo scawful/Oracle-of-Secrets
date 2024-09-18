@@ -285,7 +285,7 @@ SpritePrep_Locksmith:
 
   RTS
 }
-warnpc $068D7F
+assert pc() <= $068D7F
 
 SpriteDraw_Locksmith = $06BDAC
 Sprite_CheckIfActive_Bank06 = $06D9EC
@@ -425,7 +425,7 @@ Sprite_39_ZoraBaby:
   }
 }
 print "End of Sprite 39 Locksmith          ", pc
-warnpc $06BD9C
+assert pc() <= $06BD9C
 
 pullpc
 

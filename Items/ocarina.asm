@@ -85,7 +85,7 @@ Song_of_Storms:
 
   db $00 ; end sfx
 }
-; warnpc $1A8FD4
+; assert pc() <= $1A8FD4
 
 ; A, D, F, A, D, F
 ; SFX3_27 Agahnim charge
@@ -121,7 +121,7 @@ Song_of_Time:
 
   db $00 ; end sfx
 }
-warnpc $1A922B
+assert pc() <= $1A922B
 
 ; =========================================================
 
@@ -485,4 +485,4 @@ RainAnimation_Overridden:
 
     RTL
 }
-warnpc $02A52D
+assert pc() <= $02A52D

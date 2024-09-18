@@ -207,7 +207,7 @@ print  "End of ice_block.asm              ",  pc
 incsrc "Sprites/NPCs/ranch_girl.asm"
 print  "End of Ranch Girl.asm             ", pc
 
-warnpc $328000
+assert pc() <= $328000
 
 ; =========================================================
 
@@ -314,7 +314,7 @@ org $0083F8
   .notInCutscene
   RTS
 
-warnpc $00841E
+assert pc() <= $00841E
 
 ; =========================================================
 
@@ -344,7 +344,7 @@ ShopItem_Banana:
   .error
   JSR $F38A ; ShopItem_PlayBeep
 }
-warnpc $1EF2AB
+assert pc() <= $1EF2AB
 
 ; =========================================================
 

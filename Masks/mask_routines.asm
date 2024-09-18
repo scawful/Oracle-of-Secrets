@@ -1324,7 +1324,7 @@ LinkOAM_DrawShield:
 
   .shield_continue
 }
-warnpc $0DA79C
+assert pc() <= $0DA79C
 
 ; Hide sword while deku hover
 org $0DA5EA

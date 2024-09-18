@@ -1164,7 +1164,7 @@ Follower_BasicMover:
     LDA.b #$15 : STA.w $012C
 
     RTS
-    warnpc $09A23A
+    assert pc() <= $09A23A
   
   org $09A23A
   .no_blind_transform
@@ -1260,7 +1260,7 @@ Blind_SpawnFromMaiden:
   RTL
 }
 
-warnpc $1DA081
+assert pc() <= $1DA081
 
 ; =========================================================
 ; We are using space from this function to insert the 
@@ -1303,7 +1303,7 @@ SpritePrep_Blind_PrepareBattle:
     RTL
 }
 
-warnpc $1DA0B1
+assert pc() <= $1DA0B1
 
 org $01B3E1
   RoomDraw_BombableFloor:

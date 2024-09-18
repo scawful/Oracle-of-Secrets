@@ -52,7 +52,7 @@ LinkItem_DekuMask:
   RTS
 }
 
-warnpc $07A6BE
+assert pc() <= $07A6BE
 
 ; =========================================================
 
@@ -143,7 +143,7 @@ LinkState_UsingQuake:
   RTS
 }
 
-warnpc $07A779
+assert pc() <= $07A779
 
 ; LinkHop_FindArbitraryLandingSpot
 ; Allow LinkState 0x0A to use velocity

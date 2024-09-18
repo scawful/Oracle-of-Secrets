@@ -23,7 +23,7 @@ org $07AFF8 ; LinkItem_BugCatchingNet
 org $07D242
   JSL CheckIfJumpingForSpikeDamage
   NOP #2
-warnpc $07D248
+assert pc() <= $07D248
 
 ; =========================================================
 

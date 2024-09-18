@@ -50,7 +50,7 @@ LinkItem_FishingRodAndPortalRod:
   RTS
 }
 
-warnpc $07AFB4
+assert pc() <= $07AFB4
 
 pullpc
 
@@ -198,7 +198,7 @@ Prizes:
   db $D8, $D2, $D2, $D2, $D9, $DA, $DB, $DC, $DF, $E0, $E1, $D9, $D9, $DA, $D9, $DA
 
 
-;warnpc $07A64A
+;assert pc() <= $07A64A
 
 
 fishingrodgfx:
