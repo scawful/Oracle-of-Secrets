@@ -10,13 +10,15 @@ incsrc "Items/goldstar.asm"
 incsrc "Items/portal_rod.asm"
 incsrc "Items/fishing_rod.asm"
 incsrc "Items/magic_rings.asm"
+incsrc "Items/fist_damage.asm"
+print  "End of Items/fist_damage.asm      ", pc
 
 MagicBeanGfx:
   incbin "gfx/magic_bean.bin"
 
 MagicBeanSwapDynamicGfx:
 {
-  PHX 
+  PHX
   PHP
 
   REP #$30
