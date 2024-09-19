@@ -13,7 +13,7 @@ org $078021
   Player_DoSfx1:
 
 ; =========================================================
-; Song of Healing 
+; Song of Healing
 
 ; SFX2_Accomp
 ; SFX2 13 (Previous $3E)
@@ -70,7 +70,7 @@ Song_of_Storms:
   db !Storms_Duration2
   db !Storms_Params ; duration 1/2
   db $9A ; play note D3
-  
+
   db !Storms_Duration
   db !Storms_Params2 ; duration 1/4
   db $9C ; play note E3
@@ -90,7 +90,7 @@ Song_of_Storms:
 ; A, D, F, A, D, F
 ; SFX3_27 Agahnim charge
 ; 0x003B
-org $1A91F0 
+org $1A91F0
 Song_of_Time:
 {
   !Time4th = $2A
@@ -100,24 +100,24 @@ Song_of_Time:
 
   db !Time4th    ; duration 1/4
   db !TimeParams ; params
-  db $9A ; play note D3
+  db A3
 
   db $54         ; duration 1/2
   db !TimeParams ; params
-  db $9D ; play note F3
+  db D3
 
   db !Time4th    ; duration 1/4
   db !TimeParams ; params
-  db $9F ; play note A3
-  db $9A ; play note D3
+  db F3
+  db A3
 
   db $54 ; duration 1/2
   db !TimeParams ; params
-  db $9D ; play note F3
+  db D3
 
   db !Time4th    ; duration 1/4
   db !TimeParams ; params
-  db $9F ; play note A3
+  db F3
 
   db $00 ; end sfx
 }
@@ -150,13 +150,13 @@ LinkItem_NewFlute:
 
   .y_button_not_held
 
-  ; Check for Switch Swong 
+  ; Check for Switch Swong
   JSR UpdateFluteSong
   JSR Link_CheckNewY_ButtonPress : BCC ReturnFromFluteHook
-  
+
   ; Success... play the flute.
   LDA.b #$80 : STA.w $03F0
-  
+
   LDA.w $030F
   CMP.b #$01 : BEQ .song_of_storms
   CMP.b #$02 : BEQ .song_of_healing
@@ -169,7 +169,7 @@ LinkItem_NewFlute:
   RTS
 
   .song_of_healing
-  LDA.b #$13 : JSR Player_DoSfx2 
+  LDA.b #$13 : JSR Player_DoSfx2
   LDA.b #$01 : STA $FE
   RTS
 
@@ -184,7 +184,7 @@ LinkItem_NewFlute:
 
   ; Are we indoors?
   LDA.b $1B : BNE .return
-  
+
   ; Are we in the dark world? Then become Moosh form.
   LDA.b $8A : AND #$40 : BEQ .light_world
     JSL Link_TransformMoosh
@@ -193,42 +193,42 @@ LinkItem_NewFlute:
 
   ; Also doesn't work in special areas like Master Sword area.
   LDA.b $10 : CMP.b #$0B : BEQ .return
-  
+
   LDX.b #$04
 
   .next_ancillary_slot
 
   ; Is there already a travel bird effect in this slot?
   LDA $0C4A, X : CMP.b #$27 : BEQ .return
-  
+
   ; If there isn't one, keep checking.
   DEX : BPL .next_ancillary_slot
 
   ; Paul's weathervane stuff Do we have a normal flute (without bird)?
   LDA $7EF34C : CMP.b #$02 : BNE .travel_bird_already_released
-  
+
   REP #$20
 
   ; check the area, is it #$18 = 30?
   LDA $8A : CMP.w #$0018 : BNE .not_weathervane_trigger
-  
+
   ; Y coordinate boundaries for setting it off.
   LDA $20
-  
+
   CMP.w #$0760 : BCC .not_weathervane_trigger
   CMP.w #$07E0 : BCS .not_weathervane_trigger
-  
+
   ; do if( (Ycoord >= 0x0760) && (Ycoord < 0x07e0
   LDA $22
-  
+
   CMP.w #$01CF : BCC .not_weathervane_trigger
   CMP.w #$0230 : BCS .not_weathervane_trigger
-  
+
   ; do if( (Xcoord >= 0x1cf) && (Xcoord < 0x0230)
   SEP #$20
   ; Apparently a special Overworld mode for doing this?
   LDA.b #$2D : STA $11
-  
+
   ; Trigger the sequence to start the weathervane explosion.
   LDY.b #$00
   LDA.b #$37
@@ -284,7 +284,7 @@ OcarinaEffect_SummonStorms:
     CMP.b #$18 : BEQ .errorBeep
     CMP.b #$28 : BEQ .errorBeep
     CMP.b #$29 : BEQ .errorBeep
-    
+
     ; If the rain is already summoned, dismiss it
     LDA.l $7EE00E : BEQ .summonStorms
       .dismissStorms
@@ -316,7 +316,7 @@ CheckForZoraEvent:
   LDA $20 : CMP.w #$06E8 : BNE .notZora
   LDA $22 : CMP.w #$0C48 : BNE .notZora
     LDA.b #$01 : STA $04C6
-    SEC 
+    SEC
     RTS
   .notZora
   CLC
@@ -342,7 +342,7 @@ CheckRealTable:
   CMP.b #$9F : BNE .not_rain_area
     RTL
   .not_rain_area
-  
+
   JML RainAnimation_Overridden_skipMovement
 }
 
@@ -354,7 +354,7 @@ ResetOcarinaFlag:
   LDA #$0000 : STA.l $7EE00E
   SEP #$30
 .continue
-  LDA.w $0416 : ASL A 
+  LDA.w $0416 : ASL A
   RTL
 }
 
