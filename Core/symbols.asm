@@ -24,7 +24,7 @@ SprMiscB     = $0DB0 ; Various usages, truly auxiliary
 SprMiscC     = $0DE0 ; Cardinal direction the sprite is facing
 SprMiscD     = $0E90 ; Pikit stolen item, misc usage
 SprMiscE     = $0EB0 ; Head direction 0123 -> udlr
-SprMiscF     = $0EC0 ; 
+SprMiscF     = $0EC0 ;
 SprMiscG     = $0ED0 ;
 
 ; Used in sprite state 0x03 (falling in water)
@@ -55,7 +55,7 @@ SprSubtype   = $0E30 ; Sprite subtype
 ;   w - Causes enemies to go towards the walls
 ;   m - Master sword ceremony sprite flag
 ;   h - If set, harmless. Unset you take damage from contact.
-SprNbrOAM    = $0E40 
+SprNbrOAM    = $0E40
 SprHealth    = $0E50
 
 ; 0x00 - Sprite is dead, totally inactive
@@ -63,10 +63,10 @@ SprHealth    = $0E50
 ; 0x02 - Sprite transforms into a puff of smoke, often producing an item
 ; 0x03 - Sprite falling into deep water (optionally making a fish jump up?)
 ; 0x04 - Death mode for bosses
-; 0x05 - Sprite falling into a pit that has a special animation 
+; 0x05 - Sprite falling into a pit that has a special animation
 ; 0x06 - Death Mode for normal creatures.
-; 0x08 - Sprite is being spawned at load time. 
-;      An initialization routine will be run for one frame, 
+; 0x08 - Sprite is being spawned at load time.
+;      An initialization routine will be run for one frame,
 ;      and then move on to the active state (0x09) next frame.
 ; 0x09 - Sprite is in the normal, active mode.
 ; 0x0A - Sprite is being carried by the player.
@@ -86,7 +86,7 @@ SprGfxProps  = $0E60
 SprCollision = $0E70 
 
 
-; Definitely closely tied to the process of a sprite taking damage. 
+; Definitely closely tied to the process of a sprite taking damage.
 ; Seems to serve as a palette cycling index, or a state variable.
 ; When this value is positive
 ; 0x80 -  Signal that the recoil process has finished
@@ -101,7 +101,7 @@ SprDeath     = $0EF0
 SprYRecoil   = $0F30
 SprXRecoil   = $0F40
 
-; DIWS UUUU 
+; DIWS UUUU
 ;   D - boss death
 ;   I - Impervious to all attacks
 ;   W - Water slash
@@ -109,7 +109,7 @@ SprXRecoil   = $0F40
 ;   U - Unused
 SprProps     = $0F50
 
-; ISPH HHHH 
+; ISPH HHHH
 ;   I - ignore collisions
 ;   S - Statis (not alive eg beamos)
 ;   P - Persist code still run outside of camera
@@ -154,7 +154,7 @@ SprDmgTaken       = $0CE2
 
 ; Sprite Deflection Properties
 ;   abcdefgh
-;   a - If set, sprite is active 
+;   a - If set, sprite is active
 ;   b - Same as bit 'a' for Zora.
 ;   c - Never queried, pushable interaction flag
 ;   d - If hit from front, deflect Ice Rod, Somarian missile,
@@ -178,7 +178,7 @@ SprDefl      = $0CAA
 SprPrize     = $0BE0
 
 ; tttt a.bp
-;   t - tile interaction hitbox 
+;   t - tile interaction hitbox
 ;   a - deflect arrows TODO VERIFY
 ;   b - boss death
 ;   p - Sprite ignores falling into a pit when frozen?
@@ -210,7 +210,7 @@ SprDrop      = $0CBA ;X W 00: Drop nothing, 01: drop normal key, 03: Drop green 
 ; Xxxxxxxxx = X position of the sprite. signed but see below.
 ; yyyyyyyy  = Y position of the sprite.
 ; cccccccc  = First tile of the sprite.
-; N         = Name table of the sprite. See below for VRAM address calculation 
+; N         = Name table of the sprite. See below for VRAM address calculation
 ; ppp       = Palette of the sprite. The first palette index is 128+ppp*16.
 ; oo        = Sprite priority. See below for details.
 ; h/v       = Horizontal/Vertical flip flags.
@@ -231,7 +231,7 @@ SpritePrep_ResetProperties = $0DB871
 Sprite_PrepOamCoord =  $06E416
 
 ; =========================================================
-; Draw the sprite depending of the position of the player 
+; Draw the sprite depending of the position of the player
 ; (if he has to be over or under link)
 Sprite_OAM_AllocateDeferToPlayer = $06F864
 
@@ -270,7 +270,7 @@ Sprite_Decelerate_X = $05E657
 Sprite_Decelerate_Y = $05E666
 
 ; =========================================================
-; args: 
+; args:
 ; pos1_low  = $00
 ; pos1_size = $02
 ; pos2_low  = $04
@@ -358,7 +358,7 @@ Sound_SetSfx3PanLong = $0DBB8A
 ; =========================================================
 ; spawn a new sprite on screen, A = sprite id
 ; when using this function you have to set the position yourself
-; these values belong to the sprite who used that function not the new one 
+; these values belong to the sprite who used that function not the new one
 ; $00 low x, $01 high x
 ; $02 low y, $03 high y
 ; $04 height, $05 low x (overlord)
@@ -404,7 +404,7 @@ Sprite_ShowSolicitedMessage = $05E1A7
 Sprite_ShowSolicitedMessageIfPlayerFacing = $05E1A7
 
 ; =========================================================
-; show a message if we touch the sprite 
+; show a message if we touch the sprite
 ; should be used with Sprite_PlayerCantPassThrough
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
@@ -446,7 +446,7 @@ Sprite_SpawnProbeAlways_long = $05C66E
 Sprite_TrackBodyToHead = $05DCA2
 
 ; =========================================================
-; Misc long functions 
+; Misc long functions
 
 GetRandomInt = $0DBA71
 
@@ -484,9 +484,9 @@ AreaIndex    = $8A ; Return the current overworld area ID
 
 MsgChoice    = $1CE8 ; Choice made in a message box
 
-; set the mosaic setting ($2106) XXXXDCBA 
+; set the mosaic setting ($2106) XXXXDCBA
 ;   [ABCD BG1/BG2/BG3/BG4][X size of the mosaic pixels 0-16]
-Mosaic       = $95 
+Mosaic       = $95
 
 DungeonMainCheck = $021B
 SpriteRanCheck = $8E
@@ -506,25 +506,25 @@ RebuildHUD_long = $0DFA58
 ; =========================================================
 ; Controllers
 
-; BYSTUDLR 
+; BYSTUDLR
 ;   [B BButton][Y YButton]
 ;   [SSelect Button][TStart Button]
 ;   [UDLR dpad buttons Up, Down, Left, Right]
 RawJoypad1L  = $F0
-; AXLRIIII 
-;   [A AButton][X Xbutton][L LButton][R RButton][I = controller ID] 
+; AXLRIIII
+;   [A AButton][X Xbutton][L LButton][R RButton][I = controller ID]
 RawJoypad1H  = $F2
 
-; BYSTUDLR 
+; BYSTUDLR
 ;  [B BButton][Y YButton]
 ;  [SSelect Button][TStart Button]
 ;  [UDLR dpad buttons Up, Down, Left, Right]
 PressPad1L   = $F4
 
-; AXLRIIII 
+; AXLRIIII
 ;  [A AButton][X Xbutton]
 ;  [L LButton][R RButton][I = controller ID]
-PressPad1H   = $F6 
+PressPad1H   = $F6
 
 ButtonAFlag  = $3B ; bit7: Button A is down (A-------)
 
@@ -552,9 +552,9 @@ LinkX        = $22 ; Position X of link
 LinkXH       = $23 ; High position X of link
 LinkZ        = $24 ; Position Z of link
 
-; ----UDLR 
-;  [U Up][D Down][L Left][R Right] 
-;  Direction link is pushing against 
+; ----UDLR
+;  [U Up][D Down][L Left][R Right]
+;  Direction link is pushing against
 LinkPushDir   = $26
 
 ; Link's recoiling speed
@@ -570,16 +570,16 @@ LinkRecoilZ   = $29
 LinkSubVelY  = $2A
 LinkSubVelX  = $2B
 
-; Direction link is facing 
+; Direction link is facing
 ; 00:Up, 02:Down, 04:Left, 06:Right
 LinkFaceDir  = $2F
 
-; Last direction link moved towards 
+; Last direction link moved towards
 ; 00:Up, 01:Down, 02:Left, 03:Right
 LinkLastDir  = $66
 
-; ----UDLR 
-;  [U Up][D Down][L Left][R Right] 
+; ----UDLR
+;  [U Up][D Down][L Left][R Right]
 ;  direction link is "walking towards"
 LinkMoveDir  = $67
 
@@ -595,7 +595,7 @@ LinkSpeed    = $57
 ; 0x00: normal speed, 0x02: walking on stair speed, 0x10: dashing speed
 LinkSpeedTbl = $5E
 
-; if is set to 0x02 or 0x03 link is falling 
+; if is set to 0x02 or 0x03 link is falling
 LinkFalling  = $5B
 FallTimer    = $5C
 
@@ -635,18 +635,18 @@ LinkState    = $5D
 ; 0: Link is not in a doorway
 ; 1: is in a vertical doorway
 ; 2: is in horizontal doorway
-LinkDoorway  = $6C 
+LinkDoorway  = $6C
 
 ; 0: Nothing
 ; 1: a hand in the air
 ; 2: 2 hands in the air (like getting triforce)
-LinkGrabGfx  = $02DA 
+LinkGrabGfx  = $02DA
 
 ; if not 0 add a poof gfx on link
-LinkPoofGfx  = $02E1 
+LinkPoofGfx  = $02E1
 
 ; Bunny timer for link before transforming back
-LinkBunTimer = $02E2 
+LinkBunTimer = $02E2
 
 ; if not 0 prevent link from moving and opening the menu
 LinkMenuMove = $02E4
@@ -654,14 +654,14 @@ LinkMenuMove = $02E4
 ; if not 0 prevent link from getting any damages from sprites
 LinkDamage   = $037B
 
-; ----CCCC 
+; ----CCCC
 ;  [C Touching chest id]
 LinkColChest = $02E5
 
 ; 0: Not on somaria platform, 2: On somaria platform
 LinkSomaria  = $02F5
 
-; BP-AETHR 
+; BP-AETHR
 ;   [B Boomerang][P Powder]
 ;   [A Bow&Arrows][E UnusedItem]
 ;   [T UnusedItem][H Hammer][R Rods]
@@ -870,14 +870,15 @@ AncillaAdd_Snoring = $0980C8
 AncillaAdd_Bomb = $09811F
 AncillaAdd_Boomerang = $09820F
 AncillaAdd_BoomerangAsClink = $098345
-AddHappinessPondRupees = $098AE0
 AncillaAdd_DugUpFlute = $098C73
 AncillaAdd_ChargedSpinAttackSparkle = $098CB1
 AncillaAdd_ExplodingWeatherVane = $098D11
 AncillaAdd_CutsceneDuck = $098D90
 AncillaAdd_SomariaPlatformPoof = $098DD2
 AncillaAdd_SuperBombExplosion = $098DF9
+
 ConfigureRevivalAncillae = $098E4E
+
 AncillaAdd_CaneOfByrnaInitSpark = $098EE0
 AncillaAdd_LampFlame = $098F1C
 AncillaAdd_ShovelDirt = $098F5B
@@ -895,6 +896,8 @@ AncillaAdd_IceRodShot = $099863
 AncillaAdd_Splash = $0998FC
 AncillaAdd_Hookshot = $099B10
 AncillaAdd_Blanket = $098091
+
+AddHappinessPondRupees = $098AE0
 
 DeleteBoomAndByrnaSparks = $0FFD86
 
