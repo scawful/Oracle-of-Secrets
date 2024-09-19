@@ -84,22 +84,21 @@ Sprite_Mermaid_Prep:
 
 Sprite_Mermaid_Main:
 {
-  LDA.w SprAction, X
+  LDA.w SprMiscE, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
-  dw MermaidWait
-  dw MermaidDive
-  dw MermaidSwim
+  dw MermaidHandler
+  dw MapleHandler
+  dw LibrarianHandler
 
-  dw MapleIdle
-  dw Maple_BoughtMilkBottle
-  dw Maple_NotEnoughRupees
+  MermaidHandler:
+  {
+    LDA.w SprAction, X
+    JSL JumpTableLocal
 
-  dw LibrarianIdle
-  dw Librarian_OfferTranslation
-
-  dw Maple_HandlePlayerResponse
-  dw Maple_ComeBackAgain
+    dw MermaidWait
+    dw MermaidDive
+    dw MermaidSwim
 
   MermaidWait:
   {
@@ -145,20 +144,32 @@ Sprite_Mermaid_Main:
       +
     RTS
   }
-
-  MapleIdle:
-  {
-    %PlayAnimation(0,1,16)
-    JSL Sprite_PlayerCantPassThrough
-
-    %ShowSolicitedMessage($0187) : BCC .didnt_talk
-      %GotoAction(8) ; Handle player response
-    .didnt_talk
-    RTS
   }
 
-  Maple_BoughtMilkBottle:
+  MapleHandler:
   {
+    LDA.w SprAction, X
+    JSL JumpTableLocal
+
+    dw MapleIdle
+    dw Maple_BoughtMilkBottle
+    dw Maple_NotEnoughRupees
+    dw Maple_HandlePlayerResponse
+    dw Maple_ComeBackAgain
+
+    MapleIdle:
+    {
+      %PlayAnimation(0,1,16)
+      JSL Sprite_PlayerCantPassThrough
+
+      %ShowSolicitedMessage($0187) : BCC .didnt_talk
+        %GotoAction(3) ; Handle player response
+      .didnt_talk
+      RTS
+    }
+
+    Maple_BoughtMilkBottle:
+    {
     REP #$20
     LDA.l $7EF360
     CMP.w #$1E ; 30 rupees
@@ -170,25 +181,18 @@ Sprite_Mermaid_Main:
       LDA.l $7EF35E : CMP.b #$02 : BEQ .bottle3_available
       LDA.l $7EF35F : CMP.b #$02 : BEQ .bottle4_available
         %ShowUnconditionalMessage($033)
-        %GotoAction(3)
+        %GotoAction(0)
         RTS
 
       .bottle1_available
-      LDA.b #$0A : STA.l $7EF35C
-      JMP .finish_storage
-
+      LDA.b #$0A : STA.l $7EF35C : JMP .finish_storage
       .bottle2_available
-      LDA.b #$0A : STA.l $7EF35D
-      JMP .finish_storage
-      
+      LDA.b #$0A : STA.l $7EF35D : JMP .finish_storage
       .bottle3_available
-      LDA.b #$0A : STA.l $7EF35E
-      JMP .finish_storage
-
+      LDA.b #$0A : STA.l $7EF35E : JMP .finish_storage
       .bottle4_available
       LDA.b #$0A : STA.l $7EF35F
       .finish_storage
-
       REP #$20
       LDA.l $7EF360
       SEC
@@ -197,19 +201,46 @@ Sprite_Mermaid_Main:
       SEP #$30
 
       %ShowUnconditionalMessage($0188) ; Thank you!
-      %GotoAction(3)
+      %GotoAction(0)
       RTS
     .not_enough_rupees
-    %GotoAction(6)
+    %GotoAction(2)
     RTS
+    }
+
+    Maple_NotEnoughRupees:
+    {
+    %ShowUnconditionalMessage($0189) ; You don't have enough rupees!
+    %GotoAction(0)
+    RTS
+    }
+
+    Maple_HandlePlayerResponse:
+    {
+    LDA $1CE8 : BEQ .player_said_yes
+      %GotoAction(4)
+      RTS
+    .player_said_yes
+    %GotoAction(1)
+    RTS
+    }
+
+    Maple_ComeBackAgain:
+    {
+    %ShowUnconditionalMessage($018B) ; Come back again!
+    %GotoAction(0)
+      RTS
+    }
+
   }
 
-  Maple_NotEnoughRupees:
+  LibrarianHandler:
   {
-    %ShowUnconditionalMessage($0189) ; You don't have enough rupees!
-    %GotoAction(3)
-    RTS
-  }
+    LDA.w SprAction, X
+    JSL JumpTableLocal
+
+    dw LibrarianIdle
+    dw Librarian_OfferTranslation
 
   LibrarianIdle:
   {
@@ -229,23 +260,8 @@ Sprite_Mermaid_Main:
     %ShowSolicitedMessage($012C)
     RTS
   }
-
-  Maple_HandlePlayerResponse:
-  {
-    LDA $1CE8 : BEQ .player_said_yes
-      %GotoAction(9)
-      RTS
-    .player_said_yes
-    %GotoAction(4)
-    RTS
   }
 
-  Maple_ComeBackAgain:
-  {
-    %ShowUnconditionalMessage($018B) ; Come back again!
-    %GotoAction(3)
-    RTS
-  }
 }
 
 Librarian_CheckForAllMaps:
@@ -279,17 +295,17 @@ Sprite_Mermaid_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -306,20 +322,16 @@ Sprite_Mermaid_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
 
   RTS
-
 
   .start_index
   db $00, $02, $04, $05
