@@ -121,13 +121,13 @@ Sprite_BeanVendor_Main:
     RTS
   }
 
-  
+
   ; 0x01 - Liftable Magic Bean
   MagicBean:
   {
     %StartOnFrame(1)
     %PlayAnimation(1,1,1)
-    
+
     ; TODO: Finish bottle logic
     LDA.w SprMiscE, X : CMP.b #$01 : BEQ .not_lifting
     LDA.w $0309 : CMP.b #$02 : BNE .not_lifting
@@ -136,7 +136,7 @@ Sprite_BeanVendor_Main:
       LDA.l $7EF35D : CMP.b #$02 : BEQ .bottle2_available
       LDA.l $7EF35E : CMP.b #$02 : BEQ .bottle3_available
       LDA.l $7EF35F : CMP.b #$02 : BEQ .bottle4_available
-      
+
       %ShowUnconditionalMessage($033)
       JMP .not_lifting
 
@@ -149,7 +149,7 @@ Sprite_BeanVendor_Main:
       LDA.b #$09 : STA.l $7EF35D
       %ShowUnconditionalMessage($034)
       JMP .finish_storage
-      
+
       .bottle3_available
       LDA.b #$09 : STA.l $7EF35E
       %ShowUnconditionalMessage($034)
@@ -165,7 +165,7 @@ Sprite_BeanVendor_Main:
 
     .not_lifting
     JSL Sprite_CheckIfLifted
-    
+
     RTS
   }
 
@@ -175,7 +175,7 @@ Sprite_BeanVendor_Main:
     %PlayAnimation(2,3,16)
     JSL Sprite_PlayerCantPassThrough
     REP #$30
-    LDA.l $7EF3C7 
+    LDA.l $7EF3C7
     AND.w #$00FF
     SEP #$30
     CMP.b #$07 : BCS .already_met
@@ -211,7 +211,7 @@ Sprite_BeanVendor_Main:
         LDA.w SprY, X : STA $02
         LDA.w SprYH, X : STA $03
         LDA.w SprXH, X : STA $01
-        LDA.b #$07 
+        LDA.b #$07
         JSL   Sprite_SpawnDynamically
         JSL   Sprite_SetSpawnedCoords
         LDA.b #$01 : STA.w SprAction, Y
@@ -242,7 +242,7 @@ Sprite_BeanVendor_Main:
       %ShowUnconditionalMessage($146)
       %GotoAction(6)
     .not_ready
-    RTS 
+    RTS
   }
 
   KaeoporaGaebora_Respond:
@@ -277,7 +277,7 @@ Sprite_BeanVendor_Main:
 
 ReleaseMagicBean:
 {
-  ; X is the bottle ID 
+  ; X is the bottle ID
   LDA.b $8A : CMP.b #$00 : BNE .not_the_ranch
     LDA.b #$07
     JSL Sprite_SpawnDynamically
@@ -315,17 +315,17 @@ Sprite_BeanVendor_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -342,14 +342,12 @@ Sprite_BeanVendor_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -409,17 +407,17 @@ Sprite_KaeoporaGaebora_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -436,14 +434,13 @@ Sprite_KaeoporaGaebora_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -451,7 +448,7 @@ Sprite_KaeoporaGaebora_Draw:
   RTS
 
 
-  ; ========================================================= 
+  ; =========================================================
   .start_index
   db $00
   .nbr_of_tiles

@@ -83,8 +83,7 @@ SprState     = $0DD0
 SprGfxProps  = $0E60
 
 ; Direction of sprite collision with wall
-SprCollision = $0E70 
-
+SprCollision = $0E70
 
 ; Definitely closely tied to the process of a sprite taking damage.
 ; Seems to serve as a palette cycling index, or a state variable.
