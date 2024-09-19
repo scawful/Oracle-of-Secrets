@@ -55,19 +55,42 @@ Should use the Ganons Tower Crystal Cutscene as the base.
 ** TODO End Credits
 
 * Levels
-** Shrine of Origins
-** [#D1] Mushroom Grotto
-** [#D2] Tail Palace
-** [#D3] Kalyxo Castle
-** Shrine of Wisdom
-** [#D4] Zora Temple
-** [#D5] Glacia Estate
-** Shrine of Power
-** [#D6] Goron Mines
-** [#D7] Dragon Ship
-** Shrine of Courage
-** Fortress of Secrets
-** Shrine of ?????
+** ~S0~ Shrine of Origins
+*** Item: Moon Pearl
+Located in the Temporal Pyramid where you get transported after your first encounter with Kydrog.
+** =D1= Mushroom Grotto
+*** Item: Bow
+Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
+** =D2= Tail Palace
+*** Item: Roc's Feather
+** =D3= Kalyxo Castle
+*** Item: Meadow Blade (Lv2 Sword)
+** ~S1~ Shrine of Wisdom
+*** Item: Zora Flippers
+** =D4= Zora Temple
+*** Item: Hookshot, Zora Mask
+*** TODO [0/2]
+- [ ] Zora Follower Extended
+- [ ] Fix Water Gate Collision
+** =D5= Glacia Estate
+*** Item: Fire Rod
+*** TODO [0/2]
+- [ ] Improve enemy variety
+- [ ] Exterior gfx improvements
+** ~S2~ Shrine of Power
+*** Item: Power Glove
+** =D6= Goron Mines
+*** Item: Hammer
+*** TODO [0/2]
+- [ ] Improve Minecart game feel
+- [ ] Update King Dodongo Boss
+** =D7= Dragon Ship
+*** Item: Somaria Rod
+*** TODO [0/1]
+- [ ] Extended section???
+** ~S3~ Shrine of Courage
+** =D8= Fortress of Secrets
+** ~S4~ Shrine of ?????
 * Items
 ** Y Items
 | Name            | Description                                  |
@@ -162,7 +185,7 @@ Should use the Ganons Tower Crystal Cutscene as the base.
 1) [ ] Collectible Goron Rock Meat from Lupo Mountain
    - Requires Power Glove from Shrine of Power
 2) [ ] Kalyxian Goron NPC in the desert asks for five sirloins to open the mines.
-
+   
 ** Side Quests
 *** Masks for Sale
 **** Bunny Hood - 100 Rupees
