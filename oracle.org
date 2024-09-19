@@ -23,6 +23,24 @@ This document aims to compile all the information on the game for reference as w
 - [ ] Mine Collapse Dream
 - [ ] Final Dream ????
 
+** TODO Fix Minecart mechanics
+** TODO Goron Mines Opening Animation [0/2]
+- [ ] Setup Goron Sprite
+  - [ ] Kalyxian Variant
+  - [ ] Eon Abyss Variant
+- [ ] Animate mines opening animation
+
+** TODO Add Librarian translations [0/8]
+
+** TODO Update Kydrog boss [0/3]
+- [ ] Track offspring sprites spawned, more dynamic spawns
+- [ ] Improve Kydrog movement, add additional stage in fight
+- [ ] Cinematic opening and ending cutscene with dialogue
+
+** TODO Update Kydreeok boss [0/2]
+- [ ] Improve fireball attack
+- [ ] Improve head/neck rotation
+
 ** TODO Fortress of Secrets Opening Cutscene
 Should use the Ganons Tower Crystal Cutscene as the base.
 
@@ -36,22 +54,6 @@ Should use the Ganons Tower Crystal Cutscene as the base.
 - [ ] Dragon Ship
 - [ ] Fortress of Secrets
 
-** TODO Update Kydrog boss [0/3]
-- [ ] Track offspring sprites spawned, more dynamic spawns
-- [ ] Improve Kydrog movement, add additional stage in fight
-- [ ] Cinematic opening and ending cutscene with dialogue
-
-** TODO Update Kydreeok boss [0/2]
-- [ ] Improve fireball attack
-- [ ] Improve head/neck rotation
-
-** TODO Goron Mines Opening Animation [0/2]
-- [ ] Setup Goron Sprite
-  - [ ] Kalyxian Variant
-  - [ ] Eon Abyss Variant
-- [ ] Animate mines opening animation
-
-** TODO Fix Minecart mechanics
 ** TODO End Credits
 
 * Levels
