@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this AntiKirby (can be 0 to 7)
 !Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -54,12 +54,12 @@ Sprite_AntiKirby_Long:
 Sprite_AntiKirby_Prep:
 {
   PHB : PHK : PLB
-  
+
   LDA #$00 : STA.w SprDefl, X
   LDA #$00 : STA.w SprTileDie, X
   STZ.w SprMiscB, X
 
-  LDY $0FFF
+  LDA.l SWORD : DEC : TAY
   LDA .bump_damage, Y : STA.w SprBump, X
   LDA .health, Y : STA.w SprHealth, X
   LDA .prize_pack, Y : STA.w SprPrize, X
@@ -68,20 +68,20 @@ Sprite_AntiKirby_Prep:
   RTL
 
   .bump_damage
-    db $81, $88
+    db $81, $88, $88, $88
 
   .health
-    db 10, 20
+    db 10, 20, 20, 20
 
   .prize_pack
-    db 6, 3
+    db 6, 3, 3, 3
 }
 
 !RecoilTime = $30
 
 Sprite_AntiKirby_Main:
-{  
-  JSL Sprite_IsToRightOfPlayer 
+{
+  JSL Sprite_IsToRightOfPlayer
   TYA : CMP #$01 : BNE .WalkRight
     .WalkLeft
     LDA.b #$40 : STA.w SprMiscC, X
@@ -107,7 +107,7 @@ Sprite_AntiKirby_Main:
 
   AntiKirby_Main:
   {
-    ; Check health 
+    ; Check health
     LDA.w SprHealth, X : CMP.b #$01 : BCS .NotDead
       %GotoAction(4)
       RTS
@@ -121,7 +121,7 @@ Sprite_AntiKirby_Main:
     .not_done
 
     %PlayAnimation(0, 2, 10) ; Start
-    
+
     JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
       LDA #!RecoilTime : STA.w SprTimerA, X
       %GotoAction(1) ; Hurt
@@ -132,15 +132,13 @@ Sprite_AntiKirby_Main:
     %MoveTowardPlayer(8)
     JSL Sprite_BounceFromTileCollision
     JSL Sprite_PlayerCantPassThrough
-    
 
     RTS
   }
 
   AntiKirby_Hurt:
   {
-    %PlayAnimation(3, 3, 10) ; Hurt 
-    
+    %PlayAnimation(3, 3, 10) ; Hurt
     LDA.w SprTimerA, X : BNE .NotDone
       %GotoAction(0)
     .NotDone
@@ -157,7 +155,7 @@ Sprite_AntiKirby_Main:
       %GotoAction(1) ; Hurt
       RTS
     .NoDamage
-      
+
     LDA.b $0E : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
       LDA.b $0F : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
         INC.w SprAction, X
@@ -177,7 +175,7 @@ Sprite_AntiKirby_Main:
 
     .dont_tongue_link
 
-    LDA.w SprTimerA, X : BNE + 
+    LDA.w SprTimerA, X : BNE +
       STZ.w SprAction, X
     +
 
@@ -187,7 +185,7 @@ Sprite_AntiKirby_Main:
   AntiKirby_Sucking:
   {
     %PlayAnimation(5, 5, 10) ; Sucking
-    ; Get the direction of link relative to the anti kirby 
+    ; Get the direction of link relative to the anti kirby
     ; Invert the direction and store it in A, call DragPlayer
     ; when Link is close enough
 
@@ -202,8 +200,8 @@ Sprite_AntiKirby_Main:
     LDA.b $0E : CMP.b #$10 : BCS .NotDone
       LDA.b $0F : CMP.b #$10 : BCS .NotDone
           %SetTimerA($80)
-          LDA.b #$0A : STA.w SprFrame, X 
-          INC.w SprAction, X 
+          LDA.b #$0A : STA.w SprFrame, X
+          INC.w SprAction, X
         RTS
     .NotDone
     LDA.w SprTimerA, X : BNE +
@@ -244,7 +242,7 @@ Sprite_AntiKirby_Main:
 
   AntiKirby_HattedHurt:
   {
-    %PlayAnimation(9, 9, 10) 
+    %PlayAnimation(9, 9, 10)
     LDA.w SprTimerA, X : BNE .NotDone
       %GotoAction(5)
     .NotDone
@@ -271,7 +269,7 @@ AntiKirby_StealItem:
   SEC : SBC.b $22
   CLC : ADC.w #$000C : CMP.w #$0018 : BCS .exit
 
-  LDA.w $0FDA 
+  LDA.w $0FDA
   CLC : ADC.b $06
   SEC : SBC.b $20
   CLC : ADC.w #$000C : CMP.w #$0020 : BCS .exit
@@ -345,22 +343,22 @@ Sprite_AntiKirby_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
   LDA $09 : AND.w #$00FF : CMP.w #$0040 : BNE +
     LDA $00 : CLC : ADC .x_offsets_2, X : STA ($90), Y
-    AND.w #$0100 : STA $0E 
+    AND.w #$0100 : STA $0E
     INY
     BRA ++
   +
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   ++
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
@@ -378,14 +376,10 @@ Sprite_AntiKirby_Draw:
   INY
   LDA .properties, X : ORA $08 : AND.b #$FF : ORA $09 : STA ($90), Y
 
-  PHY 
-      
+  PHY
   TYA : LSR #2 : TAY
-      
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
