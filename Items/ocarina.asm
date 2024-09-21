@@ -3,14 +3,9 @@
 ;
 ; =========================================================
 
-org $0994FE
-  AddTravelBird:
-
-org $098D11
-  AddWeathervaneExplosion:
-
-org $078021
-  Player_DoSfx1:
+AddTravelBird = $0994FE
+AddWeathervaneExplosion = $098D11
+Player_DoSfx1 = $078021
 
 ; =========================================================
 ; Song of Healing
@@ -87,9 +82,12 @@ Song_of_Storms:
 }
 ; assert pc() <= $1A8FD4
 
+; =========================================================
+
 ; A, D, F, A, D, F
 ; SFX3_27 Agahnim charge
 ; 0x003B
+
 org $1A91F0
 Song_of_Time:
 {
@@ -361,12 +359,12 @@ ResetOcarinaFlag:
 
 ; $030F - Current Song RAM
 ; 00 - No Song
-; 01 - Song of Storms 
-; 02 - Song of Healing  
+; 01 - Song of Storms
+; 02 - Song of Healing
 ; 03 - Song of Soaring
 ; 04 - Song of Time
 
-; Values at $7EF34C determine scrolling behavior 
+; Values at $7EF34C determine scrolling behavior
 ; 01 - No scrolling allowed
 ; 02 - Scroll between two songs
 ; 03 - Scroll between three songs
@@ -378,10 +376,10 @@ UpdateFluteSong_Long:
 
   LDA $030F : BNE .songExists
     ; if this code is running, we have the flute song 1
-    LDA #$01 : STA $030F  
+    LDA #$01 : STA $030F
   .songExists
   LDA.b $F6
-  BIT.b #$20 : BNE .left ; pressed left 
+  BIT.b #$20 : BNE .left ; pressed left
   BIT.b #$10 : BNE .right ; pressed right
   RTL
 
@@ -433,7 +431,7 @@ org $02A4CD
 RainAnimation_Overridden:
 {
     JSL CheckRealTable : BEQ .rainOverlaySet
-    ; LDA.b $8C : CMP.b #$9F : 
+    ; LDA.b $8C : CMP.b #$9F :
     ; Check the progress indicator
     LDA.l $7EF3C5 : CMP.b #$02 : BRA .skipMovement
   .rainOverlaySet
@@ -445,11 +443,11 @@ RainAnimation_Overridden:
     LDA.b $1A
 
     CMP.b #$03 : BEQ .lightning ; On the 0x03rd frame, cue the lightning.
-      CMP.b #$05 : BEQ .normalLight ; On the 0x05th frame, normal light level.
-        CMP.b #$24 : BEQ .thunder ; On the 0x24th frame, cue the thunder.
-          CMP.b #$2C : BEQ .normalLight ; On the 0x2Cth frame, normal light level.
-            CMP.b #$58 : BEQ .lightning ; On the 0x58th frame, cue the lightning.
-              CMP.b #$5A : BNE .moveOverlay ; On the 0x5Ath frame, normal light level.
+    CMP.b #$05 : BEQ .normalLight ; On the 0x05th frame, normal light level.
+    CMP.b #$24 : BEQ .thunder ; On the 0x24th frame, cue the thunder.
+    CMP.b #$2C : BEQ .normalLight ; On the 0x2Cth frame, normal light level.
+    CMP.b #$58 : BEQ .lightning ; On the 0x58th frame, cue the lightning.
+    CMP.b #$5A : BNE .moveOverlay ; On the 0x5Ath frame, normal light level.
 
   .normalLight
 
