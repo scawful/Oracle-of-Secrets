@@ -85,6 +85,11 @@ db $00
 org $0589AF
 LDY.b #$03 ; ITEMGET 03
 
+; Module15_0C
+; Prevent the game from setting $7EF3C7 to 06
+org $029E58
+NOP #6
+
 pullpc
 LoadDarkWorldIntro:
 {
