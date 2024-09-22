@@ -793,7 +793,7 @@ Oh my, oh my! [L], my dear
 [3]in peace in the graveyard.
 
 [P:01]Hocus pocus!
-[2]You will take the form of the 
+[2]You will take the form of the
 [3]Zora and dive into a whirlpool[K]
 [V]to discover secrets galore!
 
