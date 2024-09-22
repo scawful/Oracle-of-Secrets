@@ -1,6 +1,6 @@
-; ========================================================= 
+; =========================================================
 ; Sprite Properties
-; ========================================================= 
+; =========================================================
 
 !SPRID              = Sprite_ThunderGhost
 !NbrTiles           = 03  ; Number of tiles used in a frame
@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -53,9 +53,9 @@ Sprite_ThunderGhost_Long:
 Sprite_ThunderGhost_Prep:
 {
   PHB : PHK : PLB
-    
-  LDA.l SWORD : DEC A : TAY 
-  LDA.w .health, Y : STA.w SprHealth, X 
+
+  LDA.l SWORD : DEC A : TAY
+  LDA.w .health, Y : STA.w SprHealth, X
   LDA.b #$08 : STA.w SprTimerB, X
   LDA.b #$08 : STA.w SprTimerA, X
 
@@ -134,7 +134,7 @@ Sprite_ThunderGhost_Move:
   JSL Sprite_BounceFromTileCollision
   JSL Sprite_PlayerCantPassThrough
   JSL Sprite_DamageFlash_Long
-  
+
   JSL GetRandomInt : AND #$7F : BNE ++
     JSR SpawnLightningAttack
   ++
@@ -171,8 +171,8 @@ Sprite_ThunderGhost_Move:
 
 SpawnLightningAttack:
 {
-  PHX 
-  LDA.b #$CD 
+  PHX
+  LDA.b #$CD
   JSL Sprite_SpawnDynamically
   BMI .no_space
 
@@ -181,7 +181,7 @@ SpawnLightningAttack:
   ; and make it move off to the bottom left or bottom right
 
   ; Y is the ID of the new attack sprite
-  ; X is the ID of the current source sprite 
+  ; X is the ID of the current source sprite
 
   ; Left 0 or Right 1
   PHY
