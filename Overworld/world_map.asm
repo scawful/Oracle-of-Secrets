@@ -165,7 +165,23 @@ DrawPyramidIcon:
 
   LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
   LDA.b #$07 : STA.l $7EC025
-  RTS
+  RTL
+}
+
+DrawEonEscapeIcon:
+{
+  LDA.b #$04 : STA.l $7EC10B
+  LDA.b #$F4 : STA.l $7EC10A
+
+  LDA.b #$0B : STA.l $7EC109
+  LDA.b #$0E : STA.l $7EC108
+
+  LDA.b #$68 : STA.b $0D
+  LDA.b #$36 : STA.b $0C ; Tile GFX
+
+  LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$06 : STA.l $7EC025
+  RTL
 }
 
 pushpc
@@ -191,6 +207,11 @@ MapIconDraw:
 
     .draw_prizes
     LDA.b $8A : AND.b #$40 : BEQ .lwprizes
+      LDA.l OOSPROG : AND.b #$02 : BNE .check_pendants
+        JSL DrawEonEscapeIcon
+        JSR HandleMapDrawIcon
+        JMP restore_coords_and_exit
+      .check_pendants
       LDA.l OOSPROG : AND.b #$10 : BEQ .check_master_sword
         JSL DrawPowerPendant
         JSR HandleMapDrawIcon
@@ -224,12 +245,12 @@ MapIconDraw:
                     CMP.b #$03 : BCS .draw_crystals
 
     .hall_of_secrets
-    JSR DrawHallOfSecretsIcon
+    JSL DrawHallOfSecretsIcon
     JSR HandleMapDrawIcon
     JMP restore_coords_and_exit
 
     .draw_secret ; Pyramid of Power
-    JSR DrawPyramidIcon
+    JSL DrawPyramidIcon
     JSR HandleMapDrawIcon_noflash
     JMP .skip_draw_6
 
