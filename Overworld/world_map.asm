@@ -134,6 +134,40 @@ DrawFinalBossIcon:
   RTL
 }
 
+DrawHallOfSecretsIcon:
+{
+  ; X position
+  LDA.b #$0D : STA.l $7EC10B
+  LDA.b #$34 : STA.l $7EC10A
+  ; Y position
+  LDA.b #$03 : STA.l $7EC109
+  LDA.b #$0E : STA.l $7EC108
+  ; Tile GFX
+  LDA.b #$68 : STA.b $0D
+  LDA.b #$34 : STA.b $0C
+  ; Tile Size
+  LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$07 : STA.l $7EC025
+  RTS
+}
+
+DrawPyramidIcon:
+{
+  ; X position
+  LDA.b #$05 : STA.l $7EC10B
+  LDA.b #$00 : STA.l $7EC10A
+  ; Y position
+  LDA.b #$00 : STA.l $7EC109
+  LDA.b #$54 : STA.l $7EC108
+
+  LDA.b #$68 : STA.b $0D
+  LDA.b #$34 : STA.b $0C ; Tile GFX
+
+  LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$07 : STA.l $7EC025
+  RTS
+}
+
 pushpc
 
 ; Removed mirror portal draw and pyramid open code
@@ -190,38 +224,14 @@ MapIconDraw:
                     CMP.b #$03 : BCS .draw_crystals
 
     .hall_of_secrets
-    ; X position
-    LDA.b #$0D : STA.l $7EC10B
-    LDA.b #$34 : STA.l $7EC10A
-    ; Y position
-    LDA.b #$03 : STA.l $7EC109
-    LDA.b #$0E : STA.l $7EC108
-    ; Tile GFX
-    LDA.b #$68 : STA.b $0D
-    LDA.b #$34 : STA.b $0C
-    ; Tile Size
-    LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
-    LDA.b #$07 : STA.l $7EC025
+    JSR DrawHallOfSecretsIcon
     JSR HandleMapDrawIcon
     JMP restore_coords_and_exit
 
     .draw_secret ; Pyramid of Power
-    ; X position
-    LDA.b #$05 : STA.l $7EC10B
-    LDA.b #$00 : STA.l $7EC10A
-    ; Y position
-    LDA.b #$00 : STA.l $7EC109
-    LDA.b #$54 : STA.l $7EC108
-
-    LDA.b #$68 : STA.b $0D
-    LDA.b #$34 : STA.b $0C ; Tile GFX
-
-    LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
-    LDA.b #$07 : STA.l $7EC025
-
+    JSR DrawPyramidIcon
     JSR HandleMapDrawIcon_noflash
     JMP .skip_draw_6
-    
 
     .draw_crystals
     ; Draw Crystal 1 
