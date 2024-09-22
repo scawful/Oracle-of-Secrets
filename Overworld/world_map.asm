@@ -148,7 +148,7 @@ DrawHallOfSecretsIcon:
   ; Tile Size
   LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
   LDA.b #$07 : STA.l $7EC025
-  RTS
+  RTL
 }
 
 DrawPyramidIcon:
@@ -243,6 +243,7 @@ MapIconDraw:
     LDA.l $7EF3C7 : CMP.b #$01 : BEQ .hall_of_secrets
                     CMP.b #$02 : BEQ .draw_secret
                     CMP.b #$03 : BCS .draw_crystals
+                    JMP restore_coords_and_exit
 
     .hall_of_secrets
     JSL DrawHallOfSecretsIcon
