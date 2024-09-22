@@ -37,7 +37,7 @@ Sprite_Mermaid_Long:
   PHB : PHK : PLB
 
   LDA.w SprMiscE, X : BEQ .MermaidDraw
-  CMP.b #$02 : BEQ .LibrarianDraw
+         CMP.b #$02 : BEQ .LibrarianDraw
     JSR Sprite_Maple_Draw
     JMP .Continue
   .LibrarianDraw
@@ -63,23 +63,23 @@ Sprite_Mermaid_Prep:
   PHB : PHK : PLB
   LDA.b #$80 : STA.w SprDefl, X
   LDA.b #$40 : STA.w SprTimerA, X
-  STZ.w SprMiscE, X
   LDA.b #$07 : STA.w SprHitbox, X
 
-  LDA.w SprSubtype, X : CMP.b #$01 : BNE +
-    ; Maple Sprite
+  ; Mermaid Sprite
+  STZ.w SprMiscE, X
+
+  ; Maple Sprite
+  LDA.w SprSubtype, X : CMP.b #$01 : BNE +  
     LDA.b #$01 : STA.w SprMiscE, X
   +
 
+  ; Librarian Sprite
   CMP.b #$02 : BNE ++
-    ; Librarian Sprite
     LDA.b #$02 : STA.w SprMiscE, X
-    LDA.b #$06 : STA.w SprAction, X
   ++
   PLB
   RTL
 }
-
 
 Sprite_Mermaid_Main:
 {
@@ -99,38 +99,37 @@ Sprite_Mermaid_Main:
     dw MermaidDive
     dw MermaidSwim
 
-  MermaidWait:
-  {
-    %PlayAnimation(0,0, 20)
-    JSL Sprite_PlayerCantPassThrough
+    MermaidWait:
+    {
+      %PlayAnimation(0,0, 20)
+      JSL Sprite_PlayerCantPassThrough
 
-    %ShowMessageOnContact($047) : BCC .didnt_talk
+      %ShowMessageOnContact($047) : BCC .didnt_talk
+        LDA.w SprTimerA, X : BNE +
+          LDA.b #$20 : STA.w SprTimerA, X
+          INC.w SprAction, X
+        +
+      .didnt_talk
+      RTS
+    }
+
+    MermaidDive:
+    {
+      %PlayAnimation(1,2, 14)
+      LDA.w SprX, X : INC : STA.w SprX, X
       LDA.w SprTimerA, X : BNE +
-      LDA.b #$20 : STA.w SprTimerA, X
-      INC.w SprAction, X
+        INC.w SprAction, X
+        LDA.b #$04 : STA.w SprTimerA, X
       +
-    .didnt_talk
-    RTS
-  }
+      RTS
+    }
 
-  MermaidDive:
-  {
-    %PlayAnimation(1,2, 14)
-
-    LDA.w SprX, X : INC : STA.w SprX, X
-    LDA.w SprTimerA, X : BNE +
-      INC.w SprAction, X
-      LDA.b #$04 : STA.w SprTimerA, X
-    +
-    RTS
-  }
-
-  MermaidSwim:
-  {
-    %PlayAnimation(3,3,20)
-    JSL Sprite_Move
-    LDA.b #10 : STA.w SprXSpeed, X
-    JSR SpawnSplash
+    MermaidSwim:
+    {
+      %PlayAnimation(3,3,20)
+      JSL Sprite_Move
+      LDA.b #10 : STA.w SprXSpeed, X
+      JSR SpawnSplash
       LDA.w SprMiscD,X : BNE ++
         STZ.w SprState, X
       ++
@@ -141,8 +140,8 @@ Sprite_Mermaid_Main:
         LDA.b #$01 : STA.w SprMiscD, X
         LDA.b #$04 : STA.w SprTimerA, X
       +
-    RTS
-  }
+      RTS
+    }
   }
 
   MapleHandler:
@@ -169,68 +168,67 @@ Sprite_Mermaid_Main:
 
     Maple_BoughtMilkBottle:
     {
-    REP #$20
-    LDA.l $7EF360
-    CMP.w #$1E ; 30 rupees
-    SEP #$30
-    BCC .not_enough_rupees
-
-      LDA.l $7EF35C : CMP.b #$02 : BEQ .bottle1_available
-      LDA.l $7EF35D : CMP.b #$02 : BEQ .bottle2_available
-      LDA.l $7EF35E : CMP.b #$02 : BEQ .bottle3_available
-      LDA.l $7EF35F : CMP.b #$02 : BEQ .bottle4_available
-        %ShowUnconditionalMessage($033)
-        %GotoAction(0)
-        RTS
-
-      .bottle1_available
-      LDA.b #$0A : STA.l $7EF35C : JMP .finish_storage
-      .bottle2_available
-      LDA.b #$0A : STA.l $7EF35D : JMP .finish_storage
-      .bottle3_available
-      LDA.b #$0A : STA.l $7EF35E : JMP .finish_storage
-      .bottle4_available
-      LDA.b #$0A : STA.l $7EF35F
-      .finish_storage
       REP #$20
       LDA.l $7EF360
-      SEC
-      SBC.w #$1E ; Subtract 30 rupees
-      STA.l $7EF360
+      CMP.w #$1E ; 30 rupees
       SEP #$30
+      BCC .not_enough_rupees
 
-      %ShowUnconditionalMessage($0188) ; Thank you!
-      %GotoAction(0)
+        LDA.l $7EF35C : CMP.b #$02 : BEQ .bottle1_available
+        LDA.l $7EF35D : CMP.b #$02 : BEQ .bottle2_available
+        LDA.l $7EF35E : CMP.b #$02 : BEQ .bottle3_available
+        LDA.l $7EF35F : CMP.b #$02 : BEQ .bottle4_available
+          %ShowUnconditionalMessage($033)
+          %GotoAction(0)
+          RTS
+
+        .bottle1_available
+        LDA.b #$0A : STA.l $7EF35C : JMP .finish_storage
+        .bottle2_available
+        LDA.b #$0A : STA.l $7EF35D : JMP .finish_storage
+        .bottle3_available
+        LDA.b #$0A : STA.l $7EF35E : JMP .finish_storage
+        .bottle4_available
+        LDA.b #$0A : STA.l $7EF35F
+        .finish_storage
+        REP #$20
+        LDA.l $7EF360
+        SEC
+        SBC.w #$1E ; Subtract 30 rupees
+        STA.l $7EF360
+        SEP #$30
+
+        %ShowUnconditionalMessage($0188) ; Thank you!
+        %GotoAction(0)
+        RTS
+      .not_enough_rupees
+      %GotoAction(2)
       RTS
-    .not_enough_rupees
-    %GotoAction(2)
-    RTS
     }
 
     Maple_NotEnoughRupees:
     {
-    %ShowUnconditionalMessage($0189) ; You don't have enough rupees!
-    %GotoAction(0)
-    RTS
+      %ShowUnconditionalMessage($0189) ; You don't have enough rupees!
+      %GotoAction(0)
+      RTS
     }
 
     Maple_HandlePlayerResponse:
     {
-    LDA $1CE8 : BEQ .player_said_yes
-      %GotoAction(4)
+      LDA $1CE8 : BEQ .player_said_yes
+          %GotoAction(4)
+          RTS
+      .player_said_yes
+      %GotoAction(1)
       RTS
-    .player_said_yes
-    %GotoAction(1)
-    RTS
     }
 
     Maple_ComeBackAgain:
     {
-    %ShowUnconditionalMessage($018B) ; Come back again!
-    %GotoAction(0)
+      %ShowUnconditionalMessage($018B) ; Come back again!
+      %GotoAction(0)
       RTS
     }
-
   }
 
   LibrarianHandler:
@@ -241,36 +239,31 @@ Sprite_Mermaid_Main:
     dw LibrarianIdle
     dw Librarian_OfferTranslation
 
-  LibrarianIdle:
-  {
-    %PlayAnimation(0,1,16)
-    JSL Sprite_PlayerCantPassThrough
-    %ShowSolicitedMessage($012E)
-    JSR Librarian_CheckForAllMaps : BCC +
-      INC.w SprAction, X
-    +
-    RTS
-  }
+    LibrarianIdle:
+    {
+      %PlayAnimation(0,1,16)
+      JSL Sprite_PlayerCantPassThrough
+      %ShowSolicitedMessage($012E)
+      JSR Librarian_CheckForAllMaps : BCC +
+        INC.w SprAction, X
+      +
+      RTS
+    }
 
-  Librarian_OfferTranslation:
-  {
-    %PlayAnimation(0,1,16)
-    JSL Sprite_PlayerCantPassThrough
-    %ShowSolicitedMessage($012C)
-    RTS
+    Librarian_OfferTranslation:
+    {
+      %PlayAnimation(0,1,16)
+      JSL Sprite_PlayerCantPassThrough
+      %ShowSolicitedMessage($012C)
+      RTS
+    }
   }
-  }
-
 }
 
 Librarian_CheckForAllMaps:
 {
-  LDA.l DNGMAP1
-  CMP.b #$FC
-  BNE .not_all_maps
-  LDA.l DNGMAP2
-  CMP.b #$FF
-  BEQ .all_maps
+  LDA.l DNGMAP1 : CMP.b #$FC : BNE .not_all_maps
+  LDA.l DNGMAP2 : CMP.b #$FF : BEQ .all_maps
   .not_all_maps
   CLC
   RTS
