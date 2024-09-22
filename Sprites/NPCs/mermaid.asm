@@ -69,7 +69,6 @@ Sprite_Mermaid_Prep:
   LDA.w SprSubtype, X : CMP.b #$01 : BNE +
     ; Maple Sprite
     LDA.b #$01 : STA.w SprMiscE, X
-    LDA.b #$03 : STA.w SprAction, X
   +
 
   CMP.b #$02 : BNE ++
