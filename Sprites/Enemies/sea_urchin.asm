@@ -21,7 +21,7 @@
 !DeflectArrow       = 00  ; 01 = deflect arrows
 !WaterSprite        = 00  ; 01 = can only walk shallow water
 !Blockable          = 01  ; 01 = can be blocked by link's shield?
-!Prize              = 00  ; 00-15 = the prize pack the sprite will drop from
+!Prize              = 03  ; 00-15 = the prize pack the sprite will drop from
 !Sound              = 00  ; 01 = Play different sound when taking damage
 !Interaction        = 00  ; ?? No documentation
 !Statue             = 00  ; 01 = Sprite is statue
@@ -52,7 +52,7 @@ Sprite_SeaUrchin_Prep:
 {
   PHB : PHK : PLB
 
-  LDA #$02 : STA.w SprPrize, X
+  LDA #$03 : STA.w SprPrize, X
 
   PLB
   RTL
