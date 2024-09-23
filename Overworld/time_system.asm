@@ -107,36 +107,35 @@ DrawClockToHud:
 
 RunClock:
 {
-  LDA $10	;checks current event in game
-  CMP #$07 : BEQ .counter_increasing ;dungeon/building?
-    CMP #$09 : BEQ .overworld ;overworld?
-    CMP #$0B : BEQ .overworld		;sub-area ? (under the bridge; zora domain...)
-      CMP #$0E : BEQ .dialog ;dialog box?
+  LDA $10	; checks current event in game
+  CMP #$07 : BEQ .counter_increasing ; dungeon/building?
+    CMP #$09 : BEQ .overworld ; overworld?
+    CMP #$0B : BEQ .overworld ; sub-area ? (under the bridge; zora domain...)
+      CMP #$0E : BEQ .dialog  ; dialog box?
         RTS
-
     .overworld
     ; Reload Sprite Gfx Properties
     JSL $00FC62 ; Sprite_LoadGraphicsProperties
 
-    LDA $11 : CMP #$23 : BNE .mosaic ;hdma transfer? (warping)
+    LDA $11 : CMP #$23 : BNE .mosaic ; HDMA transfer? (warping)
       ; Lol what?
     .mosaic
 
-    CMP #$0D : BMI .counter_increasing ;mosaic ?
+    CMP #$0D : BMI .counter_increasing ; Mosaic ?
       RTS
 
     .dialog
-    LDA $11 ;which kind of dialog? (to prevent the counter from increasing if save menu or item menu openned)
-    CMP #$02 : BEQ .counter_increasing ;NPC/signs speech
+    LDA $11 ; check submodule to prevent the counter from increasing if save/menu open
+    CMP #$02 : BEQ .counter_increasing ; NPC/signs speech
       RTS
 
   .counter_increasing
   ; GBC Link code
-    LDA $0FFF : CMP #$00 : BEQ .light_world
-      LDA $02B2 : CMP.b #$05 : BCS .already_gbc_or_minish
-        JSL UpdateGbcPalette
-        LDA.b #$3B : STA $BC   ; change link's sprite
-        LDA.b #$06 : STA $02B2 ; set the form id
+  LDA $0FFF : CMP #$00 : BEQ .light_world
+    LDA $02B2 : CMP.b #$05 : BCS .already_gbc_or_minish
+      JSL UpdateGbcPalette
+      LDA.b #$3B : STA $BC   ; change link's sprite
+      LDA.b #$06 : STA $02B2 ; set the form id
   .light_world
   .already_gbc_or_minish
 
@@ -145,7 +144,6 @@ RunClock:
   ; #$3F is almost 1 sec = 1 game minute
   LDA $1A : AND TimeSpeed : BEQ .increase_minutes ; 05
     .end
-
     RTS
 
   .increase_minutes
@@ -163,17 +161,17 @@ RunClock:
 
     .outdoors0
 
-    JSL rom_to_buff	;update buffer palette
-    JSL buff_to_eff	;update effective palette
+    JSL rom_to_buff	; update buffer palette
+    JSL buff_to_eff	; update effective palette
 
     ;rain layer ?
     LDA $8C : CMP #$9F : BEQ .skip_bg_updt0
       LDA $8C : CMP #$9E : BEQ .skip_bg_updt0	; canopy layer ?
         CMP #$97 : BEQ .skip_bg_updt0	; fog layer?
-        JSL $0BFE70	;update background color
+        JSL $0BFE70	; update background color
         BRA .inc_hours_end
 
-    .skip_bg_updt0 ;prevent the sub layer from disappearing ($1D zeroed)
+    .skip_bg_updt0 ; prevent the sub layer from disappearing ($1D zeroed)
     JSL $0BFE72
 
     .inc_hours_end
@@ -183,7 +181,7 @@ RunClock:
 
   LDA #$00 : STA $7EE000
 
-  ;check indoors/outdoors
+  ; check indoors/outdoors
   LDA $1B	: BEQ .outdoors1
     RTS
   .outdoors1
@@ -191,12 +189,12 @@ RunClock:
   JSL rom_to_buff
   JSL buff_to_eff
 
-  LDA $8C : CMP #$9F : BEQ .skip_bg_updt1 ;rain layer ?
+  LDA $8C : CMP #$9F : BEQ .skip_bg_updt1 ; rain layer ?
     LDA $8C : CMP #$9E : BEQ .skip_bg_updt1	; canopy layer ?
-      JSL $0BFE70 ;update background color
+      JSL $0BFE70 ; update background color
       BRA .reset_end
 
-  .skip_bg_updt1 ;prevent the sub layer from disappearing ($1D zeroed)
+  .skip_bg_updt1 ; prevent the sub layer from disappearing ($1D zeroed)
 
   JSL $0BFE72
 
@@ -256,9 +254,9 @@ PaletteCgram_BG = $7EC540
 PaletteCgram_Spr = $7EC600
 
 ; part of rom pal to buffer routine
-;$1B/EF61 9F 00 C3 7E STA $7EC300,x[$7E:C422]
-;$1B/EF3D 9F 00 C3 7E STA $7EC300,x[$7E:C412]
-;$1B/EF84 9F 00 C3 7E STA $7EC300,x[$7E:C4B2]
+; $1B/EF61 9F 00 C3 7E STA $7EC300,x[$7E:C422]
+; $1B/EF3D 9F 00 C3 7E STA $7EC300,x[$7E:C412]
+; $1B/EF84 9F 00 C3 7E STA $7EC300,x[$7E:C4B2]
 
 ; Palettes_LoadSingle.next_color
 org $1BEF3D
@@ -324,10 +322,10 @@ ColorSubEffect:
 
   .do_blue
 	LDA.l !pal_color : AND #$7C00 : STA !blue_value
-  ; substract amount to blue field based on a table
+  ; Subtract amount to blue field based on a table
 	SEC : SBC.l blue_table, X : STA !temp_value
-	AND #$7C00		; mask out everything except the blue bits
-	CMP !temp_value : BEQ .no_blue_sign_change; overflow ?
+  ; mask out everything except the blue bits
+	AND #$7C00 : CMP !temp_value : BEQ .no_blue_sign_change ; overflow ?
     .blue_sign_change
     LDA #$0400		; LDA smallest blue value
 
@@ -336,9 +334,9 @@ ColorSubEffect:
 
   do_green:
 	LDA !pal_color : AND #$03E0 : STA !green_value
-	SEC : SBC.l green_table,x	; substract amount to blue field based on a table
+	SEC : SBC.l green_table,x	; Subtract amount to blue field based on a table
 	STA.l !temp_value
-  ; mask out everything except the green bits
+  ; Mask out everything except the green bits
 	AND #$03E0 : CMP !temp_value : BEQ .no_green_sign_change ; overflow ?
     .green_sign_change
     LDA #$0020		; LDA smallest green value
@@ -475,90 +473,6 @@ ColorBgFix:
   RTL
 }
 
-pushpc
-
-; Overworld_LoadSprites
-org $09C4E3
-  JSL CheckIfNight
-
-; Sprite_LoadGraphicsProperties_light_world_only
-org $00FC6A
-  JSL CheckIfNight16Bit
-
-
-; $0BFE70 -> background color loading routine
-;Background color write fix - 16 bytes
-;$0B/FEB6 8F 00 C5 7E STA $7EC500
-;$0B/FEBA 8F 00 C3 7E STA $7EC300
-;$0B/FEBE 8F 40 C5 7E STA $7EC540
-;$0B/FEC2 8F 40 C3 7E STA $7EC340
-
-if ZS_CUSTOM_OW_V2 == 0
-; Custom BG Color Mosaic Background Color fix
-org $028464
-  NOP #6
-else
-; SetBGColorMainBuffer
-org $0ED5F9
-  JSL ColorBgFix
-endif
-
-; OverworldMosaicTransition_HandleScreensAndLoadShroom
-org $02AE92
-  NOP #6
-
-; =========================================================
-
-; org $0BFEB6 VANILLA DAY/NIGHT HOOK
-
-; ZS OW - ReplaceBGColor
-if ZS_CUSTOM_OW_V2 == 0
-org $2886B4
-  STA !pal_color
-  JSL BackgroundFix
-  ;NOP #8
-endif
-
-; ZS OW - CheckForChangeGraphicsTransitionLoad
-if ZS_CUSTOM_OW_V2 == 1
-org $289447
-	JSL SubAreasFix
-else
-org $2885F9
-  JSL SubAreasFix
-endif
-
-; Subareas background color fix (under the bridge; zora...)
-;$0E/D601 8F 00 C3 7E STA $7EC300[$7E:C300]
-;$0E/D605 8F 40 C3 7E STA $7EC340[$7E:C340]
-
-org $0ED601
-	JSL SubAreasFix
-
-; =========================================================
-; Gloves color loading routine
-;$1B/EE1B C2 30       REP #$30
-;$1B/EE1D AF 54 F3 7E LDA $7EF354[$7E:F354]
-;$1B/EE21 29 FF 00    AND #$00FF
-;$1B/EE24 F0 0F       BEQ $0F    [$EE35]
-;$1B/EE26 3A          DEC A
-;$1B/EE27 0A          ASL A
-;$1B/EE28 AA          TAX
-;$1B/EE29 BF F5 ED 1B LDA $1BEDF5,x[$1B:EDF7]
-;$1B/EE2D 8F FA C4 7E STA $7EC4FA[$7E:C4FA]
-;$1B/EE31 8F FA C6 7E STA $7EC6FA[$7E:C6FA]
-;$1B/EE35 E2 30       SEP #$30
-;$1B/EE37 E6 15       INC $15    [$00:0015]
-;$1B/EE39 6B          RTL
-
-; Palettes_Load_LinkGloves
-org $1BEE2D
-	JSL GlovesFix
-
-; =========================================================
-
-pullpc
-
 CheckIfNight16Bit:
 {
   JSR LoadPeacetimeSprites : BCS +
@@ -646,20 +560,98 @@ RestoreTimeForDungeonMap:
 
 pushpc
 
+; Overworld_LoadSprites
+org $09C4E3
+  JSL CheckIfNight
+
+; Sprite_LoadGraphicsProperties_light_world_only
+org $00FC6A
+  JSL CheckIfNight16Bit
+
+
+; $0BFE70 -> background color loading routine
+;Background color write fix - 16 bytes
+;$0B/FEB6 8F 00 C5 7E STA $7EC500
+;$0B/FEBA 8F 00 C3 7E STA $7EC300
+;$0B/FEBE 8F 40 C5 7E STA $7EC540
+;$0B/FEC2 8F 40 C3 7E STA $7EC340
+
+if ZS_CUSTOM_OW_V2 == 0
+; Custom BG Color Mosaic Background Color fix
+org $028464
+  NOP #6
+else
+; SetBGColorMainBuffer
+org $0ED5F9
+  JSL ColorBgFix
+endif
+
+; OverworldMosaicTransition_HandleScreensAndLoadShroom
+org $02AE92
+  NOP #6
+
+; =========================================================
+
+; org $0BFEB6 VANILLA DAY/NIGHT HOOK
+
+; ZS OW - ReplaceBGColor
+if ZS_CUSTOM_OW_V2 == 0
+org $2886B4
+  STA !pal_color
+  JSL BackgroundFix
+  ;NOP #8
+endif
+
+; ZS OW - CheckForChangeGraphicsTransitionLoad
+if ZS_CUSTOM_OW_V2 == 1
+org $289447
+	JSL SubAreasFix
+else
+org $2885F9
+  JSL SubAreasFix
+endif
+
+; Subareas background color fix (under the bridge; zora...)
+;$0E/D601 8F 00 C3 7E STA $7EC300[$7E:C300]
+;$0E/D605 8F 40 C3 7E STA $7EC340[$7E:C340]
+
+org $0ED601
+	JSL SubAreasFix
+
+; =========================================================
+; Gloves color loading routine
+;$1B/EE1B C2 30       REP #$30
+;$1B/EE1D AF 54 F3 7E LDA $7EF354[$7E:F354]
+;$1B/EE21 29 FF 00    AND #$00FF
+;$1B/EE24 F0 0F       BEQ $0F    [$EE35]
+;$1B/EE26 3A          DEC A
+;$1B/EE27 0A          ASL A
+;$1B/EE28 AA          TAX
+;$1B/EE29 BF F5 ED 1B LDA $1BEDF5,x[$1B:EDF7]
+;$1B/EE2D 8F FA C4 7E STA $7EC4FA[$7E:C4FA]
+;$1B/EE31 8F FA C6 7E STA $7EC6FA[$7E:C6FA]
+;$1B/EE35 E2 30       SEP #$30
+;$1B/EE37 E6 15       INC $15    [$00:0015]
+;$1B/EE39 6B          RTL
+
+; Palettes_Load_LinkGloves
+org $1BEE2D
+	JSL GlovesFix
+
+; =========================================================
+
+; org $0ABA5A
+; TODO: Handle overworld map palette for flashing icons
+
 org $0ED956
   JSL FixDungeonMapColors
 
 org $0AEFA6
   JSL RestoreTimeForDungeonMap
 
-; org $0ABA5A
-; TODO: Handle overworld map palette for flashing icons
-
 org $0ED745
   JSL FixShockPalette
 
 org $09F604
 GameOver_SaveAndQuit:
-{
   JSL FixSaveAndQuit
-}
