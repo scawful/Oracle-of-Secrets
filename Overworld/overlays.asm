@@ -20,12 +20,12 @@ org $07866D
   LDA.b #$1B : STA.b $5D
   RTL
 
-; ================================================
+; =========================================================
 ; Overlays $04C6
 ; 01 - Zora Temple (OW 1E)
 ; 02 - Castle Bridge (OW 1B)
 ; 03 - Tail Palace (OW 2F)
-; 04 - TODO: Shrines
+; 04 - TODO: Goron Mines Entrance
 ; 05 - TODO: Fortress of Secrets (OW 5E)
 
 CameraCache = $0632
@@ -59,7 +59,7 @@ NewDesertCheck:
       LDA.w $0618 : STA.w CameraCache
       SEP #$20
   +
-  JML $07A493 ; returnPos ; do not !
+  JML $07A493 ; return do not !
 }
 
 pushpc

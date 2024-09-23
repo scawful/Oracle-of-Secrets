@@ -27,8 +27,10 @@ org $0ED436
   NOP #$06
 
 org $2F8000
-  MessageExpand:
-  LDA.b $02 : AND.w #$00FF : CMP.w #$000E : BNE + ; are we already in expanded bank?
+MessageExpand:
+{
+  ; are we already in expanded bank?
+  LDA.b $02 : AND.w #$00FF : CMP.w #$000E : BNE + 
     LDA.w #MessageExpandedData : STA.b $00
     LDA.w #MessageExpandedData>>16 : STA.b $02
     JML $0ED3FC ; go back to original read message code pointers 
@@ -37,6 +39,7 @@ org $2F8000
   LDA.w #$DF40 : STA.b $00
   LDA.w #$000E : STA.b $02
   JML $0ED3FC ; go back to original read message code pointers 
+}
 
 MessageExpandedData:
   Message_18D:

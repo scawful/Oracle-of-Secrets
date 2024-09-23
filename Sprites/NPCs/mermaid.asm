@@ -1,5 +1,5 @@
 ; =========================================================
-; Mermaid and Maple NPC
+; Mermaid, Maple and Librarian NPC
 
 !SPRID              = Sprite_Mermaid
 !NbrTiles           = 02  ; Number of tiles used in a frame
