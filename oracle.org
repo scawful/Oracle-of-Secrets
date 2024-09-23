@@ -23,13 +23,13 @@ This document aims to compile all the information on the game for reference as w
 - [ ] Mine Collapse Dream
 - [ ] Final Dream ????
 
-** TODO Fix Minecart mechanics
 ** TODO Goron Mines Opening Animation [0/2]
 - [ ] Setup Goron Sprite
   - [ ] Kalyxian Variant
   - [ ] Eon Abyss Variant
 - [ ] Animate mines opening animation
 
+** TODO Fix Minecart mechanics
 ** TODO Add Librarian translations [0/8]
 
 ** TODO Update Kydrog boss [0/3]
@@ -183,11 +183,15 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 3) Escort the Old Man to a rock formation on the mountain and use your magic mirror.
 4) Receive the Goldstar before continuing to Glacia Estate
 
-*** TODO Goron Mines Quest [0/2]
+*** TODO Goron Mines Quest [0/4]
 1) [ ] Collectible Goron Rock Meat from Lupo Mountain
+   - Eon Gorons workers protesting labor, Piratians involved somehow
    - Requires Power Glove from Shrine of Power
 2) [ ] Kalyxian Goron NPC in the desert asks for five sirloins to open the mines.
-   
+   His brother is asleep as a rolled up Goron blocking the mines.
+3) [ ] Garo NPC easter egg warps around the map
+4) [ ] Gossip Stones provide some hint related to the Shrines?
+
 ** Side Quests
 *** Masks for Sale
 **** Bunny Hood - 100 Rupees
