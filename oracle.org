@@ -13,49 +13,6 @@ This document aims to compile all the information on the game for reference as w
 - Plot Doc: https://docs.google.com/document/d/106e_dnY0EAjm3l416l4NDnpRjlUMFH8EKN_o7eiC77c
 - Data Sheet: https://docs.google.com/spreadsheets/d/17mfAUalrYgu6Is1LNPlRBbqniAvRg5eNPOg7AQZ-b4U/
 
-* Tasks
-** TODO Add Dream Sequences [0/7]
-- [ ] Deku Business Scrub Dream
-- [ ] Twinrova Ranch Girl Dream
-- [ ] Hyrule Castle Dream
-- [ ] Zora King Dream
-- [ ] Kydrog Sealing Dream
-- [ ] Mine Collapse Dream
-- [ ] Final Dream ????
-
-** TODO Goron Mines Opening Animation [0/2]
-- [ ] Setup Goron Sprite
-  - [ ] Kalyxian Variant
-  - [ ] Eon Abyss Variant
-- [ ] Animate mines opening animation
-
-** TODO Fix Minecart mechanics
-** TODO Add Librarian translations [0/8]
-
-** TODO Update Kydrog boss [0/3]
-- [ ] Track offspring sprites spawned, more dynamic spawns
-- [ ] Improve Kydrog movement, add additional stage in fight
-- [ ] Cinematic opening and ending cutscene with dialogue
-
-** TODO Update Kydreeok boss [0/2]
-- [ ] Improve fireball attack
-- [ ] Improve head/neck rotation
-
-** TODO Fortress of Secrets Opening Cutscene
-Should use the Ganons Tower Crystal Cutscene as the base.
-
-** TODO Add Dungeon Maps [0/8]
-- [ ] Mushroom Grotto
-- [ ] Tail Palace
-- [ ] Kalyxo Castle
-- [ ] Zora Temple
-- [ ] Glacia Estate
-- [ ] Goron Mines
-- [ ] Dragon Ship
-- [ ] Fortress of Secrets
-
-** TODO End Credits
-
 * Levels
 ** ~S0~ Shrine of Origins
 *** Item: Moon Pearl
@@ -93,6 +50,74 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 ** ~S3~ Shrine of Courage
 ** =D8= Fortress of Secrets
 ** ~S4~ Shrine of ?????
+* Quests
+** Main Quests
+*** Lost Ranch Girl Quest
+1) Get Mushroom from Old Woman house in Mushroom Grotto
+2) Trade Mushroom to Potion Shop
+3) Leave Mountains and return to Potion Shop later for Magic Powder
+4) Use Magic Powder on Cucco in the Ranch House for Ocarina
+
+*** Mask Salesman Quest
+1) Requires Ocarina from Lost Ranch Girl Quest
+2) Mask Salesman teaches Song of Healing
+3) Play Song of Healing for Deku NPC near the shop for Deku Mask
+
+*** TODO Tail Palace Kiki Quest [0/2]
+1) [ ] Kiki asks for Bananas instead of Rupees
+2) [ ] Deku NPCs inhabit Tail Palace OW after dungeon completion
+
+*** Book of Secrets
+1) Play Song of Healing for sick village child for Running Boots
+2) Use Running Boots to get the Book from the village library.
+
+*** TODO Kalyxo Castle
+**** Bridge Opening
++ Requires Book of Secrets from Wayward Village library.
+**** TODO Prison Sequence [0/2]
+1) [ ] Occurs after obtaining the Meadow Blade in Kalyxo Castle
+2) [ ] Ambushed by castle guards and locked away in castle prison
+
+*** TODO Zora Sanctuary
+**** TODO Sea and River Zora Conflict
+- [ ] Meet lone Sea Zora left at the Sanctuary, learn of Zora Princess
+- [ ] Conflict over territory lead to Zora Princesses imprisonment
+  Twinrova is involved somehow? Perhaps the dream sequence explains.
+
+**** TODO Waterfall Song of Storms Event
+
+*** Old Man Mountain Quest
+1) Take the warp portal at the northwest most point on Mount Snowpeak
+2) Enter the Lava Lands cave to find the Old Man.
+3) Escort the Old Man to a rock formation on the mountain and use your magic mirror.
+4) Receive the Goldstar before continuing to Glacia Estate
+
+*** TODO Goron Mines Quest [0/4]
+1) [ ] Collectible Goron Rock Meat from Lupo Mountain
+   - Eon Gorons workers protesting labor, Piratians involved somehow
+   - Requires Power Glove from Shrine of Power
+2) [ ] Kalyxian Goron NPC in the desert asks for five sirloins to open the mines.
+   His brother is asleep as a rolled up Goron blocking the mines.
+3) [ ] Garo NPC easter egg warps around the map
+4) [ ] Gossip Stones provide some hint related to the Shrines?
+
+** Side Quests
+*** Masks for Sale
+**** Bunny Hood - 100 Rupees
+**** Stone Mask - 850 Rupees
+*** Wolf Mask Quest
+1) Wolfos appears outside of Kalyxo Castle at Night, defeat and play Song of Healing for Wolf Mask.
+*** TODO Magic Bean Quest [1/4]
+1) [X] Buy Magic Bean from Bean Vendor, requires Bottle.
+2) [ ] Take Magic Bean to the Ranch and plant it in empty soil north of the houses.
+3) [ ] Requires rain (Song of Storms), Pollination (Good Bee) and three days in game time.
+4) [ ] Player receives flower item when all conditions are met, can be traded for Fishing Rod
+*** TODO Swordsmith Rescue [0/3]
+1) [ ] Use the Bomb Shop Big Bomb in the Eon Abyss Beach
+2) [ ] Return the Lost Brother to the Smiths house west of Waywrd Village
+3) [ ] Swordsmith brothers improve your Meadow Blade to the Tempered Sword (Lv3)
+*** TODO Korok Cove
+*** TODO Fishing Minigame
 * Items
 ** Y Items
 | Name            | Description                                  |
@@ -145,67 +170,46 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 | Light Ring     | Sword beams work at -2 hearts    |
 | Blast Ring     | Higher bomb damage, bombos class |
 | Steadfast Ring | No knockback                     |
-* Quests
-** Main Quests
-*** Lost Ranch Girl Quest
-1) Get Mushroom from Old Woman house in Mushroom Grotto
-2) Trade Mushroom to Potion Shop
-3) Leave Mountains and return to Potion Shop later for Magic Powder
-4) Use Magic Powder on Cucco in the Ranch House for Ocarina
+* Tasks
+** TODO Add Dream Sequences [0/7]
+- [ ] Deku Business Scrub Dream
+- [ ] Twinrova Ranch Girl Dream
+- [ ] Hyrule Castle Dream
+- [ ] Zora King Dream
+- [ ] Kydrog Sealing Dream
+- [ ] Mine Collapse Dream
+- [ ] Final Dream ????
 
-*** Mask Salesman Quest
-1) Requires Ocarina from Lost Ranch Girl Quest
-2) Mask Salesman teaches Song of Healing
-3) Play Song of Healing for Deku NPC near the shop for Deku Mask
+** TODO Goron Mines Opening Animation [0/2]
+- [ ] Setup Goron Sprite
+  - [ ] Kalyxian Variant
+  - [ ] Eon Abyss Variant
+- [ ] Animate mines opening animation
 
-*** TODO Tail Palace Kiki Quest [0/2]
-1) [ ] Kiki asks for Bananas instead of Rupees
-2) [ ] Deku NPCs inhabit Tail Palace OW after dungeon completion
+** TODO Fix Minecart mechanics
+** TODO Add Librarian translations [0/8]
 
-*** Book of Secrets
-1) Play Song of Healing for sick village child for Running Boots
-2) Use Running Boots to get the Book from the village library.
+** TODO Update Kydrog boss [0/3]
+- [ ] Track offspring sprites spawned, more dynamic spawns
+- [ ] Improve Kydrog movement, add additional stage in fight
+- [ ] Cinematic opening and ending cutscene with dialogue
 
-*** TODO Kalyxo Castle
-**** Bridge Opening
-+ Requires Book of Secrets from Wayward Village library.
-**** TODO Prison Sequence [0/2]
-1) [ ] Occurs after obtaining the Meadow Blade in Kalyxo Castle
-2) [ ] Ambushed by castle guards and locked away in castle prison
+** TODO Update Kydreeok boss [0/2]
+- [ ] Improve fireball attack
+- [ ] Improve head/neck rotation
 
-*** TODO Zora Sanctuary
-**** TODO Sea and River Zora Conflict
-**** TODO Waterfall Song of Storms Event
+** TODO Fortress of Secrets Opening Cutscene
+Should use the Ganons Tower Crystal Cutscene as the base.
 
-*** Old Man Mountain Quest
-1) Take the warp portal at the northwest most point on Mount Snowpeak
-2) Enter the Lava Lands cave to find the Old Man.
-3) Escort the Old Man to a rock formation on the mountain and use your magic mirror.
-4) Receive the Goldstar before continuing to Glacia Estate
+** TODO Add Dungeon Maps [0/8]
+- [ ] Mushroom Grotto
+- [ ] Tail Palace
+- [ ] Kalyxo Castle
+- [ ] Zora Temple
+- [ ] Glacia Estate
+- [ ] Goron Mines
+- [ ] Dragon Ship
+- [ ] Fortress of Secrets
 
-*** TODO Goron Mines Quest [0/4]
-1) [ ] Collectible Goron Rock Meat from Lupo Mountain
-   - Eon Gorons workers protesting labor, Piratians involved somehow
-   - Requires Power Glove from Shrine of Power
-2) [ ] Kalyxian Goron NPC in the desert asks for five sirloins to open the mines.
-   His brother is asleep as a rolled up Goron blocking the mines.
-3) [ ] Garo NPC easter egg warps around the map
-4) [ ] Gossip Stones provide some hint related to the Shrines?
+** TODO End Credits
 
-** Side Quests
-*** Masks for Sale
-**** Bunny Hood - 100 Rupees
-**** Stone Mask - 850 Rupees
-*** Wolf Mask Quest
-1) Wolfos appears outside of Kalyxo Castle at Night, defeat and play Song of Healing for Wolf Mask.
-*** TODO Magic Bean Quest [1/4]
-1) [X] Buy Magic Bean from Bean Vendor, requires Bottle.
-2) [ ] Take Magic Bean to the Ranch and plant it in empty soil north of the houses.
-3) [ ] Requires rain (Song of Storms), Pollination (Good Bee) and three days in game time.
-4) [ ] Player receives flower item when all conditions are met, can be traded for Fishing Rod
-*** TODO Swordsmith Rescue [0/3]
-1) [ ] Use the Bomb Shop Big Bomb in the Eon Abyss Beach
-2) [ ] Return the Lost Brother to the Smiths house west of Waywrd Village
-3) [ ] Swordsmith brothers improve your Meadow Blade to the Tempered Sword (Lv3)
-*** TODO Korok Cove
-*** TODO Fishing Minigame
