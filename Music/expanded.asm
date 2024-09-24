@@ -13,7 +13,7 @@ CREDITS_AUX_POINTER = $2900
 LoadOverworldSongs = $008913
 SongBank_Overworld_Main = $1A9EF5
 
-org $3C8000
+pullpc
 SongBank_OverworldExpanded_Main:
   #_1A9EF5: dw $2DAE, SONG_POINTERS ; Transfer size, transfer address
 
@@ -54,7 +54,8 @@ Song02_LightWorldOverture:
   incbin song02.bin
 
 Song03_Rain:
-  incbin song03.bin
+  ; incbin song03.bin
+  incsrc deku_theme.asm
 
 Song04_BunnyTheme:
   incbin song04.bin
