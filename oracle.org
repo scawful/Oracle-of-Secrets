@@ -170,6 +170,29 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 | Light Ring     | Sword beams work at -2 hearts    |
 | Blast Ring     | Higher bomb damage, bombos class |
 | Steadfast Ring | No knockback                     |
+* Bosses
+** Manhandla
+** Advanced Arrghus
+** King Dodongo
+** Twinrova
+** Kydrog
+** Kydreeok
+* Enemies
+** Anti-Kirby
+** Booki
+** Business Scrub (Kaly/Eon)
+** Darknut (Eon)
+** Goriya
+** Helmet Chuchu
+** Octorok (Kaly/Eon)
+** Pols Voice
+** Poltergeist
+** Puffstool
+** Sea Urchin
+** Thunder Ghost
+** Wolfos
+*** Castle Variant
+*** Ice Variant
 * Tasks
 ** TODO Add Dream Sequences [0/7]
 - [ ] Deku Business Scrub Dream
