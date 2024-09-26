@@ -185,15 +185,22 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 ** Goriya
 ** Helmet Chuchu
 ** Octorok (Kaly/Eon)
+*** TODO Water Octorok
 ** Pols Voice
 ** Poltergeist
 ** Puffstool
-** Sea Urchin
+** Sea Urchin (Kaly/Eon)
 ** Thunder Ghost
 ** Wolfos
 *** Castle Variant
-*** Ice Variant
+*** TODO Ice Variant
 * Tasks
+** TODO Collectible Item Quests
+*** TODO Golden Fish
+*** TODO Magic Bean
+*** TODO Deku Stick
+*** TODO Honeycomb
+
 ** TODO Add Dream Sequences [0/7]
 - [ ] Deku Business Scrub Dream
 - [ ] Twinrova Ranch Girl Dream
