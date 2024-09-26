@@ -77,7 +77,7 @@ LinkState_UsingQuake:
 
   JSR $F514 ; CacheCameraPropertiesIfOutdoors
 
-  STZ.b $27 : STZ.b $28 ; Reset recoil X and Y 
+  STZ.b $27 : STZ.b $28 ; Reset recoil X and Y
 
   ; SPIN STEP CHECK
   LDA.w LinkSpinStep : CMP.b #$0A : BNE .not_ascending
@@ -90,7 +90,7 @@ LinkState_UsingQuake:
     JSR Link_HandleChangeInZVelocity_preset
     JSL LinkHop_FindArbitraryLandingSpot
 
-    ; Link recoil Z value, hop Z value 
+    ; Link recoil Z value, hop Z value
     LDA.b LinkRecoilZ : STA.w $0362
     LDA.w $02C7 : STA.w $0363
 
@@ -110,7 +110,7 @@ LinkState_UsingQuake:
 
     .still_ascending
     INC.w LinkSpinStep
-    LDX.w LinkSpinStep 
+    LDX.w LinkSpinStep
     CPX.b #$04 : BNE .skip_swish_sfx
       PHX : LDA.b #$23 : JSR PlaySFX_Set3 : PLX
     .skip_swish_sfx
@@ -120,7 +120,7 @@ LinkState_UsingQuake:
     .dont_reset_step
     LDA.w .anim_timer,X : STA.b $3D
     LDA.w .anim_step,X : STA.w $031C
-    
+
     LDA.w $0324 : BNE .special ; Prevent repeat spellcast check
     CPX.b #$0B : BNE .special ; Animation step check
 
@@ -137,7 +137,7 @@ LinkState_UsingQuake:
 
   .special
   LDA.b DekuFloating : BEQ +
-    DEC $5C 
+    DEC $5C
     JSL DekuLink_HoverBasedOnInput
   +
   RTS

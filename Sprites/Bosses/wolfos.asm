@@ -197,7 +197,6 @@ Sprite_Wolfos_Main:
     %StartOnFrame(6)
     %PlayAnimation(6, 8, 10)
     %Wolfos_Move()
-    
     LDA #!NormalSpeed
     STA.w SprXSpeed, X
     STZ.w SprYSpeed, X
@@ -284,10 +283,8 @@ Sprite_Wolfos_Main:
       LDA.w POSXH : STA.w SprXH, X
       LDA.w POSY : SEC : SBC.b #$08 : STA.w SprY, X
       LDA.w POSYH : STA.w SprYH, X
-      
       %GotoAction(7)
     .ninguna_cancion
-    
     RTS
   }
 
@@ -325,7 +322,7 @@ Sprite_Wolfos_Main:
 ; Animation Frame
 ; 0-2 Attack Forward
 ; 3-5 Attack Back
-; 6-8 Walk Right 
+; 6-8 Walk Right
 ; 9-11 Walk Left
 ; 12-13 Attack Right
 ; 14-15 Attack Left
@@ -345,7 +342,6 @@ Sprite_Wolfos_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
@@ -374,13 +370,9 @@ Sprite_Wolfos_Draw:
   LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY 
-      
   TYA : LSR #2 : TAY
-      
   LDA.b #02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
