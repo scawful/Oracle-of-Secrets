@@ -16,8 +16,46 @@ RingSlot2      = $7EF38D
 RingSlot3      = $7EF38E
 RingSlotsNum   = $7EF38F
 
+DamageSubclassValue = $0DB8F1
+
+pushpc
+; Sprite_ApplyCalculatedDamage
+org $06EDC0
+JSL MagicRing_CheckForPower
+pullpc
+
 ; Power     - Attack Up, Defense Down
+MagicRing_CheckForPower:
+{
+  LDA.l RingSlot1 : AND.b #$20 : BEQ +
+  LDA.l RingSlot2 : AND.b #$20 : BEQ +
+  LDA.l RingSlot3 : AND.b #$20 : BEQ +
+    LDA.w $0CF2 : CMP.b #$04 : BCS .not_sword
+                  CMP.b #$01 : BCC .not_sword
+     LDA.l DamageSubclassValue, X
+     CLC : ADC.b #$10
+     RTL
+    .not_sword
+  +
+  LDA.l DamageSubclassValue, X
+  RTL
+}
+
+pushpc
+
+pullpc
+
 ; Armor     - Defense Up, Attack Down
+MagicRing_CheckForArmor:
+{
+  LDA.l RingSlot1 : AND.b #$10 : BEQ +
+  LDA.l RingSlot2 : AND.b #$10 : BEQ +
+  LDA.l RingSlot3 : AND.b #$10 : BEQ +
+
+  +
+  RTL
+}
+
 
 ; =========================================================
 ; Steadfast - Less knockback
