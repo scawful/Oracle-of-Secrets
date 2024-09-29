@@ -31,7 +31,6 @@
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
 %Set_Sprite_Properties(Sprite_EonOwl_Prep, Sprite_EonOwl_Long)
-; =========================================================
 
 Sprite_EonOwl_Long:
 {
@@ -61,7 +60,6 @@ Sprite_EonOwl_Prep:
     .continue
   .not_intro
 
-
   PLB
   RTL
 }
@@ -70,14 +68,12 @@ Sprite_EonOwl_Prep:
 
 Sprite_EonOwl_Main:
 {
-  LDA.w SprAction, X                        ; Load the SprAction
-  JSL   UseImplicitRegIndexedLocalJumpTable ; Goto the SprAction we are currently in
+  LDA.w SprAction, X
+  JSL   UseImplicitRegIndexedLocalJumpTable
 
   dw EonOwl_Idle
   dw EonOwl_IntroDialogue
-
   dw EonOwl_FlyingAway
-
 
   EonOwl_Idle:
   {
@@ -100,19 +96,22 @@ Sprite_EonOwl_Main:
 
     %ShowUnconditionalMessage($00E6)
 
-    LDA.b #$A0 : STA.w SprTimerA, X
+    LDA.b #$C0 : STA.w SprTimerA, X
     %GotoAction(2)
-    
     RTS
   }
 
 
-  EonOwl_FlyingAway: 
+  EonOwl_FlyingAway:
   {
     %PlayAnimation(2,3,10)
 
     LDA.b #$F8 : STA.w SprYSpeed, X
     JSL   Sprite_Move
+
+    LDA.w SprTimerA, X : CMP.b #$80 : BNE +
+      LDA.b #$40 : STA.w SprXSpeed, X
+    +
 
     LDA.w SprTimerA, X : BNE .not_done
       STZ.w SprState, X
@@ -139,7 +138,6 @@ Sprite_EonOwl_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
@@ -166,14 +164,10 @@ Sprite_EonOwl_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
   TYA : LSR #2 : TAY
-      
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
