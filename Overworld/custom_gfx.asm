@@ -1,5 +1,4 @@
 
-org $3F8000
 CheckForChangeGraphicsNormalLoadBoat:
 {
     LDA $8A : CMP.b #$30 : BNE .boat_area
@@ -11,8 +10,6 @@ CheckForChangeGraphicsNormalLoadBoat:
   .boat_area
     RTL
 }
-
-; ==============================================================================
 
 ApplyGraphics1:
 {
@@ -53,8 +50,6 @@ ApplyGraphics2:
   AdditionalBitmap:
   incbin gfx/boat2.bin
 }
-
-; ==============================================================================
 
 ApplyKorokSpriteSheets:
 {

@@ -58,6 +58,9 @@ print  "End of Overworld/time_system.asm  ", pc
 
 incsrc "Overworld/overlays.asm"
 print  "End of Overworld/overlays.asm     ", pc
+
+incsrc "Overworld/custom_gfx.asm"
+print  "End of Overworld/custom_gfx.asm   ", pc
 pushpc
 
 incsrc "Overworld/world_map.asm"

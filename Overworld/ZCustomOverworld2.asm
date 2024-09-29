@@ -1024,7 +1024,7 @@ PreOverworld_LoadProperties_LoadMain:
     .no_music_load_needed
 
     ; PLACE CUSTOM GFX LOAD HERE!
-    JSL CheckForChangeGraphicsNormalLoadBoat
+    JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
     
     RTS
 }
@@ -2211,7 +2211,7 @@ CheckForChangeGraphicsNormalLoad:
     ;JSL DecompOwAnimatedTiles 
 
     ; PLACE CUSTOM GFX LOAD HERE!
-    JSL CheckForChangeGraphicsNormalLoadBoat
+    JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
         
     PLB
 
@@ -2262,7 +2262,7 @@ Func0AB8F5:
     STX.w $012C
 
     ; PLACE CUSTOM GFX LOAD HERE!
-    JSL CheckForChangeGraphicsNormalLoadBoat
+    JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
         
     RTL
 }

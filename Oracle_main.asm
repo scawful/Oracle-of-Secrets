@@ -81,10 +81,6 @@ Seashells  = $7EF391
 Honeycomb  = $7EF393
 DekuSticks = $7EF395
 
-; TODO: Move to Oracle namespace, free up the bank.
-incsrc "Overworld/custom_gfx.asm"
-print  "End of custom_gfx.asm             ", pc
-
 ; ZSCustomOverworld version
 ; Kept in case of serious issues which impedes progress
 ZS_CUSTOM_OW_V2 = 1
