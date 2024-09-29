@@ -11,7 +11,7 @@
 !DeathAnimation     = 00    ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 01    ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00    ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00    ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00    ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00    ; Unused in this template (can be 0 to 7)
 !Hitbox             = 14    ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 01    ; 01 = your sprite continue to live offscreen
@@ -30,7 +30,7 @@
 !ImpervSwordHammer  = 00    ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00    ; 00 = normal sprite, 01 = sprite is a boss
 
-%Set_Sprite_Properties(Sprite_Minecart_Prep, Sprite_Minecart_Long) 
+%Set_Sprite_Properties(Sprite_Minecart_Prep, Sprite_Minecart_Long)
 
 ; =========================================================
 
@@ -55,7 +55,7 @@ Down = $01
 Left = $02
 Right = $03
 ; $0DE0[0x10] - (Sprite) ;functions
-;     udlr 
+;     udlr
 ;     0 - up
 ;     1 - down
 ;     2 - left
@@ -93,11 +93,11 @@ Sprite_Minecart_Prep:
       LDA.b #$01 : STA.w SprMiscF, X ; Set the auto-move flag
     .continue
     LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
-    LDA #$04 : STA $0E40, X ; Nbr Oam Entries 
-    LDA #$40 : STA $0E60, x ; Impervious props 
-    LDA #$E0 : STA $0F60, X ; Persist 
-    LDA #$00 : STA.w SprBump, X ; No bump damage 
-    LDA #$00 : STA $0B6B, X ; Set interactive hitbox? 
+    LDA #$04 : STA $0E40, X ; Nbr Oam Entries
+    LDA #$40 : STA $0E60, x ; Impervious props
+    LDA #$E0 : STA $0F60, X ; Persist
+    LDA #$00 : STA.w SprBump, X ; No bump damage
+    LDA #$00 : STA $0B6B, X ; Set interactive hitbox?
 
     STZ.w !MinecartDirection
 
@@ -134,13 +134,13 @@ Sprite_Minecart_Prep:
 macro HandlePlayerCamera()
   LDA $22 : SEC : SBC $3F : STA $31
   LDA $20 : SEC : SBC $3E : STA $30
-  PHX 
-  
+  PHX
+
   JSL Link_HandleMovingAnimation_FullLongEntry
   JSL HandleIndoorCameraAndDoors
-  
+
   JSL Link_CancelDash
-  PLX 
+  PLX
 endmacro
 
 macro InitMovement()
@@ -181,7 +181,7 @@ HandleToss:
     LDA #$00 : STA.w SprSubtype, X : STA !SpriteDirection, X
     %GotoAction(1) ; Minecart_WaitVert
     JMP .continue
-  .toss_south 
+  .toss_south
     LDA.b #!DoubleSpeed : STA.w SprYSpeed, X
     LDA #$02 : STA.w SprSubtype,       X
     LDA #$01 : STA !SpriteDirection, X
@@ -465,14 +465,13 @@ HandleTileDirections:
     LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
 
     ; Fetch tile attributes based on current coordinates
-    LDA.b #$00 : JSL Sprite_GetTileAttr : LDA $0FA5 
+    LDA.b #$00 : JSL Sprite_GetTileAttr : LDA $0FA5
 
     CMP.b #$02 : BNE .not_out_of_bounds
       ; If the tile is out of bounds, release the cart
       LDA #$40 : STA.w SprTimerD, X
       %GotoAction(6) ; Minecart_Release
       RTS
-    
     .not_out_of_bounds
     ; Check if the tile is a stop tile
     CMP.b #$B7 : BEQ .stop_north
@@ -486,12 +485,10 @@ HandleTileDirections:
       LDA.b #South : STA.w SprSubtype,       X : STA.w !MinecartDirection
       LDA   #$01   : STA !SpriteDirection, X
       JMP   .go_vert
-    
     .stop_south
       ; Set the new direction to south and flip the cart's orientation
       LDA.b #North : STA.w SprSubtype,       X : STZ.w !MinecartDirection
       LDA   #$00   : STA !SpriteDirection, X
-      
     ; -----------------------------------------------
     .go_vert
       %SetTimerA($40)
@@ -499,18 +496,15 @@ HandleTileDirections:
       %GotoAction(1) ; Minecart_WaitVert
       JSL Link_ResetProperties_A
       RTS
-    
     .stop_east
       ; Set the new direction to east and flip the cart's orientation
       LDA.b #West : STA.w SprSubtype,       X : STA.w !MinecartDirection
       LDA   #$02  : STA !SpriteDirection, X
       JMP   .go_horiz
-    
     .stop_west
       ; Set the new direction to west and flip the cart's orientation
       LDA.b #East : STA.w SprSubtype,       X : STA.w !MinecartDirection
       LDA   #$03  : STA !SpriteDirection, X
-      
     ; -----------------------------------------------
     .go_horiz
       %SetTimerA($40)
@@ -549,7 +543,6 @@ HandleTileDirections:
     .inverse_vert_velocity
         LDA.b #-!MinecartSpeed : STA.w SprYSpeed, X
         JMP .done
-        
     .check_direction
       LDA.w SprSubtype, X
       ASL #2  ; Multiply by 4 (shifting left by 2 bits) to offset rows in the lookup table
@@ -612,19 +605,18 @@ HandleTileDirections:
 }
 
 ; =========================================================
-; Check for the switch_track sprite and move based on the 
+; Check for the switch_track sprite and move based on the
 ; state of that sprite.
 
 HandleDynamicSwitchTileDirections:
 {
   ; Find out if the sprite $B0 is in the room
   JSR CheckSpritePresence : BCC .no_b0
-    PHX 
+    PHX
     LDA $02 : TAX
     JSL Link_SetupHitBox
     JSL Sprite_SetupHitBox ; X is now the ID of the sprite $B0
     PLX
-    
     JSL CheckIfHitBoxesOverlap : BCC .no_b0
       LDA !MinecartDirection : CMP.b #$00 : BEQ .east_or_west
                                CMP.b #$01 : BEQ .north_or_south
@@ -674,7 +666,6 @@ CheckSpritePresence:
     LDX.b #$10
   .x_loop
     DEX
-    
     LDY.b #$04
     .y_loop
       DEY
@@ -706,13 +697,12 @@ CheckForPlayerInput:
 
   ; Fetch tile attributes based on current coordinates
   LDA.b #$00 : JSL Sprite_GetTileAttr
-  
-  ; Load the tile index 
+
+  ; Load the tile index
   LDA $0FA5 : CLC : CMP.b #$B6 : BEQ .can_input
                     CMP.b #$BD : BEQ .can_input
     BRA .cant_input
   .can_input
-  
   LDY !SpriteDirection,       X
   LDA $F0 : AND .d_pad_press, Y : STA $00 : AND.b #$08 : BEQ .not_pressing_up
     LDA.b #$00 : STA !SpriteDirection, X ; Moving Up
@@ -762,14 +752,14 @@ CheckIfPlayerIsOn:
   LDA $22 : SEC : SBC #$0009 : CMP $0FD8 : BCS .right
   LDA $20 : CLC : ADC #$0012 : CMP $0FDA : BCC .up
   LDA $20 : SEC : SBC #$0012 : CMP $0FDA : BCS .down
-    SEP #$21 
+    SEP #$21
     RTS ; Return with carry set
   .left
   .right
   .up
   .down
   SEP #$20
-  CLC 
+  CLC
   RTS ; Return with carry cleared
 }
 
@@ -816,12 +806,9 @@ Sprite_Minecart_DrawTop:
     INY
     LDA .properties, X : STA ($90), Y
 
-    PHY 
-        
+    PHY
     TYA : LSR #2 : TAY
-        
     LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-        
     PLY : INY
     PLX : DEX : BPL .nextTile
 
@@ -879,7 +866,6 @@ Sprite_Minecart_DrawBottom:
   .nextTile
 
     PHX ; Save current Tile Index?
-        
     TXA : CLC : ADC $06 ; Add Animation Index Offset
 
     PHA ; Keep the value with animation index offset?
@@ -906,14 +892,10 @@ Sprite_Minecart_DrawBottom:
     INY
     LDA .properties, X : STA ($90), Y
 
-    PHY 
-        
+    PHY
     TYA : LSR #2 : TAY
-        
     LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-        
     PLY : INY
-        
     PLX : DEX : BPL .nextTile
 
     PLX
@@ -992,3 +974,4 @@ JML RoomTag_ShutterDoorRequiresCart
 ; #_01CC0A: BRA RoomTag_TriggerHoles
 
 pullpc
+

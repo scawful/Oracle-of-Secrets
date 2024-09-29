@@ -55,7 +55,8 @@ Sprite_Octorok_Long:
 Sprite_Octorok_Prep:
 {
   PHB : PHK : PLB
-    
+
+  ; TODO Check if the sprite is placed in water
 
   PLB
   RTL
@@ -110,7 +111,7 @@ Sprite_Octorok_Move:
   JSL Sprite_CheckDamageFromPlayer
   JSL Sprite_CheckDamageToPlayer
 
-  ; Set the SprAction based on the direction 
+  ; Set the SprAction based on the direction
   LDA.w SprMiscC, X : AND.b #$03 : TAY : LDA.w .direction, Y : STA.w SprAction, X
 
   LDA.w SprMiscF, X : AND.b #$01 : BNE .octorok_used_barrage
@@ -188,7 +189,7 @@ Octorock_ShootEmUp:
 
   LDA.w SprMiscD, X : BEQ .continue
     LDA.w SprTimerD, X : BNE .four_ways
-      LDA.b #$01 : STA.w SprMiscD, X    
+      LDA.b #$01 : STA.w SprMiscD, X
   .continue
   JSL GetRandomInt : AND.b #$1F : BNE .single_shot
   .four_ways

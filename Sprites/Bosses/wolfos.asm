@@ -60,13 +60,13 @@ Sprite_Wolfos_Prep:
   .outdoors
   ; Check if the wolfos has been defeated
   LDA.l $7EF303 : CMP.b #$01 : BNE .spawn_wolfos
-    STZ.w SprState, X ; Don't spawn the sprite 
+    STZ.w SprState, X ; Don't spawn the sprite
     PLB
     RTL
   .spawn_wolfos
   LDA.b #$40 : STA.w SprTimerA, X
   LDA.b #$80 : STA.w $0CAA, X ; Sprite persist
-  LDA.b #$08 : STA.w $0E40, X ; Nbr Oam Entries 
+  LDA.b #$08 : STA.w $0E40, X ; Nbr Oam Entries
 
   PLB
   RTL
@@ -77,7 +77,7 @@ Sprite_Wolfos_CheckIfDefeated:
   LDA.b $1B : BNE .indoors
     LDA.w SprHealth, X : CMP.b #$04 : BCS .not_defeated
       LDA.b #$06 : STA.w SprAction, X ; Set to defeated
-      LDA.b #$09 : STA.w SprState, X 
+      LDA.b #$09 : STA.w SprState, X
       LDA.b #$40 : STA.w SprHealth, X ; Refill the health of the sprite
       STZ.w SprMiscD, X
       RTS
@@ -90,7 +90,7 @@ Sprite_Wolfos_CheckIfDefeated:
 
 macro Wolfos_Move()
   JSL Sprite_DamageFlash_Long
-  JSL Sprite_CheckDamageFromPlayer : BCC + 
+  JSL Sprite_CheckDamageFromPlayer : BCC +
 
   +
   JSL Sprite_PlayerCantPassThrough

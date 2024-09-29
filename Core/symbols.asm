@@ -760,9 +760,9 @@ ANC0MISCB    = $0385
 AnciTimerA   = $0C68 ; This is a timer, value is decreased by 1 every frame
 
 AnciY        = $0BFA ; Position Y of the ancilla (Up to Down)
-AnciX        = $0C04 ; Position X of the ancilla (Left to Right) 
+AnciX        = $0C04 ; Position X of the ancilla (Left to Right)
 AnciYH       = $0C0E ; High (often determine the room) Position Y of the ancilla (Up to Down)
-AnciXH       = $0C18 ; High (often determine the room) Position X of the ancilla (Left to Right) 
+AnciXH       = $0C18 ; High (often determine the room) Position X of the ancilla (Left to Right)
 AnciXSpeed   = $0C22 ; Y Speed of the ancilla can go negative to go up
 AnciYSpeed   = $0C2C ; X Speed of the ancilla can go negative to go left
 AnciLayer    = $0C7C ; return the floor where the ancilla is
