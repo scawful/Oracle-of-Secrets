@@ -67,6 +67,8 @@ DREAMS         = $7EF410
 ; Current Dream ID (0x00-0x07)
 CurrentDream   = $0426
 
+CurrentSong    = $030F
+
 ; 01 - Fishing Rod
 ; 02 - Portal Rod
 CUSTOMRODS     = $7EF351
@@ -80,7 +82,6 @@ Honeycomb  = $7EF393
 DekuSticks = $7EF395
 
 ; =========================================================
-
 
 ; ZSCustomOverworld version
 ; Kept in case of serious issues which impedes progress
