@@ -3,18 +3,18 @@
 ; Makes Link run quicker when holding
 ; Written by Conn (I think)
 ; $7EF349 bunny hood RAM slot
-; 
+;
 ; Adjustable speed table at the end
 ; db (0) $18: - Horizontal and vertical walking speed
-;                 (Default = 18) 
+;                 (Default = 18)
 ; db (1) $10 - Diagonal walking speed
-;                 (Default = 10) 
+;                 (Default = 10)
 ; db (2) $0a - Stairs walking speed
-;                 (Default = 0A) 
+;                 (Default = 0A)
 ; db (0c) $14 - walking through heavy grass speed (also shallow water)
-;                 (Default = 14) 
+;                 (Default = 14)
 ; db (0d) $0d - walking diagonally through heavy grass speed (also shallow water)
-;                 (Default = 0D) 
+;                 (Default = 0D)
 ; db (10) $40 - Pegasus boots speed (Default = 40)
 ;
 ; =========================================================
@@ -36,10 +36,10 @@ UpdateBunnyPalette:
 ; =========================================================
 
 bunny_palette:
-  dw #$7BDE, #$7FFF, #$2F7D, #$19B5, #$3A9C, #$14A5, #$19FD, #$14B6
-  dw #$55BB, #$362A, #$3F4E, #$162B, #$22D0, #$2E5A, #$1970, #$7616
-  dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
-  dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357, #$0000
+  dw $7BDE, $7FFF, $2F7D, $19B5, $3A9C, $14A5, $19FD, $14B6
+  dw $55BB, $362A, $3F4E, $162B, $22D0, $2E5A, $1970, $7616
+  dw $6565, $7271, $2AB7, $477E, $1997, $14B5, $459B, $69F2
+  dw $7AB8, $2609, $19D8, $3D95, $567C, $1890, $52F6, $2357, $0000
 
 print "End of Bunny Hood GFX             ", pc
 
@@ -57,6 +57,8 @@ Link_CheckForBunnyRun:
   RTS
 pushpc
 
+SubVelocityValues = $87E227
+
 org $20AF20
 LinkState_BunnyHoodRun:
 {
@@ -64,12 +66,12 @@ LinkState_BunnyHoodRun:
   LDA.w $0202              ; check the current item
   CMP.b #$16 : BNE .end    ; is it the bunny hood?
   LDA.w !CurrentMask : CMP.b #$04 : BNE .end
-  LDA.l BunnySpeedTable, X ; load new speed values
-  CLC
-  RTL
+        LDA.l BunnySpeedTable, X ; load new speed values
+        CLC
+        RTL
 
   .end
-  LDA $87E227, X ; load native speed values
+  LDA.l SubVelocityValues, X ; load native speed values
   CLC
   RTL
 }
@@ -77,7 +79,7 @@ LinkState_BunnyHoodRun:
 org $20AF70 ; this selects the new speed values
 BunnySpeedTable:
 {
-  db $20 ; 0x00 - walking on ground 
+  db $20 ; 0x00 - walking on ground
   db $12 ; 0x01 - walking diagonally
   db $0A ; 0x02 - walking on stairs
   db $18 ; 0x03 - walking on stairs diagonally, impossible to reach
@@ -103,10 +105,10 @@ BunnySpeedTable:
   db $18 ; 0x17 - slosh dashing diagonally
   db $20 ; 0x18 - dashing on ice
   db $15 ; 0x19 - dashing on ice diagonally
-  db $F0 ; 0x1A - 
-  db $00 ; 0x1B - 
-  db $F0 ; 0x1C - 
-  db $01 ; 0x1D - 
+  db $F0 ; 0x1A -
+  db $00 ; 0x1B -
+  db $F0 ; 0x1C -
+  db $01 ; 0x1D -
 }
 
 ; =========================================================
@@ -116,7 +118,7 @@ BunnySpeedTable:
 org $07A494
 LinkItem_Ether:
 {
-  LDA #$04 
+  LDA #$04
   JSL Link_TransformMask
   LDA $0114 : CMP.b #$20 : BNE +
     LDA.b #$03 : STA $5B

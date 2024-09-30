@@ -968,7 +968,6 @@ Sprite_DarkLink_Main:
     LDA.w SprTimerA, X : BNE +
     %GotoAction(13)
     +
-      
     RTS
   }
 
@@ -987,7 +986,6 @@ Sprite_DarkLink_Main:
 
   Dead:
   {
-    
     RTS
   }
 
@@ -1000,7 +998,6 @@ Sprite_DarkLink_Main:
         LDA dlinkPalRed, X : STA $7EC600, X
         DEX : DEX : BNE --
         INC $15 ;Refresh Palettes
-        
     SEP #$20
     PLX
 
@@ -1016,7 +1013,7 @@ Sprite_DarkLink_Main:
   }
 
   dlinkPalRed:
-  dw #$7FFF, #$14A5, #$2108, #$294A, #$1CF5, #$7E4E, #$001D, #$6FF4
+  dw $7FFF, $14A5, $2108, $294A, $1CF5, $7E4E, $001D, $6FF4
 }
 
 ; =========================================================

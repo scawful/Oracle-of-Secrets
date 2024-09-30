@@ -12,18 +12,15 @@ UpdateMooshPalette:
   RTL      ; or RTS depending on where you need it
 }
 
-
 MooshPalette:
-{
-  dw #$0000, #$7FFF, #$237E, #$46FF, #$369E, #$14A5, #$01FF, #$1078
-  dw #$6E25, #$7AEF, #$6759, #$0A4A, #$12EF, #$2A5C, #$1571, #$7A18
-}
+  dw $0000, $7FFF, $237E, $46FF, $369E, $14A5, $01FF, $1078
+  dw $6E25, $7AEF, $6759, $0A4A, $12EF, $2A5C, $1571, $7A18
 
 Link_HoverIfMooshWantsToDash:
 {
   LDA.w !CurrentMask : CMP.b #$07 : BNE .return
     JSL PrepareQuakeSpell
-    RTL    
+    RTL
   .return
   JSL Link_HandleMovingAnimation_FullLongEntry
   RTL

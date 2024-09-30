@@ -62,13 +62,13 @@ Follower_Main = $099F91
 
 org $3CA62A ; Expanded space for our routine
 {
-  LDA.l $7EF3C5 : CMP.b #$02 : BCS .continue ; Check if in main game 
+  LDA.l $7EF3C5 : CMP.b #$02 : BCS .continue ; Check if in main game
   JSL Follower_Main
   RTL
   .continue
   LDA $F2 : CMP #$70 : BEQ $03 : JMP END ; Check L, R and X button
 
-if !BetaRelease = 0
+if !BetaRelease == 0
   ; How many bombs you have. Can exceed 0x50, up to 0xff.
   LDA #$50 : STA !Bombs
 
@@ -77,22 +77,21 @@ if !BetaRelease = 0
              STA !TitansMitt
 
   ; 0 - nothing. 1 - Fire Rod
-  LDA #$01 : STA !FireRod 
-             STA !IceRod 
+  LDA #$01 : STA !FireRod
+             STA !IceRod
 
-  LDA #$01 : STA !BunnyMask 
+  LDA #$01 : STA !BunnyMask
 
   LDA #$01 : STA !DekuMask
-  LDA #$01 : STA !ZoraMask 
+  LDA #$01 : STA !ZoraMask
   LDA #$01 : STA !WolfMask
   LDA #$01 : STA !MagicCape
 
   ; 0 - nothing. 1 - shovel. 2 - flute, no bird. 3 - flue, bird activated
-  
-  LDA #$01 : STA !BookOfMudora  
+  LDA #$01 : STA !BookOfMudora
   LDA #$01 : STA !CaneOfSomaria
-  LDA #$01 : STA !PegasusBoots 
-             STA !Flippers 
+  LDA #$01 : STA !PegasusBoots
+             STA !Flippers
              STA !WolfMask
 
   ; 0 - nothing. 1 - Fighter Sword. 2 - Master Sword. 3 - Tempered Sword. 4 - Golden Sword
@@ -104,14 +103,14 @@ if !BetaRelease = 0
   ; 0 - nothing. 1 - Green Mail. 2 - Blue Mail. 3 - Red Mail
   LDA #$02 : STA !Mail
 
-  ; 0-No bottle. 
-  ; 1-Mushroom (no use). 2-Empty bottle. 
-  ; 3-Red Potion. 4-Green Potion. 
-  ; 5-Blue Potion. 6-Fairy. 
+  ; 0-No bottle.
+  ; 1-Mushroom (no use). 2-Empty bottle.
+  ; 3-Red Potion. 4-Green Potion.
+  ; 5-Blue Potion. 6-Fairy.
   ; 7-Bee. 8-Good Bee
-  LDA #$01 : STA !Bottles ; has bottles 
-  LDA #$03 : STA !Bottle1 
-  LDA #$05 : STA !Bottle2 
+  LDA #$01 : STA !Bottles ; has bottles
+  LDA #$03 : STA !Bottle1
+  LDA #$05 : STA !Bottle2
   LDA #$04 : STA !Bottle3
   LDA #$06 : STA !Bottle4
 
@@ -125,26 +124,26 @@ if !BetaRelease = 0
   ; Pendants: Bit 0 = Courage, Bit 1 = Wisdom, Bit 2 = Power
   LDA #$07 : STA !Pendants
 
-  ; Ability Flags: Bit 0: ----. 
+  ; Ability Flags: Bit 0: ----.
   ; Bit 1: Swim.
   ; Bit 2: Run / Dash.
-  ; Bit 3: Pull. Bit 4: ----. 
-  ; Bit 5: Talk. 
+  ; Bit 3: Pull. Bit 4: ----.
+  ; Bit 5: Talk.
   ; Bit 6: Read. Bit 7: ----
   LDA #$6E : STA !AbilityFlags
 
-  ; Crystals: 
+  ; Crystals:
   ; Bit 0 = Misery Mire
   ; Bit 1 = Dark Palace
-  ; Bit 2 = Ice Palace 
+  ; Bit 2 = Ice Palace
   ; Bit 3 = Turtle Rock
   ; Bit 4 = Swamp Palace
   ; Bit 5 = Gargoyle's Domain
   ; Bit 6 = Skull Woods
-  LDA #$00 : STA !Crystals 
+  LDA #$00 : STA !Crystals
 
   ; 0 - nothing. 1 - hookshot
-  LDA #$01 : STA !Hookshot 
+  LDA #$01 : STA !Hookshot
 
   ; Magic usage: 0: normal consumption. 1: 1/2 consumption. 2: 1/4 consumption
   LDA #$02 : STA !MagicUsage
@@ -160,18 +159,16 @@ endif
 
   ; 0 - nothing. 1 - blue boomerang. 2 - red boomerang
   LDA #$02 : STA !Boomerang
-             STA !Mirror 
-             STA !CaneOfByrna 
+             STA !Mirror
+             STA !CaneOfByrna
 
   ; 0 - nothing. 1 - Lamp
-  LDA #$01 : STA !Lamp 
+  LDA #$01 : STA !Lamp
              STA !MagicHammer
              STA !MoonPearl
-             
 
   ; fill all hearts
   LDA #$A0 : STA !Hearts
-  
   ; magic power, maximum is 0x80
   LDA #$80 : STA !MagicPower
 

@@ -22,8 +22,8 @@ UpdateDekuPalette:
 }
 
 deku_palette:
-  dw #$6739, #$15C5, #$150E, #$26C9, #$17AA, #$21F4, #$17DF, #$42DB
-  dw #$14A5, #$14BC, #$14B2, #$14A5, #$7FFF, #$7A18, #$178C
+  dw $6739, $15C5, $150E, $26C9, $17AA, $21F4, $17DF, $42DB
+  dw $14A5, $14BC, $14B2, $14A5, $7FFF, $7A18, $178C
 
 print "End of Masks/deku_mask.asm        ", pc
 
@@ -35,7 +35,7 @@ LinkItem_DekuMask:
   ; Don't use magic unless deku form
   LDA.w $02B2 : CMP.b #$01 : BNE .continue
     ; Don't shoot while transform is active
-    LDA.w $0C4E : BNE .continue 
+    LDA.w $0C4E : BNE .continue
       JSR Link_CheckNewY_ButtonPress : BCC .continue
         LDA $3A : AND.b #$BF : STA $3A
         LDX.b #$02
@@ -66,9 +66,9 @@ org $07A6BE
 LinkState_UsingQuake:
 {
   .anim_step
-    db #$00, #$01, #$02, #$03
-    db #$00, #$01, #$02, #$03
-    db #$10, #$10, #$00, #$00 ; 16
+    db $00, $01, $02, $03
+    db $00, $01, $02, $03
+    db $10, $10, $00, $00 ; 16
 
   .anim_timer
     db   5,   5,   5,   5
