@@ -9,9 +9,8 @@
 ;  - Custom HUD with new magic meter
 ; =========================================================
 
-
 pushpc
-; update in game hud colors 
+; update in game hud colors
 org $1BD662 : dw hexto555($814f16), hexto555($552903)
 org $1BD66A : dw hexto555($d51d00), hexto555($f9f9f9)
 org $1DB672 : dw hexto555($d0a050), hexto555($f9f9f9)
@@ -37,7 +36,7 @@ org $8DDFB2 : LDA.l Menu_ItemIndex, X
 pullpc
 
 ; =========================================================
-; Menu Bank 
+; Menu Bank
 
 org $2D8000
 incsrc "menu_gfx_table.asm"
@@ -49,7 +48,7 @@ incsrc "menu_palette.asm"
 
 Menu_Entry:
 {
-  PHB : PHK : PLB 
+  PHB : PHK : PLB
   LDA.w $0200 : ASL : TAX
   JSR (.vectors,X)
 
@@ -64,7 +63,7 @@ Menu_Entry:
     dw Menu_ScrollDown         ; 03
     dw Menu_ItemScreen         ; 04
     dw Menu_ScrollTo           ; 05
-    dw Menu_StatsScreen        ; 06 
+    dw Menu_StatsScreen        ; 06
     dw Menu_ScrollFrom         ; 07
     dw Menu_ScrollUp           ; 08
     dw Menu_RingBox            ; 09
@@ -75,12 +74,12 @@ Menu_Entry:
 }
 
 ; =========================================================
-; 00 MENU INIT GRAPHICS 
+; 00 MENU INIT GRAPHICS
 
 Menu_InitGraphics:
 {
   LDA.w $0780 : STA.w $00
-  LDA.w $0202 
+  LDA.w $0202
   CMP.b #$10 : BNE .not_fishing
     JSL DismissRodFromMenu
   .not_fishing
@@ -94,7 +93,7 @@ Menu_InitGraphics:
     LDA $3A : AND.b #$80 : STA $3A
     LDA $50 : AND.b #$FE : STA $50
     LDA.b #$80 : STA $44 : STA $45
-  BRA + 
+  BRA +
   .wolf_shovel
     LDA.b $3A : AND.b #$80 : STA.b $3A
     LDA.b $50 : AND.b #$FE : STA.b $50
@@ -107,7 +106,7 @@ Menu_InitGraphics:
 }
 
 ; =========================================================
-; 01 MENU UPLOAD RIGHT 
+; 01 MENU UPLOAD RIGHT
 
 incsrc "menu_draw.asm"
 
@@ -138,7 +137,7 @@ Menu_UploadRight:
 }
 
 ; =========================================================
-; 02 MENU UPLOAD LEFT 
+; 02 MENU UPLOAD LEFT
 
 Menu_UploadLeft:
 {
@@ -146,7 +145,6 @@ Menu_UploadLeft:
   JSR DrawYItems
   JSR Menu_DrawSelect
   JSR Menu_DrawItemName
-  
   ; INSERT PALETTE -------
 
   LDX.w #$3E
@@ -155,19 +153,17 @@ Menu_UploadLeft:
     STA.l $7EC502, X
     DEX : DEX
   BPL .loop
-  
   SEP #$30
-  
   ;-----------------------
 
   LDA.b #$22 : STA.w $0116
   LDA.b #$01 : STA.b $17 : STA.b $15 ; added for palette
   INC.w $0200
-  RTS       
+  RTS
 }
-   
+
 ; =========================================================
-; 03 MENU SCROLL DOWN 
+; 03 MENU SCROLL DOWN
 
 Menu_Scroll:
   dw 0, -3, -5, -7, -10, -12, -15, -20
@@ -183,7 +179,7 @@ Menu_ScrollDown:
 
   LDX.w MenuScrollLevelV
   INX : INX
-  LDA.w Menu_Scroll, X 
+  LDA.w Menu_Scroll, X
   STA.b $EA
   CMP.w #$FF12 : BNE .notDoneScrolling
     JMP Menu_InitItemScreen
@@ -194,7 +190,7 @@ Menu_ScrollDown:
 }
 
 ; =========================================================
-; 04 MENU ITEM SCREEN 
+; 04 MENU ITEM SCREEN
 
 incsrc "menu_select_item.asm"
 
@@ -204,8 +200,8 @@ Menu_ItemScreen:
 
   INC $0207
   LDA.w $0202 : BEQ .do_no_input
-    ; Scroll through joypad 1 inputs 
-    ASL : TAY : LDA.b $F4 
+    ; Scroll through joypad 1 inputs
+    ASL : TAY : LDA.b $F4
     LSR : BCS .move_right
     LSR : BCS .move_left
     LSR : BCS .move_down
@@ -239,24 +235,24 @@ Menu_ItemScreen:
   JSR Menu_DeleteCursor
   JSR Menu_FindNextItem
   BRA .draw_cursor
-  
+
   .move_left
   JSR Menu_DeleteCursor
   JSR Menu_FindPrevItem
   BRA .draw_cursor
 
-  .move_down 
+  .move_down
   JSR Menu_DeleteCursor
   JSR Menu_FindNextDownItem
   BRA .draw_cursor
 
-  .move_up 
+  .move_up
   JSR Menu_DeleteCursor
   JSR Menu_FindNextUpItem
   BRA .draw_cursor
 
   .draw_cursor
-  LDA.b #$20 : STA.w $012F ; cursor move sound effect 
+  LDA.b #$20 : STA.w $012F ; cursor move sound effect
 
   .no_inputs
   SEP #$30
@@ -276,54 +272,51 @@ Menu_ItemScreen:
 }
 
 ; =========================================================
-; 05 MENU SCROLL TO 
+; 05 MENU SCROLL TO
 
 Menu_ScrollTo:
 {
-  SEP #$20 
+  SEP #$20
   JSR Menu_ScrollHorizontal
   BCC .not_done
     INC.w $0200
-
   .not_done
   RTS
 }
 
 ; =========================================================
-; 06 MENU STATS SCREEN 
+; 06 MENU STATS SCREEN
 
 incsrc "menu_scroll.asm"
 
 Menu_StatsScreen:
 {
   JSR Menu_CheckHScroll
-
   RTS
 }
 
 ; =========================================================
-; 07 MENU SCROLL FROM 
+; 07 MENU SCROLL FROM
 
 Menu_ScrollFrom:
 {
   JSR Menu_ScrollHorizontal
   BCC .not_done
     JMP Menu_InitItemScreen
-
   .not_done
   RTS
 }
 
 ; =========================================================
-; 08 MENU SCROLL UP 
+; 08 MENU SCROLL UP
 
 Menu_ScrollUp:
-{ 
+{
   SEP #$10
   REP #$20
 
   LDX.w MenuScrollLevelV
-  LDA.w Menu_Scroll, X 
+  LDA.w Menu_Scroll, X
   STA.b $EA : BNE .notDoneScrolling
     STZ.b $E4
     LDA.w #$000A : STA.w $0200
@@ -335,11 +328,11 @@ Menu_ScrollUp:
 }
 
 ; =========================================================
-; CHECK BOTTLE 
+; CHECK BOTTLE
 
 Menu_CheckBottle:
 {
-  LDA.w $0202 : CMP.b #$06 : BNE .not_first 
+  LDA.w $0202 : CMP.b #$06 : BNE .not_first
     LDA.b #$0001 : JMP .prepare_bottle
   .not_first
 
@@ -355,12 +348,12 @@ Menu_CheckBottle:
     LDA.b #$0004
   .prepare_bottle
   STA.l $7EF34F
-  .not_any 
-  RTS 
+  .not_any
+  RTS
 }
 
 ; =========================================================
-; 0A MENU EXIT 
+; 0A MENU EXIT
 
 Menu_Exit:
 {
@@ -371,19 +364,19 @@ Menu_Exit:
   ; reset submodule
   STZ $0200
 
-  ; go back to the submodule we came from 
+  ; go back to the submodule we came from
   LDA.w $010C : STA.b $10
 
   ; set $0303 by using $0202 to index table on exit
   ; set $0304 to prevent item + 1 animation exploits
-  LDX $0202 
+  LDX $0202
   LDA.w Menu_ItemIndex, X : STA $0303 : STA.w $0304
 
   LDX.b #$3E
   .loop
-    LDA.l $7EC300, X 
+    LDA.l $7EC300, X
     STA.l $7EC500, X
-    DEX : DEX 
+    DEX : DEX
   BPL .loop
 
   INC.b $15
@@ -400,7 +393,7 @@ Menu_InitiateScrollDown:
   REP #$20
 
   ; Clear out the whole buffer.
-  LDX.b #$FE ; $1700-17FF 
+  LDX.b #$FE ; $1700-17FF
 
   .loop
     LDA.w #$387F
@@ -416,7 +409,7 @@ Menu_InitiateScrollDown:
     DEX : DEX
   BNE .loop
 
-  ; TODO: The BPL wasn't working so figure out why and 
+  ; TODO: The BPL wasn't working so figure out why and
   ; fix it instead of doing this abomination.
   STA.w $1000
   STA.w $1100
@@ -464,7 +457,7 @@ Menu_InitiateScrollDown:
 
   LDA.b #$08 : STA.w $0200
 
-  LDA.b #$12 : STA.w $012F ; play menu exit sound effect 
+  LDA.b #$12 : STA.w $012F ; play menu exit sound effect
 
   RTS
 }
@@ -479,32 +472,28 @@ Menu_MagicBag:
   SEP #$30
 
   INC $0207
-  LDA.b $F4 
+  LDA.b $F4
   LSR : BCS .move_right
   LSR : BCS .move_left
   LSR : BCS .move_down
   LSR : BCS .move_up
   BRA .continue
 
+  .move_up
   .move_right
     LDA.w $020B : CMP.b #$03 : BCS .zero
     INC.w $020B
     BRA .continue
 
+  .move_down
   .move_left
     LDA.w $020B : CMP.b #$00 : BEQ .continue
     DEC.w $020B
     BRA .continue
 
-  .move_down
-
-  .move_up
-
   .zero
-    STZ.w $020B
-
+  STZ.w $020B
   .continue
-
   LDA.w $020B
   ASL : TAY
   REP #$10
@@ -522,6 +511,9 @@ Menu_MagicBagCursorPositions:
   dw menu_offset(8,6)   ; banana
   dw menu_offset(8,10)  ; pineapple
   dw menu_offset(8,14)  ; goron rock meat
+  dw menu_offset(12,6)  ; seashells
+  dw menu_offset(12,10) ; honeycombs
+  dw menu_offset(12,14) ; deku sticks
 
 ; =========================================================
 ; 0D MENU SONG MENU
@@ -532,9 +524,9 @@ Menu_SongMenu:
   JSR Menu_DrawMusicNotes
 
   INC $0207
-  LDA.w $030F : BEQ .continue
-  ASL : TAY 
-  LDA.b $F4 
+  LDA.w CurrentSong : BEQ .continue
+  ASL : TAY
+  LDA.b $F4
   LSR : BCS .move_right
   LSR : BCS .move_left
   LSR : BCS .move_down
@@ -546,10 +538,9 @@ Menu_SongMenu:
     REP   #$30
     LDX.w Menu_SongIconCursorPositions-2, Y
     JSR Menu_DeleteCursor_AltEntry
-    LDA.w $030F : CMP.b #$04 : BEQ .reset
-      
-      INC.w $030F
-      LDA $030F        ; load incremented Song RAM
+    LDA.w CurrentSong : CMP.b #$04 : BEQ .reset
+      INC.w CurrentSong
+      LDA.w CurrentSong
       CMP.b #$04
       BCS .wrap_to_min
       JMP .continue
@@ -557,17 +548,16 @@ Menu_SongMenu:
       LDA $7EF34C : CMP.b #$01 : BEQ .wrap_to_min
                     CMP.b #$02 : BEQ .set_max_to_2
                     CMP.b #$03 : BEQ .set_max_to_3
-      LDA #$04 : STA $030F : JMP .continue
+      LDA #$04 : STA.w CurrentSong : JMP .continue
 
       .set_max_to_3
-      LDA #$03 : STA $030F : JMP .continue
+      LDA #$03 : STA.w CurrentSong : JMP .continue
 
       .set_max_to_2
-      LDA #$02 : STA $030F : JMP .continue
+      LDA #$02 : STA.w CurrentSong : JMP .continue
 
       .wrap_to_min
-      LDA #$01 : STA $030F
-      
+      LDA #$01 : STA.w CurrentSong
       BRA .continue
 
   .move_left
@@ -575,22 +565,19 @@ Menu_SongMenu:
     REP   #$30
     LDX.w Menu_SongIconCursorPositions-2, Y
     JSR Menu_DeleteCursor_AltEntry
-    
-    LDA.w $030F : CMP.b #$01 : BEQ .reset
-      DEC.w $030F
-      LDA $030F
+    LDA.w CurrentSong : CMP.b #$01 : BEQ .reset
+      DEC.w CurrentSong
+      LDA.w CurrentSong
       CMP #$00 : BEQ .wrap_to_max
       BRA .continue
-
-  .reset
-    LDA #$01 : STA $030F
+    .reset
+    LDA #$01 : STA.w CurrentSong
 
   .continue
 
-
   JSR Menu_DrawItemName
   SEP #$30
-  LDA.w $030F
+  LDA.w CurrentSong
   ASL : TAY
   REP #$10
   LDX.w Menu_SongIconCursorPositions-2, Y
@@ -607,7 +594,7 @@ Menu_SongMenu:
 Menu_SongIconCursorPositions:
   dw menu_offset(8,4)
   dw menu_offset(8,8)
-  dw menu_offset(8,12) 
+  dw menu_offset(8,12)
   dw menu_offset(8,16)
 
 ; =========================================================
@@ -619,7 +606,7 @@ Menu_RingBox:
   JSR Menu_DrawMagicRingsInBox
   INC $0207
 
-  LDA.b $F4 
+  LDA.b $F4
   LSR : BCS .move_right
   LSR : BCS .move_left
   LSR : BCS .move_down
@@ -671,7 +658,7 @@ Menu_RingIconCursorPositions:
 
 RingMenu_StoreRingToSlotStack:
 {
-  ; TODO: Check how many ring slots we currently have 
+  ; TODO: Check how many ring slots we currently have
 
   ; Check if the ring is already in a slot
   STA.b $00
@@ -679,7 +666,6 @@ RingMenu_StoreRingToSlotStack:
   LDA.b $00 : CMP.l RingSlot2 : BEQ .return
   LDA.b $00 : CMP.l RingSlot3 : BEQ .return
   PHA
-  
   ; Check the SRAM for an available ring slot
   ; If none is available we shift the stack
   ; $7EF38C-7EF38E (Size 03)
@@ -695,7 +681,7 @@ RingMenu_StoreRingToSlotStack:
   PLA : STA.l RingSlot3
   .return
   RTS
-  
+
   .slot1_available
   PLA : STA.l RingSlot1
   RTS
@@ -723,7 +709,7 @@ RingMenu_Controls:
   +
 
   ; Return to item menu if player presses X
-  LDA.b $F6 : BIT.b #$40 : BEQ + 
+  LDA.b $F6 : BIT.b #$40 : BEQ +
     LDA.b #$01 : STA.w $0200
   +
 
