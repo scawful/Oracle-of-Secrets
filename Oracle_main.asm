@@ -11,7 +11,7 @@
 ;   2F  - Expanded Message Bank
 ;   30-32 Sprites: all_sprites.asm
 ;   33  - Moosh Form Gfx and Palette
-;   34  - Time System, Custom Overworld Overlays
+;   34  - Time System, Custom Overworld Overlays, Gfx
 ;   35  - Deku Link Gfx and Palette
 ;   36  - Zora Link Gfx and Palette
 ;   37  - Bunny Link Gfx and Palette
@@ -22,9 +22,15 @@
 ;   3C  - Unused
 ;   3D  - LW World Map
 ;   3E  - DW World Map
-;   3F  - Load Custom Gfx, Boat Gfx
-;
-; =========================================================
+;   3F  - Unused
+
+; Mushroom Grotto ID 0x0C (Palace of Darkness)
+; Tail Palace ID 0x0A (Swamp Palace)
+; Kalyxo Castle ID 0x10 (Skull Woods)
+; Zora Temple ID 0x16 (Thieves Town)
+; Glacia Estate 0x12 (Ice Palace)
+; Goron Mines 0x0E (Misery Mire)
+; Dragon Ship 0x18 (Turtle Rock)
 
 ; .fmp h.i.
 ;  f - fortress of secrets
@@ -65,14 +71,6 @@ CurrentDream   = $0426
 ; 02 - Portal Rod
 CUSTOMRODS     = $7EF351
 
-; Mushroom Grotto ID 0x0C (Palace of Darkness)
-; Tail Palace ID 0x0A (Swamp Palace)
-; Kalyxo Castle ID 0x10 (Skull Woods)
-; Zora Temple ID 0x16 (Thieves Town)
-; Glacia Estate 0x12 (Ice Palace)
-; Goron Mines 0x0E (Misery Mire)
-; Dragon Ship 0x18 (Turtle Rock)
-
 ; Collectibles
 Bananas    = $7EF38B
 Pineapples = $7EF38D
@@ -80,6 +78,9 @@ RockMeat   = $7EF38F
 Seashells  = $7EF391
 Honeycomb  = $7EF393
 DekuSticks = $7EF395
+
+; =========================================================
+
 
 ; ZSCustomOverworld version
 ; Kept in case of serious issues which impedes progress
