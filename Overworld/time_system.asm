@@ -11,11 +11,12 @@ Hours = $7EE000
 Minutes = $7EE001
 TimeSpeed = $7EE002
 
+; HUD Template adjusts timer's color
 org !hud_template
-	db $10,$24,$11,$24
-  db $6C,$25
-  db $90,$24,$90,$24
-  db $6C,$25,$90,$24,$90,$24	; HUD Template(adjusts timer's color)
+	db $10, $24, $11, $24
+  db $6C, $25
+  db $90, $24, $90, $24
+  db $6C, $25, $90, $24, $90, $24
 
 ; Sprite_Main.dont_reset_drag
 ; Executes every frame to update the clock
@@ -105,6 +106,9 @@ DrawClockToHud:
 
 ; =========================================================
 
+Overworld_SetFixedColAndScroll = $0BFE70
+Overworld_SetFixedColAndScroll_AltEntry = $0BFE72
+
 RunClock:
 {
   LDA $10	; checks current event in game
@@ -147,33 +151,32 @@ RunClock:
     RTS
 
   .increase_minutes
-  LDA $7EE001 : INC A : STA $7EE001
-  CMP #$3C : BPL .increase_hours ; minutes = #60 ?
+  LDA.l Minutes : INC A : STA.l Minutes
+  CMP #$3C : BPL .increase_hours ; minutes = 60 ?
     RTS
 
   .increase_hours
-  LDA #$00 : STA $7EE001
-  LDA $7EE000 : INC A : STA $7EE000
-  CMP #$18 : BPL .reset_hours ; hours = #24 ?
+  LDA #$00 : STA.l Minutes
+  LDA.l Hours : INC A : STA.l Hours
+  CMP #$18 : BPL .reset_hours ; hours = 24 ?
     ;check indoors/outdoors
     LDA $1B	: BEQ .outdoors0
       RTS
 
     .outdoors0
 
-    JSL rom_to_buff	; update buffer palette
-    JSL buff_to_eff	; update effective palette
+    JSL RomToPaletteBuffer	; update buffer palette
+    JSL PaletteBufferToEffective	; update effective palette
 
     ;rain layer ?
     LDA $8C : CMP #$9F : BEQ .skip_bg_updt0
       LDA $8C : CMP #$9E : BEQ .skip_bg_updt0	; canopy layer ?
         CMP #$97 : BEQ .skip_bg_updt0	; fog layer?
-        JSL $0BFE70	; update background color
+        JSL Overworld_SetFixedColAndScroll ; update background color
         BRA .inc_hours_end
 
     .skip_bg_updt0 ; prevent the sub layer from disappearing ($1D zeroed)
-    JSL $0BFE72
-
+    JSL Overworld_SetFixedColAndScroll_AltEntry
     .inc_hours_end
     RTS
 
@@ -186,18 +189,16 @@ RunClock:
     RTS
   .outdoors1
 
-  JSL rom_to_buff
-  JSL buff_to_eff
+  JSL RomToPaletteBuffer
+  JSL PaletteBufferToEffective
 
   LDA $8C : CMP #$9F : BEQ .skip_bg_updt1 ; rain layer ?
     LDA $8C : CMP #$9E : BEQ .skip_bg_updt1	; canopy layer ?
-      JSL $0BFE70 ; update background color
+      JSL Overworld_SetFixedColAndScroll ; update background color
       BRA .reset_end
 
   .skip_bg_updt1 ; prevent the sub layer from disappearing ($1D zeroed)
-
-  JSL $0BFE72
-
+  JSL Overworld_SetFixedColAndScroll_AltEntry
   .reset_end
   RTS
 }
@@ -205,17 +206,17 @@ RunClock:
 CheckForSongOfTime:
 {
   LDA $FE : CMP.b #$02 : BNE +
-    LDA.b #$00 : STA.l $7EE002
+    LDA.b #$00 : STA.l TimeSpeed
 
-    LDA.l $7EE000 : CMP.b #$06 : BNE ++
-      LDA.l $7EE001 : BNE ++
-        LDA.b #$3F : STA.l $7EE002
+    LDA.l Hours : CMP.b #$06 : BNE ++
+      LDA.l Minutes : BNE ++
+        LDA.b #$3F : STA.l TimeSpeed
         STZ $FE
     ++
 
-    LDA.l $7EE000 : CMP.b #$12 : BNE ++
-      LDA.l $7EE001 : BNE ++
-        LDA.b #$3F : STA.l $7EE002
+    LDA.l Hours : CMP.b #$12 : BNE ++
+      LDA.l Minutes : BNE ++
+        LDA.b #$3F : STA.l TimeSpeed
         STZ $FE
     ++
   +
@@ -225,7 +226,7 @@ CheckForSongOfTime:
 pushpc
 
 ; =========================================================
-;----[ Day / Night system * palette effect ]----
+; ----[ Day / Night system * palette effect ]----
 ; =========================================================
 
 !blue_value = $7EE010
@@ -235,12 +236,14 @@ pushpc
 !temp_value = $7EE016
 !pal_color = $7EE018
 
+Overworld_CopyPalettesToCache = $02C769
+
 org $02FF80		; free space on bank $02
-buff_to_eff:
+PaletteBufferToEffective:
 	JSR $C769	; $02:C65F -> palette buffer to effective routine
 	RTL
 
-rom_to_buff:
+RomToPaletteBuffer:
 	JSR $AAF4	; $02:AAF4 -> change buffer palette of trees,houses,rivers,etc.
 	JSR $C692	; $02:C692 -> rom to palette buffer for other colors
 	RTL
@@ -439,9 +442,9 @@ GlovesFix:
 
 CheckIfNight:
 {
-  JSR LoadPeacetimeSprites : BCS +
-    RTL
-  +
+  ;JSR LoadPeacetimeSprites : BCS +
+  ;  RTL
+  ;+
   LDA.l $7EF3C5 : CMP.b #$02 : BCC .day_time
   LDA $7EE000 : CMP.b #$12 : BCS .night_time
   LDA $7EE000 : CMP.b #$06 : BCC .night_time
@@ -475,9 +478,9 @@ ColorBgFix:
 
 CheckIfNight16Bit:
 {
-  JSR LoadPeacetimeSprites : BCS +
-    RTL
-  +
+  ;JSR LoadPeacetimeSprites : BCS +
+  ;  RTL
+  ;+
   ; Don't change the spriteset during the intro sequence
   LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCC .day_time
     ; 0x12 = 18 hours or 6 pm
@@ -551,7 +554,6 @@ FixDungeonMapColors:
 
 RestoreTimeForDungeonMap:
 {
-  ; Restore the time
   LDA $7EF900 : STA $7EE000
   LDA $7EF901 : STA $7EE001
   LDA.l $7EC017
@@ -570,11 +572,11 @@ org $00FC6A
 
 
 ; $0BFE70 -> background color loading routine
-;Background color write fix - 16 bytes
-;$0B/FEB6 8F 00 C5 7E STA $7EC500
-;$0B/FEBA 8F 00 C3 7E STA $7EC300
-;$0B/FEBE 8F 40 C5 7E STA $7EC540
-;$0B/FEC2 8F 40 C3 7E STA $7EC340
+; Background color write fix - 16 bytes
+; $0B/FEB6 8F 00 C5 7E STA $7EC500
+; $0B/FEBA 8F 00 C3 7E STA $7EC300
+; $0B/FEBE 8F 40 C5 7E STA $7EC540
+; $0B/FEC2 8F 40 C3 7E STA $7EC340
 
 if ZS_CUSTOM_OW_V2 == 0
 ; Custom BG Color Mosaic Background Color fix
@@ -599,7 +601,7 @@ if ZS_CUSTOM_OW_V2 == 0
 org $2886B4
   STA !pal_color
   JSL BackgroundFix
-  ;NOP #8
+  ; NOP #8
 endif
 
 ; ZS OW - CheckForChangeGraphicsTransitionLoad
@@ -612,27 +614,27 @@ org $2885F9
 endif
 
 ; Subareas background color fix (under the bridge; zora...)
-;$0E/D601 8F 00 C3 7E STA $7EC300[$7E:C300]
-;$0E/D605 8F 40 C3 7E STA $7EC340[$7E:C340]
+; $0E/D601 8F 00 C3 7E STA $7EC300[$7E:C300]
+; $0E/D605 8F 40 C3 7E STA $7EC340[$7E:C340]
 
 org $0ED601
 	JSL SubAreasFix
 
 ; =========================================================
 ; Gloves color loading routine
-;$1B/EE1B C2 30       REP #$30
-;$1B/EE1D AF 54 F3 7E LDA $7EF354[$7E:F354]
-;$1B/EE21 29 FF 00    AND #$00FF
-;$1B/EE24 F0 0F       BEQ $0F    [$EE35]
-;$1B/EE26 3A          DEC A
-;$1B/EE27 0A          ASL A
-;$1B/EE28 AA          TAX
-;$1B/EE29 BF F5 ED 1B LDA $1BEDF5,x[$1B:EDF7]
-;$1B/EE2D 8F FA C4 7E STA $7EC4FA[$7E:C4FA]
-;$1B/EE31 8F FA C6 7E STA $7EC6FA[$7E:C6FA]
-;$1B/EE35 E2 30       SEP #$30
-;$1B/EE37 E6 15       INC $15    [$00:0015]
-;$1B/EE39 6B          RTL
+; $1B/EE1B C2 30       REP #$30
+; $1B/EE1D AF 54 F3 7E LDA $7EF354[$7E:F354]
+; $1B/EE21 29 FF 00    AND #$00FF
+; $1B/EE24 F0 0F       BEQ $0F    [$EE35]
+; $1B/EE26 3A          DEC A
+; $1B/EE27 0A          ASL A
+; $1B/EE28 AA          TAX
+; $1B/EE29 BF F5 ED 1B LDA $1BEDF5,x[$1B:EDF7]
+; $1B/EE2D 8F FA C4 7E STA $7EC4FA[$7E:C4FA]
+; $1B/EE31 8F FA C6 7E STA $7EC6FA[$7E:C6FA]
+; $1B/EE35 E2 30       SEP #$30
+; $1B/EE37 E6 15       INC $15    [$00:0015]
+; $1B/EE39 6B          RTL
 
 ; Palettes_Load_LinkGloves
 org $1BEE2D
