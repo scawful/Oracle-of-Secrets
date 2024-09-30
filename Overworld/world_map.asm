@@ -39,11 +39,11 @@ DrawWisdomPendant:
   ; Y position
   LDA.b #$07 : STA.l $7EC109
   LDA.b #$01 : STA.l $7EC108
- 
+
   LDA.b #$60 : STA.b $0D
   LDA.b #$34 : STA.b $0C ; Tile GFX
 
-  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
   LDA.b #$0D : STA.l $7EC025
   RTL
 }
@@ -60,7 +60,7 @@ DrawPowerPendant:
   LDA.b #$60 : STA.b $0D
   LDA.b #$32 : STA.b $0C ; Tile GFX
 
-  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
   LDA.b #$08 : STA.l $7EC025
   RTL
 }
@@ -77,7 +77,7 @@ DrawCouragePendant:
   LDA.b #$60 : STA.b $0D
   LDA.b #$38 : STA.b $0C
   ; Tile Size
-  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
   LDA.b #$0A : STA.l $7EC025 ; OAM Slot used
   RTL
 }
@@ -94,7 +94,7 @@ DrawMasterSwordIcon:
   LDA.b #$62 : STA.b $0D
   LDA.b #$34 : STA.b $0C ; Tile GFX
 
-  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
   LDA.b #$0B : STA.l $7EC025
   RTL
 }
@@ -111,7 +111,7 @@ DrawFortressOfSecretsIcon:
   LDA.b #$66 : STA.b $0D
   LDA.b #$34 : STA.b $0C ; Tile GFX
 
-  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
   LDA.b #$0B : STA.l $7EC025
 
   RTL
@@ -129,7 +129,7 @@ DrawFinalBossIcon:
   LDA.b #$66 : STA.b $0D
   LDA.b #$34 : STA.b $0C
   ; Tile Size
-  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
   LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
   RTL
 }
@@ -146,7 +146,7 @@ DrawHallOfSecretsIcon:
   LDA.b #$68 : STA.b $0D
   LDA.b #$34 : STA.b $0C
   ; Tile Size
-  LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8
   LDA.b #$07 : STA.l $7EC025
   RTL
 }
@@ -163,7 +163,7 @@ DrawPyramidIcon:
   LDA.b #$68 : STA.b $0D
   LDA.b #$34 : STA.b $0C ; Tile GFX
 
-  LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8
   LDA.b #$07 : STA.l $7EC025
   RTL
 }
@@ -179,7 +179,7 @@ DrawEonEscapeIcon:
   LDA.b #$68 : STA.b $0D
   LDA.b #$36 : STA.b $0C ; Tile GFX
 
-  LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+  LDA.b #$00 : STA.b $0B ; 02 = 16x16, 00 = 8x8
   LDA.b #$06 : STA.l $7EC025
   RTL
 }
@@ -268,7 +268,7 @@ MapIconDraw:
       LDA.b #$64 : STA.b $0D
       LDA.b #$38 : STA.b $0C
       ; Tile Size
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
       LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
       JSR HandleMapDrawIcon
 
@@ -286,7 +286,7 @@ MapIconDraw:
       LDA.b #$64 : STA.b $0D
       LDA.b #$34 : STA.b $0C ; Tile GFX
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
       LDA.b #$08 : STA.l $7EC025
 
       JSR HandleMapDrawIcon
@@ -305,7 +305,7 @@ MapIconDraw:
       LDA.b #$64 : STA.b $0D
       LDA.b #$34 : STA.b $0C ; Tile GFX
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
       LDA.b #$0D : STA.l $7EC025
 
       JSR HandleMapDrawIcon
@@ -325,7 +325,7 @@ MapIconDraw:
       LDA.b #$64 : STA.b $0D
       LDA.b #$3C : STA.b $0C ; Tile GFX
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
       LDA.b #$0B : STA.l $7EC025
 
       JSR HandleMapDrawIcon
@@ -344,7 +344,7 @@ MapIconDraw:
       LDA.b #$64 : STA.b $0D
       LDA.b #$34 : STA.b $0C ; Tile GFX
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
       LDA.b #$09 : STA.l $7EC025
 
       JSR HandleMapDrawIcon
@@ -396,7 +396,6 @@ HandleMapDrawIcon:
     AND.b #$10
     BNE .skip_draw ; Timer to make it flash
         .noflash ; ALTERNATE ENTRY POINT
-        
         JSR WorldMapIcon_AdjustCoordinate
         LDA.l $7EC025 : TAX
         JSR WorldMap_CalculateOAMCoordinates
@@ -439,121 +438,115 @@ restore_coords_and_exit:
 WorldMap_CalculateOAMCoordinates:
 
 ; =========================================================
-; Gfx Notes
-
-; 0x0C4000 to 0x0C8000 for the map gfx 
-; patch a new rom with your map data/gfx 
-; create a new bin file out of these bytes 
-; OverworldMap.asm you can copy everything from start to line 214
-; and 264 to 272 if you want palettes in asm too
-
-; 0AC727 (pc: 054727) to 0AD726 (pc: 055726)  0x1000 bytes 
+; 0x0C4000 to 0x0C8000 for the map gfx
+; patch a new rom with your map data/gfx
+; create a new bin file out of these bytes
+; 0AC727 (pc: 054727) to 0AD726 (pc: 055726)  0x1000 bytes
 
 ; =========================================================
 ; LW OVERWORLD MAP
 ; =========================================================
 
 org $008E54 ;STZ $2115
-    JSL DMAOwMap
-    RTS
+  JSL DMAOwMap
+  RTS
 
-org $00E399 
-    JSL DMAOwMapGfx
-    RTL
+org $00E399
+  JSL DMAOwMapGfx
+  RTL
 
 ; =========================================================
 ; DW OVERWORLD MAP
 ; =========================================================
 org $008FF3
-    RTS ; do not do anything during the DW update we'll handle it in the LW routine
+  RTS ; do nothing during DW update, we'll handle it in the LW routine
 
 org $3D8000
-    LWWorldMap_Tiles:
+  LWWorldMap_Tiles:
     incbin world_map/LwMapTileset.bin
 
-    LWWorldMap_Gfx:
+  LWWorldMap_Gfx:
     incbin world_map/LwMapGfx.bin
 
 org $3E8000
-    DWWorldMap_Tiles:
+  DWWorldMap_Tiles:
     incbin world_map/DwMapTileset.bin
 
-    DWWorldMap_Gfx:
+  DWWorldMap_Gfx:
     incbin world_map/DwMapGfx.bin
 
 DMAOwMap:
 {
   JSL Palette_ArmorAndGloves
-    LDA $8A : AND #$40 : BEQ .LWMAP
-        JMP .DWMAP
-        
-    .LWMAP
+  LDA $8A : AND #$40 : BEQ .LWMAP
+    JMP .DWMAP
+  .LWMAP
 
-    STZ.w $2115
+  STZ.w $2115
 
-    LDA.b #LWWorldMap_Tiles>>16
-    STA.w $4304
+  LDA.b #LWWorldMap_Tiles>>16
+  STA.w $4304
 
-    REP #$20
+  REP #$20
 
-    LDA.w #$1800
-    STA.w $4300
+  LDA.w #$1800
+  STA.w $4300
 
-    STZ.b $04
-    STZ.b $02
+  STZ.b $04
+  STZ.b $02
 
-    LDY.b #$01
-    LDX.b #$00
+  LDY.b #$01
+  LDX.b #$00
 
-    .next_quadrant
+  .next_quadrant
 
-        LDA.w #$0020
-        STA.b $06
+    LDA.w #$0020
+    STA.b $06
 
-        LDA.l .vram_offset,X
-        STA.b $00
+    LDA.l .vram_offset,X
+    STA.b $00
 
-        .next_row
+    .next_row
 
-            LDA.b $00
-            STA.w $2116
+      LDA.b $00
+      STA.w $2116
 
-            CLC
-            ADC.w #$0080
-            STA.b $00
+      CLC
+      ADC.w #$0080
+      STA.b $00
 
-            LDA.b $02
-            CLC
-            ADC.w #LWWorldMap_Tiles
-            STA.w $4302
+      LDA.b $02
+      CLC
+      ADC.w #LWWorldMap_Tiles
+      STA.w $4302
 
-            LDA.w #$0020
-            STA.w $4305
+      LDA.w #$0020
+      STA.w $4305
 
-            STY.w $420B
+      STY.w $420B
 
-            CLC
-            ADC.b $02
-            STA.b $02
+      CLC
+      ADC.b $02
+      STA.b $02
 
-            DEC.b $06
-        BNE .next_row
+      DEC.b $06
+    BNE .next_row
 
-        INC.b $04
-        INC.b $04
+    INC.b $04
+    INC.b $04
 
-        LDX.b $04
-        CPX.b #$08
-    BNE .next_quadrant
+    LDX.b $04
+    CPX.b #$08
+  BNE .next_quadrant
 
-    SEP #$20
+  SEP #$20
 
-    RTL
+  RTL
 
-    .vram_offset
+  .vram_offset
     dw $0000, $0020, $1000, $1020
 
-    .DWMAP
+  .DWMAP
 
     STZ.w $2115
 
@@ -573,43 +566,43 @@ DMAOwMap:
 
     .next_quadrant2
 
-        LDA.w #$0020
-        STA.b $06
+      LDA.w #$0020
+      STA.b $06
 
-        LDA.l .vram_offset,X
+      LDA.l .vram_offset,X
+      STA.b $00
+
+      .next_row2
+
+        LDA.b $00
+        STA.w $2116
+
+        CLC
+        ADC.w #$0080
         STA.b $00
 
-        .next_row2
+        LDA.b $02
+        CLC
+        ADC.w #DWWorldMap_Tiles
+        STA.w $4302
 
-            LDA.b $00
-            STA.w $2116
+        LDA.w #$0020
+        STA.w $4305
 
-            CLC
-            ADC.w #$0080
-            STA.b $00
+        STY.w $420B
 
-            LDA.b $02
-            CLC
-            ADC.w #DWWorldMap_Tiles
-            STA.w $4302
+        CLC
+        ADC.b $02
+        STA.b $02
 
-            LDA.w #$0020
-            STA.w $4305
+        DEC.b $06
+    BNE .next_row2
 
-            STY.w $420B
+    INC.b $04
+    INC.b $04
 
-            CLC
-            ADC.b $02
-            STA.b $02
-
-            DEC.b $06
-        BNE .next_row2
-
-        INC.b $04
-        INC.b $04
-
-        LDX.b $04
-        CPX.b #$08
+    LDX.b $04
+    CPX.b #$08
     BNE .next_quadrant2
 
     SEP #$20
@@ -620,30 +613,30 @@ DMAOwMap:
 
 DMAOwMapGfx:
 {
-    LDA $8A : AND #$40 : BNE .DWMAP
-        LDA.b #LWWorldMap_Gfx>>16 : STA $02
+  LDA $8A : AND #$40 : BNE .DWMAP
+    LDA.b #LWWorldMap_Gfx>>16 : STA $02
 
-        LDA.b #$80 : STA $2115
+    LDA.b #$80 : STA $2115
 
-        STZ $2116 : STZ $2117
+    STZ $2116 : STZ $2117
 
-        REP #$10
+    REP #$10
 
-        LDY.w #LWWorldMap_Gfx : STY $00
+    LDY.w #LWWorldMap_Gfx : STY $00
 
-        LDY.w #$0000
+    LDY.w #$0000
 
-        .writeChr
+    .writeChr
 
-            LDA [$00], Y : STA $2119 : INY
-            LDA [$00], Y : STA $2119 : INY
-            LDA [$00], Y : STA $2119 : INY
-            LDA [$00], Y : STA $2119 : INY
-        CPY.w #$4000 : BNE .writeChr
+        LDA [$00], Y : STA $2119 : INY
+        LDA [$00], Y : STA $2119 : INY
+        LDA [$00], Y : STA $2119 : INY
+        LDA [$00], Y : STA $2119 : INY
+    CPY.w #$4000 : BNE .writeChr
 
-        SEP #$10
+    SEP #$10
 
-        RTL
+    RTL
 
     .DWMAP
 
@@ -673,5 +666,5 @@ DMAOwMapGfx:
 }
 
 org $0ADC27
-    DWPalettes:
+  DWPalettes:
     incbin world_map/dw_palette.bin
