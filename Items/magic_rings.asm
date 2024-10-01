@@ -2,10 +2,10 @@
 ; Magic Rings
 
 ; ..pa slbh
-;   p - power 
-;   a - armor  
+;   p - power
+;   a - armor
 ;   s - steadfast
-;   l - light 
+;   l - light
 ;   b - blast
 ;   h - heart
 FOUNDRINGS     = $7EF3D7
@@ -42,16 +42,25 @@ MagicRing_CheckForPower:
 }
 
 pushpc
-
+; Sprite_AttemptDamageToLinkPlusRecoil
+org $06F400
+  JSL MagicRing_CheckForArmor
 pullpc
+
+
+; $0373 - Damage queue for Link
+Sprite_BumpDamageGroups = $06F427
 
 ; Armor     - Defense Up, Attack Down
 MagicRing_CheckForArmor:
 {
+  LDA.w Sprite_BumpDamageGroups, Y : STA.w $0373
   LDA.l RingSlot1 : AND.b #$10 : BEQ +
   LDA.l RingSlot2 : AND.b #$10 : BEQ +
   LDA.l RingSlot3 : AND.b #$10 : BEQ +
-
+    ; Reduce the damage queue by half
+    LDA $0373 : BEQ +
+      LSR : STA $0373
   +
   RTL
 }
@@ -85,7 +94,7 @@ pullpc
 
 MagicRing_CheckForLight:
 {
-  PHA 
+  PHA
   LDA.l RingSlot1 : AND.b #$05 : BEQ +
   LDA.l RingSlot2 : AND.b #$05 : BEQ +
   LDA.l RingSlot3 : AND.b #$05 : BEQ +
@@ -103,7 +112,7 @@ MagicRing_CheckForLight:
 pushpc
 org $079C77
   JSL MagicRing_CheckForLight
-pullpc 
+pullpc
 
 ; =========================================================
 ; Blast     - Bomb Damage up
@@ -151,3 +160,4 @@ pushpc
 org $07810C
   JSL MagicRings_CheckForHeart
 pullpc
+
