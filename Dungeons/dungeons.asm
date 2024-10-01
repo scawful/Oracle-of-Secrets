@@ -9,6 +9,26 @@ org $098823
 org $028BE7
   NOP #2
 
+; Fixed color fade-in effect
+; TODO: Investigate if this is the best way to fix this.
+; Module06_UnderworldLoad
+org $028364
+{
+  #_028364: LDA.b #$00 ; Fixed color RGB: #808000
+  #_028366: STA.b $9C
+
+  #_028368: LDA.b #$00
+  #_02836A: STA.b $9D
+
+  #_02836C: LDA.b #$00
+  #_02836E: STA.b $9E
+  #_028370: LDA.b #$00
+  #_028372: STA.l $7EC005
+  #_028376: STA.l $7EC006
+
+  #_02837A: JSL $079A2C ; Link_TuckIntoBed
+}
+
 incsrc "Dungeons/enemy_damage.asm"
 print  "End of enemy_damage.asm           ", pc
 
@@ -66,7 +86,7 @@ db $92, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 24, 28 } | Size: 09
 db $A2, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 24, 28 } | Size: 09
 db $C1, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 0C } | Size: 07
 
-; Vertical 
+; Vertical
 db $A1, $33, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 0C } | Size: 07
 db $A1, $72, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 1C } | Size: 06
 db $FF, $FF ; End

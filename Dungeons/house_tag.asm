@@ -1,26 +1,29 @@
 ; =========================================================
-; Room tag to initialize the game without the Uncle sprite.
+; Custom Tag
+; Provide custom room behavior based on room ID
 
 StoryState = $7C
 
 org $01CC18 ; override routine 0x39 "Holes(7)"
-  JML HouseTag
+  JML CustomTag
 
 org $01CC5A
-  HouseTag_Return:
+  CustomTag_Return:
 
 pullpc
-HouseTag:
+CustomTag:
 {
   PHX
+
   LDA $7EF3C6 : BNE .game_has_begun
     JSR HouseTag_Main
   .game_has_begun
   PLX
-  JML HouseTag_Return
+  JML CustomTag_Return
 }
 
 ; =========================================================
+; Room tag to initialize the game without the Uncle sprite.
 
 HouseTag_Main:
 {
@@ -105,26 +108,4 @@ HouseTag_End:
 print  "End of house_tag.asm              ", pc
 
 pushpc
-
-; =========================================================
-; Fixed color fade-in effect
-; TODO: Investigate if this is the best way to fix this.
-
-; Module06_UnderworldLoad
-org $028364
-{
-  #_028364: LDA.b #$00 ; Fixed color RGB: #808000
-  #_028366: STA.b $9C
-
-  #_028368: LDA.b #$00
-  #_02836A: STA.b $9D
-
-  #_02836C: LDA.b #$00
-  #_02836E: STA.b $9E
-  #_028370: LDA.b #$00
-  #_028372: STA.l $7EC005
-  #_028376: STA.l $7EC006
-
-  #_02837A: JSL $079A2C ; Link_TuckIntoBed
-}
 
