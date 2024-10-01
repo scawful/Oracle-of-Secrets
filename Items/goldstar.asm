@@ -9,18 +9,18 @@
 pullpc
 TransferGFXinRAM:
 {
-    PHX ; keep X
-    PHP ; keep processor byte
-    REP #$20 ; 16bit is a bit faster
+  PHX ; keep X
+  PHP ; keep processor byte
+  REP #$20 ; 16bit is a bit faster
 
-    LDX #$80
+  LDX #$80
   --
     LDA.l .morningstargfx, X : STA.l $7EA180, X
     DEX : DEX : BPL --
 
-    PLP
-    PLX
-    RTL
+  PLP
+  PLX
+  RTL
 
   .morningstargfx
     incbin morningstar.bin
@@ -30,13 +30,11 @@ pushpc
 ; OAM Draw Pattern for spikeball gfx
 org $0085C4
   dw $0040
-pullpc
 
 ; =========================================================
 ; Zarby Code
 ; Handles the layout of OAM tile patterns for the hookshot
 
-pushpc
 org $0DABA2 ; LinkOAM_SetWeaponVRAMOffsets
   JSL HookMaskCheck
   BRA LinkOAM_SetWeaponVRAMOffsets_not_rod_hook
@@ -54,7 +52,7 @@ HookMaskCheck:
 {
   LDA.w GoldstarOrHookshot : AND.w #$00FF :  CMP.w #$0002 : BNE .not_mask
     LDA $0202 : AND.w #$00FF : CMP.w #$0003 : BNE .not_mask
-        ; morning star graphics oam tile pattern id 
+      ; morning star graphics oam tile pattern id
       LDA.w $0109 : AND #$FF00 : ORA.w #$004A
       RTL
   .not_mask
@@ -73,7 +71,7 @@ CheckForBallChain:
 {
   LDA #$13 : STA $5D ; Set hookshot state
   LDA #$FF : STA $7A ; Start the rotation Timer
-  JMP LinkItem_BallChain_GfxTransfer ; $D520 
+  JMP LinkItem_BallChain_GfxTransfer ; $D520
   RTL
 }
 
@@ -88,7 +86,7 @@ pullpc
 ; $22D4C0 - Hooked into AncillaDraw_Hookshot @ _08BF2D
 BallChain_DrawOrReturn:
 {
-  LDA.w GoldstarOrHookshot : CMP #$02 : BEQ + 
+  LDA.w GoldstarOrHookshot : CMP #$02 : BEQ +
     LDA #$00 : STA ($92),Y
     RTL
   + ; $22D4CD
@@ -103,11 +101,11 @@ org $08BF0C
   JML BallChain_ExtraCollisionLogic
 pullpc
 
-; $22D4E0 - Hooked into Hookshot_ExtraCollisionLogic @ 08BF0C 
+; $22D4E0 - Hooked into Hookshot_ExtraCollisionLogic @ 08BF0C
 BallChain_ExtraCollisionLogic:
 {
   TAX
-  LDA.w GoldstarOrHookshot : CMP #$02 : BNE + ; Check if using goldstar 
+  LDA.w GoldstarOrHookshot : CMP #$02 : BNE + ; Check if using goldstar
     TXA : CMP #$0A : BNE ++
       LDA #$FF : BRA ++
   +  ; $22D4F2
@@ -115,7 +113,7 @@ BallChain_ExtraCollisionLogic:
   ++ ; $22D4F3
   CMP #$FF : BEQ +++
     ; AncillaDraw_Hookshot - JSR Ancilla_SetOAM_XY, skips hookshot char
-    JML $08BF10 
+    JML $08BF10
 
   +++ ; $22D4FB
   JML $08BF32 ; AncillaDraw_Hookshot_skip
@@ -129,10 +127,9 @@ LinkItem_BallChain_GfxTransfer:
     ; Check link direction
     LDA $2F : CMP #$04 : BEQ .transfer_gfx_sideways
               CMP #$06 : BEQ .transfer_gfx_sideways
-    
       REP #$30
       LDA #$0040 : LDX #GFX_D600 : LDY #$9AC0
-      MVN $2B, $7E 
+      MVN $2B, $7E
       LDA #$0040 : LDX #GFX_D640 : LDY #$9B40
       MVN $2B, $7E
       PLB :        LDA #GFX_D6A0 : STA $4302
@@ -145,12 +142,12 @@ LinkItem_BallChain_GfxTransfer:
     LDA #$0040 : LDX #GFX_D640 : LDY #$9B80
     MVN $2B, $7E
     PLB :        LDA #GFX_D6C0 : STA $4302
-    
+
   .transfer_handle_and_links ; $22D574
     LDA #$41E0 : STA $2116
     LDA #$1801 : STA $4300
     SEP #$30
-    
+
     LDA #$80 : STA $2115
     .transfer_loop
       LDA $4212 : AND #$80
@@ -224,7 +221,7 @@ GoldstarHandleGfx:
 
 ; =========================================================
 
-pushpc 
+pushpc
 org $07ABAF
   JSL BallChain_ResetTimer
 pullpc
@@ -245,7 +242,7 @@ BallChain_ResetTimer:
 
 ; =========================================================
 
-pushpc 
+pushpc
 org $08BFDA
   JSL BallChain_DrawChainOrHookshot
   NOP #8
@@ -265,7 +262,7 @@ BallChain_DrawChainOrHookshot:
   + ; 22D812
   LDA #$0E : STA ($90),Y
   JSR BallChainOrHookshot_Modifier ; $D820
-  ORA.b #$04 ; 02 is gray color 
+  ORA.b #$04 ; 02 is gray color
   RTL
 }
 
@@ -290,7 +287,7 @@ pushpc
 org $08BF1B ; AncillaDraw_HookshotChain
   JSL Goldstar_SetChainProperties
   NOP #3
-pullpc 
+pullpc
 
 ; $22D850 - Modify the palette
 Goldstar_SetChainProperties:
@@ -301,7 +298,7 @@ Goldstar_SetChainProperties:
     RTL
   .ball_chain ; 22D860
   LDA HookshotSpriteData.prop, X
-  ORA.b #$02 
+  ORA.b #$02
   ORA.b $65
   RTL
 }
@@ -311,7 +308,7 @@ Goldstar_SetChainProperties:
 pushpc
 org $0DA6E3
   JSL LinkOAM_GoldstarWeaponTiles
-  NOP 
+  NOP
 pullpc
 
 LinkOAM_WeaponTiles = $0D839B
@@ -356,14 +353,14 @@ HookshotChain_AncillaDraw:
   + ; $22D914
   CMP #$0000 : BNE ++ ; $22D921
     LDA Hookshot_box_size_y, X
-    JML $08BFB5 ; AncillaDraw_HookshotChain  
+    JML $08BFB5 ; AncillaDraw_HookshotChain
   ++
   JSR CheckForSomariaBlock ; CheckAndClearAncillaId has set the timer in A
 
   SEP #$30
   ; Compare rotation progress
   CLC : CMP #$FB : BNE +++
-    LDA #$06 : STA $2143 
+    LDA #$06 : STA $2143
 
   +++ ; 22D930
   BCC ++++
@@ -371,12 +368,12 @@ HookshotChain_AncillaDraw:
 
   ++++ ; 22D935
   ; Compare rotation progress
-  CLC : CMP #$AB : BNE +++++ 
+  CLC : CMP #$AB : BNE +++++
     LDA #$06 : STA $2143
 
   +++++ ;22D93F
   ; Compare rotation progress
-  CLC : CMP #$5B : BNE ++++++ 
+  CLC : CMP #$5B : BNE ++++++
     LDA #$06 : STA $2143
 
   ++++++ ;22D949
@@ -427,22 +424,22 @@ Routine_22D9A0:
   + ; 22D9B6
   AND #$3F : PHX : TAX
 
-  LDA Ancilla_GetRadialProjection.multiplier_y, X 
+  LDA Ancilla_GetRadialProjection.multiplier_y, X
   STA $4202 : JSR Routine_22DAA0 : STA $4203
 
   ; Sign of the projected distance.
-  LDA Ancilla_GetRadialProjection.meta_sign_y, X 
+  LDA Ancilla_GetRadialProjection.meta_sign_y, X
   STA $02 : STZ $03
 
   ; Get Y of projected distance
   LDA $4216 : ASL
   LDA $4217 : ADC #$00 : STA $00 : STZ $01
 
-  LDA Ancilla_GetRadialProjection.multiplier_x, X 
+  LDA Ancilla_GetRadialProjection.multiplier_x, X
   STA $4202 : JSR Routine_22DAA0 : STA $4203
 
   ; Sign of the projected distance.
-  LDA Ancilla_GetRadialProjection.meta_sign_x, X 
+  LDA Ancilla_GetRadialProjection.meta_sign_x, X
   STA $06 : STZ $07
 
   ; Get X of projected distance
@@ -473,7 +470,7 @@ Routine_22D9A0:
 Goldstar_GetPlayerPosY:
 {
   ADC $20 : CLC : ADC #$000C
-  CPX #$00 : BNE + 
+  CPX #$00 : BNE +
     SEC : SBC #$000C
     RTS
   + ; $22DA3F
@@ -538,7 +535,7 @@ Routine_22DAA0:
   CPY #$04 : BNE .alpha
     JMP Routine_22DB50 ; $DB50
   .alpha ; 22DAA7
-  CPY #$08 : BNE + 
+  CPY #$08 : BNE +
     LDA #$00
     RTS
   + ; 22DAAE
@@ -546,11 +543,11 @@ Routine_22DAA0:
     LDA #$04
     RTS
   ++ ; 22DAB5
-  CPY #$10 : BNE +++ 
+  CPY #$10 : BNE +++
     LDA #$08
     RTS
   +++ ; 22DABC
-  CPY #$14 : BNE ++++ 
+  CPY #$14 : BNE ++++
     LDA #$0C
     RTS
   ++++ ; 22DAC3
@@ -593,17 +590,17 @@ pullpc
 
 ; 22DB00
 ; Hooks into AncillaDraw_HookshotChain @ 08BF94
-; Hookshot box size 
+; Hookshot box size
 BallChain_TryAncillaDraw:
 {
 ; Ball Chain timer should be $FF here on first run
-  LDA $7A : AND #$00FF : CMP #$0000 : BEQ + 
+  LDA $7A : AND #$00FF : CMP #$0000 : BEQ +
     CMP #$0001 : BEQ +
       SEP #$20
-      JML HookshotChain_AncillaDraw ; $22D900 
+      JML HookshotChain_AncillaDraw ; $22D900
 
   + ; $22DB15
-  LDA Hookshot_box_size_y,X : BNE ++ 
+  LDA Hookshot_box_size_y,X : BNE ++
     JML $08BF99 ; AncillaDraw_HookshotChain
 
   ++ ; $22DB1F
@@ -612,7 +609,7 @@ BallChain_TryAncillaDraw:
 
 ; =========================================================
 
-pushpc 
+pushpc
 org $08F7DC
   JML BallChain_CheckProximityToLink
 pullpc
@@ -704,16 +701,16 @@ Routine_22DBD0:
   LDA $2F : LSR : STA $0C76
   ASL : TAX
 
-  LDA $20 : CLC : ADC AncillaAdd_HookshotData.offset_y, X 
+  LDA $20 : CLC : ADC AncillaAdd_HookshotData.offset_y, X
   STA $00 : STA $04
 
-  LDA $22 : CLC : ADC AncillaAdd_HookshotData.offset_x, X 
+  LDA $22 : CLC : ADC AncillaAdd_HookshotData.offset_x, X
   STA $02 : STA $06
 
   SEP #$30
   LDA $00 : STA $0BFE : LDA $01 : STA $0C12 ; Ancilla4 Y
   LDA $02 : STA $0C08 : LDA $03 : STA $0C1C ; Ancilla4 X
-  LDX #$06 : LDA Hookshot_box_size_y,X ; hookshot box size y table 
+  LDX #$06 : LDA Hookshot_box_size_y,X ; hookshot box size y table
   SEP #$20
   JML $08BFD0 ; AncillaDraw_HookshotChain before Hookshot_CheckProximityToLink
 }
@@ -729,7 +726,7 @@ pullpc
 HookshotOrBallChain_Extending_ignore_collision:
 {
   ; Ball Chain Timer
-  LDA $7A  : CMP #$00 : BNE + 
+  LDA $7A  : CMP #$00 : BNE +
     JSL Hookshot_CheckTileCollision ; $07D576
     JML $08BE01 ; Hookshot_Extending_ignore_collision continue
   + ; 22DC5E
@@ -746,7 +743,7 @@ ClearAncillaVariables:
   STA $7F580E ; en center x-pos
   STA $7F5810 ; en center y-pos
   STA $7F5803 ; rotation state
-  SEP #$30 
+  SEP #$30
   RTS
 }
 
@@ -816,7 +813,7 @@ CheckAndClearAncillaId:
 ; =========================================================
 ; 22E5A0
 ; Checks for the Somaria block before moving on
-; TODO: Replace the JMP $E5DB with the proper code 
+; TODO: Replace the JMP $E5DB with the proper code
 ; to handle the somaria block case.
 
 CheckForSomariaBlock:
@@ -891,11 +888,11 @@ CheckForSomariaBlast:
 BallChain_StartAnimationFlag:
 {
   ; Restore vanilla code
-  LDA #$01 : STA $037B 
+  LDA #$01 : STA $037B
   ; Check if we are rotating the goldstar
-  LDA $037A : CMP #$04 : BNE + 
+  LDA $037A : CMP #$04 : BNE +
     ; Animation flag, prevent menu from opening
-    LDA #$01 : STA $0112 
+    LDA #$01 : STA $0112
   +
   RTL
 }
@@ -909,7 +906,7 @@ org $07AB95
 pullpc
 
 ; 22EF12
-; Hooked inside LinkState_Hookshotting @ 07AB95 
+; Hooked inside LinkState_Hookshotting @ 07AB95
 BallChain_Finish:
 {
   STZ.w $0300 : STZ.w $037B ; Restore vanilla
@@ -962,7 +959,7 @@ BeginGoldstarOrHookshot:
   JSL AncillaAdd_Hookshot
   JSL TransferGFXinRAM
   RTL
-  
+
   .begin_hookshot
   JSL Hookshot_Init
   LDA.b #$13 : STA $5D ; Set hookshot state
@@ -1006,7 +1003,7 @@ CheckForSwitchToGoldstar:
 {
   %CheckNewR_ButtonPress() : BEQ .continue
     LDA.w GoldstarOrHookshot : CMP.b #$01 : BEQ .set_hookshot
-      LDA.b #$01 : STA.w GoldstarOrHookshot 
+      LDA.b #$01 : STA.w GoldstarOrHookshot
       JMP .continue
     .set_hookshot:
     LDA.b #$02 : STA.w GoldstarOrHookshot
@@ -1041,9 +1038,9 @@ org $07AB3A ;$07AB40
   RTS
 
 org $008B2A
-  JML MaybeUploadBirdGraphicsToOam 
+  JML MaybeUploadBirdGraphicsToOam
 
 org $07AD49
 LinkHookshot_GetDragged:
   JSL Goldstar_GetDragged
-  
+
