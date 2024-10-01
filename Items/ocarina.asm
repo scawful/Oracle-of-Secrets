@@ -125,12 +125,8 @@ assert pc() <= $1A922B
 
 org $07A3DB
 LinkItem_FluteHook:
-{
   JSR LinkItem_NewFlute
   RTS
-}
-
-; =========================================================
 
 ; Free Space Bank07
 pullpc
@@ -145,7 +141,6 @@ LinkItem_NewFlute:
   BIT.b $3A : BVC .y_button_not_held
     DEC.w $03F0 : LDA.w $03F0 : BNE ReturnFromFluteHook
     LDA.b $3A : AND.b #$BF : STA.b $3A
-
   .y_button_not_held
 
   ; Check for Switch Swong
@@ -252,10 +247,8 @@ LinkItem_NewFlute:
 ; =========================================================
 
 UpdateFluteSong:
-{
   JSL UpdateFluteSong_Long
   RTS
-}
 
 Link_HandleCardinalCollision_Long:
 {
@@ -328,7 +321,6 @@ PlayThunderAndRain:
   RTL
 }
 
-
 CheckRealTable:
 {
   LDA $7EE00E : CMP #$00 : BEQ .continue
@@ -348,14 +340,13 @@ ResetOcarinaFlag:
 {
   LDA $7EF3C5 : BEQ .continue
      CMP #$01 : BEQ .continue
-  REP #$30
-  LDA #$0000 : STA.l $7EE00E
-  SEP #$30
-.continue
+    REP #$30
+    LDA #$0000 : STA.l $7EE00E
+    SEP #$30
+  .continue
   LDA.w $0416 : ASL A
   RTL
 }
-
 
 ; $030F - Current Song RAM
 ; 00 - No Song
@@ -372,49 +363,43 @@ ResetOcarinaFlag:
 
 UpdateFluteSong_Long:
 {
-  LDA $7EF34C : CMP.b #$01 : BEQ .notPressed
+  LDA $7EF34C : CMP.b #$01 : BEQ .not_pressed
+    LDA $030F : BNE .song_exists
+      ; if this code is running, we have the flute song 1
+      LDA #$01 : STA $030F
+    .song_exists
+    LDA.b $F6
+    BIT.b #$20 : BNE .left  ; pressed left
+    BIT.b #$10 : BNE .right ; pressed right
+      RTL
 
-  LDA $030F : BNE .songExists
-    ; if this code is running, we have the flute song 1
+    .left ; L Button Pressed - Decrement song
+    ; LDA.b #$13 : JSR Player_DoSfx2
+    DEC $030F
+    LDA $030F : CMP #$00 : BEQ .wrap_to_max
+      BRA .update_song
+
+    .right ; R Button Pressed - Increment song
+    INC $030F
+    LDA $030F : CMP.b #$05 : BCS .wrap_to_min
+    .update_song
+      RTL
+
+    .wrap_to_max
+    LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_2
+                  CMP.b #$03 : BEQ .set_max_to_3
+      LDA #$04 : STA $030F : RTL
+
+    .set_max_to_3
+    LDA #$03 : STA $030F : RTL
+
+    .set_max_to_2
+    LDA #$02 : STA $030F : RTL
+
+    .wrap_to_min
     LDA #$01 : STA $030F
-  .songExists
-  LDA.b $F6
-  BIT.b #$20 : BNE .left ; pressed left
-  BIT.b #$10 : BNE .right ; pressed right
-  RTL
 
-  .left
-  ; L Button Pressed - Decrement song
-  ; LDA.b #$13 : JSR Player_DoSfx2
-  DEC $030F
-  LDA $030F
-  CMP #$00 : BEQ .wrap_to_max
-  BRA .update_song
-
-  .right
-  ; R Button Pressed - Increment song
-  INC $030F        ; increment $030F Song RAM
-  LDA $030F        ; load incremented Song RAM
-  CMP.b #$05
-  BCS .wrap_to_min
-  .update_song
-  RTL
-
-  .wrap_to_max
-  LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_2
-                CMP.b #$03 : BEQ .set_max_to_3
-  LDA #$04 : STA $030F : RTL
-
-  .set_max_to_3
-  LDA #$03 : STA $030F : RTL
-
-  .set_max_to_2
-  LDA #$02 : STA $030F : RTL
-
-  .wrap_to_min
-  LDA #$01 : STA $030F
-
-  .notPressed
+  .not_pressed
   RTL
 }
 print  "End of Items/ocarina.asm          ", pc
@@ -430,57 +415,55 @@ org $02F210 ; OverworldTransitionScrollAndLoadMap
 org $02A4CD
 RainAnimation_Overridden:
 {
-    JSL CheckRealTable : BEQ .rainOverlaySet
+  JSL CheckRealTable : BEQ .rainOverlaySet
     ; LDA.b $8C : CMP.b #$9F :
     ; Check the progress indicator
     LDA.l $7EF3C5 : CMP.b #$02 : BRA .skipMovement
   .rainOverlaySet
 
-    ; If misery mire has been opened already, we're done.
-    ;LDA.l $7EF2F0 : AND.b #$20 : BNE .skipMovement
-    ; Check the frame counter.
-    ; On the third frame do a flash of lightning.
-    LDA.b $1A
+  ; If misery mire has been opened already, we're done.
+  ; LDA.l $7EF2F0 : AND.b #$20 : BNE .skipMovement
+  ; Check the frame counter.
+  ; On the third frame do a flash of lightning.
+  LDA.b $1A
 
-    CMP.b #$03 : BEQ .lightning ; On the 0x03rd frame, cue the lightning.
-    CMP.b #$05 : BEQ .normalLight ; On the 0x05th frame, normal light level.
-    CMP.b #$24 : BEQ .thunder ; On the 0x24th frame, cue the thunder.
-    CMP.b #$2C : BEQ .normalLight ; On the 0x2Cth frame, normal light level.
-    CMP.b #$58 : BEQ .lightning ; On the 0x58th frame, cue the lightning.
-    CMP.b #$5A : BNE .moveOverlay ; On the 0x5Ath frame, normal light level.
+  CMP.b #$03 : BEQ .lightning ; On the 0x03rd frame, cue the lightning.
+  CMP.b #$05 : BEQ .normalLight ; On the 0x05th frame, normal light level.
+  CMP.b #$24 : BEQ .thunder ; On the 0x24th frame, cue the thunder.
+  CMP.b #$2C : BEQ .normalLight ; On the 0x2Cth frame, normal light level.
+  CMP.b #$58 : BEQ .lightning ; On the 0x58th frame, cue the lightning.
+  CMP.b #$5A : BNE .moveOverlay ; On the 0x5Ath frame, normal light level.
 
   .normalLight
 
-    ; Keep the screen semi-dark.
-    LDA.b #$72
+  ; Keep the screen semi-dark.
+  LDA.b #$72
 
-    BRA .setBrightness
+  BRA .setBrightness
 
   .thunder
 
-    ; Play the thunder sound when outdoors.
-    ;LDX.b #$36 : STX.w $012E
-    JSL PlayThunderAndRain
+  ; Play the thunder sound when outdoors.
+  ; LDX.b #$36 : STX.w $012E
+  JSL PlayThunderAndRain
 
   .lightning
 
-    LDA.b #$32 ; Make the screen flash with lightning.
+  LDA.b #$32 ; Make the screen flash with lightning.
 
   .setBrightness
 
-    STA.b $9A
+  STA.b $9A
 
   .moveOverlay
 
-    ; Overlay is only moved every 4th frame.
-    LDA.b $1A : AND.b #$03 : BNE .skipMovement
-        LDA.w $0494 : INC A : AND.b #$03 : STA.w $0494 : TAX
-
-        LDA.b $E1 : CLC : ADC.l $02A46D, X : STA.b $E1
-        LDA.b $E7 : CLC : ADC.l $02A471, X : STA.b $E7
-
+  ; Overlay is only moved every 4th frame.
+  LDA.b $1A : AND.b #$03 : BNE .skipMovement
+    LDA.w $0494 : INC A : AND.b #$03 : STA.w $0494 : TAX
+    LDA.b $E1 : CLC : ADC.l $02A46D, X : STA.b $E1
+    LDA.b $E7 : CLC : ADC.l $02A471, X : STA.b $E7
   .skipMovement
 
-    RTL
+  RTL
 }
 assert pc() <= $02A52D
