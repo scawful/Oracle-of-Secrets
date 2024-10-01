@@ -14,19 +14,17 @@ org $028BE7
 ; Module06_UnderworldLoad
 org $028364
 {
-  #_028364: LDA.b #$00 ; Fixed color RGB: #808000
-  #_028366: STA.b $9C
+  LDA.b #$00 ; Fixed color RGB: #808000
+  STA.b $9C
 
-  #_028368: LDA.b #$00
-  #_02836A: STA.b $9D
+  LDA.b #$00 : STA.b $9D
 
-  #_02836C: LDA.b #$00
-  #_02836E: STA.b $9E
-  #_028370: LDA.b #$00
-  #_028372: STA.l $7EC005
-  #_028376: STA.l $7EC006
+  LDA.b #$00 : STA.b $9E
+  LDA.b #$00
+  STA.l $7EC005
+  STA.l $7EC006
 
-  #_02837A: JSL $079A2C ; Link_TuckIntoBed
+  JSL $079A2C ; Link_TuckIntoBed
 }
 
 incsrc "Dungeons/enemy_damage.asm"
@@ -40,7 +38,6 @@ print  "End of object_handler.asm         ", pc
 
 ; Tag: Holes8
 incsrc "Dungeons/together_warp_tag.asm"
-incsrc "Dungeons/spike_subtype.asm"
 
 ; Tag: Holes7
 incsrc "Dungeons/house_tag.asm"
@@ -48,6 +45,8 @@ incsrc "Dungeons/house_tag.asm"
 ; Tag: Holes0
 incsrc "Dungeons/floor_puzzle.asm"
 print "End of floor_puzzle.asm           ", pc
+
+incsrc "Dungeons/spike_subtype.asm"
 
 incsrc "Dungeons/attract_scenes.asm"
 print  "End of attract_scenes.asm         ", pc

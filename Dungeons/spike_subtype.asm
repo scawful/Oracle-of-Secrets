@@ -28,23 +28,25 @@ db $00, $00, $00, $00, $00, $00, $00, $FF
 db $20, $18, $20, $28, $30, $38, $40, $FF
 
 NewSpikePrep:
-PHB : PHK : PLB 
-LDA $0E30, X : TAY
-LDA.w speedValuesH, Y : STA $0D50, X
-LDA.w speedValuesV, Y : STA $0D40, X
-PLB
-RTL
-
+{
+  PHB : PHK : PLB
+  LDA $0E30, X : TAY
+  LDA.w speedValuesH, Y : STA $0D50, X
+  LDA.w speedValuesV, Y : STA $0D40, X
+  PLB
+  RTL
+}
 
 NewSpikeCollision:
-LDA.b #$04 : STA $0DF0, X
+{
+  LDA.b #$04 : STA $0DF0, X
 
-LDA $0D50, X : EOR.b #$FF : INC A : STA $0D50, X
-LDA $0D40, X : EOR.b #$FF : INC A : STA $0D40, X
+  LDA $0D50, X : EOR.b #$FF : INC A : STA $0D50, X
+  LDA $0D40, X : EOR.b #$FF : INC A : STA $0D40, X
 
-LDA.b #$05 : JSL $0DBB7C ; Sound_SetSfx2PanLong
-
-RTL
+  LDA.b #$05 : JSL $0DBB7C ; Sound_SetSfx2PanLong
+  RTL
+}
 
 print  "End of spike_subtype.asm          ", pc
 pushpc
