@@ -16,23 +16,16 @@ LinkItem_PortalRod:
     JSR   LinkItem_EvaluateMagicCost : BCC .insufficient_mp
       LDA.b #$30 : JSR $802F    ; Sfx3
       JSL   LinkItem_FirePortal
-      
       .y_button_held
 
       JSR $AE65 ; HaltLinkWhenUsingItems
-      
       DEC $3D : BPL .return
-      
       LDA $0300 : INC A : STA $0300 : TAX
-      
       LDA RodAnimationTimer, X : STA $3D
-      
       CPX.b #$03 : BNE .return
-      
       STZ $0300
-      STZ $5E      
+      STZ $5E
       STZ $3D
-      
       LDA $0301 : AND.b #$FE : STA $0301
 
     .insufficient_mp
@@ -116,8 +109,7 @@ LinkItem_FirePortal:
     LDA $2F : CMP.b #$02 : BEQ .facing_down
       LDA $2F : CMP.b #$04 : BEQ .facing_left
         LDA $2F : CMP.b #$06 : BEQ .facing_right
-            
-  ; Portal Spawn Location 
+  ; Portal Spawn Location
 
   .facing_up
     %SpawnPortal($0000, -0020)
@@ -132,21 +124,20 @@ LinkItem_FirePortal:
     %SpawnPortal(0020, $0000)
 
   .finish
-  TYX 
+  TYX
   STZ $0D60, X : STZ $0D70, X
   PLX
 
   .return
   ; Delay the spin attack for some amount of time?
   LDA RodAnimationTimer : STA $3D
-  
-  STZ $2E 
+  STZ $2E
   STZ $0300 : STZ $0301
   LDA.b #$01 : TSB $0301
   RTL
 }
 
-pushpc 
+pushpc
 
 org $02FF6E
 Overworld_OperateCameraScroll_Long:
@@ -164,12 +155,12 @@ Overworld_ScrollMap_Long:
 {
   PHB : PHK : PLB
   JSR $F273
-  PLB 
+  PLB
 
   RTL
 }
 
-pullpc 
+pullpc
 
 ScrollToPortal:
 {
