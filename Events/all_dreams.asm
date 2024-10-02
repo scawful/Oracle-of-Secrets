@@ -11,7 +11,7 @@ Link_EnterDream:
 
   JSR Link_HandleDreams
 
-  PLB 
+  PLB
 
   RTL
 }
@@ -74,7 +74,7 @@ Link_HandleDreams:
   }
 }
 
-; Takes X as argument for the entrance ID 
+; Takes X as argument for the entrance ID
 Link_FallIntoDungeon:
 {
   LDA.w .entrance, X
@@ -87,7 +87,7 @@ Link_FallIntoDungeon:
   STZ.b $11 : STZ.b $B0
 
   RTS
-.entrance
+  .entrance
   db $78, $79, $01
 }
 
