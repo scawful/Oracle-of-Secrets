@@ -3,8 +3,8 @@ OverworldLocationNames:
   dw "RANCH___________" ; 01
   dw "PYRAMID_________" ; 02
   dw "LAND_OF_TREE____" ; 03
-  dw "SNOW_MOUNTAIN___" ; 04 
-  dw "SNOW_MOUNTAIN___" ; 05 
+  dw "SNOW_MOUNTAIN___" ; 04
+  dw "SNOW_MOUNTAIN___" ; 05
   dw "SNOW_MOUNTAIN___" ; 06
   dw "SNOW_MOUNTAIN___" ; 07
   dw "RANCH___________" ; 08
@@ -17,7 +17,7 @@ OverworldLocationNames:
   dw "CEMETERY________" ; 0F
   dw "TOADSTOOL_WOODS_" ; 10
   dw "RANCH_PATH______" ; 11
-  dw "CROSSROADS______" ; 12 
+  dw "CROSSROADS______" ; 12
   dw "KALYXO_CASTLE___" ; 13
   dw "KALYXO_CASTLE___" ; 14
   dw "MOUNTAINSIDE____" ; 15

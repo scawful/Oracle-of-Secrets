@@ -30,7 +30,6 @@ org $0DF14F ; AnimateHeartRefill
   LDA.b #$C7 : STA $01
   LDA.b #$7E : STA $02
 
-
 ; ==========================================================
 ; Main HUD Update Loop
 
@@ -229,7 +228,6 @@ HUD_UpdateItemBox:
     .no_silver_arrows
 
     LDX.b #$02
-    
     LDA $7EF377 : BNE .draw_bow_item_icon
       LDX.b #$01
 
@@ -294,8 +292,6 @@ HUD_UpdateItemBox:
 
     CPX.w #$0010 : BNE .custom_rod_not_equipped
       LDA.w FishingOrPortalRod
-        
-
     .custom_rod_not_equipped
 
     JSR HUD_DrawItem
@@ -446,7 +442,7 @@ org $0DF701
 ; Lamp
 org $0DF6F1
   dw $24BC, $24BD, $24CC, $64CC
-  
+
 ; Fire Rod
 org $0DF6B1
  dw $2CB0, $2CBE, $2CC0, $2CC1
@@ -467,7 +463,6 @@ org $0DF859
   dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
   dw $24D4, $24D5, $24E4, $24E5 ; Red
   dw $34D4, $34D5, $34E4, $34E5 ; Gold
-
 
 ; Roc's Feather (Net)
 org $0DF731
@@ -518,16 +513,16 @@ org $0DF7B9
   dw $3469, $7469, $3479, $7479
 
 ; Stone Mask (Flippers Slot)
-org $0DF811 
+org $0DF811
   dw $20F5, $20F5, $20F5, $20F5
   dw $30B4, $30B5, $30C4, $30C5
 
 ; =========================================================
 ; $6FE77-$6FFC0
 
-org    $0DFE77
+org $0DFE77
 HUD_Tilemap:
-incbin tilemaps/hud.tilemap
+  incbin tilemaps/hud.tilemap
 
 ; #_02816A: JSL RebuildHUD_Keys
 
@@ -537,7 +532,7 @@ incbin tilemaps/hud.tilemap
 ; ==========================================================
 
 ; $57CE0 DATA
-org    $0AFCE0
+org $0AFCE0
 FloorIndicatorNumberHigh:
 {
   dw $2508, $2509, $2509, $250A, $250B, $250C, $250D, $251D
@@ -567,7 +562,7 @@ FloorIndicator:
     ; disable the floor indicator during the next frame.
     LDA.w #$0000
   .dont_disable
-  
+
   STA   $04A0
   PHB   : PHK : PLB
   LDA.w #$251E : STA $7EC7F0
@@ -587,18 +582,16 @@ FloorIndicator:
 
   ; Check the world state
   LDA   $7EF3C5 : CMP.b #$02 : BCS .no_rain_state
-
-  ; cause the ambient rain sound to occur (indoor version)
-  LDA.b #$05 : STA $012D
-
-.no_rain_state
+    ; cause the ambient rain sound to occur (indoor version)
+    LDA.b #$05 : STA $012D
+  .no_rain_state
   REP #$20
-.not_floor_1F
-.sanctuary_rat_room
+  .not_floor_1F
+  .sanctuary_rat_room
   LDA $A4 : AND.w #$00FF
   BRA .set_floor_indicator_number
 
-.basement_floor
+  .basement_floor
   SEP   #$20
   ; turn off any ambient sound effects
   LDA.b #$05 : STA $012D
@@ -606,7 +599,7 @@ FloorIndicator:
   INX   #2
   LDA   $A4 : ORA.w #$FF00 : EOR.w #$FFFF
 
-.set_floor_indicator_number
+  .set_floor_indicator_number
 
   ASL A : TAY
 
@@ -622,7 +615,7 @@ FloorIndicator:
 
   RTL
 
-.hide_indicator ; *$57D90 ALTERNATE ENTRY POINT
+  .hide_indicator ; *$57D90 ALTERNATE ENTRY POINT
 
   REP #$20
 

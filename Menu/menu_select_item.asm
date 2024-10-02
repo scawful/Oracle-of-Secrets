@@ -14,19 +14,19 @@ Menu_ItemIndex:
   db $11,     $0F,       $08,      $10,        $13,        $0B
 
 ; =========================================================
-; Decides which graphics is drawn 
+; Decides which graphics is drawn
 Menu_AddressIndex:
   db $7EF340 ; Bow
   db $7EF341 ; Boomerang
   db $7EF342 ; Hookshot / Goldstar
   db $7EF343 ; Bombs
-  db $7EF344 ; Powder 
+  db $7EF344 ; Powder
   db $7EF35C ; Bottle 1
 
-  db $7EF34B ; Hammer 
-  db $7EF34A ; Lamp 
+  db $7EF34B ; Hammer
+  db $7EF34A ; Lamp
   db $7EF345 ; Fire Rod
-  db $7EF346 ; Ice Rod 
+  db $7EF346 ; Ice Rod
   db $7EF353 ; Magic Mirror
   db $7EF35D ; Bottle 2
 
@@ -34,12 +34,12 @@ Menu_AddressIndex:
   db $7EF34E ; Book of Secrets
   db $7EF350 ; Cane of Somaria / Cane of Byrna
   db $7EF351 ; Fishing Rod / Portal Rod
-  db $7EF34D ; Roc's Feather 
+  db $7EF34D ; Roc's Feather
   db $7EF35E ; Bottle 3
 
-  db $7EF349 ; Deku Mask 
+  db $7EF349 ; Deku Mask
   db $7EF347 ; Zora Mask
-  db $7EF358 ; Wolf Mask 
+  db $7EF358 ; Wolf Mask
   db $7EF348 ; Bunny Hood
   db $7EF352 ; Stone Mask
   db $7EF35F ; Bottle #4
@@ -54,36 +54,35 @@ Menu_ItemCursorPositions:
   dw menu_offset(6,15) ; deku mask
   dw menu_offset(6,18) ; bottle1
 
-  dw menu_offset(9,2)  ; hammer 
+  dw menu_offset(9,2)  ; hammer
   dw menu_offset(9,5)  ; lamp
   dw menu_offset(9,8)  ; firerod
   dw menu_offset(9,12) ; icerod
   dw menu_offset(9,15) ; goron
   dw menu_offset(9,18) ; bottle2
 
-  dw menu_offset(12,2)  ; shovel 
-  dw menu_offset(12,5)  ; feather 
+  dw menu_offset(12,2)  ; shovel
+  dw menu_offset(12,5)  ; feather
   dw menu_offset(12,8)  ; somaria
   dw menu_offset(12,12) ; byrna / fishing rod
   dw menu_offset(12,15) ; bunny hood
   dw menu_offset(12,18) ; bottle3
 
-  dw menu_offset(15,2)  ; powder 
-  dw menu_offset(15,5)  ; book 
+  dw menu_offset(15,2)  ; powder
+  dw menu_offset(15,5)  ; book
   dw menu_offset(15,8)  ; flute
   dw menu_offset(15,12) ; mirror
-  dw menu_offset(15,15) ; stone mask 
+  dw menu_offset(15,15) ; stone mask
   dw menu_offset(15,18) ; bottle4
 
 ; =========================================================
-
 
 Menu_FindNextItem:
 {
   LDY.w $0202 : INY
   CPY.b #$19 : BCC .no_reset
-  LDY.b #$01
-.no_reset 
+    LDY.b #$01
+  .no_reset
   STY.w $0202
   LDX.w Menu_AddressIndex-1, Y
   LDA.l $7EF300,             X
@@ -96,8 +95,8 @@ Menu_FindNextItem:
 Menu_FindPrevItem:
 {
   LDY.w $0202 : DEY : BNE .no_reset
-  LDY.b #$18
-.no_reset 
+    LDY.b #$18
+  .no_reset
   STY.w $0202
   LDX.w Menu_AddressIndex-1, Y
   LDA.l $7EF300,             X
@@ -111,13 +110,13 @@ Menu_FindNextDownItem:
 {
   LDA.w $0202 : CLC : ADC.b #$06
   CMP.b #$19 : BCC .no_reset
-  SBC.b #$18
-.no_reset 
+    SBC.b #$18
+  .no_reset
   TAY   : STY.w $0202
   LDX.w Menu_AddressIndex-1, Y
   LDA.l $7EF300,             X
   BEQ   Menu_FindNextItem
-  RTS 
+  RTS
 }
 
 ; =========================================================
@@ -126,21 +125,21 @@ Menu_FindNextUpItem:
 {
   LDA.w $0202 : SEC : SBC.b #$06
   BPL   .no_reset : BNE .no_reset
-  CLC   : ADC.b #$18
-.no_reset 
+    CLC : ADC.b #$18
+  .no_reset
   TAY   : STY.w $0202
   CPY.b #$19 : BCS .reset_up
-  LDX.w Menu_AddressIndex-1, Y
-  LDA.l $7EF300,             X
-  BEQ   Menu_FindNextItem
-  RTS 
-.reset_up
+    LDX.w Menu_AddressIndex-1, Y
+    LDA.l $7EF300,             X
+    BEQ   Menu_FindNextItem
+    RTS
+  .reset_up
   LDY.b #$01
   STY.w $0202
   LDX.w Menu_AddressIndex-1, Y
   LDA.l $7EF300,             X
   BEQ   Menu_FindNextItem
-  RTS 
+  RTS
 }
 
 
@@ -159,7 +158,7 @@ Menu_DeleteCursor_AltEntry:
   STA.w $118E, X : STA.w $11CE, X
   SEP   #$30
   STZ   $0207
-  RTS 
+  RTS
 }
 
 ; =========================================================
@@ -193,7 +192,7 @@ Menu_InitItemScreen:
     STA.w $0200
     RTS
 
-  .all_good 
+  .all_good
   ; Double check we still have the item that was selected.
   ; This is to prevent a bug where we can get stuck in an
   ; infinite loop later on.
@@ -211,39 +210,38 @@ Menu_InitItemScreen:
 Menu_AddressLong:
   db $40 ; Bow
   db $41 ; Boomerang
-  db $42 ; Hookshot 
+  db $42 ; Hookshot
   db $43 ; Bombs
-  db $44 ; Powder 
+  db $44 ; Powder
   db $5C ; Bottle 1
 
-  db $4B ; Hammer 
-  db $4A ; Lamp 
+  db $4B ; Hammer
+  db $4A ; Lamp
   db $45 ; Fire Rod
-  db $46 ; Ice Rod 
+  db $46 ; Ice Rod
   db $53 ; Magic Mirror
   db $5D ; Bottle 2
 
   db $4C ; Ocarina (formerly shovel 4F)
-  db $4E ; Book 
+  db $4E ; Book
   db $50 ; Cane of Somaria / Cane of Byrna
   db $51 ; Fishing Rod
-  db $4D ; Roc's Feather 
+  db $4D ; Roc's Feather
   db $5E ; Bottle 3
 
-  db $49 ; Deku Mask 
+  db $49 ; Deku Mask
   db $47 ; Zora Mask
-  db $58 ; Wolf Mask 
+  db $58 ; Wolf Mask
   db $48 ; Bunny Hood
   db $52 ; Stone Mask
-  db $5F ; Bottle #4
+  db $5F ; Bottle 4
 
 GotoNextItem_Local:
 {
   ; Load our currently equipped item, and move to the next one
   ; If we reach our limit (21), set it back to the bow and arrow slot.
   LDA $0202 : INC A : CMP.b #$18 : BCC .dont_reset
-  LDA.b #$01
-
+    LDA.b #$01
   .dont_reset
   ; Otherwise try to equip the item in the next slot
   STA $0202
@@ -252,12 +250,12 @@ GotoNextItem_Local:
 
 DoWeHaveThisItem_Override:
 {
-  LDY.w $0202 : LDX.w Menu_AddressLong-1, Y 
+  LDY.w $0202 : LDX.w Menu_AddressLong-1, Y
   LDA.l $7EF300, X : CMP.b #$00 : BNE .have_this_item
     CLC
     RTL
   .have_this_item
-  SEC 
+  SEC
   RTL
 }
 
@@ -302,13 +300,13 @@ SearchForEquippedItem_Override:
   BCS .we_have_that_item
   JSR TryEquipNextItem_Override
   .exit
-  
+
   REP #$30
-  PLB 
+  PLB
   RTL
 }
 
-pushpc 
+pushpc
 
 org $0DDEB0
 ItemMenu_CheckForOwnership:
@@ -325,6 +323,5 @@ SearchForEquippedItem:
 }
 assert pc() <= $0DE3C7
 
-; =========================================================
-
 pullpc
+

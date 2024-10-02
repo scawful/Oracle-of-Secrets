@@ -19,7 +19,7 @@ Menu_CheckHScroll:
     REP #$20
     LDA.w #$0008
 
-    .merge 
+    .merge
     STA.w MenuScrollHDirection
 
     SEP #$30
@@ -41,8 +41,8 @@ Menu_ScrollHorizontal:
 
   LDA.w $E4                   ; BG3 Horizontal Scroll Value
   ADC.w MenuScrollHDirection  ; Direction set by Menu_CheckHScroll
-  AND.w #$01FF                
-  STA.b $E4   
+  AND.w #$01FF
+  STA.b $E4
   AND.w #$00FF
   BNE .loop
 
@@ -50,7 +50,7 @@ Menu_ScrollHorizontal:
   RTS
 
 .loop
-  CLC 
+  CLC
   RTS
 }
 

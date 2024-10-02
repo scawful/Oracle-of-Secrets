@@ -58,7 +58,7 @@ PlaytimeLabel:
 Menu_DrawHourDigit:
 {
   SEP #$30
-  LDA.l $7EE000 
+  LDA.l $7EE000
   ASL A : ASL A
   TAX
   REP #$30
@@ -71,7 +71,7 @@ Menu_DrawHourDigit:
 Menu_DrawMinuteDigit:
 {
   SEP #$30
-  LDA.l $7EE001 
+  LDA.l $7EE001
   ASL A : ASL A
   TAX
   REP #$30
@@ -85,9 +85,9 @@ Menu_DrawPlaytimeLabel:
 {
   LDX.w #$10
 
-.draw2
+  .draw2
   LDA.w PlaytimeLabel, X
-  STA.w $1692, X 
+  STA.w $1692, X
   DEX : DEX : BPL .draw2
 
   ; Draw the current time based on the time system RAM
@@ -99,7 +99,6 @@ Menu_DrawPlaytimeLabel:
 
   ; LDX #$18
   JSR Menu_DrawMinuteDigit
-
 
   RTS
 }
@@ -199,7 +198,6 @@ Menu_DrawItemName:
                 CMP.b #$0C : BEQ .bottle_2
                 CMP.b #$12 : BEQ .bottle_3
                 CMP.b #$18 : BEQ .bottle_4
-  
   .draw_item
         REP #$30
         LDA.w $0202 : BEQ .no_items
@@ -249,11 +247,11 @@ Menu_DrawItemName:
     ; Check the timer and see if we should draw the item name
     LDA $1A : AND.w #$00FF : CMP #$0080 : BCC .draw_item
   LDA $030F : BEQ .draw_item
-  LDA $030F : AND.w #$00FF : DEC : ASL #5 : TAX 
+  LDA $030F : AND.w #$00FF : DEC : ASL #5 : TAX
   LDY.w #$0000
 
   .draw_ocarina_loop
-    LDA.w Menu_SongNames, X : STA.w $1692, Y 
+    LDA.w Menu_SongNames, X : STA.w $1692, Y
   INX #2 : INY #2 : CPY #$001C : BCC .draw_ocarina_loop
   RTS
 }
