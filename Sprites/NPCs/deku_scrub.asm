@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this DekuScrub (can be 0 to 7)
 !Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -34,7 +34,7 @@
 ; =========================================================
 
 Sprite_DekuScrub_Long:
-{  
+{
   PHB : PHK : PLB
 
   JSR Sprite_DekuScrub_Draw ; Call the draw code
@@ -90,7 +90,7 @@ Sprite_DekuScrub_Prep:
 
 Sprite_DekuScrub_Main:
 {
-  LDA.w SprAction, X                       
+  LDA.w SprAction, X
   JSL   UseImplicitRegIndexedLocalJumpTable
 
   dw EstadoInactivo
@@ -110,9 +110,8 @@ Sprite_DekuScrub_Main:
     %PlayAnimation(0, 1, 16)
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($140) : BCC .no_hablaba
-    %GotoAction(1)
-
-  .no_hablaba
+      %GotoAction(1)
+    .no_hablaba
     RTS
   }
 
@@ -120,35 +119,32 @@ Sprite_DekuScrub_Main:
   {
     %PlayAnimation(0, 1, 16)
     LDA   $FE : BEQ .ninguna_cancion
-    STZ   $FE
-    LDA.b #$C0 : STA.w SprTimerD, X
-    %GotoAction(2)
-  .ninguna_cancion
+      STZ   $FE
+      LDA.b #$C0 : STA.w SprTimerD, X
+      %GotoAction(2)
+    .ninguna_cancion
     RTS
   }
 
   DarMascara:
   {
     %PlayAnimation(0, 1, 16)
-
-    LDA.w SprTimerD,              X : BNE +
-    %ShowUnconditionalMessage($141) 
-    LDA.b #$C0 : STA.w SprTimerD, X
-
-    %GotoAction(3)
-  +
+    LDA.w SprTimerD, X : BNE +
+      %ShowUnconditionalMessage($141)
+      LDA.b #$C0 : STA.w SprTimerD, X
+      %GotoAction(3)
+    +
     RTS
   }
 
   Regalo:
   {
     LDA.w SprTimerD, X : BNE +
-
-    LDY   #$11 : STZ $02E9     ; Give the Deku Mask
-    JSL   Link_ReceiveItem
-    LDA.b #$01 : STA.l $7EF301
-    %GotoAction(4)
-  +
+      LDY   #$11 : STZ $02E9     ; Give the Deku Mask
+      JSL   Link_ReceiveItem
+      LDA.b #$01 : STA.l $7EF301
+      %GotoAction(4)
+    +
     RTS
   }
 
@@ -170,7 +166,7 @@ Sprite_DekuScrub_Main:
   {
     %PlayAnimation(4, 4, 10)
     JSL Sprite_PlayerCantPassThrough
-     %ShowSolicitedMessage($0C3)
+    %ShowSolicitedMessage($0C3)
     RTS
   }
 
@@ -210,7 +206,6 @@ Sprite_DekuScrub_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
@@ -237,14 +232,10 @@ Sprite_DekuScrub_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
   TYA : LSR #2 : TAY
-      
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -306,3 +297,4 @@ Sprite_DekuScrub_Draw:
 ;   db $02, $02, $02, $02
 ;   db $02, $02, $02, $02
 }
+
