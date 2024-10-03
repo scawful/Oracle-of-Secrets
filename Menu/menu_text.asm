@@ -264,20 +264,20 @@ DrawPortalRodName:
 
     .draw_portal_rod_loop
       LDA.w Menu_PortalRodItems, X : STA.w $1692, Y
-      INX #2 : INY #2 
+      INX #2 : INY #2
     CPY #$001C : BCC .draw_portal_rod_loop
   RTS
 }
 
 DrawBottleNames:
 {
-    LDA.l $7EF35C, X : AND.w #$00FF 
+    LDA.l $7EF35C, X : AND.w #$00FF
     DEC : ASL #5 : TAX
     LDY.w #$0000
 
     .draw_bottle_loop
       LDA.w Menu_BottleItems, X : STA.w $1692, Y
-      INX #2 : INY #2 
+      INX #2 : INY #2
     CPY #$001C : BCC .draw_bottle_loop
     RTS
 }
@@ -290,7 +290,7 @@ DrawMagicRingNames:
 
     .draw_ring_loop
       LDA.w Menu_RingNames, X : STA.w $1692, Y
-      INX #2 : INY #2 
+      INX #2 : INY #2
     CPY #$001C : BCC .draw_ring_loop
 
     LDA.w $020B : ASL #5 : TAX

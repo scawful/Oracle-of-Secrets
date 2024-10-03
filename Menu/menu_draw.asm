@@ -1,11 +1,11 @@
 ; =========================================================
-;  Tilemap Menu background 
+;  Tilemap Menu background
 
 ; This function is bled into via the previous menu.asm file.
 Menu_DrawBackground:
 {
   REP #$30
-  LDX.w #$FE ; $1700-17FF 
+  LDX.w #$FE ; $1700-17FF
 
   .loop
     LDA.w menu_frame, X
@@ -32,7 +32,7 @@ Menu_DrawBackground:
 }
 
 ; =========================================================
-;  Menu Item Draw Routine 
+;  Menu Item Draw Routine
 ;  Credit to Kan
 
 DrawMenuItem:
@@ -53,39 +53,39 @@ DrawMenuItem:
   TAY
 
   .draw
-  LDA.w $0000,Y : STA.w $1108,X 
-  LDA.w $0002,Y : STA.w $110A,X 
-  LDA.w $0004,Y : STA.w $1148,X 
-  LDA.w $0006,Y : STA.w $114A,X 
+  LDA.w $0000,Y : STA.w $1108,X
+  LDA.w $0002,Y : STA.w $110A,X
+  LDA.w $0004,Y : STA.w $1148,X
+  LDA.w $0006,Y : STA.w $114A,X
 
   RTS
 }
 
 ; =========================================================
-;  Quest Icons Tilemap Draw Routine 
+;  Quest Icons Tilemap Draw Routine
 
 Menu_DrawQuestIcons:
 {
   LDX.w #$10
 
   .loop
-    LDA.w quest_icons, X 
-    STA.w $1364, X 
-    LDA.w quest_icons+$10, X 
-    STA.w $13A4, X 
-    LDA.w quest_icons+$20, X 
-    STA.w $13E4, X 
-    LDA.w quest_icons+$30, X 
-    STA.w $1424, X 
-    LDA.w quest_icons+$40, X 
-    STA.w $1464, X 
-    LDA.w quest_icons+$50, X 
-    STA.w $14A4, X 
-    LDA.w quest_icons+$60, X 
-    STA.w $14E4, X 
+    LDA.w quest_icons, X
+    STA.w $1364, X
+    LDA.w quest_icons+$10, X
+    STA.w $13A4, X
+    LDA.w quest_icons+$20, X
+    STA.w $13E4, X
+    LDA.w quest_icons+$30, X
+    STA.w $1424, X
+    LDA.w quest_icons+$40, X
+    STA.w $1464, X
+    LDA.w quest_icons+$50, X
+    STA.w $14A4, X
+    LDA.w quest_icons+$60, X
+    STA.w $14E4, X
   DEX : DEX : BPL .loop
 
-  LDA.w #$20F5 : STA.w $13B4 : STA.w $13F4 : STA.w $1474 : STA.w $14B4 
+  LDA.w #$20F5 : STA.w $13B4 : STA.w $13F4 : STA.w $1474 : STA.w $14B4
 
   RTS
 }
@@ -94,11 +94,11 @@ Menu_DrawQuestIcons:
 
 Menu_DrawTriforceIcons:
 {
-  LDA.l $7EF37A 
-  LDX.w #$3534                    
+  LDA.l $7EF37A
+  LDX.w #$3534
   LDY.w #$3544
 
-  LSR : BCC +                     
+  LSR : BCC +
     STX.w $1366 : INX : STX.w $1368 : DEX
     STY.w $13A6 : INY : STY.w $13A8 : DEY
   +
@@ -112,22 +112,22 @@ Menu_DrawTriforceIcons:
     STX.w $136E : INX : STX.w $1370 : DEX
     STY.w $13AE : INY : STY.w $13B0 : DEY
   +
-  
+
   LSR : BCC +
     STX.w $13E4 : INX : STX.w $13E6 : DEX
     STY.w $1424 : INY : STY.w $1426 : DEY
   +
-  
+
   LSR : BCC +
     STX.w $13E8 : INX : STX.w $13EA : DEX
     STY.w $1428 : INY : STY.w $142A : DEY
   +
-  
+
   LSR : BCC +
     STX.w $13EC : INX : STX.w $13EE : DEX
     STY.w $142C : INY : STY.w $142E : DEY
   +
-  
+
   LSR : BCC +
     STX.w $13F0 : INX : STX.w $13F2 : DEX
     STY.w $1430 : INY : STY.w $1432 : DEY
@@ -177,7 +177,7 @@ Menu_DrawHeartPieces:
 {
   ; Empty heart containter
   LDX.w #$2484 : STX.w $149E ; top left
-  LDX.w #$6484 : STX.w $14A0 ; top right 
+  LDX.w #$6484 : STX.w $14A0 ; top right
   LDX.w #$2485 : STX.w $14DE ; bottom left
   LDX.w #$6485 : STX.w $14E0 ; bottom right
 
@@ -192,10 +192,10 @@ Menu_DrawHeartPieces:
   LDX.w #$64AD : STX.w $14A0
 
   .bottom_left
-  LDX.w #$24AE : STX.w $14DE 
+  LDX.w #$24AE : STX.w $14DE
 
   .top_left
-  LDX.w #$24AD : STX.w $149E 
+  LDX.w #$24AD : STX.w $149E
   RTS
 }
 
@@ -257,7 +257,7 @@ Menu_DrawMusicNotes:
 ; =========================================================
 
 DrawYItems:
-{ 
+{
   SEP #$30
   LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
   REP #$30
@@ -294,7 +294,7 @@ DrawYItems:
   .no_bomb
 
   LDA.w #$7EF344
-  LDX.w #menu_offset(7,16) 
+  LDX.w #menu_offset(7,16)
   LDY.w #PowderGFX
   JSR DrawMenuItem
 
@@ -305,7 +305,7 @@ DrawYItems:
 
   ; Row 2 -------------------------------------------------
 
-  LDA.w #$7EF34B 
+  LDA.w #$7EF34B
   LDX.w #menu_offset(10,3)
   LDY.w #HammerGFX
   JSR DrawMenuItem
@@ -470,7 +470,6 @@ Menu_DrawBigKey:
 {
   LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalace
     LSR A : TAX
-    
     ; Check if we have the big key in this palace
     LDA $7EF366
 
@@ -508,7 +507,6 @@ Menu_DrawBigKey:
 
   LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalaceAgain
     LSR A : TAX
-    
     ; Check if we have the map in this dungeon
     LDA $7EF368
 
@@ -525,7 +523,6 @@ Menu_DrawBigKey:
 
     .dontHaveMap
   .notInPalaceAgain
-  
   RTS
 }
 
@@ -535,11 +532,8 @@ Menu_DrawBigKey:
 CheckPalaceItemPossession:
 {
   SEP #$30
-  
   LDA $040C : LSR A
-  
   JSL UseImplicitRegIndexedLocalJumpTable
-  
   dw .no_item
   dw .no_item
   dw .bow
@@ -565,7 +559,6 @@ CheckPalaceItemPossession:
 
   STZ $02
   STZ $03
-  
   RTS
 
   .bow
@@ -581,7 +574,6 @@ CheckPalaceItemPossession:
 
   LDA.b #$01 : STA $02
                STZ $03
-  
   RTS
 
   .power_glove
@@ -868,7 +860,7 @@ Menu_DrawMagicRingsInBox:
 }
 
 Menu_DrawMagicItems:
-{ 
+{
   SEP #$30
   LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
   REP #$30
@@ -916,31 +908,30 @@ Menu_DrawCursor:
 {
   LDA.b #$20 : BIT.w $0207
   REP #$20
-  BEQ .no_delete 
+  BEQ .no_delete
     ; Delete cursor
     LDA.w #$20F5
     STA.w $1108, X : STA.w $1148, X
-    STA.w $114E, X : STA.w $110E, X 
+    STA.w $114E, X : STA.w $110E, X
     STA.w $11C8, X : STA.w $1188, X
-    STA.w $118E, X : STA.w $11CE, X 
+    STA.w $118E, X : STA.w $11CE, X
     BRA .done
 
-  .no_delete 
-  LDA.w #$3060 : STA.w $1108, X ; corner 
+  .no_delete
+  LDA.w #$3060 : STA.w $1108, X ; corner
   LDA.w #$3070 : STA.w $1148, X
 
-  LDA.w #$7060 : STA.w $110E, X ; corner 
+  LDA.w #$7060 : STA.w $110E, X ; corner
   LDA.w #$7070 : STA.w $114E, X
 
-  LDA.w #$3070 : STA.w $1188, X 
-  LDA.w #$B060 : STA.w $11C8, X ; corner 
+  LDA.w #$3070 : STA.w $1188, X
+  LDA.w #$B060 : STA.w $11C8, X ; corner
 
-  LDA.w #$7070 : STA.w $118E, X 
-  LDA.w #$F060 : STA.w $11CE, X ; corner 
+  LDA.w #$7070 : STA.w $118E, X
+  LDA.w #$F060 : STA.w $11CE, X ; corner
 
   .done
   SEP #$20
   RTS
 }
 
-; =========================================================
