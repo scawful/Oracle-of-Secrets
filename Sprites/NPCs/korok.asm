@@ -1,5 +1,5 @@
 ; =========================================================
-; Korok Sprite 
+; Korok Sprite
 
 !SPRID              = Sprite_Korok
 !NbrTiles           = 08  ; Number of tiles used in a frame
@@ -10,7 +10,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 01  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 01  ; 01 = your sprite continue to live offscreen
@@ -29,14 +29,14 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-%Set_Sprite_Properties(Sprite_Korok_Prep, Sprite_Korok_Long) 
+%Set_Sprite_Properties(Sprite_Korok_Prep, Sprite_Korok_Long)
 
 Sprite_Korok_Long:
 {
   PHB : PHK : PLB
 
   LDA $0AA5 : BEQ .done
-    LDA.w SprSubtype, X 
+    LDA.w SprSubtype, X
     CMP.b #$00 : BEQ .draw_makar
     CMP.b #$01 : BEQ .draw_hollo
     CMP.b #$02 : BEQ .draw_rown
@@ -50,7 +50,7 @@ Sprite_Korok_Long:
       JSR Sprite_Korok_DrawRown
       BRA .done
   .done
-  
+
   JSL Sprite_DrawShadow
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
@@ -88,20 +88,19 @@ Sprite_Korok_Main:
   {
     %PlayAnimation(0, 0, 10)
 
-    LDA $0AA5 : BNE + 
+    LDA $0AA5 : BNE +
       PHX
       JSL ApplyKorokSpriteSheets
       PLX
       LDA.b #$01 : STA.w $0AA5
     +
-    
+
     %ShowSolicitedMessage($001D) : BCC .no_talk
-      JSL GetRandomInt : AND.b #$03 
+      JSL GetRandomInt : AND.b #$03
       STA.w SprAction, X
       RTS
     .no_talk
     JSL Sprite_PlayerCantPassThrough
-    
     RTS
   }
 
@@ -110,7 +109,7 @@ Sprite_Korok_Main:
     %PlayAnimation(0, 2, 10)
     LDA.b #KorokWalkSpeed : STA.w SprYSpeed, X
     JSL Sprite_Move
-    LDA.w SprTimerB, X : BNE + 
+    LDA.w SprTimerB, X : BNE +
       JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
     +
     RTS
@@ -121,7 +120,7 @@ Sprite_Korok_Main:
     %PlayAnimation(3, 5, 10)
     LDA.b #-KorokWalkSpeed : STA.w SprYSpeed, X
     JSL Sprite_Move
-    LDA.w SprTimerB, X : BNE + 
+    LDA.w SprTimerB, X : BNE +
       JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
     +
     RTS
