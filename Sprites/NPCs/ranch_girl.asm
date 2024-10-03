@@ -2,7 +2,7 @@
 ; Ranch Girl (Chicken Easter Egg Sprite)
 ; Gives Link the Ocarina
 
-pushpc 
+pushpc
 org $05FA8E
 Sprite_ShowMessageMinimal:
 
@@ -25,22 +25,22 @@ RanchGirl_Message:
   RTL
 }
 
-RanchGirl_TeachSong: 
+RanchGirl_TeachSong:
 {
   LDA.w SprMiscD, X : CMP.b #$01 : BNE .not_started
   LDA $10 : CMP.b #$0E : BEQ .running_dialog
   LDA $7EF34C : CMP.b #$01 : BCS .has_song
 
   ; Play the song of storms
-  LDA.b #$2F 
+  LDA.b #$2F
   STA.w $0CF8
   JSL $0DBB67 ;  Link_CalculateSFXPan
   ORA.w $0CF8
   STA $012E ; Play the song learned sound
 
-  ; Give Link the Ocarina 
-  LDY #$14 
-  ; Clear the item receipt ID 
+  ; Give Link the Ocarina
+  LDY #$14
+  ; Clear the item receipt ID
   STZ $02E9
   PHX
   JSL Link_ReceiveItem
