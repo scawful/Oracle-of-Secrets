@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -91,7 +91,7 @@ Sprite_Wolfos_CheckIfDefeated:
 macro Wolfos_Move()
   JSL Sprite_DamageFlash_Long
   JSL Sprite_CheckDamageFromPlayer : BCC +
-
+    LDA.b #$01 : STA.w SprMiscF, X
   +
   JSL Sprite_PlayerCantPassThrough
   JSL Sprite_BounceFromTileCollision
@@ -107,50 +107,39 @@ Wolfos_DecideAction:
   .decide_new_action
 
   JSL Sprite_DirectionToFacePlayer
-  LDA $0E ; y distance from player
-  STA.w SprMiscC, X
-  LDA $0F ; x distance from player
-  STA.w SprMiscB, X
+  ; y distance from player
+  LDA $0E : STA.w SprMiscC, X
+  ; x distance from player
+  LDA $0F : STA.w SprMiscB, X
 
-  LDA.w SprMiscC, X
-  CMP #$10 ; Check if y distance is significant
-  BCS .adjust_y
-  LDA.w SprMiscB, X
-  CMP #$10 ; Check if x distance is significant
-  BCS .adjust_x
+  ; Check if y distance is significant
+  LDA.w SprMiscC, X : CMP #$10 : BCS .adjust_y
+  ; Check if x distance is significant
+  LDA.w SprMiscB, X : CMP #$10 : BCS .adjust_x
+    RTS ; No adjustments
 
   .adjust_y
-  JSL Sprite_IsBelowPlayer
-  TYA
-  BEQ .above_player
-  %GotoAction(1) ; Attack Back
-  RTS
-
+  JSL Sprite_IsBelowPlayer : TYA : BEQ .above_player
+    %GotoAction(1) ; Attack Back
+    RTS
   .above_player
   %GotoAction(0) ; Attack Forward
   RTS
 
   .adjust_x
-  JSL Sprite_IsToRightOfPlayer
-  TYA
-  BEQ .right
-  %GotoAction(3) ; Walk Left
-  RTS
-
+  JSL Sprite_IsToRightOfPlayer : TYA : BEQ .right
+    %GotoAction(3) ; Walk Left
+    RTS
   .right
   %GotoAction(2) ; Walk Right
   RTS
 }
 
 !NormalSpeed = $08
-!AttackSpeed = $0D
+!AttackSpeed = $0F
 
 Sprite_Wolfos_Main:
 {
-  JSL Sprite_PlayerCantPassThrough
-  JSL Sprite_BounceFromTileCollision
-  JSL Sprite_DamageFlash_Long
-
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -169,11 +158,8 @@ Sprite_Wolfos_Main:
     %PlayAnimation(0, 2, 10)
     %Wolfos_Move()
 
-    LDA #!NormalSpeed
-    STA.w SprYSpeed, X
-
-    LDA #$30
-    STA.w SprTimerA, X
+    LDA #!NormalSpeed : STA.w SprYSpeed, X
+    LDA #$30 : STA.w SprTimerA, X
 
     RTS
   }
@@ -183,11 +169,8 @@ Sprite_Wolfos_Main:
     %PlayAnimation(3, 5, 10)
     %Wolfos_Move()
 
-    LDA #-!NormalSpeed
-    STA.w SprYSpeed, X
-
-    LDA #$30
-    STA.w SprTimerA, X
+    LDA #-!NormalSpeed : STA.w SprYSpeed, X
+    LDA #$30 : STA.w SprTimerA, X
 
     RTS
   }
@@ -197,16 +180,14 @@ Sprite_Wolfos_Main:
     %StartOnFrame(6)
     %PlayAnimation(6, 8, 10)
     %Wolfos_Move()
-    LDA #!NormalSpeed
-    STA.w SprXSpeed, X
+    LDA #!NormalSpeed : STA.w SprXSpeed, X
     STZ.w SprYSpeed, X
 
     JSL GetRandomInt : AND.b #$3F : BNE +
       %GotoAction(4)
     +
 
-    LDA #$30
-    STA.w SprTimerA, X
+    LDA #$30 : STA.w SprTimerA, X
 
     RTS
   }
@@ -217,16 +198,14 @@ Sprite_Wolfos_Main:
     %PlayAnimation(9, 11, 10)
     %Wolfos_Move()
 
-    LDA #-!NormalSpeed
-    STA.w SprXSpeed, X
+    LDA #-!NormalSpeed : STA.w SprXSpeed, X
     STZ.w SprYSpeed, X
 
     JSL GetRandomInt : AND.b #$3F : BNE +
       %GotoAction(5)
     +
 
-    LDA #$30
-    STA.w SprTimerA, X
+    LDA #$30 : STA.w SprTimerA, X
 
     RTS
   }
@@ -237,9 +216,7 @@ Sprite_Wolfos_Main:
     %PlayAnimation(12, 13, 10)
 
     JSL Sprite_Move
-
-    LDA #!AttackSpeed
-    STA.w SprXSpeed, X
+    LDA #!AttackSpeed : STA.w SprXSpeed, X
 
     LDA.w SprTimerA, X : BNE +
       %GotoAction(2)
@@ -254,11 +231,9 @@ Sprite_Wolfos_Main:
     %PlayAnimation(14, 15, 10)
 
     JSL Sprite_Move
+    LDA #-!AttackSpeed : STA.w SprXSpeed, X
 
-    LDA #-!AttackSpeed
-    STA.w SprXSpeed, X
-
-     LDA.w SprTimerA, X : BNE +
+    LDA.w SprTimerA, X : BNE +
       %GotoAction(3)
     +
 
@@ -271,11 +246,13 @@ Sprite_Wolfos_Main:
     STZ.w SprXSpeed, X
     STZ.w SprYSpeed, X
 
-    ; Run the dialogue and wait for a song of healing flag to be set
+    ; Run the Wolfos dialogue once.
     LDA.w SprMiscD, X : BNE .wait
       %ShowUnconditionalMessage($23)
       LDA.b #$01 : STA.w SprMiscD, X
     .wait
+
+    ; Wait for Song of Healing before granting the mask.
     LDA   $FE : BEQ .ninguna_cancion
       STZ   $FE
       LDA.b #$20 : STA.w SprTimerD, X
@@ -290,8 +267,10 @@ Sprite_Wolfos_Main:
 
   Wolfos_GrantMask:
   {
+    ; Set the sprite frame to the Wolfos mask gfx.
     LDA.b #16 : STA.w SprFrame, X
 
+    ; Homemade Link_ReceiveItem
     LDA.w SprTimerD, X : BNE .wait
       LDA.b #$01 : STA.w BRANDISH
       %ShowUnconditionalMessage($10F)
@@ -310,13 +289,12 @@ Sprite_Wolfos_Main:
       LDA.b #$00 : STA $0DD0, X ; kill sprite normal style
       STZ.w SprAction, X
       STZ.w SprHealth, X
-      STZ.w BRANDISH
+      STZ.w BRANDISH ; Stop Link from holding his hands up.
       RTS
     .dismiss
     RTS
   }
 }
-
 
 ; =========================================================
 ; Animation Frame
@@ -456,3 +434,4 @@ Sprite_Wolfos_Draw:
   db $69, $69, $69
   db $29
 }
+
