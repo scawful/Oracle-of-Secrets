@@ -4,50 +4,40 @@
 SickKid_CheckForSongOfHealing:
 {
   LDA $FE : CMP.b #$01 : BNE .no_song
-
-  INC $0D80, X
-  INC $02E4
-  STZ $FE
-  
-.no_song
-  
+    INC $0D80, X
+    INC $02E4
+    STZ $FE
+  .no_song
   RTL
 }
 
 pushpc
 
-org $07F4D0
-Sprite_CheckIfPlayerPreoccupied:
-
-org $06F154
-Sprite_CheckDamageToPlayer_same_layer:
+Sprite_CheckIfPlayerPreoccupied = $07F4D0
+Sprite_CheckDamageToPlayer_same_layer = $06F154
 
 org $068D7F
 SpritePrep_SickKid:
 {
-    LDA.l $7EF355 : BEQ .no_boots
+  LDA.l $7EF355 : BEQ .no_boots
     LDA.b #$03 : STA $0D80, X
   .no_boots
-    INC.w $0BA0, X
-    RTS
+  INC.w $0BA0, X
+  RTS
 }
 
 org $06B962
 BugNetKid_Resting:
 {
-    JSL Sprite_CheckIfPlayerPreoccupied : BCS .dont_awaken
-    
+  JSL Sprite_CheckIfPlayerPreoccupied : BCS .dont_awaken
     JSR Sprite_CheckDamageToPlayer_same_layer : BCC .dont_awaken
-    
-    JSL SickKid_CheckForSongOfHealing
-    LDA.l $7EF355
-    CMP.b #$01 : BCC .no_boots
-    
-.dont_awaken
+      JSL SickKid_CheckForSongOfHealing
+        LDA.l $7EF355
+        CMP.b #$01 : BCC .no_boots
+  .dont_awaken
+  RTS
 
-    RTS
-
-.no_boots
+    .no_boots
     LDA.b #$04
     LDY.b #$01
     JSL Sprite_ShowSolicitedMessageIfPlayerFacing
@@ -57,22 +47,16 @@ BugNetKid_Resting:
 org $06B9C6
 BugNetKid_GrantBugNet:
 {
-    ; Give Link the Boots
-    LDY.b #$4B
-    
-    STZ $02E9
-    
-    PHX
-    
-    JSL Link_ReceiveItem
-    
-    PLX
-    
-    INC $0D80, X
-    
-    STZ $02E4
-    
-    RTS
+  ; Give Link the Boots
+  LDY.b #$4B
+  STZ $02E9
+  PHX
+  JSL Link_ReceiveItem
+  PLX
+  INC $0D80, X
+  STZ $02E4
+  RTS
 }
 
 pullpc
+
