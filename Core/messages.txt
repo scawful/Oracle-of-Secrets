@@ -1,38 +1,39 @@
 # Oracle of Secrets Non-Vanilla Dialogue
 
-# 0F
+# 0F - Skeleton Guard
 Press L or R in your menu to
 [2]see the status of your quest
 [3]and all your items!
 
-# 10
+# 10 - Skeleton Guard
 Got a map, huh? (Press [X] to
 [2]see your map). Don't get lost,
 [3]or you might find our hideout![...]
 
-# 11
+# 11 - Skeleton Guard
 You look pretty strong.
 [2]Can you lift stuff?
-[3](Press [A] to lift things). [K]
+[3](Press [A] to lift things).[K]
 [V]Bet you can't out-lift me![...]
 
-# 12
+# 12 - Skeleton Guard
 Excited to use a sword?
 [2](Press [B] to swing your sword
-[3]when you get one). [K]
+[3]when you get one).[K]
 [V]Try not to trip![...]
 
-# 13
-That mark on your map must be
-[2]your destination.
+# 13 - Skeleton Guard
+Even without a sword, you can
+[2]fend off monsters for a bit.
+[3](Press [B] to punch and stun)
 
-# 14
+# 14 - Skeleton Guard
 You can often find valuables
 [2]in chests.  (Press the [A]
 [3]Button in front of a chest to[K]
 [V]open it.)
 
-# 15
+# 15 - Skeleton Guard
 Why so serious, kid? We Stalfos
 [2]love a good laugh. Stick around,
 [3]you might even learn something!
