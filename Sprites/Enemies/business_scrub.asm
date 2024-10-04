@@ -58,7 +58,7 @@ Sprite_DekuScrubEnemy_Prep:
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .pea_shot
                       CMP.b #$02 : BEQ .cutscene_scrub
   JMP +
-  .pea_shot 
+  .pea_shot
     LDA.b #$06 : STA.w SprAction, X ; Pea Shot State
     LDA.b #$20 : STA.b SprPrize, X
     JMP +
@@ -82,7 +82,7 @@ Sprite_DekuScrubEnemy_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
-  
+
   dw DekuScrubEnemy_Hiding
   dw DekuScrubEnemy_Attack
   dw DekuScrubEnemy_PostAttack
@@ -93,7 +93,7 @@ Sprite_DekuScrubEnemy_Main:
   dw DekuScrubEnemy_PeaShot
   dw DekuScrubEnemy_HidingDefeated
 
-  dw DekuScrubEnemy_CutsceneStart 
+  dw DekuScrubEnemy_CutsceneStart
 
   ; 0x00
   DekuScrubEnemy_Hiding:
@@ -128,7 +128,7 @@ Sprite_DekuScrubEnemy_Main:
 
     JSL Sprite_PlayerCantPassThrough
     JSR CheckForPeaShotRedirect
-    
+
     LDA.w SprTimerA, X : BNE .not_done
       JSR SpawnPeaShot
       LDA #$F0 : STA.w SprTimerA, X
@@ -142,7 +142,7 @@ Sprite_DekuScrubEnemy_Main:
     JSL GetDistance8bit_Long : CMP #$18 : BCS .not_too_close
       %GotoAction(0)
     .not_too_close
-    RTS 
+    RTS
   }
 
   ; 0x02
@@ -157,7 +157,6 @@ Sprite_DekuScrubEnemy_Main:
     LDA.w SprTimerA, X : BNE +
       %GotoAction(0)
     +
-    
     RTS
   }
 
@@ -174,8 +173,8 @@ Sprite_DekuScrubEnemy_Main:
       LDA #$40 : STA.w SprTimerA, X
       INC.w SprAction, X
     .not_done
-      
-    RTS 
+
+    RTS
   }
 
   ; 0x04
@@ -191,7 +190,7 @@ Sprite_DekuScrubEnemy_Main:
       INC.w SprAction, X
     .not_done
 
-    RTS 
+    RTS
   }
 
   ; 0x05
@@ -201,14 +200,14 @@ Sprite_DekuScrubEnemy_Main:
     %PlayAnimation(7,7,1)
     JSL Sprite_PlayerCantPassThrough
 
-    LDA.w SprMiscD, X : BNE .no_talk  
+    LDA.w SprMiscD, X : BNE .no_talk
       %ShowSolicitedMessage($12D) : BCC .no_talk
         JSR DekuScrub_GiveRandomPrize
         LDA.b #$01 : STA.w SprMiscD, X
         %GotoAction(7)
     .no_talk
 
-    RTS 
+    RTS
   }
 
   ; 0x06
@@ -229,14 +228,14 @@ Sprite_DekuScrubEnemy_Main:
       ; Apply force in the opposite direction
       LDA #-16 : STA.w SprYSpeed, X
     .no_damage
-    RTS 
+    RTS
   }
 
   DekuScrubEnemy_HidingDefeated:
   {
     %StartOnFrame(13)
     %PlayAnimation(13,13,1)
-    
+
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
 
@@ -277,8 +276,8 @@ CheckForPeaShotRedirect:
 
   LDA.w SprY, X : STA.b $01
   LDA.w SprYH, X : STA.b $09
-  
-  PHX 
+
+  PHX
   LDA.w Offspring1_Id : TAX
   JSL Sprite_SetupHitBox
   PLX
@@ -289,8 +288,8 @@ CheckForPeaShotRedirect:
     RTS
   .no_dano
   ; If the pea shot and deku scrub hitboxes intersect
-  ; We will go to recoil 
-  PHX 
+  ; We will go to recoil
+  PHX
   LDA.w Offspring1_Id : TAX
   JSL Sprite_SetupHitBox
   PLX
@@ -325,7 +324,6 @@ SpawnPeaShot:
   LDA.b #$01 : STA.w SprNbrOAM, Y
 
   PHX
-      
   ; Spawn Location
   REP #$20
   LDA $0FD8 
@@ -338,18 +336,16 @@ SpawnPeaShot:
   STA.w SprY, Y : XBA : STA.w SprYH, Y
 
   TYX
-  
   STZ $0D70, X
 
   LDA #$10 : STA.w SprYSpeed, X
   STA.w SprYRound, X
 
   STX.w Offspring1_Id
-      
   PLX
 
   .return
-    RTS
+  RTS
 }
 
 ; =========================================================
@@ -369,7 +365,6 @@ Sprite_DekuScrubEnemy_Draw:
   .nextTile
 
     PHX ; Save current Tile Index?
-        
     TXA : CLC : ADC $06 ; Add Animation Index Offset
 
     PHA ; Keep the value with animation index offset?
@@ -397,13 +392,9 @@ Sprite_DekuScrubEnemy_Draw:
     LDA .properties, X : STA ($90), Y
 
     PHY 
-        
     TYA : LSR #2 : TAY
-        
     LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-        
     PLY : INY
-        
     PLX : DEX : BPL .nextTile
 
     PLX
