@@ -4,8 +4,7 @@
 macro PlayerTransform()
   LDY.b #$04 : LDA.b #$23
   JSL   AddTransformationCloud
-  LDA.b #$14 
-  STA.w $0CF8
+  LDA.b #$14 : STA.w $0CF8
   JSL $0DBB67 ; Link_CalculateSFXPan
   ORA.w $0CF8
   STA $012E
@@ -22,7 +21,7 @@ macro CheckNewR_ButtonPress()
 endmacro
 
 ; =========================================================
-; Change Link's sprite by setting $BC to the bank with the gfx
+; Change Link's sprite by setting $BC to the gfx bank
 
 ; InitializeMemoryAndSRAM
 org $008827
@@ -80,8 +79,7 @@ ForceResetMask_GameOver:
       JMP .still_link
     .gbc_link
     JSL UpdateGbcPalette
-    LDA #$3B : STA $BC   ; change link's sprite 
-
+    LDA #$3B : STA $BC   ; change link's sprite
   .still_link
   LDA.b #$30
   STA.b $98
@@ -91,10 +89,9 @@ ForceResetMask_GameOver:
 ForceResetMask_SaveAndQuit:
 {
   LDA !CurrentMask : BEQ .still_link
-  %ResetToLinkGraphics()
+    %ResetToLinkGraphics()
   .still_link
-  LDA.b #$0F
-  STA.b $95
+  LDA.b #$0F : STA.b $95
   RTL
 }
 
@@ -113,7 +110,7 @@ Palette_ArmorAndGloves:
 
   .deku_mask
     ; Load Deku Mask Location
-    LDA.b #$35 : STA $BC 
+    LDA.b #$35 : STA $BC
     JSL UpdateDekuPalette
     RTL
 
@@ -125,13 +122,13 @@ Palette_ArmorAndGloves:
 
   .wolf_mask
     ; Load Wolf Mask Location
-    LDA.b #$38 : STA $BC 
+    LDA.b #$38 : STA $BC
     JSL $38F000
     RTL
 
   .bunny_hood
     ; Load Bunny Hood Location
-    LDA.b #$37 : STA $BC 
+    LDA.b #$37 : STA $BC
     JSL $37F000
     RTL
 
@@ -244,7 +241,7 @@ LinkState_ResetMaskAnimated:
   CMP.b #$05 : BEQ .no_transform
   CMP.b #$06 : BEQ .gbc_form
   CMP.b #$07 : BEQ .moosh_form
-  
+
   .check_item_slot
   LDA.w $0202 : SEC : SBC.b #$13 : BEQ .no_transform
 
@@ -278,7 +275,7 @@ org $079CD9
 pullpc
 LinkItem_CheckForSwordSwing_Masks:
 {
-  LDA   !CurrentMask : BEQ .return 
+  LDA   !CurrentMask : BEQ .return
     CMP.b #$02 : BEQ .return  ; zora mask can use sword
       CMP.b #$06 : BEQ .return ; gbc link can use sword
         LDA #$01
@@ -331,7 +328,6 @@ Link_TransformMask:
 Link_TransformMoosh:
 {
   PHB : PHK : PLB
-  
   LDA.w !CurrentMask : CMP.b #$07 : BNE +
     %PlayerTransform()
     %ResetToLinkGraphics()
@@ -342,7 +338,7 @@ Link_TransformMoosh:
   %PlayerTransform()
   JSL Palette_ArmorAndGloves
 
-  PLB 
+  PLB
   RTL
 }
 
@@ -362,7 +358,7 @@ DekuLink_SpinOrRecoil:
     JML $0DA435 ; JML $0DA40B
   .spin
   ; Moosh form configuration
-  LDY.b #$1B ; Spin and die 
+  LDY.b #$1B ; Spin and die
   JML $0DA40B
 }
 
@@ -376,16 +372,16 @@ pullpc
 PrepareQuakeSpell:
 {
   LDA.b #$0A : STA.b $5D ; Set Link to the hover state
-  LDA.b #$00 : STA.b $3D ; Clear the animation timer 
+  LDA.b #$00 : STA.b $3D ; Clear the animation timer
 
-  LDA #$00 : STA.w $031C ; Clear the spin animation gfx 
+  LDA #$00 : STA.w $031C ; Clear the spin animation gfx
   STZ.w $031D ; Clear the spin animation step
   STZ.w $0324 ; Prevent multiple ancillae from being added
-  STZ.b $46 ; Clear the link damage timer 
+  STZ.b $46 ; Clear the link damage timer
 
   ; Set low and high of HOPVZ2
   ; Usually used as the hopping speed for diagonal jumps
-  LDA.b #$28 : STA.w $0362 : STA.w $0363 
+  LDA.b #$28 : STA.w $0362 : STA.w $0363
   STZ.w $0364 ; Clear Z-coordinate for the jump
 
   STZ.w DekuFloating ; Clear the hover flag
@@ -409,13 +405,13 @@ InitCamera:
 HandleMovement:
 {
   LDA $F0 : AND #$08 : BEQ .not_up
-    LDY #$00 
+    LDY #$00
     LDA.w .drag_y_low,  Y : CLC : ADC.w $0B7E : STA.w $0B7E
     LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
     LDA #$01 : STA $031C
     LDA #$05 : STA $3D
     STZ.w LinkFaceDir
-    
+
   .not_up
   LDA $F0 : AND #$04 : BEQ .not_down
     LDY #$01
@@ -424,7 +420,7 @@ HandleMovement:
     LDA #$02 : STA $031C
     LDA #$05 : STA $3D
     LDA #$02 : STA.w LinkFaceDir
-    
+
   .not_down
   LDA $F0 : AND #$02 : BEQ .not_left
     LDY #$02
@@ -433,7 +429,7 @@ HandleMovement:
     LDA #$03 : STA $031C
     LDA #$05 : STA $3D
     LDA #$04 : STA.w LinkFaceDir
-    
+
   .not_left
   LDA $F0 : AND #$01 : BEQ .not_right
     LDY #$03
@@ -442,7 +438,7 @@ HandleMovement:
     LDA #$04 : STA $031C
     LDA #$05 : STA $3D
     LDA #$06 : STA.w LinkFaceDir
-    
+
   .not_right
   RTS
 
@@ -471,16 +467,14 @@ DekuLink_HoverBasedOnInput:
   STZ.b $48
 
   JSR HandleMovement
-  
   JSL Link_HandleCardinalCollision_Long
   JSL Link_HandleVelocityAndSandDrag
 
   STZ.w $0302
 
   JSL HandleIndoorCameraAndDoors
-  
   JSL Link_CancelDash
-  
+
   ; Pos - Cache Pos = difference
   LDA.w LinkX : SEC : SBC $3F : STA $31
   LDA.w LinkY : SEC : SBC $3E : STA $30
@@ -488,7 +482,7 @@ DekuLink_HoverBasedOnInput:
   LDA $5C : AND #$1F : BNE .continue_me
     DEC $24
   .continue_me
-  
+
   LDA $5C : BEQ .auto_cancel
 
   LDA.w DekuFloating : BEQ .no_bomb_drop
@@ -499,7 +493,7 @@ DekuLink_HoverBasedOnInput:
 
   LDA $F0 : AND #%10000000 : BEQ .no_cancel
     .auto_cancel
-    
+
     ; Reset LinkState to Default
     STZ $5D
 
@@ -520,12 +514,12 @@ DekuLink_HoverBasedOnInput:
     ; Set height at end of hover
     ; This makes it so the landing animation timer looks correct
     ; Floating for a bit, then slowly landing on the ground
-    LDA.b #$12 : STA $24 
+    LDA.b #$12 : STA $24
   .no_cancel
 
   PLB
   RTL
-} 
+}
 
 DekuLink_CheckForDash:
 {
@@ -549,17 +543,17 @@ org $08FFDA ; Bank 08 Free space
 
 org $07903F
   JSL DekuLink_CheckForDash
-  
+
 pullpc
 
 DekuLink_ShootBubbleOrStartHover:
 {
   ; If we are standing on a deku flower, do the hover
-  LDA.b $71 : BEQ + 
+  LDA.b $71 : BEQ +
     JSL PrepareQuakeSpell
     RTL
   +
-  ; Otherwise, shoot the magic bubble 
+  ; Otherwise, shoot the magic bubble
   LDA.b #$0E
   JSL AncillaAdd_MagicBubbleShot
   JSL MagicBubbleSwapDynamicGfx
@@ -855,7 +849,7 @@ Ancilla_BoundsCheck:
 
 ; =========================================================
 
-print pc 
+print pc
 AncillaAdd_MagicBubbleShot:
 {
   LDY.b #$03
@@ -992,7 +986,7 @@ Ancilla0E_MagicBubbleLong:
 {
   PHP : PHK : PLB
   JSR Ancilla_MagicBubbleShot
-  PLB 
+  PLB
   RTL
 }
 
@@ -1276,7 +1270,7 @@ MagicBubbleGfx:
 
 MagicBubbleSwapDynamicGfx:
 {
-  PHX 
+  PHX
   PHP
 
   REP #$30
@@ -1369,8 +1363,8 @@ CheckNewRButtonPress:
 {
   LDA $F6 : BIT #$10 : BEQ .fail
 
-  SEC 
-  RTL 
+  SEC
+  RTL
 
   .fail
   CLC

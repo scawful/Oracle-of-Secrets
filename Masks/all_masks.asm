@@ -3,16 +3,19 @@
 ; =========================================================
 
 ; 00 = Human
-; 01 = Deku 
+; 01 = Deku
 ; 02 = Zora
 ; 03 = Wolf
-; 04 = Bunny Hood 
+; 04 = Bunny Hood
 ; 05 = Minish Form
 ; 06 = GBC Form
+; 07 = Moosh Form
 !CurrentMask  = $02B2
 
 ; Indexed by the bank number
 !LinkGraphics = $BC
+
+; If set, player is diving with Zora Mask
 !ZoraDiving = $0AAB
 
 ; If set, deku is hovering and can drop bombs
