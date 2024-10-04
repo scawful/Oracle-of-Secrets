@@ -47,7 +47,6 @@ org $06F400
   JSL MagicRing_CheckForArmor
 pullpc
 
-
 ; $0373 - Damage queue for Link
 Sprite_BumpDamageGroups = $06F427
 
