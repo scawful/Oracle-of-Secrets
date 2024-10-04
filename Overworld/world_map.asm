@@ -190,73 +190,74 @@ pushpc
 org $0ABF90
 MapIconDraw:
 {
-    ; .dont_draw_link
-    LDA.l $7EC108
-    PHA
+  ; .dont_draw_link
+  LDA.l $7EC108
+  PHA
 
-    LDA.l $7EC109
-    PHA
+  LDA.l $7EC109
+  PHA
 
-    LDA.l $7EC10A
-    PHA
+  LDA.l $7EC10A
+  PHA
 
-    LDA.l $7EC10B
-    PHA
+  LDA.l $7EC10B
+  PHA
 
-    ;-----------------------------------
+  ;-----------------------------------
 
-    .draw_prizes
-    LDA.b $8A : AND.b #$40 : BEQ .lwprizes
-      LDA.l OOSPROG : AND.b #$02 : BNE .check_pendants
-        JSL DrawEonEscapeIcon
-        JSR HandleMapDrawIcon
-        JMP restore_coords_and_exit
-      .check_pendants
-      LDA.l OOSPROG : AND.b #$10 : BEQ .check_master_sword
-        JSL DrawPowerPendant
-        JSR HandleMapDrawIcon
+  .draw_prizes
+  LDA.b $8A : AND.b #$40 : BEQ .lwprizes
+    LDA.l OOSPROG : AND.b #$02 : BNE .check_pendants
+      JSL DrawEonEscapeIcon
+      JSR HandleMapDrawIcon
+      JMP restore_coords_and_exit
+    .check_pendants
+    LDA.l OOSPROG : AND.b #$10 : BEQ .check_master_sword
+      JSL DrawPowerPendant
+      JSR HandleMapDrawIcon
 
-        JSL DrawWisdomPendant
-        JSR HandleMapDrawIcon
+      JSL DrawWisdomPendant
+      JSR HandleMapDrawIcon
 
-        JSL DrawCouragePendant
-        JSR HandleMapDrawIcon
+      JSL DrawCouragePendant
+      JSR HandleMapDrawIcon
+    .check_master_sword
+    LDA.l OOSPROG : AND.b #$20 : BEQ .check_fortress
+      JSL DrawMasterSwordIcon
+      JSR HandleMapDrawIcon
+      JMP restore_coords_and_exit
+    .check_fortress
+    LDA.l OOSPROG : AND.b #$40 : BEQ .check_final_boss
+      JSL DrawFortressOfSecretsIcon
+      JSR HandleMapDrawIcon
+      JMP restore_coords_and_exit
+    .check_final_boss
+    LDA.l OOSPROG : AND.b #$80 : BEQ .exit_dw
+      JSL DrawFinalBossIcon
+      JSR HandleMapDrawIcon
+    .exit_dw
+      JMP restore_coords_and_exit
+  .lwprizes
 
-      .check_master_sword
-      LDA.l OOSPROG : AND.b #$20 : BEQ .check_fortress
-        JSL DrawMasterSwordIcon
-        JSR HandleMapDrawIcon
-        JMP restore_coords_and_exit
-      .check_fortress
-      LDA.l OOSPROG : AND.b #$40 : BEQ .check_final_boss
-        JSL DrawFortressOfSecretsIcon
-        JSR HandleMapDrawIcon
-        JMP restore_coords_and_exit
-      .check_final_boss
-      LDA.l OOSPROG : AND.b #$80 : BEQ .exit_dw
-        JSL DrawFinalBossIcon
-        JSR HandleMapDrawIcon
-      .exit_dw
-        JMP restore_coords_and_exit
-    .lwprizes
+  ;-----------------------------------
 
-    LDA.l $7EF3C7 : CMP.b #$01 : BEQ .hall_of_secrets
-                    CMP.b #$02 : BEQ .draw_secret
-                    CMP.b #$03 : BCS .draw_crystals
-                    JMP restore_coords_and_exit
+  LDA.l $7EF3C7 : CMP.b #$01 : BEQ .hall_of_secrets
+                  CMP.b #$02 : BEQ .draw_secret
+                  CMP.b #$03 : BCS .draw_crystals
+                  JMP restore_coords_and_exit
 
-    .hall_of_secrets
+  .hall_of_secrets
     JSL DrawHallOfSecretsIcon
     JSR HandleMapDrawIcon
     JMP restore_coords_and_exit
 
-    .draw_secret ; Pyramid of Power
+  .draw_secret ; Pyramid of Power
     JSL DrawPyramidIcon
     JSR HandleMapDrawIcon_noflash
     JMP .skip_draw_6
 
-    .draw_crystals
-    ; Draw Crystal 1 
+  .draw_crystals
+    ; Draw Crystal 1
     LDA.l $7EF37A : AND #$02 : BNE .skip_draw_0
       ; X position
       LDA.b #$00 : STA.l $7EC10B
@@ -271,7 +272,6 @@ MapIconDraw:
       LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
       LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
       JSR HandleMapDrawIcon
-
     .skip_draw_0
 
     ; Draw Crystal 2
@@ -290,7 +290,6 @@ MapIconDraw:
       LDA.b #$08 : STA.l $7EC025
 
       JSR HandleMapDrawIcon
-
     .skip_draw_1
 
     ; Draw Crystal 3
@@ -309,7 +308,6 @@ MapIconDraw:
       LDA.b #$0D : STA.l $7EC025
 
       JSR HandleMapDrawIcon
-
     .skip_draw_2
 
 
@@ -329,7 +327,6 @@ MapIconDraw:
       LDA.b #$0B : STA.l $7EC025
 
       JSR HandleMapDrawIcon
-
     .skip_draw_3
 
     ; Draw Crystal 5
@@ -348,7 +345,6 @@ MapIconDraw:
       LDA.b #$09 : STA.l $7EC025
 
       JSR HandleMapDrawIcon
-
     .skip_draw_4
 
     ; Draw Crystal 6
@@ -363,7 +359,7 @@ MapIconDraw:
       LDA.b #$64 : STA.b $0D
       LDA.b #$32 : STA.b $0C ; Tile GFX
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
       LDA.b #$0A : STA.l $7EC025
 
       JSR HandleMapDrawIcon
@@ -381,7 +377,7 @@ MapIconDraw:
       LDA.b #$64 : STA.b $0D
       LDA.b #$32 : STA.b $0C ; Tile GFX
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8 
+      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
       LDA.b #$0C : STA.l $7EC025
 
       JSR HandleMapDrawIcon
@@ -392,22 +388,19 @@ MapIconDraw:
 
 HandleMapDrawIcon:
 {
-    LDA.b $1A
-    AND.b #$10
-    BNE .skip_draw ; Timer to make it flash
-        .noflash ; ALTERNATE ENTRY POINT
-        JSR WorldMapIcon_AdjustCoordinate
-        LDA.l $7EC025 : TAX
-        JSR WorldMap_CalculateOAMCoordinates
+  ; Timer to make it flash
+  LDA.b $1A : AND.b #$10 : BNE .skip_draw
+    .noflash ; ALTERNATE ENTRY POINT
+    JSR WorldMapIcon_AdjustCoordinate
+    LDA.l $7EC025 : TAX
+    JSR WorldMap_CalculateOAMCoordinates
 
-        BCC .skip_draw
-            LDA.l $7EC025 : TAX
-            LDA.b #$02
-            JSR WorldMap_HandleSpriteBlink
-
-    .skip_draw
-
-    RTS
+    BCC .skip_draw
+    LDA.l $7EC025 : TAX
+    LDA.b #$02
+    JSR WorldMap_HandleSpriteBlink
+  .skip_draw
+  RTS
 }
 
 FixMaskPaletteOnExit:
