@@ -35,17 +35,13 @@
 Sprite_Puffstool_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_Puffstool_Draw ; Call the draw code
+  JSR Sprite_Puffstool_Draw
   JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Puffstool_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Puffstool_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -53,16 +49,14 @@ Sprite_Puffstool_Long:
 Sprite_Puffstool_Prep:
 {
   PHB : PHK : PLB
-  
   LDA.l $7EF359 : TAY
   LDA.w .health, Y : STA.w SprHealth, X
   LDA.b #$80 : STA.w SprDefl, X
-
   PLB
   RTL
 
-.health
-  db $0A, $10, $1A, $20
+  .health
+    db $08, $0A, $1A, $20
 }
 
 ; =========================================================
@@ -86,7 +80,6 @@ Sprite_Puffstool_Main:
     LDA.w SprTimerA, X : BNE +
       JSL Sprite_SelectNewDirection
     +
-    
     JSL Sprite_MoveXyz
     JSL Sprite_BounceFromTileCollision
     JSL Sprite_BounceOffWall
@@ -123,7 +116,6 @@ Sprite_Puffstool_Main:
         JSL Sprite_SetSpawnedCoordinates
         JSL Sprite_TransmuteToBomb
       .no_space
-      
     +
     RTS
   }
@@ -213,7 +205,6 @@ Sprite_Puffstool_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
@@ -241,13 +232,9 @@ Sprite_Puffstool_Draw:
   LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY 
-      
   TYA : LSR #2 : TAY
-      
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
