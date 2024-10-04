@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 0   ; Unused in this template (can be 0 to 7)
 !Hitbox             = $0D ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -36,16 +36,16 @@
 
 Sprite_MakuTree_Long:
 {
-    PHB : PHK : PLB
+  PHB : PHK : PLB
 
-    JSL Sprite_CheckActive   ; Check if game is not paused
-    BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
+  JSL Sprite_CheckActive   ; Check if game is not paused
+  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
-    JSR Sprite_MakuTree_Main ; Call the main sprite code
+  JSR Sprite_MakuTree_Main ; Call the main sprite code
 
   .SpriteIsNotActive
-    PLB ; Get back the databank we stored previously
-    RTL ; Go back to original code
+  PLB ; Get back the databank we stored previously
+  RTL ; Go back to original code
 }
 ; =========================================================
 
@@ -68,7 +68,7 @@ ApplyPaletteFilter = $00E914
 Sprite_MakuTree_Main:
 {
   JSL Sprite_PlayerCantPassThrough
-  
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -84,13 +84,12 @@ Sprite_MakuTree_Main:
 
   MakuTree_Handler:
   {
-    ; Check the progress flags 
+    ; Check the progress flags
     LDA.l $7EF3D4 : CMP.b #$01 : BEQ .has_met_link
       %GotoAction(1)
       RTS
-
     .has_met_link
-    %GotoAction(3) 
+    %GotoAction(3)
     RTS
   }
 
@@ -195,7 +194,7 @@ Sprite_MakuTree_Main:
     .dragon_ship
     LDA.b #$06 : STA.w CurrentDream
     .enter_dream
-    PHX 
+    PHX
     LDA.b #$16 : STA.b $5D ; Set Link to sleeping
     LDA.b #$20 : JSL AncillaAdd_Blanket
     LDA.b $20 : CLC : ADC.b #$04 : STA.w $0BFA,X
@@ -204,7 +203,7 @@ Sprite_MakuTree_Main:
     LDA.b $23 : STA.w $0C18,X
     JSL PaletteFilter_StartBlindingWhite
     JSL ApplyPaletteFilter
-    PLX 
+    PLX
 
     LDA.b #$60 : STA.w SprTimerB, X
     INC.w SprAction, X
