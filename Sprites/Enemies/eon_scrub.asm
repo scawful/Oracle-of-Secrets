@@ -87,8 +87,8 @@ Sprite_EonScrub_Main:
   dw EonScrub_Recoil
   dw EonScrub_Dazed
   dw EonScrub_Subdued
-
   dw EonScrub_PeaShot
+  dw EonScrub_Defeated
 
   EonScrub_Stalking:
   {
@@ -184,10 +184,12 @@ Sprite_EonScrub_Main:
 
     JSL Sprite_PlayerCantPassThrough
 
-    LDA.w SprMiscD, X : BNE .no_talk  
-      
+    LDA.w SprMiscD, X : BNE .no_talk
+      %ShowSolicitedMessage($12D) : BCC .no_talk
+      JSR DekuScrub_GiveRandomPrize
+      LDA.b #$01 : STA.w SprMiscD, X
+      %GotoAction(7)
     .no_talk
-
     RTS
   }
 
@@ -208,8 +210,14 @@ Sprite_EonScrub_Main:
       ; Apply force in the opposite direction
       LDA #-16 : STA.w SprYSpeed, X
     .no_damage
-    RTS 
+    RTS
+  }
 
+  EonScrub_Defeated:
+  {
+    %PlayAnimation(0,1,16)
+    JSL Sprite_CheckIfLifted
+    JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
 }
@@ -242,17 +250,16 @@ Sprite_EonScrub_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -269,73 +276,68 @@ Sprite_EonScrub_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
   TYA : LSR #2 : TAY
-      
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
 
   RTS
 
+  ; =========================================================
 
-; =========================================================
-
-.start_index
-db $00, $02, $04, $06, $08, $0A, $0C, $0E, $10, $12, $14, $16, $18, $1A
-.nbr_of_tiles
-db 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0
-.x_offsets
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0, 0
-dw 0
-.y_offsets
-dw 0, -8
-dw 0, -8
-dw 0, -12
-dw 0, -12
-dw 0, -12
-dw 0, -12
-dw 0, -12
-dw 0, -12
-dw 0, -12
-dw 0, -8
-dw 0, -4
-dw 0, -16
-dw 0, -16
-dw 0
-.chr
-db $20, $0A
-db $20, $0A
-db $24, $0A
-db $22, $0A
-db $00, $0A
-db $02, $0A
-db $04, $0A
-db $08, $0A
-db $06, $0A
-db $28, $0A
-db $26, $0A
-db $2C, $0C
-db $2C, $0C
-db $2A
-.properties
+  .start_index
+  db $00, $02, $04, $06, $08, $0A, $0C, $0E, $10, $12, $14, $16, $18, $1A
+  .nbr_of_tiles
+  db 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0
+  .x_offsets
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0, 0
+  dw 0
+  .y_offsets
+  dw 0, -8
+  dw 0, -8
+  dw 0, -12
+  dw 0, -12
+  dw 0, -12
+  dw 0, -12
+  dw 0, -12
+  dw 0, -12
+  dw 0, -12
+  dw 0, -8
+  dw 0, -4
+  dw 0, -16
+  dw 0, -16
+  dw 0
+  .chr
+  db $20, $0A
+  db $20, $0A
+  db $24, $0A
+  db $22, $0A
+  db $00, $0A
+  db $02, $0A
+  db $04, $0A
+  db $08, $0A
+  db $06, $0A
+  db $28, $0A
+  db $26, $0A
+  db $2C, $0C
+  db $2C, $0C
+  db $2A
+  .properties
 db $33, $33
 db $73, $33
 db $33, $33
