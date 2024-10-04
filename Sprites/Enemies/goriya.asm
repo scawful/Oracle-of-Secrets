@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -37,22 +37,18 @@
 Sprite_Goriya_Long:
 {
   PHB : PHK : PLB
-
-  LDA.w SprSubtype, X : BEQ + 
+  LDA.w SprSubtype, X : BEQ +
     JSR Sprite_Boomerang_Draw
     JMP ++
   +
   JSR Sprite_Goriya_Draw
   JSL Sprite_DrawShadow
   ++
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Goriya_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Goriya_Main ; Call the main sprite code
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -114,7 +110,7 @@ Sprite_Goriya_Main:
   {
     %PlayAnimation(0, 3, 6)
 
-    LDA.w SprTimerD, X : BNE + 
+    LDA.w SprTimerD, X : BNE +
       LDA.b #$16
       JSL Sprite_ApplySpeedTowardsPlayer
       %SetTimerD($50)
@@ -157,7 +153,7 @@ Goriya_HandleTileCollision:
     STA.w SprMiscE, X
     %SetTimerC(60)
     JMP +
-  .down 
+  .down
     %GotoAction(1)
     STA.w SprMiscE, X
     %SetTimerC(60)
@@ -179,7 +175,7 @@ Goriya_HandleTileCollision:
 
 Goriya_BoomerangAttack:
 {
-  LDA.b #$2C 
+  LDA.b #$2C
   JSL Sprite_SpawnDynamically : BMI +
     LDA.b #$01 : STA.w SprSubtype, Y
     LDA.b #$04 : STA.w SprAction, Y
@@ -237,7 +233,7 @@ Sprite_Goriya_Move:
     STZ.w SprXSpeed, X
     %GotoAction(0)
     LDA.b #$00 : STA.w SprMiscE, X
-    RTS 
+    RTS
   }
 
   Goriya_MoveDown:
@@ -246,7 +242,7 @@ Sprite_Goriya_Move:
     STZ.w SprXSpeed, X
     %GotoAction(1)
     LDA.b #$01 : STA.w SprMiscE, X
-    RTS 
+    RTS
   }
 
   Goriya_MoveLeft:
@@ -255,7 +251,7 @@ Sprite_Goriya_Move:
     LDA.b #-GoriyaMovementSpeed : STA.w SprXSpeed, X
     %GotoAction(2)
     LDA.b #$02 : STA.w SprMiscE, X
-    RTS 
+    RTS
   }
 
   Goriya_MoveRight:
@@ -264,7 +260,7 @@ Sprite_Goriya_Move:
     LDA.b #GoriyaMovementSpeed : STA.w SprXSpeed, X
     %GotoAction(3)
     LDA.b #$03 : STA.w SprMiscE, X
-    RTS 
+    RTS
   }
 
   Goriya_Wait:
@@ -306,7 +302,7 @@ Sprite_Goriya_Draw:
       TXA : CLC : ADC $06 ; Add Animation Index Offset
       PHA ; Keep the value with animation index offset?
 
-      ASL A : TAX 
+      ASL A : TAX
 
       REP #$20
         LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
@@ -325,11 +321,10 @@ Sprite_Goriya_Draw:
     LDA .chr, X : STA ($90), Y : INY
     LDA .properties, X : ORA $08 : STA ($90), Y
 
-    PHY  
+    PHY
       TYA : LSR #2 : TAY
       LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
     PLY : INY
-        
     PLX : DEX : BPL .nextTile
 
   PLX
@@ -398,17 +393,16 @@ Sprite_Boomerang_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -425,14 +419,10 @@ Sprite_Boomerang_Draw:
   INY
   LDA .properties, X : ORA $08 : STA ($90), Y
 
-  PHY 
-      
+  PHY
   TYA : LSR #2 : TAY
-      
   LDA #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -455,3 +445,4 @@ Sprite_Boomerang_Draw:
   db $E2
   db $62
 }
+

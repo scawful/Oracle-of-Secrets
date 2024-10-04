@@ -45,7 +45,6 @@ Sprite_Poltergeist_Long:
             .onscreen
 
             JSL Sprite_CheckActive   ; Check if game is not paused
-            
             BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
                 JSR Sprite_Poltergeist_Main ; Call the main sprite code
 
@@ -55,7 +54,7 @@ Sprite_Poltergeist_Long:
     RTL ; Go back to original code
 }
 
-; ========================================================= 
+; =========================================================
 
 Sprite_Poltergeist_Prep:
 {

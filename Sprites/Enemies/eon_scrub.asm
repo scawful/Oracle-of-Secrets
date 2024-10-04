@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -56,12 +56,10 @@ Sprite_EonScrub_Long:
 Sprite_EonScrub_Prep:
 {
   PHB : PHK : PLB
-    
   LDA.w SprSubtype, X : CMP #$01 : BNE .normal_scrub
     LDA.b #$06 : STA.w SprAction, X ; Pea Shot State
     LDA.b #$20 : STA.b SprPrize, X
-  .normal_scrub 
-
+  .normal_scrub
   PLB
   RTL
 }
