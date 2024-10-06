@@ -259,7 +259,7 @@ Sprite_Minecart_Main:
         LDA.w SprMiscF, X : BNE .active_cart
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
         .active_cart
-        JSL Link_CancelDash            ; Stop the player from dashing
+        JSL Link_CancelDash                  ; Stop the player from dashing
         LDA #$02 : STA $02F5                 ; Somaria platform and moving
         LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
         LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
@@ -295,7 +295,7 @@ Sprite_Minecart_Main:
         LDA.w SprMiscF, X : BNE .active_cart
           LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
         .active_cart
-        JSL Link_CancelDash            ; Stop the player from dashing
+        JSL Link_CancelDash                  ; Stop the player from dashing
         LDA #$02 : STA $02F5                 ; Somaria platform and moving
         LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
         LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
@@ -375,7 +375,7 @@ Sprite_Minecart_Main:
       LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
       JMP   .continue
     .fast_speed
-      LDA.b #!DoubleSpeed : STA.w SprYSpeed, X
+    LDA.b #!DoubleSpeed : STA.w SprYSpeed, X
     .continue
     JSL Sprite_MoveVert
 
@@ -396,8 +396,8 @@ Sprite_Minecart_Main:
     %InitMovement()
 
     LDA   $36 : BNE .fast_speed
-    LDA.b #-!MinecartSpeed : STA.w SprXSpeed, X
-            JMP .continue
+      LDA.b #-!MinecartSpeed : STA.w SprXSpeed, X
+      JMP .continue
     .fast_speed
     LDA.b #-!DoubleSpeed : STA.w SprXSpeed, X
     .continue

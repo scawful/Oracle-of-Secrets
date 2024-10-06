@@ -1,10 +1,3 @@
-POSY            = $7E0020
-POSYH           = $7E0021
-POSX            = $7E0022
-POSXH           = $7E0023
-POSZ            = $7E0024
-POSZH           = $7E0025
-
 ; Link_ControlHandler - Indexed by $5D
 ; dw LinkState_Default                  ; 0x00
 ; dw LinkState_Pits                     ; 0x01
