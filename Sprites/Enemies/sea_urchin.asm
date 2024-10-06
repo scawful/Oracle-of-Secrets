@@ -1,6 +1,6 @@
-; ========================================================= 
+; =========================================================
 ; Sprite Properties
-; ========================================================= 
+; =========================================================
 
 !SPRID              = Sprite_SeaUrchin
 !NbrTiles           = 04  ; Number of tiles used in a frame
@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -35,25 +35,24 @@
 Sprite_SeaUrchin_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_SeaUrchin_Draw ; Call the draw code
+  JSR Sprite_SeaUrchin_Draw
   JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_SeaUrchin_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_SeaUrchin_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 Sprite_SeaUrchin_Prep:
 {
   PHB : PHK : PLB
-
-  LDA #$03 : STA.w SprPrize, X
-
+  LDA #$01 : STA.w SprPrize, X
+  LDA WORLDFLAG : BEQ +
+    ; Eon Sea Urchin impervious to sword
+    LDA.b #%10000100 : STA.w SprDefl, X
+    LDA.b #$07 : STA.w SprPrize, X
+  +
   PLB
   RTL
 }
@@ -70,35 +69,24 @@ Sprite_SeaUrchin_Main:
   {
     %PlayAnimation(0,3,8)
     %PlayerCantPassThrough()
-
     %DoDamageToPlayerSameLayerOnContact()
-
-    JSL Sprite_CheckDamageFromPlayer
-    BCC .NoDamage
-
-    %GotoAction(1)
-
+    JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
+      %GotoAction(1)
     .NoDamage
-
     RTS
   }
 
   Death:
   {
-    LDA.b #$06
-    STA.w $0DD0,X
-
-    LDA.b #$0A
-    STA.w $0DF0,X
+    LDA.b #$06 : STA.w SprState, X
+    LDA.b #$0A : STA.w SprTimerA, X
 
     STZ.w $0BE0,X
 
     LDA.b #$09 ; SFX2.1E
     JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan
-    
     RTS
   }
-
 }
 
 
@@ -110,24 +98,22 @@ Sprite_SeaUrchin_Draw:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
-
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
   .nextTile
 
   PHX ; Save current Tile Index?
-      
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -144,14 +130,10 @@ Sprite_SeaUrchin_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
   TYA : LSR #2 : TAY
-      
   LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
