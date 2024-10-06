@@ -1,6 +1,6 @@
-; ========================================================= 
+; =========================================================
 ; Sprite Properties
-; ========================================================= 
+; =========================================================
 
 !SPRID              = Sprite_HelmetChuchu
 !NbrTiles           = 03  ; Number of tiles used in a frame
@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -32,34 +32,29 @@
 
 %Set_Sprite_Properties(Sprite_HelmetChuchu_Prep, Sprite_HelmetChuchu_Long)
 
-; =========================================================
-
-; 0-1: No Helmet Green
-; 2-3: Mask Red
-; 4-5: Helmet Green
-
 Sprite_HelmetChuchu_Long:
 {
   PHB : PHK : PLB
 
-  JSR Sprite_HelmetChuchu_Draw ; Call the draw code
+  JSR Sprite_HelmetChuchu_Draw
   JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_HelmetChuchu_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_HelmetChuchu_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
+; =========================================================
+; 0-1: No Helmet Green
+; 2-3: Mask Red
+; 4-5: Helmet Green
 
 Sprite_HelmetChuchu_Prep:
 {
   PHB : PHK : PLB
 
-  LDA.l $7EF359 : DEC A : TAY 
+  LDA.l SWORD : DEC A : TAY
   LDA.w .health, Y : STA.w SprHealth, X
   JSL GetRandomInt : AND.b #$02 : STA.w SprAction, X
   STZ.w SprMiscB, X
@@ -94,17 +89,17 @@ Sprite_HelmetChuchu_Main:
   dw RedChuchu_NoMask
   dw HelmetSubtype
   dw MaskSubtype
-  
+
   GreenChuchu_Helmet:
   {
     %StartOnFrame(4)
     %PlayAnimation(4, 5, 16)
     JSR Sprite_CheckForHookshot : BCC +
-      LDA.w SprFlash, X : BEQ + 
+      LDA.w SprFlash, X : BEQ +
         %GotoAction(1)
     +
     JSL Sprite_CheckDamageFromPlayer
-    JSR Sprite_Chuchu_Move    
+    JSR Sprite_Chuchu_Move
     RTS
   }
 
@@ -112,7 +107,7 @@ Sprite_HelmetChuchu_Main:
   {
     %StartOnFrame(0)
     %PlayAnimation(0, 1, 16)
-    LDA.w SprMiscD, X : BNE + 
+    LDA.w SprMiscD, X : BNE +
       JSR HelmetChuchu_SpawnHookshotDrag
       LDA.b #$01 : STA.w SprMiscD, X
     +
@@ -126,7 +121,7 @@ Sprite_HelmetChuchu_Main:
     %StartOnFrame(2)
     %PlayAnimation(2, 3, 16)
     JSR Sprite_CheckForHookshot : BCC +
-      LDA.w SprFlash, X : BEQ + 
+      LDA.w SprFlash, X : BEQ +
         %GotoAction(3)
     +
     JSL Sprite_CheckDamageFromPlayer
@@ -138,7 +133,7 @@ Sprite_HelmetChuchu_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(6, 7, 16)
-    LDA.w SprMiscD, X : BNE + 
+    LDA.w SprMiscD, X : BNE +
       JSR HelmetChuchu_SpawnHookshotDrag
       LDA.b #$01 : STA.w SprMiscD, X
     +
@@ -202,11 +197,11 @@ HelmetChuchu_SpawnHookshotDrag:
   PLX
   RTS
 
-.speed_x
-  db  16, -11, -16, 11
+  .speed_x
+    db  16, -11, -16, 11
 
-.speed_y
-  db   0,  11,   0, -11
+  .speed_y
+    db   0,  11,   0, -11
 }
 
 ; Based on Sprite_CancelHookshot
@@ -215,20 +210,20 @@ HelmetChuchu_SpawnHookshotDrag:
 Sprite_CheckForHookshot:
 {
   PHX
-  #_0FF544: LDX.b #$0A
+  LDX.b #$0A
 
   .next_ancilla
-  #_0FF546: LDA.w $0C4A,X
-  #_0FF549: CMP.b #$1F ; ANCILLA 1F
-  #_0FF54B: BNE .not_hooker
+  LDA.w $0C4A,X
+  CMP.b #$1F ; ANCILLA 1F
+  BNE .not_hooker
 
   PLX
-  SEC 
+  SEC
   RTS
 
   .not_hooker
-  #_0FF557: DEX
-  #_0FF558: BPL .next_ancilla
+  DEX
+  BPL .next_ancilla
   PLX
   CLC
   RTS
@@ -240,7 +235,7 @@ Sprite_Chuchu_Move:
   JSL Sprite_BounceFromTileCollision
   JSL Sprite_PlayerCantPassThrough
 
-  LDA.w SprMiscB, X 
+  LDA.w SprMiscB, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
   dw BounceTowardPlayer
@@ -312,17 +307,16 @@ Sprite_HelmetChuchu_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -339,14 +333,10 @@ Sprite_HelmetChuchu_Draw:
   INY
   LDA .properties, X : ORA $08 : STA ($90), Y
 
-  PHY 
-      
+  PHY
   TYA : LSR #2 : TAY
-      
   LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
