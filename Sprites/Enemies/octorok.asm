@@ -37,17 +37,19 @@
 Sprite_Octorok_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_Octorok_Draw ; Call the draw code
+  JSR Sprite_Octorok_Draw
   JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Octorok_Main ; Call the main sprite code
-
+  JSL Sprite_DrawRippleIfInWater
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    LDA.w SprSubtype, X : BEQ +
+      JSR Sprite_WaterOctorok_Main
+      JMP ++
+    +
+    JSR Sprite_Octorok_Main
+    ++
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -55,9 +57,14 @@ Sprite_Octorok_Long:
 Sprite_Octorok_Prep:
 {
   PHB : PHK : PLB
-
-  ; TODO Check if the sprite is placed in water
-
+  ; TILETYPE 08
+  LDA.l $7FF9C2,X : CMP.b #$08 : BEQ .water_tile
+    ; TILETYPE 09
+    CMP.b #$09 : BNE .not_water_tile
+  .water_tile
+  LDA.b #$01 : STA.w SprSubtype, X
+  LDA.b #$04 : STA.w SprAction, X
+  .not_water_tile
   PLB
   RTL
 }
@@ -199,6 +206,55 @@ Octorock_ShootEmUp:
     RTS
   .single_shot
   JSR Octorok_ShootSingle
+  RTS
+}
+
+; =========================================================
+
+Sprite_WaterOctorok_Main:
+{
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
+
+  dw WaterOctorok_FaceDown
+  dw WaterOctorok_FaceUp
+  dw WaterOctorok_FaceLeft
+  dw WaterOctorok_FaceRight
+
+  WaterOctorok_FaceDown:
+  {
+    %PlayAnimation(0,1,10)
+    RTS
+  }
+
+  WaterOctorok_FaceUp:
+  {
+    %StartOnFrame(2)
+    %PlayAnimation(2,3,10)
+    RTS
+  }
+
+  WaterOctorok_FaceLeft:
+  {
+    %StartOnFrame(4)
+    %PlayAnimation(4,5,10)
+    RTS
+  }
+
+  WaterOctorok_FaceRight:
+  {
+    %StartOnFrame(6)
+    %PlayAnimation(6,7,10)
+    RTS
+  }
+}
+
+Sprite_WaterOctorok_Attack:
+{
+  JSL Sprite_IsBelowPlayer : TYA
+  CMP #$00 : BNE .is_below_player
+  ; TODO Setup Link detection and attack
+  .is_below_player
   RTS
 }
 
@@ -354,17 +410,16 @@ Sprite_Octorok_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -381,14 +436,10 @@ Sprite_Octorok_Draw:
   INY
   LDA .properties, X : ORA $08 : STA ($90), Y
 
-  PHY 
-      
+  PHY
   TYA : LSR #2 : TAY
-      
   LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -396,28 +447,28 @@ Sprite_Octorok_Draw:
   RTS
 
 
-; =========================================================
+  ; =========================================================
 
-.start_index
-db $00, $01, $02, $03, $04, $05, $06, $07
-.nbr_of_tiles
-db 0, 0, 0, 0, 0, 0, 0, 0
-.chr
-db $80
-db $80
-db $82
-db $82
-db $A0
-db $A2
-db $A0
-db $A2
-.properties
-db $2D
-db $6D
-db $2D
-db $6D
-db $2D
-db $2D
-db $6D
-db $6D
+  .start_index
+  db $00, $01, $02, $03, $04, $05, $06, $07
+  .nbr_of_tiles
+  db 0, 0, 0, 0, 0, 0, 0, 0
+  .chr
+  db $80
+  db $80
+  db $82
+  db $82
+  db $A0
+  db $A2
+  db $A0
+  db $A2
+  .properties
+  db $2D
+  db $6D
+  db $2D
+  db $6D
+  db $2D
+  db $2D
+  db $6D
+  db $6D
 }
