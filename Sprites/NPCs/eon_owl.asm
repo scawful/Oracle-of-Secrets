@@ -40,7 +40,7 @@ Sprite_EonOwl_Long:
      LDA.l $7EF37A : CMP.b #$77 : BNE .Despawn
         ; If the player has the Song of Soaring, despawn
         LDA.l $7EF34C : CMP.b #$03 : BCS .Despawn
-          LDA.b #$05 : STA.w SprSubtype, X
+          LDA.b #$01 : STA.w SprSubtype, X
           JSR Sprite_KaeporaGaebora_Draw
           JMP .HandleSprite
   .NotGaebora
@@ -65,6 +65,9 @@ Sprite_EonOwl_Long:
 Sprite_EonOwl_Prep:
 {
   PHB : PHK : PLB
+  LDA.b $8A : CMP.b #$0E : BNE .NotGaebora
+    LDA.b #$03 : STA.w SprAction, X
+  .NotGaebora
   LDA.w AreaIndex : CMP.b #$50 : BNE .not_intro
     ; If Map 0x50, don't spawn after meeting Maku Tree
     LDA.l OOSPROG : AND.b #$02 : BEQ .continue

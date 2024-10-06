@@ -60,10 +60,6 @@ Sprite_BeanVendor_Prep:
   LDA.w SprSubtype, X : STA.w SprAction, X
   CMP.b #$02 : BEQ .OldMan
 
-  LDA.b $8A : CMP.b #$0E : BNE .NotGaebora
-    LDA.b #$05 : STA.w SprAction, X
-  .NotGaebora
-
   LDA.b $8A : CMP.b #$00 : BEQ .RanchFlower
 
   .OldMan

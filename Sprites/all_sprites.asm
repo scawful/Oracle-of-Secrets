@@ -35,7 +35,7 @@ Sprite_Librarian = $F0 ; Subtype 2
 incsrc "Sprites/NPCs/mermaid.asm"
 print  "End of mermaid.asm                ", pc
 
-Sprite_Manhandla = $88 
+Sprite_Manhandla = $88
 incsrc "Sprites/Bosses/manhandla.asm"
 print  "End of manhandla.asm              ", pc
 
@@ -197,7 +197,7 @@ incsrc "Sprites/Bosses/wolfos.asm"
 print  "End of wolfos.asm                 ",  pc
 
 ; TODO: Change from digging game guy?
-Sprite_IceBlock = $D5 
+Sprite_IceBlock = $D5
 incsrc "Sprites/Objects/ice_block.asm"
 print  "End of ice_block.asm              ",  pc
 
@@ -410,7 +410,7 @@ LDA.b #$03 : STA.w $04C6
 org $05FF7D
   LDA.l $7EF34C
   CMP.b #$01
-  
+
 ; Raven Damage (LW/DW)
 org $068963
   db $81, $84
@@ -442,4 +442,3 @@ SpriteDraw_RunningBoy:
   #_05EA3D: dw   0,  -7 : db $2E, $40, $00, $02
   #_05EA45: dw   0,   1 : db $CE, $4E, $00, $02
 
-; =========================================================
