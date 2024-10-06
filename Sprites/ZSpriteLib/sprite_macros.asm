@@ -210,9 +210,17 @@ macro SetTimerF(length)
 endmacro
 
 macro NextAction()
-  INC $0D80, X 
+  INC $0D80, X
 endmacro
 
 macro GetTilePos(x, y)
   LDX.w #((<y>*$80)+(<x>*$02))
 endmacro
+
+macro SetupDistanceFromSprite()
+  LDA.w POSX : STA $02
+  LDA.w POSY : STA $03
+  LDA.w SprX, X : STA $04
+  LDA.w SprY, X : STA $05
+endmacro
+

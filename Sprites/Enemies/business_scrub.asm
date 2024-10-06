@@ -135,10 +135,7 @@ Sprite_DekuScrubEnemy_Main:
       INC.w SprAction, X
     .not_done
 
-    LDA.w POSX : STA $02
-    LDA.w POSY : STA $03
-    LDA.w SprX, X : STA $04
-    LDA.w SprY, X : STA $05
+    %SetupDistanceFromSprite()
     JSL GetDistance8bit_Long : CMP #$18 : BCS .not_too_close
       %GotoAction(0)
     .not_too_close
