@@ -1,5 +1,5 @@
 ; =========================================================
-; Deku Scrub Bro Enemy
+; Business Scrub
 
 !SPRID              = Sprite_BusinessScrub
 !NbrTiles           = 03  ; Number of tiles used in a frame
@@ -10,7 +10,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -29,20 +29,20 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-%Set_Sprite_Properties(Sprite_DekuScrubEnemy_Prep, Sprite_DekuScrubEnemy_Long);
+%Set_Sprite_Properties(Sprite_BusinessScrub_Prep, Sprite_BusinessScrub_Long);
 
-Sprite_DekuScrubEnemy_Long:
+Sprite_BusinessScrub_Long:
 {
   PHB : PHK : PLB
 
-  JSR Sprite_DekuScrubEnemy_Draw ; Call the draw code
+  JSR Sprite_BusinessScrub_Draw ; Call the draw code
   LDA.w SprSubtype, X : CMP #$01 : BNE .normal_scrub
     JSL Sprite_DrawShadow
   .normal_scrub
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
-  JSR Sprite_DekuScrubEnemy_Main ; Call the main sprite code
+  JSR Sprite_BusinessScrub_Main ; Call the main sprite code
 
   .SpriteIsNotActive
   PLB ; Get back the databank we stored previously
@@ -51,7 +51,7 @@ Sprite_DekuScrubEnemy_Long:
 
 ; =========================================================
 
-Sprite_DekuScrubEnemy_Prep:
+Sprite_BusinessScrub_Prep:
 {
   PHB : PHK : PLB
 
@@ -78,25 +78,25 @@ Sprite_DekuScrubEnemy_Prep:
 ; 8-9 - Dazed
 ; 10-12 - Pea Shooter Anim
 ; 13 - Hiding
-Sprite_DekuScrubEnemy_Main:
+Sprite_BusinessScrub_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
-  dw DekuScrubEnemy_Hiding
-  dw DekuScrubEnemy_Attack
-  dw DekuScrubEnemy_PostAttack
-  dw DekuScrubEnemy_Recoil
-  dw DekuScrubEnemy_Dazed
-  dw DekuScrubEnemy_Subdued
+  dw BusinessScrub_Hiding
+  dw BusinessScrub_Attack
+  dw BusinessScrub_PostAttack
+  dw BusinessScrub_Recoil
+  dw BusinessScrub_Dazed
+  dw BusinessScrub_Subdued
 
-  dw DekuScrubEnemy_PeaShot
-  dw DekuScrubEnemy_HidingDefeated
+  dw BusinessScrub_PeaShot
+  dw BusinessScrub_HidingDefeated
 
-  dw DekuScrubEnemy_CutsceneStart
+  dw BusinessScrub_CutsceneStart
 
   ; 0x00
-  DekuScrubEnemy_Hiding:
+  BusinessScrub_Hiding:
   {
     %StartOnFrame(13)
     %PlayAnimation(13,13,1)
@@ -107,10 +107,7 @@ Sprite_DekuScrubEnemy_Main:
     JSL Sprite_IsBelowPlayer : TYA
     CMP #$00 : BNE .is_below_player
         ; Check if the player is too close
-        LDA $22 : STA $02
-        LDA $20 : STA $03
-        LDA.w SprX, X : STA $04
-        LDA.w SprY, X : STA $05
+        %SetupDistanceFromSprite()
         JSL GetDistance8bit_Long : CMP.b #$24 : BCC .too_close
           ; The player is below the scrub, so it should pop up
           LDA #$20 : STA.w SprTimerA, X
@@ -121,7 +118,7 @@ Sprite_DekuScrubEnemy_Main:
   }
 
   ; 0x01
-  DekuScrubEnemy_Attack:
+  BusinessScrub_Attack:
   {
     %StartOnFrame(0)
     %PlayAnimation(0,2,8)
@@ -143,7 +140,7 @@ Sprite_DekuScrubEnemy_Main:
   }
 
   ; 0x02
-  DekuScrubEnemy_PostAttack:
+  BusinessScrub_PostAttack:
   {
     %StartOnFrame(0)
     %PlayAnimation(0,0,4)
@@ -158,7 +155,7 @@ Sprite_DekuScrubEnemy_Main:
   }
 
   ; 0x03
-  DekuScrubEnemy_Recoil:
+  BusinessScrub_Recoil:
   {
     %StartOnFrame(3)
     %PlayAnimation(3,6,6)
@@ -175,7 +172,7 @@ Sprite_DekuScrubEnemy_Main:
   }
 
   ; 0x04
-  DekuScrubEnemy_Dazed:
+  BusinessScrub_Dazed:
   {
     %StartOnFrame(8)
     %PlayAnimation(8,9,11)
@@ -191,7 +188,7 @@ Sprite_DekuScrubEnemy_Main:
   }
 
   ; 0x05
-  DekuScrubEnemy_Subdued:
+  BusinessScrub_Subdued:
   {
     %StartOnFrame(7)
     %PlayAnimation(7,7,1)
@@ -208,7 +205,7 @@ Sprite_DekuScrubEnemy_Main:
   }
 
   ; 0x06
-  DekuScrubEnemy_PeaShot:
+  BusinessScrub_PeaShot:
   {
     %StartOnFrame(10)
     %PlayAnimation(10,12,3)
@@ -228,7 +225,7 @@ Sprite_DekuScrubEnemy_Main:
     RTS
   }
 
-  DekuScrubEnemy_HidingDefeated:
+  BusinessScrub_HidingDefeated:
   {
     %StartOnFrame(13)
     %PlayAnimation(13,13,1)
@@ -239,7 +236,7 @@ Sprite_DekuScrubEnemy_Main:
     RTS
   }
 
-  DekuScrubEnemy_CutsceneStart:
+  BusinessScrub_CutsceneStart:
   {
     ; TODO: Add deku dream cutscene
     RTS
@@ -323,7 +320,7 @@ SpawnPeaShot:
   PHX
   ; Spawn Location
   REP #$20
-  LDA $0FD8 
+  LDA $0FD8
   SEP #$20
   STA.w SprX, Y : XBA : STA.w SprXH, Y
 
@@ -347,7 +344,7 @@ SpawnPeaShot:
 
 ; =========================================================
 
-Sprite_DekuScrubEnemy_Draw:
+Sprite_BusinessScrub_Draw:
 {
     JSL Sprite_PrepOamCoord
     JSL Sprite_OAM_AllocateDeferToPlayer
@@ -366,12 +363,12 @@ Sprite_DekuScrubEnemy_Draw:
 
     PHA ; Keep the value with animation index offset?
 
-    ASL A : TAX 
+    ASL A : TAX
 
     REP #$20
 
     LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-    AND.w #$0100 : STA $0E 
+    AND.w #$0100 : STA $0E
     INY
     LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
     CLC : ADC #$0010 : CMP.w #$0100
@@ -388,7 +385,7 @@ Sprite_DekuScrubEnemy_Draw:
     INY
     LDA .properties, X : STA ($90), Y
 
-    PHY 
+    PHY
     TYA : LSR #2 : TAY
     LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
     PLY : INY
