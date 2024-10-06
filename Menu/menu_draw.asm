@@ -340,7 +340,7 @@ DrawYItems:
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
     LDA.w $030F : BNE .spoof_ocarina
       LDA #$0001 ; Multi-songs not unlocked yet
-    .spoof_ocarina 
+    .spoof_ocarina
 
     STA.w ShortSpoof : LDA.w #ShortSpoof
     LDX.w #menu_offset(13,3)
@@ -362,8 +362,8 @@ DrawYItems:
 
   ; LDA.w #$7EF351
   LDA.l $7EF351 : AND.w #$00FF : CMP.w #$00 : BEQ .no_rods
-    LDA.w FishingOrPortalRod 
-    INC A 
+    LDA.w FishingOrPortalRod
+    INC A
     STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
     LDX.w #menu_offset(13,13)
     LDY.w #FishingRodGFX
@@ -426,7 +426,7 @@ Menu_DrawQuestItems:
   LDA.w #$7EF359
   LDX.w #menu_offset(14,2)
   LDY.w #SwordGFX
-  JSR DrawMenuItem 
+  JSR DrawMenuItem
 
   LDA.w #$7EF35A
   LDX.w #menu_offset(14,5)
@@ -611,30 +611,24 @@ CheckPalaceItemPossession:
   .mirror_shield
 
   LDA $7EF35A : CMP.b #$03 : BEQ .success
-  
   STZ $02
   STZ $03
-  
   RTS
 
   .red_mail
 
   LDA $7EF35B : CMP.b #$02 : BEQ .success
-  
   STZ $02
   STZ $03
-  
   RTS
 }
 
 ; *$6EF39-$6EF66 LOCAL
 Menu_DrawBigChestKey:
-{  
+{
   LDA $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .notInPalace
     LSR A : TAX
-    
     LDA $7EF364
-    
     .locateCompassFlag
 
     ASL A : DEX : BPL .locateCompassFlag
@@ -649,10 +643,8 @@ Menu_DrawBigChestKey:
       LDX.w #menu_offset(11, 5)
       LDY.w #BigChestKeyGFX
       JSR DrawMenuItem
-    
     .dontHaveCompass
   .notInPalace
-  
   RTS
 }
 
@@ -660,7 +652,7 @@ Menu_DrawBigChestKey:
 Menu_DrawSongMenu:
 {
   REP #$30
-  LDX.w #$FE ; $1700-17FF 
+  LDX.w #$FE ; $1700-17FF
 
   .loop
     LDA.w .magic_bag_tilemap, X
@@ -682,7 +674,6 @@ Menu_DrawSongMenu:
 
     DEX : DEX
   BPL .loop
-  
   RTS
 
   .magic_bag_tilemap
@@ -692,7 +683,7 @@ Menu_DrawSongMenu:
 Menu_DrawMagicBag:
 {
   REP #$30
-  LDX.w #$FE ; $1700-17FF 
+  LDX.w #$FE ; $1700-17FF
 
   .loop
     LDA.w .magic_bag_tilemap, X
@@ -714,7 +705,6 @@ Menu_DrawMagicBag:
 
     DEX : DEX
   BPL .loop
-  
   RTS
 
   .magic_bag_tilemap
@@ -724,7 +714,7 @@ Menu_DrawMagicBag:
 Menu_DrawRingBox:
 {
   REP #$30
-  LDX.w #$FE ; $1700-17FF 
+  LDX.w #$FE ; $1700-17FF
 
   .loop
     LDA.w .ring_box_tilemap, X

@@ -37,16 +37,12 @@
 Sprite_BeanVendor_Long:
 {
   PHB : PHK : PLB
-
   JSR Sprite_BeanVendor_Draw
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_BeanVendor_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_BeanVendor_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 ; =========================================================
