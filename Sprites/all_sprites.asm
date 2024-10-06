@@ -23,14 +23,13 @@ print  "End of mask_salesman.asm          ", pc
 
 Sprite_BeanVendor     = $07
 Sprite_VillageElder   = $07
-Sprite_KaeporaGaebora = $07
 incsrc "Sprites/NPCs/bean_vendor.asm"
 print  "End of bean_vendor.asm            ", pc
 
 incsrc "Sprites/Bosses/octoboss.asm"
 print  "End of octoboss.asm               ", pc
 
-Sprite_Mermaid   = $F0 
+Sprite_Mermaid   = $F0
 Sprite_Maple     = $F0 ; Subtype 1
 Sprite_Librarian = $F0 ; Subtype 2
 incsrc "Sprites/NPCs/mermaid.asm"
@@ -265,6 +264,7 @@ incsrc "Sprites/Objects/collectible.asm"
 print  "End of collectible.asm            ", pc
 
 Sprite_EonOwl   = $0A
+Sprite_KaeporaGaebora = $0A
 incsrc "Sprites/NPCs/eon_owl.asm"
 print "End of eon_owl.asm                ", pc
 
