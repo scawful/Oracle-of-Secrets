@@ -227,6 +227,7 @@ Sprite_WaterOctorok_Main:
   dw WaterOctorok_FaceUp
   dw WaterOctorok_FaceLeft
   dw WaterOctorok_FaceRight
+  dw WaterOctorok_FaceHidden
 
   WaterOctorok_FaceDown:
   {
@@ -254,6 +255,13 @@ Sprite_WaterOctorok_Main:
     %PlayAnimation(6,7,10)
     RTS
   }
+
+  WaterOctorok_FaceHidden:
+  {
+    %StartOnFrame(8)
+    %PlayAnimation(8,8,10)
+    RTS
+  }
 }
 
 Sprite_WaterOctorok_Attack:
@@ -279,8 +287,8 @@ Sprite_WaterOctorok_Attack:
     JSL GetDistance8bit_Long
     CMP.b #$40
     BCC .not_close_enough ; LD < 64
-        INC.w SprMiscG, X
-        %SetTimerA($10)
+      INC.w SprMiscG, X
+      %SetTimerA($10)
     .not_close_enough
     RTS
   }
@@ -292,8 +300,8 @@ Sprite_WaterOctorok_Attack:
        INC.w SprMiscG, X
        %SetTimerA($20)
        JSL Sprite_DirectionToFacePlayer
-       ; Set the Direction
-
+       ; LDA.w SprMiscC, X : AND.b #$03 : TAY
+       ; LDA.w Sprite_Octorok_Move_direction, Y : STA.w SprAction, X
      +
      RTS
    }
@@ -313,6 +321,7 @@ Sprite_WaterOctorok_Attack:
    WaterOctorok_Hiding:
    {
      LDA.w SprTimerA, X : BNE +
+       LDA.b #$04 : STA.w SprAction, X
        STZ.w SprMiscG, X
        %SetTimerA($40)
      +
@@ -328,7 +337,6 @@ Octorok_ShootSingle:
     PHA
     JSR Octorok_SpawnRock
     PLA
-
   .bide_time
   LSR A
   LSR A
@@ -391,43 +399,24 @@ Octorok_Shoot4Ways:
 Octorok_SpawnRock:
 {
   LDA.b #$07 : JSL SpriteSFX_QueueSFX2WithPan
-
   LDA.b #$0C : JSL Sprite_SpawnDynamically : BMI .fired_a_blank
-
     PHX
 
     LDA.w SprMiscC,X
     TAX
 
-    LDA.b $00
-    CLC
-    ADC.w .offset_x_low,X
-    STA.w $0D10,Y
-
-    LDA.b $01
-    ADC.w .offset_x_high,X
-    STA.w $0D30,Y
-
-    LDA.b $02
-    CLC
-    ADC.w .offset_y_low,X
-    STA.w $0D00,Y
-
-    LDA.b $03
-    ADC.w .offset_y_high,X
-    STA.w $0D20,Y
+    LDA.b $00 : CLC : ADC.w .offset_x_low,X : STA.w $0D10,Y
+    LDA.b $01 : ADC.w .offset_x_high,X : STA.w $0D30,Y
+    LDA.b $02 : CLC : ADC.w .offset_y_low,X : STA.w $0D00,Y
+    LDA.b $03 : ADC.w .offset_y_high,X : STA.w $0D20,Y
 
     LDA.w SprMiscC,Y
     TAX
 
-    LDA.w .rock_speed_x,X
-    STA.w $0D50,Y
-
-    LDA.w .rock_speed_y,X
-    STA.w $0D40,Y
+    LDA.w .rock_speed_x,X : STA.w $0D50,Y
+    LDA.w .rock_speed_y,X : STA.w $0D40,Y
 
     PLX
-
   .fired_a_blank
   RTS
 
@@ -487,7 +476,7 @@ Sprite_Octorok_Draw:
   STA $0E
   .on_screen_y
 
-  PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
+  PLX ; Pullback Animation Index Offset
   INY
   LDA .chr, X : STA ($90), Y
   INY
@@ -507,9 +496,9 @@ Sprite_Octorok_Draw:
   ; =========================================================
 
   .start_index
-  db $00, $01, $02, $03, $04, $05, $06, $07
+  db $00, $01, $02, $03, $04, $05, $06, $07, $08
   .nbr_of_tiles
-  db 0, 0, 0, 0, 0, 0, 0, 0
+  db 0, 0, 0, 0, 0, 0, 0, 0, 0
   .chr
   db $80
   db $80
@@ -519,6 +508,7 @@ Sprite_Octorok_Draw:
   db $A2
   db $A0
   db $A2
+  db $AA ; Water Octorok
   .properties
   db $2D
   db $6D
@@ -528,4 +518,5 @@ Sprite_Octorok_Draw:
   db $2D
   db $6D
   db $6D
+  db $3D ; Water Octorok
 }
