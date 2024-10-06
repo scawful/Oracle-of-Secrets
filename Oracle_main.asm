@@ -32,55 +32,6 @@
 ; Goron Mines 0x0E (Misery Mire)
 ; Dragon Ship 0x18 (Turtle Rock)
 
-; .fmp h.i.
-;  f - fortress of secrets
-;  m - master sword
-;  p - pendant quest
-;  h - hall of secrets
-;  i - intro over, maku tree
-OOSPROG         = $7EF3D6
-
-; Bitfield of less important progression
-; .fbh .zsu
-;   u - Uncle visited in secret passage; controls spawn (0: spawn | 1: gone)
-;   s - Priest visited in sanc after Zelda is kidnapped again
-;   z - Zelda brought to sanc
-;   h - Uncle has left Link's house; controls spawn (0: spawn | 1: gone)
-;   b - Book of Mudora obtained/mentioned; controls Aginah dialog
-;   f - Flipped by fortune tellers to decide which fortune set to give
-OOSPROG2       = $7EF3C6
-
-; .... ...m
-;   m - maku tree has met link (0: no | 1: yes)
-OOSPROG3       = $7EF3D4
-
-; .dgi zktm
-;   m - Mushroom Grotto
-;   t - Tail Palace
-;   k - Kalyxo Castle
-;   z - Zora Temple
-;   i - Glacia Estate
-;   g - Goron Mines
-;   d - Dragon Ship
-DREAMS         = $7EF410
-
-; Current Dream ID (0x00-0x07)
-CurrentDream   = $0426
-
-CurrentSong    = $030F
-
-; 01 - Fishing Rod
-; 02 - Portal Rod
-CUSTOMRODS     = $7EF351
-
-; Collectibles
-Bananas    = $7EF38B
-Pineapples = $7EF38D
-RockMeat   = $7EF38F
-Seashells  = $7EF391
-Honeycomb  = $7EF393
-DekuSticks = $7EF395
-
 ; =========================================================
 
 ; ZSCustomOverworld version
@@ -103,7 +54,6 @@ namespace Oracle
   print "Applying patches to Oracle of Secrets"
   print ""
 
-  incsrc "Util/ram.asm"
   incsrc "Util/functions.asm"
   incsrc "Core/music_macros.asm"
   incsrc "Core/symbols.asm"
