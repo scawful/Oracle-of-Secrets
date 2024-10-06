@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = $08 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 03  ; Number of tiles used in a frame
+!NbrTiles           = 05  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -38,13 +38,13 @@ Sprite_Octorok_Long:
 {
   PHB : PHK : PLB
   JSR Sprite_Octorok_Draw
-  JSL Sprite_DrawShadow
-  JSL Sprite_DrawRippleIfInWater
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     LDA.w SprSubtype, X : BEQ +
+      JSL Sprite_DrawWaterRipple
       JSR Sprite_WaterOctorok_Main
       JMP ++
     +
+    JSL Sprite_DrawShadow
     JSR Sprite_Octorok_Main
     ++
   .SpriteIsNotActive
@@ -57,14 +57,7 @@ Sprite_Octorok_Long:
 Sprite_Octorok_Prep:
 {
   PHB : PHK : PLB
-  ; TILETYPE 08
-  LDA.l $7FF9C2,X : CMP.b #$08 : BEQ .water_tile
-    ; TILETYPE 09
-    CMP.b #$09 : BNE .not_water_tile
-  .water_tile
-  LDA.b #$01 : STA.w SprSubtype, X
-  LDA.b #$04 : STA.w SprAction, X
-  .not_water_tile
+
   PLB
   RTL
 }
@@ -74,6 +67,17 @@ Sprite_Octorok_Prep:
 Sprite_Octorok_Main:
 {
   JSR Sprite_Octorok_Move
+
+  ; TILETYPE 08
+  LDA.l $7FF9C2,X : CMP.b #$08 : BEQ .water_tile
+    ; TILETYPE 09
+    CMP.b #$09 : BNE .not_water_tile
+  .water_tile
+    LDA.b #$01 : STA.w SprSubtype, X
+    STZ.w SprAction, X
+    STZ.w SprMiscG, X
+    RTS
+  .not_water_tile
 
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
@@ -119,7 +123,8 @@ Sprite_Octorok_Move:
   JSL Sprite_CheckDamageToPlayer
 
   ; Set the SprAction based on the direction
-  LDA.w SprMiscC, X : AND.b #$03 : TAY : LDA.w .direction, Y : STA.w SprAction, X
+  LDA.w SprMiscC, X : AND.b #$03 : TAY
+  LDA.w .direction, Y : STA.w SprAction, X
 
   LDA.w SprMiscF, X : AND.b #$01 : BNE .octorok_used_barrage
     LDA.w SprMiscC, X : AND.b #$02 : ASL A : STA.b $00
@@ -213,6 +218,8 @@ Octorock_ShootEmUp:
 
 Sprite_WaterOctorok_Main:
 {
+  JSR Sprite_WaterOctorok_Attack
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -251,11 +258,66 @@ Sprite_WaterOctorok_Main:
 
 Sprite_WaterOctorok_Attack:
 {
-  JSL Sprite_IsBelowPlayer : TYA
-  CMP #$00 : BNE .is_below_player
-  ; TODO Setup Link detection and attack
-  .is_below_player
-  RTS
+  JSL Sprite_DamageFlash_Long
+  JSL Sprite_CheckDamageToPlayer
+
+  LDA SprMiscG, X
+  JSL UseImplicitRegIndexedLocalJumpTable
+
+  dw WaterOctorok_Hidden
+  dw WaterOctorok_PoppingUp
+  dw WaterOctorok_Attacking
+  dw WaterOctorok_Hiding
+
+  WaterOctorok_Hidden:
+  {
+    LDA.w SprTimerA, X : BEQ +
+      RTS
+    +
+
+    %SetupDistanceFromSprite()
+    JSL GetDistance8bit_Long
+    CMP.b #$40
+    BCC .not_close_enough ; LD < 64
+        INC.w SprMiscG, X
+        %SetTimerA($10)
+    .not_close_enough
+    RTS
+  }
+
+   WaterOctorok_PoppingUp:
+   {
+     JSL Sprite_CheckDamageFromPlayer
+     LDA.w SprTimerA, X : BNE +
+       INC.w SprMiscG, X
+       %SetTimerA($20)
+       JSL Sprite_DirectionToFacePlayer
+       ; Set the Direction
+
+     +
+     RTS
+   }
+
+   WaterOctorok_Attacking:
+   {
+     JSL Sprite_CheckDamageFromPlayer
+     LDA.w SprTimerA, X : BNE +
+       INC.w SprMiscG, X
+       %SetTimerA($10)
+       RTS
+     +
+     JSR Octorok_ShootSingle
+     RTS
+   }
+
+   WaterOctorok_Hiding:
+   {
+     LDA.w SprTimerA, X : BNE +
+       STZ.w SprMiscG, X
+       %SetTimerA($40)
+     +
+     RTS
+   }
 }
 
 ; =========================================================
@@ -292,23 +354,18 @@ Octorok_Shoot4Ways:
 {
   LDA.w SprTimerA,X
   PHA
-
   CMP.b #$80 : BCS .animate
-
-  AND.b #$0F : BNE .delay_turn
+    AND.b #$0F : BNE .delay_turn
     PHA
 
     LDY.w SprMiscC,X
     LDA.w .next_direction,Y : STA.w SprMiscC,X
 
     PLA
-  .delay_turn
-  CMP.b #$08
-  BNE .animate
-
-  JSR Octorok_SpawnRock
-
-.animate
+    .delay_turn
+    CMP.b #$08 : BNE .animate
+      JSR Octorok_SpawnRock
+  .animate
   PLA
   LSR A
   LSR A
@@ -320,13 +377,13 @@ Octorok_Shoot4Ways:
 
   RTS
 
-.next_direction
-  db $02, $03, $01, $00
+  .next_direction
+    db $02, $03, $01, $00
 
-.mouth_anim_step
-  db $02, $02, $02, $02
-  db $02, $02, $02, $02
-  db $01, $00
+  .mouth_anim_step
+    db $02, $02, $02, $02
+    db $02, $02, $02, $02
+    db $01, $00
 }
 
 ; =========================================================
