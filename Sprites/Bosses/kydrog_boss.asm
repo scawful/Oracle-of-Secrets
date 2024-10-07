@@ -1,13 +1,5 @@
 ; =========================================================
 ;  Kydrog Boss
-
-; =========================================================
-;  RAM Addresses
-
-!ConsecutiveHits = $AC             ;0x01
-!KydrogPhase     = $7A             ;0x01
-!WalkSpeed       = 10              ;0x01
-
 ; =========================================================
 
 !SPRID              = Sprite_KydrogBoss
@@ -19,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this KydrogBoss (can be 0 to 7)
 !Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -40,24 +32,21 @@
 
 %Set_Sprite_Properties(Sprite_KydrogBoss_Prep, Sprite_KydrogBoss_Long)
 
-; =========================================================
+!ConsecutiveHits    = $AC ; 0x01
+!KydrogPhase        = $7A ; 0x01
+!WalkSpeed          = 10  ; 0x01
 
 Sprite_KydrogBoss_Long:
 {
   PHB : PHK : PLB
-
   JSR Sprite_KydrogBoss_Draw ; Call the draw code
   JSR Sprite_CheckIfFrozen
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_KydrogBoss_CheckIfDead ; Check if sprite is dead
-  JSR Sprite_KydrogBoss_Main ; Call the main sprite code
-
-.SpriteIsNotActive
-  
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_KydrogBoss_CheckIfDead
+    JSR Sprite_KydrogBoss_Main
+  .SpriteIsNotActive
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -71,7 +60,7 @@ Sprite_KydrogBoss_CheckIfDead:
     .health_not_negative
 
     LDA $0E50, X : BNE .not_dead
-      PHX 
+      PHX
       LDA.b #$04 : STA $0DD0, X ;kill sprite boss style
       LDA.b #$09 : STA.w SprAction, X ;go to KydrogBoss_Death stage
       STZ.w $0D90,X
@@ -85,17 +74,16 @@ Sprite_KydrogBoss_CheckIfDead:
 ; =========================================================
 
 Sprite_KydrogBoss_Prep:
-{  
+{
   PHB : PHK : PLB
-    
   LDA #$00 : STA !KydrogPhase
 
   LDA.b #$A0 : STA $0E50, X ; health
   LDA.b #$80 : STA $0CAA, X
 
-  LDA.b #$03 : STA $0F60, X ; hitbox settings 
-  LDA.b #$07 : STA.w SprBump, X ; bump damage type 
-  LDA $0E60, X : AND.b #$BF : STA $0E60, X ; Not invincible 
+  LDA.b #$03 : STA $0F60, X ; hitbox settings
+  LDA.b #$07 : STA.w SprBump, X ; bump damage type
+  LDA $0E60, X : AND.b #$BF : STA $0E60, X ; Not invincible
 
   JSR KydrogBoss_Set_Damage ; Set the damage table
 
@@ -137,7 +125,7 @@ macro RandomStalfosOffspring()
     PHX : JSR Sprite_Offspring_SpawnHead : PLX
   ++
   .too_many_stalfos
-endmacro 
+endmacro
 
 macro BounceBasedOnPhase()
   LDA !KydrogPhase : CMP #$00 : BEQ .phase_one
@@ -171,33 +159,31 @@ Sprite_KydrogBoss_Main:
   KydrogBoss_Init:
   {
     %StartOnFrame(15)
-    %PlayAnimation(15, 16, 8) ; Arms Crossed Animation 
-
+    %PlayAnimation(15, 16, 8) ; Arms Crossed Animation
     ; JSR SetupMovieEffect
     ; JSR MovieEffect
     ; LDX.b #$00
-    
     LDA.w SprTimerD, X : BNE +
-    %GotoAction(1) ; Goto KydrogBoss_WalkState
-  +
+      %GotoAction(1) ; Goto KydrogBoss_WalkState
+    +
     RTS
   }
 
   ; -------------------------------------------------------
 
   KydrogBoss_WalkState:
-  {    
-      JSR CheckForNextPhase
-      LDA $0DA0 : BEQ .not_flashing
-        LDA.b #$20 : STA.w SprTimerD, X
-        %GotoAction(6) ; Goto KydrogBoss_TakeDamage
-        RTS
+  {
+    JSR CheckForNextPhase
+    LDA $0DA0 : BEQ .not_flashing
+      LDA.b #$20 : STA.w SprTimerD, X
+      %GotoAction(6) ; Goto KydrogBoss_TakeDamage
+      RTS
     .not_flashing
 
-      JSL GetRandomInt : AND.b #$0F : BNE .not_taunting
-        LDA.b #$10 : STA.w SprTimerD, X
-        %GotoAction(8) ; Goto KydrogBoss_TauntPlayer
-        RTS
+    JSL GetRandomInt : AND.b #$0F : BNE .not_taunting
+      LDA.b #$10 : STA.w SprTimerD, X
+      %GotoAction(8) ; Goto KydrogBoss_TauntPlayer
+      RTS
     .not_taunting
 
     ;   JSL GetRandomInt : AND.b #$0F : BNE .not_absconding
@@ -206,28 +192,24 @@ Sprite_KydrogBoss_Main:
     ;     RTS
     ; .not_absconding
 
-      LDA #$50 : STA $09, X
-      JSL Sprite_DirectionToFacePlayer 
-      TYA : CMP.b #$02 : BCC .WalkRight
-    
+    LDA #$50 : STA $09, X
+    JSL Sprite_DirectionToFacePlayer
+    TYA : CMP.b #$02 : BCC .WalkRight
     .WalkForward
       %StopIfTooClose()
       JSL Sprite_IsBelowPlayer ; Check if sprite is below player
       TYA : BNE .WalkBackwards ; If 1, go to KydrogBoss_WalkBackwards
-      
       %GotoAction(2) ; Goto KydrogBoss_WalkForward
       RTS
-
     .WalkBackwards
       %GotoAction(5) ; Goto KydrogBoss_WalkBackwards
       RTS
 
     .WalkRight
       %StopIfTooClose()
-      JSL Sprite_IsToRightOfPlayer : TYA : BNE .WalkLeft 
+      JSL Sprite_IsToRightOfPlayer : TYA : BNE .WalkLeft
       %GotoAction(4)
       RTS
-    
     .WalkLeft
       %GotoAction(3) ; Goto KydrogBoss_WalkLeft
       RTS
@@ -239,10 +221,10 @@ Sprite_KydrogBoss_Main:
   {
     %PlayAnimation(0, 2, 8)
 
-    PHX 
+    PHX
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
-    PLX 
+    PLX
 
     JSL Sprite_DamageFlash_Long
     %BounceBasedOnPhase()
@@ -259,10 +241,10 @@ Sprite_KydrogBoss_Main:
   {
     %PlayAnimation(3, 5, 8)
 
-    PHX 
+    PHX
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
-    PLX 
+    PLX
 
     JSL Sprite_DamageFlash_Long
     %BounceBasedOnPhase()
@@ -279,10 +261,10 @@ Sprite_KydrogBoss_Main:
   {
     %PlayAnimation(6, 8, 8)
 
-    PHX 
+    PHX
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
-    PLX 
+    PLX
 
     JSL Sprite_DamageFlash_Long
     %BounceBasedOnPhase()
@@ -299,10 +281,10 @@ Sprite_KydrogBoss_Main:
   {
     %PlayAnimation(9, 11, 8)
 
-    PHX 
+    PHX
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
-    PLX 
+    PLX
 
     JSL Sprite_DamageFlash_Long
     %BounceBasedOnPhase()
@@ -333,15 +315,12 @@ Sprite_KydrogBoss_Main:
     PHX
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
-    PLX 
+    PLX
 
     JSL Sprite_DamageFlash_Long
-    
     %RandomStalfosOffspring()
-    
     LDA.w SprTimerD, X : BNE +
-    %GotoAction(1)
-
+      %GotoAction(1)
     +
 
     JSL GetRandomInt : AND.b #$1F : BNE ++
@@ -355,21 +334,20 @@ Sprite_KydrogBoss_Main:
 
   ; -------------------------------------------------------
 
-  KydrogBoss_TauntPlayer: ;0x07 
+  KydrogBoss_TauntPlayer: ;0x07
   {
     %StartOnFrame(15)
-    %PlayAnimation(15, 16, 8) ; Arms Crossed Animation 
-    
+    %PlayAnimation(15, 16, 8) ; Arms Crossed Animation
     PHX
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
-    PLX 
+    PLX
 
     JSL Sprite_DamageFlash_Long
     LDA.w SprTimerD, X : BNE .continue_timer
-    LDA.b #$20 : STA.w SprTimerD, X ; set timer E to 0x20
-    %GotoAction(8)
-  .continue_timer
+      LDA.b #$20 : STA.w SprTimerD, X ; set timer E to 0x20
+      %GotoAction(8)
+    .continue_timer
     RTS
   }
 
@@ -379,21 +357,19 @@ Sprite_KydrogBoss_Main:
   {
     %StartOnFrame(17)
     %PlayAnimation(17, 17, 10)
-    
     PHX
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
-    PLX 
+    PLX
 
     JSL Sprite_DamageFlash_Long
 
     %RandomStalfosOffspring()
 
     LDA.w SprTimerD, X : BNE +
-    JSR Kydrog_ThrowBoneAtPlayer
-
-    %GotoAction(1)
-  +
+      JSR Kydrog_ThrowBoneAtPlayer
+      %GotoAction(1)
+    +
     RTS
   }
 
@@ -420,8 +396,8 @@ Sprite_KydrogBoss_Main:
 
     %RandomStalfosOffspring()
 
-    ; Increase the Z for a bit until he is off screen 
-    LDA.w SprHeight, X : CLC : ADC.b #$04 
+    ; Increase the Z for a bit until he is off screen
+    LDA.w SprHeight, X : CLC : ADC.b #$04
     STA.w SprHeight, X : CMP.b #$B0 : BCC .not_off_screen
       LDA #$40 : STA.w SprTimerD, X
       %GotoAction($0B)
@@ -432,29 +408,28 @@ Sprite_KydrogBoss_Main:
 
   KydrogBoss_Descend:
   {
-      %StartOnFrame(17)
-      %PlayAnimation(17, 17, 10)
+    %StartOnFrame(17)
+    %PlayAnimation(17, 17, 10)
 
-      %RandomStalfosOffspring()
+    %RandomStalfosOffspring()
 
-      LDA.w SprTimerD, X : BEQ .no_track_player
+    LDA.w SprTimerD, X : BEQ .no_track_player
 
-      LDA $20 : STA.w SprY, X
-      LDA $22 : STA.w SprX, X
-      ; PHX : JSL $01F3EC : PLX ; Light Torch
+    LDA $20 : STA.w SprY, X
+    LDA $22 : STA.w SprX, X
+    ; PHX : JSL $01F3EC : PLX ; Light Torch
 
-      LDA.w SprTimerD, X : BNE .wait_a_second
+    LDA.w SprTimerD, X : BNE .wait_a_second
     .no_track_player
 
-      ; Decrease the Z for a bit until he is at level with Link
-      LDA.w SprHeight, X : SEC : SBC.b #$04 : STA.w SprHeight, X 
-      CMP.b #$04 : BCS .not_off_screen
-        %GotoAction(1)
+    ; Decrease the Z for a bit until he is at level with Link
+    LDA.w SprHeight, X : SEC : SBC.b #$04 : STA.w SprHeight, X
+    CMP.b #$04 : BCS .not_off_screen
+      %GotoAction(1)
     .not_off_screen
 
     .wait_a_second
-
-      RTS
+    RTS
   }
 
   KydrogBoss_Abscond: ; 0x0C
@@ -463,23 +438,21 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(13, 13, 10)
 
     JSL GetRandomInt : AND.b #$3F : BNE +
-    LDA.b $0D50 : CLC : ADC.b #$08 : STA $0D50
-    LDA.b $0D70 : CLC : ADC.b #$02 : STA $0D70
-    LDA.w SprTimerD, X : BNE .not_done
-    %GotoAction(1)
-    RTS
-  +
+      LDA.b $0D50 : CLC : ADC.b #$08 : STA $0D50
+      LDA.b $0D70 : CLC : ADC.b #$02 : STA $0D70
+      LDA.w SprTimerD, X : BNE .not_done
+        %GotoAction(1)
+        RTS
+    +
     LDA.b $0D40 : CLC : ADC.b #$08 : STA $0D40
     LDA.b $0D60 : CLC : ADC.b #$02 : STA $0D60
     LDA.w SprTimerD, X : BNE .not_done
     %GotoAction(1)
 
-  .not_done
+    .not_done
     JSL Sprite_Move
     RTS
-
   }
-
 }
 
 ; =========================================================
@@ -487,10 +460,10 @@ Sprite_KydrogBoss_Main:
 CheckForNextPhase:
 {
   LDA !KydrogPhase : CMP.b #$00 : BEQ .phase_one
-  CMP.b #$01 : BEQ .phase_two
-  CMP.b #$02 : BEQ .phase_three
-  CMP.b #$03 : BEQ .phase_four
-  RTS
+                     CMP.b #$01 : BEQ .phase_two
+                     CMP.b #$02 : BEQ .phase_three
+                     CMP.b #$03 : BEQ .phase_four
+                     RTS
 
   .phase_one
     ; Check for phase two
@@ -519,8 +492,7 @@ CheckForNextPhase:
     LDA #$03 : STA.w SprAction, X
     STA !KydrogPhase
   .return
-    RTS
-  
+  RTS
 }
 
 ; =========================================================
@@ -558,17 +530,14 @@ KydrogBoss_Set_Damage:
   PHX
   LDX.b #$00
 
-.loop
-
-  LDA .damageProperties, X : STA $7F6CB0, X 
-
+  .loop
+  LDA .damageProperties, X : STA $7F6CB0, X
   INX : CPX.b #$10 : BNE .loop
 
   PLX
-
   RTS
 
-.damageProperties
+  .damageProperties
   db $00, $01, $01, $01, $01, $01, $01, $00, $04, $01, $00, $01, $03, $01, $00, $01
       ;BA   D1   D2   D3   D4   D5   AR   HS   BM   SA   PD   FR   IR   BB   ET   QU
 }
@@ -580,7 +549,7 @@ Sprite_Offspring_SpawnHead:
   JSL GetRandomInt : AND.b #$3F : BNE .normal_head
     LDA.b #$02 : BRA .alt_entry
   .normal_head
-  LDA.b #$7C 
+  LDA.b #$7C
   .alt_entry
   BRA Sprite_Offspring_Spawn_alt_entry
   RTS
@@ -593,14 +562,12 @@ Sprite_Offspring_Spawn:
     LDA.b #$85 : BRA .alt_entry
   .normal_stalfos
   ; Spawn the stalfos offspring
-  LDA.b #$A7 
+  LDA.b #$A7
   .alt_entry
   JSL Sprite_SpawnDynamically : BMI .return ;89
 
   LDA.b #$02 : STA.w SprSubtype, Y
-      
   PHX
-      
   REP #$20
   LDA $0FD8 : CLC : ADC.w #$000C
   SEP #$20
@@ -615,9 +582,7 @@ Sprite_Offspring_Spawn:
 
   STZ $0D60, X : STZ $0D70, X
   LDA.b #$05 : STA.w SprBump, X
-      
   PLX
-      
   .return
 
   RTS
@@ -626,40 +591,24 @@ Sprite_Offspring_Spawn:
 Kydrog_ThrowBoneAtPlayer:
 {
   LDA.b #$A7 : JSL Sprite_SpawnDynamically : BMI .spawn_failed
-  
-  LDA.b #$01 : STA $0D90, Y ; Sprite state "falling into a pit"
-  
-  JSL Sprite_SetSpawnedCoords
-  
-  PHX
-  
-  TYX
+    LDA.b #$01 : STA $0D90, Y ; Sprite state "falling into a pit"
+    JSL Sprite_SetSpawnedCoords
+    PHX
+    TYX
 
-  LDA.w SprX, X : CLC : ADC.b #$10 : STA.w SprX, X
-  LDA.w SprY, X : SEC : SBC.b #$04 : STA.w SprY, X
-  
-  LDA.b #$20 : JSL Sprite_ApplySpeedTowardsPlayer
-  
-  LDA.b #$21 : STA $0E40, X : STA $0BA0, X
-  
-  LDA $0E60, X : ORA.b #$40 : STA $0E60, X
-  
-  LDA.b #$48 : STA $0CAA, X
-  
-  LDA.b #$10 : STA.w SprTimerC, X
-  
-  LDA.b #$14 : STA $0F60, X
-  
-  LDA.b #$07 : STA $0F50, X
-  
-  LDA.b #$20 : STA.w SprBump, X
-  
-  PLX
-  
-  LDA.b #$02 : JSL Sound_SetSfx2PanLong
-
-.spawn_failed
-
+    LDA.w SprX, X : CLC : ADC.b #$10 : STA.w SprX, X
+    LDA.w SprY, X : SEC : SBC.b #$04 : STA.w SprY, X
+    LDA.b #$20 : JSL Sprite_ApplySpeedTowardsPlayer
+    LDA.b #$21 : STA $0E40, X : STA $0BA0, X
+    LDA $0E60, X : ORA.b #$40 : STA $0E60, X
+    LDA.b #$48 : STA $0CAA, X
+    LDA.b #$10 : STA.w SprTimerC, X
+    LDA.b #$14 : STA $0F60, X
+    LDA.b #$07 : STA $0F50, X
+    LDA.b #$20 : STA.w SprBump, X
+    PLX
+    LDA.b #$02 : JSL Sound_SetSfx2PanLong
+  .spawn_failed
   RTS
 }
 
@@ -667,14 +616,13 @@ Kydrog_ThrowBoneAtPlayer:
 ; $00 = your stalfos skull count
 GetNumberSpawnStalfos:
 {
-    PHX
-    STZ.w $00
+  PHX
+  STZ.w $00
 
-    LDX.b #$10
-    
+  LDX.b #$10
+
   .x_loop
     DEX
-    
     LDY.b #$04
     .y_loop
       DEY
@@ -700,12 +648,12 @@ GetNumberSpawnStalfos:
 ; =========================================================
 
 Sprite_KydrogBoss_Draw:
-{  
+{
     JSL Sprite_PrepOamCoord
     JSL Sprite_OAM_AllocateDeferToPlayer
     ; JSL OAM_AllocateFromRegionE
 
-    LDA $0DC0, X : CLC : ADC $0D90, X : ASL : TAY ; Animation Frame 
+    LDA $0DC0, X : CLC : ADC $0D90, X : ASL : TAY ; Animation Frame
     REP #$20
     LDA .start_index, Y : STA $06 ; Needs to be 16 bit ; Y = 00, 02, 04, 06
     SEP #$20
@@ -713,7 +661,6 @@ Sprite_KydrogBoss_Draw:
     LDA.w SprFlash, X : STA $08
 
     PHX ; Store Sprite ID
-    
     REP #$20
     LDA .nbr_of_tiles, Y ;amount of tiles -1 ; doesn't need to be 16 bit ;Y = 00, 02, 04, 06
     REP #$30
@@ -723,8 +670,8 @@ Sprite_KydrogBoss_Draw:
   .nextTile
     REP #$30
 
-    PHX ; Save current tile index 
-    TXA : CLC : ADC $06 ; Add Animation Index Offset 
+    PHX ; Save current tile index
+    TXA : CLC : ADC $06 ; Add Animation Index Offset
 
     PHA ; Keep the value with animation index offset
 
@@ -732,8 +679,8 @@ Sprite_KydrogBoss_Draw:
 
     REP #$30 ; X and Y position must be 16 bit
 
-    LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y 
-    AND.w #$0100 : STA $0E 
+    LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+    AND.w #$0100 : STA $0E
     INY
     LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
     CLC : ADC #$0010 : CMP.w #$0100
@@ -750,18 +697,15 @@ Sprite_KydrogBoss_Draw:
     LDA .chr, X : STA ($90), Y
     INY
 
-    ; Set palette flash modifier 
+    ; Set palette flash modifier
     LDA .properties, X : ORA $08 : STA ($90), Y
 
-    REP #$30 
-    PHY 
-        
+    REP #$30
+    PHY
     TYA : LSR #2 : TAY ; divide Y by 4
     SEP #$20 ;set A back to 8bit but not X and Y
     LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-        
     PLY : INY
-        
     PLX : DEX : BPL .nextTile
 
     SEP #$30
@@ -770,103 +714,103 @@ Sprite_KydrogBoss_Draw:
 
     RTS
 
-.start_index
-  dw $00, $0B, $15, $1F, $27, $2D, $35, $3D, $43, $4C, $57, $66, $71, $7A, $87, $91, $99, $A1
-.nbr_of_tiles
-  dw 10, 9, 9, 7, 5, 7, 7, 5, 8, 10, 14, 10, 8, 12, 9, 7, 7, 6
-.x_offsets
-  dw -8, 8, 8, 0, 8, 0, -8, -8, 16, 16, -8
-  dw -8, 8, -8, 0, 16, 16, -8, 16, 0, 8
-  dw -8, 8, 0, 16, -8, -8, -8, 16, 0, 8
-  dw 0, 0, 16, 8, 0, 16, 16, 16
-  dw 16, 0, 0, 16, 16, 0
-  dw 0, 16, 8, 16, 0, 16, 12, 0
-  dw 4, -4, 12, 4, -4, -4, 4, -4
-  dw 4, -12, 4, -12, -4, 16
-  dw 4, -4, 4, -4, -4, 12, 12, -4, 12
-  dw 0, 8, 8, 0, 0, 8, -8, -8, -8, 16, 16
-  dw 0, 8, 8, 0, 8, 0, 0, 8, 8, -8, -8, -8, 16, 16, 16
-  dw 0, 8, 8, 0, 0, 8, 16, 16, 16, -8, -8
-  dw -8, -8, 8, 16, 8, 8, 16, 0, 8
-  dw 0, -8, 8, 8, -8, -8, 0, 8, 0, 8, 16, 16, 16
-  dw -8, 16, 8, 8, 16, 0, 16, -8, 0, 8
-  dw -8, 8, -8, -8, 8, 8, -8, 16
-  dw -8, 8, 0, 8, -8, 8, -8, 16
-  dw -12, 4, 12, -4, 0, 16, 8
-.y_offsets
-  dw -20, -20, -4, 4, 4, 12, 4, 12, 4, 12, -4
-  dw -19, -19, 4, 4, 4, 12, -4, -4, -3, -3
-  dw -20, -20, 4, 4, 4, 12, -4, -4, -4, -4
-  dw -20, -4, -4, -4, 4, 4, 12, -20
-  dw -20, -4, 4, -4, 4, -20
-  dw -20, -20, -4, -4, 4, 4, 12, -4
-  dw -20, -20, -4, -4, -4, -12, 4, 4
-  dw -20, -20, -4, -4, 4, 0
-  dw -20, -20, -4, -4, 4, 0, 8, -12, -4
-  dw -20, -20, -12, 0, -4, -4, -8, 0, 8, 0, -8
-  dw -20, -20, -12, -4, -4, 0, 8, 0, 8, 0, 8, -8, 0, 8, -8
-  dw -20, -20, -12, 0, -4, -4, -8, 0, 8, 0, -8
-  dw -24, -8, -24, -8, -8, 0, 0, 8, 8
-  dw -8, -24, -24, -8, -8, 0, 8, 8, 0, 0, 0, 8, -8
-  dw -16, -16, -16, -8, -8, 0, 0, 0, -24, -24
-  dw 0, 0, -16, -24, -16, -24, -16, -16
-  dw 0, 0, -8, -8, -24, -24, -8, -8
-  dw -4, -4, -20, -20, 12, 12, 12
-.chr
-  db $87, $87, $A7, $80, $81, $A4, $93, $A3, $96, $A6, $A7
-  db $87, $87, $B3, $80, $92, $A2, $83, $83, $A8, $A8
-  db $87, $87, $80, $B2, $A1, $B1, $83, $83, $A8, $A8
-  db $C9, $E9, $EB, $EA, $C0, $C2, $D2, $CB
-  db $CE, $EC, $C3, $EE, $C5, $CC
-  db $C9, $CB, $FA, $FB, $C6, $C8, $D8, $E9
-  db $C9, $CB, $E9, $EA, $EB, $DB, $E1, $E0
-  db $CC, $CE, $EC, $EE, $E3, $E5
-  db $C9, $CB, $FA, $FB, $E6, $E8, $F8, $DE, $E9
-  db $89, $89, $99, $8E, $A9, $A9, $82, $92, $A2, $B3, $83
-  db $89, $89, $99, $A9, $A9, $8D, $9D, $8D, $9D, $8C, $9C, $83, $A1, $B1, $82
-  db $89, $89, $99, $8E, $A9, $A9, $83, $93, $A3, $B2, $83
-  db $45, $65, $45, $65, $66, $77, $75, $BD, $BE
-  db $6F, $4E, $4E, $6F, $47, $57, $7C, $7D, $AA, $AB, $6E, $7E, $83
-  db $84, $84, $85, $95, $5D, $AA, $6D, $6D, $8A, $8A
-  db $AC, $AE, $50, $40, $50, $40, $52, $52
-  db $AC, $AE, $63, $63, $42, $42, $60, $60
-  db $68, $6A, $4B, $49, $70, $72, $71
-.properties
-  db $39, $79, $79, $39, $39, $39, $39, $39, $39, $39, $39
-  db $39, $79, $39, $39, $39, $39, $39, $79, $39, $79
-  db $39, $79, $79, $39, $39, $39, $39, $79, $39, $79
-  db $39, $39, $39, $39, $39, $39, $39, $39
-  db $39, $39, $39, $39, $39, $39
-  db $39, $39, $39, $39, $39, $39, $39, $39
-  db $79, $79, $79, $79, $79, $79, $39, $39
-  db $79, $79, $79, $79, $39, $39
-  db $79, $79, $79, $79, $39, $39, $39, $79, $79
-  db $39, $79, $79, $39, $39, $79, $79, $79, $79, $79, $79
-  db $39, $79, $79, $39, $79, $39, $39, $79, $79, $39, $39, $39, $79, $79, $39
-  db $39, $79, $79, $79, $39, $79, $79, $79, $79, $79, $39
-  db $39, $39, $79, $79, $79, $39, $79, $39, $39
-  db $39, $39, $79, $79, $39, $39, $39, $39, $39, $39, $39, $39, $79
-  db $39, $79, $79, $79, $39, $39, $39, $79, $39, $79
-  db $39, $39, $39, $39, $79, $79, $39, $79
-  db $39, $39, $39, $79, $39, $79, $39, $79
-  db $39, $39, $39, $39, $39, $39, $39
-.sizes
-  db $02, $02, $02, $00, $00, $02, $00, $00, $00, $00, $02
-  db $02, $02, $00, $02, $00, $00, $00, $00, $00, $00
-  db $02, $02, $02, $00, $00, $00, $00, $00, $00, $00
-  db $02, $00, $00, $00, $02, $00, $00, $00
-  db $02, $02, $02, $02, $00, $02
-  db $02, $00, $00, $00, $02, $00, $00, $00
-  db $02, $00, $00, $00, $00, $00, $02, $02
-  db $02, $02, $02, $02, $02, $00
-  db $02, $00, $00, $00, $02, $00, $00, $00, $00
-  db $02, $00, $00, $02, $00, $00, $00, $00, $00, $00, $00
-  db $02, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-  db $02, $00, $00, $02, $00, $00, $00, $00, $00, $00, $00
-  db $02, $02, $02, $00, $00, $00, $00, $00, $00
-  db $00, $02, $02, $00, $02, $02, $00, $00, $00, $00, $00, $00, $00
-  db $02, $00, $00, $00, $00, $02, $00, $00, $00, $00
-  db $02, $02, $02, $02, $02, $02, $00, $00
-  db $02, $02, $02, $00, $02, $02, $00, $00
-  db $02, $02, $02, $02, $00, $00, $00
+  .start_index
+    dw $00, $0B, $15, $1F, $27, $2D, $35, $3D, $43, $4C, $57, $66, $71, $7A, $87, $91, $99, $A1
+  .nbr_of_tiles
+    dw 10, 9, 9, 7, 5, 7, 7, 5, 8, 10, 14, 10, 8, 12, 9, 7, 7, 6
+  .x_offsets
+    dw -8, 8, 8, 0, 8, 0, -8, -8, 16, 16, -8
+    dw -8, 8, -8, 0, 16, 16, -8, 16, 0, 8
+    dw -8, 8, 0, 16, -8, -8, -8, 16, 0, 8
+    dw 0, 0, 16, 8, 0, 16, 16, 16
+    dw 16, 0, 0, 16, 16, 0
+    dw 0, 16, 8, 16, 0, 16, 12, 0
+    dw 4, -4, 12, 4, -4, -4, 4, -4
+    dw 4, -12, 4, -12, -4, 16
+    dw 4, -4, 4, -4, -4, 12, 12, -4, 12
+    dw 0, 8, 8, 0, 0, 8, -8, -8, -8, 16, 16
+    dw 0, 8, 8, 0, 8, 0, 0, 8, 8, -8, -8, -8, 16, 16, 16
+    dw 0, 8, 8, 0, 0, 8, 16, 16, 16, -8, -8
+    dw -8, -8, 8, 16, 8, 8, 16, 0, 8
+    dw 0, -8, 8, 8, -8, -8, 0, 8, 0, 8, 16, 16, 16
+    dw -8, 16, 8, 8, 16, 0, 16, -8, 0, 8
+    dw -8, 8, -8, -8, 8, 8, -8, 16
+    dw -8, 8, 0, 8, -8, 8, -8, 16
+    dw -12, 4, 12, -4, 0, 16, 8
+  .y_offsets
+    dw -20, -20, -4, 4, 4, 12, 4, 12, 4, 12, -4
+    dw -19, -19, 4, 4, 4, 12, -4, -4, -3, -3
+    dw -20, -20, 4, 4, 4, 12, -4, -4, -4, -4
+    dw -20, -4, -4, -4, 4, 4, 12, -20
+    dw -20, -4, 4, -4, 4, -20
+    dw -20, -20, -4, -4, 4, 4, 12, -4
+    dw -20, -20, -4, -4, -4, -12, 4, 4
+    dw -20, -20, -4, -4, 4, 0
+    dw -20, -20, -4, -4, 4, 0, 8, -12, -4
+    dw -20, -20, -12, 0, -4, -4, -8, 0, 8, 0, -8
+    dw -20, -20, -12, -4, -4, 0, 8, 0, 8, 0, 8, -8, 0, 8, -8
+    dw -20, -20, -12, 0, -4, -4, -8, 0, 8, 0, -8
+    dw -24, -8, -24, -8, -8, 0, 0, 8, 8
+    dw -8, -24, -24, -8, -8, 0, 8, 8, 0, 0, 0, 8, -8
+    dw -16, -16, -16, -8, -8, 0, 0, 0, -24, -24
+    dw 0, 0, -16, -24, -16, -24, -16, -16
+    dw 0, 0, -8, -8, -24, -24, -8, -8
+    dw -4, -4, -20, -20, 12, 12, 12
+  .chr
+    db $87, $87, $A7, $80, $81, $A4, $93, $A3, $96, $A6, $A7
+    db $87, $87, $B3, $80, $92, $A2, $83, $83, $A8, $A8
+    db $87, $87, $80, $B2, $A1, $B1, $83, $83, $A8, $A8
+    db $C9, $E9, $EB, $EA, $C0, $C2, $D2, $CB
+    db $CE, $EC, $C3, $EE, $C5, $CC
+    db $C9, $CB, $FA, $FB, $C6, $C8, $D8, $E9
+    db $C9, $CB, $E9, $EA, $EB, $DB, $E1, $E0
+    db $CC, $CE, $EC, $EE, $E3, $E5
+    db $C9, $CB, $FA, $FB, $E6, $E8, $F8, $DE, $E9
+    db $89, $89, $99, $8E, $A9, $A9, $82, $92, $A2, $B3, $83
+    db $89, $89, $99, $A9, $A9, $8D, $9D, $8D, $9D, $8C, $9C, $83, $A1, $B1, $82
+    db $89, $89, $99, $8E, $A9, $A9, $83, $93, $A3, $B2, $83
+    db $45, $65, $45, $65, $66, $77, $75, $BD, $BE
+    db $6F, $4E, $4E, $6F, $47, $57, $7C, $7D, $AA, $AB, $6E, $7E, $83
+    db $84, $84, $85, $95, $5D, $AA, $6D, $6D, $8A, $8A
+    db $AC, $AE, $50, $40, $50, $40, $52, $52
+    db $AC, $AE, $63, $63, $42, $42, $60, $60
+    db $68, $6A, $4B, $49, $70, $72, $71
+  .properties
+    db $39, $79, $79, $39, $39, $39, $39, $39, $39, $39, $39
+    db $39, $79, $39, $39, $39, $39, $39, $79, $39, $79
+    db $39, $79, $79, $39, $39, $39, $39, $79, $39, $79
+    db $39, $39, $39, $39, $39, $39, $39, $39
+    db $39, $39, $39, $39, $39, $39
+    db $39, $39, $39, $39, $39, $39, $39, $39
+    db $79, $79, $79, $79, $79, $79, $39, $39
+    db $79, $79, $79, $79, $39, $39
+    db $79, $79, $79, $79, $39, $39, $39, $79, $79
+    db $39, $79, $79, $39, $39, $79, $79, $79, $79, $79, $79
+    db $39, $79, $79, $39, $79, $39, $39, $79, $79, $39, $39, $39, $79, $79, $39
+    db $39, $79, $79, $79, $39, $79, $79, $79, $79, $79, $39
+    db $39, $39, $79, $79, $79, $39, $79, $39, $39
+    db $39, $39, $79, $79, $39, $39, $39, $39, $39, $39, $39, $39, $79
+    db $39, $79, $79, $79, $39, $39, $39, $79, $39, $79
+    db $39, $39, $39, $39, $79, $79, $39, $79
+    db $39, $39, $39, $79, $39, $79, $39, $79
+    db $39, $39, $39, $39, $39, $39, $39
+  .sizes
+    db $02, $02, $02, $00, $00, $02, $00, $00, $00, $00, $02
+    db $02, $02, $00, $02, $00, $00, $00, $00, $00, $00
+    db $02, $02, $02, $00, $00, $00, $00, $00, $00, $00
+    db $02, $00, $00, $00, $02, $00, $00, $00
+    db $02, $02, $02, $02, $00, $02
+    db $02, $00, $00, $00, $02, $00, $00, $00
+    db $02, $00, $00, $00, $00, $00, $02, $02
+    db $02, $02, $02, $02, $02, $00
+    db $02, $00, $00, $00, $02, $00, $00, $00, $00
+    db $02, $00, $00, $02, $00, $00, $00, $00, $00, $00, $00
+    db $02, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+    db $02, $00, $00, $02, $00, $00, $00, $00, $00, $00, $00
+    db $02, $02, $02, $00, $00, $00, $00, $00, $00
+    db $00, $02, $02, $00, $02, $02, $00, $00, $00, $00, $00, $00, $00
+    db $02, $00, $00, $00, $00, $02, $00, $00, $00, $00
+    db $02, $02, $02, $02, $02, $02, $00, $00
+    db $02, $02, $02, $00, $02, $02, $00, $00
+    db $02, $02, $02, $02, $00, $00, $00
 }
