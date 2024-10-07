@@ -3,27 +3,27 @@
 org $008000
 base $7E0730 ; MAP16OVERFLOW free ram region
 
-MenuScrollLevelV: skip 1
-MenuScrollLevelH: skip 1
-MenuScrollHDirection: skip 2
-MenuItemValueSpoof: skip 2
-ShortSpoof: skip 1
-MusicNoteValue: skip 2
+MenuScrollLevelV:         skip 1
+MenuScrollLevelH:         skip 1
+MenuScrollHDirection:     skip 2
+MenuItemValueSpoof:       skip 2
+ShortSpoof:               skip 1
+MusicNoteValue:           skip 2
 OverworldLocationPointer: skip 2
-HasGoldstar: skip 1
-GoldstarOrHookshot: skip 1
-Neck_Index: skip 1
-Neck1_OffsetX: skip 1
-Neck1_OffsetY: skip 1
-Neck2_OffsetX: skip 1
-Neck2_OffsetY: skip 1
-Neck3_OffsetX: skip 1
-Neck3_OffsetY: skip 1
-Offspring1_Id: skip 1
-Offspring2_Id: skip 1
-Offspring3_Id: skip 1
-Kydreeok_Id: skip 1
-FishingOrPortalRod: skip 1
+HasGoldstar:              skip 1
+GoldstarOrHookshot:       skip 1
+Neck_Index:               skip 1
+Neck1_OffsetX:            skip 1
+Neck1_OffsetY:            skip 1
+Neck2_OffsetX:            skip 1
+Neck2_OffsetY:            skip 1
+Neck3_OffsetX:            skip 1
+Neck3_OffsetY:            skip 1
+Offspring1_Id:            skip 1
+Offspring2_Id:            skip 1
+Offspring3_Id:            skip 1
+Kydreeok_Id:              skip 1
+FishingOrPortalRod:       skip 1
 
 base off
 
@@ -43,9 +43,9 @@ OOSPROG         = $7EF3D6
 ;   u - Uncle
 ;   s - Priest visited in sanc after Zelda is kidnapped again
 ;   z - Zelda brought to sanc
-;   h - Uncle has left Link's house; controls spawn (0: spawn | 1: gone)
+;   h - Uncle left Link's house (0: spawn | 1: gone)
 ;   b - Book of Mudora obtained/mentioned; controls Aginah dialog
-;   f - Flipped by fortune tellers to decide which fortune set to give
+;   f - Flipped by fortune tellers to decide fortune set to give
 OOSPROG2       = $7EF3C6
 
 ; .... ...m
