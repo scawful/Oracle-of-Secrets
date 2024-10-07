@@ -54,7 +54,6 @@ namespace Oracle
   print "Applying patches to Oracle of Secrets"
   print ""
 
-  incsrc "Util/functions.asm"
   incsrc "Core/music_macros.asm"
   incsrc "Core/symbols.asm"
 
