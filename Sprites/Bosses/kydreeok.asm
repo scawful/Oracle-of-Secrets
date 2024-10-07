@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = $07 ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -29,27 +29,23 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 01  ; 00 = normal sprite, 01 = sprite is a boss
-%Set_Sprite_Properties(Sprite_Kydreeok_Prep, Sprite_Kydreeok_Long);
 
-; =========================================================
+%Set_Sprite_Properties(Sprite_Kydreeok_Prep, Sprite_Kydreeok_Long)
 
 Sprite_Kydreeok_Long:
 {
-    PHB : PHK : PLB
-
-    JSR Sprite_Kydreeok_Draw
-    JSL Sprite_CheckActive : BCC .SpriteIsNotActive  
-      JSR Sprite_Kydreeok_Main
-      JSR Sprite_Kydreeok_CheckIfDead
-      JSR MaybeRespawnHead
-
-    .SpriteIsNotActive
-    LDA.w SprState, X : BNE .not_inactive
-      JSR ApplyEndPalette
-    .not_inactive
-
-    PLB ; Get back the databank we stored previously
-    RTL ; Go back to original code
+  PHB : PHK : PLB
+  JSR Sprite_Kydreeok_Draw
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Kydreeok_Main
+    JSR Sprite_Kydreeok_CheckIfDead
+    JSR MaybeRespawnHead
+  .SpriteIsNotActive
+  LDA.w SprState, X : BNE .not_inactive
+    JSR ApplyEndPalette
+  .not_inactive
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -57,17 +53,16 @@ Sprite_Kydreeok_Long:
 Sprite_Kydreeok_Prep:
 {
   PHB : PHK : PLB
-    
   LDA   #$40 : STA.w SprTimerA, X
   LDA.b #$08 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
   LDA.b #$09 : STA.w SprBump,   X ; bump damage type
 
   ; Cache the origin position of the sprite.
-  LDA.w SprX, X : STA.w SprMiscA, X 
+  LDA.w SprX, X : STA.w SprMiscA, X
   LDA.w SprY, X : STA.w SprMiscB, X
 
-  JSR SpawnLeftHead 
+  JSR SpawnLeftHead
   ; JSR SpawnCenterHead
   JSR SpawnRightHead
 
@@ -77,7 +72,7 @@ Sprite_Kydreeok_Prep:
 
   JSR ApplyPalette
 
-  ; Final Boss theme 1F 
+  ; Final Boss theme 1F
   LDA #$1F : STA $012C
 
   PLB
@@ -99,7 +94,7 @@ Sprite_Kydreeok_CheckIfDead:
   LDA.w SprMiscD, X : CMP.b #$02 : BEQ .dead
     LDA.b #$02 : STA.w SprMiscD, X
     LDY.b #$01 : JSR ApplyKydreeokGraphics
-    JSR SpawnLeftHead 
+    JSR SpawnLeftHead
     JSR SpawnRightHead
     RTS
   .dead
@@ -110,10 +105,10 @@ Sprite_Kydreeok_CheckIfDead:
   RTS
 }
 
-; Head may respawn if the other isn't killed in time 
+; Head may respawn if the other isn't killed in time
 MaybeRespawnHead:
 {
-  LDA.w Offspring1_Id : TAY 
+  LDA.w Offspring1_Id : TAY
   LDA.w SprState, Y : BNE .offspring1_alive
       JSL GetRandomInt : AND.b #$7F : BNE .offspring1_alive
         JSR SpawnLeftHead
@@ -240,14 +235,14 @@ Sprite_Kydreeok_Main:
     PHX
     REP #$20
 
-    ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
+    ; Use a range of + 0x05 because being exact equal didnt trigger consistently
     LDA $20 : SBC.w SprCachedY : CMP.w #$FFFB : BCC .notEqualY
       SEP #$20
       %GotoAction(2) ; Kydreeok_MoveXandY
       BRA .notEqualX
     .notEqualY
 
-    ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
+    ; Use a range of + 0x05 because being exact equal didnt trigger consistently
     LDA $22 : SBC.w SprCachedX : CMP.w #$FFFB : BCC .notEqualX
       SEP #$20
       %GotoAction(2) ; Kydreeok_MoveXandY
@@ -274,41 +269,31 @@ Sprite_Kydreeok_Main:
 
   Kydreeok_Dead:
   {
-    
     LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
-    ; Flicker the body every other frame using the timer 
+    ; Flicker the body every other frame using the timer
     LDA.w SprTimerA, X : AND.b #$01 : BEQ .flicker
       LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
     .flicker
 
     ; Spawn the explosion
-    LDA.b #$00 ; SPRITE 00
-    JSL Sprite_SpawnDynamically
-    BMI .no_space
-
-    LDA.b #$0B : STA.w $0AAA
-    LDA.b #$04 : STA.w $0DD0,Y
-    LDA.b #$03 : STA.w $0E40,Y
-    LDA.b #$0C : STA.w $0F50,Y
-    LDA.w $0FD8 : STA.w SprX,Y
-    LDA.w $0FD9 : STA.w SprXH,Y
-    LDA.w $0FDA : STA.w SprY,Y
-    LDA.w $0FDB : STA.w SprYH,Y
-
-    LDA.b #$1F
-    STA.w $0DF0,Y
-    STA.w $0D90,Y
-
-    LDA.b #$02 : STA.w $0F20,Y
-      
+    LDA.b #$00
+    JSL Sprite_SpawnDynamically : BMI .no_space
+      LDA.b #$0B : STA.w $0AAA
+      LDA.b #$04 : STA.w $0DD0,Y
+      LDA.b #$03 : STA.w $0E40,Y
+      LDA.b #$0C : STA.w $0F50,Y
+      LDA.w $0FD8 : STA.w SprX,Y
+      LDA.w $0FD9 : STA.w SprXH,Y
+      LDA.w $0FDA : STA.w SprY,Y
+      LDA.w $0FDB : STA.w SprYH,Y
+      LDA.b #$1F : STA.w $0DF0,Y : STA.w $0D90,Y
+      LDA.b #$02 : STA.w $0F20,Y
     .no_space
-
     LDA.w SprTimerA, X : BNE .continue
       STZ.w $0422
       STZ.w $0424
       LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
       STZ.w $0DD0, X ; GG
-      
     .continue
     RTS
   }
@@ -333,7 +318,6 @@ Sprite_Kydreeok_Main:
       %GotoAction(2)
     .continue
     RTS
-  
   }
 
 }
@@ -367,12 +351,10 @@ Offspring3_Neck3_Y = $1A7D
 SpawnLeftHead:
 {
   LDA #$CF
-
   JSL   Sprite_SpawnDynamically : BMI .return
     TYA   : STA.w Offspring1_Id
     ;store the sub-type
     LDA.b #$00 : STA $0E30, Y
-        
     PHX
     ; code that controls where to spawn the offspring.
     REP #$20
@@ -395,7 +377,6 @@ SpawnLeftHead:
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX
-      
   .return
   RTS
 }
@@ -513,10 +494,10 @@ MoveBody:
   LDA.w SprY, X : SEC : SBC.b #$0C : STA.w $0DB0, X
 
   LDA.w $0B08 : SEC : SBC.w SprX, X
-                CLC : ADC.b #$02 
+                CLC : ADC.b #$02
                 CMP.b #$04 : BCS .not_at_target
 
-  LDA.w $0B09 : SEC : SBC.w SprY, X 
+  LDA.w $0B09 : SEC : SBC.w SprY, X
                 CLC : ADC.b #$02
                 CMP.b #$04 : BCS .not_at_target
 
@@ -588,17 +569,17 @@ StopIfOutOfBounds:
   LDA.w SprCachedY : CMP.w #$00D0 : BCC .not_out_of_bounds_Down
     SEP #$20
     LDA.w SprYSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Down
-        LDA.b #-10 : STA.w SprYSpeed : STA.w SprYRound ; Reverse the direction
+      LDA.b #-10 : STA.w SprYSpeed : STA.w SprYRound ; Reverse the direction
 
-        ; Modify the neck position
-        ; Makes them move away from each other a bit
-        LDA $19EA : SEC : SBC #$04 : STA $19EA
-        LDA $19EC : SEC : SBC #$04 : STA $19EC
-        LDA $19EE : SEC : SBC #$04 : STA $19EE
+      ; Modify the neck position
+      ; Makes them move away from each other a bit
+      LDA $19EA : SEC : SBC #$04 : STA $19EA
+      LDA $19EC : SEC : SBC #$04 : STA $19EC
+      LDA $19EE : SEC : SBC #$04 : STA $19EE
 
-        LDA $19F0 : CLC : ADC #$04 : STA $19F0
-        LDA $19F2 : CLC : ADC #$04 : STA $19F2
-        LDA $19F4 : CLC : ADC #$04 : STA $19F4
+      LDA $19F0 : CLC : ADC #$04 : STA $19F0
+      LDA $19F2 : CLC : ADC #$04 : STA $19F2
+      LDA $19F4 : CLC : ADC #$04 : STA $19F4
 
   .not_out_of_bounds_Down
   SEP #$20
@@ -612,7 +593,7 @@ ApplyPalette:
 {
     REP #$20 ;Set A in 16bit mode
 
-    ;note, this uses adresses like 7EC300 and not 7EC500 because the game 
+    ;note, this uses adresses like 7EC300 and not 7EC500 because the game
     ;will fade the colors into 7EC500 based on the colors found in 7EC300
 
     LDA #$7FFF : STA $7EC5E2 ;BG2
@@ -623,11 +604,11 @@ ApplyPalette:
     LDA #$7E56 : STA $7EC5EC
     LDA #$65CA : STA $7EC5EE
     ; LDA #$14A5 : STA $7EC5F0
-    ; LDA #$7E56 : STA $7EC5F2 
+    ; LDA #$7E56 : STA $7EC5F2
     ; LDA #$65CA : STA $7EC5F4
 
     INC $15
- 
+
     SEP #$20 ;Set A in 8bit mode
 
     RTS
@@ -637,7 +618,7 @@ ApplyEndPalette:
 {
     REP #$20 ;Set A in 16bit mode
 
-    ;note, this uses adresses like 7EC300 and not 7EC500 because the game 
+    ;note, this uses adresses like 7EC300 and not 7EC500 because the game
     ;will fade the colors into 7EC500 based on the colors found in 7EC300
 
     LDA #$1084 : STA $7EC5E2 ;BG2
@@ -648,11 +629,11 @@ ApplyEndPalette:
     LDA #$7E56 : STA $7EC5EC
     LDA #$65CA : STA $7EC5EE
     ; LDA #$14A5 : STA $7EC5F0
-    ; LDA #$7E56 : STA $7EC5F2 
+    ; LDA #$7E56 : STA $7EC5F2
     ; LDA #$65CA : STA $7EC5F4
 
     INC $15
- 
+
     SEP #$20 ;Set A in 8bit mode
 
     RTS
@@ -662,60 +643,55 @@ ApplyEndPalette:
 
 Sprite_Kydreeok_Draw:
 {
-    JSL Sprite_PrepOamCoord
-    ; JSL Sprite_OAM_AllocateDeferToPlayer
-    LDA.b #$08
-    JSL OAM_AllocateFromRegionE
+  JSL Sprite_PrepOamCoord
+  ; JSL Sprite_OAM_AllocateDeferToPlayer
+  LDA.b #$08
+  JSL OAM_AllocateFromRegionE
 
-    LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
-    LDA .start_index, Y : STA $06
+  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA .start_index, Y : STA $06
 
-    PHX
-    LDX   .nbr_of_tiles, Y ;amount of tiles -1
-    LDY.b #$00
+  PHX
+  LDX   .nbr_of_tiles, Y ;amount of tiles -1
+  LDY.b #$00
   .next_tile
 
-    PHX ; Save current Tile Index?
-        
-    TXA : CLC : ADC $06 ; Add Animation Index Offset
+  PHX ; Save current Tile Index?
+  TXA : CLC : ADC $06 ; Add Animation Index Offset
 
-    PHA ; Keep the value with animation index offset?
+  PHA ; Keep the value with animation index offset?
 
-    ASL A : TAX
+  ASL A : TAX
 
-    REP #$20
+  REP #$20
 
-    LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-    AND.w #$0100 : STA $0E
-    INY
-    LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-    CLC   : ADC #$0010 : CMP.w #$0100
-    SEP   #$20
-    BCC   .on_screen_y
+  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
+  AND.w #$0100 : STA $0E
+  INY
+  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
+  CLC   : ADC #$0010 : CMP.w #$0100
+  SEP   #$20
+  BCC   .on_screen_y
 
-    LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-    STA   $0E
+  LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
+  STA   $0E
   .on_screen_y
 
-    PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
-    INY
-    LDA .chr, X : STA ($90), Y
-    INY
-    LDA .properties, X : STA ($90), Y
+  PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
+  INY
+  LDA .chr, X : STA ($90), Y
+  INY
+  LDA .properties, X : STA ($90), Y
 
-    PHY 
-        
-    TYA : LSR #2 : TAY
-        
-    LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-        
-    PLY : INY
-        
-    PLX : DEX : BPL .next_tile
+  PHY
+  TYA : LSR #2 : TAY
+  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
+  PLY : INY
+  PLX : DEX : BPL .next_tile
 
-    PLX
+  PLX
 
-    RTS
+  RTS
 
   .start_index
     db $00, $08, $10
@@ -741,27 +717,27 @@ Sprite_Kydreeok_Draw:
 
 ApplyKydreeokGraphics:
 {
-    PHX 
-    REP #$20               ; A = 16, XY = 8
-    LDX #$80 : STX $2100   ; turn the screen off (required)
-    LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
-    LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
-    LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register 
-                           ; "001 => 2 registers write once (2 bytes: p, p+1)"
-    CPY #$01 : BEQ .phase2
-      LDA.w #KydreeokGraphics : STA $4302
-      LDX.b #KydreeokGraphics>>16 : STX $4304
-      JMP .continue
-    .phase2
-    LDA.w #KydreeokPhase2Graphics : STA $4302
-    LDX.b #KydreeokPhase2Graphics>>16 : STX $4304
-    .continue
-    LDA   #$2000 : STA $4305                ; Size of the transfer 4 sheets of $800 each
-    LDX   #$01 : STX $420B                  ; Do the DMA 
-    LDX #$0F : STX $2100                    ; Turn the screen back on
-    SEP #$30
-    PLX
-    RTS
+  PHX
+  REP #$20               ; A = 16, XY = 8
+  LDX #$80 : STX $2100   ; turn the screen off (required)
+  LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
+  LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
+  LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register
+                          ; "001 => 2 registers write once (2 bytes: p, p+1)"
+  CPY #$01 : BEQ .phase2
+    LDA.w #KydreeokGraphics : STA $4302
+    LDX.b #KydreeokGraphics>>16 : STX $4304
+    JMP .continue
+  .phase2
+  LDA.w #KydreeokPhase2Graphics : STA $4302
+  LDX.b #KydreeokPhase2Graphics>>16 : STX $4304
+  .continue
+  LDA   #$2000 : STA $4305                ; Size of the transfer 4 sheets of $800 each
+  LDX   #$01 : STX $420B                  ; Do the DMA
+  LDX #$0F : STX $2100                    ; Turn the screen back on
+  SEP #$30
+  PLX
+  RTS
 
   KydreeokGraphics:
     incbin kydreeok.bin
