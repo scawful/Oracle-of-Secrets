@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 0   ; Unused in this template (can be 0 to 7)
 !Hitbox             = 0   ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -32,33 +32,25 @@
 
 %Set_Sprite_Properties(Sprite_Kydrog_Prep, Sprite_Kydrog_Long)
 
-; =========================================================
-
 Sprite_Kydrog_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_Kydrog_Draw ; Call the draw code
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Kydrog_Main ; Call the main sprite code
-
+  JSR Sprite_Kydrog_Draw
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Kydrog_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
+
 ; =========================================================
 
 Sprite_Kydrog_Prep:
 {
   PHB : PHK : PLB
-    
-  LDA.l $7EF300
-  BEQ .PlayIntro
-    STZ.w $0DD0, X ; Kill the sprite 
+  LDA.l $7EF300 : BEQ .PlayIntro
+    STZ.w $0DD0, X ; Kill the sprite
   .PlayIntro
-
   PLB
   RTL
 }
@@ -74,7 +66,6 @@ Sprite_Kydrog_Main:
   dw Kydrog_AttractPlayer
   dw Kydrog_SpawnOffspring
   dw Kydrog_WarpPlayerAway
-
 
   Kydrog_StartCutscene:
   {
@@ -106,7 +97,7 @@ Sprite_Kydrog_Main:
   Kydrog_SpawnOffspring:
   {
     LDA.b #$02 : STA.b $B6 ; Update story flag for Farore
-    STZ.b $49 ; Stop Link from moving 
+    STZ.b $49 ; Stop Link from moving
     %GotoAction(3)
     RTS
   }
@@ -126,16 +117,16 @@ Sprite_Kydrog_Main:
     ; The module to return to is #$08 (preoverworld)
     LDA.b #$08 : STA $010C
 
-    ; Set the map I want 
+    ; Set the map I want
     LDA.b #$20 : STA $A0 : STZ $A1
-    
-    ; Set us to the warp state 
+
+    ; Set us to the warp state
     LDA.b #$15 : STA $10
 
     ; Clear submodules
     STZ $11 : STZ $B0
 
-    ; Remove Impa follower 
+    ; Remove Impa follower
     LDA.b #$00 : STA $7EF3CC
 
     ; Set the flag to remove Farore and Kydrog from Maku area
@@ -158,24 +149,20 @@ Sprite_Kydrog_Draw:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
-
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
   .nextTile
 
   PHX ; Save current Tile Index?
-      
   TXA : CLC : ADC $06 ; Add Animation Index Offset
-
   PHA ; Keep the value with animation index offset?
-
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -192,14 +179,10 @@ Sprite_Kydrog_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
   TYA : LSR #2 : TAY
-      
   LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX
