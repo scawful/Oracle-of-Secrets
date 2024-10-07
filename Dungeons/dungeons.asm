@@ -39,8 +39,9 @@ print  "End of object_handler.asm         ", pc
 ; Tag: Holes8
 incsrc "Dungeons/together_warp_tag.asm"
 
-; Tag: Holes7
-incsrc "Dungeons/house_tag.asm"
+; Custom Tag: Holes7
+; Minish Tag: Holes5
+incsrc "Dungeons/custom_tag.asm"
 
 ; Tag: Holes0
 incsrc "Dungeons/floor_puzzle.asm"
@@ -55,26 +56,6 @@ incsrc "Collision/CollisionTablesExpanded.asm"
 incsrc "Collision/GlobalCollisionTables.asm"
 
 pullpc ; Bank 0x33
-
-RoomTag_MinishShutterDoor:
-{
-  LDA.w $02B2 : CMP.b #$05 : BNE .no_minish
-    REP #$30
-
-    LDX.w #$0000 : CPX.w $0468 : BEQ .exit
-      STZ.w $0468
-      STZ.w $068E : STZ.w $0690
-
-      SEP #$30
-
-      LDA.b #$1B : STA.w $012F
-      LDA.b #$05 : STA.b $11
-
-    .exit
-    SEP #$30
-  .no_minish
-  JML $01CC5A ; RoomTag_TriggerHoles return
-}
 
 NewWaterOverlayData:
 ; Horizontal
@@ -93,10 +74,6 @@ db $FF, $FF ; End
 print "End of dungeons.asm               ", pc
 
 pushpc
-
-org $01CC10
-RoomTag_Holes5:
-  JML RoomTag_MinishShutterDoor
 
 ; RoomTag_GetHeartForPrize
 ; Swap LW/DW check on spawn falling prize
