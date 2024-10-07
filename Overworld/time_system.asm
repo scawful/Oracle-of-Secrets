@@ -65,42 +65,30 @@ DrawClockToHudLong:
 DrawClockToHud:
 {
   LDX #$00
-
   .debut
-    LDY #$00 : LDA $7EE000,x
-
-    .debut2
-      CMP #$0A : BMI .draw
+  LDY #$00 : LDA $7EE000,x
+  .debut2
+  CMP #$0A : BMI .draw
     SBC #$0A : INY : BRA .debut2
-
-    .draw
-
-    ADC #$90 : CPX #$01 : BEQ .minutes_low
-      STA.l !hud_hours_low
-      LDA #$30 : STA.l !hud_hours_low+1 ; white palette
-      BRA .continue_draw ; 04
-
-    .minutes_low
-
-    STA.l !hud_min_low
-    LDA #$30 : STA.l !hud_min_low+1 ; white palette
-
-    .continue_draw
-
-    TYA
-    CLC : ADC #$90 : CPX #$01 : BEQ .minutes_high
-      STA.l !hud_hours_high
-      LDA #$30 : STA.l !hud_hours_high+1 ; white palette
-      BRA .finish_draw ; 04
-
-    .minutes_high
-
-    STA.l !hud_min_high
-    LDA #$30 : STA.l !hud_min_high+1 ; white palette
-
-    .finish_draw
+  .draw
+  ADC #$90 : CPX #$01 : BEQ .minutes_low
+    STA.l !hud_hours_low
+    LDA #$30 : STA.l !hud_hours_low+1 ; white palette
+    BRA .continue_draw ; 04
+  .minutes_low
+  STA.l !hud_min_low
+  LDA #$30 : STA.l !hud_min_low+1 ; white palette
+  .continue_draw
+  TYA
+  CLC : ADC #$90 : CPX #$01 : BEQ .minutes_high
+    STA.l !hud_hours_high
+    LDA #$30 : STA.l !hud_hours_high+1 ; white palette
+    BRA .finish_draw ; 04
+  .minutes_high
+  STA.l !hud_min_high
+  LDA #$30 : STA.l !hud_min_high+1 ; white palette
+  .finish_draw
 	INX : CPX #$02 : BMI .debut
-
   RTS
 }
 
@@ -114,7 +102,7 @@ RunClock:
   LDA $10	; checks current event in game
   CMP #$07 : BEQ .counter_increasing ; dungeon/building?
     CMP #$09 : BEQ .overworld ; overworld?
-    CMP #$0B : BEQ .overworld ; sub-area ? (under the bridge; zora domain...)
+    CMP #$0B : BEQ .overworld ; special overworld?
       CMP #$0E : BEQ .dialog  ; dialog box?
         RTS
     .overworld
@@ -129,7 +117,8 @@ RunClock:
       RTS
 
     .dialog
-    LDA $11 ; check submodule to prevent the counter from increasing if save/menu open
+    ; check submodule to prevent the counter from increasing if save/menu open
+    LDA $11
     CMP #$02 : BEQ .counter_increasing ; NPC/signs speech
       RTS
 
@@ -162,7 +151,6 @@ RunClock:
     ;check indoors/outdoors
     LDA $1B	: BEQ .outdoors0
       RTS
-
     .outdoors0
 
     JSL RomToPaletteBuffer	; update buffer palette
@@ -205,15 +193,19 @@ RunClock:
 
 CheckForSongOfTime:
 {
+  ; Check if Song of Time was activated
   LDA $FE : CMP.b #$02 : BNE +
+    ; Speed up the time
     LDA.b #$00 : STA.l TimeSpeed
 
+    ; If we reached 6am
     LDA.l Hours : CMP.b #$06 : BNE ++
       LDA.l Minutes : BNE ++
         LDA.b #$3F : STA.l TimeSpeed
         STZ $FE
     ++
 
+    ; If we reached 6pm
     LDA.l Hours : CMP.b #$12 : BNE ++
       LDA.l Minutes : BNE ++
         LDA.b #$3F : STA.l TimeSpeed
