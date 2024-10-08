@@ -35,18 +35,24 @@ Sprite_BusinessScrub_Long:
 {
   PHB : PHK : PLB
 
-  JSR Sprite_BusinessScrub_Draw ; Call the draw code
+  LDA.w WORLDFLAG : BNE .draw_eon
+    JSR Sprite_BusinessScrub_Draw
+    JMP +
+  .draw_eon
+  JSR Sprite_EonScrub_Draw
+  +
+
   LDA.w SprSubtype, X : CMP #$01 : BNE .normal_scrub
     JSL Sprite_DrawShadow
   .normal_scrub
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_BusinessScrub_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    LDA.w WORLDFLAG : BNE .eon
+      JSR Sprite_BusinessScrub_Main
+    .eon
+    JSR Sprite_EonScrub_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 ; =========================================================
