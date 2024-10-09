@@ -20,6 +20,7 @@ Sprite_EonScrub_Main:
   dw EonScrub_Recoil
   dw EonScrub_Dazed
   dw EonScrub_Subdued
+
   dw EonScrub_PeaShot
   dw EonScrub_Defeated
 

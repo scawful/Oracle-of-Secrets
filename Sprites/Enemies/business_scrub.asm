@@ -48,6 +48,7 @@ Sprite_BusinessScrub_Long:
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     LDA.w WORLDFLAG : BNE .eon
       JSR Sprite_BusinessScrub_Main
+      JMP .SpriteIsNotActive
     .eon
     JSR Sprite_EonScrub_Main
   .SpriteIsNotActive
