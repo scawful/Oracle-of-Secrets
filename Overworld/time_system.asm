@@ -434,9 +434,9 @@ GlovesFix:
 
 CheckIfNight:
 {
-  ;JSR LoadPeacetimeSprites : BCS +
-  ;  RTL
-  ;+
+  JSR LoadPeacetimeSprites : BCS +
+    RTL
+  +
   LDA.l $7EF3C5 : CMP.b #$02 : BCC .day_time
   LDA $7EE000 : CMP.b #$12 : BCS .night_time
   LDA $7EE000 : CMP.b #$06 : BCC .night_time
@@ -470,9 +470,12 @@ ColorBgFix:
 
 CheckIfNight16Bit:
 {
-  ;JSR LoadPeacetimeSprites : BCS +
-  ;  RTL
-  ;+
+  SEP #$30
+  JSR LoadPeacetimeSprites : BCS +
+    REP #$30
+    RTL
+  +
+  REP #$30
   ; Don't change the spriteset during the intro sequence
   LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCC .day_time
     ; 0x12 = 18 hours or 6 pm
@@ -493,9 +496,13 @@ LoadPeacetimeSprites:
   ; Map 2E, 2F if CRYSTALS && 0x10 == 0
   LDA $8A : CMP.b #$2E : BEQ .tail_palace
             CMP.b #$2F : BEQ .tail_palace
+            CMP.b #$1E : BEQ .zora_sanctuary
     JMP +
   .tail_palace
   LDA.l CRYSTALS : AND #$10 : BNE .load_peacetime
+  JMP +
+  .zora_sanctuary
+  LDA.l CRYSTALS : AND #$20 : BNE .load_peacetime
   JMP +
   .load_peacetime
   LDA.b #$01
