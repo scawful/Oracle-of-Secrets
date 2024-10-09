@@ -43,7 +43,6 @@ Sprite_BusinessScrub = $14
 incsrc "Sprites/Enemies/business_scrub.asm"
 print  "End of business_scrub.asm         ",  pc
 
-Sprite_EonScrub = $22
 incsrc "Sprites/Enemies/eon_scrub.asm"
 print  "End of eon_scrub.asm              ",  pc
 
@@ -188,10 +187,6 @@ Sprite_PolsVoice = $A4
 incsrc "Sprites/Enemies/pols_voice.asm"
 print  "End of pols_voice.asm             ",  pc
 
-Sprite_ZoraPrincess = $B8
-incsrc "Sprites/NPCs/zora_princess.asm"
-print  "End of zora_princess.asm          ",  pc
-
 Sprite_Wolfos = $A9
 incsrc "Sprites/Bosses/wolfos.asm"
 print  "End of wolfos.asm                 ",  pc
@@ -234,10 +229,13 @@ incsrc "Sprites/NPCs/bug_net_kid.asm"
 print "End of bug_net_kid.asm            ", pc
 
 incsrc "Sprites/Bosses/king_dodongo.asm"
-print "End of king_dodongo.asm           ", pc
+print  "End of king_dodongo.asm          ", pc
 
 incsrc "Sprites/Bosses/arrghus.asm"
 print  "End of arrghus.asm                ", pc
+
+incsrc "Sprites/NPCs/fortune_teller.asm"
+print  "End of fortune_teller.asm         ", pc
 
 ; =========================================================
 
@@ -255,7 +253,7 @@ incsrc "Sprites/NPCs/followers.asm"
 print  "End of followers.asm              ", pc
 
 incsrc "Sprites/Enemies/octorok.asm"
-print "End of octorok.asm                 ", pc
+print  "End of octorok.asm                ", pc
 
 incsrc "Sprites/NPCs/piratian.asm"
 print  "End of piratian.asm               ", pc
@@ -266,10 +264,14 @@ print  "End of collectible.asm            ", pc
 Sprite_EonOwl   = $0A
 Sprite_KaeporaGaebora = $0A
 incsrc "Sprites/NPCs/eon_owl.asm"
-print "End of eon_owl.asm                ", pc
+print  "End of eon_owl.asm                ", pc
 
-incsrc "Sprites/NPCs/fortune_teller.asm"
-print  "End of fortune_teller.asm         ", pc
+Sprite_ZoraPrincess = $B8
+incsrc "Sprites/NPCs/zora_princess.asm"
+print  "End of zora_princess.asm          ", pc
+
+incsrc "Sprites/NPCs/tingle.asm"
+print  "End of tingle.asm                 ", pc
 
 incsrc "Sprites/NPCs/goron.asm"
 print  "End of goron.asm                  ", pc
