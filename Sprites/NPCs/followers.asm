@@ -655,7 +655,6 @@ MinecartFollower_Top:
 
     LDA $02CF : TAY 
     LDA .start_index, Y : STA $06
-    
     PHX
     LDX .nbr_of_tiles, Y ; amount of tiles -1
     LDY.b #$00
@@ -687,11 +686,8 @@ MinecartFollower_Top:
     LDA .properties, X : STA ($90), Y
 
     PHY 
-        
     TYA : LSR #2 : TAY
-        
     LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-        
     PLY : INY
     PLX : DEX : BPL .nextTile
 
@@ -766,11 +762,8 @@ MinecartFollower_Bottom:
     LDA .properties, X : STA ($90), Y
 
     PHY 
-        
     TYA : LSR #2 : TAY
-        
     LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-        
     PLY : INY
     PLX : DEX : BPL .nextTile
 

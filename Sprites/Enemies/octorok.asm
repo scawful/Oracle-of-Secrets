@@ -269,7 +269,7 @@ Sprite_WaterOctorok_Attack:
   JSL Sprite_DamageFlash_Long
   JSL Sprite_CheckDamageToPlayer
 
-  LDA SprMiscG, X
+  LDA.w SprMiscG, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
   dw WaterOctorok_Hidden

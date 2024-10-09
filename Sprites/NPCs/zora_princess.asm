@@ -10,7 +10,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 02  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -48,10 +48,9 @@ Sprite_ZoraPrincess_Long:
 Sprite_ZoraPrincess_Prep:
 {
     PHB : PHK : PLB
-      
     LDA.l $7EF302
     BEQ   .doesnt_have_mask
-      STZ.w $0DD0, X ; Kill the sprite 
+      STZ.w $0DD0, X ; Kill the sprite
     .doesnt_have_mask
 
     LDA #$00 : STA $0CAA, X
@@ -98,7 +97,7 @@ Sprite_ZoraPrincess_Main:
   {
     %PlayAnimation(0, 1, 10)
     LDA.w SprTimerD,              X : BNE +
-      %ShowUnconditionalMessage($0C6) 
+      %ShowUnconditionalMessage($0C6)
       LDA.b #$C0 : STA.w SprTimerD, X
       %GotoAction(3)
     +
@@ -133,12 +132,11 @@ Sprite_ZoraPrincess_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
@@ -161,13 +159,9 @@ Sprite_ZoraPrincess_Draw:
   LDA .properties, X : STA ($90), Y
 
   PHY 
-      
   TYA : LSR #2 : TAY
-      
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
   PLY : INY
-      
   PLX : DEX : BPL .nextTile
 
   PLX

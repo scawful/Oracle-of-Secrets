@@ -59,18 +59,16 @@ pullpc ; Bank 0x33
 
 TransferDungeonMapGfx:
 {
-  REP #$20               ; A = 16, XY = 8
-
-  LDX #$80 : STX $2100   ; turn the screen off (required)
-  LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
-  LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
+  REP #$20
+  LDX #$80 : STX $2100
+  LDX #$80 : STX $2115
+  LDA #$5000 : STA $2116 ; Destination of the DMA in VRAM
   LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register
-  LDA.w #MapGfx     : STA $4302     ; Source address where you want gfx from ROM
+  LDA.w #MapGfx     : STA $4302
   LDX.b #MapGfx>>16 : STX $4304
-  LDA   #$2000 : STA $4305          ; size of the transfer 4 sheets of $800 each
-  LDX   #$01 : STX $420B            ; Do the DMA
-
-  LDX #$0F : STX $2100                    ; Turn the screen back on
+  LDA #$2000 : STA $4305
+  LDX #$01 : STX $420B
+  LDX #$0F : STX $2100
   SEP #$30
 
   LDA.b #$09 : STA.b $14
