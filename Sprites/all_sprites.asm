@@ -267,6 +267,9 @@ incsrc "Sprites/NPCs/eon_owl.asm"
 print  "End of eon_owl.asm                ", pc
 
 Sprite_ZoraPrincess = $B8
+incsrc "Sprites/NPCs/eon_zora.asm"
+incsrc "Sprites/NPCs/eon_zora_elder.asm"
+incsrc "Sprites/NPCs/zora.asm"
 incsrc "Sprites/NPCs/zora_princess.asm"
 print  "End of zora_princess.asm          ", pc
 

@@ -6,7 +6,7 @@ Sprite_EonZoraElder_Main:
   JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
 
   dw EonZoraElder_Idle
-  dw EoNZoraElder_Surprised
+  dw EonZoraElder_Surprised
   dw EonZoraElder_WithRod
 
   EonZoraElder_Idle:

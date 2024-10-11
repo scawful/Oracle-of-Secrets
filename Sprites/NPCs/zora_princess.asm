@@ -28,7 +28,7 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
-%Set_Sprite_Properties(Sprite_ZoraPrincess_Prep, Sprite_ZoraPrincess_Long);
+%Set_Sprite_Properties(Sprite_ZoraPrincess_Prep, Sprite_Zora_Long);
 
 Sprite_ZoraPrincess_Long:
 {
@@ -47,17 +47,17 @@ Sprite_ZoraPrincess_Long:
 
 Sprite_ZoraPrincess_Prep:
 {
-    PHB : PHK : PLB
-    LDA.l $7EF302
-    BEQ   .doesnt_have_mask
-      STZ.w $0DD0, X ; Kill the sprite
-    .doesnt_have_mask
+  PHB : PHK : PLB
+  LDA.l $7EF302
+  BEQ   .doesnt_have_mask
+    STZ.w $0DD0, X ; Kill the sprite
+  .doesnt_have_mask
 
-    LDA #$00 : STA $0CAA, X
-    LDA #$00 : STA $0B6B, X
+  LDA #$00 : STA $0CAA, X
+  LDA #$00 : STA $0B6B, X
 
-    PLB
-    RTL
+  PLB
+  RTL
 }
 
 
