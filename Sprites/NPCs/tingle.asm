@@ -11,7 +11,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 02  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -75,6 +75,7 @@ Sprite_Tingle_Main:
   Tingle_Forward:
   {
     %PlayAnimation(0,0,10)
+    %ShowSolicitedMessage($012C)
     RTS
   }
 
