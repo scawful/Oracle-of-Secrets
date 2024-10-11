@@ -1,7 +1,8 @@
+; Tingle Sprite
 
 !SPRID              = $22 ; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 00  ; Number of tiles used in a frame
-!Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
+!NbrTiles           = 03  ; Number of tiles used in a frame
+!Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
@@ -33,6 +34,7 @@ Sprite_Tingle_Long:
 {
   PHB : PHK : PLB
   JSR Sprite_Tingle_Draw
+  JSL Sprite_DrawShadow
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_Tingle_Main
   .SpriteIsNotActive
@@ -50,6 +52,19 @@ Sprite_Tingle_Prep:
 
 Sprite_Tingle_Main:
 {
+  JSL Sprite_PlayerCantPassThrough
+
+  JSL Sprite_IsBelowPlayer : TYA : BEQ .below
+    JSL Sprite_IsToRightOfPlayer : TYA : BNE .right
+      LDA.b #$02 : STA.w SprAction, X
+      JMP +
+    .right
+    LDA.b #$01 : STA.w SprAction, X
+    JMP +
+  .below
+  STZ.w SprAction, X
+  +
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -59,19 +74,19 @@ Sprite_Tingle_Main:
 
   Tingle_Forward:
   {
-    %PlayAnimation(0,1,10)
+    %PlayAnimation(0,0,10)
     RTS
   }
 
   Tingle_Right:
   {
-    %PlayAnimation(0,1,10)
+    %PlayAnimation(1,1,10)
     RTS
   }
 
   Tingle_Left:
   {
-    %PlayAnimation(0,1,10)
+    %PlayAnimation(2,2,10)
     RTS
   }
 }
