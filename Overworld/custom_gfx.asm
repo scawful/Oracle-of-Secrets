@@ -1,4 +1,3 @@
-
 CheckForChangeGraphicsNormalLoadBoat:
 {
     LDA $8A : CMP.b #$30 : BNE .boat_area

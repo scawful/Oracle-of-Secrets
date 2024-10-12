@@ -308,53 +308,38 @@ LoadDayNightPaletteEffect:
 
 ColorSubEffect:
 {
-	LDA $7EE000		; LDA #hours
-	AND #$00FF
-	CLC
-	ADC $7EE000		; #hours * 2
-	AND #$00FF
-	TAX
+	LDA.l Hours : AND #$00FF : CLC
+	ADC.l Hours	; hours * 2
+	AND #$00FF : TAX
 
-  .do_blue
 	LDA.l !pal_color : AND #$7C00 : STA !blue_value
-  ; Subtract amount to blue field based on a table
-	SEC : SBC.l blue_table, X : STA !temp_value
+  SEC : SBC.l blue_table, X ; Subtract amount to blue field based on a table
+  STA !temp_value
   ; mask out everything except the blue bits
 	AND #$7C00 : CMP !temp_value : BEQ .no_blue_sign_change ; overflow ?
-    .blue_sign_change
     LDA #$0400		; LDA smallest blue value
-
   .no_blue_sign_change
 	STA.l !blue_value
 
-  do_green:
 	LDA !pal_color : AND #$03E0 : STA !green_value
 	SEC : SBC.l green_table,x	; Subtract amount to blue field based on a table
 	STA.l !temp_value
   ; Mask out everything except the green bits
 	AND #$03E0 : CMP !temp_value : BEQ .no_green_sign_change ; overflow ?
-    .green_sign_change
     LDA #$0020		; LDA smallest green value
-
   .no_green_sign_change
 	STA.l !green_value
 
-  .do_red
 	LDA.l !pal_color : AND #$001F : STA.l !red_value
 	SEC : SBC.l red_table,x		; substract amount to red field based on a table
 	STA.l !temp_value
 	AND #$001F		; mask out everything except the red bits
 	CMP !temp_value : BEQ .no_red_sign_change ; overflow ?
-    .red_sign_change
     LDA #$0001		; LDA smallest red value
-
   .no_red_sign_change
 	STA.l !red_value
 
-	LDA.l !blue_value
-	ORA.l !green_value
-	ORA.l !red_value
-
+  LDA.l !blue_value : ORA.l !green_value : ORA.l !red_value
 	RTL
 }
 
