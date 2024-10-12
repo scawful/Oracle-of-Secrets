@@ -7,7 +7,8 @@ Menu_CheckHScroll:
     LDA.b $F6
     BIT.b #$20 : BNE .left
       BIT.b #$10 : BNE .right
-        RTS
+        BIT.b #$80 : BNE .leave_menu
+          RTS
 
     .left
 
