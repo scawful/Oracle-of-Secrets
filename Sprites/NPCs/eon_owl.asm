@@ -3,7 +3,7 @@
 
 !SPRID              = Sprite_EonOwl
 !NbrTiles           = 03  ; Number of tiles used in a frame
-!Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
+!Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
@@ -24,9 +24,9 @@
 !Sound              = 00  ; 01 = Play different sound when taking damage
 !Interaction        = 00  ; ?? No documentation
 !Statue             = 00  ; 01 = Sprite is statue
-!DeflectProjectiles = 00  ; 01 = Sprite will deflect ALL projectiles
-!ImperviousArrow    = 00  ; 01 = Impervious to arrows
-!ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
+!DeflectProjectiles = 01  ; 01 = Sprite will deflect ALL projectiles
+!ImperviousArrow    = 01  ; 01 = Impervious to arrows
+!ImpervSwordHammer  = 01  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
 %Set_Sprite_Properties(Sprite_EonOwl_Prep, Sprite_EonOwl_Long)
@@ -172,8 +172,6 @@ Sprite_EonOwl_Main:
     .not_ready
     RTS
   }
-
-
 }
 
 ; =========================================================
@@ -315,8 +313,6 @@ Sprite_KaeporaGaebora_Draw:
 
   RTS
 
-
-  ; =========================================================
   .start_index
   db $00
   .nbr_of_tiles
