@@ -120,7 +120,10 @@ Sprite_BusinessScrub_Main:
           LDA #$20 : STA.w SprTimerA, X
           %GotoAction(1)
       .too_close
+    RTS
     .is_below_player
+    JSL Sprite_CheckIfLifted
+    JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
 
