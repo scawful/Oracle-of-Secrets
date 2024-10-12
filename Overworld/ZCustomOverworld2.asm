@@ -1779,7 +1779,10 @@ CheckForChangeGraphicsTransitionLoad:
 
     ; Set transparent color. only set the buffer so it fades in right
     ; during mosaic transition.
-    STA.l $7EC300 : STA.l $7EC340
+    JSL Oracle_MosaicFix
+    NOP #4
+    ;STA.l $7EC300
+    ;STA.l $7EC340
 
     LDX.w #$4020 : STX.b $9C
     LDX.w #$8040 : STX.b $9D

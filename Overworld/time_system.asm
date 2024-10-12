@@ -399,6 +399,16 @@ BackgroundFix:
   RTL
 }
 
+MosaicFix:
+{
+  BEQ +
+    JSL ColorSubEffect
+  +
+  STA.l PaletteBuffer_HUD
+  STA.l PaletteBuffer_BG
+  RTL
+}
+
 SubAreasFix:
 {
   BEQ .no_effect
