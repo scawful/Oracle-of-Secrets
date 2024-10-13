@@ -54,42 +54,107 @@ Sprite_Tingle_Main:
 {
   JSL Sprite_PlayerCantPassThrough
 
-  JSL Sprite_IsBelowPlayer : TYA : BEQ .below
-    JSL Sprite_IsToRightOfPlayer : TYA : BNE .right
-      LDA.b #$02 : STA.w SprAction, X
-      JMP +
-    .right
-    LDA.b #$01 : STA.w SprAction, X
-    JMP +
-  .below
-  STZ.w SprAction, X
-  +
-
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
   dw Tingle_Forward
   dw Tingle_Right
   dw Tingle_Left
+  dw Tingle_MapPrompt
+  dw Tingle_MapSales
 
   Tingle_Forward:
   {
     %PlayAnimation(0,0,10)
-    %ShowSolicitedMessage($012C)
+    JSR Sprite_Tingle_TrackPlayer
+
+    %ShowSolicitedMessage($018D) : BCC +
+      LDA.b #$03 : STA.w SprAction, X
+    +
     RTS
   }
 
   Tingle_Right:
   {
     %PlayAnimation(1,1,10)
+    JSR Sprite_Tingle_TrackPlayer
     RTS
   }
 
   Tingle_Left:
   {
     %PlayAnimation(2,2,10)
+    JSR Sprite_Tingle_TrackPlayer
     RTS
   }
+
+  Tingle_MapPrompt:
+  {
+    %PlayAnimation(0,0,10)
+    LDA.l TingleMaps : ASL : TAX
+    LDY.b #$01
+    LDA.w .message_ids, X
+    JSL Sprite_ShowMessageUnconditional
+    INC.w SprAction, X
+    RTS
+
+    .message_ids
+    dw $0191
+    dw $0192
+    dw $0193
+    dw $0194
+    dw $0195
+    dw $0196
+    dw $0197
+    dw $0190
+  }
+
+  Tingle_MapSales:
+  {
+    %PlayAnimation(0,0,10)
+    LDA $1CE8 : BNE .said_no
+      REP #$20
+      LDA.l $7EF360 : CMP.w #$64
+      SEP #$30
+      BCC .not_enough_rupees
+        REP #$20
+        LDA.l $7EF360 : SEC : SBC.w #$64
+        STA.l $7EF360
+        SEP #$30
+        %ShowUnconditionalMessage($018E) ; Purchased
+        STZ.w SprAction, X
+        RTS
+      .not_enough_rupees
+      %ShowSolicitedMessage($018F) ; Not enough rupees
+    .said_no
+    LDA.b #$10 : STA.w SprTimerA, X
+    STZ.w SprAction, X
+    RTS
+
+    .cost
+    dw 50
+    dw 75
+    dw 100
+    dw 80
+    dw 90
+    dw 60
+    dw 120   
+  }
+}
+
+Sprite_Tingle_TrackPlayer:
+{
+  JSL Sprite_IsBelowPlayer : TYA : BEQ .below
+    JSL Sprite_IsToRightOfPlayer : TYA : BNE .right
+      LDA.b #$02 : STA.w SprAction, X
+        JMP +
+    .right
+    LDA.b #$01 : STA.w SprAction, X
+    JMP +
+  .below
+  STZ.w SprAction, X
+  +
+  RTS
 }
 
 Sprite_Tingle_Draw:
