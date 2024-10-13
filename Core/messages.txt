@@ -1356,3 +1356,123 @@ I haven't had a chance to trim
 [V]gates to the Eon Abyss[...][K]
 [V]The Hylians didn't care
 [V]for that at all[...]
+
+# 18D - Tingle Intro
+Tingle, Tingle, Koolo-Limpah!
+[2]Ah, you there!
+[3]Do you seek maps, my friend?[K]
+[V]Tingle has traveled far and
+[V]wide across Kalyxo to chart
+[V]the unknown! For a small fee,[K]
+[V]of course[...] Rupees make the
+[V]world spin, don't they?
+
+# 18E - Tingle Purchased Map
+Ah, a wise choice!
+[2]With this map, no secret
+[3]will be hidden from you![K]
+[V]Just hand over the rupees
+[V]and let the adventure begin!
+
+# 18F - Tingle Not Enough Rupees
+Oh dear...
+[2]It seems your pockets are a
+[3]a bit light. Come back when[K]
+[V]your wallet is as full as mine!
+[V]Tingle will wait, don't
+[V]you worry!
+
+# 190 - Tingle Purchased Many Maps
+Ah, my best customer!
+[2]You are becoming quite
+[3]the collector of maps![K]
+[V]Maybe one day Tingle
+[V]will name a place after you!
+
+# 191 - Tingle Mushroom Grotto
+Tingle, Tingle, Koolo-Limpah!
+[2]Ah, seeking the secrets of
+[3]the Mushroom Grotto, are you?[K]
+[V]The Toadstool Woods are a
+[V]tricky place[...] paths seem to
+[V]twist and turn forever.[K]
+[V]Maybe someone in town has
+[V]figured out how to solve its
+[V]mysteries![K]
+[V] How does 50 rupees sound?
+[V]    > Sounds good
+[V]       I'll take my chances[CH2I]
+
+# 192 - Tingle Tail Palace
+Tingle, Tingle, Koolo-Limpah!
+[2]Ah, the Tail Palace!
+[3][K]
+[V]The path through the swamps
+[V]is something only a Deku could
+[V]navigate comfortably[...]
+[V] How does 75 rupees sound?
+[V]    > Sounds good
+[V]       I'll take my chances[CH2I]
+
+# 193
+Tingle, Tingle, Koolo-Limpah!
+[2]The grand Kalyxo Castle!
+[3][K]
+[V]They say the King of Kalyxo
+[V]hid a powerful weapon, deep
+[V]within the castle walls.[K]
+[V] How does 100 rupees sound?
+[V]    > Sounds good
+[V]       I'll take my chances[CH2I]
+
+# 194
+Tingle, Tingle, Koolo-Limpah!
+[2]Ah, the Zora Temple!
+[3][K]
+[V]The Zora kingdom is in
+[V]chaos... the river and sea
+[V]Zoras have been at odds.[K]
+[V]Perhaps it's connected to
+[V]a certain... royal scandal?[K]
+[V] How does 80 rupees sound?
+[V]    > Sounds good
+[V]       I'll take my chances[CH2I]
+
+# 195
+Tingle, Tingle, Koolo-Limpah!
+[2]Ah, you wish to explore
+[3]Glacia Estate?[K]
+[V]A place once filled with wealth
+[V]and power... but now? They
+[V]say spirits walk its halls[...][K]
+[V]And that there's someone
+[V]waiting for you... a very
+[V]chilling welcome.[K]
+[V] How does 90 rupees sound?
+[V]    > Sounds good
+[V]       I'll take my chances[CH2I]
+
+# 196
+Tingle, Tingle, Koolo-Limpah!
+[2]Ah, the Goron Mines?
+[3][K]
+[V]I've heard the Gorons
+[V]are restless... something
+[V]about missing rock meat?[K]
+[V]You’ll need more than
+[V]just strength to crack
+[V]those mines open![K]
+[V] How does 60 rupees sound?
+[V]    > Sounds good
+[V]       I'll take my chances[CH2I]
+
+# 197
+Tingle, Tingle, Koolo-Limpah!
+[2]Ah, Kydrog's ship!
+[3][K]
+[V]A fearsome vessel, they say
+[V]only those who can soar
+[V]will reach it![K]
+[V] How does 120 rupees sound?
+[V]    > Sounds good
+[V]       I'll take my chances[CH2I]
