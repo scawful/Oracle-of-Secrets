@@ -58,20 +58,12 @@ OOSPROG2       = $7EF3C6
 ;   m - maku tree has met link (0: no | 1: yes)
 OOSPROG3       = $7EF3D4
 
-; Current Dream ID (0x00-0x07)
-CurrentDream   = $0426
+; 01 - Fishing Rod
+; 02 - Portal Rod
+CUSTOMRODS  = $7EF351
 
-CurrentSong    = $030F
-
-; .dgi zktm
-;   m - Mushroom Grotto
-;   t - Tail Palace
-;   k - Kalyxo Castle
-;   z - Zora Temple
-;   i - Glacia Estate
-;   g - Goron Mines
-;   d - Dragon Ship
-DREAMS         = $7EF410
+; Free SRAM Block 38A-3C4
+FishingRod = $7EF38A
 
 ; Collectibles
 Bananas    = $7EF38B
@@ -81,11 +73,25 @@ Seashells  = $7EF391
 Honeycomb  = $7EF393
 DekuSticks = $7EF395
 
-; 01 - Fishing Rod
-; 02 - Portal Rod
-CUSTOMRODS     = $7EF351
+TingleMaps = $7EF396
 
-FishingRod = $7EF38A
+
+; .dgi zktm
+;   m - Mushroom Grotto
+;   t - Tail Palace
+;   k - Kalyxo Castle
+;   z - Zora Temple
+;   i - Glacia Estate
+;   g - Goron Mines
+;   d - Dragon Ship
+DREAMS     = $7EF410
+
+; Current Dream ID (0x00-0x07)
+CurrentDream   = $0426
+
+; Current Song
+CurrentSong    = $030F
+
 
 ; =========================================================
 ; Sprite RAM and Functions
