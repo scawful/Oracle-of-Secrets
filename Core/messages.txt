@@ -1567,9 +1567,9 @@ Ah, another secret scroll!
 [V]Shall I translate its forgotten
 [V]words for you?
 [V][K]
-[V] What will you do?
-[V]    > Translate the scroll
-[V]       Don't touch my stuff[CH2I]
+[V]> Translate the scroll
+[V]   Read previous scroll
+[V]   Don't touch my stuff[CH3]
 
 # 1A1 - Librarian
 Very well. Let us unveil the
@@ -1584,3 +1584,8 @@ The scroll has been translated.
 [3]history revealed.[K]
 [V]These words may serve you
 [V]well, if you heed them.
+
+# 1A3 - Librarian Collected All
+It seems you've collected all
+[2]the scrolls in the land of
+[3]Kalyxo! You truly are the hero.
