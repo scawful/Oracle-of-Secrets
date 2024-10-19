@@ -1559,3 +1559,28 @@ A hero once sailed the seas,
 [V]In his quest to defy the gods,
 [V]he seeks not glory, but a
 [V]return to what was lost.
+
+# 1A0 - Librarian
+Ah, another secret scroll!
+[2]These ancient writings hold
+[3]mysteries long lost to time.[K]
+[V]Shall I translate its forgotten
+[V]words for you?
+[V][K]
+[V] What will you do?
+[V]    > Translate the scroll
+[V]       Don't touch my stuff[CH2I]
+
+# 1A1 - Librarian
+Very well. Let us unveil the
+[2]secrets hidden within this
+[3]ancient text.[K]
+[V]Listen closely, for these
+[V]words carry great weight.
+
+# 1A2 - Librarian Done
+The scroll has been translated.
+[2]Another piece of Kalyxo’s
+[3]history revealed.[K]
+[V]These words may serve you
+[V]well, if you heed them.
