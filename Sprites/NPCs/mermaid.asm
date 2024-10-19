@@ -237,9 +237,11 @@ Sprite_Mermaid_Main:
     JSL JumpTableLocal
 
     dw LibrarianIdle
+    dw Librarian_CheckResponse
     dw Librarian_OfferTranslation
     dw Librarian_TranslateScroll
     dw Librarian_FinishTranslation
+    dw Librarian_ScrollQuestComplete
 
     LibrarianIdle:
     {
@@ -262,6 +264,22 @@ Sprite_Mermaid_Main:
       +++
       RTS
     }
+
+    Librarian_CheckResponse:
+    {
+      %PlayAnimation(0,1,16)
+      LDA $1CE8 : BEQ .translate
+                  CMP.b #$01 : BNE .finish
+        ; Check for previous translation
+        LDA.l Scrolls : BEQ .translate ; The first one has no previous
+        STA.w SprMiscG, X
+        %GotoAction(3)
+        RTS
+      .translate
+      INC.w SprAction, X
+      RTS
+      .finish
+      STZ.w SprAction, X
       RTS
     }
 
