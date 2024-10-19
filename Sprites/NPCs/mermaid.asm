@@ -241,7 +241,6 @@ Sprite_Mermaid_Main:
     dw Librarian_OfferTranslation
     dw Librarian_TranslateScroll
     dw Librarian_FinishTranslation
-    dw Librarian_ScrollQuestComplete
 
     LibrarianIdle:
     {
@@ -254,14 +253,17 @@ Sprite_Mermaid_Main:
         RTS
       +
 
-      ; Ah, another scroll!
-      %ShowSolicitedMessage($01A0) : BCC ++
-        INC.w SprAction, X
+      ; If the player has all the maps
+      JSR Librarian_CheckForAllMaps : BCC ++
+        %ShowSolicitedMessage($01A3)
+        RTS
       ++
 
-      JSR Librarian_CheckForAllMaps : BCC +++
+      ; Ah, another scroll!
+      %ShowSolicitedMessage($01A0) : BCC +++
         INC.w SprAction, X
       +++
+
       RTS
     }
 
@@ -308,7 +310,7 @@ Sprite_Mermaid_Main:
       JSL Sprite_PlayerCantPassThrough
       print pc
       %ShowUnconditionalMessage($01A1)
-      
+
       ; If there are no scrolls yet
       LDA.l Scrolls : AND #$01 : BNE .NotMushroomGrotto
         LDA.l DNGMAP2 : AND #%00000010 : BEQ .NotMushroomGrotto
@@ -364,7 +366,7 @@ Sprite_Mermaid_Main:
     {
       %PlayAnimation(0,1,16)
 
-      PHX 
+      PHX
       LDY.b #$01
       LDA.w SprMiscG, X
       ASL A : TAX
@@ -390,14 +392,6 @@ Sprite_Mermaid_Main:
     {
       %PlayAnimation(0,1,16)
       %ShowUnconditionalMessage($01A2)
-      STZ.w SprAction, X
-      RTS
-    }
-
-    Librarian_ScrollQuestComplete:
-    {
-      %PlayAnimation(0,1,16)
-      %ShowUnconditionalMessage($01A3)
       STZ.w SprAction, X
       RTS
     }
