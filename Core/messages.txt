@@ -1410,10 +1410,11 @@ Tingle, Tingle, Koolo-Limpah!
 [3][K]
 [V]The path through the swamps
 [V]is something only a Deku could
-[V]navigate comfortably[...]
+[V]navigate comfortably[...][K]
 [V] How does 75 rupees sound?
 [V]    > Sounds good
 [V]       I'll take my chances[CH2I]
+
 
 # 193
 Tingle, Tingle, Koolo-Limpah!

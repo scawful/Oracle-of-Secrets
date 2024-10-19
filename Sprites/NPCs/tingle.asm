@@ -114,7 +114,6 @@ Sprite_Tingle_Main:
   {
     %PlayAnimation(0,0,10)
     LDA $1CE8 : BNE .said_no
-        print "> ", pc
       REP #$20
       LDA.l TingleMaps : ASL : TAY
       LDA.l $7EF360 : CMP.w .cost, Y
