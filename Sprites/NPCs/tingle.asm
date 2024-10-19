@@ -53,7 +53,6 @@ Sprite_Tingle_Prep:
 Sprite_Tingle_Main:
 {
   JSL Sprite_PlayerCantPassThrough
-
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -62,6 +61,7 @@ Sprite_Tingle_Main:
   dw Tingle_Left
   dw Tingle_MapPrompt
   dw Tingle_MapSales
+  dw Tingle_PlayerSaidNo
 
   Tingle_Forward:
   {
@@ -69,10 +69,10 @@ Sprite_Tingle_Main:
     JSR Sprite_Tingle_TrackPlayer
 
     %ShowSolicitedMessage($018D) : BCC +
-      LDA.b #$03 : STA.w SprAction, X
+      %GotoAction(3)
     +
     RTS
-  }
+}
 
   Tingle_Right:
   {
@@ -91,13 +91,18 @@ Sprite_Tingle_Main:
   Tingle_MapPrompt:
   {
     %PlayAnimation(0,0,10)
-    LDA.l TingleMaps : ASL : TAX
-    LDY.b #$01
-    LDA.w .message_ids, X
-    JSL Sprite_ShowMessageUnconditional
-    INC.w SprAction, X
+    LDA $1CE8 : BNE .said_no
+      PHX
+      LDA.l TingleMaps : ASL : TAX
+      LDY.b #$01
+      LDA.w .message_ids, X
+      JSL Sprite_ShowMessageUnconditional
+      PLX
+      %GotoAction(4)
+      RTS
+    .said_no
+    %GotoAction(5)
     RTS
-
     .message_ids
     dw $0191
     dw $0192
@@ -126,9 +131,9 @@ Sprite_Tingle_Main:
         RTS
       .not_enough_rupees
       %ShowSolicitedMessage($018F) ; Not enough rupees
+      RTS
     .said_no
-    LDA.b #$10 : STA.w SprTimerA, X
-    STZ.w SprAction, X
+    %GotoAction(5)
     RTS
 
     .cost
@@ -140,6 +145,14 @@ Sprite_Tingle_Main:
     dw 60
     dw 120   
   }
+
+  Tingle_PlayerSaidNo:
+  {
+    %ShowUnconditionalMessage($0198)
+    STZ.w SprAction, X
+    RTS
+  }
+
 }
 
 Sprite_Tingle_TrackPlayer:
