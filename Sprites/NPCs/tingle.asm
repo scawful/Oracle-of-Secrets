@@ -67,10 +67,6 @@ Sprite_Tingle_Main:
   {
     %PlayAnimation(0,0,10)
     JSR Sprite_Tingle_TrackPlayer
-
-    %ShowSolicitedMessage($018D) : BCC +
-      %GotoAction(3)
-    +
     RTS
 }
 
@@ -118,14 +114,19 @@ Sprite_Tingle_Main:
   {
     %PlayAnimation(0,0,10)
     LDA $1CE8 : BNE .said_no
+        print "> ", pc
       REP #$20
-      LDA.l $7EF360 : CMP.w #$64
+      LDA.l TingleMaps : ASL : TAY
+      LDA.l $7EF360 : CMP.w .cost, Y
       SEP #$30
       BCC .not_enough_rupees
         REP #$20
-        LDA.l $7EF360 : SEC : SBC.w #$64
+        LDA.l $7EF360 : SEC : SBC.w .cost, Y
         STA.l $7EF360
         SEP #$30
+        LDA.l TingleMaps
+        ORA.w .dungeon, Y
+        STA.l TingleMaps
         %ShowUnconditionalMessage($018E) ; Purchased
         STZ.w SprAction, X
         RTS
@@ -143,7 +144,15 @@ Sprite_Tingle_Main:
     dw 80
     dw 90
     dw 60
-    dw 120   
+    dw 120
+    .dungeon
+    db 01
+    db 02
+    db 04
+    db 08
+    db 16
+    db 32
+    db 64
   }
 
   Tingle_PlayerSaidNo:
@@ -152,11 +161,14 @@ Sprite_Tingle_Main:
     STZ.w SprAction, X
     RTS
   }
-
 }
 
 Sprite_Tingle_TrackPlayer:
 {
+  %ShowSolicitedMessage($018D) : BCC +
+    %GotoAction(3)
+    RTS
+  +
   JSL Sprite_IsBelowPlayer : TYA : BEQ .below
     JSL Sprite_IsToRightOfPlayer : TYA : BNE .right
       LDA.b #$02 : STA.w SprAction, X
