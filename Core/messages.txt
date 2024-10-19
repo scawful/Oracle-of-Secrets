@@ -1364,8 +1364,9 @@ Tingle, Tingle, Koolo-Limpah!
 [V]Tingle has traveled far and
 [V]wide across Kalyxo to chart
 [V]the unknown! For a small fee,[K]
-[V]of course[...] Rupees make the
-[V]world spin, don't they?
+[V]of course[...]
+[V]    > What do you have?
+[V]       I'm okay.[CH2I]
 
 # 18E - Tingle Purchased Map
 Ah, a wise choice!
@@ -1476,3 +1477,12 @@ Tingle, Tingle, Koolo-Limpah!
 [V] How does 120 rupees sound?
 [V]    > Sounds good
 [V]       I'll take my chances[CH2I]
+
+# 198 - Tingle Player Said No
+Ah, well that's too bad.
+[2]Come back if you're interested
+[3]in Tingle's maps![K]
+[V]Tingle, Tingle! Kooloo-Limpah!
+[V][...]These are the magic words
+[V]that Tingle created himself.[K]
+[V]Don't steal them!
