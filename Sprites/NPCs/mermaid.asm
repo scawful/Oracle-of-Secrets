@@ -245,12 +245,23 @@ Sprite_Mermaid_Main:
     {
       %PlayAnimation(0,1,16)
       JSL Sprite_PlayerCantPassThrough
-      %ShowSolicitedMessage($012E) : BCC ++
+
+      ; If the player has no maps
+      JSR Librarian_CheckForNoMaps : BCC +
+        %ShowSolicitedMessage($012E)
+        RTS
+      +
+
+      ; Ah, another scroll!
+      %ShowSolicitedMessage($01A0) : BCC ++
         INC.w SprAction, X
       ++
-      JSR Librarian_CheckForAllMaps : BCC +
+
+      JSR Librarian_CheckForAllMaps : BCC +++
         INC.w SprAction, X
-      +
+      +++
+      RTS
+    }
       RTS
     }
 
@@ -373,6 +384,18 @@ Librarian_CheckForAllMaps:
   CLC
   RTS
   .all_maps
+  SEC
+  RTS
+}
+
+Librarian_CheckForNoMaps:
+{
+  LDA.l DNGMAP1 : CMP.b #$00 : BNE .not_no_maps
+  LDA.l DNGMAP2 : CMP.b #$00 : BEQ .no_maps
+  .not_no_maps
+  CLC
+  RTS
+  .no_maps
   SEC
   RTS
 }
