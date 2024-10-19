@@ -67,6 +67,8 @@ Sprite_Zora_Main:
 
   Zora_Forward:
   {
+    %PlayAnimation(0,0,10)
+    %ShowSolicitedMessage($01A4)
     RTS
   }
 

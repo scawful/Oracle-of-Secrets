@@ -1589,3 +1589,11 @@ The scroll has been translated.
 It seems you've collected all
 [2]the scrolls in the land of
 [3]Kalyxo! You truly are the hero.
+
+# 1A4 - Sea Zora NPC
+The princess[...] taken from us!
+[2]We should have seen it coming.
+[3]The River Zoras grow bolder[K]
+[V]each day. Now, they've stolen
+[V]our most precious treasure!
+[V]Who will protect us now?
