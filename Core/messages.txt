@@ -1487,3 +1487,75 @@ Ah, well that's too bad.
 [V][...]These are the magic words
 [V]that Tingle created himself.[K]
 [V]Don't steal them!
+
+# 199 - Librarian Mushroom Grotto
+The mushroom is no mere
+[2]growth of the earth.
+[3]Steeped in ancient magic, it[K]
+[V]brings forth what is hidden.
+[V]In its powder lies the power
+[V]to reveal true forms, secrets[K]
+[V]long concealed by nature.
+
+# 19A - Librarian Tail Palace
+The winds once carried those
+[2]who soared with feather and
+[3]leaf, unhindered by the earth.[K]
+[V]But with the rise of darkness,
+[V]the sky turned against them.
+[V]Now, only those who embrace[K]
+[V]the sky's gifts may ride the
+[V]currents of freedom.
+
+# 19B - Librarian Kalyxo Castle
+A blade born in shadow, the
+[2]Meadow Blade once shone in
+[3]the hands of a hero.[K]
+[V]But darkness clung to its
+[V]edge, and the hero was lost.
+[V]Now, the blade waits, buried[K]
+[V]beneath the weight of forgotten
+[V]ambitions.
+
+# 19C - Librarian Zora Temple
+From crystal and water, the
+[2]Zora crafted wonders that
+[3]pierced the veil of realms.[K]
+[V]Their works opened paths to
+[V]places unseen, but at great
+[V]cost.[K]
+[V]What flows through the water
+[V]may lead to salvation[...] or
+[V]ruin.
+
+# 19D - Librarian Glacia Estate
+The halls of Glacia once echoed
+[2]with warmth and wealth, yet
+[3]ice filled their hearts.[K]
+[V]In their greed, they were drawn
+[V]to powers that froze them from
+[V]within.[K]
+[V]Now, their legacy is but cold
+[V]stone, a prison for those
+[V]who sought too much.
+
+# 19E - Librarian Goron Mines
+The earth sings of power,
+[2]buried deep in its veins.
+[3]Crystals, forged in the ancient[K]
+[V]fires, hold the keys to realms
+[V]beyond. But power comes at a
+[V]price, for the goddesses[K]
+[V]scattered their gifts across
+[V]the land, hidden from mortals.
+
+# 19F - Librarian Kydrogs Ship
+A hero once sailed the seas,
+[2]but fate turned him to ruin,
+[3]deep in the meadows[...][K]
+[V]From noble heart to cursed
+[V]captain, Kydrog now rides
+[V]the waves of the Abyss.[K]
+[V]In his quest to defy the gods,
+[V]he seeks not glory, but a
+[V]return to what was lost.
