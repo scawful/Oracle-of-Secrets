@@ -3,6 +3,7 @@
 Sprite_Zora_Long:
 {
   PHB : PHK : PLB
+  print "Sea Zora NPC Handler", pc
   ; Check what Zora we are drawing
   REP #$30
   LDA.w ROOM : CMP.w #$0105 : BNE .not_princess
@@ -11,14 +12,16 @@ Sprite_Zora_Long:
     LDA.b #$01 : STA.w SprMiscG, X      
     JMP +
   .not_princess
-  SEP #$30
-  LDA.w WORLDFLAG : BNE .eon_draw
+  LDA.w WORLDFLAG : AND.w #$00FF : BEQ .eon_draw
+    SEP #$30
     JSR Sprite_EonZora_Draw
     LDA.b #$02 : STA.w SprMiscG, X
     JMP +
   .eon_draw
+  SEP #$30
   LDA.w SprSubtype, X : BNE .special_zora
     JSR Sprite_Zora_Draw
+    JSL Sprite_DrawShadow
     STZ.w SprMiscG, X
     JMP +
   .special_zora
