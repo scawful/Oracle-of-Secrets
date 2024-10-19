@@ -238,23 +238,128 @@ Sprite_Mermaid_Main:
 
     dw LibrarianIdle
     dw Librarian_OfferTranslation
+    dw Librarian_TranslateScroll
+    dw Librarian_FinishTranslation
 
     LibrarianIdle:
     {
       %PlayAnimation(0,1,16)
       JSL Sprite_PlayerCantPassThrough
-      %ShowSolicitedMessage($012E)
+      %ShowSolicitedMessage($012E) : BCC ++
+        INC.w SprAction, X
+      ++
       JSR Librarian_CheckForAllMaps : BCC +
         INC.w SprAction, X
       +
       RTS
     }
 
+    ; Bitfields for ownership of various dungeon items
+    ;   SET 2        SET 1
+    ; xced aspm    wihb tg..
+    ;   c - Hyrule Castle
+    ;   x - Sewers
+    ;   a - Agahnim's Tower
+    ;
+    ;   e - Eastern Palace
+    ;   d - Desert Palace
+    ;   h - Tower of Hera
+    ;
+    ;   p - Palace of Darkness (Mushroom Grotto)
+    ;   s - Swamp Palace (Tail Palace)
+    ;   w - Skull Woods  (Kalyxo Castle)
+    ;   b - Thieves' Town (Zora Temple)
+    ;   i - Ice Palace (Glacia Estate)
+    ;   m - Misery Mire (Goron Mines)
+    ;   t - Turtle Rock (Dragon Ship)
+    ;   g - Ganon's Tower
     Librarian_OfferTranslation:
     {
       %PlayAnimation(0,1,16)
       JSL Sprite_PlayerCantPassThrough
-      %ShowSolicitedMessage($012C)
+      print pc
+      ; If there are no scrolls yet
+      LDA.l Scrolls : AND #$01 : BNE .NotMushroomGrotto
+        LDA.l DNGMAP2 : AND #%00000010 : BEQ .NotMushroomGrotto
+          LDA.l Scrolls : ORA #$01 : STA.l Scrolls
+          LDA.b #$01 : STA.w SprMiscG, X
+          JMP +
+      .NotMushroomGrotto
+      LDA.l Scrolls : AND #$02 : BNE .NotTailPalace
+        LDA.l DNGMAP2 : AND #%00000100 : BEQ .NotTailPalace
+          LDA.l Scrolls : ORA #$02 : STA.l Scrolls
+          LDA.b #$02 : STA.w SprMiscG, X
+          JMP +
+      .NotTailPalace
+      LDA.l Scrolls : AND #$04 : BNE .NotKalyxoCastle
+        LDA.l DNGMAP1 : AND #%10000000 : BEQ .NotKalyxoCastle
+          LDA.l Scrolls : ORA #$04 : STA.l Scrolls
+          LDA.b #$03 : STA.w SprMiscG, X
+          JMP +
+      .NotKalyxoCastle
+      LDA.l Scrolls : AND #$08 : BNE .NotZoraTemple
+        LDA.l DNGMAP1 : AND #%00010000 : BEQ .NotZoraTemple
+          LDA.l Scrolls : ORA #$08 : STA.l Scrolls
+          LDA.b #$04 : STA.w SprMiscG, X
+          JMP +
+      .NotZoraTemple
+      LDA.l Scrolls : AND #$10 : BNE .NotIcePalace
+        LDA.l DNGMAP1 : AND #%01000000 : BEQ .NotIcePalace
+          LDA.l Scrolls : ORA #$10 : STA.l Scrolls
+          LDA.b #$05 : STA.w SprMiscG, X
+          JMP +
+      .NotIcePalace
+      LDA.l Scrolls : AND #$20 : BNE .NotGoronMines
+        LDA.l DNGMAP2 : AND #%00000001 : BEQ .NotGoronMines
+          LDA.l Scrolls : ORA #$20 : STA.l Scrolls
+          LDA.b #$06 : STA.w SprMiscG, X
+          JMP +
+      .NotGoronMines
+      LDA.l Scrolls : AND #$40 : BNE .NotDragonShip
+        LDA.l DNGMAP1 : AND #%00001000 : BEQ .NotDragonShip
+          LDA.l Scrolls : ORA #$40 : STA.l Scrolls
+          LDA.b #$07 : STA.w SprMiscG, X
+          JMP +
+      .NotDragonShip
+      STZ.w SprAction, X
+      RTS
+      +
+
+      INC.w SprAction, X      
+      RTS
+    }
+
+    Librarian_TranslateScroll:
+    {
+      %PlayAnimation(0,1,16)
+
+      PHX 
+      LDY.b #$01
+      LDA.w SprMiscG, X
+      ASL A : TAX
+      LDA.w .scroll_messages, X
+      JSL Sprite_ShowMessageUnconditional
+      PLX
+
+      INC.w SprAction, X
+
+      RTS
+
+      .scroll_messages
+        dw $0199
+        dw $019A
+        dw $019B
+        dw $019C
+        dw $019D
+        dw $019E
+        dw $019F
+    }
+
+    Librarian_FinishTranslation:
+    {
+      %PlayAnimation(0,1,16)
+      %ShowUnconditionalMessage($01A2)
+      STZ.w SprAction, X
       RTS
     }
   }
