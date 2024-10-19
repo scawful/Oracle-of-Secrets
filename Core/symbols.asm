@@ -75,6 +75,15 @@ DekuSticks = $7EF395
 
 TingleMaps = $7EF396
 
+; .dgi zktm
+;   m - Mushroom Grotto
+;   t - Tail Palace
+;   k - Kalyxo Castle
+;   z - Zora Temple
+;   i - Glacia Estate
+;   g - Goron Mines
+;   d - Dragon Ship
+Scrolls    = $7EF398
 
 ; .dgi zktm
 ;   m - Mushroom Grotto
