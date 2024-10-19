@@ -307,47 +307,49 @@ Sprite_Mermaid_Main:
       %PlayAnimation(0,1,16)
       JSL Sprite_PlayerCantPassThrough
       print pc
+      %ShowUnconditionalMessage($01A1)
+      
       ; If there are no scrolls yet
       LDA.l Scrolls : AND #$01 : BNE .NotMushroomGrotto
         LDA.l DNGMAP2 : AND #%00000010 : BEQ .NotMushroomGrotto
           LDA.l Scrolls : ORA #$01 : STA.l Scrolls
-          LDA.b #$01 : STA.w SprMiscG, X
+          STZ.w SprMiscG, X
           JMP +
       .NotMushroomGrotto
       LDA.l Scrolls : AND #$02 : BNE .NotTailPalace
         LDA.l DNGMAP2 : AND #%00000100 : BEQ .NotTailPalace
           LDA.l Scrolls : ORA #$02 : STA.l Scrolls
-          LDA.b #$02 : STA.w SprMiscG, X
+          LDA.b #$01 : STA.w SprMiscG, X
           JMP +
       .NotTailPalace
       LDA.l Scrolls : AND #$04 : BNE .NotKalyxoCastle
         LDA.l DNGMAP1 : AND #%10000000 : BEQ .NotKalyxoCastle
           LDA.l Scrolls : ORA #$04 : STA.l Scrolls
-          LDA.b #$03 : STA.w SprMiscG, X
+          LDA.b #$02 : STA.w SprMiscG, X
           JMP +
       .NotKalyxoCastle
       LDA.l Scrolls : AND #$08 : BNE .NotZoraTemple
         LDA.l DNGMAP1 : AND #%00010000 : BEQ .NotZoraTemple
           LDA.l Scrolls : ORA #$08 : STA.l Scrolls
-          LDA.b #$04 : STA.w SprMiscG, X
+          LDA.b #$03 : STA.w SprMiscG, X
           JMP +
       .NotZoraTemple
       LDA.l Scrolls : AND #$10 : BNE .NotIcePalace
         LDA.l DNGMAP1 : AND #%01000000 : BEQ .NotIcePalace
           LDA.l Scrolls : ORA #$10 : STA.l Scrolls
-          LDA.b #$05 : STA.w SprMiscG, X
+          LDA.b #$04 : STA.w SprMiscG, X
           JMP +
       .NotIcePalace
       LDA.l Scrolls : AND #$20 : BNE .NotGoronMines
         LDA.l DNGMAP2 : AND #%00000001 : BEQ .NotGoronMines
           LDA.l Scrolls : ORA #$20 : STA.l Scrolls
-          LDA.b #$06 : STA.w SprMiscG, X
+          LDA.b #$05 : STA.w SprMiscG, X
           JMP +
       .NotGoronMines
       LDA.l Scrolls : AND #$40 : BNE .NotDragonShip
         LDA.l DNGMAP1 : AND #%00001000 : BEQ .NotDragonShip
           LDA.l Scrolls : ORA #$40 : STA.l Scrolls
-          LDA.b #$07 : STA.w SprMiscG, X
+          LDA.b #$06 : STA.w SprMiscG, X
           JMP +
       .NotDragonShip
       STZ.w SprAction, X
@@ -388,6 +390,14 @@ Sprite_Mermaid_Main:
     {
       %PlayAnimation(0,1,16)
       %ShowUnconditionalMessage($01A2)
+      STZ.w SprAction, X
+      RTS
+    }
+
+    Librarian_ScrollQuestComplete:
+    {
+      %PlayAnimation(0,1,16)
+      %ShowUnconditionalMessage($01A3)
       STZ.w SprAction, X
       RTS
     }
