@@ -1514,8 +1514,8 @@ A blade born in shadow, the
 [V]But darkness clung to its
 [V]edge, and the hero was lost.
 [V]Now, the blade waits, buried[K]
-[V]beneath the weight of forgotten
-[V]ambitions.
+[V]beneath the weight of
+[V]forgotten ambitions.
 
 # 19C - Librarian Zora Temple
 From crystal and water, the
