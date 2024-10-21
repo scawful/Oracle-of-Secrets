@@ -63,9 +63,9 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 2) Mask Salesman teaches Song of Healing
 3) Play Song of Healing for Deku NPC near the shop for Deku Mask
 
-*** TODO Tail Palace Kiki Quest [0/2]
+*** TODO Tail Palace Kiki Quest [1/2]
 1) [ ] Kiki asks for Bananas instead of Rupees
-2) [ ] Deku NPCs inhabit Tail Palace OW after dungeon completion
+2) [X] Deku NPCs inhabit Tail Palace OW after dungeon completion
 
 *** Book of Secrets
 1) Play Song of Healing for sick village child for Running Boots
@@ -82,14 +82,13 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 **** TODO Sea and River Zora Conflict
 - [ ] Meet lone Sea Zora left at the Sanctuary, learn of Zora Princess
 - [ ] Conflict over territory lead to Zora Princesses imprisonment
-  Twinrova is involved somehow? Perhaps the dream sequence explains.
 
 **** TODO Waterfall Song of Storms Event
 
 *** Old Man Mountain Quest
 1) Take the warp portal at the northwest most point on Mount Snowpeak
 2) Enter the Lava Lands cave to find the Old Man.
-3) Escort the Old Man to a rock formation on the mountain and use your magic mirror.
+3) Escort the Old Man to a rock formation on the mountain and use magic mirror.
 4) Receive the Goldstar before continuing to Glacia Estate
 
 *** TODO Goron Mines Quest [0/4]
@@ -211,20 +210,12 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 *** Castle Variant
 *** TODO Ice Variant
 * Tasks
+** DONE Add Librarian translations
 ** TODO Collectible Item Quests
 *** TODO Golden Fish
 *** TODO Magic Bean
 *** TODO Deku Stick
 *** TODO Honeycomb
-
-** TODO Add Dream Sequences [0/7]
-- [ ] Deku Business Scrub Dream
-- [ ] Twinrova Ranch Girl Dream
-- [ ] Hyrule Castle Dream
-- [ ] Zora King Dream
-- [ ] Kydrog Sealing Dream
-- [ ] Mine Collapse Dream
-- [ ] Final Dream ????
 
 ** TODO Goron Mines Opening Animation [0/2]
 - [ ] Setup Goron Sprite
@@ -233,8 +224,6 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 - [ ] Animate mines opening animation
 
 ** TODO Fix Minecart mechanics
-** TODO Add Librarian translations [0/8]
-
 ** TODO Update Kydrog boss [0/3]
 - [ ] Track offspring sprites spawned, more dynamic spawns
 - [ ] Improve Kydrog movement, add additional stage in fight
@@ -247,7 +236,7 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 ** TODO Fortress of Secrets Opening Cutscene
 Should use the Ganons Tower Crystal Cutscene as the base.
 
-** TODO Add Dungeon Maps [0/8]
+** TODO Add Dungeon Maps [0/11]
 - [ ] Mushroom Grotto
 - [ ] Tail Palace
 - [ ] Kalyxo Castle
@@ -256,6 +245,18 @@ Should use the Ganons Tower Crystal Cutscene as the base.
 - [ ] Goron Mines
 - [ ] Dragon Ship
 - [ ] Fortress of Secrets
+- [ ] Shrine of Wisdom
+- [ ] Shrine of Power
+- [ ] Shrine of Courage
+
+** TODO Add Dream Sequences [0/7]
+- [ ] Deku Business Scrub Dream
+- [ ] Twinrova Ranch Girl Dream
+- [ ] Hyrule Castle Dream
+- [ ] Zora King Dream
+- [ ] Kydrog Sealing Dream
+- [ ] Mine Collapse Dream
+- [ ] Final Dream ????
 
 ** TODO End Credits
 
