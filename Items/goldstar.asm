@@ -1014,8 +1014,12 @@ CheckForSwitchToGoldstar:
 
 Goldstar_GetDragged:
 {
+  LDA.w GoldstarOrHookshot : CMP.b #$02 : BNE +
+    STZ.w $0112
+    STZ.w $037E
+    RTL
+  +
   JSL LinkHop_FindArbitraryLandingSpot
-  STZ.w $0112
   RTL
 }
 
