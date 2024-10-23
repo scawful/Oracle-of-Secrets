@@ -313,6 +313,52 @@ DrawMagicRingNames:
     RTS
 }
 
+Menu_CollectibleNames:
+  dw "BANANAS:________"
+  dw "PINEAPPLES:_____"
+  dw "ROCK_MEAT:______"
+  dw "SEASHELLS:______"
+  dw "HONEYCOMBS:_____"
+  dw "DEKU_STICKS:____"
+
+DrawCollectibleNamesAndCount:
+{
+  REP #$30
+  LDA.w $020B : ASL #5 : TAX : LDY.w #$0000
+
+  .draw_loop
+    LDA.w Menu_CollectibleNames, X : STA.w $1692, Y
+    INX #2 : INY #2
+  CPY #$001C : BCC .draw_loop
+  SEP #$30
+  ; Draw the number of each collectible
+  LDA.w $020B : CMP.b #$01 : BEQ .pineapples
+                CMP.b #$02 : BEQ .rock_meat
+                CMP.b #$03 : BEQ .seashells
+                CMP.b #$04 : BEQ .honeycomb
+                CMP.b #$05 : BEQ .deku_sticks
+    LDA.l Bananas : JMP .draw
+  .pineapples
+  LDA.l Pineapples : JMP .draw
+  .rock_meat
+  LDA.l RockMeat : JMP .draw
+  .seashells
+  LDA.l Seashells : JMP .draw
+  .honeycomb
+  LDA.l Honeycomb : JMP .draw
+  .deku_sticks
+  LDA.l DekuSticks
+  .draw
+  ASL #2 : TAX
+  REP #$30
+  LDA.w TimeLabels, X : STA.w $1692+$18
+  INX : INX
+  LDA.w TimeLabels, X : STA.w $1692+$1A
+
+  SEP #$30
+  RTS
+}
+
 DrawGoldstarName: 
 {
     REP #$30
