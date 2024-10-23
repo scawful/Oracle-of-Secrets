@@ -381,7 +381,15 @@ UpdateFluteSong_Long:
 
     .right ; R Button Pressed - Increment song
     INC $030F
-    LDA $030F : CMP.b #$05 : BCS .wrap_to_min
+    LDA $7EF34C : CMP.b #$02 : BEQ .max_2
+                  CMP.b #$03 : BEQ .max_3
+      LDA $030F : CMP.b #$05 : BCS .wrap_to_min
+      RTL
+    .max_2
+    LDA $030F : CMP.b #$03 : BCS .wrap_to_min
+      RTL
+    .max_3
+    LDA $030F : CMP.b #$04 : BCS .wrap_to_min
     .update_song
       RTL
 
