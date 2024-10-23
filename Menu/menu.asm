@@ -530,14 +530,15 @@ Menu_SongMenu:
   JSR Menu_DrawMusicNotes
 
   INC $0207
-  LDA.w CurrentSong : BEQ .continue
+  LDA.w CurrentSong : BEQ +
   ASL : TAY
   LDA.b $F4
   LSR : BCS .move_right
   LSR : BCS .move_left
   LSR : BCS .move_down
   LSR : BCS .move_up
-  BRA .continue
+  +
+  JMP .continue
 
   .move_right
   .move_up
@@ -547,8 +548,20 @@ Menu_SongMenu:
     LDA.w CurrentSong : CMP.b #$04 : BEQ .reset
       INC.w CurrentSong
       LDA.w CurrentSong
-      CMP.b #$04
-      BCS .wrap_to_min
+      PHA
+      LDA $7EF34C : CMP.b #$01 : BEQ .max_1
+                    CMP.b #$02 : BEQ .max_2
+                    CMP.b #$03 : BEQ .max_3
+        PLA
+        CMP.b #$05 : BCS .wrap_to_min
+        JMP .continue
+      .max_1
+      PLA : CMP.b #$02 : BCS .wrap_to_min
+      .max_2
+      PLA : CMP.b #$03 : BCS .wrap_to_min
+      JMP .continue
+      .max_3
+      PLA : CMP.b #$04 : BCS .wrap_to_min
       JMP .continue
       .wrap_to_max
       LDA $7EF34C : CMP.b #$01 : BEQ .wrap_to_min
