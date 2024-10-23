@@ -61,6 +61,11 @@ Sprite_Zora_Handler:
 
 Sprite_Zora_Main:
 {
+  JSR Zora_TrackHeadToPlayer
+  JSL Sprite_PlayerCantPassThrough
+
+  %ShowSolicitedMessage($01A4)
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -71,14 +76,30 @@ Sprite_Zora_Main:
   Zora_Forward:
   {
     %PlayAnimation(0,0,10)
-    %ShowSolicitedMessage($01A4)
     RTS
   }
 
   Zora_Right:
+  {
+    %PlayAnimation(1,1,10)
     RTS
+  }
+
   Zora_Left:
+  {
+    %PlayAnimation(1,1,10)
     RTS
+  }
+}
+
+Zora_TrackHeadToPlayer:
+{
+  JSL Sprite_IsToRightOfPlayer : TAY : BEQ .right
+    LDA.b #$00 : STA.w SprAction, X
+    RTS
+  .right
+  LDA.b #$01 : STA.w SprAction, X
+  RTS
 }
 
 Sprite_Zora_Draw:
