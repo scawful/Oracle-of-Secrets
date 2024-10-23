@@ -63,7 +63,7 @@ Sprite_BeanVendor_Prep:
   RTL
 
   .RanchFlower
-  LDA.b #$08 : STA.w SprAction, X
+  LDA.b #$05 : STA.w SprAction, X
   PLB
   RTL
 }
@@ -86,9 +86,7 @@ Sprite_BeanVendor_Main:
   BeanVendor:
   {
     %PlayAnimation(0,0,1)
-
     JSL Sprite_PlayerCantPassThrough
-
     %ShowSolicitedMessage($142) : BCC .no_message
       %GotoAction(3)
     .no_message
@@ -210,6 +208,7 @@ Sprite_BeanVendor_Main:
   MagicBean_RanchFlower:
   {
     LDA.b #$04 : STA.w SprFrame, X
+    JSL ThrownSprite_TileAndSpriteInteraction_long 
     RTS
   }
 }
