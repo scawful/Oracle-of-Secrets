@@ -481,23 +481,29 @@ Menu_MagicBag:
 
   .move_up
   .move_right
-    LDA.w $020B : CMP.b #$03 : BCS .zero
+    REP #$30
+    LDX.w Menu_MagicBagCursorPositions-2, Y
+    JSR Menu_DeleteCursor_AltEntry
     INC.w $020B
+    LDA.w $020B : CMP.b #$06 : BCS .zero
     BRA .continue
 
   .move_down
   .move_left
+    REP #$30
+    LDX.w Menu_MagicBagCursorPositions-2, Y
+    JSR Menu_DeleteCursor_AltEntry
     LDA.w $020B : CMP.b #$00 : BEQ .continue
     DEC.w $020B
     BRA .continue
-
   .zero
   STZ.w $020B
   .continue
+  JSR DrawCollectibleNamesAndCount
   LDA.w $020B
   ASL : TAY
   REP #$10
-  LDX.w Menu_MagicBagCursorPositions-2, Y
+  LDX.w Menu_MagicBagCursorPositions, Y
   JSR Menu_DrawCursor
   JSR Submenu_Return
 
