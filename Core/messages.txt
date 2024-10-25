@@ -1597,3 +1597,23 @@ The princess[...] taken from us!
 [V]each day. Now, they've stolen
 [V]our most precious treasure!
 [V]Who will protect us now?
+
+# 1A5 - Sea Zora Flipper Hint
+You can’t swim, can you? It's
+[2]no surprise[...] the waters here
+[3]are treacherous.[K]
+[V]But I've heard whispers of the
+[V]Abyss[...] in that dark place, the
+[V]flippers are said to be hidden.[K]
+[V]If you could find them, perhaps
+[V]the waters would no longer
+[V]hold you back.
+
+# 1A6 - Sea Zora Post Temple
+The princess may be gone from
+[2]this world, but her spirit has
+[3]found new life in you.[K]
+[V]The Zora Mask carries her
+[V]voice, her wisdom[...] and a
+[V]piece of our hearts.[K]
+[V]Protect it well, brave one.
