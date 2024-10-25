@@ -62,6 +62,26 @@ namespace Oracle
   incsrc "Core/message.asm"
 
   ; -------------------------------------------------------
+  ; Music
+
+  print "  -- Music --  "
+  print ""
+
+  incsrc "Music/lost_woods_v2.asm"
+  print  "End of Music/lost_woods_v2.asm    ", pc
+
+  incsrc "Music/color_dungeon_theme.asm"
+  print  "End of color_dungeon_theme.asm    ", pc
+
+  incsrc "Music/deku_theme.asm"
+  print  "End of Music/deku_theme.asm       ", pc
+
+  incsrc "Music/song_of_healing.asm"
+  print  "End of Music/song_of_healing.asm  ", pc
+
+  print ""
+
+  ; -------------------------------------------------------
   ; Overworld
 
   print "  -- Overworld --  "
@@ -78,26 +98,6 @@ namespace Oracle
   print ""
 
   incsrc "Dungeons/dungeons.asm"
-
-  print ""
-
-  ; -------------------------------------------------------
-  ; Music
-
-  print "  -- Music --  "
-  print ""
-
-  incsrc "Music/lost_woods_v2.asm"
-  print  "End of Music/lost_woods_v2.asm    ", pc
-
-  incsrc "Music/color_dungeon_theme.asm"
-  print  "End of color_dungeon_theme.asm    ", pc
-
-  incsrc "Music/deku_theme.asm"
-  print  "End of Music/deku_theme.asm        ", pc
-
-  incsrc "Music/song_of_healing.asm"
-  print  "End of Music/song_of_healing.asm  ", pc
 
   print ""
 
