@@ -1679,7 +1679,6 @@ NewOverworld_FinishTransGfx:
     RTL
 }
 
-print "CheckForChangeGraphicsTransitionLoad: ", pc
 CheckForChangeGraphicsTransitionLoad:
 {
     ; Are we currently in a mosaic?
@@ -2247,7 +2246,7 @@ InitColorLoad2:
     LDA.w Pool_BGColorTable, X ; Get the color.
 
     .storeColor
-
+    JSL Oracle_BackgroundFix
     STA.l $7EC300 : STA.l $7EC340 ; Set transparent color.
     ;STA.l $7EC500 : STA.l $7EC540
 
@@ -2678,7 +2677,7 @@ AnimateMirrorWarp_DecompressBackgroundsCLongCalls:
     LDA.w Pool_OWGFXGroupTable_sheet7, X : CMP.b #$FF : BNE .notFF7
         LDA.w Pool_DefaultGFXGroups_sheet7, Y
     .notFF7
-    STA.b $08 : STA AnimatedTileGFXSet
+    STA.b $08 : STA.w AnimatedTileGFXSet
 
     LDA.w Pool_OWGFXGroupTable_sheet6, X : CMP.b #$FF : BNE .notFF6
         LDA.w Pool_DefaultGFXGroups_sheet6, Y
