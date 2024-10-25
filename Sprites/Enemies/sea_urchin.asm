@@ -48,7 +48,7 @@ Sprite_SeaUrchin_Prep:
 {
   PHB : PHK : PLB
   LDA #$01 : STA.w SprPrize, X
-  LDA WORLDFLAG : BEQ +
+  LDA.w WORLDFLAG : BEQ +
     ; Eon Sea Urchin impervious to sword
     LDA.b #%10000100 : STA.w SprDefl, X
     LDA.b #$07 : STA.w SprPrize, X

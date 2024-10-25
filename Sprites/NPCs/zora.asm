@@ -3,7 +3,7 @@
 Sprite_Zora_Long:
 {
   PHB : PHK : PLB
-  print "Sea Zora NPC Handler", pc
+
   ; Check what Zora we are drawing
   REP #$30
   LDA.w ROOM : CMP.w #$0105 : BNE .not_princess

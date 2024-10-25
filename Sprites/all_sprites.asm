@@ -226,10 +226,10 @@ print  "End of kydreeok_head.asm          ",  pc
 ; =========================================================
 
 incsrc "Sprites/NPCs/bug_net_kid.asm"
-print "End of bug_net_kid.asm            ", pc
+print  "End of bug_net_kid.asm            ", pc
 
 incsrc "Sprites/Bosses/king_dodongo.asm"
-print  "End of king_dodongo.asm          ", pc
+print  "End of king_dodongo.asm           ", pc
 
 incsrc "Sprites/Bosses/arrghus.asm"
 print  "End of arrghus.asm                ", pc
