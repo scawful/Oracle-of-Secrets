@@ -76,6 +76,10 @@ org $1BCCD4
 JSL TailPalace_EntranceAnimation
 RTS
 
+org $1BCE28
+JSL Goron_EntranceAnimation
+RTS
+
 pullpc
 
 ; Zarby Notes
@@ -1027,3 +1031,135 @@ TailPalace_EntranceAnimation:
   }
 }
 
+Goron_EntranceAnimation:
+{
+  LDA.b $B0 ; Get animation state
+  ASL A
+  TAX ; x2
+  JSR.w (.AnimationFrames, X)
+
+  RTL
+  .AnimationFrames
+  dw Goron_Frame0
+  dw Goron_Frame1
+  dw Goron_Frame2
+  dw Goron_Frame3
+  dw Goron_Frame4
+
+  Goron_Frame0:
+  LDA.b $C8 : BEQ .doInit ; Load the timer
+  JMP .notfirstframe
+  .doInit
+  ; Init code for the frame here
+  REP #$30 ; 16 bit mode
+  LDA.w #$0789
+  LDX.w #$10A2
+  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  SEP #$30 ; 8 bit mode
+  INC.b $14 ; Do tiles transfer
+  LDA.b #$16 :  STA.w $012F
+  .notfirstframe
+  JSR ShakeScreen ; make the screen shake
+  INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+  BNE .wait
+  INC.b $B0 ; increase frame
+  STZ.b $C8 ; reset timer for next frame
+  .wait
+  RTS
+  Goron_Frame1:
+  LDA.b $C8 : BEQ .doInit ; Load the timer
+  JMP .notfirstframe
+  .doInit
+  ; Init code for the frame here
+  REP #$30 ; 16 bit mode
+  LDA.w #$09C1
+  LDX.w #$109C
+  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  SEP #$30 ; 8 bit mode
+  INC.b $14 ; Do tiles transfer
+  .notfirstframe
+  JSR ShakeScreen ; make the screen shake
+  INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+  BNE .wait
+  INC.b $B0 ; increase frame
+  STZ.b $C8 ; reset timer for next frame
+  .wait
+  RTS
+  Goron_Frame2:
+  LDA.b $C8 : BEQ .doInit ; Load the timer
+  JMP .notfirstframe
+  .doInit
+  ; Init code for the frame here
+  REP #$30 ; 16 bit mode
+  LDA.w #$09C1
+  LDX.w #$1024
+  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  LDA.w #$078A
+  LDX.w #$101E
+  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  SEP #$30 ; 8 bit mode
+  INC.b $14 ; Do tiles transfer
+  LDA.b #$16 :  STA.w $012F
+  .notfirstframe
+  JSR ShakeScreen ; make the screen shake
+  INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+  BNE .wait
+  INC.b $B0 ; increase frame
+  STZ.b $C8 ; reset timer for next frame
+  .wait
+  RTS
+  Goron_Frame3:
+  LDA.b $C8 : BEQ .doInit ; Load the timer
+  JMP .notfirstframe
+  .doInit
+  ; Init code for the frame here
+  REP #$30 ; 16 bit mode
+  LDA.w #$0791
+  LDX.w #$0FA2
+  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  LDA.w #$0797
+  LDX.w #$0F9E
+  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  SEP #$30 ; 8 bit mode
+  INC.b $14 ; Do tiles transfer
+  .notfirstframe
+  INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+  BNE .wait
+  INC.b $B0 ; increase frame
+  STZ.b $C8 ; reset timer for next frame
+  .wait
+  RTS
+  Goron_Frame4:
+  LDA.b $C8 : BEQ .doInit ; Load the timer
+  JMP .notfirstframe
+  .doInit
+  ; Init code for the frame here
+  REP #$30 ; 16 bit mode
+  LDA.w #$0787
+  LDX.w #$0FA0
+  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  SEP #$30 ; 8 bit mode
+  INC.b $14 ; Do tiles transfer
+  LDA.b #$1B :  STA.w $012F
+  .notfirstframe
+  JSR ShakeScreen ; make the screen shake
+  INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+  BNE .wait
+  INC.b $B0 ; increase frame
+  STZ.b $C8 ; reset timer for next frame
+  STZ.w $04C6
+  STZ.b $B0
+  STZ.w $0710
+  STZ.w $02E4
+  STZ.w $0FC1
+  STZ.w $011A
+  STZ.w $011B
+  STZ.w $011C
+  STZ.w $011D
+  LDX.b $8A
+  LDA.l $7EF280,X
+  ORA.b #$20
+  STA.l $7EF280,X
+  .wait
+  RTS
+}
