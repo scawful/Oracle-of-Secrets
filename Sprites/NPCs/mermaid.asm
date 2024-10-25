@@ -308,7 +308,6 @@ Sprite_Mermaid_Main:
     {
       %PlayAnimation(0,1,16)
       JSL Sprite_PlayerCantPassThrough
-      print pc
       %ShowUnconditionalMessage($01A1)
 
       ; If there are no scrolls yet

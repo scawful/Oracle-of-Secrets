@@ -424,7 +424,7 @@ Sprite_39_ZoraBaby:
     RTS
   }
 }
-print "End of Sprite 39 Locksmith          ", pc
+print "End of Sprite 39 Locksmith        ", pc
 assert pc() <= $06BD9C
 
 pullpc
