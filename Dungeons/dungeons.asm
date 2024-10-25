@@ -1,3 +1,5 @@
+; Dungeons
+
 incsrc "Dungeons/keyblock.asm"
 print  "End of keyblock.asm               ", pc
 
@@ -13,6 +15,7 @@ org $028BE7
 ; TODO: Investigate if this is the best way to fix this.
 ; Module06_UnderworldLoad
 org $028364
+Module06_UnderworldLoad:
 {
   LDA.b #$00 ; Fixed color RGB: #808000
   STA.b $9C
@@ -45,7 +48,6 @@ incsrc "Dungeons/custom_tag.asm"
 
 ; Tag: Holes0
 incsrc "Dungeons/floor_puzzle.asm"
-print "End of floor_puzzle.asm           ", pc
 
 incsrc "Dungeons/spike_subtype.asm"
 
@@ -78,6 +80,36 @@ TransferDungeonMapGfx:
     incbin dungeon_maps.bin
 }
 
+CheckForTingleMaps:
+{
+  LDA.w $040C : CMP.b #$0C : BEQ .check_mush
+                CMP.b #$0A : BEQ .check_tail
+                CMP.b #$10 : BEQ .check_castle
+                CMP.b #$16 : BEQ .check_zora
+                CMP.b #$12 : BEQ .check_glacia
+                CMP.b #$0E : BEQ .check_goron
+                CMP.b #$18 : BEQ .check_ship
+                JMP +
+  .check_mush
+    LDA.l TingleMaps : AND.b #$01 : RTL
+  .check_tail
+    LDA.l TingleMaps : AND.b #$02 : RTL
+  .check_castle
+    LDA.l TingleMaps : AND.b #$04 : RTL
+  .check_zora
+    LDA.l TingleMaps : AND.b #$08 : RTL
+  .check_glacia
+    LDA.l TingleMaps : AND.b #$10 : RTL
+  .check_goron
+    LDA.l TingleMaps : AND.b #$20 : RTL
+  .check_ship
+    LDA.l TingleMaps : AND.b #$40 : RTL
+  +
+  LDA.w $040C
+  CMP.b #$FF
+  RTL
+}
+
 NewWaterOverlayData:
 ; Horizontal
 db $1B, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 06, 28 } | Size: 0D
@@ -95,6 +127,9 @@ db $FF, $FF ; End
 print "End of dungeons.asm               ", pc
 
 pushpc
+
+org $0288FF
+  JSL CheckForTingleMaps : NOP
 
 ; Transfer Dungeon Map Graphics
 ; Module0E_03_01_00_PrepMapGraphics
