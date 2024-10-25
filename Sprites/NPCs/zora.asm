@@ -64,7 +64,7 @@ Sprite_Zora_Main:
   JSR Zora_TrackHeadToPlayer
   JSL Sprite_PlayerCantPassThrough
 
-  %ShowSolicitedMessage($01A4)
+  JSR Zora_HandleDialogue
 
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
@@ -99,6 +99,21 @@ Zora_TrackHeadToPlayer:
     RTS
   .right
   LDA.b #$01 : STA.w SprAction, X
+  RTS
+}
+
+Zora_HandleDialogue:
+{
+  LDA.l CRYSTALS : AND.b #$20 : BEQ +++
+    %ShowSolicitedMessage($01A6)
+    JMP ++
+  +++
+  LDA.w SprAction, X : BEQ +
+    %ShowSolicitedMessage($01A5)
+    JMP ++
+  +
+  %ShowSolicitedMessage($01A4)
+  ++
   RTS
 }
 
