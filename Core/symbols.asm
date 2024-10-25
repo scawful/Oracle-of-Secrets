@@ -85,6 +85,8 @@ TingleMaps = $7EF396
 ;   d - Dragon Ship
 Scrolls    = $7EF398
 
+PrevScroll = $7EF39A
+
 ; .dgi zktm
 ;   m - Mushroom Grotto
 ;   t - Tail Palace
