@@ -1617,3 +1617,33 @@ The princess may be gone from
 [V]voice, her wisdom[...] and a
 [V]piece of our hearts.[K]
 [V]Protect it well, brave one.
+
+# 1A7 - Goron Mines
+Hey, traveler! These mines
+[2]are sealed tight. Without Rock
+[3]Sirloins, I don’t have the[K]
+[V]strength to break through!
+[V]We Gorons need that hearty
+[V]meat to fuel us[...][K]
+[V]nothing else packs the punch!
+[V]Bring me five, and I'll open
+[V]the way for you!
+
+# 1A8 - Goron Mines not Enough
+Hmm[...] this is a start, but I
+[2]need five Rock Sirloins to
+[3]get the job done![K]
+[V]Keep searching, friend! Those
+[V]rocks aren't going to budge
+[V]on their own!
+
+# 1A9 - Goron Mines Five Collected
+Ah! Now that's what I'm talkin'
+[2]about! Five Rock Sirloins!
+[3]This is really it![K]
+[V]With this, I've got all the
+[V]strength I need to crack these
+[V]mines open![K]
+[V]Stand back, friend[...]these
+[V]stones are about to feel the
+[V]might of a true Goron!
