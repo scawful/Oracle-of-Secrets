@@ -273,10 +273,11 @@ Sprite_Mermaid_Main:
       LDA $1CE8 : BEQ .translate
                   CMP.b #$01 : BNE .finish
         ; Check for previous translation
-        LDA.l Scrolls : BEQ .translate ; The first one has no previous
-        STA.w SprMiscG, X
-        %GotoAction(3)
-        RTS
+        LDA.l Scrolls : BEQ .finish
+          LDA.l PrevScroll
+          STA.w SprMiscG, X
+          %GotoAction(3)
+          RTS
       .translate
       INC.w SprAction, X
       RTS
@@ -368,6 +369,7 @@ Sprite_Mermaid_Main:
       PHX
       LDY.b #$01
       LDA.w SprMiscG, X
+      STA.l PrevScroll
       ASL A : TAX
       LDA.w .scroll_messages, X
       JSL Sprite_ShowMessageUnconditional
