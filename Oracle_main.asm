@@ -20,9 +20,11 @@
 ;   3A  - Mask Routines, Custom Ancillae (Deku Bubble)
 ;   3B  - GBC Link Gfx
 ;   3C  - Unused
-;   3D  - LW World Map
-;   3E  - DW World Map
-;   3F  - Unused
+;   3D  - ZS Tile16
+;   3E  - LW ZS Tile32
+;   3F  - DW ZS Tile32
+;   40  - LW World Map
+;   41  - DW World Map
 
 ; Mushroom Grotto ID 0x0C (Palace of Darkness)
 ; Tail Palace ID 0x0A (Swamp Palace)

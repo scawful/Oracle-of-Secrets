@@ -454,14 +454,14 @@ org $00E399
 org $008FF3
   RTS ; do nothing during DW update, we'll handle it in the LW routine
 
-org $3D8000
+org $408000
   LWWorldMap_Tiles:
     incbin world_map/LwMapTileset.bin
 
   LWWorldMap_Gfx:
     incbin world_map/LwMapGfx.bin
 
-org $3E8000
+org $418000
   DWWorldMap_Tiles:
     incbin world_map/DwMapTileset.bin
 
