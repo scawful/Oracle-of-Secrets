@@ -349,12 +349,11 @@ DrawCollectibleNamesAndCount:
   .deku_sticks
   LDA.l DekuSticks
   .draw
-  ASL #2 : TAX
+  TAX
   REP #$30
   LDA.w TimeLabels, X : STA.w $1692+$18
   INX : INX
   LDA.w TimeLabels, X : STA.w $1692+$1A
-
   SEP #$30
   RTS
 }
