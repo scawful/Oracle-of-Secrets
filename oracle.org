@@ -279,3 +279,24 @@ ZS reserves everything up to 1.5mb or up to 0x150000
 | 0x148000 - 0x14FFFF | Expanded dungeon object data |
 |                     |                              |
 
+* Credits
+Zarby89 - ZScream, Code, Graphics
+Jared Brian - Shrine of Power, ZScream, Code
+Jeimuzu - Shrine of Wisdom, Tail Palace
+Letterbomb - Shrine of Courage, Music, Graphics
+NEONswift - Legends of Hyrule Maps
+
+SePH - Overworld, Graphics
+Ghillie - Overworld, Graphics
+
+DarkLink45 - Deku Link GFX
+
+W*E*R*D*N*A - Graphics
+GameyFireBro - Graphics
+Fruttielicious - Beta Testing
+LEGO_Vince - Beta Testing
+Spacewiki - Beta Testing
+Evolvingfetus - Beta Testing
+Discodragn - Beta Testing
+BIGLOU - Beta Testing
+HonorThyFamily - Beta Testing
