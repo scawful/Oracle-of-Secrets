@@ -300,6 +300,18 @@ SprBulletproof = $0BA0
 SprRoom      = $0C9A ;X W Contains the area or room id the sprite has been loaded in
 SprDrop      = $0CBA ;X W 00: Drop nothing, 01: drop normal key, 03: Drop green rupee, OtherValues: Drop big key
 
+; Overlord
+
+OverlordId   = $0B00
+OverlordX    = $0B08
+OverlordXH   = $0B10
+OverlordY    = $0B18
+OverlordYH   = $0B20
+
+OverlordTimerA = $0B28
+OverlordTimerB = $0B30
+OverlordTimerC = $0B38
+
 ; =========================================================
 
 ; The record format for the low table is 4 bytes:
@@ -470,6 +482,7 @@ Sound_SetSfx3PanLong = $0DBB8A
 ; $06 high x (overlord), $07 low y (overlord)
 ; $08 high y (overlord)
 Sprite_SpawnDynamically = $1DF65D
+Sprite_SpawnDynamically_slot_limited = $1DF65F
 
 Sprite_SetSpawnedCoords = $09AE64
 Sprite_SetSpawnedCoordinates = $09AE64
