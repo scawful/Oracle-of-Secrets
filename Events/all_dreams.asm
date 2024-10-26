@@ -88,7 +88,11 @@ Link_FallIntoDungeon:
 
   RTS
   .entrance
-  db $78, $79, $01
+  db $78 ; 0x00 - Deku Dream
+  db $79 ; 0x01 - Castle Dream 
+  db $7A ; 0x02 -
+  db $81 ; 0x03
 }
+
 
 print "End of all_dreams.asm             ", pc
