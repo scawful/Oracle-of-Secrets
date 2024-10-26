@@ -258,4 +258,24 @@ Should use the Ganons Tower Crystal Cutscene as the base.
 - [ ] Final Dream ????
 
 ** TODO End Credits
+* ROM Map
+Expanded space used by ZScream as of 1/16/2024
+
+Addresses are PC unless stated otherwise.
+
+ZS reserves everything up to 1.5mb or up to 0x150000
+
+| Location            | Contents                     |
+|---------------------+------------------------------|
+| 0x100000 - 0x107FFF | Nothing?                     |
+| 0x108000 - 0x10FFFF | Title Screen, Dungeon Map    |
+| 0x110000 - 0x117FFF | Default room header location |
+| 0x118000 - 0x11FFFF | Unknown                      |
+| 0x120000 - 0x127FFF | Expanded overlay data        |
+| 0x128000 - 0x12FFFF | Custom collision data        |
+| 0x130000 - 0x137FFF | Overworld map data overflow  |
+| 0x138000 - 0x13FFFF | Expanded dungeon object data |
+| 0x140000 - 0x147FFF | Custom overworld data        |
+| 0x148000 - 0x14FFFF | Expanded dungeon object data |
+|                     |                              |
 
