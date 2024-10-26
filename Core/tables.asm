@@ -145,7 +145,7 @@ Link_ControlHandler:
   LinkState_Zapped                   ; 0x07
   LinkState_UsingEther               ; 0x08
   LinkState_UsingBombos              ; 0x09
-  LinkState_UsingQuake               ; 0x0A
+  LinkState_UsingQuake               ; 0x0A - DekuHover
   LinkState_HoppingSouthOW           ; 0x0B
   LinkState_HoppingHorizontallyOW    ; 0x0C
   LinkState_HoppingDiagonallyUpOW    ; 0x0D
