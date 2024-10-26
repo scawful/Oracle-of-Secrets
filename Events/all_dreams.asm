@@ -94,5 +94,24 @@ Link_FallIntoDungeon:
   db $81 ; 0x03
 }
 
+SummonGuards:
+{
+  LDA.l SWORD : CMP.b #$02 : BNE +
+  +
+  RTL
+}
+
+
+pushpc
+
+org $09B7BE
+  dw Overlord_KalyxoCastleGuards
+
+org $09F253
+Overlord_KalyxoCastleGuards:
+  JSL SummonGuards
+  RTS
+
+pullpc
 
 print "End of all_dreams.asm             ", pc
