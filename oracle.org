@@ -79,9 +79,10 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 2) [ ] Ambushed by castle guards and locked away in castle prison
 
 *** TODO Zora Sanctuary
-**** TODO Sea and River Zora Conflict
-- [ ] Meet lone Sea Zora left at the Sanctuary, learn of Zora Princess
-- [ ] Conflict over territory lead to Zora Princesses imprisonment
+**** ACTIVE Sea and River Zora Conflict
+- [X] Meet lone Sea Zora left at the Sanctuary, learn of Zora Princess
+- [X] Conflict over territory lead to Zora Princesses imprisonment
+- [ ] Restore River Zora King NPC ?
 
 **** TODO Waterfall Song of Storms Event
 
@@ -91,12 +92,11 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 3) Escort the Old Man to a rock formation on the mountain and use magic mirror.
 4) Receive the Goldstar before continuing to Glacia Estate
 
-*** TODO Goron Mines Quest [0/4]
-1) [ ] Collectible Goron Rock Meat from Lupo Mountain
+*** TODO Goron Mines Quest [2/4]
+1) [X] Collectible Goron Rock Meat from Lupo Mountain
    - Eon Gorons workers protesting labor, Piratians involved somehow
    - Requires Power Glove from Shrine of Power
-2) [ ] Kalyxian Goron NPC in the desert asks for five sirloins to open the mines.
-   His brother is asleep as a rolled up Goron blocking the mines.
+2) [X] Kalyxian Goron NPC in the desert asks for five sirloins to open the mines.
 3) [ ] Garo NPC easter egg warps around the map
 4) [ ] Gossip Stones provide some hint related to the Shrines?
 
@@ -211,19 +211,18 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 *** TODO Ice Variant
 * Tasks
 ** DONE Add Librarian translations
+** DONE Goron Mines Opening Animation [2/2]
+- [X] Setup Goron Sprite
+  - [X] Kalyxian Variant
+  - [X] Eon Abyss Variant
+- [X] Animate mines opening animation
+
+** TODO Fix Minecart mechanics
 ** TODO Collectible Item Quests
 *** TODO Golden Fish
 *** TODO Magic Bean
 *** TODO Deku Stick
 *** TODO Honeycomb
-
-** TODO Goron Mines Opening Animation [0/2]
-- [ ] Setup Goron Sprite
-  - [ ] Kalyxian Variant
-  - [ ] Eon Abyss Variant
-- [ ] Animate mines opening animation
-
-** TODO Fix Minecart mechanics
 ** TODO Update Kydrog boss [0/3]
 - [ ] Track offspring sprites spawned, more dynamic spawns
 - [ ] Improve Kydrog movement, add additional stage in fight
@@ -232,9 +231,6 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 ** TODO Update Kydreeok boss [0/2]
 - [ ] Improve fireball attack
 - [ ] Improve head/neck rotation
-
-** TODO Fortress of Secrets Opening Cutscene
-Should use the Ganons Tower Crystal Cutscene as the base.
 
 ** TODO Add Dungeon Maps [0/11]
 - [ ] Mushroom Grotto
@@ -248,6 +244,9 @@ Should use the Ganons Tower Crystal Cutscene as the base.
 - [ ] Shrine of Wisdom
 - [ ] Shrine of Power
 - [ ] Shrine of Courage
+
+** TODO Fortress of Secrets Opening Cutscene
+Should use the Ganons Tower Crystal Cutscene as the base.
 
 ** TODO Add Dream Sequences [0/7]
 - [ ] Deku Business Scrub Dream
