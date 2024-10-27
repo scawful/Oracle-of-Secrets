@@ -68,7 +68,7 @@ Sprite_Tingle_Main:
     %PlayAnimation(0,0,10)
     JSR Sprite_Tingle_TrackPlayer
     RTS
-}
+  }
 
   Tingle_Right:
   {
@@ -130,7 +130,8 @@ Sprite_Tingle_Main:
         STZ.w SprAction, X
         RTS
       .not_enough_rupees
-      %ShowSolicitedMessage($018F) ; Not enough rupees
+      %ShowUnconditionalMessage($018F) ; Not enough rupees
+      STZ.w SprAction, X
       RTS
     .said_no
     %GotoAction(5)
