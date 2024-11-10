@@ -1,6 +1,6 @@
 ; =========================================================
 ; Minish Form Link
-; 
+;
 ; Reacts to Tile ID 64 to transform into Minish Link
 ; =========================================================
 
@@ -41,7 +41,7 @@ LinkState_CheckForMinishForm:
 
   ; Check if the value in A (from $0202) is GTE to $16.
   CMP.b #$17 : BCS .continue
-  
+
   LDA.b #$3C : STA.w $012E ; Error beep
   JMP .return
 
@@ -54,7 +54,7 @@ LinkState_CheckForMinishForm:
   .transform
   %PlayerTransform()
 
-  LDA #$39 : STA $BC   ; Change link's sprite 
+  LDA #$39 : STA $BC   ; Change link's sprite
   LDA #$05 : STA $02B2 ; Set the current mask form
   BRA .return
 
@@ -63,7 +63,7 @@ LinkState_CheckForMinishForm:
   %ResetToLinkGraphics()
 
 .return
-  
+
   REP #$30
   RTS
 }
@@ -74,7 +74,7 @@ LinkState_CheckMinishTile:
 {
     LDA $02B2 : BEQ .blocked ; no form
       CMP.w #$0007 : BEQ .allowed  ; moosh can fly over
-      CMP.w #$0005 : BNE .blocked  ; not minish 
+      CMP.w #$0005 : BNE .blocked  ; not minish
       .allowed
         LDA $0A : TSB $0343
         RTS

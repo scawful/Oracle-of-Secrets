@@ -1,4 +1,3 @@
-
 org $01C742
   JSL Ancilla_SpawnFallingPrize
 
@@ -49,18 +48,18 @@ Lanmola_DrawDirt:
     LDA $0D40, X : ASL A : ROL A : ASL A : EOR $0D80, X : AND.b #$02 : BEQ .nu
         LDA.b #$08 : JSL OAM_AllocateFromRegionB
         BRA .xi
-        
+
     .nu
         LDA.b #$08 : JSL OAM_AllocateFromRegionC
-        
+
     .xi
-        
+
     LDY.b #$00
-            
+
     LDA $0E00, X : LSR #2 : AND.b #$03 : EOR.b #$03 : ASL A : STA $06
-            
+
     LDA $0DC0, X : XBA
-    LDA $0DE0, X 
+    LDA $0DE0, X
     REP #$20 : SEC : SBC $E2 : STA $00 : SEP #$20
 
     STZ $37
@@ -72,14 +71,14 @@ Lanmola_DrawDirt:
     LDA $0EB0, X : XBA
     LDA $0E70, X
     REP #$20 : SEC : SBC $E8 : STA $02 : SEP #$20
-            
+
     PHX
-            
+
     LDX.b #$01
-        
+
     .dirtLoop
         PHX
-                
+
         TXA : CLC : ADC $06 : ASL : TAX
 
         REP #$20
@@ -104,7 +103,7 @@ Lanmola_DrawDirt:
         BCC .on_screen_y
             .out_of_bounds3
             SEP #$20
-            LDA.b #$F0 : STA ($90), Y 
+            LDA.b #$F0 : STA ($90), Y
 
         .on_screen_y
 
@@ -112,19 +111,19 @@ Lanmola_DrawDirt:
 
         LDA $7EEA84, X : INY : STA ($90), Y ;dirt chr ;.chrDirt
         LDA $7EEA8C, X : INY : STA ($90), Y ;dirt properties ;.propertiesDirt
-                
+
         PHY
-                
+
         TYA : LSR #2 : TAY
-                
+
         LDA $7EEA94, X : ORA $37 : ORA $36 : STA ($92), Y ;.sizesDirt
-                
+
         PLY : INY
-            
+
     PLX : DEX : BPL .dirtLoop
-            
+
     PLX
-    
+
     RTS
 }
 
@@ -153,7 +152,7 @@ Sprite_Lanmola_Init_Data:
 
     INX : CPX.b #$B8 : BCC .loop
 
-    PLX  
+    PLX
 
     RTS
 
@@ -175,7 +174,7 @@ Sprite_Lanmola_Init_Data:
 
     ;$7EEA18
     .chrTail
-    db $CC, $E4, $CA, $E6, $C8, $E6, $CA, $E4, $CC, $E4, $CA, $E6, $C8, $E6, $CA, $E4 
+    db $CC, $E4, $CA, $E6, $C8, $E6, $CA, $E4, $CC, $E4, $CA, $E6, $C8, $E6, $CA, $E4
 
     ;$7EEA28
     .propertiesBody
@@ -207,7 +206,7 @@ Sprite_Lanmola_Init_Data:
     .chrMound
     db $EE, $EE, $EC, $EC, $CE, $CE
     ;db $EE, $EE, $EC, $EC, $CE, $CE
-    
+
     ;$7EEA4E
     .propertiesMound
     ; db $39, $79, $39, $79, $39, $79
@@ -228,14 +227,14 @@ Sprite_Lanmola_Init_Data:
     .yDirt
     dw $0000, $0000, $FFFF, $FFFF, $FFFF, $FFFF, $0003, $0003
     ;db $00, $00, $FF, $FF, $FF, $FF, $03, $03
-        
+
     ;$7EEA84
     .chrDirt
     db $E8, $E8, $E8, $E8, $EA, $EA, $EA, $EA
-        
+
     ;$7EEA8C
     .propertiesDirt
-    db $39, $79, $39, $79, $39, $79, $39, $79 
+    db $39, $79, $39, $79, $39, $79, $39, $79
     ;db $00, $40, $00, $40, $00, $40, $00, $40
 
     ;$7EEA94
@@ -256,7 +255,7 @@ Sprite_Lanmola_Init_Data:
 
     ;$7EEAA8
     .randXPos
-    db $58, $50, $60, $70, $80, $90, $A0, $98  
+    db $58, $50, $60, $70, $80, $90, $A0, $98
 
     ;$7EEAB0
     .randYPos
@@ -281,16 +280,16 @@ Lanmola_MoveSegment:
     SEP #$20
 
     PLX
-        
+
     LDA $0D40, X : SEC : SBC $0F80, X : STA $00
     LDA $0D50, X                      : STA $01
     JSL Sprite_ConvertVelocityToAngle : STA $0F
-        
+
     LDA $7EEA00, X : STA $04 ;.sprite_regions
-        
+
     PHX
-        
-    ; Store the current position, angle, and hieght of the sprite 
+
+    ; Store the current position, angle, and hieght of the sprite
     ; so that we can set the other segments to them later.
     LDA.w SprXH, X : PHA ;high x
     LDA.w SprYH, X : PHA ;high y
@@ -299,11 +298,11 @@ Lanmola_MoveSegment:
 
     LDA $0F70, X : PHA ;height
     LDA $0F      : PHA ;angle
-        
+
     LDA $0E80, X : STA $02 : STA $05
-        
+
     CLC : ADC $04 : TAX
-        
+
     PLA : STA $7FFF00, X ;angle
     PLA : STA $7FFE00, X ;height
 
@@ -311,9 +310,9 @@ Lanmola_MoveSegment:
     PLA : STA $7FFC00, X ;lower x
     PLA : STA $7EE900, X ;high y
     PLA : STA $7EE800, X ;high x
-        
+
     PLX
-        
+
     LDA $0DD0, X : CMP.b #$09 : BNE .notActive
         LDA $11 : ORA $0FC1 : BNE .notActive
             LDA $10 : CMP #$0E : BEQ .notActive
@@ -321,7 +320,7 @@ Lanmola_MoveSegment:
                       CMP #$09 : BEQ .notActive ;in medallion cut scene
                       CMP #$0A : BEQ .notActive ;in medallion cut scene
                 LDA $05 : INC A : AND.b #$3F : STA $0E80, X
-    
+
     .notActive
 
     RTL
@@ -335,7 +334,7 @@ SetShrapnelTimer:
 
     JSL GetRandomInt ; replaced code
 
-    RTL       
+    RTL
 }
 
 ; =========================================================

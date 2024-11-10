@@ -34,10 +34,10 @@ LinkItem_FishingRodAndPortalRod:
   JSR LinkItem_PortalRod
   ++
   LDA.b $F6
-  BIT.b #$20 : BNE .left ; pressed left 
+  BIT.b #$20 : BNE .left ; pressed left
   BIT.b #$10 : BNE .right ; pressed right
   RTS
-  
+
   ; Swap the ram variable FishingOrPortalRod based on left or right
   ; 00 = fishing rod, 01 = portal rod
   .left
@@ -65,7 +65,7 @@ LinkItem_FishingRod:
   BIT.b $3A : BVS .holding_y
     LDA.b $6C : BNE FishingRodExit
     JSR CheckYButtonPress : BCC FishingRodExit
-    
+
     LDA.b $67 : AND.b #$F0 : STA.b $67
 
     JSL FishingSwapCaneBlockHammerGfx
@@ -218,7 +218,7 @@ CheckYButtonPress:
   BIT.b $3A : BVS .fail
   LDA.b $46 : BNE .fail
   LDA.b $F4 : AND.b #$40 : BEQ .fail
-    TSB.b $3A 
+    TSB.b $3A
     SEC
     RTS
 
@@ -424,7 +424,7 @@ Sprite_Floater:
   BCS .no_bounce
 
   LDA.w $0E90, X : BNE .not_water_tile_last
-    INC.w $0E90, X 
+    INC.w $0E90, X
     JSL Sprite_CheckTileCollision
     LDA.w $0FA5
     CMP.b #$08 : BEQ .water_tile_last

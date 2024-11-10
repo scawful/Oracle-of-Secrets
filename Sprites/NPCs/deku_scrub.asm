@@ -56,32 +56,28 @@ Sprite_DekuScrub_Prep:
 
   LDA.b #$80 : STA.w SprDefl, X
 
+  ; Peacetime Deku Scrub NPCs
   LDA.b $8A : CMP.b #$2E : BNE .check_next
+    ; Deku Butler
     LDA.b #$07 : STA.w SprAction, X
-    JMP .PlayIntro
+    JMP +
   .check_next
   CMP.b #$2F : BNE .continue
     LDA.b #$08 : STA.w SprAction, X
-    JMP .PlayIntro
+    JMP +
   .continue
 
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .DekuButler
                         CMP.b #$02 : BEQ .DekuPrincess
-
-  LDA.l $7EF301
-  BEQ   .PlayIntro
+  LDA.l $7EF301 : BEQ +
     LDA.b #$04 : STA.w SprAction, X
-  .PlayIntro
-
-  PLB
-  RTL
-
+    JMP +
   .DekuButler
-  LDA.b #$05 : STA.w SprAction, X
-  PLB
-  RTL
+    LDA.b #$05 : STA.w SprAction, X
+    JMP +
   .DekuPrincess
-  LDA.b #$06 : STA.w SprAction, X
+    LDA.b #$06 : STA.w SprAction, X
+  +
   PLB
   RTL
 }

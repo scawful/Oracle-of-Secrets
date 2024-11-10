@@ -9,7 +9,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 01  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 01  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this MaskSalesman (can be 0 to 7)
 !Hitbox             = 02  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -31,7 +31,7 @@
 %Set_Sprite_Properties(Sprite_MaskSalesman_Prep, Sprite_MaskSalesman_Long);
 
 Sprite_MaskSalesman_Long:
-{  
+{
   PHB : PHK : PLB
 
   JSR Sprite_MaskSalesman_Draw ; Call the draw code
@@ -49,7 +49,6 @@ Sprite_MaskSalesman_Long:
 Sprite_MaskSalesman_Prep:
 {
   PHB : PHK : PLB
-    
   PLB
   RTL
 }
@@ -59,7 +58,7 @@ Sprite_MaskSalesman_Main:
   JSL Sprite_PlayerCantPassThrough
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable 
+  JSL UseImplicitRegIndexedLocalJumpTable
 
   dw InquiryHandler
   dw NoOcarina
@@ -75,7 +74,7 @@ Sprite_MaskSalesman_Main:
 
   ; 0x00
   InquiryHandler:
-  {  
+  {
       %PlayAnimation(0, 1, 16)
 
       ; Player has a Lv1 Ocarina, skip to the you got it message
@@ -133,11 +132,11 @@ Sprite_MaskSalesman_Main:
     RTS
   }
 
-  ; 0x03 
+  ; 0x03
   TeachLinkSong:
   {
     LDA #$02 : STA $7EF34C ; Increment the number of songs Link has
-    LDA.b #$13 
+    LDA.b #$13
     STA.w $0CF8
     JSL $0DBB67 ;  Link_CalculateSFXPan
     ORA.w $0CF8
@@ -148,7 +147,7 @@ Sprite_MaskSalesman_Main:
 
   ; 0x04 - Offer Bunny Hood
   OfferBunnyHood:
-  {    
+  {
       %PlayAnimation(0, 1, 16)
 
       %ShowUnconditionalMessage($07F) ; Bunny Hood for 100 rupees?
@@ -158,7 +157,7 @@ Sprite_MaskSalesman_Main:
 
   ; 0x05 - Offer Stone Mask
   OfferStoneMask:
-  {    
+  {
       %PlayAnimation(0, 1, 16)
       %ShowUnconditionalMessage($082) ; Stone Mask for 650 rupees?
       %GotoAction(9)
@@ -208,14 +207,14 @@ Sprite_MaskSalesman_Main:
           SEP #$30
 
           %ShowUnconditionalMessage($063)
-      
+
           %GotoAction(0)
           RTS
 
       .not_enough_rupees
         %GotoAction($0A)
         RTS
-    .player_said_no  
+    .player_said_no
       %GotoAction(6)
       RTS
   }
@@ -251,7 +250,7 @@ Sprite_MaskSalesman_Main:
       .not_enough_rupees
         %GotoAction($0A)
         RTS
-    .player_said_no  
+    .player_said_no
       %GotoAction(6)
       RTS
   }
@@ -266,7 +265,7 @@ Sprite_MaskSalesman_Main:
 }
 
 Sprite_MaskSalesman_Draw:
-{  
+{
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
@@ -280,17 +279,17 @@ Sprite_MaskSalesman_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -307,14 +306,14 @@ Sprite_MaskSalesman_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX
