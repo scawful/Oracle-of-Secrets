@@ -66,9 +66,9 @@ pushpc
 incsrc "Overworld/world_map.asm"
 print "End of world_map.asm              ", pc
 
-pullpc
-incsrc "Overworld/entrances.asm"
-print  "End of Overworld/entrances.asm    ", pc
+;pullpc
+;incsrc "Overworld/entrances.asm"
+;print  "End of Overworld/entrances.asm    ", pc
 
 ; =========================================================
 ; Get Lv2 Sword from chest
@@ -104,7 +104,7 @@ LoadDarkWorldIntro:
   .not_dw_spawn
   LDA.l $7EF3C5 : CMP.b #$02 : BNE .continue
     ; Check for maku tree progress flag
-    LDA.l $7EF3D6 : CMP.b #$02 : BCS .has_pearl 
+    LDA.l $7EF3D6 : CMP.b #$02 : BCS .has_pearl
       STZ.w $1B
       LDA.b #$40 : STA.l $7EF3CA
       RTL
@@ -145,9 +145,9 @@ LoadOverworldPitAreas:
   CLC ; allow transition
   RTL
 }
-pushpc
+;pushpc
 
-incsrc "Overworld/special_areas.asm"
+; incsrc "Overworld/special_areas.asm"
 
 Overworld_GetPitDestination = $1BB860
 

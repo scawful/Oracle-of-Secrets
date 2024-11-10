@@ -25,7 +25,7 @@ org $07866D
 ; 01 - Zora Temple (OW 1E)
 ; 02 - Castle Bridge (OW 1B)
 ; 03 - Tail Palace (OW 2F)
-; 04 - TODO: Goron Mines Entrance
+; 04 - Goron Mines Entrance (OW 36)
 ; 05 - TODO: Fortress of Secrets (OW 5E)
 
 CameraCache = $0632
@@ -89,22 +89,12 @@ pullpc
 ShakeScreen:
 {
   REP #$20
-  LDA.b $1A
-  AND.w #$0001
-  ASL A
-  TAX
-
-  LDA.l $01C961, X
-  STA.w $011A
-
-  LDA.l $01C965, X
-  STA.w $011C
-
-  .exit
+  LDA.b $1A : AND.w #$0001 : ASL A : TAX
+  LDA.l $01C961, X : STA.w $011A
+  LDA.l $01C965, X : STA.w $011C
   SEP #$20
   RTS
 }
-
 
 ; =========================================================
 ; Zora Temple Hidden Waterfall
@@ -129,10 +119,8 @@ ZoraTemple_EntranceAnimation:
   SEP #$20
 
   .do_anim
-  LDA.b $B0 ; Get animation state
-  ASL A
-  TAX ; x2
-
+  ; Get animation state
+  LDA.b $B0 : ASL A : TAX ; x2
   JSR.w (.AnimationFrames, X)
 
   RTL
@@ -654,21 +642,17 @@ ZoraTemple_EntranceAnimation:
 Castle_EntranceAnimation:
 {
   LDA.b $B0 : CMP.b #$04 : BEQ .last_frame
-  REP #$20
-  LDA $0618 : CMP.w #$0630 : BCC +
-    DEC.b $E8 ; Increment camera vertical
-    DEC.w $0618 : DEC.w $0618 
-    DEC.w $061A : DEC.w $061A
-  +
-  SEP #$20
+    REP #$20
+    LDA $0618 : CMP.w #$0630 : BCC +
+      DEC.b $E8 ; Increment camera vertical
+      DEC.w $0618 : DEC.w $0618
+      DEC.w $061A : DEC.w $061A
+    +
+    SEP #$20
   .last_frame
-
-  LDA.b $B0 ; Get animation state
-  ASL A
-  TAX ; x2
-
+  ; Get animation state
+  LDA.b $B0 : ASL A : TAX ; x2
   JSR.w (.AnimationFrames, X)
-
   RTL
 
   .AnimationFrames
@@ -778,10 +762,10 @@ Castle_Frame0:
 
 Castle_Frame1:
 {
-  #_1BCC21: LDA.b #$16 ; SFX3.16
-  #_1BCC23: STA.w $012F
+  LDA.b #$16 ; SFX3.16
+  STA.w $012F
   LDA.b $C8 : BEQ .doInit ; Load the timer
-  JMP .notfirstframe
+    JMP .notfirstframe
   .doInit
   ; Init code for the frame here
   REP #$30 ; 16 bit mode
@@ -935,13 +919,8 @@ Castle_Frame3:
 
 TailPalace_EntranceAnimation:
 {
-
-  LDA.b $B0 ; Get animation state
-  ASL A
-  TAX ; x2
-
+  LDA.b $B0 : ASL A : TAX ; x2
   JSR.w (.AnimationFrames, X)
-
   RTL
 
   .AnimationFrames
@@ -1033,12 +1012,10 @@ TailPalace_EntranceAnimation:
 
 Goron_EntranceAnimation:
 {
-  LDA.b $B0 ; Get animation state
-  ASL A
-  TAX ; x2
+  LDA.b $B0 : ASL A : TAX ; x2
   JSR.w (.AnimationFrames, X)
-
   RTL
+
   .AnimationFrames
   dw Goron_Frame0
   dw Goron_Frame1
