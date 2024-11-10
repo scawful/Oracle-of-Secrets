@@ -170,9 +170,9 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 | Blast Ring     | Higher bomb damage, bombos class |
 | Steadfast Ring | No knockback                     |
 * NPCs
-** Bean Vendor/Village Elder/KaeporaGaebora
+** Bean Vendor/Village Elder
 ** Deku Scrub (Mask)
-** Eon Owl
+** KaeporaGaebora/Eon Owl
 ** Farore
 ** Goron
 ** Impa
@@ -247,7 +247,6 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 
 ** TODO Fortress of Secrets Opening Cutscene
 Should use the Ganons Tower Crystal Cutscene as the base.
-
 ** TODO Add Dream Sequences [0/7]
 - [ ] Deku Business Scrub Dream
 - [ ] Twinrova Ranch Girl Dream
