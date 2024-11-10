@@ -3,8 +3,9 @@
 ; Makes BG2 Disappear when holding L in a building
 ; Based on the Parallel Worlds feature
 ;
-; Layer Flags: xxxsabcd (i count BG from 1 to 4 - MathOnNapkins RAM-Map counts from 0 to 3)
-; s - Sprite layer enabled 
+; Layer Flags: xxxsabcd
+; (i count BG from 1 to 4 - MathOnNapkins RAM-Map counts from 0 to 3)
+; s - Sprite layer enabled
 ; a - BG4 enabled
 ; b - BG3 enabled
 ; c - BG2 enabled
@@ -15,7 +16,7 @@
 ; =========================================================
 ; long subroutine that is executed every frame
 
-org $068365			  
+org $068365
 JSL LinkItem_SecretsBook ; overwrite it (originally JSL $099F91)
 
 ; =========================================================
@@ -33,20 +34,20 @@ LinkItem_SecretsBook:
 
     ; load unfiltered joypad 1 register (AXLR|????)
     ; delete all bits except those for L
-    LDA $F2	: AND #$20 
+    LDA $F2	: AND #$20
 
     ; L button pressed? (if yes, zero flag is set)
     SEC : SBC #$20	: BNE $06	; if not, go to enable BG2
 
       ; load layer flags and disable BG2 (0xFD = 11111101)
       LDA $1C	: AND #$FD : BRA $04 ; go to store layer flags
-    
+
     ; enable BG2 (0x02 = 00000010)
-    LDA $1C	: ORA #$02 : STA $1C				  
+    LDA $1C	: ORA #$02 : STA $1C
     ; ----------
 
-.end
-  JSL $099F91			  ; at least execute original code
+  .end
+  JSL $099F91
   RTL
 }
 

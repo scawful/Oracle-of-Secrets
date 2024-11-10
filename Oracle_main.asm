@@ -33,7 +33,6 @@
 ; Glacia Estate 0x12 (Ice Palace)
 ; Goron Mines 0x0E (Misery Mire)
 ; Dragon Ship 0x18 (Turtle Rock)
-
 ; =========================================================
 
 ; ZSCustomOverworld version
