@@ -89,7 +89,7 @@ LoadFollowerGraphics = $00D423
 ; Uses Sprite 0x39 Locksmith in Bank06
 
 ZoraBaby_RevertToSprite:
-{  
+{
   PHA
 
   LDA.b #$39 : JSL Sprite_SpawnDynamically
@@ -155,7 +155,7 @@ UploadZoraBabyGraphicsPrep:
   JSL $00D423
   LDA.b #$00 : STA.l $7EF3CC
   PLX
-  LDA.b #$02 : STA.w SprAction, X 
+  LDA.b #$02 : STA.w SprAction, X
   LDA.l $7EF3C9
   RTL
 }
@@ -168,9 +168,9 @@ ZoraBaby_CheckForWaterSwitchSprite:
 {
   PHX
 
-  LDX #$10 
+  LDX #$10
   -
-  LDA.w SprType, X 
+  LDA.w SprType, X
   CMP #$21 : BEQ ZoraBaby_CheckForWaterGateSwitch_found_switch
   DEX : BPL -
   ; Water gate switch not found
@@ -184,7 +184,7 @@ ZoraBaby_CheckForWaterGateSwitch:
 {
   PHX
 
-  LDX #$10 
+  LDX #$10
   -
   LDA.w SprType, X : CMP #$04 : BEQ .found_switch
   DEX : BPL -
@@ -222,7 +222,7 @@ ZoraBaby_GlobalBehavior:
     JSR ZoraBaby_CheckForWaterGateSwitch : BCC ++
       ; Face head up towards switch
       LDA.b #$20 : STA.w FollowerHeadOffset
-      ; Set end of switch graphics 
+      ; Set end of switch graphics
       LDA.b #$0D : STA.w SprGfx, Y
       ; Set the water gate tag
       LDA.b #$01 : STA.w $0642
@@ -231,7 +231,7 @@ ZoraBaby_GlobalBehavior:
     ++
 
     JSR ZoraBaby_CheckForWaterSwitchSprite : BCC +
-      ; Set end of switch graphics 
+      ; Set end of switch graphics
       LDA.b #$01 : STA.w SprAction, Y
       ; Goto ZoraBaby_PullSwitch
       LDA.b #$05 : STA.w SprAction, X
@@ -240,7 +240,16 @@ ZoraBaby_GlobalBehavior:
   RTL
 }
 
-pushpc 
+pushpc
+
+org $01F195 ; Replace static LDA
+LDA $0682
+
+org $01F1C9 ; Replace static LDA
+LDA $0682
+
+org $01F3D2 ; do tilemapcollision stuff for the dam
+JML $01F237
 
 ; Make Zora sway like a girl
 org $09AA5E
@@ -314,7 +323,7 @@ Sprite_39_ZoraBaby:
   {
     LDA.b #$07 ; MESSAGE 0107
     LDY.b #$01
-    JSL Sprite_ShowSolicitedMessage 
+    JSL Sprite_ShowSolicitedMessage
 
     LDA.w $0D10, X
     PHA
@@ -432,14 +441,14 @@ pullpc
 ; =========================================================
 ; Old Man Follower Sprite
 
-; Old man sprite wont spawn in his home room 
-; if you have the follower 
+; Old man sprite wont spawn in his home room
+; if you have the follower
 OldMan_ExpandedPrep:
 {
   ; ROOM 00E4
   LDA.l $7EF3CC : CMP.b #$04 : BEQ .not_home
     LDA.b $A0 : CMP.b #$E4 : BNE .not_home
-      CLC 
+      CLC
       RTL
   .not_home
   SEC
@@ -448,7 +457,7 @@ OldMan_ExpandedPrep:
 
 pushpc
 
-; Old man gives link the "shovel" 
+; Old man gives link the "shovel"
 ; Now the goldstar hookshot upgrade
 org $1EE9FF
   LDY.b #$13 ; ITEMGET 1A
@@ -473,7 +482,7 @@ SpritePrep_OldMan:
   .main
   INC.w $0BA0, X
 
-  
+
   ; LDA.b $A0 : CMP.b #$E4 ; ROOM 00E4
   JSL OldMan_ExpandedPrep : BCS .not_home
     LDA.b #$02 : STA.w $0E80, X
@@ -653,7 +662,7 @@ MinecartFollower_Top:
     LDA #$08
     JSL OAM_AllocateFromRegionB
 
-    LDA $02CF : TAY 
+    LDA $02CF : TAY
     LDA .start_index, Y : STA $06
     PHX
     LDX .nbr_of_tiles, Y ; amount of tiles -1
@@ -685,7 +694,7 @@ MinecartFollower_Top:
     INY
     LDA .properties, X : STA ($90), Y
 
-    PHY 
+    PHY
     TYA : LSR #2 : TAY
     LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
     PLY : INY
@@ -728,7 +737,7 @@ MinecartFollower_Bottom:
     JSR FollowerDraw_CalculateOAMCoords
     LDA #$08
     JSL OAM_AllocateFromRegionC
-    LDA $02CF : TAY 
+    LDA $02CF : TAY
     LDA .start_index, Y : STA $06
 
     PHX
@@ -761,7 +770,7 @@ MinecartFollower_Bottom:
     INY
     LDA .properties, X : STA ($90), Y
 
-    PHY 
+    PHY
     TYA : LSR #2 : TAY
     LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
     PLY : INY
@@ -802,7 +811,7 @@ DrawMinecartFollower:
 {
   JSL $099EFC ; Follower_Initialize
 
-  LDX $012B 
+  LDX $012B
   LDA .direction_to_anim, X
   STA $02CF
 
@@ -812,7 +821,7 @@ DrawMinecartFollower:
 
   LDA.b $11 : BNE .dont_spawn
     LDA !LinkInCart : BEQ .dont_spawn
-      LDA.b #$A3 
+      LDA.b #$A3
       JSL Sprite_SpawnDynamically
       TYX
       JSL Sprite_SetSpawnedCoords
@@ -862,12 +871,12 @@ FollowerDraw_CachePosition:
   STZ.b $72
   ; Vanilla game would check some priority and collision
   ; variables based on the follower here and manipulate $72
-  ; if the player was immobile. 
-  
+  ; if the player was immobile.
+
   CLC : ADC $04 : STA $04
   TYA : CLC : ADC $04 : STA $04
   ; -------------------------
-  
+
   REP #$20
   LDA $0FB3 : AND.w #$00FF : ASL A : TAY
   LDA $20 : CMP $00 : BEQ .check_priority_for_region
@@ -884,13 +893,13 @@ FollowerDraw_CachePosition:
   .set_region
 
   PHA
-  
+
   LSR #2 : CLC : ADC.w #$0A20 : STA $92
   PLA    : CLC : ADC.w #$0800 : STA $90
-  
+
   LDA $00 : SEC : SBC $E8 : STA $06
   LDA $02 : SEC : SBC $E2 : STA $08
-  
+
   SEP #$20
 
   LDA.w $02D7
@@ -905,13 +914,13 @@ FollowerDraw_CachePosition:
 
   LDA $02D7 : ASL #2 : STA $05
   TXA : CLC : ADC $05 : TAX
-  
+
   REP #$20
-  
+
   LDA $06 : CLC : ADC.w #$0010 : STA $00
   LDA $08 : STA $02
   STZ $74
-  
+
   SEP #$20
 
   RTS
@@ -931,10 +940,10 @@ CheckForMinecartFollowerDraw:
   PHB : PHK : PLB
   LDA.l $7EF3CC : CMP.b #$0B : BNE .not_minecart
     JSR DrawMinecartFollower
-    
+
   .not_minecart
   ; LDA.b #$10 : STA.b $5E
-  PLB 
+  PLB
   RTL
 }
 
