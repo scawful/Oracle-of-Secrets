@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 01  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 0   ; Unused in this template (can be 0 to 7)
 !Hitbox             = 0   ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -32,7 +32,7 @@
 
 ; =========================================================
 
-%Set_Sprite_Properties(Sprite_Farore_Prep, Sprite_Farore_Long) 
+%Set_Sprite_Properties(Sprite_Farore_Prep, Sprite_Farore_Long)
 
 ; =========================================================
 
@@ -56,13 +56,11 @@ Sprite_Farore_Long:
 Sprite_Farore_Prep:
 {
   PHB : PHK : PLB
-  
-  LDA.b #$80 : STA $0CAA, X ; Don't kill Farore when she goes off screen
 
-  LDA.l $7EF300
-  BEQ .PlayIntro
-    STZ.w $0DD0, X ; Kill the sprite 
-.PlayIntro
+  LDA.b #$80 : STA $0CAA, X ; Don't kill Farore when she goes off screen
+  LDA.l $7EF300 : BEQ .PlayIntro
+    STZ.w $0DD0, X ; Kill the sprite
+  .PlayIntro
 
   PLB
   RTL
@@ -74,7 +72,6 @@ Sprite_Farore_Prep:
 
 WALKSPEED = 14
 STORY_STATE = $B6
-
 
 Sprite_Farore_Main:
 {
@@ -90,22 +87,19 @@ Sprite_Farore_Main:
   dw MakuArea_FaroreFollowPlayer
   dw MakuArea_FaroreWaitForKydrog
 
-
   ; 00
   IntroStart:
   {
     LDA #$01 : STA InCutScene
     LDA $B6 : CMP.b #$01 : BEQ .maku_area
               CMP.b #$02 : BEQ .waiting
-    
-    %GotoAction(1)
-    RTS 
+      %GotoAction(1)
+      RTS
+    .maku_area
+    %GotoAction(6)
+    RTS
 
-  .maku_area
-    %GotoAction(6)    
-    RTS 
-
-  .waiting
+    .waiting
     %GotoAction(7)
     RTS
   }
@@ -115,13 +109,11 @@ Sprite_Farore_Main:
   {
     LDA.w WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
     LDA.b #$08 : STA.b $49 ; Auto-movement north
-    
-    LDA.b $20 ; Link's Y Position
-    CMP.b #$9C ; Y = 6C
-    BCC .linkistoofar
-    %GotoAction(2)
 
-  .linkistoofar
+    ; Link's Y Position - Y = 6C
+    LDA.b $20 : CMP.b #$9C : BCC .linkistoofar
+      %GotoAction(2)
+    .linkistoofar
     %PlayAnimation(6, 6, 8) ; Farore look towards Link
     RTS
   }
@@ -129,27 +121,24 @@ Sprite_Farore_Main:
   ; 02
   MoveLeftTowardsFarore:
   {
-    ; Move Link Left 
+    ; Move Link Left
     LDA.w WALKSPEED : STA.b $57 ; Slow Link down for the cutscene
-    LDA.b #$02 : STA.b $49 
+    LDA.b #$02 : STA.b $49
 
-    LDA.b $22 ; Link's X position 
-    CMP.b #$1A
-    BCS .linkistoofar
-
-    STZ.b $49 ; kill automove
-    LDA.b #$20
-    STA.w SprTimerA, X ; set timer A to 0x10
-    %PlayAnimation(0, 0, 8)
-    %GotoAction(3)
-
-  .linkistoofar
+    ; Link's X position
+    LDA.b $22 : CMP.b #$1A : BCS .linkistoofar
+      STZ.b $49 ; kill automove
+      LDA.b #$20
+      STA.w SprTimerA, X ; set timer A to 0x10
+      %PlayAnimation(0, 0, 8)
+      %GotoAction(3)
+    .linkistoofar
     RTS
   }
 
   ; 03
   WaitAndMessage:
-  { 
+  {
     %PlayAnimation(1, 2, 8)
     LDA.b #$15
     JSL Sprite_ApplySpeedTowardsPlayer
@@ -159,7 +148,7 @@ Sprite_Farore_Main:
     STZ $2F
     LDA #$00 : STA InCutScene
     %ShowUnconditionalMessage($0E) ; "I am Farore, the Oracle of Secrets."
-    
+
     %GotoAction(4)
   +
     RTS
@@ -189,7 +178,7 @@ Sprite_Farore_Main:
 
     LDA #$02 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
     LDA #$05 : STA $012D ; turn off rain sound
-    LDA #$01 : STA $B6 ; Set Story State 
+    LDA #$01 : STA $B6 ; Set Story State
     JSL Sprite_LoadGfxProperties
 
     %GotoAction(6)
@@ -213,7 +202,7 @@ Sprite_Farore_Main:
   }
 
   ; 07
-  ; Look at the RAM SprY to $0D60, the first few are the actual positions of the sprite 
+  ; Look at the RAM SprY to $0D60, the first few are the actual positions of the sprite
   ; that you can just set manually or $0D40 and $0D50 are the "speeds" of the sprites irrc
   ; You can set one of the speeds and then call the function called Sprite_Move
   ; And then that will handle it applying the speed for you
@@ -242,17 +231,17 @@ Sprite_Farore_Draw:
 .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -269,14 +258,14 @@ Sprite_Farore_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX

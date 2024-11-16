@@ -101,7 +101,7 @@ Module09_Overworld:
   Module09_MirrorWarp                    ; 0x2C
   Module09_2D_WaitForBird                ; 0x2D
   Module09_2E_Whirlpool                  ; 0x2E
-  Module09_2F   
+  Module09_2F
 
 
 Module07_Underworld:
@@ -249,23 +249,23 @@ STA.w $0AAE ; PALSPR2
 
 ; PALBG
 ; 0x00 - Kalyxo Castle
-; 0x01 - Blue 
+; 0x01 - Blue
 ; 0x02 - House
-; 0x03 - Green 
+; 0x03 - Green
 ; 0x04 - Glacia Estate Ice
 ; 0x05 - Zora Temple
 ; 0x06 - Tail Palace Pink
 ; 0x07 - Goron Mines Cave Red
 ; 0x08 - Mushroom Grotto Gray
-; 0x09 
+; 0x09
 ; 0x0A (10) - Ranch Pink
 ; 0x0B (11) - Another green
 ; 0x0C - Goron Mines Cave Red
 ; 0x0D
 ; 0x0E
 ; 0x0F
-; 0x10 - 
-; 0x (19) - 
+; 0x10 -
+; 0x (19) -
 
 UnderworldPaletteSets:
 db $00, $00, $03, $01 ; 0x00
@@ -277,7 +277,7 @@ db $04, $04, $03, $0A ; 0x05 House
 db $0C, $05, $08, $14 ; 0x06 Tail Palace
 db $0E, $00, $03, $0A ; 0x07 Goron Mines/Caves
 db $02, $00, $0F, $14 ; 0x08 Castle Basement
-db $0A, $02, $00, $07 ; 0x09 
+db $0A, $02, $00, $07 ; 0x09
 db $02, $00, $0F, $0C ; 0x0A
 db $06, $00, $06, $07 ; 0x0B
 db $00, $00, $0E, $12 ; 0x0C Kalyxo Castle
@@ -291,7 +291,7 @@ db $08, $00, $04, $0C ; 0x13 Glacia Estate
 db $08, $00, $04, $09 ; 0x14
 db $04, $00, $03, $01 ; 0x15 House
 db $14, $00, $04, $04 ; 0x16
-db $14, $00, $14, $0C ; 0x17 
+db $14, $00, $14, $0C ; 0x17
 db $18, $05, $07, $0B ; 0x18 Lava Lands Cave/Turtle Rock
 db $18, $06, $10, $0C ; 0x19
 db $1A, $05, $08, $14 ; 0x1A Dragon Ship
@@ -300,7 +300,7 @@ db $06, $00, $03, $0A ; 0x1C
 db $1C, $00, $03, $01 ; 0x1D
 db $1E, $00, $0B, $11 ; 0x1E Swordsmith
 db $04, $00, $0B, $11 ; 0x1F
-db $0E, $00, $00, $02 ; 0x20 
+db $0E, $00, $00, $02 ; 0x20
 db $20, $08, $13, $0D ; 0x21 Ganondorf Boss
 db $0A, $00, $03, $0A ; 0x22 Zora Temple
 db $14, $00, $04, $04 ; 0x23
@@ -309,4 +309,3 @@ db $1A, $0A, $00, $00 ; 0x25 Dragon Ship
 db $00, $00, $03, $02 ; 0x26
 db $0E, $00, $03, $07 ; 0x27
 db $1A, $05, $05, $0B ; 0x28 Dragon Ship
-

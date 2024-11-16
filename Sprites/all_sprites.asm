@@ -71,8 +71,7 @@ DontTeleportWithoutFlippers:
   LDA.l $7EF356 : BNE +
     RTL
   +
-  #_1EEEE4: LDA.b #$2E
-  #_1EEEE6: STA.b $11
+  LDA.b #$2E : STA.b $11
   RTL
 }
 
@@ -90,8 +89,7 @@ Graphics_Transfer:
     JSR ApplyManhandlaGraphics
     JSR ApplyManhandlaPalette
   +
-  #_02BE5E: LDA.b $11
-  #_02BE60: CMP.b #$02
+  LDA.b $11 : CMP.b #$02
   RTL
 }
 

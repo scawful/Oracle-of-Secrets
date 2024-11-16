@@ -27,7 +27,7 @@
 ; When $xy &lt; $80
 ;   $x = Duration Rate (0-7)
 ;   $y = Velocity Rate (0-15)
-; VByte itself means the length of the following note 
+; VByte itself means the length of the following note
 ; (48 = quarter note, usually).
 
 macro SetDuration(v)
@@ -156,10 +156,10 @@ dw <addr>
 db <repeat>
 endmacro
 
-; Set the left and right position of the sound. 
-; The range of values is as narrow as 0 to 20 
-; (the actual setting ratio is defined in the internal table). 
-; Depending on the version, it depends on whether the large value is left or right. 
+; Set the left and right position of the sound.
+; The range of values is as narrow as 0 to 20
+; (the actual setting ratio is defined in the internal table).
+; Depending on the version, it depends on whether the large value is left or right.
 ; The upper 2 bits are used for phase inversion.
 ; Lower-5bit for pan value (0-20), higher-2bit is used for phase reverse switch.
 macro SetPan(v)
@@ -171,7 +171,7 @@ macro PanFade(length, dest)
 db $E2, <length>, <dest>
 endmacro
 
-; Enables vibrato (pitch fluctuation / pitch swing). 
+; Enables vibrato (pitch fluctuation / pitch swing).
 ; Set zz-sized vibrato at yy speed after xx time.
 macro VibratoOn(delay, rate, depth)
 db $E3, <delay>, <rate>, <depth>
@@ -187,24 +187,24 @@ db $E6, <length>, <dest>
 endmacro
 
 ; Specifies the playing speed of the song.
-; Value of about 24/60 is written. 
+; Value of about 24/60 is written.
 macro TempoFade(length, dest)
 db $E8, <length>, <dest>
 endmacro
 
-; Raises the playing pitch of all channels by xx 
+; Raises the playing pitch of all channels by xx
 ; (negative numbers can be specified).
 macro GlobalTranspose(tone)
 db $E9, <tone>
 endmacro
 
-; Raises the playing pitch of a single channel by xx 
+; Raises the playing pitch of a single channel by xx
 ; (negative numbers can also be specified).
 macro ChannelTranspose(tone)
 db $EA, <tone>
 endmacro
 
-; Enable tremolo (volume fluctuation). 
+; Enable tremolo (volume fluctuation).
 ; Set the tremolo of the size of zz to be applied at the speed of yy after xx time.
 macro TremoloOn(delay, rate, depth)
 db $EB, <delay>, <rate>, <depth>
@@ -218,22 +218,22 @@ macro ChannelVolumeFade(length, dest)
 db $EE, <length>, <dest>
 endmacro
 
-; After temporarily setting the vibrato depth to 0, 
+; After temporarily setting the vibrato depth to 0,
 ; it will smoothly return to the original value over xx time.
 macro VibratoFade(length)
 db $F0, <length>
 endmacro
 
-; Specifies that subsequent sounds will be 
-; "higher by zz over yy time after xx time." 
+; Specifies that subsequent sounds will be
+; "higher by zz over yy time after xx time."
 ; zz is a semitone unit, and you can specify a negative number.
 macro PitchEnvelopeTo(delay, length, key)
 db $F1, <delay>, <length>, <key>
 endmacro
 
-; Specifies that subsequent notes will be 
-; "played at a pitch that is zz higher than normal, 
-;  and will return to normal pitch over yy time after xx time." 
+; Specifies that subsequent notes will be
+; "played at a pitch that is zz higher than normal,
+;  and will return to normal pitch over yy time after xx time."
 ; zz is a semitone unit, and you can specify a negative number.
 macro PitchEnvelopeFrom(delay, length, key)
 db $F2, <delay>, <length>, <key>
@@ -243,14 +243,14 @@ macro PitchEnvelopeOff()
 db $F3
 endmacro
 
-; Change the pitch slightly. 
+; Change the pitch slightly.
 ; Only positive numbers can be specified, so the pitch cannot be lowered.
 ; xx = Unsigned. Make the pitch xx/256 semitones higher.
 macro Tuning(v)
 db $F4, <v>
 endmacro
 
-; Specifies the channel and volume at which echo is enabled. 
+; Specifies the channel and volume at which echo is enabled.
 ; The value set in the register remains the same.
 ; xx = Echo Switch (EON)
 ; yy = Echo Left Volume (EVOL (L))
@@ -284,15 +284,15 @@ endmacro
 ; (pitch slide vcmd appears but note $90 has been end), utter note $92.
 ; $90, $e0 01, $f9 $00 $01 $91, $92
 
-; Smoothly changes the pitch of the sound being pronounced. 
+; Smoothly changes the pitch of the sound being pronounced.
 ; After xx time from play, it will be changed to the zz pitch
-; (absolute designation) over yy time. 
-; If you want to raise or lower the sound in the middle of one note, 
-; write this command continuously. 
+; (absolute designation) over yy time.
+; If you want to raise or lower the sound in the middle of one note,
+; write this command continuously.
 ; If the pronunciation time is long, you can write it with Thai.
 
-; Normally, after one Note, it waits for the length of the note 
-; and then processes the next byte, but only this command 
+; Normally, after one Note, it waits for the length of the note
+; and then processes the next byte, but only this command
 ; is read and processed immediately.
 macro PitchSlide(delay, length, note)
 db $F9, <delay>, <length>, <note>
@@ -343,23 +343,23 @@ Tie  = $C8
 Rest = $C9
 
 ; Percussion Note ($CA-DF)
-; VByte itself means percussion note (#). 
+; VByte itself means percussion note (#).
 ; Relations between percussion note and SRCN depends on $FA.
-; By default, percussion uses the same instrument set as the song, 
-; and all percussion is keyed on with a note of $A4. 
-; The starting ID to use for all channels can be redefined by VCMD $FA. 
+; By default, percussion uses the same instrument set as the song,
+; and all percussion is keyed on with a note of $A4.
+; The starting ID to use for all channels can be redefined by VCMD $FA.
 
 
 ; =========================================================
 ; Tone Map
-; 
-; 	    C 	C+ 	D 	D+ 	E 	F 	F+ 	G 	G+ 	A 	A+ 	B
-; Oc1 	80 	81 	82 	83 	84 	85 	86 	87 	88 	89 	8A 	8B
-; Oc2 	8C 	8D 	8E 	8F 	90 	91 	92 	93 	94 	95 	96 	97
-; Oc3 	98 	99 	9A 	9B 	9C 	9D 	9E 	9F 	A0 	A1 	A2 	A3
-; Oc4 	A4 	A5 	A6 	A7 	A8 	A9 	AA 	AB 	AC 	AD 	AE 	AF
-; Oc5 	B0 	B1 	B2 	B3 	B4 	B5 	B6 	B7 	B8 	B9 	BA 	BB
-; Oc6 	BC 	BD 	BE 	BF 	C0 	C1 	C2 	C3 	C4 	C5 	C6 	C7
+;
+;       C   C+  D   D+  E   F   F+  G   G+  A   A+  B
+; Oc1   80  81  82  83  84  85  86  87  88  89  8A  8B
+; Oc2   8C  8D  8E  8F  90  91  92  93  94  95  96  97
+; Oc3   98  99  9A  9B  9C  9D  9E  9F  A0  A1  A2  A3
+; Oc4   A4  A5  A6  A7  A8  A9  AA  AB  AC  AD  AE  AF
+; Oc5   B0  B1  B2  B3  B4  B5  B6  B7  B8  B9  BA  BB
+; Oc6   BC  BD  BE  BF  C0  C1  C2  C3  C4  C5  C6  C7
 
 C1   = $80
 C1s  = $81
