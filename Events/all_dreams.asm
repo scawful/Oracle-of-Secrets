@@ -89,7 +89,7 @@ Link_FallIntoDungeon:
   RTS
   .entrance
   db $78 ; 0x00 - Deku Dream
-  db $79 ; 0x01 - Castle Dream 
+  db $79 ; 0x01 - Castle Dream
   db $7A ; 0x02 -
   db $81 ; 0x03
 }
@@ -102,6 +102,7 @@ SummonGuards:
   RTL
 }
 
+; TimerB - Manages spawn rate
 Overlord_SpawnSoldierPath:
 {
   LDA.w OverlordTimerB, X : CMP.b #$80 : BEQ .spawn
@@ -122,9 +123,8 @@ Overlord_SpawnSoldierPath:
   .skip
   DEY
   BPL .next_check
-  
-  LDA.b $00 : CMP.b #$05 : BCS .exit
 
+  LDA.b $00 : CMP.b #$05 : BCS .exit
     LDY.b #$0C
     LDA.b #$41 ; SPRITE 41 - Blue Soldier
     JSL Sprite_SpawnDynamically_slot_limited : BMI .exit
@@ -136,11 +136,9 @@ Overlord_SpawnSoldierPath:
 
     LDA.w .soldier_position_x, X : STA.w SprX,Y
     LDA.w .soldier_position_y, X : STA.w SprY,Y
-
     LDA.w $0B40,X : STA.w SprFloor,Y
     LDA.b #$20 : STA.w SprTimerA,Y
     LDA.w $0FB5 : STA.w $0DE0,Y
-
   .exit
   RTS
 
@@ -160,7 +158,8 @@ Overlord_SpawnSoldierPath:
 
 pushpc
 
-org $09B7BE
+; Overlord04_Unused
+org $09B7AE
   dw Overlord_KalyxoCastleGuards
 
 org $09F253
