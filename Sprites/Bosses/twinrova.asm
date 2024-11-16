@@ -1,8 +1,8 @@
 ; =========================================================
 ; Twinrova Boss Sprite
 ;
-; Overrides Blind and the Blind Maiden to create a new 
-; boss sequence. 
+; Overrides Blind and the Blind Maiden to create a new
+; boss sequence.
 ;
 ; =========================================================
 
@@ -15,7 +15,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this Twinrova (can be 0 to 7)
 !Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -39,19 +39,16 @@
 
 Sprite_Twinrova_Long:
 {
-    PHB : PHK : PLB
+PHB : PHK : PLB
+JSR Sprite_Twinrova_Draw
+JSL Sprite_DrawShadow
 
-    JSR Sprite_Twinrova_Draw 
-    JSL Sprite_DrawShadow
-
-    JSL Sprite_CheckActive : BCC .SpriteIsNotActive 
-
-    JSR Sprite_Twinrova_CheckIfDead
-    JSR Sprite_Twinrova_Main
-
-  .SpriteIsNotActive
-    PLB
-    RTL
+JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+  JSR Sprite_Twinrova_CheckIfDead
+  JSR Sprite_Twinrova_Main
+.SpriteIsNotActive
+PLB
+RTL
 }
 
 ; =========================================================
@@ -65,7 +62,7 @@ Sprite_Twinrova_CheckIfDead:
 
   .health_not_negative
     LDA.w SprHealth, X : BNE .not_dead
-      PHX 
+      PHX
       LDA.b #$04 : STA $0DD0, X     ; Kill sprite boss style
       LDA.b #$0A : STA.w SprAction, X ; Go to Twinrova_Dead stage
       LDA.b #$10 : STA.w $0D90, X
@@ -88,7 +85,7 @@ Sprite_Twinrova_Prep:
   LDA.b #$5A : STA.w SprHealth, X ; Health
   LDA.b #$80 : STA $0CAA, X
   LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
-  LDA.w $0E60, X : AND.b #$BF : STA.w $0E60, X ; Not invincible 
+  LDA.w $0E60, X : AND.b #$BF : STA.w $0E60, X ; Not invincible
 
   %SetSpriteSpeedX(15)
   %SetSpriteSpeedX(15)
@@ -150,7 +147,7 @@ endmacro
 ;          and shooting fire and ice attacks at Link.
 ;          Similar to the Trinexx attacks.
 ;
-; Phase 2: Twinrova alternates between Koume (fire) and 
+; Phase 2: Twinrova alternates between Koume (fire) and
 ;          Kotake (ice) forms. Koume changes the arena
 ;          to a fire arena. Similar to Ganon fight changes.
 
@@ -159,9 +156,14 @@ Sprite_Twinrova_Main:
   JSL Sprite_PlayerCantPassThrough
   JSL Sprite_DamageFlash_Long
 
+  PHX
+  JSL Sprite_CheckDamageFromPlayer
+  %DoDamageToPlayerSameLayerOnContact()
+  PLX
+
   LDA.w SprAction, X
   JSL   UseImplicitRegIndexedLocalJumpTable
-  
+
   dw Twinrova_Init          ; 0x00
   dw Twinrova_MoveState     ; 0x01
   dw Twinrova_MoveForwards  ; 0x02
@@ -175,7 +177,7 @@ Sprite_Twinrova_Main:
   dw Twinrova_Dead          ; 0x0A
 
   ; -------------------------------------------------------
-  ; 0x00 
+  ; 0x00
   Twinrova_Init:
   {
     %ShowUnconditionalMessage($123)
@@ -194,15 +196,13 @@ Sprite_Twinrova_Main:
     LDA.w SprHealth, X : CMP.b #$20 : BCS .phase_1
       ; -------------------------------------------
       ; Phase 2
+      LDA.b #$70 : STA.w SprTimerD, X
       LDA.w SprTimerE, X : BNE .kotake
-        LDA #$70 : STA.w SprTimerD, X
         %GotoAction(8) ; Koume Mode
         RTS
       .kotake
-        LDA #$70 : STA.w SprTimerD, X
         %GotoAction(9) ; Kotake Mode
         RTS
-
     ; ---------------------------------------------
     .phase_1
     LDA $0DA0 : BEQ .not_flashing
@@ -226,18 +226,18 @@ Sprite_Twinrova_Main:
     ++
 
     JSL GetRandomInt : AND.b #$0F : BEQ .random_strafe
-        JSL Sprite_IsBelowPlayer : TYA : BNE .MoveBackwards
-        %GotoAction(2) ; Move Forwards
-        RTS
+      JSL Sprite_IsBelowPlayer : TYA : BNE .MoveBackwards
+      %GotoAction(2) ; Move Forwards
+      RTS
     .random_strafe
-        JSL GetRandomInt : AND.b #$01 : BEQ .strafe_left
-            LDA #$10 : STA.w SprXSpeed, X
-            %GotoAction(2) ; Move Forwards with strafe
-            RTS
-        .strafe_left
-            LDA #$F0 : STA.w SprXSpeed, X
-            %GotoAction(2) ; Move Forwards with strafe
-            RTS
+      JSL GetRandomInt : AND.b #$01 : BEQ .strafe_left
+        LDA #$10 : STA.w SprXSpeed, X
+        %GotoAction(2) ; Move Forwards with strafe
+        RTS
+      .strafe_left
+      LDA #$F0 : STA.w SprXSpeed, X
+      %GotoAction(2) ; Move Forwards with strafe
+      RTS
 
     .MoveBackwards
       %GotoAction(3) ; MoveBackwards
@@ -249,17 +249,10 @@ Sprite_Twinrova_Main:
   Twinrova_MoveForwards:
   {
     %Twinrova_Front()
-
-    PHX 
-    JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
-    PLX 
-
     LDA #$10 ; speed
     LDY #$10 ; height
     JSL Sprite_FloatTowardPlayer
     JSL Sprite_CheckTileCollision
-
     %GotoAction(1)
     RTS
   }
@@ -269,16 +262,9 @@ Sprite_Twinrova_Main:
   Twinrova_MoveBackwards:
   {
     %Twinrova_Back()
-
-    PHX 
-    JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
-    PLX 
-
-    LDA #$20 : LDY #$10 
+    LDA #$20 : LDY #$10
     JSL Sprite_FloatTowardPlayer
     JSL Sprite_CheckTileCollision
-
     %GotoAction(1)
     RTS
   }
@@ -287,22 +273,21 @@ Sprite_Twinrova_Main:
   ; 0x04
   Twinrova_PrepareAttack:
   {
-      %StartOnFrame(7)
-      %Twinrova_Attack()
+    %StartOnFrame(7)
+    %Twinrova_Attack()
 
-      LDA #$01 : STA $0360
-
-      LDA $0CAA : AND.b #$03 : STA $0CAA
-      LDA.w SprTimerD, X : BNE +
-        LDA $0CAA : ORA.b #$03 : STA $0CAA
-        LDA.b #$40 : STA.w SprTimerD, X
-        LDA   $AC : BEQ .fire
-          %GotoAction(6) ; Ice Attack
-          RTS
+    LDA #$01 : STA $0360
+    LDA $0CAA : AND.b #$03 : STA $0CAA
+    LDA.w SprTimerD, X : BNE +
+      LDA $0CAA : ORA.b #$03 : STA $0CAA
+      LDA.b #$40 : STA.w SprTimerD, X
+      LDA   $AC : BEQ .fire
+        %GotoAction(6) ; Ice Attack
+        RTS
       .fire
-          %GotoAction(5)
+      %GotoAction(5)
     +
-      RTS
+    RTS
   }
 
   ; -------------------------------------------------------
@@ -346,7 +331,7 @@ Sprite_Twinrova_Main:
   {
     %StartOnFrame(10)
     %Twinrova_Hurt()
-    
+
     ; Check if hurt timer is zero, if not keep flashing hurt animation
     LDA.w SprTimerD, X : BNE .HurtAnimation
 
@@ -357,40 +342,40 @@ Sprite_Twinrova_Main:
     BRA .ResumeNormalState
 
     .DodgeOrRetaliate
-        ; Determine whether to dodge or retaliate
-        JSL GetRandomInt
-        AND.b #$01
-        BEQ .PerformDodge
-        BRA .PerformRetaliate
+      ; Determine whether to dodge or retaliate
+      JSL GetRandomInt
+      AND.b #$01
+      BEQ .PerformDodge
+      BRA .PerformRetaliate
 
     .PerformDodge
-        JSR DoRandomStrafe
-        LDA.b #$20 : STA.w SprTimerA, X  ; Set timer for dodge duration
-        LDA.b #$02 : STA.w SprMiscA, X  ; Set state to random strafe
-        RTS
+      JSR DoRandomStrafe
+      LDA.b #$20 : STA.w SprTimerA, X  ; Set timer for dodge duration
+      LDA.b #$02 : STA.w SprMiscA, X  ; Set state to random strafe
+      RTS
 
     .PerformRetaliate
-        ; Immediate retaliation with fire or ice attack
-        JSL GetRandomInt
-        AND.b #$01
-        BEQ .FireAttack
-        BRA .IceAttack
+      ; Immediate retaliation with fire or ice attack
+      JSL GetRandomInt
+      AND.b #$01
+      BEQ .FireAttack
+      BRA .IceAttack
 
     .FireAttack
-        LDA.b #$20 : STA.w SprTimerD, X
-        STZ $AC  ; Set fire attack
-        %GotoAction(4) ; Prepare Attack
-        RTS
+      LDA.b #$20 : STA.w SprTimerD, X
+      STZ $AC  ; Set fire attack
+      %GotoAction(4) ; Prepare Attack
+      RTS
 
     .IceAttack
-        LDA.b #$20 : STA.w SprTimerD, X
-        LDA.b #$01 : STA $AC  ; Set ice attack
-        %GotoAction(4) ; Prepare Attack
-        RTS
+      LDA.b #$20 : STA.w SprTimerD, X
+      LDA.b #$01 : STA $AC  ; Set ice attack
+      %GotoAction(4) ; Prepare Attack
+      RTS
 
     .ResumeNormalState
-        %GotoAction(1)  ; Resume normal movement state
-        RTS
+      %GotoAction(1)  ; Resume normal movement state
+      RTS
 
     .HurtAnimation
       RTS
@@ -403,11 +388,6 @@ Sprite_Twinrova_Main:
     %StartOnFrame(8)
     %Show_Koume()
 
-    PHX
-    JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
-    PLX 
-
     JSL GetRandomInt : AND.b #$3F : BNE ++
       JSR AddPitHazard
       JSR Ganon_SpawnFallingTilesOverlord
@@ -418,7 +398,7 @@ Sprite_Twinrova_Main:
       JSL Sprite_SpawnFireball
     +++
 
-    
+
     JSR RageModeMove
 
     LDA.w SprTimerD, X : BNE +
@@ -435,12 +415,7 @@ Sprite_Twinrova_Main:
     %StartOnFrame(9)
     %Show_Kotake()
 
-    PHX
-    JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
-    PLX 
-
-    JSL Sprite_IsBelowPlayer 
+    JSL Sprite_IsBelowPlayer
     CPY #$01 : BEQ .not_below
       JSL GetRandomInt : AND.b #$3F : BNE ++
         JSL $1DE612 ; Sprite_SpawnLightning
@@ -474,7 +449,6 @@ Sprite_Twinrova_Main:
 
 ; =========================================================
 ; Handles dynamic floaty movement for Twinrova
-; =========================================================
 
 RageModeMove:
 {
@@ -622,7 +596,7 @@ TrinexxBreath_AltEntry:
       CLC : ADC.w .shake_x, Y : STA $0D50, X
 
   .no_shake
-  JSL Sprite_IsBelowPlayer 
+  JSL Sprite_IsBelowPlayer
     LDA $0D40, X : CMP .x_speed_targets, Y : BEQ .exit
       CLC : ADC.w .shake_y, Y : STA $0D40, X
 
@@ -649,7 +623,7 @@ TrinexxBreath_AltEntry:
 }
 
 Sprite_Twinrova_FireAttack:
-{ 
+{
   JSL Sprite_CheckTileCollision : BNE .no_collision
     JSL Sprite_Move
   .no_collision
@@ -678,7 +652,7 @@ AddFireGarnish:
     LDA.w SprXH, Y : STA $7FF878, X                    ; Garnish XH
     LDA.w SprY, Y  : CLC : ADC.b #$10 : STA $7FF81E, X ; Garnish YL
     LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X       ; Garnish YH
-    LDA.b #$7F : STA $7FF90E, X : STX $00              ; Set garnish timer 
+    LDA.b #$7F : STA $7FF90E, X : STX $00              ; Set garnish timer
     PLX
 
   .return
@@ -742,7 +716,7 @@ org $09B459
 org $09B5D6
   Garnish_SetOamPropsAndSmallSize:
 
-; SpriteData_Bump - Ice Garnish 
+; SpriteData_Bump - Ice Garnish
 org $0DB266+$CD
   db $04
 
@@ -761,7 +735,7 @@ pullpc
 
 RestoreFloorTile:
 {
-  PHA 
+  PHA
   LDA.l $7FF83C,X
   STA.b $00
   LDA.l $7FF83C,X
@@ -900,7 +874,7 @@ Sprite_Twinrova_Draw:
   .nextTile
 
     PHX ; Save current Tile Index?
-        
+
     TXA : CLC : ADC $06 ; Add Animation Index Offset
 
     PHA ; Keep the value with animation index offset?
@@ -926,18 +900,18 @@ Sprite_Twinrova_Draw:
     LDA .chr, X : STA ($90), Y
     INY
 
-    ; Set palette flash modifier 
+    ; Set palette flash modifier
     LDA .properties, X : ORA $08 : STA ($90), Y
 
-    PHY 
-        
+    PHY
+
     TYA : LSR #2 : TAY
-        
+
     SEP #$20 ;set A back to 8bit but not X and Y
     LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-        
+
     PLY : INY
-        
+
     PLX : DEX : BPL .nextTile
 
     SEP #$30
@@ -1021,17 +995,17 @@ Sprite_Twinrova_Draw:
 
 ApplyTwinrovaGraphics:
 {
-    PHX 
+    PHX
     REP #$20               ; A = 16, XY = 8
     LDX #$80 : STX $2100   ; turn the screen off (required)
     LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
     LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
-    LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register 
+    LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register
                            ; "001 => 2 registers write once (2 bytes: p, p+1)"
     LDA.w #TwinrovaGraphics : STA $4302     ; Source address where you want gfx from ROM
     LDX.b #TwinrovaGraphics>>16 : STX $4304
     LDA   #$2000 : STA $4305                ; Size of the transfer 4 sheets of $800 each
-    LDX   #$01 : STX $420B                  ; Do the DMA 
+    LDX   #$01 : STX $420B                  ; Do the DMA
     LDX #$0F : STX $2100                    ; Turn the screen back on
     SEP #$30
     PLX
@@ -1133,7 +1107,7 @@ Follower_BasicMover:
   ; Check if the follower is the blind maiden
   LDA.l $7EF3CC : CMP.b #$06 : BNE .no_blind_transform
     ; Check if we are in room 0xAC
-    REP #$20 
+    REP #$20
     LDA.b $A0 : CMP.w #$00AC : BNE .no_blind_transform
       ; ; Check room flag 0x65
       ; LDA.l $7EF0CA : AND.w #$0100 : BEQ .no_blind_transform
@@ -1151,7 +1125,7 @@ Follower_BasicMover:
     LDA.b #$00 : STA.l $7EF3CC
     JSL Blind_SpawnFromMaiden
 
-    ; Close the shutter door 
+    ; Close the shutter door
     INC.w $0468
 
     ; Clear door tilemap position for some reason
@@ -1165,7 +1139,7 @@ Follower_BasicMover:
 
     RTS
     assert pc() <= $09A23A
-  
+
   org $09A23A
   .no_blind_transform
 }
@@ -1251,7 +1225,7 @@ Blind_SpawnFromMaiden:
   ; Set SprMiscC and bulletproof properties
   LDA.b #$02 : STA.w $0DE0,X : STA.w $0BA0,X
 
-  ; Set the 2nd key / heart piece items taken room flag 
+  ; Set the 2nd key / heart piece items taken room flag
   LDA.w $0403 : ORA.b #$20 : STA.w $0403
 
   ; Clear blinds head spin flag
@@ -1263,7 +1237,7 @@ Blind_SpawnFromMaiden:
 assert pc() <= $1DA081
 
 ; =========================================================
-; We are using space from this function to insert the 
+; We are using space from this function to insert the
 ; Twinrova graphics above, since the prep is now handled
 ; in the custom sprite code.
 
@@ -1390,7 +1364,7 @@ org $1AFC52
 org $1AFCA7
     ; Tiles
     db $0C, $0E, $0C, $2C, $2E, $2C
-    ; Mantle Properties : 
+    ; Mantle Properties :
     db $3D, $3D, $7D, $3D, $3D, $7D
 
 pullpc
@@ -1418,7 +1392,7 @@ NOP #6
 ; LDA.b #$04
 ; STA.l $7EF3C8
 
-pullpc 
+pullpc
 
 CheckForMaidenInLibrary:
 {
