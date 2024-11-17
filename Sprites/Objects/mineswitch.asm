@@ -37,16 +37,12 @@
 Sprite_LeverSwitch_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_LeverSwitch_Draw ; Call the draw code
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_LeverSwitch_Main ; Call the main sprite code
-
+  JSR Sprite_LeverSwitch_Draw
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_LeverSwitch_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 ; =========================================================
