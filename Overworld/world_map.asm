@@ -7,28 +7,6 @@ org $0AC589
 org $0AC51C
     WorldMap_HandleSpriteBlink:
 
-; Map icon
-;   0x00 - Red X on castle    | Save zelda
-;   0x01 - Red X on Kakariko  | Talk to villagers about elders
-;   0x02 - Red X on Eastern   | Talk to Sahasrahla
-;   0x03 - Pendants and MS    | Obtain the master sword
-;   0x04 - Master sword on LW | Grab the master sword
-;   0x05 - Skull on castle    | Kill Agahnim
-;   0x06 - Crystal on POD     | Get the first crystal
-;   0x07 - Crystals           | Get all 7 crystals
-;   0x08 - Skull on GT        | Climb Ganon's Tower
-MAPICON         = $7EF3C7
-
-; .wbs tipm
-;   p - Palace of Darkness
-;   s - Swamp Palace
-;   w - Skull Woods
-;   b - Thieves' Town
-;   i - Ice Palace
-;   m - Misery Mire
-;   t - Turtle Rock
-CRYSTALS        = $7EF37A
-
 pullpc
 
 DrawWisdomPendant:
@@ -244,6 +222,8 @@ MapIconDraw:
   LDA.l $7EF3C7 : CMP.b #$01 : BEQ .hall_of_secrets
                   CMP.b #$02 : BEQ .draw_secret
                   CMP.b #$03 : BCS .draw_crystals
+                  JSL DrawEonEscapeIcon
+                  JSR HandleMapDrawIcon
                   JMP restore_coords_and_exit
 
   .hall_of_secrets

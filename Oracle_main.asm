@@ -25,14 +25,6 @@
 ;   3F  - DW ZS Tile32
 ;   40  - LW World Map
 ;   41  - DW World Map
-
-; Mushroom Grotto ID 0x0C (Palace of Darkness)
-; Tail Palace ID 0x0A (Swamp Palace)
-; Kalyxo Castle ID 0x10 (Skull Woods)
-; Zora Temple ID 0x16 (Thieves Town)
-; Glacia Estate 0x12 (Ice Palace)
-; Goron Mines 0x0E (Misery Mire)
-; Dragon Ship 0x18 (Turtle Rock)
 ; =========================================================
 
 ; ZSCustomOverworld version
