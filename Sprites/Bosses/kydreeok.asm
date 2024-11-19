@@ -282,11 +282,11 @@ Sprite_Kydreeok_Main:
       LDA.b #$04 : STA.w $0DD0,Y
       LDA.b #$03 : STA.w $0E40,Y
       LDA.b #$0C : STA.w $0F50,Y
-      LDA.w $0FD8 : STA.w SprX,Y
+      LDA.w SprCachedX : STA.w SprX,Y
       LDA.w $0FD9 : STA.w SprXH,Y
-      LDA.w $0FDA : STA.w SprY,Y
+      LDA.w SprCachedY : STA.w SprY,Y
       LDA.w $0FDB : STA.w SprYH,Y
-      LDA.b #$1F : STA.w $0DF0,Y : STA.w $0D90,Y
+      LDA.b #$1F : STA.w SprTimerA,Y : STA.w $0D90,Y
       LDA.b #$02 : STA.w $0F20,Y
     .no_space
     LDA.w SprTimerA, X : BNE .continue
@@ -491,7 +491,7 @@ MoveBody:
 
   LDA.b #$01 : STA.w $0428
 
-  LDA.w SprY, X : SEC : SBC.b #$0C : STA.w $0DB0, X
+  LDA.w SprY, X : SEC : SBC.b #$0C : STA.w SprMiscB, X
 
   LDA.w $0B08 : SEC : SBC.w SprX, X
                 CLC : ADC.b #$02
@@ -502,7 +502,7 @@ MoveBody:
                 CMP.b #$04 : BCS .not_at_target
 
   .adjust_phase ; Unused?
-  LDA.b #$30 : STA.w $0DF0, X
+  LDA.b #$30 : STA.w SprTimerA, X
 
   .not_at_target
   ; LayerEffect_Trinexx $0AFEF0

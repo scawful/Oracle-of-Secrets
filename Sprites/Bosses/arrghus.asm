@@ -7,7 +7,7 @@ Sprite3_Move:
 org $1EB593
 Arrghus_ApproachTargetSpeed:
 {
-    LDA $0DF0, X : BNE .delay
+    LDA.w SprTimerA, X : BNE .delay
     
     INC $0D80, X
     
@@ -23,6 +23,6 @@ AdvancedArrghus:
   LDA.b #$04 : STA $0CD2, Y
   
   JSL Sprite_SpawnFireball
-  LDA.b #$50 : STA $0DF0, X
+  LDA.b #$50 : STA.w SprTimerA, X
   RTL
 }

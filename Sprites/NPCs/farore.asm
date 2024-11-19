@@ -202,8 +202,8 @@ Sprite_Farore_Main:
   }
 
   ; 07
-  ; Look at the RAM SprY to $0D60, the first few are the actual positions of the sprite
-  ; that you can just set manually or $0D40 and $0D50 are the "speeds" of the sprites irrc
+  ; Look at the RAM SprY to SprYRound, the first few are the actual positions of the sprite
+  ; that you can just set manually or SprYSpeed and SprXSpeed are the "speeds" of the sprites irrc
   ; You can set one of the speeds and then call the function called Sprite_Move
   ; And then that will handle it applying the speed for you
   MakuArea_FaroreWaitForKydrog:

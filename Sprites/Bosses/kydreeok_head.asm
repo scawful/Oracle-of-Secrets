@@ -244,16 +244,16 @@ KydreeokHead_RotationMove:
 
 Sprite_KydreeokHead_Damage_Flash:
 {
-  LDA.w $0EB0, X : BEQ .dontFlash
+  LDA.w SprMiscE, X : BEQ .dontFlash
     ; Change the palette to the next in the cycle
-    LDA.w $0EB0, X : INC : CMP.b #$08 : BNE .dontReset
+    LDA.w SprMiscE, X : INC : CMP.b #$08 : BNE .dontReset
       LDA.b #$00
   .dontReset
-    STA.w $0EB0, X
+    STA.w SprMiscE, X
     BRA .flash
 
   .dontFlash
-  STZ.w $0EB0, X
+  STZ.w SprMiscE, X
 
   .flash
   RTS
@@ -685,7 +685,7 @@ Sprite_KydreeokHead_Draw:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
-  LDA.w $0EB0, X : STA $08
+  LDA.w SprMiscE, X : STA $08
 
   PHX
   ; amount of tiles - 1

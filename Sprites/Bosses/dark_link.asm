@@ -178,14 +178,14 @@ Sprite_DarkLink_Main:
 
     REP #$20
 
-    LDA $0FD8 ; Sprite X
+    LDA.w SprCachedX ; Sprite X
     SEC : SBC $22 ; - Player X
     BPL +
     EOR #$FFFF
     +
     STA $00 ; Distance X (ABS)
 
-    LDA $0FDA ; Sprite Y
+    LDA.w SprCachedY ; Sprite Y
     SEC : SBC $20 ; - Player Y
     BPL +
     EOR #$FFFF
@@ -438,7 +438,7 @@ Sprite_DarkLink_Main:
       ; ... but once spawned, transmute it to an enemy bomb.
       JSL $06AD50
       JSL GetRandomInt : AND #$7F : CLC : ADC #$20
-      STA $0E00, Y
+      STA.w SprTimerB, Y
       .spawn_failed
       RTS
     }
@@ -460,10 +460,10 @@ Sprite_DarkLink_Main:
       PHX
       TYX
       LDA.b #$28 : JSL Sprite_ApplySpeedTowardsPlayer
-      LDA.b #$01 : STA $0DB0, X
+      LDA.b #$01 : STA.w SprMiscB, X
       LDA.b #$16 : STA $0F80, X
       JSL GetRandomInt : AND #$7F : CLC : ADC #$20
-      STA $0E00, X
+      STA.w SprTimerB, X
       PLX
 
       .spawn_failed
@@ -677,14 +677,14 @@ Sprite_DarkLink_Main:
 
     REP #$20
 
-    LDA $0FD8 ; Sprite X
+    LDA.w SprCachedX ; Sprite X
     SEC : SBC $22 ; - Player X
     BPL +
     EOR #$FFFF
     +
     STA $00 ; Distance X (ABS)
 
-    LDA $0FDA ; Sprite Y
+    LDA.w SprCachedY ; Sprite Y
     SEC : SBC $20 ; - Player Y
     BPL +
     EOR #$FFFF

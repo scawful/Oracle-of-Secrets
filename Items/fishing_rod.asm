@@ -130,15 +130,15 @@ LinkItem_FishingRod:
   LDA.l $7F5BA3 : TAX
 
   LDY.b $66
-  LDA.w DirSpeedsY, Y : STA.w $0D40, X ; YSpeed
-  LDA.w DirSpeedsX, Y : STA.w $0D50, X ; YSpeed
+  LDA.w DirSpeedsY, Y : STA.w SprYSpeed, X ; YSpeed
+  LDA.w DirSpeedsX, Y : STA.w SprXSpeed, X ; YSpeed
   .BringBackFloater
   LDA.b #$10 : STA.w $0F80, X ; Gravity
 
 
   ; =======================================================
   ; We got something spawn it and pull it at us
-  LDA.w $0DB0, X : BEQ .noPrize
+  LDA.w SprMiscB, X : BEQ .noPrize
   JSL GetRandomInt : AND #$0F : TAY : LDA Prizes, Y : BEQ .noPrize
     JSL Sprite_SpawnDynamically
     JSL Sprite_SetSpawnedCoordinates
@@ -150,11 +150,11 @@ LinkItem_FishingRod:
 
     PHX
     LDX.b $66
-    LDA.w DirSpeedsY, X : STA.w $0D40, Y ; YSpeed
-    LDA.w DirSpeedsX, X : STA.w $0D50, Y ; YSpeed
+    LDA.w DirSpeedsY, X : STA.w SprYSpeed, Y ; YSpeed
+    LDA.w DirSpeedsX, X : STA.w SprXSpeed, Y ; YSpeed
 
     PLX
-    LDA.b #$FF : STA.w $0EE0, Y
+    LDA.b #$FF : STA.w SprTimerD, Y
     LDA.b #$20 : STA.w $0F80, Y ; Gravity
     ;LDA.b #$06 : STA.w $0F70, Y
 
@@ -324,19 +324,19 @@ Sprite_CheckIfActive:
 SpritePrep_Floater:
 {
   LDA.b $66 : CMP.b #$03 : BNE .notRight
-    LDA.b #$12 : STA.w $0D50, X ; XSpeed
+    LDA.b #$12 : STA.w SprXSpeed, X ; XSpeed
     BRA .DoInitFloater
   .notRight
   CMP.b #$02 : BNE .notLeft
-    LDA.b #$ED : STA.w $0D50, X ; XSpeed
+    LDA.b #$ED : STA.w SprXSpeed, X ; XSpeed
     BRA .DoInitFloater
   .notLeft
   CMP.b #$01 : BNE .notDown
-    LDA.b #$12 : STA.w $0D40, X ; YSpeed
+    LDA.b #$12 : STA.w SprYSpeed, X ; YSpeed
     BRA .DoInitFloater
   .notDown
   CMP.b #$00 : BNE .notUp
-    LDA.b #$ED : STA.w $0D40, X ; YSpeed
+    LDA.b #$ED : STA.w SprYSpeed, X ; YSpeed
     BRA .DoInitFloater
   .notUp
 
@@ -345,11 +345,11 @@ SpritePrep_Floater:
   LDA.b #$08 : STA.w $0F70, X    ; Height
   LDA.b #$10 : STA.w $0F80, X    ; Gravity
   LDA.b #$00 : STA.w SprMiscG, X ; is it in water?
-  LDA.b #$00 : STA.w $0EB0, X    ; Wiggling Velocity index
-  LDA.b #$00 : STA.w $0E90, X    ; just for a check
-  LDA.b #$00 : STA.w $0DB0, X    ; if we have a fish on line
+  LDA.b #$00 : STA.w SprMiscE, X    ; Wiggling Velocity index
+  LDA.b #$00 : STA.w SprMiscD, X    ; just for a check
+  LDA.b #$00 : STA.w SprMiscB, X    ; if we have a fish on line
 
-  ;$0EE0 Timer for when floater is in water waiting for a fish to catch
+  ;SprTimerD Timer for when floater is in water waiting for a fish to catch
 
   RTL
 }
@@ -372,34 +372,34 @@ Sprite_Floater:
 
   LDA.w SprMiscG, X : BEQ .noFishOnLine ; is the floater in water?
 
-    LDA.w $0EE0, X : BNE .noWigglingYet ; timerD wait until fish is on line
+    LDA.w SprTimerD, X : BNE .noWigglingYet ; timerD wait until fish is on line
 
-      LDA.w $0DB0, X : BNE .fishOnlineWait
+      LDA.w SprMiscB, X : BNE .fishOnlineWait
       ; start another random timer for the time it'll last
       JSL GetRandomInt : AND #$3F
-      CLC : ADC.b #$0F : STA.w $0DF0, X ; wiggling timer
-      INC.w $0DB0, X ; we have a fish on line
+      CLC : ADC.b #$0F : STA.w SprTimerA, X ; wiggling timer
+      INC.w SprMiscB, X ; we have a fish on line
 
     .noWigglingYet
 
-    LDA.w $0DB0, X : BEQ .noFishOnLine ; do we already have a fish on line?
+    LDA.w SprMiscB, X : BEQ .noFishOnLine ; do we already have a fish on line?
     .fishOnlineWait
-    LDA.w $0DF0, X : BNE .still_wiggling
-    STZ.w $0DB0, X ; no more fish on line took too much time
+    LDA.w SprTimerA, X : BNE .still_wiggling
+    STZ.w SprMiscB, X ; no more fish on line took too much time
     JSL GetRandomInt : AND.b #$7F
-    CLC : ADC.b #$7F : STA.w $0EE0, X ; reset timer wait until fish is on line
-    STZ.w $0D50, X
-    STZ.w $0D40, X
+    CLC : ADC.b #$7F : STA.w SprTimerD, X ; reset timer wait until fish is on line
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
     BRA .noFishOnLine
     .still_wiggling
 
 
-    LDY.w $0E10, X
-    LDA.w WigglingTable, Y : STA.w $0D50, X
-    LDA.w WigglingTable, Y : STA.w $0D40, X
-    LDY.w $0E10, X : BNE + ; use timer to do wiggling
+    LDY.w SprTimerC, X
+    LDA.w WigglingTable, Y : STA.w SprXSpeed, X
+    LDA.w WigglingTable, Y : STA.w SprYSpeed, X
+    LDY.w SprTimerC, X : BNE + ; use timer to do wiggling
     ; if = 0 then put it back to F
-    LDA.b #$0F : STA.w $0E10, X ; wiggling timer
+    LDA.b #$0F : STA.w SprTimerC, X ; wiggling timer
     +
 
   .noFishOnLine
@@ -413,9 +413,9 @@ Sprite_Floater:
 
   STZ.w $0F70, X
 
-  LDA.w $0D50, X : ASL A : ROR.w $0D50, X
+  LDA.w SprXSpeed, X : ASL A : ROR.w SprXSpeed, X
 
-  LDA.w $0D40, X : ASL A : ROR.w $0D40, X
+  LDA.w SprYSpeed, X : ASL A : ROR.w SprYSpeed, X
 
   LDA.w $0F80, X : EOR.b #$FF : INC A
 
@@ -423,8 +423,8 @@ Sprite_Floater:
   CMP.b #$09
   BCS .no_bounce
 
-  LDA.w $0E90, X : BNE .not_water_tile_last
-    INC.w $0E90, X
+  LDA.w SprMiscD, X : BNE .not_water_tile_last
+    INC.w SprMiscD, X
     JSL Sprite_CheckTileCollision
     LDA.w $0FA5
     CMP.b #$08 : BEQ .water_tile_last
@@ -434,12 +434,12 @@ Sprite_Floater:
     JSL Sprite_SpawnSmallSplash
 
     JSL GetRandomInt : AND #$3F
-    CLC : ADC #$3F : STA.w $0EE0, X
+    CLC : ADC #$3F : STA.w SprTimerD, X
 
   .not_water_tile_last
   STZ.w $0F80, X
-  STZ.w $0D50, X
-  STZ.w $0D40, X
+  STZ.w SprXSpeed, X
+  STZ.w SprYSpeed, X
 
   BRA .aloft
 

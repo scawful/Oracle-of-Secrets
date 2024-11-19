@@ -46,7 +46,7 @@ Lanmola_FinishInitialization:
 {
     PHB : PHK : PLB
 
-    LDA.l .starting_delay, X : STA $0DF0, X
+    LDA.l .starting_delay, X : STA.w SprTimerA, X
 
     LDA.b #$FF : STA $0F70, X
 
@@ -103,8 +103,8 @@ Lanmola_Wait: ;0x00
 {
     JSR Lanmola_Draw
 
-    LDA $0DF0, X : BNE .delay ; ORA $0F00, X :
-        LDA.b #$7F : STA $0DF0, X
+    LDA.w SprTimerA, X : BNE .delay ; ORA $0F00, X :
+        LDA.b #$7F : STA.w SprTimerA, X
 
         INC $0D80, X
 
@@ -124,36 +124,36 @@ Lanmola_Mound: ;0x01
     JSR Lanmola_DrawMound
     JSL CheckIfActive : BCS Lanmola_Wait_delay
 
-    LDA $0DF0, X : BNE .return
+    LDA.w SprTimerA, X : BNE .return
         JSL Lanmola_SpawnShrapnel
 
         LDA.b #$13 : STA $012D
 
         TXY
         JSL GetRandomInt : AND.b #$07 : TAX
-        LDA $7EEAA8, X : STA $0DA0, Y ; Get random X pos to have the lanmola fly to. ;.randXPos
+        LDA $7EEAA8, X : STA.w SprMiscA, Y ; Get random X pos to have the lanmola fly to. ;.randXPos
 
         JSL GetRandomInt : AND.b #$07 : TAX
-        LDA $7EEAB0, X : STA $0DB0, Y ; Get random Y pos to have the lanmola fly to. ;.randYPos
+        LDA $7EEAB0, X : STA.w SprMiscB, Y ; Get random Y pos to have the lanmola fly to. ;.randYPos
         TYX
 
         INC $0D80, X
 
         LDA.b #$18 : STA $0F80, X
 
-        STZ $0EC0, X
-        STZ $0ED0, X
+        STZ.w SprMiscF, X
+        STZ.w SprMiscG, X
 
         ; ALTERNATE ENTRY POINT
         .Lanmola_SetScatterSandPosition
 
         LDA.w SprXH, X : STA $0DC0, X
-        LDA.w SprYH, X : STA $0EB0, X
+        LDA.w SprYH, X : STA.w SprMiscE, X
 
-        LDA.w SprX, X : STA $0DE0, X
+        LDA.w SprX, X : STA.w SprMiscC, X
         LDA.w SprY, X : STA $0E70, X
 
-        LDA.b #$4A : STA $0E00, X
+        LDA.b #$4A : STA.w SprTimerB, X
 
     .return
 
@@ -172,9 +172,9 @@ Lanmola_Fly: ;0x02
     JSR Sprite2_MoveAltitude
 
     ; Slowly decrease the Y speed when first coming out of the ground
-    LDA $0EC0, X : BNE .notRising
+    LDA.w SprMiscF, X : BNE .notRising
         LDA $0F80, X : SEC : SBC.b #$01 : STA $0F80, X : BNE .beta
-            INC $0EC0, X
+            INC.w SprMiscF, X
 
         .beta
 
@@ -185,19 +185,19 @@ Lanmola_Fly: ;0x02
     ; Use the Y speed to bob up and down
     LDA $1A : AND.b #$01 : BNE .dontSwitchDirections ; Every other frame.
         TXY
-        LDA $0ED0, X : AND.b #$01 : TAX
+        LDA.w SprMiscG, X : AND.b #$01 : TAX
 
         LDA $0F80, Y : CLC : ADC $7EEA9C, X : STA $0F80, Y : CMP $7EEA9E, X : BNE .dontSwitchDirections2 ;.y_speed_slope ;.y_speeds
-            TYX : INC $0ED0, X ; Switch direction
+            TYX : INC.w SprMiscG, X ; Switch direction
 
         .dontSwitchDirections2
         TYX
 
     .dontSwitchDirections
 
-    LDA $0DA0, X : STA $04
+    LDA.w SprMiscA, X : STA $04
     LDA.w SprXH, X : STA $05
-    LDA $0DB0, X : STA $06
+    LDA.w SprMiscB, X : STA $06
     LDA.w SprYH, X : STA $07
     LDA.w SprX, X : STA $00
     LDA.w SprXH, X : STA $01
@@ -219,8 +219,8 @@ Lanmola_Fly: ;0x02
 
     JSL Sprite_ProjectSpeedTowardsEntityLong
 
-    LDA $00 : STA $0D40, X
-    LDA $01 : STA $0D50, X
+    LDA $00 : STA.w SprYSpeed, X
+    LDA $01 : STA.w SprXSpeed, X
 
     JSR Sprite2_Move
 
@@ -250,7 +250,7 @@ Lanmola_Dive: ;0x03
     LDA $0F70, X : BPL .notUnderGroundYet
         INC $0D80, X
 
-        LDA.b #$80 : STA $0DF0, X
+        LDA.b #$80 : STA.w SprTimerA, X
 
         JSR Lanmola_Mound_Lanmola_SetScatterSandPosition
 
@@ -267,7 +267,7 @@ Lanmola_Reset: ;0x04
     JSL Lanmola_DrawDirtLONG
     JSL CheckIfActive : BCS Lanmola_Dive_notUnderGroundYet
 
-    LDA $0DF0, X : BNE .wait
+    LDA.w SprTimerA, X : BNE .wait
         STZ $0D80, X ; Go back to wait phase
 
         TXY
@@ -289,7 +289,7 @@ Lanmola_Death: ;0x05
 {
     JSR Lanmola_Draw
 
-    LDA $0DF0, X : BNE .timerNotDone
+    LDA.w SprTimerA, X : BNE .timerNotDone
         STZ $0DD0, X
 
         ; Y is the index where we write in RAM
@@ -316,7 +316,7 @@ Lanmola_Death: ;0x05
 
     .timerNotDone
 
-    LDA $0DF0, X : CMP.b #$20 : BCC Lanmola_Reset_wait
+    LDA.w SprTimerA, X : CMP.b #$20 : BCC Lanmola_Reset_wait
                    CMP.b #$A0 : BCS Lanmola_Reset_wait
                    AND.b #$0F : BNE Lanmola_Reset_wait
         TXY
@@ -346,7 +346,7 @@ Lanmola_Death: ;0x05
 
             LDA.b #$04 : STA $0DD0, Y
 
-            LDA.b #$1F : STA $0DF0, Y : STA $0D90, Y
+            LDA.b #$1F : STA.w SprTimerA, Y : STA $0D90, Y
 
             LDA $0A : STA.w SprX, Y
             LDA $0B : STA.w SprXH, Y
@@ -386,7 +386,7 @@ Lanmola_Draw:
 
     STA $0F
 
-    LDA $0D40, X : ASL A : ROL A : AND.b #$01 : TAX
+    LDA.w SprYSpeed, X : ASL A : ROL A : AND.b #$01 : TAX
 
     LDA $7EEA06, X : STA $0C ;.data2
 
@@ -528,15 +528,15 @@ Lanmola_DrawMound:
 
     PHX
 
-    LDA $0DF0, X : LSR #3 : TAX
+    LDA.w SprTimerA, X : LSR #3 : TAX
 
     LDA $7EEA54, X : TAX ;.frameMound
 
     LDY.b #$00
 
     REP #$20
-    LDA $0FDA : SEC : SBC $E8 : STA $02
-    LDA $0FD8 : SEC : SBC $E2 : STA ($90), Y
+    LDA.w SprCachedY : SEC : SBC $E8 : STA $02
+    LDA.w SprCachedX : SEC : SBC $E2 : STA ($90), Y
 
     STZ $37
     BPL .notNegative
@@ -601,11 +601,11 @@ Sprite_Shrapnel:
     TXA : EOR $1A : AND.b #$03 : BNE .noTileCollision
         REP #$20
 
-        LDA $0FD8 : SEC : SBC $22 : CLC : ADC.w #$0004
+        LDA.w SprCachedX : SEC : SBC $22 : CLC : ADC.w #$0004
 
         CMP.w #$0010 : BCS .player_not_close
 
-        LDA $0FDA : SEC : SBC $20 : CLC : ADC.w #$FFFC
+        LDA.w SprCachedY : SEC : SBC $20 : CLC : ADC.w #$FFFC
 
         CMP.w #$000C : BCS .player_not_close
 
@@ -622,7 +622,7 @@ Sprite_Shrapnel:
 
     .noTileCollision
 
-    LDA $0DF0, X : BNE .timerNotDone
+    LDA.w SprTimerA, X : BNE .timerNotDone
         STZ $0DD0, X
 
     .timerNotDone

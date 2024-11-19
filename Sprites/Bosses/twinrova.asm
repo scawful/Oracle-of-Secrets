@@ -205,7 +205,7 @@ Sprite_Twinrova_Main:
         RTS
     ; ---------------------------------------------
     .phase_1
-    LDA $0DA0 : BEQ .not_flashing
+    LDA.w SprMiscA : BEQ .not_flashing
       LDA.b #$30 : STA.w SprTimerD, X
       %GotoAction(7) ; Goto Twinrova_Hurt
       RTS
@@ -585,20 +585,20 @@ TrinexxBreath_AltEntry:
     JSL GetRandomInt
     AND.b #$03
     TAY
-    LDA SpeedAdjustments, Y : CLC : ADC $0D50, X : STA $0D50, X
-    LDA SpeedAdjustments+4, Y : CLC : ADC $0D40, X : STA $0D40, X
+    LDA SpeedAdjustments, Y : CLC : ADC.w SprXSpeed, X : STA.w SprXSpeed, X
+    LDA SpeedAdjustments+4, Y : CLC : ADC.w SprYSpeed, X : STA.w SprYSpeed, X
   .no_adjustment
 
   JSL Sprite_BounceFromTileCollision
   LDA $1A : AND.b #$03 : BNE .no_shake
     JSL Sprite_IsToRightOfPlayer
-    LDA $0D50, X : CMP .x_speed_targets, Y : BEQ .no_shake
-      CLC : ADC.w .shake_x, Y : STA $0D50, X
+    LDA.w SprXSpeed, X : CMP .x_speed_targets, Y : BEQ .no_shake
+      CLC : ADC.w .shake_x, Y : STA.w SprXSpeed, X
 
   .no_shake
   JSL Sprite_IsBelowPlayer
-    LDA $0D40, X : CMP .x_speed_targets, Y : BEQ .exit
-      CLC : ADC.w .shake_y, Y : STA $0D40, X
+    LDA.w SprYSpeed, X : CMP .x_speed_targets, Y : BEQ .exit
+      CLC : ADC.w .shake_y, Y : STA.w SprYSpeed, X
 
   JSL Sprite_CheckTileCollision : BEQ .exit
     LDY #$10
@@ -803,11 +803,11 @@ Ganon_SpawnFallingTilesOverlord:
   ;----------------------------------------------------------
 
   .free_slot
-  #_1D90DB: LDA.w $0EC0,X
+  #_1D90DB: LDA.w SprMiscF,X
   #_1D90DE: CMP.b #$04
   #_1D90E0: BCS .dont_spawn
 
-  #_1D90E2: INC.w $0EC0,X
+  #_1D90E2: INC.w SprMiscF,X
 
   #_1D90E5: PHX
 
@@ -1044,10 +1044,10 @@ ReleaseFireballs:
   JSL Sprite_DirectionToFacePlayer
 
   LDA.w .speed_x,Y
-  STA.w $0D50,X
+  STA.w SprXSpeed,X
 
   LDA.w .speed_y,Y
-  STA.w $0D40,X
+  STA.w SprYSpeed,X
 
   LDA.w SprX,X
   CLC
@@ -1217,13 +1217,13 @@ Blind_SpawnFromMaiden:
   ; JSL SpritePrep_LoadProperties
 
   ; Set SprTimerC
-  LDA.b #$C0 : STA.w $0E10,X
+  LDA.b #$C0 : STA.w SprTimerC,X
 
   ; Set SprGfx
   LDA.b #$00 : STA.w $0DC0,X
 
   ; Set SprMiscC and bulletproof properties
-  LDA.b #$02 : STA.w $0DE0,X : STA.w $0BA0,X
+  LDA.b #$02 : STA.w SprMiscC,X : STA.w $0BA0,X
 
   ; Set the 2nd key / heart piece items taken room flag
   LDA.w $0403 : ORA.b #$20 : STA.w $0403
@@ -1253,16 +1253,16 @@ SpritePrep_Blind_PrepareBattle:
     BEQ .despawn
 
     LDA.b #$60
-    STA.w $0E10,X
+    STA.w SprTimerC,X
 
     LDA.b #$01
-    STA.w $0DB0,X
+    STA.w SprMiscB,X
 
     LDA.b #$02
-    STA.w $0DE0,X
+    STA.w SprMiscC,X
 
     LDA.b #$04
-    STA.w $0EB0,X
+    STA.w SprMiscE,X
 
     LDA.b #$07
     STA.w $0DC0,X

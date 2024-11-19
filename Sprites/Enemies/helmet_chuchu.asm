@@ -191,8 +191,8 @@ HelmetChuchu_SpawnHookshotDrag:
     LDA.b #$00 : STA.w SprMiscB, Y
     LDA.b #$80 : STA.w SprTimerA, Y
     LDA.b #$01 : STA.w SprNbrOAM,  Y
-    LDA.w .speed_x, X : STA.w $0D50, Y
-    LDA.w .speed_y, X : STA.w $0D40, Y
+    LDA.w .speed_x, X : STA.w SprXSpeed, Y
+    LDA.w .speed_y, X : STA.w SprYSpeed, Y
   .no_space2
   PLX
   RTS

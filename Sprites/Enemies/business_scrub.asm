@@ -330,17 +330,17 @@ SpawnPeaShot:
   PHX
   ; Spawn Location
   REP #$20
-  LDA $0FD8
+  LDA.w SprCachedX
   SEP #$20
   STA.w SprX, Y : XBA : STA.w SprXH, Y
 
   REP #$20
-  LDA $0FDA : CLC : ADC.w #$000C
+  LDA.w SprCachedY : CLC : ADC.w #$000C
   SEP #$20
   STA.w SprY, Y : XBA : STA.w SprYH, Y
 
   TYX
-  STZ $0D70, X
+  STZ.w SprXRound, X
 
   LDA #$10 : STA.w SprYSpeed, X
   STA.w SprYRound, X

@@ -38,14 +38,14 @@ Lanmola_DrawDirtLONG:
 
 Lanmola_DrawDirt:
 {
-    LDA $0E00, X : BNE .timerNotDone
+    LDA.w SprTimerB, X : BNE .timerNotDone
         RTS
 
     .timerNotDone
 
     ; Determine weather the dirt should draw in front of or behind the body
     ; based on its y velocity.
-    LDA $0D40, X : ASL A : ROL A : ASL A : EOR $0D80, X : AND.b #$02 : BEQ .nu
+    LDA.w SprYSpeed, X : ASL A : ROL A : ASL A : EOR $0D80, X : AND.b #$02 : BEQ .nu
         LDA.b #$08 : JSL OAM_AllocateFromRegionB
         BRA .xi
 
@@ -56,10 +56,10 @@ Lanmola_DrawDirt:
 
     LDY.b #$00
 
-    LDA $0E00, X : LSR #2 : AND.b #$03 : EOR.b #$03 : ASL A : STA $06
+    LDA.w SprTimerB, X : LSR #2 : AND.b #$03 : EOR.b #$03 : ASL A : STA $06
 
     LDA $0DC0, X : XBA
-    LDA $0DE0, X
+    LDA.w SprMiscC, X
     REP #$20 : SEC : SBC $E2 : STA $00 : SEP #$20
 
     STZ $37
@@ -68,7 +68,7 @@ Lanmola_DrawDirt:
 
     .notNegative3
 
-    LDA $0EB0, X : XBA
+    LDA.w SprMiscE, X : XBA
     LDA $0E70, X
     REP #$20 : SEC : SBC $E8 : STA $02 : SEP #$20
 
@@ -281,8 +281,8 @@ Lanmola_MoveSegment:
 
     PLX
 
-    LDA $0D40, X : SEC : SBC $0F80, X : STA $00
-    LDA $0D50, X                      : STA $01
+    LDA.w SprYSpeed, X : SEC : SBC $0F80, X : STA $00
+    LDA.w SprXSpeed, X                      : STA $01
     JSL Sprite_ConvertVelocityToAngle : STA $0F
 
     LDA $7EEA00, X : STA $04 ;.sprite_regions
@@ -330,7 +330,7 @@ Lanmola_MoveSegment:
 
 SetShrapnelTimer:
 {
-    LDA.b #$40 : STA $0DF0, Y
+    LDA.b #$40 : STA.w SprTimerA, Y
 
     JSL GetRandomInt ; replaced code
 

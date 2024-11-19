@@ -11,7 +11,7 @@ KingDodongo_NewHealthSystem:
   TAY
 
   LDA.w .phase_table,Y
-  STA.w $0DB0,X
+  STA.w SprMiscB,X
   PLB
 
   RTL

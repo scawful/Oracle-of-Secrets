@@ -887,7 +887,7 @@ SpawnSplash:
   STA.w $0DD0,Y
 
   LDA.b #$0F
-  STA.w $0DF0,Y
+  STA.w SprTimerA,Y
 
   LDA.b #$00
   STA.w $0D80,Y
@@ -936,7 +936,7 @@ SpawnBossPoof:
   STA.w $0D90,Y
 
   LDA.b #$2F
-  STA.w $0DF0,Y
+  STA.w SprTimerA,Y
 
   LDA.b #$09
   STA.w $0E40,Y
@@ -960,7 +960,7 @@ HandleMovingSplash:
   TXY
   LDX.b #$1D
 
-  LDA.w $0D40,Y
+  LDA.w SprYSpeed,Y
   BMI .next_slot
 
   LDX.b #$0E
@@ -1017,7 +1017,7 @@ SpawnMedallion:
   TYX
 
   LDA.b #$10
-  STA.w $0D50, X
+  STA.w SprXSpeed, X
 
   LDA.b #$30
   STA.w $0F80, X

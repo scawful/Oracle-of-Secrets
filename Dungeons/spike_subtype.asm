@@ -31,18 +31,18 @@ NewSpikePrep:
 {
   PHB : PHK : PLB
   LDA $0E30, X : TAY
-  LDA.w speedValuesH, Y : STA $0D50, X
-  LDA.w speedValuesV, Y : STA $0D40, X
+  LDA.w speedValuesH, Y : STA.w SprXSpeed, X
+  LDA.w speedValuesV, Y : STA.w SprYSpeed, X
   PLB
   RTL
 }
 
 NewSpikeCollision:
 {
-  LDA.b #$04 : STA $0DF0, X
+  LDA.b #$04 : STA.w SprTimerA, X
 
-  LDA $0D50, X : EOR.b #$FF : INC A : STA $0D50, X
-  LDA $0D40, X : EOR.b #$FF : INC A : STA $0D40, X
+  LDA.w SprXSpeed, X : EOR.b #$FF : INC A : STA.w SprXSpeed, X
+  LDA.w SprYSpeed, X : EOR.b #$FF : INC A : STA.w SprYSpeed, X
 
   LDA.b #$05 : JSL $0DBB7C ; Sound_SetSfx2PanLong
   RTL

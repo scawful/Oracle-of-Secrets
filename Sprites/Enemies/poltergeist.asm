@@ -1,6 +1,6 @@
-; ========================================================= 
+; =========================================================
 ; Sprite Properties
-; ========================================================= 
+; =========================================================
 
 !SPRID              = Sprite_Poltergeist
 !NbrTiles           = 4   ; Number of tiles used in a frame
@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 0   ; Unused in this template (can be 0 to 7)
 !Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -60,7 +60,7 @@ Sprite_Poltergeist_Prep:
 {
     PHB : PHK : PLB
 
-    LDA #$00 : STA $0F60, X ; Persist 
+    LDA #$00 : STA $0F60, X ; Persist
     LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
     LDA #$02 : STA $0E40, X ;1 tile by default
     LDA #$01 : STA.w SprAction, X ; by default it's a chair
@@ -106,8 +106,8 @@ Sprite_Poltergeist_Prep:
         LDA #36 : STA.w SprFrame, X
         LDA #$01 : STA.w SprAction, X
         LDA #$04 : STA $0E40, X
-        LDA.w SprY, X : SEC : SBC #$0C : STA.w SprY, X 
-        LDA.w SprX, X : CLC : ADC #$08 : STA.w SprX, X 
+        LDA.w SprY, X : SEC : SBC #$0C : STA.w SprY, X
+        LDA.w SprX, X : CLC : ADC #$08 : STA.w SprX, X
         BRA .done
 
     .notDoor
@@ -119,7 +119,7 @@ Sprite_Poltergeist_Prep:
     .secondset
 
     LDA.w SprSubtype, X : AND #$07 : CLC : ADC #30 : STA.w SprFrame, X
-    LDA.w SprSubtype, X 
+    LDA.w SprSubtype, X
 
     .done
 
@@ -152,7 +152,7 @@ Sprite_Poltergeist_Prep:
 ; 21:Shutter door
 
 Sprite_Poltergeist_Main:
-{  
+{
     LDA.w SprAction, X : JSL UseImplicitRegIndexedLocalJumpTable
 
     dw PictureFrame
@@ -189,7 +189,7 @@ PictureFrame:
 
     JSL Sprite_CheckDamageFromPlayer : BCC .noShatter
         JMP Shatter
-        
+
     .noShatter
 
     RTS
@@ -197,7 +197,7 @@ PictureFrame:
 
 GetLinkDistance16bit:
 {
-    LDA $0FD8 ; Sprite X
+    LDA.w SprCachedX ; Sprite X
     SEC : SBC $22 ; - Player X
 
     BPL +
@@ -206,7 +206,7 @@ GetLinkDistance16bit:
 
     STA $00 ; Distance X (ABS)
 
-    LDA $0FDA ; Sprite Y
+    LDA.w SprCachedY ; Sprite Y
     SEC : SBC $20 ; - Player Y
 
     BPL +
@@ -287,11 +287,11 @@ Shatter:
     LDA.b #$1F : JSL Sound_SetSfx2PanLong
     STZ $0DC0, X
 
-    LDA.b #$04 : STA $0DB0, X
+    LDA.b #$04 : STA.w SprMiscB, X
 
     LDA.b #$06 : STA $0DD0, X
 
-    LDA.b #$1F : STA $0DF0, X
+    LDA.b #$1F : STA.w SprTimerA, X
 
     LDA.b #$EC : STA $0E20, X
 
@@ -299,7 +299,7 @@ Shatter:
 
     STZ $0EF0, X
 
-    LDA.b #$80 : STA $0DB0, X
+    LDA.b #$80 : STA.w SprMiscB, X
     RTS
 }
 
@@ -309,7 +309,7 @@ Axe:
     REP #$20
     JSR GetLinkDistance16bit : CMP #$0050 : BCS .notcloseenough
         SEP #$20
-        
+
         LDA.w SprMiscA, X : BNE +
             LDA #$01 : STA.w SprMiscA, X
         +
@@ -476,7 +476,7 @@ SpawnerTester:
     .secondset
 
     LDA.w SprSubtype, Y : AND #$07 : CLC : ADC #30 : STA.w SprFrame, Y
-    LDA.w SprSubtype, Y 
+    LDA.w SprSubtype, Y
 
     .done
 
@@ -504,17 +504,17 @@ Sprite_Poltergeist_Draw:
     .nextTile
 
         PHX ; Save current Tile Index?
-            
+
         TXA : CLC : ADC $06 ; Add Animation Index Offset
 
         PHA ; Keep the value with animation index offset?
 
-        ASL A : TAX 
+        ASL A : TAX
 
         REP #$20
 
         LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-        AND.w #$0100 : STA $0E 
+        AND.w #$0100 : STA $0E
         INY
         LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
         CLC : ADC #$0010 : CMP.w #$0100
@@ -532,12 +532,12 @@ Sprite_Poltergeist_Draw:
         INY
         LDA .properties, X : STA ($90), Y
 
-        PHY 
-            
+        PHY
+
         TYA : LSR #2 : TAY
-            
+
         LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-            
+
         PLY : INY
     PLX : DEX : BPL .nextTile
 
@@ -548,8 +548,8 @@ Sprite_Poltergeist_Draw:
     RTS
 }
 
-; ========================================================= 
-  
+; =========================================================
+
     .start_index
     db $00, $02, $04, $06, $08, $09, $0F, $15, $16, $17, $18, $19, $1A, $1B, $1C, $1D, $1F, $20, $22, $23, $25, $26, $28, $29, $2A, $2B, $2C, $2D, $2E, $2F, $30, $31, $33, $35, $37, $39, $3B, $3F, $41, $42, $44, $45, $47, $48, $4A
 
@@ -696,7 +696,7 @@ Sprite_Poltergeist_Draw:
     db $28
     db $3E, $3F
     db $28
-    
+
     .properties
     db $3D, $7D
     db $3D, $7D

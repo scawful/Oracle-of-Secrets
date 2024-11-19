@@ -57,7 +57,7 @@ Sprite_MoveVert:
 {
   LDA.w SprYSpeed, X : BEQ .no_velocity
     ASL : ASL : ASL : ASL
-    CLC : ADC.w $0D60,X : STA.w $0D60,X
+    CLC : ADC.w SprYRound,X : STA.w SprYRound,X
 
     LDY.b #$00
     LDA.w SprYSpeed, X
@@ -882,10 +882,10 @@ Sprite_CheckIfRecoiling:
 
   LDA.w $0EA0, X : BEQ .exit
   AND.b #$7F : BEQ .recoil_over
-    LDA.w $0D40, X
+    LDA.w SprYSpeed, X
     PHA
 
-    LDA.w $0D50, X
+    LDA.w SprXSpeed, X
     PHA
 
     DEC.w $0EA0, X : BNE .still_recoiling
@@ -902,9 +902,9 @@ Sprite_CheckIfRecoiling:
 
       LDA.b $1A : AND.w .masks,Y : BNE .no_movement
 
-      LDA.w $0F30, X : STA.w $0D40,X
+      LDA.w $0F30, X : STA.w SprYSpeed,X
 
-      LDA.w $0F40, X : STA.w $0D50,X
+      LDA.w $0F40, X : STA.w SprXSpeed,X
 
       LDA.w $0CD2, X : BMI .handle_movement
 
@@ -916,13 +916,13 @@ Sprite_CheckIfRecoiling:
       CMP.b #$04 : BCS .stop_vertical_movement
 
       STZ.w $0F40,X
-      STZ.w $0D50,X
+      STZ.w SprXSpeed,X
 
       BRA .movement_stopped
 
       .stop_vertical_movement
       STZ.w $0F30,X
-      STZ.w $0D40,X
+      STZ.w SprYSpeed,X
 
       .movement_stopped
       BRA .no_movement
@@ -932,10 +932,10 @@ Sprite_CheckIfRecoiling:
 
     .no_movement
     PLA
-    STA.w $0D50,X
+    STA.w SprXSpeed,X
 
     PLA
-    STA.w $0D40,X
+    STA.w SprYSpeed,X
 
     PLA
     PLA

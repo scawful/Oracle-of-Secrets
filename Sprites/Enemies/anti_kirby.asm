@@ -264,12 +264,12 @@ AntiKirby_StealItem:
 {
   REP #$20
 
-  LDA.w $0FD8
+  LDA.w SprCachedX
   CLC : ADC.b $04
   SEC : SBC.b $22
   CLC : ADC.w #$000C : CMP.w #$0018 : BCS .exit
 
-  LDA.w $0FDA
+  LDA.w SprCachedY
   CLC : ADC.b $06
   SEC : SBC.b $20
   CLC : ADC.w #$000C : CMP.w #$0020 : BCS .exit

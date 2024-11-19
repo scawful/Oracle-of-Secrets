@@ -38,7 +38,7 @@ Sprite_IceBlock_Long:
     STZ.w SprMiscC, X
     STZ.b $5E : STZ.b $48
   .not_being_pushed
-  LDA.w $0DF0, X : BEQ .retain_momentum
+  LDA.w SprTimerA, X : BEQ .retain_momentum
     LDA.b #$01 : STA.w SprMiscC, X
     LDA.b #$84 : STA $48
     LDA.b #$04 : STA.b $5E
@@ -123,11 +123,11 @@ Sprite_IceBlock_Main:
     BCC NotInContact
     JSR ApplyPush
     ; Set timer
-    LDA.b #$07 : STA.w $0DF0, X
+    LDA.b #$07 : STA.w SprTimerA, X
 
     JSL $079291 ; Sprite_RepelDash_long
 
-    LDA.w $0E00,X : BNE Statue_CancelHookshot
+    LDA.w SprTimerB,X : BNE Statue_CancelHookshot
     ; JSL Sprite_DirectionToFacePlayer
     ; LDA.w StatueSpeed_x,Y
     ; STA.w SprXSpeed,X
@@ -154,8 +154,8 @@ Sprite_IceBlock_Main:
   NotInContact:
   {
     %PlayAnimation(0, 0, 1)
-    LDA.w $0DF0,X : BNE .delay_timer
-    LDA.b #$0D : STA.w $0E00,X
+    LDA.w SprTimerA,X : BNE .delay_timer
+    LDA.b #$0D : STA.w SprTimerB,X
 
     .delay_timer
 

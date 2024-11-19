@@ -125,7 +125,7 @@ LinkItem_FirePortal:
 
   .finish
   TYX
-  STZ $0D60, X : STZ $0D70, X
+  STZ.w SprYRound, X : STZ.w SprXRound, X
   PLX
 
   .return

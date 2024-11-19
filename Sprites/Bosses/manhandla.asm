@@ -819,7 +819,7 @@ Mothula_SpawnBeams:
 
   CLC : ADC.b #$03 : STA.w SprY,Y
 
-  LDA.b #$10 : STA.w $0DF0,Y : STA.w $0BA0,Y
+  LDA.b #$10 : STA.w SprTimerA,Y : STA.w $0BA0,Y
 
   PHX
 
@@ -828,10 +828,10 @@ Mothula_SpawnBeams:
   LDA.b $00 : CLC : ADC.w .speed_and_offset_x,X
   STA.w SprX,Y
 
-  LDA.w .speed_and_offset_x,X : STA.w $0D50,Y
+  LDA.w .speed_and_offset_x,X : STA.w SprXSpeed,Y
 
   LDA.w .speed_y,X
-  STA.w $0D40,Y
+  STA.w SprYSpeed,Y
 
   LDA.b #$00
   STA.w $0F70,Y

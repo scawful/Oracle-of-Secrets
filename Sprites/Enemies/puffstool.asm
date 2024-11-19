@@ -155,10 +155,10 @@ Puffstool_SpawnSpores:
   LDX.b $0D
 
   LDA.w .speed_x,X
-  STA.w $0D50,Y
+  STA.w SprXSpeed,Y
 
   LDA.w .speed_y,X
-  STA.w $0D40, Y
+  STA.w SprYSpeed, Y
 
   LDA.b #$20
   STA.w $0F80, Y

@@ -75,12 +75,12 @@ ChickenLady:
 
   .main
   #_1AFED3: LDA.b #$01
-  #_1AFED5: STA.w $0DE0,X
+  #_1AFED5: STA.w SprMiscC,X
 
   #_1AFED8: JSL SpriteDraw_RaceGameLady
   #_1AFEDC: JSR Sprite_CheckIfActive_Bank1A
 
-  #_1AFEDF: LDA.w $0DF0,X
+  #_1AFEDF: LDA.w SprTimerA,X
   #_1AFEE2: CMP.b #$01
   #_1AFEE4: BNE .no_message
 

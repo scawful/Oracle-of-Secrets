@@ -148,9 +148,9 @@ Sprite_Octorok_Move:
   .wait
   LDY.w SprMiscC, X
 
-  LDA.w .speed_x, Y : STA.w $0D50,X
+  LDA.w .speed_x, Y : STA.w SprXSpeed,X
 
-  LDA.w .speed_y, Y : STA.w $0D40,X
+  LDA.w .speed_y, Y : STA.w SprYSpeed,X
 
   JSL Sprite_CheckTileCollision
   LDA.w $0E70, X : BEQ .no_collision
@@ -162,7 +162,7 @@ Sprite_Octorok_Move:
   ; ---------------------------------------------------------
 
   .octorok_used_barrage
-  STZ.w $0D50, X : STZ.w $0D40,X
+  STZ.w SprXSpeed, X : STZ.w SprYSpeed,X
 
   LDA.w SprTimerA, X : BNE Octorock_ShootEmUp
     INC.w SprMiscF, X
@@ -405,16 +405,16 @@ Octorok_SpawnRock:
     LDA.w SprMiscC,X
     TAX
 
-    LDA.b $00 : CLC : ADC.w .offset_x_low,X : STA.w $0D10,Y
-    LDA.b $01 : ADC.w .offset_x_high,X : STA.w $0D30,Y
-    LDA.b $02 : CLC : ADC.w .offset_y_low,X : STA.w $0D00,Y
-    LDA.b $03 : ADC.w .offset_y_high,X : STA.w $0D20,Y
+    LDA.b $00 : CLC : ADC.w .offset_x_low,X : STA.w SprX,Y
+    LDA.b $01 : ADC.w .offset_x_high,X : STA.w SprXH,Y
+    LDA.b $02 : CLC : ADC.w .offset_y_low,X : STA.w SprY,Y
+    LDA.b $03 : ADC.w .offset_y_high,X : STA.w SprYH,Y
 
     LDA.w SprMiscC,Y
     TAX
 
-    LDA.w .rock_speed_x,X : STA.w $0D50,Y
-    LDA.w .rock_speed_y,X : STA.w $0D40,Y
+    LDA.w .rock_speed_x,X : STA.w SprXSpeed,Y
+    LDA.w .rock_speed_y,X : STA.w SprYSpeed,Y
 
     PLX
   .fired_a_blank

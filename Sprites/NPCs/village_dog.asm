@@ -259,10 +259,10 @@ Sprite_VillageDog_Main:
 CheckIfPlayerIsNearby:
 {
   REP #$20
-  LDA $22 : CLC : ADC #$0012 : CMP $0FD8 : BCC .out
-  LDA $22 : SEC : SBC #$0012 : CMP $0FD8 : BCS .out
-  LDA $20 : CLC : ADC #$001A : CMP $0FDA : BCC .out
-  LDA $20 : SEC : SBC #$001A : CMP $0FDA : BCS .out
+  LDA $22 : CLC : ADC #$0012 : CMP.w SprCachedX : BCC .out
+  LDA $22 : SEC : SBC #$0012 : CMP.w SprCachedX : BCS .out
+  LDA $20 : CLC : ADC #$001A : CMP.w SprCachedY : BCC .out
+  LDA $20 : SEC : SBC #$001A : CMP.w SprCachedY : BCS .out
   SEP #$21 
   RTS ; Return with carry set
 
