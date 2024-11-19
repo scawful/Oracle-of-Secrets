@@ -335,7 +335,7 @@ ShopItem_Banana:
     JSR $F39E ; ShopItem_HandleCost
     BCC $F1A1 ; ShopItem_GiveFailureMessage
 
-    STZ.w $0DD0,X
+    STZ.w SprState,X
 
     INC.b Bananas
 

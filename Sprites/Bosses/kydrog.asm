@@ -49,7 +49,7 @@ Sprite_Kydrog_Prep:
 {
   PHB : PHK : PLB
   LDA.l $7EF300 : BEQ .PlayIntro
-    STZ.w $0DD0, X ; Kill the sprite
+    STZ.w SprState, X ; Kill the sprite
   .PlayIntro
   PLB
   RTL

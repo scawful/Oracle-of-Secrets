@@ -98,13 +98,13 @@ ZoraBaby_RevertToSprite:
 
   PHX
   TAX
-  LDA.w $1A64, X : AND.b #$03 : STA.w $0EB0,Y : STA.w $0DE0,Y
-  LDA.w $1A00, X : CLC : ADC.b #$02 : STA.w $0D00,Y
-  LDA.w $1A14, X : ADC.b #$00 : STA.w $0D20,Y
-  LDA.w $1A28, X : CLC : ADC.b #$10 : STA.w $0D10,Y
-  LDA.w $1A3C, X : ADC.b #$00 : STA.w $0D30,Y
+  LDA.w $1A64, X : AND.b #$03 : STA.w SprMiscE,Y : STA.w SprMiscC,Y
+  LDA.w $1A00, X : CLC : ADC.b #$02 : STA.w SprY,Y
+  LDA.w $1A14, X : ADC.b #$00 : STA.w SprYH,Y
+  LDA.w $1A28, X : CLC : ADC.b #$10 : STA.w SprX,Y
+  LDA.w $1A3C, X : ADC.b #$00 : STA.w SprXH,Y
   LDA.b $EE : STA.w $0F20,Y
-  LDA.b #$01 : STA.w $0BA0,Y : STA.w $0E80,Y
+  LDA.b #$01 : STA.w SprBulletproof,Y : STA.w $0E80,Y
   LDA.b #$04 : STA.w SprAction, Y
   LDA.b #$FF : STA.w SprTimerB, Y
   PLX
@@ -276,7 +276,7 @@ org $06BD9C
 org $068D59
 SpritePrep_Locksmith:
 {
-  INC.w $0BA0, X
+  INC.w SprBulletproof, X
 
   ; Clear sprite if we already have Zora baby
   LDA.l $7EF3CC : CMP.b #$09 : BNE .not_already_following
@@ -325,14 +325,14 @@ Sprite_39_ZoraBaby:
     LDY.b #$01
     JSL Sprite_ShowSolicitedMessage
 
-    LDA.w $0D10, X
+    LDA.w SprX, X
     PHA
 
-    SEC : SBC.b #$10 : STA.w $0D10, X
+    SEC : SBC.b #$10 : STA.w SprX, X
 
     JSR Sprite_Get16BitCoords_Local
 
-    LDA.b #$01 : STA.w $0D50, X : STA.w $0D40, X
+    LDA.b #$01 : STA.w SprXSpeed, X : STA.w SprYSpeed, X
 
     JSL Sprite_CheckTileCollision_long : BNE .dont_stalk_link
       INC.w SprAction, X
@@ -340,7 +340,7 @@ Sprite_39_ZoraBaby:
         LDA.b #$05 : STA.w SprAction, X
     .dont_stalk_link
     PLA
-    STA.w $0D10, X
+    STA.w SprX, X
 
     RTS
   }
@@ -480,7 +480,7 @@ SpritePrep_OldMan:
   RTL
 
   .main
-  INC.w $0BA0, X
+  INC.w SprBulletproof, X
 
 
   ; LDA.b $A0 : CMP.b #$E4 ; ROOM 00E4

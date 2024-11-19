@@ -19,8 +19,8 @@ Arrghus_ApproachTargetSpeed:
 pullpc
 AdvancedArrghus:
 {
-  LDA $0CAA, Y : ORA.b #$08 : STA $0CAA, Y
-  LDA.b #$04 : STA $0CD2, Y
+  LDA.w SprDefl, Y : ORA.b #$08 : STA.w SprDefl, Y
+  LDA.b #$04 : STA.w SprBump, Y
   
   JSL Sprite_SpawnFireball
   LDA.b #$50 : STA.w SprTimerA, X

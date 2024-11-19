@@ -50,11 +50,11 @@ Sprite_ZoraPrincess_Prep:
   PHB : PHK : PLB
   LDA.l $7EF302
   BEQ   .doesnt_have_mask
-    STZ.w $0DD0, X ; Kill the sprite
+    STZ.w SprState, X ; Kill the sprite
   .doesnt_have_mask
 
-  LDA #$00 : STA $0CAA, X
-  LDA #$00 : STA $0B6B, X
+  LDA #$00 : STA.w SprDefl, X
+  LDA #$00 : STA.w SprTileDie, X
 
   PLB
   RTL
@@ -110,7 +110,7 @@ Sprite_ZoraPrincess_Main:
       LDY   #$0F : STZ $02E9     ; Give the Zora Mask
       JSL   Link_ReceiveItem
       LDA   #$01 : STA.l $7EF302
-      LDA.b #$00 : STA $0DD0, X
+      LDA.b #$00 : STA.w SprState, X
     +
     RTS
   }

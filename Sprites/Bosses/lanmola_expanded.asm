@@ -296,7 +296,7 @@ Lanmola_MoveSegment:
     LDA.w SprX, X : PHA ;lower x
     LDA.w SprY, X : PHA ;lower y
 
-    LDA $0F70, X : PHA ;height
+    LDA.w SprHeight, X : PHA ;height
     LDA $0F      : PHA ;angle
 
     LDA $0E80, X : STA $02 : STA $05
@@ -313,8 +313,8 @@ Lanmola_MoveSegment:
 
     PLX
 
-    LDA $0DD0, X : CMP.b #$09 : BNE .notActive
-        LDA $11 : ORA $0FC1 : BNE .notActive
+    LDA.w SprState, X : CMP.b #$09 : BNE .notActive
+        LDA $11 : ORA.w SprFreeze : BNE .notActive
             LDA $10 : CMP #$0E : BEQ .notActive
             LDA $5D : CMP #$08 : BEQ .notActive ;in medallion cut scene
                       CMP #$09 : BEQ .notActive ;in medallion cut scene

@@ -17,11 +17,11 @@ Sprite_Octoboss_Long:
   PHB : PHK : PLB
 
   LDA.w SprMiscD, X : BNE + ; is the sprite already init
-  LDA #$04 : STA.w $0E40, X
+  LDA #$04 : STA.w SprNbrOAM, X
   ;LDA.w SprHitbox, X : AND.b #$E0 : ORA.b #$23 : STA.w SprHitbox, X 
-  ;LDA.w $0CAA, X : AND #$7F : ORA.b #$81 : STA.w $0CAA, X
+  ;LDA.w SprDefl, X : AND #$7F : ORA.b #$81 : STA.w SprDefl, X
   ;LDA.b #$20 : STA.w SprHealth, X
-  STZ.w $0BA0, X
+  STZ.w SprBulletproof, X
 
   ; TODO: Add a safety check to prevent player from leaving without the item
   ; example if player left without the item, item will be on the ground still
@@ -34,14 +34,14 @@ Sprite_Octoboss_Long:
   ; Is is killed? do we have the quake medallion tho ?
   LDA.l $7EF349 : BNE .weHaveMedallion
   ; Spawn the medallion
-  STZ.w $0DD0, X
+  STZ.w SprState, X
   JSR SpawnMedallionAlt ; spawn standing medallion
   BRA .SpriteIsNotActive
 
   .weHaveMedallion
   ; Do nothing just kill this sprite
 
-  STZ.w $0DD0, X
+  STZ.w SprState, X
   BRA .SpriteIsNotActive
 
   .notKiledYet
@@ -49,8 +49,8 @@ Sprite_Octoboss_Long:
   PLX
 
 
-  ;LDA.w $0E60, X : AND.b #$BF : STA.w $0E60, X
-  ;LDA.w $0F50, X : AND.b #$BF : STA.w $0F50, X
+  ;LDA.w SprGfxProps, X : AND.b #$BF : STA.w SprGfxProps, X
+  ;LDA.w SprProps, X : AND.b #$BF : STA.w SprProps, X
 
   LDA.b #15 : STA.w SprFrame, X
   LDA.b #$87 : STA.l $7EC664 : STA.l $7EC684
@@ -547,7 +547,7 @@ Sprite_Octoboss_Secondary:
     LDA.w SprTimerB, X : BNE +
     LDA.w SprFrame, X : DEC : STA.w SprFrame, X : CMP.b #01 : BCS .noframereset
     JSR SpawnSplash
-    STZ.w $0DD0, X
+    STZ.w SprState, X
     .noframereset
     LDA.b #2 : STA.w SprTimerB, X
     +
@@ -884,7 +884,7 @@ SpawnSplash:
   JSL Sprite_SetSpawnedCoords
 
   LDA.b #$03
-  STA.w $0DD0,Y
+  STA.w SprState,Y
 
   LDA.b #$0F
   STA.w SprTimerA,Y
@@ -893,7 +893,7 @@ SpawnSplash:
   STA.w $0D80,Y
 
   LDA.b #$03
-  STA.w $0E40,Y
+  STA.w SprNbrOAM,Y
 
   LDA.b #$28 ; SFX2.28
   JSL Sound_SetSfx2PanLong
@@ -939,8 +939,8 @@ SpawnBossPoof:
   STA.w SprTimerA,Y
 
   LDA.b #$09
-  STA.w $0E40,Y
-  STA.w $0BA0,Y
+  STA.w SprNbrOAM,Y
+  STA.w SprBulletproof,Y
 
   RTS
 
@@ -1029,13 +1029,13 @@ SpawnMedallion:
   JSL $0DBB7C ; SpriteSFX_QueueSFX2WithPan
 
   LDA.b #$83
-  STA.w $0E40,X
+  STA.w SprNbrOAM,X
 
   LDA.b #$58
-  STA.w $0E60,X
+  STA.w SprGfxProps,X
 
   AND.b #$0F
-  STA.w $0F50,X
+  STA.w SprProps,X
 
   PLX
 
@@ -1064,13 +1064,13 @@ SpawnMedallionAlt:
   STA.w $0D90, X
 
   LDA.b #$83
-  STA.w $0E40,X
+  STA.w SprNbrOAM,X
 
   LDA.b #$58
-  STA.w $0E60,X
+  STA.w SprGfxProps,X
 
   AND.b #$0F
-  STA.w $0F50,X
+  STA.w SprProps,X
 
   LDA.b #$DC : STA.w SprY, X
   LDA.b #$F7 : STA.w SprX, X

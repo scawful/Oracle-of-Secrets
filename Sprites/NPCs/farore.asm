@@ -57,9 +57,9 @@ Sprite_Farore_Prep:
 {
   PHB : PHK : PLB
 
-  LDA.b #$80 : STA $0CAA, X ; Don't kill Farore when she goes off screen
+  LDA.b #$80 : STA.w SprDefl, X ; Don't kill Farore when she goes off screen
   LDA.l $7EF300 : BEQ .PlayIntro
-    STZ.w $0DD0, X ; Kill the sprite
+    STZ.w SprState, X ; Kill the sprite
   .PlayIntro
 
   PLB

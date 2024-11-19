@@ -500,7 +500,7 @@ DekuLink_HoverBasedOnInput:
     LDA.b #$01 : STA.w $0AAA
     STZ.w $0324 : STZ.w $031C : STZ.w $031D
     STZ.b $50 : STZ.b $3D
-    STZ.w $0FC1
+    STZ.w SprFreeze
     STZ.w $011A : STZ.w $011B : STZ.w $011C : STZ.w $011D
 
     LDY.b #$00
@@ -600,9 +600,9 @@ Ancilla_CheckBasicSpriteCollision:
   ORA.w $0EF0, Y
   BNE .skip
 
-  LDA.w $0DD0, Y : CMP.b #$09 : BCC .skip
+  LDA.w SprState, Y : CMP.b #$09 : BCC .skip
 
-  LDA.w $0CAA, Y : AND.b #$02 : BNE .sprite_ignores_priority
+  LDA.w SprDefl, Y : AND.b #$02 : BNE .sprite_ignores_priority
 
   LDA.w $0280, X : BNE .skip
 
@@ -651,20 +651,20 @@ Ancilla_CheckBasicSpriteCollision_Single:
   ; SPRITE 92
   LDA.w $0E20, Y : CMP.b #$92 : BNE .not_king_helma
 
-  LDA.w $0DB0, Y : CMP.b #$03 : BCC .success
+  LDA.w SprMiscB, Y : CMP.b #$03 : BCC .success
 
   .not_king_helma
   ; SPRITE 80
   LDA.w $0E20, Y : CMP.b #$80 : BNE .dont_reverse_fire_snake
 
-  LDA.w $0F10, Y : BNE .dont_reverse_fire_snake
+  LDA.w SprTimerE, Y : BNE .dont_reverse_fire_snake
 
-  LDA.b #$18 : STA.w $0F10, Y
+  LDA.b #$18 : STA.w SprTimerE, Y
 
-  LDA.w $0DE0, Y : EOR.b #$01 : STA.w $0DE0, Y
+  LDA.w SprMiscC, Y : EOR.b #$01 : STA.w SprMiscC, Y
 
   .dont_reverse_fire_snake
-  LDA.w $0BA0, Y : BNE .fail
+  LDA.w SprBulletproof, Y : BNE .fail
 
   LDA.w AnciX, X : SEC : SBC.b #$08 : STA.b $04
 
@@ -692,8 +692,8 @@ Ancilla_CheckBasicSpriteCollision_Single:
   PLX
   PLY
 
-  LDA.b $00 : EOR.b #$FF : STA.w $0F30, Y
-  LDA.b $01 : EOR.b #$FF : STA.w $0F40, Y
+  LDA.b $00 : EOR.b #$FF : STA.w SprYRecoil, Y
+  LDA.b $01 : EOR.b #$FF : STA.w SprXRecoil, Y
 
   PHX
 

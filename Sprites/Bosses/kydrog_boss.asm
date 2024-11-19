@@ -61,7 +61,7 @@ Sprite_KydrogBoss_CheckIfDead:
 
     LDA.w SprHealth, X : BNE .not_dead
       PHX
-      LDA.b #$04 : STA $0DD0, X ;kill sprite boss style
+      LDA.b #$04 : STA.w SprState, X ;kill sprite boss style
       LDA.b #$09 : STA.w SprAction, X ;go to KydrogBoss_Death stage
       STZ.w $0D90,X
 
@@ -79,11 +79,11 @@ Sprite_KydrogBoss_Prep:
   LDA #$00 : STA !KydrogPhase
 
   LDA.b #$A0 : STA.w SprHealth, X ; health
-  LDA.b #$80 : STA $0CAA, X
+  LDA.b #$80 : STA.w SprDefl, X
 
-  LDA.b #$03 : STA $0F60, X ; hitbox settings
+  LDA.b #$03 : STA.w SprHitbox, X ; hitbox settings
   LDA.b #$07 : STA.w SprBump, X ; bump damage type
-  LDA $0E60, X : AND.b #$BF : STA $0E60, X ; Not invincible
+  LDA.w SprGfxProps, X : AND.b #$BF : STA.w SprGfxProps, X ; Not invincible
 
   JSR KydrogBoss_Set_Damage ; Set the damage table
 
@@ -466,10 +466,10 @@ CheckForNextPhase:
 ; TODO: Use a timer to unfreeze the sprite
 Sprite_CheckIfFrozen:
 {
-  LDA $0DD0, X : CMP.b #$0B : BNE .not_frozen
+  LDA.w SprState, X : CMP.b #$0B : BNE .not_frozen
     LDA.w SprTimerC, X : BNE .not_frozen
       LDA.b #$00 : STA.l $7FFA3C,X
-      LDA.b #$09 : STA.w $0DD0, X
+      LDA.b #$09 : STA.w SprState, X
     .not_frozen
   RTS
 }
@@ -564,12 +564,12 @@ Kydrog_ThrowBoneAtPlayer:
     LDA.w SprX, X : CLC : ADC.b #$10 : STA.w SprX, X
     LDA.w SprY, X : SEC : SBC.b #$04 : STA.w SprY, X
     LDA.b #$20 : JSL Sprite_ApplySpeedTowardsPlayer
-    LDA.b #$21 : STA $0E40, X : STA $0BA0, X
-    LDA $0E60, X : ORA.b #$40 : STA $0E60, X
-    LDA.b #$48 : STA $0CAA, X
+    LDA.b #$21 : STA.w SprNbrOAM, X : STA.w SprBulletproof, X
+    LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X
+    LDA.b #$48 : STA.w SprDefl, X
     LDA.b #$10 : STA.w SprTimerC, X
-    LDA.b #$14 : STA $0F60, X
-    LDA.b #$07 : STA $0F50, X
+    LDA.b #$14 : STA.w SprHitbox, X
+    LDA.b #$07 : STA.w SprProps, X
     LDA.b #$20 : STA.w SprBump, X
     PLX
     LDA.b #$02 : JSL Sound_SetSfx2PanLong
@@ -595,7 +595,7 @@ GetNumberSpawnStalfos:
       BRA .not_a_skull
 
     .increment_count
-      LDA $0DD0, X : CMP.b #$00 : BEQ .not_a_skull
+      LDA.w SprState, X : CMP.b #$00 : BEQ .not_a_skull
       INC $00
 
   .not_a_skull

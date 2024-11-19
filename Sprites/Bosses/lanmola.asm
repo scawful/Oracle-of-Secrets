@@ -48,7 +48,7 @@ Lanmola_FinishInitialization:
 
     LDA.l .starting_delay, X : STA.w SprTimerA, X
 
-    LDA.b #$FF : STA $0F70, X
+    LDA.b #$FF : STA.w SprHeight, X
 
     PHX
 
@@ -247,7 +247,7 @@ Lanmola_Dive: ;0x03
     .alpha
 
     ; If we are under the ground go to the reset stage
-    LDA $0F70, X : BPL .notUnderGroundYet
+    LDA.w SprHeight, X : BPL .notUnderGroundYet
         INC $0D80, X
 
         LDA.b #$80 : STA.w SprTimerA, X
@@ -290,7 +290,7 @@ Lanmola_Death: ;0x05
     JSR Lanmola_Draw
 
     LDA.w SprTimerA, X : BNE .timerNotDone
-        STZ $0DD0, X
+        STZ.w SprState, X
 
         ; Y is the index where we write in RAM
         PHX ; keep X
@@ -303,7 +303,7 @@ Lanmola_Death: ;0x05
 
         .next_sprite
             LDA $0E20, X : CMP.b #$54 : BNE .notLanmola
-                LDA $0DD0, X : BNE .oneIsntDead
+                LDA.w SprState, X : BNE .oneIsntDead
 
             .notLanmola
 
@@ -344,7 +344,7 @@ Lanmola_Death: ;0x05
         LDA.b #$00 : JSL Sprite_SpawnDynamically : BMI .spawn_failed
             LDA.b #$0B : STA $0AAA
 
-            LDA.b #$04 : STA $0DD0, Y
+            LDA.b #$04 : STA.w SprState, Y
 
             LDA.b #$1F : STA.w SprTimerA, Y : STA $0D90, Y
 
@@ -353,9 +353,9 @@ Lanmola_Death: ;0x05
             LDA $0C : STA.w SprY, Y
             LDA $0D : STA.w SprYH, Y
 
-            LDA.b #$03 : STA $0E40, Y
+            LDA.b #$03 : STA.w SprNbrOAM, Y
 
-            LDA.b #$0C : STA $0F50, Y
+            LDA.b #$0C : STA.w SprProps, Y
 
             LDA.b #$0C : JSL Sound_SetSfx2PanLong
 
@@ -594,7 +594,7 @@ Sprite_Shrapnel:
 
     .active
 
-    LDA $1A : ASL #2 : AND.b #$C0 : STA $0F50, X ; : ORA.b #$00
+    LDA $1A : ASL #2 : AND.b #$C0 : STA.w SprProps, X ; : ORA.b #$00
 
     JSR $E948 ;Sprite4_MoveXyz
 
@@ -618,12 +618,12 @@ Sprite_Shrapnel:
     SEP #$20
 
     ;JSR $8094 : BEQ .noTileCollision ;Sprite4_CheckTileCollision
-        ;STZ $0DD0, X
+        ;STZ.w SprState, X
 
     .noTileCollision
 
     LDA.w SprTimerA, X : BNE .timerNotDone
-        STZ $0DD0, X
+        STZ.w SprState, X
 
     .timerNotDone
 

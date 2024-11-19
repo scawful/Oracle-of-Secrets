@@ -5,7 +5,7 @@
 KingDodongo_NewHealthSystem:
 {
   PHB : PHK : PLB
-  LDA.w $0E50,X
+  LDA.w SprHealth,X
   LSR A
   LSR A
   TAY

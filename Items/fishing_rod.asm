@@ -144,7 +144,7 @@ LinkItem_FishingRod:
     JSL Sprite_SetSpawnedCoordinates
 
     LDA.w $0E20, Y : CMP.b #$D2 : BNE .notafish
-      LDA #$04 : STA.w $0F70, Y
+      LDA #$04 : STA.w SprHeight, Y
       LDA #$01 : STA.w $0D80, Y
     .notafish
 
@@ -156,7 +156,7 @@ LinkItem_FishingRod:
     PLX
     LDA.b #$FF : STA.w SprTimerD, Y
     LDA.b #$20 : STA.w $0F80, Y ; Gravity
-    ;LDA.b #$06 : STA.w $0F70, Y
+    ;LDA.b #$06 : STA.w SprHeight, Y
 
   .noPrize
   LDA.b #$02 : STA.l $7F5BA2 ; set fishing rod state to pulling back
@@ -172,7 +172,7 @@ EndFishing:
   LDA #$00
   STA.l $7F5BA2
   LDA.l $7F5BA3 : TAX
-  STZ.w $0DD0, X
+  STZ.w SprState, X
   STZ.b $5E
   STZ.w $0300
   STZ.b $3D
@@ -298,13 +298,13 @@ FloaterBoySpriteCheck:
 
 Sprite_CheckIfActive:
 {
-  LDA.w $0FC1 ; Remove that if want to be able to pause all other sprites
+  LDA.w SprFreeze ; Remove that if want to be able to pause all other sprites
   BNE .inactive
 
   LDA.b $11
   BNE .inactive
 
-  LDA.w $0CAA, X
+  LDA.w SprDefl, X
   BMI .active
 
   LDA.w $0F00, X
@@ -342,7 +342,7 @@ SpritePrep_Floater:
 
   .DoInitFloater
 
-  LDA.b #$08 : STA.w $0F70, X    ; Height
+  LDA.b #$08 : STA.w SprHeight, X    ; Height
   LDA.b #$10 : STA.w $0F80, X    ; Gravity
   LDA.b #$00 : STA.w SprMiscG, X ; is it in water?
   LDA.b #$00 : STA.w SprMiscE, X    ; Wiggling Velocity index
@@ -409,9 +409,9 @@ Sprite_Floater:
 
   LDA.w $0F80, X : SEC : SBC.b #$01 : STA.w $0F80, X
 
-  LDA.w $0F70, X : BPL .aloft
+  LDA.w SprHeight, X : BPL .aloft
 
-  STZ.w $0F70, X
+  STZ.w SprHeight, X
 
   LDA.w SprXSpeed, X : ASL A : ROR.w SprXSpeed, X
 
@@ -506,7 +506,7 @@ DismissRodFromMenu:
   LDA #$00
   STA.l $7F5BA2
   LDA.l $7F5BA3 : TAX
-  STZ.w $0DD0, X
+  STZ.w SprState, X
   STZ.b $5E
   STZ.w $0300
   STZ.b $3D

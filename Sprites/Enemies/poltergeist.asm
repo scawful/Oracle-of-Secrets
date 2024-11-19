@@ -60,9 +60,9 @@ Sprite_Poltergeist_Prep:
 {
     PHB : PHK : PLB
 
-    LDA #$00 : STA $0F60, X ; Persist
-    LDA #$00 : STA $0CAA, X ; Sprite persist in dungeon
-    LDA #$02 : STA $0E40, X ;1 tile by default
+    LDA #$00 : STA.w SprHitbox, X ; Persist
+    LDA #$00 : STA.w SprDefl, X ; Sprite persist in dungeon
+    LDA #$02 : STA.w SprNbrOAM, X ;1 tile by default
     LDA #$01 : STA.w SprAction, X ; by default it's a chair
 
     LDA.w SprSubtype, X : CMP #$10 : BNE .notPictureFrame
@@ -75,7 +75,7 @@ Sprite_Poltergeist_Prep:
     CMP #$11 : BNE .notAxe
         LDA #$07 : STA.w SprFrame, X
         LDA #$02 : STA.w SprAction, X
-        LDA #$04 : STA $0E40, X
+        LDA #$04 : STA.w SprNbrOAM, X
         BRA .done
 
     .notAxe
@@ -97,7 +97,7 @@ Sprite_Poltergeist_Prep:
     CMP #$14 : BNE .notBed
         LDA #5 : STA.w SprFrame, X
         LDA #$01 : STA.w SprAction, X
-        LDA #$06 : STA $0E40, X
+        LDA #$06 : STA.w SprNbrOAM, X
         BRA .done
 
     .notBed
@@ -105,7 +105,7 @@ Sprite_Poltergeist_Prep:
     CMP #$15 : BNE .notDoor
         LDA #36 : STA.w SprFrame, X
         LDA #$01 : STA.w SprAction, X
-        LDA #$04 : STA $0E40, X
+        LDA #$04 : STA.w SprNbrOAM, X
         LDA.w SprY, X : SEC : SBC #$0C : STA.w SprY, X
         LDA.w SprX, X : CLC : ADC #$08 : STA.w SprX, X
         BRA .done
@@ -283,19 +283,19 @@ Chair:
 
 Shatter:
 {
-    LDA.b #$A6 : STA $0E40, X
+    LDA.b #$A6 : STA.w SprNbrOAM, X
     LDA.b #$1F : JSL Sound_SetSfx2PanLong
     STZ $0DC0, X
 
     LDA.b #$04 : STA.w SprMiscB, X
 
-    LDA.b #$06 : STA $0DD0, X
+    LDA.b #$06 : STA.w SprState, X
 
     LDA.b #$1F : STA.w SprTimerA, X
 
     LDA.b #$EC : STA $0E20, X
 
-    LDA $0E40, X : CLC : ADC #$04 : STA $0E40, X
+    LDA.w SprNbrOAM, X : CLC : ADC #$04 : STA.w SprNbrOAM, X
 
     STZ $0EF0, X
 

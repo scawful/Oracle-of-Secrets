@@ -248,13 +248,13 @@ Sprite_Chuchu_Move:
 
     JSL Sprite_MoveAltitude
     DEC.w $0F80,X : DEC.w $0F80,X
-    LDA.w $0F70, X : BPL .aloft
-      STZ.w $0F70, X
+    LDA.w SprHeight, X : BPL .aloft
+      STZ.w SprHeight, X
       LDA.b $08 : STA.w $0F80, X ; set height from 08
       LDA.b $09
       JSL Sprite_ApplySpeedTowardsPlayer
     .aloft
-    LDA.w $0F70, X : BEQ .dontmove
+    LDA.w SprHeight, X : BEQ .dontmove
       JSL Sprite_Move
     .dontmove
 

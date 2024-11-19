@@ -65,8 +65,8 @@ Sprite_Wolfos_Prep:
     RTL
   .spawn_wolfos
   LDA.b #$40 : STA.w SprTimerA, X
-  LDA.b #$80 : STA.w $0CAA, X ; Sprite persist
-  LDA.b #$08 : STA.w $0E40, X ; Nbr Oam Entries
+  LDA.b #$80 : STA.w SprDefl, X ; Sprite persist
+  LDA.b #$08 : STA.w SprNbrOAM, X ; Nbr Oam Entries
 
   PLB
   RTL
@@ -286,7 +286,7 @@ Sprite_Wolfos_Main:
     STZ.w SprYSpeed, X
 
     LDA.w SprTimerD, X : BNE .dismiss
-      LDA.b #$00 : STA $0DD0, X ; kill sprite normal style
+      LDA.b #$00 : STA.w SprState, X ; kill sprite normal style
       STZ.w SprAction, X
       STZ.w SprHealth, X
       STZ.w BRANDISH ; Stop Link from holding his hands up.

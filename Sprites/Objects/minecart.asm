@@ -282,7 +282,7 @@ Sprite_Minecart_Main:
         .active_cart
         JSL Link_CancelDash                  ; Stop the player from dashing
         LDA #$02 : STA $02F5                 ; Somaria platform and moving
-        LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
+        LDA.w SprCachedY : SEC : SBC #$0B : STA $20 ; Adjust player pos
         LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
 
         ; Check if the cart is facing east or west
@@ -315,7 +315,7 @@ Sprite_Minecart_Main:
         .active_cart
         JSL Link_CancelDash                  ; Stop the player from dashing
         LDA #$02 : STA $02F5                 ; Somaria platform and moving
-        LDA $0FDA : SEC : SBC #$0B : STA $20 ; Adjust player pos
+        LDA.w SprCachedY : SEC : SBC #$0B : STA $20 ; Adjust player pos
         LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
 
         ; Check if the cart is facing north or south
@@ -365,7 +365,7 @@ Sprite_Minecart_Main:
     %PlayAnimation(0,1,8)
     %InitMovement()
     LDA $36 : BNE .fast_speed
-      LDA.b #!MinecartSpeed : STA $0D50, X
+      LDA.b #!MinecartSpeed : STA.w SprXSpeed, X
       JMP +
     .fast_speed
     LDA.b #!DoubleSpeed : STA.w SprXSpeed, X
@@ -751,10 +751,10 @@ CheckForPlayerInput:
 CheckIfPlayerIsOn:
 {
   REP #$20
-  LDA $22 : CLC : ADC #$0009 : CMP $0FD8 : BCC .left
-  LDA $22 : SEC : SBC #$0009 : CMP $0FD8 : BCS .right
-  LDA $20 : CLC : ADC #$0012 : CMP $0FDA : BCC .up
-  LDA $20 : SEC : SBC #$0012 : CMP $0FDA : BCS .down
+  LDA $22 : CLC : ADC #$0009 : CMP.w SprCachedX : BCC .left
+  LDA $22 : SEC : SBC #$0009 : CMP.w SprCachedX : BCS .right
+  LDA $20 : CLC : ADC #$0012 : CMP.w SprCachedY : BCC .up
+  LDA $20 : SEC : SBC #$0012 : CMP.w SprCachedY : BCS .down
     SEP #$21
     RTS ; Return with carry set
   .left

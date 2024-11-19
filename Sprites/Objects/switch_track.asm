@@ -49,7 +49,7 @@ Sprite_RotatingTrack_Long:
 Sprite_RotatingTrack_Prep:
 {
   PHB : PHK : PLB
-  LDA.b #$80 : STA $0CAA, X
+  LDA.b #$80 : STA.w SprDefl, X
   LDA.w SprSubtype, X : STA.w SprAction,X
   PLB
   RTL

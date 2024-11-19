@@ -203,7 +203,7 @@ Sprite_KydreeokHead_Main:
     JSL Sprite_Move
 
     LDA.w SprTimerA, X : BNE .not_done
-      LDA #$00 : STA $0DD0, X
+      LDA #$00 : STA.w SprState, X
     .not_done
     RTS
   }

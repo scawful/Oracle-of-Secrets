@@ -138,7 +138,7 @@ Overlord_SpawnSoldierPath:
     LDA.w .soldier_position_y, X : STA.w SprY,Y
     LDA.w $0B40,X : STA.w SprFloor,Y
     LDA.b #$20 : STA.w SprTimerA,Y
-    LDA.w $0FB5 : STA.w $0DE0,Y
+    LDA.w $0FB5 : STA.w SprMiscC,Y
   .exit
   RTS
 

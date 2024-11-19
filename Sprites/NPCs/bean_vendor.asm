@@ -51,7 +51,7 @@ Sprite_BeanVendor_Prep:
 {
   PHB : PHK : PLB
 
-  LDA.b #$80 : STA $0CAA, X ; Persist in dungeons
+  LDA.b #$80 : STA.w SprDefl, X ; Persist in dungeons
   LDA.b #$40 : STA.w SprTimerA, X
   LDA.w SprSubtype, X : STA.w SprAction, X
   CMP.b #$02 : BEQ .OldMan

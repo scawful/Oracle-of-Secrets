@@ -557,7 +557,7 @@ Sprite_DarkLink_Main:
       LDA #$20
       JSL Sprite_ApplySpeedTowardsPlayer
       ;restore life removed by the checkdamage
-      STZ.w $0CE2, X
+      STZ.w SprBump, X
 
             
         LDA #$20 : STA $29 : STA $C7
@@ -638,9 +638,9 @@ Sprite_DarkLink_Main:
 
     DEC.w $0F80,X : DEC.w $0F80,X
 
-    LDA.w $0F70,X : BPL .aloft
+    LDA.w SprHeight,X : BPL .aloft
 
-    STZ.w $0F70,X
+    STZ.w SprHeight,X
     %GotoAction(0)
 
     .aloft
@@ -714,10 +714,10 @@ Sprite_DarkLink_Main:
 
     DEC.w $0F80,X : DEC.w $0F80,X : DEC.w $0F80,X : DEC.w $0F80,X
 
-    LDA.w $0F70,X : BPL .aloft
+    LDA.w SprHeight,X : BPL .aloft
 
 
-    STZ.w $0F70,X
+    STZ.w SprHeight,X
 
     LDA.b #$90 : STA.w SprTimerC, X
     LDA.b #$10 : STA.w SprTimerA, X
@@ -878,12 +878,12 @@ Sprite_DarkLink_Main:
 
     DEC.w $0F80,X : DEC.w $0F80,X
 
-    LDA.w $0F70,X : BPL .aloft
+    LDA.w SprHeight,X : BPL .aloft
 
     STZ.w SprYSpeed, X
     STZ.w SprXSpeed, X
 
-    STZ.w $0F70,X
+    STZ.w SprHeight,X
 
     .aloft
 
@@ -977,7 +977,7 @@ Sprite_DarkLink_Main:
     INC.w SprMiscF, X
     ;LDA #$1A : STA.b $11 ; ganon open door routine
     ; handled by the room tag?
-    LDA #$04 : STZ.w $0DD0, X
+    LDA #$04 : STZ.w SprState, X
     LDA.b #$80 : STA $0403
     %GotoAction(14)
 

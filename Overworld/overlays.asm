@@ -620,7 +620,7 @@ ZoraTemple_EntranceAnimation:
     STZ.b $B0
     STZ.w $0710
     STZ.w $02E4
-    STZ.w $0FC1
+    STZ.w SprFreeze
     STZ.w $011A
     STZ.w $011B
     STZ.w $011C
@@ -671,7 +671,7 @@ Castle_EndAnimation:
   STZ.b $B0
   STZ.w $0710
   STZ.w $02E4
-  STZ.w $0FC1
+  STZ.w SprFreeze
   STZ.w $011A
   STZ.w $011B
   STZ.w $011C
@@ -995,7 +995,7 @@ TailPalace_EntranceAnimation:
     STZ.b $B0
     STZ.w $0710
     STZ.w $02E4
-    STZ.w $0FC1
+    STZ.w SprFreeze
     STZ.w $011A
     STZ.w $011B
     STZ.w $011C
@@ -1128,7 +1128,7 @@ Goron_EntranceAnimation:
   STZ.b $B0
   STZ.w $0710
   STZ.w $02E4
-  STZ.w $0FC1
+  STZ.w SprFreeze
   STZ.w $011A
   STZ.w $011B
   STZ.w $011C

@@ -63,7 +63,7 @@ Sprite_Twinrova_CheckIfDead:
   .health_not_negative
     LDA.w SprHealth, X : BNE .not_dead
       PHX
-      LDA.b #$04 : STA $0DD0, X     ; Kill sprite boss style
+      LDA.b #$04 : STA.w SprState, X     ; Kill sprite boss style
       LDA.b #$0A : STA.w SprAction, X ; Go to Twinrova_Dead stage
       LDA.b #$10 : STA.w $0D90, X
       PLX
@@ -79,13 +79,13 @@ Sprite_Twinrova_Prep:
 
   ; Kill the sprite if the Maiden is present
   LDA.l $7EF3CC : CMP.b #$06 : BNE .prep_twinrova
-    STZ.w $0DD0, X
+    STZ.w SprState, X
   .prep_twinrova
 
   LDA.b #$5A : STA.w SprHealth, X ; Health
-  LDA.b #$80 : STA $0CAA, X
-  LDA.b #$04 : STA $0CD2, X ; Bump damage type (4 hearts, green tunic)
-  LDA.w $0E60, X : AND.b #$BF : STA.w $0E60, X ; Not invincible
+  LDA.b #$80 : STA.w SprDefl, X
+  LDA.b #$04 : STA.w SprBump, X ; Bump damage type (4 hearts, green tunic)
+  LDA.w SprGfxProps, X : AND.b #$BF : STA.w SprGfxProps, X ; Not invincible
 
   %SetSpriteSpeedX(15)
   %SetSpriteSpeedX(15)
@@ -277,9 +277,9 @@ Sprite_Twinrova_Main:
     %Twinrova_Attack()
 
     LDA #$01 : STA $0360
-    LDA $0CAA : AND.b #$03 : STA $0CAA
+    LDA.w SprDefl : AND.b #$03 : STA.w SprDefl
     LDA.w SprTimerD, X : BNE +
-      LDA $0CAA : ORA.b #$03 : STA $0CAA
+      LDA.w SprDefl : ORA.b #$03 : STA.w SprDefl
       LDA.b #$40 : STA.w SprTimerD, X
       LDA   $AC : BEQ .fire
         %GotoAction(6) ; Ice Attack
@@ -539,7 +539,7 @@ RageModeMove:
   ; Handle floaty movement with controlled altitude
   LDA.w SprHeight, X : CMP #$10 : BNE .CheckGrounded
     DEC.w SprHeight, X
-    DEC.w $0F90, X
+    DEC.w SprHeightS, X
 
   .CheckGrounded
   ; Move sprite
@@ -1018,12 +1018,12 @@ ApplyTwinrovaGraphics:
 ; $1DC845
 #Fireball_Configure:
 {
-  LDA.w $0CAA,Y
+  LDA.w SprDefl,Y
   ORA.b #$08
-  STA.w $0CAA,Y
+  STA.w SprDefl,Y
 
   LDA.b #$04
-  STA.w $0CD2,Y
+  STA.w SprBump,Y
 
   .exit
   RTS
@@ -1202,7 +1202,7 @@ Blind_SpawnFromMaiden:
   LDX.b #$00 ; Load the boss into sprite index 0
 
   ; Set the sprite to alive and active
-  LDA.b #$09 : STA.w $0DD0,X
+  LDA.b #$09 : STA.w SprState,X
 
   ; SPRITE CE
   LDA.b #$CE : STA.w $0E20,X
@@ -1223,7 +1223,7 @@ Blind_SpawnFromMaiden:
   LDA.b #$00 : STA.w $0DC0,X
 
   ; Set SprMiscC and bulletproof properties
-  LDA.b #$02 : STA.w SprMiscC,X : STA.w $0BA0,X
+  LDA.b #$02 : STA.w SprMiscC,X : STA.w SprBulletproof,X
 
   ; Set the 2nd key / heart piece items taken room flag
   LDA.w $0403 : ORA.b #$20 : STA.w $0403
@@ -1272,7 +1272,7 @@ SpritePrep_Blind_PrepareBattle:
     RTL
 
   .despawn
-    STZ.w $0DD0,X
+    STZ.w SprState,X
 
     RTL
 }

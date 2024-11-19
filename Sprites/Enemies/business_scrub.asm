@@ -310,7 +310,7 @@ KillPeaShot:
   ; Kill the pea shot
   PHX
   LDA.w Offspring1_Id : TAX
-  STZ.w $0DD0, X
+  STZ.w SprState, X
   PLX
   RTS
 }

@@ -81,7 +81,7 @@ Sprite_MoveZ:
 Sprite_MoveAltitude:
 {
   LDA.w SprTimerF, X : ASL : ASL : ASL : ASL
-  CLC : ADC.w $0F90, X : STA.w $0F90, X
+  CLC : ADC.w SprHeightS, X : STA.w SprHeightS, X
 
   LDA.w SprTimerF, X : PHP
   LSR   : LSR : LSR : LSR
@@ -342,7 +342,7 @@ Sprite_SetupHitBox:
   PHB : PHK : PLB
   LDA.w SprHeight, X : BMI .too_high
     PHY
-    LDA.w $0F60, X : AND.b #$1F : TAY
+    LDA.w SprHitbox, X : AND.b #$1F : TAY
     LDA.w SprX, X : CLC : ADC.w .offset_x_low, Y : STA.b $04
 
     LDA.w SprXH, X : ADC.w .offset_x_high, Y : STA.b $0A
@@ -889,8 +889,8 @@ Sprite_CheckIfRecoiling:
     PHA
 
     DEC.w $0EA0, X : BNE .still_recoiling
-      LDA.w $0F40, X : CLC : ADC.b #$20 : CMP.b #$40 : BCS .no_adjust
-        LDA.w $0F30, X : CLC : ADC.b #$20 : CMP.b #$40 : BCC .still_recoiling
+      LDA.w SprXRecoil, X : CLC : ADC.b #$20 : CMP.b #$40 : BCS .no_adjust
+        LDA.w SprYRecoil, X : CLC : ADC.b #$20 : CMP.b #$40 : BCC .still_recoiling
       .no_adjust
       LDA.b #$90 : STA.w $0EA0,X
     .still_recoiling
@@ -902,11 +902,11 @@ Sprite_CheckIfRecoiling:
 
       LDA.b $1A : AND.w .masks,Y : BNE .no_movement
 
-      LDA.w $0F30, X : STA.w SprYSpeed,X
+      LDA.w SprYRecoil, X : STA.w SprYSpeed,X
 
-      LDA.w $0F40, X : STA.w SprXSpeed,X
+      LDA.w SprXRecoil, X : STA.w SprXSpeed,X
 
-      LDA.w $0CD2, X : BMI .handle_movement
+      LDA.w SprBump, X : BMI .handle_movement
 
       JSL Sprite_CheckTileCollision_long
 
@@ -915,13 +915,13 @@ Sprite_CheckIfRecoiling:
       .stop_horizontal_movement
       CMP.b #$04 : BCS .stop_vertical_movement
 
-      STZ.w $0F40,X
+      STZ.w SprXRecoil,X
       STZ.w SprXSpeed,X
 
       BRA .movement_stopped
 
       .stop_vertical_movement
-      STZ.w $0F30,X
+      STZ.w SprYRecoil,X
       STZ.w SprYSpeed,X
 
       .movement_stopped

@@ -279,9 +279,9 @@ Sprite_Kydreeok_Main:
     LDA.b #$00
     JSL Sprite_SpawnDynamically : BMI .no_space
       LDA.b #$0B : STA.w $0AAA
-      LDA.b #$04 : STA.w $0DD0,Y
-      LDA.b #$03 : STA.w $0E40,Y
-      LDA.b #$0C : STA.w $0F50,Y
+      LDA.b #$04 : STA.w SprState,Y
+      LDA.b #$03 : STA.w SprNbrOAM,Y
+      LDA.b #$0C : STA.w SprProps,Y
       LDA.w SprCachedX : STA.w SprX,Y
       LDA.w $0FD9 : STA.w SprXH,Y
       LDA.w SprCachedY : STA.w SprY,Y
@@ -293,7 +293,7 @@ Sprite_Kydreeok_Main:
       STZ.w $0422
       STZ.w $0424
       LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
-      STZ.w $0DD0, X ; GG
+      STZ.w SprState, X ; GG
     .continue
     RTS
   }

@@ -60,10 +60,10 @@ Sprite_Portal_Prep:
   PHB : PHK : PLB
   
   ; Persist outside of camera  
-  LDA #$00 : STA $0CAA, X 
+  LDA #$00 : STA.w SprDefl, X 
   LDA.w SprHitbox, X : AND.b #$C0 : STA.w SprHitbox, X
-  STZ.w $0B6B, X
-  LDA.b #$FF : STA.w $0BA0, X
+  STZ.w SprTileDie, X
+  LDA.b #$FF : STA.w SprBulletproof, X
 
   PLB
   RTL
@@ -297,13 +297,13 @@ CheckForDismissPortal:
     LDA $7E0FA6 : BEQ .DespawnOrange ; Check what portal is spawning next 
       PHX
         LDA.w BlueSpriteIndex : TAX
-        STZ.w $0DD0, X
+        STZ.w SprState, X
         DEC.w $06FE
       PLX
     .DespawnOrange  
     PHX
       LDA.w OrangeSpriteIndex : TAX
-      STZ.w $0DD0, X
+      STZ.w SprState, X
       DEC.w $06FE
     PLX
   RTS
@@ -329,7 +329,7 @@ RejectOnTileCollision:
     LDA #$3C ; SFX2.3C Error beep
     STA $012E ; Queue sound effect 
 
-    LDA #$00 : STA $0DD0, X
+    LDA #$00 : STA.w SprState, X
     DEC $06FE
 
   .not_out_of_bounds

@@ -22,7 +22,7 @@ SpritePrep_SickKid:
   LDA.l $7EF355 : BEQ .no_boots
     LDA.b #$03 : STA $0D80, X
   .no_boots
-  INC.w $0BA0, X
+  INC.w SprBulletproof, X
   RTS
 }
 

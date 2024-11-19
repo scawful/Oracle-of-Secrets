@@ -72,7 +72,7 @@ Ancilla_HandlePortalCollision:
     RTL
   .not_portal_arrow
   ; Restore arrow deflection sprite code from $088DC3
-  LDA.w $0B6B,Y : AND.b #$08
+  LDA.w SprTileDie,Y : AND.b #$08
   RTL
 }
 

@@ -16,7 +16,7 @@ org $0EF581
 EXIT_0EF581:
 
 org $01C769
-#_01C769: LDA.w $0DD0,X
+#_01C769: LDA.w SprState,X
 #_01C76C: CMP.b #$02
 
 ; Credits_LoadNextScene_Overworld
@@ -233,7 +233,7 @@ SpawnPointData:
 #_02DBF0: dw $0083 ; 0x02 - Prison
 #_02DBF2: dw $007B ; 0x03 - Uncle
 #_02DBF4: dw $009A ; 0x04 - Throne
-#_02DBF6: dw $0103 ; 0x05 - Old man cave
+#_02DBF6: DW $0103 ; 0x05 - Old man cave
 #_02DBF8: dw $0187 ; 0x06 - Old man home
 
 ; ---------------------------------------------------------

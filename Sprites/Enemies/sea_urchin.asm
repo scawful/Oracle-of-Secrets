@@ -81,7 +81,7 @@ Sprite_SeaUrchin_Main:
     LDA.b #$06 : STA.w SprState, X
     LDA.b #$0A : STA.w SprTimerA, X
 
-    STZ.w $0BE0,X
+    STZ.w SprPrize,X
 
     LDA.b #$09 ; SFX2.1E
     JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan

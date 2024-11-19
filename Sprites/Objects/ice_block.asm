@@ -65,7 +65,7 @@ Sprite_IceBlock_Prep:
   LDA.w SprXH, X : STA.w SprMiscF, X
   LDA.w SprYH, X : STA.w SprMiscG, X
 
-  STZ.w $0CAA, X
+  STZ.w SprDefl, X
 
   PLB
   RTL
@@ -323,7 +323,7 @@ Statue_BlockSprites:
   AND.b #$01
   BNE .skip
 
-  LDA.w $0DD0,Y
+  LDA.w SprState,Y
   CMP.b #$09
   BCC .skip
 
@@ -372,10 +372,10 @@ Statue_BlockSprites:
   PLY
 
   LDA.b $00
-  STA.w $0F30,Y
+  STA.w SprYRecoil,Y
 
   LDA.b $01
-  STA.w $0F40,Y
+  STA.w SprXRecoil,Y
 
   .skip
   SEP #$20
