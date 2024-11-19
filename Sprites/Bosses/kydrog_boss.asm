@@ -55,17 +55,17 @@ Sprite_KydrogBoss_CheckIfDead:
 {
   LDA.w SprAction, X : CMP.b #$09 : BEQ .not_dead
     ; If health is negative, set back to zero
-    LDA $0E50, X : CMP.b #$C3 : BCC .health_not_negative
-      LDA.b #$00 : STA $0E50, X
+    LDA.w SprHealth, X : CMP.b #$C3 : BCC .health_not_negative
+      LDA.b #$00 : STA.w SprHealth, X
     .health_not_negative
 
-    LDA $0E50, X : BNE .not_dead
+    LDA.w SprHealth, X : BNE .not_dead
       PHX
       LDA.b #$04 : STA $0DD0, X ;kill sprite boss style
       LDA.b #$09 : STA.w SprAction, X ;go to KydrogBoss_Death stage
       STZ.w $0D90,X
 
-      LDA.b #$E0 : STA.w $0DF0,X
+      LDA.b #$E0 : STA.w SprTimerA,X
       PLX
   .not_dead
   RTS
@@ -78,7 +78,7 @@ Sprite_KydrogBoss_Prep:
   PHB : PHK : PLB
   LDA #$00 : STA !KydrogPhase
 
-  LDA.b #$A0 : STA $0E50, X ; health
+  LDA.b #$A0 : STA.w SprHealth, X ; health
   LDA.b #$80 : STA $0CAA, X
 
   LDA.b #$03 : STA $0F60, X ; hitbox settings
@@ -92,7 +92,6 @@ Sprite_KydrogBoss_Prep:
   %SetHarmless(00)
 
   LDA #$80 : STA.w SprTimerD, X ; intro timer
-
   PLB
   RTL
 }
@@ -113,26 +112,44 @@ macro StopIfTooClose()
 +
 endmacro
 
-macro RandomStalfosOffspring()
-    JSL GetNumberSpawnStalfos
-    LDA $00 : CMP.b #$04 : BCS .too_many_stalfos
-
+RandomStalfosOffspring:
+{
+  JSL GetNumberSpawnStalfos
+  LDA $00 : CMP.b #$04 : BCS .too_many_stalfos
     JSL GetRandomInt : AND.b #$3F : BNE +
-    PHX : JSR Sprite_Offspring_Spawn : PLX
-  +
-
+      PHX : JSR Sprite_Offspring_Spawn : PLX
+    +
     JSL GetRandomInt : AND.b #$3F : BNE ++
-    PHX : JSR Sprite_Offspring_SpawnHead : PLX
-  ++
+      PHX : JSR Sprite_Offspring_SpawnHead : PLX
+    ++
   .too_many_stalfos
-endmacro
+  RTS
+}
 
-macro BounceBasedOnPhase()
+BounceBasedOnPhase:
+{
   LDA !KydrogPhase : CMP #$00 : BEQ .phase_one
     LDA #$10 : STA $08 : LDA #$20 : STA $09
   .phase_one
     JSL Sprite_BounceTowardPlayer
-endmacro
+  RTS
+}
+
+KydrogBoss_DoMovement:
+{
+  PHX
+  JSL Sprite_CheckDamageFromPlayer
+  %DoDamageToPlayerSameLayerOnContact()
+  PLX
+
+  JSL Sprite_DamageFlash_Long
+  JSR BounceBasedOnPhase
+
+  JSR RandomStalfosOffspring
+
+  %GotoAction(1)
+  RTS
+}
 
 Sprite_KydrogBoss_Main:
 {
@@ -174,7 +191,7 @@ Sprite_KydrogBoss_Main:
   KydrogBoss_WalkState:
   {
     JSR CheckForNextPhase
-    LDA $0DA0 : BEQ .not_flashing
+    LDA.w SprMiscA : BEQ .not_flashing
       LDA.b #$20 : STA.w SprTimerD, X
       %GotoAction(6) ; Goto KydrogBoss_TakeDamage
       RTS
@@ -197,20 +214,19 @@ Sprite_KydrogBoss_Main:
     TYA : CMP.b #$02 : BCC .WalkRight
     .WalkForward
       %StopIfTooClose()
-      JSL Sprite_IsBelowPlayer ; Check if sprite is below player
-      TYA : BNE .WalkBackwards ; If 1, go to KydrogBoss_WalkBackwards
-      %GotoAction(2) ; Goto KydrogBoss_WalkForward
-      RTS
-    .WalkBackwards
+      JSL Sprite_IsBelowPlayer : TYA : BNE .WalkBackwards
+        %GotoAction(2) ; Goto KydrogBoss_WalkForward
+        RTS
+      .WalkBackwards
       %GotoAction(5) ; Goto KydrogBoss_WalkBackwards
       RTS
 
     .WalkRight
       %StopIfTooClose()
       JSL Sprite_IsToRightOfPlayer : TYA : BNE .WalkLeft
-      %GotoAction(4)
-      RTS
-    .WalkLeft
+        %GotoAction(4)
+        RTS
+      .WalkLeft
       %GotoAction(3) ; Goto KydrogBoss_WalkLeft
       RTS
   }
@@ -220,78 +236,28 @@ Sprite_KydrogBoss_Main:
   KydrogBoss_WalkForward:
   {
     %PlayAnimation(0, 2, 8)
-
-    PHX
-    JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
-    PLX
-
-    JSL Sprite_DamageFlash_Long
-    %BounceBasedOnPhase()
-
-    %RandomStalfosOffspring()
-
-    %GotoAction(1)
+    JSR KydrogBoss_DoMovement
     RTS
   }
-
-  ; -------------------------------------------------------
 
   KydrogBoss_WalkLeft:
   {
     %PlayAnimation(3, 5, 8)
-
-    PHX
-    JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
-    PLX
-
-    JSL Sprite_DamageFlash_Long
-    %BounceBasedOnPhase()
-
-    %RandomStalfosOffspring()
-
-    %GotoAction(1)
+    JSR KydrogBoss_DoMovement
     RTS
   }
-
-  ; -------------------------------------------------------
 
   KydrogBoss_WalkRight:
   {
     %PlayAnimation(6, 8, 8)
-
-    PHX
-    JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
-    PLX
-
-    JSL Sprite_DamageFlash_Long
-    %BounceBasedOnPhase()
-
-    %RandomStalfosOffspring()
-
-    %GotoAction(1)
+    JSR KydrogBoss_DoMovement
     RTS
   }
-
-  ; -------------------------------------------------------
 
   KydrogBoss_WalkBackward:
   {
     %PlayAnimation(9, 11, 8)
-
-    PHX
-    JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
-    PLX
-
-    JSL Sprite_DamageFlash_Long
-    %BounceBasedOnPhase()
-
-    %RandomStalfosOffspring()
-
-    %GotoAction(1)
+    JSR KydrogBoss_DoMovement
     RTS
   }
 
@@ -305,8 +271,8 @@ Sprite_KydrogBoss_Main:
     INC !ConsecutiveHits
     LDA !ConsecutiveHits : CMP #$10 : BCC .continue
       STZ !ConsecutiveHits
-      LDA.b #$28 ; SFX3.28
-      JSL $0DBB8A  ; SpriteSFX_QueueSFX3WithPan
+      ; SFX3.28
+      LDA.b #$28 : JSL $0DBB8A  ; SpriteSFX_QueueSFX3WithPan
       %GotoAction($0A) ; Goto KydrogBoss_Ascend
       JSL Sprite_KillFriends
       RTS
@@ -318,15 +284,15 @@ Sprite_KydrogBoss_Main:
     PLX
 
     JSL Sprite_DamageFlash_Long
-    %RandomStalfosOffspring()
+    JSR RandomStalfosOffspring
     LDA.w SprTimerD, X : BNE +
       %GotoAction(1)
     +
 
     JSL GetRandomInt : AND.b #$1F : BNE ++
-    LDA.b #$28 ; SFX3.28
-    JSL $0DBB8A  ; SpriteSFX_QueueSFX3WithPan
-    %GotoAction($0A) ; Goto KydrogBoss_Ascend
+      ; SFX3.28
+      LDA.b #$28 : JSL $0DBB8A  ; SpriteSFX_QueueSFX3WithPan
+      %GotoAction($0A) ; Goto KydrogBoss_Ascend
     ++
 
     RTS
@@ -364,7 +330,7 @@ Sprite_KydrogBoss_Main:
 
     JSL Sprite_DamageFlash_Long
 
-    %RandomStalfosOffspring()
+    JSR RandomStalfosOffspring
 
     LDA.w SprTimerD, X : BNE +
       JSR Kydrog_ThrowBoneAtPlayer
@@ -394,7 +360,7 @@ Sprite_KydrogBoss_Main:
     %StartOnFrame(17)
     %PlayAnimation(17, 17, 10)
 
-    %RandomStalfosOffspring()
+    JSR RandomStalfosOffspring
 
     ; Increase the Z for a bit until he is off screen
     LDA.w SprHeight, X : CLC : ADC.b #$04
@@ -411,7 +377,7 @@ Sprite_KydrogBoss_Main:
     %StartOnFrame(17)
     %PlayAnimation(17, 17, 10)
 
-    %RandomStalfosOffspring()
+    JSR RandomStalfosOffspring
 
     LDA.w SprTimerD, X : BEQ .no_track_player
 
@@ -438,14 +404,14 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(13, 13, 10)
 
     JSL GetRandomInt : AND.b #$3F : BNE +
-      LDA.b $0D50 : CLC : ADC.b #$08 : STA $0D50
-      LDA.b $0D70 : CLC : ADC.b #$02 : STA $0D70
+      LDA.b SprXSpeed : CLC : ADC.b #$08 : STA.w SprXSpeed
+      LDA.b SprXRound : CLC : ADC.b #$02 : STA.w SprXRound
       LDA.w SprTimerD, X : BNE .not_done
         %GotoAction(1)
         RTS
     +
-    LDA.b $0D40 : CLC : ADC.b #$08 : STA $0D40
-    LDA.b $0D60 : CLC : ADC.b #$02 : STA $0D60
+    LDA.b SprYSpeed : CLC : ADC.b #$08 : STA.w SprYSpeed
+    LDA.b SprYRound : CLC : ADC.b #$02 : STA.w SprYRound
     LDA.w SprTimerD, X : BNE .not_done
     %GotoAction(1)
 
@@ -473,7 +439,7 @@ CheckForNextPhase:
   .phase_two
     LDA.w SprHealth,X : CMP.b #$20 : BCC .phase_three
     LDA !KydrogPhase : CMP.b #$01 : BEQ .return
-    LDA #$80 : STA $0E50, X
+    LDA #$80 : STA.w SprHealth, X
     LDA #$01 : STA.w SprAction, X
     STA !KydrogPhase
     INC.w SprFlash, X
@@ -482,7 +448,7 @@ CheckForNextPhase:
   .phase_three
     LDA.w SprHealth,X : CMP.b #$20 : BCC .phase_four
     LDA !KydrogPhase : CMP.b #$02 : BEQ .return
-    LDA #$80 : STA $0E50, X
+    LDA #$80 : STA.w SprHealth, X
     LDA #$02 : STA.w SprAction, X
     STA !KydrogPhase
     RTS
@@ -501,7 +467,7 @@ CheckForNextPhase:
 Sprite_CheckIfFrozen:
 {
   LDA $0DD0, X : CMP.b #$0B : BNE .not_frozen
-    LDA.w $0E10, X : BNE .not_frozen
+    LDA.w SprTimerC, X : BNE .not_frozen
       LDA.b #$00 : STA.l $7FFA3C,X
       LDA.b #$09 : STA.w $0DD0, X
     .not_frozen
@@ -555,7 +521,6 @@ Sprite_Offspring_SpawnHead:
   RTS
 }
 
-
 Sprite_Offspring_Spawn:
 {
   JSL GetRandomInt : AND.b #$3F : BNE .normal_stalfos
@@ -569,18 +534,18 @@ Sprite_Offspring_Spawn:
   LDA.b #$02 : STA.w SprSubtype, Y
   PHX
   REP #$20
-  LDA $0FD8 : CLC : ADC.w #$000C
+  LDA.w SprCachedX : CLC : ADC.w #$000C
   SEP #$20
   STA.w SprX, Y : XBA : STA.w SprXH, Y
 
   REP #$20
-  LDA $0FDA : CLC : ADC.w #$001E
+  LDA.w SprCachedY : CLC : ADC.w #$001E
   SEP #$20
   STA.w SprY, Y : XBA : STA.w SprYH, Y
 
   TYX
 
-  STZ $0D60, X : STZ $0D70, X
+  STZ.w SprYRound, X : STZ.w SprXRound, X
   LDA.b #$05 : STA.w SprBump, X
   PLX
   .return
