@@ -217,22 +217,12 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
   - [X] Eon Abyss Variant
 - [X] Animate mines opening animation
 
-** TODO Fix Minecart mechanics
-** TODO Collectible Item Quests
+** ACTIVE Fix Minecart mechanics
+** ACTIVE Collectible Item Quests
 *** TODO Golden Fish
-*** TODO Magic Bean
 *** TODO Deku Stick
 *** TODO Honeycomb
-** TODO Update Kydrog boss [0/3]
-- [ ] Track offspring sprites spawned, more dynamic spawns
-- [ ] Improve Kydrog movement, add additional stage in fight
-- [ ] Cinematic opening and ending cutscene with dialogue
-
-** TODO Update Kydreeok boss [0/2]
-- [ ] Improve fireball attack
-- [ ] Improve head/neck rotation
-
-** TODO Add Dungeon Maps [0/11]
+** ACTIVE Add Dungeon Maps [0/11]
 - [ ] Mushroom Grotto
 - [ ] Tail Palace
 - [ ] Kalyxo Castle
@@ -245,8 +235,18 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 - [ ] Shrine of Power
 - [ ] Shrine of Courage
 
-** TODO Fortress of Secrets Opening Cutscene
+** TODO Update Kydrog boss [0/3]
+- [ ] Track offspring sprites spawned, more dynamic spawns
+- [ ] Improve Kydrog movement, add additional stage in fight
+- [ ] Cinematic opening and ending cutscene with dialogue
+
+** TODO Update Kydreeok boss [0/2]
+- [ ] Improve fireball attack
+- [ ] Improve head/neck rotation
+
+** TODO Fortress of Secrets Cutscene
 Should use the Ganons Tower Crystal Cutscene as the base.
+
 ** TODO Add Dream Sequences [0/7]
 - [ ] Deku Business Scrub Dream
 - [ ] Twinrova Ranch Girl Dream
@@ -257,6 +257,28 @@ Should use the Ganons Tower Crystal Cutscene as the base.
 - [ ] Final Dream ????
 
 ** TODO End Credits
+
+
+* Timeline
+
+- Farore Intro
+  - GameState 7EF3C5:02
+  - StoryState    B6:01
+- Kydrog Intro
+  - OosProg2  7EF3C6:04
+  - IntroFlag 7EF300:01
+- Maku Tree Return from Eon Abyss
+  - OosProg   7EF3D6:02
+
+- Impa Hall of Secrets
+  - OosProg   7EF3D6:04
+
+- Ranch Kid
+  - MAPICON interaction
+
+- Village Elder
+  - MAPICON interaction
+
 * ROM Map
 Expanded space used by ZScream as of 1/16/2024
 
