@@ -208,7 +208,7 @@ Sprite_BeanVendor_Main:
   MagicBean_RanchFlower:
   {
     LDA.b #$04 : STA.w SprFrame, X
-    JSL ThrownSprite_TileAndSpriteInteraction_long 
+    JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
 }
@@ -329,4 +329,3 @@ Sprite_BeanVendor_Draw:
   db $02, $02, $02, $02, $00, $00
   db $02, $02, $02, $02 ; Flower
 }
-

@@ -37,12 +37,9 @@
 Sprite_MakuTree_Long:
 {
   PHB : PHK : PLB
-
   JSL Sprite_CheckActive   ; Check if game is not paused
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
   JSR Sprite_MakuTree_Main ; Call the main sprite code
-
   .SpriteIsNotActive
   PLB ; Get back the databank we stored previously
   RTL ; Go back to original code
@@ -54,6 +51,7 @@ Sprite_MakuTree_Prep:
   PHB : PHK : PLB
 
   ; Play the Maku Song
+
   LDA.b #$03 : STA.w $012C
 
   PLB
