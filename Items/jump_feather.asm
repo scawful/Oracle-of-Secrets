@@ -1,22 +1,22 @@
 ; =========================================================
-; Zarby Feather 
+; Zarby Feather
 
 org $07AFF8 ; LinkItem_BugCatchingNet
 {
-    BIT $3A : BVS .return ;if Y or B are already pressed
-      LDA $6C : BNE .return ; if we are standing in a dooray or not
-        ; Link_CheckNewY_ButtonPress
-        JSR $B073 : BCC .return ; Check if we just pressed Y Button  
-          JSL LinkItem_JumpFeather
+  BIT $3A : BVS .return ;if Y or B are already pressed
+    LDA $6C : BNE .return ; if we are standing in a dooray or not
+      ; Link_CheckNewY_ButtonPress
+      JSR $B073 : BCC .return ; Check if we just pressed Y Button
+        JSL LinkItem_JumpFeather
   .return
-    RTS
+  RTS
 }
 
 ; =========================================================
 ; Prevent Link from taking damage while jumping spikes
-; The game originally differentiates between your armor 
+; The game originally differentiates between your armor
 ; for the damage take, however the table has all the same
-; values, so it's effectively useless. 
+; values, so it's effectively useless.
 
 ; TileDetect_MainHandler_no_moon_pearl
 ; org $07D23D
@@ -36,19 +36,19 @@ LinkItem_JumpFeather:
     LDA #$02 : STA $4D ; set jumping state (ledge hop)
 
     ; Length of the jump
-    LDA #$20 : STA $46 
+    LDA #$20 : STA $46
 
     ; Height of the jump
-    LDA #$24 
+    LDA #$24
 
-    ; Set vertical resistance 
+    ; Set vertical resistance
     STA $29
     STA $02C7
 
     ; Set Links direction to right(?)
     LDA #$08 : STA $0340 : STA $67
 
-    ; Reset Link movement offsets 
+    ; Reset Link movement offsets
     STZ $31 : STZ $30
 
       LDA $F4 : AND #$08 : BEQ .noUp
@@ -67,7 +67,7 @@ LinkItem_JumpFeather:
         LDA #8  ; Change that 8 if you want higher speed moving right
         STA $28
     .noRight
-    
+
   .cantuseit
     RTL
 }
