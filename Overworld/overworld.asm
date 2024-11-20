@@ -1,52 +1,73 @@
 ; Overworld.asm
 
-; Spawn Point 03 - Room 0005
-org $02DB74
-  dw $0005
-
-org $02DC51
-  db $14
-
 ; Remove rain sound effects from beginning
-org $02838C
-LDA.l $7EF3C5
-CMP.b #$00
+org $02838C : LDA.l $7EF3C5 : CMP.b #$00
 
-org $0EF581
-EXIT_0EF581:
-
-org $01C769
-#_01C769: LDA.w SprState,X
-#_01C76C: CMP.b #$02
+; RoomTag_GanonDoor
+; Replace SprState == 04 -> .exit
+org $01C769 : LDA.w SprState, X : CMP.b #$02
 
 ; Credits_LoadNextScene_Overworld
 ; Skip end cutscene until it's ready
-org $0E9889
-    LDA #$20 : STA $11
-    RTS
+org $0E9889 : LDA #$20 : STA $11 : RTS
 
-; FlashGanonTowerPalette
-org $0EF587
-  LDA.b $8A
-  CMP.b #$73
-  BEQ .on_dark_dm
-  CMP.b #$75
-  BEQ .on_dark_dm
-  CMP.b #$7D
-  BNE EXIT_0EF581
-  .on_dark_dm
+; =========================================================
+; Special Area Properties
 
-org $0EF531
-Palettes_GanonTowerFlash:
-  dw  $7FFF,  $0884,  $1CC8,  $1DCE,  $3694,  $4718,  $1D4A,  $18AC
-  dw  $7FFF,  $1908,  $2D2F,  $3614,  $4EDA,  $471F,  $1D4A,  $390F
-  dw  $7FFF,  $34CD,  $5971,  $5635,  $7F1B,  $7FFF,  $1D4A,  $3D54
-  dw  $7FFF,  $1908,  $2D2F,  $3614,  $4EDA,  $471F,  $1D4A,  $390F
-  dw  $7FFF,  $0884,  $052A,  $21EF,  $3AB5,  $4B39,  $1D4C,  $18AC
-  ; dw $7FFF,   $0C63,  $40A5,  $5D67, $7EAE, $7F18, $7A6B, $7B5C
+org $0EDE29
+{
+  ; corresponding warp types that lead to special overworld areas
+  dw $01EF, $01EF, $00AD, $00B9
 
-incsrc "Overworld/maku_tree.asm"
-print  "End of Overworld/maku_tree.asm    ", pc
+  ; Lost woods, Hyrule Castle Bridge, Entrance to Zora falls, and in Zora Falls...
+  dw $002A, $0018, $000F, $0081
+
+  ; Direction Link will face when he enters the special area
+  dw $0008, $0008, $0008, $0008
+
+  ; Exit value for the special area. In Hyrule Magic these are those White markers.
+  dw $0180, $0181, $0182, $0189
+}
+
+; =========================================================
+; Exit 180 to Master Sword Area
+
+; Sprite GFX
+org $02E811 : db $0C ; PC Address $016811
+; Background GFX
+org $02E821 : db $2F ; PC Address $016821
+; Palette
+org $02E831 : db $0A ; PC Address $016831
+; Sprite Palette
+org $02E841 : db $01 ; PC Address $016841
+
+; =========================================================
+; Exit 181 to Bridge Area
+
+; Sprite GFX
+org $02E812 : db $25 ; PC Address $016812
+; Background GFX
+org $02E822 : db $2F ; PC Address $016822
+; Palette
+org $02E832 : db $0A ; PC Address $016832
+; Sprite Palette
+org $02E842 : db $08 ; PC Address $016842
+
+; =========================================================
+; Exit 182 to Zora's Waterfall
+
+; Sprite GFX
+org $02E813 : db $0E ; PC Address $016813
+; Background GFX
+org $02E823 : db $2F ; PC Address $016823
+; Palette
+org $02E833 : db $0A ; PC Address $016833
+; Sprite Palette
+org $02E843 : db $03 ; PC Address $016843
+; Disable Zora's Waterfall SFX
+org $02C444 : db $55 ; PC Address $014444
+
+; =========================================================
 
 incsrc "Overworld/lost_woods.asm"
 print  "End of Overworld/lost_woods.asm   ", pc
@@ -66,32 +87,23 @@ pushpc
 incsrc "Overworld/world_map.asm"
 print "End of world_map.asm              ", pc
 
-;pullpc
-;incsrc "Overworld/entrances.asm"
-;print  "End of Overworld/entrances.asm    ", pc
-
 ; =========================================================
 ; Get Lv2 Sword from chest
 ; Get Lv4 Sword from pedestal
-; =========================================================
 
 ; At 04/87CA, change D0 into 80
-org $0987CA
-db $80
+org $0987CA : db $80
 
 ; Disable wind blowing sfx:
 ; At 04/45D4, change 09 into 00
-org $08C5D4
-db $00
+org $08C5D4 : db $00
 
 ; MasterSword_HandleReceipt
-org $0589AF
-LDY.b #$03 ; ITEMGET 03
+org $0589AF : LDY.b #$03 ; ITEMGET 03
 
 ; Module15_0C
 ; Prevent the game from setting $7EF3C7 to 06
-org $029E58
-NOP #6
+org $029E58 : NOP #6
 
 pullpc
 LoadDarkWorldIntro:
@@ -119,17 +131,14 @@ LoadDarkWorldIntro:
 pushpc
 
 ; Module05_LoadFile
-org $028192
-  JSL LoadDarkWorldIntro
+org $028192 : JSL LoadDarkWorldIntro
 
 ; Module05_LoadFile
 ; Check for goldstar instead of mirror for mountain spawn option
-org $0281E2
-  LDA.l $7EF342 : CMP.b #$02
+org $0281E2 : LDA.l $7EF342 : CMP.b #$02
 
 ; Check for hall of secrets spawn pt flag
-org $0281CD
-  LDA.l $7EF3D6 : CMP.b #$04
+org $0281CD : LDA.l $7EF3D6 : CMP.b #$04
 
 pullpc
 LoadOverworldPitAreas:
@@ -138,16 +147,12 @@ LoadOverworldPitAreas:
             CMP.b #$11 : BEQ .allow_transition
             CMP.b #$23 : BEQ .allow_transition
             CMP.b #$57 : BEQ .allow_transition
-  SEC ; fall in the pit
-  RTL
-
+    SEC ; fall in the pit
+    RTL
   .allow_transition
   CLC ; allow transition
   RTL
 }
-;pushpc
-
-; incsrc "Overworld/special_areas.asm"
 
 Overworld_GetPitDestination = $1BB860
 
@@ -158,7 +163,30 @@ org $0794D9
     RTS
 .overworld_pit_transition
 
-; TODO: Fix camera scroll boundaries so sprites appear for 0x05
+org $0EF581
+EXIT_0EF581:
+
+; FlashGanonTowerPalette
+org $0EF587
+  LDA.b $8A : CMP.b #$73 : BEQ .on_dark_dm
+              CMP.b #$75 : BEQ .on_dark_dm
+              CMP.b #$7D : BNE EXIT_0EF581
+  .on_dark_dm
+
+org $0EF531
+Palettes_GanonTowerFlash:
+  dw  $7FFF,  $0884,  $1CC8,  $1DCE,  $3694,  $4718,  $1D4A,  $18AC
+  dw  $7FFF,  $1908,  $2D2F,  $3614,  $4EDA,  $471F,  $1D4A,  $390F
+  dw  $7FFF,  $34CD,  $5971,  $5635,  $7F1B,  $7FFF,  $1D4A,  $3D54
+  dw  $7FFF,  $1908,  $2D2F,  $3614,  $4EDA,  $471F,  $1D4A,  $390F
+  dw  $7FFF,  $0884,  $052A,  $21EF,  $3AB5,  $4B39,  $1D4C,  $18AC
+; dw  $7FFF,  $0C63,  $40A5,  $5D67, $7EAE, $7F18, $7A6B, $7B5C
+
+
+; TODO Remove when its confirmed ZS spawn works properly
+; Spawn Point 03 - Room 0005
+org $02DB74 : dw $0005
+org $02DC51 : db $14
 org $02DB6E
 SpawnPointData:
 .room_id
