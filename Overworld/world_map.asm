@@ -221,7 +221,8 @@ MapIconDraw:
 
   LDA.l $7EF3C7 : CMP.b #$01 : BEQ .hall_of_secrets
                   CMP.b #$02 : BEQ .draw_secret
-                  CMP.b #$03 : BCS .draw_crystals
+                  CMP.b #$03 : BEQ .draw_crystal_1
+                  CMP.b #$04 : BCS .draw_crystals
                   JSL DrawEonEscapeIcon
                   JSR HandleMapDrawIcon
                   JMP restore_coords_and_exit
@@ -236,7 +237,7 @@ MapIconDraw:
     JSR HandleMapDrawIcon_noflash
     JMP .skip_draw_6
 
-  .draw_crystals
+  .draw_crystal_1
     ; Draw Crystal 1
     LDA.l $7EF37A : AND #$02 : BNE .skip_draw_0
       ; X position
@@ -253,7 +254,9 @@ MapIconDraw:
       LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
       JSR HandleMapDrawIcon
     .skip_draw_0
+    JMP restore_coords_and_exit
 
+  .draw_crystals
     ; Draw Crystal 2
     LDA.l $7EF37A : AND #$10 : BNE .skip_draw_1
       ; X position (2)

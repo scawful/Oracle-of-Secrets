@@ -55,14 +55,14 @@ OOSPROG         = $7EF3D6
 OOSPROG2       = $7EF3C6
 
 ; Map icon
-;   0x00 - Red X on castle    | Save zelda
-;   0x01 - Red X on Kakariko  | Talk to villagers about elders
-;   0x02 - Red X on Eastern   | Talk to Sahasrahla
-;   0x03 - Pendants and MS    | Obtain the master sword
-;   0x04 - Master sword on LW | Grab the master sword
-;   0x05 - Skull on castle    | Kill Agahnim
-;   0x06 - Crystal on POD     | Get the first crystal
-;   0x07 - Crystals           | Get all 7 crystals
+;   0x00 - Red X on Maku Tree/Maku Warp
+;   0x01 - Red X on Hall of Secrets
+;   0x02 - Red X on Kalyxo Pyramid
+;   0x03 - Toadstool Woods Crystal
+;   0x04 - Kalyxo Crystals All
+;   0x05 -
+;   0x06 -
+;   0x07 -
 ;   0x08 - Skull on GT        | Climb Ganon's Tower
 MAPICON         = $7EF3C7
 
