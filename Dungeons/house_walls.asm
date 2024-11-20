@@ -1,7 +1,6 @@
-
 ;
 ; Editor View
-; 1 2         -> 1 3 
+; 1 2         -> 1 3
 ; 3 4         -> 2 4
 
 ; Top Left Corner Layer 1
@@ -26,14 +25,14 @@ org $00A6B8
   dw $C89E, $489E, $48B6, $4899
   dw $889E, $089E, $4894, $4892
 
-; Bottom Right Corner Layer 1 
+; Bottom Right Corner Layer 1
 #obj0BC6:
   dw $CCAE, $C8B3, $8896, $8890
   dw $C8B7, $C8A6, $C8B5, $8893
   dw $4898, $C8B6, $C89E, $489E
   dw $4892, $C894, $889E, $089E
 
-; Top Wall Layer 1 
+; Top Wall Layer 1
 #obj02E8:
 org $009E3A
   dw $0890, $0896, $08A2, $0CAC
@@ -43,7 +42,7 @@ org $009E3A
   dw $8CAC, $88A2, $8896, $C890
   dw $CCAC, $88A3, $8897, $8890
 
-; Left Wall Layer 1 
+; Left Wall Layer 1
 
 #obj02C8:
 org $009E1A

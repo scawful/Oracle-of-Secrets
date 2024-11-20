@@ -9,7 +9,7 @@ Sprite_Zora_Long:
   LDA.w ROOM : CMP.w #$0105 : BNE .not_princess
     SEP #$30
     JSR Sprite_ZoraPrincess_Draw
-    LDA.b #$01 : STA.w SprMiscG, X      
+    LDA.b #$01 : STA.w SprMiscG, X
     JMP +
   .not_princess
   LDA.w WORLDFLAG : AND.w #$00FF : BEQ .eon_draw
@@ -192,4 +192,3 @@ Sprite_Zora_Draw:
   db $02, $02
   db $02, $02
 }
-

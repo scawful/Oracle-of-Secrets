@@ -12,7 +12,7 @@ org $05DF12
   NOP
 
 org $04ECA0
-  STZ $0DD0,x
+  STZ.w SprState,x
   STZ $02E4     ; repeat native code overwritten by hook
   LDA #$02
   STA $7EF3C5   ; store "part 2"

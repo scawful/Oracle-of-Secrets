@@ -1,4 +1,4 @@
-; Change Enemy Damage 
+; Change Enemy Damage
 ; tzpd bbbb
 ;   t - TODO
 ;   z - High priority target for bees to give hints
@@ -38,10 +38,10 @@ org $0DB330
 org $0DB266+$53
   db $13
 
-org $0DB1C6 ;  0x53 - ARMOS KNIGHT health 
+org $0DB1C6 ;  0x53 - ARMOS KNIGHT health
   db 64
 
-; Firebar 
+; Firebar
 org $0DB44C+$7F
   db $64 ; persist, same damage
 
@@ -49,12 +49,12 @@ org $0DB44C+$7F
 org $0DB266+$55
   db $03, $03
 
-; Arrghus 
-org $0DB266+$8C 
+; Arrghus
+org $0DB266+$8C
   db $14
 
 org $0DB266+$8D ; Arrgi
   db $14
 
-org $0DB266+$5D ; Roller vertical 
+org $0DB266+$5D ; Roller vertical
   db $05, $05, $05, $05
