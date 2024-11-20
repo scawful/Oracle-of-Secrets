@@ -117,6 +117,14 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 3) [ ] Swordsmith brothers improve your Meadow Blade to the Tempered Sword (Lv3)
 *** TODO Korok Cove
 *** TODO Fishing Minigame
+*** TODO Dream Sequences [0/7]
+- [ ] Deku Business Scrub Dream
+- [ ] Twinrova Ranch Girl Dream
+- [ ] Hyrule Castle Dream
+- [ ] Zora King Dream
+- [ ] Kydrog Sealing Dream
+- [ ] Mine Collapse Dream
+- [ ] Final Dream ????
 * Items
 ** Y Items
 | Name            | Description                                  |
@@ -231,9 +239,13 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 - [X] Animate mines opening animation
 
 ** ACTIVE Fix Minecart mechanics
-** ACTIVE Collectible Item Quests
-*** TODO Deku Stick
-*** TODO Honeycomb
+** ACTIVE Collectible Item Quests [2/6]
+- [ ] Bananas
+- [X] Pineapples
+- [X] Rock Meat
+- [ ] Seashells
+- [ ] Honeycombs
+- [ ] Deku Sticks
 ** ACTIVE Add Dungeon Maps [0/11]
 - [ ] Mushroom Grotto
 - [ ] Tail Palace
@@ -247,26 +259,17 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 - [ ] Shrine of Power
 - [ ] Shrine of Courage
 
+** TODO Update Kydrog boss [1/3]
+- [X] Track offspring sprites spawned, more dynamic spawns
+- [ ] Improve Kydrog movement, add additional stage in fight
+- [ ] Cinematic opening and ending cutscene with dialogue
+
 ** TODO Update Kydreeok boss [0/2]
 - [ ] Improve fireball attack
 - [ ] Improve head/neck rotation
 
-** TODO Update Kydrog boss [0/3]
-- [ ] Track offspring sprites spawned, more dynamic spawns
-- [ ] Improve Kydrog movement, add additional stage in fight
-- [ ] Cinematic opening and ending cutscene with dialogue
-
 ** TODO Fortress of Secrets Cutscene
 Should use the Ganons Tower Crystal Cutscene as the base.
-
-** TODO Add Dream Sequences [0/7]
-- [ ] Deku Business Scrub Dream
-- [ ] Twinrova Ranch Girl Dream
-- [ ] Hyrule Castle Dream
-- [ ] Zora King Dream
-- [ ] Kydrog Sealing Dream
-- [ ] Mine Collapse Dream
-- [ ] Final Dream ????
 
 ** TODO End Credits
 
@@ -297,15 +300,12 @@ Should use the Ganons Tower Crystal Cutscene as the base.
 - Song of Healing -> Running Boots from Sick Kid in village
 - Running Boots   -> Book of Secrets from village library
 
-
 - Book of Secrets
   - Lifts the Kalyxo Castle gates
 
 * ROM Map
 Expanded space used by ZScream as of 1/16/2024
-
 Addresses are PC unless stated otherwise.
-
 ZS reserves everything up to 1.5mb or up to 0x150000
 
 | Location            | Contents                     |
