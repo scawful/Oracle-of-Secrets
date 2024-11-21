@@ -9,7 +9,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 0   ; Unused in this template (can be 0 to 7)
 !Hitbox             = 0   ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -56,7 +56,7 @@ Sprite_Puffstool_Prep:
   RTL
 
   .health
-    db $08, $0A, $1A, $20
+    db $04, $08, $1A, $20
 }
 
 ; =========================================================
@@ -103,7 +103,7 @@ Sprite_Puffstool_Main:
     JSL Sprite_DamageFlash_Long
     JSL ThrownSprite_TileAndSpriteInteraction_long
 
-    LDA.w SprTimerA, X : BNE + 
+    LDA.w SprTimerA, X : BNE +
       %GotoAction(0)
 
       JSL GetRandomInt : AND.b #$1F : BEQ .bomb
@@ -128,7 +128,7 @@ Sprite_Puffstool_Main:
     JSL Sprite_MoveXyz
     JSL Sprite_CheckDamageToPlayerSameLayer
 
-    LDA.w SprTimerC, X : BNE + 
+    LDA.w SprTimerC, X : BNE +
       STZ.w SprState, X
     +
     RTS
@@ -154,25 +154,13 @@ Puffstool_SpawnSpores:
 
   LDX.b $0D
 
-  LDA.w .speed_x,X
-  STA.w SprXSpeed,Y
-
-  LDA.w .speed_y,X
-  STA.w SprYSpeed, Y
-
-  LDA.b #$20
-  STA.w $0F80, Y
-
-  LDA.b #$FF
-  STA.w $0E80, Y
-
+  LDA.w .speed_x, X : STA.w SprXSpeed, Y
+  LDA.w .speed_y, X : STA.w SprYSpeed, Y
+  LDA.b #$20 : STA.w $0F80, Y
+  LDA.b #$FF : STA.w $0E80, Y
   LDA.b #$40 : STA.w SprTimerC, Y
-
-  LDA.b #$01
-  STA.w SprSubtype, Y
-
-  LDA.b #$02
-  STA.w SprAction, Y
+  LDA.b #$01 : STA.w SprSubtype, Y
+  LDA.b #$02 : STA.w SprAction, Y
 
   PLX
 
@@ -181,10 +169,10 @@ Puffstool_SpawnSpores:
   BPL .nth_child
   RTS
 
-.speed_x
+  .speed_x
   db  11, -11, -11, 11
 
-.speed_y
+  .speed_y
   db   0,  11,   0, -11
 }
 
@@ -209,12 +197,12 @@ Sprite_Puffstool_Draw:
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -231,7 +219,7 @@ Sprite_Puffstool_Draw:
   INY
   LDA .properties, X : ORA $08 : STA ($90), Y
 
-  PHY 
+  PHY
   TYA : LSR #2 : TAY
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
   PLY : INY
