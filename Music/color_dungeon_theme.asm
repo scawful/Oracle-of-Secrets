@@ -35,7 +35,7 @@ dw $0000
 
 
 .Channel0
-%SetMasterVolume($9F)
+%SetMasterVolume($6F)
 %SetTempo(93);
 %SetInstrument($09) ; Strings
 %SetDurationN($24, $7F) ; 1/8
