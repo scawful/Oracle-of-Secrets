@@ -1361,11 +1361,14 @@ CheckForTwoWayMirror:
 
 CheckNewRButtonPress:
 {
+  ; F6 is the NEW input from the current frame
+  ; For the AXLR buttons
+  ; $1A is a timer which increases every frame the game is not lagging
   LDA $F6 : BIT #$10 : BEQ .fail
-
-  SEC
-  RTL
-
+    STZ $F6
+    LDA $1A : AND #$0F : BEQ .fail
+      SEC
+      RTL
   .fail
   CLC
   RTL
