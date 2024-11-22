@@ -36,34 +36,28 @@
 Sprite_ThunderGhost_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_ThunderGhost_Draw ; Call the draw code
+  JSR Sprite_ThunderGhost_Draw
   JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_ThunderGhost_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_ThunderGhost_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 
 Sprite_ThunderGhost_Prep:
 {
   PHB : PHK : PLB
-
   LDA.l SWORD : DEC A : TAY
   LDA.w .health, Y : STA.w SprHealth, X
   LDA.b #$08 : STA.w SprTimerB, X
   LDA.b #$08 : STA.w SprTimerA, X
-
   PLB
   RTL
 
   .health
-    db $08, $10, $20, $C0
+    db $06, $0A, $0C, $10
 }
 
 ; =========================================================
@@ -79,12 +73,10 @@ Sprite_ThunderGhost_Main:
   dw CastThunderLeft
   dw CastThunderRight
 
-
   ThunderGhostFaceForward:
   {
     %PlayAnimation(0, 1, 16)
     JSR Sprite_ThunderGhost_Move
-
     RTS
   }
 
@@ -106,6 +98,7 @@ Sprite_ThunderGhost_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(6, 6, 16)
+    JSL Sprite_PlayerCantPassThrough
     JSL Sprite_CheckDamageToPlayerSameLayer
     JSL Sprite_Move
     LDA.w SprTimerA, X : BNE +
@@ -118,6 +111,7 @@ Sprite_ThunderGhost_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(7, 7, 16)
+    JSL Sprite_PlayerCantPassThrough
     JSL Sprite_CheckDamageToPlayerSameLayer
     JSL Sprite_Move
     LDA.w SprTimerA, X : BNE +
