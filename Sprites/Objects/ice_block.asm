@@ -105,7 +105,7 @@ Sprite_IceBlock_Main:
     ; matches the push direction (cached) and then initiate
     ; the speed changes if they agree
 
-    JSL Sprite_CheckDamageToPlayerSameLayer : BCC NotInContact
+    JSL Sprite_CheckDamageToPlayerSameLayer : BCC .NotInContact
       LDA.w SprMiscA, X : BNE .push_cached
         LDA.b $26 : STA.w SprMiscA, X
         JSR ApplyPush

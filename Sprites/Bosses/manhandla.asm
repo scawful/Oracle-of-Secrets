@@ -11,7 +11,7 @@
 !DeathAnimation     = 01  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -50,7 +50,7 @@ Sprite_Manhandla_Long:
   BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
 
   JSR Sprite_Manhandla_Main ; Call the main sprite code
-  
+
   .SpriteIsNotActive
   PLB ; Get back the databank we stored previously
   RTL ; Go back to original code
@@ -70,7 +70,7 @@ pullpc
 Sprite_Manhandla_Prep:
 {
   PHB : PHK : PLB
-    
+
   LDA.b #$04 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
   LDA.b #$80 : STA.w SprDefl, X
@@ -103,12 +103,12 @@ Sprite_Manhandla_CheckForNextPhaseOrDeath:
     JMP .not_dead
   .offspring3_dead
   LDA.b #$07 : STA.w $36
-  
+
   LDA.w SprMiscD, X : BNE .phase2
-      LDA.b #$01 : STA.w SprMiscD, X 
-      LDA.b #$40 : STA.w SprTimerA, X 
+      LDA.b #$01 : STA.w SprMiscD, X
+      LDA.b #$40 : STA.w SprTimerA, X
       LDA.b #$40 : STA.w SprHealth, X ; Refill the health
-      LDA.b #$08 : STA.w SprNbrOAM, X ; Give more OAM 
+      LDA.b #$08 : STA.w SprNbrOAM, X ; Give more OAM
       LDA.b #$07 : STA.w SprAction, X ; Chuchu Emerge
       LDA.b #$0A : STA.w $36
     .not_dead
@@ -116,14 +116,14 @@ Sprite_Manhandla_CheckForNextPhaseOrDeath:
   .phase2
   LDA.w SprMiscD, X : CMP.b #$03 : BEQ +
     LDA.w SprHealth, X : CMP.b #$04 : BCS .phase2_not_dead
-      LDA.b #$50 : STA.w SprTimerA, X 
+      LDA.b #$50 : STA.w SprTimerA, X
       LDA.b #$09 : STA.w SprAction, X
       LDA.b #$13 : STA $012C
       LDA.b #$04 : STA.w SprMiscD, X
       LDA.b #$0A : STA.w $36
     .phase2_not_dead
   +
-  
+
   RTS
 }
 
@@ -139,7 +139,7 @@ macro SetLeftHeadPos()
     LDA.w SprCachedY : SEC : SBC.w #$000F
     SEP #$20
     STA.w SprY, Y : XBA : STA.w SprYH, Y
-endmacro 
+endmacro
 
 macro SetRightHeadPos()
     REP #$20
@@ -153,14 +153,14 @@ macro SetRightHeadPos()
     STA.w SprY, Y : XBA : STA.w SprYH, Y
 endmacro
 
-macro SetCenterHeadPos() 
+macro SetCenterHeadPos()
     REP #$20
     LDA.w SprCachedX
     SEP #$20
     STA.w SprX, Y : XBA : STA.w SprXH, Y
 
     REP #$20
-    LDA.w SprCachedY 
+    LDA.w SprCachedY
     SEP #$20
     STA.w SprY, Y : XBA : STA.w SprYH, Y
 endmacro
@@ -174,7 +174,7 @@ Sprite_Manhandla_Main:
   dw Manhandla_FrontHead ; 0x01
   dw Manhandla_LeftHead  ; 0x02
   dw Manhandla_RightHead ; 0x03
-  dw BigChuchu_Main      ; 0x04 
+  dw BigChuchu_Main      ; 0x04
   dw Flower_Flicker      ; 0x05
   dw Manhandla_Body      ; 0x06
   dw BigChuchu_Emerge    ; 0x07
@@ -189,11 +189,11 @@ Sprite_Manhandla_Main:
       JSR SpawnLeftManhandlaHead
       JSR SpawnRightManhandlaHead
       JSR SpawnCenterMandhandlaHead
-      LDA.b #$06 : STA.w SprFrame, X 
+      LDA.b #$06 : STA.w SprFrame, X
       %GotoAction(6) ; Manhandla_Body
       RTS
     .not_main
-    
+
     LDA.w SprSubtype, X : STA.w SprAction, X
     RTS
   }
@@ -221,7 +221,7 @@ Sprite_Manhandla_Main:
 
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
-    
+
     RTS
   }
 
@@ -237,7 +237,7 @@ Sprite_Manhandla_Main:
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
     PLX
-    
+
     RTS
   }
 
@@ -276,7 +276,7 @@ Sprite_Manhandla_Main:
   {
     %PlayAnimation(11, 12, 10)
     LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
-    ; Flicker the body every other frame using the timer 
+    ; Flicker the body every other frame using the timer
     LDA.w SprTimerA, X : AND.b #$01 : BEQ .flicker
       LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
     .flicker
@@ -288,8 +288,8 @@ Sprite_Manhandla_Main:
       %GotoAction($04)
 
       LDA.b #$10 : STA.w SprTimerC, X
-      LDA.b #$8D : STA.w SprHitbox, X 
-      
+      LDA.b #$8D : STA.w SprHitbox, X
+
       LDA #$88
       JSL Sprite_SpawnDynamically : BMI .return
         TYA : STA.w Offspring3_Id
@@ -310,7 +310,7 @@ Sprite_Manhandla_Main:
         STZ.w SprYRound, X
         STZ.w SprXRound, X
         PLX
-        
+
 
       .return
 
@@ -326,14 +326,14 @@ Sprite_Manhandla_Main:
     JSR Sprite_Manhandla_Move
     JSL Sprite_DamageFlash_Long
 
-    JSL GetRandomInt : AND.b #$7F : BNE + 
+    JSL GetRandomInt : AND.b #$7F : BNE +
       JSL GetRandomInt : AND.b #$04 : BNE +
       JSR Mothula_SpawnBeams
     +
 
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
-    
+
     LDY.w Offspring1_Id
     LDA.w SprType, Y : CMP.b #$88 : BNE .not_head
     LDA.w SprState, Y : BEQ .offspring1_dead
@@ -354,7 +354,7 @@ Sprite_Manhandla_Main:
       .offspring3_dead
     .not_head3
 
-    PLX 
+    PLX
 
     RTS
   }
@@ -365,9 +365,9 @@ Sprite_Manhandla_Main:
 
     JSL Sprite_DamageFlash_Long
 
-    LDA.w SprTimerA, X : BNE + 
-      LDA.b #$02 : STA.w SprMiscD, X ; Set phase flag 
-      LDA.b #$20 : STA.w SprTimerA, X 
+    LDA.w SprTimerA, X : BNE +
+      LDA.b #$02 : STA.w SprMiscD, X ; Set phase flag
+      LDA.b #$20 : STA.w SprTimerA, X
       %GotoAction($05)
     +
 
@@ -389,9 +389,9 @@ Sprite_Manhandla_Main:
 
   BigChuchu_Dead:
   {
-    #_068517: LDA.b #$FF
-    #_068519: STA.w $0BC0, X
-    LDA.b #$04 : STA.w SprState, X 
+    LDA.b #$FF
+    STA.w $0BC0, X
+    LDA.b #$04 : STA.w SprState, X
     STZ.w SprHealth, X
     RTS
   }
@@ -410,7 +410,7 @@ Sprite_Manhandla_Main:
 
 Sprite_Manhandla_Move:
 {
-  LDA.w SprMiscC, X 
+  LDA.w SprMiscC, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
   dw StageControl
@@ -456,15 +456,15 @@ Sprite_Manhandla_Move:
     PHX
     REP #$20
 
-    ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
+    ; Use a range of + 0x05 because being exact equal didnt trigger consistently
     LDA $20 : SBC.w SprCachedY : CMP.w #$FFFB : BCC .notEqualY
       SEP #$20
       LDA.b #$02 : STA.w SprMiscC, X
-      
+
       BRA .notEqualX
     .notEqualY
 
-    ; Use a range of + 0x05 because being exact equal didnt trigger consistently 
+    ; Use a range of + 0x05 because being exact equal didnt trigger consistently
     LDA $22 : SBC.w SprCachedX : CMP.w #$FFFB : BCC .notEqualX
       SEP #$20
       LDA.b #$02 : STA.w SprMiscC, X
@@ -546,17 +546,17 @@ Sprite_Manhandla_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -573,14 +573,14 @@ Sprite_Manhandla_Draw:
   INY
   LDA .properties, X : ORA $08 : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -686,17 +686,17 @@ Sprite_BigChuchu_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -713,14 +713,14 @@ Sprite_BigChuchu_Draw:
   INY
   LDA .properties, X : ORA $08 : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -769,7 +769,7 @@ Chuchu_SpawnBlast:
   PHX
   LDA.b #$88
   JSL Sprite_SpawnDynamically : BMI .return
-    
+
     LDA.b #$0A : STA.w SprSubtype, Y
     STA.w SprAction, Y
 
@@ -783,12 +783,12 @@ Chuchu_SpawnBlast:
     LDA.b #$02 : STA.w SprMiscD, Y
     LDA.b #$00 : STA.w SprTileDie, Y
     LDA.b #$40 : STA.w SprProps, Y
-    LDA.b #$04 : STA.w SprFrame, Y 
+    LDA.b #$04 : STA.w SprFrame, Y
     LDA.b #$10 : STA.w SprTimerB, Y
     LDA.b #$00 : STA.w SprNbrOAM, Y
     LDA.b #$03 : STA.w SprHitbox, Y
 
-  .return 
+  .return
   PLX
   RTS
 
@@ -869,7 +869,7 @@ SpawnLeftManhandlaHead:
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX
-      
+
   .return
   RTS
 }
@@ -925,7 +925,7 @@ ApplyManhandlaPalette:
 {
     REP #$20 ;Set A in 16bit mode
 
-    ;note, this uses adresses like 7EC300 and not 7EC500 because the game 
+    ;note, this uses adresses like 7EC300 and not 7EC500 because the game
     ;will fade the colors into 7EC500 based on the colors found in 7EC300
 
     LDA #$7FFF : STA $7EC5E2 ;BG2
@@ -937,7 +937,7 @@ ApplyManhandlaPalette:
     LDA #$19DF : STA $7EC5EE
 
     INC $15
- 
+
     SEP #$20 ;Set A in 8bit mode
 
     RTS
@@ -945,19 +945,19 @@ ApplyManhandlaPalette:
 
 ApplyManhandlaGraphics:
 {
-    PHX 
+    PHX
     REP #$20               ; A = 16, XY = 8
     LDX #$80 : STX $2100   ; turn the screen off (required)
     LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
     LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
-    LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register 
+    LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register
                            ; "001 => 2 registers write once (2 bytes: p, p+1)"
 
     LDA.w #ManhandlaGraphics : STA $4302
     LDX.b #ManhandlaGraphics>>16 : STX $4304
 
     LDA   #$2000 : STA $4305                ; Size of the transfer 4 sheets of $800 each
-    LDX   #$01 : STX $420B                  ; Do the DMA 
+    LDX   #$01 : STX $420B                  ; Do the DMA
     LDX #$0F : STX $2100                    ; Turn the screen back on
     SEP #$30
     PLX
