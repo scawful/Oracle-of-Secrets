@@ -53,25 +53,22 @@ Sprite_HelmetChuchu_Long:
 Sprite_HelmetChuchu_Prep:
 {
   PHB : PHK : PLB
-
   LDA.l SWORD : DEC A : TAY
   LDA.w .health, Y : STA.w SprHealth, X
   JSL GetRandomInt : AND.b #$02 : STA.w SprAction, X
   STZ.w SprMiscB, X
   STZ.w SprMiscD, X
-
   LDA.w SprAction, X : BNE +
     LDA.b #$04 : STA.w SprFrame, X
   +
   CMP.b #$02 : BNE +
     LDA.b #$02 : STA.w SprFrame, X
   +
-
   PLB
   RTL
 
   .health
-    db $0C, $10, $80, $C0
+    db $08, $0C, $40, $C0
 }
 
 ; =========================================================
@@ -167,11 +164,8 @@ HelmetChuchu_SpawnHookshotDrag:
 {
   ; Based on the subtype either spawn the helmet or the mask
   PHX
-  LDA.w SprAction, X
-  CMP.b #$01
-  BEQ .spawn_helmet
-  CMP.b #$03
-  BEQ .spawn_mask
+  LDA.w SprAction, X : CMP.b #$01 : BEQ .spawn_helmet
+                       CMP.b #$03 : BEQ .spawn_mask
 
   .spawn_helmet
   LDA.b #$05
