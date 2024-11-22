@@ -510,13 +510,13 @@ Sprite_Octorok_Draw:
   db $A2
   db $AA ; Water Octorok
   .properties
-  db $2D
-  db $6D
-  db $2D
-  db $6D
-  db $2D
-  db $2D
-  db $6D
-  db $6D
+  db $0D
+  db $4D
+  db $0D
+  db $4D
+  db $0D
+  db $0D
+  db $4D
+  db $4D
   db $3D ; Water Octorok
 }
