@@ -27,38 +27,34 @@
 !ImperviousArrow    = 01  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
-%Set_Sprite_Properties(Sprite_IceBlock_Prep, Sprite_IceBlock_Long);
 
+%Set_Sprite_Properties(Sprite_IceBlock_Prep, Sprite_IceBlock_Long)
 
 Sprite_IceBlock_Long:
 {
   PHB : PHK : PLB
-
   LDA.w SprMiscC, X : BEQ .not_being_pushed
     STZ.w SprMiscC, X
-    STZ.b $5E : STZ.b $48
+    STZ.b $5E ; Clear Links speed
+    STZ.b $48 ; Clear push actions bitfield
   .not_being_pushed
   LDA.w SprTimerA, X : BEQ .retain_momentum
     LDA.b #$01 : STA.w SprMiscC, X
-    LDA.b #$84 : STA $48
-    LDA.b #$04 : STA.b $5E
+    LDA.b #$84 : STA.b $48 ; Set statue and push block actions
+    LDA.b #$04 : STA.b $5E ; Slipping into pit speed
   .retain_momentum
 
-  JSR Sprite_IceBlock_Draw ; Call the draw code
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_IceBlock_Main ; Call the main sprite code
-
+  JSR Sprite_IceBlock_Draw
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_IceBlock_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 Sprite_IceBlock_Prep:
 {
   PHB : PHK : PLB
-
   ; Cache Sprite position
   LDA.w SprX, X : STA.w SprMiscD, X
   LDA.w SprY, X : STA.w SprMiscE, X
@@ -66,49 +62,28 @@ Sprite_IceBlock_Prep:
   LDA.w SprYH, X : STA.w SprMiscG, X
 
   STZ.w SprDefl, X
-
   PLB
   RTL
 }
-
-StatueDirection:
-db $04, $06, $00, $02
-
-StatuePressMask:
-db $01, $02, $04, $08
-
-StatueSpeed:
-.x
-db -16,  16 ; bleeds into next
-
-.y
-db   0,   0, -16,  16
 
 Sprite_IceBlock_Main:
 {
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
-
   dw MovementHandler
-  dw NotInContact
 
-  ; 0x00
   MovementHandler:
   {
     %PlayAnimation(0, 0, 1)
 
     JSR Statue_BlockSprites
-
-    JSL Sprite_CheckDamageFromPlayer
-    BCC .no_damage
+    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
       LDA.w SprMiscD, X : STA.w SprX, X
       LDA.w SprMiscE, X : STA.w SprY, X
       LDA.w SprMiscF, X : STA.w SprXH, X
       LDA.w SprMiscG, X : STA.w SprYH, X
       STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
     .no_damage
-
-    ; JSR IceBlock_CheckForGround
 
     STZ.w $0642
     JSR Sprite_IceBlock_CheckForSwitch : BCC .no_switch
@@ -119,123 +94,65 @@ Sprite_IceBlock_Main:
     JSL Sprite_Move ; Sprite MoveXY
     JSL Sprite_Get_16_bit_Coords ; Get 16bit coords
     JSL Sprite_CheckTileCollision ; Check Tile collision
-    JSL Sprite_CheckDamageToPlayerSameLayer
-    BCC NotInContact
-    JSR ApplyPush
-    ; Set timer
-    LDA.b #$07 : STA.w SprTimerA, X
+    ; ----udlr , u = up, d = down, l = left, r = right
+    LDA.w SprCollision, X : AND.b #$0F : BEQ +
+      STZ.w SprMiscA, X
+    +
 
-    JSL $079291 ; Sprite_RepelDash_long
+    ; TODO: Update Link push collision reaction
+    ; If link is in contact, register a push with the sprite
+    ; Run a timer briefly, and confirm the facing direction
+    ; matches the push direction (cached) and then initiate
+    ; the speed changes if they agree
 
-    LDA.w SprTimerB,X : BNE Statue_CancelHookshot
-    ; JSL Sprite_DirectionToFacePlayer
-    ; LDA.w StatueSpeed_x,Y
-    ; STA.w SprXSpeed,X
-    ; LDA.w StatueSpeed_y,Y
-    ; STA.w SprYSpeed,X
-    ; JSR Statue_HandleGrab
-
-    LDA.w SprX, X : AND #$F0 : STA.w SprX, X
-    LDA.w SprY, X : AND #$F0 : STA.w SprY, X
-    RTS
-    .not_in_contact
-    %GotoAction(1)
-    .dont_move
-    RTS
-  }
-
-  Statue_CancelHookshot:
-  {
-    JSL $0FF540
-    RTS
-  }
-
-  ; 0x01
-  NotInContact:
-  {
-    %PlayAnimation(0, 0, 1)
-    LDA.w SprTimerA,X : BNE .delay_timer
-    LDA.b #$0D : STA.w SprTimerB,X
-
+    JSL Sprite_CheckDamageToPlayerSameLayer : BCC NotInContact
+      LDA.w SprMiscA, X : BNE .push_cached
+        LDA.b $26 : STA.w SprMiscA, X
+        JSR ApplyPush
+      .push_cached
+      LDA.b #$07 : STA.w SprTimerA, X
+      STZ.b $5E
+      JSL Sprite_RepelDash
+      LDA.w SprTimerB, X : BNE .CancelHookshot
+        LDA.w SprX, X : AND #$F8 : STA.w SprX, X
+        LDA.w SprY, X : AND #$F8 : STA.w SprY, X
+        RTS
+      .CancelHookshot:
+      JSL $0FF540
+      RTS
+    .NotInContact:
+    LDA.w SprTimerA, X : BNE .delay_timer
+      LDA.b #$0D : STA.w SprTimerB,X
     .delay_timer
-
-    REP #$20
-    LDA.w SprCachedX
-    SEC : SBC.b $22
-    CLC : ADC.w #$0010
-    CMP.w #$0023 : BCS .reset_contact
-
-    LDA.w SprCachedY
-    SEC : SBC.b $20
-    CLC : ADC.w #$000C
-    CMP.w #$0024 : BCS .reset_contact
-    SEP #$30
-
-    JSL Sprite_DirectionToFacePlayer
-
-    ; LDA.b $2F
-    ; CMP.w StatueDirection,Y : BNE .reset_contact
-    ; LDA.w $0372 : BNE .reset_contact
-    ; LDA.b #$01 : STA.w $02FA
-    ; LDA.b #$01 : STA.w SprFrame,X
-    ; LDA.w $0376 : AND.b #$02 : BEQ .exit
-
-    ; LDA.b $F0 : AND.w StatuePressMask,Y : BEQ .exit
-
-    ; LDA.b $30 : ORA.b $31 : BEQ .exit
-
-    ; TYA : EOR.b #$01 : TAY
-
-    ; LDA.w StatueSpeed_x,Y : STA.w SprXSpeed,X
-
-    ; LDA.w StatueSpeed_y,Y : STA.w SprYSpeed,X
-
-    ; JMP.w Statue_HandleGrab
-
-    .reset_contact
-    SEP #$30
-
-    LDA.w SprFrame,X : BEQ .exit
-    STZ.w SprFrame,X
-
-    STZ.b $5E
-    STZ.w $0376
-    STZ.w $02FA
-
-    LDA.b $50 : AND.b #$FE : STA.b $50
-
-    .exit
-    %GotoAction(0)
     RTS
   }
-
 
   ApplyPush:
   {
+    ; Only apply the push if the facing direction
+    ; and pushing direction agree with each other
     LDA $26 : CMP.b #$01 : BEQ .push_right
-      CMP.b #$02 : BEQ .push_left
-      CMP.b #$04 : BEQ .push_down
-      CMP.b #$08 : BEQ .push_up
+              CMP.b #$02 : BEQ .push_left
+              CMP.b #$04 : BEQ .push_down
+              CMP.b #$08 : BEQ .push_up
 
     .push_right
-      LDA #16 : STA.w SprXSpeed,X
-      LDA #00 : STA.w SprYSpeed,X
-      JMP .push_done
+      LDA #16 : STA.w SprXSpeed, X
+      STZ.w SprYSpeed, X
+      JMP +
     .push_left
-      LDA #-16 : STA.w SprXSpeed,X
-      LDA #00 : STA.w SprYSpeed,X
-      JMP .push_done
+      LDA #-16 : STA.w SprXSpeed, X
+      STZ.w SprYSpeed, X
+      JMP +
     .push_down
-      LDA #00 : STA.w SprXSpeed,X
-      LDA #16 : STA.w SprYSpeed,X
-      JMP .push_done
+      STZ.w SprXSpeed, X
+      LDA #16 : STA.w SprYSpeed, X
+      JMP +
     .push_up
-      LDA #00 : STA.w SprXSpeed,X
-      LDA #-16 : STA.w SprYSpeed,X
-
-    .push_done
-
-      RTS
+      STZ.w SprXSpeed, X
+      LDA #-16 : STA.w SprYSpeed, X
+    +
+    RTS
   }
 }
 
@@ -304,7 +221,6 @@ Sprite_IceBlock_CheckForSwitch:
   .tile_id
     db $23, $24, $25, $3B
 }
-
 
 Statue_BlockSprites:
 {
@@ -386,7 +302,6 @@ Statue_BlockSprites:
   RTS
 }
 
-
 Sprite_IceBlock_Draw:
 {
   JSL Sprite_PrepOamCoord
@@ -394,7 +309,6 @@ Sprite_IceBlock_Draw:
 
   LDA $0DC0, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
