@@ -45,10 +45,10 @@ Sprite_MoveHoriz:
 ; make the sprite move both directions (also height)
 
 Sprite_MoveXyz:
-	JSL Sprite_MoveAltitude
+  JSL Sprite_MoveAltitude
 Sprite_Move:
-	JSL Sprite_MoveHoriz
-	; no RTL, just continue into Sprite_MoveVert
+  JSL Sprite_MoveHoriz
+  ; no RTL, just continue into Sprite_MoveVert
 
 ; =========================================================
 ; make the sprite move Y axis
@@ -96,15 +96,14 @@ Sprite_MoveAltitude:
 
 ; =========================================================
 ; make the sprite bounce toward player
-; movement, collision are handled by this function 
+; movement, collision are handled by this function
 ; $09 = speed, $08 = max height ( e.g. height:20 = vitreous)
-
 
 Sprite_BounceTowardPlayer:
 {
-	JSL Sprite_MoveAltitude
-	DEC.w SprTimerF, X : DEC.w SprTimerF, X
-	LDA.w SprHeight, X : BPL .aloft
+  JSL Sprite_MoveAltitude
+  DEC.w SprTimerF, X : DEC.w SprTimerF, X
+  LDA.w SprHeight, X : BPL .aloft
     STZ.w SprHeight, X
     LDA.b $08 : STA.w SprTimerF, X ; set height from 08
     LDA.b $09 : JSL Sprite_ApplySpeedTowardsPlayer
@@ -113,7 +112,7 @@ Sprite_BounceTowardPlayer:
   LDA.w SprHeight, X : BEQ .dontmove
     JSL Sprite_Move
   .dontmove
-	RTL
+  RTL
 }
 
 ; A = Speed
@@ -237,7 +236,7 @@ DragPlayer:
     INC.w DragYL
 
   .x_done
-  ; Changing the modifier adjusts links position in the cart 
+  ; Changing the modifier adjusts links position in the cart
   LDA.w SprCachedY : SEC : SBC.w #$0008
   CMP $20 : BEQ .y_done : BPL .y_too_low
       DEC.w DragXL
@@ -293,7 +292,7 @@ Sprite_Damage_Flash:
     ; Change the palette to the next in the cycle
     LDA.w SprFlash, X : INC : CMP.b #$08 : BNE .dontReset
       LDA.b #$00
-    
+
   .dontReset
     STA.w SprFlash, X
     BRA .flash
@@ -325,13 +324,13 @@ Link_CheckNewY_ButtonPress_Long:
 Link_SetupHitBox:
 {
   LDA.b #$08 : STA $02 : STA $03
-  
+
   LDA $22 : CLC : ADC.b #$04 : STA $00
   LDA $23 : ADC.b #$00 : STA $08
-  
+
   LDA $20 : ADC.b #$08 : STA $01
   LDA $21 : ADC.b #$00 : STA $09
-  
+
   RTL
 }
 
@@ -604,7 +603,7 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
       ;player_to_the_Left
       REP #$20
       LDA.w SprCachedX : SEC : SBC $22 ; delta X
-      
+
       CMP $01 : BCS .XGreaterThanY1
         ;YGreaterThanX
         SEP   #$20
@@ -700,7 +699,6 @@ GetDistance8bit_Long:
   RTL
 }
 
-
 ; =========================================================
 
 Intro_Dungeon_Main:
@@ -714,7 +712,7 @@ Intro_Dungeon_Main:
      LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
 
  .didNotRun
- 
+
  STZ.b SpriteRanCheck
 
   .not_sprite_body_boss
@@ -764,7 +762,7 @@ MoveCamera:
   ;CameraAbovePoint ;right
    ADC.w #$0001 : STA $E2 : STA $E0 : STA $011E : STA $0120 ;move the camera right by 1
       BRA .dontMoveX
-  
+
   .CameraBelowPointX
       SEC : SBC.w #$0001 : STA $E2 : STA $E0 : STA $011E : STA $0120 ;move the camera left by 1
 
@@ -837,7 +835,7 @@ SetupMovieEffect:
   LDA.b #$01 : STA.l MovieEffectA
   LDA.b #$00 : STA.l MovieEffectB
 
-  ;Below screen 
+  ;Below screen
   LDA.b #$20 : STA.l MovieEffectC
   LDA.b #$0F : STA.l MovieEffectD
 
@@ -864,7 +862,7 @@ MovieEffect:
   SEP   #$20
   LDA.b #$20 : STA $9B ;Do the HDMA instead of $420C
 
-  ; LDA $9B : ORA #$20 : STA $9B 
+  ; LDA $9B : ORA #$20 : STA $9B
   ; LDA.b #$02 : STA $13 ;controls the brightness of the screen
 
   RTS

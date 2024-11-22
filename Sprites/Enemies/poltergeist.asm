@@ -34,97 +34,82 @@
 
 Sprite_Poltergeist_Long:
 {
-    PHB : PHK : PLB
-
-    JSR Sprite_Poltergeist_Draw ; Call the draw code
-
-    LDA $E0 : CMP #$F0 : BNE .onscreen
-        LDA.w SprMiscA, X : BEQ .SpriteIsNotActive
-            STZ.w SprState, X ; kill the sprite if offscreen and activated
-
-            .onscreen
-
-            JSL Sprite_CheckActive   ; Check if game is not paused
-            BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-                JSR Sprite_Poltergeist_Main ; Call the main sprite code
-
-    .SpriteIsNotActive
-
-    PLB ; Get back the databank we stored previously
-    RTL ; Go back to original code
+  PHB : PHK : PLB
+  JSR Sprite_Poltergeist_Draw
+  LDA $E0 : CMP #$F0 : BNE .onscreen
+    LDA.w SprMiscA, X : BEQ .SpriteIsNotActive
+      STZ.w SprState, X ; kill the sprite if offscreen and activated
+  .onscreen
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Poltergeist_Main
+  .SpriteIsNotActive
+  PLB
+  RTL
 }
 
 ; =========================================================
 
 Sprite_Poltergeist_Prep:
 {
-    PHB : PHK : PLB
+  PHB : PHK : PLB
 
-    LDA #$00 : STA.w SprHitbox, X ; Persist
-    LDA #$00 : STA.w SprDefl, X ; Sprite persist in dungeon
-    LDA #$02 : STA.w SprNbrOAM, X ;1 tile by default
-    LDA #$01 : STA.w SprAction, X ; by default it's a chair
+  LDA #$00 : STA.w SprHitbox, X ; Persist
+  LDA #$00 : STA.w SprDefl, X ; Sprite persist in dungeon
+  LDA #$02 : STA.w SprNbrOAM, X ;1 tile by default
+  LDA #$01 : STA.w SprAction, X ; by default it's a chair
 
-    LDA.w SprSubtype, X : CMP #$10 : BNE .notPictureFrame
-        STZ.w SprMiscA, X
-        STZ.w SprAction, X
-        JMP .done
+  LDA.w SprSubtype, X : CMP #$10 : BNE .notPictureFrame
+      STZ.w SprMiscA, X
+      STZ.w SprAction, X
+      JMP .done
+  .notPictureFrame
 
-    .notPictureFrame
+  CMP #$11 : BNE .notAxe
+      LDA #$07 : STA.w SprFrame, X
+      LDA #$02 : STA.w SprAction, X
+      LDA #$04 : STA.w SprNbrOAM, X
+      BRA .done
+  .notAxe
 
-    CMP #$11 : BNE .notAxe
-        LDA #$07 : STA.w SprFrame, X
-        LDA #$02 : STA.w SprAction, X
-        LDA #$04 : STA.w SprNbrOAM, X
-        BRA .done
+  CMP #$12 : BNE .notKnife
+      LDA #15 : STA.w SprFrame, X
+      LDA #$02 : STA.w SprAction, X
+      BRA .done
+  .notKnife
 
-    .notAxe
+  CMP #$13 : BNE .notFork
+      LDA #37 : STA.w SprFrame, X
+      LDA #$02 : STA.w SprAction, X
+      BRA .done
+  .notFork
 
-    CMP #$12 : BNE .notKnife
-        LDA #15 : STA.w SprFrame, X
-        LDA #$02 : STA.w SprAction, X
-        BRA .done
+  CMP #$14 : BNE .notBed
+      LDA #5 : STA.w SprFrame, X
+      LDA #$01 : STA.w SprAction, X
+      LDA #$06 : STA.w SprNbrOAM, X
+      BRA .done
+  .notBed
 
-    .notKnife
+  CMP #$15 : BNE .notDoor
+      LDA #36 : STA.w SprFrame, X
+      LDA #$01 : STA.w SprAction, X
+      LDA #$04 : STA.w SprNbrOAM, X
+      LDA.w SprY, X : SEC : SBC #$0C : STA.w SprY, X
+      LDA.w SprX, X : CLC : ADC #$08 : STA.w SprX, X
+      BRA .done
+  .notDoor
 
-    CMP #$13 : BNE .notFork
-        LDA #37 : STA.w SprFrame, X
-        LDA #$02 : STA.w SprAction, X
-        BRA .done
+  LDA.w SprSubtype, X : AND #$08 : BNE .secondset ;2nd set
+      LDA.w SprSubtype, X : CLC : ADC #23 : STA.w SprFrame, X
+      BRA .done
+  .secondset
 
-    .notFork
+  LDA.w SprSubtype, X : AND #$07 : CLC : ADC #30 : STA.w SprFrame, X
+  LDA.w SprSubtype, X
 
-    CMP #$14 : BNE .notBed
-        LDA #5 : STA.w SprFrame, X
-        LDA #$01 : STA.w SprAction, X
-        LDA #$06 : STA.w SprNbrOAM, X
-        BRA .done
-
-    .notBed
-
-    CMP #$15 : BNE .notDoor
-        LDA #36 : STA.w SprFrame, X
-        LDA #$01 : STA.w SprAction, X
-        LDA #$04 : STA.w SprNbrOAM, X
-        LDA.w SprY, X : SEC : SBC #$0C : STA.w SprY, X
-        LDA.w SprX, X : CLC : ADC #$08 : STA.w SprX, X
-        BRA .done
-
-    .notDoor
-
-    LDA.w SprSubtype, X : AND #$08 : BNE .secondset ;2nd set
-        LDA.w SprSubtype, X : CLC : ADC #23 : STA.w SprFrame, X
-        BRA .done
-
-    .secondset
-
-    LDA.w SprSubtype, X : AND #$07 : CLC : ADC #30 : STA.w SprFrame, X
-    LDA.w SprSubtype, X
-
-    .done
-
-    PLB
-    RTL
+  .done
+  PLB
+  RTL
 }
 
 ; Subtype:
@@ -153,12 +138,12 @@ Sprite_Poltergeist_Prep:
 
 Sprite_Poltergeist_Main:
 {
-    LDA.w SprAction, X : JSL UseImplicitRegIndexedLocalJumpTable
+  LDA.w SprAction, X : JSL UseImplicitRegIndexedLocalJumpTable
 
-    dw PictureFrame
-    dw Chair
-    dw Axe
-    dw SpawnerTester
+  dw PictureFrame
+  dw Chair
+  dw Axe
+  dw SpawnerTester
 }
 
 PictureFrame:
@@ -392,23 +377,20 @@ Axe:
 
 PlayAxe:
 {
-    %PlayAnimation(7, 14, 6)
-
-    RTS
+  %PlayAnimation(7, 14, 6)
+  RTS
 }
 
 PlayFork:
 {
-    %PlayAnimation(37, 44, 6)
-
-    RTS
+  %PlayAnimation(37, 44, 6)
+  RTS
 }
 
 PlayKnife:
 {
-    %PlayAnimation(15, 22, 6)
-
-    RTS
+  %PlayAnimation(15, 22, 6)
+  RTS
 }
 
 SpawnerTester:
