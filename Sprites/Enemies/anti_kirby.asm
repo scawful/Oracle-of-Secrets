@@ -1,6 +1,5 @@
 ; =========================================================
-; Sprite Properties
-; =========================================================
+; Anti Kirby
 
 !SPRID              = Sprite_AntiKirby
 !NbrTiles           = 02  ; Number of tiles used in a frame
@@ -30,23 +29,18 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-%Set_Sprite_Properties(Sprite_AntiKirby_Prep, Sprite_AntiKirby_Long);
-
+%Set_Sprite_Properties(Sprite_AntiKirby_Prep, Sprite_AntiKirby_Long)
 
 Sprite_AntiKirby_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_AntiKirby_Draw ; Call the draw code
+  JSR Sprite_AntiKirby_Draw
   JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_AntiKirby_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_AntiKirby_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -54,25 +48,20 @@ Sprite_AntiKirby_Long:
 Sprite_AntiKirby_Prep:
 {
   PHB : PHK : PLB
-
-  LDA #$00 : STA.w SprDefl, X
-  LDA #$00 : STA.w SprTileDie, X
+  STZ.w SprDefl, X
+  STZ.w SprTileDie, X
   STZ.w SprMiscB, X
-
   LDA.l SWORD : DEC : TAY
   LDA .bump_damage, Y : STA.w SprBump, X
   LDA .health, Y : STA.w SprHealth, X
   LDA .prize_pack, Y : STA.w SprPrize, X
-
   PLB
   RTL
 
   .bump_damage
     db $81, $88, $88, $88
-
   .health
     db 10, 20, 20, 20
-
   .prize_pack
     db 6, 3, 3, 3
 }
@@ -142,7 +131,6 @@ Sprite_AntiKirby_Main:
     LDA.w SprTimerA, X : BNE .NotDone
       %GotoAction(0)
     .NotDone
-
     RTS
   }
 
@@ -159,26 +147,15 @@ Sprite_AntiKirby_Main:
     LDA.b $0E : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
       LDA.b $0F : CLC : ADC.b #$30 : CMP.b #$60 : BCS .dont_tongue_link
         INC.w SprAction, X
-
-        LDA.b #$1F
-        JSL Sprite_ProjectSpeedTowardsPlayer
-        JSL Sprite_ConvertVelocityToAngle
-
-        LSR A
-        STA.w SprMiscD,X
-
-        LDA.b #$5F
-        STA.w SprTimerA, X
-
+        LDA.b #$5F : STA.w SprTimerA, X
+        LDA.b #$1F : JSL Sprite_ProjectSpeedTowardsPlayer
+        JSL Sprite_ConvertVelocityToAngle : LSR A : STA.w SprMiscD,X
         RTS
-    ; -----------------------------------------------------
-
     .dont_tongue_link
 
     LDA.w SprTimerA, X : BNE +
       STZ.w SprAction, X
     +
-
     RTS
   }
 
@@ -213,7 +190,6 @@ Sprite_AntiKirby_Main:
   AntiKirby_Full:
   {
     %PlayAnimation(10, 10, 10)
-
     LDA.w SprTimerA, X : BNE +
       INC.w SprAction, X
       %SetTimerA($60)
@@ -226,17 +202,14 @@ Sprite_AntiKirby_Main:
   AntiKirby_Hatted:
   {
     %PlayAnimation(6, 8, 10) ; Hatted
-
     %DoDamageToPlayerSameLayerOnContact()
     %MoveTowardPlayer(8)
     JSL Sprite_BounceFromTileCollision
     JSL Sprite_PlayerCantPassThrough
-
     JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
       LDA #!RecoilTime : STA.w SprTimerA, X
       %GotoAction(6) ; Hurt
     .NoDamage
-
     RTS
   }
 
@@ -253,9 +226,7 @@ Sprite_AntiKirby_Main:
   {
     %PlayAnimation(3, 3, 10) ; Death
     LDA.b #$06 : STA.w SprState, X
-
-    LDA.b #$09 ; SFX2.1E
-    JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan
+    LDA.b #$09 : JSL SpriteSFX_QueueSFX3WithPan
     RTS
   }
 }
@@ -265,13 +236,11 @@ AntiKirby_StealItem:
   REP #$20
 
   LDA.w SprCachedX
-  CLC : ADC.b $04
-  SEC : SBC.b $22
+  CLC : ADC.b $04 : SEC : SBC.b $22
   CLC : ADC.w #$000C : CMP.w #$0018 : BCS .exit
 
   LDA.w SprCachedY
-  CLC : ADC.b $06
-  SEC : SBC.b $20
+  CLC : ADC.b $06 : SEC : SBC.b $20
   CLC : ADC.w #$000C : CMP.w #$0020 : BCS .exit
 
   SEP #$20
@@ -311,16 +280,11 @@ AntiKirby_StealItem:
   ; -----------------------------------------------------
 
   .dont_steal_rupee
-  LDA.l $7EF35A
-  STA.w SprSubtype, X
-  BEQ .dont_steal_anything
-
-  CMP.b #$03
-  BEQ .dont_steal_anything
-
-  LDA.b #$00
-  STA.l $7EF35A
-  RTS
+  LDA.l $7EF35A : STA.w SprSubtype, X : BEQ .dont_steal_anything
+    CMP.b #$03 : BEQ .dont_steal_anything
+      LDA.b #$00
+      STA.l $7EF35A
+      RTS
 }
 
 ; 7-9: Walking with hat
@@ -432,19 +396,19 @@ Sprite_AntiKirby_Draw:
   db $22, $23
   .properties
   ; Normal Kirby
-  db $2B
-  db $2B
-  db $2B
-  db $2B
-  db $2B
-  db $2B
+  db $0B
+  db $0B
+  db $0B
+  db $0B
+  db $0B
+  db $0B
   ; Link hat kirby
-  db $2B, $2B
-  db $2B, $2B
-  db $2B, $2B
-  db $2B, $2B
-  db $2B, $2B
-  db $6B, $6B
+  db $0B, $0B
+  db $0B, $0B
+  db $0B, $0B
+  db $0B, $0B
+  db $0B, $0B
+  db $4B, $4B
   .sizes
   db $02
   db $02
