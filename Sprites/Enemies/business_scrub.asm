@@ -13,7 +13,7 @@
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
-!Persist            = 00  ; 01 = your sprite continue to live offscreen
+!Persist            = 01  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
 !CanFall            = 00  ; 01 sprite can fall in hole, 01 = can't fall
@@ -34,14 +34,12 @@
 Sprite_BusinessScrub_Long:
 {
   PHB : PHK : PLB
-
   LDA.w WORLDFLAG : BNE .draw_eon
     JSR Sprite_BusinessScrub_Draw
     JMP +
   .draw_eon
   JSR Sprite_EonScrub_Draw
   +
-
   LDA.w SprSubtype, X : CMP #$01 : BNE .normal_scrub
     JSL Sprite_DrawShadow
   .normal_scrub
@@ -61,7 +59,6 @@ Sprite_BusinessScrub_Long:
 Sprite_BusinessScrub_Prep:
 {
   PHB : PHK : PLB
-
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .pea_shot
                       CMP.b #$02 : BEQ .cutscene_scrub
   JMP +
@@ -72,7 +69,6 @@ Sprite_BusinessScrub_Prep:
   .cutscene_scrub
     LDA.b #$08 : STA.w SprAction, X
   +
-
   PLB
   RTL
 }
@@ -362,11 +358,10 @@ Sprite_BusinessScrub_Draw:
     LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
     LDA .start_index, Y : STA $06
 
-
     PHX
     LDX .nbr_of_tiles, Y ;amount of tiles -1
     LDY.b #$00
-  .nextTile
+    .nextTile
 
     PHX ; Save current Tile Index?
     TXA : CLC : ADC $06 ; Add Animation Index Offset
@@ -387,7 +382,7 @@ Sprite_BusinessScrub_Draw:
 
     LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
     STA $0E
-  .on_screen_y
+    .on_screen_y
 
     PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
     INY
