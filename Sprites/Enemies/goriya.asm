@@ -45,7 +45,7 @@ Sprite_Goriya_Long:
   JSL Sprite_DrawShadow
   ++
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
-    JSR Sprite_Goriya_Main ; Call the main sprite code
+    JSR Sprite_Goriya_Main
   .SpriteIsNotActive
   PLB
   RTL
@@ -121,6 +121,7 @@ Sprite_Goriya_Main:
     JSL Sprite_PlayerCantPassThrough
 
     JSL Sprite_CheckDamageToPlayer : BCC .no_dano
+      LDA.b #$FF : STA.w SprTimerD, X
       JSL Sprite_InvertSpeed_XY
     .no_dano
 
@@ -146,30 +147,24 @@ Goriya_HandleTileCollision:
   LDA.w SprCollision, X : CMP.b #$04 : BEQ .down
   LDA.w SprCollision, X : CMP.b #$02 : BEQ .left
   LDA.w SprCollision, X : CMP.b #$01 : BEQ .right
-  JMP +
+    JMP ++
 
   .up
-    %GotoAction(0)
-    STA.w SprMiscE, X
-    %SetTimerC(60)
+    %GotoAction(1)
     JMP +
   .down
-    %GotoAction(1)
-    STA.w SprMiscE, X
-    %SetTimerC(60)
+    %GotoAction(0)
     JMP +
   .left
-    %GotoAction(2)
-    STA.w SprMiscE, X
-    %SetTimerC(60)
+    %GotoAction(3)
     JMP +
   .right
-    %GotoAction(3)
-    STA.w SprMiscE, X
-    %SetTimerC(60)
+    %GotoAction(2)
     JMP +
   +
-
+  STA.w SprMiscE, X
+  %SetTimerC(60)
+  ++
   RTS
 }
 
