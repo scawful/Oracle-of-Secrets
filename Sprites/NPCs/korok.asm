@@ -34,12 +34,10 @@
 Sprite_Korok_Long:
 {
   PHB : PHK : PLB
-
   LDA $0AA5 : BEQ .done
-    LDA.w SprSubtype, X
-    CMP.b #$00 : BEQ .draw_makar
-    CMP.b #$01 : BEQ .draw_hollo
-    CMP.b #$02 : BEQ .draw_rown
+    LDA.w SprSubtype, X : BEQ .draw_makar
+                          CMP.b #$01 : BEQ .draw_hollo
+                          CMP.b #$02 : BEQ .draw_rown
     .draw_makar
       JSR Sprite_Korok_DrawMakar
       BRA .done
@@ -52,14 +50,11 @@ Sprite_Korok_Long:
   .done
 
   JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Korok_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Korok_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 Sprite_Korok_Prep:
@@ -131,7 +126,7 @@ Sprite_Korok_Main:
     %PlayAnimation(6, 8, 10)
     LDA.b #KorokWalkSpeed : STA.w SprXSpeed, X
     JSL Sprite_Move
-    LDA.w SprTimerB, X : BNE + 
+    LDA.w SprTimerB, X : BNE +
       JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
     +
     RTS
@@ -143,7 +138,7 @@ Sprite_Korok_Main:
     LDA.b #-KorokWalkSpeed : STA.w SprXSpeed, X
     JSL Sprite_Move
 
-    LDA.w SprTimerB, X : BNE + 
+    LDA.w SprTimerB, X : BNE +
       JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
     +
     RTS
@@ -182,17 +177,17 @@ Sprite_Korok_DrawMakar:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -209,14 +204,14 @@ Sprite_Korok_DrawMakar:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -310,17 +305,17 @@ Sprite_Korok_DrawHollo:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -337,14 +332,14 @@ Sprite_Korok_DrawHollo:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -438,17 +433,17 @@ Sprite_Korok_DrawRown:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -465,14 +460,14 @@ Sprite_Korok_DrawRown:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX

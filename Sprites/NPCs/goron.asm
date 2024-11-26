@@ -27,12 +27,12 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
-%Set_Sprite_Properties(Sprite_Goron_Prep, Sprite_Goron_Long);
+
+%Set_Sprite_Properties(Sprite_Goron_Prep, Sprite_Goron_Long)
 
 Sprite_Goron_Long:
 {
   PHB : PHK : PLB
-
   LDA.w WORLDFLAG : BEQ .kalyxo
     JSR Sprite_EonGoron_Draw
     JMP +
@@ -40,11 +40,8 @@ Sprite_Goron_Long:
   JSR Sprite_KalyxoGoron_Draw
   +
   JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive
-  BCC .SpriteIsNotActive
-
-  JSR Sprite_Goron_Main
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Goron_Main
   .SpriteIsNotActive
   PLB
   RTL
@@ -59,9 +56,9 @@ Sprite_Goron_Prep:
   +
   PHX
   LDX $8A
-  LDA.l $7EF280,X : CMP.b #$20 : BEQ +++
-  PLX
-  STZ.w SprAction, X
+  LDA.l $7EF280, X : CMP.b #$20 : BEQ +++
+    PLX
+    STZ.w SprAction, X
   ++
   PLB
   RTL

@@ -29,23 +29,20 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
-%Set_Sprite_Properties(Sprite_DekuScrub_Prep, Sprite_DekuScrub_Long);
+
+%Set_Sprite_Properties(Sprite_DekuScrub_Prep, Sprite_DekuScrub_Long)
 
 ; =========================================================
 
 Sprite_DekuScrub_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_DekuScrub_Draw ; Call the draw code
-  JSL Sprite_CheckActive    ; Check if game is not paused
-  BCC .SpriteIsNotActive    ; Skip Main code is sprite is innactive
-
-  JSR Sprite_DekuScrub_Main ; Call the main sprite code
-
+  JSR Sprite_DekuScrub_Draw
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_DekuScrub_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -53,7 +50,6 @@ Sprite_DekuScrub_Long:
 Sprite_DekuScrub_Prep:
 {
   PHB : PHK : PLB
-
   LDA.b #$80 : STA.w SprDefl, X
 
   ; Peacetime Deku Scrub NPCs
@@ -194,7 +190,6 @@ Sprite_DekuScrub_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX   .nbr_of_tiles, Y ;amount of tiles -1

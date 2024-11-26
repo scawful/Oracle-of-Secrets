@@ -44,17 +44,14 @@ Sprite_Mermaid_Long:
   JSR Sprite_Librarian_Draw
   JMP .Continue
   .MermaidDraw
-  JSR Sprite_Mermaid_Draw ; Call the draw code
+  JSR Sprite_Mermaid_Draw
   .Continue
   JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Mermaid_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Mermaid_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 
@@ -169,8 +166,7 @@ Sprite_Mermaid_Main:
     Maple_BoughtMilkBottle:
     {
       REP #$20
-      LDA.l $7EF360
-      CMP.w #$1E ; 30 rupees
+      LDA.l $7EF360 : CMP.w #$1E ; 30 rupees
       SEP #$30
       BCC .not_enough_rupees
 
@@ -193,8 +189,7 @@ Sprite_Mermaid_Main:
         .finish_storage
         REP #$20
         LDA.l $7EF360
-        SEC
-        SBC.w #$1E ; Subtract 30 rupees
+        SEC : SBC.w #$1E ; Subtract 30 rupees
         STA.l $7EF360
         SEP #$30
 
@@ -216,8 +211,8 @@ Sprite_Mermaid_Main:
     Maple_HandlePlayerResponse:
     {
       LDA $1CE8 : BEQ .player_said_yes
-          %GotoAction(4)
-          RTS
+        %GotoAction(4)
+        RTS
       .player_said_yes
       %GotoAction(1)
       RTS
@@ -431,7 +426,6 @@ Sprite_Mermaid_Draw:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
-
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
@@ -515,7 +509,6 @@ Sprite_Maple_Draw:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
-
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
@@ -586,7 +579,6 @@ Sprite_Librarian_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1

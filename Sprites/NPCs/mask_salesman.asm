@@ -28,23 +28,18 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-%Set_Sprite_Properties(Sprite_MaskSalesman_Prep, Sprite_MaskSalesman_Long);
+%Set_Sprite_Properties(Sprite_MaskSalesman_Prep, Sprite_MaskSalesman_Long)
 
 Sprite_MaskSalesman_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_MaskSalesman_Draw ; Call the draw code
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_MaskSalesman_Main ; Call the main sprite code
-
+  JSR Sprite_MaskSalesman_Draw
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_MaskSalesman_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
-
 
 Sprite_MaskSalesman_Prep:
 {
@@ -75,26 +70,24 @@ Sprite_MaskSalesman_Main:
   ; 0x00
   InquiryHandler:
   {
-      %PlayAnimation(0, 1, 16)
+    %PlayAnimation(0, 1, 16)
+    ; Player has a Lv1 Ocarina, skip to the you got it message
+    LDA.l $7EF34C : CMP.b #$01 : BEQ .has_ocarina
+      ; Player has no Ocarina or Lv2 Ocarina
+      ; Do you want to buy a mask?
+      %ShowSolicitedMessage($E5) : BCC .didnt_converse
+        LDA $1CE8 : BNE .player_said_no
 
-      ; Player has a Lv1 Ocarina, skip to the you got it message
-      LDA.l $7EF34C : CMP.b #$01 : BEQ .has_ocarina
+        ; Player wants to buy a mask
+        LDA.l $7EF34C : CMP.b #$02 : BCS .has_song_healing
 
-        ; Player has no Ocarina or Lv2 Ocarina
-        ; Do you want to buy a mask?
-        %ShowSolicitedMessage($E5) : BCC .didnt_converse
-          LDA $1CE8 : BNE .player_said_no
-
-          ; Player wants to buy a mask
-          LDA.l $7EF34C : CMP.b #$02 : BCS .has_song_healing
-
-            ; No Ocarina yet
-            %GotoAction(1)
-            RTS
+          ; No Ocarina yet
+          %GotoAction(1)
+          RTS
 
     .has_ocarina
-      %GotoAction(2)
-      RTS
+    %GotoAction(2)
+    RTS
 
     .has_song_healing
       LDA.l $7EF348 : CMP.b #$01 : BCS .has_bunny_mask
@@ -111,7 +104,7 @@ Sprite_MaskSalesman_Main:
     .player_said_no
       %GotoAction(6)
     .didnt_converse
-      RTS
+    RTS
   }
 
   ; 0x01 - Link has not yet gotten the Ocarina
@@ -148,20 +141,19 @@ Sprite_MaskSalesman_Main:
   ; 0x04 - Offer Bunny Hood
   OfferBunnyHood:
   {
-      %PlayAnimation(0, 1, 16)
-
-      %ShowUnconditionalMessage($07F) ; Bunny Hood for 100 rupees?
-      %GotoAction(8)
-      RTS
+    %PlayAnimation(0, 1, 16)
+    %ShowUnconditionalMessage($07F) ; Bunny Hood for 100 rupees?
+    %GotoAction(8)
+    RTS
   }
 
   ; 0x05 - Offer Stone Mask
   OfferStoneMask:
   {
-      %PlayAnimation(0, 1, 16)
-      %ShowUnconditionalMessage($082) ; Stone Mask for 650 rupees?
-      %GotoAction(9)
-      RTS
+    %PlayAnimation(0, 1, 16)
+    %ShowUnconditionalMessage($082) ; Stone Mask for 650 rupees?
+    %GotoAction(9)
+    RTS
   }
 
   ; 0x06 - Player said no to buying a mask
@@ -185,74 +177,68 @@ Sprite_MaskSalesman_Main:
   BoughtBunnyHood:
   {
     %PlayAnimation(0, 1, 16)
-      LDA $1CE8 : BNE .player_said_no
+    LDA $1CE8 : BNE .player_said_no
+      REP #$20
+      LDA.l $7EF360 : CMP.w #$64 ; 100 rupees
+      SEP #$30
+      BCC .not_enough_rupees
+
+        LDY.b #$10 ; Bunny Hood
+        STZ.w $02E9
+        PHX
+        JSL Link_ReceiveItem
+        PLX
 
         REP #$20
         LDA.l $7EF360
-        CMP.w #$64 ; 100 rupees
+        SEC : SBC.w #$64 ; Subtract 100 rupees
+        STA.l $7EF360
         SEP #$30
-        BCC .not_enough_rupees
 
-          LDY.b #$10 ; Bunny Hood
-          STZ.w $02E9
-          PHX
-          JSL Link_ReceiveItem
-          PLX
+        %ShowUnconditionalMessage($063)
 
-          REP #$20
-          LDA.l $7EF360
-          SEC
-          SBC.w #$64 ; Subtract 100 rupees
-          STA.l $7EF360
-          SEP #$30
-
-          %ShowUnconditionalMessage($063)
-
-          %GotoAction(0)
-          RTS
+        %GotoAction(0)
+        RTS
 
       .not_enough_rupees
-        %GotoAction($0A)
-        RTS
-    .player_said_no
-      %GotoAction(6)
+      %GotoAction($0A)
       RTS
+    .player_said_no
+    %GotoAction(6)
+    RTS
   }
 
   BoughtStoneMask:
   {
     %PlayAnimation(0, 1, 16)
-      LDA $1CE8 : BNE .player_said_no
+    LDA $1CE8 : BNE .player_said_no
+      REP #$20
+      LDA.l $7EF360 : CMP.w #$352 ; 850 rupees
+      SEP #$30
+      BCC .not_enough_rupees
+
+        LDY #$19 ; Stone Mask
+        STZ.w $02E9
+        PHX
+        JSL Link_ReceiveItem
+        PLX
+
         REP #$20
         LDA.l $7EF360
-        CMP.w #$352 ; 850 rupees
+        SEC : SBC.w #$352 ; Subtract 850 rupees
+        STA.l $7EF360
         SEP #$30
-        BCC .not_enough_rupees
 
-          LDY #$19 ; Stone Mask
-          STZ.w $02E9
-          PHX
-          JSL Link_ReceiveItem
-          PLX
-
-          REP #$20
-          LDA.l $7EF360
-          SEC
-          SBC.w #$352 ; Subtract 850 rupees
-          STA.l $7EF360
-          SEP #$30
-
-          %ShowUnconditionalMessage($055)
-
-          %GotoAction(0)
-          RTS
+        %ShowUnconditionalMessage($055)
+        %GotoAction(0)
+        RTS
 
       .not_enough_rupees
-        %GotoAction($0A)
-        RTS
-    .player_said_no
-      %GotoAction(6)
+      %GotoAction($0A)
       RTS
+    .player_said_no
+    %GotoAction(6)
+    RTS
   }
 
   NotEnoughMoney:
@@ -271,7 +257,6 @@ Sprite_MaskSalesman_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
