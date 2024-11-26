@@ -360,7 +360,6 @@ ResetOcarinaFlag:
 ; 02 - Scroll between two songs
 ; 03 - Scroll between three songs
 ; 04 - Scroll between four songs
-
 UpdateFluteSong_Long:
 {
   LDA $7EF34C : CMP.b #$01 : BEQ .not_pressed
@@ -394,7 +393,8 @@ UpdateFluteSong_Long:
       RTL
 
     .wrap_to_max
-    LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_2
+    LDA $7EF34C : CMP.b #$01 : BEQ .wrap_to_min
+                  CMP.b #$02 : BEQ .set_max_to_2
                   CMP.b #$03 : BEQ .set_max_to_3
       LDA #$04 : STA $030F : RTL
 
