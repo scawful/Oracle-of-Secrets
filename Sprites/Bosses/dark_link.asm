@@ -10,7 +10,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 0   ; Unused in this template (can be 0 to 7)
 !Hitbox             = 0   ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
@@ -33,12 +33,12 @@
 ; =========================================================
 
 Sprite_DarkLink_Long:
-{  
+{
   PHB : PHK : PLB
 
   ; ADD GANON CODE if subtype == 05
   LDA.w SprSubtype, X : CMP #$05 : BNE .NotGanon
-    ; JSR Sprite_Ganon_Draw 
+    ; JSR Sprite_Ganon_Draw
     JSL Sprite_CheckActive   ; Check if game is not paused (Prevent timers from running if game is paused)
     BCC .SpriteIsNotActive2   ; Skip Main code is sprite is innactive
     JSR Sprite_Ganon_Main ; do ganon instead
@@ -55,14 +55,14 @@ Sprite_DarkLink_Long:
   .normal_draw
   CMP.b #$09 : BEQ .sword_draw
   LDA.w SprSubtype, X : BNE .skipnormal_draw
-    JSR Sprite_DarkLink_Draw 
+    JSR Sprite_DarkLink_Draw
   .skipnormal_draw
 
   LDA.w SprAction, X : CMP.b #11 : BCS .notdying
     LDA.w SprHealth, X : CMP.b #$20 : BCS .notdying
       LDA.w SprMiscC, X : BNE +
         ; check if action is 00 otherwise wait
-        LDA.w SprAction, X : BNE .notdying 
+        LDA.w SprAction, X : BNE .notdying
           %GotoAction(15) ; enraging instead
           BRA .SpriteIsNotActive
       +
@@ -111,7 +111,7 @@ Sprite_DarkLink_Prep:
   LDA #$58 : STA.w SprY, X
 
   LDA #$00 : STA.w SprMiscE, X
-  LDA #$00 : STA.w SprMiscC, X ; Enraging 
+  LDA #$00 : STA.w SprMiscC, X ; Enraging
   LDA #$C0 : STA.w SprHealth, X
   %GotoAction(4)
 
@@ -145,7 +145,7 @@ Sprite_DarkLink_Main:
   dw Enraging
 
   Handler:
-  {  
+  {
     LDA.w SprSubtype, X : CMP #$01 : BNE +
       %SetTimerA(16)
       %GotoAction(10)
@@ -309,8 +309,8 @@ Sprite_DarkLink_Main:
     STZ.w SprYSpeed, X
     .ignorezerospeed
 
-    LDA.w SprXSpeed, X : BEQ .nodiagonal 
-    LDA.w SprYSpeed, X : BEQ .nodiagonal 
+    LDA.w SprXSpeed, X : BEQ .nodiagonal
+    LDA.w SprYSpeed, X : BEQ .nodiagonal
     BPL .diagoyspeedpositive
     LDA #$F5 : STA.w SprYSpeed, X
     BRA .dodiagox
@@ -559,19 +559,19 @@ Sprite_DarkLink_Main:
       ;restore life removed by the checkdamage
       STZ.w SprBump, X
 
-            
+
         LDA #$20 : STA $29 : STA $C7
-        
+
         STZ $24
         STZ $25
-        
+
         LDA.w SprYSpeed, X  : STA $27 : EOR #$FF : STA.w SprYSpeed, X
         LDA.w SprXSpeed, X  : STA $28 : EOR #$FF : STA.w SprXSpeed, X
         LDA.b #$08 : STA.w $0F80, X
         LDA.b #$10 : STA $47 : STA $46
         %SetTimerC(16)
       %GotoAction(09)
-        
+
       RTS
 
     .no_damage
@@ -671,8 +671,8 @@ Sprite_DarkLink_Main:
     LDA #$20
     .movespeed
     JSL Sprite_ProjectSpeedTowardsEntityLong
-    LDA.b $01 : STA.w SprXSpeed, X 
-    LDA.b $00 : STA.w SprYSpeed, X 
+    LDA.b $01 : STA.w SprXSpeed, X
+    LDA.b $00 : STA.w SprYSpeed, X
 
 
     REP #$20
@@ -694,8 +694,8 @@ Sprite_DarkLink_Main:
 
     CMP #$0008 : BCS .toofar
     SEP #$20
-    STZ.w SprXSpeed, X 
-    STZ.w SprYSpeed, X 
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
     %GotoAction(4)
     .toofar
     SEP #$20
@@ -930,7 +930,7 @@ Sprite_DarkLink_Main:
     LDA.w SprTimerB, X : BNE ++
 
     LDA.b #$08 : STA.w SprTimerB, X
-    LDA.w SprMiscD, X : INC : STA.w SprMiscD, X : CMP #$04 : BNE + 
+    LDA.w SprMiscD, X : INC : STA.w SprMiscD, X : CMP #$04 : BNE +
     STZ.w SprMiscD, X
     LDA #$00
     +
@@ -940,7 +940,7 @@ Sprite_DarkLink_Main:
     ++
 
     LDA.w SprTimerA, X : BNE +
-    LDA.b #$60 : STA.w SprTimerA, X 
+    LDA.b #$60 : STA.w SprTimerA, X
     LDA.b #$12 : STA.w SprTimerB, X
     LDA.b #44 : STA.w SprFrame, X
     %GotoAction(12)
@@ -1036,17 +1036,17 @@ Sprite_DarkLink_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -1063,14 +1063,14 @@ Sprite_DarkLink_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -1102,17 +1102,17 @@ Sprite_DarkLink_Draw:
   .nextTile2
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets2, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets2, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -1129,14 +1129,14 @@ Sprite_DarkLink_Draw:
   INY
   LDA .properties2, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes2, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile2
 
   PLX
@@ -1526,11 +1526,11 @@ GanonInit:
   LDA #$05 : STA.w SprSubtype, Y
   LDA $00 : STA.w SprX, Y
   LDA $01 : STA.w SprXH, Y
-  
+
   LDA $02 : STA.w SprY, Y
   LDA $03 : STA.w SprYH, Y
 
-  LDA.b #$30 : STA.w SprTimerA, Y  
+  LDA.b #$30 : STA.w SprTimerA, Y
   LDA #$1C : STA.w $012C
   RTL
 }
@@ -1620,17 +1620,17 @@ Sprite_Ganon_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -1647,14 +1647,14 @@ Sprite_Ganon_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -1686,17 +1686,17 @@ Sprite_Ganon_Draw:
 
 ApplyDarkLinkGraphics:
 {
-    PHX 
+    PHX
     REP #$20               ; A = 16, XY = 8
     LDX #$80 : STX $2100   ; turn the screen off (required)
     LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
     LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
-    LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register 
+    LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register
                            ; "001 => 2 registers write once (2 bytes: p, p+1)"
     LDA.w #DarkLinkGraphics : STA $4302     ; Source address where you want gfx from ROM
     LDX.b #DarkLinkGraphics>>16 : STX $4304
     LDA   #$2000 : STA $4305                ; Size of the transfer 4 sheets of $800 each
-    LDX   #$01 : STX $420B                  ; Do the DMA 
+    LDX   #$01 : STX $420B                  ; Do the DMA
     LDX #$0F : STX $2100                    ; Turn the screen back on
     SEP #$30
     PLX

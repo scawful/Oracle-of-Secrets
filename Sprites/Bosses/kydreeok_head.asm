@@ -35,7 +35,6 @@
 Sprite_KydreeokHead_Long:
 {
   PHB : PHK : PLB
-
   LDA.w SprAction, X : CMP #$05 : BEQ .no_head
     JSR Sprite_KydreeokHead_Draw
   .no_head
@@ -43,9 +42,8 @@ Sprite_KydreeokHead_Long:
   JSL Sprite_CheckActive : BCC .not_active
     JSR Sprite_KydreeokHead_Main
   .not_active
-
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -53,11 +51,9 @@ Sprite_KydreeokHead_Long:
 Sprite_KydreeokHead_Prep:
 {
   PHB : PHK : PLB
-
   LDA.b #$C0 : STA.w SprHealth, X
   LDA.b #$09 : STA.w SprBump,   X ; bump damage type
   STZ.w SprMiscE, X
-
   PLB
   RTL
 }

@@ -37,31 +37,25 @@
 Sprite_Manhandla_Long:
 {
   PHB : PHK : PLB
-
   JSR Sprite_Manhandla_CheckForNextPhaseOrDeath
-
   LDA.w SprMiscD, X : CMP.b #$02 : BCC .phase1
     JSR Sprite_BigChuchu_Draw
     JMP .continue
   .phase1
     JSR Sprite_Manhandla_Draw
   .continue
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Manhandla_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Manhandla_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 pushpc
 
 ; Sprite_DoTheDeath#PrepareEnemyDrop.post_death_stuff
 org $06FA25
-  #_06FA25: LDA.w $0E20,X
-  #_06FA28: CMP.b #$88
+  LDA.w $0E20, X : CMP.b #$88
 
 pullpc
 
@@ -70,13 +64,11 @@ pullpc
 Sprite_Manhandla_Prep:
 {
   PHB : PHK : PLB
-
   LDA.b #$04 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
   LDA.b #$80 : STA.w SprDefl, X
   LDA.b #$80 : STA.w SprHealth, X
   LDA.w SprSubtype, X : STA.w SprAction, X
-
   PLB
   RTL
 }
@@ -130,39 +122,39 @@ Sprite_Manhandla_CheckForNextPhaseOrDeath:
 ; =========================================================
 
 macro SetLeftHeadPos()
-    REP #$20
-    LDA.w SprCachedX : SEC : SBC.w #$0016
-    SEP #$20
-    STA.w SprX, Y : XBA : STA.w SprXH, Y
+  REP #$20
+  LDA.w SprCachedX : SEC : SBC.w #$0016
+  SEP #$20
+  STA.w SprX, Y : XBA : STA.w SprXH, Y
 
-    REP #$20
-    LDA.w SprCachedY : SEC : SBC.w #$000F
-    SEP #$20
-    STA.w SprY, Y : XBA : STA.w SprYH, Y
+  REP #$20
+  LDA.w SprCachedY : SEC : SBC.w #$000F
+  SEP #$20
+  STA.w SprY, Y : XBA : STA.w SprYH, Y
 endmacro
 
 macro SetRightHeadPos()
-    REP #$20
-    LDA.w SprCachedX : CLC : ADC.w #$0016
-    SEP #$20
-    STA.w SprX, Y : XBA : STA.w SprXH, Y
+  REP #$20
+  LDA.w SprCachedX : CLC : ADC.w #$0016
+  SEP #$20
+  STA.w SprX, Y : XBA : STA.w SprXH, Y
 
-    REP #$20
-    LDA.w SprCachedY : SEC : SBC.w #$000F
-    SEP #$20
-    STA.w SprY, Y : XBA : STA.w SprYH, Y
+  REP #$20
+  LDA.w SprCachedY : SEC : SBC.w #$000F
+  SEP #$20
+  STA.w SprY, Y : XBA : STA.w SprYH, Y
 endmacro
 
 macro SetCenterHeadPos()
-    REP #$20
-    LDA.w SprCachedX
-    SEP #$20
-    STA.w SprX, Y : XBA : STA.w SprXH, Y
+  REP #$20
+  LDA.w SprCachedX
+  SEP #$20
+  STA.w SprX, Y : XBA : STA.w SprXH, Y
 
-    REP #$20
-    LDA.w SprCachedY
-    SEP #$20
-    STA.w SprY, Y : XBA : STA.w SprYH, Y
+  REP #$20
+  LDA.w SprCachedY
+  SEP #$20
+  STA.w SprY, Y : XBA : STA.w SprYH, Y
 endmacro
 
 Sprite_Manhandla_Main:
