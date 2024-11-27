@@ -44,7 +44,7 @@ LinkItem_IceRod:
   TXA
   STA $7ED004 ; store native x value into ram to regain after code
 
- ; wait for vblank to enable dma transfer
+  ; wait for vblank to enable dma transfer
   LDA $4212 : AND #$80 : BEQ $F9
 
   REP #$30
@@ -100,15 +100,13 @@ VramDmaTransfer:
 {
   LDA #$007E ; load origin of bytes to transfer (7E/d000)
   STA $4304
-  LDA #$D000
-  STA $4302
+  LDA #$D000 : STA $4302
   SEP #$30
   LDA #$18 ; bus
   STA $4301
   LDA #$04 ; transfer 4 bytes
   STA $4305
-  LDA #$01
-  STA $4300
+  LDA #$01 : STA $4300
   STA $420B ; make dma transfer
   RTS
 }

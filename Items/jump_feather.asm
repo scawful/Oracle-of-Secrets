@@ -30,16 +30,12 @@ assert pc() <= $07D248
 pullpc
 LinkItem_JumpFeather:
 {
-  JSL $07983A ; Reset swim state
-  LDA $46 : BNE .cantuseit
+  JSL Link_ResetSwimmingState
+  LDA $46 : BNE .cant_use_it
     LDA #$02 : STA $5D ; set link state recoil
     LDA #$02 : STA $4D ; set jumping state (ledge hop)
-
-    ; Length of the jump
-    LDA #$20 : STA $46
-
-    ; Height of the jump
-    LDA #$24
+    LDA #$20 : STA $46 ; length of the jump
+    LDA #$24 ; Height of the jump
 
     ; Set vertical resistance
     STA $29
@@ -51,25 +47,24 @@ LinkItem_JumpFeather:
     ; Reset Link movement offsets
     STZ $31 : STZ $30
 
-      LDA $F4 : AND #$08 : BEQ .noUp
-        LDA #-8 ; Change that -8 if you want higher speed moving up
-        STA $27 ; Vertical recoil
-    .noUp
-      LDA $F4 : AND #$04 : BEQ .noDown
-        LDA #8  ; Change that -8 if you want higher speed moving down
-        STA $27
-    .noDown
-      LDA $F4 : AND #$02 : BEQ .noLeft
-        LDA #-8 ; Change that -8 if you want higher speed moving left
-        STA $28 ; Horizontal recoil
-    .noLeft
-      LDA $F4 : AND #$01 : BEQ .noRight
-        LDA #8  ; Change that 8 if you want higher speed moving right
-        STA $28
-    .noRight
-
-  .cantuseit
-    RTL
+    LDA $F4 : AND #$08 : BEQ .no_up
+      LDA #-8
+      STA $27 ; Vertical recoil
+    .no_up
+    LDA $F4 : AND #$04 : BEQ .no_down
+      LDA #8
+      STA $27
+    .no_down
+    LDA $F4 : AND #$02 : BEQ .no_left
+      LDA #-8
+      STA $28 ; Horizontal recoil
+    .no_left
+    LDA $F4 : AND #$01 : BEQ .no_right
+      LDA #8
+      STA $28
+    .no_right
+  .cant_use_it
+  RTL
 }
 
 ; =========================================================
@@ -79,13 +74,13 @@ LinkItem_JumpFeather:
 
 CheckIfJumpingForSpikeDamage:
 {
-    PHB : PHK : PLB
-    ; Check Z pos of Link
-    LDA $5D : CMP.b #$02 : BEQ .airborne
-      LDA.w .spike_floor_damage, Y : STA.w $0373
-    .airborne
-    PLB
-    RTL
+  PHB : PHK : PLB
+  ; Check Z pos of Link
+  LDA $5D : CMP.b #$02 : BEQ .airborne
+    LDA.w .spike_floor_damage, Y : STA.w $0373
+  .airborne
+  PLB
+  RTL
 
   .spike_floor_damage
     db $08 ; green

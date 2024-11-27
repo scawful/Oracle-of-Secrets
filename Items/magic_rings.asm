@@ -159,4 +159,3 @@ pushpc
 org $07810C
   JSL MagicRings_CheckForHeart
 pullpc
-

@@ -146,7 +146,7 @@ Overworld_OperateCameraScroll_Long:
 
   JSR $BB90
 
-  PLB 
+  PLB
 
   RTL
 }
@@ -165,10 +165,10 @@ pullpc
 ScrollToPortal:
 {
   REP #$20
-  
+
   STZ $00
   STZ $02
-  
+
   LDA $22 : CMP $7EC186 : BEQ .set_x : BCC .x_low
     DEC $02
     DEC A : CMP $7EC186 : BEQ .set_x
@@ -185,7 +185,7 @@ ScrollToPortal:
   .set_x
 
   STA $22
-  
+
   LDA $20 : CMP $7EC184 : BEQ .set_y : BCC .y_low
     DEC $00
     DEC A : CMP $7EC184 : BEQ .set_y
@@ -209,12 +209,12 @@ ScrollToPortal:
   .delay_advance
 
   SEP #$20
-  
+
   LDA $00 : STA $30
   LDA $02 : STA $31
-  
+
   JSL Overworld_OperateCameraScroll_Long ; $13B90 IN ROM
-  
+
   LDA $0416 : BEQ .exit
     JSL Overworld_ScrollMap_Long ; $17273 IN ROM
   .exit
@@ -229,46 +229,46 @@ pushpc
 ; Ancilla_PortalShot:
 ; {
 ;     LDA $0C54, X : BEQ .traveling_shot
-    
+
 ;     JMP Ancilla_ConsumingFire
 
 ; .traveling_shot
-    
+
 ;     LDA $11 : BNE .just_draw
-    
+
 ;     STZ $0385, X
-    
+
 ;     JSR Ancilla_MoveHoriz
 ;     JSR Ancilla_MoveVert
-    
+
 ;     JSR Ancilla_CheckSpriteCollision : BCS .collided
-    
+
 ;     LDA $0C72, X : ORA.b #$08 : STA $0C72, X
-    
+
 ;     JSR Ancilla_CheckTileCollision
-    
+
 ;     PHP
-    
+
 ;     LDA $03E4, X : STA $0385, X
-    
+
 ;     PLP : BCS .collided
-    
+
 ;     LDA $0C72, X : ORA.b #$0C : STA $0C72, X
-    
+
 ;     LDA $028A, X : STA $74
-    
+
 ;     JSR Ancilla_CheckTileCollision
-    
+
 ;     PHP
-    
+
 ;     LDA $74 : STA $028A, X
-    
+
 ;     PLP : BCC .no_collision
 
 ; .collided
-    
+
 ;     INC $0C54, X
-    
+
 ;     ; Check if it's blue or orange portal
 ;     LDA   $0C68, X
 ;     CMP.b #$1F
@@ -290,23 +290,23 @@ pushpc
 ;     ; CLC : ADC portal creation logic here if necessary
 
 ; .no_collision
-    
+
 ;     INC $0C5E, X
-    
+
 ;     LDA $0C72, X : AND.b #$F3 : STA $0C72, X
-    
+
 ;     LDA $0385, X : STA $0333
-    
+
 ;     AND.b #$F0 : CMP.b #$C0 : BNE .just_draw
-    
+
 ;     LDA $03E4, X : STA $0333
-    
+
 ;     AND.b #$F0 : CMP.b #$C0 : BNE .just_draw
 
 ; .just_draw
-    
+
 ;     JSR PortalShot_Draw
-    
+
 ;     RTS
 ; }
 
@@ -314,46 +314,46 @@ pushpc
 ; PortalShot_Draw:
 ; {
 ;   JSR Ancilla_BoundsCheck
-  
+
 ;   LDA $0280, X : BEQ .default_priority
-  
+
 ;   LDA.b #$30 : TSB $04
 
 ; .default_priority
 
 ;   LDA $0C5E, X : AND.b #$0C : STA $02
-  
+
 ;   PHX
-  
+
 ;   LDX.b #$02
 ;   LDY.b #$00
 
 ; .next_oam_entry
 
 ;   STX $03
-  
+
 ;   TXA : ORA $02 : TAX
-  
+
 ;   LDA $00 : CLC : ADC .x_offsets, X       : STA ($90), Y
 ;   LDA $01 : CLC : ADC .y_offsets, X : INY : STA ($90), Y
-  
+
 ;   LDX $03
-  
+
 ;   LDA .chr, X          : INY : STA ($90), Y
 ;   LDA $04 : ORA.b #$02 : INY : STA ($90), Y
-  
+
 ;   PHY
-  
+
 ;   TYA : LSR #2 : TAY
-  
+
 ;   LDA.b #$00 : STA ($92), Y
-  
+
 ;   PLY : INY
-  
+
 ;   DEX : BPL .next_oam_entry
-  
+
 ;   PLX
-  
+
 ;   RTS
 
 ; .x_offsets

@@ -31,7 +31,7 @@ NOP
 
 org $079E67
 NOP #$04
-CMP #$FF 
+CMP #$FF
 
 org $09F608
 NOP
