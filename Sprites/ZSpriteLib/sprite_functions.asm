@@ -143,7 +143,7 @@ Sprite_FloatAwayFromPlayer:
 
 Sprite_BounceFromTileCollision:
 {
-  JSL   Sprite_CheckTileCollision : AND.b #$03 : BEQ ++
+  JSL Sprite_CheckTileCollision : AND.b #$03 : BEQ ++
     LDA.w SprXSpeed, X : EOR.b #$FF : INC : STA.w SprXSpeed, X
 
   ++ LDA.w SprCollision, X : AND.b #$0C : BEQ ++
@@ -168,34 +168,30 @@ Sprite_BounceOffWall:
 Sprite_InvertSpeed_XY:
   JSL Sprite_InvertSpeed_Y
 
-; =========================================================
-
 Sprite_InvertSpeed_X:
   LDA.w SprXSpeed, X
   EOR.b #$FF
   INC A
   STA.w SprXSpeed, X
-
   RTL
-
-; =========================================================
 
 Sprite_InvertSpeed_Y:
   LDA.w SprYSpeed,X
   EOR.b #$FF
   INC A
   STA.w SprYSpeed,X
-
   RTL
 
 ; =========================================================
 
 Sprite_SelectNewDirection:
 {
+  PHB : PHK : PLB
   JSL GetRandomInt : AND.b #$07 : TAY
   LDA.w .speed_x, Y : STA.w SprXSpeed, X
   LDA.w .speed_y, Y : STA.w SprYSpeed, X
   LDA.w .timers, Y : STA.w SprTimerA, X
+  PLB
   RTL
 
   .speed_x
@@ -277,9 +273,7 @@ DragPlayer:
 Sprite_DamageFlash_Long:
 {
   PHB : PHK : PLB
-
   JSR Sprite_Damage_Flash
-
   PLB
   RTL
 }
@@ -292,15 +286,14 @@ Sprite_Damage_Flash:
     ; Change the palette to the next in the cycle
     LDA.w SprFlash, X : INC : CMP.b #$08 : BNE .dontReset
       LDA.b #$00
-
-  .dontReset
+    .dontReset
     STA.w SprFlash, X
     BRA .flash
 
-.dontFlash
+  .dontFlash
   STZ.w SprFlash, X
 
-.flash
+  .flash
   RTS
 }
 
@@ -324,13 +317,10 @@ Link_CheckNewY_ButtonPress_Long:
 Link_SetupHitBox:
 {
   LDA.b #$08 : STA $02 : STA $03
-
   LDA $22 : CLC : ADC.b #$04 : STA $00
   LDA $23 : ADC.b #$00 : STA $08
-
   LDA $20 : ADC.b #$08 : STA $01
   LDA $21 : ADC.b #$00 : STA $09
-
   RTL
 }
 
@@ -343,15 +333,11 @@ Sprite_SetupHitBox:
     PHY
     LDA.w SprHitbox, X : AND.b #$1F : TAY
     LDA.w SprX, X : CLC : ADC.w .offset_x_low, Y : STA.b $04
-
     LDA.w SprXH, X : ADC.w .offset_x_high, Y : STA.b $0A
-
     LDA.w SprY, X : CLC : ADC.w .offset_y_low, Y
-
     PHP
     SEC : SBC.w SprHeight, X : STA.b $05
     LDA.w SprYH, X : SBC.b #$00
-
     PLP
     ADC.w .offset_y_high, Y : STA.b $0B
 
@@ -876,6 +862,7 @@ MovieEffect:
 }
 
 Sprite_CheckIfRecoiling:
+{
   PHB : PHK : PLB
 
   LDA.w $0EA0, X : BEQ .exit
@@ -948,5 +935,6 @@ Sprite_CheckIfRecoiling:
   PLB
   RTL
 
-.masks
+  .masks
   db $03, $01, $00, $00, $0C, $03
+}

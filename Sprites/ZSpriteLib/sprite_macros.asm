@@ -53,7 +53,7 @@ endmacro
 macro PlayAnimation(frame_start, frame_end, frame_wait)
   LDA.w SprTimerB, X : BNE +
     LDA.w SprFrame, X : INC : STA.w SprFrame, X : CMP.b #<frame_end>+1 : BCC .noframereset
-    LDA.b #<frame_start> : STA.w SprFrame, X
+      LDA.b #<frame_start> : STA.w SprFrame, X
     .noframereset
     LDA.b #<frame_wait> : STA.w SprTimerB, X
   +
@@ -70,9 +70,9 @@ endmacro
 ; Return Carry Set if message is displayed
 ; can use BCC .label <> .label to see if message have been displayed
 macro ShowSolicitedMessage(message_id)
-    LDY.b #(<message_id>)>>8
-    LDA.b #<message_id>
-    JSL Sprite_ShowSolicitedMessageIfPlayerFacing
+  LDY.b #(<message_id>)>>8
+  LDA.b #<message_id>
+  JSL Sprite_ShowSolicitedMessageIfPlayerFacing
 endmacro
 
 macro ShowMessageOnContact(message_id)
@@ -110,12 +110,12 @@ macro SetHarmless(value)
   LDA.w SprNbrOAM, X
   AND #$7F
   if <value> != 0
-      ORA.b #(<value>)<<7 
+      ORA.b #(<value>)<<7
   endif
   STA.w SprNbrOAM, X
 endmacro
 
-; Set Room Flag (Chest 6) 
+; Set Room Flag (Chest 6)
 ; Do not use if you have more than 5 chests or a small key under a pot
 ; in that room unless you want it to be already opened/taken
 macro SetRoomFlag(value)
