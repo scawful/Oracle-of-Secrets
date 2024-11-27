@@ -59,7 +59,7 @@ Sprite_Darknut_Prep:
   RTL
 
   .health
-    db $04, $0C, $12, $1C
+    db $04, $0C, $0F, $10
 }
 
 ; =========================================================
@@ -68,33 +68,90 @@ DarknutSpeed = 04
 
 Sprite_Darknut_Main:
 {
-  JSL Sprite_SpawnProbeAlways_long
+  LDA.w POSX : STA $02
+  LDA.w POSY : STA $03
+  LDA.w SprX, X : STA $04
+  LDA.w SprY, X : STA $05
+  JSL GetDistance8bit_Long
+  CMP.b #$50 : BCS .no_probe
+    ; JSL Sprite_SendOutProbe
+    JSL Sprite_SpawnProbeAlways_long
+  .no_probe
+
+  ; TODO: Setup parrying sword gfx
   JSL Guard_ParrySwordAttacks
+
   JSL Sprite_Move
   JSL Sprite_BounceFromTileCollision
   JSL Sprite_PlayerCantPassThrough
   JSL Sprite_DamageFlash_Long
 
-  LDA.w SprTimerA, X : BNE +
-    LDA.b #$04
-    JSL Sprite_ApplySpeedTowardsPlayer
-    JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
-    %SetTimerA($A0)
+  LDA.w SprTimerA, X : BEQ +
+    LDA.b #$40 : STA.w SprTimerD, X
   +
+  LDA.w SprTimerD, X : BEQ ++
+    LDA.b #$04 : JSL Sprite_ApplySpeedTowardsPlayer
+    JSL Sprite_DirectionToFacePlayer
+    TYA
+    STA.w SprMiscC, X
+    STA.w SprMiscE, X
+    STA.w SprAction, X
+    JSL Guard_ChaseLinkOnOneAxis
+    JMP +++
+  ++
+  JSR Sprite_Darknut_BasicMove
+  +++
 
   JSR Goriya_HandleTileCollision
 
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
-  dw MoveUp
-  dw MoveDown
-  dw MoveLeft
+  dw FaceRight
+  dw FaceLeft
+  dw FaceDown
+  dw FaceUp
+
+  FaceUp:
+  {
+    %PlayAnimation(0,1,10)
+    RTS
+  }
+
+  FaceDown:
+  {
+    %StartOnFrame(2)
+    %PlayAnimation(2,3,10)
+    RTS
+  }
+
+  FaceLeft:
+  {
+    %StartOnFrame(4)
+    %PlayAnimation(4,5,10)
+    RTS
+  }
+
+  FaceRight:
+  {
+    %StartOnFrame(6)
+    %PlayAnimation(6,7,10)
+    RTS
+  }
+}
+
+Sprite_Darknut_BasicMove:
+{
+  LDA.w SprAction, X
+  JSL JumpTableLocal
+
   dw MoveRight
+  dw MoveLeft
+  dw MoveDown
+  dw MoveUp
 
   MoveUp:
   {
-    %PlayAnimation(0,1,10)
     LDA.b #-DarknutSpeed : STA.w SprYSpeed, X
     STZ.w SprXSpeed, X
     RTS
@@ -102,8 +159,6 @@ Sprite_Darknut_Main:
 
   MoveDown:
   {
-    %StartOnFrame(2)
-    %PlayAnimation(2,3,10)
     LDA.b #DarknutSpeed : STA.w SprYSpeed, X
     STZ.w SprXSpeed, X
     RTS
@@ -111,8 +166,6 @@ Sprite_Darknut_Main:
 
   MoveLeft:
   {
-    %StartOnFrame(4)
-    %PlayAnimation(4,5,10)
     LDA.b #-DarknutSpeed : STA.w SprXSpeed, X
     STZ.w SprYSpeed, X
     RTS
@@ -120,13 +173,10 @@ Sprite_Darknut_Main:
 
   MoveRight:
   {
-    %StartOnFrame(6)
-    %PlayAnimation(6,7,10)
     LDA.b #DarknutSpeed : STA.w SprXSpeed, X
     STZ.w SprYSpeed, X
     RTS
   }
-
 }
 
 ; =========================================================
@@ -136,9 +186,8 @@ Sprite_Darknut_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+  LDA.w SprGfx, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
   LDA.w SprFlash, X : STA $08
 
   PHX
