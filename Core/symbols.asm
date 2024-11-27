@@ -54,6 +54,17 @@ OOSPROG         = $7EF3D6
 ;   f - Flipped by fortune tellers to decide fortune set to give
 OOSPROG2       = $7EF3C6
 
+; .... ...m
+;   m - maku tree has met link (0: no | 1: yes)
+OOSPROG3       = $7EF3D4
+
+; Game state
+;   0x00 - Very start; progress cannot be saved in this state
+;   0x01 - Uncle reached
+;   0x02 - Zelda rescued
+;   0x03 - Agahnim defeated
+GAMESTATE       = $7EF3C5
+
 ; Map icon
 ;   0x00 - Red X on Maku Tree/Maku Warp
 ;   0x01 - Red X on Hall of Secrets
@@ -84,10 +95,6 @@ MAPICON         = $7EF3C7
 ;   m - Misery Mire
 ;   t - Turtle Rock
 CRYSTALS        = $7EF37A
-
-; .... ...m
-;   m - maku tree has met link (0: no | 1: yes)
-OOSPROG3       = $7EF3D4
 
 ; 01 - Fishing Rod
 ; 02 - Portal Rod
@@ -133,7 +140,29 @@ CurrentDream   = $0426
 
 ; Current Song
 CurrentSong    = $030F
+; =========================================================
+; The record format for the low table is 4 bytes:
+;   byte OBJ*4+0: xxxxxxxx
+;   byte OBJ*4+1: yyyyyyyy
+;   byte OBJ*4+2: cccccccc
+;   byte OBJ*4+3: vhoopppN
 
+; The record format for the high table is 2 bits:
+;   bit 0/2/4/6 of byte OBJ/4: X
+;   bit 1/3/5/7 of byte OBJ/4: s
+
+; Xxxxxxxxx = X position of the sprite. signed but see below.
+; yyyyyyyy  = Y position of the sprite.
+; cccccccc  = First tile of the sprite.
+; N         = Name table of the sprite. See below for VRAM address calculation
+; ppp       = Palette of the sprite. The first palette index is 128+ppp*16.
+; oo        = Sprite priority. See below for details.
+; h/v       = Horizontal/Vertical flip flags.
+; s         = Sprite size flag. See below for details.
+
+OAMPtr       = $90
+OAMPtrH      = $92
+OamBackup   = $0FEC
 
 ; =========================================================
 ; Sprite RAM and Functions
@@ -342,32 +371,6 @@ OverlordYH   = $0B20
 OverlordTimerA = $0B28
 OverlordTimerB = $0B30
 OverlordTimerC = $0B38
-
-; =========================================================
-
-; The record format for the low table is 4 bytes:
-;   byte OBJ*4+0: xxxxxxxx
-;   byte OBJ*4+1: yyyyyyyy
-;   byte OBJ*4+2: cccccccc
-;   byte OBJ*4+3: vhoopppN
-
-; The record format for the high table is 2 bits:
-;   bit 0/2/4/6 of byte OBJ/4: X
-;   bit 1/3/5/7 of byte OBJ/4: s
-
-; Xxxxxxxxx = X position of the sprite. signed but see below.
-; yyyyyyyy  = Y position of the sprite.
-; cccccccc  = First tile of the sprite.
-; N         = Name table of the sprite. See below for VRAM address calculation
-; ppp       = Palette of the sprite. The first palette index is 128+ppp*16.
-; oo        = Sprite priority. See below for details.
-; h/v       = Horizontal/Vertical flip flags.
-; s         = Sprite size flag. See below for details.
-
-OAMPtr       = $90
-OAMPtrH      = $92
-
-OamBackup   = $0FEC
 
 SpriteData_OAMProp = $0DB359
 
@@ -585,10 +588,21 @@ Sprite_ProjectSpeedTowardsEntityLong = $06EA22
 
 ; =========================================================
 ; Guard and Prober functions
+; SprMiscB contains the ID of the parent sprite to alert
 
 Guard_ChaseLinkOnOneAxis = $05C542
 Guard_ParrySwordAttacks = $06EB5E
 Probe_CheckTileSolidity = $0DC26E
+
+ProbeAndSparkCheckDirXSpeed = $05C359
+ProbeAndSparkCheckDirYSpeed = $05C361
+ProbeAndSparkXSpeed = $05C369
+ProbeAndSparkYSpeed = $05C371
+
+ColinearDirections = $05C381
+OrthogonalDirections = $05C389
+ColinearNextDirections = $05C391
+OrthogonalNextDirections = $05C399
 
 Sprite_SpawnProbeAlways_long = $05C66E
 
@@ -1055,3 +1069,5 @@ Sparkle_PrepOAMFromRadial = $08DA17
 Fireball_SpawnTrailGarnish = $09B020
 
 SpriteSFX_QueueSFX2WithPan = $0DBB7C
+
+SpriteSFX_QueueSFX3WithPan = $0DBB8A
