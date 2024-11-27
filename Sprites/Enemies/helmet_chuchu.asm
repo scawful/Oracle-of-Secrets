@@ -1,6 +1,5 @@
 ; =========================================================
-; Sprite Properties
-; =========================================================
+;
 
 !SPRID              = Sprite_HelmetChuchu
 !NbrTiles           = 03  ; Number of tiles used in a frame
@@ -35,7 +34,6 @@
 Sprite_HelmetChuchu_Long:
 {
   PHB : PHK : PLB
-
   JSR Sprite_HelmetChuchu_Draw
   JSL Sprite_DrawShadow
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -205,16 +203,11 @@ Sprite_CheckForHookshot:
 {
   PHX
   LDX.b #$0A
-
   .next_ancilla
-  LDA.w $0C4A,X
-  CMP.b #$1F ; ANCILLA 1F
-  BNE .not_hooker
-
-  PLX
-  SEC
-  RTS
-
+  LDA.w $0C4A, X : CMP.b #$1F : BNE .not_hooker
+    PLX
+    SEC
+    RTS
   .not_hooker
   DEX
   BPL .next_ancilla

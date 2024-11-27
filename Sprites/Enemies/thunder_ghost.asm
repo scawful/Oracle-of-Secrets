@@ -167,41 +167,39 @@ SpawnLightningAttack:
 {
   PHX
   LDA.b #$CD
-  JSL Sprite_SpawnDynamically
-  BMI .no_space
+  JSL Sprite_SpawnDynamically : BMI .no_space
+    ; Use SprXSpeed, SprYSpeed, SprXRound, SprYRound
+    ; SprX, SprY, SprXH, SprY, to cast the lightning spell
+    ; and make it move off to the bottom left or bottom right
 
-  ; Use SprXSpeed, SprYSpeed, SprXRound, SprYRound
-  ; SprX, SprY, SprXH, SprY, to cast the lightning spell
-  ; and make it move off to the bottom left or bottom right
+    ; Y is the ID of the new attack sprite
+    ; X is the ID of the current source sprite
 
-  ; Y is the ID of the new attack sprite
-  ; X is the ID of the current source sprite
+    ; Left 0 or Right 1
+    PHY
+    JSL Sprite_IsToRightOfPlayer : TAY : CMP.b #$01 : BEQ +
+      LDA.b #$00
+      JMP .Continue
+    +
+    LDA.b #$01
+    .Continue
+    CLC : ADC.b #$03
+    PLY
+    STA.w SprSubtype, Y
+    STA.w SprAction, Y
 
-  ; Left 0 or Right 1
-  PHY
-  JSL Sprite_IsToRightOfPlayer : TAY : CMP.b #$01 : BEQ +
-    LDA.b #$00
-    JMP .Continue
-  +
-  LDA.b #$01
-  .Continue
-  CLC : ADC.b #$03
-  PLY
-  STA.w SprSubtype, Y
-  STA.w SprAction, Y
+    LDA.w SprX, X : STA.w SprX, Y
+    LDA.w SprY, X : STA.w SprY, Y
+    LDA.w SprXH, X : STA.w SprXH, Y
+    LDA.w SprYH, X : STA.w SprYH, Y
 
-  LDA.w SprX, X : STA.w SprX, Y
-  LDA.w SprY, X : STA.w SprY, Y
-  LDA.w SprXH, X : STA.w SprXH, Y
-  LDA.w SprYH, X : STA.w SprYH, Y
-
-  LDA.w SprXSpeed, X : STA.w SprXSpeed, Y
-  LDA.w SprYSpeed, X : STA.w SprYSpeed, Y
-  LDA.b #$02 : STA.w SprXRound, Y
-  LDA.b #$02 : STA.w SprYRound, Y
-  LDA.b #$30 : STA.w SprTimerA, Y
-  LDA.b #$30 : STA.w SprTimerB, Y
-  LDA.b #$1A : STA.w SprHitbox, Y
+    LDA.w SprXSpeed, X : STA.w SprXSpeed, Y
+    LDA.w SprYSpeed, X : STA.w SprYSpeed, Y
+    LDA.b #$02 : STA.w SprXRound, Y
+    LDA.b #$02 : STA.w SprYRound, Y
+    LDA.b #$30 : STA.w SprTimerA, Y
+    LDA.b #$30 : STA.w SprTimerB, Y
+    LDA.b #$1A : STA.w SprHitbox, Y
   .no_space
 
   PLX
@@ -227,17 +225,17 @@ Sprite_ThunderGhost_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -254,14 +252,14 @@ Sprite_ThunderGhost_Draw:
   INY
   LDA .properties, X : ORA $08 : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX

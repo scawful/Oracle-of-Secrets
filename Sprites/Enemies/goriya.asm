@@ -56,9 +56,7 @@ Sprite_Goriya_Long:
 Sprite_Goriya_Prep:
 {
   PHB : PHK : PLB
-
   LDA.b #$08 : STA.w SprHealth, X
-
   PLB
   RTL
 }
