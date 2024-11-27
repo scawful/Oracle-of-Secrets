@@ -146,31 +146,29 @@ LinkItem_NewFlute:
   ; Check for Switch Swong
   JSR UpdateFluteSong
   JSR Link_CheckNewY_ButtonPress : BCC ReturnFromFluteHook
+    ; Success... play the flute.
+    LDA.b #$80 : STA.w $03F0
 
-  ; Success... play the flute.
-  LDA.b #$80 : STA.w $03F0
+    LDA.w $030F : CMP.b #$01 : BEQ .song_of_storms
+                  CMP.b #$02 : BEQ .song_of_healing
+                  CMP.b #$03 : BEQ .song_of_soaring
+                  CMP.b #$04 : BEQ .song_of_time
+                  JMP .song_of_storms
+    .song_of_time
+    LDA.b #$27 : JSR $802F ; Player_DoSfx3
+    LDA.b #$02 : STA $FE
+    RTS
 
-  LDA.w $030F
-  CMP.b #$01 : BEQ .song_of_storms
-  CMP.b #$02 : BEQ .song_of_healing
-  CMP.b #$03 : BEQ .song_of_soaring
-  CMP.b #$04 : BEQ .song_of_time
+    .song_of_healing
+    LDA.b #$13 : JSR Player_DoSfx2
+    LDA.b #$01 : STA $FE
+    RTS
 
-  .song_of_time
-  LDA.b #$27 : JSR $802F ; Player_DoSfx3
-  LDA.b #$02 : STA $FE
-  RTS
-
-  .song_of_healing
-  LDA.b #$13 : JSR Player_DoSfx2
-  LDA.b #$01 : STA $FE
-  RTS
-
-  .song_of_storms
-  ; Play the Song of Storms SFX
-  LDA.b #$2F : JSR Player_DoSfx2
-  JSL OcarinaEffect_SummonStorms
-  RTS
+    .song_of_storms
+    ; Play the Song of Storms SFX
+    LDA.b #$2F : JSR Player_DoSfx2
+    JSL OcarinaEffect_SummonStorms
+    RTS
 
   .song_of_soaring
   LDA.b #$3E : JSR Player_DoSfx2
@@ -199,39 +197,31 @@ LinkItem_NewFlute:
 
   ; Paul's weathervane stuff Do we have a normal flute (without bird)?
   LDA $7EF34C : CMP.b #$02 : BNE .travel_bird_already_released
+    REP #$20
+    ; check the area, is it #$18 = 30?
+    LDA $8A : CMP.w #$0018 : BNE .not_weathervane_trigger
+      ; Y coordinate boundaries for setting it off.
+      LDA $20
+      CMP.w #$0760 : BCC .not_weathervane_trigger
+      CMP.w #$07E0 : BCS .not_weathervane_trigger
 
-  REP #$20
+      ; do if( (Ycoord >= 0x0760) && (Ycoord < 0x07e0
+      LDA $22
+      CMP.w #$01CF : BCC .not_weathervane_trigger
+      CMP.w #$0230 : BCS .not_weathervane_trigger
 
-  ; check the area, is it #$18 = 30?
-  LDA $8A : CMP.w #$0018 : BNE .not_weathervane_trigger
+        ; do if( (Xcoord >= 0x1cf) && (Xcoord < 0x0230)
+        SEP #$20
+        ; Apparently a special Overworld mode for doing this?
+        LDA.b #$2D : STA $11
 
-  ; Y coordinate boundaries for setting it off.
-  LDA $20
-
-  CMP.w #$0760 : BCC .not_weathervane_trigger
-  CMP.w #$07E0 : BCS .not_weathervane_trigger
-
-  ; do if( (Ycoord >= 0x0760) && (Ycoord < 0x07e0
-  LDA $22
-
-  CMP.w #$01CF : BCC .not_weathervane_trigger
-  CMP.w #$0230 : BCS .not_weathervane_trigger
-
-  ; do if( (Xcoord >= 0x1cf) && (Xcoord < 0x0230)
-  SEP #$20
-  ; Apparently a special Overworld mode for doing this?
-  LDA.b #$2D : STA $11
-
-  ; Trigger the sequence to start the weathervane explosion.
-  LDY.b #$00
-  LDA.b #$37
-  JSL AddWeathervaneExplosion
-
-  .not_weathervane_trigger
-
-  SEP #$20
-  BRA .return
-
+        ; Trigger the sequence to start the weathervane explosion.
+        LDY.b #$00
+        LDA.b #$37
+        JSL AddWeathervaneExplosion
+    .not_weathervane_trigger
+    SEP #$20
+    BRA .return
   .travel_bird_already_released
 
   LDY.b #$04
