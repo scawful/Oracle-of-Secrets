@@ -39,7 +39,12 @@ Sprite_BeanVendor_Long:
   PHB : PHK : PLB
   JSR Sprite_BeanVendor_Draw
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    LDA.w SprSubtype, X : BNE +
+      JSR Sprite_VillageElder_Main
+      JMP ++
+    +
     JSR Sprite_BeanVendor_Main
+    ++
   .SpriteIsNotActive
   PLB
   RTL
@@ -50,20 +55,13 @@ Sprite_BeanVendor_Long:
 Sprite_BeanVendor_Prep:
 {
   PHB : PHK : PLB
-
   LDA.b #$80 : STA.w SprDefl, X ; Persist in dungeons
   LDA.b #$40 : STA.w SprTimerA, X
   LDA.w SprSubtype, X : STA.w SprAction, X
-  CMP.b #$02 : BEQ .OldMan
-
-  LDA.b $8A : CMP.b #$00 : BEQ .RanchFlower
-
-  .OldMan
-  PLB
-  RTL
-
-  .RanchFlower
-  LDA.b #$05 : STA.w SprAction, X
+  LDA.b $8A : CMP.b #$00 : BNE +
+    ; Sprite is the flower on ranch map
+    LDA.b #$04 : STA.w SprAction, X
+  +
   PLB
   RTL
 }
@@ -77,7 +75,6 @@ Sprite_BeanVendor_Main:
 
   dw BeanVendor
   dw MagicBean
-  dw VillageElder
   dw SpawnMagicBean
   dw PlayerSaidNo
   dw MagicBean_RanchFlower
@@ -88,11 +85,10 @@ Sprite_BeanVendor_Main:
     %PlayAnimation(0,0,1)
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($142) : BCC .no_message
-      %GotoAction(3)
+      %GotoAction(2)
     .no_message
     RTS
   }
-
 
   ; 0x01 - Liftable Magic Bean
   MagicBean:
@@ -141,26 +137,7 @@ Sprite_BeanVendor_Main:
     RTS
   }
 
-  ; 0x02 - Village Elder
-  VillageElder:
-  {
-    %PlayAnimation(2,3,16)
-    JSL Sprite_PlayerCantPassThrough
-    REP #$30
-    LDA.l $7EF3C7 : AND.w #$00FF
-    SEP #$30
-    CMP.b #$07 : BCS .already_met
-      %ShowSolicitedMessage($143) : BCC .no_message
-        LDA.b #$02 : STA.l $7EF3C7
-      .no_message
-      RTS
-
-    .already_met
-    %ShowSolicitedMessage($019)
-    RTS
-  }
-
-  ; 0x03 - Spawn Magic Bean
+  ; 0x02 - Spawn Magic Bean
   SpawnMagicBean:
   {
     %PlayAnimation(0,0,1)
@@ -192,11 +169,11 @@ Sprite_BeanVendor_Main:
         %GotoAction(0)
         RTS
     .player_said_no_or_not_enough_rupees
-    %GotoAction(4)
+    %GotoAction(3)
     RTS
   }
 
-  ; 0x04 - Player Said No
+  ; 0x03 - Player Said No
   PlayerSaidNo:
   {
     %PlayAnimation(0,0,1)
@@ -218,19 +195,14 @@ ReleaseMagicBean:
   ; X is the bottle ID
   LDA.b $8A : CMP.b #$00 : BNE .not_the_ranch
     LDA.b #$07
-    JSL Sprite_SpawnDynamically
-    BMI .not_the_ranch
-
-    LDA $20 : STA.w SprY, Y
-    LDA $21 : STA.w SprYH, Y
-    LDA $22 : STA.w SprX, Y
-    LDA $23 : STA.w SprXH, Y
-
-    LDA.b #$01 : STA.w SprAction, Y
-    STA.w SprSubtype, Y
-    LDA.b #$02 : STA.l $7EF35C, X
-    RTL
-
+    JSL Sprite_SpawnDynamically : BMI .not_the_ranch
+      LDA $20 : STA.w SprY, Y
+      LDA $21 : STA.w SprYH, Y
+      LDA $22 : STA.w SprX, Y
+      LDA $23 : STA.w SprXH, Y
+      LDA.b #$01 : STA.w SprAction, Y : STA.w SprSubtype, Y
+      LDA.b #$02 : STA.l $7EF35C, X
+      RTL
   .not_the_ranch
   %ShowUnconditionalMessage($030)
   RTL

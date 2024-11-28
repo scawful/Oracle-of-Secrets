@@ -23,6 +23,7 @@ print  "End of mask_salesman.asm          ", pc
 
 Sprite_BeanVendor     = $07
 Sprite_VillageElder   = $07
+incsrc "Sprites/NPCs/village_elder.asm"
 incsrc "Sprites/NPCs/bean_vendor.asm"
 print  "End of bean_vendor.asm            ", pc
 
