@@ -79,7 +79,7 @@ Sprite_DekuLeaf_Main:
 
     JSR CheckIfPlayerIsOn : BCC +
       LDA.b #$01 : STA.b $71
-      LDA.w !CurrentMask : CMP.b #$01 : BNE ++
+      LDA.w $02B2 : CMP.b #$01 : BNE ++
         JSL Sprite_SpawnPoofGarnish
       ++
       RTS
