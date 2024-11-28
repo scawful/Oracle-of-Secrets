@@ -61,7 +61,7 @@ Sprite_AntiKirby_Prep:
   .bump_damage
     db $81, $88, $88, $88
   .health
-    db 10, 20, 20, 20
+    db 06, 10, 20, 20
   .prize_pack
     db 6, 3, 3, 3
 }
