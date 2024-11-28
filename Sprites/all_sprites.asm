@@ -67,6 +67,9 @@ Sprite_Vasu = $D7
 incsrc "Sprites/NPCs/vasu.asm"
 print  "End of vasu.asm                   ", pc
 
+incsrc "Sprites/Enemies/leever.asm"
+print  "End of leever.asm                 ", pc
+
 DontTeleportWithoutFlippers:
 {
   LDA.l $7EF356 : BNE +
