@@ -1,4 +1,3 @@
-
 ; =========================================================
 ; Portal Sprite
 ; =========================================================
@@ -12,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this Portal (can be 0 to 7)
 !Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 01  ; 01 = your sprite continue to live offscreen
@@ -34,21 +33,17 @@
 
 
 ; =========================================================
-; Long Sprite Code 
+; Long Sprite Code
 ; =========================================================
 Sprite_Portal_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_Portal_Draw ; Call the draw code
-  JSL Sprite_CheckActive ; Check if game is not paused
-  BCC .SpriteIsNotActive ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Portal_Main ; Call the main sprite code
-
-.SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  JSR Sprite_Portal_Draw
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Portal_Main
+  .SpriteIsNotActive
+  PLB
+  RTL
 
 }
 
@@ -58,13 +53,11 @@ Sprite_Portal_Long:
 Sprite_Portal_Prep:
 {
   PHB : PHK : PLB
-  
-  ; Persist outside of camera  
-  LDA #$00 : STA.w SprDefl, X 
+  ; Persist outside of camera
+  LDA #$00 : STA.w SprDefl, X
   LDA.w SprHitbox, X : AND.b #$C0 : STA.w SprHitbox, X
   STZ.w SprTileDie, X
   LDA.b #$FF : STA.w SprBulletproof, X
-
   PLB
   RTL
 }
@@ -86,7 +79,7 @@ OrangeSpriteIndex = $7E0633
 BlueSpriteIndex   = $7E0632
 
 ; =========================================================
-; Main Sprite Code 
+; Main Sprite Code
 ; =========================================================
 
 Sprite_Portal_Main:
@@ -115,7 +108,6 @@ Sprite_Portal_Main:
       LDA.w SprY, X : STA.w OrangePortal_X
       LDA.w SprX, X : STA.w OrangePortal_Y
       LDA.b #$01 : STA.w SprSubtype, X
-      
       %GotoAction(2)
       RTS
     .BluePortal
@@ -124,7 +116,7 @@ Sprite_Portal_Main:
     LDA.w SprY, X : STA.w BluePortal_X
     LDA.w SprX, X : STA.w BluePortal_Y
     LDA.b #$02 : STA.w SprSubtype, X
-    
+
     %GotoAction(1)
     RTS
   }
@@ -141,8 +133,7 @@ Sprite_Portal_Main:
 
     LDA.w SprTimerD, X : BNE .NoOverlap
       JSL Link_SetupHitBox
-      JSL $0683EA          ; Sprite_SetupHitbox_long 
-      
+      JSL $0683EA          ; Sprite_SetupHitbox_long
       JSL CheckIfHitBoxesOverlap : BCC .NoOverlap
       CLC
 
@@ -167,21 +158,19 @@ Sprite_Portal_Main:
     CLC
     LDA.w SprTimerD, X : BNE .NoOverlap
     JSL Link_SetupHitBox
-    JSL $0683EA          ; Sprite_SetupHitbox_long 
-    
+    JSL $0683EA          ; Sprite_SetupHitbox_long
+
     JSL CheckIfHitBoxesOverlap : BCC .NoOverlap
     CLC
     ; JSL $01FF28 ; Player_CacheStatePriorToHandler
-    
+
     LDA $1B : BEQ .outdoors
-    %GotoAction(4) ; OrangePortal_WarpDungeon
-    
-    .NoOverlap
-    RTS
+      %GotoAction(4) ; OrangePortal_WarpDungeon
+      .NoOverlap
+      RTS
 
     .outdoors
     %GotoAction(6) ; OrangePortal_WarpOverworld
-
     RTS
   }
 
@@ -198,7 +187,7 @@ Sprite_Portal_Main:
     ; LDA $7EC192 : STA $0612
     ; LDA $7EC194 : STA $0614
     ; LDA $7EC196 : STA $0616
-  
+
     PHX
     LDA.w OrangeSpriteIndex : TAX
     LDA #$40 : STA.w SprTimerD, X
@@ -218,12 +207,12 @@ Sprite_Portal_Main:
     LDA $7EC184 : STA $20
     LDA $7EC186 : STA $22
 
-    ; Camera Scroll Boundaries 
-    LDA $7EC188 : STA $0600 ; Small Room North 
+    ; Camera Scroll Boundaries
+    LDA $7EC188 : STA $0600 ; Small Room North
     LDA $7EC18A : STA $0604 ; Small Room South
-    LDA $7EC18C : STA $0608 ; Small Room West 
+    LDA $7EC18C : STA $0608 ; Small Room West
     LDA $7EC18E : STA $060C ; Small Room South
-    ; LDA $7EC190 : STA $0610 
+    ; LDA $7EC190 : STA $0610
     ; LDA $7EC192 : STA $0612
     ; LDA $7EC194 : STA $0614
     ; LDA $7EC196 : STA $0616
@@ -237,7 +226,6 @@ Sprite_Portal_Main:
     STA.w OrangePortal_X
     PLX
 
-
     LDA #$14 : STA $11
     %GotoAction(2) ; Return to OrangePortal
     RTS
@@ -247,7 +235,7 @@ Sprite_Portal_Main:
   {
     LDA.w OrangePortal_X : STA $20
     LDA.w OrangePortal_Y : STA $22
-    LDA $7EC190 : STA $0610 
+    LDA $7EC190 : STA $0610
     LDA $7EC192 : STA $0612
     LDA $7EC194 : STA $0614
     LDA $7EC196 : STA $0616
@@ -257,12 +245,10 @@ Sprite_Portal_Main:
     PHX ; Infinite loop prevention protocol
     LDA.w OrangeSpriteIndex : TAX
     LDA #$40 : STA.w SprTimerD, X
-    
+
     PLX
-
     LDA #$01 : STA $5D
-   ;LDA #$2A : STA $11
-
+    ;LDA #$2A : STA $11
     %GotoAction(1) ; Return to BluePortal
     RTS
   }
@@ -271,7 +257,7 @@ Sprite_Portal_Main:
   {
     LDA.w BluePortal_X : STA $20
     LDA.w BluePortal_Y : STA $22
-    LDA $7EC190 : STA $0610 
+    LDA $7EC190 : STA $0610
     LDA $7EC192 : STA $0612
     LDA $7EC194 : STA $0614
     LDA $7EC196 : STA $0616
@@ -294,13 +280,13 @@ Sprite_Portal_Main:
 CheckForDismissPortal:
 {
   LDA $06FE : CMP.b #$02 : BCC .return
-    LDA $7E0FA6 : BEQ .DespawnOrange ; Check what portal is spawning next 
+    LDA $7E0FA6 : BEQ .DespawnOrange ; Check what portal is spawning next
       PHX
         LDA.w BlueSpriteIndex : TAX
         STZ.w SprState, X
         DEC.w $06FE
       PLX
-    .DespawnOrange  
+    .DespawnOrange
     PHX
       LDA.w OrangeSpriteIndex : TAX
       STZ.w SprState, X
@@ -320,14 +306,14 @@ RejectOnTileCollision:
 
   ; Fetch tile attributes based on current coordinates
   LDA.b #$00 : JSL Sprite_GetTileAttr
-  
-  ; Load the tile index 
+
+  ; Load the tile index
   LDA $0FA5 : CLC : CMP.b #$00 : BEQ .not_out_of_bounds
                     CMP.b #$48 : BEQ .not_out_of_bounds
-    
-    ; Clear the sprite and make an error sound 
+
+    ; Clear the sprite and make an error sound
     LDA #$3C ; SFX2.3C Error beep
-    STA $012E ; Queue sound effect 
+    STA $012E ; Queue sound effect
 
     LDA #$00 : STA.w SprState, X
     DEC $06FE
@@ -355,7 +341,7 @@ Sprite_Portal_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
@@ -382,14 +368,14 @@ Sprite_Portal_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -397,7 +383,7 @@ Sprite_Portal_Draw:
   RTS
 
 
-; Draw Data 
+; Draw Data
 
 .start_index
   db $00, $01, $02, $03
@@ -424,4 +410,3 @@ Sprite_Portal_Draw:
   db $22
   db $62
 }
-
