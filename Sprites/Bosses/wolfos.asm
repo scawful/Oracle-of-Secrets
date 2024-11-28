@@ -36,17 +36,13 @@
 Sprite_Wolfos_Long:
 {
   PHB : PHK : PLB
-
   JSR Sprite_Wolfos_Draw
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Wolfos_CheckIfDefeated
-  JSR Sprite_Wolfos_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Wolfos_CheckIfDefeated
+    JSR Sprite_Wolfos_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -54,7 +50,6 @@ Sprite_Wolfos_Long:
 Sprite_Wolfos_Prep:
 {
   PHB : PHK : PLB
-
   LDA.b $1B : BEQ .outdoors
     JMP .spawn_wolfos
   .outdoors
@@ -67,7 +62,6 @@ Sprite_Wolfos_Prep:
   LDA.b #$40 : STA.w SprTimerA, X
   LDA.b #$80 : STA.w SprDefl, X ; Sprite persist
   LDA.b #$08 : STA.w SprNbrOAM, X ; Nbr Oam Entries
-
   PLB
   RTL
 }
@@ -88,7 +82,8 @@ Sprite_Wolfos_CheckIfDefeated:
 
 ; =========================================================
 
-macro Wolfos_Move()
+Wolfos_Move:
+{
   JSL Sprite_DamageFlash_Long
   JSL Sprite_CheckDamageFromPlayer : BCC +
     LDA.b #$01 : STA.w SprMiscF, X
@@ -98,7 +93,8 @@ macro Wolfos_Move()
 
   JSL Sprite_Move
   JSR Wolfos_DecideAction
-endmacro
+  RTS
+}
 
 Wolfos_DecideAction:
 {
@@ -156,7 +152,7 @@ Sprite_Wolfos_Main:
   Wolfos_AttackForward:
   {
     %PlayAnimation(0, 2, 10)
-    %Wolfos_Move()
+    JSR Wolfos_Move
 
     LDA #!NormalSpeed : STA.w SprYSpeed, X
     LDA #$30 : STA.w SprTimerA, X
@@ -167,7 +163,7 @@ Sprite_Wolfos_Main:
   Wolfos_AttackBack:
   {
     %PlayAnimation(3, 5, 10)
-    %Wolfos_Move()
+    JSR Wolfos_Move
 
     LDA #-!NormalSpeed : STA.w SprYSpeed, X
     LDA #$30 : STA.w SprTimerA, X
@@ -179,7 +175,7 @@ Sprite_Wolfos_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(6, 8, 10)
-    %Wolfos_Move()
+    JSR Wolfos_Move
     LDA #!NormalSpeed : STA.w SprXSpeed, X
     STZ.w SprYSpeed, X
 
@@ -196,7 +192,7 @@ Sprite_Wolfos_Main:
   {
     %StartOnFrame(9)
     %PlayAnimation(9, 11, 10)
-    %Wolfos_Move()
+    JSR Wolfos_Move
 
     LDA #-!NormalSpeed : STA.w SprXSpeed, X
     STZ.w SprYSpeed, X
@@ -324,12 +320,12 @@ Sprite_Wolfos_Draw:
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -344,10 +340,10 @@ Sprite_Wolfos_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  ; Set palette flash modifier 
+  ; Set palette flash modifier
   LDA .properties, X : ORA $08 : STA ($90), Y
 
-  PHY 
+  PHY
   TYA : LSR #2 : TAY
   LDA.b #02 : ORA $0F : STA ($92), Y ; store size in oam buffer
   PLY : INY
@@ -434,4 +430,3 @@ Sprite_Wolfos_Draw:
   db $69, $69, $69
   db $29
 }
-

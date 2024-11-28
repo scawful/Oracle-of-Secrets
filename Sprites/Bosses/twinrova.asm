@@ -39,16 +39,16 @@
 
 Sprite_Twinrova_Long:
 {
-PHB : PHK : PLB
-JSR Sprite_Twinrova_Draw
-JSL Sprite_DrawShadow
+  PHB : PHK : PLB
+  JSR Sprite_Twinrova_Draw
+  JSL Sprite_DrawShadow
 
-JSL Sprite_CheckActive : BCC .SpriteIsNotActive
-  JSR Sprite_Twinrova_CheckIfDead
-  JSR Sprite_Twinrova_Main
-.SpriteIsNotActive
-PLB
-RTL
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Twinrova_CheckIfDead
+    JSR Sprite_Twinrova_Main
+  .SpriteIsNotActive
+  PLB
+  RTL
 }
 
 ; =========================================================

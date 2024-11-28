@@ -18,7 +18,7 @@ Sprite_Octoboss_Long:
 
   LDA.w SprMiscD, X : BNE + ; is the sprite already init
   LDA #$04 : STA.w SprNbrOAM, X
-  ;LDA.w SprHitbox, X : AND.b #$E0 : ORA.b #$23 : STA.w SprHitbox, X 
+  ;LDA.w SprHitbox, X : AND.b #$E0 : ORA.b #$23 : STA.w SprHitbox, X
   ;LDA.w SprDefl, X : AND #$7F : ORA.b #$81 : STA.w SprDefl, X
   ;LDA.b #$20 : STA.w SprHealth, X
   STZ.w SprBulletproof, X
@@ -125,7 +125,7 @@ Sprite_Octoboss_Secondary:
 
   WaitForPlayerToApproach:
     REP #$20
-    LDA.b $20 : CMP #$08C8 
+    LDA.b $20 : CMP #$08C8
     SEP #$20
     BCS .TooFar
     INC.w SprAction, X
@@ -213,7 +213,7 @@ Sprite_Octoboss_Secondary:
     LDA.w SprTimerC, X : BNE +
 
     LDA.w SprAction, Y : INC : STA.w SprAction, Y
-    LDA.b #$40 
+    LDA.b #$40
     STA.w SprTimerC, Y
     STA.w SprTimerC, X
 
@@ -222,7 +222,7 @@ Sprite_Octoboss_Secondary:
     INC.w SprAction, X
 
 
-    ; All the tiles spawned by the sprite 
+    ; All the tiles spawned by the sprite
     ; you can use a sprite/item to get location from ZS
     ; and use the macro GetTilePos($x,$y)
 
@@ -323,26 +323,26 @@ Sprite_Octoboss_Secondary:
 
     LDA.w SprX, X : CMP.b #$E2 : BCC .notTooFarRight
     LDA.w SprXSpeed, X : BMI .notTooFarRight
-    EOR.b #$FF : STA.w SprXSpeed, X 
+    EOR.b #$FF : STA.w SprXSpeed, X
     .notTooFarRight
 
 
     LDA.w SprX, X : CMP.b #$80 : BCS .notTooFarLeft
     LDA.w SprXSpeed, X : BPL .notTooFarLeft
-    EOR.b #$FF : STA.w SprXSpeed, X 
+    EOR.b #$FF : STA.w SprXSpeed, X
     .notTooFarLeft
 
 
 
     LDA.w SprY, X : CMP.b #$FB : BCC .notTooFarDown
     LDA.w SprYSpeed, X : BMI .notTooFarDown
-    EOR.b #$FF : STA.w SprYSpeed, X 
+    EOR.b #$FF : STA.w SprYSpeed, X
     .notTooFarDown
 
 
     LDA.w SprY, X : CMP.b #$B8 : BCS .notTooFarUp
     LDA.w SprYSpeed, X : BPL .notTooFarUp
-    EOR.b #$FF : STA.w SprYSpeed, X 
+    EOR.b #$FF : STA.w SprYSpeed, X
     .notTooFarUp
 
     JSR HandleMovingSplash
@@ -377,26 +377,26 @@ Sprite_Octoboss_Secondary:
 
     LDA.w SprX, X : CMP.b #$78 : BCC .notTooFarRight
     LDA.w SprXSpeed, X : BMI .notTooFarRight
-    EOR.b #$FF : STA.w SprXSpeed, X 
+    EOR.b #$FF : STA.w SprXSpeed, X
     .notTooFarRight
 
 
     LDA.w SprX, X : CMP.b #$10 : BCS .notTooFarLeft
     LDA.w SprXSpeed, X : BPL .notTooFarLeft
-    EOR.b #$FF : STA.w SprXSpeed, X 
+    EOR.b #$FF : STA.w SprXSpeed, X
     .notTooFarLeft
 
 
 
     LDA.w SprY, X : CMP.b #$FB : BCC .notTooFarDown
     LDA.w SprYSpeed, X : BMI .notTooFarDown
-    EOR.b #$FF : STA.w SprYSpeed, X 
+    EOR.b #$FF : STA.w SprYSpeed, X
     .notTooFarDown
 
 
     LDA.w SprY, X : CMP.b #$B8 : BCS .notTooFarUp
     LDA.w SprYSpeed, X : BPL .notTooFarUp
-    EOR.b #$FF : STA.w SprYSpeed, X 
+    EOR.b #$FF : STA.w SprYSpeed, X
     .notTooFarUp
 
     JSR HandleMovingSplash
@@ -566,7 +566,7 @@ Sprite_Octoboss_Secondary:
     LDA.w SprHealth, Y : STA.b $00
 
     LDA.w SprHealth, X : CLC : ADC.b $00
-    RTS 
+    RTS
 }
 
 
@@ -587,17 +587,17 @@ Sprite_Octoboss_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -614,14 +614,14 @@ Sprite_Octoboss_Draw:
   INY
   LDA.b $05 : ORA.w .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX
@@ -742,17 +742,17 @@ Sprite_Octoboss_Draw2:
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -769,14 +769,14 @@ Sprite_Octoboss_Draw2:
   INY
   LDA.b $05 : ORA.w .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX
