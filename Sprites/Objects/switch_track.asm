@@ -102,7 +102,7 @@ Sprite_RotatingTrack_Main:
   ; 02 = BottomRight -> BottomLeft
   BottomRightToBottomLeft:
   {
-    LDA.w SwitchRam : BNE part2_b
+    LDA.w SwitchRam : BEQ part2_b
       %PlayAnimation(2,2,4)
     part2_b:
     %PlayAnimation(3,3,4)

@@ -188,6 +188,7 @@ endmacro
 
 Minecart_HandleToss:
 {
+  LDA.b #$30 : STA.w SprTimerA, X
   ; Check links facing direction $2F and apply velocity
   LDA $2F : CMP.b #$00 : BEQ .toss_north
             CMP.b #$02 : BEQ .toss_south
@@ -470,7 +471,6 @@ HandleTileDirections:
 
   ; Fetch tile attributes based on current coordinates
   LDA.b #$00 : JSL Sprite_GetTileAttr : LDA $0FA5
-
   CMP.b #$02 : BNE .not_out_of_bounds
     ; If the tile is out of bounds, release the cart
     LDA #$40 : STA.w SprTimerD, X
@@ -626,38 +626,32 @@ HandleDynamicSwitchTileDirections:
                                CMP.b #$01 : BEQ .north_or_south
                                CMP.b #$02 : BEQ .east_or_west
                                CMP.b #$03 : BEQ .north_or_south
-  .no_b0
+    .no_b0
     RTS
 
     .east_or_west
       LDA.w SwitchRam : BNE .go_west
-      LDA #$01 : STA.w SprSubtype,       X
-      STA.w !MinecartDirection
-      LDA #$03 : STA !SpriteDirection, X
-      %GotoAction(3) ; Minecart_MoveEast
-      RTS
-
-    .go_west
-      LDA #$03 : STA.w SprSubtype,       X
-      STA.w !MinecartDirection
+        LDA #$01 : STA.w SprSubtype, X : STA.w !MinecartDirection
+        LDA #$03 : STA !SpriteDirection, X
+        %GotoAction(3) ; Minecart_MoveEast
+        RTS
+      .go_west
+      LDA #$03 : STA.w SprSubtype, X : STA.w !MinecartDirection
       LDA #$02 : STA !SpriteDirection, X
       %GotoAction(5) ; Minecart_MoveWest
       RTS
 
     .north_or_south
-      LDA.w SwitchRam : BNE .go_south
-      LDA #$00 : STA.w SprSubtype, X
-      STA.w !MinecartDirection
-      STA !SpriteDirection,      X
+    LDA.w SwitchRam : BNE .go_south
+      LDA #$00 : STA.w SprSubtype, X : STA.w !MinecartDirection
+      STA !SpriteDirection, X
       %GotoAction(2) ; Minecart_MoveNorth
       RTS
-
     .go_south
-      LDA #$02 : STA.w SprSubtype,       X
-      STA.w !MinecartDirection
-      LDA #$01 : STA !SpriteDirection, X
-      %GotoAction(4) ; Minecart_MoveSouth
-      RTS
+    LDA #$02 : STA.w SprSubtype, X : STA.w !MinecartDirection
+    LDA #$01 : STA !SpriteDirection, X
+    %GotoAction(4) ; Minecart_MoveSouth
+    RTS
 }
 
 ; =========================================================

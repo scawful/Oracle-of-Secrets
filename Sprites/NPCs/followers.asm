@@ -811,14 +811,14 @@ DrawMinecartFollower:
 {
   JSL $099EFC ; Follower_Initialize
 
-  LDX $012B
-  LDA .direction_to_anim, X
-  STA $02CF
+  LDX !MinecartDirection
+  LDA .direction_to_anim, X : STA $02CF
 
   JSR FollowerDraw_CachePosition
   JSR MinecartFollower_Top
   JSR MinecartFollower_Bottom
 
+  ; Check the current submodule in the underworld
   LDA.b $11 : BNE .dont_spawn
     LDA !LinkInCart : BEQ .dont_spawn
       LDA.b #$A3
@@ -844,7 +844,7 @@ DrawMinecartFollower:
   .dont_spawn
   RTS
 
-.direction_to_anim
+  .direction_to_anim
   db $02, $00, $02, $00
 }
 
