@@ -58,7 +58,7 @@ LinkState_CheckForMinishForm:
 
       .already_minish
       %PlayerTransform()
-      %ResetToLinkGraphics()
+      JSL ResetToLinkGraphics
 
   .return
   REP #$30

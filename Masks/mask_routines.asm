@@ -10,11 +10,7 @@ macro PlayerTransform()
   STA $012E
 endmacro
 
-macro ResetToLinkGraphics()
-  STZ   !CurrentMask
-  JSL   Palette_ArmorAndGloves
-  LDA.b #$10 : STA !LinkGraphics
-endmacro
+
 
 macro CheckNewR_ButtonPress()
   LDA.b $F6 : BIT.b #$10
@@ -71,11 +67,25 @@ StartupMasks:
   RTL
 }
 
+ResetToLinkGraphics:
+{
+  LDA $0FFF : BNE +
+    STZ !CurrentMask
+    LDA.b #$10 : STA.w !LinkGraphics
+    JMP ++
+  +
+  LDA.b #$06 : STA.w !CurrentMask
+  LDA.b #$3B : STA.w !LinkGraphics
+  ++
+  JSL Palette_ArmorAndGloves
+  RTL
+}
+
 ForceResetMask_GameOver:
 {
   LDA $02B2 : BEQ .still_link
     CMP.b #$06 : BEQ .gbc_link
-      %ResetToLinkGraphics()
+      JSL ResetToLinkGraphics
       JMP .still_link
     .gbc_link
     JSL UpdateGbcPalette
@@ -89,7 +99,7 @@ ForceResetMask_GameOver:
 ForceResetMask_SaveAndQuit:
 {
   LDA !CurrentMask : BEQ .still_link
-    %ResetToLinkGraphics()
+    JSL ResetToLinkGraphics
   .still_link
   LDA.b #$0F : STA.b $95
   RTL
@@ -247,7 +257,7 @@ LinkState_ResetMaskAnimated:
 
   .transform
   %PlayerTransform()
-  %ResetToLinkGraphics()
+  JSL ResetToLinkGraphics
 
   .gbc_form
   .no_transform
@@ -313,7 +323,7 @@ Link_TransformMask:
     STZ $5D
     STZ $02F5
 
-    %ResetToLinkGraphics()
+    JSL ResetToLinkGraphics
     PLB : CLC : RTL
 
   .return
@@ -330,7 +340,7 @@ Link_TransformMoosh:
   PHB : PHK : PLB
   LDA.w !CurrentMask : CMP.b #$07 : BNE +
     %PlayerTransform()
-    %ResetToLinkGraphics()
+    JSL ResetToLinkGraphics
     PLB : RTL
   +
   LDA.b #$07 : STA.w !CurrentMask
