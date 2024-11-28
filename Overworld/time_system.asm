@@ -439,8 +439,8 @@ CheckIfNight:
     LDA.l $7EF3C5
     RTL
   .night_time
-    LDA.b #$03
-    RTL
+  LDA.b #$03
+  RTL
 }
 
 ColorBgFix:
@@ -451,6 +451,7 @@ ColorBgFix:
   LDA.b $10 : CMP.b #$17 : BEQ .vanilla
   REP #$30
   PLA
+  STA.l !pal_color
   JSL ColorSubEffect
   STA.l PaletteCgram_HUD
   STA.l PaletteCgram_BG
@@ -519,13 +520,13 @@ FixShockPalette:
 {
   PHA
   LDA $1B : BNE .indoors
-  PLA
-  STA !pal_color
-  PHX
-  JSL ColorSubEffect
-  PLX
-  STA.l PaletteCgram_HUD, X
-  RTL
+    PLA
+    STA !pal_color
+    PHX
+    JSL ColorSubEffect
+    PLX
+    STA.l PaletteCgram_HUD, X
+    RTL
   .indoors
   PLA
   RTL
@@ -540,7 +541,6 @@ FixDungeonMapColors:
   ; Set the time to 8:00am while map is open
   LDA #$08 : STA $7EE000
   LDA #$00 : STA $7EE001
-
   PLA
   STA $7EC229
   RTL
@@ -587,25 +587,6 @@ org $02AE92
   NOP #6
 
 ; =========================================================
-
-; org $0BFEB6 VANILLA DAY/NIGHT HOOK
-
-; ZS OW - ReplaceBGColor
-if ZS_CUSTOM_OW_V2 == 0
-org $2886B4
-  STA !pal_color
-  JSL BackgroundFix
-  ; NOP #8
-endif
-
-; ZS OW - CheckForChangeGraphicsTransitionLoad
-if ZS_CUSTOM_OW_V2 == 1
-org $289447
-	JSL SubAreasFix
-else
-org $2885F9
-  JSL SubAreasFix
-endif
 
 ; Subareas background color fix (under the bridge; zora...)
 ; $0E/D601 8F 00 C3 7E STA $7EC300[$7E:C300]

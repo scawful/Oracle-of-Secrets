@@ -1681,151 +1681,148 @@ NewOverworld_FinishTransGfx:
 
 CheckForChangeGraphicsTransitionLoad:
 {
-    ; Are we currently in a mosaic?
-    LDA.b $11 : CMP.b #$0F : BEQ .mosaic
-        ; Are we entering a special area?
-        CMP.b #$1A : BEQ .mosaic
-            ; Are we leaving a special area?
-            CMP.b #$26 : BEQ .mosaic
-                ; Just a normal transition, Not a mosaic.
-                LDA.l Pool_EnableAnimated : BEQ .dontUpdateAnimated1
-                    ; Check to see if we need to update the animated tiles
-                    ; by checking what was previously loaded.
-                    JSL ReadAnimatedTable : CMP.w AnimatedTileGFXSet : BEQ .dontUpdateAnimated1
-                        STA.w AnimatedTileGFXSet : DEC : TAY
+  ; Are we currently in a mosaic?
+  LDA.b $11 : CMP.b #$0F : BEQ .mosaic
+    ; Are we entering a special area?
+    CMP.b #$1A : BEQ .mosaic
+        ; Are we leaving a special area?
+        CMP.b #$26 : BEQ .mosaic
+            ; Just a normal transition, Not a mosaic.
+            LDA.l Pool_EnableAnimated : BEQ .dontUpdateAnimated1
+                ; Check to see if we need to update the animated tiles
+                ; by checking what was previously loaded.
+                JSL ReadAnimatedTable : CMP.w AnimatedTileGFXSet : BEQ .dontUpdateAnimated1
+                    STA.w AnimatedTileGFXSet : DEC : TAY
 
-                        ; This forces the game toupdate the animated tiles
-                        ; when going from one area to another.
-                        JSL DecompOwAnimatedTiles
+                    ; This forces the game toupdate the animated tiles
+                    ; when going from one area to another.
+                    JSL DecompOwAnimatedTiles
 
-                .dontUpdateAnimated1
+            .dontUpdateAnimated1
 
-                LDA.w Pool_EnableMainPalette : BEQ .dontUpdateMain1
-                    ; Check to see if we need to update the main palette by
-                    ; checking what was previously loaded.
-                    LDX.b $8A
-                    LDA.w Pool_MainPaletteTable, X : CMP.w $0AB3 : BEQ .dontUpdateMain1
-                        STA.w $0AB3
+            LDA.w Pool_EnableMainPalette : BEQ .dontUpdateMain1
+                ; Check to see if we need to update the main palette by
+                ; checking what was previously loaded.
+                LDX.b $8A
+                LDA.w Pool_MainPaletteTable, X : CMP.w $0AB3 : BEQ .dontUpdateMain1
+                    STA.w $0AB3
 
-                        ; Run the modified routine that loads the buffer
-                        ; and normal color ram.
-                        JSL Palette_OverworldBgMain2
+                    ; Run the modified routine that loads the buffer
+                    ; and normal color ram.
+                    JSL Palette_OverworldBgMain2
 
-                .dontUpdateMain1
+            .dontUpdateMain1
 
-                LDA.w Pool_EnableBGColor : BEQ .dontUpdateBGColor1
-                    REP #$30 ; Set A, X, and Y in 16bit mode.
+            LDA.w Pool_EnableBGColor : BEQ .dontUpdateBGColor1
+                REP #$30 ; Set A, X, and Y in 16bit mode.
 
-                    LDA.b $8A : ASL : TAX ; Get area code and times it by 2.
+                LDA.b $8A : ASL : TAX ; Get area code and times it by 2.
 
-                    ; Where ZS saves the array of palettes
-                    LDA.w Pool_BGColorTable, X
-                    JSL Oracle_BackgroundFix
-                    NOP #8
-                    ;STA.l $7EC300 : STA.l $7EC500
-                    ;STA.l $7EC540 : STA.l $7EC340
+                ; Where ZS saves the array of palettes
+                LDA.w Pool_BGColorTable, X
+                JSL Oracle_BackgroundFix
+                NOP #8
+                ;STA.l $7EC300 : STA.l $7EC500
+                ;STA.l $7EC540 : STA.l $7EC340
 
-                    SEP #$30 ; Set A, X, and Y in 8bit mode.
+                SEP #$30 ; Set A, X, and Y in 8bit mode.
 
-                    ; Don't update the CRAM until later when the overlays are
-                    ; loaded so that way the BG overlays have a chance to hide
-                    ; the cracks.
-                    ;INC.b $15
-                .dontUpdateBGColor1
+                ; Don't update the CRAM until later when the overlays are
+                ; loaded so that way the BG overlays have a chance to hide
+                ; the cracks.
+                ;INC.b $15
+            .dontUpdateBGColor1
 
-                RTS
+            RTS
 
-    .mosaic
+  .mosaic
 
-    ; Check to see if we need to update the animated tiles by checking what
-    ; was previously loaded.
-    JSL ReadAnimatedTable : CMP.w AnimatedTileGFXSet : BEQ .dontUpdateAnimated2
-        STA.w AnimatedTileGFXSet : DEC : TAY
+  ; Check to see if we need to update the animated tiles by checking what
+  ; was previously loaded.
+  JSL ReadAnimatedTable : CMP.w AnimatedTileGFXSet : BEQ .dontUpdateAnimated2
+      STA.w AnimatedTileGFXSet : DEC : TAY
 
-        ; This forces the game to update the animated tiles when going
-        ; from one area to another.
-        JSL DecompOwAnimatedTiles
+      ; This forces the game to update the animated tiles when going
+      ; from one area to another.
+      JSL DecompOwAnimatedTiles
 
-    .dontUpdateAnimated2
+  .dontUpdateAnimated2
 
-    ; Check to see if we need to update the main palette by checking
-    ; what was previously loaded.
-    LDX.b $8A
-    LDA.w Pool_MainPaletteTable, X : CMP.w $0AB3 : BEQ .dontUpdateMain2
-        STA.w $0AB3
+  ; Check to see if we need to update the main palette by checking
+  ; what was previously loaded.
+  LDX.b $8A
+  LDA.w Pool_MainPaletteTable, X : CMP.w $0AB3 : BEQ .dontUpdateMain2
+      STA.w $0AB3
 
-        ; Run the vanilla routine that only loads the buffer.
-        JSL Palette_OverworldBgMain
+      ; Run the vanilla routine that only loads the buffer.
+      JSL Palette_OverworldBgMain
 
-    .dontUpdateMain2
+  .dontUpdateMain2
 
-    REP #$30 ; Set A, X, and Y in 16bit mode.
+  REP #$30 ; Set A, X, and Y in 16bit mode.
 
-    ; $0181 is the exit room number used for getting into the under the bridge
-    ; area.
-    LDA.b $A0 : CMP.w #$0181 : BNE .notBridge
-        LDA.w Pool_BGColorTable_Bridge
+  ; $0181 is the exit room number used for getting into the under the bridge
+  ; area.
+  LDA.b $A0 : CMP.w #$0181 : BNE .notBridge
+      LDA.w Pool_BGColorTable_Bridge
+      BRA .storeColor
 
-        BRA .storeColor
+  .notBridge
 
-    .notBridge
+  LDA.b $8A : ASL : TAX ; Get area code and times it by 2.
+  LDA.w Pool_BGColorTable, X ; Where ZS saves the array of palettes.
 
-    LDA.b $8A : ASL : TAX ; Get area code and times it by 2.
+  .storeColor
 
-    LDA.w Pool_BGColorTable, X ; Where ZS saves the array of palettes.
+  ; Set transparent color. only set the buffer so it fades in right
+  ; during mosaic transition.
+  STA $7EE018
+  JSL Oracle_MosaicFix
+  ;STA.l $7EC300 : STA.l $7EC340
 
-    .storeColor
+  LDX.w #$4020 : STX.b $9C
+  LDX.w #$8040 : STX.b $9D
+  LDX.w #$4F33
+  LDY.w #$894F
+  ; Change the fixed color depending on our sub screen overlay.
+  ; Lost woods and skull woods.
+  JSL ReadOverlayArray : CMP.w #$009D : BEQ .noSpecialColor
+      CMP.w #$0040 : BEQ .noSpecialColor
+          ; Pyramid area.
+          CMP.w #$0096 : BEQ .specialColor
+              LDX.w #$4C26
+              LDY.w #$8C4C
+              ; LW death mountain.
+              CMP.w #$0095 : BEQ .specialColor
+                  LDX.w #$4A26
+                  LDY.w #$874A
+                  ; DW death mountain.
+                  CMP.w #$009C : BEQ .specialColor
+                      BRA .noSpecialColor
+          .specialColor
 
-    ; Set transparent color. only set the buffer so it fades in right
-    ; during mosaic transition.
-    JSL Oracle_MosaicFix
-    NOP #4
-    ;STA.l $7EC300
-    ;STA.l $7EC340
+          STX.b $9C
+          STY.b $9D
+  .noSpecialColor
+  SEP #$30 ; Set A, X, and Y in 8bit mode.
 
-    LDX.w #$4020 : STX.b $9C
-    LDX.w #$8040 : STX.b $9D
-    LDX.w #$4F33
-    LDY.w #$894F
-    ; Change the fixed color depending on our sub screen overlay.
-    ; Lost woods and skull woods.
-    JSL ReadOverlayArray : CMP.w #$009D : BEQ .noSpecialColor
-        CMP.w #$0040 : BEQ .noSpecialColor
-            ; Pyramid area.
-            CMP.w #$0096 : BEQ .specialColor
-                LDX.w #$4C26
-                LDY.w #$8C4C
-                ; LW death mountain.
-                CMP.w #$0095 : BEQ .specialColor
-                    LDX.w #$4A26
-                    LDY.w #$874A
-                    ; DW death mountain.
-                    CMP.w #$009C : BEQ .specialColor
-                        BRA .noSpecialColor
-            .specialColor
+  ; Don't update the CRAM until later when the overlays are loaded so
+  ; that way the BG overlays have a chance to hide the cracks.
+  ;INC.b $15
 
-            STX.b $9C
-            STY.b $9D
-    .noSpecialColor
-    SEP #$30 ; Set A, X, and Y in 8bit mode.
+  ; PLACE CUSTOM GFX LOAD HERE!
+  ;JML CheckForChangeGraphicsTransitionLoadCastle
 
-    ; Don't update the CRAM until later when the overlays are loaded so
-    ; that way the BG overlays have a chance to hide the cracks.
-    ;INC.b $15
+  CheckForChangeGraphicsTransitionLoadRetrun:
 
-    ; PLACE CUSTOM GFX LOAD HERE!
-    ;JML CheckForChangeGraphicsTransitionLoadCastle
+  RTS
 
-    CheckForChangeGraphicsTransitionLoadRetrun:
+  SkipOverworld_FinishTransGfx_firstHalf:
 
-    RTS
+  ; Move on to next submodule.
+  INC.b $11
 
-    SkipOverworld_FinishTransGfx_firstHalf:
-
-    ; Move on to next submodule.
-    INC.b $11
-
-    RTS
+  RTS
 }
 
 ; The following 2 functions are copied from the palettes.asm but they only
@@ -2152,36 +2149,51 @@ Overworld_LoadBGColorAndSubscreenOverlay:
 assert pc() <= $0BFFA8 ; $05FFA8
 
 pullpc
-print "ReplaceBGColor: ", pc
+print pc
 ReplaceBGColor:
 {
     PHB : PHK : PLB
 
-    ; TODO: This may need to check if we are in a warp and then if so load the
-    ; custom color. If not, then chceck if its enabled or not.
-    ;SEP #$20 ; Set A in 8bit mode.
+    SEP #$20 ; Set A in 8bit mode.
+    LDA.w Pool_EnableBGColor : BNE .custom
+        REP #$20 ; Set A in 16bit mode.
+        PLB
+        RTL
+    .custom
 
-    ;LDA.w Pool_EnableBGColor : BNE .custom
-        ;REP #$20 ; Set A in 16bit mode.
-
-        ;PLB
-
-        ;RTL
-
-    ;.custom
-
-    ;REP #$20 ; Set A in 16bit mode.
-
+    REP #$20 ; Set A in 16bit mode.
+    PHY
     LDA.b $8A : ASL : TAX ; Get area code and times it by 2.
     LDA.w Pool_BGColorTable, X ; Get the color.
 
     ; ORACLE TIME SYSTEM
     STA $7EE018
     JSL Oracle_BackgroundFix ; $3482DD ; Background Fix
-
     ;STA.l $7EC300 : STA.l $7EC340 ; Set the BG color.
     STA.l $7EC500 : STA.l $7EC540
+    TAY ; Save the color.
+    SEP #$20 ; Set A in 8bit mode.
 
+    ; TODO: Check if this is needed. I think it is. If not, it should always
+    ; set the buffer too. If not the warp fades into the wrong color for a
+    ; second.
+    ; Only set the buffer color during warps.
+    LDA.b $11 : CMP.b #$23 : BNE .notWarp
+    REP #$20 ; Set A in 16bit mode.
+
+    TYA
+
+    ; Set the BG color buffer.
+    STA.l $7EE018
+    JSL Oracle_BackgroundFix
+    ; STA.l $7EC300
+    STA.l $7EC340
+
+    .notWarp
+
+    REP #$20 ; Set A in 16bit mode.
+
+    PLY
     PLB
 
     RTL
@@ -2246,8 +2258,10 @@ InitColorLoad2:
     LDA.w Pool_BGColorTable, X ; Get the color.
 
     .storeColor
+    STA.l $7EE018
     JSL Oracle_BackgroundFix
-    STA.l $7EC300 : STA.l $7EC340 ; Set transparent color.
+    ; STA.l $7EC300
+    STA.l $7EC340 ; Set transparent color.
     ;STA.l $7EC500 : STA.l $7EC540
 
     INC.b $15
