@@ -93,6 +93,12 @@ Sprite_MoveAltitude:
   RTL
 }
 
+Sprite_GetDirectionToFacePlayer:
+{
+  JSL Sprite_DirectionToFacePlayer
+
+  RTL
+}
 
 ; =========================================================
 ; make the sprite bounce toward player
@@ -202,6 +208,30 @@ Sprite_SelectNewDirection:
 
   .timers
     db 48, 48, 48, 48, 48, 48, 64, 64
+}
+
+Sprite_SendOutProbe:
+{
+  PHB : PHK : PLB
+  LDA.w SprX, X : STA.b $00
+  LDA.w SprXH, X : STA.b $01
+  LDA.w SprY, X : STA.b $02
+  LDA.w SprYH, X : STA.b $03
+  TXA : CLC : ADC.b $1A : STA.b $0F
+  AND.b #$03 : ORA.w $0F00, X : BNE .exit
+  LDA.w SprMiscF, X : INC.w SprMiscF, X
+    LDY.w SprMiscC, X : CLC : AND.b #$1F
+    ADC.w .index_offset, Y
+    AND.b #$3F : STA.b $0F
+    JSL Sprite_SpawnProbeAlways_long
+  .exit
+  PLB
+  RTL
+  .index_offset
+  db $10
+  db $30
+  db $00
+  db $20
 }
 
 ; =========================================================
@@ -921,9 +951,6 @@ Sprite_CheckIfRecoiling:
 
     PLA
     STA.w SprYSpeed,X
-
-    PLA
-    PLA
 
     .exit
     PLB
