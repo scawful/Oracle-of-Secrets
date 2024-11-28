@@ -50,10 +50,10 @@ LinkState_GameboyInDungeonEntrance:
 {
   ; if link is in the dark world, change his sprite to the gbc one
   LDA $0FFF : CMP #$00 : BEQ .return
-    LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
-      LDA $BC :  CMP #$06 : BEQ .return
-      JSL UpdateGbcPalette
-      LDA #$3B : STA $BC   ; change link's sprite
+    LDA.w !CurrentMask : BNE .return
+      LDA $BC : CMP #$06 : BEQ .return
+        JSL UpdateGbcPalette
+        LDA #$3B : STA $BC ; change link's sprite
   .return
   JSL $0AFE80 ; Underworld_HandleLayerEffect
   RTL

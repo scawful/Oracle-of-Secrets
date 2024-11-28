@@ -125,7 +125,7 @@ RunClock:
   .counter_increasing
   ; GBC Link code
   LDA $0FFF : CMP #$00 : BEQ .light_world
-    LDA $02B2 : CMP.b #$05 : BCS .already_gbc_or_minish
+    LDA $02B2 : BNE .already_gbc_or_minish
       JSL UpdateGbcPalette
       LDA.b #$3B : STA $BC   ; change link's sprite
       LDA.b #$06 : STA $02B2 ; set the form id
