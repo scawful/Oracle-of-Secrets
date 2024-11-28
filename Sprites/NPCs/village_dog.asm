@@ -11,7 +11,7 @@
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
-!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow 
+!Shadow             = 01  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this VillageDog (can be 0 to 7)
 !Hitbox             = 09  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 01  ; 01 = your sprite continue to live offscreen
@@ -32,36 +32,29 @@
 
 %Set_Sprite_Properties(Sprite_VillageDog_Prep, Sprite_VillageDog_Long)
 
-
 Sprite_VillageDog_Long:
 {
   PHB : PHK : PLB
-
   LDA.w WORLDFLAG : BEQ .village
     JSR Sprite_EonDog_Draw
     JMP +
   .village
-  JSR Sprite_VillageDog_Draw ; Call the draw code
+  JSR Sprite_VillageDog_Draw
   +
   JSL Sprite_DrawShadow
-  JSL Sprite_CheckActive     ; Check if game is not paused
-  BCC .SpriteIsNotActive     ; Skip Main code is sprite is innactive
-
-  JSR Sprite_VillageDog_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_VillageDog_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 Sprite_VillageDog_Prep:
 {
   PHB : PHK : PLB
-
   LDA.w WORLDFLAG : BEQ .village
     LDA.b #$07 : STA.w SprAction, X
   .village
-   
   PLB
   RTL
 }
@@ -74,7 +67,8 @@ HandleTossedDog:
   RTS
 }
 
-macro LiftOrTalk()
+LiftOrTalk:
+{
   LDA.w $02B2 : BEQ .lifting
                 CMP.b #$03 : BEQ .wolf
                 CMP.b #$05 : BEQ .minish
@@ -86,20 +80,21 @@ macro LiftOrTalk()
   .lifting
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
-    +
-endmacro
+  +
+  RTS
+}
 
 Sprite_VillageDog_Main:
 {
   LDA.w SprAction, X
   JSL   UseImplicitRegIndexedLocalJumpTable
 
-  dw Dog_Handler              ; 00 
-  dw Dog_LookLeftAtLink       ; 01 
-  dw Dog_LookRightAtLink      ; 02 
-  dw Dog_MoveLeftTowardsLink  ; 03 
-  dw Dog_MoveRightTowardsLink ; 04 
-  dw Dog_WagTailLeft          ; 05 
+  dw Dog_Handler              ; 00
+  dw Dog_LookLeftAtLink       ; 01
+  dw Dog_LookRightAtLink      ; 02
+  dw Dog_MoveLeftTowardsLink  ; 03
+  dw Dog_MoveRightTowardsLink ; 04
+  dw Dog_WagTailLeft          ; 05
   dw Dog_WagTailRight         ; 06
 
   dw EonDog_Handler           ; 07
@@ -109,20 +104,16 @@ Sprite_VillageDog_Main:
   Dog_Handler:
   {
     %PlayAnimation(8,8,8) ; Sitting
-
     JSR HandleTossedDog
-
     LDA $0309 : AND #$03 : BNE .lifting
       LDA #$20 : STA.w SprTimerD, X
       JSL Sprite_IsToRightOfPlayer : TYA : BEQ .walk_right
         %GotoAction(1)
         JMP .lifting
-      
       .walk_right
-        %GotoAction(2)
-
-      %LiftOrTalk()
-
+      %GotoAction(2)
+      .lifting
+      JSR LiftOrTalk
     JSL Sprite_Move
     RTS
   }
@@ -134,7 +125,7 @@ Sprite_VillageDog_Main:
     JSR HandleTossedDog
     LDA.w SprTimerD, X : BNE +
       ; Load the timer for the run
-      LDA   #$60 : STA.w SprTimerD, X
+      LDA.b #$60 : STA.w SprTimerD, X
       %GotoAction(3)
     +
     RTS
@@ -147,13 +138,13 @@ Sprite_VillageDog_Main:
     JSR HandleTossedDog
     LDA.w SprTimerD, X : BNE +
       ; Load the timer for the run
-      LDA   #$60 : STA.w SprTimerD, X
+      LDA.b #$60 : STA.w SprTimerD, X
       %GotoAction(4)
     +
     RTS
   }
 
-  ; 03 
+  ; 03
   Dog_MoveLeftTowardsLink:
   {
     %PlayAnimation(2,4,6)
@@ -170,11 +161,11 @@ Sprite_VillageDog_Main:
     .no_collision
 
     LDA.b #$0A
-    JSL   Sprite_ApplySpeedTowardsPlayer
-    STZ   $06 : STZ $07
-    JSL   Sprite_MoveLong
+    JSL Sprite_ApplySpeedTowardsPlayer
+    STZ $06 : STZ $07
+    JSL Sprite_MoveLong
 
-    %LiftOrTalk()
+    JSR LiftOrTalk
 
     LDA.w SprTimerD, X : BNE +
       %GotoAction(0)
@@ -198,10 +189,10 @@ Sprite_VillageDog_Main:
     .no_collision
 
     LDA.b #$0A
-    JSL   Sprite_ApplySpeedTowardsPlayer
-    STZ   $06 : STZ $07
-    JSL   Sprite_MoveLong
-    %LiftOrTalk()
+    JSL Sprite_ApplySpeedTowardsPlayer
+    STZ $06 : STZ $07
+    JSL Sprite_MoveLong
+    JSR LiftOrTalk
 
     LDA.w SprTimerD, X : BNE ++
       %GotoAction(0)
@@ -209,26 +200,23 @@ Sprite_VillageDog_Main:
     RTS
   }
 
-  ; 05 
+  ; 05
   Dog_WagTailLeft:
   {
     %PlayAnimation(0,1, 8)
-    
-    %LiftOrTalk()
-
+    JSR LiftOrTalk
     JSR HandleTossedDog
     LDA.w SprTimerD, X : BNE +
       %GotoAction(0)
     +
     RTS
   }
-  
+
   ; 06
   Dog_WagTailRight:
   {
     %PlayAnimation(11,12,8)
-    %LiftOrTalk()
-
+    JSR LiftOrTalk
     JSR HandleTossedDog
     LDA.w SprTimerD, X : BNE +
       %GotoAction(0)
@@ -239,21 +227,18 @@ Sprite_VillageDog_Main:
   EonDog_Handler:
   {
     %PlayAnimation(0,1,8)
-
+    JSR LiftOrTalk
     JSR HandleTossedDog
-
     RTS
   }
 
   EonDog_Right:
   {
     %PlayAnimation(2,3,8)
-
+    JSR LiftOrTalk
     JSR HandleTossedDog
-
     RTS
   }
-
 }
 
 CheckIfPlayerIsNearby:
@@ -263,12 +248,12 @@ CheckIfPlayerIsNearby:
   LDA $22 : SEC : SBC #$0012 : CMP.w SprCachedX : BCS .out
   LDA $20 : CLC : ADC #$001A : CMP.w SprCachedY : BCC .out
   LDA $20 : SEC : SBC #$001A : CMP.w SprCachedY : BCS .out
-  SEP #$21 
+  SEP #$21
   RTS ; Return with carry set
 
   .out
   SEP #$20
-  CLC 
+  CLC
   RTS ; Return with carry cleared
 }
 
@@ -290,14 +275,13 @@ Sprite_VillageDog_Draw:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY ; Animation Frame
   LDA   .start_index,     Y : STA $06
 
-
   PHX
   LDX   .nbr_of_tiles,    Y              ; amount of tiles -1
   LDY.b #$00
   .nextTile
 
   PHX                                    ; Save current Tile Index?
-      
+
   TXA   : CLC : ADC $06                  ; Add Animation Index Offset
 
   PHA                                    ; Keep the value with animation index offset?
@@ -324,14 +308,14 @@ Sprite_VillageDog_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA   : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY   : INY
-      
+
   PLX   : DEX : BPL .nextTile
 
   PLX
@@ -423,24 +407,23 @@ Sprite_EonDog_Draw:
   LDA.w SprFrame, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
 
-
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
   .nextTile
 
   PHX ; Save current Tile Index?
-      
+
   TXA : CLC : ADC $06 ; Add Animation Index Offset
 
   PHA ; Keep the value with animation index offset?
 
-  ASL A : TAX 
+  ASL A : TAX
 
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -457,14 +440,14 @@ Sprite_EonDog_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
-      
+  PHY
+
   TYA : LSR #2 : TAY
-      
+
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-      
+
   PLY : INY
-      
+
   PLX : DEX : BPL .nextTile
 
   PLX
