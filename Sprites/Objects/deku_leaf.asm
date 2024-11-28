@@ -37,21 +37,17 @@
 Sprite_DekuLeaf_Long:
 {
   PHB : PHK : PLB
-
   LDA $8A : CMP.b #$3D : BEQ .whirlpool
-    JSR Sprite_DekuLeaf_Draw ; Call the draw code
+    JSR Sprite_DekuLeaf_Draw
     JMP +
   .whirlpool
   JSR Sprite_Whirlpool_Draw
   +
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_DekuLeaf_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_DekuLeaf_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -59,11 +55,9 @@ Sprite_DekuLeaf_Long:
 Sprite_DekuLeaf_Prep:
 {
   PHB : PHK : PLB
-
   LDA $8A : CMP.b #$3D : BNE .not_whirlpool
     LDA.b #$01 : STA.w SprAction, X
   .not_whirlpool
-
   PLB
   RTL
 }
@@ -85,6 +79,7 @@ Sprite_DekuLeaf_Main:
 
     JSR CheckIfPlayerIsOn : BCC +
       LDA.b #$01 : STA.b $71
+      JSL Sprite_SpawnPoofGarnish
       RTS
     +
     STZ.b $71
@@ -156,7 +151,6 @@ Sprite_DekuLeaf_Main:
 Sprite_DekuLeaf_Draw:
 {
   JSL Sprite_PrepOamCoord
-  ; JSL Sprite_OAM_AllocateDeferToPlayer
   LDA #$10
   JSL OAM_AllocateFromRegionB
 
