@@ -33,29 +33,23 @@
 Sprite_ZoraPrincess_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_ZoraPrincess_Draw ; Call the draw code
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_ZoraPrincess_Main ; Call the main sprite code
-
+  JSR Sprite_ZoraPrincess_Draw
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+  JSR Sprite_ZoraPrincess_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
 }
 
 Sprite_ZoraPrincess_Prep:
 {
   PHB : PHK : PLB
-  LDA.l $7EF302
-  BEQ   .doesnt_have_mask
+  LDA.l $7EF302 : BEQ   .doesnt_have_mask
     STZ.w SprState, X ; Kill the sprite
   .doesnt_have_mask
 
   LDA #$00 : STA.w SprDefl, X
   LDA #$00 : STA.w SprTileDie, X
-
   PLB
   RTL
 }
@@ -141,7 +135,7 @@ Sprite_ZoraPrincess_Draw:
   REP #$20
 
   LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E 
+  AND.w #$0100 : STA $0E
   INY
   LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
   CLC : ADC #$0010 : CMP.w #$0100
@@ -158,7 +152,7 @@ Sprite_ZoraPrincess_Draw:
   INY
   LDA .properties, X : STA ($90), Y
 
-  PHY 
+  PHY
   TYA : LSR #2 : TAY
   LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
   PLY : INY
