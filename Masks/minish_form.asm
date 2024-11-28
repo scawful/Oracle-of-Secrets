@@ -27,43 +27,40 @@ pullpc
 LinkState_CheckForMinishForm:
 {
   SEP #$30
+  LDA.l GAMESTATE : BEQ .return
+    JSL $0FF979 ; AncillaSpawn_SwordChargeSparkle
 
-  JSL $0FF979 ; AncillaSpawn_SwordChargeSparkle
+    ; Check for the R button (like minish cap)
+    JSL CheckNewRButtonPress : BCC .return
 
-  ; Check for the R button (like minish cap)
-  JSL CheckNewRButtonPress : BCC .return
+      ; Skip the code if you have a mask item out
+      LDA $0202
 
-  ; Skip the code if you have a mask item out
-  LDA $0202
+      ; Check if the value in A (from $0202) is LT $13.
+      CMP.b #$13 : BCC .continue
 
-  ; Check if the value in A (from $0202) is LT $13.
-  CMP.b #$13 : BCC .continue
+      ; Check if the value in A (from $0202) is GTE to $16.
+      CMP.b #$17 : BCS .continue
+        LDA.b #$3C : STA.w $012E ; Error beep
+        JMP .return
+      .continue
 
-  ; Check if the value in A (from $0202) is GTE to $16.
-  CMP.b #$17 : BCS .continue
+      LDA   !CurrentMask
+      CMP.b #$05 : BEQ .already_minish ; return to human form
+      CMP.b #$00 : BEQ .transform
+      CMP.b #$06 : BCC .return         ; don't transform if not human
+      .transform
+      %PlayerTransform()
 
-  LDA.b #$3C : STA.w $012E ; Error beep
-  JMP .return
+      LDA #$39 : STA $BC   ; Change link's sprite
+      LDA #$05 : STA $02B2 ; Set the current mask form
+      BRA .return
 
-.continue
+      .already_minish
+      %PlayerTransform()
+      %ResetToLinkGraphics()
 
-  LDA   !CurrentMask
-  CMP.b #$05 : BEQ .already_minish ; return to human form
-  CMP.b #$00 : BEQ .transform
-  CMP.b #$06 : BCC .return         ; don't transform if not human
-  .transform
-  %PlayerTransform()
-
-  LDA #$39 : STA $BC   ; Change link's sprite
-  LDA #$05 : STA $02B2 ; Set the current mask form
-  BRA .return
-
-.already_minish
-  %PlayerTransform()
-  %ResetToLinkGraphics()
-
-.return
-
+  .return
   REP #$30
   RTS
 }
@@ -72,16 +69,16 @@ LinkState_CheckForMinishForm:
 
 LinkState_CheckMinishTile:
 {
-    LDA $02B2 : BEQ .blocked ; no form
-      CMP.w #$0007 : BEQ .allowed  ; moosh can fly over
+  LDA $02B2 : BEQ .blocked ; no form
+    CMP.w #$0007 : BEQ .allowed  ; moosh can fly over
       CMP.w #$0005 : BNE .blocked  ; not minish
       .allowed
         LDA $0A : TSB $0343
         RTS
 
   .blocked
-    LDA $0A : TSB $0E ; Blocked
-    RTS
+  LDA $0A : TSB $0E ; Blocked
+  RTS
 }
 
 ; Prevent lifting while minish
