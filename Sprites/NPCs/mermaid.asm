@@ -35,7 +35,6 @@
 Sprite_Mermaid_Long:
 {
   PHB : PHK : PLB
-
   LDA.w SprMiscE, X : BEQ .MermaidDraw
          CMP.b #$02 : BEQ .LibrarianDraw
     JSR Sprite_Maple_Draw

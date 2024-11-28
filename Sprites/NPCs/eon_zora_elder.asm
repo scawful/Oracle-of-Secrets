@@ -2,8 +2,8 @@
 
 Sprite_EonZoraElder_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
 
   dw EonZoraElder_Idle
   dw EonZoraElder_Surprised
@@ -28,7 +28,6 @@ Sprite_EonZoraElder_Draw:
 
   LDA.w SprFrame, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1

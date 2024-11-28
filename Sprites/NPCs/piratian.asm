@@ -58,7 +58,7 @@ Sprite_Piratian_Prep:
 
 Sprite_Piratian_Main:
 {
-  JSR Sprite_Piratian_Move ; Call the move code
+  JSR Sprite_Piratian_Move
 
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable

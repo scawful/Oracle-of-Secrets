@@ -44,16 +44,13 @@ Sprite_EonOwl_Long:
           JSR Sprite_KaeporaGaebora_Draw
           JMP .HandleSprite
   .NotGaebora
-  JSR Sprite_EonOwl_Draw ; Call the draw code
+  JSR Sprite_EonOwl_Draw
   .HandleSprite
-  JSL Sprite_CheckActive ; Check if game is not paused
-  BCC .SpriteIsNotActive ; Skip Main code is sprite is innactive
-
-  JSR Sprite_EonOwl_Main ; Call the main sprite code
-
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_EonOwl_Main
   .SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  PLB
+  RTL
   .Despawn
   STZ.w SprState, X
   PLB
@@ -97,7 +94,6 @@ Sprite_EonOwl_Main:
   EonOwl_Idle:
   {
     %PlayAnimation(0,1,16)
-
     LDA.w POSX : STA $02
     LDA.w POSY : STA $03
     LDA.w SprX, X : STA $04
@@ -105,26 +101,21 @@ Sprite_EonOwl_Main:
     JSL GetDistance8bit_Long : CMP #$28 : BCS .not_too_close
       %GotoAction(1)
     .not_too_close
-
     RTS
   }
 
   EonOwl_IntroDialogue:
   {
     %PlayAnimation(0,1,16)
-
     %ShowUnconditionalMessage($00E6)
-
     LDA.b #$C0 : STA.w SprTimerA, X
     %GotoAction(2)
     RTS
   }
 
-
   EonOwl_FlyingAway:
   {
     %PlayAnimation(2,3,10)
-
     LDA.b #$F8 : STA.w SprYSpeed, X
     JSL   Sprite_Move
 
@@ -153,8 +144,8 @@ Sprite_EonOwl_Main:
   KaeporaGaebora_Respond:
   {
     LDA $1CE8 : BNE .player_said_no
-    %GotoAction(5)
-    RTS
+      %GotoAction(5)
+      RTS
     .player_said_no
     %GotoAction(5)
     LDA.b #$60 : STA.w SprTimerA, X
@@ -168,7 +159,7 @@ Sprite_EonOwl_Main:
     LDA.b #-FlyAwaySpeed : STA.w SprYSpeed, X
     JSL Sprite_Move
     LDA.w SprTimerA, X : BNE .not_ready
-    STZ.w SprState, X
+      STZ.w SprState, X
     .not_ready
     RTS
   }
@@ -183,7 +174,6 @@ Sprite_EonOwl_Draw:
 
   LDA.w SprFrame,     X : TAY     ;Animation Frame
   LDA   .start_index, Y : STA $06
-
 
   PHX
   LDX   .nbr_of_tiles, Y ;amount of tiles -1
@@ -265,7 +255,6 @@ Sprite_KaeporaGaebora_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1

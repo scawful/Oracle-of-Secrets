@@ -170,7 +170,6 @@ Sprite_Korok_DrawMakar:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
-
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
@@ -298,7 +297,6 @@ Sprite_Korok_DrawHollo:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
-
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
@@ -425,7 +423,6 @@ Sprite_Korok_DrawRown:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1

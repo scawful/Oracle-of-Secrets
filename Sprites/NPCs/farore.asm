@@ -1,6 +1,5 @@
 ; =========================================================
-; Farore Sprite Properties
-; =========================================================
+; Farore
 
 !SPRID              = Sprite_Farore
 !NbrTiles           = 2   ; Number of tiles used in a frame
@@ -30,8 +29,6 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-; =========================================================
-
 %Set_Sprite_Properties(Sprite_Farore_Prep, Sprite_Farore_Long)
 
 ; =========================================================
@@ -39,16 +36,12 @@
 Sprite_Farore_Long:
 {
   PHB : PHK : PLB
-
-  JSR Sprite_Farore_Draw ; Call the draw code
-  JSL Sprite_CheckActive   ; Check if game is not paused
-  BCC .SpriteIsNotActive   ; Skip Main code is sprite is innactive
-
-  JSR Sprite_Farore_Main ; Call the main sprite code
-
-.SpriteIsNotActive
-  PLB ; Get back the databank we stored previously
-  RTL ; Go back to original code
+  JSR Sprite_Farore_Draw
+  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+    JSR Sprite_Farore_Main
+  .SpriteIsNotActive
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -56,12 +49,10 @@ Sprite_Farore_Long:
 Sprite_Farore_Prep:
 {
   PHB : PHK : PLB
-
   LDA.b #$80 : STA.w SprDefl, X ; Don't kill Farore when she goes off screen
   LDA.l $7EF300 : BEQ .PlayIntro
     STZ.w SprState, X ; Kill the sprite
   .PlayIntro
-
   PLB
   RTL
 }
@@ -75,8 +66,8 @@ STORY_STATE = $B6
 
 Sprite_Farore_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable ; Goto the SprAction we are currently in
+  LDA.w SprAction, X
+  JSL UseImplicitRegIndexedLocalJumpTable
 
   dw IntroStart
   dw MoveUpTowardsFarore
@@ -144,13 +135,12 @@ Sprite_Farore_Main:
     JSL Sprite_ApplySpeedTowardsPlayer
     JSL Sprite_MoveVert
     LDA.w SprTimerA, X : BNE +
-
-    STZ $2F
-    LDA #$00 : STA InCutScene
-    %ShowUnconditionalMessage($0E) ; "I am Farore, the Oracle of Secrets."
-
-    %GotoAction(4)
-  +
+      STZ $2F
+      LDA #$00 : STA InCutScene
+      ; "I am Farore, the Oracle of Secrets."
+      %ShowUnconditionalMessage($0E)
+      %GotoAction(4)
+    +
     RTS
   }
 
@@ -171,7 +161,6 @@ Sprite_Farore_Main:
     LDA.b #$08 : STA.b $49 ; Auto-movement north
     %PlayAnimation(3, 4, 8)
 
-
     LDA.b #$15
     JSL Sprite_ApplySpeedTowardsPlayer
     JSL Sprite_MoveVert
@@ -188,16 +177,13 @@ Sprite_Farore_Main:
   ; 06
   MakuArea_FaroreFollowPlayer:
   {
-    ;.keep_walking
     %PlayAnimation(3, 4, 8)
 
     LDA.b #$15
     JSL Sprite_ApplySpeedTowardsPlayer
     JSL Sprite_MoveVert
 
-    ; LDA $B6 : CMP.b #$02 : BEQ .keep_walking
     %GotoAction(6)
-
     RTS
   }
 
@@ -228,7 +214,7 @@ Sprite_Farore_Draw:
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
-.nextTile
+  .nextTile
 
   PHX ; Save current Tile Index?
 

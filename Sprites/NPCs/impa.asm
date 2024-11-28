@@ -1,5 +1,3 @@
-
-
 ; 0x00 - Link's house
 ; 0x01 - Sanctuary (Hall of Secrets)
 ; 0x02 - Castle Prison
@@ -46,7 +44,7 @@ org $05ED10
 NOP #5
 
 ; LDA.b #$19 ; SONG 19
-;#_05ED12: STA.w $012C
+; STA.w $012C
 org $05ED63
 NOP #5
 ; #_05ED63: LDA.b #$10 ; SONG 10
