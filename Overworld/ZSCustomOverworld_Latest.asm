@@ -342,7 +342,7 @@ Pool:
         dw $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
         dw $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
         endif
-    warnpc $288140
+    assert pc() <= $288140
 
     ; Valid values:
     ; $00 - Disabled
@@ -428,7 +428,7 @@ Pool:
     ;db $00, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00, $00, $00, $00
     ;db $00, $00, $00, $00, $00
-    warnpc $288160
+    assert pc() <= $288160
 
     ; Valid values:
     ; Main overworld palette index $00 to $05.
@@ -465,7 +465,7 @@ Pool:
         db $00, $00, $00, $00, $00, $00, $00, $00
         db $00, $00, $00, $00, $00, $00, $00, $00
         endif
-    warnpc $288200
+    assert pc() <= $288200
 
     ; Valid values:
     ; ; ----udlr
@@ -500,7 +500,7 @@ Pool:
         db $00, $00, $00, $00, $00, $00, $00, $00
         db $00, $00, $00, $00, $00, $00, $00, $00
         endif
-    warnpc $2882A0
+    assert pc() <= $2882A0
 
     ; Not the same as OWGFXGroupTable_sheet7. The game uses a combination of $59
     ; and $5B to create the sheet in sheet #7. This is done by first transfering
@@ -542,7 +542,7 @@ Pool:
         db $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B
         db $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B
         endif
-    warnpc $288340
+    assert pc() <= $288340
 
     ; Valid values:
     ; Can be any value $00 to $FF but is stored as 2 bytes instead of one to
@@ -587,7 +587,7 @@ Pool:
         dw $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF
         dw $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF, $00FF
         endif
-    warnpc $288480
+    assert pc() <= $288480
 
     ; Just in case 0xFF is used and there is no sheet to load when warping using
     ; the bird, unloading the map, or exiting a dungeon, the DefaultGFXGroups
@@ -825,7 +825,7 @@ Pool:
         db $3A, $3B, $3C, $3D, $57, $4C, $3E, $5B ; 0x9E
         db $3A, $3B, $3C, $3D, $53, $4D, $3E, $5B ; 0x9F
         endif
-    warnpc $288980
+    assert pc() <= $288980
 
     ; TODO: Add a way to edit these within ZS? Unsure.
     org $288980 ; $140980
@@ -869,7 +869,7 @@ Pool:
 
         ; SW
         db $3A, $3B, $3C, $3D, $47, $48, $3E, $5B
-    warnpc $288998 ; $140998
+    assert pc() <= $288998 ; $140998
 }
 
 ; ==============================================================================
@@ -899,7 +899,7 @@ AnimateMirrorWarp_DecompressAnimatedTiles:
 
     RTL
 }
-warnpc $00D8EE
+assert pc() <= $00D8EE
 
 else
 
@@ -991,7 +991,7 @@ AnimateMirrorWarp_LoadSubscreen:
 
     RTL
 }
-warnpc $00DABB
+assert pc() <= $00DABB
 
 else
 
@@ -1092,7 +1092,7 @@ Func00EEBB:
 
     RTL
 }
-warnpc $00EEE0
+assert pc() <= $00EEE0
 
 else
 
@@ -1147,7 +1147,7 @@ Func00FF7C:
     RTL
 }
 ; NOTE: This end point also uses up a null block at the end of the function.
-warnpc $00FFC0
+assert pc() <= $00FFC0
 
 else
 
@@ -1174,25 +1174,25 @@ if !Func0283EE == 1
 org $028027 ; $010027
     JSR.w PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-warnpc $02802B
+assert pc() <= $02802B
 
 ; Dungeon_LoadSongBankIfNeeded:
 org $029C0C ; $011C0C
     JMP PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-warnpc $029C0F
+assert pc() <= $029C0F
 
 ; Mirror_LoadMusic:
 org $029D1E ; $011D1E
     JSR.w PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-warnpc $029D21
+assert pc() <= $029D21
 
 ; GanonEmerges_LoadPyramidArea:
 org $029F82 ; $011F82
     JSR.w PreOverworld_LoadProperties_LoadMain_LoadMusicIfNeeded
 
-warnpc $029F85
+assert pc() <= $029F85
 
 ; Changes the function that loads overworld properties when exiting a dungeon.
 ; Includes removing asm that plays music in certain areas and changing how
@@ -1365,7 +1365,7 @@ PreOverworld_LoadProperties_LoadMain:
 
     RTS
 }
-warnpc $02856A ; $01056A
+assert pc() <= $02856A ; $01056A
 
 else
 
@@ -1489,7 +1489,7 @@ Func028632:
 
     RTS
 }
-warnpc $028697
+assert pc() <= $028697
 
 else
 
@@ -1543,7 +1543,7 @@ Func029AA6:
 
     RTS
 }
-warnpc $029AD3
+assert pc() <= $029AD3
 
 else
 
@@ -1784,7 +1784,7 @@ CustomOverworld_LoadSubscreenOverlay_PostInit:
 
     RTS
 }
-warnpc $02B0D2 ; $0130D2
+assert pc() <= $02B0D2 ; $0130D2
 
 else
 
@@ -1857,7 +1857,7 @@ Func02B2D4:
 
     RTL
 }
-warnpc $02B2E6 ; $0132E6
+assert pc() <= $02B2E6 ; $0132E6
 
 else
 
@@ -1946,7 +1946,7 @@ Func02B3A1:
 
     RTL
 }
-warnpc $02B40A ; $01340A
+assert pc() <= $02B40A ; $01340A
 
 else
 
@@ -1982,12 +1982,12 @@ Func02BC44:
         JSL.l BGControl
         BRA .BRANCH_IOTA
 
-    warnpc $02BC60 ; $013C60
+    assert pc() <= $02BC60 ; $013C60
 
     org $02BC60 ; $013C60
     .BRANCH_IOTA
 }
-warnpc $02BC60
+assert pc() <= $02BC60
 
 else
 
@@ -2074,7 +2074,7 @@ Func02C02D:
 
     .dontMoveBg1
 }
-warnpc $02C039 ; $014039
+assert pc() <= $02C039 ; $014039
 
 else
 
@@ -2115,7 +2115,7 @@ if !Func02C692 == 1
 org $02A07A ; $01207A
     JSR.w Overworld_LoadAreaPalettes
 
-warnpc $02A07D ; $01207D
+assert pc() <= $02A07D ; $01207D
 
 ; The main overworld palette loading routine un-hardcoded to load the custom
 ; main palette.
@@ -2180,7 +2180,7 @@ Overworld_LoadAreaPalettes:
 
     RTS
 }
-warnpc $02C6EB ; $0146EB
+assert pc() <= $02C6EB ; $0146EB
 
 else
 
@@ -2271,7 +2271,7 @@ RainAnimation:
 
     RTL
 }
-warnpc $02A52D ; $01252D
+assert pc() <= $02A52D ; $01252D
 
 else
 
@@ -2301,7 +2301,7 @@ if !Func02AADB == 1
 org $02AADB ; $012ADB
     JML MosaicAreaCheck
 
-warnpc $02AADF ; $012ADF
+assert pc() <= $02AADF ; $012ADF
 
 else
 
@@ -2347,7 +2347,7 @@ org $02ABBE ; $012BBE
     JSL.l NewOverworld_FinishTransGfx
     NOP : NOP : NOP
 
-warnpc $02ABC5 ; $012BC5
+assert pc() <= $02ABC5 ; $012BC5
 
 else
 
@@ -2485,13 +2485,13 @@ BlockGFXCheck:
     db $03, $04, $05, $06, $00, $01, $02, $07
 
     .sheetTarget
-    dw #$2000, #$2400, #$2800, #$2C00, #$3000, #$3400, #$3800, #$3E00
+    dw $2000, $2400, $2800, $2C00, $3000, $3400, $3800, $3E00
 
     .sheetSource
-    dw #$2000, #$2800, #$3000, #$0000, #$0800, #$1000, #$1800, #$3C00
+    dw $2000, $2800, $3000, $0000, $0800, $1000, $1800, $3C00
 
     .sheetCount
-    dw #$0800, #$0800, #$0800, #$0800, #$0800, #$0800, #$0800, #$0400
+    dw $0800, $0800, $0800, $0800, $0800, $0800, $0800, $0400
 
     ; Only copy the latter half of the sheet to prevent the animated tiles
     ; from flickering on transition.
@@ -2865,7 +2865,7 @@ if !Func0ABC5A == 1
 org $0ABC5A ; $053C5A
     JSL.l CheckForChangeGraphicsNormalLoad
 
-warnpc $0ABC5E ; $053C5E
+assert pc() <= $0ABC5E ; $053C5E
 
 else
 
@@ -2946,7 +2946,7 @@ Func0AB8F5:
 
     RTL
 }
-warnpc $0AB948 ; $053948
+assert pc() <= $0AB948 ; $053948
 
 else
 
@@ -3094,7 +3094,7 @@ Overworld_LoadBGColorAndSubscreenOverlay:
 
     RTL
 }
-warnpc $0BFFA8 ; $05FFA8
+assert pc() <= $0BFFA8 ; $05FFA8
 
 else
 
@@ -3254,7 +3254,7 @@ org $0ED627 ; $075627
     JML InitColorLoad2
     NOP
 
-warnpc $0ED62C ; $07562C
+assert pc() <= $0ED62C ; $07562C
 
 else
 
@@ -3349,7 +3349,7 @@ Func0ED8AE:
 
     RTL
 }
-warnpc $0ED8FB ; $0758FB
+assert pc() <= $0ED8FB ; $0758FB
 
 else
 
@@ -3376,17 +3376,17 @@ if !Func00D585 == 1
 org $00D673 ; $005673
     JML NewLoadTransAuxGFX
 
-warnpc $00D677 ; $005677
+assert pc() <= $00D677 ; $005677
 
 org $008C8A ; $000C8A
     dw NMI_UpdateChr_Bg2HalfAndAnimated
 
-warnpc $008C8C ; $000C8C
+assert pc() <= $008C8C ; $000C8C
 
 org $02ABB4
     JSL.l NewPrepTransAuxGFX
 
-warnpc $02ABB8 ; $012BB8
+assert pc() <= $02ABB8 ; $012BB8
 
 ; Replaces the UNREACHABLE_00D585 which is unused.
 org $00D585 ; $005585
@@ -3430,7 +3430,7 @@ NMI_UpdateChr_Bg2HalfAndAnimated:
     RTS
 }
 
-warnpc $00D5CB ; $0055CB
+assert pc() <= $00D5CB ; $0055CB
 
 else
 
@@ -3640,22 +3640,22 @@ if !Func00E221 == 1
 org $00E221 ; $006221
     JML InitTilesetsLongCalls
 
-warnpc $00E225 ; $006225
+assert pc() <= $00E225 ; $006225
 
 org $00D904 ; $005904
     JML AnimateMirrorWarp_DecompressNewTileSetsLongCalls
 
-warnpc $00D908 ; $005908
+assert pc() <= $00D908 ; $005908
 
 org $00D97D ; $00597D
     JML AnimateMirrorWarp_DecompressNewTileSetsLongCalls2
 
-warnpc $00D981 ; $005981
+assert pc() <= $00D981 ; $005981
 
 org $00D9BC ; $0059BC
     JML AnimateMirrorWarp_DecompressBackgroundsALongCalls
 
-warnpc $00D9C1 ; $0059C1
+assert pc() <= $00D9C1 ; $0059C1
 
 org $00DA2F ; $005A2F
     JML AnimateMirrorWarp_DecompressBackgroundsCLongCalls
