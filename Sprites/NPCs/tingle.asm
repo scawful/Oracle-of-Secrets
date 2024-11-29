@@ -89,12 +89,16 @@ Sprite_Tingle_Main:
     %PlayAnimation(0,0,10)
     LDA $1CE8 : BNE .said_no
       PHX
-      LDA.l TingleMaps : ASL : TAX
+      LDA.l TingleId : ASL : TAX
       LDY.b #$01
       LDA.w .message_ids, X
       JSL Sprite_ShowMessageUnconditional
       PLX
-      %GotoAction(4)
+      LDA.l TingleId : CMP.b #$07 : BEQ +
+        %GotoAction(4)
+        RTS
+      +
+      %GotoAction(0)
       RTS
     .said_no
     %GotoAction(5)
@@ -115,7 +119,7 @@ Sprite_Tingle_Main:
     %PlayAnimation(0,0,10)
     LDA $1CE8 : BNE .said_no
       REP #$20
-      LDA.l TingleMaps : ASL : TAY
+      LDA.l TingleId : ASL : TAY
       LDA.l $7EF360 : CMP.w .cost, Y
       SEP #$30
       BCC .not_enough_rupees
@@ -126,6 +130,7 @@ Sprite_Tingle_Main:
         LDA.l TingleMaps
         ORA.w .dungeon, Y
         STA.l TingleMaps
+        LDA.l TingleId : INC A : STA.l TingleId
         %ShowUnconditionalMessage($018E) ; Purchased
         STZ.w SprAction, X
         RTS
