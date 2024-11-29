@@ -143,6 +143,7 @@ Sprite_HelmetChuchu_Main:
     %PlayAnimation(8, 8, 16)
     JSL Sprite_Move
     JSL Sprite_CheckIfLifted
+    JSL Sprite_CheckIfRecoiling
     JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
@@ -153,6 +154,7 @@ Sprite_HelmetChuchu_Main:
     %PlayAnimation(9, 9, 16)
     JSL Sprite_Move
     JSL Sprite_CheckIfLifted
+    JSL Sprite_CheckIfRecoiling
     JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
@@ -221,6 +223,7 @@ Sprite_Chuchu_Move:
   JSL Sprite_Move
   JSL Sprite_BounceFromTileCollision
   JSL Sprite_PlayerCantPassThrough
+  JSL Sprite_CheckIfRecoiling
 
   LDA.w SprMiscB, X
   JSL UseImplicitRegIndexedLocalJumpTable
