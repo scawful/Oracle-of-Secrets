@@ -31,7 +31,7 @@
 ; Kept in case of serious issues which impedes progress
 ZS_CUSTOM_OW_V2 = 1
 if ZS_CUSTOM_OW_V2 == 1
-  incsrc "Overworld/ZCustomOverworld2.asm"
+  incsrc "Overworld/ZSCustomOverworld_Latest.asm"
   print  "End of ZCustomOverworld2.asm      ", pc
 else
   incsrc "Overworld/ZCustomOverworld.asm"
