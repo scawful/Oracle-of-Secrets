@@ -39,7 +39,7 @@ Sprite_BeanVendor_Long:
   PHB : PHK : PLB
   JSR Sprite_BeanVendor_Draw
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
-    LDA.w SprSubtype, X : BNE +
+    LDA.w SprSubtype, X : BEQ +
       JSR Sprite_VillageElder_Main
       JMP ++
     +
