@@ -4,9 +4,6 @@
 ; Reacts to Tile ID 64 to transform into Minish Link
 ; =========================================================
 
-org    $07DA2A
-  TileDetection_OverworldAttributeJumpTable:
-
 ; Overworld Collision Tables
 org $07DAF2
   dw LinkState_CheckForMinishForm ; Tile ID 64

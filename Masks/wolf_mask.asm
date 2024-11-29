@@ -9,8 +9,13 @@ UpdateWolfPalette:
   LDX #$001E
 
   .loop
-    LDA.l WolfPalette, X : STA $7EC6E0, X
-    DEX : DEX : BPL .loop
+    LDA.l WolfPalette, X
+    PHX
+    STA.l !pal_color
+    JSL ColorSubEffect
+    PLX
+    STA $7EC6E0, X
+  DEX : DEX : BPL .loop
 
   SEP #$30 ; go back to 8 bit mode
   INC $15  ; update the palette
@@ -27,11 +32,8 @@ WolfPalette:
 
 ; =========================================================
 
-org $07A3DB
-  LinkItem_Flute:
-
-org $07A32C
-  LinkItem_Shovel:
+LinkItem_Flute = $07A3DB
+LinkItem_Shovel =  $07A32C
 
 ; LinkItem_Shovel
 org $07A3B2

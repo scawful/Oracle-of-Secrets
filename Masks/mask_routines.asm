@@ -10,8 +10,6 @@ macro PlayerTransform()
   STA $012E
 endmacro
 
-
-
 macro CheckNewR_ButtonPress()
   LDA.b $F6 : BIT.b #$10
 endmacro
@@ -191,7 +189,9 @@ Palette_ArmorAndGloves:
   LDA.b $BC : AND #$00FF : STA $02
 
   .loop
-    LDA [$00] : STA $7EC300, X : STA $7EC500, X
+    LDA [$00]
+    JSL ColorBgFix
+    STA $7EC300, X : STA $7EC500, X
     INC $00 : INC $00
     INX #2
   DEY : BPL .loop

@@ -17,7 +17,12 @@ UpdateZoraPalette:
   LDX #$001E
 
   .loop
-  LDA.l zora_palette, X : STA $7EC6E0, X
+  LDA.l zora_palette, X
+  PHX
+  STA.l !pal_color
+  JSL ColorSubEffect
+  PLX
+  STA $7EC6E0, X
   DEX : DEX : BPL .loop
 
   SEP #$30 ; go back to 8 bit mode
