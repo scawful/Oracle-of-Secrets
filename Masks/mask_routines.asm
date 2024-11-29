@@ -503,7 +503,6 @@ DekuLink_HoverBasedOnInput:
 
   LDA $F0 : AND #%10000000 : BEQ .no_cancel
     .auto_cancel
-
     ; Reset LinkState to Default
     STZ $5D
 
@@ -541,7 +540,23 @@ DekuLink_CheckForDash:
   RTL
 }
 
+DekuLink_SkipPitSlip:
+{
+  LDA.b $5D : CMP.b #$0A : BEQ .exit
+              CMP.b #$05
+              RTL
+  .exit
+  LDA.b #$00
+  RTL
+}
+
 pushpc
+
+org $07C729
+  JSL DekuLink_SkipPitSlip
+
+org $07BCEE
+  JSL DekuLink_SkipPitSlip
 
 org $088399
   dw Ancilla0E_MagicBubble
