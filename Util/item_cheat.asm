@@ -62,10 +62,10 @@ Follower_Main = $099F91
 
 org $3CA62A ; Expanded space for our routine
 {
-  LDA.l $7EF3C5 : CMP.b #$02 : BCS .continue ; Check if in main game
-  JSL Follower_Main
-  RTL
-  .continue
+  ;LDA.l $7EF3C5 : CMP.b #$02 : BCS .continue ; Check if in main game
+  ;JSL Follower_Main
+  ;RTL
+  ;.continue
   LDA $F2 : CMP #$70 : BEQ $03 : JMP END ; Check L, R and X button
 
 if !BetaRelease == 0
@@ -89,7 +89,7 @@ if !BetaRelease == 0
 
   ; 0 - nothing. 1 - shovel. 2 - flute, no bird. 3 - flue, bird activated
   LDA #$01 : STA !BookOfMudora
-  LDA #$01 : STA !CaneOfSomaria
+  LDA #$00 : STA !CaneOfSomaria
   LDA #$01 : STA !PegasusBoots
              STA !Flippers
              STA !WolfMask
@@ -98,10 +98,10 @@ if !BetaRelease == 0
   LDA #$02 : STA !Sword
 
   ; 0 - nothing. 1 - Fighter Shield. 2 - Fire Shield. 3 - Mirror Shield
-  LDA #$03 : STA !Shield
+  LDA #$02 : STA !Shield
 
   ; 0 - nothing. 1 - Green Mail. 2 - Blue Mail. 3 - Red Mail
-  LDA #$02 : STA !Mail
+  LDA #$01 : STA !Mail
 
   ; 0-No bottle.
   ; 1-Mushroom (no use). 2-Empty bottle.
@@ -152,7 +152,7 @@ if !BetaRelease == 0
   LDA #$A0 : STA !HealthCapacity
 
 endif
-  LDA #$03 : STA !Flute
+  LDA #$04 : STA !Flute
   LDA #$01 : STA !JumpFeather
   ; 0 - nothing. 1 - bow w/ no arrows. 2 - bow w/ arrows. 3 - silver arrows
   LDA #$03 : STA !Bow
@@ -164,13 +164,23 @@ endif
 
   ; 0 - nothing. 1 - Lamp
   LDA #$01 : STA !Lamp
-             STA !MagicHammer
+             ; STA !MagicHammer
              STA !MoonPearl
 
   ; fill all hearts
   LDA #$A0 : STA !Hearts
   ; magic power, maximum is 0x80
   LDA #$80 : STA !MagicPower
+
+  ; Skip story events, test goron mines
+  LDX.b #$36
+  LDA.l $7EF280,X
+  ORA.b #$20
+  STA.l $7EF280,X
+
+  LDA.b #$02 : STA $7EF3C5
+  LDA.b #$01 : STA OOSPROG3
+  LDA.b #%00001010 : STA OOSPROG
 
 END:
 
