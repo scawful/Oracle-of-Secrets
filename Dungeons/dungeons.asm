@@ -51,6 +51,8 @@ incsrc "Dungeons/spike_subtype.asm"
 incsrc "Dungeons/attract_scenes.asm"
 print  "End of attract_scenes.asm         ", pc
 
+incsrc "Collision/custom_collision.asm"
+
 incsrc "Collision/CollisionTablesExpanded.asm"
 incsrc "Collision/GlobalCollisionTables.asm"
 
