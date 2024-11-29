@@ -4,12 +4,10 @@ incsrc "Dungeons/keyblock.asm"
 print  "End of keyblock.asm               ", pc
 
 ; Pendant from chest position
-org $098823
-  LDY.b #$68
+org $098823 : LDY.b #$68
 
 ; Disable hardcoded sanctuary song
-org $028BE7
-  NOP #2
+org $028BE7 : NOP #2
 
 ; Fixed color fade-in effect
 ; TODO: Investigate if this is the best way to fix this.
@@ -21,7 +19,6 @@ Module06_UnderworldLoad:
   STA.b $9C
 
   LDA.b #$00 : STA.b $9D
-
   LDA.b #$00 : STA.b $9E
   LDA.b #$00
   STA.l $7EC005
@@ -128,21 +125,26 @@ print "End of dungeons.asm               ", pc
 
 pushpc
 
-org $0288FF
-  JSL CheckForTingleMaps : NOP
+org $0288FF : JSL CheckForTingleMaps : NOP
 
 ; Transfer Dungeon Map Graphics
 ; Module0E_03_01_00_PrepMapGraphics
-org $0AE152
-JSL TransferDungeonMapGfx
+org $0AE152 : JSL TransferDungeonMapGfx
 
 ; RoomTag_GetHeartForPrize
 ; Swap LW/DW check on spawn falling prize
-org $01C71B
-  LDA.l $7EF37A ; Crystals in LW
+org $01C71B : LDA.l $7EF37A ; Crystals in LW
+org $01C727 : LDA.l $7EF374 ; Pendants in DW
 
-org $01C727
-  LDA.l $7EF374 ; Pendants in DW
+org $01F195 ; Replace static LDA
+LDA $0682
+
+org $01F1C9 ; Replace static LDA
+LDA $0682
+
+org $01F3D2 ; do tilemapcollision stuff for the dam
+JML $01F237
+
 
 ; RoomTag_WaterGate
 org $01CBAC

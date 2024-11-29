@@ -167,7 +167,6 @@ UploadZoraBabyGraphicsPrep:
 ZoraBaby_CheckForWaterSwitchSprite:
 {
   PHX
-
   LDX #$10
   -
   LDA.w SprType, X
@@ -205,7 +204,6 @@ ZoraBaby_CheckForWaterGateSwitch:
   LDA.w SprX, X : SEC : SBC #$09 : CMP.w SprX, Y : BCS .not_on_switch
   LDA.w SprY, X : CLC : ADC #$12 : CMP.w SprY, Y : BCC .not_on_switch
   LDA.w SprY, X : SEC : SBC #$12 : CMP.w SprY, Y : BCS .not_on_switch
-
   SEC
   RTS
 }
@@ -242,31 +240,18 @@ ZoraBaby_GlobalBehavior:
 
 pushpc
 
-org $01F195 ; Replace static LDA
-LDA $0682
-
-org $01F1C9 ; Replace static LDA
-LDA $0682
-
-org $01F3D2 ; do tilemapcollision stuff for the dam
-JML $01F237
-
 ; Make Zora sway like a girl
-org $09AA5E
-  JSL CheckForZoraBabyFollower
+org $09AA5E : JSL CheckForZoraBabyFollower
 
 ; Follower_BasicMover
 ; Jump to ZoraBaby sprite on star tile
-org $09A19C
-  JSL CheckForZoraBabyTransitionToSprite
+org $09A19C : JSL CheckForZoraBabyTransitionToSprite
 
 ; Make Zora follower blue palette
-org $09A902
-  db $02
+org $09A902 : db $02
 
 ; Zora Baby char data offset
-org $09A8CF
-  org $00C0
+org $09A8CF : org $00C0
 
 ; Zora Baby Sprite Idle OAM data
 org $06BD9C
@@ -316,13 +301,13 @@ Sprite_39_ZoraBaby:
   dw ZoraBaby_RespondToAnswer     ; Goto FollowLink or JustPromiseOkay
   dw ZoraBaby_AgreeToWait
   dw ZoraBaby_PullSwitch
+  dw ZoraBaby_PostSwitch
 
   ; =======================================================
 
   LockSmith_Chillin:
   {
-    LDA.b #$07 ; MESSAGE 0107
-    LDY.b #$01
+    LDY.b #$01 : LDA.b #$07 ; MESSAGE 0107
     JSL Sprite_ShowSolicitedMessage
 
     LDA.w SprX, X
@@ -352,17 +337,14 @@ Sprite_39_ZoraBaby:
     LDA.b #$09 : STA.l $7EF3CC
 
     PHX
-
     STZ.w $02F9
     JSL LoadFollowerGraphics
     JSL Follower_Initialize
-
     PLX
 
     LDA.b #$40
     STA.w $02CD
     STZ.w $02CE
-
     STZ.w SprState, X
 
     RTS
@@ -373,8 +355,7 @@ Sprite_39_ZoraBaby:
   ZoraBaby_OfferService:
   {
     JSL CheckIfLinkIsBusy : BCS .exit
-      LDA.b #$09 ; MESSAGE 0109
-      LDY.b #$01
+      LDY.b #$01 : LDA.b #$09 ; MESSAGE 0109
       JSL Sprite_ShowSolicitedMessage : BCC .exit
         INC.w SprAction, X
     .exit
@@ -386,21 +367,17 @@ Sprite_39_ZoraBaby:
   ZoraBaby_RespondToAnswer:
   {
     LDA.w $1CE8 : BNE .rejected
-      LDA.b #$0C ; MESSAGE 010C
-      LDY.b #$01
+      LDY.b #$01 : LDA.b #$0C ; MESSAGE 010C
       JSL Sprite_ShowMessageUnconditional
       LDA.b #$01 : STA.w SprAction, X
       RTS
 
-    ; -------------------------------------------------------
       ; LDA.l $7EF3C9
       ; ORA.b #$10
       ; STA.l $7EF3C9
-    ; -------------------------------------------------------
 
     .rejected
-    LDA.b #$0A ; MESSAGE 010A
-    LDY.b #$01
+    LDY.b #$01 : LDA.b #$0A ; MESSAGE 010A
     JSL Sprite_ShowMessageUnconditional
 
     LDA.b #$FF : STA.w SprTimerB, X
@@ -413,9 +390,8 @@ Sprite_39_ZoraBaby:
 
   ZoraBaby_AgreeToWait:
   {
-    LDA.b #$0B ; MESSAGE 010B
-    LDY.b #$01
     LDA.b #$A0 : STA.w $0AEA
+    LDY.b #$01 : LDA.b #$0B ; MESSAGE 010B
     JSL Sprite_ShowSolicitedMessage
     LDA.w SprTimerB, X : BNE +
       STZ.w SprAction, X
@@ -427,9 +403,16 @@ Sprite_39_ZoraBaby:
 
   ZoraBaby_PullSwitch:
   {
-    LDA.b #$07 ; MESSAGE 0107
-    LDY.b #$01
-    JSL Sprite_ShowSolicitedMessage
+    LDY.b #$01 : LDA.b #$07 ; MESSAGE 0107
+    JSL Sprite_ShowMessageUnconditional
+    ; LDA.b #$01 : STA.b $B1
+    ; JSL $01B8BF
+    INC.w SprAction, X
+    RTS
+  }
+
+  ZoraBaby_PostSwitch:
+  {
     RTS
   }
 }
