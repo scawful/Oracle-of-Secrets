@@ -120,6 +120,7 @@ Sprite_Booki_Move:
   JSL Sprite_BounceFromTileCollision
   JSL Sprite_PlayerCantPassThrough
   JSL Sprite_DamageFlash_Long
+  JSL Sprite_CheckIfRecoiling
 
   JSL Sprite_IsToRightOfPlayer : CPY.b #$01 : BNE .ToRight
     LDA.b #$01 : STA.w SprMiscC, X

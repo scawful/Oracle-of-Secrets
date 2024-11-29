@@ -90,7 +90,7 @@ Wolfos_Move:
   +
   JSL Sprite_PlayerCantPassThrough
   JSL Sprite_BounceFromTileCollision
-
+  JSL Sprite_CheckIfRecoiling
   JSL Sprite_Move
   JSR Wolfos_DecideAction
   RTS

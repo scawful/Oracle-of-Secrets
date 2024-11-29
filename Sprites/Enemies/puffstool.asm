@@ -56,7 +56,7 @@ Sprite_Puffstool_Prep:
   RTL
 
   .health
-    db $04, $08, $1A, $20
+    db $04, $08, $0A, $10
 }
 
 ; =========================================================
@@ -85,7 +85,7 @@ Sprite_Puffstool_Main:
     JSL Sprite_BounceOffWall
     JSL Sprite_DamageFlash_Long
     JSL ThrownSprite_TileAndSpriteInteraction_long
-
+    JSL Sprite_CheckIfRecoiling
     JSL Sprite_CheckDamageFromPlayer : BCC .no_dano
       %GotoAction(1)
       %SetTimerA($60)

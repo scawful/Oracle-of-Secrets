@@ -86,6 +86,8 @@ Sprite_Darknut_Main:
   JSL Sprite_PlayerCantPassThrough
   JSL Sprite_DamageFlash_Long
 
+  JSL Sprite_CheckIfRecoiling
+
   LDA.w SprTimerA, X : BEQ +
     LDA.b #$40 : STA.w SprTimerD, X
   +

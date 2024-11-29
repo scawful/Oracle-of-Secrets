@@ -128,7 +128,7 @@ Sprite_ThunderGhost_Move:
   JSL Sprite_BounceFromTileCollision
   JSL Sprite_PlayerCantPassThrough
   JSL Sprite_DamageFlash_Long
-
+  JSL Sprite_CheckIfRecoiling
   JSL GetRandomInt : AND #$7F : BNE ++
     JSR SpawnLightningAttack
   ++

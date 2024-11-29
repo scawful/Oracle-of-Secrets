@@ -195,6 +195,8 @@ Sprite_Goriya_Move:
   JSL Sprite_CheckDamageToPlayer
   JSL Sprite_CheckDamageFromPlayer
 
+  JSL Sprite_CheckIfRecoiling
+
   JSR Goriya_HandleTileCollision
 
   LDA.w SprTimerD, X : BNE ++

@@ -80,7 +80,7 @@ Sprite_AntiKirby_Main:
   +
 
   JSL Sprite_DamageFlash_Long
-
+  JSL Sprite_CheckIfRecoiling
 
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
