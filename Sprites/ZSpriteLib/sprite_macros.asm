@@ -218,6 +218,10 @@ macro SetTimerF(length)
   LDA.b #<length> : STA.w SprTimerF, X
 endmacro
 
+macro ErrorBeep()
+  LDA.b #$3C : STA.w $012E ; Error beep
+endmacro
+
 macro NextAction()
   INC $0D80, X
 endmacro

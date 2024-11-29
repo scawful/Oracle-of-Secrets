@@ -338,6 +338,10 @@ Link_TransformMask:
 Link_TransformMoosh:
 {
   PHB : PHK : PLB
+  LDA.b $1B : BEQ ++
+    %ErrorBeep()
+    JMP .done
+  ++
   LDA.w !CurrentMask : CMP.b #$07 : BNE +
     %PlayerTransform()
     JSL ResetToLinkGraphics
@@ -347,7 +351,7 @@ Link_TransformMoosh:
   LDA.b #$33 : STA $BC
   %PlayerTransform()
   JSL Palette_ArmorAndGloves
-
+  .done
   PLB
   RTL
 }
