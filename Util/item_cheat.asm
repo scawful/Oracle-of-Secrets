@@ -89,19 +89,19 @@ if !BetaRelease == 0
 
   ; 0 - nothing. 1 - shovel. 2 - flute, no bird. 3 - flue, bird activated
   LDA #$01 : STA !BookOfMudora
-  LDA #$00 : STA !CaneOfSomaria
+  LDA #$01 : STA !CaneOfSomaria
   LDA #$01 : STA !PegasusBoots
              STA !Flippers
              STA !WolfMask
 
   ; 0 - nothing. 1 - Fighter Sword. 2 - Master Sword. 3 - Tempered Sword. 4 - Golden Sword
-  LDA #$02 : STA !Sword
+  LDA #$04 : STA !Sword
 
   ; 0 - nothing. 1 - Fighter Shield. 2 - Fire Shield. 3 - Mirror Shield
-  LDA #$02 : STA !Shield
+  LDA #$03 : STA !Shield
 
   ; 0 - nothing. 1 - Green Mail. 2 - Blue Mail. 3 - Red Mail
-  LDA #$01 : STA !Mail
+  LDA #$03 : STA !Mail
 
   ; 0-No bottle.
   ; 1-Mushroom (no use). 2-Empty bottle.
