@@ -37,7 +37,9 @@ Sprite_ThunderGhost_Long:
 {
   PHB : PHK : PLB
   JSR Sprite_ThunderGhost_Draw
-  JSL Sprite_DrawShadow
+  LDA.w SprAction, X : CMP.b #$03 : BCS +
+    JSL Sprite_DrawShadow
+  +
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_ThunderGhost_Main
   .SpriteIsNotActive
@@ -98,7 +100,6 @@ Sprite_ThunderGhost_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(6, 6, 16)
-    JSL Sprite_PlayerCantPassThrough
     JSL Sprite_CheckDamageToPlayerSameLayer
     JSL Sprite_Move
     LDA.w SprTimerA, X : BNE +
@@ -111,7 +112,6 @@ Sprite_ThunderGhost_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(7, 7, 16)
-    JSL Sprite_PlayerCantPassThrough
     JSL Sprite_CheckDamageToPlayerSameLayer
     JSL Sprite_Move
     LDA.w SprTimerA, X : BNE +
