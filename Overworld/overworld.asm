@@ -1,5 +1,10 @@
 ; Overworld.asm
 
+; Random chance of hearts from bush instead of guards
+org $1AFBBF : db $0B ; Heart Index
+org $1AFBC7 : db $0B ; Heart Index
+org $1AFBD7 : db $00
+
 ; Remove rain sound effects from beginning
 org $02838C : LDA.l $7EF3C5 : CMP.b #$00
 
