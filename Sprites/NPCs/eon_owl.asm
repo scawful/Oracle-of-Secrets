@@ -66,8 +66,8 @@ Sprite_EonOwl_Prep:
     LDA.b #$03 : STA.w SprAction, X
   .NotGaebora
   LDA.w AreaIndex : CMP.b #$50 : BNE .not_intro
-    ; If Map 0x50, don't spawn after meeting Maku Tree
-    LDA.l OOSPROG : AND.b #$02 : BEQ .continue
+    ; If Map 0x50, don't spawn after getting sword
+    LDA.l SWORD : CMP.b #$01 : BCC .continue
       .Despawn
        STZ.w SprState, X
     .continue
