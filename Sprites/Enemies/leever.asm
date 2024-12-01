@@ -40,6 +40,7 @@ Sprite_Leever_Move:
 {
   JSL Sprite_ApplySpeedTowardsPlayer
   JSL Sprite_Move
+  JSL Sprite_BounceFromTileCollision
   RTS
 }
 
@@ -182,8 +183,8 @@ Sprite_Leever_Draw:
   dw 0
   dw 0
   .chr
-  db $E0
-  db $E2
+  db $C4
+  db $C6
   db $C2
   db $C0
   .properties
