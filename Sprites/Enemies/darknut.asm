@@ -265,14 +265,14 @@ Sprite_Darknut_Draw:
   dw 0, 0
   dw 0, 0
   .chr
-  db $C0, $E6
-  db $C0, $E6
-  db $E2, $C0
-  db $E2, $C0
-  db $E4, $C2
-  db $E0, $C2
-  db $E4, $C2
-  db $E0, $C2
+  db $EE, $E6
+  db $EE, $E6
+  db $E2, $EE
+  db $E2, $EE
+  db $E4, $E8
+  db $E0, $E8
+  db $E4, $E8
+  db $E0, $E8
   .properties
   db $B9, $39
   db $B9, $79
