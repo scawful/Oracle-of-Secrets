@@ -15,6 +15,7 @@ Sprite_Zora_Long:
   LDA.w WORLDFLAG : AND.w #$00FF : BEQ .eon_draw
     SEP #$30
     JSR Sprite_EonZora_Draw
+    JSL Sprite_DrawShadow
     LDA.b #$02 : STA.w SprMiscG, X
     JMP +
   .eon_draw
@@ -46,7 +47,7 @@ Sprite_Zora_Prep:
 Sprite_Zora_Handler:
 {
   LDA.w SprMiscG, X
-  CMP.b #$02 : BNE .not_princess
+  CMP.b #$01 : BNE .not_princess
     JSR Sprite_ZoraPrincess_Main
     RTS
   .not_princess
@@ -106,14 +107,14 @@ Zora_HandleDialogue:
 {
   LDA.l CRYSTALS : AND.b #$20 : BEQ +++
     %ShowSolicitedMessage($01A6)
-    JMP ++
+    JMP +
   +++
-  LDA.w SprAction, X : BEQ +
+  LDA.w SprAction, X : BEQ ++
     %ShowSolicitedMessage($01A5)
-    JMP ++
-  +
-  %ShowSolicitedMessage($01A4)
+  JMP +
   ++
+  %ShowSolicitedMessage($01A4)
+  +
   RTS
 }
 
