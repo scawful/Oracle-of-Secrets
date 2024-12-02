@@ -285,11 +285,7 @@ print  "End of goron.asm                  ", pc
 
 ; Sprite Recoil and Death
 ; TODO: Sprite_AttemptKillingOfKin
-
 ; Kydreeok Head die like Sidenexx
-org $06EFFF
-  CMP.b #$CF
-
 org $06F003
   CMP.b #$CF
 

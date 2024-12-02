@@ -53,7 +53,7 @@ Sprite_Kydreeok_Long:
 Sprite_Kydreeok_Prep:
 {
   PHB : PHK : PLB
-  LDA   #$40 : STA.w SprTimerA, X
+  LDA.b #$40 : STA.w SprTimerA, X
   LDA.b #$08 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
   LDA.b #$09 : STA.w SprBump,   X ; bump damage type
@@ -193,7 +193,7 @@ Sprite_Kydreeok_Main:
     JSL MoveBody
 
     JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
+    JSL Sprite_CheckDamageToPlayer
 
     %GotoAction(4)
 
@@ -213,7 +213,7 @@ Sprite_Kydreeok_Main:
     JSL MoveBody
 
     JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
+    JSL Sprite_CheckDamageToPlayer
 
     %GotoAction(4)
     RTS
@@ -252,15 +252,15 @@ Sprite_Kydreeok_Main:
     JSR StopIfOutOfBounds
 
     ;if both velocities are 0 go back to the Stalk_Player_XORY to re-set the course
-    LDA.w SprYSpeed : BNE .notZero
-      LDA.w SprXSpeed : BNE .notZero
+    LDA.w SprYSpeed, X : BNE .notZero
+      LDA.w SprXSpeed, X : BNE .notZero
         %GotoAction(3) ; Kydreeok_MoveXorY
     .notZero
 
     JSL MoveBody
 
     JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
+    JSL Sprite_CheckDamageToPlayer
 
     PLX ;restores X
 
@@ -311,7 +311,7 @@ Sprite_Kydreeok_Main:
     LDA.b #$04 : STA.w SprHeight, X
 
     JSL Sprite_CheckDamageFromPlayer
-    %DoDamageToPlayerSameLayerOnContact()
+    JSL Sprite_CheckDamageToPlayer
 
     LDA.w SprTimerA, X : BNE .continue
       STZ.w SprHeight, X
