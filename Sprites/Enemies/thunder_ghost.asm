@@ -13,7 +13,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 09  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -100,8 +100,9 @@ Sprite_ThunderGhost_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(6, 6, 16)
-    JSL Sprite_CheckDamageToPlayerSameLayer
-    JSL Sprite_Move
+    JSL Sprite_CheckDamageToPlayer
+    JSL Sprite_MoveLong
+
     LDA.w SprTimerA, X : BNE +
       STZ.w SprState, X
     +
@@ -112,8 +113,10 @@ Sprite_ThunderGhost_Main:
   {
     %StartOnFrame(6)
     %PlayAnimation(7, 7, 16)
-    JSL Sprite_CheckDamageToPlayerSameLayer
-    JSL Sprite_Move
+
+    JSL Sprite_CheckDamageToPlayer
+    JSL Sprite_MoveLong
+
     LDA.w SprTimerA, X : BNE +
       STZ.w SprState, X
     +
@@ -129,8 +132,10 @@ Sprite_ThunderGhost_Move:
   JSL Sprite_PlayerCantPassThrough
   JSL Sprite_DamageFlash_Long
   JSL Sprite_CheckIfRecoiling
-  JSL GetRandomInt : AND #$7F : BNE ++
-    JSR SpawnLightningAttack
+  LDA.w SprTimerC, X : BNE ++
+    JSL GetRandomInt : AND #$3F : BNE ++
+      LDA.b #$40 : STA.w SprTimerC, X
+      JSR SpawnLightningAttack
   ++
 
   LDA.w SprTimerA, X : BNE +
@@ -199,7 +204,6 @@ SpawnLightningAttack:
     LDA.b #$02 : STA.w SprYRound, Y
     LDA.b #$30 : STA.w SprTimerA, Y
     LDA.b #$30 : STA.w SprTimerB, Y
-    LDA.b #$1A : STA.w SprHitbox, Y
   .no_space
 
   PLX

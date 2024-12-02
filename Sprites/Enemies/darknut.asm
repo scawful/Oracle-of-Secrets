@@ -73,7 +73,7 @@ Sprite_Darknut_Main:
   LDA.w SprX, X : STA $04
   LDA.w SprY, X : STA $05
   JSL GetDistance8bit_Long
-  CMP.b #$50 : BCS .no_probe
+  CMP.b #$80 : BCS .no_probe
     ; JSL Sprite_SendOutProbe
     JSL Sprite_SpawnProbeAlways_long
   .no_probe
@@ -89,10 +89,10 @@ Sprite_Darknut_Main:
   JSL Sprite_CheckIfRecoiling
 
   LDA.w SprTimerA, X : BEQ +
-    LDA.b #$40 : STA.w SprTimerD, X
+    LDA.b #$90 : STA.w SprTimerD, X
   +
   LDA.w SprTimerD, X : BEQ ++
-    LDA.b #$04 : JSL Sprite_ApplySpeedTowardsPlayer
+    LDA.b #$08 : JSL Sprite_ApplySpeedTowardsPlayer
     JSL Sprite_DirectionToFacePlayer
     TYA
     STA.w SprMiscC, X
@@ -229,7 +229,7 @@ Sprite_Darknut_Draw:
 
   TYA : LSR #2 : TAY
 
-  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA.w .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
 
   PLY : INY
 
@@ -241,45 +241,54 @@ Sprite_Darknut_Draw:
 
 
   ; =======================================================
-
   .start_index
-  db $00, $02, $04, $06, $08, $0A, $0C, $0E
+  db $00, $03, $06, $09, $0C, $0E, $10, $12
   .nbr_of_tiles
-  db 1, 1, 1, 1, 1, 1, 1, 1
+  db 2, 2, 2, 2, 1, 1, 1, 1
   .x_offsets
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
+  dw 0, 0, 0
+  dw 0, 0, 0
+  dw 0, 0, 0
+  dw 0, 0, 0
   dw 0, -12
   dw 0, -12
   dw 0, 12
   dw 0, 12
   .y_offsets
-  dw -12, 0
-  dw -12, 0
-  dw 0, 12
-  dw 0, 12
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
+  dw -4, 0, -12
+  dw -4, 0, -12
+  dw 0, 12, 20
+  dw 0, 12, 20
+  dw 0, 8
+  dw 0, 8
+  dw 0, 8
+  dw 0, 8
   .chr
-  db $EE, $E6
-  db $EE, $E6
-  db $E2, $EE
-  db $E2, $EE
-  db $E4, $E8
+  db $EF, $E6, $FF
+  db $EF, $E6, $FF
+  db $E2, $EF, $FF
+  db $E2, $EF, $FF
   db $E0, $E8
   db $E4, $E8
   db $E0, $E8
+  db $E4, $E8
   .properties
-  db $B9, $39
-  db $B9, $79
+  db $B9, $39, $B9
+  db $B9, $79, $B9
+  db $39, $39, $39
+  db $79, $39, $39
   db $39, $79
-  db $79, $79
-  db $39, $F9
-  db $39, $F9
-  db $79, $B9
-  db $79, $B9
+  db $39, $79
+  db $79, $39
+  db $79, $39
+  .sizes
+  db $00, $02, $00
+  db $00, $02, $00
+  db $02, $00, $00
+  db $02, $00, $00
+  db $02, $02
+  db $02, $02
+  db $02, $02
+  db $02, $02
+
 }

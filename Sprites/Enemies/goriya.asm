@@ -140,24 +140,8 @@ GoriyaMovementSpeed = 10
 Goriya_HandleTileCollision:
 {
   JSL Sprite_CheckTileCollision
-  LDA.w SprCollision, X : CMP.b #$08 : BEQ .up
-  LDA.w SprCollision, X : CMP.b #$04 : BEQ .down
-  LDA.w SprCollision, X : CMP.b #$02 : BEQ .left
-  LDA.w SprCollision, X : CMP.b #$01 : BEQ .right
-    JMP ++
-
-  .up
-    %GotoAction(1)
-    JMP +
-  .down
-    %GotoAction(0)
-    JMP +
-  .left
-    %GotoAction(3)
-    JMP +
-  .right
-    %GotoAction(2)
-    JMP +
+  LDA.w SprCollision, X : BEQ ++
+    JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X
   +
   STA.w SprMiscE, X
   %SetTimerC(60)
