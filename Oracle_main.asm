@@ -30,13 +30,8 @@
 ; ZSCustomOverworld version
 ; Kept in case of serious issues which impedes progress
 ZS_CUSTOM_OW_V2 = 1
-if ZS_CUSTOM_OW_V2 == 1
-  incsrc "Overworld/ZSCustomOverworld_Latest.asm"
-  print  "End of ZCustomOverworld2.asm      ", pc
-else
-  incsrc "Overworld/ZCustomOverworld.asm"
-  print  "End of ZCustomOverworld.asm       ", pc
-endif
+incsrc "Overworld/ZSCustomOverworld_Latest.asm"
+print  "End of ZSCustomOverworld.asm      ", pc
 
 ; Vanilla WRAM and SRAM
 incsrc "Core/ram.asm"
@@ -51,9 +46,6 @@ namespace Oracle
   incsrc "Core/symbols.asm"
 
   incsrc "Core/message.asm"
-
-  ; -------------------------------------------------------
-  ; Music
 
   print "  -- Music --  "
   print ""
@@ -72,18 +64,12 @@ namespace Oracle
 
   print ""
 
-  ; -------------------------------------------------------
-  ; Overworld
-
   print "  -- Overworld --  "
   print ""
 
   incsrc "Overworld/overworld.asm"
 
   print ""
-
-  ; -------------------------------------------------------
-  ; Dungeon
 
   print "  -- Dungeon --  "
   print ""
@@ -92,18 +78,12 @@ namespace Oracle
 
   print ""
 
-  ; -------------------------------------------------------
-  ; Sprites
-
   print "  -- Sprites --  "
   print ""
 
   incsrc "Sprites/all_sprites.asm"
 
   print ""
-
-  ; -------------------------------------------------------
-  ; Transformation Masks
 
   print "  -- Masks --  "
   print ""
@@ -112,17 +92,12 @@ namespace Oracle
 
   print ""
 
-  ; -------------------------------------------------------
-  ; Items
-
   print "  -- Items --  "
   print ""
 
   incsrc "Items/all_items.asm"
 
   print ""
-
-  ; -------------------------------------------------------
 
   print "  -- Events --  "
   print ""
@@ -131,23 +106,14 @@ namespace Oracle
 
   print ""
 
-  ; -------------------------------------------------------
-  ; Custom Menu and HUD
-
   print "  -- Menu --  "
   print ""
 
   incsrc "Menu/menu.asm"
 
-  ; -------------------------------------------------------
-  ; Misc
-
   incsrc "Util/item_cheat.asm"
 
-  ; -------------------------------------------------------
-
   ; incsrc "Music/ww_ganondorf.asm"
-
   ; incsrc "Music/great_sea.asm"
 
   print ""
