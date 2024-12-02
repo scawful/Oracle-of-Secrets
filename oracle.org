@@ -33,8 +33,9 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 - [ ] Fix Water Gate Collision
 ** =D5= Glacia Estate
 *** Item: Fire Rod
-*** TODO [0/2]
-- [ ] Improve enemy variety
+*** TODO [0/3]
+- [ ] Improve Ice Block sprite collision detection
+- [ ] Tune enemies in dungeon, adjust positioning
 - [ ] Exterior gfx improvements
 ** ~S2~ Shrine of Power
 *** Item: Power Glove
@@ -84,7 +85,7 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 - [X] Conflict over territory lead to Zora Princesses imprisonment
 - [ ] Restore River Zora King NPC ?
 
-**** TODO Waterfall Song of Storms Event
+**** ACTIVE Waterfall Song of Storms Event
 
 *** Old Man Mountain Quest
 1) Take the warp portal at the northwest most point on Mount Snowpeak
@@ -92,7 +93,7 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 3) Escort the Old Man to a rock formation on the mountain and use magic mirror.
 4) Receive the Goldstar before continuing to Glacia Estate
 
-*** TODO Goron Mines Quest [2/4]
+*** ACTIVE Goron Mines Quest [2/4]
 1) [X] Collectible Goron Rock Meat from Lupo Mountain
    - Eon Gorons workers protesting labor, Piratians involved somehow
    - Requires Power Glove from Shrine of Power
@@ -106,7 +107,7 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 **** Stone Mask - 850 Rupees
 *** Wolf Mask Quest
 1) Wolfos appears outside of Kalyxo Castle at Night, defeat and play Song of Healing for Wolf Mask.
-*** TODO Magic Bean Quest [1/4]
+*** ACTIVE Magic Bean Quest [1/4]
 1) [X] Buy Magic Bean from Bean Vendor, requires Bottle.
 2) [ ] Take Magic Bean to the Ranch and plant it in empty soil north of the houses.
 3) [ ] Requires rain (Song of Storms), Pollination (Good Bee) and three days in game time.

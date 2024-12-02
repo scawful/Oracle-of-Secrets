@@ -101,7 +101,7 @@ if !BetaRelease == 0
   LDA #$03 : STA !Shield
 
   ; 0 - nothing. 1 - Green Mail. 2 - Blue Mail. 3 - Red Mail
-  LDA #$03 : STA !Mail
+  LDA #$02 : STA !Mail
 
   ; 0-No bottle.
   ; 1-Mushroom (no use). 2-Empty bottle.

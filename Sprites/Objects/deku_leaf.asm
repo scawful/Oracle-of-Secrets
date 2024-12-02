@@ -14,7 +14,7 @@
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = $0D ; 00 to 31, can be viewed in sprite draw tool
-!Persist            = 00  ; 01 = your sprite continue to live offscreen
+!Persist            = 01  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
 !CanFall            = 00  ; 01 sprite can fall in hole, 01 = can't fall
@@ -153,7 +153,7 @@ Sprite_DekuLeaf_Main:
 Sprite_DekuLeaf_Draw:
 {
   JSL Sprite_PrepOamCoord
-  LDA #$10
+  LDA #$08
   JSL OAM_AllocateFromRegionB
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame

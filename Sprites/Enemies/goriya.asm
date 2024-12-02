@@ -116,7 +116,6 @@ Sprite_Goriya_Main:
 
     JSL Sprite_Move
     JSL Sprite_SpawnSparkleGarnish
-    JSL Sprite_PlayerCantPassThrough
 
     JSL Sprite_CheckDamageToPlayer : BCC .no_dano
       LDA.b #$FF : STA.w SprTimerD, X
