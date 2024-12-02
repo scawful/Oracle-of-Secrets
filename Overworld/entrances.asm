@@ -1,4 +1,5 @@
-Map16Definitions = $0F8000
+;Map16Definitions = $0F8000
+Map16Definitions = $3D8000
 Overworld_DrawMap16_Persist = $1BC97C
 Overworld_DrawMap16_Anywhere = $1BC983
 Interface_PrepAndDisplayMessage = $0FFDAA
@@ -284,6 +285,7 @@ ValidDoorTypes_high:
  dw $0131, $0112, $017A, $0163 ; 09:
  dw $0172, $01BD, $0152, $0167 ; 10:
 
+pullpc
 
 
 ; 0x00 - OW
