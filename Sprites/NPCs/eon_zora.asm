@@ -2,6 +2,12 @@
 
 Sprite_EonZora_Main:
 {
+  JSR EonZora_HandleDialogue
+  JSR EonZora_Walk
+
+  JSL Sprite_Move
+  JSL Sprite_BounceFromTileCollision
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -11,13 +17,62 @@ Sprite_EonZora_Main:
   dw EonZora_Back
 
   EonZora_Forward:
+    %PlayAnimation(0,1,10)
     RTS
   EonZora_Left:
+    %PlayAnimation(2,3,10)
     RTS
   EonZora_Right:
+    %PlayAnimation(4,5,10)
     RTS
   EonZora_Back:
+    %PlayAnimation(6,7,10)
     RTS
+}
+
+EonZora_Walk:
+{
+  LDA.w SprTimerA, X : BNE +
+    JSL GetRandomInt : AND.b #$03 : STA.w SprAction, X : TAY
+    LDA.w .speed_x, Y : STA.w SprXSpeed, X
+    LDA.w .speed_y, Y : STA.w SprYSpeed, X
+    LDA.b #$6A : STA.w SprTimerA, X
+  +
+  RTS
+
+  .speed_x
+  db 0, -4, 4, 0
+  .speed_y
+  db 4, 0, 0, -4
+}
+
+EonZora_HandleDialogue:
+{
+  LDA.w AreaIndex : CMP.b #$63 : BNE .not_wisdom
+    %ShowSolicitedMessage($01AC)
+    JMP ++
+  .not_wisdom
+  CMP.b #$5B : BNE .not_power
+    %ShowSolicitedMessage($01AB)
+    JMP ++
+  .not_power
+  CMP.b #$40 : BNE .not_pyramid
+    %ShowSolicitedMessage($01AA)
+    JMP ++
+  .not_pyramid
+  CMP.b #$70 : BNE .not_underwater
+    %ShowSolicitedMessage($01AD)
+    JMP ++
+  .not_underwater
+  CMP.b #$42 : BNE .not_portal
+    %ShowSolicitedMessage($01AF)
+    JMP ++
+  .not_portal
+  %ShowSolicitedMessage($01AE) : BCC .no_talk
+    JSL GetRandomInt : AND.b #$06 : STA.l FOUNDRINGS
+  .no_talk
+  ++
+  RTS
 }
 
 ; 0-1 : Forward

@@ -10,10 +10,13 @@ Sprite_EonZoraElder_Main:
   dw EonZoraElder_WithRod
 
   EonZoraElder_Idle:
+    %PlayAnimation(0,1,10)
     RTS
   EonZoraElder_Surprised:
+    %PlayAnimation(2,3,10)
     RTS
   EonZoraElder_WithRod:
+    %PlayAnimation(4,4,10)
     RTS
 }
 
