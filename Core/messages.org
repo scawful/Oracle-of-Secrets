@@ -1650,3 +1650,116 @@ Ah! Now that's what I'm talkin'
 [V]Stand back, friend[...]these
 [V]stones are about to feel the
 [V]might of a true Goron!
+
+** 1AA - Sea Zora Temporal Pyramid
+Ah, traveler from beyond...
+[2]you stand near the Temporal
+[3]Pyramid, a place of beginnings.[K]
+[V]The Shrine of Origins lies west,
+[V]a place of ancient power.[K]
+[V]Only the small may tread its
+[V]paths, for the secrets within
+[V]are hidden from the unworthy.[K]
+[V]Legends say it grants a relic
+[V]that holds form steady even in
+[V]this unstable realm.
+
+** 1AB - Sea Zora Village
+You've come far to this place.
+[2]The Shrine of Power lies within
+[3]the mountains, where the land[K]
+[V]itself groans under its weight.
+[V]There, you will find a treasure
+[V]that grants the strength to[K]
+[V]move even the unmovable.
+[V]But beware, such power is
+[V]never given freely. Only those[K]
+[V]with unwavering resolve endure.
+
+** 1AC - Sea Zora Swamp
+The waters of this realm are
+[2]not kind to outsiders like you.
+[3]Beyond this swamp lies[K]
+[V]the Shrine of Wisdom, where
+[V]the flippers rest.
+[V]With them, one may swim the[K]
+[V]deepest currents and uncover
+[V]what the Abyss hides.
+[V]But to claim them, you must[K]
+[V]path the way forward through
+[V]some other means[...]
+
+** 1AD - Sea Zora Kydrog Lore
+Kydrog was once a hero,
+[2]chosen by the Meadow Blade
+[3]in the Meadow of Shadows.[K]
+[V]But ambition clouded his heart,
+[V]and he fell to the tricks of
+[V]Ganondorf, king of thieves.[K]
+[V]When Kydrog's deeds turned to
+[V]darkness, the goddesses cast
+[V]him into the Abyss[...][K]
+[V]Yet even here, his hunger grew,
+[V]and he rose again, no longer
+[V]a hero, but a king of pirates.
+
+** 1AE - Sea Zora Found Ring
+Oh, what's this? A ring? I
+[2]found it washed up on the
+[3]Abyssal Shore.[K]
+[V]It glimmers strangely, like it
+[V]holds some hidden power. I have
+[V]no use for it, but you might.[K]
+[V]Take it to a jeweler, there's
+[V]one near the Village of Echoes,
+[V]who appraises such treasures.
+
+** 1AF - Sea Zora Quest Hint
+The Fortress of Secrets lies
+[2]deep within the Abyss, sealed
+[3]by ancient power.[K]
+[V]To open its gates, you must
+[V]unite the Essences of the
+[V]Triforce from Kalyxo.[K]
+[V]But beware, for beyond the
+[V]fortress lies Kydrog, the
+[V]fallen hero, twisted by greed.[K]
+[V]The Master Sword is the only
+[V]blade that can break his curse,
+[V]yet it rests guarded by trials,
+[V]shrines built by the goddesses.[K]
+[V]To claim it, you must conquer
+[V]each challenge and then return
+[V]to where it all began[...]
+
+** 1B0 - Eon Goron Hint
+The Shrine of Power? A tricky
+[2]place, that one. The caves
+[3]are full of surprises.[K]
+[V]They say the path forward is
+[V]hidden, only revealed to those
+[V]willing to take a leap of faith.[K]
+[V]It's not for the faint of heart.
+[V]You'd best trust your
+[V]instincts, traveler.
+
+** 1B1 - Eon Goron Power Glove Hint
+Mmm, the smell of Rock Sirloins!
+[2]Nothing fuels a Goron like
+[3]those hearty chunks of stone.[K]
+[V]You'll find them scattered
+[V]around here, but lifting them?
+[V]That's another matter.[K]
+[V]Only someone with real power
+[V]could move those beauties. Got
+[V]a Power Glove handy?
+
+** 1B2 - Eon Goron Friendly Warning
+You planning to head into the
+[2]Shrine of Power?
+[3]Heh, good luck![K]
+[V]The floors don’t always seem...
+[V]real, if you catch my drift.
+[V]And those Rock Sirloins? [K]
+[V]Heavy as boulders. Without the
+[V]Power Glove, you’re out of luck.
