@@ -120,8 +120,6 @@ Sprite_AntiKirby_Main:
     %DoDamageToPlayerSameLayerOnContact()
     %MoveTowardPlayer(8)
     JSL Sprite_BounceFromTileCollision
-    JSL Sprite_PlayerCantPassThrough
-
     RTS
   }
 
@@ -176,6 +174,9 @@ Sprite_AntiKirby_Main:
     JSL Sprite_DirectionToFacePlayer
     LDA.b $0E : CMP.b #$10 : BCS .NotDone
       LDA.b $0F : CMP.b #$10 : BCS .NotDone
+          LDA POSX : STA.w SprMiscB, X
+          LDA POSY : STA.w SprMiscA, X
+          LDA.b #$0C : STA.b $4B
           %SetTimerA($80)
           LDA.b #$0A : STA.w SprFrame, X
           INC.w SprAction, X
@@ -190,10 +191,13 @@ Sprite_AntiKirby_Main:
   AntiKirby_Full:
   {
     %PlayAnimation(10, 10, 10)
+    LDA.w SprMiscA, X : STA.b POSY
+    LDA.w SprMiscB, X : STA.b POSX
     LDA.w SprTimerA, X : BNE +
       INC.w SprAction, X
       %SetTimerA($60)
       STZ.w SprMiscG, X
+      STZ.b $4B
       RTS
     +
     RTS
@@ -205,7 +209,6 @@ Sprite_AntiKirby_Main:
     %DoDamageToPlayerSameLayerOnContact()
     %MoveTowardPlayer(8)
     JSL Sprite_BounceFromTileCollision
-    JSL Sprite_PlayerCantPassThrough
     JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
       LDA #!RecoilTime : STA.w SprTimerA, X
       %GotoAction(6) ; Hurt
