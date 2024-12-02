@@ -54,6 +54,7 @@ Sprite_VillageDog_Prep:
   PHB : PHK : PLB
   LDA.w WORLDFLAG : BEQ .village
     LDA.b #$07 : STA.w SprAction, X
+    LDA.b #$40 : STA.w SprTimerA, X
   .village
   PLB
   RTL
@@ -227,18 +228,34 @@ Sprite_VillageDog_Main:
   EonDog_Handler:
   {
     %PlayAnimation(0,1,8)
-    JSR LiftOrTalk
-    JSR HandleTossedDog
+    JSR EonDog_Walk
     RTS
   }
 
   EonDog_Right:
   {
     %PlayAnimation(2,3,8)
-    JSR LiftOrTalk
-    JSR HandleTossedDog
+    JSR EonDog_Walk
     RTS
   }
+}
+
+EonDog_Walk:
+{
+  JSL Sprite_MoveLong
+  JSL Sprite_BounceFromTileCollision
+  LDA.w SprTimerA, X : BNE +
+    JSL GetRandomInt : AND.b #$03 : TAY
+    LDA.w .speed_x, Y : STA.w SprXSpeed, X
+    LDA.w .speed_y, Y : STA.w SprYSpeed, X
+    LDA.b #$3F : STA.w SprTimerA, X
+    JSL GetRandomInt : AND.b #$01 : CLC : ADC.b #$07 : STA.w SprAction, X
+  +
+  RTS
+  .speed_x
+  db 0, -2, 2, 0
+  .speed_y
+  db 2, 0, 0, -2
 }
 
 CheckIfPlayerIsNearby:
