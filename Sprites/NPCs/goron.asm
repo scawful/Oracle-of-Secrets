@@ -51,6 +51,13 @@ Sprite_Goron_Prep:
 {
   PHB : PHK : PLB
   LDA.w WORLDFLAG : BEQ +
+    LDA AreaIndex : CMP.b #$55 : BNE .not_sing
+      LDA.b #$04 : STA.w SprAction, X
+    .not_sing
+    JSL GetRandomInt : AND.b #$01 : BEQ .rand
+      LDA.b #$05 : STA.w SprAction, X
+      JMP ++
+    .rand
     LDA.b #$03 : STA.w SprAction, X
     JMP ++
   +
@@ -116,18 +123,21 @@ Sprite_Goron_Main:
   EonGoron_Main:
   {
     %PlayAnimation(0, 1, 10)
+    %ShowSolicitedMessage($01B0)
     RTS
   }
 
   EonGoron_Sing:
   {
     %PlayAnimation(2, 3, 10)
+    %ShowSolicitedMessage($01B2)
     RTS
   }
 
   EonGoron_Punch:
   {
     %PlayAnimation(4, 5, 10)
+    %ShowSolicitedMessage($01B1)
     RTS
   }
 }
