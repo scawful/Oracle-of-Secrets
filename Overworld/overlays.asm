@@ -80,6 +80,10 @@ org $1BCE28
 JSL Goron_EntranceAnimation
 RTS
 
+org $1BCFD9
+JSL Fortress_EntranceAnimation
+RTS
+
 pullpc
 
 ; Zarby Notes
@@ -1139,4 +1143,280 @@ Goron_EntranceAnimation:
   STA.l $7EF280,X
   .wait
   RTS
+}
+
+
+
+Fortress_EntranceAnimation:
+{
+  LDA.b $B0 : ASL A : TAX ; x2
+  JSR.w (.AnimationFrames, X)
+  RTL
+
+  .AnimationFrames
+  dw Fortress_Frame0
+  dw Fortress_Frame1
+  dw Fortress_Frame2
+  dw Fortress_Frame3
+  dw Fortress_Frame4
+
+  Fortress_Frame0:
+  {
+    LDA.b $C8 : BEQ .doInit ; Load the timer
+    JMP .notfirstframe
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$0196
+    LDX.w #$0754
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$0756
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$06D4
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$06D6
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A2
+    LDX.w #$0752
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A2
+    LDX.w #$06D2
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A3
+    LDX.w #$0758
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A3
+    LDX.w #$06D8
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    JSR ShakeScreen ; make the screen shake
+    INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    LDA.b #$05 ; SFX1.05
+    STA.w $012D
+
+    LDA.b #$0C ; SFX2.0C
+    STA.w $012E
+
+    LDA.b #$07 ; SFX3.07
+    STA.w $012F
+    .wait
+    RTS
+  }
+  Fortress_Frame1:
+  {
+    LDA.b $C8 : BEQ .doInit ; Load the timer
+    JMP .notfirstframe
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$09A3
+    LDX.w #$0658
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A3
+    LDX.w #$05D8
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A2
+    LDX.w #$0652
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A2
+    LDX.w #$05D2
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$0654
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$0656
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$05D6
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$05D4
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    JSR ShakeScreen ; make the screen shake
+    INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    LDA.b #$05 ; SFX1.05
+    STA.w $012D
+
+    LDA.b #$0C ; SFX2.0C
+    STA.w $012E
+
+    LDA.b #$07 ; SFX3.07
+    STA.w $012F
+    .wait
+    RTS
+  }
+  Fortress_Frame2:
+  {
+    LDA.b $C8 : BEQ .doInit ; Load the timer
+    JMP .notfirstframe
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$09A3
+    LDX.w #$04D8
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A3
+    LDX.w #$0558
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A2
+    LDX.w #$04D2
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A2
+    LDX.w #$0552
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$04D6
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$0556
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$04D4
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$0554
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    JSR ShakeScreen ; make the screen shake
+    INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    LDA.b #$05 ; SFX1.05
+    STA.w $012D
+
+    LDA.b #$0C ; SFX2.0C
+    STA.w $012E
+
+    LDA.b #$07 ; SFX3.07
+    STA.w $012F
+    .wait
+    RTS
+  }
+  Fortress_Frame3:
+  {
+    LDA.b $C8 : BEQ .doInit ; Load the timer
+    JMP .notfirstframe
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$0196
+    LDX.w #$0454
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$0456
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$03D6
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0196
+    LDX.w #$03D4
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A2
+    LDX.w #$03D2
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A2
+    LDX.w #$0452
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A3
+    LDX.w #$03D8
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$09A3
+    LDX.w #$0458
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    LDA.b #$05 ; SFX1.05
+    STA.w $012D
+
+    LDA.b #$0C ; SFX2.0C
+    STA.w $012E
+
+    LDA.b #$07 ; SFX3.07
+    STA.w $012F
+    .wait
+    RTS
+  }
+  Fortress_Frame4:
+  {
+    LDA.b $C8 : BEQ .doInit ; Load the timer
+    JMP .notfirstframe
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$099C
+    LDX.w #$0354
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$099C
+    LDX.w #$0356
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    STZ.w $04C6
+    STZ.b $B0
+    STZ.w $0710
+    STZ.w $02E4
+    STZ.w $0FC1
+    STZ.w $011A
+    STZ.w $011B
+    STZ.w $011C
+    STZ.w $011D
+    ; set the overlay
+    LDX.b $8A
+    LDA.l $7EF280,X
+    ORA.b #$20
+    STA.l $7EF280,X
+    ; OverworldEntrance_PlayJingle
+    #_1BCF40: LDA.b #$1B ; SFX3.1B
+
+    #_1BCF42: STA.w $012F
+
+    #_1BCF45: STZ.w $04C6
+    #_1BCF48: STZ.b $B0
+    #_1BCF4A: STZ.w $0710
+
+    #_1BCF4D: STZ.w $02E4
+
+    #_1BCF50: STZ.w $0FC1
+
+    #_1BCF53: STZ.w $011A
+    #_1BCF56: STZ.w $011B
+    #_1BCF59: STZ.w $011C
+    #_1BCF5C: STZ.w $011D
+
+    #_1BD1CD: LDA.b #$09
+    #_1BD1CF: STA.w $012C
+
+    #_1BD1D2: LDA.b #$09 ; SFX1.09
+    #_1BD1D4: STA.w $012D
+    .wait
+    RTS
+  }
 }

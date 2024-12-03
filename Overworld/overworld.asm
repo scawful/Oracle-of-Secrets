@@ -170,6 +170,8 @@ org $0794D9
     RTS
 .overworld_pit_transition
 
+org $1AF5C3 : CMP.b #$5E
+
 org $0EF581
 EXIT_0EF581:
 
