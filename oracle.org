@@ -239,6 +239,9 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
   - [X] Eon Abyss Variant
 - [X] Animate mines opening animation
 
+** DONE Fortress of Secrets Cutscene
+Should use the Ganons Tower Crystal Cutscene as the base.
+
 ** ACTIVE Fix Minecart mechanics
 ** ACTIVE Collectible Item Quests [2/6]
 - [ ] Bananas
@@ -268,9 +271,6 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 ** TODO Update Kydreeok boss [0/2]
 - [ ] Improve fireball attack
 - [ ] Improve head/neck rotation
-
-** TODO Fortress of Secrets Cutscene
-Should use the Ganons Tower Crystal Cutscene as the base.
 
 ** TODO End Credits
 

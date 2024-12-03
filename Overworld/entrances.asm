@@ -1,4 +1,8 @@
-;Map16Definitions = $0F8000
+; =========================================================
+; Custom Entrance Tile Types
+; Can use eithe vanilla map16 @ $0F8000
+; Or ZS Expanded @ $3D8000
+
 Map16Definitions = $3D8000
 Overworld_DrawMap16_Persist = $1BC97C
 Overworld_DrawMap16_Anywhere = $1BC983
@@ -12,7 +16,6 @@ org $1BBBF4
   JSL Overworld_UseEntranceEntry
   RTL
 pullpc
-
 
 Overworld_UseEntranceEntry:
 {

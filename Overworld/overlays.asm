@@ -26,7 +26,7 @@ org $07866D
 ; 02 - Castle Bridge (OW 1B)
 ; 03 - Tail Palace (OW 2F)
 ; 04 - Goron Mines Entrance (OW 36)
-; 05 - TODO: Fortress of Secrets (OW 5E)
+; 05 - Fortress of Secrets (OW 5E)
 
 CameraCache = $0632
 
@@ -85,10 +85,6 @@ JSL Fortress_EntranceAnimation
 RTS
 
 pullpc
-
-; Zarby Notes
-; don't forget to set $C8 to zero (STZ.b $C8)
-; don't forget to set $B0 to zero (STZ.b $B0)
 
 ShakeScreen:
 {
@@ -665,258 +661,258 @@ Castle_EntranceAnimation:
   dw Castle_Frame1
   dw Castle_Frame2
   dw Castle_RestoreCamera
-}
 
-Castle_EndAnimation:
-{
-  INC.b $B0 ; increase frame
-  STZ.b $C8 ; reset timer for next frame
-  STZ.w $04C6
-  STZ.b $B0
-  STZ.w $0710
-  STZ.w $02E4
-  STZ.w SprFreeze
-  STZ.w $011A
-  STZ.w $011B
-  STZ.w $011C
-  STZ.w $011D
-  LDA.b #$1B ; SFX3.1B
-  STA.w $012F
-  ; set the overlay
-  LDX.b $8A
-  LDA.l $7EF280,X
-  ORA.b #$20
-  STA.l $7EF280,X
-  RTS
-}
-
-Castle_RestoreCamera:
-{
-  REP #$20
-
-  INC.w $061A : INC.w $061A
-  INC.w $0618 : INC.w $0618
-  INC.b $E8
-
-  LDA.w $0618 : CMP.w CameraCache : BNE +
-    SEP #$20
-    JSR Castle_EndAnimation
+  Castle_EndAnimation:
+  {
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    STZ.w $04C6
+    STZ.b $B0
+    STZ.w $0710
+    STZ.w $02E4
+    STZ.w SprFreeze
+    STZ.w $011A
+    STZ.w $011B
+    STZ.w $011C
+    STZ.w $011D
+    LDA.b #$1B ; SFX3.1B
+    STA.w $012F
+    ; set the overlay
+    LDX.b $8A
+    LDA.l $7EF280,X
+    ORA.b #$20
+    STA.l $7EF280,X
     RTS
-  +
-  SEP #$20
-  RTS
-}
+  }
 
-Castle_Frame0:
-{
-  #_1BD017: LDA.b #$02 ; SFX3.07
-  #_1BD019: STA.w $012F
-  LDA.b $C8 : BEQ .doInit ; Load the timer
-  JMP .notfirstframe
-  .doInit
-  ; Init code for the frame here
-  REP #$30 ; 16 bit mode
-  LDA.w #$0611
-  LDX.w #$031C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0613
-  LDX.w #$031E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0613
-  LDX.w #$0320
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0612
-  LDX.w #$0322
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0614
-  LDX.w #$039C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0613
-  LDX.w #$039E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0613
-  LDX.w #$03A0
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0615
-  LDX.w #$03A2
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0480
-  LDX.w #$029C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0479
-  LDX.w #$029E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0479
-  LDX.w #$02A0
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0481
-  LDX.w #$02A2
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  SEP #$30 ; 8 bit mode
-  INC.b $14 ; Do tiles transfer
-  .notfirstframe
-  JSR ShakeScreen ; make the screen shake
-  INC.b $C8 : LDA.b $C8 : CMP.b #$2E ; Load and compare timer
-  BNE .wait
-  INC.b $B0 ; increase frame
-  STZ.b $C8 ; reset timer for next frame
-  .wait
-  RTS
-}
+  Castle_RestoreCamera:
+  {
+    REP #$20
 
-Castle_Frame1:
-{
-  LDA.b #$16 ; SFX3.16
-  STA.w $012F
-  LDA.b $C8 : BEQ .doInit ; Load the timer
+    INC.w $061A : INC.w $061A
+    INC.w $0618 : INC.w $0618
+    INC.b $E8
+
+    LDA.w $0618 : CMP.w CameraCache : BNE +
+      SEP #$20
+      JSR Castle_EndAnimation
+      RTS
+    +
+    SEP #$20
+    RTS
+  }
+
+  Castle_Frame0:
+  {
+    #_1BD017: LDA.b #$02 ; SFX3.07
+    #_1BD019: STA.w $012F
+    LDA.b $C8 : BEQ .doInit ; Load the timer
     JMP .notfirstframe
-  .doInit
-  ; Init code for the frame here
-  REP #$30 ; 16 bit mode
-  LDA.w #$049E
-  LDX.w #$039C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$049C
-  LDX.w #$039E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0604
-  LDX.w #$03A0
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0608
-  LDX.w #$03A2
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$060A
-  LDX.w #$041C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0495
-  LDX.w #$041E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0496
-  LDX.w #$0420
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0499
-  LDX.w #$0422
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0602
-  LDX.w #$049C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0606
-  LDX.w #$049E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0606
-  LDX.w #$04A0
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$060E
-  LDX.w #$04A2
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0610
-  LDX.w #$051C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0606
-  LDX.w #$051E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0606
-  LDX.w #$0520
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$046C
-  LDX.w #$0522
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$046F
-  LDX.w #$059C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0469
-  LDX.w #$059E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$046A
-  LDX.w #$05A0
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$046E
-  LDX.w #$05A2
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  SEP #$30 ; 8 bit mode
-  INC.b $14 ; Do tiles transfer
-  .notfirstframe
-  JSR ShakeScreen ; make the screen shake
-  INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
-  BNE .wait
-  INC.b $B0 ; increase frame
-  STZ.b $C8 ; reset timer for next frame
-  .wait
-  RTS
-}
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$0611
+    LDX.w #$031C
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0613
+    LDX.w #$031E
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0613
+    LDX.w #$0320
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0612
+    LDX.w #$0322
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0614
+    LDX.w #$039C
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0613
+    LDX.w #$039E
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0613
+    LDX.w #$03A0
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0615
+    LDX.w #$03A2
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0480
+    LDX.w #$029C
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0479
+    LDX.w #$029E
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0479
+    LDX.w #$02A0
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0481
+    LDX.w #$02A2
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    JSR ShakeScreen ; make the screen shake
+    INC.b $C8 : LDA.b $C8 : CMP.b #$2E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    .wait
+    RTS
+  }
 
-Castle_Frame2:
-{
-  LDA.b $C8 : BEQ .doInit ; Load the timer
-  JMP .notfirstframe
-  .doInit
-  ; Init code for the frame here
-  REP #$30 ; 16 bit mode
-  LDA.w #$0108
-  LDX.w #$061C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$010A
-  LDX.w #$0622
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$04E2
-  LDX.w #$0620
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$04E2
-  LDX.w #$061E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  SEP #$30 ; 8 bit mode
-  INC.b $14 ; Do tiles transfer
-  .notfirstframe
-  JSR ShakeScreen ; make the screen shake
-  INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
-  BNE .wait
-  INC.b $B0 ; increase frame
-  STZ.b $C8 ; reset timer for next frame
-  .wait
-  RTS
-}
+  Castle_Frame1:
+  {
+    LDA.b #$16 ; SFX3.16
+    STA.w $012F
+    LDA.b $C8 : BEQ .doInit ; Load the timer
+      JMP .notfirstframe
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$049E
+    LDX.w #$039C
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$049C
+    LDX.w #$039E
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0604
+    LDX.w #$03A0
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0608
+    LDX.w #$03A2
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$060A
+    LDX.w #$041C
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0495
+    LDX.w #$041E
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0496
+    LDX.w #$0420
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0499
+    LDX.w #$0422
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0602
+    LDX.w #$049C
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0606
+    LDX.w #$049E
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0606
+    LDX.w #$04A0
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$060E
+    LDX.w #$04A2
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0610
+    LDX.w #$051C
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0606
+    LDX.w #$051E
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0606
+    LDX.w #$0520
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$046C
+    LDX.w #$0522
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$046F
+    LDX.w #$059C
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0469
+    LDX.w #$059E
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$046A
+    LDX.w #$05A0
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$046E
+    LDX.w #$05A2
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    JSR ShakeScreen ; make the screen shake
+    INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    .wait
+    RTS
+  }
 
-Castle_Frame3:
-{
-  LDA.b $C8 : BEQ .doInit ; Load the timer
-  JMP .notfirstframe
-  .doInit
-  ; Init code for the frame here
-  REP #$30 ; 16 bit mode
-  LDA.w #$0611
-  LDX.w #$039C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0612
-  LDX.w #$03A2
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0613
-  LDX.w #$039E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0613
-  LDX.w #$03A0
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$048F
-  LDX.w #$031C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$0474
-  LDX.w #$031E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$061C
-  LDX.w #$0320
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  LDA.w #$061A
-  LDX.w #$0322
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
-  SEP #$30 ; 8 bit mode
-  INC.b $14 ; Do tiles transfer
-  .notfirstframe
-  JSR ShakeScreen ; make the screen shake
-  INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
-  BNE .wait
-  INC.b $B0 ; increase frame
-  STZ.b $C8 ; reset timer for next frame
-  .wait
-  RTS
+  Castle_Frame2:
+  {
+    LDA.b $C8 : BEQ .doInit ; Load the timer
+    JMP .notfirstframe
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$0108
+    LDX.w #$061C
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$010A
+    LDX.w #$0622
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$04E2
+    LDX.w #$0620
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$04E2
+    LDX.w #$061E
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    JSR ShakeScreen ; make the screen shake
+    INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    .wait
+    RTS
+  }
+
+  Castle_Frame3:
+  {
+    LDA.b $C8 : BEQ .doInit ; Load the timer
+    JMP .notfirstframe
+    .doInit
+    ; Init code for the frame here
+    REP #$30 ; 16 bit mode
+    LDA.w #$0611
+    LDX.w #$039C
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0612
+    LDX.w #$03A2
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0613
+    LDX.w #$039E
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0613
+    LDX.w #$03A0
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$048F
+    LDX.w #$031C
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$0474
+    LDX.w #$031E
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$061C
+    LDX.w #$0320
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    LDA.w #$061A
+    LDX.w #$0322
+    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    SEP #$30 ; 8 bit mode
+    INC.b $14 ; Do tiles transfer
+    .notfirstframe
+    JSR ShakeScreen ; make the screen shake
+    INC.b $C8 : LDA.b $C8 : CMP.b #$1E ; Load and compare timer
+    BNE .wait
+    INC.b $B0 ; increase frame
+    STZ.b $C8 ; reset timer for next frame
+    .wait
+    RTS
+  }
 }
 
 ; =========================================================
@@ -1013,6 +1009,8 @@ TailPalace_EntranceAnimation:
     RTS
   }
 }
+
+; =========================================================
 
 Goron_EntranceAnimation:
 {
@@ -1145,7 +1143,7 @@ Goron_EntranceAnimation:
   RTS
 }
 
-
+; =========================================================
 
 Fortress_EntranceAnimation:
 {
