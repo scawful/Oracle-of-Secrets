@@ -286,20 +286,19 @@ print  "End of goron.asm                  ", pc
 ; Sprite Recoil and Death
 ; TODO: Sprite_AttemptKillingOfKin
 ; Kydreeok Head die like Sidenexx
-org $06F003
-  CMP.b #$CF
+org $06F003 : CMP.b #$CF
+
+; Remove sidenexx death from booki
+org $06EFFF : NOP #4
 
 ; Make Dark Link die like sidenexx
-org $06F003
-  CMP.b #$C1
+org $06F003 : CMP.b #$C1
 
 ; Make Helmet ChuChu recoil link
-org $06F37D
-  CMP.b #$05
+org $06F37D : CMP.b #$05
 
 ; Make Kydreeok head recoil Link
-org $06F381
-  CMP.b #$CF
+org $06F381 : CMP.b #$CF
 
 ; =========================================================
 
@@ -336,11 +335,9 @@ ShopItem_Banana:
     BCC $F1A1 ; ShopItem_GiveFailureMessage
 
     STZ.w SprState,X
-
     INC.b Bananas
 
-    LDY.b #$42
-    JSR $F366 ; ShopItem_HandleReceipt
+    LDY.b #$42 : JSR $F366 ; ShopItem_HandleReceipt
 
   .exit
   RTS
@@ -364,59 +361,42 @@ org $1EF42E
 
 ; Octoballoon_FormBabby
 ; Reduce by half the number of babies spawned
-org $06D814
-  LDA.b #$02
+org $06D814 : LDA.b #$02
 
 ; SpritePrep_HauntedGroveOstritch
-org $068BB2
-NOP #11
+org $068BB2 : NOP #11
 
 ; HauntedGroveRabbit_Idle
-org $1E9A8F
-NOP #5
+org $1E9A8F : NOP #5
 
 ; MedallionTablet (Goron)
-org $05F274
-  LDA.l $7EF378 ; Unused SRAM
+org $05F274 : LDA.l $7EF378 ; Unused SRAM
 
-org $08C2E3
-  dw $006F ; BUTTER SWORD DIALOGUE
+org $08C2E3 : dw $006F ; BUTTER SWORD DIALOGUE
 
 ; Fix the capital 'B' debug item cheat.
-org $0CDC26
-    db $80 ; replace a $F0 (BEQ) with a $80 (BRA).
+org $0CDC26 : db $80 ; replace a $F0 (BEQ) with a $80 (BRA).
 
 ; Update Catfish Item Get to Bottle
-org $1DE184
-#_1DE184: LDA.b #$16 ; ITEMGET 11
-#_1DE186: STA.w $0D90,X
+org $1DE184 : LDA.b #$16 : STA.w $0D90, X
 
 ; Follower_Disable
 ; Don't disable Kiki so we can switch maps with him.
-org $09ACF3
-  LDA.l $7EF3CC
-  CMP.b #$0E
+org $09ACF3 : LDA.l $7EF3CC : CMP.b #$0E
 
 ; Kiki, don't care if we're not in dark world
-org $099FEB
-#_099FEB: LDA.b $8A
-#_099FED: AND.b #$FF
+org $099FEB : LDA.b $8A : AND.b #$FF
 
-org $1EE48E
-  NOP #6
+org $1EE48E : NOP #6
 
 ; Kiki activate cutscene 3 (tail palace)
-org $1EE630
-LDA.b #$03 : STA.w $04C6
+org $1EE630 : LDA.b #$03 : STA.w $04C6
 
 ; Kid at ranch checks for flute
-org $05FF7D
-  LDA.l $7EF34C
-  CMP.b #$01
+org $05FF7D : LDA.l $7EF34C : CMP.b #$01
 
 ; Raven Damage (LW/DW)
-org $068963
-  db $81, $84
+org $068963 : db $81, $84
 
 ; Running Man draw palette
 org $05E9CD
