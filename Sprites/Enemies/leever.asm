@@ -4,8 +4,7 @@ pushpc
 
 Sprite_71_Leever =  $06CBA2
 
-org $069365
-  dw Sprite_71_Leever_Alt
+org $069365 : dw Sprite_71_Leever_Alt
 
 ; UNREACHABLE_06A540
 org $06A540
@@ -46,6 +45,7 @@ Sprite_Leever_Move:
 
 Sprite_Leever_Main:
 {
+  JSL Sprite_DamageFlash_Long
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
@@ -119,6 +119,7 @@ Sprite_Leever_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
+  LDA.w SprFlash, X : STA $08
 
 
   PHX
@@ -152,7 +153,7 @@ Sprite_Leever_Draw:
   INY
   LDA .chr, X : STA ($90), Y
   INY
-  LDA .properties, X : STA ($90), Y
+  LDA .properties, X : ORA $08 : STA ($90), Y
 
   PHY
 
