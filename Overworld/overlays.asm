@@ -1158,6 +1158,19 @@ Fortress_EntranceAnimation:
   dw Fortress_Frame3
   dw Fortress_Frame4
 
+  Fortress_SFX:
+  {
+    LDA.b #$05 ; SFX1.05
+    STA.w $012D
+
+    LDA.b #$0C ; SFX2.0C
+    STA.w $012E
+
+    LDA.b #$07 ; SFX3.07
+    STA.w $012F
+    RTS
+  }
+
   Fortress_Frame0:
   {
     LDA.b $C8 : BEQ .doInit ; Load the timer
@@ -1197,14 +1210,7 @@ Fortress_EntranceAnimation:
     BNE .wait
     INC.b $B0 ; increase frame
     STZ.b $C8 ; reset timer for next frame
-    LDA.b #$05 ; SFX1.05
-    STA.w $012D
-
-    LDA.b #$0C ; SFX2.0C
-    STA.w $012E
-
-    LDA.b #$07 ; SFX3.07
-    STA.w $012F
+    JSR Fortress_SFX
     .wait
     RTS
   }
@@ -1247,14 +1253,7 @@ Fortress_EntranceAnimation:
     BNE .wait
     INC.b $B0 ; increase frame
     STZ.b $C8 ; reset timer for next frame
-    LDA.b #$05 ; SFX1.05
-    STA.w $012D
-
-    LDA.b #$0C ; SFX2.0C
-    STA.w $012E
-
-    LDA.b #$07 ; SFX3.07
-    STA.w $012F
+    JSR Fortress_SFX
     .wait
     RTS
   }
@@ -1297,14 +1296,7 @@ Fortress_EntranceAnimation:
     BNE .wait
     INC.b $B0 ; increase frame
     STZ.b $C8 ; reset timer for next frame
-    LDA.b #$05 ; SFX1.05
-    STA.w $012D
-
-    LDA.b #$0C ; SFX2.0C
-    STA.w $012E
-
-    LDA.b #$07 ; SFX3.07
-    STA.w $012F
+    JSR Fortress_SFX
     .wait
     RTS
   }
@@ -1346,14 +1338,7 @@ Fortress_EntranceAnimation:
     BNE .wait
     INC.b $B0 ; increase frame
     STZ.b $C8 ; reset timer for next frame
-    LDA.b #$05 ; SFX1.05
-    STA.w $012D
-
-    LDA.b #$0C ; SFX2.0C
-    STA.w $012E
-
-    LDA.b #$07 ; SFX3.07
-    STA.w $012F
+    JSR Fortress_SFX
     .wait
     RTS
   }
