@@ -100,16 +100,13 @@ Graphics_Transfer:
 print "End of Sprites Bank 30            ", pc
 
 ; UnderworldTransition_ScrollRoom
-org $02BE5E
-  JSL Graphics_Transfer
+org $02BE5E : JSL Graphics_Transfer
 
 ; Whirlpool
-org $1EEEE4
-  JSL DontTeleportWithoutFlippers
+org $1EEEE4 : JSL DontTeleportWithoutFlippers
 
 ; SpriteDraw_Roller
-org $058EE6
-  JSL PutRollerBeneathLink
+org $058EE6 : JSL PutRollerBeneathLink
 
 ; =========================================================
 
@@ -197,8 +194,6 @@ print  "End of wolfos.asm                 ",  pc
 Sprite_IceBlock = $D5
 incsrc "Sprites/Objects/ice_block.asm"
 print  "End of ice_block.asm              ",  pc
-
-; =========================================================
 
 incsrc "Sprites/NPCs/ranch_girl.asm"
 print  "End of Ranch Girl.asm             ", pc
