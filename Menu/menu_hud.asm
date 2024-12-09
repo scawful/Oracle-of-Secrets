@@ -324,36 +324,35 @@ HUD_UpdateHearts:
   ; Draws hearts in a painfully slow loop
   LDX.w #$0000
 
-.next_heart
+  .next_heart
   LDA.b $00 : CMP.w #$0008 : BCC .less_than_one_heart
-  ; Notice no SEC was needed since carry is assumedly set.
-  SBC.w #$0008 : STA.b $00
-  LDY.w #$0004
-  JSR   .draw_heart
-  INX   #2
-  BRA   .next_heart
+    ; Notice no SEC was needed since carry is assumedly set.
+    SBC.w #$0008 : STA.b $00
+    LDY.w #$0004
+    JSR   .draw_heart
+    INX   #2
+    BRA   .next_heart
+  .less_than_one_heart
 
-.less_than_one_heart
   CMP.w #$0005 : BCC .half_heart_or_less
-  LDY.w #$0004
-  BRA   .draw_heart
+    LDY.w #$0004
+    BRA   .draw_heart
+  .half_heart_or_less
 
-.half_heart_or_less
   CMP.w #$0001 : BCC .empty_heart
-  LDY.w #$0002
-  BRA   .draw_heart
-
-.empty_heart
+    LDY.w #$0002
+    BRA   .draw_heart
+  .empty_heart
   RTS
 
-.draw_heart
+  .draw_heart
   ; Compare number of hearts so far on current line to 10
   CPX.w #$0014 : BCC .no_line_change
-  ; if not, we have to move down one tile in the tilemap
-  LDX.w #$0000
-  LDA.b $07 : CLC : ADC.w #$0040 : STA.b $07
+    ; if not, we have to move down one tile in the tilemap
+    LDX.w #$0000
+    LDA.b $07 : CLC : ADC.w #$0040 : STA.b $07
+  .no_line_change
 
-.no_line_change
   LDA.b [$0A], Y : TXY : STA.b [$07], Y
   RTS
 }
@@ -362,26 +361,26 @@ HUD_UpdateHearts:
 
 HexToDecimal:
 {
-    REP   #$30
-    STZ   $0003
-    LDX.w #$0000
-    LDY.w #$0002
-.next_digit
-    CMP $F9F9,       Y : BCC .next_lowest_10s_place
+  REP   #$30
+  STZ   $0003
+  LDX.w #$0000
+  LDY.w #$0002
+  .next_digit
+  CMP $F9F9, Y : BCC .next_lowest_10s_place
     SEC : SBC $F9F9, Y
     INC $03,         X
     BRA .next_digit
-.next_lowest_10s_place
+  .next_lowest_10s_place
     INX   : DEY #2
     BPL   .next_digit
     STA   $05
     SEP   #$30
     LDX.b #$02
-.set_next_digit_tile
+  .set_next_digit_tile
     LDA   $03, X : CMP.b #$7F
     BEQ   .blank_digit
     ORA.b #$90
-.blank_digit
+  .blank_digit
     STA $03, X
     DEX : BPL .set_next_digit_tile
     RTS
