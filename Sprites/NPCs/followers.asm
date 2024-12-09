@@ -819,7 +819,7 @@ DrawMinecartFollower:
       .finish_prep
       LDA.w POSYH : STA.w SprYH, X
       LDA.w POSXH : STA.w SprXH, X
-      LDA.w !MinecartDirection : CLC : ADC.b #$03 : STA.w SprSubtype, X
+      LDA.w !MinecartDirection : CLC : ADC.b #$04 : STA.w SprSubtype, X
 
       LDA .direction_to_anim, X : STA $0D90, X
       JSL Sprite_Minecart_Prep

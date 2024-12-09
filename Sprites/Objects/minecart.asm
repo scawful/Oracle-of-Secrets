@@ -110,7 +110,7 @@ Sprite_Minecart_Prep:
 
   ; If the subtype is > 4, then it's an active cart
   LDA.w SprSubtype, X : CMP.b #$04 : BCC +
-    LDA.w SprSubtype, X : SEC : SBC.b #$03 : STA.w SprSubtype, X
+    LDA.w SprSubtype, X : SEC : SBC.b #$04 : STA.w SprSubtype, X
     LDA.b #$01 : STA.w SprMiscF, X ; Set the auto-move flag
   +
 
@@ -171,7 +171,7 @@ endmacro
 macro MoveCart()
   JSR HandleTileDirections
   JSR HandleDynamicSwitchTileDirections
-  LDA #$35 : STA $012E                  ; Cart SFX
+  LDA #$35 : STA $012E ; Cart SFX
 endmacro
 
 macro StopCart()
@@ -627,7 +627,7 @@ HandleTileDirections:
   JSR CheckForOutOfBounds
   JSR CheckForStopTiles
   JSR CheckForCornerTiles : BCC .done
-  JSR CheckForTrackTiles
+  ; JSR CheckForTrackTiles
   .done
   LDA #$0F : STA.w SprTimerA, X
   RTS
