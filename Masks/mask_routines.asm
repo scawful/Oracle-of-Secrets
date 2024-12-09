@@ -18,12 +18,10 @@ endmacro
 ; Change Link's sprite by setting $BC to the gfx bank
 
 ; InitializeMemoryAndSRAM
-org $008827
-  JSL StartupMasks
+org $008827 : JSL StartupMasks
 
 ; Link Sprite hook before game starts
-org $008A01
-  LDA $BC
+org $008A01 :  LDA $BC
 
 ; =========================================================
 ; Change Link's palette based on $02B2 (mask value)
@@ -42,12 +40,10 @@ org $1BEE1B
 ; =========================================================
 
 ; GameOver_DelayBeforeIris
-org $09F347
-  JSL ForceResetMask_GameOver
+org $09F347 : JSL ForceResetMask_GameOver
 
 ; Module17_SaveAndQuit
-org $09F7B5
-  JSL ForceResetMask_SaveAndQuit
+org $09F7B5 : JSL ForceResetMask_SaveAndQuit
 
 ; =========================================================
 ; EXPANDED SPACE
@@ -61,7 +57,6 @@ StartupMasks:
 
   ; set links sprite bank
   LDA #$10 : STA $BC
-
   RTL
 }
 
@@ -206,7 +201,6 @@ Palette_ArmorAndGloves:
 
 ; =========================================================
 ; Overworld Palette Persist
-
 
 Overworld_CgramAuxToMain_Override:
 {

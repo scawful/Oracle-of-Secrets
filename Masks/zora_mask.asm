@@ -13,7 +13,7 @@
 
 UpdateZoraPalette:
 {
-  REP #$30   ; change 16 bit mode
+  REP #$30
   LDX #$001E
 
   .loop
@@ -25,8 +25,8 @@ UpdateZoraPalette:
   STA $7EC6E0, X
   DEX : DEX : BPL .loop
 
-  SEP #$30 ; go back to 8 bit mode
-  INC $15  ; update the palette
+  SEP #$30
+  INC $15
   RTL
 }
 
@@ -45,10 +45,7 @@ zora_palette:
 ;   dw #$6565, #$7271, #$2AB7, #$477E, #$1997, #$14B5, #$459B, #$69F2
 ;   dw #$7AB8, #$2609, #$19D8, #$3D95, #$567C, #$1890, #$52F6, #$2357
 
-; =========================================================
-
-org $0998FC
-  AddTransitionSplash:
+AddTransitionSplash = $0998FC
 
 ; =========================================================
 
@@ -56,13 +53,12 @@ org $0998FC
 org $07A569
 LinkItem_ZoraMask:
 {
-    ; No removing the mask whilst diving.
-    LDA !ZoraDiving : BNE .return 
-      LDA.b #$02
-      JSL Link_TransformMask
-
+  ; No removing the mask whilst diving.
+  LDA !ZoraDiving : BNE .return
+    LDA.b #$02
+    JSL Link_TransformMask
   .return
-    RTS
+  RTS
 }
 
 assert pc() <= $07A5CE
@@ -70,7 +66,7 @@ assert pc() <= $07A5CE
 ; =========================================================
 
 ; End of LinkState_Swimming
-org    $079781
+org $079781
   JSR LinkState_UsingZoraMask
   RTS
 
@@ -105,16 +101,15 @@ LinkState_UsingZoraMask:
 
     ; Check if already underwater
     LDA !ZoraDiving : BEQ .dive
+      STZ $55            ; Reset cape flag
+      STZ !ZoraDiving    ; Reset underwater flag
+      STZ $0351          ; Reset ripple flag
+      STZ $037B          ; Reset invincibility flag
+      LDA #$04 : STA $5D ; Put Link in Swimming State
+      JMP .return
+    .dive
 
-    STZ $55            ; Reset cape flag
-    STZ !ZoraDiving    ; Reset underwater flag
-    STZ $0351          ; Reset ripple flag
-    STZ $037B          ; Reset invincibility flag
-    LDA #$04 : STA $5D ; Put Link in Swimming State
 
-    JMP .return
-
-  .dive
     ; Handle overworld underwater swimming
     LDA #$01 : STA $55   ; Set cape flag
     STA $037B            ; Set invincible flag
