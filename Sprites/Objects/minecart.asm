@@ -251,25 +251,27 @@ Sprite_Minecart_Main:
     LDA.w LinkCarryOrToss : AND #$03 : BNE .lifting
       LDA.w SprTimerA, X : BNE .not_ready
         JSR CheckIfPlayerIsOn : BCC .not_ready
-        LDA.w SprMiscF, X : BNE .active_cart
-          LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
-        .active_cart
-        JSL Link_CancelDash                  ; Stop the player from dashing
-        LDA #$02 : STA $02F5                 ; Somaria platform and moving
-        LDA.w SprCachedY : SEC : SBC #$0B : STA $20 ; Adjust player pos
-        LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
+          ; If the cart is active, we move immediately
+          LDA.w SprMiscF, X : BNE .active_cart
+            ; Check for B button
+            LDA $F4 : AND.b #$80 : BEQ .not_ready
+          .active_cart
 
-        ; Check if the cart is facing east or west
-        LDA.w SprSubtype, X : CMP.b #$03 : BNE .opposite_direction
-          STA.w !MinecartDirection
-          LDA   #$02 : STA !SpriteDirection, X
-          %GotoAction(5)  ; Minecart_MoveWest
+          JSL Link_CancelDash
+          LDA #$02 : STA.w LinkSomaria
+          LDA #$01 : STA !LinkInCart
+          ; Adjust player pos
+          LDA.w SprCachedY : SEC : SBC #$0B : STA $20
+
+          ; Check if the cart is facing east or west
+          LDA.w SprSubtype, X : CMP.b #$03 : BNE +
+            JSR Minecart_SetDirectionWest
+            %GotoAction(5)  ; Minecart_MoveWest
+            RTS
+          +
+          JSR Minecart_SetDirectionEast
+          %GotoAction(3) ; Minecart_MoveEast
           RTS
-        .opposite_direction
-        STA.w !MinecartDirection
-        LDA   #$03 : STA !SpriteDirection, X
-        %GotoAction(3) ; Minecart_MoveEast
-        RTS
       .not_ready
     .lifting
     JSR Minecart_HandleLiftAndToss
@@ -284,25 +286,27 @@ Sprite_Minecart_Main:
     LDA.w LinkCarryOrToss : AND #$03 : BNE .lifting
       LDA.w SprTimerA, X : BNE .not_ready
         JSR CheckIfPlayerIsOn : BCC .not_ready
-        LDA.w SprMiscF, X : BNE .active_cart
-          LDA $F4 : AND.b #$80 : BEQ .not_ready ; Check for B button
-        .active_cart
-        JSL Link_CancelDash                  ; Stop the player from dashing
-        LDA #$02 : STA $02F5                 ; Somaria platform and moving
-        LDA.w SprCachedY : SEC : SBC #$0B : STA $20 ; Adjust player pos
-        LDA #$01 : STA !LinkInCart           ; Set Link in cart flag
+          ; If the cart is active, we move immediately
+          LDA.w SprMiscF, X : BNE .active_cart
+            ; Check for B button
+            LDA $F4 : AND.b #$80 : BEQ .not_ready
+          .active_cart
 
-        ; Check if the cart is facing north or south
-        LDA.w SprSubtype, X : BEQ .opposite_direction
-          STA.w !MinecartDirection
-          LDA   #$01 : STA !SpriteDirection, X
-          %GotoAction(4)  ; Minecart_MoveSouth
+          JSL Link_CancelDash
+          LDA.b #$02 : STA.w LinkSomaria
+          LDA.b #$01 : STA.w !LinkInCart
+          ; Adjust player pos
+          LDA.w SprCachedY : SEC : SBC #$0B : STA $20
+
+          ; Check if the cart is facing north or south
+          LDA.w SprSubtype, X : BEQ +
+            JSR Minecart_SetDirectionSouth
+            %GotoAction(4)  ; Minecart_MoveSouth
+            RTS
+          +
+          JSR Minecart_SetDirectionNorth
+          %GotoAction(2)  ; Minecart_MoveNorth
           RTS
-        .opposite_direction
-        STA.w !MinecartDirection
-        LDA   #$00 : STA !SpriteDirection, X
-        %GotoAction(2)  ; Minecart_MoveNorth
-        RTS
       .not_ready
     .lifting
     JSR Minecart_HandleLiftAndToss
@@ -437,7 +441,7 @@ HandlePlayerCameraAndMoveCart:
 
 StopCart:
 {
-  STZ.w $02F5
+  STZ.w LinkSomaria
   STZ.w SprYSpeed, X
   STZ.w SprXSpeed, X
   STZ.w !LinkInCart
