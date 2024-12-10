@@ -90,18 +90,16 @@ OverworldTransition_CheckForGbcLink:
 }
 
 ; Module08_02_LoadAndAdvance
-org $02EDC0
-  JSL LoadOverworld_CheckForGbcLink
+org $02EDC0 : JSL LoadOverworld_CheckForGbcLink
 
-org $02ABDA
-  JSL OverworldTransition_CheckForGbcLink
+; Overworld_RunScrollTransition
+org $02ABDA : JSL OverworldTransition_CheckForGbcLink
 
-org $07A9B1
-LinkMode_MagicMirror:
-  JSL LinkState_GameboyForm
+; LinkState_CrossingWorlds
+org $07A9B1 : JSL LinkState_GameboyForm
 
-org $0287A4
-  JSL LinkState_GameboyInDungeonEntrance
+; Module07_Underworld
+org $0287A4 : JSL LinkState_GameboyInDungeonEntrance
 
 pullpc
 LinkState_GameboyForm:
