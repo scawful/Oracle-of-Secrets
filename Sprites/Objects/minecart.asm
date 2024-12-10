@@ -20,6 +20,10 @@
 ;                        a new minecart sprite in the room at Link's
 ;                        location and configuring the direction to move
 ;                        in automatically (no B button to activate)
+;
+; NOTE: Current implementation forbades any two carts from co-existing
+; as the !MinecartDirection variable will be overrode by the prep of
+; the other cart and invalidate the current movement.
 
 !SPRID              = Sprite_Minecart
 !NbrTiles           = 08    ; Number of tiles used in a frame
