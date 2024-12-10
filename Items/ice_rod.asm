@@ -52,26 +52,20 @@ LinkItem_IceRod:
 
   ; calculation procedure to get correct x,y coordinates for new tile
   LDA $00 : SEC : SBC $0708 : AND $070A
-  ASL A
-  ASL A
-  ASL A
-  STA $06
+  ASL A : ASL A : ASL A : STA $06
   LDA $02 : SEC : SBC $070C : AND $070E : ORA $06
   TAX
   LDA #$00B7 : STA $7E2000, X ; store new 16x16 ice tile into ram (property of tile!)
   CLC : STZ $02 ; calculation procedure to get 8x8 vram map address (look of tile)
   TXA
   AND #$003F : CMP #$0020 : BCC $05
-  LDA #$0400 : STA $02
+    LDA #$0400 : STA $02
   TXA
   AND #$0FFF : CMP #$0800 : BCC $07
-  LDA $02 : ADC #$07FF : STA $02
+    LDA $02 : ADC #$07FF : STA $02
   TXA
   AND #$001F : ADC $02 : STA $02
-  TXA
-  AND #$0780
-  LSR A
-  ADC $02
+  TXA : AND #$0780 : LSR A : ADC $02
   STA $2116 ; store vram address for upper tile part (8x16) to $2116
   STA $7ED007
 
@@ -112,6 +106,7 @@ VramDmaTransfer:
 }
 
 ; bug fix to not swim through tiles but jump onto them
+; TileBehavior_GanonIce
 org $07DC9E
   JSL $0EFC80
   NOP

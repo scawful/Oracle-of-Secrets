@@ -112,6 +112,7 @@ Honeycomb  = $7EF393
 DekuSticks = $7EF395
 
 TingleMaps = $7EF396
+TingleId   = $7EF397
 
 ; .dgi zktm
 ;   m - Mushroom Grotto
