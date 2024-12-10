@@ -93,13 +93,6 @@ Sprite_MoveAltitude:
   RTL
 }
 
-Sprite_GetDirectionToFacePlayer:
-{
-  JSL Sprite_DirectionToFacePlayer
-
-  RTL
-}
-
 ; =========================================================
 ; make the sprite bounce toward player
 ; movement, collision are handled by this function
@@ -308,19 +301,17 @@ Sprite_DamageFlash_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_Damage_Flash:
 {
-  LDA $0EF0, X : BEQ .dontFlash
+  LDA.w SprDeath, X : BEQ .dont_flash
     ; Change the palette to the next in the cycle
-    LDA.w SprFlash, X : INC : CMP.b #$08 : BNE .dontReset
+    LDA.w SprFlash, X : INC : CMP.b #$08 : BNE .dont_reset
       LDA.b #$00
-    .dontReset
+    .dont_reset
     STA.w SprFlash, X
     BRA .flash
 
-  .dontFlash
+  .dont_flash
   STZ.w SprFlash, X
 
   .flash
