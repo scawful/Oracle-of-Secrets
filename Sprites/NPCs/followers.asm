@@ -69,20 +69,20 @@ LoadFollowerGraphics = $00D423
 
 ; org $099F99
 ; #Follower_AIVectors:
-;   dw Follower_BasicMover   ; 0x01 - Zelda (Impa)
-;   dw Follower_OldMan       ; 0x02 - Old man that stops following you
-;   dw Follower_OldManUnused ; 0x03 - Unused old man
-;   dw Follower_OldMan       ; 0x04 - Normal old man
-;   dw Follower_Telepathy    ; 0x05 - Zelda rescue telepathy
-;   dw Follower_BasicMover   ; 0x06 - Blind maiden
-;   dw Follower_BasicMover   ; 0x07 - Frogsmith
-;   dw Follower_BasicMover   ; 0x08 - Smithy
-;   dw Follower_BasicMover   ; 0x09 - Locksmith (Zora Baby)
-;   dw Follower_BasicMover   ; 0x0A - Kiki
-;   dw Follower_OldManUnused ; 0x0B - Minecart Follower
-;   dw Follower_BasicMover   ; 0x0C - Purple chest
-;   dw Follower_BasicMover   ; 0x0D - Super bomb
-;   dw Follower_Telepathy    ; 0x0E - Master Sword telepathy
+; Follower_BasicMover   ; 0x01 - Zelda (Impa)
+; Follower_OldMan       ; 0x02 - Old man that stops following you
+; Follower_OldManUnused ; 0x03 - Unused old man
+; Follower_OldMan       ; 0x04 - Normal old man
+; Follower_Telepathy    ; 0x05 - Zelda rescue telepathy
+; Follower_BasicMover   ; 0x06 - Blind maiden
+; Follower_BasicMover   ; 0x07 - Frogsmith
+; Follower_BasicMover   ; 0x08 - Smithy
+; Follower_BasicMover   ; 0x09 - Locksmith (Zora Baby)
+; Follower_BasicMover   ; 0x0A - Kiki
+; Follower_OldManUnused ; 0x0B - Minecart Follower
+; Follower_BasicMover   ; 0x0C - Purple chest
+; Follower_BasicMover   ; 0x0D - Super bomb
+; Follower_Telepathy    ; 0x0E - Master Sword telepathy
 
 ; =========================================================
 ; Zora Baby Follower Sprite
@@ -109,8 +109,7 @@ ZoraBaby_RevertToSprite:
   LDA.b #$FF : STA.w SprTimerB, Y
   PLX
 
-  LDA.b #$00
-  STA.l $7EF3CC
+  LDA.b #$00 : STA.l $7EF3CC
 
   STZ.b $5E
 
@@ -442,17 +441,13 @@ pushpc
 
 ; Old man gives link the "shovel"
 ; Now the goldstar hookshot upgrade
-org $1EE9FF
-  LDY.b #$13 ; ITEMGET 1A
-  STZ.w $02E9
+org $1EE9FF : LDY.b #$13 : STZ.w $02E9
 
 ; FindEntrance
-org $1BBD3C
-  CMP.w #$04
+org $1BBD3C : CMP.w #$04
 
 ; Underworld_LoadEntrance
-org $02D98B
-  CMP.w #$02
+org $02D98B : CMP.w #$02
 
 org $1EE8F1
 SpritePrep_OldMan:
@@ -464,33 +459,27 @@ SpritePrep_OldMan:
 
   .main
   INC.w SprBulletproof, X
-
-
-  ; LDA.b $A0 : CMP.b #$E4 ; ROOM 00E4
   JSL OldMan_ExpandedPrep : BCS .not_home
     LDA.b #$02 : STA.w $0E80, X
     RTS
-
   .not_home
+
   LDA.l $7EF3CC : CMP.b #$00 : BNE .dont_spawn
 
-  ; Check for lv2 hookshot instead of mirror
-  LDA.l $7EF342 : CMP.b #$02 : BNE .spawn
+    ; Check for lv2 hookshot instead of mirror
+    LDA.l $7EF342 : CMP.b #$02 : BNE .spawn
+      STZ.w SprState, X
+    .spawn
+    ; FOLLOWER 04
+    LDA.b #$04 : STA.l $7EF3CC
 
-  STZ.w SprState, X
+    PHX
+    JSL LoadFollowerGraphics
+    PLX
 
-  .spawn
-  ; FOLLOWER 04
-  LDA.b #$04 : STA.l $7EF3CC
+    LDA.b #$00 : STA.l $7EF3CC
+    RTS
 
-  PHX
-  JSL LoadFollowerGraphics
-  PLX
-
-  LDA.b #$00
-  STA.l $7EF3CC
-
-  RTS
   .dont_spawn
   STZ.w SprState, X
 
@@ -640,16 +629,16 @@ FollowerDraw_CalculateOAMCoords:
 
 MinecartFollower_Top:
 {
-    SEP #$30
-    JSR FollowerDraw_CalculateOAMCoords
-    LDA #$08
-    JSL OAM_AllocateFromRegionB
+  SEP #$30
+  JSR FollowerDraw_CalculateOAMCoords
+  LDA #$08
+  JSL OAM_AllocateFromRegionB
 
-    LDA $02CF : TAY
-    LDA .start_index, Y : STA $06
-    PHX
-    LDX .nbr_of_tiles, Y ; amount of tiles -1
-    LDY.b #$00
+  LDA $02CF : TAY
+  LDA .start_index, Y : STA $06
+  PHX
+  LDX .nbr_of_tiles, Y ; amount of tiles -1
+  LDY.b #$00
   .nextTile
 
     PHX                 ; Save current Tile index
@@ -666,10 +655,9 @@ MinecartFollower_Top:
     CLC   : ADC #$0010 : CMP.w #$0100
     SEP   #$20
     BCC   .on_screen_y
-
-    LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-    STA   $0E
-  .on_screen_y
+      LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
+      STA   $0E
+    .on_screen_y
 
     PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
     INY
@@ -683,9 +671,8 @@ MinecartFollower_Top:
     PLY : INY
     PLX : DEX : BPL .nextTile
 
-    PLX
-
-    RTS
+  PLX
+  RTS
 
   .start_index:
       db $00, $02, $04, $06
@@ -715,17 +702,17 @@ MinecartFollower_Top:
 
 MinecartFollower_Bottom:
 {
-    SEP #$30
+  SEP #$30
 
-    JSR FollowerDraw_CalculateOAMCoords
-    LDA #$08
-    JSL OAM_AllocateFromRegionC
-    LDA $02CF : TAY
-    LDA .start_index, Y : STA $06
+  JSR FollowerDraw_CalculateOAMCoords
+  LDA #$08
+  JSL OAM_AllocateFromRegionC
+  LDA $02CF : TAY
+  LDA .start_index, Y : STA $06
 
-    PHX
-    LDX .nbr_of_tiles, Y ; amount of tiles -1
-    LDY.b #$00
+  PHX
+  LDX .nbr_of_tiles, Y ; amount of tiles -1
+  LDY.b #$00
   .nextTile
 
     PHX ; Save current Tile Index?
@@ -742,10 +729,9 @@ MinecartFollower_Bottom:
     CLC   : ADC #$0010 : CMP.w #$0100
     SEP   #$20
     BCC   .on_screen_y
-
-    LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-    STA   $0E
-  .on_screen_y
+      LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
+      STA   $0E
+    .on_screen_y
 
     PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
     INY
@@ -759,9 +745,9 @@ MinecartFollower_Bottom:
     PLY : INY
     PLX : DEX : BPL .nextTile
 
-    PLX
+  PLX
 
-    RTS
+  RTS
 
   .start_index:
       db $00, $02, $04, $06
@@ -923,7 +909,6 @@ CheckForMinecartFollowerDraw:
   PHB : PHK : PLB
   LDA.l $7EF3CC : CMP.b #$0B : BNE .not_minecart
     JSR DrawMinecartFollower
-
   .not_minecart
   ; LDA.b #$10 : STA.b $5E
   PLB
@@ -932,11 +917,9 @@ CheckForMinecartFollowerDraw:
 
 CheckForFollowerInterroomTransition:
 {
-  PHB : PHK : PLB
   LDA.w !LinkInCart : BEQ .not_in_cart
     LDA.b #$0B : STA $7EF3CC
   .not_in_cart
-  PLB
   JSL $01873A ; Underworld_LoadRoom
   RTL
 }
@@ -944,11 +927,9 @@ CheckForFollowerInterroomTransition:
 CheckForFollowerIntraroomTransition:
 {
   STA.l $7EC007
-  PHB : PHK : PLB
   LDA.w !LinkInCart : BEQ .not_in_cart
     LDA.b #$0B : STA $7EF3CC
   .not_in_cart
-  PLB
   RTL
 }
 
@@ -960,10 +941,9 @@ org $09A41F
   RTS
 
 ; Module07_02_01_LoadNextRoom
-org $028A5B
-  JSL CheckForFollowerInterroomTransition
+org $028A5B : JSL CheckForFollowerInterroomTransition
 
-org $0289BF
-  JSL CheckForFollowerIntraroomTransition
+; UnderworldTransition_Intraroom_PrepTransition
+org $0289BF : JSL CheckForFollowerIntraroomTransition
 
 pullpc
