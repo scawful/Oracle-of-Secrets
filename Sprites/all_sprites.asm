@@ -1,9 +1,9 @@
 ; =========================================================
 
-incsrc ZSpriteLib/sprite_macros.asm
+incsrc Core/sprite_macros.asm
 
 org    $308000
-incsrc ZSpriteLib/sprite_new_table.asm
+incsrc Core/sprite_new_table.asm
 
 Sprite_Farore    = $73
 incsrc "Sprites/NPCs/farore.asm"
@@ -115,7 +115,7 @@ print  "Bank 31 Sprites"
 print  ""
 
 org    $318000
-incsrc ZSpriteLib/sprite_functions.asm
+incsrc Core/sprite_functions.asm
 print  "End of sprite_functions.asm       ", pc
 
 Sprite_KydrogBoss = $CB
