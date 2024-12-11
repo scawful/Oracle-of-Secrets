@@ -775,6 +775,9 @@ MinecartFollower_Bottom:
       db $3D, $7D
 }
 
+Minecart_AnimDirection:
+  db $02, $00, $02, $00
+
 MinecartFollower_TransitionToSprite:
 {
   LDA.b #$A3
@@ -782,10 +785,10 @@ MinecartFollower_TransitionToSprite:
   TYX
   JSL Sprite_SetSpawnedCoords
   LDA.w !MinecartDirection : CMP.b #$00 : BEQ .vert_adjust
-  CMP.b #$02 : BEQ .vert_adjust
-  LDA.w POSY : CLC : ADC #$08 : STA.w SprY, X
-  LDA.w POSX : STA.w SprX, X
-  JMP .finish_prep
+                             CMP.b #$02 : BEQ .vert_adjust
+    LDA.w POSY : CLC : ADC #$08 : STA.w SprY, X
+    LDA.w POSX : STA.w SprX, X
+    JMP .finish_prep
   .vert_adjust
   LDA.w POSY : STA.w SprY, X
   LDA.w POSX : CLC : ADC #$02 : STA.w SprX, X
@@ -794,13 +797,10 @@ MinecartFollower_TransitionToSprite:
   LDA.w POSXH : STA.w SprXH, X
   LDA.w !MinecartDirection : CLC : ADC.b #$04 : STA.w SprSubtype, X
 
-  LDA .direction_to_anim, X : STA $0D90, X
+  LDA Minecart_AnimDirection, X : STA $0D90, X
   JSL Sprite_Minecart_Prep
   LDA.b #$00 : STA.l $7EF3CC
   RTS
-
-  .direction_to_anim
-  db $02, $00, $02, $00
 }
 
 ; Minecart Follower Main Routine and Draw
@@ -809,7 +809,7 @@ DrawMinecartFollower:
   JSL $099EFC ; Follower_Initialize
 
   LDX !MinecartDirection
-  LDA .direction_to_anim, X : STA $02CF
+  LDA Minecart_AnimDirection, X : STA $02CF
 
   JSR FollowerDraw_CachePosition
   JSR MinecartFollower_Top
