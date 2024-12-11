@@ -775,6 +775,34 @@ MinecartFollower_Bottom:
       db $3D, $7D
 }
 
+MinecartFollower_TransitionToSprite:
+{
+  LDA.b #$A3
+  JSL Sprite_SpawnDynamically
+  TYX
+  JSL Sprite_SetSpawnedCoords
+  LDA.w !MinecartDirection : CMP.b #$00 : BEQ .vert_adjust
+  CMP.b #$02 : BEQ .vert_adjust
+  LDA.w POSY : CLC : ADC #$08 : STA.w SprY, X
+  LDA.w POSX : STA.w SprX, X
+  JMP .finish_prep
+  .vert_adjust
+  LDA.w POSY : STA.w SprY, X
+  LDA.w POSX : CLC : ADC #$02 : STA.w SprX, X
+  .finish_prep
+  LDA.w POSYH : STA.w SprYH, X
+  LDA.w POSXH : STA.w SprXH, X
+  LDA.w !MinecartDirection : CLC : ADC.b #$04 : STA.w SprSubtype, X
+
+  LDA .direction_to_anim, X : STA $0D90, X
+  JSL Sprite_Minecart_Prep
+  LDA.b #$00 : STA.l $7EF3CC
+  RTS
+
+  .direction_to_anim
+  db $02, $00, $02, $00
+}
+
 ; Minecart Follower Main Routine and Draw
 DrawMinecartFollower:
 {
@@ -790,31 +818,9 @@ DrawMinecartFollower:
   ; Check the current submodule in the underworld
   LDA.b $11 : BNE .dont_spawn
     LDA !LinkInCart : BEQ .dont_spawn
-      LDA.b #$A3
-      JSL Sprite_SpawnDynamically
-      TYX
-      JSL Sprite_SetSpawnedCoords
-      LDA.w !MinecartDirection : CMP.b #$00 : BEQ .vert_adjust
-                                 CMP.b #$02 : BEQ .vert_adjust
-        LDA.w POSY : CLC : ADC #$08 : STA.w SprY, X
-        LDA.w POSX : STA.w SprX, X
-        JMP .finish_prep
-      .vert_adjust
-        LDA.w POSY : STA.w SprY, X
-        LDA.w POSX : CLC : ADC #$02 : STA.w SprX, X
-      .finish_prep
-      LDA.w POSYH : STA.w SprYH, X
-      LDA.w POSXH : STA.w SprXH, X
-      LDA.w !MinecartDirection : CLC : ADC.b #$04 : STA.w SprSubtype, X
-
-      LDA .direction_to_anim, X : STA $0D90, X
-      JSL Sprite_Minecart_Prep
-      LDA.b #$00 : STA.l $7EF3CC
+      JSR MinecartFollower_TransitionToSprite
   .dont_spawn
   RTS
-
-  .direction_to_anim
-  db $02, $00, $02, $00
 }
 
 FollowerDraw_CachePosition:
@@ -933,7 +939,17 @@ CheckForFollowerIntraroomTransition:
   RTL
 }
 
+LinkState_Minecart:
+{
+
+  RTL
+}
+
 pushpc
+
+org $07A50F
+  JSL LinkState_Minecart
+  RTS
 
 ; Follower_OldManUnused
 org $09A41F
