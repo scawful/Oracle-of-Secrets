@@ -45,6 +45,12 @@ incsrc "Dungeons/custom_tag.asm"
 
 ; Tag: Holes0
 incsrc "Dungeons/floor_puzzle.asm"
+print  "End of floor_puzzle.asm           ", pc
+
+; Crumble Floor Tag: Holes3
+incsrc "Dungeons/crumblefloor_tag.asm"
+
+pushpc
 
 incsrc "Dungeons/spike_subtype.asm"
 

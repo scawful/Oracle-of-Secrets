@@ -330,5 +330,3 @@ SearchToRedStar:
   BRA --
 }
 
-print  "End of floor_puzzle.asm           ", pc
-pushpc
