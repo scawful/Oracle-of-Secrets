@@ -17,7 +17,7 @@ org $0CC120
 
 ; !ARAMAddr = $2BB3
 org $1A9FF8
-GreatSea: 
+GreatSea:
 {
   !ARAMAddr = $D0FF
   dw !ARAMAddr+$0A ; Intro
@@ -50,7 +50,7 @@ GreatSea:
 
   ; ---------------------------------------------
   ; Intro Channels
-  {  
+  {
     .Channel0_Choir
       %SetMasterVolume($C8)
       %SetTempo(100)
@@ -83,15 +83,15 @@ GreatSea:
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.main_choir00+!ARAMC, 8)
       %CallSubroutine(.intro_lead+!ARAMC, 8) ; Change me
-      %CallSubroutine(.main_choir00+!ARAMC, 8) ; Change me
+      %CallSubroutine(.main_choir00+!ARAMC, 32) ; Change me
       db $00
-   
+
     .MainChannel1_Strings
       %Strings()
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.main_piano+!ARAMC, 8)
       %CallSubroutine(.intro_lead+!ARAMC, 8)  ; Change me
-      %CallSubroutine(.main_piano+!ARAMC, 4)
+      %CallSubroutine(.main_piano+!ARAMC, 32)
       db $00
 
     .MainChannel2_Piano
@@ -99,32 +99,32 @@ GreatSea:
       %SetDurationN(!4th, $7F) ; 1/4
       %CallSubroutine(.main_piano+!ARAMC, 8)
       %CallSubroutine(.intro_lead+!ARAMC, 8)
-      %CallSubroutine(.main_piano+!ARAMC, 4)
+      %CallSubroutine(.main_piano+!ARAMC, 32)
       db $00
 
     .MainChannel3_Trumpet
       %Trumpet()
       %SetDurationN(!4th, $7F)
       %TremoloOn(1, 4, 4)
-      %CallSubroutine(.main_trumpet+!ARAMC, 1)
+      %CallSubroutine(.main_trumpet+!ARAMC, 0)
       %CallSubroutine(.silence+!ARAMC, 32)
-      %CallSubroutine(.main_trumpet+!ARAMC, 1)
+      %CallSubroutine(.main_trumpet+!ARAMC, 0)
       %TremoloOff()
       db $00
 
     .MainChannel4_TrumpetSupport
       %Trumpet()
       %SetDurationN(!4th, $7F) ; 1/4
-      %CallSubroutine(.support_trumpet+!ARAMC, 1)
+      %CallSubroutine(.support_trumpet+!ARAMC, 0)
       %CallSubroutine(.silence+!ARAMC, 32)
-      %CallSubroutine(.main_piano_support_trumpet+!ARAMC, 1)
+      %CallSubroutine(.main_piano_support_trumpet+!ARAMC, 0)
       db $00
 
     .MainChannel5_Drums
       %Tympani()
       %SetChannelVolume($88)
       %SetDurationN(!4th, $7F) ; 1/4
-      %CallSubroutine(.main_drums+!ARAMC, 32)
+      %CallSubroutine(.main_drums+!ARAMC, 48)
       db $00
 
   }
@@ -195,7 +195,7 @@ GreatSea:
   .main_trumpet
     db !8th, F3s, !16th, Rest, D3
     db !4th, A2, Tie, Tie, Tie, Tie, Tie
-    db !16th, D3, A2, D3, F3s, !4th 
+    db !16th, D3, A2, D3, F3s, !4th
     db A3, Tie, Tie, Tie, Tie, Tie, Tie
     db !16th, A3, Rest, G3, F3s
 
@@ -215,7 +215,7 @@ GreatSea:
     db !8th, F3s, !16th, Rest, D3
 
     db !4th, A2, Tie, Tie, Tie, Tie, Tie
-    
+
     db !16th, D3, A2, D3, F3s
     db !4th, A3, Tie, Tie, Tie, Tie, Tie, Tie
     db !16th, A3, Rest, G3, F3s
@@ -245,8 +245,8 @@ GreatSea:
     db D3, Tie, Tie, Tie
     db A2, Tie, Tie, Tie
 
-    ; 21 
-    db Rest, Rest, Rest, Rest 
+    ; 21
+    db Rest, Rest, Rest, Rest
     db !16th, B2, Rest, B2, C3s
     db !4th, D3, Tie, Tie
     db B2, Tie, Tie, Tie
