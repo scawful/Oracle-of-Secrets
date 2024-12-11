@@ -174,8 +174,8 @@ Sprite_AntiKirby_Main:
     JSL Sprite_DirectionToFacePlayer
     LDA.b $0E : CMP.b #$10 : BCS .NotDone
       LDA.b $0F : CMP.b #$10 : BCS .NotDone
-          LDA POSX : STA.w SprMiscB, X
-          LDA POSY : STA.w SprMiscA, X
+          LDA.w POSX : STA.w SprMiscB, X
+          LDA.w POSY : STA.w SprMiscA, X
           LDA.b #$0C : STA.b $4B
           %SetTimerA($80)
           LDA.b #$0A : STA.w SprFrame, X

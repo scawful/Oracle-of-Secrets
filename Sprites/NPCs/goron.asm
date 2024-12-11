@@ -51,7 +51,7 @@ Sprite_Goron_Prep:
 {
   PHB : PHK : PLB
   LDA.w WORLDFLAG : BEQ +
-    LDA AreaIndex : CMP.b #$55 : BNE .not_sing
+    LDA.w AreaIndex : CMP.b #$55 : BNE .not_sing
       LDA.b #$04 : STA.w SprAction, X
     .not_sing
     JSL GetRandomInt : AND.b #$01 : BEQ .rand
