@@ -7,11 +7,11 @@
 ; Ported by Letterbomb
 ;=====================================================================================
 
-lorom
+; lorom
 
-org $1ACCAB; Sections?
+; org $1ACCAB; Sections?
 FrozenHyruleTheme: 
-!ARAMAddr = $2B00
+!ARAMAddr = $EF6D
 dw !ARAMAddr+$0A ; Intro
 dw !ARAMAddr+$1A ; Looping
 dw $00FF
@@ -42,7 +42,7 @@ dw $0000
 
 
 .Channel0Intro
-%SetMasterVolume($AF)
+%SetMasterVolume($80)
 %SetTempo(80);
 %SetInstrument($15) ; Choir
 %SetDurationN($48, $7F) ; 1/4
