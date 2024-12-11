@@ -818,7 +818,8 @@ DrawMinecartFollower:
   ; Check the current submodule in the underworld
   LDA.b $11 : BNE .dont_spawn
     LDA !LinkInCart : BEQ .dont_spawn
-      JSR MinecartFollower_TransitionToSprite
+      LDA.b #$09 : STA.b LinkState
+      ;JSR MinecartFollower_TransitionToSprite
   .dont_spawn
   RTS
 }
@@ -909,7 +910,6 @@ FollowerDraw_CachePosition:
     dw $0110
 }
 
-
 CheckForMinecartFollowerDraw:
 {
   PHB : PHK : PLB
@@ -939,17 +939,75 @@ CheckForFollowerIntraroomTransition:
   RTL
 }
 
+; 0x08
 LinkState_Minecart:
 {
+  PHB : PHK : PLB
+  STZ.b $2A
+  STZ.b $2B
+  STZ.b $6B
+  STZ.b $48
 
+  ; Move Link based on the direction of the cart
+  LDA.w !MinecartDirection : BNE .not_north
+    LDY.b #$00
+    LDA.w .drag_y_low, Y : CLC : ADC.w $0B7E : STA.w $0B7E
+    LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
+    STZ.w LinkFaceDir
+  .not_north
+  CMP.b #$01 : BNE .not_east
+    LDY #$03
+    LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
+    LDA.w .drag_x_high, Y : ADC.w DragYH : STA.w DragYH
+    LDA.b #$06 : STA.w LinkFaceDir
+  .not_east
+  CMP.b #$02 : BNE .not_south
+    LDY #$01
+    LDA.w .drag_y_low,  Y : CLC : ADC.w $0B7E : STA.w $0B7E
+    LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
+    LDA.b #$02 : STA.w LinkFaceDir
+  .not_south
+  CMP.b #$03 : BNE .not_west
+    LDY #$02
+    LDA.w .drag_x_low,  Y : CLC : ADC.w DragYL : STA.w DragYL
+    LDA.w .drag_x_high, Y : ADC.w DragYH : STA.w DragYH
+  .not_west
+
+  JSL Link_HandleCardinalCollision_Long
+  JSL Link_HandleVelocityAndSandDrag
+
+  STZ.w $0302
+
+  ; JSL Link_HandleMovingAnimation_FullLongEntry
+  JSL HandleIndoorCameraAndDoors
+  JSL Link_CancelDash
+
+  ; Pos - Cache Pos = difference
+  LDA.w LinkX : SEC : SBC $3F : STA $31
+  LDA.w LinkY : SEC : SBC $3E : STA $30
+
+  PLB
   RTL
+  .drag_x_high
+  db 0,   0,  -1,   0
+
+  .drag_x_low
+  db 0,   0,  -1,   1
+
+  .drag_y_low
+  db -1,   1,   0,   0
+
+  .drag_y_high
+  db -1,   0,   0,   0
 }
 
 pushpc
 
-org $07A50F
+org $07A5F7
   JSL LinkState_Minecart
   RTS
+
+assert pc() <= $07A64B
 
 ; Follower_OldManUnused
 org $09A41F
