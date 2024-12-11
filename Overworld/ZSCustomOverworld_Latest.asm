@@ -396,7 +396,7 @@ Pool:
     org $288146 ; $140146
     .EnableBeginningRain ; 0x01
         if !UseVanillaPool > 0
-        db $FF
+        db $00
         endif
 
     ; TODO: Add a place to change this in ZS. Once that is done add this to the
