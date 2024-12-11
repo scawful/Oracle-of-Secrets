@@ -147,6 +147,9 @@ org $0281E2 : LDA.l $7EF342 : CMP.b #$02
 ; Check for hall of secrets spawn pt flag
 org $0281CD : LDA.l $7EF3D6 : CMP.b #$04
 
+; GameOver_FadeAndRevive
+org $09F520 : LDA.l $7EF3C5 : CMP.b #$02
+
 pullpc
 LoadOverworldPitAreas:
 {
