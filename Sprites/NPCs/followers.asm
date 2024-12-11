@@ -939,7 +939,7 @@ CheckForFollowerIntraroomTransition:
   RTL
 }
 
-; 0x08
+; 0x09
 LinkState_Minecart:
 {
   PHB : PHK : PLB
@@ -1008,6 +1008,23 @@ org $07A5F7
   RTS
 
 assert pc() <= $07A64B
+
+; Minecart Track tile types
+org $07D938
+  dw TileBehavior_Nothing ; 0xB0 UW LR
+  dw TileBehavior_Nothing ; 0xB1 UW UD
+  dw TileBehavior_Nothing ; 0xB2 UW TL
+  dw TileBehavior_Nothing ; 0xB3 UW BL
+  dw TileBehavior_Nothing ; 0xB4 UW TR
+  dw TileBehavior_Nothing ; 0xB5 UW BR
+  dw TileBehavior_Nothing ; 0xB6 UW Any
+  dw TileBehavior_Nothing ; 0xB7 UW Stop Top
+  dw TileBehavior_Nothing ; 0xB8 UW Stop Bottom
+  dw TileBehavior_Nothing ; 0xB9 UW Stop Left
+  dw TileBehavior_Nothing ; 0xBA UW Stop Right
+  dw TileBehavior_Nothing ; TileBehavior_Pit     ; 0xBB UW Pit LR
+  dw TileBehavior_Nothing ; TileBehavior_Pit     ; 0xBC UW Pit UD
+  dw TileBehavior_Nothing ; TileBehavior_Pit     ; 0xBD UW Any
 
 ; Follower_OldManUnused
 org $09A41F

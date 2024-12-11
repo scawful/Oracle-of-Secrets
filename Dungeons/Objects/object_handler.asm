@@ -5,23 +5,6 @@ TileBehavior_Nothing = $07DC54
 TileBehavior_Pit = $07DC8B
 TileBehavior_Door = $07DD0A
 
-; Minecart Track tile types
-org $07D938
-  dw TileBehavior_Nothing ; 0xB0 UW LR
-  dw TileBehavior_Nothing ; 0xB1 UW UD
-  dw TileBehavior_Nothing ; 0xB2 UW TL
-  dw TileBehavior_Nothing ; 0xB3 UW BL
-  dw TileBehavior_Nothing ; 0xB4 UW TR
-  dw TileBehavior_Nothing ; 0xB5 UW BR
-  dw TileBehavior_Nothing ; 0xB6 UW Any
-  dw TileBehavior_Nothing ; 0xB7 UW Stop Top
-  dw TileBehavior_Nothing ; 0xB8 UW Stop Bottom
-  dw TileBehavior_Nothing ; 0xB9 UW Stop Left
-  dw TileBehavior_Nothing ; 0xBA UW Stop Right
-  dw TileBehavior_Pit     ; 0xBB UW Pit LR
-  dw TileBehavior_Pit     ; 0xBC UW Pit UD
-  dw TileBehavior_Pit     ; 0xBD UW Any
-
 org $018262 ; Object ID 0x31
   dw ExpandedObject
 
