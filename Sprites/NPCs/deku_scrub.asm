@@ -70,9 +70,13 @@ Sprite_DekuScrub_Prep:
     JMP +
   .DekuButler
     LDA.b #$05 : STA.w SprAction, X
-    JMP +
+    JMP ++
   .DekuPrincess
     LDA.b #$06 : STA.w SprAction, X
+    ++
+    ; Check if tail palace is cleared
+    LDA.l CRYSTALS : AND #$10 : BEQ +
+      STZ.w SprState, X
   +
   PLB
   RTL
