@@ -124,7 +124,18 @@ TingleId   = $7EF397
 ;   d - Dragon Ship
 Scrolls    = $7EF398
 
+; Keep track of the previous scroll
+; For re-reading old hints.
 PrevScroll = $7EF39A
+
+; ..ts fwpb
+;   b - bean planted
+;   w - plant watered
+;   p - pollinated by bee
+;   f - first day
+;   s - second day
+;   t - third day
+MagicBeanProg = $7EF39B
 
 ; .dgi zktm
 ;   m - Mushroom Grotto
