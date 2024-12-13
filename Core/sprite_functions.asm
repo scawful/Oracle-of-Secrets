@@ -318,6 +318,34 @@ Sprite_Damage_Flash:
   RTS
 }
 
+; $00 - ID of the sprite to check
+; $02 - Index of the sprite found
+Sprite_CheckForPresence:
+{
+  PHX
+  CLC
+  LDX.b #$10
+  .x_loop
+    DEX
+    LDY.b #$04
+    .y_loop
+      DEY
+      LDA $0E20, X : CMP.b $00 : BEQ .set_flag
+        BRA .not_b0
+      .set_flag
+      SEC ; Set flag indicating sprite is present
+      STX.w $02
+      BRA   .done
+
+    .not_b0
+    CPY.b #$00 : BNE .y_loop
+    CPX.b #$00 : BNE .x_loop
+  .done
+  PLX
+  RTS
+
+}
+
 ; =========================================================
 
 Link_CheckNewY_ButtonPress_Long:
