@@ -366,14 +366,12 @@ Link_CheckNewY_ButtonPress_Long:
 Link_SetupHitBox:
 {
   LDA.b #$08 : STA $02 : STA $03
-  LDA $22 : CLC : ADC.b #$04 : STA $00
-  LDA $23 : ADC.b #$00 : STA $08
-  LDA $20 : ADC.b #$08 : STA $01
-  LDA $21 : ADC.b #$00 : STA $09
+  LDA.b LinkX  : CLC : ADC.b #$04 : STA.b pos1_x_low
+  LDA.b LinkXH : ADC.b #$00 : STA.b pos1_x_high
+  LDA.b LinkY  : ADC.b #$08 : STA.b pos1_y_low
+  LDA.b LinkYH : ADC.b #$00 : STA.b pos1_y_high
   RTL
 }
-
-; =========================================================
 
 Sprite_SetupHitBox:
 {
@@ -381,27 +379,52 @@ Sprite_SetupHitBox:
   LDA.w SprHeight, X : BMI .too_high
     PHY
     LDA.w SprHitbox, X : AND.b #$1F : TAY
-    LDA.w SprX, X : CLC : ADC.w .offset_x_low, Y : STA.b $04
-    LDA.w SprXH, X : ADC.w .offset_x_high, Y : STA.b $0A
+    LDA.w SprX, X : CLC : ADC.w .offset_x_low, Y : STA.b pos2_x_low
+    LDA.w SprXH, X : ADC.w .offset_x_high, Y : STA.b pos2_x_high
     LDA.w SprY, X : CLC : ADC.w .offset_y_low, Y
     PHP
-    SEC : SBC.w SprHeight, X : STA.b $05
+    SEC : SBC.w SprHeight, X : STA.b pos2_y_low
     LDA.w SprYH, X : SBC.b #$00
     PLP
-    ADC.w .offset_y_high, Y : STA.b $0B
+    ADC.w .offset_y_high, Y : STA.b pos2_y_high
 
-    LDA.w .width, Y : STA.b $06
-    LDA.w .height, Y : STA.b $07
+    LDA.w .width, Y : STA.b pos2_size
+    LDA.w .height, Y : STA.b pos2_height
     PLY
     PLB
     RTL
 
   .too_high
-  LDA.b #$80 : STA.b $0A
+  LDA.b #$80 : STA.b pos2_x_high
   PLB
   RTL
 
-.offset_x_low
+Sprite_SetupHitBox_Alt:
+  PHB : PHK : PLB
+  LDA.w SprHeight, X : BMI .too_high
+  PHY
+  LDA.w SprHitbox, X : AND.b #$1F : TAY
+  LDA.w SprX, X : CLC : ADC.w .offset_x_low, Y : STA.b pos1_x_low
+  LDA.w SprXH, X : ADC.w .offset_x_high, Y : STA.b pos1_x_high
+  LDA.w SprY, X : CLC : ADC.w .offset_y_low, Y
+  PHP
+  SEC : SBC.w SprHeight, X : STA.b pos1_y_low
+  LDA.w SprYH, X : SBC.b #$00
+  PLP
+  ADC.w .offset_y_high, Y : STA.b pos1_y_high
+
+  LDA.w .width, Y : STA.b pos1_size
+  LDA.w .height, Y : STA.b pos1_height
+  PLY
+  PLB
+  RTL
+
+  .too_high
+  LDA.b #$80 : STA.b pos1_x_high
+  PLB
+  RTL
+
+  .offset_x_low
   db 2   ; 0x00
   db 3   ; 0x01
   db 0   ; 0x02
@@ -436,9 +459,7 @@ Sprite_SetupHitBox:
   db -2  ; 0x1E
   db 4   ; 0x1F
 
-; ---------------------------------------------------------
-
-.offset_x_high
+  .offset_x_high
   db 0   ; 0x00
   db 0   ; 0x01
   db 0   ; 0x02
@@ -473,9 +494,7 @@ Sprite_SetupHitBox:
   db -1  ; 0x1E
   db 0   ; 0x1F
 
-; ---------------------------------------------------------
-
-.width
+  .width
   db 12  ; 0x00
   db 1   ; 0x01
   db 16  ; 0x02
@@ -510,9 +529,7 @@ Sprite_SetupHitBox:
   db 4   ; 0x1E
   db 8   ; 0x1F
 
-; ---------------------------------------------------------
-
-.offset_y_low
+  .offset_y_low
   db 0   ; 0x00
   db 3   ; 0x01
   db 4   ; 0x02
@@ -547,9 +564,7 @@ Sprite_SetupHitBox:
   db -8  ; 0x1E
   db 10  ; 0x1F
 
-; ---------------------------------------------------------
-
-.offset_y_high
+  .offset_y_high
   db 0   ; 0x00
   db 0   ; 0x01
   db 0   ; 0x02
@@ -584,9 +599,7 @@ Sprite_SetupHitBox:
   db -1  ; 0x1E
   db 0   ; 0x1F
 
-; ---------------------------------------------------------
-
-.height
+  .height
   db 14  ; 0x00
   db 1   ; 0x01
   db 16  ; 0x02

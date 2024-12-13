@@ -433,16 +433,26 @@ Sprite_Decelerate_X = $05E657
 Sprite_Decelerate_Y = $05E666
 
 ; =========================================================
-; args:
-; pos1_low  = $00
-; pos1_size = $02
-; pos2_low  = $04
-; pos2_size = $06
-; pos1_high = $08
-; pos2_high = $0A
-; ans_low   = $0F
-; ans_high  = $0C
 ; returns carry clear if there was no overlap
+; args:
+pos1_x_low    = $00
+pos1_y_low    = $01
+pos1_size     = $02
+pos1_height   = $03
+
+pos2_x_low    = $04
+pos2_y_low    = $05
+pos2_size     = $06
+pos2_height   = $07
+
+pos1_x_high   = $08
+pos1_y_high   = $09
+pos2_x_high   = $0A
+pos2_y_high   = $0B
+
+ans_low     = $0F
+ans_high    = $0C
+
 CheckIfHitBoxesOverlap = $0683E6
 
 ; =========================================================
