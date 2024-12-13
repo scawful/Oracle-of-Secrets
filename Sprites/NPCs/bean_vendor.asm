@@ -58,7 +58,11 @@ Sprite_BeanVendor_Prep:
   LDA.b #$80 : STA.w SprDefl, X ; Persist in dungeons
   LDA.b #$40 : STA.w SprTimerA, X
   LDA.w SprSubtype, X : STA.w SprAction, X
+
   LDA.b $8A : CMP.b #$00 : BNE +
+    LDA.l MagicBeanProg : BNE .in_progress
+      STZ.w SprState, X
+   .in_progress
     ; Sprite is the flower on ranch map
     LDA.b #$04 : STA.w SprAction, X
   +
@@ -70,14 +74,8 @@ Sprite_BeanVendor_Prep:
 
 Sprite_BeanVendor_Main:
 {
-  LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
-
-  dw BeanVendor
-  dw MagicBean
-  dw SpawnMagicBean
-  dw PlayerSaidNo
-  dw MagicBean_RanchFlower
+  %SpriteJumpTable(BeanVendor, MagicBean, SpawnMagicBean,
+                   PlayerSaidNo, MagicBean_RanchFlower)
 
   ; 0x00 - Bean Vendor
   BeanVendor:
@@ -185,6 +183,23 @@ Sprite_BeanVendor_Main:
   MagicBean_RanchFlower:
   {
     LDA.b #$04 : STA.w SprFrame, X
+
+    ; Check for the good bee
+    LDA.l MagicBeanProg : AND.b #$02 : BEQ +
+      LDA.b #$B2 : STA.b $00
+      ; bee sprite ID
+      JSL Sprite_CheckForPresence : BCC +
+        PHX
+        LDA.b $02 : TAX
+        JSL Sprite_SetupHitBox
+        PLX
+        JSL Sprite_SetupHitBox_Alt
+        JSL CheckIfHitboxesOverlap : BCC +
+          LDA.l MagicBeanProg
+          ORA.l #$02 : STA.l MagicBeanProg
+          ; Set a timer and maybe a jingle effect?
+    +
+
     JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
