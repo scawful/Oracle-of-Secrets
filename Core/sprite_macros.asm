@@ -46,6 +46,20 @@ macro GotoAction(action)
   LDA.b #<action> : STA.w SprAction, X
 endmacro
 
+macro SetFrame(frame)
+  LDA.b #<frame> : STA.w SprFrame, X
+endmacro
+
+macro SpriteJumpTable(...)
+  LDA.w SprAction, X
+  JSL JumpTableLocal
+
+  !a #= 0
+  while !a < sizeof(...)
+    dw <...[!a]>
+    !a #= !a+1
+  endwhile
+endmacro
 
 ; Increase the sprite frame every (frames_wait) frames
 ; reset to (frame_start) when reaching (frame_end)
