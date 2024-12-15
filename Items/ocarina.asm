@@ -254,7 +254,8 @@ org $2B8000
 OcarinaEffect_SummonStorms:
 {
   ; Dismiss the rain in the Zora area where it is already raining
-  LDA.w $8A : CMP.b #$1E : BEQ .checkForEvent
+  LDA.w $8A : CMP.b #$00 : BEQ .check_for_magic_bean
+              CMP.b #$1E : BEQ .checkForEvent
               CMP.b #$2E : BEQ .dismissStorms
               CMP.b #$2F : BEQ .dismissStorms
     ; Check for areas which should not be allowed to have rain
@@ -289,6 +290,16 @@ OcarinaEffect_SummonStorms:
   .checkForEvent
     JSR CheckForZoraEvent : BCC .errorBeep
     JMP .dismissStorms
+
+  .check_for_magic_bean
+  LDA.b #Sprite_BeanVendor : LDX.b #$00
+  JSL Sprite_CheckForPresence : BCC .not_active
+    ; Check that it's the magic bean planted
+    LDA.l MagicBeanProg
+    AND.b #$04
+    STA.l MagicBeanProg
+  .not_active
+  RTL
 }
 
 ; Y: E8 06, X: 48 0C
