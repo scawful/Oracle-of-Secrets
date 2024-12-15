@@ -66,6 +66,7 @@ Sprite_BeanVendor_Prep:
   LDA.b $8A : CMP.b #$00 : BNE +
     LDA.l MagicBeanProg : BNE .in_progress
       LDA.b #$04 : STA.w SprAction, X
+      LDA.b #$01 : STA.w SprMiscD, X
       JMP +
     .in_progress
     CMP.b #$3F : BNE .not_flower
@@ -104,19 +105,23 @@ Sprite_BeanVendor_Main:
 
   MagicBean:
   {
-    %StartOnFrame(1)
-    %PlayAnimation(1,1,1)
+    %SetFrame(1)
 
     LDA.w SprMiscE, X : CMP.b #$01 : BEQ .not_lifting
       LDA.w $0309 : CMP.b #$02 : BNE .not_lifting
         LDA.b $8A : BEQ +
           JSR MagicBean_BottleLogic
         +
-        RTS
+       RTS
 
     .not_lifting
+    LDA.b #Sprite_BeanVendor
+    JSL Sprite_CheckCollisionWithSprite
+    LDA.w SprMiscF, X : BEQ ++
+      STZ.w SprState, X
+    ++
     JSL Sprite_CheckIfLifted
-
+    JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
 
@@ -177,6 +182,7 @@ Sprite_BeanVendor_Main:
         LDA.l MagicBeanProg
         ORA.b #$01
         STA.l MagicBeanProg
+        STZ.w SprMiscD, X
     +
     RTS
   }
@@ -202,8 +208,6 @@ Sprite_BeanVendor_Main:
     AND.b #$3F : BEQ ++
       LDA.b #$04 : STA.w SprFrame, X
     ++
-
-    JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
   }
 }
