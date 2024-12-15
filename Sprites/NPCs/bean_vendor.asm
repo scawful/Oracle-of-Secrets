@@ -88,46 +88,17 @@ Sprite_BeanVendor_Main:
     RTS
   }
 
-  ; 0x01 - Liftable Magic Bean
   MagicBean:
   {
     %StartOnFrame(1)
     %PlayAnimation(1,1,1)
 
-    ; TODO: Finish bottle logic
     LDA.w SprMiscE, X : CMP.b #$01 : BEQ .not_lifting
-    LDA.w $0309 : CMP.b #$02 : BNE .not_lifting
-
-      LDA.l $7EF35C : CMP.b #$02 : BEQ .bottle1_available
-      LDA.l $7EF35D : CMP.b #$02 : BEQ .bottle2_available
-      LDA.l $7EF35E : CMP.b #$02 : BEQ .bottle3_available
-      LDA.l $7EF35F : CMP.b #$02 : BEQ .bottle4_available
-
-      %ShowUnconditionalMessage($033)
-      JMP .not_lifting
-
-      .bottle1_available
-      LDA.b #$09 : STA.l $7EF35C
-      %ShowUnconditionalMessage($034)
-      JMP .finish_storage
-
-      .bottle2_available
-      LDA.b #$09 : STA.l $7EF35D
-      %ShowUnconditionalMessage($034)
-      JMP .finish_storage
-
-      .bottle3_available
-      LDA.b #$09 : STA.l $7EF35E
-      %ShowUnconditionalMessage($034)
-      JMP .finish_storage
-
-      .bottle4_available
-      LDA.b #$09 : STA.l $7EF35F
-      %ShowUnconditionalMessage($034)
-      .finish_storage
-      LDA.b #$01 : STA.w SprMiscE, X
-      STZ.w SprState, X
-      RTS
+      LDA.w $0309 : CMP.b #$02 : BNE .not_lifting
+        LDA.b $8A : BEQ +
+          JSR MagicBean_BottleLogic
+        +
+        RTS
 
     .not_lifting
     JSL Sprite_CheckIfLifted
@@ -221,6 +192,41 @@ ReleaseMagicBean:
   .not_the_ranch
   %ShowUnconditionalMessage($030)
   RTL
+}
+
+MagicBean_BottleLogic:
+{
+  LDA.l $7EF35C : CMP.b #$02 : BEQ .bottle1_available
+  LDA.l $7EF35D : CMP.b #$02 : BEQ .bottle2_available
+  LDA.l $7EF35E : CMP.b #$02 : BEQ .bottle3_available
+  LDA.l $7EF35F : CMP.b #$02 : BEQ .bottle4_available
+
+    %ShowUnconditionalMessage($033)
+    JMP .return
+
+  .bottle1_available
+  LDA.b #$09 : STA.l $7EF35C
+  %ShowUnconditionalMessage($034)
+  JMP .finish_storage
+
+  .bottle2_available
+  LDA.b #$09 : STA.l $7EF35D
+  %ShowUnconditionalMessage($034)
+  JMP .finish_storage
+
+  .bottle3_available
+  LDA.b #$09 : STA.l $7EF35E
+  %ShowUnconditionalMessage($034)
+  JMP .finish_storage
+
+  .bottle4_available
+  LDA.b #$09 : STA.l $7EF35F
+  %ShowUnconditionalMessage($034)
+  .finish_storage
+  LDA.b #$01 : STA.w SprMiscE, X
+  STZ.w SprState, X
+  .return
+  RTS
 }
 
 ; =========================================================
