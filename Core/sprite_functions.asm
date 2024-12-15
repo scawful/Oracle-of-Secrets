@@ -318,6 +318,22 @@ Sprite_Damage_Flash:
   RTS
 }
 
+; A = Spr ID to check
+Sprite_CheckCollisionWithSprite:
+{
+  STA.b $00
+  JSL Sprite_CheckForPresence : BCC +
+    PHX
+    LDA.b $02 : TAX
+    JSL Sprite_SetupHitBox
+    PLX
+    JSL Sprite_SetupHitBox_Alt
+    JSL CheckIfHitBoxesOverlap : BCC +
+      LDA.b #$01 : STA.w SprMiscF, X
+  +
+  RTL
+}
+
 ; $00 - ID of the sprite to check
 ; $01 - Current sprite index
 ; $02 - Index of the sprite found
@@ -339,6 +355,7 @@ Sprite_CheckForPresence:
 
     .continue
     CPX.b #$00 : BNE .x_loop
+    CLC
   .done
   PLX
   RTL
