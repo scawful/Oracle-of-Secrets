@@ -37,7 +37,11 @@
 Sprite_BeanVendor_Long:
 {
   PHB : PHK : PLB
-  JSR Sprite_BeanVendor_Draw
+
+  LDA.w SprMiscD, X : BNE +
+    JSR Sprite_BeanVendor_Draw
+  +
+
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     LDA.w SprSubtype, X : BEQ +
       JSR Sprite_VillageElder_Main
@@ -55,16 +59,23 @@ Sprite_BeanVendor_Long:
 Sprite_BeanVendor_Prep:
 {
   PHB : PHK : PLB
-  LDA.b #$80 : STA.w SprDefl, X ; Persist in dungeons
+  LDA.b #$80 : STA.w SprDefl, X
   LDA.b #$40 : STA.w SprTimerA, X
-  LDA.w SprSubtype, X : STA.w SprAction, X
+  STZ.w SprMiscD, X
 
   LDA.b $8A : CMP.b #$00 : BNE +
     LDA.l MagicBeanProg : BNE .in_progress
+      LDA.b #$04 : STA.w SprAction, X
+      JMP +
+    .in_progress
+    CMP.b #$3F : BNE .not_flower
+      ; Sprite is the flower on ranch map
+      LDA.b #$05 : STA.w SprAction, X
+      JMP +
+    .not_flower
+    CMP.b #$7F : BNE .not_done
       STZ.w SprState, X
-   .in_progress
-    ; Sprite is the flower on ranch map
-    LDA.b #$04 : STA.w SprAction, X
+    .not_done
   +
   PLB
   RTL
@@ -74,10 +85,13 @@ Sprite_BeanVendor_Prep:
 
 Sprite_BeanVendor_Main:
 {
-  %SpriteJumpTable(BeanVendor, MagicBean, SpawnMagicBean,
-                   PlayerSaidNo, MagicBean_RanchFlower)
+  %SpriteJumpTable(BeanVendor,
+                   MagicBean,
+                   BeanVendor_SpawnMagicBean,
+                   BeanVendor_PlayerSaidNo,
+                   MagicBean_FertileSoil,
+                   MagicBean_RanchFlower)
 
-  ; 0x00 - Bean Vendor
   BeanVendor:
   {
     %PlayAnimation(0,0,1)
@@ -106,8 +120,7 @@ Sprite_BeanVendor_Main:
     RTS
   }
 
-  ; 0x02 - Spawn Magic Bean
-  SpawnMagicBean:
+  BeanVendor_SpawnMagicBean:
   {
     %PlayAnimation(0,0,1)
     LDA $1CE8 : BNE .player_said_no_or_not_enough_rupees
@@ -142,8 +155,7 @@ Sprite_BeanVendor_Main:
     RTS
   }
 
-  ; 0x03 - Player Said No
-  PlayerSaidNo:
+  BeanVendor_PlayerSaidNo:
   {
     %PlayAnimation(0,0,1)
     %ShowUnconditionalMessage($144)
@@ -151,10 +163,26 @@ Sprite_BeanVendor_Main:
     RTS
   }
 
+  MagicBean_FertileSoil:
+  {
+    LDA.b #Sprite_BeanVendor : STA.b $00
+    JSL Sprite_CheckForPresence : BCC +
+      PHX
+      LDA.b $02 : TAX
+      JSL Sprite_SetupHitBox
+      PLX
+      JSL Sprite_SetupHitBox_Alt
+      JSL CheckIfHitBoxesOverlap : BCC +
+        INC.w SprAction, X
+        LDA.l MagicBeanProg
+        ORA.b #$01
+        STA.l MagicBeanProg
+    +
+    RTS
+  }
+
   MagicBean_RanchFlower:
   {
-    LDA.b #$04 : STA.w SprFrame, X
-
     ; Check for the good bee
     LDA.l MagicBeanProg : AND.b #$02 : BEQ +
       LDA.b #$B2 : STA.b $00
@@ -165,11 +193,15 @@ Sprite_BeanVendor_Main:
         JSL Sprite_SetupHitBox
         PLX
         JSL Sprite_SetupHitBox_Alt
-        JSL CheckIfHitboxesOverlap : BCC +
+        JSL CheckIfHitBoxesOverlap : BCC +
           LDA.l MagicBeanProg
-          ORA.l #$02 : STA.l MagicBeanProg
+          ORA.l #$02
+          STA.l MagicBeanProg
           ; Set a timer and maybe a jingle effect?
     +
+    AND.b #$3F : BEQ ++
+      LDA.b #$04 : STA.w SprFrame, X
+    ++
 
     JSL ThrownSprite_TileAndSpriteInteraction_long
     RTS
@@ -186,7 +218,7 @@ ReleaseMagicBean:
       LDA $21 : STA.w SprYH, Y
       LDA $22 : STA.w SprX, Y
       LDA $23 : STA.w SprXH, Y
-      LDA.b #$01 : STA.w SprAction, Y : STA.w SprSubtype, Y
+      LDA.b #$01 : STA.w SprAction, Y
       LDA.b #$02 : STA.l $7EF35C, X
       RTL
   .not_the_ranch
@@ -238,7 +270,6 @@ Sprite_BeanVendor_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
