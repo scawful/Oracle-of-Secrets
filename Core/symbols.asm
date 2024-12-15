@@ -35,6 +35,26 @@ function menu_offset(y,x) = (y*64)+(x*2)
 
 ; =========================================================
 ; SRAM in Use
+{
+
+; Game state
+;   0x00 - Very start; progress cannot be saved in this state
+;   0x01 - Uncle reached
+;   0x02 - Zelda rescued
+;   0x03 - Agahnim defeated
+GAMESTATE       = $7EF3C5
+
+; Map icon
+;   0x00 - Red X on Maku Tree/Maku Warp
+;   0x01 - Red X on Hall of Secrets
+;   0x02 - Red X on Kalyxo Pyramid
+;   0x03 - Toadstool Woods Crystal
+;   0x04 - Kalyxo Crystals All
+;   0x05 -
+;   0x06 -
+;   0x07 -
+;   0x08 - Skull on GT        | Climb Ganon's Tower
+MAPICON         = $7EF3C7
 
 ; .fmp h.i.
 ;  f - fortress of secrets
@@ -57,25 +77,6 @@ OOSPROG2       = $7EF3C6
 ; .... ...m
 ;   m - maku tree has met link (0: no | 1: yes)
 OOSPROG3       = $7EF3D4
-
-; Game state
-;   0x00 - Very start; progress cannot be saved in this state
-;   0x01 - Uncle reached
-;   0x02 - Zelda rescued
-;   0x03 - Agahnim defeated
-GAMESTATE       = $7EF3C5
-
-; Map icon
-;   0x00 - Red X on Maku Tree/Maku Warp
-;   0x01 - Red X on Hall of Secrets
-;   0x02 - Red X on Kalyxo Pyramid
-;   0x03 - Toadstool Woods Crystal
-;   0x04 - Kalyxo Crystals All
-;   0x05 -
-;   0x06 -
-;   0x07 -
-;   0x08 - Skull on GT        | Climb Ganon's Tower
-MAPICON         = $7EF3C7
 
 ; Dungeon ID Legend
 ; Mushroom Grotto ID 0x0C (Palace of Darkness)
@@ -128,13 +129,14 @@ Scrolls    = $7EF398
 ; For re-reading old hints.
 PrevScroll = $7EF39A
 
-; ..ts fwpb
+; .dts fwpb
 ;   b - bean planted
 ;   w - plant watered
 ;   p - pollinated by bee
 ;   f - first day
 ;   s - second day
 ;   t - third day
+;   d - done
 MagicBeanProg = $7EF39B
 
 ; .dgi zktm
@@ -152,6 +154,8 @@ CurrentDream   = $0426
 
 ; Current Song
 CurrentSong    = $030F
+}
+
 ; =========================================================
 ; The record format for the low table is 4 bytes:
 ;   byte OBJ*4+0: xxxxxxxx
@@ -178,7 +182,7 @@ OamBackup   = $0FEC
 
 ; =========================================================
 ; Sprite RAM and Functions
-
+{
 SprY         = $0D00
 SprX         = $0D10
 SprYH        = $0D20
@@ -371,6 +375,7 @@ SprBulletproof = $0BA0
 
 SprRoom      = $0C9A ;X W Contains the area or room id the sprite has been loaded in
 SprDrop      = $0CBA ;X W 00: Drop nothing, 01: drop normal key, 03: Drop green rupee, OtherValues: Drop big key
+}
 
 ; Overlord
 
