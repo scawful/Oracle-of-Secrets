@@ -1,86 +1,75 @@
 ; =========================================================
 ; Ocarina Multiple Song Select
 ;
-; =========================================================
-
-AddTravelBird = $0994FE
-AddWeathervaneExplosion = $098D11
-Player_DoSfx1 = $078021
-
-; =========================================================
-; Song of Healing
+; $030F - Current Song RAM
+; 00 - No Song
+; 01 - Song of Storms
+; 02 - Song of Healing
+; 03 - Song of Soaring
+; 04 - Song of Time
 
 ; SFX2_Accomp
 ; SFX2 13 (Previous $3E)
-org $1A8C60
-  db $00
+org $1A8C60 : db $00
 
 ; SFX2_13
 org $1A9750
 Song_of_Healing:
 {
-  db $E0, $0D
-  db $2A ; change this to change length of quarter note
+  %SetInstrument($0D) ; Ocarina
+  db $2A ; length of quarter note
   db $46
-  db $A3, $A1, $9D
-  db $A3, $A1, $9D
-  db $A3, $A1
+  db B3, A3, F3
+  db B3, A3, F3
+  db B3, A3
   db $15 ; make this half of whatever you made quarter note
-  db $9C, $9A
+  db E3, D3
   db $7F ; make this triple whatever you made quarter note (max value 7F)
-  db $9C
-  db $00
+  db E3
+  db End
 }
+assert pc() <= $1A9765
 
 ; =========================================================
-
 ; D F D - D F D - E F E - F E C
 ; D F d D F d e f e f e c
-; SFX2_12
-; org $1A977D
-
-!Storms_Duration = $0F
-!Storms_Params = $46
-
-!Storms_Duration2 = $1E
-!Storms_Params2 = $3C
 
 org $1A92F7 ; SFX2_2F
 Song_of_Storms:
 {
-  db $E0, $0D ; set sfx instrument - twee
+  !Storms_Duration = $0F
+  !Storms_Params = $46
+
+  !Storms_Duration2 = $1E
+  !Storms_Params2 = $3C
+
+  %SetInstrument($0D)
 
   db !Storms_Duration
   db !Storms_Params ; duration 1/4
-  db $9A ; play note D3
-  db $9D ; play note F3
+  db D3, F3
   db !Storms_Duration2
   db !Storms_Params ; duration 1/2
-  db $9A ; play note D3
+  db D3
 
   db !Storms_Duration
   db !Storms_Params ; duration 1/4
-  db $9A ; play note D3
-  db $9D ; play note F3
+  db D3, F3
   db !Storms_Duration2
   db !Storms_Params ; duration 1/2
-  db $9A ; play note D3
+  db D3
 
   db !Storms_Duration
   db !Storms_Params2 ; duration 1/4
-  db $9C ; play note E3
-  db $9D ; play note F3
-  db $9C ; play note E3
+  db E3, F3, E3
 
-  db $9D ; play note F3
-  db $9C ; play note E3
+  db F3, E3
   db !Storms_Duration2
   db !Storms_Params2 ; duration 1/2
-  db $98 ; play note C3
-
-  db $00 ; end sfx
+  db C3
+  db End
 }
-; assert pc() <= $1A8FD4
+assert pc() <= $1A931F
 
 ; =========================================================
 
@@ -94,8 +83,7 @@ Song_of_Time:
   !Time4th = $2A
   !TimeParams = $46
 
-  db $E0, $0D ; set sfx instrument - twee
-
+  %SetInstrument($0D)
   db !Time4th    ; duration 1/4
   db !TimeParams ; params
   db A3
@@ -117,11 +105,15 @@ Song_of_Time:
   db !TimeParams ; params
   db F3
 
-  db $00 ; end sfx
+  db End
 }
 assert pc() <= $1A922B
 
 ; =========================================================
+
+AddTravelBird = $0994FE
+AddWeathervaneExplosion = $098D11
+Player_DoSfx1 = $078021
 
 org $07A3DB
 LinkItem_FluteHook:
@@ -305,12 +297,12 @@ OcarinaEffect_SummonStorms:
 ; Y: E8 06, X: 48 0C
 CheckForZoraEvent:
 {
-  LDA $20 : CMP.w #$06E8 : BNE .notZora
-  LDA $22 : CMP.w #$0C48 : BNE .notZora
+  LDA $20 : CMP.w #$06E8 : BNE .not_zora
+  LDA $22 : CMP.w #$0C48 : BNE .not_zora
     LDA.b #$01 : STA $04C6
     SEC
     RTS
-  .notZora
+  .not_zora
   CLC
   RTS
 }
@@ -333,7 +325,7 @@ CheckRealTable:
   CMP.b #$9F : BNE .not_rain_area
     RTL
   .not_rain_area
-
+  STZ.b $1D
   JML RainAnimation_Overridden_skipMovement
 }
 
@@ -348,13 +340,6 @@ ResetOcarinaFlag:
   LDA.w $0416 : ASL A
   RTL
 }
-
-; $030F - Current Song RAM
-; 00 - No Song
-; 01 - Song of Storms
-; 02 - Song of Healing
-; 03 - Song of Soaring
-; 04 - Song of Time
 
 ; Values at $7EF34C determine scrolling behavior
 ; 01 - No scrolling allowed
@@ -415,10 +400,8 @@ print  "End of Items/ocarina.asm          ", pc
 
 pushpc ; Bank2B freespace
 
-org $02F210 ; OverworldTransitionScrollAndLoadMap
-{
-  JSL ResetOcarinaFlag
-}
+; OverworldTransitionScrollAndLoadMap
+org $02F210 : JSL ResetOcarinaFlag
 
 ; ZS OW
 org $02A4CD
