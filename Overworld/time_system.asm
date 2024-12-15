@@ -168,8 +168,10 @@ RunClock:
 
   .reset_hours
 
-  LDA #$00 : STA $7EE000
+  JSR CheckForDailyQuests
 
+  LDA #$00 : STA $7EE000
+  .update_palette
   ; check indoors/outdoors
   LDA $1B	: BEQ .outdoors1
     RTS
@@ -210,6 +212,23 @@ CheckForSongOfTime:
         STZ $FE
     ++
   +
+  RTS
+}
+
+CheckForDailyQuests:
+{
+  LDA.l MagicBeanProg : AND.b #$7F : BEQ .bean_done
+    AND.b #$08 : BNE .not_first
+      LDA.b #$08 : JMP +
+    .not_first
+    AND.b #$10 : BNE .not_second
+      LDA.b #$10 : JMP +
+    .not_second
+    AND.b #$20 : BNE .bean_done
+      LDA.b #$20
+    +
+    ORA.l MagicBeanProg : STA.l MagicBeanProg
+  .bean_done
   RTS
 }
 
@@ -258,45 +277,42 @@ org $1BEF3D : JSL LoadDayNightPaletteEffect
 org $1BEF61 : JSL LoadDayNightPaletteEffect
 
 ; Palettes_LoadMultiple_Arbitrary.next_color
-org $1BEF84
-	JSL LoadDayNightPaletteEffect
+org $1BEF84 : JSL LoadDayNightPaletteEffect
 
 pullpc
 LoadDayNightPaletteEffect:
 {
-  STA.l !pal_color
-
-  CPX #$0041 : BPL .title_check
-    STA PaletteBuffer_HUD,X
+  STA.l !pal_color : CPX #$0041 : BPL .title_check
+    STA.l PaletteBuffer_HUD, X
     RTL
   .title_check
 
   ; title or file select screen ?
   LDA $10 : AND #$00FF : CMP #$0002	: BCS .outin_check
-    LDA.l !pal_color : STA PaletteBuffer_HUD,X
+    LDA.l !pal_color
+    STA.l PaletteBuffer_HUD, X
     RTL
-
   .outin_check
-  LDA.b $10 : AND #$00FF
-    CMP.w #$0005 : BCC .restorecode
-    CMP.w #$0012 : BCS .restorecode
+
+  LDA.b $10 : AND #$00FF : CMP.w #$0005 : BCC .restorecode
+                           CMP.w #$0012 : BCS .restorecode
     BRA .overworld
   .restorecode
-    LDA.l !pal_color : STA.l PaletteBuffer_HUD, X
-    RTL
-  .overworld
+  LDA.l !pal_color
+  STA.l PaletteBuffer_HUD, X
+  RTL
 
+  .overworld
   LDA $1B : AND #$00FF : BEQ .outdoors2
     LDA.l !pal_color
-    STA PaletteBuffer_HUD,X
+    STA.l PaletteBuffer_HUD,X
     RTL
-
   .outdoors2
 
   PHX
   JSL ColorSubEffect
   PLX
-  STA.l PaletteBuffer_HUD,X
+  STA.l PaletteBuffer_HUD, X
   RTL
 }
 
@@ -309,7 +325,7 @@ ColorSubEffect:
 
   ; Subtract amount to blue field based on a table
 	LDA.l !pal_color : AND #$7C00 : STA !blue_value
-  SEC : SBC.l blue_table, X : STA !temp_value
+  SEC : SBC.l .blue, X : STA !temp_value
 
   ; mask out everything except the blue bits
 	AND #$7C00 : CMP !temp_value : BEQ .no_blue_sign_change ; overflow ?
@@ -319,7 +335,7 @@ ColorSubEffect:
 
   ; Subtract amount to blue field based on a table
 	LDA !pal_color : AND #$03E0 : STA !green_value
-	SEC : SBC.l green_table, X : STA.l !temp_value
+	SEC : SBC.l .green, X : STA.l !temp_value
 
   ; Mask out everything except the green bits
 	AND #$03E0 : CMP !temp_value : BEQ .no_green_sign_change ; overflow ?
@@ -329,7 +345,7 @@ ColorSubEffect:
 
   ; substract amount to red field based on a table
 	LDA.l !pal_color : AND #$001F : STA.l !red_value
-	SEC : SBC.l red_table, X : STA.l !temp_value
+	SEC : SBC.l .red, X : STA.l !temp_value
 
   ; mask out everything except the red bits
 	AND #$001F : CMP !temp_value : BEQ .no_red_sign_change ; overflow ?
@@ -339,42 +355,39 @@ ColorSubEffect:
 
   LDA.l !blue_value : ORA.l !green_value : ORA.l !red_value
 	RTL
+
+  ; color_sub_tables : 24 * 2 bytes each = 48 bytes
+  ; (2 bytes = 1 color sub for each hour)
+
+  .blue:
+    dw $1000, $1000, $1000, $1000
+    dw $1000, $1000, $1000, $0800
+    dw $0000, $0000, $0000, $0000
+    dw $0000, $0000, $0000, $0000
+    dw $0000, $0400, $0800, $0800
+    dw $0800, $1000, $1000, $1000
+
+  .green:
+    dw $0100, $0100, $0100, $0100
+    dw $0100, $00C0, $0080, $0040
+    dw $0000, $0000, $0000, $0000
+    dw $0000, $0000, $0000, $0000
+    dw $0000, $0020, $0040, $0080
+    dw $00C0, $0100, $0100, $0100
+
+  .red:
+    dw $0008, $0008, $0008, $0008
+    dw $0008, $0006, $0004, $0002
+    dw $0000, $0000, $0000, $0000
+    dw $0000, $0000, $0000, $0000
+    dw $0000, $0000, $0000, $0002
+    dw $0004, $0006, $0008, $0008
 }
-
-; =========================================================
-
-; color_sub_tables : 24 * 2 bytes each = 48 bytes
-; (2 bytes = 1 color sub for each hour)
-
-blue_table:
-	dw $1000, $1000, $1000, $1000
-  dw $1000, $1000, $1000, $0800
-  dw $0000, $0000, $0000, $0000
-  dw $0000, $0000, $0000, $0000
-  dw $0000, $0400, $0800, $0800
-  dw $0800, $1000, $1000, $1000
-
-green_table:
-	dw $0100, $0100, $0100, $0100
-  dw $0100, $00C0, $0080, $0040
-  dw $0000, $0000, $0000, $0000
-  dw $0000, $0000, $0000, $0000
-  dw $0000, $0020, $0040, $0080
-  dw $00C0, $0100, $0100, $0100
-
-red_table:
-	dw $0008, $0008, $0008, $0008
-  dw $0008, $0006, $0004, $0002
-  dw $0000, $0000, $0000, $0000
-  dw $0000, $0000, $0000, $0000
-  dw $0000, $0000, $0000, $0002
-  dw $0004, $0006, $0008, $0008
 
 BackgroundFix:
 {
   BEQ .no_effect		;BRAnch if A=#$0000 (transparent bg)
     JSL ColorSubEffect
-
   .no_effect:
   STA.l PaletteCgram_HUD
   STA.l PaletteBuffer_HUD
@@ -612,14 +625,11 @@ org $1BEE2D
 ; org $0ABA5A
 ; TODO: Handle overworld map palette for flashing icons
 
-org $0ED956
-  JSL FixDungeonMapColors
+org $0ED956 : JSL FixDungeonMapColors
 
-org $0AEFA6
-  JSL RestoreTimeForDungeonMap
+org $0AEFA6 : JSL RestoreTimeForDungeonMap
 
-org $0ED745
-  JSL FixShockPalette
+org $0ED745 : JSL FixShockPalette
 
 org $09F604
 GameOver_SaveAndQuit:
