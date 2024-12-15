@@ -319,30 +319,29 @@ Sprite_Damage_Flash:
 }
 
 ; $00 - ID of the sprite to check
+; $01 - Current sprite index
 ; $02 - Index of the sprite found
 Sprite_CheckForPresence:
 {
+  STX $01
   PHX
   CLC
   LDX.b #$10
   .x_loop
     DEX
-    LDY.b #$04
-    .y_loop
-      DEY
-      LDA $0E20, X : CMP.b $00 : BEQ .set_flag
-        BRA .not_b0
-      .set_flag
+    LDA $0E20, X : CMP.b $00 : BEQ .set_flag
+      BRA .continue
+    .set_flag
+    CPX.b $01 : BEQ .continue
       SEC ; Set flag indicating sprite is present
       STX.w $02
       BRA   .done
 
-    .not_b0
-    CPY.b #$00 : BNE .y_loop
+    .continue
     CPX.b #$00 : BNE .x_loop
   .done
   PLX
-  RTS
+  RTL
 
 }
 
@@ -399,9 +398,9 @@ Sprite_SetupHitBox:
   PLB
   RTL
 
-Sprite_SetupHitBox_Alt:
+.Alt:
   PHB : PHK : PLB
-  LDA.w SprHeight, X : BMI .too_high
+  LDA.w SprHeight, X : BMI .too_high2
   PHY
   LDA.w SprHitbox, X : AND.b #$1F : TAY
   LDA.w SprX, X : CLC : ADC.w .offset_x_low, Y : STA.b pos1_x_low
@@ -419,7 +418,7 @@ Sprite_SetupHitBox_Alt:
   PLB
   RTL
 
-  .too_high
+  .too_high2
   LDA.b #$80 : STA.b pos1_x_high
   PLB
   RTL
