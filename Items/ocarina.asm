@@ -259,6 +259,7 @@ OcarinaEffect_SummonStorms:
     CMP.b #$28 : BEQ .errorBeep
     CMP.b #$29 : BEQ .errorBeep
 
+  .summon_or_dismiss
     ; If the rain is already summoned, dismiss it
     LDA.l $7EE00E : BEQ .summonStorms
       .dismissStorms
@@ -276,8 +277,8 @@ OcarinaEffect_SummonStorms:
     RTL
 
   .errorBeep
-    LDA.b #$3C : STA.w $012E ; Error beep
-    RTL
+  LDA.b #$3C : STA.w $012E ; Error beep
+  RTL
 
   .checkForEvent
     JSR CheckForZoraEvent : BCC .errorBeep
@@ -287,9 +288,13 @@ OcarinaEffect_SummonStorms:
   LDA.b #Sprite_BeanVendor : LDX.b #$00
   JSL Sprite_CheckForPresence : BCC .not_active
     ; Check that it's the magic bean planted
-    LDA.l MagicBeanProg
-    AND.b #$04
-    STA.l MagicBeanProg
+    LDA.l MagicBeanProg : AND.b #$01 : BEQ +
+                          AND.b #$04 : BNE +
+      LDA.l MagicBeanProg
+      ORA.b #$04
+      STA.l MagicBeanProg
+    +
+    JMP .summon_or_dismiss
   .not_active
   RTL
 }
