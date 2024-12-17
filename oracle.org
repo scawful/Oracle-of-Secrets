@@ -107,25 +107,25 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 **** Stone Mask - 850 Rupees
 *** Wolf Mask Quest
 1) Wolfos appears outside of Kalyxo Castle at Night, defeat and play Song of Healing for Wolf Mask.
-*** ACTIVE Magic Bean Quest [1/4]
+*** DONE Magic Bean Quest [4/4]
 1) [X] Buy Magic Bean from Bean Vendor, requires Bottle.
-2) [ ] Take Magic Bean to the Ranch and plant it in empty soil north of the houses.
-3) [ ] Requires rain (Song of Storms), Pollination (Good Bee) and three days in game time.
-4) [ ] Player receives flower item when all conditions are met, can be traded for Fishing Rod
+2) [X] Take Magic Bean to the Ranch and plant it in empty soil north of the houses.
+3) [X] Requires rain (Song of Storms), Pollination (Good Bee) and 3 in game days.
+4) [X] Flower the player can ride to a heart container appears.
 *** TODO Swordsmith Rescue [0/3]
 1) [ ] Use the Bomb Shop Big Bomb in the Eon Abyss Beach
 2) [ ] Return the Lost Brother to the Smiths house west of Waywrd Village
 3) [ ] Swordsmith brothers improve your Meadow Blade to the Tempered Sword (Lv3)
 *** TODO Korok Cove
 *** TODO Fishing Minigame
-*** TODO Dream Sequences [0/7]
+*** TODO Dream Sequences [0/6]
 - [ ] Deku Business Scrub Dream
 - [ ] Twinrova Ranch Girl Dream
-- [ ] Hyrule Castle Dream
-- [ ] Zora King Dream
+- [ ] Hyrule Castle Dream (Song of Time)
+- [ ] River Zora King Dream
 - [ ] Kydrog Sealing Dream
 - [ ] Mine Collapse Dream
-- [ ] Final Dream ????
+
 * Items
 ** Y Items
 | Name            | Description                                  |
