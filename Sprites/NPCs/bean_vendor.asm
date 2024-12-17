@@ -87,7 +87,9 @@ Sprite_BeanVendor_Main:
                    BeanVendor_SpawnMagicBean,
                    BeanVendor_PlayerSaidNo,
                    MagicBean_FertileSoil,
-                   MagicBean_RanchFlower)
+                   MagicBean_RanchFlower,
+                   MagicBean_DragPlayer,
+                   MagicBean_Finished)
 
   BeanVendor:
   {
@@ -166,29 +168,25 @@ Sprite_BeanVendor_Main:
 
   MagicBean_FertileSoil:
   {
-    LDA.b #Sprite_BeanVendor : STA.b $00
-    JSL Sprite_CheckForPresence : BCC +
-      PHX
-      LDA.b $02 : TAX
-      JSL Sprite_SetupHitBox
-      PLX
-      JSL Sprite_SetupHitBox_Alt
-      JSL CheckIfHitBoxesOverlap : BCC +
-        INC.w SprAction, X
-        LDA.l MagicBeanProg
-        ORA.b #$01
-        STA.l MagicBeanProg
-        STZ.w SprMiscD, X
+    LDA.b #Sprite_BeanVendor
+    JSL Sprite_CheckCollisionWithSprite
+    LDA.w SprMiscF, X : BEQ +
+      INC.w SprAction, X
+      LDA.l MagicBeanProg
+      ORA.b #$01
+      STA.l MagicBeanProg
+      STZ.w SprMiscD, X
     +
     RTS
   }
 
   MagicBean_RanchFlower:
   {
-    ; Check for the good bee
-    LDA.l MagicBeanProg : AND.b #$02 : BEQ +
+    %SetFrame($06)
+
+    LDA.l MagicBeanProg : AND.b #$02 : BNE +
+      ; Check for the bee pollination
       LDA.b #$B2 : STA.b $00
-      ; bee sprite ID
       JSL Sprite_CheckForPresence : BCC +
         PHX
         LDA.b $02 : TAX
@@ -197,15 +195,97 @@ Sprite_BeanVendor_Main:
         JSL Sprite_SetupHitBox_Alt
         JSL CheckIfHitBoxesOverlap : BCC +
           LDA.l MagicBeanProg
-          ORA.l #$02
+          ORA.b #$02
           STA.l MagicBeanProg
           ; Set a timer and maybe a jingle effect?
     +
-    AND.b #$3F : BEQ ++
+    LDA.l MagicBeanProg : CMP.b #$3F : BNE ++
       LDA.b #$04 : STA.w SprFrame, X
+      LDA.b #$5F : STA.w SprTimerC, X
+      INC.w SprAction, X
+      LDA.b #$00 : STA.w SprMiscC, X
     ++
     RTS
   }
+
+  MagicBean_DragPlayer:
+  {
+    LDA.b #$04 : STA.w SprFrame, X
+    JSL Link_SetupHitBox
+    JSL Sprite_SetupHitBox
+    JSL CheckIfHitBoxesOverlap : BCC +
+      LDA.b #$01 : STA.w SprMiscE, X
+    +
+
+    LDA.w SprMiscE, X : BEQ +
+      JSL InitMovement_Long
+      LDA.b #$01 : STA.w $037F
+      LDA.b #$02 : STA.w LinkSomaria
+      LDA.b #$08 : STA.b POSZ
+      LDA.b #$04 : STA.w SprHeight, X
+      LDA.w SprMiscC, X
+      CMP.b #$00 : BNE .p1
+        LDA.b #$F8 : STA.w SprXSpeed, X
+      .p1
+      CMP.b #$01 : BNE .p2
+        STZ.w SprXSpeed, X
+        LDA.b #$F8 : STA.w SprYSpeed, X
+      .p2
+      CMP.b #$02 : BNE .p3
+        STZ.w SprYSpeed, X
+        LDA.b #$F2 : STA.w SprXSpeed, X
+      .p3
+      LDA.w .direction, Y
+      PHY : TYA
+      JSL DragPlayer
+      PLY
+
+      PHX
+      JSL HandleIndoorCameraAndDoors
+      JSL Link_CancelDash
+      LDA $22 : SEC : SBC $3F : STA $31
+      LDA $20 : SEC : SBC $3E : STA $30
+      PLX
+
+      LDA.w SprTimerC, X : BNE +
+        LDA.b #$5F : STA.w SprTimerC, X
+        LDA.w SprMiscC, X : INC A : CMP.b #$03 : BCC ++
+          STZ.w SprXSpeed, X
+          INC.w SprAction, X
+          JMP +
+        ++
+        STA.w SprMiscC, X
+    +
+    JSL Sprite_Move
+    RTS
+
+    .direction
+      db $02, $00, $02
+  }
+
+  MagicBean_Finished:
+  {
+    LDA.l MagicBeanProg : CMP.b #$7F : BEQ +
+      STZ.w $037F
+      STZ.w SprHeight, X
+      LDA.b #$FF : STA.b POSZ : STA.b POSZH
+      STZ.w LinkSomaria
+      LDA.l MagicBeanProg
+      ORA.b #$40
+      STA.l MagicBeanProg
+    +
+    RTS
+  }
+}
+
+
+InitMovement_Long:
+{
+  LDA.b $22 : STA.b $3F
+  LDA.b $23 : STA.b $41
+  LDA.b $20 : STA.b $3E
+  LDA.b $21 : STA.b $40
+  RTL
 }
 
 ReleaseMagicBean:
