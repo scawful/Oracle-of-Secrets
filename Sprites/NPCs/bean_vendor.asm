@@ -64,18 +64,15 @@ Sprite_BeanVendor_Prep:
 
   LDA.b $8A : CMP.b #$00 : BNE +
     LDA.l MagicBeanProg : BNE .in_progress
-      LDA.b #$04 : STA.w SprAction, X
       LDA.b #$01 : STA.w SprMiscD, X
+      LDA.b #$04 : STA.w SprAction, X
       JMP +
     .in_progress
-    CMP.b #$3F : BNE .not_flower
+    LDA.l MagicBeanProg : CMP.b #$3F : BCS .not_flower
       ; Sprite is the flower on ranch map
       LDA.b #$05 : STA.w SprAction, X
-      JMP +
     .not_flower
-    CMP.b #$7F : BNE .not_done
-      STZ.w SprState, X
-    .not_done
+    STA.w SprFrame, X
   +
   PLB
   RTL
