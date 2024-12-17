@@ -273,9 +273,16 @@ Should use the Ganons Tower Crystal Cutscene as the base.
 - [ ] Improve Kydrog movement, add additional stage in fight
 - [ ] Cinematic opening and ending cutscene with dialogue
 
-** TODO Update Kydreeok boss [0/2]
+** TODO Update Kydreeok boss [0/9]
 - [ ] Improve fireball attack
 - [ ] Improve head/neck rotation
+- [ ] pause and neck stretch out attack ala Chain Chomp style
+- [ ] neck stretch out and spin around the main body while shooting fire attack
+- [ ] A bone throwing attack in the second half
+- [ ] heads detach after you kill them and then float around the room like the original gleeok or like blind And then re-attach themselves instead of having them just pop back in like you have it now You could do it in both phases or just in the second bone phase
+- [ ] bullet hell section where it just sucks in its heads so you can't hit it and then just shoots fireballs in every direction
+- [ ] function that checks if you hit the head and if you do, don't electrocute the player to avoid some potential frustration there
+- [ ] pre-fight transformation cutscene with kydrog
 
 ** TODO End Credits
 
