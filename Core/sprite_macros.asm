@@ -50,6 +50,35 @@ macro SetFrame(frame)
   LDA.b #<frame> : STA.w SprFrame, X
 endmacro
 
+macro JumpTable(index, ...)
+  LDA.w <index>
+  JSL JumpTableLocal
+
+  !a #= 0
+  while !a < sizeof(...)
+    dw <...[!a]>
+    !a #= !a+1
+  endwhile
+endmacro
+
+macro SetMode(bit_mode)
+  if <bit_mode> == "16bit"
+    REP #$30
+  elseif <bit_mode> == "8bit"
+    SEP #$30
+  endif
+endmacro
+
+macro ScopedMode(bit_mode, body)
+  SetMode bit_mode
+  body
+  if <bit_mode> == "16bit"
+    SetMode "8bit"
+  elseif <bit_mode> == "8bit"
+    SetMode "16bit"
+  endif
+endmacro
+
 macro SpriteJumpTable(...)
   LDA.w SprAction, X
   JSL JumpTableLocal
@@ -61,12 +90,38 @@ macro SpriteJumpTable(...)
   endwhile
 endmacro
 
+macro SetFlag(flag_addr, bit_pos)
+  LDA.b flag_addr
+  ORA.b #(1 << bit_pos)
+  STA.b flag_addr
+endmacro
+
+macro ClearFlag(flag_addr, bit_pos)
+  LDA.b flag_addr
+  AND.b #~(1 << bit_pos)
+  STA.b flag_addr
+endmacro
+
+macro ToggleFlag(flag_addr, bit_pos)
+  LDA.b flag_addr
+  EOR.b #(1 << bit_pos)
+  STA.b flag_addr
+endmacro
+
+macro CheckFlag(flag_addr, bit_pos, set_label, clear_label)
+  LDA.b flag_addr
+  AND.b #(1 << bit_pos)
+  BEQ clear_label
+  BRA set_label
+endmacro
+
 ; Increase the sprite frame every (frames_wait) frames
 ; reset to (frame_start) when reaching (frame_end)
 ; This is using SprTimerB
 macro PlayAnimation(frame_start, frame_end, frame_wait)
   LDA.w SprTimerB, X : BNE +
-    LDA.w SprFrame, X : INC : STA.w SprFrame, X : CMP.b #<frame_end>+1 : BCC .noframereset
+    LDA.w SprFrame, X : INC : STA.w SprFrame, X
+                        CMP.b #<frame_end>+1 : BCC .noframereset
       LDA.b #<frame_start> : STA.w SprFrame, X
     .noframereset
     LDA.b #<frame_wait> : STA.w SprTimerB, X
@@ -75,7 +130,8 @@ endmacro
 
 macro PlayAnimBackwards(frame_start, frame_end, frame_wait)
   LDA.w SprTimerB, X : BNE +
-    LDA.w SprFrame, X : DEC : STA.w SprFrame, X : CMP.b #<frame_end> : BCS .noframereset
+    LDA.w SprFrame, X : DEC : STA.w SprFrame, X
+                        CMP.b #<frame_end> : BCS .noframereset
       LDA.b #<frame_start> : STA.w SprFrame, X
     .noframereset
     LDA.b #<frame_wait> : STA.w SprTimerB, X
