@@ -209,6 +209,8 @@ SprMiscE     = $0EB0 ; Head direction 0123 -> udlr
 SprMiscF     = $0EC0 ;
 SprMiscG     = $0ED0 ;
 
+SprCustom    = $1CC0 ;
+
 ; Used in sprite state 0x03 (falling in water)
 ; used as delay in most of the sprites
 SprDelay     = $0E80
