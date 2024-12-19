@@ -17,40 +17,53 @@ This document aims to compile all the information on the game for reference as w
 ** ~S0~ Shrine of Origins
 *** Item: Moon Pearl
 Located in the Temporal Pyramid where you get transported after your first encounter with Kydrog.
+
 ** =D1= Mushroom Grotto
 *** Item: Bow
 Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
+
 ** =D2= Tail Palace
 *** Item: Roc's Feather
+
 ** =D3= Kalyxo Castle
 *** Item: Meadow Blade (Lv2 Sword)
+
 ** ~S1~ Shrine of Wisdom
 *** Item: Zora Flippers
+
 ** =D4= Zora Temple
 *** Item: Hookshot, Zora Mask
 *** TODO [0/2]
 - [ ] Zora Follower Extended
 - [ ] Fix Water Gate Collision
+
 ** =D5= Glacia Estate
 *** Item: Fire Rod
 *** TODO [0/3]
 - [ ] Improve Ice Block sprite collision detection
 - [ ] Tune enemies in dungeon, adjust positioning
 - [ ] Exterior gfx improvements
+
 ** ~S2~ Shrine of Power
 *** Item: Power Glove
+
 ** =D6= Goron Mines
 *** Item: Hammer
 *** TODO [0/2]
 - [ ] Improve Minecart game feel
 - [ ] Update King Dodongo Boss
+
 ** =D7= Dragon Ship
 *** Item: Somaria Rod
 *** TODO [0/1]
 - [ ] Extended section???
+
 ** ~S3~ Shrine of Courage
+
 ** =D8= Fortress of Secrets
+
 ** ~S4~ Shrine of ?????
+
 * Quests
 ** Main Quests
 *** Lost Ranch Girl Quest

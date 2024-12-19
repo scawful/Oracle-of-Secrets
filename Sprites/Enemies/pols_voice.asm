@@ -129,10 +129,10 @@ Sprite_PolsVoice_Main:
   }
 }
 
-PolsVoice_CheckForFuteSong:
+PolsVoice_CheckForFluteSong:
 {
-  ; If the player plays the flute, turn into a puff of smoke?
-  LDA $FE : BNE +
+  ; If the player plays the flute
+  LDA $FE : BEQ +
     LDA.b #$03 : STA.w SprState, X
   +
   RTS

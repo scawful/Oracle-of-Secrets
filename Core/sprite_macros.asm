@@ -127,6 +127,13 @@ macro CheckFlag(flag_addr, bit_pos, set_label, clear_label)
   BRA set_label
 endmacro
 
+macro CheckFlagLong(flag_addr, bit_pos, set_label, clear_label)
+  LDA.l flag_addr
+  AND.b #(1 << bit_pos)
+  BEQ clear_label
+  BRA set_label
+endmacro
+
 ; Increase the sprite frame every (frames_wait) frames
 ; reset to (frame_start) when reaching (frame_end)
 ; This is using SprTimerB
