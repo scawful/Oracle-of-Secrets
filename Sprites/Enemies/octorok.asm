@@ -283,7 +283,6 @@ Sprite_WaterOctorok_Attack:
       RTS
     +
 
-    %SetupDistanceFromSprite()
     JSL GetDistance8bit_Long
     CMP.b #$40
     BCC .not_close_enough ; LD < 64

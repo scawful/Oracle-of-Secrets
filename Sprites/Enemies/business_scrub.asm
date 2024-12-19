@@ -110,7 +110,6 @@ Sprite_BusinessScrub_Main:
     JSL Sprite_IsBelowPlayer : TYA
     CMP #$00 : BNE .is_below_player
         ; Check if the player is too close
-        %SetupDistanceFromSprite()
         JSL GetDistance8bit_Long : CMP.b #$24 : BCC .too_close
           ; The player is below the scrub, so it should pop up
           LDA #$20 : STA.w SprTimerA, X
@@ -138,7 +137,6 @@ Sprite_BusinessScrub_Main:
       INC.w SprAction, X
     .not_done
 
-    %SetupDistanceFromSprite()
     JSL GetDistance8bit_Long : CMP #$18 : BCS .not_too_close
       %GotoAction(0)
     .not_too_close

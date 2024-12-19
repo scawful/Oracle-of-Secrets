@@ -63,13 +63,9 @@ Sprite_Puffstool_Prep:
 
 Sprite_Puffstool_Main:
 {
-  LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
-
-  dw Puffstool_Walking
-  dw Puffstool_Stunned
-
-  dw Puffstool_Spores
+  %SpriteJumpTable(Puffstool_Walking,
+                   Puffstool_Stunned,
+                   Puffstool_Spores)
 
   Puffstool_Walking:
   {
@@ -140,30 +136,23 @@ Puffstool_SpawnSpores:
   LDA.b #$0C ; SFX2.0C
   JSL $0DBB7C ; SpriteSFX_QueueSFX2WithPan
 
-  LDA.b #$03
-  STA.b $0D
+  LDA.b #$03 : STA.b $0D
 
   .nth_child
-  LDA.b #$B1 ; SPRITE 10
-  JSL Sprite_SpawnDynamically
-  BMI .no_space
+  LDA.b #$B1 : JSL Sprite_SpawnDynamically : BMI .no_space
+    JSL Sprite_SetSpawnedCoordinates
+    PHX
 
-  JSL Sprite_SetSpawnedCoordinates
+    LDX.b $0D
+    LDA.w .speed_x, X : STA.w SprXSpeed, Y
+    LDA.w .speed_y, X : STA.w SprYSpeed, Y
+    LDA.b #$20 : STA.w $0F80, Y
+    LDA.b #$FF : STA.w $0E80, Y
+    LDA.b #$40 : STA.w SprTimerC, Y
+    LDA.b #$01 : STA.w SprSubtype, Y
+    LDA.b #$02 : STA.w SprAction, Y
 
-  PHX
-
-  LDX.b $0D
-
-  LDA.w .speed_x, X : STA.w SprXSpeed, Y
-  LDA.w .speed_y, X : STA.w SprYSpeed, Y
-  LDA.b #$20 : STA.w $0F80, Y
-  LDA.b #$FF : STA.w $0E80, Y
-  LDA.b #$40 : STA.w SprTimerC, Y
-  LDA.b #$01 : STA.w SprSubtype, Y
-  LDA.b #$02 : STA.w SprAction, Y
-
-  PLX
-
+    PLX
   .no_space
   DEC.b $0D
   BPL .nth_child
@@ -180,124 +169,75 @@ Puffstool_SpawnSpores:
 
 Sprite_Puffstool_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
-
-  LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
-  LDA .start_index, Y : STA $06
-  LDA.w SprFlash, X : STA $08 ; Palette damage flash
-
-  PHX
-  LDX .nbr_of_tiles, Y ;amount of tiles -1
-  LDY.b #$00
-  .nextTile
-
-  PHX ; Save current Tile Index?
-  TXA : CLC : ADC $06 ; Add Animation Index Offset
-
-  PHA ; Keep the value with animation index offset?
-
-  ASL A : TAX
-
-  REP #$20
-
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E
-  INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-  CLC : ADC #$0010 : CMP.w #$0100
-  SEP #$20
-  BCC .on_screen_y
-
-  LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-  STA $0E
-  .on_screen_y
-
-  PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
-  INY
-  LDA .chr, X : STA ($90), Y
-  INY
-  LDA .properties, X : ORA $08 : STA ($90), Y
-
-  PHY
-  TYA : LSR #2 : TAY
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-  PLY : INY
-  PLX : DEX : BPL .nextTile
-
-  PLX
-
-  RTS
-
-  ; =========================================================
+  %DrawSprite()
 
   .start_index
-  db $00, $02, $04, $06, $08, $0A, $0C, $0E, $0F, $10, $11, $12
+    db $00, $02, $04, $06, $08, $0A, $0C, $0E, $0F, $10, $11, $12
   .nbr_of_tiles
-  db 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0
+    db 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0
   .x_offsets
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 4
+    dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0
+    dw 0
+    dw 0
+    dw 0
+    dw 4
   .y_offsets
-  dw -8, 0
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8
-  dw 0, -8
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-  dw 4
+    dw -8, 0
+    dw 0, -8
+    dw 0, -8
+    dw 0, -8
+    dw 0, -8
+    dw 0, -8
+    dw 0, -8
+    dw 0
+    dw 0
+    dw 0
+    dw 0
+    dw 4
   .chr
-  db $C0, $D0
-  db $D2, $C2
-  db $D4, $C4
-  db $D2, $C2
-  db $D0, $C0
-  db $D2, $C2
-  db $D4, $C4
-  db $D6
-  db $EA
-  db $C8
-  db $E8
-  db $F7
+    db $C0, $D0
+    db $D2, $C2
+    db $D4, $C4
+    db $D2, $C2
+    db $D0, $C0
+    db $D2, $C2
+    db $D4, $C4
+    db $D6
+    db $EA
+    db $C8
+    db $E8
+    db $F7
   .properties
-  db $33, $33
-  db $33, $33
-  db $33, $33
-  db $33, $33
-  db $33, $33
-  db $73, $73
-  db $73, $73
-  db $3D
-  db $33
-  db $33
-  db $33
-  db $33
+    db $33, $33
+    db $33, $33
+    db $33, $33
+    db $33, $33
+    db $33, $33
+    db $73, $73
+    db $73, $73
+    db $3D
+    db $33
+    db $33
+    db $33
+    db $33
   .sizes
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02
-  db $02
-  db $02
-  db $02
-  db $00
+    db $02, $02
+    db $02, $02
+    db $02, $02
+    db $02, $02
+    db $02, $02
+    db $02, $02
+    db $02, $02
+    db $02
+    db $02
+    db $02
+    db $02
+    db $00
 }

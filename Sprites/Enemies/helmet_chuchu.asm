@@ -74,16 +74,12 @@ Sprite_HelmetChuchu_Prep:
 Sprite_HelmetChuchu_Main:
 {
   JSL Sprite_DamageFlash_Long
-
-  LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
-
-  dw GreenChuchu_Helmet
-  dw GreenChuchu_NoHelmet
-  dw RedChuchu_Masked
-  dw RedChuchu_NoMask
-  dw HelmetSubtype
-  dw MaskSubtype
+  %SpriteJumpTable(GreenChuchu_Helmet,
+                  GreenChuchu_NoHelmet,
+                  RedChuchu_Masked,
+                  RedChuchu_NoMask,
+                  HelmetSubtype,
+                  MaskSubtype)
 
   GreenChuchu_Helmet:
   {
