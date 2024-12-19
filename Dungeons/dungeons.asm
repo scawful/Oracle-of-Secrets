@@ -15,9 +15,8 @@ org $028BE7 : NOP #2
 org $028364
 Module06_UnderworldLoad:
 {
-  LDA.b #$00 ; Fixed color RGB: #808000
-  STA.b $9C
-
+  ; Fixed color RGB: #808000
+  LDA.b #$00 : STA.b $9C
   LDA.b #$00 : STA.b $9D
   LDA.b #$00 : STA.b $9E
   LDA.b #$00
@@ -85,6 +84,11 @@ TransferDungeonMapGfx:
     incbin dungeon_maps.bin
 }
 
+pushpc
+org $0288FF
+JSL CheckForTingleMaps : NOP
+pullpc
+
 CheckForTingleMaps:
 {
   LDA.w $040C : CMP.b #$0C : BEQ .check_mush
@@ -96,23 +100,29 @@ CheckForTingleMaps:
                 CMP.b #$18 : BEQ .check_ship
                 JMP +
   .check_mush
-    LDA.l TingleMaps : AND.b #$01 : RTL
+    LDA.l TingleMaps : AND.b #$01 : BEQ +
+      JMP ++
   .check_tail
-    LDA.l TingleMaps : AND.b #$02 : RTL
+    LDA.l TingleMaps : AND.b #$02 : BEQ +
+      JMP ++
   .check_castle
-    LDA.l TingleMaps : AND.b #$04 : RTL
+    LDA.l TingleMaps : AND.b #$04 : BEQ +
+      JMP ++
   .check_zora
-    LDA.l TingleMaps : AND.b #$08 : RTL
+    LDA.l TingleMaps : AND.b #$08 : BEQ +
+      JMP ++
   .check_glacia
-    LDA.l TingleMaps : AND.b #$10 : RTL
+    LDA.l TingleMaps : AND.b #$10 : BEQ +
+      JMP ++
   .check_goron
-    LDA.l TingleMaps : AND.b #$20 : RTL
+    LDA.l TingleMaps : AND.b #$20 : BEQ +
+      JMP ++
   .check_ship
-    LDA.l TingleMaps : AND.b #$40 : RTL
+    LDA.l TingleMaps : AND.b #$40 : BEQ +
+  ++
+  LDA.b #$01 : RTL
   +
-  LDA.w $040C
-  CMP.b #$FF
-  RTL
+  LDA.w $040C : CMP.b #$FF : RTL
 }
 
 NewWaterOverlayData:
@@ -132,8 +142,6 @@ db $FF, $FF ; End
 print "End of dungeons.asm               ", pc
 
 pushpc
-
-org $0288FF : JSL CheckForTingleMaps : NOP
 
 ; Transfer Dungeon Map Graphics
 ; Module0E_03_01_00_PrepMapGraphics
