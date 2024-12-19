@@ -47,24 +47,25 @@ Sprite_PolsVoice_Long:
 }
 
 ; =========================================================
+
 Sprite_PolsVoice_Prep:
 {
   PHB : PHK : PLB
   LDA.b #$80 : STA.w SprTimerA, X
-  LDA.b #$00 : STA.w SprDefl, X
-  LDA.b #$00 : STA.w SprTileDie, X
+  STZ.w SprDefl, X
+  STZ.w SprTileDie, X
   PLB
   RTL
 }
 
 ; =========================================================
+
 Sprite_PolsVoice_Main:
 {
-  LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSR PolsVoice_CheckForFluteSong
 
-  dw PolsVoice_MoveAround
-  dw PolsVoice_HopAround
+  %SpriteJumpTable(PolsVoice_MoveAround,
+                   PolsVoice_HopAround)
 
   PolsVoice_MoveAround:
   {
@@ -126,6 +127,15 @@ Sprite_PolsVoice_Main:
     .no_damage
     RTS
   }
+}
+
+PolsVoice_CheckForFuteSong:
+{
+  ; If the player plays the flute, turn into a puff of smoke?
+  LDA $FE : BNE +
+    LDA.b #$03 : STA.w SprState, X
+  +
+  RTS
 }
 
 ; =========================================================
