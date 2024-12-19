@@ -230,7 +230,7 @@ HUD_UpdateItemBox:
     LDX.b #$02
     LDA $7EF377 : BNE .draw_bow_item_icon
       LDX.b #$01
-
+      BRA .draw_bow_item_icon
     .silver_with_arrows
     LDX.b #$04
     .draw_bow_item_icon
