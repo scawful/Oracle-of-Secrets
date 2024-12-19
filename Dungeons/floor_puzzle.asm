@@ -14,15 +14,12 @@ NewTagRoutine:
   ; check under link feet what tile he is standing on
   ; save somewhere in ram last tile we were on so it doesn't turn it back off
   ; kill room tag
-  LDA.b $20 : CLC : ADC #$10 : AND.b #$F0
-  STA.w $0224 ; y
-
-  LDA.b $22 : CLC : ADC #$08 : AND.b #$F0
-  STA.w $0225 ; x
+  LDA.b $20 : CLC : ADC #$10 : AND.b #$F0 : STA.w $0224 ; y
+  LDA.b $22 : CLC : ADC #$08 : AND.b #$F0 : STA.w $0225 ; x
 
   LDA.w $0224 : CMP.w $0226 : BNE .differentTile
-  LDA.w $0225 : CMP.w $0227 : BNE .differentTile
-  JMP .sameTile
+    LDA.w $0225 : CMP.w $0227 : BNE .differentTile
+      JMP .sameTile
   .differentTile
 
   ; do code here for tile code
@@ -33,17 +30,17 @@ NewTagRoutine:
   TAX
 
   LDA.l $7E2000, X : CMP.w #$0DED : BNE +
-      JSR update_star_tile
-      JSR SearchForEmptyStar
-      BRA .doneupdate
+    JSR update_star_tile
+    JSR SearchForEmptyStar
+    BRA .doneupdate
   +
   LDA.l $7E2000, X : CMP.w #$0DEE : BNE +
-      ;JSR SearchToRedStar
-      JSR update_red_star_tile
-      SEP #$30
-      STZ.b $AE ; kill room tag!
-      ;JSR update_empty_tile
-      ;JSR SearchForEmptyStar
+    ;JSR SearchToRedStar
+    JSR update_red_star_tile
+    SEP #$30
+    STZ.b $AE ; kill room tag!
+    ;JSR update_empty_tile
+    ;JSR SearchForEmptyStar
   +
 
   .doneupdate
@@ -62,13 +59,9 @@ update_empty_tile:
 {
   STZ.b $0E
   REP #$30
-
   JSR replace_tile_empty
-
   SEP #$30
-
-  LDA.b #$01
-  STA.b $14
+  LDA.b #$01 : STA.b $14
   REP #$30
   RTS
 }
@@ -77,13 +70,9 @@ update_star_tile:
 {
   STZ.b $0E
   REP #$30
-
   JSR replace_tile_star
-
   SEP #$30
-
-  LDA.b #$01
-  STA.b $14
+  LDA.b #$01 : STA.b $14
   LDA.b #$0C : STA.w $012F
   REP #$30
   RTS
@@ -93,15 +82,10 @@ update_red_star_tile:
 {
   STZ.b $0E
   REP #$30
-
   JSR replace_red_tile_star
-
   SEP #$30
-
-  LDA.b #$01
-  STA.b $14
+  LDA.b #$01 : STA.b $14
   LDA.b #$3C : STA.w $012E
-
   REP #$30
   RTS
 }
@@ -110,17 +94,10 @@ replace_red_tile_star:
 {
   LDX.w $1000
 
-  LDA.w #$19EE
-  STA.w $1006,X
-
-  LDA.w #$99EE
-  STA.w $100C,X
-
-  LDA.w #$59EE
-  STA.w $1012,X
-
-  LDA.w #$D9EE
-  STA.w $1018,X
+  LDA.w #$19EE : STA.w $1006,X
+  LDA.w #$99EE : STA.w $100C,X
+  LDA.w #$59EE : STA.w $1012,X
+  LDA.w #$D9EE : STA.w $1018,X
 
   LDX.b $06
 

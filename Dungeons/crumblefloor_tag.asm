@@ -11,11 +11,8 @@ pullpc
 ; kill room tag
 CrumbleFloorTag_Main:
 {
-  LDA.b $20 : CLC : ADC #$10 : AND.b #$F0
-  STA.w $0224 ; y
-
-  LDA.b $22 : CLC : ADC #$08 : AND.b #$F0
-  STA.w $0225 ; x
+  LDA.b $20 : CLC : ADC #$10 : AND.b #$F0 : STA.w $0224 ; y
+  LDA.b $22 : CLC : ADC #$08 : AND.b #$F0 : STA.w $0225 ; x
 
   LDA.w $0224 : CMP.w $0226 : BNE .differentTile
     LDA.w $0225 : CMP.w $0227 : BNE .differentTile
@@ -37,8 +34,10 @@ CrumbleFloorTag_Main:
     BRA .doneupdate
   +
   LDA.l $7E2000, X : CMP.w #$0C62 : BNE +
+  -
     JSR update_crack_tile
   +
+  LDA.l $7E2000, X : CMP.w #$0C63 : BEQ -
   .doneupdate
   SEP #$30
 
