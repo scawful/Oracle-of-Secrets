@@ -114,21 +114,15 @@ Sprite_BounceTowardPlayer:
   RTL
 }
 
-; A = Speed
+; A = Speed, Y = Height
 Sprite_FloatTowardPlayer:
 {
   ; Maintain altitude (float effect)
   TYA : STA.w SprHeight, X
   JSL Sprite_MoveAltitude
-
   JSL Sprite_ApplySpeedTowardsPlayer
-
-  ; Update horizontal position
   JSL Sprite_MoveHoriz
-
-  ; Update vertical position
   JSL Sprite_MoveVert
-
   RTL
 }
 
@@ -746,17 +740,17 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
 
 GetDistance8bit_Long:
 {
-  LDA   $04        ; Sprite X
-  SEC   : SBC $02  ; - Player X
-  BPL   +
-  EOR.b #$FF : INC
+  LDA.w POSX : STA $02
+  LDA.w POSY : STA $03
+  LDA.w SprX, X : STA $04
+  LDA.w SprY, X : STA $05
+  LDA   $04 : SEC : SBC $02 : BPL   +
+    EOR.b #$FF : INC
   +
-  STA   $00        ; Distance X (ABS)
+  STA   $00 ; Distance X (ABS)
 
-  LDA   $05        ; Sprite Y
-  SEC   : SBC $03  ; - Player Y
-  BPL   +
-  EOR.b #$FF : INC
+  LDA   $05 : SEC : SBC $03 : BPL   +
+    EOR.b #$FF : INC
   +
   ; Add it back to X Distance
   CLC   : ADC $00 : STA $00 ; distance total X, Y (ABS)
@@ -765,38 +759,111 @@ GetDistance8bit_Long:
 
 ; =========================================================
 
+Sprite_CheckIfRecoiling:
+{
+  PHB : PHK : PLB
+
+  LDA.w $0EA0, X : BEQ .exit
+  AND.b #$7F : BEQ .recoil_over
+    LDA.w SprYSpeed, X
+    PHA
+
+    LDA.w SprXSpeed, X
+    PHA
+
+    DEC.w $0EA0, X : BNE .still_recoiling
+      LDA.w SprXRecoil, X : CLC : ADC.b #$20 : CMP.b #$40 : BCS .no_adjust
+        LDA.w SprYRecoil, X : CLC : ADC.b #$20 : CMP.b #$40 : BCC .still_recoiling
+      .no_adjust
+      LDA.b #$90 : STA.w $0EA0,X
+    .still_recoiling
+    LDA.w $0EA0,X : BMI .no_movement
+
+      LSR A
+      LSR A
+      TAY
+
+      LDA.b $1A : AND.w .masks,Y : BNE .no_movement
+
+      LDA.w SprYRecoil, X : STA.w SprYSpeed,X
+
+      LDA.w SprXRecoil, X : STA.w SprXSpeed,X
+
+      LDA.w SprBump, X : BMI .handle_movement
+
+      JSL Sprite_CheckTileCollision_long
+
+      LDA.w $0E70, X : AND.b #$0F : BEQ .handle_movement
+
+      .stop_horizontal_movement
+      CMP.b #$04 : BCS .stop_vertical_movement
+
+      STZ.w SprXRecoil,X
+      STZ.w SprXSpeed,X
+
+      BRA .movement_stopped
+
+      .stop_vertical_movement
+      STZ.w SprYRecoil,X
+      STZ.w SprYSpeed,X
+
+      .movement_stopped
+      BRA .no_movement
+
+      .handle_movement
+      JSL Sprite_Move
+
+    .no_movement
+    PLA
+    STA.w SprXSpeed,X
+
+    PLA
+    STA.w SprYSpeed,X
+
+    .exit
+    PLB
+    RTL
+
+  .recoil_over
+  STZ.w $0EA0,X
+
+  PLB
+  RTL
+
+  .masks
+  db $03, $01, $00, $00, $0C, $03
+}
+
 Intro_Dungeon_Main:
 {
   LDA $0E20 : CMP.b #$92 : BNE .not_sprite_body_boss
-      LDA $0E30 : BEQ .not_sprite_body_boss
- LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
+    LDA $0E30 : BEQ .not_sprite_body_boss
+    LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
 
- ; free ram used to check if the sprite ran this frame, if 0, it didn't run
- LDA.b SpriteRanCheck : BEQ .didNotRun
-     LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
+    ; free ram used to check if the sprite ran this frame, if 0, it didn't run
+    LDA.b SpriteRanCheck : BEQ .didNotRun
+      LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
+    .didNotRun
 
- .didNotRun
-
- STZ.b SpriteRanCheck
-
+    STZ.b SpriteRanCheck
   .not_sprite_body_boss
 
-  REP #$21 : LDA.w DungeonMainCheck : BNE .intro ;<- load that free ram you are using if it's not zero then we're doing intro thing
-      LDA $E2 : RTL ;return to normal intro
-
+  ;<- free ram you are using if it's not zero then we're doing intro
+  REP #$21 : LDA.w DungeonMainCheck : BNE .intro
+    LDA $E2 : RTL ; return to normal intro
   .intro
 
-  PLA ;Pop 2byte from stack
-  ;skip all the BGs codes
+  PLA ; pop 2byte from stack
+  ; skip all the BGs codes
 
   SEP #$20
-  PLA ;Pop 1 byte from the stack
+  PLA ; Pop 1 byte from the stack
   JSL $07F0AC ; $3F0AC IN ROM. Handle the sprites of pushed blocks.
-  JSL $068328 ;Sprite_Main
-  JSL $0DA18E ;PlayerOam_Main
-  JSL $0DDB75 ;HUD.RefillLogicLong
+  JSL $068328 ; Sprite_Main
+  JSL $0DA18E ; PlayerOam_Main
+  JSL $0DDB75 ; HUD.RefillLogicLong
 
-  JML $0AFD0C ;FloorIndicator ; $57D0C IN ROM. Handles HUD floor indicator
+  JML $0AFD0C ; FloorIndicator ; $57D0C IN ROM. Handles HUD floor indicator
 }
 
 ; =========================================================
@@ -806,44 +873,43 @@ MoveCamera:
 {
   REP #$20
 
-  ;move the camera up or down until a point is reached
-  LDA $E8 : CMP $00 : BEQ .dontMoveY ;if equals that point, dont move y
-
-  BCS .CameraBelowPointY
-  ;CameraAbovePoint
-   ADC.w #$0001 : STA $E8 : STA $E6 : STA $0122 : STA $0124 ;move the camera down by 1
+  ; move the camera up or down until a point is reached
+  LDA $E8 : CMP $00 : BEQ .dontMoveY ; if equals that point, dont move y
+                      BCS .CameraBelowPointY
+  ; CameraAbovePoint
+  ADC.w #$0001 : %sta($E8, $E6, $0122, $0124) ; move the camera down by 1
       BRA .dontMoveY
 
   .CameraBelowPointY
-      SEC : SBC.w #$0001 : STA $E8 : STA $E6 : STA $0122 : STA $0124 ;move the camera up by 1
+      SEC : SBC.w #$0001 : %sta($E8,$E6,$0122,$0124) ; move the camera up by 1
 
   .dontMoveY
 
-  ;move the camera right or left until a point is reached
-  LDA $E2 : CMP.w $02 : BEQ .dontMoveX ;if equals that point, dont move x
-
-  BCS .CameraBelowPointX ;left
-  ;CameraAbovePoint ;right
-   ADC.w #$0001 : STA $E2 : STA $E0 : STA $011E : STA $0120 ;move the camera right by 1
+  ; move the camera right or left until a point is reached
+  LDA $E2 : CMP.w $02 : BEQ .dontMoveX ; if equals that point, dont move x
+                        BCS .CameraBelowPointX ; left
+  ; CameraAbovePoint ;right
+   ADC.w #$0001 : %sta($E2, $E0, $011E, $0120) ; move the camera right by 1
       BRA .dontMoveX
 
   .CameraBelowPointX
-      SEC : SBC.w #$0001 : STA $E2 : STA $E0 : STA $011E : STA $0120 ;move the camera left by 1
+      SEC : SBC.w #$0001 : %sta($E2, $E0, $011E, $0120) ; move the camera left by 1
 
   .dontMoveX
 
-  ;if link is outside of a certain range of the camera, make him dissapear so he doesnt appear on the other side
+  ; if link is outside of a certain range of the camera
+  ; make him dissapear so he doesnt appear on the other side
   LDA $20 : SEC : SBC $E8 : CMP.w #$00E0 : BCS .MakeLinkInvisible
   LDA $22 : SEC : SBC $E2 : CMP.w #$00E0 : BCS .MakeLinkInvisible
 
   SEP   #$20
-  LDA.b #$00 : STA $4B ;make link visible
+  LDA.b #$00 : STA $4B ; make link visible
   RTS
 
   .MakeLinkInvisible
 
   SEP   #$20
-  LDA.b #$0C : STA $4B ;make link invisible
+  LDA.b #$0C : STA $4B ; make link invisible
 
   RTS
 }
@@ -939,77 +1005,3 @@ MovieEffect:
   db $00      ;end the HDMA
 }
 
-Sprite_CheckIfRecoiling:
-{
-  PHB : PHK : PLB
-
-  LDA.w $0EA0, X : BEQ .exit
-  AND.b #$7F : BEQ .recoil_over
-    LDA.w SprYSpeed, X
-    PHA
-
-    LDA.w SprXSpeed, X
-    PHA
-
-    DEC.w $0EA0, X : BNE .still_recoiling
-      LDA.w SprXRecoil, X : CLC : ADC.b #$20 : CMP.b #$40 : BCS .no_adjust
-        LDA.w SprYRecoil, X : CLC : ADC.b #$20 : CMP.b #$40 : BCC .still_recoiling
-      .no_adjust
-      LDA.b #$90 : STA.w $0EA0,X
-    .still_recoiling
-    LDA.w $0EA0,X : BMI .no_movement
-
-      LSR A
-      LSR A
-      TAY
-
-      LDA.b $1A : AND.w .masks,Y : BNE .no_movement
-
-      LDA.w SprYRecoil, X : STA.w SprYSpeed,X
-
-      LDA.w SprXRecoil, X : STA.w SprXSpeed,X
-
-      LDA.w SprBump, X : BMI .handle_movement
-
-      JSL Sprite_CheckTileCollision_long
-
-      LDA.w $0E70, X : AND.b #$0F : BEQ .handle_movement
-
-      .stop_horizontal_movement
-      CMP.b #$04 : BCS .stop_vertical_movement
-
-      STZ.w SprXRecoil,X
-      STZ.w SprXSpeed,X
-
-      BRA .movement_stopped
-
-      .stop_vertical_movement
-      STZ.w SprYRecoil,X
-      STZ.w SprYSpeed,X
-
-      .movement_stopped
-      BRA .no_movement
-
-      .handle_movement
-      JSL Sprite_Move
-
-    .no_movement
-    PLA
-    STA.w SprXSpeed,X
-
-    PLA
-    STA.w SprYSpeed,X
-
-    .exit
-    PLB
-    RTL
-
-  .recoil_over
-  STZ.w $0EA0,X
-
-  PLB
-  RTL
-
-  .masks
-  db $03, $01, $00, $00, $0C, $03
-}
