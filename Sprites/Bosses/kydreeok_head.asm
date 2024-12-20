@@ -198,7 +198,7 @@ Sprite_KydreeokHead_Main:
     %MoveTowardPlayer(10)
 
     JSL Sprite_CheckDamageToPlayer
-    JSR Sprite_Twinrova_FireAttack
+    JSL Sprite_Twinrova_FireAttack
     LDA.w SprTimerA, X : BNE .not_done
       LDA #$00 : STA.w SprState, X
     .not_done

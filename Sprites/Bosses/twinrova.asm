@@ -297,7 +297,7 @@ Sprite_Twinrova_Main:
     %StartOnFrame(4)
     %Twinrova_Ready()
 
-    JSR Sprite_Twinrova_FireAttack
+    JSL Sprite_Twinrova_FireAttack
 
     ; Random chance to release fireball
     JSL GetRandomInt : AND.b #$3F : BNE ++
@@ -317,7 +317,7 @@ Sprite_Twinrova_Main:
     %StartOnFrame(4)
     %Twinrova_Ready()
 
-    JSR Sprite_Twinrova_IceAttack
+    JSL Sprite_Twinrova_IceAttack
 
     LDA.w SprTimerD, X : BNE +
       %GotoAction(1)
@@ -577,161 +577,6 @@ TargetPositions:
     dw $0040, $FFC0  ; Down, Up
 
 ; =========================================================
-
-; Reused function from TrinexxBreath.
-TrinexxBreath_AltEntry:
-{
-  LDA $1A : AND.b #$07 : BNE .no_adjustment
-    JSL GetRandomInt
-    AND.b #$03
-    TAY
-    LDA SpeedAdjustments, Y : CLC : ADC.w SprXSpeed, X : STA.w SprXSpeed, X
-    LDA SpeedAdjustments+4, Y : CLC : ADC.w SprYSpeed, X : STA.w SprYSpeed, X
-  .no_adjustment
-
-  JSL Sprite_BounceFromTileCollision
-  LDA $1A : AND.b #$03 : BNE .no_shake
-    JSL Sprite_IsToRightOfPlayer
-    LDA.w SprXSpeed, X : CMP .x_speed_targets, Y : BEQ .no_shake
-      CLC : ADC.w .shake_x, Y : STA.w SprXSpeed, X
-
-  .no_shake
-  JSL Sprite_IsBelowPlayer
-    LDA.w SprYSpeed, X : CMP .x_speed_targets, Y : BEQ .exit
-      CLC : ADC.w .shake_y, Y : STA.w SprYSpeed, X
-
-  JSL Sprite_CheckTileCollision : BEQ .exit
-    LDY #$10
-    JSL Sprite_FloatTowardPlayer
-
-  .exit
-  RTS
-
-  .x_speed_targets
-    db 16, -16
-
-  .shake_x
-    db  1, -1
-
-  .shake_y
-    db  0, -1
-
-  ; Adjustments for xy speeds (small positive, small negative)
-  SpeedAdjustments:
-  db  $02, $FE, $04, $FC ; X
-  db  $01, $FF, $02, $FE ; Y
-}
-
-Sprite_Twinrova_FireAttack:
-{
-  JSL Sprite_CheckTileCollision : BNE .no_collision
-    JSL Sprite_Move
-  .no_collision
-  JSR AddFireGarnish
-  JMP TrinexxBreath_AltEntry
-}
-
-; $1DBDD6 - TrinexxFire_AddFireGarnish
-AddFireGarnish:
-{
-    INC.w SprDelay, X : LDA.w SprDelay, X : AND.b #$07 : BNE .return
-      LDA.b #$2A : JSL Sound_SetSfx2PanLong
-      LDA.b #$1D : PHX : TXY : TAX : STA $00
-
-  .next_slot
-    LDA $7FF800, X : BEQ .free_slot ; Search for free Garnish slot
-      DEX : BPL .next_slot
-        DEC $0FF8 : BPL .use_search_index
-          LDA $00 : STA $0FF8
-    .use_search_index
-      LDX $0FF8
-  .free_slot
-    ; Set garnish ID, set garnish handled flag, set garnish parent sprite
-    LDA.b #$10 : STA $7FF800, X : STA $0FB4 : TYA : STA $7FF92C, X
-    LDA.w SprX, Y  : STA $7FF83C, X                    ; Garnish XL
-    LDA.w SprXH, Y : STA $7FF878, X                    ; Garnish XH
-    LDA.w SprY, Y  : CLC : ADC.b #$10 : STA $7FF81E, X ; Garnish YL
-    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X       ; Garnish YH
-    LDA.b #$7F : STA $7FF90E, X : STX $00              ; Set garnish timer
-    PLX
-
-  .return
-    RTS
-}
-
-; =========================================================
-
-Sprite_Twinrova_IceAttack:
-{
-  JSL Sprite_CheckTileCollision : BNE .no_collision
-    JSL Sprite_Move
-  .no_collision
-  JSR AddIceGarnishV2
-  JMP TrinexxBreath_AltEntry
-}
-
-; $1DBD65 - TrinexxBreath_ice_add_ice_garnish
-AddIceGarnishV2:
-{
-    INC.w SprDelay, X : LDA.w SprDelay, X : AND.b #$07 : BNE .return
-      LDA.b #$14 : JSL Sound_SetSfx3PanLong
-      LDA.b #$1D : PHX : TXY : TAX : STA $00
-
-  .next_slot
-    LDA $7FF800, X : BEQ .free_slot ; Search for free Garnish slot
-      DEX : BPL .next_slot
-        DEC $0FF8 : BPL .use_search_index
-          LDA.b #$00 : STA $0FF8
-    .use_search_index
-      LDX $0FF8
-  .free_slot
-    ; Set garnish ID, set garnish handled flag, set garnish parent sprite
-    LDA.b #$0C : STA $7FF800, X : STA $0FB4 : TYA : STA $7FF92C, X
-    LDA.w SprX, Y : STA $7FF83C, X                    ; Garnish XL
-    LDA.w SprXH, Y : STA $7FF878, X                   ; Garnish XH
-    LDA.w SprY, Y : CLC : ADC.b #$10 : STA $7FF81E, X ; Garnish YL
-    LDA.w SprYH, Y : ADC.b #$00 : STA $7FF85A, X      ; Garnish YH
-    LDA.b #$7F : STA $7FF90E, X : STX $00             ; Set garnish timer
-    PLX
-
-  .return
-    RTS
-}
-
-; =========================================================
-; Overwrite vanilla Trinexx ice garnish
-; Plays like a simple ice cloud animation now.
-
-pushpc
-
-org $09B5DE
-  Garnish_PrepOamCoord:
-
-org $09B70C
-  Garnish_SetOamPropsAndLargeSize:
-
-org $09B459
-  Garnish_CheckPlayerCollision:
-
-org $09B5D6
-  Garnish_SetOamPropsAndSmallSize:
-
-; SpriteData_Bump - Ice Garnish
-org $0DB266+$CD
-  db $04
-
-org $09B33F
-TrinexxIce_Pool:
-{
-  .chr
-    db $2E, $2E, $2E, $2E
-    db $2C, $2C, $2C, $2C
-    db $2C, $2C, $2C, $2C
-  .properties
-    db $35, $35, $35, $35
-}
-
-pullpc
 
 RestoreFloorTile:
 {
