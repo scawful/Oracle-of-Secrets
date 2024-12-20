@@ -1000,9 +1000,9 @@ RoomTag_ShutterDoorRequiresCart:
 pushpc
 
 ; JML to return here 01CC5A
-org $01CC08
-RoomTag_Holes3:
-JML RoomTag_ShutterDoorRequiresCart
+;org $01CC08
+;RoomTag_Holes3:
+;JML RoomTag_ShutterDoorRequiresCart
 ; LDA.b #$06 : BRA RoomTag_TriggerHoles
 
 pullpc
