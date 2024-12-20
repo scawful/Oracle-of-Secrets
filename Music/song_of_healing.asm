@@ -32,7 +32,7 @@ dw $0000
 
 
 .Channel0
-%SetMasterVolume($C8)
+%SetMasterVolume($98)
 %SetTempo(56)
 %SetInstrument($18) ; Guitar
 %SetDurationN($48, $7F) ; 1/4
