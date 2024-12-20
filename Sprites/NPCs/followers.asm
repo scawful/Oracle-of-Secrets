@@ -795,12 +795,14 @@ MinecartFollower_TransitionToSprite:
   .finish_prep
   LDA.w POSYH : STA.w SprYH, X
   LDA.w POSXH : STA.w SprXH, X
-  LDA.w !MinecartDirection : CLC : ADC.b #$04 : STA.w SprSubtype, X
+  LDA.w !MinecartDirection
+  CLC : ADC.b #$04
+  STA.w SprSubtype, X
 
   LDA Minecart_AnimDirection, X : STA $0D90, X
   JSL Sprite_Minecart_Prep
   LDA.b #$00 : STA.l $7EF3CC
-  RTS
+  RTL
 }
 
 ; Minecart Follower Main Routine and Draw
@@ -818,8 +820,8 @@ DrawMinecartFollower:
   ; Check the current submodule in the underworld
   LDA.b $11 : BNE .dont_spawn
     LDA !LinkInCart : BEQ .dont_spawn
-      LDA.b #$09 : STA.b LinkState
-      ;JSR MinecartFollower_TransitionToSprite
+      ;LDA.b #$09 : STA.b LinkState
+      JSL MinecartFollower_TransitionToSprite
   .dont_spawn
   RTS
 }
