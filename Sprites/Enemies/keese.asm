@@ -58,9 +58,8 @@ Sprite_Keese_Prep:
 {
   PHB : PHK : PLB
   LDA.b #$80 : STA.w SprDefl, X
-
   LDA.w SprSubtype, X : CMP.b #$02 : BNE +
-    LDA.b #$60 : STA.w SprHealth, X
+    LDA.b #$20 : STA.w SprHealth, X
     BRA ++
   +
   LDA.b #$02 : STA.w SprNbrOAM, X
