@@ -11,6 +11,9 @@ pullpc
 ; kill room tag
 CrumbleFloorTag_Main:
 {
+  LDA.w $02B2 : CMP.b #$05 : BNE +
+    RTL
+  +
   LDA.b $20 : CLC : ADC #$10 : AND.b #$F0 : STA.w $0224 ; y
   LDA.b $22 : CLC : ADC #$08 : AND.b #$F0 : STA.w $0225 ; x
 
