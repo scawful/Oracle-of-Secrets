@@ -151,7 +151,7 @@ Sprite_Mermaid_Main:
     Maple_Idle:
     {
       %PlayAnimation(0,1,16)
-      %ShowSolicitedMessage($0187) : BCC +
+      %ShowSolicitedMessage($01B3) : BCC +
         INC.w SprAction, X
       +
       RTS
