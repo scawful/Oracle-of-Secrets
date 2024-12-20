@@ -67,6 +67,9 @@ Sprite_Vasu = $D7
 incsrc "Sprites/NPCs/vasu.asm"
 print  "End of vasu.asm                   ", pc
 
+incsrc "Sprites/NPCs/bottle_vendor.asm"
+print  "End of bottle_vendor.asm          ", pc
+
 incsrc "Sprites/Enemies/leever.asm"
 print  "End of leever.asm                 ", pc
 

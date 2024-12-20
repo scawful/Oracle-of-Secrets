@@ -145,82 +145,20 @@ Sprite_Mermaid_Main:
     LDA.w SprAction, X
     JSL JumpTableLocal
 
-    dw MapleIdle
-    dw Maple_BoughtMilkBottle
-    dw Maple_NotEnoughRupees
-    dw Maple_HandlePlayerResponse
-    dw Maple_ComeBackAgain
+    dw Maple_Idle
+    dw Maple_HandleDreams
 
-    MapleIdle:
+    Maple_Idle:
     {
       %PlayAnimation(0,1,16)
-      JSL Sprite_PlayerCantPassThrough
-
-      %ShowSolicitedMessage($0187) : BCC .didnt_talk
-        %GotoAction(3) ; Handle player response
-      .didnt_talk
+      %ShowSolicitedMessage($0187) : BCC +
+        INC.w SprAction, X
+      +
       RTS
     }
 
-    Maple_BoughtMilkBottle:
+    Maple_HandleDreams:
     {
-      REP #$20
-      LDA.l $7EF360 : CMP.w #$1E ; 30 rupees
-      SEP #$30
-      BCC .not_enough_rupees
-
-        LDA.l $7EF35C : CMP.b #$02 : BEQ .bottle1_available
-        LDA.l $7EF35D : CMP.b #$02 : BEQ .bottle2_available
-        LDA.l $7EF35E : CMP.b #$02 : BEQ .bottle3_available
-        LDA.l $7EF35F : CMP.b #$02 : BEQ .bottle4_available
-          %ShowUnconditionalMessage($033)
-          %GotoAction(0)
-          RTS
-
-        .bottle1_available
-        LDA.b #$0A : STA.l $7EF35C : JMP .finish_storage
-        .bottle2_available
-        LDA.b #$0A : STA.l $7EF35D : JMP .finish_storage
-        .bottle3_available
-        LDA.b #$0A : STA.l $7EF35E : JMP .finish_storage
-        .bottle4_available
-        LDA.b #$0A : STA.l $7EF35F
-        .finish_storage
-        REP #$20
-        LDA.l $7EF360
-        SEC : SBC.w #$1E ; Subtract 30 rupees
-        STA.l $7EF360
-        SEP #$30
-
-        %ShowUnconditionalMessage($0188) ; Thank you!
-        %GotoAction(0)
-        RTS
-      .not_enough_rupees
-      %GotoAction(2)
-      RTS
-    }
-
-    Maple_NotEnoughRupees:
-    {
-      %ShowUnconditionalMessage($0189) ; You don't have enough rupees!
-      %GotoAction(0)
-      RTS
-    }
-
-    Maple_HandlePlayerResponse:
-    {
-      LDA $1CE8 : BEQ .player_said_yes
-        %GotoAction(4)
-        RTS
-      .player_said_yes
-      %GotoAction(1)
-      RTS
-    }
-
-    Maple_ComeBackAgain:
-    {
-      %ShowUnconditionalMessage($018B) ; Come back again!
-      %GotoAction(0)
       RTS
     }
   }
