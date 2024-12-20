@@ -35,14 +35,11 @@ Object_KeyBlock:
 }
 
 ; Fix draw bug from floor tile left by block after unlock.
-org $01EBC8
-  LDA.w $9B5A, Y
+org $01EBC8 : LDA.w $9B5A, Y
 
-org $01EBD1
-  LDA.w $9B54, Y
+org $01EBD1 : LDA.w $9B54, Y
 
-org $01EBDA
-  LDA.w $9B5C, Y
+org $01EBDA : LDA.w $9B5C, Y
 
 ; Draw Values
 ; 50 - /
@@ -53,7 +50,6 @@ org $01EBDA
 ; 5A - y mirror
 ; 5C - xy mirror
 ; 5E - y mirror
-
 
 org $00AFE6
   dw $4936

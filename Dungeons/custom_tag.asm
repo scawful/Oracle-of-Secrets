@@ -5,18 +5,16 @@
 StoryState = $7C
 RoomTag_Return = $01CC5A
 
-org $01CC18 ; override routine 0x39 "Holes(7)"
-  JML CustomTag
+; override routine 0x39 "Holes(7)"
+org $01CC18 : JML CustomTag
 
-org $01CC10
-  RoomTag_Holes5:
-  JML RoomTag_MinishShutterDoor
+; RoomTag_Holes5
+org $01CC10 : JML RoomTag_MinishShutterDoor
 
 pullpc
 CustomTag:
 {
   PHX
-
   LDA $7EF3C6 : BNE .game_has_begun
     JSR HouseTag_Main
   .game_has_begun
@@ -30,7 +28,6 @@ CustomTag:
 HouseTag_Main:
 {
   LDA.w StoryState
-
   JSL $008781
 
   dw HouseTag_TelepathicPlea
@@ -39,7 +36,7 @@ HouseTag_Main:
 
   HouseTag_TelepathicPlea:
   {
-    LDA #$08 : STA $7EE000 ; Set the time to 8:00am
+    LDA.b #$08 : STA $7EE000 ; Set the time to 8:00am
     LDA.b #$03 : STA.w $012C ; Play the deku tree music
 
     ; -------------------------------
@@ -64,12 +61,9 @@ HouseTag_Main:
     ; Lighten the screen gradually and then wake Link up partially
     LDA $1A : AND.b #$03 : BNE .delay
       LDA $9C : CMP.b #$00 : BEQ .colorTargetReached
-
         DEC $9C : DEC $9D
-
-    .delay
-    RTS
-
+      .delay
+      RTS
     .colorTargetReached
 
     INC $0D80, X
@@ -92,12 +86,10 @@ HouseTag_Main:
     RTS
   }
 
-
   HouseTag_End:
   {
     LDA $B6 : BNE .hasMetFarore
       LDA #$00 : STA.w StoryState
-
     .hasMetFarore
     RTS
   }
@@ -115,12 +107,9 @@ RoomTag_MinishShutterDoor:
     LDX.w #$0000 : CPX.w $0468 : BEQ .exit
       STZ.w $0468
       STZ.w $068E : STZ.w $0690
-
       SEP #$30
-
       LDA.b #$1B : STA.w $012F
       LDA.b #$05 : STA.b $11
-
     .exit
     SEP #$30
   .no_minish

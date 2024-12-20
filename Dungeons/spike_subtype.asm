@@ -17,7 +17,6 @@ org $1EBD0E
 JSL NewSpikeCollision
 RTS
 
-
 pullpc
 speedValuesH:
 db $20, $10, $18, $28, $30, $38, $40, $FF
@@ -40,10 +39,8 @@ NewSpikePrep:
 NewSpikeCollision:
 {
   LDA.b #$04 : STA.w SprTimerA, X
-
   LDA.w SprXSpeed, X : EOR.b #$FF : INC A : STA.w SprXSpeed, X
   LDA.w SprYSpeed, X : EOR.b #$FF : INC A : STA.w SprYSpeed, X
-
   LDA.b #$05 : JSL $0DBB7C ; Sound_SetSfx2PanLong
   RTL
 }

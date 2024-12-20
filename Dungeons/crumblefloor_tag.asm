@@ -58,28 +58,15 @@ SpawnFallingTile:
 
   .next
   LDA.l $7FF800, X : BNE .skip
-
-    LDA.b #$03 ; GARNISH 03
-    STA.l $7FF800, X
-
+    ; GARNISH 03
+    LDA.b #$03 : STA.l $7FF800, X
     LDA.w $022A : STA.l $7FF83C, X
     LDA.w $022B : STA.l $7FF878, X
-
-    LDA.w $0228
-    CLC
-    ADC.b #$10
-    STA.l $7FF81E, X
-
-    LDA.w $0229
-    ADC.b #$00
-    STA.l $7FF85A, X
-
+    LDA.w $0228 : CLC : ADC.b #$10 : STA.l $7FF81E, X
+    LDA.w $0229 : ADC.b #$00 : STA.l $7FF85A, X
     LDA.b #$1F : STA.l $7FF90E, X
-
     STA.w $0FB4
-
     BRA .exit
-
   .skip
   DEX
   BPL .next
@@ -113,28 +100,20 @@ update_pit_tile:
 replace_crack_pit:
 {
   LDX.w $1000
-
-  LDA.w #$0CCC : STA.w $1006,X
-
-  LDA.w #$0CDC : STA.w $100C,X
-
-  LDA.w #$0CCD : STA.w $1012,X
-
-  LDA.w #$0CDD : STA.w $1018,X
+  LDA.w #$0CCC : STA.w $1006, X
+  LDA.w #$0CDC : STA.w $100C, X
+  LDA.w #$0CCD : STA.w $1012, X
+  LDA.w #$0CDD : STA.w $1018, X
 
   LDX.b $06
-
   LDA.w #$0CCC : STA.l $7E2000, X
   LDA.w #$0CDC : STA.l $7E2080, X
   LDA.w #$0CCD : STA.l $7E2002, X
   LDA.w #$0CDD : STA.l $7E2082, X
 
   LDA.w #$01E9 : AND.w #$03FF : TAX
-
-  LDA.l $7EFE00,X
-  AND.w #$00FF
-  STA.b $08
-  STA.b $09
+  LDA.l $7EFE00, X : AND.w #$00FF
+  STA.b $08 : STA.b $09
 
   JMP replace_tile_continue
 }
@@ -144,10 +123,10 @@ replace_tile_pit:
   LDX.w $1000
 
   LDA.w #$01E9
-  STA.w $1006,X
-  STA.w $100C,X
-  STA.w $1012,X
-  STA.w $1018,X
+  STA.w $1006, X
+  STA.w $100C, X
+  STA.w $1012, X
+  STA.w $1018, X
 
   LDX.b $06
 
@@ -164,15 +143,8 @@ replace_tile_pit:
   STA.l $7F2000, X
   STA.l $7F2040, X
 
-
-  LDA.w #$01E9
-  AND.w #$03FF
-  TAX
-
-  LDA.l $7EFE00,X
-  AND.w #$00FF
-  STA.b $08
-  STA.b $09
+  LDA.w #$01E9 : AND.w #$03FF : TAX
+  LDA.l $7EFE00, X : AND.w #$00FF : STA.b $08 : STA.b $09
 
   JMP replace_tile_continue
 }

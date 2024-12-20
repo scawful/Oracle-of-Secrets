@@ -8,11 +8,9 @@
 ; depending on the player's position in the room. This uses
 ; the 4 "stairs" properties in the room header.
 
-org $01CC1C
-  JML WarpTag
+org $01CC1C : JML WarpTag
 
-org $01CC5A
-  WarpTag_Return:
+WarpTag_Return = $01CC5A
 
 pullpc ; Bank 0x2C
 WarpTag:

@@ -44,7 +44,6 @@ namespace Oracle
 
   incsrc "Core/music_macros.asm"
   incsrc "Core/symbols.asm"
-
   incsrc "Core/message.asm"
 
   print "  -- Music --  "
