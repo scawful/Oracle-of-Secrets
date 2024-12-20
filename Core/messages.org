@@ -1763,3 +1763,15 @@ You planning to head into the
 [V]And those Rock Sirloins? [K]
 [V]Heavy as boulders. Without the
 [V]Power Glove, you’re out of luck.
+
+** 1B3 - Maple Intro
+Well, well, what's this?
+[2]A traveler from beyond, in my
+[3]Dream Hut? How intriguing![K]
+[V]I am Maple, the Great Witch
+[V]Syrup's apprentice! You look
+[V]like someone carrying secrets[...][K]
+[V]or seeking them?[K]
+[V]> Yes, I seek guidance
+[V]   What is this place?
+[V]   No thanks, I'll be going now.[CH3]
