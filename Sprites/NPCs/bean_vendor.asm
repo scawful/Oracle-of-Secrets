@@ -113,10 +113,11 @@ Sprite_BeanVendor_Main:
        RTS
 
     .not_lifting
-    LDA.b #Sprite_BeanVendor
-    JSL Sprite_CheckCollisionWithSprite
-    LDA.w SprMiscF, X : BEQ ++
-      STZ.w SprState, X
+    LDA.b $8A : CMP.b #$00 : BNE ++
+      LDA.b #Sprite_BeanVendor
+      JSL Sprite_CheckCollisionWithSprite
+      LDA.w SprMiscF, X : BEQ ++
+        STZ.w SprState, X
     ++
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
