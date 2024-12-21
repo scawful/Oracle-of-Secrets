@@ -99,7 +99,6 @@ Sprite_Mermaid_Main:
     {
       %PlayAnimation(0,0, 20)
       JSL Sprite_PlayerCantPassThrough
-
       %ShowMessageOnContact($047) : BCC .didnt_talk
         LDA.w SprTimerA, X : BNE +
           LDA.b #$20 : STA.w SprTimerA, X
@@ -159,6 +158,11 @@ Sprite_Mermaid_Main:
 
     Maple_HandleDreams:
     {
+      LDA.l $7EF351 : BEQ +
+        LDA.b #$02 : STA.l $7EF351
+        LDA.b #$1B : STA.w $012F
+        STZ.w SprAction, X
+      +
       RTS
     }
   }
