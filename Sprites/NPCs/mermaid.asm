@@ -31,7 +31,6 @@
 
 %Set_Sprite_Properties(Sprite_Mermaid_Prep, Sprite_Mermaid_Long)
 
-
 Sprite_Mermaid_Long:
 {
   PHB : PHK : PLB
@@ -134,34 +133,6 @@ Sprite_Mermaid_Main:
         STZ.w SprXSpeed, X
         LDA.b #$01 : STA.w SprMiscD, X
         LDA.b #$04 : STA.w SprTimerA, X
-      +
-      RTS
-    }
-  }
-
-  MapleHandler:
-  {
-    LDA.w SprAction, X
-    JSL JumpTableLocal
-
-    dw Maple_Idle
-    dw Maple_HandleDreams
-
-    Maple_Idle:
-    {
-      %PlayAnimation(0,1,16)
-      %ShowSolicitedMessage($01B3) : BCC +
-        INC.w SprAction, X
-      +
-      RTS
-    }
-
-    Maple_HandleDreams:
-    {
-      LDA.l $7EF351 : BEQ +
-        LDA.b #$02 : STA.l $7EF351
-        LDA.b #$1B : STA.w $012F
-        STZ.w SprAction, X
       +
       RTS
     }

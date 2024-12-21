@@ -35,6 +35,8 @@ Sprite_Maple     = $F0 ; Subtype 1
 Sprite_Librarian = $F0 ; Subtype 2
 incsrc "Sprites/NPCs/mermaid.asm"
 print  "End of mermaid.asm                ", pc
+incsrc "Sprites/NPCs/maple.asm"
+print  "End of maple.asm                  ", pc
 
 Sprite_Manhandla = $88
 incsrc "Sprites/Bosses/manhandla.asm"
