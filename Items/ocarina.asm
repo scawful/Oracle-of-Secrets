@@ -248,41 +248,41 @@ OcarinaEffect_SummonStorms:
   ; Dismiss the rain in the Zora area where it is already raining
   LDA.w $8A : CMP.b #$00 : BEQ .check_for_magic_bean
               CMP.b #$1E : BEQ .checkForEvent
-              CMP.b #$2E : BEQ .dismissStorms
-              CMP.b #$2F : BEQ .dismissStorms
+              CMP.b #$2E : BEQ .dismiss_storms
+              CMP.b #$2F : BEQ .dismiss_storms
     ; Check for areas which should not be allowed to have rain
-    CMP.b #$05 : BEQ .errorBeep
-    CMP.b #$06 : BEQ .errorBeep
-    CMP.b #$07 : BEQ .errorBeep
-    CMP.b #$10 : BEQ .errorBeep
-    CMP.b #$18 : BEQ .errorBeep
-    CMP.b #$28 : BEQ .errorBeep
-    CMP.b #$29 : BEQ .errorBeep
+    CMP.b #$05 : BEQ .error_beep
+    CMP.b #$06 : BEQ .error_beep
+    CMP.b #$07 : BEQ .error_beep
+    CMP.b #$10 : BEQ .error_beep
+    CMP.b #$18 : BEQ .error_beep
+    CMP.b #$28 : BEQ .error_beep
+    CMP.b #$29 : BEQ .error_beep
 
   .summon_or_dismiss
     ; If the rain is already summoned, dismiss it
-    LDA.l $7EE00E : BEQ .summonStorms
-      .dismissStorms
+    LDA.l $7EE00E : BEQ .summon_storms
+      .dismiss_storms
       LDA #$FF : STA $8C
       LDA #$00 : STA $7EE00E
       STZ $1D
       STZ $9A
       RTL
 
-    .summonStorms
+    .summon_storms
     LDA #$9F : STA $8C
     LDA.b #$01 : STA.b $1D
     LDA.b #$72 : STA.b $9A
     LDA #$01 : STA $7EE00E
     RTL
 
-  .errorBeep
+  .error_beep
   LDA.b #$3C : STA.w $012E ; Error beep
   RTL
 
   .checkForEvent
-    JSR CheckForZoraEvent : BCC .errorBeep
-    JMP .dismissStorms
+    JSR CheckForZoraEvent : BCC .error_beep
+    JMP .dismiss_storms
 
   .check_for_magic_bean
   LDA.b #Sprite_BeanVendor : LDX.b #$00
@@ -293,6 +293,7 @@ OcarinaEffect_SummonStorms:
       LDA.l MagicBeanProg
       ORA.b #$04
       STA.l MagicBeanProg
+      LDA.b #$2D : STA.w $012F
     +
     JMP .summon_or_dismiss
   .not_active
