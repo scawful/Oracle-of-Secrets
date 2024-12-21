@@ -49,9 +49,32 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 
 ** =D6= Goron Mines
 *** Item: Hammer
-*** TODO [0/2]
-- [ ] Improve Minecart game feel
-- [ ] Update King Dodongo Boss
+*** Dungeon Ideas
+
+- Goron Follower
+  - Requires gfx
+  - Affects crumble floor cracks, can fall down
+
+- Lifting cart to another location
+  - only works if it is a small corridor so he can't walk back another route
+
+- a puzzle similar to star puzzle in minish grotto?
+  (if you step on the same star twice, you fail the puzzle).
+- walk to the other side of the room without any part of the floor falling down.
+  enemies or other things can make it difficult for you.
+  If you fail, the door to the next room wont open.
+
+- only some parts of the floor are normal and other parts break.
+  you put an item in front of you but if it ends up on weak parts of the floor
+  it falls down and you have to start over.
+  kind of like somaria block try and error on invisible floors
+
+- when you enter the room there are already cracks on the floor.
+  you need an item to fix the floor so that you can walk over it once.
+  maybe the song of healing
+
+- make a crack and fall down in the right place
+  so that you end up in the right place on the floor below
 
 ** =D7= Dragon Ship
 *** Item: Somaria Rod
