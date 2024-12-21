@@ -217,7 +217,8 @@ CheckForSongOfTime:
 
 CheckForDailyQuests:
 {
-  LDA.l MagicBeanProg : AND.b #$7F : BEQ .bean_done
+  LDA.l MagicBeanProg : AND.b #$7F : BNE .bean_done
+                        AND.b #$01 : BEQ .bean_done
     AND.b #$08 : BNE .not_first
       LDA.b #$08 : JMP +
     .not_first
@@ -228,6 +229,7 @@ CheckForDailyQuests:
       LDA.b #$20
     +
     ORA.l MagicBeanProg : STA.l MagicBeanProg
+    LDA.b #$1B : STA.w $012F
   .bean_done
   RTS
 }
