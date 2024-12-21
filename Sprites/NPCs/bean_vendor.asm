@@ -186,8 +186,8 @@ Sprite_BeanVendor_Main:
     %SetFrame($06)
 
     LDA.l MagicBeanProg : AND.b #$02 : BNE +
-      ; Check for the bee pollination
-      LDA.b #$B2 : STA.b $00
+      ; Check for the bee pollination (79:bee,B2:good bee)
+      LDA.b #$79 : STA.b $00
       JSL Sprite_CheckForPresence : BCC +
         PHX
         LDA.b $02 : TAX
@@ -198,9 +198,10 @@ Sprite_BeanVendor_Main:
           LDA.l MagicBeanProg
           ORA.b #$02
           STA.l MagicBeanProg
-          ; Set a timer and maybe a jingle effect?
+          LDA.b #$2D : STA.w $012F
     +
     LDA.l MagicBeanProg : CMP.b #$3F : BNE ++
+      LDA.b #$1B : STA.w $012F
       LDA.b #$04 : STA.w SprFrame, X
       LDA.b #$5F : STA.w SprTimerC, X
       INC.w SprAction, X

@@ -229,7 +229,7 @@ CheckForDailyQuests:
       LDA.b #$20
     +
     ORA.l MagicBeanProg : STA.l MagicBeanProg
-    LDA.b #$1B : STA.w $012F
+    LDA.b #$2D : STA.w $012F
   .bean_done
   RTS
 }
