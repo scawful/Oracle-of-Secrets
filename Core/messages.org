@@ -1765,13 +1765,79 @@ You planning to head into the
 [V]Power Glove, you’re out of luck.
 
 ** 1B3 - Maple Intro
-Well, well, what's this?
-[2]A traveler from beyond, in my
-[3]Dream Hut? How intriguing![K]
-[V]I am Maple, the Great Witch
-[V]Syrup's apprentice! You look
-[V]like someone carrying secrets[...][K]
-[V]or seeking them?[K]
-[V]> Yes, I seek guidance
+Oho-ho! Well, look who stumbled
+[2]into my Dream Hut! Checking
+[3]out the Eon Abyss, are we?[K]
+[V]I'm Maple, yes, that Maple!
+[V]We've crossed paths before in
+[V]Holodrum[...] or was it Labrynna?[K]
+[V]Heh, you were a bit of a pest
+[V]on my broom route, but I see
+[V]you’ve come a long way![K]
+[V]> Long time no see, Maple!
 [V]   What is this place?
-[V]   No thanks, I'll be going now.[CH3]
+[V]   I'll come back later.[CH3]
+
+** 1B4 - Maple First Response
+Ha! You do remember me!
+[2]Guess all that chasing around
+[3]left an impression.[K]
+[V]Now I've set up shop here,
+[V]diving into dreams instead
+[V]of crashing brooms.[K]
+[V]Feel free to let me poke
+[V]around in your mind[...]
+[V]it could be fun![K]
+[V]> Sure, show me a dream.
+[V]   How does this work?
+[V]   Maybe some other time.[CH3]
+
+** 1B5 - Maple What is this place?
+This little haven? I call it my
+[2]Dream Hut... not super original,
+[3]but it gets the point across.[K]
+[V]Here, I tug at the edges of your
+[V]mind, spinning dreams that might
+[V]reveal something useful.[K]
+[V]Just beware—the Eon Abyss
+[V]takes its toll, even in sleep.
+[V]Weird stuff happens here.
+
+** 1B6 - Maple Dream Check For Pendant
+Ooh, I can sense it[...]
+[2]that pendant you have there.
+[3]Perfect for dream-weaving![K]
+[V]Close those eyes, Hero. Let's
+[V]see what secrets are lurking in
+[V]that noggin of yours.
+
+** 1B7 - Maple Dream No New Pendant
+Huh, no spark in sight.
+[2]No Pendant, no dream, sorry!
+[3]But hey, roam the Abyss a bit.[K]
+[V]I'm sure you'll scrounge one up
+[V]eventually[...] And when you do,
+[V]I'll be here, waiting.
+
+** 1B8 - Maple How Does this work
+Oho! Curious about my little
+[2]dream-weaving act, are we?
+[3]Listen close, Hero.[K]
+[V]See, in the Eon Abyss, there
+[V]are three pendants, artifacts
+[V]left behind by the Goddesses.[K]
+[V]When you gather each pendant,
+[V]they resonate with your spirit,
+[V]invoking dreams of the past[...][K]
+[V]That's where I come in, helping
+[V]to navigate the dreams and
+[V]reveal secrets of the past.[K]
+[V]But the grand prize? Once
+[V]you've proven yourself,
+[V]the Master Sword awaits.[K]
+[V]That blade's hidden deep in the
+[V]Abyss, and only the one with
+[V]the pendants can awaken it.[K]
+[V]So, think of these little dreams
+[V]as stepping stones to your
+[V]destiny!
