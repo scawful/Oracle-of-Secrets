@@ -19,7 +19,7 @@ Sprite_VampireBat_Main:
   VampireBat_Idle:
   {
     STZ.w SprFrame, X
-    JSL GetDistance8bit_Long : CMP.b #$20 : BCS +
+    JSL GetDistance8bit_Long : CMP.b #$24 : BCS +
       INC.w SprAction, X
       LDA.b #$40 : STA.w SprTimerA, X
     +
@@ -28,7 +28,7 @@ Sprite_VampireBat_Main:
 
   VampireBat_Ascend:
   {
-    %PlayAnimation(1,4,5)
+    %PlayAnimation(1,2,5)
     LDA.w SprTimerA, X : AND.b #$02 : BNE +
       LDA.w SprHeight, X : CMP.b #$50 : BEQ +
         INC.w SprHeight, X
@@ -36,8 +36,8 @@ Sprite_VampireBat_Main:
 
     LDA.w SprTimerA, X : BNE +
       INC.w SprAction, X
-      LDA.b #$40 : STA.w SprTimerC, X
-      JSL GetRandomInt : AND.b #$7F : BNE +
+      LDA.b #$50 : STA.w SprTimerC, X
+      JSL GetRandomInt : AND.b #$3F : BNE +
         JSR Sprite_SpawnFireKeese
     +
     RTS
@@ -45,9 +45,8 @@ Sprite_VampireBat_Main:
 
   VampireBat_FlyAround:
   {
-    %PlayAnimation(1,4,10)
+    %PlayAnimation(1,2,10)
     JSL Sprite_ProjectSpeedTowardsPlayer
-
     JSL GetRandomInt : AND.b #$1F : BNE +
       JSL Sprite_SelectNewDirection
     +
@@ -63,7 +62,7 @@ Sprite_VampireBat_Main:
 
   VampireBat_Descend:
   {
-    %PlayAnimation(1,4,5)
+    %PlayAnimation(3,4,5)
     LDA.w SprHeight, X : BEQ +
       DEC.w SprHeight, X
     +
@@ -147,37 +146,38 @@ Sprite_VampireBat_Draw:
 
   RTS
   .start_index
-  db $00, $04, $0A, $12, $1A
+  db $00, $04, $0A, $12, $18
   .nbr_of_tiles
-  db 3, 5, 7, 7, 9
+  db 3, 5, 7, 5, 7
   .x_offsets
   dw -8, -8, 8, 8
   dw -8, -8, -24, 8, 8, 24
-  dw -8, -8, -24, 8, 8, 24, 0, 8
   dw -8, -8, -24, -24, 8, 8, 24, 24
-  dw -8, -8, -24, -24, 8, 8, 24, 24, 0, 8
+  dw -8, -8, -24, 8, 8, 24
+  dw -8, -8, -24, 8, 8, 24, 0, 8
   .y_offsets
   dw -16, 0, -16, 0
-  dw -16, 0, 0, -16, 0, 0
-  dw -16, 0, 0, -16, 0, 0, 0, 0
-  dw -16, 0, -16, 0, -16, 0, -16, 0
-  dw -16, 0, -16, 0, -16, 0, -16, 0, 0, 0
+  dw 0, -16, 0, 0, -16, 0
+  dw -16, 0, 0, -16, -16, 0, 0, -16
+  dw 0, -16, 0, 0, -16, 0
+  dw 0, -16, 0, 0, -16, 0, 0, 0
   .chr
   db $8E, $AE, $8E, $AE
-  db $88, $A8, $A6, $88, $A8, $A6
-  db $88, $A8, $A6, $88, $A8, $A6, $87, $87
-  db $8C, $AC, $8A, $AA, $8C, $AC, $8A, $AA
-  db $8C, $AC, $8A, $AA, $8C, $AC, $8A, $AA, $87, $87
+  db $A8, $88, $A6, $A8, $88, $A6
+  db $8C, $AC, $AA, $8A, $8C, $AC, $AA, $8A
+  db $A8, $88, $A6, $A8, $88, $A6
+  db $A8, $88, $A6, $A8, $88, $A6, $87, $87
   .properties
   db $33, $33, $73, $73
   db $33, $33, $33, $73, $73, $73
-  db $33, $33, $33, $73, $73, $73, $33, $73
   db $33, $33, $33, $33, $73, $73, $73, $73
-  db $33, $33, $33, $33, $73, $73, $73, $73, $33, $73
+  db $33, $33, $33, $73, $73, $73
+  db $33, $33, $33, $73, $73, $73, $33, $73
   .sizes
   db $02, $02, $02, $02
   db $02, $02, $02, $02, $02, $02
-  db $02, $02, $02, $02, $02, $02, $00, $00
   db $02, $02, $02, $02, $02, $02, $02, $02
-  db $02, $02, $02, $02, $02, $02, $02, $02, $00, $00
+  db $02, $02, $02, $02, $02, $02
+  db $02, $02, $02, $02, $02, $02, $00, $00
+
 }
