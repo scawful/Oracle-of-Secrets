@@ -2,7 +2,7 @@
 ; WRAM in Use
 org $008000
 base $7E0730 ; MAP16OVERFLOW free ram region
-
+{
 MenuScrollLevelV:         skip 1
 MenuScrollLevelH:         skip 1
 MenuScrollHDirection:     skip 2
@@ -24,7 +24,7 @@ Offspring2_Id:            skip 1
 Offspring3_Id:            skip 1
 Kydreeok_Id:              skip 1
 FishingOrPortalRod:       skip 1
-
+}
 base off
 
 ; =========================================================
@@ -35,8 +35,8 @@ function menu_offset(y,x) = (y*64)+(x*2)
 
 ; =========================================================
 ; SRAM in Use
+SaveRam:
 {
-
 ; Game state
 ;   0x00 - Very start; progress cannot be saved in this state
 ;   0x01 - Uncle reached
@@ -139,17 +139,13 @@ PrevScroll = $7EF39A
 ;   d - done
 MagicBeanProg = $7EF39B
 
-; .dgi zktm
-;   m - Mushroom Grotto
-;   t - Tail Palace
-;   k - Kalyxo Castle
-;   z - Zora Temple
-;   i - Glacia Estate
-;   g - Goron Mines
-;   d - Dragon Ship
-DREAMS     = $7EF410
+; .... .cpw
+;   c - courage
+;   p - power
+;   w - wisdom
+Dreams        = $7EF410
 
-; Current Dream ID (0x00-0x07)
+; Current Dream ID (0x00-0x03)
 CurrentDream   = $0426
 
 ; Current Song
@@ -176,12 +172,14 @@ CurrentSong    = $030F
 ; h/v       = Horizontal/Vertical flip flags.
 ; s         = Sprite size flag. See below for details.
 
-OAMPtr       = $90
-OAMPtrH      = $92
+OamPtr       = $90
+OamPtrH      = $92
 OamBackup   = $0FEC
 
 ; =========================================================
 ; Sprite RAM and Functions
+
+SpriteRam:
 {
 SprY         = $0D00
 SprX         = $0D10
