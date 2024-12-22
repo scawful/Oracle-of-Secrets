@@ -98,13 +98,6 @@ namespace Oracle
 
   print ""
 
-  print "  -- Events --  "
-  print ""
-
-  incsrc "Events/all_dreams.asm"
-
-  print ""
-
   print "  -- Menu --  "
   print ""
 
