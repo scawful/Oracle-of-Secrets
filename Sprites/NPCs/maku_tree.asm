@@ -73,11 +73,6 @@ Sprite_MakuTree_Main:
   dw MakuTree_SpawnHeartContainer
   dw MakuTree_HasMetLink
 
-  dw MakuTree_OfferTheDreamer
-  dw MakuTree_HandleResponse
-  dw MakuTree_HandleDreams
-  dw MakuTree_DreamTransition
-
   MakuTree_Handler:
   {
     ; Check the progress flags
@@ -117,103 +112,7 @@ Sprite_MakuTree_Main:
   {
     %ShowSolicitedMessage($22) : BCC .no_talk
       LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
-      ; TODO: Activate when dreams are implemented
-      ; LDA.l CRYSTALS : BNE .no_essences
-      ;   INC.w SprAction, X
-      ; .no_essences
     .no_talk
     RTS
   }
-
-  MakuTree_OfferTheDreamer:
-  {
-    %ShowSolicitedMessage($013C) : BCC .no_talk
-      INC.w SprAction, X
-    .no_talk
-    RTS
-  }
-
-  MakuTree_HandleResponse:
-  {
-    LDA.w MsgChoice : BEQ .become_dreamer
-    CMP.b #$01 : BEQ .said_no
-      RTS
-    .become_dreamer
-    INC.w SprAction, X
-    RTS
-    .said_no
-    %GotoAction(4)
-    RTS
-  }
-
-  MakuTree_HandleDreams:
-  {
-    ; Check if Link has seen the dream
-    LDA.l DREAMS
-    CMP.b #$01 : BCC .mushroom_grotto
-    CMP.b #$02 : BCC .tail_palace
-    CMP.b #$04 : BCC .kalyxo_castle
-    CMP.b #$08 : BCC .zora_temple
-    CMP.b #$10 : BCC .glacia_estate
-    CMP.b #$20 : BCC .goron_mines
-    CMP.b #$40 : BCC .dragon_ship
-
-    ; .kzt dimg
-    ;   m - Mushroom Grotto
-    ;   t - Tail Palace
-    ;   k - Kalyxo Castle
-    ;   z - Zora Temple
-    ;   i - Glacia Estate
-    ;   g - Goron Mines
-    ;   d - Dragon Ship
-    ;  CRYSTALS        = $7EF37A
-
-    ; TODO: Check if Link has the essence for the dream
-    .mushroom_grotto
-    LDA.b #$00 : STA.w CurrentDream
-    JMP .enter_dream
-    .tail_palace
-    LDA.b #$01 : STA.w CurrentDream
-    JMP .enter_dream
-    .kalyxo_castle
-    LDA.b #$02 : STA.w CurrentDream
-    JMP .enter_dream
-    .zora_temple
-    LDA.b #$03 : STA.w CurrentDream
-    JMP .enter_dream
-    .glacia_estate
-    LDA.b #$04 : STA.w CurrentDream
-    JMP .enter_dream
-    .goron_mines
-    LDA.b #$05 : STA.w CurrentDream
-    JMP .enter_dream
-    .dragon_ship
-    LDA.b #$06 : STA.w CurrentDream
-    .enter_dream
-    PHX
-    LDA.b #$16 : STA.b $5D ; Set Link to sleeping
-    LDA.b #$20 : JSL AncillaAdd_Blanket
-    LDA.b $20 : CLC : ADC.b #$04 : STA.w $0BFA,X
-    LDA.b $21 : STA.w $0C0E,X
-    LDA.b $22 : SEC : SBC.b #$08 : STA.w $0C04,X
-    LDA.b $23 : STA.w $0C18,X
-    JSL PaletteFilter_StartBlindingWhite
-    JSL ApplyPaletteFilter
-    PLX
-
-    LDA.b #$60 : STA.w SprTimerB, X
-    INC.w SprAction, X
-    RTS
-  }
-
-  MakuTree_DreamTransition:
-  {
-    LDA.w SprTimerB, X : BNE +
-      JSL Link_EnterDream
-    +
-    RTS
-  }
-
 }
-
-
