@@ -1794,12 +1794,12 @@ Ha! You do remember me!
 
 ** 1B5 - Maple What is this place?
 This little haven? I call it my
-[2]Dream Hut... not super original,
+[2]Dream Hut[...] not super original,
 [3]but it gets the point across.[K]
-[V]Here, I tug at the edges of your
-[V]mind, spinning dreams that might
-[V]reveal something useful.[K]
-[V]Just beware—the Eon Abyss
+[V]Here, I tug at the edges of
+[V]your mind, spinning dreams that
+[V]might reveal something useful.[K]
+[V]Just beware-the Eon Abyss
 [V]takes its toll, even in sleep.
 [V]Weird stuff happens here.
 
