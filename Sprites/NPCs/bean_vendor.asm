@@ -187,7 +187,7 @@ Sprite_BeanVendor_Main:
 
     LDA.l MagicBeanProg : AND.b #$02 : BNE +
       ; Check for the bee pollination (79:bee,B2:good bee)
-      LDA.b #$79 : STA.b $00
+      LDA.b #$B2 : STA.b $00
       JSL Sprite_CheckForPresence : BCC +
         PHX
         LDA.b $02 : TAX
