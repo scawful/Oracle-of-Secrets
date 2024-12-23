@@ -8,6 +8,8 @@ incsrc Core/sprite_new_table.asm
 Sprite_Farore    = $73
 incsrc "Sprites/NPCs/farore.asm"
 print  "End of farore.asm                 ", pc
+incsrc "Sprites/NPCs/hyrule_dream.asm"
+print  "End of hyrule_dream.asm           ", pc
 
 Sprite_KydrogNPC = $7B
 incsrc "Sprites/Bosses/kydrog.asm"

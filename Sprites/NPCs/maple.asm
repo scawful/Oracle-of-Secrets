@@ -76,7 +76,6 @@ MapleHandler:
 
   Maple_CheckForPendant:
   {
-    print pc
     ; Check for pendant
     LDA.l PENDANTS : AND.b #$04 : BNE .courage
     LDA.l PENDANTS : AND.b #$02 : BNE .power
@@ -156,6 +155,7 @@ Link_HandleDreams:
     LDA.l Dreams : ORA.b #%00000001 : STA.l Dreams
     LDX.b #$00
     JSR Link_WarpToRoom
+    LDA.b #$01 : STA.b $EE
     RTS
   }
 

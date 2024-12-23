@@ -36,6 +36,12 @@
 Sprite_Farore_Long:
 {
   PHB : PHK : PLB
+  LDA.b INDOORS : BEQ .outdoors
+    JSR Sprite_HyruleDream_Draw
+    JSL Sprite_CheckActive : BCC .SpriteIsNotActive
+      JSR Sprite_HyruleDream_Main
+      JMP .SpriteIsNotActive
+  .outdoors
   JSR Sprite_Farore_Draw
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_Farore_Main
@@ -50,6 +56,10 @@ Sprite_Farore_Prep:
 {
   PHB : PHK : PLB
   LDA.b #$80 : STA.w SprDefl, X ; Don't kill Farore when she goes off screen
+  LDA.b INDOORS : BEQ .outdoors
+    JSR Sprite_HyruleDream_Prep
+    JMP .PlayIntro
+  .outdoors
   LDA.l $7EF300 : BEQ .PlayIntro
     STZ.w SprState, X ; Kill the sprite
   .PlayIntro
