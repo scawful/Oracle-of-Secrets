@@ -52,6 +52,26 @@ macro sta(...)
   %loop(STA, ...)
 endmacro
 
+macro sta_x(...)
+  %loop(STA.w, ..., X)
+endmacro
+
+macro accum16()
+  REP #$20
+endmacro
+
+macro accum8()
+  SEP #$20
+endmacro
+
+macro index16()
+  REP #$10
+endmacro
+
+macro index8()
+  SEP #$10
+endmacro
+
 macro GotoAction(action)
   LDA.b #<action> : STA.w SprAction, X
 endmacro
