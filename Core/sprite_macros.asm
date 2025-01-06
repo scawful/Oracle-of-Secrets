@@ -56,6 +56,14 @@ macro sta_x(...)
   %loop(STA.w, ..., X)
 endmacro
 
+macro mode16()
+  REP #$30
+endmacro
+
+macro mode8()
+  SEP #$30
+endmacro
+
 macro accum16()
   REP #$20
 endmacro
@@ -91,26 +99,6 @@ macro JumpTable(index, ...)
   endwhile
 endmacro
 
-macro SetMode(bit_mode)
-  if <bit_mode> == "16bit"
-    REP #$30
-  elseif <bit_mode> == "8bit"
-    SEP #$30
-  endif
-endmacro
-
-macro ScopedMode(bit_mode, body)
-  if <bit_mode> == "16bit"
-    %SetMode("16bit")
-    <body>
-    %SetMode("8bit")
-  elseif <bit_mode> == "8bit"
-    %SetMode("8bit")
-    <body>
-    %SetMode("16bit")
-  endif
-endmacro
-
 macro SpriteJumpTable(...)
   LDA.w SprAction, X
   JSL JumpTableLocal
@@ -123,41 +111,32 @@ macro SpriteJumpTable(...)
 endmacro
 
 macro SetFlag(flag_addr, bit_pos)
-  LDA.b flag_addr
-  ORA.b #(1 << bit_pos)
-  STA.b flag_addr
+  LDA.b flag_addr : ORA.b #(1 << bit_pos) : STA.b flag_addr
 endmacro
 
 macro ClearFlag(flag_addr, bit_pos)
-  LDA.b flag_addr
-  AND.b #~(1 << bit_pos)
-  STA.b flag_addr
+  LDA.b flag_addr : AND.b #~(1 << bit_pos) : STA.b flag_addr
 endmacro
 
 macro ToggleFlag(flag_addr, bit_pos)
-  LDA.b flag_addr
-  EOR.b #(1 << bit_pos)
-  STA.b flag_addr
+  LDA.b flag_addr : EOR.b #(1 << bit_pos) : STA.b flag_addr
 endmacro
 
 macro CheckFlag(flag_addr, bit_pos, set_label, clear_label)
-  LDA.b flag_addr
-  AND.b #(1 << bit_pos)
-  BEQ clear_label
-  BRA set_label
+  LDA.b flag_addr : AND.b #(1 << bit_pos) : BEQ clear_label
+    BRA set_label
 endmacro
 
 macro CheckFlagLong(flag_addr, bit_pos, set_label, clear_label)
-  LDA.l flag_addr
-  AND.b #(1 << bit_pos)
-  BEQ clear_label
-  BRA set_label
+  LDA.l flag_addr : AND.b #(1 << bit_pos) : BEQ clear_label
+    BRA set_label
 endmacro
 
 ; Increase the sprite frame every (frames_wait) frames
 ; reset to (frame_start) when reaching (frame_end)
 ; This is using SprTimerB
 macro PlayAnimation(frame_start, frame_end, frame_wait)
+{
   LDA.w SprTimerB, X : BNE +
     LDA.w SprFrame, X : INC : STA.w SprFrame, X
                         CMP.b #<frame_end>+1 : BCC .noframereset
@@ -165,6 +144,7 @@ macro PlayAnimation(frame_start, frame_end, frame_wait)
     .noframereset
     LDA.b #<frame_wait> : STA.w SprTimerB, X
   +
+}
 endmacro
 
 macro PlayAnimBackwards(frame_start, frame_end, frame_wait)
@@ -182,7 +162,6 @@ macro StartOnFrame(frame)
     LDA.b #<frame> : STA.w SprFrame, x
   +
 endmacro
-
 
 ; Show message if the player is facing toward sprite and pressing A
 ; Return Carry Set if message is displayed
@@ -254,16 +233,6 @@ macro AllowPlayerMovement()
   STZ.w $02E4
 endmacro
 
-; Enter 16bit mode
-macro Set16bitmode()
-  REP #$30
-endmacro
-
-; Enter 8bit mode
-macro Set8bitmode()
-  SEP #$30
-endmacro
-
 ; This is a 16 bit will load A with current rupee count
 ; to use with instructions CMP and BCC/BCS
 macro GetPlayerRupees()
@@ -282,47 +251,38 @@ macro SetSpriteSpeedX(speed)
   LDA.b #<speed> : STA.w SprXSpeed, x
 endmacro
 
-; Will play a sound SFX 1 See Zelda_3_RAM.log for more informations
 macro PlaySFX1(sfxid)
   LDA.b #<sfxid> : STA $012E
 endmacro
 
-; Will play a sound SFX 2 See Zelda_3_RAM.log for more informations
 macro PlaySFX2(sfxid)
   LDA.b #<sfxid> : STA $012F
 endmacro
 
-; Will play a music See Zelda_3_RAM.log for more informations
 macro PlayMusic(musicid)
   LDA.b #<musicid> : STA $012C
 endmacro
 
-; Will set the timer A to wait (length) amount of frames
 macro SetTimerA(length)
   LDA.b #<length> : STA.w SprTimerA, X
 endmacro
 
-; Will set the timer B to wait (length) amount of frames
 macro SetTimerB(length)
   LDA.b #<length> : STA.w SprTimerB, X
 endmacro
 
-; Will set the timer C to wait (length) amount of frames
 macro SetTimerC(length)
   LDA.b #<length> : STA.w SprTimerC, X
 endmacro
 
-; Will set the timer D to wait (length) amount of frames
 macro SetTimerD(length)
   LDA.b #<length> : STA.w SprTimerD, X
 endmacro
 
-; Will set the timer E to wait (length) amount of frames
 macro SetTimerE(length)
   LDA.b #<length> : STA.w SprTimerE, X
 endmacro
 
-; Will set the timer F to wait (length) amount of frames
 macro SetTimerF(length)
   LDA.b #<length> : STA.w SprTimerF, X
 endmacro

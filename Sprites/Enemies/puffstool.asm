@@ -78,7 +78,6 @@ Sprite_Puffstool_Main:
     +
     JSL Sprite_MoveXyz
     JSL Sprite_BounceFromTileCollision
-    JSL Sprite_BounceOffWall
     JSL Sprite_DamageFlash_Long
     JSL ThrownSprite_TileAndSpriteInteraction_long
     JSL Sprite_CheckIfRecoiling

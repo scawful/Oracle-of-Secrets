@@ -1,9 +1,9 @@
 ; =========================================================
 ; return carry set if active
+; Deactivates the sprite in certain situations
 
 Sprite_CheckActive:
 {
-  ; Deactivates the sprite in certain situations
   LDA.w SprState, X : CMP.b #$09 : BNE .inactive
     LDA.w SprFreeze : BNE .inactive
       LDA $11 : BNE .inactive
@@ -18,31 +18,22 @@ Sprite_CheckActive:
 }
 
 ; =========================================================
-; make the sprite move X axis
 
 Sprite_MoveHoriz:
 {
   LDA.w SprXSpeed, X : BEQ .no_velocity
-    ASL   : ASL : ASL : ASL
-    CLC : ADC.w SprXRound, X : STA.w SprXRound, X
-
+    ASL #4 : CLC : ADC.w SprXRound, X : STA.w SprXRound, X
     LDY.b #$00
     LDA.w SprXSpeed, X
-    PHP   : LSR : LSR : LSR : LSR : PLP
-    BPL   ++
-
-    ORA.b #$F0
-    DEY
-
-    ++	ADC.w SprX, X : STA.w SprX, X
+    PHP : LSR #4 : PLP : BPL   ++
+      ORA.b #$F0
+      DEY
+    ++
+    ADC.w SprX, X : STA.w SprX, X
     TYA : ADC.w SprXH, X : STA.w SprXH, X
-
   .no_velocity
   RTL
 }
-
-; =========================================================
-; make the sprite move both directions (also height)
 
 Sprite_MoveXyz:
   JSL Sprite_MoveAltitude
@@ -50,15 +41,11 @@ Sprite_Move:
   JSL Sprite_MoveHoriz
   ; no RTL, just continue into Sprite_MoveVert
 
-; =========================================================
-; make the sprite move Y axis
-
 Sprite_MoveVert:
 {
   LDA.w SprYSpeed, X : BEQ .no_velocity
     ASL : ASL : ASL : ASL
-    CLC : ADC.w SprYRound,X : STA.w SprYRound,X
-
+    CLC : ADC.w SprYRound, X : STA.w SprYRound, X
     LDY.b #$00
     LDA.w SprYSpeed, X
     PHP   : LSR : LSR : LSR : LSR : PLP
@@ -67,34 +54,26 @@ Sprite_MoveVert:
     ORA.b #$F0
     DEY
 
-    ++	ADC.w SprY,X : STA.w SprY,X
-    TYA : ADC.w SprYH,X : STA.w SprYH,X
+    ++	ADC.w SprY, X : STA.w SprY, X
+    TYA : ADC.w SprYH, X : STA.w SprYH, X
 
   .no_velocity
   RTL
 }
 
-; =========================================================
-; make the sprite move Z axis (height)
-
 Sprite_MoveZ:
 Sprite_MoveAltitude:
 {
-  LDA.w SprTimerF, X : ASL : ASL : ASL : ASL
+  LDA.w SprTimerF, X : ASL #4
   CLC : ADC.w SprHeightS, X : STA.w SprHeightS, X
-
-  LDA.w SprTimerF, X : PHP
-  LSR   : LSR : LSR : LSR
-  PLP   : BPL .positive
+  LDA.w SprTimerF, X : PHP : LSR #4 : PLP : BPL .positive
     ORA.b #$F0
   .positive
-  ADC.w SprHeight,X : STA.w SprHeight,X
-
+  ADC.w SprHeight, X : STA.w SprHeight, X
   RTL
 }
 
 ; =========================================================
-; make the sprite bounce toward player
 ; movement, collision are handled by this function
 ; $09 = speed, $08 = max height ( e.g. height:20 = vitreous)
 
@@ -138,41 +117,26 @@ Sprite_BounceFromTileCollision:
 {
   JSL Sprite_CheckTileCollision : AND.b #$03 : BEQ ++
     LDA.w SprXSpeed, X : EOR.b #$FF : INC : STA.w SprXSpeed, X
-
-  ++ LDA.w SprCollision, X : AND.b #$0C : BEQ ++
-      LDA.w SprYSpeed, X : EOR.b #$FF : INC : STA.w SprYSpeed, X
-
-  ++ RTL
-}
-
-; =========================================================
-
-Sprite_BounceOffWall:
-  LDA.w SprCollision, X : AND.b #$03 : BEQ .no_horizontal_collision
-    JSL Sprite_InvertSpeed_X
-  .no_horizontal_collision
-  LDA.w SprCollision, X : AND.b #$0C : BEQ .no_vertical_collision
-    JSL Sprite_InvertSpeed_Y
-  .no_vertical_collision
+  ++
+  LDA.w SprCollision, X : AND.b #$0C : BEQ ++
+    LDA.w SprYSpeed, X : EOR.b #$FF : INC : STA.w SprYSpeed, X
+  ++
   RTL
-
-; =========================================================
+}
 
 Sprite_InvertSpeed_XY:
   JSL Sprite_InvertSpeed_Y
 
 Sprite_InvertSpeed_X:
   LDA.w SprXSpeed, X
-  EOR.b #$FF
-  INC A
+  EOR.b #$FF : INC A
   STA.w SprXSpeed, X
   RTL
 
 Sprite_InvertSpeed_Y:
-  LDA.w SprYSpeed,X
-  EOR.b #$FF
-  INC A
-  STA.w SprYSpeed,X
+  LDA.w SprYSpeed, X
+  EOR.b #$FF : INC A
+  STA.w SprYSpeed, X
   RTL
 
 ; =========================================================
@@ -651,89 +615,78 @@ Sprite_ApplySpeedTowardsPlayerXOrY:
 {
   JSL Sprite_IsBelowPlayer : BEQ .player_below
     ;playerAbove
-
     REP #$20
     ; if link.y is 6 above sprite.y it is considered below
     LDA.w SprCachedY : SEC : SBC $20 : CLC : ADC.w #$0006 : STA $01 ;delta Y
     SEP #$20
 
-    JSL Sprite_IsToRightOfPlayer : BEQ .player_to_the_Right1
+    JSL Sprite_IsToRightOfPlayer : BEQ .player_to_the_right1
       ;player_to_the_Left
-      REP #$20
-      LDA.w SprCachedX : SEC : SBC $22 ; delta X
-
-      CMP $01 : BCS .XGreaterThanY1
+      REP #$20 ; delta X
+      LDA.w SprCachedX : SEC : SBC $22 : CMP $01 : BCS .XGreaterThanY1
         ;YGreaterThanX
         SEP   #$20
         LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
         STZ.w SprXSpeed
         RTL
-
       .XGreaterThanY1
-        SEP   #$20
-        LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
-        STZ.w SprYSpeed
-        RTL
+      SEP   #$20
+      LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
+      STZ.w SprYSpeed
+      RTL
 
-  .player_to_the_Right1
-      REP #$20
-      LDA $22 : SEC : SBC.w SprCachedX ; delta X
-
-      CMP $01 : BCS .XGreaterThanY2
-        ;YGreaterThanX
-        SEP   #$20
-        LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
-        STZ.w SprXSpeed
-        RTL
-
-      .XGreaterThanY2
-        SEP   #$20
-        LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
-        STZ.w SprYSpeed
-        RTL
-
+  .player_to_the_right1
+  REP #$20 ; delta X
+  LDA $22 : SEC : SBC.w SprCachedX : CMP $01 : BCS .XGreaterThanY2
+    ;YGreaterThanX
+    SEP   #$20
+    LDA.b #$00 : SEC : SBC $00 : STA.w SprYSpeed
+    STZ.w SprXSpeed
+    RTL
+  .XGreaterThanY2
+  SEP   #$20
+  LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
+  STZ.w SprYSpeed
+  RTL
 
   .player_below
-      REP #$20
-      ; if link.y is 6 above sprite.y it is considered below
-      LDA $20 : SEC : SBC.w SprCachedY : CLC : ADC.w #$0006 : STA $01 ; delta Y
-      SEP #$20
+  REP #$20
+  ; if link.y is 6 above sprite.y it is considered below
+  LDA $20 : SEC : SBC.w SprCachedY : CLC : ADC.w #$0006 : STA $01 ; delta Y
+  SEP #$20
 
-      JSL Sprite_IsToRightOfPlayer : BEQ .player_to_the_Right2
-        ;player_to_the_Left
-        REP #$20
-        LDA.w SprCachedX : SEC : SBC $22 ; delta X
+  JSL Sprite_IsToRightOfPlayer : BEQ .player_to_the_Right2
+    ;player_to_the_Left
+    REP #$20
+    LDA.w SprCachedX : SEC : SBC $22 ; delta X
 
-        CMP $01 : BCS .XGreaterThanY3
-          ;YGreaterThanX
-          SEP   #$20
-          LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
-          STZ.w SprXSpeed
-          RTL
+    CMP $01 : BCS .XGreaterThanY3
+      ;YGreaterThanX
+      SEP   #$20
+      LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
+      STZ.w SprXSpeed
+      RTL
 
-        .XGreaterThanY3
-          SEP   #$20
-          LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
-          STZ.w SprYSpeed
-          RTL
+    .XGreaterThanY3
+      SEP   #$20
+      LDA.b #$00 : SEC : SBC $00 : STA.w SprXSpeed
+      STZ.w SprYSpeed
+      RTL
 
+  .player_to_the_Right2
+  REP #$20 ; delta X
+  LDA $22 : SEC : SBC.w SprCachedX : CMP $01 : BCS .XGreaterThanY4
+    ;YGreaterThanX
+    SEP   #$20
+    LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
+    STZ.w SprXSpeed
+    RTL
 
-      .player_to_the_Right2
-        REP #$20
-        LDA $22 : SEC : SBC.w SprCachedX ; delta X
-
-        CMP $01 : BCS .XGreaterThanY4
-          ;YGreaterThanX
-          SEP   #$20
-          LDA.b #$00 : CLC : ADC $00 : STA.w SprYSpeed
-          STZ.w SprXSpeed
-          RTL
-
-        .XGreaterThanY4
-          SEP   #$20
-          LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
-          STZ.w SprYSpeed
-          RTL
+  .XGreaterThanY4
+  SEP   #$20
+  LDA.b #$00 : CLC : ADC $00 : STA.w SprXSpeed
+  STZ.w SprYSpeed
+  RTL
 }
 
 ; =========================================================
@@ -744,16 +697,16 @@ GetDistance8bit_Long:
   LDA.w POSY : STA $03
   LDA.w SprX, X : STA $04
   LDA.w SprY, X : STA $05
-  LDA   $04 : SEC : SBC $02 : BPL   +
+  LDA $04 : SEC : SBC $02 : BPL   +
     EOR.b #$FF : INC
   +
-  STA   $00 ; Distance X (ABS)
+  STA $00 ; Distance X (ABS)
 
-  LDA   $05 : SEC : SBC $03 : BPL   +
+  LDA $05 : SEC : SBC $03 : BPL   +
     EOR.b #$FF : INC
   +
   ; Add it back to X Distance
-  CLC   : ADC $00 : STA $00 ; distance total X, Y (ABS)
+  CLC : ADC $00 : STA $00 ; distance total X, Y (ABS)
   RTL
 }
 
@@ -762,7 +715,6 @@ GetDistance8bit_Long:
 Sprite_CheckIfRecoiling:
 {
   PHB : PHK : PLB
-
   LDA.w $0EA0, X : BEQ .exit
   AND.b #$7F : BEQ .recoil_over
     LDA.w SprYSpeed, X
@@ -775,57 +727,54 @@ Sprite_CheckIfRecoiling:
       LDA.w SprXRecoil, X : CLC : ADC.b #$20 : CMP.b #$40 : BCS .no_adjust
         LDA.w SprYRecoil, X : CLC : ADC.b #$20 : CMP.b #$40 : BCC .still_recoiling
       .no_adjust
-      LDA.b #$90 : STA.w $0EA0,X
+      LDA.b #$90 : STA.w $0EA0, X
     .still_recoiling
-    LDA.w $0EA0,X : BMI .no_movement
+    LDA.w $0EA0, X : BMI .no_movement
 
       LSR A
       LSR A
       TAY
 
-      LDA.b $1A : AND.w .masks,Y : BNE .no_movement
+      LDA.b $1A : AND.w .masks, Y : BNE .no_movement
+        LDA.w SprYRecoil, X : STA.w SprYSpeed, X
+        LDA.w SprXRecoil, X : STA.w SprXSpeed, X
+        LDA.w SprBump, X : BMI .handle_movement
 
-      LDA.w SprYRecoil, X : STA.w SprYSpeed,X
+          JSL Sprite_CheckTileCollision_long
 
-      LDA.w SprXRecoil, X : STA.w SprXSpeed,X
+          LDA.w $0E70, X : AND.b #$0F : BEQ .handle_movement
 
-      LDA.w SprBump, X : BMI .handle_movement
+          .stop_horizontal_movement
+          CMP.b #$04 : BCS .stop_vertical_movement
 
-      JSL Sprite_CheckTileCollision_long
+          STZ.w SprXRecoil, X
+          STZ.w SprXSpeed, X
 
-      LDA.w $0E70, X : AND.b #$0F : BEQ .handle_movement
+          BRA .movement_stopped
 
-      .stop_horizontal_movement
-      CMP.b #$04 : BCS .stop_vertical_movement
+          .stop_vertical_movement
+          STZ.w SprYRecoil, X
+          STZ.w SprYSpeed, X
 
-      STZ.w SprXRecoil,X
-      STZ.w SprXSpeed,X
+          .movement_stopped
+          BRA .no_movement
 
-      BRA .movement_stopped
-
-      .stop_vertical_movement
-      STZ.w SprYRecoil,X
-      STZ.w SprYSpeed,X
-
-      .movement_stopped
-      BRA .no_movement
-
-      .handle_movement
-      JSL Sprite_Move
+        .handle_movement
+        JSL Sprite_Move
 
     .no_movement
     PLA
-    STA.w SprXSpeed,X
+    STA.w SprXSpeed, X
 
     PLA
-    STA.w SprYSpeed,X
+    STA.w SprYSpeed, X
 
     .exit
     PLB
     RTL
 
   .recoil_over
-  STZ.w $0EA0,X
+  STZ.w $0EA0, X
 
   PLB
   RTL
