@@ -31,10 +31,6 @@
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 %Set_Sprite_Properties(Sprite_Portal_Prep, Sprite_Portal_Long)
 
-
-; =========================================================
-; Long Sprite Code
-; =========================================================
 Sprite_Portal_Long:
 {
   PHB : PHK : PLB
@@ -44,12 +40,8 @@ Sprite_Portal_Long:
   .SpriteIsNotActive
   PLB
   RTL
-
 }
 
-; =========================================================
-; Sprite Initialization code
-; =========================================================
 Sprite_Portal_Prep:
 {
   PHB : PHK : PLB
@@ -77,10 +69,6 @@ OrangeActive      = $7E06FD
 
 OrangeSpriteIndex = $7E0633
 BlueSpriteIndex   = $7E0632
-
-; =========================================================
-; Main Sprite Code
-; =========================================================
 
 Sprite_Portal_Main:
 {
@@ -322,18 +310,13 @@ RejectOnTileCollision:
   RTS
 }
 
-;==========================================================
-
-
 Sprite_Portal_Draw:
 {
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX   .nbr_of_tiles, Y ;amount of tiles -1
@@ -382,31 +365,28 @@ Sprite_Portal_Draw:
 
   RTS
 
-
-; Draw Data
-
-.start_index
-  db $00, $01, $02, $03
-.nbr_of_tiles
-  db 0, 0, 0, 0
-.x_offsets
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-.y_offsets
-  dw 0
-  dw 0
-  dw 0
-  dw 0
-.chr
-  db $EE
-  db $EE
-  db $EE
-  db $EE
-.properties
-  db $24
-  db $64
-  db $22
-  db $62
+  .start_index
+    db $00, $01, $02, $03
+  .nbr_of_tiles
+    db 0, 0, 0, 0
+  .x_offsets
+    dw 0
+    dw 0
+    dw 0
+    dw 0
+  .y_offsets
+    dw 0
+    dw 0
+    dw 0
+    dw 0
+  .chr
+    db $EE
+    db $EE
+    db $EE
+    db $EE
+  .properties
+    db $24
+    db $64
+    db $22
+    db $62
 }
