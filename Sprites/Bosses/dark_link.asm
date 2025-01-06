@@ -198,24 +198,21 @@ Sprite_DarkLink_Main:
     SEP #$20
     LDA.w SprTimerC, X : BNE ++
       ; attempt a slash if we can
-
       LDA.w SprMiscD, X : BNE +
-      STZ.w SprFrame, X
-      BRA .skipdirections
+        STZ.w SprFrame, X
+        BRA .skipdirections
       +
       LDA.w SprMiscD, X : CMP #$01 : BNE +
-      LDA.b #06 : STA.w SprFrame, X
-      BRA .skipdirections
+        LDA.b #06 : STA.w SprFrame, X
+        BRA .skipdirections
       +
       LDA.w SprMiscD, X : CMP #$02 : BNE +
-      LDA.b #12 : STA.w SprFrame, X
-      BRA .skipdirections
+        LDA.b #12 : STA.w SprFrame, X
+        BRA .skipdirections
       +
       LDA.b #18 : STA.w SprFrame, X
       +
-
       .skipdirections
-
       JSR SpawnSwordDamage
       %GotoAction(1)
     ++
@@ -228,45 +225,37 @@ Sprite_DarkLink_Main:
 
 
     LDA.w $0354 : CMP #$27 : BEQ .attemptToDodge
-    CMP #$02 : BEQ .attemptToDodge
-    CMP #$06 : BEQ .attemptToDodge
-    CMP #$0F : BNE .toofardodge
-
-    ; only once per slash !
-
+      CMP #$02 : BEQ .attemptToDodge
+      CMP #$06 : BEQ .attemptToDodge
+      CMP #$0F : BNE .toofardodge
+      ; only once per slash !
     .attemptToDodge
 
     ;check if we are using spin attack
     LDA.b $3C : CMP #$90 : BNE .nospin
-
-    ; determine if player is going to dodge it or not
-    LDA $1A : AND #$01 : BEQ .dodge
-
+      ; determine if player is going to dodge it or not
+      LDA $1A : AND #$01 : BEQ .dodge
     .nospin
     LDA.w SprMiscB, X : CMP.w $0354 : BEQ .toofardodge
 
+      LDA.w SprMiscC, X : BNE .enrageddodge
+        LDA $1A : AND #$03 : BEQ .toofardodge ; 50/50 chances of dodging
+        BRA .dodge
+      .enrageddodge
+      LDA $1A : AND #$07 : BEQ .toofardodge ; 50/50 chances of dodging
 
-    LDA.w SprMiscC, X : BNE .enrageddodge
-    LDA $1A : AND #$03 : BEQ .toofardodge ; 50/50 chances of dodging
-    BRA .dodge
-    .enrageddodge
-    LDA $1A : AND #$07 : BEQ .toofardodge ; 50/50 chances of dodging
-
-    .dodge
-    LDA #$16
-    JSL Sprite_ApplySpeedTowardsPlayer
-    LDA.w SprXSpeed, X : EOR #$FF : STA.w SprXSpeed, X
-    LDA.w SprYSpeed, X : EOR #$FF : STA.w SprYSpeed, X
-    LDA.b #$1A : STA.w $0F80,X
-
-    %GotoAction(2)
-
-    RTS
+      .dodge
+      LDA #$16
+      JSL Sprite_ApplySpeedTowardsPlayer
+      LDA.w SprXSpeed, X : EOR #$FF : STA.w SprXSpeed, X
+      LDA.w SprYSpeed, X : EOR #$FF : STA.w SprYSpeed, X
+      LDA.b #$1A : STA.w $0F80,X
+      %GotoAction(2)
+      RTS
 
     .toofardodge
 
     SEP #$20
-
 
     .linknotattacking
     LDA.w $0354 : STA.w SprMiscB, X
@@ -275,22 +264,22 @@ Sprite_DarkLink_Main:
     STZ $03 ; y direction
 
     LDA.w SprXSpeed, X : BPL .positiveX
-    STA $02
-    EOR #$FF
+      STA $02
+      EOR #$FF
     .positiveX
     STA $00 ; X speed (abs)
 
     LDA.w SprYSpeed, X : BPL .positiveY
-    STA $03
-    EOR #$FF
+      STA $03
+      EOR #$FF
     .positiveY
     STA $01 ; Y speed (abs)
 
 
     LDA.w SprXSpeed, X : CMP.b #$08 : BCC .zeroXSpeed
-    BPL .positiveXspeed
-    LDA #$F0 : STA.w SprXSpeed, X
-    BRA .doYspeed
+      BPL .positiveXspeed
+      LDA #$F0 : STA.w SprXSpeed, X
+      BRA .doYspeed
     .positiveXspeed
     LDA #$10 : STA.w SprXSpeed, X
     BRA .doYspeed
@@ -298,10 +287,9 @@ Sprite_DarkLink_Main:
     STZ.w SprXSpeed, X
     .doYspeed
     LDA.w SprYSpeed, X : CMP.b #$08 : BCC .zeroYSpeed
-
     BPL .positiveYspeed
-    LDA #$F0 : STA.w SprYSpeed, X
-    BRA .ignorezerospeed
+      LDA #$F0 : STA.w SprYSpeed, X
+      BRA .ignorezerospeed
     .positiveYspeed
     LDA #$10 : STA.w SprYSpeed, X
     BRA .ignorezerospeed
@@ -414,12 +402,11 @@ Sprite_DarkLink_Main:
 
 
     ActionJumpTable:
-    dw JumpAttack ;00
-    dw Cape ;02
-    dw Bomb ;04
-    dw BombThrow ;04
-    ;dw Walk ;06
-
+      dw JumpAttack ;00
+      dw Cape ;02
+      dw Bomb ;04
+      dw BombThrow ;04
+      ;dw Walk ;06
 
 
     Bomb:

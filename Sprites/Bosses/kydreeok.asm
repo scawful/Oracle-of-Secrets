@@ -68,7 +68,7 @@ Sprite_Kydreeok_Prep:
 
   STZ.w Neck1_OffsetX : STZ.w Neck1_OffsetY
   STZ.w Neck2_OffsetX : STZ.w Neck2_OffsetY
-  STZ.w Neck3_OffsetX : STZ.w Neck3_OffsetY
+  ; STZ.w Neck3_OffsetX : STZ.w Neck3_OffsetY
 
   JSR ApplyPalette
 
@@ -121,21 +121,17 @@ MaybeRespawnHead:
   RTS
 }
 
-
 ; =========================================================
 
 Sprite_Kydreeok_Main:
 {
-  LDA.w SprAction, X
-  JSL   UseImplicitRegIndexedLocalJumpTable
-
-  dw Kydreeok_Start        ; 00
-  dw Kydreeok_StageControl ; 01
-  dw Kydreeok_MoveXandY    ; 02
-  dw Kydreeok_MoveXorY     ; 03
-  dw Kydreeok_KeepWalking  ; 04
-  dw Kydreeok_Dead         ; 05
-  dw Kydreeok_Flying       ; 06
+  %SpriteJumpTable(Kydreeok_Start,
+                  Kydreeok_StageControl,
+                  Kydreeok_MoveXandY,
+                  Kydreeok_MoveXorY,
+                  Kydreeok_KeepWalking,
+                  Kydreeok_Dead,
+                  Kydreeok_Flying)
 
   ; -------------------------------------------------------
   ; 0x00
@@ -324,21 +320,21 @@ Sprite_Kydreeok_Main:
 
 ; =========================================================
 
-Offspring1_Neck1_X = $19EA
-Offspring1_Neck2_X = $19EC
-Offspring1_Neck3_X = $19EE
+LeftNeck1_X = $19EA
+LeftNeck2_X = $19EC
+LeftNeck3_X = $19EE
 
-Offspring1_Neck1_Y = $19EB
-Offspring1_Neck2_Y = $19ED
-Offspring1_Neck3_Y = $19EF
+LeftNeck1_Y = $19EB
+LeftNeck2_Y = $19ED
+LeftNeck3_Y = $19EF
 
-Offspring2_Neck1_X = $19F0
-Offspring2_Neck2_X = $19F2
-Offspring2_Neck3_X = $19F4
+RightNeck1_X = $19F0
+RightNeck2_X = $19F2
+RightNeck3_X = $19F4
 
-Offspring2_Neck1_Y = $19F1
-Offspring2_Neck2_Y = $19F3
-Offspring2_Neck3_Y = $19F5
+RightNeck1_Y = $19F1
+RightNeck2_Y = $19F3
+RightNeck3_Y = $19F5
 
 Offspring3_Neck1_X = $1A78
 Offspring3_Neck2_X = $1A7A
@@ -353,27 +349,21 @@ SpawnLeftHead:
   LDA #$CF
   JSL   Sprite_SpawnDynamically : BMI .return
     TYA   : STA.w Offspring1_Id
-    ;store the sub-type
     LDA.b #$00 : STA $0E30, Y
     PHX
-    ; code that controls where to spawn the offspring.
     REP #$20
     LDA.w SprCachedX : SEC : SBC.w #$0010
     SEP #$20
     STA.w SprX, Y : XBA : STA.w SprXH, Y
-
     REP #$20
     LDA.w SprCachedY : SEC : SBC.w #$000F
     SEP #$20
     STA.w SprY, Y : XBA : STA.w SprYH, Y
-
     LDA.w SprX,     Y
     STA.w SprMiscA, Y : STA.w $19EA : STA.w $19EC : STA.w $19EE
     LDA.w SprY, Y : STA.w $19EB : STA.w $19ED : STA.w $19EF : STA.w SprY, Y
     STA.w SprMiscB, Y
-
     TYX
-
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX
@@ -382,44 +372,34 @@ SpawnLeftHead:
 }
 
 ; =========================================================
-
 ; SpawnCenterHead:
 ; {
 ;   LDA #$CF
-
 ;   JSL Sprite_SpawnDynamically : BMI .return
 ;     TYA : STA.w Offspring3_Id
-
 ;     ;store the sub-type
 ;     LDA.b #$02 : STA $0E30, Y
-
 ;     PHX
 ;     ; code that controls where to spawn the offspring.
 ;     REP #$20
 ;     LDA.w SprCachedX : CLC : ADC.w #$0004
 ;     SEP #$20
 ;     STA.w SprX, Y : XBA : STA.w SprXH, Y
-
 ;     REP #$20
 ;     LDA.w SprCachedY : SEC : SBC.w #$000F
 ;     SEP #$20
 ;     STA.w SprY, Y : XBA : STA.w SprYH, Y
-
 ;     LDA.w SprX, Y : STA.w SprX, Y
 ;     STA.w SprMiscA, Y : STA.w $1A78 : STA.w $1A7A : STA.w $1A7C
 ;     LDA.w SprY, Y : STA.w $1A79 : STA.w $1A7B : STA.w $1A7D : STA.w SprY, Y
 ;     STA.w SprMiscB, Y
-
 ;     TYX
-
 ;     STZ.w SprYRound, X
 ;     STZ.w SprXRound, X
 ;     PLX
-
 ;   .return
 ;   RTS
 ; }
-
 ; =========================================================
 
 SpawnRightHead:
@@ -427,28 +407,21 @@ SpawnRightHead:
   LDA #$CF
   JSL Sprite_SpawnDynamically : BMI .return
     TYA : STA.w Offspring2_Id
-
-    ;store the sub-type
     LDA.b #$01 : STA $0E30, Y
     PHX
-    ; code that controls where to spawn the offspring.
     REP #$20
     LDA.w SprCachedX : CLC : ADC.w #$000D
     SEP #$20
     STA.w SprX, Y : XBA : STA.w SprXH, Y
-
     REP #$20
     LDA.w SprCachedY : SEC : SBC.w #$000F
     SEP #$20
     STA.w SprY, Y : XBA : STA.w SprYH, Y
-
     LDA.w SprX, Y : STA.w SprX, Y
     STA.w SprMiscA, Y : STA.w $19F0 : STA.w $19F2 : STA.w $19F4
     LDA.w SprY, Y : STA.w $19F1 : STA.w $19F3 : STA.w $19F5 : STA.w SprY, Y
     STA.w SprMiscB, Y
-
     TYX
-
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX

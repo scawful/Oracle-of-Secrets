@@ -30,6 +30,7 @@
 !ImperviousArrow    = 00  ; 01 = Impervious to arrows
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
+
 %Set_Sprite_Properties(Sprite_KydreeokHead_Prep, Sprite_KydreeokHead_Long)
 
 Sprite_KydreeokHead_Long:
@@ -48,7 +49,6 @@ Sprite_KydreeokHead_Long:
 
 ; =========================================================
 
-print "KydreeokHead_Prep: ", pc
 Sprite_KydreeokHead_Prep:
 {
   PHB : PHK : PLB
@@ -192,7 +192,6 @@ Sprite_KydreeokHead_Main:
     RTS
   }
 
-
   KydreeokHead_SummonFire:
   {
     %MoveTowardPlayer(10)
@@ -204,55 +203,19 @@ Sprite_KydreeokHead_Main:
     .not_done
     RTS
   }
-
 }
 
 KydreeokHead_RotationMove:
 {
-  ; ; Reset targetting mode
-  ; LDA.w SprTimerE, X : BNE +
-  ;   STZ.w SprMiscE, X
-  ; +
-  ; LDA.w SprMiscE, X : BEQ .continue_move
-  ;   LDA.b #$04
-  ;   JSL Sprite_ApplySpeedTowardsPlayer
-  ;   JSL Sprite_Move
-  ;   JSR MoveWithBody
-  ;   RTS
-  ; .continue_move
-
   JSL   GetRandomInt : AND #$0F : TAY
   LDA.w SpeedTable, Y : STA.w SprXSpeed, X : STA $00
   JSL   GetRandomInt : AND #$0F : TAY
   LDA.w SpeedTable, Y : STA.w SprYSpeed, X : STA $01
-  ; JSL Sprite_Move
 
   JSR KydreeokHead_NeckControl
   JSR MoveWithBody
 
   JSR RotateHeadUsingSpeedValues
-
-  ; JSL GetRandomInt : AND #$7F : BNE .no_independent
-  ;   LDA.b #$01 : STA.w SprMiscE, X
-  ;   LDA.b #$10 : STA.w SprTimerE, X
-  ; .no_independent
-  RTS
-}
-
-Sprite_KydreeokHead_Damage_Flash:
-{
-  LDA.w SprMiscE, X : BEQ .dontFlash
-    ; Change the palette to the next in the cycle
-    LDA.w SprMiscE, X : INC : CMP.b #$08 : BNE .dontReset
-      LDA.b #$00
-  .dontReset
-    STA.w SprMiscE, X
-    BRA .flash
-
-  .dontFlash
-  STZ.w SprMiscE, X
-
-  .flash
   RTS
 }
 
@@ -279,39 +242,33 @@ CoordinateBasedRotation:
 
 ; Table for X coordinates (based on a radius of 8)
 X_Coords:
-    db 8, 11,  8,  3, -4, -9, -12, -9
-    db -4,  3,  8, 11,  8,  3, -4, -9
+  db 8, 11,  8,  3, -4, -9, -12, -9
+  db -4,  3,  8, 11,  8,  3, -4, -9
 
 ; Table for Y coordinates (based on a radius of 8)
 Y_Coords:
-    db 0, -3, -8, -11, -15, -15, -11, -8
-    db -3,  0,  3,  8, 11, 15, 15, 11
+  db 0, -3, -8, -11, -15, -15, -11, -8
+  db -3,  0,  3,  8, 11, 15, 15, 11
 
 ; =========================================================
 
 RotateHeadUsingSpeedValues:
 {
   LDY.w Neck_Index
-
   LDA.w SprXSpeed, X : CLC : ADC.w XSpeedSin, Y : ASL : STA.w SprXSpeed, X
   LDA.w SprYSpeed, X : CLC : ADC.w YSpeedSin, Y : ASL : STA.w SprYSpeed, X
-
   INY : CPY #$3F : BNE .not_full
     LDY.b #$00
   .not_full
   STY.w Neck_Index
   JSL   Sprite_MoveLong
   RTS
-}
 
-XSpeedSin:
-{
+#XSpeedSin:
   db 0,   3,   6,   9,  12,  15,  18,  20,  23,  25
   db 27,  28,  30,  31,  31,  32
-}
 
-YSpeedSin:
-{
+#YSpeedSin:
   db 32,  32,  31,  31
   db 30,  28,  27,  25,  23,  20,  18,  15,  12,   9
   db 6,   3,   0,  -3,  -6,  -9, -12, -15, -18, -20
@@ -331,7 +288,7 @@ YSpeedSin:
 
 RandomlyAttack:
 {
-  JSR Sprite_KydreeokHead_Damage_Flash
+  JSL Sprite_DamageFlash_Long
   JSL GetRandomInt : AND #$7F : BNE .no_attack
     CLC
     JSL GetRandomInt : AND #$0F : BNE .no_attack
@@ -354,16 +311,16 @@ MoveWithBody:
 
     LDA.w SprX, Y : SEC : SBC #$0F
     STA.w SprMiscA, X
-    STA.w $19EA : DEC
-    STA.w $19EC : DEC
-    STA.w $19EE
+    STA.w LeftNeck1_X : DEC
+    STA.w LeftNeck2_X : DEC
+    STA.w LeftNeck3_X
     ; STA.w SprX, X
 
     LDA.w SprY, Y : SEC : SBC #$0F
     STA.w SprMiscB, X
-    STA.w $19EB
-    ; STA.w $19ED
-    ; STA.w $19EF
+    STA.w LeftNeck1_Y
+    ; STA.w LeftNeck2_Y
+    ; STA.w LeftNeck3_Y
     ; STA.w SprY, X
     RTS
 
@@ -390,29 +347,30 @@ MoveWithBody:
 
 Neck1_Control:
 {
-  ; Set head pos
-  LDA $19EE : STA.w SprX, X
-  LDA $19EF : STA.w SprY, X
+  LDA.w LeftNeck3_X : STA.w SprX, X
+  LDA.w LeftNeck3_Y : STA.w SprY, X
 
   LDA.w SprX, X : STA.w SprMiscC, X
   LDA.w SprY, X : STA.w SprMiscD, X
+
   LDA.w SprXSpeed, X : STA $08
   LDA.w SprYSpeed, X : STA $09
 
-  LDA.w $19EA : STA $02 ; x
-  LDA.w $19EB : STA $03 ; y
+  LDA.w LeftNeck1_X : STA $02 ; x
+  LDA.w LeftNeck1_Y : STA $03 ; y
 
   LDA.w SprX, X : STA $04
   LDA.w SprY, X : STA $05
-  JSR   GetDistance8bit : CMP #$08 : BCC .TooCloseToHead ; is body1 too close to the head?
+
+  JSR GetDistance8bit : CMP #$08 : BCC .TooCloseToHead ; is body1 too close to the head?
     LDA.w SprX,  X : STA $04 ; dest X
     LDA.w SprXH, X : STA $05 ; dest XH
     LDA.w SprY,  X : STA $06 ; dest Y
     LDA.w SprYH, X : STA $07 ; dest YH
 
     ; load body position into sprite position
-    LDA.w $19EA : STA.w SprX, X
-    LDA.w $19EB : STA.w SprY, X
+    LDA.w LeftNeck1_X : STA.w SprX, X
+    LDA.w LeftNeck1_Y : STA.w SprY, X
 
     LDA   #$06
     JSL   Sprite_ProjectSpeedTowardsEntityLong
@@ -420,26 +378,28 @@ Neck1_Control:
     LDA.b $00 : STA.w SprYSpeed, X
     JSL   Sprite_MoveLong
 
-    LDA.w SprX, X : STA.w $19EA
-    LDA.w SprY, X : STA.w $19EB
+    LDA.w SprX, X : STA.w LeftNeck1_X
+    LDA.w SprY, X : STA.w LeftNeck1_Y
   .TooCloseToHead
 
   ; Do body part 2
 
-  LDA.w $19EC : STA $02 ; x
-  LDA.w $19ED : STA $03 ; y
+  LDA.w LeftNeck2_X : STA $02 ; x
+  LDA.w LeftNeck2_Y : STA $03 ; y
 
-  LDA.w $19EA : STA $04
-  LDA.w $19EB : STA $05
-  JSR   GetDistance8bit : CMP #$0D : BCC .TooCloseToBodyPart1 ; is body1 too close to the head?
-    LDA.w $19EA : STA $04    ; dest X
+  LDA.w LeftNeck1_X : STA $04
+  LDA.w LeftNeck1_Y : STA $05
+
+  ; is body1 too close to the head?
+  JSR GetDistance8bit : CMP #$0D : BCC .TooCloseToBodyPart1
+    LDA.w LeftNeck1_X : STA $04    ; dest X
     LDA.w SprXH, X : STA $05 ; dest XH
-    LDA.w $19EB : STA $06    ; dest Y
+    LDA.w LeftNeck1_Y : STA $06    ; dest Y
     LDA.w SprYH, X : STA $07 ; dest YH
 
     ;load body position into sprite position
-    LDA.w $19EC : STA.w SprX, X
-    LDA.w $19ED : STA.w SprY, X
+    LDA.w LeftNeck2_X : STA.w SprX, X
+    LDA.w LeftNeck2_Y : STA.w SprY, X
 
     LDA   #$06
     JSL   Sprite_ProjectSpeedTowardsEntityLong
@@ -447,32 +407,33 @@ Neck1_Control:
     LDA.b $00 : STA.w SprYSpeed, X
     JSL   Sprite_MoveLong
 
-    LDA.w SprX, X : STA.w $19EC
-    LDA.w SprY, X : STA.w $19ED
+    LDA.w SprX, X : STA.w LeftNeck2_X
+    LDA.w SprY, X : STA.w LeftNeck2_Y
   .TooCloseToBodyPart1
 
   ; Do body part 2
-  LDA.w $19EE : STA $02 ; x
-  LDA.w $19EF : STA $03 ; y
+  LDA.w LeftNeck3_X : STA $02 ; x
+  LDA.w LeftNeck3_Y : STA $03 ; y
+  LDA.w LeftNeck2_X : STA $04
+  LDA.w LeftNeck2_Y : STA $05
 
-  LDA.w $19EC : STA $04
-  LDA.w $19ED : STA $05
-  JSR   GetDistance8bit : CMP #$14 : BCC .TooCloseToBodyPart2 ; is body1 too close to the head?
-    LDA.w $19EC : STA $04                 ; dest X
-    LDA.w SprXH,              X : STA $05 ; dest XH
-    LDA.w $19ED : STA $06                 ; dest Y
-    LDA.w SprYH,              X : STA $07 ; dest YH
-    ;load body position into sprite position
-    LDA.w $19EE : STA.w SprX, X
-    LDA.w $19EF : STA.w SprY, X
+  ; is body1 too close to the head?
+  JSR GetDistance8bit : CMP #$14 : BCC .TooCloseToBodyPart2
+    LDA.w LeftNeck2_X : STA $04 ; dest X
+    LDA.w SprXH, X : STA $05 ; dest XH
+    LDA.w LeftNeck2_Y : STA $06 ; dest Y
+    LDA.w SprYH, X : STA $07 ; dest YH
+    ; load body position into sprite position
+    LDA.w LeftNeck3_X : STA.w SprX, X
+    LDA.w LeftNeck3_Y : STA.w SprY, X
 
     LDA   #$06
     JSL   Sprite_ProjectSpeedTowardsEntityLong
     LDA.b $01 : STA.w SprXSpeed, X
     LDA.b $00 : STA.w SprYSpeed, X
     JSL   Sprite_MoveLong
-    LDA.w SprX,                  X : STA.w $19EE
-    LDA.w SprY,                  X : STA.w $19EF
+    LDA.w SprX, X : STA.w LeftNeck3_X
+    LDA.w SprY, X : STA.w LeftNeck3_Y
   .TooCloseToBodyPart2
 
   LDA.w SprMiscC, X : STA.w SprX, X
@@ -484,7 +445,6 @@ Neck1_Control:
 
 Neck2_Control:
 {
-  ; Set head pos
   LDA $19F4  : STA.w SprX, X
   LDA $19F5  : STA.w SprY, X
 
@@ -498,7 +458,7 @@ Neck2_Control:
 
   LDA.w SprX, X : STA $04
   LDA.w SprY, X : STA $05
-  JSR   GetDistance8bit : CMP #$08 : BCC .TooCloseToHead2 ; is body1 too close to the head?
+  JSR GetDistance8bit : CMP #$08 : BCC .TooCloseToHead2 ; is body1 too close to the head?
     LDA.w SprX,               X : STA $04 ; dest X
     LDA.w SprXH,              X : STA $05 ; dest XH
     LDA.w SprY,               X : STA $06 ; dest Y
@@ -512,8 +472,8 @@ Neck2_Control:
     LDA.b $01 : STA.w SprXSpeed, X
     LDA.b $00 : STA.w SprYSpeed, X
     JSL   Sprite_MoveLong
-    LDA.w SprX,                  X : STA.w $19F0
-    LDA.w SprY,                  X : STA.w $19F1
+    LDA.w SprX, X : STA.w $19F0
+    LDA.w SprY, X : STA.w $19F1
 
   .TooCloseToHead2
 
@@ -522,7 +482,9 @@ Neck2_Control:
 
   LDA.w $19F0 : STA $04
   LDA.w $19F1 : STA $05
-  JSR   GetDistance8bit : CMP #$0D : BCC .TooCloseToBodyPart12 ; is body1 too close to the head?
+
+  ; is body1 too close to the head?
+  JSR GetDistance8bit : CMP #$0D : BCC .TooCloseToBodyPart12
 
     LDA.w $19F0 : STA $04                 ; dest X
     LDA.w SprXH,              X : STA $05 ; dest XH
@@ -587,40 +549,43 @@ KydreeokHead_NeckControl:
 
 Sprite_KydreeokHead_DrawNeck:
 {
-  ; Dumb draw neck code
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .neck2
-    LDA.w $19EE : STA.w SprCachedX
-    LDA.w $19EF : CLC : ADC.b #$06 : STA.w SprCachedY
+    LDA.w LeftNeck3_X : STA.w SprCachedX
+    LDA.w LeftNeck3_Y : CLC : ADC.b #$06 : STA.w SprCachedY
     JSR DrawNeckPart
 
-    LDA.w $19EC : STA.w SprCachedX
-    LDA.w $19ED : STA.w SprCachedY
+    LDA.w LeftNeck2_X : STA.w SprCachedX
+    LDA.w LeftNeck2_Y : STA.w SprCachedY
     JSR DrawNeckPart
+
     LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
     JSR DrawNeckPart
 
-    LDA.w $19EA : STA.w SprCachedX
-    LDA.w $19EB : SEC : SBC.b #$04 : STA.w SprCachedY
+    LDA.w LeftNeck1_X : STA.w SprCachedX
+    LDA.w LeftNeck1_Y : SEC : SBC.b #$04 : STA.w SprCachedY
     JSR DrawNeckPart
+
     LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
     JSR DrawNeckPart
 
     BRA .skipNeck
   .neck2
 
-  LDA.w $19F4 : STA.w SprCachedX
-  LDA.w $19F5 : CLC : ADC.b #$06 : STA.w SprCachedY
+  LDA.w RightNeck3_X : STA.w SprCachedX
+  LDA.w RightNeck3_Y : CLC : ADC.b #$06 : STA.w SprCachedY
   JSR DrawNeckPart
 
-  LDA.w $19F2 : STA.w SprCachedX
-  LDA.w $19F3 : STA.w SprCachedY
+  LDA.w RightNeck2_X : STA.w SprCachedX
+  LDA.w RightNeck2_Y : STA.w SprCachedY
   JSR DrawNeckPart
+
   LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
   JSR DrawNeckPart
 
-  LDA.w $19F0 : STA.w SprCachedX
-  LDA.w $19F1 : SEC : SBC.b #$04 : STA.w SprCachedY
+  LDA.w RightNeck1_X : STA.w SprCachedX
+  LDA.w RightNeck1_Y : SEC : SBC.b #$04 : STA.w SprCachedY
   JSR DrawNeckPart
+
   LDA.w SprCachedY : SEC : SBC.b #$0A : STA.w SprCachedY
   JSR DrawNeckPart
 
@@ -633,29 +598,25 @@ Sprite_KydreeokHead_DrawNeck:
 
 DrawNeckPart:
 {
-  PHY
-  JSL Sprite_PrepOamCoord
-  PLY
-
+  PHY : JSL Sprite_PrepOamCoord : PLY
   REP #$20
   LDA $00 : STA ($90), Y : AND.w #$0100 : STA $0E : INY
   LDA $02 : STA ($90), Y : CLC   : ADC #$0010 : CMP.w #$0100
   SEP #$20
   BCC .on_screen_y2
-    LDA.b #$F0 : STA ($90), Y ; Put the sprite out of the way
-    STA   $0E
+    ; Put the sprite out of the way
+    LDA.b #$F0 : STA ($90), Y : STA $0E
   .on_screen_y2
-    INY
-    LDA #$2E : STA ($90), Y ; Set the Char
-    INY
-    LDA #$39 : ORA $08 : STA ($90), Y ; Set the Properties
-
-    PHY
-    TYA : LSR #2 : TAY
-    LDA #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
-    PLY : INY
-
-    RTS
+  INY
+  LDA #$2E : STA ($90), Y ; Set the Char
+  INY
+  LDA #$39 : ORA $08 : STA ($90), Y ; Set the Properties
+  PHY
+  TYA : LSR #2 : TAY
+  LDA #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
+  PLY
+  INY
+  RTS
 }
 
 ; =========================================================
@@ -667,8 +628,7 @@ Sprite_KydreeokHead_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
-  LDA.w SprMiscE, X : STA $08
+  LDA.w SprFlash, X : STA $08
 
   PHX
   ; amount of tiles - 1

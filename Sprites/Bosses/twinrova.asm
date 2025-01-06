@@ -59,8 +59,7 @@ Sprite_Twinrova_CheckIfDead:
     ; If health is negative, set back to zero
     LDA.w SprHealth, X : CMP.b #$C3 : BCC .health_not_negative
       LDA.b #$00 : STA.w SprHealth, X
-
-  .health_not_negative
+    .health_not_negative
     LDA.w SprHealth, X : BNE .not_dead
       PHX
       LDA.b #$04 : STA.w SprState, X     ; Kill sprite boss style
@@ -76,7 +75,6 @@ Sprite_Twinrova_CheckIfDead:
 Sprite_Twinrova_Prep:
 {
   PHB : PHK : PLB
-
   ; Kill the sprite if the Maiden is present
   LDA.l $7EF3CC : CMP.b #$06 : BNE .prep_twinrova
     STZ.w SprState, X
