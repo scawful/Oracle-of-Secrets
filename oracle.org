@@ -30,6 +30,10 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 
 ** ~S1~ Shrine of Wisdom
 *** Item: Zora Flippers
+- [ ] Warp Zones to return the player to the start in case they screw up.
+- [ ] Shrubs with Plentiful magic restoring items
+- [ ] NPCs to help navigate the player.
+- [ ] A possible heart-piece/treasure to reward curious players for venturing off the intended route.
 
 ** =D4= Zora Temple
 *** Item: Hookshot, Zora Mask
@@ -39,10 +43,11 @@ Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
 
 ** =D5= Glacia Estate
 *** Item: Fire Rod
-*** TODO [0/3]
+*** TODO [0/4]
 - [ ] Improve Ice Block sprite collision detection
 - [ ] Tune enemies in dungeon, adjust positioning
 - [ ] Exterior gfx improvements
+- [ ] Add indicator for pushable block in ice puzzle
 
 ** ~S2~ Shrine of Power
 *** Item: Power Glove
