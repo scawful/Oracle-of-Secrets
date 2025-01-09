@@ -1,11 +1,9 @@
 ; =========================================================
 ; World Map Module
 
-org $0AC589
-    WorldMapIcon_AdjustCoordinate:
 
-org $0AC51C
-    WorldMap_HandleSpriteBlink:
+WorldMapIcon_AdjustCoordinate = $0AC589
+WorldMap_HandleSpriteBlink = $0AC51C
 
 pullpc
 
@@ -169,17 +167,10 @@ org $0ABF90
 MapIconDraw:
 {
   ; .dont_draw_link
-  LDA.l $7EC108
-  PHA
-
-  LDA.l $7EC109
-  PHA
-
-  LDA.l $7EC10A
-  PHA
-
-  LDA.l $7EC10B
-  PHA
+  LDA.l $7EC108 : PHA
+  LDA.l $7EC109 : PHA
+  LDA.l $7EC10A : PHA
+  LDA.l $7EC10B : PHA
 
   ;-----------------------------------
 

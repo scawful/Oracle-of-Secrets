@@ -98,12 +98,12 @@ Overworld_SetFixedColAndScroll_AltEntry = $0BFE72
 
 RunClock:
 {
-  LDA $10	; checks current event in game
-  CMP #$07 : BEQ .counter_increasing ; dungeon/building?
-    CMP #$09 : BEQ .overworld ; overworld?
-    CMP #$0B : BEQ .overworld ; special overworld?
-      CMP #$0E : BEQ .dialog  ; dialog box?
-        RTS
+  ; checks current event in game
+  LDA $10 : CMP #$07 : BEQ .counter_increasing ; dungeon/building?
+            CMP #$09 : BEQ .overworld ; overworld?
+            CMP #$0B : BEQ .overworld ; special overworld?
+            CMP #$0E : BEQ .dialog  ; dialog box?
+              RTS
     .overworld
     ; Reload Sprite Gfx Properties
     JSL $00FC62 ; Sprite_LoadGraphicsProperties
