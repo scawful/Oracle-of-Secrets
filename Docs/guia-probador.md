@@ -27,14 +27,20 @@ Objectivo es coleccionar siete esencias de trifuerza, mientras ocasionalmente vi
 
 Las mazmorras están en la isla, mientras los santuarios están en el abismo del eón.
 
-Spoiler de ocarina y hongo:
->! Para realizar varias misiones se requiere la Ocarina, que puedes obtener usando el Polvo Mágico en un pollo en el rancho dentro de la casa. Para obtener el polvo mágico, debes intercambiar el hongo con la bruja en las montañas y luego irte y cruzar un mapa del supramundo antes de regresar.
+<details>
+<summary>Spoiler de ocarina y hongo</summary>
+Para realizar varias misiones se requiere la Ocarina, que puedes obtener usando el Polvo Mágico en un pollo en el rancho dentro de la casa. Para obtener el polvo mágico, debes intercambiar el hongo con la bruja en las montañas y luego irte y cruzar un mapa del supramundo antes de regresar.
+</details>
 
-Spoiler de libro de secretos y botas de correr:
->! Reproduce la canción de sanación para el niño enfermo del pueblo para las botas de correr. Para obtener el libro de los secretos, corre hacia la estantería de la biblioteca.
+<details>
+<summary>Spoiler de libro de secretos y botas de correr</summary>
+Reproduce la canción de sanación para el niño enfermo del pueblo para las botas de correr. Para obtener el libro de los secretos, corre hacia la estantería de la biblioteca.
+</details>
 
-Spoiler de la tierra submarina:
->! Usa la forma de máscara zora y sumérgete en el gran remolino de la playa.
+<details>
+<summary>Spoiler de la tierra submarina</summary>
+Usa la forma de máscara zora y sumérgete en el gran remolino de la playa.
+</details>
 
 ### Mazmorra Uno: Bosque de setas venenosas
 - Objetos: Arco y flecha, hongo
