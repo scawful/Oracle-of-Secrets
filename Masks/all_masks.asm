@@ -25,14 +25,10 @@ DekuFloating   = $70
 ; Unset, will shoot deku bubble instead
 DekuHover      = $71
 
-; =========================================================
-
 AddTransformationCloud = $09912C
 Link_CheckNewY_ButtonPress = $07B073
 LinkItem_EvaluateMagicCost = $07B0AB
 Player_DoSfx2 = $078028
-
-; =========================================================
 
 incsrc "Masks/mask_routines.asm"
 

@@ -15,10 +15,7 @@ org $07D8A0
   dw LinkState_CheckMinishTile
 
 ; LinkState_Bunny.not_moving
-org $078427
-  JSR $9BAA ; Link_HandleAPress
-
-; =========================================================
+org $078427 : JSR $9BAA ; Link_HandleAPress
 
 pullpc
 LinkState_CheckForMinishForm:

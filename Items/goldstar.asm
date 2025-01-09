@@ -9,9 +9,9 @@
 pullpc
 TransferGFXinRAM:
 {
-  PHX ; keep X
-  PHP ; keep processor byte
-  REP #$20 ; 16bit is a bit faster
+  PHX
+  PHP
+  REP #$20
 
   LDX #$80
   --
@@ -28,8 +28,7 @@ TransferGFXinRAM:
 
 pushpc
 ; OAM Draw Pattern for spikeball gfx
-org $0085C4
-  dw $0040
+org $0085C4 : dw $0040
 
 ; =========================================================
 ; Zarby Code

@@ -3,7 +3,7 @@
 
 macro PlayerTransform()
   LDY.b #$04 : LDA.b #$23
-  JSL   AddTransformationCloud
+  JSL AddTransformationCloud
   LDA.b #$14 : STA.w $0CF8
   JSL $0DBB67 ; Link_CalculateSFXPan
   ORA.w $0CF8
@@ -21,7 +21,7 @@ endmacro
 org $008827 : JSL StartupMasks
 
 ; Link Sprite hook before game starts
-org $008A01 :  LDA $BC
+org $008A01 : LDA $BC
 
 ; =========================================================
 ; Change Link's palette based on $02B2 (mask value)
@@ -102,50 +102,45 @@ ForceResetMask_SaveAndQuit:
 
 Palette_ArmorAndGloves:
 {
-  LDA   !CurrentMask : CMP #$01 : BEQ .deku_mask
-  CMP.b #$02 : BEQ .zora_mask
-  CMP.b #$03 : BEQ .wolf_mask
-  CMP.b #$04 : BEQ .bunny_hood
-  CMP.b #$05 : BEQ .minish_form
-  CMP.b #$06 : BEQ .gbc_form
-  CMP.b #$07 : BEQ .moosh_form
-  JMP   .original_sprite
+  LDA !CurrentMask : CMP.b #$01 : BEQ .deku_mask
+                     CMP.b #$02 : BEQ .zora_mask
+                     CMP.b #$03 : BEQ .wolf_mask
+                     CMP.b #$04 : BEQ .bunny_hood
+                     CMP.b #$05 : BEQ .minish_form
+                     CMP.b #$06 : BEQ .gbc_form
+                     CMP.b #$07 : BEQ .moosh_form
+                        JMP   .original_sprite
 
   .deku_mask
-    ; Load Deku Mask Location
-    LDA.b #$35 : STA $BC
-    JSL UpdateDekuPalette
-    RTL
+  LDA.b #$35 : STA $BC
+  JSL UpdateDekuPalette
+  RTL
 
   .zora_mask
-    ; Load Zora Mask Location
-    LDA.b #$36 : STA $BC
-    JSL UpdateZoraPalette
-    RTL
+  LDA.b #$36 : STA $BC
+  JSL UpdateZoraPalette
+  RTL
 
   .wolf_mask
-    ; Load Wolf Mask Location
-    LDA.b #$38 : STA $BC
-    JSL $38F000
-    RTL
+  LDA.b #$38 : STA $BC
+  JSL $38F000
+  RTL
 
   .bunny_hood
-    ; Load Bunny Hood Location
-    LDA.b #$37 : STA $BC
-    JSL $37F000
-    RTL
+  LDA.b #$37 : STA $BC
+  JSL $37F000
+  RTL
 
   .minish_form
-    ; Load Minish Form Location
-    LDA.b #$39 : STA $BC : JMP .original_palette
+  LDA.b #$39 : STA $BC : JMP .original_palette
 
   .gbc_form
-    JSL UpdateGbcPalette
-    RTL
+  JSL UpdateGbcPalette
+  RTL
 
   .moosh_form
-    JSL UpdateMooshPalette
-    RTL
+  JSL UpdateMooshPalette
+  RTL
 
   .original_sprite
   ; Load Original Sprite Location
@@ -212,17 +207,17 @@ Overworld_CgramAuxToMain_Override:
   LDX.b #$00
 
   .loop
-  LDA $7EC300, X : STA $7EC500, X
-  LDA $7EC340, X : STA $7EC540, X
-  LDA $7EC380, X : STA $7EC580, X
-  LDA $7EC3C0, X : STA $7EC5C0, X
-  LDA $7EC400, X : STA $7EC600, X
-  LDA $7EC440, X : STA $7EC640, X
-  LDA $7EC480, X : STA $7EC680, X
-  LDA !CurrentMask : BNE .has_mask_palette
-    LDA $7EC4C0, X : STA $7EC6C0, X
-  .has_mask_palette
-  INX #2 : CPX.b #$40 : BNE .loop
+    LDA $7EC300, X : STA $7EC500, X
+    LDA $7EC340, X : STA $7EC540, X
+    LDA $7EC380, X : STA $7EC580, X
+    LDA $7EC3C0, X : STA $7EC5C0, X
+    LDA $7EC400, X : STA $7EC600, X
+    LDA $7EC440, X : STA $7EC640, X
+    LDA $7EC480, X : STA $7EC680, X
+    LDA !CurrentMask : BNE .has_mask_palette
+      LDA $7EC4C0, X : STA $7EC6C0, X
+    .has_mask_palette
+    INX #2 : CPX.b #$40 : BNE .loop
 
   SEP #$20
 
@@ -238,13 +233,13 @@ LinkState_ResetMaskAnimated:
 {
   STZ.b $55
   LDA.w !CurrentMask : BEQ .no_transform
-  CMP.b #$01 : BEQ .check_item_slot
-  CMP.b #$02 : BEQ .no_transform
-  CMP.b #$03 : BEQ .check_item_slot
-  CMP.b #$04 : BEQ .check_item_slot
-  CMP.b #$05 : BEQ .no_transform
-  CMP.b #$06 : BEQ .gbc_form
-  CMP.b #$07 : BEQ .moosh_form
+    CMP.b #$01 : BEQ .check_item_slot
+    CMP.b #$02 : BEQ .no_transform
+    CMP.b #$03 : BEQ .check_item_slot
+    CMP.b #$04 : BEQ .check_item_slot
+    CMP.b #$05 : BEQ .no_transform
+    CMP.b #$06 : BEQ .gbc_form
+    CMP.b #$07 : BEQ .moosh_form
 
   .check_item_slot
   LDA.w $0202 : SEC : SBC.b #$13 : BEQ .no_transform
@@ -279,12 +274,11 @@ org $079CD9
 pullpc
 LinkItem_CheckForSwordSwing_Masks:
 {
-  LDA   !CurrentMask : BEQ .return
+  LDA !CurrentMask : BEQ .return
     CMP.b #$02 : BEQ .return  ; zora mask can use sword
       CMP.b #$06 : BEQ .return ; gbc link can use sword
         LDA #$01
         RTL
-
   .return
   LDA $3B : AND.b #$10 ; Restore Link_CheckForSwordSwing
   RTL
@@ -395,17 +389,6 @@ PrepareQuakeSpell:
   STZ.w DekuFloating ; Clear the hover flag
 
   RTL
-}
-
-; =========================================================
-
-InitCamera:
-{
-  LDA.b $22 : STA.b $3F
-  LDA.b $23 : STA.b $41
-  LDA.b LinkY : STA.b $3E
-  LDA.b LinkYH : STA.b $40
-  RTS
 }
 
 ; =========================================================
@@ -550,22 +533,18 @@ DekuLink_SkipPitSlip:
 
 pushpc
 
-org $07C729
-  JSL DekuLink_SkipPitSlip
+org $07C729 : JSL DekuLink_SkipPitSlip
 
-org $07BCEE
-  JSL DekuLink_SkipPitSlip
+org $07BCEE : JSL DekuLink_SkipPitSlip
 
-org $088399
-  dw Ancilla0E_MagicBubble
+org $088399 : dw Ancilla0E_MagicBubble
 
 org $08FFDA ; Bank 08 Free space
   Ancilla0E_MagicBubble:
     JSL Ancilla0E_MagicBubbleLong
     RTS
 
-org $07903F
-  JSL DekuLink_CheckForDash
+org $07903F : JSL DekuLink_CheckForDash
 
 pullpc
 
@@ -849,9 +828,7 @@ Ancilla_Move_Z:
 Ancilla_Killa:
   PLA
   PLA
-
   STZ.w AnciType, X
-
   RTS
 
 Ancilla_BoundsCheck:
@@ -1312,8 +1289,7 @@ MagicBubbleSwapDynamicGfx:
 pushpc
 
 ; Magic Bubble Ancilla damage class
-org $06EC8C
- db $01
+org $06EC8C : db $01
 
 ; =========================================================
 
@@ -1328,14 +1304,9 @@ LinkOAM_DrawShield:
 
   NOP #3
   BEQ .no_shield
-
-  LDA.l $7EF35A
-  AND.w #$00FF
-  BEQ .no_shield
-
-  JSR LinkOAM_SetEquipmentVRAMOffsets
-  BCC .shield_continue
-
+    LDA.l $7EF35A : AND.w #$00FF : BEQ .no_shield
+      JSR LinkOAM_SetEquipmentVRAMOffsets
+      BCC .shield_continue
   .no_shield
   BRL LinkOAM_DrawShadow
 
@@ -1353,9 +1324,9 @@ pullpc
 LinkOAM_CheckForDrawShield:
 {
   LDA.w !CurrentMask : AND.w #$00FF : CMP.w #$0005 : BNE +
-  .no_shield
-  LDA.w #$0000
-  RTL
+    .no_shield
+    LDA.w #$0000
+    RTL
   +
   CMP.w #$0001 : BEQ .no_shield
   CMP.w #$0003 : BEQ .no_shield
@@ -1366,8 +1337,7 @@ LinkOAM_CheckForDrawShield:
 
 pushpc
 
-org $07A94F
-  JSL CheckForTwoWayMirror
+org $07A94F : JSL CheckForTwoWayMirror
 
 pullpc
 
@@ -1377,8 +1347,8 @@ CheckForTwoWayMirror:
     LDA.b #$01
     RTL
   .vanilla_code
-  #_07A94F: LDA.b $8A
-  #_07A951: AND.b #$40
+  LDA.b $8A
+  AND.b #$40
   RTL
 }
 

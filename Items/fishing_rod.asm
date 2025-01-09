@@ -9,7 +9,7 @@
 ; $7F5BA2 RAM for fishing mode - 1 = rod out, 2 = pull
 ; $7F5BA3 RAM Index for the fishing floater
 ; Modify the code of the sprite "RunningBoy" 0x74
-; =========================================================
+; ====================================================
 
 ; Sprite_2D_NecklessMan_bounce
 org $06C0B2
@@ -284,9 +284,6 @@ RestoreCaneBlockHammerGfx:
   PLX
   RTL
 }
-
-
-
 
 FloaterBoySpriteCheck:
 {
