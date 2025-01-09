@@ -247,7 +247,7 @@ Sprite_Kydreeok_Main:
     SEP #$20
     JSR StopIfOutOfBounds
 
-    ;if both velocities are 0 go back to the Stalk_Player_XORY to re-set the course
+    ; if both velocities are 0 go back to the Stalk_Player_XORY to re-set the course
     LDA.w SprYSpeed, X : BNE .notZero
       LDA.w SprXSpeed, X : BNE .notZero
         %GotoAction(3) ; Kydreeok_MoveXorY
@@ -258,7 +258,7 @@ Sprite_Kydreeok_Main:
     JSL Sprite_CheckDamageFromPlayer
     JSL Sprite_CheckDamageToPlayer
 
-    PLX ;restores X
+    PLX
 
     RTS
   }
@@ -564,52 +564,52 @@ StopIfOutOfBounds:
 
 ApplyPalette:
 {
-    REP #$20 ;Set A in 16bit mode
+  REP #$20 ;Set A in 16bit mode
 
-    ;note, this uses adresses like 7EC300 and not 7EC500 because the game
-    ;will fade the colors into 7EC500 based on the colors found in 7EC300
+  ;note, this uses adresses like 7EC300 and not 7EC500 because the game
+  ;will fade the colors into 7EC500 based on the colors found in 7EC300
 
-    LDA #$7FFF : STA $7EC5E2 ;BG2
-    LDA #$319B : STA $7EC5E4
-    LDA #$15B6 : STA $7EC5E6
-    LDA #$369E : STA $7EC5E8
-    LDA #$14A5 : STA $7EC5EA
-    LDA #$7E56 : STA $7EC5EC
-    LDA #$65CA : STA $7EC5EE
-    ; LDA #$14A5 : STA $7EC5F0
-    ; LDA #$7E56 : STA $7EC5F2
-    ; LDA #$65CA : STA $7EC5F4
+  LDA #$7FFF : STA $7EC5E2 ;BG2
+  LDA #$319B : STA $7EC5E4
+  LDA #$15B6 : STA $7EC5E6
+  LDA #$369E : STA $7EC5E8
+  LDA #$14A5 : STA $7EC5EA
+  LDA #$7E56 : STA $7EC5EC
+  LDA #$65CA : STA $7EC5EE
+  ; LDA #$14A5 : STA $7EC5F0
+  ; LDA #$7E56 : STA $7EC5F2
+  ; LDA #$65CA : STA $7EC5F4
 
-    INC $15
+  INC $15
 
-    SEP #$20 ;Set A in 8bit mode
+  SEP #$20 ;Set A in 8bit mode
 
-    RTS
+  RTS
 }
 
 ApplyEndPalette:
 {
-    REP #$20 ;Set A in 16bit mode
+  REP #$20 ;Set A in 16bit mode
 
-    ;note, this uses adresses like 7EC300 and not 7EC500 because the game
-    ;will fade the colors into 7EC500 based on the colors found in 7EC300
+  ;note, this uses adresses like 7EC300 and not 7EC500 because the game
+  ;will fade the colors into 7EC500 based on the colors found in 7EC300
 
-    LDA #$1084 : STA $7EC5E2 ;BG2
-    LDA #$210D : STA $7EC5E4
-    LDA #$3191 : STA $7EC5E6
-    LDA #$4E78 : STA $7EC5E8
-    LDA #$14A5 : STA $7EC5EA
-    LDA #$7E56 : STA $7EC5EC
-    LDA #$65CA : STA $7EC5EE
-    ; LDA #$14A5 : STA $7EC5F0
-    ; LDA #$7E56 : STA $7EC5F2
-    ; LDA #$65CA : STA $7EC5F4
+  LDA #$1084 : STA $7EC5E2 ;BG2
+  LDA #$210D : STA $7EC5E4
+  LDA #$3191 : STA $7EC5E6
+  LDA #$4E78 : STA $7EC5E8
+  LDA #$14A5 : STA $7EC5EA
+  LDA #$7E56 : STA $7EC5EC
+  LDA #$65CA : STA $7EC5EE
+  ; LDA #$14A5 : STA $7EC5F0
+  ; LDA #$7E56 : STA $7EC5F2
+  ; LDA #$65CA : STA $7EC5F4
 
-    INC $15
+  INC $15
 
-    SEP #$20 ;Set A in 8bit mode
+  SEP #$20 ;Set A in 8bit mode
 
-    RTS
+  RTS
 }
 
 ; =========================================================

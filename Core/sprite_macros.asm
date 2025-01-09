@@ -41,34 +41,23 @@ macro Set_Sprite_Properties(SprPrep, SprMain)
 }
 endmacro
 
-macro loop(body, ...)
-  !x #= 0
-  while !x < sizeof(...)
-    !x #= !x+1
-  endwhile
-endmacro
-
 macro sta(...)
   %loop(STA, ...)
 endmacro
 
-macro sta_x(...)
-  %loop(STA.w, ..., X)
-endmacro
-
-macro mode16()
+macro m16()
   REP #$30
 endmacro
 
-macro mode8()
+macro m8()
   SEP #$30
 endmacro
 
-macro accum16()
+macro a16()
   REP #$20
 endmacro
 
-macro accum8()
+macro a8()
   SEP #$20
 endmacro
 

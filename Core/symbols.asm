@@ -689,8 +689,6 @@ SpriteRanCheck = $8E
 ;    0x00 indicates no sprite in this slot
 UWDEATH         = $7FDF80
 
-; =========================================================
-
 RebuildHUD_long = $0DFA58
 
 ; =========================================================

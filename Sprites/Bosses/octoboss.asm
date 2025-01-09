@@ -211,7 +211,7 @@ Sprite_Octoboss_Secondary:
       ; and use the macro GetTilePos($x,$y)
 
       PHX
-      %mode16()
+      %m16()
 
       %GetTilePos($0F, $07)
       LDA.w #$068F : JSL Overworld_DrawMap16_Persist
@@ -231,7 +231,7 @@ Sprite_Octoboss_Secondary:
       %GetTilePos($11, $08)
       LDA.w #$06A4 : JSL Overworld_DrawMap16_Persist
 
-      %mode8()
+      %m8()
       PLX
       LDA.b #$01 : STA.b $14
     +
@@ -432,27 +432,22 @@ Sprite_Octoboss_Secondary:
 
     LDA.w SprTimerC, X : CMP.b #$40 : BNE +
       PHX
-      %mode16()
+      %m16()
 
       %GetTilePos($0F, $07)
       LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
-
       %GetTilePos($10, $07)
       LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
-
       %GetTilePos($11, $07)
       LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
-
       %GetTilePos($0F, $08)
       LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
-
       %GetTilePos($10, $08)
       LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
-
       %GetTilePos($11, $08)
       LDA.w #$0034 : JSL Overworld_DrawMap16_Persist
 
-      %mode8()
+      %m8()
       PLX
       LDA.b #$01 : STA.b $14
     +
