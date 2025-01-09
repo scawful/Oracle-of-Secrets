@@ -69,21 +69,14 @@ Menu_DrawQuestIcons:
   LDX.w #$10
 
   .loop
-    LDA.w quest_icons, X
-    STA.w $1364, X
-    LDA.w quest_icons+$10, X
-    STA.w $13A4, X
-    LDA.w quest_icons+$20, X
-    STA.w $13E4, X
-    LDA.w quest_icons+$30, X
-    STA.w $1424, X
-    LDA.w quest_icons+$40, X
-    STA.w $1464, X
-    LDA.w quest_icons+$50, X
-    STA.w $14A4, X
-    LDA.w quest_icons+$60, X
-    STA.w $14E4, X
-  DEX : DEX : BPL .loop
+    LDA.w quest_icons, X : STA.w $1364, X
+    LDA.w quest_icons+$10, X : STA.w $13A4, X
+    LDA.w quest_icons+$20, X : STA.w $13E4, X
+    LDA.w quest_icons+$30, X : STA.w $1424, X
+    LDA.w quest_icons+$40, X : STA.w $1464, X
+    LDA.w quest_icons+$50, X : STA.w $14A4, X
+    LDA.w quest_icons+$60, X : STA.w $14E4, X
+    DEX : DEX : BPL .loop
 
   LDA.w #$20F5 : STA.w $13B4 : STA.w $13F4 : STA.w $1474 : STA.w $14B4
 

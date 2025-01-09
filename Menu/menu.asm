@@ -256,8 +256,7 @@ Menu_ItemScreen:
 
   .no_inputs
   SEP #$30
-  LDA.w $0202
-  ASL : TAY
+  LDA.w $0202 : ASL : TAY
   REP #$10
   LDX.w Menu_ItemCursorPositions-2, Y
   JSR Menu_DrawCursor
@@ -277,8 +276,7 @@ Menu_ItemScreen:
 Menu_ScrollTo:
 {
   SEP #$20
-  JSR Menu_ScrollHorizontal
-  BCC .not_done
+  JSR Menu_ScrollHorizontal : BCC .not_done
     INC.w $0200
   .not_done
   RTS
@@ -300,8 +298,7 @@ Menu_StatsScreen:
 
 Menu_ScrollFrom:
 {
-  JSR Menu_ScrollHorizontal
-  BCC .not_done
+  JSR Menu_ScrollHorizontal : BCC .not_done
     JMP Menu_InitItemScreen
   .not_done
   RTS
@@ -397,32 +394,22 @@ Menu_InitiateScrollDown:
 
   .loop
     LDA.w #$387F
-    STA.w $1000, X
-    STA.w $1100, X
-    STA.w $1200, X
-    STA.w $1300, X
-    STA.w $1400, X
-    STA.w $1500, X
-    STA.w $1600, X
-    STA.w $1700, X
-
-    DEX : DEX
-  BNE .loop
+    STA.w $1000, X : STA.w $1100, X
+    STA.w $1200, X : STA.w $1300, X
+    STA.w $1400, X : STA.w $1500, X
+    STA.w $1600, X : STA.w $1700, X
+    DEX : DEX : BNE .loop
 
   ; TODO: The BPL wasn't working so figure out why and
   ; fix it instead of doing this abomination.
-  STA.w $1000
-  STA.w $1100
-  STA.w $1200
-  STA.w $1300
-  STA.w $1400
-  STA.w $1500
-  STA.w $1600
-  STA.w $1700
+  STA.w $1000 : STA.w $1100
+  STA.w $1200 : STA.w $1300
+  STA.w $1400 : STA.w $1500
+  STA.w $1600 : STA.w $1700
 
   SEP #$20
 
-  JSL $0DFA58 ; HUD_Rebuild_Long
+  JSL RebuildHUD_long
 
   ; Draw one frame of the clock so it doesn't just
   ; pop in when scrolling down.
@@ -454,9 +441,7 @@ Menu_InitiateScrollDown:
 
   LDA.b #$24 : STA.w $0116
   LDA.b #$01 : STA.b $17
-
   LDA.b #$08 : STA.w $0200
-
   LDA.b #$12 : STA.w $012F ; play menu exit sound effect
 
   RTS
@@ -596,8 +581,7 @@ Menu_SongMenu:
 
   JSR Menu_DrawItemName
   SEP #$30
-  LDA.w CurrentSong
-  ASL : TAY
+  LDA.w CurrentSong : ASL : TAY
   REP #$10
   LDX.w Menu_SongIconCursorPositions-2, Y
   JSR Menu_DrawCursor
@@ -649,12 +633,11 @@ Menu_RingBox:
     DEC.w $020B
     BRA .continue
   .zero
-    STZ.w $020B
+  STZ.w $020B
   .continue
 
   JSR DrawMagicRingNames
-  LDA.w $020B
-  ASL : TAY
+  LDA.w $020B : ASL : TAY
   REP #$10
   LDX.w Menu_RingIconCursorPositions, Y
   JSR Menu_DrawCursor
@@ -762,5 +745,3 @@ incsrc "menu_map_names.asm"
 print  "End of Menu/menu.asm              ", pc
 incsrc "menu_hud.asm"
 print  "End of Menu/menu_hud.asm          ", pc
-
-; =========================================================

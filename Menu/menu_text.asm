@@ -186,7 +186,6 @@ Menu_DrawItemName:
   CMP.b #$01 : BCS .haveItem
     REP #$30
     RTS
-
   .haveItem
 
   LDA.w $0202 : CMP.b #$03 : BEQ .goldstar
@@ -258,59 +257,59 @@ Menu_DrawItemName:
 
 DrawPortalRodName:
 {
-    REP #$30
-    LDX.w #$0000
-    LDY.w #$0000
+  REP #$30
+  LDX.w #$0000
+  LDY.w #$0000
 
-    .draw_portal_rod_loop
-      LDA.w Menu_PortalRodItems, X : STA.w $1692, Y
-      INX #2 : INY #2
-    CPY #$001C : BCC .draw_portal_rod_loop
+  .draw_portal_rod_loop
+    LDA.w Menu_PortalRodItems, X : STA.w $1692, Y
+    INX #2 : INY #2
+  CPY #$001C : BCC .draw_portal_rod_loop
   RTS
 }
 
 DrawBottleNames:
 {
-    LDA.l $7EF35C, X : AND.w #$00FF
-    DEC : ASL #5 : TAX
-    LDY.w #$0000
+  LDA.l $7EF35C, X : AND.w #$00FF
+  DEC : ASL #5 : TAX
+  LDY.w #$0000
 
-    .draw_bottle_loop
-      LDA.w Menu_BottleItems, X : STA.w $1692, Y
-      INX #2 : INY #2
-    CPY #$001C : BCC .draw_bottle_loop
-    RTS
+  .draw_bottle_loop
+    LDA.w Menu_BottleItems, X : STA.w $1692, Y
+    INX #2 : INY #2
+  CPY #$001C : BCC .draw_bottle_loop
+  RTS
 }
 
 DrawMagicRingNames:
 {
-    REP #$30
-    LDA.w $020B : ASL #5 : TAX
+  REP #$30
+  LDA.w $020B : ASL #5 : TAX
+  LDY.w #$0000
+
+  .draw_ring_loop
+    LDA.w Menu_RingNames, X : STA.w $1692, Y
+    INX #2 : INY #2
+  CPY #$001C : BCC .draw_ring_loop
+
+  LDA.w $020B : ASL #5 : TAX
+  LDY.w #$0000
+
+  .draw_ring_desc_loop
+    LDA.w Menu_RingDescriptions, X : STA.w $1590, Y
+    INX #2 : INY #2
+  CPY #$0020 : BCC .draw_ring_desc_loop
+
+  LDA.l MAGICRINGS : AND.w #$00FF : STA.b $00
+  LDA.l FOUNDRINGS : AND.w #$00FF : CMP.b $00 : BEQ +
     LDY.w #$0000
+    .draw_found_ring
+    LDA.w Menu_RingsFound, Y : STA.w $1692, Y
+    INY #2 : CPY #$001C : BCC .draw_found_ring
+  +
 
-    .draw_ring_loop
-      LDA.w Menu_RingNames, X : STA.w $1692, Y
-      INX #2 : INY #2
-    CPY #$001C : BCC .draw_ring_loop
-
-    LDA.w $020B : ASL #5 : TAX
-    LDY.w #$0000
-
-    .draw_ring_desc_loop
-      LDA.w Menu_RingDescriptions, X : STA.w $1590, Y
-      INX #2 : INY #2
-    CPY #$0020 : BCC .draw_ring_desc_loop
-
-    LDA.l MAGICRINGS : AND.w #$00FF : STA.b $00
-    LDA.l FOUNDRINGS : AND.w #$00FF : CMP.b $00 : BEQ +
-      LDY.w #$0000
-      .draw_found_ring
-      LDA.w Menu_RingsFound, Y : STA.w $1692, Y
-      INY #2 : CPY #$001C : BCC .draw_found_ring
-    +
-
-    SEP #$30
-    RTS
+  SEP #$30
+  RTS
 }
 
 Menu_CollectibleNames:
@@ -360,26 +359,22 @@ DrawCollectibleNamesAndCount:
 
 DrawGoldstarName:
 {
-    REP #$30
-    LDX.w #$0000
-    LDY.w #$0000
-
-    .draw_goldstar_loop
-      LDA.w Menu_GoldstarLabel, X
-    STA.w $1692, X : INX #2 : INY #2 : CPY #$001C : BCC .draw_goldstar_loop
-    RTS
+  REP #$30
+  LDX.w #$0000 : LDY.w #$0000
+  .draw_goldstar_loop
+  LDA.w Menu_GoldstarLabel, X : STA.w $1692, X
+  INX #2 : INY #2 : CPY #$001C : BCC .draw_goldstar_loop
+  RTS
 }
 
 DrawMushroomName:
 {
-    REP #$30
-    LDX.w #$0000
-    LDY.w #$0000
-
-    .draw_mushroom_loop
-      LDA.w Menu_MushroomLabel, X
-    STA.w $1692, X : INX #2 : INY #2 : CPY #$001C : BCC .draw_mushroom_loop
-    RTS
+  REP #$30
+  LDX.w #$0000 : LDY.w #$0000
+  .draw_mushroom_loop
+  LDA.w Menu_MushroomLabel, X : STA.w $1692, X
+  INX #2 : INY #2 : CPY #$001C : BCC .draw_mushroom_loop
+  RTS
 }
 
 ; =========================================================
@@ -397,20 +392,20 @@ DrawLocationName:
   LDY.w #$000
   TAX
 
-.draw_overworld_loop
+  .draw_overworld_loop
   LDA.w OverworldLocationNames, X ; Load your text character
   STA.w $12CC, Y                  ; Store into the buffer
   INX : INX
   INY : INY : CPY #$0020 : BCC .draw_overworld_loop
   RTS
 
-.indoors
+  .indoors
   LDA.b $A0 ; Load current room
   ASL #5
   TAY
   LDX.w #$0000
 
-.draw_indoors_loop
+  .draw_indoors_loop
   LDA.w DungeonLocationNames, Y : STA.w $12CC, X
 
   INY : INY
@@ -426,7 +421,7 @@ Menu_DrawSelect:
   REP #$30
   LDX.w #$16
 
-.loop
+  .loop
   LDA.w SelectItemTXT, X : STA.w $1194, X
   DEX #2 : BPL .loop
 
@@ -440,7 +435,7 @@ Menu_DrawQuestStatus:
   REP #$30
   LDX.w #$16
 
-.loop
+  .loop
   LDA.w QuestStatusTXT, X : STA.w $1194, X
   DEX #2 : BPL .loop
 
@@ -454,7 +449,7 @@ Menu_DrawAreaNameTXT:
   REP #$30
   LDX.w #$26
 
-.loop
+  .loop
   LDA.w AreaNameTXT, X
   STA.w $128C, X
 
@@ -487,7 +482,8 @@ Menu_DrawAreaNameTXT:
 ;
 ; B1-blank^
 ;
-; ^This code is not the canon encoding of this character. ex. AF is the proper "I". 08 is not.
+; ^This code is not the canon encoding of this character.
+; ex. AF is the proper "I". 08 is not.
 
 AlphabetTable:
   db $00, $01, $02, $03, $04, $05, $06, $07
@@ -521,7 +517,6 @@ Menu_DrawCharacterName:
   .write_to_screen
   CLC : ADC #$2550 : STA.w $134C, X
   DEX : DEX : BPL .draw_name_loop
-
   RTS
 
   .fix_i
@@ -532,3 +527,4 @@ Menu_DrawCharacterName:
   ; accumulator and convert it to an uppercase value.
   LDA.w #$1D : BRA .write_to_screen
 }
+
