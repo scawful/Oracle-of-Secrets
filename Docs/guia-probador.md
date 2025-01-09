@@ -27,9 +27,16 @@ Objectivo es coleccionar siete esencias de trifuerza, mientras ocasionalmente vi
 
 Las mazmorras están en la isla, mientras los santuarios están en el abismo del eón.
 
+El vendedor de máscaras está al este del pueblo. El salón de los secretos está al noreste del castillo.
+
 <details>
 <summary>Spoiler de ocarina y hongo</summary>
 Para realizar varias misiones se requiere la Ocarina, que puedes obtener usando el Polvo Mágico en un pollo en el rancho dentro de la casa. Para obtener el polvo mágico, debes intercambiar el hongo con la bruja en las montañas y luego irte y cruzar un mapa del supramundo antes de regresar.
+</details>
+
+<details>
+<summary>Spoiler de la Máscara de Deku</summary>
+Para conseguir la máscara deku, toca la canción de sanación para el deku afuera de la tienda del vendedor de máscaras.
 </details>
 
 <details>
