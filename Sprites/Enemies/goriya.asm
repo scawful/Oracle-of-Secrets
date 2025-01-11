@@ -32,8 +32,6 @@
 
 %Set_Sprite_Properties(Sprite_Goriya_Prep, Sprite_Goriya_Long)
 
-; =========================================================
-
 Sprite_Goriya_Long:
 {
   PHB : PHK : PLB
@@ -51,8 +49,6 @@ Sprite_Goriya_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_Goriya_Prep:
 {
   PHB : PHK : PLB
@@ -60,8 +56,6 @@ Sprite_Goriya_Prep:
   PLB
   RTL
 }
-
-; =========================================================
 
 Sprite_Goriya_Main:
 {
@@ -308,9 +302,6 @@ Sprite_Goriya_Draw:
   PLX
 
   RTS
-
-
-  ; =========================================================
 
   .start_index
   db $00, $02, $04, $06, $08, $0A, $0C, $0E

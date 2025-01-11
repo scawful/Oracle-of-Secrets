@@ -43,8 +43,6 @@ Sprite_AntiKirby_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_AntiKirby_Prep:
 {
   PHB : PHK : PLB
