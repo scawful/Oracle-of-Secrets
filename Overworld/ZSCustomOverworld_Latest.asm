@@ -1695,7 +1695,7 @@ CustomOverworld_LoadSubscreenOverlay_PostInit:
     ; pyramid one by default.
     CPX.w #$00FF : BNE .notFF
         ; The pyramid background.
-        LDX.w #$0096
+        LDX.w #$009F ; #$0096
 
     .notFF
 
