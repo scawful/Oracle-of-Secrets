@@ -179,7 +179,7 @@ endif
   STA.l $7EF280,X
 
   LDA.b #$02 : STA $7EF3C5
-  LDA.b #$01 : STA OOSPROG3
+  LDA.b #$01 : STA MakuTreeQuest
   LDA.b #%00001010 : STA OOSPROG
 
 END:

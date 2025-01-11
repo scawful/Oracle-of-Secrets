@@ -44,17 +44,8 @@ SaveRam:
 ;   0x03 - Agahnim defeated
 GAMESTATE       = $7EF3C5
 
-; Map icon
-;   0x00 - Red X on Maku Tree/Maku Warp
-;   0x01 - Red X on Hall of Secrets
-;   0x02 - Red X on Kalyxo Pyramid
-;   0x03 - Toadstool Woods Crystal
-;   0x04 - Kalyxo Crystals All
-;   0x05 -
-;   0x06 -
-;   0x07 -
-;   0x08 - Skull on GT        | Climb Ganon's Tower
-MAPICON         = $7EF3C7
+; Red X on Hall of Secrets
+; Red X on Kalyxo Pyramid
 
 ; .fmp h.i.
 ;  f - fortress of secrets
@@ -76,7 +67,19 @@ OOSPROG2       = $7EF3C6
 
 ; .... ...m
 ;   m - maku tree has met link (0: no | 1: yes)
-OOSPROG3       = $7EF3D4
+MakuTreeQuest  = $7EF3D4
+
+; Map icon
+;   0x00 - Red X on Maku Tree/Maku Warp
+;   0x01 - Toadstool Woods Crystal
+;   0x02 - Kalyxo All Crystals
+;   0x03 -
+;   0x04 -
+;   0x05 -
+;   0x06 -
+;   0x07 -
+;   0x08 - Skull on GT        | Climb Ganon's Tower
+MapIcon        = $7EF3C7
 
 ; Dungeon ID Legend
 ; Mushroom Grotto ID 0x0C (Palace of Darkness)
@@ -95,11 +98,11 @@ OOSPROG3       = $7EF3D4
 ;   i - Ice Palace
 ;   m - Misery Mire
 ;   t - Turtle Rock
-CRYSTALS        = $7EF37A
+CRYSTALS   = $7EF37A
 
 ; 01 - Fishing Rod
 ; 02 - Portal Rod
-CUSTOMRODS  = $7EF351
+CustomRods = $7EF351
 
 ; Free SRAM Block 38A-3C4
 FishingRod = $7EF38A

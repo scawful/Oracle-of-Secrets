@@ -172,8 +172,6 @@ MapIconDraw:
   LDA.l $7EC10A : PHA
   LDA.l $7EC10B : PHA
 
-  ;-----------------------------------
-
   .draw_prizes
   LDA.b $8A : AND.b #$40 : BEQ .lwprizes
     LDA.l OOSPROG : AND.b #$02 : BNE .check_pendants
@@ -208,156 +206,152 @@ MapIconDraw:
       JMP restore_coords_and_exit
   .lwprizes
 
-  ;-----------------------------------
-
-  LDA.l $7EF3C7 : CMP.b #$01 : BEQ .hall_of_secrets
-                  CMP.b #$02 : BEQ .draw_secret
-                  CMP.b #$03 : BEQ .draw_crystal_1
-                  CMP.b #$04 : BCS .draw_crystals
-                  JSL DrawEonEscapeIcon
-                  JSR HandleMapDrawIcon
-                  JMP restore_coords_and_exit
-
-  .hall_of_secrets
+  LDA.l OOSPROG : CMP.b #$02 : BNE +
     JSL DrawHallOfSecretsIcon
     JSR HandleMapDrawIcon
-    JMP restore_coords_and_exit
-
-  .draw_secret ; Pyramid of Power
+    JMP .main_quest
+  +
+  LDA.l OOSPROG : AND.b #$10 : BEQ .main_quest
+    ; Pyramid of Power
     JSL DrawPyramidIcon
     JSR HandleMapDrawIcon_noflash
-    JMP .skip_draw_6
+  .main_quest
+
+  LDA.l MapIcon : CMP.b #$01 : BEQ .draw_crystal_1
+                  CMP.b #$02 : BEQ .draw_crystals
+                    JSL DrawEonEscapeIcon
+                    JSR HandleMapDrawIcon
+                    JMP restore_coords_and_exit
 
   .draw_crystal_1
-    ; Draw Crystal 1
-    LDA.l $7EF37A : AND #$02 : BNE .skip_draw_0
-      ; X position
-      LDA.b #$00 : STA.l $7EC10B
-      LDA.b #$87 : STA.l $7EC10A
-      ; Y position
-      LDA.b #$04 : STA.l $7EC109
-      LDA.b #$01 : STA.l $7EC108
-      ; Tile GFX
-      LDA.b #$64 : STA.b $0D
-      LDA.b #$38 : STA.b $0C
-      ; Tile Size
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
-      LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
-      JSR HandleMapDrawIcon
-    .skip_draw_0
-    JMP restore_coords_and_exit
+  ; Draw Crystal 1
+  LDA.l $7EF37A : AND #$02 : BNE .skip_draw_0
+    ; X position
+    LDA.b #$00 : STA.l $7EC10B
+    LDA.b #$87 : STA.l $7EC10A
+    ; Y position
+    LDA.b #$04 : STA.l $7EC109
+    LDA.b #$01 : STA.l $7EC108
+    ; Tile GFX
+    LDA.b #$64 : STA.b $0D
+    LDA.b #$38 : STA.b $0C
+    ; Tile Size
+    LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
+    LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
+    JSR HandleMapDrawIcon
+  .skip_draw_0
+  JMP restore_coords_and_exit
 
   .draw_crystals
-    ; Draw Crystal 2
-    LDA.l $7EF37A : AND #$10 : BNE .skip_draw_1
-      ; X position (2)
-      LDA.b #$1E : STA.l $7EC10B
-      LDA.b #$A0 : STA.l $7EC10A
-      ; Y position (2)
-      LDA.b #$09 : STA.l $7EC109
-      LDA.b #$74 : STA.l $7EC108
+  ; Draw Crystal 2
+  LDA.l $7EF37A : AND #$10 : BNE .skip_draw_1
+    ; X position (2)
+    LDA.b #$1E : STA.l $7EC10B
+    LDA.b #$A0 : STA.l $7EC10A
+    ; Y position (2)
+    LDA.b #$09 : STA.l $7EC109
+    LDA.b #$74 : STA.l $7EC108
 
-      LDA.b #$64 : STA.b $0D
-      LDA.b #$34 : STA.b $0C ; Tile GFX
+    LDA.b #$64 : STA.b $0D
+    LDA.b #$34 : STA.b $0C ; Tile GFX
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
-      LDA.b #$08 : STA.l $7EC025
+    LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
+    LDA.b #$08 : STA.l $7EC025
 
-      JSR HandleMapDrawIcon
-    .skip_draw_1
+    JSR HandleMapDrawIcon
+  .skip_draw_1
 
-    ; Draw Crystal 3
-    LDA.l $7EF37A : AND #$40 : BNE .skip_draw_2
-      ; X position
-      LDA.b #$08 : STA.l $7EC10B
-      LDA.b #$10 : STA.l $7EC10A
-      ; Y position
-      LDA.b #$04 : STA.l $7EC109
-      LDA.b #$0E : STA.l $7EC108
+  ; Draw Crystal 3
+  LDA.l $7EF37A : AND #$40 : BNE .skip_draw_2
+    ; X position
+    LDA.b #$08 : STA.l $7EC10B
+    LDA.b #$10 : STA.l $7EC10A
+    ; Y position
+    LDA.b #$04 : STA.l $7EC109
+    LDA.b #$0E : STA.l $7EC108
 
-      LDA.b #$64 : STA.b $0D
-      LDA.b #$34 : STA.b $0C ; Tile GFX
+    LDA.b #$64 : STA.b $0D
+    LDA.b #$34 : STA.b $0C ; Tile GFX
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
-      LDA.b #$0D : STA.l $7EC025
+    LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
+    LDA.b #$0D : STA.l $7EC025
 
-      JSR HandleMapDrawIcon
-    .skip_draw_2
+    JSR HandleMapDrawIcon
+  .skip_draw_2
 
+  ; Draw Crystal 4
+  LDA.l $7EF37A : AND #$20 : BNE .skip_draw_3
+    ; X position
+    LDA.b #$0E : STA.l $7EC10B
+    LDA.b #$5E : STA.l $7EC10A
+    ; Y position
+    LDA.b #$06 : STA.l $7EC109
+    LDA.b #$68 : STA.l $7EC108
 
-    ; Draw Crystal 4
-    LDA.l $7EF37A : AND #$20 : BNE .skip_draw_3
-      ; X position
-      LDA.b #$0E : STA.l $7EC10B
-      LDA.b #$5E : STA.l $7EC10A
-      ; Y position
-      LDA.b #$06 : STA.l $7EC109
-      LDA.b #$68 : STA.l $7EC108
+    LDA.b #$64 : STA.b $0D
+    LDA.b #$3C : STA.b $0C ; Tile GFX
 
-      LDA.b #$64 : STA.b $0D
-      LDA.b #$3C : STA.b $0C ; Tile GFX
+    LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
+    LDA.b #$0B : STA.l $7EC025
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
-      LDA.b #$0B : STA.l $7EC025
+    JSR HandleMapDrawIcon
+  .skip_draw_3
 
-      JSR HandleMapDrawIcon
-    .skip_draw_3
+  ; Draw Crystal 5
+  LDA.l $7EF37A : AND #$04 : BNE .skip_draw_4
+    ; X position
+    LDA.b #$0C : STA.l $7EC10B
+    LDA.b #$34 : STA.l $7EC10A
+    ; Y position
+    LDA.b #$00 : STA.l $7EC109
+    LDA.b #$0E : STA.l $7EC108
 
-    ; Draw Crystal 5
-    LDA.l $7EF37A : AND #$04 : BNE .skip_draw_4
-      ; X position
-      LDA.b #$0C : STA.l $7EC10B
-      LDA.b #$34 : STA.l $7EC10A
-      ; Y position
-      LDA.b #$00 : STA.l $7EC109
-      LDA.b #$0E : STA.l $7EC108
+    LDA.b #$64 : STA.b $0D
+    LDA.b #$34 : STA.b $0C ; Tile GFX
 
-      LDA.b #$64 : STA.b $0D
-      LDA.b #$34 : STA.b $0C ; Tile GFX
+    LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
+    LDA.b #$09 : STA.l $7EC025
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
-      LDA.b #$09 : STA.l $7EC025
+    JSR HandleMapDrawIcon
+  .skip_draw_4
 
-      JSR HandleMapDrawIcon
-    .skip_draw_4
+  ; Draw Crystal 6
+  LDA.l $7EF37A : AND #$01 : BNE .skip_draw_5
+    ; X position (6)
+    LDA.b #$0D : STA.l $7EC10B
+    LDA.b #$05 : STA.l $7EC10A
+    ; Y position (6)
+    LDA.b #$0D : STA.l $7EC109
+    LDA.b #$09 : STA.l $7EC108
 
-    ; Draw Crystal 6
-    LDA.l $7EF37A : AND #$01 : BNE .skip_draw_5
-      ; X position (6)
-      LDA.b #$0D : STA.l $7EC10B
-      LDA.b #$05 : STA.l $7EC10A
-      ; Y position (6)
-      LDA.b #$0D : STA.l $7EC109
-      LDA.b #$09 : STA.l $7EC108
+    LDA.b #$64 : STA.b $0D
+    LDA.b #$32 : STA.b $0C ; Tile GFX
 
-      LDA.b #$64 : STA.b $0D
-      LDA.b #$32 : STA.b $0C ; Tile GFX
+    LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
+    LDA.b #$0A : STA.l $7EC025
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
-      LDA.b #$0A : STA.l $7EC025
+    JSR HandleMapDrawIcon
+  .skip_draw_5
 
-      JSR HandleMapDrawIcon
-    .skip_draw_5
+  ; Draw Crystal 7
+  LDA.l $7EF37A : AND #$08 : BNE .skip_draw_6
+    ; X position
+    LDA.b #$00 : STA.l $7EC10B
+    LDA.b #$F4 : STA.l $7EC10A
+    ; Y position
+    LDA.b #$0D : STA.l $7EC109
+    LDA.b #$0E : STA.l $7EC108
 
-    ; Draw Crystal 7
-    LDA.l $7EF37A : AND #$08 : BNE .skip_draw_6
-      ; X position
-      LDA.b #$00 : STA.l $7EC10B
-      LDA.b #$F4 : STA.l $7EC10A
-      ; Y position
-      LDA.b #$0D : STA.l $7EC109
-      LDA.b #$0E : STA.l $7EC108
+    LDA.b #$64 : STA.b $0D
+    LDA.b #$32 : STA.b $0C ; Tile GFX
 
-      LDA.b #$64 : STA.b $0D
-      LDA.b #$32 : STA.b $0C ; Tile GFX
+    LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
+    LDA.b #$0C : STA.l $7EC025
 
-      LDA.b #$02 : STA.b $0B ; 02 = 16x16, 00 = 8x8
-      LDA.b #$0C : STA.l $7EC025
+    JSR HandleMapDrawIcon
+  .skip_draw_6
 
-      JSR HandleMapDrawIcon
-    .skip_draw_6
-
-    JMP restore_coords_and_exit
+  JMP restore_coords_and_exit
 }
 
 HandleMapDrawIcon:

@@ -76,7 +76,7 @@ Sprite_MakuTree_Main:
   MakuTree_Handler:
   {
     ; Check the progress flags
-    LDA.l $7EF3D4 : CMP.b #$01 : BEQ .has_met_link
+    LDA.l MakuTreeQuest : AND.b #$01 : BNE .has_met_link
       %GotoAction(1)
       RTS
     .has_met_link
@@ -92,8 +92,8 @@ Sprite_MakuTree_Main:
     LDA.w SprY, X : STA $05
     JSL GetDistance8bit_Long : CMP #$28 : BCS .not_too_close
       %ShowUnconditionalMessage($20)
-      LDA.b #$01 : STA.l $7EF3D4
-      LDA.b #$01 : STA.l $7EF3C7 ; Mark the Hall of Secrets
+      LDA.b #$01 : STA.l MakuTreeQuest
+      LDA.b #$01 : STA.l MapIcon ; Mushroom Grotto
       LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
       %GotoAction(2)
     .not_too_close
