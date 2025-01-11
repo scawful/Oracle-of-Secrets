@@ -42,7 +42,11 @@ macro Set_Sprite_Properties(SprPrep, SprMain)
 endmacro
 
 macro sta(...)
-  %loop(STA, ...)
+  !a #= 0
+  while !a < sizeof(...)
+    STA <...>
+    !a #= !a+1
+  endwhile
 endmacro
 
 macro m16()
