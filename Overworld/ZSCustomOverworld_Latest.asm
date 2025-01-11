@@ -2539,8 +2539,9 @@ CheckForChangeGraphicsTransitionLoad:
 
                     ; Where ZS saves the array of palettes
                     LDA.w Pool_BGColorTable, X
+                    STA.l $7EE018
                     JSL Oracle_BackgroundFix
-                    NOP #8
+                    NOP #4
                     ;STA.l $7EC300 : STA.l $7EC500
                     ;STA.l $7EC540 : STA.l $7EC340
 
