@@ -39,22 +39,19 @@ HouseTag_Main:
     LDA.b #$08 : STA $7EE000 ; Set the time to 8:00am
     LDA.b #$03 : STA.w $012C ; Play the deku tree music
 
-    ; -------------------------------
     ; Set Link's coordinates to this specific position.
     LDA.b #$40 : STA $0FC2
     LDA.b #$09 : STA $0FC3
-
     LDA.b #$5A : STA $0FC4
     LDA.b #$21 : STA $0FC5
 
     ; "Accept our quest, Link!"
     LDA.b #$1F : LDY.b #$00
-    JSL $05E219 ; Sprite_ShowMessageUnconditional
+    JSL Sprite_ShowMessageUnconditional
     INC.b StoryState
 
     RTS
   }
-
 
   HouseTag_WakeUpPlayer:
   {
@@ -80,7 +77,7 @@ HouseTag_Main:
     LDA $7EF3C6 : ORA.b #$10 : STA $7EF3C6
 
     ; Set the game mode
-    LDA #$00 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
+    LDA #$00 : STA GameState   ; (0 - intro, 1 - pendants, 2 - crystals)
     LDA #$00 : STA $7EF3CC   ; disable telepathic message
     JSL Sprite_LoadGfxProperties
     RTS

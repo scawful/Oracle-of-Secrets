@@ -21,7 +21,7 @@ pullpc
 LinkState_CheckForMinishForm:
 {
   SEP #$30
-  LDA.l GAMESTATE : BEQ .return
+  LDA.l GameState : BEQ .return
     JSL $0FF979 ; AncillaSpawn_SwordChargeSparkle
 
     ; Check for the R button (like minish cap)

@@ -337,8 +337,8 @@ CheckRealTable:
 
 ResetOcarinaFlag:
 {
-  LDA $7EF3C5 : BEQ .continue
-     CMP #$01 : BEQ .continue
+  LDA.l GameState : BEQ .continue
+                    CMP #$01 : BEQ .continue
     REP #$30
     LDA #$0000 : STA.l $7EE00E
     SEP #$30
@@ -416,7 +416,7 @@ RainAnimation_Overridden:
   JSL CheckRealTable : BEQ .rainOverlaySet
     ; LDA.b $8C : CMP.b #$9F :
     ; Check the progress indicator
-    LDA.l $7EF3C5 : CMP.b #$02 : BRA .skipMovement
+    LDA.l GameState : CMP.b #$02 : BRA .skipMovement
   .rainOverlaySet
 
   ; If misery mire has been opened already, we're done.

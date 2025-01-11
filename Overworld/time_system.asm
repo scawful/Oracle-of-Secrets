@@ -446,11 +446,11 @@ CheckIfNight:
   JSR LoadPeacetimeSprites : BCS +
     RTL
   +
-  LDA.l $7EF3C5 : CMP.b #$02 : BCC .day_time
+  LDA.l GameState : CMP.b #$02 : BCC .day_time
   LDA $7EE000 : CMP.b #$12 : BCS .night_time
   LDA $7EE000 : CMP.b #$06 : BCC .night_time
     .day_time
-    LDA.l $7EF3C5
+    LDA.l GameState
     RTL
   .night_time
   LDA.b #$03
@@ -487,32 +487,32 @@ CheckIfNight16Bit:
   +
   REP #$30
   ; Don't change the spriteset during the intro sequence
-  LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCC .day_time
+  LDA.l GameState : AND.w #$00FF : CMP.w #$0002 : BCC .day_time
     ; 0x12 = 18 hours or 6 pm
     LDA $7EE000 : AND.w #$00FF : CMP.w #$0012 : BCS .night_time
       ; If it's less than 6 am, jump to night time
       LDA $7EE000 : AND.w #$00FF : CMP.w #$0006 : BCC .night_time
   .day_time
-  LDA.l $7EF3C5
+  LDA.l GameState
   RTL
   .night_time
   ; Load the gamestate 03 spritesets, but don't change the save ram
-  LDA.l $7EF3C5 : CLC : ADC #$0001
+  LDA.l GameState : CLC : ADC #$0001
   RTL
 }
 
 LoadPeacetimeSprites:
 {
-  ; Map 2E, 2F if CRYSTALS && 0x10 == 0
+  ; Map 2E, 2F if Crystals && 0x10 == 0
   LDA $8A : CMP.b #$2E : BEQ .tail_palace
             CMP.b #$2F : BEQ .tail_palace
             CMP.b #$1E : BEQ .zora_sanctuary
     JMP +
   .tail_palace
-  LDA.l CRYSTALS : AND #$10 : BNE .load_peacetime
+  LDA.l Crystals : AND #$10 : BNE .load_peacetime
   JMP +
   .zora_sanctuary
-  LDA.l CRYSTALS : AND #$20 : BNE .load_peacetime
+  LDA.l Crystals : AND #$20 : BNE .load_peacetime
   JMP +
   .load_peacetime
   LDA.b #$01
@@ -526,7 +526,7 @@ LoadPeacetimeSprites:
 FixSaveAndQuit:
 {
   LDA #$08 : STA $7EE000
-  LDA.l $7EF3C5
+  LDA.l GameState
   RTL
 }
 

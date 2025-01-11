@@ -42,7 +42,7 @@ SaveRam:
 ;   0x01 - Uncle reached
 ;   0x02 - Zelda rescued
 ;   0x03 - Agahnim defeated
-GAMESTATE       = $7EF3C5
+GameState       = $7EF3C5
 
 ; Red X on Hall of Secrets
 ; Red X on Kalyxo Pyramid
@@ -98,7 +98,7 @@ MapIcon        = $7EF3C7
 ;   i - Ice Palace
 ;   m - Misery Mire
 ;   t - Turtle Rock
-CRYSTALS   = $7EF37A
+Crystals   = $7EF37A
 
 ; 01 - Fishing Rod
 ; 02 - Portal Rod

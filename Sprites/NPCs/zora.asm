@@ -105,7 +105,7 @@ Zora_TrackHeadToPlayer:
 
 Zora_HandleDialogue:
 {
-  LDA.l CRYSTALS : AND.b #$20 : BEQ +++
+  LDA.l Crystals : AND.b #$20 : BEQ +++
     %ShowSolicitedMessage($01A6)
     JMP +
   +++
