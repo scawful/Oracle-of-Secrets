@@ -209,16 +209,14 @@ MapIconDraw:
   LDA.l OOSPROG : CMP.b #$02 : BNE +
     JSL DrawHallOfSecretsIcon
     JSR HandleMapDrawIcon
-    JMP .main_quest
   +
   LDA.l OOSPROG : AND.b #$10 : BEQ .main_quest
-    ; Pyramid of Power
     JSL DrawPyramidIcon
     JSR HandleMapDrawIcon_noflash
   .main_quest
 
   LDA.l MapIcon : CMP.b #$01 : BEQ .draw_crystal_1
-                  CMP.b #$02 : BEQ .draw_crystals
+                  CMP.b #$02 : BCS .draw_crystals
                     JSL DrawEonEscapeIcon
                     JSR HandleMapDrawIcon
                     JMP restore_coords_and_exit
