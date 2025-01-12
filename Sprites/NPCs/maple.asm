@@ -16,16 +16,15 @@ MapleHandler:
   dw Maple_PutLinkToSleep
   dw Maple_HandleDreams
 
-; LDA.l $7EF351 : BEQ +
-; LDA.b #$02 : STA.l $7EF351
-; LDA.b #$1B : STA.w $012F
-; STZ.w SprAction, X
-; +
 
   Maple_Idle:
   {
     %ShowSolicitedMessage($01B3) : BCC +
       INC.w SprAction, X
+    +
+    LDA.l $7EF351 : BEQ +
+      LDA.b #$02 : STA.l $7EF351
+      LDA.b #$1B : STA.w $012F
     +
     RTS
   }
