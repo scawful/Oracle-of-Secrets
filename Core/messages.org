@@ -1841,3 +1841,25 @@ Oho! Curious about my little
 [V]So, think of these little dreams
 [V]as stepping stones to your
 [V]destiny!
+
+** 1B9 - Deku NPC
+My deepest gratitude, hero.
+[2]Because of your valor,
+[3]Tail Palace shines once more.[K]
+[V]We Deku owe you a debt—our
+[V]home was in turmoil after
+[V]Kydrog's meddling.[K]
+[V]But with the Moldorm calmed,
+[V]peace returns to our halls,
+[V]thanks to you!
+
+** 1BA - Deku NPC 2
+Ah, you plan to head onward,
+[2]yes? The next threat looms
+[3]in Kalyxo Castle.[K]
+[V]I've taken the liberty of
+[V]marking the castle on your map.
+[V]Beware: its shadows run deep.[K]
+[V]Seek the Meadow Blade there,
+[V]legends say it holds power fit
+[V]for your quest.
