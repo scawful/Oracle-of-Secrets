@@ -62,13 +62,15 @@ Sprite_EonOwl_Long:
 Sprite_EonOwl_Prep:
 {
   PHB : PHK : PLB
+
+  STZ.w SprHitbox, X
+
   LDA.b $8A : CMP.b #$0E : BNE .NotGaebora
     LDA.b #$03 : STA.w SprAction, X
   .NotGaebora
   LDA.w AreaIndex : CMP.b #$50 : BNE .not_intro
     ; If Map 0x50, don't spawn after getting sword
     LDA.l SWORD : CMP.b #$01 : BCC .continue
-      .Despawn
        STZ.w SprState, X
     .continue
   .not_intro

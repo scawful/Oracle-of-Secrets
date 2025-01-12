@@ -31,8 +31,6 @@
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 %Set_Sprite_Properties(Sprite_Vasu_Prep, Sprite_Vasu_Long)
 
-; =========================================================
-
 Sprite_Vasu_Long:
 {
   PHB : PHK : PLB
@@ -51,8 +49,6 @@ Sprite_Vasu_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_Vasu_Prep:
 {
   PHB : PHK : PLB
@@ -63,8 +59,6 @@ Sprite_Vasu_Prep:
   PLB
   RTL
 }
-
-; =========================================================
 
 Sprite_Vasu_Main:
 {
@@ -179,8 +173,6 @@ Sprite_Vasu_Main:
     RTS
   }
 }
-
-; =========================================================
 
 Sprite_Vasu_Draw:
 {
