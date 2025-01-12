@@ -19,8 +19,6 @@
 org $068365
 JSL LinkItem_SecretsBook ; overwrite it (originally JSL $099F91)
 
-; =========================================================
-
 pullpc
 
 LinkItem_SecretsBook:

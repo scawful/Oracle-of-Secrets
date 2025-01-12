@@ -8087,7 +8087,7 @@ ABILITY         = $7EF379
 ;   i - Ice Palace
 ;   m - Misery Mire
 ;   t - Turtle Rock
-CRYSTALS        = $7EF37A
+Crystals        = $7EF37A
 
 ; 0x00 - Normal magic
 ; 0x01 - Half magic

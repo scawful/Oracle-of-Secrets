@@ -1,12 +1,4 @@
 ; =========================================================
-; Normal Overlays:
-; Overworld_DrawQuadrantsAndOverlays
-; -> ApplyOverworldOverlay
-
-; Animated Entrances:
-; Module09_00_PlayerControl
-; -> Overworld_AnimateEntrance
-; =========================================================
 
 ; Trigger Zora Temple from Tablet
 org $1EE061

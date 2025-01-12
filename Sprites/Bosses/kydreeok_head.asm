@@ -47,8 +47,6 @@ Sprite_KydreeokHead_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_KydreeokHead_Prep:
 {
   PHB : PHK : PLB
@@ -58,8 +56,6 @@ Sprite_KydreeokHead_Prep:
   PLB
   RTL
 }
-
-; =========================================================
 
 SpeedTable:
   db $00, $02, $04, $06, $07, $01, $06, $03
@@ -219,8 +215,6 @@ KydreeokHead_RotationMove:
   RTS
 }
 
-; =========================================================
-
 CoordinateBasedRotation:
 {
   LDA.w Neck_Index : TAY
@@ -238,19 +232,17 @@ CoordinateBasedRotation:
     LDA #0 : STA.w Neck_Index
   .not_full
   RTS
+
+  ; Table for X coordinates (based on a radius of 8)
+  X_Coords:
+    db 8, 11,  8,  3, -4, -9, -12, -9
+    db -4,  3,  8, 11,  8,  3, -4, -9
+
+  ; Table for Y coordinates (based on a radius of 8)
+  Y_Coords:
+    db 0, -3, -8, -11, -15, -15, -11, -8
+    db -3,  0,  3,  8, 11, 15, 15, 11
 }
-
-; Table for X coordinates (based on a radius of 8)
-X_Coords:
-  db 8, 11,  8,  3, -4, -9, -12, -9
-  db -4,  3,  8, 11,  8,  3, -4, -9
-
-; Table for Y coordinates (based on a radius of 8)
-Y_Coords:
-  db 0, -3, -8, -11, -15, -15, -11, -8
-  db -3,  0,  3,  8, 11, 15, 15, 11
-
-; =========================================================
 
 RotateHeadUsingSpeedValues:
 {
@@ -283,8 +275,6 @@ RotateHeadUsingSpeedValues:
   db -31, -31, -30, -28, -27, -25, -23, -20, -18, -15
   db -12,  -9,  -6,  -3
 }
-
-; =========================================================
 
 RandomlyAttack:
 {
