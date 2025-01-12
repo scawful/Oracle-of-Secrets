@@ -66,6 +66,7 @@ Sprite_EonOwl_Prep:
   STZ.w SprHitbox, X
 
   LDA.b $8A : CMP.b #$0E : BNE .NotGaebora
+    LDA.b #$20 : STA.w SprTimerA, X
     LDA.b #$03 : STA.w SprAction, X
   .NotGaebora
   LDA.w AreaIndex : CMP.b #$50 : BNE .not_intro
@@ -137,8 +138,8 @@ Sprite_EonOwl_Main:
   {
     %PlayAnimation(0,0,1)
     LDA.w SprTimerA, X : BNE .not_ready
-    %ShowUnconditionalMessage($146)
-    %GotoAction(4)
+      %ShowUnconditionalMessage($146)
+      %GotoAction(4)
     .not_ready
     RTS
   }
@@ -146,7 +147,7 @@ Sprite_EonOwl_Main:
   KaeporaGaebora_Respond:
   {
     LDA $1CE8 : BNE .player_said_no
-      %GotoAction(5)
+      %GotoAction(3)
       RTS
     .player_said_no
     %GotoAction(5)
