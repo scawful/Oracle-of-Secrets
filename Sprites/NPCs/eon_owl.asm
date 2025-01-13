@@ -137,9 +137,10 @@ Sprite_EonOwl_Main:
   KaeporaGaebora:
   {
     %PlayAnimation(0,0,1)
-    LDA.w SprTimerA, X : BNE .not_ready
-      %ShowUnconditionalMessage($146)
-      %GotoAction(4)
+    JSL GetDistance8bit_Long : CMP.b #$50 : BCC .not_ready
+      LDA.w SprTimerA, X : BNE .not_ready
+        %ShowUnconditionalMessage($146)
+        %GotoAction(4)
     .not_ready
     RTS
   }
