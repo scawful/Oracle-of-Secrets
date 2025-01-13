@@ -120,7 +120,7 @@ Sprite_MaskSalesman_Main:
   HasOcarina:
   {
     %PlayAnimation(0, 1, 16)
-    %ShowSolicitedMessage($080) ; Oh! You got it!
+    %ShowSolicitedMessage($081) ; Oh! You got it!
     %GotoAction(3)
     RTS
   }
