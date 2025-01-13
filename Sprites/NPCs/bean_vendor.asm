@@ -62,7 +62,7 @@ Sprite_BeanVendor_Prep:
     LDA.b $8A : CMP.b #$00 : BNE +
       LDA.l MagicBeanProg : BNE .in_progress
         LDA.b #$01 : STA.w SprMiscD, X
-        LDA.b #$04 : STA.w SprAction, X
+        LDA.b #$05 : STA.w SprAction, X
         JMP +
       .in_progress
       LDA.l MagicBeanProg : CMP.b #$3F : BCS .not_flower
