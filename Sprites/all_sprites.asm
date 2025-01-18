@@ -432,3 +432,6 @@ SpriteDraw_RunningBoy:
   #_05EA3D: dw   0,  -7 : db $2E, $40, $00, $02
   #_05EA45: dw   0,   1 : db $CE, $4E, $00, $02
 
+; Sword Barrier Sprite Prep
+; Skip overworld flag check, sprite is indoors now
+org $06891B : NOP #12
