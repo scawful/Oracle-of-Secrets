@@ -29,7 +29,7 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-%Set_Sprite_Properties(Sprite_BusinessScrub_Prep, Sprite_BusinessScrub_Long);
+%Set_Sprite_Properties(Sprite_BusinessScrub_Prep, Sprite_BusinessScrub_Long)
 
 Sprite_BusinessScrub_Long:
 {
@@ -60,7 +60,7 @@ Sprite_BusinessScrub_Prep:
 {
   PHB : PHK : PLB
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .pea_shot
-                      CMP.b #$02 : BEQ .cutscene_scrub
+                        CMP.b #$02 : BEQ .cutscene_scrub
   JMP +
   .pea_shot
     LDA.b #$06 : STA.w SprAction, X ; Pea Shot State

@@ -35,13 +35,13 @@ Sprite_IceBlock_Long:
   PHB : PHK : PLB
   LDA.w SprMiscC, X : BEQ .not_being_pushed
     STZ.w SprMiscC, X
-    STZ.b $5E ; Clear Links speed
+    STZ.b LinkSpeedTbl
     STZ.b $48 ; Clear push actions bitfield
   .not_being_pushed
   LDA.w SprTimerA, X : BEQ .retain_momentum
     LDA.b #$01 : STA.w SprMiscC, X
     LDA.b #$84 : STA.b $48 ; Set statue and push block actions
-    LDA.b #$04 : STA.b $5E ; Slipping into pit speed
+    LDA.b #$04 : STA.b LinkSpeedTbl ; Slipping into pit speed
   .retain_momentum
 
   JSR Sprite_IceBlock_Draw
@@ -60,7 +60,6 @@ Sprite_IceBlock_Prep:
   LDA.w SprY, X : STA.w SprMiscE, X
   LDA.w SprXH, X : STA.w SprMiscF, X
   LDA.w SprYH, X : STA.w SprMiscG, X
-
   STZ.w SprDefl, X
   PLB
   RTL
@@ -110,6 +109,7 @@ Sprite_IceBlock_Main:
         LDA.b $26 : STA.w SprMiscA, X
         JSR ApplyPush
       .push_cached
+
       LDA.b #$07 : STA.w SprTimerA, X
       STZ.b $5E
       JSL Sprite_RepelDash
@@ -227,71 +227,36 @@ Statue_BlockSprites:
   LDY.b #$0F
 
   .next
-  LDA.w $0E20,Y
-  CMP.b #$1C ; SPRITE 1C
-  BEQ .skip
+  ; SPRITE 1C
+  LDA.w $0E20, Y : CMP.b #$1C : BEQ .skip
+    CPY.w $0FA0 : BEQ .skip
+      TYA : EOR.b $1A : AND.b #$01 : BNE .skip
+        LDA.w SprState,Y : CMP.b #$09 : BCC .skip
 
-  CPY.w $0FA0
-  BEQ .skip
-
-  TYA
-  EOR.b $1A
-  AND.b #$01
-  BNE .skip
-
-  LDA.w SprState,Y
-  CMP.b #$09
-  BCC .skip
-
-  LDA.w SprX,Y
-  STA.b $04
-
-  LDA.w SprXH,Y
-  STA.b $05
-
-  LDA.w SprY,Y
-  STA.b $06
-
-  LDA.w SprYH,Y
-  STA.b $07
+  LDA.w SprX, Y : STA.b $04
+  LDA.w SprXH, Y : STA.b $05
+  LDA.w SprY, Y : STA.b $06
+  LDA.w SprYH, Y : STA.b $07
 
   REP #$20
 
-  LDA.w SprCachedX
-  SEC
-  SBC.b $04
-  CLC
-  ADC.w #$000C
+  LDA.w SprCachedX : SEC : SBC.b $04 : CLC : ADC.w #$000C
+  CMP.w #$0018 : BCS .skip
 
-  CMP.w #$0018
-  BCS .skip
-
-  LDA.w SprCachedY
-  SEC
-  SBC.b $06
-  CLC
-  ADC.w #$000C
-
-  CMP.w #$0024
-  BCS .skip
+  LDA.w SprCachedY : SEC : SBC.b $06 : CLC : ADC.w #$000C
+  CMP.w #$0024 : BCS .skip
 
   SEP #$20
 
-  LDA.b #$04
-  STA.w $0EA0,Y
+  LDA.b #$04 : STA.w $0EA0, Y
 
   PHY
-
   LDA.b #$20
   JSL Sprite_CheckSlopedTileCollision ; JSR Sprite_ProjectSpeedTowardsLocation
-
   PLY
 
-  LDA.b $00
-  STA.w SprYRecoil,Y
-
-  LDA.b $01
-  STA.w SprXRecoil,Y
+  LDA.b $00 : STA.w SprYRecoil, Y
+  LDA.b $01 : STA.w SprXRecoil, Y
 
   .skip
   SEP #$20

@@ -34,7 +34,6 @@
 Sprite_Vasu_Long:
 {
   PHB : PHK : PLB
-
   LDA.w SprSubtype, X : BNE +
     JSR Sprite_Vasu_Draw
     JMP ++
@@ -43,7 +42,7 @@ Sprite_Vasu_Long:
   ++
   JSL Sprite_DrawShadow
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
-  JSR Sprite_Vasu_Main
+    JSR Sprite_Vasu_Main
   .SpriteIsNotActive
   PLB
   RTL
