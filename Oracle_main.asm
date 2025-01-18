@@ -27,9 +27,6 @@
 ;   41  - DW World Map
 ; =========================================================
 
-; ZSCustomOverworld version
-; Kept in case of serious issues which impedes progress
-ZS_CUSTOM_OW_V2 = 1
 incsrc "Overworld/ZSCustomOverworld_Latest.asm"
 print  "End of ZSCustomOverworld.asm      ", pc
 
@@ -38,75 +35,43 @@ incsrc "Core/ram.asm"
 
 namespace Oracle
 {
-  print ""
-  print "Applying patches to Oracle of Secrets"
-  print ""
-
-  incsrc "Core/music_macros.asm"
   incsrc "Core/symbols.asm"
   incsrc "Core/message.asm"
 
   print "  -- Music --  "
   print ""
-
-  incsrc "Music/lost_woods_v2.asm"
-  print  "End of Music/lost_woods_v2.asm    ", pc
-
-  incsrc "Music/color_dungeon_theme.asm"
-  print  "End of color_dungeon_theme.asm    ", pc
-
-  incsrc "Music/deku_theme.asm"
-  print  "End of Music/deku_theme.asm       ", pc
-
-  incsrc "Music/song_of_healing.asm"
-  print  "End of Music/song_of_healing.asm  ", pc
-
+  incsrc "Music/all_music.asm"
   print ""
 
   print "  -- Overworld --  "
   print ""
-
   incsrc "Overworld/overworld.asm"
-
   print ""
 
   print "  -- Dungeon --  "
   print ""
-
   incsrc "Dungeons/dungeons.asm"
-
   print ""
 
   print "  -- Sprites --  "
   print ""
-
   incsrc "Sprites/all_sprites.asm"
-
   print ""
 
   print "  -- Masks --  "
   print ""
-
   incsrc "Masks/all_masks.asm"
-
   print ""
 
   print "  -- Items --  "
   print ""
-
   incsrc "Items/all_items.asm"
-
   print ""
 
   print "  -- Menu --  "
   print ""
-
   incsrc "Menu/menu.asm"
-
   incsrc "Util/item_cheat.asm"
-
-  ; incsrc "Music/ww_ganondorf.asm"
-  ; incsrc "Music/great_sea.asm"
 
   print ""
   print "Finished applying patches"
