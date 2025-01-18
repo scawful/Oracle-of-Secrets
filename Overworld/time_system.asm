@@ -38,8 +38,8 @@ pullpc
 LogoFadeInSetClock:
 {
   JSL $00ED7C ; IntroLogoPaletteFadeIn
-  LDA.b #$08 : STA.l $7EE000 ; Set the time to 6:00am
-  LDA.b #$3F : STA.l $7EE002 ; Set the time speed
+  LDA.b #$08 : STA.l Hours ; Set the time to 6:00am
+  LDA.b #$3F : STA.l TimeSpeed ; Set the time speed
   RTL
 }
 
@@ -50,8 +50,8 @@ pullpc
 ResetClockTriforceRoom:
 {
   JSL $00E384 ; LoadCommonSprites_long
-  LDA.b #$00 : STA.l $7EE000 ; low hours for palette?
-  LDA.b #$00 : STA.l $7EE001 ; high hours for palette?
+  LDA.b #$00 : STA.l Hours ; low hours for palette?
+  LDA.b #$00 : STA.l Minutes ; high hours for palette?
   RTL
 }
 
@@ -65,7 +65,7 @@ DrawClockToHud:
 {
   LDX #$00
   .debut
-  LDY #$00 : LDA $7EE000,x
+  LDY #$00 : LDA Hours,x
   .debut2
   CMP #$0A : BMI .draw
     SBC #$0A : INY : BRA .debut2
@@ -146,7 +146,7 @@ RunClock:
   LDA #$00 : STA.l Minutes
   LDA.l Hours : INC A : STA.l Hours
   CMP #$18 : BPL .reset_hours ; hours = 24 ?
-    ;check indoors/outdoors
+    ; check indoors/outdoors
     LDA $1B	: BEQ .outdoors0
       RTS
     .outdoors0
@@ -154,7 +154,7 @@ RunClock:
     JSL RomToPaletteBuffer	; update buffer palette
     JSL PaletteBufferToEffective	; update effective palette
 
-    ;rain layer ?
+    ; rain layer ?
     LDA $8C : CMP #$9F : BEQ .skip_bg_updt0
       LDA $8C : CMP #$9E : BEQ .skip_bg_updt0	; canopy layer ?
         CMP #$97 : BEQ .skip_bg_updt0	; fog layer?
@@ -170,10 +170,9 @@ RunClock:
 
   JSR CheckForDailyQuests
 
-  LDA #$00 : STA $7EE000
-  .update_palette
+  LDA.b #$00 : STA.l Hours
   ; check indoors/outdoors
-  LDA $1B	: BEQ .outdoors1
+  LDA.b $1B	: BEQ .outdoors1
     RTS
   .outdoors1
 
@@ -234,7 +233,52 @@ CheckForDailyQuests:
   RTS
 }
 
+CheckIfNight:
+{
+  JSR LoadPeacetimeSprites : BCS +
+    RTL
+  +
+  LDA.l GameState : CMP.b #$02 : BCC .day_time
+    LDA Hours : CMP.b #$12 : BCS .night_time
+      LDA Hours : CMP.b #$06 : BCC .night_time
+      .day_time
+      LDA.l GameState
+      RTL
+  .night_time
+  LDA.b #$03
+  RTL
+}
+
+CheckIfNight16Bit:
+{
+  SEP #$30
+  JSR LoadPeacetimeSprites : BCS +
+    REP #$30
+    RTL
+  +
+  REP #$30
+  ; Don't change the spriteset during the intro sequence
+  LDA.l GameState : AND.w #$00FF : CMP.w #$0002 : BCC .day_time
+    ; 0x12 = 18 hours or 6 pm
+    LDA Hours : AND.w #$00FF : CMP.w #$0012 : BCS .night_time
+      ; If it's less than 6 am, jump to night time
+      LDA Hours : AND.w #$00FF : CMP.w #$0006 : BCC .night_time
+      .day_time
+      LDA.l GameState
+      RTL
+  .night_time
+  ; Load the gamestate 03 spritesets, but don't change the save ram
+  LDA.l GameState : CLC : ADC #$0001
+  RTL
+}
+
 pushpc
+
+; Overworld_LoadSprites
+org $09C4E3 : JSL CheckIfNight
+
+; Sprite_LoadGraphicsProperties_light_world_only
+org $00FC6A : JSL CheckIfNight16Bit
 
 ; =========================================================
 ; ----[ Day / Night system * palette effect ]----
@@ -259,18 +303,13 @@ RomToPaletteBuffer:
 	JSR $C692	; $02:C692 -> rom to palette buffer for other colors
 	RTL
 
-PaletteBuffer_HUD = $7EC300
-PaletteBuffer_BG = $7EC340
-PaletteBuffer_Spr = $7EC400
+PalBuf300_HUD = $7EC300
+PalBuf340_BG = $7EC340
+PalBuf400_Spr = $7EC400
 
-PaletteCgram_HUD = $7EC500
-PaletteCgram_BG = $7EC540
-PaletteCgram_Spr = $7EC600
-
-; part of rom pal to buffer routine
-; $1B/EF61 9F 00 C3 7E STA $7EC300,x[$7E:C422]
-; $1B/EF3D 9F 00 C3 7E STA $7EC300,x[$7E:C412]
-; $1B/EF84 9F 00 C3 7E STA $7EC300,x[$7E:C4B2]
+PalCgram500_HUD = $7EC500
+PalCgram540_BG = $7EC540
+PalCgram600_Spr = $7EC600
 
 ; Palettes_LoadSingle.next_color
 org $1BEF3D : JSL LoadDayNightPaletteEffect
@@ -285,14 +324,14 @@ pullpc
 LoadDayNightPaletteEffect:
 {
   STA.l !pal_color : CPX #$0041 : BPL .title_check
-    STA.l PaletteBuffer_HUD, X
+    STA.l PalBuf300_HUD, X
     RTL
   .title_check
 
   ; title or file select screen ?
   LDA $10 : AND #$00FF : CMP #$0002	: BCS .outin_check
     LDA.l !pal_color
-    STA.l PaletteBuffer_HUD, X
+    STA.l PalBuf300_HUD, X
     RTL
   .outin_check
 
@@ -301,20 +340,20 @@ LoadDayNightPaletteEffect:
     BRA .overworld
   .restorecode
   LDA.l !pal_color
-  STA.l PaletteBuffer_HUD, X
+  STA.l PalBuf300_HUD, X
   RTL
 
   .overworld
   LDA $1B : AND #$00FF : BEQ .outdoors2
     LDA.l !pal_color
-    STA.l PaletteBuffer_HUD,X
+    STA.l PalBuf300_HUD,X
     RTL
   .outdoors2
 
   PHX
   JSL ColorSubEffect
   PLX
-  STA.l PaletteBuffer_HUD, X
+  STA.l PalBuf300_HUD, X
   RTL
 }
 
@@ -391,10 +430,10 @@ BackgroundFix:
   BEQ .no_effect		;BRAnch if A=#$0000 (transparent bg)
     JSL ColorSubEffect
   .no_effect:
-  STA.l PaletteCgram_HUD
-  STA.l PaletteBuffer_HUD
-  STA.l PaletteCgram_BG
-  STA.l PaletteBuffer_BG
+  STA.l PalCgram500_HUD
+  STA.l PalBuf300_HUD
+  STA.l PalCgram540_BG
+  STA.l PalBuf340_BG
   RTL
 }
 
@@ -403,8 +442,8 @@ MosaicFix:
   BEQ +
     JSL ColorSubEffect
   +
-  STA.l PaletteBuffer_HUD
-  STA.l PaletteBuffer_BG
+  STA.l PalBuf300_HUD
+  STA.l PalBuf340_BG
   RTL
 }
 
@@ -418,8 +457,8 @@ SubAreasFix:
     SEP #$20
 	PLX
   .no_effect
-	STA.l PaletteBuffer_HUD
-	STA.l PaletteBuffer_BG
+	STA.l PalBuf300_HUD
+	STA.l PalBuf340_BG
 	RTL
 }
 
@@ -441,63 +480,23 @@ GlovesFix:
 	RTL
 }
 
-CheckIfNight:
-{
-  JSR LoadPeacetimeSprites : BCS +
-    RTL
-  +
-  LDA.l GameState : CMP.b #$02 : BCC .day_time
-  LDA $7EE000 : CMP.b #$12 : BCS .night_time
-  LDA $7EE000 : CMP.b #$06 : BCC .night_time
-    .day_time
-    LDA.l GameState
-    RTL
-  .night_time
-  LDA.b #$03
-  RTL
-}
-
 ColorBgFix:
 {
   PHA
   SEP #$30
   ; Check for save and quit
   LDA.b $10 : CMP.b #$17 : BEQ .vanilla
-  REP #$30
-  PLA
-  STA.l !pal_color
-  JSL ColorSubEffect
-  STA.l PaletteCgram_HUD
-  STA.l PaletteCgram_BG
-  RTL
-
+    REP #$30
+    PLA
+    STA.l !pal_color
+    JSL ColorSubEffect
+    STA.l PalCgram500_HUD
+    STA.l PalCgram540_BG
+    RTL
   .vanilla
   REP #$30
   PLA
-  STA.l PaletteCgram_HUD
-  RTL
-}
-
-CheckIfNight16Bit:
-{
-  SEP #$30
-  JSR LoadPeacetimeSprites : BCS +
-    REP #$30
-    RTL
-  +
-  REP #$30
-  ; Don't change the spriteset during the intro sequence
-  LDA.l GameState : AND.w #$00FF : CMP.w #$0002 : BCC .day_time
-    ; 0x12 = 18 hours or 6 pm
-    LDA $7EE000 : AND.w #$00FF : CMP.w #$0012 : BCS .night_time
-      ; If it's less than 6 am, jump to night time
-      LDA $7EE000 : AND.w #$00FF : CMP.w #$0006 : BCC .night_time
-  .day_time
-  LDA.l GameState
-  RTL
-  .night_time
-  ; Load the gamestate 03 spritesets, but don't change the save ram
-  LDA.l GameState : CLC : ADC #$0001
+  STA.l PalCgram500_HUD
   RTL
 }
 
@@ -525,7 +524,7 @@ LoadPeacetimeSprites:
 
 FixSaveAndQuit:
 {
-  LDA #$08 : STA $7EE000
+  LDA.b #$08 : STA.l Hours
   LDA.l GameState
   RTL
 }
@@ -533,13 +532,13 @@ FixSaveAndQuit:
 FixShockPalette:
 {
   PHA
-  LDA $1B : BNE .indoors
+  LDA.b $1B : BNE .indoors
     PLA
     STA !pal_color
     PHX
     JSL ColorSubEffect
     PLX
-    STA.l PaletteCgram_HUD, X
+    STA.l PalCgram500_HUD, X
     RTL
   .indoors
   PLA
@@ -550,31 +549,25 @@ FixDungeonMapColors:
 {
   PHA
   ; Cache the current time
-  LDA $7EE000 : STA $7EF900
-  LDA $7EE001 : STA $7EF901
+  LDA Hours : STA $7EF900
+  LDA Minutes : STA $7EF901
   ; Set the time to 8:00am while map is open
-  LDA #$08 : STA $7EE000
-  LDA #$00 : STA $7EE001
+  LDA.b #$08 : STA Hours
+  LDA.b #$00 : STA Minutes
   PLA
-  STA $7EC229
+  STA.l $7EC229
   RTL
 }
 
 RestoreTimeForDungeonMap:
 {
-  LDA $7EF900 : STA $7EE000
-  LDA $7EF901 : STA $7EE001
+  LDA $7EF900 : STA Hours
+  LDA $7EF901 : STA Minutes
   LDA.l $7EC017
   RTL
 }
 
 pushpc
-
-; Overworld_LoadSprites
-org $09C4E3 : JSL CheckIfNight
-
-; Sprite_LoadGraphicsProperties_light_world_only
-org $00FC6A : JSL CheckIfNight16Bit
 
 ; $0BFE70 -> background color loading routine
 ; Background color write fix - 16 bytes
@@ -582,16 +575,13 @@ org $00FC6A : JSL CheckIfNight16Bit
 ; $0B/FEBA 8F 00 C3 7E STA $7EC300
 ; $0B/FEBE 8F 40 C5 7E STA $7EC540
 ; $0B/FEC2 8F 40 C3 7E STA $7EC340
-org $0BFEB6
-  JSL BackgroundFix
+org $0BFEB6 : JSL BackgroundFix
 
 ; SetBGColorMainBuffer
-org $0ED5F9
-  JSL ColorBgFix
+org $0ED5F9 : JSL ColorBgFix
 
 ; OverworldMosaicTransition_HandleScreensAndLoadShroom
-org $02AE92
-  NOP #6
+org $02AE92 : NOP #6
 
 ; =========================================================
 
@@ -599,8 +589,7 @@ org $02AE92
 ; $0E/D601 8F 00 C3 7E STA $7EC300[$7E:C300]
 ; $0E/D605 8F 40 C3 7E STA $7EC340[$7E:C340]
 
-org $0ED601
-	JSL SubAreasFix
+org $0ED601 : JSL SubAreasFix
 
 ; =========================================================
 ; Gloves color loading routine
@@ -619,20 +608,19 @@ org $0ED601
 ; $1B/EE39 6B          RTL
 
 ; Palettes_Load_LinkGloves
-org $1BEE2D
-	JSL GlovesFix
-
-; =========================================================
+org $1BEE2D : JSL GlovesFix
 
 ; org $0ABA5A
 ; TODO: Handle overworld map palette for flashing icons
 
+; Module0E_03_00_DarkenAndPrep
 org $0ED956 : JSL FixDungeonMapColors
 
-org $0AEFA6 : JSL RestoreTimeForDungeonMap
+; UnderworldMap_RecoverGFX
+org $0AEFA6 : JSL RestoreTimeForDungeonMap 
 
-org $0ED745 : JSL FixShockPalette
+; RefreshLinkEquipmentPalettes
+org $0ED745 : JSL FixShockPalette 
 
-org $09F604
-GameOver_SaveAndQuit:
-  JSL FixSaveAndQuit
+; GameOver_SaveAndQuit:
+org $09F604 : JSL FixSaveAndQuit 
