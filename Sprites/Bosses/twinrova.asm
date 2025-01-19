@@ -204,7 +204,7 @@ Sprite_Twinrova_Main:
     JSL Sprite_CountActiveById
     LDA.b $02 : CMP.b #$03 : BCS +
       %ProbCheck($3F, +)
-        %ProbCheck($0F, ++)
+        %ProbCheck2($0F, ++)
           JSL Sprite_SpawnFireKeese
           LDA.b #$01 : STA.w SprMiscB, Y
           JMP +
@@ -422,6 +422,7 @@ Sprite_Twinrova_Main:
   Twinrova_Dead:
   {
     %StartOnFrame(11)
+    JSL Sprite_KillFriends
     %Twinrova_Hurt()
     RTS
   }
