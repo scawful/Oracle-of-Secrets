@@ -471,7 +471,7 @@ Menu_MagicBag:
     JSR Menu_DeleteCursor_AltEntry
     INC.w $020B
     LDA.w $020B : CMP.b #$06 : BCS .zero
-    BRA .continue
+      BRA .continue
 
   .move_down
   .move_left
@@ -479,8 +479,8 @@ Menu_MagicBag:
     LDX.w Menu_MagicBagCursorPositions-2, Y
     JSR Menu_DeleteCursor_AltEntry
     LDA.w $020B : CMP.b #$00 : BEQ .continue
-    DEC.w $020B
-    BRA .continue
+      DEC.w $020B
+      BRA .continue
   .zero
   STZ.w $020B
   .continue

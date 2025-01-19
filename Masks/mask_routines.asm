@@ -1,20 +1,4 @@
 ; =========================================================
-; Macros
-
-macro PlayerTransform()
-  LDY.b #$04 : LDA.b #$23
-  JSL AddTransformationCloud
-  LDA.b #$14 : STA.w $0CF8
-  JSL $0DBB67 ; Link_CalculateSFXPan
-  ORA.w $0CF8
-  STA $012E
-endmacro
-
-macro CheckNewR_ButtonPress()
-  LDA.b $F6 : BIT.b #$10
-endmacro
-
-; =========================================================
 ; Change Link's sprite by setting $BC to the gfx bank
 
 ; InitializeMemoryAndSRAM
@@ -51,12 +35,22 @@ org $09F7B5 : JSL ForceResetMask_SaveAndQuit
 org $3A8000
 StartupMasks:
 {
-  ; from vanilla:
-  ; bring the screen into force blank after NMI
+  ; vanilla: bring the screen into force blank after NMI
   LDA.b #$80 : STA $13
 
   ; set links sprite bank
   LDA #$10 : STA $BC
+  RTL
+}
+
+PlayerTransform:
+{
+  LDY.b #$04 : LDA.b #$23
+  JSL AddTransformationCloud
+  LDA.b #$14 : STA.w $0CF8
+  JSL $0DBB67 ; Link_CalculateSFXPan
+  ORA.w $0CF8
+  STA $012E
   RTL
 }
 
@@ -197,13 +191,11 @@ Palette_ArmorAndGloves:
 ; =========================================================
 ; Overworld Palette Persist
 
-Overworld_CgramAuxToMain_Override:
+Overworld_CgramAuxToMain:
 {
   ; Copies the auxiliary CGRAM buffer to the main one
   ; Causes NMI to reupload the palette.
-
   REP #$20
-
   LDX.b #$00
 
   .loop
@@ -217,15 +209,20 @@ Overworld_CgramAuxToMain_Override:
     LDA !CurrentMask : BNE .has_mask_palette
       LDA $7EC4C0, X : STA $7EC6C0, X
     .has_mask_palette
-    INX #2 : CPX.b #$40 : BNE .loop
+  INX #2 : CPX.b #$40 : BNE .loop
 
   SEP #$20
 
   ; tell NMI to upload new CGRAM data
   INC $15
-
   RTL
 }
+
+pushpc
+org $02C769 ; Overworld_CgramAuxToMain
+  JSL Overworld_CgramAuxToMain
+  RTS
+pullpc
 
 ; =========================================================
 
@@ -245,7 +242,7 @@ LinkState_ResetMaskAnimated:
   LDA.w $0202 : SEC : SBC.b #$13 : BEQ .no_transform
 
   .transform
-  %PlayerTransform()
+  JSL PlayerTransform
   JSL ResetToLinkGraphics
 
   .gbc_form
@@ -254,24 +251,14 @@ LinkState_ResetMaskAnimated:
   RTL
 }
 
-pushpc
-
-; =========================================================
-
-org $02C769
-Overworld_CgramAuxToMain:
-  JSL Overworld_CgramAuxToMain_Override
-  RTS
-
 ; =========================================================
 ; Change which mask forms have access to the sword.
-; =========================================================
 
+pushpc
 ; Link_CheckForSwordSwing
-org $079CD9
-  JSL LinkItem_CheckForSwordSwing_Masks
-
+org $079CD9 : JSL LinkItem_CheckForSwordSwing_Masks
 pullpc
+
 LinkItem_CheckForSwordSwing_Masks:
 {
   LDA !CurrentMask : BEQ .return
@@ -293,11 +280,11 @@ Link_TransformMask:
 {
   PHB : PHK : PLB
   PHA ; save mask ID
-  %CheckNewR_ButtonPress() : BEQ .return
+  JSL CheckNewRButtonPress : BEQ .return
     LDA $6C : BNE .return   ; in a doorway
     LDA $0FFC : BNE .return ; can't open menu
 
-    %PlayerTransform()
+    JSL PlayerTransform
     PLA ; restore mask ID
     TAY
     CPY !CurrentMask : BEQ .unequip ; check if mask is on
@@ -321,8 +308,6 @@ Link_TransformMask:
     db $00, $35, $36, $38, $37, $39, $3A, $3B
 }
 
-; =========================================================
-
 Link_TransformMoosh:
 {
   PHB : PHK : PLB
@@ -331,13 +316,13 @@ Link_TransformMoosh:
     JMP .done
   ++
   LDA.w !CurrentMask : CMP.b #$07 : BNE +
-    %PlayerTransform()
+    JSL PlayerTransform
     JSL ResetToLinkGraphics
     PLB : RTL
   +
   LDA.b #$07 : STA.w !CurrentMask
   LDA.b #$33 : STA $BC
-  %PlayerTransform()
+  JSL PlayerTransform
   JSL Palette_ArmorAndGloves
   .done
   PLB
@@ -390,8 +375,6 @@ PrepareQuakeSpell:
 
   RTL
 }
-
-; =========================================================
 
 HandleMovement:
 {
@@ -752,8 +735,6 @@ Ancilla_Move_X:
   BRL Ancilla_RestoreIndex
 }
 
-; ---------------------------------------------------------
-
 Ancilla_Move_Y:
 {
   LDA.w $0C22, X
@@ -789,8 +770,6 @@ Ancilla_Move_Y:
 
   RTS
 }
-
-; =========================================================
 
 Ancilla_Move_Z:
 {

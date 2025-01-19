@@ -44,14 +44,14 @@ LinkState_CheckForMinishForm:
       CMP.b #$00 : BEQ .transform
       CMP.b #$06 : BCC .return         ; don't transform if not human
       .transform
-      %PlayerTransform()
+      JSL PlayerTransform
 
       LDA #$39 : STA $BC   ; Change link's sprite
       LDA #$05 : STA $02B2 ; Set the current mask form
       BRA .return
 
       .already_minish
-      %PlayerTransform()
+      JSL PlayerTransform
       JSL ResetToLinkGraphics
 
   .return

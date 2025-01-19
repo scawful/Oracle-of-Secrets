@@ -108,14 +108,14 @@ LinkState_GameboyForm:
   LDA $02B2 : CMP.b #$06 : BEQ .already_gbc
     LDA $0FFF : BEQ .return ; not in dark world
       .transform
-      %PlayerTransform()
+      JSL PlayerTransform
       LDA #$3B : STA $BC   ; change link's sprite
       LDA #$06 : STA $02B2
       JSL UpdateGbcPalette
       BRA .return
 
   .already_gbc
-  %PlayerTransform()
+  JSL PlayerTransform
   LDA #$10 : STA $BC
   STZ $02B2
   JSL Palette_ArmorAndGloves

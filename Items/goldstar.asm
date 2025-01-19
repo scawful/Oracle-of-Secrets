@@ -1000,7 +1000,7 @@ ApplyGoldstarDamageClass:
 
 CheckForSwitchToGoldstar:
 {
-  %CheckNewR_ButtonPress() : BEQ .continue
+  JSL CheckNewRButtonPress : BEQ .continue
   LDA.l $7EF342 : CMP.b #$02 : BNE .continue
     LDA.w GoldstarOrHookshot : CMP.b #$01 : BEQ .set_hookshot
       LDA.b #$01 : STA.w GoldstarOrHookshot
