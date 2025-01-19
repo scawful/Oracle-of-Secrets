@@ -1864,3 +1864,13 @@ Ah, you plan to head onward,
 [V]Seek the Meadow Blade there,
 [V]legends say it holds power fit
 [V]for your quest.
+
+** 1BB - Piratian Friendly Hint
+Ahoy, matey! You're lookin'
+[2]for the Pirate King, eh?
+[3]Well, I can't help you there.[K]
+[V]But I can tell you this: the
+[V]Pirate King had an old ship,
+[V]here in the abyss somewhere.[K]
+[V]If you're lookin' to find him,
+[V]that's a good place to start.
