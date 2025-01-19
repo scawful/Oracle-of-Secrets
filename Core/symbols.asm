@@ -536,6 +536,8 @@ UWDEATH         = $7FDF80
 
 RebuildHUD_long = $0DFA58
 
+ForcePrizeDrop_long = $06FA54
+
 ; =========================================================
 ; Controllers
 
