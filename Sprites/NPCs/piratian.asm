@@ -45,10 +45,15 @@ Sprite_Piratian_Long:
 Sprite_Piratian_Prep:
 {
   PHB : PHK : PLB
-  LDA.b #$08 : STA.w SprHealth, X
+  LDA.l $7EF359 : TAY
+  LDA.w .health, Y : STA.w SprHealth, X
   STZ.w SprMiscA, X
+  LDA.w SprNbrOAM, X : ORA.b #$80 : STA.w SprNbrOAM, X
   PLB
   RTL
+
+  .health
+    db $08, $0A, $0C, $0F
 }
 
 Sprite_Piratian_Main:
@@ -113,11 +118,14 @@ Sprite_Piratian_Move:
 
   JSL Sprite_CheckDamageFromPlayer : BCC .no_dano
     LDA.b #$01 : STA.w SprMiscA, X
+    LDA.w SprNbrOAM, X : AND.b #$7F : STA.w SprNbrOAM, X
     %SetTimerA($60)
     %SetTimerF($20)
   .no_dano
 
   LDA.w SprMiscA, X : BEQ .no_aggro
+    LDA.b #$10 : STA.w SprTimerA, X
+    LDA.b #$08
     JSL Sprite_ProjectSpeedTowardsPlayer
     JSL Sprite_CheckDamageToPlayer
     JMP .return
@@ -130,7 +138,10 @@ Sprite_Piratian_Move:
 
 Sprite_Piratian_Friendly:
 {
-  %ShowSolicitedMessage($01BB)
+  LDA.w SprTimerD, X : BNE +
+    %ShowMessageOnContact($01BB) : BCC +
+      LDA.b #$FF : STA.w SprTimerD, X
+  +
   RTS
 }
 
