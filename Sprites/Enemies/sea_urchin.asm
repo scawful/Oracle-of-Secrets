@@ -60,7 +60,7 @@ Sprite_SeaUrchin_Prep:
 Sprite_SeaUrchin_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Idle
   dw Death

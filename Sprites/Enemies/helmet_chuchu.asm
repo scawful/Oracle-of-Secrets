@@ -66,7 +66,7 @@ Sprite_HelmetChuchu_Prep:
   RTL
 
   .health
-    db $08, $0C, $40, $C0
+    db $08, $0C, $0F, $10
 }
 
 ; =========================================================
@@ -222,7 +222,7 @@ Sprite_Chuchu_Move:
   JSL Sprite_CheckIfRecoiling
 
   LDA.w SprMiscB, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw BounceTowardPlayer
   dw RecoilFromPlayer

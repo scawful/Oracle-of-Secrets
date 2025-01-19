@@ -81,7 +81,7 @@ Sprite_AntiKirby_Main:
   JSL Sprite_CheckIfRecoiling
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw AntiKirby_Main
   dw AntiKirby_Hurt

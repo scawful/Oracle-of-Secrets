@@ -60,7 +60,7 @@ Sprite_Goriya_Prep:
 Sprite_Goriya_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Goriya_WalkingUp
   dw Goriya_WalkingDown
@@ -191,7 +191,7 @@ Sprite_Goriya_Move:
   +
 
   LDA.w SprMiscB, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Goriya_MoveUp
   dw Goriya_MoveDown

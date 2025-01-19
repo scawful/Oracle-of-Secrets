@@ -74,7 +74,7 @@ Sprite_Octorok_Main:
   .not_water_tile
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Octorok_MoveDown
   dw Octorok_MoveUp
@@ -206,7 +206,7 @@ Sprite_WaterOctorok_Main:
   JSR Sprite_WaterOctorok_Attack
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw WaterOctorok_FaceDown
   dw WaterOctorok_FaceUp
@@ -255,7 +255,7 @@ Sprite_WaterOctorok_Attack:
   JSL Sprite_CheckDamageToPlayer
 
   LDA.w SprMiscG, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw WaterOctorok_Hidden
   dw WaterOctorok_PoppingUp

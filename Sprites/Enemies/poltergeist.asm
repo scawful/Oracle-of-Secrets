@@ -136,7 +136,7 @@ Sprite_Poltergeist_Prep:
 
 Sprite_Poltergeist_Main:
 {
-  LDA.w SprAction, X : JSL UseImplicitRegIndexedLocalJumpTable
+  LDA.w SprAction, X : JSL JumpTableLocal
 
   dw PictureFrame
   dw Chair

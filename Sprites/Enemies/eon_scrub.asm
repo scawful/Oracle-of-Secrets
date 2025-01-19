@@ -12,7 +12,7 @@
 Sprite_EonScrub_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw EonScrub_Stalking
   dw EonScrub_Attack

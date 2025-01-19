@@ -60,7 +60,7 @@ Sprite_Booki_Prep:
 Sprite_Booki_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw StalkPlayer
   dw HideFromPlayer
@@ -122,7 +122,7 @@ Sprite_Booki_Move:
   .no_damage
 
   LDA.w SprMiscB, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw SlowFloat
   dw FloatAway

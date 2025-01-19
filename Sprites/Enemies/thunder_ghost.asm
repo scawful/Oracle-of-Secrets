@@ -146,7 +146,7 @@ Sprite_ThunderGhost_Move:
   .Continue
 
   LDA.w SprMiscB, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw ThunderGhostMove
 
