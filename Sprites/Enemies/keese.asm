@@ -58,6 +58,7 @@ Sprite_Keese_Prep:
 {
   PHB : PHK : PLB
   LDA.b #$80 : STA.w SprDefl, X
+  LDA.b #$30 : STA.w SprTimerC, X
   LDA.w SprSubtype, X : CMP.b #$02 : BNE +
     LDA.b #$20 : STA.w SprHealth, X
     BRA ++
@@ -81,7 +82,9 @@ Sprite_Keese_Main:
   {
     STZ.w SprFrame, X
     ; Wait til the player is nearby then fly around
+    LDA.w SprTimerC, X : BEQ .move
     JSL GetDistance8bit_Long : CMP.b #$20 : BCS +
+      .move
       INC.w SprAction, X
       JSL GetRandomInt
       STA.w SprTimerA, X
@@ -93,16 +96,19 @@ Sprite_Keese_Main:
   {
     %PlayAnimation(0,5,8)
     JSL Sprite_CheckDamageToPlayer
-    JSL Sprite_CheckDamageFromPlayer
+    JSL Sprite_CheckDamageFromPlayer : BCC +
+      JSL ForcePrizeDrop_long
+    +
     JSL Sprite_DamageFlash_Long
     JSL Sprite_BounceFromTileCollision
 
-    JSL GetRandomInt : AND.b #$1F : BNE +
-      LDA.b #$40 : STA.w SprTimerC, X
+    JSL GetRandomInt : AND.b #$3F : BNE +
+      LDA.b #$10 : STA.w SprTimerC, X
     +
     JSR Sprite_Keese_Attack
 
     LDA.w SprTimerA, X : AND.b #$10 : BNE +
+      LDA.b #$40
       JSL Sprite_ProjectSpeedTowardsPlayer
     +
 
