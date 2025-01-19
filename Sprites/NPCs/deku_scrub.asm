@@ -81,7 +81,7 @@ Sprite_DekuScrub_Prep:
 Sprite_DekuScrub_Main:
 {
   LDA.w SprAction, X
-  JSL   UseImplicitRegIndexedLocalJumpTable
+  JSL   JumpTableLocal
 
   dw EstadoInactivo
   dw QuiereCuracion
@@ -107,8 +107,8 @@ Sprite_DekuScrub_Main:
   QuiereCuracion:
   {
     %PlayAnimation(0, 1, 16)
-    LDA $FE : BEQ .ninguna_cancion
-      STZ $FE
+    LDA SongFlag : CMP.b #$01 : BNE .ninguna_cancion
+      STZ.w SongFlag
       LDA.b #$C0 : STA.w SprTimerD, X
       %GotoAction(2)
     .ninguna_cancion

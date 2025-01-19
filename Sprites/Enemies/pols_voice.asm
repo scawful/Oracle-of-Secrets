@@ -32,8 +32,6 @@
 
 %Set_Sprite_Properties(Sprite_PolsVoice_Prep, Sprite_PolsVoice_Long)
 
-; =========================================================
-
 Sprite_PolsVoice_Long:
 {
   PHB : PHK : PLB
@@ -46,8 +44,6 @@ Sprite_PolsVoice_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_PolsVoice_Prep:
 {
   PHB : PHK : PLB
@@ -57,8 +53,6 @@ Sprite_PolsVoice_Prep:
   PLB
   RTL
 }
-
-; =========================================================
 
 Sprite_PolsVoice_Main:
 {
@@ -132,7 +126,7 @@ Sprite_PolsVoice_Main:
 PolsVoice_CheckForFluteSong:
 {
   ; If the player plays the flute
-  LDA $FE : BEQ +
+  LDA SongFlag : BEQ +
     LDA.b #$03 : STA.w SprState, X
   +
   RTS

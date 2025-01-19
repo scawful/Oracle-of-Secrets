@@ -148,12 +148,12 @@ LinkItem_NewFlute:
                   JMP .song_of_storms
     .song_of_time
     LDA.b #$27 : JSR $802F ; Player_DoSfx3
-    LDA.b #$02 : STA $FE
+    LDA.b #$02 : STA SongFlag
     RTS
 
     .song_of_healing
     LDA.b #$13 : JSR Player_DoSfx2
-    LDA.b #$01 : STA $FE
+    LDA.b #$01 : STA SongFlag
     RTS
 
     .song_of_storms

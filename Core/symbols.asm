@@ -39,6 +39,10 @@ CurrentDream   = $0426
 ; Current Song
 CurrentSong    = $030F
 
+; 01 - Song of Healing
+; 02 - Song of Time
+SongFlag       = $FE
+
 ; =========================================================
 ; The record format for the low table is 4 bytes:
 ;   byte OBJ*4+0: xxxxxxxx
