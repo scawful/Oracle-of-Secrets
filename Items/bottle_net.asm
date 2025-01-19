@@ -14,8 +14,8 @@ org $07A15B
 LinkItem_NewBottle:
 {
   ; Check if we have a bottle or not
-  LDA $7EF34F : DEC A : TAX
-  LDA $7EF35C, X : BEQ .exit
+  LDA.l BottleIndex : DEC A : TAX
+  LDA.l Bottle1, X : BEQ .exit
 
   ; Check if the bottle is empty
   CMP.b #$03     : BCC .empty_bottle
@@ -103,7 +103,7 @@ LinkItem_Bottles:
     LDA.b $3A : AND.b #$BF : STA.b $3A
 
     ; Check if we have a bottle or not
-    LDA.l $7EF34F : DEC A : TAX
+    LDA.l BottleIndex : DEC A : TAX
 
     LDA.l $7EF35C, X : BEQ NetExit  ; (RTS)
     CMP.b #$03       : BCC .LinkItem_UselessBottle

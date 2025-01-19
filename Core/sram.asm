@@ -100,33 +100,33 @@ Dreams        = $7EF410
 ; 0x03 - Silver bow
 ; 0x04 - Silver bow and arrows
 ; Picking the arrow and nonarrow versions is done by the HUD draw routines
-BOW             = $7EF340
+Bow             = $7EF340
 
 ; 0x00 - Nothing
 ; 0x01 - Blue boomerang
 ; 0x02 - Red boomerang
-BOOMER          = $7EF341
+Boomerang       = $7EF341
 
 ; 0x00 - Nothing
 ; 0x01 - Hookshot
 ; 0x02 - Goldstar (L/R)
-HOOKSHOT        = $7EF342
+Hookshot        = $7EF342
 
 ; Number of bombs
-BOMBS           = $7EF343
+Bombs           = $7EF343
 
 ; 0x00 - Nothing
 ; 0x01 - Mushroom
 ; 0x02 - Powder
-SHROOM          = $7EF344
+MagicPowder     = $7EF344
 
 ; 0x00 - Nothing
 ; 0x01 - Fire rod
-FIREROD         = $7EF345
+FireRod         = $7EF345
 
 ; 0x00 - Nothing
 ; 0x01 - Ice rod
-ICEROD          = $7EF346
+IceRod          = $7EF346
 
 ; 0x00 - Nothing
 ; 0x01 - Zora Mask
@@ -142,17 +142,17 @@ DekuMask        = $7EF349
 
 ; 0x00 - Nothing
 ; 0x01 - Lamp
-LAMP            = $7EF34A
+Lamp            = $7EF34A
 
 ; 0x00 - Nothing
 ; 0x01 - Magic hammer
-HAMMER          = $7EF34B
+Hammer          = $7EF34B
 
 ; 0x00 - Nothing
 ; 0x01 - Shovel
 ; 0x02 - Inactive flute
 ; 0x03 - Active flute
-FLUTE           = $7EF34C
+Flute           = $7EF34C
 
 ; 0x00 - Nothing
 ; 0x01 - Roc's Feather
@@ -160,7 +160,7 @@ RocsFeather     = $7EF34D
 
 ; 0x00 - Nothing
 ; 0x01 - Book of Mudora
-BOOK            = $7EF34E
+Book            = $7EF34E
 
 ; 0x00 - Nothing
 ; Other values indicate the index of the currently selected bottle
@@ -168,39 +168,39 @@ BottleIndex     = $7EF34F
 
 ; 0x00 - Nothing
 ; 0x01 - Cane of Somaria
-SOMARIA         = $7EF350
+Somaria         = $7EF350
 
 ; 0x00 - Nothing
 ; 0x01 - Cane of Byrna
-BYRNA           = $7EF351
+Byrna           = $7EF351
 
 ; 0x00 - Nothing
-; 0x01 - Magic cape
-CAPE            = $7EF352
+; 0x01 - Stone Mask
+StoneMask       = $7EF352
 
 ; 0x00 - Nothing
 ; 0x01 - Letter (works like mirror)
 ; 0x02 - Mirror
 ; 0x03 - Deleted triforce item
-MIRROR          = $7EF353
+Mirror          = $7EF353
 
 ; 0x00 - Lift 1 (nothing)
 ; 0x01 - Lift 2 (power glove)
 ; 0x02 - Lift 3 (titan's mitt)
-GLOVES          = $7EF354
+Gloves          = $7EF354
 
 ; 0x00 - Nothing
 ; 0x01 - Pegasus boots
 ; bit 2 of $7E:F379 also needs to be set to actually dash
-BOOTS           = $7EF355
+Boots           = $7EF355
 
 ; 0x00 - Nothing
 ; 0x01 - Zora's flippers
-FLIPPERS        = $7EF356
+Flippers        = $7EF356
 
 ; 0x00 - Nothing
 ; 0x01 - Moon pearl
-PEARL           = $7EF357
+Pearl           = $7EF357
 
 ; 0x00 - Nothing
 ; 0x01 - Wolf Mask
@@ -212,18 +212,18 @@ WolfMask        = $7EF358
 ; 0x03 - Tempered sword
 ; 0x04 - Golden sword
 ; 0xFF - Set when sword is handed in to smithy
-SWORD           = $7EF359
+Sword           = $7EF359
 
 ; 0x00 - Nothing
 ; 0x01 - Fighter shield
 ; 0x02 - Fire shield
 ; 0x03 - Mirror shield
-SHIELD          = $7EF35A
+Shield          = $7EF35A
 
 ; 0x00 - Green mail
 ; 0x01 - Blue mail
 ; 0x02 - Red mail
-ARMOR           = $7EF35B
+Armor           = $7EF35B
 
 ; 0x00 - Nothing
 ; 0x01 - Mushroom (unused)
@@ -243,7 +243,8 @@ Bottle4         = $7EF35F
 
 ; Number of rupees you have
 ; RUPEEDISP will be incremented or decremented until it reaches this value
-RUPEES          = $7EF360
+Rupees          = $7EF360
+RupeesGoal      = $7EF361
 
 ; Rupee count displayed on the HUD
 RUPEEDISP       = $7EF362
@@ -292,7 +293,7 @@ MAXHP           = $7EF36C
 CURHP           = $7EF36D
 
 ; Magic power, capped at 128
-MAGPOW          = $7EF36E
+MagicPower      = $7EF36E
 
 ; Current number of keys for whatever dungeon is loaded
 KEYS            = $7EF36F
@@ -303,7 +304,7 @@ ARROWCAP        = $7EF371
 
 ; Refills health
 ; Expects multiples of 8
-HEALME          = $7EF372
+HeartRefill     = $7EF372
 
 ; Refills magic
 ZAPME           = $7EF373
@@ -312,7 +313,7 @@ ZAPME           = $7EF373
 ;   r - Wisdom  (red)
 ;   b - Power   (blue)
 ;   g - Courage (green)
-PENDANTS        = $7EF374
+Pendants        = $7EF374
 
 ; Refills bombs
 BOMBME          = $7EF375
@@ -321,7 +322,7 @@ BOMBME          = $7EF375
 SHOOTME         = $7EF376
 
 ; Arrow count
-ARROWS          = $7EF377
+Arrows          = $7EF377
 
 ; Unused
 UNUSED_7EF378   = $7EF378
@@ -338,7 +339,7 @@ UNUSED_7EF378   = $7EF378
 ;  l - Lift
 ;      This only controls the display of "LIFT.1"
 ;      If this bit is unset but LIFT is set then the proper lift text is displayed
-ABILITY         = $7EF379
+Ability         = $7EF379
 
 ; Dungeon ID Legend
 ; Mushroom Grotto ID 0x0C (Palace of Darkness)
@@ -364,7 +365,7 @@ Crystals        = $7EF37A
 ; 0x02 - Quarter magic
 ; Quarter magic has no special HUD graphic, unlike half magic
 ; Also, not everything is necessarily quarter magic
-MAGCON          = $7EF37B
+MagicUsage      = $7EF37B
 
 ; Keys earned per dungeon
 ; Sewers and Castle are kept in sync
@@ -422,7 +423,7 @@ MAPICON         = $7EF3C7
 ; 0x04 - Throne
 ; 0x05 - Old man cave
 ; 0x06 - Old man home
-SPAWNPT         = $7EF3C8
+SpawnPoint      = $7EF3C8
 
 ; Another bitfield for progress
 ; t.dp s.bh

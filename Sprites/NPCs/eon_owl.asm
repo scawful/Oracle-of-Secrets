@@ -71,7 +71,7 @@ Sprite_EonOwl_Prep:
   .NotGaebora
   LDA.w AreaIndex : CMP.b #$50 : BNE .not_intro
     ; If Map 0x50, don't spawn after getting sword
-    LDA.l SWORD : CMP.b #$01 : BCC .continue
+    LDA.l Sword : CMP.b #$01 : BCC .continue
        STZ.w SprState, X
     .continue
   .not_intro

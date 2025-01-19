@@ -344,7 +344,7 @@ Menu_CheckBottle:
   LDA.w $0202 : CMP.b #$18 : BNE .not_any
     LDA.b #$0004
   .prepare_bottle
-  STA.l $7EF34F
+  STA.l BottleIndex
   .not_any
   RTS
 }

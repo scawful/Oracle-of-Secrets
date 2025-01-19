@@ -76,9 +76,9 @@ MapleHandler:
   Maple_CheckForPendant:
   {
     ; Check for pendant
-    LDA.l PENDANTS : AND.b #$04 : BNE .courage
-    LDA.l PENDANTS : AND.b #$02 : BNE .power
-    LDA.l PENDANTS : AND.b #$01 : BNE .wisdom
+    LDA.l Pendants : AND.b #$04 : BNE .courage
+    LDA.l Pendants : AND.b #$02 : BNE .power
+    LDA.l Pendants : AND.b #$01 : BNE .wisdom
                      JMP .none
     .courage
     LDA.l Dreams : AND.b #$04 : BNE .power

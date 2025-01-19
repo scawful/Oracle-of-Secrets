@@ -47,7 +47,7 @@ Sprite_Booki_Long:
 Sprite_Booki_Prep:
 {
   PHB : PHK : PLB
-  LDA.l SWORD : DEC A : TAY
+  LDA.l Sword : DEC A : TAY
   LDA.w .health, Y : STA.w SprHealth, X
   STZ.w SprMiscB, X
   PLB
