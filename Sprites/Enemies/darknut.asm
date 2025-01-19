@@ -59,7 +59,7 @@ Sprite_Darknut_Prep:
   RTL
 
   .health
-    db $04, $0C, $0F, $10
+    db $04, $06, $08, $0A
 }
 
 ; =========================================================
@@ -72,8 +72,7 @@ Sprite_Darknut_Main:
   LDA.w POSY : STA $03
   LDA.w SprX, X : STA $04
   LDA.w SprY, X : STA $05
-  JSL GetDistance8bit_Long
-  CMP.b #$80 : BCS .no_probe
+  JSL GetDistance8bit_Long : CMP.b #$80 : BCS .no_probe
     ; JSL Sprite_SendOutProbe
     JSL Sprite_SpawnProbeAlways_long
   .no_probe
@@ -87,6 +86,10 @@ Sprite_Darknut_Main:
   JSL Sprite_DamageFlash_Long
 
   JSL Sprite_CheckIfRecoiling
+
+  JSL Sprite_CheckDamageFromPlayer : BCC .no_dano
+    LDA.b #$FF : STA.w SprTimerD, X
+  .no_dano
 
   LDA.w SprTimerA, X : BEQ +
     LDA.b #$90 : STA.w SprTimerD, X
@@ -107,7 +110,7 @@ Sprite_Darknut_Main:
   JSR Goriya_HandleTileCollision
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw FaceRight
   dw FaceLeft
