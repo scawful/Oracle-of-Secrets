@@ -128,6 +128,7 @@ PolsVoice_CheckForFluteSong:
   ; If the player plays the flute
   LDA.b SongFlag : BEQ +
     LDA.b #$03 : STA.w SprState, X
+    JSL ForcePrizeDrop_long
   +
   RTS
 }
