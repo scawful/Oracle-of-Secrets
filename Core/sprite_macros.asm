@@ -305,6 +305,12 @@ macro ProbCheck(mask, label)
   BNE <label>
 endmacro
 
+macro ProbCheck2(mask, label)
+  JSL GetRandomInt
+  AND.b #<mask>
+  BEQ <label>
+endmacro
+
 macro DrawSprite()
 {
   JSL Sprite_PrepOamCoord
