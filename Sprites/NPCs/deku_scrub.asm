@@ -107,8 +107,8 @@ Sprite_DekuScrub_Main:
   QuiereCuracion:
   {
     %PlayAnimation(0, 1, 16)
-    LDA SongFlag : CMP.b #$01 : BNE .ninguna_cancion
-      STZ.w SongFlag
+    LDA.b SongFlag : CMP.b #$01 : BNE .ninguna_cancion
+      STZ.b SongFlag
       LDA.b #$C0 : STA.w SprTimerD, X
       %GotoAction(2)
     .ninguna_cancion

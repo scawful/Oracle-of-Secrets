@@ -193,7 +193,7 @@ RunClock:
 CheckForSongOfTime:
 {
   ; Check if Song of Time was activated
-  LDA SongFlag : CMP.b #$02 : BNE +
+  LDA.b SongFlag : CMP.b #$02 : BNE +
     ; Speed up the time
     LDA.b #$00 : STA.l TimeSpeed
 
@@ -201,14 +201,14 @@ CheckForSongOfTime:
     LDA.l Hours : CMP.b #$06 : BNE ++
       LDA.l Minutes : BNE ++
         LDA.b #$3F : STA.l TimeSpeed
-        STZ SongFlag
+        STZ.b SongFlag
     ++
 
     ; If we reached 6pm
     LDA.l Hours : CMP.b #$12 : BNE ++
       LDA.l Minutes : BNE ++
         LDA.b #$3F : STA.l TimeSpeed
-        STZ SongFlag
+        STZ.b SongFlag
     ++
   +
   RTS

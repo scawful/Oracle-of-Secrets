@@ -126,7 +126,7 @@ Sprite_PolsVoice_Main:
 PolsVoice_CheckForFluteSong:
 {
   ; If the player plays the flute
-  LDA SongFlag : BEQ +
+  LDA.b SongFlag : BEQ +
     LDA.b #$03 : STA.w SprState, X
   +
   RTS
