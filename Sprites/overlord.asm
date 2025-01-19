@@ -2,7 +2,7 @@
 
 SummonGuards:
 {
-  LDA.l SWORD : CMP.b #$02 : BNE +
+  LDA.l Sword : CMP.b #$02 : BNE +
     JSR Overlord_SpawnSoldierPath
   +
   RTL
