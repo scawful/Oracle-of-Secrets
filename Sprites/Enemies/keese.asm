@@ -62,7 +62,8 @@ Sprite_Keese_Prep:
     LDA.b #$20 : STA.w SprHealth, X
     BRA ++
   +
-  LDA.b #$02 : STA.w SprNbrOAM, X
+  LDA.b #$03 : STA.w SprNbrOAM, X
+  LDA.b #$03 : STA.w SprPrize, X
   ++
   PLB
   RTL
@@ -90,7 +91,7 @@ Sprite_Keese_Main:
 
   Keese_FlyAround:
   {
-    %PlayAnimation(0,5,10)
+    %PlayAnimation(0,5,8)
     JSL Sprite_CheckDamageToPlayer
     JSL Sprite_CheckDamageFromPlayer
     JSL Sprite_DamageFlash_Long
@@ -126,6 +127,7 @@ Sprite_Keese_Draw:
   LDA.w SprFrame, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
   LDA.w SprFlash, X : STA $08
+  LDA.w SprMiscB, X : STA $09
   LDA.w SprSubtype, X : CMP.b #$01 : BNE +
     LDA.b #$0A : EOR $08 : STA $08
   +
@@ -159,7 +161,14 @@ Sprite_Keese_Draw:
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
+
+  ; If SprMiscA != 0, then use 4th sheet
+  LDA.b $09 : BEQ +
+    LDA .chr_2, X : STA ($90), Y
+    JMP ++
+  +
   LDA .chr, X : STA ($90), Y
+  ++
   INY
   LDA .properties, X : ORA $08 : STA ($90), Y
 
@@ -202,6 +211,13 @@ Sprite_Keese_Draw:
   db $84, $84
   db $A4, $A4
   db $A0
+  .chr_2
+  db $C0
+  db $E2, $E2
+  db $C2
+  db $C4, $C4
+  db $E4, $E4
+  db $E0
   .properties
   db $35
   db $35, $75
