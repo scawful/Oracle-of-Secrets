@@ -35,6 +35,7 @@ incsrc "Core/ram.asm"
 
 namespace Oracle
 {
+  incsrc "Core/link.asm"
   incsrc "Core/sram.asm"
   incsrc "Core/symbols.asm"
   incsrc "Core/message.asm"
