@@ -226,7 +226,7 @@ Sprite_Twinrova_Main:
       RTS
     +
 
-    JSL GetRandomInt : AND.b #$3F : BNE ++
+    JSL GetRandomInt : AND.b #$7F : BNE ++
       LDA.b #$20 : STA.w SprTimerD, X
       LDA   #$01 : STA $AC ; Set the ice attack
       %GotoAction(4) ; Prepare Attack
