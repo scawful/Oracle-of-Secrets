@@ -68,7 +68,7 @@ Sprite_IceBlock_Prep:
 Sprite_IceBlock_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
   dw MovementHandler
 
   MovementHandler:
@@ -122,7 +122,7 @@ Sprite_IceBlock_Main:
       RTS
     .NotInContact:
     LDA.w SprTimerA, X : BNE .delay_timer
-      LDA.b #$0D : STA.w SprTimerB,X
+      LDA.b #$0D : STA.w SprTimerB, X
     .delay_timer
     RTS
   }
@@ -160,22 +160,21 @@ Sprite_IceBlock_Main:
 ; Currently unused as it doesnt play well with the hitbox choices
 IceBlock_CheckForGround:
 {
-  LDA.w SprY,X : CLC : ADC.b #$08 : STA.b $00
-  LDA.w SprYH,X : ADC.b #$00 : STA.b $01
-  LDA.w SprX,X : STA.b $02
-  LDA.w SprXH,X : ADC.b #$00 : STA.b $03
-  LDA.w $0F20,X
+  LDA.w SprY, X : CLC : ADC.b #$08 : STA.b $00
+  LDA.w SprYH, X : ADC.b #$00 : STA.b $01
+  LDA.w SprX, X : STA.b $02
+  LDA.w SprXH, X : ADC.b #$00 : STA.b $03
+  LDA.w $0F20, X
   PHY
   JSL $06E87B ; GetTileType_long
   PLY
 
-  LDA.w $0FA5
-  CMP.b #$0E : BNE .stop
-  SEC
-  RTS
-.stop
-  STZ.w SprXSpeed,X
-  STZ.w SprYSpeed,X
+  LDA.w $0FA5 : CMP.b #$0E : BNE .stop
+    SEC
+    RTS
+  .stop
+  STZ.w SprXSpeed, X
+  STZ.w SprYSpeed, X
   CLC
   RTS
 }
@@ -185,11 +184,11 @@ Sprite_IceBlock_CheckForSwitch:
   LDY.b #$03
 
   .next_tile
-  LDA.w SprY,X : CLC : ADC.w .offset_y,Y : STA.b $00
-  LDA.w SprYH,X : ADC.b #$00 : STA.b $01
-  LDA.w SprX,X : CLC : ADC.w .offset_x,Y : STA.b $02
-  LDA.w SprXH,X : ADC.b #$00 : STA.b $03
-  LDA.w $0F20,X
+  LDA.w SprY, X : CLC : ADC.w .offset_y, Y : STA.b $00
+  LDA.w SprYH, X : ADC.b #$00 : STA.b $01
+  LDA.w SprX, X : CLC : ADC.w .offset_x, Y : STA.b $02
+  LDA.w SprXH, X : ADC.b #$00 : STA.b $03
+  LDA.w $0F20, X
 
   PHY
   JSL $06E87B ; GetTileType_long
@@ -231,7 +230,7 @@ Statue_BlockSprites:
   LDA.w $0E20, Y : CMP.b #$1C : BEQ .skip
     CPY.w $0FA0 : BEQ .skip
       TYA : EOR.b $1A : AND.b #$01 : BNE .skip
-        LDA.w SprState,Y : CMP.b #$09 : BCC .skip
+        LDA.w SprState, Y : CMP.b #$09 : BCC .skip
 
   LDA.w SprX, Y : STA.b $04
   LDA.w SprXH, Y : STA.b $05

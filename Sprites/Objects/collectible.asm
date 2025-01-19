@@ -1,6 +1,6 @@
 ; =========================================================
-; Sprite Properties
-; =========================================================
+; Collectible Sprites 
+; (Pineapple, Seashell, Sword/Shield, Rock Sirloin)
 
 !SPRID              = $52
 !NbrTiles           = 03  ; Number of tiles used in a frame
@@ -32,8 +32,6 @@
 
 %Set_Sprite_Properties(Sprite_Collectible_Prep, Sprite_Collectible_Long)
 
-; =========================================================
-
 Sprite_Collectible_Long:
 {
   PHB : PHK : PLB
@@ -59,8 +57,6 @@ Sprite_Collectible_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_Collectible_Prep:
 {
   PHB : PHK : PLB
@@ -80,12 +76,10 @@ Sprite_Collectible_Prep:
   RTL
 }
 
-; =========================================================
-
 Sprite_Collectible_Main:
 {
   LDA.w SprAction, X
-  JSL   UseImplicitRegIndexedLocalJumpTable
+  JSL   JumpTableLocal
 
   dw Pineapple
   dw Seashell
@@ -138,8 +132,6 @@ Sprite_Collectible_Main:
   }
 
 }
-
-; =========================================================
 
 Sprite_Pineapple_Draw:
 {
@@ -195,9 +187,6 @@ Sprite_Pineapple_Draw:
   PLX
 
   RTS
-
-
-  ; =========================================================
 
   .start_index
   db $00
@@ -270,7 +259,6 @@ Sprite_SwordShield_Draw:
   PLX
 
   RTS
-
 
   .start_index
   db $00

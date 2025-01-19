@@ -73,7 +73,7 @@ BlueSpriteIndex   = $7E0632
 Sprite_Portal_Main:
 {
   LDA.w SprAction, X
-  JSL   UseImplicitRegIndexedLocalJumpTable
+  JSL   JumpTableLocal
 
   dw StateHandler
   dw BluePortal
@@ -104,7 +104,6 @@ Sprite_Portal_Main:
     LDA.w SprY, X : STA.w BluePortal_X
     LDA.w SprX, X : STA.w BluePortal_Y
     LDA.b #$02 : STA.w SprSubtype, X
-
     %GotoAction(1)
     RTS
   }
@@ -124,9 +123,7 @@ Sprite_Portal_Main:
       JSL $0683EA          ; Sprite_SetupHitbox_long
       JSL CheckIfHitBoxesOverlap : BCC .NoOverlap
       CLC
-
       LDA $1B : BEQ .outdoors
-
       %GotoAction(3) ; BluePortal_WarpDungeon
     .NoOverlap
     RTS
@@ -171,10 +168,6 @@ Sprite_Portal_Main:
     LDA $7EC18A : STA $0604
     LDA $7EC18C : STA $0608
     LDA $7EC18E : STA $060C
-    ; LDA $7EC190 : STA $0610
-    ; LDA $7EC192 : STA $0612
-    ; LDA $7EC194 : STA $0614
-    ; LDA $7EC196 : STA $0616
 
     PHX
     LDA.w OrangeSpriteIndex : TAX
@@ -200,10 +193,6 @@ Sprite_Portal_Main:
     LDA $7EC18A : STA $0604 ; Small Room South
     LDA $7EC18C : STA $0608 ; Small Room West
     LDA $7EC18E : STA $060C ; Small Room South
-    ; LDA $7EC190 : STA $0610
-    ; LDA $7EC192 : STA $0612
-    ; LDA $7EC194 : STA $0614
-    ; LDA $7EC196 : STA $0616
 
     PHX
     LDA.w BlueSpriteIndex : TAX
