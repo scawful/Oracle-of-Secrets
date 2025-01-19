@@ -159,7 +159,7 @@ Sprite_Twinrova_Main:
   PLX
 
   LDA.w SprAction, X
-  JSL   UseImplicitRegIndexedLocalJumpTable
+  JSL   JumpTableLocal
 
   dw Twinrova_Init          ; 0x00
   dw Twinrova_MoveState     ; 0x01
@@ -200,14 +200,17 @@ Sprite_Twinrova_Main:
     .phase_1
 
 
-    %ProbCheck($3F, +)
-      %ProbCheck($0F, ++)
-        JSL Sprite_SpawnFireKeese
+    LDA.b #$11 : STA.b $00
+    JSL Sprite_CountActiveById
+    LDA.b $02 : CMP.b #$03 : BCS +
+      %ProbCheck($3F, +)
+        %ProbCheck($0F, ++)
+          JSL Sprite_SpawnFireKeese
+          LDA.b #$01 : STA.w SprMiscB, Y
+          JMP +
+        ++
+        JSL Sprite_SpawnIceKeese
         LDA.b #$01 : STA.w SprMiscB, Y
-        JMP +
-      ++
-      JSL Sprite_SpawnIceKeese
-      LDA.b #$01 : STA.w SprMiscB, Y
     +
 
     LDA.w SprFlash, X : BEQ .not_flashing
@@ -528,31 +531,30 @@ DoRandomStrafe:
 
 ; Velocity offsets table
 VelocityOffsets:
-    db $08, $F8, $08, $F8  ; X speeds (right, left, down, up)
-    db $04, $FC, $04, $FC  ; Y speeds (down, up, right, left)
+  db $08, $F8, $08, $F8  ; X speeds (right, left, down, up)
+  db $04, $FC, $04, $FC  ; Y speeds (down, up, right, left)
 
 ; Target positions table (relative to the player)
 TargetPositions:
-    dw $0040, $FFC0  ; Right, Left
-    dw $0040, $FFC0  ; Down, Up
+  dw $0040, $FFC0  ; Right, Left
+  dw $0040, $FFC0  ; Down, Up
 
 ; =========================================================
 
 Twinrova_RestoreFloorTile:
 {
-  LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
-  LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
+  LDA.w SprY, X : STA.b $00 : LDA.w SprYH, X : STA.b $01
+  LDA.w SprX, X : STA.b $02 : LDA.w SprXH, X : STA.b $03
 
   LDA.b #$00
   JSL Sprite_GetTileAttr
   LDA.w $0FA5 : CMP.b #$0E : BNE +
-    LDA.w SprX,Y : STA.l $7FF83C,X
-    LDA.w SprXH,Y : STA.l $7FF878,X
-    LDA.w SprY,Y : CLC : ADC.b #$10 : STA.l $7FF81E,X
-    LDA.w SprYH,Y : ADC.b #$00 : STA.l $7FF85A,X
+    LDA.w SprX, Y : STA.l $7FF83C, X
+    LDA.w SprXH, Y : STA.l $7FF878, X
+    LDA.w SprY, Y : CLC : ADC.b #$10 : STA.l $7FF81E, X
+    LDA.w SprYH, Y : ADC.b #$00 : STA.l $7FF85A, X
     JSR RestoreFloorTile
   +
-
   RTS
 }
 
@@ -586,71 +588,44 @@ AddPitHazard:
 
 Ganon_SpawnFallingTilesOverlord:
 {
-  #_1D90D0: LDY.b #$07
-
+  LDY.b #$07
   .next_slot
-  #_1D90D2: LDA.w $0B00,Y
-  #_1D90D5: BEQ .free_slot
-
-  #_1D90D7: DEY
-  #_1D90D8: BPL .next_slot
-
-  #_1D90DA: RTS
-
-  ;----------------------------------------------------------
-
+  LDA.w $0B00, Y : BEQ .free_slot
+    DEY : BPL .next_slot
+      RTS
   .free_slot
-  #_1D90DB: LDA.w SprMiscF,X
-  #_1D90DE: CMP.b #$04
-  #_1D90E0: BCS .dont_spawn
 
-  #_1D90E2: INC.w SprMiscF,X
-
-  #_1D90E5: PHX
-
-  #_1D90E6: TAX
-
-  #_1D90E7: LDA.w .overlord_type,X
-  #_1D90EA: STA.w $0B00,Y
-
-  #_1D90ED: LDA.w .position_x,X
-  #_1D90F0: STA.w $0B08,Y
-
-  #_1D90F3: LDA.b $23
-  #_1D90F5: STA.w $0B10,Y
-
-  #_1D90F8: LDA.w .position_y,X
-  #_1D90FB: STA.w $0B18,Y
-
-  #_1D90FE: LDA.b $21
-  #_1D9100: STA.w $0B20,Y
-
-  #_1D9103: LDA.b #$00
-  #_1D9105: STA.w $0B28,Y
-  #_1D9108: STA.w $0B30,Y
-
-  #_1D910B: PLX
-
+  LDA.w SprMiscF, X : CMP.b #$04 : BCS .dont_spawn
+    INC.w SprMiscF, X
+    PHX
+    TAX
+    LDA.w .overlord_type, X : STA.w $0B00, Y
+    LDA.w .position_x, X : STA.w $0B08, Y
+    LDA.b $23 : STA.w $0B10, Y
+    LDA.w .position_y, X : STA.w $0B18, Y
+    LDA.b $21 : STA.w $0B20, Y
+    LDA.b #$00 : STA.w $0B28, Y : STA.w $0B30, Y
+    PLX
   .dont_spawn
-  #_1D910C: RTS
+  RTS
 
   .overlord_type
-  #_1D90C4: db $0C ; OVERLORD 0C
-  #_1D90C5: db $0D ; OVERLORD 0D
-  #_1D90C6: db $0E ; OVERLORD 0E
-  #_1D90C7: db $0F ; OVERLORD 0F
+  db $0C ; OVERLORD 0C
+  db $0D ; OVERLORD 0D
+  db $0E ; OVERLORD 0E
+  db $0F ; OVERLORD 0F
 
   .position_x
-  #_1D90C8: db $18
-  #_1D90C9: db $D8
-  #_1D90CA: db $D8
-  #_1D90CB: db $18
+  db $18
+  db $D8
+  db $D8
+  db $18
 
   .position_y
-  #_1D90CC: db $20
-  #_1D90CD: db $20
-  #_1D90CE: db $D0
-  #_1D90CF: db $D0
+  db $20
+  db $20
+  db $D0
+  db $D0
 }
 
 ; =========================================================
@@ -833,15 +808,14 @@ ReleaseFireballs:
 
     LDA.w .speed_x, Y : STA.w SprXSpeed, X
     LDA.w .speed_y, Y : STA.w SprYSpeed, X
-    LDA.w SprX, X : CLC : ADC.w .offset_x_low,Y : STA.w SprX,X
+    LDA.w SprX, X : CLC : ADC.w .offset_x_low, Y : STA.w SprX, X
     LDA.w SprXH, X : ADC.w .offset_x_high, Y : STA.w SprXH, X
-    LDA.w SprY,X : CLC : ADC.w .offset_y_low,Y : STA.w SprY,X
-    LDA.w SprYH,X : ADC.w .offset_y_high,Y : STA.w SprYH,X
+    LDA.w SprY, X : CLC : ADC.w .offset_y_low, Y : STA.w SprY, X
+    LDA.w SprYH, X : ADC.w .offset_y_high, Y : STA.w SprYH, X
 
     PLX
   .exit_a
   RTS
-
 
   .offset_x_low
   db  12, -12,   0,   0
@@ -966,28 +940,28 @@ Blind_SpawnFromMaiden:
   LDX.b #$00 ; Load the boss into sprite index 0
 
   ; Set the sprite to alive and active
-  LDA.b #$09 : STA.w SprState,X
+  LDA.b #$09 : STA.w SprState, X
 
   ; SPRITE CE
-  LDA.b #$CE : STA.w $0E20,X
+  LDA.b #$CE : STA.w $0E20, X
 
   ; Load the position cache from the maiden follower
-  LDA.b $00 : STA.w SprX,X
-  LDA.b $01 : STA.w SprXH,X
-  LDA.b $02 : SEC : SBC.b #$10 : STA.w SprY,X
-  LDA.b $03 : STA.w SprYH,X
+  LDA.b $00 : STA.w SprX, X
+  LDA.b $01 : STA.w SprXH, X
+  LDA.b $02 : SEC : SBC.b #$10 : STA.w SprY, X
+  LDA.b $03 : STA.w SprYH, X
 
   ; Removed because it was causing the sprite to disappear
   ; JSL SpritePrep_LoadProperties
 
   ; Set SprTimerC
-  LDA.b #$C0 : STA.w SprTimerC,X
+  LDA.b #$C0 : STA.w SprTimerC, X
 
   ; Set SprGfx
-  LDA.b #$00 : STA.w $0DC0,X
+  LDA.b #$00 : STA.w $0DC0, X
 
   ; Set SprMiscC and bulletproof properties
-  LDA.b #$02 : STA.w SprMiscC,X : STA.w SprBulletproof,X
+  LDA.b #$02 : STA.w SprMiscC, X : STA.w SprBulletproof, X
 
   ; Set the 2nd key / heart piece items taken room flag
   LDA.w $0403 : ORA.b #$20 : STA.w $0403
@@ -1012,15 +986,15 @@ SpritePrep_Blind_PrepareBattle:
   ; CMP.b #$06 ; FOLLOWER 06
   ; BEQ .despawn
   LDA.w $0403 : AND.b #$20 : BEQ .despawn
-    LDA.b #$60 : STA.w SprTimerC,X
-    LDA.b #$01 : STA.w SprMiscB,X
-    LDA.b #$02 : STA.w SprMiscC,X
-    LDA.b #$04 : STA.w SprMiscE,X
-    LDA.b #$07 : STA.w $0DC0,X
+    LDA.b #$60 : STA.w SprTimerC, X
+    LDA.b #$01 : STA.w SprMiscB, X
+    LDA.b #$02 : STA.w SprMiscC, X
+    LDA.b #$04 : STA.w SprMiscE, X
+    LDA.b #$07 : STA.w $0DC0, X
     STZ.w $0B69
     RTL
   .despawn
-  STZ.w SprState,X
+  STZ.w SprState, X
   RTL
 }
 
@@ -1038,7 +1012,7 @@ org $01B3E1
 org $1DA0B1
 BlindLaser_SpawnTrailGarnish:
 {
-  LDA.w SprDelay,X : AND.b #$00 : BNE .exit
+  LDA.w SprDelay, X : AND.b #$00 : BNE .exit
 
   PHX
   TXY
@@ -1046,7 +1020,7 @@ BlindLaser_SpawnTrailGarnish:
   LDX.b #$1D
 
   .next_slot
-  LDA.l $7FF800,X : BEQ .free_slot
+  LDA.l $7FF800, X : BEQ .free_slot
 
   DEX
   BPL .next_slot
@@ -1064,15 +1038,15 @@ BlindLaser_SpawnTrailGarnish:
   STA.l $7FF800, X
   STA.w $0FB4
 
-  LDA.w $0DC0,Y : STA.l $7FF9FE,X
-  TYA : STA.l $7FF92C,X
+  LDA.w $0DC0, Y : STA.l $7FF9FE, X
+  TYA : STA.l $7FF92C, X
 
-  LDA.w SprX,Y : STA.l $7FF83C,X
-  LDA.w SprXH,Y : STA.l $7FF878,X
-  LDA.w SprY,Y : CLC : ADC.b #$10 : STA.l $7FF81E,X
-  LDA.w SprYH,Y : ADC.b #$00 : STA.l $7FF85A,X
+  LDA.w SprX, Y : STA.l $7FF83C, X
+  LDA.w SprXH, Y : STA.l $7FF878, X
+  LDA.w SprY, Y : CLC : ADC.b #$10 : STA.l $7FF81E, X
+  LDA.w SprYH, Y : ADC.b #$00 : STA.l $7FF85A, X
 
-  LDA.b #$0A : STA.l $7FF90E,X
+  LDA.b #$0A : STA.l $7FF90E, X
 
   PLX
 

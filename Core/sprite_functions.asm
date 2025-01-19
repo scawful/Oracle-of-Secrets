@@ -317,7 +317,23 @@ Sprite_CheckForPresence:
   .done
   PLX
   RTL
+}
 
+; $00 - ID of the sprite to check
+; $02 - Number of sprites found
+Sprite_CountActiveById:
+{
+  STZ $02
+  LDX.b #$10
+  .x_loop
+    DEX
+    LDA $0E20, X : CMP.b $00 : BEQ .increment
+      BRA .continue
+    .increment
+    INC $02
+    .continue
+    CPX.b #$00 : BNE .x_loop
+  RTL
 }
 
 ; =========================================================
