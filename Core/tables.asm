@@ -309,3 +309,107 @@ db $1A, $0A, $00, $00 ; 0x25 Dragon Ship
 db $00, $00, $03, $02 ; 0x26
 db $0E, $00, $03, $07 ; 0x27
 db $1A, $05, $05, $0B ; 0x28 Dragon Ship
+
+PrizePackRarities:
+{
+  db $01 ; pack 1 :  50%
+  db $01 ; pack 2 :  50%
+  db $01 ; pack 3 :  50%
+  db $00 ; pack 4 : 100%
+  db $01 ; pack 5 :  50%
+  db $01 ; pack 6 :  50%
+  db $01 ; pack 7 :  50%
+  db $00 ; pack 8 : 100% - doesn't exist
+}
+
+ItemDropBounceProps:
+{
+  db $24 ; GREEN RUPEE
+  db $24 ; BLUE RUPEE
+  db $24 ; RED RUPEE
+  db $20 ; BOMB REFILL 1
+  db $20 ; BOMB REFILL 4
+  db $20 ; BOMB REFILL 8
+  db $24 ; SMALL MAGIC DECANTER
+  db $24 ; LARGE MAGIC DECANTER
+  db $24 ; ARROW REFILL 5
+  db $24 ; ARROW REFILL 10
+  db $00 ; FAIRY
+  db $24 ; SMALL KEY
+  db $20 ; BIG KEY
+  db $20 ; STOLEN SHIELD
+}
+
+PrizePackPrizes:
+{
+  .pack_1
+  db $D8 ; SPRITE D8 - heart
+  db $D8 ; SPRITE D8 - heart
+  db $D8 ; SPRITE D8 - heart
+  db $D8 ; SPRITE D8 - heart
+  db $D9 ; SPRITE D9 - green rupee
+  db $D8 ; SPRITE D8 - heart
+  db $D8 ; SPRITE D8 - heart
+  db $D9 ; SPRITE D9 - green rupee
+
+  .pack_2
+  db $DA ; SPRITE DA - blue rupee
+  db $D9 ; SPRITE D9 - green rupee
+  db $DA ; SPRITE DA - blue rupee
+  db $DB ; SPRITE DB - red rupee
+  db $DA ; SPRITE DA - blue rupee
+  db $D9 ; SPRITE D9 - green rupee
+  db $DA ; SPRITE DA - blue rupee
+  db $DA ; SPRITE DA - blue rupee
+
+  .pack_3
+  db $E0 ; SPRITE E0 - full magic
+  db $DF ; SPRITE DF - small magic
+  db $DF ; SPRITE DF - small magic
+  db $DA ; SPRITE DA - blue rupee
+  db $E0 ; SPRITE E0 - full magic
+  db $DF ; SPRITE DF - small magic
+  db $D8 ; SPRITE D8 - heart
+  db $DF ; SPRITE DF - small magic
+
+  .pack_4
+  db $DC ; SPRITE DC - 1 bomb
+  db $DC ; SPRITE DC - 1 bomb
+  db $DC ; SPRITE DC - 1 bomb
+  db $DD ; SPRITE DD - 4 bombs
+  db $DC ; SPRITE DC - 1 bomb
+  db $DC ; SPRITE DC - 1 bomb
+  db $DE ; SPRITE DE - 8 bombs
+  db $DC ; SPRITE DC - 1 bomb
+
+  .pack_5
+  db $E1 ; SPRITE E1 - 5 arrows
+  db $D8 ; SPRITE D8 - heart
+  db $E1 ; SPRITE E1 - 5 arrows
+  db $E2 ; SPRITE E2 - 10 arrows
+  db $E1 ; SPRITE E1 - 5 arrows
+  db $D8 ; SPRITE D8 - heart
+  db $E1 ; SPRITE E1 - 5 arrows
+  db $E2 ; SPRITE E2 - 10 arrows
+
+  .pack_6
+  db $DF ; SPRITE DF - small magic
+  db $D9 ; SPRITE D9 - green rupee
+  db $D8 ; SPRITE D8 - heart
+  db $E1 ; SPRITE E1 - 5 arrows
+  db $DF ; SPRITE DF - small magic
+  db $DC ; SPRITE DC - 1 bomb
+  db $D9 ; SPRITE D9 - green rupee
+  db $D8 ; SPRITE D8 - heart
+
+  .pack_7
+  db $D8 ; SPRITE D8 - heart
+  db $E3 ; SPRITE E3 - fairy
+  db $E0 ; SPRITE E0 - full magic
+  db $DB ; SPRITE DB - red rupee
+  db $DE ; SPRITE DE - 8 bombs
+  db $D8 ; SPRITE D8 - heart
+  db $DB ; SPRITE DB - red rupee
+  db $E2 ; SPRITE E2 - 10 arrows
+}
+
