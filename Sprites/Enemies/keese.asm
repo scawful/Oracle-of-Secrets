@@ -72,7 +72,7 @@ Sprite_Keese_Prep:
 Sprite_Keese_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Keese_Idle
   dw Keese_FlyAround
@@ -98,12 +98,9 @@ Sprite_Keese_Main:
     JSL Sprite_BounceFromTileCollision
 
     JSL GetRandomInt : AND.b #$1F : BNE +
-      LDA.w SprSubtype, X : BEQ ++
-        JSL Sprite_Twinrova_FireAttack
-        JMP +
-      ++
-      ; Ice Attack
+      LDA.b #$40 : STA.w SprTimerC, X
     +
+    JSR Sprite_Keese_Attack
 
     LDA.w SprTimerA, X : AND.b #$10 : BNE +
       JSL Sprite_ProjectSpeedTowardsPlayer
@@ -117,6 +114,19 @@ Sprite_Keese_Main:
     +
     RTS
   }
+}
+
+Sprite_Keese_Attack:
+{
+  LDA.w SprTimerC, X : BEQ +
+    LDA.w SprSubtype, X : BEQ ++
+      JSL Sprite_Twinrova_FireAttack
+      JMP +
+    ++
+    JSL Sprite_SpawnSparkleGarnish
+    JSL BlindLaser_SpawnTrailGarnish
+  +
+  RTS
 }
 
 Sprite_Keese_Draw:
