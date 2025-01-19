@@ -64,7 +64,7 @@ Sprite_Vasu_Main:
   JSL Sprite_PlayerCantPassThrough
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Vasu_Idle
   dw Vasu_MessageHandler

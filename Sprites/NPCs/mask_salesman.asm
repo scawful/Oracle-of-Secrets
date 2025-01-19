@@ -53,7 +53,7 @@ Sprite_MaskSalesman_Main:
   JSL Sprite_PlayerCantPassThrough
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw InquiryHandler
   dw NoOcarina

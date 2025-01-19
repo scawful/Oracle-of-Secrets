@@ -3,7 +3,7 @@
 Sprite_EonZoraElder_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw EonZoraElder_Idle
   dw EonZoraElder_Surprised

@@ -56,7 +56,7 @@ Sprite_Piratian_Main:
   JSR Sprite_Piratian_Move
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Piratian_MoveDown
   dw Piratian_MoveUp
@@ -123,7 +123,7 @@ Sprite_Piratian_Move:
     JMP .return
   .no_aggro
 
-  JSR Sprite_Pirate_Friendly
+  JSR Sprite_Piratian_Friendly
   .return
   RTS
 }

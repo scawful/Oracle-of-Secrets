@@ -71,7 +71,7 @@ STORY_STATE = $B6
 Sprite_Farore_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw IntroStart
   dw MoveUpTowardsFarore
@@ -195,10 +195,8 @@ Sprite_Farore_Main:
   MakuArea_FaroreWaitForKydrog:
   {
     %PlayAnimation(5, 5, 8)
-
     RTS
   }
-
 }
 
 Sprite_Farore_Draw:

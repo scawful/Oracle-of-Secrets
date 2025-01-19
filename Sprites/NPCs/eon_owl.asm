@@ -84,7 +84,7 @@ Sprite_EonOwl_Prep:
 Sprite_EonOwl_Main:
 {
   LDA.w SprAction, X
-  JSL   UseImplicitRegIndexedLocalJumpTable
+  JSL   JumpTableLocal
 
   dw EonOwl_Idle
   dw EonOwl_IntroDialogue

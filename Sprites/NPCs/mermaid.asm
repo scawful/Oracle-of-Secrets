@@ -79,7 +79,7 @@ Sprite_Mermaid_Prep:
 Sprite_Mermaid_Main:
 {
   LDA.w SprMiscE, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw MermaidHandler
   dw MapleHandler
