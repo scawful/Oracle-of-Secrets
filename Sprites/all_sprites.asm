@@ -82,6 +82,9 @@ print  "End of bottle_vendor.asm          ", pc
 incsrc "Sprites/Enemies/leever.asm"
 print  "End of leever.asm                 ", pc
 
+incsrc "Sprites/Objects/pedestal.asm"
+print  "End of pedestal.asm               ", pc
+
 DontTeleportWithoutFlippers:
 {
   LDA.l $7EF356 : BNE +

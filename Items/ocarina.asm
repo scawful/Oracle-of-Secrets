@@ -159,6 +159,7 @@ LinkItem_NewFlute:
     .song_of_storms
     ; Play the Song of Storms SFX
     LDA.b #$2F : JSR Player_DoSfx2
+    LDA.b #$03 : STA.b SongFlag
     JSL OcarinaEffect_SummonStorms
     RTS
 
@@ -247,7 +248,6 @@ OcarinaEffect_SummonStorms:
 {
   ; Dismiss the rain in the Zora area where it is already raining
   LDA.w $8A : CMP.b #$00 : BEQ .check_for_magic_bean
-              CMP.b #$1E : BEQ .checkForEvent
               CMP.b #$2E : BEQ .dismiss_storms
               CMP.b #$2F : BEQ .dismiss_storms
     ; Check for areas which should not be allowed to have rain
@@ -280,10 +280,6 @@ OcarinaEffect_SummonStorms:
   LDA.b #$3C : STA.w $012E ; Error beep
   RTL
 
-  .checkForEvent
-    JSR CheckForZoraEvent : BCC .error_beep
-    JMP .dismiss_storms
-
   .check_for_magic_bean
   LDA.b #Sprite_BeanVendor : LDX.b #$00
   JSL Sprite_CheckForPresence : BCC .not_active
@@ -298,19 +294,6 @@ OcarinaEffect_SummonStorms:
     JMP .summon_or_dismiss
   .not_active
   RTL
-}
-
-; Y: E8 06, X: 48 0C
-CheckForZoraEvent:
-{
-  LDA $20 : CMP.w #$06E8 : BNE .not_zora
-  LDA $22 : CMP.w #$0C48 : BNE .not_zora
-    LDA.b #$01 : STA $04C6
-    SEC
-    RTS
-  .not_zora
-  CLC
-  RTS
 }
 
 PlayThunderAndRain:

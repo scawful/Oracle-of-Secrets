@@ -40,6 +40,7 @@ CurrentSong    = $030F
 
 ; 01 - Song of Healing
 ; 02 - Song of Time
+; 03 - Song of Storms
 SongFlag       = $FE
 
 ; =========================================================
