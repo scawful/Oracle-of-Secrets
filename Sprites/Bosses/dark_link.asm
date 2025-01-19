@@ -125,7 +125,7 @@ DarkLink_Palette:
 
 Sprite_DarkLink_Main:
 {
-  LDA.w SprAction, X : JSL UseImplicitRegIndexedLocalJumpTable
+  LDA.w SprAction, X : JSL JumpTableLocal
 
   dw Handler
   dw SwordSlash
@@ -1526,7 +1526,7 @@ GanonInit:
 
 Sprite_Ganon_Main:
 {
-  LDA.w SprAction, X : JSL UseImplicitRegIndexedLocalJumpTable
+  LDA.w SprAction, X : JSL JumpTableLocal
 
   dw Wait
   dw ShowMessage

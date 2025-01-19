@@ -1,4 +1,3 @@
-; ==============================================================================\
 ; RAM used
 
 ;$35-$37 as some temp draw ram
@@ -6,42 +5,22 @@
 ;$7EEA00-$7EEAB8 draw table storage
 ;$7EEAB8-$7EEAC9 room cleared flags
 
-; ==============================================================================
 ; Hooks
-
-org $05AB93
-    Sprite2_CheckDamage:
-
-org $05F955
-    Sprite2_CheckIfActivePermissive:
-
-org $05FA2E
-    Sprite2_MoveAltitude:
-
-org $05F9ED
-    Sprite2_Move:
+Sprite2_CheckDamage = $05AB93
+Sprite2_CheckIfActivePermissive = $05F955
+Sprite2_MoveAltitude = $05FA2E
+Sprite2_Move = $05F9ED
 
 org $068F95 ; skip SpritePrep_Bosses
-    NOP : NOP : NOP
-    ;JSR $8F1C ; original JSR
-    JSL Lanmola_FinishInitialization
+    NOP #3
+    JSL Lanmola_FinishInitialization ;JSR $8F1C ; original JSR
 
-org $05B60E
-    dw Sprite_Lanmola
+org $05B60E : dw Sprite_Lanmola
+org $1AF9D6 : JSL SetShrapnelTimer
+org $1AF981 : Lanmola_SpawnShrapnel:
+org $1DF614 : Sprite_ConvertVelocityToAngle:
 
-org $1AF9D6
-    JSL SetShrapnelTimer
-
-org $1AF981
-    Lanmola_SpawnShrapnel:
-
-org $1DF614
-    Sprite_ConvertVelocityToAngle:
-
-org $05A377 ;replace vanilla sprite_lanmola.asm
-
-; ==============================================================================
-
+org $05A377 ; replace vanilla sprite_lanmola.asm
 Lanmola_FinishInitialization:
 {
     PHB : PHK : PLB
@@ -79,15 +58,13 @@ Lanmola_FinishInitialization:
     db $80, $CF, $FF, $60
 }
 
-; ==============================================================================
-
 Sprite_Lanmola:
 {
     ;JSR Sprite2_CheckIfActivePermissive
 
     LDA $0D80, X
 
-    JSL UseImplicitRegIndexedLocalJumpTable
+    JSL JumpTableLocal
 
     dw Lanmola_Wait  ;0x00
     dw Lanmola_Mound ;0x01
@@ -97,7 +74,7 @@ Sprite_Lanmola:
     dw Lanmola_Death ;0x05
 }
 
-; ==============================================================================
+
 
 Lanmola_Wait: ;0x00
 {
@@ -116,7 +93,7 @@ Lanmola_Wait: ;0x00
     RTS
 }
 
-; ==============================================================================
+
 
 Lanmola_Mound: ;0x01
 {
@@ -160,7 +137,7 @@ Lanmola_Mound: ;0x01
     RTS
 }
 
-; ==============================================================================
+
 
 Lanmola_Fly: ;0x02
 {
@@ -229,8 +206,6 @@ Lanmola_Fly: ;0x02
     RTS
 }
 
-; ==============================================================================
-
 Lanmola_Dive: ;0x03
 {
     JSR Lanmola_Draw
@@ -259,8 +234,6 @@ Lanmola_Dive: ;0x03
     RTS
 }
 
-; ==============================================================================
-
 Lanmola_Reset: ;0x04
 {
     JSR Lanmola_Draw
@@ -282,8 +255,6 @@ Lanmola_Reset: ;0x04
 
     RTS
 }
-
-; ==============================================================================
 
 Lanmola_Death: ;0x05
 {
@@ -368,8 +339,6 @@ Lanmola_Death: ;0x05
 
     RTS
 }
-
-; ==============================================================================
 
 Lanmola_Draw:
 {
@@ -520,8 +489,6 @@ Lanmola_Draw:
     RTS
 }
 
-; ==============================================================================
-
 Lanmola_DrawMound:
 {
     LDA.b #$04 : JSL OAM_AllocateFromRegionB
@@ -570,13 +537,9 @@ Lanmola_DrawMound:
     RTS
 }
 
-; ==============================================================================
-
 assert pc() <= $05A880
 
-; ==============================================================================
 org $1DCFCB
-
 Sprite_Shrapnel:
 {
     ; This sprite manifests as a boulder outdoors, and as shrapnel indoors.
@@ -629,7 +592,5 @@ Sprite_Shrapnel:
 
     RTS
 }
-
-; ==============================================================================
 
 assert pc() <= $1DD02A

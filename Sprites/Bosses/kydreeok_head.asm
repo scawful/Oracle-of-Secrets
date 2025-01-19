@@ -64,7 +64,7 @@ SpeedTable:
 Sprite_KydreeokHead_Main:
 {
   LDA.w SprAction, X
-  JSL   UseImplicitRegIndexedLocalJumpTable
+  JSL   JumpTableLocal
 
   dw KydreeokHead_ForwardAnim ; 0x00
   dw KydreeokHead_RightAnim   ; 0x01
@@ -73,7 +73,6 @@ Sprite_KydreeokHead_Main:
   dw KydreeokHead_FarLeft     ; 0x04
   dw KydreeokHead_SummonFire  ; 0x05
 
-  ; -------------------------------------------------------
   ; 0x00
   KydreeokHead_ForwardAnim:
   {
@@ -105,7 +104,6 @@ Sprite_KydreeokHead_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
   ; 0x01
   KydreeokHead_RightAnim:
   {
@@ -127,7 +125,6 @@ Sprite_KydreeokHead_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
   ; 0x02
   KydreeokHead_LeftAnim:
   {
@@ -148,7 +145,6 @@ Sprite_KydreeokHead_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
   ; 0x03
   KydreeokHead_FarRight:
   {
@@ -168,7 +164,6 @@ Sprite_KydreeokHead_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
   ; 0x04
   KydreeokHead_FarLeft:
   {
@@ -291,8 +286,6 @@ RandomlyAttack:
   .no_attack
   RTS
 }
-
-; =========================================================
 
 MoveWithBody:
 {
@@ -535,8 +528,6 @@ KydreeokHead_NeckControl:
   RTS
 }
 
-; =========================================================
-
 Sprite_KydreeokHead_DrawNeck:
 {
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .neck2
@@ -608,8 +599,6 @@ DrawNeckPart:
   INY
   RTS
 }
-
-; =========================================================
 
 Sprite_KydreeokHead_Draw:
 {

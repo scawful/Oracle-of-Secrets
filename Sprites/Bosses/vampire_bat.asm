@@ -9,7 +9,7 @@ Sprite_VampireBat_Main:
   JSL Sprite_BounceFromTileCollision
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw VampireBat_Idle
   dw VampireBat_Ascend

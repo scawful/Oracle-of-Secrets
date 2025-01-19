@@ -43,8 +43,6 @@ Sprite_Kydrog_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_Kydrog_Prep:
 {
   PHB : PHK : PLB
@@ -55,12 +53,10 @@ Sprite_Kydrog_Prep:
   RTL
 }
 
-; =========================================================
-
 Sprite_Kydrog_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Kydrog_StartCutscene
   dw Kydrog_AttractPlayer
@@ -139,8 +135,6 @@ Sprite_Kydrog_Main:
   }
 }
 
-; =========================================================
-
 Sprite_Kydrog_Draw:
 {
   JSL Sprite_PrepOamCoord
@@ -188,8 +182,6 @@ Sprite_Kydrog_Draw:
   PLX
 
   RTS
-
-; =========================================================
 
   .start_index
     db $00

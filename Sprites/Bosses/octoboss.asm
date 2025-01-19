@@ -2,12 +2,10 @@
 ; Octoboss by Zarby89
 
 pushpc
-
 ; Sprite_A2_Kholdstare
 org $1E9518
 JSL Sprite_Octoboss_Long
 RTS
-
 pullpc
 
 BrotherSpr = $0EB0
@@ -74,7 +72,7 @@ Sprite_Octoboss_Long:
 Sprite_Octoboss_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw WaitForPlayerToApproach ; 00
   dw Emerge ; 01
@@ -97,7 +95,7 @@ Sprite_Octoboss_Main:
 
 Sprite_Octoboss_Secondary:
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw WaitForPlayerToApproach ; 00
   dw Emerge ; 01

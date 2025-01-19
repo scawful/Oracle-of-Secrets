@@ -49,8 +49,6 @@ Sprite_KydrogBoss_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_KydrogBoss_CheckIfDead:
 {
   LDA.w SprAction, X : CMP.b #$09 : BEQ .not_dead
@@ -70,8 +68,6 @@ Sprite_KydrogBoss_CheckIfDead:
   .not_dead
   RTS
 }
-
-; =========================================================
 
 Sprite_KydrogBoss_Prep:
 {
@@ -95,7 +91,6 @@ Sprite_KydrogBoss_Prep:
   PLB
   RTL
 }
-; =========================================================
 
 pushpc
 org $1ECD97
@@ -153,8 +148,8 @@ KydrogBoss_DoMovement:
 
 Sprite_KydrogBoss_Main:
 {
-  LDA.w SprAction, X; Load the SprAction
-  JSL UseImplicitRegIndexedLocalJumpTable; Goto the SprAction we are currently in
+  LDA.w SprAction, X
+  JSL JumpTableLocal
 
   dw KydrogBoss_Init          ; 00
   dw KydrogBoss_WalkState     ; 01
@@ -171,8 +166,6 @@ Sprite_KydrogBoss_Main:
   dw KydrogBoss_Descend       ; 0B
   dw KydrogBoss_Abscond       ; 0C
 
-  ; -------------------------------------------------------
-
   KydrogBoss_Init:
   {
     %StartOnFrame(15)
@@ -185,8 +178,6 @@ Sprite_KydrogBoss_Main:
     +
     RTS
   }
-
-  ; -------------------------------------------------------
 
   KydrogBoss_WalkState:
   {
@@ -231,8 +222,6 @@ Sprite_KydrogBoss_Main:
       RTS
   }
 
-  ; -------------------------------------------------------
-
   KydrogBoss_WalkForward:
   {
     %PlayAnimation(0, 2, 8)
@@ -260,8 +249,6 @@ Sprite_KydrogBoss_Main:
     JSR KydrogBoss_DoMovement
     RTS
   }
-
-  ; -------------------------------------------------------
 
   KydrogBoss_TakeDamage: ;0x06
   {
@@ -298,8 +285,6 @@ Sprite_KydrogBoss_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
-
   KydrogBoss_TauntPlayer: ;0x07
   {
     %StartOnFrame(15)
@@ -316,8 +301,6 @@ Sprite_KydrogBoss_Main:
     .continue_timer
     RTS
   }
-
-  ; -------------------------------------------------------
 
   KydrogBoss_SummonStalfos: ;0x08
   {
@@ -338,8 +321,6 @@ Sprite_KydrogBoss_Main:
     +
     RTS
   }
-
-  ; -------------------------------------------------------
 
   KydrogBoss_Death: ;0x09
   {
@@ -421,8 +402,6 @@ Sprite_KydrogBoss_Main:
   }
 }
 
-; =========================================================
-
 CheckForNextPhase:
 {
   LDA !KydrogPhase : CMP.b #$00 : BEQ .phase_one
@@ -460,8 +439,6 @@ CheckForNextPhase:
   .return
   RTS
 }
-
-; =========================================================
 
 ; TODO: Use a timer to unfreeze the sprite
 Sprite_CheckIfFrozen:
@@ -507,8 +484,6 @@ KydrogBoss_Set_Damage:
   db $00, $01, $01, $01, $01, $01, $01, $00, $04, $01, $00, $01, $03, $01, $00, $01
       ;BA   D1   D2   D3   D4   D5   AR   HS   BM   SA   PD   FR   IR   BB   ET   QU
 }
-
-; =========================================================
 
 Sprite_Offspring_SpawnHead:
 {
@@ -609,8 +584,6 @@ GetNumberSpawnStalfos:
   .stalfos_ids
     db $7C, $02, $A7, $85
 }
-
-; =========================================================
 
 Sprite_KydrogBoss_Draw:
 {

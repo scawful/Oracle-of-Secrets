@@ -1,6 +1,5 @@
 ; =========================================================
-; Sprite Properties
-; =========================================================
+; Manhandla / Big ChuChu Sprite
 
 !SPRID              = Sprite_Manhandla
 !NbrTiles           = 03  ; Number of tiles used in a frame
@@ -32,8 +31,6 @@
 
 %Set_Sprite_Properties(Sprite_Manhandla_Prep, Sprite_Manhandla_Long)
 
-; =========================================================
-
 Sprite_Manhandla_Long:
 {
   PHB : PHK : PLB
@@ -56,8 +53,6 @@ pushpc
 org $06FA25
   LDA.w $0E20, X : CMP.b #$88
 pullpc
-
-; =========================================================
 
 Sprite_Manhandla_Prep:
 {
@@ -117,8 +112,6 @@ Sprite_Manhandla_CheckForNextPhaseOrDeath:
   RTS
 }
 
-; =========================================================
-
 SetLeftHeadPos:
   REP #$20
   LDA.w SprCachedX : SEC : SBC.w #$0016
@@ -158,7 +151,7 @@ SetCenterHeadPos:
 Sprite_Manhandla_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Manhandla_Intro
   dw Manhandla_FrontHead ; 0x01
@@ -383,7 +376,7 @@ Sprite_Manhandla_Main:
 Sprite_Manhandla_Move:
 {
   LDA.w SprMiscC, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw StageControl
   dw MoveXandY
@@ -407,7 +400,6 @@ Sprite_Manhandla_Move:
     JSL Sprite_ApplySpeedTowardsPlayer
     JSR Manhandla_StopIfOutOfBounds
     JSL MoveBody
-
     INC.w SprMiscC, X
     RTS
   }
@@ -418,7 +410,6 @@ Sprite_Manhandla_Move:
     JSL Sprite_ApplySpeedTowardsPlayerXOrY
     JSR Manhandla_StopIfOutOfBounds
     JSL MoveBody
-
     INC.w SprMiscC, X
     RTS
   }
@@ -500,8 +491,6 @@ Manhandla_StopIfOutOfBounds:
 
   RTS
 }
-
-; =========================================================
 
 Sprite_Manhandla_Draw:
 {
