@@ -501,6 +501,8 @@ Sprite_LoadGfxProperties = $00FC41
 
 ThrownSprite_TileAndSpriteInteraction_long = $06DFF2
 
+Overworld_DrawMap16_Persist = $1BC97C
+
 ; =========================================================
 ; Local functions which may be useful for sprites
 ; Sprite_AttemptZapDamage - 06EC02

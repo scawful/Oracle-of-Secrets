@@ -9,19 +9,45 @@
 ; a - BG4 enabled
 ; b - BG3 enabled
 ; c - BG2 enabled
-; d - (BG1 disabled) --> only works properly if the room uses the feature "BG2 on Top"
+; d - (BG1 disabled) --> only works if the room uses the feature "BG2 on Top"
 ;
 ; Originally by XaserLE, updated by scawful
 
-; =========================================================
-; long subroutine that is executed every frame
+; LinkItem_Book
+; Desert Book activation trigger
+org $07A484 ; LDA $02ED : BNE BRANCH_BETA
+  NOP #01
+  JML LinkItem_BookOfSecrets
+  return_pos:
 
-org $068365
-JSL LinkItem_SecretsBook ; overwrite it (originally JSL $099F91)
 
 pullpc
+LinkItem_BookOfSecrets:
+{
+  ; set link in praying mode
+  ; LDA.b #$02 : STA.w $037A
+  ; LDA #$FF : STA $8C
+  ; LDA #$00 : STA $7EE00E
+  ; STZ $1D : STZ $9A
+  ; STZ.w $012D
 
-LinkItem_SecretsBook:
+  ; Are we on the castle map?
+  LDA $8A : CMP.b #$1B : BNE +
+    ; Is there an overlay playing?
+    LDA $04C6 : BNE +
+      ; If not, start the castle entrance animation
+      LDA.b #$02 : STA.w $04C6 ; Set the overlay
+      STZ.b $B0 : STZ.b $C8
+      ; Cache the camera
+      REP #$20
+      LDA.w $0618 : STA.w CameraCache
+      SEP #$20
+  +
+  JML $07A493 ; return do not !
+}
+
+
+Dungeon_RevealSecrets:
 {
   ; Check if we are in a building
   LDA $1B : AND #$01 : BEQ .end
@@ -45,7 +71,7 @@ LinkItem_SecretsBook:
     ; ----------
 
   .end
-  JSL $099F91
+  ; @ $068365, JSL $099F91 old hook
   RTL
 }
 

@@ -1,8 +1,13 @@
 ; =========================================================
+; Overlays $04C6
+; 01 - Zora Temple (OW 1E)
+; 02 - Castle Bridge (OW 1B)
+; 03 - Tail Palace (OW 2F)
+; 04 - Goron Mines Entrance (OW 36)
+; 05 - Fortress of Secrets (OW 5E)
 
 ; Trigger Zora Temple from Tablet
-org $1EE061
-  CMP.b #$1E ; Zora Temple Map
+org $1EE061 : CMP.b #$1E ; Zora Temple Map
 
 ; InitiateDesertCutscene
 org $07866D
@@ -12,49 +17,7 @@ org $07866D
   LDA.b #$1B : STA.b $5D
   RTL
 
-; =========================================================
-; Overlays $04C6
-; 01 - Zora Temple (OW 1E)
-; 02 - Castle Bridge (OW 1B)
-; 03 - Tail Palace (OW 2F)
-; 04 - Goron Mines Entrance (OW 36)
-; 05 - Fortress of Secrets (OW 5E)
-
 CameraCache = $0632
-
-; LinkItem_Book
-; Desert Book activation trigger
-org $07A484 ; LDA $02ED : BNE BRANCH_BETA
-NOP #01
-JML NewDesertCheck
-returnPos:
-
-pullpc
-NewDesertCheck:
-{
-  ; set link in praying mode
-  ; LDA.b #$02 : STA.w $037A
-  ; LDA #$FF : STA $8C
-  ; LDA #$00 : STA $7EE00E
-  ; STZ $1D : STZ $9A
-  ; STZ.w $012D
-
-  ; Are we on the castle map?
-  LDA $8A : CMP.b #$1B : BNE +
-    ; Is there an overlay playing?
-    LDA $04C6 : BNE +
-      ; If not, start the castle entrance animation
-      LDA.b #$02 : STA.w $04C6 ; Set the overlay
-      STZ.b $B0 : STZ.b $C8
-      ; Cache the camera
-      REP #$20
-      LDA.w $0618 : STA.w CameraCache
-      SEP #$20
-  +
-  JML $07A493 ; return do not !
-}
-
-pushpc
 
 org $1BCADE
 JSL ZoraTemple_EntranceAnimation
@@ -137,40 +100,40 @@ ZoraTemple_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$0965
     LDX.w #$0490
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0175
     LDX.w #$0492
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0965
     LDX.w #$049C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0175
     LDX.w #$049E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02D5
     LDX.w #$0510
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0730
     LDX.w #$0512
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02D5
     LDX.w #$051C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0730
     LDX.w #$051E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00CE
     LDX.w #$0410
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00D5
     LDX.w #$0412
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00CE
     LDX.w #$041C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00D5
     LDX.w #$041E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -191,40 +154,40 @@ ZoraTemple_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$0965
     LDX.w #$0510
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0183
     LDX.w #$0512
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02D5
     LDX.w #$0590
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0730
     LDX.w #$0592
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0965
     LDX.w #$051C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0183
     LDX.w #$051E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02D5
     LDX.w #$059C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0730
     LDX.w #$059E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00CE
     LDX.w #$0490
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00D5
     LDX.w #$0492
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00CE
     LDX.w #$049C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00D5
     LDX.w #$049E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -246,40 +209,40 @@ ZoraTemple_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$00CE
     LDX.w #$0510
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00D5
     LDX.w #$0512
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00CE
     LDX.w #$051C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00D5
     LDX.w #$051E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0965
     LDX.w #$0590
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0183
     LDX.w #$0592
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02D5
     LDX.w #$0610
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0730
     LDX.w #$0612
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0965
     LDX.w #$059C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0183
     LDX.w #$059E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02D5
     LDX.w #$061C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0730
     LDX.w #$061E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -300,46 +263,46 @@ ZoraTemple_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$0530
     LDX.w #$0616
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02E4
     LDX.w #$0618
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$05A1
     LDX.w #$0594
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$05A1
     LDX.w #$059A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0530
     LDX.w #$0596
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02E4
     LDX.w #$0598
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0599
     LDX.w #$0614
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0599
     LDX.w #$061A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0094
     LDX.w #$0494
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0094
     LDX.w #$049A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$05A1
     LDX.w #$0514
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$05A1
     LDX.w #$051A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0530
     LDX.w #$0516
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02E4
     LDX.w #$0518
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -360,34 +323,34 @@ ZoraTemple_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$056D
     LDX.w #$0396
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$056D
     LDX.w #$0398
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$056D
     LDX.w #$0416
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$056D
     LDX.w #$0418
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$056D
     LDX.w #$0496
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$056D
     LDX.w #$0498
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$056D
     LDX.w #$0414
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$056D
     LDX.w #$041A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$06AF
     LDX.w #$0394
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$06AF
     LDX.w #$039A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -409,52 +372,52 @@ ZoraTemple_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$02C0
     LDX.w #$0292
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02BD
     LDX.w #$029C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00D5
     LDX.w #$031C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00CE
     LDX.w #$0392
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00D5
     LDX.w #$039C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00CE
     LDX.w #$0412
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00D5
     LDX.w #$041C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0965
     LDX.w #$0492
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0175
     LDX.w #$049C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00C7
     LDX.w #$0512
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00C8
     LDX.w #$051C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$057D
     LDX.w #$0592
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$057D
     LDX.w #$059C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0156
     LDX.w #$0612
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0156
     LDX.w #$061C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00CE
     LDX.w #$0312
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     LDA.b #$07 :  STA.w $012D
@@ -477,52 +440,52 @@ ZoraTemple_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$02BF
     LDX.w #$0192
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0312
     LDX.w #$019C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02B9
     LDX.w #$0212
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02B6
     LDX.w #$021C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$06B0
     LDX.w #$0214
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$06B1
     LDX.w #$0216
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$06B2
     LDX.w #$0218
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$06B3
     LDX.w #$021A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$06B5
     LDX.w #$0294
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00DF
     LDX.w #$0296
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00E0
     LDX.w #$0298
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$06B6
     LDX.w #$029A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$02D5
     LDX.w #$0314
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0223
     LDX.w #$0316
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0205
     LDX.w #$0318
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0730
     LDX.w #$031A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -544,52 +507,52 @@ ZoraTemple_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$00C7
     LDX.w #$0014
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0158
     LDX.w #$0016
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0158
     LDX.w #$0018
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00C8
     LDX.w #$001A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00C7
     LDX.w #$0094
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0158
     LDX.w #$0096
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0158
     LDX.w #$0098
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00C8
     LDX.w #$009A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00C7
     LDX.w #$0114
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0158
     LDX.w #$0116
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0158
     LDX.w #$0118
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00C8
     LDX.w #$011A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00C7
     LDX.w #$0194
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0158
     LDX.w #$0196
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0158
     LDX.w #$0198
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$00C8
     LDX.w #$019A
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     LDA.b #$0D :  STA.w $012D
@@ -705,40 +668,40 @@ Castle_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$0611
     LDX.w #$031C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0613
     LDX.w #$031E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0613
     LDX.w #$0320
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0612
     LDX.w #$0322
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0614
     LDX.w #$039C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0613
     LDX.w #$039E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0613
     LDX.w #$03A0
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0615
     LDX.w #$03A2
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0480
     LDX.w #$029C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0479
     LDX.w #$029E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0479
     LDX.w #$02A0
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0481
     LDX.w #$02A2
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -762,64 +725,64 @@ Castle_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$049E
     LDX.w #$039C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$049C
     LDX.w #$039E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0604
     LDX.w #$03A0
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0608
     LDX.w #$03A2
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$060A
     LDX.w #$041C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0495
     LDX.w #$041E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0496
     LDX.w #$0420
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0499
     LDX.w #$0422
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0602
     LDX.w #$049C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0606
     LDX.w #$049E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0606
     LDX.w #$04A0
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$060E
     LDX.w #$04A2
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0610
     LDX.w #$051C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0606
     LDX.w #$051E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0606
     LDX.w #$0520
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$046C
     LDX.w #$0522
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$046F
     LDX.w #$059C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0469
     LDX.w #$059E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$046A
     LDX.w #$05A0
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$046E
     LDX.w #$05A2
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -841,16 +804,16 @@ Castle_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$0108
     LDX.w #$061C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$010A
     LDX.w #$0622
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$04E2
     LDX.w #$0620
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$04E2
     LDX.w #$061E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -872,28 +835,28 @@ Castle_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$0611
     LDX.w #$039C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0612
     LDX.w #$03A2
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0613
     LDX.w #$039E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0613
     LDX.w #$03A0
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$048F
     LDX.w #$031C
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0474
     LDX.w #$031E
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$061C
     LDX.w #$0320
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$061A
     LDX.w #$0322
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -929,7 +892,7 @@ TailPalace_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$0A8C
     LDX.w #$02A2
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -950,7 +913,7 @@ TailPalace_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$0AF3
     LDX.w #$0328
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -971,10 +934,10 @@ TailPalace_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$0AF1
     LDX.w #$0328
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0AF3
     LDX.w #$03A8
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -1025,7 +988,7 @@ Goron_EntranceAnimation:
   REP #$30 ; 16 bit mode
   LDA.w #$0789
   LDX.w #$10A2
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  JSL Overworld_DrawMap16_Persist
   SEP #$30 ; 8 bit mode
   INC.b $14 ; Do tiles transfer
   LDA.b #$16 :  STA.w $012F
@@ -1045,7 +1008,7 @@ Goron_EntranceAnimation:
   REP #$30 ; 16 bit mode
   LDA.w #$09C1
   LDX.w #$109C
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  JSL Overworld_DrawMap16_Persist
   SEP #$30 ; 8 bit mode
   INC.b $14 ; Do tiles transfer
   .notfirstframe
@@ -1064,10 +1027,10 @@ Goron_EntranceAnimation:
   REP #$30 ; 16 bit mode
   LDA.w #$09C1
   LDX.w #$1024
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  JSL Overworld_DrawMap16_Persist
   LDA.w #$078A
   LDX.w #$101E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  JSL Overworld_DrawMap16_Persist
   SEP #$30 ; 8 bit mode
   INC.b $14 ; Do tiles transfer
   LDA.b #$16 :  STA.w $012F
@@ -1087,10 +1050,10 @@ Goron_EntranceAnimation:
   REP #$30 ; 16 bit mode
   LDA.w #$0791
   LDX.w #$0FA2
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  JSL Overworld_DrawMap16_Persist
   LDA.w #$0797
   LDX.w #$0F9E
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  JSL Overworld_DrawMap16_Persist
   SEP #$30 ; 8 bit mode
   INC.b $14 ; Do tiles transfer
   .notfirstframe
@@ -1108,7 +1071,7 @@ Goron_EntranceAnimation:
   REP #$30 ; 16 bit mode
   LDA.w #$0787
   LDX.w #$0FA0
-  JSL $1BC97C ; Overworld_DrawMap16_Persist
+  JSL Overworld_DrawMap16_Persist
   SEP #$30 ; 8 bit mode
   INC.b $14 ; Do tiles transfer
   LDA.b #$1B :  STA.w $012F
@@ -1172,28 +1135,28 @@ Fortress_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$0196
     LDX.w #$0754
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$0756
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$06D4
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$06D6
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A2
     LDX.w #$0752
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A2
     LDX.w #$06D2
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A3
     LDX.w #$0758
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A3
     LDX.w #$06D8
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -1215,28 +1178,28 @@ Fortress_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$09A3
     LDX.w #$0658
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A3
     LDX.w #$05D8
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A2
     LDX.w #$0652
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A2
     LDX.w #$05D2
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$0654
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$0656
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$05D6
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$05D4
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -1258,28 +1221,28 @@ Fortress_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$09A3
     LDX.w #$04D8
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A3
     LDX.w #$0558
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A2
     LDX.w #$04D2
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A2
     LDX.w #$0552
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$04D6
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$0556
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$04D4
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$0554
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -1301,28 +1264,28 @@ Fortress_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$0196
     LDX.w #$0454
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$0456
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$03D6
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$0196
     LDX.w #$03D4
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A2
     LDX.w #$03D2
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A2
     LDX.w #$0452
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A3
     LDX.w #$03D8
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$09A3
     LDX.w #$0458
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
@@ -1343,10 +1306,10 @@ Fortress_EntranceAnimation:
     REP #$30 ; 16 bit mode
     LDA.w #$099C
     LDX.w #$0354
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     LDA.w #$099C
     LDX.w #$0356
-    JSL $1BC97C ; Overworld_DrawMap16_Persist
+    JSL Overworld_DrawMap16_Persist
     SEP #$30 ; 8 bit mode
     INC.b $14 ; Do tiles transfer
     .notfirstframe
