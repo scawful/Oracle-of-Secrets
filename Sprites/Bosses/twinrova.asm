@@ -576,29 +576,34 @@ TargetPositions:
 
 ; =========================================================
 
+Twinrova_RestoreFloorTile:
+{
+  LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
+  LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
+
+  LDA.b #$00
+  JSL Sprite_GetTileAttr
+  LDA.w $0FA5 : CMP.b #$0E : BNE +
+    LDA.w SprX,Y : STA.l $7FF83C,X
+    LDA.w SprXH,Y : STA.l $7FF878,X
+    LDA.w SprY,Y : CLC : ADC.b #$10 : STA.l $7FF81E,X
+    LDA.w SprYH,Y : ADC.b #$00 : STA.l $7FF85A,X
+    JSR RestoreFloorTile
+  +
+
+  RTS
+}
+
 RestoreFloorTile:
 {
   PHA
-  LDA.l $7FF83C,X
-  STA.b $00
-  LDA.l $7FF83C,X
-  STA.b $00
-
-  LDA.l $7FF878,X
-  STA.b $01
-
-  LDA.l $7FF81E,X
-  SEC
-  SBC.b #$10
-  STA.b $02
-
-  LDA.l $7FF85A,X
-  SBC.b #$00
-  STA.b $03
+  LDA.l $7FF83C, X : STA.b $00
+  LDA.l $7FF878, X : STA.b $01
+  LDA.l $7FF81E, X : SEC : SBC.b #$10 : STA.b $02
+  LDA.l $7FF85A, X : SBC.b #$00 : STA.b $03
 
   LDY.b #$00
   JSL $01E7A9 ; Underworld_UpdateTilemapWithCommonTile
-
   PLA
   RTS
 }
@@ -606,29 +611,16 @@ RestoreFloorTile:
 AddPitHazard:
 {
   PHA
-
-  LDA.l $7FF83C,X
-  STA.b $00
-
-  LDA.l $7FF878,X
-  STA.b $01
-
-  LDA.l $7FF81E,X
-  SEC
-  SBC.b #$10
-  STA.b $02
-
-  LDA.l $7FF85A,X
-  SBC.b #$00
-  STA.b $03
+  LDA.l $7FF83C, X : STA.b $00
+  LDA.l $7FF878, X : STA.b $01
+  LDA.l $7FF81E, X : SEC : SBC.b #$10 : STA.b $02
+  LDA.l $7FF85A, X : SBC.b #$00 : STA.b $03
 
   LDY.b #$04
   JSL $01E7A9 ; Underworld_UpdateTilemapWithCommonTile
-
   PLA
   RTS
 }
-
 
 Ganon_SpawnFallingTilesOverlord:
 {
