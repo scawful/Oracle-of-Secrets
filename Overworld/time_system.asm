@@ -12,7 +12,7 @@ TimeSpeed = $7EE002
 
 ; HUD Template adjusts timer's color
 org $0DFF07
-	db $10, $24, $11, $24
+  db $10, $24, $11, $24
   db $6C, $25
   db $90, $24, $90, $24
   db $6C, $25, $90, $24, $90, $24
@@ -20,14 +20,14 @@ org $0DFF07
 ; Sprite_Main.dont_reset_drag
 ; Executes every frame to update the clock
 org $068361
-	JSL HUD_ClockDisplay
+  JSL HUD_ClockDisplay
 pullpc
 HUD_ClockDisplay:
 {
-	JSR RunClock
-	JSR DrawClockToHud
-	JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
-	RTL
+  JSR RunClock
+  JSR DrawClockToHud
+  JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
+  RTL
 }
 
 ; Zarby Intro and Credits fix
@@ -87,7 +87,7 @@ DrawClockToHud:
   STA.l !hud_min_high
   LDA #$30 : STA.l !hud_min_high+1 ; white palette
   .finish_draw
-	INX : CPX #$02 : BMI .debut
+  INX : CPX #$02 : BMI .debut
   RTS
 }
 
@@ -284,24 +284,24 @@ org $00FC6A : JSL CheckIfNight16Bit
 ; ----[ Day / Night system * palette effect ]----
 ; =========================================================
 
-!blue_value = $7EE010
-!green_value = $7EE012
-!red_value = $7EE014
+!BlueVal = $7EE010
+!GreenVal = $7EE012
+!RedVal = $7EE014
 
-!temp_value = $7EE016
-!pal_color = $7EE018
+!TempPalColor = $7EE016
+!SubPalColor = $7EE018
 
 Overworld_CopyPalettesToCache = $02C769
 
 org $02FF80		; free space on bank $02
 PaletteBufferToEffective:
-	JSR $C769	; $02:C65F -> palette buffer to effective routine
-	RTL
+  JSR $C769	; $02:C65F -> palette buffer to effective routine
+  RTL
 
 RomToPaletteBuffer:
-	JSR $AAF4	; $02:AAF4 -> change buffer palette of trees,houses,rivers,etc.
-	JSR $C692	; $02:C692 -> rom to palette buffer for other colors
-	RTL
+  JSR $AAF4	; $02:AAF4 -> change buffer palette of trees,houses,rivers,etc.
+  JSR $C692	; $02:C692 -> rom to palette buffer for other colors
+  RTL
 
 PalBuf300_HUD = $7EC300
 PalBuf340_BG = $7EC340
@@ -323,14 +323,14 @@ org $1BEF84 : JSL LoadDayNightPaletteEffect
 pullpc
 LoadDayNightPaletteEffect:
 {
-  STA.l !pal_color : CPX #$0041 : BPL .title_check
+  STA.l !SubPalColor : CPX #$0041 : BPL .title_check
     STA.l PalBuf300_HUD, X
     RTL
   .title_check
 
   ; title or file select screen ?
   LDA $10 : AND #$00FF : CMP #$0002	: BCS .outin_check
-    LDA.l !pal_color
+    LDA.l !SubPalColor
     STA.l PalBuf300_HUD, X
     RTL
   .outin_check
@@ -339,13 +339,13 @@ LoadDayNightPaletteEffect:
                            CMP.w #$0012 : BCS .restorecode
     BRA .overworld
   .restorecode
-  LDA.l !pal_color
+  LDA.l !SubPalColor
   STA.l PalBuf300_HUD, X
   RTL
 
   .overworld
   LDA $1B : AND #$00FF : BEQ .outdoors2
-    LDA.l !pal_color
+    LDA.l !SubPalColor
     STA.l PalBuf300_HUD,X
     RTL
   .outdoors2
@@ -359,43 +359,47 @@ LoadDayNightPaletteEffect:
 
 ; =========================================================
 
+!SmallestBlue = #$0400
+!SmallestGreen = #$0020
+!SmallestRed = #$0001
+
 ColorSubEffect:
 {
-	LDA.l Hours : AND #$00FF : CLC : ADC.l Hours	; hours * 2
-	AND #$00FF : TAX
+  LDA.l Hours : AND #$00FF : CLC : ADC.l Hours	; hours * 2
+  AND #$00FF : TAX
 
   ; Subtract amount to blue field based on a table
-	LDA.l !pal_color : AND #$7C00 : STA !blue_value
-  SEC : SBC.l .blue, X : STA !temp_value
+  LDA.l !SubPalColor : AND #$7C00 : STA !BlueVal
+  SEC : SBC.l .blue, X : STA !TempPalColor
 
   ; mask out everything except the blue bits
-	AND #$7C00 : CMP !temp_value : BEQ .no_blue_sign_change ; overflow ?
-    LDA #$0400		; LDA smallest blue value
+  AND #$7C00 : CMP !TempPalColor : BEQ .no_blue_sign_change ; overflow ?
+    LDA !SmallestBlue
   .no_blue_sign_change
-	STA.l !blue_value
+  STA.l !BlueVal
 
   ; Subtract amount to blue field based on a table
-	LDA !pal_color : AND #$03E0 : STA !green_value
-	SEC : SBC.l .green, X : STA.l !temp_value
+  LDA !SubPalColor : AND #$03E0 : STA !GreenVal
+  SEC : SBC.l .green, X : STA.l !TempPalColor
 
   ; Mask out everything except the green bits
-	AND #$03E0 : CMP !temp_value : BEQ .no_green_sign_change ; overflow ?
-    LDA #$0020 ; LDA smallest green value
+  AND #$03E0 : CMP !TempPalColor : BEQ .no_green_sign_change ; overflow ?
+    LDA !SmallestGreen
   .no_green_sign_change
-	STA.l !green_value
+  STA.l !GreenVal
 
   ; substract amount to red field based on a table
-	LDA.l !pal_color : AND #$001F : STA.l !red_value
-	SEC : SBC.l .red, X : STA.l !temp_value
+  LDA.l !SubPalColor : AND #$001F : STA.l !RedVal
+  SEC : SBC.l .red, X : STA.l !TempPalColor
 
   ; mask out everything except the red bits
-	AND #$001F : CMP !temp_value : BEQ .no_red_sign_change ; overflow ?
-    LDA #$0001 ; LDA smallest red value
+  AND #$001F : CMP !TempPalColor : BEQ .no_red_sign_change ; overflow ?
+    LDA !SmallestRed
   .no_red_sign_change
-	STA.l !red_value
+  STA.l !RedVal
 
-  LDA.l !blue_value : ORA.l !green_value : ORA.l !red_value
-	RTL
+  LDA.l !BlueVal : ORA.l !GreenVal : ORA.l !RedVal
+  RTL
 
   ; color_sub_tables : 24 * 2 bytes each = 48 bytes
   ; (2 bytes = 1 color sub for each hour)
@@ -450,34 +454,34 @@ MosaicFix:
 SubAreasFix:
 {
   BEQ .no_effect
-	STA.l !pal_color
-	PHX
+  STA.l !SubPalColor
+  PHX
     REP #$20
       JSL ColorSubEffect
     SEP #$20
-	PLX
+  PLX
   .no_effect
-	STA.l PalBuf300_HUD
-	STA.l PalBuf340_BG
-	RTL
+  STA.l PalBuf300_HUD
+  STA.l PalBuf340_BG
+  RTL
 }
 
 GlovePalettePosition = $7EC4FA
 
 GlovesFix:
 {
-	STA.l !pal_color
-	LDA $1B : AND #$00FF : BEQ .outdoors3
-    LDA.l !pal_color
+  STA.l !SubPalColor
+  LDA $1B : AND #$00FF : BEQ .outdoors3
+    LDA.l !SubPalColor
     STA GlovePalettePosition
     RTL
 
   .outdoors3:
-	PHX
-	JSL ColorSubEffect
-	PLX
-	STA GlovePalettePosition
-	RTL
+  PHX
+  JSL ColorSubEffect
+  PLX
+  STA GlovePalettePosition
+  RTL
 }
 
 ColorBgFix:
@@ -488,7 +492,7 @@ ColorBgFix:
   LDA.b $10 : CMP.b #$17 : BEQ .vanilla
     REP #$30
     PLA
-    STA.l !pal_color
+    STA.l !SubPalColor
     JSL ColorSubEffect
     STA.l PalCgram500_HUD
     STA.l PalCgram540_BG
@@ -534,7 +538,7 @@ FixShockPalette:
   PHA
   LDA.b $1B : BNE .indoors
     PLA
-    STA !pal_color
+    STA !SubPalColor
     PHX
     JSL ColorSubEffect
     PLX
@@ -617,10 +621,10 @@ org $1BEE2D : JSL GlovesFix
 org $0ED956 : JSL FixDungeonMapColors
 
 ; UnderworldMap_RecoverGFX
-org $0AEFA6 : JSL RestoreTimeForDungeonMap 
+org $0AEFA6 : JSL RestoreTimeForDungeonMap
 
 ; RefreshLinkEquipmentPalettes
-org $0ED745 : JSL FixShockPalette 
+org $0ED745 : JSL FixShockPalette
 
 ; GameOver_SaveAndQuit:
-org $09F604 : JSL FixSaveAndQuit 
+org $09F604 : JSL FixSaveAndQuit

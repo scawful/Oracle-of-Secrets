@@ -19,7 +19,7 @@ UpdateZoraPalette:
   .loop
   LDA.l zora_palette, X
   PHX
-  STA.l !pal_color
+  STA.l !SubPalColor
   JSL ColorSubEffect
   PLX
   STA $7EC6E0, X
