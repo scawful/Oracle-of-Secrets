@@ -7,7 +7,7 @@
 ;
 ; The cart begins in an inactive state, horizontal or vertical
 ; and is activated by the player when they stand on the hitbox
-; and press the B button. Based on the subtype of the cart,
+; and press the B button. Based on the SprMiscB of the cart,
 ; it will move in that direction until it encounters one of the
 ; following scenarions:
 ;
@@ -62,7 +62,7 @@
 !MinecartSpeed      = 20
 !DoubleSpeed        = 30
 
-; SprSubtype and Minecart movement direction
+; SprMiscB and Minecart movement direction
 ; nesw
 ; 0 - north
 ; 1 - east
@@ -72,7 +72,7 @@ North = $00
 East  = $01
 South = $02
 West  = $03
-!MinecartDirection  = $012B
+!MinecartDirection  = $0DE0 ; = SprMiscC
 
 ; Sprite Facing Direction
 ; udlr
@@ -85,6 +85,34 @@ Down = $01
 Left = $02
 Right = $03
 !SpriteDirection    = $0DE0
+
+
+; A "track" is one minecart that can exist in multiple different places.
+; Allowing the player to leave a minecart in one room and then still find
+; it in the same place upon returning to that room.
+
+; There is a total possibility of 0x20 different subtypes that can be set.
+; Therefore there can be a total of 0x20 different tracks. 
+
+; This value is used to keep track of which room the minecart was left
+; in. Currently #$00 is reserved to keep track of new tracks that have
+; not been used yet so tracks will not work when stopped in room 00. Up
+; to $0768 used which is all free ram.
+!MinecartTrackRoom = $0728
+
+; Track X position. This is used to keep track of the possibility of
+; there being more than one stop per track in the same room. Up to $07A8
+; used which is all free ram.
+!MinecartTrackX =  $0768
+
+; Track X position. This is used to keep track of the possibility of
+; there being more than one stop per track in the same room. Up to $07E8
+; used which is all free ram.
+!MinecartTrackY = $07A8
+
+; This is used to keep track of which track we are on while riding
+; the cart. We can only use one cart at a time so this is only 1 byte.
+!MinecartTrackCache = $07E8
 
 ; =========================================================
 
@@ -101,22 +129,54 @@ Sprite_Minecart_Long:
 }
 
 ; =========================================================
-; The subtype of the minecart determines the direction it
-; will move in, so if the subtype is 0 the cart will move
+; The SprMiscB of the minecart determines the direction it
+; will move in, so if the SprMiscB is 0 the cart will move
 ; north and start in WaitVert mode.
 
 Sprite_Minecart_Prep:
 {
   PHB : PHK : PLB
 
+  print "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: ", pc
+  
+  JSR UpdateCachedCoords
+
+  LDA.w SprSubtype, X : ASL : TAY
+  
+  ; If Link is in a cart AND he is on the same track as this cart's
+  ; track, kill the cart.
+  CMP.w !MinecartTrackCache : BNE .notSameTrack
+    LDA.b !LinkInCart : BEQ .notInCart
+      BRA .killMinecart
+    .notInCart
+  .notSameTrack
+  
+  REP #$20
+  ; Check if the track has already been initialized. If not we need to
+  ; tell the game where the cart on the track starts
+  LDA.w !MinecartTrackRoom, Y : BNE .trackAlreadySetUp
+    LDA.w .TrackStartingX, Y : STA.w !MinecartTrackX, Y
+    LDA.w .TrackStartingY, Y : STA.w !MinecartTrackY, Y
+    LDA.w .TrackStartingRooms, Y : STA.w !MinecartTrackRoom, Y
+  .trackAlreadySetUp
+
+  ; Check if we are currently in the room where the track was left.
+  CMP.b $A0 : BEQ .inRoom
+    .killMinecart
+    SEP #$20
+    STZ.w SprState, X
+
+    PLB
+    RTL
+  .inRoom
+
+  ; Check if the coordinates match, if not kill the sprite.
+  LDA.w !MinecartTrackX, Y : CMP.w SprCachedX : BNE .killMinecart
+  LDA.w !MinecartTrackY, Y : CMP.w SprCachedY : BNE .killMinecart
+  SEP #$20
+
   STZ.w SprMiscF, X ; Clear the auto-move flag
   STZ.w SprMiscG, X ; Clear the active tossing flag
-
-  ; If the subtype is > 4, then it's an active cart
-  LDA.w SprSubtype, X : CMP.b #$04 : BCC +
-    LDA.w SprSubtype, X : SEC : SBC.b #$04 : STA.w SprSubtype, X
-    LDA.b #$01 : STA.w SprMiscF, X ; Set the auto-move flag
-  +
 
   LDA.b #$04 : STA.w SprNbrOAM, X   ; Nbr Oam Entries
   LDA.b #$40 : STA.w SprGfxProps, X ; Impervious props
@@ -124,108 +184,102 @@ Sprite_Minecart_Prep:
   STZ.w SprDefl, X                  ; Sprite persist in dungeon
   STZ.w SprBump, X                  ; No bump damage
   STZ.w SprTileDie, X               ; Set interactive hitbox
-  STZ.w !MinecartDirection
+
+  STZ.w !MinecartDirection, X
   STZ.w !SpriteDirection, X
 
-  LDA.w SprSubtype, X : CMP.b #$00 : BEQ .north
-                        CMP.b #$01 : BEQ .east
-                        CMP.b #$02 : BEQ .south
-                        CMP.b #$03 : BEQ .west
+  ; If the SprMiscB is > 4, then it's an active cart. This should only
+  ; be the case when transitioning from a follower.
+  LDA.w SprMiscB, X : CMP.b #$04 : BCC .notActive
+    LDA.w SprMiscB, X : SEC : SBC.b #$04 : STA.w SprMiscB, X
+    LDA.b #$01 : STA.w SprMiscF, X ; Set the auto-move flag
+
+    BRA .active
+  .notActive
+    ; Setup Minecart position to look for tile IDs
+    ; We use AND #$F8 to clamp to a 8x8 grid.
+    LDA.w SprY, X : AND #$F8 : STA.b $00
+    LDA.w SprYH, X           : STA.b $01
+
+    LDA.w SprX, X : AND #$F8 : STA.b $02
+    LDA.w SprXH, X           : STA.b $03
+
+    ; Fetch tile attributes based on current coordinates
+    LDA.b #$00 : JSL Sprite_GetTileAttr
+
+    ; Set our starting direction based on the stop tile we are on.
+    ; This means minecarts should always be placed on top of a stop tile.
+    LDA.w SPRTILE
+    CMP.b #$B7 : BEQ .goSouth
+    CMP.b #$B8 : BEQ .goNorth
+    CMP.b #$B9 : BEQ .goEast
+    CMP.b #$BA : BEQ .goWest
+    .goNorth
+      LDA.b #North : STA.w SprMiscB, X
+      JMP .done2
+    .goEast
+      LDA.b #East : STA.w SprMiscB, X
+      JMP .done2
+    .goSouth
+      LDA.b #South : STA.w SprMiscB, X
+      JMP .done2
+    .goWest
+      LDA.b #West : STA.w SprMiscB, X
+    .done2
+  .active
+  
+  LDA.w SprMiscB, X : CMP.b #$00 : BEQ .north
+                      CMP.b #$01 : BEQ .east
+                      CMP.b #$02 : BEQ .south
+                      CMP.b #$03 : BEQ .west
   .north
+    ; Both !MinecartDirection and !SpriteDirection set to 0 earlier.
     %GotoAction(1) ; Minecart_WaitVert
-    JMP   .done
+    JMP .done
   .east
-    LDA.b #East : STA !MinecartDirection
+    LDA.b #East  : STA !MinecartDirection, X
     LDA.b #Right : STA !SpriteDirection, X
     %GotoAction(0) ; Minecart_WaitHoriz
     JMP .done
   .south
-    LDA.b #South : STA !MinecartDirection
-    LDA.b #Down : STA !SpriteDirection, X
+    LDA.b #South : STA !MinecartDirection, X
+    LDA.b #Down  : STA !SpriteDirection, X
     %GotoAction(1) ; Minecart_WaitVert
     JMP .done
   .west
-    LDA.b #West : STA !MinecartDirection
+    LDA.b #West : STA !MinecartDirection, X
     LDA.b #Left : STA !SpriteDirection, X
     %GotoAction(0) ; Minecart_WaitHoriz
   .done
   PLB
   RTL
-}
 
-; =========================================================
-; Handle the tossing of the cart
-; Changes the subtype of the cart to indicate the direction
-; the cart is facing and sets the velocity of the cart
-; based on the direction it is facing.
+  ; This is which room each track should start in if it hasn't already
+  ; been given a track.
+  .TrackStartingRooms
+  dw $0089, $0089, $0089, $0089, $0089, $0089, $0089, $0089
+  dw $0089, $0089, $0089, $0089, $0089, $0089, $0089, $0089
+  dw $0089, $0089, $0089, $0089, $0089, $0089, $0089, $0089
+  dw $0089, $0089, $0089, $0089, $0089, $0089, $0089, $0089
 
-Minecart_HandleToss:
-{
-  LDA.b #$30 : STA.w SprTimerA, X
-  ; Check links facing direction $2F and apply velocity
-  LDA $2F : CMP.b #$00 : BEQ .toss_north
-            CMP.b #$02 : BEQ .toss_south
-            CMP.b #$04 : BEQ .toss_east
-            CMP.b #$06 : BEQ .toss_west
-  .toss_north
-    LDA.b #-!DoubleSpeed : STA.w SprYSpeed, X
-    LDA #$00 : STA.w SprSubtype, X : STA !SpriteDirection, X
-    %GotoAction(1) ; Minecart_WaitVert
-    JMP .continue
-  .toss_south
-    LDA.b #!DoubleSpeed : STA.w SprYSpeed, X
-    LDA #$02 : STA.w SprSubtype,       X
-    LDA #$01 : STA !SpriteDirection, X
-    %GotoAction(1) ; Minecart_WaitVert
-    JMP .continue
-  .toss_east
-    LDA.b #-!DoubleSpeed : STA.w SprXSpeed, X
-    LDA #$01 : STA.w SprSubtype,       X
-    LDA #$03 : STA !SpriteDirection, X
-    %GotoAction(0) ; Minecart_WaitHoriz
-    JMP .continue
-  .toss_west
-    LDA.b #!DoubleSpeed : STA.w SprXSpeed, X
-    LDA #$03 : STA.w SprSubtype,       X
-    LDA #$02 : STA !SpriteDirection, X
-    %GotoAction(0) ; Minecart_WaitHoriz
-  .continue
-  LDA #$01 : STA.w SprMiscG, X
-  LDA #$12 : STA.w SprTimerC, X
-  STA.w SprYRound, X : STA.w SprXRound, X
-  RTS
-}
+  ; This is where within the room each track should start in if it hasn't
+  ; already been given a position. This is necessary to allow for more
+  ; than one stopping point to be in one room.
+  .TrackStartingX
+  dw $1320, $12D0, $1300, $1300, $1300, $1300, $1300, $1300
+  dw $1300, $1300, $1300, $1300, $1300, $1300, $1300, $1300
+  dw $1300, $1300, $1300, $1300, $1300, $1300, $1300, $1300
+  dw $1300, $1300, $1300, $1300, $1300, $1300, $1300, $1300
 
-Minecart_HandleTossedCart:
-{
-  LDA.w SprMiscG, X : BEQ .not_tossed
-    LDA.w SprHeight, X : BEQ .low_enough
-      DEC.w SprHeight, X
-      RTS
-  .low_enough
+  .TrackStartingY
+  dw $11C0, $1120, $1100, $1100, $1100, $1100, $1100, $1100
+  dw $1100, $1100, $1100, $1100, $1100, $1100, $1100, $1100
+  dw $1100, $1100, $1100, $1100, $1100, $1100, $1100, $1100
+  dw $1100, $1100, $1100, $1100, $1100, $1100, $1100, $1100
 
-  LDA.w SprTimerC, X : BNE .not_tossed
-    LDA.w SprX, X : AND.b #$F8 : STA.w SprX, X
-    LDA.w SprY, X : AND.b #$F8 : STA.w SprY, X
-    STZ.w SprMiscG, X
-    STZ.w SprYSpeed, X
-    STZ.w SprXSpeed, X
-    STZ.w SprHeight, X
-  .not_tossed
-  RTS
-}
-
-Minecart_HandleLiftAndToss:
-{
-  JSR CheckIfPlayerIsOn : BCC .not_tossing
-    LDA.w LinkCarryOrToss : CMP.b #$02 : BNE .not_tossing
-      JSR Minecart_HandleToss
-  .not_tossing
-  JSL Sprite_CheckIfLifted
-  JSL Sprite_Move
-  JSR Minecart_HandleTossedCart
-  JSL ThrownSprite_TileAndSpriteInteraction_long
-  RTS
+  ; NOTE TO SCAWFUL: All of these values will need to be set when you
+  ; place the carts within ZS. I set them all to spawn in the middle of
+  ; room 0x89 just for testing purposes.
 }
 
 ; =========================================================
@@ -248,6 +302,7 @@ Sprite_Minecart_Main:
   Minecart_WaitHoriz:
   {
     %PlayAnimation(0,1,8)
+
     LDA.w LinkCarryOrToss : AND #$03 : BNE .lifting
       LDA.w SprTimerA, X : BNE .not_ready
         JSR CheckIfPlayerIsOn : BCC .not_ready
@@ -257,14 +312,17 @@ Sprite_Minecart_Main:
             LDA $F4 : AND.b #$80 : BEQ .not_ready
           .active_cart
 
+          ; Save what track we are currently riding.
+          LDA.w SprSubtype, X : STA.w !MinecartTrackCache
+
           JSL Link_CancelDash
-          LDA #$02 : STA.w LinkSomaria
-          LDA #$01 : STA !LinkInCart
+          LDA.b #$02 : STA.w LinkSomaria
+          LDA.b #$01 : STA.w !LinkInCart
           ; Adjust player pos
           LDA.w SprCachedY : SEC : SBC #$0B : STA $20
 
           ; Check if the cart is facing east or west
-          LDA.w SprSubtype, X : CMP.b #$03 : BNE +
+          LDA.w SprMiscB, X : CMP.b #$03 : BNE +
             JSR Minecart_SetDirectionWest
             %GotoAction(5)  ; Minecart_MoveWest
             RTS
@@ -274,6 +332,7 @@ Sprite_Minecart_Main:
           RTS
       .not_ready
     .lifting
+
     ;JSR Minecart_HandleLiftAndToss
     RTS
   }
@@ -283,6 +342,7 @@ Sprite_Minecart_Main:
   Minecart_WaitVert:
   {
     %PlayAnimation(2,3,8)
+
     LDA.w LinkCarryOrToss : AND #$03 : BNE .lifting
       LDA.w SprTimerA, X : BNE .not_ready
         JSR CheckIfPlayerIsOn : BCC .not_ready
@@ -292,6 +352,9 @@ Sprite_Minecart_Main:
             LDA $F4 : AND.b #$80 : BEQ .not_ready
           .active_cart
 
+          ; Save what track we are currently riding.
+          LDA.w SprSubtype, X : STA.w !MinecartTrackCache
+
           JSL Link_CancelDash
           LDA.b #$02 : STA.w LinkSomaria
           LDA.b #$01 : STA.w !LinkInCart
@@ -299,7 +362,7 @@ Sprite_Minecart_Main:
           LDA.w SprCachedY : SEC : SBC #$0B : STA $20
 
           ; Check if the cart is facing north or south
-          LDA.w SprSubtype, X : BEQ +
+          LDA.w SprMiscB, X : BEQ +
             JSR Minecart_SetDirectionSouth
             %GotoAction(4)  ; Minecart_MoveSouth
             RTS
@@ -309,6 +372,7 @@ Sprite_Minecart_Main:
           RTS
       .not_ready
     .lifting
+
     ;JSR Minecart_HandleLiftAndToss
     RTS
   }
@@ -443,7 +507,7 @@ Sprite_Minecart_Main:
       %GotoAction(1) ; Minecart_WaitVert
       RTS
       .horiz
-      %GotoAction(0)
+      %GotoAction(0) ; Minecart_WaitHoriz
     .not_ready
     RTS
   }
@@ -471,6 +535,17 @@ StopCart:
   STZ.w SprYSpeed, X
   STZ.w SprXSpeed, X
   STZ.w !LinkInCart
+
+  JSR RoundCoords
+
+  LDA.w SprSubtype, X : ASL : TAY
+
+  REP #$20
+  LDA.w SprCachedX : STA.w !MinecartTrackX, Y
+  LDA.w SprCachedY : STA.w !MinecartTrackY, Y
+  LDA.w $A0 : STA.w !MinecartTrackRoom, Y
+  SEP #$20
+
   RTS
 }
 
@@ -485,28 +560,28 @@ InitMovement:
 
 Minecart_SetDirectionNorth:
 {
-  LDA.b #North : STA.w SprSubtype, X : STZ.w !MinecartDirection
-  LDA.b #Up  : STA !SpriteDirection, X
+  LDA.b #North : STA.w SprMiscB, X : STZ.w !MinecartDirection, X
+  LDA.b #Up    : STA !SpriteDirection, X
   RTS
 }
 
 Minecart_SetDirectionEast:
 {
-  LDA.b #East : STA.w SprSubtype, X : STA.w !MinecartDirection
-  LDA.b #Right  : STA !SpriteDirection, X
+  LDA.b #East  : STA.w SprMiscB, X : STA.w !MinecartDirection, X
+  LDA.b #Right : STA !SpriteDirection, X
   RTS
 }
 
 Minecart_SetDirectionSouth:
 {
-  LDA.b #South : STA.w SprSubtype, X : STA.w !MinecartDirection
-  LDA.b #Down : STA.w !SpriteDirection, X
+  LDA.b #South : STA.w SprMiscB, X : STA.w !MinecartDirection, X
+  LDA.b #Down  : STA.w !SpriteDirection, X
   RTS
 }
 
 Minecart_SetDirectionWest:
 {
-  LDA.b #West : STA.w SprSubtype, X : STA.w !MinecartDirection
+  LDA.b #West : STA.w SprMiscB, X : STA.w !MinecartDirection, X
   LDA.b #Left : STA.w !SpriteDirection, X
   RTS
 }
@@ -541,7 +616,7 @@ CheckForStopTiles:
     RTS
   .check_direction
 
-  LDA.w SprSubtype, X
+  LDA.w SprMiscB, X
   ASL #2  ; Multiply by 4 to offset rows in the lookup table
   STA $07 ; Store the action index in $07
 
@@ -626,7 +701,7 @@ CheckForCornerTiles:
     CLC
     RTS
   .check_direction
-  LDA.w SprSubtype, X
+  LDA.w SprMiscB, X
   ASL #2  ; Multiply by 4 to offset rows in the lookup table
   STA $07 ; Store the action index in $07
 
@@ -691,17 +766,17 @@ CheckForTrackTiles:
 
   .horiz
   ; Are we moving left or right?
-  LDA.w SprSubtype, X : CMP.b #$03 : BEQ .inverse_horiz_velocity
+  LDA.w SprMiscB, X : CMP.b #$03 : BEQ .inverse_horiz_velocity
     LDA.b #!MinecartSpeed : STA.w SprXSpeed, X
-    LDA.b #East : STA !MinecartDirection
+    LDA.b #East : STA !MinecartDirection, X
     JMP .done
   .inverse_horiz_velocity
   LDA.b #-!MinecartSpeed : STA.w SprXSpeed, X
-  LDA.b #West : STA !MinecartDirection
+  LDA.b #West : STA !MinecartDirection, X
   JMP .done
   .vert
   ; Are we moving up or down?
-  LDA.w SprSubtype, X : CMP.b #$00 : BEQ .inverse_vert_velocity
+  LDA.w SprMiscB, X : CMP.b #$00 : BEQ .inverse_vert_velocity
     LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
     JMP .done
   .inverse_vert_velocity
@@ -723,12 +798,12 @@ HandleTileDirections:
   .player_on_cart
 
   ; Setup Minecart position to look for tile IDs
-  ; We use AND #$F8 to clamp to a 16x16 grid.
+  ; We use AND #$F8 to clamp to a 8x8 grid.
   LDA.w SprY, X : AND #$F8 : STA.b $00
-  LDA.w SprYH, X : STA.b $01
+  LDA.w SprYH, X           : STA.b $01
 
   LDA.w SprX, X : AND #$F8 : STA.b $02
-  LDA.w SprXH, X : STA.b $03
+  LDA.w SprXH, X           : STA.b $03
 
   ; Fetch tile attributes based on current coordinates
   LDA.b #$00 : JSL Sprite_GetTileAttr
@@ -736,8 +811,6 @@ HandleTileDirections:
   ; Debug: put the tile type into the rupee SRM.
   STA.l $7EF362 : STA.l $7EF360
   LDA.b #$00 : STA.l $7EF363 : STA.l $7EF361
-
-  print "adfsddddddddddddddddddddddddddddddddddddddddddddddddd: ", pc
 
   LDA.w SPRTILE
   JSR CheckForOutOfBounds : BCC .notOutOfBounds
@@ -760,13 +833,45 @@ HandleTileDirections:
   RTS
 }
 
+; NOTE TO SCAWFUL: This function could really go in a generic sprite
+; functions file but I'll leave that up to you.
+UpdateCachedCoords:
+{
+  LDA.w SprY, X  : STA.w SprCachedY+0
+  LDA.w SprX, X  : STA.w SprCachedX+0
+  LDA.w SprYH, X : STA.w SprCachedY+1
+  LDA.w SprXH, X : STA.w SprCachedX+1
+
+  RTS
+}
+
+; NOTE TO SCAWFUL: This function could really go in a generic sprite
+; functions file but I'll leave that up to you.
 RoundCoords:
 {
   ; Clamp the Y coord to the nearest multiple of 8.
-  LDA.b $00 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $00 : STA.w SprY, x
+  LDA.b $00 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $00 : STA.w SprY, X
 
   ; Clamp the X coord to the nearest multiple of 8.
-  LDA.b $02 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $02 : STA.w SprX, x
+  LDA.b $02 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $02 : STA.w SprX, X
+
+  JSR UpdateCachedCoords
+
+  RTS
+}
+
+; TODO: Hook this up to a dungeon loading routine
+; mask_routines or gbc_form maybe.
+ResetTrackVars:
+{
+  LDA.b #$00 : STA.w !MinecartTrackCache
+  LDX.b #$41
+  .loop
+  DEX
+    STA.w !MinecartTrackRoom, X
+    STA.w !MinecartTrackX, X
+    STA.w !MinecartTrackY, X
+  CPX.b #$00 : BNE .loop
 
   RTS
 }
@@ -785,10 +890,10 @@ HandleDynamicSwitchTileDirections:
     JSL Sprite_SetupHitBox ; X is now the ID of the sprite $B0
     PLX
     JSL CheckIfHitBoxesOverlap : BCC .no_b0
-      LDA !MinecartDirection : CMP.b #$00 : BEQ .east_or_west
-                               CMP.b #$01 : BEQ .north_or_south
-                               CMP.b #$02 : BEQ .east_or_west
-                               CMP.b #$03 : BEQ .north_or_south
+      LDA !MinecartDirection, X : CMP.b #$00 : BEQ .east_or_west
+                                  CMP.b #$01 : BEQ .north_or_south
+                                  CMP.b #$02 : BEQ .east_or_west
+                                  CMP.b #$03 : BEQ .north_or_south
     .no_b0
     RTS
 
@@ -827,12 +932,12 @@ CheckSpritePresence:
     .y_loop
       DEY
       LDA $0E20, X : CMP.b #$B0 : BEQ .set_flag
-      BRA .not_b0
+        BRA .not_b0
 
     .set_flag
       SEC         ; Set flag indicating sprite ID $B0 is present
       STX.w $02
-      BRA   .done
+      BRA .done
 
   .not_b0
     CPY.b #$00 : BNE .y_loop
@@ -909,6 +1014,81 @@ CheckIfPlayerIsOn:
   SEP #$20
   CLC
   RTS ; Return with carry cleared
+}
+
+; =========================================================
+; Handle the tossing of the cart
+; Changes the SprMiscB of the cart to indicate the direction
+; the cart is facing and sets the velocity of the cart
+; based on the direction it is facing.
+
+Minecart_HandleToss:
+{
+  LDA.b #$30 : STA.w SprTimerA, X
+  ; Check links facing direction $2F and apply velocity
+  LDA $2F : CMP.b #$00 : BEQ .toss_north
+            CMP.b #$02 : BEQ .toss_south
+            CMP.b #$04 : BEQ .toss_east
+            CMP.b #$06 : BEQ .toss_west
+  .toss_north
+    LDA.b #-!DoubleSpeed : STA.w SprYSpeed, X
+    LDA #$00 : STA.w SprMiscB, X : STA !SpriteDirection, X
+    %GotoAction(1) ; Minecart_WaitVert
+    JMP .continue
+  .toss_south
+    LDA.b #!DoubleSpeed : STA.w SprYSpeed, X
+    LDA #$02 : STA.w SprMiscB,       X
+    LDA #$01 : STA !SpriteDirection, X
+    %GotoAction(1) ; Minecart_WaitVert
+    JMP .continue
+  .toss_east
+    LDA.b #-!DoubleSpeed : STA.w SprXSpeed, X
+    LDA #$01 : STA.w SprMiscB,       X
+    LDA #$03 : STA !SpriteDirection, X
+    %GotoAction(0) ; Minecart_WaitHoriz
+    JMP .continue
+  .toss_west
+    LDA.b #!DoubleSpeed : STA.w SprXSpeed, X
+    LDA #$03 : STA.w SprMiscB,       X
+    LDA #$02 : STA !SpriteDirection, X
+    %GotoAction(0) ; Minecart_WaitHoriz
+  .continue
+  LDA #$01 : STA.w SprMiscG, X
+  LDA #$12 : STA.w SprTimerC, X
+  STA.w SprYRound, X : STA.w SprXRound, X
+  RTS
+}
+
+Minecart_HandleTossedCart:
+{
+  LDA.w SprMiscG, X : BEQ .not_tossed
+    LDA.w SprHeight, X : BEQ .low_enough
+      DEC.w SprHeight, X
+      RTS
+  .low_enough
+
+  LDA.w SprTimerC, X : BNE .not_tossed
+    LDA.w SprX, X : AND.b #$F8 : STA.w SprX, X
+    LDA.w SprY, X : AND.b #$F8 : STA.w SprY, X
+    STZ.w SprMiscG, X
+    STZ.w SprYSpeed, X
+    STZ.w SprXSpeed, X
+    STZ.w SprHeight, X
+  .not_tossed
+  RTS
+}
+
+Minecart_HandleLiftAndToss:
+{
+  JSR CheckIfPlayerIsOn : BCC .not_tossing
+    LDA.w LinkCarryOrToss : CMP.b #$02 : BNE .not_tossing
+      JSR Minecart_HandleToss
+  .not_tossing
+  JSL Sprite_CheckIfLifted
+  JSL Sprite_Move
+  JSR Minecart_HandleTossedCart
+  JSL ThrownSprite_TileAndSpriteInteraction_long
+  RTS
 }
 
 ; =========================================================

@@ -784,10 +784,10 @@ MinecartFollower_TransitionToSprite:
   JSL Sprite_SpawnDynamically
   TYX
   JSL Sprite_SetSpawnedCoords
-  LDA.w !MinecartDirection : CMP.b #$00 : BEQ .vert_adjust
+  LDA.w !MinecartDirection, X : CMP.b #$00 : BEQ .vert_adjust
                              CMP.b #$02 : BEQ .vert_adjust
     LDA.w POSY : CLC : ADC #$08 : STA.w SprY, X
-    LDA.w POSX : STA.w SprX, X
+    LDA.w POSX                  : STA.w SprX, X
     JMP .finish_prep
   .vert_adjust
   LDA.w POSY : STA.w SprY, X
@@ -795,9 +795,11 @@ MinecartFollower_TransitionToSprite:
   .finish_prep
   LDA.w POSYH : STA.w SprYH, X
   LDA.w POSXH : STA.w SprXH, X
-  LDA.w !MinecartDirection
-  CLC : ADC.b #$04
-  STA.w SprSubtype, X
+  LDA.w !MinecartDirection, X
+  CLC : ADC.b #$04 : STA.w SprMiscB, X
+
+  ; Tell the newly spawned cart which track it is on.
+  LDA.w !MinecartTrackCache : STA.w SprSubtype, X
 
   LDA Minecart_AnimDirection, X : STA $0D90, X
   JSL Sprite_Minecart_Prep
@@ -810,7 +812,7 @@ DrawMinecartFollower:
 {
   JSL $099EFC ; Follower_Initialize
 
-  LDX !MinecartDirection
+  LDA.w !MinecartDirection, X : TAX
   LDA Minecart_AnimDirection, X : STA $02CF
 
   JSR FollowerDraw_CachePosition
@@ -951,7 +953,7 @@ LinkState_Minecart:
   STZ.b $48
 
   ; Move Link based on the direction of the cart
-  LDA.w !MinecartDirection : BNE .not_north
+  LDA.w !MinecartDirection, X : BNE .not_north
     LDY.b #$00
     LDA.w .drag_y_low, Y : CLC : ADC.w $0B7E : STA.w $0B7E
     LDA.w .drag_y_high, Y : ADC.w $0B7F : STA.w $0B7F
