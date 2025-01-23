@@ -137,8 +137,6 @@ Sprite_Minecart_Prep:
 {
   PHB : PHK : PLB
 
-  print "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: ", pc
-  
   JSR UpdateCachedCoords
 
   LDA.w SprSubtype, X : ASL : TAY
@@ -324,7 +322,7 @@ Sprite_Minecart_Main:
           ; Check if the cart is facing east or west
           LDA.w SprMiscB, X : CMP.b #$03 : BNE +
             JSR Minecart_SetDirectionWest
-            %GotoAction(5)  ; Minecart_MoveWest
+            %GotoAction(5) ; Minecart_MoveWest
             RTS
           +
           JSR Minecart_SetDirectionEast
@@ -397,7 +395,6 @@ Sprite_Minecart_Main:
     ; Get direction of the cart (0 to 3)
     LDY.w !SpriteDirection, X
     JSL DragPlayer
-    JSR CheckForPlayerInput
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
@@ -426,7 +423,6 @@ Sprite_Minecart_Main:
     ; Get direction of the cart (0 to 3)
     LDY.w !SpriteDirection, X
     JSL DragPlayer
-    JSR CheckForPlayerInput
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
@@ -455,7 +451,6 @@ Sprite_Minecart_Main:
     ; Get direction of the cart (0 to 3)
     LDY.w !SpriteDirection, X
     JSL DragPlayer
-    JSR CheckForPlayerInput
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
@@ -484,7 +479,6 @@ Sprite_Minecart_Main:
     ; Get direction of the cart (0 to 3)
     LDY.w !SpriteDirection, X
     JSL DragPlayer
-    JSR CheckForPlayerInput
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
@@ -591,7 +585,7 @@ Minecart_SetDirectionWest:
 
 CheckForOutOfBounds:
 {
-  CMP.b #$02 : BNE .not_out_of_bounds
+  LDA.w SPRTILE : CMP.b #$02 : BNE .not_out_of_bounds
     ; If the tile is out of bounds, release the cart
     LDA #$40 : STA.w SprTimerD, X
     %GotoAction(6) ; Minecart_Release
@@ -607,11 +601,11 @@ CheckForOutOfBounds:
 ; CLC if no stop occured, SEC if stop occured.
 CheckForStopTiles:
 {
+  LDA.w SPRTILE
   CMP.b #$B7 : BEQ .check_direction
   CMP.b #$B8 : BEQ .check_direction
   CMP.b #$B9 : BEQ .check_direction
   CMP.b #$BA : BEQ .check_direction
-    .exit
     CLC
     RTS
   .check_direction
@@ -632,7 +626,6 @@ CheckForStopTiles:
   CPY.b #$03 : BEQ .stop_south
   CPY.b #$04 : BEQ .stop_west
     CLC
-
     RTS
 
   .stop_north
@@ -693,6 +686,7 @@ CheckForStopTiles:
 
 CheckForCornerTiles:
 {
+  LDA.w SPRTILE
   CMP.b #$B2 : BEQ .check_direction
   CMP.b #$B3 : BEQ .check_direction
   CMP.b #$B4 : BEQ .check_direction
@@ -812,7 +806,6 @@ HandleTileDirections:
   STA.l $7EF362 : STA.l $7EF360
   LDA.b #$00 : STA.l $7EF363 : STA.l $7EF361
 
-  LDA.w SPRTILE
   JSR CheckForOutOfBounds : BCC .notOutOfBounds
     JSR RoundCoords
 
@@ -820,15 +813,25 @@ HandleTileDirections:
 
   .notOutOfBounds
 
+  print "SDFL:KDFSDFSDFSFSFSDFSDFSFSFSDFSFSFSDFSD: ", pc
+  JSR CheckForPlayerInput : BCC .noInput
+    JSR RoundCoords
+
+    BRA .done
+    
+  .noInput
+
   JSR CheckForStopTiles : BCC .noStop
     JSR RoundCoords
 
     BRA .done
   .noStop
   
-  JSR CheckForCornerTiles : BCC .done
+  JSR CheckForCornerTiles : BCC .noCorner
     JSR RoundCoords
     
+  .noCorner
+
   .done
   RTS
 }
@@ -860,10 +863,21 @@ RoundCoords:
   RTS
 }
 
-; TODO: Hook this up to a dungeon loading routine
-; mask_routines or gbc_form maybe.
+pushpc
+
+org $0DFA68
+  RebuildHUD_Keys:
+
+org $028260
+  JSL ResetTrackVars
+
+pullpc
+
 ResetTrackVars:
 {
+  ; Replaced code.
+  JSL.l RebuildHUD_Keys
+
   LDA.b #$00 : STA.w !MinecartTrackCache
   LDX.b #$41
   .loop
@@ -873,7 +887,7 @@ ResetTrackVars:
     STA.w !MinecartTrackY, X
   CPX.b #$00 : BNE .loop
 
-  RTS
+  RTL
 }
 
 ; =========================================================
@@ -949,49 +963,79 @@ CheckSpritePresence:
 
 ; =========================================================
 ; Check for input from the user (u,d,l,r) on tile B6, BD
+; CLC if not on an input tile or there was no input recieved.
 
 CheckForPlayerInput:
 {
-  ; Setup Minecart position to look for tile IDs
-  LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
-  LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
-
-  ; Fetch tile attributes based on current coordinates
-  LDA.b #$00 : JSL Sprite_GetTileAttr
-
   ; Load the tile index
-  LDA $0FA5 : CLC : CMP.b #$B6 : BEQ .can_input
-                    CMP.b #$BD : BEQ .can_input
-    BRA .cant_input
+  LDA.w SPRTILE : CMP.b #$B6 : BEQ .can_input ; Intersection
+                  CMP.b #$BB : BEQ .can_input ; North T
+                  CMP.b #$BC : BEQ .can_input ; South T
+                  CMP.b #$BD : BEQ .can_input ; East T
+                  CMP.b #$BE : BEQ .can_input ; West T
+    CLC
+    RTS
   .can_input
-  LDY !SpriteDirection,       X
-  LDA $F0 : AND .d_pad_press, Y : STA $00 : AND.b #$08 : BEQ .not_pressing_up
+  ; Normalize the tile.
+  SEC : SBC.b #$B6 : TAY
+
+  ; Get an offset based on the tile the get the allowed directions.
+  LDA.w .intersectionMap, Y
+
+  ; Add the direction the cart is going to prevent the cart from
+  ; returning from where it came from.
+  CLC : ADC.w !SpriteDirection, X : TAY
+
+  ; Filter the input.
+  LDA $F0 : AND.w .d_pad_press, Y : STA $05 : AND.b #$08 : BEQ .not_pressing_up
     JSR Minecart_SetDirectionNorth
+
     %GotoAction(2) ; Minecart_MoveNorth
-    BRA   .return
-
-  .not_pressing_up
-  LDA.b $00 : AND.b #$04 : BEQ .not_pressing_down
-    JSR Minecart_SetDirectionSouth
-    %GotoAction(4) ; Minecart_MoveSouth
-    BRA   .return
-
-  .not_pressing_down
-  LDA.b $00 : AND.b #$02 : BEQ .not_pressing_left
-    JSR Minecart_SetDirectionWest
-    %GotoAction(5) ; Minecart_MoveWest
-    BRA   .return
-
-  .not_pressing_left
-  LDA.b $00 : AND.b #$01 : BEQ .return
-    JSR Minecart_SetDirectionEast
-    %GotoAction(3) ; Minecart_MoveEast
-  .return
-  .cant_input
+    SEC
     RTS
 
+  .not_pressing_up
+  LDA.b $05 : AND.b #$04 : BEQ .not_pressing_down
+    JSR Minecart_SetDirectionSouth
+
+    %GotoAction(4) ; Minecart_MoveSouth
+    SEC
+    RTS
+
+  .not_pressing_down
+  LDA.b $05 : AND.b #$02 : BEQ .not_pressing_left
+    JSR Minecart_SetDirectionWest
+
+    %GotoAction(5) ; Minecart_MoveWest
+    SEC
+    RTS
+
+  .not_pressing_left
+  LDA.b $05 : AND.b #$01 : BEQ .return
+    JSR Minecart_SetDirectionEast
+
+    %GotoAction(3) ; Minecart_MoveEast
+    SEC
+    RTS
+  .return
+
+  ; If we made it here that means there was no matching input.
+  CLC
+  RTS
+
   .d_pad_press
-    db $0B, $07, $0E, $0D
+    ; udlr
+    ; up, down, left, right
+    db $00, $00, $00, $00 ; Nothing
+    db $0B, $07, $0E, $0D ; Intersection
+    db $03, $03, $04, $04 ; North T
+    db $03, $03, $08, $08 ; South T
+    db $02, $02, $0C, $0C ; East T
+    db $01, $01, $0C, $0C ; West T
+
+  .intersectionMap
+    ;   B6,  B7,  B8,  B9,  BA,  BB,  BC,  BD,  BE
+    db $04, $00, $00, $00, $00, $08, $0C, $10, $14
 }
 
 ; =========================================================
