@@ -80,10 +80,6 @@ Sprite_MakuTree_Main:
 
   MakuTree_MeetLink:
   {
-    LDA.w POSX : STA $02
-    LDA.w POSY : STA $03
-    LDA.w SprX, X : STA $04
-    LDA.w SprY, X : STA $05
     JSL GetDistance8bit_Long : CMP #$28 : BCS .not_too_close
       %ShowUnconditionalMessage($20)
       LDA.b #$01 : STA.l MakuTreeQuest

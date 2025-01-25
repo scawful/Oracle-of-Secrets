@@ -32,8 +32,6 @@
 
 %Set_Sprite_Properties(Sprite_Darknut_Prep, Sprite_Darknut_Long)
 
-; =========================================================
-
 Sprite_Darknut_Long:
 {
   PHB : PHK : PLB
@@ -45,8 +43,6 @@ Sprite_Darknut_Long:
   PLB
   RTL
 }
-
-; =========================================================
 
 Sprite_Darknut_Prep:
 {
@@ -62,16 +58,10 @@ Sprite_Darknut_Prep:
     db $04, $06, $08, $0A
 }
 
-; =========================================================
-
 DarknutSpeed = 04
 
 Sprite_Darknut_Main:
 {
-  LDA.w POSX : STA $02
-  LDA.w POSY : STA $03
-  LDA.w SprX, X : STA $04
-  LDA.w SprY, X : STA $05
   JSL GetDistance8bit_Long : CMP.b #$80 : BCS .no_probe
     ; JSL Sprite_SendOutProbe
     JSL Sprite_SpawnProbeAlways_long
@@ -82,7 +72,6 @@ Sprite_Darknut_Main:
 
   JSL Sprite_Move
   JSL Sprite_BounceFromTileCollision
-  JSL Sprite_PlayerCantPassThrough
   JSL Sprite_DamageFlash_Long
 
   JSL Sprite_CheckIfRecoiling
@@ -184,8 +173,6 @@ Sprite_Darknut_BasicMove:
   }
 }
 
-; =========================================================
-
 Sprite_Darknut_Draw:
 {
   JSL Sprite_PrepOamCoord
@@ -242,8 +229,6 @@ Sprite_Darknut_Draw:
 
   RTS
 
-
-  ; =======================================================
   .start_index
   db $00, $03, $06, $09, $0C, $0E, $10, $12
   .nbr_of_tiles
@@ -293,5 +278,4 @@ Sprite_Darknut_Draw:
   db $02, $02
   db $02, $02
   db $02, $02
-
 }

@@ -33,10 +33,6 @@ Sprite_EonScrub_Main:
     JSL Sprite_IsBelowPlayer : TYA
     CMP #$00 : BNE .is_below_player
       ; Check if the player is too close
-      LDA $22 : STA $02
-      LDA $20 : STA $03
-      LDA.w SprX, X : STA $04
-      LDA.w SprY, X : STA $05
       JSL GetDistance8bit_Long : CMP.b #$24 : BCC .too_close
         ; The player is below the scrub, so it should pop up
         LDA #$20 : STA.w SprTimerA, X
@@ -60,10 +56,6 @@ Sprite_EonScrub_Main:
       INC.w SprAction, X
     .not_done
 
-    LDA.w POSX : STA $02
-    LDA.w POSY : STA $03
-    LDA.w SprX, X : STA $04
-    LDA.w SprY, X : STA $05
     JSL GetDistance8bit_Long : CMP #$18 : BCS .not_too_close
       %GotoAction(0)
     .not_too_close

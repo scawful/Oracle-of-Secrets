@@ -414,6 +414,7 @@ Sprite_BehaveAsBarrier = $1EF4F3
 Sprite_PlayerCantPassThrough = $1EF4F3
 
 ; player can't hookshot to that sprite
+Sprite_CancelHookshot = $0FF540
 Sprite_NullifyHookshotDrag = $0FF540
 
 ; show a message box without any condition
