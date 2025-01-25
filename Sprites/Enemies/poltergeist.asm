@@ -319,14 +319,13 @@ Axe:
 
     LDA.w SprTimerA, X : BNE .waitingdelay
       JSL Sprite_MoveLong
-      JSL Sprite_CheckDamageToPlayer : BCC .noShatter
+      JSL Sprite_CheckDamageToPlayer : BCC +
         JMP Shatter
-        JSL Sprite_CheckDamageFromPlayer : BCC .noShatter
+      +
+      JSL Sprite_CheckDamageFromPlayer : BCC +
+        JMP Shatter
+        JSL Sprite_CheckTileCollision : BEQ +
           JMP Shatter
-          JSL Sprite_CheckTileCollision : BEQ .noShatter
-            JMP Shatter
-      .noShatter
-      RTS
   +
   RTS
 
