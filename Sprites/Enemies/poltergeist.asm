@@ -36,10 +36,12 @@ Sprite_Poltergeist_Long:
 {
   PHB : PHK : PLB
   JSR Sprite_Poltergeist_Draw
-  LDA $E0 : CMP #$F0 : BNE .onscreen
-    LDA.w SprMiscA, X : BEQ .SpriteIsNotActive
-      STZ.w SprState, X ; kill the sprite if offscreen and activated
-  .onscreen
+
+  ; LDA $E0 : CMP #$F0 : BNE .onscreen
+  ;   LDA.w SprMiscA, X : BEQ .SpriteIsNotActive
+  ;     STZ.w SprState, X ; kill the sprite if offscreen and activated
+  ; .onscreen
+
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_Poltergeist_Main
   .SpriteIsNotActive
