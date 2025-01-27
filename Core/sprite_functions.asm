@@ -94,14 +94,13 @@ Sprite_BounceTowardPlayer:
 }
 
 ; A = Speed, Y = Height
+; Maintain altitude (float effect)
 Sprite_FloatTowardPlayer:
 {
-  ; Maintain altitude (float effect)
   TYA : STA.w SprHeight, X
   JSL Sprite_MoveAltitude
   JSL Sprite_ApplySpeedTowardsPlayer
-  JSL Sprite_MoveHoriz
-  JSL Sprite_MoveVert
+  JSL Sprite_Move
   RTL
 }
 
@@ -859,20 +858,21 @@ Sprite_Twinrova_FireAttack:
 ; $1DBDD6 - TrinexxFire_AddFireGarnish
 AddFireGarnish:
 {
-    INC.w SprDelay, X : LDA.w SprDelay, X : AND.b #$07 : BNE .return
-      LDA.b #$2A : JSL Sound_SetSfx2PanLong
-      LDA.b #$1D : PHX : TXY : TAX : STA $00
+  INC.w SprDelay, X : LDA.w SprDelay, X : AND.b #$07 : BNE .return
+    LDA.b #$2A : JSL Sound_SetSfx2PanLong
+    LDA.b #$1D : PHX : TXY : TAX : STA $00
 
   .next_slot
-    LDA $7FF800, X : BEQ .free_slot ; Search for free Garnish slot
-      DEX : BPL .next_slot
-        DEC $0FF8 : BPL .use_search_index
-          LDA $00 : STA $0FF8
+  LDA $7FF800, X : BEQ .free_slot ; Search for free Garnish slot
+    DEX : BPL .next_slot
+      DEC $0FF8 : BPL .use_search_index
+        LDA $00 : STA $0FF8
     .use_search_index
-      LDX $0FF8
+    LDX $0FF8
   .free_slot
-    ; Set garnish ID, set garnish handled flag, set garnish parent sprite
-    LDA.b #$10 : STA $7FF800, X : STA $0FB4 : TYA : STA $7FF92C, X
+    ; Set garnish ID, set garnish handled flag
+    LDA.b #$10 : STA $7FF800, X : STA $0FB4
+    TYA : STA $7FF92C, X            ; set garnish parent sprite
     LDA.w SprX, Y  : STA $7FF83C, X                    ; Garnish XL
     LDA.w SprXH, Y : STA $7FF878, X                    ; Garnish XH
     LDA.w SprY, Y  : CLC : ADC.b #$10 : STA $7FF81E, X ; Garnish YL
@@ -881,7 +881,7 @@ AddFireGarnish:
     PLX
 
   .return
-    RTS
+  RTS
 }
 
 ; =========================================================
