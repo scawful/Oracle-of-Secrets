@@ -75,22 +75,16 @@ if !BetaRelease == 0
 endif
   LDA #$04 : STA Flute
   LDA #$01 : STA RocsFeather
-  ; 0 - nothing. 1 - bow w/ no arrows. 2 - bow w/ arrows. 3 - silver arrows
   LDA #$03 : STA Bow
-
-  ; 0 - nothing. 1 - blue boomerang. 2 - red boomerang
   LDA #$02 : STA Boomerang
              STA Mirror
              STA Byrna
 
-  ; 0 - nothing. 1 - Lamp
   LDA #$01 : STA Lamp
              ; STA MagicHammer
              STA Pearl
 
-  ; fill all hearts
   LDA #$A0 : STA HeartRefill
-  ; magic power, maximum is 0x80
   LDA #$80 : STA MagicPower
 
   ; Skip story events, test goron mines

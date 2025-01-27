@@ -10,3 +10,138 @@ oos111x.sfc
 oos111x.smp.sym
 oos111x.srm
 oos111x.sym
+Roms
+Dungeons/Assets
+Items/gfx/jump_frames.xcf
+Masks/etc
+Menu/rings/
+Overworld/project_files/DarkWorldMainSet.xcf
+Sprites/Project Files/
+Thumbs.db
+.favorites.json
+Dungeons/Assets/
+Roms/oos111.bps
+Roms/oos112.sfc
+Sprites/Enemies/deku_scrub_enemy.zsm
+Dungeons/Objects/object_files/kydreeok_body.zob
+Sprites/Objects/Minecart/
+Util/tools
+Util/rom_map.txt
+Sprites/NPCs/korok_hollo.asm
+Sprites/NPCs/korok_makar.asm
+Sprites/NPCs/korok_rown.asm
+Overworld/world_map/test_dw.bmp
+Overworld/world_map/zelda3.sfc
+Overworld/world_map/maptest.bmp
+Sprites/Objects/whirlpool_export.asm
+Sprites/Objects/ice_block_export.asm
+Masks/gfx/[108]tlp11
+Masks/gfx/extra/
+Overworld/project_files/OverworldCastleBridge.png
+Overworld/project_files/OverworldCastleBridge.xcf
+Overworld/gfx/boat2_1.bin
+Overworld/gfx/boat2_3.bin
+Overworld/gfx/boat2_4.bin
+Overworld/gfx/boat2_2.bin
+Sprites/NPCs/zora_princess_proj.zsm
+Util/SpcToASM/SpcConverter.deps.json
+Util/SpcToASM/SpcConverter.dll
+Util/SpcToASM/SpcConverter.exe
+Util/SpcToASM/SpcConverter.pdb
+Util/SpcToASM/SpcConverter.runtimeconfig.json
+Masks/gfx/deku_link.pal
+Masks/gfx/deku_new.pal
+Masks/gfx/dekulinkpal.pal
+Masks/gfx/dekulinkpal.pal.bak
+Masks/gfx/gbc-link.pal
+Masks/gfx/image.bin
+Masks/gfx/image.png
+Overworld/project_files/zora_overlay_2.zsa
+Overworld/project_files/zora_temple_overlay.zsa
+Sprites/wolfos_export.asm
+Sprites/wolf_boss.zsm
+Sprites/NPCs/project_files/korok_hollo.asm
+Sprites/NPCs/project_files/korok_makar.asm
+Sprites/NPCs/project_files/korok_rown.asm
+Sprites/NPCs/project_files/zora_princess_proj.zsm
+Util/zelda3.sfc
+Util/templatemusic.asm
+Util/ZSCustomOverworld.asm
+Sprites/Objects/Project Files/ice_block_export.asm
+Sprites/Objects/Project Files/whirlpool_export.asm
+Overworld/world_map/dw_gfx_new.bmp
+Menu/tilemaps/dung_map.bin
+Dungeons/intro_cutscene.asm
+Dungeons/water_switch.asm
+run.sh
+Sprites/Bosses/left_kydreeok_head.asm
+Sprites/Bosses/kydreeok_wings.asm
+Sprites/Bosses/kydreeok_body.zsm
+Sprites/Bosses/dark_link.pal
+Sprites/NPCs/deku_scrub_npcs.asm
+Sprites/Enemies/anti_kirby_v2.asm
+Masks/gfx/gbc_dark_link.4bpp
+Sprites/kydrog_intro.asm
+Util/ZScreamNew/ZScream.exe
+Util/ZScreamNew/ZSCustomOverworld.asm
+Util/dark_link.bin
+Sprites/NPCs/project_files/deku_scrub_npcs.asm
+Util/ZScreamNew/asar.dll
+Util/ZScreamNew/CustomCollision.asm
+Util/ZScreamNew/debug.asm
+Util/ZScreamNew/DefaultNames.txt
+Util/ZScreamNew/DW.png
+Util/ZScreamNew/Lidgren.Network.dll
+Util/ZScreamNew/Lidgren.Network.pdb
+Util/ZScreamNew/Logs.txt
+Util/ZScreamNew/LW.png
+Util/ZScreamNew/MapTest.png
+Util/ZScreamNew/newgraves.asm
+Util/ZScreamNew/ScratchPad.dat
+Util/ZScreamNew/SP.png
+Util/ZScreamNew/spritesmove.asm
+Util/ZScreamNew/tempPatch.asm
+Util/ZScreamNew/ZScream.application
+Util/ZScreamNew/ZScream.exe.config
+Util/ZScreamNew/ZScream.exe.manifest
+Util/ZScreamNew/ZS_Patches/Version.txt
+Util/ZScreamNew/ZS_Patches/Hex Edits/Misc Small Patches.asm
+Util/ZScreamNew/ZS_Patches/Items/AST Boots.asm
+Util/ZScreamNew/ZS_Patches/Misc/Big Bomb Requirements.asm
+Util/ZScreamNew/ZS_Patches/Misc/IntroSkip.asm
+Util/ZScreamNew/ZS_Patches/Misc/JP1.0 Glitches.asm
+Util/ZScreamNew/ZS_Patches/Misc/Link Bed Start Position.asm
+Util/ZScreamNew/ZS_Patches/Misc/NoRocks.asm
+Util/ZScreamNew/ZS_Patches/Misc/Rainstate Skip.asm
+Util/ZScreamNew/ZS_Patches/Misc/TorchTags.asm
+Util/ZScreamNew/ZS_Patches/Misc/Weathervane.asm
+Util/ZScreamNew/ZS_Patches/Music/LostWoodsExitMusic.asm
+Util/ZScreamNew/ZS_Patches/Npcs/Bottle Vendor.asm
+Util/ZScreamNew/ZS_Patches/Sprites/Crystalswitch Conveyor.asm
+Util/ZScreamNew/ZS_Patches/Sprites/Elemental Trinexx.asm
+Util/ZScreamNew/ZS_Patches/Sprites/Eye Lasers Active.asm
+Util/ZScreamNew/ZS_Patches/Sprites/Khodstare Speeds.asm
+Util/ZScreamNew/ZS_Patches/Sprites/Spike Damage.asm
+Util/ZScreamNew/ZS_Patches/Sprites/Spikes_Subtype.asm
+Sprites/Bosses/bigchuchu_grow.asm
+Sprites/Bosses/manhandla_chuchu_blast.asm
+Sprites/Bosses/manhandla_export_2.asm
+Sprites/Bosses/manhandla_export.asm
+Music/Z3_SongOfHealingThemeV1-00.asm
+Dungeons/experimental/HitBoxProperties.asm
+Dungeons/experimental/intro_cutscene.asm
+Dungeons/experimental/KillSprites
+Dungeons/experimental/warpswitch.asm
+Dungeons/experimental/water_switch.asm
+Overworld/weathervane.asm
+Util/banana.asm
+Menu/tilemaps/sheet.png
+Sprites/NPCs/project_files/eon_owl.zsm
+Music/wip/oot_title.asm
+Music/wip/phantom_ganon.asm
+Music/wip/template_song.asm
+Music/wip/twinrova_battle.asm
+Sprites/NPCs/piratian.zsm
+Masks/gfx/moosh.png
+Masks/gfx/moosh.pal
+Dungeons/DungeonMaps.asm
