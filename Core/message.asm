@@ -16,7 +16,7 @@ endwhile
 ; Temporary fix for the message bank
 ; ZS does not clear message data when bank is changed
 ; So the end of the data bank is not as easily searchable.
-org $0EEE76 : db $80
+org $0EEE75 : db $80
 
 org !addr+1 : db $80
 
