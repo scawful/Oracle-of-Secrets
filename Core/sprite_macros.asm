@@ -132,9 +132,9 @@ macro PlayAnimation(frame_start, frame_end, frame_wait)
 {
   LDA.w SprTimerB, X : BNE +
     LDA.w SprFrame, X : INC : STA.w SprFrame, X
-                        CMP.b #<frame_end>+1 : BCC .noframereset
+                        CMP.b #<frame_end>+1 : BCC ++
       LDA.b #<frame_start> : STA.w SprFrame, X
-    .noframereset
+    ++
     LDA.b #<frame_wait> : STA.w SprTimerB, X
   +
 }
@@ -143,9 +143,9 @@ endmacro
 macro PlayAnimBackwards(frame_start, frame_end, frame_wait)
   LDA.w SprTimerB, X : BNE +
     LDA.w SprFrame, X : DEC : STA.w SprFrame, X
-                        CMP.b #<frame_end> : BCS .noframereset
+                        CMP.b #<frame_end> : BCS ++
       LDA.b #<frame_start> : STA.w SprFrame, X
-    .noframereset
+    ++
     LDA.b #<frame_wait> : STA.w SprTimerB, X
   +
 endmacro

@@ -225,6 +225,8 @@ Sprite_Minecart_Prep:
       LDA.b #West : STA.w SprMiscB, X
     .done2
   .active
+
+  STZ.w SprTimerB, X
   
   LDA.w SprMiscB, X : CMP.b #$00 : BEQ .north
                       CMP.b #$01 : BEQ .east
@@ -232,22 +234,35 @@ Sprite_Minecart_Prep:
                       CMP.b #$03 : BEQ .west
   .north
     ; Both !MinecartDirection and !SpriteDirection set to 0 earlier.
-    %GotoAction(1) ; Minecart_WaitVert
-    JMP .done
-  .east
-    LDA.b #East  : STA !MinecartDirection, X
-    LDA.b #Right : STA !SpriteDirection, X
-    %GotoAction(0) ; Minecart_WaitHoriz
-    JMP .done
+    BRA .vert
+
   .south
     LDA.b #South : STA !MinecartDirection, X
     LDA.b #Down  : STA !SpriteDirection, X
+
+    .vert
+    %PlayAnimation(2,3,8)
+    LDA.b #$02 : STA.w $0D90, X
+
     %GotoAction(1) ; Minecart_WaitVert
-    JMP .done
+
+    BRA .done
+  .east
+    LDA.b #East  : STA !MinecartDirection, X
+    LDA.b #Right : STA !SpriteDirection, X
+
+    BRA .horz
+
   .west
     LDA.b #West : STA !MinecartDirection, X
     LDA.b #Left : STA !SpriteDirection, X
+
+    .horz
+    %PlayAnimation(0,1,8)
+    LDA.b #$00 : STA.w $0D90, X
+    
     %GotoAction(0) ; Minecart_WaitHoriz
+
   .done
   PLB
   RTL
@@ -362,11 +377,11 @@ Sprite_Minecart_Main:
           ; Check if the cart is facing north or south
           LDA.w SprMiscB, X : BEQ +
             JSR Minecart_SetDirectionSouth
-            %GotoAction(4)  ; Minecart_MoveSouth
+            %GotoAction(4) ; Minecart_MoveSouth
             RTS
           +
           JSR Minecart_SetDirectionNorth
-          %GotoAction(2)  ; Minecart_MoveNorth
+          %GotoAction(2) ; Minecart_MoveNorth
           RTS
       .not_ready
     .lifting
@@ -554,6 +569,11 @@ InitMovement:
 
 Minecart_SetDirectionNorth:
 {
+  ; Reset the animation timer and set the animation early to make it
+  ; more snappy.
+  STZ.w SprTimerB, X
+  %PlayAnimation(2,3,8)
+
   LDA.b #North : STA.w SprMiscB, X : STZ.w !MinecartDirection, X
   LDA.b #Up    : STA !SpriteDirection, X
   RTS
@@ -561,6 +581,11 @@ Minecart_SetDirectionNorth:
 
 Minecart_SetDirectionEast:
 {
+  ; Reset the animation timer and set the animation early to make it
+  ; more snappy.
+  STZ.w SprTimerB, X
+  %PlayAnimation(0,1,8)
+
   LDA.b #East  : STA.w SprMiscB, X : STA.w !MinecartDirection, X
   LDA.b #Right : STA !SpriteDirection, X
   RTS
@@ -568,6 +593,11 @@ Minecart_SetDirectionEast:
 
 Minecart_SetDirectionSouth:
 {
+  ; Reset the animation timer and set the animation early to make it
+  ; more snappy.
+  STZ.w SprTimerB, X
+  %PlayAnimation(2,3,8)
+
   LDA.b #South : STA.w SprMiscB, X : STA.w !MinecartDirection, X
   LDA.b #Down  : STA.w !SpriteDirection, X
   RTS
@@ -575,6 +605,11 @@ Minecart_SetDirectionSouth:
 
 Minecart_SetDirectionWest:
 {
+  ; Reset the animation timer and set the animation early to make it
+  ; more snappy.
+  STZ.w SprTimerB, X
+  %PlayAnimation(0,1,8)
+
   LDA.b #West : STA.w SprMiscB, X : STA.w !MinecartDirection, X
   LDA.b #Left : STA.w !SpriteDirection, X
   RTS
@@ -813,7 +848,6 @@ HandleTileDirections:
 
   .notOutOfBounds
 
-  print "SDFL:KDFSDFSDFSFSFSDFSDFSFSFSDFSFSFSDFSD: ", pc
   JSR CheckForPlayerInput : BCC .noInput
     JSR RoundCoords
 
@@ -984,10 +1018,11 @@ CheckForPlayerInput:
 
   ; Add the direction the cart is going to prevent the cart from
   ; returning from where it came from.
-  CLC : ADC.w !SpriteDirection, X : TAY
+  CLC : ADC.w !SpriteDirection, X : STA.b $06 : TAY
 
   ; Filter the input.
   LDA $F0 : AND.w .d_pad_press, Y : STA $05 : AND.b #$08 : BEQ .not_pressing_up
+    .north
     JSR Minecart_SetDirectionNorth
 
     %GotoAction(2) ; Minecart_MoveNorth
@@ -996,6 +1031,7 @@ CheckForPlayerInput:
 
   .not_pressing_up
   LDA.b $05 : AND.b #$04 : BEQ .not_pressing_down
+    .south
     JSR Minecart_SetDirectionSouth
 
     %GotoAction(4) ; Minecart_MoveSouth
@@ -1004,6 +1040,7 @@ CheckForPlayerInput:
 
   .not_pressing_down
   LDA.b $05 : AND.b #$02 : BEQ .not_pressing_left
+    .west
     JSR Minecart_SetDirectionWest
 
     %GotoAction(5) ; Minecart_MoveWest
@@ -1012,6 +1049,7 @@ CheckForPlayerInput:
 
   .not_pressing_left
   LDA.b $05 : AND.b #$01 : BEQ .return
+    .east
     JSR Minecart_SetDirectionEast
 
     %GotoAction(3) ; Minecart_MoveEast
@@ -1019,19 +1057,47 @@ CheckForPlayerInput:
     RTS
   .return
 
-  ; If we made it here that means there was no matching input.
+  ; If no input was detected, we will assign a direction based on our
+  ; current direction and what junction we are encountering, this is to
+  ; prevent us from going off the top of a north junction or down off a
+  ; south one for example.
+  LDY.b $06
+  LDA.w .defaultDirection, Y : CMP.b #North : BEQ .north
+                               CMP.b #South : BEQ .south
+                               CMP.b #East  : BEQ .east
+                               CMP.b #West  : BEQ .west
+
+  ; If we made it here, no input was found and no default directions were
+  ; chosen.
   CLC
   RTS
 
+  ; When setting the values for the "allowed" directions the cart can go
+  ; on the junctions for both tables we do not allow the direction we are
+  ; already going. If do allow the current direction the cart will get
+  ; locked on the junction because it will constantly be coordinate
+  ; clamped to within the junction tile, preventing it from escaping that
+  ; tile.
   .d_pad_press
     ; udlr
     ; up, down, left, right
-    db $00, $00, $00, $00 ; Nothing
-    db $0B, $07, $0E, $0D ; Intersection
-    db $03, $03, $04, $04 ; North T
-    db $03, $03, $08, $08 ; South T
-    db $02, $02, $0C, $0C ; East T
-    db $01, $01, $0C, $0C ; West T
+    db $0F, $0F, $0F, $0F ; Nothing
+    db $0B, $07, $0E, $0D ; $B6 Intersection
+    db $03, $03, $04, $04 ; $BB North T
+    db $03, $03, $08, $08 ; $BC South T
+    db $02, $02, $0C, $0C ; $BD East T
+    db $01, $01, $0C, $0C ; $BE West T
+
+  ; #$04 is don't change direction.
+  .defaultDirection
+    ; udlr
+    ;  up,   down, left,  right
+    db $04,  $04,  $04,   $04    ; Nothing
+    db $04,  $04,  $04,   $04    ; $B6 Intersection
+    db East, $04,  $04,   $04    ; $BB North T
+    db $04,  East, $04,   $04    ; $BC South T
+    db $04,  $04,  $04,   North ; $BD East T
+    db $04,  $04,  North, $04    ; $BE West T
 
   .intersectionMap
     ;   B6,  B7,  B8,  B9,  BA,  BB,  BC,  BD,  BE
