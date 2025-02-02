@@ -98,13 +98,13 @@ ZoraBaby_RevertToSprite:
 
   PHX
   TAX
-  LDA.w $1A64, X : AND.b #$03 : STA.w SprMiscE,Y : STA.w SprMiscC,Y
-  LDA.w $1A00, X : CLC : ADC.b #$02 : STA.w SprY,Y
-  LDA.w $1A14, X : ADC.b #$00 : STA.w SprYH,Y
-  LDA.w $1A28, X : CLC : ADC.b #$10 : STA.w SprX,Y
-  LDA.w $1A3C, X : ADC.b #$00 : STA.w SprXH,Y
-  LDA.b $EE : STA.w $0F20,Y
-  LDA.b #$01 : STA.w SprBulletproof,Y : STA.w $0E80,Y
+  LDA.w $1A64, X : AND.b #$03 : STA.w SprMiscE, Y : STA.w SprMiscC, Y
+  LDA.w $1A00, X : CLC : ADC.b #$02 : STA.w SprY, Y
+  LDA.w $1A14, X       : ADC.b #$00 : STA.w SprYH, Y
+  LDA.w $1A28, X : CLC : ADC.b #$10 : STA.w SprX, Y
+  LDA.w $1A3C, X       : ADC.b #$00 : STA.w SprXH, Y
+  LDA.b $EE : STA.w $0F20, Y
+  LDA.b #$01 : STA.w SprBulletproof, Y : STA.w $0E80, Y
   LDA.b #$04 : STA.w SprAction, Y
   LDA.b #$FF : STA.w SprTimerB, Y
   PLX
@@ -168,8 +168,8 @@ ZoraBaby_CheckForWaterSwitchSprite:
   PHX
   LDX #$10
   -
-  LDA.w SprType, X
-  CMP #$21 : BEQ ZoraBaby_CheckForWaterGateSwitch_found_switch
+    LDA.w SprType, X
+    CMP #$21 : BEQ ZoraBaby_CheckForWaterGateSwitch_found_switch
   DEX : BPL -
   ; Water gate switch not found
   PLX
@@ -185,9 +185,9 @@ ZoraBaby_CheckForWaterGateSwitch:
   LDX #$10
   -
   LDA.w SprType, X : CMP #$04 : BEQ .found_switch
-  DEX : BPL -
-  ; Water gate switch not found
-  PLX
+    DEX : BPL -
+    ; Water gate switch not found
+    PLX
   .not_on_switch
   CLC
   RTS
@@ -203,8 +203,8 @@ ZoraBaby_CheckForWaterGateSwitch:
   LDA.w SprX, X : SEC : SBC #$09 : CMP.w SprX, Y : BCS .not_on_switch
   LDA.w SprY, X : CLC : ADC #$12 : CMP.w SprY, Y : BCC .not_on_switch
   LDA.w SprY, X : SEC : SBC #$12 : CMP.w SprY, Y : BCS .not_on_switch
-  SEC
-  RTS
+    SEC
+    RTS
 }
 
 ZoraBaby_GlobalBehavior:
@@ -295,9 +295,9 @@ Sprite_39_ZoraBaby:
   JSL JumpTableLocal
 
   dw LockSmith_Chillin
-  dw ZoraBaby_FollowLink          ; Becomes Follower
-  dw ZoraBaby_OfferService        ; I can help! (Follow/Stay)
-  dw ZoraBaby_RespondToAnswer     ; Goto FollowLink or JustPromiseOkay
+  dw ZoraBaby_FollowLink      ; Becomes Follower
+  dw ZoraBaby_OfferService    ; I can help! (Follow/Stay)
+  dw ZoraBaby_RespondToAnswer ; Goto FollowLink or JustPromiseOkay
   dw ZoraBaby_AgreeToWait
   dw ZoraBaby_PullSwitch
   dw ZoraBaby_PostSwitch
@@ -609,17 +609,17 @@ pullpc
 FollowerDraw_CalculateOAMCoords:
 {
   REP #$20
-  LDA.b $02 : STA.b ($90),Y
+  LDA.b $02 : STA.b ($90), Y
   INY
 
   CLC : ADC.w #$0080 : CMP.w #$0180 : BCS .off_screen
     LDA.b $02 : AND.w #$0100 : STA.b $74
-    LDA.b $00 : STA.b ($90),Y
+    LDA.b $00 : STA.b ($90), Y
 
     CLC : ADC.w #$0010 : CMP.w #$0100 : BCC .on_screen
 
   .off_screen:
-  LDA.w #$00F0 : STA.b ($90),Y
+  LDA.w #$00F0 : STA.b ($90), Y
 
   .on_screen:
   SEP #$20
@@ -784,7 +784,8 @@ MinecartFollower_TransitionToSprite:
   JSL Sprite_SpawnDynamically
   TYX
   JSL Sprite_SetSpawnedCoords
-  LDA.w !MinecartDirection, X : CMP.b #$00 : BEQ .vert_adjust
+  LDA.w !MinecartDirectionCache : STA.w !MinecartDirection, X
+  CMP.b #$00 : BEQ .vert_adjust
                              CMP.b #$02 : BEQ .vert_adjust
     LDA.w POSY : CLC : ADC #$08 : STA.w SprY, X
     LDA.w POSX                  : STA.w SprX, X
@@ -802,6 +803,7 @@ MinecartFollower_TransitionToSprite:
   LDA.w !MinecartTrackCache : STA.w SprSubtype, X
 
   LDA Minecart_AnimDirection, X : STA $0D90, X
+
   JSL Sprite_Minecart_Prep
   LDA.b #$00 : STA.l $7EF3CC
   RTL
@@ -812,7 +814,7 @@ DrawMinecartFollower:
 {
   JSL $099EFC ; Follower_Initialize
 
-  LDA.w !MinecartDirection, X : TAX
+  LDA.w !MinecartDirectionCache : TAX
   LDA Minecart_AnimDirection, X : STA $02CF
 
   JSR FollowerDraw_CachePosition
@@ -838,6 +840,13 @@ FollowerDraw_CachePosition:
   LDA.w $1A3C, X : STA.b $03
   LDA.w $1A64, X : STA.b $05
 
+  ; Adjust the coordinate a bit to place it more in line where the
+  ; minecart should be relative to Link.
+  REP #$20
+  LDA.b $00 : SEC : SBC.w #$0008 : STA.b $00
+  LDA.b $02 : CLC : ADC.w #$0002 : STA.b $02
+  SEP #$20
+
   ; -------------------------
   AND.b #$20
   LSR A
@@ -853,7 +862,7 @@ FollowerDraw_CachePosition:
   ; variables based on the follower here and manipulate $72
   ; if the player was immobile.
 
-  CLC : ADC $04 : STA $04
+        CLC : ADC $04 : STA $04
   TYA : CLC : ADC $04 : STA $04
   ; -------------------------
 
@@ -929,6 +938,12 @@ CheckForFollowerInterroomTransition:
 {
   LDA.w !LinkInCart : BEQ .not_in_cart
     LDA.b #$0B : STA $7EF3CC
+
+    ; Pause the current cart so that it doesn't draw anymore
+    PHX
+    LDX.w !MinecartCurrent
+    LDA.b #$01 : STA $0F00, X
+    PLX
   .not_in_cart
   JSL $01873A ; Underworld_LoadRoom
   RTL
