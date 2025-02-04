@@ -86,7 +86,6 @@ Left = $02
 Right = $03
 !SpriteDirection    = $0DE0
 
-
 ; A "track" is one minecart that can exist in multiple different places.
 ; Allowing the player to leave a minecart in one room and then still find
 ; it in the same place upon returning to that room.
@@ -127,6 +126,8 @@ Right = $03
 Sprite_Minecart_Long:
 {
   PHB : PHK : PLB
+
+  print "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: ", pc
 
   JSR Sprite_Minecart_DrawTop    ; Draw behind Link
   JSR Sprite_Minecart_DrawBottom ; Draw in front of Link
@@ -424,7 +425,6 @@ Sprite_Minecart_Main:
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
-    JSR HandleDynamicSwitchTileDirections
 
     RTS
   }
@@ -452,7 +452,6 @@ Sprite_Minecart_Main:
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
-    JSR HandleDynamicSwitchTileDirections
 
     RTS
   }
@@ -480,7 +479,6 @@ Sprite_Minecart_Main:
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
-    JSR HandleDynamicSwitchTileDirections
 
     RTS
   }
@@ -508,7 +506,6 @@ Sprite_Minecart_Main:
     JSR HandlePlayerCameraAndMoveCart
 
     JSR HandleTileDirections
-    JSR HandleDynamicSwitchTileDirections
 
     RTS
   }
@@ -641,7 +638,64 @@ Minecart_SetDirectionWest:
 }
 
 ; =========================================================
-; A = $0FA5
+
+HandleTileDirections:
+{
+  ; If the cart got disconnected from the player, release them.
+  JSR CheckIfPlayerIsOn : BCS .player_on_cart
+    %GotoAction(6) ; Minecart_Release
+    RTS
+  .player_on_cart
+
+  ; Setup Minecart position to look for tile IDs
+  ; We use AND #$F8 to clamp to a 8x8 grid.
+  LDA.w SprY, X : AND #$F8 : STA.b $00
+  LDA.w SprYH, X           : STA.b $01
+
+  LDA.w SprX, X : AND #$F8 : STA.b $02
+  LDA.w SprXH, X           : STA.b $03
+
+  ; Fetch tile attributes based on current coordinates
+  LDA.b #$00 : JSL Sprite_GetTileAttr
+
+  ; Debug: put the tile type into the rupee SRM.
+  STA.l $7EF362 : STA.l $7EF360
+  LDA.b #$00 : STA.l $7EF363 : STA.l $7EF361
+
+  JSR CheckForOutOfBounds : BCC .notOutOfBounds
+    JSR RoundCoords
+
+    BRA .done
+  .notOutOfBounds
+
+  JSR CheckForStopTiles : BCC .noStop
+    JSR RoundCoords
+
+    BRA .done
+  .noStop
+
+  JSR CheckForPlayerInput : BCC .noInput
+    JSR RoundCoords
+
+    BRA .done
+  .noInput
+
+  JSR CheckForCornerTiles : BCC .noCorner
+    JSR RoundCoords
+
+    BRA .done
+  .noCorner
+
+  JSR HandleDynamicSwitchTileDirections : BCC .noSwitch
+    JSR RoundCoords
+
+  .noSwitch
+
+  .done
+  RTS
+}
+
+; =========================================================
 
 CheckForOutOfBounds:
 {
@@ -678,13 +732,13 @@ CheckForStopTiles:
   LDA.w SPRTILE : SEC : SBC.b #$B7
 
   CLC : ADC.w $07 : TAY
-  LDA.w .DirectionTileLookup, Y : TAY
+  LDA.w .DirectionTileLookup, Y
 
   ; Check if the tile is a stop tile
-  CPY.b #$01 : BEQ .stop_north
-  CPY.b #$02 : BEQ .stop_east
-  CPY.b #$03 : BEQ .stop_south
-  CPY.b #$04 : BEQ .stop_west
+  CMP.b #$01 : BEQ .stop_north
+  CMP.b #$02 : BEQ .stop_east
+  CMP.b #$03 : BEQ .stop_south
+  CMP.b #$04 : BEQ .stop_west
     CLC
     RTS
 
@@ -744,287 +798,8 @@ CheckForStopTiles:
   }
 }
 
-CheckForCornerTiles:
-{
-  LDA.w SPRTILE
-  CMP.b #$B2 : BEQ .check_direction
-  CMP.b #$B3 : BEQ .check_direction
-  CMP.b #$B4 : BEQ .check_direction
-  CMP.b #$B5 : BEQ .check_direction
-    .exit
-    CLC
-    RTS
-  .check_direction
-  LDA.w SprMiscB, X
-  ASL #2  ; Multiply by 4 to offset rows in the lookup table
-  STA $07 ; Store the action index in $07
-
-  ; Subtract $B2 to normalize the tile type to 0 to 3
-  LDA.w SPRTILE : SEC : SBC.b #$B2
-  ; Add action index to tile type offset for the composite index
-  ; Transfer to Y to use as an offset for the rows
-  CLC : ADC.w $07 : TAY
-  LDA.w .DirectionTileLookup, Y : TAY
-  CPY #$01 : BEQ .move_north
-  CPY #$02 : BEQ .move_east
-  CPY #$03 : BEQ .move_south
-  CPY #$04 : BEQ .move_west
-    JMP .exit
-
-  .move_north
-  JSR Minecart_SetDirectionNorth
-  %GotoAction(2) ; Minecart_MoveNorth
-  JMP .done
-
-  .move_east
-  JSR Minecart_SetDirectionEast
-  %GotoAction(3) ; Minecart_MoveEast
-  JMP .done
-
-  .move_south
-  JSR Minecart_SetDirectionSouth
-  %GotoAction(4) ; Minecart_MoveSouth
-  JMP .done
-
-  .move_west
-  JSR Minecart_SetDirectionWest
-  %GotoAction(5) ; Minecart_MoveWest
-
-  .done
-  SEC
-  RTS
-
-  ; Direction to move on tile collision
-  ; 00 - stop or nothing
-  ; 01 - north
-  ; 02 - east
-  ; 03 - south
-  ; 04 - west
-  .DirectionTileLookup
-  {
-    ; TL,  BL,  TR,  BR, Stop
-    db $02, $00, $04, $00 ; North
-    db $00, $00, $03, $01 ; East
-    db $00, $02, $00, $04 ; South
-    db $03, $01, $00, $00 ; West
-  }
-}
-
-; Unused?
-CheckForTrackTiles:
-{
-  CMP.b #$B0 : BEQ .horiz
-  CMP.b #$B1 : BEQ .vert
-  CMP.b #$BB : BEQ .horiz
-  CMP.b #$BC : BEQ .vert
-    JMP .done
-
-  .horiz
-  ; Are we moving left or right?
-  LDA.w SprMiscB, X : CMP.b #$03 : BEQ .inverse_horiz_velocity
-    LDA.b #!MinecartSpeed : STA.w SprXSpeed, X
-    LDA.b #East : STA !MinecartDirection, X
-    JMP .done
-  .inverse_horiz_velocity
-  LDA.b #-!MinecartSpeed : STA.w SprXSpeed, X
-  LDA.b #West : STA !MinecartDirection, X
-  JMP .done
-  .vert
-  ; Are we moving up or down?
-  LDA.w SprMiscB, X : CMP.b #$00 : BEQ .inverse_vert_velocity
-    LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
-    JMP .done
-  .inverse_vert_velocity
-  LDA.b #-!MinecartSpeed : STA.w SprYSpeed, X
-  .done
-  RTS
-}
-
-HandleTileDirections:
-{
-  ;LDA.w SprTimerA, X : BEQ +
-  ;  RTS
-  ;+
-
-  ; If the cart got disconnected from the player, release them.
-  JSR CheckIfPlayerIsOn : BCS .player_on_cart
-    %GotoAction(6) ; Minecart_Release
-    RTS
-  .player_on_cart
-
-  ; Setup Minecart position to look for tile IDs
-  ; We use AND #$F8 to clamp to a 8x8 grid.
-  LDA.w SprY, X : AND #$F8 : STA.b $00
-  LDA.w SprYH, X           : STA.b $01
-
-  LDA.w SprX, X : AND #$F8 : STA.b $02
-  LDA.w SprXH, X           : STA.b $03
-
-  ; Fetch tile attributes based on current coordinates
-  LDA.b #$00 : JSL Sprite_GetTileAttr
-
-  ; Debug: put the tile type into the rupee SRM.
-  STA.l $7EF362 : STA.l $7EF360
-  LDA.b #$00 : STA.l $7EF363 : STA.l $7EF361
-
-  JSR CheckForOutOfBounds : BCC .notOutOfBounds
-    JSR RoundCoords
-
-    BRA .done
-
-  .notOutOfBounds
-
-  JSR CheckForPlayerInput : BCC .noInput
-    JSR RoundCoords
-
-    BRA .done
-    
-  .noInput
-
-  JSR CheckForStopTiles : BCC .noStop
-    JSR RoundCoords
-
-    BRA .done
-  .noStop
-  
-  JSR CheckForCornerTiles : BCC .noCorner
-    JSR RoundCoords
-    
-  .noCorner
-
-  .done
-  RTS
-}
-
-; NOTE TO SCAWFUL: This function could really go in a generic sprite
-; functions file but I'll leave that up to you.
-UpdateCachedCoords:
-{
-  LDA.w SprY, X  : STA.w SprCachedY+0
-  LDA.w SprX, X  : STA.w SprCachedX+0
-  LDA.w SprYH, X : STA.w SprCachedY+1
-  LDA.w SprXH, X : STA.w SprCachedX+1
-
-  RTS
-}
-
-; NOTE TO SCAWFUL: This function could really go in a generic sprite
-; functions file but I'll leave that up to you.
-RoundCoords:
-{
-  ; Clamp the Y coord to the nearest multiple of 8.
-  LDA.b $00 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $00 : STA.w SprY, X
-
-  ; Clamp the X coord to the nearest multiple of 8.
-  LDA.b $02 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $02 : STA.w SprX, X
-
-  JSR UpdateCachedCoords
-
-  RTS
-}
-
-pushpc
-
-org $0DFA68
-  RebuildHUD_Keys:
-
-org $028260
-  JSL ResetTrackVars
-
-pullpc
-
-ResetTrackVars:
-{
-  ; Replaced code.
-  JSL.l RebuildHUD_Keys
-
-  LDA.b #$00 : STA.w !MinecartTrackCache
-  LDX.b #$41
-  .loop
-  DEX
-    STA.w !MinecartTrackRoom, X
-    STA.w !MinecartTrackX, X
-    STA.w !MinecartTrackY, X
-  CPX.b #$00 : BNE .loop
-
-  RTL
-}
-
-; =========================================================
-; Check for the switch_track sprite and move based on the
-; state of that sprite.
-
-HandleDynamicSwitchTileDirections:
-{
-  ; Find out if the sprite $B0 is in the room
-  JSR CheckSpritePresence : BCC .no_b0
-    PHX
-    LDA $02 : TAX
-    JSL Link_SetupHitBox
-    JSL Sprite_SetupHitBox ; X is now the ID of the sprite $B0
-    PLX
-    JSL CheckIfHitBoxesOverlap : BCC .no_b0
-      LDA !MinecartDirection, X : CMP.b #$00 : BEQ .east_or_west
-                                  CMP.b #$01 : BEQ .north_or_south
-                                  CMP.b #$02 : BEQ .east_or_west
-                                  CMP.b #$03 : BEQ .north_or_south
-    .no_b0
-    RTS
-
-    .east_or_west
-      LDA.w SwitchRam : BNE .go_west
-        JSR Minecart_SetDirectionEast
-        %GotoAction(3) ; Minecart_MoveEast
-        RTS
-      .go_west
-      JSR Minecart_SetDirectionWest
-      %GotoAction(5) ; Minecart_MoveWest
-      RTS
-
-    .north_or_south
-    LDA.w SwitchRam : BNE .go_south
-      JSR Minecart_SetDirectionNorth
-      %GotoAction(2) ; Minecart_MoveNorth
-      RTS
-    .go_south
-    JSR Minecart_SetDirectionSouth
-    %GotoAction(4) ; Minecart_MoveSouth
-    RTS
-}
-
-; =========================================================
-; $00 = flag indicating presence of sprite ID $B0
-
-CheckSpritePresence:
-{
-  PHX
-  CLC        ; Assume sprite ID $B0 is not present
-  LDX.b #$10
-  .x_loop
-    DEX
-    LDY.b #$04
-    .y_loop
-      DEY
-      LDA $0E20, X : CMP.b #$B0 : BEQ .set_flag
-        BRA .not_b0
-
-    .set_flag
-      SEC         ; Set flag indicating sprite ID $B0 is present
-      STX.w $02
-      BRA .done
-
-  .not_b0
-    CPY.b #$00 : BNE .y_loop
-    CPX.b #$00 : BNE .x_loop
-  .done
-  PLX
-  RTS
-}
-
-; =========================================================
 ; Check for input from the user (u,d,l,r) on tile B6, BD
 ; CLC if not on an input tile or there was no input recieved.
-
 CheckForPlayerInput:
 {
   ; Load the tile index
@@ -1050,8 +825,8 @@ CheckForPlayerInput:
   LDA $F0 : AND.w .d_pad_press, Y : STA $05 : AND.b #$08 : BEQ .not_pressing_up
     .north
     JSR Minecart_SetDirectionNorth
-
     %GotoAction(2) ; Minecart_MoveNorth
+
     SEC
     RTS
 
@@ -1059,8 +834,8 @@ CheckForPlayerInput:
   LDA.b $05 : AND.b #$04 : BEQ .not_pressing_down
     .south
     JSR Minecart_SetDirectionSouth
-
     %GotoAction(4) ; Minecart_MoveSouth
+
     SEC
     RTS
 
@@ -1068,8 +843,8 @@ CheckForPlayerInput:
   LDA.b $05 : AND.b #$02 : BEQ .not_pressing_left
     .west
     JSR Minecart_SetDirectionWest
-
     %GotoAction(5) ; Minecart_MoveWest
+
     SEC
     RTS
 
@@ -1077,8 +852,8 @@ CheckForPlayerInput:
   LDA.b $05 : AND.b #$01 : BEQ .return
     .east
     JSR Minecart_SetDirectionEast
-
     %GotoAction(3) ; Minecart_MoveEast
+
     SEC
     RTS
   .return
@@ -1118,22 +893,248 @@ CheckForPlayerInput:
   .defaultDirection
     ; udlr
     ;  up,   down, left,  right
-    db $04,  $04,  $04,   $04    ; Nothing
-    db $04,  $04,  $04,   $04    ; $B6 Intersection
-    db East, $04,  $04,   $04    ; $BB North T
-    db $04,  East, $04,   $04    ; $BC South T
+    db $04,  $04,  $04,   $04   ; Nothing
+    db $04,  $04,  $04,   $04   ; $B6 Intersection
+    db East, $04,  $04,   $04   ; $BB North T
+    db $04,  East, $04,   $04   ; $BC South T
     db $04,  $04,  $04,   North ; $BD East T
-    db $04,  $04,  North, $04    ; $BE West T
+    db $04,  $04,  North, $04   ; $BE West T
 
   .intersectionMap
     ;   B6,  B7,  B8,  B9,  BA,  BB,  BC,  BD,  BE
     db $04, $00, $00, $00, $00, $08, $0C, $10, $14
 }
 
+CheckForCornerTiles:
+{
+  LDA.w SPRTILE
+  CMP.b #$B2 : BEQ .check_direction ; TL
+  CMP.b #$B3 : BEQ .check_direction ; BL
+  CMP.b #$B4 : BEQ .check_direction ; TR
+  CMP.b #$B5 : BEQ .check_direction ; BR
+    CLC
+    RTS
+  .check_direction
+  LDA.w SprMiscB, X
+  ASL #2  ; Multiply by 4 to offset rows in the lookup table
+  STA $07 ; Store the action index in $07
+
+  ; Subtract $B2 to normalize the tile type to 0 to 3
+  LDA.w SPRTILE : SEC : SBC.b #$B2
+  ; Add action index to tile type offset for the composite index
+  ; Transfer to Y to use as an offset for the rows
+  CLC : ADC.b $07 : TAY
+  LDA.w .DirectionTileLookup, Y
+  CMP.b #$01 : BEQ .move_north
+  CMP.b #$02 : BEQ .move_east
+  CMP.b #$03 : BEQ .move_south
+  CMP.b #$04 : BEQ .move_west
+    CLC
+    RTS
+
+  .move_north
+  JSR Minecart_SetDirectionNorth
+  %GotoAction(2) ; Minecart_MoveNorth
+  BRA .done
+
+  .move_east
+  JSR Minecart_SetDirectionEast
+  %GotoAction(3) ; Minecart_MoveEast
+  BRA .done
+
+  .move_south
+  JSR Minecart_SetDirectionSouth
+  %GotoAction(4) ; Minecart_MoveSouth
+  BRA .done
+
+  .move_west
+  JSR Minecart_SetDirectionWest
+  %GotoAction(5) ; Minecart_MoveWest
+
+  .done
+  SEC
+  RTS
+
+  ; Direction to move on tile collision
+  ; 00 - stop or nothing
+  ; 01 - north
+  ; 02 - east
+  ; 03 - south
+  ; 04 - west
+  .DirectionTileLookup
+  {
+    ;   TL,  BL,  TR,  BR   Coming from the:
+    db $02, $00, $04, $00 ; North
+    db $00, $00, $03, $01 ; East
+    db $00, $02, $00, $04 ; South
+    db $03, $01, $00, $00 ; West
+  }
+}
+
+; Check for the switch_track sprite and move based on the
+; state of that sprite.
+HandleDynamicSwitchTileDirections:
+{
+  ; Check for the switch tile.
+  LDA.w SPRTILE : CMP.b #$BF : BEQ .onSwitchTile
+    CLC
+    RTS
+  .onSwitchTile
+
+  ; Find out if the sprite $B0 is in the room.
+  JSR CheckSpritePresence : BCS .B0Present
+    CLC
+    RTS
+  .B0Present
+
+  LDA.w SprMiscB, X
+  ASL #3  ; Multiply by 8 to offset rows in the lookup table
+  STA.b $07 ; Store the action index in $07
+
+  ; Get the type (TL, BL, TR, BL) of the track by taking the subtype and
+  ; cutting out the extra data. Then x2 so we get the correct data from
+  ; the table.
+  LDY.b $04
+  LDA.w SprSubtype, Y : AND.b #$18 : LSR #2
+
+  ; Add the current direction and the state of the switch to determine
+  ; which direction we should go next.
+  CLC : ADC.b SwitchRam : CLC : ADC.b $07 : TAY
+  LDA.w .DirectionTileLookup, Y
+  CMP.b #$01 : BEQ .move_north
+  CMP.b #$02 : BEQ .move_east
+  CMP.b #$03 : BEQ .move_south
+  CMP.b #$04 : BEQ .move_west
+    CLC
+    RTS
+
+  .move_north
+  JSR Minecart_SetDirectionNorth
+  %GotoAction(2) ; Minecart_MoveNorth
+  BRA .done
+
+  .move_east
+  JSR Minecart_SetDirectionEast
+  %GotoAction(3) ; Minecart_MoveEast
+  BRA .done
+
+  .move_south
+  JSR Minecart_SetDirectionSouth
+  %GotoAction(4) ; Minecart_MoveSouth
+  BRA .done
+
+  .move_west
+  JSR Minecart_SetDirectionWest
+  %GotoAction(5) ; Minecart_MoveWest
+
+  .done
+  SEC
+  RTS
+
+  ; Direction to move on tile collision
+  ; 00 - stop or nothing
+  ; 01 - north
+  ; 02 - east
+  ; 03 - south
+  ; 04 - west
+  .DirectionTileLookup
+  {
+    ;  Off,  On, Off,  On, Off,  On, Off,  On
+    ;   TL,  TL,  BL,  BL,  TR,  TR,  BR,  BR   Coming from the:
+    db $02, $04, $00, $02, $04, $00, $00, $00 ; North
+    db $00, $03, $00, $00, $03, $01, $01, $00 ; East
+    db $00, $00, $02, $00, $00, $04, $04, $02 ; South
+    db $03, $00, $01, $03, $00, $00, $00, $01 ; West
+  }
+
+  ; TL turns into TR when on.
+  ; TR turns into BR when on.
+  ; BR turns into BL when on.
+  ; BL turns into TL when on.
+}
+
+; Unused?
+CheckForTrackTiles:
+{
+  CMP.b #$B0 : BEQ .horiz
+  CMP.b #$B1 : BEQ .vert
+  CMP.b #$BB : BEQ .horiz
+  CMP.b #$BC : BEQ .vert
+    JMP .done
+
+  .horiz
+  ; Are we moving left or right?
+  LDA.w SprMiscB, X : CMP.b #$03 : BEQ .inverse_horiz_velocity
+    LDA.b #!MinecartSpeed : STA.w SprXSpeed, X
+    LDA.b #East : STA !MinecartDirection, X
+    JMP .done
+  .inverse_horiz_velocity
+  LDA.b #-!MinecartSpeed : STA.w SprXSpeed, X
+  LDA.b #West : STA !MinecartDirection, X
+  JMP .done
+  .vert
+  ; Are we moving up or down?
+  LDA.w SprMiscB, X : CMP.b #$00 : BEQ .inverse_vert_velocity
+    LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
+    JMP .done
+  .inverse_vert_velocity
+  LDA.b #-!MinecartSpeed : STA.w SprYSpeed, X
+  .done
+  RTS
+}
+
 ; =========================================================
+
+; NOTE TO SCAWFUL: This function could really go in a generic sprite
+; functions file but I'll leave that up to you.
+UpdateCachedCoords:
+{
+  LDA.w SprY, X  : STA.w SprCachedY+0
+  LDA.w SprX, X  : STA.w SprCachedX+0
+  LDA.w SprYH, X : STA.w SprCachedY+1
+  LDA.w SprXH, X : STA.w SprCachedX+1
+
+  RTS
+}
+
+; NOTE TO SCAWFUL: This function could really go in a generic sprite
+; functions file but I'll leave that up to you.
+RoundCoords:
+{
+  ; Clamp the Y coord to the nearest multiple of 8.
+  LDA.b $00 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $00 : STA.w SprY, X
+
+  ; Clamp the X coord to the nearest multiple of 8.
+  LDA.b $02 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $02 : STA.w SprX, X
+
+  JSR UpdateCachedCoords
+
+  RTS
+}
+
+; $04 = sprite index of sprite ID $B0
+; SEC if sprite is present.
+CheckSpritePresence:
+{
+  PHX
+  CLC ; Assume sprite ID $B0 is not present
+  LDX.b #$10
+  .x_loop
+    DEX
+    LDA $0E20, X : CMP.b #$B0 : BNE .not_b0
+      SEC ; Set flag indicating sprite ID $B0 is present
+      STX.w $04
+      BRA .done
+    .not_b0
+  CPX.b #$00 : BNE .x_loop
+
+  .done
+  PLX
+  RTS
+}
+
 ; Sets carry if player is overlapping the sprite
 ; Clear carry if player is outside the bounds
-
 CheckIfPlayerIsOn:
 {
   REP #$20
@@ -1150,6 +1151,35 @@ CheckIfPlayerIsOn:
   SEP #$20
   CLC
   RTS ; Return with carry cleared
+}
+
+; =========================================================
+
+pushpc
+
+org $0DFA68
+  RebuildHUD_Keys:
+
+org $028260
+  JSL ResetTrackVars
+
+pullpc
+
+ResetTrackVars:
+{
+  ; Replaced code.
+  JSL.l RebuildHUD_Keys
+
+  LDA.b #$00 : STA.w !MinecartTrackCache
+  LDX.b #$41
+  .loop
+  DEX
+    STA.w !MinecartTrackRoom, X
+    STA.w !MinecartTrackX, X
+    STA.w !MinecartTrackY, X
+  CPX.b #$00 : BNE .loop
+
+  RTL
 }
 
 ; =========================================================
@@ -1261,8 +1291,8 @@ Sprite_Minecart_DrawTop:
     BCC   .on_screen_y
 
     LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-    STA   $0E
-  .on_screen_y
+      STA   $0E
+    .on_screen_y
 
     PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
     INY
@@ -1274,11 +1304,11 @@ Sprite_Minecart_DrawTop:
     TYA : LSR #2 : TAY
     LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
     PLY : INY
-    PLX : DEX : BPL .nextTile
+  PLX : DEX : BPL .nextTile
 
-    PLX
+  PLX
 
-    RTS
+  RTS
 
   .start_index
     db $00, $02, $04, $06
@@ -1323,7 +1353,6 @@ Sprite_Minecart_DrawBottom:
     LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
     LDA .start_index, Y : STA $06
 
-
     PHX
     LDX   .nbr_of_tiles, Y ;amount of tiles -1
     LDY.b #$00
@@ -1347,8 +1376,8 @@ Sprite_Minecart_DrawBottom:
     BCC   .on_screen_y
 
     LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-    STA   $0E
-  .on_screen_y
+      STA   $0E
+    .on_screen_y
 
     PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
     INY
@@ -1360,11 +1389,11 @@ Sprite_Minecart_DrawBottom:
     TYA : LSR #2 : TAY
     LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
     PLY : INY
-    PLX : DEX : BPL .nextTile
+  PLX : DEX : BPL .nextTile
 
-    PLX
+  PLX
 
-    RTS
+  RTS
 
   .start_index
     db $00, $02, $04, $06
@@ -1429,3 +1458,4 @@ pushpc
 
 pullpc
 
+; =========================================================

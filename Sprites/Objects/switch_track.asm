@@ -50,7 +50,11 @@ Sprite_RotatingTrack_Prep:
 {
   PHB : PHK : PLB
   LDA.b #$80 : STA.w SprDefl, X
-  LDA.w SprSubtype, X : STA.w SprAction,X
+  LDA.w SprSubtype, X : AND.b #$18 : LSR #3
+
+  ; Run the main frame once so that the animation frame is
+  ; started correctly.
+  JSR Sprite_RotatingTrack_Main
   PLB
   RTL
 }
@@ -61,7 +65,6 @@ Sprite_RotatingTrack_Prep:
 ; 1 = TopRight -> BottomRight
 ; 2 = BottomRight -> BottomLeft
 ; 3 = BottomLeft -> TopLeft
-; 4 = TopRight -> TopLeft
 
 SwitchRam = $37
 
@@ -74,7 +77,6 @@ Sprite_RotatingTrack_Main:
   dw TopRightToBottomRight
   dw BottomRightToBottomLeft
   dw BottomLeftToTopLeft
-  dw TopRightToTopLeft
 
   ; -------------------------------------------------------
   ; 00 = TopLeft -> TopRight
@@ -119,19 +121,6 @@ Sprite_RotatingTrack_Main:
     %PlayAnimation(0,0,4)
     RTS
   }
-
-  ; -------------------------------------------------------
-  ; 04 = TopRight -> TopLeft
-  TopRightToTopLeft:
-  {
-    LDA.w SwitchRam : BNE part2_d
-      %StartOnFrame(1)
-      %PlayAnimation(1,1,4)
-    part2_d:
-    %StartOnFrame(0)
-    %PlayAnimation(0,0,4)
-    RTS
-  }
 }
 
 ; =========================================================
@@ -139,7 +128,7 @@ Sprite_RotatingTrack_Main:
 Sprite_RotatingTrack_Draw:
 {
   JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  LDA.b #$04 : JSL OAM_AllocateFromRegionB
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
@@ -191,7 +180,6 @@ Sprite_RotatingTrack_Draw:
 
   RTS
 
-
   .start_index
     db $00, $01, $02, $03
   .nbr_of_tiles
@@ -202,8 +190,10 @@ Sprite_RotatingTrack_Draw:
     db $44
     db $44
   .properties
-    db $7D
-    db $3D
-    db $FD
-    db $BD
+    db $0D
+    db $4D
+    db $CD
+    db $8D
 }
+
+; =========================================================
