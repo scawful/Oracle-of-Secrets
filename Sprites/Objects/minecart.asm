@@ -122,6 +122,34 @@ Right = $03
 !MinecartCurrent = $07EA
 
 ; =========================================================
+; Collision setup:
+
+; 0xB0 - Horizontal straight
+; 0xB1 - Vertical straight
+; 0xB2 - Top left corner
+; 0xB3 - Bottom left corner
+; 0xB4 - Top right corner
+; 0xB5 - Bottom right corner
+; 0xB6 - 4 way intersection
+; 0xB7 - Stop north
+; 0xB8 - Stop south
+; 0xB9 - Stop west
+; 0xBA - Stop east
+; 0xBB - North T intersection
+; 0xBC - South T intersection
+; 0xBD - East T intersection
+; 0xBE - West T intersection
+; 0xD0 - Top left switch
+; 0xD1 - Bottom left switch
+; 0xD2 - Top right switch
+; 0xD3 - Bottom right switch
+
+; TL switch turns into TR when on
+; BL switch turns into TL when on
+; TR switch turns into BR when on
+; BR switch turns into BL when on
+
+; =========================================================
 
 Sprite_Minecart_Long:
 {
@@ -1054,7 +1082,6 @@ HandleDynamicSwitchTileDirections:
   ; $D1 BL turns into TL when on.
   ; $D2 TR turns into BR when on.
   ; $D3 BR turns into BL when on.
-  
 }
 
 ; Unused?
