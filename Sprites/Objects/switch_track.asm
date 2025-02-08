@@ -50,7 +50,20 @@ Sprite_RotatingTrack_Prep:
 {
   PHB : PHK : PLB
   LDA.b #$80 : STA.w SprDefl, X
-  LDA.w SprSubtype, X : AND.b #$18 : LSR #3
+  
+  ; Setup Minecart position to look for tile IDs
+  ; We use AND #$F8 to clamp to a 8x8 grid.
+  ; Subtract 8 from the Y position to get the tile right above instead.
+  LDA.w SprY, X : AND #$F8 : SEC : SBC.b #$08 : STA.b $00
+  LDA.w SprYH, X                              : STA.b $01
+
+  LDA.w SprX, X : AND #$F8 : STA.b $02
+  LDA.w SprXH, X           : STA.b $03
+
+  ; Fetch tile attributes based on current coordinates
+  LDA.b #$00 : JSL Sprite_GetTileAttr
+
+  LDA.w SPRTILE : SEC : SBC.b #$D0 : STA.w SprAction, X
 
   ; Run the main frame once so that the animation frame is
   ; started correctly.
@@ -66,59 +79,67 @@ Sprite_RotatingTrack_Prep:
 ; 2 = BottomRight -> BottomLeft
 ; 3 = BottomLeft -> TopLeft
 
-SwitchRam = $37
+; The state of each switch. Up to $0250 used which is all free ram.
+SwitchRam = $0230
 
 Sprite_RotatingTrack_Main:
 {
+  ; Get the subtype of the track so that we can get its on/off state.
+  LDA.w SprSubtype, X : TAY
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
   dw TopLeftToTopRight
+  dw BottomLeftToTopLeft
   dw TopRightToBottomRight
   dw BottomRightToBottomLeft
-  dw BottomLeftToTopLeft
-
+  
   ; -------------------------------------------------------
   ; 00 = TopLeft -> TopRight
   TopLeftToTopRight:
   {
-    LDA.w SwitchRam : BNE part2
-      %PlayAnimation(0,0,4)
-    part2:
-    %PlayAnimation(1,1,4)
+    LDA.w SwitchRam, Y : BNE .part2
+      LDA.b #$00 : STA.w SprFrame, X
+      RTS
+    .part2
+    LDA.b #$01 : STA.w SprFrame, X
     RTS
   }
 
   ; -------------------------------------------------------
-  ; 01 = TopRight -> BottomRight
-  TopRightToBottomRight:
-  {
-    LDA.w SwitchRam : BNE part2_a
-      %PlayAnimation(1,1,4)
-    part2_a:
-    %PlayAnimation(2,2,4)
-    RTS
-  }
-
-  ; -------------------------------------------------------
-  ; 02 = BottomRight -> BottomLeft
-  BottomRightToBottomLeft:
-  {
-    LDA.w SwitchRam : BEQ part2_b
-      %PlayAnimation(2,2,4)
-    part2_b:
-    %PlayAnimation(3,3,4)
-    RTS
-  }
-
-  ; -------------------------------------------------------
-  ; 03 = BottomLeft -> TopLeft
+  ; 01 = BottomLeft -> TopLeft
   BottomLeftToTopLeft:
   {
-    LDA.w SwitchRam : BNE part2_c
-      %PlayAnimation(3,3,4)
-    part2_c:
-    %PlayAnimation(0,0,4)
+    LDA.w SwitchRam, Y : BNE .part2_c
+      LDA.b #$03 : STA.w SprFrame, X
+      RTS
+    .part2_c
+    LDA.b #$00 : STA.w SprFrame, X
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 02 = TopRight -> BottomRight
+  TopRightToBottomRight:
+  {
+    LDA.w SwitchRam, Y : BNE .part2_a
+      LDA.b #$01 : STA.w SprFrame, X
+      RTS
+    .part2_a
+    LDA.b #$02 : STA.w SprFrame, X
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 03 = BottomRight -> BottomLeft
+  BottomRightToBottomLeft:
+  {
+    LDA.w SwitchRam, Y : BEQ .part2_b
+      LDA.b #$03 : STA.w SprFrame, X
+      RTS
+    .part2_b
+    LDA.b #$02 : STA.w SprFrame, X
     RTS
   }
 }
@@ -190,10 +211,10 @@ Sprite_RotatingTrack_Draw:
     db $44
     db $44
   .properties
-    db $0D
-    db $4D
-    db $CD
-    db $8D
+    db $3D
+    db $7D
+    db $FD
+    db $BD
 }
 
 ; =========================================================

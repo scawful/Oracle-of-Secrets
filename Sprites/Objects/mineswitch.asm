@@ -52,7 +52,11 @@ Sprite_LeverSwitch_Prep:
   PHB : PHK : PLB
 
   LDA.b #$00 : STA.w SprDefl, X
-  LDA.w SwitchRam : STA.w SprAction, X : STA.w SprFrame, X
+
+  ; Get the subtype of the switch so that we can get its on/off state.
+  LDA.w SprSubtype, X : TAY
+
+  LDA.w SwitchRam, Y : STA.w SprAction, X : STA.w SprFrame, X
   LDA.b #$00 : STA.w SprTileDie, X
   STZ.w SprBulletproof, X
 
@@ -81,8 +85,11 @@ Sprite_LeverSwitch_Main:
       JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
         LDA #$25 : STA $012F
 
+        ; Get the subtype of the switch so that we can get its on/off state.
+        LDA.w SprSubtype, X : TAY
+
         ; Turn the switch on.
-        LDA #$01 : STA.b SwitchRam
+        LDA #$01 : STA.w SwitchRam, Y
         LDA #$10 : STA.w SprTimerA, X
         %GotoAction(1)
     .NoDamage
@@ -95,9 +102,12 @@ Sprite_LeverSwitch_Main:
     LDA.w SprTimerA, X : BNE .NoDamage
       JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
         LDA #$25 : STA $012F
+
+        ; Get the subtype of the switch so that we can get its on/off state.
+        LDA.w SprSubtype, X : TAY
         
         ; Turn the switch off.
-        STZ.w SwitchRam
+        LDA #$00 : STA.w SwitchRam, Y
         LDA #$10 : STA.w SprTimerA, X
         %GotoAction(0)
     .NoDamage

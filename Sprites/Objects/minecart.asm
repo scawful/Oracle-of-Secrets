@@ -127,8 +127,6 @@ Sprite_Minecart_Long:
 {
   PHB : PHK : PLB
 
-  print "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: ", pc
-
   JSR Sprite_Minecart_DrawTop    ; Draw behind Link
   JSR Sprite_Minecart_DrawBottom ; Draw in front of Link
 
@@ -976,30 +974,35 @@ CheckForCornerTiles:
 HandleDynamicSwitchTileDirections:
 {
   ; Check for the switch tile.
-  LDA.w SPRTILE : CMP.b #$BF : BEQ .onSwitchTile
+  LDA.w SPRTILE : CMP.b #$D0 : BEQ .onSwitchTile
+                  CMP.b #$D1 : BEQ .onSwitchTile
+                  CMP.b #$D2 : BEQ .onSwitchTile
+                  CMP.b #$D3 : BEQ .onSwitchTile
     CLC
     RTS
   .onSwitchTile
 
-  ; Find out if the sprite $B0 is in the room.
-  JSR CheckSpritePresence : BCS .B0Present
+  ; Find out if the sprite $B0 is in the room and if we are
+  ; currently touching it.
+  JSR CheckTrackSpritePresence : BCS .B0Present
     CLC
     RTS
   .B0Present
 
   LDA.w SprMiscB, X
-  ASL #3  ; Multiply by 8 to offset rows in the lookup table
+  ASL #3 ; Multiply by 8 to offset rows in the lookup table
   STA.b $07 ; Store the action index in $07
 
-  ; Get the type (TL, BL, TR, BL) of the track by taking the subtype and
-  ; cutting out the extra data. Then x2 so we get the correct data from
-  ; the table.
-  LDY.b $04
-  LDA.w SprSubtype, Y : AND.b #$18 : LSR #2
+  ; Get the subtype of the track so that we can get its on/off state.
+  LDA.w SprSubtype, Y : TAY
+
+  ; Normalize the tile data and get the type of track (TL, BL, TR, BR) and
+  ; x2 so that we can read the correct column in the table.
+  LDA.w SPRTILE : SEC : SBC.b #$D0 : ASL
 
   ; Add the current direction and the state of the switch to determine
   ; which direction we should go next.
-  CLC : ADC.b SwitchRam : CLC : ADC.b $07 : TAY
+  CLC : ADC.w SwitchRam, Y : CLC : ADC.b $07 : TAY
   LDA.w .DirectionTileLookup, Y
   CMP.b #$01 : BEQ .move_north
   CMP.b #$02 : BEQ .move_east
@@ -1047,10 +1050,11 @@ HandleDynamicSwitchTileDirections:
     db $03, $00, $01, $03, $00, $00, $00, $01 ; West
   }
 
-  ; TL turns into TR when on.
-  ; TR turns into BR when on.
-  ; BR turns into BL when on.
-  ; BL turns into TL when on.
+  ; $D0 TL turns into TR when on.
+  ; $D1 BL turns into TL when on.
+  ; $D2 TR turns into BR when on.
+  ; $D3 BR turns into BL when on.
+  
 }
 
 ; Unused?
@@ -1114,22 +1118,30 @@ RoundCoords:
 
 ; $04 = sprite index of sprite ID $B0
 ; SEC if sprite is present.
-CheckSpritePresence:
+CheckTrackSpritePresence:
 {
-  PHX
-  CLC ; Assume sprite ID $B0 is not present
-  LDX.b #$10
-  .x_loop
-    DEX
-    LDA $0E20, X : CMP.b #$B0 : BNE .not_b0
-      SEC ; Set flag indicating sprite ID $B0 is present
-      STX.w $04
-      BRA .done
+  LDY.b #$10
+  .loop
+    DEY
+    ; Check if the sprite is $B0
+    LDA.w $0E20, Y : CMP.b #$B0 : BNE .not_b0
+      ; Check if the high bytes of the coordinates match.
+      LDA.w SprYH, X : CMP.w SprYH, Y : BNE .not_b0
+      LDA.w SprXH, X : CMP.w SprXH, Y : BNE .not_b0
+        ; Check if the low bytes match but round the cart's coordinates.
+        ; Offset the Y by 8 so that we match the cart
+        LDA.w SprY, X : CLC : ADC.b #$04 : AND.b #$F8 : CLC : ADC.b #$08
+        CMP.w SprY, Y : BNE .not_b0
+        LDA.w SprX, X : CLC : ADC.b #$04 : AND.b #$F8
+        CMP.w SprX, Y : BNE .not_b0
+          STY.b $04
+          SEC ; Set flag indicating sprite ID $B0 is present.
+          BRA .done
     .not_b0
-  CPX.b #$00 : BNE .x_loop
+  CPY.b #$00 : BNE .loop
+  CLC ; Assume sprite ID $B0 is not present
 
   .done
-  PLX
   RTS
 }
 
