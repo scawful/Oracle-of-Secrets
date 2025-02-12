@@ -35,7 +35,7 @@ Sprite_ZoraPrincess_Long:
   PHB : PHK : PLB
   JSR Sprite_ZoraPrincess_Draw
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
-  JSR Sprite_ZoraPrincess_Main
+    JSR Sprite_ZoraPrincess_Main
   .SpriteIsNotActive
   PLB
   RTL
@@ -44,7 +44,7 @@ Sprite_ZoraPrincess_Long:
 Sprite_ZoraPrincess_Prep:
 {
   PHB : PHK : PLB
-  LDA.l $7EF302 : BEQ   .doesnt_have_mask
+  LDA.l $7EF302 : BEQ .doesnt_have_mask
     STZ.w SprState, X ; Kill the sprite
   .doesnt_have_mask
 
@@ -60,7 +60,7 @@ Sprite_ZoraPrincess_Main:
   JSL Sprite_PlayerCantPassThrough
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw WaitForLink
   dw CheckForSongOfHealing
@@ -79,8 +79,8 @@ Sprite_ZoraPrincess_Main:
   CheckForSongOfHealing:
   {
     %PlayAnimation(0, 1, 10)
-    LDA   $FE : BEQ .ninguna_cancion
-      STZ   $FE
+    LDA.b SongFlag : BEQ .ninguna_cancion
+      STZ.b SongFlag
       LDA.b #$C0 : STA.w SprTimerD, X
       %GotoAction(2)
     .ninguna_cancion

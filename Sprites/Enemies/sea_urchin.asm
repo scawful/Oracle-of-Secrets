@@ -60,7 +60,7 @@ Sprite_SeaUrchin_Prep:
 Sprite_SeaUrchin_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Idle
   dw Death
@@ -80,11 +80,9 @@ Sprite_SeaUrchin_Main:
   {
     LDA.b #$06 : STA.w SprState, X
     LDA.b #$0A : STA.w SprTimerA, X
-
     STZ.w SprPrize,X
-
-    LDA.b #$09 ; SFX2.1E
-    JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan
+    JSL ForcePrizeDrop_long
+    LDA.b #$09 : JSL SpriteSFX_QueueSFX3WithPan
     RTS
   }
 }

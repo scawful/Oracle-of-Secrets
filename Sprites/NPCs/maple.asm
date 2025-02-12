@@ -16,16 +16,15 @@ MapleHandler:
   dw Maple_PutLinkToSleep
   dw Maple_HandleDreams
 
-; LDA.l $7EF351 : BEQ +
-; LDA.b #$02 : STA.l $7EF351
-; LDA.b #$1B : STA.w $012F
-; STZ.w SprAction, X
-; +
 
   Maple_Idle:
   {
     %ShowSolicitedMessage($01B3) : BCC +
       INC.w SprAction, X
+    +
+    LDA.l $7EF351 : BEQ +
+      LDA.b #$02 : STA.l $7EF351
+      LDA.b #$1B : STA.w $012F
     +
     RTS
   }
@@ -77,9 +76,9 @@ MapleHandler:
   Maple_CheckForPendant:
   {
     ; Check for pendant
-    LDA.l PENDANTS : AND.b #$04 : BNE .courage
-    LDA.l PENDANTS : AND.b #$02 : BNE .power
-    LDA.l PENDANTS : AND.b #$01 : BNE .wisdom
+    LDA.l Pendants : AND.b #$04 : BNE .courage
+    LDA.l Pendants : AND.b #$02 : BNE .power
+    LDA.l Pendants : AND.b #$01 : BNE .wisdom
                      JMP .none
     .courage
     LDA.l Dreams : AND.b #$04 : BNE .power

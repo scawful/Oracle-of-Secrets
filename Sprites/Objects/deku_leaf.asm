@@ -32,8 +32,6 @@
 
 %Set_Sprite_Properties(Sprite_DekuLeaf_Prep, Sprite_DekuLeaf_Long)
 
-; =========================================================
-
 Sprite_DekuLeaf_Long:
 {
   PHB : PHK : PLB
@@ -50,8 +48,6 @@ Sprite_DekuLeaf_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_DekuLeaf_Prep:
 {
   PHB : PHK : PLB
@@ -62,12 +58,10 @@ Sprite_DekuLeaf_Prep:
   RTL
 }
 
-; =========================================================
-
 Sprite_DekuLeaf_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw WaitForPlayer
   dw Whirlpool_Main
@@ -95,60 +89,34 @@ Sprite_DekuLeaf_Main:
 
     LDA $0AAB : BEQ .not_on
 
-    STZ $55            ; Reset cape flag
-    STZ $0AAB          ; Reset underwater flag
-    STZ $0351          ; Reset ripple flag
-    STZ $037B          ; Reset invincibility flag
-    STZ $02B2
+      STZ $55    ; Reset cape flag
+      STZ $0AAB  ; Reset underwater flag
+      STZ $0351  ; Reset ripple flag
+      STZ $037B  ; Reset invincibility flag
+      STZ $02B2  ; Reset mask flag
 
-    LDA.b $10
-    CMP.b #$0B
-    BEQ .exit
+      LDA.b $10 : CMP.b #$0B : BEQ .exit
+        LDA.b $8A : AND.b #$40 : STA.b $7B : BEQ .no_mirror_portal
+          LDA.b $20 : STA.w $1ADF
+          LDA.b $21 : STA.w $1AEF
+          LDA.b $22 : STA.w $1ABF
+          LDA.b $23 : STA.w $1ACF
+        .no_mirror_portal
+        LDA.b #$23
 
-    LDA.b $8A
-    AND.b #$40
-    STA.b $7B
+        #SetGameModeLikeMirror:
+        STA.b $11
+        STZ.w $03F8
+        LDA.b #$01 : STA.w $02DB
+        STZ.b $B0
+        STZ.b $27 : STZ.b $28
+        LDA.b #$14 : STA.b $5D
 
-    BEQ .no_mirror_portal
-
-    LDA.b $20
-    STA.w $1ADF
-
-    LDA.b $21
-    STA.w $1AEF
-
-    LDA.b $22
-    STA.w $1ABF
-
-    LDA.b $23
-    STA.w $1ACF
-
-  .no_mirror_portal
-    LDA.b #$23
-
-  #SetGameModeLikeMirror:
-    STA.b $11
-
-    STZ.w $03F8
-
-    LDA.b #$01
-    STA.w $02DB
-
-    STZ.b $B0
-
-    STZ.b $27
-    STZ.b $28
-
-    LDA.b #$14 ; LINKSTATE 14
-    STA.b $5D
-
-  .not_on
-  .exit
+    .not_on
+    .exit
     RTS
   }
 }
-
-; =========================================================
 
 Sprite_DekuLeaf_Draw:
 {
@@ -158,7 +126,6 @@ Sprite_DekuLeaf_Draw:
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -206,9 +173,6 @@ Sprite_DekuLeaf_Draw:
   PLX
 
   RTS
-
-
-; =========================================================
 
 .start_index
   db $00
@@ -279,8 +243,6 @@ Sprite_Whirlpool_Draw:
   PLX
 
   RTS
-
-
 
   .start_index
   db $00, $04, $08

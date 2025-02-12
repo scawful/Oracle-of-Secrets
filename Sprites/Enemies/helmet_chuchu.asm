@@ -51,7 +51,7 @@ Sprite_HelmetChuchu_Long:
 Sprite_HelmetChuchu_Prep:
 {
   PHB : PHK : PLB
-  LDA.l SWORD : DEC A : TAY
+  LDA.l Sword : DEC A : TAY
   LDA.w .health, Y : STA.w SprHealth, X
   JSL GetRandomInt : AND.b #$02 : STA.w SprAction, X
   STZ.w SprMiscB, X
@@ -66,7 +66,7 @@ Sprite_HelmetChuchu_Prep:
   RTL
 
   .health
-    db $08, $0C, $40, $C0
+    db $08, $0C, $0F, $10
 }
 
 ; =========================================================
@@ -222,7 +222,7 @@ Sprite_Chuchu_Move:
   JSL Sprite_CheckIfRecoiling
 
   LDA.w SprMiscB, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw BounceTowardPlayer
   dw RecoilFromPlayer

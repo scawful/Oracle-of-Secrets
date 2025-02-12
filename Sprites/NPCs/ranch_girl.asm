@@ -43,13 +43,7 @@ RanchGirl_TeachSong:
   .not_started
   .running_dialog
   .has_song
-  LDA.b $1A
-  LSR A
-  LSR A
-  LSR A
-  LSR A
-  AND.b #$01
-  STA.w $0DC0,X
+  LDA.b $1A : LSR #4 : AND.b #$01 : STA.w $0DC0,X
 
   RTL
 }

@@ -3,10 +3,10 @@
 
 SickKid_CheckForSongOfHealing:
 {
-  LDA $FE : CMP.b #$01 : BNE .no_song
+  LDA.b SongFlag : CMP.b #$01 : BNE .no_song
     INC $0D80, X
     INC $02E4
-    STZ $FE
+    STZ.b SongFlag
   .no_song
   RTL
 }

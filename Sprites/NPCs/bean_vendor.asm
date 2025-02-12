@@ -32,8 +32,6 @@
 
 %Set_Sprite_Properties(Sprite_BeanVendor_Prep, Sprite_BeanVendor_Long)
 
-; =========================================================
-
 Sprite_BeanVendor_Long:
 {
   PHB : PHK : PLB
@@ -53,8 +51,6 @@ Sprite_BeanVendor_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_BeanVendor_Prep:
 {
   PHB : PHK : PLB
@@ -62,23 +58,22 @@ Sprite_BeanVendor_Prep:
   LDA.b #$40 : STA.w SprTimerA, X
   STZ.w SprMiscD, X
 
-  LDA.b $8A : CMP.b #$00 : BNE +
-    LDA.l MagicBeanProg : BNE .in_progress
-      LDA.b #$01 : STA.w SprMiscD, X
-      LDA.b #$04 : STA.w SprAction, X
-      JMP +
-    .in_progress
-    LDA.l MagicBeanProg : CMP.b #$3F : BCS .not_flower
-      ; Sprite is the flower on ranch map
-      LDA.b #$05 : STA.w SprAction, X
-    .not_flower
-    STA.w SprFrame, X
+  LDA.b $1B : BNE +
+    LDA.b $8A : CMP.b #$00 : BNE +
+      LDA.l MagicBeanProg : BNE .in_progress
+        LDA.b #$01 : STA.w SprMiscD, X
+        LDA.b #$05 : STA.w SprAction, X
+        JMP +
+      .in_progress
+      LDA.l MagicBeanProg : CMP.b #$3F : BCS .not_flower
+        ; Sprite is the flower on ranch map
+        LDA.b #$05 : STA.w SprAction, X
+      .not_flower
+      STA.w SprFrame, X
   +
   PLB
   RTL
 }
-
-; =========================================================
 
 Sprite_BeanVendor_Main:
 {
@@ -398,8 +393,6 @@ Sprite_BeanVendor_Draw:
 
   RTS
 
-
-  ; =======================================================
   .start_index
   db $00, $04, $05, $0B, $11, $13, $15
   .nbr_of_tiles

@@ -47,7 +47,7 @@ Sprite_Leever_Main:
 {
   JSL Sprite_DamageFlash_Long
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Leever_Underground
   dw Leever_Emerge

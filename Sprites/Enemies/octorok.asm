@@ -2,7 +2,7 @@
 ; Sprite Properties
 ; =========================================================
 
-!SPRID              = $08 ; The sprite ID you are overwriting (HEX)
+!SPRID              = $08
 !NbrTiles           = 05  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -32,8 +32,6 @@
 
 %Set_Sprite_Properties(Sprite_Octorok_Prep, Sprite_Octorok_Long)
 
-; =========================================================
-
 Sprite_Octorok_Long:
 {
   PHB : PHK : PLB
@@ -52,8 +50,6 @@ Sprite_Octorok_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_Octorok_Prep:
 {
   PHB : PHK : PLB
@@ -61,8 +57,6 @@ Sprite_Octorok_Prep:
   PLB
   RTL
 }
-
-; =========================================================
 
 Sprite_Octorok_Main:
 {
@@ -80,7 +74,7 @@ Sprite_Octorok_Main:
   .not_water_tile
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Octorok_MoveDown
   dw Octorok_MoveUp
@@ -148,9 +142,8 @@ Sprite_Octorok_Move:
   .wait
   LDY.w SprMiscC, X
 
-  LDA.w .speed_x, Y : STA.w SprXSpeed,X
-
-  LDA.w .speed_y, Y : STA.w SprYSpeed,X
+  LDA.w .speed_x, Y : STA.w SprXSpeed, X
+  LDA.w .speed_y, Y : STA.w SprYSpeed, X
 
   JSL Sprite_CheckTileCollision
   LDA.w $0E70, X : BEQ .no_collision
@@ -159,26 +152,18 @@ Sprite_Octorok_Move:
   .no_collision
   RTS
 
-  ; ---------------------------------------------------------
-
   .octorok_used_barrage
   STZ.w SprXSpeed, X : STZ.w SprYSpeed,X
-
   LDA.w SprTimerA, X : BNE Octorock_ShootEmUp
     INC.w SprMiscF, X
-
     LDA.w SprMiscC, X
     PHA
-
     JSL GetRandomInt : AND.b #$3F : ADC.b #$30 : STA.w SprTimerA, X
     AND.b #$03 : STA.w SprMiscC, X
-
     PLA
     CMP.w SprMiscC, X : BEQ .exit
-    EOR.w SprMiscC, X : BNE .exit
-
-    LDA.b #$08 : STA.w SprTimerB,X
-
+      EOR.w SprMiscC, X : BNE .exit
+        LDA.b #$08 : STA.w SprTimerB,X
   .exit
   RTS
 
@@ -221,7 +206,7 @@ Sprite_WaterOctorok_Main:
   JSR Sprite_WaterOctorok_Attack
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw WaterOctorok_FaceDown
   dw WaterOctorok_FaceUp
@@ -270,7 +255,7 @@ Sprite_WaterOctorok_Attack:
   JSL Sprite_CheckDamageToPlayer
 
   LDA.w SprMiscG, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw WaterOctorok_Hidden
   dw WaterOctorok_PoppingUp
@@ -284,8 +269,7 @@ Sprite_WaterOctorok_Attack:
     +
 
     JSL GetDistance8bit_Long
-    CMP.b #$40
-    BCC .not_close_enough ; LD < 64
+    CMP.b #$40 : BCC .not_close_enough ; LD < 64
       INC.w SprMiscG, X
       %SetTimerA($10)
     .not_close_enough
@@ -332,19 +316,14 @@ Sprite_WaterOctorok_Attack:
 
 Octorok_ShootSingle:
 {
-  LDA.w SprTimerA,X : CMP.b #$1C : BNE .bide_time
+  LDA.w SprTimerA, X : CMP.b #$1C : BNE .bide_time
     PHA
     JSR Octorok_SpawnRock
     PLA
   .bide_time
-  LSR A
-  LSR A
-  LSR A
+  LSR #3
   TAY
-
-  LDA.w .mouth_anim_step,Y
-  STA.w SprMiscB,X
-
+  LDA.w .mouth_anim_step, Y : STA.w SprMiscB, X
   RTS
 
   .mouth_anim_step
@@ -355,33 +334,24 @@ Octorok_ShootSingle:
     db $02, $01, $01, $00
 }
 
-; ---------------------------------------------------------
-
 Octorok_Shoot4Ways:
 {
-  LDA.w SprTimerA,X
+  LDA.w SprTimerA, X
   PHA
   CMP.b #$80 : BCS .animate
     AND.b #$0F : BNE .delay_turn
     PHA
-
-    LDY.w SprMiscC,X
-    LDA.w .next_direction,Y : STA.w SprMiscC,X
-
+    LDY.w SprMiscC, X
+    LDA.w .next_direction, Y : STA.w SprMiscC, X
     PLA
     .delay_turn
     CMP.b #$08 : BNE .animate
       JSR Octorok_SpawnRock
   .animate
   PLA
-  LSR A
-  LSR A
-  LSR A
-  LSR A
+  LSR #4
   TAY
-
-  LDA.w .mouth_anim_step,Y : STA.w SprMiscB,X
-
+  LDA.w .mouth_anim_step, Y : STA.w SprMiscB, X
   RTS
 
   .next_direction

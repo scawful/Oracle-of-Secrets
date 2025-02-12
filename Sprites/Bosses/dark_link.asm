@@ -1,7 +1,7 @@
 ; =========================================================
 ; Dark Link Boss
 
-!SPRID              = $C1 ; The sprite ID you are overwriting (HEX)
+!SPRID              = $C1
 !NbrTiles           = 4   ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -125,7 +125,7 @@ DarkLink_Palette:
 
 Sprite_DarkLink_Main:
 {
-  LDA.w SprAction, X : JSL UseImplicitRegIndexedLocalJumpTable
+  LDA.w SprAction, X : JSL JumpTableLocal
 
   dw Handler
   dw SwordSlash
@@ -1526,7 +1526,7 @@ GanonInit:
 
 Sprite_Ganon_Main:
 {
-  LDA.w SprAction, X : JSL UseImplicitRegIndexedLocalJumpTable
+  LDA.w SprAction, X : JSL JumpTableLocal
 
   dw Wait
   dw ShowMessage

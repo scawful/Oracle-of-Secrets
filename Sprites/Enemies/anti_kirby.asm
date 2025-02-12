@@ -43,15 +43,13 @@ Sprite_AntiKirby_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_AntiKirby_Prep:
 {
   PHB : PHK : PLB
   STZ.w SprDefl, X
   STZ.w SprTileDie, X
   STZ.w SprMiscB, X
-  LDA.l SWORD : DEC : TAY
+  LDA.l Sword : DEC : TAY
   LDA .bump_damage, Y : STA.w SprBump, X
   LDA .health, Y : STA.w SprHealth, X
   LDA .prize_pack, Y : STA.w SprPrize, X
@@ -83,7 +81,7 @@ Sprite_AntiKirby_Main:
   JSL Sprite_CheckIfRecoiling
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw AntiKirby_Main
   dw AntiKirby_Hurt

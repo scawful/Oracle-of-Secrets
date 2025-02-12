@@ -32,8 +32,6 @@
 
 %Set_Sprite_Properties(Sprite_Booki_Prep, Sprite_Booki_Long)
 
-; =========================================================
-
 Sprite_Booki_Long:
 {
   PHB : PHK : PLB
@@ -46,12 +44,10 @@ Sprite_Booki_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_Booki_Prep:
 {
   PHB : PHK : PLB
-  LDA.l SWORD : DEC A : TAY
+  LDA.l Sword : DEC A : TAY
   LDA.w .health, Y : STA.w SprHealth, X
   STZ.w SprMiscB, X
   PLB
@@ -61,12 +57,10 @@ Sprite_Booki_Prep:
     db $04, $08, $10, $18
 }
 
-; =========================================================
-
 Sprite_Booki_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw StalkPlayer
   dw HideFromPlayer
@@ -76,16 +70,13 @@ Sprite_Booki_Main:
   StalkPlayer:
   {
     %PlayAnimation(0,1,16)
-
     JSR Sprite_Booki_Move
-
     RTS
   }
 
   HideFromPlayer:
   {
     %PlayAnimation(0,4,16)
-
     LDA.w SprTimerA, X : BNE +
       INC.w SprAction, X
     +
@@ -95,9 +86,7 @@ Sprite_Booki_Main:
   HiddenFromPlayer:
   {
     %PlayAnimation(4,4,16)
-
     JSR Sprite_Booki_Move
-
     JSL GetRandomInt : AND.b #$03 : BEQ +
       INC.w SprAction, X
     +
@@ -107,9 +96,7 @@ Sprite_Booki_Main:
   ApproachPlayer:
   {
     %PlayAnimation(5,9,16)
-
     JSR Sprite_Booki_Move
-
     RTS
   }
 }
@@ -135,7 +122,7 @@ Sprite_Booki_Move:
   .no_damage
 
   LDA.w SprMiscB, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw SlowFloat
   dw FloatAway
@@ -198,9 +185,7 @@ Sprite_Booki_Draw:
   .nextTile
 
   PHX ; Save current Tile Index?
-
   TXA : CLC : ADC $06 ; Add Animation Index Offset
-
   PHA ; Keep the value with animation index offset?
 
   ASL A : TAX

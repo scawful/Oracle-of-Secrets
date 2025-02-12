@@ -1,6 +1,5 @@
 ; =========================================================
-; Sprite Properties
-; =========================================================
+; Maku Tree
 
 !SPRID              = Sprite_MakuTree
 !NbrTiles           = 00  ; Number of tiles used in a frame
@@ -32,8 +31,6 @@
 
 %Set_Sprite_Properties(Sprite_MakuTree_Prep, Sprite_MakuTree_Long)
 
-; =========================================================
-
 Sprite_MakuTree_Long:
 {
   PHB : PHK : PLB
@@ -43,7 +40,6 @@ Sprite_MakuTree_Long:
   PLB
   RTL
 }
-; =========================================================
 
 Sprite_MakuTree_Prep:
 {
@@ -56,8 +52,6 @@ Sprite_MakuTree_Prep:
   RTL
 }
 
-; =========================================================
-
 PaletteFilter_StartBlindingWhite = $00EEF1
 ApplyPaletteFilter = $00E914
 
@@ -66,7 +60,7 @@ Sprite_MakuTree_Main:
   JSL Sprite_PlayerCantPassThrough
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw MakuTree_Handler
   dw MakuTree_MeetLink
@@ -86,10 +80,6 @@ Sprite_MakuTree_Main:
 
   MakuTree_MeetLink:
   {
-    LDA.w POSX : STA $02
-    LDA.w POSY : STA $03
-    LDA.w SprX, X : STA $04
-    LDA.w SprY, X : STA $05
     JSL GetDistance8bit_Long : CMP #$28 : BCS .not_too_close
       %ShowUnconditionalMessage($20)
       LDA.b #$01 : STA.l MakuTreeQuest

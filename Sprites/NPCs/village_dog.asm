@@ -88,7 +88,7 @@ LiftOrTalk:
 Sprite_VillageDog_Main:
 {
   LDA.w SprAction, X
-  JSL   UseImplicitRegIndexedLocalJumpTable
+  JSL   JumpTableLocal
 
   dw Dog_Handler              ; 00
   dw Dog_LookLeftAtLink       ; 01

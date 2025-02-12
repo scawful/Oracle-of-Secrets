@@ -299,6 +299,18 @@ macro SetupDistanceFromSprite()
   LDA.w SprY, X : STA $05
 endmacro
 
+macro ProbCheck(mask, label)
+  JSL GetRandomInt
+  AND.b #<mask>
+  BNE <label>
+endmacro
+
+macro ProbCheck2(mask, label)
+  JSL GetRandomInt
+  AND.b #<mask>
+  BEQ <label>
+endmacro
+
 macro DrawSprite()
 {
   JSL Sprite_PrepOamCoord

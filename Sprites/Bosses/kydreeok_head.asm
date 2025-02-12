@@ -47,8 +47,6 @@ Sprite_KydreeokHead_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_KydreeokHead_Prep:
 {
   PHB : PHK : PLB
@@ -59,8 +57,6 @@ Sprite_KydreeokHead_Prep:
   RTL
 }
 
-; =========================================================
-
 SpeedTable:
   db $00, $02, $04, $06, $07, $01, $06, $03
   db 0, -2, -4, -6, -7, -1, -6, -3
@@ -68,7 +64,7 @@ SpeedTable:
 Sprite_KydreeokHead_Main:
 {
   LDA.w SprAction, X
-  JSL   UseImplicitRegIndexedLocalJumpTable
+  JSL   JumpTableLocal
 
   dw KydreeokHead_ForwardAnim ; 0x00
   dw KydreeokHead_RightAnim   ; 0x01
@@ -77,7 +73,6 @@ Sprite_KydreeokHead_Main:
   dw KydreeokHead_FarLeft     ; 0x04
   dw KydreeokHead_SummonFire  ; 0x05
 
-  ; -------------------------------------------------------
   ; 0x00
   KydreeokHead_ForwardAnim:
   {
@@ -109,7 +104,6 @@ Sprite_KydreeokHead_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
   ; 0x01
   KydreeokHead_RightAnim:
   {
@@ -131,7 +125,6 @@ Sprite_KydreeokHead_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
   ; 0x02
   KydreeokHead_LeftAnim:
   {
@@ -152,7 +145,6 @@ Sprite_KydreeokHead_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
   ; 0x03
   KydreeokHead_FarRight:
   {
@@ -172,7 +164,6 @@ Sprite_KydreeokHead_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
   ; 0x04
   KydreeokHead_FarLeft:
   {
@@ -219,8 +210,6 @@ KydreeokHead_RotationMove:
   RTS
 }
 
-; =========================================================
-
 CoordinateBasedRotation:
 {
   LDA.w Neck_Index : TAY
@@ -238,19 +227,17 @@ CoordinateBasedRotation:
     LDA #0 : STA.w Neck_Index
   .not_full
   RTS
+
+  ; Table for X coordinates (based on a radius of 8)
+  X_Coords:
+    db 8, 11,  8,  3, -4, -9, -12, -9
+    db -4,  3,  8, 11,  8,  3, -4, -9
+
+  ; Table for Y coordinates (based on a radius of 8)
+  Y_Coords:
+    db 0, -3, -8, -11, -15, -15, -11, -8
+    db -3,  0,  3,  8, 11, 15, 15, 11
 }
-
-; Table for X coordinates (based on a radius of 8)
-X_Coords:
-  db 8, 11,  8,  3, -4, -9, -12, -9
-  db -4,  3,  8, 11,  8,  3, -4, -9
-
-; Table for Y coordinates (based on a radius of 8)
-Y_Coords:
-  db 0, -3, -8, -11, -15, -15, -11, -8
-  db -3,  0,  3,  8, 11, 15, 15, 11
-
-; =========================================================
 
 RotateHeadUsingSpeedValues:
 {
@@ -284,8 +271,6 @@ RotateHeadUsingSpeedValues:
   db -12,  -9,  -6,  -3
 }
 
-; =========================================================
-
 RandomlyAttack:
 {
   JSL Sprite_DamageFlash_Long
@@ -301,8 +286,6 @@ RandomlyAttack:
   .no_attack
   RTS
 }
-
-; =========================================================
 
 MoveWithBody:
 {
@@ -545,8 +528,6 @@ KydreeokHead_NeckControl:
   RTS
 }
 
-; =========================================================
-
 Sprite_KydreeokHead_DrawNeck:
 {
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .neck2
@@ -618,8 +599,6 @@ DrawNeckPart:
   INY
   RTS
 }
-
-; =========================================================
 
 Sprite_KydreeokHead_Draw:
 {

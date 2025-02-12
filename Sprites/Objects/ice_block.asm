@@ -1,7 +1,7 @@
 ; Pushable Ice Block
 
-!SPRID              = $D5; The sprite ID you are overwriting (HEX)
-!NbrTiles           = 03 ; Number of tiles used in a frame
+!SPRID              = $D5
+!NbrTiles           = 02
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -11,7 +11,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 00  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 09  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -33,15 +33,17 @@
 Sprite_IceBlock_Long:
 {
   PHB : PHK : PLB
+
   LDA.w SprMiscC, X : BEQ .not_being_pushed
     STZ.w SprMiscC, X
-    STZ.b $5E ; Clear Links speed
+    STZ.b LinkSpeedTbl
     STZ.b $48 ; Clear push actions bitfield
   .not_being_pushed
+
   LDA.w SprTimerA, X : BEQ .retain_momentum
     LDA.b #$01 : STA.w SprMiscC, X
     LDA.b #$84 : STA.b $48 ; Set statue and push block actions
-    LDA.b #$04 : STA.b $5E ; Slipping into pit speed
+    LDA.b #$04 : STA.b LinkSpeedTbl ; Slipping into pit speed
   .retain_momentum
 
   JSR Sprite_IceBlock_Draw
@@ -60,122 +62,115 @@ Sprite_IceBlock_Prep:
   LDA.w SprY, X : STA.w SprMiscE, X
   LDA.w SprXH, X : STA.w SprMiscF, X
   LDA.w SprYH, X : STA.w SprMiscG, X
-
   STZ.w SprDefl, X
+  LDA.w SprHitbox, X : ORA.b #$09 : STA.w SprHitbox, X
   PLB
   RTL
 }
 
 Sprite_IceBlock_Main:
 {
-  LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
-  dw MovementHandler
+  %PlayAnimation(0, 0, 1)
 
-  MovementHandler:
-  {
-    %PlayAnimation(0, 0, 1)
+  JSR Statue_BlockSprites
+  JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
+    LDA.w SprMiscD, X : STA.w SprX, X
+    LDA.w SprMiscE, X : STA.w SprY, X
+    LDA.w SprMiscF, X : STA.w SprXH, X
+    LDA.w SprMiscG, X : STA.w SprYH, X
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    STZ.w SprTimerA, X : STZ.w SprMiscA, X
+  .no_damage
 
-    JSR Statue_BlockSprites
-    JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
-      LDA.w SprMiscD, X : STA.w SprX, X
-      LDA.w SprMiscE, X : STA.w SprY, X
-      LDA.w SprMiscF, X : STA.w SprXH, X
-      LDA.w SprMiscG, X : STA.w SprYH, X
-      STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
-    .no_damage
+  STZ.w $0642
+  JSR Sprite_IceBlock_CheckForSwitch : BCC .no_switch
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+    LDA.b #$01 : STA.w $0642
+  .no_switch
 
-    STZ.w $0642
-    JSR Sprite_IceBlock_CheckForSwitch : BCC .no_switch
-      STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
-      LDA.b #$01 : STA.w $0642
-    .no_switch
+  JSL Sprite_Move
+  JSL Sprite_Get_16_bit_Coords
+  JSL Sprite_CheckTileCollision
+  ; ----udlr , u = up, d = down, l = left, r = right
+  LDA.w SprCollision, X : AND.b #$0F : BEQ +
+    STZ.w SprMiscA, X
+  +
 
-    JSL Sprite_Move ; Sprite MoveXY
-    JSL Sprite_Get_16_bit_Coords ; Get 16bit coords
-    JSL Sprite_CheckTileCollision ; Check Tile collision
-    ; ----udlr , u = up, d = down, l = left, r = right
-    LDA.w SprCollision, X : AND.b #$0F : BEQ +
-      STZ.w SprMiscA, X
-    +
+  ; If link is in contact, register a push with the sprite
+  ; Run a timer briefly, and confirm the facing direction
+  ; matches the push direction (cached) and then initiate
+  ; the speed changes if they agree
+  JSL Sprite_CheckDamageToPlayerSameLayer : BCC .NotInContact
+    LDA.w SprMiscA, X : BNE .push_cached
+      LDA.b $26 : STA.w SprMiscA, X
+      JSR Sprite_ApplyPush
+    .push_cached
 
-    ; TODO: Update Link push collision reaction
-    ; If link is in contact, register a push with the sprite
-    ; Run a timer briefly, and confirm the facing direction
-    ; matches the push direction (cached) and then initiate
-    ; the speed changes if they agree
-
-    JSL Sprite_CheckDamageToPlayerSameLayer : BCC .NotInContact
-      LDA.w SprMiscA, X : BNE .push_cached
-        LDA.b $26 : STA.w SprMiscA, X
-        JSR ApplyPush
-      .push_cached
-      LDA.b #$07 : STA.w SprTimerA, X
-      STZ.b $5E
-      JSL Sprite_RepelDash
-      LDA.w SprTimerB, X : BNE .CancelHookshot
-        LDA.w SprX, X : AND #$F8 : STA.w SprX, X
-        LDA.w SprY, X : AND #$F8 : STA.w SprY, X
-        RTS
-      .CancelHookshot:
-      JSL $0FF540
+    LDA.b #$07 : STA.w SprTimerA, X
+    STZ.b $5E
+    JSL Sprite_RepelDash
+    LDA.w SprTimerB, X : BNE .CancelHookshot
+      LDA.w SprX, X : AND #$F8 : STA.w SprX, X
+      LDA.w SprY, X : AND #$F8 : STA.w SprY, X
       RTS
-    .NotInContact:
-    LDA.w SprTimerA, X : BNE .delay_timer
-      LDA.b #$0D : STA.w SprTimerB,X
-    .delay_timer
+    .CancelHookshot:
+    JSL Sprite_CancelHookshot
     RTS
-  }
+  .NotInContact:
 
-  ApplyPush:
-  {
-    ; Only apply the push if the facing direction
-    ; and pushing direction agree with each other
-    LDA $26 : CMP.b #$01 : BEQ .push_right
-              CMP.b #$02 : BEQ .push_left
-              CMP.b #$04 : BEQ .push_down
-              CMP.b #$08 : BEQ .push_up
+  LDA.w SprTimerA, X : BNE .delay_timer
+    LDA.b #$0D : STA.w SprTimerB, X
+  .delay_timer
+  RTS
+}
 
-    .push_right
-      LDA #16 : STA.w SprXSpeed, X
-      STZ.w SprYSpeed, X
-      JMP +
-    .push_left
-      LDA #-16 : STA.w SprXSpeed, X
-      STZ.w SprYSpeed, X
-      JMP +
-    .push_down
-      STZ.w SprXSpeed, X
-      LDA #16 : STA.w SprYSpeed, X
-      JMP +
-    .push_up
-      STZ.w SprXSpeed, X
-      LDA #-16 : STA.w SprYSpeed, X
-    +
+Sprite_ApplyPush:
+{
+  ; Only apply the push if the facing direction
+  ; and pushing direction agree with each other
+  LDA.w SprMiscA, X : CMP.b $26 : BEQ .push
     RTS
-  }
+  .push
+
+  LDA $26 : CMP.b #$01 : BEQ .push_right
+            CMP.b #$02 : BEQ .push_left
+            CMP.b #$04 : BEQ .push_down
+            CMP.b #$08 : BEQ .push_up
+
+  .push_right
+    LDA #16 : STA.w SprXSpeed, X : STZ.w SprYSpeed, X
+    JMP +
+  .push_left
+    LDA #-16 : STA.w SprXSpeed, X : STZ.w SprYSpeed, X
+    JMP +
+  .push_down
+    LDA #16 : STA.w SprYSpeed, X : STZ.w SprXSpeed, X
+    JMP +
+  .push_up
+    LDA #-16 : STA.w SprYSpeed, X : STZ.w SprXSpeed, X
+  +
+  RTS
 }
 
 ; Check if the tile beneath the sprite is the sliding ice
 ; Currently unused as it doesnt play well with the hitbox choices
 IceBlock_CheckForGround:
 {
-  LDA.w SprY,X : CLC : ADC.b #$08 : STA.b $00
-  LDA.w SprYH,X : ADC.b #$00 : STA.b $01
-  LDA.w SprX,X : STA.b $02
-  LDA.w SprXH,X : ADC.b #$00 : STA.b $03
-  LDA.w $0F20,X
+  LDA.w SprY, X : CLC : ADC.b #$08 : STA.b $00
+  LDA.w SprYH, X : ADC.b #$00 : STA.b $01
+  LDA.w SprX, X : STA.b $02
+  LDA.w SprXH, X : ADC.b #$00 : STA.b $03
+  LDA.w SprFloor, X
   PHY
-  JSL $06E87B ; GetTileType_long
+  JSL Sprite_GetTileAttr
   PLY
 
-  LDA.w $0FA5
-  CMP.b #$0E : BNE .stop
-  SEC
-  RTS
-.stop
-  STZ.w SprXSpeed,X
-  STZ.w SprYSpeed,X
+  LDA.w $0FA5 : CMP.b #$0E : BNE .stop
+    SEC
+    RTS
+  .stop
+  STZ.w SprXSpeed, X
+  STZ.w SprYSpeed, X
   CLC
   RTS
 }
@@ -185,14 +180,14 @@ Sprite_IceBlock_CheckForSwitch:
   LDY.b #$03
 
   .next_tile
-  LDA.w SprY,X : CLC : ADC.w .offset_y,Y : STA.b $00
-  LDA.w SprYH,X : ADC.b #$00 : STA.b $01
-  LDA.w SprX,X : CLC : ADC.w .offset_x,Y : STA.b $02
-  LDA.w SprXH,X : ADC.b #$00 : STA.b $03
-  LDA.w $0F20,X
+  LDA.w SprY, X : CLC : ADC.w .offset_y, Y : STA.b $00
+  LDA.w SprYH, X : ADC.b #$00 : STA.b $01
+  LDA.w SprX, X : CLC : ADC.w .offset_x, Y : STA.b $02
+  LDA.w SprXH, X : ADC.b #$00 : STA.b $03
+  LDA.w SprFloor, X
 
   PHY
-  JSL $06E87B ; GetTileType_long
+  JSL Sprite_GetTileAttr
   PLY
 
   LDA.w $0FA5
@@ -227,71 +222,38 @@ Statue_BlockSprites:
   LDY.b #$0F
 
   .next
-  LDA.w $0E20,Y
-  CMP.b #$1C ; SPRITE 1C
-  BEQ .skip
+  ; SPRITE 1C
+  LDA.w SprType, Y : CMP.b #$1C : BEQ .skip
+    CPY.w SprSlot : BEQ .skip
+      TYA : EOR.b $1A : AND.b #$01 : BNE .skip
+        LDA.w SprState, Y : CMP.b #$09 : BCC .skip
 
-  CPY.w $0FA0
-  BEQ .skip
-
-  TYA
-  EOR.b $1A
-  AND.b #$01
-  BNE .skip
-
-  LDA.w SprState,Y
-  CMP.b #$09
-  BCC .skip
-
-  LDA.w SprX,Y
-  STA.b $04
-
-  LDA.w SprXH,Y
-  STA.b $05
-
-  LDA.w SprY,Y
-  STA.b $06
-
-  LDA.w SprYH,Y
-  STA.b $07
+  LDA.w SprX, Y : STA.b $04
+  LDA.w SprXH, Y : STA.b $05
+  LDA.w SprY, Y : STA.b $06
+  LDA.w SprYH, Y : STA.b $07
 
   REP #$20
 
-  LDA.w SprCachedX
-  SEC
-  SBC.b $04
-  CLC
-  ADC.w #$000C
+  LDA.w SprCachedX 
+  SEC : SBC.b $04 
+  CLC : ADC.w #$000C : CMP.w #$0018 : BCS .skip
 
-  CMP.w #$0018
-  BCS .skip
-
-  LDA.w SprCachedY
-  SEC
-  SBC.b $06
-  CLC
-  ADC.w #$000C
-
-  CMP.w #$0024
-  BCS .skip
+  LDA.w SprCachedY 
+  SEC : SBC.b $06 
+  CLC : ADC.w #$000C : CMP.w #$0024 : BCS .skip
 
   SEP #$20
 
-  LDA.b #$04
-  STA.w $0EA0,Y
+  LDA.b #$04 : STA.w $0EA0, Y
 
   PHY
-
   LDA.b #$20
   JSL Sprite_CheckSlopedTileCollision ; JSR Sprite_ProjectSpeedTowardsLocation
-
   PLY
 
-  LDA.b $00
-  STA.w SprYRecoil,Y
-
-  LDA.b $01
-  STA.w SprXRecoil,Y
+  LDA.b $00 : STA.w SprYRecoil, Y
+  LDA.b $01 : STA.w SprXRecoil, Y
 
   .skip
   SEP #$20

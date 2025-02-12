@@ -538,8 +538,6 @@ FloorIndicatorNumberHigh:
   dw $E51C, $250E, $007F
 }
 
-; ==========================================================
-
 ; $57CF6 DATA
 org $0AFCF6
 FloorIndicatorNumberLow:
@@ -547,8 +545,6 @@ FloorIndicatorNumberLow:
   dw $2518, $2519, $A509, $251A, $251B, $251C, $2518, $A51D
   dw $E50C, $A50E, $007F
 }
-
-; ==========================================================
 
 ; *$57D0C-$57DA7 JUMP LOCATION (LONG)
 org $0AFD0C

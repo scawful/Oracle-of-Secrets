@@ -32,8 +32,6 @@
 
 %Set_Sprite_Properties(Sprite_DekuScrub_Prep, Sprite_DekuScrub_Long)
 
-; =========================================================
-
 Sprite_DekuScrub_Long:
 {
   PHB : PHK : PLB
@@ -45,15 +43,13 @@ Sprite_DekuScrub_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_DekuScrub_Prep:
 {
   PHB : PHK : PLB
   LDA.b #$80 : STA.w SprDefl, X
 
   ; Peacetime Deku Scrub NPCs
-  LDA.b $8A : CMP.b #$2E : BNE .check_next
+  LDA.b AreaIndex : CMP.b #$2E : BNE .check_next
     ; Deku Butler
     LDA.b #$07 : STA.w SprAction, X
     JMP +
@@ -75,19 +71,17 @@ Sprite_DekuScrub_Prep:
     LDA.b #$06 : STA.w SprAction, X
     ++
     ; Check if tail palace is cleared
-    LDA.l CRYSTALS : AND #$10 : BEQ +
+    LDA.l Crystals : AND #$10 : BEQ +
       STZ.w SprState, X
   +
   PLB
   RTL
 }
 
-; =========================================================
-
 Sprite_DekuScrub_Main:
 {
   LDA.w SprAction, X
-  JSL   UseImplicitRegIndexedLocalJumpTable
+  JSL   JumpTableLocal
 
   dw EstadoInactivo
   dw QuiereCuracion
@@ -99,7 +93,6 @@ Sprite_DekuScrub_Main:
 
   dw DekuButler_Peacetime
   dw DekuPrinces_Peacetime
-
 
   EstadoInactivo:
   {
@@ -114,8 +107,8 @@ Sprite_DekuScrub_Main:
   QuiereCuracion:
   {
     %PlayAnimation(0, 1, 16)
-    LDA   $FE : BEQ .ninguna_cancion
-      STZ   $FE
+    LDA.b SongFlag : CMP.b #$01 : BNE .ninguna_cancion
+      STZ.b SongFlag
       LDA.b #$C0 : STA.w SprTimerD, X
       %GotoAction(2)
     .ninguna_cancion
@@ -171,7 +164,9 @@ Sprite_DekuScrub_Main:
     %StartOnFrame(3)
     %PlayAnimation(3, 3, 10)
     JSL Sprite_PlayerCantPassThrough
-    ; %ShowSolicitedMessage($0C4)
+    %ShowSolicitedMessage($1B9) : BCC +
+      LDA.b #$02 : STA.l MapIcon
+    +
     RTS
   }
 
@@ -180,12 +175,12 @@ Sprite_DekuScrub_Main:
     %StartOnFrame(4)
     %PlayAnimation(4, 4, 10)
     JSL Sprite_PlayerCantPassThrough
-    ; %ShowSolicitedMessage($0C5)
+    %ShowSolicitedMessage($1BA) : BCC +
+      LDA.b #$02 : STA.l MapIcon
+    +
     RTS
   }
 }
-
-; =========================================================
 
 Sprite_DekuScrub_Draw:
 {

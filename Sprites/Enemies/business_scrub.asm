@@ -29,7 +29,7 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-%Set_Sprite_Properties(Sprite_BusinessScrub_Prep, Sprite_BusinessScrub_Long);
+%Set_Sprite_Properties(Sprite_BusinessScrub_Prep, Sprite_BusinessScrub_Long)
 
 Sprite_BusinessScrub_Long:
 {
@@ -60,14 +60,10 @@ Sprite_BusinessScrub_Prep:
 {
   PHB : PHK : PLB
   LDA.w SprSubtype, X : CMP.b #$01 : BEQ .pea_shot
-                      CMP.b #$02 : BEQ .cutscene_scrub
   JMP +
   .pea_shot
     LDA.b #$06 : STA.w SprAction, X ; Pea Shot State
     LDA.b #$20 : STA.b SprPrize, X
-    JMP +
-  .cutscene_scrub
-    LDA.b #$08 : STA.w SprAction, X
   +
   PLB
   RTL
@@ -84,7 +80,7 @@ Sprite_BusinessScrub_Prep:
 Sprite_BusinessScrub_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw BusinessScrub_Hiding
   dw BusinessScrub_Attack
@@ -95,8 +91,6 @@ Sprite_BusinessScrub_Main:
 
   dw BusinessScrub_PeaShot
   dw BusinessScrub_HidingDefeated
-
-  dw BusinessScrub_CutsceneStart
 
   ; 0x00
   BusinessScrub_Hiding:
@@ -237,12 +231,6 @@ Sprite_BusinessScrub_Main:
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
 
-    RTS
-  }
-
-  BusinessScrub_CutsceneStart:
-  {
-    ; TODO: Add deku dream cutscene
     RTS
   }
 }

@@ -9,7 +9,7 @@ Sprite_VampireBat_Main:
   JSL Sprite_BounceFromTileCollision
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw VampireBat_Idle
   dw VampireBat_Ascend
@@ -38,7 +38,7 @@ Sprite_VampireBat_Main:
       INC.w SprAction, X
       LDA.b #$50 : STA.w SprTimerC, X
       JSL GetRandomInt : AND.b #$3F : BNE +
-        JSR Sprite_SpawnFireKeese
+        JSL Sprite_SpawnFireKeese
     +
     RTS
   }
@@ -87,7 +87,16 @@ Sprite_SpawnFireKeese:
     LDA.b #$01 : STA.w SprSubtype, Y ; Fire Keese
     JSL Sprite_SetSpawnedCoords
   .spawn_failed
-  RTS
+  RTL
+}
+
+Sprite_SpawnIceKeese:
+{
+  LDA.b #$11
+  JSL Sprite_SpawnDynamically : BMI +
+    JSL Sprite_SetSpawnedCoords
+  +
+  RTL
 }
 
 Sprite_VampireBat_Draw:

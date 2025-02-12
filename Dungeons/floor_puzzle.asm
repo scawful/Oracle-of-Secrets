@@ -1,8 +1,6 @@
 
-;================================================
-;use holes_0 tag routine
-; DO NOT USE holes_1 tag (broken because of holes_0 tag)
-;==================================================
+; ================================================
+; use holes_0 tag routine
 
 org $01CC00 ; holes_0 tag routine
 JSL NewTagRoutine
@@ -17,10 +15,10 @@ NewTagRoutine:
   LDA.b $20 : CLC : ADC #$10 : AND.b #$F0 : STA.w $0224 ; y
   LDA.b $22 : CLC : ADC #$08 : AND.b #$F0 : STA.w $0225 ; x
 
-  LDA.w $0224 : CMP.w $0226 : BNE .differentTile
-    LDA.w $0225 : CMP.w $0227 : BNE .differentTile
-      JMP .sameTile
-  .differentTile
+  LDA.w $0224 : CMP.w $0226 : BNE .different_tile
+    LDA.w $0225 : CMP.w $0227 : BNE .different_tile
+      JMP .same_tile
+  .different_tile
 
   ; do code here for tile code
   REP #$30
@@ -32,7 +30,7 @@ NewTagRoutine:
   LDA.l $7E2000, X : CMP.w #$0DED : BNE +
     JSR update_star_tile
     JSR SearchForEmptyStar
-    BRA .doneupdate
+    BRA .done_update
   +
   LDA.l $7E2000, X : CMP.w #$0DEE : BNE +
     ;JSR SearchToRedStar
@@ -43,10 +41,10 @@ NewTagRoutine:
     ;JSR SearchForEmptyStar
   +
 
-  .doneupdate
+  .done_update
   SEP #$30
 
-  .sameTile
+  .same_tile
 
   LDA.w $0224 : STA.w $0226 ; Last Y
   LDA.w $0225 : STA.w $0227 ; Last X
@@ -93,26 +91,19 @@ update_red_star_tile:
 replace_red_tile_star:
 {
   LDX.w $1000
-
-  LDA.w #$19EE : STA.w $1006,X
-  LDA.w #$99EE : STA.w $100C,X
-  LDA.w #$59EE : STA.w $1012,X
-  LDA.w #$D9EE : STA.w $1018,X
+  LDA.w #$19EE : STA.w $1006, X
+  LDA.w #$99EE : STA.w $100C, X
+  LDA.w #$59EE : STA.w $1012, X
+  LDA.w #$D9EE : STA.w $1018, X
 
   LDX.b $06
-
   LDA.w #$19EE : STA.l $7E2000, X
   LDA.w #$99EE : STA.l $7E2080, X
   LDA.w #$59EE : STA.l $7E2002, X
   LDA.w #$D9EE : STA.l $7E2082, X
-
-  AND.w #$03FF
-  TAX
-
-  LDA.l $7EFE00,X
-  AND.w #$00FF
-  STA.b $08
-  STA.b $09
+  AND.w #$03FF : TAX
+  LDA.l $7EFE00,X : AND.w #$00FF
+  STA.b $08 : STA.b $09
 
   JMP replace_tile_continue
 }

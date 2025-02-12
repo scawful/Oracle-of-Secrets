@@ -48,8 +48,6 @@ Sprite_Kydreeok_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_Kydreeok_Prep:
 {
   PHB : PHK : PLB
@@ -120,8 +118,6 @@ MaybeRespawnHead:
     .offspring2_alive
   RTS
 }
-
-; =========================================================
 
 Sprite_Kydreeok_Main:
 {

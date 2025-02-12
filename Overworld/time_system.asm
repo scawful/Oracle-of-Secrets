@@ -12,7 +12,7 @@ TimeSpeed = $7EE002
 
 ; HUD Template adjusts timer's color
 org $0DFF07
-	db $10, $24, $11, $24
+  db $10, $24, $11, $24
   db $6C, $25
   db $90, $24, $90, $24
   db $6C, $25, $90, $24, $90, $24
@@ -20,14 +20,14 @@ org $0DFF07
 ; Sprite_Main.dont_reset_drag
 ; Executes every frame to update the clock
 org $068361
-	JSL HUD_ClockDisplay
+  JSL HUD_ClockDisplay
 pullpc
 HUD_ClockDisplay:
 {
-	JSR RunClock
-	JSR DrawClockToHud
-	JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
-	RTL
+  JSR RunClock
+  JSR DrawClockToHud
+  JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
+  RTL
 }
 
 ; Zarby Intro and Credits fix
@@ -38,8 +38,8 @@ pullpc
 LogoFadeInSetClock:
 {
   JSL $00ED7C ; IntroLogoPaletteFadeIn
-  LDA.b #$08 : STA.l $7EE000 ; Set the time to 6:00am
-  LDA.b #$3F : STA.l $7EE002 ; Set the time speed
+  LDA.b #$08 : STA.l Hours ; Set the time to 6:00am
+  LDA.b #$3F : STA.l TimeSpeed ; Set the time speed
   RTL
 }
 
@@ -50,8 +50,8 @@ pullpc
 ResetClockTriforceRoom:
 {
   JSL $00E384 ; LoadCommonSprites_long
-  LDA.b #$00 : STA.l $7EE000 ; low hours for palette?
-  LDA.b #$00 : STA.l $7EE001 ; high hours for palette?
+  LDA.b #$00 : STA.l Hours ; low hours for palette?
+  LDA.b #$00 : STA.l Minutes ; high hours for palette?
   RTL
 }
 
@@ -65,7 +65,7 @@ DrawClockToHud:
 {
   LDX #$00
   .debut
-  LDY #$00 : LDA $7EE000,x
+  LDY #$00 : LDA Hours,x
   .debut2
   CMP #$0A : BMI .draw
     SBC #$0A : INY : BRA .debut2
@@ -87,7 +87,7 @@ DrawClockToHud:
   STA.l !hud_min_high
   LDA #$30 : STA.l !hud_min_high+1 ; white palette
   .finish_draw
-	INX : CPX #$02 : BMI .debut
+  INX : CPX #$02 : BMI .debut
   RTS
 }
 
@@ -146,7 +146,7 @@ RunClock:
   LDA #$00 : STA.l Minutes
   LDA.l Hours : INC A : STA.l Hours
   CMP #$18 : BPL .reset_hours ; hours = 24 ?
-    ;check indoors/outdoors
+    ; check indoors/outdoors
     LDA $1B	: BEQ .outdoors0
       RTS
     .outdoors0
@@ -154,7 +154,7 @@ RunClock:
     JSL RomToPaletteBuffer	; update buffer palette
     JSL PaletteBufferToEffective	; update effective palette
 
-    ;rain layer ?
+    ; rain layer ?
     LDA $8C : CMP #$9F : BEQ .skip_bg_updt0
       LDA $8C : CMP #$9E : BEQ .skip_bg_updt0	; canopy layer ?
         CMP #$97 : BEQ .skip_bg_updt0	; fog layer?
@@ -170,10 +170,9 @@ RunClock:
 
   JSR CheckForDailyQuests
 
-  LDA #$00 : STA $7EE000
-  .update_palette
+  LDA.b #$00 : STA.l Hours
   ; check indoors/outdoors
-  LDA $1B	: BEQ .outdoors1
+  LDA.b $1B	: BEQ .outdoors1
     RTS
   .outdoors1
 
@@ -194,7 +193,7 @@ RunClock:
 CheckForSongOfTime:
 {
   ; Check if Song of Time was activated
-  LDA $FE : CMP.b #$02 : BNE +
+  LDA.b SongFlag : CMP.b #$02 : BNE +
     ; Speed up the time
     LDA.b #$00 : STA.l TimeSpeed
 
@@ -202,14 +201,14 @@ CheckForSongOfTime:
     LDA.l Hours : CMP.b #$06 : BNE ++
       LDA.l Minutes : BNE ++
         LDA.b #$3F : STA.l TimeSpeed
-        STZ $FE
+        STZ.b SongFlag
     ++
 
     ; If we reached 6pm
     LDA.l Hours : CMP.b #$12 : BNE ++
       LDA.l Minutes : BNE ++
         LDA.b #$3F : STA.l TimeSpeed
-        STZ $FE
+        STZ.b SongFlag
     ++
   +
   RTS
@@ -234,43 +233,83 @@ CheckForDailyQuests:
   RTS
 }
 
+CheckIfNight:
+{
+  JSR LoadPeacetimeSprites : BCS +
+    RTL
+  +
+  LDA.l GameState : CMP.b #$02 : BCC .day_time
+    LDA Hours : CMP.b #$12 : BCS .night_time
+      LDA Hours : CMP.b #$06 : BCC .night_time
+      .day_time
+      LDA.l GameState
+      RTL
+  .night_time
+  LDA.b #$03
+  RTL
+}
+
+CheckIfNight16Bit:
+{
+  SEP #$30
+  JSR LoadPeacetimeSprites : BCS +
+    REP #$30
+    RTL
+  +
+  REP #$30
+  ; Don't change the spriteset during the intro sequence
+  LDA.l GameState : AND.w #$00FF : CMP.w #$0002 : BCC .day_time
+    ; 0x12 = 18 hours or 6 pm
+    LDA Hours : AND.w #$00FF : CMP.w #$0012 : BCS .night_time
+      ; If it's less than 6 am, jump to night time
+      LDA Hours : AND.w #$00FF : CMP.w #$0006 : BCC .night_time
+      .day_time
+      LDA.l GameState
+      RTL
+  .night_time
+  ; Load the gamestate 03 spritesets, but don't change the save ram
+  LDA.l GameState : CLC : ADC #$0001
+  RTL
+}
+
 pushpc
+
+; Overworld_LoadSprites
+org $09C4E3 : JSL CheckIfNight
+
+; Sprite_LoadGraphicsProperties_light_world_only
+org $00FC6A : JSL CheckIfNight16Bit
 
 ; =========================================================
 ; ----[ Day / Night system * palette effect ]----
 ; =========================================================
 
-!blue_value = $7EE010
-!green_value = $7EE012
-!red_value = $7EE014
+!BlueVal = $7EE010
+!GreenVal = $7EE012
+!RedVal = $7EE014
 
-!temp_value = $7EE016
-!pal_color = $7EE018
+!TempPalColor = $7EE016
+!SubPalColor = $7EE018
 
 Overworld_CopyPalettesToCache = $02C769
 
 org $02FF80		; free space on bank $02
 PaletteBufferToEffective:
-	JSR $C769	; $02:C65F -> palette buffer to effective routine
-	RTL
+  JSR $C769	; $02:C65F -> palette buffer to effective routine
+  RTL
 
 RomToPaletteBuffer:
-	JSR $AAF4	; $02:AAF4 -> change buffer palette of trees,houses,rivers,etc.
-	JSR $C692	; $02:C692 -> rom to palette buffer for other colors
-	RTL
+  JSR $AAF4	; $02:AAF4 -> change buffer palette of trees,houses,rivers,etc.
+  JSR $C692	; $02:C692 -> rom to palette buffer for other colors
+  RTL
 
-PaletteBuffer_HUD = $7EC300
-PaletteBuffer_BG = $7EC340
-PaletteBuffer_Spr = $7EC400
+PalBuf300_HUD = $7EC300
+PalBuf340_BG = $7EC340
+PalBuf400_Spr = $7EC400
 
-PaletteCgram_HUD = $7EC500
-PaletteCgram_BG = $7EC540
-PaletteCgram_Spr = $7EC600
-
-; part of rom pal to buffer routine
-; $1B/EF61 9F 00 C3 7E STA $7EC300,x[$7E:C422]
-; $1B/EF3D 9F 00 C3 7E STA $7EC300,x[$7E:C412]
-; $1B/EF84 9F 00 C3 7E STA $7EC300,x[$7E:C4B2]
+PalCgram500_HUD = $7EC500
+PalCgram540_BG = $7EC540
+PalCgram600_Spr = $7EC600
 
 ; Palettes_LoadSingle.next_color
 org $1BEF3D : JSL LoadDayNightPaletteEffect
@@ -284,15 +323,15 @@ org $1BEF84 : JSL LoadDayNightPaletteEffect
 pullpc
 LoadDayNightPaletteEffect:
 {
-  STA.l !pal_color : CPX #$0041 : BPL .title_check
-    STA.l PaletteBuffer_HUD, X
+  STA.l !SubPalColor : CPX #$0041 : BPL .title_check
+    STA.l PalBuf300_HUD, X
     RTL
   .title_check
 
   ; title or file select screen ?
   LDA $10 : AND #$00FF : CMP #$0002	: BCS .outin_check
-    LDA.l !pal_color
-    STA.l PaletteBuffer_HUD, X
+    LDA.l !SubPalColor
+    STA.l PalBuf300_HUD, X
     RTL
   .outin_check
 
@@ -300,63 +339,67 @@ LoadDayNightPaletteEffect:
                            CMP.w #$0012 : BCS .restorecode
     BRA .overworld
   .restorecode
-  LDA.l !pal_color
-  STA.l PaletteBuffer_HUD, X
+  LDA.l !SubPalColor
+  STA.l PalBuf300_HUD, X
   RTL
 
   .overworld
   LDA $1B : AND #$00FF : BEQ .outdoors2
-    LDA.l !pal_color
-    STA.l PaletteBuffer_HUD,X
+    LDA.l !SubPalColor
+    STA.l PalBuf300_HUD,X
     RTL
   .outdoors2
 
   PHX
   JSL ColorSubEffect
   PLX
-  STA.l PaletteBuffer_HUD, X
+  STA.l PalBuf300_HUD, X
   RTL
 }
 
 ; =========================================================
 
+!SmallestBlue = #$0400
+!SmallestGreen = #$0020
+!SmallestRed = #$0001
+
 ColorSubEffect:
 {
-	LDA.l Hours : AND #$00FF : CLC : ADC.l Hours	; hours * 2
-	AND #$00FF : TAX
+  LDA.l Hours : AND #$00FF : CLC : ADC.l Hours	; hours * 2
+  AND #$00FF : TAX
 
   ; Subtract amount to blue field based on a table
-	LDA.l !pal_color : AND #$7C00 : STA !blue_value
-  SEC : SBC.l .blue, X : STA !temp_value
+  LDA.l !SubPalColor : AND #$7C00 : STA !BlueVal
+  SEC : SBC.l .blue, X : STA !TempPalColor
 
   ; mask out everything except the blue bits
-	AND #$7C00 : CMP !temp_value : BEQ .no_blue_sign_change ; overflow ?
-    LDA #$0400		; LDA smallest blue value
+  AND #$7C00 : CMP !TempPalColor : BEQ .no_blue_sign_change ; overflow ?
+    LDA !SmallestBlue
   .no_blue_sign_change
-	STA.l !blue_value
+  STA.l !BlueVal
 
   ; Subtract amount to blue field based on a table
-	LDA !pal_color : AND #$03E0 : STA !green_value
-	SEC : SBC.l .green, X : STA.l !temp_value
+  LDA !SubPalColor : AND #$03E0 : STA !GreenVal
+  SEC : SBC.l .green, X : STA.l !TempPalColor
 
   ; Mask out everything except the green bits
-	AND #$03E0 : CMP !temp_value : BEQ .no_green_sign_change ; overflow ?
-    LDA #$0020 ; LDA smallest green value
+  AND #$03E0 : CMP !TempPalColor : BEQ .no_green_sign_change ; overflow ?
+    LDA !SmallestGreen
   .no_green_sign_change
-	STA.l !green_value
+  STA.l !GreenVal
 
   ; substract amount to red field based on a table
-	LDA.l !pal_color : AND #$001F : STA.l !red_value
-	SEC : SBC.l .red, X : STA.l !temp_value
+  LDA.l !SubPalColor : AND #$001F : STA.l !RedVal
+  SEC : SBC.l .red, X : STA.l !TempPalColor
 
   ; mask out everything except the red bits
-	AND #$001F : CMP !temp_value : BEQ .no_red_sign_change ; overflow ?
-    LDA #$0001 ; LDA smallest red value
+  AND #$001F : CMP !TempPalColor : BEQ .no_red_sign_change ; overflow ?
+    LDA !SmallestRed
   .no_red_sign_change
-	STA.l !red_value
+  STA.l !RedVal
 
-  LDA.l !blue_value : ORA.l !green_value : ORA.l !red_value
-	RTL
+  LDA.l !BlueVal : ORA.l !GreenVal : ORA.l !RedVal
+  RTL
 
   ; color_sub_tables : 24 * 2 bytes each = 48 bytes
   ; (2 bytes = 1 color sub for each hour)
@@ -391,10 +434,10 @@ BackgroundFix:
   BEQ .no_effect		;BRAnch if A=#$0000 (transparent bg)
     JSL ColorSubEffect
   .no_effect:
-  STA.l PaletteCgram_HUD
-  STA.l PaletteBuffer_HUD
-  STA.l PaletteCgram_BG
-  STA.l PaletteBuffer_BG
+  STA.l PalCgram500_HUD
+  STA.l PalBuf300_HUD
+  STA.l PalCgram540_BG
+  STA.l PalBuf340_BG
   RTL
 }
 
@@ -403,57 +446,41 @@ MosaicFix:
   BEQ +
     JSL ColorSubEffect
   +
-  STA.l PaletteBuffer_HUD
-  STA.l PaletteBuffer_BG
+  STA.l PalBuf300_HUD
+  STA.l PalBuf340_BG
   RTL
 }
 
 SubAreasFix:
 {
   BEQ .no_effect
-	STA.l !pal_color
-	PHX
+  STA.l !SubPalColor
+  PHX
     REP #$20
       JSL ColorSubEffect
     SEP #$20
-	PLX
+  PLX
   .no_effect
-	STA.l PaletteBuffer_HUD
-	STA.l PaletteBuffer_BG
-	RTL
+  STA.l PalBuf300_HUD
+  STA.l PalBuf340_BG
+  RTL
 }
 
 GlovePalettePosition = $7EC4FA
 
 GlovesFix:
 {
-	STA.l !pal_color
-	LDA $1B : AND #$00FF : BEQ .outdoors3
-    LDA.l !pal_color
+  STA.l !SubPalColor
+  LDA $1B : AND #$00FF : BEQ .outdoors3
+    LDA.l !SubPalColor
     STA GlovePalettePosition
     RTL
 
   .outdoors3:
-	PHX
-	JSL ColorSubEffect
-	PLX
-	STA GlovePalettePosition
-	RTL
-}
-
-CheckIfNight:
-{
-  JSR LoadPeacetimeSprites : BCS +
-    RTL
-  +
-  LDA.l $7EF3C5 : CMP.b #$02 : BCC .day_time
-  LDA $7EE000 : CMP.b #$12 : BCS .night_time
-  LDA $7EE000 : CMP.b #$06 : BCC .night_time
-    .day_time
-    LDA.l $7EF3C5
-    RTL
-  .night_time
-  LDA.b #$03
+  PHX
+  JSL ColorSubEffect
+  PLX
+  STA GlovePalettePosition
   RTL
 }
 
@@ -463,56 +490,32 @@ ColorBgFix:
   SEP #$30
   ; Check for save and quit
   LDA.b $10 : CMP.b #$17 : BEQ .vanilla
-  REP #$30
-  PLA
-  STA.l !pal_color
-  JSL ColorSubEffect
-  STA.l PaletteCgram_HUD
-  STA.l PaletteCgram_BG
-  RTL
-
+    REP #$30
+    PLA
+    STA.l !SubPalColor
+    JSL ColorSubEffect
+    STA.l PalCgram500_HUD
+    STA.l PalCgram540_BG
+    RTL
   .vanilla
   REP #$30
   PLA
-  STA.l PaletteCgram_HUD
-  RTL
-}
-
-CheckIfNight16Bit:
-{
-  SEP #$30
-  JSR LoadPeacetimeSprites : BCS +
-    REP #$30
-    RTL
-  +
-  REP #$30
-  ; Don't change the spriteset during the intro sequence
-  LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCC .day_time
-    ; 0x12 = 18 hours or 6 pm
-    LDA $7EE000 : AND.w #$00FF : CMP.w #$0012 : BCS .night_time
-      ; If it's less than 6 am, jump to night time
-      LDA $7EE000 : AND.w #$00FF : CMP.w #$0006 : BCC .night_time
-  .day_time
-  LDA.l $7EF3C5
-  RTL
-  .night_time
-  ; Load the gamestate 03 spritesets, but don't change the save ram
-  LDA.l $7EF3C5 : CLC : ADC #$0001
+  STA.l PalCgram500_HUD
   RTL
 }
 
 LoadPeacetimeSprites:
 {
-  ; Map 2E, 2F if CRYSTALS && 0x10 == 0
+  ; Map 2E, 2F if Crystals && 0x10 == 0
   LDA $8A : CMP.b #$2E : BEQ .tail_palace
             CMP.b #$2F : BEQ .tail_palace
             CMP.b #$1E : BEQ .zora_sanctuary
     JMP +
   .tail_palace
-  LDA.l CRYSTALS : AND #$10 : BNE .load_peacetime
+  LDA.l Crystals : AND #$10 : BNE .load_peacetime
   JMP +
   .zora_sanctuary
-  LDA.l CRYSTALS : AND #$20 : BNE .load_peacetime
+  LDA.l Crystals : AND #$20 : BNE .load_peacetime
   JMP +
   .load_peacetime
   LDA.b #$01
@@ -525,21 +528,21 @@ LoadPeacetimeSprites:
 
 FixSaveAndQuit:
 {
-  LDA #$08 : STA $7EE000
-  LDA.l $7EF3C5
+  LDA.b #$08 : STA.l Hours
+  LDA.l GameState
   RTL
 }
 
 FixShockPalette:
 {
   PHA
-  LDA $1B : BNE .indoors
+  LDA.b $1B : BNE .indoors
     PLA
-    STA !pal_color
+    STA !SubPalColor
     PHX
     JSL ColorSubEffect
     PLX
-    STA.l PaletteCgram_HUD, X
+    STA.l PalCgram500_HUD, X
     RTL
   .indoors
   PLA
@@ -550,31 +553,25 @@ FixDungeonMapColors:
 {
   PHA
   ; Cache the current time
-  LDA $7EE000 : STA $7EF900
-  LDA $7EE001 : STA $7EF901
+  LDA Hours : STA $7EF900
+  LDA Minutes : STA $7EF901
   ; Set the time to 8:00am while map is open
-  LDA #$08 : STA $7EE000
-  LDA #$00 : STA $7EE001
+  LDA.b #$08 : STA Hours
+  LDA.b #$00 : STA Minutes
   PLA
-  STA $7EC229
+  STA.l $7EC229
   RTL
 }
 
 RestoreTimeForDungeonMap:
 {
-  LDA $7EF900 : STA $7EE000
-  LDA $7EF901 : STA $7EE001
+  LDA $7EF900 : STA Hours
+  LDA $7EF901 : STA Minutes
   LDA.l $7EC017
   RTL
 }
 
 pushpc
-
-; Overworld_LoadSprites
-org $09C4E3 : JSL CheckIfNight
-
-; Sprite_LoadGraphicsProperties_light_world_only
-org $00FC6A : JSL CheckIfNight16Bit
 
 ; $0BFE70 -> background color loading routine
 ; Background color write fix - 16 bytes
@@ -582,16 +579,13 @@ org $00FC6A : JSL CheckIfNight16Bit
 ; $0B/FEBA 8F 00 C3 7E STA $7EC300
 ; $0B/FEBE 8F 40 C5 7E STA $7EC540
 ; $0B/FEC2 8F 40 C3 7E STA $7EC340
-org $0BFEB6
-  JSL BackgroundFix
+org $0BFEB6 : JSL BackgroundFix
 
 ; SetBGColorMainBuffer
-org $0ED5F9
-  JSL ColorBgFix
+org $0ED5F9 : JSL ColorBgFix
 
 ; OverworldMosaicTransition_HandleScreensAndLoadShroom
-org $02AE92
-  NOP #6
+org $02AE92 : NOP #6
 
 ; =========================================================
 
@@ -599,8 +593,7 @@ org $02AE92
 ; $0E/D601 8F 00 C3 7E STA $7EC300[$7E:C300]
 ; $0E/D605 8F 40 C3 7E STA $7EC340[$7E:C340]
 
-org $0ED601
-	JSL SubAreasFix
+org $0ED601 : JSL SubAreasFix
 
 ; =========================================================
 ; Gloves color loading routine
@@ -619,20 +612,19 @@ org $0ED601
 ; $1B/EE39 6B          RTL
 
 ; Palettes_Load_LinkGloves
-org $1BEE2D
-	JSL GlovesFix
-
-; =========================================================
+org $1BEE2D : JSL GlovesFix
 
 ; org $0ABA5A
 ; TODO: Handle overworld map palette for flashing icons
 
+; Module0E_03_00_DarkenAndPrep
 org $0ED956 : JSL FixDungeonMapColors
 
+; UnderworldMap_RecoverGFX
 org $0AEFA6 : JSL RestoreTimeForDungeonMap
 
+; RefreshLinkEquipmentPalettes
 org $0ED745 : JSL FixShockPalette
 
-org $09F604
-GameOver_SaveAndQuit:
-  JSL FixSaveAndQuit
+; GameOver_SaveAndQuit:
+org $09F604 : JSL FixSaveAndQuit

@@ -31,8 +31,6 @@
 
 %Set_Sprite_Properties(Sprite_Farore_Prep, Sprite_Farore_Long)
 
-; =========================================================
-
 Sprite_Farore_Long:
 {
   PHB : PHK : PLB
@@ -50,8 +48,6 @@ Sprite_Farore_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_Farore_Prep:
 {
   PHB : PHK : PLB
@@ -67,8 +63,6 @@ Sprite_Farore_Prep:
   RTL
 }
 
-; =========================================================
-
 ; Movement key bitwise ---- udlr
 
 WALKSPEED = 14
@@ -77,7 +71,7 @@ STORY_STATE = $B6
 Sprite_Farore_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw IntroStart
   dw MoveUpTowardsFarore
@@ -198,19 +192,12 @@ Sprite_Farore_Main:
   }
 
   ; 07
-  ; Look at the RAM SprY to SprYRound, the first few are the actual positions of the sprite
-  ; that you can just set manually or SprYSpeed and SprXSpeed are the "speeds" of the sprites irrc
-  ; You can set one of the speeds and then call the function called Sprite_Move
-  ; And then that will handle it applying the speed for you
   MakuArea_FaroreWaitForKydrog:
   {
     %PlayAnimation(5, 5, 8)
-
     RTS
   }
-
 }
-; =========================================================
 
 Sprite_Farore_Draw:
 {
@@ -220,16 +207,13 @@ Sprite_Farore_Draw:
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
-
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
   LDY.b #$00
   .nextTile
 
   PHX ; Save current Tile Index?
-
   TXA : CLC : ADC $06 ; Add Animation Index Offset
-
   PHA ; Keep the value with animation index offset?
 
   ASL A : TAX
@@ -246,7 +230,7 @@ Sprite_Farore_Draw:
 
   LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
   STA $0E
-.on_screen_y
+  .on_screen_y
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
@@ -268,50 +252,48 @@ Sprite_Farore_Draw:
 
   RTS
 
-; =========================================================
-
-.start_index
-  db $00, $02, $04, $06, $08, $0A, $0C
-.nbr_of_tiles
-  db 1, 1, 1, 1, 1, 1, 1
-.x_offsets
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, 0
-  dw 0, -1
-.y_offsets
-  dw -8, 4
-  dw -8, 4
-  dw 4, -8
-  dw -8, 4
-  dw 4, -7
-  dw -8, 4
-  dw 4, -7
-.chr
-  db $A8, $AA
-  db $A8, $88
-  db $AA, $A8
-  db $8A, $8C
-  db $8C, $8A
-  db $8A, $AC
-  db $AA, $86
-.properties
-  db $3B, $3B
-  db $3B, $7B
-  db $3B, $3B
-  db $3B, $3B
-  db $7B, $3B
-  db $3B, $3B
-  db $3B, $7B
-.sizes
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
-  db $02, $02
+  .start_index
+    db $00, $02, $04, $06, $08, $0A, $0C
+  .nbr_of_tiles
+    db 1, 1, 1, 1, 1, 1, 1
+  .x_offsets
+    dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0, 0
+    dw 0, -1
+  .y_offsets
+    dw -8, 4
+    dw -8, 4
+    dw 4, -8
+    dw -8, 4
+    dw 4, -7
+    dw -8, 4
+    dw 4, -7
+  .chr
+    db $A8, $AA
+    db $A8, $88
+    db $AA, $A8
+    db $8A, $8C
+    db $8C, $8A
+    db $8A, $AC
+    db $AA, $86
+  .properties
+    db $3B, $3B
+    db $3B, $7B
+    db $3B, $3B
+    db $3B, $3B
+    db $7B, $3B
+    db $3B, $3B
+    db $3B, $7B
+  .sizes
+    db $02, $02
+    db $02, $02
+    db $02, $02
+    db $02, $02
+    db $02, $02
+    db $02, $02
+    db $02, $02
 }

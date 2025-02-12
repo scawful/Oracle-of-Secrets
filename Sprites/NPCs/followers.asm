@@ -1020,10 +1020,40 @@ LinkState_Minecart:
   db -1,   0,   0,   0
 }
 
+
+TileBehavior_TL_Long:
+{
+  LDA.w !MinecartDirection : CMP.b #East : BNE +
+
+  +
+  CMP.b #West
+
+  RTL
+}
+
+TileBehavior_StopLeft_Long:
+{
+  ; Transition back to sprite, put link in state default
+  LDA.w !LinkInCart : BEQ +
+    JSL MinecartFollower_TransitionToSprite
+    STZ.w LinkState
+    STZ.w !LinkInCart
+  +
+  RTL
+}
+
 pushpc
 
 org $07A5F7
   JSL LinkState_Minecart
+  RTS
+
+TileBehavior_TL:
+  JSL TileBehavior_TL_Long
+  RTS
+
+TileBehavior_StopLeft:
+  JSL TileBehavior_StopLeft_Long
   RTS
 
 assert pc() <= $07A64B

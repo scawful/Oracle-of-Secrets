@@ -52,7 +52,7 @@ Sprite_Zora_Handler:
     RTS
   .not_princess
 
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Sprite_Zora_Main
   dw Sprite_ZoraPrincess_Main
@@ -68,7 +68,7 @@ Sprite_Zora_Main:
   JSR Zora_HandleDialogue
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Zora_Forward
   dw Zora_Right
@@ -105,7 +105,7 @@ Zora_TrackHeadToPlayer:
 
 Zora_HandleDialogue:
 {
-  LDA.l CRYSTALS : AND.b #$20 : BEQ +++
+  LDA.l Crystals : AND.b #$20 : BEQ +++
     %ShowSolicitedMessage($01A6)
     JMP +
   +++

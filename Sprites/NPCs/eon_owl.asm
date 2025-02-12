@@ -62,13 +62,16 @@ Sprite_EonOwl_Long:
 Sprite_EonOwl_Prep:
 {
   PHB : PHK : PLB
+
+  STZ.w SprHitbox, X
+
   LDA.b $8A : CMP.b #$0E : BNE .NotGaebora
+    LDA.b #$20 : STA.w SprTimerA, X
     LDA.b #$03 : STA.w SprAction, X
   .NotGaebora
   LDA.w AreaIndex : CMP.b #$50 : BNE .not_intro
     ; If Map 0x50, don't spawn after getting sword
-    LDA.l SWORD : CMP.b #$01 : BCC .continue
-      .Despawn
+    LDA.l Sword : CMP.b #$01 : BCC .continue
        STZ.w SprState, X
     .continue
   .not_intro
@@ -81,7 +84,7 @@ Sprite_EonOwl_Prep:
 Sprite_EonOwl_Main:
 {
   LDA.w SprAction, X
-  JSL   UseImplicitRegIndexedLocalJumpTable
+  JSL   JumpTableLocal
 
   dw EonOwl_Idle
   dw EonOwl_IntroDialogue
@@ -94,10 +97,6 @@ Sprite_EonOwl_Main:
   EonOwl_Idle:
   {
     %PlayAnimation(0,1,16)
-    LDA.w POSX : STA $02
-    LDA.w POSY : STA $03
-    LDA.w SprX, X : STA $04
-    LDA.w SprY, X : STA $05
     JSL GetDistance8bit_Long : CMP #$28 : BCS .not_too_close
       %GotoAction(1)
     .not_too_close
@@ -134,9 +133,10 @@ Sprite_EonOwl_Main:
   KaeporaGaebora:
   {
     %PlayAnimation(0,0,1)
-    LDA.w SprTimerA, X : BNE .not_ready
-    %ShowUnconditionalMessage($146)
-    %GotoAction(4)
+    JSL GetDistance8bit_Long : CMP.b #$50 : BCC .not_ready
+      LDA.w SprTimerA, X : BNE .not_ready
+        %ShowUnconditionalMessage($146)
+        %GotoAction(4)
     .not_ready
     RTS
   }
@@ -144,7 +144,7 @@ Sprite_EonOwl_Main:
   KaeporaGaebora_Respond:
   {
     LDA $1CE8 : BNE .player_said_no
-      %GotoAction(5)
+      %GotoAction(3)
       RTS
     .player_said_no
     %GotoAction(5)

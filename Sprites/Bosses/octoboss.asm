@@ -2,12 +2,10 @@
 ; Octoboss by Zarby89
 
 pushpc
-
 ; Sprite_A2_Kholdstare
 org $1E9518
 JSL Sprite_Octoboss_Long
 RTS
-
 pullpc
 
 BrotherSpr = $0EB0
@@ -74,7 +72,7 @@ Sprite_Octoboss_Long:
 Sprite_Octoboss_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw WaitForPlayerToApproach ; 00
   dw Emerge ; 01
@@ -97,7 +95,7 @@ Sprite_Octoboss_Main:
 
 Sprite_Octoboss_Secondary:
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw WaitForPlayerToApproach ; 00
   dw Emerge ; 01
@@ -501,7 +499,7 @@ Sprite_Octoboss_Secondary:
     LDA.w SprHealth, Y : STA.b $00
     LDA.w SprHealth, X : CLC : ADC.b $00
     RTS
-    }
+  }
 }
 
 Sprite_Octoboss_Draw:
@@ -509,9 +507,8 @@ Sprite_Octoboss_Draw:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC SprFrame, X : TAY;Animation Frame
+  LDA $0DC0, X : CLC : ADC.w SprFrame, X : TAY
   LDA .start_index, Y : STA $06
-
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -560,11 +557,6 @@ Sprite_Octoboss_Draw:
 
   RTS
 
-
-  ; =========================================================
-  ; Sprite Draw Generated Data
-  ; This is where the generated Data for the sprite go
-  ; =========================================================
   .start_index
   db $00, $04, $0A, $10, $16, $1C, $20, $24, $28, $2C, $30, $34, $38, $3C, $40, $44
   .nbr_of_tiles
@@ -662,7 +654,7 @@ Sprite_Octoboss_Draw2:
   JSL Sprite_PrepOamCoord
   JSL Sprite_OAM_AllocateDeferToPlayer
 
-  LDA $0DC0, X : CLC : ADC SprFrame, X : TAY;Animation Frame
+  LDA $0DC0, X : CLC : ADC.w SprFrame, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
 
 

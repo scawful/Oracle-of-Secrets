@@ -10,14 +10,6 @@
 ; =========================================================
 
 pushpc
-; update in game hud colors
-org $1BD662 : dw hexto555($814f16), hexto555($552903)
-org $1BD66A : dw hexto555($d51d00), hexto555($f9f9f9)
-org $1DB672 : dw hexto555($d0a050), hexto555($f9f9f9)
-org $1DB67A : dw hexto555($5987e0), hexto555($f9f9f9)
-org $1DB682 : dw hexto555($7b7b83), hexto555($bbbbbb)
-org $1DB68A : dw hexto555($a58100), hexto555($dfb93f)
-
 ; Free ROM in Bank 00
 org $0098AB : db $6C
 org $0098AC : db $64
@@ -344,7 +336,7 @@ Menu_CheckBottle:
   LDA.w $0202 : CMP.b #$18 : BNE .not_any
     LDA.b #$0004
   .prepare_bottle
-  STA.l $7EF34F
+  STA.l BottleIndex
   .not_any
   RTS
 }
@@ -471,7 +463,7 @@ Menu_MagicBag:
     JSR Menu_DeleteCursor_AltEntry
     INC.w $020B
     LDA.w $020B : CMP.b #$06 : BCS .zero
-    BRA .continue
+      BRA .continue
 
   .move_down
   .move_left
@@ -479,8 +471,8 @@ Menu_MagicBag:
     LDX.w Menu_MagicBagCursorPositions-2, Y
     JSR Menu_DeleteCursor_AltEntry
     LDA.w $020B : CMP.b #$00 : BEQ .continue
-    DEC.w $020B
-    BRA .continue
+      DEC.w $020B
+      BRA .continue
   .zero
   STZ.w $020B
   .continue

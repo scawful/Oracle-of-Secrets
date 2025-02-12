@@ -6,7 +6,7 @@ org $1AFBC7 : db $0B ; Heart Index
 org $1AFBD7 : db $00
 
 ; Remove rain sound effects from beginning
-org $02838C : LDA.l $7EF3C5 : CMP.b #$00
+org $02838C : LDA.l GameState : CMP.b #$00
 
 ; RoomTag_GanonDoor
 ; Replace SprState == 04 -> .exit
@@ -121,7 +121,7 @@ LoadDarkWorldIntro:
     LDA.b #$40 : STA.l $7EF3CA
     RTL
   .not_dw_spawn
-  LDA.l GAMESTATE : CMP.b #$02 : BNE .intro_sequence
+  LDA.l GameState : CMP.b #$02 : BNE .intro_sequence
     ; Check for maku tree progress flag
     LDA.l OOSPROG : CMP.b #$02 : BCS .has_pearl
       STZ.w $1B
@@ -148,7 +148,7 @@ org $0281E2 : LDA.l $7EF342 : CMP.b #$02
 org $0281CD : LDA.l $7EF3D6 : CMP.b #$04
 
 ; GameOver_FadeAndRevive
-org $09F520 : LDA.l $7EF3C5 : CMP.b #$02
+org $09F520 : LDA.l GameState : CMP.b #$02
 
 pullpc
 LoadOverworldPitAreas:

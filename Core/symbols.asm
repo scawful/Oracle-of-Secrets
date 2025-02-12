@@ -30,130 +30,18 @@ base off
 ; =========================================================
 
 function RGBto555(R,G,B) = ((R/8)<<10)|((G/8)<<5)|(B/8) ; zarby
-function hexto555(h) = ((((h&$FF)/8)<<10)|(((h>>8&$FF)/8)<<5)|(((h>>16&$FF)/8)<<0)) ; kan
 function menu_offset(y,x) = (y*64)+(x*2)
-
-; =========================================================
-; SRAM in Use
-SaveRam:
-{
-; Game state
-;   0x00 - Very start; progress cannot be saved in this state
-;   0x01 - Uncle reached
-;   0x02 - Zelda rescued
-;   0x03 - Agahnim defeated
-GAMESTATE       = $7EF3C5
-
-; Red X on Hall of Secrets
-; Red X on Kalyxo Pyramid
-
-; .fmp h.i.
-;  f - fortress of secrets
-;  m - master sword
-;  p - pendant quest
-;  h - hall of secrets
-;  i - intro over, maku tree
-OOSPROG         = $7EF3D6
-
-; Bitfield of less important progression
-; .fbh .zsu
-;   u - Uncle
-;   s - Priest visited in sanc after Zelda is kidnapped again
-;   z - Zelda brought to sanc
-;   h - Uncle left Link's house (0: spawn | 1: gone)
-;   b - Book of Mudora obtained/mentioned; controls Aginah dialog
-;   f - Flipped by fortune tellers to decide fortune set to give
-OOSPROG2       = $7EF3C6
-
-; .... ...m
-;   m - maku tree has met link (0: no | 1: yes)
-MakuTreeQuest  = $7EF3D4
-
-; Map icon
-;   0x00 - Red X on Maku Tree/Maku Warp
-;   0x01 - Toadstool Woods Crystal
-;   0x02 - Kalyxo All Crystals
-;   0x03 -
-;   0x04 -
-;   0x05 -
-;   0x06 -
-;   0x07 -
-;   0x08 - Skull on GT        | Climb Ganon's Tower
-MapIcon        = $7EF3C7
-
-; Dungeon ID Legend
-; Mushroom Grotto ID 0x0C (Palace of Darkness)
-; Tail Palace ID 0x0A (Swamp Palace)
-; Kalyxo Castle ID 0x10 (Skull Woods)
-; Zora Temple ID 0x16 (Thieves Town)
-; Glacia Estate 0x12 (Ice Palace)
-; Goron Mines 0x0E (Misery Mire)
-; Dragon Ship 0x18 (Turtle Rock)
-
-; .wbs tipm
-;   p - Palace of Darkness
-;   s - Swamp Palace
-;   w - Skull Woods
-;   b - Thieves' Town
-;   i - Ice Palace
-;   m - Misery Mire
-;   t - Turtle Rock
-CRYSTALS   = $7EF37A
-
-; 01 - Fishing Rod
-; 02 - Portal Rod
-CustomRods = $7EF351
-
-; Free SRAM Block 38A-3C4
-FishingRod = $7EF38A
-
-; Collectibles
-Bananas    = $7EF38B
-Pineapples = $7EF38D
-RockMeat   = $7EF38F
-Seashells  = $7EF391
-Honeycomb  = $7EF393
-DekuSticks = $7EF395
-
-TingleMaps = $7EF396
-TingleId   = $7EF397
-
-; .dgi zktm
-;   m - Mushroom Grotto
-;   t - Tail Palace
-;   k - Kalyxo Castle
-;   z - Zora Temple
-;   i - Glacia Estate
-;   g - Goron Mines
-;   d - Dragon Ship
-Scrolls    = $7EF398
-
-; Keep track of the previous scroll
-; For re-reading old hints.
-PrevScroll = $7EF39A
-
-; .dts fwpb
-;   b - bean planted
-;   w - plant watered
-;   p - pollinated by bee
-;   f - first day
-;   s - second day
-;   t - third day
-;   d - done
-MagicBeanProg = $7EF39B
-
-; .... .cpw
-;   c - courage
-;   p - power
-;   w - wisdom
-Dreams        = $7EF410
 
 ; Current Dream ID (0x00-0x03)
 CurrentDream   = $0426
 
 ; Current Song
 CurrentSong    = $030F
-}
+
+; 01 - Song of Healing
+; 02 - Song of Time
+; 03 - Song of Storms
+SongFlag       = $FE
 
 ; =========================================================
 ; The record format for the low table is 4 bytes:
@@ -180,10 +68,8 @@ OamPtrH      = $92
 OamBackup   = $0FEC
 
 ; =========================================================
-; Sprite RAM and Functions
+; Sprite RAM
 
-SpriteRam:
-{
 SprY         = $0D00
 SprX         = $0D10
 SprYH        = $0D20
@@ -215,9 +101,7 @@ SprCustom    = $1CC0 ;
 ; Used in sprite state 0x03 (falling in water)
 ; used as delay in most of the sprites
 SprDelay     = $0E80
-
-; Enemy color flash buffer
-SprFlash     = $0B89
+SprFlash     = $0B89 ; Enemy color flash buffer
 
 SprTimerA    = $0DF0 ; Action,    decreased by 1 each frame
 SprTimerB    = $0E00 ; Animation, decreased by 1 each frame
@@ -323,14 +207,6 @@ SprFreeze    = $0FC1 ; Seems to freeze sprites
 ;   0x07   32   24   16
 ;   0x08   24   16    8
 ;   0x09   64   48   24
-;
-; Higher values are invalid, but here's what they are:
-;   0x0A  169   48   32
-;   0x0B  142  246  169
-;   0x0C  144  133   71
-;   0x0D  169   16  133
-;   0x0E   70  169   33
-;   0x0F   34  124  187
 SprBump      = $0CD2
 
 ; Damage sprite is enduring
@@ -344,9 +220,7 @@ SprDmgTaken       = $0CE2
 ;   d - If hit from front, deflect Ice Rod, Somarian missile,
 ;       boomerang, hookshot, and sword beam, and arrows stick in
 ;       it harmlessly.  If bit 1 is also set, frontal arrows will
-;       instead disappear harmlessly.  No monsters have bit 4 set
-;       in the ROM data, but it was functional and interesting
-;       enough to include.
+;       instead disappear harmlessly.
 ;   e - If set, sprite collides with less tiles than usual
 ;   f - If set, impervious to sword and hammer type attacks
 ;   g - If set, impervious to arrows, but may have other additional meanings.
@@ -378,10 +252,8 @@ SprBulletproof = $0BA0
 
 SprRoom      = $0C9A ;X W Contains the area or room id the sprite has been loaded in
 SprDrop      = $0CBA ;X W 00: Drop nothing, 01: drop normal key, 03: Drop green rupee, OtherValues: Drop big key
-}
 
 ; Overlord
-
 OverlordId   = $0B00
 OverlordX    = $0B08
 OverlordXH   = $0B10
@@ -392,16 +264,17 @@ OverlordTimerA = $0B28
 OverlordTimerB = $0B30
 OverlordTimerC = $0B38
 
+; =========================================================
+; Sprite Functions
+
 SpriteData_OAMProp = $0DB359
 
 ; Clear all properties for sprites
 SpritePrep_ResetProperties = $0DB871
 
-; =========================================================
 ; set the oam coordinate for the sprite draw
 Sprite_PrepOamCoord =  $06E416
 
-; =========================================================
 ; Draw the sprite depending of the position of the player
 ; (if he has to be over or under link)
 Sprite_OAM_AllocateDeferToPlayer = $06F864
@@ -415,23 +288,17 @@ OAM_AllocateFromRegionF = $0DBA94 ; Above
 
 Sprite_DrawMultiple_quantity_preset = $05DF70
 
-; =========================================================
 ; check if the sprite is getting damage from player or items
 Sprite_CheckDamageFromPlayer = $06F2AA
 
-; =========================================================
 ; check if the sprite is touching the player to damage
 Sprite_CheckDamageToPlayer = $06F121
 
-; =========================================================
 ; damage the player everywhere on screen?
 Sprite_AttemptDamageToPlayerPlusRecoil = $06F41F
 
-; =========================================================
 ; makes all the sprites on screen shaking
 ApplyRumbleToSprites = $0680FA
-
-; =========================================================
 
 Sprite_MoveLong = $1D808C
 
@@ -463,74 +330,59 @@ ans_high    = $0C
 
 CheckIfHitBoxesOverlap = $0683E6
 
-; =========================================================
 ; $0FD8 = sprite's X coordinate
 ; $0FDA = sprite's Y coordinate
 Sprite_Get16BitCoords_Local = $0684C1
 Sprite_Get_16_bit_Coords = $0684BD
 
-; =========================================================
 ; load / draw a 16x16 sprite
 Sprite_PrepAndDrawSingleLarge = $06DBF0
 
-; =========================================================
 ; load / draw a 8x8 sprite
 Sprite_PrepAndDrawSingleSmall = $06DBF8
 
-; =========================================================
 ; draw shadow (requires additional oam allocation)
 Sprite_DrawShadow = $06DC54
 
 Sprite_DrawWaterRipple = $059FFA
 Sprite_DrawRippleIfInWater = $1EFF8D
 
-; =========================================================
 ; check if the sprite is colliding with a solid tile set $0E70, X
 ; ----udlr , u = up, d = down, l = left, r = right
 Sprite_CheckTileCollision = $06E496
 Sprite_CheckTileCollision_long = $06E496
 
-; =========================================================
-; $00[0x02] - Entity Y coordinate
+; $00[0x02]  - Entity Y coordinate
 ; $02[0x03?] - Entity X coordinate
-; $0FA5
+; $0FA5      - Tile ID result
 Sprite_GetTileAttr = $06E87B
 
-; =========================================================
 ; check if the sprite is colliding with a solid sloped tile
 Sprite_CheckSlopedTileCollision = $06E8FD
 
-; =========================================================
 ; set the velocity x,y towards the player (A = speed)
 Sprite_ApplySpeedTowardsPlayer = $06EA12
 
-; =========================================================
 ; \return $0E is low byte of player_y_pos - sprite_y_pos
 ; \return $0F is low byte of player_x_pos - sprite_x_pos
 Sprite_DirectionToFacePlayer = $06EAA0
 
-; =========================================================
 ; if Link is to the left of the sprite, Y = 1, otherwise Y = 0.
 Sprite_IsToRightOfPlayer = $06EACD
 
-; =========================================================
 ; return Y=1 sprite is below player, otherwise Y = 0
 Sprite_IsBelowPlayer = $06EAE4
 
-; =========================================================
 ; $06 = sprite's Y coordinate
 ; $07 = sprite's X coordinate
 Sprite_IsBelowLocation = $06EB1D
 
-; =========================================================
 ; check damage done to player if they collide on same layer
 Sprite_CheckDamageToPlayerSameLayer = $06F129
 
-; =========================================================
 ; check damage done to player if they collide even if they are not on same layer
 Sprite_CheckDamageToPlayerIgnoreLayer = $06F131
 
-; =========================================================
 ; play a sound loaded in A
 Sound_SetSfx1PanLong = $0DBB6E
 Sound_SetSfx2PanLong = $0DBB7C
@@ -551,41 +403,31 @@ Sprite_SpawnDynamically_slot_limited = $1DF65F
 Sprite_SetSpawnedCoords = $09AE64
 Sprite_SetSpawnedCoordinates = $09AE64
 
-; =========================================================
 ; move the sprite if he stand on a conveyor belt
 Sprite_ApplyConveyorAdjustment = $1D8010
 
-; =========================================================
 ; Setup sprite hitbox for comparison with scrap ram
 Sprite_SetupHitBoxLong = $0683EA
 
-; =========================================================
-; set tile of dungeon
-Dungeon_SpriteInducedTilemapUpdate = $01E7A9
-
-; =========================================================
 ; player can't pass through the sprite
 Sprite_BehaveAsBarrier = $1EF4F3
 Sprite_PlayerCantPassThrough = $1EF4F3
 
-; =========================================================
 ; player can't hookshot to that sprite
+Sprite_CancelHookshot = $0FF540
 Sprite_NullifyHookshotDrag = $0FF540
 
-; =========================================================
 ; show a message box without any condition
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
 Sprite_ShowMessageUnconditional = $05E219
 
-; =========================================================
 ; show a message if we press A and face the sprite
 ; A = low byte of message ID to use.
 ; Y = high byte of message ID to use.
 Sprite_ShowSolicitedMessage = $05E1A7
 Sprite_ShowSolicitedMessageIfPlayerFacing = $05E1A7
 
-; =========================================================
 ; show a message if we touch the sprite
 ; should be used with Sprite_PlayerCantPassThrough
 ; A = low byte of message ID to use.
@@ -604,6 +446,8 @@ Snitch_SpawnGuard = $09C02F
 Sprite_KillFriends = $09EF56
 
 Sprite_KillSelf = $09F1F8
+
+Dungeon_SpriteInducedTilemapUpdate = $01E7A9
 
 ; =========================================================
 ; $04 = X
@@ -644,10 +488,9 @@ Sprite_TrackBodyToHead = $05DCA2
 GetRandomInt = $0DBA71
 
 Sprite_SpawnFireball = $0DDA06
-
 Sprite_SpawnSmallSplash = $1EA820
-
 Sprite_SpawnSparkleGarnish = $058008
+Sprite_SpawnPoofGarnish = $05AB9C
 
 Sprite_CheckIfLifted = $06AA0C
 
@@ -655,11 +498,11 @@ Sprite_TransmuteToBomb = $06AD50
 
 Sprite_RepelDash = $079291
 
-Sprite_SpawnPoofGarnish = $05AB9C
-
 Sprite_LoadGfxProperties = $00FC41
 
 ThrownSprite_TileAndSpriteInteraction_long = $06DFF2
+
+Overworld_DrawMap16_Persist = $1BC97C
 
 ; =========================================================
 ; Local functions which may be useful for sprites
@@ -693,6 +536,14 @@ SpriteRanCheck = $8E
 UWDEATH         = $7FDF80
 
 RebuildHUD_long = $0DFA58
+
+ForcePrizeDrop_long = $06FA54
+
+TileDetect_BigArea_long = $07CF0A
+
+Follower_Initialize = $099EFC
+
+HandleFollowersAfterMirroring = $07AAA2
 
 ; =========================================================
 ; Controllers
@@ -733,199 +584,6 @@ ButtonAFlag  = $3B ; bit7: Button A is down (A-------)
 ;   Bombos tablet: 0x00E0
 ;   Desert tablet: 0x0001
 BFLAG           = $3C
-
-; =========================================================
-; Link RAM and Functions
-
-LinkY        = $20 ; Position Y of link
-LinkYH       = $21 ; High position Y of link
-LinkX        = $22 ; Position X of link
-LinkXH       = $23 ; High position X of link
-LinkZ        = $24 ; Position Z of link
-
-; ----UDLR
-;  [U Up][D Down][L Left][R Right]
-;  Direction link is pushing against
-LinkPushDir   = $26
-
-; Link's recoiling speed
-; By themselves, these do not do much
-; They will be reset every frame Link is not in recoil state
-LinkRecoilY   = $27
-LinkRecoilX   = $28
-LinkRecoilZ   = $29
-
-; Link's subpixel velocity
-; when this value overflows, Link's main velocity gains an extra pixel
-; reset on direction change, so not really a positional subpixel
-LinkSubVelY  = $2A
-LinkSubVelX  = $2B
-
-; Direction link is facing
-; 00:Up, 02:Down, 04:Left, 06:Right
-LinkFaceDir  = $2F
-
-; Last direction link moved towards
-; 00:Up, 01:Down, 02:Left, 03:Right
-LinkLastDir  = $66
-
-; ----UDLR
-;  [U Up][D Down][L Left][R Right]
-;  direction link is "walking towards"
-LinkMoveDir  = $67
-
-; 0: Not moving, 1: Moving cardinal, 2: Moving diagonally
-LinkMoveInfo = $6A
-
-LinkVisible  = $4B ; if set to 0x0C link will be invisible
-LinkBunnyGfx = $56 ; if set to 1 link will be bunny, otherwise link
-
-; 0x00: normal speed, 0x01-0x0F: slow,�> 0x10:fast
-LinkSpeed    = $57
-
-; 0x00: normal speed, 0x02: walking on stair speed, 0x10: dashing speed
-LinkSpeedTbl = $5E
-
-; if is set to 0x02 or 0x03 link is falling
-LinkFalling  = $5B
-FallTimer    = $5C
-
-; LinkState_Default                  : 0x00
-; LinkState_Pits                     : 0x01
-; LinkState_Recoil                   : 0x02
-; LinkState_SpinAttack               : 0x03
-; LinkState_Swimming                 : 0x04 (ZoraDive)
-; LinkState_OnIce                    : 0x05
-; LinkState_Recoil                   : 0x06
-; LinkState_Zapped                   : 0x07
-; LinkState_UsingEther               : 0x08
-; LinkState_UsingBombos              : 0x09
-; LinkState_UsingQuake               : 0x0A (DekuHover)
-; LinkState_HoppingSouthOW           : 0x0B
-; LinkState_HoppingHorizontallyOW    : 0x0C
-; LinkState_HoppingDiagonallyUpOW    : 0x0D
-; LinkState_HoppingDiagonallyDownOW  : 0x0E
-; LinkState_0F                       : 0x0F
-; LinkState_0F                       : 0x10
-; LinkState_Dashing                  : 0x11
-; LinkState_ExitingDash              : 0x12
-; LinkState_Hookshotting             : 0x13
-; LinkState_CrossingWorlds           : 0x14
-; LinkState_ShowingOffItem           : 0x15
-; LinkState_Sleeping                 : 0x16
-; LinkState_Bunny                    : 0x17
-; LinkState_HoldingBigRock           : 0x18
-; LinkState_ReceivingEther           : 0x19
-; LinkState_ReceivingBombos          : 0x1A
-; LinkState_ReadingDesertTablet      : 0x1B
-; LinkState_TemporaryBunny           : 0x1C
-; LinkState_TreePull                 : 0x1D
-; LinkState_SpinAttack               : 0x1E
-LinkState    = $5D
-
-; 0: Link is not in a doorway
-; 1: is in a vertical doorway
-; 2: is in horizontal doorway
-LinkDoorway  = $6C
-
-; 0: Nothing
-; 1: a hand in the air
-; 2: 2 hands in the air (like getting triforce)
-LinkGrabGfx  = $02DA
-
-; if not 0 add a poof gfx on link
-LinkPoofGfx  = $02E1
-
-; Bunny timer for link before transforming back
-LinkBunTimer = $02E2
-
-; if not 0 prevent link from moving and opening the menu
-LinkMenuMove = $02E4
-
-; if not 0 prevent link from getting any damages from sprites
-LinkDamage   = $037B
-
-; ----CCCC
-;  [C Touching chest id]
-LinkColChest = $02E5
-
-; 0: Not on somaria platform, 2: On somaria platform
-LinkSomaria  = $02F5
-
-; BP-AETHR
-;   [B Boomerang][P Powder]
-;   [A Bow&Arrows][E UnusedItem]
-;   [T UnusedItem][H Hammer][R Rods]
-LinkItemUse  = $0301
-
-LinkItemY    = $0303 ; Currently equipped item on the Y button
-
-; 0: Nothing, 1:Picking up something, 2: Throwing something
-LinkCarrying = $0308
-
-; .... ..tl
-;   t - tossing object
-;   l - lifting object
-LinkCarryOrToss = $0309
-
-; 0: Normal
-; 1: Shovel
-; 2: Praying
-; 4: Hookshot
-; 8: Somaria
-; 10: Bug net
-; 20: Read book
-; 40: Tree pull
-LinkAnim     = $037A
-
-LinkWallCheat = $037F ; If non zero can walk through walls
-
-; Animation step/graphics for spin attack animations; including medallions.
-LinkSpinGfx   = $031C
-LinkSpinStep  = $031D
-
-; =========================================================
-
-Link_ReceiveItem = $0799AD ; Y = item id
-
-Link_CancelDash = $0791B9
-
-Link_Initialize = $07F13C
-Link_ResetProperties_A = $07F1A3
-Link_ResetProperties_B = $07F1E6
-Link_ResetProperties_C = $07F1FA
-Link_ResetSwimmingState = $07983A
-Link_ResetStateAfterDamagingPit = $07984B
-Link_ItemReset_FromOverworldThings = $07B107
-
-Link_CalculateSFXPan = $0DBB67
-
-; Used by Agahnim2 fight
-CallForDuckIndoors = $07A45F
-
-ApplyLinksMovementToCamera = $07E9D3
-
-HandleIndoorCameraAndDoors = $07F42F
-
-Link_HandleVelocityAndSandDrag = $07E3DD
-
-Link_HandleMovingAnimation_FullLongEntry = $07E6A6
-Link_HandleMovingAnimation_General = $07E765
-Link_HandleMovingAnimationSwimming = $07E7FA
-
-LinkHop_FindArbitraryLandingSpot = $07E370
-
-HandleFollowersAfterMirroring = $07AAA2
-
-TileDetect_BigArea_long = $07CF0A
-
-Hookshot_CheckTileCollision = $07D576
-
-Refund_Magic = $07B0E9
-
-CheckIfLinkIsBusy = $07F4D0
-
-Follower_Initialize = $099EFC
 
 ; =========================================================
 ; Ancilla
@@ -1097,5 +755,4 @@ Sparkle_PrepOAMFromRadial = $08DA17
 Fireball_SpawnTrailGarnish = $09B020
 
 SpriteSFX_QueueSFX2WithPan = $0DBB7C
-
 SpriteSFX_QueueSFX3WithPan = $0DBB8A

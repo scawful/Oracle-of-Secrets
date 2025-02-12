@@ -21,7 +21,7 @@ pullpc
 LinkState_CheckForMinishForm:
 {
   SEP #$30
-  LDA.l GAMESTATE : BEQ .return
+  LDA.l GameState : BEQ .return
     JSL $0FF979 ; AncillaSpawn_SwordChargeSparkle
 
     ; Check for the R button (like minish cap)
@@ -44,14 +44,14 @@ LinkState_CheckForMinishForm:
       CMP.b #$00 : BEQ .transform
       CMP.b #$06 : BCC .return         ; don't transform if not human
       .transform
-      %PlayerTransform()
+      JSL PlayerTransform
 
       LDA #$39 : STA $BC   ; Change link's sprite
       LDA #$05 : STA $02B2 ; Set the current mask form
       BRA .return
 
       .already_minish
-      %PlayerTransform()
+      JSL PlayerTransform
       JSL ResetToLinkGraphics
 
   .return

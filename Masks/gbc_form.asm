@@ -48,10 +48,10 @@ GameboyLinkRedMail:
 
 LinkState_GameboyInDungeonEntrance:
 {
+  print pc
   ; if link is in the dark world, change his sprite to the gbc one
   LDA $0FFF : CMP #$00 : BEQ .return
-    LDA.w !CurrentMask : BNE .return
-      LDA $BC : CMP #$06 : BEQ .return
+    LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
         JSL UpdateGbcPalette
         LDA #$3B : STA $BC ; change link's sprite
   .return
@@ -64,10 +64,10 @@ LoadOverworld_CheckForGbcLink:
 {
   LDA $0FFF : BEQ .return_lw
     LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
-      LDA.b #$06 : STA $02B2
-      LDA.b #$3B : STA $BC   ; change link's sprite
-      JSL UpdateGbcPalette
-      JMP .return
+        LDA.b #$06 : STA $02B2
+        LDA.b #$3B : STA $BC   ; change link's sprite
+        JSL UpdateGbcPalette
+        JMP .return
   .return_lw
   STZ.w $02B2
   .return
@@ -108,14 +108,14 @@ LinkState_GameboyForm:
   LDA $02B2 : CMP.b #$06 : BEQ .already_gbc
     LDA $0FFF : BEQ .return ; not in dark world
       .transform
-      %PlayerTransform()
+      JSL PlayerTransform
       LDA #$3B : STA $BC   ; change link's sprite
       LDA #$06 : STA $02B2
       JSL UpdateGbcPalette
       BRA .return
 
   .already_gbc
-  %PlayerTransform()
+  JSL PlayerTransform
   LDA #$10 : STA $BC
   STZ $02B2
   JSL Palette_ArmorAndGloves

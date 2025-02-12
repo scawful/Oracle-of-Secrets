@@ -70,7 +70,7 @@ KorokWalkSpeed = $02
 Sprite_Korok_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Sprite_Korok_Idle
   dw Sprite_Korok_WalkingDown

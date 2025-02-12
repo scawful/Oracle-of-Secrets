@@ -1041,7 +1041,6 @@ ActivateSubScreen:
     ; If $7EF3C5 >= 0x02.
     LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCS .noRain
         BRA .turnOn
-
     .noRain
 
     ; Get the overlay value for this overworld area.
@@ -1881,7 +1880,6 @@ EnableSubScreenCheckForPyramid:
     CMP.w #$0096 : BNE .notPyramidOrCastle
         SEP #$20 ; Set A in 8bit mode.
         LDA.b #$01 : STA.b $1D
-
     .notPyramidOrCastle
 
     SEP #$20 ; Set A in 8bit mode.

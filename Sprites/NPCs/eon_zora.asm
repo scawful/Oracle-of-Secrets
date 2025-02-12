@@ -9,7 +9,7 @@ Sprite_EonZora_Main:
   JSL Sprite_BounceFromTileCollision
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw EonZora_Forward
   dw EonZora_Left

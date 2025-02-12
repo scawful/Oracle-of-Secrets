@@ -53,7 +53,7 @@ Sprite_MaskSalesman_Main:
   JSL Sprite_PlayerCantPassThrough
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw InquiryHandler
   dw NoOcarina
@@ -120,7 +120,7 @@ Sprite_MaskSalesman_Main:
   HasOcarina:
   {
     %PlayAnimation(0, 1, 16)
-    %ShowSolicitedMessage($080) ; Oh! You got it!
+    %ShowSolicitedMessage($081) ; Oh! You got it!
     %GotoAction(3)
     RTS
   }

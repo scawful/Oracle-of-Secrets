@@ -526,7 +526,7 @@ CheckPalaceItemPossession:
 {
   SEP #$30
   LDA $040C : LSR A
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
   dw .no_item
   dw .no_item
   dw .bow

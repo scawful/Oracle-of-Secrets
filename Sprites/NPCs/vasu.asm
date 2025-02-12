@@ -31,12 +31,9 @@
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 %Set_Sprite_Properties(Sprite_Vasu_Prep, Sprite_Vasu_Long)
 
-; =========================================================
-
 Sprite_Vasu_Long:
 {
   PHB : PHK : PLB
-
   LDA.w SprSubtype, X : BNE +
     JSR Sprite_Vasu_Draw
     JMP ++
@@ -45,13 +42,11 @@ Sprite_Vasu_Long:
   ++
   JSL Sprite_DrawShadow
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
-  JSR Sprite_Vasu_Main
+    JSR Sprite_Vasu_Main
   .SpriteIsNotActive
   PLB
   RTL
 }
-
-; =========================================================
 
 Sprite_Vasu_Prep:
 {
@@ -64,14 +59,12 @@ Sprite_Vasu_Prep:
   RTL
 }
 
-; =========================================================
-
 Sprite_Vasu_Main:
 {
   JSL Sprite_PlayerCantPassThrough
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Vasu_Idle
   dw Vasu_MessageHandler
@@ -179,8 +172,6 @@ Sprite_Vasu_Main:
     RTS
   }
 }
-
-; =========================================================
 
 Sprite_Vasu_Draw:
 {

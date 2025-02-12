@@ -9,27 +9,26 @@ RodAnimationTimer:
 LinkItem_PortalRod:
 {
   BIT $3A : BVS .y_button_held
-  LDA $6C : BNE .return
+    LDA $6C : BNE .return
+    JSR Link_CheckNewY_ButtonPress : BCC .return
+      LDX.b #$00
+      JSR LinkItem_EvaluateMagicCost : BCC .insufficient_mp
+        LDA.b #$30 : JSR $802F    ; Sfx3
+        JSL   LinkItem_FirePortal
+        .y_button_held
 
-  JSR   Link_CheckNewY_ButtonPress : BCC .return
-    LDX.b #$00
-    JSR   LinkItem_EvaluateMagicCost : BCC .insufficient_mp
-      LDA.b #$30 : JSR $802F    ; Sfx3
-      JSL   LinkItem_FirePortal
-      .y_button_held
+        JSR $AE65 ; HaltLinkWhenUsingItems
+        DEC $3D : BPL .return
+        LDA $0300 : INC A : STA $0300 : TAX
+        LDA RodAnimationTimer, X : STA $3D
+        CPX.b #$03 : BNE .return
+        STZ $0300
+        STZ $5E
+        STZ $3D
+        LDA $0301 : AND.b #$FE : STA $0301
 
-      JSR $AE65 ; HaltLinkWhenUsingItems
-      DEC $3D : BPL .return
-      LDA $0300 : INC A : STA $0300 : TAX
-      LDA RodAnimationTimer, X : STA $3D
-      CPX.b #$03 : BNE .return
-      STZ $0300
-      STZ $5E
-      STZ $3D
-      LDA $0301 : AND.b #$FE : STA $0301
-
-    .insufficient_mp
-    LDA $3A : AND.b #$BF : STA $3A
+      .insufficient_mp
+      LDA $3A : AND.b #$BF : STA $3A
 
   .return
   RTS

@@ -60,7 +60,7 @@ Sprite_Wolfos_Prep:
     RTL
   .spawn_wolfos
   LDA.b #$40 : STA.w SprTimerA, X
-  LDA.b #$80 : STA.w SprDefl, X ; Sprite persist
+  LDA.b #$82 : STA.w SprDefl, X ; persist, impervious to arrows
   LDA.b #$08 : STA.w SprNbrOAM, X ; Nbr Oam Entries
   PLB
   RTL
@@ -137,7 +137,7 @@ Wolfos_DecideAction:
 Sprite_Wolfos_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Wolfos_AttackForward ; 0x00
   dw Wolfos_AttackBack    ; 0x01
@@ -249,8 +249,8 @@ Sprite_Wolfos_Main:
     .wait
 
     ; Wait for Song of Healing before granting the mask.
-    LDA   $FE : BEQ .ninguna_cancion
-      STZ   $FE
+    LDA.b SongFlag : CMP.b #$01 : BNE .ninguna_cancion
+      STZ.b SongFlag
       LDA.b #$20 : STA.w SprTimerD, X
       LDA.w POSX : STA.w SprX, X
       LDA.w POSXH : STA.w SprXH, X

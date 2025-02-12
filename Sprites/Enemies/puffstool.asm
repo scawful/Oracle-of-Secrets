@@ -124,6 +124,7 @@ Sprite_Puffstool_Main:
     JSL Sprite_CheckDamageToPlayerSameLayer
 
     LDA.w SprTimerC, X : BNE +
+      JSL ForcePrizeDrop_long
       STZ.w SprState, X
     +
     RTS

@@ -4,7 +4,7 @@
 ;  01 - Fire
 ;  02 - Vampire Bat
 
-!SPRID              = $11 ; The sprite ID you are overwriting (HEX)
+!SPRID              = $11
 !NbrTiles           = 08  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -58,11 +58,13 @@ Sprite_Keese_Prep:
 {
   PHB : PHK : PLB
   LDA.b #$80 : STA.w SprDefl, X
+  LDA.b #$30 : STA.w SprTimerC, X
   LDA.w SprSubtype, X : CMP.b #$02 : BNE +
     LDA.b #$20 : STA.w SprHealth, X
     BRA ++
   +
-  LDA.b #$02 : STA.w SprNbrOAM, X
+  LDA.b #$03 : STA.w SprNbrOAM, X
+  LDA.b #$03 : STA.w SprPrize, X
   ++
   PLB
   RTL
@@ -71,7 +73,7 @@ Sprite_Keese_Prep:
 Sprite_Keese_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Keese_Idle
   dw Keese_FlyAround
@@ -80,7 +82,9 @@ Sprite_Keese_Main:
   {
     STZ.w SprFrame, X
     ; Wait til the player is nearby then fly around
+    LDA.w SprTimerC, X : BEQ .move
     JSL GetDistance8bit_Long : CMP.b #$20 : BCS +
+      .move
       INC.w SprAction, X
       JSL GetRandomInt
       STA.w SprTimerA, X
@@ -90,21 +94,21 @@ Sprite_Keese_Main:
 
   Keese_FlyAround:
   {
-    %PlayAnimation(0,5,10)
+    %PlayAnimation(0,5,8)
     JSL Sprite_CheckDamageToPlayer
-    JSL Sprite_CheckDamageFromPlayer
+    JSL Sprite_CheckDamageFromPlayer : BCC +
+      JSL ForcePrizeDrop_long
+    +
     JSL Sprite_DamageFlash_Long
     JSL Sprite_BounceFromTileCollision
 
-    JSL GetRandomInt : AND.b #$1F : BNE +
-      LDA.w SprSubtype, X : BEQ ++
-        JSL Sprite_Twinrova_FireAttack
-        JMP +
-      ++
-      ; Ice Attack
+    JSL GetRandomInt : AND.b #$3F : BNE +
+      LDA.b #$10 : STA.w SprTimerC, X
     +
+    JSR Sprite_Keese_Attack
 
     LDA.w SprTimerA, X : AND.b #$10 : BNE +
+      LDA.b #$40
       JSL Sprite_ProjectSpeedTowardsPlayer
     +
 
@@ -118,6 +122,19 @@ Sprite_Keese_Main:
   }
 }
 
+Sprite_Keese_Attack:
+{
+  LDA.w SprTimerC, X : BEQ +
+    LDA.w SprSubtype, X : BEQ ++
+      JSL Sprite_Twinrova_FireAttack
+      JMP +
+    ++
+    JSL Sprite_SpawnSparkleGarnish
+    JSL BlindLaser_SpawnTrailGarnish
+  +
+  RTS
+}
+
 Sprite_Keese_Draw:
 {
   JSL Sprite_PrepOamCoord
@@ -126,6 +143,7 @@ Sprite_Keese_Draw:
   LDA.w SprFrame, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
   LDA.w SprFlash, X : STA $08
+  LDA.w SprMiscB, X : STA $09
   LDA.w SprSubtype, X : CMP.b #$01 : BNE +
     LDA.b #$0A : EOR $08 : STA $08
   +
@@ -159,7 +177,14 @@ Sprite_Keese_Draw:
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
+
+  ; If SprMiscA != 0, then use 4th sheet
+  LDA.b $09 : BEQ +
+    LDA .chr_2, X : STA ($90), Y
+    JMP ++
+  +
   LDA .chr, X : STA ($90), Y
+  ++
   INY
   LDA .properties, X : ORA $08 : STA ($90), Y
 
@@ -202,6 +227,13 @@ Sprite_Keese_Draw:
   db $84, $84
   db $A4, $A4
   db $A0
+  .chr_2
+  db $C0
+  db $E2, $E2
+  db $C2
+  db $C4, $C4
+  db $E4, $E4
+  db $E0
   .properties
   db $35
   db $35, $75

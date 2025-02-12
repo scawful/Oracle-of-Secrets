@@ -1,6 +1,5 @@
 ; =========================================================
-; Sprite Properties
-; =========================================================
+; Manhandla / Big ChuChu Sprite
 
 !SPRID              = Sprite_Manhandla
 !NbrTiles           = 03  ; Number of tiles used in a frame
@@ -32,8 +31,6 @@
 
 %Set_Sprite_Properties(Sprite_Manhandla_Prep, Sprite_Manhandla_Long)
 
-; =========================================================
-
 Sprite_Manhandla_Long:
 {
   PHB : PHK : PLB
@@ -52,14 +49,10 @@ Sprite_Manhandla_Long:
 }
 
 pushpc
-
 ; Sprite_DoTheDeath#PrepareEnemyDrop.post_death_stuff
 org $06FA25
   LDA.w $0E20, X : CMP.b #$88
-
 pullpc
-
-; =========================================================
 
 Sprite_Manhandla_Prep:
 {
@@ -119,9 +112,7 @@ Sprite_Manhandla_CheckForNextPhaseOrDeath:
   RTS
 }
 
-; =========================================================
-
-macro SetLeftHeadPos()
+SetLeftHeadPos:
   REP #$20
   LDA.w SprCachedX : SEC : SBC.w #$0016
   SEP #$20
@@ -131,9 +122,9 @@ macro SetLeftHeadPos()
   LDA.w SprCachedY : SEC : SBC.w #$000F
   SEP #$20
   STA.w SprY, Y : XBA : STA.w SprYH, Y
-endmacro
+  RTS
 
-macro SetRightHeadPos()
+SetRightHeadPos:
   REP #$20
   LDA.w SprCachedX : CLC : ADC.w #$0016
   SEP #$20
@@ -143,9 +134,9 @@ macro SetRightHeadPos()
   LDA.w SprCachedY : SEC : SBC.w #$000F
   SEP #$20
   STA.w SprY, Y : XBA : STA.w SprYH, Y
-endmacro
+  RTS
 
-macro SetCenterHeadPos()
+SetCenterHeadPos:
   REP #$20
   LDA.w SprCachedX
   SEP #$20
@@ -155,12 +146,12 @@ macro SetCenterHeadPos()
   LDA.w SprCachedY
   SEP #$20
   STA.w SprY, Y : XBA : STA.w SprYH, Y
-endmacro
+  RTS
 
 Sprite_Manhandla_Main:
 {
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw Manhandla_Intro
   dw Manhandla_FrontHead ; 0x01
@@ -257,7 +248,7 @@ Sprite_Manhandla_Main:
     LDY.w Offspring3_Id
     LDA.w SprType, Y : CMP.b #$88 : BNE .not_head3
     LDA.w SprState, Y : BEQ .offspring3_dead
-      %SetCenterHeadPos()
+      JSR SetCenterHeadPos
       .offspring3_dead
     .not_head3
 
@@ -267,16 +258,16 @@ Sprite_Manhandla_Main:
   Flower_Flicker:
   {
     %PlayAnimation(11, 12, 10)
-    LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
+    LDA $1C : ORA.b #$01 : STA $1C ; turn on BG2 (Body)
     ; Flicker the body every other frame using the timer
     LDA.w SprTimerA, X : AND.b #$01 : BEQ .flicker
-      LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
+      LDA $1C : AND.b #$FE : STA $1C ; turn off BG2 (Body)
     .flicker
 
     LDA.w SprTimerA, X : BNE .continue
       STZ.w $0422
       STZ.w $0424
-      LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
+      LDA $1C : AND.b #$FE : STA $1C ; turn off BG2 (Body)
       %GotoAction($04)
 
       LDA.b #$10 : STA.w SprTimerC, X
@@ -285,27 +276,19 @@ Sprite_Manhandla_Main:
       LDA #$88
       JSL Sprite_SpawnDynamically : BMI .return
         TYA : STA.w Offspring3_Id
-
         PHX
-        %SetCenterHeadPos()
-
+        JSR SetCenterHeadPos
         LDA.b #$08 : STA.w SprSubtype, Y
         STA.w SprAction, Y
         LDA.b #$20 : STA.w SprHealth, Y
         LDA.b #$07 : STA.w SprNbrOAM, Y
-
         LDA.w SprY, Y : CLC : ADC.b #$20 : STA.w SprY, Y
         LDA.b #$10 : STA.w SprTimerC, Y
-
         TYX
-
         STZ.w SprYRound, X
         STZ.w SprXRound, X
         PLX
-
-
       .return
-
     .continue
     RTS
   }
@@ -328,54 +311,47 @@ Sprite_Manhandla_Main:
 
     LDY.w Offspring1_Id
     LDA.w SprType, Y : CMP.b #$88 : BNE .not_head
-    LDA.w SprState, Y : BEQ .offspring1_dead
-      %SetLeftHeadPos()
-    .offspring1_dead
+      LDA.w SprState, Y : BEQ .offspring1_dead
+        JSR SetLeftHeadPos
+      .offspring1_dead
     .not_head
+
     LDY.w Offspring2_Id
     LDA.w SprType, Y : CMP.b #$88 : BNE .not_head2
-    LDA.w SprState, Y : BEQ .offspring2_dead
-      %SetRightHeadPos()
-    .offspring2_dead
+      LDA.w SprState, Y : BEQ .offspring2_dead
+        JSR SetRightHeadPos
+      .offspring2_dead
     .not_head2
 
     LDY.w Offspring3_Id
     LDA.w SprType, Y : CMP.b #$88 : BNE .not_head3
-    LDA.w SprState, Y : BEQ .offspring3_dead
-      %SetCenterHeadPos()
+      LDA.w SprState, Y : BEQ .offspring3_dead
+        JSR SetCenterHeadPos
       .offspring3_dead
     .not_head3
-
     PLX
-
     RTS
   }
 
   BigChuchu_Emerge:
   {
     %PlayAnimation(9, 12, 10)
-
     JSL Sprite_DamageFlash_Long
-
     LDA.w SprTimerA, X : BNE +
       LDA.b #$02 : STA.w SprMiscD, X ; Set phase flag
       LDA.b #$20 : STA.w SprTimerA, X
       %GotoAction($05)
     +
-
     RTS
   }
 
   BigChuchu_Flower:
   {
     %PlayAnimation(12, 12, 1)
-
     JSL Sprite_DamageFlash_Long
-
     LDA.w SprTimerC, X : BEQ +
         LDA.w SprY, X : DEC : STA.w SprY, X
     +
-
     RTS
   }
 
@@ -391,11 +367,8 @@ Sprite_Manhandla_Main:
   ChuchuBlast:
   {
     %PlayAnimation(3, 4, 4)
-
     JSL Sprite_Move
-
     %DoDamageToPlayerSameLayerOnContact()
-
     RTS
   }
 }
@@ -403,7 +376,7 @@ Sprite_Manhandla_Main:
 Sprite_Manhandla_Move:
 {
   LDA.w SprMiscC, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw StageControl
   dw MoveXandY
@@ -427,7 +400,6 @@ Sprite_Manhandla_Move:
     JSL Sprite_ApplySpeedTowardsPlayer
     JSR Manhandla_StopIfOutOfBounds
     JSL MoveBody
-
     INC.w SprMiscC, X
     RTS
   }
@@ -438,7 +410,6 @@ Sprite_Manhandla_Move:
     JSL Sprite_ApplySpeedTowardsPlayerXOrY
     JSR Manhandla_StopIfOutOfBounds
     JSL MoveBody
-
     INC.w SprMiscC, X
     RTS
   }
@@ -521,8 +492,6 @@ Manhandla_StopIfOutOfBounds:
   RTS
 }
 
-; =========================================================
-
 Sprite_Manhandla_Draw:
 {
   JSL Sprite_PrepOamCoord
@@ -578,9 +547,6 @@ Sprite_Manhandla_Draw:
   PLX
 
   RTS
-
-
-  ; =========================================================
 
   .start_index
   db $00, $02, $04, $08, $0C, $10, $14, $17, $1A, $1D, $23, $29, $33
@@ -719,7 +685,6 @@ Sprite_BigChuchu_Draw:
 
   RTS
 
-  ; =======================================================
   .start_index
   db $00, $09, $12, $1B, $1C
   .nbr_of_tiles
@@ -761,12 +726,8 @@ Chuchu_SpawnBlast:
   PHX
   LDA.b #$88
   JSL Sprite_SpawnDynamically : BMI .return
-
-    LDA.b #$0A : STA.w SprSubtype, Y
-    STA.w SprAction, Y
-
+    LDA.b #$0A : STA.w SprSubtype, Y : STA.w SprAction, Y
     JSL GetRandomInt : AND.b #$01 : TAX
-
     LDA.w .speed_and_offset_x, X : STA.w SprXSpeed, Y
     LDA.w SprX, Y : CLC : ADC.w .speed_and_offset_x, X : STA.w SprX, Y
     STA.w SprXRound, Y
@@ -779,11 +740,9 @@ Chuchu_SpawnBlast:
     LDA.b #$10 : STA.w SprTimerB, Y
     LDA.b #$00 : STA.w SprNbrOAM, Y
     LDA.b #$03 : STA.w SprHitbox, Y
-
   .return
   PLX
   RTS
-
 
   .speed_and_offset_x
   db -16, 16
@@ -797,43 +756,27 @@ Mothula_SpawnBeams:
   LDA.b #$36 ; SFX3.36
   JSL $0DBB8A ; SpriteSFX_QueueSFX3WithPan
 
-  LDA.b #$02
-  STA.w $0FB5
+  LDA.b #$02 : STA.w $0FB5
 
   .next_spawn
   LDA.b #$89 ; SPRITE 89
-  JSL Sprite_SpawnDynamically
-  BMI .no_space
+  JSL Sprite_SpawnDynamically : BMI .no_space
+    JSL Sprite_SetSpawnedCoordinates
+    LDA.b $02 : SEC : SBC.b $04
+    CLC : ADC.b #$03 : STA.w SprY,Y
+    LDA.b #$10 : STA.w SprTimerA,Y : STA.w SprBulletproof,Y
 
-  JSL Sprite_SetSpawnedCoordinates
-
-  LDA.b $02 : SEC : SBC.b $04
-
-  CLC : ADC.b #$03 : STA.w SprY,Y
-
-  LDA.b #$10 : STA.w SprTimerA,Y : STA.w SprBulletproof,Y
-
-  PHX
-
-  LDX.w $0FB5
-
-  LDA.b $00 : CLC : ADC.w .speed_and_offset_x,X
-  STA.w SprX,Y
-
-  LDA.w .speed_and_offset_x,X : STA.w SprXSpeed,Y
-
-  LDA.w .speed_y,X
-  STA.w SprYSpeed,Y
-
-  LDA.b #$00
-  STA.w SprHeight,Y
-
-  PLX
+    PHX
+    LDX.w $0FB5
+    LDA.b $00 : CLC : ADC.w .speed_and_offset_x,X : STA.w SprX,Y
+    LDA.w .speed_and_offset_x,X : STA.w SprXSpeed,Y
+    LDA.w .speed_y,X : STA.w SprYSpeed,Y
+    LDA.b #$00 : STA.w SprHeight,Y
+    PLX
 
   .no_space
   DEC.w $0FB5
   BPL .next_spawn
-
   RTS
   .speed_and_offset_x
   db -20,   0,  20
@@ -845,23 +788,19 @@ Mothula_SpawnBeams:
 SpawnLeftManhandlaHead:
 {
   LDA #$88
-  JSL   Sprite_SpawnDynamically : BMI .return
-    TYA   : STA.w Offspring1_Id
-
+  JSL Sprite_SpawnDynamically : BMI .return
+    TYA : STA.w Offspring1_Id
     PHX
-    %SetLeftHeadPos()
-    ; store the sub-type
+    JSR SetLeftHeadPos
     LDA.b #$03 : STA.w SprSubtype, Y
     STA.w SprAction, Y
     LDA.b #$14 : STA.w SprHealth, Y
     LDA.b #$90 : STA.w SprTileDie, Y
     LDA.w SprGfxProps : ORA.b #$80 : STA.w SprGfxProps, Y
     TYX
-
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX
-
   .return
   RTS
 }
@@ -871,17 +810,14 @@ SpawnRightManhandlaHead:
   LDA #$88
   JSL Sprite_SpawnDynamically : BMI .return
     TYA : STA.w Offspring2_Id
-
     PHX
-    %SetRightHeadPos()
-
+    JSR SetRightHeadPos
     LDA.b #$02
     STA.w SprSubtype, Y
     LDA.b #$14 : STA.w SprHealth, Y
     LDA.b #$90 : STA.w SprTileDie, Y
     LDA.w SprGfxProps : AND.b #$80 : STA.w SprGfxProps, Y
     TYX
-
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX
@@ -894,18 +830,14 @@ SpawnCenterMandhandlaHead:
   LDA #$88
   JSL Sprite_SpawnDynamically : BMI .return
     TYA : STA.w Offspring3_Id
-
     PHX
-    %SetCenterHeadPos()
-
+    JSR SetCenterHeadPos
     LDA.b #$01
     STA.w SprSubtype, Y
     LDA.b #$14 : STA.w SprHealth, Y
     LDA.b #$90 : STA.w SprTileDie, Y
     LDA.w SprGfxProps : AND.b #$80 : STA.w SprGfxProps, Y
-
     TYX
-
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX
@@ -915,45 +847,40 @@ SpawnCenterMandhandlaHead:
 
 ApplyManhandlaPalette:
 {
-    REP #$20 ;Set A in 16bit mode
-
-    ;note, this uses adresses like 7EC300 and not 7EC500 because the game
-    ;will fade the colors into 7EC500 based on the colors found in 7EC300
-
-    LDA #$7FFF : STA $7EC5E2 ;BG2
-    LDA #$08D9 : STA $7EC5E4
-    LDA #$1E07 : STA $7EC5E6
-    LDA #$4ACA : STA $7EC5E8
-    LDA #$14A5 : STA $7EC5EA
-    LDA #$133F : STA $7EC5EC
-    LDA #$19DF : STA $7EC5EE
-
-    INC $15
-
-    SEP #$20 ;Set A in 8bit mode
-
-    RTS
+  REP #$20 ;Set A in 16bit mode
+  ; note, this uses adresses like 7EC300 and not 7EC500 because the game
+  ; will fade the colors into 7EC500 based on the colors found in 7EC300
+  LDA #$7FFF : STA $7EC5E2 ;BG2
+  LDA #$08D9 : STA $7EC5E4
+  LDA #$1E07 : STA $7EC5E6
+  LDA #$4ACA : STA $7EC5E8
+  LDA #$14A5 : STA $7EC5EA
+  LDA #$133F : STA $7EC5EC
+  LDA #$19DF : STA $7EC5EE
+  INC $15
+  SEP #$20 ;Set A in 8bit mode
+  RTS
 }
 
 ApplyManhandlaGraphics:
 {
-    PHX
-    REP #$20               ; A = 16, XY = 8
-    LDX #$80 : STX $2100   ; turn the screen off (required)
-    LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
-    LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram <- this need to be divided by 2
-    LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register
-                           ; "001 => 2 registers write once (2 bytes: p, p+1)"
+  PHX
+  REP #$20               ; A = 16, XY = 8
+  LDX #$80 : STX $2100   ; turn the screen off (required)
+  LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
+  LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram, need to be divided by 2
+  LDA #$1801 : STA $4300 ; DMA Transfer Mode and destination register
+                          ; "001 => 2 registers write once (2 bytes: p, p+1)"
 
-    LDA.w #ManhandlaGraphics : STA $4302
-    LDX.b #ManhandlaGraphics>>16 : STX $4304
+  LDA.w #ManhandlaGraphics : STA $4302
+  LDX.b #ManhandlaGraphics>>16 : STX $4304
 
-    LDA   #$2000 : STA $4305                ; Size of the transfer 4 sheets of $800 each
-    LDX   #$01 : STX $420B                  ; Do the DMA
-    LDX #$0F : STX $2100                    ; Turn the screen back on
-    SEP #$30
-    PLX
-    RTS
+  LDA   #$2000 : STA $4305                ; Size of the transfer 4 sheets of $800 each
+  LDX   #$01 : STX $420B                  ; Do the DMA
+  LDX #$0F : STX $2100                    ; Turn the screen back on
+  SEP #$30
+  PLX
+  RTS
 
   ManhandlaGraphics:
     incbin manhandla.bin

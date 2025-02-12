@@ -1,6 +1,6 @@
 ; Goron Sprite
 
-!SPRID              = $F2 ; The sprite ID you are overwriting (HEX)
+!SPRID              = $F2
 !NbrTiles           = 04  ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
@@ -81,7 +81,7 @@ Sprite_Goron_Main:
   JSL Sprite_PlayerCantPassThrough
 
   LDA.w SprAction, X
-  JSL UseImplicitRegIndexedLocalJumpTable
+  JSL JumpTableLocal
 
   dw KalyxoGoron_Main
   dw KalyxoGoron_OpenMines
