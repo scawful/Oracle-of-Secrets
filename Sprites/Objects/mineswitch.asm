@@ -52,7 +52,11 @@ Sprite_LeverSwitch_Prep:
   PHB : PHK : PLB
 
   LDA.b #$00 : STA.w SprDefl, X
-  LDA.w SprSubtype, X : STA.w SprAction, X
+
+  ; Get the subtype of the switch so that we can get its on/off state.
+  LDA.w SprSubtype, X : TAY
+
+  LDA.w SwitchRam, Y : STA.w SprAction, X : STA.w SprFrame, X
   LDA.b #$00 : STA.w SprTileDie, X
   STZ.w SprBulletproof, X
 
@@ -81,7 +85,11 @@ Sprite_LeverSwitch_Main:
       JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
         LDA #$25 : STA $012F
 
-        STZ.w $37
+        ; Get the subtype of the switch so that we can get its on/off state.
+        LDA.w SprSubtype, X : TAY
+
+        ; Turn the switch on.
+        LDA #$01 : STA.w SwitchRam, Y
         LDA #$10 : STA.w SprTimerA, X
         %GotoAction(1)
     .NoDamage
@@ -94,7 +102,12 @@ Sprite_LeverSwitch_Main:
     LDA.w SprTimerA, X : BNE .NoDamage
       JSL Sprite_CheckDamageFromPlayer : BCC .NoDamage
         LDA #$25 : STA $012F
-        LDA #$01 : STA $37
+
+        ; Get the subtype of the switch so that we can get its on/off state.
+        LDA.w SprSubtype, X : TAY
+        
+        ; Turn the switch off.
+        LDA #$00 : STA.w SwitchRam, Y
         LDA #$10 : STA.w SprTimerA, X
         %GotoAction(0)
     .NoDamage
@@ -129,9 +142,9 @@ Sprite_LeverSwitch_Main:
 Sprite_LeverSwitch_Draw:
 {
     JSL Sprite_PrepOamCoord
-    JSL Sprite_OAM_AllocateDeferToPlayer
+    LDA.b #$04 : JSL Sprite_OAM_AllocateDeferToPlayer
 
-    LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
+    LDA $0DC0, X : CLC : ADC $0D90, X : TAY ;Animation Frame
     LDA .start_index, Y : STA $06
 
 
@@ -194,8 +207,8 @@ Sprite_LeverSwitch_Draw:
     dw 0
     dw 0
   .chr
-    db $64
     db $66
+    db $64
   .properties
     db $37
     db $37
