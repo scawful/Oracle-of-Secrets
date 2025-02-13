@@ -138,6 +138,27 @@ Sprite_InvertSpeed_Y:
   STA.w SprYSpeed, X
   RTL
 
+UpdateCachedCoords:
+{
+  LDA.w SprY, X  : STA.w SprCachedY+0
+  LDA.w SprX, X  : STA.w SprCachedX+0
+  LDA.w SprYH, X : STA.w SprCachedY+1
+  LDA.w SprXH, X : STA.w SprCachedX+1
+  RTS
+}
+
+RoundCoords:
+{
+  ; Clamp the Y coord to the nearest multiple of 8.
+  LDA.b $00 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $00 : STA.w SprY, X
+
+  ; Clamp the X coord to the nearest multiple of 8.
+  LDA.b $02 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $02 : STA.w SprX, X
+
+  JSR UpdateCachedCoords
+  RTS
+}
+
 ; =========================================================
 
 Sprite_SelectNewDirection:

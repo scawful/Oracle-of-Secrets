@@ -91,7 +91,7 @@ Right = $03
 ; it in the same place upon returning to that room.
 
 ; There is a total possibility of 0x20 different subtypes that can be set.
-; Therefore there can be a total of 0x20 different tracks. 
+; Therefore there can be a total of 0x20 different tracks.
 
 ; This value is used to keep track of which room the minecart was left
 ; in. Currently #$00 is reserved to keep track of new tracks that have
@@ -154,10 +154,8 @@ Right = $03
 Sprite_Minecart_Long:
 {
   PHB : PHK : PLB
-
   JSR Sprite_Minecart_DrawTop    ; Draw behind Link
   JSR Sprite_Minecart_DrawBottom ; Draw in front of Link
-
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_Minecart_Main
   .SpriteIsNotActive
@@ -188,7 +186,7 @@ Sprite_Minecart_Prep:
         BRA .killMinecart
     .notInCart
   .notSameTrack
-  
+
   REP #$20
   ; Check if the track has already been initialized. If not we need to
   ; tell the game where the cart on the track starts
@@ -275,7 +273,6 @@ Sprite_Minecart_Prep:
   .active2
 
   STZ.w SprTimerB, X
-  
   LDA.w SprMiscB, X : CMP.b #$00 : BEQ .north
                       CMP.b #$01 : BEQ .east
                       CMP.b #$02 : BEQ .south
@@ -1115,33 +1112,6 @@ CheckForTrackTiles:
 }
 
 ; =========================================================
-
-; NOTE TO SCAWFUL: This function could really go in a generic sprite
-; functions file but I'll leave that up to you.
-UpdateCachedCoords:
-{
-  LDA.w SprY, X  : STA.w SprCachedY+0
-  LDA.w SprX, X  : STA.w SprCachedX+0
-  LDA.w SprYH, X : STA.w SprCachedY+1
-  LDA.w SprXH, X : STA.w SprCachedX+1
-
-  RTS
-}
-
-; NOTE TO SCAWFUL: This function could really go in a generic sprite
-; functions file but I'll leave that up to you.
-RoundCoords:
-{
-  ; Clamp the Y coord to the nearest multiple of 8.
-  LDA.b $00 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $00 : STA.w SprY, X
-
-  ; Clamp the X coord to the nearest multiple of 8.
-  LDA.b $02 : CLC : ADC.b #$04 : AND.b #$F8 : STA.b $02 : STA.w SprX, X
-
-  JSR UpdateCachedCoords
-
-  RTS
-}
 
 ; $04 = sprite index of sprite ID $B0
 ; SEC if sprite is present.
