@@ -20,10 +20,6 @@
 ;                        a new minecart sprite in the room at Link's
 ;                        location and configuring the direction to move
 ;                        in automatically (no B button to activate)
-;
-; NOTE: Current implementation forbades any two carts from co-existing
-; as the !MinecartDirection variable will be overrode by the prep of
-; the other cart and invalidate the current movement.
 
 !SPRID              = Sprite_Minecart
 !NbrTiles           = 08    ; Number of tiles used in a frame
@@ -1081,36 +1077,6 @@ HandleDynamicSwitchTileDirections:
   ; $D3 BR turns into BL when on.
 }
 
-; Unused?
-CheckForTrackTiles:
-{
-  CMP.b #$B0 : BEQ .horiz
-  CMP.b #$B1 : BEQ .vert
-  CMP.b #$BB : BEQ .horiz
-  CMP.b #$BC : BEQ .vert
-    JMP .done
-
-  .horiz
-  ; Are we moving left or right?
-  LDA.w SprMiscB, X : CMP.b #$03 : BEQ .inverse_horiz_velocity
-    LDA.b #!MinecartSpeed : STA.w SprXSpeed, X
-    LDA.b #East : STA !MinecartDirection, X
-    JMP .done
-  .inverse_horiz_velocity
-  LDA.b #-!MinecartSpeed : STA.w SprXSpeed, X
-  LDA.b #West : STA !MinecartDirection, X
-  JMP .done
-  .vert
-  ; Are we moving up or down?
-  LDA.w SprMiscB, X : CMP.b #$00 : BEQ .inverse_vert_velocity
-    LDA.b #!MinecartSpeed : STA.w SprYSpeed, X
-    JMP .done
-  .inverse_vert_velocity
-  LDA.b #-!MinecartSpeed : STA.w SprYSpeed, X
-  .done
-  RTS
-}
-
 ; =========================================================
 
 ; $04 = sprite index of sprite ID $B0
@@ -1142,8 +1108,8 @@ CheckTrackSpritePresence:
   RTS
 }
 
-; Sets carry if player is overlapping the sprite
-; Clear carry if player is outside the bounds
+; SEC if player is overlapping the sprite
+; CLC if player is outside the bounds
 CheckIfPlayerIsOn:
 {
   REP #$20
