@@ -197,16 +197,17 @@ Sprite_Minecart_Prep:
     .killMinecart
     SEP #$20
     STZ.w SprState, X
-
     PLB
     RTL
   .inRoom
 
   ; Check if the coordinates match, if not kill the sprite.
+  ; If cart isn't appearring in room, check here for values to match
+  ; against the MiencartTrack table values.
+  ; print "MinecartPrep_CheckCoords ", pc
   LDA.w !MinecartTrackX, Y : CMP.w SprCachedX : BNE .killMinecart
-  LDA.w !MinecartTrackY, Y : CMP.w SprCachedY : BNE .killMinecart
-  SEP #$20
-
+    LDA.w !MinecartTrackY, Y : CMP.w SprCachedY : BNE .killMinecart
+      SEP #$20
   .active1
 
   STZ.w SprMiscG, X ; Clear the active tossing flag
@@ -307,7 +308,7 @@ Sprite_Minecart_Prep:
   ; This is which room each track should start in if it hasn't already
   ; been given a track.
   .TrackStartingRooms
-  dw $0089, $0089, $0089, $0088, $0089, $0089, $0089, $0089
+  dw $0098, $0088, $0089, $0088, $0089, $0089, $0089, $0089
   dw $0089, $0089, $0089, $0089, $0089, $0089, $0089, $0089
   dw $0089, $0089, $0089, $0089, $0089, $0089, $0089, $0089
   dw $0089, $0089, $0089, $0089, $0089, $0089, $0089, $0089
@@ -316,20 +317,16 @@ Sprite_Minecart_Prep:
   ; already been given a position. This is necessary to allow for more
   ; than one stopping point to be in one room.
   .TrackStartingX
-  dw $1320, $12D0, $1300, $1100, $1300, $1300, $1300, $1300
+  dw $1190, $12D0, $1300, $1100, $1300, $1300, $1300, $1300
   dw $1300, $1300, $1300, $1300, $1300, $1300, $1300, $1300
   dw $1300, $1300, $1300, $1300, $1300, $1300, $1300, $1300
   dw $1300, $1300, $1300, $1300, $1300, $1300, $1300, $1300
 
   .TrackStartingY
-  dw $11C0, $1120, $1100, $10D0, $1100, $1100, $1100, $1100
+  dw $1380, $1120, $1100, $10D0, $1100, $1100, $1100, $1100
   dw $1100, $1100, $1100, $1100, $1100, $1100, $1100, $1100
   dw $1100, $1100, $1100, $1100, $1100, $1100, $1100, $1100
   dw $1100, $1100, $1100, $1100, $1100, $1100, $1100, $1100
-
-  ; NOTE TO SCAWFUL: All of these values will need to be set when you
-  ; place the carts within ZS. I set them all to spawn in the middle of
-  ; room 0x89 just for testing purposes.
 }
 
 ; =========================================================
