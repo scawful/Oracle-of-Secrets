@@ -50,7 +50,7 @@ Sprite_RotatingTrack_Prep:
 {
   PHB : PHK : PLB
   LDA.b #$80 : STA.w SprDefl, X
-  
+
   ; Setup Minecart position to look for tile IDs
   ; We use AND #$F8 to clamp to a 8x8 grid.
   ; Subtract 8 from the Y position to get the tile right above instead.
@@ -94,8 +94,7 @@ Sprite_RotatingTrack_Main:
   dw BottomLeftToTopLeft
   dw TopRightToBottomRight
   dw BottomRightToBottomLeft
-  
-  ; -------------------------------------------------------
+
   ; 00 = TopLeft -> TopRight
   TopLeftToTopRight:
   {
@@ -107,7 +106,6 @@ Sprite_RotatingTrack_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
   ; 01 = BottomLeft -> TopLeft
   BottomLeftToTopLeft:
   {
@@ -119,7 +117,6 @@ Sprite_RotatingTrack_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
   ; 02 = TopRight -> BottomRight
   TopRightToBottomRight:
   {
@@ -131,7 +128,6 @@ Sprite_RotatingTrack_Main:
     RTS
   }
 
-  ; -------------------------------------------------------
   ; 03 = BottomRight -> BottomLeft
   BottomRightToBottomLeft:
   {
@@ -217,4 +213,3 @@ Sprite_RotatingTrack_Draw:
     db $BD
 }
 
-; =========================================================

@@ -202,8 +202,8 @@ Sprite_Minecart_Prep:
   .inRoom
 
   ; Check if the coordinates match, if not kill the sprite.
-  ; If cart isn't appearring in room, check here for values to match
-  ; against the MiencartTrack table values.
+  ; If cart isn't appearing in room, check here for values to match
+  ; against the MinecartTrack table values.
   ; print "MinecartPrep_CheckCoords ", pc
   LDA.w !MinecartTrackX, Y : CMP.w SprCachedX : BNE .killMinecart
     LDA.w !MinecartTrackY, Y : CMP.w SprCachedY : BNE .killMinecart
@@ -308,7 +308,7 @@ Sprite_Minecart_Prep:
   ; This is which room each track should start in if it hasn't already
   ; been given a track.
   .TrackStartingRooms
-  dw $0098, $0088, $0089, $0088, $0089, $0089, $0089, $0089
+  dw $0098, $0088, $0087, $0088, $0089, $0089, $0089, $0089
   dw $0089, $0089, $0089, $0089, $0089, $0089, $0089, $0089
   dw $0089, $0089, $0089, $0089, $0089, $0089, $0089, $0089
   dw $0089, $0089, $0089, $0089, $0089, $0089, $0089, $0089
