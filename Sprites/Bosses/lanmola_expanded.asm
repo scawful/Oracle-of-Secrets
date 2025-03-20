@@ -12,132 +12,114 @@ pullpc
 Ancilla_SpawnFallingPrize:
   PHX
   TAX
-
   LDY.b #$04
   LDA.b #$29 ; ANCILLA 29
   JSL AncillaAdd_FallingPrize
-
   PLX
-
   RTL
-
-; =========================================================
 
 Lanmola_DrawDirtLONG:
 {
-    PHB : PHK : PLB
-
-    JSR Lanmola_DrawDirt
-
-    PLB
-
-    RTL
+  PHB : PHK : PLB
+  JSR Lanmola_DrawDirt
+  PLB
+  RTL
 }
-
-; =========================================================
 
 Lanmola_DrawDirt:
 {
-    LDA.w SprTimerB, X : BNE .timerNotDone
-        RTS
+  LDA.w SprTimerB, X : BNE .timerNotDone
+    RTS
+  .timerNotDone
 
-    .timerNotDone
+  ; Determine weather the dirt should draw in front of or behind the body
+  ; based on its y velocity.
+  LDA.w SprYSpeed, X : ASL A : ROL A : ASL A : EOR $0D80, X : AND.b #$02 : BEQ .nu
+    LDA.b #$08 : JSL OAM_AllocateFromRegionB
+    BRA .xi
 
-    ; Determine weather the dirt should draw in front of or behind the body
-    ; based on its y velocity.
-    LDA.w SprYSpeed, X : ASL A : ROL A : ASL A : EOR $0D80, X : AND.b #$02 : BEQ .nu
-        LDA.b #$08 : JSL OAM_AllocateFromRegionB
-        BRA .xi
+  .nu
+    LDA.b #$08 : JSL OAM_AllocateFromRegionC
 
-    .nu
-        LDA.b #$08 : JSL OAM_AllocateFromRegionC
+  .xi
 
-    .xi
+  LDY.b #$00
 
-    LDY.b #$00
+  LDA.w SprTimerB, X : LSR #2 : AND.b #$03 : EOR.b #$03 : ASL A : STA $06
+  LDA $0DC0, X : XBA
+  LDA.w SprMiscC, X
+  REP #$20 : SEC : SBC $E2 : STA $00 : SEP #$20
+  STZ $37
+  BPL .notNegative3
+    INC $37
 
-    LDA.w SprTimerB, X : LSR #2 : AND.b #$03 : EOR.b #$03 : ASL A : STA $06
+  .notNegative3
 
-    LDA $0DC0, X : XBA
-    LDA.w SprMiscC, X
-    REP #$20 : SEC : SBC $E2 : STA $00 : SEP #$20
+  LDA.w SprMiscE, X : XBA
+  LDA $0E70, X
+  REP #$20 : SEC : SBC $E8 : STA $02 : SEP #$20
+  PHX
+  LDX.b #$01
 
-    STZ $37
-    BPL .notNegative3
-        INC $37
-
-    .notNegative3
-
-    LDA.w SprMiscE, X : XBA
-    LDA $0E70, X
-    REP #$20 : SEC : SBC $E8 : STA $02 : SEP #$20
-
+  .dirtLoop
     PHX
 
-    LDX.b #$01
+    TXA : CLC : ADC $06 : ASL : TAX
 
-    .dirtLoop
-        PHX
+    REP #$20
+    LDA $00 : CLC : ADC $7EEA64, X : STA ($90), Y ;dirt x ;.xDirt
 
-        TXA : CLC : ADC $06 : ASL : TAX
+    STZ $36
+    BPL .notNegative4
+        INC $36
 
-        REP #$20
-        LDA $00 : CLC : ADC $7EEA64, X : STA ($90), Y ;dirt x ;.xDirt
+    .notNegative4
 
-        STZ $36
-        BPL .notNegative4
-            INC $36
+    INY
 
-        .notNegative4
+    CLC : ADC.w #$0040 : CMP.w #$0140 : BCS .out_of_bounds3
 
-        INY
+    LDA $02 : CLC : ADC $7EEA74, X : STA ($90), Y ;dirt y ;.yDirt
 
-        CLC : ADC.w #$0040 : CMP.w #$0140 : BCS .out_of_bounds3
+    REP #$20
+    CLC : ADC.w #$0010 : CMP.w #$0100
+    SEP #$20
 
-        LDA $02 : CLC : ADC $7EEA74, X : STA ($90), Y ;dirt y ;.yDirt
+    BCC .on_screen_y
+      .out_of_bounds3
+      SEP #$20
+      LDA.b #$F0 : STA ($90), Y
 
-        REP #$20
-        CLC : ADC.w #$0010 : CMP.w #$0100
-        SEP #$20
+    .on_screen_y
 
-        BCC .on_screen_y
-            .out_of_bounds3
-            SEP #$20
-            LDA.b #$F0 : STA ($90), Y
+    TXA : LSR : TAX
 
-        .on_screen_y
+    LDA $7EEA84, X : INY : STA ($90), Y ;dirt chr ;.chrDirt
+    LDA $7EEA8C, X : INY : STA ($90), Y ;dirt properties ;.propertiesDirt
 
-        TXA : LSR : TAX
+    PHY
 
-        LDA $7EEA84, X : INY : STA ($90), Y ;dirt chr ;.chrDirt
-        LDA $7EEA8C, X : INY : STA ($90), Y ;dirt properties ;.propertiesDirt
+    TYA : LSR #2 : TAY
 
-        PHY
+    LDA $7EEA94, X : ORA $37 : ORA $36 : STA ($92), Y ;.sizesDirt
 
-        TYA : LSR #2 : TAY
+    PLY : INY
 
-        LDA $7EEA94, X : ORA $37 : ORA $36 : STA ($92), Y ;.sizesDirt
+  PLX : DEX : BPL .dirtLoop
 
-        PLY : INY
+  PLX
 
-    PLX : DEX : BPL .dirtLoop
-
-    PLX
-
-    RTS
+  RTS
 }
 
 ; =========================================================
 
 Sprite_Lanmola_Init_DataLONG:
 {
-    PHB : PHK : PLB
-
-    JSR Sprite_Lanmola_Init_Data
-
-    PLB
-
-    RTL
+  PHB : PHK : PLB
+  JSR Sprite_Lanmola_Init_Data
+  PLB
+  RTL
 }
 
 ; =========================================================
@@ -148,7 +130,7 @@ Sprite_Lanmola_Init_Data:
 
     LDX.b #$00
     .loop
-        LDA .sprite_regions, X : STA $7EEA00, X
+      LDA .sprite_regions, X : STA $7EEA00, X
 
     INX : CPX.b #$B8 : BCC .loop
 
@@ -271,88 +253,83 @@ Sprite_Lanmola_Init_Data:
 
 Lanmola_MoveSegment:
 {
-    PHX
-    TXA : ASL A : TAX
+  PHX
+  TXA : ASL A : TAX
 
-    REP #$20
-    LDA $7EEA38, X : STA $90 ;.oamCoord90
-    LDA $7EEA40, X : STA $92 ;.oamCoord92
-    SEP #$20
+  REP #$20
+  LDA $7EEA38, X : STA $90 ;.oamCoord90
+  LDA $7EEA40, X : STA $92 ;.oamCoord92
+  SEP #$20
 
-    PLX
+  PLX
 
-    LDA.w SprYSpeed, X : SEC : SBC $0F80, X : STA $00
-    LDA.w SprXSpeed, X                      : STA $01
-    JSL Sprite_ConvertVelocityToAngle : STA $0F
+  LDA.w SprYSpeed, X : SEC : SBC $0F80, X : STA $00
+  LDA.w SprXSpeed, X                      : STA $01
+  JSL Sprite_ConvertVelocityToAngle : STA $0F
 
-    LDA $7EEA00, X : STA $04 ;.sprite_regions
+  LDA $7EEA00, X : STA $04 ;.sprite_regions
 
-    PHX
+  PHX
 
-    ; Store the current position, angle, and hieght of the sprite
-    ; so that we can set the other segments to them later.
-    LDA.w SprXH, X : PHA ;high x
-    LDA.w SprYH, X : PHA ;high y
-    LDA.w SprX, X : PHA ;lower x
-    LDA.w SprY, X : PHA ;lower y
+  ; Store the current position, angle, and hieght of the sprite
+  ; so that we can set the other segments to them later.
+  LDA.w SprXH, X : PHA ;high x
+  LDA.w SprYH, X : PHA ;high y
+  LDA.w SprX, X : PHA ;lower x
+  LDA.w SprY, X : PHA ;lower y
 
-    LDA.w SprHeight, X : PHA ;height
-    LDA $0F      : PHA ;angle
+  LDA.w SprHeight, X : PHA ;height
+  LDA $0F      : PHA ;angle
 
-    LDA $0E80, X : STA $02 : STA $05
+  LDA $0E80, X : STA $02 : STA $05
 
-    CLC : ADC $04 : TAX
+  CLC : ADC $04 : TAX
 
-    PLA : STA $7FFF00, X ;angle
-    PLA : STA $7FFE00, X ;height
+  PLA : STA $7FFF00, X ;angle
+  PLA : STA $7FFE00, X ;height
 
-    PLA : STA $7FFD00, X ;lower y
-    PLA : STA $7FFC00, X ;lower x
-    PLA : STA $7EE900, X ;high y
-    PLA : STA $7EE800, X ;high x
+  PLA : STA $7FFD00, X ;lower y
+  PLA : STA $7FFC00, X ;lower x
+  PLA : STA $7EE900, X ;high y
+  PLA : STA $7EE800, X ;high x
 
-    PLX
+  PLX
 
-    LDA.w SprState, X : CMP.b #$09 : BNE .notActive
-        LDA $11 : ORA.w SprFreeze : BNE .notActive
-            LDA $10 : CMP #$0E : BEQ .notActive
-            LDA $5D : CMP #$08 : BEQ .notActive ;in medallion cut scene
-                      CMP #$09 : BEQ .notActive ;in medallion cut scene
-                      CMP #$0A : BEQ .notActive ;in medallion cut scene
-                LDA $05 : INC A : AND.b #$3F : STA $0E80, X
-
-    .notActive
-
-    RTL
+  LDA.w SprState, X : CMP.b #$09 : BNE .notActive
+    LDA $11 : ORA.w SprFreeze : BNE .notActive
+      LDA $10 : CMP #$0E : BEQ .notActive
+      LDA $5D : CMP #$08 : BEQ .notActive ;in medallion cut scene
+                CMP #$09 : BEQ .notActive ;in medallion cut scene
+                CMP #$0A : BEQ .notActive ;in medallion cut scene
+                  LDA $05 : INC A : AND.b #$3F : STA $0E80, X
+  .notActive
+  RTL
 }
 
 ; =========================================================
 
 SetShrapnelTimer:
 {
-    LDA.b #$40 : STA.w SprTimerA, Y
-
-    JSL GetRandomInt ; replaced code
-
-    RTL
+  LDA.b #$40 : STA.w SprTimerA, Y
+  JSL GetRandomInt ; replaced code
+  RTL
 }
 
 ; =========================================================
 
 CheckIfActive:
 {
-    SEC
+  SEC
 
-    ;Check if sprite is active (pause menu, etc...)
-    LDA $10 : CMP #$0E : BEQ .inMenu
-    LDA $5D : CMP #$08 : BEQ .inMenu ;in medallion cut scene
-              CMP #$09 : BEQ .inMenu ;in medallion cut scene
-              CMP #$0A : BEQ .inMenu ;in medallion cut scene
+  ;Check if sprite is active (pause menu, etc...)
+  LDA $10 : CMP #$0E : BEQ .inMenu
+  LDA $5D : CMP #$08 : BEQ .inMenu ;in medallion cut scene
+            CMP #$09 : BEQ .inMenu ;in medallion cut scene
+            CMP #$0A : BEQ .inMenu ;in medallion cut scene
 
-        CLC
-    .inMenu
+      CLC
+  .inMenu
 
-    RTL
+  RTL
 }
 
-; =========================================================
