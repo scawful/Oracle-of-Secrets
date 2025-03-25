@@ -5,6 +5,7 @@
 ; Fortress Secrets (Map 5E)
 
 pushpc
+; Sprite_B3_PedestalPlaque
 org $1EE05F
   JSL CheckForBook
 pullpc
@@ -37,7 +38,7 @@ PedestalPlaque:
                     CMP.b #$5E : BEQ .fortress_secrets
                       JMP .return
   .zora_temple
-    
+
     LDA.l $7EF29E : AND.b #$20 : BNE .return
       LDA.b SongFlag : CMP.b #$03 : BNE .return
         LDA.b #$01 : STA $04C6

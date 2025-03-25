@@ -29,9 +29,7 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 
-%Set_Sprite_Properties(Sprite_RotatingTrack_Prep, Sprite_RotatingTrack_Long);
-
-; =========================================================
+%Set_Sprite_Properties(Sprite_RotatingTrack_Prep, Sprite_RotatingTrack_Long)
 
 Sprite_RotatingTrack_Long:
 {
@@ -44,8 +42,6 @@ Sprite_RotatingTrack_Long:
   RTL
 }
 
-; =========================================================
-
 Sprite_RotatingTrack_Prep:
 {
   PHB : PHK : PLB
@@ -55,10 +51,10 @@ Sprite_RotatingTrack_Prep:
   ; We use AND #$F8 to clamp to a 8x8 grid.
   ; Subtract 8 from the Y position to get the tile right above instead.
   LDA.w SprY, X : AND #$F8 : SEC : SBC.b #$08 : STA.b $00
-  LDA.w SprYH, X                              : STA.b $01
+  LDA.w SprYH, X : STA.b $01
 
   LDA.w SprX, X : AND #$F8 : STA.b $02
-  LDA.w SprXH, X           : STA.b $03
+  LDA.w SprXH, X : STA.b $03
 
   ; Fetch tile attributes based on current coordinates
   LDA.b #$00 : JSL Sprite_GetTileAttr
@@ -139,8 +135,6 @@ Sprite_RotatingTrack_Main:
     RTS
   }
 }
-
-; =========================================================
 
 Sprite_RotatingTrack_Draw:
 {
