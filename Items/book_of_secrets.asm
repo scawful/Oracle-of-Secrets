@@ -52,7 +52,6 @@ Dungeon_RevealSecrets:
   ; Check if we are in a building
   LDA $1B : AND #$01 : BEQ .end
 
-    ; ----------
     ; Check if we have the book of secrets
     LDA $7EF34D : CMP #$01 : BNE $0F ; if not, go to enable BG2
 
@@ -68,7 +67,6 @@ Dungeon_RevealSecrets:
 
     ; enable BG2 (0x02 = 00000010)
     LDA $1C	: ORA #$02 : STA $1C
-    ; ----------
 
   .end
   ; @ $068365, JSL $099F91 old hook
