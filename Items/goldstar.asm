@@ -23,7 +23,7 @@ TransferGFXinRAM:
   RTL
 
   .morningstargfx
-    incbin morningstar.bin
+    incbin gfx/morningstar.bin
 }
 
 pushpc
