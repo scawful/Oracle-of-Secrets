@@ -27,7 +27,7 @@
 ;   41  - DW World Map
 ; =========================================================
 
-incsrc "Overworld/ZSCustomOverworld_Latest.asm"
+incsrc "Overworld/ZSCustomOverworld.asm"
 print  "End of ZSCustomOverworld.asm      ", pc
 
 ; Vanilla WRAM and SRAM
