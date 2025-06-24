@@ -61,9 +61,6 @@ Sprite_RotatingTrack_Prep:
 
   LDA.w SPRTILE : SEC : SBC.b #$D0 : STA.w SprAction, X
 
-  ; Run the main frame once so that the animation frame is
-  ; started correctly.
-  JSR Sprite_RotatingTrack_Main
   PLB
   RTL
 }
