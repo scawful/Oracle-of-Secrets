@@ -186,19 +186,8 @@ Menu_ScrollDown:
 
 incsrc "menu_select_item.asm"
 
-Menu_ItemScreen:
+Menu_CheckForSpecialMenus:
 {
-  JSR Menu_CheckHScroll
-
-  INC $0207
-  LDA.w $0202 : BEQ .do_no_input
-    ; Scroll through joypad 1 inputs
-    ASL : TAY : LDA.b $F4
-    LSR : BCS .move_right
-    LSR : BCS .move_left
-    LSR : BCS .move_down
-    LSR : BCS .move_up
-
     LDA.w $0202 : CMP.b #$05 : BNE +
       LDA.b $F6 : BIT.b #$80 : BEQ +
         STZ.w $020B
@@ -212,6 +201,14 @@ Menu_ItemScreen:
           SEP #$30
           JMP .exit
     ++
+    LDA.w $0202 : CMP.b #$0E : BNE ++
+      LDA.b $F6 : BIT.b #$80 : BEQ ++
+        LDA.b #$0E : STA.w $0200
+        JSR Menu_DeleteCursor
+        JSL Menu_DrawJournal
+        SEP #$30
+        JMP .exit
+    ++
 
     LDA.b $F6 : BIT.b #$40 : BEQ +++
       JSR Menu_DeleteCursor
@@ -220,6 +217,25 @@ Menu_ItemScreen:
       LDA.b #$09 : STA.w $0200 ; Ring Box
       JMP .exit
     +++
+  .exit
+
+  RTS
+}
+
+
+Menu_ItemScreen:
+{
+  JSR Menu_CheckHScroll
+
+  INC $0207
+  LDA.w $0202 : BEQ .do_no_input
+    ; Scroll through joypad 1 inputs
+    ASL : TAY : LDA.b $F4
+    LSR : BCS .move_right
+    LSR : BCS .move_left
+    LSR : BCS .move_down
+    LSR : BCS .move_up
+      JSR Menu_CheckForSpecialMenus
   .do_no_input
   BRA .no_inputs
 
