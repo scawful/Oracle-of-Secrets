@@ -63,6 +63,7 @@ Menu_Entry:
     dw Menu_InitiateScrollDown ; 0B
     dw Menu_MagicBag           ; 0C
     dw Menu_SongMenu           ; 0D
+    dw Menu_Journal            ; 0E
 }
 
 ; =========================================================
@@ -733,6 +734,17 @@ RingMenu_Controls:
     db $20, $10, $08, $04, $02, $01
 }
 
+Menu_Journal:
+{
+  JSL Journal_Handler
+
+  JSR Submenu_Return
+
+  LDA.b #$22 : STA.w $0116
+  LDA.b #$01 : STA.b $17
+  RTS
+}
+
 Submenu_Return:
 {
   ; Return to the item menu if they press A
@@ -753,3 +765,6 @@ incsrc "menu_map_names.asm"
 print  "End of Menu/menu.asm              ", pc
 incsrc "menu_hud.asm"
 print  "End of Menu/menu_hud.asm          ", pc
+incsrc "menu_journal.asm"
+print  "End of Menu/menu_journal.asm      ", pc
+
