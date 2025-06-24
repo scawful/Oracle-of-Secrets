@@ -378,7 +378,7 @@ ColorSubEffect:
   .no_blue_sign_change
   STA.l !BlueVal
 
-  ; Subtract amount to blue field based on a table
+  ; Subtract amount to green field based on a table
   LDA !SubPalColor : AND #$03E0 : STA !GreenVal
   SEC : SBC.l .green, X : STA.l !TempPalColor
 

@@ -2,7 +2,7 @@
 ; Game state
 ;   0x00 - Very start; progress cannot be saved in this state
 ;   0x01 - Uncle reached
-;   0x02 - Zelda rescued
+;   0x02 - Farore intro over | Zelda rescued
 ;   0x03 - Agahnim defeated
 GameState       = $7EF3C5
 
@@ -84,6 +84,10 @@ PrevScroll = $7EF39A
 ;   t - third day
 ;   d - done
 MagicBeanProg = $7EF39B
+
+JournalState = $7EF39C
+
+; 7EF403 - 7EF4FD Unused block
 
 ; .... .cpw
 ;   c - courage
