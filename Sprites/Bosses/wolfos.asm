@@ -45,36 +45,16 @@ Sprite_Wolfos_Long:
   RTL
 }
 
-; =========================================================
-
-Sprite_Wolfos_Prep:
-{
-  PHB : PHK : PLB
-  LDA.b $1B : BEQ .outdoors
-    JMP .spawn_wolfos
-  .outdoors
-  ; Check if the wolfos has been defeated
-  LDA.l $7EF303 : CMP.b #$01 : BNE .spawn_wolfos
-    STZ.w SprState, X ; Don't spawn the sprite
-    PLB
-    RTL
-  .spawn_wolfos
-  LDA.b #$40 : STA.w SprTimerA, X
-  LDA.b #$82 : STA.w SprDefl, X ; persist, impervious to arrows
-  LDA.b #$08 : STA.w SprNbrOAM, X ; Nbr Oam Entries
-  PLB
-  RTL
-}
+WolfosDialogue = SprMiscD
 
 Sprite_Wolfos_CheckIfDefeated:
 {
   LDA.b $1B : BNE .indoors
     LDA.w SprHealth, X : CMP.b #$04 : BCS .not_defeated
-      LDA.b #$06 : STA.w SprAction, X ; Set to defeated
-      LDA.b #$09 : STA.w SprState, X
+      LDA.b #$06 : STA.w SprAction, X ; Set to defeated action
+      LDA.b #$09 : STA.w SprState, X  ; Set to normal state, avoid death
       LDA.b #$40 : STA.w SprHealth, X ; Refill the health of the sprite
-      STZ.w SprMiscD, X
-      RTS
+      STZ.w WolfosDialogue, X
     .not_defeated
   .indoors
   RTS
@@ -82,54 +62,62 @@ Sprite_Wolfos_CheckIfDefeated:
 
 ; =========================================================
 
-Wolfos_Move:
+Sprite_Wolfos_Prep:
 {
-  JSL Sprite_DamageFlash_Long
-  JSL Sprite_CheckDamageFromPlayer : BCC +
-    LDA.b #$01 : STA.w SprMiscF, X
-  +
-  JSL Sprite_PlayerCantPassThrough
-  JSL Sprite_BounceFromTileCollision
-  JSL Sprite_CheckIfRecoiling
-  JSL Sprite_Move
-  JSR Wolfos_DecideAction
-  RTS
+  PHB : PHK : PLB
+  LDA.b $1B : BNE .spawn_wolfos
+    ; Outdoors
+    ; Check if the wolfos has been defeated
+    LDA.l $7EF303 : CMP.b #$01 : BNE .spawn_wolfos
+      STZ.w SprState, X ; Don't spawn the sprite
+      PLB
+      RTL
+  .spawn_wolfos
+  LDA.b #$40 : STA.w SprTimerA, X
+  LDA.b #$82 : STA.w SprDefl, X ; persist, impervious to arrows
+  LDA.b #$08 : STA.w SprNbrOAM, X ; Nbr Oam Entries
+  STZ.w SprMiscG, X
+  PLB
+  RTL
 }
 
-Wolfos_DecideAction:
-{
-  LDA.w SprTimerA, X : BNE .decide_new_action
-    RTS
-  .decide_new_action
+; =========================================================
 
-  JSL Sprite_DirectionToFacePlayer
-  ; y distance from player
-  LDA $0E : STA.w SprMiscC, X
-  ; x distance from player
-  LDA $0F : STA.w SprMiscB, X
+macro AttackForward()
+  %GotoAction($00)
+endmacro
 
-  ; Check if y distance is significant
-  LDA.w SprMiscC, X : CMP #$10 : BCS .adjust_y
-  ; Check if x distance is significant
-  LDA.w SprMiscB, X : CMP #$10 : BCS .adjust_x
-    RTS ; No adjustments
+macro AttackBack()
+  %GotoAction($01)
+endmacro
 
-  .adjust_y
-  JSL Sprite_IsBelowPlayer : TYA : BEQ .above_player
-    %GotoAction(1) ; Attack Back
-    RTS
-  .above_player
-  %GotoAction(0) ; Attack Forward
-  RTS
+macro WalkRight()
+  %GotoAction($02)
+endmacro
 
-  .adjust_x
-  JSL Sprite_IsToRightOfPlayer : TYA : BEQ .right
-    %GotoAction(3) ; Walk Left
-    RTS
-  .right
-  %GotoAction(2) ; Walk Right
-  RTS
-}
+macro WalkLeft()
+  %GotoAction($03)
+endmacro
+
+macro AttackRight()
+  %GotoAction($04)
+endmacro
+
+macro AttackLeft()
+  %GotoAction($05)
+endmacro
+
+macro Subdued()
+  %GotoAction($06)
+endmacro
+
+macro GrantMask()
+  %GotoAction($07)
+endmacro
+
+macro Dismiss()
+  %GotoAction($08)
+endmacro
 
 !NormalSpeed = $08
 !AttackSpeed = $0F
@@ -153,10 +141,9 @@ Sprite_Wolfos_Main:
   {
     %PlayAnimation(0, 2, 10)
     JSR Wolfos_Move
-
-    LDA #!NormalSpeed : STA.w SprYSpeed, X
-    LDA #$30 : STA.w SprTimerA, X
-
+    JSR Wolfos_DecideAction
+    %SetSpriteSpeedY(!NormalSpeed)
+    %SetTimerA($30)
     RTS
   }
 
@@ -164,10 +151,8 @@ Sprite_Wolfos_Main:
   {
     %PlayAnimation(3, 5, 10)
     JSR Wolfos_Move
-
-    LDA #-!NormalSpeed : STA.w SprYSpeed, X
-    LDA #$30 : STA.w SprTimerA, X
-
+    %SetSpriteSpeedY(-!NormalSpeed)
+    %SetTimerA($30)
     RTS
   }
 
@@ -180,11 +165,9 @@ Sprite_Wolfos_Main:
     STZ.w SprYSpeed, X
 
     JSL GetRandomInt : AND.b #$3F : BNE +
-      %GotoAction(4)
+      %AttackRight()
     +
-
-    LDA #$30 : STA.w SprTimerA, X
-
+    %SetTimerA($30)
     RTS
   }
 
@@ -193,16 +176,13 @@ Sprite_Wolfos_Main:
     %StartOnFrame(9)
     %PlayAnimation(9, 11, 10)
     JSR Wolfos_Move
-
     LDA #-!NormalSpeed : STA.w SprXSpeed, X
     STZ.w SprYSpeed, X
 
     JSL GetRandomInt : AND.b #$3F : BNE +
-      %GotoAction(5)
+      %AttackLeft()
     +
-
-    LDA #$30 : STA.w SprTimerA, X
-
+    %SetTimerA($30)
     RTS
   }
 
@@ -210,14 +190,13 @@ Sprite_Wolfos_Main:
   {
     %StartOnFrame(12)
     %PlayAnimation(12, 13, 10)
-
+    LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X
     JSL Sprite_Move
     LDA #!AttackSpeed : STA.w SprXSpeed, X
-
     LDA.w SprTimerA, X : BNE +
-      %GotoAction(2)
+      LDA.w SprGfxProps, X : AND.b #$40 : STA.w SprGfxProps, X
+      %WalkRight()
     +
-
     RTS
   }
 
@@ -225,14 +204,11 @@ Sprite_Wolfos_Main:
   {
     %StartOnFrame(14)
     %PlayAnimation(14, 15, 10)
-
     JSL Sprite_Move
     LDA #-!AttackSpeed : STA.w SprXSpeed, X
-
     LDA.w SprTimerA, X : BNE +
-      %GotoAction(3)
+      %WalkLeft()
     +
-
     RTS
   }
 
@@ -243,9 +219,9 @@ Sprite_Wolfos_Main:
     STZ.w SprYSpeed, X
 
     ; Run the Wolfos dialogue once.
-    LDA.w SprMiscD, X : BNE .wait
+    LDA.w WolfosDialogue, X : BNE .wait
       %ShowUnconditionalMessage($23)
-      LDA.b #$01 : STA.w SprMiscD, X
+      LDA.b #$01 : STA.w WolfosDialogue, X
     .wait
 
     ; Wait for Song of Healing before granting the mask.
@@ -256,7 +232,7 @@ Sprite_Wolfos_Main:
       LDA.w POSXH : STA.w SprXH, X
       LDA.w POSY : SEC : SBC.b #$08 : STA.w SprY, X
       LDA.w POSYH : STA.w SprYH, X
-      %GotoAction(7)
+      %GrantMask()
     .ninguna_cancion
     RTS
   }
@@ -270,8 +246,8 @@ Sprite_Wolfos_Main:
     LDA.w SprTimerD, X : BNE .wait
       LDA.b #$01 : STA.w BRANDISH
       %ShowUnconditionalMessage($10F)
-      LDA.b #$01 : STA.l $7EF358
-      %GotoAction(8)
+      LDA.b #$01 : STA.l WolfMask
+      %Dismiss()
     .wait
     RTS
   }
@@ -290,6 +266,96 @@ Sprite_Wolfos_Main:
     .dismiss
     RTS
   }
+}
+
+Wolfos_Move:
+{
+  JSL Sprite_DamageFlash_Long
+  JSL Sprite_CheckDamageFromPlayer : BCC +
+    LDA.b #$01 : STA.w SprMiscF, X
+  +
+  JSL Sprite_PlayerCantPassThrough
+  JSL Sprite_BounceFromTileCollision
+  JSL Sprite_CheckIfRecoiling
+  JSL Sprite_Move
+  JSR Wolfos_DecideAction
+  RTS
+}
+
+Wolfos_DecideAction:
+{
+  LDA.w SprTimerA, X : BNE .decide_new_action
+    JSL GetRandomInt : AND #$02 : STA.w SprMiscG, X
+    RTS
+  .decide_new_action
+
+  LDA.w SprMiscG, X
+  JSL JumpTableLocal
+
+  dw Wolfos_MoveAction_Basic
+  dw Wolfos_MoveAction_CirclePlayer
+  dw Wolfos_MoveAction_Dodge
+}
+
+Wolfos_MoveAction_Basic:
+{
+  JSL Sprite_DirectionToFacePlayer
+  ; y distance from player
+  LDA $0E : STA.w SprMiscC, X
+  ; x distance from player
+  LDA $0F : STA.w SprMiscB, X
+
+  ; Check if y distance is significant
+  LDA.w SprMiscC, X : CMP #$10 : BCS .adjust_y
+  ; Check if x distance is significant
+  LDA.w SprMiscB, X : CMP #$10 : BCS .adjust_x
+    RTS ; No adjustments
+
+  .adjust_y
+  JSL Sprite_IsBelowPlayer : TYA : BEQ .above_player
+    %AttackBack()
+    RTS
+  .above_player
+  %AttackForward()
+  RTS
+
+  .adjust_x
+  JSL Sprite_IsToRightOfPlayer : TYA : BEQ .right
+    %WalkLeft()
+    RTS
+  .right
+  %WalkRight()
+  RTS
+}
+
+Wolfos_MoveAction_CirclePlayer:
+{
+  ; Get the direction to the player
+  JSL Sprite_DirectionToFacePlayer
+
+  ; Check if the player is close
+  LDA.b $0E : CMP #$10 : BCS .too_far_y
+  LDA.b $0F : CMP #$10 : BCS .too_far_x
+    RTS
+  .too_far_y
+
+  ; clockwise:  X' = Y, Y' = -X
+  LDA.w SprXSpeed, X : PHA
+  LDA.w SprYSpeed, X : STA.w SprXSpeed, X
+  PLA : EOR #$FF : INC : STA.w SprYSpeed, X
+
+  RTS
+
+  .too_far_x
+  LDA.w SprXSpeed, X : EOR #$FF : INC : STA.w SprXSpeed, X
+  RTS
+}
+
+Wolfos_MoveAction_Dodge:
+{
+  JSL Sprite_ApplySpeedTowardsPlayer
+  JSL Sprite_InvertSpeed_XY
+  RTS
 }
 
 ; =========================================================
