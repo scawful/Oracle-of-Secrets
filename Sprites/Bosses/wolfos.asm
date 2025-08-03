@@ -1,6 +1,5 @@
 ; =========================================================
 ; Wolfos Sprite Properties
-; =========================================================
 
 !SPRID              = Sprite_Wolfos
 !NbrTiles           = 03  ; Number of tiles used in a frame
@@ -31,8 +30,6 @@
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 %Set_Sprite_Properties(Sprite_Wolfos_Prep, Sprite_Wolfos_Long)
 
-; =========================================================
-
 Sprite_Wolfos_Long:
 {
   PHB : PHK : PLB
@@ -60,8 +57,6 @@ Sprite_Wolfos_CheckIfDefeated:
   RTS
 }
 
-; =========================================================
-
 Sprite_Wolfos_Prep:
 {
   PHB : PHK : PLB
@@ -77,34 +72,41 @@ Sprite_Wolfos_Prep:
   LDA.b #$82 : STA.w SprDefl, X ; persist, impervious to arrows
   LDA.b #$08 : STA.w SprNbrOAM, X ; Nbr Oam Entries
   STZ.w SprMiscG, X
+  STZ.w SprMiscE, X
   PLB
   RTL
 }
 
-; =========================================================
+Wolfos_AnimateAction = SprMiscE
 
 macro AttackForward()
   %GotoAction($00)
+  STA.w Wolfos_AnimateAction, X
 endmacro
 
 macro AttackBack()
   %GotoAction($01)
+  STA.w Wolfos_AnimateAction, X
 endmacro
 
 macro WalkRight()
   %GotoAction($02)
+  STA.w Wolfos_AnimateAction, X
 endmacro
 
 macro WalkLeft()
   %GotoAction($03)
+  STA.w Wolfos_AnimateAction, X
 endmacro
 
 macro AttackRight()
   %GotoAction($04)
+  STA.w Wolfos_AnimateAction, X
 endmacro
 
 macro AttackLeft()
   %GotoAction($05)
+  STA.w Wolfos_AnimateAction, X
 endmacro
 
 macro Subdued()
@@ -124,6 +126,8 @@ endmacro
 
 Sprite_Wolfos_Main:
 {
+  JSR Sprite_Wolfos_Animate
+
   LDA.w SprAction, X
   JSL JumpTableLocal
 
@@ -139,75 +143,59 @@ Sprite_Wolfos_Main:
 
   Wolfos_AttackForward:
   {
-    %PlayAnimation(0, 2, 10)
     JSR Wolfos_Move
-    JSR Wolfos_DecideAction
-    %SetSpriteSpeedY(!NormalSpeed)
-    %SetTimerA($30)
     RTS
   }
 
   Wolfos_AttackBack:
   {
-    %PlayAnimation(3, 5, 10)
     JSR Wolfos_Move
-    %SetSpriteSpeedY(-!NormalSpeed)
-    %SetTimerA($30)
     RTS
   }
 
   Wolfos_WalkRight:
   {
-    %StartOnFrame(6)
-    %PlayAnimation(6, 8, 10)
     JSR Wolfos_Move
-    LDA #!NormalSpeed : STA.w SprXSpeed, X
-    STZ.w SprYSpeed, X
-
     JSL GetRandomInt : AND.b #$3F : BNE +
+      LDA #!AttackSpeed : STA.w SprXSpeed, X
+      %SetImpervious(1)
       %AttackRight()
+      %SetTimerA($30)
     +
-    %SetTimerA($30)
     RTS
   }
 
   Wolfos_WalkLeft:
   {
-    %StartOnFrame(9)
-    %PlayAnimation(9, 11, 10)
     JSR Wolfos_Move
-    LDA #-!NormalSpeed : STA.w SprXSpeed, X
-    STZ.w SprYSpeed, X
-
     JSL GetRandomInt : AND.b #$3F : BNE +
+      LDA #-!AttackSpeed : STA.w SprXSpeed, X
+      %SetImpervious(1)
       %AttackLeft()
     +
-    %SetTimerA($30)
     RTS
   }
 
   Wolfos_AttackRight:
   {
-    %StartOnFrame(12)
-    %PlayAnimation(12, 13, 10)
-    LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X
     JSL Sprite_Move
-    LDA #!AttackSpeed : STA.w SprXSpeed, X
+    JSL Sprite_DamageFlash_Long
+    JSL Sprite_CheckDamageFromPlayer
     LDA.w SprTimerA, X : BNE +
-      LDA.w SprGfxProps, X : AND.b #$40 : STA.w SprGfxProps, X
       %WalkRight()
+      %SetImpervious(0)
     +
     RTS
   }
 
   Wolfos_AttackLeft:
   {
-    %StartOnFrame(14)
-    %PlayAnimation(14, 15, 10)
     JSL Sprite_Move
-    LDA #-!AttackSpeed : STA.w SprXSpeed, X
+    JSL Sprite_DamageFlash_Long
+    JSL Sprite_CheckDamageFromPlayer
     LDA.w SprTimerA, X : BNE +
       %WalkLeft()
+      %SetImpervious(0)
     +
     RTS
   }
@@ -254,8 +242,7 @@ Sprite_Wolfos_Main:
 
   Wolfos_Dismiss:
   {
-    STZ.w SprXSpeed, X
-    STZ.w SprYSpeed, X
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
 
     LDA.w SprTimerD, X : BNE .dismiss
       LDA.b #$00 : STA.w SprState, X ; kill sprite normal style
@@ -264,6 +251,65 @@ Sprite_Wolfos_Main:
       STZ.w BRANDISH ; Stop Link from holding his hands up.
       RTS
     .dismiss
+    RTS
+  }
+}
+
+Sprite_Wolfos_Animate:
+{
+  LDA.w Wolfos_AnimateAction, X : JSL JumpTableLocal
+
+  dw Wolfos_Animate_AttackForward ; 0x00
+  dw Wolfos_Animate_AttackBack    ; 0x01
+  dw Wolfos_Animate_WalkRight     ; 0x02
+  dw Wolfos_Animate_WalkLeft      ; 0x03
+  dw Wolfos_Animate_AttackRight   ; 0x04
+  dw Wolfos_Animate_AttackLeft    ; 0x05
+  dw Wolfos_Animate_Subdued       ; 0x06
+
+  Wolfos_Animate_AttackForward:
+  {
+    %PlayAnimation(0, 2, 10)
+    RTS
+  }
+
+  Wolfos_Animate_AttackBack:
+  {
+    %PlayAnimation(3, 5, 10)
+    RTS
+  }
+
+  Wolfos_Animate_WalkRight:
+  {
+    %StartOnFrame(6)
+    %PlayAnimation(6, 8, 10)
+    RTS
+  }
+
+  Wolfos_Animate_WalkLeft:
+  {
+    %StartOnFrame(9)
+    %PlayAnimation(9, 11, 10)
+    RTS
+  }
+
+  Wolfos_Animate_AttackRight:
+  {
+    %StartOnFrame(12)
+    %PlayAnimation(12, 13, 10)
+    RTS
+  }
+
+  Wolfos_Animate_AttackLeft:
+  {
+    %StartOnFrame(14)
+    %PlayAnimation(14, 15, 10)
+    RTS
+  }
+
+  Wolfos_Animate_Subdued:
+  {
+    %PlayAnimation(0, 0, 10)
     RTS
   }
 }
@@ -284,6 +330,8 @@ Wolfos_Move:
 
 Wolfos_DecideAction:
 {
+  JSR Wolfos_MoveAction_Basic
+
   LDA.w SprTimerA, X : BNE .decide_new_action
     JSL GetRandomInt : AND #$02 : STA.w SprMiscG, X
     RTS
@@ -313,17 +361,26 @@ Wolfos_MoveAction_Basic:
 
   .adjust_y
   JSL Sprite_IsBelowPlayer : TYA : BEQ .above_player
+    %SetSpriteSpeedY(-!NormalSpeed)
+    %SetTimerA($30)
     %AttackBack()
     RTS
   .above_player
+  %SetSpriteSpeedY(!NormalSpeed)
+  %SetTimerA($30)
   %AttackForward()
   RTS
 
   .adjust_x
   JSL Sprite_IsToRightOfPlayer : TYA : BEQ .right
+    LDA #-!NormalSpeed : STA.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+    %SetTimerA($30)
     %WalkLeft()
     RTS
   .right
+  LDA #!NormalSpeed : STA.w SprXSpeed, X
+  STZ.w SprYSpeed, X
   %WalkRight()
   RTS
 }
