@@ -9,8 +9,6 @@ MenuScrollHDirection:     skip 2
 MenuItemValueSpoof:       skip 2
 ShortSpoof:               skip 1
 MusicNoteValue:           skip 2
-OverworldLocationPointer: skip 2
-HasGoldstar:              skip 1
 GoldstarOrHookshot:       skip 1
 Neck_Index:               skip 1
 Neck1_OffsetX:            skip 1
@@ -42,6 +40,9 @@ CurrentSong    = $030F
 ; 02 - Song of Time
 ; 03 - Song of Storms
 SongFlag       = $FE
+
+; Overlay camera cache variable
+CameraCache    = $0632
 
 ; =========================================================
 ; The record format for the low table is 4 bytes:
@@ -89,12 +90,12 @@ SprFrame     = $0D90 ; Indexes the SprGfx for drawing
 SprGfx       = $0DC0 ; Determine the GFX used for the sprite
 
 SprMiscA     = $0DA0 ; Direction, position, or other misc usage
-SprMiscB     = $0DB0 ; Various usages, truly auxiliary
+SprMiscB     = $0DB0 ; Prober parent sprite ID, misc
 SprMiscC     = $0DE0 ; Cardinal direction the sprite is facing
 SprMiscD     = $0E90 ; Pikit stolen item, misc usage
 SprMiscE     = $0EB0 ; Head direction 0123 -> udlr
-SprMiscF     = $0EC0 ;
-SprMiscG     = $0ED0 ;
+SprMiscF     = $0EC0 ; Clones
+SprMiscG     = $0ED0 ; Probe whistle sfx
 
 SprCustom    = $1CC0 ;
 
@@ -144,7 +145,7 @@ SprState     = $0DD0
 
 ; nios pppt
 ;   n - if set, don't draw extra death anim
-;   i - impervious to attacks and collision? TODO
+;   i - impervious to attacks and collision (0: normal | 1: clink)
 ;   o - shadow size (0: normal | 1: small)
 ;   s - shadow (0: no shadow | 1: shadow)
 ;   p - palette used for OAM props

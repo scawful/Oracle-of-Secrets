@@ -205,6 +205,12 @@ macro SetHarmless(value)
   STA.w SprNbrOAM, X
 endmacro
 
+macro SetImpervious(value)
+  LDA.w SprDefl, X
+  EOR.b #(<value>)<<2
+  STA.w SprDefl, X
+endmacro
+
 ; Set Room Flag (Chest 6)
 ; Do not use if you have more than 5 chests or a small key under a pot
 ; in that room unless you want it to be already opened/taken
