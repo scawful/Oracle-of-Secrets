@@ -19,10 +19,6 @@
 
 ; ==========================================================
 
-; OverworldHandleTransitions
-org $02AA7D
-  JSL LOST_WOOD_HOOK
-
 ; Gets the small/large map true ID of the current screen
 Overworld_ActualScreenID = $02A5EC
 

@@ -4740,9 +4740,11 @@ OverworldHandleTransitions:
         LDA.b $8A : PHA
 
         ; Set the OW area number.
-        LDA.l Pool_Overworld_ActualScreenID_New, X : STA.b $8A
-                                                     STA.w $040A
-                                                     TAX
+        ; LDA.l Pool_Overworld_ActualScreenID_New, X
+        JSL Oracle_LOST_WOOD_HOOK
+        STA.b $8A
+        STA.w $040A
+        TAX
 
         ; HARDCODED: Bunny music.
         LDA.l $7EF3CA : BEQ .lightWorld
