@@ -3944,8 +3944,6 @@ InitColorLoad2:
     .storeColor
 
     ; Set transparent color.
-    STA.l $7EE018
-    JSL Oracle_BackgroundFix
     STA.l $7EC300
     STA.l $7EC340 ; Set transparent color.
 

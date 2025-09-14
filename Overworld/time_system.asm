@@ -589,14 +589,6 @@ RestoreTimeForDungeonMap:
 
 pushpc
 
-; $0BFE70 -> background color loading routine
-; Background color write fix - 16 bytes
-; $0B/FEB6 8F 00 C5 7E STA $7EC500
-; $0B/FEBA 8F 00 C3 7E STA $7EC300
-; $0B/FEBE 8F 40 C5 7E STA $7EC540
-; $0B/FEC2 8F 40 C3 7E STA $7EC340
-org $0BFEB6 : JSL BackgroundFix
-
 ; SetBGColorMainBuffer
 org $0ED5F9 : JSL ColorBgFix
 
