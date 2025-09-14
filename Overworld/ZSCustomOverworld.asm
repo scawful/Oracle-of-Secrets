@@ -4739,7 +4739,7 @@ OverworldHandleTransitions:
 
         ; Set the OW area number.
         ; LDA.l Pool_Overworld_ActualScreenID_New, X
-        JSL Oracle_LOST_WOOD_HOOK
+        JSL Oracle_LostWoods
         STA.b $8A
         STA.w $040A
         TAX

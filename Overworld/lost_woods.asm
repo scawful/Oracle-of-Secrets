@@ -25,15 +25,14 @@ Overworld_ActualScreenID = $02A5EC
 ; At this stage the accumulator contains area currently in
 ; X contains the area you're moving to.
 org $A0F000
-LOST_WOOD_HOOK:
+LostWoods:
 {
+  LDA.l Pool_Overworld_ActualScreenID_New, X
   ; are we in the right area?
   CMP #$29 : BEQ begincode
     ; not right area so return.
     normalfinish:
-    LDA !RestoreCam  : BEQ +
-    +
-    LDA Overworld_ActualScreenID, X
+    LDA Pool_Overworld_ActualScreenID_New, X
     STZ !ComboCounter
     RTL
 
