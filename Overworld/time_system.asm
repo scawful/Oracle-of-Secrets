@@ -293,15 +293,31 @@ org $00FC6A : JSL CheckIfNight16Bit
 
 Overworld_CopyPalettesToCache = $02C769
 
-org $02FF80		; free space on bank $02
+org $02FF80 ; free space on bank $02
 PaletteBufferToEffective:
-  JSR $C769	; $02:C65F -> palette buffer to effective routine
+  ; JSR $C769	; $02:C65F -> palette buffer to effective routine
+  JSR $C65F
   RTL
 
+OverworldPalettesScreenToSet_New           = $09C635 ; $04C635
+OverworldPalettesLoader = $0ED5A8
+
+; rom to palette buffer for other colors
+OverworldLoadScreensPaletteSet = $02C692
+
+; From OverworldHandleTransitions.change_palettes $02AAF4
+; Change buffer palette of trees,houses,rivers,etc.
 RomToPaletteBuffer:
-  JSR $AAF4	; $02:AAF4 -> change buffer palette of trees,houses,rivers,etc.
-  JSR $C692	; $02:C692 -> rom to palette buffer for other colors
+{
+  LDX.b $8A
+  LDA.l $7EFD40,X : STA.b $00
+
+  LDA.l OverworldPalettesScreenToSet_New,X
+  JSL OverworldPalettesLoader
+  JSR Overworld_CopyPalettesToCache
+  JSR OverworldLoadScreensPaletteSet 
   RTL
+}
 
 PalBuf300_HUD = $7EC300
 PalBuf340_BG = $7EC340
