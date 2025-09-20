@@ -17,8 +17,6 @@ org $07866D
   LDA.b #$1B : STA.b $5D
   RTL
 
-CameraCache = $0632
-
 org $1BCADE
 JSL ZoraTemple_EntranceAnimation
 RTS
