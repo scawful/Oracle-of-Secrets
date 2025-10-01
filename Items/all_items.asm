@@ -11,7 +11,7 @@ incsrc "Items/portal_rod.asm"
 incsrc "Items/fishing_rod.asm"
 incsrc "Items/magic_rings.asm"
 incsrc "Items/fist_damage.asm"
-print  "End of Items/fist_damage.asm      ", pc
+%print_debug("End of Items/fist_damage.asm      ")
 
 MagicBeanGfx:
   incbin "gfx/magic_bean.bin"
@@ -80,5 +80,5 @@ Link_ConsumeMagicBagItem:
 pushpc
 ; League of its own
 incsrc "Items/ice_rod.asm"
-print  "End of Items/ice_rod.asm          ", pc
+%print_debug("End of Items/ice_rod.asm          ")
 pullpc

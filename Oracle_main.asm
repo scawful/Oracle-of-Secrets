@@ -27,8 +27,10 @@
 ;   41  - DW World Map
 ; =========================================================
 
+incsrc "Util/macros.asm"
+
 incsrc "Overworld/ZSCustomOverworld.asm"
-print  "End of ZSCustomOverworld.asm      ", pc
+%print_debug("End of ZSCustomOverworld.asm      ")
 
 ; Vanilla WRAM and SRAM
 incsrc "Core/ram.asm"
@@ -40,42 +42,43 @@ namespace Oracle
   incsrc "Core/symbols.asm"
   incsrc "Core/message.asm"
 
-  print "  -- Music --  "
-  print ""
+  %print_debug("  -- Music --  ")
+  %print_debug("")
   incsrc "Music/all_music.asm"
-  print ""
+  %print_debug("")
 
-  print "  -- Overworld --  "
-  print ""
+  %print_debug("  -- Overworld --  ")
+  %print_debug("")
   incsrc "Overworld/overworld.asm"
-  print ""
+  %print_debug("")
 
-  print "  -- Dungeon --  "
-  print ""
+  %print_debug("  -- Dungeon --  ")
+  %print_debug("")
   incsrc "Dungeons/dungeons.asm"
-  print ""
+  %print_debug("")
 
-  print "  -- Sprites --  "
-  print ""
+  %print_debug("  -- Sprites --  ")
+  %print_debug("")
   incsrc "Sprites/all_sprites.asm"
-  print ""
+  %print_debug("")
 
-  print "  -- Masks --  "
-  print ""
+  %print_debug("  -- Masks --  ")
+  %print_debug("")
   incsrc "Masks/all_masks.asm"
-  print ""
+  %print_debug("")
 
-  print "  -- Items --  "
-  print ""
+  %print_debug("  -- Items --  ")
+  %print_debug("")
   incsrc "Items/all_items.asm"
-  print ""
+  %print_debug("")
 
-  print "  -- Menu --  "
-  print ""
+  %print_debug("  -- Menu --  ")
+  %print_debug("")
   incsrc "Menu/menu.asm"
   incsrc "Util/item_cheat.asm"
+  incsrc "Core/patches.asm"
 
-  print ""
-  print "Finished applying patches"
+  %print_debug("")
+  %print_debug("Finished applying patches")
 }
 namespace off
