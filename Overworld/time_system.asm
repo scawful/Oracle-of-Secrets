@@ -275,10 +275,12 @@ CheckIfNight16Bit:
 pushpc
 
 ; Overworld_LoadSprites
-org $09C4E3 : JSL CheckIfNight
+; Temporarily commented out while porting to ZSOWv3
+; org $09C4E3 : JSL CheckIfNight
 
 ; Sprite_LoadGraphicsProperties_light_world_only
-org $00FC6A : JSL CheckIfNight16Bit
+; Temporarily commented out while porting to ZSOWv3
+; org $00FC6A : JSL CheckIfNight16Bit
 
 ; =========================================================
 ; ----[ Day / Night system * palette effect ]----
@@ -601,7 +603,8 @@ org $02AE92 : NOP #6
 ; $0E/D601 8F 00 C3 7E STA $7EC300[$7E:C300]
 ; $0E/D605 8F 40 C3 7E STA $7EC340[$7E:C340]
 
-org $0ED601 : JSL SubAreasFix
+; Temporarily commented out while porting to ZSOWv3
+; org $0ED601 : JSL SubAreasFix
 
 ; =========================================================
 ; Gloves color loading routine

@@ -3350,8 +3350,13 @@ Palette_MultiLoad_NonBuffer:
     
         .copyColors
             ; We're loading A from the address set up in the calling function.
-            LDA.b [$00] : STA.l $7EC300, X
-                          STA.l $7EC500, X 
+            LDA.b [$00] 
+            STA.l $7EE018
+            BEQ + 
+            JSL Oracle_ColorSubEffect
+            +
+            STA.l $7EC300, X
+            STA.l $7EC500, X 
             
             ; Increment the absolute portion of the address by two, and
             ; decrease the color count by one.

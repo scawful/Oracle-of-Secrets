@@ -303,20 +303,21 @@ PlayThunderAndRain:
   RTL
 }
 
-CheckRealTable:
-{
-  LDA $7EE00E : CMP #$00 : BEQ .continue
-    JML RainAnimation_Overridden_rainOverlaySet
-  .continue
-  LDA #$05 : STA $012D
-  LDA.b $8A : ASL : TAX
-  LDA.l Pool_OverlayTable, X
-  CMP.b #$9F : BNE .not_rain_area
-    RTL
-  .not_rain_area
-  STZ.b $1D
-  JML RainAnimation_Overridden_skipMovement
-}
+; Temporarily commented out while porting to ZSOWv3
+; CheckRealTable:
+; {
+;   LDA $7EE00E : CMP #$00 : BEQ .continue
+;     JML RainAnimation_Overridden_rainOverlaySet
+;   .continue
+;   LDA #$05 : STA $012D
+;   LDA.b $8A : ASL : TAX
+;   LDA.l Pool_OverlayTable, X
+;   CMP.b #$9F : BNE .not_rain_area
+;     RTL
+;   .not_rain_area
+;   STZ.b $1D
+;   JML RainAnimation_Overridden_skipMovement
+; }
 
 ResetOcarinaFlag:
 {
@@ -393,58 +394,59 @@ pushpc ; Bank2B freespace
 org $02F210 : JSL ResetOcarinaFlag
 
 ; ZS OW
-org $02A4CD
-RainAnimation_Overridden:
-{
-  JSL CheckRealTable : BEQ .rainOverlaySet
-    ; LDA.b $8C : CMP.b #$9F :
-    ; Check the progress indicator
-    LDA.l GameState : CMP.b #$02 : BRA .skipMovement
-  .rainOverlaySet
+; Temporarily commented out while porting to ZSOWv3
+; org $02A4CD
+; RainAnimation_Overridden:
+; {
+;   JSL CheckRealTable : BEQ .rainOverlaySet
+;     ; LDA.b $8C : CMP.b #$9F :
+;     ; Check the progress indicator
+;     LDA.l GameState : CMP.b #$02 : BRA .skipMovement
+;   .rainOverlaySet
 
-  ; If misery mire has been opened already, we're done.
-  ; LDA.l $7EF2F0 : AND.b #$20 : BNE .skipMovement
-  ; Check the frame counter.
-  ; On the third frame do a flash of lightning.
-  LDA.b $1A
+;   ; If misery mire has been opened already, we're done.
+;   ; LDA.l $7EF2F0 : AND.b #$20 : BNE .skipMovement
+;   ; Check the frame counter.
+;   ; On the third frame do a flash of lightning.
+;   LDA.b $1A
 
-  CMP.b #$03 : BEQ .lightning ; On the 0x03rd frame, cue the lightning.
-  CMP.b #$05 : BEQ .normalLight ; On the 0x05th frame, normal light level.
-  CMP.b #$24 : BEQ .thunder ; On the 0x24th frame, cue the thunder.
-  CMP.b #$2C : BEQ .normalLight ; On the 0x2Cth frame, normal light level.
-  CMP.b #$58 : BEQ .lightning ; On the 0x58th frame, cue the lightning.
-  CMP.b #$5A : BNE .moveOverlay ; On the 0x5Ath frame, normal light level.
+;   CMP.b #$03 : BEQ .lightning ; On the 0x03rd frame, cue the lightning.
+;   CMP.b #$05 : BEQ .normalLight ; On the 0x05th frame, normal light level.
+;   CMP.b #$24 : BEQ .thunder ; On the 0x24th frame, cue the thunder.
+;   CMP.b #$2C : BEQ .normalLight ; On the 0x2Cth frame, normal light level.
+;   CMP.b #$58 : BEQ .lightning ; On the 0x58th frame, cue the lightning.
+;   CMP.b #$5A : BNE .moveOverlay ; On the 0x5Ath frame, normal light level.
 
-  .normalLight
+;   .normalLight
 
-  ; Keep the screen semi-dark.
-  LDA.b #$72
+;   ; Keep the screen semi-dark.
+;   LDA.b #$72
 
-  BRA .setBrightness
+;   BRA .setBrightness
 
-  .thunder
+;   .thunder
 
-  ; Play the thunder sound when outdoors.
-  ; LDX.b #$36 : STX.w $012E
-  JSL PlayThunderAndRain
+;   ; Play the thunder sound when outdoors.
+;   ; LDX.b #$36 : STX.w $012E
+;   JSL PlayThunderAndRain
 
-  .lightning
+;   .lightning
 
-  LDA.b #$32 ; Make the screen flash with lightning.
+;   LDA.b #$32 ; Make the screen flash with lightning.
 
-  .setBrightness
+;   .setBrightness
 
-  STA.b $9A
+;   STA.b $9A
 
-  .moveOverlay
+;   .moveOverlay
 
-  ; Overlay is only moved every 4th frame.
-  LDA.b $1A : AND.b #$03 : BNE .skipMovement
-    LDA.w $0494 : INC A : AND.b #$03 : STA.w $0494 : TAX
-    LDA.b $E1 : CLC : ADC.l $02A46D, X : STA.b $E1
-    LDA.b $E7 : CLC : ADC.l $02A471, X : STA.b $E7
-  .skipMovement
+;   ; Overlay is only moved every 4th frame.
+;   LDA.b $1A : AND.b #$03 : BNE .skipMovement
+;     LDA.w $0494 : INC A : AND.b #$03 : STA.w $0494 : TAX
+;     LDA.b $E1 : CLC : ADC.l $02A46D, X : STA.b $E1
+;     LDA.b $E7 : CLC : ADC.l $02A471, X : STA.b $E7
+;   .skipMovement
 
-  RTL
-}
-assert pc() <= $02A52D
+;   RTL
+; }
+; assert pc() <= $02A52D
