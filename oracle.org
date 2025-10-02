@@ -1,479 +1,385 @@
-#+title: Oracle of Secrets
-#+author: @scawful
+#+title: Oracle of Secrets - Project Tracker
+#+author: @scawful & Gemini
 #+todo: TODO(t) ACTIVE(a) | DONE(d) CANCELED(c)
-#+options: H:4 tags:t
+#+options: H:5 tags:t
 #+startup: content
 
-* Oracle of Secrets
+* Project Dashboard & Epics
 
-  ROM Hack for The Legend of Zelda: A Link to the Past
-  Based on the Oracle series and using elements from Minish Cap, Link's Awakening, and other Zelda games.
+This section provides a high-level overview of the major development efforts (Epics). Each epic groups together numerous smaller tasks from the sections below.
 
-  - Plot Doc: https://docs.google.com/document/d/106e_dnY0EAjm3l416l4NDnpRjlUMFH8EKN_o7eiC77c
-  - Data Sheet: https://docs.google.com/spreadsheets/d/17mfAUalrYgu6Is1LNPlRBbqniAvRg5eNPOg7AQZ-b4U/
+- *Epic: Core Infrastructure Refactor*
+  - Goal: Improve code quality, readability, and maintainability across all major systems.
+  - Related Sections: [[Technical Debt & Refactoring]]
 
-* Infrastructure and Organization Improvements
+- *Epic: System Integration & Stability*
+  - Goal: Resolve all known conflicts between major systems like ZSOW, the Time System, and other custom logic to ensure a stable and bug-free experience.
+  - Related Sections: [[System Integration & Bugs]]
+
+- *Epic: Dungeon Polish & Completion*
+  - Goal: Finalize the design, puzzles, and presentation of all dungeons.
+  - Related Sections: [[New Features & Content]]
+
+- *Epic: Quest & Narrative Implementation*
+  - Goal: Implement all remaining main story quests, side-quests, and narrative sequences.
+  - Related Sections: [[New Features & Content]]
+
+- *Epic: Boss & Enemy Enhancements*
+  - Goal: Refine and improve all custom boss fights and enemy behaviors.
+  - Related Sections: [[New Features & Content]]
+
+* Technical Debt & Refactoring
   :PROPERTIES:
   :CATEGORY: Infrastructure
+  :STRATEGY: Opportunistic
   :END:
 
-This section outlines suggestions for improving the overall structure and maintainability of the "Oracle of Secrets" codebase, primarily by leveraging advanced features of asar.
+This section tracks tasks focused on improving the existing codebase's structure, readability, and maintainability. Per user feedback, these tasks should be tackled opportunistically alongside feature development and bug-fixing to allow for immediate testing and avoid regressions.
 
-**Rationale:** As the project grows, a well-organized codebase becomes crucial for efficient development, debugging, and long-term maintenance. These suggestions aim to increase modularity, reduce errors, and improve readability.
-
-*** TODO Reorganize Patches into a Dedicated File
+** General Infrastructure
+*** TODO [#B] Reorganize All Patches into a Central File
     :PROPERTIES:
-    :ID:       infra-patches
+    :ID: infra-patches-all
     :END:
-    - *Current State:* Numerous small `org` patches are located at the end of =Sprites/all_sprites.asm=.
-    - *Suggestion:* Create a new top-level file, perhaps =Core/patches.asm=, and move all vanilla code patches there. This file can be organized by bank or functionality.
-    - *Benefits:*
-      - **Separation of Concerns:** =all_sprites.asm= would only be responsible for including sprite code, not patching the ROM.
-      - **Maintainability:** Centralizes all direct modifications to original code, making them easier to find, manage, and debug.
+    - *Analysis:* Patches are scattered across multiple files (=time_system.asm=, =all_sprites.asm=, etc.).
+    - *Task:* Move all `org` patches that modify vanilla code into =Core/patches.asm=. This file should be organized by bank and functionality for clarity.
+    - *Benefit:* Centralizes all direct modifications to the original ROM, making them easier to find, manage, and debug.
 
-*** TODO Use ~incbin~ for All Binary Data
+*** TODO [#C] Leverage ~struct~ for Complex Data Structures
     :PROPERTIES:
-    :ID:       infra-incbin
+    :ID: infra-structs
     :END:
-    - *Current State:* GFX data is already well-handled with `incbin`. This is a reminder to continue this practice for all non-code data.
-    - *Suggestion:* Ensure all graphics, palettes, level data, etc., are included via `incbin`.
-    - *Benefits:*
-      - **Cleanliness:** Keeps assembly files focused on logic.
-      - **Tooling:** Allows for easier use of external tools to edit binary data.
+    - *Analysis:* Many systems use parallel arrays or labeled offsets for complex data, which is functional but hard to read.
+    - *Task:* Systematically refactor key data structures to use asar's `struct` directive.
+    - *Candidates:*
+      - [ ] Player Data (Link's state)
+      - [ ] Sprite State (Generic sprite properties)
+      - [ ] SRAM Layout (Quest flags, item data)
 
-*** TODO Leverage ~struct~ for Complex Data
+*** TODO [#C] Convert Manual Jump Tables to Use ~table~
     :PROPERTIES:
-    :ID:       infra-structs
+    :ID: infra-tables
     :END:
-    - *Current State:* RAM addresses are defined with labels (e.g., in =Core/ram.asm=). This is standard, but for complex related data, it can be improved.
-    - *Suggestion:* Use asar's `struct` directive for things like sprite state, player data, or complex SRAM layouts.
-    - *Benefits:*
-      - **Clarity:** Defines data structures in a high-level, readable format.
-      - **Maintainability:** Reduces "magic numbers" when accessing data fields. If the structure changes, you only need to update the `struct` definition.
+    - *Analysis:* Jump tables are often created manually with `dw` directives.
+    - *Task:* Convert these tables to use asar's `table` directive for simplicity and safety.
+    - *Candidates:*
+      - [ ] =Items/all_items.asm= (=Link_ConsumeMagicBagItem=)
+      - [ ] =Menu/menu.asm= (=Menu_Entry.vectors=)
 
-*** TODO Use ~table~ for Jump Tables
+*** TODO [#C] Document the Dialogue System
     :PROPERTIES:
-    :ID:       infra-tables
+    :ID: infra-dialogue-docs
     :END:
-    - *Current State:* Jump tables are created manually with `dw` directives, like in =Items/all_items.asm= for =Link_ConsumeMagicBagItem=.
-    - *Suggestion:* Use the `table` directive to create these tables automatically.
-    - *Benefits:*
-      - **Simplicity:** Less boilerplate code.
-      - **Safety:** Can help prevent errors from misaligned table entries.
+    - *Goal:* Create comprehensive documentation for the game's dialogue and text rendering system.
+    - *Blocker For:* [[quest-goron-mines]] (Garo NPC).
 
-*** TODO Combine custom room tags into a table system
+** Time System (=Overworld/time_system.asm=)
+*** TODO [#B] Refactor Time System [0/3]
     :PROPERTIES:
-    :ID:       infra-roomtags
+    :ID: refactor-time-system
     :END:
-    - *Current State:* Custom room tags are defined in =Dungeons/crumblefloor_tag.asm= and similar files.
-    - *Suggestion:* Create a unified table system for all custom room tags, possibly in a new file like =Dungeons/room_tags.asm=.
-    - *Benefits:*
-      - **Organization:** Easier to find and manage all custom room tags.
-      - **Extensibility:** Simplifies adding new tags in the future.
+    - *Analysis:* The system is functional but monolithic and uses many magic numbers.
+    - *Tasks:*
+      - [ ] Group all time-related variables (`Hours`, `Minutes`, `TimeSpeed`, color values) into a single `TimeState` struct.
+      - [ ] Convert all logic blocks (`RunClock`, `DrawClockToHud`, `ColorSubEffect`) into proper `subroutine`s.
+      - [ ] Break down the large `RunClock` routine into smaller, single-purpose functions (e.g., `TimeSystem_CheckCanRun`, `TimeSystem_IncrementTime`, `TimeSystem_UpdatePalettes`).
 
-* Levels
-** ~S0~ Shrine of Origins
-*** Item: Moon Pearl
-Located in the Temporal Pyramid where you get transported after your first encounter with Kydrog.
+** Minecart System (=Sprites/Objects/minecart.asm=)
+*** TODO [#B] Refactor Minecart System [0/4]
+    :PROPERTIES:
+    :ID: refactor-minecart
+    :END:
+    - *Analysis:* An impressive but highly complex system that would benefit greatly from better organization and data-driven design.
+    - *Tasks:*
+      - [ ] Define a `MinecartTrack` struct and convert the SRAM tracking arrays into a `table` of these structs.
+      - [ ] Refactor the four `Minecart_Move...` routines into a single `Minecart_Move` subroutine that uses a lookup table for speed and axis.
+      - [ ] Refactor the `Minecart_SetDirection...` routines into a single `Minecart_SetDirection` subroutine that uses lookup tables.
+      - [ ] Add high-level block comments to explain the purpose of major routines like `HandleTileDirections` and the track caching system.
 
-** =D1= Mushroom Grotto
-*** Item: Bow
-*** Miniboss: Vampire Bat
-*** Boss: Mothra 
-Located in the Mushroom Grotto west of the Maku Tree and Wayward Village
+** Ice Block System (=Sprites/Objects/ice_block.asm=)
+*** TODO [#C] Refactor Ice Block Sprite
+    :PROPERTIES:
+    :ID: refactor-ice-block
+    :END:
+    - *Analysis:* The logic is straightforward but can be made more compact and readable.
+    - *Task:* Refactor the `Sprite_ApplyPush` routine to use a lookup table for setting speed based on direction, instead of a chain of `CMP`/`BEQ` instructions.
+    - *Note:* This is a code quality refactor. A separate bug for the collision mechanics is tracked in [[bug-ice-block-collision]].
 
-** =D2= Tail Palace
-*** Boss: Big Moldorm (Vanilla)
-*** Item: Roc's Feather
+** Menu System (=Menu/=)
+*** TODO [#B] Refactor Menu System [0/2]
+    :PROPERTIES:
+    :ID: refactor-menu
+    :END:
+    - *Analysis:* The menu system is robust but has some duplicated code and hardcoded values.
+    - *Tasks:*
+      - [ ] Refactor the input handling logic for the Magic Bag, Song Menu, and Ring Box sub-menus into a single, reusable subroutine.
+      - [ ] Replace all hardcoded menu state values (e.g., `LDA.b #$0C`) with named constants (e.g., `!MENU_STATE_MAGIC_BAG = $0C`).
 
-** =D3= Kalyxo Castle
-*** Boss: Armos Knights (Vanilla)
-*** Item: Meadow Blade (Lv2 Sword)
-*** TODO: Castle Guard Ambush Sequence using overlord sprites and dungeon warp
-    - [ ] Idea needs fleshing out by @scawful
+** Music System (=Music/=)
+*** TODO [#C] Improve Music System Workflow [0/3]
+    :PROPERTIES:
+    :ID: improve-music
+    :END:
+    - *Analysis:* The macro-based system is powerful but could be even more user-friendly for composition.
+    - *Tasks:*
+      - [ ] Establish a clear naming convention for subroutines (e.g., `.MelodyVerseA`, `.BasslineIntro`) and refactor existing songs to use it.
+      - [ ] Create a `Music/common_patterns.asm` library for reusable musical phrases like standard drum beats or arpeggios.
+      - [ ] Develop advanced composition macros like `%DefineMeasure(Name, Notes...)` and `%PlayMeasure(Name, Repeats)` to abstract away subroutine creation and calling.
 
-** ~S1~ Shrine of Wisdom
-*** Item: Zora Flippers
-*** TODO [#C] Shrine of Wisdom Swamp Overworld Improvements :planning:
-    - [ ] Warp Zones to return the player to the start in case they screw up.
-    - [ ] Shrubs with Plentiful magic restoring items
-    - [ ] NPCs to help navigate the player.
-    - [ ] A possible heart-piece/treasure to reward curious players for venturing off the intended route.
+* System Integration & Bugs
+  :PROPERTIES:
+  :CATEGORY: Integration
+  :END:
 
-** =D4= Zora Temple
-*** Boss: Advanced Arrghus (Vanilla variant)
-*** Item: Hookshot, Zora Mask
-*** TODO [#B] Zora Temple Tasks [0/2] :code:bugfix:
-    - [ ] Zora Follower Sprite Logic
-    - [ ] Fix Water Gate Collision
+This section tracks known conflicts between systems and outstanding bugs.
 
-** =D5= Glacia Estate
-*** Boss: Twinrova
-*** Item: Fire Rod
-*** TODO [#B] Glacia Estate Tasks [0/4] :design:polish:
-    - [ ] Improve Ice Block sprite collision detection
-    - [ ] Tune enemies in dungeon, adjust positioning
-    - [ ] Exterior gfx improvements
-    - [ ] Add indicator for pushable block in ice puzzle
+*** ACTIVE [#A] Fix Ice Block Collision and Push Mechanics
+    :PROPERTIES:
+    :ID: bug-ice-block-collision
+    :END:
+    - *Problem:* Collision logic was too sensitive, touch was unpredictable and the direction could shift while the player is moving.
+    - *Solution:* Implemented an intent-based push system requiring Link to be aligned and hold contact for a short duration, with grid snapping for predictable movement.
+    - *Status:* Awaiting emulator verification.
 
-** ~S2~ Shrine of Power
-*** Item: Power Glove
-*** TODO [#A] Shrine of Power Tasks [0/3] :design:
-    - [ ] Fix collision of lava pit corner tiles
+*** ACTIVE [#C] Refactor Ice Block Sprite
+    :PROPERTIES:
+    :ID: refactor-ice-block
+    :END:
+    - *Analysis:* The logic is straightforward but can be made more compact and readable.
+    - *Task:* Refactored the `Sprite_ApplyPush` routine to use a lookup table for setting speed based on direction. Converted `IceBlock_CheckForGround` and `Sprite_IceBlock_CheckForSwitch` to subroutines. Replaced magic numbers with constants.
+    - *Status:* Awaiting emulator verification.
 
-** =D6= Goron Mines
-*** Boss: King Dodongo (Helmasaur variant)
-*** Miniboss: Lanmolas (Large room variant)
-*** Item: Hammer
-*** Dungeon Ideas
-    - Goron Follower
-      - Requires gfx
-      - Affects `Dungeons/crumblefloor_tag.asm` cracks, can fall down
-    - Lifting `Sprites/Objects/minecart.asm` to another location
-      - only works if it is a small corridor so he can't walk back another route
-    - a puzzle similar to star puzzle in minish grotto?
-      (if you step on the same star twice, you fail the puzzle).
-    - walk to the other side of the room without any part of the floor falling down.
-      enemies or other things can make it difficult for you.
-      If you fail, the door to the next room wont open.
-    - only some parts of thefloor are normal and other parts break.
-      you put an item in front of you but if it ends up on weak parts of the floor
-      it falls down and you have to start over.
-      kind of like somaria block try and error on invisible floors
-    - when you enter the room there are already cracks on the floor.
-      you need an item to fix the floor so that you can walk over it once.
-      maybe the song of healing
-    - make a crack and fall down in the right place
-      so that you end up in the right place on the floor below
+*** TODO [#A] Resolve ZSOW vs. Lost Woods Conflict
+    :PROPERTIES:
+    :ID: bug-zsow-lostwoods
+    :END:
+    - *Analysis:* The `lost_woods.asm` puzzle directly conflicts with `ZSCustomOverworld.asm`'s transition handler.
+    - *Task:* Refactor `lost_woods.asm` into a proper `JSL`-callable subroutine (`LostWoods_PuzzleHandler`).
+    - *Implementation:* Modify the `OverworldHandleTransitions` routine in `ZSCustomOverworld.asm` to check if the current area is the Lost Woods (`#$29`) and call the new handler. The handler should return a status indicating if it has overridden the transition.
 
-** =D7= Dragon Ship
-*** Boss: KydrogBoss
-*** Item: Somaria Rod
+*** ACTIVE [#A] ZSOW vs. Day/Night Sprites
+    :PROPERTIES:
+    :ID: bug-zsow-daynight
+    :END:
+    - *Status:* Regression. The previous fix attempt introduced a `BRK` crash.
+    - *Task:* Triage the crash to identify the root cause and develop a new solution for integrating day/night sprite loading with ZSOW.
+
+*** ACTIVE [#A] ZSOW vs. Song of Storms
+    :PROPERTIES:
+    :ID: bug-zsow-storms
+    :END:
+    - *Status:* In progress.
+    - *Blocker:* This task is blocked by the `ZSOW vs. Day/Night Sprites` regression, as they may be related.
+
+*** ACTIVE [#B] Zora Temple Tasks [0/2] :code:bugfix:
+    :PROPERTIES:
+    :ID: bug-zora-temple
+    :END:
+    - [ ] Zora Follower Sprite Logic: Ensure the Zora Baby follower correctly transitions to a standard sprite and interacts with switches.
+    - [ ] Fix Water Gate Collision: Debug collision issues with the water gates in the temple.
+
+* New Features & Content
+
+** Dungeons & Levels
+*** TODO [#A] Add Dungeon Maps [0/11] :assets:map:
+    :PROPERTIES:
+    :ID: content-dungeon-maps
+    :END:
+    - *Task:* Create and integrate map data for all dungeons using the yaze dungeon map editor.
+    - [ ] D1: Mushroom Grotto
+    - [ ] D2: Tail Palace
+    - [ ] D3: Kalyxo Castle
+    - [ ] D4: Zora Temple
+    - [ ] D5: Glacia Estate
+    - [ ] D6: Goron Mines
+    - [ ] D7: Dragon Ship
+    - [ ] D8: Fortress of Secrets
+    - [ ] S1: Shrine of Wisdom
+    - [ ] S2: Shrine of Power
+    - [ ] S3: Shrine of Courage
+
+*** TODO [#B] Glacia Estate Polish [0/4] :design:polish:
+    :PROPERTIES:
+    :ID: content-glacia-estate
+    :END:
+    - [ ] Improve Ice Block sprite collision detection (relates to [[bug-ice-block-collision]]).
+    - [ ] Tune enemies in dungeon, adjust positioning for better challenge flow.
+    - [ ] Exterior GFX improvements.
+    - [ ] Add a visual indicator (e.g., a crack) for the pushable block in the ice puzzle.
+
+*** TODO [#A] Shrine of Power Tasks [0/1] :design:
+    :PROPERTIES:
+    :ID: content-shrine-power
+    :END:
+    - [ ] Fix collision of lava pit corner tiles.
+
 *** TODO [#C] Dragon Ship Tasks [0/1] :design:
-    - [ ] Extended section???
+    :PROPERTIES:
+    :ID: content-dragon-ship
+    :END:
+    - [ ] Flesh out ideas for an extended section.
 
-** ~S3~ Shrine of Courage
-*** Boss: Vaati (Vitreous variant)
-*** Item: Mirror Shield
+*** TODO [#C] Shrine of Wisdom Swamp Overworld Improvements :planning:
+    :PROPERTIES:
+    :ID: content-shrine-wisdom
+    :END:
+    - *Goal:* Make the swamp area less frustrating and more rewarding to explore.
+    - *Ideas:*
+      - [ ] Add warp zones that return the player to the start of a section if they fall.
+      - [ ] Place shrubs or enemies that drop magic vials to support item usage.
+      - [ ] Add a friendly NPC who provides hints about the correct path.
+      - [ ] Place a hidden heart piece or other treasure to reward players who explore off the main path.
 
-** ~S4~ Bonus Shrine (Underwater Eon Abyss)
-*** Item: Red Tunic
+*** TODO [#B] Goron Mines Dungeon Ideas :design:
+    :PROPERTIES:
+    :ID: content-goron-mines
+    :END:
+    - *Goal:* Flesh out puzzle concepts for the Goron Mines.
+    - *Ideas:*
+      - [ ] *Goron Follower:* A Goron follows you who is heavy enough to trigger crumble floors. You must guide him safely.
+      - [ ] *Minecart Lift:* A puzzle where you must lift an empty minecart and place it on a different track to proceed.
+      - [ ] *Fragile Floor Maze:* A room with a mix of normal and crumbling floor tiles. You must find the safe path. Maybe use an item (Cane of Somaria?) to test the floor ahead.
+      - [ ] *Controlled Collapse:* A puzzle where you must intentionally make a floor tile crumble to fall down to a specific spot on the floor below.
 
-** =D8= Fortress of Secrets
-*** Boss: Dark Link
-*** Item: Portal Rod
+** Quests & Narrative Sequences
+*** ACTIVE [#A] Zora Sanctuary Questline [2/3] :quest:
+    :PROPERTIES:
+    :ID: quest-zora-sanctuary
+    :END:
+    - [X] Meet lone Sea Zora left at the Sanctuary, learn of Zora Princess.
+    - [X] Conflict over territory lead to Zora Princesses imprisonment.
+    - [ ] Implement waterfall opening event using Song of Storms. This will require coordination between =Items/ocarina.asm= and =Overworld/overlays.asm=.
 
-** =D9= Eon Core (Endgame)
-*** Boss Part 1: Kydreeok (Kydrog Gleeok variant)
-*** Boss Part 2: Ganon 
-*** Item: Triforce
-
-* Quests
-** Main Quests
-*** Lost Ranch Girl Quest
-  1) Get Mushroom from Old Woman house in Mushroom Grotto
-  2) Trade Mushroom to Potion Shop
-  3) Leave Mountains and return to Potion Shop later for Magic Powder
-  4) Use Magic Powder on Cucco in the Ranch House for Ocarina
-
-*** Mask Salesman Quest
-  1) Requires Ocarina from Lost Ranch Girl Quest
-  2) Mask Salesman teaches Song of Healing
-  3) Play Song of Healing for Deku NPC near the shop for Deku Mask
-
-*** TODO [#B] Tail Palace Kiki Quest [1/2] :quest:code:
-1) [ ] Kiki asks for Bananas instead of Rupees
-2) [X] Deku NPCs inhabit Tail Palace OW after dungeon completion
-
-*** Book of Secrets
-  1) Play Song of Healing for sick village child for Running Boots
-  2) Use Running Boots to get the Book from the village library.
-**** TODO Journal mode :menu:
-    - [ ] Track quests completed
-    - [ ] Track items obtained
-    - [ ] Track dungeon completion
-
-*** TODO [#A] Kalyxo Castle Questline :quest:
-**** Bridge Opening
-+ Requires Book of Secrets from Wayward Village library.
-**** TODO Prison Sequence [0/2] :sequence:code:
-  1) [ ] Occurs after obtaining the Meadow Blade in Kalyxo Castle
-  2) [ ] Ambushed by castle guards and locked away in castle prison dungeon room
-  3) [ ] Escape the prison cell and sneak past guards to exit the castle using minish form,
-      requires minish dungeon object tile types and interactions with `probe_ref.asm` (unused)
-      to do player detection by guards.
-
-*** ACTIVE [#A] Zora Sanctuary Questline [2/2] :quest:
-  - [X] Meet lone Sea Zora left at the Sanctuary, learn of Zora Princess
-  - [X] Conflict over territory lead to Zora Princesses imprisonment
-  - [ ] Waterfall Song of Storms Event apart of `Items/ocarina.asm` and `Overworld/overlays.asm`
-
-*** Old Man Mountain Quest
-  1) Take the warp portal at the northwest most point on Mount Snowpeak
-  2) Enter the Lava Lands cave to find the Old Man.
-  3) Escort the Old Man to a rock formation on the mountain and use magic mirror.
-  4) Receive the Goldstar before continuing to Glacia Estate
+*** TODO [#A] Kalyxo Castle Prison Sequence [0/4] :sequence:code:
+    :PROPERTIES:
+    :ID: quest-kalyxo-prison
+    :END:
+    - *Goal:* Create a stealth-based escape sequence after obtaining the Meadow Blade.
+    - *Tasks:*
+      - [ ] Implement Overlord logic to swarm the player with guards after they get the Lv2 sword, triggering a warp to a dungeon room (prison cell).
+      - [ ] Implement guard AI using =probe_ref.asm=. Some guards should have a simple "reset on sight" behavior, while others should give chase.
+      - [ ] Design the prison escape path, requiring the use of Minish form to slip through small passages.
+      - [ ] Create custom dungeon objects for Minish-only pathways.
 
 *** ACTIVE [#B] Goron Mines Quest [2/4] :quest:
-  1) [X] Collectible Goron Rock Meat from Lupo Mountain
-      - Eon Gorons workers protesting labor, Piratians involved somehow
-      - Requires Power Glove from Shrine of Power
-  2) [X] Kalyxian Goron NPC in the desert asks for five sirloins to open the mines.
-  3) [ ] Garo NPC easter egg warps around the map
-  4) [ ] Gossip Stones provide some hint related to the Shrines?
+    :PROPERTIES:
+    :ID: quest-goron-mines
+    :END:
+    - [X] Collectible Goron Rock Meat from Lupo Mountain.
+    - [X] Kalyxian Goron NPC in the desert asks for five sirloins to open the mines.
+    - [ ] Implement Garo NPC. This will be a dialogue-heavy NPC with mysterious warping behavior. (Depends on [[infra-dialogue-docs]]).
+    - [ ] Add Gossip Stones that provide hints related to the Shrines or other world lore.
 
-** Side Quests
-*** Masks for Sale
-**** Bunny Hood - 100 Rupees
-**** Stone Mask - 850 Rupees
-*** Wolf Mask Quest
-  1) Wolfos appears outside of Kalyxo Castle at Night, defeat and play Song of Healing for Wolf Mask.
-*** DONE Magic Bean Quest [4/4] :quest:
-  1) [X] Buy Magic Bean from Bean Vendor, requires Bottle.
-  2) [X] Take Magic Bean to the Ranch and plant it in empty soil north of the houses.
-  3) [X] Requires rain (Song of Storms), Pollination (Good Bee) and 3 in game days.
-  4) [X] Flower the player can ride to a heart container appears.
-*** TODO [#C] Swordsmith Rescue [0/3] :quest:
-  1) [ ] Use the Bomb Shop Big Bomb in the Eon Abyss Beach
-  2) [ ] Return the Lost Brother to the Smiths house west of Waywrd Village
-  3) [ ] Swordsmith brothers improve your Meadow Blade to the Tempered Sword (Lv3)
-*** TODO [#C] Korok Cove :quest:
-  1) [ ] Find the Korok Cove entrance in graveyard
-  2) [ ] Hide and seek minigame with `Sprites/NPCs/korok.asm`
-*** TODO [#C] East Kalyxo Zora River Region :quest:
-  1) [ ] Use the flippers to swim down the river east of Korok Cove
-  2) [ ] Find the hidden grotto with a heart piece
-  3) [ ] Come up with more ideas for this area
-*** TODO [#C] Fishing Minigame :minigame:
-*** TODO [#B] Sky Area Special Overworld Events :quest:
-  - [ ] Song of Soaring to access Sky Area
-  - [ ] Sky Area NPCs and Enemies
-  - Ideas for Cloud area (weather puzzles)
-    - Some clouds are very thin and Link will fall through them if he is not minish Link.
-    - Other clouds have strong wind currents so Minish Link will be blown away immediately.
-    - Some clouds are too far apart to jump over with Roc's feather or hookshot. Then you have to use the flute and switch between sun and rain: New cloud platforms will appear when it rains (water fills them)
-    - Some clouds are charged with electricity and damage Link if you walk on them. Play the flute to get sunshine so they turn into normal clouds. Or maybe somehow lead the electricity to a mechanism that opens a gate? (for example, playing the melody again so that a normal cloud becomes a thundercloud and conducts the electricity further)
-*** TODO [#B] Dream Sequences [0/6] :sequence:
-  - [ ] Deku Business Scrub Dream
-  - [ ] Twinrova Ranch Girl Dream
-  - [ ] Hyrule Castle Dream (Song of Time)
-  - [ ] River Zora King Dream
-  - [ ] Kydrog Sealing Dream
-  - [ ] Mine Collapse Dream
+*** TODO [#B] Tail Palace Kiki Quest [1/2] :quest:code:
+    :PROPERTIES:
+    :ID: quest-tail-palace
+    :END:
+    - [X] Deku NPCs inhabit Tail Palace OW after dungeon completion.
+    - [ ] Modify the Kiki follower logic to require Bananas instead of Rupees to open the palace.
 
-* Items
-** Y Items
-| Name            | Description                                  |
-|-----------------+----------------------------------------------|
-| Bow             | Vanilla                                      |
-| Boomerang       | Vanilla                                      |
-| Hookshot        | Goldstar ball and chain upgrade, L/R to swap |
-| Bombs           | Vanilla                                      |
-| Magic Powder    | Press A on menu to open Magic Bag            |
-| Hammer          | Vanilla                                      |
-| Lamp            | Vanilla                                      |
-| Fire Rod        | Vanilla                                      |
-| Ice Rod         | Freezes water tiles to walk on               |
-| Magic Mirror    | Allows dual warping with all essences        |
-| Ocarina         | Song of Storms, Soaring, Time, Healing       |
-| Book of Secrets | Activates special overworld events           |
-| Cane of Byrna   | Vanilla                                      |
-| Fishing Rod     | Press Y to cast reel in water                |
-| Portal Rod      | Press Y to create blue and orange portals    |
-| Roc's Feather   | Press Y to jump                              |
-| Deku Mask       | Shoot magic bubbles, interact with Deku leaf |
-| Zora Mask       | Press Y to dive underwater                   |
-| Wolf Mask       | Press Y to dig for treasure                  |
-| Bunny Hood      | Press R to transform and run faster          |
-| Stone Mask      | Reskinned Magic Cape                         |
-| Bottles         | No longer requires Bug Catching Net to use   |
+*** TODO [#B] Implement Dream Sequences [0/6] :sequence:
+    :PROPERTIES:
+    :ID: content-dream-sequences
+    :END:
+    - [ ] Deku Business Scrub Dream
+    - [ ] Twinrova Ranch Girl Dream
+    - [ ] Hyrule Castle Dream (Song of Time)
+    - [ ] River Zora King Dream
+    - [ ] Kydrog Sealing Dream
+    - [ ] Mine Collapse Dream
 
-** Equipment
-| Name                 | Location                 |
-|----------------------+--------------------------|
-| Moon Pearl           | Shrine of Origins        |
-| Small Sword    (Lv1) | Forest of Dreams         |
-| Small Shield   (Lv1) | Forest of Dreams         |
-| Meadow Blade   (Lv2) | Kalyxo Castle            |
-| Tempered Blade (Lv3) | Swordsmiths Hut          |
-| Master Sword   (Lv4) | Temporal Pyramid         |
-| Hero Shield          | Shops                    |
-| Mirror Shield        | ???                      |
-| Blue Tunic           | Zora Sanctuary Waterfall |
-| Red Tunic            | Shrine of ??????         |
-| Power Glove          | Shrine of Power          |
-| Titans Mitt          | Fortress of Secrets?     |
-| Running Boots        | Sick Kid Wayward Village |
+*** TODO [#B] Implement Journal Feature :menu:
+    :PROPERTIES:
+    :ID: content-journal
+    :END:
+    - *Goal:* Create a functional journal accessible from the menu.
+    - *Tasks:*
+      - [ ] Design the UI for the journal in =Menu/menu_journal.asm=.
+      - [ ] Create a system to track completed quests and major events using SRAM flags.
+      - [ ] Write the text entries for each event.
 
-** Rings
-| Name           | Description                      |
-|----------------+----------------------------------|
-| Power Ring     | Increase attack                  |
-| Armor Ring     | Increase defense                 |
-| Heart Ring     | Slowly regenerate health         |
-| Light Ring     | Sword beams work at -2 hearts    |
-| Blast Ring     | Higher bomb damage, bombos class |
-| Steadfast Ring | No knockback                     |
+*** ACTIVE [#B] Implement Consumable Item Effects [2/6] :quest:
+    :PROPERTIES:
+    :ID: content-consumables
+    :END:
+    - *Analysis:* The Magic Bag jump table in =all_items.asm= has several unimplemented items.
+    - *Tasks:*
+      - [X] Banana (restores health)
+      - [X] Rock Meat
+      - [ ] Pineapple
+      - [ ] Seashells
+      - [ ] Honeycombs
+      - [ ] Deku Sticks
 
-** Ocarina Songs
-| Name           | Effect                                      |
-|----------------+---------------------------------------------|
-| Song of Storms | Makes it rain and grow plants               |
-| Song of Soaring| Warp to previously visited locations        |
-| Song of Time   | Change day to night and vice versa          |
-| Song of Healing| Heals a character and gives Deku Mask       |
+*** TODO [#C] Design and Implement Custom End Credits Sequence
+    :PROPERTIES:
+    :ID: content-end-credits
+    :END:
+    - *Goal:* Create a unique end credits sequence for the game.
+    - *Note:* Will be implemented using the custom C++ editor, yaze.
 
-* Sprites
-** NPCs
-*** Impa
-*** Maku Tree
-*** Ranch Girl
-*** TODO Garo
-*** [#0A] Kaepora Gaebora / Eon Owl
-  - Return to the Hall of Secrets with Six Essences
-  - Kaepora Gaebora teaches you the Song of Soaring 
-*** [#0E] Piratian
-*** [#07] Bean Vendor / Village Elder
-*** [#22] Tingle
-  - Player can buy maps for each dungeon from Tingle
-*** [#25] Village Dog
-*** [#39] Sea Zora Baby
-*** [#73] Farore
-*** [#A0] Deku Scrub (Mask) and NPCs
-*** [#B8] Zora Princess and NPCs
-*** [#D7] Vasu
-*** [#E8] Happy Mask Salesman
-*** [#F0] Mermaid / Maple / Librarian
-*** [#F1] Korok
-*** [#F2] Goron
-** Bosses
-*** [#88] Manhandla
-*** Advanced Arrghus
-*** King Dodongo
-*** [#CE] Twinrova
-*** [#C1] Dark Link
-*** Kydrog
-*** [#7A] Kydreeok
-** Enemies
-*** [#05] Helmet Chuchu
-*** [#14] Business Scrub (Kaly/Eon)
-*** [#1D] Darknut (Eon)
-*** [#2C] Goriya
-*** Octorok (Kaly/Eon)
-**** TODO Water Octorok
-*** [#A4] Pols Voice
-*** [#A8] Anti-Kirby
-*** [#A9] Wolfos
-**** Castle Variant
-**** TODO Ice Variant
-*** [#AE] Sea Urchin (Kaly/Eon)
-*** [#B1] Puffstool
-*** [#EF] Poltergeist
-*** [#CC] Booki
-*** [#CD] Thunder Ghost
-** Objects
-*** Collectibles
-*** Deku Leaf
-*** [#D5] Ice Block
-*** Minecart
-*** Mineswitch
-*** Switch track
-*** Portal Sprite
-* Tasks
-** DONE Add Librarian translations
-** DONE Goron Mines Opening Animation [2/2]
-- [X] Setup Goron Sprite
-  - [X] Kalyxian Variant
-  - [X] Eon Abyss Variant
-- [X] Animate mines opening animation
+** Sprites & Entities
+*** TODO [#A] Improve Various Sprites Behavior Quality
+    :PROPERTIES:
+    :ID: quality-sprites
+    :END:
+    - *Goal:* A general task to review and polish the AI and behavior of various custom sprites.
+    - *Note:* This is a high-level task that should be broken down into specific sprite-by-sprite improvements as development continues.
 
-** DONE Fortress of Secrets Cutscene
-Should use the Ganons Tower Crystal Cutscene as the base.
+*** TODO [#A] Update Kydrog Boss Fight [1/3] :boss:code:
+    :PROPERTIES:
+    :ID: boss-kydrog
+    :END:
+    - [X] Track offspring sprites spawned for more dynamic spawns.
+    - [ ] Improve Kydrog's movement AI and add a second phase to the fight.
+    - [ ] Create a cinematic opening and ending cutscene with dialogue.
 
-** DONE Fix Minecart mechanics [3/3]
-- [X] Follower cart controls
-- [X] Tile behavior for follower cart mode
-- [X] Center based hitbox detection
+*** TODO [#A] Update Kydreeok Boss Fight [0/9] :boss:code:
+    :PROPERTIES:
+    :ID: boss-kydreeok
+    :END:
+    - *Goal:* Make the fight more dynamic and challenging.
+    - *Tasks:*
+      - [ ] Improve fireball attack patterns (e.g., targeted shots, spreads).
+      - [ ] Add a "neck stretch" lunge attack, similar to a Chain Chomp.
+      - [ ] Add a "spin attack" where necks stretch and spin around the body while shooting fire.
+      - [ ] Add a bone-throwing attack for the second phase.
+      - [ ] Make defeated heads detach and float around the room before re-attaching, instead of just popping back.
+      - [ ] Add a "bullet hell" phase where heads are retracted and the body shoots fireballs in all directions.
+      - [ ] Modify the damage check to prevent electrocuting the player if they hit a head, reducing frustration.
+      - [ ] Create a pre-fight transformation cutscene showing Kydrog turning into Kydreeok.
+      - [ ] Improve head/neck rotation visuals.
 
-** ACTIVE [#B] Collectible Item Quests [2/6] :quest:
-- [ ] Bananas
-- [X] Pineapples
-- [X] Rock Meat
-- [ ] Seashells
-- [ ] Honeycombs
-- [ ] Deku Sticks
+*** TODO [#B] Enhance Shrine of Courage Boss (Vaati) AI
+    :PROPERTIES:
+    :ID: boss-vaati
+    :END:
+    - *Goal:* Move the boss beyond a simple reskin of Vitreous.
+    - *Task:* Design and implement new, Vaati-inspired attack patterns.
+    - *Inspiration:* Could draw from the "Advanced Arrghus" custom boss logic.
 
-** ACTIVE [#A] Add Dungeon Maps [0/11] :assets:map:
-Apart of yaze dungeon map editor task.
-- [ ] Mushroom Grotto
-- [ ] Tail Palace
-- [ ] Kalyxo Castle
-- [ ] Zora Temple
-- [ ] Glacia Estate
-- [ ] Goron Mines
-- [ ] Dragon Ship
-- [ ] Fortress of Secrets
-- [ ] Shrine of Wisdom
-- [ ] Shrine of Power
-- [ ] Shrine of Courage
+** Creative Ideas & Brainstorming
+*** Sky Area Special Overworld Events
+    :PROPERTIES:
+    :ID: idea-sky-area
+    :END:
+    - *Goal:* Design puzzles for a cloud-based area accessed with the Song of Soaring.
+    - *Ideas:*
+      - *Weather Puzzles:* Use the Ocarina to switch between sun and rain. Rain creates new cloud platforms by filling them with water. Sunshine makes electric clouds safe to walk on.
+      - *Form-Based Puzzles:* Some clouds are thin and require Minish Form to not fall through. Others have strong winds that blow Minish Link away but not normal Link.
+      - *Conduction Puzzles:* Use the Song of Storms to turn a normal cloud into a thundercloud to conduct electricity and power a mechanism.
 
-** TODO [#A] Update Kydrog boss [1/3] :boss:code:
-- [X] Track offspring sprites spawned, more dynamic spawns
-- [ ] Improve Kydrog movement, add additional stage in fight
-- [ ] Cinematic opening and ending cutscene with dialogue
-
-** TODO [#A] Update Kydreeok boss [0/9] :boss:code:
-- [ ] Improve fireball attack
-- [ ] Improve head/neck rotation
-- [ ] pause and neck stretch out attack ala Chain Chomp style
-- [ ] neck stretch out and spin around the main body while shooting fire attack
-- [ ] A bone throwing attack in the second half
-- [ ] heads detach after you kill them and then float around the room like the original gleeok or like blind And then re-attach themselves instead of having them just pop back in like you have it now You could do it in both phases or just in the second bone phase
-- [ ] bullet hell section where it just sucks in its heads so you can't hit it and then just shoots fireballs in every direction
-- [ ] function that checks if you hit the head and if you do, don't electrocute the player to avoid some potential frustration there
-- [ ] pre-fight transformation cutscene with kydrog
-
-** TODO [#C] End Credits :sequence:
-
-* Timeline
+* Reference
+** Timeline
 
 | Event             | Items                |
 |-------------------+----------------------|
 | Start Game        | Lamp                 |
 | Shrine of Origins | Moon Pearl           |
 | Forest of Dreams  | Lv1 Sword and Shield |
-|                   |                      |
+| ...               | ...                  |
 
-
-- Beginning
-  - Farore Intro
-    - GameState 7EF3C5:02
-    - StoryState    B6:01
-  - Kydrog Intro
-    - OosProg2  7EF3C6:04
-    - IntroFlag 7EF300:01
-  - Maku Tree Return from Eon Abyss
-    - OosProg   7EF3D6:02
-
-- Kalyxo General
-  - Impa Hall of Secrets
-    - OosProg   7EF3D6:04
-  - Village Elder
-    - MAPICON interaction
-  - Ranch Kid
-    - MAPICON interaction
-
-- Toadstool Woods Mushroom -> Magic Powder from Potion Shop
-- Magic Powder -> Ocarina from chicken at Toto Ranch
-- Ocarina -> Song of Healing from Mask Salesman near village
-- Song of Healing -> Deku Mask from Deku Scrub near Mask Shop
-- Song of Healing -> Running Boots from Sick Kid in village
-- Running Boots   -> Book of Secrets from village library
-
-- Book of Secrets
-  - Lifts the Kalyxo Castle gates
-
-* ROM Map
+** ROM Map
 Expanded space used by ZScream as of 1/16/2024
 Addresses are PC unless stated otherwise.
 ZS reserves everything up to 1.5mb or up to 0x150000
@@ -490,20 +396,16 @@ ZS reserves everything up to 1.5mb or up to 0x150000
 | 0x138000 - 0x13FFFF | Expanded dungeon object data |
 | 0x140000 - 0x147FFF | Custom overworld data        |
 | 0x148000 - 0x14FFFF | Expanded dungeon object data |
-|                     |                              |
 
-* Credits
+** Credits
 Zarby89 - ZScream, Code, Graphics
 Jared Brian - Shrine of Power, ZScream, Code
 Jeimuzu - Shrine of Wisdom, Tail Palace
 Letterbomb - Shrine of Courage, Music, Graphics
 NEONswift - Legends of Hyrule Maps
-
 SePH - Overworld, Graphics
 Ghillie - Overworld, Graphics
-
 DarkLink45 - Deku Link GFX
-
 W*E*R*D*N*A - Graphics
 GameyFireBro - Graphics
 Fruttielicious - Beta Testing
@@ -512,4 +414,4 @@ Spacewiki - Beta Testing
 Evolvingfetus - Beta Testing
 Discodragn - Beta Testing
 BIGLOU - Beta Testing
-HonorThyFamily - Beta Testing
+HonorThyFamily - Beta-Testing

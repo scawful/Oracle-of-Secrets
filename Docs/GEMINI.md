@@ -49,7 +49,7 @@ The 65816 is an 8/16-bit microprocessor used in the Super Nintendo Entertainment
 
 ### 2.2. Scoping and Style
 
-- **Guideline:** The established code style uses labels followed by `{}` brackets to define scope for new blocks of logic. This convention must be followed.
+- **Guideline:** The established code style uses labels followed by `{}` brackets to define scope for new blocks of logic. This convention must be followed. The `subroutine`/`endsubroutine` keywords are explicitly *not* to be used in this project.
 - **Rationale:** The `subroutine`/`endsubroutine` keywords are not used in this project. Maintaining a consistent style is crucial for readability.
 
 ### 2.3. Data Organization
@@ -61,6 +61,19 @@ The 65816 is an 8/16-bit microprocessor used in the Super Nintendo Entertainment
 
 - **Guideline:** Avoid hardcoding numerical values. Use `!` or `define()` to create named constants for RAM/SRAM addresses, item IDs, sprite states, tile IDs, etc.
 - **Rationale:** This makes the code self-documenting and significantly easier to maintain and debug.
+
+### 2.5. Opcode Size Suffixes (.b, .w, .l)
+
+`asar` can often infer operand sizes, but relying on this can lead to bugs when the processor state (M and X flags) is not what you expect. To write robust, readable, and safe code, you should use explicit size suffixes.
+
+- **`.b` (byte):** Forces an 8-bit operation. Use this when you are certain you are working with a single byte.
+    - Example: `LDA.b $7E0010` will correctly load a single byte into the accumulator, regardless of the M flag's state.
+- **`.w` (word):** Forces a 16-bit operation. Use this when working with two bytes (a word).
+    - Example: `LDA.w $7E0022` will load a 16-bit value. This is essential for correctness if the M flag is 1 (8-bit mode).
+- **`.l` (long):** Forces a 24-bit operation, typically for addresses in `JML` or `JSL`.
+    - Example: `JSL.l SomeRoutineInAnotherBank`
+
+**Golden Rule:** A mismatch between the M/X flags and the intended operation size is a primary cause of crashes. When in doubt, wrap your code in `REP`/`SEP` to explicitly set the processor state, and use size suffixes to make your intent clear to both the assembler and future developers.
 
 ## 3. Project-Specific Conventions
 
@@ -82,7 +95,14 @@ The 65816 is an 8/16-bit microprocessor used in the Super Nintendo Entertainment
 - When hooking or modifying vanilla code, it is essential to understand the original context. The `usdasm` disassembly is the primary reference for this.
 - To find the original code for a patch at a given address (e.g., `$07A3DB`), you can search for the SNES address in the `usdasm` files (e.g., `#_07A3DB:`).
 
-## 4. Debugging Tips for BRKs and Crashes
+## 4. Build Process and ROM Management
+
+- **Clean ROM**: The clean, unmodified "The Legend of Zelda: A Link to the Past" ROM should be placed at `Roms/oos169.sfc`. This path is included in `.gitignore`, so the ROM file will not be committed to the repository.
+- **Build Script**: A `build.sh` script is provided to automate the build process. For detailed usage, see `Docs/AsarUsage.md`.
+- **Workflow**: The build script creates a fresh copy of the clean ROM and applies the `Oracle_main.asm` patch to it using `asar`.
+- **Important**: Never apply patches directly to `Roms/oos169.sfc`. Always use the build script to create a new, patched ROM. This ensures the clean ROM remains untouched for future builds.
+
+## 5. Debugging Tips for BRKs and Crashes
 
 When encountering unexpected crashes (often indicated by a `BRK` instruction in emulators), especially after modifying code, consider the following:
 
@@ -92,6 +112,10 @@ When encountering unexpected crashes (often indicated by a `BRK` instruction in 
     - **Check `PHP`/`PLP`:** These save/restore the entire Processor Status Register. Use them when a routine needs a specific P state and you want to restore the caller's state afterwards.
 
 - **Stack Corruption:** JSL/JSR push the return address onto the stack. If a called routine pushes too much data onto the stack without popping it, or if the stack pointer (`S`) is corrupted, the return address can be overwritten, leading to a crash when `RTL`/`RTS` is executed.
+    - **`JSR`/`RTS` vs `JSL`/`RTL` Mismatch:** This is a critical and common error.
+        - `JSR` (Jump to Subroutine) pushes a 2-byte return address. It **must** be paired with `RTS` (Return from Subroutine), which pulls 2 bytes.
+        - `JSL` (Jump to Subroutine Long) pushes a 3-byte return address (including the bank). It **must** be paired with `RTL` (Return from Subroutine Long), which pulls 3 bytes.
+    - Using `RTL` with `JSR` (or `RTS` with `JSL`) will corrupt the stack and almost certainly lead to a crash. Always verify that your subroutine calls and returns are correctly paired.
     - **Balance Pushes and Pops:** Every `PHA`, `PHX`, `PHY`, `PHP` should ideally have a corresponding `PLA`, `PLX`, `PLY`, `PLP` within the same routine.
     - **Bank Switching with Stack:** Be extremely careful when performing bank switches (`PHB`/`PLB`, `PHK`/`PLK`) around stack operations, as the stack is in WRAM (bank $7E/$7F).
 
@@ -113,7 +137,12 @@ When encountering unexpected crashes (often indicated by a `BRK` instruction in 
 
 
 
-## 5. Memory and Symbol Analysis
+## 6. Verification Policy
+
+- **Bugs and Features:** Never mark a bug fix or feature implementation as `DONE` until it has been thoroughly tested and verified in an emulator. This ensures stability and prevents regressions.
+
+
+## 7. Memory and Symbol Analysis
 
 This section details the layout and purpose of critical memory regions (WRAM and SRAM) and the symbol definition files that give them context.
 
@@ -160,7 +189,7 @@ This file acts as a central header, defining constants and labels for memory add
 *   **Memory Maps:** It contains the definitive memory maps for WRAM structures, most notably for sprites and ancillae.
 *   **Readability:** Its primary purpose is to replace "magic numbers" (raw addresses) with human-readable labels, which is essential for a project of this scale.
 
-## 6. Disassembly Analysis and Search Guide
+## 8. Disassembly Analysis and Search Guide
 
 This section provides a high-level analysis of key banks in the Link to the Past disassembly. Use this guide to quickly locate relevant code and understand the overall structure of the game.
 
@@ -694,7 +723,7 @@ This bank is another major collection of advanced sprite and boss logic, complem
 
 #### 6.19. Bank $1F: Dungeon Room Data
 
-## 7. ZScream expanded feature ROM map
+## 9. ZScream expanded feature ROM map
 
 > **Last Updated:** 02/28/2025
 > **Note:** All addresses are in PC format unless otherwise stated.
