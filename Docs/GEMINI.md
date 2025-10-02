@@ -94,6 +94,13 @@ The 65816 is an 8/16-bit microprocessor used in the Super Nintendo Entertainment
 
 - When hooking or modifying vanilla code, it is essential to understand the original context. The `usdasm` disassembly is the primary reference for this.
 - To find the original code for a patch at a given address (e.g., `$07A3DB`), you can search for the SNES address in the `usdasm` files (e.g., `#_07A3DB:`).
+- **Vanilla labels are not included by default.** The `usdasm` project is a reference, not part of the build. If you need to call a vanilla routine, you must find its implementation in the disassembly and explicitly copy or recreate it within the `Oracle of Secrets` source, giving it a new label (e.g., inside the `Oracle` namespace).
+
+### 3.5. Namespacing
+
+- **Guideline:** The majority of the *Oracle of Secrets* codebase is organized within an `Oracle` namespace, as defined in `Oracle_main.asm`. However, some modules, notably `ZSCustomOverworld.asm`, are included *outside* of this namespace.
+- **Interaction:** To call a function that is inside the `Oracle` namespace from a file that is outside of it (like `ZSCustomOverworld.asm`), you must prefix the function's label with `Oracle_`. For example, to call the `CheckIfNight16Bit` function (defined inside the namespace), you must use `JSL Oracle_CheckIfNight16Bit`.
+- **Rationale:** The build process correctly resolves these `Oracle_` prefixed labels to their namespaced counterparts (e.g., `Oracle.CheckIfNight16Bit`). Do not add the `Oracle_` prefix to the original function definition; it is only used by the calling code outside the namespace.
 
 ## 4. Build Process and ROM Management
 
@@ -134,6 +141,7 @@ When encountering unexpected crashes (often indicated by a `BRK` instruction in 
     2.  **Use `print_debug`:** Strategically place `%print_debug()` macros to output register values or memory contents at critical points in the code. This can help track the flow and identify unexpected values.
     3.  **Emulator Debugger:** Learn to use your emulator's debugger effectively. Step-by-step execution, register viewing, and memory inspection are invaluable tools.
     4.  **Check `usdasm`:** Always cross-reference with the `usdasm` disassembly to understand the original vanilla code and how your hooks are interacting with it.
+    5.  **Efficiently Search Large Files:** When analyzing large assembly files, especially those with large data blocks like `Overworld/ZSCustomOverworld.asm`, prefer using `search_file_content` or `grep` to find specific labels or code sections instead of reading the entire file in chunks. This avoids confusion and is more efficient.
 
 
 

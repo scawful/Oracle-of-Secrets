@@ -129,12 +129,11 @@ With ZSOW v3, the vanilla sprite loading hook (`Overworld_LoadSprites` at `$09C4
 
 ### Conclusion & Solution
 
-This conflict is **ongoing**. An attempted solution to integrate the `CheckIfNight` logic directly into ZSOW's sprite loading routine caused a regression, resulting in a `BRK` after returning from `LoadOverworldSprites_Interupt`.
+This is an **unresolved conflict**. The original day/night sprite logic is not being called by ZSOW's custom sprite loading routine, preventing day/night-specific sprites from appearing.
 
-**Attempted Solution (Caused Regression):**
-1.  **Modified `LoadOverworldSprites_Interupt`:** In `ZSCustomOverworld.asm`, a `JSL CheckIfNight` call was inserted at the beginning of this routine. `CheckIfNight` returns a potentially modified game state (e.g., `GameState + 1` for night) in the accumulator.
-2.  **Adjusted Game State Usage:** The `LoadOverworldSprites_Interupt` routine then attempted to use this adjusted game state to look up the appropriate sprite set in ZSOW's `.Overworld_SpritePointers_state_..._New` tables.
-3.  **`CheckIfNight` and `CheckIfNight16Bit`:** These routines in `Overworld/time_system.asm` were uncommented and available. `CheckIfNight16Bit` is already integrated into ZSOW's `Sprite_LoadGfxProperties_Interupt` (`$00FC67`), ensuring sprite graphics properties are also adjusted for day/night.
-
-**Impact of Regression:** The game crashes with a `BRK` after `LoadOverworldSprites_Interupt` returns, indicating an issue with the state or stack after the `CheckIfNight` call. This solution is currently not viable. Further investigation is required to correctly integrate day/night sprite loading with ZSOW v3 without causing crashes.
+**Status:**
+- An initial attempt was made to integrate the `CheckIfNight` logic into ZSOW's `LoadOverworldSprites_Interupt` routine.
+- This attempt introduced severe regressions, including game crashes (`BRK`) and build failures.
+- The changes have been **reverted** to restore stability.
+- As a result, the conflict remains, and a new solution is needed to make the two systems compatible.
 

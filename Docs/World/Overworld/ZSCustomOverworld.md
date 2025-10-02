@@ -57,3 +57,13 @@ ZSCustomOverworld replaces dozens of vanilla routines. Some of the most critical
 
 - **`!UseVanillaPool`:** A flag that, when set to 1, forces the system to use data tables that mimic the vanilla game's behavior. This is useful for debugging.
 - **`!Func...` Flags:** A large set of individual flags that allow for enabling or disabling specific hooks. This provides granular control for debugging and compatibility testing.
+
+## 6. Analysis & Future Work: Sprite Loading
+
+The `LoadOverworldSprites_Interupt` hook at `org $09C4C7` is a critical component that requires further investigation to support dynamic sprite sets, such as those needed for a day/night cycle.
+
+- **Identified Conflict:** The current ZScream implementation for sprite loading conflicts with external logic that attempts to swap sprite sets based on in-game conditions (e.g., time of day). The original hook's design, which calls `JSL.l Sprite_OverworldReloadAll`, can lead to recursive loops and stack overflows if not handled carefully.
+
+- **Investigation Goal:** The primary goal is to modify `LoadOverworldSprites_Interupt` to accommodate multiple sprite sets for a single area. The system needs to be able to check a condition (like whether it is currently night) and then select the appropriate sprite pointer, rather than relying solely on the static `state_..._New` tables.
+
+- **Technical Challenges:** A previous attempt to integrate this functionality was reverted due to build system issues where labels from other modules (like `Oracle_CheckIfNight16Bit`) were not visible to `ZSCustomOverworld.asm`. A successful solution will require resolving these cross-module dependencies and carefully merging the day/night selection logic with ZScream's existing data-driven approach to sprite loading.
