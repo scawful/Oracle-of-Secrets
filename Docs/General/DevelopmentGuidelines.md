@@ -29,6 +29,96 @@ To ensure modern and maintainable assembly code, the project adheres to the foll
 *   **Data Structures:** Use `struct` for complex, related data (e.g., sprite state) and `table` for jump tables or data arrays. This improves readability and reduces errors from manual offset calculations.
 *   **Constants:** Use `!` or `define()` to create named constants for RAM/SRAM addresses, item IDs, sprite states, and other "magic numbers." This makes the code self-documenting and easier to maintain.
 
+### 2.4. Namespace Architecture
+
+Oracle of Secrets uses a mixed namespace architecture to organize code and manage symbol visibility:
+
+*   **`Oracle` Namespace:** Most custom code is placed within the `namespace Oracle { }` block. This includes Items, Menu, Masks, Time System, and most custom features.
+*   **ZScream (No Namespace):** The `ZSCustomOverworld` system operates outside any namespace, as it needs to hook directly into vanilla bank addresses.
+*   **Cross-Namespace Calling:** When Oracle code needs to call ZScream functions, or vice versa, proper exports must be defined:
+
+```asm
+// In ZScream file:
+LoadOverworldSprites_Interupt:
+{
+    ; ... ZScream code ...
+    RTL
+}
+
+// Export to Oracle namespace:
+namespace Oracle
+{
+    Oracle_LoadOverworldSprites_Interupt = LoadOverworldSprites_Interupt
+}
+```
+
+*   **Bridge Functions:** When ZScream needs to call Oracle code, use a bridge function pattern:
+
+```asm
+// Oracle implementation:
+namespace Oracle
+{
+    CheckIfNight:
+        ; Main implementation
+        RTL
+}
+
+// Bridge function (no namespace):
+ZSO_CheckIfNight:
+{
+    JSL Oracle_CheckIfNight  ; Can call INTO Oracle
+    RTL
+}
+
+// Export bridge:
+namespace Oracle
+{
+    Oracle_ZSO_CheckIfNight = ZSO_CheckIfNight
+}
+```
+
+**Important:** Always use the `Oracle_` prefix when calling exported functions from within the Oracle namespace. See `Docs/World/Overworld/ZSCustomOverworldAdvanced.md` Section 5 for detailed examples.
+
+### 2.5. Processor State Management
+
+The 65816 processor has critical flags (M and X) that control register sizes:
+
+*   **M Flag (bit 5):** Controls Accumulator size (0=16-bit, 1=8-bit)
+*   **X Flag (bit 4):** Controls Index register size (0=16-bit, 1=8-bit)
+
+**Best Practices:**
+
+1. **Initialize at function entry:**
+   ```asm
+   MyFunction:
+       PHP              ; Save caller's state
+       SEP #$30         ; Set to known 8-bit state
+       ; ... your code ...
+       PLP              ; Restore caller's state
+       RTL
+   ```
+
+2. **Be explicit about sizes:**
+   ```asm
+   REP #$20         ; A = 16-bit
+   LDA.w #$1234     ; Load 16-bit value
+   
+   SEP #$20         ; A = 8-bit
+   LDA.b #$12       ; Load 8-bit value only
+   ```
+
+3. **Document function requirements:**
+   ```asm
+   ; Function: CalculateOffset
+   ; Inputs: A=16-bit (offset), X=8-bit (index)
+   ; Outputs: A=16-bit (result)
+   ; Status: Returns with P unchanged (uses PHP/PLP)
+   ```
+
+4. **Cross-namespace calls:** Be especially careful when calling between Oracle and ZScream code, as they may use different processor states.
+
+See `Docs/General/Troubleshooting.md` Section 3 for common processor state issues and solutions.
+
 ## 3. Key Custom Systems
 
 Oracle of Secrets introduces several major custom systems that form the foundation of the hack.
@@ -92,15 +182,77 @@ Macros are used extensively to simplify common tasks and improve code readabilit
 
 ### 5.1. Common Issues
 
-*   **`BRK` Instructions:** A `BRK` instruction indicates a crash. This is often caused by a P-register mismatch (e.g., calling a 16-bit routine when in 8-bit mode) or a corrupted stack.
+*   **`BRK` Instructions:** A `BRK` instruction indicates a crash. This is often caused by:
+    *   Jumping to invalid memory (uninitialized ROM, data instead of code)
+    *   P-register mismatch (e.g., calling a 16-bit routine when in 8-bit mode)
+    *   Stack corruption (unbalanced push/pop, JSR/JSL vs RTS/RTL mismatch)
+    *   Return without matching call (RTL executed without previous JSL)
+    
 *   **P-Register Mismatches:** Always ensure the M and X flags of the processor status register are in the correct state before calling a routine. Use `SEP` and `REP` to switch between 8-bit and 16-bit modes as needed.
+
+*   **Stack Corruption:** Ensure push/pop operations are balanced and that JSR is paired with RTS (2 bytes) while JSL is paired with RTL (3 bytes). Never mix them.
+
+*   **Namespace Visibility:** If you get "label not found" errors, verify:
+    *   Label is exported with `Oracle_` prefix
+    *   File is included in correct build order in `Oracle_main.asm`
+    *   Namespace block is properly closed
+
+*   **Memory Conflicts:** If you get "overwrote some code" warnings:
+    *   Check for overlapping `org` directives
+    *   Use `assert pc() <= $ADDRESS` to protect boundaries
+    *   Review ROM map in Section 6 for available space
+
+**For comprehensive troubleshooting guidance, see `Docs/General/Troubleshooting.md` which covers:**
+- BRK crash debugging with emulator tools
+- Stack corruption patterns
+- Processor status register issues
+- Cross-namespace calling problems
+- Memory conflicts and bank collisions
+- Graphics/DMA timing issues
+- ZScream-specific problems
 
 ### 5.2. Debugging Tools
 
+*   **Mesen-S (Recommended):** The most powerful SNES debugger with:
+    *   Execution breakpoints with conditions
+    *   Memory watchpoints (read/write/execute)
+    *   Stack viewer
+    *   Event viewer (NMI/IRQ timing)
+    *   Live memory updates
+    
+*   **BSNES-Plus:** Cycle-accurate emulator with:
+    *   Memory editor with search
+    *   Tilemap and VRAM viewers
+    *   Debugger with disassembly
+
 *   **`!DEBUG` Flag:** The `!DEBUG` flag in `Util/macros.asm` can be used to enable or disable build-time logging.
+
 *   **`%print_debug()` Macro:** This macro can be used to print debug messages and register values during assembly. It is an invaluable tool for tracing code execution and identifying issues.
-*   **Emulator Debuggers:** Use an emulator with a robust debugger (e.g., Geiger's Snes9x) to step through code, set breakpoints, and inspect memory.
-*   **`usdasm`:** The `usdasm` disassembly is the primary reference for the original game's code. Use it to understand the context of vanilla routines that are being hooked or modified.
+
+*   **Breadcrumb Tracking:** Add markers to narrow down crash locations:
+    ```asm
+    LDA.b #$01 : STA.l $7F5000  ; Breadcrumb 1
+    JSL SuspiciousFunction
+    LDA.b #$02 : STA.l $7F5000  ; Breadcrumb 2
+    ; After crash, check $7F5000 to see which breadcrumb was reached
+    ```
+
+*   **Vanilla Disassembly:** The ALTTP disassembly in `ALTTP/` is the primary reference for the original game's code. Use it to understand the context of vanilla routines that are being hooked or modified.
+
+### 5.3. Debugging Checklist
+
+When encountering an issue:
+
+1. ✅ Check error message carefully - Asar errors are usually precise
+2. ✅ Verify namespace - Is label prefixed correctly?
+3. ✅ Check stack balance - Equal push/pop counts?
+4. ✅ Verify processor state - REP/SEP correct for operation?
+5. ✅ Check memory bounds - Assertions in place?
+6. ✅ Test in Mesen-S first - Best debugger for SNES
+7. ✅ Use breadcrumbs - Narrow down crash location
+8. ✅ Check build order - Files included in correct order?
+9. ✅ Review recent changes - Compare with known working version
+10. ✅ Read vanilla code - Understand what you're hooking
 
 ## 6. ROM Map & Memory Layout
 
@@ -147,9 +299,15 @@ For a more detailed breakdown of the ROM map, refer to the `ZS ROM MAP.txt` file
 
 The following documents have been generated by analyzing the codebase and project files. They serve as key references for understanding the project's architecture and gameplay systems.
 
-*   **`Docs/MemoryMap.md`:** A comprehensive map of all custom WRAM and SRAM variables. See [MemoryMap.md](Core/MemoryMap.md) for details.
+*   **`Docs/Core/MemoryMap.md`:** A comprehensive map of all custom WRAM and SRAM variables, including repurposed vanilla blocks. See [MemoryMap.md](../Core/MemoryMap.md) for details.
 
-*   **`Docs/QuestFlow.md`:** A detailed guide to the main story and side-quest progression, including trigger conditions and progression flags. See [QuestFlow.md](QuestFlow.md) for details.
+*   **`Docs/Core/Ram.md`:** High-level overview of WRAM and SRAM usage with verified custom variables. See [Ram.md](../Core/Ram.md) for details.
+
+*   **`Docs/World/Overworld/ZSCustomOverworldAdvanced.md`:** Advanced technical guide for ZScream integration, including hook architecture, sprite loading system, cross-namespace integration, and performance considerations. See [ZSCustomOverworldAdvanced.md](../World/Overworld/ZSCustomOverworldAdvanced.md) for details.
+
+*   **`Docs/General/Troubleshooting.md`:** Comprehensive troubleshooting guide covering BRK crashes, stack corruption, processor state issues, namespace problems, memory conflicts, and graphics issues. See [Troubleshooting.md](Troubleshooting.md) for details.
+
+*   **`Docs/QuestFlow.md`:** A detailed guide to the main story and side-quest progression, including trigger conditions and progression flags. See [QuestFlow.md](../QuestFlow.md) for details.
 
 *   **`Docs/SpriteCreationGuide.md`:** A step-by-step tutorial for creating a new custom sprite using the project's frameworks and conventions. See [SpriteCreationGuide.md](SpriteCreationGuide.md) for details.
 

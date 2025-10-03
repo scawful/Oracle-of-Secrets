@@ -48,6 +48,44 @@ Once a room is loaded, its specific behavior is governed by tags and flags.
 
     The sprite engine in `bank_06.asm` iterates through these arrays each frame, executing the logic for each active sprite.
 
+## 4.5. Custom WRAM Region (`$7E0730+`)
+
+Oracle of Secrets adds a custom WRAM region starting at `$7E0730`, utilizing the MAP16OVERFLOW free RAM space. All custom variables documented here have been verified against `Core/ram.asm` and are actively used by the project's custom systems.
+
+### Verified Custom WRAM Variables
+
+| Address    | Label                   | Description                                               | Verified |
+|------------|-------------------------|-----------------------------------------------------------|----------|
+| `$7E0730`  | `MenuScrollLevelV`      | Vertical scroll position for the custom menu system       | ✓        |
+| `$7E0731`  | `MenuScrollLevelH`      | Horizontal scroll position for the custom menu system     | ✓        |
+| `$7E0732`  | `MenuScrollHDirection`  | Direction flag for horizontal menu scrolling (2 bytes)    | ✓        |
+| `$7E0734`  | `MenuItemValueSpoof`    | Temporary override for displayed menu item values (2 bytes)| ✓       |
+| `$7E0736`  | `ShortSpoof`            | Shorter version of the spoof value (1 byte)               | ✓        |
+| `$7E0737`  | `MusicNoteValue`        | Current music note value for Ocarina system (2 bytes)     | ✓        |
+| `$7E0739`  | `GoldstarOrHookshot`    | Differentiates Hookshot (0) from Goldstar (1) mode        | ✓        |
+| `$7E073A`  | `Neck_Index`            | Index for multi-part sprite body tracking (e.g., bosses)  | ✓        |
+| `$7E073B`  | `Neck1_OffsetX`         | X-offset for first neck/body segment                      | ✓        |
+| `$7E073C`  | `Neck1_OffsetY`         | Y-offset for first neck/body segment                      | ✓        |
+| `$7E073D`  | `Neck2_OffsetX`         | X-offset for second neck/body segment                     | ✓        |
+| `$7E073E`  | `Neck2_OffsetY`         | Y-offset for second neck/body segment                     | ✓        |
+| `$7E073F`  | `Neck3_OffsetX`         | X-offset for third neck/body segment                      | ✓        |
+| `$7E0740`  | `Neck3_OffsetY`         | Y-offset for third neck/body segment                      | ✓        |
+| `$7E0741`  | `Offspring1_Id`         | Sprite ID of first child sprite (for boss mechanics)      | ✓        |
+| `$7E0742`  | `Offspring2_Id`         | Sprite ID of second child sprite (for boss mechanics)     | ✓        |
+| `$7E0743`  | `Offspring3_Id`         | Sprite ID of third child sprite (for boss mechanics)      | ✓        |
+| `$7E0744`  | `Kydreeok_Id`           | Sprite ID for Kydreeok boss entity                        | ✓        |
+| `$7E0745`  | `FishingOrPortalRod`    | Differentiates Fishing Rod (1) from Portal Rod (2)        | ✓        |
+
+### Usage Notes
+
+-   **Menu System**: Variables `$7E0730-$7E0736` are exclusively used by the custom menu system (`Menu/menu.asm`) to manage smooth scrolling between the Items and Quest Status pages.
+
+-   **Item Differentiation**: `GoldstarOrHookshot` and `FishingOrPortalRod` are critical for shared inventory slots. These allow two distinct items to occupy a single menu slot, with the player able to switch between them using the L/R shoulder buttons.
+
+-   **Boss Mechanics**: The `Neck_*` and `Offspring_*` variables enable complex multi-part boss sprites (e.g., Kydreeok with multiple heads, Manhandla with independent parts). The parent sprite uses these to track and coordinate its child sprite components.
+
+-   **Memory Safety**: All variables in this region are placed within the MAP16OVERFLOW free RAM area, which is guaranteed to be unused by the vanilla game engine. This prevents conflicts with vanilla systems.
+
 ## 5. Long-Term Progression: SRAM and Custom Flags
 
 SRAM (`$7EF000+`) stores the player's save file and is the key to managing long-term quest progression. Oracle of Secrets heavily expands the vanilla save format to support its new data-driven systems.

@@ -1,6 +1,56 @@
 # Memory Map
 
-This document provides a detailed map of the WRAM and SRAM memory regions, serving as a central reference for understanding the game's state.
+This document provides a detailed map of the WRAM and SRAM memory regions, serv| `$7EF358` | `WolfMask`        | Flag indicating if the player has obtained the Wolf Mask.               |
+
+### Repurposed Vanilla SRAM Blocks
+
+The following blocks were marked "unused" in vanilla ALTTP but are now utilized for OOS custom data:
+
+#### **Block $7EF38A-$7EF3C4** - Collectibles & Custom Progression
+
+*This is a large block of vanilla unused SRAM now used for various collectibles, side-quests, and tracking systems.*
+
+| Address  | Label               | Description                                                              | Verified |
+|----------|---------------------|--------------------------------------------------------------------------|----------|
+| `$7EF38A` | `FishingRod`        | Flag indicating if the player has the Fishing Rod.                       | ✓        |
+| `$7EF38B` | `Bananas`           | Number of bananas collected for side-quest.                              | ✓        |
+| `$7EF38D` | `Pineapples`        | Number of pineapples collected.                                          | ✓        |
+| `$7EF38F` | `RockMeat`          | Number of rock meat items collected.                                     | ✓        |
+| `$7EF391` | `Seashells`         | Number of secret seashells collected.                                    | ✓        |
+| `$7EF393` | `Honeycomb`         | Number of honeycombs collected.                                          | ✓        |
+| `$7EF395` | `DekuSticks`        | Number of Deku sticks collected.                                         | ✓        |
+| `$7EF396` | `TingleMaps`        | Tingle map collection tracking.                                          | ✓        |
+| `$7EF397` | `TingleId`          | Tingle identification value.                                             | ✓        |
+| `$7EF398` | `Scrolls`           | Bitfield tracking lore scroll collection (7 dungeons: `.dgi zktm`).      | ✓        |
+| `$7EF39A` | `PrevScroll`        | Tracks the previous scroll for re-reading old hints.                     | ✓        |
+| `$7EF39B` | `MagicBeanProg`     | Multi-day growth cycle tracking for magic bean side-quest (`.dts fwpb`). | ✓        |
+| `$7EF39C` | `JournalState`      | Current state of the player's journal.                                   | ✓        |
+| `$7EF39D` | `SRAM_StormsActive` | Flag indicating if the Song of Storms effect is active.                  | ✓        |
+
+#### **Block $7EF403-$7EF4FD** - Partially Repurposed
+
+*Most of this block remains unused, but OOS utilizes a portion for the Dreams collectible system.*
+
+| Address  | Label     | Description                                                        | Verified |
+|----------|-----------|--------------------------------------------------------------------|----------|
+| `$7EF410` | `Dreams`  | Bitfield tracking collection of three Dreams (`.cpw`: Courage, Power, Wisdom). | ✓        |
+
+> **💡 Usage Notes:**
+> - **Scrolls** (`$7EF398`): One scroll per dungeon (7 total). Bitfield format: `.dgi zktm` where each letter represents a dungeon (m=Mushroom Grotto, t=Tail Palace, k=Kalyxo Castle, z=Zora Temple, i=Glacia Estate, g=Goron Mines, d=Dragon Ship).
+> - **MagicBeanProg** (`$7EF39B`): Tracks multi-day growth cycle with bitfield `.dts fwpb` (b=bean planted, w=watered, p=pollinated, f=first day, s=second day, t=third day, d=done).
+> - **Dreams** (`$7EF410`): Similar to vanilla Pendants, tracks three key collectibles. Bitfield: `.cpw` (c=Courage, p=Power, w=Wisdom).
+
+### SRAM Address Contradictions (Source File Notes)
+
+The following addresses appear with both active label definitions and `UNUSED_` markers in `Core/sram.asm`. **The label definitions take precedence** - these addresses are actively used:
+
+- `$7EF3D4` - Both `MakuTreeQuest` and `UNUSED_7EF3D4` (✓ **In Use**)
+- `$7EF3D6` - Both `OOSPROG` and `UNUSED_7EF3D6` (✓ **In Use**)
+- `$7EF38A` - Both `FishingRod` and `UNUSED_7EF38A` (✓ **In Use**)
+
+These contradictions appear to be legacy comments from the vanilla ALTTP disassembly that were not removed when OOS repurposed these addresses.
+
+ as a central reference for understanding the game's state.
 
 ## 1. WRAM (Work RAM) - `$7E0000`
 
@@ -47,6 +97,8 @@ This section details the layout of the game's volatile memory.
 ## 2. SRAM (Save RAM) - `$7EF000`
 
 This section details the layout of the save file memory.
+
+> **🔍 SRAM Verification Note**: All custom SRAM variables documented below have been cross-referenced with `Core/sram.asm`. Some addresses in the source file have contradictory `UNUSED_` markers alongside actual label definitions (e.g., `OOSPROG = $7EF3D6` vs `UNUSED_7EF3D6 = $7EF3D6`). **The actual usage takes precedence** - if a label is defined for an address, it is considered in-use regardless of `UNUSED_` markers. This appears to be a legacy comment artifact from the vanilla ALTTP disassembly.
 
 ### Key Vanilla SRAM Variables
 
