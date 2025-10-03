@@ -32,6 +32,35 @@ The 65816 is an 8/16-bit microprocessor used in the Super Nintendo Entertainment
 - **`REP #$20` (or `REP #$30`):** Resets the M flag (and X flag if $30 is used) to 0, switching A (and X/Y) to 16-bit mode.
 - **Importance:** Mismatched M/X flags between calling and called routines are a common cause of crashes (BRKs) or unexpected behavior. Always ensure the P register is in the expected state for a given routine, or explicitly set it.
 
+**Practical Example:**
+```asm
+; INCORRECT: Size mismatch causes corruption
+REP #$20        ; A = 16-bit
+LDA.w #$1234    ; A = $1234
+
+SEP #$20        ; A = 8-bit now
+LDA.w #$1234    ; ERROR: Assembler generates LDA #$34, $12 becomes opcode!
+
+; CORRECT: Match processor state to operation
+REP #$20        ; A = 16-bit
+LDA.w #$1234    ; A = $1234
+
+SEP #$20        ; A = 8-bit
+LDA.b #$12      ; Load only 8-bit value
+```
+
+**Best Practice:**
+```asm
+MyFunction:
+    PHP              ; Save caller's processor state
+    SEP #$30         ; Set to known 8-bit state
+    ; ... your code here ...
+    PLP              ; Restore caller's processor state
+    RTL
+```
+
+See `Docs/General/Troubleshooting.md` Section 3 for comprehensive processor state troubleshooting.
+
 ### 1.4. Memory Mapping
 
 - The SNES has a 24-bit address space, allowing access to up to 16MB of ROM/RAM.
@@ -84,7 +113,9 @@ The 65816 is an 8/16-bit microprocessor used in the Super Nintendo Entertainment
 
 ### 3.2. Patch Management
 
-- **Revised Guideline:** Only small, simple patches that modify a few bytes of vanilla code should be considered for centralization in `Core/patches.asm`. Any patch that defines new functions or data in freespace should remain in its original file to preserve context and memory layout.
+- **Guideline:** Hooks and patches should be placed logically near the code they relate to, not centralized in `Core/patches.asm`. This improves code organization, maintainability, and context preservation.
+- **Rationale:** When a hook modifies vanilla behavior to add custom functionality, placing the hook in the same file as the custom implementation keeps related code together. This makes it easier to understand the complete feature, debug issues, and maintain the codebase.
+- **Exception:** Only truly generic, cross-cutting patches that don't belong to any specific feature should be considered for `Core/patches.asm`.
 
 ### 3.3. Debugging
 
@@ -103,6 +134,152 @@ The 65816 is an 8/16-bit microprocessor used in the Super Nintendo Entertainment
 - **Interaction:** To call a function that is inside the `Oracle` namespace from a file that is outside of it (like `ZSCustomOverworld.asm`), you must prefix the function's label with `Oracle_`. For example, to call the `CheckIfNight16Bit` function (defined inside the namespace), you must use `JSL Oracle_CheckIfNight16Bit`.
 - **Rationale:** The build process correctly resolves these `Oracle_` prefixed labels to their namespaced counterparts (e.g., `Oracle.CheckIfNight16Bit`). Do not add the `Oracle_` prefix to the original function definition; it is only used by the calling code outside the namespace.
 
+**Practical Example - Oracle to ZScream:**
+```asm
+// In ZScream file (no namespace):
+LoadOverworldSprites_Interupt:
+{
+    ; ZScream code here
+    RTL
+}
+
+// Export to Oracle namespace:
+namespace Oracle
+{
+    Oracle_LoadOverworldSprites_Interupt = LoadOverworldSprites_Interupt
+}
+
+// Now Oracle code can call it:
+namespace Oracle
+{
+    MyFunction:
+        JSL Oracle_LoadOverworldSprites_Interupt  ; Use prefix!
+        RTL
+}
+```
+
+**Practical Example - ZScream to Oracle (Bridge Pattern):**
+```asm
+// Oracle implementation:
+namespace Oracle
+{
+    CheckIfNight:
+        LDA.l $7EE000  ; Check time system
+        ; ... logic ...
+        RTL
+}
+
+// Bridge function (no namespace):
+ZSO_CheckIfNight:
+{
+    JSL Oracle_CheckIfNight  ; Can call INTO Oracle
+    RTL
+}
+
+// Export bridge:
+namespace Oracle
+{
+    Oracle_ZSO_CheckIfNight = ZSO_CheckIfNight
+}
+
+// ZScream hook can use it:
+org $09C4C7
+LoadOverworldSprites_Hook:
+    JSL Oracle_ZSO_CheckIfNight  ; Bridge function
+```
+
+For comprehensive namespace troubleshooting and advanced patterns, see:
+- `Docs/World/Overworld/ZSCustomOverworldAdvanced.md` Section 5 (Cross-Namespace Integration)
+- `Docs/General/Troubleshooting.md` Section 5 (Cross-Namespace Calling)
+- `Docs/General/DevelopmentGuidelines.md` Section 2.4 (Namespace Architecture)
+
+### 3.6. Safe Hooking and Code Injection
+
+When modifying vanilla game logic, it is critical to never edit the disassembly files in `ALTTP/` or `usdasm/` directly. Instead, use the following safe hooking method to inject custom code.
+
+- **1. Identify a Target and Free Space:**
+  - Locate the exact address in the vanilla code you want to modify (the "hook point").
+  - Identify a free bank or region in the ROM to place your new, expanded code.
+
+- **2. Choose the Appropriate File for Your Hook:**
+  - **Feature-Specific Hooks:** Place hooks in the same file as the custom implementation they enable. For example, if you're adding a new item feature in `Items/magic_ring.asm`, place the vanilla hook in that same file.
+  - **Module-Specific Hooks:** For hooks that modify core game systems (sprite engine, player engine, etc.), place them in the relevant module file within the `Core/` directory.
+  - **Generic Patches:** Only place truly generic, cross-cutting modifications in `Core/patches.asm` (e.g., fixes to vanilla bugs, performance optimizations).
+  - **Rationale:** Co-locating hooks with their implementations improves code organization, makes features self-contained, and provides better context for future maintenance.
+
+- **3. Write the Hook:**
+  - Use `pushpc` and `pullpc` to isolate your patch.
+  - Use `org` to navigate to the target address in the vanilla code.
+  - At the target address, overwrite the original instruction(s) with a `JSL` (or `JMP`) to your new custom routine in free space.
+  - **Crucially, ensure your `JSL`/`JMP` instruction and any necessary `NOP`s perfectly replace the original instruction(s) byte-for-byte.** A `JSL` is 4 bytes. If you overwrite an instruction that is only 2 bytes, you must add `NOP` instructions to fill the remaining 2 bytes to avoid corrupting the subsequent instruction.
+
+- **4. Implement the Custom Routine:**
+  - In a `freedata` block (or using `org` with a free space address), write your new routine in the same file as the hook.
+  - **Preserve Overwritten Code:** The first thing your new routine must do is execute the exact vanilla instruction(s) that you overwrote with your `JSL`. This is essential to maintain the original game's behavior.
+  - After preserving the original logic, add your new custom code.
+  - End your routine with an `RTL` (to return from a `JSL`) or `RTS` (to return from a `JSR`).
+
+- **Example (Feature-Specific Hook):**
+  ```asm
+  ; In Items/magic_ring.asm
+
+  ; 1. Place the new, expanded logic in a free bank.
+  org $348000
+  MagicRing_CustomEffect:
+  {
+    ; 2. First, execute the original instruction(s) that were overwritten.
+    LDA.b #$01         ; Example: Original instruction was LDA #$01 (2 bytes)
+    STA.w $0DD0,X      ; Example: Original instruction was STA $0DD0,X (3 bytes)
+
+    ; 3. Now, add your new custom logic for the magic ring.
+    LDA.l MagicRing    ; Check if player has magic ring
+    BEQ .no_ring
+      LDA.b #$FF       ; Apply ring's special effect
+      STA.w $1234,X
+    .no_ring
+
+    ; 4. Return to the vanilla code.
+    RTL
+  }
+
+  ; 5. Hook placement: In the same file, near the feature implementation
+  pushpc
+  org $05C227 ; Target address in vanilla sprite damage routine
+  JSL MagicRing_CustomEffect ; JSL is 4 bytes.
+  NOP ; Fill the 5th byte since we overwrote two instructions (2+3=5 bytes)
+  pullpc
+  ```
+
+- **Example (Core System Hook):**
+  ```asm
+  ; In Core/sprite_engine_hooks.asm (or similar)
+
+  org $348100
+  CustomSprite_DeathHandler:
+  {
+    ; Preserve original death logic
+    LDA.w SprHealth, X
+    BNE .not_dead
+      ; Original vanilla death code here
+      JSL Sprite_SpawnDeathAnimation
+    .not_dead
+    
+    ; Add custom death effects for Oracle sprites
+    LDA.w SprType, X
+    CMP.b #CustomSpriteID : BNE .skip_custom
+      JSR CustomSprite_SpecialDeath
+    .skip_custom
+    
+    RTL
+  }
+
+  ; Hook in same file
+  pushpc
+  org $068450
+  JSL CustomSprite_DeathHandler
+  pullpc
+  ```
+
 ## 4. Build Process and ROM Management
 
 - **Clean ROM**: The clean, unmodified "The Legend of Zelda: A Link to the Past" ROM should be placed at `Roms/oos169.sfc`. This path is included in `.gitignore`, so the ROM file will not be committed to the repository.
@@ -114,35 +291,111 @@ The 65816 is an 8/16-bit microprocessor used in the Super Nintendo Entertainment
 
 When encountering unexpected crashes (often indicated by a `BRK` instruction in emulators), especially after modifying code, consider the following:
 
-- **Processor Status Register (P) Mismatch:** This is a very common cause. If a routine expects 8-bit accumulator/index registers (M=1, X=1) but is called when they are 16-bit (M=0, X=0), or vice-versa, memory accesses and arithmetic operations will be incorrect, leading to crashes. Always verify the M and X flags before and after calling/returning from routines, especially those in different banks or that you've modified.
-    - **Check `PHD`/`PLD`, `PHB`/`PLB`, `PHK`/`PLK`:** These instructions save/restore the Direct Page, Data Bank, and Program Bank registers, respectively. Ensure they are used correctly when switching banks or contexts.
-    - **Check `PHA`/`PLA`, `PHX`/`PLX`, `PHY`/`PLY`:** These save/restore the accumulator and index registers. Ensure they are balanced.
-    - **Check `PHP`/`PLP`:** These save/restore the entire Processor Status Register. Use them when a routine needs a specific P state and you want to restore the caller's state afterwards.
+**For comprehensive debugging guidance with step-by-step procedures, see `Docs/General/Troubleshooting.md`.**
+
+### 5.1. Most Common Causes
+
+- **Processor Status Register (P) Mismatch:** This is a very common cause. If a routine expects 8-bit accumulator/index registers (M=1, X=1) but is called when they are 16-bit (M=0, X=0), or vice-versa, memory accesses and arithmetic operations will be incorrect, leading to crashes.
+
+**Example:**
+```asm
+; BAD: Size mismatch
+REP #$20        ; A = 16-bit
+JSL Function    ; Function expects 8-bit!
+
+; Inside Function:
+SEP #$20        ; Sets 8-bit mode
+LDA.b #$FF
+STA.w $1234     ; Only stores $FF, not $00FF!
+RTL             ; ← Doesn't restore caller's 16-bit mode
+
+; GOOD: Preserve state
+Function:
+    PHP         ; Save caller's state
+    SEP #$20    ; Set to 8-bit
+    LDA.b #$FF
+    STA.w $1234
+    PLP         ; Restore caller's state
+    RTL
+```
 
 - **Stack Corruption:** JSL/JSR push the return address onto the stack. If a called routine pushes too much data onto the stack without popping it, or if the stack pointer (`S`) is corrupted, the return address can be overwritten, leading to a crash when `RTL`/`RTS` is executed.
     - **`JSR`/`RTS` vs `JSL`/`RTL` Mismatch:** This is a critical and common error.
         - `JSR` (Jump to Subroutine) pushes a 2-byte return address. It **must** be paired with `RTS` (Return from Subroutine), which pulls 2 bytes.
         - `JSL` (Jump to Subroutine Long) pushes a 3-byte return address (including the bank). It **must** be paired with `RTL` (Return from Subroutine Long), which pulls 3 bytes.
-    - Using `RTL` with `JSR` (or `RTS` with `JSL`) will corrupt the stack and almost certainly lead to a crash. Always verify that your subroutine calls and returns are correctly paired.
-    - **Balance Pushes and Pops:** Every `PHA`, `PHX`, `PHY`, `PHP` should ideally have a corresponding `PLA`, `PLX`, `PLY`, `PLP` within the same routine.
-    - **Bank Switching with Stack:** Be extremely careful when performing bank switches (`PHB`/`PLB`, `PHK`/`PLK`) around stack operations, as the stack is in WRAM (bank $7E/$7F).
 
-- **Incorrect Bank Setup:** When calling a routine in a different bank using `JSL`, ensure the Program Bank (PB) and Data Bank (DB) registers are correctly set for the target routine and restored for the calling routine.
+**Example:**
+```asm
+; BAD: Mismatched call/return
+MainFunction:
+    JSL SubFunction  ; Pushes 3 bytes ($02 $C4 $09)
+    
+SubFunction:
+    ; ... code ...
+    RTS  ; ← ERROR: Only pops 2 bytes! Stack corrupted!
 
-- **Memory Overwrites:** A bug in one part of the code might be writing to an unexpected memory location, corrupting data or code that is used later.
-    - **Use an Emulator Debugger:** Step through the code instruction by instruction, paying close attention to register values and memory contents. Set breakpoints at the point of the crash and work backward.
-    - **Memory Watchpoints:** Some emulators allow setting watchpoints that trigger when a specific memory address is read or written. This can help pinpoint where corruption occurs.
+; GOOD: Matched call/return
+MainFunction:
+    JSL SubFunction  ; Pushes 3 bytes
+    
+SubFunction:
+    ; ... code ...
+    RTL  ; ← Correct: Pops 3 bytes
+```
 
-- **Off-by-One Errors/Table Bounds:** Accessing data outside the bounds of an array or table can lead to reading garbage data or overwriting other parts of memory.
+### 5.2. Debugging Tools
 
-- **Unintended Side Effects:** A routine might modify a register or memory location that a calling routine expects to remain unchanged. Always document what registers a routine clobbers.
+- **Mesen-S (Recommended):** The most powerful SNES debugger:
+    - Set breakpoints with conditions: `A == #$42`
+    - Memory watchpoints: `[W]$7E0730` (break on write)
+    - Stack viewer to trace call history
+    - Event viewer for NMI/IRQ timing
+    - Break on BRK automatically
 
-- **Debugging Strategy:**
-    1.  **Isolate the Problem:** Try to narrow down the exact code change that causes the crash. Revert changes one by one if necessary.
-    2.  **Use `print_debug`:** Strategically place `%print_debug()` macros to output register values or memory contents at critical points in the code. This can help track the flow and identify unexpected values.
-    3.  **Emulator Debugger:** Learn to use your emulator's debugger effectively. Step-by-step execution, register viewing, and memory inspection are invaluable tools.
-    4.  **Check `usdasm`:** Always cross-reference with the `usdasm` disassembly to understand the original vanilla code and how your hooks are interacting with it.
-    5.  **Efficiently Search Large Files:** When analyzing large assembly files, especially those with large data blocks like `Overworld/ZSCustomOverworld.asm`, prefer using `search_file_content` or `grep` to find specific labels or code sections instead of reading the entire file in chunks. This avoids confusion and is more efficient.
+**Quick Mesen-S Workflow:**
+1. Enable "Break on BRK" in Debugger settings
+2. When crash occurs, check Stack viewer
+3. Read return addresses to trace call history
+4. Set breakpoint before suspected crash location
+5. Step through code examining registers
+
+- **Breadcrumb Tracking:**
+```asm
+; Add markers to narrow down crash location
+LDA.b #$01 : STA.l $7F5000  ; Breadcrumb 1
+JSL SuspiciousFunction
+LDA.b #$02 : STA.l $7F5000  ; Breadcrumb 2
+JSL AnotherFunction
+LDA.b #$03 : STA.l $7F5000  ; Breadcrumb 3
+
+; After crash, check $7F5000 in memory viewer
+; If value is $02, crash occurred in AnotherFunction
+```
+
+### 5.3. Common Error Patterns
+
+**Pattern 1: Jumping to $000000 (BRK)**
+- Cause: Corrupted jump address or return address
+- Debug: Check stack contents, verify JSL/JSR is called before RTL/RTS
+
+**Pattern 2: Infinite Loop / Freeze**
+- Cause: Forgot to increment module/submodule, infinite recursion
+- Debug: Check that `$10` (module) or `$11` (submodule) is incremented
+
+**Pattern 3: Wrong Graphics / Corrupted Screen**
+- Cause: DMA during active display, wrong VRAM address
+- Debug: Ensure graphics updates only during NMI or Force Blank
+
+### 5.4. Cross-Reference Documentation
+
+For specific debugging scenarios:
+- **BRK Crashes:** `Docs/General/Troubleshooting.md` Section 2
+- **Stack Corruption:** `Docs/General/Troubleshooting.md` Section 3  
+- **Processor State Issues:** `Docs/General/Troubleshooting.md` Section 4
+- **Namespace Problems:** `Docs/General/Troubleshooting.md` Section 5
+- **Memory Conflicts:** `Docs/General/Troubleshooting.md` Section 6
+- **Graphics Issues:** `Docs/General/Troubleshooting.md` Section 7
+- **ZScream-Specific:** `Docs/General/Troubleshooting.md` Section 8
 
 
 
@@ -154,6 +407,11 @@ When encountering unexpected crashes (often indicated by a `BRK` instruction in 
 ## 7. Memory and Symbol Analysis
 
 This section details the layout and purpose of critical memory regions (WRAM and SRAM) and the symbol definition files that give them context.
+
+**For comprehensive memory documentation, see:**
+- `Docs/Core/MemoryMap.md` - Complete WRAM/SRAM map with verified custom variables
+- `Docs/Core/Ram.md` - High-level overview of memory usage
+- `Docs/General/Troubleshooting.md` Section 6 - Memory conflict resolution
 
 ### 7.1. WRAM (Work RAM) Analysis
 
