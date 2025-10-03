@@ -129,11 +129,11 @@ With ZSOW v3, the vanilla sprite loading hook (`Overworld_LoadSprites` at `$09C4
 
 ### Conclusion & Solution
 
-This is an **unresolved conflict**. The original day/night sprite logic is not being called by ZSOW's custom sprite loading routine, preventing day/night-specific sprites from appearing.
+This is a **partially resolved conflict**. The integration of day/night logic into ZSOW's custom sprite loading routine now correctly switches the active sprite set based on the time of day. However, the corresponding sprite graphics are not being loaded, leading to incorrect visual representation of sprites.
 
 **Status:**
-- An initial attempt was made to integrate the `CheckIfNight` logic into ZSOW's `LoadOverworldSprites_Interupt` routine.
-- This attempt introduced severe regressions, including game crashes (`BRK`) and build failures.
-- The changes have been **reverted** to restore stability.
-- As a result, the conflict remains, and a new solution is needed to make the two systems compatible.
+- The logic to determine day/night and adjust the `GameState` for sprite set loading has been successfully integrated into `ZSCustomOverworld.asm` (via `ZSO_CheckIfNight` called from `LoadOverworldSprites_Interupt`).
+- This resolves the issue of day/night-specific sprites *appearing* (i.e., the correct sprite data is now referenced).
+- **New Issue:** The sprite *graphics* (tilesets) are not being updated to match the new day/night sprite sets. This results in "gargoyle" sprites (graphical corruption) for sprites that change between day and night.
+- A new solution is needed to ensure the correct sprite graphics are loaded when the sprite set changes due to day/night transitions.
 

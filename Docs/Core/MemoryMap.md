@@ -90,3 +90,38 @@ This section details the layout of the save file memory.
 | `$7EF34D` | `RocsFeather`     | Flag indicating if the player has obtained Roc's Feather.                 |
 | `$7EF352` | `StoneMask`       | Flag indicating if the player has obtained the Stone Mask.               |
 | `$7EF358` | `WolfMask`        | Flag indicating if the player has obtained the Wolf Mask.                |
+
+## 3. Custom Code and Data Layout (ROM Banks)
+
+This section details the allocation of custom code and data within the ROM banks, as defined by `org` directives in the project's assembly files. The order of `incsrc` directives in `Oracle_main.asm` is crucial for the final ROM layout.
+
+| Bank (Hex) | Address Range (PC) | Purpose / Contents                                     |
+|------------|--------------------|--------------------------------------------------------|
+| $20        | `$208000` - `$20FFFF` | Expanded Music                                         |
+| $21-$27    |                    | ZScream Reserved                                       |
+| $28        | `$288000` - `$28FFFF` | ZSCustomOverworld data and code                        |
+| $29-$2A    |                    | ZScream Reserved                                       |
+| $2B        | `$2B8000` - `$2BFFFF` | Items                                                  |
+| $2C        | `$2C8000` - `$2CFFFF` | Underworld/Dungeons                                    |
+| $2D        | `$2D8000` - `$2DFFFF` | Menu                                                   |
+| $2E        | `$2E8000` - `$2EFFFF` | HUD                                                    |
+| $2F        | `$2F8000` - `$2FFFFF` | Expanded Message Bank                                  |
+| $30        | `$308000` - `$30FFFF` | Sprites                                                |
+| $31        | `$318000` - `$31FFFF` | Sprites                                                |
+| $32        | `$328000` - `$32FFFF` | Sprites                                                |
+| $33        | `$338000` - `$33FFFF` | Moosh Form Gfx and Palette                             |
+| $34        | `$348000` - `$34FFFF` | Time System, Custom Overworld Overlays, Gfx            |
+| $35        | `$358000` - `$35FFFF` | Deku Link Gfx and Palette                              |
+| $36        | `$368000` - `$36FFFF` | Zora Link Gfx and Palette                              |
+| $37        | `$378000` - `$37FFFF` | Bunny Link Gfx and Palette                             |
+| $38        | `$388000` - `$38FFFF` | Wolf Link Gfx and Palette                              |
+| $39        | `$398000` - `$39FFFF` | Minish Link Gfx                                        |
+| $3A        | `$3A8000` - `$3AFFFF` | Mask Routines, Custom Ancillae (Deku Bubble)           |
+| $3B        | `$3B8000` - `$3BFFFF` | GBC Link Gfx                                           |
+| $3C        |                    | Unused                                                 |
+| $3D        |                    | ZS Tile16                                              |
+| $3E        |                    | LW ZS Tile32                                           |
+| $3F        |                    | DW ZS Tile32                                           |
+| $40        | `$408000` - `$40FFFF` | LW World Map                                           |
+| $41        | `$418000` - `$41FFFF` | DW World Map                                           |
+| Patches    | Various            | Targeted modifications within vanilla ROM addresses    | `Core/patches.asm`, `Util/item_cheat.asm` |

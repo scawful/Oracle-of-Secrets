@@ -95,6 +95,7 @@ The 65816 is an 8/16-bit microprocessor used in the Super Nintendo Entertainment
 - When hooking or modifying vanilla code, it is essential to understand the original context. The `usdasm` disassembly is the primary reference for this.
 - To find the original code for a patch at a given address (e.g., `$07A3DB`), you can search for the SNES address in the `usdasm` files (e.g., `#_07A3DB:`).
 - **Vanilla labels are not included by default.** The `usdasm` project is a reference, not part of the build. If you need to call a vanilla routine, you must find its implementation in the disassembly and explicitly copy or recreate it within the `Oracle of Secrets` source, giving it a new label (e.g., inside the `Oracle` namespace).
+- **Disassembly files are for reference only.** Never modify any files within the `usdasm` directory. All changes must be made within the `Oracle of Secrets` project files.
 
 ### 3.5. Namespacing
 
@@ -444,3 +445,20 @@ ZScream reserves:
 | `0x1E0000 - 0x1E7FFF` | 1 Bank    | Custom ASM patches                                 |
 | `0x1E8000 - 0x1EFFFF` | 1 Bank    | Expanded Tile16 space                              |
 | `0x1F0000 - 0x1FFFFF` | 2 Banks   | Expanded Tile32 space                              |
+
+## 10. Oracle of Secrets Specific Guidelines for Gemini
+
+To ensure accurate and consistent modifications within the Oracle of Secrets project, adhere to the following guidelines regarding memory management and code placement:
+
+- **Understand `incsrc` Order:** The order of `incsrc` directives in `Oracle_main.asm` is paramount. It dictates the final ROM layout, especially for code and data placed using `org`. Always consult `Oracle_main.asm` and `Docs/Core/MemoryMap.md` to understand the current memory allocation before introducing new `org` directives.
+
+- **`org` for New Features:** When implementing new features that require significant code or data, use `org $XXXXXX` to place them in an appropriate free bank. Refer to the detailed memory map in `Docs/Core/MemoryMap.md` and the `Oracle_main.asm` comment for available and designated banks. If a new bank is needed, ensure it does not conflict with existing allocations or ZScream reserved space.
+
+- **`pushpc`/`pullpc` for Patches:** For small, targeted modifications to vanilla code or data (e.g., changing a few bytes, hooking a jump), use `pushpc`/`pullpc`. These directives are ideal for non-intrusive patches that don't require a dedicated bank. Examine `Core/patches.asm` and `Util/item_cheat.asm` for examples of this usage.
+
+- **Consult Memory Map:** Before any code modification involving `org` or `pushpc`/`pullpc`, always cross-reference with `Docs/Core/MemoryMap.md` and the `Oracle_main.asm` comment to prevent memory conflicts and ensure proper placement.
+
+- **Prioritize Existing Conventions:** Mimic the existing style and structure of the codebase. If a new feature is similar to an existing one, follow its implementation pattern, including how it manages memory.
+
+- **Avoid Arbitrary `org`:** Never use `org` without a clear understanding of the target address and its implications for the overall ROM layout. Unplanned `org` directives can lead to crashes or unexpected behavior.
+'''

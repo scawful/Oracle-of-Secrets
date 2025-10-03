@@ -23,7 +23,8 @@ The project makes extensive use of both WRAM and SRAM to store custom data and g
 
 To ensure modern and maintainable assembly code, the project adheres to the following `asar` best practices:
 
-*   **`pushpc`/`pullpc` vs. `org`:** Use `pushpc`/`pullpc` for small, targeted patches. For larger blocks of new code, use `org` to place them in designated free space banks. Avoid using `org` to modify existing vanilla code directly, as this can lead to conflicts.
+*   **`org` for New Code and Data:** Use `org $XXXXXX` to place larger blocks of new code or data into designated free space banks. The `incsrc` order in `Oracle_main.asm` is critical when using `org`, as it directly determines the final ROM layout. Moving `org` blocks or changing the `incsrc` order can lead to memory conflicts or incorrect addressing.
+*   **`pushpc`/`pullpc` for Targeted Patches:** Use `pushpc`/`pullpc` for small, targeted modifications to existing vanilla code or data. This directive temporarily changes the program counter, allowing a small patch to be inserted at a specific address without affecting the surrounding `org` context. Files like `Core/patches.asm` and `Util/item_cheat.asm` extensively use `pushpc`/`pullpc` for this purpose.
 *   **Scoping:** Use labels followed by `{}` to define local scopes for new logic blocks. This is the established convention, and `subroutine`/`endsubroutine` are not used.
 *   **Data Structures:** Use `struct` for complex, related data (e.g., sprite state) and `table` for jump tables or data arrays. This improves readability and reduces errors from manual offset calculations.
 *   **Constants:** Use `!` or `define()` to create named constants for RAM/SRAM addresses, item IDs, sprite states, and other "magic numbers." This makes the code self-documenting and easier to maintain.
@@ -103,14 +104,42 @@ Macros are used extensively to simplify common tasks and improve code readabilit
 
 ## 6. ROM Map & Memory Layout
 
-Oracle of Secrets uses the ZScream expanded ROM map, which provides additional space for new code and data. The following is a brief overview of the key bank allocations:
+Oracle of Secrets utilizes the ZScream expanded ROM map, providing significant additional space for new code and data. The allocation of custom code and data within these banks is managed through `org` directives in the assembly files. The `incsrc` order in `Oracle_main.asm` is crucial, as it dictates the final placement of these blocks in the ROM.
 
-*   **`$2B8000+`:** Free space for new code and data.
-*   **`$288000+`:** `ZSCustomOverworld` configuration tables.
-*   **`$7E0730+`:** Custom WRAM region for new features.
-*   **`$7EF3D6+`:** Custom SRAM region for new progress flags and item data.
+Here is a detailed overview of the custom ROM bank allocations:
 
-For a more detailed breakdown of the ROM map, refer to the `ZS ROM MAP.txt` file in the `Core/` directory.
+| Bank (Hex) | Address Range (PC) | Purpose / Contents                                     | Defining File(s)                      |
+|------------|--------------------|--------------------------------------------------------|---------------------------------------|
+| $20        | `$208000` - `$20FFFF` | Expanded Music                                         | `Music/all_music.asm`                 |
+| $21-$27    |                    | ZScream Reserved                                       |                                       |
+| $28        | `$288000` - `$28FFFF` | ZSCustomOverworld data and code                        | `Overworld/ZSCustomOverworld.asm`     |
+| $29-$2A    |                    | ZScream Reserved                                       |                                       |
+| $2B        | `$2B8000` - `$2BFFFF` | Items                                                  | `Items/all_items.asm`                 |
+| $2C        | `$2C8000` - `$2CFFFF` | Underworld/Dungeons                                    | `Dungeons/dungeons.asm`               |
+| $2D        | `$2D8000` - `$2DFFFF` | Menu                                                   | `Menu/menu.asm`                       |
+| $2E        | `$2E8000` - `$2EFFFF` | HUD                                                    | `Menu/menu.asm`                       |
+| $2F        | `$2F8000` - `$2FFFFF` | Expanded Message Bank                                  | `Core/message.asm`                    |
+| $30        | `$308000` - `$30FFFF` | Sprites                                                | `Sprites/all_sprites.asm`             |
+| $31        | `$318000` - `$31FFFF` | Sprites                                                | `Sprites/all_sprites.asm`             |
+| $32        | `$328000` - `$32FFFF` | Sprites                                                | `Sprites/all_sprites.asm`             |
+| $33        | `$338000` - `$33FFFF` | Moosh Form Gfx and Palette                             | `Masks/all_masks.asm`                 |
+| $34        | `$348000` - `$34FFFF` | Time System, Custom Overworld Overlays, Gfx            | `Masks/all_masks.asm`                 |
+| $35        | `$358000` - `$35FFFF` | Deku Link Gfx and Palette                              | `Masks/all_masks.asm`                 |
+| $36        | `$368000` - `$36FFFF` | Zora Link Gfx and Palette                              | `Masks/all_masks.asm`                 |
+| $37        | `$378000` - `$37FFFF` | Bunny Link Gfx and Palette                             | `Masks/all_masks.asm`                 |
+| $38        | `$388000` - `$38FFFF` | Wolf Link Gfx and Palette                              | `Masks/all_masks.asm`                 |
+| $39        | `$398000` - `$39FFFF` | Minish Link Gfx                                        | `Masks/all_masks.asm`                 |
+| $3A        | `$3A8000` - `$3AFFFF` | Mask Routines, Custom Ancillae (Deku Bubble)           | `Masks/all_masks.asm`                 |
+| $3B        | `$3B8000` - `$3BFFFF` | GBC Link Gfx                                           | `Masks/all_masks.asm`                 |
+| $3C        |                    | Unused                                                 |                                       |
+| $3D        |                    | ZS Tile16                                              |                                       |
+| $3E        |                    | LW ZS Tile32                                           |                                       |
+| $3F        |                    | DW ZS Tile32                                           |                                       |
+| $40        | `$408000` - `$40FFFF` | LW World Map                                           | `Overworld/overworld.asm`             |
+| $41        | `$418000` - `$41FFFF` | DW World Map                                           | `Overworld/overworld.asm`             |
+| Patches    | Various            | Targeted modifications within vanilla ROM addresses    | `Core/patches.asm`, `Util/item_cheat.asm` |
+
+For a more detailed breakdown of the ROM map, refer to the `ZS ROM MAP.txt` file in the `Core/` directory, and `Docs/Core/MemoryMap.md` for a comprehensive overview of all custom memory regions.
 
 ---
 
@@ -118,7 +147,7 @@ For a more detailed breakdown of the ROM map, refer to the `ZS ROM MAP.txt` file
 
 The following documents have been generated by analyzing the codebase and project files. They serve as key references for understanding the project's architecture and gameplay systems.
 
-*   **`Docs/MemoryMap.md`:** A comprehensive map of all custom WRAM and SRAM variables. See [MemoryMap.md](MemoryMap.md) for details.
+*   **`Docs/MemoryMap.md`:** A comprehensive map of all custom WRAM and SRAM variables. See [MemoryMap.md](Core/MemoryMap.md) for details.
 
 *   **`Docs/QuestFlow.md`:** A detailed guide to the main story and side-quest progression, including trigger conditions and progression flags. See [QuestFlow.md](QuestFlow.md) for details.
 
