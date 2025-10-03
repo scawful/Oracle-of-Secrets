@@ -125,6 +125,8 @@ Sprite_MyNewEnemy_Main:
 
 This routine renders your sprite's graphics. The easiest method is to use the `%DrawSprite()` macro, which reads from a set of data tables you define. However, for highly customized drawing logic, such as dynamic tile selection, complex animation sequences, or precise OAM manipulation (as demonstrated in the Booki sprite's `Sprite_Booki_Draw` routine, which uses `REP`/`SEP` for 16-bit coordinate calculations), you may need to implement a custom drawing routine.
 
+**Important Note on 16-bit OAM Calculations:** When performing OAM (Object Attribute Memory) calculations, especially for sprite positioning and offsets, it is crucial to explicitly manage the Processor Status Register (P) flags. Use `REP #$20` to set the accumulator to 16-bit mode before performing 16-bit arithmetic operations (e.g., adding `x_offsets` or `y_offsets` to sprite coordinates), and `SEP #$20` to restore it to 8-bit mode afterward if necessary. This ensures accurate positioning and prevents unexpected graphical glitches or crashes.
+
 ```asm
 Sprite_MyNewEnemy_Draw:
 {
@@ -221,7 +223,7 @@ For more engaging and adaptive enemies, consider implementing dynamic behaviors:
 *   **Dynamic Appearance and Conditional Vulnerability:** Sprites can dynamically change their appearance and vulnerability based on internal states or player actions. For instance, the Helmet Chuchu (`Sprites/Enemies/helmet_chuchu.asm`) changes its graphics and becomes vulnerable only after its helmet/mask is removed, often by a specific item like the Hookshot.
 *   **Stunned State and Counter-Attack:** Some sprites react to damage by entering a stunned state, then performing a counter-attack (e.g., Puffstool spawning spores or transforming into a bomb).
 *   **Interaction with Thrown Objects:** Sprites can be designed to interact with objects thrown by Link (e.g., `ThrownSprite_TileAndSpriteInteraction_long` used by Puffstool), allowing for environmental puzzles or unique combat strategies.
-*   **Interaction with Non-Combat Player Actions:** Sprites can react to specific player actions beyond direct attacks, such as playing a musical instrument. The Pols Voice (`Sprites/Enemies/pols_voice.asm`) despawns and drops a prize if Link plays the flute.
+*   **Interaction with Non-Combat Player Actions:** Sprites can react to specific player actions beyond direct attacks, suchs as playing a musical instrument. The Pols Voice (`Sprites/Enemies/pols_voice.asm`) despawns and drops a prize if Link plays the flute.
 *   **Specific Movement Routines for Attacks:** During attack animations, sprites may utilize specialized movement routines like `Sprite_MoveLong` (seen in Thunder Ghost) to control their position and trajectory precisely.
 *   **Damage Reaction (Invert Speed):** A common dynamic behavior is for a sprite to invert its speed or change its movement pattern upon taking damage, as seen in Pols Voice.
 *   **Global State-Dependent Behavior:** Sprite properties and behaviors can be dynamically altered based on global game state variables (e.g., `WORLDFLAG` in the Sea Urchin sprite), allowing for different enemy characteristics in various areas or game progression points.
@@ -229,3 +231,15 @@ For more engaging and adaptive enemies, consider implementing dynamic behaviors:
 *   **Timed Attack and Stun States:** Sprites can have distinct attack and stunned states that are governed by timers, allowing for predictable attack patterns and temporary incapacitation (e.g., Poltergeist's `Poltergeist_Attack` and `Poltergeist_Stunned` states).
 *   **Conditional Invulnerability:** Invulnerability can be dynamic, changing based on the sprite's state. For example, a sprite might be impervious to certain attacks only when in a specific state, or its `SprDefl` flags might be manipulated to reflect temporary invulnerability (as suggested by the Poltergeist's properties).
 *   **Direct SRAM Interaction:** Implement mechanics that directly interact with Link's inventory or status in SRAM (e.g., stealing items, modifying rupee count). Remember to explicitly manage processor status flags (`REP`/`SEP`) when performing mixed 8-bit/16-bit operations on SRAM addresses to prevent unexpected behavior or crashes.
+
+### 8.7. Subtype-based Behavior and Dynamic Transformations
+Leverage `SprSubtype` to create diverse enemy variations from a single sprite ID and enable dynamic transformations based on in-game conditions.
+
+*   **Multiple Variations per `!SPRID`**: A single `!SPRID` can represent several distinct enemy types (e.g., Ice Keese, Fire Keese, Vampire Bat) by assigning unique `SprSubtype` values. This allows for efficient reuse of sprite slots and base logic while providing varied challenges.
+*   **Dynamic Environmental Transformation**: Sprites can change their `SprSubtype` (and thus their behavior/appearance) in response to environmental factors. For example, an Octorok might transform from a land-based to a water-based variant upon entering water tiles. This adds depth and realism to enemy interactions with the environment.
+
+### 8.8. Vanilla Sprite Overrides and Conditional Logic
+When modifying existing enemies or creating new boss sequences, it's common to override vanilla sprite behavior. This allows for custom implementations while retaining the original sprite ID.
+
+*   **Hooking Entry Points**: Use `pushpc`/`pullpc` and `org` directives to redirect execution from vanilla sprite routines to your custom code. This is crucial for replacing or extending existing behaviors.
+*   **Contextual Checks**: Implement checks (e.g., using custom flags or game state variables) within your custom routines to determine whether to execute your custom logic or fall back to the original vanilla behavior. This provides flexibility and allows for conditional modifications.
