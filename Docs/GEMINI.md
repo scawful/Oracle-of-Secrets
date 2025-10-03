@@ -456,11 +456,109 @@ This file acts as a central header, defining constants and labels for memory add
 *   **Memory Maps:** It contains the definitive memory maps for WRAM structures, most notably for sprites and ancillae.
 *   **Readability:** Its primary purpose is to replace "magic numbers" (raw addresses) with human-readable labels, which is essential for a project of this scale.
 
-## 8. Disassembly Analysis and Search Guide
+## 8. Documentation Reference
+
+This section provides a comprehensive overview of all available documentation files, organized by category. These documents serve as key references for understanding the project's architecture, gameplay systems, and development practices.
+
+### 8.1. Core System Documentation
+
+*   **`Docs/Core/MemoryMap.md`:** Complete WRAM and SRAM memory map with verified custom variables. Documents all custom memory regions from `$7E0730+` (WRAM) and OOS-specific SRAM including `$7EF3D6` (OOSPROG), `$7EF38A+` (collectibles block), and `$7EF410` (Dreams). Essential reference for any code that accesses RAM.
+
+*   **`Docs/Core/Ram.md`:** High-level overview of WRAM and SRAM usage patterns with descriptions of custom variable purposes.
+
+*   **`Docs/Core/Link.md`:** Documentation of Link's state machine, player mechanics, and control handlers.
+
+*   **`Docs/Core/SystemInteractions.md`:** Documentation of core game systems and their interactions.
+
+### 8.2. Development Guidelines
+
+*   **`Docs/General/DevelopmentGuidelines.md`:** Comprehensive development guidelines covering architecture patterns, memory management, assembly best practices, coding standards, and debugging strategies. Expands on concepts in this GEMINI.md file with detailed examples and rationale. **Required reading for all contributors.**
+
+*   **`Docs/General/Troubleshooting.md`:** Comprehensive troubleshooting guide with step-by-step debugging procedures. Covers:
+    - BRK crashes and stack traces
+    - Stack corruption patterns (JSL/JSR vs RTL/RTS mismatches)
+    - Processor status register issues (M/X flag problems)
+    - Cross-namespace calling problems
+    - Memory conflicts and bank collisions
+    - Graphics/DMA timing issues
+    - ZScream-specific problems
+    - Debugging with Mesen-S and BSNES-Plus
+
+*   **`Docs/General/AsarUsage.md`:** Best practices for using the Asar assembler and the build script system. Covers `org` vs `pushpc`/`pullpc`, ROM management, and build workflow.
+
+### 8.3. Creation Guides
+
+*   **`Docs/Guides/SpriteCreationGuide.md`:** Comprehensive 878-line tutorial for creating custom sprites from scratch. Covers:
+    - File setup and bank organization
+    - Sprite properties (23 configurable flags with memory addresses)
+    - Initialization with 60+ WRAM variables documented
+    - Main logic with 30+ macros and 20+ core functions
+    - OAM drawing system with tile format specifications
+    - Testing procedures and debugging strategies
+    - Common issues and solutions
+    - 10 advanced patterns:
+      1. State Machines (Booki example)
+      2. Multi-part Sprites (Kydreeok boss)
+      3. Guard/Defense Mechanics (Darknut)
+      4. Shared Logic (Goriya variations)
+      5. Complex Boss Mechanics
+      6. NPC Interactions (Followers)
+      7. Interactive Objects (Minecart)
+      8. Environmental Awareness
+      9. Advanced AI Patterns
+      10. Cross-System Integration
+    - Real examples from Booki, Darknut, Kydreeok, Goriya, Followers, and Minecart sprites
+
+*   **`Docs/Guides/QuestFlow.md`:** Detailed guide to main story and side-quest progression, including trigger conditions, progression flags, and quest dependencies.
+
+### 8.4. World System Documentation
+
+*   **`Docs/World/Overworld/ZSCustomOverworld.md`:** Basic guide to the ZScream custom overworld system and its data tables.
+
+*   **`Docs/World/Overworld/ZSCustomOverworldAdvanced.md`:** Advanced technical documentation for ZScream integration. **Critical for modifying overworld behavior.** Covers:
+    - Internal hook architecture (38+ vanilla routine replacements)
+    - Hook execution order during screen transitions
+    - Memory management and state tracking (Bank $28 data pool)
+    - Graphics loading pipeline with frame-by-frame analysis
+    - Sprite loading system deep dive
+    - Cross-namespace integration patterns (Oracle ↔ ZScream)
+    - Performance considerations and optimization strategies
+    - Adding custom features to the overworld system
+    - Debugging ZScream-specific issues
+
+*   **`Docs/World/Overworld/TimeSystem.md`:** Documentation of the day/night cycle system implementation.
+
+*   **`Docs/World/Dungeons/Dungeons.md`:** Breakdown of dungeon systems, layouts, enemy placements, and puzzle mechanics.
+
+### 8.5. Feature System Documentation
+
+*   **`Docs/Features/Menu/Menu.md`:** Analysis of the custom menu and HUD systems, including two-page menu layout and item drawing routines.
+
+*   **`Docs/Features/Items/Items.md`:** Guide to custom and modified items, including implementation details for Goldstar, Portal Rod, Ocarina, and others.
+
+*   **`Docs/Features/Music/Music.md`:** Guide to custom music tracks, sound effects, and adding new audio.
+
+*   **`Docs/Features/Masks/Masks.md`:** Comprehensive overview of the Mask System, including transformation mechanics and each mask's abilities.
+
+### 8.6. Sprite Documentation
+
+Each sprite category has both an overview document and individual files for specific sprites:
+
+*   **`Docs/Sprites/NPCs.md`:** Overview of NPC sprite system with links to individual NPC documentation in `Docs/Sprites/NPCs/` (BeanVendor, DekuScrub, EonOwl, Farore, Followers, Impa, Korok, Maple, MaskSalesman, Tingle, Vasu, ZoraPrincess, etc.)
+
+*   **`Docs/Sprites/Bosses.md`:** Overview of boss sprite system with links to individual boss documentation in `Docs/Sprites/Bosses/` (DarkLink, Kydreeok, Manhandla, etc.)
+
+*   **`Docs/Sprites/Enemies/`:** Individual documentation for enemy sprites (AntiKirby, Booki, BusinessScrub, Darknut, Goriya, Keese, Leever, Octorok, PolsVoice, Wolfos, etc.)
+
+*   **`Docs/Sprites/Objects.md`:** Overview of interactive object sprites with documentation in `Docs/Sprites/Objects/` (Collectible, DekuLeaf, IceBlock, Minecart, Pedestal, PortalSprite, etc.)
+
+*   **`Docs/Sprites/Overlords.md`:** Analysis of the Overlord sprite system used for environmental effects and multi-screen management.
+
+## 9. Disassembly Analysis and Search Guide
 
 This section provides a high-level analysis of key banks in the Link to the Past disassembly. Use this guide to quickly locate relevant code and understand the overall structure of the game.
 
-### 8.1. Bank $00: Game Core & Main Loop
+### 9.1. Bank $00: Game Core & Main Loop
 
 **File:** `ALTTP/bank_00.asm`
 **Address Range:** `$008000` - `$00FFFF`
@@ -477,7 +575,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Per-Frame Logic:** Search `bank_00.asm` for `Interrupt_NMI:`. Key routines called from here are `NMI_ReadJoypads` (input) and `NMI_DoUpdates` (graphics DMA).
 *   **Initialization Logic:** Start at the `Reset:` label in `bank_00.asm` and trace `JSR`/`JSL` calls to routines like `InitializeMemoryAndSRAM`.
 
-### 8.2. Bank $01: Dungeon Engine
+### 9.2. Bank $01: Dungeon Engine
 
 **File:** `ALTTP/bank_01.asm`
 **Address Range:** `$018000` - `$01FFFF`
@@ -493,7 +591,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Room Construction Logic:** In `bank_01.asm`, start at `Underworld_LoadRoom` and trace the call sequence: `Underworld_LoadHeader` -> `RoomDraw_DrawFloors` -> `RoomDraw_DrawAllObjects`.
 *   **Specific Dungeon Object Code:** To find an object's drawing code, search the `.type1_subtype_..._routine` tables at the start of `bank_01.asm` for the object's ID. The corresponding label is the drawing routine. To find its tile data, search the `.type1_subtype_..._data_offset` tables.
 
-### 8.3. Bank $02: Overworld & Transitions
+### 9.3. Bank $02: Overworld & Transitions
 
 **File:** `ALTTP/bank_02.asm`
 **Address Range:** `$028000` - `$02FFFF`
@@ -509,11 +607,11 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Underworld Gameplay:** Start at `Module07_Underworld` in `bank_02.asm`. Examine the `.submodules` jump table to see the different states, determined by WRAM `$11`.
 *   **Transition Logic:** Search for code that sets the game `MODE` (`$10`) to `$08` (Overworld Load) or `$06` (Underworld Load) to find the start of a transition.
 
-### 8.4. Bank $03: Tile32 Overworld Layout Data
+### 9.4. Bank $03: Tile32 Overworld Layout Data
 
-### 8.5. Bank $04: Tile32 Overworld Layout Data, Dungeon Room Headers
+### 9.5. Bank $04: Tile32 Overworld Layout Data, Dungeon Room Headers
 
-### 8.6. Bank $07: Core Player (Link) Engine
+### 9.6. Bank $07: Core Player (Link) Engine
 
 **File:** `ALTTP/bank_07.asm`
 **Address Range:** `$078000` - `$07FFFF`
@@ -530,7 +628,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Y-Button Item Logic:** In `LinkState_Default`, search for the call to `JSR Link_HandleYItem`.
 *   **Player Damage Logic:** Search for writes to WRAM `$7E0373` (`HURTME`).
 
-### 8.7. Bank $05: Specialized Sprite & Object Engine
+### 9.7. Bank $05: Specialized Sprite & Object Engine
 
 **File:** `ALTTP/bank_05.asm`
 **Address Range:** `$058000` - `$05FFFF`
@@ -540,7 +638,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Unique/Non-Enemy Sprites:** When looking for a unique sprite (minigame, cutscene object, complex trap), check `bank_05.asm` first.
 *   **Finding Sprite Logic:** Search for the sprite's name (e.g., "MasterSword") or its hexadecimal ID (e.g., `Sprite_62`) to find its main routine.
 
-### 8.8. Bank $06: Main Sprite Engine & Helpers
+### 9.8. Bank $06: Main Sprite Engine & Helpers
 
 **File:** `ALTTP/bank_06.asm`
 **Address Range:** `$068000` - `$06FFFF`
@@ -557,7 +655,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Sprite Core AI:** In `bank_06.asm`, go to `SpriteModule_Active`. Find the sprite's ID in its jump table to find the entry point to its main AI logic (which may be in another bank).
 *   **Bush/Rock Item Drops:** Locate the `Sprite_SpawnSecret` routine and examine the `.ID` table at `#_0681F4` to see the prize mappings.
 
-### 8.9. Bank $08: Ancilla Engine
+### 9.9. Bank $08: Ancilla Engine
 
 **File:** `ALTTP/bank_08.asm`
 **Address Range:** `$088000` - `$08FFFF`
@@ -567,7 +665,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Projectile/Effect Logic:** In `bank_08.asm`, find the main jump table in `Ancilla_ExecuteOne` (at `#_08837F`). Look up the ancilla's ID in this table to find the label for its logic routine (e.g., `Ancilla07_Bomb`).
 *   **Projectile Properties (speed, graphics):** Go to the ancilla's main logic routine (e.g., `Ancilla09_Arrow`) and look for writes to its WRAM properties (e.g., `$0C2C` for X-speed).
 
-### 8.10. Bank $09: Ancilla Spawning & Item Logic
+### 9.10. Bank $09: Ancilla Spawning & Item Logic
 
 **File:** `ALTTP/bank_09.asm`
 **Address Range:** `$098000` - `$09FFFF`
@@ -577,7 +675,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Projectile/Effect Creation:** To find where a projectile is created, search the codebase for `JSL` calls to its corresponding `AncillaAdd_...` function in this bank (e.g., `JSL AncillaAdd_Bomb`).
 *   **Item "Get" Properties:** To change the properties of an item the player receives, find the `AncillaAdd_ItemReceipt` routine and examine the large data tables starting at `#_098404`.
 
-### 8.11. Bank $0A: World Map & Flute Menu Engine
+### 9.11. Bank $0A: World Map & Flute Menu Engine
 
 **File:** `ALTTP/bank_0A.asm`
 **Address Range:** `$0A8000` - `$0AFFFF`
@@ -587,7 +685,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Flute Warp Destinations:** In `bank_0A.asm`, find the `FluteMenu_LoadTransport` routine. The table within it maps the 8 flute spots to screen indexes.
 *   **Map Icon Locations:** Search for the `WorldMapIcon_posx_...` and `WorldMapIcon_posy_...` tables to adjust icon coordinates.
 
-### 8.12. Bank $0B: Overworld Environment & State Helpers
+### 9.12. Bank $0B: Overworld Environment & State Helpers
 
 **File:** `ALTTP/bank_0B.asm`
 **Address Range:** `$0B8000` - `$0BFFFF`
@@ -597,7 +695,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Overworld Area Palette:** To change the background color of an overworld area, modify the color values loaded in `Overworld_SetFixedColAndScroll`. The logic checks WRAM `$8A` to decide which color to use.
 *   **Wall Master Capture:** To change what happens when captured, find the `WallMaster_SendPlayerToLastEntrance` routine.
 
-### 8.13. Bank $0C: Intro & Credits Sequence
+### 9.13. Bank $0C: Intro & Credits Sequence
 
 **File:** `ALTTP/bank_0C.asm`
 **Address Range:** `$0C8000` - `$0CFFFF`
@@ -606,7 +704,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 #### Search Heuristics:
 *   **Intro/Credits Scene Logic:** Start at the `Module00_Intro` or `Module1A_Credits` jump tables. The sub-mode in WRAM `$11` determines which part of the sequence is running. Follow the jump table to the routine for the scene you want to change.
 
-### 8.14. Bank $0D: Link Animation & OAM Data
+### 9.14. Bank $0D: Link Animation & OAM Data
 
 **File:** `ALTTP/bank_0D.asm`
 **Address Range:** `$0D8000` - `$0DFFFF`
@@ -616,7 +714,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Link's Animation Sequence:** To modify an animation, find the action in `LinkOAM_AnimationSteps`. The values are indices into the `LinkOAM_PoseData` table, which defines the body parts for each frame.
 *   **Link's Item Positioning:** To change how Link holds an item, find the animation frame index in `LinkOAM_AnimationSteps` and use it to find the corresponding entries in the `LinkOAM_SwordOffsetX/Y` or `LinkOAM_ShieldOffsetX/Y` tables.
 
-### 8.15. Bank $0E: Tile Properties & Credits Engine
+### 9.15. Bank $0E: Tile Properties & Credits Engine
 
 **File:** `ALTTP/bank_0E.asm`
 **Address Range:** `$0E8000` - `$0EFFFF`
@@ -626,7 +724,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Tile Behavior (e.g., making a wall walkable):** Identify the tile's graphical ID and find its entry in the `OverworldTileTypes` or `UnderworldTileTypes` tables. Change its byte value to match a tile with the desired properties.
 *   **Custom Tile Physics (e.g., ice):** Search for the `Underworld_LoadCustomTileTypes` function to see how alternate tile property sets are loaded for specific dungeons.
 
-### 8.16. Bank $0F: Miscellaneous Game Logic & Helpers
+### 9.16. Bank $0F: Miscellaneous Game Logic & Helpers
 
 **File:** `ALTTP/bank_0F.asm`
 **Address Range:** `$0F8000` - `$0FFFFF`
@@ -636,11 +734,11 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Player Death Sequence:** The entry points are `PrepareToDie` and `Link_SpinAndDie`.
 *   **Dialogue Box Trigger:** Search for `JSL Interface_PrepAndDisplayMessage`. The code immediately preceding it sets up the message ID to be displayed.
 
-### 8.17. Bank $10-$18: Graphics Sheets for Link, Dungeon, Overworld, Sprites
+### 9.17. Bank $10-$18: Graphics Sheets for Link, Dungeon, Overworld, Sprites
 
-### 8.18. Bank $19: Sound Data
+### 9.18. Bank $19: Sound Data
 
-### 8.19. Bank $1A: Miscellaneous Sprites & Cutscenes
+### 9.19. Bank $1A: Miscellaneous Sprites & Cutscenes
 
 **File:** `ALTTP/bank_1A.asm`
 **Address Range:** `$1A8000` - `$1AFFFF`
@@ -651,7 +749,7 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Waterfall of Wishing Splash:** Search for `SpawnHammerWaterSplash`.
 *   **Secret Item Substitution:** To understand how items under rocks are sometimes replaced by enemies, analyze `Overworld_SubstituteAlternateSecret`.
 
-### 8.20. Bank $1B: Overworld Interaction & Palettes
+### 9.20. Bank $1B: Overworld Interaction & Palettes
 
 **File:** `ALTTP/bank_1B.asm`
 **Address Range:** `$1B8000` - `$1BFFFF`
@@ -662,9 +760,9 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Hidden Item Locations:** To change the item under a specific bush, find the correct `OverworldData_HiddenItems_Screen_XX` table and modify the entry for that bush's coordinates.
 *   **Sprite/Armor Colors:** To change a color, find the correct palette in the `PaletteData` section and modify the desired color values.
 
-### 8.21. Bank $1C: Text Data
+### 9.21. Bank $1C: Text Data
 
-### 8.22. Bank $1D & $1E: Advanced Sprite & Boss AI
+### 9.22. Bank $1D & $1E: Advanced Sprite & Boss AI
 
 **Files:** `ALTTP/bank_1D.asm`, `ALTTP/bank_1E.asm`
 **Summary:** These banks contain the specific, complex AI for most of the game's major bosses and late-game enemies (Ganon, Moldorm, Trinexx, Helmasaur King, Kholdstare, Agahnim, etc.).
@@ -673,9 +771,9 @@ This section provides a high-level analysis of key banks in the Link to the Past
 *   **Boss/Enemy AI:** To modify a specific boss or advanced enemy, search for its `Sprite_...` routine in these two banks (e.g., `Sprite_92_HelmasaurKing` in bank $1E).
 *   **Sprite Dispatch Table:** The jump table at `SpriteModule_Active_Bank1E` in `bank_1E.asm` provides a comprehensive list of all sprites managed by that bank and is a good starting point for investigation.
 
-### 8.23. Bank $1F: Dungeon Room Data
+### 9.23. Bank $1F: Dungeon Room Data
 
-## 9. ZScream expanded feature ROM map
+## 10. ZScream Expanded ROM Map
 
 > **Last Updated:** 02/28/2025
 > **Note:** All addresses are in PC format unless otherwise stated.
@@ -704,7 +802,7 @@ ZScream reserves:
 | `0x1E8000 - 0x1EFFFF` | 1 Bank    | Expanded Tile16 space                              |
 | `0x1F0000 - 0x1FFFFF` | 2 Banks   | Expanded Tile32 space                              |
 
-## 10. Oracle of Secrets Specific Guidelines for Gemini
+## 11. Oracle of Secrets Specific Guidelines for Gemini
 
 To ensure accurate and consistent modifications within the Oracle of Secrets project, adhere to the following guidelines regarding memory management and code placement:
 
@@ -719,4 +817,3 @@ To ensure accurate and consistent modifications within the Oracle of Secrets pro
 - **Prioritize Existing Conventions:** Mimic the existing style and structure of the codebase. If a new feature is similar to an existing one, follow its implementation pattern, including how it manages memory.
 
 - **Avoid Arbitrary `org`:** Never use `org` without a clear understanding of the target address and its implications for the overall ROM layout. Unplanned `org` directives can lead to crashes or unexpected behavior.
-'''
