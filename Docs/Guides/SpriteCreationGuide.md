@@ -173,9 +173,10 @@ For complex bosses or entities, you can break them down into a main parent sprit
     *   May be positioned relative to the parent sprite.
     *   Can use `SprSubtype` to differentiate between multiple instances of the same child sprite ID (e.g., left head vs. right head, Goriya vs. its Boomerang, or Helmet Chuchu's detached helmet/mask).
 *   **Shared Sprite IDs for Variations:** A single `!SPRID` can also be used for different enemy variations (e.g., Keese, Fire Keese, Ice Keese, Vampire Bat) by assigning unique `SprSubtype` values. This is an efficient way to reuse sprite slots and base logic.
+*   **Multi-Layered Drawing for Immersion**: For sprites that Link interacts with by appearing "inside" or "behind" them (e.g., the `minecart`), drawing the sprite in multiple parts (e.g., top and bottom) and allocating OAM from different regions can create a convincing sense of depth and immersion.
 
-### 8.2. Multi-Phase Bosses and Dynamic Health Management
-Boss fights can be made more engaging by implementing multiple phases and dynamic health management.
+### 8.2. Quest Integration and Dynamic Progression
+Boss fights and NPC interactions can be made more engaging by implementing multiple phases, dynamic health management, and deep integration with quest progression.
 
 *   **Phase Transitions:** Trigger new phases based on health thresholds, timers, or the defeat of child sprites. Phases can involve:
     *   Changing the boss's graphics or palette.
@@ -186,6 +187,7 @@ Boss fights can be made more engaging by implementing multiple phases and dynami
     *   Indirectly by monitoring the health or state of child sprites (e.g., Kydreeok's main body health is tied to its heads).
     *   Using custom variables (e.g., `!KydrogPhase`) to track overall boss progression.
 *   **Quest Integration and Pacification:** Sprites can be integrated into quests where "defeat" might mean pacification rather than outright killing. This can involve refilling health and changing the sprite's state to a subdued or quest-complete action (e.g., Wolfos granting a mask after being subdued by the Song of Healing).
+*   **Deep Quest Integration**: Many NPCs (e.g., `bug_net_kid`, `deku_scrub`, `eon_owl`, `farore`, `maple`, `mask_salesman`, `mermaid` (Librarian), `ranch_girl`, `tingle`, `vasu`, `zora_princess`) are deeply integrated into questlines, with their dialogue, actions, and even spawning/despawning being conditional on various SRAM flags, WRAM flags, collected items, and game progression. This allows for rich, evolving narratives and dynamic NPC roles.
 
 ### 8.3. Code Reusability and Modularity
 When designing multiple sprites, especially bosses, look for opportunities to reuse code and create modular components.
@@ -241,5 +243,38 @@ Leverage `SprSubtype` to create diverse enemy variations from a single sprite ID
 ### 8.8. Vanilla Sprite Overrides and Conditional Logic
 When modifying existing enemies or creating new boss sequences, it's common to override vanilla sprite behavior. This allows for custom implementations while retaining the original sprite ID.
 
-*   **Hooking Entry Points**: Use `pushpc`/`pullpc` and `org` directives to redirect execution from vanilla sprite routines to your custom code. This is crucial for replacing or extending existing behaviors.
-*   **Contextual Checks**: Implement checks (e.g., using custom flags or game state variables) within your custom routines to determine whether to execute your custom logic or fall back to the original vanilla behavior. This provides flexibility and allows for conditional modifications.
+*   **Hooking Entry Points:** Identify the entry points of vanilla sprites (e.g., `Sprite_Blind_Long`, `Sprite_Blind_Prep`) and use `org` directives to redirect execution to your custom routines. This is crucial for replacing or extending existing behaviors.
+*   **Contextual Checks:** Within your custom routines, perform checks (e.g., `LDA.l $7EF3CC : CMP.b #$06`) to determine if the vanilla behavior should be executed or if your custom logic should take over. This provides flexibility and allows for conditional modifications.
+
+### 8.9. Centralized Handlers and Multi-Purpose Sprites
+Many sprite definitions serve as central handlers for multiple distinct NPCs or objects, leveraging conditional logic to dispatch to specific behaviors and drawing routines. This approach significantly optimizes resource usage and allows for a diverse range of content from a single sprite ID.
+
+*   **Single Sprite, Multiple Roles**: A single `!SPRID` can represent several distinct characters or objects (e.g., `followers.asm` for Zora Baby, Old Man, Kiki; `mermaid.asm` for Mermaid, Maple, Librarian; `zora.asm` for various Zora types; `collectible.asm` for different items; `deku_leaf.asm` for Deku Leaf and Whirlpool). This is achieved by dispatching to different routines based on `SprSubtype`, `AreaIndex`, `WORLDFLAG`, or other custom flags.
+*   **Resource Optimization**: By consolidating related behaviors under one sprite ID, the project reduces the overall number of unique sprite definitions, leading to more efficient memory usage and easier management.
+
+### 8.10. Interactive Puzzle Elements and Environmental Interaction
+Many objects are designed as interactive puzzle elements that require specific player actions and often interact with environmental tiles. These sprites contribute to the game's puzzle design and environmental storytelling.
+
+*   **Player-Manipulated Objects**: Sprites like the `ice_block` and `minecart` are core interactive puzzle elements that Link can push or ride. Their behavior is governed by precise collision detection, alignment checks, and movement physics.
+*   **Environmental Triggers**: Objects like `mineswitch` and `switch_track` respond to player actions (e.g., attacking a switch) or environmental factors (e.g., a minecart moving over a track segment) to change their state or influence other game elements.
+*   **Detailed Collision and Alignment Logic**: Implementing precise collision detection and alignment checks (as seen in `ice_block` and `minecart`) is crucial for creating fair and intuitive interactive puzzle elements.
+
+### 8.11. Player State Manipulation and Cinematic Control
+Certain sprites are designed to directly influence Link's state, movement, and the overall cinematic presentation of the game, creating immersive and narrative-driven sequences.
+
+*   **Direct Link Control**: Sprites like `farore` and `maple` can directly manipulate Link's movement, animation, and game state during cutscenes or specific interactions (e.g., putting Link to sleep, controlling his auto-movement). The `minecart` also heavily manipulates Link's state while he is riding it.
+*   **Cinematic Transitions**: Routines within these sprites can trigger screen transitions, visual filters, and sound effects to enhance the cinematic quality of key narrative moments.
+
+### 8.12. Robust Shop and Item Management Systems
+Several NPCs implement sophisticated systems for granting items, selling goods, or offering services, often with complex conditional logic based on Link's inventory, rupee count, and quest progression.
+
+*   **Conditional Transactions**: Shopkeepers like the `mask_salesman` and `tingle` implement systems for selling items, including checks for Link's rupee count and deducting the cost upon purchase.
+*   **Item Granting and Quest Rewards**: NPCs such as `maku_tree`, `hyrule_dream`, `ranch_girl`, `vasu`, and `zora_princess` are responsible for granting key items or rewards to Link, often as part of a questline or in exchange for services.
+*   **Inventory and Progression Checks**: These systems extensively check Link's inventory (e.g., Ocarina, collected masks, found rings) and various game progression flags to determine available options and dialogue.
+
+### 8.13. Robustness and Player Feedback
+Implementing mechanisms for error handling and providing clear feedback to the player is crucial for a polished and user-friendly experience.
+
+*   **Error Handling and Prevention**: Sprites can include logic to prevent unintended behavior or game-breaking scenarios. For example, the `portal_sprite` includes logic to despawn if placed on invalid tiles, preventing Link from getting stuck.
+*   **Clear Player Feedback**: Providing audio or visual cues (e.g., playing an error sound when a portal is placed incorrectly) helps the player understand what is happening and why, improving the overall user experience.
+
