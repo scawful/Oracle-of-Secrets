@@ -762,9 +762,9 @@ Submenu_Return:
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
 quest_icons: incbin "tilemaps/quest_icons.tilemap"
 incsrc "menu_map_names.asm"
-%print_debug("End of Menu/menu.asm              ")
+%log_end("Menu/menu.asm", !LOG_MENU)
 incsrc "menu_hud.asm"
-%print_debug("End of Menu/menu_hud.asm          ")
+%log_end("Menu/menu_hud.asm", !LOG_MENU)
 incsrc "menu_journal.asm"
-%print_debug("End of Menu/menu_journal.asm      ")
+%log_end("Menu/menu_journal.asm", !LOG_MENU)
 

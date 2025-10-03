@@ -215,5 +215,5 @@ Bottle_DrinkMilk:
   RTL
 }
 
-print  "End of Items/bottle_net.asm       ", pc
+%log_end("Items/bottle_net.asm", !LOG_ITEMS)
 pushpc

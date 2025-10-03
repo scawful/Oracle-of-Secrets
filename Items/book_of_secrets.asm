@@ -73,5 +73,5 @@ Dungeon_RevealSecrets:
   RTL
 }
 
-print  "End of Items/book_of_secrets.asm  ", pc
+%log_end("Items/book_of_secrets.asm", !LOG_ITEMS)
 pushpc

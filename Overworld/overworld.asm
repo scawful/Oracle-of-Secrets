@@ -37,25 +37,25 @@ org $0EDE29
 ; =========================================================
 
 incsrc "Overworld/lost_woods.asm"
-print  "End of Overworld/lost_woods.asm   ", pc
+%log_end("Overworld/lost_woods.asm", !LOG_OVERWORLD)
 
 org $348000 ; Free space
 pushpc
 incsrc "Overworld/time_system.asm"
-print  "End of Overworld/time_system.asm  ", pc
+%log_end("Overworld/time_system.asm", !LOG_OVERWORLD)
 
 incsrc "Overworld/overlays.asm"
-print  "End of Overworld/overlays.asm     ", pc
+%log_end("Overworld/overlays.asm", !LOG_OVERWORLD)
 
 incsrc "Overworld/entrances.asm"
-print  "End of Overworld/entrances.asm    ", pc
+%log_end("Overworld/entrances.asm", !LOG_OVERWORLD)
 
 incsrc "Overworld/custom_gfx.asm"
-print  "End of Overworld/custom_gfx.asm   ", pc
+%log_end("Overworld/custom_gfx.asm", !LOG_OVERWORLD)
 pushpc
 
 incsrc "Overworld/world_map.asm"
-print "End of world_map.asm              ", pc
+%log_end("Overworld/world_map.asm", !LOG_OVERWORLD)
 
 ; =========================================================
 ; Get Lv2 Sword from chest

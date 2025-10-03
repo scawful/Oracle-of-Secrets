@@ -415,7 +415,7 @@ Sprite_39_ZoraBaby:
     RTS
   }
 }
-print "End of Sprite 39 Locksmith        ", pc
+%log_end("Sprite 39 Locksmith", !LOG_SPRITES)
 assert pc() <= $06BD9C
 
 pullpc

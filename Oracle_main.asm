@@ -39,7 +39,7 @@
 incsrc "Util/macros.asm"
 
 incsrc "Overworld/ZSCustomOverworld.asm"
-%print_debug("End of ZSCustomOverworld.asm      ")
+%log_end("ZSCustomOverworld.asm", !LOG_OVERWORLD)
 
 ; Vanilla WRAM and SRAM
 incsrc "Core/ram.asm"
@@ -76,6 +76,7 @@ namespace Oracle
   incsrc "Core/patches.asm"
   ; incsrc "Core/capture.asm"
 
-  print "\nFinished applying patches"
+  print ""
+  print "Finished applying patches"
 }
 namespace off

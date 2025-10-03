@@ -221,7 +221,7 @@ ScrollToPortal:
   RTL
 }
 
-print "End of Items/portal_rod.asm       ", pc
+%log_end("Items/portal_rod.asm", !LOG_ITEMS)
 pushpc
 
 ; ; Portal Rod logic based on Fire Rod

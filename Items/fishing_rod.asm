@@ -515,4 +515,4 @@ DismissRodFromMenu:
   RTL
 }
 
-print  "End of Items/fishing_rod.asm      ", pc
+%log_end("Items/fishing_rod.asm", !LOG_ITEMS)

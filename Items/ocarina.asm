@@ -386,7 +386,7 @@ UpdateFluteSong_Long:
   .not_pressed
   RTL
 }
-print  "End of Items/ocarina.asm          ", pc
+%log_end("Items/ocarina.asm", !LOG_ITEMS)
 
 pushpc ; Bank2B freespace
 

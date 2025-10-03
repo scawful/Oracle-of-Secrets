@@ -25,7 +25,9 @@ endmacro
 ; Usage: %log_section("Sprites", !LOG_SPRITES)
 macro log_section(name, flag)
     if !DEBUG == 1 && <flag> == 1
-        print "\n---  <name>  ---"
+        print ""
+        print "---  <name>  ---"
+        print ""
     endif
 endmacro
 

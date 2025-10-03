@@ -88,5 +88,5 @@ CheckIfJumpingForSpikeDamage:
     db $04 ; red
 }
 
-print  "End of Items/jump_feather.asm     ", pc
+%log_end("Items/jump_feather.asm", !LOG_ITEMS)
 pushpc
