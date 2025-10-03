@@ -32,14 +32,14 @@ The core logic for the Overlord system resides in **Bank $09** of the vanilla RO
 
 The jump table at `$09B7A8` is the key to customizing overlords. It contains pointers to the code for each of the 26 (1A) possible overlord types.
 
-| Address | Vanilla Label | Oracle of Secrets Usage |
-|---|---|---|
-| `$09B7A8` | `Overlord01_PositionTarget` | Unused |
-| `$09B7AA` | `Overlord02_FullRoomCannons` | Unused |
-| `$09B7AC` | `Overlord03_VerticalCannon` | Unused |
-| **`$09B7AE`** | `Overlord04_Unused` | **Hooked for `Overlord_KalyxoCastleGuards`** |
-| `$09B7B0` | `Overlord05_FallingStalfos` | Unused |
-| ... | ... | ... |
+| Address       | Vanilla Label                | Oracle of Secrets Usage                      |
+|---------------|------------------------------|----------------------------------------------|
+| `$09B7A8`     | `Overlord01_PositionTarget`  | Unused                                       |
+| `$09B7AA`     | `Overlord02_FullRoomCannons` | Unused                                       |
+| `$09B7AC`     | `Overlord03_VerticalCannon`  | Unused                                       |
+| **`$09B7AE`** | `Overlord04_Unused`          | **Hooked for `Overlord_KalyxoCastleGuards`** |
+| `$09B7B0`     | `Overlord05_FallingStalfos`  | Unused                                       |
+| ...           | ...                          | ...                                          |
 
 `Oracle of Secrets` replaces the pointer at `$09B7AE` to point to its own custom logic for the castle guard spawner.
 
@@ -47,15 +47,15 @@ The jump table at `$09B7A8` is the key to customizing overlords. It contains poi
 
 Each of the five active overlords has its data stored in a series of arrays in WRAM, indexed by the overlord slot (0-4).
 
-| Address | Description |
-|---|---|
-| `$0F90,X` | **Overlord Type:** The ID (1-26) that determines which logic to run via the jump table.
-| `$0FA0,X` | **Overlord State/Action:** The current state of the overlord's internal state machine, similar to `SprAction` for normal sprites.
-| `$0FB0,X` | **Overlord Timer A:** A general-purpose timer.
-| `$0FC0,X` | **Overlord Timer B:** A second general-purpose timer.
-| `$0FD0,X` | **Overlord Timer C:** A third general-purpose timer.
-| `$0B08,X` | X-Coordinate (and other properties, loaded from room data).
-| `$0B10,X` | Y-Coordinate (and other properties, loaded from room data).
+| Address   | Description                                                                                                                       |
+|-----------|-----------------------------------------------------------------------------------------------------------------------------------|
+| `$0F90,X` | **Overlord Type:** The ID (1-26) that determines which logic to run via the jump table.                                           |
+| `$0FA0,X` | **Overlord State/Action:** The current state of the overlord's internal state machine, similar to `SprAction` for normal sprites. |
+| `$0FB0,X` | **Overlord Timer A:** A general-purpose timer.                                                                                    |
+| `$0FC0,X` | **Overlord Timer B:** A second general-purpose timer.                                                                             |
+| `$0FD0,X` | **Overlord Timer C:** A third general-purpose timer.                                                                              |
+| `$0B08,X` | X-Coordinate (and other properties, loaded from room data).                                                                       |
+| `$0B10,X` | Y-Coordinate (and other properties, loaded from room data).                                                                       |
 
 When a room is loaded, the `Underworld_LoadSingleOverlord` (`$09C35A`) or `Overworld_LoadSingleOverlord` (`$09C779`) routines read the overlord data defined in the level editor and populate these WRAM slots.
 
