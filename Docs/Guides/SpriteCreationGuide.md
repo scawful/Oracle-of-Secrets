@@ -21,7 +21,7 @@ At the top of your new sprite file, define its core properties using the provide
 ```asm
 ; Properties for MyNewEnemy
 !SPRID              = $XX ; CHOOSE AN UNUSED SPRITE ID!
-!NbrTiles           = 02  ; Number of 8x8 tiles used in the largest frame
+!NbrTiles           = 02  ; Number of 8x8 tiles used in the largest frame (e.g., Darknut uses 03 for its multi-tile body)
 !Health             = 10  ; Health points
 !Damage             = 04  ; Damage dealt to Link on contact (04 = half a heart)
 !Harmless           = 00  ; 00 = Harmful, 01 = Harmless
@@ -33,8 +33,9 @@ At the top of your new sprite file, define its core properties using the provide
 
 ; --- Design Considerations ---
 ; *   **Multi-purpose Sprite IDs:** A single `!SPRID` can be used for multiple distinct behaviors (e.g., Dark Link and Ganon) through the use of `SprSubtype`. This is a powerful technique for reusing sprite slots and creating multi-phase bosses or variations of enemies.
-; *   **Damage Handling for Bosses:** For boss sprites, `!Damage = 0` is acceptable if damage is applied through other means, such as spawned projectiles or direct contact logic within the main routine.
-; *   **Custom Boss Logic:** Setting `!Boss = 00` for a boss sprite indicates that custom boss logic is being used, rather than relying on vanilla boss flags. This is important for understanding how boss-specific behaviors are implemented.
+*   **Damage Handling for Bosses:** For boss sprites, `!Damage = 0` is acceptable if damage is applied through other means, such as spawned projectiles or direct contact logic within the main routine.
+*   **Fixed vs. Dynamic Health:** While many sprites (like Booki) have dynamic health based on Link's sword level, some sprites (like Pols Voice) may have a fixed `!Health` value, simplifying their damage model.
+*   **Custom Boss Logic:** Setting `!Boss = 00` for a boss sprite indicates that custom boss logic is being used, rather than relying on vanilla boss flags. This is important for understanding how boss-specific behaviors are implemented.
 
 ; This macro MUST be called after the properties
 %Set_Sprite_Properties(Sprite_MyNewEnemy_Prep, Sprite_MyNewEnemy_Long)
@@ -42,7 +43,7 @@ At the top of your new sprite file, define its core properties using the provide
 
 ## 3. Main Structure (`_Long` routine)
 
-This is the main entry point for your sprite, called by the game engine every frame. Its primary job is to call the drawing and logic routines.
+This is the main entry point for your sprite, called by the game engine every frame. Its primary job is to call the drawing and logic routines. Sometimes, shadow drawing might be conditional based on the sprite's current action or state, as seen in the Thunder Ghost sprite (`Sprites/Enemies/thunder_ghost.asm`).
 
 ```asm
 Sprite_MyNewEnemy_Long:
@@ -117,12 +118,12 @@ Sprite_MyNewEnemy_Main:
 ; }
 ;
 ; --- Code Readability Note ---
-; For improved readability and maintainability, always prefer using named constants for hardcoded values (e.g., timers, speeds, health, magic numbers) and named labels for `JSL` calls to project-specific functions instead of direct numerical addresses.
+; For improved readability and maintainability, always prefer using named constants for hardcoded values (e.g., timers, speeds, health, magic numbers) and named labels for `JSL` calls to project-specific functions instead of direct numerical addresses. Additionally, be mindful of the Processor Status Register (P) flags (M and X) and use `REP #$20`/`SEP #$20` to explicitly set the accumulator/index register size when necessary, especially when interacting with memory or calling routines that expect a specific state.
 ```
 
 ## 6. Drawing (`_Draw` routine)
 
-This routine renders your sprite's graphics. The easiest method is to use the `%DrawSprite()` macro, which reads from a set of data tables you define.
+This routine renders your sprite's graphics. The easiest method is to use the `%DrawSprite()` macro, which reads from a set of data tables you define. However, for highly customized drawing logic, such as dynamic tile selection, complex animation sequences, or precise OAM manipulation (as demonstrated in the Booki sprite's `Sprite_Booki_Draw` routine, which uses `REP`/`SEP` for 16-bit coordinate calculations), you may need to implement a custom drawing routine.
 
 ```asm
 Sprite_MyNewEnemy_Draw:
@@ -148,7 +149,7 @@ Sprite_MyNewEnemy_Draw:
 ; }
 ;
 ; --- Code Readability Note ---
-; For improved readability and maintainability, always prefer using named constants for hardcoded values (e.g., OAM properties, tile numbers) and named labels for `JSL` calls to project-specific functions instead of direct numerical addresses.
+; For improved readability and maintainability, always prefer using named constants for hardcoded values (e.g., OAM properties, tile numbers) and named labels for `JSL` calls to project-specific functions instead of direct numerical addresses. Additionally, be mindful of the Processor Status Register (P) flags (M and X) and use `REP #$20`/`SEP #$20` to explicitly set the accumulator/index register size when necessary, especially when interacting with memory or calling routines that expect a specific state.
 ```
 
 ## 7. Final Integration
@@ -161,14 +162,14 @@ The %Set_Sprite_Properties() macro you added in Step 2 handles the final integra
 For complex bosses or entities, you can break them down into a main parent sprite and multiple child sprites.
 
 *   **Parent Sprite Responsibilities:**
-    *   Spawns and manages its child sprites (e.g., Kydreeok spawning `kydreeok_head` instances).
+    *   Spawns and manages its child sprites (e.g., Kydreeok spawning `kydreeok_head` instances, Darknut spawning probes, Goriya spawning its boomerang, Helmet Chuchu detaching its helmet/mask, Thunder Ghost spawning lightning attacks with directional logic, or Puffstool transforming into a bomb).
     *   Monitors the state/health of its child sprites to determine its own phases, actions, or defeat conditions.
     *   Often handles overall movement, phase transitions, and global effects.
     *   Uses global variables (e.g., `Offspring1_Id`, `Offspring2_Id`) to store the sprite IDs of its children for easy referencing.
 *   **Child Sprite Responsibilities:**
     *   Handles its own independent logic, movement, and attacks.
     *   May be positioned relative to the parent sprite.
-    *   Can use `SprSubtype` to differentiate between multiple instances of the same child sprite ID (e.g., left head vs. right head).
+    *   Can use `SprSubtype` to differentiate between multiple instances of the same child sprite ID (e.g., left head vs. right head, Goriya vs. its Boomerang, or Helmet Chuchu's detached helmet/mask).
 *   **Shared Sprite IDs for Variations:** A single `!SPRID` can also be used for different enemy variations (e.g., Keese, Fire Keese, Ice Keese, Vampire Bat) by assigning unique `SprSubtype` values. This is an efficient way to reuse sprite slots and base logic.
 
 ### 8.2. Multi-Phase Bosses and Dynamic Health Management
@@ -187,7 +188,7 @@ Boss fights can be made more engaging by implementing multiple phases and dynami
 ### 8.3. Code Reusability and Modularity
 When designing multiple sprites, especially bosses, look for opportunities to reuse code and create modular components.
 
-*   **Shared Logic:** If multiple sprites perform similar actions (e.g., spawning stalfos, specific movement patterns), consider creating common functions or macros that can be called by different sprites. This reduces code duplication and improves maintainability.
+*   **Shared Logic:** If multiple sprites perform similar actions (e.g., spawning stalfos, specific movement patterns, or tile collision handling like `Goriya_HandleTileCollision` used by Darknut), consider creating common functions or macros that can be called by different sprites. This reduces code duplication and improves maintainability.
 *   **Refactoring:** Regularly refactor duplicated code into reusable components. This makes it easier to apply changes consistently across related sprites.
 
 ### 8.4. Configurability and Avoiding Hardcoded Values
@@ -199,6 +200,9 @@ To improve sprite reusability and ease of placement in different maps, avoid har
     *   Relative positioning or distance checks to Link.
 *   **Timers, Speeds, Offsets:** Always prefer using named constants (`!CONSTANT_NAME = value`) for numerical values that control behavior (timers, speeds, offsets, health thresholds). This significantly improves readability and makes it easier to adjust parameters without searching through code.
 *   **Function Calls:** Use named labels for `JSL` calls to project-specific functions instead of direct numerical addresses.
+*   **Conditional Drawing/Flipping:** When drawing, use sprite-specific variables (e.g., `SprMiscC` in the Booki sprite) to store directional information and conditionally adjust OAM offsets or flip bits to achieve horizontal or vertical flipping without hardcoding.
+*   **State Machine Implementation:** For complex AI, utilize `JumpTableLocal` with `SprAction` to create robust state machines, as seen in the Booki sprite's `_Main` routine.
+*   **Randomness:** Incorporate `JSL GetRandomInt` to introduce variability into sprite behaviors, such as movement patterns or state transitions, making enemies less predictable.
 
 ### 8.5. Overriding Vanilla Behavior
 When creating new boss sequences or modifying existing enemies, it's common to override vanilla sprite behavior.
@@ -206,3 +210,22 @@ When creating new boss sequences or modifying existing enemies, it's common to o
 *   **Hooking Entry Points:** Identify the entry points of vanilla sprites (e.g., `Sprite_Blind_Long`, `Sprite_Blind_Prep`) and use `org` directives to redirect execution to your custom routines.
 *   **Contextual Checks:** Within your custom routines, perform checks (e.g., `LDA.l $7EF3CC : CMP.b #$06`) to determine if the vanilla behavior should be executed or if your custom logic should take over.
 *   **SRAM Flags:** Utilize SRAM flags (`$7EF3XX`) to track quest progression or conditions that dictate whether vanilla or custom behavior is active.
+
+### 8.6. Dynamic Enemy Behavior
+For more engaging and adaptive enemies, consider implementing dynamic behaviors:
+
+*   **Dynamic Difficulty Scaling:** Adjust enemy properties (health, damage, prize drops) based on player progression (e.g., Link's sword level, number of collected items). This can be done in the `_Prep` routine by indexing into data tables. For example, the Booki sprite (`Sprites/Enemies/booki.asm`) sets its health based on Link's current sword level.
+*   **Dynamic State Management:** Utilize `SprMisc` variables (e.g., `SprMiscB` for sub-states) and timers (e.g., `SprTimerA` for timed transitions) to create complex and adaptive behaviors. The Booki sprite demonstrates this with its `SlowFloat` and `FloatAway` sub-states and timed transitions.
+*   **Advanced Interaction/Guard Mechanics:** Implement behaviors like parrying (`Guard_ParrySwordAttacks` in Darknut) or chasing Link along a single axis (`Guard_ChaseLinkOnOneAxis` in Darknut) to create more sophisticated enemy encounters.
+*   **Random Movement with Collision Response:** Implement enemies that move in random directions and change their behavior upon collision with tiles, as demonstrated by the Goriya sprite's `Goriya_HandleTileCollision` routine.
+*   **Dynamic Appearance and Conditional Vulnerability:** Sprites can dynamically change their appearance and vulnerability based on internal states or player actions. For instance, the Helmet Chuchu (`Sprites/Enemies/helmet_chuchu.asm`) changes its graphics and becomes vulnerable only after its helmet/mask is removed, often by a specific item like the Hookshot.
+*   **Stunned State and Counter-Attack:** Some sprites react to damage by entering a stunned state, then performing a counter-attack (e.g., Puffstool spawning spores or transforming into a bomb).
+*   **Interaction with Thrown Objects:** Sprites can be designed to interact with objects thrown by Link (e.g., `ThrownSprite_TileAndSpriteInteraction_long` used by Puffstool), allowing for environmental puzzles or unique combat strategies.
+*   **Interaction with Non-Combat Player Actions:** Sprites can react to specific player actions beyond direct attacks, such as playing a musical instrument. The Pols Voice (`Sprites/Enemies/pols_voice.asm`) despawns and drops a prize if Link plays the flute.
+*   **Specific Movement Routines for Attacks:** During attack animations, sprites may utilize specialized movement routines like `Sprite_MoveLong` (seen in Thunder Ghost) to control their position and trajectory precisely.
+*   **Damage Reaction (Invert Speed):** A common dynamic behavior is for a sprite to invert its speed or change its movement pattern upon taking damage, as seen in Pols Voice.
+*   **Global State-Dependent Behavior:** Sprite properties and behaviors can be dynamically altered based on global game state variables (e.g., `WORLDFLAG` in the Sea Urchin sprite), allowing for different enemy characteristics in various areas or game progression points.
+*   **Simple Movement/Idle:** Not all sprites require complex movement. Some may have simple idle animations and primarily interact through contact damage or being pushable, as exemplified by the Sea Urchin.
+*   **Timed Attack and Stun States:** Sprites can have distinct attack and stunned states that are governed by timers, allowing for predictable attack patterns and temporary incapacitation (e.g., Poltergeist's `Poltergeist_Attack` and `Poltergeist_Stunned` states).
+*   **Conditional Invulnerability:** Invulnerability can be dynamic, changing based on the sprite's state. For example, a sprite might be impervious to certain attacks only when in a specific state, or its `SprDefl` flags might be manipulated to reflect temporary invulnerability (as suggested by the Poltergeist's properties).
+*   **Direct SRAM Interaction:** Implement mechanics that directly interact with Link's inventory or status in SRAM (e.g., stealing items, modifying rupee count). Remember to explicitly manage processor status flags (`REP`/`SEP`) when performing mixed 8-bit/16-bit operations on SRAM addresses to prevent unexpected behavior or crashes.
