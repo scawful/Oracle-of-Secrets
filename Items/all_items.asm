@@ -1,4 +1,6 @@
 ; Inherits Free Space from Bank07
+org $07FA80
+!RAM_MAGIC = $7EF36E
 incsrc "Items/bottle_net.asm"
 
 ; Starts Expanded Bank 0x2B
@@ -42,36 +44,44 @@ Link_ConsumeMagicBagItem:
 
   Link_Banana:
   {
-    LDA.l CURHP : CMP.w MAXHP : BCS +
+    LDA.l CURHP : CMP.w MAXHP : BCS .full
       LDA.l CURHP : CLC : ADC.b #$10 : STA.l CURHP
-      LDA.b #$0D : STA.w $012F ; HUD Heart SFX
-    +
-    RTS
+      SEC : RTS
+    .full
+    CLC : RTS
   }
 
   Link_Pineapple:
   {
-    RTS
+    LDA.l !RAM_MAGIC : CMP.b #$80 : BCS .full
+      LDA.b #$80 : STA.l !RAM_MAGIC
+      SEC : RTS
+    .full
+    CLC : RTS
   }
 
   Link_RockMeat:
   {
-    RTS
+    CLC : RTS
   }
 
   Link_Seashells:
   {
-    RTS
+    CLC : RTS
   }
 
   Link_Honeycombs:
   {
-    RTS
+    LDA.l CURHP : CMP.w MAXHP : BCS .full
+      LDA.l CURHP : CLC : ADC.b #$10 : STA.l CURHP
+      SEC : RTS
+    .full
+    CLC : RTS
   }
 
   Link_DekuSticks:
   {
-    RTS
+    CLC : RTS
   }
 
 }

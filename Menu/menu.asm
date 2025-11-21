@@ -499,6 +499,7 @@ Menu_MagicBag:
   REP #$10
   LDX.w Menu_MagicBagCursorPositions, Y
   JSR Menu_DrawCursor
+  JSR MagicBag_ConsumeItem
   JSR Submenu_Return
 
   LDA.b #$22 : STA.w $0116
@@ -514,6 +515,53 @@ Menu_MagicBagCursorPositions:
   dw menu_offset(12,6)  ; seashells
   dw menu_offset(12,10) ; honeycombs
   dw menu_offset(12,14) ; deku sticks
+
+MagicBag_ConsumeItem:
+{
+    ; Check for A button press
+    LDA.b $F6 : BIT.b #$80 : BEQ .exit
+    
+    REP #$30
+    ; Calculate SRAM address for current item (4 bytes per entry)
+    LDA.w $020B : ASL #2 : TAX
+    LDA.l .sram_addresses, X : STA $00
+    LDA.l .sram_addresses+2, X : STA $02
+    SEP #$30
+
+    ; Handle Consumption
+    PHB : LDA $02 : PHA : PLB
+    LDA ($00) : BEQ .error_dbr
+    
+    ; Call Handler
+    JSL Link_ConsumeMagicBagItem
+    BCC .failed_use_dbr
+    
+    ; Success -> Decrement
+    LDA ($00) : DEC A : STA ($00)
+    PLB
+    
+    ; Sound
+    LDA.b #$35 : STA.w $012F
+    BRA .exit
+
+.failed_use_dbr
+    PLB
+.error_dbr
+    ; Error Sound
+    LDA.b #$3C : STA.w $012E
+    BRA .exit
+
+.exit
+    RTS
+
+.sram_addresses
+    dd Bananas
+    dd Pineapples
+    dd RockMeat
+    dd Seashells
+    dd Honeycomb
+    dd DekuSticks
+}
 
 ; =========================================================
 ; 0D MENU SONG MENU
