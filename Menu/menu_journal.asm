@@ -7,20 +7,32 @@
 Journal_Handler:
 {
   PHB : PHK : PLB
-  ; Check for L button press
-  LDA.b $F6 : BIT.b #$20 : BEQ .check_right
+
+  ; Check timer
+  LDA.w $0207 : BEQ .process_input
+    DEC.w $0207
+    JMP .exit
+  .process_input
+
+  ; Check for L button press (using F2 for continuous poll with timer)
+  LDA.b $F2 : BIT.b #$20 : BEQ .check_right
     REP #$30
     JSR Journal_PrevPage
     JSL Menu_DrawJournal
-    BRA .draw_page
+    SEP #$30
+    LDA.b #$0A : STA.w $0207 ; Set delay
+    JMP .exit
   
   .check_right
   ; Check for R button press
-  LDA.b $F6 : BIT.b #$10 : BEQ .draw_page
+  LDA.b $F2 : BIT.b #$10 : BEQ .exit
     REP #$30
     JSR Journal_NextPage
     JSL Menu_DrawJournal
-  .draw_page
+    SEP #$30
+    LDA.b #$0A : STA.w $0207 ; Set delay
+
+  .exit
   SEP #$30
   PLB
   RTL
@@ -250,6 +262,7 @@ Entry_MakuTree:
 Menu_DrawJournal:
 {
   PHB : PHK : PLB
+  REP #$30
   
   ; Logic to choose background based on page number?
   ; For now just cycle them 1-2-3-1-2-3

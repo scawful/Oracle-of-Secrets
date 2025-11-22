@@ -125,8 +125,8 @@ Menu_UploadRight:
   JSR DrawLocationName
 
   SEP #$30
-  LDA.b #$23 : STA.w $0116
-  LDA.b #$01 : STA.b $17
+  LDA.b #$22 : STA.w $0116
+  LDA.b #$01 : STA.b $17 : STA.b $15
   INC.w $0200
   RTS
 }
@@ -154,7 +154,7 @@ Menu_UploadLeft:
   ;-----------------------
 
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17 : STA.b $15 ; added for palette
+  LDA.b #$01 : STA.b $17 : STA.b $15 : STA.b $15 ; added for palette
   INC.w $0200
   RTS
 }
@@ -197,14 +197,17 @@ Menu_CheckForSpecialMenus:
       LDA.b $F6 : BIT.b #$80 : BEQ +
         STZ.w $020B
         LDA.b #$0C : STA.w $0200 ; Magic Bag
+        JSR Menu_DeleteCursor ; Ensure cursor is deleted
+        SEC : RTS             ; Return Carry Set
     +
     LDA.w $0202 : CMP.b #$0D : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
         LDA.b #$0D : STA.w $0200
+        LDA.b #$01 : STA.w CurrentSong ; Initialize song selection
           JSR Menu_DeleteCursor
           JSR Menu_DrawSongMenu
           SEP #$30
-          JMP .exit
+          SEC : RTS ; Return Carry Set
     ++
     LDA.w $0202 : CMP.b #$0E : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
@@ -212,7 +215,7 @@ Menu_CheckForSpecialMenus:
         JSR Menu_DeleteCursor
         JSL Menu_DrawJournal
         SEP #$30
-        JMP .exit
+        SEC : RTS ; Return Carry Set
     ++
 
     LDA.b $F6 : BIT.b #$40 : BEQ +++
@@ -220,11 +223,10 @@ Menu_CheckForSpecialMenus:
       JSR Menu_DrawRingBox
       STZ.w $020B
       LDA.b #$09 : STA.w $0200 ; Ring Box
-      JMP .exit
+      SEC : RTS ; Return Carry Set
     +++
-  .exit
 
-  RTS
+  CLC : RTS ; Return Carry Clear
 }
 
 
@@ -241,6 +243,7 @@ Menu_ItemScreen:
     LSR : BCS .move_down
     LSR : BCS .move_up
       JSR Menu_CheckForSpecialMenus
+      BCS .exit ; Skip drawing cursor if submenu opened
   .do_no_input
   BRA .no_inputs
 
@@ -278,7 +281,7 @@ Menu_ItemScreen:
   SEP #$20
   .exit
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17
+  LDA.b #$01 : STA.b $17 : STA.b $15
 
   RTS
 }
@@ -511,7 +514,7 @@ Menu_InitiateScrollDown:
   DEX : BNE .loop4
 
   LDA.b #$24 : STA.w $0116
-  LDA.b #$01 : STA.b $17
+  LDA.b #$01 : STA.b $17 : STA.b $15
   LDA.b #$08 : STA.w $0200
   LDA.b #$12 : STA.w $012F ; play menu exit sound effect
 
@@ -572,7 +575,7 @@ Menu_MagicBag:
 
   ; Trigger VRAM tilemap upload
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17
+  LDA.b #$01 : STA.b $17 : STA.b $15
   RTS
 }
 
@@ -714,7 +717,7 @@ Menu_SongMenu:
   SEP #$20
 
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17
+  LDA.b #$01 : STA.b $17 : STA.b $15
 
   RTS
 }
@@ -770,7 +773,7 @@ Menu_RingBox:
   SEP #$20
 
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17
+  LDA.b #$01 : STA.b $17 : STA.b $15
 
   RTS
 }
@@ -857,7 +860,7 @@ Menu_Journal:
   JSR Submenu_Return
 
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17
+  LDA.b #$01 : STA.b $17 : STA.b $15
   RTS
 }
 
@@ -866,7 +869,7 @@ Menu_SubmenuReturn:
   STZ.w $0116 ; Clear VRAM flag to prevent partial upload
   JSR Menu_RefreshInventoryScreen
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17 : STA.b $15
+  LDA.b #$01 : STA.b $17 : STA.b $15 : STA.b $15
   LDA.b #$04 : STA.w $0200 ; Set state to Item Screen
   RTS
 }

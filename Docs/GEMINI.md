@@ -399,6 +399,35 @@ For specific debugging scenarios:
 
 
 
+### 5.5. Recent Debugging Insights
+
+During recent development and bug-fixing tasks, several critical patterns and debugging insights have emerged:
+
+-   **Processor Status Mismatch (M/X flags) and BRK (`$00` opcode):**
+    -   A common cause of crashes is calling a routine expecting a different processor mode (e.g., 16-bit Accumulator) than the current CPU state (e.g., 8-bit Accumulator).
+    -   Specifically, if an `AND.w #$00FF` instruction is encountered while the A-register is in 8-bit mode (`SEP #$20` active), the assembler may generate `29 FF 00`. The CPU will execute `29 FF` (AND immediate byte), and then interpret the trailing `00` as a `BRK` instruction, leading to a crash.
+    -   **Resolution:** Always explicitly set the processor state (`REP #$30` for 16-bit, `SEP #$30` for 8-bit) at the entry of routines that depend on a specific mode, and consider `PHP`/`PLP` for state preservation if the routine needs to temporarily change modes or be called from various contexts.
+
+-   **Input Polling Registers for Continuous Actions:**
+    -   For features requiring continuous input (e.g., holding a button to navigate in a menu or turn pages), use the joypad register that tracks **all pressed buttons** (`$F2` / `JOY1B_ALL`).
+    -   Avoid using registers that only signal **new button presses** (`$F6` / `JOY1B_NEW`), as these will only trigger an action for a single frame, making continuous interaction impossible.
+    -   **Resolution:** Pair `$F2` checks with a delay timer (`$0207` in our context) to prevent rapid-fire actions.
+
+-   **VRAM Update Flags (`$0116`, `$15`, `$17`) for Menu Graphics:**
+    -   The variable `$0116` acts as a crucial trigger for the vanilla NMI handler (`NMI_DoUpdates`) to perform VRAM updates. **Bit 0 of `$0116` must be set (`$01`, or part of `$21`, `$23`, `$25`, etc.)** for standard tilemap and OAM buffer uploads to occur. Values like `$22` (where bit 0 is clear) may be ignored by the vanilla NMI handler for general VRAM updates.
+    -   The `$15` flag (often referred to as the Palette/Refresh flag) should often be set alongside `$17` (NMI module selection) to ensure consistent and complete VRAM refreshes, especially for full-screen updates.
+    -   **Resolution:** When a menu state needs to update its tilemap or OAM visually, ensure `$0116` has bit 0 set, and consider setting `$15` for comprehensive refreshes.
+
+-   **Data Table Mismatches (Logical vs. Visual Indexing):**
+    -   In UI-heavy features (like inventory or submenus), a misalignment between a table defining the *logical order* of items (e.g., `Menu_AddressIndex`) and a table defining their *visual positions* (e.g., `Menu_ItemCursorPositions`) can lead to subtle bugs.
+    -   **Symptom:** A cursor might appear in the wrong place, or attempting to clear a cursor from one item might inadvertently clear another, resulting in visual artifacts.
+    -   **Resolution:** Rigorously align item indices across all related data tables, ensuring a 1:1 mapping between logical item order and visual screen coordinates.
+
+-   **Custom NMI Handlers and Vanilla System Integration:**
+    -   Be aware that extensive custom systems (like ZScream's overworld graphics streaming) may replace or heavily modify vanilla NMI routines. These custom handlers might be designed to process their *own* DMA requests and could potentially ignore standard vanilla flags (`$0116`, `$15`) or input registers.
+    -   **Symptom:** Standard game elements (like menus) may fail to update graphics or respond to input if the custom NMI handler does not explicitly integrate or defer to the vanilla update logic.
+    -   **Resolution:** If a custom NMI handler is in place, it must either pass control to the vanilla NMI handler when appropriate (e.g., when the game is in a menu state), or manually replicate the necessary vanilla update logic (e.g., checking `$0116` and initiating DMA for menu buffers).
+
 ## 6. Verification Policy
 
 - **Bugs and Features:** Never mark a bug fix or feature implementation as `DONE` until it has been thoroughly tested and verified in an emulator. This ensures stability and prevents regressions.
