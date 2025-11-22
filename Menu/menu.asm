@@ -95,6 +95,7 @@ Menu_InitGraphics:
   STZ.w $0300 ; ITEMSTEP
   STZ.w $037A ; USEY2
   STZ.w $0301 ; USEY1
+  STZ.w $020C ; Stats Screen Cursor Index
   INC $0200
 }
 
@@ -299,6 +300,7 @@ incsrc "menu_scroll.asm"
 Menu_StatsScreen:
 {
   JSR Menu_CheckHScroll
+  JSR Menu_StatsScreen_Input
   RTS
 }
 

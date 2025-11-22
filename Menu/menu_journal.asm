@@ -4,6 +4,10 @@ JOURNAL_STATE_FIRST_PAGE  = $0000
 JOURNAL_STATE_MIDDLE_PAGE = $0001
 JOURNAL_STATE_LAST_PAGE   = $0002
 
+; ---------------------------------------------------------
+; Journal Handler
+; ---------------------------------------------------------
+
 Journal_Handler:
 {
   PHB : PHK : PLB
@@ -27,6 +31,10 @@ Journal_Handler:
   PLB
   RTL
 }
+
+; ---------------------------------------------------------
+; Page Navigation
+; ---------------------------------------------------------
 
 Journal_PrevPage:
 {
@@ -58,23 +66,85 @@ Journal_NextPage:
   RTS
 }
 
+; ---------------------------------------------------------
+; Entry Drawing
+; ---------------------------------------------------------
+
 Journal_DrawEntry:
 {
   REP #$30
-  LDX.w #$0000
-  LDY.w #$0000
+  ; Calculate pointer to the text based on JournalState (Page #)
+  ; Entry = JournalEntries[JournalState]
+  LDA.l JournalState : AND.w #$00FF : ASL : TAX
+  LDA.w JournalEntries, X : STA.b $00 ; Store pointer in $00 (Direct Page)
+
+  LDX.w #$0000 ; Text Offset
+  LDY.w #$0000 ; VRAM Offset
+  
   .loop
-    LDA.w BookEntries, X : STA.w $1292, Y
-    INY #2 : INX #2
-  CPY.w #$001F : BCC .loop
+    ; Read from Indirect Address ($00) + Y (offset)
+    ; We need to be careful with addressing.
+    ; $00 is 16-bit pointer. We need to read from Bank 2D (current bank).
+    ; LDA ($00), Y works if Y is index.
+    ; But our X is the text offset index, Y is VRAM index.
+    ; Let's swap registers.
+    
+    PHY ; Save VRAM offset
+    TXY ; Y = Text Offset
+    LDA ($00), Y ; Read word from text table
+    PLY ; Restore VRAM offset
+    
+    STA.w $1292, Y ; Write to VRAM buffer
+    
+    INY #2 ; Next VRAM word
+    INX #2 ; Next Text word
+    
+  CPY.w #$0060 ; Copy 3 lines (32 bytes * 3 approx? No, original was $1F bytes -> 16 chars/1 line)
+               ; Original loop: CPY #$001F. That's 32 bytes (16 chars).
+               ; The BookEntries had 3 lines defined but the loop only did 1 line?
+               ; Original:
+               ; .loop
+               ;   LDA.w BookEntries, X : STA.w $1292, Y
+               ;   INY #2 : INX #2
+               ; CPY.w #$001F : BCC .loop
+               ; Yes, it only copied the first line ($00 to $1E).
+               ; We should probably copy more lines.
+               ; Let's copy 6 lines ($60 bytes? No, $1F is 31. So 16 chars * 2 bytes = 32 bytes = $20)
+               ; Let's copy 3 lines = $60 bytes.
+               
+  CPY.w #$0060 : BCC .loop
+  
   SEP #$30
   RTS
 }
 
-BookEntries:
-  dw "THIS_IS_A_TEST__"
-  dw "______________  "
-  dw "______________  "
+; ---------------------------------------------------------
+; Data Tables
+; ---------------------------------------------------------
+
+JournalEntries:
+  dw Entry_Page1
+  dw Entry_Page2
+  dw Entry_Page3
+
+Entry_Page1:
+  dw "QUEST_LOG:_I____"
+  dw "Must_find_the___"
+  dw "missing_girl____"
+
+Entry_Page2:
+  dw "QUEST_LOG:_II___"
+  dw "The_Mushroom_is_"
+  dw "key_to_the_woods"
+
+Entry_Page3:
+  dw "QUEST_LOG:_III__"
+  dw "Zora_River_flows"
+  dw "from_the_north__"
+
+; ---------------------------------------------------------
+; Background Drawing
+; ---------------------------------------------------------
 
 Menu_DrawJournal:
 {
@@ -183,4 +253,3 @@ Journal_DrawLastPage:
   .last_page_tilemap
     incbin "tilemaps/journal_end.bin"
 }
-
