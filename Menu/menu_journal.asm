@@ -1,8 +1,4 @@
 ; Book of Secrets Journal Menu
-; Journal States
-JOURNAL_STATE_FIRST_PAGE  = $0000
-JOURNAL_STATE_MIDDLE_PAGE = $0001
-JOURNAL_STATE_LAST_PAGE   = $0002
 
 ; ---------------------------------------------------------
 ; Journal Handler
@@ -16,7 +12,6 @@ Journal_Handler:
     REP #$30
     JSR Journal_PrevPage
     JSL Menu_DrawJournal
-    JSR Journal_DrawEntry
     BRA .draw_page
   
   .check_right
@@ -25,7 +20,6 @@ Journal_Handler:
     REP #$30
     JSR Journal_NextPage
     JSL Menu_DrawJournal
-    JSR Journal_DrawEntry
   .draw_page
   SEP #$30
   PLB
@@ -39,14 +33,15 @@ Journal_Handler:
 Journal_PrevPage:
 {
   LDA.l JournalState 
-  AND.w #$00FF : CMP.w #JOURNAL_STATE_FIRST_PAGE 
-  BEQ .wrap_to_last
+  AND.w #$00FF : BEQ .wrap_to_last
     DEC A
     STA.l JournalState
     RTS
   
   .wrap_to_last
-  LDA.w #JOURNAL_STATE_LAST_PAGE
+  ; Find total count to wrap to last
+  JSR Journal_CountUnlocked
+  DEC A
   STA.l JournalState
   RTS
 }
@@ -54,16 +49,113 @@ Journal_PrevPage:
 Journal_NextPage:
 {
   LDA.l JournalState 
-  AND.w #$00FF : CMP.w #JOURNAL_STATE_LAST_PAGE 
-  BEQ .wrap_to_first
-    INC A
+  AND.w #$00FF : INC A : STA.b $00
+  
+  ; Check if next page exists
+  LDA.b $00
+  JSR Journal_GetNthEntry
+  CPX.w #$0000 : BEQ .wrap_to_first
+    LDA.b $00
     STA.l JournalState
     RTS
   
   .wrap_to_first
-  LDA.w #JOURNAL_STATE_FIRST_PAGE
+  LDA.w #$0000
   STA.l JournalState
   RTS
+}
+
+; ---------------------------------------------------------
+; Entry Logic
+; ---------------------------------------------------------
+
+; Input: A = Index (N)
+; Output: X = Text Pointer (or 0 if not found)
+Journal_GetNthEntry:
+{
+  PHA
+  LDY.w #$0000 ; Master List Index
+  
+  .loop
+    ; Check if we reached end of list
+    LDA.w Journal_MasterList, Y : BEQ .end_of_list
+    
+    ; Check Flag
+    ; Format: dd dd dd mm (Address Long, Mask)
+    ; But we can't indirect long easily without setup.
+    ; Let's read address to $00.
+    
+    LDA.w Journal_MasterList, Y : STA.b $02
+    LDA.w Journal_MasterList+2, Y : STA.b $04 ; Get mask in low byte of $04
+    
+    SEP #$20
+    ; $04 = Bank, $05 = Mask (from 16-bit read above)
+
+    PHB
+    LDA.b $04 : PHA : PLB       ; Set DB to address bank
+    LDA.b ($02)                 ; Load flag value at address
+    PLB                         ; Restore original data bank
+
+    AND.w Journal_MasterList+3, Y  ; Apply mask (A is 8-bit, addr is 16-bit)
+    ; Wait, 16-bit read of +2 gets Bank and Mask.
+    ; $02-$03 = Addr Low
+    ; $04 = Bank
+    ; $05 = Mask
+    ; The AND above reads from ROM directly.
+    
+    BEQ .locked
+      ; Unlocked
+      PLA : DEC A : PHA ; Decrement target index
+      BMI .found
+    
+    .locked
+    REP #$20
+    TYA : CLC : ADC.w #$0006 : TAY ; Next Entry (4 bytes header + 2 bytes ptr = 6)
+    BRA .loop
+    
+  .found
+    REP #$20
+    PLA ; Clean stack
+    LDA.w Journal_MasterList+4, Y : TAX
+    RTS
+    
+  .end_of_list
+    REP #$20
+    PLA ; Clean stack
+    LDX.w #$0000
+    RTS
+}
+
+Journal_CountUnlocked:
+{
+  LDY.w #$0000 ; Master List Index
+  LDA.w #$0000 : STA.b $06 ; Counter
+  
+  .loop
+    LDA.w Journal_MasterList, Y : BEQ .done
+    
+    ; Check Flag
+    LDA.w Journal_MasterList, Y : STA.b $02
+    LDA.w Journal_MasterList+2, Y : STA.b $04
+    
+    SEP #$20
+    PHB                         ; Save current data bank
+    LDA.b $04 : PHA : PLB       ; Set DB to address bank
+    LDA.b ($02)                 ; Load flag value
+    PLB                         ; Restore original data bank
+    AND.w Journal_MasterList+3, Y  ; Apply mask (A is 8-bit, addr is 16-bit)
+    BEQ .locked
+      REP #$20
+      INC.b $06
+
+    .locked
+    REP #$20
+    TYA : CLC : ADC.w #$0006 : TAY
+    BRA .loop
+    
+  .done
+    LDA.b $06
+    RTS
 }
 
 ; ---------------------------------------------------------
@@ -73,47 +165,51 @@ Journal_NextPage:
 Journal_DrawEntry:
 {
   REP #$30
-  ; Calculate pointer to the text based on JournalState (Page #)
-  ; Entry = JournalEntries[JournalState]
-  LDA.l JournalState : AND.w #$00FF : ASL : TAX
-  LDA.w JournalEntries, X : STA.b $00 ; Store pointer in $00 (Direct Page)
+  LDA.l JournalState : AND.w #$00FF
+  JSR Journal_GetNthEntry
+  STX.b $00 ; Store Text Pointer
+  
+  CPX.w #$0000 : BNE .valid
+    ; Draw "Empty" if no entry found (shouldn't happen with correct logic)
+    RTS
+  .valid
 
   LDX.w #$0000 ; Text Offset
   LDY.w #$0000 ; VRAM Offset
   
   .loop
-    ; Read from Indirect Address ($00) + Y (offset)
-    ; We need to be careful with addressing.
-    ; $00 is 16-bit pointer. We need to read from Bank 2D (current bank).
-    ; LDA ($00), Y works if Y is index.
-    ; But our X is the text offset index, Y is VRAM index.
-    ; Let's swap registers.
-    
     PHY ; Save VRAM offset
     TXY ; Y = Text Offset
-    LDA ($00), Y ; Read word from text table
+    LDA ($00), Y ; Read word from text
     PLY ; Restore VRAM offset
     
-    STA.w $1292, Y ; Write to VRAM buffer
+    CMP.w #$FFFF : BEQ .done ; Check for terminator
+    
+    STA.w $1292, Y ; Write to VRAM buffer (Row 1)
     
     INY #2 ; Next VRAM word
     INX #2 ; Next Text word
     
-  CPY.w #$0060 ; Copy 3 lines (32 bytes * 3 approx? No, original was $1F bytes -> 16 chars/1 line)
-               ; Original loop: CPY #$001F. That's 32 bytes (16 chars).
-               ; The BookEntries had 3 lines defined but the loop only did 1 line?
-               ; Original:
-               ; .loop
-               ;   LDA.w BookEntries, X : STA.w $1292, Y
-               ;   INY #2 : INX #2
-               ; CPY.w #$001F : BCC .loop
-               ; Yes, it only copied the first line ($00 to $1E).
-               ; We should probably copy more lines.
-               ; Let's copy 6 lines ($60 bytes? No, $1F is 31. So 16 chars * 2 bytes = 32 bytes = $20)
-               ; Let's copy 3 lines = $60 bytes.
-               
-  CPY.w #$0060 : BCC .loop
-  
+    ; Wrap logic for multiple lines
+    ; Line 1 ends at $1292 + $20 (32 bytes) = $12B2?
+    ; Let's just assume the text includes padding or we handle newlines?
+    ; Simplified: The text data is pre-formatted to 16 chars per line.
+    ; We just copy linear data to linear VRAM.
+    ; But VRAM is linear in rows? Yes, usually.
+    ; However, to jump to next line in tilemap we need to add stride.
+    ; Row Width = $40 bytes (32 tiles * 2 bytes).
+    ; If we write 16 chars (32 bytes), we need to skip 32 bytes to reach next line.
+    
+    CPY.w #$0020 : BNE .check_line_2
+      TYA : CLC : ADC.w #$0020 : TAY ; Skip to next line start
+    .check_line_2
+    CPY.w #$0060 : BNE .check_line_3 ; End of Line 2 ($20 + $40 = $60)
+      TYA : CLC : ADC.w #$0020 : TAY
+    .check_line_3
+    
+    BRA .loop
+    
+  .done
   SEP #$30
   RTS
 }
@@ -122,25 +218,30 @@ Journal_DrawEntry:
 ; Data Tables
 ; ---------------------------------------------------------
 
-JournalEntries:
-  dw Entry_Page1
-  dw Entry_Page2
-  dw Entry_Page3
+; Format: Address(3), Mask(1), TextPtr(2) = 6 bytes
+Journal_MasterList:
+  dl $7EF3D6 : db $02 : dw Entry_QuestStart ; OOSPROG bit 1 (Quest Start)
+  dl $7EF3D6 : db $10 : dw Entry_MetElder   ; OOSPROG bit 4 (Met Elder)
+  dl $7EF3C6 : db $04 : dw Entry_MakuTree   ; OOSPROG2 bit 2 (Maku Tree)
+  dw $0000 ; Terminator
 
-Entry_Page1:
-  dw "QUEST_LOG:_I____"
-  dw "Must_find_the___"
+Entry_QuestStart:
+  dw "Quest_Started___"
+  dw "Find_the_3_gems_"
+  dw "to_save_Hyrule__"
+  dw $FFFF
+
+Entry_MetElder:
+  dw "Spoke_to_Elder__"
+  dw "He_mentioned_a__"
   dw "missing_girl____"
+  dw $FFFF
 
-Entry_Page2:
-  dw "QUEST_LOG:_II___"
-  dw "The_Mushroom_is_"
-  dw "key_to_the_woods"
-
-Entry_Page3:
-  dw "QUEST_LOG:_III__"
-  dw "Zora_River_flows"
-  dw "from_the_north__"
+Entry_MakuTree:
+  dw "Met_Maku_Tree___"
+  dw "He_needs_his____"
+  dw "memory_back_____"
+  dw $FFFF
 
 ; ---------------------------------------------------------
 ; Background Drawing
@@ -149,17 +250,44 @@ Entry_Page3:
 Menu_DrawJournal:
 {
   PHB : PHK : PLB
-  LDA.l JournalState
-  ASL : TAX
-  JSR (.page_drawers, X)
+  
+  ; Logic to choose background based on page number?
+  ; For now just cycle them 1-2-3-1-2-3
+  LDA.l JournalState : AND.w #$00FF
+  CLC : ADC.b #$01 ; Make 1-based?
+  ; Modulo 3?
+  ; Simple:
+  ; 0 -> First
+  ; Last -> Last
+  ; Else -> Middle
+  
+  ; But we don't know which is last without counting.
+  ; Let's just use First for 0, Last for Last, Middle for others.
+  
+  LDA.l JournalState : AND.w #$00FF : BEQ .first
+  
+  PHA
+  JSR Journal_CountUnlocked : DEC A : STA.b $02
+  PLA
+  CMP.b $02 : BEQ .last
+  
+  BRA .middle
+
+  .first
+    JSR Journal_DrawFirstPage
+    BRA .exit
+  .last
+    JSR Journal_DrawLastPage
+    BRA .exit
+  .middle
+    JSR Journal_DrawMiddlePage
+  .exit
+  
+  JSR Journal_DrawEntry
+
   SEP #$30
   PLB
   RTL
-
-  .page_drawers
-    dw Journal_DrawFirstPage
-    dw Journal_DrawMiddlePage
-    dw Journal_DrawLastPage
 }
 
 Journal_DrawFirstPage:

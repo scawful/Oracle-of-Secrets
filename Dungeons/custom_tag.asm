@@ -2,7 +2,7 @@
 ; Custom Tag
 ; Provide custom room behavior based on room ID
 
-StoryState = $7C
+; StoryState is now defined in Core/sram.asm at $7EF39E (persistent SRAM)
 RoomTag_Return = $01CC5A
 
 ; override routine 0x39 "Holes(7)"
@@ -27,9 +27,16 @@ CustomTag:
 
 HouseTag_Main:
 {
-  LDA.w StoryState
-  JSL $008781
+  LDA.l StoryState   ; Must use long addressing for SRAM ($7EF39E)
+  CMP.b #$03 : BCC .valid_state
+    ; If state is invalid (>= 3), force reset to 0 (Intro)
+    LDA.b #$00 : STA.l StoryState
+  .valid_state
+  ASL A : TAX
+  JSR (.jump_table, X)
+  RTS
 
+  .jump_table
   dw HouseTag_TelepathicPlea
   dw HouseTag_WakeUpPlayer
   dw HouseTag_End
@@ -48,7 +55,7 @@ HouseTag_Main:
     ; "Accept our quest, Link!"
     LDA.b #$1F : LDY.b #$00
     JSL Sprite_ShowMessageUnconditional
-    INC.b StoryState
+    LDA.l StoryState : INC A : STA.l StoryState  ; Long addressing for SRAM
 
     RTS
   }
@@ -71,7 +78,7 @@ HouseTag_Main:
     ;LDA.b #$01 : STA $02E4
 
     STZ $02E4 ; awake from slumber
-    INC.b StoryState
+    LDA.l StoryState : INC A : STA.l StoryState  ; Long addressing for SRAM
 
     ; Make it so Link's uncle never respawns in the house again.
     LDA $7EF3C6 : ORA.b #$10 : STA $7EF3C6
@@ -86,7 +93,7 @@ HouseTag_Main:
   HouseTag_End:
   {
     LDA $B6 : BNE .hasMetFarore
-      LDA #$00 : STA.w StoryState
+      LDA #$00 : STA.l StoryState  ; Long addressing for SRAM
     .hasMetFarore
     RTS
   }

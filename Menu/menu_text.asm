@@ -119,7 +119,7 @@ Menu_ItemNames:
   dw "MIRROR_OF_TIME  "
   dw "____BOTTLE____  "
   dw "___OCARINA____  "
-  dw "_SECRET_TOME__  "
+  dw "TOME__L:REVEAL__"
   dw "___SOMARIA____  "
   dw "_FISHING_ROD__  "
   dw "_ROCS_FEATHER_  "
@@ -423,7 +423,7 @@ Menu_DrawSelect:
 
   .loop
   LDA.w SelectItemTXT, X : STA.w $1194, X
-  DEX #2 : BPL .loop
+  DEX : DEX : BPL .loop
 
   RTS
 }
@@ -437,7 +437,7 @@ Menu_DrawQuestStatus:
 
   .loop
   LDA.w QuestStatusTXT, X : STA.w $1194, X
-  DEX #2 : BPL .loop
+  DEX : DEX : BPL .loop
 
   RTS
 }
@@ -528,3 +528,16 @@ Menu_DrawCharacterName:
   LDA.w #$1D : BRA .write_to_screen
 }
 
+
+Menu_DrawRingPrompt:
+{
+  REP #$30
+  LDX.w #$0E
+
+  .loop
+  LDA.w RingPromptTXT, X : STA.w $1254, X
+  DEX : DEX : BPL .loop
+
+  SEP #$30               ; Restore 8-bit mode before return
+  RTS
+}

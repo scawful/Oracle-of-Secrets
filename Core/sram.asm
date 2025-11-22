@@ -87,6 +87,12 @@ MagicBeanProg = $7EF39B
 
 JournalState = $7EF39C
 
+; State machine for Link's House intro sequence (custom_tag.asm)
+;   0x00 - Telepathic Plea phase
+;   0x01 - Wake Up Player phase
+;   0x02 - End (intro complete)
+StoryState   = $7EF39E
+
 ; 7EF403 - 7EF4FD Unused block
 
 ; .... .cpw

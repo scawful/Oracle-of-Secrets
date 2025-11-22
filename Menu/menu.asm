@@ -64,6 +64,7 @@ Menu_Entry:
     dw Menu_MagicBag           ; 0C
     dw Menu_SongMenu           ; 0D
     dw Menu_Journal            ; 0E
+    dw Menu_SubmenuReturn      ; 0F
 }
 
 ; =========================================================
@@ -138,9 +139,11 @@ Menu_UploadLeft:
   JSR Menu_DrawBackground
   JSR DrawYItems
   JSR Menu_DrawSelect
+  JSR Menu_DrawRingPrompt
   JSR Menu_DrawItemName
   ; INSERT PALETTE -------
 
+  REP #$30
   LDX.w #$3E
   .loop
     LDA.w Menu_Palette, X
@@ -287,6 +290,7 @@ Menu_ScrollTo:
 {
   SEP #$20
   JSR Menu_ScrollHorizontal : BCC .not_done
+    JSR Menu_RefreshQuestScreen
     INC.w $0200
   .not_done
   RTS
@@ -300,7 +304,7 @@ incsrc "menu_scroll.asm"
 Menu_StatsScreen:
 {
   JSR Menu_CheckHScroll
-  JSR Menu_StatsScreen_Input
+  ; JSR Menu_StatsScreen_Input ; Selection disabled per user request
   RTS
 }
 
@@ -310,8 +314,10 @@ Menu_StatsScreen:
 Menu_ScrollFrom:
 {
   JSR Menu_ScrollHorizontal : BCC .not_done
+    JSR Menu_RefreshInventoryScreen
     JMP Menu_InitItemScreen
   .not_done
+  SEP #$20               ; Restore 8-bit A if scroll not done
   RTS
 }
 
@@ -375,10 +381,17 @@ Menu_Exit:
   ; go back to the submodule we came from
   LDA.w $010C : STA.b $10
 
+  ; Check H-Scroll ($E4) to see if we are on the Quest Screen
+  ; If $E4 is not 0, we are likely on the Quest Screen (256)
+  ; In that case, skip item selection.
+  LDA.b $E4 : BNE .quest_screen_exit
+
   ; set $0303 by using $0202 to index table on exit
   ; set $0304 to prevent item + 1 animation exploits
   LDX $0202
   LDA.w Menu_ItemIndex, X : STA $0303 : STA.w $0304
+
+  .quest_screen_exit
 
   LDX.b #$3E
   .loop
@@ -390,6 +403,53 @@ Menu_Exit:
   INC.b $15
   INC.b $16
 
+  RTS
+}
+
+; =========================================================
+; REFRESH SCREENS
+; =========================================================
+
+Menu_RefreshQuestScreen:
+{
+  JSR Menu_DrawBackground
+  JSR Menu_DrawQuestItems
+  JSR Menu_DrawCharacterName
+  JSR Menu_DrawBigKey
+  JSR Menu_DrawBigChestKey
+
+  JSR Menu_DrawQuestIcons
+  JSR Menu_DrawTriforceIcons
+  JSR Menu_DrawPendantIcons
+  JSR Menu_DrawMagicRings
+  JSR Menu_DrawPlaytimeLabel
+
+  JSR Menu_DrawHeartPieces
+  JSR Menu_DrawQuestStatus
+  JSR Menu_DrawAreaNameTXT
+  JSR DrawLocationName
+  SEP #$30               ; Restore 8-bit mode before return
+  RTS
+}
+
+Menu_RefreshInventoryScreen:
+{
+  JSR Menu_DrawBackground
+  JSR DrawYItems
+  JSR Menu_DrawSelect
+  JSR Menu_DrawRingPrompt
+  JSR Menu_DrawItemName
+  
+  ; Palette restore if needed (mimicking Menu_UploadLeft)
+  REP #$30
+  LDX.w #$3E
+  .loop
+    LDA.w Menu_Palette, X
+    STA.l $7EC502, X
+    DEX : DEX
+  BPL .loop
+  SEP #$30
+  
   RTS
 }
 
@@ -478,18 +538,23 @@ Menu_MagicBag:
   .move_up
   .move_right
     REP #$30
-    LDX.w Menu_MagicBagCursorPositions-2, Y
+    LDA.w $020B : ASL : TAY           ; Y = current index * 2
+    LDX.w Menu_MagicBagCursorPositions, Y
     JSR Menu_DeleteCursor_AltEntry
+    SEP #$20                          ; Back to 8-bit A after JSR
     INC.w $020B
-    LDA.w $020B : CMP.b #$06 : BCS .zero
+    LDA.w $020B : CMP.b #$06 : BCC .continue
+      STZ.w $020B                     ; Wrap to 0
       BRA .continue
 
   .move_down
   .move_left
     REP #$30
-    LDX.w Menu_MagicBagCursorPositions-2, Y
+    LDA.w $020B : ASL : TAY           ; Y = current index * 2
+    LDX.w Menu_MagicBagCursorPositions, Y
     JSR Menu_DeleteCursor_AltEntry
-    LDA.w $020B : CMP.b #$00 : BEQ .continue
+    SEP #$20                          ; Back to 8-bit A after JSR
+    LDA.w $020B : BEQ .continue       ; Already at 0, don't decrement
       DEC.w $020B
       BRA .continue
   .zero
@@ -503,10 +568,11 @@ Menu_MagicBag:
   JSR Menu_DrawCursor
   JSR MagicBag_ConsumeItem
   JSR Submenu_Return
+  SEP #$20                     ; Ensure 8-bit A mode
 
+  ; Trigger VRAM tilemap upload
   LDA.b #$22 : STA.w $0116
   LDA.b #$01 : STA.b $17
-
   RTS
 }
 
@@ -547,8 +613,8 @@ MagicBag_ConsumeItem:
     BRA .exit
 
 .failed_use_dbr
-    PLB
 .error_dbr
+    PLB                        ; Restore data bank (was pushed at line 597)
     ; Error Sound
     LDA.b #$3C : STA.w $012E
     BRA .exit
@@ -771,7 +837,7 @@ RingMenu_Controls:
 
   ; Return to item menu if player presses X
   LDA.b $F6 : BIT.b #$40 : BEQ +
-    LDA.b #$01 : STA.w $0200
+    LDA.b #$0F : STA.w $0200
   +
 
   ; Close the menu if the player presses start
@@ -795,11 +861,21 @@ Menu_Journal:
   RTS
 }
 
+Menu_SubmenuReturn:
+{
+  STZ.w $0116 ; Clear VRAM flag to prevent partial upload
+  JSR Menu_RefreshInventoryScreen
+  LDA.b #$22 : STA.w $0116
+  LDA.b #$01 : STA.b $17 : STA.b $15
+  LDA.b #$04 : STA.w $0200 ; Set state to Item Screen
+  RTS
+}
+
 Submenu_Return:
 {
   ; Return to the item menu if they press A
   LDA.b $F6 : BIT.b #$80 : BEQ +
-    LDA.b #$02 : STA.w $0200
+    LDA.b #$0F : STA.w $0200
   +
 
   ; Close the menu if the player presses start
@@ -817,4 +893,3 @@ incsrc "menu_hud.asm"
 %log_end("Menu/menu_hud.asm", !LOG_MENU)
 incsrc "menu_journal.asm"
 %log_end("Menu/menu_journal.asm", !LOG_MENU)
-

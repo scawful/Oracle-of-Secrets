@@ -26,6 +26,7 @@ The following blocks were marked "unused" in vanilla ALTTP but are now utilized 
 | `$7EF39B` | `MagicBeanProg`     | Multi-day growth cycle tracking for magic bean side-quest (`.dts fwpb`). | ✓        |
 | `$7EF39C` | `JournalState`      | Current state of the player's journal.                                   | ✓        |
 | `$7EF39D` | `SRAM_StormsActive` | Flag indicating if the Song of Storms effect is active.                  | ✓        |
+| `$7EF39E` | `StoryState`        | State machine for Link's House intro sequence (0-2).                     | ✓        |
 
 #### **Block $7EF403-$7EF4FD** - Partially Repurposed
 
@@ -135,6 +136,7 @@ This section details the layout of the save file memory.
 | `$7EF39B` | `MagicBeanProg`   | Tracks the multi-day growth cycle of the magic bean side-quest.          |
 | `$7EF39C` | `JournalState`    | The current state of the player's journal.                              |
 | `$7EF39D` | `SRAM_StormsActive`| A flag indicating if the Song of Storms effect is active.                |
+| `$7EF39E` | `StoryState`      | State machine for Link's House intro sequence (0=Telepathy, 1=WakeUp, 2=End). |
 | `$7EF410` | `Dreams`          | A bitfield tracking the collection of the three "Dreams" (Courage, Power, Wisdom). |
 | `$7EF347` | `ZoraMask`        | Flag indicating if the player has obtained the Zora Mask.                |
 | `$7EF348` | `BunnyHood`       | Flag indicating if the player has obtained the Bunny Hood.               |
