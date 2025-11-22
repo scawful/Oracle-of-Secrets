@@ -387,22 +387,22 @@ ColorSubEffect:
   AND #$00FF : TAX
 
   ; Subtract amount to blue field based on a table
-  LDA.l !SubPalColor : AND #$7C00 : STA !BlueVal
-  SEC : SBC.l .blue, X : STA !TempPalColor
+  LDA.l !SubPalColor : AND #$7C00 : STA.l !BlueVal
+  SEC : SBC.l .blue, X : STA.l !TempPalColor
 
   ; mask out everything except the blue bits
-  AND #$7C00 : CMP !TempPalColor : BEQ .no_blue_sign_change ; overflow ?
-    LDA !SmallestBlue
+  AND #$7C00 : CMP.l !TempPalColor : BEQ .no_blue_sign_change ; overflow ?
+    LDA.l !SmallestBlue
   .no_blue_sign_change
   STA.l !BlueVal
 
   ; Subtract amount to green field based on a table
-  LDA !SubPalColor : AND #$03E0 : STA !GreenVal
+  LDA.l !SubPalColor : AND #$03E0 : STA.l !GreenVal
   SEC : SBC.l .green, X : STA.l !TempPalColor
 
   ; Mask out everything except the green bits
-  AND #$03E0 : CMP !TempPalColor : BEQ .no_green_sign_change ; overflow ?
-    LDA !SmallestGreen
+  AND #$03E0 : CMP.l !TempPalColor : BEQ .no_green_sign_change ; overflow ?
+    LDA.l !SmallestGreen
   .no_green_sign_change
   STA.l !GreenVal
 
@@ -411,8 +411,8 @@ ColorSubEffect:
   SEC : SBC.l .red, X : STA.l !TempPalColor
 
   ; mask out everything except the red bits
-  AND #$001F : CMP !TempPalColor : BEQ .no_red_sign_change ; overflow ?
-    LDA !SmallestRed
+  AND #$001F : CMP.l !TempPalColor : BEQ .no_red_sign_change ; overflow ?
+    LDA.l !SmallestRed
   .no_red_sign_change
   STA.l !RedVal
 

@@ -3671,7 +3671,8 @@ Overworld_LoadBGColorAndSubscreenOverlay:
         
     .notMire
 
-    JSL.l ReadOverlayArray
+    LDA.b $8C ; Use current active overlay instead of reading from static table
+    ; JSL.l ReadOverlayArray
 
     ; Check for misery mire.
     CMP.w #$009F : BNE .notRain
@@ -3693,6 +3694,11 @@ Overworld_LoadBGColorAndSubscreenOverlay:
             
             ; Check for DW Death mountain. (not turtle rock?).
             CMP.w #$009C : BEQ .setCustomFixedColor
+            
+            ; Safety check: If we have a valid overlay ID (not FF) that wasn't caught above
+            ; (e.g. Canopy $9E, Fog $97), preserve it with default fixed colors instead of disabling.
+            CMP.w #$00FF : BNE .noCustomFixedColor
+
                 SEP #$30 ; Set A, X, and Y in 8bit mode.
 
                 ; Don't set the subscreen during a warp to hide the transparent
@@ -3723,7 +3729,7 @@ Overworld_LoadBGColorAndSubscreenOverlay:
         LDA.b $E2 : STA.b $E0
             
         ; Just because I need a bit more space.
-        JSL.l ReadOverlayArray
+        LDA.b $8C ; JSL.l ReadOverlayArray
             
         ; Are we at Hyrule Castle or Pyramid of Power?
         CMP.w #$0096 : BNE .subscreenOnAndReturn
@@ -3734,7 +3740,8 @@ Overworld_LoadBGColorAndSubscreenOverlay:
     .BRANCH_11
     
     ; Check for the pyramid BG.
-    JSL.l ReadOverlayArray : CMP.w #$0096 : BNE .subscreenOnAndReturn
+    LDA.b $8C ; JSL.l ReadOverlayArray 
+    CMP.w #$0096 : BNE .subscreenOnAndReturn
         ; Synchronize Y scrolls on BG0 and BG1. Same for X scrolls.
         LDA.b $E8 : STA.b $E6
         LDA.b $E2 : STA.b $E0
@@ -3949,13 +3956,8 @@ InitColorLoad2:
     .storeColor
 
     ; Set transparent color.
-    STA.l $7EC300
-    STA.l $7EC340 ; Set transparent color.
-
-    ; TODO: Based on the conditions as explained above, double check that this is
-    ; not needed for any of them.
-    ;STA.l $7EC500
-    ;STA.l $7EC540
+    STA.l $7EE018 ; Set temp color for tinting
+    JSL Oracle_BackgroundFix ; Apply tint and write to buffers
 
     INC.b $15
 
