@@ -1,4 +1,3 @@
-
 struct Sprite $7E0BA0
 {
   .BulletProof: skip 16
@@ -61,3 +60,16 @@ struct Sprite $7E0BA0
 }
 endstruct
 
+struct TimeState $7EE000
+{
+  .Hours:     skip 1
+  .Minutes:   skip 1
+  .Speed:     skip 1
+  .Padding:   skip 13 ; Pad to $7EE010
+  .BlueVal:   skip 2
+  .GreenVal:  skip 2
+  .RedVal:    skip 2
+  .TempColor: skip 2
+  .SubColor:  skip 2
+}
+endstruct

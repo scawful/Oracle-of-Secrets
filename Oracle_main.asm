@@ -37,6 +37,7 @@
 ; =========================================================
 
 incsrc "Util/macros.asm"
+incsrc "Core/structs.asm"
 
 incsrc "Overworld/ZSCustomOverworld.asm"
 %log_end("ZSCustomOverworld.asm", !LOG_OVERWORLD)

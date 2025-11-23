@@ -3176,7 +3176,7 @@ CheckForChangeGraphicsTransitionLoad:
 
                     ; Where ZS saves the array of palettes
                     LDA.w Pool_BGColorTable, X
-                    STA.l $7EE018
+                    STA.l TimeState.SubColor
                     JSL Oracle_BackgroundFix
                     ; STA.l $7EC300 : STA.l $7EC500
                     ; STA.l $7EC540 : STA.l $7EC340
@@ -3238,7 +3238,7 @@ CheckForChangeGraphicsTransitionLoad:
 
     ; Set transparent color. only set the buffer so it fades in right
     ; during mosaic transition.
-    STA.l $7EE018
+    STA.l TimeState.SubColor
     JSL Oracle_MosaicFix
     ;STA.l $7EC300 : STA.l $7EC340
 
@@ -3351,7 +3351,7 @@ Palette_MultiLoad_NonBuffer:
         .copyColors
             ; We're loading A from the address set up in the calling function.
             LDA.b [$00] 
-            STA.l $7EE018
+            STA.l TimeState.SubColor
             BEQ + 
             JSL Oracle_ColorSubEffect
             +
@@ -3845,7 +3845,7 @@ ReplaceBGColor:
 
             ; Set the BG color buffer.
             PLA
-            STA.l $7EE018
+            STA.l TimeState.SubColor
             JSL Oracle_BackgroundFix ; $3482DD ; Background Fix
             ; STA.l $7EC300 : STA.l $7EC340 ; Set the BG color.
             ; STA.l $7EC500 : STA.l $7EC540
@@ -3858,7 +3858,7 @@ ReplaceBGColor:
 
     ; Set the BG color.
     PLA
-    STA.l $7EE018
+    STA.l TimeState.SubColor
     JSL Oracle_BackgroundFix
     ; STA.l $7EC500
     ; STA.l $7EC540
@@ -3956,7 +3956,7 @@ InitColorLoad2:
     .storeColor
 
     ; Set transparent color.
-    STA.l $7EE018 ; Set temp color for tinting
+    STA.l TimeState.SubColor ; Set temp color for tinting
     JSL Oracle_BackgroundFix ; Apply tint and write to buffers
 
     INC.b $15

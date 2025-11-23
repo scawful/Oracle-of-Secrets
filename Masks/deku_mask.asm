@@ -15,7 +15,7 @@ UpdateDekuPalette:
   .loop
   LDA.l deku_palette, X
   PHX
-  STA.l !SubPalColor
+  STA.l TimeState.SubColor
   JSL ColorSubEffect
   PLX
   STA $7EC6E0, X

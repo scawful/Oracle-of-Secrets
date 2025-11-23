@@ -6,10 +6,6 @@
 !hud_hours_low = $7EC7C6
 !hud_hours_high = $7EC7C4
 
-Hours = $7EE000
-Minutes = $7EE001
-TimeSpeed = $7EE002
-
 ; HUD Template adjusts timer's color
 org $0DFF07
   db $10, $24, $11, $24
@@ -38,8 +34,8 @@ pullpc
 LogoFadeInSetClock:
 {
   JSL $00ED7C ; IntroLogoPaletteFadeIn
-  LDA.b #$08 : STA.l Hours ; Set the time to 6:00am
-  LDA.b #$3F : STA.l TimeSpeed ; Set the time speed
+  LDA.b #$08 : STA.l TimeState.Hours ; Set the time to 6:00am
+  LDA.b #$3F : STA.l TimeState.Speed ; Set the time speed
   RTL
 }
 
@@ -50,8 +46,8 @@ pullpc
 ResetClockTriforceRoom:
 {
   JSL $00E384 ; LoadCommonSprites_long
-  LDA.b #$00 : STA.l Hours ; low hours for palette?
-  LDA.b #$00 : STA.l Minutes ; high hours for palette?
+  LDA.b #$00 : STA.l TimeState.Hours ; low hours for palette?
+  LDA.b #$00 : STA.l TimeState.Minutes ; high hours for palette?
   RTL
 }
 
@@ -65,7 +61,7 @@ DrawClockToHud:
 {
   LDX #$00
   .debut
-  LDY #$00 : LDA Hours,x
+  LDY #$00 : LDA TimeState.Hours,x
   .debut2
   CMP #$0A : BMI .draw
     SBC #$0A : INY : BRA .debut2
@@ -98,12 +94,27 @@ Overworld_SetFixedColAndScroll_AltEntry = $0BFE72
 
 RunClock:
 {
+  JSR TimeSystem_CheckCanRun : BCC .return
+
+  JSR TimeSystem_UpdateGBCLink
+  JSR CheckForSongOfTime
+  
+  JSR TimeSystem_IncrementTime : BCC .return
+
+  JSR TimeSystem_UpdatePalettes
+
+  .return
+  RTS
+}
+
+TimeSystem_CheckCanRun:
+{
   ; checks current event in game
   LDA $10 : CMP #$07 : BEQ .counter_increasing ; dungeon/building?
             CMP #$09 : BEQ .overworld ; overworld?
             CMP #$0B : BEQ .overworld ; special overworld?
             CMP #$0E : BEQ .dialog  ; dialog box?
-              RTS
+              CLC : RTS
     .overworld
     ; Reload Sprite Gfx Properties
     JSL $00FC62 ; Sprite_LoadGraphicsProperties
@@ -113,14 +124,19 @@ RunClock:
     .mosaic
 
     CMP #$0D : BMI .counter_increasing ; Mosaic ?
-      RTS
+      CLC : RTS
 
     .dialog
     ; check submodule to prevent the counter from increasing if save/menu open
     LDA $11 : CMP #$02 : BEQ .counter_increasing ; NPC/signs speech
-      RTS
+      CLC : RTS
 
   .counter_increasing
+  SEC : RTS
+}
+
+TimeSystem_UpdateGBCLink:
+{
   ; GBC Link code
   LDA $0FFF : CMP #$00 : BEQ .light_world
     LDA $02B2 : BNE .already_gbc_or_minish
@@ -129,65 +145,53 @@ RunClock:
       LDA.b #$06 : STA $02B2 ; set the form id
   .light_world
   .already_gbc_or_minish
+  RTS
+}
 
-  JSR CheckForSongOfTime
+TimeSystem_IncrementTime:
+{
   ; time speed (1,3,5,7,F,1F,3F,7F,FF)
   ; #$3F is almost 1 sec = 1 game minute
-  LDA $1A : AND TimeSpeed : BEQ .increase_minutes ; 05
-    .end
-    RTS
+  LDA $1A : AND TimeState.Speed : BEQ .increase_minutes ; 05
+    CLC : RTS
 
   .increase_minutes
-  LDA.l Minutes : INC A : STA.l Minutes
+  LDA.l TimeState.Minutes : INC A : STA.l TimeState.Minutes
   CMP #$3C : BPL .increase_hours ; minutes = 60 ?
-    RTS
+    CLC : RTS
 
   .increase_hours
-  LDA #$00 : STA.l Minutes
-  LDA.l Hours : INC A : STA.l Hours
+  LDA #$00 : STA.l TimeState.Minutes
+  LDA.l TimeState.Hours : INC A : STA.l TimeState.Hours
   CMP #$18 : BPL .reset_hours ; hours = 24 ?
+    SEC : RTS
+
+  .reset_hours
+  JSR CheckForDailyQuests
+  LDA.b #$00 : STA.l TimeState.Hours
+  SEC : RTS
+}
+
+TimeSystem_UpdatePalettes:
+{
     ; check indoors/outdoors
-    LDA $1B	: BEQ .outdoors0
+    LDA $1B	: BEQ .outdoors
       RTS
-    .outdoors0
+    .outdoors
 
     JSL RomToPaletteBuffer	; update buffer palette
     JSL PaletteBufferToEffective	; update effective palette
 
     ; rain layer ?
-    LDA $8C : CMP #$9F : BEQ .skip_bg_updt0
-      LDA $8C : CMP #$9E : BEQ .skip_bg_updt0	; canopy layer ?
-        CMP #$97 : BEQ .skip_bg_updt0	; fog layer?
+    LDA $8C : CMP #$9F : BEQ .skip_bg_updt
+      LDA $8C : CMP #$9E : BEQ .skip_bg_updt	; canopy layer ?
+        CMP #$97 : BEQ .skip_bg_updt	; fog layer?
         JSL Overworld_SetFixedColAndScroll ; update background color
-        BRA .inc_hours_end
+        RTS
 
-    .skip_bg_updt0 ; prevent the sub layer from disappearing ($1D zeroed)
+    .skip_bg_updt ; prevent the sub layer from disappearing ($1D zeroed)
     JSL Overworld_SetFixedColAndScroll_AltEntry
-    .inc_hours_end
     RTS
-
-  .reset_hours
-
-  JSR CheckForDailyQuests
-
-  LDA.b #$00 : STA.l Hours
-  ; check indoors/outdoors
-  LDA.b $1B	: BEQ .outdoors1
-    RTS
-  .outdoors1
-
-  JSL RomToPaletteBuffer
-  JSL PaletteBufferToEffective
-
-  LDA $8C : CMP #$9F : BEQ .skip_bg_updt1 ; rain layer ?
-    LDA $8C : CMP #$9E : BEQ .skip_bg_updt1	; canopy layer ?
-      JSL Overworld_SetFixedColAndScroll ; update background color
-      BRA .reset_end
-
-  .skip_bg_updt1 ; prevent the sub layer from disappearing ($1D zeroed)
-  JSL Overworld_SetFixedColAndScroll_AltEntry
-  .reset_end
-  RTS
 }
 
 CheckForSongOfTime:
@@ -195,19 +199,19 @@ CheckForSongOfTime:
   ; Check if Song of Time was activated
   LDA.b SongFlag : CMP.b #$02 : BNE +
     ; Speed up the time
-    LDA.b #$00 : STA.l TimeSpeed
+    LDA.b #$00 : STA.l TimeState.Speed
 
     ; If we reached 6am
-    LDA.l Hours : CMP.b #$06 : BNE ++
-      LDA.l Minutes : BNE ++
-        LDA.b #$3F : STA.l TimeSpeed
+    LDA.l TimeState.Hours : CMP.b #$06 : BNE ++
+      LDA.l TimeState.Minutes : BNE ++
+        LDA.b #$3F : STA.l TimeState.Speed
         STZ.b SongFlag
     ++
 
     ; If we reached 6pm
-    LDA.l Hours : CMP.b #$12 : BNE ++
-      LDA.l Minutes : BNE ++
-        LDA.b #$3F : STA.l TimeSpeed
+    LDA.l TimeState.Hours : CMP.b #$12 : BNE ++
+      LDA.l TimeState.Minutes : BNE ++
+        LDA.b #$3F : STA.l TimeState.Speed
         STZ.b SongFlag
     ++
   +
@@ -239,8 +243,8 @@ CheckIfNight:
     RTL
   +
   LDA.l GameState : CMP.b #$02 : BCC .day_time
-    LDA Hours : CMP.b #$12 : BCS .night_time
-      LDA Hours : CMP.b #$06 : BCC .night_time
+    LDA TimeState.Hours : CMP.b #$12 : BCS .night_time
+      LDA TimeState.Hours : CMP.b #$06 : BCC .night_time
       .day_time
       LDA.l GameState
       RTL
@@ -260,9 +264,9 @@ CheckIfNight16Bit:
   ; Don't change the spriteset during the intro sequence
   LDA.l GameState : AND.w #$00FF : CMP.w #$0002 : BCC .day_time
     ; 0x12 = 18 hours or 6 pm
-    LDA Hours : AND.w #$00FF : CMP.w #$0012 : BCS .night_time
+    LDA TimeState.Hours : AND.w #$00FF : CMP.w #$0012 : BCS .night_time
       ; If it's less than 6 am, jump to night time
-      LDA Hours : AND.w #$00FF : CMP.w #$0006 : BCC .night_time
+      LDA TimeState.Hours : AND.w #$00FF : CMP.w #$0006 : BCC .night_time
       .day_time
       LDA.l GameState
       RTL
@@ -285,13 +289,6 @@ pushpc
 ; =========================================================
 ; ----[ Day / Night system * palette effect ]----
 ; =========================================================
-
-!BlueVal = $7EE010
-!GreenVal = $7EE012
-!RedVal = $7EE014
-
-!TempPalColor = $7EE016
-!SubPalColor = $7EE018
 
 Overworld_CopyPalettesToCache = $02C769
 
@@ -341,14 +338,14 @@ org $1BEF84 : JSL LoadDayNightPaletteEffect
 pullpc
 LoadDayNightPaletteEffect:
 {
-  STA.l !SubPalColor : CPX #$0041 : BPL .title_check
+  STA.l TimeState.SubColor : CPX #$0041 : BPL .title_check
     STA.l PalBuf300_HUD, X
     RTL
   .title_check
 
   ; title or file select screen ?
   LDA $10 : AND #$00FF : CMP #$0002	: BCS .outin_check
-    LDA.l !SubPalColor
+    LDA.l TimeState.SubColor
     STA.l PalBuf300_HUD, X
     RTL
   .outin_check
@@ -357,13 +354,13 @@ LoadDayNightPaletteEffect:
                            CMP.w #$0012 : BCS .restorecode
     BRA .overworld
   .restorecode
-  LDA.l !SubPalColor
+  LDA.l TimeState.SubColor
   STA.l PalBuf300_HUD, X
   RTL
 
   .overworld
   LDA $1B : AND #$00FF : BEQ .outdoors2
-    LDA.l !SubPalColor
+    LDA.l TimeState.SubColor
     STA.l PalBuf300_HUD,X
     RTL
   .outdoors2
@@ -383,40 +380,40 @@ LoadDayNightPaletteEffect:
 
 ColorSubEffect:
 {
-  LDA.l Hours : AND #$00FF : CLC : ADC.l Hours	; hours * 2
+  LDA.l TimeState.Hours : AND #$00FF : CLC : ADC.l TimeState.Hours	; hours * 2
   AND #$00FF : TAX
 
   ; Subtract amount to blue field based on a table
-  LDA.l !SubPalColor : AND #$7C00 : STA.l !BlueVal
-  SEC : SBC.l .blue, X : STA.l !TempPalColor
+  LDA.l TimeState.SubColor : AND #$7C00 : STA.l TimeState.BlueVal
+  SEC : SBC.l .blue, X : STA.l TimeState.TempColor
 
   ; mask out everything except the blue bits
-  AND #$7C00 : CMP.l !TempPalColor : BEQ .no_blue_sign_change ; overflow ?
+  AND #$7C00 : CMP.l TimeState.TempColor : BEQ .no_blue_sign_change ; overflow ?
     LDA.l !SmallestBlue
   .no_blue_sign_change
-  STA.l !BlueVal
+  STA.l TimeState.BlueVal
 
   ; Subtract amount to green field based on a table
-  LDA.l !SubPalColor : AND #$03E0 : STA.l !GreenVal
-  SEC : SBC.l .green, X : STA.l !TempPalColor
+  LDA.l TimeState.SubColor : AND #$03E0 : STA.l TimeState.GreenVal
+  SEC : SBC.l .green, X : STA.l TimeState.TempColor
 
   ; Mask out everything except the green bits
-  AND #$03E0 : CMP.l !TempPalColor : BEQ .no_green_sign_change ; overflow ?
+  AND #$03E0 : CMP.l TimeState.TempColor : BEQ .no_green_sign_change ; overflow ?
     LDA.l !SmallestGreen
   .no_green_sign_change
-  STA.l !GreenVal
+  STA.l TimeState.GreenVal
 
   ; substract amount to red field based on a table
-  LDA.l !SubPalColor : AND #$001F : STA.l !RedVal
-  SEC : SBC.l .red, X : STA.l !TempPalColor
+  LDA.l TimeState.SubColor : AND #$001F : STA.l TimeState.RedVal
+  SEC : SBC.l .red, X : STA.l TimeState.TempColor
 
   ; mask out everything except the red bits
-  AND #$001F : CMP.l !TempPalColor : BEQ .no_red_sign_change ; overflow ?
+  AND #$001F : CMP.l TimeState.TempColor : BEQ .no_red_sign_change ; overflow ?
     LDA.l !SmallestRed
   .no_red_sign_change
-  STA.l !RedVal
+  STA.l TimeState.RedVal
 
-  LDA.l !BlueVal : ORA.l !GreenVal : ORA.l !RedVal
+  LDA.l TimeState.BlueVal : ORA.l TimeState.GreenVal : ORA.l TimeState.RedVal
   RTL
 
   ; color_sub_tables : 24 * 2 bytes each = 48 bytes
@@ -472,7 +469,7 @@ MosaicFix:
 SubAreasFix:
 {
   BEQ .no_effect
-  STA.l !SubPalColor
+  STA.l TimeState.SubColor
   PHX
     REP #$20
       JSL ColorSubEffect
@@ -488,9 +485,9 @@ GlovePalettePosition = $7EC4FA
 
 GlovesFix:
 {
-  STA.l !SubPalColor
+  STA.l TimeState.SubColor
   LDA $1B : AND #$00FF : BEQ .outdoors3
-    LDA.l !SubPalColor
+    LDA.l TimeState.SubColor
     STA GlovePalettePosition
     RTL
 
@@ -510,7 +507,7 @@ ColorBgFix:
   LDA.b $10 : CMP.b #$17 : BEQ .vanilla
     REP #$30
     PLA
-    STA.l !SubPalColor
+    STA.l TimeState.SubColor
     JSL ColorSubEffect
     STA.l PalCgram500_HUD
     STA.l PalCgram540_BG
@@ -546,7 +543,7 @@ LoadPeacetimeSprites:
 
 FixSaveAndQuit:
 {
-  LDA.b #$08 : STA.l Hours
+  LDA.b #$08 : STA.l TimeState.Hours
   LDA.l GameState
   RTL
 }
@@ -556,7 +553,7 @@ FixShockPalette:
   PHA
   LDA.b $1B : BNE .indoors
     PLA
-    STA !SubPalColor
+    STA TimeState.SubColor
     PHX
     JSL ColorSubEffect
     PLX
@@ -571,11 +568,11 @@ FixDungeonMapColors:
 {
   PHA
   ; Cache the current time
-  LDA Hours : STA $7EF900
-  LDA Minutes : STA $7EF901
+  LDA TimeState.Hours : STA $7EF900
+  LDA TimeState.Minutes : STA $7EF901
   ; Set the time to 8:00am while map is open
-  LDA.b #$08 : STA Hours
-  LDA.b #$00 : STA Minutes
+  LDA.b #$08 : STA TimeState.Hours
+  LDA.b #$00 : STA TimeState.Minutes
   PLA
   STA.l $7EC229
   RTL
@@ -583,8 +580,8 @@ FixDungeonMapColors:
 
 RestoreTimeForDungeonMap:
 {
-  LDA $7EF900 : STA Hours
-  LDA $7EF901 : STA Minutes
+  LDA $7EF900 : STA TimeState.Hours
+  LDA $7EF901 : STA TimeState.Minutes
   LDA.l $7EC017
   RTL
 }

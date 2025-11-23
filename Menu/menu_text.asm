@@ -58,7 +58,7 @@ PlaytimeLabel:
 Menu_DrawHourDigit:
 {
   SEP #$30
-  LDA.l $7EE000
+  LDA.l TimeState.Hours
   ASL A : ASL A
   TAX
   REP #$30
@@ -71,7 +71,7 @@ Menu_DrawHourDigit:
 Menu_DrawMinuteDigit:
 {
   SEP #$30
-  LDA.l $7EE001
+  LDA.l TimeState.Minutes
   ASL A : ASL A
   TAX
   REP #$30
