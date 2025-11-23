@@ -74,15 +74,15 @@ This section tracks tasks focused on improving the existing codebase's structure
     - *Blocker For:* [[quest-goron-mines]] (Garo NPC).
 
 ** Time System (=Overworld/time_system.asm=)
-*** TODO [#B] Refactor Time System [0/3]
+*** DONE [#B] Refactor Time System [3/3]
     :PROPERTIES:
     :ID: refactor-time-system
     :END:
     - *Analysis:* The system is functional but monolithic and uses many magic numbers.
     - *Tasks:*
-      - [ ] Group all time-related variables (`Hours`, `Minutes`, `TimeSpeed`, color values) into a single `TimeState` struct.
-      - [ ] Convert all logic blocks (`RunClock`, `DrawClockToHud`, `ColorSubEffect`) into proper `subroutine`s.
-      - [ ] Break down the large `RunClock` routine into smaller, single-purpose functions (e.g., `TimeSystem_CheckCanRun`, `TimeSystem_IncrementTime`, `TimeSystem_UpdatePalettes`).
+      - [X] Group all time-related variables (`Hours`, `Minutes`, `TimeSpeed`, color values) into a single `TimeState` struct.
+      - [X] Convert all logic blocks (`RunClock`, `DrawClockToHud`, `ColorSubEffect`) into proper `subroutine`s.
+      - [X] Break down the large `RunClock` routine into smaller, single-purpose functions (e.g., `TimeSystem_CheckCanRun`, `TimeSystem_IncrementTime`, `TimeSystem_UpdatePalettes`).
 
 ** Minecart System (=Sprites/Objects/minecart.asm=)
 *** TODO [#B] Refactor Minecart System [0/4]
@@ -106,14 +106,14 @@ This section tracks tasks focused on improving the existing codebase's structure
     - *Note:* This is a code quality refactor. A separate bug for the collision mechanics is tracked in [[bug-ice-block-collision]].
 
 ** Menu System (=Menu/=)
-*** TODO [#B] Refactor Menu System [0/2]
+*** DONE [#B] Refactor Menu System [2/2]
     :PROPERTIES:
     :ID: refactor-menu
     :END:
     - *Analysis:* The menu system is robust but has some duplicated code and hardcoded values.
     - *Tasks:*
-      - [ ] Refactor the input handling logic for the Magic Bag, Song Menu, and Ring Box sub-menus into a single, reusable subroutine.
-      - [ ] Replace all hardcoded menu state values (e.g., `LDA.b #$0C`) with named constants (e.g., `!MENU_STATE_MAGIC_BAG = $0C`).
+      - [X] Refactor the input handling logic for the Magic Bag, Song Menu, and Ring Box sub-menus into a single, reusable subroutine.
+      - [X] Replace all hardcoded menu state values (e.g., `LDA.b #$0C`) with named constants (e.g., `!MENU_STATE_MAGIC_BAG = $0C`).
 
 ** Music System (=Music/=)
 *** TODO [#C] Improve Music System Workflow [0/3]
@@ -161,7 +161,7 @@ This section tracks known conflicts between systems and outstanding bugs.
     :PROPERTIES:
     :ID: bug-zsow-daynight
     :END:
-    - *Status:* Regression. The previous fix attempt introduced a `BRK` crash.
+    - *Status:* In progress.
     - *Task:* Triage the crash to identify the root cause and develop a new solution for integrating day/night sprite loading with ZSOW.
 
 *** ACTIVE [#A] ZSOW vs. Song of Storms
