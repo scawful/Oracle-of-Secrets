@@ -5243,7 +5243,7 @@ LoadOverworldSprites_Interupt:
                       STZ.w $0FBA
 
     ; What phase are we in?
-    LDA.l $7EF3C5 : ASL : TAY
+    JSL Oracle_CheckIfNight : ASL : TAY
 
     REP #$30
 
