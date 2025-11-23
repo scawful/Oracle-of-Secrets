@@ -389,7 +389,7 @@ ColorSubEffect:
 
   ; mask out everything except the blue bits
   AND #$7C00 : CMP.l TimeState.TempColor : BEQ .no_blue_sign_change ; overflow ?
-    LDA.l !SmallestBlue
+    LDA.w !SmallestBlue
   .no_blue_sign_change
   STA.l TimeState.BlueVal
 
@@ -399,7 +399,7 @@ ColorSubEffect:
 
   ; Mask out everything except the green bits
   AND #$03E0 : CMP.l TimeState.TempColor : BEQ .no_green_sign_change ; overflow ?
-    LDA.l !SmallestGreen
+    LDA.w !SmallestGreen
   .no_green_sign_change
   STA.l TimeState.GreenVal
 
@@ -409,7 +409,7 @@ ColorSubEffect:
 
   ; mask out everything except the red bits
   AND #$001F : CMP.l TimeState.TempColor : BEQ .no_red_sign_change ; overflow ?
-    LDA.l !SmallestRed
+    LDA.w !SmallestRed
   .no_red_sign_change
   STA.l TimeState.RedVal
 
