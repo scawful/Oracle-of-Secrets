@@ -36,6 +36,26 @@ incsrc "menu_text.asm"
 incsrc "menu_palette.asm"
 
 ; =========================================================
+; CONSTANTS
+
+!MENU_STATE_INIT_GRAPHICS       = $00
+!MENU_STATE_UPLOAD_RIGHT        = $01
+!MENU_STATE_UPLOAD_LEFT         = $02
+!MENU_STATE_SCROLL_DOWN         = $03
+!MENU_STATE_ITEM_SCREEN         = $04
+!MENU_STATE_SCROLL_TO           = $05
+!MENU_STATE_STATS_SCREEN        = $06
+!MENU_STATE_SCROLL_FROM         = $07
+!MENU_STATE_SCROLL_UP           = $08
+!MENU_STATE_RING_BOX            = $09
+!MENU_STATE_EXIT                = $0A
+!MENU_STATE_INIT_SCROLL_DOWN    = $0B
+!MENU_STATE_MAGIC_BAG           = $0C
+!MENU_STATE_SONG_MENU           = $0D
+!MENU_STATE_JOURNAL             = $0E
+!MENU_STATE_SUBMENU_RETURN      = $0F
+
+; =========================================================
 ; SUBROUTINE TABLE
 
 Menu_Entry:
@@ -125,8 +145,8 @@ Menu_UploadRight:
   JSR DrawLocationName
 
   SEP #$30
-  LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17 : STA.b $15
+  LDA.b #$23 : STA.w $0116
+  LDA.b #$01 : STA.b $17
   INC.w $0200
   RTS
 }
@@ -154,7 +174,7 @@ Menu_UploadLeft:
   ;-----------------------
 
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17 : STA.b $15 : STA.b $15 ; added for palette
+  LDA.b #$01 : STA.b $17 : STA.b $15 ; added for palette
   INC.w $0200
   RTS
 }
@@ -193,25 +213,25 @@ incsrc "menu_select_item.asm"
 
 Menu_CheckForSpecialMenus:
 {
-    LDA.w $0202 : CMP.b #$05 : BNE +
+    LDA.w $0202 : CMP.b #!MENU_STATE_SCROLL_TO : BNE +
       LDA.b $F6 : BIT.b #$80 : BEQ +
         STZ.w $020B
-        LDA.b #$0C : STA.w $0200 ; Magic Bag
+        LDA.b #!MENU_STATE_MAGIC_BAG : STA.w $0200 ; Magic Bag
         JSR Menu_DeleteCursor ; Ensure cursor is deleted
         SEC : RTS             ; Return Carry Set
     +
-    LDA.w $0202 : CMP.b #$0D : BNE ++
+    LDA.w $0202 : CMP.b #!MENU_STATE_SONG_MENU : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
-        LDA.b #$0D : STA.w $0200
+        LDA.b #!MENU_STATE_SONG_MENU : STA.w $0200
         LDA.b #$01 : STA.w CurrentSong ; Initialize song selection
           JSR Menu_DeleteCursor
           JSR Menu_DrawSongMenu
           SEP #$30
           SEC : RTS ; Return Carry Set
     ++
-    LDA.w $0202 : CMP.b #$0E : BNE ++
+    LDA.w $0202 : CMP.b #!MENU_STATE_JOURNAL : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
-        LDA.b #$0E : STA.w $0200
+        LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
         JSR Menu_DeleteCursor
         JSL Menu_DrawJournal
         SEP #$30
@@ -222,7 +242,7 @@ Menu_CheckForSpecialMenus:
       JSR Menu_DeleteCursor
       JSR Menu_DrawRingBox
       STZ.w $020B
-      LDA.b #$09 : STA.w $0200 ; Ring Box
+      LDA.b #!MENU_STATE_RING_BOX : STA.w $0200 ; Ring Box
       SEC : RTS ; Return Carry Set
     +++
 
@@ -281,7 +301,7 @@ Menu_ItemScreen:
   SEP #$20
   .exit
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17 : STA.b $15
+  LDA.b #$01 : STA.b $17
 
   RTS
 }
@@ -336,7 +356,7 @@ Menu_ScrollUp:
   LDA.w Menu_Scroll, X
   STA.b $EA : BNE .notDoneScrolling
     STZ.b $E4
-    LDA.w #$000A : STA.w $0200
+    LDA.w #!MENU_STATE_EXIT : STA.w $0200
     RTS
 
   .notDoneScrolling
@@ -353,7 +373,7 @@ Menu_CheckBottle:
     LDA.b #$0001 : JMP .prepare_bottle
   .not_first
 
-  LDA.w $0202 : CMP.b #$0C : BNE .not_second
+  LDA.w $0202 : CMP.b #!MENU_STATE_MAGIC_BAG : BNE .not_second
     LDA.b #$0002 : JMP .prepare_bottle
   .not_second
 
@@ -514,11 +534,66 @@ Menu_InitiateScrollDown:
   DEX : BNE .loop4
 
   LDA.b #$24 : STA.w $0116
-  LDA.b #$01 : STA.b $17 : STA.b $15
-  LDA.b #$08 : STA.w $0200
+  LDA.b #$01 : STA.b $17
+  LDA.b #!MENU_STATE_SCROLL_UP : STA.w $0200
   LDA.b #$12 : STA.w $012F ; play menu exit sound effect
 
   RTS
+}
+
+; =========================================================
+; SUBMENU GRID NAVIGATION
+; Inputs:
+;   X = Address of Cursor Position Table
+;   Y = Max Index (Exclusive)
+; Uses:
+;   $00-$01 (Scratch for table pointer)
+;   $020B   (Cursor Index)
+; =========================================================
+
+Menu_HandleGridNavigation:
+{
+  STX $00 ; Save Table Pointer
+
+  TYA ; Max Index to A
+  PHA ; Save Max
+
+  LDA.b $F4
+  LSR : BCS .move_right
+  LSR : BCS .move_left
+  LSR : BCS .move_down
+  LSR : BCS .move_up
+  PLA ; Clean stack
+  CLC : RTS
+
+  .move_up
+  .move_right
+    JSR .delete_cursor
+    PLA ; Get Max
+    STA $02 ; Store Max
+    INC.w $020B
+    LDA.w $020B : CMP $02 : BCC .done
+      STZ.w $020B
+    BRA .done
+
+  .move_down
+  .move_left
+    JSR .delete_cursor
+    PLA ; Clean stack
+    LDA.w $020B : BEQ .done
+      DEC.w $020B
+    BRA .done
+
+  .delete_cursor
+    REP #$30
+    LDA.w $020B : ASL : TAY
+    LDA ($00), Y : TAX
+    JSR Menu_DeleteCursor_AltEntry
+    SEP #$20
+    RTS
+
+  .done
+    SEC : RTS
 }
 
 ; =========================================================
@@ -531,38 +606,11 @@ Menu_MagicBag:
   SEP #$30
 
   INC $0207
-  LDA.b $F4
-  LSR : BCS .move_right
-  LSR : BCS .move_left
-  LSR : BCS .move_down
-  LSR : BCS .move_up
-  BRA .continue
 
-  .move_up
-  .move_right
-    REP #$30
-    LDA.w $020B : ASL : TAY           ; Y = current index * 2
-    LDX.w Menu_MagicBagCursorPositions, Y
-    JSR Menu_DeleteCursor_AltEntry
-    SEP #$20                          ; Back to 8-bit A after JSR
-    INC.w $020B
-    LDA.w $020B : CMP.b #$06 : BCC .continue
-      STZ.w $020B                     ; Wrap to 0
-      BRA .continue
+  LDX.w #Menu_MagicBagCursorPositions
+  LDY.w #$0006
+  JSR Menu_HandleGridNavigation
 
-  .move_down
-  .move_left
-    REP #$30
-    LDA.w $020B : ASL : TAY           ; Y = current index * 2
-    LDX.w Menu_MagicBagCursorPositions, Y
-    JSR Menu_DeleteCursor_AltEntry
-    SEP #$20                          ; Back to 8-bit A after JSR
-    LDA.w $020B : BEQ .continue       ; Already at 0, don't decrement
-      DEC.w $020B
-      BRA .continue
-  .zero
-  STZ.w $020B
-  .continue
   JSR DrawCollectibleNamesAndCount
   LDA.w $020B
   ASL : TAY
@@ -575,7 +623,7 @@ Menu_MagicBag:
 
   ; Trigger VRAM tilemap upload
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17 : STA.b $15
+  LDA.b #$01 : STA.b $17
   RTS
 }
 
@@ -717,7 +765,7 @@ Menu_SongMenu:
   SEP #$20
 
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17 : STA.b $15
+  LDA.b #$01 : STA.b $17
 
   RTS
 }
@@ -737,32 +785,9 @@ Menu_RingBox:
   JSR Menu_DrawMagicRingsInBox
   INC $0207
 
-  LDA.b $F4
-  LSR : BCS .move_right
-  LSR : BCS .move_left
-  LSR : BCS .move_down
-  LSR : BCS .move_up
-  BRA .continue
-
-  .move_up
-  .move_right
-    REP   #$30
-    LDX.w Menu_RingIconCursorPositions-2, Y
-    JSR Menu_DeleteCursor_AltEntry
-    INC.w $020B
-    LDA.w $020B : CMP.b #$06 : BCS .zero
-    BRA .continue
-  .move_left
-  .move_down
-    REP   #$30
-    LDX.w Menu_RingIconCursorPositions-2, Y
-    JSR Menu_DeleteCursor_AltEntry
-    LDA.w $020B : CMP.b #$00 : BEQ .continue
-    DEC.w $020B
-    BRA .continue
-  .zero
-  STZ.w $020B
-  .continue
+  LDX.w #Menu_RingIconCursorPositions
+  LDY.w #$0006
+  JSR Menu_HandleGridNavigation
 
   JSR DrawMagicRingNames
   LDA.w $020B : ASL : TAY
@@ -773,7 +798,7 @@ Menu_RingBox:
   SEP #$20
 
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17 : STA.b $15
+  LDA.b #$01 : STA.b $17
 
   RTS
 }
@@ -840,12 +865,12 @@ RingMenu_Controls:
 
   ; Return to item menu if player presses X
   LDA.b $F6 : BIT.b #$40 : BEQ +
-    LDA.b #$0F : STA.w $0200
+    LDA.b #!MENU_STATE_SUBMENU_RETURN : STA.w $0200
   +
 
   ; Close the menu if the player presses start
   LDA.b $F4 : BIT.b #$10 : BEQ +
-    LDA.b #$08 : STA.w $0200
+    LDA.b #!MENU_STATE_SCROLL_UP : STA.w $0200
   +
   RTS
 
@@ -860,7 +885,7 @@ Menu_Journal:
   JSR Submenu_Return
 
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17 : STA.b $15
+  LDA.b #$01 : STA.b $17
   RTS
 }
 
@@ -869,8 +894,8 @@ Menu_SubmenuReturn:
   STZ.w $0116 ; Clear VRAM flag to prevent partial upload
   JSR Menu_RefreshInventoryScreen
   LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17 : STA.b $15 : STA.b $15
-  LDA.b #$04 : STA.w $0200 ; Set state to Item Screen
+  LDA.b #$01 : STA.b $17 : STA.b $15
+  LDA.b #!MENU_STATE_ITEM_SCREEN : STA.w $0200 ; Set state to Item Screen
   RTS
 }
 
@@ -878,12 +903,12 @@ Submenu_Return:
 {
   ; Return to the item menu if they press A
   LDA.b $F6 : BIT.b #$80 : BEQ +
-    LDA.b #$0F : STA.w $0200
+    LDA.b #!MENU_STATE_SUBMENU_RETURN : STA.w $0200
   +
 
   ; Close the menu if the player presses start
   LDA.b $F4 : BIT.b #$10 : BEQ +
-    LDA.b #$08 : STA.w $0200
+    LDA.b #!MENU_STATE_SCROLL_UP : STA.w $0200
   +
   RTS
 }
