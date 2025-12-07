@@ -83,14 +83,22 @@ Menu_ItemCursorPositions:
 
 Menu_FindNextItem:
 {
-  LDY.w $0202 : INY
-  CPY.b #$19 : BCC .no_reset
-    LDY.b #$01
-  .no_reset
-  STY.w $0202
-  LDX.w Menu_AddressIndex-1, Y
-  LDA.l $7EF300,             X
-  BEQ   Menu_FindNextItem
+  PHX                        ; Save X for counter
+  LDX.b #$18                 ; Max 24 items
+  .loop
+    LDY.w $0202 : INY
+    CPY.b #$19 : BCC .no_reset
+      LDY.b #$01
+    .no_reset
+    STY.w $0202
+    PHX
+    LDX.w Menu_AddressIndex-1, Y
+    LDA.l $7EF300, X
+    PLX
+    BNE .found               ; Item exists, done
+    DEX : BNE .loop          ; Keep searching
+  .found
+  PLX
   RTS
 }
 
@@ -98,13 +106,21 @@ Menu_FindNextItem:
 
 Menu_FindPrevItem:
 {
-  LDY.w $0202 : DEY : BNE .no_reset
-    LDY.b #$18
-  .no_reset
-  STY.w $0202
-  LDX.w Menu_AddressIndex-1, Y
-  LDA.l $7EF300,             X
-  BEQ   Menu_FindPrevItem
+  PHX                        ; Save X for counter
+  LDX.b #$18                 ; Max 24 items
+  .loop
+    LDY.w $0202 : DEY : BNE .no_reset
+      LDY.b #$18
+    .no_reset
+    STY.w $0202
+    PHX
+    LDX.w Menu_AddressIndex-1, Y
+    LDA.l $7EF300, X
+    PLX
+    BNE .found               ; Item exists, done
+    DEX : BNE .loop          ; Keep searching
+  .found
+  PLX
   RTS
 }
 
@@ -116,10 +132,10 @@ Menu_FindNextDownItem:
   CMP.b #$19 : BCC .no_reset
     SBC.b #$18
   .no_reset
-  TAY   : STY.w $0202
+  TAY : STY.w $0202
   LDX.w Menu_AddressIndex-1, Y
-  LDA.l $7EF300,             X
-  BEQ   Menu_FindNextItem
+  LDA.l $7EF300, X
+  BEQ Menu_FindNextItem          ; If empty, scan horizontally (now safe)
   RTS
 }
 
@@ -128,21 +144,15 @@ Menu_FindNextDownItem:
 Menu_FindNextUpItem:
 {
   LDA.w $0202 : SEC : SBC.b #$06
-  BPL   .no_reset : BNE .no_reset
-    CLC : ADC.b #$18
+  BEQ .wrap                       ; If zero, wrap
+  BPL .no_reset                   ; If positive (1+), valid
+  .wrap
+    CLC : ADC.b #$18              ; Wrap to bottom row
   .no_reset
-  TAY   : STY.w $0202
-  CPY.b #$19 : BCS .reset_up
-    LDX.w Menu_AddressIndex-1, Y
-    LDA.l $7EF300,             X
-    BEQ   Menu_FindNextItem
-    RTS
-  .reset_up
-  LDY.b #$01
-  STY.w $0202
+  TAY : STY.w $0202
   LDX.w Menu_AddressIndex-1, Y
-  LDA.l $7EF300,             X
-  BEQ   Menu_FindNextItem
+  LDA.l $7EF300, X
+  BEQ Menu_FindNextItem          ; If empty, scan horizontally (now safe)
   RTS
 }
 
