@@ -551,9 +551,7 @@ org $0AFD0C
 FloorIndicator:
 {
   REP   #$30
-  LDA   $04A0 : AND.w #$00FF : BNE +
-    JMP .hide_indicator
-  +
+  LDA   $04A0 : AND.w #$00FF : BEQ .hide_indicator
   INC   A : CMP.w #$00C0 : BNE .dont_disable
     ; if the count up timer reaches 0x00BF frames
     ; disable the floor indicator during the next frame.
@@ -577,12 +575,7 @@ FloorIndicator:
   LDA   $A0 : CMP.w #$0002 : BEQ .sanctuary_rat_room
   SEP   #$20
 
-  ; Check if Song of Storms rain is active
-  LDA.l $7EE00E : BEQ .checkIntroRain
-    LDA.b #$05 : STA $012D  ; Indoor rain SFX
-    BRA .no_rain_state
-  .checkIntroRain
-  ; Check the world state (intro rain)
+  ; Check the world state
   LDA   $7EF3C5 : CMP.b #$02 : BCS .no_rain_state
     ; cause the ambient rain sound to occur (indoor version)
     LDA.b #$05 : STA $012D
