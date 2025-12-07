@@ -460,11 +460,11 @@ Pool:
     db $03
 
     ; When non 0 this will cause rain to appear on all areas in the beginning
-    ; phase. Default is $FF.
+    ; phase. Default is $FF. Disabled for Oracle of Secrets.
     org $288146 ; $140146
     .EnableBeginningRain ; 0x01
     ;if !UseVanillaPool > 0
-    db $FF
+    db $00
     ;endif
 
     ; TODO: Add a place to change this in ZS. Once that is done add this to the 
@@ -1530,8 +1530,6 @@ ActivateSubScreen:
 {
     PHB : PHK : PLB
 
-    STZ.b $1D
-
     PHX
 
     REP #$20 ; Set A in 16bit mode.
@@ -1552,6 +1550,9 @@ ActivateSubScreen:
                 BRA .turnOn
         
     .notMire
+
+    ; Check if Song of Storms rain is active
+    LDA.l $7EE00E : AND.w #$00FF : BNE .turnOn
 
     ; Check if we are in the beginning phase, if not, no rain.
     ; If $7EF3C5 >= 0x02.
@@ -1575,6 +1576,11 @@ ActivateSubScreen:
     .normal
 
     SEP #$20 ; Set A in 8bit mode.
+
+    ; Only clear $1D if not in menu (module $0E)
+    LDA.b $10 : CMP.b #$0E : BEQ .skipClear
+        STZ.b $1D        ; Only clear if no overlay needed AND not in menu
+    .skipClear
 
     PLX
 
@@ -2295,20 +2301,22 @@ Overworld_ReloadSubscreenOverlay_Interupt:
     .notMire
 
     ; Check if we are in the beginning phase, if not, no rain.
-    ; If $7EF3C5 >= 0x02.
     LDA.l Pool_EnableBeginningRain : AND.w #$00FF : BEQ .noRain
         LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCS .noRain
-            ; The rain overlay.
             LDX.w #$009F
-        
+
     .noRain
-    
+
+    ; Check if Song of Storms rain is active - force rain overlay
+    LDA.l $7EE00E : AND.w #$00FF : BEQ .noSongOfStorms
+        LDX.w #$009F
+    .noSongOfStorms
+
     ; Store the overlay for later.
     PHX
 
     ; If the value is 0xFF that means we didn't set any overlay so load the
-    ; pyramid one by default. This is done in vanilla to not have to load the
-    ; BG during a normal transition from area 0x65 to the pyramid area.
+    ; pyramid one by default.
     CPX.w #$00FF : BNE .notFF
         ; The pyramid background.
         LDX.w #$0096
@@ -3616,6 +3624,12 @@ pullpc
 LoadAmbientSound:
 {
     PHB : PHK : PLB
+
+    ; Check if Song of Storms rain is active
+    LDA.l $7EE00E : BEQ .noSongOfStorms
+        LDA.b #$01 : STA.w $012D  ; Rain SFX
+        BRA .disableRainSound
+    .noSongOfStorms
 
     ; Reset the ambient sound effect to what it was.
     LDX.b $8A

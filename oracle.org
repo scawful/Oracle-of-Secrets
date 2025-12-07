@@ -157,19 +157,39 @@ This section tracks known conflicts between systems and outstanding bugs.
     - *Task:* Refactor `lost_woods.asm` into a proper `JSL`-callable subroutine (`LostWoods_PuzzleHandler`).
     - *Implementation:* Modify the `OverworldHandleTransitions` routine in `ZSCustomOverworld.asm` to check if the current area is the Lost Woods (`#$29`) and call the new handler. The handler should return a status indicating if it has overridden the transition.
 
-*** ACTIVE [#A] ZSOW vs. Day/Night Sprites
+*** DONE [#A] ZSOW vs. Day/Night Sprites
     :PROPERTIES:
     :ID: bug-zsow-daynight
     :END:
-    - *Status:* In progress.
+    - *Status:* Fixed.
     - *Task:* Triage the crash to identify the root cause and develop a new solution for integrating day/night sprite loading with ZSOW.
 
-*** ACTIVE [#A] ZSOW vs. Song of Storms
+*** DONE [#A] ZSOW vs. Song of Storms
     :PROPERTIES:
     :ID: bug-zsow-storms
     :END:
-    - *Status:* In progress.
-    - *Blocker:* This task is blocked by the `ZSOW vs. Day/Night Sprites` regression, as they may be related.
+    - *Status:* Fixed. Rain overlay now persists across all transitions and loads immediately.
+    - *Solution:* Multi-part fix across several files:
+      1. *ZSCustomOverworld.asm (lines 2307-2310):* Added $7EE00E check before default overlay, forces rain ($9F) when flag is set.
+      2. *ZSCustomOverworld.asm (lines 1556-1557):* ActivateSubScreen checks $7EE00E for menu transition visibility.
+      3. *ZSCustomOverworld.asm (lines 3625-3629):* LoadAmbientSound forces rain SFX ($01) when flag is set.
+      4. *menu_hud.asm (lines 580-583):* Indoor rain SFX ($05) when Song of Storms active.
+      5. *ocarina.asm:* OcarinaEffect_SummonStorms now calls JSL Overworld_ReloadSubscreenOverlayAndAdvance_long to properly load/unload rain overlay graphics immediately.
+      6. *ocarina.asm:* ResetOcarinaFlag no longer clears $7EE00E on screen transitions.
+      7. *ocarina.asm:* Reordered logic - check $7EE00E FIRST so dismissal works from any area. Area checks only block summoning.
+    - *Note:* Pool_EnableBeginningRain set to $00 to disable intro rain for Oracle of Secrets.
+    - *Known Issues:*
+      - Minor graphical artifacts in rain tiles may need editor fix or could be menu layer conflict.
+      - Zora areas ($2E, $2F) now error beep on summon attempt. The Zora's Domain waterfall event (dismiss to trigger cutscene) needs position check - should only work when near the event in top-left of large map.
+      - Edge cases with synchronization may exist but are deferred.
+
+*** ACTIVE [#B] Menu Empty Items Bug :code:bugfix:
+    :PROPERTIES:
+    :ID: bug-menu-empty
+    :END:
+    - *Problem:* Menu system has issues when a section has no items.
+    - *Cause:* Likely related to menu refactoring in commit 52a5ed4.
+    - *File:* =Menu/menu.asm=
 
 *** ACTIVE [#B] Zora Temple Tasks [0/2] :code:bugfix:
     :PROPERTIES:

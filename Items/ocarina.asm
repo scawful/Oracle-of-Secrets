@@ -114,6 +114,7 @@ assert pc() <= $1A922B
 AddTravelBird = $0994FE
 AddWeathervaneExplosion = $098D11
 Player_DoSfx1 = $078021
+Overworld_ReloadSubscreenOverlayAndAdvance_long = $02B1F4
 
 org $07A3DB
 LinkItem_FluteHook:
@@ -246,10 +247,14 @@ print "Bank07 Free Space: ", pc
 org $2B8000
 OcarinaEffect_SummonStorms:
 {
-  ; Dismiss the rain in the Zora area where it is already raining
+  ; FIRST: Check if rain is already active - always allow dismissal
+  ; This must come before area checks so you can dismiss from any area
+  LDA.l $7EE00E : BNE .dismiss_storms
+
+  ; Area checks only apply when trying to SUMMON rain
   LDA.w $8A : CMP.b #$00 : BEQ .check_for_magic_bean
-              CMP.b #$2E : BEQ .dismiss_storms
-              CMP.b #$2F : BEQ .dismiss_storms
+              CMP.b #$2E : BEQ .error_beep  ; Zora areas already have rain
+              CMP.b #$2F : BEQ .error_beep
     ; Check for areas which should not be allowed to have rain
     CMP.b #$05 : BEQ .error_beep
     CMP.b #$06 : BEQ .error_beep
@@ -259,21 +264,29 @@ OcarinaEffect_SummonStorms:
     CMP.b #$28 : BEQ .error_beep
     CMP.b #$29 : BEQ .error_beep
 
-  .summon_or_dismiss
-    ; If the rain is already summoned, dismiss it
-    LDA.l $7EE00E : BEQ .summon_storms
-      .dismiss_storms
-      LDA #$FF : STA $8C
+  ; Fall through to summon rain
+  JMP .summon_storms
+
+  .dismiss_storms
+      ; Clear the flag first so the reload routine loads default overlay
       LDA #$00 : STA $7EE00E
+      ; Trigger overlay reload - will load area default (pyramid or other)
+      JSL Overworld_ReloadSubscreenOverlayAndAdvance_long
+      ; Hide the subscreen and disable color math
       STZ $1D
       STZ $9A
+      LDA #$FF : STA $8C
       RTL
 
     .summon_storms
+    ; Set the flag first so the reload routine sees it
+    LDA #$01 : STA $7EE00E
+    ; Trigger overlay reload - will load rain due to $7EE00E flag
+    JSL Overworld_ReloadSubscreenOverlayAndAdvance_long
+    ; Set up visibility and color math
     LDA #$9F : STA $8C
     LDA.b #$01 : STA.b $1D
     LDA.b #$72 : STA.b $9A
-    LDA #$01 : STA $7EE00E
     RTL
 
   .error_beep
@@ -291,7 +304,7 @@ OcarinaEffect_SummonStorms:
       STA.l MagicBeanProg
       LDA.b #$2D : STA.w $012F
     +
-    JMP .summon_or_dismiss
+    JMP .summon_storms
   .not_active
   RTL
 }
@@ -321,12 +334,9 @@ PlayThunderAndRain:
 
 ResetOcarinaFlag:
 {
-  LDA.l GameState : BEQ .continue
-                    CMP #$01 : BEQ .continue
-    REP #$30
-    LDA #$0000 : STA.l $7EE00E
-    SEP #$30
-  .continue
+  ; NOTE: Removed automatic clearing of $7EE00E on screen transitions.
+  ; Rain flag is now only cleared when player plays Song of Storms again.
+  ; The visibility is controlled in ZSCustomOverworld.asm.
   LDA.w $0416 : ASL A
   RTL
 }
