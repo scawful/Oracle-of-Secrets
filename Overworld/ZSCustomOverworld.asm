@@ -1570,18 +1570,16 @@ ActivateSubScreen:
         .turnOn
         SEP #$20 ; Set A in 8bit mode.
 
-        ; Turn on BG1.
+        ; Turn on BG1 and exit (don't fall through to clear!)
         LDA.b #$01 : STA.b $1D
+        BRA .exit
 
     .normal
-
+    ; No overlay needed - clear $1D
     SEP #$20 ; Set A in 8bit mode.
+    STZ.b $1D
 
-    ; Only clear $1D if not in menu (module $0E)
-    LDA.b $10 : CMP.b #$0E : BEQ .skipClear
-        STZ.b $1D        ; Only clear if no overlay needed AND not in menu
-    .skipClear
-
+    .exit
     PLX
 
     PLB

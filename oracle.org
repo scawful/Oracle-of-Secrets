@@ -84,6 +84,14 @@ This section tracks tasks focused on improving the existing codebase's structure
       - [X] Convert all logic blocks (`RunClock`, `DrawClockToHud`, `ColorSubEffect`) into proper `subroutine`s.
       - [X] Break down the large `RunClock` routine into smaller, single-purpose functions (e.g., `TimeSystem_CheckCanRun`, `TimeSystem_IncrementTime`, `TimeSystem_UpdatePalettes`).
 
+*** TODO [#A] Fix Time System Custom BG Color Regression
+    :PROPERTIES:
+    :ID: bug-time-system-bg-color
+    :END:
+    - *Symptom:* Custom background color not working correctly after recent changes.
+    - *Likely Cause:* Regression introduced during system refactoring or ZSCustomOverworld changes.
+    - *Files to Investigate:* =Overworld/time_system.asm=, =Overworld/ZSCustomOverworld.asm=
+
 ** Minecart System (=Sprites/Objects/minecart.asm=)
 *** TODO [#B] Refactor Minecart System [0/4]
     :PROPERTIES:
