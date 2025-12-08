@@ -84,21 +84,22 @@ This section tracks tasks focused on improving the existing codebase's structure
       - [X] Convert all logic blocks (`RunClock`, `DrawClockToHud`, `ColorSubEffect`) into proper `subroutine`s.
       - [X] Break down the large `RunClock` routine into smaller, single-purpose functions (e.g., `TimeSystem_CheckCanRun`, `TimeSystem_IncrementTime`, `TimeSystem_UpdatePalettes`).
 
-*** TODO [#A] Fix Time System Custom BG Color Regression
+*** DONE [#A] Fix Time System Custom BG Color Regression
     :PROPERTIES:
     :ID: bug-time-system-bg-color
     :END:
     - *Symptom:* Custom background color not working correctly after recent changes.
-    - *Likely Cause:* Regression introduced during system refactoring or ZSCustomOverworld changes.
-    - *Files to Investigate:* =Overworld/time_system.asm=, =Overworld/ZSCustomOverworld.asm=
+    - *Root Cause:* The Color Math Control Register ($9A) was persisting when transitioning from an overlay area (Rain/Storms) to a normal area, causing additive color math to apply to the background.
+    - *Solution:* Explicitly cleared $9A in `Overworld_LoadBGColorAndSubscreenOverlay` and `Overworld_ReloadSubscreenOverlay_Interupt` in `ZSCustomOverworld.asm` when the overlay ID is $FF. Also ensured Time System tint persistence via `Oracle_CgramAuxToMain_Impl` in `mask_routines.asm`.
 
 ** Minecart System (=Sprites/Objects/minecart.asm=)
-*** TODO [#B] Refactor Minecart System [0/4]
+*** ACTIVE [#B] Refactor Minecart System [1/4]
     :PROPERTIES:
     :ID: refactor-minecart
     :END:
     - *Analysis:* An impressive but highly complex system that would benefit greatly from better organization and data-driven design.
     - *Tasks:*
+      - [X] Externalize track data into `data/minecart_tracks.asm` (Partial step toward struct/table conversion).
       - [ ] Define a `MinecartTrack` struct and convert the SRAM tracking arrays into a `table` of these structs.
       - [ ] Refactor the four `Minecart_Move...` routines into a single `Minecart_Move` subroutine that uses a lookup table for speed and axis.
       - [ ] Refactor the `Minecart_SetDirection...` routines into a single `Minecart_SetDirection` subroutine that uses lookup tables.
@@ -157,13 +158,14 @@ This section tracks known conflicts between systems and outstanding bugs.
     - *Task:* Refactored the `Sprite_ApplyPush` routine to use a lookup table for setting speed based on direction. Converted `IceBlock_CheckForGround` and `Sprite_IceBlock_CheckForSwitch` to subroutines. Replaced magic numbers with constants.
     - *Status:* Awaiting emulator verification.
 
-*** TODO [#A] Resolve ZSOW vs. Lost Woods Conflict
+*** DONE [#A] Resolve ZSOW vs. Lost Woods Conflict
     :PROPERTIES:
     :ID: bug-zsow-lostwoods
     :END:
-    - *Analysis:* The `lost_woods.asm` puzzle directly conflicts with `ZSCustomOverworld.asm`'s transition handler.
-    - *Task:* Refactor `lost_woods.asm` into a proper `JSL`-callable subroutine (`LostWoods_PuzzleHandler`).
-    - *Implementation:* Modify the `OverworldHandleTransitions` routine in `ZSCustomOverworld.asm` to check if the current area is the Lost Woods (`#$29`) and call the new handler. The handler should return a status indicating if it has overridden the transition.
+    - *Analysis:* The `lost_woods.asm` puzzle logic was executing prematurely on entry, corrupting coordinates.
+    - *Fix:* Added a check to ensure puzzle logic only runs when *inside* Area 0x29. Added `LostWoods_ResetCoordinates` to snap Link's position and clear scroll drifts on exit.
+    - *Status:* Main "skipping" bug resolved.
+    - *Regression:* Minor camera/coordinate desync when returning West (0x28). Documented in [[file:Docs/Issues/LostWoods_Transition_Desync.md][LostWoods_Transition_Desync.md]]. Low priority.
 
 *** DONE [#A] ZSOW vs. Day/Night Sprites
     :PROPERTIES:
@@ -270,13 +272,16 @@ This section tracks known conflicts between systems and outstanding bugs.
       - [ ] *Controlled Collapse:* A puzzle where you must intentionally make a floor tile crumble to fall down to a specific spot on the floor below.
 
 ** Quests & Narrative Sequences
-*** ACTIVE [#A] Zora Sanctuary Questline [2/3] :quest:
+*** ACTIVE [#A] Zora Sanctuary Questline [3/3] :quest:
     :PROPERTIES:
     :ID: quest-zora-sanctuary
     :END:
     - [X] Meet lone Sea Zora left at the Sanctuary, learn of Zora Princess.
     - [X] Conflict over territory lead to Zora Princesses imprisonment.
-    - [ ] Implement waterfall opening event using Song of Storms. This will require coordination between =Items/ocarina.asm= and =Overworld/overlays.asm=.
+    - [X] Implement waterfall opening event using Song of Storms.
+      - Trigger: Song of Storms dismissal at the statue (Map 1E, Top-Left).
+      - Logic: Strict 16x16 pixel trigger zone (Y=$06A0-$06B0, X=$0CB0-$0CC0) to prevent camera desync.
+      - Fixes: Restored `overlays.asm` camera logic and added palette refresh (`INC $15`) to `ocarina.asm`.
 
 *** TODO [#A] Kalyxo Castle Prison Sequence [0/4] :sequence:code:
     :PROPERTIES:

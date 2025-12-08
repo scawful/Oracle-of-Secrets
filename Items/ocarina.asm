@@ -252,22 +252,50 @@ OcarinaEffect_SummonStorms:
   LDA.l $7EE00E : BNE .dismiss_storms
 
   ; Area checks only apply when trying to SUMMON rain
-  LDA.w $8A : CMP.b #$00 : BEQ .check_for_magic_bean
-              CMP.b #$2E : BEQ .error_beep  ; Zora areas already have rain
-              CMP.b #$2F : BEQ .error_beep
+  LDA.w $8A : CMP.b #$00 : BNE +
+                JMP .check_for_magic_bean
+              +
+              CMP.b #$2E : BEQ .jump_error_beep  ; Zora areas already have rain
+              CMP.b #$2F : BEQ .jump_error_beep
     ; Check for areas which should not be allowed to have rain
-    CMP.b #$05 : BEQ .error_beep
-    CMP.b #$06 : BEQ .error_beep
-    CMP.b #$07 : BEQ .error_beep
-    CMP.b #$10 : BEQ .error_beep
-    CMP.b #$18 : BEQ .error_beep
-    CMP.b #$28 : BEQ .error_beep
-    CMP.b #$29 : BEQ .error_beep
+    CMP.b #$05 : BEQ .jump_error_beep
+    CMP.b #$06 : BEQ .jump_error_beep
+    CMP.b #$07 : BEQ .jump_error_beep
+    CMP.b #$10 : BEQ .jump_error_beep
+    CMP.b #$18 : BEQ .jump_error_beep
+    CMP.b #$28 : BEQ .jump_error_beep
+    CMP.b #$29 : BNE .no_error_beep
+
+  .jump_error_beep
+    JMP .error_beep
+
+  .no_error_beep
 
   ; Fall through to summon rain
   JMP .summon_storms
 
   .dismiss_storms
+      ; Check for Zora Temple Waterfall Trigger
+      ; Map 1E, High Precision Zone (16x16 pixels)
+      ; Target: Y=$06A8, X=$0CB7 (At the statue)
+      ; Range: Y=$06A0-$06B0, X=$0CB0-$0CC0
+      
+      LDA.w $8A : CMP.b #$1E : BNE .normal_dismiss
+      
+      ; Y Coordinate Check
+      LDA.b $21 : CMP.b #$06 : BNE .normal_dismiss ; High Byte
+      LDA.b $20 : CMP.b #$A0 : BCC .normal_dismiss ; Low Byte < $A0 (Too North/Close)
+                  CMP.b #$B0 : BCS .normal_dismiss ; Low Byte >= $B0 (Too South)
+
+      ; X Coordinate Check
+      LDA.b $23 : CMP.b #$0C : BNE .normal_dismiss ; High Byte
+      LDA.b $22 : CMP.b #$B0 : BCC .normal_dismiss ; Low Byte < $B0 (Too West)
+                  CMP.b #$C0 : BCS .normal_dismiss ; Low Byte >= $C0 (Too East)
+
+      ; Trigger Found!
+      JMP .trigger_zora_waterfall
+
+    .normal_dismiss
       ; Clear the flag first so the reload routine loads default overlay
       LDA #$00 : STA $7EE00E
       ; Trigger overlay reload - will load area default (pyramid or other)
@@ -276,6 +304,22 @@ OcarinaEffect_SummonStorms:
       STZ $1D
       STZ $9A
       LDA #$FF : STA $8C
+      RTL
+
+    .trigger_zora_waterfall
+      ; Clear Rain State
+      LDA #$00 : STA $7EE00E
+      STZ $1D ; Hide Rain Overlay
+      STZ $9A ; Clear Color Math
+      LDA #$FF : STA $8C ; Clear Overlay ID
+      
+      ; Setup Zora Temple Cutscene
+      STZ.b $B0        ; Reset Animation Timer
+      LDA.b #$01 : STA.w $04C6 ; Set Overlay Index (01 = Zora Temple)
+      LDA.b #$16 : STA.b $11   ; Set Submodule to "Open Entrance" ($16)
+      
+      INC.b $15 ; Force Palette Refresh
+      
       RTL
 
     .summon_storms
