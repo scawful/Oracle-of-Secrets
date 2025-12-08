@@ -191,7 +191,7 @@ Palette_ArmorAndGloves:
 ; =========================================================
 ; Overworld Palette Persist
 
-Overworld_CgramAuxToMain:
+Oracle_CgramAuxToMain_Impl:
 {
   ; Copies the auxiliary CGRAM buffer to the main one
   ; Causes NMI to reupload the palette.
@@ -213,14 +213,36 @@ Overworld_CgramAuxToMain:
 
   SEP #$20
 
+  ; Fix BG color: Apply time tinting after aux->main copy
+  ; Only when outdoors ($1B = 0)
+  ; NOTE: Overworld_LoadPalettes does NOT load palette 0 (BG color), so aux buffer
+  ; at offset 0 contains garbage. Must load from Pool_BGColorTable instead.
+  LDA.b $1B : BNE .skip_bg_fix
+
+  REP #$20
+  ; Get area index and load BG color from Pool_BGColorTable ($288000)
+  LDA.b $8A : AND.w #$00FF : ASL : TAX
+  LDA.l $288000, X                   ; Pool_BGColorTable
+  BEQ .skip_bg_fix_16bit             ; Skip if transparent ($0000)
+  STA.l TimeState.SubColor
+  JSL ColorSubEffect                 ; Apply time tinting, result in A
+  ; Write tinted color to all 4 BG color buffers
+  STA.l $7EC500                      ; PalCgram500_HUD
+  STA.l $7EC300                      ; PalBuf300_HUD
+  STA.l $7EC540                      ; PalCgram540_BG
+  STA.l $7EC340                      ; PalBuf340_BG
+  .skip_bg_fix_16bit
+  SEP #$20
+  .skip_bg_fix
+
   ; tell NMI to upload new CGRAM data
   INC $15
   RTL
 }
 
 pushpc
-org $02C769 ; Overworld_CgramAuxToMain
-  JSL Overworld_CgramAuxToMain
+org $02C769 ; Hook vanilla Overworld_CopyPalettesToCache
+  JSL Oracle_CgramAuxToMain_Impl
   RTS
 pullpc
 

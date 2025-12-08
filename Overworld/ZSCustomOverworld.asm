@@ -2364,6 +2364,13 @@ Overworld_ReloadSubscreenOverlay_Interupt:
         CPX.b #$95 : BEQ .loadOverlay ; Sky
         CPX.b #$9C : BEQ .loadOverlay ; Lava
         CPX.b #$96 : BEQ .loadOverlay ; Pyramid BG
+        
+        ; Check for NO OVERLAY ($FF)
+        CPX.b #$FF : BNE .checkScroll
+            LDA.b #$00 ; Disable Color Math
+            BRA .loadOverlay
+
+        .checkScroll
             ; TODO: Investigate what these checks are for.
             LDX.b $11 : CPX.b #$23 : BEQ .loadOverlay
                         CPX.b #$2C : BEQ .loadOverlay
@@ -3712,6 +3719,9 @@ Overworld_LoadBGColorAndSubscreenOverlay:
             CMP.w #$00FF : BNE .noCustomFixedColor
 
                 SEP #$30 ; Set A, X, and Y in 8bit mode.
+
+                ; Clear color math control register to prevent brightness bug
+                STZ.b $9A
 
                 ; Don't set the subscreen during a warp to hide the transparent
                 ; color change. This will get set properly later in the warp
