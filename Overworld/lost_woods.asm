@@ -27,12 +27,16 @@ Overworld_ActualScreenID = $02A5EC
 org $A0F000
 LostWoods:
 {
+  ; If currently in Lost Woods, execute puzzle logic
+  LDA.b $8A : CMP.b #$29 : BEQ begincode
+
+  ; Else, return standard area ID (Allow entry)
   LDA.l Pool_Overworld_ActualScreenID_New, X
-  ; are we in the right area?
-  CMP #$29 : BEQ begincode
-    ; not right area so return.
-    normalfinish:
-    LDA Pool_Overworld_ActualScreenID_New, X
+  STZ !ComboCounter
+  RTL
+
+  normalfinish:
+    LDA.l Pool_Overworld_ActualScreenID_New, X
     STZ !ComboCounter
     RTL
 
