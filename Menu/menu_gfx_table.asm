@@ -211,6 +211,16 @@ AreaNameTXT:
   dw $2430, $2430, $2430, $2430
   dw $2430, $2430, $2430, $2430
 
-RingPromptTXT:
-  dw $2567, $256B, $2417, $2561
-  dw $2558, $255D, $2556, $2562
+; Button prompts: "X:LOG   Y:RINGS "
+ButtonPromptTXT:
+  dw $2567, $256B, $255B, $255E  ; X:LO
+  dw $2556, $2417, $2417, $2417  ; G   (spaces)
+  dw $2568, $256B, $2561, $2558  ; Y:RI
+  dw $255D, $2556, $2562, $2417  ; NGS (space)
+
+; Ring box prompts: "A:EQUIP  Y:BACK "
+RingBoxPromptTXT:
+  dw $2550, $256B, $2554, $2560  ; A:EQ
+  dw $2564, $2558, $255F, $2417  ; UIP (space)
+  dw $2568, $256B, $2551, $2550  ; Y:BA
+  dw $2552, $255A, $2417, $2417  ; CK  (spaces)

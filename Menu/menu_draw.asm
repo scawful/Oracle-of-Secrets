@@ -901,20 +901,51 @@ Menu_DrawCursor:
     BRA .done
 
   .no_delete
+  ; Check if current item has submenu behavior
+  SEP #$20
+  JSR Menu_CheckItemHasSubmenu
+  REP #$20
+  BCS .submenu_cursor
+
+  ; Normal cursor (palette 1 - default blue/white)
   LDA.w #$3060 : STA.w $1108, X ; corner
   LDA.w #$3070 : STA.w $1148, X
-
   LDA.w #$7060 : STA.w $110E, X ; corner
   LDA.w #$7070 : STA.w $114E, X
-
   LDA.w #$3070 : STA.w $1188, X
   LDA.w #$B060 : STA.w $11C8, X ; corner
-
   LDA.w #$7070 : STA.w $118E, X
   LDA.w #$F060 : STA.w $11CE, X ; corner
+  BRA .done
+
+  .submenu_cursor
+  ; Gold/yellow cursor (palette 2) for items with submenus
+  LDA.w #$2460 : STA.w $1108, X ; corner
+  LDA.w #$2470 : STA.w $1148, X
+  LDA.w #$6460 : STA.w $110E, X ; corner
+  LDA.w #$6470 : STA.w $114E, X
+  LDA.w #$2470 : STA.w $1188, X
+  LDA.w #$A460 : STA.w $11C8, X ; corner
+  LDA.w #$6470 : STA.w $118E, X
+  LDA.w #$E460 : STA.w $11CE, X ; corner
 
   .done
   SEP #$20
+  RTS
+}
+
+; Check if current item has submenu behavior
+; Returns: Carry set if item has submenu, clear otherwise
+Menu_CheckItemHasSubmenu:
+{
+  LDA.w $0202  ; Current cursor position/item index
+  CMP.b #$05 : BEQ .has_submenu  ; Magic Powder (mushroom/powder)
+  CMP.b #$0D : BEQ .has_submenu  ; Ocarina (song selection)
+  CMP.b #$0E : BEQ .has_submenu  ; Book (Journal)
+  CLC
+  RTS
+  .has_submenu
+  SEC
   RTS
 }
 

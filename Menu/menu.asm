@@ -159,7 +159,7 @@ Menu_UploadLeft:
   JSR Menu_DrawBackground
   JSR DrawYItems
   JSR Menu_DrawSelect
-  JSR Menu_DrawRingPrompt
+  JSR Menu_DrawButtonPrompt
   JSR Menu_DrawItemName
   ; INSERT PALETTE -------
 
@@ -240,13 +240,25 @@ Menu_CheckForSpecialMenus:
         SEC : RTS ; Return Carry Set
     ++
 
-    LDA.b $F6 : BIT.b #$40 : BEQ +++
+    ; X Button: Open Journal from anywhere
+    LDA.b $F6 : BIT.b #$40 : BEQ .no_x_journal
+      LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
+      JSR Menu_DeleteCursor
+      REP #$20
+      LDA.w #$0000 : STA.l JournalState  ; Reset to first page
+      JSL Menu_DrawJournal
+      SEP #$30
+      SEC : RTS ; Return Carry Set
+    .no_x_journal
+
+    ; Y Button: Open Ring Box from anywhere
+    LDA.b $F4 : BIT.b #$40 : BEQ .no_y_rings
       JSR Menu_DeleteCursor
       JSR Menu_DrawRingBox
       STZ.w $020B
       LDA.b #!MENU_STATE_RING_BOX : STA.w $0200 ; Ring Box
       SEC : RTS ; Return Carry Set
-    +++
+    .no_y_rings
 
   CLC : RTS ; Return Carry Clear
 }
@@ -330,7 +342,7 @@ Menu_StatsScreen:
 {
   JSR Menu_CheckHScroll
 
-  ; Check X button to open Journal
+  ; X Button: Open Journal
   LDA.b $F6 : BIT.b #$40 : BEQ .no_journal
     LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
     REP #$20
@@ -342,7 +354,21 @@ Menu_StatsScreen:
     LDA.b #$01 : STA.b $17
     ; Play menu open sound
     LDA.b #$11 : STA.w $012F
+    RTS
   .no_journal
+
+  ; Y Button: Open Ring Box
+  LDA.b $F4 : BIT.b #$40 : BEQ .no_rings
+    JSR Menu_DrawRingBox
+    STZ.w $020B
+    LDA.b #!MENU_STATE_RING_BOX : STA.w $0200 ; Ring Box
+    ; Set VRAM upload for right side (quest screen)
+    LDA.b #$23 : STA.w $0116
+    LDA.b #$01 : STA.b $17
+    ; Play menu open sound
+    LDA.b #$11 : STA.w $012F
+    RTS
+  .no_rings
 
   ; JSR Menu_StatsScreen_Input ; Selection disabled per user request
   RTS
@@ -477,7 +503,7 @@ Menu_RefreshInventoryScreen:
   JSR Menu_DrawBackground
   JSR DrawYItems
   JSR Menu_DrawSelect
-  JSR Menu_DrawRingPrompt
+  JSR Menu_DrawButtonPrompt
   JSR Menu_DrawItemName
 
   ; Palette restore if needed (mimicking Menu_UploadLeft)
@@ -570,43 +596,48 @@ Menu_InitiateScrollDown:
 
 Menu_HandleGridNavigation:
 {
-  STX $00 ; Save Table Pointer
+  STX $00              ; Save Table Pointer (16-bit, callers set REP #$10)
+  SEP #$30             ; 8-bit A and X/Y for navigation
 
-  TYA ; Max Index to A
-  PHA ; Save Max
+  TYA                  ; Max Index to A (low byte of Y)
+  PHA                  ; Save Max
 
   LDA.b $F4
   LSR : BCS .move_right
   LSR : BCS .move_left
   LSR : BCS .move_down
   LSR : BCS .move_up
-  PLA ; Clean stack
+  PLA                  ; Clean stack
   CLC : RTS
 
   .move_up
   .move_right
     JSR .delete_cursor
-    PLA ; Get Max
-    STA $02 ; Store Max
+    PLA                ; Get Max
+    STA $02            ; Store Max
     INC.w $020B
     LDA.w $020B : CMP $02 : BCC .done
-      STZ.w $020B
+      STZ.w $020B      ; Wrap to 0
     BRA .done
 
   .move_down
   .move_left
     JSR .delete_cursor
-    PLA ; Clean stack
-    LDA.w $020B : BEQ .done
+    PLA                ; Get Max
+    STA $02            ; Store Max
+    LDA.w $020B : BEQ .wrap_to_max
       DEC.w $020B
+      BRA .done
+    .wrap_to_max
+      ; Wrap from 0 to max-1
+      LDA $02 : DEC : STA.w $020B
     BRA .done
 
   .delete_cursor
     REP #$30
     LDA.w $020B : ASL : TAY
     LDA ($00), Y : TAX
-    JSR Menu_DeleteCursor_AltEntry
-    SEP #$20
+    JSR Menu_DeleteCursor_AltEntry  ; This does SEP #$30 internally
     RTS
 
   .done
@@ -620,10 +651,11 @@ Menu_MagicBag:
 {
   JSR Menu_DrawMagicBag
   JSR Menu_DrawMagicItems
-  SEP #$30
+  SEP #$20             ; 8-bit A
 
   INC $0207
 
+  REP #$10             ; 16-bit X/Y for pointer load
   LDX.w #Menu_MagicBagCursorPositions
   LDY.w #$0006
   JSR Menu_HandleGridNavigation
@@ -800,8 +832,11 @@ Menu_RingBox:
 {
   JSR Menu_DrawRingBox
   JSR Menu_DrawMagicRingsInBox
+  JSR Menu_DrawRingBoxPrompt
+  SEP #$20             ; 8-bit A
   INC $0207
 
+  REP #$10             ; 16-bit X/Y for pointer load
   LDX.w #Menu_RingIconCursorPositions
   LDY.w #$0006
   JSR Menu_HandleGridNavigation
@@ -871,24 +906,37 @@ RingMenu_Controls:
   SEP #$30
   ; Set the current ring to the cursor position
   TAY                     ; Transfer A to Y for indexing
-  LDA.b $F6 : BIT.b #$80 : BEQ +  ; Check if the confirm button is pressed
+  LDA.b $F6 : BIT.b #$80 : BEQ .no_a  ; A button: Select ring
     LDA .rings, Y         ; Load the ring bitmask
     AND.l MAGICRINGS      ; Check if the ring is owned
-    BEQ +                 ; If not, skip setting the ring
+    BEQ .no_a             ; If not, skip setting the ring
       INY #2
       TYA                 ; Transfer Y to A
       JSR RingMenu_StoreRingToSlotStack
-  +
+      LDA.b #$22 : STA.w $012F  ; Play equip sound
+  .no_a
 
-  ; Return to item menu if player presses X
-  LDA.b $F6 : BIT.b #$40 : BEQ +
+  ; Y button: Close ring menu, return to previous screen
+  LDA.b $F4 : BIT.b #$40 : BEQ .no_y
+    LDA.b #$12 : STA.w $012F  ; Play close sound
     LDA.b #!MENU_STATE_SUBMENU_RETURN : STA.w $0200
-  +
+    RTS
+  .no_y
 
-  ; Close the menu if the player presses start
-  LDA.b $F4 : BIT.b #$10 : BEQ +
+  ; X button: Open Journal from ring menu
+  LDA.b $F6 : BIT.b #$40 : BEQ .no_x
+    LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
+    REP #$20
+    LDA.w #$0000 : STA.l JournalState
+    JSL Menu_DrawJournal
+    SEP #$30
+    RTS
+  .no_x
+
+  ; Start button: Close the entire menu
+  LDA.b $F4 : BIT.b #$10 : BEQ .no_start
     LDA.b #!MENU_STATE_SCROLL_UP : STA.w $0200
-  +
+  .no_start
   RTS
 
   .rings

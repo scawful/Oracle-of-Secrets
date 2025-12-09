@@ -529,15 +529,28 @@ Menu_DrawCharacterName:
 }
 
 
-Menu_DrawRingPrompt:
+Menu_DrawButtonPrompt:
 {
   REP #$30
-  LDX.w #$0E
+  LDX.w #$1E             ; 16 tiles (32 bytes - 2 = $1E)
 
   .loop
-  LDA.w RingPromptTXT, X : STA.w $1254, X
+  LDA.w ButtonPromptTXT, X : STA.w $1254, X
   DEX : DEX : BPL .loop
 
   SEP #$30               ; Restore 8-bit mode before return
+  RTS
+}
+
+Menu_DrawRingBoxPrompt:
+{
+  REP #$30
+  LDX.w #$1E             ; 16 tiles (32 bytes - 2 = $1E)
+
+  .loop
+  LDA.w RingBoxPromptTXT, X : STA.w $1294, X  ; One row below button prompt ($1254 + $40)
+  DEX : DEX : BPL .loop
+
+  SEP #$30
   RTS
 }
