@@ -83,22 +83,20 @@ Menu_ItemCursorPositions:
 
 Menu_FindNextItem:
 {
-  PHX                        ; Save X for counter
-  LDX.b #$18                 ; Max 24 items
+  SEP #$30                   ; Ensure 8-bit A, X, Y
+  LDY.b #$18                 ; Max 24 items to check (use Y as counter)
   .loop
-    LDY.w $0202 : INY
-    CPY.b #$19 : BCC .no_reset
-      LDY.b #$01
+    LDA.w $0202 : INC A
+    CMP.b #$19 : BCC .no_reset
+      LDA.b #$01
     .no_reset
-    STY.w $0202
-    PHX
-    LDX.w Menu_AddressIndex-1, Y
-    LDA.l $7EF300, X
-    PLX
+    STA.w $0202
+    TAX : DEX                ; X = position - 1 (for table index)
+    LDA.l Menu_AddressLong, X : TAX  ; Load offset from table
+    LDA.l $7EF300, X         ; Load item value
     BNE .found               ; Item exists, done
-    DEX : BNE .loop          ; Keep searching
+    DEY : BNE .loop          ; Keep searching
   .found
-  PLX
   RTS
 }
 
@@ -106,21 +104,19 @@ Menu_FindNextItem:
 
 Menu_FindPrevItem:
 {
-  PHX                        ; Save X for counter
-  LDX.b #$18                 ; Max 24 items
+  SEP #$30                   ; Ensure 8-bit A, X, Y
+  LDY.b #$18                 ; Max 24 items to check (use Y as counter)
   .loop
-    LDY.w $0202 : DEY : BNE .no_reset
-      LDY.b #$18
+    LDA.w $0202 : DEC A : BNE .no_reset
+      LDA.b #$18
     .no_reset
-    STY.w $0202
-    PHX
-    LDX.w Menu_AddressIndex-1, Y
-    LDA.l $7EF300, X
-    PLX
+    STA.w $0202
+    TAX : DEX                ; X = position - 1 (for table index)
+    LDA.l Menu_AddressLong, X : TAX  ; Load offset from table
+    LDA.l $7EF300, X         ; Load item value
     BNE .found               ; Item exists, done
-    DEX : BNE .loop          ; Keep searching
+    DEY : BNE .loop          ; Keep searching
   .found
-  PLX
   RTS
 }
 
@@ -128,14 +124,16 @@ Menu_FindPrevItem:
 
 Menu_FindNextDownItem:
 {
+  SEP #$30                        ; Ensure 8-bit mode
   LDA.w $0202 : CLC : ADC.b #$06
   CMP.b #$19 : BCC .no_reset
     SBC.b #$18
   .no_reset
-  TAY : STY.w $0202
-  LDX.w Menu_AddressIndex-1, Y
+  STA.w $0202
+  TAX : DEX                       ; X = position - 1
+  LDA.l Menu_AddressLong, X : TAX ; Load offset from table
   LDA.l $7EF300, X
-  BEQ Menu_FindNextItem          ; If empty, scan horizontally (now safe)
+  BEQ Menu_FindNextItem           ; If empty, scan horizontally
   RTS
 }
 
@@ -143,16 +141,18 @@ Menu_FindNextDownItem:
 
 Menu_FindNextUpItem:
 {
+  SEP #$30                        ; Ensure 8-bit mode
   LDA.w $0202 : SEC : SBC.b #$06
   BEQ .wrap                       ; If zero, wrap
   BPL .no_reset                   ; If positive (1+), valid
   .wrap
     CLC : ADC.b #$18              ; Wrap to bottom row
   .no_reset
-  TAY : STY.w $0202
-  LDX.w Menu_AddressIndex-1, Y
+  STA.w $0202
+  TAX : DEX                       ; X = position - 1
+  LDA.l Menu_AddressLong, X : TAX ; Load offset from table
   LDA.l $7EF300, X
-  BEQ Menu_FindNextItem          ; If empty, scan horizontally (now safe)
+  BEQ Menu_FindNextItem           ; If empty, scan horizontally
   RTS
 }
 
@@ -187,9 +187,10 @@ Menu_InitItemScreen:
     LDY.b #$00
 
     .loop
-      INY : CPY.b #$25 : BCS .bad
-        LDX.w Menu_AddressIndex-1, Y
-        LDA.l $7EF300,             X
+      INY : CPY.b #$19 : BCS .bad  ; Only 24 items (1-24), stop at 25
+        TYA : TAX : DEX            ; X = Y - 1 (for table index)
+        LDA.l Menu_AddressLong, X : TAX
+        LDA.l $7EF300, X
     BEQ .loop
 
     STY.w $0202
@@ -210,8 +211,9 @@ Menu_InitItemScreen:
   ; Double check we still have the item that was selected.
   ; This is to prevent a bug where we can get stuck in an
   ; infinite loop later on.
-  LDX.w Menu_AddressIndex-1, Y
-  LDA.l $7EF300,             X
+  TYA : TAX : DEX                  ; X = Y - 1 (for table index)
+  LDA.l Menu_AddressLong, X : TAX
+  LDA.l $7EF300, X
   CMP.b #$01 : BCC .lookForAlternateItem
     STZ   $0207
     LDA.b #$04

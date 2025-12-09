@@ -462,70 +462,120 @@ Menu_DrawAreaNameTXT:
 ; =========================================================
 
 ; Player's Name
-; $3D9-$3E4: See appendix for listing of character codes.
-; Note each of the six letters is represented by a 16-bit number.
+; $7EF3D9-$7EF3E4: 6 characters, 16-bit each
 ;
-; 00-A 01-B 02-C 03-D 04-E 05-F 06=G 07-H
-; 08-I^ 09-J 0A-K 0B-L 0C-M 0D-N OE-O OF-P
-; 10-?? 20-Q 21-R 22-S 23-T 24-U 25-V
-; 26-W 27-X 28-Y 29-Z
+; Game Character Encoding:
+; 00-07: A-H          | 09-0F: J-P        | 20-29: Q-Z
+; AF: I (special)     | B1: space/blank
 ;
-; 2A-a 2B-b-2C-c 2D-d 2E-e 2F-f 40-g 41-h
-; 42-k 43-j 44-i 45-l 46-m 47-n 48-o 49-p
-; 4A-q 4B-r 4C-s 4D-t 4E-u 4F-v 60-w 61-x 62-y 63-z
+; Lowercase (convert to uppercase):
+; 2A-2F: a-f → A-F    | 40-41: g-h → G-H  | 42: k → K
+; 43: j → J           | 44: i → I         | 45: l → L
+; 46-48: m-o → M-O    | 49-4F: p-v → P-V  | 60-63: w-z → W-Z
 ;
-; 64-0 65-1 66-2 67-3 68-4 69-5 6A-6 6B-7 6C-8 6D-9 6E-"?" 6F-"!"
-; 80-"-"
-; 81-"."
-; 82-","
-; 85-"(" 86-")"
+; Numbers: 64-6D: 0-9
+; Symbols: 6E-? 6F-! 80-- 81-. 82-, 85-( 86-)
 ;
-; B1-blank^
-;
-; ^This code is not the canon encoding of this character.
-; ex. AF is the proper "I". 08 is not.
+; Font tiles: $2550=A, $2551=B, ... $2569=Z, $256A-$2573=0-9
+; Space tile: $2417
 
-AlphabetTable:
-  db $00, $01, $02, $03, $04, $05, $06, $07
-  db $AF, $09, $0A, $0B, $0C, $0D, $0E, $0F
-  db $10, $20, $21, $22, $23, $24, $25, $26
-  db $27, $28, $29, $2A, $2B, $2C, $2D, $2E
-  db $2F, $40, $41, $42, $43, $44, $45, $46
-  db $47, $48, $49, $4A, $4B, $4C, $4D, $4E
-  db $4F, $60, $61, $62, $63, $64, $65, $66
-  db $67, $68, $69, $6A, $6B, $6C, $6D, $6E
-  db $6F, $80, $81, $82, $85, $86, $B1
-
+; =========================================================
+; Menu_DrawCharacterName
+; Draws the player's name from $7EF3D9 to tilemap at $134C
+; Converts game encoding to font tiles, uppercase only
+; =========================================================
 Menu_DrawCharacterName:
 {
   REP #$30
-  LDX.w #$C
+  LDX.w #$000C           ; 6 characters * 2 bytes = $0C
 
-  .draw_name_loop
-  ; Player's Name in memory, indexed by X
-  LDA.l $7EF3D9, X
+  .loop
+    LDA.l $7EF3D9, X     ; Load character code
+    AND.w #$00FF         ; Mask to 8-bit
+    JSR .convert_char    ; Convert to tile
+    STA.w $134C, X
+    DEX : DEX
+    BPL .loop
+    RTS
 
-  ; Check if the character is the special encoding for "I" first.
-  CMP.w #$AF : BEQ .fix_i
+  ; ----------------------------------------------------------
+  ; Subroutine: Convert character code in A to font tile
+  ; Returns tile value in A
+  ; ----------------------------------------------------------
+  .convert_char
+    ; Uppercase A-H ($00-$07)
+    CMP.w #$0008 : BCC .direct
+    ; Uppercase J-P ($09-$0F)
+    CMP.w #$0010 : BCC .direct
+    ; Q-Z ($20-$29)
+    CMP.w #$0020 : BCC .space
+    CMP.w #$002A : BCC .qz_range
+    ; Lowercase a-f ($2A-$2F)
+    CMP.w #$0030 : BCC .lower_af
+    ; Gap $30-$3F
+    CMP.w #$0040 : BCC .space
+    ; Lowercase g-o ($40-$48)
+    CMP.w #$0049 : BCC .lower_go
+    ; Lowercase p-v ($49-$4F)
+    CMP.w #$0050 : BCC .lower_pv
+    ; Gap $50-$5F
+    CMP.w #$0060 : BCC .space
+    ; Lowercase w-z ($60-$63)
+    CMP.w #$0064 : BCC .lower_wz
+    ; Numbers ($64-$6D)
+    CMP.w #$006E : BCC .numbers
+    ; Special I ($AF)
+    CMP.w #$00AF : BEQ .char_i
+    ; Else space
+  .space
+    LDA.w #$2417 : RTS
 
-  ; Check if it is the gap between the P and Q characters
-  CMP.w #$10 : BCC .write_to_screen ; handle P, Q gap
-  SBC.b #$10
-  CLC
-  CMP.w #$2A : BCS .fix_lowercase
+  .direct
+    CLC : ADC.w #$2550 : RTS
 
-  .write_to_screen
-  CLC : ADC #$2550 : STA.w $134C, X
-  DEX : DEX : BPL .draw_name_loop
-  RTS
+  .qz_range
+    SEC : SBC.w #$0010
+    CLC : ADC.w #$2550 : RTS
 
-  .fix_i
-  LDA.w #$08 : BRA .write_to_screen
+  .lower_af
+    SEC : SBC.w #$002A
+    CLC : ADC.w #$2550 : RTS
 
-  .fix_lowercase
-  ; TODO: Convert the lowercase value of 2A or greater inside of the
-  ; accumulator and convert it to an uppercase value.
-  LDA.w #$1D : BRA .write_to_screen
+  .lower_go
+    ; $40=g, $41=h, $42=k, $43=j, $44=i, $45=l, $46=m, $47=n, $48=o
+    ; Use lookup table for this irregular mapping
+    SEC : SBC.w #$0040    ; A = 0-8
+    ASL A                 ; *2 for word index
+    TAY
+    LDA.w .go_table, Y : RTS
+  .go_table
+    dw $2556  ; $40 g -> G
+    dw $2557  ; $41 h -> H
+    dw $255A  ; $42 k -> K
+    dw $2559  ; $43 j -> J
+    dw $2558  ; $44 i -> I
+    dw $255B  ; $45 l -> L
+    dw $255C  ; $46 m -> M
+    dw $255D  ; $47 n -> N
+    dw $255E  ; $48 o -> O
+
+  .lower_pv
+    ; $49-$4F -> P-V ($255F-$2565)
+    SEC : SBC.w #$003A
+    CLC : ADC.w #$2550 : RTS
+
+  .lower_wz
+    ; $60-$63 -> W-Z ($2566-$2569)
+    SEC : SBC.w #$004A
+    CLC : ADC.w #$2550 : RTS
+
+  .numbers
+    ; $64-$6D -> 0-9 ($256A-$2573)
+    SEC : SBC.w #$0064
+    CLC : ADC.w #$256A : RTS
+
+  .char_i
+    LDA.w #$2558 : RTS
 }
 
 

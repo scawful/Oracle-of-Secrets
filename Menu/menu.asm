@@ -357,18 +357,8 @@ Menu_StatsScreen:
     RTS
   .no_journal
 
-  ; Y Button: Open Ring Box
-  LDA.b $F4 : BIT.b #$40 : BEQ .no_rings
-    JSR Menu_DrawRingBox
-    STZ.w $020B
-    LDA.b #!MENU_STATE_RING_BOX : STA.w $0200 ; Ring Box
-    ; Set VRAM upload for right side (quest screen)
-    LDA.b #$23 : STA.w $0116
-    LDA.b #$01 : STA.b $17
-    ; Play menu open sound
-    LDA.b #$11 : STA.w $012F
-    RTS
-  .no_rings
+  ; Y Button: Ring Box disabled on Quest Status screen
+  ; (Ring box graphics don't display correctly on right side)
 
   ; JSR Menu_StatsScreen_Input ; Selection disabled per user request
   RTS
