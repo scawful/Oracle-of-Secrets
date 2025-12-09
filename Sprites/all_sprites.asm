@@ -246,10 +246,6 @@ Sprite_IceBlock = $D5
 incsrc "Sprites/Objects/ice_block.asm"
 %log_end("ice_block", !LOG_SPRITES)
 
-%log_start("ranch_girl", !LOG_SPRITES)
-incsrc "Sprites/NPCs/ranch_girl.asm"
-%log_end("ranch_girl", !LOG_SPRITES)
-
 assert pc() <= $328000
 
 %log_end("Bank 31", !LOG_SPRITES)
@@ -289,6 +285,10 @@ incsrc "Sprites/Bosses/arrghus.asm"
 %log_start("fortune_teller", !LOG_SPRITES)
 incsrc "Sprites/NPCs/fortune_teller.asm"
 %log_end("fortune_teller", !LOG_SPRITES)
+
+%log_start("ranch_girl", !LOG_SPRITES)
+incsrc "Sprites/NPCs/ranch_girl.asm"
+%log_end("ranch_girl", !LOG_SPRITES)
 
 %log_end("Bank 32", !LOG_SPRITES)
 
