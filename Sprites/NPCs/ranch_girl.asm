@@ -9,6 +9,8 @@ Sprite_CheckIfActive_Bank1A = $1AF954
 RanchGirl_Message:
 {
   LDA $7EF34C : CMP.b #$01 : BCS .has_ocarina
+    ; Set journal flag: Ranch Girl transformed back (curse broken)
+    LDA.l SideQuestProg2 : ORA.b #$01 : STA.l SideQuestProg2
     %ShowUnconditionalMessage($017D)
     LDA #$01 : STA.w SprMiscD, X
     RTL

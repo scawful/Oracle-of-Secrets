@@ -111,6 +111,8 @@ Sprite_MaskSalesman_Main:
   NoOcarina:
   {
     %PlayAnimation(0, 1, 16)
+    ; Set journal flag: Met Mask Salesman (hint to get Ocarina)
+    LDA.l SideQuestProg : ORA.b #$01 : STA.l SideQuestProg
     %ShowUnconditionalMessage($E9) ; Go get the Ocarina first!
     %GotoAction(0)
     RTS
@@ -129,6 +131,8 @@ Sprite_MaskSalesman_Main:
   TeachLinkSong:
   {
     LDA #$02 : STA $7EF34C ; Increment the number of songs Link has
+    ; Set journal flag: Mask Salesman taught Song of Healing
+    LDA.l SideQuestProg2 : ORA.b #$04 : STA.l SideQuestProg2
     LDA.b #$13
     STA.w $0CF8
     JSL $0DBB67 ;  Link_CalculateSFXPan

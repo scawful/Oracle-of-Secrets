@@ -99,6 +99,8 @@ Sprite_DekuScrub_Main:
     %PlayAnimation(0, 1, 16)
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($140) : BCC .no_hablaba
+      ; Set journal flag: Found withering Deku Scrub
+      LDA.l SideQuestProg : ORA.b #$04 : STA.l SideQuestProg
       %GotoAction(1)
     .no_hablaba
     RTS
@@ -109,6 +111,8 @@ Sprite_DekuScrub_Main:
     %PlayAnimation(0, 1, 16)
     LDA.b SongFlag : CMP.b #$01 : BNE .ninguna_cancion
       STZ.b SongFlag
+      ; Set journal flag: Deku Scrub soul freed
+      LDA.l SideQuestProg2 : ORA.b #$10 : STA.l SideQuestProg2
       LDA.b #$C0 : STA.w SprTimerD, X
       %GotoAction(2)
     .ninguna_cancion
