@@ -233,6 +233,8 @@ Menu_CheckForSpecialMenus:
       LDA.b $F6 : BIT.b #$80 : BEQ ++
         LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
         JSR Menu_DeleteCursor
+        REP #$20
+        LDA.w #$0000 : STA.l JournalState  ; Reset to first page
         JSL Menu_DrawJournal
         SEP #$30
         SEC : RTS ; Return Carry Set
@@ -327,6 +329,21 @@ incsrc "menu_scroll.asm"
 Menu_StatsScreen:
 {
   JSR Menu_CheckHScroll
+
+  ; Check X button to open Journal
+  LDA.b $F6 : BIT.b #$40 : BEQ .no_journal
+    LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
+    REP #$20
+    LDA.w #$0000 : STA.l JournalState  ; Reset to first page
+    JSL Menu_DrawJournal
+    SEP #$30
+    ; Set VRAM upload for right side (quest screen)
+    LDA.b #$23 : STA.w $0116
+    LDA.b #$01 : STA.b $17
+    ; Play menu open sound
+    LDA.b #$11 : STA.w $012F
+  .no_journal
+
   ; JSR Menu_StatsScreen_Input ; Selection disabled per user request
   RTS
 }
@@ -462,7 +479,7 @@ Menu_RefreshInventoryScreen:
   JSR Menu_DrawSelect
   JSR Menu_DrawRingPrompt
   JSR Menu_DrawItemName
-  
+
   ; Palette restore if needed (mimicking Menu_UploadLeft)
   REP #$30
   LDX.w #$3E
@@ -472,7 +489,7 @@ Menu_RefreshInventoryScreen:
     DEX : DEX
   BPL .loop
   SEP #$30
-  
+
   RTS
 }
 
@@ -639,7 +656,7 @@ MagicBag_ConsumeItem:
 {
     ; Check for A button press
     LDA.b $F6 : BIT.b #$80 : BEQ .exit
-    
+
     REP #$30
     ; Calculate SRAM address for current item (4 bytes per entry)
     LDA.w $020B : ASL #2 : TAX
@@ -650,15 +667,15 @@ MagicBag_ConsumeItem:
     ; Handle Consumption
     PHB : LDA $02 : PHA : PLB
     LDA ($00) : BEQ .error_dbr
-    
+
     ; Call Handler
     JSL Link_ConsumeMagicBagItem
     BCC .failed_use_dbr
-    
+
     ; Success -> Decrement
     LDA ($00) : DEC A : STA ($00)
     PLB
-    
+
     ; Sound
     LDA.b #$35 : STA.w $012F
     BRA .exit
@@ -882,9 +899,39 @@ Menu_Journal:
 {
   JSL Journal_Handler
 
-  JSR Submenu_Return
+  ; Check if we should return (A or Start pressed)
+  LDA.b $F6 : BIT.b #$80 : BNE .return_pressed
+  LDA.b $F4 : BIT.b #$10 : BNE .close_menu
+  BRA .continue
 
-  LDA.b #$22 : STA.w $0116
+  .close_menu
+    LDA.b #$12 : STA.w $012F  ; Play menu close sound
+    LDA.b #!MENU_STATE_SCROLL_UP : STA.w $0200
+    BRA .continue
+
+  .return_pressed
+    LDA.b #$12 : STA.w $012F  ; Play menu close sound
+    ; Check which side we came from using $E5 (high byte of $E4)
+    ; $E4 = $0000 for left, $0100 for right (quest screen)
+    LDA.b $E5 : BNE .return_to_quest
+      ; Return to inventory (left side)
+      LDA.b #!MENU_STATE_SUBMENU_RETURN : STA.w $0200
+      BRA .continue
+    .return_to_quest
+      ; Return to quest screen (right side)
+      JSR Menu_RefreshQuestScreen
+      LDA.b #!MENU_STATE_STATS_SCREEN : STA.w $0200
+
+  .continue
+  ; Set VRAM upload address based on which side we're on
+  ; $E4 is 16-bit: $0000 = left, $0100 = right (quest screen)
+  ; Check high byte $E5 to detect quest screen
+  LDA.b $E5 : BNE .quest_side
+    LDA.b #$22 : BRA .set_vram  ; Left side (inventory)
+  .quest_side
+    LDA.b #$23                   ; Right side (quest)
+  .set_vram
+  STA.w $0116
   LDA.b #$01 : STA.b $17
   RTS
 }

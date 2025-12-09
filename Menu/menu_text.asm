@@ -119,7 +119,7 @@ Menu_ItemNames:
   dw "MIRROR_OF_TIME  "
   dw "____BOTTLE____  "
   dw "___OCARINA____  "
-  dw "TOME__L:REVEAL__"
+  dw "BOOK__L:REVEAL  "
   dw "___SOMARIA____  "
   dw "_FISHING_ROD__  "
   dw "_ROCS_FEATHER_  "

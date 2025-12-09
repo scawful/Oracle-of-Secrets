@@ -476,8 +476,28 @@ FOLLOWERING     = $7EF3D3
 UNUSED_7EF3D4   = $7EF3D4
 UNUSED_7EF3D5   = $7EF3D5
 UNUSED_7EF3D6   = $7EF3D6
-UNUSED_7EF3D7   = $7EF3D7
-UNUSED_7EF3D8   = $7EF3D8
+
+; Side Quest Progress Flags
+; .dgo mwcn
+;   n - Met Mask Salesman (shown "need Ocarina" dialogue)
+;   c - Found cursed Cucco at ranch (shown first dialogue)
+;   w - Found withering Deku Scrub (shown first dialogue)
+;   m - Got Mushroom from Toadstool Woods
+;   o - Old Man Mountain quest active
+;   g - Goron quest active (collecting rock meat)
+;   d - (reserved)
+SideQuestProg   = $7EF3D7
+
+; Side Quest Progress Flags 2
+; .bts pfmr
+;   r - Ranch Girl transformed back (dialogue shown)
+;   m - Mask Salesman taught Song of Healing
+;   f - Fortune teller visited (any fortune)
+;   p - Potion shop visited with mushroom
+;   s - Deku Scrub soul freed (before mask given)
+;   t - Tingle met (any map purchased)
+;   b - Bean beanstalk grown (final stage)
+SideQuestProg2  = $7EF3D8
 
 ; Player name
 NAME1L          = $7EF3D9
