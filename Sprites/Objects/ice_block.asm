@@ -1,4 +1,26 @@
+; =========================================================
 ; Pushable Ice Block
+; =========================================================
+; A sliding puzzle block that Link can push in cardinal directions.
+; The block slides until it hits a wall or lands on a switch tile.
+;
+; Key Mechanics:
+; - Direction Locking: Once Link starts pushing, the direction is locked
+;   in SprMiscA until the block stops moving (speed = 0).
+; - Side Validation: Link must be on the opposite side of the block from
+;   the direction he's facing. Uses Sprite_DirectionToFacePlayer to
+;   determine Link's relative position and validates against $26 (facing).
+; - Switch Detection: Checks center point of block against switch tiles
+;   ($23, $24, $25, $3B) to stop and activate switches.
+; - Grid Snapping: Block position is snapped to 8px grid when pushed.
+;
+; Sprite RAM Usage:
+;   SprMiscA - Locked push direction ($01=R, $02=L, $04=D, $08=U)
+;   SprMiscC - Push state flag (set while being actively pushed)
+;   SprMiscD-G - Cached initial position for damage reset
+;   SprTimerA - Push momentum timer (keeps push active for 7 frames)
+;   SprTimerB - Delay timer for hookshot cancellation
+; =========================================================
 
 !SPRID              = $D5
 !NbrTiles           = 02
@@ -30,6 +52,10 @@
 
 %Set_Sprite_Properties(Sprite_IceBlock_Prep, Sprite_IceBlock_Long)
 
+; =========================================================
+; Main Entry Point - Called every frame
+; Handles push state management and dispatches to main logic
+; =========================================================
 Sprite_IceBlock_Long:
 {
   PHB : PHK : PLB
@@ -54,6 +80,10 @@ Sprite_IceBlock_Long:
   RTL
 }
 
+; =========================================================
+; Initialization - Called once when sprite spawns
+; Caches initial position for damage reset
+; =========================================================
 Sprite_IceBlock_Prep:
 {
   PHB : PHK : PLB
@@ -68,6 +98,9 @@ Sprite_IceBlock_Prep:
   RTL
 }
 
+; =========================================================
+; Main Logic - Handles movement, collision, and push detection
+; =========================================================
 Sprite_IceBlock_Main:
 {
   %PlayAnimation(0, 0, 1)
@@ -93,18 +126,25 @@ Sprite_IceBlock_Main:
   JSL Sprite_CheckTileCollision
   ; ----udlr , u = up, d = down, l = left, r = right
   LDA.w SprCollision, X : AND.b #$0F : BEQ +
+    ; Hit a wall - clear direction only if we actually stop
     STZ.w SprMiscA, X
   +
 
   ; If link is in contact, register a push with the sprite
-  ; Run a timer briefly, and confirm the facing direction
-  ; matches the push direction (cached) and then initiate
-  ; the speed changes if they agree
+  ; Must be pushing from correct side for the direction
   JSL Sprite_CheckDamageToPlayerSameLayer : BCC .NotInContact
-    LDA.w SprMiscA, X : BNE .push_cached
+    ; Check which side Link is on and validate push direction
+    JSR IceBlock_ValidatePushSide : BCC .wrong_direction
+
+    LDA.w SprMiscA, X : BNE .check_facing
+      ; No direction cached - lock to current facing
       LDA.b $26 : STA.w SprMiscA, X
       JSR Sprite_ApplyPush
-    .push_cached
+      BRA .do_push
+    .check_facing
+    ; Direction is locked - only allow push if Link faces same direction
+    LDA.b $26 : CMP.w SprMiscA, X : BNE .wrong_direction
+    .do_push
 
     LDA.b #$07 : STA.w SprTimerA, X
     STZ.b $5E
@@ -116,7 +156,18 @@ Sprite_IceBlock_Main:
     .CancelHookshot:
     JSL Sprite_CancelHookshot
     RTS
+
+  .wrong_direction
+    ; Link is pushing from wrong side - just repel, don't move block
+    JSL Sprite_RepelDash
+    RTS
+
   .NotInContact:
+
+  ; Not in contact - only clear direction if block has stopped moving
+  LDA.w SprXSpeed, X : ORA.w SprYSpeed, X : BNE .still_moving
+    STZ.w SprMiscA, X  ; Block stopped, allow new direction
+  .still_moving
 
   LDA.w SprTimerA, X : BNE .delay_timer
     LDA.b #$0D : STA.w SprTimerB, X
@@ -124,6 +175,10 @@ Sprite_IceBlock_Main:
   RTS
 }
 
+; =========================================================
+; Apply Push - Sets block velocity based on Link's facing direction
+; Only applies if cached direction matches current facing
+; =========================================================
 Sprite_ApplyPush:
 {
   ; Only apply the push if the facing direction
@@ -152,6 +207,63 @@ Sprite_ApplyPush:
   RTS
 }
 
+; =========================================================
+; Validate Push Side - Anti-cheat for push direction
+; =========================================================
+; Prevents players from manipulating the block by changing
+; direction while in contact. Uses Sprite_DirectionToFacePlayer
+; to determine Link's actual position relative to the block,
+; then validates that his facing direction ($26) is appropriate.
+;
+; Example: If Link is standing to the RIGHT of the block,
+; he must be facing LEFT ($02) to push it leftward.
+;
+; Returns: Carry set = valid push, Carry clear = invalid push
+; Link facing ($26): $01 = right, $02 = left, $04 = down, $08 = up
+; Sprite_DirectionToFacePlayer returns Y:
+;   Y=0: Link is to the right of sprite  -> must face left ($02)
+;   Y=1: Link is to the left of sprite   -> must face right ($01)
+;   Y=2: Link is below sprite            -> must face up ($08)
+;   Y=3: Link is above sprite            -> must face down ($04)
+; =========================================================
+IceBlock_ValidatePushSide:
+{
+  JSL Sprite_DirectionToFacePlayer  ; Y = Link's position relative to block
+  LDA.b $26                         ; A = Link's facing direction
+  CPY.b #$00 : BEQ .link_is_right
+  CPY.b #$01 : BEQ .link_is_left
+  CPY.b #$02 : BEQ .link_is_below
+  CPY.b #$03 : BEQ .link_is_above
+  BRA .invalid  ; Unknown direction
+
+.link_is_right
+  CMP.b #$02 : BEQ .valid  ; Must face left
+  BRA .invalid
+
+.link_is_left
+  CMP.b #$01 : BEQ .valid  ; Must face right
+  BRA .invalid
+
+.link_is_below
+  CMP.b #$08 : BEQ .valid  ; Must face up
+  BRA .invalid
+
+.link_is_above
+  CMP.b #$04 : BEQ .valid  ; Must face down (fall through to invalid)
+
+.invalid
+  CLC
+  RTS
+
+.valid
+  SEC
+  RTS
+}
+
+; =========================================================
+; Helper Routines
+; =========================================================
+
 ; Check if the tile beneath the sprite is the sliding ice
 ; Currently unused as it doesnt play well with the hitbox choices
 IceBlock_CheckForGround:
@@ -177,46 +289,31 @@ IceBlock_CheckForGround:
 
 Sprite_IceBlock_CheckForSwitch:
 {
-  LDY.b #$03
-
-  .next_tile
-  LDA.w SprY, X : CLC : ADC.w .offset_y, Y : STA.b $00
+  ; Check center point of block for switch tile
+  LDA.w SprY, X : CLC : ADC.b #$08 : STA.b $00
   LDA.w SprYH, X : ADC.b #$00 : STA.b $01
-  LDA.w SprX, X : CLC : ADC.w .offset_x, Y : STA.b $02
+  LDA.w SprX, X : CLC : ADC.b #$08 : STA.b $02
   LDA.w SprXH, X : ADC.b #$00 : STA.b $03
   LDA.w SprFloor, X
 
-  PHY
   JSL Sprite_GetTileAttr
-  PLY
 
   LDA.w $0FA5
-  CMP.w .tile_id+0 : BEQ .switch_tile
-  CMP.w .tile_id+1 : BEQ .switch_tile
-  CMP.w .tile_id+2 : BEQ .switch_tile
-  CMP.w .tile_id+3 : BNE .fail
+  CMP.b #$23 : BEQ .on_switch
+  CMP.b #$24 : BEQ .on_switch
+  CMP.b #$25 : BEQ .on_switch
+  CMP.b #$3B : BEQ .on_switch
 
-  .switch_tile
-  DEY
-  BPL .next_tile
-
-  SEC
-  RTS
-
-  .fail
   CLC
   RTS
 
-  .offset_x
-    db   3,  12,   3,  12
-
-  .offset_y
-    db   3,   3,  12,  12
-
-  .tile_id
-    db $23, $24, $25, $3B
+.on_switch
+  SEC
+  RTS
 }
 
+; Block other sprites from passing through this block
+; Applies recoil to sprites that collide with the ice block
 Statue_BlockSprites:
 {
   LDY.b #$0F
@@ -264,6 +361,9 @@ Statue_BlockSprites:
   RTS
 }
 
+; =========================================================
+; Drawing - Renders the 16x16 ice block using 4 8x8 tiles
+; =========================================================
 Sprite_IceBlock_Draw:
 {
   JSL Sprite_PrepOamCoord
