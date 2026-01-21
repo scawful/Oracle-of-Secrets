@@ -118,6 +118,17 @@ Util/ZScreamNew/ZScream.exe.config
 Util/ZScreamNew/ZScream.exe.manifest
 Util/ZScreamNew/ZS_Patches/Version.txt
 Util/ZScreamNew/ZS_Patches/Hex Edits/Misc Small Patches.asm
+
+# Local tooling/editor state
+.DS_Store
+.claude/
+.gemini/
+.genkit/
+.vscode/
+.context
+Oracle-of-Secrets.yaze
+Docs/GEMINI.md.bak_*
+checks.json
 Util/ZScreamNew/ZS_Patches/Items/AST Boots.asm
 Util/ZScreamNew/ZS_Patches/Misc/Big Bomb Requirements.asm
 Util/ZScreamNew/ZS_Patches/Misc/IntroSkip.asm
