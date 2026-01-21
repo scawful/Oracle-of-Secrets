@@ -1,0 +1,40 @@
+name = "oracle-of-secrets"
+description = "Zelda: Oracle of Secrets - A Link to the Past ROM hack with custom menu, sprites, and areas"
+aliases = ["oos", "oracle"]
+tags = ["game-dev", "romhacking", "active"]
+platforms = ["mac", "linux"]
+
+# Migrated from REPO_FACTS.json
+stage = "alpha"
+is_product = false
+commercial_intent = "none"
+public = false
+
+# Technology stack
+languages = ["asm-65816"]
+build_system = "asar"
+
+[build]
+command = "./build.sh"
+
+[dependencies]
+# Build dependencies
+build = ["asar", "flips"]  # asar assembler, Floating IPS for patch creation
+
+# Development dependencies
+external = ["yaze"]  # For testing and debugging
+
+verified_features = [
+    "custom-menu-hud",
+    "custom-sprites",
+    "new-areas"
+]
+
+[links]
+website = "https://halext.org/labs/Oracle"
+github = "https://github.com/scawful/oracle-of-secrets"
+
+[sync]
+type = "git"
+direction = "both"
+remote = "server"
