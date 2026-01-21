@@ -378,9 +378,9 @@ mcp__yaze_mcp__get_game_state()            # Dump current state
 
 **Hyrule Historian**:
 ```python
-mcp__hyrule-historian__lookup_address("02XXXX")
-mcp__hyrule-historian__search_oracle_code("Sprite_Booki")
-mcp__hyrule-historian__get_ram_info("SprAction")
+mcp__hyrule-historian__lookup("02XXXX")        # Address lookup
+mcp__hyrule-historian__search("Sprite_Booki", scope="oracle") # Search code
+mcp__hyrule-historian__lookup("SprAction")     # RAM lookup
 ```
 
 ### 7.3 Logging
