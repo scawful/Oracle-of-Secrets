@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Evaluation Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        .leaderboard {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .leaderboard-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .leaderboard-table tr:hover {
+            background: #f8f9ff;
+        }
+
+        .rank {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #667eea;
+        }
+
+        .rank-1 { color: #ffd700; }
+        .rank-2 { color: #c0c0c0; }
+        .rank-3 { color: #cd7f32; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .badge-excellent { background: #d4edda; color: #155724; }
+        .badge-good { background: #d1ecf1; color: #0c5460; }
+        .badge-average { background: #fff3cd; color: #856404; }
+        .badge-poor { background: #f8d7da; color: #721c24; }
+
+        .refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .category-card {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .category-score {
+            font-size: 2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="refresh-indicator" id="refreshIndicator" style="display: none;">
+        <div class="spinner"></div>
+        <span>Updating...</span>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>Model Evaluation Dashboard</h1>
+            <p class="subtitle">Real-time performance metrics and comparisons</p>
+        </header>
+
+        <div id="errorContainer"></div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalModels">-</div>
+                <div class="stat-label">Models Evaluated</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalTests">-</div>
+                <div class="stat-label">Total Tests</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgAccuracy">-</div>
+                <div class="stat-label">Average Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="topModel">-</div>
+                <div class="stat-label">Top Performer</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h2 class="chart-title">Model Accuracy Comparison</h2>
+            <div class="chart-wrapper">
+                <canvas id="accuracyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h2 class="chart-title">Performance by Category</h2>
+            <div class="chart-wrapper">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+        <div class="leaderboard">
+            <h2 class="chart-title">Leaderboard</h2>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Model</th>
+                        <th>Accuracy</th>
+                        <th>Questions</th>
+                        <th>Avg Time</th>
+                        <th>Visual Tests</th>
+                        <th>Last Run</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <tr><td colspan="7" class="loading">Loading data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="chart-container">
+            <h2 class="chart-title">Recent Evaluation History</h2>
+            <div class="chart-wrapper">
+                <canvas id="historyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="last-updated" id="lastUpdated">
+            Last updated: Never
+        </div>
+    </div>
+
+    <script>
+        let accuracyChart = null;
+        let categoryChart = null;
+        let historyChart = null;
+
+        // Auto-refresh every 30 seconds
+        const REFRESH_INTERVAL = 30000;
+        let refreshTimer = null;
+
+        // Initialize dashboard
+        async function initDashboard() {
+            await loadData();
+            startAutoRefresh();
+        }
+
+        function startAutoRefresh() {
+            if (refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(loadData, REFRESH_INTERVAL);
+        }
+
+        async function loadData() {
+            showRefreshIndicator();
+
+            try {
+                // Load leaderboard data
+                const leaderboard = await fetchJSON('results/leaderboard.json');
+
+                // Load all benchmark results for detailed analysis
+                const results = await fetchAllResults();
+
+                updateStats(leaderboard, results);
+                updateCharts(results);
+                updateLeaderboard(leaderboard);
+                updateTimestamp();
+                clearError();
+
+            } catch (error) {
+                showError('Failed to load data: ' + error.message);
+                console.error('Error loading data:', error);
+            } finally {
+                hideRefreshIndicator();
+            }
+        }
+
+        async function fetchJSON(path) {
+            const response = await fetch(path);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return await response.json();
+        }
+
+        async function fetchAllResults() {
+            // In a real implementation, this would fetch all result files
+            // For now, return empty array if leaderboard doesn't exist
+            try {
+                return await fetchJSON('results/leaderboard.json');
+            } catch {
+                return [];
+            }
+        }
+
+        function updateStats(leaderboard, results) {
+            const totalModels = new Set(leaderboard.map(r => r.model_name)).size;
+            const totalTests = leaderboard.reduce((sum, r) => sum + r.total_questions, 0);
+            const avgAccuracy = leaderboard.length > 0
+                ? leaderboard.reduce((sum, r) => sum + r.accuracy, 0) / leaderboard.length
+                : 0;
+            const topModel = leaderboard[0]?.model_name || 'N/A';
+
+            document.getElementById('totalModels').textContent = totalModels;
+            document.getElementById('totalTests').textContent = totalTests;
+            document.getElementById('avgAccuracy').textContent = (avgAccuracy * 100).toFixed(1) + '%';
+            document.getElementById('topModel').textContent = topModel;
+        }
+
+        function updateCharts(results) {
+            if (results.length === 0) return;
+
+            // Accuracy comparison chart
+            const accuracyData = {
+                labels: results.map(r => r.model_name),
+                datasets: [{
+                    label: 'Accuracy (%)',
+                    data: results.map(r => r.accuracy * 100),
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2
+                }]
+            };
+
+            if (accuracyChart) accuracyChart.destroy();
+            accuracyChart = new Chart(
+                document.getElementById('accuracyChart'),
+                {
+                    type: 'bar',
+                    data: accuracyData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: { display: true, text: 'Accuracy (%)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                }
+            );
+
+            // Category performance chart (if data available)
+            updateCategoryChart(results);
+
+            // History chart
+            updateHistoryChart(results);
+        }
+
+        function updateCategoryChart(results) {
+            // Extract category data from first result (as example)
+            if (!results[0]?.category_scores) return;
+
+            const categories = Object.keys(results[0].category_scores);
+            const datasets = results.map((result, idx) => ({
+                label: result.model_name,
+                data: categories.map(cat =>
+                    (result.category_scores[cat]?.accuracy || 0) * 100
+                ),
+                backgroundColor: `hsla(${idx * 360 / results.length}, 70%, 60%, 0.8)`,
+                borderColor: `hsla(${idx * 360 / results.length}, 70%, 50%, 1)`,
+                borderWidth: 2
+            }));
+
+            if (categoryChart) categoryChart.destroy();
+            categoryChart = new Chart(
+                document.getElementById('categoryChart'),
+                {
+                    type: 'radar',
+                    data: {
+                        labels: categories,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        function updateHistoryChart(results) {
+            // Sort by timestamp
+            const sorted = [...results].sort((a, b) =>
+                new Date(a.timestamp) - new Date(b.timestamp)
+            );
+
+            const historyData = {
+                labels: sorted.map(r => new Date(r.timestamp).toLocaleDateString()),
+                datasets: [{
+                    label: 'Accuracy Trend',
+                    data: sorted.map(r => r.accuracy * 100),
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            };
+
+            if (historyChart) historyChart.destroy();
+            historyChart = new Chart(
+                document.getElementById('historyChart'),
+                {
+                    type: 'line',
+                    data: historyData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: { display: true, text: 'Accuracy (%)' }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        function updateLeaderboard(leaderboard) {
+            const tbody = document.getElementById('leaderboardBody');
+            tbody.innerHTML = '';
+
+            if (leaderboard.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No results yet</td></tr>';
+                return;
+            }
+
+            leaderboard.forEach((entry, idx) => {
+                const row = document.createElement('tr');
+
+                const rankClass = idx === 0 ? 'rank-1' : idx === 1 ? 'rank-2' : idx === 2 ? 'rank-3' : '';
+                const accuracy = entry.accuracy * 100;
+                const badge = accuracy >= 90 ? 'excellent' :
+                             accuracy >= 75 ? 'good' :
+                             accuracy >= 60 ? 'average' : 'poor';
+
+                const visualPassed = entry.visual_tests_total > 0
+                    ? `${entry.visual_tests_passed}/${entry.visual_tests_total}`
+                    : 'N/A';
+
+                row.innerHTML = `
+                    <td><span class="rank ${rankClass}">#${idx + 1}</span></td>
+                    <td><strong>${entry.model_name}</strong></td>
+                    <td><span class="badge badge-${badge}">${accuracy.toFixed(1)}%</span></td>
+                    <td>${entry.correct_answers}/${entry.total_questions}</td>
+                    <td>${entry.avg_time.toFixed(2)}s</td>
+                    <td>${visualPassed}</td>
+                    <td>${new Date(entry.timestamp).toLocaleString()}</td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateTimestamp() {
+            const now = new Date().toLocaleString();
+            document.getElementById('lastUpdated').textContent = `Last updated: ${now}`;
+        }
+
+        function showRefreshIndicator() {
+            document.getElementById('refreshIndicator').style.display = 'flex';
+        }
+
+        function hideRefreshIndicator() {
+            document.getElementById('refreshIndicator').style.display = 'none';
+        }
+
+        function showError(message) {
+            const container = document.getElementById('errorContainer');
+            container.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function clearError() {
+            document.getElementById('errorContainer').innerHTML = '';
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+</html>

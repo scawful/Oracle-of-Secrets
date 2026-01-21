@@ -1,0 +1,24 @@
+{
+  "models": [
+    {
+      "name": "example_model_1",
+      "endpoint": null,
+      "api_key": null,
+      "enabled": false,
+      "schedule": "on_change",
+      "description": "Example model configuration - disable this and add your models"
+    }
+  ],
+  "notification_settings": {
+    "webhook_url": null,
+    "notify_on_completion": true,
+    "notify_on_error": true,
+    "notify_on_improvement": true
+  },
+  "evaluation_settings": {
+    "min_interval_hours": 1.0,
+    "enable_visual_tests": true,
+    "timeout_per_question": 30.0,
+    "parallel_evaluations": false
+  }
+}
