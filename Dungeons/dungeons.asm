@@ -57,6 +57,7 @@ incsrc "Dungeons/attract_scenes.asm"
 print  "End of attract_scenes.asm         ", pc
 
 incsrc "Collision/custom_collision.asm"
+; water_collision.asm moved to Bank $2C after main dungeon code
 
 incsrc "Collision/CollisionTablesExpanded.asm"
 incsrc "Collision/GlobalCollisionTables.asm"
@@ -139,6 +140,9 @@ db $A1, $33, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 0C } | Size: 07
 db $A1, $72, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 1C } | Size: 06
 db $FF, $FF ; End
 
+; Water collision system - placed in Bank $2C after main dungeon code
+incsrc "Collision/water_collision.asm"
+
 print "End of dungeons.asm               ", pc
 
 pushpc
@@ -159,7 +163,8 @@ org $01F1C9 ; Replace static LDA
 LDA $0682
 
 org $01F3D2 ; do tilemapcollision stuff for the dam
-JML $01F237
+JML WaterGate_FillComplete_Hook
+NOP #4 ; Pad to 8 bytes (replaces STZ $1E + STZ $1F + JSL IrisSpotlight_ResetTable)
 
 
 ; RoomTag_WaterGate

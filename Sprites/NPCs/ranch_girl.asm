@@ -52,7 +52,7 @@ RanchGirl_TeachSong:
 
 pushpc
 
-org $01AFECF
+org $1AFECF
 ChickenLady:
 {
   JSR .main
@@ -72,5 +72,5 @@ ChickenLady:
   RTS
 }
 
-assert pc() <= $01AFEFF
+assert pc() <= $1AFEFF
 pullpc

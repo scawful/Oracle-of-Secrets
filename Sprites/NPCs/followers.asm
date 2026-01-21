@@ -211,12 +211,17 @@ ZoraBaby_GlobalBehavior:
 {
   JSL Sprite_BehaveAsBarrier
   JSR Follower_WatchLink
-  LDA.w SprAction, X : CMP.b #$02 : BEQ +
+
+  ; Skip switch detection if already in switch-pulling state (Action >= 5)
+  ; This prevents the dialogue loop where switch detection re-triggers
+  LDA.w SprAction, X : CMP.b #$05 : BCS .skip_switch_detection
+  CMP.b #$02 : BEQ .skip_switch_detection
+
     JSL Sprite_CheckIfLifted
     JSL ThrownSprite_TileAndSpriteInteraction_long
     JSL Sprite_Move
 
-    JSR ZoraBaby_CheckForWaterGateSwitch : BCC ++
+    JSR ZoraBaby_CheckForWaterGateSwitch : BCC .no_water_gate
       ; Face head up towards switch
       LDA.b #$20 : STA.w FollowerHeadOffset
       ; Set end of switch graphics
@@ -225,15 +230,17 @@ ZoraBaby_GlobalBehavior:
       LDA.b #$01 : STA.w $0642
       ; Goto ZoraBaby_PullSwitch
       LDA.b #$05 : STA.w SprAction, X
-    ++
+      RTL
+    .no_water_gate
 
-    JSR ZoraBaby_CheckForWaterSwitchSprite : BCC +
+    JSR ZoraBaby_CheckForWaterSwitchSprite : BCC .skip_switch_detection
       ; Set end of switch graphics
       LDA.b #$01 : STA.w SprAction, Y
       ; Goto ZoraBaby_PullSwitch
       LDA.b #$05 : STA.w SprAction, X
       LDA.w SprX, X : CLC : ADC #$10 : STA.w SprX, X
-  +
+
+  .skip_switch_detection
   RTL
 }
 
@@ -402,16 +409,20 @@ Sprite_39_ZoraBaby:
 
   ZoraBaby_PullSwitch:
   {
+    ; Show message once, then wait for it to complete
     LDY.b #$01 : LDA.b #$07 ; MESSAGE 0107
-    JSL Sprite_ShowMessageUnconditional
-    ; LDA.b #$01 : STA.b $B1
-    ; JSL $01B8BF
-    INC.w SprAction, X
+    JSL Sprite_ShowSolicitedMessage : BCC .wait
+      ; Message finished, move to post-switch state
+      INC.w SprAction, X
+    .wait
     RTS
   }
 
   ZoraBaby_PostSwitch:
   {
+    ; Water gate has been activated, convert back to follower
+    ; This destroys the sprite and makes Zora Baby follow Link again
+    LDA.b #$01 : STA.w SprAction, X  ; Go to ZoraBaby_FollowLink
     RTS
   }
 }

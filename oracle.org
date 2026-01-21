@@ -106,13 +106,13 @@ This section tracks tasks focused on improving the existing codebase's structure
       - [ ] Add high-level block comments to explain the purpose of major routines like `HandleTileDirections` and the track caching system.
 
 ** Ice Block System (=Sprites/Objects/ice_block.asm=)
-*** TODO [#C] Refactor Ice Block Sprite
+*** DONE [#C] Refactor Ice Block Sprite
+CLOSED: [2025-12-09 Mon]
     :PROPERTIES:
     :ID: refactor-ice-block
     :END:
     - *Analysis:* The logic is straightforward but can be made more compact and readable.
-    - *Task:* Refactor the `Sprite_ApplyPush` routine to use a lookup table for setting speed based on direction, instead of a chain of `CMP`/`BEQ` instructions.
-    - *Note:* This is a code quality refactor. A separate bug for the collision mechanics is tracked in [[bug-ice-block-collision]].
+    - *Completed:* Added comprehensive documentation including header comment with mechanics overview, sprite RAM usage table, and section headers for all routines. Push validation now uses =Sprite_DirectionToFacePlayer= for reliable side detection.
 
 ** Menu System (=Menu/=)
 *** DONE [#B] Refactor Menu System [2/2]
@@ -142,21 +142,26 @@ This section tracks tasks focused on improving the existing codebase's structure
 
 This section tracks known conflicts between systems and outstanding bugs.
 
-*** ACTIVE [#A] Fix Ice Block Collision and Push Mechanics
+*** DONE [#A] Fix Ice Block Collision and Push Mechanics
+CLOSED: [2025-12-09 Mon]
     :PROPERTIES:
     :ID: bug-ice-block-collision
     :END:
     - *Problem:* Collision logic was too sensitive, touch was unpredictable and the direction could shift while the player is moving.
-    - *Solution:* Implemented an intent-based push system requiring Link to be aligned and hold contact for a short duration, with grid snapping for predictable movement.
-    - *Status:* Awaiting emulator verification.
+    - *Solution:* Implemented side validation using =Sprite_DirectionToFacePlayer= to verify Link's position matches his facing direction. Direction is locked in =SprMiscA= once push starts and only clears when block stops moving.
+    - *Key Changes:*
+      - =IceBlock_ValidatePushSide=: Anti-cheat that validates Link is on correct side of block for his facing direction
+      - Direction locking prevents mid-push manipulation
+      - Switch detection uses center point for reliable activation
+      - Comprehensive documentation added to sprite file
 
-*** ACTIVE [#C] Refactor Ice Block Sprite
+*** DONE [#C] Refactor Ice Block Sprite
+CLOSED: [2025-12-09 Mon]
     :PROPERTIES:
     :ID: refactor-ice-block
     :END:
     - *Analysis:* The logic is straightforward but can be made more compact and readable.
-    - *Task:* Refactored the `Sprite_ApplyPush` routine to use a lookup table for setting speed based on direction. Converted `IceBlock_CheckForGround` and `Sprite_IceBlock_CheckForSwitch` to subroutines. Replaced magic numbers with constants.
-    - *Status:* Awaiting emulator verification.
+    - *Completed:* Added comprehensive header documentation, section comments, and sprite RAM usage documentation. Code is now well-organized with clear separation of concerns.
 
 *** DONE [#A] Resolve ZSOW vs. Lost Woods Conflict
     :PROPERTIES:
@@ -193,7 +198,8 @@ This section tracks known conflicts between systems and outstanding bugs.
       - Zora areas ($2E, $2F) now error beep on summon attempt. The Zora's Domain waterfall event (dismiss to trigger cutscene) needs position check - should only work when near the event in top-left of large map.
       - Edge cases with synchronization may exist but are deferred.
 
-*** ACTIVE [#B] Menu Empty Items Bug :code:bugfix:
+*** DONE [#B] Menu Empty Items Bug                            :code:bugfix:
+CLOSED: [2025-12-08 Mon 22:34]
     :PROPERTIES:
     :ID: bug-menu-empty
     :END:
@@ -201,12 +207,40 @@ This section tracks known conflicts between systems and outstanding bugs.
     - *Cause:* Likely related to menu refactoring in commit 52a5ed4.
     - *File:* =Menu/menu.asm=
 
-*** ACTIVE [#B] Zora Temple Tasks [0/2] :code:bugfix:
+*** ACTIVE [#B] Zora Temple Tasks [2/6] :code:bugfix:
     :PROPERTIES:
     :ID: bug-zora-temple
     :END:
-    - [ ] Zora Follower Sprite Logic: Ensure the Zora Baby follower correctly transitions to a standard sprite and interacts with switches.
-    - [ ] Fix Water Gate Collision: Debug collision issues with the water gates in the temple.
+    - [X] Fix Zora Baby Dialogue Loop: MESSAGE 0107 was repeating infinitely when Zora Baby activated switch.
+      - *Root Cause:* =ZoraBaby_GlobalBehavior= re-detected switch every frame, resetting action to 5.
+      - *Solution:* Added action check to skip switch detection when =SprAction >= 5=.
+      - *File:* =Sprites/NPCs/followers.asm= line 217
+    - [X] Create Water Collision System: Generic system to update collision tilemaps when water fills.
+      - *File:* =Dungeons/Collision/water_collision.asm=
+      - *Features:* Room-indexed collision tables, SRAM persistence flags, hooks into =$01F3D2=
+    - [ ] *BLOCKED* Room 0x27 Water Gate Puzzle Collision Shape
+      - *Puzzle:* Player throws Zora Baby to switch, she pulls it, water fills upside-T section, Link swims to chest.
+      - *Problem:* AI agent couldn't determine correct custom collision fill shape. Used =analyze_rooms= script but got wrong offsets.
+      - *Blocker:* Need better approach - either manual collision editing, improved 2D spatial communication with agent, or multimodal via yaze screenshot.
+      - *Future:* yaze needs custom collision editor (ZScream has one, need feature parity).
+      - *Note:* Offsets in =WaterGate_Room27_Data= are placeholder estimates based on =NewWaterOverlayData=.
+    - [ ] Add Room Entry Persistence Hook: When re-entering room, restore water collision if SRAM flag set.
+    - [ ] Fix Room 0x25 Water Grate Position Bug
+      - *Symptom:* The grate sprite appears in top-left corner instead of correct position, but the moving water expansion works correctly in lower quadrants.
+      - *Analysis:* Sprite 0x21 (WaterSwitch) triggers room tag 0x1A (WaterGate). Grate position vs water fill are desynced.
+      - *Possible Causes:* (1) Room 0x25 missing tag 0x1A in ZScream (2) Sprite X/Y initialization wrong
+      - *Note:* May want to revisit puzzle design here - need general strategy for adapting custom collision for future rooms.
+    - [ ] General: Develop reusable custom collision workflow for water puzzles
+
+**** Zora Baby Quest (D4 Main Mechanic)
+     - *Narrative:* Territory dispute between Sea Zora and River Zora. Sea Zora Princess kidnapped - Link gets Big Key to unlock her cell, but she dies (broken heart/injuries). Song of Healing → Zora Mask.
+     - *Mechanic:* Zora Baby (little girl) follows Link as follower sprite. Can pick up and throw her (OoT style). She pulls switches to solve puzzles.
+     - *Key Puzzle (Room 0x27):* Throw Zora Baby to switch, she pulls it, water fills upside-T section, Link swims to previously unreachable chest.
+
+**** Sea Zora Temple (Future Content)
+     - The expanded eastern region could serve as the *Sea Zora ancestral sanctuary*.
+     - Narrative: Contains murals explaining shared River/Sea Zora history, evidence that Argghus corrupted the waters and caused the tribal conflict.
+     - Could include: Zora Mask upgrade, post-D4 story resolution, optional lore content.
 
 * New Features & Content
 
@@ -228,11 +262,13 @@ This section tracks known conflicts between systems and outstanding bugs.
     - [ ] S2: Shrine of Power
     - [ ] S3: Shrine of Courage
 
-*** TODO [#B] Glacia Estate Polish [0/4] :design:polish:
+*** TODO [#B] Glacia Estate Polish [1/4] :design:polish:
     :PROPERTIES:
     :ID: content-glacia-estate
     :END:
-    - [ ] Improve Ice Block sprite collision detection (relates to [[bug-ice-block-collision]]).
+    - [X] Improve Ice Block sprite collision detection (relates to [[bug-ice-block-collision]]).
+      - *Solution:* Added =IceBlock_ValidatePushSide= using =Sprite_DirectionToFacePlayer= for anti-cheat push validation.
+      - *File:* =Sprites/Objects/ice_block.asm=
     - [ ] Tune enemies in dungeon, adjust positioning for better challenge flow.
     - [ ] Exterior GFX improvements.
     - [ ] Add a visual indicator (e.g., a crack) for the pushable block in the ice puzzle.
