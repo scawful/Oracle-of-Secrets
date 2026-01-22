@@ -6,11 +6,17 @@ local BRIDGE_DIR = os.getenv("HOME") .. "/Documents/Mesen2/bridge"
 local STATE_FILE = BRIDGE_DIR .. "/state.json"
 local CMD_FILE = BRIDGE_DIR .. "/command.txt"
 local RESPONSE_FILE = BRIDGE_DIR .. "/response.txt"
+local SAVESTATE_EXEC_HOOK = 0x008051 -- MainGameLoop .do_frame
 
 -- Ensure bridge directory exists (Lua doesn't have mkdir, so we try to open)
 local function ensureDir()
     os.execute("mkdir -p " .. BRIDGE_DIR)
 end
+
+local savestatePending = nil
+local savestateStatus = "idle" -- idle, pending, ok, error
+local savestateError = ""
+local savestateLastPath = ""
 
 local function read8(addr)
     return emu.read(addr, emu.memType.snesMemory)
@@ -49,6 +55,42 @@ local function readBlock(addr, length)
         bytes[#bytes + 1] = string.format("%02X", read8(addr + i))
     end
     return table.concat(bytes)
+end
+
+local function queueSavestateLoad(path)
+    if not path or path == "" then
+        savestateStatus = "error"
+        savestateError = "missing_path"
+        return false
+    end
+    savestatePending = path
+    savestateStatus = "pending"
+    savestateError = ""
+    savestateLastPath = path
+    return true
+end
+
+local function loadSavestateNow()
+    if not savestatePending then return end
+    local path = savestatePending
+    savestatePending = nil
+
+    local f = io.open(path, "rb")
+    if not f then
+        savestateStatus = "error"
+        savestateError = "state_not_found:" .. path
+        return
+    end
+    local data = f:read("*all")
+    f:close()
+
+    local ok, result = pcall(emu.loadSavestate, data)
+    if ok and result then
+        savestateStatus = "ok"
+    else
+        savestateStatus = "error"
+        savestateError = ok and "load_failed" or tostring(result)
+    end
 end
 
 -- Frame counter (since emu.getState().ppu may not exist)
@@ -135,6 +177,7 @@ local function getState()
     s.submode = read8(0x7E0011)
     s.indoors = read8(0x7E001B)
     s.roomId = read8(0x7E00A0)
+    s.overworldArea = read8(0x7E008A)
 
     -- Link state
     s.linkState = read8(0x7E005D)
@@ -160,6 +203,12 @@ local function getState()
     s.menuState = read8(0x7E0200)
     s.menuCursor = read8(0x7E0202)
 
+    -- Savestate status
+    s.savestateStatus = savestateStatus
+    s.savestatePending = savestatePending ~= nil
+    s.savestateError = savestateError
+    s.savestatePath = savestateLastPath
+
     return s
 end
 
@@ -173,6 +222,7 @@ local function toJSON(s)
     table.insert(lines, string.format('  "submode": %d,', s.submode))
     table.insert(lines, string.format('  "indoors": %s,', s.indoors == 1 and "true" or "false"))
     table.insert(lines, string.format('  "roomId": %d,', s.roomId))
+    table.insert(lines, string.format('  "overworldArea": %d,', s.overworldArea))
     table.insert(lines, string.format('  "linkState": %d,', s.linkState))
     table.insert(lines, string.format('  "linkX": %d,', s.linkX))
     table.insert(lines, string.format('  "linkY": %d,', s.linkY))
@@ -186,7 +236,11 @@ local function toJSON(s)
     table.insert(lines, string.format('  "health": %d,', s.health))
     table.insert(lines, string.format('  "maxHealth": %d,', s.maxHealth))
     table.insert(lines, string.format('  "menuState": %d,', s.menuState))
-    table.insert(lines, string.format('  "menuCursor": %d', s.menuCursor))
+    table.insert(lines, string.format('  "menuCursor": %d,', s.menuCursor))
+    table.insert(lines, string.format('  "savestateStatus": "%s",', s.savestateStatus))
+    table.insert(lines, string.format('  "savestatePending": %s,', s.savestatePending and "true" or "false"))
+    table.insert(lines, string.format('  "savestateError": "%s",', s.savestateError or ""))
+    table.insert(lines, string.format('  "savestatePath": "%s"', s.savestatePath or ""))
     table.insert(lines, "}")
     return table.concat(lines, "\n")
 end
@@ -221,6 +275,7 @@ local function checkCommands()
     -- Pipe format: "id|CMD|arg1|arg2"
     local parts = {}
     local response = ""
+    local responseOk = true
     local responseMode = "legacy"
     local reqId = nil
 
@@ -316,24 +371,26 @@ local function checkCommands()
         end
         emu.takeScreenshot(path)
         response = "SCREENSHOT:" .. path
-    elseif cmd == "SAVESTATE" then
-        -- Save state to slot (1-10)
-        local slot = parseAddr(responseMode == "pipe" and parts[3] or parts[2]) or 1
-        if slot >= 1 and slot <= 10 then
-            emu.saveSavestate(slot)
-            response = string.format("SAVESTATE:slot=%d,saved", slot)
-        else
-            response = "SAVESTATE:error=invalid_slot"
-        end
     elseif cmd == "LOADSTATE" then
-        -- Load state from slot (1-10)
-        local slot = parseAddr(responseMode == "pipe" and parts[3] or parts[2]) or 1
-        if slot >= 1 and slot <= 10 then
-            emu.loadSavestate(slot)
-            response = string.format("LOADSTATE:slot=%d,loaded", slot)
+        local path = responseMode == "pipe" and parts[3] or parts[2]
+        if path then
+            path = path:gsub("^%s+", ""):gsub("%s+$", "")
+            if queueSavestateLoad(path) then
+                response = "LOADSTATE:queued:" .. path
+            else
+                responseOk = false
+                response = "LOADSTATE:error=queue_failed"
+            end
         else
-            response = "LOADSTATE:error=invalid_slot"
+            responseOk = false
+            response = "LOADSTATE:error=missing_path"
         end
+    elseif cmd == "SAVESTATE" then
+        responseOk = false
+        response = "SAVESTATE:error=unsupported"
+    else
+        responseOk = false
+        response = "ERR:unknown_command"
     end
 
     -- Write response
@@ -341,7 +398,7 @@ local function checkCommands()
         local rf = io.open(RESPONSE_FILE, "w")
         if rf then
             if responseMode == "pipe" and reqId ~= nil then
-                rf:write(string.format("%s|OK|%s", reqId, response))
+                rf:write(string.format("%s|%s|%s", reqId, responseOk and "OK" or "ERR", response))
             else
                 rf:write(response)
             end
@@ -354,6 +411,12 @@ local function checkCommands()
     if cf then
         cf:write("")
         cf:close()
+    end
+end
+
+local function savestateExecCallback()
+    if savestatePending then
+        loadSavestateNow()
     end
 end
 
@@ -374,9 +437,12 @@ end
 
 -- Initialize
 ensureDir()
+pcall(function()
+    emu.addMemoryCallback(savestateExecCallback, emu.callbackType.exec, SAVESTATE_EXEC_HOOK)
+end)
 emu.addEventCallback(Main, emu.eventType.endFrame)
 emu.displayMessage("Bridge", "Live bridge active: " .. BRIDGE_DIR)
 print("Live bridge started. State file: " .. STATE_FILE)
 print("Send commands to: " .. CMD_FILE)
-print("Commands: PING, STATE, READ, READ16, READBLOCK, WRITE, WRITE16, LRSWAP, INPUT, RELEASE")
+print("Commands: PING, STATE, READ, READ16, READBLOCK, WRITE, WRITE16, LRSWAP, INPUT, RELEASE, LOADSTATE")
 print("Input examples: INPUT|A|5, INPUT|UP+A|10, INPUT|START|1")

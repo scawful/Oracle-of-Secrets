@@ -1,7 +1,7 @@
 # Tool Integration Strategy
 
 **Date:** 2026-01-21
-**Status:** Proposal
+**Status:** Implemented
 
 ## Current State
 
@@ -15,12 +15,22 @@
 | **Triforce Models** | Specialized 65816 experts | LM Studio / Ollama |
 | **z3ed** | AI-driven ROM hacking CLI | gRPC to yaze |
 
-### What's Missing
+### What Was Missing (Now Implemented)
 
-1. **No test result routing** - Test failures don't reach experts
-2. **No visual capture** - Can't do regression testing
-3. **No unified test format** - Save states + metadata are separate
-4. **Bridges don't communicate** - yaze_bridge and mesen_live_bridge are isolated
+1. ~~**No test result routing**~~ → `test_runner.py` routes failures to experts
+2. ~~**No visual capture**~~ → `visual_diff.py` + screenshot command
+3. ~~**No unified test format**~~ → JSON test definitions in `tests/`
+4. ~~**Bridges don't communicate**~~ → `yaze_sync.py` daemon
+
+### Implemented Tools
+
+| Script | Purpose | Usage |
+|--------|---------|-------|
+| `export_symbols.py` | WLA→MLB symbol conversion | `./scripts/export_symbols.py --sync` |
+| `visual_diff.py` | Screenshot comparison | `./scripts/visual_diff.py compare a.png b.png` |
+| `yaze_sync.py` | Bidirectional yaze↔Mesen2 sync | `./scripts/yaze_sync.py --status` |
+| `ai_patch.py` | AI-suggested ASM patches | `./scripts/ai_patch.py interactive` |
+| `test_runner.py` | Automated test execution | `./scripts/test_runner.py tests/*.json` |
 
 ---
 
@@ -224,17 +234,17 @@ z3ed --rom oos168x.sfc --prompt "Fix water collision in room 0x27"
 
 ---
 
-## Implementation Priority
+## Implementation Status
 
-| Priority | Item | Effort | Impact |
+| Priority | Item | Status | Script |
 |----------|------|--------|--------|
-| **P0** | Screenshot command | 30min | Enables visual testing |
-| **P0** | Unified test format | 1hr | Declarative testing |
-| **P1** | Test runner script | 2hr | Automated execution |
-| **P1** | Symbol export | 30min | Better debugging |
-| **P2** | Visual regression | 4hr | Catch visual bugs |
-| **P2** | Bidirectional sync | 4hr | Smoother workflow |
-| **P3** | z3ed patching loop | 8hr | AI-in-the-loop fixes |
+| **P0** | Screenshot command | ✅ Done | `mesen_cli.sh screenshot` |
+| **P0** | Unified test format | ✅ Done | `tests/*.json` |
+| **P1** | Test runner script | ✅ Done | `test_runner.py` |
+| **P1** | Symbol export | ✅ Done | `export_symbols.py` |
+| **P2** | Visual regression | ✅ Done | `visual_diff.py` |
+| **P2** | Bidirectional sync | ✅ Done | `yaze_sync.py` |
+| **P3** | z3ed patching loop | ✅ Done | `ai_patch.py` |
 
 ---
 

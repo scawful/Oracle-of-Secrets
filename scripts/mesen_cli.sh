@@ -27,8 +27,8 @@ Commands:
   press <buttons> [frames]  Inject button press (default: 5 frames)
   release         Stop any injected input
   screenshot [path]  Take screenshot (default: bridge/screenshot_<time>.png)
-  savestate <slot>   Save state to slot (1-10)
-  loadstate <slot>   Load state from slot (1-10)
+  loadstate <path>   Queue savestate load from .mss path
+  wait-load [secs]   Wait for savestate load to complete (default: 10)
   ping            Test bridge connection
   lrswap          Check L/R swap test readiness
   watch <addr>    Watch address for changes
@@ -43,6 +43,7 @@ Examples:
   mesen_cli.sh press A             # Press A for 5 frames
   mesen_cli.sh press START 1       # Press Start for 1 frame
   mesen_cli.sh press UP+A 10       # Press Up+A for 10 frames
+  mesen_cli.sh loadstate ~/Documents/Mesen2/SaveStates/oos168x_1.mss
   mesen_cli.sh poll 0.5
 EOF
 }
