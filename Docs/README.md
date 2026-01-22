@@ -15,12 +15,14 @@ Welcome to the documentation for Oracle of Secrets. This directory is organized 
     -   `./World/Overworld/`: Documentation for the overworld engine, including `ZSCustomOverworld` and the time system.
     -   `./World/Dungeons/`: Details on dungeon mechanics and custom features.
 -   `./Sprites/`: Analysis of all sprite types, including bosses, NPCs, and interactive objects.
+-   `./Tooling/`: Debugging, automation, and emulator integration workflows.
 -   `./Guides/`: Step-by-step guides and tutorials, such as the sprite creation guide and the main quest flowchart.
 
 ## Key Documents
 
 -   **`General/DevelopmentGuidelines.md`**: The primary guide for coding standards, architecture, and best practices. Start here to understand the project's philosophy.
 -   **`Core/MemoryMap.md`**: A comprehensive map of custom WRAM and SRAM variables.
+-   **`Tooling/AgentWorkflow.md`**: End-to-end workflow for Mesen2/YAZE/z3ed debugging and editing (includes expert-chain multi-step analysis).
 -   **`Guides/QuestFlow.md`**: A detailed walkthrough of the main story and side-quest progression.
 -   **`Guides/SpriteCreationGuide.md`**: A tutorial for creating new custom sprites.
 -   **`World/Overworld/ZSCustomOverworld.md`**: A deep dive into the data-driven overworld engine that powers the game world.

@@ -93,6 +93,7 @@ incsrc "Overworld/ZSCustomOverworld.asm"
 | $7EF000-$7EFFFF | SRAM (saved data) |
 | $7EF3C5-$7EF3D6 | Oracle progression flags |
 | $7EF410 | Dreams bitfield |
+| $7EF411 | WaterGateStates bitfield |
 
 ### 3.3 Key SRAM Variables
 
@@ -123,6 +124,10 @@ incsrc "Overworld/ZSCustomOverworld.asm"
 ; Dreams ($7EF410) - Dream sequence tracking
 ; .dts fwpb
 ;   (Individual dream completion flags)
+
+; WaterGateStates ($7EF411) - Zora Temple water gate persistence
+;   bit 0 = room 0x27
+;   bit 1 = room 0x25
 ```
 
 ---

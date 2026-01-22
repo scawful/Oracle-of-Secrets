@@ -680,7 +680,7 @@ Oracle_BossHealth = $7E0732       ; 2 bytes - Boss HP (16-bit)
 #### Repurposed Blocks
 Oracle of Secrets repurposes vanilla SRAM:
 - `$7EF38A-$7EF3C4`: Collectibles (59 bytes)
-- `$7EF410-$7EF41F`: Dreams system (16 bytes)
+- `$7EF410-$7EF41F`: Dreams + WaterGateStates (16 bytes)
 
 ##### Issue: Vanilla Code Still Writes
 Some vanilla functions may write to repurposed SRAM. Example:

@@ -1,8 +1,17 @@
 # Water Collision System - Handoff Document
 
-## Status: Partially Working, Needs Debugging
+## Status: PARTIAL FIX - Horizontal Swimming Works
 
-The water gate visual animation works correctly. The collision write hook is being called and executes without crashing. However, Link still cannot swim properly in all areas - collision values aren't being applied correctly to all tiles.
+**2026-01-21 Testing Session:**
+- Shifted collision data down 3 tiles (+20px Y offset compensation) - **WORKING**
+- Room load hook disabled due to dungeon crashes - **WORKAROUND**
+- Horizontal water strip allows swimming - **WORKING**
+- Full water mask shape NOT covered - **NEEDS WORK**
+
+### Current Build
+- **Source ROM:** `oos168.sfc` (MD5: `2eb02125e1f72e773aaf04e048c2d097`)
+- **Patched ROM:** `oos168x.sfc` (MD5: `6211297eeabb2f4b99040ba8cf2cce5a`)
+- **Git Commit:** `32a9a3d` with uncommitted changes to `dungeons.asm`
 
 ---
 
@@ -179,3 +188,139 @@ Need to find where the game reads COLMAPA to determine Link's terrain type. This
 
 - `oos168_test2.sfc` - Clean ROM (ZScream OW v3) - use for analysis
 - `oos91x.sfc` - Patched ROM with custom assembly
+
+---
+
+## Root Cause Analysis (2026-01-21)
+
+### Discovery
+
+The vanilla collision lookup routine (`TileDetect_MainHandler` at `$07D077`) adds **direction-based pixel offsets** to Link's position before checking tiles:
+
+```asm
+; From bank_07.asm disassembly
+.calculate_offset
+  LDA.b $22              ; Link's X
+  CLC
+  ADC.w .offset_x,Y      ; ADD OFFSET (+8 to +15 pixels)
+  ...
+  LDA.b $20              ; Link's Y
+  CLC
+  ADC.w .offset_y,Y      ; ADD OFFSET (+20 to +23 pixels)
+```
+
+For deep water checks (Y input = 5), the offsets are:
+| Direction | Y Offset | X Offset |
+|-----------|----------|----------|
+| Up        | +20 px   | +8 px    |
+| Down      | +20 px   | +8 px    |
+| Left      | +23 px   | +0 px    |
+| Right     | +23 px   | +15 px   |
+
+### The Problem
+
+**+20 pixels = ~2.5 tiles offset.** When Link is visually standing at tile Y=39, the game checks collision at tile Y=41-42. The original collision data at Y=38-40 was being checked when Link was at Y=35-38 - ABOVE the visual water.
+
+### The Fix
+
+Shifted all collision offsets down by 3 tiles in `water_collision.asm`:
+
+| Old Row | New Row | Purpose |
+|---------|---------|---------|
+| Y=12    | Y=15    | Vertical channel |
+| Y=28    | Y=31    | Vertical channel |
+| Y=38    | Y=41    | Main water area |
+| Y=39    | Y=42    | Main water area |
+| Y=40    | Y=43    | Main water area |
+
+### Verification Needed
+
+1. Build patched ROM with new offsets
+2. Test in Room 0x27:
+   - Walk into water from all directions
+   - Verify swim state triggers at visual water boundary
+   - Test persistence on room re-entry
+3. Update `mesen_water_debug.lua` to show BOTH raw tile and offset-adjusted tile
+
+---
+
+## Room Load Hook Issue (2026-01-21)
+
+### Problem
+The `Underworld_LoadRoom_ExitHook` at `$0188DF` caused **dungeon exit/re-entry crashes**.
+
+### Root Cause
+The hook relies on the Z flag from the instruction BEFORE the `JML`:
+```asm
+; At $0188DF - original code
+BNE $0188C9     ; Branch if more torches (Z flag dependent)
+SEP #$30
+RTL
+
+; Our hook replacement
+JML Underworld_LoadRoom_ExitHook
+
+; Hook code (water_collision.asm:187-197)
+Underworld_LoadRoom_ExitHook:
+{
+  BNE .draw_next_torch    ; Z flag unreliable after JML!
+  SEP #$30
+  JSL WaterGate_CheckRoomEntry
+  RTL
+  .draw_next_torch
+  JML $0188C9
+}
+```
+
+### Workaround Applied
+Commented out the hook in `Dungeons/dungeons.asm:169-173`:
+```asm
+; DISABLED FOR TESTING - suspected cause of dungeon crashes
+; org $0188DF
+; JML Underworld_LoadRoom_ExitHook
+; NOP #1
+```
+
+### Effect
+- **FIXED:** Dungeon exit/re-entry no longer crashes
+- **BROKEN:** Water collision does NOT persist on room re-entry
+- Players must re-trigger the floor switch each time they enter Room 0x27
+
+### Proper Fix Needed
+1. Save processor state (PHP) at hook entry
+2. Restore state (PLP) before branch decision
+3. Or: Check a memory flag instead of relying on CPU flags
+
+---
+
+## Known Menu Bugs (Separate Issue)
+
+During testing, the following menu graphics issues were observed:
+
+| Issue | Description |
+|-------|-------------|
+| Fishing Rod GFX | Missing from menu |
+| Ring Box | Icons offset, frame corrupted |
+| Magic Bag | Graphics messed up |
+| Ocarina Song Frame | Frame corrupted, icons OK |
+
+**These may predate the water collision work.** Relevant commits:
+- `740571c` (Dec 8, 2025) - submenu upgrades
+- `f508f9a` (Dec 8, 2025) - menu scroll fixes
+
+**Files to investigate:**
+- `Menu/menu_draw.asm` - Drawing functions
+- `Menu/menu_gfx_table.asm` - Item graphics data
+- `Menu/tilemaps/*.tilemap` - Binary tilemap data
+
+---
+
+## Debug Scripts Created
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/debug_transitions.lua` | Module/room tracking, stuck detection |
+| `scripts/debug_crash_detector.lua` | Hook monitoring, invalid state detection |
+| `scripts/debug_overworld.lua` | Overworld transitions, edge detection |
+
+Load in Mesen2 via: **Tools → Run Script**
