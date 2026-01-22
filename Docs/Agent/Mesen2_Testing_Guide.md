@@ -134,10 +134,42 @@ Else (0x00 or 0x01):
 | `readblock ADDR LEN` | Read block of bytes (hex) | `./mesen_cli.sh readblock 0x7E0000 16` |
 | `write ADDR VAL` | Write 8-bit value | `./mesen_cli.sh write 0x7EF342 0x02` |
 | `write16 ADDR VAL` | Write 16-bit value | `./mesen_cli.sh write16 0x7E0022 0x100` |
+| `press BTN [F]` | Inject button press (F frames) | `./mesen_cli.sh press A 5` |
+| `release` | Stop injected input | `./mesen_cli.sh release` |
 | `watch ADDR` | Watch for changes | `./mesen_cli.sh watch 0x7E0739` |
 | `wait-ready` | Wait for L/R swap ready | `./mesen_cli.sh wait-ready` |
 | `lrswap` | L/R swap test status | `./mesen_cli.sh lrswap` |
+| `watergate` | Water collision check | `./mesen_cli.sh watergate` |
 | `ping` | Test bridge connection | `./mesen_cli.sh ping` |
+
+## Input Injection
+
+The bridge supports automated button presses via the `press` command:
+
+```bash
+# Single button press (default 5 frames ≈ 83ms)
+./scripts/mesen_cli.sh press A
+
+# Button press with custom frame count
+./scripts/mesen_cli.sh press START 1      # Quick tap
+./scripts/mesen_cli.sh press A 30         # Half second hold
+
+# Combined buttons
+./scripts/mesen_cli.sh press UP+A 10      # Press Up and A together
+./scripts/mesen_cli.sh press L+R+START 5  # Soft reset combo
+```
+
+**Available Buttons:**
+- D-pad: `UP`, `DOWN`, `LEFT`, `RIGHT`
+- Face: `A`, `B`, `X`, `Y`
+- Shoulder: `L`, `R`
+- Control: `START`, `SELECT`
+
+**Timing Notes:**
+- SNES runs at ~60fps, so 1 frame ≈ 16.7ms
+- Default 5 frames is usually enough for single input detection
+- Menu navigation may need 10+ frames between inputs
+- Use `release` to stop any stuck inputs
 
 ## Yabai Integration
 

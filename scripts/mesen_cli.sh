@@ -17,24 +17,30 @@ Usage: mesen_cli.sh <command> [args...]
 
 Commands:
   state           Show current game state (JSON)
+  status          Human-readable game status
   poll [seconds]  Continuously poll state (default: 1s interval)
   read <addr>     Read 8-bit value from address (hex, e.g., 0x7E0010)
   read16 <addr>   Read 16-bit value from address
   readblock <addr> <len>  Read a block of bytes (hex string)
   write <addr> <value>    Write 8-bit value to address
   write16 <addr> <value>  Write 16-bit value to address
+  press <buttons> [frames]  Inject button press (default: 5 frames)
+  release         Stop any injected input
   ping            Test bridge connection
   lrswap          Check L/R swap test readiness
   watch <addr>    Watch address for changes
   wait-ready      Wait until game is ready for L/R swap test
-  status          Human-readable game status
-  watergate       Check water gate collision + SRAM flag in room 0x27
+
+Button Names: A, B, X, Y, L, R, UP, DOWN, LEFT, RIGHT, START, SELECT
+Combine with +: A+B, UP+A, L+R+START
 
 Examples:
   mesen_cli.sh state
   mesen_cli.sh read 0x7E0739
+  mesen_cli.sh press A             # Press A for 5 frames
+  mesen_cli.sh press START 1       # Press Start for 1 frame
+  mesen_cli.sh press UP+A 10       # Press Up+A for 10 frames
   mesen_cli.sh poll 0.5
-  mesen_cli.sh lrswap
 EOF
 }
 
@@ -353,6 +359,24 @@ cmd_write16() {
     send_command "WRITE16" "${addr}" "${value}"
 }
 
+cmd_press() {
+    local buttons="${1:-}"
+    local frames="${2:-5}"
+    if [[ -z "${buttons}" ]]; then
+        echo "Usage: mesen_cli.sh press <buttons> [frames]" >&2
+        echo "Buttons: A, B, X, Y, L, R, UP, DOWN, LEFT, RIGHT, START, SELECT" >&2
+        echo "Combine: A+B, UP+A, L+R+START" >&2
+        return 1
+    fi
+    ensure_bridge || return 1
+    send_command "INPUT" "${buttons}" "${frames}"
+}
+
+cmd_release() {
+    ensure_bridge || return 1
+    send_command "RELEASE"
+}
+
 cmd_watergate() {
     ensure_bridge || return 1
     local state_json
@@ -399,6 +423,8 @@ case "${1:-}" in
     readblock) cmd_readblock "${2:-}" "${3:-}" ;;
     write)    cmd_write "${2:-}" "${3:-}" ;;
     write16)  cmd_write16 "${2:-}" "${3:-}" ;;
+    press)    cmd_press "${2:-}" "${3:-}" ;;
+    release)  cmd_release ;;
     ping)     cmd_ping ;;
     lrswap)   cmd_lrswap ;;
     watch)    cmd_watch "${2:-}" ;;

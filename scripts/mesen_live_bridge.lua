@@ -54,6 +54,74 @@ end
 -- Frame counter (since emu.getState().ppu may not exist)
 local frameCounter = 0
 
+-- Input injection system
+local injectedInput = {
+    f4 = 0,  -- D-pad + Select/Start/B/Y
+    f6 = 0,  -- AXLR
+    frames = 0,  -- How many frames to hold
+    active = false
+}
+
+-- Button name to bit mapping
+local BUTTONS = {
+    -- F4 register (D-pad, Select, Start, B, Y)
+    UP = {reg = "f4", bit = 0x08},
+    DOWN = {reg = "f4", bit = 0x04},
+    LEFT = {reg = "f4", bit = 0x02},
+    RIGHT = {reg = "f4", bit = 0x01},
+    SELECT = {reg = "f4", bit = 0x20},
+    START = {reg = "f4", bit = 0x10},
+    B = {reg = "f4", bit = 0x80},
+    Y = {reg = "f4", bit = 0x40},
+    -- F6 register (AXLR)
+    A = {reg = "f6", bit = 0x80},
+    X = {reg = "f6", bit = 0x40},
+    L = {reg = "f6", bit = 0x20},
+    R = {reg = "f6", bit = 0x10},
+}
+
+-- Parse button string (e.g., "A", "A+B", "UP+A")
+local function parseButtons(btnStr)
+    local f4, f6 = 0, 0
+    for btn in btnStr:upper():gmatch("[^+]+") do
+        btn = btn:gsub("^%s+", ""):gsub("%s+$", "")
+        local mapping = BUTTONS[btn]
+        if mapping then
+            if mapping.reg == "f4" then
+                f4 = f4 | mapping.bit
+            else
+                f6 = f6 | mapping.bit
+            end
+        end
+    end
+    return f4, f6
+end
+
+-- Apply injected input (called each frame)
+local function applyInjectedInput()
+    if not injectedInput.active then return end
+
+    if injectedInput.frames > 0 then
+        -- Write to input registers
+        if injectedInput.f4 ~= 0 then
+            local current = read8(0x7E00F4)
+            write8(0x7E00F4, current | injectedInput.f4)
+        end
+        if injectedInput.f6 ~= 0 then
+            local current = read8(0x7E00F6)
+            write8(0x7E00F6, current | injectedInput.f6)
+            -- Also set held register for continuous buttons
+            local held = read8(0x7E00F2)
+            write8(0x7E00F2, held | injectedInput.f6)
+        end
+        injectedInput.frames = injectedInput.frames - 1
+    else
+        injectedInput.active = false
+        injectedInput.f4 = 0
+        injectedInput.f6 = 0
+    end
+end
+
 -- Get comprehensive game state
 local function getState()
     local s = {}
@@ -216,6 +284,30 @@ local function checkCommands()
         local active = s.goldstarOrHookshot == 2 and "Goldstar" or "Hookshot"
         response = string.format("LRSWAP:ready=%s,active=%s,slot=%d,sram=%d",
             ready and "true" or "false", active, s.equippedSlot, s.hookshotSRAM)
+    elseif cmd == "INPUT" or cmd == "PRESS" then
+        -- Inject button press: INPUT|buttons|frames
+        -- Example: INPUT|A|5 (press A for 5 frames)
+        -- Example: INPUT|UP+A|10 (press Up+A for 10 frames)
+        local buttons = responseMode == "pipe" and parts[3] or parts[2]
+        local frames = parseAddr(responseMode == "pipe" and parts[4] or parts[3]) or 5
+        if buttons then
+            local f4, f6 = parseButtons(buttons)
+            injectedInput.f4 = f4
+            injectedInput.f6 = f6
+            injectedInput.frames = frames
+            injectedInput.active = true
+            response = string.format("INPUT:buttons=%s,f4=0x%02X,f6=0x%02X,frames=%d",
+                buttons, f4, f6, frames)
+        else
+            response = "INPUT:error=no_buttons_specified"
+        end
+    elseif cmd == "RELEASE" then
+        -- Stop any injected input
+        injectedInput.active = false
+        injectedInput.f4 = 0
+        injectedInput.f6 = 0
+        injectedInput.frames = 0
+        response = "RELEASE:ok"
     end
 
     -- Write response
@@ -242,6 +334,9 @@ end
 function Main()
     frameCounter = frameCounter + 1
 
+    -- Apply any injected input BEFORE game processes input
+    applyInjectedInput()
+
     -- Write state every 10 frames (~6 times per second at 60fps)
     if frameCounter % 10 == 0 then
         writeState()
@@ -257,4 +352,5 @@ emu.addEventCallback(Main, emu.eventType.endFrame)
 emu.displayMessage("Bridge", "Live bridge active: " .. BRIDGE_DIR)
 print("Live bridge started. State file: " .. STATE_FILE)
 print("Send commands to: " .. CMD_FILE)
-print("Commands: PING, STATE, READ:addr, READ16:addr, READBLOCK:addr:len, WRITE:addr:val, WRITE16:addr:val, LRSWAP")
+print("Commands: PING, STATE, READ, READ16, READBLOCK, WRITE, WRITE16, LRSWAP, INPUT, RELEASE")
+print("Input examples: INPUT|A|5, INPUT|UP+A|10, INPUT|START|1")
