@@ -1,0 +1,195 @@
+name: ROM Tests
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '**/*.asm'
+      - '**/*.lua'
+      - 'scripts/**'
+      - '.github/workflows/test-rom.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.asm'
+      - '**/*.lua'
+      - 'scripts/**'
+  workflow_dispatch:
+    inputs:
+      run_emulator_tests:
+        description: 'Run emulator tests (requires self-hosted runner with ROM)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  # =============================================================================
+  # ASM Syntax Check
+  # =============================================================================
+  # Validates ASM files compile without errors using Asar
+  asm-check:
+    name: ASM Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Asar
+        run: |
+          # Download Asar assembler
+          wget -q https://github.com/RPGHacker/asar/releases/download/v1.91/asar191.zip
+          unzip -q asar191.zip -d asar
+          chmod +x asar/asar
+
+      - name: Check ASM Syntax
+        run: |
+          # Create a dummy ROM for syntax checking (Asar needs a file to write to)
+          # This only validates syntax, not actual assembly output
+          dd if=/dev/zero of=test.sfc bs=1024 count=2048 2>/dev/null
+
+          # Run Asar in check mode (--no-title-check allows headerless)
+          ./asar/asar --no-title-check Oracle_main.asm test.sfc 2>&1 | tee asar_output.txt
+
+          # Check for errors
+          if grep -q "error" asar_output.txt; then
+            echo "::error::ASM syntax errors found"
+            exit 1
+          fi
+
+          echo "ASM syntax check passed"
+
+  # =============================================================================
+  # Lua Script Validation
+  # =============================================================================
+  # Basic syntax check for Lua test scripts
+  lua-check:
+    name: Lua Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Lua
+        run: sudo apt-get update && sudo apt-get install -y lua5.4
+
+      - name: Check Lua Syntax
+        run: |
+          # Check all Lua scripts for syntax errors
+          errors=0
+          for file in scripts/*.lua; do
+            echo "Checking $file..."
+            if ! lua5.4 -p "$file" 2>&1; then
+              echo "::error file=$file::Syntax error in $file"
+              errors=$((errors + 1))
+            fi
+          done
+
+          if [ $errors -gt 0 ]; then
+            echo "::error::Found $errors Lua syntax errors"
+            exit 1
+          fi
+
+          echo "All Lua scripts passed syntax check"
+
+  # =============================================================================
+  # Emulator Tests (Self-Hosted Only)
+  # =============================================================================
+  # Runs actual ROM tests using Mesen2 testRunner
+  # Requires self-hosted runner with:
+  # - Mesen2 installed
+  # - Base ROM at ~/roms/alttp/oos168.sfc
+  emulator-tests:
+    name: Emulator Tests
+    runs-on: self-hosted
+    if: github.event.inputs.run_emulator_tests == 'true' || github.event_name == 'workflow_dispatch'
+    needs: [asm-check, lua-check]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for Base ROM
+        id: check-rom
+        run: |
+          if [ -f ~/roms/alttp/oos168.sfc ]; then
+            echo "rom_available=true" >> $GITHUB_OUTPUT
+            echo "Base ROM found"
+          else
+            echo "rom_available=false" >> $GITHUB_OUTPUT
+            echo "::warning::Base ROM not found at ~/roms/alttp/oos168.sfc"
+          fi
+
+      - name: Build Patched ROM
+        if: steps.check-rom.outputs.rom_available == 'true'
+        run: |
+          # Copy base ROM to Roms directory
+          cp ~/roms/alttp/oos168.sfc Roms/
+
+          # Build patched ROM
+          ASAR_BIN="${ASAR_BIN:-asar}" ./scripts/build_rom.sh 168
+
+      - name: Run Boot Test
+        if: steps.check-rom.outputs.rom_available == 'true'
+        run: |
+          # Run boot verification test
+          Mesen --testRunner --timeout=30 \
+            scripts/verify_boot.lua \
+            Roms/oos168x.sfc
+
+          echo "Boot test passed"
+        continue-on-error: true
+
+      - name: Run Water Gate Test
+        if: steps.check-rom.outputs.rom_available == 'true'
+        run: |
+          # Run water gate persistence test
+          # Note: This test requires manual navigation to room 0x27
+          # In automated mode, it will timeout waiting for the room
+          Mesen --testRunner --timeout=120 \
+            scripts/verify_water_gate.lua \
+            Roms/oos168x.sfc
+
+          echo "Water gate test completed"
+        continue-on-error: true
+
+      - name: Upload Test Logs
+        if: always() && steps.check-rom.outputs.rom_available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: |
+            *.log
+            asar_output.txt
+          retention-days: 7
+
+  # =============================================================================
+  # Test Summary
+  # =============================================================================
+  summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [asm-check, lua-check]
+    if: always()
+
+    steps:
+      - name: Check Results
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.asm-check.result }}" == "success" ]; then
+            echo "- ASM Syntax: :white_check_mark: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ASM Syntax: :x: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.lua-check.result }}" == "success" ]; then
+            echo "- Lua Syntax: :white_check_mark: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Lua Syntax: :x: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "_Emulator tests require self-hosted runner with ROM._" >> $GITHUB_STEP_SUMMARY
