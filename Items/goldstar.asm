@@ -1006,11 +1006,13 @@ CheckForSwitchToGoldstar:
   .do_swap
   ; Must have both hookshot upgrades ($7EF342 == $02)
   LDA.l $7EF342 : CMP.b #$02 : BNE .continue
-    LDA.w GoldstarOrHookshot : CMP.b #$01 : BEQ .set_hookshot
-      LDA.b #$01 : STA.w GoldstarOrHookshot
+    ; Toggle: if goldstar ($02), switch to hookshot ($01)
+    ;         if hookshot or unset ($01/$00), switch to goldstar ($02)
+    LDA.w GoldstarOrHookshot : CMP.b #$02 : BEQ .set_hookshot
+      LDA.b #$02 : STA.w GoldstarOrHookshot  ; Set to goldstar
       JMP .continue
     .set_hookshot:
-    LDA.b #$02 : STA.w GoldstarOrHookshot
+      LDA.b #$01 : STA.w GoldstarOrHookshot  ; Set to hookshot
   .continue:
   LDA.b $3A : AND.b #$40 ; Restore vanilla code
   RTL

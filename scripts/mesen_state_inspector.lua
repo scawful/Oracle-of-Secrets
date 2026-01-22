@@ -14,6 +14,20 @@ local function readSRAM(offset)
     return read8(0x7EF300 + offset)
 end
 
+local function band(a, b)
+    local res = 0
+    local bit = 1
+    while a > 0 and b > 0 do
+        if (a % 2 == 1) and (b % 2 == 1) then
+            res = res + bit
+        end
+        a = math.floor(a / 2)
+        b = math.floor(b / 2)
+        bit = bit * 2
+    end
+    return res
+end
+
 -- Item names for display
 local ITEM_NAMES = {
     [0x40] = "Bow",
@@ -202,7 +216,7 @@ local function displayOverlay()
     emu.drawString(x, y, string.format("Dungeons: $%02X", state.dungeonScrolls), 0xFFFFFF)
 end
 
--- Print state to console on demand (F5)
+-- Print state to console on demand (Select+Start+Y)
 local function printState()
     local state = getGameState()
     print("=== SAVE STATE METADATA ===")
@@ -211,11 +225,20 @@ local function printState()
     emu.displayMessage("Inspector", "State printed to console")
 end
 
--- Register callbacks
-emu.addEventCallback(displayOverlay, emu.eventType.endFrame)
+local function checkDumpHotkey()
+    local newKeys = read8(0x7E00F4) -- PressPad1L: BYSTUDLR
+    if band(newKeys, 0x70) == 0x70 then
+        printState()
+    end
+end
 
--- Register F5 hotkey for console dump
-emu.registerMemoryCallback(printState, emu.callbackType.cpuRead, 0x4016)
+local function onFrame()
+    displayOverlay()
+    checkDumpHotkey()
+end
+
+-- Register callbacks
+emu.addEventCallback(onFrame, emu.eventType.endFrame)
 
 emu.displayMessage("Script", "State Inspector Loaded - Overlay active")
-print("State Inspector loaded. Press F5 in-game to dump state to console.")
+print("State Inspector loaded. Press Select+Start+Y to dump state to console.")

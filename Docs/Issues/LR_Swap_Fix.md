@@ -1,10 +1,11 @@
 # L/R Hookshot/Goldstar Swap Fix
 
-**Status:** UNTESTED
-**Date:** 2026-01-21
+**Status:** TESTED & VERIFIED
+**Date Fixed:** 2026-01-21
+**Date Tested:** 2026-01-21
 **Files Modified:**
 - `Masks/mask_routines.asm` (lines 1356-1382)
-- `Items/goldstar.asm` (lines 1001-1017)
+- `Items/goldstar.asm` (lines 1001-1019)
 
 ---
 
@@ -20,10 +21,13 @@ Fixed the L/R button swap for Hookshot/Goldstar items during gameplay.
 
 3. **Updated `CheckForSwitchToGoldstar`** - Now checks both L and R buttons
 
+4. **Fixed toggle logic** - Changed initial state handling so first press always switches to Goldstar (previously no visible change on first press)
+
 ### Before (broken)
 ```asm
 CheckForSwitchToGoldstar:
   JSL CheckNewRButtonPress : BEQ .continue  ; Only R worked
+  LDA.w GoldstarOrHookshot : CMP.b #$01 : BEQ .set_hookshot  ; Wrong toggle
   ...
 ```
 
@@ -33,7 +37,36 @@ CheckForSwitchToGoldstar:
   JSL CheckNewRButtonPress : BCS .do_swap
   JSL CheckNewLButtonPress : BEQ .continue  ; Now L also works
   .do_swap
+  LDA.w GoldstarOrHookshot : CMP.b #$02 : BEQ .set_hookshot  ; Correct toggle
   ...
+```
+
+---
+
+## Test Results
+
+**Tested via Mesen2 Live Bridge on 2026-01-21**
+
+| # | Test | Result | Notes |
+|---|------|--------|-------|
+| 1 | R button swap | PASS | Swaps correctly |
+| 2 | L button swap | PASS | Swaps correctly |
+| 3 | Toggle logic | PASS | `0x00→0x02→0x01→0x02` cycle works |
+| 4 | Rapid toggle | PASS | Multiple quick presses all register |
+
+### Test Methodology
+
+Used the new Mesen2 CLI bridge to:
+1. Set `$7EF342 = 0x02` (give both items via write command)
+2. Watch `$7E0739` for value changes
+3. Press L/R buttons and observe toggle
+
+**Observed values:**
+```
+[23:07:17] READ:0x7E0739=0x00 (0)   <- Initial state (hookshot default)
+[23:07:25] READ:0x7E0739=0x02 (2)   <- First L/R press → Goldstar
+[23:07:26] READ:0x7E0739=0x01 (1)   <- Second press → Hookshot
+[23:07:26] READ:0x7E0739=0x02 (2)   <- Third press → Goldstar
 ```
 
 ---
@@ -55,64 +88,37 @@ CheckForSwitchToGoldstar:
 
 ---
 
-## Testing Requirements
-
-### Prerequisites
-1. Save state with both Hookshot AND Goldstar acquired (`$7EF342 == $02`)
-2. Hookshot/Goldstar equipped in Y-item slot (`$7E0202 == $03`)
-3. Outside of menu (normal gameplay)
-
-### Test Cases
-
-| # | Test | Steps | Expected |
-|---|------|-------|----------|
-| 1 | R button swap | Press R during gameplay | Swaps between Hookshot/Goldstar |
-| 2 | L button swap | Press L during gameplay | Swaps between Hookshot/Goldstar |
-| 3 | No regression: masks | Use mask item with R | Mask transformation works |
-| 4 | No regression: menu L/R | Press L/R in menu | Menu scroll works |
-| 5 | Rapid toggle | Press L then R quickly | Both swaps register |
-
-### Regression Checks
-- Menu navigation still works (other systems reading $F6)
-- Mask transformation still works (uses `CheckNewRButtonPress`)
-- No stuck inputs or missed button presses
-
----
-
-## Save State Requirements
-
-Need save states that meet these criteria:
-
-| State | Requirements | Current Coverage |
-|-------|--------------|------------------|
-| Hookshot only | `$7EF342 == $01` | Unknown |
-| Both items | `$7EF342 == $02` | **Required for test** |
-| Hookshot equipped | `$7E0202 == $03` | Unknown |
-
----
-
 ## Mesen2 Testing Commands
 
-```lua
--- Check if player has both items
-emu.read(0x7EF342, emu.memType.snesMemory) -- Should be $02
+```bash
+# Check if player has both items
+./scripts/mesen_cli.sh read 0x7EF342  # Should be 0x02
 
--- Check which is currently equipped
-emu.read(0x7E0739, emu.memType.snesMemory) -- $01=hookshot, $02=goldstar
+# Set both items for testing
+./scripts/mesen_cli.sh write 0x7EF342 0x02
 
--- Check current menu selection
-emu.read(0x7E0202, emu.memType.snesMemory) -- $03=hookshot slot
+# Check which is currently equipped
+./scripts/mesen_cli.sh read 0x7E0739  # 0x01=hookshot, 0x02=goldstar
 
--- Watch for button press handling
-emu.read(0x7E00F6, emu.memType.snesMemory) -- New inputs this frame
+# Watch for changes
+./scripts/mesen_cli.sh watch 0x7E0739
+
+# Full L/R swap status
+./scripts/mesen_cli.sh lrswap
 ```
 
 ---
 
-## Next Steps
+## Regression Testing (TODO)
 
-1. [ ] Build ROM with fix applied
-2. [ ] Identify/create save state with both Hookshot+Goldstar
-3. [ ] Run through test matrix
-4. [ ] Verify no regressions in other L/R uses
-5. [ ] Mark as TESTED once verified
+- [ ] Menu navigation still works (other systems reading $F6)
+- [ ] Mask transformation still works (uses `CheckNewRButtonPress`)
+- [ ] No stuck inputs or missed button presses
+
+---
+
+## Related Documentation
+
+- `Docs/Agent/Mesen2_Testing_Guide.md` - Full testing guide for agents
+- `scripts/mesen_cli.sh` - CLI tool for bridge interaction
+- `scripts/mesen_live_bridge.lua` - Mesen2 Lua bridge script

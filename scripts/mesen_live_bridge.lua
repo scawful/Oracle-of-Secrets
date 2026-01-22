@@ -20,9 +20,39 @@ local function read16(addr)
     return read8(addr) + (read8(addr + 1) * 256)
 end
 
+local function write8(addr, value)
+    emu.write(addr, value & 0xFF, emu.memType.snesMemory)
+end
+
+local function write16(addr, value)
+    write8(addr, value)
+    write8(addr + 1, math.floor(value / 256))
+end
+
 local function readSRAM(offset)
     return read8(0x7EF300 + offset)
 end
+
+local function parseAddr(value)
+    if value == nil then return nil end
+    if type(value) == "number" then return value end
+    local s = tostring(value):gsub("^%s+", ""):gsub("%s+$", "")
+    if s:sub(1, 2) == "0x" or s:sub(1, 2) == "0X" then
+        return tonumber(s:sub(3), 16)
+    end
+    return tonumber(s)
+end
+
+local function readBlock(addr, length)
+    local bytes = {}
+    for i = 0, length - 1 do
+        bytes[#bytes + 1] = string.format("%02X", read8(addr + i))
+    end
+    return table.concat(bytes)
+end
+
+-- Frame counter (since emu.getState().ppu may not exist)
+local frameCounter = 0
 
 -- Get comprehensive game state
 local function getState()
@@ -30,7 +60,7 @@ local function getState()
 
     -- Timestamp
     s.timestamp = os.time()
-    s.frame = emu.getState().ppu.frameCount
+    s.frame = frameCounter
 
     -- Game mode
     s.mode = read8(0x7E0010)
@@ -97,10 +127,12 @@ end
 local function writeState()
     local state = getState()
     local json = toJSON(state)
-    local f = io.open(STATE_FILE, "w")
+    local tmp = STATE_FILE .. ".tmp"
+    local f = io.open(tmp, "w")
     if f then
         f:write(json)
         f:close()
+        os.rename(tmp, STATE_FILE)
     end
 end
 
@@ -113,29 +145,65 @@ local function checkCommands()
     local content = f:read("*all")
     f:close()
 
+    content = content:gsub("^%s+", ""):gsub("%s+$", "")
     if content == "" then return end
 
-    -- Parse command (format: "CMD:arg1:arg2")
+    -- Parse command
+    -- Legacy format: "CMD:arg1:arg2"
+    -- Pipe format: "id|CMD|arg1|arg2"
     local parts = {}
-    for part in content:gmatch("[^:]+") do
-        table.insert(parts, part)
+    local response = ""
+    local responseMode = "legacy"
+    local reqId = nil
+
+    if content:find("|", 1, true) then
+        for part in content:gmatch("[^|]+") do
+            table.insert(parts, part)
+        end
+        reqId = parts[1]
+        responseMode = "pipe"
+    else
+        for part in content:gmatch("[^:]+") do
+            table.insert(parts, part)
+        end
     end
 
-    local cmd = parts[1]
-    local response = ""
+    local cmd = responseMode == "pipe" and parts[2] or parts[1]
+    cmd = cmd or ""
+    cmd = cmd:upper()
 
-    if cmd == "READ" and parts[2] then
-        -- Read memory address
-        local addr = tonumber(parts[2])
+    if cmd == "READ" and (parts[2] or parts[3]) then
+        local addr = parseAddr(responseMode == "pipe" and parts[3] or parts[2])
         if addr then
             local val = read8(addr)
             response = string.format("READ:0x%06X=0x%02X (%d)", addr, val, val)
         end
-    elseif cmd == "READ16" and parts[2] then
-        local addr = tonumber(parts[2])
+    elseif cmd == "READ16" and (parts[2] or parts[3]) then
+        local addr = parseAddr(responseMode == "pipe" and parts[3] or parts[2])
         if addr then
             local val = read16(addr)
             response = string.format("READ16:0x%06X=0x%04X (%d)", addr, val, val)
+        end
+    elseif cmd == "READBLOCK" and (parts[2] or parts[3]) then
+        local addr = parseAddr(responseMode == "pipe" and parts[3] or parts[2])
+        local len = parseAddr(responseMode == "pipe" and parts[4] or parts[3])
+        if addr and len and len > 0 then
+            local hex = readBlock(addr, len)
+            response = string.format("READBLOCK:0x%06X:%d:%s", addr, len, hex)
+        end
+    elseif cmd == "WRITE" and (parts[2] or parts[3]) then
+        local addr = parseAddr(responseMode == "pipe" and parts[3] or parts[2])
+        local val = parseAddr(responseMode == "pipe" and parts[4] or parts[3])
+        if addr and val then
+            write8(addr, val)
+            response = string.format("WRITE:0x%06X=0x%02X", addr, val % 256)
+        end
+    elseif cmd == "WRITE16" and (parts[2] or parts[3]) then
+        local addr = parseAddr(responseMode == "pipe" and parts[3] or parts[2])
+        local val = parseAddr(responseMode == "pipe" and parts[4] or parts[3])
+        if addr and val then
+            write16(addr, val)
+            response = string.format("WRITE16:0x%06X=0x%04X", addr, val % 65536)
         end
     elseif cmd == "STATE" then
         response = toJSON(getState())
@@ -154,7 +222,11 @@ local function checkCommands()
     if response ~= "" then
         local rf = io.open(RESPONSE_FILE, "w")
         if rf then
-            rf:write(response)
+            if responseMode == "pipe" and reqId ~= nil then
+                rf:write(string.format("%s|OK|%s", reqId, response))
+            else
+                rf:write(response)
+            end
             rf:close()
         end
     end
@@ -167,14 +239,11 @@ local function checkCommands()
     end
 end
 
--- Frame counter for throttling
-local frameCount = 0
-
 function Main()
-    frameCount = frameCount + 1
+    frameCounter = frameCounter + 1
 
     -- Write state every 10 frames (~6 times per second at 60fps)
-    if frameCount % 10 == 0 then
+    if frameCounter % 10 == 0 then
         writeState()
     end
 
@@ -188,4 +257,4 @@ emu.addEventCallback(Main, emu.eventType.endFrame)
 emu.displayMessage("Bridge", "Live bridge active: " .. BRIDGE_DIR)
 print("Live bridge started. State file: " .. STATE_FILE)
 print("Send commands to: " .. CMD_FILE)
-print("Commands: PING, STATE, READ:addr, READ16:addr, LRSWAP")
+print("Commands: PING, STATE, READ:addr, READ16:addr, READBLOCK:addr:len, WRITE:addr:val, WRITE16:addr:val, LRSWAP")
