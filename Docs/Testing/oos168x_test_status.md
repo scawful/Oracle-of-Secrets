@@ -1,0 +1,141 @@
+# OOS168x Testing Status
+
+**Date:** 2026-01-21
+**Tester:** scawful + Claude
+**Build:** oos168x.sfc (patched from oos168.sfc)
+
+---
+
+## ROM Information
+
+| Property | Value |
+|----------|-------|
+| Source ROM | `Roms/oos168.sfc` |
+| Source MD5 | `2eb02125e1f72e773aaf04e048c2d097` |
+| Patched ROM | `Roms/oos168x.sfc` |
+| Patched MD5 | `6211297eeabb2f4b99040ba8cf2cce5a` |
+| Git Commit | `32a9a3d` (Fix water debug overlay position) |
+| Build Script | `./scripts/build_rom.sh 168` |
+| Assembler | Asar (from `third_party/asar-repo/`) |
+
+## Changes from oos168.sfc
+
+### Water Collision System (NEW)
+- **File:** `Dungeons/Collision/water_collision.asm`
+- **Hook 1:** `$01F3D2` - `WaterGate_FillComplete_Hook` (ENABLED)
+  - Triggers when water fill animation completes
+  - Writes collision data to `$7F2000` (COLMAPA) and `$7F3000` (COLMAPB)
+  - Sets SRAM persistence flag at `$7EF411`
+- **Hook 2:** `$0188DF` - `Underworld_LoadRoom_ExitHook` (DISABLED)
+  - Was causing dungeon exit/re-entry crashes
+  - Commented out in `Dungeons/dungeons.asm` lines 169-173
+  - **Effect:** Water collision does NOT persist on room re-entry
+
+### Collision Data (Room 0x27 - Zora Temple Water Gate)
+Y-offsets shifted +3 tiles to account for game's +20px Y check offset:
+- Vertical channel: Y=15 (was Y=12), Y=31 (was Y=28)
+- Horizontal swim area: Y=41-43 (was Y=38-40), X=5-57
+- Total tiles: 174
+
+---
+
+## Test Results
+
+### WORKING ✅
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Dungeon exit/re-entry | ✅ Fixed | Crashes stopped after disabling room load hook |
+| Overworld transitions | ✅ Fixed | Walking between areas works correctly |
+| Water fill animation | ✅ Working | Room 0x27 water fills visually |
+| Partial swim collision | ✅ Working | Horizontal strip in Room 0x27 allows swimming |
+| Dungeon corner graphics | ✅ OK | Was stale save state artifact |
+
+### ISSUES ⚠️
+
+| Issue | Severity | Description |
+|-------|----------|-------------|
+| Incomplete water collision | Medium | Only horizontal strip works; full water mask shape not covered |
+| Water persistence | Medium | Collision resets on room re-entry (hook disabled) |
+| Fishing Rod GFX | Low | Graphics missing in menu |
+| Ring Box GFX | Low | Icons offset, frame messed up |
+| Magic Bag GFX | Low | Graphics messed up |
+| Ocarina Song Frame | Low | Frame corrupted, song icons OK |
+
+### Menu Graphics Issues (Pre-existing?)
+
+These may predate the water collision work. Relevant commits:
+- `740571c` (Dec 8, 2025) - "upgrade submenus with hints, indicators"
+- `f508f9a` (Dec 8, 2025) - "menu scroll fixes"
+
+Files involved:
+- `Menu/menu_draw.asm` - Drawing functions
+- `Menu/menu_gfx_table.asm` - Item graphics data
+- `Menu/tilemaps/*.tilemap` - Tilemap binary data
+
+---
+
+## Debug Infrastructure Created
+
+| Script | Purpose | Location |
+|--------|---------|----------|
+| `debug_transitions.lua` | Module/room change tracking, stuck detection | `scripts/` |
+| `debug_crash_detector.lua` | Hook monitoring, invalid state detection | `scripts/` |
+| `debug_overworld.lua` | Overworld area transitions, edge detection | `scripts/` |
+| `mesen_water_debug.lua` | Water collision overlay (existing) | `scripts/` |
+| `verify_water_gate.lua` | Automated water gate test (existing) | `scripts/` |
+
+---
+
+## Next Steps
+
+### Priority 1: Fix Water Collision Coverage
+- [ ] Map the actual water mask shape in Room 0x27
+- [ ] Add collision data for missing areas (vertical sections, edges)
+- [ ] Test with `mesen_water_debug.lua` to visualize collision values
+
+### Priority 2: Fix Room Load Hook
+- [ ] Rewrite `Underworld_LoadRoom_ExitHook` to preserve flags correctly
+- [ ] The issue: `BNE` relies on Z flag from before `JML` - unreliable
+- [ ] Solution: Save/restore processor state, or use memory check instead of flag
+
+### Priority 3: Investigate Menu Bugs
+- [ ] Determine if pre-existing or new regression
+- [ ] Check tilemap loading in `Menu_Draw*` functions
+- [ ] Verify `SEP`/`REP` state consistency
+
+---
+
+## Reproduction Steps
+
+### Build patched ROM:
+```bash
+cd /Users/scawful/src/hobby/oracle-of-secrets
+./scripts/build_rom.sh 168
+```
+
+### Launch with debugger:
+```bash
+open /Users/scawful/src/third_party/mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen.app \
+  --args /Users/scawful/src/hobby/oracle-of-secrets/Roms/oos168x.sfc
+```
+
+### Load debug script:
+In Mesen2: Tools → Run Script → `scripts/debug_transitions.lua`
+
+---
+
+## Files Modified (Uncommitted)
+
+```
+M Core/sram.asm
+M Dungeons/Collision/water_collision.asm
+M Dungeons/dungeons.asm  (room load hook disabled)
+M Docs/...
+M STATUS.md
+```
+
+## Archive Location
+
+Previous builds archived to:
+`~/Library/Mobile Documents/com~apple~CloudDocs/Documents/OracleOfSecrets/Roms/`
