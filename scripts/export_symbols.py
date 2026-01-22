@@ -62,8 +62,17 @@ def parse_wla_symbols(path: Path) -> Iterator[Symbol]:
             if not line or line.startswith(';'):
                 continue
 
-            # Parse "BB:AAAA :name" format
+            # Parse "BB:AAAA :name" format (with colon before name)
             match = re.match(r'^([0-9A-Fa-f]{2}):([0-9A-Fa-f]{4})\s+:(.+)$', line)
+            if match:
+                bank = int(match.group(1), 16)
+                addr = int(match.group(2), 16)
+                name = match.group(3).strip()
+                yield Symbol(bank, addr, name)
+                continue
+
+            # Parse "BB:AAAA name" format (without colon before name)
+            match = re.match(r'^([0-9A-Fa-f]{2}):([0-9A-Fa-f]{4})\s+([A-Za-z_][A-Za-z0-9_]*)$', line)
             if match:
                 bank = int(match.group(1), 16)
                 addr = int(match.group(2), 16)

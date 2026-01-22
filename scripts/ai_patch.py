@@ -92,7 +92,13 @@ def call_orchestrator(prompt: str, expert: str | None = None) -> str:
             text=True,
             timeout=120
         )
-        return result.stdout + result.stderr
+        output = result.stdout + result.stderr
+
+        # Check for import/config errors
+        if "ImportError" in output or "ModuleNotFoundError" in output:
+            return f"[Orchestrator configuration error - check afs tools setup]\n\nExpert: {expert}\nPrompt that would be sent:\n{prompt}"
+
+        return output
     except subprocess.TimeoutExpired:
         return "[Orchestrator timed out]"
     except Exception as e:
