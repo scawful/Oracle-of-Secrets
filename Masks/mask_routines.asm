@@ -1359,7 +1359,20 @@ CheckNewRButtonPress:
   ; For the AXLR buttons
   ; $1A is a timer which increases every frame the game is not lagging
   LDA $F6 : BIT #$10 : BEQ .fail
-    STZ $F6
+    LDA $F6 : AND #$EF : STA $F6  ; Clear only R bit, not all inputs
+    LDA $1A : AND #$0F : BEQ .fail
+      SEC
+      RTL
+  .fail
+  CLC
+  RTL
+}
+
+CheckNewLButtonPress:
+{
+  ; L button is bit 5 ($20) of $F6
+  LDA $F6 : BIT #$20 : BEQ .fail
+    LDA $F6 : AND #$DF : STA $F6  ; Clear only L bit, not all inputs
     LDA $1A : AND #$0F : BEQ .fail
       SEC
       RTL

@@ -1000,7 +1000,11 @@ ApplyGoldstarDamageClass:
 
 CheckForSwitchToGoldstar:
 {
-  JSL CheckNewRButtonPress : BEQ .continue
+  ; Check for L or R button to swap Hookshot/Goldstar
+  JSL CheckNewRButtonPress : BCS .do_swap
+  JSL CheckNewLButtonPress : BEQ .continue
+  .do_swap
+  ; Must have both hookshot upgrades ($7EF342 == $02)
   LDA.l $7EF342 : CMP.b #$02 : BNE .continue
     LDA.w GoldstarOrHookshot : CMP.b #$01 : BEQ .set_hookshot
       LDA.b #$01 : STA.w GoldstarOrHookshot
