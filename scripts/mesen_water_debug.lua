@@ -1,6 +1,8 @@
 -- Water/Collision Debug Script for Mesen2
 -- Shows Link's position, state, and collision info
 
+local overlayVisible = true
+
 function getCollisionOffset(x, y)
     -- Room-local coordinates (room is 512x512 pixels = 64x64 tiles)
     local localX = x % 512
@@ -11,6 +13,9 @@ function getCollisionOffset(x, y)
 end
 
 function Main()
+    -- Skip drawing if overlay disabled
+    if not overlayVisible then return end
+
     -- Link Position (world coordinates)
     local linkX = emu.read(0x7E0022, emu.memType.snesMemory) + (emu.read(0x7E0023, emu.memType.snesMemory) * 256)
     local linkY = emu.read(0x7E0020, emu.memType.snesMemory) + (emu.read(0x7E0021, emu.memType.snesMemory) * 256)
@@ -33,9 +38,10 @@ function Main()
     local collValue = emu.read(0x7F2000 + collOffset, emu.memType.snesMemory)
     local collValueB = emu.read(0x7F3000 + collOffset, emu.memType.snesMemory)
 
-    -- Display on screen
+    -- Display on screen (right side, outside game area)
+    -- SNES is 256x224, place overlay at x=260 to be outside main view
     local y = 10
-    local x = 10
+    local x = 260
 
     emu.drawRectangle(x-2, y-2, 200, 145, 0x000000, true)
     emu.drawRectangle(x-2, y-2, 200, 145, 0xFFFFFF, false)
