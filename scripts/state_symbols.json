@@ -1,0 +1,239 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "source": "oracle-of-secrets/Core/*.asm",
+    "description": "Pre-extracted symbols for mesen_diff_states MCP tool"
+  },
+  "symbols": {
+    "0x7E0010": {
+      "label": "MODE",
+      "desc": "Main game state/module index",
+      "values": {
+        "0x00": "Title screen",
+        "0x01": "File select",
+        "0x05": "Loading file",
+        "0x07": "Dungeon",
+        "0x09": "Overworld",
+        "0x0B": "Overworld special",
+        "0x0E": "Text/message",
+        "0x10": "Opening",
+        "0x12": "Dungeon attract",
+        "0x14": "File copy/delete",
+        "0x17": "Save and continue",
+        "0x19": "Game over"
+      }
+    },
+    "0x7E0011": {
+      "label": "SUBMODE",
+      "desc": "Sub-state for current mode"
+    },
+    "0x7E001A": {
+      "label": "FRAME",
+      "desc": "Frame counter"
+    },
+    "0x7E001B": {
+      "label": "INDOORS",
+      "desc": "Indoor/outdoor flag",
+      "values": {
+        "0x00": "Outdoors",
+        "0x01": "Indoors"
+      }
+    },
+    "0x7E002F": {
+      "label": "DIR",
+      "desc": "Direction facing",
+      "values": {
+        "0x00": "Up",
+        "0x02": "Down",
+        "0x04": "Left",
+        "0x06": "Right"
+      }
+    },
+    "0x7E005D": {
+      "label": "LINKDO",
+      "desc": "Link's personal state machine ID"
+    },
+    "0x7E008A": {
+      "label": "OWSCR",
+      "desc": "Current overworld screen ID"
+    },
+    "0x7E00A0": {
+      "label": "ROOM",
+      "desc": "Current underworld room ID"
+    },
+    "0x7E02E0": {
+      "label": "BUNNY",
+      "desc": "Bunny form flag",
+      "values": {
+        "0x00": "Normal",
+        "0x01": "Bunny"
+      }
+    },
+    "0x7E031F": {
+      "label": "IFRAMES",
+      "desc": "Invincibility frame timer"
+    },
+    "0x7E0DD0": {
+      "label": "SprState[0]",
+      "desc": "Sprite 0 state",
+      "values": {
+        "0x00": "Dead",
+        "0x01": "Falling pit",
+        "0x02": "Poof death",
+        "0x03": "Falling water",
+        "0x04": "Boss death",
+        "0x05": "Special fall",
+        "0x06": "Normal death",
+        "0x08": "Spawning",
+        "0x09": "Active",
+        "0x0A": "Carried",
+        "0x0B": "Stunned"
+      }
+    },
+    "0x7E0E20": {
+      "label": "SprType[0]",
+      "desc": "Sprite 0 type ID"
+    },
+    "0x7E0E50": {
+      "label": "SprHealth[0]",
+      "desc": "Sprite 0 health"
+    },
+    "0x7E0746": {
+      "label": "DBG_REINIT_FLAGS",
+      "desc": "Debug reinit request bitfield"
+    },
+    "0x7E0747": {
+      "label": "DBG_REINIT_STATUS",
+      "desc": "Debug reinit completed bitfield"
+    },
+    "0x7E0748": {
+      "label": "DBG_REINIT_ERROR",
+      "desc": "Debug reinit error code"
+    },
+    "0x7E0749": {
+      "label": "DBG_REINIT_SEQ",
+      "desc": "Debug reinit sequence"
+    },
+    "0x7E074A": {
+      "label": "DBG_REINIT_LAST",
+      "desc": "Debug reinit last value"
+    },
+    "0x7EF340": {
+      "label": "Bow",
+      "desc": "Bow item slot",
+      "values": {
+        "0x00": "None",
+        "0x01": "Bow",
+        "0x02": "Bow+arrows",
+        "0x03": "Silver bow",
+        "0x04": "Silver bow+arrows"
+      }
+    },
+    "0x7EF359": {
+      "label": "Sword",
+      "desc": "Sword level",
+      "values": {
+        "0x00": "None",
+        "0x01": "Fighter",
+        "0x02": "Master",
+        "0x03": "Tempered",
+        "0x04": "Golden",
+        "0xFF": "At smithy"
+      }
+    },
+    "0x7EF35A": {
+      "label": "Shield",
+      "desc": "Shield level",
+      "values": {
+        "0x00": "None",
+        "0x01": "Fighter",
+        "0x02": "Fire",
+        "0x03": "Mirror"
+      }
+    },
+    "0x7EF35B": {
+      "label": "Armor",
+      "desc": "Mail type",
+      "values": {
+        "0x00": "Green",
+        "0x01": "Blue",
+        "0x02": "Red"
+      }
+    },
+    "0x7EF36C": {
+      "label": "MAXHP",
+      "desc": "Maximum health (8 = 1 heart)"
+    },
+    "0x7EF36D": {
+      "label": "CURHP",
+      "desc": "Current health"
+    },
+    "0x7EF36E": {
+      "label": "MagicPower",
+      "desc": "Magic power (max 128)"
+    },
+    "0x7EF36F": {
+      "label": "KEYS",
+      "desc": "Current dungeon keys"
+    },
+    "0x7EF374": {
+      "label": "Pendants",
+      "desc": "Pendant bitfield (RGB=CWP)"
+    },
+    "0x7EF37A": {
+      "label": "Crystals",
+      "desc": "Crystal bitfield"
+    },
+    "0x7EF3C5": {
+      "label": "GameState",
+      "desc": "Main progression state",
+      "values": {
+        "0x00": "Very start",
+        "0x01": "Uncle reached",
+        "0x02": "Zelda rescued",
+        "0x03": "Agahnim defeated"
+      }
+    },
+    "0x7EF3D6": {
+      "label": "OOSPROG",
+      "desc": "OOS quest milestones bitfield"
+    },
+    "0x7EF410": {
+      "label": "Dreams",
+      "desc": "Dream collection bitfield (CPW)"
+    },
+    "0x7EF411": {
+      "label": "WaterGateStates",
+      "desc": "Water gate persistence flags"
+    }
+  },
+  "regions": {
+    "link": {
+      "desc": "Link's core state variables",
+      "ranges": [
+        {"start": "0x0010", "length": 256, "mem_type": "wram"},
+        {"start": "0x02E0", "length": 64, "mem_type": "wram"}
+      ]
+    },
+    "sprites": {
+      "desc": "Sprite arrays (16 sprites)",
+      "ranges": [
+        {"start": "0x0DD0", "length": 16, "mem_type": "wram", "label": "SprState"},
+        {"start": "0x0E20", "length": 16, "mem_type": "wram", "label": "SprType"},
+        {"start": "0x0E50", "length": 16, "mem_type": "wram", "label": "SprHealth"}
+      ]
+    },
+    "oos_wram": {
+      "desc": "Custom OOS WRAM region",
+      "ranges": [
+        {"start": "0x0730", "length": 32, "mem_type": "wram"}
+      ]
+    },
+    "sram": {
+      "desc": "SRAM progression (mirrored in WRAM)",
+      "ranges": [
+        {"start": "0xF340", "length": 256, "mem_type": "wram"}
+      ]
+    }
+  }
+}

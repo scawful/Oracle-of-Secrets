@@ -1,0 +1,33 @@
+{
+  "name": "baseline Boot Verification",
+  "description": "Verify baseline states load without crash",
+  "saveState": {
+    "id": "baseline_1",
+    "waitSeconds": 3
+  },
+  "steps": [
+    {
+      "type": "wait",
+      "seconds": 1
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "in": [
+        0,
+        7,
+        9
+      ],
+      "description": "Valid game mode"
+    },
+    {
+      "type": "screenshot",
+      "name": "baseline_loaded"
+    }
+  ],
+  "tags": [
+    "baseline",
+    "boot",
+    "smoke-test"
+  ]
+}

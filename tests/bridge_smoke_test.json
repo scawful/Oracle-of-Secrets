@@ -1,0 +1,51 @@
+{
+  "name": "Mesen2 Bridge Smoke",
+  "description": "Sanity check CLI bridge commands (ping/state/read/write). Uses MAP16OVERFLOW scratch RAM.",
+  "version": "1.0",
+  "steps": [
+    {
+      "type": "command",
+      "command": "ping"
+    },
+    {
+      "type": "command",
+      "command": "state"
+    },
+    {
+      "type": "command",
+      "command": "read",
+      "args": ["0x7E0010"]
+    },
+    {
+      "type": "wait_addr",
+      "address": "$7E0010",
+      "in": [7, 9, 14],
+      "timeout": 5,
+      "description": "Wait for a stable gameplay mode"
+    },
+    {
+      "type": "write",
+      "address": "$7E0718",
+      "value": "0x5A",
+      "description": "Write to MAP16OVERFLOW scratch byte"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0718",
+      "equals": "0x5A",
+      "description": "Verify scratch write"
+    },
+    {
+      "type": "command",
+      "command": "readblock",
+      "args": ["0x7E0718", "1"]
+    },
+    {
+      "type": "write",
+      "address": "$7E0718",
+      "value": "0x00",
+      "description": "Clear scratch byte"
+    }
+  ],
+  "tags": ["mesen", "bridge", "smoke", "cli"]
+}

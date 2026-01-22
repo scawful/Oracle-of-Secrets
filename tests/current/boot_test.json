@@ -1,0 +1,33 @@
+{
+  "name": "current Boot Verification",
+  "description": "Verify current states load without crash",
+  "saveState": {
+    "id": "current_1",
+    "waitSeconds": 3
+  },
+  "steps": [
+    {
+      "type": "wait",
+      "seconds": 1
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "in": [
+        0,
+        7,
+        9
+      ],
+      "description": "Valid game mode"
+    },
+    {
+      "type": "screenshot",
+      "name": "current_loaded"
+    }
+  ],
+  "tags": [
+    "current",
+    "boot",
+    "smoke-test"
+  ]
+}
