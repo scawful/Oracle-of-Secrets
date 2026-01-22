@@ -23,6 +23,7 @@ Welcome to the documentation for Oracle of Secrets. This directory is organized 
 -   **`General/DevelopmentGuidelines.md`**: The primary guide for coding standards, architecture, and best practices. Start here to understand the project's philosophy.
 -   **`Core/MemoryMap.md`**: A comprehensive map of custom WRAM and SRAM variables.
 -   **`Tooling/AgentWorkflow.md`**: End-to-end workflow for Mesen2/YAZE/z3ed debugging and editing (includes expert-chain multi-step analysis).
+-   **`Testing/SaveStateLibrary.md`**: How to maintain the save-state library for quick regression checks.
 -   **`Guides/QuestFlow.md`**: A detailed walkthrough of the main story and side-quest progression.
 -   **`Guides/SpriteCreationGuide.md`**: A tutorial for creating new custom sprites.
 -   **`World/Overworld/ZSCustomOverworld.md`**: A deep dive into the data-driven overworld engine that powers the game world.
