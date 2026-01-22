@@ -29,12 +29,13 @@ local COLMAPB_BASE = 0x7F3000
 -- Sample collision offsets from Room 0x27 water area
 -- These are offsets into $7F2000 collision map
 -- Formula: offset = (Y * 64) + X where Y,X are tile coordinates
+-- NOTE: Collision data is shifted down 3 tiles (Y=41-43) to match engine offsets
 local SAMPLE_WATER_OFFSETS = {
-  0x0985,  -- Y=38, X=5 (start of swim area)
-  0x0998,  -- Y=38, X=24 (middle of swim area)
-  0x09B9,  -- Y=38, X=57 (end of swim area)
-  0x09D5,  -- Y=39, X=21 (middle row)
-  0x0A15,  -- Y=40, X=21 (bottom row)
+  0x0A45,  -- Y=41, X=5 (start of swim area)
+  0x0A58,  -- Y=41, X=24 (middle of swim area)
+  0x0A79,  -- Y=41, X=57 (end of swim area)
+  0x0A95,  -- Y=42, X=21 (middle row)
+  0x0AD5,  -- Y=43, X=21 (bottom row)
 }
 
 -- Timing (60 fps)
@@ -224,8 +225,11 @@ end
 
 local function phase_done()
   if state.exit_code == 0 then
+    log("RESULT: PASS")
     emu.displayMessage("Test", "PASS - Water gate verified")
   else
+    local status = state.exit_code == 2 and "TIMEOUT" or "FAIL"
+    log("RESULT: " .. status)
     emu.displayMessage("Test", "FAIL - See log for details")
   end
 
