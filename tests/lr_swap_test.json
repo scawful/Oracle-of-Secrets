@@ -1,0 +1,81 @@
+{
+  "name": "L/R Hookshot Swap",
+  "description": "Verify L/R buttons toggle between hookshot and goldstar",
+  "version": "1.0",
+  "saveState": {
+    "category": "items",
+    "file": "hookshot_both.mss",
+    "slot": 1
+  },
+  "preconditions": [
+    {
+      "address": "0x7EF342",
+      "equals": 2,
+      "description": "Has both hookshot and goldstar items"
+    },
+    {
+      "address": "0x7E0202",
+      "equals": 3,
+      "description": "Hookshot slot (3) equipped"
+    }
+  ],
+  "steps": [
+    {
+      "type": "assert",
+      "address": "0x7E0739",
+      "condition": "in",
+      "values": [0, 1],
+      "description": "Starts as hookshot (0 or 1)"
+    },
+    {
+      "type": "press",
+      "button": "L",
+      "frames": 5
+    },
+    {
+      "type": "wait",
+      "ms": 100
+    },
+    {
+      "type": "assert",
+      "address": "0x7E0739",
+      "equals": 2,
+      "description": "Switched to goldstar"
+    },
+    {
+      "type": "press",
+      "button": "R",
+      "frames": 5
+    },
+    {
+      "type": "wait",
+      "ms": 100
+    },
+    {
+      "type": "assert",
+      "address": "0x7E0739",
+      "equals": 1,
+      "description": "Switched back to hookshot"
+    },
+    {
+      "type": "press",
+      "button": "L",
+      "frames": 5
+    },
+    {
+      "type": "wait",
+      "ms": 100
+    },
+    {
+      "type": "assert",
+      "address": "0x7E0739",
+      "equals": 2,
+      "description": "Toggled to goldstar again"
+    }
+  ],
+  "onFailure": {
+    "expert": "farore",
+    "context": "L/R swap toggle not working. Check HandleLRSwap routine in equipment.asm. The GoldstarOrHookshot variable at $7E0739 should toggle between 1 (hookshot) and 2 (goldstar) when L or R is pressed while hookshot slot is equipped."
+  },
+  "tags": ["lr-swap", "hookshot", "goldstar", "items"]
+}

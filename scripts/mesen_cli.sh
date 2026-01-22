@@ -26,6 +26,9 @@ Commands:
   write16 <addr> <value>  Write 16-bit value to address
   press <buttons> [frames]  Inject button press (default: 5 frames)
   release         Stop any injected input
+  screenshot [path]  Take screenshot (default: bridge/screenshot_<time>.png)
+  savestate <slot>   Save state to slot (1-10)
+  loadstate <slot>   Load state from slot (1-10)
   ping            Test bridge connection
   lrswap          Check L/R swap test readiness
   watch <addr>    Watch address for changes
@@ -377,6 +380,40 @@ cmd_release() {
     send_command "RELEASE"
 }
 
+cmd_screenshot() {
+    local path="${1:-}"
+    ensure_bridge || return 1
+    local result
+    result=$(send_command "SCREENSHOT" "${path}")
+    echo "${result}"
+    # Extract path from response
+    local saved_path
+    saved_path=$(echo "${result}" | sed 's/SCREENSHOT://')
+    if [[ -f "${saved_path}" ]]; then
+        echo "Saved to: ${saved_path}"
+    fi
+}
+
+cmd_savestate() {
+    local slot="${1:-1}"
+    if [[ -z "${slot}" || "${slot}" -lt 1 || "${slot}" -gt 10 ]]; then
+        echo "Usage: mesen_cli.sh savestate <slot 1-10>" >&2
+        return 1
+    fi
+    ensure_bridge || return 1
+    send_command "SAVESTATE" "${slot}"
+}
+
+cmd_loadstate() {
+    local slot="${1:-1}"
+    if [[ -z "${slot}" || "${slot}" -lt 1 || "${slot}" -gt 10 ]]; then
+        echo "Usage: mesen_cli.sh loadstate <slot 1-10>" >&2
+        return 1
+    fi
+    ensure_bridge || return 1
+    send_command "LOADSTATE" "${slot}"
+}
+
 cmd_watergate() {
     ensure_bridge || return 1
     local state_json
@@ -425,6 +462,9 @@ case "${1:-}" in
     write16)  cmd_write16 "${2:-}" "${3:-}" ;;
     press)    cmd_press "${2:-}" "${3:-}" ;;
     release)  cmd_release ;;
+    screenshot) cmd_screenshot "${2:-}" ;;
+    savestate) cmd_savestate "${2:-}" ;;
+    loadstate) cmd_loadstate "${2:-}" ;;
     ping)     cmd_ping ;;
     lrswap)   cmd_lrswap ;;
     watch)    cmd_watch "${2:-}" ;;

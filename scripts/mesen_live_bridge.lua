@@ -308,6 +308,32 @@ local function checkCommands()
         injectedInput.f6 = 0
         injectedInput.frames = 0
         response = "RELEASE:ok"
+    elseif cmd == "SCREENSHOT" then
+        -- Take a screenshot
+        local path = responseMode == "pipe" and parts[3] or parts[2]
+        if not path or path == "" then
+            path = BRIDGE_DIR .. "/screenshot_" .. os.time() .. ".png"
+        end
+        emu.takeScreenshot(path)
+        response = "SCREENSHOT:" .. path
+    elseif cmd == "SAVESTATE" then
+        -- Save state to slot (1-10)
+        local slot = parseAddr(responseMode == "pipe" and parts[3] or parts[2]) or 1
+        if slot >= 1 and slot <= 10 then
+            emu.saveSavestate(slot)
+            response = string.format("SAVESTATE:slot=%d,saved", slot)
+        else
+            response = "SAVESTATE:error=invalid_slot"
+        end
+    elseif cmd == "LOADSTATE" then
+        -- Load state from slot (1-10)
+        local slot = parseAddr(responseMode == "pipe" and parts[3] or parts[2]) or 1
+        if slot >= 1 and slot <= 10 then
+            emu.loadSavestate(slot)
+            response = string.format("LOADSTATE:slot=%d,loaded", slot)
+        else
+            response = "LOADSTATE:error=invalid_slot"
+        end
     end
 
     -- Write response
