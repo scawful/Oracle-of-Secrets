@@ -7,6 +7,13 @@ This library keeps curated save states for fast testing (room jumps, progress mi
 
 ## Common workflows
 
+### Reload runtime caches after loading a state
+
+If a save state was captured on an older ROM build, reload pointers/tables before testing:
+
+- **Hotkey:** `L + R + Select + Start`
+- **Effect:** Rebuilds message pointer table + reloads sprite graphics properties (and overworld sprite list when outdoors)
+
 ### Import a Mesen2 save state into the library
 
 ```bash

@@ -1,12 +1,16 @@
 # Water Collision System - Handoff Document
 
-## Status: PARTIAL FIX - Horizontal Swimming Works
+## Status: HOOK RE-ENABLED - Retest Pending
 
 **2026-01-21 Testing Session:**
 - Shifted collision data down 3 tiles (+20px Y offset compensation) - **WORKING**
 - Room load hook disabled due to dungeon crashes - **WORKAROUND**
 - Horizontal water strip allows swimming - **WORKING**
 - Full water mask shape NOT covered - **NEEDS WORK**
+
+**2026-01-22 Update:**
+- Room load hook re-enabled with explicit torch table check (no stale Z flag reliance)
+- Added runtime reload hotkey for save-state safety (message pointers + sprite graphics properties)
 
 ### Current Build
 - **Source ROM:** `oos168.sfc` (MD5: `2eb02125e1f72e773aaf04e048c2d097`)
@@ -26,6 +30,7 @@
 
 1. **Incomplete collision coverage** - Link gets stuck in parts of the water
 2. **Can swim through floor** - Some floor tiles incorrectly have water collision
+3. **Persistence retest needed** - Room load hook re-enabled but not yet validated
 
 ---
 
@@ -57,11 +62,11 @@ The room has multiple coordinate systems that don't perfectly align:
 
 ### Current Collision Data (174 tiles)
 ```
-Y=12: X=40-47 (vertical channel) - 8 tiles
-Y=28: X=40-46 (vertical channel) - 7 tiles
-Y=38: X=5-57 (horizontal) - 53 tiles
-Y=39: X=5-57 (horizontal) - 53 tiles
-Y=40: X=5-57 (horizontal) - 53 tiles
+Y=15: X=40-47 (vertical channel) - 8 tiles
+Y=31: X=40-46 (vertical channel) - 7 tiles
+Y=41: X=5-57 (horizontal) - 53 tiles
+Y=42: X=5-57 (horizontal) - 53 tiles
+Y=43: X=5-57 (horizontal) - 53 tiles
 ```
 
 ---
@@ -100,6 +105,17 @@ LDA.b [$00] : STA.b $04
 STZ.b $05  ; Clear high byte for 16-bit decrement
 ```
 
+### 4. Room Load Hook Z-Flag Reliance
+**Problem**: Hook replaced `BNE` but relied on a stale Z flag from the prior `CMP`
+```asm
+; FIXED - explicitly re-check the torch table end condition
+REP #$30
+LDX.b $BA
+LDA.l $7EFB40,X
+CMP.w #$FFFF
+BNE .draw_next_torch
+```
+
 ---
 
 ## Debugging Tools
@@ -112,6 +128,11 @@ Displays real-time debug info:
 - COLMAPA and COLMAPB values at Link's position
 - Link state, submodule, action, speed
 - Door flag ($0403) and deep water flag ($0345)
+
+### Runtime Reload Hotkey (Save-State Safety)
+- **Combo:** `L + R + Select + Start`
+- **Effect:** Rebuilds message pointer table + reloads sprite graphics properties (and overworld sprite list when outdoors)
+- **Use:** After loading older save states following ROM rebuilds
 
 ### Key RAM Addresses
 | Address | Description |
@@ -160,6 +181,7 @@ Current formula: `offset = (Y * 64) + X`
    - COLMAPA should show `$08` (deep water)
    - Link should enter swim state
    - Movement should work in all water areas
+6. If using older save states, press **L+R+Select+Start** to reload caches
 
 ---
 

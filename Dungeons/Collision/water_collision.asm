@@ -188,6 +188,10 @@ WaterGate_CheckRoomEntry:
 ; into the draw loop. Otherwise apply persistent water collision.
 Underworld_LoadRoom_ExitHook:
 {
+  REP #$30
+  LDX.b $BA
+  LDA.l $7EFB40,X
+  CMP.w #$FFFF
   BNE .draw_next_torch
 
   SEP #$30

@@ -2,10 +2,10 @@
 
 Stage: Alpha (per PROJECT.toml)
 
-## Current focus (2026-01-21)
-- **Water Collision Fix Applied** - Needs build & testing
-- Build Mesen2 on the new Mac and verify WaterGate persistence (rooms 0x27 / 0x25).
-- Promote clean ROM naming (no `_test` after oos168) and keep legacy saves accessible.
+## Current focus (2026-01-22)
+- **Water Collision Fix Applied** - Hook re-enabled, needs rebuild & testing
+- Verify WaterGate persistence (rooms 0x27 / 0x25) after room re-entry and save/reload
+- Use runtime reload hotkey (L+R+Select+Start) after loading older save states
 
 ## Water Collision Fix (2026-01-21)
 
@@ -41,6 +41,7 @@ Shifted all collision data in `Dungeons/Collision/water_collision.asm` down by 3
 4. Walk into water from all directions
 5. Verify swim state triggers at visual water boundary
 6. Test persistence on room re-entry and save/reload
+7. If using old save states, press L+R+Select+Start to reload caches
 
 ## Mesen2 build + WaterGate verification plan
 ### Claude tasks

@@ -11,7 +11,7 @@ function onTick()
   -- Check Game Mode (Address $7E0010 in ALTTP)
   -- 0x00 = Intro/Nintendo Logo, 0x01 = File Select, 0x02 = Copy, 0x03 = Erase, ...
   -- 0x07 = Dungeon, 0x09 = Overworld
-  local gameMode = emu.read(0x7E0010, emu.memType.cpu)
+  local gameMode = emu.read(0x7E0010, emu.memType.snesMemory)
   
   -- If we reached Intro or File Select, we booted!
   if gameMode > 0 then

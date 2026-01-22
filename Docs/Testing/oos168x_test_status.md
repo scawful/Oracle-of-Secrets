@@ -1,7 +1,7 @@
 # OOS168x Testing Status
 
-**Date:** 2026-01-21
-**Tester:** scawful + Claude
+**Date:** 2026-01-22
+**Tester:** scawful + Codex
 **Build:** oos168x.sfc (patched from oos168.sfc)
 
 ---
@@ -26,10 +26,10 @@
   - Triggers when water fill animation completes
   - Writes collision data to `$7F2000` (COLMAPA) and `$7F3000` (COLMAPB)
   - Sets SRAM persistence flag at `$7EF411`
-- **Hook 2:** `$0188DF` - `Underworld_LoadRoom_ExitHook` (DISABLED)
-  - Was causing dungeon exit/re-entry crashes
-  - Commented out in `Dungeons/dungeons.asm` lines 169-173
-  - **Effect:** Water collision does NOT persist on room re-entry
+- **Hook 2:** `$0188DF` - `Underworld_LoadRoom_ExitHook` (ENABLED in source)
+  - Recomputes torch table end condition (no stale Z flag reliance)
+  - Re-enabled in `Dungeons/dungeons.asm` (needs rebuild + retest)
+  - **Expected Effect:** Water collision should persist on room re-entry
 
 ### Collision Data (Room 0x27 - Zora Temple Water Gate)
 Y-offsets shifted +3 tiles to account for game's +20px Y check offset:
@@ -56,7 +56,7 @@ Y-offsets shifted +3 tiles to account for game's +20px Y check offset:
 | Issue | Severity | Description |
 |-------|----------|-------------|
 | Incomplete water collision | Medium | Only horizontal strip works; full water mask shape not covered |
-| Water persistence | Medium | Collision resets on room re-entry (hook disabled) |
+| Water persistence | Medium | Hook re-enabled in source; needs retest after rebuild |
 | Fishing Rod GFX | Low | Graphics missing in menu |
 | Ring Box GFX | Low | Icons offset, frame messed up |
 | Magic Bag GFX | Low | Graphics messed up |
@@ -85,6 +85,11 @@ Files involved:
 | `mesen_water_debug.lua` | Water collision overlay (existing) | `scripts/` |
 | `verify_water_gate.lua` | Automated water gate test (existing) | `scripts/` |
 
+### Runtime Reload Hotkey (Save-State Safety)
+- **Combo:** `L + R + Select + Start`
+- **Effect:** Rebuilds message pointer table + reloads sprite graphics properties (and overworld sprite list when outdoors)
+- **Use:** After loading older save states following ROM rebuilds
+
 ---
 
 ## Next Steps
@@ -95,9 +100,8 @@ Files involved:
 - [ ] Test with `mesen_water_debug.lua` to visualize collision values
 
 ### Priority 2: Fix Room Load Hook
-- [ ] Rewrite `Underworld_LoadRoom_ExitHook` to preserve flags correctly
-- [ ] The issue: `BNE` relies on Z flag from before `JML` - unreliable
-- [ ] Solution: Save/restore processor state, or use memory check instead of flag
+- [ ] Retest `Underworld_LoadRoom_ExitHook` after rebuild
+- [ ] Verify persistence on room re-entry and save/load
 
 ### Priority 3: Investigate Menu Bugs
 - [ ] Determine if pre-existing or new regression
@@ -128,11 +132,11 @@ In Mesen2: Tools → Run Script → `scripts/debug_transitions.lua`
 ## Files Modified (Uncommitted)
 
 ```
-M Core/sram.asm
 M Dungeons/Collision/water_collision.asm
-M Dungeons/dungeons.asm  (room load hook disabled)
+M Dungeons/dungeons.asm  (room load hook re-enabled)
+M Util/item_cheat.asm    (runtime reload hotkey)
 M Docs/...
-M STATUS.md
+M scripts/sync_mesen_saves.sh
 ```
 
 ## Archive Location
