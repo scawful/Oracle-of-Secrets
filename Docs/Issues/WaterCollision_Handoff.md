@@ -111,17 +111,18 @@ Displays real-time debug info:
 - Collision offset being checked
 - COLMAPA and COLMAPB values at Link's position
 - Link state, submodule, action, speed
-- Door flag ($0403) and deep water flag ($5D)
+- Door flag ($0403) and deep water flag ($0345)
 
 ### Key RAM Addresses
 | Address | Description |
 |---------|-------------|
 | `$7E0020-0023` | Link Y/X position (16-bit each) |
-| `$7E002E` | Link state |
+| `$7E005D` | Link state |
+| `$7E002E` | Link anim step |
 | `$7E001C` | Submodule |
 | `$7E00A0` | Current room ID |
 | `$7E0403` | Door/water gate flag |
-| `$7E005D` | Deep water flag |
+| `$7E0345` | Deep water flag |
 | `$7F2000+offset` | COLMAPA value |
 | `$7F3000+offset` | COLMAPB value |
 

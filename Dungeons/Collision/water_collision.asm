@@ -154,9 +154,10 @@ WaterGate_CheckRoomEntry:
     LDA.l WaterGateStates : AND.b #$01 : BEQ .no_persistence
       ; Water was filled before - restore collision
       LDA.b #$02 : STA.w $0403  ; Set door flag to skip animation
-      REP #$30
+      REP #$20
       LDA.w #WaterGate_Room27_Data : STA.b $00
-      LDA.w #WaterGate_Room27_Data>>16 : STA.b $02
+      SEP #$20
+      LDA.b #WaterGate_Room27_Data>>16 : STA.b $02
       JSR WaterGate_ApplyCollision
       SEP #$30
       BRA .done
@@ -167,9 +168,10 @@ WaterGate_CheckRoomEntry:
     LDA.l WaterGateStates : AND.b #$02 : BEQ .no_persistence
       ; Water grate was opened - restore collision
       LDA.b #$02 : STA.w $0403
-      REP #$30
+      REP #$20
       LDA.w #WaterGate_Room25_Data : STA.b $00
-      LDA.w #WaterGate_Room25_Data>>16 : STA.b $02
+      SEP #$20
+      LDA.b #WaterGate_Room25_Data>>16 : STA.b $02
       JSR WaterGate_ApplyCollision
       SEP #$30
 
