@@ -166,6 +166,12 @@ org $01F3D2 ; do tilemapcollision stuff for the dam
 JML WaterGate_FillComplete_Hook
 NOP #4 ; Pad to 8 bytes (replaces STZ $1E + STZ $1F + JSL IrisSpotlight_ResetTable)
 
+; Underworld_LoadRoom exit hook (torch loop end)
+; DISABLED FOR TESTING - suspected cause of dungeon crashes
+; org $0188DF
+; JML Underworld_LoadRoom_ExitHook
+; NOP #1
+
 
 ; RoomTag_WaterGate
 org $01CBAC

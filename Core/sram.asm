@@ -93,13 +93,14 @@ JournalState = $7EF39C
 ;   0x02 - End (intro complete)
 StoryState   = $7EF39E
 
-; 7EF403 - 7EF4FD Unused block
+; 7EF403 - 7EF4FD Partially repurposed block
 
 ; .... .cpw
 ;   c - courage
 ;   p - power
 ;   w - wisdom
 Dreams        = $7EF410
+WaterGateStates = $7EF411
 
 ; =========================================================
 ; Items
