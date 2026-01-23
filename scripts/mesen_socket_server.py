@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import socket
 import threading
 import json
@@ -10,9 +11,22 @@ from queue import Queue, Empty
 from urllib.parse import urlparse, parse_qs
 
 # Configuration
-TCP_HOST = '127.0.0.1'
-TCP_PORT = 5050  # Mesen connects here
-HTTP_PORT = 8080 # Clients (Agents/CLI) connect here
+TCP_HOST = os.getenv("MESEN_TCP_HOST", "127.0.0.1")
+HTTP_HOST = os.getenv("MESEN_HTTP_HOST", "127.0.0.1")
+
+def _env_port(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+TCP_PORT = _env_port("MESEN_TCP_PORT", 5050)  # Mesen connects here
+HTTP_PORT = _env_port("MESEN_HTTP_PORT", 8080) # Clients (Agents/CLI) connect here
+HUB_ID = os.getenv("MESEN_HUB_ID", "")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Global State
 mesen_socket = None
@@ -43,12 +57,13 @@ class MesenTCPHandler(threading.Thread):
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind((TCP_HOST, TCP_PORT))
             s.listen(1)
-            print(f"[TCP] Listening for Mesen2 on {TCP_HOST}:{TCP_PORT}...")
+            hub_label = f"[{HUB_ID}] " if HUB_ID else ""
+            print(f"[TCP] {hub_label}Listening for Mesen2 on {TCP_HOST}:{TCP_PORT}...")
             
             while True:
                 conn, addr = s.accept()
                 with conn:
-                    print(f"[TCP] Connected by {addr}")
+                    print(f"[TCP] {hub_label}Connected by {addr}")
                     mesen_socket = conn
                     connected_event.set()
                     
@@ -83,7 +98,17 @@ class MesenTCPHandler(threading.Thread):
                                             
                                             if msg_type == "state":
                                                 global latest_state
+                                                # Preserve lastEvent if not present in new state
+                                                last_evt = latest_state.get("lastEvent")
                                                 latest_state = msg.get("payload", msg)
+                                                if last_evt and "lastEvent" not in latest_state:
+                                                    latest_state["lastEvent"] = last_evt
+
+                                            elif msg_type == "event":
+                                                print(f"[EVENT] {msg}")
+                                                # Inject event into state for polling clients
+                                                latest_state["lastEvent"] = msg
+                                                
                                             elif msg_type == "response":
                                                 cmd_id = msg.get("id")
                                                 if cmd_id in response_queues:
@@ -104,7 +129,7 @@ class MesenTCPHandler(threading.Thread):
                             print(f"[TCP] Error: {e}")
                             break
                     
-                    print("[TCP] Disconnected")
+                    print(f"[TCP] {hub_label}Disconnected")
                     mesen_socket = None
                     connected_event.clear()
                     clear_pending()
@@ -113,7 +138,7 @@ class AgentHTTPHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/':
             try:
-                with open('scripts/dashboard.html', 'rb') as f:
+                with open(os.path.join(SCRIPT_DIR, 'dashboard.html'), 'rb') as f:
                     self.send_response(200)
                     self.send_header('Content-type', 'text/html')
                     self.end_headers()
@@ -202,8 +227,9 @@ class AgentHTTPHandler(BaseHTTPRequestHandler):
         return # Silence logs
 
 def run_http():
-    server = HTTPServer(('127.0.0.1', HTTP_PORT), AgentHTTPHandler)
-    print(f"[HTTP] Agent API listening on http://127.0.0.1:{HTTP_PORT}")
+    server = HTTPServer((HTTP_HOST, HTTP_PORT), AgentHTTPHandler)
+    hub_label = f"[{HUB_ID}] " if HUB_ID else ""
+    print(f"[HTTP] {hub_label}Agent API listening on http://{HTTP_HOST}:{HTTP_PORT}")
     server.serve_forever()
 
 if __name__ == '__main__':
