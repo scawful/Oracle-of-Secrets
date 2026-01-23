@@ -39,7 +39,7 @@ PY
 apply_rule() {
   local mode="$1"
   local space="$2"
-  local base_rule=( "app=^(Mesen|Mesen2)$" "label=mesen-managed" )
+  local base_rule=( "app=^(Mesen|Mesen2|Mesen2 OOS)$" "label=mesen-managed" )
   case "${mode}" in
     bsp)
       yabai -m rule --add "${base_rule[@]}" "manage=on" >/dev/null
@@ -68,7 +68,7 @@ apply_rule() {
 
 apply_aux_rules() {
   # Float tool windows (Script/Debugger/etc.) to avoid bsp tiling chaos
-  local aux_rule=( "app=^(Mesen|Mesen2)$" "label=mesen-aux" "manage=off" )
+  local aux_rule=( "app=^(Mesen|Mesen2|Mesen2 OOS)$" "label=mesen-aux" "manage=off" )
   local titles="(Script|Lua|Debugger|Trace|Profiler|Disassembler|Memory|Palette|Tile|Assembler|Log|Breakpoints|Cheats|Input|Settings|PPU|APU|Event|Watch|Viewer|Mixer)"
   yabai -m rule --add "${aux_rule[@]}" "title=${titles}" >/dev/null || true
 }
@@ -87,7 +87,7 @@ except json.JSONDecodeError:
 title_re = re.compile(titles) if titles else None
 for win in windows:
     app = win.get("app") or ""
-    if app not in ("Mesen", "Mesen2"):
+    if app not in ("Mesen", "Mesen2", "Mesen2 OOS"):
         continue
     wid = win.get("id")
     if not wid:

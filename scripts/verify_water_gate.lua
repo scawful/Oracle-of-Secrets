@@ -1,6 +1,7 @@
 -- verify_water_gate.lua
 -- Automated headless test for water collision persistence
 -- Run with: Mesen --testRunner --timeout=120 scripts/verify_water_gate.lua Roms/oos168.sfc
+-- Optional: MESEN_LOADSTATE=/path/to/state.mss (auto-load before testing)
 --
 -- Tests:
 -- 1. Game boots successfully
@@ -42,13 +43,17 @@ local SAMPLE_WATER_OFFSETS = {
 local BOOT_TIMEOUT_FRAMES = 600   -- 10 seconds to boot
 local TEST_TIMEOUT_FRAMES = 7200  -- 2 minutes total
 local ROOM_SETTLE_FRAMES = 60     -- 1 second for room to fully load
+local LOADSTATE_TIMEOUT_FRAMES = 300 -- 5 seconds to load savestate
+local LOADSTATE_PATH = os.getenv("MESEN_LOADSTATE")
+local SAVESTATE_EXEC_HOOK = 0x008051 -- MainGameLoop .do_frame
 
 -- =============================================================================
 -- Test State
 -- =============================================================================
 
 local state = {
-  phase = "boot",         -- boot, wait_room, check_collision, check_sram, done
+  phase = LOADSTATE_PATH and "load_state" or "boot",
+                          -- load_state, boot, wait_room, check_collision, check_sram, done
   frame_count = 0,
   room_entry_count = 0,
   last_room = 0,
@@ -56,6 +61,13 @@ local state = {
   settle_counter = 0,
   test_results = {},
   exit_code = 2,          -- Default to timeout
+}
+
+local loadstate = {
+  path = LOADSTATE_PATH,
+  status = LOADSTATE_PATH and "pending" or "idle",
+  error = "",
+  frames = 0,
 }
 
 -- =============================================================================
@@ -84,6 +96,43 @@ local function readWord(addr)
   return readByte(addr) + (readByte(addr + 1) * 256)
 end
 
+local function resetStateForLoadedSave()
+  state.frame_count = 0
+  state.room_entry_count = 0
+  state.last_room = 0
+  state.in_target_room = false
+  state.settle_counter = 0
+  state.test_results = {}
+end
+
+local function loadSavestateFromFile(path)
+  local f = io.open(path, "rb")
+  if not f then
+    return false, "state_not_found"
+  end
+  local data = f:read("*all")
+  f:close()
+  local ok, result = pcall(emu.loadSavestate, data)
+  if not ok then
+    return false, tostring(result)
+  end
+  if result ~= true then
+    return false, "load_failed"
+  end
+  return true
+end
+
+local function savestateExecCallback()
+  if loadstate.status ~= "pending" then return end
+  local ok, err = loadSavestateFromFile(loadstate.path)
+  if ok then
+    loadstate.status = "ok"
+  else
+    loadstate.status = "error"
+    loadstate.error = err
+  end
+end
+
 local function getCurrentRoom()
   return readByte(0x7E00A0)
 end
@@ -103,6 +152,30 @@ end
 -- =============================================================================
 -- Test Phases
 -- =============================================================================
+
+local function phase_load_state()
+  loadstate.frames = loadstate.frames + 1
+
+  if loadstate.frames == 1 then
+    log("Loading savestate: " .. tostring(loadstate.path))
+  end
+
+  if loadstate.status == "ok" then
+    pass("Savestate loaded")
+    resetStateForLoadedSave()
+    state.phase = "wait_room"
+    return
+  end
+
+  if loadstate.status == "error" then
+    fail("Savestate load failed: " .. tostring(loadstate.error))
+    return
+  end
+
+  if loadstate.frames > LOADSTATE_TIMEOUT_FRAMES then
+    fail("Savestate load timeout")
+  end
+end
 
 local function phase_boot()
   local gameMode = getGameMode()
@@ -254,7 +327,9 @@ function Main()
   end
 
   -- Phase dispatch
-  if state.phase == "boot" then
+  if state.phase == "load_state" then
+    phase_load_state()
+  elseif state.phase == "boot" then
     phase_boot()
   elseif state.phase == "wait_room" then
     phase_wait_room()
@@ -275,4 +350,11 @@ emu.addEventCallback(Main, emu.eventType.endFrame)
 log("Water Gate Test Script loaded")
 log("Target room: " .. string.format("0x%02X", TEST_ROOM))
 log("Expected collision: " .. string.format("$%02X", DEEP_WATER_COLLISION))
-log("Waiting for game boot...")
+if LOADSTATE_PATH then
+  pcall(function()
+    emu.addMemoryCallback(savestateExecCallback, emu.callbackType.exec, SAVESTATE_EXEC_HOOK)
+  end)
+  log("Savestate auto-load enabled: " .. LOADSTATE_PATH)
+else
+  log("Waiting for game boot...")
+end

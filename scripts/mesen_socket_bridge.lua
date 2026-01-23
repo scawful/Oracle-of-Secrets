@@ -9,6 +9,7 @@ local PORT = 5050
 local client = nil
 local lastConnectFrame = 0
 local CONNECT_INTERVAL = 60
+local MESEN2_DIR = os.getenv("MESEN2_DIR") or (os.getenv("HOME") .. "/Documents/Mesen2")
 
 local SAVESTATE_EXEC_HOOK = 0x008051 -- MainGameLoop .do_frame
 
@@ -248,7 +249,7 @@ local function getGameState()
 end
 
 -- === Input Injection ===
-local injectedInput = { active = false, f4 = 0, f6 = 0, frames = 0, override_active = false }
+local injectedInput = { active = false, f4 = 0, f6 = 0, frames = 0, override_active = false, player = 1 }
 local BUTTON_MAP = {
     UP={0x08,0}, DOWN={0x04,0}, LEFT={0x02,0}, RIGHT={0x01,0},
     SELECT={0x20,0}, START={0x10,0}, B={0x80,0}, Y={0x40,0},
@@ -294,7 +295,8 @@ local function applyInput()
             if injectedInput.f6 & 0x20 ~= 0 then state.L = true end
             if injectedInput.f6 & 0x10 ~= 0 then state.R = true end
 
-            emu.setInputOverrides(1, state)
+            local player = injectedInput.player or 1
+            emu.setInputOverrides(player, state)
             injectedInput.override_active = true
         else
             if injectedInput.f4 ~= 0 then write8(0x7E00F4, read8(0x7E00F4) | injectedInput.f4) end
@@ -482,8 +484,93 @@ local function respond(id, ok, payload, err)
     sendJSON(resp)
 end
 
+-- === Breakpoints ===
+local breakpoints = {} -- {id -> {callback, type, addr, endAddr, desc}}
+local nextBpId = 1
+
+local function onBreakpointHit(addr, typeName, id)
+    local msg = {
+        type = "event",
+        kind = "breakpoint",
+        id = id,
+        addr = addr,
+        mode = typeName,
+        timestamp = os.time()
+    }
+    sendJSON(msg)
+    
+    -- Try to pause execution (Mesen2 vs Mesen-S vs others)
+    if emu.breakExecution then
+        emu.breakExecution()
+    elseif emu.pause then
+        emu.pause()
+    elseif emu.setPaused then
+        emu.setPaused(true)
+    end
+    
+    emu.log(string.format("Breakpoint %d hit at 0x%X (%s)", id, addr, typeName))
+end
+
+local function addBreakpoint(typeStr, addr, endAddr)
+    local cbType
+    local typeName
+    local typeStrLower = typeStr:lower()
+    
+    if typeStrLower == "exec" or typeStrLower == "execute" then
+        cbType = emu.callbackType.exec
+        typeName = "exec"
+    elseif typeStrLower == "read" then
+        cbType = emu.callbackType.read
+        typeName = "read"
+    elseif typeStrLower == "write" then
+        cbType = emu.callbackType.write
+        typeName = "write"
+    else
+        return nil, "invalid_type"
+    end
+    
+    local id = nextBpId
+    nextBpId = nextBpId + 1
+    
+    -- Closure to capture ID and Type
+    local cb = function(address, value)
+        onBreakpointHit(address, typeName, id)
+    end
+    
+    -- Register with emulator
+    -- signature: callback, type, startAddr, endAddr
+    emu.addMemoryCallback(cb, cbType, addr, endAddr or addr)
+    
+    breakpoints[id] = {
+        callback = cb,
+        type = cbType,
+        addr = addr,
+        endAddr = endAddr or addr,
+        desc = string.format("%s:0x%X", typeName, addr)
+    }
+    
+    return id
+end
+
+local function removeBreakpoint(id)
+    local bp = breakpoints[id]
+    if bp then
+        emu.removeMemoryCallback(bp.callback, bp.type, bp.addr, bp.endAddr)
+        breakpoints[id] = nil
+        return true
+    end
+    return false
+end
+
+local function clearBreakpoints()
+    for id, bp in pairs(breakpoints) do
+        emu.removeMemoryCallback(bp.callback, bp.type, bp.addr, bp.endAddr)
+    end
+    breakpoints = {}
+end
+
 local function slotPath(slot)
-    return os.getenv("HOME") .. "/Documents/Mesen2/SaveStates/oos168x_" .. slot .. ".mss"
+    return MESEN2_DIR .. "/SaveStates/oos168x_" .. slot .. ".mss"
 end
 
 local function processCommand(cmd)
@@ -495,6 +582,48 @@ local function processCommand(cmd)
 
     if cmdType == "PING" then
         payload = "PONG:" .. os.time()
+
+    elseif cmdType == "ADD_BREAK" then
+        local typeStr = cmd.kind or "exec"
+        local addr = parseAddr(cmd.addr)
+        local endAddr = parseAddr(cmd.endAddr)
+        if addr then
+            local bpId, bpErr = addBreakpoint(typeStr, addr, endAddr)
+            if bpId then
+                payload = string.format("BREAKPOINT:added:%d:%s", bpId, typeStr)
+            else
+                ok = false
+                err = bpErr
+            end
+        else
+            ok = false
+            err = "invalid_addr"
+        end
+
+    elseif cmdType == "DEL_BREAK" then
+        local bpId = parseAddr(cmd.bpId)
+        if bpId then
+            if removeBreakpoint(bpId) then
+                payload = "BREAKPOINT:removed:" .. bpId
+            else
+                ok = false
+                err = "not_found"
+            end
+        else
+            ok = false
+            err = "invalid_id"
+        end
+
+    elseif cmdType == "LIST_BREAK" then
+        local list = {}
+        for bpId, bp in pairs(breakpoints) do
+            list[#list + 1] = string.format("%d|%s", bpId, bp.desc)
+        end
+        payload = "BREAKPOINTS:" .. table.concat(list, ",")
+
+    elseif cmdType == "CLEAR_BREAK" then
+        clearBreakpoints()
+        payload = "BREAKPOINTS:cleared"
 
     elseif cmdType == "STATE" then
         payload = getGameState()
@@ -521,7 +650,7 @@ local function processCommand(cmd)
 
     elseif cmdType == "READBLOCK" then
         local addr = parseAddr(cmd.addr)
-        local len = parseAddr(cmd.len)
+        local len = parseAddr(cmd.len or cmd.length)
         if addr and len and len > 0 then
             local hex = readBlock(addr, len)
             payload = string.format("READBLOCK:0x%06X:%d:%s", addr, len, hex)
@@ -532,7 +661,7 @@ local function processCommand(cmd)
 
     elseif cmdType == "WRITE" then
         local addr = parseAddr(cmd.addr)
-        local val = parseAddr(cmd.val)
+        local val = parseAddr(cmd.value or cmd.val)
         if addr and val ~= nil then
             write8(addr, val)
             payload = string.format("WRITE:0x%06X=0x%02X", addr, val % 256)
@@ -543,7 +672,7 @@ local function processCommand(cmd)
 
     elseif cmdType == "WRITE16" then
         local addr = parseAddr(cmd.addr)
-        local val = parseAddr(cmd.val)
+        local val = parseAddr(cmd.value or cmd.val)
         if addr and val ~= nil then
             write16(addr, val)
             payload = string.format("WRITE16:0x%06X=0x%04X", addr, val % 65536)
@@ -572,11 +701,13 @@ local function processCommand(cmd)
         local buttons = cmd.buttons
         local frames = parseAddr(cmd.frames) or 5
         if buttons then
+            local player = parseAddr(cmd.player) or 1
             local f4, f6 = parseButtons(buttons)
             injectedInput.f4 = f4
             injectedInput.f6 = f6
             injectedInput.frames = frames
             injectedInput.active = true
+            injectedInput.player = player
             payload = string.format("INPUT:buttons=%s,f4=0x%02X,f6=0x%02X,frames=%d",
                 buttons, f4, f6, frames)
         else
@@ -622,11 +753,15 @@ local function processCommand(cmd)
 
     elseif cmdType == "LOADSTATE" then
         local path = cmd.path
+        local slot = parseAddr(cmd.slot)
+        if slot and slot >= 1 and slot <= 10 then
+            path = slotPath(slot)
+        end
         if path and queueSavestateLoad(path) then
             payload = "LOADSTATE:queued:" .. path
         else
             ok = false
-            err = savestateError ~= "" and savestateError or "missing_path"
+            err = savestateError ~= "" and savestateError or "missing_path_or_slot"
         end
 
     elseif cmdType == "SAVESTATE" then
@@ -667,7 +802,7 @@ local function processCommand(cmd)
     elseif cmdType == "SCREENSHOT" then
         local path = cmd.path
         if not path or path == "" then
-            path = os.getenv("HOME") .. "/Documents/Mesen2/bridge/screenshot_" .. os.time() .. ".png"
+            path = MESEN2_DIR .. "/bridge/screenshot_" .. os.time() .. ".png"
         end
         local okShot, result = pcall(emu.takeScreenshot, path)
         if not okShot then

@@ -1,0 +1,46 @@
+# Oracle of Secrets Common Watch Addresses
+# Load in Mesen2: Debug > Watch
+
+# Game Mode & Area
+$7E0010 Mode
+$7E0011 SubMode
+$7E008A AreaID
+$7E00A0 RoomLayout
+$7E001B Indoors
+
+# Link Position
+$7E0020 LinkY (16-bit)
+$7E0022 LinkX (16-bit)
+$7E0024 LinkZ (16-bit)
+$7E002F LinkDir
+$7E005D LinkState
+
+# Scroll Registers (Lost Woods debugging)
+$7E00E1 ScrollX_Lo
+$7E00E3 ScrollX_Hi
+$7E00E7 ScrollY_Lo
+$7E00E9 ScrollY_Hi
+
+# Sprite Slot 0
+$7E0D00 Spr0_X
+$7E0D10 Spr0_Y
+$7E0D80 Spr0_State
+$7E0DD0 Spr0_Type
+$7E0DF0 Spr0_Action
+$7E0DC0 Spr0_Health
+$7E0EE0 Spr0_TimerD
+
+# Story Progress (SRAM)
+$7EF3C5 GameState
+$7EF3D6 OOSPROG
+$7EF3C6 OOSPROG2
+$7EF3D7 SideQuest
+$7EF37A Crystals
+$7EF374 Pendants
+
+# Quest Flags
+$7EF300 KydrogFaroreRemoved
+$7EF301 DekuMaskQuest
+$7EF302 ZoraMaskQuest
+$7EF303 InCutScene
+$7EF3D4 MakuTreeQuest

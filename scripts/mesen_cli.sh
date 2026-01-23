@@ -5,7 +5,17 @@
 set -euo pipefail
 
 # Configuration
-DEFAULT_BRIDGE_ROOT="${HOME}/Documents/Mesen2/bridge"
+MESEN2_DIR="${MESEN2_DIR:-}"
+if [[ -z "${MESEN2_DIR}" ]]; then
+    if [[ -d "${HOME}/Documents/Mesen2/bridge" ]]; then
+        MESEN2_DIR="${HOME}/Documents/Mesen2"
+    elif [[ -d "${HOME}/Library/Application Support/Mesen2" ]]; then
+        MESEN2_DIR="${HOME}/Library/Application Support/Mesen2"
+    else
+        MESEN2_DIR="${HOME}/Documents/Mesen2"
+    fi
+fi
+DEFAULT_BRIDGE_ROOT="${MESEN2_DIR}/bridge"
 SOCKET_URL="http://127.0.0.1:8080"
 USE_SOCKET=0
 
@@ -70,14 +80,42 @@ Commands:
   loadslot <n>    Load state from slot (1-10)
   wait-save [secs] Wait for savestate to finish
   wait-load [secs] Wait for savestate load to finish
-  wait-addr <addr> <val> [secs] Wait for memory match
-  loadrom <path>   Load a ROM (Headless only)
-  preserve [action] Manage SRAM preservation across save states
-                   - status: Show preserve list
-                   - on/off: Enable/disable preservation
+      wait-addr <addr> <val> [secs] Wait for memory match
+      loadrom <path>   Load a ROM (Headless only)
+      break <type> <addr> Add breakpoint (exec, read, write)
+      watch <addr>     Add write watchpoint
+      clear-break      Clear all breakpoints
+          list-breaks      List active breakpoints
+          wait-break [secs] Wait for breakpoint hit
+          trace            Dump stack trace with symbols
+          sym <addr>       Lookup symbol for address (e.g. 00:8000)
+          preserve [action] Manage SRAM preservation across save states
+                         - status: Show preserve list
+                         - on/off: Enable/disable preservation
                    - add <addr>: Add address to preserve list
                    - remove <addr>: Remove address from list
                    - default: Reset to default items
+
+Oracle Debug Commands (via mesen2_client.py):
+  assistant         Live debug assistant (monitors area changes)
+  oracle-state      Show Oracle game state (mode, area, link position)
+  oracle-story      Show story progress flags
+  oracle-watch [-p profile] Watch addresses (overworld,dungeon,sprites,lost_woods,story)
+  oracle-sprites [--all] Debug sprite slots
+  oracle-items [name] List items or get specific item
+  oracle-give <item> <val> Give item to Link (e.g., oracle-give sword 2)
+  oracle-flags [name] List flags or get specific flag
+  oracle-setflag <flag> <val> Set flag (e.g., oracle-setflag d1 true)
+  oracle-warp <loc|list> Warp to location (or 'list' for locations)
+  oracle-press <btns> Press buttons (e.g., oracle-press a,b)
+  oracle-pos <x> <y> Set Link position
+  oracle-library [-t tag] List save state library entries
+  oracle-lib-load <id> Load state from library by ID
+  oracle-lib-info <id> Show library entry details
+  oracle-capture      Capture current state metadata for library
+
+Env:
+  MESEN2_DIR     Override Mesen2 data directory (defaults to Documents or App Support)
   ... (see script for full list)
 EOF
 }
@@ -121,7 +159,7 @@ send_socket_command() {
         WRITE|WRITE16)
             addr=$(json_escape "$1")
             val=$(json_escape "$2")
-            json=$(printf '{"type":"%s","addr":%s,"val":%s}' "$cmd" "$addr" "$val")
+            json=$(printf '{"type":"%s","addr":%s,"value":%s}' "$cmd" "$addr" "$val")
             ;;
         WRITEBLOCK)
             addr=$(json_escape "$1")
@@ -131,7 +169,7 @@ send_socket_command() {
         PRESS|INPUT)
             buttons=$(json_escape "$1")
             frames="${2:-5}"
-            json=$(printf '{"type":"PRESS","buttons":%s,"frames":%s}' "$buttons" "$frames")
+            json=$(printf '{"type":"INPUT","buttons":%s,"frames":%s}' "$buttons" "$frames")
             ;;
         RELEASE)
              json='{"type":"RELEASE"}'
@@ -203,6 +241,21 @@ PY
              else
                  json=$(printf '{"type":"SCREENSHOT","path":%s}' "$path")
              fi
+             ;;
+        ADD_BREAK)
+             kind=$(json_escape "$1")
+             addr=$(json_escape "$2")
+             json=$(printf '{"type":"ADD_BREAK","kind":%s,"addr":%s}' "$kind" "$addr")
+             ;;
+        DEL_BREAK)
+             id=$(json_escape "$1")
+             json=$(printf '{"type":"DEL_BREAK","bpId":%s}' "$id")
+             ;;
+        LIST_BREAK)
+             json='{"type":"LIST_BREAK"}'
+             ;;
+        CLEAR_BREAK)
+             json='{"type":"CLEAR_BREAK"}'
              ;;
         *)
             echo "Command not supported in socket mode yet: $cmd" >&2
@@ -524,6 +577,87 @@ cmd_wait_addr() {
     done
 }
 
+cmd_break() {
+    ensure_bridge || return 1
+    send_command "ADD_BREAK" "${1:-exec}" "${2:-}"
+}
+
+cmd_watch() {
+    ensure_bridge || return 1
+    send_command "ADD_BREAK" "write" "${1:-}"
+}
+
+cmd_clear_break() {
+    ensure_bridge || return 1
+    send_command "CLEAR_BREAK"
+}
+
+cmd_list_breaks() {
+    ensure_bridge || return 1
+    send_command "LIST_BREAK"
+}
+
+cmd_wait_break() {
+    ensure_bridge || return 1
+    local timeout="${1:-10}"
+    local start=$(date +%s)
+    local last_ts=0
+    
+    # First get current event timestamp to ignore old ones
+    local initial_state
+    initial_state="$(send_command "STATE" 2>/dev/null || true)"
+    if [[ -n "${initial_state}" ]]; then
+        last_ts=$(echo "${initial_state}" | python3 -c "import sys, json; print(json.load(sys.stdin).get('lastEvent', {}).get('timestamp', 0))")
+    fi
+
+    while true; do
+        local state_json
+        state_json="$(send_command "STATE" 2>/dev/null || true)"
+        if [[ -n "${state_json}" ]]; then
+            local evt
+            evt=$(echo "${state_json}" | python3 -c "import sys, json; 
+d=json.load(sys.stdin); 
+evt=d.get('lastEvent'); 
+ts=evt.get('timestamp', 0) if evt else 0; 
+print(json.dumps(evt) if evt and ts > $last_ts else '')")
+            
+            if [[ -n "${evt}" && "${evt}" != "null" ]]; then
+                echo "${evt}"
+                return 0
+            fi
+        fi
+
+        if [[ $(( $(date +%s) - start )) -ge "${timeout}" ]]; then
+            echo "Timed out waiting for breakpoint" >&2
+            return 1
+        fi
+        sleep 0.1
+    done
+}
+
+cmd_trace() {
+    ensure_bridge || return 1
+    local cpu
+    cpu="$(send_command "CPU")"
+    local stack
+    stack="$(send_command "STACK" "32")" # Dump 32 bytes
+    
+    python3 "${SCRIPT_DIR}/stack_report.py" --cpu "${cpu}" --stack "${stack}" --sym "${SYM_FILE}"
+}
+
+cmd_sym() {
+    local input="${1:-}"
+    if [[ "${input}" == *":"* ]]; then
+        local bank="${input%%:*}"
+        local pc="${input#*:}"
+        python3 "${SCRIPT_DIR}/symbols.py" lookup --bank "0x${bank}" --pc "0x${pc}" --sym "${SYM_FILE}" --source
+    else
+        # Assume PC24 or simple label search not supported yet via CLI args easily without logic
+        # For now assume hex string is PC24
+        python3 "${SCRIPT_DIR}/symbols.py" lookup --pc24 "${input}" --sym "${SYM_FILE}" --source
+    fi
+}
+
 # Main dispatch
 case "${1:-}" in
     state)    cmd_state ;; 
@@ -548,6 +682,13 @@ case "${1:-}" in
     wait-save) cmd_wait_save "${2:-}" ;;
     wait-load) cmd_wait_load "${2:-}" ;;
     wait-addr) cmd_wait_addr "${2:-}" "${3:-}" "${4:-}" ;;
+    break)    cmd_break "${2:-}" "${3:-}" ;;
+    watch)    cmd_watch "${2:-}" ;;
+    clear-break) cmd_clear_break ;;
+    list-breaks) cmd_list_breaks ;;
+    wait-break) cmd_wait_break "${2:-}" ;;
+    trace)    cmd_trace ;;
+    sym)      cmd_sym "${2:-}" ;;
     ping)
         ensure_bridge || return 1
         send_command "PING"
@@ -555,6 +696,42 @@ case "${1:-}" in
     preserve)
         ensure_bridge || return 1
         send_command "PRESERVE" "${2:-status}" "${3:-}" "${4:-}"
+        ;;
+    assistant)
+        # Launch Oracle debug assistant (Python client)
+        python3 "${SCRIPT_DIR}/mesen2_client.py" assistant
+        ;;
+    oracle-state)
+        # Get Oracle-specific game state
+        python3 "${SCRIPT_DIR}/mesen2_client.py" state "${@:2}"
+        ;;
+    oracle-story)
+        # Get Oracle story progress
+        python3 "${SCRIPT_DIR}/mesen2_client.py" story "${@:2}"
+        ;;
+    oracle-watch)
+        # Watch addresses with profile
+        python3 "${SCRIPT_DIR}/mesen2_client.py" watch "${@:2}"
+        ;;
+    oracle-sprites)
+        # Debug sprites
+        python3 "${SCRIPT_DIR}/mesen2_client.py" sprites "${@:2}"
+        ;;
+    oracle-library)
+        # List state library entries
+        python3 "${SCRIPT_DIR}/mesen2_client.py" library "${@:2}"
+        ;;
+    oracle-lib-load)
+        # Load state from library by ID
+        python3 "${SCRIPT_DIR}/mesen2_client.py" lib-load "${@:2}"
+        ;;
+    oracle-lib-info)
+        # Show library entry details
+        python3 "${SCRIPT_DIR}/mesen2_client.py" lib-info "${@:2}"
+        ;;
+    oracle-capture)
+        # Capture current state metadata
+        python3 "${SCRIPT_DIR}/mesen2_client.py" capture "${@:2}"
         ;;
     -h|--help|"") usage ;; 
     *)

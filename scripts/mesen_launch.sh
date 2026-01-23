@@ -8,11 +8,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Defaults
-MESEN_APP="${MESEN_APP:-/Users/scawful/src/third_party/mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen.app}"
+MESEN_APP="${MESEN_APP:-}"
 ROM_PATH="${ROM_PATH:-${REPO_ROOT}/Roms/oos168x.sfc}"
 BRIDGE_KIND="live"
 BRIDGE_SCRIPT="${REPO_ROOT}/scripts/mesen_live_bridge.lua"
-MESEN2_DIR="${HOME}/Documents/Mesen2"
+MESEN2_DIR="${MESEN2_DIR:-}"
 YABAI_MODE="${YABAI_MODE:-}" # Set to "bsp" or "float" for yabai control
 INSTANCE_NAME="default"
 ALLOW_MULTI=0
@@ -41,6 +41,10 @@ Examples:
   mesen_launch.sh --build            # Rebuild ROM first
   mesen_launch.sh --yabai bsp        # Use yabai BSP tiling
   mesen_launch.sh --state 1          # Load save state slot 1
+
+Env:
+  MESEN_APP    Override Mesen2 app bundle path
+  MESEN2_DIR   Override Mesen2 data directory
 EOF
 }
 
@@ -49,6 +53,42 @@ STATE_SLOT=""
 SET_NAME=""
 ALLOW_STALE=0
 YABAI_SPACE=""
+
+resolve_mesen_app() {
+    if [[ -n "${MESEN_APP}" ]]; then
+        echo "${MESEN_APP}"
+        return
+    fi
+
+    local candidates=(
+        "/Users/scawful/src/third_party/forks/Mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen2 OOS.app"
+        "/Users/scawful/src/third_party/forks/Mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen.app"
+        "/Applications/Mesen2 OOS.app"
+        "/Applications/Mesen.app"
+    )
+    for path in "${candidates[@]}"; do
+        if [[ -d "${path}" ]]; then
+            echo "${path}"
+            return
+        fi
+    done
+    echo "/Applications/Mesen2 OOS.app"
+}
+
+resolve_mesen_dir() {
+    if [[ -n "${MESEN2_DIR}" ]]; then
+        echo "${MESEN2_DIR}"
+        return
+    fi
+
+    local app_support="${HOME}/Library/Application Support/Mesen2"
+    if [[ -d "${app_support}" ]]; then
+        echo "${app_support}"
+        return
+    fi
+
+    echo "${HOME}/Documents/Mesen2"
+}
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -116,6 +156,9 @@ case "${BRIDGE_KIND}" in
         exit 1
         ;;
 esac
+
+MESEN_APP="$(resolve_mesen_app)"
+MESEN2_DIR="$(resolve_mesen_dir)"
 
 # Rebuild ROM if requested
 if [[ "${BUILD}" -eq 1 ]]; then

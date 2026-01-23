@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-APP_NAME="${APP_NAME:-Mesen,Mesen2}"
+APP_NAME="${APP_NAME:-Mesen,Mesen2,Mesen2 OOS}"
 ACTION="${1:-toggle}"
 SCRATCH_SPACE="${SCRATCH_SPACE:-}"
 STATE_FILE="${STATE_FILE:-${HOME}/Documents/Mesen2/bridge/mesen_space.txt}"

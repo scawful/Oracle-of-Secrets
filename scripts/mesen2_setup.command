@@ -8,7 +8,8 @@ Usage: mesen2_setup.command [--rom PATH]
 Opens Mesen2 with a ROM and pops open the Scripts/SaveStates folders.
 
 Env:
-  MESEN_APP   Override Mesen app path (default: /Applications/Mesen.app)
+  MESEN_APP   Override Mesen app path
+  MESEN2_DIR  Override Mesen2 data directory
 EOF
 }
 
@@ -34,13 +35,51 @@ done
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-APP_PATH="${MESEN_APP:-/Applications/Mesen.app}"
+APP_PATH="${MESEN_APP:-}"
 DEFAULT_ROM="${REPO_ROOT}/Roms/oos168x.sfc"
 ROM_PATH="${ROM_OVERRIDE:-$DEFAULT_ROM}"
 
-SCRIPTS_DIR="$HOME/Documents/Mesen2/Scripts"
-STATES_DIR="$HOME/Documents/Mesen2/SaveStates"
-SAVES_DIR="$HOME/Documents/Mesen2/Saves"
+MESEN2_DIR="${MESEN2_DIR:-}"
+
+resolve_mesen_app() {
+  if [[ -n "${APP_PATH}" ]]; then
+    echo "${APP_PATH}"
+    return
+  fi
+  local candidates=(
+    "/Users/scawful/src/third_party/forks/Mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen2 OOS.app"
+    "/Users/scawful/src/third_party/forks/Mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen.app"
+    "/Applications/Mesen2 OOS.app"
+    "/Applications/Mesen.app"
+  )
+  for path in "${candidates[@]}"; do
+    if [[ -d "${path}" ]]; then
+      echo "${path}"
+      return
+    fi
+  done
+  echo "/Applications/Mesen2 OOS.app"
+}
+
+resolve_mesen_dir() {
+  if [[ -n "${MESEN2_DIR}" ]]; then
+    echo "${MESEN2_DIR}"
+    return
+  fi
+  local app_support="${HOME}/Library/Application Support/Mesen2"
+  if [[ -d "${app_support}" ]]; then
+    echo "${app_support}"
+    return
+  fi
+  echo "${HOME}/Documents/Mesen2"
+}
+
+APP_PATH="$(resolve_mesen_app)"
+MESEN2_DIR="$(resolve_mesen_dir)"
+
+SCRIPTS_DIR="${MESEN2_DIR}/Scripts"
+STATES_DIR="${MESEN2_DIR}/SaveStates"
+SAVES_DIR="${MESEN2_DIR}/Saves"
 
 mkdir -p "${SCRIPTS_DIR}" "${STATES_DIR}" "${SAVES_DIR}"
 

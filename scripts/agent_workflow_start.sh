@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: agent_workflow_start.sh [--rom <path>] [--yaze <path>] [--api-port <port>] [--grpc-port <port>]\n                               [--wait-grpc <secs>] [--generate-states [--state <id>]]\n                               [--export-fast --symbols-src <path>] [--no-export]
+Usage: agent_workflow_start.sh [--rom <path>] [--yaze <path>] [--api-port <port>] [--grpc-port <port>]\n                               [--wait-grpc <secs>] [--generate-states [--state <id>]]\n                               [--export-fast --symbols-src <path>] [--no-export] [--sync-nightly]
 
 Starts:
   - yaze in --server mode (gRPC + HTTP)
@@ -13,7 +13,7 @@ Optionally exports Mesen2 symbols (.mlb) before launch.
 
 Defaults:
   ROM:   <repo>/Roms/oos168.sfc
-  YAZE:  ~/src/hobby/yaze/build_ai/bin/Debug/yaze.app/Contents/MacOS/yaze
+  YAZE:  yaze-nightly if available, else ~/src/hobby/yaze/build_ai/bin/Debug/yaze.app/Contents/MacOS/yaze
   API:   8081
   gRPC:  50052
   wait:  60s
@@ -27,7 +27,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 ROM_DEFAULT="${REPO_ROOT}/Roms/oos168.sfc"
-YAZE_DEFAULT="${YAZE_BIN:-$HOME/src/hobby/yaze/build_ai/bin/Debug/yaze.app/Contents/MacOS/yaze}"
+if [[ -n "${YAZE_BIN:-}" ]]; then
+  YAZE_DEFAULT="${YAZE_BIN}"
+elif command -v yaze-nightly >/dev/null 2>&1; then
+  YAZE_DEFAULT="$(command -v yaze-nightly)"
+else
+  YAZE_DEFAULT="$HOME/src/hobby/yaze/build_ai/bin/Debug/yaze.app/Contents/MacOS/yaze"
+fi
 API_PORT_DEFAULT=8081
 GRPC_PORT_DEFAULT=50052
 WAIT_GRPC_DEFAULT=60
@@ -43,6 +49,7 @@ STATE_ID=""
 EXPORT_SYMBOLS=1
 EXPORT_FAST=0
 SYMBOLS_SRC=""
+SYNC_NIGHTLY=0
 
 : > "$LOG_FILE"
 
@@ -88,6 +95,10 @@ while [[ $# -gt 0 ]]; do
       EXPORT_SYMBOLS=0
       shift
       ;;
+    --sync-nightly)
+      SYNC_NIGHTLY=1
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -130,6 +141,17 @@ wait_for_port() {
 if [[ ! -f "$ROM_PATH" ]]; then
   echo "ROM not found: $ROM_PATH" >&2
   exit 1
+fi
+
+if [[ "$SYNC_NIGHTLY" -eq 1 ]]; then
+  installer="$HOME/src/hobby/yaze/scripts/install-nightly.sh"
+  if [[ -x "$installer" ]]; then
+    log "Syncing yaze nightly..."
+    "$installer"
+  else
+    log "Nightly installer not found: $installer"
+    exit 1
+  fi
 fi
 
 if [[ ! -x "$YAZE_BIN_PATH" ]]; then
