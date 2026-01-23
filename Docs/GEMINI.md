@@ -37,6 +37,45 @@ Use the `afs` CLI (`afs` or `scripts/afs` if installed) to mount context into a 
 - **Key Rule:** `usdasm` is Read-Only. Hook via `pushpc/pullpc` in project files.
 - **Safety:** Always verify M/X flags (`REP/SEP #$30`) and Bank Overflows.
 
+## Debugging & Automation (Mesen2)
+We use a **Dual-Backend Architecture** to support both interactive debugging (GUI) and high-speed CI (Headless) with a unified API.
+
+### Active Mesen2 Repo
+- Use `~/src/third_party/forks/Mesen2` for all emulator changes.
+- Avoid upstream or alternate clones unless explicitly requested.
+
+### 1. The Unified CLI (`scripts/mesen_cli.sh`)
+This script acts as the primary interface for agents. It automatically detects if the Socket Hub is running.
+
+```bash
+# Common Commands
+./scripts/mesen_cli.sh state            # Get JSON game state
+./scripts/mesen_cli.sh press A          # Press button
+./scripts/mesen_cli.sh read 0x7E0010    # Read memory
+./scripts/mesen_cli.sh loadstate /path/to/state.mss
+./scripts/mesen_cli.sh status           # Human-readable status
+./scripts/mesen_cli.sh screenshot       # Capture frame
+```
+
+### 2. Backend Modes
+*   **Interactive (GUI):**
+    1.  Start Hub: `python3 scripts/mesen_socket_server.py`
+    2.  Open Mesen2 → Debug → Script Window → Load `scripts/mesen_socket_bridge.lua`
+        - Or launch with `./scripts/mesen_launch.sh --bridge socket`
+    3.  *Best for:* Visual confirmation, "shoulder-surfing", reproducing bugs.
+*   **Headless (CI):**
+    1.  Start Server: `cd ~/src/tools/mesen2-mcp && python3 -m mesen2_mcp.server`
+    2.  *Best for:* Fast regression testing, automated agents.
+
+### Yaze Background Service
+Use `scripts/yaze_service.sh` to run a headless yaze server and toggle a GUI instance when needed:
+
+```bash
+./scripts/yaze_service.sh sync-nightly
+./scripts/yaze_service.sh start --rom Roms/oos168x.sfc
+./scripts/yaze_service.sh gui-toggle --rom Roms/oos168x.sfc
+```
+
 ## Permissions
 - **Allowed:** `~/.context`, Project Workspace.
 - **Read-Only:** `/Users/scawful` (Dotfiles), `/opt/homebrew`.

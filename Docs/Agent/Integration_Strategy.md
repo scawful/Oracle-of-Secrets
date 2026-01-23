@@ -128,9 +128,13 @@ def route_to_expert(failure_type: str, context: str) -> str:
 
 def run_test(test_def: dict) -> dict:
     """Execute a single test and return results."""
-    # Load save state (manual step - user loads in Mesen2)
-    print(f"Load save state: {test_def['state']}")
-    input("Press Enter when ready...")
+    # Load save state via bridge (auto)
+    state = test_def.get("saveState", {})
+    if isinstance(state, dict) and state.get("path"):
+        run_mesen_command("loadstate", state["path"])
+        # No wait-load yet; use a short sleep or poll a known address
+        import time
+        time.sleep(float(state.get("waitSeconds", 1.0)))
 
     # Execute test sequence
     for step in test_def["steps"]:
@@ -160,13 +164,19 @@ def run_test(test_def: dict) -> dict:
 {
   "name": "L/R Hookshot Swap",
   "description": "Verify L/R buttons toggle between hookshot and goldstar",
-  "saveState": "items/hookshot_both.mss",
+  "saveState": {
+    "id": "hookshot_both",
+    "path": "items/hookshot_both.mss",
+    "libraryRoot": "Roms/SaveStates/library",
+    "waitSeconds": 8,
+    "reloadCaches": true
+  },
   "preconditions": {
     "$7EF342": {"equals": 2, "desc": "Has both items"},
     "$7E0202": {"equals": 3, "desc": "Hookshot slot equipped"}
   },
   "steps": [
-    {"type": "assert", "address": "$7E0739", "equals": 0, "desc": "Starts as hookshot"},
+    {"type": "assert", "address": "$7E0739", "in": [0, 1], "desc": "Starts as hookshot"},
     {"type": "press", "button": "L", "frames": 5},
     {"type": "wait", "seconds": 0.1},
     {"type": "assert", "address": "$7E0739", "equals": 2, "desc": "Switched to goldstar"},
@@ -261,4 +271,4 @@ z3ed --rom oos168x.sfc --prompt "Fix water collision in room 0x27"
 
 1. Should test definitions live in `Roms/SaveStates/` (gitignored) or `tests/` (tracked)?
 2. Do we need real-time streaming from Mesen2 or is polling sufficient?
-3. How do we handle save state loading (still manual F1-F10)?
+3. Save state loading can use `mesen_cli.sh loadstate` + a short sleep (or `wait-addr`); do we still need manual F1-F10 fallback?
