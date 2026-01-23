@@ -13,6 +13,7 @@ Options:
   --name NAME      Destination app name (default: Mesen2 OOS.app)
   --user           Install to ~/Applications
   --prune          Move other Mesen app bundles in DEST to backup
+  --prune-all      Move other Mesen app bundles in /Applications and ~/Applications
   --no-backup      Replace without backing up existing bundle(s)
   --force          Alias for --no-backup
   --symlink        Create/refresh Mesen.app -> installed app in DEST
