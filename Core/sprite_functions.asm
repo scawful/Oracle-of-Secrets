@@ -181,6 +181,75 @@ Sprite_SelectNewDirection:
     db 48, 48, 48, 48, 48, 48, 64, 64
 }
 
+; =========================================================
+; Sprite_SpawnProbeWithCooldown
+;
+; Spawns a probe toward Link with built-in cooldown.
+; The vanilla probe system sets SprTimerD on the parent
+; sprite when the probe reaches Link without hitting walls.
+;
+; Input: X = sprite slot
+; Uses: $00-$03 (sprite position), SprTimerB (cooldown)
+; Output: Probe spawned if cooldown expired and Link nearby
+;
+; Call this each frame; it handles cooldown internally.
+; After calling, check SprTimerD to see if Link was detected.
+; =========================================================
+
+Sprite_SpawnProbeWithCooldown:
+{
+  PHB : PHK : PLB
+
+  ; Check cooldown timer (use SprTimerB to avoid conflicts)
+  LDA.w SprTimerB, X : BNE .exit
+
+  ; Check if Link is within range (0x80 pixels)
+  JSL GetDistance8bit_Long : CMP.b #$80 : BCS .exit
+
+  ; Set up position for probe (required by FireProbe)
+  LDA.w SprX, X : STA.b $00
+  LDA.w SprXH, X : STA.b $01
+  LDA.w SprY, X : STA.b $02
+  LDA.w SprYH, X : STA.b $03
+
+  ; Set cooldown (24 frames = ~0.4 seconds)
+  LDA.b #$18 : STA.w SprTimerB, X
+
+  ; Spawn the probe
+  JSL Sprite_SpawnProbeAlways_long
+
+  .exit
+  PLB
+  RTL
+}
+
+; =========================================================
+; Sprite_CheckProbeDetection
+;
+; Check if a previously spawned probe detected Link.
+; Returns carry set if Link was detected (SprTimerD > 0).
+;
+; Input: X = sprite slot
+; Output: Carry set if probe made contact with Link
+; =========================================================
+
+Sprite_CheckProbeDetection:
+{
+  LDA.w SprTimerD, X : BEQ .not_detected
+    SEC
+    RTL
+  .not_detected
+  CLC
+  RTL
+}
+
+; =========================================================
+; Sprite_SendOutProbe (Legacy)
+;
+; Original probe routine - kept for compatibility.
+; Prefer Sprite_SpawnProbeWithCooldown for new sprites.
+; =========================================================
+
 Sprite_SendOutProbe:
 {
   PHB : PHK : PLB

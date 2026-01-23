@@ -62,8 +62,10 @@ DarknutSpeed = 04
 
 Sprite_Darknut_Main:
 {
+  ; Spawn probe toward Link when in range
+  ; NOTE: Vanilla probe sets guard state, not SprTimerD
+  ; Detection currently works via damage (SprTimerD set below)
   JSL GetDistance8bit_Long : CMP.b #$80 : BCS .no_probe
-    ; JSL Sprite_SendOutProbe
     JSL Sprite_SpawnProbeAlways_long
   .no_probe
 
@@ -76,13 +78,17 @@ Sprite_Darknut_Main:
 
   JSL Sprite_CheckIfRecoiling
 
+  ; Taking damage triggers alert
   JSL Sprite_CheckDamageFromPlayer : BCC .no_dano
     LDA.b #$FF : STA.w SprTimerD, X
   .no_dano
 
+  ; SprTimerA triggers chase (used by vanilla guard routines)
   LDA.w SprTimerA, X : BEQ +
     LDA.b #$90 : STA.w SprTimerD, X
   +
+
+  ; SprTimerD > 0 means alerted (from damage or SprTimerA)
   LDA.w SprTimerD, X : BEQ ++
     LDA.b #$08 : JSL Sprite_ApplySpeedTowardsPlayer
     JSL Sprite_DirectionToFacePlayer

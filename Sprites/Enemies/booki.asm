@@ -129,13 +129,17 @@ Sprite_Booki_Move:
 
   SlowFloat:
   {
+    ; Float toward player
     LDY #$04
     JSL GetRandomInt : AND.b #$04
     JSL Sprite_FloatTowardPlayer
 
+    ; Check if Link is looking at us (facing our direction)
     PHX
     JSL Sprite_DirectionToFacePlayer
 
+    ; If Link is too close, flee (simple distance check)
+    ; TODO: Implement proper line-of-sight with tile collision
     LDA.b $0E : CMP.b #$1A : BCS .NotTooClose
     LDA.b $0F : CMP.b #$1A : BCS .NotTooClose
       LDA.b #$01 : STA.w SprMiscB, X

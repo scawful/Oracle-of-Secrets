@@ -36,7 +36,10 @@ LostWoods:
   RTL
 
       normalfinish:
-      JSL LostWoods_ResetCoordinates
+      ; NOTE: LostWoods_ResetCoordinates was causing transition issues
+      ; The coordinate snapping interfered with ZSCustomOverworld's
+      ; transition position calculations. Disabled pending investigation.
+      ; JSL LostWoods_ResetCoordinates
       LDA.l Pool_Overworld_ActualScreenID_New, X
       STZ !ComboCounter
       RTL
