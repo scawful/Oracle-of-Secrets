@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesen2 Ops Center</title>
+    <style>
+        body { font-family: monospace; background: #1e1e1e; color: #d4d4d4; margin: 0; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; height: 100vh; box-sizing: border-box; }
+        h1 { grid-column: 1 / -1; margin: 0; color: #569cd6; font-size: 1.5em; }
+        .panel { background: #252526; border: 1px solid #333; padding: 10px; border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; }
+        .panel h2 { margin: 0 0 10px 0; color: #ce9178; font-size: 1.1em; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        #screen-container { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; }
+        #screenshot { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
+        #state-json { white-space: pre; overflow: auto; flex: 1; color: #9cdcfe; font-size: 0.9em; }
+        .status-bar { grid-column: 1 / -1; display: flex; gap: 20px; font-size: 0.9em; color: #6a9955; }
+        .blink { animation: blinker 1s linear infinite; color: #f44747; }
+        @keyframes blinker { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+    <h1>Mesen2 Ops Center <span id="mode-badge" style="font-size: 0.6em; color: #888;">(Connecting...)</span></h1>
+    
+    <div class="status-bar">
+        <span id="conn-status">Checking Connection...</span>
+        <span>Frame: <span id="frame-count">0</span></span>
+        <span>Mode: <span id="game-mode">?</span></span>
+        <span>Room: <span id="room-id">?</span></span>
+    </div>
+
+    <div class="panel">
+        <h2>Live Feed (Auto-Refresh)</h2>
+        <div id="screen-container">
+            <img id="screenshot" src="" alt="Waiting for feed...">
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Game State</h2>
+        <div id="state-json">Loading...</div>
+    </div>
+
+    <script>
+        const API_ROOT = window.location.origin;
+        let isHeadless = false;
+
+        async function updateState() {
+            try {
+                const res = await fetch(`${API_ROOT}/state`);
+                const data = await res.json();
+                
+                // Update Badge
+                document.getElementById('mode-badge').innerText = isHeadless ? "[HEADLESS]" : "[GUI BRIDGE]";
+                
+                // Update JSON
+                document.getElementById('state-json').innerText = JSON.stringify(data, null, 2);
+                
+                // Update Status
+                document.getElementById('conn-status').innerText = "● Connected";
+                document.getElementById('conn-status').className = "";
+                document.getElementById('frame-count').innerText = data.frame || 0;
+                document.getElementById('game-mode').innerText = `0x${(data.mode || 0).toString(16).toUpperCase()}`;
+                document.getElementById('room-id').innerText = `0x${(data.roomId || 0).toString(16).toUpperCase()}`;
+
+            } catch (e) {
+                document.getElementById('conn-status').innerText = "○ Disconnected";
+                document.getElementById('conn-status').className = "blink";
+            }
+        }
+
+        async function updateScreen() {
+            try {
+                // Request screenshot command
+                const res = await fetch(`${API_ROOT}/command`, {
+                    method: 'POST',
+                    body: JSON.stringify({ type: "SCREENSHOT" })
+                });
+                const data = await res.json();
+                
+                if (data.payload && data.payload.startsWith("data:image")) {
+                    document.getElementById('screenshot').src = data.payload;
+                } else if (data.payload && !data.payload.startsWith("data")) {
+                    // GUI bridge returns path, we can't display local path easily in browser 
+                    // without a file server. 
+                    // Fallback: Just show text if it's a path
+                    console.log("Screenshot path returned (GUI mode):", data.payload);
+                }
+            } catch (e) {
+                console.error("Screenshot failed:", e);
+            }
+        }
+
+        // Detect mode
+        fetch(`${API_ROOT}/health`).then(r => r.json()).then(d => {
+            isHeadless = d.mode === "headless";
+        });
+
+        setInterval(updateState, 500);
+        setInterval(updateScreen, 1000); // 1fps screenshot to save bandwidth
+    </script>
+</body>
+</html>

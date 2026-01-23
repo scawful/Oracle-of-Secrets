@@ -1,0 +1,65 @@
+{
+  "set": "ow_baseline",
+  "entries": [
+    {
+      "id": "ow_start_day0",
+      "slot": 1,
+      "description": "Overworld start, day 0",
+      "tags": ["overworld", "start"]
+    },
+    {
+      "id": "ow_transition_lostwoods_west",
+      "slot": 2,
+      "description": "Lost Woods west transition",
+      "tags": ["overworld", "transition"]
+    },
+    {
+      "id": "ow_transition_western_gate",
+      "slot": 3,
+      "description": "Western gate transition",
+      "tags": ["overworld", "transition"]
+    },
+    {
+      "id": "ow_lava_island",
+      "slot": 4,
+      "description": "Lava island entry",
+      "tags": ["overworld", "lava"]
+    },
+    {
+      "id": "ow_broken_bridge",
+      "slot": 5,
+      "description": "Broken bridge",
+      "tags": ["overworld", "bridge"]
+    },
+    {
+      "id": "ow_swamp_exit",
+      "slot": 6,
+      "description": "Swamp exit",
+      "tags": ["overworld", "swamp"]
+    },
+    {
+      "id": "ow_ruins_gate",
+      "slot": 7,
+      "description": "Ruins gate",
+      "tags": ["overworld", "ruins"]
+    },
+    {
+      "id": "ow_mountain_pass",
+      "slot": 8,
+      "description": "Mountain pass",
+      "tags": ["overworld", "mountain"]
+    },
+    {
+      "id": "ow_beach_entry",
+      "slot": 9,
+      "description": "Beach entry",
+      "tags": ["overworld", "beach"]
+    },
+    {
+      "id": "ow_market_gate",
+      "slot": 10,
+      "description": "Market gate",
+      "tags": ["overworld", "market"]
+    }
+  ]
+}

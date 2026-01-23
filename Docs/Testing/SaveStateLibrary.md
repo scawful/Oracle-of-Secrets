@@ -89,20 +89,15 @@ python3 scripts/state_library.py import \
 
 ### Capture directly from a live Mesen2 session
 
-For now, use a **pre-saved** slot or state file (until `wait-save` is implemented in the CLI).
+This triggers a savestate via the bridge, waits for it to complete, reads state JSON, and imports the result in one step.
 
 ```bash
-# Save manually first (Mesen UI or CLI)
-./scripts/mesen_cli.sh savestate ~/Documents/Mesen2/SaveStates/oos168x_1.mss
-
-# Import without triggering a save
 python3 scripts/state_library.py capture \
   --id zt_water_gate_pre \
   --rom Roms/oos168x.sfc \
-  --state ~/Documents/Mesen2/SaveStates/oos168x_1.mss \
+  --slot 1 \
   --description "Zora Temple room 0x27, pre-switch" \
-  --tags dungeon,zora-temple,water-gate \
-  --no-save
+  --tags dungeon,zora-temple,water-gate
 ```
 
 Skip triggering a savestate (use an existing slot or state file):
@@ -134,8 +129,6 @@ python3 scripts/state_library.py capture-set \
   --slot 9:ow_beach_entry \
   --slot 10:ow_market_gate
 ```
-
-**Note:** `capture-set` currently assumes slot files already exist (until `wait-save` is implemented).
 
 Reuse an existing set mapping (captures all slots already listed in the manifest):
 
@@ -182,10 +175,8 @@ python3 scripts/state_library.py capture-set \
 Create a plan file with entries, then run:
 
 ```bash
-./scripts/capture_workflow.py --plan Docs/Testing/ow_baseline_plan.json
+./scripts/capture_workflow.py --plan Docs/Testing/ow_baseline_plan.json --snapshot
 ```
-
-**Planned:** `--snapshot` once `snapshot` is implemented in `mesen_cli.sh`.
 
 ### Export a library state back to Mesen2
 
@@ -224,10 +215,10 @@ python3 scripts/state_library.py capture \
   --snapshot
 ```
 
-**Planned:** `--snapshot` depends on `mesen_cli.sh snapshot` (not yet implemented). For now, use `state-json` + `screenshot` manually and attach paths in the manifest.
+This stores a screenshot (`screenshot_path`) and full state JSON (`state_json_path`) alongside the manifest entry.
 
 ## Automation roadmap
 
-- Add `wait-save` to the bridge/CLI so `capture`/`capture-set` can auto-save reliably.
-- Add `snapshot` (state-json + screenshot) to the CLI for one-call captures.
-- Update `capture_workflow.py` to use `wait-save` + `snapshot` once available.
+- Add `wait-state`, `wait-room`, `wait-indoors` helpers to simplify scripted capture flows.
+- Extend `snapshot` metadata to include ROM hash + instance id.
+- Add batch capture validations (min frame age, non-transition checks).

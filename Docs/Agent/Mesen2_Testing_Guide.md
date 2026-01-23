@@ -139,7 +139,7 @@ Else (0x00 or 0x01):
 ```bash
 # Load a known state via the bridge
 ./scripts/mesen_cli.sh loadstate ~/Documents/Mesen2/SaveStates/oos168x_1.mss
-sleep 1
+./scripts/mesen_cli.sh wait-load 10
 
 # Verify state loaded
 ./scripts/mesen_cli.sh state
@@ -220,7 +220,10 @@ If a local save state is missing, you can skip those tests:
 | `savestate PATH` | Save state to file | `./mesen_cli.sh savestate /tmp/oos168x.mss` |
 | `loadslot N` | Load slot 1-10 | `./mesen_cli.sh loadslot 1` |
 | `saveslot N` | Save slot 1-10 | `./mesen_cli.sh saveslot 1` |
-| `screenshot [PATH]` | Save screenshot (socket/headless only) | `./mesen_cli.sh screenshot ~/Desktop/oos.png` |
+| `wait-load [SECS]` | Wait for load to finish | `./mesen_cli.sh wait-load 10` |
+| `wait-save [SECS]` | Wait for save to finish | `./mesen_cli.sh wait-save 10` |
+| `screenshot [PATH]` | Save screenshot | `./mesen_cli.sh screenshot ~/Desktop/oos.png` |
+| `snapshot [DIR]` | Save state JSON + screenshot | `./mesen_cli.sh snapshot /tmp/oos_snap` |
 | `reinit` | Queue runtime reinit | `./mesen_cli.sh reinit dialog,sprites` |
 | `reinit-status` | Read reinit flags/status/error | `./mesen_cli.sh reinit-status` |
 | `pause` | Pause emulator | `./mesen_cli.sh pause` |
@@ -231,7 +234,7 @@ If a local save state is missing, you can skip those tests:
 | `ping` | Test bridge connection | `./mesen_cli.sh ping` |
 
 ### Planned CLI Additions (not yet implemented)
-- `wait-load`, `wait-save`, `snapshot`, `wait-state`, `wait-room`, `wait-indoors`
+- `wait-state`, `wait-room`, `wait-indoors`
 - `readblock`, `writeblock`, `cpu`, `stack`, `stack-report`, `step/stepover/stepout`
 - `watch`, `watchlist`, `trace`, `log`, `trace-report`
 - `emu-state-keys`, `emu-get`, `emu-call`, `where`, `loadrom`

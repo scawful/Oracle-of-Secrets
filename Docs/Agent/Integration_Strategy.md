@@ -132,9 +132,9 @@ def run_test(test_def: dict) -> dict:
     state = test_def.get("saveState", {})
     if isinstance(state, dict) and state.get("path"):
         run_mesen_command("loadstate", state["path"])
-        # No wait-load yet; use a short sleep or poll a known address
         import time
-        time.sleep(float(state.get("waitSeconds", 1.0)))
+        # Wait for savestate load to complete (fallback to short sleep if needed)
+        run_mesen_command("wait-load", str(int(state.get("waitSeconds", 1.0))))
 
     # Execute test sequence
     for step in test_def["steps"]:
