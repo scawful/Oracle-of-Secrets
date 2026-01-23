@@ -1,5 +1,63 @@
 ; =========================================================
-; Sprite Properties
+; Deku Scrub NPCs (Multiple Variants)
+;
+; NARRATIVE ROLE: Transformation quest NPCs. The cursed Deku Scrub gives
+;   Link the Deku Mask after being healed with the Song of Healing. The
+;   Deku Butler and Princess appear in Tail Palace (D2) dungeon context
+;   and have peacetime variants for post-dungeon content.
+;
+; TERMINOLOGY: "Deku Scrub" = DekuScrubNPCs
+;   - "Withering Deku" - Cursed scrub who needs Song of Healing
+;   - "Deku Butler" - Subtype 1, palace servant
+;   - "Deku Princess" - Subtype 2, Tail Palace royalty
+;   - Quest parallels Zora Princess revelation in D4
+;
+; VARIANTS (via SprSubtype):
+;   0x00: Default - Cursed/Withering Deku Scrub
+;   0x01: Deku Butler - Tail Palace servant
+;   0x02: Deku Princess - Tail Palace royalty
+;
+; AREA-SPECIFIC BEHAVIOR:
+;   AreaIndex 0x2E: Deku Butler peacetime (state 7)
+;   AreaIndex 0x2F: Deku Princess peacetime (state 8)
+;
+; STATES:
+;   0: EstadoInactivo - Idle, show initial message
+;   1: QuiereCuracion - Wait for Song of Healing
+;   2: DarMascara - Play transformation, show thanks
+;   3: Regalo - Give Deku Mask item
+;   4: Withered - Post-quest withered appearance
+;   5: DekuButler - Butler dialogue (0x80)
+;   6: DekuPrincess - Princess dialogue (0xC3)
+;   7: DekuButler_Peacetime - Post-D2 butler (0x1B9)
+;   8: DekuPrincess_Peacetime - Post-D2 princess (0x1BA)
+;
+; MESSAGES:
+;   0x80 - Deku Butler dialogue
+;   0xC3 - Deku Princess dialogue
+;   0x140 - Initial meeting ("Help me...")
+;   0x141 - Thanks after healing
+;   0x1B9 - Butler peacetime
+;   0x1BA - Princess peacetime
+;
+; FLAGS READ:
+;   $7EF301 - Deku Mask quest done
+;   SongFlag - Check for Song of Healing played
+;   Crystals bit 0x10 - Tail Palace cleared (despawn condition)
+;
+; FLAGS WRITTEN:
+;   SideQuestProg |= 0x04 - Found withering Deku Scrub
+;   SideQuestProg2 |= 0x10 - Deku Scrub soul freed
+;   $7EF301 = 1 - Deku Mask obtained
+;   MapIcon = 2 - Set after peacetime dialogue
+;
+; ITEMS GIVEN:
+;   0x11 - Deku Mask
+;
+; RELATED:
+;   - mask_salesman.asm (teaches Song of Healing)
+;   - zora_princess.asm (similar Song of Healing pattern)
+;   - Tail Palace (D2 dungeon context)
 ; =========================================================
 
 !SPRID              = Sprite_DekuScrubNPCs

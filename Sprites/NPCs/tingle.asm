@@ -1,4 +1,52 @@
-; Tingle Sprite
+; =========================================================
+; Tingle (Map Merchant)
+;
+; NARRATIVE ROLE: Eccentric map salesman who sells dungeon maps for
+;   rupees. Provides optional content that helps with dungeon navigation.
+;   His appearance hints at broader Zelda universe connections.
+;
+; TERMINOLOGY: "Tingle" = Tingle
+;   - Sells 7 dungeon maps in sequence
+;   - TingleId tracks which map is next
+;   - TingleMaps bitfield tracks purchased maps
+;
+; STATES:
+;   0: Forward - Face down, track player
+;   1: Right - Face right, track player
+;   2: Left - Face left, track player
+;   3: MapPrompt - Show purchase prompt for current map
+;   4: MapSales - Process purchase transaction
+;   5: PlayerSaidNo - Rejection dialogue
+;
+; MESSAGES:
+;   0x18D - Initial greeting ("Tingle, Tingle, Kooloo-Limpah!")
+;   0x18E - Purchase successful
+;   0x18F - Not enough rupees
+;   0x190 - All maps purchased
+;   0x191-0x197 - Individual map offers (dungeons 1-7)
+;   0x198 - Player declined purchase
+;
+; MAP COSTS:
+;   Map 0: 50 rupees  (bit 0x01)
+;   Map 1: 75 rupees  (bit 0x02)
+;   Map 2: 100 rupees (bit 0x04)
+;   Map 3: 80 rupees  (bit 0x08)
+;   Map 4: 90 rupees  (bit 0x10)
+;   Map 5: 60 rupees  (bit 0x20)
+;   Map 6: 120 rupees (bit 0x40)
+;
+; FLAGS READ/WRITTEN:
+;   TingleId - Current map index (0-7)
+;   TingleMaps - Bitfield of purchased maps
+;   $7EF360 - Rupees (read and decremented)
+;
+; CHOICE HANDLING:
+;   $1CE8 - Player response (0 = yes, non-zero = no)
+;
+; RELATED:
+;   - sram.asm (TingleId, TingleMaps definitions)
+;   - Core/messages.org (message text)
+; =========================================================
 
 !SPRID              = $22
 !NbrTiles           = 03  ; Number of tiles used in a frame

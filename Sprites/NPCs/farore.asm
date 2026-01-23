@@ -1,4 +1,52 @@
 ; =========================================================
+; Farore, Oracle of Secrets
+;
+; NARRATIVE ROLE: Central story character - the Oracle of Secrets and
+;   keeper of hidden knowledge. Kidnapped by Kydrog in the intro, she
+;   serves as his "anchor" to the Light World until rescued in D7.
+;   Post-rescue, she reveals the truth about Ganondorf and guides Link
+;   to forge the Master Sword.
+;
+; TERMINOLOGY: "Farore" = Farore (Oracle of Secrets)
+;   - NOT the Goddess Farore (though named after her)
+;   - Last of the Oracle bloodline (connected to seal guardians)
+;   - Bound within the Meadow Blade (fragment of her spirit)
+;
+; CONTEXT-DEPENDENT BEHAVIOR:
+;   - INDOORS: Uses HyruleDream draw/main (dream sequences)
+;   - OUTDOORS: Uses standard Farore draw/main (overworld/cutscenes)
+;
+; STATES (Outdoor):
+;   0: Intro start - Initial cutscene
+;   1: Move up - Walking toward player
+;   2: Move left - Walking toward player
+;   3: Wait/message - Show dialogue, wait
+;   4: Proceed - Cutscene continuation
+;   5: Follow outdoor - Following Link (pre-Maku)
+;   6: Follow Maku - Following Link (Maku area)
+;   7: Wait for Kydrog - Imprisoned state
+;
+; MESSAGES:
+;   0x0E - Initial meeting dialogue
+;   0x70 - Meadow Blade telepathy (her spirit in the sword)
+;   0x138 - Dragon Ship rescue dialogue
+;   0x220+ (planned) - Post-D7 Hall of Secrets exposition
+;
+; FLAGS:
+;   $B6 - Story state (0=intro, 1=Maku area, 2=waiting)
+;   $7EF300 - Set after Kydrog encounter (removes sprites)
+;
+; RELATED:
+;   - kydrog.asm (captures her in intro, anchor mechanic)
+;   - maku_tree.asm (her sanctuary)
+;   - hyrule_dream.asm (indoor dream variant)
+;   - narrative_lockdown.md (post-D7 exposition plans)
+;
+; TODO:
+;   - Add post-rescue states (8+) for Hall of Secrets NPC
+;   - Implement Ganondorf exposition dialogue
+;   - Add Master Sword guidance sequence
+; =========================================================
 ; Farore
 
 !SPRID              = Sprite_Farore

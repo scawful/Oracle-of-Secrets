@@ -1,4 +1,52 @@
-; Goron Sprite
+; =========================================================
+; Goron NPCs (Kalyxo & Eon Abyss Variants)
+;
+; NARRATIVE ROLE: Dual-world Goron NPCs. In Kalyxo (Light World), Gorons
+;   guard the mines and require Rock Meat trade to open access. In the
+;   Eon Abyss (Dark World), Gorons provide lore and hints about the
+;   ancient world before Kydrog's corruption.
+;
+; TERMINOLOGY: "Goron" = Goron
+;   - "Kalyxo Goron" - Light World variant, mine guards
+;   - "Eon Goron" - Dark World variant, temporal echoes
+;   - Rock Meat quest parallels Zora reconciliation arc
+;
+; CONTEXT-DEPENDENT BEHAVIOR:
+;   - WORLDFLAG = 0 (Kalyxo): Uses KalyxoGoron_Draw, Rock Meat quest
+;   - WORLDFLAG = 1 (Eon Abyss): Uses EonGoron_Draw, lore dialogue
+;
+; STATES (Kalyxo):
+;   0: Main - Check Rock Meat, show appropriate message
+;   1: OpenMines - Animation, set flag $04C6
+;   2: MinesOpened - Post-quest idle
+;
+; STATES (Eon Abyss):
+;   3: Main - Default dialogue (0x1B0)
+;   4: Sing - Singing animation, area 0x55 (0x1B2)
+;   5: Punch - Punching animation (0x1B1)
+;
+; MESSAGES:
+;   0x1A7 - Kalyxo: No Rock Meat ("We're hungry...")
+;   0x1A8 - Kalyxo: Some Rock Meat (1-4 pieces)
+;   0x1A9 - Kalyxo: Enough Rock Meat (5+), opens mines
+;   0x1B0 - Eon: Default lore dialogue
+;   0x1B1 - Eon: Punch animation dialogue
+;   0x1B2 - Eon: Singing dialogue (area 0x55)
+;
+; FLAGS READ:
+;   WORLDFLAG - Determines Kalyxo vs Eon variant
+;   AreaIndex - Special behavior at 0x55 (singing)
+;   RockMeat - Trade item count (0-5+)
+;   $7EF280,X - Room flag check for mines state
+;
+; FLAGS WRITTEN:
+;   $04C6 = 4 - Triggers mine opening sequence
+;
+; RELATED:
+;   - rock_meat.asm (trade item)
+;   - goron_mines (D6 dungeon)
+;   - narrative_lockdown.md (Goron arc parallels Zora arc)
+; =========================================================
 
 !SPRID              = $F2
 !NbrTiles           = 04  ; Number of tiles used in a frame

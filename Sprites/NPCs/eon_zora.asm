@@ -1,3 +1,39 @@
+; =========================================================
+; Eon Zora (Eon Abyss Sea Zora)
+;
+; NARRATIVE ROLE: Friendly NPCs in the Eon Abyss who provide hints,
+;   lore, and guidance. They are temporally displaced Sea Zoras from
+;   before the Schism existed, which is why they remain unified while
+;   their surface kin war.
+;
+; TERMINOLOGY: "Eon Zora" = EonZora
+;   - NOT the same as corrupted River Zoras (those are enemies)
+;   - Friendly NPCs who remember "what the Zoras were meant to be"
+;   - Guardians of the boundary between worlds
+;
+; BEHAVIOR: Wanders randomly, location-based dialogue
+;
+; STATES:
+;   0: Forward - Walking down animation
+;   1: Left - Walking left animation
+;   2: Right - Walking right animation
+;   3: Back - Walking up animation
+;
+; MESSAGES:
+;   0x1AA - Temporal Pyramid area dialogue
+;   0x1AB - Near Shrine of Power
+;   0x1AC - Near Shrine of Wisdom (swamp area)
+;   0x1AD - Underwater area (Kydrog lore)
+;   0x1AE - Default / Found Ring
+;   0x1AF - Portal area / Quest hint
+;
+; FLAGS: Sets FOUNDRINGS on dialogue (random ring drop)
+;
+; RELATED:
+;   - eon_zora_elder.asm (elder variant)
+;   - zora.asm (handler dispatch based on WORLDFLAG)
+;   - shrine_cosmology.md (Sea Shrine lore)
+; =========================================================
 ; Eon Abyss Sea Zora NPC
 
 Sprite_EonZora_Main:

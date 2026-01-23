@@ -1,4 +1,39 @@
+; =========================================================
 ; Zora Princess
+;
+; NARRATIVE ROLE: D4 (Zora Temple) quest NPC. The imprisoned princess
+;   reveals the truth about Kydrog's manipulation of the Zora conflict
+;   when Link plays the Song of Healing. Her dying words expose that
+;   the River Zoras were framed by Kydrog's pirates wearing stolen scales.
+;
+; TERMINOLOGY: "Zora Princess" = ZoraPrincess
+;   - Part of the Sea Zora faction
+;   - Sister conflict: Sea Zoras vs River Zoras (The Schism)
+;   - Resolution: Princess's revelation starts reconciliation arc
+;
+; STATES:
+;   0: WaitForLink - Shows initial dialogue (0xC5)
+;   1: CheckForSongOfHealing - Waits for SongFlag
+;   2: ThanksMessage - Post-healing revelation (0xC6)
+;   3: GiveZoraMask - Grants item, despawns
+;
+; MESSAGES:
+;   0xC5 - Initial plea for help
+;   0xC6 - Death/revelation dialogue (enhance for Kydrog conspiracy)
+;
+; FLAGS:
+;   $7EF302 - Zora Mask obtained (sprite despawns if set)
+;   SongFlag - Triggers state transition when Song of Healing played
+;
+; RELATED:
+;   - followers.asm (Zora Baby follower type 0x09 = princess's attendant)
+;   - zora.asm (main Zora handler dispatches to this)
+;   - East Kalyxo reconciliation scene (post-D4)
+;
+; TODO:
+;   - Enhance 0xC6 dialogue with conspiracy revelation
+;   - Add Zora Baby reaction state after revelation
+; =========================================================
 ; Grants Link the Zora Mask when Song of Healing is played
 
 !SPRID              = Sprite_ZoraPrincess

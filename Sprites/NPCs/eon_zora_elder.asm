@@ -1,3 +1,39 @@
+; =========================================================
+; Eon Zora Elder
+;
+; NARRATIVE ROLE: Ancient Eon Abyss Zora who guides Link to the Sea
+;   Shrine (First Mirror). Reveals the history of crystal-mirror magic
+;   and why Kydrog targeted the Zoras - their united magic could seal
+;   the rifts he uses to travel between worlds.
+;
+; TERMINOLOGY: "Eon Zora Elder" = EonZoraElder
+;   - Distinct from Sea Zoras (Kalyxo) and River Zoras
+;   - Eon Zoras are temporally displaced - exist before the Schism
+;   - Guardians of the First Mirror and portal magic knowledge
+;
+; STATES:
+;   0: Idle - Default breathing animation
+;   1: Surprised - Reaction to Link's arrival
+;   2: WithRod - Holding ceremonial staff (post-dialogue?)
+;
+; MESSAGES: (Planned 0x1F0-0x1FF)
+;   - Sea Shrine introduction
+;   - Portal magic history ("Crystal-mirror magic")
+;   - Warn about Octoboss guarding the depths
+;   - Post-shrine lore about the seal
+;
+; FLAGS: None currently
+;
+; RELATED:
+;   - eon_zora.asm (regular Eon Zora NPCs)
+;   - Sea Shrine maps (0x79 area)
+;   - shrine_cosmology.md (lore context)
+;
+; TODO:
+;   - Add dialogue handler with message range 0x1F0+
+;   - Add conditional dialogue based on shrine completion
+;   - Consider name for the Elder character
+; =========================================================
 ; Eon Abyss Sea Zora Elder NPC
 
 Sprite_EonZoraElder_Main:

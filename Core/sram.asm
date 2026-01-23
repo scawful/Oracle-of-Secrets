@@ -1,546 +1,693 @@
-
-; Game state
-;   0x00 - Very start; progress cannot be saved in this state
-;   0x01 - Uncle reached
-;   0x02 - Farore intro over | Zelda rescued
-;   0x03 - Agahnim defeated
-GameState       = $7EF3C5
-
-; Red X on Hall of Secrets
-; Red X on Kalyxo Pyramid
-
-; .fmp h.i.
-;  f - fortress of secrets
-;  m - master sword
-;  p - pendant quest
-;  h - hall of secrets
-;  i - intro over, maku tree
-OOSPROG         = $7EF3D6
-
-; Bitfield of less important progression
-; .fbh .zsu
-;   u - Uncle
-;   s - Priest visited in sanc after Zelda is kidnapped again
-;   z - Zelda brought to sanc
-;   h - Uncle left Link's house (0: spawn | 1: gone)
-;   b - Book of Mudora obtained/mentioned; controls Aginah dialog
-;   f - Flipped by fortune tellers to decide fortune set to give
-OOSPROG2       = $7EF3C6
-
-; .... ...m
-;   m - maku tree has met link (0: no | 1: yes)
-MakuTreeQuest  = $7EF3D4
-
-; Map icon
-;   0x00 - Red X on Maku Tree/Maku Warp
-;   0x01 - Toadstool Woods Crystal
-;   0x02 - Kalyxo All Crystals
-;   0x03 -
-;   0x04 -
-;   0x05 -
-;   0x06 -
-;   0x07 -
-;   0x08 - Skull on GT        | Climb Ganon's Tower
-MapIcon        = $7EF3C7
-
-; 01 - Fishing Rod
-; 02 - Portal Rod
-CustomRods = $7EF351
-
-; Free SRAM Block 38A-3C4
-FishingRod = $7EF38A
-
-; Collectibles
-Bananas    = $7EF38B
-Pineapples = $7EF38D
-RockMeat   = $7EF38F
-Seashells  = $7EF391
-Honeycomb  = $7EF393
-DekuSticks = $7EF395
-
-TingleMaps = $7EF396
-TingleId   = $7EF397
-
-; .dgi zktm
-;   m - Mushroom Grotto
-;   t - Tail Palace
-;   k - Kalyxo Castle
-;   z - Zora Temple
-;   i - Glacia Estate
-;   g - Goron Mines
-;   d - Dragon Ship
-Scrolls    = $7EF398
-
-; Keep track of the previous scroll
-; For re-reading old hints.
-PrevScroll = $7EF39A
-
-; .dts fwpb
-;   b - bean planted
-;   w - plant watered
-;   p - pollinated by bee
-;   f - first day
-;   s - second day
-;   t - third day
-;   d - done
-MagicBeanProg = $7EF39B
-
-JournalState = $7EF39C
-
-; State machine for Link's House intro sequence (custom_tag.asm)
-;   0x00 - Telepathic Plea phase
-;   0x01 - Wake Up Player phase
-;   0x02 - End (intro complete)
-StoryState   = $7EF39E
-
-; 7EF403 - 7EF4FD Partially repurposed block
-
-; .... .cpw
-;   c - courage
-;   p - power
-;   w - wisdom
-Dreams        = $7EF410
-WaterGateStates = $7EF411
+; =========================================================
+; Oracle of Secrets - SRAM Definitions
+; =========================================================
+; Standardized naming convention: PascalCase for all variables
+; Bit constants use !Prefix_Name format
+;
+; Organization:
+;   1. Flag Management Macros
+;   2. Bit Constants (for bitfields)
+;   3. Story Progression ($7EF300-30F, $7EF3C5-D8)
+;   4. Items ($7EF340-35F)
+;   5. Player Stats ($7EF360-37B)
+;   6. Dungeon Data ($7EF37C-389, $7EF364-369)
+;   7. Collectibles ($7EF38A-39F)
+;   8. Save File Metadata ($7EF3C8-E2, $7EF3E3-4FF)
+;   9. Follower System ($7EF3CC-D3)
+;  10. Free Blocks Reference (334 bytes available)
+; =========================================================
 
 ; =========================================================
-; Items
+; 1. FLAG MANAGEMENT MACROS
 ; =========================================================
-; 0x00 - Nothing
-; 0x01 - Bow
-; 0x02 - Bow and arrows
-; 0x03 - Silver bow
-; 0x04 - Silver bow and arrows
-; Picking the arrow and nonarrow versions is done by the HUD draw routines
-Bow             = $7EF340
-
-; 0x00 - Nothing
-; 0x01 - Blue boomerang
-; 0x02 - Red boomerang
-Boomerang       = $7EF341
-
-; 0x00 - Nothing
-; 0x01 - Hookshot
-; 0x02 - Goldstar (L/R)
-Hookshot        = $7EF342
-
-; Number of bombs
-Bombs           = $7EF343
-
-; 0x00 - Nothing
-; 0x01 - Mushroom
-; 0x02 - Powder
-MagicPowder     = $7EF344
-
-; 0x00 - Nothing
-; 0x01 - Fire rod
-FireRod         = $7EF345
-
-; 0x00 - Nothing
-; 0x01 - Ice rod
-IceRod          = $7EF346
-
-; 0x00 - Nothing
-; 0x01 - Zora Mask
-ZoraMask        = $7EF347
-
-; 0x00 - Nothing
-; 0x01 - Bunny Hood
-BunnyHood       = $7EF348
-
-; 0x00 - Nothing
-; 0x01 - Deku Mask
-DekuMask        = $7EF349
-
-; 0x00 - Nothing
-; 0x01 - Lamp
-Lamp            = $7EF34A
-
-; 0x00 - Nothing
-; 0x01 - Magic hammer
-Hammer          = $7EF34B
-
-; 0x00 - Nothing
-; 0x01 - Shovel
-; 0x02 - Inactive flute
-; 0x03 - Active flute
-Flute           = $7EF34C
-
-; 0x00 - Nothing
-; 0x01 - Roc's Feather
-RocsFeather     = $7EF34D
-
-; 0x00 - Nothing
-; 0x01 - Book of Mudora
-Book            = $7EF34E
-
-; 0x00 - Nothing
-; Other values indicate the index of the currently selected bottle
-BottleIndex     = $7EF34F
-
-; 0x00 - Nothing
-; 0x01 - Cane of Somaria
-Somaria         = $7EF350
-
-; 0x00 - Nothing
-; 0x01 - Cane of Byrna
-Byrna           = $7EF351
-
-; 0x00 - Nothing
-; 0x01 - Stone Mask
-StoneMask       = $7EF352
-
-; 0x00 - Nothing
-; 0x01 - Letter (works like mirror)
-; 0x02 - Mirror
-; 0x03 - Deleted triforce item
-Mirror          = $7EF353
-
-; 0x00 - Lift 1 (nothing)
-; 0x01 - Lift 2 (power glove)
-; 0x02 - Lift 3 (titan's mitt)
-Gloves          = $7EF354
-
-; 0x00 - Nothing
-; 0x01 - Pegasus boots
-; bit 2 of $7E:F379 also needs to be set to actually dash
-Boots           = $7EF355
-
-; 0x00 - Nothing
-; 0x01 - Zora's flippers
-Flippers        = $7EF356
-
-; 0x00 - Nothing
-; 0x01 - Moon pearl
-Pearl           = $7EF357
-
-; 0x00 - Nothing
-; 0x01 - Wolf Mask
-WolfMask        = $7EF358
-
-; 0x00 - Nothing
-; 0x01 - Fighter sword
-; 0x02 - Master sword
-; 0x03 - Tempered sword
-; 0x04 - Golden sword
-; 0xFF - Set when sword is handed in to smithy
-Sword           = $7EF359
-
-; 0x00 - Nothing
-; 0x01 - Fighter shield
-; 0x02 - Fire shield
-; 0x03 - Mirror shield
-Shield          = $7EF35A
-
-; 0x00 - Green mail
-; 0x01 - Blue mail
-; 0x02 - Red mail
-Armor           = $7EF35B
-
-; 0x00 - Nothing
-; 0x01 - Mushroom (unused)
-; 0x02 - Empty bottle
-; 0x03 - Red potion
-; 0x04 - Green potion
-; 0x05 - Blue potion
-; 0x06 - Fairy
-; 0x07 - Bee
-; 0x08 - Good bee
-; 0x09 - Magic Bean
-; 0x0A - Milk Bottle
-Bottle1         = $7EF35C
-Bottle2         = $7EF35D
-Bottle3         = $7EF35E
-Bottle4         = $7EF35F
-
-; Number of rupees you have
-; RUPEEDISP will be incremented or decremented until it reaches this value
-Rupees          = $7EF360
-RupeesGoal      = $7EF361
-
-; Rupee count displayed on the HUD
-RUPEEDISP       = $7EF362
-
-; Bitfields for ownership of various dungeon items
-;   SET 2        SET 1
-; xced aspm    wihb tg..
-;   c - Hyrule Castle
-;   x - Sewers
-;   a - Agahnim's Tower
+; SRAM-specific macros using long addressing and bit masks.
+; For sprite/WRAM flags, use macros in sprite_macros.asm instead.
 ;
-;   e - Eastern Palace
-;   d - Desert Palace
-;   h - Tower of Hera
+; Key difference from sprite_macros.asm:
+;   - These use BIT MASKS ($01, $02, $04...) not bit positions (0, 1, 2...)
+;   - These use LONG addressing (LDA.l) for SRAM access
+;   - sprite_macros.asm uses short addressing for WRAM
 ;
-;   p - Palace of Darkness
-;   s - Swamp Palace
-;   w - Skull Woods
-;   b - Thieves' Town
-;   i - Ice Palace
-;   m - Misery Mire
-;   t - Turtle Rock
-;   g - Ganon's Tower
-COMPASS1        = $7EF364
-COMPASS2        = $7EF365
+; Usage examples:
+;   %SRAMSetFlag(SideQuestProgress, !SideQuest_MetMaskSalesman)
+;   %SRAMCheckFlag(StoryProgress, !Story_IntroComplete) : BNE .has_flag
 
-BIGKEY1         = $7EF366
-BIGKEY2         = $7EF367
+; Set a bit in an SRAM progress flag (long addressing, bit mask)
+macro SRAMSetFlag(address, bit)
+    LDA.l <address> : ORA #<bit> : STA.l <address>
+endmacro
 
-DNGMAP1         = $7EF368
-DNGMAP2         = $7EF369
+; Clear a bit in an SRAM progress flag (long addressing, bit mask)
+macro SRAMClearFlag(address, bit)
+    LDA.l <address> : AND.b #<bit>^$FF : STA.l <address>
+endmacro
 
-; Number of rupees donated to fairies
-WISHRUP         = $7EF36A
+; Check if bit is set in SRAM (Z=0 if set, Z=1 if not set)
+macro SRAMCheckFlag(address, bit)
+    LDA.l <address> : AND #<bit>
+endmacro
 
-; Number of heart pieces towards next container
-; Intended to be a value from 0-3
-HEARTPC         = $7EF36B
+; Check if bit is NOT set in SRAM (Z=1 if set, Z=0 if not set)
+macro SRAMCheckFlagClear(address, bit)
+    LDA.l <address> : AND #<bit> : EOR #<bit>
+endmacro
 
-; Maximum health; 1 heart container = 0x08 HP
-MAXHP           = $7EF36C
+; Set a full byte value in SRAM
+macro SRAMSetValue(address, value)
+    LDA #<value> : STA.l <address>
+endmacro
 
-; Current health
-; You die at 0x00
-; You also die at ≥0xA8
-CURHP           = $7EF36D
+; Increment a byte value in SRAM
+macro SRAMIncValue(address)
+    LDA.l <address> : INC : STA.l <address>
+endmacro
 
-; Magic power, capped at 128
-MagicPower      = $7EF36E
+; =========================================================
+; 2. BIT CONSTANTS
+; =========================================================
 
-; Current number of keys for whatever dungeon is loaded
-KEYS            = $7EF36F
+; ---------------------------------------------------------
+; GameState Values ($7EF3C5)
+; ---------------------------------------------------------
+!GameState_Start           = $00  ; Cannot save yet
+!GameState_LoomBeach       = $01  ; Intro sequence begun
+!GameState_KydrogComplete  = $02  ; Sent to Eon Abyss
+!GameState_FaroreRescued   = $03  ; D7 complete, endgame
 
-; Number of capacity upgrades received
-BOMBCAP         = $7EF370
-ARROWCAP        = $7EF371
+; ---------------------------------------------------------
+; StoryProgress Bits (OOSPROG @ $7EF3D6)
+; ---------------------------------------------------------
+; Bitfield: .fmp h.i.
+!Story_IntroComplete       = $01  ; bit 0 - Met Maku Tree
+!Story_HallOfSecrets       = $02  ; bit 1 - Hall of Secrets flag
+!Story_PendantQuest        = $04  ; bit 2 - Shrine access
+!Story_VillageElderMet     = $10  ; bit 4 - Elder met (Master Sword?)
+!Story_MasterSword         = $10  ; bit 4 - (alias, same as above)
+!Story_FortressComplete    = $80  ; bit 7 - Final dungeon done
 
-; Refills health
-; Expects multiples of 8
-HeartRefill     = $7EF372
+; ---------------------------------------------------------
+; StoryProgress2 Bits (OOSPROG2 @ $7EF3C6)
+; ---------------------------------------------------------
+; Bitfield: .fbh .zsu (repurposed from ALTTP)
+!Story2_ImpaIntro          = $01  ; bit 0 - Impa intro complete
+!Story2_SanctuaryVisit     = $02  ; bit 1 - Sanctuary post-kidnap
+!Story2_KydrogEncounter    = $04  ; bit 2 - Kydrog encounter done
+!Story2_ImpaLeftHouse      = $08  ; bit 3 - Impa left Link's house
+!Story2_BookOfSecrets      = $20  ; bit 5 - Book obtained
+!Story2_FortuneTellerFlip  = $40  ; bit 6 - Fortune set toggle
 
-; Refills magic
-ZAPME           = $7EF373
+; ---------------------------------------------------------
+; Crystals Bits - Dungeon Completion ($7EF37A)
+; ---------------------------------------------------------
+; Uses ALTTP bit positions for compatibility
+!Crystal_D1_MushroomGrotto = $01  ; bit 0 - Palace of Darkness slot
+!Crystal_D6_GoronMines     = $02  ; bit 1 - Misery Mire slot
+!Crystal_D5_GlaciaEstate   = $04  ; bit 2 - Ice Palace slot
+!Crystal_D7_DragonShip     = $08  ; bit 3 - Turtle Rock slot
+!Crystal_D2_TailPalace     = $10  ; bit 4 - Swamp Palace slot
+!Crystal_D4_ZoraTemple     = $20  ; bit 5 - Thieves' Town slot
+!Crystal_D3_KalyxoCastle   = $40  ; bit 6 - Skull Woods slot
 
-; ... ..gbr
-;   r - Wisdom  (red)
-;   b - Power   (blue)
-;   g - Courage (green)
-Pendants        = $7EF374
+; ---------------------------------------------------------
+; SideQuestProgress Bits ($7EF3D7)
+; ---------------------------------------------------------
+; Bitfield: .dgo mwcn
+!SideQuest_MetMaskSalesman = $01  ; bit 0 - Shown "need Ocarina"
+!SideQuest_CursedCucco     = $02  ; bit 1 - Ranch quest started
+!SideQuest_DekuScrubFound  = $04  ; bit 2 - Withering Deku found
+!SideQuest_GotMushroom     = $08  ; bit 3 - Toadstool Woods
+!SideQuest_OldManMountain  = $10  ; bit 4 - (TBD)
+!SideQuest_GoronQuest      = $20  ; bit 5 - Rock Meat collecting
 
-; Refills bombs
-BOMBME          = $7EF375
+; ---------------------------------------------------------
+; SideQuestProgress2 Bits ($7EF3D8)
+; ---------------------------------------------------------
+; Bitfield: .bts fsmr
+!SideQuest2_RanchGirl      = $01  ; bit 0 - Transformed back
+!SideQuest2_SongOfHealing  = $04  ; bit 2 - Mask Salesman taught
+!SideQuest2_FortuneTeller  = $08  ; bit 3 - Any fortune shown
+!SideQuest2_DekuSoulFreed  = $10  ; bit 4 - Before mask given
+!SideQuest2_TingleMet      = $20  ; bit 5 - Any map purchased
+!SideQuest2_BeanstalkGrown = $40  ; bit 6 - Final bean stage
 
-; Refills arrows
-SHOOTME         = $7EF376
+; ---------------------------------------------------------
+; Pendants Bits ($7EF374)
+; ---------------------------------------------------------
+!Pendant_Wisdom            = $01  ; bit 0 - Red pendant
+!Pendant_Power             = $02  ; bit 1 - Blue pendant
+!Pendant_Courage           = $04  ; bit 2 - Green pendant
 
-; Arrow count
-Arrows          = $7EF377
+; ---------------------------------------------------------
+; Dreams Bits ($7EF410)
+; ---------------------------------------------------------
+!Dream_Wisdom              = $01  ; bit 0
+!Dream_Power               = $02  ; bit 1
+!Dream_Courage             = $04  ; bit 2
 
-; Unused
-UNUSED_7EF378   = $7EF378
+; ---------------------------------------------------------
+; MagicBeanProgress Bits ($7EF39B)
+; ---------------------------------------------------------
+!Bean_Planted              = $01  ; bit 0
+!Bean_Watered              = $02  ; bit 1
+!Bean_Pollinated           = $04  ; bit 2
+!Bean_Day1                 = $08  ; bit 3
+!Bean_Day2                 = $10  ; bit 4
+!Bean_Day3                 = $20  ; bit 5
+!Bean_Complete             = $40  ; bit 6
 
-; Displays ability flags
-; lrtu pbsh
-;  h - Pray (unused and mostly cut off by HUD borders)
-;  s - Swim
-;  b - Run
-;  u - unused but set by default
-;  p - Pull
-;  t - Talk
-;  r - Read
-;  l - Lift
-;      This only controls the display of "LIFT.1"
-;      If this bit is unset but LIFT is set then the proper lift text is displayed
-Ability         = $7EF379
+; ---------------------------------------------------------
+; Scroll Bits ($7EF398) - Dungeon Hints Collected
+; ---------------------------------------------------------
+!Scroll_D1_MushroomGrotto  = $01  ; bit 0
+!Scroll_D2_TailPalace      = $02  ; bit 1
+!Scroll_D3_KalyxoCastle    = $04  ; bit 2
+!Scroll_D4_ZoraTemple      = $08  ; bit 3
+!Scroll_D5_GlaciaEstate    = $10  ; bit 4
+!Scroll_D6_GoronMines      = $20  ; bit 5
+!Scroll_D7_DragonShip      = $40  ; bit 6
 
-; Dungeon ID Legend
-; Mushroom Grotto ID 0x0C (Palace of Darkness)
-; Tail Palace ID 0x0A (Swamp Palace)
-; Kalyxo Castle ID 0x10 (Skull Woods)
-; Zora Temple ID 0x16 (Thieves Town)
-; Glacia Estate 0x12 (Ice Palace)
-; Goron Mines 0x0E (Misery Mire)
-; Dragon Ship 0x18 (Turtle Rock)
+; ---------------------------------------------------------
+; MapIcon Values ($7EF3C7) - Dungeon Guidance
+; ---------------------------------------------------------
+!MapIcon_MakuTree          = $00
+!MapIcon_D1_MushroomGrotto = $01
+!MapIcon_D2_TailPalace     = $02
+!MapIcon_D3_KalyxoCastle   = $03
+!MapIcon_D4_ZoraTemple     = $04
+!MapIcon_D5_GlaciaEstate   = $05
+!MapIcon_D6_GoronMines     = $06
+!MapIcon_D7_DragonShip     = $07
+!MapIcon_Fortress          = $08
 
-; .wbs tipm
-;   p - Palace of Darkness
-;   s - Swamp Palace
-;   w - Skull Woods
-;   b - Thieves' Town
-;   i - Ice Palace
-;   m - Misery Mire
-;   t - Turtle Rock
-Crystals        = $7EF37A
+; ---------------------------------------------------------
+; SpawnPoint Values ($7EF3C8)
+; ---------------------------------------------------------
+!Spawn_LinksHouse          = $00
+!Spawn_Sanctuary           = $01
+!Spawn_Prison              = $02
+!Spawn_Uncle               = $03
+!Spawn_Throne              = $04
+!Spawn_OldManCave          = $05
+!Spawn_OldManHome          = $06
 
-; 0x00 - Normal magic
-; 0x01 - Half magic
-; 0x02 - Quarter magic
-; Quarter magic has no special HUD graphic, unlike half magic
-; Also, not everything is necessarily quarter magic
-MagicUsage      = $7EF37B
+; =========================================================
+; 3. STORY PROGRESSION FLAGS
+; =========================================================
 
-; Keys earned per dungeon
-; Sewers and Castle are kept in sync
-KEYSSEWER       = $7EF37C
-KEYSHYRULE      = $7EF37D
-KEYSEAST        = $7EF37E
-KEYSDESERT      = $7EF37F
-KEYSAGA         = $7EF380
-KEYSSWAMP       = $7EF381
-KEYSPOD         = $7EF382
-KEYSMIRE        = $7EF383
-KEYSWOODS       = $7EF384
-KEYSICE         = $7EF385
-KEYSHERA        = $7EF386
-KEYSTHIEF       = $7EF387
-KEYSTROCK       = $7EF388
-KEYSGANON       = $7EF389
+; ---------------------------------------------------------
+; Oracle of Secrets Flags ($7EF300-30F)
+; ---------------------------------------------------------
+; Added for Oracle of Secrets (not in vanilla ALTTP).
 
-; Unused block of SRAM
-UNUSED_7EF38A   = $7EF38A
+; Kydrog/Farore removed from Maku Tree intro area
+;   Set by: kydrog.asm | Read by: farore.asm, kydrog.asm
+KydrogFaroreRemoved     = $7EF300
 
-; Game state
-;   0x00 - Very start; progress cannot be saved in this state
-;   0x01 - Uncle reached
-;   0x02 - Zelda rescued
-;   0x03 - Agahnim defeated
-GAMESTATE       = $7EF3C5
+; Deku Mask quest complete (separate from inventory slot)
+;   Set by: deku_scrub.asm
+DekuMaskQuestDone       = $7EF301
 
-; Bitfield of less important progression
-; .fbh .zsu
-;   u - Uncle visited in secret passage; controls spawn (0: spawn | 1: gone)
-;   s - Priest visited in sanc after Zelda is kidnapped again
-;   z - Zelda brought to sanc
-;   h - Uncle has left Link's house; controls spawn (0: spawn | 1: gone)
-;   b - Book of Mudora obtained/mentioned; controls Aginah dialog
-;   f - Flipped by fortune tellers to decide which fortune set to give
-PROGLITE        = $7EF3C6
+; Zora Mask quest complete (separate from inventory slot)
+;   Set by: zora_princess.asm
+ZoraMaskQuestDone       = $7EF302
 
-; Map icon to guide noob players
-;   0x00 - Red X on castle    | Save zelda
-;   0x01 - Red X on Kakariko  | Talk to villagers about elders
-;   0x02 - Red X on Eastern   | Talk to Sahasrahla
-;   0x03 - Pendants and MS    | Obtain the master sword
-;   0x04 - Master sword on LW | Grab the master sword
-;   0x05 - Skull on castle    | Kill Agahnim
-;   0x06 - Crystal on POD     | Get the first crystal
-;   0x07 - Crystals           | Get all 7 crystals
-;   0x08 - Skull on GT        | Climb Ganon's Tower
-MAPICON         = $7EF3C7
+; In cutscene flag (controls player movement)
+;   Also defined in patches.asm as InCutScene
+InCutSceneFlag          = $7EF303
 
-; 0x00 - Link's house
-; 0x01 - Sanctuary
-; 0x02 - Prison
-; 0x03 - Uncle
-; 0x04 - Throne
-; 0x05 - Old man cave
-; 0x06 - Old man home
-SpawnPoint      = $7EF3C8
+; Reserved: $7EF304-30F available for future use
 
-; Another bitfield for progress
-; t.dp s.bh
-;   t - smiths are currently tempering sword
-;   d - swordsmith rescued
-;   p - purple chest has been opened
-;   s - stumpy has been stumped
-;   b - bottle purchased from vendor
-;   h - bottle received from hobo
-PROGLITE2       = $7EF3C9
+; ---------------------------------------------------------
+; Main Story State ($7EF3C5)
+; ---------------------------------------------------------
+; Use !GameState_* constants for values
+GameState               = $7EF3C5
 
-; .d.. ....
-;   d - World (0: Light World | 1: Dark World)
-SAVEWORLD       = $7EF3CA
+; ---------------------------------------------------------
+; Story Progress Bitfields
+; ---------------------------------------------------------
+; Primary story flags - use !Story_* bit constants
+StoryProgress           = $7EF3D6
 
-; Not used
-UNUSED_7EF3CB   = $7EF3CB
+; Secondary story flags - use !Story2_* bit constants
+StoryProgress2          = $7EF3C6
 
-; Current follower ID
-FOLLOWER        = $7EF3CC
+; Maku Tree meeting flag
+;   bit 0: Has met Link (0=no, 1=yes)
+MakuTreeQuest           = $7EF3D4
 
-; Cache of follower properties
-FOLLOWCYL       = $7EF3CD
-FOLLOWCYH       = $7EF3CE
-FOLLOWCXL       = $7EF3CF
-FOLLOWCXH       = $7EF3D0
+; Reserved for future story flags
+ReservedStory           = $7EF3D5
 
-; Copies INDOORS
-FOLLOWERINOUT   = $7EF3D1
+; ---------------------------------------------------------
+; Map Guidance ($7EF3C7)
+; ---------------------------------------------------------
+; Use !MapIcon_* constants for values
+; Set by: maku_tree.asm, deku_scrub.asm
+MapIcon                 = $7EF3C7
 
-; Copies LAYER
-FOLLOWERCLAYER  = $7EF3D2
+; ---------------------------------------------------------
+; Side Quest Progress ($7EF3D7-D8)
+; ---------------------------------------------------------
+; Use !SideQuest_* and !SideQuest2_* bit constants
+SideQuestProgress       = $7EF3D7
+SideQuestProgress2      = $7EF3D8
 
-; Indicates the follower is currently following
-;   0x00 - Following
-;   0x80 - Not following
-FOLLOWERING     = $7EF3D3
+; =========================================================
+; 4. ITEMS ($7EF340-35F)
+; =========================================================
 
-; Unused
-UNUSED_7EF3D4   = $7EF3D4
-UNUSED_7EF3D5   = $7EF3D5
-UNUSED_7EF3D6   = $7EF3D6
+; ---------------------------------------------------------
+; Y-Button Items ($7EF340-350)
+; ---------------------------------------------------------
+; 0x00 = Nothing, other values indicate level/type
 
-; Side Quest Progress Flags
-; .dgo mwcn
-;   n - Met Mask Salesman (shown "need Ocarina" dialogue)
-;   c - Found cursed Cucco at ranch (shown first dialogue)
-;   w - Found withering Deku Scrub (shown first dialogue)
-;   m - Got Mushroom from Toadstool Woods
-;   o - Old Man Mountain quest active
-;   g - Goron quest active (collecting rock meat)
-;   d - (reserved)
-SideQuestProg   = $7EF3D7
+Bow                     = $7EF340   ; 1=Bow, 2=+Arrows, 3=Silver, 4=Silver+Arrows
+Boomerang               = $7EF341   ; 1=Blue, 2=Red
+Hookshot                = $7EF342   ; 1=Hookshot, 2=Goldstar
+Bombs                   = $7EF343   ; Count
+MagicPowder             = $7EF344   ; 1=Mushroom, 2=Powder
+FireRod                 = $7EF345   ; 1=Have
+IceRod                  = $7EF346   ; 1=Have
+ZoraMask                = $7EF347   ; 1=Have (inventory slot)
+BunnyHood               = $7EF348   ; 1=Have
+DekuMask                = $7EF349   ; 1=Have (inventory slot)
+Lamp                    = $7EF34A   ; 1=Have
+Hammer                  = $7EF34B   ; 1=Have
+Flute                   = $7EF34C   ; 1=Shovel, 2=Inactive, 3=Active (also Ocarina)
+RocsFeather             = $7EF34D   ; 1=Have
+Book                    = $7EF34E   ; 1=Have (Book of Secrets)
+BottleIndex             = $7EF34F   ; Currently selected bottle (1-4)
+Somaria                 = $7EF350   ; 1=Have
+CustomRods              = $7EF351   ; 1=Fishing Rod, 2=Portal Rod
+StoneMask               = $7EF352   ; 1=Have
+Mirror                  = $7EF353   ; 1=Letter, 2=Mirror
 
-; Side Quest Progress Flags 2
-; .bts pfmr
-;   r - Ranch Girl transformed back (dialogue shown)
-;   m - Mask Salesman taught Song of Healing
-;   f - Fortune teller visited (any fortune)
-;   p - Potion shop visited with mushroom
-;   s - Deku Scrub soul freed (before mask given)
-;   t - Tingle met (any map purchased)
-;   b - Bean beanstalk grown (final stage)
-SideQuestProg2  = $7EF3D8
+; ---------------------------------------------------------
+; Equipment ($7EF354-35B)
+; ---------------------------------------------------------
+Gloves                  = $7EF354   ; 0=None, 1=Power Glove, 2=Titan's Mitt
+Boots                   = $7EF355   ; 1=Pegasus Boots (also needs Ability bit)
+Flippers                = $7EF356   ; 1=Have
+MoonPearl               = $7EF357   ; 1=Have
+WolfMask                = $7EF358   ; 1=Have
+Sword                   = $7EF359   ; 1=Fighter, 2=Master, 3=Tempered, 4=Golden
+Shield                  = $7EF35A   ; 1=Fighter, 2=Fire, 3=Mirror
+Armor                   = $7EF35B   ; 0=Green, 1=Blue, 2=Red
 
-; Player name
-NAME1L          = $7EF3D9
-NAME1H          = $7EF3DA
-NAME2L          = $7EF3DB
-NAME2H          = $7EF3DC
-NAME3L          = $7EF3DD
-NAME3H          = $7EF3DE
-NAME4L          = $7EF3DF
-NAME4H          = $7EF3E0
+; ---------------------------------------------------------
+; Bottles ($7EF35C-35F)
+; ---------------------------------------------------------
+; 0=Empty slot, 2=Empty bottle, 3-10=Contents
+Bottle1                 = $7EF35C
+Bottle2                 = $7EF35D
+Bottle3                 = $7EF35E
+Bottle4                 = $7EF35F
 
-; Save file checksum; expected to be $55AA
-SCHKSML         = $7EF3E1
-SCHKSMH         = $7EF3E2
+; =========================================================
+; 5. PLAYER STATS ($7EF360-37B)
+; =========================================================
 
-; Games played in each dungeon
-GPSEWER         = $7EF3E3
-GPHYRULE        = $7EF3E5
-GPEAST          = $7EF3E7
-GPDESERT        = $7EF3E9
-GPAGA           = $7EF3EB
-GPSWAMP         = $7EF3ED
-GPPOD           = $7EF3EF
-GPMIRE          = $7EF3F1
-GPWOODS         = $7EF3F3
-GPICE           = $7EF3F5
-GPHERA          = $7EF3F7
-GPTHIEF         = $7EF3F9
-GPTROCK         = $7EF3FB
-GPGANON         = $7EF3FD
+; ---------------------------------------------------------
+; Currency
+; ---------------------------------------------------------
+Rupees                  = $7EF360   ; Actual count
+RupeesGoal              = $7EF361   ; Target (for drain/fill animation)
+RupeesDisplay           = $7EF362   ; HUD display value
 
-; Games played for current segment
-GPNOW           = $7EF3FF
+; ---------------------------------------------------------
+; Health & Magic
+; ---------------------------------------------------------
+MaxHealth               = $7EF36C   ; Max HP (8 per heart container)
+CurrentHealth           = $7EF36D   ; Current HP (0 = death)
+MagicPower              = $7EF36E   ; Current magic (max 128)
+MagicUsage              = $7EF37B   ; 0=Normal, 1=Half, 2=Quarter
+HeartRefill             = $7EF372   ; Pending HP refill (multiples of 8)
+MagicRefill             = $7EF373   ; Pending magic refill
 
-; Total games played
-; No display on file select if 0xFFFF
-GAMESPLAYED     = $7EF401
+; ---------------------------------------------------------
+; Ammo & Capacity
+; ---------------------------------------------------------
+Arrows                  = $7EF377   ; Arrow count
+BombCapacity            = $7EF370   ; Bomb capacity upgrades
+ArrowCapacity           = $7EF371   ; Arrow capacity upgrades
+BombRefill              = $7EF375   ; Pending bomb refill
+ArrowRefill             = $7EF376   ; Pending arrow refill
 
-; Big unused block
-UNUSED_7EF403   = $7EF403
-DEATHS_MAXED    = $7EF405
+; ---------------------------------------------------------
+; Progress Collectibles
+; ---------------------------------------------------------
+HeartPieces             = $7EF36B   ; Pieces toward next container (0-3)
+Pendants                = $7EF374   ; Use !Pendant_* bits
+Crystals                = $7EF37A   ; Use !Crystal_* bits
+WishRupees              = $7EF36A   ; Rupees donated to fairies
 
-; Inverse checksum for save file
-SAVEICKSML      = $7EF4FE
-SAVEICKSMH      = $7EF4FF
+; ---------------------------------------------------------
+; Ability Display ($7EF379)
+; ---------------------------------------------------------
+; Bitfield: lrtu pbsh
+;   h=Pray, s=Swim, b=Run, p=Pull, t=Talk, r=Read, l=Lift
+AbilityFlags            = $7EF379
+
+; ---------------------------------------------------------
+; Dreams ($7EF410)
+; ---------------------------------------------------------
+; Use !Dream_* bits
+Dreams                  = $7EF410
+
+; =========================================================
+; 6. DUNGEON DATA
+; =========================================================
+
+; ---------------------------------------------------------
+; Current Dungeon Keys ($7EF36F)
+; ---------------------------------------------------------
+CurrentKeys             = $7EF36F
+
+; ---------------------------------------------------------
+; Keys Per Dungeon ($7EF37C-389)
+; ---------------------------------------------------------
+KeysSewer               = $7EF37C
+KeysHyruleCastle        = $7EF37D
+KeysEastern             = $7EF37E
+KeysDesert              = $7EF37F
+KeysAgahnim             = $7EF380
+KeysSwamp               = $7EF381
+KeysPalaceOfDarkness    = $7EF382
+KeysMiseryMire          = $7EF383
+KeysSkullWoods          = $7EF384
+KeysIcePalace           = $7EF385
+KeysTowerOfHera         = $7EF386
+KeysThievesTown         = $7EF387
+KeysTurtleRock          = $7EF388
+KeysGanonsTower         = $7EF389
+
+; ---------------------------------------------------------
+; Dungeon Item Ownership ($7EF364-369)
+; ---------------------------------------------------------
+; Bitfields - see vanilla ALTTP documentation for bit mapping
+CompassSet1             = $7EF364
+CompassSet2             = $7EF365
+BigKeySet1              = $7EF366
+BigKeySet2              = $7EF367
+DungeonMapSet1          = $7EF368
+DungeonMapSet2          = $7EF369
+
+; =========================================================
+; 7. COLLECTIBLES ($7EF38A-39F)
+; =========================================================
+
+; ---------------------------------------------------------
+; Trade Items / Resources
+; ---------------------------------------------------------
+FishingRod              = $7EF38A
+Bananas                 = $7EF38B
+Pineapples              = $7EF38D
+RockMeatCount           = $7EF38F   ; For Goron quest
+Seashells               = $7EF391
+Honeycomb               = $7EF393
+DekuSticks              = $7EF395
+
+; ---------------------------------------------------------
+; Tingle Maps ($7EF396-397)
+; ---------------------------------------------------------
+TingleMaps              = $7EF396   ; Bitfield of purchased maps
+TingleId                = $7EF397   ; Next map index (0-7)
+
+; ---------------------------------------------------------
+; Dungeon Scrolls ($7EF398-39A)
+; ---------------------------------------------------------
+; Use !Scroll_* bit constants
+DungeonScrolls          = $7EF398
+PreviousScroll          = $7EF39A   ; For re-reading hints
+
+; ---------------------------------------------------------
+; Magic Bean Progress ($7EF39B)
+; ---------------------------------------------------------
+; Use !Bean_* bit constants
+MagicBeanProgress       = $7EF39B
+
+; ---------------------------------------------------------
+; Journal & Story State ($7EF39C-39E)
+; ---------------------------------------------------------
+JournalState            = $7EF39C
+; Reserved              = $7EF39D
+IntroState              = $7EF39E   ; Link's House intro sequence
+
+; ---------------------------------------------------------
+; Water Gate States ($7EF411)
+; ---------------------------------------------------------
+WaterGateStates         = $7EF411
+
+; =========================================================
+; 8. SAVE FILE METADATA
+; =========================================================
+
+; ---------------------------------------------------------
+; Spawn & World State ($7EF3C8-CA)
+; ---------------------------------------------------------
+; Use !Spawn_* constants for SpawnPoint
+SpawnPoint              = $7EF3C8
+
+; Miscellaneous progress (mostly vanilla ALTTP)
+; Bitfield: t.dp s.bh
+MiscProgress            = $7EF3C9
+
+; World flag: bit 6 = Dark World
+SavedWorld              = $7EF3CA
+
+; Reserved
+ReservedSave            = $7EF3CB
+
+; ---------------------------------------------------------
+; Player Name ($7EF3D9-E0)
+; ---------------------------------------------------------
+PlayerName1L            = $7EF3D9
+PlayerName1H            = $7EF3DA
+PlayerName2L            = $7EF3DB
+PlayerName2H            = $7EF3DC
+PlayerName3L            = $7EF3DD
+PlayerName3H            = $7EF3DE
+PlayerName4L            = $7EF3DF
+PlayerName4H            = $7EF3E0
+
+; ---------------------------------------------------------
+; Checksum ($7EF3E1-E2)
+; ---------------------------------------------------------
+SaveChecksumL           = $7EF3E1
+SaveChecksumH           = $7EF3E2
+
+; ---------------------------------------------------------
+; Games Played Per Dungeon ($7EF3E3-3FD)
+; ---------------------------------------------------------
+GamesSewer              = $7EF3E3
+GamesHyruleCastle       = $7EF3E5
+GamesEastern            = $7EF3E7
+GamesDesert             = $7EF3E9
+GamesAgahnim            = $7EF3EB
+GamesSwamp              = $7EF3ED
+GamesPalaceOfDarkness   = $7EF3EF
+GamesMiseryMire         = $7EF3F1
+GamesSkullWoods         = $7EF3F3
+GamesIcePalace          = $7EF3F5
+GamesTowerOfHera        = $7EF3F7
+GamesThievesTown        = $7EF3F9
+GamesTurtleRock         = $7EF3FB
+GamesGanonsTower        = $7EF3FD
+
+; ---------------------------------------------------------
+; Total Games Played ($7EF3FF-401)
+; ---------------------------------------------------------
+GamesCurrentSegment     = $7EF3FF
+TotalGamesPlayed        = $7EF401
+
+; ---------------------------------------------------------
+; Misc Save Data ($7EF403-4FF)
+; ---------------------------------------------------------
+ReservedBlock           = $7EF403
+DeathsMaxed             = $7EF405
+
+; Inverse checksum
+SaveInverseChecksumL    = $7EF4FE
+SaveInverseChecksumH    = $7EF4FF
+
+; =========================================================
+; 9. FOLLOWER SYSTEM ($7EF3CC-D3)
+; =========================================================
+
+; Current follower ID (0 = none)
+FollowerId              = $7EF3CC
+
+; Follower position cache
+FollowerCoordYL         = $7EF3CD
+FollowerCoordYH         = $7EF3CE
+FollowerCoordXL         = $7EF3CF
+FollowerCoordXH         = $7EF3D0
+
+; Follower state
+FollowerIndoors         = $7EF3D1   ; Copies INDOORS
+SavedFollowerLayer      = $7EF3D2   ; Copies LAYER (SRAM cache)
+FollowerActive          = $7EF3D3   ; 0x00=Following, 0x80=Not following
+
+; =========================================================
+; LEGACY ALIASES (for backward compatibility)
+; =========================================================
+; These aliases maintain compatibility with existing code.
+; New code should use the standardized names above.
+
+OOSPROG                 = StoryProgress
+OOSPROG2                = StoryProgress2
+CURHP                   = CurrentHealth
+MAXHP                   = MaxHealth
+KEYS                    = CurrentKeys
+RUPEEDISP               = RupeesDisplay
+HEARTPC                 = HeartPieces
+ZAPME                   = MagicRefill
+BOMBME                  = BombRefill
+SHOOTME                 = ArrowRefill
+BOMBCAP                 = BombCapacity
+ARROWCAP                = ArrowCapacity
+WISHRUP                 = WishRupees
+COMPASS1                = CompassSet1
+COMPASS2                = CompassSet2
+BIGKEY1                 = BigKeySet1
+BIGKEY2                 = BigKeySet2
+DNGMAP1                 = DungeonMapSet1
+DNGMAP2                 = DungeonMapSet2
+KEYSSEWER               = KeysSewer
+KEYSHYRULE              = KeysHyruleCastle
+KEYSEAST                = KeysEastern
+KEYSDESERT              = KeysDesert
+KEYSAGA                 = KeysAgahnim
+KEYSSWAMP               = KeysSwamp
+KEYSPOD                 = KeysPalaceOfDarkness
+KEYSMIRE                = KeysMiseryMire
+KEYSWOODS               = KeysSkullWoods
+KEYSICE                 = KeysIcePalace
+KEYSHERA                = KeysTowerOfHera
+KEYSTHIEF               = KeysThievesTown
+KEYSTROCK               = KeysTurtleRock
+KEYSGANON               = KeysGanonsTower
+PROGLITE2               = MiscProgress
+SAVEWORLD               = SavedWorld
+FOLLOWER                = FollowerId
+FOLLOWCYL               = FollowerCoordYL
+FOLLOWCYH               = FollowerCoordYH
+FOLLOWCXL               = FollowerCoordXL
+FOLLOWCXH               = FollowerCoordXH
+FOLLOWERINOUT           = FollowerIndoors
+FOLLOWERCLAYER          = SavedFollowerLayer
+FOLLOWERING             = FollowerActive
+GPSEWER                 = GamesSewer
+GPHYRULE                = GamesHyruleCastle
+GPEAST                  = GamesEastern
+GPDESERT                = GamesDesert
+GPAGA                   = GamesAgahnim
+GPSWAMP                 = GamesSwamp
+GPPOD                   = GamesPalaceOfDarkness
+GPMIRE                  = GamesMiseryMire
+GPWOODS                 = GamesSkullWoods
+GPICE                   = GamesIcePalace
+GPHERA                  = GamesTowerOfHera
+GPTHIEF                 = GamesThievesTown
+GPTROCK                 = GamesTurtleRock
+GPGANON                 = GamesGanonsTower
+GPNOW                   = GamesCurrentSegment
+GAMESPLAYED             = TotalGamesPlayed
+SCHKSML                 = SaveChecksumL
+SCHKSMH                 = SaveChecksumH
+SAVEICKSML              = SaveInverseChecksumL
+SAVEICKSMH              = SaveInverseChecksumH
+NAME1L                  = PlayerName1L
+NAME1H                  = PlayerName1H
+NAME2L                  = PlayerName2L
+NAME2H                  = PlayerName2H
+NAME3L                  = PlayerName3L
+NAME3H                  = PlayerName3H
+NAME4L                  = PlayerName4L
+NAME4H                  = PlayerName4H
+RockMeat                = RockMeatCount
+Scrolls                 = DungeonScrolls
+PrevScroll              = PreviousScroll
+MagicBeanProg           = MagicBeanProgress
+StoryState              = IntroState
+Pearl                   = MoonPearl
+Ability                 = AbilityFlags
+Byrna                   = CustomRods        ; Note: Address conflict with CustomRods
+SideQuestProg           = SideQuestProgress
+SideQuestProg2          = SideQuestProgress2
+
+; =========================================================
+; 10. FREE SRAM BLOCKS (Available for Future Use)
+; =========================================================
+; This section documents all unused SRAM addresses.
+; When adding new features, allocate from these blocks.
+;
+; IMPORTANT: Update this section when claiming addresses!
+;
+; ---------------------------------------------------------
+; Story Extension Block ($7EF304-30F) - 12 bytes
+; ---------------------------------------------------------
+; Purpose: Reserved for additional story/quest flags
+; Suggested uses:
+;   - Additional NPC encounter flags
+;   - Extended side quest progress
+;   - World event triggers
+;
+FreeBlock_Story    = $7EF304  ; 12 bytes ($7EF304-30F)
+
+; ---------------------------------------------------------
+; Item Extension Block ($7EF310-33F) - 48 bytes
+; ---------------------------------------------------------
+; Purpose: Reserved for new items or item metadata
+; Suggested uses:
+;   - New Y-button items
+;   - Item upgrade levels
+;   - Quest item tracking
+;
+FreeBlock_Items    = $7EF310  ; 48 bytes ($7EF310-33F)
+
+; ---------------------------------------------------------
+; Collectibles Extension ($7EF39F-3A0) - 2 bytes
+; ---------------------------------------------------------
+; Purpose: Reserved for additional collectible tracking
+; Note: Small block, use for single-byte counters
+;
+FreeBlock_Collect  = $7EF39F  ; 2 bytes ($7EF39F-3A0)
+
+; ---------------------------------------------------------
+; Reserved Block ($7EF3A1-3C4) - 36 bytes
+; ---------------------------------------------------------
+; Purpose: Large block for complex features
+; Suggested uses:
+;   - Achievement system
+;   - Extended map data
+;   - NPC relationship tracking
+;
+FreeBlock_Large    = $7EF3A1  ; 36 bytes ($7EF3A1-3C4)
+
+; ---------------------------------------------------------
+; Dreams Extension ($7EF411-4FD) - 237 bytes
+; ---------------------------------------------------------
+; Purpose: Large block after dreams/water gates
+; Note: $7EF4FE-4FF are checksum (do not use)
+;
+FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
+
+; ---------------------------------------------------------
+; FREE BLOCK SUMMARY
+; ---------------------------------------------------------
+; | Start    | End      | Size  | Purpose            |
+; |----------|----------|-------|--------------------|
+; | $7EF304  | $7EF30F  | 12    | Story extension    |
+; | $7EF310  | $7EF33F  | 48    | Item extension     |
+; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
+; | $7EF3A1  | $7EF3C4  | 36    | Large reserved     |
+; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
+; |----------|----------|-------|--------------------|
+; | TOTAL AVAILABLE:    | 334   | bytes              |
+; ---------------------------------------------------------
+
+; =========================================================
+; END OF SRAM DEFINITIONS
+; =========================================================

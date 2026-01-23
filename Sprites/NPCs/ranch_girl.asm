@@ -1,6 +1,48 @@
 ; =========================================================
-; Ranch Girl (Chicken Easter Egg Sprite)
-; Gives Link the Ocarina
+; Ranch Girl (Chicken Lady / Ocarina Quest)
+;
+; NARRATIVE ROLE: Side quest NPC who gives Link the Ocarina and teaches
+;   the Song of Storms. The "Chicken Easter Egg" refers to the Cucco
+;   attack sequence that triggers her appearance. This is the prerequisite
+;   for the Mask Salesman's Song of Healing quest.
+;
+; TERMINOLOGY: "Ranch Girl" = RanchGirl / ChickenLady
+;   - Appears after Cucco attack sequence
+;   - Gives Ocarina (item 0x14)
+;   - Teaches Song of Storms (SFX 0x2F)
+;   - $7EF34C = 1 after receiving Ocarina
+;
+; TECHNICAL NOTE: This sprite hooks into the existing ChickenLady
+;   sprite at ROM address $1AFECF, extending vanilla ALTTP behavior.
+;
+; BEHAVIOR:
+;   1. SprTimerA = 1 triggers message display
+;   2. First visit: Show message 0x17D, set SprMiscD = 1
+;   3. SprMiscD = 1: Play Song of Storms, give Ocarina
+;   4. Subsequent visits: Show message 0x10E
+;
+; MESSAGES:
+;   0x17D - First meeting (curse broken, teaches song)
+;   0x10E - Already has Ocarina
+;
+; FLAGS WRITTEN:
+;   SideQuestProg2 |= 0x01 - Ranch Girl transformed back
+;   $7EF34C = 1 - Ocarina obtained (Lv1)
+;
+; FLAGS READ:
+;   $7EF34C - Check if already has Ocarina
+;
+; ITEMS GIVEN:
+;   0x14 - Ocarina
+;
+; RELATED:
+;   - mask_salesman.asm (requires Ocarina to proceed)
+;   - cucco.asm (triggers her appearance)
+;
+; ROM HOOKS:
+;   $1AFECF - ChickenLady main hook
+;   $1AFEFF - End of hook space
+; =========================================================
 
 Sprite_ShowMessageMinimal = $05FA8E
 SpriteDraw_RaceGameLady =  $1AF92C

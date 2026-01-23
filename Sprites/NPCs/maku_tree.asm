@@ -1,5 +1,46 @@
 ; =========================================================
 ; Maku Tree
+;
+; NARRATIVE ROLE: Central quest hub NPC who guides Link through the main
+;   story. The Maku Tree is the guardian of Kalyxo Island and provides
+;   dungeon guidance after the intro sequence. Serves as the "oracle"
+;   figure who points Link toward the next objective.
+;
+; TERMINOLOGY: "Maku Tree" = MakuTree
+;   - Guardian spirit of Kalyxo Island
+;   - Provides dungeon map hints (MapIcon system)
+;   - First major NPC after Kydrog encounter
+;
+; TRIGGER: Spawns at Maku Tree area (LW 0x2A) after intro sequence
+;   - Plays Maku Song on entry if OOSPROG2 bit 2 is set
+;
+; STATES:
+;   0: Handler - Check if met before, branch accordingly
+;   1: MeetLink - First meeting, show message 0x20, give heart container
+;   2: SpawnHeartContainer - Award heart container item
+;   3: HasMetLink - Subsequent visits, show message 0x22
+;
+; MESSAGES:
+;   0x20 - First meeting (introduces quest, dungeon guidance)
+;   0x22 - Subsequent visits (ongoing guidance)
+;
+; FLAGS WRITTEN:
+;   MakuTreeQuest = 1 - Met Maku Tree
+;   MapIcon = 1 - Set to Mushroom Grotto (first dungeon)
+;   $7EF3D6 |= 0x02 - OOSPROG bit 1 (Hall of Secrets flag)
+;
+; FLAGS READ:
+;   MakuTreeQuest - Check if already met
+;   OOSPROG2 bit 2 - Check if Kydrog encounter done (for music)
+;
+; RELATED:
+;   - farore.asm (leads Link to Maku area)
+;   - kydrog.asm (sets OOSPROG2 bit 2)
+;   - narrative_lockdown.md (story structure)
+;
+; ITEMS GIVEN:
+;   0x3E - Heart Container (first meeting only)
+; =========================================================
 
 !SPRID              = Sprite_MakuTree
 !NbrTiles           = 00  ; Number of tiles used in a frame

@@ -1,4 +1,62 @@
-; Happy Mask Salesman Sprite
+; =========================================================
+; Happy Mask Salesman
+;
+; NARRATIVE ROLE: Mysterious merchant who teaches Link the Song of Healing
+;   and sells transformation masks. Key NPC in the mask/transformation
+;   quest chain. Appears after Link obtains the Ocarina from Ranch Girl.
+;
+; TERMINOLOGY: "Mask Salesman" = MaskSalesman
+;   - Teaches Song of Healing (required for Deku/Zora mask quests)
+;   - Sells Bunny Hood (100 rupees) and Stone Mask (850 rupees)
+;   - $7EF34C tracks Ocarina/song progress
+;
+; STATES:
+;   0: InquiryHandler - Check Ocarina status, branch accordingly
+;   1: NoOcarina - Tell player to get Ocarina first
+;   2: HasOcarina - Recognize Ocarina, transition to teaching
+;   3: TeachLinkSong - Award Song of Healing ($7EF34C = 2)
+;   4: OfferBunnyHood - Offer Bunny Hood purchase
+;   5: OfferStoneMask - Offer Stone Mask purchase
+;   6: PlayerSaidNoToMask - Rejection dialogue
+;   7: PlayerHasAllMasks - Sold out dialogue
+;   8: BoughtBunnyHood - Process Bunny Hood purchase
+;   9: BoughtStoneMask - Process Stone Mask purchase
+;   10: NotEnoughMoney - Insufficient rupees dialogue
+;
+; MESSAGES:
+;   0x28 - All masks purchased
+;   0x29 - Not enough rupees
+;   0x55 - Stone Mask received
+;   0x63 - Bunny Hood received
+;   0x7F - Bunny Hood offer (100 rupees)
+;   0x81 - Recognize Ocarina ("Oh! You got it!")
+;   0x82 - Stone Mask offer (850 rupees)
+;   0xE5 - Initial greeting/inquiry
+;   0xE8 - Player declined
+;   0xE9 - No Ocarina yet
+;
+; INVENTORY CHECKS:
+;   $7EF34C - Ocarina slot (0=none, 1=Lv1 Ocarina, 2+=Song of Healing)
+;   $7EF348 - Bunny Hood slot
+;   $7EF352 - Stone Mask slot
+;
+; FLAGS WRITTEN:
+;   SideQuestProg |= 0x01 - Met Mask Salesman (if no Ocarina)
+;   SideQuestProg2 |= 0x04 - Taught Song of Healing
+;   $7EF34C = 2 - Song of Healing learned
+;
+; ITEMS GIVEN:
+;   0x10 - Bunny Hood (100 rupees)
+;   0x19 - Stone Mask (850 rupees)
+;
+; CHOICE HANDLING:
+;   $1CE8 - Player response (0 = yes, non-zero = no)
+;
+; RELATED:
+;   - ranch_girl.asm (gives Ocarina, prerequisite)
+;   - deku_scrub.asm (uses Song of Healing)
+;   - zora_princess.asm (uses Song of Healing)
+; =========================================================
 
 !SPRID              = Sprite_MaskSalesman
 !NbrTiles           = 02 ; Number of tiles used in a frame

@@ -1,4 +1,47 @@
 ; =========================================================
+; Kydrog NPC (Intro Cutscene)
+;
+; NARRATIVE ROLE: The Pirate King who kidnaps Farore and banishes Link
+;   to the Eon Abyss. This is the NPC/cutscene version - not the boss.
+;   Kydrog is a fallen knight corrupted by Ganondorf over centuries.
+;
+; TERMINOLOGY: "Kydrog" = KydrogNPC (NPC form)
+;   - "Pirate King" - his self-styled title
+;   - "Fallen Knight" - his true origin (revealed late-game)
+;   - See kydrog_boss.asm for D7 boss fight
+;   - See kydreeok.asm for final boss (dragon form)
+;
+; TRIGGER: Spawns at Maku Tree area (LW 0x2A) during intro
+;   - Despawns permanently after encounter ($7EF300 = 1)
+;
+; STATES:
+;   0: StartCutscene - Auto-walk Link north, play music
+;   1: AttractPlayer - Timer countdown, show message 0x21
+;   2: SpawnOffspring - Update Farore's story flag ($B6)
+;   3: WarpPlayerAway - Banish to Eon Abyss (DW 0x20)
+;
+; MESSAGES:
+;   0x21 - Intro confrontation ("Well, well, what a surprise!")
+;
+; FLAGS WRITTEN:
+;   $7EF300 = 1 - KydrogFaroreRemoved (prevents respawn)
+;   $7EF303 = 0 - InCutScene cleared
+;   $7EF3C6 |= 0x04 - OOSPROG2 bit 2 (Kydrog encounter done)
+;   $7EF3CA ^= 0x40 - Toggle Dark World flag
+;   $7EF3CC = 0 - Remove Impa follower
+;
+; FLAGS READ:
+;   $7EF300 - If set, sprite is killed in Prep
+;
+; RELATED:
+;   - farore.asm (captured by Kydrog, uses $B6 story state)
+;   - impa.asm (follower removed during warp)
+;   - maku_tree.asm (same area, appears after Kydrog gone)
+;   - narrative_lockdown.md (backstory, death scene plans)
+;
+; LORE HOOK: Message 0x21 contains "cast away to the Eon Abyss,
+;   just as I was" - hints at his fallen hero origin.
+; =========================================================
 ; Cutscene Kydrog Sprite Properties
 ; =========================================================
 

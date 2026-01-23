@@ -1,4 +1,52 @@
-; Sea Zora NPC Handler
+; =========================================================
+; Sea Zora NPC Handler (Multi-Variant Dispatcher)
+;
+; NARRATIVE ROLE: Central dispatcher for all Zora NPC variants. Routes
+;   to the appropriate draw/main routines based on location and world.
+;   The Zora race is divided by the Schism - Sea Zoras in Kalyxo,
+;   Eon Zoras in the Abyss, and the Princess in D4 (Zora Temple).
+;
+; TERMINOLOGY: "Zora" = Zora (dispatcher)
+;   - "Sea Zora" - Kalyxo NPCs (friendly after reconciliation)
+;   - "Eon Zora" - Abyss NPCs (temporally displaced, friendly)
+;   - "Zora Princess" - D4 boss room, gives Zora Mask
+;   - "Eon Zora Elder" - Subtype 1, Sea Shrine guide
+;
+; VARIANT DETECTION (via SprMiscG):
+;   0x00: Sea Zora (default) - WORLDFLAG = 0, SprSubtype = 0
+;   0x01: Zora Princess - ROOM = 0x105
+;   0x02: Eon Zora - WORLDFLAG = 1
+;   0x03: Eon Zora Elder - SprSubtype = 1
+;
+; ROUTING LOGIC (Sprite_Zora_Long):
+;   1. Check ROOM = 0x105 → Zora Princess (SprMiscG = 1)
+;   2. Check WORLDFLAG = 1 → Eon Zora (SprMiscG = 2)
+;   3. Check SprSubtype = 1 → Eon Zora Elder (SprMiscG = 3)
+;   4. Default → Sea Zora (SprMiscG = 0)
+;
+; SEA ZORA STATES:
+;   0: Forward - Face player
+;   1: Right - Face right
+;   2: Left - Face left
+;
+; SEA ZORA MESSAGES:
+;   0x1A4 - Default dialogue (face forward)
+;   0x1A5 - Alternative dialogue (face sideways)
+;   0x1A6 - Post-D4 dialogue (Crystals bit 5 set)
+;
+; FLAGS READ:
+;   ROOM - Check for Zora Temple boss room (0x105)
+;   WORLDFLAG - Kalyxo (0) vs Eon Abyss (1)
+;   Crystals bit 0x20 - D4 (Zora Temple) complete
+;   SprSubtype - Elder variant detection
+;
+; RELATED:
+;   - zora_princess.asm (D4 revelation, Zora Mask)
+;   - eon_zora.asm (Abyss variant logic)
+;   - eon_zora_elder.asm (Sea Shrine guide)
+;   - sram_flag_analysis.md (Zora reconciliation flags)
+;   - jiggly-spinning-newt.md (Zora conflict resolution plan)
+; =========================================================
 
 Sprite_Zora_Long:
 {

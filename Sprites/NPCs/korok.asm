@@ -1,5 +1,52 @@
 ; =========================================================
-; Korok Sprite
+; Korok NPCs (Forest Spirits)
+;
+; NARRATIVE ROLE: Friendly forest spirits who inhabit Korok Cove and
+;   East Kalyxo regions. They provide hints, side content, and connect
+;   the game to Wind Waker-era Zelda lore. Multiple visual variants
+;   add personality to the forest areas.
+;
+; TERMINOLOGY: "Korok" = Korok
+;   - "Makar" - Subtype 0, musician Korok (Wind Waker reference)
+;   - "Hollo" - Subtype 1, potion-making Korok
+;   - "Rown" - Subtype 2, gardener Korok
+;   - Forest guardians, evolved from Kokiri
+;
+; VARIANTS (via SprSubtype, randomly assigned in Prep):
+;   0x00: Makar - Uses Sprite_Korok_DrawMakar
+;   0x01: Hollo - Uses Sprite_Korok_DrawHollo
+;   0x02: Rown - Uses Sprite_Korok_DrawRown
+;
+; STATES:
+;   0: Idle - Standing, show dialogue on interaction
+;   1: WalkingDown - Random wander south
+;   2: WalkingUp - Random wander north
+;   3: WalkingLeft - Random wander west
+;   4: WalkingRight - Random wander east
+;   5: Liftable - Can be picked up by Link
+;
+; MESSAGES:
+;   0x1D - Generic Korok greeting
+;
+; GRAPHICS:
+;   Uses custom sprite sheets loaded via ApplyKorokSpriteSheets
+;   Flag $0AA5 tracks if sheets are loaded
+;
+; MOVEMENT:
+;   KorokWalkSpeed = 2
+;   Random direction changes via GetRandomInt
+;   SprTimerB controls direction duration
+;
+; RELATED:
+;   - East Kalyxo region (planned Korok minigame)
+;   - Korok Cove (maps 0x81-8A)
+;   - jiggly-spinning-newt.md (10 Korok hide-and-seek plan)
+;
+; TODO:
+;   - Implement Korok minigame tracking
+;   - Add unique dialogue per variant
+;   - Add hide-and-seek reward system
+; =========================================================
 
 !SPRID              = Sprite_Korok
 !NbrTiles           = 08  ; Number of tiles used in a frame
