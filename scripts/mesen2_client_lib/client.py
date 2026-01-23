@@ -316,7 +316,9 @@ class OracleDebugClient:
     def press_button(self, buttons: str, frames: int = 5) -> bool:
         """Press button(s) for specified frames.
 
-        buttons: Comma-separated button names (a,b,up,down,left,right,start,select,l,r,x,y)
+        Args:
+            buttons: Comma-separated button names (a,b,up,down,left,right,start,select,l,r,x,y)
+            frames: Number of frames to hold (default 5, ~83ms at 60fps). 0 = indefinite.
         """
         # Normalize button names
         btn_list = []
@@ -327,14 +329,19 @@ class OracleDebugClient:
                 btn_list.append(btn.upper())
 
         btn_str = ",".join(btn_list)
-        return self.bridge.press_button(btn_str)
+        return self.bridge.press_button(btn_str, frames=frames)
 
     def hold_direction(self, direction: str, frames: int = 30) -> bool:
-        """Hold a direction for specified frames."""
+        """Hold a direction for specified frames.
+
+        Args:
+            direction: Direction to hold (up, down, left, right)
+            frames: Number of frames to hold (default 30, ~500ms at 60fps)
+        """
         dir_map = {"up": "UP", "down": "DOWN", "left": "LEFT", "right": "RIGHT"}
         if direction.lower() not in dir_map:
             raise ValueError(f"Invalid direction: {direction}")
-        return self.bridge.press_button(dir_map[direction.lower()])
+        return self.bridge.press_button(dir_map[direction.lower()], frames=frames)
 
     # --- Pass-through to MesenBridge ---
 
