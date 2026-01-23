@@ -80,6 +80,9 @@ TransGFXModuleFrame        = $0CF3   ; [0x01]
 AnimatedTileGFXSet         = $0FC0   ; [0x01]
 ExpandedSpritePalArray     = $7EFDC0 ; [0x40]
 
+; NOTE: Lost Woods camera drift fix was attempted but broke transitions.
+; See Docs/Issues/lost_woods_camera_desync.md for details and research needed.
+
 ; $0716 is not actually free, but labled as such for the sake of organization.
 ; $0718 is free RAM and took the horizontal responsibility away from $0716.
 ; ($0716 is labled as OWCameraBoundsSE in the disassembly).
@@ -5600,9 +5603,13 @@ if !Func02A5D3 == $01
 org $02A5D3 ; $0125D3
 Overworld_PlayerControl_Interupt:
 {
+    ; NOTE: Lost Woods camera drift fix was attempted here but broke small-to-large
+    ; transitions. See Docs/Issues/lost_woods_camera_desync.md for details.
+    ; The scroll drift from wrong puzzle moves persists but is visual-only.
+
     JSL.l Overworld_Entrance
     JSL.l Overworld_DwDeathMountainPaletteAnimation
-    
+
     ; If not in SW mode skip this part.
     LDA.b $8A : CMP.b #$80 : BCC .notSpecialOverworld
         ; Checks for tiles that lead back to normal overworld.

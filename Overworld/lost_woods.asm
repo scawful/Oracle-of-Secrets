@@ -15,7 +15,7 @@
 !SouthArea    = #$31
 !EastArea     = #$2A
 !ComboCounter = $1CF7 ; ram address to store combo counter
-!RestoreCam   = $1CF8
+!RestoreCam   = $7E1CF8  ; Must use full address for cross-bank access
 
 ; ==========================================================
 
@@ -36,10 +36,9 @@ LostWoods:
   RTL
 
       normalfinish:
-      ; NOTE: LostWoods_ResetCoordinates was causing transition issues
-      ; The coordinate snapping interfered with ZSCustomOverworld's
-      ; transition position calculations. Disabled pending investigation.
-      ; JSL LostWoods_ResetCoordinates
+      ; Note: Camera drift fix was attempted here but broke small-to-large transitions.
+      ; The scroll drift from wrong puzzle moves persists until Link moves enough
+      ; in the new area for the camera to catch up naturally.
       LDA.l Pool_Overworld_ActualScreenID_New, X
       STZ !ComboCounter
       RTL
@@ -118,7 +117,7 @@ LostWoods:
       CLC
       ADC #$10
       STA $700
-      LDA.b #$01 : STA !RestoreCam
+      ; Note: !RestoreCam is now set at normalfinish for all exits
       BRA all
     } ; label UP_CORRECT
   
@@ -197,13 +196,100 @@ LostWoods:
   
       .reset_scroll
       SEP #$20
-      
+
       ; Reset Overlay Scroll Drifts introduced by puzzle
       STZ.b $E1
       STZ.b $E3
       STZ.b $E7
       STZ.b $E9
-      
+
       .done
       RTL
   }
+
+; =============================================================================
+; LostWoods_RecalculateScroll
+; =============================================================================
+; Recalculates camera scroll position based on Link's current coordinates.
+; Called AFTER transition completes to fix scroll drift from Lost Woods puzzle.
+;
+; The camera scroll should center Link on screen:
+;   Scroll_X = Link_X - 128 (half of 256px screen width)
+;   Scroll_Y = Link_Y - 112 (half of 224px screen height)
+;
+; The result is clamped to camera boundaries ($0600-$0606) to prevent
+; showing areas outside the valid map region.
+;
+; Registers modified:
+;   A - Used for calculations
+;   $00-$01 - Temp storage for calculated scroll
+;
+; Scroll register layout:
+;   $E0/$E2 - BG1 scroll X (lo/hi) - parallax/overlay layer
+;   $E1/$E3 - BG2 scroll X (lo/hi) - main gameplay layer
+;   $E6/$E8 - BG1 scroll Y (lo/hi)
+;   $E7/$E9 - BG2 scroll Y (lo/hi)
+;
+; Camera boundary layout:
+;   $0600 - Camera Y minimum (top edge of scrollable area)
+;   $0602 - Camera Y maximum (bottom edge)
+;   $0604 - Camera X minimum (left edge)
+;   $0606 - Camera X maximum (right edge)
+; =============================================================================
+LostWoods_RecalculateScroll:
+{
+    PHB : PHK : PLB
+
+    REP #$20  ; 16-bit accumulator
+
+    ; --- Calculate Y scroll ---
+    ; Ideal scroll Y = Link Y - 112 (center vertically)
+    LDA.b $20           ; Link Y position (16-bit)
+    SEC
+    SBC.w #$0070        ; Subtract 112 (0x70) for vertical centering
+
+    ; Clamp to camera Y boundaries
+    CMP.w $0600         ; Compare to Y minimum
+    BCS .y_above_min
+        LDA.w $0600     ; Use minimum if below
+    .y_above_min
+
+    CMP.w $0602         ; Compare to Y maximum
+    BCC .y_below_max
+        LDA.w $0602     ; Use maximum if above
+    .y_below_max
+
+    ; Store Y scroll (split into lo/hi bytes)
+    STA.b $00           ; Temp store full value
+    SEP #$20            ; 8-bit for byte operations
+    LDA.b $00 : STA.b $E7   ; Y scroll low byte
+    LDA.b $01 : STA.b $E9   ; Y scroll high byte
+
+    REP #$20  ; Back to 16-bit
+
+    ; --- Calculate X scroll ---
+    ; Ideal scroll X = Link X - 128 (center horizontally)
+    LDA.b $22           ; Link X position (16-bit)
+    SEC
+    SBC.w #$0080        ; Subtract 128 (0x80) for horizontal centering
+
+    ; Clamp to camera X boundaries
+    CMP.w $0604         ; Compare to X minimum
+    BCS .x_above_min
+        LDA.w $0604     ; Use minimum if below
+    .x_above_min
+
+    CMP.w $0606         ; Compare to X maximum
+    BCC .x_below_max
+        LDA.w $0606     ; Use maximum if above
+    .x_below_max
+
+    ; Store X scroll (split into lo/hi bytes)
+    STA.b $00           ; Temp store full value
+    SEP #$20            ; 8-bit for byte operations
+    LDA.b $00 : STA.b $E1   ; X scroll low byte
+    LDA.b $01 : STA.b $E3   ; X scroll high byte
+
+    PLB
+    RTL
+}
