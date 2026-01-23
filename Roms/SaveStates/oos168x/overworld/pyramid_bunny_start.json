@@ -1,0 +1,41 @@
+{
+  "name": "Pyramid Bunny Start",
+  "description": "Fresh game start at pyramid area in bunny form. Early game state with minimal items.",
+  "category": "overworld",
+  "tags": [
+    "early-game",
+    "bunny",
+    "pyramid",
+    "fresh-start"
+  ],
+  "created": "2026-01-22T00:03:30.534033",
+  "romVersion": "oos168x",
+  "gameState": {
+    "mode": 9,
+    "modeDesc": "Overworld",
+    "submode": 0,
+    "roomId": "0x20",
+    "roomIdDecimal": 32,
+    "overworldArea": "0x40",
+    "indoors": false
+  },
+  "linkState": {
+    "x": 744,
+    "y": 536,
+    "direction": 2,
+    "directionDesc": "Down",
+    "state": 23,
+    "stateDesc": "Falling (bunny form)"
+  },
+  "health": {
+    "current": 24,
+    "max": 24,
+    "hearts": 3
+  },
+  "equipment": {
+    "equippedSlot": 8,
+    "goldstarOrHookshot": 0,
+    "hookshotSRAM": 0
+  },
+  "frame": 1280
+}

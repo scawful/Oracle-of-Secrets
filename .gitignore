@@ -3,6 +3,7 @@ oos111.sfc
 oos111x-1.bst
 oos111x-2.bst
 oos111x-3.bst
+Docs/Tooling/lmstudio_models.json
 oos111x.bp
 oos111x.cht
 oos111x.cpu.sym
@@ -22,7 +23,17 @@ oos165x.smp.sym
 oos165x.srm
 buildJ.bat
 oos165x.cht
-Roms
+# Ignore ROM files and save states, but track metadata
+Roms/*
+!Roms/SaveStates/
+Roms/SaveStates/*
+!Roms/SaveStates/overworld/
+!Roms/SaveStates/oos168x/
+Roms/SaveStates/oos168x/*
+!Roms/SaveStates/oos168x/*/
+Roms/SaveStates/oos168x/**/*.mss
+Roms/SaveStates/oos168x/**/*.srm
+Roms/SaveStates/overworld/*.mss
 Dungeons/Assets
 Items/gfx/jump_frames.xcf
 Masks/etc
@@ -168,3 +179,4 @@ Sprites/NPCs/piratian.zsm
 Masks/gfx/moosh.png
 Masks/gfx/moosh.pal
 Dungeons/DungeonMaps.asm
+__pycache__/

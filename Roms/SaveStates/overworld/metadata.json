@@ -1,0 +1,194 @@
+{
+  "romVersion": "oos168x",
+  "created": "2026-01-21",
+  "updated": "2026-01-23",
+  "category": "overworld",
+  "description": "Save states for overworld transitions, area testing, and camera behavior",
+  "states": {
+    "pyramid_bunny_start": {
+      "file": "../oos168x/overworld/pyramid_bunny_start.mss",
+      "name": "Pyramid Bunny Start",
+      "description": "Fresh game start at pyramid area in bunny form",
+      "area": "0x40",
+      "tags": ["early-game", "bunny", "pyramid", "fresh-start"]
+    }
+  },
+  "requiredCheckpoints": [
+    {
+      "id": "ow_lost_woods_entrance",
+      "area": "0x29",
+      "areaName": "Lost Woods Center",
+      "purpose": "Lost Woods puzzle testing and camera drift verification",
+      "priority": "high",
+      "tags": ["lost-woods", "puzzle", "camera-test"],
+      "conditions": {
+        "mode": "0x09",
+        "indoors": false,
+        "suggestedPosition": "Center of area 0x29"
+      },
+      "testCoverage": [
+        "lost-woods-puzzle",
+        "camera-drift",
+        "small-map-transitions"
+      ]
+    },
+    {
+      "id": "ow_lost_woods_east_exit",
+      "area": "0x2A",
+      "areaName": "Lost Woods East",
+      "purpose": "Tests small-to-large map transition (0x2A to 0x23)",
+      "priority": "high",
+      "tags": ["lost-woods", "transition", "small-map", "boundary"],
+      "conditions": {
+        "mode": "0x09",
+        "indoors": false,
+        "suggestedPosition": "Near east boundary of 0x2A"
+      },
+      "testCoverage": [
+        "small-to-large-transition",
+        "camera-boundary-setup",
+        "scroll-initialization"
+      ]
+    },
+    {
+      "id": "ow_village_west",
+      "area": "0x23",
+      "areaName": "Village Area",
+      "purpose": "Large map area for testing transitions from Lost Woods",
+      "priority": "high",
+      "tags": ["village", "large-map", "transition"],
+      "conditions": {
+        "mode": "0x09",
+        "indoors": false,
+        "suggestedPosition": "Near west boundary adjacent to Lost Woods"
+      },
+      "testCoverage": [
+        "large-map-camera",
+        "post-transition-state"
+      ]
+    },
+    {
+      "id": "ow_sanctuary",
+      "area": "0x22",
+      "areaName": "Sanctuary Area",
+      "purpose": "Indoor/outdoor transition testing",
+      "priority": "medium",
+      "tags": ["sanctuary", "indoor-entrance", "early-game"],
+      "conditions": {
+        "mode": "0x09",
+        "indoors": false,
+        "suggestedPosition": "Near sanctuary entrance"
+      },
+      "testCoverage": [
+        "indoor-transition",
+        "entrance-detection"
+      ]
+    },
+    {
+      "id": "ow_links_house",
+      "area": "0x1B",
+      "areaName": "Link's House",
+      "purpose": "Starting area with indoor entrance",
+      "priority": "medium",
+      "tags": ["start", "indoor-entrance", "early-game"],
+      "conditions": {
+        "mode": "0x09",
+        "indoors": false,
+        "suggestedPosition": "Near Link's house door"
+      },
+      "testCoverage": [
+        "boot-state",
+        "indoor-transition"
+      ]
+    },
+    {
+      "id": "ow_kakariko",
+      "area": "0x18",
+      "areaName": "Kakariko Village",
+      "purpose": "Village with multiple indoor entrances",
+      "priority": "medium",
+      "tags": ["village", "indoor-entrance", "npc"],
+      "conditions": {
+        "mode": "0x09",
+        "indoors": false
+      },
+      "testCoverage": [
+        "multiple-entrances",
+        "npc-interaction"
+      ]
+    },
+    {
+      "id": "ow_graveyard",
+      "area": "0x3A",
+      "areaName": "Graveyard",
+      "purpose": "Dungeon entrance area",
+      "priority": "medium",
+      "tags": ["graveyard", "dungeon-entrance"],
+      "conditions": {
+        "mode": "0x09",
+        "indoors": false
+      },
+      "testCoverage": [
+        "dungeon-entrance",
+        "area-transition"
+      ]
+    },
+    {
+      "id": "ow_pyramid_dw",
+      "area": "0x40",
+      "areaName": "Dark World Pyramid",
+      "purpose": "Dark World starting area and world switching",
+      "priority": "medium",
+      "tags": ["dark-world", "pyramid", "world-switch"],
+      "conditions": {
+        "mode": "0x09",
+        "indoors": false
+      },
+      "testCoverage": [
+        "dark-world",
+        "world-transitions"
+      ]
+    },
+    {
+      "id": "ow_death_mountain",
+      "area": "0x03",
+      "areaName": "Death Mountain",
+      "purpose": "Mountain hazards and vertical scrolling",
+      "priority": "low",
+      "tags": ["mountain", "hazards", "vertical-scroll"],
+      "conditions": {
+        "mode": "0x09",
+        "indoors": false
+      },
+      "testCoverage": [
+        "hazard-tiles",
+        "vertical-scroll"
+      ]
+    },
+    {
+      "id": "ow_lake_hylia",
+      "area": "0x07",
+      "areaName": "Lake Hylia",
+      "purpose": "Water area for swimming mechanics",
+      "priority": "low",
+      "tags": ["water", "swimming", "lake"],
+      "conditions": {
+        "mode": "0x09",
+        "indoors": false
+      },
+      "testCoverage": [
+        "swimming",
+        "water-collision"
+      ]
+    }
+  ],
+  "captureTool": "scripts/capture_overworld_states.py",
+  "captureInstructions": [
+    "1. Start Mesen2 with socket server: ./scripts/mesen_launch.sh",
+    "2. Load oos168x ROM",
+    "3. Navigate to desired checkpoint location",
+    "4. Run: ./scripts/capture_overworld_states.py check",
+    "5. Run: ./scripts/capture_overworld_states.py capture --name <checkpoint_id>",
+    "6. Import to library: python3 scripts/state_library.py import ..."
+  ]
+}
