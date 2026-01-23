@@ -30,10 +30,26 @@ USAGE
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-FORK_INSTALL="${REPO_ROOT}/../third_party/forks/Mesen2/tools/install_mesen2_oos.sh"
 
-if [[ ! -x "${FORK_INSTALL}" ]]; then
-  echo "Missing fork install script: ${FORK_INSTALL}" >&2
+FORK_INSTALL_CANDIDATES=(
+  "${REPO_ROOT}/../third_party/forks/Mesen2/tools/install_mesen2_oos.sh"
+  "${REPO_ROOT}/../../third_party/forks/Mesen2/tools/install_mesen2_oos.sh"
+  "/Users/scawful/src/third_party/forks/Mesen2/tools/install_mesen2_oos.sh"
+)
+
+FORK_INSTALL=""
+for candidate in "${FORK_INSTALL_CANDIDATES[@]}"; do
+  if [[ -x "${candidate}" ]]; then
+    FORK_INSTALL="${candidate}"
+    break
+  fi
+done
+
+if [[ -z "${FORK_INSTALL}" ]]; then
+  echo "Missing fork install script. Tried:" >&2
+  for candidate in "${FORK_INSTALL_CANDIDATES[@]}"; do
+    echo "  - ${candidate}" >&2
+  done
   echo "Make sure the Mesen2 fork is checked out and built." >&2
   exit 1
 fi
