@@ -40,11 +40,18 @@ class StateLibrary:
 
     def resolve_path(self, entry: dict) -> Path:
         """Resolve the full state file path for a manifest entry."""
-        state_path = entry.get("path")
+        # Support both "path" (legacy) and "state_path" (new format)
+        state_path = entry.get("path") or entry.get("state_path")
         if not state_path:
             raise ValueError(f"State '{entry.get('id', '?')}' has no path")
 
-        full_path = self.library_root / state_path
+        # Check if state_path is absolute or relative
+        path_obj = Path(state_path)
+        if path_obj.is_absolute():
+            full_path = path_obj
+        else:
+            full_path = self.library_root.parent.parent.parent / state_path
+
         if not full_path.exists():
             raise ValueError(f"State file not found: {full_path}")
 
