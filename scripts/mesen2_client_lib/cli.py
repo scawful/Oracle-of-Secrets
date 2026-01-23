@@ -164,8 +164,10 @@ def main():
         else:
             print("=== Oracle Game State ===")
             print(f"Mode: {state['mode_name']} (0x{state['mode']:02X})")
-            print(f"Area: 0x{state['area']:02X}")
-            print(f"Room: 0x{state['room']:02X}")
+            print(f"Location: {state['area_name']}")
+            print(f"Area: 0x{state['area']:02X} | Room: 0x{state['room']:02X}")
+            if state['indoors']:
+                print(f"Dungeon Room: 0x{state['dungeon_room']:02X} ({state['room_name']})")
             print(f"Indoors: {bool(state['indoors'])}")
             print(f"Link: ({state['link_x']}, {state['link_y']}, Z={state['link_z']})")
             print(f"Direction: {state['link_dir_name']}")
@@ -516,6 +518,10 @@ def main():
             print(f"Room: 0x{metadata['room']:02X}")
             print(f"Position: ({metadata['link_x']}, {metadata['link_y']})")
             print(f"Indoors: {metadata['indoors']}")
+            print(f"Form: {metadata['link_form_name']} (0x{metadata['link_form']:02X})")
+            print(f"Time: {metadata['time_hours']:02d}:{metadata['time_minutes']:02d} (speed: {metadata['time_speed']})")
+            print(f"Health: {metadata['health']}/{metadata['max_health']}")
+            print(f"Magic: {metadata['magic']}, Rupees: {metadata['rupees']}")
             print(f"GameState: {metadata['game_state']}")
             print(f"OOSPROG: 0x{metadata['oosprog']:02X}")
             print(f"OOSPROG2: 0x{metadata['oosprog2']:02X}")

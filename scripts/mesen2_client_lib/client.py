@@ -8,11 +8,15 @@ from .bridge import MesenBridge
 from .constants import (
     BUTTONS,
     DIRECTION_NAMES,
+    DUNGEON_INFO,
+    ENTRANCE_INFO,
     FORM_NAMES,
     ITEMS,
     LOST_WOODS_AREAS,
     MODE_NAMES,
     OracleRAM,
+    OVERWORLD_AREAS,
+    ROOM_NAMES,
     STORY_FLAGS,
     WARP_LOCATIONS,
     WATCH_PROFILES,
@@ -39,14 +43,31 @@ class OracleDebugClient:
         """Get Oracle-specific game state."""
         mode = self.bridge.read_memory(OracleRAM.MODE)
         link_form = self.bridge.read_memory(OracleRAM.LINK_FORM)
+        area = self.bridge.read_memory(OracleRAM.AREA_ID)
+        room = self.bridge.read_memory(OracleRAM.ROOM_LAYOUT)
+        dungeon_room = self.bridge.read_memory16(OracleRAM.ROOM_ID)
+        indoors = self.bridge.read_memory(OracleRAM.INDOORS)
+
+        # Determine location name based on context
+        if indoors:
+            # Use room ID for indoor locations (dungeons)
+            room_name = ROOM_NAMES.get(dungeon_room, f"Room 0x{dungeon_room:02X}")
+            area_name = f"Inside: {room_name}"
+        else:
+            # Use area ID for overworld
+            area_name = OVERWORLD_AREAS.get(area, f"Area 0x{area:02X}")
+            room_name = area_name
+
         return {
             "mode": mode,
             "mode_name": MODE_NAMES.get(mode, f"Unknown (0x{mode:02X})"),
             "submode": self.bridge.read_memory(OracleRAM.SUBMODE),
-            "area": self.bridge.read_memory(OracleRAM.AREA_ID),
-            "room": self.bridge.read_memory(OracleRAM.ROOM_LAYOUT),
-            "dungeon_room": self.bridge.read_memory16(OracleRAM.ROOM_ID),
-            "indoors": self.bridge.read_memory(OracleRAM.INDOORS),
+            "area": area,
+            "area_name": area_name,
+            "room": room,
+            "room_name": room_name,
+            "dungeon_room": dungeon_room,
+            "indoors": indoors,
             # Link position and state
             "link_x": self.bridge.read_memory16(OracleRAM.LINK_X),
             "link_y": self.bridge.read_memory16(OracleRAM.LINK_Y),
@@ -451,15 +472,20 @@ class OracleDebugClient:
 
     def _describe_location(self, state: dict) -> str:
         """Generate a human-readable location description."""
+        # Use the pre-computed names from get_oracle_state()
+        if "area_name" in state:
+            return state["area_name"]
+
+        # Fallback for older state format
         area = state["area"]
         if state["indoors"]:
-            return f"Dungeon Room 0x{state['room']:02X}"
-        elif area == 0x23:
-            return "Start Village"
+            dungeon_room = state.get("dungeon_room", state["room"])
+            room_name = ROOM_NAMES.get(dungeon_room, f"Room 0x{dungeon_room:02X}")
+            return f"Inside: {room_name}"
         elif area in LOST_WOODS_AREAS:
             return "Lost Woods"
         else:
-            return f"Overworld Area 0x{area:02X}"
+            return OVERWORLD_AREAS.get(area, f"Overworld Area 0x{area:02X}")
 
     def _describe_state(self, state: dict, story: dict) -> str:
         """Generate a summary of current game state."""
