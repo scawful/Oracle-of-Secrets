@@ -8,6 +8,7 @@ from .bridge import MesenBridge
 from .constants import (
     BUTTONS,
     DIRECTION_NAMES,
+    FORM_NAMES,
     ITEMS,
     LOST_WOODS_AREAS,
     MODE_NAMES,
@@ -37,6 +38,7 @@ class OracleDebugClient:
     def get_oracle_state(self) -> dict:
         """Get Oracle-specific game state."""
         mode = self.bridge.read_memory(OracleRAM.MODE)
+        link_form = self.bridge.read_memory(OracleRAM.LINK_FORM)
         return {
             "mode": mode,
             "mode_name": MODE_NAMES.get(mode, f"Unknown (0x{mode:02X})"),
@@ -45,6 +47,7 @@ class OracleDebugClient:
             "room": self.bridge.read_memory(OracleRAM.ROOM_LAYOUT),
             "dungeon_room": self.bridge.read_memory16(OracleRAM.ROOM_ID),
             "indoors": self.bridge.read_memory(OracleRAM.INDOORS),
+            # Link position and state
             "link_x": self.bridge.read_memory16(OracleRAM.LINK_X),
             "link_y": self.bridge.read_memory16(OracleRAM.LINK_Y),
             "link_z": self.bridge.read_memory16(OracleRAM.LINK_Z),
@@ -53,8 +56,20 @@ class OracleDebugClient:
                 self.bridge.read_memory(OracleRAM.LINK_DIR), "?"
             ),
             "link_state": self.bridge.read_memory(OracleRAM.LINK_STATE),
+            "link_form": link_form,
+            "link_form_name": FORM_NAMES.get(link_form, f"Unknown (0x{link_form:02X})"),
+            # Scroll registers
             "scroll_x": self.bridge.read_memory(OracleRAM.SCROLL_X_LO),
             "scroll_y": self.bridge.read_memory(OracleRAM.SCROLL_Y_LO),
+            # Time system (Oracle custom)
+            "time_hours": self.bridge.read_memory(OracleRAM.TIME_HOURS),
+            "time_minutes": self.bridge.read_memory(OracleRAM.TIME_MINUTES),
+            "time_speed": self.bridge.read_memory(OracleRAM.TIME_SPEED),
+            # Player stats
+            "health": self.bridge.read_memory(OracleRAM.HEALTH_CURRENT),
+            "max_health": self.bridge.read_memory(OracleRAM.HEALTH_MAX),
+            "magic": self.bridge.read_memory(OracleRAM.MAGIC_POWER),
+            "rupees": self.bridge.read_memory16(OracleRAM.RUPEES),
         }
 
     def get_story_state(self) -> dict:
@@ -407,14 +422,29 @@ class OracleDebugClient:
             "room": state["room"],
             "area": state["area"],
             "indoors": bool(state["indoors"]),
+            # Link state
             "link_x": state["link_x"],
             "link_y": state["link_y"],
             "link_state": state["link_state"],
+            "link_form": state["link_form"],
+            "link_form_name": state["link_form_name"],
+            "link_dir": state["link_dir"],
+            # Time system
+            "time_hours": state["time_hours"],
+            "time_minutes": state["time_minutes"],
+            "time_speed": state["time_speed"],
+            # Player stats
+            "health": state["health"],
+            "max_health": state["max_health"],
+            "magic": state["magic"],
+            "rupees": state["rupees"],
+            # Story progress
             "game_state": story["game_state"],
             "oosprog": story["oosprog"],
             "oosprog2": story["oosprog2"],
             "crystals": story["crystals"],
             "pendants": story["pendants"],
+            # Descriptive fields
             "location": self._describe_location(state),
             "summary": self._describe_state(state, story),
         }

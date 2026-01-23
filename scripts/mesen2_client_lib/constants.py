@@ -22,6 +22,12 @@ class OracleRAM:
     LINK_Z = 0x7E0024  # Link Z position ($FFFF = grounded)
     LINK_DIR = 0x7E002F  # Link facing direction (0=up, 2=down, 4=left, 6=right)
     LINK_STATE = 0x7E005D  # Link state
+    LINK_FORM = 0x7E02B2  # Link form/mask ID (0=normal, 3=wolf, 5=minish, 6=GBC Link)
+
+    # Time System (Oracle custom, TimeState struct at $7EE000)
+    TIME_HOURS = 0x7EE000  # Current hour (0-23)
+    TIME_MINUTES = 0x7EE001  # Current minute (0-59)
+    TIME_SPEED = 0x7EE002  # Time speed multiplier
 
     # Scroll Registers (Lost Woods issue)
     SCROLL_X_LO = 0x7E00E1  # X scroll low
@@ -144,6 +150,13 @@ DIRECTION_NAMES = {
     2: "Down",
     4: "Left",
     6: "Right",
+}
+
+FORM_NAMES = {
+    0x00: "Normal",
+    0x03: "Wolf",
+    0x05: "Minish",
+    0x06: "GBC Link",
 }
 
 
@@ -338,6 +351,29 @@ WATCH_PROFILES = {
             (OracleRAM.OOSPROG2, "OOSPROG2", "hex"),
             (OracleRAM.SIDE_QUEST, "SideQuest", "hex"),
             (OracleRAM.CRYSTALS, "Crystals", "hex"),
+        ],
+    },
+    "time": {
+        "description": "Time system variables",
+        "addresses": [
+            (OracleRAM.TIME_HOURS, "Hours", "dec"),
+            (OracleRAM.TIME_MINUTES, "Minutes", "dec"),
+            (OracleRAM.TIME_SPEED, "Speed", "dec"),
+            (OracleRAM.LINK_FORM, "Form", "hex"),
+            (OracleRAM.MODE, "Mode", "hex"),
+        ],
+    },
+    "link": {
+        "description": "Link state and form debugging",
+        "addresses": [
+            (OracleRAM.LINK_X, "LinkX", "dec16"),
+            (OracleRAM.LINK_Y, "LinkY", "dec16"),
+            (OracleRAM.LINK_Z, "LinkZ", "dec16"),
+            (OracleRAM.LINK_DIR, "Direction", "hex"),
+            (OracleRAM.LINK_STATE, "State", "hex"),
+            (OracleRAM.LINK_FORM, "Form", "hex"),
+            (OracleRAM.HEALTH_CURRENT, "Health", "dec"),
+            (OracleRAM.HEALTH_MAX, "MaxHealth", "dec"),
         ],
     },
 }

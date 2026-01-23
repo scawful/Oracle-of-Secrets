@@ -75,17 +75,54 @@ def get_bridge():
 
 def get_current_state(bridge):
     """Read current game state from Mesen2."""
+    # Oracle RAM addresses
+    LINK_FORM = 0x7E02B2  # 0=normal, 3=wolf, 5=minish, 6=GBC Link
+    TIME_HOURS = 0x7EE000
+    TIME_MINUTES = 0x7EE001
+    TIME_SPEED = 0x7EE002
+    HEALTH_CURRENT = 0x7EF36D
+    HEALTH_MAX = 0x7EF36C
+    MAGIC_POWER = 0x7EF36E
+    RUPEES = 0x7EF360
+    GAME_STATE = 0x7EF3C5
+    OOSPROG = 0x7EF3D6
+    CRYSTALS = 0x7EF37A
+
+    link_form = bridge.read_memory(LINK_FORM)
+    form_names = {0x00: "Normal", 0x03: "Wolf", 0x05: "Minish", 0x06: "GBC Link"}
+
     return {
+        # Core game state
         "area": bridge.read_memory(0x7E008A),
         "room": bridge.read_memory(0x7E00A0),
         "mode": bridge.read_memory(0x7E0010),
         "submode": bridge.read_memory(0x7E0011),
-        "link_x": bridge.read_memory16(0x7E0022),
-        "link_y": bridge.read_memory16(0x7E0020),
         "indoors": bridge.read_memory(0x7E001B),
         "dungeon_id": bridge.read_memory(0x7E040C),
+        # Link position
+        "link_x": bridge.read_memory16(0x7E0022),
+        "link_y": bridge.read_memory16(0x7E0020),
+        "link_dir": bridge.read_memory(0x7E002F),
+        "link_state": bridge.read_memory(0x7E005D),
+        # Link form (Oracle custom)
+        "link_form": link_form,
+        "link_form_name": form_names.get(link_form, f"Unknown (0x{link_form:02X})"),
+        # Scroll registers
         "scroll_x": bridge.read_memory16(0x7E00E1) | (bridge.read_memory(0x7E00E3) << 8),
         "scroll_y": bridge.read_memory16(0x7E00E7) | (bridge.read_memory(0x7E00E9) << 8),
+        # Time system (Oracle custom)
+        "time_hours": bridge.read_memory(TIME_HOURS),
+        "time_minutes": bridge.read_memory(TIME_MINUTES),
+        "time_speed": bridge.read_memory(TIME_SPEED),
+        # Player stats
+        "health": bridge.read_memory(HEALTH_CURRENT),
+        "max_health": bridge.read_memory(HEALTH_MAX),
+        "magic": bridge.read_memory(MAGIC_POWER),
+        "rupees": bridge.read_memory16(RUPEES),
+        # Story progress
+        "game_state": bridge.read_memory(GAME_STATE),
+        "oosprog": bridge.read_memory(OOSPROG),
+        "crystals": bridge.read_memory(CRYSTALS),
     }
 
 
@@ -148,7 +185,21 @@ def print_state(state):
     print(f"  Dungeon:   0x{state['dungeon_id']:02X}")
     print(f"  Indoors:   {'Yes' if state['indoors'] else 'No'}")
     print(f"  Link:      ({state['link_x']}, {state['link_y']})")
+    print(f"  Form:      {state['link_form_name']} (0x{state['link_form']:02X})")
     print(f"  Scroll:    ({state['scroll_x']}, {state['scroll_y']})")
+
+    # Time system
+    print(f"\n  Time:      {state['time_hours']:02d}:{state['time_minutes']:02d} (speed: {state['time_speed']})")
+
+    # Player stats
+    print(f"  Health:    {state['health']}/{state['max_health']}")
+    print(f"  Magic:     {state['magic']}")
+    print(f"  Rupees:    {state['rupees']}")
+
+    # Story progress
+    print(f"\n  GameState: {state['game_state']}")
+    print(f"  OOSPROG:   0x{state['oosprog']:02X}")
+    print(f"  Crystals:  0x{state['crystals']:02X}")
 
     category = detect_category(state)
     print(f"\n  Detected Category: {category}")
@@ -284,15 +335,36 @@ def cmd_capture(args):
             "area": f"0x{state['area']:02X}",
             "room": f"0x{state['room']:02X}",
             "indoors": bool(state["indoors"]),
+            "dungeonId": f"0x{state['dungeon_id']:02X}",
         },
         "linkState": {
             "x": state["link_x"],
             "y": state["link_y"],
+            "direction": state["link_dir"],
+            "state": state["link_state"],
+            "form": state["link_form"],
+            "formName": state["link_form_name"],
         },
         "scrollState": {
             "x": state["scroll_x"],
             "y": state["scroll_y"],
-        }
+        },
+        "timeState": {
+            "hours": state["time_hours"],
+            "minutes": state["time_minutes"],
+            "speed": state["time_speed"],
+        },
+        "playerStats": {
+            "health": state["health"],
+            "maxHealth": state["max_health"],
+            "magic": state["magic"],
+            "rupees": state["rupees"],
+        },
+        "storyProgress": {
+            "gameState": state["game_state"],
+            "oosprog": f"0x{state['oosprog']:02X}",
+            "crystals": f"0x{state['crystals']:02X}",
+        },
     }
 
     # Save state file path

@@ -169,7 +169,19 @@ def main():
             print(f"Indoors: {bool(state['indoors'])}")
             print(f"Link: ({state['link_x']}, {state['link_y']}, Z={state['link_z']})")
             print(f"Direction: {state['link_dir_name']}")
+            print(f"Form: {state['link_form_name']} (0x{state['link_form']:02X})")
             print(f"Scroll: ({state['scroll_x']}, {state['scroll_y']})")
+
+            # Time system (Oracle custom)
+            print(f"\n=== Time System ===")
+            print(f"Time: {state['time_hours']:02d}:{state['time_minutes']:02d}")
+            print(f"Speed: {state['time_speed']}")
+
+            # Player stats
+            print(f"\n=== Player Stats ===")
+            print(f"Health: {state['health']}/{state['max_health']}")
+            print(f"Magic: {state['magic']}")
+            print(f"Rupees: {state['rupees']}")
 
             # Check for issues
             warnings = client.check_known_issues(state)
