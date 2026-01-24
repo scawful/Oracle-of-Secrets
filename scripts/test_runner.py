@@ -4,6 +4,8 @@ Test runner for Oracle of Secrets with MoE orchestrator integration.
 
 Executes test definitions and routes failures to specialized Triforce models.
 
+Defaults to the Mesen2 fork socket API. Set OOS_TEST_BACKEND=cli to force legacy mesen_cli.sh.
+
 Usage:
     ./scripts/test_runner.py tests/lr_swap_test.json
     ./scripts/test_runner.py tests/*.json --verbose
@@ -17,7 +19,13 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
+
+try:
+    from mesen2_client_lib.client import OracleDebugClient
+    HAS_SOCKET_BACKEND = True
+except Exception:
+    HAS_SOCKET_BACKEND = False
 
 # Colors for terminal output
 class Colors:
@@ -32,24 +40,178 @@ def log(msg: str, color: str = ''):
     """Print colored log message."""
     print(f"{color}{msg}{Colors.RESET}")
 
-def mesen_cmd(cmd: str, *args, timeout: float = 2.0) -> tuple[bool, str]:
-    """Execute mesen_cli.sh command and return (success, output)."""
-    script_dir = Path(__file__).parent
-    cli_path = script_dir / "mesen_cli.sh"
+CLI_PATH = Path(__file__).parent / "mesen_cli.sh"
 
+def _mesen_cli_cmd(cmd: str, *args, timeout: float = 2.0) -> tuple[bool, str]:
+    """Execute mesen_cli.sh command and return (success, output)."""
     try:
         result = subprocess.run(
-            [str(cli_path), cmd, *[str(a) for a in args]],
+            [str(CLI_PATH), cmd, *[str(a) for a in args]],
             capture_output=True,
             text=True,
             timeout=timeout,
-            cwd=script_dir.parent
+            cwd=Path(__file__).parent.parent
         )
         return result.returncode == 0, result.stdout.strip()
     except subprocess.TimeoutExpired:
         return False, "Command timed out"
     except Exception as e:
         return False, str(e)
+
+
+def _parse_addr(addr: Any) -> Optional[int]:
+    if isinstance(addr, int):
+        return addr
+    if isinstance(addr, str):
+        s = addr.strip()
+        if s.startswith("$"):
+            s = "0x" + s[1:]
+        try:
+            return int(s, 16 if s.lower().startswith("0x") else 10)
+        except ValueError:
+            return None
+    try:
+        return int(addr)
+    except Exception:
+        return None
+
+
+class MesenSocketBackend:
+    def __init__(self):
+        self.client = OracleDebugClient()
+
+    def is_connected(self) -> bool:
+        return self.client.is_connected()
+
+    def send(self, cmd: str, *args, timeout: float = 2.0) -> tuple[bool, str]:
+        command = cmd.lower()
+
+        if command == "ping":
+            return (self.is_connected(), "pong" if self.is_connected() else "not connected")
+
+        if not self.is_connected():
+            return False, "Mesen2 socket not connected"
+
+        try:
+            if command in ("read", "read8"):
+                addr = _parse_addr(args[0]) if args else None
+                if addr is None:
+                    return False, "Invalid address"
+                value = self.client.read_address(addr)
+                return True, f"READ:0x{addr:06X}=0x{value:02X} ({value})"
+
+            if command == "read16":
+                addr = _parse_addr(args[0]) if args else None
+                if addr is None:
+                    return False, "Invalid address"
+                value = self.client.read_address16(addr)
+                return True, f"READ16:0x{addr:06X}=0x{value:04X} ({value})"
+
+            if command == "write":
+                addr = _parse_addr(args[0]) if len(args) >= 1 else None
+                value = parse_int(args[1]) if len(args) >= 2 else None
+                if addr is None or value is None:
+                    return False, "Invalid write args"
+                ok = self.client.write_address(addr, int(value))
+                return ok, f"WRITE:0x{addr:06X}=0x{int(value):02X}"
+
+            if command == "write16":
+                addr = _parse_addr(args[0]) if len(args) >= 1 else None
+                value = parse_int(args[1]) if len(args) >= 2 else None
+                if addr is None or value is None:
+                    return False, "Invalid write16 args"
+                ok = self.client.bridge.write_memory16(addr, int(value))
+                return ok, f"WRITE16:0x{addr:06X}=0x{int(value):04X}"
+
+            if command == "press":
+                button = args[0] if args else ""
+                frames = parse_int(args[1]) if len(args) >= 2 else 5
+                ok = self.client.press_button(str(button), int(frames or 0))
+                return ok, f"PRESSED:{button}"
+
+            if command == "state":
+                state = self.client.get_oracle_state()
+                try:
+                    story = self.client.get_story_state()
+                    state.update(story)
+                except Exception:
+                    pass
+                return True, json.dumps(state)
+
+            if command == "screenshot":
+                path = str(args[0]) if args else ""
+                if not path:
+                    stamp = time.strftime("%Y%m%d_%H%M%S")
+                    path = str(Path("tests/screenshots") / f"mesen_capture_{stamp}.png")
+                path_obj = Path(path)
+                path_obj.parent.mkdir(parents=True, exist_ok=True)
+                data = self.client.screenshot()
+                if not data:
+                    return False, "Screenshot failed"
+                path_obj.write_bytes(data)
+                return True, str(path_obj)
+
+            if command in ("loadstate", "load"):
+                path = str(args[0]) if args else ""
+                if not path:
+                    return False, "Missing loadstate path"
+                ok = self.client.load_state(path=path)
+                return ok, f"LOADSTATE:{path}"
+
+            if command == "loadslot":
+                slot = parse_int(args[0]) if args else None
+                if slot is None:
+                    return False, "Invalid loadslot"
+                ok = self.client.load_state(slot=int(slot))
+                return ok, f"LOADSLOT:{slot}"
+
+            if command == "wait-load":
+                seconds = parse_int(args[0]) if args else 1
+                time.sleep(float(seconds or 0))
+                return True, f"WAIT:{seconds}"
+
+            return False, f"Unsupported socket command: {cmd}"
+        except Exception as exc:
+            return False, f"Socket backend error: {exc}"
+
+
+class MesenBackend:
+    def __init__(self):
+        mode = os.environ.get("OOS_TEST_BACKEND", "auto").lower()
+        self.mode = mode
+        self.socket_backend = None
+        self.cli_available = CLI_PATH.exists()
+
+        if mode in ("auto", "socket") and HAS_SOCKET_BACKEND:
+            candidate = MesenSocketBackend()
+            if candidate.is_connected() or mode == "socket":
+                self.socket_backend = candidate
+
+        if self.socket_backend is None and mode == "auto" and self.cli_available:
+            self.mode = "cli"
+
+    def backend_name(self) -> str:
+        if self.socket_backend is not None:
+            return "socket"
+        return "cli" if self.cli_available else "none"
+
+    def send(self, cmd: str, *args, timeout: float = 2.0) -> tuple[bool, str]:
+        if self.socket_backend is not None:
+            success, output = self.socket_backend.send(cmd, *args, timeout=timeout)
+            if success or self.mode == "socket":
+                return success, output
+            # fallback to CLI when in auto mode
+        if self.cli_available:
+            return _mesen_cli_cmd(cmd, *args, timeout=timeout)
+        return False, "No available backend (socket or mesen_cli.sh)"
+
+
+BACKEND = MesenBackend()
+
+
+def mesen_cmd(cmd: str, *args, timeout: float = 2.0) -> tuple[bool, str]:
+    """Execute command via socket API (default) or mesen_cli fallback."""
+    return BACKEND.send(cmd, *args, timeout=timeout)
 
 
 def run_yabai(action: str, *args: str) -> None:
@@ -519,6 +681,7 @@ def run_test(test_path: Path, verbose: bool = False, dry_run: bool = False,
 
     # Check bridge connection
     log("\nChecking bridge connection...")
+    log(f"Using backend: {BACKEND.backend_name()} (mode={BACKEND.mode})")
     success, output = mesen_cmd('ping')
     if not success:
         log(f"{Colors.RED}Bridge not connected: {output}{Colors.RESET}")

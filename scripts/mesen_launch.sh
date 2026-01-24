@@ -61,10 +61,10 @@ resolve_mesen_app() {
     fi
 
     local candidates=(
-        "/Users/scawful/src/third_party/forks/Mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen2 OOS.app"
-        "/Users/scawful/src/third_party/forks/Mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen.app"
         "/Applications/Mesen2 OOS.app"
         "/Applications/Mesen.app"
+        "/Users/scawful/src/third_party/forks/Mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen2 OOS.app"
+        "/Users/scawful/src/third_party/forks/Mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen.app"
     )
     for path in "${candidates[@]}"; do
         if [[ -d "${path}" ]]; then

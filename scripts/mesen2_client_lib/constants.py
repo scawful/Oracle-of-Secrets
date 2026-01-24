@@ -70,6 +70,20 @@ class OracleRAM:
     MAP_ICON = 0x7EF3C7  # Dungeon guidance icon
     SPAWN_POINT = 0x7EF3C8  # Spawn point ID
 
+    # Debug Warp System ($7E074C-$7E0753) - ROM code at $3CB400
+    # Write to these addresses to trigger a debug warp:
+    #   1. Write target area to DBG_WARP_AREA
+    #   2. Write target X (16-bit) to DBG_WARP_X
+    #   3. Write target Y (16-bit) to DBG_WARP_Y
+    #   4. Write 1 (cross-area) or 2 (same-area) to DBG_WARP_REQUEST
+    #   5. Poll DBG_WARP_STATUS for completion
+    DBG_WARP_REQUEST = 0x7E074C  # 1=cross-area warp, 2=same-area warp
+    DBG_WARP_AREA = 0x7E074D  # Target overworld area ID
+    DBG_WARP_X = 0x7E074E  # Target X (16-bit: lo at 074E, hi at 074F)
+    DBG_WARP_Y = 0x7E0750  # Target Y (16-bit: lo at 0750, hi at 0751)
+    DBG_WARP_STATUS = 0x7E0752  # 0=idle, 1=pending, 2=in_progress, 3=complete
+    DBG_WARP_ERROR = 0x7E0753  # Error code: 1=wrong mode, 2=UW not supported
+
     # Items ($7EF340-35F)
     BOW = 0x7EF340  # 1=Bow, 2=+Arrows, 3=Silver, 4=Silver+Arrows
     BOOMERANG = 0x7EF341  # 1=Blue, 2=Red
@@ -131,17 +145,45 @@ class GameMode:
     """Oracle game mode values."""
 
     TITLE_RESET = 0x00
-    TRANSITION = 0x05
+    LOAD_FILE = 0x05
+    DUNGEON_LOAD = 0x06
     DUNGEON = 0x07
+    OVERWORLD_LOAD = 0x08
     OVERWORLD = 0x09
+    OVERWORLD_SPECIAL_LOAD = 0x0A
+    OVERWORLD_SPECIAL = 0x0B
     MENU = 0x0E
+
+
+class OverworldSubmode:
+    """Module09 (Overworld) submodule values for transitions."""
+
+    PLAYER_CONTROL = 0x00
+    LOAD_AUX_GFX = 0x01
+    TRIGGER_TILEMAP = 0x02
+    LOAD_MAP_GFX = 0x03
+    LOAD_SPRITES = 0x04
+    START_SCROLL = 0x05  # Scroll transition start
+    RUN_SCROLL = 0x06
+    EASE_OFF_SCROLL = 0x07
+    FINALIZE_ENTRY = 0x08
+    START_MOSAIC = 0x0D  # Mosaic (fade) transition start
+    LOAD_SUBSCREEN = 0x0E
+    FADE_BACK_IN = 0x16  # Return from mosaic
+    MIRROR_WARP = 0x23  # Instant mirror warp
+    RECOVER_DROWNING = 0x2A
+    WHIRLPOOL = 0x2E
 
 
 MODE_NAMES = {
     GameMode.TITLE_RESET: "Title/Reset",
-    GameMode.TRANSITION: "Transition",
+    GameMode.LOAD_FILE: "Load File",
+    GameMode.DUNGEON_LOAD: "Dungeon Load",
     GameMode.DUNGEON: "Dungeon",
+    GameMode.OVERWORLD_LOAD: "Overworld Load",
     GameMode.OVERWORLD: "Overworld",
+    GameMode.OVERWORLD_SPECIAL_LOAD: "Special Area Load",
+    GameMode.OVERWORLD_SPECIAL: "Special Area",
     GameMode.MENU: "Menu",
 }
 
@@ -363,7 +405,10 @@ WATCH_PROFILES = {
             (OracleRAM.OOSPROG, "OOSPROG", "hex"),
             (OracleRAM.OOSPROG2, "OOSPROG2", "hex"),
             (OracleRAM.SIDE_QUEST, "SideQuest", "hex"),
+            (OracleRAM.SIDE_QUEST2, "SideQuest2", "hex"),
             (OracleRAM.CRYSTALS, "Crystals", "hex"),
+            (OracleRAM.PENDANTS, "Pendants", "hex"),
+            (OracleRAM.MAKU_TREE_QUEST, "MakuTreeQuest", "hex"),
         ],
     },
     "time": {

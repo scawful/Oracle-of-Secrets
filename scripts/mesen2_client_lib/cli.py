@@ -2,11 +2,107 @@
 
 import argparse
 import json
+import os
+import re
 import sys
+import time
+from pathlib import Path
 
 from .client import OracleDebugClient
 from .constants import ITEMS, STORY_FLAGS, WARP_LOCATIONS, WATCH_PROFILES
 from .paths import MANIFEST_PATH
+
+SCRIPT_DIR = Path(__file__).resolve().parents[1]
+WATCH_PRESETS = {
+    "debug": SCRIPT_DIR / "oracle_debug.watch",
+    "story": SCRIPT_DIR / "oracle_story.watch",
+}
+
+
+def _bridge_paths() -> tuple[Path, Path, Path]:
+    bridge_dir = Path(
+        os.getenv("MESEN_BRIDGE_DIR", Path.home() / "Documents/Mesen2/bridge")
+    )
+    return bridge_dir, bridge_dir / "debug_command.txt", bridge_dir / "debug_response.txt"
+
+
+def _send_debug_command(command: str, *args: str, timeout: float = 1.5) -> tuple[bool, str]:
+    bridge_dir, cmd_path, resp_path = _bridge_paths()
+    bridge_dir.mkdir(parents=True, exist_ok=True)
+    req_id = f"{int(time.time() * 1000)}"
+    payload = "|".join([req_id, command] + [str(a) for a in args])
+    cmd_path.write_text(payload)
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if resp_path.exists():
+            raw = resp_path.read_text().strip()
+            if raw:
+                parts = raw.split("|", 2)
+                if parts[0] == req_id:
+                    ok = len(parts) > 1 and parts[1] == "OK"
+                    data = parts[2] if len(parts) > 2 else ""
+                    return ok, data
+        time.sleep(0.05)
+    return False, "timeout waiting for debug bridge response"
+
+
+def _normalize_watch_id(label: str, index: int, used: set[str]) -> str:
+    slug = re.sub(r"[^A-Za-z0-9_]+", "_", label.strip()).strip("_")
+    if not slug:
+        slug = f"watch_{index:02d}"
+    base = slug
+    suffix = 2
+    while slug in used:
+        slug = f"{base}_{suffix}"
+        suffix += 1
+    used.add(slug)
+    return slug
+
+
+def _parse_watch_file(path: Path, default_format: str) -> list[tuple[str, str, str]]:
+    watches = []
+    used_ids: set[str] = set()
+    for raw in path.read_text().splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line:
+            continue
+        parts = line.split()
+        if not parts:
+            continue
+        addr = parts[0]
+        fmt = default_format
+        label_parts = parts[1:]
+        if label_parts and label_parts[-1].lower() in {"hex", "dec", "bin"}:
+            fmt = label_parts[-1].lower()
+            label_parts = label_parts[:-1]
+        label = " ".join(label_parts)
+        watch_id = _normalize_watch_id(label, len(watches) + 1, used_ids)
+        watches.append((watch_id, addr, fmt))
+    return watches
+
+
+def _load_watch_preset(path: Path, default_format: str, clear: bool) -> tuple[bool, str]:
+    if not path.exists():
+        return False, f"Watch file not found: {path}"
+
+    ok, _ = _send_debug_command("VERSION", timeout=1.0)
+    if not ok:
+        return False, "Debug bridge not responding. Load mesen_debug_bridge.lua in Mesen2."
+
+    if clear:
+        _send_debug_command("WATCH_CLEAR", timeout=1.0)
+
+    watches = _parse_watch_file(path, default_format)
+    if not watches:
+        return False, f"No watch entries found in {path}"
+
+    for watch_id, expr, fmt in watches:
+        ok, resp = _send_debug_command("WATCH_ADD", watch_id, expr, fmt, timeout=1.0)
+        if not ok:
+            return False, f"Failed to add watch '{watch_id}': {resp}"
+
+    return True, f"Loaded {len(watches)} watch entries from {path}"
 
 
 def main():
@@ -25,6 +121,21 @@ def main():
     watch_parser = subparsers.add_parser("watch", help="Watch addresses")
     watch_parser.add_argument("--profile", "-p", default="overworld")
     watch_parser.add_argument("--json", "-j", action="store_true")
+
+    # Watch loader command
+    watch_load_parser = subparsers.add_parser(
+        "watch-load", help="Load watch preset into Mesen2 (debug bridge)"
+    )
+    watch_load_parser.add_argument(
+        "--preset", choices=sorted(WATCH_PRESETS.keys()), default="debug"
+    )
+    watch_load_parser.add_argument("--file", help="Watch list file path")
+    watch_load_parser.add_argument(
+        "--format", choices=("hex", "dec", "bin"), default="hex"
+    )
+    watch_load_parser.add_argument(
+        "--clear", action="store_true", help="Clear existing watches before loading"
+    )
 
     # Sprites command
     sprites_parser = subparsers.add_parser("sprites", help="Debug sprites")
@@ -68,6 +179,7 @@ def main():
     warp_parser.add_argument("--x", type=int)
     warp_parser.add_argument("--y", type=int)
     warp_parser.add_argument("--kind", "-k", default="ow", help="ow=overworld, uw=underworld")
+    warp_parser.add_argument("--legacy", action="store_true", help="Use legacy direct RAM write (may cause black screen)")
 
     # Press command (input injection)
     press_parser = subparsers.add_parser("press", help="Press buttons")
@@ -119,6 +231,14 @@ def main():
         return
 
     # Handle commands that don't require connection first
+    if args.command == "watch-load":
+        path = Path(args.file).expanduser() if args.file else WATCH_PRESETS.get(args.preset)
+        ok, msg = _load_watch_preset(path, args.format, args.clear)
+        print(msg)
+        if not ok:
+            sys.exit(1)
+        return
+
     if args.command == "profiles":
         if args.json:
             profiles = {name: p["description"] for name, p in WATCH_PROFILES.items()}
@@ -369,20 +489,27 @@ def main():
 
     elif args.command == "warp":
         try:
+            use_rom = not getattr(args, 'legacy', False)
             if args.location:
-                if client.warp_to(location=args.location, kind=args.kind):
+                if args.location.lower() == 'list':
+                    print("=== Available Warp Locations ===")
+                    for name, data in sorted(WARP_LOCATIONS.items()):
+                        area, x, y, desc = data
+                        print(f"  {name}: area=0x{area:02X}, pos=({x}, {y}) - {desc}")
+                elif client.warp_to(location=args.location, kind=args.kind, use_rom_warp=use_rom):
                     loc = WARP_LOCATIONS[args.location]
                     print(f"Warped to {args.location} ({loc[3]})")
                 else:
                     print("Warp failed")
             elif args.area is not None and args.x is not None and args.y is not None:
-                if client.warp_to(area=args.area, x=args.x, y=args.y, kind=args.kind):
+                if client.warp_to(area=args.area, x=args.x, y=args.y, kind=args.kind, use_rom_warp=use_rom):
                     print(f"Warped to area=0x{args.area:02X}, x={args.x}, y={args.y} (kind={args.kind})")
                 else:
                     print("Warp failed")
             else:
                 print("Usage: warp <location> OR warp --area 0xXX --x N --y N [--kind ow|uw]")
-                print("Use 'warp list' to see available locations")
+                print("       warp list  - show available named locations")
+                print("       --legacy   - use direct RAM write (may cause black screen)")
         except (ValueError, KeyError) as e:
             print(f"Error: {e}")
             sys.exit(1)

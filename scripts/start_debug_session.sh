@@ -17,6 +17,11 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 # Default ROM
 ROM_PATH="${1:-$PROJECT_DIR/Roms/oos91x.sfc}"
 
+# Watch preset to auto-load after bridge connects (debug bridge required).
+# Use WATCH_PRESET=none to disable. WATCH_CLEAR=1 clears existing watches first.
+WATCH_PRESET="${WATCH_PRESET:-${2:-debug}}"
+WATCH_CLEAR="${WATCH_CLEAR:-0}"
+
 # Bridge scripts
 MAIN_BRIDGE="$SCRIPT_DIR/mesen_live_bridge.lua"
 DEBUG_BRIDGE="$SCRIPT_DIR/mesen_debug_bridge.lua"
@@ -76,6 +81,9 @@ echo ""
 echo "4. Verify bridge connection:"
 echo "   python3 $SCRIPT_DIR/mesen_cli.sh ping"
 echo ""
+echo "5. (Optional) Auto-load watch preset after connect:"
+echo "   WATCH_PRESET=${WATCH_PRESET}"
+echo ""
 echo "==================================="
 echo ""
 
@@ -84,6 +92,18 @@ echo "Waiting for bridge connection..."
 for i in {1..30}; do
     if "$SCRIPT_DIR/mesen_cli.sh" ping 2>/dev/null | grep -q "PONG"; then
         echo "Bridge connected!"
+        if [[ "${WATCH_PRESET}" != "none" ]]; then
+            echo "Loading watch preset: ${WATCH_PRESET}"
+            if [[ "${WATCH_CLEAR}" == "1" ]]; then
+                if ! python3 "$SCRIPT_DIR/mesen2_client.py" watch-load --preset "${WATCH_PRESET}" --clear; then
+                    echo "Watch preset load failed (debug bridge may not be running)."
+                fi
+            else
+                if ! python3 "$SCRIPT_DIR/mesen2_client.py" watch-load --preset "${WATCH_PRESET}"; then
+                    echo "Watch preset load failed (debug bridge may not be running)."
+                fi
+            fi
+        fi
         exit 0
     fi
     sleep 1

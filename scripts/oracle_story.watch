@@ -1,0 +1,21 @@
+# Oracle of Secrets - Story Flags Watch List
+# Load via: python3 scripts/mesen2_client.py watch-load --preset story
+
+# Story progress bitfields
+$7EF3C5 GameState
+$7EF3D6 OOSPROG
+$7EF3C6 OOSPROG2
+$7EF3D7 SideQuest
+$7EF3D8 SideQuest2
+$7EF37A Crystals
+$7EF374 Pendants
+
+# Quest and intro flags
+$7EF3D4 MakuTreeQuest
+$7EF3C7 MapIcon
+$7EF300 KydrogFaroreRemoved
+$7EF301 DekuMaskQuest
+$7EF302 ZoraMaskQuest
+$7EF303 InCutScene
+$7EF39C JournalState
+$7EF39E IntroState

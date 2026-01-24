@@ -25,14 +25,19 @@ Usage:
 
 import argparse
 import json
-import subprocess
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
-# Try to import bridge
+# Try to import socket client + shared capture helpers
 try:
-    from mesen2_client_lib.bridge import MesenBridge
+    from mesen2_client_lib.client import OracleDebugClient
+    from mesen2_client_lib.capture import (
+        get_build_metadata,
+        read_current_state,
+        resolve_oos_root,
+    )
     HAS_BRIDGE = True
 except ImportError:
     HAS_BRIDGE = False
@@ -56,74 +61,25 @@ MODE_NAMES = {
 }
 
 
-def get_bridge():
-    """Get Mesen2 bridge connection."""
+def get_client():
+    """Get Mesen2 socket client connection."""
     if not HAS_BRIDGE:
         print("ERROR: mesen2_client_lib not available")
         print("Make sure you're running from the oracle-of-secrets directory")
         sys.exit(1)
 
-    bridge = MesenBridge()
-    if not bridge.is_connected():
+    client = OracleDebugClient()
+    if not client.is_connected():
         print("ERROR: Not connected to Mesen2")
-        print("Start Mesen2 with socket server enabled:")
-        print("  ./scripts/mesen_launch.sh")
+        print("Start Mesen2 and ensure the fork socket API is live.")
         sys.exit(1)
 
-    return bridge
+    return client
 
 
-def get_current_state(bridge):
-    """Read current game state from Mesen2."""
-    # Oracle RAM addresses
-    LINK_FORM = 0x7E02B2  # 0=normal, 3=wolf, 5=minish, 6=GBC Link
-    TIME_HOURS = 0x7EE000
-    TIME_MINUTES = 0x7EE001
-    TIME_SPEED = 0x7EE002
-    HEALTH_CURRENT = 0x7EF36D
-    HEALTH_MAX = 0x7EF36C
-    MAGIC_POWER = 0x7EF36E
-    RUPEES = 0x7EF360
-    GAME_STATE = 0x7EF3C5
-    OOSPROG = 0x7EF3D6
-    CRYSTALS = 0x7EF37A
-
-    link_form = bridge.read_memory(LINK_FORM)
-    form_names = {0x00: "Normal", 0x03: "Wolf", 0x05: "Minish", 0x06: "GBC Link"}
-
-    return {
-        # Core game state
-        "area": bridge.read_memory(0x7E008A),
-        "room": bridge.read_memory(0x7E00A0),
-        "mode": bridge.read_memory(0x7E0010),
-        "submode": bridge.read_memory(0x7E0011),
-        "indoors": bridge.read_memory(0x7E001B),
-        "dungeon_id": bridge.read_memory(0x7E040C),
-        # Link position
-        "link_x": bridge.read_memory16(0x7E0022),
-        "link_y": bridge.read_memory16(0x7E0020),
-        "link_dir": bridge.read_memory(0x7E002F),
-        "link_state": bridge.read_memory(0x7E005D),
-        # Link form (Oracle custom)
-        "link_form": link_form,
-        "link_form_name": form_names.get(link_form, f"Unknown (0x{link_form:02X})"),
-        # Scroll registers
-        "scroll_x": bridge.read_memory16(0x7E00E1) | (bridge.read_memory(0x7E00E3) << 8),
-        "scroll_y": bridge.read_memory16(0x7E00E7) | (bridge.read_memory(0x7E00E9) << 8),
-        # Time system (Oracle custom)
-        "time_hours": bridge.read_memory(TIME_HOURS),
-        "time_minutes": bridge.read_memory(TIME_MINUTES),
-        "time_speed": bridge.read_memory(TIME_SPEED),
-        # Player stats
-        "health": bridge.read_memory(HEALTH_CURRENT),
-        "max_health": bridge.read_memory(HEALTH_MAX),
-        "magic": bridge.read_memory(MAGIC_POWER),
-        "rupees": bridge.read_memory16(RUPEES),
-        # Story progress
-        "game_state": bridge.read_memory(GAME_STATE),
-        "oosprog": bridge.read_memory(OOSPROG),
-        "crystals": bridge.read_memory(CRYSTALS),
-    }
+def get_current_state(client):
+    """Read current game state from Mesen2 (shared helper)."""
+    return read_current_state(client)
 
 
 def detect_category(state):
@@ -207,8 +163,8 @@ def print_state(state):
 
 def cmd_check(args):
     """Check current position."""
-    bridge = get_bridge()
-    state = get_current_state(bridge)
+    client = get_client()
+    state = get_current_state(client)
     print_state(state)
 
     # Find matching checkpoint suggestions
@@ -279,8 +235,8 @@ def cmd_list_required(args):
 
 def cmd_capture(args):
     """Capture current state as checkpoint."""
-    bridge = get_bridge()
-    state = get_current_state(bridge)
+    client = get_client()
+    state = get_current_state(client)
 
     # Auto-detect or use provided category
     category = args.category or detect_category(state)
@@ -304,22 +260,10 @@ def cmd_capture(args):
     # Trigger save state
     slot = args.slot or 10
     print(f"\nSaving to slot {slot}...")
-
-    cli_path = REPO_ROOT / "scripts" / "mesen_cli.sh"
-    result = subprocess.run(
-        [str(cli_path), "savestate", str(slot)],
-        capture_output=True, text=True, cwd=REPO_ROOT
-    )
-
-    if result.returncode != 0:
-        print(f"ERROR: Failed to save state: {result.stderr}")
+    if not client.save_state(slot=slot):
+        print("ERROR: Failed to save state via socket API")
         sys.exit(1)
-
-    # Wait for save
-    subprocess.run(
-        [str(cli_path), "wait-save", "5"],
-        capture_output=True, text=True, cwd=REPO_ROOT
-    )
+    time.sleep(0.5)
 
     # Create metadata
     metadata = {
@@ -366,6 +310,7 @@ def cmd_capture(args):
             "crystals": f"0x{state['crystals']:02X}",
         },
     }
+    metadata["build"] = get_build_metadata(resolve_oos_root())
 
     # Save state file path
     state_path = category_dir / f"{state_id}.mss"

@@ -35,6 +35,7 @@ $7EF3C5 GameState
 $7EF3D6 OOSPROG
 $7EF3C6 OOSPROG2
 $7EF3D7 SideQuest
+$7EF3D8 SideQuest2
 $7EF37A Crystals
 $7EF374 Pendants
 
@@ -44,3 +45,12 @@ $7EF301 DekuMaskQuest
 $7EF302 ZoraMaskQuest
 $7EF303 InCutScene
 $7EF3D4 MakuTreeQuest
+
+# Side Quest Tracking (SRAM)
+$7EF34C Ocarina
+$7EF344 MagicPowder
+$7EF38F RockMeat
+$7EF39B MagicBeanProgress
+$7EF396 TingleMaps
+$7EF397 TingleId
+$7EF3CC FollowerId

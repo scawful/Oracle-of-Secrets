@@ -101,6 +101,7 @@ Oracle Debug Commands (via mesen2_client.py):
   oracle-state      Show Oracle game state (mode, area, link position)
   oracle-story      Show story progress flags
   oracle-watch [-p profile] Watch addresses (overworld,dungeon,sprites,lost_woods,story)
+  oracle-watch-load [--preset name|--file path] Load watch preset into Mesen2 (debug bridge)
   oracle-sprites [--all] Debug sprite slots
   oracle-items [name] List items or get specific item
   oracle-give <item> <val> Give item to Link (e.g., oracle-give sword 2)
@@ -712,6 +713,10 @@ case "${1:-}" in
     oracle-watch)
         # Watch addresses with profile
         python3 "${SCRIPT_DIR}/mesen2_client.py" watch "${@:2}"
+        ;;
+    oracle-watch-load)
+        # Load Mesen2 watch preset via debug bridge
+        python3 "${SCRIPT_DIR}/mesen2_client.py" watch-load "${@:2}"
         ;;
     oracle-sprites)
         # Debug sprites
