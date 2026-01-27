@@ -7,6 +7,13 @@ org $02BE5E : JSL Graphics_Transfer
 ; Whirlpool
 org $1EEEE4 : JSL DontTeleportWithoutFlippers
 
+; ---------------------------------------------------------------------------
+; Main game loop (vanilla restored)
+; Main game loop (vanilla)
+org $008034
+  db $A5,$12,$F0,$FC,$58,$80,$16,$A5,$F6,$29,$20,$F0,$03,$EE,$D7,$0F
+  db $A5,$F6,$29,$10,$D0,$07,$AD,$D7,$0F,$29,$01,$D0,$09,$E6,$1A
+
 ; SpriteDraw_Roller
 org $058EE6 : JSL PutRollerBeneathLink
 
@@ -48,6 +55,13 @@ org $0083F8
 assert pc() <= $00841E
 
 ; =========================================================
+; B010: Prevent infinite SPC upload wait after savestate load.
+; Replace vanilla handshake at $008888 with a timeouted version.
+org $008888
+  JML SPC_Upload_WithTimeout
+  NOP #2 ; pad over original prologue bytes
+
+; =========================================================
 
 org $1EF27D
 ShopItem_Banana:
@@ -61,7 +75,7 @@ ShopItem_Banana:
     LDA.l Bananas : CMP.b #$0A : BCS .error
     LDA.b #$1E : LDY.b #$00
     JSR $F39E ; ShopItem_HandleCost
-    BCC $F1A1 ; ShopItem_GiveFailureMessage
+    BCC .error
 
     STZ.w SprState,X
     INC.b Bananas
@@ -71,7 +85,7 @@ ShopItem_Banana:
   .exit
   RTS
   .error
-  JSR $F38A ; ShopItem_PlayBeep
+  JSR $F1A1 ; ShopItem_GiveFailureMessage
 }
 assert pc() <= $1EF2AB
 
@@ -157,3 +171,46 @@ SpriteDraw_RunningBoy:
 ; Sword Barrier Sprite Prep
 ; Skip overworld flag check, sprite is indoors now
 org $06891B : NOP #12
+
+; =========================================================
+; B010: SPC upload handshake with timeout to avoid hangs post-savestate.
+; Jumps back into the original routine after the handshake succeeds.
+org $3C8000
+SPC_Upload_WithTimeout:
+{
+  PHP                 ; preserve caller status
+  REP #$30            ; 16-bit A/X/Y
+  PHX                 ; keep caller's X (used later in routine)
+  LDY #$0000
+  ; --- instrumentation: log entry + magic value ---
+  ; Use 7E0730-37 (FreeRAMStart per symbols) to avoid collisions with SRAM or game state.
+  LDA #$0010          ; state: entering handshake
+  STA.l $7E0730
+  LDA #$BBAA
+  STA.l $7E0732       ; log expected magic
+  LDX #$FFFF          ; timeout counter (~65k iterations)
+.handshake
+  CMP.w $2140         ; wait for SPC to present magic value
+  BEQ .ready
+  DEX
+  BNE .handshake
+  ; Timeout: bail out gracefully to avoid softlock
+  LDA.w $2140         ; log last seen APUIO0
+  STA.l $7E0734
+  TXA
+  STA.l $7E0736         ; how far the counter got before timeout
+  LDA #$00FF
+  STA.l $7E0730         ; state: timeout
+  PLX
+  PLP
+  RTL
+.ready
+  PHA                 ; preserve A ($BBAA)
+  LDA.w $2140
+  STA.l $7E0734         ; log observed magic value
+  LDA #$0020
+  STA.l $7E0730         ; state: handshake complete
+  PLA
+  PLX                 ; restore caller's X
+  JML $008896         ; resume original routine after handshake loop
+}

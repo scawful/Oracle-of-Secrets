@@ -729,13 +729,18 @@ Menu_SongMenu:
   REP #$30
   JSR Menu_DrawMusicNotes
 
+  LDA $7EF34C : CMP.b #$02 : BCS .songs_available
+    STZ.w CurrentSong
+    JMP .continue
+  .songs_available
+
   INC $0207
   LDA.w CurrentSong : BEQ +
   ASL : TAY
   LDA.b $F4
-  LSR : BCS .move_right
-  LSR : BCS .move_left
-  LSR : BCS .move_down
+  LSR : BCC ++ : JMP .move_right : ++
+  LSR : BCC ++ : JMP .move_left : ++
+  LSR : BCC ++ : JMP .move_down : ++
   LSR : BCS .move_up
   +
   JMP .continue
@@ -745,13 +750,14 @@ Menu_SongMenu:
     REP   #$30
     LDX.w Menu_SongIconCursorPositions-2, Y
     JSR Menu_DeleteCursor_AltEntry
-    LDA.w CurrentSong : CMP.b #$04 : BEQ .reset
+    LDA.w CurrentSong : CMP.b #$04 : BNE ++ : JMP .reset : ++
       INC.w CurrentSong
       LDA.w CurrentSong
       PHA
-      LDA $7EF34C : CMP.b #$01 : BEQ .max_1
-                    CMP.b #$02 : BEQ .max_2
-                    CMP.b #$03 : BEQ .max_3
+      LDA $7EF34C : CMP.b #$02 : BEQ .max_1
+                    CMP.b #$03 : BEQ .max_2
+                    CMP.b #$04 : BEQ .max_3
+                    CMP.b #$05 : BEQ .max_4
         PLA
         CMP.b #$05 : BCS .wrap_to_min
         JMP .continue
@@ -763,10 +769,14 @@ Menu_SongMenu:
       .max_3
       PLA : CMP.b #$04 : BCS .wrap_to_min
       JMP .continue
+      .max_4
+      PLA : CMP.b #$05 : BCS .wrap_to_min
+      JMP .continue
       .wrap_to_max
-      LDA $7EF34C : CMP.b #$01 : BEQ .wrap_to_min
-                    CMP.b #$02 : BEQ .set_max_to_2
-                    CMP.b #$03 : BEQ .set_max_to_3
+      LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_1
+                    CMP.b #$03 : BEQ .set_max_to_2
+                    CMP.b #$04 : BEQ .set_max_to_3
+                    CMP.b #$05 : BEQ .set_max_to_4
       LDA #$04 : STA.w CurrentSong : JMP .continue
 
       .set_max_to_3
@@ -774,6 +784,12 @@ Menu_SongMenu:
 
       .set_max_to_2
       LDA #$02 : STA.w CurrentSong : JMP .continue
+
+      .set_max_to_1
+      LDA #$01 : STA.w CurrentSong : JMP .continue
+
+      .set_max_to_4
+      LDA #$04 : STA.w CurrentSong : JMP .continue
 
       .wrap_to_min
       LDA #$01 : STA.w CurrentSong

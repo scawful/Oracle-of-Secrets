@@ -1,0 +1,25 @@
+{
+  "defaults": {
+    "host": "127.0.0.1",
+    "port": 1234
+  },
+  "default_model": "REPLACE_WITH_MODEL_NAME",
+  "experts": {
+    "farore": {
+      "model": "REPLACE_WITH_FARORE_MODEL",
+      "identifier": "farore"
+    },
+    "nayru": {
+      "model": "REPLACE_WITH_NAYRU_MODEL",
+      "identifier": "nayru"
+    },
+    "din": {
+      "model": "REPLACE_WITH_DIN_MODEL",
+      "identifier": "din"
+    },
+    "veran": {
+      "model": "REPLACE_WITH_VERAN_MODEL",
+      "identifier": "veran"
+    }
+  }
+}

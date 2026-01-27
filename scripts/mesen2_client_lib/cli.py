@@ -6,45 +6,24 @@ import os
 import re
 import sys
 import time
+import subprocess
 from pathlib import Path
 
 from .client import OracleDebugClient
 from .constants import ITEMS, STORY_FLAGS, WARP_LOCATIONS, WATCH_PROFILES
 from .paths import MANIFEST_PATH
 
+# Try to import AgentBrain (might fail if run directly from lib)
+try:
+    from agent.brain import AgentBrain
+except ImportError:
+    AgentBrain = None
+
 SCRIPT_DIR = Path(__file__).resolve().parents[1]
 WATCH_PRESETS = {
     "debug": SCRIPT_DIR / "oracle_debug.watch",
     "story": SCRIPT_DIR / "oracle_story.watch",
 }
-
-
-def _bridge_paths() -> tuple[Path, Path, Path]:
-    bridge_dir = Path(
-        os.getenv("MESEN_BRIDGE_DIR", Path.home() / "Documents/Mesen2/bridge")
-    )
-    return bridge_dir, bridge_dir / "debug_command.txt", bridge_dir / "debug_response.txt"
-
-
-def _send_debug_command(command: str, *args: str, timeout: float = 1.5) -> tuple[bool, str]:
-    bridge_dir, cmd_path, resp_path = _bridge_paths()
-    bridge_dir.mkdir(parents=True, exist_ok=True)
-    req_id = f"{int(time.time() * 1000)}"
-    payload = "|".join([req_id, command] + [str(a) for a in args])
-    cmd_path.write_text(payload)
-
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        if resp_path.exists():
-            raw = resp_path.read_text().strip()
-            if raw:
-                parts = raw.split("|", 2)
-                if parts[0] == req_id:
-                    ok = len(parts) > 1 and parts[1] == "OK"
-                    data = parts[2] if len(parts) > 2 else ""
-                    return ok, data
-        time.sleep(0.05)
-    return False, "timeout waiting for debug bridge response"
 
 
 def _normalize_watch_id(label: str, index: int, used: set[str]) -> str:
@@ -82,40 +61,76 @@ def _parse_watch_file(path: Path, default_format: str) -> list[tuple[str, str, s
     return watches
 
 
-def _load_watch_preset(path: Path, default_format: str, clear: bool) -> tuple[bool, str]:
+def _load_watch_preset(client: OracleDebugClient, path: Path, default_format: str, clear: bool) -> tuple[bool, str]:
     if not path.exists():
         return False, f"Watch file not found: {path}"
 
-    ok, _ = _send_debug_command("VERSION", timeout=1.0)
-    if not ok:
-        return False, "Debug bridge not responding. Load mesen_debug_bridge.lua in Mesen2."
-
     if clear:
-        _send_debug_command("WATCH_CLEAR", timeout=1.0)
+        client.execute_lua("if DebugBridge and DebugBridge.clearWatches then DebugBridge.clearWatches() end")
 
     watches = _parse_watch_file(path, default_format)
     if not watches:
         return False, f"No watch entries found in {path}"
 
     for watch_id, expr, fmt in watches:
-        ok, resp = _send_debug_command("WATCH_ADD", watch_id, expr, fmt, timeout=1.0)
-        if not ok:
-            return False, f"Failed to add watch '{watch_id}': {resp}"
+        # If it's a hex address, make sure it's 0x prefixed for Lua
+        if expr.startswith("$"):
+            expr = "0x" + expr[1:]
+            
+        code = f"if DebugBridge and DebugBridge.addWatch then DebugBridge.addWatch('{watch_id}', '{expr}', '{fmt}') end"
+        res = client.execute_lua(code)
+        if res.get("error"):
+            return False, f"Failed to add watch '{watch_id}': {res.get('error')}"
 
-    return True, f"Loaded {len(watches)} watch entries from {path}"
+    return True, f"Loaded {len(watches)} watch entries from {path} via socket"
 
 
 def main():
     parser = argparse.ArgumentParser(description="Oracle of Secrets Debug Client")
+    parser.add_argument("--socket", help="Target Mesen2 socket path")
+    parser.add_argument("--instance", help="Registry instance name to target")
+    parser.add_argument("--vanilla", action="store_true", help="Include USDASM vanilla labels")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # State command
     state_parser = subparsers.add_parser("state", help="Show game state")
     state_parser.add_argument("--json", "-j", action="store_true")
 
+    run_state_parser = subparsers.add_parser("run-state", help="Show emulator run/paused state")
+    run_state_parser.add_argument("--json", "-j", action="store_true")
+
+    time_parser = subparsers.add_parser("time", help="Show Oracle time system state")
+    time_parser.add_argument("--json", "-j", action="store_true")
+
+    diag_parser = subparsers.add_parser("diagnostics", help="Show diagnostic snapshot")
+    diag_parser.add_argument("--deep", action="store_true", help="Include items, flags, sprites, and watch values")
+    diag_parser.add_argument("--json", "-j", action="store_true")
+
+    # Debug Status command (Consolidated)
+    debug_status_parser = subparsers.add_parser("debug-status", help="High-level debug status summary")
+    debug_status_parser.add_argument("--json", "-j", action="store_true")
+
+    # Debug Context command (Discovery)
+    debug_context_parser = subparsers.add_parser("debug-context", help="Discovery command for all debugging assets")
+    debug_context_parser.add_argument("--json", "-j", action="store_true")
+
     # Story command
     story_parser = subparsers.add_parser("story", help="Show story progress")
     story_parser.add_argument("--json", "-j", action="store_true")
+
+    # Health command
+    health_parser = subparsers.add_parser("health", help="Check socket health")
+    health_parser.add_argument("--json", "-j", action="store_true")
+
+    # Socket cleanup command
+    socket_cleanup_parser = subparsers.add_parser("socket-cleanup", help="Remove stale Mesen2 sockets")
+    socket_cleanup_parser.add_argument("--json", "-j", action="store_true")
+
+    # Close command (registry-based)
+    close_parser = subparsers.add_parser("close", help="Close a registered Mesen2 instance (graceful)")
+    close_parser.add_argument("--force", action="store_true")
+    close_parser.add_argument("--confirm", action="store_true")
+    close_parser.add_argument("--owner")
 
     # Watch command
     watch_parser = subparsers.add_parser("watch", help="Watch addresses")
@@ -185,16 +200,50 @@ def main():
     press_parser = subparsers.add_parser("press", help="Press buttons")
     press_parser.add_argument("buttons", help="Comma-separated buttons (a,b,up,down,etc)")
     press_parser.add_argument("--frames", "-f", type=int, default=5)
+    press_parser.add_argument("--allow-paused", action="store_true", help="Allow input while paused")
 
     # Position command
     pos_parser = subparsers.add_parser("pos", help="Set Link position")
     pos_parser.add_argument("x", type=int)
     pos_parser.add_argument("y", type=int)
 
+    # Navigation command
+    nav_parser = subparsers.add_parser("navigate", help="Navigate Link autonomously")
+    nav_group = nav_parser.add_mutually_exclusive_group(required=True)
+    nav_group.add_argument("--poi", type=str, help="Point of interest name")
+    nav_group.add_argument("--area", type=str, help="Area ID (hex, e.g., 0x40)")
+    nav_group.add_argument("--pos", type=str, help="Coordinates (x,y)")
+    nav_parser.add_argument("--timeout", type=int, default=600, help="Timeout in frames")
+    nav_parser.add_argument("--no-safe", action="store_true", help="Disable checkpoint")
+
+    # Move command
+    move_parser = subparsers.add_parser("move", help="Basic directional movement")
+    move_group = move_parser.add_mutually_exclusive_group(required=True)
+    move_group.add_argument("--direction", "-d", choices=("up", "down", "left", "right"), help="Direction to move")
+    move_group.add_argument("--to", type=str, help="X,Y coordinates")
+    move_group.add_argument("--to-poi", type=str, help="POI name")
+    move_parser.add_argument("--distance", type=int, default=30, help="Distance in frames (for --direction)")
+    move_parser.add_argument("--timeout", type=int, default=600, help="Timeout in frames (for --to)")
+
+    # Hypothesis Testing command
+    hypo_parser = subparsers.add_parser("test-hypothesis", help="Test memory patches against a state")
+    hypo_parser.add_argument("state_id", help="State ID to test against")
+    hypo_parser.add_argument("--patch", "-p", action="append", help="Patch in addr:val format (hex)")
+    hypo_parser.add_argument("--patch-file", "-f", help="JSON file containing patches")
+    hypo_parser.add_argument("--frames", type=int, default=300, help="Frames to wait before verification")
+    hypo_parser.add_argument("--watch", help="Watch profile to load")
+    hypo_parser.add_argument("--json", "-j", action="store_true")
+
     # Control commands
     subparsers.add_parser("pause", help="Pause emulation")
     subparsers.add_parser("resume", help="Resume emulation")
     subparsers.add_parser("reset", help="Reset game")
+
+    # Disassembly command
+    disasm_parser = subparsers.add_parser("disasm", help="Disassemble code")
+    disasm_parser.add_argument("address", nargs="?", help="Address to disassemble (hex)")
+    disasm_parser.add_argument("--count", "-c", type=int, default=10, help="Number of instructions")
+    disasm_parser.add_argument("--json", "-j", action="store_true")
 
     # Frame advance
     frame_parser = subparsers.add_parser("frame", help="Advance frames")
@@ -202,17 +251,70 @@ def main():
 
     # Save state commands
     save_parser = subparsers.add_parser("save", help="Save state")
-    save_parser.add_argument("slot", type=int, nargs="?", help="Slot number (1-10)")
+    save_parser.add_argument("slot", type=int, nargs="?", help="Slot number (1-99 or configured)")
     save_parser.add_argument("--path", "-p", help="Custom save path")
 
     load_parser = subparsers.add_parser("load", help="Load state")
-    load_parser.add_argument("slot", type=int, nargs="?", help="Slot number (1-10)")
+    load_parser.add_argument("slot", type=int, nargs="?", help="Slot number (1-99 or configured)")
     load_parser.add_argument("--path", "-p", help="Custom load path")
+
+    label_parser = subparsers.add_parser("savestate-label", help="Get/set save state labels")
+    label_parser.add_argument("action", choices=("get", "set", "clear"))
+    label_parser.add_argument("slot", type=int, nargs="?", help="Slot number (1-99 or configured)")
+    label_parser.add_argument("--path", "-p", help="Save state path")
+    label_parser.add_argument("--label", "-l", help="Label text (for set)")
+    label_parser.add_argument("--json", "-j", action="store_true")
+
+    # Smart Save command
+    smart_save_parser = subparsers.add_parser("smart-save", help="Save state only if safe (Agent verified)")
+    smart_save_parser.add_argument("slot", type=int, help="Slot number (1-99 or configured)")
+    smart_save_parser.add_argument(
+        "--b008-mode",
+        choices=("auto", "on", "off"),
+        default="auto",
+        help="B008 input correction mode for AgentBrain (auto/on/off)",
+    )
+
+    # AgentBrain calibration command
+    subparsers.add_parser(
+        "brain-calibrate",
+        help="Auto-detect B008 input rotation (AgentBrain)",
+    )
 
     # Library commands
     lib_parser = subparsers.add_parser("library", help="List library entries")
     lib_parser.add_argument("--tag", "-t", help="Filter by tag")
     lib_parser.add_argument("--json", "-j", action="store_true")
+
+    # Repro command
+    repro_parser = subparsers.add_parser("repro", help="Reproduce bug from state")
+    repro_parser.add_argument("state_id", help="State ID from library")
+    repro_parser.add_argument("--trace", action="store_true", help="Start trace after loading")
+    repro_parser.add_argument("--watch", help="Watch profile to load")
+    repro_parser.add_argument("--json", "-j", action="store_true")
+
+    lib_save_parser = subparsers.add_parser("lib-save", help="Save labeled state to library")
+    lib_save_parser.add_argument("label", help="Label for the state")
+    lib_save_parser.add_argument("--tag", "-t", action="append", dest="tags", help="Optional tag (repeatable)")
+    lib_save_parser.add_argument("--captured-by", choices=["human", "agent"], default="agent",
+                                  help="Who captured this state (default: agent)")
+    lib_save_parser.add_argument("--json", "-j", action="store_true")
+
+    lib_verify_parser = subparsers.add_parser("lib-verify", help="Promote draft state to canon status")
+    lib_verify_parser.add_argument("state_id", help="State ID to verify")
+    lib_verify_parser.add_argument("--by", dest="verified_by", default="scawful", help="Verifier name")
+    lib_verify_parser.add_argument("--json", "-j", action="store_true")
+
+    lib_verify_all_parser = subparsers.add_parser("lib-verify-all", help="Verify all canon states by loading them")
+    lib_verify_all_parser.add_argument("--json", "-j", action="store_true")
+
+    lib_deprecate_parser = subparsers.add_parser("lib-deprecate", help="Mark state as deprecated")
+    lib_deprecate_parser.add_argument("state_id", help="State ID to deprecate")
+    lib_deprecate_parser.add_argument("--reason", "-r", default="", help="Deprecation reason")
+    lib_deprecate_parser.add_argument("--json", "-j", action="store_true")
+
+    lib_backfill_parser = subparsers.add_parser("lib-backfill", help="Backfill missing hashes in manifest")
+    lib_backfill_parser.add_argument("--json", "-j", action="store_true")
 
     lib_load_parser = subparsers.add_parser("lib-load", help="Load state from library by ID")
     lib_load_parser.add_argument("state_id", help="State ID from library")
@@ -221,19 +323,286 @@ def main():
     lib_info_parser.add_argument("state_id", help="State ID")
     lib_info_parser.add_argument("--json", "-j", action="store_true")
 
+    lib_scan_parser = subparsers.add_parser("lib-scan", help="Scan library folder for unmanaged states")
+    lib_scan_parser.add_argument("--json", "-j", action="store_true")
+
     capture_parser = subparsers.add_parser("capture", help="Capture current state metadata")
     capture_parser.add_argument("--json", "-j", action="store_true")
 
+    # Symbols command
+    symbols_parser = subparsers.add_parser("symbols", help="Query symbols and labels")
+    symbols_parser.add_argument("query", nargs="?", help="Symbol name or address to look up")
+    symbols_parser.add_argument("--json", "-j", action="store_true")
+
+    # Labels Sync command
+    labels_sync_parser = subparsers.add_parser("labels-sync", help="Sync vanilla USDASM labels to Mesen2")
+    labels_sync_parser.add_argument("--clear", action="store_true", help="Clear existing labels before syncing")
+    labels_sync_parser.add_argument("--json", "-j", action="store_true")
+
+    # === ADVANCED COMMANDS ===
+
+    # Subscribe command
+    subscribe_parser = subparsers.add_parser("subscribe", help="Subscribe to events")
+    subscribe_parser.add_argument("events", help="Comma-separated events (breakpoint_hit,frame_complete,all)")
+
+    # Batch command
+    batch_parser = subparsers.add_parser("batch", help="Execute batch commands")
+    batch_parser.add_argument("commands", help="JSON array of commands")
+
+    # Watchdog command
+    watchdog_parser = subparsers.add_parser("watchdog", help="Detect stalled game loop and auto-recover")
+    watchdog_parser.add_argument("--slot", type=int, default=1, help="Savestate slot to reload on stall")
+    watchdog_parser.add_argument("--frames", type=int, default=30, help="Frames to run while checking progress")
+    watchdog_parser.add_argument("--json", "-j", action="store_true")
+
+    # State Diff command
+    state_diff_parser = subparsers.add_parser("state-diff", help="Get state changes since last call")
+    state_diff_parser.add_argument("--json", "-j", action="store_true")
+
+    # Watch Trigger commands
+    trigger_parser = subparsers.add_parser("watch-trigger", help="Manage memory watch triggers")
+    trigger_sub = trigger_parser.add_subparsers(dest="trigger_cmd")
+
+    trig_add = trigger_sub.add_parser("add", help="Add a watch trigger")
+    trig_add.add_argument("addr", help="Address (hex)")
+    trig_add.add_argument("value", help="Value (hex)")
+    trig_add.add_argument("--condition", "-c", default="eq", choices=("eq", "ne", "gt", "lt", "ge", "le"))
+
+    trig_rem = trigger_sub.add_parser("remove", help="Remove a watch trigger")
+    trig_rem.add_argument("id", type=int, help="Trigger ID")
+
+    trigger_sub.add_parser("list", help="List watch triggers")
+
+    # Sync command
+    sync_parser = subparsers.add_parser("sync", help="Notify YAZE of state save")
+    sync_parser.add_argument("path", help="Path to state file")
+
+    # Agent-friendly JSON commands (single entry point)
+    agent_parser = subparsers.add_parser("agent", help="Agent-friendly JSON commands")
+    agent_parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON")
+    agent_sub = agent_parser.add_subparsers(dest="agent_cmd")
+
+    agent_sub.add_parser("health", help="Check socket health")
+    agent_sub.add_parser("state", help="Get full emulator state")
+    agent_sub.add_parser("oracle-state", help="Get Oracle-specific state")
+    agent_sub.add_parser("story", help="Get story progress state")
+    agent_sub.add_parser("run-state", help="Get emulator run/paused state")
+    agent_sub.add_parser("time", help="Get Oracle time system state")
+    diag_agent = agent_sub.add_parser("diagnostics", help="Get diagnostic snapshot")
+    diag_agent.add_argument("--deep", action="store_true", help="Include items, flags, sprites, and watch values")
+
+    press_agent = agent_sub.add_parser("press", help="Press buttons")
+    press_agent.add_argument("buttons", help="Comma-separated buttons")
+    press_agent.add_argument("--frames", type=int, default=5)
+    press_agent.add_argument("--allow-paused", action="store_true")
+
+    warp_agent = agent_sub.add_parser("warp", help="Warp to location or coords")
+    warp_agent.add_argument("location", nargs="?")
+    warp_agent.add_argument("--area", type=lambda x: int(x, 0))
+    warp_agent.add_argument("--x", type=int)
+    warp_agent.add_argument("--y", type=int)
+    warp_agent.add_argument("--kind", default="ow")
+
+    save_agent = agent_sub.add_parser("save", help="Save state")
+    save_agent.add_argument("slot", nargs="?", type=int)
+    save_agent.add_argument("--path")
+
+    load_agent = agent_sub.add_parser("load", help="Load state")
+    load_agent.add_argument("slot", nargs="?", type=int)
+    load_agent.add_argument("--path")
+
+    label_agent = agent_sub.add_parser("savestate-label", help="Get/set save state labels")
+    label_agent.add_argument("action", choices=("get", "set", "clear"))
+    label_agent.add_argument("slot", nargs="?", type=int)
+    label_agent.add_argument("--path")
+    label_agent.add_argument("--label")
+
+    lib_save_agent = agent_sub.add_parser("lib-save", help="Save labeled state to library")
+    lib_save_agent.add_argument("label")
+    lib_save_agent.add_argument("--tag", action="append", dest="tags")
+
+    agent_sub.add_parser("lib-scan", help="Scan library folder for unmanaged states")
+
+    snap_agent = agent_sub.add_parser("snapshot", help="Capture state JSON + screenshot")
+    snap_agent.add_argument("--out-dir", default=str(SCRIPT_DIR.parent / "Roms" / "SaveStates" / "bug_captures"))
+
+    wait_agent = agent_sub.add_parser("wait", help="Sleep for seconds")
+    wait_agent.add_argument("seconds", type=float)
+
     args = parser.parse_args()
+    if args.socket:
+        os.environ["MESEN2_SOCKET_PATH"] = args.socket
+    if args.instance:
+        os.environ["MESEN2_INSTANCE"] = args.instance
 
     if not args.command:
         parser.print_help()
         return
 
+    if args.command == "agent":
+        def emit(payload: dict, ok: bool = True) -> None:
+            data = {"ok": ok, **payload}
+            if args.pretty:
+                print(json.dumps(data, indent=2))
+            else:
+                print(json.dumps(data))
+            if not ok:
+                sys.exit(1)
+
+        if not args.agent_cmd:
+            agent_parser.print_help()
+            sys.exit(1)
+
+        client = OracleDebugClient()
+        if args.agent_cmd == "health":
+            info = client.health_check()
+            emit(info, ok=bool(info.get("ok")))
+            return
+
+        if not client.ensure_connected():
+            emit({"error": "Cannot connect to Mesen2 socket", "socket": getattr(client.bridge, "socket_path", None)}, ok=False)
+
+        if args.agent_cmd == "state":
+            raw = client.bridge.get_state()
+            data = raw.get("data") if isinstance(raw, dict) else None
+            if data is None:
+                data = client.get_oracle_state()
+            emit({"state": data})
+            return
+        if args.agent_cmd == "oracle-state":
+            emit({"state": client.get_oracle_state()})
+            return
+        if args.agent_cmd == "story":
+            emit({"story": client.get_story_state()})
+            return
+        if args.agent_cmd == "run-state":
+            emit({"run_state": client.get_run_state()})
+            return
+        if args.agent_cmd == "time":
+            emit({"time": client.get_time_state()})
+            return
+        if args.agent_cmd == "diagnostics":
+            emit({"diagnostics": client.get_diagnostics(deep=getattr(args, "deep", False))})
+            return
+        if args.agent_cmd == "press":
+            ok = client.press_button(args.buttons, frames=args.frames, ensure_running=not args.allow_paused)
+            emit({"pressed": args.buttons, "frames": args.frames}, ok=ok)
+            return
+        if args.agent_cmd == "warp":
+            if args.location:
+                ok = client.warp_to(location=args.location, kind=args.kind)
+                emit({"warp": args.location, "kind": args.kind}, ok=ok)
+            else:
+                ok = client.warp_to(area=args.area, x=args.x, y=args.y, kind=args.kind)
+                emit({"warp": {"area": args.area, "x": args.x, "y": args.y}, "kind": args.kind}, ok=ok)
+            return
+        if args.agent_cmd == "save":
+            ok = False
+            if args.path:
+                ok = client.save_state(path=args.path)
+                emit({"saved": args.path}, ok=ok)
+            elif args.slot is not None:
+                ok = client.save_state(slot=args.slot)
+                emit({"saved": args.slot}, ok=ok)
+            else:
+                emit({"error": "Missing slot or path"}, ok=False)
+            return
+        if args.agent_cmd == "load":
+            if args.path:
+                ok = client.load_state(path=args.path)
+                if ok:
+                    emit({"loaded": args.path}, ok=True)
+                else:
+                    emit({"error": client.last_error or "Load failed", "path": args.path}, ok=False)
+            elif args.slot is not None:
+                ok = client.load_state(slot=args.slot)
+                if ok:
+                    emit({"loaded": args.slot}, ok=True)
+                else:
+                    emit({"error": "Load failed", "slot": args.slot}, ok=False)
+            else:
+                emit({"error": "Missing slot or path"}, ok=False)
+            return
+        if args.agent_cmd == "savestate-label":
+            if args.slot is None and not args.path:
+                emit({"error": "Missing slot or path"}, ok=False)
+            if args.action == "set" and not args.label:
+                emit({"error": "Missing label"}, ok=False)
+            res = client.save_state_label(
+                action=args.action,
+                slot=args.slot,
+                path=args.path,
+                label=args.label,
+            )
+            emit({"response": res}, ok=bool(res.get("success")))
+            return
+        if args.agent_cmd == "lib-save":
+            try:
+                state_id = client.save_library_state(args.label, tags=args.tags)
+                emit({"state_id": state_id, "label": args.label})
+            except Exception as exc:
+                emit({"error": str(exc)}, ok=False)
+            return
+        if args.agent_cmd == "lib-scan":
+            try:
+                added = client.scan_library()
+                emit({"added": added})
+            except Exception as exc:
+                emit({"error": str(exc)}, ok=False)
+            return
+        if args.agent_cmd == "snapshot":
+            out_dir = Path(args.out_dir).expanduser()
+            out_dir.mkdir(parents=True, exist_ok=True)
+            stamp = time.strftime("%Y%m%d_%H%M%S")
+            state_path = out_dir / f"state_{stamp}.json"
+            shot_path = out_dir / f"shot_{stamp}.png"
+
+            raw = client.bridge.get_state()
+            data = raw.get("data") if isinstance(raw, dict) else None
+            if data is None:
+                data = client.get_oracle_state()
+            state_path.write_text(json.dumps(data, indent=2))
+
+            shot_bytes = client.screenshot()
+            shot_out = ""
+            if shot_bytes:
+                shot_path.write_bytes(shot_bytes)
+                shot_out = str(shot_path)
+
+            emit({"state": str(state_path), "screenshot": shot_out})
+            return
+        if args.agent_cmd == "wait":
+            time.sleep(args.seconds)
+            emit({"waited": args.seconds})
+            return
+
+        emit({"error": f"Unknown agent command: {args.agent_cmd}"}, ok=False)
+        return
+
     # Handle commands that don't require connection first
+    if args.command == "close":
+        instance = args.instance or os.getenv("MESEN2_INSTANCE") or os.getenv("MESEN2_REGISTRY_INSTANCE")
+        if not instance:
+            print("Error: --instance is required (or set MESEN2_INSTANCE).")
+            sys.exit(1)
+        registry = SCRIPT_DIR / "mesen2_registry.py"
+        if not registry.exists():
+            print("Error: mesen2_registry.py not found.")
+            sys.exit(1)
+        cmd = [sys.executable, str(registry), "close", "--instance", instance]
+        if args.owner:
+            cmd += ["--owner", args.owner]
+        if args.force:
+            cmd.append("--force")
+        if args.confirm:
+            cmd.append("--confirm")
+        result = subprocess.run(cmd, check=False)
+        sys.exit(result.returncode)
+
     if args.command == "watch-load":
+        client = OracleDebugClient()
         path = Path(args.file).expanduser() if args.file else WATCH_PRESETS.get(args.preset)
-        ok, msg = _load_watch_preset(path, args.format, args.clear)
+        ok, msg = _load_watch_preset(client, path, args.format, args.clear)
         print(msg)
         if not ok:
             sys.exit(1)
@@ -271,13 +640,110 @@ def main():
         return
 
     client = OracleDebugClient()
+    if args.vanilla:
+        client.load_usdasm_labels()
+
+    if args.command == "debug-status":
+        info = client.health_check()
+        run_state = client.get_run_state()
+        state = client.get_oracle_state()
+        manifest = client.get_library_manifest()
+        
+        canon_states = [e["id"] for e in manifest.get("entries", []) if e.get("status") == "canon"]
+        
+        status = {
+            "health": info,
+            "run_state": run_state,
+            "game_mode": state["mode_name"],
+            "location": state["area_name"],
+            "pos": (state["link_x"], state["link_y"]),
+            "canon_states": canon_states,
+            "watch_profile": client._watch_profile,
+        }
+        
+        if args.json:
+            print(json.dumps(status, indent=2))
+        else:
+            print("=== Debug Status ===")
+            print(f"Health: {'OK' if info.get('ok') else 'FAIL'} (Latency: {info.get('latency_ms')}ms)")
+            print(f"Emulator: {'Paused' if run_state.get('paused') else 'Running'} (Frame: {run_state.get('frame')})")
+            print(f"Game: {state['mode_name']} | {state['area_name']} | Pos: ({state['link_x']}, {state['link_y']})")
+            print(f"Canon States: {len(canon_states)} available")
+            if canon_states:
+                print(f"  Example: {canon_states[0]}")
+            print(f"Watch Profile: {client._watch_profile}")
+        return
+
+    if args.command == "health":
+        info = client.health_check()
+        if args.json:
+            print(json.dumps(info, indent=2))
+        else:
+            status = "OK" if info.get("ok") else "FAIL"
+            print(f"Health: {status}")
+            if info.get("socket"):
+                print(f"Socket: {info.get('socket')}")
+            if info.get("latency_ms") is not None:
+                print(f"Latency: {info.get('latency_ms')} ms")
+            if info.get("error"):
+                print(f"Error: {info.get('error')}")
+        if not info.get("ok"):
+            sys.exit(1)
+        return
+
+    if args.command == "socket-cleanup":
+        from .bridge import cleanup_stale_sockets
+        removed = cleanup_stale_sockets(verbose=not args.json)
+        if args.json:
+            print(json.dumps({"removed": removed, "count": len(removed)}, indent=2))
+        else:
+            if removed:
+                print(f"Removed {len(removed)} stale socket(s)")
+            else:
+                print("No stale sockets found")
+        return
 
     if not client.is_connected():
         print("ERROR: Cannot connect to Mesen2. Is it running with socket enabled?")
         print("Looking for socket at: /tmp/mesen2-*.sock")
         sys.exit(1)
 
-    if args.command == "state":
+    elif args.command == "debug-context":
+        manifest = client.get_library_manifest()
+        
+        context = {
+            "watch_profiles": {name: p["description"] for name, p in WATCH_PROFILES.items()},
+            "warp_locations": {name: {"area": loc[0], "pos": (loc[1], loc[2]), "desc": loc[3]} 
+                               for name, loc in WARP_LOCATIONS.items()},
+            "items": {name: desc for name, (addr, desc, vals) in ITEMS.items()},
+            "flags": {name: desc for name, (addr, desc, mask) in STORY_FLAGS.items()},
+            "canon_states": [
+                {
+                    "id": e["id"], 
+                    "desc": e.get("description") or e.get("label"), 
+                    "location": e.get("meta", {}).get("location")
+                } 
+                for e in manifest.get("entries", []) if e.get("status") == "canon"
+            ],
+            "usdasm": {
+                "loaded": len(client._usdasm_labels) > 0,
+                "label_count": len(client._usdasm_labels)
+            }
+        }
+        
+        if args.json:
+            print(json.dumps(context, indent=2))
+        else:
+            print("=== Debugging Context ===")
+            print(f"Watch Profiles: {len(context['watch_profiles'])}")
+            print(f"Warp Locations: {len(context['warp_locations'])}")
+            print(f"Items: {len(context['items'])} | Flags: {len(context['flags'])}")
+            print(f"Canon States: {len(context['canon_states'])}")
+            print(f"USDASM Labels: {'Loaded' if context['usdasm']['loaded'] else 'Not Loaded'} ({context['usdasm']['label_count']})")
+            print("\nTip: Use --json for the full metadata payload.")
+        return
+
+    elif args.command == "state":
         state = client.get_oracle_state()
         if args.json:
             print(json.dumps(state, indent=2))
@@ -311,6 +777,85 @@ def main():
                 print("\n=== Warnings ===")
                 for w in warnings:
                     print(w)
+
+    elif args.command == "run-state":
+        run_state = client.get_run_state()
+        if args.json:
+            print(json.dumps(run_state, indent=2))
+        else:
+            running = run_state.get("running")
+            paused = run_state.get("paused")
+            frame = run_state.get("frame")
+            fps = run_state.get("fps")
+            print("=== Emulator Run State ===")
+            print(f"Running: {running}")
+            print(f"Paused: {paused}")
+            if frame is not None:
+                print(f"Frame: {frame}")
+            if fps is not None:
+                print(f"FPS: {fps}")
+
+    elif args.command == "time":
+        time_state = client.get_time_state()
+        if args.json:
+            print(json.dumps(time_state, indent=2))
+        else:
+            print("=== Time System ===")
+            print(f"Time: {time_state['hours']:02d}:{time_state['minutes']:02d}")
+            print(f"Phase: {time_state['phase']} (night={time_state['is_night']})")
+            print(f"Speed: {time_state['speed']}")
+            print(f"SubColor: {time_state['subcolor']}")
+            palette = time_state.get("palette", {})
+            print(f"Palette: R={palette.get('red')} G={palette.get('green')} B={palette.get('blue')}")
+
+    elif args.command == "diagnostics":
+        diagnostics = client.get_diagnostics(deep=args.deep)
+        if args.json:
+            print(json.dumps(diagnostics, indent=2))
+        else:
+            run_state = diagnostics.get("run_state", {})
+            rom_info = diagnostics.get("rom_info", {})
+            time_state = diagnostics.get("time_state", {})
+            overworld = diagnostics.get("overworld", {})
+            camera = diagnostics.get("camera", {})
+            items = diagnostics.get("items", {})
+            flags = diagnostics.get("flags", {})
+            story = diagnostics.get("story_state", {})
+            watch_profile = diagnostics.get("watch_profile", "")
+            watch_values = diagnostics.get("watch_values", {})
+            sprites = diagnostics.get("sprites", [])
+
+            print("=== Diagnostic Snapshot ===")
+            print(f"Paused: {run_state.get('paused')} | Running: {run_state.get('running')}")
+            if rom_info:
+                print(f"ROM: {rom_info.get('filename')} (crc32={rom_info.get('crc32')})")
+            print(f"Mode: {overworld.get('mode_name')} (0x{overworld.get('mode', 0):02X})")
+            print(f"Submode: {overworld.get('submode_name')} (0x{overworld.get('submode', 0):02X})")
+            print(f"Indoors: {overworld.get('indoors')} | Overworld: {overworld.get('is_overworld')}")
+            print(f"Transition: {overworld.get('is_transition')}")
+            print(f"Time: {time_state.get('hours', 0):02d}:{time_state.get('minutes', 0):02d} ({time_state.get('phase')})")
+            print(f"Camera offsets: x={camera.get('offset_x')} y={camera.get('offset_y')}")
+            if not diagnostics.get("camera_ok", True):
+                print("WARN: Camera offset exceeds expected bounds.")
+            warnings = diagnostics.get("warnings", [])
+            if warnings:
+                print("\n=== Warnings ===")
+                for w in warnings:
+                    print(w)
+            if args.deep:
+                if story:
+                    print(f"Story: game_state={story.get('game_state')} oosprog=0x{story.get('oosprog', 0):02X}")
+                if items:
+                    non_zero = sum(1 for item in items.values() if item.get("value", 0))
+                    print(f"Items: {non_zero}/{len(items)} non-zero")
+                if flags:
+                    set_flags = sum(1 for flag in flags.values() if flag.get("is_set"))
+                    print(f"Flags: {set_flags}/{len(flags)} set")
+                if watch_profile:
+                    print(f"Watch profile: {watch_profile} ({len(watch_values)} values)")
+                if sprites:
+                    print(f"Sprites: {len(sprites)} active")
+                print("Tip: use --deep --json for full diagnostic payload.")
 
     elif args.command == "story":
         story = client.get_story_state()
@@ -515,16 +1060,146 @@ def main():
             sys.exit(1)
 
     elif args.command == "press":
-        if client.press_button(args.buttons, args.frames):
+        ok = client.press_button(args.buttons, args.frames, ensure_running=not args.allow_paused)
+        if ok:
             print(f"Pressed: {args.buttons}")
         else:
-            print("Button press failed")
+            if client.last_error:
+                print(f"Button press failed: {client.last_error}")
+            else:
+                print("Button press failed")
 
     elif args.command == "pos":
         if client.set_position(args.x, args.y):
             print(f"Set position to ({args.x}, {args.y})")
         else:
             print("Position set failed")
+
+    elif args.command == "move":
+        if args.direction:
+            ok = client.hold_direction(args.direction, frames=args.distance)
+            if ok:
+                print(f"Moved {args.direction} for {args.distance} frames")
+            else:
+                print(f"Movement failed: {client.last_error}")
+        else:
+            # Delegate to navigate logic
+            try:
+                sys.path.insert(0, str(Path.home() / ".claude" / "skills" / "hyrule-navigator" / "scripts"))
+                from navigator import HyruleNavigator
+            except ImportError:
+                print("Error: hyrule-navigator skill not installed (required for --to/--to-poi)")
+                sys.exit(1)
+
+            nav = HyruleNavigator(timeout_frames=args.timeout)
+            nav.bridge = client.bridge
+            nav.client = client
+
+            if args.to_poi:
+                result = nav.goto_poi(args.to_poi)
+            elif args.to:
+                x, y = map(int, args.to.split(","))
+                result = nav.goto_position(x, y)
+            
+            print(f"Movement: {result.status.name}")
+            if result.error:
+                print(f"  Error: {result.error}")
+
+    elif args.command == "navigate":
+        # Import navigation module
+        try:
+            sys.path.insert(0, str(Path.home() / ".claude" / "skills" / "hyrule-navigator" / "scripts"))
+            from navigator import HyruleNavigator, NavResult
+        except ImportError:
+            print("Error: hyrule-navigator skill not installed")
+            print("Install at: ~/.claude/skills/hyrule-navigator/")
+            sys.exit(1)
+
+        nav = HyruleNavigator(
+            timeout_frames=args.timeout,
+            safe_mode=not args.no_safe
+        )
+        # Reuse existing connection
+        nav.bridge = client.bridge
+        nav.client = client
+
+        if args.poi:
+            result = nav.goto_poi(args.poi)
+        elif args.area:
+            area_id = int(args.area, 16) if args.area.startswith("0x") else int(args.area)
+            result = nav.goto_area(area_id)
+        elif args.pos:
+            x, y = map(int, args.pos.split(","))
+            result = nav.goto_position(x, y)
+
+        print(f"\nNavigation: {result.status.name}")
+        if result.start_pos:
+            print(f"  Start: ({result.start_pos[0]}, {result.start_pos[1]})")
+        if result.end_pos:
+            print(f"  End:   ({result.end_pos[0]}, {result.end_pos[1]})")
+        if result.frames_elapsed:
+            print(f"  Frames: {result.frames_elapsed}")
+        if result.error:
+            print(f"  Error: {result.error}")
+
+    elif args.command == "test-hypothesis":
+        patches = {}
+        # Load from file if provided
+        if args.patch_file:
+            try:
+                with open(args.patch_file, "r") as f:
+                    file_patches = json.load(f)
+                for addr_str, val in file_patches.items():
+                    addr = int(addr_str, 0)
+                    patches[addr] = val
+            except Exception as e:
+                print(f"Error loading patch file: {e}")
+                sys.exit(1)
+        
+        # Load from CLI args
+        if args.patch:
+            for p in args.patch:
+                if ":" not in p:
+                    print(f"Error: Invalid patch format '{p}'. Use addr:val")
+                    sys.exit(1)
+                addr_str, val_str = p.split(":", 1)
+                try:
+                    addr = int(addr_str, 0)
+                    # Check if val is a list of bytes [1, 2, 3]
+                    if val_str.startswith("[") and val_str.endswith("]"):
+                        val = json.loads(val_str)
+                    else:
+                        val = int(val_str, 0)
+                    patches[addr] = val
+                except Exception as e:
+                    print(f"Error parsing patch '{p}': {e}")
+                    sys.exit(1)
+        
+        if not patches:
+            print("Error: No patches provided. Use --patch or --patch-file")
+            sys.exit(1)
+            
+        print(f"Testing hypothesis on state '{args.state_id}' with {len(patches)} patches...")
+        result = client.test_hypothesis(
+            args.state_id, 
+            patches, 
+            timeout_frames=args.frames,
+            watch_profile=args.watch
+        )
+        
+        if args.json:
+            print(json.dumps(result, indent=2))
+        else:
+            if result["passed"]:
+                print("PASSED: Hypothesis verified (no warnings, engine active).")
+            else:
+                print("FAILED: Hypothesis failed verification.")
+                for err in result.get("errors", []):
+                    print(f"  ERROR: {err}")
+                for warn in result.get("warnings", []):
+                    print(f"  WARNING: {warn}")
+            
+        sys.exit(0 if result["passed"] else 1)
 
     elif args.command == "pause":
         if client.pause():
@@ -537,6 +1212,43 @@ def main():
             print("Resumed")
         else:
             print("Resume failed")
+
+    elif args.command == "disasm":
+        addr_str = args.address
+        if not addr_str:
+            # Get current PC if no address provided
+            regs = client.get_cpu_state()
+            pc = regs.get("PC", 0)
+            pb = regs.get("K", 0) or regs.get("DB", 0)
+            addr = (pb << 16) | pc
+        else:
+            # Try to resolve label if not a hex number
+            if addr_str.startswith("0x") or addr_str.startswith("$"):
+                addr = int(addr_str.replace("$", "0x"), 16)
+            else:
+                addr = client.resolve_symbol(addr_str)
+                if addr is None:
+                    print(f"Error: Could not resolve symbol '{addr_str}'")
+                    sys.exit(1)
+
+        lines = client.disassemble(addr, args.count)
+        
+        # Resolve symbols for each line if possible
+        for line in lines:
+            line_addr_str = line.get("address", "")
+            if line_addr_str:
+                line_addr = int(line_addr_str.replace("$", "0x"), 16)
+                symbol = client.get_symbol_at(line_addr)
+                if symbol:
+                    line["symbol"] = symbol
+
+        if args.json:
+            print(json.dumps(lines, indent=2))
+        else:
+            print(f"=== Disassembly at 0x{addr:06X} ===")
+            for line in lines:
+                symbol_part = f"<{line['symbol']}> " if "symbol" in line else ""
+                print(f"  {line.get('address')}: {symbol_part}{line.get('bytes')}  {line.get('instruction')}")
 
     elif args.command == "reset":
         if client.reset():
@@ -569,7 +1281,10 @@ def main():
             if client.load_state(path=args.path):
                 print(f"Loaded from {args.path}")
             else:
-                print("Load failed")
+                if client.last_error:
+                    print(f"Load failed: {client.last_error}")
+                else:
+                    print("Load failed")
         elif args.slot:
             if client.load_state(slot=args.slot):
                 print(f"Loaded from slot {args.slot}")
@@ -578,7 +1293,95 @@ def main():
         else:
             print("Usage: load <slot> OR load --path <file>")
 
+    elif args.command == "savestate-label":
+        if args.slot is None and not args.path:
+            print("Usage: savestate-label <get|set|clear> <slot> OR --path <file>")
+            sys.exit(1)
+        if args.action == "set" and not args.label:
+            print("Error: --label is required for action=set")
+            sys.exit(1)
+        res = client.save_state_label(
+            action=args.action,
+            slot=args.slot,
+            path=args.path,
+            label=args.label,
+        )
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                label_text = res.get("data") if isinstance(res.get("data"), str) else ""
+                if args.action == "get":
+                    print(label_text or "(no label)")
+                else:
+                    print("OK")
+            else:
+                print(f"Error: {res.get('error', 'Unknown error')}")
+                sys.exit(1)
+
+    elif args.command == "smart-save":
+        if AgentBrain is None:
+            print("Error: Could not import AgentBrain. Run via mesen2_client.py.")
+            sys.exit(1)
+        
+        try:
+            print("Initializing Agent Brain...")
+            agent = AgentBrain(args.b008_mode)
+            print(f"Attempting smart save to slot {args.slot}...")
+            agent.validate_and_save(args.slot)
+        except Exception as e:
+            print(f"Smart Save Error: {e}")
+            sys.exit(1)
+    elif args.command == "brain-calibrate":
+        if AgentBrain is None:
+            print("Error: Could not import AgentBrain. Run via mesen2_client.py.")
+            sys.exit(1)
+
+        try:
+            print("Initializing Agent Brain...")
+            agent = AgentBrain("auto")
+            mode = agent.calibrate_b008()
+            if mode == "unknown":
+                print("B008 calibration: unknown (not in gameplay or no movement)")
+            else:
+                print(f"B008 calibration: {mode}")
+        except Exception as e:
+            print(f"B008 calibration error: {e}")
+            sys.exit(1)
+
     # === STATE LIBRARY COMMANDS ===
+
+    elif args.command == "repro":
+        # 1. Load the state
+        try:
+            if not client.load_library_state(args.state_id):
+                print(f"Error: Failed to load state '{args.state_id}'")
+                sys.exit(1)
+        except ValueError as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+            
+        print(f"Loaded state: {args.state_id}")
+        
+        # 2. Set watch profile if requested
+        if args.watch:
+            if client.set_watch_profile(args.watch):
+                print(f"Set watch profile: {args.watch}")
+            else:
+                print(f"Warning: Unknown watch profile '{args.watch}'")
+                
+        # 3. Start trace if requested
+        if args.trace:
+            res = client.execute_lua("if DebugBridge and DebugBridge.startTrace then DebugBridge.startTrace() end")
+            if res.get("error"):
+                print(f"Warning: Failed to start trace: {res.get('error')}")
+            else:
+                print("Trace started.")
+                
+        if args.json:
+            print(json.dumps({"success": True, "state": args.state_id, "trace": args.trace, "watch": args.watch}, indent=2))
+        else:
+            print("\nReady for reproduction.")
 
     elif args.command == "library":
         entries = client.list_library_entries(tag=args.tag)
@@ -592,10 +1395,173 @@ def main():
                 print(f"=== State Library ({len(entries)} entries) ===")
                 for entry in entries:
                     tags = ", ".join(entry.get("tags", []))
-                    desc = entry.get("description", "No description")
-                    print(f"  {entry['id']}: {desc}")
+                    desc = entry.get("description") or entry.get("label") or "No description"
+                    status = entry.get("status", "draft")
+                    status_badge = {"canon": "[CANON]", "deprecated": "[DEPR]", "draft": "[draft]"}.get(status, "[?]")
+                    print(f"  {status_badge} {entry['id']}: {desc}")
                     if tags:
-                        print(f"    Tags: {tags}")
+                        print(f"         Tags: {tags}")
+
+    elif args.command == "lib-save":
+        try:
+            captured_by = getattr(args, "captured_by", "agent")
+            state_id, warnings = client.save_library_state(
+                args.label, tags=args.tags, captured_by=captured_by
+            )
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+        if args.json:
+            print(json.dumps({
+                "state_id": state_id,
+                "label": args.label,
+                "tags": args.tags or [],
+                "status": "draft",
+                "warnings": warnings
+            }, indent=2))
+        else:
+            print(f"Saved: {args.label} ({state_id}) [status: draft]")
+            for warn in warnings:
+                print(f"  WARNING: {warn}")
+
+    elif args.command == "lib-scan":
+        try:
+            added = client.scan_library()
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+        if args.json:
+            print(json.dumps({"added": added}, indent=2))
+        else:
+            print(f"Added {added} entr{'y' if added == 1 else 'ies'} from library scan")
+
+    elif args.command == "lib-verify":
+        try:
+            if client.verify_library_state(args.state_id, verified_by=args.verified_by):
+                if args.json:
+                    print(json.dumps({
+                        "state_id": args.state_id,
+                        "status": "canon",
+                        "verified_by": args.verified_by
+                    }, indent=2))
+                else:
+                    print(f"Verified: {args.state_id} -> canon (by {args.verified_by})")
+            else:
+                entry = client.find_library_entry(args.state_id)
+                if entry:
+                    print(f"State '{args.state_id}' is already canon")
+                else:
+                    print(f"State '{args.state_id}' not found")
+                    sys.exit(1)
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+
+    elif args.command == "lib-deprecate":
+        try:
+            if client.deprecate_library_state(args.state_id, reason=args.reason):
+                if args.json:
+                    print(json.dumps({
+                        "state_id": args.state_id,
+                        "status": "deprecated",
+                        "reason": args.reason
+                    }, indent=2))
+                else:
+                    print(f"Deprecated: {args.state_id}")
+                    if args.reason:
+                        print(f"  Reason: {args.reason}")
+            else:
+                print(f"State '{args.state_id}' not found")
+                sys.exit(1)
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+
+    elif args.command == "lib-verify-all":
+        manifest = client.get_library_manifest()
+        entries = [e for e in manifest.get("entries", []) if e.get("status") == "canon"]
+        
+        if not entries:
+            print("No canon states to verify.")
+            return
+            
+        from .state_validator import StateValidator
+        validator = StateValidator()
+        results = []
+        
+        print(f"Verifying {len(entries)} canon states...")
+        for entry in entries:
+            state_id = entry["id"]
+            print(f"  Loading {state_id}...", end="", flush=True)
+            
+            try:
+                ok = client.load_library_state(state_id)
+                if not ok:
+                    print(" LOAD FAILED")
+                    results.append({"id": state_id, "valid": False, "error": "Load failed"})
+                    continue
+                
+                # Wait a few frames for engine to settle
+                client.run_frames(2)
+                
+                # Validate metadata
+                # Map library metadata format to validator expected format
+                meta = entry.get("meta", {})
+                expected = {
+                    "gameState": {
+                        "mode": meta.get("module"),
+                        "room": meta.get("room"),
+                        "overworldArea": meta.get("area"),
+                        "indoors": meta.get("indoors") == "true" or meta.get("indoors") is True
+                    },
+                    "linkState": {
+                        "x": int(meta.get("link_x", 0)) if meta.get("link_x") else None,
+                        "y": int(meta.get("link_y", 0)) if meta.get("link_y") else None
+                    }
+                }
+                
+                res = validator.validate(client.bridge, expected, state_id=state_id)
+                
+                # Also check if frame counter is still advancing
+                stalled = not client.ensure_frame_progress(frames=10)
+                if stalled:
+                    res.valid = False
+                    res.errors.append("Game engine stalled (frame counter not advancing)")
+                
+                if res.valid:
+                    print(" OK")
+                else:
+                    print(f" INVALID: {', '.join(res.errors)}")
+                
+                results.append({
+                    "id": state_id,
+                    "valid": res.valid,
+                    "errors": res.errors,
+                    "warnings": res.warnings
+                })
+                
+            except Exception as e:
+                print(f" ERROR: {e}")
+                results.append({"id": state_id, "valid": False, "error": str(e)})
+
+        total_valid = sum(1 for r in results if r["valid"])
+        if args.json:
+            print(json.dumps({"results": results, "total": len(results), "valid": total_valid}, indent=2))
+        else:
+            print(f"\nVerification complete: {total_valid}/{len(results)} canon states valid.")
+            if total_valid < len(results):
+                sys.exit(1)
+
+    elif args.command == "lib-backfill":
+        try:
+            updated = client.backfill_library_hashes()
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+        if args.json:
+            print(json.dumps({"updated": updated}, indent=2))
+        else:
+            print(f"Backfilled {updated} entr{'y' if updated == 1 else 'ies'} with MD5 hashes")
 
     elif args.command == "lib-load":
         try:
@@ -619,18 +1585,26 @@ def main():
             print(json.dumps(entry, indent=2))
         else:
             print(f"=== {entry['id']} ===")
-            print(f"Description: {entry.get('description', 'N/A')}")
+            print(f"Label: {entry.get('label', 'N/A')}")
             print(f"Path: {entry.get('path', 'N/A')}")
-            print(f"ROM Base: {entry.get('rom_base', 'N/A')}")
+            print(f"Status: {entry.get('status', 'draft')}")
+            print(f"Captured by: {entry.get('captured_by', 'unknown')}")
             print(f"Tags: {', '.join(entry.get('tags', []))}")
-            if "gameState" in entry:
-                gs = entry["gameState"]
-                print(
-                    f"Game State: mode={gs.get('mode', '?')}, submode={gs.get('submode', '?')}, indoors={gs.get('indoors', '?')}"
-                )
-            if "meta" in entry:
-                print("Meta:")
-                for k, v in entry["meta"].items():
+            if entry.get("md5"):
+                print(f"MD5: {entry['md5']}")
+            created_at = entry.get("created_at")
+            if created_at:
+                print(f"Created: {created_at}")
+            verified_by = entry.get("verified_by")
+            verified_at = entry.get("verified_at")
+            if verified_by:
+                print(f"Verified by: {verified_by} at {verified_at}")
+            if entry.get("deprecation_reason"):
+                print(f"Deprecation reason: {entry['deprecation_reason']}")
+            metadata = entry.get("metadata") or {}
+            if metadata:
+                print("Metadata:")
+                for k, v in metadata.items():
                     print(f"  {k}: {v}")
 
     elif args.command == "capture":
@@ -654,6 +1628,140 @@ def main():
             print(f"OOSPROG2: 0x{metadata['oosprog2']:02X}")
             print(f"Crystals: 0x{metadata['crystals']:02X}")
             print(f"Pendants: 0x{metadata['pendants']:02X}")
+
+    elif args.command == "symbols":
+        if args.query:
+            # Check if query is an address
+            if args.query.startswith("0x") or args.query.startswith("$"):
+                addr = int(args.query.replace("$", "0x"), 16)
+                symbol = client.get_symbol_at(addr)
+                result = {"address": f"0x{addr:06X}", "symbol": symbol}
+            else:
+                addr = client.resolve_symbol(args.query)
+                result = {"symbol": args.query, "address": f"0x{addr:06X}" if addr is not None else None}
+            
+            if args.json:
+                print(json.dumps(result, indent=2))
+            else:
+                if result.get("address") and result.get("symbol"):
+                    print(f"{result['symbol']} = {result['address']}")
+                elif result.get("address"):
+                    print(f"{result['address']}: (no symbol found)")
+                elif result.get("symbol"):
+                    print(f"Could not resolve symbol '{result['symbol']}'")
+        else:
+            # List some stats
+            stats = {
+                "usdasm_loaded": len(client._usdasm_labels),
+            }
+            if args.json:
+                print(json.dumps(stats, indent=2))
+            else:
+                print(f"USDASM Labels: {stats['usdasm_loaded']} loaded")
+                print("Use 'symbols <name>' or 'symbols <address>' to query.")
+
+    elif args.command == "labels-sync":
+        # Load USDASM labels if not already loaded
+        if not client._usdasm_labels:
+            client.load_usdasm_labels()
+            
+        if not client._usdasm_labels:
+            print("Error: No USDASM labels found to sync.")
+            sys.exit(1)
+            
+        # Create symbol JSON for Mesen2
+        # Format: {"SymbolName": {"addr": "BBAAAA", "size": 1, "type": "code"}, ...}
+        symbols_data = {}
+        for name, linear_addr in client._usdasm_labels.items():
+            symbols_data[name] = {
+                "addr": f"{linear_addr:06X}",
+                "size": 1,
+                "type": "code"
+            }
+            
+        temp_path = Path(tempfile.gettempdir()) / "vanilla_symbols.json"
+        try:
+            temp_path.write_text(json.dumps(symbols_data))
+            
+            res = client.bridge.send_command("SYMBOLS_LOAD", {"file": str(temp_path), "clear": "true" if args.clear else "false"})
+            
+            if res.get("success"):
+                if args.json:
+                    print(json.dumps({"success": True, "count": len(symbols_data)}, indent=2))
+                else:
+                    print(f"Successfully synced {len(symbols_data)} labels to Mesen2.")
+            else:
+                print(f"Error syncing labels: {res.get('error', 'Unknown error')}")
+                sys.exit(1)
+        finally:
+            if temp_path.exists():
+                temp_path.unlink()
+
+    elif args.command == "subscribe":
+        if client.subscribe(args.events):
+            print(f"Subscribed to: {args.events}")
+            print("Listening for events... (Press Ctrl+C to stop)")
+            try:
+                # Direct access to bridge to read pushed events
+                # This depends on bridge implementation of a blocking read
+                while True:
+                    # For now just print that we are waiting
+                    # If bridge supports it, we would read here
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                print("\nUnsubscribed.")
+        else:
+            print("Subscription failed")
+
+    elif args.command == "batch":
+        try:
+            cmds = json.loads(args.commands)
+            results = client.batch_execute(cmds)
+            print(json.dumps(results, indent=2))
+        except json.JSONDecodeError:
+            print("Error: Invalid JSON commands")
+            sys.exit(1)
+
+    elif args.command == "watchdog":
+        ok, msg = client.watchdog_recover(slot=args.slot, frames=args.frames)
+        if args.json:
+            print(json.dumps({"ok": ok, "message": msg}, indent=2))
+        else:
+            print(msg)
+        if not ok:
+            sys.exit(1)
+
+    elif args.command == "state-diff":
+        diff = client.get_state_diff()
+        print(json.dumps(diff, indent=2))
+
+    elif args.command == "watch-trigger":
+        if args.trigger_cmd == "add":
+            try:
+                addr = int(args.addr, 0)
+                val = int(args.value, 0)
+                tid = client.add_watch_trigger(addr, val, condition=args.condition)
+                if tid:
+                    print(f"Trigger added with ID: {tid}")
+                else:
+                    print("Failed to add trigger")
+            except ValueError:
+                print("Error: Invalid address or value")
+                sys.exit(1)
+        elif args.trigger_cmd == "remove":
+            if client.remove_watch_trigger(args.id):
+                print(f"Trigger {args.id} removed")
+            else:
+                print("Failed to remove trigger")
+        elif args.trigger_cmd == "list":
+            triggers = client.list_watch_triggers()
+            print(json.dumps(triggers, indent=2))
+
+    elif args.command == "sync":
+        if client.save_state_sync(args.path):
+            print(f"Synced state: {args.path}")
+        else:
+            print("Sync failed")
 
 
 if __name__ == "__main__":

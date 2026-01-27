@@ -1,0 +1,12 @@
+{
+  "id": "sprite_state_machine_001",
+  "category": "sprite",
+  "title": "Basic Sprite State Machine Pattern",
+  "context": "Oracle of Secrets uses jump tables for sprite state machines. Each sprite has a SprAction index that determines its current behavior.",
+  "input": "Create a sprite with 3 states: idle, walk, attack",
+  "code": "; Sprite State Machine Template\n; Entry point called from sprite main loop\n\nMySprite_Main:\n{\n    PHB : PHK : PLB              ; Standard bank setup\n    \n    ; Get current state and dispatch\n    LDA.w SprAction, X           ; Load state index\n    JSL JumpTableLocal           ; Dispatch to handler\n    dw State_Idle                ; State 0\n    dw State_Walk                ; State 1\n    dw State_Attack              ; State 2\n    \n    PLB\n    RTL\n}\n\nState_Idle:\n{\n    ; Check for player proximity\n    JSL Sprite_CheckPlayerCollision\n    BCC .stay_idle\n    \n    ; Player nearby - transition to walk\n    LDA.b #$01\n    STA.w SprAction, X\n    \n.stay_idle:\n    RTS\n}\n\nState_Walk:\n{\n    ; Move toward player\n    JSL Sprite_MoveTowardPlayer\n    \n    ; Check if close enough to attack\n    LDA.w SprTimerB, X\n    BNE .keep_walking\n    \n    ; Transition to attack\n    LDA.b #$02\n    STA.w SprAction, X\n    \n.keep_walking:\n    RTS\n}\n\nState_Attack:\n{\n    ; Execute attack animation\n    JSL Sprite_Attack\n    \n    ; Check if attack complete\n    LDA.w SprTimerC, X\n    BNE .attacking\n    \n    ; Return to idle\n    LDA.b #$00\n    STA.w SprAction, X\n    \n.attacking:\n    RTS\n}",
+  "explanation": "This pattern demonstrates the core sprite state machine used in Oracle of Secrets:\n\n1. **Bank Setup**: PHB : PHK : PLB ensures we're working in the correct data bank\n2. **State Dispatch**: SprAction holds the current state (0-255), JSL JumpTableLocal reads the address table\n3. **State Handlers**: Each state handles its own logic and can transition by writing to SprAction\n4. **Timers**: SprTimerB, SprTimerC are per-sprite timers for delays and animations\n5. **Helper Routines**: JSL to vanilla routines for collision, movement, etc.",
+  "tags": ["sprite", "state-machine", "jump-table", "pattern"],
+  "verified": true,
+  "source": "campaign_discoveries_sprite_system"
+}

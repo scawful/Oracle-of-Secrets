@@ -1,567 +1,896 @@
 {
-    "version": 1,
-    "library_root": "Roms/SaveStates/library",
-    "entries": [
-        {
-            "id": "baseline_1",
-            "path": "baseline/oos91x_1.mss",
-            "description": "Early game overworld - Link's house area",
-            "tags": [
-                "baseline",
-                "overworld",
-                "early-game",
-                "boot"
-            ],
-            "imported": "2023-09-13T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "Start Area",
-                "location": "Overworld - Link's House",
-                "notes": "Fresh early-game state, good for boot verification"
-            },
-            "rom_base": "oos91x"
-        },
-        {
-            "id": "baseline_2",
-            "path": "baseline/oos91x_2.mss",
-            "description": "Menu and item system testing state",
-            "tags": [
-                "baseline",
-                "menu",
-                "items",
-                "overworld"
-            ],
-            "imported": "2023-11-05T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "Menu Test",
-                "location": "Overworld",
-                "notes": "State with items for menu testing"
-            },
-            "rom_base": "oos91x"
-        },
-        {
-            "id": "baseline_3",
-            "path": "baseline/oos91x_3.mss",
-            "description": "Mid-game progression state",
-            "tags": [
-                "baseline",
-                "progression",
-                "overworld"
-            ],
-            "imported": "2023-09-16T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "Progression",
-                "location": "Overworld",
-                "notes": "Mid-game with some items collected"
-            },
-            "rom_base": "oos91x"
-        },
-        {
-            "id": "baseline_4",
-            "path": "baseline/oos91x_4.mss",
-            "description": "Dungeon entrance testing state",
-            "tags": [
-                "baseline",
-                "dungeon",
-                "entrance"
-            ],
-            "imported": "2023-10-05T00:00:00Z",
-            "gameState": {
-                "mode": "0x07",
-                "submode": "0x00",
-                "indoors": true
-            },
-            "meta": {
-                "label": "Dungeon Entry",
-                "location": "Dungeon Entrance",
-                "notes": "Good for dungeon transition testing"
-            },
-            "rom_base": "oos91x"
-        },
-        {
-            "id": "baseline_5",
-            "path": "baseline/oos91x_5.mss",
-            "description": "Hookshot and Goldstar dual-equip state",
-            "tags": [
-                "baseline",
-                "items",
-                "hookshot",
-                "goldstar",
-                "lr-swap"
-            ],
-            "imported": "2023-11-17T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "L/R Swap Test",
-                "location": "Overworld",
-                "notes": "Both hookshot and goldstar equipped for L/R swap testing"
-            },
-            "rom_base": "oos91x"
-        },
-        {
-            "id": "baseline_6",
-            "path": "baseline/oos91x_6.mss",
-            "description": "Overworld transition testing - western area",
-            "tags": [
-                "baseline",
-                "overworld",
-                "transition",
-                "western"
-            ],
-            "imported": "2023-09-11T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "Western OW",
-                "location": "Overworld - Western Area",
-                "notes": "Good for screen transition testing"
-            },
-            "rom_base": "oos91x"
-        },
-        {
-            "id": "baseline_7",
-            "path": "baseline/oos91x_7.mss",
-            "description": "Water temple / Zora area state",
-            "tags": [
-                "baseline",
-                "dungeon",
-                "water",
-                "zora-temple"
-            ],
-            "imported": "2023-09-17T00:00:00Z",
-            "gameState": {
-                "mode": "0x07",
-                "submode": "0x00",
-                "indoors": true
-            },
-            "meta": {
-                "label": "Zora Temple",
-                "location": "Zora Temple",
-                "notes": "Water collision and dungeon testing"
-            },
-            "rom_base": "oos91x"
-        },
-        {
-            "id": "baseline_8",
-            "path": "baseline/oos91x_8.mss",
-            "description": "Water gate room - pre-activation",
-            "tags": [
-                "baseline",
-                "dungeon",
-                "water-gate",
-                "zora-temple",
-                "pre-fill"
-            ],
-            "imported": "2023-09-17T00:00:00Z",
-            "gameState": {
-                "mode": "0x07",
-                "room": "0x27",
-                "indoors": true
-            },
-            "meta": {
-                "label": "Water Gate Pre",
-                "location": "Room 0x27 (Zora Temple)",
-                "notes": "Water gate before activation - for collision testing"
-            },
-            "rom_base": "oos91x"
-        },
-        {
-            "id": "baseline_9",
-            "path": "baseline/oos91x_9.mss",
-            "description": "Water gate room - post-activation",
-            "tags": [
-                "baseline",
-                "dungeon",
-                "water-gate",
-                "zora-temple",
-                "post-fill"
-            ],
-            "imported": "2023-09-17T00:00:00Z",
-            "gameState": {
-                "mode": "0x07",
-                "room": "0x27",
-                "indoors": true
-            },
-            "meta": {
-                "label": "Water Gate Post",
-                "location": "Room 0x27 (Zora Temple)",
-                "notes": "Water gate after activation - verify collision tiles active"
-            },
-            "rom_base": "oos91x"
-        },
-        {
-            "id": "baseline_10",
-            "path": "baseline/oos91x_10.mss",
-            "description": "Late game / boss area state",
-            "tags": [
-                "baseline",
-                "late-game",
-                "boss",
-                "dungeon"
-            ],
-            "imported": "2023-09-11T00:00:00Z",
-            "gameState": {
-                "mode": "0x07",
-                "submode": "0x00",
-                "indoors": true
-            },
-            "meta": {
-                "label": "Boss Area",
-                "location": "Dungeon - Boss Region",
-                "notes": "Late game progression for boss testing"
-            },
-            "rom_base": "oos91x"
-        },
-        {
-            "id": "baseline_11",
-            "path": "baseline/oos91x_11.mss",
-            "description": "Extended testing state - full inventory",
-            "tags": [
-                "baseline",
-                "full-inventory",
-                "late-game",
-                "testing"
-            ],
-            "imported": "2023-11-10T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "Full Inventory",
-                "location": "Overworld",
-                "notes": "Full item set for comprehensive testing"
-            },
-            "rom_base": "oos91x"
-        },
-        {
-            "id": "current_1",
-            "path": "current/oos168x_1.mss",
-            "description": "Current build - boot verification state",
-            "tags": [
-                "current",
-                "oos168x",
-                "boot",
-                "overworld"
-            ],
-            "imported": "2026-01-22T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "Boot State",
-                "location": "Overworld - Start",
-                "notes": "Matches baseline_1 position for regression testing"
-            },
-            "rom_base": "oos168x"
-        },
-        {
-            "id": "current_2",
-            "path": "current/oos168x_2.mss",
-            "description": "Current build - menu testing",
-            "tags": [
-                "current",
-                "oos168x",
-                "menu",
-                "items"
-            ],
-            "imported": "2026-01-22T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "Menu Test",
-                "location": "Overworld",
-                "notes": "Matches baseline_2 for regression"
-            },
-            "rom_base": "oos168x"
-        },
-        {
-            "id": "current_3",
-            "path": "current/oos168x_3.mss",
-            "description": "Current build - progression state",
-            "tags": [
-                "current",
-                "oos168x",
-                "progression"
-            ],
-            "imported": "2026-01-22T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "Progression",
-                "location": "Overworld"
-            },
-            "rom_base": "oos168x"
-        },
-        {
-            "id": "current_4",
-            "path": "current/oos168x_4.mss",
-            "description": "Current build - dungeon entrance",
-            "tags": [
-                "current",
-                "oos168x",
-                "dungeon",
-                "entrance"
-            ],
-            "imported": "2026-01-22T00:00:00Z",
-            "gameState": {
-                "mode": "0x07",
-                "submode": "0x00",
-                "indoors": true
-            },
-            "meta": {
-                "label": "Dungeon Entry",
-                "location": "Dungeon Entrance"
-            },
-            "rom_base": "oos168x"
-        },
-        {
-            "id": "current_5",
-            "path": "current/oos168x_5.mss",
-            "description": "Current build - hookshot/goldstar L/R swap",
-            "tags": [
-                "current",
-                "oos168x",
-                "items",
-                "hookshot",
-                "goldstar",
-                "lr-swap"
-            ],
-            "imported": "2026-01-22T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "L/R Swap",
-                "location": "Overworld",
-                "notes": "L/R swap regression testing"
-            },
-            "rom_base": "oos168x"
-        },
-        {
-            "id": "current_6",
-            "path": "current/oos168x_6.mss",
-            "description": "Current build - overworld transitions",
-            "tags": [
-                "current",
-                "oos168x",
-                "overworld",
-                "transition"
-            ],
-            "imported": "2026-01-22T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "OW Transition",
-                "location": "Overworld - Western"
-            },
-            "rom_base": "oos168x"
-        },
-        {
-            "id": "current_7",
-            "path": "current/oos168x_7.mss",
-            "description": "Current build - Zora Temple area",
-            "tags": [
-                "current",
-                "oos168x",
-                "dungeon",
-                "water",
-                "zora-temple"
-            ],
-            "imported": "2026-01-22T00:00:00Z",
-            "gameState": {
-                "mode": "0x07",
-                "submode": "0x00",
-                "indoors": true
-            },
-            "meta": {
-                "label": "Zora Temple",
-                "location": "Zora Temple"
-            },
-            "rom_base": "oos168x"
-        },
-        {
-            "id": "current_8",
-            "path": "current/oos168x_8.mss",
-            "description": "Current build - water gate pre-fill",
-            "tags": [
-                "current",
-                "oos168x",
-                "dungeon",
-                "water-gate",
-                "pre-fill"
-            ],
-            "imported": "2026-01-22T00:00:00Z",
-            "gameState": {
-                "mode": "0x07",
-                "room": "0x27",
-                "indoors": true
-            },
-            "meta": {
-                "label": "Water Gate Pre",
-                "location": "Room 0x27",
-                "notes": "Water collision testing - current build"
-            },
-            "rom_base": "oos168x"
-        },
-        {
-            "id": "current_9",
-            "path": "current/oos168x_9.mss",
-            "description": "Current build - water gate post-fill",
-            "tags": [
-                "current",
-                "oos168x",
-                "dungeon",
-                "water-gate",
-                "post-fill"
-            ],
-            "imported": "2026-01-22T00:00:00Z",
-            "gameState": {
-                "mode": "0x07",
-                "room": "0x27",
-                "indoors": true
-            },
-            "meta": {
-                "label": "Water Gate Post",
-                "location": "Room 0x27",
-                "notes": "Verify water collision active on current build"
-            },
-            "rom_base": "oos168x"
-        },
-        {
-            "id": "current_10",
-            "path": "current/oos168x_10.mss",
-            "description": "Current build - boss area",
-            "tags": [
-                "current",
-                "oos168x",
-                "late-game",
-                "boss"
-            ],
-            "imported": "2026-01-22T00:00:00Z",
-            "gameState": {
-                "mode": "0x07",
-                "submode": "0x00",
-                "indoors": true
-            },
-            "meta": {
-                "label": "Boss Area",
-                "location": "Dungeon - Boss Region"
-            },
-            "rom_base": "oos168x"
-        },
-        {
-            "id": "current_11",
-            "path": "current/oos168x_11.mss",
-            "description": "Current build - full inventory testing",
-            "tags": [
-                "current",
-                "oos168x",
-                "full-inventory",
-                "testing"
-            ],
-            "imported": "2026-01-22T00:00:00Z",
-            "gameState": {
-                "mode": "0x09",
-                "submode": "0x00",
-                "indoors": false
-            },
-            "meta": {
-                "label": "Full Inventory",
-                "location": "Overworld"
-            },
-            "rom_base": "oos168x"
-        }
-    ],
-    "sets": [
-        {
-            "name": "oos91x_baseline",
-            "description": "Complete oos91x baseline states for regression testing",
-            "rom_base": "oos91x",
-            "slots": {
-                "1": "baseline_1",
-                "2": "baseline_2",
-                "3": "baseline_3",
-                "4": "baseline_4",
-                "5": "baseline_5",
-                "6": "baseline_6",
-                "7": "baseline_7",
-                "8": "baseline_8",
-                "9": "baseline_9",
-                "10": "baseline_10"
-            }
-        },
-        {
-            "name": "oos168x_current",
-            "description": "Current oos168x build states matching baseline positions",
-            "rom_base": "oos168x",
-            "slots": {
-                "1": "current_1",
-                "2": "current_2",
-                "3": "current_3",
-                "4": "current_4",
-                "5": "current_5",
-                "6": "current_6",
-                "7": "current_7",
-                "8": "current_8",
-                "9": "current_9",
-                "10": "current_10"
-            }
-        },
-        {
-            "name": "water_gate_test",
-            "description": "Water gate collision testing states",
-            "rom_base": "oos168x",
-            "slots": {
-                "1": "baseline_8",
-                "2": "baseline_9",
-                "3": "current_8",
-                "4": "current_9"
-            }
-        },
-        {
-            "name": "lr_swap_test",
-            "description": "L/R button item swap testing",
-            "rom_base": "oos168x",
-            "slots": {
-                "1": "baseline_5",
-                "2": "current_5"
-            }
-        }
-    ]
+  "entries": [
+    {
+      "id": "1769464731_Zora_Temple_Entry",
+      "path": "oos_1769464731_Zora_Temple_Entry.mss",
+      "label": "Zora Temple Entry",
+      "created_at": 1769464731,
+      "tags": [
+        "dungeon",
+        "entrance"
+      ],
+      "metadata": {
+        "module": 9,
+        "room": 32,
+        "area": 64,
+        "indoors": false,
+        "link_x": 744,
+        "link_y": 531,
+        "link_state": 0,
+        "link_form": 6,
+        "link_form_name": "GBC Link",
+        "link_dir": 2,
+        "time_hours": 10,
+        "time_minutes": 0,
+        "time_speed": 63,
+        "health": 48,
+        "max_health": 80,
+        "magic": 120,
+        "rupees": 999,
+        "game_state": 2,
+        "oosprog": 0,
+        "oosprog2": 16,
+        "crystals": 0,
+        "pendants": 0,
+        "location": "Temporal Pyramid",
+        "summary": "Mode: Overworld | GameState: 2"
+      },
+      "status": "canon",
+      "captured_by": "agent",
+      "verified_by": "scawful",
+      "verified_at": 1769464736,
+      "md5": "41ebb3077a65186edebbdb1ed5fedd37"
+    },
+    {
+      "id": "1769374361_Link_s_House_Area",
+      "path": "oos_1769374361_Link_s_House_Area.mss",
+      "label": "Link's House Area",
+      "created_at": 1769374361,
+      "tags": [
+        "overworld",
+        "start",
+        "indoor-entrance"
+      ],
+      "metadata": {
+        "module": 9,
+        "room": 32,
+        "area": 35,
+        "indoors": false,
+        "link_x": 1360,
+        "link_y": 2800,
+        "link_state": 0,
+        "link_form": 6,
+        "link_form_name": "GBC Link",
+        "link_dir": 2,
+        "time_hours": 10,
+        "time_minutes": 37,
+        "time_speed": 63,
+        "health": 48,
+        "max_health": 80,
+        "magic": 120,
+        "rupees": 999,
+        "game_state": 2,
+        "oosprog": 0,
+        "oosprog2": 16,
+        "crystals": 0,
+        "pendants": 0,
+        "location": "Ranch",
+        "summary": "Mode: Overworld | GameState: 2"
+      },
+      "md5": "1764b69fcb3755468ae5bfa19d5f9d13",
+      "status": "canon",
+      "capture_quality": "unique",
+      "verified_by": "scawful",
+      "verified_at": 1769464678
+    },
+    {
+      "id": "1769374342_Village_West",
+      "path": "oos_1769374342_Village_West.mss",
+      "label": "Village West",
+      "created_at": 1769374342,
+      "tags": [
+        "overworld",
+        "village",
+        "transition",
+        "large-map"
+      ],
+      "metadata": {
+        "module": 9,
+        "room": 32,
+        "area": 35,
+        "indoors": false,
+        "link_x": 1572,
+        "link_y": 2790,
+        "link_state": 0,
+        "link_form": 6,
+        "link_form_name": "GBC Link",
+        "link_dir": 2,
+        "time_hours": 10,
+        "time_minutes": 20,
+        "time_speed": 63,
+        "health": 48,
+        "max_health": 80,
+        "magic": 120,
+        "rupees": 999,
+        "game_state": 2,
+        "oosprog": 0,
+        "oosprog2": 16,
+        "crystals": 0,
+        "pendants": 0,
+        "location": "Ranch",
+        "summary": "Mode: Overworld | GameState: 2"
+      },
+      "md5": "19e3ae00c10d06ab8f5e09269d8bd13b",
+      "status": "canon",
+      "capture_quality": "unique",
+      "verified_by": "scawful",
+      "verified_at": 1769464681
+    },
+    {
+      "id": "1769374328_Lost_Woods_Center",
+      "path": "oos_1769374328_Lost_Woods_Center.mss",
+      "label": "Lost Woods Center",
+      "created_at": 1769374328,
+      "tags": [
+        "overworld",
+        "lost-woods",
+        "transition",
+        "puzzle"
+      ],
+      "metadata": {
+        "module": 9,
+        "room": 32,
+        "area": 41,
+        "indoors": false,
+        "link_x": 512,
+        "link_y": 512,
+        "link_state": 0,
+        "link_form": 6,
+        "link_form_name": "GBC Link",
+        "link_dir": 2,
+        "time_hours": 10,
+        "time_minutes": 6,
+        "time_speed": 63,
+        "health": 48,
+        "max_health": 80,
+        "magic": 120,
+        "rupees": 999,
+        "game_state": 2,
+        "oosprog": 0,
+        "oosprog2": 16,
+        "crystals": 0,
+        "pendants": 0,
+        "location": "Church",
+        "summary": "Mode: Overworld | GameState: 2"
+      },
+      "md5": "cee6e40fb180e238089c866098fce2e2",
+      "status": "canon",
+      "capture_quality": "unique",
+      "verified_by": "scawful",
+      "verified_at": 1769464681
+    },
+    {
+      "id": "1769374193_Dark_World_Pyramid_checkpoint",
+      "path": "oos_1769374193_Dark_World_Pyramid_checkpoint.mss",
+      "label": "Dark World Pyramid checkpoint",
+      "created_at": 1769374193,
+      "tags": [
+        "overworld",
+        "dark-world",
+        "pyramid",
+        "transition"
+      ],
+      "metadata": {
+        "module": 9,
+        "room": 32,
+        "area": 64,
+        "indoors": false,
+        "link_x": 744,
+        "link_y": 531,
+        "link_state": 0,
+        "link_form": 6,
+        "link_form_name": "GBC Link",
+        "link_dir": 2,
+        "time_hours": 9,
+        "time_minutes": 13,
+        "time_speed": 63,
+        "health": 48,
+        "max_health": 80,
+        "magic": 120,
+        "rupees": 999,
+        "game_state": 2,
+        "oosprog": 0,
+        "oosprog2": 16,
+        "crystals": 0,
+        "pendants": 0,
+        "location": "Temporal Pyramid",
+        "summary": "Mode: Overworld | GameState: 2"
+      },
+      "md5": "46ca8715852b08c781b8c6590994a2a6",
+      "status": "canon",
+      "capture_quality": "unique",
+      "verified_by": "scawful",
+      "verified_at": 1769464681
+    },
+    {
+      "description": "Early game overworld - Link's house area",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "baseline_1",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Start Area",
+        "location": "Overworld - Link's House",
+        "notes": "Fresh early-game state, good for boot verification"
+      },
+      "path": "baseline/oos168x_1.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "overworld",
+        "early-game",
+        "boot"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34"
+    },
+    {
+      "description": "Menu and item system testing state",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "baseline_2",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Menu Test",
+        "location": "Overworld",
+        "notes": "State with items for menu testing"
+      },
+      "path": "baseline/oos168x_2.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "menu",
+        "items",
+        "overworld"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.837914Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Mid-game progression state",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "baseline_3",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Progression",
+        "location": "Overworld",
+        "notes": "Mid-game with some items collected"
+      },
+      "path": "baseline/oos168x_3.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "progression",
+        "overworld"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838044Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Dungeon entrance testing state",
+      "gameState": {
+        "indoors": true,
+        "mode": "0x07",
+        "submode": "0x00"
+      },
+      "id": "baseline_4",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Dungeon Entry",
+        "location": "Dungeon Entrance",
+        "notes": "Good for dungeon transition testing"
+      },
+      "path": "baseline/oos168x_4.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "dungeon",
+        "entrance"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838046Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Hookshot and Goldstar dual-equip state",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "baseline_5",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "L/R Swap Test",
+        "location": "Overworld",
+        "notes": "Both hookshot and goldstar equipped for L/R swap testing"
+      },
+      "path": "baseline/oos168x_5.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "items",
+        "hookshot",
+        "goldstar",
+        "lr-swap"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838048Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Overworld transition testing - western area",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "baseline_6",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Western OW",
+        "location": "Overworld - Western Area",
+        "notes": "Good for screen transition testing"
+      },
+      "path": "baseline/oos168x_6.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "overworld",
+        "transition",
+        "western"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838049Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Water temple / Zora area state",
+      "gameState": {
+        "indoors": true,
+        "mode": "0x07",
+        "submode": "0x00"
+      },
+      "id": "baseline_7",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Zora Temple",
+        "location": "Zora Temple",
+        "notes": "Water collision and dungeon testing"
+      },
+      "path": "baseline/oos168x_7.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "dungeon",
+        "water",
+        "zora-temple"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838050Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Water gate room - pre-activation",
+      "gameState": {
+        "indoors": true,
+        "mode": "0x07",
+        "room": "0x27"
+      },
+      "id": "baseline_8",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Water Gate Pre",
+        "location": "Room 0x27 (Zora Temple)",
+        "notes": "Water gate before activation - for collision testing"
+      },
+      "path": "baseline/oos168x_8.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "dungeon",
+        "water-gate",
+        "zora-temple",
+        "pre-fill"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838051Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Water gate room - post-activation",
+      "gameState": {
+        "indoors": true,
+        "mode": "0x07",
+        "room": "0x27"
+      },
+      "id": "baseline_9",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Water Gate Post",
+        "location": "Room 0x27 (Zora Temple)",
+        "notes": "Water gate after activation - verify collision tiles active"
+      },
+      "path": "baseline/oos168x_9.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "dungeon",
+        "water-gate",
+        "zora-temple",
+        "post-fill"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838052Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Late game / boss area state",
+      "gameState": {
+        "indoors": true,
+        "mode": "0x07",
+        "submode": "0x00"
+      },
+      "id": "baseline_10",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Boss Area",
+        "location": "Dungeon - Boss Region",
+        "notes": "Late game progression for boss testing"
+      },
+      "path": "baseline/oos168x_10.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "late-game",
+        "boss",
+        "dungeon"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838053Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Extended testing state - full inventory",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "baseline_11",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Full Inventory",
+        "location": "Overworld",
+        "notes": "Full item set for comprehensive testing"
+      },
+      "path": "baseline/oos168x_11.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "full-inventory",
+        "late-game",
+        "testing"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838054Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x baseline - Early game overworld - Link's house area",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "current_1",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Current Start Area",
+        "location": "Overworld - Link's House",
+        "notes": "Alias of oos168x baseline state (refreshed 2026-01-21)."
+      },
+      "path": "baseline/oos168x_1.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "boot",
+        "current",
+        "early-game",
+        "oos168x",
+        "overworld"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838055Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x baseline - Menu and item system testing state",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "current_2",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Current Menu Test",
+        "location": "Overworld",
+        "notes": "Alias of oos168x baseline state (refreshed 2026-01-21)."
+      },
+      "path": "baseline/oos168x_2.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "current",
+        "items",
+        "menu",
+        "oos168x",
+        "overworld"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838056Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x baseline - Mid-game progression state",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "current_3",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Current Progression",
+        "location": "Overworld",
+        "notes": "Alias of oos168x baseline state (refreshed 2026-01-21)."
+      },
+      "path": "baseline/oos168x_3.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "current",
+        "oos168x",
+        "overworld",
+        "progression"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838057Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x baseline - Dungeon entrance testing state",
+      "gameState": {
+        "indoors": true,
+        "mode": "0x07",
+        "submode": "0x00"
+      },
+      "id": "current_4",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Current Dungeon Entry",
+        "location": "Dungeon Entrance",
+        "notes": "Alias of oos168x baseline state (refreshed 2026-01-21)."
+      },
+      "path": "baseline/oos168x_4.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "current",
+        "dungeon",
+        "entrance",
+        "oos168x"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838058Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x baseline - Hookshot and Goldstar dual-equip state",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "current_5",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Current L/R Swap Test",
+        "location": "Overworld",
+        "notes": "Alias of oos168x baseline state (refreshed 2026-01-21)."
+      },
+      "path": "baseline/oos168x_5.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "current",
+        "goldstar",
+        "hookshot",
+        "items",
+        "lr-swap",
+        "oos168x"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838059Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x baseline - Overworld transition testing - western area",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "current_6",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Current Western OW",
+        "location": "Overworld - Western Area",
+        "notes": "Alias of oos168x baseline state (refreshed 2026-01-21)."
+      },
+      "path": "baseline/oos168x_6.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "current",
+        "oos168x",
+        "overworld",
+        "transition",
+        "western"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838060Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x baseline - Water temple / Zora area state",
+      "gameState": {
+        "indoors": true,
+        "mode": "0x07",
+        "submode": "0x00"
+      },
+      "id": "current_7",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Current Zora Temple",
+        "location": "Zora Temple",
+        "notes": "Alias of oos168x baseline state (refreshed 2026-01-21)."
+      },
+      "path": "baseline/oos168x_7.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "current",
+        "dungeon",
+        "oos168x",
+        "water",
+        "zora-temple"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838061Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x baseline - Water gate room - pre-activation",
+      "gameState": {
+        "indoors": true,
+        "mode": "0x07",
+        "room": "0x27"
+      },
+      "id": "current_8",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Current Water Gate Pre",
+        "location": "Room 0x27 (Zora Temple)",
+        "notes": "Alias of oos168x baseline state (refreshed 2026-01-21)."
+      },
+      "path": "baseline/oos168x_8.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "current",
+        "dungeon",
+        "oos168x",
+        "pre-fill",
+        "water-gate",
+        "zora-temple"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838063Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x baseline - Water gate room - post-activation",
+      "gameState": {
+        "indoors": true,
+        "mode": "0x07",
+        "room": "0x27"
+      },
+      "id": "current_9",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Current Water Gate Post",
+        "location": "Room 0x27 (Zora Temple)",
+        "notes": "Alias of oos168x baseline state (refreshed 2026-01-21)."
+      },
+      "path": "baseline/oos168x_9.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "current",
+        "dungeon",
+        "oos168x",
+        "post-fill",
+        "water-gate",
+        "zora-temple"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838064Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x baseline - Late game / boss area state",
+      "gameState": {
+        "indoors": true,
+        "mode": "0x07",
+        "submode": "0x00"
+      },
+      "id": "current_10",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Current Boss Area",
+        "location": "Dungeon - Boss Region",
+        "notes": "Alias of oos168x baseline state (refreshed 2026-01-21)."
+      },
+      "path": "baseline/oos168x_10.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "boss",
+        "current",
+        "dungeon",
+        "late-game",
+        "oos168x"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838065Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x baseline - Extended testing state - full inventory",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09",
+        "submode": "0x00"
+      },
+      "id": "current_11",
+      "imported": "2026-01-21T00:00:00Z",
+      "meta": {
+        "label": "Current Full Inventory",
+        "location": "Overworld",
+        "notes": "Alias of oos168x baseline state (refreshed 2026-01-21)."
+      },
+      "path": "baseline/oos168x_11.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "current",
+        "full-inventory",
+        "late-game",
+        "oos168x",
+        "testing"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838066Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Baseline oos168x - Start Area",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09"
+      },
+      "id": "oos168x_baseline_1",
+      "path": "baseline/oos168x_1.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "baseline",
+        "oos168x",
+        "boot"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838067Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "description": "Current oos168x - Start Area",
+      "gameState": {
+        "indoors": false,
+        "mode": "0x09"
+      },
+      "id": "oos168x_current_1",
+      "path": "baseline/oos168x_1.mss",
+      "rom_base": "oos168x",
+      "tags": [
+        "current",
+        "oos168x",
+        "boot"
+      ],
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
+      "status": "deprecated",
+      "deprecated_at": "2026-01-25T22:04:53.838068Z",
+      "deprecated_reason": "Duplicate of baseline_1"
+    }
+  ],
+  "library_root": "Roms/SaveStates/library",
+  "sets": [
+    {
+      "name": "oos168x_baseline",
+      "description": "Complete oos168x baseline states for regression testing (refreshed 2026-01-21)",
+      "rom_base": "oos168x",
+      "slots": {
+        "1": "baseline_1",
+        "2": "baseline_2",
+        "3": "baseline_3",
+        "4": "baseline_4",
+        "5": "baseline_5",
+        "6": "baseline_6",
+        "7": "baseline_7",
+        "8": "baseline_8",
+        "9": "baseline_9",
+        "10": "baseline_10"
+      }
+    },
+    {
+      "name": "oos168x_current",
+      "description": "Alias set for current testing using refreshed oos168x baseline states",
+      "rom_base": "oos168x",
+      "slots": {
+        "1": "current_1",
+        "2": "current_2",
+        "3": "current_3",
+        "4": "current_4",
+        "5": "current_5",
+        "6": "current_6",
+        "7": "current_7",
+        "8": "current_8",
+        "9": "current_9",
+        "10": "current_10"
+      }
+    }
+  ],
+  "version": 1
 }

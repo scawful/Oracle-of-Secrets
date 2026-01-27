@@ -1,0 +1,15 @@
+include_paths = [
+  ".",
+  "Core",
+  "Util",
+  "Dungeons",
+  "Items",
+  "Sprites",
+  "Overworld",
+  "Menu"
+]
+defines = [
+  "ORACLE=1"
+]
+symbols = "mesen"
+rom_path = "Roms/oos168x.sfc"

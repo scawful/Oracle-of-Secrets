@@ -1,5 +1,7 @@
 # Oracle of Secrets - Testing Infrastructure Gap Analysis
 
+> NOTE (2026-01-24): oos168x/oos168_test2 save states are deprecated. Use patched oos168x states only; stale packs are archived under `Roms/SaveStates/library/_stale_oos_20260124`.
+
 **Date:** 2026-01-22
 **Status:** Analysis Complete
 **Priority:** Foundation work for automated regression testing
@@ -33,7 +35,7 @@ Located at: `~/Documents/Mesen2/SaveStates/`
 
 | ROM Build | Files | Date Range | Notes |
 |-----------|-------|------------|-------|
-| **oos91x** | 11 states (`oos91x_1.mss` - `oos91x_11.mss`) | Sep-Nov 2023 | **Best baseline** per user |
+| **oos168x** | 11 states (`oos168x_1.mss` - `oos168x_11.mss`) | Jan 21-22, 2026 | **Primary baseline** |
 | oos168 | 11 states (`oos168_1.mss` - `oos168_11.mss`) | Jan 21, 2026 | Base ROM |
 | **oos168x** | 11 states (`oos168x_1.mss` - `oos168x_11.mss`) | Jan 21-22, 2026 | Patched ROM (current) |
 | spooky_test | 11 states | Oct-Nov 2023 | Halloween build |
@@ -41,13 +43,13 @@ Located at: `~/Documents/Mesen2/SaveStates/`
 
 ### Recommended State Usage
 
-**Primary baseline:** `oos91x` states (most stable, tested extensively)
+**Primary baseline:** `oos168x` states
 
 | State | Potential Use | Priority |
 |-------|--------------|----------|
-| `oos91x_1.mss` | Boot verification, basic overworld | High |
-| `oos91x_2.mss` | Menu system testing | High |
-| `oos91x_3.mss` | Item functionality | High |
+| `oos168x_1.mss` | Boot verification, basic overworld | High |
+| `oos168x_2.mss` | Menu system testing | High |
+| `oos168x_3.mss` | Item functionality | High |
 | `oos168x_1.mss` | Current build regression | High |
 | `oos168x_10.mss` | Latest state (Jan 22) | Medium |
 
@@ -70,7 +72,7 @@ Located at: `~/Documents/Mesen2/SaveStates/`
 
 **Impact:** Test runner cannot load states by ID. All automated tests fail at precondition phase.
 
-**Fix:** Populate manifest with oos91x and oos168x states.
+**Fix:** Populate manifest with oos168x and oos168x states.
 
 ---
 
@@ -151,9 +153,9 @@ emulator-tests:
 #### Task 1.1: Import Save States to Library
 
 ```bash
-# Copy oos91x states (primary baseline)
+# Copy oos168x states (primary baseline)
 mkdir -p Roms/SaveStates/library/baseline
-cp ~/Documents/Mesen2/SaveStates/oos91x_*.mss Roms/SaveStates/library/baseline/
+cp ~/Documents/Mesen2/SaveStates/oos168x_*.mss Roms/SaveStates/library/baseline/
 
 # Copy current build states
 mkdir -p Roms/SaveStates/library/oos168x
@@ -168,8 +170,8 @@ Create entries for each imported state with metadata (requires inspecting states
 ```json
 {
   "id": "baseline_1",
-  "path": "baseline/oos91x_1.mss",
-  "romVersion": "oos91x",
+  "path": "baseline/oos168x_1.mss",
+  "romVersion": "oos168x",
   "description": "Opening sequence, fresh file",
   "tags": ["boot", "overworld", "early-game"],
   "gameState": {
@@ -335,7 +337,7 @@ python scripts/generate_dashboard_data.py --last 30
 
 ### Today (Manual Setup)
 
-1. [ ] Copy oos91x states to `Roms/SaveStates/library/baseline/`
+1. [ ] Copy oos168x states to `Roms/SaveStates/library/baseline/`
 2. [ ] Copy oos168x states to `Roms/SaveStates/library/oos168x/`
 3. [ ] Update `save_state_library.json` with at least 3 entries
 4. [ ] Capture 3 baseline screenshots (title, overworld, menu)

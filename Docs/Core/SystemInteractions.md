@@ -1,5 +1,15 @@
 # System Interactions & Coordination
 
+**Last Verified:** UNKNOWN (needs audit)
+**Primary Sources:** Mixed (ROM/disassembly/runtime/sheets)
+**Confidence:** UNKNOWN (needs audit)
+
+## Verification
+| Area | Evidence | Last Verified | Notes |
+| --- | --- | --- | --- |
+| Document | Needs audit | UNKNOWN | Added verification framework |
+
+
 **Version:** 2.0  
 **Last Updated:** October 3, 2025  
 **Purpose:** Document how major systems coordinate and interact in Oracle of Secrets
@@ -8,6 +18,8 @@
 - `Docs/World/Overworld/ZSCustomOverworldAdvanced.md` - ZScream technical details
 - `Docs/General/Troubleshooting.md` - System conflict debugging
 - `Docs/Core/MemoryMap.md` - Shared memory regions
+
+NOTE: Vanilla disassembly is external. In this workspace, JP gigaleak disassembly lives under `../alttp-gigaleak/DISASM/jpdasm/`. If you generate a US `usdasm` export for address parity, it lives under `../alttp-gigaleak/DISASM/usdasm/`. Adjust paths if your setup differs.
 
 ---
 
@@ -1317,4 +1329,3 @@ See `Docs/General/Troubleshooting.md` for comprehensive debugging guide.
 **Document Version:** 2.0  
 **Last Updated:** October 3, 2025  
 **Maintained By:** Oracle of Secrets Development Team
-

@@ -948,12 +948,14 @@ CheckForMinecartFollowerDraw:
 CheckForFollowerInterroomTransition:
 {
   LDA.w !LinkInCart : BEQ .not_in_cart
-    LDA.b #$0B : STA $7EF3CC
+    ; Use long addressing - data bank may not be $7E when called from Module07
+    LDA.b #$0B : STA.l $7EF3CC
 
     ; Pause the current cart so that it doesn't draw anymore
     PHX
     LDX.w !MinecartCurrent
-    LDA.b #$01 : STA $0F00, X
+    ; Use long addressing for sprite state ($7E0F00)
+    LDA.b #$01 : STA.l $7E0F00, X
     PLX
   .not_in_cart
   JSL $01873A ; Underworld_LoadRoom
@@ -962,10 +964,26 @@ CheckForFollowerInterroomTransition:
 
 CheckForFollowerIntraroomTransition:
 {
-  STA.l $7EC007
+  ; This routine is called from UnderworldTransition_Intraroom_PrepTransition
+  ; Vanilla behavior: STA $7EC007 (store fade time as 16-bit)
+  ; The caller SHOULD be in 16-bit A mode (REP #$20), but we must handle both cases
+
+  ; Save P register state to preserve caller's M/X flags
+  PHP
+
+  ; Force 16-bit A mode to match vanilla behavior for the STA
+  REP #$20
+  STA.l $7EC007           ; Store 16-bit A (vanilla behavior)
+
+  ; Now do our custom logic in 8-bit mode
+  SEP #$20
   LDA.w !LinkInCart : BEQ .not_in_cart
-    LDA.b #$0B : STA $7EF3CC
+    ; Use long addressing - data bank may not be $7E when called from Module07
+    LDA #$0B : STA.l $7EF3CC
   .not_in_cart
+
+  ; Restore caller's P register state exactly as it was
+  PLP
   RTL
 }
 

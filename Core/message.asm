@@ -32,6 +32,16 @@ MessageExpand:
     LDA.w #MessageExpandedData : STA.b $00
     LDA.w #MessageExpandedData>>16 : STA.b $02
     JML $0ED3FC ; go back to original read message code pointers
+  
+  ; [ANALYSIS] Message Expansion Mechanism
+  ; The vanilla game has limit on message data size per bank.
+  ; This hook intercepts the data pointer lookup. If Bank $0E is requested,
+  ; it redirects to our expanded data block (MessageExpandedData) in Bank $2F.
+  ;
+  ; Data Format:
+  ; The data stream is NOT ASCII. It uses Zelda 3's proprietary encoding.
+  ; Control codes (e.g., $7E, $73) manage text speed, pausing, and branching.
+  ; See `Docs/TextCodes.md` (if available) or use the proprietary converter.
   +
   ; Restore vanilla code
   LDA.w #$DF40 : STA.b $00

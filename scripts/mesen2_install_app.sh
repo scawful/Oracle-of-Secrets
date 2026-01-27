@@ -32,9 +32,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 FORK_INSTALL_CANDIDATES=(
-  "${REPO_ROOT}/../third_party/forks/Mesen2/tools/install_mesen2_oos.sh"
-  "${REPO_ROOT}/../../third_party/forks/Mesen2/tools/install_mesen2_oos.sh"
-  "/Users/scawful/src/third_party/forks/Mesen2/tools/install_mesen2_oos.sh"
+  "${REPO_ROOT}/../mesen2-oos/tools/install_mesen2_oos.sh"
+  "${REPO_ROOT}/../../mesen2-oos/tools/install_mesen2_oos.sh"
+  "/Users/scawful/src/hobby/mesen2-oos/tools/install_mesen2_oos.sh"
 )
 
 FORK_INSTALL=""

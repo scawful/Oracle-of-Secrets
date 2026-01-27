@@ -2,6 +2,8 @@
 
 This document outlines the current state of the dungeon object rendering system in `yaze` following recent changes aimed at addressing the emulator preview crash related to handler `$3479` and restoring manual drawing routines.
 
+NOTE: Vanilla disassembly is external. In this workspace, JP gigaleak disassembly lives under `../alttp-gigaleak/DISASM/jpdasm/`. If you generate a US `usdasm` export for address parity, it lives under `../alttp-gigaleak/DISASM/usdasm/`. Adjust paths if your setup differs.
+
 ## 1. Manual Draw Routines Restoration
 
 **Status**: **Completed**
@@ -35,6 +37,6 @@ The `yaze` application has been successfully rebuilt with these changes. There w
 
 ## 5. Next Steps (from Plan - Short Term)
 
-*   **Phase 1.2 - WRAM state research for handler $3479**: This involves a deep dive into the `usdasm` disassembly to understand the WRAM variables expected by the problematic drawing handler.
+*   **Phase 1.2 - WRAM state research for handler $3479**: This involves a deep dive into the `usdasm` (US) or `jpdasm` (JP) disassembly to understand the WRAM variables expected by the problematic drawing handler.
 *   **Phase 3 - Basic UI improvements**: Integrate the `ObjectRenderMode` toggle into the UI to allow users to switch between rendering modes.
 *   **Phase 5.1-5.2 - Selection and movement**: Begin implementing core object manipulation features in the dungeon canvas.

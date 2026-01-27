@@ -1,18 +1,10 @@
 {
-  "romVersion": "oos168x",
+  "romVersion": "oos91x",
   "created": "2026-01-21",
-  "updated": "2026-01-23",
+  "updated": "2026-01-24",
   "category": "overworld",
   "description": "Save states for overworld transitions, area testing, and camera behavior",
-  "states": {
-    "pyramid_bunny_start": {
-      "file": "../oos168x/overworld/pyramid_bunny_start.mss",
-      "name": "Pyramid Bunny Start",
-      "description": "Fresh game start at pyramid area in bunny form",
-      "area": "0x40",
-      "tags": ["early-game", "bunny", "pyramid", "fresh-start"]
-    }
-  },
+  "states": {},
   "requiredCheckpoints": [
     {
       "id": "ow_lost_woods_entrance",
@@ -20,7 +12,11 @@
       "areaName": "Lost Woods Center",
       "purpose": "Lost Woods puzzle testing and camera drift verification",
       "priority": "high",
-      "tags": ["lost-woods", "puzzle", "camera-test"],
+      "tags": [
+        "lost-woods",
+        "puzzle",
+        "camera-test"
+      ],
       "conditions": {
         "mode": "0x09",
         "indoors": false,
@@ -38,7 +34,12 @@
       "areaName": "Lost Woods East",
       "purpose": "Tests small-to-large map transition (0x2A to 0x23)",
       "priority": "high",
-      "tags": ["lost-woods", "transition", "small-map", "boundary"],
+      "tags": [
+        "lost-woods",
+        "transition",
+        "small-map",
+        "boundary"
+      ],
       "conditions": {
         "mode": "0x09",
         "indoors": false,
@@ -56,7 +57,11 @@
       "areaName": "Village Area",
       "purpose": "Large map area for testing transitions from Lost Woods",
       "priority": "high",
-      "tags": ["village", "large-map", "transition"],
+      "tags": [
+        "village",
+        "large-map",
+        "transition"
+      ],
       "conditions": {
         "mode": "0x09",
         "indoors": false,
@@ -73,7 +78,11 @@
       "areaName": "Sanctuary Area",
       "purpose": "Indoor/outdoor transition testing",
       "priority": "medium",
-      "tags": ["sanctuary", "indoor-entrance", "early-game"],
+      "tags": [
+        "sanctuary",
+        "indoor-entrance",
+        "early-game"
+      ],
       "conditions": {
         "mode": "0x09",
         "indoors": false,
@@ -90,7 +99,11 @@
       "areaName": "Link's House",
       "purpose": "Starting area with indoor entrance",
       "priority": "medium",
-      "tags": ["start", "indoor-entrance", "early-game"],
+      "tags": [
+        "start",
+        "indoor-entrance",
+        "early-game"
+      ],
       "conditions": {
         "mode": "0x09",
         "indoors": false,
@@ -107,7 +120,11 @@
       "areaName": "Kakariko Village",
       "purpose": "Village with multiple indoor entrances",
       "priority": "medium",
-      "tags": ["village", "indoor-entrance", "npc"],
+      "tags": [
+        "village",
+        "indoor-entrance",
+        "npc"
+      ],
       "conditions": {
         "mode": "0x09",
         "indoors": false
@@ -123,7 +140,10 @@
       "areaName": "Graveyard",
       "purpose": "Dungeon entrance area",
       "priority": "medium",
-      "tags": ["graveyard", "dungeon-entrance"],
+      "tags": [
+        "graveyard",
+        "dungeon-entrance"
+      ],
       "conditions": {
         "mode": "0x09",
         "indoors": false
@@ -139,7 +159,11 @@
       "areaName": "Dark World Pyramid",
       "purpose": "Dark World starting area and world switching",
       "priority": "medium",
-      "tags": ["dark-world", "pyramid", "world-switch"],
+      "tags": [
+        "dark-world",
+        "pyramid",
+        "world-switch"
+      ],
       "conditions": {
         "mode": "0x09",
         "indoors": false
@@ -155,7 +179,11 @@
       "areaName": "Death Mountain",
       "purpose": "Mountain hazards and vertical scrolling",
       "priority": "low",
-      "tags": ["mountain", "hazards", "vertical-scroll"],
+      "tags": [
+        "mountain",
+        "hazards",
+        "vertical-scroll"
+      ],
       "conditions": {
         "mode": "0x09",
         "indoors": false
@@ -171,7 +199,11 @@
       "areaName": "Lake Hylia",
       "purpose": "Water area for swimming mechanics",
       "priority": "low",
-      "tags": ["water", "swimming", "lake"],
+      "tags": [
+        "water",
+        "swimming",
+        "lake"
+      ],
       "conditions": {
         "mode": "0x09",
         "indoors": false
@@ -190,5 +222,6 @@
     "4. Run: ./scripts/capture_overworld_states.py check",
     "5. Run: ./scripts/capture_overworld_states.py capture --name <checkpoint_id>",
     "6. Import to library: python3 scripts/state_library.py import ..."
-  ]
+  ],
+  "notes": "Legacy oos168x overworld savestate removed; use oos91x baseline states instead."
 }

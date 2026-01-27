@@ -1,0 +1,50 @@
+[
+  {
+    "file": "oracle-of-secrets/Sprites/NPCs/deku_scrub.asm",
+    "line": 194,
+    "item_id": "0x11",
+    "item_name": "Ether Medallion"
+  },
+  {
+    "file": "oracle-of-secrets/Sprites/NPCs/bug_net_kid.asm",
+    "line": 51,
+    "item_id": "0x4B",
+    "item_name": "Arrow Refill (10)"
+  },
+  {
+    "file": "oracle-of-secrets/Sprites/NPCs/maku_tree.asm",
+    "line": 137,
+    "item_id": "0x3E",
+    "item_name": "Fairy"
+  },
+  {
+    "file": "oracle-of-secrets/Sprites/NPCs/ranch_girl.asm",
+    "line": 78,
+    "item_id": "0x14",
+    "item_name": "Shovel"
+  },
+  {
+    "file": "oracle-of-secrets/Sprites/NPCs/mask_salesman.asm",
+    "line": 248,
+    "item_id": "0x10",
+    "item_name": "Bombos Medallion"
+  },
+  {
+    "file": "oracle-of-secrets/Sprites/NPCs/mask_salesman.asm",
+    "line": 282,
+    "item_id": "0x19",
+    "item_name": "Byrna Cane"
+  },
+  {
+    "file": "oracle-of-secrets/Sprites/NPCs/zora_princess.asm",
+    "line": 139,
+    "item_id": "0x0F",
+    "item_name": "Bee Badge"
+  },
+  {
+    "file": "oracle-of-secrets/Sprites/Objects/collectible.asm",
+    "line": 114,
+    "item_id": "0x00",
+    "item_name": "None"
+  }
+]

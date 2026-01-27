@@ -28,6 +28,10 @@ This section provides a high-level overview of the major development efforts (Ep
   - Goal: Refine and improve all custom boss fights and enemy behaviors.
   - Related Sections: [[New Features & Content]]
 
+** Handoff Notes
+*** Latest Handoff (Lore + Infra Planning)
+    - See: =Docs/Status/handoff_lore_infra_planning_2026-01-24.md=
+
 * Technical Debt & Refactoring
   :PROPERTIES:
   :CATEGORY: Infrastructure
@@ -123,6 +127,14 @@ CLOSED: [2025-12-09 Mon]
     - *Tasks:*
       - [X] Refactor the input handling logic for the Magic Bag, Song Menu, and Ring Box sub-menus into a single, reusable subroutine.
       - [X] Replace all hardcoded menu state values (e.g., `LDA.b #$0C`) with named constants (e.g., `!MENU_STATE_MAGIC_BAG = $0C`).
+
+*** TODO [#B] Ocarina Menu: Blank Slot + Icon Palette :menu:ui:
+    :PROPERTIES:
+    :ID: menu-ocarina-blank-slot
+    :END:
+    - *Goal:* Support an empty Ocarina slot and grey icon before songs are learned.
+    - [ ] Recolor Ocarina icon to grey.
+    - [ ] Update Ocarina submenu to allow a no-song state.
 
 ** Music System (=Music/=)
 *** TODO [#C] Improve Music System Workflow [0/3]
@@ -233,7 +245,7 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [ ] General: Develop reusable custom collision workflow for water puzzles
 
 **** Zora Baby Quest (D4 Main Mechanic)
-     - *Narrative:* Territory dispute between Sea Zora and River Zora. Sea Zora Princess kidnapped - Link gets Big Key to unlock her cell, but she dies (broken heart/injuries). Song of Healing → Zora Mask.
+     - *Narrative:* Territory dispute between Sea Zora and River Zora. Sea Zora Princess kidnapped - Link gets Big Key to unlock her cell, but she dies (broken heart/injuries). Song of Healing -> Zora Mask.
      - *Mechanic:* Zora Baby (little girl) follows Link as follower sprite. Can pick up and throw her (OoT style). She pulls switches to solve puzzles.
      - *Key Puzzle (Room 0x27):* Throw Zora Baby to switch, she pulls it, water fills upside-T section, Link swims to previously unreachable chest.
 
@@ -308,6 +320,64 @@ CLOSED: [2025-12-08 Mon 22:34]
       - [ ] *Controlled Collapse:* A puzzle where you must intentionally make a floor tile crumble to fall down to a specific spot on the floor below.
 
 ** Quests & Narrative Sequences
+*** TODO [#B] Story Canon QA Pass (Mask/Deku + Intro House) :docs:story:
+    :PROPERTIES:
+    :ID: story-canon-qa
+    :END:
+    - [X] Decide canonical OW 0x2D name and update all docs (Tail Pond).
+    - [X] Note mask shop + outside Deku Scrub on the same map.
+    - [X] Reclassify withered Deku Scrub as main quest (Story Event Graph + Flag Ledger + Side Quest Bible).
+    - [X] Document intro house legacy flag (no uncle NPC in room).
+    - [X] Update Kydrog encounter location to SW 0x80 + LW 0x2A forest crossroads.
+    - [X] Note Stalfos guard block on OW 0x2D during intro sequence.
+    - [ ] Audit Story Event Graph + Flag Ledger for non-canonical / brainstorming artifacts.
+    - [X] Capture Tail Pond/Deku main-quest timing + magic powder path into docs.
+    - [X] Clarify Hall of Secrets location (OW 0x0E; repurposed sanctuary).
+    - [ ] Capture additional story clarifications from Q&A into Story Event Graph + docs.
+      - [X] Village Elder house entrance 0x97 (Room 0x202) mapping.
+      - [X] Fortune Teller multi-entrance (LW/DW) note.
+      - [ ] Reconcile intro flow (Eon Abyss -> Maku Tree -> Impa/Hall of Secrets) and Elder map marker timing.
+
+*** TODO [#B] Item Flow & Hint Coverage Balance Pass :planning:docs:
+    :PROPERTIES:
+    :ID: item-flow-balance
+    :END:
+    - *Goal:* Sanity-check item progression and hint coverage before canonicalizing new flow.
+    - *Reference:* =Docs/Planning/item_flow_balance_check.md=
+    - [ ] Confirm Ocarina song chain placement (Ranch Girl -> Mask Salesman -> Windmill -> Owl).
+    - [ ] Align Song of Storms access with Zora Temple + Magic Bean gating.
+    - [ ] Implement Impa grant for Mirror of Time in Hall of Secrets (design locked; untested).
+    - [ ] Wire Tail Pond MapIcon after post-D1 Mask Salesman hint (Village Elder draft).
+    - [ ] Tune Tail Pond map marker coordinates (manual visual pass).
+    - [ ] Decide how and when to set MapIcon + ElderGuideStage + ImpaGuideStage (incl. pyramid icon timing).
+
+*** TODO [#B] NPC Home/Dialogue Audit (Vanilla ALTTP reuse) :docs:story:
+    :PROPERTIES:
+    :ID: npc-home-audit
+    :END:
+    - [X] Initial overworld sprite lists captured (0x2D, 0x23, 0x0E).
+    - [X] Document Fortune Teller + Librarian scroll message text.
+    - [X] Generate room metadata audit (room IDs -> blockset/spriteset/palette) via z3ed; see `Docs/Planning/room_metadata_audit.csv`.
+    - [X] Port ROM-only messages (`0x143`, `0x012E`) into `Core/messages.org`.
+    - [ ] Identify reused ALTTP NPCs and map them to Oracle story roles.
+    - [X] Rebuild z3ed to enable `dungeon-list-sprites` and updated `dungeon-describe-room` data.
+    - [X] Add `z3ed dungeon-get-entrance` for entrance->room metadata (interior audits).
+    - [X] Audit interiors (Village Elder house, Librarian, Fortune Teller, Hall of Secrets) using `z3ed dungeon-list-sprites` (see `Docs/Planning/npc_home_dialogue_audit.md`).
+    - [X] Add vanilla sprite ID mapping table to `Docs/Planning/npc_home_dialogue_audit.md`.
+    - [ ] Document NPC homes/locations + dialogue context in docs.
+    - [ ] Confirm Village Elder subtype mapping (0x3A / subtype=27) and update docs.
+    - [ ] Discuss Village Elder progress-based dialogue triggers (needs design input).
+
+*** TODO [#B] World Map Accuracy Audit :docs:world:
+    :PROPERTIES:
+    :ID: world-map-audit
+    :END:
+    - [X] Verify SW 0x80 sub-areas (left half Maku/Kydrog; top-right inside-tree).
+    - [X] Clarify exit IDs 0x180/0x181/0x182 and their Oracle names.
+    - [X] Remove Maku Tree interior linkage; Hall of Secrets is OW 0x0E.
+    - [X] Review LW 0x2A connections (Wayward Village, Lost Woods, Loom Beach West).
+    - [X] Update map diagram + sheets with any corrections.
+
 *** ACTIVE [#A] Zora Sanctuary Questline [3/3] :quest:
     :PROPERTIES:
     :ID: quest-zora-sanctuary

@@ -326,14 +326,33 @@ A cartographer trades in secrets.
 
 ---
 
-## Message ID Reservation
+## Message ID Assignment
 
-Reserve message IDs for Gossip Stones in `Core/messages.org`:
+Gossip Stones use message IDs 0x1C0-0x1D4 in `Core/messages.org`:
 
-```
-; Gossip Stone Messages (GS01-GS18)
-; Reserve IDs: 0x300-0x320 (or appropriate range)
-```
+| Stone | Message ID | Location |
+|-------|------------|----------|
+| GS01 | 0x1C0 | Mushroom Grotto Entrance |
+| GS02 | 0x1C1 | Wayward Village |
+| GS03 | 0x1C2 | Zora Sanctuary |
+| GS04 | 0x1C3 | Mount Snowpeak |
+| GS05 | 0x1C4 | Forest of Dreams |
+| GS06 | 0x1C5 | Kalyxo Castle Exterior |
+| GS07 | 0x1C6 | Korok Cove |
+| GS08 | 0x1C7 | Shrine of Wisdom |
+| GS09 | 0x1C8 | Shrine of Power |
+| GS10 | 0x1C9 | Shrine of Courage |
+| GS11 | 0x1CA | Eon Abyss Beach |
+| GS12 | 0x1CB | Hall of Secrets Interior |
+| GS13 | 0x1CC | Near Ranch |
+| GS14 | 0x1CD | Goron Area Path |
+| GS15 | 0x1CE | Dragon Ship Dock |
+| GS16 | 0x1CF | Temporal Pyramid Exterior |
+| GS17 | 0x1D0 | Hidden Grotto |
+| GS18 | 0x1D1 | Seashell Coast |
+| GS19 | 0x1D2 | Glacia Estate Approach |
+| GS20 | 0x1D3 | Temporal Pyramid Interior |
+| GS21 | 0x1D4 | Meadow Blade Location |
 
 ---
 

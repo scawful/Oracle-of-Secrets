@@ -36,9 +36,8 @@ LostWoods:
   RTL
 
       normalfinish:
-      ; Note: Camera drift fix was attempted here but broke small-to-large transitions.
-      ; The scroll drift from wrong puzzle moves persists until Link moves enough
-      ; in the new area for the camera to catch up naturally.
+      ; Reset coordinates and scroll to fix camera drift/softlocks
+      JSL LostWoods_ResetCoordinates
       LDA.l Pool_Overworld_ActualScreenID_New, X
       STZ !ComboCounter
       RTL

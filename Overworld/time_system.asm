@@ -1,4 +1,7 @@
 ; ---------------------[ Time system ]---------------------
+; @doc Docs/Core/SystemArchitecture.md#42-time-system
+; @source Oracle custom time system (TimeState at $7EE000)
+; @verified UNKNOWN (needs audit)
 
 ; tiles locations on HUD
 !hud_min_low = $7EC7CC
@@ -35,7 +38,7 @@ LogoFadeInSetClock:
 {
   JSL $00ED7C ; IntroLogoPaletteFadeIn
   LDA.b #$08 : STA.l TimeState.Hours ; Set the time to 6:00am
-  LDA.b #$3F : STA.l TimeState.Speed ; Set the time speed
+  LDA.b #$3F : STA.l TimeState.Speed ; Set the time speed (slower)
   RTL
 }
 
@@ -446,13 +449,22 @@ ColorSubEffect:
 
 BackgroundFix:
 {
-  BEQ .no_effect		;BRAnch if A=#$0000 (transparent bg)
+  ; Called from ZSCustomOverworld with REP #$30 (16-bit A and X)
+  ; ColorSubEffect uses X for table indexing, so we need to ensure
+  ; consistent register widths. Save and restore P register state.
+  PHP
+  REP #$20                ; Ensure 16-bit A for color operations
+  SEP #$10                ; Ensure 8-bit X for table indexing safety
+
+  BEQ .no_effect          ; Branch if A=#$0000 (transparent bg)
     JSL ColorSubEffect
   .no_effect:
   STA.l PalCgram500_HUD
   STA.l PalBuf300_HUD
   STA.l PalCgram540_BG
   STA.l PalBuf340_BG
+
+  PLP                     ; Restore caller's P register state
   RTL
 }
 

@@ -123,67 +123,61 @@ Ancient tree spirit who serves as Farore's sanctuary and counsel. The Maku Tree 
 
 Zelda's attendant from Hyrule, sent to Kalyxo to assess the situation after the Oracle games' events. She helps Link escape the initial ambush and serves as his guide in the early game.
 
-### Ganondorf, The Imprisoned
+### Ganondorf, The Intuder
 
-**Not Pig Ganon.** This is a different incarnation—a tall, regal Ganondorf, more wizard-king than beast. Long before Kydrog's fall, a hero from another era sealed this Ganondorf in the deepest layer of the Eon Abyss. Not killed—imprisoned. He has had centuries to plan.
+**The Dark Victor:** This is not a resurrection. This is an invasion.
+In a timeline where the Hero of Time fell and darkness reigned supreme, Ganondorf achieved total victory. But a god-king craves new worlds to conquer. Slipping through a fracture in reality caused by the botched resurrection in *Ages/Seasons*, this "Dark Victor" entered the world of the Oracles.
 
-**Visual Concept:** Humanoid Ganondorf with flowing robes, skull motif, green skin. Think OoT Ganondorf or the classic wizard-lord aesthetic. Distinct from the pig-beast Ganon of the linked ending.
+**The Anomaly:** Because he does not belong to this timeline, reality rejects him. He is forced to hide in the **Eon Abyss**, the shadow of existence, to avoid being erased by the universe's natural defenses.
 
-**His Prison:** The Lava Lands at the heart of the Abyss, bound by the power of the three Shrines. He cannot act directly, but he can influence, whisper, corrupt. He is patient. Immortal. Playing a long game.
+**His Goal:** He seeks Farore not just for her divinity, but because as the Oracle of Secrets, she holds the "source code" to this reality. If he consumes her knowledge, he can rewrite the timeline to make his existence permanent, effectively overwriting the history where Link won.
 
-**His Plan:** Ganondorf recognized Kydrog's heroic spirit and spent centuries turning grief into rage. Through Kydrog, he orchestrates:
-- Farore's capture (she knows how to strengthen the seal)
-- The gathering of essences (each one taken weakens the barrier)
-- The assault on Kalyxo (chaos feeds the Abyss)
+**Visuals:** He wears the tattered cloak of a king, but his form flickers like a glitch. He carries trophies from his victory—perhaps a cracked Hylian Shield or a corrupted Ocarina.
 
-Kydrog believes he acts of his own will. Ganondorf prefers it that way.
+### Twinrova (The Echoes)
 
-**Connection to Oracle Series:** Oracle of Secrets is **Chapter 3**—set sometime after the linked ending of Ages/Seasons.
+**Origin:** The Twinrova from this world died in the Linked Ending. These versions are **Memory Constructs**—manifestations of their intense ambition and malice, given form by the Eon Abyss.
 
-Timeline:
-- Ages/Seasons (linked): Twinrova resurrect Pig Ganon using the Flames. He's defeated.
-- Oracle of Secrets: Twinrova, having failed with Pig Ganon, turn to a different master—this Ganondorf, who has been sealed in the Eon Abyss for far longer. A new plan, a different incarnation of evil.
+**Nature:** They are "Echoes" of the witches, existing only where the Abyss bleeds into Kalyxo. They are desperate to merge the worlds because it is the only way they can become "real" again. They serve the Intruder Ganondorf because he promises them true resurrection in his rewritten world.
 
-This explains why Twinrova appear again: they serve Ganon in any form. After their first scheme failed, they found another.
+### Impa & The Maku Tree
 
-**Boss Status:** Ganondorf as a fightable boss is a *possible future addition* pending sprite work. Visual reference: tall humanoid Ganondorf (see `Documents/Zelda/Ganon.png` concept sheet). For now, his presence is felt through lore, Gossip Stones, and Twinrova's dialogue.
+**Impa:** No longer just a nursemaid. She recognizes the "wrongness" of this Ganondorf's magic—it feels like the ancient stories of the Great War, but twisted. She serves as Link's strategic commander, coordinating the resistance from the Hall of Secrets.
 
-### Twinrova (Koume & Kotake)
-
-The twin witches serve Ganon—any Ganon. After their failed resurrection of Pig Ganon in the linked ending of Ages/Seasons, they've found a new master: the Ganondorf sealed in the Eon Abyss.
-
-**Location:** Boss of D5 - Glacia Estate (ice/fire duality fits them perfectly)
-
-**Why They're Here:**
-- Their previous scheme (Flames of Sorrow/Despair/Destruction) failed
-- They learned of Ganondorf's imprisonment in the Abyss
-- This is their second attempt—different Ganon, different plan
-- They're more desperate now, which makes them more dangerous
-
-**Role in the Plot:**
-- Working alongside Kydrog, though their true loyalty is to Ganondorf
-- The Ranch Girl connection (dream sequence reveals Twinrova transformed her or she's their agent)
-- May reference their "previous failure" or "learning from mistakes"
-- Defeated at Glacia Estate but likely survive (they always do)
-
-**Dialogue Opportunities:**
-- "This time, we will not fail our master..."
-- Reference to "our master's useful puppet" (Kydrog)
-- Hints that "the King of Evil takes many forms"
-- Mockery about the fallen hero whose blade Link carries
-- Possible callback: "You remind us of another hero... he failed too."
-
-### Supporting Cast
-
-- **Village Elder:** Keeper of maps and local knowledge
-- **The Owl (Kaepora Gaebora):** Appears at key moments with warnings and guidance
-- **Tingle:** Map merchant, comic relief
-- **Happy Mask Salesman:** Teaches Song of Healing, sells masks
-- **Ranch Girl:** Has a hidden connection to Twinrova (revealed in dream sequence—transformed? Agent? Victim?)
+**The Maku Tree:** The Maku Tree senses the timeline rot. It is the only entity old enough to remember the "correct" history, and its roots act as a stabilizer for reality. Losing the Maku Tree would mean the instant collapse of the timeline.
 
 ---
 
-## 4. Factions & Peoples
+## 3. Key Characters
+
+### Farore, Oracle of Secrets
+
+The current Oracle of Secrets, keeper of hidden knowledge and guardian of the seal. Farore knows the true history of Kydrog—including who he once was. She maintains the seal through ritual and will, but cannot strengthen it alone.
+
+**Role in Story:** Kidnapped in the prologue, rescued after D7. Provides exposition and guides Link to the final confrontation.
+
+**Secret:** Farore may be the last descendant of the Oracle bloodline—the same bloodline as the guardians who created the seal. This is why Kydrog needs her specifically.
+
+### Kydrog, The Pirate King
+
+**True Origin:** Kydrog was once a hero—a knight sent to investigate disturbances in the Meadow of Shadows, a liminal realm where the boundary to the Eon Abyss had grown thin. He sought to stop an ancient evil stirring in the deep. He failed. He died. The Abyss claimed him.
+
+**The Corruption:** As a newly-risen Stalfos, the fallen hero wandered the Eon Abyss in confusion and despair. Ganon, sealed in the deepest layer, sensed a hero's spirit—and began to whisper. Over centuries, Ganon nurtured the knight's bitterness: anger at his failure, resentment toward those who couldn't save him, hatred for the Oracle who held secrets that might have helped him. These feelings were real. Ganon simply... cultivated them.
+
+**The Transformation:** The knight became Kydrog—the Stalfos King of Pirates. He built a twisted empire in the Abyss, his Dragon Ship sailing between realities, crewed by spirits of the drowned. He styles himself "King of Pirates" because he plunders not treasure, but **memories and magic**. He has his own goals, his own rage. He is not Ganon's puppet—but he is Ganon's pawn.
+
+**His Living Name:** Lost to time. The Gossip Stones no longer speak it. (TBD - considering: Kel, Rulf, Dorn, or left unnamed as "The Fallen Knight")
+
+**His Weapon:** The Meadow Blade—left behind when he fell. Now found in Kalyxo Castle, waiting for a new hero.
+
+**Forms:**
+- Pirate Form (D7 boss) - His preferred manifestation, humanoid Stalfos lord
+- Dragon Form (Kydreeok) - His corrupted true shape, a multi-headed gleeok-like abomination
+- Skeleton Stalfos (Final phase) - What remains when the dragon form is broken
+
+**Motivation:** Kydrog believes he wants the Triforce to remake himself, to undo his death, to have the power he lacked. What he doesn't fully realize is that his actions serve Ganon's escape. Capturing Farore, gathering the essences, weakening the seals—it all feeds the prison's decay.
+
+**Redemption Potential:** When Kydrog finally falls, there may be a moment of clarity—the hero he once was surfacing briefly. Whether he can act on it, and how, remains to be seen. (Options: empowers the Meadow Blade, reveals Ganon's weakness, simply finds peace)
 
 ### Native Kalyxians
 

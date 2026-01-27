@@ -1,6 +1,11 @@
-# Oracle of Secrets - Agent Instructions
+---
 
-**For all AI agents (Claude, Gemini, Codex)**
+## Ralph Loop Findings (2026-01-24)
+
+### Critical Findings
+- **Mesen2 Fork Instability:** Socket server crashes intermittently during script execution. Do not switch emulators; restart the fork and capture logs instead.
+- **Black Screen Bug:** Tier 1 (Static Analysis) passed, but Tier 2 (Smoke Testing) and Tier 3 (State Capture) are **PENDING**. Do not assume it is fully fixed.
+- **YAZE Save State Gap:** YAZE proto has save/load RPCs, but the MCP bridge exposure is **PENDING** (Task P1.3 in `Mesen2_Debug_Backlog.md`).
 
 ---
 
@@ -10,6 +15,11 @@
 2. **Query Memory:** Search the knowledge graph before starting work
 3. **Check Context:** Read relevant knowledge docs from `~/.context/projects/oracle-of-secrets/`
 4. **Document Progress:** Update scratchpad and handoff docs during/after work
+5. **Debug Preflight:** `python3 scripts/mesen2_client.py run-state` + `diagnostics --json`
+   - Deep capture (items/flags/sprites/watch): `python3 scripts/mesen2_client.py diagnostics --deep --json`
+6. **Capture Repro State:** `python3 scripts/mesen2_client.py smart-save 1` (slots 1-99 or configured)
+   - Optional label: `python3 scripts/mesen2_client.py savestate-label set 1 --label "Dark World south crash"`
+   - Library capture: `python3 scripts/mesen2_client.py lib-save "Dark World south crash"`
 
 ---
 
@@ -139,7 +149,12 @@ dw State_Idle, State_Chase, State_Attack
 **WRONG:** `LDA.w SprTimerD, X` for probe detection
 **RIGHT:** `LDA.w SprState, X` (vanilla sets `$0D80,X`, not `$0EE0,X`)
 
-### 2. ZSCustomOverworld Transitions
+### 2. Black Screen Bug Status (2026-01-24)
+- **Tier 1 (Static):** Long addressing and SEP/REP verified.
+- **Tier 2 (Visual):** **PENDING**. Verification needed for all transitions (OW→Cave, etc.).
+- **Infrastructure:** Use `oracle-debugger` skill or YAZE AI tools for autonomous capture.
+
+### 3. ZSCustomOverworld Transitions
 **NEVER** modify coordinates (`$20-$23`) during transition flow.
 Use post-transition hooks instead.
 
@@ -159,17 +174,69 @@ cd ~/src/hobby/oracle-of-secrets
 # Test
 ~/src/tools/emu-launch -m Roms/oos168x.sfc
 
-# With debug script
-~/src/tools/emu-launch -m Roms/oos168x.sfc scripts/mesen_water_debug.lua
+# Debug (Socket API)
+python3 scripts/mesen2_client.py ping
+python3 scripts/mesen2_client.py state --json
+python3 scripts/mesen2_client.py run-state
+python3 scripts/mesen2_client.py time
+python3 scripts/mesen2_client.py diagnostics --json
+```
+
+---
+
+## Debugging Toolkit
+
+**Full documentation:** [`Docs/Tooling/Debugging_Tools_Index.md`](Docs/Tooling/Debugging_Tools_Index.md)
+
+### Real-Time Tools (`~/src/hobby/yaze/scripts/ai/`)
+
+| Tool | Purpose | Command |
+|------|---------|---------|
+| **Sentinel** | Soft lock detection | `python3 sentinel.py` |
+| **Crash Dump** | Post-mortem analysis | `python3 crash_dump.py dump` |
+| **Profiler** | CPU hotspots | `python3 profiler.py --duration 10` |
+| **Fuzzer** | Stress testing | `python3 fuzzer.py --mode gameplay` |
+| **Code Graph** | Static analysis | `python3 code_graph.py callers <label>` |
+
+### Quick Debugging Workflow
+
+```bash
+# 1. Start Sentinel monitoring (runs in background)
+cd ~/src/hobby/yaze
+python3 scripts/ai/sentinel.py &
+
+# 2. Load repro state and play
+python3 ~/src/hobby/oracle-of-secrets/scripts/mesen2_client.py load 1
+
+# 3. Sentinel auto-captures when soft lock detected
+# Check reports:
+cat crash_reports/crash_*.md | tail -100
+
+# 4. Static analysis if needed
+python3 scripts/ai/code_graph.py ~/src/hobby/oracle-of-secrets writes 7E0020
+```
+
+### Unified Platform
+
+```bash
+# Interactive debugging session
+python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py interactive
+
+# Regression tests
+python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py regression
+
+# ROM comparison
+python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py diff old.sfc new.sfc
 ```
 
 ---
 
 ## Mesen2 Fork
 
-- **Active repo:** `~/src/third_party/forks/Mesen2`
-- Do not edit upstream or alternate clones unless explicitly requested
-- If multiple clones look active, compare recent activity and ask
+-   **Active repo:** `~/src/hobby/mesen2-oos` (Socket Server enabled)
+-   **Architecture:** [`Docs/Tooling/Mesen2_Architecture.md`](Docs/Tooling/Mesen2_Architecture.md)
+-   **Golden Path:** Agents use **Socket API** (`/tmp/mesen2-*.sock`) via `mesen2_client.py` or `mesen2-mcp` layer.
+-   **Rule:** Only use `apps/Mesen2 OOS.app` (fork build). Do NOT use vanilla Mesen.
 
 ---
 

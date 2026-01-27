@@ -100,6 +100,12 @@ python3 scripts/state_library.py capture \
   --tags dungeon,zora-temple,water-gate
 ```
 
+### One-command bug capture
+
+```bash
+./scripts/bug_capture.py --notes "Softlock after water gate switch" --slot 10
+```
+
 Skip triggering a savestate (use an existing slot or state file):
 
 ```bash
@@ -199,6 +205,52 @@ Use consistent IDs and tags to keep the library searchable:
 - **dungeon/entrance**: `d5_entrance`
 - **dungeon/boss**: `d5_boss_ready`
 - **feature-specific**: `zt_water_gate_pre`, `zt_water_gate_post`
+
+### Quick CLI Access (Native Bridge)
+
+If you're using the socket bridge (preferred for agents), you can use the `oracle-` commands in `mesen_cli.sh`:
+
+```bash
+# List all library entries (optionally filtered by tag)
+./scripts/mesen_cli.sh oracle-library [-t tag]
+
+# Load an entry by its ID
+./scripts/mesen_cli.sh oracle-lib-load baseline_1
+
+# Get detailed info about an entry in JSON or text
+./scripts/mesen_cli.sh oracle-lib-info baseline_1 [--json]
+```
+
+## Agentic Usage
+
+The library is a powerful tool for agents to automate testing, data collection, and debugging.
+
+### 1. Regression Testing
+Agents can automatically cycle through curated states after a build to verify specific logic:
+- **Collision:** Load a state near a known "loose" wall and test movement.
+- **Trigger Logic:** Load a `_pre` state, perform an action, and verify the `_post` state outcome.
+- **Boot Sanity:** Rapidly load `baseline_1` on every build to ensure the basic engine isn't broken.
+
+### 2. Automated Walkthroughs and Demos
+Use the library to skip mundane setup and jump straight to the action for visual reporting:
+- Load a boss state, inject a sequence of inputs, and capture a high-quality GIF of the fight.
+- Generate a "World Tour" video by jumping through every overworld sector's `baseline` state.
+
+### 3. Diagnostic Snapshots
+If an agent detects an anomaly (e.g., a sprite glitch or a softlock), it should immediately capture a state for human review:
+
+```bash
+./scripts/mesen_cli.sh oracle-capture --id bug_report_$(date +%s) --tags auto-bug --notes "Sprite 04 failed to spawn"
+```
+
+### 4. Dynamic Training Data
+Agents can build datasets by capturing states during various playstyles or fuzzing sessions, tagging them with metadata that can be used for model fine-tuning.
+
+### 5. Automated "Room Probing"
+Script an agent to jump through every room listed in the manifest to check for:
+- Console errors or Lua bridge warnings.
+- Graphical regressions (via `visual_diff.py`).
+- Performance drops (tracking FPS across locations).
 
 ## Metadata fields
 

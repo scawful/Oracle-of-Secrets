@@ -200,29 +200,29 @@ Menu_DrawMusicNotes:
   LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
   REP #$30
 
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0001 : BCC .no_storms
-    LDA.w #$0002 : BRA .draw_storms
-  .no_storms
+  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_healing
+    LDA.w #$0002 : BRA .draw_healing
+  .no_healing
   LDA.w #$0001
-  .draw_storms
+  .draw_healing
   STA.w MusicNoteValue
   LDA.w #MusicNoteValue
   LDX.w #menu_offset(9,5)
   LDY.w #QuarterNoteGFX
   JSR DrawMenuItem
 
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_healing
-    LDA.w #$03 : BRA .draw_healing
-  .no_healing
+  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0003 : BCC .no_storms
+    LDA.w #$03 : BRA .draw_storms
+  .no_storms
   LDA.w #$01
-  .draw_healing
+  .draw_storms
   STA.w MusicNoteValue
   LDA.w #MusicNoteValue
   LDX.w #menu_offset(9,9)
   LDY.w #QuarterNoteGFX
   JSR DrawMenuItem
 
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0003 : BCC .no_soaring
+  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0004 : BCC .no_soaring
     LDA.w #$04 : BRA .draw_soaring
   .no_soaring
   LDA.w #$01
@@ -233,7 +233,7 @@ Menu_DrawMusicNotes:
   LDY.w #QuarterNoteGFX
   JSR DrawMenuItem
 
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0004 : BCC .no_songs
+  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0005 : BCC .no_songs
     LDA.w #$05 : BRA .draw_songs
   .no_songs
   LDA.w #$01
@@ -948,4 +948,3 @@ Menu_CheckItemHasSubmenu:
   SEC
   RTS
 }
-

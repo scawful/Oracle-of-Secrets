@@ -117,6 +117,12 @@
 
 ; -----------------------------------------------------------------------------
 ; SFX1 - queued via $012D | Table: ARAM $17C0, ROM $1A:8B70
+; [ANALYSIS] SFX Bank 1: Ambient & Environmental
+; Queue Address: $012D
+; Priority: Low (Background)
+; Usage: Rain, Wind, Flute songs, Boss swooshes.
+; Key IDs: $13 (Boss Swoosh), $01-$04 (Rain), $0B (Flute).
+; Note: These sounds often loop or play for extended durations.
 
 ; ID          ARAM      ROM         Name
 ; -----------------------------------------------------------------------------
@@ -158,6 +164,12 @@
 
 ; -----------------------------------------------------------------------------
 ; SFX2 - queued via $012E | Table: ARAM $1820, ROM $1A:8BD0
+; [ANALYSIS] SFX Bank 2: Action & Menu
+; Queue Address: $012E
+; Priority: Medium
+; Usage: Sword slashes, Items, Menu interaction, Standard impact sounds.
+; Key IDs: $01-$04 (Slash), $2C/$3A (Sword Up), $20 (Fall).
+; Note: These are the most common "gameplay" sounds.
 
 ; ID          ARAM      ROM         Name
 ; -----------------------------------------------------------------------------
@@ -228,6 +240,12 @@
 
 ; -----------------------------------------------------------------------------
 ; SFX3 - queued via $012F |  Table: ARAM $191C, ROM $1A:8CCC
+; [ANALYSIS] SFX Bank 3: Interactivity & Feedback
+; Queue Address: $012F
+; Priority: High
+; Usage: Enemy damage, Puzzle solves, Boss damage, Text typing.
+; Key IDs: $1B/$3A (Puzzle Solved), $22 (Boss Dying).
+; Note: Often used for critical feedback sounds that shouldn't be interrupted.
 
 ; ID          ARAM      ROM         Name
 ; -----------------------------------------------------------------------------

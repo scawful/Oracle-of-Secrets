@@ -2,10 +2,82 @@
 
 Stage: Alpha (per PROJECT.toml)
 
-## Current focus (2026-01-22)
-- **Water Collision Fix Applied** - Hook re-enabled, needs rebuild & testing
+## Current focus (2026-01-24)
+- **Follower Transition Fixes Applied** - Fixed black screen on building entry, stairs, room transitions
+  - Two bugs fixed: 16-bit/8-bit mode mismatch + Data Bank addressing
+  - ROM rebuilt and verified: `Roms/oos168x.sfc`
+- **Testing Needed**: Building entry, dungeon transitions, staircases
+- **Water Collision Fix Applied** - Hook re-enabled, needs testing
 - Verify WaterGate persistence (rooms 0x27 / 0x25) after room re-entry and save/reload
 - Use runtime reload hotkey (L+R+Select+Start) after loading older save states
+
+## Follower Transition Fixes (2026-01-24)
+
+### Problem
+Black screen when using staircases, entering buildings, or transitioning between dungeon rooms. Screen would go black and stay black (game hang).
+
+### Root Causes Discovered
+
+**Bug 1: 16-bit/8-bit Mode Mismatch (Intraroom Hook)**
+
+The `CheckForFollowerIntraroomTransition` hook at `$0289BF` was called with A in 16-bit mode but used 8-bit operations.
+
+**Bug 2: Data Bank Addressing (Both Hooks)**
+
+Both follower hooks used absolute addressing (`STA.w $7EF3CC`) instead of long addressing (`STA.l $7EF3CC`). When called from Module07 (bank $02), the Data Bank register is not $7E, causing writes to go to wrong memory locations (ROM mirrors instead of WRAM).
+
+### Fixes Applied
+
+**CheckForFollowerIntraroomTransition:**
+```asm
+CheckForFollowerIntraroomTransition:
+{
+  STA.l $7EC007           ; Store 16-bit A (vanilla behavior)
+  SEP #$20                ; Switch to 8-bit A for our logic
+  LDA.w !LinkInCart : BEQ .not_in_cart
+    LDA #$0B : STA.l $7EF3CC  ; Long addressing - bank-agnostic
+  .not_in_cart
+  REP #$20                ; Restore 16-bit A mode before returning
+  RTL
+}
+```
+
+**CheckForFollowerInterroomTransition:**
+```asm
+CheckForFollowerInterroomTransition:
+{
+  LDA.w !LinkInCart : BEQ .not_in_cart
+    LDA.b #$0B : STA.l $7EF3CC     ; Long addressing
+    PHX
+    LDX.w !MinecartCurrent
+    LDA.b #$01 : STA.l $7E0F00, X  ; Long indexed addressing
+    PLX
+  .not_in_cart
+  JSL $01873A ; Underworld_LoadRoom
+  RTL
+}
+```
+
+**Key changes:**
+- `STA.w $7EF3CC` → `STA.l $7EF3CC` (opcode $8F)
+- `STA $0F00, X` → `STA.l $7E0F00, X` (opcode $9F)
+- Added SEP #$20 / REP #$20 wrapper for intraroom hook
+
+### ROM Verified
+Assembled ROM (`Roms/oos168x.sfc`) confirmed to use correct opcodes:
+- $8F = STA long (24-bit absolute)
+- $9F = STA long,X (24-bit absolute indexed)
+
+### Files Modified
+- `Sprites/NPCs/followers.asm` - Fixed both transition hooks
+
+### Verification Needed
+1. ✅ ROM built: `./scripts/build_rom.sh 168`
+2. Load in Mesen2 (optional: use `scripts/debug_building_entry.lua`)
+3. Test intra-room transitions (stairs, layer changes)
+4. Test inter-room transitions (doors between rooms)
+5. Test building entry (houses, shops, dungeons)
+6. Test dungeon exit back to overworld
 
 ## Water Collision Fix (2026-01-21)
 
@@ -56,7 +128,7 @@ Shifted all collision data in `Dungeons/Collision/water_collision.asm` down by 3
 
 ### Build status
 - Built Mesen2 with: `SDKROOT=$(xcrun --sdk macosx --show-sdk-path) make`
-- App bundle: `/Users/scawful/src/third_party/mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen.app`
+- App bundle (preferred): `/Applications/Mesen2 OOS.app`
 
 ## What exists today
 - Repo contains the Oracle-of-Secrets ASM source tree (see folders like `Core/`, `Dungeons/`, `Items/`).
@@ -67,12 +139,23 @@ Shifted all collision data in `Dungeons/Collision/water_collision.asm` down by 3
 - No LICENSE file at repo root.
 
 ## Priorities (next 1-3 weeks)
-- Verify the build process (`build.bat` and manual Asar flow).
+- Verify the build process (`scripts/build_rom.sh` and manual Asar flow).
 - Document required inputs and tools (Asar version, ROM input requirements).
 - Add distribution policy (patch-only) and keep it current.
+- [ ] Add LICENSE file to repository root.
 
-## Known issues
-- Build process not verified in this status doc.
+## Build Process (Verified)
+
+To build the Oracle of Secrets ROM:
+1. Ensure `asar` is in your PATH.
+2. Provide a base ROM at `Roms/oos168x.sfc`.
+3. Run the build script:
+   ```bash
+   ./scripts/build_rom.sh 168
+   ```
+4. Output will be generated at `Roms/oos168x.sfc` (patched).
+
+For specific sprite or dungeon work, use the corresponding ASM files in `Sprites/` or `Dungeons/` with `asar` directly as documented in `Docs/General/AsarUsage.md`.
 
 ## Source of truth
 - `README.md`

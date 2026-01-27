@@ -1,5 +1,15 @@
 # Oracle of Secrets: System Architecture
 
+**Last Verified:** UNKNOWN (needs audit)
+**Primary Sources:** Mixed (ROM/disassembly/runtime/sheets)
+**Confidence:** UNKNOWN (needs audit)
+
+## Verification
+| Area | Evidence | Last Verified | Notes |
+| --- | --- | --- | --- |
+| Document | Needs audit | UNKNOWN | Added verification framework |
+
+
 **Purpose**: Document how major systems interact to help AI agents understand the codebase structure.
 
 ---
@@ -353,9 +363,8 @@ Every hook should document:
 ./run.sh
 
 # MCP tools
-mcp__book-of-mudora__run_build()   # Build ROM
-mcp__book-of-mudora__lint_asm()    # Check style
-mcp__book-of-mudora__analyze_patches()  # Review patches
+mcp__book-of-mudora__dev_ops(action="build")  # Build ROM
+mcp__book-of-mudora__dev_ops(action="lint")   # Check style
 ```
 
 ---
@@ -376,9 +385,9 @@ mcp__book-of-mudora__analyze_patches()  # Review patches
 
 **Yaze MCP** (in-development):
 ```python
-mcp__yaze_mcp__read_memory("7E0010", 2)   # Read RAM
-mcp__yaze_mcp__add_breakpoint("02XXXX")    # Set breakpoint
-mcp__yaze_mcp__get_game_state()            # Dump current state
+mcp__yaze-mcp__manage_memory(action="read", address="$7E0010", size=2)  # Read RAM
+mcp__yaze-mcp__manage_breakpoint(action="add", address="$02XXXX")       # Set breakpoint
+mcp__yaze-mcp__get_debug_context(include_disasm=true)                   # Dump state
 ```
 
 **Hyrule Historian**:

@@ -33,6 +33,11 @@ Sprite_MaskSalesman = $E8
 incsrc "Sprites/NPCs/mask_salesman.asm"
 %log_end("Sprite_MaskSalesman", !LOG_SPRITES)
 
+%log_start("windmill_guy", !LOG_SPRITES)
+Sprite_WindmillGuy = $F8
+incsrc "Sprites/NPCs/windmill_guy.asm"
+%log_end("windmill_guy", !LOG_SPRITES)
+
 %log_start("village_elder", !LOG_SPRITES)
 Sprite_BeanVendor     = $07
 Sprite_VillageElder   = $07

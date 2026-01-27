@@ -41,16 +41,46 @@ ROM_PATH="${ROM_OVERRIDE:-$DEFAULT_ROM}"
 
 MESEN2_DIR="${MESEN2_DIR:-}"
 
+resolve_rom_path() {
+  local input="$1"
+  if [[ -z "${input}" ]]; then
+    echo ""
+    return
+  fi
+  if [[ "${input}" == "~/"* ]]; then
+    input="${HOME}/${input#~/}"
+  fi
+  if [[ "${input}" != /* ]]; then
+    if [[ -e "${input}" ]]; then
+      input="$(cd "$(dirname "${input}")" && pwd -P)/$(basename "${input}")"
+    elif [[ -e "${REPO_ROOT}/${input}" ]]; then
+      input="$(cd "${REPO_ROOT}/$(dirname "${input}")" && pwd -P)/$(basename "${input}")"
+    fi
+  fi
+  if [[ -d "${input}" ]]; then
+    local found
+    found=$(ls "${input}"/oos*x.sfc 2>/dev/null | grep -E 'x\\.sfc$' | sort -V | tail -n 1 || true)
+    if [[ -n "${found}" ]]; then
+      echo "${found}"
+      return
+    fi
+    found=$(ls "${input}"/*.sfc "${input}"/*.smc 2>/dev/null | head -n 1 || true)
+    if [[ -n "${found}" ]]; then
+      echo "${found}"
+      return
+    fi
+  fi
+  echo "${input}"
+}
+
 resolve_mesen_app() {
   if [[ -n "${APP_PATH}" ]]; then
     echo "${APP_PATH}"
     return
   fi
   local candidates=(
-    "/Users/scawful/src/third_party/forks/Mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen2 OOS.app"
-    "/Users/scawful/src/third_party/forks/Mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen.app"
     "/Applications/Mesen2 OOS.app"
-    "/Applications/Mesen.app"
+    "/Users/scawful/src/hobby/mesen2-oos/bin/osx-arm64/Release/osx-arm64/publish/Mesen2 OOS.app"
   )
   for path in "${candidates[@]}"; do
     if [[ -d "${path}" ]]; then
@@ -76,6 +106,7 @@ resolve_mesen_dir() {
 
 APP_PATH="$(resolve_mesen_app)"
 MESEN2_DIR="$(resolve_mesen_dir)"
+ROM_PATH="$(resolve_rom_path "${ROM_PATH}")"
 
 SCRIPTS_DIR="${MESEN2_DIR}/Scripts"
 STATES_DIR="${MESEN2_DIR}/SaveStates"
@@ -90,6 +121,14 @@ fi
 
 if [[ ! -f "${ROM_PATH}" ]]; then
   echo "ROM not found: ${ROM_PATH}" >&2
+  echo "Tip: pass a directory (it will search for the latest oos*x.sfc patched ROM)." >&2
+  exit 1
+fi
+
+ROM_BASE="$(basename "${ROM_PATH}" | sed 's/\.[^.]*$//')"
+if [[ "${ROM_BASE}" == *test* || "${ROM_BASE}" == "oos91x" || "${ROM_BASE}" =~ ^oos[0-9]+$ ]]; then
+  echo "Refusing to launch editing ROM in Mesen2: ${ROM_PATH}" >&2
+  echo "Use the patched ROM (e.g., Roms/oos168x.sfc)." >&2
   exit 1
 fi
 

@@ -43,9 +43,10 @@
 ;   - narrative_lockdown.md (post-D7 exposition plans)
 ;
 ; TODO:
-;   - Add post-rescue states (8+) for Hall of Secrets NPC
+;   - Add post-rescue states (8+) for Hall of Secrets NPC ($B6 = 3)
 ;   - Implement Ganondorf exposition dialogue
 ;   - Add Master Sword guidance sequence
+;   - IDEA: Branching dialogue if Link possesses the "Oracle Secrets" item.
 ; =========================================================
 ; Farore
 

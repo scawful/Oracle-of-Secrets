@@ -14,7 +14,7 @@
 ;   0: InquiryHandler - Check Ocarina status, branch accordingly
 ;   1: NoOcarina - Tell player to get Ocarina first
 ;   2: HasOcarina - Recognize Ocarina, transition to teaching
-;   3: TeachLinkSong - Award Song of Healing ($7EF34C = 2)
+;   3: TeachLinkSong - Award Song of Healing ($7EF34C = 2, first song)
 ;   4: OfferBunnyHood - Offer Bunny Hood purchase
 ;   5: OfferStoneMask - Offer Stone Mask purchase
 ;   6: PlayerSaidNoToMask - Rejection dialogue
@@ -36,7 +36,7 @@
 ;   0xE9 - No Ocarina yet
 ;
 ; INVENTORY CHECKS:
-;   $7EF34C - Ocarina slot (0=none, 1=Lv1 Ocarina, 2+=Song of Healing)
+;   $7EF34C - Ocarina slot (0=none, 1=Ocarina, 2=Song of Healing)
 ;   $7EF348 - Bunny Hood slot
 ;   $7EF352 - Stone Mask slot
 ;

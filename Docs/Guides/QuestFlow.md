@@ -30,6 +30,7 @@ This document outlines the progression of the main story and major side-quests. 
 1.  **Trigger:** Player talks to the Maku Tree for the first time (`Sprites/NPCs/maku_tree.asm`).
 2.  **Events:** The Maku Tree speaks to Link, explaining the plight of the land.
 3.  **Reward:** A Heart Container is given to the player (`Link_ReceiveItem` with Y=`$3E`).
+4.  **Note:** Impa grants the **Mirror of Time** in the Hall of Secrets (planned; setter TBD).
 4.  **Progression Flags & Consequences:**
 
 | Flag            | Address  | Value/Bit     | Consequence                                                              |
@@ -44,6 +45,16 @@ This document outlines the progression of the main story and major side-quests. 
 2.  **Events:** Player navigates the dungeon, facing the Vampire Bat miniboss and the Mothra boss.
 3.  **Reward:** **Bow**.
 
+### Chapter 2.5: Tail Pond and the Withered Deku Scrub (Main Quest Beat)
+
+1.  **Trigger:** After completing D1 and obtaining the Mushroom.
+2.  **Player Actions:**
+    *   Trade the Mushroom to the witches east of the castle to obtain **Magic Powder** / collectible bag.
+    *   Talk to the Village Elder post-D1 to learn about the Mask Salesman (sets Tail Pond map marker).
+    *   Visit **Tail Pond (OW 0x2D)** and speak with the Happy Mask Salesman.
+    *   Learn the **Song of Healing** and use it on the withered Deku Scrub outside the shop.
+3.  **Reward:** **Deku Mask** (progression item).
+
 ### Chapter 3: The Tail Palace (D2)
 
 1.  **Trigger:** Player enters Tail Palace.
@@ -56,7 +67,7 @@ This document outlines the progression of the main story and major side-quests. 
 1.  **Trigger:** This is a multi-part quest chain required to access Kalyxo Castle.
 2.  **Player Actions:**
     *   **Ocarina:** Complete the "Lost Ranch Girl" side-quest to obtain the Ocarina.
-    *   **Song of Healing:** Learn the Song of Healing from the Happy Mask Salesman.
+    *   **Song of Healing:** Learn the Song of Healing from the Happy Mask Salesman (Tail Pond).
     *   **Running Boots:** Play the Song of Healing for the sick child in Wayward Village to receive the Running Boots.
     *   **Book of Secrets:** Use the Running Boots to get the Book of Secrets from the village library.
 3.  **Consequence:** The Book of Secrets is required to open the gates to Kalyxo Castle.
@@ -84,7 +95,7 @@ This document outlines the progression of the main story and major side-quests. 
 ### Chapter 8: Glacia Estate (D5)
 
 1.  **Trigger:** Player enters Glacia Estate.
-2.  **Required Items:** **Goldstar** (from the "Old Man Mountain Quest").
+2.  **Note:** **Goldstar** is an optional upgrade from the "Old Man Mountain Quest" (Lava Lands) and is not required for entry.
 3.  **Events:** Player navigates ice puzzles and defeats the Twinrova boss.
 4.  **Reward:** **Fire Rod**.
 
@@ -99,6 +110,7 @@ This document outlines the progression of the main story and major side-quests. 
 2.  **Required Items:** **Power Glove**, Completion of the "Goron Mines Quest".
 3.  **Events:** Player defeats the Lanmolas and the King Dodongo (Helmasaur variant) boss.
 4.  **Reward:** **Hammer**.
+5.  **Post-Dungeon Reward:** **Titan's Mitt** (desert area unlocked after D6).
 
 ### Chapter 11: Dragon Ship (D7)
 
@@ -136,7 +148,7 @@ This document outlines the progression of the main story and major side-quests. 
 ### The Mask Salesman
 
 1.  **Trigger:** Player must have the Ocarina.
-2.  **Action:** Talk to the Happy Mask Salesman.
+2.  **Action:** Talk to the Happy Mask Salesman at Tail Pond (OW 0x2D).
 3.  **Reward:** He teaches Link the **Song of Healing**.
 
 ### The Zora Mask
@@ -155,7 +167,7 @@ This document outlines the progression of the main story and major side-quests. 
 ### Old Man Mountain Quest
 
 1.  **Trigger:** Player takes the warp portal at the northwest point of Mount Snowpeak.
-2.  **Action:** Enter the Lava Lands cave to find an Old Man sprite. Escort him to a rock formation and use the Magic Mirror.
+2.  **Action:** Enter the Lava Lands cave to find an Old Man sprite. Escort him to a rock formation and use the Mirror of Time (from the Hall of Secrets).
 3.  **Reward:** **Goldstar** (upgrade for the Hookshot).
 
 ### Goron Mines Quest

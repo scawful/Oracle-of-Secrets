@@ -2,6 +2,9 @@
 
 **Version**: 1.0
 **Purpose**: Reduce AI errors and ensure consistent code quality across the codebase.
+**Last Verified:** 2026-01-23 (style update)
+**Primary Sources:** Internal conventions
+**Confidence:** High
 
 ---
 
@@ -34,6 +37,17 @@
 - [ ] **NEVER MIX** - mismatch causes crashes
 - [ ] External hooks use `JSL`, internal helpers use `JSR`
 
+### Comment Tags
+
+Use these tags for evidence, assumptions, and doc anchors. They are short, searchable, and AI-friendly.
+
+- `;@source` - Where the fact came from (disassembly, runtime watch, sheet, doc).
+- `;@verified` - Date + method (e.g., `2026-01-23 runtime watch`, `2026-01-22 screenshot`).
+- `;@assumption` - Explicit assumptions that still need verification.
+- `;@risk` - Known risk or regression area for this logic.
+- `;@todo` - Verification or research to perform.
+- `;@doc` - Doc anchor reference (e.g., `Docs/Core/Ram.md#verification`).
+
 ---
 
 ## 1. File Structure
@@ -46,6 +60,8 @@
 ; Purpose: [Brief description of what this file implements]
 ; Author: [Your name or handle]
 ; =========================================================
+;@source: [doc/disassembly/runtime/sheet]
+;@verified: UNKNOWN (needs audit)
 ```
 
 ### 1.2 Section Organization
@@ -506,8 +522,8 @@ LDA.l OOSPROG : AND.b #$01 : BEQ .not_complete
 
 ### 10.3 After Writing Code
 
-1. **Run build** - Use `mcp__book-of-mudora__run_build()`
-2. **Run lint** - Use `mcp__book-of-mudora__lint_asm()`
+1. **Run build** - Use `mcp__book-of-mudora__dev_ops(action="build")`
+2. **Run lint** - Use `mcp__book-of-mudora__dev_ops(action="lint")`
 3. **Verify in emulator** - Test before marking complete
 
 ---

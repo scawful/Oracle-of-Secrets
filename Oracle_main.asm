@@ -70,7 +70,7 @@ namespace Oracle
   %log_section("Menu", !LOG_MENU)
   incsrc "Menu/menu.asm"
 
-  incsrc "Util/item_cheat.asm"
+  ; incsrc "Util/item_cheat.asm"  ; DISABLED FOR TESTING
   incsrc "Core/patches.asm"
   ; incsrc "Core/capture.asm"
 

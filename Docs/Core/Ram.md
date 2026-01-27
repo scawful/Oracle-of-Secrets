@@ -1,6 +1,18 @@
 # RAM Analysis: The Engine's State
 
+**Last Verified:** UNKNOWN (needs audit)
+**Primary Sources:** Mixed (ROM/disassembly/runtime/sheets)
+**Confidence:** UNKNOWN (needs audit)
+
+## Verification
+| Area | Evidence | Last Verified | Notes |
+| --- | --- | --- | --- |
+| Document | Needs audit | UNKNOWN | Added verification framework |
+
+
 This document provides a high-level analysis of how Work RAM (WRAM) and Save RAM (SRAM) are used to manage the game's state. For a raw list of addresses, see `Core/ram.asm` and `Core/sram.asm`.
+
+NOTE: Vanilla disassembly is external. In this workspace, JP gigaleak disassembly lives under `../alttp-gigaleak/DISASM/jpdasm/`. If you generate a US `usdasm` export for address parity, it lives under `../alttp-gigaleak/DISASM/usdasm/`. Adjust paths if your setup differs.
 
 ## 1. The Core Game Loop: WRAM in Motion
 
@@ -75,6 +87,21 @@ Oracle of Secrets adds a custom WRAM region starting at `$7E0730`, utilizing the
 | `$7E0743`  | `Offspring3_Id`         | Sprite ID of third child sprite (for boss mechanics)      | ✓        |
 | `$7E0744`  | `Kydreeok_Id`           | Sprite ID for Kydreeok boss entity                        | ✓        |
 | `$7E0745`  | `FishingOrPortalRod`    | Differentiates Fishing Rod (1) from Portal Rod (2)        | ✓        |
+| `$7E0746`  | `DBG_REINIT_FLAGS`      | Debug reinit request bitfield (bridge -> game)            | —        |
+| `$7E0747`  | `DBG_REINIT_STATUS`     | Debug reinit completed bitfield                           | —        |
+| `$7E0748`  | `DBG_REINIT_ERROR`      | Debug reinit error bitfield                               | —        |
+| `$7E0749`  | `DBG_REINIT_SEQ`        | Debug reinit request sequence counter                     | —        |
+| `$7E074A`  | `DBG_REINIT_LAST`       | Debug reinit last-executed target                         | —        |
+| `$7E074B`  | `DBG_WARP_ARM`          | Debug warp arm byte (must be set to 0xA5)                 | —        |
+| `$7E074C`  | `DBG_WARP_REQUEST`      | Debug warp request (1=cross-area, 2=same-area)            | —        |
+| `$7E074D`  | `DBG_WARP_AREA`         | Debug warp target overworld area                          | —        |
+| `$7E074E`  | `DBG_WARP_X_LO`         | Debug warp target X (low byte)                            | —        |
+| `$7E074F`  | `DBG_WARP_X_HI`         | Debug warp target X (high byte)                           | —        |
+| `$7E0750`  | `DBG_WARP_Y_LO`         | Debug warp target Y (low byte)                            | —        |
+| `$7E0751`  | `DBG_WARP_Y_HI`         | Debug warp target Y (high byte)                           | —        |
+| `$7E0752`  | `DBG_WARP_STATUS`       | Debug warp status (0=idle, 0x5A=armed, 2=in_progress, 3=complete) | — |
+| `$7E0753`  | `DBG_WARP_ERROR`        | Debug warp error code                                     | —        |
+| `$7E0754`  | `DBG_WARP_GFX_PENDING`  | Debug warp pending GFX reload flag                        | —        |
 
 ### Usage Notes
 
@@ -85,6 +112,7 @@ Oracle of Secrets adds a custom WRAM region starting at `$7E0730`, utilizing the
 -   **Boss Mechanics**: The `Neck_*` and `Offspring_*` variables enable complex multi-part boss sprites (e.g., Kydreeok with multiple heads, Manhandla with independent parts). The parent sprite uses these to track and coordinate its child sprite components.
 
 -   **Memory Safety**: All variables in this region are placed within the MAP16OVERFLOW free RAM area, which is guaranteed to be unused by the vanilla game engine. This prevents conflicts with vanilla systems.
+-   **Debug Reinit + Warp**: `$7E0746-$7E0754` are reserved for the bridge-driven reinit + debug warp systems. Avoid using these for gameplay logic.
 
 ## 5. Long-Term Progression: SRAM and Custom Flags
 

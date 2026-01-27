@@ -1,18 +1,15 @@
-; ==========================================================
-; Key Block Object like Link's Awakening
-; Overwrites the Prison Door
+; =========================================================
+; Key Block Object
 ;
-; Author:   XaserLE
-; Thanks: - PuzzleDude for finding a drawing bug and get rid of it
-;			    - MathOnNapkins' Zelda Doc's
-;			    - wiiqwertyuiop for his Zelda Disassembly
+; Purpose: A puzzle block that requires a small key to unlock, 
+;          similar to Link's Awakening. Overwrites the Prison Door.
 ;
-; The blocks can be opened from up- or downside only
-; left and right will not work (will try to fix this in the future).
+; Author: XaserLE
+; Thanks: PuzzleDude, MathOnNapkins, wiiqwertyuiop
 ;
-; The key block must always be placed on EVEN x and y.
-; 00, 02, 04, 06, 08, 0A, 0C, 0E
-; ==========================================================
+; Notes: The blocks can be opened from up or down only.
+;        Must be placed on EVEN x and y coordinates.
+; =========================================================
 
 ; Big chest key for compass
 org $01EC1A
@@ -21,17 +18,25 @@ org $01EC1A
 org $01EB8C
 Object_KeyBlock:
 {
-  LDA $7EF36F			; load the small key counter
-  AND #$00FF			; check if we have at least one small key (AND will not be zero)
-  BEQ $4C				  ; if not (AND is zero), do nothing
+  ; $7EF36F: Small key counter (Index into SRAM).
+  LDA $7EF36F
+  AND #$00FF              ; Mask high byte just in case.
+  BEQ .no_keys            ; If zero, Link cannot unlock the block.
 
-  ; otherwise we will decrement the small key counter
-  ; and branch to the code that opens the prison door
+  ; Link has at least one key. 
+  ; Decrement the counter and proceed to the vanilla prison door unlock routine.
+  LDA $7EF36F
+  DEC A
+  STA $7EF36F
 
-  LDA $7EF36F			; reload small key counter
-  DEC A				    ; remove one key
-  STA $7EF36F			; save the new value at small key counter position
-  BRA $05				  ; branch to the code that opens the prison door
+  BRA .vanilla_unlock     ; Hook into vanilla unlock logic.
+
+.no_keys
+  RTS
+
+.vanilla_unlock
+  ; This branch logic targets the prison door opening code at $01EB8C's offset.
+  BRA $05
 }
 
 ; Fix draw bug from floor tile left by block after unlock.

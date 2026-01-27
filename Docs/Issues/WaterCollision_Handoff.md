@@ -4,7 +4,7 @@
 
 **2026-01-21 Testing Session:**
 - Shifted collision data down 3 tiles (+20px Y offset compensation) - **WORKING**
-- Room load hook disabled due to dungeon crashes - **WORKAROUND**
+- Room load hook disabled during crash triage (workaround at the time)
 - Horizontal water strip allows swimming - **WORKING**
 - Full water mask shape NOT covered - **NEEDS WORK**
 
@@ -15,7 +15,7 @@
 ### Current Build
 - **Source ROM:** `oos168.sfc` (MD5: `2eb02125e1f72e773aaf04e048c2d097`)
 - **Patched ROM:** `oos168x.sfc` (MD5: `6211297eeabb2f4b99040ba8cf2cce5a`)
-- **Git Commit:** `32a9a3d` with uncommitted changes to `dungeons.asm`
+- **Git Commit:** `3320518` (local HEAD; working tree has uncommitted changes)
 
 ---
 
@@ -129,9 +129,12 @@ Displays real-time debug info:
 - Link state, submodule, action, speed
 - Door flag ($0403) and deep water flag ($0345)
 
+### Headless Regression Test (`scripts/verify_water_gate.lua`)
+- Supports `MESEN_LOADSTATE=/path/to/state.mss` for deterministic runs
+
 ### Runtime Reload Hotkey (Save-State Safety)
 - **Combo:** `L + R + Select + Start`
-- **Effect:** Rebuilds message pointer table + reloads sprite graphics properties (and overworld sprite list when outdoors)
+- **Effect:** Rebuilds message pointer table (dialog dictionaries) + reloads sprite graphics properties + reloads overworld/underworld sprite list based on `INDOORS`
 - **Use:** After loading older save states following ROM rebuilds
 
 ### Key RAM Addresses
@@ -210,7 +213,7 @@ Need to find where the game reads COLMAPA to determine Link's terrain type. This
 ## ROM Files
 
 - `oos168_test2.sfc` - Clean ROM (ZScream OW v3) - use for analysis
-- `oos91x.sfc` - Patched ROM with custom assembly
+- `oos168x.sfc` - Patched ROM with custom assembly
 
 ---
 
@@ -295,24 +298,15 @@ Underworld_LoadRoom_ExitHook:
 }
 ```
 
-### Workaround Applied
-Commented out the hook in `Dungeons/dungeons.asm:169-173`:
-```asm
-; DISABLED FOR TESTING - suspected cause of dungeon crashes
-; org $0188DF
-; JML Underworld_LoadRoom_ExitHook
-; NOP #1
-```
+### Resolution (2026-01-22)
+Hook re-enabled with an explicit torch table end check (no stale Z flag reliance). The hook now matches the original control flow and calls `WaterGate_CheckRoomEntry` only after the torch loop is complete.
 
-### Effect
-- **FIXED:** Dungeon exit/re-entry no longer crashes
-- **BROKEN:** Water collision does NOT persist on room re-entry
-- Players must re-trigger the floor switch each time they enter Room 0x27
+### Current State
+- **Should fix:** Dungeon exit/re-entry crash caused by stale Z flag use
+- **Needs verification:** Water collision persistence on room re-entry
 
-### Proper Fix Needed
-1. Save processor state (PHP) at hook entry
-2. Restore state (PLP) before branch decision
-3. Or: Check a memory flag instead of relying on CPU flags
+### Historical Note (2026-01-21)
+The hook was temporarily disabled during crash triage, which did prevent the crash but also broke persistence. That workaround is no longer applied in current code.
 
 ---
 

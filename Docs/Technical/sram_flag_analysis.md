@@ -63,7 +63,7 @@ The `sram.asm` comments reference vanilla ALTTP storyline:
 ; Game state
 ;   0x00 - Very start; progress cannot be saved in this state
 ;   0x01 - Reached Loom Beach (intro sequence)
-;   0x02 - Kydrog encounter complete (sent to Eon Abyss)
+;   0x02 - Kydrog encounter complete (sent to Eon Abyss); overworld guard blocks cleared on return
 ;   0x03 - D7 complete (Farore rescued)
 ```
 
@@ -95,14 +95,14 @@ The `sram.asm` comments reference vanilla ALTTP storyline:
 
 | Bit | Flag | Meaning | Set By |
 |-----|------|---------|--------|
-| 0 | `i` | Intro over, met Maku Tree | `maku_tree.asm` |
+| 0 | `i` | Intro complete (setter unknown) | TBD (no setter found; Maku Tree sets bit 1) |
 | 1 | `h` | Hall of Secrets flag | `maku_tree.asm` |
-| 2 | `p` | Pendant quest started | TBD |
+| 2 | `p` | Pendant quest started | `impa.asm` |
 | 3 | — | (unused) | — |
-| 4 | `m` | Master Sword obtained | TBD |
+| 4 | `m` | Elder met / Master Sword? | `village_elder.asm` |
 | 5 | — | (unused) | — |
 | 6 | — | (unused) | — |
-| 7 | `f` | Fortress of Secrets complete | TBD |
+| 7 | `f` | Fortress of Secrets complete | TBD (no setter found) |
 
 ### OOSPROG2 / PROGLITE Bitfield ($7EF3C6)
 
@@ -112,7 +112,7 @@ The `sram.asm` comments reference vanilla ALTTP storyline:
 | 1 | `s` | Sanctuary visited post-kidnap | Priest visited |
 | 2 | `z` | (repurposed) Kydrog encounter done | Zelda brought to sanc |
 | 3 | `h` | Impa left Link's house | Uncle left house |
-| 4 | — | (unused) | — |
+| 4 | — | Legacy house flag (intro house state) | Uncle left house |
 | 5 | `b` | Book of Secrets obtained | Book of Mudora |
 | 6 | `f` | Fortune teller flip | Fortune teller flip |
 | 7 | — | (unused) | — |
@@ -122,11 +122,11 @@ The `sram.asm` comments reference vanilla ALTTP storyline:
 | Bit | Flag | Meaning | Set By |
 |-----|------|---------|--------|
 | 0 | `n` | Met Mask Salesman | `mask_salesman.asm` |
-| 1 | `c` | Found cursed Cucco | TBD |
-| 2 | `w` | Found withering Deku Scrub | `deku_scrub.asm` |
-| 3 | `m` | Got Mushroom from Toadstool | TBD |
-| 4 | `o` | Old Man Mountain quest active | `old_man.asm` |
-| 5 | `g` | Goron quest active | `goron.asm` |
+| 1 | `c` | Found cursed Cucco | TBD (no setter found) |
+| 2 | `w` | Found withering Deku Scrub (main quest beat) | `deku_scrub.asm` |
+| 3 | `m` | Got Mushroom from Toadstool | TBD (no setter found) |
+| 4 | `o` | Old Man Mountain quest active | TBD (no setter found) |
+| 5 | `g` | Goron quest active | TBD (no setter found) |
 | 6 | `d` | (reserved) | — |
 | 7 | — | (unused) | — |
 
@@ -137,10 +137,10 @@ The `sram.asm` comments reference vanilla ALTTP storyline:
 | 0 | `r` | Ranch Girl transformed back | `ranch_girl.asm` |
 | 1 | — | (unused) | — |
 | 2 | `m` | Mask Salesman taught Song of Healing | `mask_salesman.asm` |
-| 3 | `f` | Fortune teller visited | TBD |
-| 4 | `s` | Deku Scrub soul freed | `deku_scrub.asm` |
-| 5 | `t` | Tingle met | `tingle.asm` |
-| 6 | `b` | Beanstalk grown (final) | TBD |
+| 3 | `f` | Fortune teller visited | TBD (no setter found) |
+| 4 | `s` | Deku Scrub soul freed (main quest beat) | `deku_scrub.asm` |
+| 5 | `t` | Tingle met | TBD (no setter found; uses TingleMaps) |
+| 6 | `b` | Beanstalk grown (final) | TBD (no setter found; uses MagicBeanProg) |
 | 7 | — | (unused) | — |
 
 ---
@@ -240,7 +240,7 @@ Removed duplicates, kept canonical names:
 Updated all comments to reflect Oracle of Secrets milestones:
 - GameState values (Loom Beach, Kydrog encounter, D7 complete)
 - OOSPROG/OOSPROG2 bit meanings
-- MapIcon dungeon guidance (D1-D7 + Fortress)
+- MapIcon dungeon guidance (Tail Pond + D1-D7 + Fortress)
 - Crystals bitfield with dungeon mapping table
 - SideQuestProg with sprite file cross-references
 

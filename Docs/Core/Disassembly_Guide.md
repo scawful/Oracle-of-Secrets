@@ -1,6 +1,18 @@
 # Disassembly Analysis and Search Guide
 
+**Last Verified:** UNKNOWN (needs audit)
+**Primary Sources:** Mixed (ROM/disassembly/runtime/sheets)
+**Confidence:** UNKNOWN (needs audit)
+
+## Verification
+| Area | Evidence | Last Verified | Notes |
+| --- | --- | --- | --- |
+| Document | Needs audit | UNKNOWN | Added verification framework |
+
+
 This document provides a high-level analysis of key banks in the Link to the Past disassembly. Use this guide to quickly locate relevant code and understand the overall structure of the game.
+
+NOTE: Vanilla disassembly is external. In this workspace, JP gigaleak disassembly lives under `../alttp-gigaleak/DISASM/jpdasm/`. If you generate a US `usdasm` export for address parity, it lives under `../alttp-gigaleak/DISASM/usdasm/`. Adjust paths if your setup differs.
 
 ## 1. Bank $00: Game Core & Main Loop
 

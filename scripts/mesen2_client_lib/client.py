@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import os
+import tempfile
+import time
+from pathlib import Path
 from typing import Optional
 
 from .bridge import MesenBridge
@@ -19,6 +23,7 @@ from .constants import (
     OracleRAM,
     OVERWORLD_AREAS,
     OverworldSubmode,
+    OVERWORLD_SUBMODE_NAMES,
     ROOM_NAMES,
     STORY_FLAGS,
     WARP_LOCATIONS,
@@ -26,6 +31,60 @@ from .constants import (
 )
 from .issues import KNOWN_ISSUES
 from .state_library import StateLibrary
+
+
+NAME_ENTRY_GUARD_ENV = "OOS_NAME_ENTRY_GUARD"
+NAME_ENTRY_ALLOW_ENV = "OOS_NAME_ENTRY_ALLOW_A"
+NAME_ENTRY_GUARD_FILE_ENV = "OOS_NAME_ENTRY_GUARD_FILE"
+NAME_ENTRY_GUARD_COOLDOWN_ENV = "OOS_NAME_ENTRY_GUARD_COOLDOWN"
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
+def _guard_state_path() -> Path:
+    override = os.getenv(NAME_ENTRY_GUARD_FILE_ENV)
+    if override:
+        return Path(override).expanduser()
+    return Path(tempfile.gettempdir()) / "oos_name_entry_guard.json"
+
+
+def _guard_cooldown_seconds() -> float:
+    raw = os.getenv(NAME_ENTRY_GUARD_COOLDOWN_ENV)
+    if raw is None:
+        return 1.0
+    try:
+        return float(raw)
+    except ValueError:
+        return 1.0
+
+
+def _load_guard_state(path: Path) -> dict:
+    try:
+        if path.exists():
+            return json.loads(path.read_text())
+    except Exception:
+        return {}
+    return {}
+
+
+def _write_guard_state(path: Path, mode: int, timestamp: float) -> None:
+    payload = {"mode": mode, "timestamp": timestamp}
+    try:
+        path.write_text(json.dumps(payload))
+    except Exception:
+        pass
+
+
+def _guard_active_for_mode(state: dict, mode: int, now: float, cooldown: float) -> bool:
+    if state.get("mode") != mode:
+        return False
+    last_time = state.get("timestamp", 0.0)
+    return now - last_time < cooldown
 
 
 class OracleDebugClient:
@@ -37,9 +96,166 @@ class OracleDebugClient:
         self._last_area: Optional[int] = None
         self._watch_profile = "overworld"
         self.state_library = StateLibrary()
+        self.last_error = ""
+        self._usdasm_labels: dict[str, int] = {}
+        self._usdasm_index: dict[int, str] = {}
+        
+        # Auto-load USDASM labels if they exist
+        self.load_usdasm_labels()
+
+    def load_usdasm_labels(self, path: Optional[Path] = None) -> int:
+        """Load USDASM labels from a CSV index file."""
+        if path is None:
+            # Try to find it in the known location
+            candidates = [
+                Path(__file__).resolve().parents[3] / "z3dk" / ".context" / "knowledge" / "label_index_usdasm.csv",
+                Path.home() / "src/hobby/z3dk/.context/knowledge/label_index_usdasm.csv"
+            ]
+            for candidate in candidates:
+                if candidate.exists():
+                    path = candidate
+                    break
+        
+        if not path or not path.exists():
+            return 0
+            
+        import csv
+        count = 0
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    label = row["label"]
+                    addr_str = row["address"] # format "$BB:AAAA"
+                    try:
+                        bank_str, offset_str = addr_str.replace("$", "").split(":")
+                        bank = int(bank_str, 16)
+                        offset = int(offset_str, 16)
+                        # Linear SNES address (for LoROM)
+                        linear = (bank << 16) | offset
+                        self._usdasm_labels[label] = linear
+                        self._usdasm_index[linear] = label
+                        count += 1
+                    except Exception:
+                        continue
+        except Exception as exc:
+            self.last_error = f"Failed to load USDASM labels: {exc}"
+            return 0
+        return count
+
+    def resolve_symbol(self, symbol: str) -> Optional[int]:
+        """Resolve a symbol name to a SNES address.
+        
+        Checks internal USDASM labels first, then queries Mesen2.
+        """
+        if symbol in self._usdasm_labels:
+            return self._usdasm_labels[symbol]
+            
+        res = self.bridge.send_command("SYMBOLS_RESOLVE", symbol=symbol)
+        if res.get("success"):
+            data = res.get("data", {})
+            if isinstance(data, dict):
+                addr_str = data.get("addr", "")
+                if addr_str:
+                    return int(addr_str.replace("0x", ""), 16)
+        return None
+
+    def get_symbol_at(self, address: int) -> Optional[str]:
+        """Get the symbol name at a given address."""
+        # Check USDASM index first
+        if address in self._usdasm_index:
+            return self._usdasm_index[address]
+            
+        # Try Mesen2 labels command
+        res = self.bridge.send_command("LABELS", action="get", addr=f"0x{address:06X}")
+        if res.get("success"):
+            data = res.get("data", {})
+            if isinstance(data, dict) and data.get("label"):
+                return data.get("label")
+        return None
 
     def is_connected(self) -> bool:
+        if hasattr(self.bridge, "ensure_connected"):
+            return bool(self.bridge.ensure_connected())
         return self.bridge.is_connected()
+
+    def ensure_connected(self) -> bool:
+        if hasattr(self.bridge, "ensure_connected"):
+            return bool(self.bridge.ensure_connected())
+        return self.bridge.is_connected()
+
+    def health_check(self) -> dict:
+        if hasattr(self.bridge, "check_health"):
+            return self.bridge.check_health()
+        return {
+            "ok": self.bridge.is_connected(),
+            "socket": getattr(self.bridge, "socket_path", None),
+            "latency_ms": None,
+            "error": "",
+        }
+
+    # --- Emulator Run State ---
+
+    def get_run_state(self) -> dict:
+        """Return emulator run/paused state."""
+        try:
+            raw = self.bridge.send_command("STATE")
+        except Exception as exc:
+            self.last_error = f"STATE failed: {exc}"
+            return {}
+        if not isinstance(raw, dict) or not raw.get("success"):
+            self.last_error = str(raw.get("error") if isinstance(raw, dict) else "STATE failed")
+            return {}
+        data = raw.get("data", {})
+        if isinstance(data, str):
+            try:
+                return json.loads(data)
+            except json.JSONDecodeError:
+                return {}
+        return data
+
+    def get_rom_info(self) -> dict:
+        """Return ROM info from the socket API."""
+        try:
+            raw = self.bridge.send_command("ROMINFO")
+        except Exception as exc:
+            self.last_error = f"ROMINFO failed: {exc}"
+            return {}
+        if not isinstance(raw, dict) or not raw.get("success"):
+            self.last_error = str(raw.get("error") if isinstance(raw, dict) else "ROMINFO failed")
+            return {}
+        data = raw.get("data", {})
+        if isinstance(data, str):
+            try:
+                return json.loads(data)
+            except json.JSONDecodeError:
+                return {}
+        return data
+
+    def is_paused(self) -> Optional[bool]:
+        """Return True if paused, False if running, or None if unknown."""
+        state = self.get_run_state()
+        if not state:
+            return None
+        return bool(state.get("paused")) if "paused" in state else None
+
+    def ensure_running(self) -> bool:
+        """Resume emulation if paused. Returns True if running or resumed."""
+        paused = self.is_paused()
+        if paused is None:
+            return False
+        if paused:
+            return bool(self.resume())
+        return True
+
+    def ensure_paused(self) -> bool:
+        """Pause emulation if running. Returns True if paused or paused successfully."""
+        paused = self.is_paused()
+        if paused is None:
+            return False
+        if not paused:
+            return bool(self.pause())
+        return True
 
     # --- State Reading ---
 
@@ -47,6 +263,7 @@ class OracleDebugClient:
         """Get Oracle-specific game state."""
         mode = self.bridge.read_memory(OracleRAM.MODE)
         link_form = self.bridge.read_memory(OracleRAM.LINK_FORM)
+        link_dir = self.bridge.read_memory(OracleRAM.LINK_DIR)
         area = self.bridge.read_memory(OracleRAM.AREA_ID)
         room = self.bridge.read_memory(OracleRAM.ROOM_LAYOUT)
         dungeon_room = self.bridge.read_memory16(OracleRAM.ROOM_ID)
@@ -76,10 +293,8 @@ class OracleDebugClient:
             "link_x": self.bridge.read_memory16(OracleRAM.LINK_X),
             "link_y": self.bridge.read_memory16(OracleRAM.LINK_Y),
             "link_z": self.bridge.read_memory16(OracleRAM.LINK_Z),
-            "link_dir": self.bridge.read_memory(OracleRAM.LINK_DIR),
-            "link_dir_name": DIRECTION_NAMES.get(
-                self.bridge.read_memory(OracleRAM.LINK_DIR), "?"
-            ),
+            "link_dir": link_dir,
+            "link_dir_name": DIRECTION_NAMES.get(link_dir, "?"),
             "link_state": self.bridge.read_memory(OracleRAM.LINK_STATE),
             "link_form": link_form,
             "link_form_name": FORM_NAMES.get(link_form, f"Unknown (0x{link_form:02X})"),
@@ -96,6 +311,111 @@ class OracleDebugClient:
             "magic": self.bridge.read_memory(OracleRAM.MAGIC_POWER),
             "rupees": self.bridge.read_memory16(OracleRAM.RUPEES),
         }
+
+    def get_time_state(self) -> dict:
+        """Return Oracle day/night time state and palette values."""
+        hours = self.bridge.read_memory(OracleRAM.TIME_HOURS)
+        minutes = self.bridge.read_memory(OracleRAM.TIME_MINUTES)
+        speed = self.bridge.read_memory(OracleRAM.TIME_SPEED)
+        subcolor = self.bridge.read_memory16(OracleRAM.TIME_SUBCOLOR)
+        red = self.bridge.read_memory16(OracleRAM.TIME_RED)
+        green = self.bridge.read_memory16(OracleRAM.TIME_GREEN)
+        blue = self.bridge.read_memory16(OracleRAM.TIME_BLUE)
+
+        is_night = hours < 6 or hours >= 18
+        phase = "night" if is_night else "day"
+
+        return {
+            "hours": hours,
+            "minutes": minutes,
+            "speed": speed,
+            "phase": phase,
+            "is_night": is_night,
+            "subcolor": f"0x{subcolor:04X}",
+            "palette": {
+                "red": f"0x{red:04X}",
+                "green": f"0x{green:04X}",
+                "blue": f"0x{blue:04X}",
+            },
+        }
+
+    def get_overworld_status(self) -> dict:
+        """Return overworld/transition status with heuristics."""
+        mode = self.bridge.read_memory(OracleRAM.MODE)
+        submode = self.bridge.read_memory(OracleRAM.SUBMODE)
+        indoors = self.bridge.read_memory(OracleRAM.INDOORS)
+
+        overworld_modes = {GameMode.OVERWORLD, GameMode.OVERWORLD_SPECIAL}
+        loading_modes = {GameMode.OVERWORLD_LOAD, GameMode.OVERWORLD_SPECIAL_LOAD, GameMode.DUNGEON_LOAD}
+        is_overworld = mode in overworld_modes and not indoors
+        is_transition = mode in loading_modes or (mode in overworld_modes and submode != OverworldSubmode.PLAYER_CONTROL)
+
+        return {
+            "mode": mode,
+            "mode_name": MODE_NAMES.get(mode, f"0x{mode:02X}"),
+            "submode": submode,
+            "submode_name": OVERWORLD_SUBMODE_NAMES.get(submode, f"0x{submode:02X}"),
+            "indoors": bool(indoors),
+            "is_overworld": is_overworld,
+            "is_transition": is_transition,
+        }
+
+    def get_camera_offset(self) -> dict:
+        """Return scroll offsets relative to Link position."""
+        scroll_x_lo = self.bridge.read_memory(OracleRAM.SCROLL_X_LO)
+        scroll_x_hi = self.bridge.read_memory(OracleRAM.SCROLL_X_HI)
+        scroll_y_lo = self.bridge.read_memory(OracleRAM.SCROLL_Y_LO)
+        scroll_y_hi = self.bridge.read_memory(OracleRAM.SCROLL_Y_HI)
+
+        scroll_x = (scroll_x_hi << 8) | scroll_x_lo
+        scroll_y = (scroll_y_hi << 8) | scroll_y_lo
+
+        link_x = self.bridge.read_memory16(OracleRAM.LINK_X)
+        link_y = self.bridge.read_memory16(OracleRAM.LINK_Y)
+
+        return {
+            "scroll_x": scroll_x,
+            "scroll_y": scroll_y,
+            "link_x": link_x,
+            "link_y": link_y,
+            "offset_x": abs(link_x - scroll_x),
+            "offset_y": abs(link_y - scroll_y),
+        }
+
+    def get_diagnostics(self, deep: bool = False) -> dict:
+        """Composite diagnostic snapshot for agents."""
+        oracle_state = self.get_oracle_state()
+        run_state = self.get_run_state()
+        rom_info = self.get_rom_info()
+        time_state = self.get_time_state()
+        overworld = self.get_overworld_status()
+        camera = self.get_camera_offset()
+        warnings = self.check_known_issues(oracle_state)
+
+        camera_ok = camera["offset_x"] <= 200 and camera["offset_y"] <= 200
+
+        snapshot = {
+            "run_state": run_state,
+            "rom_info": rom_info,
+            "oracle_state": oracle_state,
+            "time_state": time_state,
+            "overworld": overworld,
+            "camera": camera,
+            "camera_ok": camera_ok,
+            "warnings": warnings,
+        }
+        if deep:
+            snapshot.update(
+                {
+                    "story_state": self.get_story_state(),
+                    "items": self.get_all_items(),
+                    "flags": self.get_all_flags(),
+                    "watch_profile": self._watch_profile,
+                    "watch_values": self.read_watch_values(),
+                    "sprites": self.get_all_sprites(),
+                }
+            )
+        return snapshot
 
     def get_story_state(self) -> dict:
         """Get story progression state."""
@@ -143,6 +463,141 @@ class OracleDebugClient:
                 sprite["slot"] = slot
                 sprites.append(sprite)
         return sprites
+
+    # --- Event Subscription ---
+
+    def subscribe(self, events: str) -> bool:
+        """Subscribe to real-time events.
+        
+        Args:
+            events: Comma-separated list of event types (breakpoint_hit, frame_complete, etc.)
+        """
+        res = self.bridge.send_command("SUBSCRIBE", events=events)
+        return bool(res.get("success"))
+
+    def get_events(self) -> list[dict]:
+        """Receive pending events from the socket."""
+        # This requires the bridge to have a way to read pushed messages
+        # without sending a command.
+        if hasattr(self.bridge.bridge, "read_event"):
+            return self.bridge.bridge.read_event()
+        return []
+
+    # --- Batch Execution ---
+
+    def batch_execute(self, commands: list[dict]) -> tuple[list[dict], str]:
+        """Execute multiple commands in one request.
+
+        Returns:
+            Tuple of (results, error). If error is non-empty, the batch failed.
+            On success, error is empty string and results contains command outputs.
+        """
+        res = self.bridge.send_command("BATCH", commands=json.dumps(commands))
+        if res.get("success"):
+            data = res.get("data")
+            if isinstance(data, str):
+                return json.loads(data).get("results", []), ""
+            return data.get("results", []), ""
+        error = res.get("error", "BATCH command failed")
+        self.last_error = error
+        return [], error
+
+    # --- YAZE State Synchronization ---
+
+    def save_state_sync(self, path: str) -> bool:
+        """Notify YAZE of a state save."""
+        res = self.bridge.send_command("SAVESTATE_SYNC", path=path)
+        return bool(res.get("success"))
+
+    def save_state_watch(self, action: str = "status") -> dict:
+        """Manage YAZE state file watching."""
+        res = self.bridge.send_command("SAVESTATE_WATCH", action=action)
+        if res.get("success"):
+            return res.get("data", {})
+        return {}
+
+    # --- State Tracking ---
+
+    def get_state_diff(self) -> dict:
+        """Get state changes since last call."""
+        res = self.bridge.send_command("STATE_DIFF")
+        if res.get("success"):
+            return res.get("data", {})
+        return {}
+
+    # --- Watchdog helpers ---
+
+    def _frame_value(self) -> int:
+        """Read the game's own frame counter (not emulator host frame)."""
+        return self.bridge.read_memory(OracleRAM.FRAME_COUNTER)
+
+    def ensure_frame_progress(self, frames: int = 30) -> bool:
+        """Return True if the in-game frame counter advances after running a few frames."""
+        before = self._frame_value()
+        # Run minimal frames to give the main loop a chance to tick
+        self.bridge.run_frames(max(1, frames))
+        after = self._frame_value()
+        return after != before
+
+    def watchdog_recover(self, slot: int = 1, frames: int = 30) -> tuple[bool, str]:
+        """Detect stalled game loop and auto-reload a state to recover.
+
+        Args:
+            slot: savestate slot to reload on stall
+            frames: frames to run while checking for progress
+        Returns:
+            (ok, message) where ok=True if no stall detected, False if a reload was issued.
+        """
+        try:
+            progressed = self.ensure_frame_progress(frames=frames)
+        except Exception as exc:
+            self.last_error = f"Watchdog read failed: {exc}"
+            return False, self.last_error
+
+        if progressed:
+            return True, "Frame counter advanced; no action taken."
+
+        # Attempt recovery: reload slot and resume
+        reloaded = self.bridge.load_state(slot=slot)
+        if reloaded:
+            self.bridge.resume()
+            return False, f"Frame counter stalled; reloaded slot {slot} and resumed."
+
+        self.last_error = f"Frame counter stalled and reload of slot {slot} failed."
+        return False, self.last_error
+
+    # --- Watch Triggers ---
+
+    def add_watch_trigger(self, addr: int, value: int, condition: str = "eq") -> Optional[int]:
+        """Add a memory watch trigger."""
+        res = self.bridge.send_command(
+            "WATCH_TRIGGER", 
+            action="add", 
+            addr=hex(addr), 
+            value=hex(value), 
+            condition=condition
+        )
+        if res.get("success"):
+            data = res.get("data")
+            if isinstance(data, str):
+                return json.loads(data).get("id")
+            return data.get("id")
+        return None
+
+    def remove_watch_trigger(self, trigger_id: int) -> bool:
+        """Remove a memory watch trigger."""
+        res = self.bridge.send_command("WATCH_TRIGGER", action="remove", trigger_id=str(trigger_id))
+        return bool(res.get("success"))
+
+    def list_watch_triggers(self) -> list[dict]:
+        """List active watch triggers."""
+        res = self.bridge.send_command("WATCH_TRIGGER", action="list")
+        if res.get("success"):
+            data = res.get("data")
+            if isinstance(data, str):
+                return json.loads(data).get("triggers", [])
+            return data.get("triggers", [])
+        return []
 
     # --- Watch Profiles ---
 
@@ -216,6 +671,86 @@ class OracleDebugClient:
     def write_address(self, addr: int, value: int) -> bool:
         """Write a byte to an address."""
         return self.bridge.write_memory(addr, value)
+
+    # --- Hypothesis Testing ---
+
+    def apply_hypothesis(self, patches: dict[int, list[int] | int]) -> bool:
+        """Apply temporary memory patches for hypothesis testing.
+        
+        Args:
+            patches: Dict mapping address (int) to value (int) or list of bytes.
+        """
+        success = True
+        for addr, data in patches.items():
+            if isinstance(data, list):
+                # Write byte array
+                for i, byte in enumerate(data):
+                    success &= self.bridge.write_memory(addr + i, byte)
+            else:
+                # Write single byte
+                success &= self.bridge.write_memory(addr, data)
+        return success
+
+    def test_hypothesis(
+        self, 
+        state_id: str, 
+        patches: dict[int, list[int] | int], 
+        timeout_frames: int = 300,
+        watch_profile: Optional[str] = None
+    ) -> dict:
+        """Test a hypothesis by applying patches to a state and checking for issues.
+        
+        Args:
+            state_id: State ID to load from library
+            patches: Memory patches to apply
+            timeout_frames: How many frames to run before verifying
+            watch_profile: Optional watch profile to load
+            
+        Returns:
+            Dict with result: 'passed', 'warnings', 'errors', 'diagnostics'
+        """
+        # 1. Load the state
+        if not self.load_library_state(state_id):
+            return {"passed": False, "errors": [f"Failed to load state: {state_id}"]}
+            
+        # 2. Save recovery checkpoint (slot 99)
+        self.bridge.save_state(slot=99)
+        
+        try:
+            # 3. Apply patches
+            if not self.apply_hypothesis(patches):
+                return {"passed": False, "errors": ["Failed to apply patches"]}
+                
+            # 4. Set watch profile
+            if watch_profile:
+                self.set_watch_profile(watch_profile)
+                
+            # 5. Run scenario (wait for frames)
+            self.run_frames(timeout_frames)
+            
+            # 6. Verify result
+            diagnostics = self.get_diagnostics(deep=True)
+            warnings = diagnostics.get("warnings", [])
+            
+            # A hypothesis "passes" if there are no warnings triggered after the wait
+            # and the frame counter is still advancing.
+            stalled = not self.ensure_frame_progress(frames=10)
+            
+            passed = not warnings and not stalled
+            errors = []
+            if stalled:
+                errors.append("Game engine stalled after applying hypothesis")
+                
+            return {
+                "passed": passed,
+                "warnings": warnings,
+                "errors": errors,
+                "diagnostics": diagnostics if not passed else None
+            }
+            
+        finally:
+            # 7. Rollback
+            self.bridge.load_state(slot=99)
 
     # --- Item Management ---
 
@@ -360,8 +895,9 @@ class OracleDebugClient:
         self.bridge.write_memory16(OracleRAM.DBG_WARP_X, x)
         self.bridge.write_memory16(OracleRAM.DBG_WARP_Y, y)
 
-        # 3. Clear status before triggering
-        self.bridge.write_memory(OracleRAM.DBG_WARP_STATUS, 0)
+        # 3. Arm + clear status before triggering
+        self.bridge.write_memory(OracleRAM.DBG_WARP_ARM, OracleRAM.DBG_WARP_ARM_MAGIC)
+        self.bridge.write_memory(OracleRAM.DBG_WARP_STATUS, OracleRAM.DBG_WARP_STATUS_ARMED)
         self.bridge.write_memory(OracleRAM.DBG_WARP_ERROR, 0)
 
         # 4. Trigger the warp (1=cross-area with transition, 2=same-area teleport)
@@ -381,7 +917,7 @@ class OracleDebugClient:
             status = self.bridge.read_memory(OracleRAM.DBG_WARP_STATUS)
             if status == 3:  # Complete
                 return True
-            if status == 0:  # Not yet processed
+            if status in (0, OracleRAM.DBG_WARP_STATUS_ARMED):  # Not yet processed/armed
                 time.sleep(1 / 60)  # Wait one frame
                 continue
             # Status 1 or 2 means still processing
@@ -394,6 +930,9 @@ class OracleDebugClient:
                 1: "Wrong game mode (not in overworld/dungeon play)",
                 2: "Underworld warps not yet supported",
                 3: "Cross-world warp (LW<->DW) - use mirror first, then warp within that world",
+                4: "Invalid request byte (garbage request)",
+                5: "Warp not armed (missing arm byte)",
+                6: "Warp not armed (status mismatch)",
             }
             print(f"Warp failed: {error_msgs.get(error, f'Error code {error}')}")
             return False
@@ -411,13 +950,38 @@ class OracleDebugClient:
 
     # --- Input Injection ---
 
-    def press_button(self, buttons: str, frames: int = 5) -> bool:
+    def press_button(self, buttons: str, frames: int = 5, ensure_running: bool | None = None) -> bool:
         """Press button(s) for specified frames.
 
         Args:
             buttons: Comma-separated button names (a,b,up,down,left,right,start,select,l,r,x,y)
             frames: Number of frames to hold (default 5, ~83ms at 60fps). 0 = indefinite.
         """
+        if ensure_running is None:
+            ensure_running = _env_flag("OOS_INPUT_REQUIRE_RUNNING", True)
+        if ensure_running and not self.ensure_running():
+            self.last_error = "Emulator appears paused; resume before input."
+            return False
+
+        if _env_flag(NAME_ENTRY_GUARD_ENV, True) and not _env_flag(NAME_ENTRY_ALLOW_ENV, False):
+            try:
+                # GameMode values are sourced from usdasm Zelda_3_RAM.log.
+                mode = self.bridge.read_memory(OracleRAM.MODE)
+            except Exception as exc:
+                # Connection error - block button presses as a safety measure
+                self.last_error = f"Name entry guard: failed to read mode ({exc})"
+                return False
+            if mode == GameMode.NAME_ENTRY:
+                guard_path = _guard_state_path()
+                now = time.time()
+                cooldown = _guard_cooldown_seconds()
+                guard_state = _load_guard_state(guard_path)
+                if _guard_active_for_mode(guard_state, mode, now, cooldown):
+                    return True
+                buttons = "start"
+                frames = max(2, min(frames, 5))
+                _write_guard_state(guard_path, mode, now)
+
         # Normalize button names
         btn_list = []
         for btn in buttons.lower().replace(" ", "").split(","):
@@ -429,7 +993,7 @@ class OracleDebugClient:
         btn_str = ",".join(btn_list)
         return self.bridge.press_button(btn_str, frames=frames)
 
-    def hold_direction(self, direction: str, frames: int = 30) -> bool:
+    def hold_direction(self, direction: str, frames: int = 30, ensure_running: bool | None = None) -> bool:
         """Hold a direction for specified frames.
 
         Args:
@@ -439,6 +1003,11 @@ class OracleDebugClient:
         dir_map = {"up": "UP", "down": "DOWN", "left": "LEFT", "right": "RIGHT"}
         if direction.lower() not in dir_map:
             raise ValueError(f"Invalid direction: {direction}")
+        if ensure_running is None:
+            ensure_running = _env_flag("OOS_INPUT_REQUIRE_RUNNING", True)
+        if ensure_running and not self.ensure_running():
+            self.last_error = "Emulator appears paused; resume before input."
+            return False
         return self.bridge.press_button(dir_map[direction.lower()], frames=frames)
 
     # --- Pass-through to MesenBridge ---
@@ -458,14 +1027,195 @@ class OracleDebugClient:
     def save_state(self, **kw):
         return self.bridge.save_state(**kw)
 
+    def save_state_label(
+        self,
+        action: str = "set",
+        slot: int | None = None,
+        path: str | None = None,
+        label: str | None = None,
+    ) -> dict:
+        params: dict = {"action": action}
+        if slot is not None:
+            params["slot"] = slot
+        if path:
+            params["path"] = path
+        if label is not None:
+            params["label"] = label
+        res = self.bridge.send_command("SAVESTATE_LABEL", **params)
+        if res.get("success"):
+            self.last_error = ""
+        else:
+            self.last_error = res.get("error", "") or "SAVESTATE_LABEL failed"
+        return res
+
     def load_state(self, **kw):
+        path = kw.get("path")
+        if path:
+            from .state_library import disallowed_state_reason, is_disallowed_state_path
+            path_obj = Path(str(path)).expanduser()
+            if is_disallowed_state_path(path_obj):
+                self.last_error = disallowed_state_reason(path_obj)
+                return False
+        self.last_error = ""
         return self.bridge.load_state(**kw)
 
     def add_breakpoint(self, **kw):
         return self.bridge.add_breakpoint(**kw)
 
     def get_cpu_state(self):
-        return self.bridge.get_cpu_state()
+        """Get CPU registers and flags via Lua bridge."""
+        # Try the bridge's native get_cpu_state first
+        try:
+            native = self.bridge.get_cpu_state()
+            if native and native.get("success"):
+                return native.get("data")
+        except Exception:
+            pass
+        
+        # Fallback/Extended via Lua bridge REGISTERS command
+        res = self.bridge.send_command("REGISTERS")
+        if res.get("success"):
+            return res.get("data")
+        return {}
+
+    def disassemble(self, address: int, count: int = 10) -> list:
+        """Disassemble code at address."""
+        res = self.bridge.send_command("DISASM", address, count)
+        if res.get("success"):
+            return res.get("data")
+        return []
+
+    def get_callstack(self) -> list:
+        """Get the current CPU callstack."""
+        res = self.bridge.send_command("CALLSTACK")
+        if res.get("success"):
+            return res.get("data")
+        return []
+
+    def get_labels(self, filter_str: str = "") -> dict:
+        """Get labels, optionally filtered by name or address."""
+        res = self.bridge.send_command("LABELS", filter_str)
+        if res.get("success"):
+            return res.get("data")
+        return {}
+
+    def search_memory(self, value: int, size: int = 1, start: int = 0x7E0000, end: int = 0x7FFFFF) -> list:
+        """Search memory for a value."""
+        res = self.bridge.send_command("MEMORY_SEARCH", value, size, start, end)
+        if res.get("success"):
+            return res.get("data", {}).get("addresses", [])
+        return []
+
+    def get_collision_map(self) -> bytes | None:
+        """Fetch the current collision map (ColMap A) from the bridge.
+
+        Returns:
+            bytes: Collision values for the current screen. The size depends
+                   on the format returned by COLLISION_DUMP.
+                   Returns None on failure.
+
+        The COLLISION_DUMP command returns a 2D array with interleaved
+        [tile_id, collision_type] pairs: [tile0, col0, tile1, col1, ...]
+        Each row has 64 values = 32 tile pairs (for a 32-tile wide area).
+        We extract the collision types (odd indices) and flatten to bytes.
+        """
+        res = self.bridge.send_command("COLLISION_DUMP")
+        if not res.get("success"):
+            return None
+
+        data = res.get("data", {})
+        if not isinstance(data, dict):
+            return None
+
+        rows = data.get("data", [])
+
+        # COLLISION_DUMP returns 64 rows x 64 values
+        # Each row is interleaved: [tile_id, collision, tile_id, collision, ...]
+        # So 64 values per row = 32 tiles, each with (tile_id, collision) pair
+        # We extract collision values at odd indices (1, 3, 5, ...)
+        collision_bytes = bytearray()
+
+        for row in rows:
+            # Extract collision types at odd indices
+            for i in range(1, len(row), 2):
+                collision_bytes.append(row[i] & 0xFF)
+
+        return bytes(collision_bytes) if collision_bytes else None
+
+    def get_collision_raw(self) -> dict | None:
+        """Get the raw COLLISION_DUMP response for detailed analysis.
+
+        Returns:
+            dict with keys: 'colmap' (str), 'width' (int), 'height' (int),
+            'data' (list of rows with interleaved tile_id, collision pairs)
+        """
+        res = self.bridge.send_command("COLLISION_DUMP")
+        if res.get("success"):
+            return res.get("data")
+        return None
+
+    def draw_path(self, points: list[tuple[int, int]]) -> bool:
+        """Draw a visual path on the emulator overlay.
+        
+        Args:
+            points: List of (x, y) coordinates
+        """
+        # Format as "x1,y1,x2,y2..."
+        # Limit to reasonable length (CLI arg limits)
+        if not points:
+            return self.bridge.send_command("DRAW_PATH", "").get("success", False)
+            
+        # Take up to 50 points to avoid overflowing command buffer
+        # Resample if path is long? For now just truncate or send sparse
+        chunks = []
+        for x, y in points[:50]: 
+            chunks.append(f"{int(x)},{int(y)}")
+        
+        arg = ",".join(chunks)
+        return self.bridge.send_command("DRAW_PATH", arg).get("success", False)
+
+    def execute_lua(self, code: str) -> dict:
+        """Execute arbitrary Lua code in the emulator."""
+        # Use base64 to avoid issues with special characters in shell commands
+        import base64
+        encoded = base64.b64encode(code.encode()).decode()
+        res = self.bridge.send_command("EXEC_LUA", encoded)
+        if res.get("success"):
+            return res.get("data")
+        return {"error": "Lua execution failed", "bridge_response": res}
+
+    def wait_for_value(self, address: int, value: int, timeout: float = 5.0, interval: float = 0.05) -> bool:
+        """Wait for a memory address to hold a specific value."""
+        import time
+        start = time.time()
+        while time.time() - start < timeout:
+            if self.read_address(address) == value:
+                return True
+            time.sleep(interval)
+        return False
+
+    def wait_for_label(self, label_name: str, timeout: float = 5.0) -> bool:
+        """Wait until the CPU PC reaches a specific symbolic label."""
+        import time
+        # Resolve label to address
+        labels = self.get_labels(label_name)
+        addr = None
+        for a_str, name in labels.items():
+            if name == label_name:
+                addr = int(a_str.replace("$", "0x"), 16)
+                break
+        
+        if addr is None:
+            raise ValueError(f"Label not found: {label_name}")
+            
+        start = time.time()
+        while time.time() - start < timeout:
+            regs = self.get_cpu_state()
+            pc = regs.get("PC")
+            if pc == addr:
+                return True
+            time.sleep(0.01) # Poll faster for PC
+        return False
 
     def step(self, count: int = 1, mode: str = "into"):
         return self.bridge.step(count, mode)
@@ -487,9 +1237,53 @@ class OracleDebugClient:
         """List all entries in the library, optionally filtered by tag."""
         return self.state_library.list_entries(tag=tag)
 
+    def save_library_state(
+        self,
+        label: str,
+        metadata: Optional[dict] = None,
+        tags: Optional[list[str]] = None,
+        captured_by: str = "agent",
+    ) -> tuple[str, list[str]]:
+        """Save a labeled state to the library and return its ID and warnings."""
+        if metadata is None:
+            metadata = self.capture_state_metadata()
+        return self.state_library.save_labeled_state(
+            self.bridge, label, metadata=metadata, tags=tags, captured_by=captured_by
+        )
+
     def load_library_state(self, state_id: str) -> bool:
         """Load a save state from the library by ID."""
         return self.state_library.load_state(self.bridge, state_id)
+
+    def verify_library_state(self, state_id: str, verified_by: str = "scawful") -> bool:
+        """Promote a draft state to canon status after verification.
+        
+        Loads the state and runs the StateValidator to ensure it is healthy.
+        """
+        # 1. Load and validate
+        try:
+            # Load with validation enabled
+            if not self.state_library.load_state(self.bridge, state_id, validate=True, strict=True):
+                self.last_error = f"Verification failed for {state_id}: Validation errors or stall detected."
+                return False
+        except Exception as e:
+            self.last_error = f"Verification failed for {state_id}: {e}"
+            return False
+
+        # 2. Promote in manifest
+        return self.state_library.verify_state(state_id, verified_by=verified_by)
+
+    def deprecate_library_state(self, state_id: str, reason: str = "") -> bool:
+        """Mark a state as deprecated."""
+        return self.state_library.deprecate_state(state_id, reason=reason)
+
+    def backfill_library_hashes(self) -> int:
+        """Compute and store hashes for entries missing md5 field."""
+        return self.state_library.backfill_hashes()
+
+    def scan_library(self) -> int:
+        """Scan library directory for unmanaged states and add them."""
+        return self.state_library.scan_library()
 
     def get_library_sets(self) -> list[dict]:
         """List all state sets in the library."""

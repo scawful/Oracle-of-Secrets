@@ -3,6 +3,8 @@
 ## Overview
 The Mask Salesman sprite (`!SPRID = Sprite_MaskSalesman`) is a complex NPC that functions as a vendor and a quest-giver, offering masks for sale and teaching Link songs. His interactions are highly conditional, branching based on Link's inventory (Ocarina, learned songs, owned masks) and current rupee count.
 
+**Location:** Tail Pond (OW 0x2D) shop interior. The shop is always present; overworld access is blocked by Stalfos guards during the intro sequence (clears after GameState moves to 2).
+
 ## Sprite Properties
 *   **`!SPRID`**: `Sprite_MaskSalesman` (Custom symbol, likely a remapped vanilla ID)
 *   **`!NbrTiles`**: `02`

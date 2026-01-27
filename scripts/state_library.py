@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -19,8 +20,33 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = REPO_ROOT / "Docs" / "Testing" / "save_state_library.json"
 DEFAULT_LIBRARY_ROOT = "Roms/SaveStates/library"
-DEFAULT_MESEN_STATES = Path.home() / "Documents" / "Mesen2" / "SaveStates"
-DEFAULT_MESEN_SAVES = Path.home() / "Documents" / "Mesen2" / "Saves"
+
+def _default_mesen_root() -> Path:
+    env_home = os.getenv("MESEN2_HOME")
+    if env_home:
+        return Path(env_home).expanduser()
+
+    candidates = [
+        Path.home() / "Documents" / "Mesen2",
+        Path.home() / "Library" / "Application Support" / "Mesen2",
+        Path.home() / ".config" / "mesen2",
+        Path.home() / ".config" / "Mesen2",
+    ]
+
+    for candidate in candidates:
+        if (candidate / "SaveStates").exists():
+            return candidate
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    return Path.home() / "Documents" / "Mesen2"
+
+
+DEFAULT_MESEN_ROOT = _default_mesen_root()
+DEFAULT_MESEN_STATES = DEFAULT_MESEN_ROOT / "SaveStates"
+DEFAULT_MESEN_SAVES = DEFAULT_MESEN_ROOT / "Saves"
 DEFAULT_MESEN_CLI = REPO_ROOT / "scripts" / "mesen_cli.sh"
 
 
@@ -55,6 +81,19 @@ def _load_manifest(path: Path) -> dict:
 def _save_manifest(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
+
+
+def _resolve_state_path(entry: dict, manifest: dict) -> Path | None:
+    path_str = entry.get("state_path") or entry.get("path") or ""
+    if not path_str:
+        return None
+    path = Path(path_str)
+    if path.is_absolute():
+        return path
+    if entry.get("state_path"):
+        return (REPO_ROOT / path).resolve()
+    library_root = Path(manifest.get("library_root", DEFAULT_LIBRARY_ROOT))
+    return (REPO_ROOT / library_root / path).resolve()
 
 
 def _find_entry(entries: list[dict], state_id: str) -> dict | None:
@@ -419,9 +458,9 @@ def cmd_export(args) -> None:
         if stored_md5 and stored_md5 != rom_md5 and not args.allow_stale:
             raise SystemExit("ROM MD5 mismatch. Use --allow-stale to override.")
 
-    state_path = Path(entry.get("state_path", ""))
-    if not state_path.is_absolute():
-        state_path = (REPO_ROOT / state_path).resolve()
+    state_path = _resolve_state_path(entry, manifest)
+    if not state_path:
+        raise SystemExit(f"State entry missing path: {args.id}")
     if not state_path.exists():
         raise SystemExit(f"State file missing: {state_path}")
 
@@ -607,9 +646,9 @@ def cmd_set_apply(args) -> None:
         entry = _find_entry(entries, state_id)
         if not entry:
             raise SystemExit(f"Set references unknown state id: {state_id}")
-        state_path = Path(entry.get("state_path", ""))
-        if not state_path.is_absolute():
-            state_path = (REPO_ROOT / state_path).resolve()
+        state_path = _resolve_state_path(entry, manifest)
+        if not state_path:
+            raise SystemExit(f"State entry missing path: {state_id}")
         if not state_path.exists():
             raise SystemExit(f"State file missing: {state_path}")
 
@@ -666,9 +705,11 @@ def cmd_verify(args) -> None:
     for entry in entries:
         if entry.get("pending"):
             continue
-        state_path = Path(entry.get("state_path", ""))
-        if not state_path.is_absolute():
-            state_path = (REPO_ROOT / state_path).resolve()
+        state_path = _resolve_state_path(entry, manifest)
+        if not state_path:
+            print(f"MISSING: {entry.get('id')} -> <no path>")
+            error = True
+            continue
         if not state_path.exists():
             print(f"MISSING: {entry.get('id')} -> {state_path}")
             error = True

@@ -26,6 +26,24 @@ Before implementing changes to sprite behavior or overworld systems:
 
 ---
 
+## Agent Preflight (Before Live Debugging)
+
+1. **Confirm emulator run state**
+   - `python3 scripts/mesen2_client.py run-state`
+   - If paused, resume or use `--allow-paused` for intentional step testing.
+2. **Capture baseline diagnostics**
+   - `python3 scripts/mesen2_client.py diagnostics --json`
+   - Deep capture (items/flags/sprites/watch): `python3 scripts/mesen2_client.py diagnostics --deep --json`
+   - Note mode/submode, time phase, and camera offsets.
+3. **Create a labeled save state at the exact repro point**
+   - `python3 scripts/mesen2_client.py smart-save 1` (slots 1-99 or configured)
+   - `python3 scripts/mesen2_client.py savestate-label set 1 --label "Dark World south crash"`
+   - `python3 scripts/mesen2_client.py lib-save "Dark World south crash"`
+4. **Log actions explicitly**
+   - Record whether inputs are agent-driven or user-driven in scratchpad.
+
+---
+
 ## Testing Protocol
 
 ### Overworld Transitions
@@ -50,6 +68,7 @@ After ANY change to overworld or coordinate code:
    - Watch RAM addresses during transition: `$20-$23`, `$E1-$E9`
    - Use sprite viewer to verify probe spawning/despawning
    - Set breakpoints on `OverworldHandleTransitions`
+   - Run `python3 scripts/overworld_explorer.py transitions` for coverage
 
 ### Sprite Systems
 After changes to sprite detection/AI:
@@ -157,6 +176,13 @@ watch $E7
 
 ; Breakpoint on area transition
 bp $02A5EC  ; Overworld_ActualScreenID
+
+; Run-state / diagnostics
+python3 scripts/mesen2_client.py run-state
+python3 scripts/mesen2_client.py time
+python3 scripts/mesen2_client.py diagnostics --json
+python3 scripts/mesen2_client.py savestate-label set 1 --label "Dark World south crash"
+python3 scripts/mesen2_client.py lib-save "Dark World south crash"
 ```
 
 ---

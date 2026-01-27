@@ -3,6 +3,8 @@
 ; Compilation of wram.asm, sram.asm, Zelda_3_RAM.log,
 ; music.txt, sfx.txt, registers.asm
 ; Credit to spannerisms and MathOnNapkins
+; @doc Docs/Core/Ram.md#verification
+; Comment tags: see Docs/Core/StyleGuide.md#comment-tags
 
 ; Low bytes may be indicated with an "L" suffix
 ; High bytes are indicated with an "H" suffix

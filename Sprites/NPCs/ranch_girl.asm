@@ -1,16 +1,15 @@
 ; =========================================================
 ; Ranch Girl (Chicken Lady / Ocarina Quest)
 ;
-; NARRATIVE ROLE: Side quest NPC who gives Link the Ocarina and teaches
-;   the Song of Storms. The "Chicken Easter Egg" refers to the Cucco
+; NARRATIVE ROLE: Side quest NPC who gives Link the Ocarina.
+;   The "Chicken Easter Egg" refers to the Cucco
 ;   attack sequence that triggers her appearance. This is the prerequisite
 ;   for the Mask Salesman's Song of Healing quest.
 ;
 ; TERMINOLOGY: "Ranch Girl" = RanchGirl / ChickenLady
 ;   - Appears after Cucco attack sequence
 ;   - Gives Ocarina (item 0x14)
-;   - Teaches Song of Storms (SFX 0x2F)
-;   - $7EF34C = 1 after receiving Ocarina
+;   - $7EF34C = 1 after receiving Ocarina (no songs yet)
 ;
 ; TECHNICAL NOTE: This sprite hooks into the existing ChickenLady
 ;   sprite at ROM address $1AFECF, extending vanilla ALTTP behavior.
@@ -18,11 +17,11 @@
 ; BEHAVIOR:
 ;   1. SprTimerA = 1 triggers message display
 ;   2. First visit: Show message 0x17D, set SprMiscD = 1
-;   3. SprMiscD = 1: Play Song of Storms, give Ocarina
+;   3. SprMiscD = 1: Give Ocarina
 ;   4. Subsequent visits: Show message 0x10E
 ;
 ; MESSAGES:
-;   0x17D - First meeting (curse broken, teaches song)
+;   0x17D - First meeting (curse broken, gives Ocarina)
 ;   0x10E - Already has Ocarina
 ;
 ; FLAGS WRITTEN:
@@ -45,7 +44,7 @@
 ; =========================================================
 
 Sprite_ShowMessageMinimal = $05FA8E
-SpriteDraw_RaceGameLady =  $1AF92C
+; SpriteDraw_RaceGameLady already defined in windmill_guy.asm
 Sprite_CheckIfActive_Bank1A = $1AF954
 
 RanchGirl_Message:
@@ -67,13 +66,6 @@ RanchGirl_TeachSong:
   LDA $10 : CMP.b #$0E : BEQ .running_dialog
   LDA $7EF34C : CMP.b #$01 : BCS .has_song
 
-  ; Play the song of storms
-  LDA.b #$2F
-  STA.w $0CF8
-  JSL $0DBB67 ;  Link_CalculateSFXPan
-  ORA.w $0CF8
-  STA $012E ; Play the song learned sound
-
   ; Give Link the Ocarina
   LDY #$14
   ; Clear the item receipt ID
@@ -82,7 +74,8 @@ RanchGirl_TeachSong:
   JSL Link_ReceiveItem
   PLX
 
-  LDA #$01 : STA $7EF34C ; The item gives 02 by default, so decrement that for now
+  LDA #$01 : STA $7EF34C ; Ocarina only (no songs yet)
+  STZ $030F              ; Clear active song selection
 
   .not_started
   .running_dialog

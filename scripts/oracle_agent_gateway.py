@@ -370,7 +370,13 @@ def action_afs_context_warm(_: dict[str, Any]) -> dict[str, Any]:
     return {"ok": False, "error": "afs-warm script not found and afs not in PATH"}
 
 
+def _yaze_allowed() -> bool:
+    return os.getenv("ALLOW_YAZE") == "1"
+
+
 def action_yaze_start(_: dict[str, Any]) -> dict[str, Any]:
+    if not _yaze_allowed():
+        return {"ok": False, "error": "YAZE is disabled for agents. Use Mesen2 OOS only."}
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
@@ -384,6 +390,8 @@ def action_yaze_start(_: dict[str, Any]) -> dict[str, Any]:
 
 
 def action_yaze_stop(_: dict[str, Any]) -> dict[str, Any]:
+    if not _yaze_allowed():
+        return {"ok": False, "error": "YAZE is disabled for agents. Use Mesen2 OOS only."}
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
@@ -394,6 +402,8 @@ def action_yaze_stop(_: dict[str, Any]) -> dict[str, Any]:
 
 
 def action_yaze_gui_toggle(_: dict[str, Any]) -> dict[str, Any]:
+    if not _yaze_allowed():
+        return {"ok": False, "error": "YAZE is disabled for agents. Use Mesen2 OOS only."}
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
@@ -407,6 +417,8 @@ def action_yaze_gui_toggle(_: dict[str, Any]) -> dict[str, Any]:
 
 
 def action_headless_workflow_start(_: dict[str, Any]) -> dict[str, Any]:
+    if not _yaze_allowed():
+        return {"ok": False, "error": "Headless YAZE workflow disabled for agents. Use Mesen2 OOS only."}
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
@@ -438,6 +450,25 @@ def action_start_llm_gateway(_: dict[str, Any]) -> dict[str, Any]:
 
 def action_open_llm_status(_: dict[str, Any]) -> dict[str, Any]:
     return _open_url("http://127.0.0.1:11440/status")
+
+
+def _run_mesen2_cli(args: list[str]) -> dict[str, Any]:
+    oos_root = _resolve_oos_root()
+    if not oos_root:
+        return {"ok": False, "error": "Oracle-of-Secrets root not found"}
+    script = oos_root / "scripts" / "mesen2_client.py"
+    if not script.exists():
+        return {"ok": False, "error": "mesen2_client.py not found"}
+    cmd = [sys.executable, str(script)] + args
+    return _run(cmd, cwd=oos_root)
+
+
+def action_check_day_night(_: dict[str, Any]) -> dict[str, Any]:
+    return _run_mesen2_cli(["time", "--json"])
+
+
+def action_check_zsow_status(_: dict[str, Any]) -> dict[str, Any]:
+    return _run_mesen2_cli(["diagnostics", "--json"])
 
 
 ACTIONS: dict[str, dict[str, Any]] = {
@@ -515,19 +546,19 @@ ACTIONS: dict[str, dict[str, Any]] = {
     },
     "yaze_start": {
         "fn": action_yaze_start,
-        "description": "Start yaze service",
+        "description": "Start yaze service (disabled unless ALLOW_YAZE=1)",
     },
     "yaze_stop": {
         "fn": action_yaze_stop,
-        "description": "Stop yaze service",
+        "description": "Stop yaze service (disabled unless ALLOW_YAZE=1)",
     },
     "yaze_gui_toggle": {
         "fn": action_yaze_gui_toggle,
-        "description": "Toggle yaze GUI",
+        "description": "Toggle yaze GUI (disabled unless ALLOW_YAZE=1)",
     },
     "headless_workflow_start": {
         "fn": action_headless_workflow_start,
-        "description": "Start agent workflow (headless)",
+        "description": "Start agent workflow (headless, disabled unless ALLOW_YAZE=1)",
     },
     "headless_workflow_stop": {
         "fn": action_headless_workflow_stop,
@@ -540,6 +571,14 @@ ACTIONS: dict[str, dict[str, Any]] = {
     "open_llm_status": {
         "fn": action_open_llm_status,
         "description": "Open local OpenAI gateway status",
+    },
+    "check_day_night": {
+        "fn": action_check_day_night,
+        "description": "Report day/night time system state",
+    },
+    "check_zsow_status": {
+        "fn": action_check_zsow_status,
+        "description": "Report ZSCustomOverworld/overworld diagnostic snapshot",
     },
 }
 

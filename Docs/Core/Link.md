@@ -1,5 +1,17 @@
 # Bank $07: Core Player (Link) Engine Analysis
 
+**Last Verified:** UNKNOWN (needs audit)
+**Primary Sources:** Mixed (ROM/disassembly/runtime/sheets)
+**Confidence:** UNKNOWN (needs audit)
+
+## Verification
+| Area | Evidence | Last Verified | Notes |
+| --- | --- | --- | --- |
+| Document | Needs audit | UNKNOWN | Added verification framework |
+
+
+NOTE: Vanilla disassembly is external. In this workspace, JP gigaleak disassembly lives under `../alttp-gigaleak/DISASM/jpdasm/`. If you generate a US `usdasm` export for address parity, it lives under `../alttp-gigaleak/DISASM/usdasm/`. Adjust paths if your setup differs.
+
 **File**: `ALTTP/bank_07.asm`
 **Address Range**: `$078000` - `$07FFFF`
 

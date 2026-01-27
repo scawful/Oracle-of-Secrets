@@ -38,6 +38,134 @@ FortuneTellerMessage:
 ; ... (rest of the table)
 ```
 
+## Message Texts (0xEA-0xFD)
+
+These messages live in `Core/messages.org` under ** Fortune teller** and are shown in order (0xEA → 0xFD).
+
+**0xEA**
+```
+Hocus pocus!
+You will meet with the Great
+Maku Tree once again!
+```
+
+**0xEB**
+```
+Abracadabra alakazam!
+You will find a magic mushroom
+in the Toadstool Woods.
+```
+
+**0xEC**
+```
+Abracadabra alakazam!
+You will find a mushroom lover
+at the mountain Magic Shop[...]
+```
+
+**0xED**
+```
+Hocus pocus!
+You will cross bodies of water
+by freezing the path ahead!
+```
+
+**0xEE**
+```
+Hocus pocus!
+You will find the flippers deep
+in the swamps of the Abyss[...]
+```
+
+**0xEF**
+```
+Abracadabra alakazam!
+The true Hero will save the
+old man lost in the Eon Abyss,
+amidst a sea of lava!
+```
+
+**0xF0**
+```
+Hocus pocus!
+You will heal the sick child with
+your melodies, and in return
+he will help you gain access to
+knowledge forbidden.
+```
+
+**0xF1**
+```
+Abracadabra alakazam!
+The true Hero will find the
+strength to proceed in the
+mountains of the Eon Abyss!
+```
+
+**0xF6**
+```
+Hocus pocus!
+You will be attacked by a
+creature shrouded in twilight,
+in the dark of night, yearning
+to find peace.
+```
+
+**0xF7**
+```
+Abracadabra alakazam!
+The gossip shop in the Eon
+Abyss has treasure for the
+asking[...]
+```
+
+**0xF8**
+```
+Hocus pocus!
+You will find the smith's
+partner trapped behind the
+rubble of a mining operation
+gone wrong.
+```
+
+**0xF9**
+```
+Abracadabra alakazam!
+You will find a treasure resting
+in peace in the graveyard.
+```
+
+**0xFA**
+```
+Hocus pocus!
+You will take the form of the
+Zora and dive into a whirlpool
+to discover secrets galore!
+```
+
+**0xFB**
+```
+Abracadabra alakazam!
+You will collect the pendants
+and claim your prize like each
+Hero before you!
+```
+
+**0xFC**
+```
+Hocus pocus!
+You will run into a barrier if
+you try to enter
+the Fortress of Secrets.
+```
+
+**0xFD**
+```
+Abracadabra alakazam!
+You will need Silver Arrows to
+give Kydrog his final moment.
+```
+
 ## `FortuneTeller_PerformPseudoScience` Routine
 This routine is the central logic for the custom Fortune Teller. It dynamically selects which message to display to Link based on a series of checks against his inventory and various game progression flags stored in SRAM.
 

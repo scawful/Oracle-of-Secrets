@@ -4,13 +4,19 @@ This document outlines best practices for using Asar and managing ROM files with
 
 ## Safety First: Preserve the Clean ROM
 
-The most important rule is to **never modify the clean ROM directly**. The clean dev ROM for the current cycle is:
+The most important rule is to **never modify the clean ROM directly**. The dev ROM for the current cycle may be a ZScream-edited file, for example:
+
+- `Roms/oos168_test2.sfc` (current dev ROM, ZScream 3.2.5 + ZSCustomOverworld v3)
+
+The legacy clean base is still kept read-only:
 
 - `Roms/oos168.sfc` (read-only)
 
 Patched output is always written to:
 
 - `Roms/oos168x.sfc`
+
+Emulator/testing runs should always use the patched ROM (`oos168x.sfc`), not the dev/edit ROM.
 
 When we move to the next version, the number increments:
 
@@ -38,7 +44,7 @@ Use the build script to archive the previous patched ROM and produce a fresh pat
 ```
 
 What it does:
-1. Archives the existing `Roms/oos168x.sfc` to iCloud (Documents/OracleOfSecrets/Roms/).
+1. Archives the existing `Roms/oos168x.sfc` to `~/Documents/OracleOfSecrets/Roms/`.
 2. Copies `Roms/oos168.sfc` → `Roms/oos168x.sfc`.
 3. Runs `asar Oracle_main.asm Roms/oos168x.sfc`.
 

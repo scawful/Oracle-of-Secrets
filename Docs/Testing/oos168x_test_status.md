@@ -85,9 +85,11 @@ Files involved:
 | `mesen_water_debug.lua` | Water collision overlay (existing) | `scripts/` |
 | `verify_water_gate.lua` | Automated water gate test (existing) | `scripts/` |
 
+`verify_water_gate.lua` supports `MESEN_LOADSTATE=/path/to/state.mss` for deterministic headless runs.
+
 ### Runtime Reload Hotkey (Save-State Safety)
 - **Combo:** `L + R + Select + Start`
-- **Effect:** Rebuilds message pointer table + reloads sprite graphics properties (and overworld sprite list when outdoors)
+- **Effect:** Rebuilds message pointer table (dialog dictionaries) + reloads sprite graphics properties + reloads overworld/underworld sprite list based on `INDOORS`
 - **Use:** After loading older save states following ROM rebuilds
 
 ---
@@ -120,7 +122,7 @@ cd /Users/scawful/src/hobby/oracle-of-secrets
 
 ### Launch with debugger:
 ```bash
-open /Users/scawful/src/third_party/mesen2/bin/osx-arm64/Release/osx-arm64/publish/Mesen.app \
+open /Applications/Mesen2\ OOS.app \
   --args /Users/scawful/src/hobby/oracle-of-secrets/Roms/oos168x.sfc
 ```
 
@@ -142,4 +144,4 @@ M scripts/sync_mesen_saves.sh
 ## Archive Location
 
 Previous builds archived to:
-`~/Library/Mobile Documents/com~apple~CloudDocs/Documents/OracleOfSecrets/Roms/`
+`~/Documents/OracleOfSecrets/Roms/`

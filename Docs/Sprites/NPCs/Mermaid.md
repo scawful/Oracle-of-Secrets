@@ -105,6 +105,61 @@ Manages the Librarian's behavior, primarily focused on a map and scroll translat
 *   **`Librarian_TranslateScroll`**: Displays a message based on the scroll ID and transitions to `Librarian_FinishTranslation`.
 *   **`Librarian_FinishTranslation`**: Displays a final message and returns to `LibrarianIdle`.
 
+### Librarian Message IDs
+
+| Message ID | Purpose | Status |
+| --- | --- | --- |
+| `0x012E` | No maps / no scrolls | Present |
+| `0x01A0` | Offer translation | Present |
+| `0x01A1` | Translation start | Present |
+| `0x01A2` | Translation complete | Present |
+| `0x01A3` | All scrolls collected | Present |
+
+**Message 0x012E (current):**
+```
+In your quest you may find
+secret scrolls, bring them all
+to me for translation.
+```
+
+**Message 0x01A0 (Offer Translation):**
+```
+Ah, another secret scroll!
+These ancient writings hold
+mysteries long lost to time.
+Shall I translate its forgotten
+words for you?
+
+> Translate the scroll
+  Read previous scroll
+  Don't touch my stuff
+```
+
+**Message 0x01A1 (Translation Start):**
+```
+Very well. Let us unveil the
+secrets hidden within this
+ancient text.
+Listen closely, for these
+words carry great weight.
+```
+
+**Message 0x01A2 (Translation Done):**
+```
+The scroll has been translated.
+Another piece of Kalyxo's
+history revealed.
+These words may serve you
+well, if you heed them.
+```
+
+**Message 0x01A3 (All Scrolls):**
+```
+It seems you've collected all
+the scrolls in the land of
+Kalyxo! You truly are the hero.
+```
+
 ## `Librarian_CheckForAllMaps` and `Librarian_CheckForNoMaps`
 These helper routines check `DNGMAP1` and `DNGMAP2` (SRAM flags for dungeon maps) to determine Link's map collection status.
 

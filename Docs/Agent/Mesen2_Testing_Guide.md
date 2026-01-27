@@ -1,62 +1,61 @@
 # Mesen2 Testing Guide for AI Agents
 
-**Last Updated:** 2026-01-22
+**Last Updated:** 2026-01-25
 **For:** Claude, Codex, Gemini, and other AI agents
 
 ---
 
 ## Overview
 
-This guide enables AI agents to interact with the Oracle of Secrets ROM running in Mesen2 emulator for automated testing and debugging.
+This guide enables AI agents to interact with the Oracle of Secrets ROM running in the **Mesen2-OoS** fork via the **Unix Domain Socket API**.
+
+> **Note**: Legacy `mesen_cli.sh` and Lua bridges are deprecated. Use the Python `mesen2_client.py` or the `mesen2-mcp` tool.
 
 ## Architecture
 
-### Dual-Backend System
-`mesen_cli.sh` uses the HTTP API on port 8080 when a hub/headless server is running, and falls back to the file bridge when it is not.
+Mesen2-OoS runs a custom C++ `SocketServer` on a separate thread, listening on `/tmp/mesen2-{PID}.sock`.
 
 ```
-┌─────────────┐      HTTP       ┌────────────────────────┐
-│   Agent     │ ──────────────▶ │ mesen_socket_server.py │ (Hub)
-│  (Claude)   │ ◀────────────── │        (Port 8080)     │
-└─────────────┘                 └───────────┬────────────┘
-                                            │
-                       ┌────────────────────┴────────────────────┐
-                       ▼                                         ▼
-              [Interactive Mode]                          [Headless Mode]
-       ┌──────────────────────────────┐           ┌──────────────────────────────┐
-       │           Mesen2             │           │         mesen2-mcp           │
-       │   (Socket Bridge Script)     │           │      (Headless Server)       │
-       └──────────────────────────────┘           └──────────────────────────────┘
+┌─────────────┐      JSON       ┌────────────────────────┐
+│   Agent     │ ──────────────▶ │  Mesen2 (SocketServer) │
+│  (Client)   │ ◀────────────── │  /tmp/mesen2-*.sock    │
+└─────────────┘                 └────────────────────────┘
 ```
 
 ## Quick Start
 
-### Mode A: Interactive Debugging (GUI)
-Best for visual confirmation and "shoulder-surfing".
+### Interactive Debugging (GUI)
 
 ```bash
-# 1. Start the Hub (Terminal A)
-python3 scripts/mesen_socket_server.py
+# 1. Launch Mesen2 with a source-tagged window title
+./scripts/mesen_launch.sh --multi --instance agent-demo --owner claude \
+  --title "Claude" --source manual
 
-# 2. Launch Mesen2 with Socket Bridge
-./scripts/mesen_launch.sh --bridge socket
+# Title shows ACTIVE + source tag for clarity.
 
-# 3. Interact (Terminal B)
-./scripts/mesen_cli.sh state
-./scripts/mesen_cli.sh press A
+# 2. Interact via Python Client
+python3 scripts/mesen2_client.py state --json
+python3 scripts/mesen2_client.py press A
 ```
 
-### Mode B: Headless Automation (CI)
-Best for fast regression testing and background agents.
+### Instance Lifecycle (Required)
+
+- **Source tag is mandatory**: use `--source <label>` or set `MESEN2_AGENT_SOURCE`.
+- **Active instances are highlighted**: window title is prefixed with `ACTIVE` and includes `[src:<label>]`.
+- **Close cleanly** (no force-kill):  
+  `./scripts/mesen2_client.py close --instance <name>`
+  - If marked active: add `--confirm`
+  - `--force` only increases the graceful wait; it never sends kill signals.
+
+### Headless Automation (CI)
 
 ```bash
-# 1. Start the Headless Server
+# 1. Start Headless Server (uses MesenCore.dylib)
 cd ~/src/tools/mesen2-mcp
 python3 -m mesen2_mcp.server
 
 # 2. Interact
-./scripts/mesen_cli.sh state
-./scripts/mesen_cli.sh status
+# (The server exposes MCP tools directly)
 ```
 
 ## Key Memory Addresses
@@ -145,6 +144,19 @@ Else (0x00 or 0x01):
 ./scripts/mesen_cli.sh state
 ```
 
+### Agent Brain (B008 Input Correction)
+```bash
+# Calibrate input correction (prints on/off/unknown)
+python3 scripts/mesen2_client.py brain-calibrate
+
+# Smart save with correction override
+python3 scripts/mesen2_client.py smart-save 3 --b008-mode auto
+python3 scripts/mesen2_client.py smart-save 3 --b008-mode on
+python3 scripts/mesen2_client.py smart-save 3 --b008-mode off
+```
+
+If calibration returns `unknown`, you are likely not in gameplay or no movement was detected.
+
 ### Runtime Reinit (Stale Cache Fixes)
 ```bash
 # Queue reinit targets (comma-separated)
@@ -152,6 +164,14 @@ Else (0x00 or 0x01):
 
 # Check reinit status bits
 ./scripts/mesen_cli.sh reinit-status
+```
+
+### Agent-Friendly CLI (JSON Output)
+
+```bash
+./scripts/mesen2_client.py agent health
+./scripts/mesen2_client.py agent state --pretty
+./scripts/mesen2_client.py agent snapshot
 ```
 
 ### Multi-Instance Bridges

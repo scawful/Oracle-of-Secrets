@@ -1,5 +1,15 @@
 # SNES 65816 Processor Basics
 
+**Last Verified:** UNKNOWN (needs audit)
+**Primary Sources:** Mixed (ROM/disassembly/runtime/sheets)
+**Confidence:** UNKNOWN (needs audit)
+
+## Verification
+| Area | Evidence | Last Verified | Notes |
+| --- | --- | --- | --- |
+| Document | Needs audit | UNKNOWN | Added verification framework |
+
+
 ## 1. Architecture Overview
 
 The 65816 is an 8/16-bit microprocessor used in the Super Nintendo Entertainment System (SNES). It operates in two modes: emulation mode (6502-compatible, 8-bit) and native mode (65816, 16-bit). The SNES typically runs in native mode.

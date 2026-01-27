@@ -3,59 +3,6 @@
 **Date:** 2026-01-21
 **Status:** Implemented
 
-## Current State
-
-### What We Have
-
-| Tool | Purpose | Integration Point |
-|------|---------|-------------------|
-| **mesen_live_bridge.lua** | Game state, input injection | File-based IPC |
-| **yaze_bridge.lua** | Symbol sync to Mesen2 | HTTP API (yaze server) |
-| **MoE Orchestrator** | Route prompts to Triforce models | CLI / Python API |
-| **Triforce Models** | Specialized 65816 experts | LM Studio / Ollama |
-| **z3ed** | AI-driven ROM hacking CLI | gRPC to yaze |
-
-### What Was Missing (Now Implemented)
-
-1. ~~**No test result routing**~~ → `test_runner.py` routes failures to experts
-2. ~~**No visual capture**~~ → `visual_diff.py` + screenshot command
-3. ~~**No unified test format**~~ → JSON test definitions in `tests/`
-4. ~~**Bridges don't communicate**~~ → `yaze_sync.py` daemon
-
-### Implemented Tools
-
-| Script | Purpose | Usage |
-|--------|---------|-------|
-| `export_symbols.py` | WLA→MLB symbol conversion | `./scripts/export_symbols.py --sync` |
-| `visual_diff.py` | Screenshot comparison | `./scripts/visual_diff.py compare a.png b.png` |
-| `yaze_sync.py` | Bidirectional yaze↔Mesen2 sync | `./scripts/yaze_sync.py --status` |
-| `ai_patch.py` | AI-suggested ASM patches | `./scripts/ai_patch.py interactive` |
-| `test_runner.py` | Automated test execution | `./scripts/test_runner.py tests/*.json` |
-
----
-
-## Integration Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Test Orchestrator                            │
-│  (Python script that coordinates all tools)                        │
-└───────────────┬─────────────────────────────────┬──────────────────┘
-                │                                 │
-        ┌───────▼───────┐                 ┌───────▼───────┐
-        │  mesen_cli.sh │                 │ MoE Orchest.  │
-        │  (game state) │                 │ (AI routing)  │
-        └───────┬───────┘                 └───────┬───────┘
-                │                                 │
-        ┌───────▼───────┐                 ┌───────▼───────┐
-        │ Mesen2 Bridge │                 │ Triforce      │
-        │ (Lua script)  │                 │ Nayru/Din/etc │
-        └───────────────┘                 └───────────────┘
-```
-
----
-
-## Quick Wins (Can Do Now)
 
 ### 1. Add Screenshot Command to Bridge
 

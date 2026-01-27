@@ -1,6 +1,14 @@
 ; =========================================================
-; return carry set if active
-; Deactivates the sprite in certain situations
+; Sprite_CheckActive
+;
+; Purpose: Checks if the sprite is currently active.
+;          Deactivates the sprite in certain situations (freezing, pause, etc.).
+;
+; Outputs:
+;   Carry: Set if active, Clear if inactive.
+;
+; Clobbers: A
+; =========================================================
 
 Sprite_CheckActive:
 {
@@ -18,7 +26,19 @@ Sprite_CheckActive:
 }
 
 ; =========================================================
-
+; Sprite_MoveHoriz
+;
+; Purpose: Moves the sprite horizontally based on its X speed.
+;
+; DEEP ANALYSIS:
+;   This routine handles movement with fixed-point precision.
+;   SprXRound (at $0D70) stores the subpixel component.
+;   The speed is shifted (ASL #4) and added to the subpixel buffer.
+;   Carry from this addition automatically propagates to the main 
+;   SprX coordinate, ensuring smooth subpixel-aware movement.
+;
+; Clobbers: A, Y
+; =========================================================
 Sprite_MoveHoriz:
 {
   LDA.w SprXSpeed, X : BEQ .no_velocity
@@ -37,6 +57,14 @@ Sprite_MoveHoriz:
 
 Sprite_MoveXyz:
   JSL Sprite_MoveAltitude
+; =========================================================
+; Sprite_Move
+;
+; Purpose: Core movement routine. Performs horizontal movement 
+;          then falls through to vertical movement.
+;
+; Clobbers: A, Y
+; =========================================================
 Sprite_Move:
   JSL Sprite_MoveHoriz
   ; no RTL, just continue into Sprite_MoveVert
@@ -74,9 +102,17 @@ Sprite_MoveAltitude:
 }
 
 ; =========================================================
-; movement, collision are handled by this function
-; $09 = speed, $08 = max height ( e.g. height:20 = vitreous)
-
+; Sprite_BounceTowardPlayer
+;
+; Purpose: Makes the sprite bounce towards the player.
+;          Handles altitude movement and horizontal direction.
+;
+; Inputs:
+;   $08: Max height (e.g. 20 for Vitreous)
+;   $09: Speed
+;
+; Clobbers: A
+; =========================================================
 Sprite_BounceTowardPlayer:
 {
   JSL Sprite_MoveAltitude
@@ -93,8 +129,15 @@ Sprite_BounceTowardPlayer:
   RTL
 }
 
-; A = Speed, Y = Height
-; Maintain altitude (float effect)
+; =========================================================
+; Sprite_FloatTowardPlayer
+;
+; Purpose: Makes the sprite float towards the player at a constant altitude.
+;
+; Inputs:
+;   A: Speed
+;   Y: Height
+; =========================================================
 Sprite_FloatTowardPlayer:
 {
   TYA : STA.w SprHeight, X
@@ -339,7 +382,11 @@ DragPlayer:
 }
 
 ; =========================================================
-
+; Sprite_DamageFlash_Long / Sprite_Damage_Flash
+;
+; TODO: Consider centralizing distance checks (!) before calling
+;       expensive collision/damage routines in large segmented bosses.
+; =========================================================
 Sprite_DamageFlash_Long:
 {
   PHB : PHK : PLB
@@ -365,7 +412,19 @@ Sprite_Damage_Flash:
   RTS
 }
 
-; A = Spr ID to check
+; =========================================================
+; Sprite_CheckCollisionWithSprite
+;
+; Purpose: Checks if the current sprite is colliding with another sprite of a specific ID.
+;
+; Inputs:
+;   A: Sprite ID to check for.
+;
+; Outputs:
+;   SprMiscF, X: Set to 0x01 if collision occurred.
+;
+; Clobbers: A, X ($00, $01, $02)
+; =========================================================
 Sprite_CheckCollisionWithSprite:
 {
   STA.b $00
@@ -381,9 +440,18 @@ Sprite_CheckCollisionWithSprite:
   RTL
 }
 
-; $00 - ID of the sprite to check
-; $01 - Current sprite index
-; $02 - Index of the sprite found
+; DEEP ANALYSIS:
+;   This is the backbone of the "Probe System" detection logic.
+;   When a probe ($0E20,X = #$41) executes, it calls this to find 
+;   its "parent" or other targets. 
+;   
+;   COORDINATION: 
+;     The probe's lifetime is limited by $0F60,X. If contact 
+;     is made before expiration, it writes to the parent's 
+;     SprAction ($0D80) to trigger an alert state.
+;
+;   Clobbers: A, X ($01)
+; =========================================================
 Sprite_CheckForPresence:
 {
   STX $01
@@ -408,8 +476,19 @@ Sprite_CheckForPresence:
   RTL
 }
 
-; $00 - ID of the sprite to check
-; $02 - Number of sprites found
+; =========================================================
+; Sprite_CountActiveById
+;
+; Purpose: Counts how many active sprites of a given ID are on screen.
+;
+; Inputs:
+;   $00: Sprite ID to count.
+;
+; Outputs:
+;   $02: Number of sprites found.
+;
+; Clobbers: A, X
+; =========================================================
 Sprite_CountActiveById:
 {
   STZ $02

@@ -6,6 +6,8 @@ This document outlines the established coding conventions, architectural pattern
 
 The Oracle of Secrets is a large-scale ROM hack of "The Legend of Zelda: A Link to the Past" for the Super Nintendo. It is built using the `asar` assembler and features a highly modular and data-driven architecture. The project's core philosophy is to replace hardcoded vanilla logic with flexible, data-driven systems, allowing for easier expansion and modification.
 
+NOTE: Vanilla disassembly is external. In this workspace, JP gigaleak disassembly lives under `../alttp-gigaleak/DISASM/jpdasm/`. If you generate a US `usdasm` export for address parity, it lives under `../alttp-gigaleak/DISASM/usdasm/`. Adjust paths if your setup differs.
+
 ## 2. Core Architecture
 
 ### 2.1. Game State Management
@@ -212,6 +214,8 @@ Macros are used extensively to simplify common tasks and improve code readabilit
 - ZScream-specific problems
 
 ### 5.2. Debugging Tools
+
+**Agent rule:** For any agent-driven debugging or automation, use only the Mesen2 OOS fork. Other emulators listed here are for human reference only unless explicitly authorized.
 
 *   **Mesen-S (Recommended):** The most powerful SNES debugger with:
     *   Execution breakpoints with conditions

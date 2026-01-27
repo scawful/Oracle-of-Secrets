@@ -22,6 +22,9 @@ LinkRecoilZ   = $29
 ; Link's subpixel velocity
 ; when this value overflows, Link's main velocity gains an extra pixel
 ; reset on direction change, so not really a positional subpixel
+; [ANALYSIS] Subpixel precision is crucial for smooth custom movement.
+; When implementing custom states (like Kydrog's warp), ensure these are cleared or
+; preserved correctly to avoid "sliding" effects after the sequence ends.
 LinkSubVelY  = $2A
 LinkSubVelX  = $2B
 
@@ -85,6 +88,12 @@ FallTimer    = $5C
 ; LinkState_TemporaryBunny           : 0x1C
 ; LinkState_TreePull                 : 0x1D
 ; LinkState_SpinAttack               : 0x1E
+; [ANALYSIS] Master State Index
+; 0x00: Default state (Movement, Interaction)
+; 0x17: Bunny (Used for Fallen State/Curses)
+; 0x14: CrossingWorlds (Heavily used by Kydrog's Banishment Sequence)
+; When creating new player modes, try to piggyback on existing states (like 0x00 or 0x17) with
+; secondary flags rather than defining new main states, which is risky.
 LinkState    = $5D
 
 ; 0: Link is not in a doorway

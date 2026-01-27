@@ -3,12 +3,12 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: sync_mesen_saves.sh [--target oos168] [--with-patched] [--force]\n                           [--rom PATH] [--source-rom PATH] [--allow-stale]
+Usage: sync_mesen_saves.sh [--target oos168x] [--with-patched] [--force]\n                           [--rom PATH] [--source-rom PATH] [--allow-stale]
 
-Copies oos91x save states/srm into the Mesen2 folders, renaming to a new base.
+Copies oos168x save states/srm into the Mesen2 folders, renaming to a new base.
 
 Options:
-  --target NAME     Base ROM name to copy to (default: oos168)
+  --target NAME     Base ROM name to copy to (default: oos168x)
   --with-patched    Also copy to NAME + "x" (patched ROM)
   --force           Overwrite existing files
   --rom PATH        Target ROM path (for MD5 check)
@@ -20,7 +20,7 @@ Env:
 EOF
 }
 
-TARGET="oos168"
+TARGET="oos168x"
 WITH_PATCHED=0
 FORCE=0
 ALLOW_STALE=0
@@ -67,7 +67,7 @@ done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-SRC_DIR="${REPO_ROOT}/Roms/SaveStates/oos91x"
+SRC_DIR="${REPO_ROOT}/Roms/SaveStates/oos168x"
 MESEN2_DIR="${MESEN2_DIR:-$HOME/Documents/Mesen2}"
 DST_STATES="${MESEN2_DIR}/SaveStates"
 DST_SAVES="${MESEN2_DIR}/Saves"
@@ -125,18 +125,18 @@ copy_file() {
 }
 
 shopt -s nullglob
-for f in "${SRC_DIR}"/oos91x_*.mss; do
+for f in "${SRC_DIR}"/oos168x_*.mss; do
   base="$(basename "${f}")"
-  num="${base#oos91x_}"
+  num="${base#oos168x_}"
   copy_file "${f}" "${DST_STATES}/${TARGET}_${num}"
   if [[ "${WITH_PATCHED}" -eq 1 ]]; then
     copy_file "${f}" "${DST_STATES}/${TARGET}x_${num}"
   fi
 done
 
-if [[ -f "${SRC_DIR}/oos91x.srm" ]]; then
-  copy_file "${SRC_DIR}/oos91x.srm" "${DST_SAVES}/${TARGET}.srm"
+if [[ -f "${SRC_DIR}/oos168x.srm" ]]; then
+  copy_file "${SRC_DIR}/oos168x.srm" "${DST_SAVES}/${TARGET}.srm"
   if [[ "${WITH_PATCHED}" -eq 1 ]]; then
-    copy_file "${SRC_DIR}/oos91x.srm" "${DST_SAVES}/${TARGET}x.srm"
+    copy_file "${SRC_DIR}/oos168x.srm" "${DST_SAVES}/${TARGET}x.srm"
   fi
 fi

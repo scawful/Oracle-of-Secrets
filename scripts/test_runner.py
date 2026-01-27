@@ -27,6 +27,30 @@ try:
 except Exception:
     HAS_SOCKET_BACKEND = False
 
+try:
+    from scripts.mesen2_client_lib.state_library import (
+        disallowed_state_reason,
+        is_disallowed_state_path,
+    )
+except Exception:
+    def is_disallowed_state_path(_path: Path) -> bool:
+        return False
+
+    def disallowed_state_reason(path: Path) -> str:
+        return f"Blocked legacy save state: {path}"
+
+HAS_YAZE_BACKEND = False
+YAZE_ADAPTER = None
+YAZE_MCP_ROOT = os.getenv("YAZE_MCP_PATH") or str(Path.home() / "src/tools/yaze-mcp")
+if Path(YAZE_MCP_ROOT).exists():
+    sys.path.insert(0, YAZE_MCP_ROOT)
+    try:
+        from core.emulator_abstraction.yaze_adapter import YazeAdapter as _YazeAdapter
+        YAZE_ADAPTER = _YazeAdapter
+        HAS_YAZE_BACKEND = True
+    except Exception:
+        HAS_YAZE_BACKEND = False
+
 # Colors for terminal output
 class Colors:
     GREEN = '\033[92m'
@@ -40,23 +64,7 @@ def log(msg: str, color: str = ''):
     """Print colored log message."""
     print(f"{color}{msg}{Colors.RESET}")
 
-CLI_PATH = Path(__file__).parent / "mesen_cli.sh"
-
-def _mesen_cli_cmd(cmd: str, *args, timeout: float = 2.0) -> tuple[bool, str]:
-    """Execute mesen_cli.sh command and return (success, output)."""
-    try:
-        result = subprocess.run(
-            [str(CLI_PATH), cmd, *[str(a) for a in args]],
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=Path(__file__).parent.parent
-        )
-        return result.returncode == 0, result.stdout.strip()
-    except subprocess.TimeoutExpired:
-        return False, "Command timed out"
-    except Exception as e:
-        return False, str(e)
+# No longer using legacy CLI backend.
 
 
 def _parse_addr(addr: Any) -> Optional[int]:
@@ -106,6 +114,14 @@ class MesenSocketBackend:
                     return False, "Invalid address"
                 value = self.client.read_address16(addr)
                 return True, f"READ16:0x{addr:06X}=0x{value:04X} ({value})"
+
+            if command == "readblock":
+                addr = _parse_addr(args[0]) if len(args) >= 1 else None
+                length = parse_int(args[1]) if len(args) >= 2 else None
+                if addr is None or length is None:
+                    return False, "Invalid readblock args"
+                data = self.client.bridge.read_block(addr, int(length))
+                return True, f"READBLOCK:0x{addr:06X}={data.hex()}"
 
             if command == "write":
                 addr = _parse_addr(args[0]) if len(args) >= 1 else None
@@ -175,35 +191,179 @@ class MesenSocketBackend:
             return False, f"Socket backend error: {exc}"
 
 
+class YazeBackend:
+    def __init__(self):
+        if not HAS_YAZE_BACKEND or YAZE_ADAPTER is None:
+            raise RuntimeError("Yaze backend not available")
+        grpc_target = os.getenv("YAZE_GRPC_TARGET")
+        if not grpc_target:
+            port = os.getenv("YAZE_GRPC_PORT", "50052")
+            grpc_target = f"127.0.0.1:{port}"
+        symbols_path = os.getenv("YAZE_SYMBOLS_PATH")
+        self.adapter = YAZE_ADAPTER(grpc_target=grpc_target, symbols_path=symbols_path)
+
+    def is_connected(self) -> bool:
+        return self.adapter.is_available()
+
+    def _read(self, addr: int, size: int = 1) -> int:
+        data = self.adapter.read_memory(addr, size)
+        if not data:
+            return 0
+        if size == 1:
+            return data[0]
+        if size == 2:
+            return data[0] | (data[1] << 8)
+        value = 0
+        for i, b in enumerate(data):
+            value |= b << (i * 8)
+        return value
+
+    def send(self, cmd: str, *args, timeout: float = 2.0) -> tuple[bool, str]:
+        command = cmd.lower()
+
+        if command == "ping":
+            return (self.is_connected(), "pong" if self.is_connected() else "not connected")
+
+        if not self.is_connected():
+            return False, "yaze backend not connected"
+
+        try:
+            if command in ("read", "read8"):
+                addr = _parse_addr(args[0]) if args else None
+                if addr is None:
+                    return False, "Invalid address"
+                value = self._read(addr, 1)
+                return True, f"READ:0x{addr:06X}=0x{value:02X} ({value})"
+
+            if command == "read16":
+                addr = _parse_addr(args[0]) if args else None
+                if addr is None:
+                    return False, "Invalid address"
+                value = self._read(addr, 2)
+                return True, f"READ16:0x{addr:06X}=0x{value:04X} ({value})"
+
+            if command == "readblock":
+                addr = _parse_addr(args[0]) if len(args) >= 1 else None
+                length = parse_int(args[1]) if len(args) >= 2 else None
+                if addr is None or length is None:
+                    return False, "Invalid readblock args"
+                data = self.adapter.read_memory(addr, int(length))
+                return True, f"READBLOCK:0x{addr:06X}={data.hex()}"
+
+            if command == "write":
+                addr = _parse_addr(args[0]) if len(args) >= 1 else None
+                value = parse_int(args[1]) if len(args) >= 2 else None
+                if addr is None or value is None:
+                    return False, "Invalid write args"
+                ok = self.adapter.write_memory(addr, bytes([int(value) & 0xFF]))
+                return ok, f"WRITE:0x{addr:06X}=0x{int(value) & 0xFF:02X}"
+
+            if command == "write16":
+                addr = _parse_addr(args[0]) if len(args) >= 1 else None
+                value = parse_int(args[1]) if len(args) >= 2 else None
+                if addr is None or value is None:
+                    return False, "Invalid write16 args"
+                lo = int(value) & 0xFF
+                hi = (int(value) >> 8) & 0xFF
+                ok = self.adapter.write_memory(addr, bytes([lo, hi]))
+                return ok, f"WRITE16:0x{addr:06X}=0x{int(value) & 0xFFFF:04X}"
+
+            if command == "state":
+                try:
+                    from mesen2_client_lib.constants import OracleRAM
+                except Exception:
+                    OracleRAM = None
+                state = {}
+                if OracleRAM is not None:
+                    state = {
+                        "mode": self._read(OracleRAM.MODE, 1),
+                        "submode": self._read(OracleRAM.SUBMODE, 1),
+                        "area": self._read(OracleRAM.AREA_ID, 1),
+                        "room": self._read(OracleRAM.ROOM_LAYOUT, 1),
+                        "indoors": self._read(OracleRAM.INDOORS, 1),
+                        "link_x": self._read(OracleRAM.LINK_X, 2),
+                        "link_y": self._read(OracleRAM.LINK_Y, 2),
+                        "link_z": self._read(OracleRAM.LINK_Z, 2),
+                    }
+                    state["dungeon_room"] = self._read(OracleRAM.ROOM_ID, 2)
+                    state["health"] = self._read(OracleRAM.HEALTH_CURRENT, 1)
+                    state["max_health"] = self._read(OracleRAM.HEALTH_MAX, 1)
+                    state["rupees"] = self._read(OracleRAM.RUPEES, 2)
+                return True, json.dumps(state)
+
+            if command == "screenshot":
+                path = str(args[0]) if args else ""
+                if not path:
+                    stamp = time.strftime("%Y%m%d_%H%M%S")
+                    path = str(Path("tests/screenshots") / f"yaze_capture_{stamp}.png")
+                path_obj = Path(path)
+                path_obj.parent.mkdir(parents=True, exist_ok=True)
+                data = self.adapter.screenshot()
+                if not data:
+                    return False, "Screenshot failed"
+                path_obj.write_bytes(data)
+                return True, str(path_obj)
+
+            if command in ("loadstate", "load"):
+                path = str(args[0]) if args else ""
+                if not path:
+                    return False, "Missing loadstate path"
+                if path.endswith(".mss"):
+                    return False, "yaze does not support Mesen2 .mss states"
+                ok = self.adapter.load_state(path)
+                return ok, f"LOADSTATE:{path}"
+
+            if command == "loadslot":
+                return False, "yaze does not support slot-based loads"
+
+            if command == "wait-load":
+                seconds = parse_int(args[0]) if args else 1
+                time.sleep(float(seconds or 0))
+                return True, f"WAIT:{seconds}"
+
+            if command == "press":
+                return False, "yaze input not supported via gRPC"
+
+            return False, f"Unsupported yaze command: {cmd}"
+        except Exception as exc:
+            return False, f"Yaze backend error: {exc}"
+
+
 class MesenBackend:
     def __init__(self):
         mode = os.environ.get("OOS_TEST_BACKEND", "auto").lower()
         self.mode = mode
         self.socket_backend = None
-        self.cli_available = CLI_PATH.exists()
+        self.yaze_backend = None
 
-        if mode in ("auto", "socket") and HAS_SOCKET_BACKEND:
+        if mode == "yaze":
+            if HAS_YAZE_BACKEND:
+                self.yaze_backend = YazeBackend()
+            else:
+                self.mode = "none"
+
+        if self.yaze_backend is None and mode in ("auto", "socket") and HAS_SOCKET_BACKEND:
             candidate = MesenSocketBackend()
             if candidate.is_connected() or mode == "socket":
                 self.socket_backend = candidate
 
-        if self.socket_backend is None and mode == "auto" and self.cli_available:
-            self.mode = "cli"
-
     def backend_name(self) -> str:
+        if self.yaze_backend is not None:
+            return "yaze"
         if self.socket_backend is not None:
             return "socket"
-        return "cli" if self.cli_available else "none"
+        return "none"
 
     def send(self, cmd: str, *args, timeout: float = 2.0) -> tuple[bool, str]:
+        if self.yaze_backend is not None:
+            success, output = self.yaze_backend.send(cmd, *args, timeout=timeout)
+            if success or self.mode == "yaze":
+                return success, output
         if self.socket_backend is not None:
             success, output = self.socket_backend.send(cmd, *args, timeout=timeout)
             if success or self.mode == "socket":
                 return success, output
-            # fallback to CLI when in auto mode
-        if self.cli_available:
-            return _mesen_cli_cmd(cmd, *args, timeout=timeout)
-        return False, "No available backend (socket or mesen_cli.sh)"
+        return False, "No available backend (socket or yaze)"
 
 
 BACKEND = MesenBackend()
@@ -310,6 +470,13 @@ def resolve_save_state(save_state: Any, repo_root: Path, manifest_path: Path) ->
                 path_obj = candidate
             else:
                 path_obj = (repo_root / library_root / path_obj)
+        if is_disallowed_state_path(path_obj):
+            return {
+                "kind": "missing",
+                "reason": disallowed_state_reason(path_obj),
+                "allow_missing": allow_missing,
+                "warning": warning,
+            }
         return {
             "kind": "path",
             "path": path_obj,
@@ -461,6 +628,14 @@ def check_preconditions(test: dict, verbose: bool = False) -> tuple[bool, list[s
 
 def execute_step(step: dict, verbose: bool = False) -> tuple[bool, str]:
     """Execute a single test step. Returns (passed, message)."""
+    
+    # Check for asynchronous CRASH events from Mesen2
+    if BACKEND.backend_name() == "socket":
+        # The bridge.send_command might have already received an EVENT in its buffer
+        # For now, we'll do a quick check via a special command if supported, 
+        # or rely on the fact that next socket read might return it.
+        pass
+
     step_type = step['type']
 
     if step_type == 'press':
@@ -688,6 +863,11 @@ def run_test(test_path: Path, verbose: bool = False, dry_run: bool = False,
         log("Start Mesen2 with bridge script loaded first.")
         return "failed"
     log(f"{Colors.GREEN}Bridge connected{Colors.RESET}")
+
+    # Subscribe to events and show OSD message
+    if BACKEND.backend_name() == "socket":
+        mesen_cmd("command", "SUBSCRIBE", "events=all")
+        mesen_cmd("command", "OSD", f"text=Running Test: {test['name']}")
 
     # Load save state (optional)
     if not skip_load and test.get("saveState"):

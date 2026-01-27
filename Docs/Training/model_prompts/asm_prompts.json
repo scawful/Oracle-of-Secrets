@@ -1,0 +1,34 @@
+{
+  "category": "65816_assembly",
+  "description": "Curated prompt/response pairs for 65816 assembly assistance",
+  "prompts": [
+    {
+      "id": "asm_prompt_001",
+      "prompt": "What does PHB : PHK : PLB do in 65816 assembly?",
+      "response": "This is a standard bank setup sequence in 65816:\n\n1. **PHB** (Push Data Bank) - Saves current data bank to stack\n2. **PHK** (Push Program Bank) - Pushes current code bank to stack\n3. **PLB** (Pull Data Bank) - Sets data bank = current code bank\n\nThis ensures that subsequent memory accesses use the correct bank. At routine end, use `PLB` to restore the original data bank.\n\nExample:\n```asm\nMyRoutine:\n{\n    PHB : PHK : PLB    ; Setup: data bank = code bank\n    LDA $8000          ; Now accesses current bank's $8000\n    PLB                ; Restore original data bank\n    RTL\n}\n```",
+      "quality": "verified",
+      "tags": ["bank-setup", "phb", "plb", "pattern"]
+    },
+    {
+      "id": "asm_prompt_002",
+      "prompt": "How do I read a sprite's X position in ALTTP?",
+      "response": "ALTTP sprites store positions in two parts - low byte and high byte:\n\n```asm\n; Low byte (pixel position within screen)\nLDA.w SprX, X        ; $0D10,X - X position low byte\nLDA.w SprY, X        ; $0D00,X - Y position low byte\n\n; High byte (for large coordinates)\nLDA.w SprXH, X       ; $0D30,X - X position high byte\nLDA.w SprYH, X       ; $0D20,X - Y position high byte\n\n; Full 16-bit position\nLDA.w SprX, X        ; Low byte in A\nXBA                  ; Move to high byte of A\nLDA.w SprXH, X       ; Low byte now has high byte\nXBA                  ; Swap back - A = full 16-bit X\n```\n\nX register must be set to sprite slot (0-15, multiplied by sprite table stride).",
+      "quality": "verified",
+      "tags": ["sprite", "position", "wram"]
+    },
+    {
+      "id": "asm_prompt_003",
+      "prompt": "What's the difference between JSL and JSR?",
+      "response": "Both are subroutine calls, but differ in range and stack usage:\n\n**JSR (Jump to Subroutine)**\n- 16-bit address (same bank)\n- Pushes 2 bytes (return address low+high)\n- Returns with RTS\n- Faster, smaller code\n\n**JSL (Jump to Subroutine Long)**\n- 24-bit address (any bank)\n- Pushes 3 bytes (bank + return address)\n- Returns with RTL\n- Required for cross-bank calls\n\n```asm\n; Same bank call\nJSR LocalRoutine     ; 3 bytes, returns with RTS\n\n; Cross-bank call\nJSL $02D8EB          ; 4 bytes, returns with RTL\nJSL FarRoutine       ; Symbol must resolve to 24-bit\n```\n\nMixing JSR/RTS with JSL/RTL corrupts the stack!",
+      "quality": "verified",
+      "tags": ["jsr", "jsl", "subroutine", "basics"]
+    },
+    {
+      "id": "asm_prompt_004",
+      "prompt": "How do I detect if Link is near my sprite?",
+      "response": "Use the sprite-Link distance calculation routines:\n\n```asm\nCheckPlayerProximity:\n{\n    ; Method 1: Use vanilla collision check\n    JSL Sprite_CheckPlayerCollision\n    BCC .not_colliding      ; Carry clear = no collision\n    ; Player is touching sprite\n    \n.not_colliding:\n    ; Method 2: Manual distance check\n    LDA.w $0022             ; Link X low\n    SEC\n    SBC.w SprX, X           ; Subtract sprite X\n    BPL .positive_x\n    EOR #$FF                ; Absolute value\n    INC A\n.positive_x:\n    CMP.b #$20              ; Within 32 pixels?\n    BCS .too_far_x\n    \n    ; Repeat for Y axis...\n    RTS\n}\n```\n\nFor visual range (not just collision), check both X and Y distance and compare against your detection radius.",
+      "quality": "verified",
+      "tags": ["sprite", "collision", "player-detection"]
+    }
+  ]
+}

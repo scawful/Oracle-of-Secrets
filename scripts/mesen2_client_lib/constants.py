@@ -12,6 +12,7 @@ class OracleRAM:
     # Game State
     MODE = 0x7E0010  # Game mode
     SUBMODE = 0x7E0011  # Sub-mode
+    FRAME_COUNTER = 0x7E001A  # Game frame counter (increments in main loop)
     AREA_ID = 0x7E008A  # Current area/room ID
     ROOM_LAYOUT = 0x7E00A0  # Room layout index
     INDOORS = 0x7E001B  # 0=outdoors, 1=indoors
@@ -28,6 +29,11 @@ class OracleRAM:
     TIME_HOURS = 0x7EE000  # Current hour (0-23)
     TIME_MINUTES = 0x7EE001  # Current minute (0-59)
     TIME_SPEED = 0x7EE002  # Time speed multiplier
+    TIME_BLUE = 0x7EE010  # TimeState.BlueVal (16-bit, BGR555)
+    TIME_GREEN = 0x7EE012  # TimeState.GreenVal (16-bit, BGR555)
+    TIME_RED = 0x7EE014  # TimeState.RedVal (16-bit, BGR555)
+    TIME_TEMP = 0x7EE016  # TimeState.TempColor (16-bit)
+    TIME_SUBCOLOR = 0x7EE018  # TimeState.SubColor (16-bit)
 
     # Scroll Registers (Lost Woods issue)
     SCROLL_X_LO = 0x7E00E1  # X scroll low
@@ -70,19 +76,24 @@ class OracleRAM:
     MAP_ICON = 0x7EF3C7  # Dungeon guidance icon
     SPAWN_POINT = 0x7EF3C8  # Spawn point ID
 
-    # Debug Warp System ($7E074C-$7E0753) - ROM code at $3CB400
+    # Debug Warp System ($7E074B-$7E0753) - ROM code at $3CB400
     # Write to these addresses to trigger a debug warp:
-    #   1. Write target area to DBG_WARP_AREA
-    #   2. Write target X (16-bit) to DBG_WARP_X
-    #   3. Write target Y (16-bit) to DBG_WARP_Y
-    #   4. Write 1 (cross-area) or 2 (same-area) to DBG_WARP_REQUEST
-    #   5. Poll DBG_WARP_STATUS for completion
+    #   1. Write DBG_WARP_ARM with DBG_WARP_ARM_MAGIC
+    #   2. Write DBG_WARP_STATUS with DBG_WARP_STATUS_ARMED
+    #   3. Write target area to DBG_WARP_AREA
+    #   4. Write target X (16-bit) to DBG_WARP_X
+    #   5. Write target Y (16-bit) to DBG_WARP_Y
+    #   6. Write 1 (cross-area) or 2 (same-area) to DBG_WARP_REQUEST
+    #   7. Poll DBG_WARP_STATUS for completion
+    DBG_WARP_ARM = 0x7E074B  # Must be set to DBG_WARP_ARM_MAGIC to arm requests
     DBG_WARP_REQUEST = 0x7E074C  # 1=cross-area warp, 2=same-area warp
     DBG_WARP_AREA = 0x7E074D  # Target overworld area ID
     DBG_WARP_X = 0x7E074E  # Target X (16-bit: lo at 074E, hi at 074F)
     DBG_WARP_Y = 0x7E0750  # Target Y (16-bit: lo at 0750, hi at 0751)
     DBG_WARP_STATUS = 0x7E0752  # 0=idle, 1=pending, 2=in_progress, 3=complete
     DBG_WARP_ERROR = 0x7E0753  # Error code: 1=wrong mode, 2=UW not supported
+    DBG_WARP_ARM_MAGIC = 0xA5
+    DBG_WARP_STATUS_ARMED = 0x5A
 
     # Items ($7EF340-35F)
     BOW = 0x7EF340  # 1=Bow, 2=+Arrows, 3=Silver, 4=Silver+Arrows
@@ -145,6 +156,10 @@ class GameMode:
     """Oracle game mode values."""
 
     TITLE_RESET = 0x00
+    FILE_SELECT = 0x01
+    COPY_PLAYER = 0x02
+    ERASE_PLAYER = 0x03
+    NAME_ENTRY = 0x04
     LOAD_FILE = 0x05
     DUNGEON_LOAD = 0x06
     DUNGEON = 0x07
@@ -175,8 +190,31 @@ class OverworldSubmode:
     WHIRLPOOL = 0x2E
 
 
+OVERWORLD_SUBMODE_NAMES = {
+    OverworldSubmode.PLAYER_CONTROL: "PLAYER_CONTROL",
+    OverworldSubmode.LOAD_AUX_GFX: "LOAD_AUX_GFX",
+    OverworldSubmode.TRIGGER_TILEMAP: "TRIGGER_TILEMAP",
+    OverworldSubmode.LOAD_MAP_GFX: "LOAD_MAP_GFX",
+    OverworldSubmode.LOAD_SPRITES: "LOAD_SPRITES",
+    OverworldSubmode.START_SCROLL: "START_SCROLL",
+    OverworldSubmode.RUN_SCROLL: "RUN_SCROLL",
+    OverworldSubmode.EASE_OFF_SCROLL: "EASE_OFF_SCROLL",
+    OverworldSubmode.FINALIZE_ENTRY: "FINALIZE_ENTRY",
+    OverworldSubmode.START_MOSAIC: "START_MOSAIC",
+    OverworldSubmode.LOAD_SUBSCREEN: "LOAD_SUBSCREEN",
+    OverworldSubmode.FADE_BACK_IN: "FADE_BACK_IN",
+    OverworldSubmode.MIRROR_WARP: "MIRROR_WARP",
+    OverworldSubmode.RECOVER_DROWNING: "RECOVER_DROWNING",
+    OverworldSubmode.WHIRLPOOL: "WHIRLPOOL",
+}
+
+
 MODE_NAMES = {
     GameMode.TITLE_RESET: "Title/Reset",
+    GameMode.FILE_SELECT: "File Select",
+    GameMode.COPY_PLAYER: "Copy Player",
+    GameMode.ERASE_PLAYER: "Erase Player",
+    GameMode.NAME_ENTRY: "Name Entry",
     GameMode.LOAD_FILE: "Load File",
     GameMode.DUNGEON_LOAD: "Dungeon Load",
     GameMode.DUNGEON: "Dungeon",

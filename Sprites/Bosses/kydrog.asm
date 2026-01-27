@@ -41,6 +41,9 @@
 ;
 ; LORE HOOK: Message 0x21 contains "cast away to the Eon Abyss,
 ;   just as I was" - hints at his fallen hero origin.
+;
+; TODO: Implement "Fallen Knight" transition logic where his palette 
+;       changes as his armor breaks (visual storytelling).
 ; =========================================================
 ; Cutscene Kydrog Sprite Properties
 ; =========================================================
@@ -143,6 +146,9 @@ Sprite_Kydrog_Main:
 
   Kydrog_WarpPlayerAway:
   {
+    ; TODO: Trigger "Abyss" background effect here (BG3 mosaic or HDMA scanlines)
+    ;       to emphasize the banishment sequence.
+    
     ; Put us in the Dark World.
     LDA $7EF3CA : EOR.b #$40 : STA $7EF3CA
 

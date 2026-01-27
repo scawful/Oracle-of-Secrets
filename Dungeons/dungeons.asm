@@ -9,16 +9,16 @@ org $098823 : LDY.b #$68
 ; Disable hardcoded sanctuary song
 org $028BE7 : NOP #2
 
-; Fixed color fade-in effect
-; TODO: Investigate if this is the best way to fix this.
-; Module06_UnderworldLoad
+; Fixed color fade-in effect for bed cutscene
+; NOTE: This only runs when GameState=0 and specific flag not set (Link's intro)
+; Vanilla values restored - previously incorrectly set to all zeros
+; Module06_UnderworldLoad bed cutscene block at $028364
 org $028364
-Module06_UnderworldLoad:
 {
-  ; Fixed color RGB: #808000
-  LDA.b #$00 : STA.b $9C
-  LDA.b #$00 : STA.b $9D
-  LDA.b #$00 : STA.b $9E
+  ; Fixed color for bed cutscene (vanilla values)
+  LDA.b #$30 : STA.b $9C   ; COLDATA R component
+  LDA.b #$50 : STA.b $9D   ; COLDATA G component
+  LDA.b #$80 : STA.b $9E   ; COLDATA B component
   LDA.b #$00
   STA.l $7EC005
   STA.l $7EC006
@@ -162,15 +162,16 @@ LDA $0682
 org $01F1C9 ; Replace static LDA
 LDA $0682
 
-org $01F3D2 ; do tilemapcollision stuff for the dam
-JML WaterGate_FillComplete_Hook
-NOP #4 ; Pad to 8 bytes (replaces STZ $1E + STZ $1F + JSL IrisSpotlight_ResetTable)
+; DISABLED FOR TESTING
+; org $01F3D2 ; do tilemapcollision stuff for the dam
+; JML WaterGate_FillComplete_Hook
+; NOP #4 ; Pad to 8 bytes (replaces STZ $1E + STZ $1F + JSL IrisSpotlight_ResetTable)
 
 ; Underworld_LoadRoom exit hook (torch loop end)
-; Re-enabled with explicit torch table check (no stale Z flag reliance).
-org $0188DF
-JML Underworld_LoadRoom_ExitHook
-NOP #1
+; DISABLED FOR TESTING - was re-enabled but still causing issues
+; org $0188DF
+; JML Underworld_LoadRoom_ExitHook
+; NOP #1
 
 
 ; RoomTag_WaterGate

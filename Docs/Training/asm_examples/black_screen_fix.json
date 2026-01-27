@@ -1,0 +1,12 @@
+{
+  "id": "black_screen_fix_001",
+  "category": "debugging",
+  "title": "SEP/REP Wrapper for Cross-Bank Calls",
+  "context": "Black screen bugs in ALTTP hacks often occur when 16-bit/8-bit mode mismatches happen during bank switches. The called routine may expect A in 8-bit mode but the caller left it in 16-bit mode.",
+  "input": "Fix black screen occurring during building entry transitions",
+  "code": "; BEFORE (Bug):\n; This call could corrupt state if routine expects 8-bit A\nJSL Vanilla_CheckTransition\n\n; AFTER (Fixed):\n; SEP/REP wrapper ensures mode consistency\nSEP #$30                         ; Force 8-bit A and X/Y\nJSL Vanilla_CheckTransition\nREP #$30                         ; Restore 16-bit mode if needed\n\n; Alternative: Use wrapper macro\n%SafeVanillaCall(Vanilla_CheckTransition)",
+  "explanation": "The 65816 processor has separate 8-bit and 16-bit modes controlled by the P register:\n\n1. **SEP #$30**: Sets bits in P register - makes A, X, Y all 8-bit\n2. **REP #$30**: Resets bits in P register - makes A, X, Y all 16-bit\n\nWhy this causes black screens:\n- Vanilla routines assume specific register widths\n- If A is 16-bit when it should be 8-bit, LDA/STA operations corrupt adjacent bytes\n- INIDISP ($2100) getting wrong value = forced blanking = black screen\n- GameMode ($7E0010) corruption = stuck in invalid state\n\nThe SEP/REP wrapper ensures:\n- Entry state matches vanilla expectations\n- Exit state is restored for your code\n- No mode mismatch corruption",
+  "tags": ["debugging", "black-screen", "sep-rep", "mode-mismatch", "fix"],
+  "verified": true,
+  "source": "campaign_iteration_65_tier1_fixes"
+}

@@ -1,5 +1,15 @@
 # Memory Map
 
+**Last Verified:** UNKNOWN (needs audit)
+**Primary Sources:** Mixed (ROM/disassembly/runtime/sheets)
+**Confidence:** UNKNOWN (needs audit)
+
+## Verification
+| Area | Evidence | Last Verified | Notes |
+| --- | --- | --- | --- |
+| Document | Needs audit | UNKNOWN | Added verification framework |
+
+
 This document provides a detailed map of the WRAM and SRAM memory regions, serv| `$7EF358` | `WolfMask`        | Flag indicating if the player has obtained the Wolf Mask.               |
 
 ### Repurposed Vanilla SRAM Blocks
@@ -94,6 +104,21 @@ This section details the layout of the game's volatile memory.
 | `$7E0739` | `GoldstarOrHookshot`   | Differentiates between the vanilla Hookshot and the custom Goldstar item.  |
 | `$7E073A` | `Neck_Index`           | Used for multi-part sprites, like a centipede body.                      |
 | `$7E0745` | `FishingOrPortalRod`   | Differentiates between the Fishing Rod and the Portal Rod.               |
+| `$7E0746` | `DBG_REINIT_FLAGS`     | Debug reinit request bitfield (bridge -> game).                          |
+| `$7E0747` | `DBG_REINIT_STATUS`    | Debug reinit completed bitfield.                                         |
+| `$7E0748` | `DBG_REINIT_ERROR`     | Debug reinit error bitfield.                                             |
+| `$7E0749` | `DBG_REINIT_SEQ`       | Debug reinit request sequence counter.                                   |
+| `$7E074A` | `DBG_REINIT_LAST`      | Debug reinit last-executed target.                                       |
+| `$7E074B` | `DBG_WARP_ARM`         | Debug warp arm byte (must be set to 0xA5).                               |
+| `$7E074C` | `DBG_WARP_REQUEST`     | Debug warp request (1=cross-area, 2=same-area).                          |
+| `$7E074D` | `DBG_WARP_AREA`        | Debug warp target overworld area.                                        |
+| `$7E074E` | `DBG_WARP_X_LO`        | Debug warp target X (low byte).                                          |
+| `$7E074F` | `DBG_WARP_X_HI`        | Debug warp target X (high byte).                                         |
+| `$7E0750` | `DBG_WARP_Y_LO`        | Debug warp target Y (low byte).                                          |
+| `$7E0751` | `DBG_WARP_Y_HI`        | Debug warp target Y (high byte).                                         |
+| `$7E0752` | `DBG_WARP_STATUS`      | Debug warp status (0=idle, 0x5A=armed, 2=in_progress, 3=complete).        |
+| `$7E0753` | `DBG_WARP_ERROR`       | Debug warp error code.                                                   |
+| `$7E0754` | `DBG_WARP_GFX_PENDING` | Debug warp pending GFX reload flag.                                      |
 
 ---
 

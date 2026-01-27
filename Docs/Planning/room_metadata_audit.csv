@@ -1,0 +1,134 @@
+room_id_hex,room_id_dec,room_name,status,blockset,spriteset,palette,layout,floor1,floor2,effect,tag1,tag2,object_count,heuristic_tags,heuristic_source
+0x00,0,Ganon,success,19,23,33,0,6,14,7,0,0,24,,
+0x01,1,Hyrule Castle (North Corridor),success,0,42,12,4,6,6,0,0,0,41,castle,room_name
+0x02,2,Behind Sanctuary (Switch),success,3,6,17,0,0,0,0,0,0,0,switch;sanctuary,room_name
+0x03,3,Houlihan,success,6,25,1,0,1,14,0,0,0,13,,
+0x04,4,Dragon Ship (Crysta-Roller),success,13,38,24,0,1,14,0,20,0,42,ship,room_name
+0x05,5,Empty,success,1,20,5,0,0,14,1,0,0,54,,
+0x06,6,Zora Temple (Arrghus[Boss]),success,1,20,9,0,2,14,0,0,32,108,boss;temple,room_name
+0x07,7,Tower of Hera (Moldorm[Boss]),success,7,22,15,4,1,4,1,63,0,345,boss;tower,room_name
+0x08,8,Cave (Healing Fairy),success,6,7,3,0,1,5,0,0,0,57,fairy;cave,room_name
+0x09,9,Mushroom Grotto,success,7,8,15,7,1,14,0,58,0,103,grotto,room_name
+0x0A,10,Mushroom Grotto (Stalfos Trap),success,7,19,15,6,1,15,0,0,0,84,trap;grotto,room_name
+0x0B,11,Mushroom Grotto (Turtle),success,7,8,15,2,1,14,0,0,0,96,grotto,room_name
+0x0C,12,Fortress of Secrets (Entrance),success,14,19,3,7,1,6,0,0,0,55,entrance;fortress,room_name
+0x0D,13,Fortress of Secrets (Agahnim2[Boss]),success,14,23,3,0,9,10,5,63,0,20,boss;fortress,room_name
+0x0E,14,Tail Palace (Entrance),success,5,19,6,0,1,14,0,0,0,92,entrance;palace,room_name
+0x0F,15,Empty Clone,success,3,13,22,1,2,3,0,0,0,37,,
+0x10,16,Ganon Evacuation Route,success,19,34,33,1,1,14,0,0,0,71,,
+0x11,17,Hyrule Castle (Bombable Stock),success,3,19,17,1,3,5,0,0,0,71,castle,room_name
+0x12,18,Sanctuary,success,3,5,17,7,3,7,1,0,0,90,sanctuary,room_name
+0x13,19,Dragon Ship (Hokku-Bokku Key 2),success,13,38,24,0,0,0,0,0,0,20,ship,room_name
+0x14,20,Dragon Ship (Big Key),success,13,38,24,0,0,11,0,0,0,35,ship,room_name
+0x15,21,Dragon Ship,success,13,38,24,0,0,11,0,0,0,30,ship,room_name
+0x16,22,Zora Temple (Swimming Treadmill),success,1,30,9,5,2,14,3,0,0,67,temple,room_name
+0x17,23,Tower of Hera (Moldorm Fall),success,7,29,15,7,1,4,1,0,0,301,tower,room_name
+0x18,24,Cave,success,1,17,9,7,2,15,1,0,0,141,cave,room_name
+0x19,25,Mushroom Grotto (Dark Maze),success,7,31,15,0,1,14,0,4,0,110,grotto,room_name
+0x1A,26,Mushroom Grotto (Big Chest),success,7,43,15,7,1,14,1,0,0,131,big_chest;grotto,room_name
+0x1B,27,Mushroom Grotto (Mimics / Moving Wall),success,7,43,15,3,1,1,0,0,0,84,grotto,room_name
+0x1C,28,Fortress of Secrets (Ice Armos),success,14,9,3,0,1,14,0,63,0,48,fortress,room_name
+0x1D,29,Fortress of Secrets (Final Hallway),success,14,23,3,4,2,14,0,0,0,66,fortress,room_name
+0x1E,30,Tail Palace (Bomb Floor / Bari),success,5,19,6,7,1,4,0,0,0,77,palace,room_name
+0x1F,31,Tail Palace (Pengator / Big Key),success,5,41,3,0,0,0,0,0,0,0,palace,room_name
+0x20,32,Agahnim's Tower (Agahnim[Boss]),success,2,18,17,0,0,0,0,0,0,0,boss;tower,room_name
+0x21,33,Hyrule Castle (Key-rat),success,3,1,17,0,0,0,0,0,0,24,castle,room_name
+0x22,34,Hyrule Castle (Sewer Text Trigger),success,3,1,17,3,3,0,0,0,0,18,castle,room_name
+0x23,35,Dragon Ship (West Exit to Balcony),success,13,38,24,0,1,14,0,0,0,37,ship,room_name
+0x24,36,Dragon Ship (Double Hokku-Bokku / Big chest),success,13,38,24,0,1,14,0,0,0,72,big_chest;ship,room_name
+0x25,37,Empty Clone,success,1,17,9,7,2,15,3,0,0,53,,
+0x26,38,Zora Temple (Statue),success,1,17,9,7,2,14,0,0,0,119,temple,room_name
+0x27,39,Tower of Hera (Big Chest),success,1,8,9,7,2,14,0,26,0,77,big_chest;tower,room_name
+0x28,40,Zora Temple (Entrance),success,1,17,9,7,2,15,1,0,0,134,entrance;temple,room_name
+0x29,41,Kalyxo Castle (Mothula[Boss]),success,2,9,12,0,1,14,0,21,0,17,boss;castle,room_name
+0x2A,42,Mushroom Grotto (Big Hub),success,7,8,15,7,1,5,1,0,0,100,grotto,room_name
+0x2B,43,Mushroom Grotto (Map Chest / Fairy),success,7,43,15,7,1,1,0,0,0,78,map_chest;fairy;grotto,room_name
+0x2C,44,Cave,success,6,7,24,5,0,14,0,0,0,87,cave,room_name
+0x2D,45,Empty Clone,success,14,31,3,7,1,8,0,0,0,63,,
+0x2E,46,Tail Palace (Compass),success,5,19,6,0,1,8,0,0,0,69,palace,room_name
+0x2F,47,Cave (Kakariko Well HP),success,6,25,24,2,1,5,0,0,0,61,cave,room_name
+0x30,48,Agahnim's Tower (Maiden Sacrifice Chamber),success,2,18,12,0,1,14,0,0,0,26,tower,room_name
+0x31,49,Tower of Hera (Hardhat Beetles),success,7,26,15,0,0,0,0,0,0,0,tower,room_name
+0x32,50,Hyrule Castle (Sewer Key Chest),success,7,29,15,7,6,1,1,0,0,312,key_chest;castle,room_name
+0x33,51,Shrine of Power (Lanmolas[Boss]),success,7,30,15,7,1,4,1,0,0,463,boss;shrine,room_name
+0x34,52,Zora Temple (Push Block Puzzle / Pre-Big Key),success,1,17,9,3,2,14,0,0,0,110,temple,room_name
+0x35,53,Zora Temple (Big Key / BS),success,1,17,9,7,2,15,1,0,0,167,temple,room_name
+0x36,54,Zora Temple (Big Chest),success,1,17,9,7,2,15,0,0,0,116,big_chest;temple,room_name
+0x37,55,Zora Temple (Map Chest / Water Fill),success,1,17,9,7,2,14,0,0,0,227,map_chest;temple,room_name
+0x38,56,Zora Temple (Key Pot),success,1,17,9,7,2,14,0,0,0,134,temple,room_name
+0x39,57,Kalyxo Castle (Gibdo Key / Mothula Hole),success,2,9,12,0,1,8,0,0,0,60,castle,room_name
+0x3A,58,Mushroom Grotto (Bombable Floor),success,7,43,15,7,1,8,1,0,0,190,grotto,room_name
+0x3B,59,Mushroom Grotto (Spike Block / Conveyor),success,7,26,15,3,1,5,0,4,0,77,grotto,room_name
+0x3C,60,Cave,success,6,19,24,7,0,14,0,0,32,60,cave,room_name
+0x3D,61,Fortress of Secrets (Torch 2),success,14,36,3,7,1,0,0,0,0,32,fortress,room_name
+0x3E,62,Tail Palace (Stalfos Knights / Conveyor Hellway),success,5,19,6,6,1,14,0,29,0,61,palace,room_name
+0x3F,63,Tail Palace (Map Chest),success,5,19,6,0,1,14,0,0,0,46,map_chest;palace,room_name
+0x40,64,Agahnim's Tower (Final Bridge),success,3,2,17,7,3,15,1,0,0,79,tower,room_name
+0x41,65,Hyrule Castle (First Dark),success,3,2,17,2,3,14,0,0,0,67,castle,room_name
+0x42,66,Hyrule Castle (6 Ropes),success,3,1,17,0,3,15,1,0,0,66,castle,room_name
+0x43,67,Shrine of Power (Torch Puzzle / Moving Wall),success,7,29,15,7,1,4,1,0,0,335,shrine,room_name
+0x44,68,Glacia Estate (Big Chest),success,1,17,9,7,2,14,0,0,0,152,big_chest;estate,room_name
+0x45,69,Glacia Estate (Jail Cells),success,1,30,9,4,2,14,0,0,0,124,prison;estate,room_name
+0x46,70,Zora Temple (Compass Chest),success,1,27,9,7,2,6,1,0,0,112,temple,room_name
+0x47,71,Empty Clone,success,2,10,12,2,1,15,0,0,0,92,,
+0x48,72,Empty Clone,success,2,33,12,0,1,14,6,0,0,112,,
+0x49,73,Kalyxo Castle (Gibdo Torch Puzzle),success,2,33,12,2,1,14,0,0,0,77,castle,room_name
+0x4A,74,Mushroom Grotto (Entrance),success,7,43,15,7,1,14,0,0,0,135,entrance;grotto,room_name
+0x4B,75,Mushroom Grotto (Warps / South Mimics),success,7,8,15,0,1,14,0,0,0,119,grotto,room_name
+0x4C,76,Fortress of Secrets (Mini-Helmasaur Conveyor),success,14,12,3,0,2,0,0,0,0,19,fortress,room_name
+0x4D,77,Fortress of Secrets (Moldorm),success,14,12,3,7,2,8,0,63,0,112,fortress,room_name
+0x4E,78,Tail Palace (Bomb-Jump),success,5,19,6,3,1,14,0,0,0,68,palace,room_name
+0x4F,79,Tail Palace Clone (Fairy),success,5,19,6,6,1,14,0,0,0,64,fairy;palace,room_name
+0x50,80,Hyrule Castle (West Corridor),success,0,4,12,1,6,6,0,0,0,55,castle,room_name
+0x51,81,Hyrule Castle (Throne),success,2,42,12,7,2,6,0,0,0,89,throne;castle,room_name
+0x52,82,Hyrule Castle (East Corridor),success,0,4,12,7,2,6,0,0,0,64,castle,room_name
+0x53,83,Shrine of Power (Popos 2 / Beamos Hellway),success,7,29,15,7,1,4,1,0,0,342,shrine,room_name
+0x54,84,Zora Temple (Upstairs Pits),success,1,33,1,2,1,15,0,0,0,58,temple,room_name
+0x55,85,Castle Secret Entrance / Uncle Death,success,1,33,1,4,5,1,0,0,0,54,entrance;castle,room_name
+0x56,86,Kalyxo Castle (Key Pot / Trap),success,2,33,12,2,1,14,0,0,0,101,trap;castle,room_name
+0x57,87,Kalyxo Castle (Big Key),success,2,33,12,4,1,14,0,0,0,68,castle,room_name
+0x58,88,Kalyxo Castle (Big Chest),success,2,33,12,0,1,14,0,0,0,73,big_chest;castle,room_name
+0x59,89,Kalyxo Castle (Final Section Entrance),success,2,33,12,6,1,14,0,0,0,106,entrance;castle,room_name
+0x5A,90,Mushroom Grotto (Helmasaur King[Boss]),success,7,26,16,0,1,14,0,0,0,10,boss;grotto,room_name
+0x5B,91,Fortress of Secrets (Spike Pit),success,7,8,15,1,1,6,0,0,0,57,fortress,room_name
+0x5C,92,Fortress of Secrets (Ganon-Ball Z),success,14,10,3,2,1,0,0,0,0,70,fortress,room_name
+0x5D,93,Fortress of Secrets (Gauntlet 1/2/3),success,14,26,3,0,1,0,0,63,0,67,fortress,room_name
+0x5E,94,Tail Palace (Lonely Firebar),success,5,25,6,6,1,14,0,0,0,31,palace,room_name
+0x5F,95,Tail Palace (Hidden Chest / Spike Floor),success,5,31,6,0,1,14,0,0,0,77,palace,room_name
+0x60,96,Hyrule Castle (West Entrance),success,0,4,12,1,2,6,0,0,0,66,entrance;castle,room_name
+0x61,97,Hyrule Castle (Main Entrance),success,0,42,12,7,2,6,0,0,0,105,entrance;castle,room_name
+0x62,98,Hyrule Castle (East Entrance),success,0,4,12,7,2,6,0,0,0,88,entrance;castle,room_name
+0x63,99,Shrine of Power (Final Section Entrance),success,7,29,15,7,1,4,1,0,0,339,entrance;shrine,room_name
+0x64,100,Glacia Estate (West Attic),success,1,33,1,4,1,15,0,0,0,6,estate,room_name
+0x65,101,Glacia Estate (East Attic),success,1,17,1,5,1,15,0,0,0,0,estate,room_name
+0x66,102,Zora Temple (Hidden Chest / Hidden Door),success,2,33,12,0,1,0,0,0,0,85,temple,room_name
+0x67,103,Kalyxo Castle (Compass Chest),success,2,33,12,3,1,15,0,0,0,98,castle,room_name
+0x68,104,Kalyxo Castle (Key Chest / Trap),success,2,33,12,0,1,9,0,0,0,80,key_chest;trap;castle,room_name
+0x69,105,Empty Clone,success,4,8,7,7,9,15,0,0,0,65,,
+0x6A,106,Mushroom Grotto (Rupee),success,7,43,15,6,1,7,0,0,0,76,grotto,room_name
+0x6B,107,Fortress of Secrets (Mimics s),success,14,10,3,6,1,14,0,0,0,58,fortress,room_name
+0x6C,108,Fortress of Secrets (Lanmolas),success,14,11,3,0,2,14,0,63,0,50,fortress,room_name
+0x6D,109,Fortress of Secrets (Gauntlet 4/5),success,14,35,3,2,2,14,0,0,0,81,fortress,room_name
+0x6E,110,Tail Palace (Pengators),success,5,25,6,0,1,14,0,0,0,88,palace,room_name
+0x6F,111,Empty Clone,success,5,25,6,0,1,14,0,0,0,64,,
+0x70,112,Hyrule Castle (Small Corridor to Jail Cells),success,1,1,1,2,1,14,0,0,0,91,prison;castle,room_name
+0x71,113,Hyrule Castle (Boomerang Chest),success,3,33,14,6,2,15,0,4,0,105,castle,room_name
+0x72,114,Hyrule Castle (Map Chest),success,3,33,2,6,2,15,0,0,0,80,map_chest;castle,room_name
+0x73,115,Shrine of Power (Big Chest),success,13,30,24,3,0,11,0,0,0,194,big_chest;shrine,room_name
+0x74,116,Shrine of Power (Map Chest),success,13,30,24,7,1,11,0,0,0,241,map_chest;shrine,room_name
+0x75,117,Shrine of Power (Big Key Chest),success,13,30,24,7,1,11,0,0,0,425,key_chest;shrine,room_name
+0x76,118,Zora Temple (Water Drain),success,13,30,24,7,0,11,0,0,0,363,temple,room_name
+0x77,119,Goron Mines (Northwest Hall),success,4,10,7,7,9,15,0,0,0,137,mines,room_name
+0x78,120,Goron Mines (Lanmolas Mini-boss),success,4,11,7,7,9,0,0,0,0,155,miniboss;mines,room_name
+0x79,121,Goron Mines (Northeast Hall),success,4,10,7,3,9,0,0,0,0,91,mines,room_name
+0x7A,122,Shrine of Wisdom (Pendant),success,8,44,13,7,5,14,3,0,0,205,pendant;shrine,room_name
+0x7B,123,Fortress of Secrets,success,14,19,3,4,1,0,0,0,0,91,fortress,room_name
+0x7C,124,Fortress of Secrets (East Side Collapsing Bridge / Exploding Wall),success,14,19,3,0,1,14,0,0,0,34,fortress,room_name
+0x7D,125,Fortress of Secrets (Winder / Warp Maze),success,14,19,3,6,1,6,0,60,0,93,fortress,room_name
+0x7E,126,Tail Palace (Hidden Chest / Bombable Floor),success,5,25,6,6,1,14,0,0,0,88,palace,room_name
+0x7F,127,Tail Palace ( Big Spike Traps),success,5,25,6,7,1,4,0,0,0,104,trap;palace,room_name
+0x80,128,Hyrule Castle (Jail Cell),success,1,33,1,4,1,14,0,0,0,115,prison;castle,room_name
+0x81,129,Hyrule Castle,success,3,33,14,5,2,15,0,0,0,90,castle,room_name
+0x82,130,Hyrule Castle (Basement Chasm),success,3,33,14,5,2,15,0,0,0,83,castle,room_name
+0x83,131,Shrine of Power (West Entrance),success,13,30,24,2,1,11,0,0,0,205,entrance;shrine,room_name
+0x84,132,Shrine of Power (Main Entrance),success,13,30,24,7,1,11,0,0,0,123,entrance;shrine,room_name

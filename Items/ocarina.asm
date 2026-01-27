@@ -3,8 +3,8 @@
 ;
 ; $030F - Current Song RAM
 ; 00 - No Song
-; 01 - Song of Storms
-; 02 - Song of Healing
+; 01 - Song of Healing
+; 02 - Song of Storms
 ; 03 - Song of Soaring
 ; 04 - Song of Time
 
@@ -142,11 +142,11 @@ LinkItem_NewFlute:
     ; Success... play the flute.
     LDA.b #$80 : STA.w $03F0
 
-    LDA.w $030F : CMP.b #$01 : BEQ .song_of_storms
-                  CMP.b #$02 : BEQ .song_of_healing
+    LDA.w $030F : CMP.b #$01 : BEQ .song_of_healing
+                  CMP.b #$02 : BEQ .song_of_storms
                   CMP.b #$03 : BEQ .song_of_soaring
                   CMP.b #$04 : BEQ .song_of_time
-                  JMP .song_of_storms
+                  JMP .song_of_healing
     .song_of_time
     LDA.b #$27 : JSR $802F ; Player_DoSfx3
     LDA.b #$02 : STA.b SongFlag
@@ -385,14 +385,18 @@ ResetOcarinaFlag:
   RTL
 }
 
-; Values at $7EF34C determine scrolling behavior
-; 01 - No scrolling allowed
-; 02 - Scroll between two songs
-; 03 - Scroll between three songs
-; 04 - Scroll between four songs
+; Values at $7EF34C determine Ocarina/song progression
+; 00 - No Ocarina
+; 01 - Ocarina (no songs)
+; 02 - 1 song (Healing)
+; 03 - 2 songs (Healing, Storms)
+; 04 - 3 songs (Healing, Storms, Soaring)
+; 05 - 4 songs (Healing, Storms, Soaring, Time)
 UpdateFluteSong_Long:
 {
-  LDA $7EF34C : CMP.b #$01 : BEQ .not_pressed
+  LDA $7EF34C : CMP.b #$02 : BCS +
+    JMP .no_songs
+  +
     LDA $030F : BNE .song_exists
       ; if this code is running, we have the flute song 1
       LDA #$01 : STA $030F
@@ -410,22 +414,31 @@ UpdateFluteSong_Long:
 
     .right ; R Button Pressed - Increment song
     INC $030F
-    LDA $7EF34C : CMP.b #$02 : BEQ .max_2
-                  CMP.b #$03 : BEQ .max_3
+    LDA $7EF34C : CMP.b #$02 : BEQ .max_1
+                  CMP.b #$03 : BEQ .max_2
+                  CMP.b #$04 : BEQ .max_3
+                  CMP.b #$05 : BEQ .max_4
       LDA $030F : CMP.b #$05 : BCS .wrap_to_min
+      RTL
+    .max_1
+    LDA $030F : CMP.b #$02 : BCS .wrap_to_min
       RTL
     .max_2
     LDA $030F : CMP.b #$03 : BCS .wrap_to_min
       RTL
     .max_3
     LDA $030F : CMP.b #$04 : BCS .wrap_to_min
+      RTL
+    .max_4
+    LDA $030F : CMP.b #$05 : BCS .wrap_to_min
     .update_song
       RTL
 
     .wrap_to_max
-    LDA $7EF34C : CMP.b #$01 : BEQ .wrap_to_min
-                  CMP.b #$02 : BEQ .set_max_to_2
-                  CMP.b #$03 : BEQ .set_max_to_3
+    LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_1
+                  CMP.b #$03 : BEQ .set_max_to_2
+                  CMP.b #$04 : BEQ .set_max_to_3
+                  CMP.b #$05 : BEQ .set_max_to_4
       LDA #$04 : STA $030F : RTL
 
     .set_max_to_3
@@ -434,10 +447,20 @@ UpdateFluteSong_Long:
     .set_max_to_2
     LDA #$02 : STA $030F : RTL
 
+    .set_max_to_1
+    LDA #$01 : STA $030F : RTL
+
+    .set_max_to_4
+    LDA #$04 : STA $030F : RTL
+
     .wrap_to_min
     LDA #$01 : STA $030F
 
   .not_pressed
+  RTL
+
+  .no_songs
+  STZ $030F
   RTL
 }
 %log_end("Items/ocarina.asm", !LOG_ITEMS)

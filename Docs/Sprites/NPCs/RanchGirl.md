@@ -1,7 +1,7 @@
 # Ranch Girl
 
 ## Overview
-The `ranch_girl.asm` file defines the behavior for the "Ranch Girl" NPC, who is involved in a "Chicken Easter Egg" quest. This character plays a crucial role in granting Link the Ocarina and teaching him a song. Her behavior is implemented as a vanilla override, modifying the existing `ChickenLady` routine.
+The `ranch_girl.asm` file defines the behavior for the "Ranch Girl" NPC, who is involved in a "Chicken Easter Egg" quest. This character grants Link the Ocarina. Her behavior is implemented as a vanilla override, modifying the existing `ChickenLady` routine.
 
 ## Vanilla Overrides
 This file directly modifies the vanilla `ChickenLady` routine at `org $01AFECF` to inject custom logic for the Ranch Girl's interactions.
@@ -26,9 +26,9 @@ RanchGirl_Message:
 ```
 
 ## `RanchGirl_TeachSong`
-This routine is responsible for teaching Link a song (specifically the "Song of Storms") and granting him the Ocarina. It checks the Ocarina quest flag (`SprMiscD, X`) and Link's current Ocarina status (`$7EF34C`).
+This routine grants Link the Ocarina. It checks the Ocarina quest flag (`SprMiscD, X`) and Link's current Ocarina status (`$7EF34C`).
 
-*   If the conditions are met, it plays the "Song of Storms" sound, gives Link the Ocarina (`LDY #$14`, `JSL Link_ReceiveItem`), and sets `$7EF34C` to `$01`.
+*   If the conditions are met, it gives Link the Ocarina (`LDY #$14`, `JSL Link_ReceiveItem`) and sets `$7EF34C` to `$01`.
 
 ```asm
 RanchGirl_TeachSong:
@@ -36,13 +36,6 @@ RanchGirl_TeachSong:
   LDA.w SprMiscD, X : CMP.b #$01 : BNE .not_started
   LDA $10 : CMP.b #$0E : BEQ .running_dialog
   LDA $7EF34C : CMP.b #$01 : BCS .has_song
-
-  ; Play the song of storms
-  LDA.b #$2F
-  STA.w $0CF8
-  JSL $0DBB67 ;  Link_CalculateSFXPan
-  ORA.w $0CF8
-  STA $012E ; Play the song learned sound
 
   ; Give Link the Ocarina
   LDY #$14
@@ -52,7 +45,7 @@ RanchGirl_TeachSong:
   JSL Link_ReceiveItem
   PLX
 
-  LDA #$01 : STA $7EF34C ; The item gives 02 by default, so decrement that for now
+  LDA #$01 : STA $7EF34C ; Ocarina only (no songs yet)
 
   .not_started
   .running_dialog

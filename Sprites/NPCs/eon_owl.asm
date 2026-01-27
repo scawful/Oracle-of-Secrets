@@ -39,7 +39,7 @@ Sprite_EonOwl_Long:
     ; If the map doesn't have the 6 crystals
      LDA.l $7EF37A : CMP.b #$77 : BNE .Despawn
         ; If the player has the Song of Soaring, despawn
-        LDA.l $7EF34C : CMP.b #$03 : BCS .Despawn
+        LDA.l $7EF34C : CMP.b #$04 : BCS .Despawn
           LDA.b #$01 : STA.w SprSubtype, X
           JSR Sprite_KaeporaGaebora_Draw
           JMP .HandleSprite
@@ -149,7 +149,7 @@ Sprite_EonOwl_Main:
     .player_said_no
     %GotoAction(5)
     LDA.b #$60 : STA.w SprTimerA, X
-    LDA.b #$03 : STA.l $7EF34C
+    LDA.b #$04 : STA.l $7EF34C
     RTS
   }
 

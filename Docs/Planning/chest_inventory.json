@@ -1,0 +1,1927 @@
+{
+  "room_filter": "all",
+  "rooms": [
+    {
+      "room_id": "0x01",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0xFF",
+          "item_name": "Item FF",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Hyrule Castle (North Corridor)",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x04",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Turtle Rock (Crysta-Roller)",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x05",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x1F",
+          "item_name": "Zora Flippers",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Empty",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x07",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x37",
+          "item_name": "20 Rupees",
+          "is_big_chest": true
+        },
+        {
+          "index": 1,
+          "item_id": "0x85",
+          "item_name": "Item 85",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Tower of Hera (Moldorm[Boss])",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x09",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Palace of Darkness",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x0B",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x29",
+          "item_name": "3 Bombs",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Palace of Darkness (Turtle)",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x0F",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x09",
+          "item_name": "Ice Rod",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x11",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x28",
+          "item_name": "Bomb",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x46",
+          "item_name": "20 Rupees (Green)",
+          "is_big_chest": false
+        },
+        {
+          "index": 2,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Hyrule Castle (Bombable Stock )",
+      "chest_count": 3
+    },
+    {
+      "room_id": "0x17",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x25",
+          "item_name": "Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Tower of Hera (Moldorm Fall )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x18",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x8D",
+          "item_name": "Item 8D",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x8D",
+          "item_name": "Item 8D",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Cave",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x19",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x33",
+          "item_name": "Big Key",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x99",
+          "item_name": "Item 99",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Palace of Darkness (Dark Maze)",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x1B",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x32",
+          "item_name": "10 Bombs",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Palace of Darkness (Mimics / Moving Wall )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x1C",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x28",
+          "item_name": "Bomb",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ganon's Tower (Ice Armos)",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x1D",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ganon's Tower (Final Hallway)",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x1E",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ice Palace (Bomb Floor / Bari )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x26",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Swamp Palace (Statue )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x2A",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x0B",
+          "item_name": "Hookshot",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Palace of Darkness (Big Hub )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x2F",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x28",
+          "item_name": "Bomb",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Cave (Kakariko Well HP)",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x32",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x32",
+          "item_name": "10 Bombs",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Hyrule Castle (Sewer Key Chest )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x34",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x32",
+          "item_name": "10 Bombs",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Swamp Palace (Push Block Puzzle / Pre-Big Key )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x35",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x25",
+          "item_name": "Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Swamp Palace (Big Key / BS )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x36",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x0A",
+          "item_name": "Hammer",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Swamp Palace (Big Chest )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x37",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Swamp Palace (Map Chest / Water Fill )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x3C",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x41",
+          "item_name": "1 Arrow",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x41",
+          "item_name": "1 Arrow",
+          "is_big_chest": false
+        },
+        {
+          "index": 2,
+          "item_id": "0x41",
+          "item_name": "1 Arrow",
+          "is_big_chest": false
+        },
+        {
+          "index": 3,
+          "item_id": "0x41",
+          "item_name": "1 Arrow",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Cave",
+      "chest_count": 4
+    },
+    {
+      "room_id": "0x3D",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x3B",
+          "item_name": "Bow and Arrows",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Ganon's Tower (Torch 2)",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x3E",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x33",
+          "item_name": "Big Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ice Palace (Stalfos Knights / Conveyor Hellway)",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x41",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x31",
+          "item_name": "Blue Potion (Refill)",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Hyrule Castle (First Dark )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x42",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Hyrule Castle (6 Ropes )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x44",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x33",
+          "item_name": "Big Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Thieves Town (Big Chest )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x48",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x4A",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Palace of Darkness (Entrance )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x4E",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x25",
+          "item_name": "Key",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x41",
+          "item_name": "1 Arrow",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ice Palace (Bomb-Jump )",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x53",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x06",
+          "item_name": "Fire Shield",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Desert Palace (Popos 2 / Beamos Hellway )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x56",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x01",
+          "item_name": "Fighter Sword",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Skull Woods (Key Pot / Trap )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x5B",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x25",
+          "item_name": "Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ganon's Tower (Spike Pit )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x5C",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x23",
+          "item_name": "Blue Mail",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Ganon's Tower (Ganon-Ball Z)",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x5E",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ice Palace (Lonely Firebar)",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x5F",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ice Palace (Hidden Chest / Spike Floor )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x63",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Desert Palace (Final Section Entrance )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x66",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x25",
+          "item_name": "Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Swamp Palace (Hidden Chest / Hidden Door )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x69",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x25",
+          "item_name": "Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x6C",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x25",
+          "item_name": "Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ganon's Tower (Lanmolas )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x73",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x39",
+          "item_name": "Pendant of Wisdom",
+          "is_big_chest": true
+        },
+        {
+          "index": 1,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Desert Palace (Big Chest )",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x74",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x1B",
+          "item_name": "Mirror",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Desert Palace (Map Chest )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x75",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x32",
+          "item_name": "10 Bombs",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Desert Palace (Big Key Chest )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x78",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x32",
+          "item_name": "10 Bombs",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x7A",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x38",
+          "item_name": "Pendant of Courage",
+          "is_big_chest": true
+        },
+        {
+          "index": 1,
+          "item_id": "0x8D",
+          "item_name": "Item 8D",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x7B",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ganon's Tower",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x7C",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        },
+        {
+          "index": 2,
+          "item_id": "0x28",
+          "item_name": "Bomb",
+          "is_big_chest": false
+        },
+        {
+          "index": 3,
+          "item_id": "0x28",
+          "item_name": "Bomb",
+          "is_big_chest": false
+        },
+        {
+          "index": 4,
+          "item_id": "0x32",
+          "item_name": "10 Bombs",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Ganon's Tower (East Side Collapsing Bridge / Exploding Wall )",
+      "chest_count": 5
+    },
+    {
+      "room_id": "0x7F",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x21",
+          "item_name": "Crystal",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Ice Palace ( Big Spike Traps )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x80",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x32",
+          "item_name": "10 Bombs",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Hyrule Castle (Jail Cell )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x85",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x25",
+          "item_name": "Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Desert Palace (East Entrance )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x88",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x09",
+          "item_name": "Ice Rod",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x8F",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x32",
+          "item_name": "10 Bombs",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x92",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x1C",
+          "item_name": "Power Glove",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Misery Mire (Dark Bomb Wall / Switches )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x99",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Eastern Palace (Eyegore Key )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x9A",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x1E",
+          "item_name": "Book of Mudora",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x9E",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x25",
+          "item_name": "Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ice Palace (Big Chest )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x9F",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x20",
+          "item_name": "Moon Pearl",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x20",
+          "item_name": "Moon Pearl",
+          "is_big_chest": true
+        },
+        {
+          "index": 2,
+          "item_id": "0x20",
+          "item_name": "Moon Pearl",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Ice Palace",
+      "chest_count": 3
+    },
+    {
+      "room_id": "0xA2",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x25",
+          "item_name": "Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Misery Mire (Bridge Key Chest )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xA5",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x9F",
+          "item_name": "Item 9F",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ganon's Tower (Wizzrobes s)",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xA8",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x33",
+          "item_name": "Big Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Eastern Palace (Stalfos Spawn )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xA9",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x01",
+          "item_name": "Fighter Sword",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x01",
+          "item_name": "Fighter Sword",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Eastern Palace (Big Chest )",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0xAA",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x32",
+          "item_name": "10 Bombs",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Eastern Palace (Map Chest )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xAE",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ice Palace",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xB3",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x15",
+          "item_name": "Flute",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Misery Mire (Spike Key Chest )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xB7",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x33",
+          "item_name": "Big Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Turtle Rock (Map Chest / Key Chest / Roller )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xB9",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Eastern Palace (Lobby Cannonballs )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xBA",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Eastern Palace (Dark Antifairy / Key Pot )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xBD",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xBE",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ice Palace (Block Puzzle )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xC9",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x80",
+          "item_name": "Item 80",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x80",
+          "item_name": "Item 80",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Eastern Palace (Entrance )",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0xCA",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x25",
+          "item_name": "Key",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "??",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xCC",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x07",
+          "item_name": "Mirror Shield",
+          "is_big_chest": true
+        }
+      ],
+      "room_name": "Thieves Town (North East Entrance )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xCE",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x32",
+          "item_name": "10 Bombs",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ice Palace (Hole to Kholdstare )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xD0",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Agahnim's Tower (Dark Maze)",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xD3",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x40",
+          "item_name": "Heart",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xD8",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x41",
+          "item_name": "1 Arrow",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Eastern Palace (Zeldagamer / Pre-Armos Knights )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xD9",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Eastern Palace (Canonball",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xDC",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x24",
+          "item_name": "Red Mail",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Thieves Town (South East Entrance )",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xE2",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Cave (Lumberjack's Tree HP)",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xE8",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x0C",
+          "item_name": "Bow",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Cave",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xEC",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x16",
+          "item_name": "Somaria Cane",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xF6",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xFC",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Empty Clone",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0xFF",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x28",
+          "item_name": "Bomb",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x38",
+          "item_name": "Pendant of Courage",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Cave",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x100",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0xAA",
+          "item_name": "Item AA",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Chest Minigame",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x103",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Tavern",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x104",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x12",
+          "item_name": "Quake Medallion",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Link's House",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x108",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Chicken House",
+      "chest_count": 1
+    },
+    {
+      "room_id": "0x10A",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "A Aginah's Cave",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x10B",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x22",
+          "item_name": "Bug Net",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x28",
+          "item_name": "Bomb",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Dam",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x10C",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Mimic Cave",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x10D",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x05",
+          "item_name": "Fighter Shield",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 2,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Mire Shed",
+      "chest_count": 3
+    },
+    {
+      "room_id": "0x113",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x1A",
+          "item_name": "Cape",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x19",
+          "item_name": "Byrna Cane",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Grave Cave",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x117",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x18",
+          "item_name": "Heart Piece",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x18",
+          "item_name": "Heart Piece",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Spike Cave",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x11C",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x46",
+          "item_name": "20 Rupees (Green)",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x46",
+          "item_name": "20 Rupees (Green)",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Big Bomb Shop, C-House",
+      "chest_count": 2
+    },
+    {
+      "room_id": "0x11D",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 2,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 3,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 4,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 5,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Blind Hut 2",
+      "chest_count": 6
+    },
+    {
+      "room_id": "0x11E",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x14",
+          "item_name": "Shovel",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 2,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 3,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 4,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Hype Cave",
+      "chest_count": 5
+    },
+    {
+      "room_id": "0x120",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x08",
+          "item_name": "Fire Rod",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x08",
+          "item_name": "Fire Rod",
+          "is_big_chest": false
+        },
+        {
+          "index": 2,
+          "item_id": "0x08",
+          "item_name": "Fire Rod",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Ice Cave",
+      "chest_count": 3
+    },
+    {
+      "room_id": "0x123",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x28",
+          "item_name": "Bomb",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 2,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 3,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        },
+        {
+          "index": 4,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        },
+        {
+          "index": 5,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        },
+        {
+          "index": 6,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 7,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 8,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        },
+        {
+          "index": 9,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 10,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 11,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        },
+        {
+          "index": 12,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        },
+        {
+          "index": 13,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 14,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        },
+        {
+          "index": 15,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 16,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        },
+        {
+          "index": 17,
+          "item_id": "0x28",
+          "item_name": "Bomb",
+          "is_big_chest": false
+        },
+        {
+          "index": 18,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 19,
+          "item_id": "0x36",
+          "item_name": "5 Rupees",
+          "is_big_chest": false
+        },
+        {
+          "index": 20,
+          "item_id": "0x44",
+          "item_name": "Small Magic",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "MiniMoldorm Cave",
+      "chest_count": 21
+    },
+    {
+      "room_id": "0x124",
+      "chests": [
+        {
+          "index": 0,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 1,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 2,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 3,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 4,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 5,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 6,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 7,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 8,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 9,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 10,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 11,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 12,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 13,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 14,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 15,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 16,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 17,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 18,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 19,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 20,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 21,
+          "item_id": "0x17",
+          "item_name": "Bottle",
+          "is_big_chest": false
+        },
+        {
+          "index": 22,
+          "item_id": "0x8D",
+          "item_name": "Item 8D",
+          "is_big_chest": false
+        }
+      ],
+      "room_name": "Under Rock Caves",
+      "chest_count": 23
+    }
+  ],
+  "summary": {
+    "total_rooms": 102,
+    "rooms_with_chests": 102,
+    "total_chests": 185,
+    "unique_items": 48,
+    "duplicate_items": [
+      {
+        "item_id": "0x17",
+        "item_name": "Bottle",
+        "count": 38
+      },
+      {
+        "item_id": "0x24",
+        "item_name": "Red Mail",
+        "count": 20
+      },
+      {
+        "item_id": "0x36",
+        "item_name": "5 Rupees",
+        "count": 19
+      },
+      {
+        "item_id": "0x44",
+        "item_name": "Small Magic",
+        "count": 13
+      },
+      {
+        "item_id": "0x25",
+        "item_name": "Key",
+        "count": 11
+      },
+      {
+        "item_id": "0x32",
+        "item_name": "10 Bombs",
+        "count": 10
+      },
+      {
+        "item_id": "0x28",
+        "item_name": "Bomb",
+        "count": 9
+      },
+      {
+        "item_id": "0x41",
+        "item_name": "1 Arrow",
+        "count": 6
+      },
+      {
+        "item_id": "0x33",
+        "item_name": "Big Key",
+        "count": 5
+      },
+      {
+        "item_id": "0x8D",
+        "item_name": "Item 8D",
+        "count": 4
+      },
+      {
+        "item_id": "0x46",
+        "item_name": "20 Rupees (Green)",
+        "count": 3
+      },
+      {
+        "item_id": "0x01",
+        "item_name": "Fighter Sword",
+        "count": 3
+      },
+      {
+        "item_id": "0x20",
+        "item_name": "Moon Pearl",
+        "count": 3
+      },
+      {
+        "item_id": "0x08",
+        "item_name": "Fire Rod",
+        "count": 3
+      },
+      {
+        "item_id": "0x09",
+        "item_name": "Ice Rod",
+        "count": 2
+      },
+      {
+        "item_id": "0x38",
+        "item_name": "Pendant of Courage",
+        "count": 2
+      },
+      {
+        "item_id": "0x80",
+        "item_name": "Item 80",
+        "count": 2
+      },
+      {
+        "item_id": "0x18",
+        "item_name": "Heart Piece",
+        "count": 2
+      }
+    ]
+  }
+}

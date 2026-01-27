@@ -10,6 +10,9 @@
 ; - Integration with vanilla water fill animation completion
 ;
 ; =========================================================
+; @doc Docs/Issues/WaterCollision_Handoff.md
+; @source Derived from vanilla disassembly + runtime tests (see doc)
+; @verified UNKNOWN (needs audit)
 
 ; SRAM Persistence for Water Gate States
 ; Defined in Core/sram.asm (uses $7EF411 in $7EF403-$7EF4FD block)
@@ -286,18 +289,45 @@ WaterGate_Room27_Data:
 ; =========================================================
 ; Room 0x25 - Zora Temple Water Grate Room
 ; =========================================================
-; Placeholder - needs actual collision offsets for this room
+; Collision offsets for swimming area after grate opens.
+;
+; Derived from Layer-2 swim mask objects (0xD9) in room data:
+; - Visual water at Y=43, X=5-60 (size=0x0F / 0x07 segments)
+; - Apply +2..+4 tile Y offset (TileDetect deep water check)
+;
+; Rows covered: Y=45-47, X=5-60 (56 tiles per row)
 
 WaterGate_Room25_Data:
 {
   ; Tile count
-  db 16  ; Placeholder
+  db 168
 
-  ; Collision offsets - TODO: Fill in based on actual room layout
-  dw $0800, $0802, $0804, $0806
-  dw $0840, $0842, $0844, $0846
-  dw $0880, $0882, $0884, $0886
-  dw $08C0, $08C2, $08C4, $08C6
+  ; Y=45 row (X=5-60) - 56 tiles
+  dw $0B45, $0B46, $0B47, $0B48, $0B49, $0B4A, $0B4B, $0B4C
+  dw $0B4D, $0B4E, $0B4F, $0B50, $0B51, $0B52, $0B53, $0B54
+  dw $0B55, $0B56, $0B57, $0B58, $0B59, $0B5A, $0B5B, $0B5C
+  dw $0B5D, $0B5E, $0B5F, $0B60, $0B61, $0B62, $0B63, $0B64
+  dw $0B65, $0B66, $0B67, $0B68, $0B69, $0B6A, $0B6B, $0B6C
+  dw $0B6D, $0B6E, $0B6F, $0B70, $0B71, $0B72, $0B73, $0B74
+  dw $0B75, $0B76, $0B77, $0B78, $0B79, $0B7A, $0B7B, $0B7C
+
+  ; Y=46 row (X=5-60) - 56 tiles
+  dw $0B85, $0B86, $0B87, $0B88, $0B89, $0B8A, $0B8B, $0B8C
+  dw $0B8D, $0B8E, $0B8F, $0B90, $0B91, $0B92, $0B93, $0B94
+  dw $0B95, $0B96, $0B97, $0B98, $0B99, $0B9A, $0B9B, $0B9C
+  dw $0B9D, $0B9E, $0B9F, $0BA0, $0BA1, $0BA2, $0BA3, $0BA4
+  dw $0BA5, $0BA6, $0BA7, $0BA8, $0BA9, $0BAA, $0BAB, $0BAC
+  dw $0BAD, $0BAE, $0BAF, $0BB0, $0BB1, $0BB2, $0BB3, $0BB4
+  dw $0BB5, $0BB6, $0BB7, $0BB8, $0BB9, $0BBA, $0BBB, $0BBC
+
+  ; Y=47 row (X=5-60) - 56 tiles
+  dw $0BC5, $0BC6, $0BC7, $0BC8, $0BC9, $0BCA, $0BCB, $0BCC
+  dw $0BCD, $0BCE, $0BCF, $0BD0, $0BD1, $0BD2, $0BD3, $0BD4
+  dw $0BD5, $0BD6, $0BD7, $0BD8, $0BD9, $0BDA, $0BDB, $0BDC
+  dw $0BDD, $0BDE, $0BDF, $0BE0, $0BE1, $0BE2, $0BE3, $0BE4
+  dw $0BE5, $0BE6, $0BE7, $0BE8, $0BE9, $0BEA, $0BEB, $0BEC
+  dw $0BED, $0BEE, $0BEF, $0BF0, $0BF1, $0BF2, $0BF3, $0BF4
+  dw $0BF5, $0BF6, $0BF7, $0BF8, $0BF9, $0BFA, $0BFB, $0BFC
 }
 
 print "End of water_collision.asm        ", pc

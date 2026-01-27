@@ -1,0 +1,12 @@
+{
+  "id": "collision_system_001",
+  "category": "game-mechanics",
+  "title": "Oracle Dual-Mode Collision System",
+  "context": "Oracle of Secrets uses different collision detection systems for overworld vs dungeons. This is a critical discovery that affects navigation, pathfinding, and collision testing.",
+  "input": "How does Oracle handle collision detection?",
+  "code": "; Reading collision differs by GameMode!\n\nCheckCollision:\n{\n    ; First check which mode we're in\n    LDA.w $0010                  ; GameMode\n    CMP.b #$07                   ; Dungeon mode?\n    BEQ .dungeon_collision\n    \n.overworld_collision:\n    ; Overworld: Read Map16 tile ID from TILEMAPA\n    LDA.l $7E2000, X             ; TILEMAPA - Map16 tile IDs\n    ; Then lookup collision in ROM table\n    JSL Map16_GetCollisionType\n    RTS\n    \n.dungeon_collision:\n    ; Dungeon: Read collision TYPE directly from COLMAPA\n    LDA.l $7F2000, X             ; COLMAPA - Direct collision values\n    ; Value IS the collision type (0x00-0x09)\n    RTS\n}\n\n; Map16 lookup for overworld\nMap16_GetCollisionType:\n{\n    ; A = tile ID from TILEMAPA\n    ; Table at $3D8000 (ZS expanded) or $0F8000 (vanilla)\n    ASL A                        ; tile_id * 2\n    ASL A                        ; tile_id * 4\n    ASL A                        ; tile_id * 8 (8 bytes per entry)\n    TAX\n    LDA.l $3D8000, X             ; Read first word\n    AND.w #$01FF                 ; Mask collision bits\n    RTL\n}",
+  "explanation": "Oracle/ALTTP uses two completely different collision systems:\n\n**Dungeons (GameMode 0x07):**\n- Address: $7F2000 (COLMAPA), $7F3000 (COLMAPB)\n- Format: Direct collision TYPE values\n- Values: 0x00=walkable, 0x01=solid, 0x08=deep water, etc.\n- Simple: Read value, compare to type\n\n**Overworld (GameMode 0x09):**\n- Address: $7E2000 (TILEMAPA) - NOT $7F2000!\n- Format: Map16 tile IDs (NOT collision types!)\n- Collision lookup: tile_id × 8 → ROM table at $3D8000\n- Complex: Read tile ID, then ROM lookup\n\n**Critical Gotcha:** $7F2000 is repurposed!\n- In dungeons: collision map\n- In overworld: decompression buffer (garbage for collision)\n\nAlways check GameMode before reading collision data.",
+  "tags": ["collision", "game-mechanics", "overworld", "dungeon", "map16", "discovery"],
+  "verified": true,
+  "source": "campaign_iteration_78_collision_discovery"
+}

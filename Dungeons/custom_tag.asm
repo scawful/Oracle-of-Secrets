@@ -80,11 +80,11 @@ HouseTag_Main:
     STZ $02E4 ; awake from slumber
     LDA.l StoryState : INC A : STA.l StoryState  ; Long addressing for SRAM
 
-    ; Make it so Link's uncle never respawns in the house again.
-    LDA $7EF3C6 : ORA.b #$10 : STA $7EF3C6
+    ; Legacy vanilla house flag (no uncle NPC in OOS).
+    LDA $7EF3C6 : ORA.b #!Story2_LegacyHouseFlag : STA $7EF3C6
 
-    ; Set the game mode
-    LDA #$00 : STA GameState   ; (0 - intro, 1 - pendants, 2 - crystals)
+    ; Set the game mode (legacy mapping; see Core/sram.asm for current values)
+    LDA #$00 : STA GameState
     LDA #$00 : STA $7EF3CC   ; disable telepathic message
     JSL Sprite_LoadGfxProperties
     RTS
