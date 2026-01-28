@@ -570,13 +570,13 @@ class OracleDebugClient:
 
     def add_watch_trigger(self, addr: int, value: int, condition: str = "eq") -> Optional[int]:
         """Add a memory watch trigger."""
-        res = self.bridge.send_command(
-            "WATCH_TRIGGER", 
-            action="add", 
-            addr=hex(addr), 
-            value=hex(value), 
-            condition=condition
-        )
+        payload = {
+            "action": "add",
+            "addr": hex(addr),
+            "value": hex(value),
+            "condition": condition,
+        }
+        res = self.bridge.send_command("WATCH_TRIGGER", payload)
         if res.get("success"):
             data = res.get("data")
             if isinstance(data, str):
@@ -586,7 +586,8 @@ class OracleDebugClient:
 
     def remove_watch_trigger(self, trigger_id: int) -> bool:
         """Remove a memory watch trigger."""
-        res = self.bridge.send_command("WATCH_TRIGGER", action="remove", trigger_id=str(trigger_id))
+        payload = {"action": "remove", "trigger_id": str(trigger_id)}
+        res = self.bridge.send_command("WATCH_TRIGGER", payload)
         return bool(res.get("success"))
 
     def list_watch_triggers(self) -> list[dict]:
@@ -991,7 +992,68 @@ class OracleDebugClient:
                 btn_list.append(btn.upper())
 
         btn_str = ",".join(btn_list)
-        return self.bridge.press_button(btn_str, frames=frames)
+        force_fallback = _env_flag("OOS_INPUT_FORCE_FALLBACK", False)
+        if not force_fallback:
+            ok = self.bridge.press_button(btn_str, frames=frames)
+            if ok:
+                return True
+
+        # Fallback: direct RAM input injection (works even if DebugBridge Lua isn't loaded)
+        # JOY1A (BYsSudlr) at $7E00F0/$7E00F4, JOY1B (AXLR....) at $7E00F2/$7E00F6.
+        # Bits (low byte): B=0x01, Y=0x02, Select=0x04, Start=0x08,
+        # Up=0x10, Down=0x20, Left=0x40, Right=0x80.
+        mask_a = 0
+        mask_b = 0
+        for b in btn_list:
+            b = b.lower()
+            if b in {"b"}:
+                mask_a |= 0x01
+            elif b in {"y"}:
+                mask_a |= 0x02
+            elif b in {"select"}:
+                mask_a |= 0x04
+            elif b in {"start"}:
+                mask_a |= 0x08
+            elif b in {"up"}:
+                mask_a |= 0x10
+            elif b in {"down"}:
+                mask_a |= 0x20
+            elif b in {"left"}:
+                mask_a |= 0x40
+            elif b in {"right"}:
+                mask_a |= 0x80
+            elif b in {"a"}:
+                mask_b |= 0x01
+            elif b in {"x"}:
+                mask_b |= 0x02
+            elif b in {"l"}:
+                mask_b |= 0x04
+            elif b in {"r"}:
+                mask_b |= 0x08
+
+        if mask_a == 0 and mask_b == 0:
+            self.last_error = "Fallback input: unknown button(s)"
+            return False
+
+        try:
+            # Write to joypad mirrors: NEW at $7E00F4/$7E00F6, ALL at $7E00F0/$7E00F2
+            total_frames = max(1, frames)
+            for i in range(total_frames):
+                new_a = mask_a if i == 0 else 0
+                new_b = mask_b if i == 0 else 0
+                self.bridge.write_memory(0x7E00F4, new_a)
+                self.bridge.write_memory(0x7E00F6, new_b)
+                self.bridge.write_memory(0x7E00F0, mask_a)
+                self.bridge.write_memory(0x7E00F2, mask_b)
+                self.bridge.run_frames(1)
+            self.bridge.write_memory(0x7E00F4, 0)
+            self.bridge.write_memory(0x7E00F6, 0)
+            self.bridge.write_memory(0x7E00F0, 0)
+            self.bridge.write_memory(0x7E00F2, 0)
+            return True
+        except Exception as exc:
+            self.last_error = f"Fallback input failed: {exc}"
+            return False
 
     def hold_direction(self, direction: str, frames: int = 30, ensure_running: bool | None = None) -> bool:
         """Hold a direction for specified frames.
@@ -1025,6 +1087,28 @@ class OracleDebugClient:
         return self.bridge.screenshot()
 
     def save_state(self, **kw):
+        path = kw.get("path")
+        if path:
+            path_obj = Path(str(path)).expanduser()
+            allow_external = kw.pop("allow_external", None)
+            if allow_external is None:
+                allow_external = kw.pop("allowExternal", None)
+            if allow_external is None:
+                allow_external = True
+            params: dict = {"path": str(path_obj)}
+            if "slot" in kw:
+                params["slot"] = str(kw["slot"])
+            if "pause" in kw:
+                params["pause"] = str(kw["pause"]).lower()
+            if allow_external:
+                params["allow_external"] = "true"
+            res = self.bridge.send_command("SAVESTATE", params)
+            if res.get("success"):
+                self.last_error = ""
+                return True
+            self.last_error = res.get("error", "") or "SAVESTATE failed"
+            return False
+        self.last_error = ""
         return self.bridge.save_state(**kw)
 
     def save_state_label(
@@ -1056,10 +1140,31 @@ class OracleDebugClient:
             if is_disallowed_state_path(path_obj):
                 self.last_error = disallowed_state_reason(path_obj)
                 return False
+            allow_external = kw.pop("allow_external", None)
+            if allow_external is None:
+                allow_external = kw.pop("allowExternal", None)
+            if allow_external is None:
+                allow_external = True
+            params: dict = {"path": str(path_obj)}
+            if "pause" in kw:
+                params["pause"] = str(kw["pause"]).lower()
+            if allow_external:
+                params["allow_external"] = "true"
+            res = self.bridge.send_command("LOADSTATE", params)
+            if res.get("success"):
+                self.last_error = ""
+                return True
+            self.last_error = res.get("error", "") or "LOADSTATE failed"
+            return False
         self.last_error = ""
         return self.bridge.load_state(**kw)
 
     def add_breakpoint(self, **kw):
+        # mesen2-mcp expects "bptype" for breakpoint kind; CLI uses "mode".
+        if "mode" in kw and "bptype" not in kw:
+            kw["bptype"] = kw.pop("mode")
+        if "type" in kw and "bptype" not in kw:
+            kw["bptype"] = kw.pop("type")
         return self.bridge.add_breakpoint(**kw)
 
     def get_cpu_state(self):
@@ -1067,8 +1172,12 @@ class OracleDebugClient:
         # Try the bridge's native get_cpu_state first
         try:
             native = self.bridge.get_cpu_state()
-            if native and native.get("success"):
-                return native.get("data")
+            if native:
+                # mesen2-mcp bridge returns the data dict directly (no success wrapper)
+                if isinstance(native, dict) and "success" not in native:
+                    return native
+                if isinstance(native, dict) and native.get("success"):
+                    return native.get("data")
         except Exception:
             pass
         
@@ -1080,10 +1189,75 @@ class OracleDebugClient:
 
     def disassemble(self, address: int, count: int = 10) -> list:
         """Disassemble code at address."""
-        res = self.bridge.send_command("DISASM", address, count)
+        try:
+            if hasattr(self.bridge, "disassemble"):
+                return self.bridge.disassemble(address, count)
+        except Exception:
+            pass
+        res = self.bridge.send_command("DISASM", {"addr": f"0x{address:06X}", "count": str(count)})
         if res.get("success"):
-            return res.get("data")
+            data = res.get("data")
+            if isinstance(data, list):
+                return data
         return []
+
+    def trace(self, count: int = 1000, offset: int = 0) -> tuple[bool, list[dict]]:
+        """Capture an execution trace.
+        
+        Args:
+            count: Number of instructions to capture.
+            offset: Offset into the trace buffer.
+            
+        Returns:
+            (success, frames)
+        """
+        params = {"count": str(count)}
+        if offset:
+            params["offset"] = str(offset)
+        res = self.bridge.send_command("TRACE", params)
+        if res.get("success"):
+            data = res.get("data")
+            if isinstance(data, dict) and "entries" in data:
+                return True, data["entries"]
+            if isinstance(data, str):
+                try:
+                    return True, json.loads(data)
+                except json.JSONDecodeError:
+                    return False, []
+            return True, data if isinstance(data, list) else []
+        self.last_error = res.get("error", "Trace failed")
+        return False, []
+
+    def trace_control(
+        self,
+        action: str,
+        *,
+        format: str | None = None,
+        condition: str | None = None,
+        labels: bool | None = None,
+        indent: bool | None = None,
+        clear: bool | None = None,
+    ) -> dict:
+        """Control execution trace logging via socket TRACE."""
+        params: dict[str, str] = {"action": action}
+        if format is not None:
+            params["format"] = format
+        if condition is not None:
+            params["condition"] = condition
+        if labels is not None:
+            params["labels"] = "true" if labels else "false"
+        if indent is not None:
+            params["indent"] = "true" if indent else "false"
+        if clear is not None:
+            params["clear"] = "true" if clear else "false"
+
+        res = self.bridge.send_command("TRACE", params)
+        if res.get("success") and isinstance(res.get("data"), str):
+            try:
+                res["data"] = json.loads(res["data"])
+            except json.JSONDecodeError:
+                pass
+        return res
 
     def get_callstack(self) -> list:
         """Get the current CPU callstack."""

@@ -167,7 +167,14 @@ class StateLibrary:
             raise ValueError(f"State '{state_id}' not found in library")
 
         full_path = self.resolve_path(entry)
-        success = bridge.load_state(path=str(full_path))
+        try:
+            res = bridge.send_command(
+                "LOADSTATE",
+                {"path": str(full_path), "allow_external": "true"},
+            )
+            success = bool(res.get("success"))
+        except Exception:
+            success = bridge.load_state(path=str(full_path))
 
         if not success:
             return False
@@ -421,7 +428,14 @@ class StateLibrary:
 
         # If source and target ROM match, load directly
         if source_rom == target_rom or not target_rom:
-            return bridge.load_state(path=str(source_path))
+            try:
+                res = bridge.send_command(
+                    "LOADSTATE",
+                    {"path": str(source_path), "allow_external": "true"},
+                )
+                return bool(res.get("success"))
+            except Exception:
+                return bridge.load_state(path=str(source_path))
 
         # Determine Mesen2 SaveStates directory
         if mesen_states_dir is None:

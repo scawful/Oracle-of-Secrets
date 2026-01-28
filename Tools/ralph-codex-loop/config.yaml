@@ -1,0 +1,53 @@
+# Paths (override with env)
+root: ".."
+rom: "../../oracle-of-secrets/Roms/oos168x.sfc"
+mesen_socket: "/tmp/mesen2-*.sock"
+mesen_client: "../../oracle-of-secrets/scripts/mesen2_client.py"
+mesen_instance: "agent"
+afs_cli: "~/src/lab/afs/scripts/afs"
+input_chunk_frames: 20
+dangerous_paths:
+  - dw_softlock_south
+
+# Context roots
+contexts:
+  oracle: "~/.context/projects/oracle-of-secrets"
+  mesen2: "../../mesen2-oos/.context"
+  z3dk: "../../z3dk/.context"
+  yaze: "../../yaze/.context"
+
+# Knowledge sources (embeddings/triforce models)
+triforce_models:
+  - "~/.context/projects/oracle-of-secrets/knowledge/triforce_models.json"
+embeddings:
+  usdasm_index: "~/.context/projects/oracle-of-secrets/knowledge/disassembly"
+  code_embeddings: "~/.context/projects/oracle-of-secrets/knowledge/debug_info.md"
+
+# Model selector (default + catalog)
+model: "gpt-5.2-codex-xhigh"
+models:
+  codex_xhigh:
+    provider: openai
+    name: gpt-5.2-codex-xhigh
+  gemini_flash:
+    provider: google
+    name: gemini-3.0-flash-preview-01-28
+  claude_opus:
+    provider: anthropic
+    name: claude-opus-4.5
+  din_local:
+    provider: lmstudio
+    name: din
+    endpoint: "http://localhost:1234/v1"
+  nayru_local:
+    provider: lmstudio
+    name: nayru
+    endpoint: "http://localhost:1234/v1"
+  farore_local:
+    provider: lmstudio
+    name: farore
+    endpoint: "http://localhost:1234/v1"
+
+# Logging
+session_log_dir: "~/.context/projects/oracle-of-secrets/scratchpad/sessions"
+status_dir: "../Docs/Status/ralph"

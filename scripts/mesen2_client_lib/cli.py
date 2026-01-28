@@ -7,10 +7,11 @@ import re
 import sys
 import time
 import subprocess
+import tempfile
 from pathlib import Path
 
 from .client import OracleDebugClient
-from .constants import ITEMS, STORY_FLAGS, WARP_LOCATIONS, WATCH_PROFILES
+from .constants import ITEMS, STORY_FLAGS, WATCH_PROFILES, BREAKPOINT_PROFILES
 from .paths import MANIFEST_PATH
 
 # Try to import AgentBrain (might fail if run directly from lib)
@@ -61,6 +62,59 @@ def _parse_watch_file(path: Path, default_format: str) -> list[tuple[str, str, s
     return watches
 
 
+def _coerce_bool(value: str | None) -> bool | None:
+    if value is None:
+        return None
+    raw = value.strip().lower()
+    if raw in ("1", "true", "yes", "on"):
+        return True
+    if raw in ("0", "false", "no", "off"):
+        return False
+    raise ValueError(f"Invalid boolean value: {value}")
+
+
+def _find_socket_candidates() -> list[Path]:
+    candidates = sorted(Path("/tmp").glob("mesen2-*.sock"), key=lambda p: p.stat().st_mtime, reverse=True)
+    return [p for p in candidates if p.is_socket()]
+
+
+def _preflight_socket(args: argparse.Namespace) -> None:
+    if args.socket:
+        os.environ["MESEN2_SOCKET_PATH"] = args.socket
+        return
+    if args.instance:
+        os.environ["MESEN2_INSTANCE"] = args.instance
+        return
+    if os.getenv("MESEN2_SOCKET_PATH") or os.getenv("MESEN2_INSTANCE") or os.getenv("MESEN2_REGISTRY_INSTANCE"):
+        return
+
+    sockets = _find_socket_candidates()
+    if not sockets:
+        print("Error: No Mesen2 socket found. Launch an instance or set MESEN2_SOCKET_PATH.", file=sys.stderr)
+        sys.exit(2)
+
+    if os.getenv("MESEN2_AUTO_ATTACH"):
+        os.environ["MESEN2_SOCKET_PATH"] = str(sockets[0])
+        print(
+            f"Warning: multiple sockets found; auto-attaching to newest {sockets[0]} "
+            "(set --socket/--instance to be explicit).",
+            file=sys.stderr,
+        )
+        return
+
+    print(
+        "Error: Mesen2 socket not specified. Use --socket or --instance "
+        "(or set MESEN2_AUTO_ATTACH=1 to auto-select).",
+        file=sys.stderr,
+    )
+    print("Detected sockets:", file=sys.stderr)
+    for sock in sockets[:5]:
+        print(f"  - {sock}", file=sys.stderr)
+    if len(sockets) > 5:
+        print(f"  ... and {len(sockets) - 5} more", file=sys.stderr)
+    sys.exit(2)
+
+
 def _load_watch_preset(client: OracleDebugClient, path: Path, default_format: str, clear: bool) -> tuple[bool, str]:
     if not path.exists():
         return False, f"Watch file not found: {path}"
@@ -85,10 +139,32 @@ def _load_watch_preset(client: OracleDebugClient, path: Path, default_format: st
     return True, f"Loaded {len(watches)} watch entries from {path} via socket"
 
 
+class SessionLogger:
+    """Logs CLI session activity to JSONL."""
+    def __init__(self, path: str):
+        self.path = Path(path).expanduser()
+        
+    def log(self, cmd: str, args: argparse.Namespace, result: dict = None, error: str = None):
+        entry = {
+            "timestamp": time.time(),
+            "command": cmd,
+            "args": vars(args),
+            "result": result,
+            "error": error
+        }
+        # Filter non-serializable args if needed
+        if "func" in entry["args"]:
+            del entry["args"]["func"]
+            
+        with open(self.path, "a") as f:
+            f.write(json.dumps(entry) + "\n")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Oracle of Secrets Debug Client")
-    parser.add_argument("--socket", help="Target Mesen2 socket path")
-    parser.add_argument("--instance", help="Registry instance name to target")
+    parser.add_argument("--socket", help="Target Mesen2 socket path (recommended; avoids auto-attaching)")
+    parser.add_argument("--instance", help="Registry instance name to target (preferred for multi-agent)")
+    parser.add_argument("--log", help="Log session activity to JSONL file")
     parser.add_argument("--vanilla", action="store_true", help="Include USDASM vanilla labels")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
@@ -136,6 +212,27 @@ def main():
     watch_parser = subparsers.add_parser("watch", help="Watch addresses")
     watch_parser.add_argument("--profile", "-p", default="overworld")
     watch_parser.add_argument("--json", "-j", action="store_true")
+
+    # Breakpoint command
+    bp_parser = subparsers.add_parser("breakpoint", help="Manage breakpoints")
+    bp_parser.add_argument("--profile", "-p", help="Load a breakpoint profile")
+    bp_parser.add_argument("--add", "-a", help="Add breakpoint (addr:type)")
+    bp_parser.add_argument("--remove", "-r", type=int, help="Remove breakpoint ID")
+    bp_parser.add_argument("--list", "-l", action="store_true", help="List breakpoints")
+    bp_parser.add_argument("--clear", "-c", action="store_true", help="Clear all breakpoints")
+    bp_parser.add_argument("--json", "-j", action="store_true")
+
+    # Trace command (socket TRACE)
+    trace_parser = subparsers.add_parser("trace", help="Control or fetch execution trace (socket)")
+    trace_parser.add_argument("--action", choices=("start", "stop", "status", "clear"))
+    trace_parser.add_argument("--count", type=int, default=20, help="Entries to fetch (default 20, max 100)")
+    trace_parser.add_argument("--offset", type=int, default=0, help="Trace buffer offset")
+    trace_parser.add_argument("--format", help="Trace format string")
+    trace_parser.add_argument("--condition", help="Trace condition")
+    trace_parser.add_argument("--labels", choices=("true", "false"), help="Enable label resolution")
+    trace_parser.add_argument("--indent", choices=("true", "false"), help="Indent code blocks")
+    trace_parser.add_argument("--clear", action="store_true", help="Clear buffer when starting trace")
+    trace_parser.add_argument("--json", "-j", action="store_true")
 
     # Watch loader command
     watch_load_parser = subparsers.add_parser(
@@ -186,15 +283,6 @@ def main():
     setflag_parser = subparsers.add_parser("setflag", help="Set a story flag")
     setflag_parser.add_argument("flag", help="Flag name")
     setflag_parser.add_argument("value", help="Value (number or true/false)")
-
-    # Warp command
-    warp_parser = subparsers.add_parser("warp", help="Warp Link to location")
-    warp_parser.add_argument("location", nargs="?", help="Location name or 'list'")
-    warp_parser.add_argument("--area", "-a", type=lambda x: int(x, 0))
-    warp_parser.add_argument("--x", type=int)
-    warp_parser.add_argument("--y", type=int)
-    warp_parser.add_argument("--kind", "-k", default="ow", help="ow=overworld, uw=underworld")
-    warp_parser.add_argument("--legacy", action="store_true", help="Use legacy direct RAM write (may cause black screen)")
 
     # Press command (input injection)
     press_parser = subparsers.add_parser("press", help="Press buttons")
@@ -335,7 +423,10 @@ def main():
     symbols_parser.add_argument("--json", "-j", action="store_true")
 
     # Labels Sync command
-    labels_sync_parser = subparsers.add_parser("labels-sync", help="Sync vanilla USDASM labels to Mesen2")
+    labels_sync_parser = subparsers.add_parser(
+        "labels-sync",
+        help="Sync vanilla USDASM ROM labels to Mesen2 (filters RAM/low addresses)",
+    )
     labels_sync_parser.add_argument("--clear", action="store_true", help="Clear existing labels before syncing")
     labels_sync_parser.add_argument("--json", "-j", action="store_true")
 
@@ -396,13 +487,6 @@ def main():
     press_agent.add_argument("--frames", type=int, default=5)
     press_agent.add_argument("--allow-paused", action="store_true")
 
-    warp_agent = agent_sub.add_parser("warp", help="Warp to location or coords")
-    warp_agent.add_argument("location", nargs="?")
-    warp_agent.add_argument("--area", type=lambda x: int(x, 0))
-    warp_agent.add_argument("--x", type=int)
-    warp_agent.add_argument("--y", type=int)
-    warp_agent.add_argument("--kind", default="ow")
-
     save_agent = agent_sub.add_parser("save", help="Save state")
     save_agent.add_argument("slot", nargs="?", type=int)
     save_agent.add_argument("--path")
@@ -430,16 +514,16 @@ def main():
     wait_agent.add_argument("seconds", type=float)
 
     args = parser.parse_args()
-    if args.socket:
-        os.environ["MESEN2_SOCKET_PATH"] = args.socket
-    if args.instance:
-        os.environ["MESEN2_INSTANCE"] = args.instance
+    logger = SessionLogger(args.log) if args.log else None
+    if logger:
+        logger.log(args.command, args)
 
     if not args.command:
         parser.print_help()
         return
 
     if args.command == "agent":
+        _preflight_socket(args)
         def emit(payload: dict, ok: bool = True) -> None:
             data = {"ok": ok, **payload}
             if args.pretty:
@@ -487,14 +571,6 @@ def main():
         if args.agent_cmd == "press":
             ok = client.press_button(args.buttons, frames=args.frames, ensure_running=not args.allow_paused)
             emit({"pressed": args.buttons, "frames": args.frames}, ok=ok)
-            return
-        if args.agent_cmd == "warp":
-            if args.location:
-                ok = client.warp_to(location=args.location, kind=args.kind)
-                emit({"warp": args.location, "kind": args.kind}, ok=ok)
-            else:
-                ok = client.warp_to(area=args.area, x=args.x, y=args.y, kind=args.kind)
-                emit({"warp": {"area": args.area, "x": args.x, "y": args.y}, "kind": args.kind}, ok=ok)
             return
         if args.agent_cmd == "save":
             ok = False
@@ -600,6 +676,7 @@ def main():
         sys.exit(result.returncode)
 
     if args.command == "watch-load":
+        _preflight_socket(args)
         client = OracleDebugClient()
         path = Path(args.file).expanduser() if args.file else WATCH_PRESETS.get(args.preset)
         ok, msg = _load_watch_preset(client, path, args.format, args.clear)
@@ -633,12 +710,7 @@ def main():
             print(f"  {name}: {desc}{bit_info}")
         return
 
-    if args.command == "warp" and args.location == "list":
-        print("=== Warp Locations ===")
-        for name, (area, x, y, desc) in WARP_LOCATIONS.items():
-            print(f"  {name}: {desc} (area=0x{area:02X}, x={x}, y={y})")
-        return
-
+    _preflight_socket(args)
     client = OracleDebugClient()
     if args.vanilla:
         client.load_usdasm_labels()
@@ -713,8 +785,6 @@ def main():
         
         context = {
             "watch_profiles": {name: p["description"] for name, p in WATCH_PROFILES.items()},
-            "warp_locations": {name: {"area": loc[0], "pos": (loc[1], loc[2]), "desc": loc[3]} 
-                               for name, loc in WARP_LOCATIONS.items()},
             "items": {name: desc for name, (addr, desc, vals) in ITEMS.items()},
             "flags": {name: desc for name, (addr, desc, mask) in STORY_FLAGS.items()},
             "canon_states": [
@@ -736,7 +806,6 @@ def main():
         else:
             print("=== Debugging Context ===")
             print(f"Watch Profiles: {len(context['watch_profiles'])}")
-            print(f"Warp Locations: {len(context['warp_locations'])}")
             print(f"Items: {len(context['items'])} | Flags: {len(context['flags'])}")
             print(f"Canon States: {len(context['canon_states'])}")
             print(f"USDASM Labels: {'Loaded' if context['usdasm']['loaded'] else 'Not Loaded'} ({context['usdasm']['label_count']})")
@@ -889,6 +958,115 @@ def main():
             for name, val in values.items():
                 print(f"  {name}: {val}")
 
+    elif args.command == "breakpoint":
+        if args.profile:
+            profile = BREAKPOINT_PROFILES.get(args.profile)
+            if not profile:
+                print(f"Unknown profile: {args.profile}")
+                print(f"Available: {', '.join(BREAKPOINT_PROFILES.keys())}")
+                sys.exit(1)
+            
+            print(f"Loading profile: {args.profile} ({profile['description']})")
+            count = 0
+            for bp in profile["breakpoints"]:
+                client.add_breakpoint(address=bp["addr"], mode=bp.get("type", "exec"))
+                print(f"  + Breakpoint at 0x{bp['addr']:06X} ({bp['desc']})")
+                count += 1
+            if args.json:
+                print(json.dumps({"profile": args.profile, "count": count}, indent=2))
+
+        elif args.add:
+            # Format: addr or addr:type
+            parts = args.add.split(":")
+            addr_str = parts[0]
+            mode = parts[1] if len(parts) > 1 else "exec"
+            
+            if addr_str.startswith("0x") or addr_str.startswith("$"):
+                addr = int(addr_str.replace("$", "0x"), 16)
+            else:
+                addr = client.resolve_symbol(addr_str)
+                if addr is None:
+                    print(f"Error: Could not resolve symbol '{addr_str}'")
+                    sys.exit(1)
+            
+            client.add_breakpoint(address=addr, mode=mode)
+            print(f"Added {mode} breakpoint at 0x{addr:06X}")
+            if args.json:
+                print(json.dumps({"action": "add", "address": addr, "mode": mode}, indent=2))
+
+        elif args.remove:
+            # Note: MesenBridge add_breakpoint currently doesn't return ID, 
+            # and remove_breakpoint isn't exposed in client.py yet.
+            # We need to rely on the Lua bridge's RemoveBreakpoint if implemented, 
+            # or ClearBreakpoints.
+            print("Error: Removing specific breakpoints not yet supported by bridge.")
+            sys.exit(1)
+
+        elif args.clear:
+            client.execute_lua("if DebugBridge and DebugBridge.clearBreakpoints then DebugBridge.clearBreakpoints() end")
+            print("Cleared all breakpoints.")
+            if args.json:
+                print(json.dumps({"action": "clear"}, indent=2))
+
+        elif args.list:
+            # Requires bridge support to list
+            print("Error: Listing breakpoints not yet supported by bridge.")
+            sys.exit(1)
+        
+        else:
+            print("Usage: breakpoint --profile <name> OR --add <addr> OR --clear")
+
+    elif args.command == "trace":
+        if args.action:
+            try:
+                labels = _coerce_bool(args.labels)
+                indent = _coerce_bool(args.indent)
+            except ValueError as exc:
+                print(f"Error: {exc}")
+                sys.exit(1)
+
+            res = client.trace_control(
+                args.action,
+                format=args.format,
+                condition=args.condition,
+                labels=labels,
+                indent=indent,
+                clear=args.clear if args.action == "start" else None,
+            )
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                if res.get("success"):
+                    data = res.get("data")
+                    if isinstance(data, dict):
+                        print(f"Trace {args.action}: {data}")
+                    elif data is not None:
+                        print(f"Trace {args.action}: {data}")
+                    else:
+                        print(f"Trace {args.action}: OK")
+                else:
+                    print(f"Trace {args.action} failed: {res.get('error')}")
+                    sys.exit(1)
+            return
+
+        count = max(1, args.count)
+        offset = max(0, args.offset)
+        success, entries = client.trace(count=count, offset=offset)
+        payload = {"success": success, "count": len(entries), "offset": offset, "entries": entries}
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            if not success:
+                print(f"Trace fetch failed: {client.last_error}")
+                sys.exit(1)
+            print(f"=== Trace ({len(entries)} entries, offset={offset}) ===")
+            for row in entries:
+                pc = row.get("pc") or row.get("address") or ""
+                bytecode = row.get("bytes") or row.get("bytecode") or ""
+                disasm = row.get("disasm") or row.get("instruction") or ""
+                line = f"  {pc}: {bytecode} {disasm}".rstrip()
+                print(line if pc else f"  {row}")
+
     elif args.command == "sprites":
         if args.all:
             sprites = client.get_all_sprites()
@@ -924,8 +1102,6 @@ def main():
         print("Monitoring area changes and known issues...")
         print("Press Ctrl+C to exit")
         print()
-
-        import time
 
         last_area = None
         while True:
@@ -1029,33 +1205,6 @@ def main():
             else:
                 print(f"Failed to set {args.flag}")
         except ValueError as e:
-            print(f"Error: {e}")
-            sys.exit(1)
-
-    elif args.command == "warp":
-        try:
-            use_rom = not getattr(args, 'legacy', False)
-            if args.location:
-                if args.location.lower() == 'list':
-                    print("=== Available Warp Locations ===")
-                    for name, data in sorted(WARP_LOCATIONS.items()):
-                        area, x, y, desc = data
-                        print(f"  {name}: area=0x{area:02X}, pos=({x}, {y}) - {desc}")
-                elif client.warp_to(location=args.location, kind=args.kind, use_rom_warp=use_rom):
-                    loc = WARP_LOCATIONS[args.location]
-                    print(f"Warped to {args.location} ({loc[3]})")
-                else:
-                    print("Warp failed")
-            elif args.area is not None and args.x is not None and args.y is not None:
-                if client.warp_to(area=args.area, x=args.x, y=args.y, kind=args.kind, use_rom_warp=use_rom):
-                    print(f"Warped to area=0x{args.area:02X}, x={args.x}, y={args.y} (kind={args.kind})")
-                else:
-                    print("Warp failed")
-            else:
-                print("Usage: warp <location> OR warp --area 0xXX --x N --y N [--kind ow|uw]")
-                print("       warp list  - show available named locations")
-                print("       --legacy   - use direct RAM write (may cause black screen)")
-        except (ValueError, KeyError) as e:
             print(f"Error: {e}")
             sys.exit(1)
 
@@ -1672,7 +1821,14 @@ def main():
         # Create symbol JSON for Mesen2
         # Format: {"SymbolName": {"addr": "BBAAAA", "size": 1, "type": "code"}, ...}
         symbols_data = {}
+        filtered = 0
+        total = len(client._usdasm_labels)
         for name, linear_addr in client._usdasm_labels.items():
+            bank = (linear_addr >> 16) & 0xFF
+            offset = linear_addr & 0xFFFF
+            if bank in (0x7E, 0x7F) or offset < 0x8000:
+                filtered += 1
+                continue
             symbols_data[name] = {
                 "addr": f"{linear_addr:06X}",
                 "size": 1,
@@ -1687,9 +1843,9 @@ def main():
             
             if res.get("success"):
                 if args.json:
-                    print(json.dumps({"success": True, "count": len(symbols_data)}, indent=2))
+                    print(json.dumps({"success": True, "count": len(symbols_data), "filtered": filtered}, indent=2))
                 else:
-                    print(f"Successfully synced {len(symbols_data)} labels to Mesen2.")
+                    print(f"Successfully synced {len(symbols_data)} labels to Mesen2 (filtered {filtered}/{total} non-ROM).")
             else:
                 print(f"Error syncing labels: {res.get('error', 'Unknown error')}")
                 sys.exit(1)

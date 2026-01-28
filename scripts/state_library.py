@@ -668,6 +668,7 @@ def cmd_set_apply(args) -> None:
         shutil.copy2(state_path, dest)
 
     srm_id = args.srm_id or set_entry.get("srm_id")
+    mesen_saves = None
     if srm_id:
         srm_entry = _find_entry(entries, srm_id)
         if not srm_entry:
@@ -684,7 +685,8 @@ def cmd_set_apply(args) -> None:
             raise SystemExit(f"Destination exists: {dest_srm} (use --force)")
         shutil.copy2(srm_path, dest_srm)
 
-    print(f"Applied set '{args.set}' to {mesen_dir}")
+    srm_note = f", srm -> {mesen_saves}" if mesen_saves else ""
+    print(f"Applied set '{args.set}' to {mesen_dir}{srm_note}")
 
 
 def cmd_verify(args) -> None:
@@ -1088,11 +1090,19 @@ def build_parser() -> argparse.ArgumentParser:
     set_create_cmd.add_argument("--force", action="store_true")
     set_create_cmd.set_defaults(func=cmd_set_create)
 
-    set_apply_cmd = sub.add_parser("set-apply", help="Apply a set to Mesen2 slots")
+    set_apply_cmd = sub.add_parser("set-apply", help="Apply a set to Mesen2 slots (SaveStates dir)")
     set_apply_cmd.add_argument("--set", required=True)
     set_apply_cmd.add_argument("--rom", help="ROM path to validate MD5")
-    set_apply_cmd.add_argument("--mesen-dir", default=str(DEFAULT_MESEN_STATES))
-    set_apply_cmd.add_argument("--mesen-saves-dir", default=str(DEFAULT_MESEN_SAVES))
+    set_apply_cmd.add_argument(
+        "--mesen-dir",
+        default=str(DEFAULT_MESEN_STATES),
+        help="Mesen2 SaveStates directory (use isolated profile path when multi-agent)",
+    )
+    set_apply_cmd.add_argument(
+        "--mesen-saves-dir",
+        default=str(DEFAULT_MESEN_SAVES),
+        help="Mesen2 Saves directory (SRM destination)",
+    )
     set_apply_cmd.add_argument("--srm-id", help="Override SRM source id")
     set_apply_cmd.add_argument("--allow-partial", action="store_true")
     set_apply_cmd.add_argument("--allow-stale", action="store_true")

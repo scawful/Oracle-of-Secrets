@@ -3,12 +3,19 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: sync_mesen_saves.sh [--target oos168x] [--with-patched] [--force]\n                           [--rom PATH] [--source-rom PATH] [--allow-stale]
+Usage: sync_mesen_saves.sh [--source-set oos168x] [--target oos168x]\n                           [--extra-target NAME] [--with-patched]\n                           [--force] [--rom PATH] [--source-rom PATH]\n                           [--allow-stale]
 
-Copies oos168x save states/srm into the Mesen2 folders, renaming to a new base.
+Copies a save-state set (defaults to oos168x) into your Mesen2 folders,
+renaming to a new base. Useful for porting legacy sets like oos91x or
+creating multiple target names at once.
+
+Tip: set MESEN2_DIR to an isolated profile (e.g. ~/.config/Mesen2/profiles/<instance>)
+to avoid overwriting default SaveStates during multi-agent work.
 
 Options:
+  --source-set NAME Source folder under Roms/SaveStates (default: oos168x)
   --target NAME     Base ROM name to copy to (default: oos168x)
+  --extra-target N  Additional target base (repeatable)
   --with-patched    Also copy to NAME + "x" (patched ROM)
   --force           Overwrite existing files
   --rom PATH        Target ROM path (for MD5 check)
@@ -16,11 +23,14 @@ Options:
   --allow-stale     Allow copying across ROM MD5 mismatch
 
 Env:
+  MESEN2_HOME       Override Mesen2 home (preferred for isolated instances)
   MESEN2_DIR        Destination base (default: ~/Documents/Mesen2)
 EOF
 }
 
+SOURCE_SET="oos168x"
 TARGET="oos168x"
+EXTRA_TARGETS=()
 WITH_PATCHED=0
 FORCE=0
 ALLOW_STALE=0
@@ -29,8 +39,16 @@ SOURCE_ROM_PATH=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --source-set)
+      SOURCE_SET="${2:-}"
+      shift 2
+      ;;
     --target)
       TARGET="${2:-}"
+      shift 2
+      ;;
+    --extra-target)
+      EXTRA_TARGETS+=("${2:-}")
       shift 2
       ;;
     --with-patched)
@@ -67,8 +85,12 @@ done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-SRC_DIR="${REPO_ROOT}/Roms/SaveStates/oos168x"
-MESEN2_DIR="${MESEN2_DIR:-$HOME/Documents/Mesen2}"
+SRC_DIR="${REPO_ROOT}/Roms/SaveStates/${SOURCE_SET}"
+if [[ -n "${MESEN2_HOME:-}" ]]; then
+  MESEN2_DIR="${MESEN2_HOME}"
+else
+  MESEN2_DIR="${MESEN2_DIR:-$HOME/Documents/Mesen2}"
+fi
 DST_STATES="${MESEN2_DIR}/SaveStates"
 DST_SAVES="${MESEN2_DIR}/Saves"
 
@@ -124,19 +146,28 @@ copy_file() {
   cp -f "${src}" "${dst}"
 }
 
-shopt -s nullglob
-for f in "${SRC_DIR}"/oos168x_*.mss; do
-  base="$(basename "${f}")"
-  num="${base#oos168x_}"
-  copy_file "${f}" "${DST_STATES}/${TARGET}_${num}"
-  if [[ "${WITH_PATCHED}" -eq 1 ]]; then
-    copy_file "${f}" "${DST_STATES}/${TARGET}x_${num}"
-  fi
-done
+copy_target() {
+  local base="$1"
+  shopt -s nullglob
+  for f in "${SRC_DIR}"/${SOURCE_SET}_*.mss; do
+    local fname
+    fname="$(basename "${f}")"
+    local num="${fname#${SOURCE_SET}_}"
+    copy_file "${f}" "${DST_STATES}/${base}_${num}"
+    if [[ "${WITH_PATCHED}" -eq 1 ]]; then
+      copy_file "${f}" "${DST_STATES}/${base}x_${num}"
+    fi
+  done
 
-if [[ -f "${SRC_DIR}/oos168x.srm" ]]; then
-  copy_file "${SRC_DIR}/oos168x.srm" "${DST_SAVES}/${TARGET}.srm"
-  if [[ "${WITH_PATCHED}" -eq 1 ]]; then
-    copy_file "${SRC_DIR}/oos168x.srm" "${DST_SAVES}/${TARGET}x.srm"
+  if [[ -f "${SRC_DIR}/${SOURCE_SET}.srm" ]]; then
+    copy_file "${SRC_DIR}/${SOURCE_SET}.srm" "${DST_SAVES}/${base}.srm"
+    if [[ "${WITH_PATCHED}" -eq 1 ]]; then
+      copy_file "${SRC_DIR}/${SOURCE_SET}.srm" "${DST_SAVES}/${base}x.srm"
+    fi
   fi
-fi
+}
+
+copy_target "${TARGET}"
+for extra in "${EXTRA_TARGETS[@]}"; do
+  copy_target "${extra}"
+done

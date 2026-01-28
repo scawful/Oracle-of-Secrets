@@ -914,3 +914,39 @@ DUNGEON_INFO = {
 
 # Lost Woods area IDs (approximate - may need verification)
 LOST_WOODS_AREAS = {0x28, 0x29, 0x2A, 0x38, 0x39, 0x3A}
+
+
+# =========================================================
+# Breakpoint Profiles
+# =========================================================
+
+BREAKPOINT_PROFILES = {
+    "transition": {
+        "description": "Area and dungeon transitions",
+        "breakpoints": [
+            {"addr": 0x02D8EB, "type": "exec", "desc": "Module_LoadFile"},
+            {"addr": 0x0289BF, "type": "exec", "desc": "Module07_Dungeon"},
+            {"addr": 0x028364, "type": "exec", "desc": "Module06_UnderworldLoad"},
+        ]
+    },
+    "sprite_spawn": {
+        "description": "Sprite creation and probing",
+        "breakpoints": [
+            {"addr": 0x05C66E, "type": "exec", "desc": "Sprite_SpawnProbeAlways"},
+            {"addr": 0x05C612, "type": "exec", "desc": "FireProbe"},
+        ]
+    },
+    "collision": {
+        "description": "Tile collision logic",
+        "breakpoints": [
+            {"addr": 0x07D077, "type": "exec", "desc": "TileDetect_MainHandler"},
+            {"addr": 0x07CF8C, "type": "exec", "desc": "Collision Checks"},
+        ]
+    },
+    "mode_change": {
+        "description": "Game mode changes",
+        "breakpoints": [
+            {"addr": OracleRAM.MODE, "type": "write", "desc": "Mode Change"},
+        ]
+    },
+}
