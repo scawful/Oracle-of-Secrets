@@ -9,10 +9,10 @@ USAGE:
   scripts/mesen2_launch_instance.sh [options]
 
 OPTIONS:
-  --instance NAME        Instance name (default: agent-<timestamp>)
-  --owner NAME           Owner label for registry (default: $USER)
+  --instance NAME        Instance name (default: <source>-<owner>)
+  --owner NAME           Owner label for registry (default: $USER; used in default instance name)
   --title TITLE          Window title suffix (default: instance name)
-  --source NAME          Agent source tag (default: agent)
+  --source NAME          Agent source tag (default: agent; used in default instance name)
   --rom PATH             ROM to load (default: Roms/oos168x.sfc)
   --state-set NAME       Save-state set to apply (default: oos168x_current)
   --state-manifest PATH  Override save-state manifest path
@@ -46,7 +46,8 @@ EOF
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-INSTANCE="agent-$(date +%Y%m%d_%H%M%S)"
+INSTANCE=""
+INSTANCE_SET=0
 OWNER="${USER:-agent}"
 TITLE=""
 TITLE_DEFAULT=0
@@ -77,7 +78,7 @@ SETTINGS_STATUS=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --instance) INSTANCE="$2"; shift 2 ;;
+    --instance) INSTANCE="$2"; INSTANCE_SET=1; shift 2 ;;
     --owner) OWNER="$2"; shift 2 ;;
     --title) TITLE="$2"; shift 2 ;;
     --source) SOURCE="$2"; shift 2 ;;
@@ -108,6 +109,23 @@ while [[ $# -gt 0 ]]; do
     *) echo "Unknown arg: $1" >&2; usage; exit 1 ;;
   esac
 done
+
+sanitize_instance() {
+  local input="$1"
+  input="${input// /_}"
+  input="$(printf '%s' "$input" | tr -cs 'A-Za-z0-9._-' '_')"
+  input="${input#_}"
+  input="${input%_}"
+  printf '%s' "$input"
+}
+
+if [[ "${INSTANCE_SET}" -eq 0 ]]; then
+  default_instance="$(sanitize_instance "${SOURCE}-${OWNER}")"
+  if [[ -z "${default_instance}" ]]; then
+    default_instance="agent-$(date +%Y%m%d_%H%M%S)"
+  fi
+  INSTANCE="${default_instance}"
+fi
 
 if [[ -z "${TITLE}" ]]; then
   TITLE="${INSTANCE}"
@@ -272,7 +290,7 @@ if [[ "${COPY_SETTINGS}" -eq 1 ]]; then
       echo "Warning: settings.json not found at ${COPY_FROM} (input prefs may reset)." >&2
       SETTINGS_STATUS="missing source (input prefs may reset)"
     else
-      SETTINGS_STATUS="existing config"
+      SETTINGS_STATUS="existing config (reused profile)"
     fi
     if [[ -f "${COPY_FROM}/Input.xml" && ! -f "${HOME_DIR}/Input.xml" ]]; then
       cp "${COPY_FROM}/Input.xml" "${HOME_DIR}/Input.xml"
@@ -283,7 +301,7 @@ if [[ "${COPY_SETTINGS}" -eq 1 ]]; then
     fi
   else
     if [[ "${SETTINGS_NEEDS_SEED}" -eq 0 ]]; then
-      SETTINGS_STATUS="existing config"
+      SETTINGS_STATUS="existing config (reused profile)"
     else
       echo "Warning: no default Mesen2 profile found to seed settings/input." >&2
       SETTINGS_STATUS="missing source (input prefs may reset)"

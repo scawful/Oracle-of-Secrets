@@ -31,13 +31,14 @@ This creates a **separate Mesen2 home + title** and applies a save-state library
 ./scripts/mesen2_launch_instance.sh
 
 # 2) Use the socket explicitly (printed by the launcher)
-python3 scripts/mesen2_client.py --socket /tmp/mesen2-agent-20260128_120000.sock health
+python3 scripts/mesen2_client.py --socket /tmp/mesen2-<source>-<owner>.sock health
 ```
 
 Notes:
 - The launcher applies the `oos168x_current` state set by default (from `Docs/Testing/save_state_library.json`).
 - Use `--no-state-set` for a clean profile or `--state-set <name>` to pick a different set.
 - The launcher prints `MESEN2_HOME`, `MESEN2_SOCKET_PATH`, and `MESEN2_INSTANCE` exports for reuse.
+- Default instance name is `<source>-<owner>` (reusable); pass `--instance <name>` for a one-off profile.
 - Only use `--allow-default-profile` if you explicitly intend to share Mesen2’s default profile.
 - The launcher seeds `settings.json` from your default profile to avoid input reset prompts; use `--copy-settings-force` if the instance config gets corrupted.
 - `mesen2_client.py` requires explicit `--socket` or `--instance` (or set `MESEN2_AUTO_ATTACH=1` to auto-select the newest socket).
