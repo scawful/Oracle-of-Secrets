@@ -30,6 +30,10 @@ OPTIONS:
   --app PATH             Mesen2 OOS.app path override
   --headless             Launch without UI (--headless)
   --no-save-settings     Launch with --doNotSaveSettings
+  --copy-settings        Seed settings.json/Input.xml from default profile (default)
+  --copy-settings-force  Overwrite settings.json with seeded copy (repairs corrupt configs)
+  --no-copy-settings     Skip seeding settings/input from default profile
+  --copy-from PATH       Copy settings/input from a specific profile dir
   --allow-default-profile Allow using the default Mesen2 profile/home (unsafe)
   --no-register          Skip mesen2_registry claim
   -h, --help             Show help
@@ -66,6 +70,10 @@ NO_SAVE_SETTINGS=0
 ALLOW_DEFAULT_PROFILE=0
 REGISTER=1
 LUA_SCRIPT=""
+COPY_SETTINGS=1
+COPY_SETTINGS_FORCE=0
+COPY_FROM=""
+SETTINGS_STATUS=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -90,6 +98,10 @@ while [[ $# -gt 0 ]]; do
     --app) APP_PATH="$2"; shift 2 ;;
     --headless) HEADLESS=1; shift ;;
     --no-save-settings) NO_SAVE_SETTINGS=1; shift ;;
+    --copy-settings) COPY_SETTINGS=1; shift ;;
+    --copy-settings-force) COPY_SETTINGS=1; COPY_SETTINGS_FORCE=1; shift ;;
+    --no-copy-settings) COPY_SETTINGS=0; shift ;;
+    --copy-from) COPY_FROM="$2"; shift 2 ;;
     --allow-default-profile) ALLOW_DEFAULT_PROFILE=1; shift ;;
     --no-register) REGISTER=0; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -132,6 +144,28 @@ resolve_rom_path() {
     fi
   fi
   echo "${input}"
+}
+
+validate_settings_json() {
+  local settings_path="$1"
+  python3 - "$settings_path" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    data = json.loads(path.read_text(encoding="utf-8-sig"))
+except Exception as exc:
+    print(f"settings.json invalid: {exc}", file=sys.stderr)
+    sys.exit(1)
+
+if not isinstance(data, dict) or "Input" not in data or "Preferences" not in data:
+    print("settings.json missing required keys (Input/Preferences)", file=sys.stderr)
+    sys.exit(2)
+
+sys.exit(0)
+PY
 }
 
 ROM_PATH="$(resolve_rom_path "${ROM_PATH}")"
@@ -202,6 +236,63 @@ fi
 
 mkdir -p "${HOME_DIR}/SaveStates" "${HOME_DIR}/Saves"
 
+if [[ "${COPY_SETTINGS}" -eq 1 ]]; then
+  SETTINGS_NEEDS_SEED=1
+  if [[ -f "${HOME_DIR}/settings.json" ]]; then
+    if validate_settings_json "${HOME_DIR}/settings.json"; then
+      SETTINGS_NEEDS_SEED=0
+    else
+      ts="$(date +%Y%m%d_%H%M%S)"
+      mv "${HOME_DIR}/settings.json" "${HOME_DIR}/settings.json.invalid-${ts}"
+      SETTINGS_NEEDS_SEED=1
+    fi
+  fi
+  if [[ "${COPY_SETTINGS_FORCE}" -eq 1 ]]; then
+    SETTINGS_NEEDS_SEED=1
+  fi
+
+  if [[ -z "${COPY_FROM}" ]]; then
+    for candidate in \
+      "${HOME}/Documents/Mesen2" \
+      "${HOME}/Library/Application Support/Mesen2" \
+      "${HOME}/.config/Mesen2"; do
+      if [[ -f "${candidate}/settings.json" ]]; then
+        COPY_FROM="${candidate}"
+        break
+      fi
+    done
+  fi
+
+  if [[ -n "${COPY_FROM}" ]]; then
+    if [[ "${SETTINGS_NEEDS_SEED}" -eq 1 && -f "${COPY_FROM}/settings.json" ]]; then
+      cp "${COPY_FROM}/settings.json" "${HOME_DIR}/settings.json"
+      echo "Seeded settings.json from ${COPY_FROM} (source profile untouched)"
+      SETTINGS_STATUS="seeded from ${COPY_FROM}"
+    elif [[ "${SETTINGS_NEEDS_SEED}" -eq 1 ]]; then
+      echo "Warning: settings.json not found at ${COPY_FROM} (input prefs may reset)." >&2
+      SETTINGS_STATUS="missing source (input prefs may reset)"
+    else
+      SETTINGS_STATUS="existing config"
+    fi
+    if [[ -f "${COPY_FROM}/Input.xml" && ! -f "${HOME_DIR}/Input.xml" ]]; then
+      cp "${COPY_FROM}/Input.xml" "${HOME_DIR}/Input.xml"
+      echo "Seeded Input.xml from ${COPY_FROM}"
+    fi
+    if [[ -f "${COPY_FROM}/instance_guid.txt" && ! -f "${HOME_DIR}/instance_guid.txt" ]]; then
+      cp "${COPY_FROM}/instance_guid.txt" "${HOME_DIR}/instance_guid.txt"
+    fi
+  else
+    if [[ "${SETTINGS_NEEDS_SEED}" -eq 0 ]]; then
+      SETTINGS_STATUS="existing config"
+    else
+      echo "Warning: no default Mesen2 profile found to seed settings/input." >&2
+      SETTINGS_STATUS="missing source (input prefs may reset)"
+    fi
+  fi
+else
+  SETTINGS_STATUS="copy disabled"
+fi
+
 if [[ "${NO_STATE_SET}" -eq 0 ]]; then
   set_cmd=(python3 "${ROOT_DIR}/scripts/state_library.py" set-apply --set "${STATE_SET}")
   if [[ -n "${STATE_MANIFEST}" ]]; then
@@ -271,6 +362,7 @@ echo "Owner:    ${OWNER}"
 echo "Title:    ${TITLE}"
 echo "Source:   ${SOURCE}"
 echo "ROM:      ${ROM_PATH}"
+echo "Settings: ${SETTINGS_STATUS}"
 echo "Home:     ${HOME_DIR}"
 echo "Socket:   ${SOCKET_PATH}"
 echo "Binary:   ${MESEN_BIN}"

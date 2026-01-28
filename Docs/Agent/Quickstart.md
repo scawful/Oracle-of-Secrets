@@ -10,7 +10,7 @@ Use this before any other Oracle-of-Secrets doc. It is the shortest path to repr
 
 ## Five-Step Loop
 1) **Build (skip if fresh):** `./scripts/build_rom.sh 168`
-2) **Launch Mesen2 + open ROM.** If multiple sockets exist, set `MESEN2_SOCKET_PATH=/tmp/mesen2-<pid>.sock`.
+2) **Launch Mesen2 + open ROM.** Prefer `./scripts/mesen2_launch_instance.sh` for isolated sessions. If you launch manually and multiple sockets exist, set `MESEN2_SOCKET_PATH=/tmp/mesen2-<pid>.sock`.
 3) **Preflight:**
    - `python3 scripts/mesen2_client.py run-state`
    - `python3 scripts/mesen2_client.py diagnostics --json`
@@ -29,6 +29,7 @@ Use this before any other Oracle-of-Secrets doc. It is the shortest path to repr
 
 ## If Tooling Misbehaves
 - Socket missing? Relaunch Mesen2 and run `python3 scripts/mesen2_client.py socket-cleanup`.
+- Input prefs reset prompt? Relaunch with `./scripts/mesen2_launch_instance.sh --copy-settings-force`.
 - Mesen2 older than repo? `./scripts/mesen2_preflight.sh --rebuild-dirty`.
 - Need headless/CI? `./scripts/agent_workflow_start.sh --rom Roms/oos168x.sfc` (details in `Docs/Tooling/AgentWorkflow.md`).
 - Need deeper background? Check `Docs/STABILITY.md` and `Docs/General/Troubleshooting.md` only after the quickstart.

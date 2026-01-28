@@ -39,6 +39,7 @@ Notes:
 - Use `--no-state-set` for a clean profile or `--state-set <name>` to pick a different set.
 - The launcher prints `MESEN2_HOME`, `MESEN2_SOCKET_PATH`, and `MESEN2_INSTANCE` exports for reuse.
 - Only use `--allow-default-profile` if you explicitly intend to share Mesen2’s default profile.
+- The launcher seeds `settings.json` from your default profile to avoid input reset prompts; use `--copy-settings-force` if the instance config gets corrupted.
 - `mesen2_client.py` requires explicit `--socket` or `--instance` (or set `MESEN2_AUTO_ATTACH=1` to auto-select the newest socket).
 
 ### Legacy/compat (manual launch)

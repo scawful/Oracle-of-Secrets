@@ -64,6 +64,8 @@ Notes:
 - Save-state library sets are applied into that profile’s `SaveStates/` and `Saves/` folders.
 - Use `--no-state-set` to skip copying if you want a clean slate.
 - Only use `--allow-default-profile` if you explicitly intend to share the default Mesen2 profile.
+- The launcher seeds `settings.json` from your default profile to avoid input reset prompts; use `--copy-settings-force` if the instance config gets corrupted.
+- Use `--copy-from <profile_dir>` if you want to seed from a specific profile (e.g., play vs dev).
 
 ## 5. Agent Brain Integration
 
