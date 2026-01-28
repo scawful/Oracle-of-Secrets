@@ -20,30 +20,50 @@ Comprehensive reference for all debugging tools available for Oracle of Secrets 
 
 ## Mesen2 Socket Quickstart (USDASM-safe)
 
-Use this flow to spin up the fork with a live socket, load a known state, and run B010/B-Mirror checks. All disassembly references must be **USDASM (US)** at `../third_party/usdasm`.
+Use this flow to spin up the fork with a live socket, load a known state, and run B010/B-Mirror checks. All disassembly references must be **USDASM (US)** at `../usdasm`.
+
+### Agent-safe isolated instance (preferred)
+
+This creates a **separate Mesen2 home + title** and applies a save-state library set into that profile, avoiding interference with other agents or live play sessions.
 
 ```bash
-# 1) Launch Mesen2 with socket bridge (pick your instance name)
-MESEN_APP="/Users/scawful/src/hobby/mesen2-oos/bin/osx-arm64/Release/osx-arm64/publish/Mesen2 OOS.app" \
-MESEN2_AGENT_SOURCE=manual \
-./scripts/mesen_launch.sh --bridge socket --rom Roms/oos168x.sfc \
-  --state 1 --instance codex --multi --open-launch --export-env
+# 1) Launch isolated Mesen2 instance (safe defaults)
+./scripts/mesen2_launch_instance.sh
 
-# 2) Copy the matching savestate into the instance save dir
-mkdir -p ~/.config/mesen2-codex/SaveStates
-cp Roms/SaveStates/oos168x/oos168x_1.mss ~/.config/mesen2-codex/SaveStates/oos168x_1.mss
+# 2) Use the socket explicitly (printed by the launcher)
+python3 scripts/mesen2_client.py --socket /tmp/mesen2-agent-20260128_120000.sock health
+```
 
-# 3) Verify socket is live (path printed by mesen_launch; fallback: ls /tmp/mesen2-*.sock)
-MESEN2_SOCKET_PATH=/tmp/mesen2-1165.sock ./scripts/mesen_cli.sh status
+Notes:
+- The launcher applies the `oos168x_current` state set by default (from `Docs/Testing/save_state_library.json`).
+- Use `--no-state-set` for a clean profile or `--state-set <name>` to pick a different set.
+- The launcher prints `MESEN2_HOME`, `MESEN2_SOCKET_PATH`, and `MESEN2_INSTANCE` exports for reuse.
+- Only use `--allow-default-profile` if you explicitly intend to share Mesen2’s default profile.
+- `mesen2_client.py` requires explicit `--socket` or `--instance` (or set `MESEN2_AUTO_ATTACH=1` to auto-select the newest socket).
 
-# 4) Run the regression harness
-MESEN2_SOCKET_PATH=/tmp/mesen2-1165.sock python3 scripts/savestate_regression.py --slot 1 --frames 600
+### Legacy/compat (manual launch)
+
+```bash
+# Manual launch with explicit env (keeps other instances safe)
+export MESEN2_HOME="$HOME/Library/Application Support/Mesen2-instances/manual"
+export MESEN2_SOCKET_PATH="/tmp/mesen2-manual.sock"
+export MESEN2_AGENT_TITLE="manual"
+export MESEN2_AGENT_SOURCE="manual"
+
+"/Applications/Mesen2 OOS.app/Contents/MacOS/Mesen2" Roms/oos168x.sfc --instanceName=manual
+
+# Verify socket is live
+python3 scripts/mesen2_client.py --socket "$MESEN2_SOCKET_PATH" health
+
+# Apply a state set to this profile (optional)
+python3 scripts/state_library.py set-apply --set oos168x_current \
+  --mesen-dir "$MESEN2_HOME/SaveStates" --mesen-saves-dir "$MESEN2_HOME/Saves"
 ```
 
 Tips:
-- If the window does not appear in a headless environment, the socket still works; interact via `mesen_cli.sh`.
-- Use USDASM only (never `jpdasm`) when mapping PCs: `../third_party/usdasm/bank_00.asm`.
+- Use USDASM only (never `jpdasm`) when mapping PCs: `../usdasm/bank_00.asm`.
 - For a new set of states, refresh via `scripts/state_library.py capture` so CRCs match the current ROM.
+- Socket trace control is now supported via `TRACE` (start/stop/status/clear + count/offset). See `Docs/Tooling/Mesen2_Architecture.md`.
 
 ---
 
@@ -212,28 +232,16 @@ python3 scripts/ai/memory_cartographer.py interactive
 
 ---
 
-### 8. Unified Platform
+### 8. Oracle Debugger Skill (`~/.claude/skills/oracle-debugger/`)
 
-#### Oracle Debugger (`~/.claude/skills/oracle-debugger/`)
-
-Comprehensive debugging platform integrating multiple capabilities.
-
-**Components:**
-- Emulator control
-- State library management
-- Regression testing
-- ROM diffing
-- Trace analysis
-- Bug reproduction
-- ASM validation
-- Hypothesis testing
+Claude skill wrapper providing additional capabilities:
 
 **Usage:**
 ```bash
 # Interactive session
 python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py interactive
 
-# Regression tests
+# Regression tests (uses test suite)
 python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py regression
 
 # Bug reproduction
@@ -261,13 +269,20 @@ python3 scripts/mesen2_client.py diagnostics --deep --json
 python3 scripts/mesen2_client.py smart-save 1
 python3 scripts/mesen2_client.py lib-save "Crash repro state"
 
+# Debugging (NEW)
+python3 scripts/mesen2_client.py breakpoint --profile transition
+python3 scripts/mesen2_client.py breakpoint --add 0x0289BF:exec
+
 # Navigation
-python3 scripts/mesen2_client.py warp --area 0x40 --x 256 --y 256
 python3 scripts/mesen2_client.py navigate --poi "lost_woods_center"
 
 # Control
 python3 scripts/mesen2_client.py pause
 python3 scripts/mesen2_client.py press "a,up" --frames 10
+
+# Session Logging (NEW)
+# Logs all commands and arguments to a JSONL file
+python3 scripts/mesen2_client.py --log session.jsonl navigate --poi "beach"
 ```
 
 ---
