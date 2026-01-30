@@ -141,7 +141,7 @@ db $A1, $72, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 1C } | Size: 06
 db $FF, $FF ; End
 
 ; Water collision system - placed in Bank $2C after main dungeon code
-incsrc "Collision/water_collision.asm"
+; incsrc "Collision/water_collision.asm"
 
 print "End of dungeons.asm               ", pc
 
@@ -162,20 +162,18 @@ LDA $0682
 org $01F1C9 ; Replace static LDA
 LDA $0682
 
-; DISABLED FOR TESTING
+; Water gate collision write + persistence (DISABLED pending regression fix)
 ; org $01F3D2 ; do tilemapcollision stuff for the dam
 ; JML WaterGate_FillComplete_Hook
 ; NOP #4 ; Pad to 8 bytes (replaces STZ $1E + STZ $1F + JSL IrisSpotlight_ResetTable)
 
-; Underworld_LoadRoom exit hook (torch loop end)
-; DISABLED FOR TESTING - was re-enabled but still causing issues
+; Underworld_LoadRoom exit hook (torch loop end) - DISABLED pending regression fix
 ; org $0188DF
 ; JML Underworld_LoadRoom_ExitHook
-; NOP #1
 
 
 ; RoomTag_WaterGate
-org $01CBAC
-LDA.w #NewWaterOverlayData>>16
-STA.b $B9
-LDA.w #NewWaterOverlayData>>0
+; org $01CBAC
+; LDA.w #NewWaterOverlayData>>16
+; STA.b $B9
+; LDA.w #NewWaterOverlayData>>0
