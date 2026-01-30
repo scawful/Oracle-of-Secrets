@@ -199,6 +199,7 @@ Underworld_LoadRoom_ExitHook:
 
   SEP #$30
   JSL WaterGate_CheckRoomEntry
+  PLB
   RTL
 
   .draw_next_torch
@@ -244,8 +245,9 @@ WaterGateCollisionTable:
 
 WaterGate_Room27_Data:
 {
-  ; Tile count: 8 + 7 + 53*3 = 174
-  db 174
+  ; Tile count: expanded coverage (vertical channels + full 4-row swim mask)
+  ; 8 + 7 + (56*4) = 239 tiles
+  db 239
 
   ; Vertical channel (Y=15, X=40-47) - 8 tiles
   ; Shifted from Y=12 to Y=15 to match +3 tile offset
@@ -255,35 +257,35 @@ WaterGate_Room27_Data:
   ; Shifted from Y=28 to Y=31 to match +3 tile offset
   dw $07E8, $07E9, $07EA, $07EB, $07EC, $07ED, $07EE
 
-  ; Y=41 row (X=5-57) - 53 tiles
-  ; Link at visual Y=38-39 checks here
-  dw $0A45, $0A46, $0A47, $0A48, $0A49, $0A4A, $0A4B, $0A4C
-  dw $0A4D, $0A4E, $0A4F, $0A50, $0A51, $0A52, $0A53, $0A54
-  dw $0A55, $0A56, $0A57, $0A58, $0A59, $0A5A, $0A5B, $0A5C
-  dw $0A5D, $0A5E, $0A5F, $0A60, $0A61, $0A62, $0A63, $0A64
-  dw $0A65, $0A66, $0A67, $0A68, $0A69, $0A6A, $0A6B, $0A6C
-  dw $0A6D, $0A6E, $0A6F, $0A70, $0A71, $0A72, $0A73, $0A74
-  dw $0A75, $0A76, $0A77, $0A78, $0A79
+  ; Main swim area (rows 41-44, cols 5-60) - 56 tiles per row
+  ; Link checks collision ~20px below his feet, so we cover a 4-row band.
+  dw $0A45, $0A46, $0A47, $0A48, $0A49, $0A4A, $0A4B, $0A4C, $0A4D, $0A4E
+  dw $0A4F, $0A50, $0A51, $0A52, $0A53, $0A54, $0A55, $0A56, $0A57, $0A58
+  dw $0A59, $0A5A, $0A5B, $0A5C, $0A5D, $0A5E, $0A5F, $0A60, $0A61, $0A62
+  dw $0A63, $0A64, $0A65, $0A66, $0A67, $0A68, $0A69, $0A6A, $0A6B, $0A6C
+  dw $0A6D, $0A6E, $0A6F, $0A70, $0A71, $0A72, $0A73, $0A74, $0A75, $0A76
+  dw $0A77, $0A78, $0A79, $0A7A, $0A7B, $0A7C
 
-  ; Y=42 row (X=5-57) - 53 tiles
-  ; Link at visual Y=39-40 checks here
-  dw $0A85, $0A86, $0A87, $0A88, $0A89, $0A8A, $0A8B, $0A8C
-  dw $0A8D, $0A8E, $0A8F, $0A90, $0A91, $0A92, $0A93, $0A94
-  dw $0A95, $0A96, $0A97, $0A98, $0A99, $0A9A, $0A9B, $0A9C
-  dw $0A9D, $0A9E, $0A9F, $0AA0, $0AA1, $0AA2, $0AA3, $0AA4
-  dw $0AA5, $0AA6, $0AA7, $0AA8, $0AA9, $0AAA, $0AAB, $0AAC
-  dw $0AAD, $0AAE, $0AAF, $0AB0, $0AB1, $0AB2, $0AB3, $0AB4
-  dw $0AB5, $0AB6, $0AB7, $0AB8, $0AB9
+  dw $0A85, $0A86, $0A87, $0A88, $0A89, $0A8A, $0A8B, $0A8C, $0A8D, $0A8E
+  dw $0A8F, $0A90, $0A91, $0A92, $0A93, $0A94, $0A95, $0A96, $0A97, $0A98
+  dw $0A99, $0A9A, $0A9B, $0A9C, $0A9D, $0A9E, $0A9F, $0AA0, $0AA1, $0AA2
+  dw $0AA3, $0AA4, $0AA5, $0AA6, $0AA7, $0AA8, $0AA9, $0AAA, $0AAB, $0AAC
+  dw $0AAD, $0AAE, $0AAF, $0AB0, $0AB1, $0AB2, $0AB3, $0AB4, $0AB5, $0AB6
+  dw $0AB7, $0AB8, $0AB9, $0ABA, $0ABB, $0ABC
 
-  ; Y=43 row (X=5-57) - 53 tiles
-  ; Link at visual Y=40-41 checks here
-  dw $0AC5, $0AC6, $0AC7, $0AC8, $0AC9, $0ACA, $0ACB, $0ACC
-  dw $0ACD, $0ACE, $0ACF, $0AD0, $0AD1, $0AD2, $0AD3, $0AD4
-  dw $0AD5, $0AD6, $0AD7, $0AD8, $0AD9, $0ADA, $0ADB, $0ADC
-  dw $0ADD, $0ADE, $0ADF, $0AE0, $0AE1, $0AE2, $0AE3, $0AE4
-  dw $0AE5, $0AE6, $0AE7, $0AE8, $0AE9, $0AEA, $0AEB, $0AEC
-  dw $0AED, $0AEE, $0AEF, $0AF0, $0AF1, $0AF2, $0AF3, $0AF4
-  dw $0AF5, $0AF6, $0AF7, $0AF8, $0AF9
+  dw $0AC5, $0AC6, $0AC7, $0AC8, $0AC9, $0ACA, $0ACB, $0ACC, $0ACD, $0ACE
+  dw $0ACF, $0AD0, $0AD1, $0AD2, $0AD3, $0AD4, $0AD5, $0AD6, $0AD7, $0AD8
+  dw $0AD9, $0ADA, $0ADB, $0ADC, $0ADD, $0ADE, $0ADF, $0AE0, $0AE1, $0AE2
+  dw $0AE3, $0AE4, $0AE5, $0AE6, $0AE7, $0AE8, $0AE9, $0AEA, $0AEB, $0AEC
+  dw $0AED, $0AEE, $0AEF, $0AF0, $0AF1, $0AF2, $0AF3, $0AF4, $0AF5, $0AF6
+  dw $0AF7, $0AF8, $0AF9, $0AFA, $0AFB, $0AFC
+
+  dw $0B05, $0B06, $0B07, $0B08, $0B09, $0B0A, $0B0B, $0B0C, $0B0D, $0B0E
+  dw $0B0F, $0B10, $0B11, $0B12, $0B13, $0B14, $0B15, $0B16, $0B17, $0B18
+  dw $0B19, $0B1A, $0B1B, $0B1C, $0B1D, $0B1E, $0B1F, $0B20, $0B21, $0B22
+  dw $0B23, $0B24, $0B25, $0B26, $0B27, $0B28, $0B29, $0B2A, $0B2B, $0B2C
+  dw $0B2D, $0B2E, $0B2F, $0B30, $0B31, $0B32, $0B33, $0B34, $0B35, $0B36
+  dw $0B37, $0B38, $0B39, $0B3A, $0B3B, $0B3C
 }
 
 ; =========================================================
