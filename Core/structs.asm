@@ -62,14 +62,16 @@ endstruct
 
 struct TimeState $7EE000
 {
-  .Hours:     skip 1
-  .Minutes:   skip 1
-  .Speed:     skip 1
+  ; @assert TimeState.Hours < $18
+  ; @assert TimeState.Minutes < $3C
+  .Hours:     skip 1 ; @watch fmt=hex
+  .Minutes:   skip 1 ; @watch fmt=hex
+  .Speed:     skip 1 ; @watch fmt=hex
   .Padding:   skip 13 ; Pad to $7EE010
-  .BlueVal:   skip 2
-  .GreenVal:  skip 2
-  .RedVal:    skip 2
+  .BlueVal:   skip 2 ; @watch fmt=hex
+  .GreenVal:  skip 2 ; @watch fmt=hex
+  .RedVal:    skip 2 ; @watch fmt=hex
   .TempColor: skip 2
-  .SubColor:  skip 2
+  .SubColor:  skip 2 ; @watch fmt=hex
 }
 endstruct

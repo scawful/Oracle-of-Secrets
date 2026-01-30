@@ -62,8 +62,8 @@ SCRAP0F         = $7E000F
 
 ; Game mode and submode
 ; See $00:80B5
-MODE            = $7E0010
-SUBMODE         = $7E0011
+MODE            = $7E0010 ; @watch fmt=hex
+SUBMODE         = $7E0011 ; @watch fmt=hex
 
 ; Before the main loop starts again, $12 is cleared with an STZ
 ; While 0, it sits in a loop, waiting for interrupts.
@@ -90,12 +90,13 @@ UPINCVH         = $7E0019
 
 ; This counter is incremented every time the main loop runs.
 ; In other words: every frame that the game is not lagging
-FRAME           = $7E001A
+FRAME           = $7E001A ; @watch fmt=dec
 
 ; Used to flag indoors/outdoors
 ;   0x00 - outdoors
 ;   0x01 - indoors
-INDOORS         = $7E001B
+INDOORS         = $7E001B ; @watch fmt=hex
+; @assert INDOORS == $00 || INDOORS == $01
 
 ; PPU register queues handled during NMI
 TMQ             = $7E001C
@@ -105,10 +106,10 @@ TSWQ            = $7E001F
 
 ; Link's absolute coordinates
 ; TODO also used during attract (up through around $34)
-POSY            = $7E0020
-POSYH           = $7E0021
-POSX            = $7E0022
-POSXH           = $7E0023
+POSY            = $7E0020 ; @watch fmt=hex
+POSYH           = $7E0021 ; @watch fmt=hex
+POSX            = $7E0022 ; @watch fmt=hex
+POSXH           = $7E0023 ; @watch fmt=hex
 
 ; Takes the value $FFFF when on the ground
 POSZ            = $7E0024
@@ -226,8 +227,8 @@ OBSTRUCTV       = $7E0042
 OBSTRUCTD       = $7E0043
 
 ; Offsets for OAM also used in calculation of sword/hammer hitboxes
-OAMOFFAY        = $7E0044
-OAMOFFAX        = $7E0045
+OAMOFFAY        = $7E0044 ; @watch fmt=hex
+OAMOFFAX        = $7E0045 ; @watch fmt=hex
 
 ; Countdown timer used when Link takes damage
 INPAIN          = $7E0046
@@ -477,8 +478,8 @@ OWMAPDIYH       = $7E0089
 ; However, reads and writes for screen ID are often 16-bit
 ; Occasionally 8A is used to read underworld screens.
 ; Thus, this address should be considered used.
-OWSCR           = $7E008A
-OWSCRH          = $7E008B
+OWSCR           = $7E008A ; @watch fmt=hex
+OWSCRH          = $7E008B ; @watch fmt=hex
 
 ; Overworld background overlay ID
 OWBG1           = $7E008C
@@ -524,22 +525,23 @@ UNUSED_9F       = $7E009F
 ; Room ID for underworld
 ; Copied to $0483
 ; There are only 2 "maps", so $A1 is only expected to be 0 or 1
-ROOM            = $7E00A0
-ROOMH           = $7E00A1
+ROOM            = $7E00A0 ; @watch fmt=hex
+ROOMH           = $7E00A1 ; @watch fmt=hex
+; @assert ROOMH <= $01
 
 ; Value of $A0 for previous room
-PREVROOM        = $7E00A2
-PREVROOMH       = $7E00A3
+PREVROOM        = $7E00A2 ; @watch fmt=hex
+PREVROOMH       = $7E00A3 ; @watch fmt=hex
 
 ; Current floor of dungeon.
 ;   0x00 - Floor 1
 ;   Negative values indicate basement floors.
-FLOOR           = $7E00A4
+FLOOR           = $7E00A4 ; @watch fmt=hex
 
 ; Technically never used, but read by FLOOR sometimes (never rewritten).
 ; Seems to expect 0x00 always for various comparisons.
 ; Not safe to consider this free.
-FLOORH          = $7E00A5
+FLOORH          = $7E00A5 ; @watch fmt=hex
 
 ; Which set of camera boundaries to use.
 BSETH           = $7E00A6
@@ -929,8 +931,8 @@ URHEREYH        = $7E0218
 
 ; Location of HUD tile map in VRAM.
 ; Written when loading a file and called upon during NMI.
-HUDLOC          = $7E0219
-HUDLOCH         = $7E021A
+HUDLOC          = $7E0219 ; @watch fmt=hex
+HUDLOCH         = $7E021A ; @watch fmt=hex
 
 ; Unused but referenced in an unused table entry indicating this address would have
 ; been used for stripes data of some sort...?
@@ -1969,8 +1971,8 @@ OWSCR2H         = $7E040B
 
 ; Dungeon IDs, multiples of 2.
 ; High byte mostly unused but sometimes read.
-DUNGEON         = $7E040C
-DUNGEONH        = $7E040D
+DUNGEON         = $7E040C ; @watch fmt=hex
+DUNGEONH        = $7E040D ; @watch fmt=hex
 
 ; Dungeon room layout
 ; High byte zeroed but unused
@@ -2250,8 +2252,8 @@ STAIRT          = $7E048C
 STAIRTH         = $7E048D
 
 ; Mirrors ROOM
-ROOMCOPY        = $7E048E
-ROOMCOPYH       = $7E048F
+ROOMCOPY        = $7E048E ; @watch fmt=hex
+ROOMCOPYH       = $7E048F ; @watch fmt=hex
 
 ; Floor 2 type
 FLOOR2          = $7E0490
@@ -2318,10 +2320,10 @@ FLUTEX          = $7E04B2
 FLUTEXH         = $7E04B3
 
 ; Timer used by minigames and big bomb.
-HUDTIMER        = $7E04B4
+HUDTIMER        = $7E04B4 ; @watch fmt=hex
 
 ; Counts down from 60 to tick HUDTIMER
-HUDTMSUB        = $7E04B5
+HUDTMSUB        = $7E04B5 ; @watch fmt=hex
 
 ; Tilemap position of triggers when stood on.
 TRIGGERT        = $7E04B6

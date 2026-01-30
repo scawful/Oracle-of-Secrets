@@ -950,11 +950,6 @@ I am Zeniea.  I sense something
 [V]If you are the person who will
 [V]be The Hero[...]
 
-** 12E - Librarian (No Scrolls)
-In your quest you may find
-[2]secret scrolls, bring them all
-[3]to me for translation.
-
 ** 12F
 Yeah [L], now I'm
 [2]quarreling with my younger
@@ -1172,7 +1167,7 @@ Chomp chomp chomp...
 [V]    >  I'll take it!
 [V]        Sounds like a scam.[CH2I]
 
-** 143 - Village Mayor
+** TODO 143 - Village Mayor
 Welcome, young one, to this
 [2]Village of Wayward, for which
 [3]I am the mayor.[K]
@@ -1181,8 +1176,8 @@ Welcome, young one, to this
 [V]This is truly a terrible fate.[K]
 [V]To truly take on the forces of
 [V]Kydrog, you will need to return
-[V]to the abyss for strength[...][K]
-[V]There is a gate, left by my
+[V]to the Eon Abyss for strength[...][K]
+[V]There is a rift, found by my
 [V]ancestors in the mountains. I
 [V]will mark the spot on your map.[SFX:2D]
 
@@ -1336,8 +1331,9 @@ Cluck cluck[...]  What?!
 [V]of changing me back, I'd
 [V]like to give you this Ocarina
 [V]as a token of my thanks![K]
-[V]May it guide you to melodies
-[V]only the wind remembers.[K]
+[V]I'll even teach you the song
+[V]I use to water my plants!
+[V]Here, let me play it for you![K]
 
 ** 182 - Bush Yard Guy
 Hi, [L].  Sorry about my
@@ -1878,127 +1874,3 @@ Ahoy, matey! You're lookin'
 [V]here in the abyss somewhere.[K]
 [V]If you're lookin' to find him,
 [V]that's a good place to start.
-
-** ====================================
-** GOSSIP STONES (1C0-1D4)
-** ====================================
-
-** 1C0 - GS01 - Mushroom Grotto Entrance (Lore)
-We remember when these woods
-[2]whispered only of growth[...]
-[3]before the shadow learned our names.
-
-** 1C1 - GS02 - Wayward Village (Hint: Lost Voice Quest)
-A girl lost her voice at the ranch.
-[2]Seek the forest's gift, the witch's craft,
-[3]and the spark that wakes the silent.
-
-** 1C2 - GS03 - Zora Sanctuary (Lore: Post-D4)
-The Zora carved mirrors from crystal
-[2]to walk between worlds freely.
-[3]That freedom became our cage.
-
-** 1C3 - GS04 - Mount Snowpeak (Hint: Old Man Quest)
-An old man waits where fire meets ice.
-[2]Show him the path he has forgotten.
-[3]The stars will remember your kindness.
-
-** 1C4 - GS05 - Forest of Dreams (Warning: Kydrog Origin)
-The Pirate King was not always dead.
-[2]He came here as you did—sword drawn,
-[3]heart full of purpose. The Abyss remembers.
-
-** 1C5 - GS06 - Kalyxo Castle Exterior (Lore: Post-D3)
-The Hylians came bearing shields,
-[2]claiming protection. We traded
-[3]one king's shadow for another's.
-
-** 1C6 - GS07 - Korok Cove (Hint: Korok Minigame)
-The small ones play where roots drink deep.
-[2]Count them if you can, seeker.
-[3]They reward those with patient eyes.
-
-** 1C7 - GS08 - Shrine of Wisdom Entrance (Lore)
-She who guarded Wisdom
-[2]surrendered every memory to the seal.
-[3]Even now, she has forgotten why.
-
-** 1C8 - GS09 - Shrine of Power Entrance (Lore)
-He who guarded Power
-[2]gave his flesh to bind the dark.
-[3]Only stone remembers his face.
-
-** 1C9 - GS10 - Shrine of Courage Entrance (Lore)
-She who guarded Courage
-[2]sacrificed tomorrow for today.
-[3]The future she lost[...] is now yours.
-
-** 1CA - GS11 - Eon Abyss Beach (Warning)
-This is the world that waits
-[2]when hope abandons the living.
-[3]Do not linger. Do not look back.
-
-** 1CB - GS12 - Hall of Secrets Interior (Lore: Post-D7)
-The Oracle's blood runs thin now.
-[2]One sealing nearly broke her line.
-[3]A second may end it forever.
-
-** 1CC - GS13 - Near Ranch (Hint: Magic Bean Quest)
-Plant what hungers in barren soil.
-[2]Call the rain. Summon the swarm.
-[3]Patience grows what haste cannot.
-
-** 1CD - GS14 - Goron Area Path (Hint: Rock Meat)
-The mountain dwellers feast in silence.
-[2]Five offerings open the stone door.
-[3]Seek the meat that feeds the earth.
-
-** 1CE - GS15 - Dragon Ship Dock (Warning: Post-6 Essences)
-His ship sails on stolen breath.
-[2]Strike true, but know this:
-[3]Killing the body frees the spirit.
-
-** 1CF - GS16 - Temporal Pyramid Exterior (Warning: Post-D8)
-Three gave everything to cage him.
-[2]You carry their sacrifice now.
-[3]Do not let their ending be yours.
-
-** 1D0 - GS17 - Hidden Grotto (Lore: Ganondorf Hint)
-Something older than the Pirate King
-[2]waits in the deepest dark.
-[3]A king of thieves. A lord of malice.
-
-** 1D1 - GS18 - Seashell Coast (Hint: Seashell Collection)
-The sea remembers what the land forgets.
-[2]Gather its whispers, shell by shell.
-[3]A cartographer trades in secrets.
-
-** 1D2 - GS19 - Glacia Estate Approach (Warning: Twinrova)
-The twin flames serve another master.
-[2]Ice and fire are merely tools.
-[3]Beware what they prepare for.
-
-** 1D3 - GS20 - Temporal Pyramid Interior (Lore: Ganondorf)
-He whispered to the fallen knight
-[2]for a hundred years. Patience
-[3]is the weapon of the imprisoned.
-
-** 1D4 - GS21 - Meadow Blade Location (Lore: Kalyxo Castle)
-This blade knew another hand.
-[2]A hero carried it into shadow
-[3]and never returned. Until now.
-
-** 1D5 - Windmill Guy (No Ocarina)
-The wind is quiet without a tune.
-[2]Find an ocarina, then return.
-
-** 1D6 - Windmill Guy (Need Healing)
-A broken melody must be healed first.
-[2]Seek the mask salesman at Tail Pond.
-
-** 1D7 - Windmill Guy (Teach Storms)
-Hear the wind. Feel the rhythm.
-[2]This is the Song of Storms.
-
-** 1D8 - Windmill Guy (Already Knows)
-The storm already knows your song.

@@ -3,9 +3,6 @@
 ; =========================================================
 ; Standardized naming convention: PascalCase for all variables
 ; Bit constants use !Prefix_Name format
-; @doc Docs/Technical/Flag_Ledger.md
-; @source Primary flag definitions live here
-; @verified 2026-01-23 (code audit)
 ;
 ; Organization:
 ;   1. Flag Management Macros
@@ -81,7 +78,7 @@ endmacro
 ; StoryProgress Bits (OOSPROG @ $7EF3D6)
 ; ---------------------------------------------------------
 ; Bitfield: .fmp h.i.
-!Story_IntroComplete       = $01  ; bit 0 - Intro complete (setter unknown; Maku Tree sets bit 1)
+!Story_IntroComplete       = $01  ; bit 0 - Met Maku Tree
 !Story_HallOfSecrets       = $02  ; bit 1 - Hall of Secrets flag
 !Story_PendantQuest        = $04  ; bit 2 - Shrine access
 !Story_VillageElderMet     = $10  ; bit 4 - Elder met (Master Sword?)
@@ -177,11 +174,11 @@ endmacro
 !MapIcon_D1_MushroomGrotto = $01
 !MapIcon_D2_TailPalace     = $02
 !MapIcon_D3_KalyxoCastle   = $03
-!MapIcon_Group_Midgame     = $04  ; Draws D4/D5/D6 markers together
-!MapIcon_D7_DragonShip     = $05  ; Canonical value (legacy: $07)
-!MapIcon_Fortress          = $06  ; Canonical value (legacy: $08)
-!MapIcon_D7_DragonShip_Legacy = $07
-!MapIcon_Fortress_Legacy      = $08
+!MapIcon_D4_ZoraTemple     = $04
+!MapIcon_D5_GlaciaEstate   = $05
+!MapIcon_D6_GoronMines     = $06
+!MapIcon_D7_DragonShip     = $07
+!MapIcon_Fortress          = $08
 !MapIcon_TailPond          = $09  ; Tail Pond guidance marker
 
 ; ---------------------------------------------------------
@@ -221,16 +218,10 @@ ZoraMaskQuestDone       = $7EF302
 InCutSceneFlag          = $7EF303
 
 ; Village Elder guidance stage (map marker progression)
-;   bits 0-3: stage id (0-15)
-;   bit 6: show Pyramid icon (post-D3 guidance)
+;   Low nibble used for post-D1 guidance to Tail Pond
 ElderGuideStage         = $7EF304
 
-; Impa guidance stage (Hall of Secrets check-in)
-;   bits 0-3: stage id (0-15)
-;   bit 7: show Hall of Secrets icon
-ImpaGuideStage          = $7EF305
-
-; Reserved: $7EF306-30F available for future use
+; Reserved: $7EF305-30F available for future use
 
 ; ---------------------------------------------------------
 ; Main Story State ($7EF3C5)
@@ -289,7 +280,7 @@ BunnyHood               = $7EF348   ; 1=Have
 DekuMask                = $7EF349   ; 1=Have (inventory slot)
 Lamp                    = $7EF34A   ; 1=Have
 Hammer                  = $7EF34B   ; 1=Have
-Flute                   = $7EF34C   ; 0=None, 1=Ocarina, 2=Healing, 3=Storms, 4=Soaring, 5=Time
+Flute                   = $7EF34C   ; 1=Shovel, 2=Inactive, 3=Active (also Ocarina)
 RocsFeather             = $7EF34D   ; 1=Have
 Book                    = $7EF34E   ; 1=Have (Book of Secrets)
 BottleIndex             = $7EF34F   ; Currently selected bottle (1-4)
