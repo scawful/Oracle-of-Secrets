@@ -2,10 +2,12 @@
 # Run module isolation in FixPlan Phase 1B order: disable one module, build, prompt to test.
 #
 # Usage:
-#   ./scripts/run_module_isolation.sh [--next N]
+#   ./scripts/run_module_isolation.sh [--next N]   # Manual: one step, then prompt
+#   ./scripts/run_module_isolation.sh --auto       # Automated: build + bisect_softlock per module
 #
-# With no args: runs the full cycle (disables masks, builds, prompts; then music; ...; then resets).
-# With --next N: runs only step N (1=masks, 2=music, ... 8=overworld, 9=reset). Useful to resume.
+# Manual: With no args runs full cycle (disables masks, builds, prompts; ...; then resets).
+# With --next N: step N only (1=masks .. 8=overworld, 9=reset).
+# Automated: --auto runs python3 scripts/run_module_isolation_auto.py (Mesen2 socket + state 1 required).
 #
 # After each build: load save state 1 (overworld) and state 2 (dungeon) in Mesen2 and test.
 # If crash disappears, the disabled module is implicated; then bisect inside that module.
@@ -47,14 +49,19 @@ run_step() {
 }
 
 NEXT=""
+AUTO=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --next)
             NEXT="$2"
             shift 2
             ;;
+        --auto)
+            AUTO=1
+            shift
+            ;;
         --help|-h)
-            head -25 "$0" | tail -22
+            head -28 "$0" | tail -25
             exit 0
             ;;
         *)
@@ -65,6 +72,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 cd "$PROJECT_ROOT"
+
+if [[ -n "$AUTO" ]]; then
+    exec python3 scripts/run_module_isolation_auto.py "$@"
+fi
 
 if [[ -n "$NEXT" ]]; then
     # Run a single step
