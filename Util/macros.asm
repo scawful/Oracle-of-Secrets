@@ -3,6 +3,20 @@
 ; Set to 1 to enable global debug printing, 0 to disable.
 !DEBUG = 1
 
+; --- Module Disable Flags ---
+; Set to 1 to DISABLE a module entirely (for bug isolation).
+; When disabled, all hooks/patches from that module are excluded from assembly.
+; WARNING: Disabling a module may cause linker errors if other modules
+;          reference its symbols. See Oracle_main.asm for dependency notes.
+!DISABLE_MUSIC     = 0
+!DISABLE_OVERWORLD = 0
+!DISABLE_DUNGEON   = 0
+!DISABLE_SPRITES   = 0
+!DISABLE_MASKS     = 0
+!DISABLE_ITEMS     = 0
+!DISABLE_MENU      = 0
+!DISABLE_PATCHES   = 0
+
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
 !LOG_MUSIC     = 1
@@ -73,4 +87,29 @@ macro log_end(name, flag)
     if !DEBUG == 1 && <flag> == 1
         print "$", pc, " < <name>"
     endif
+endmacro
+
+; =========================================================
+; OOS_LongEntry / OOS_LongExit
+;
+; Purpose: Standardize ABI handling for long-entry routines.
+;          Preserves P and DB so caller M/X and data bank are restored.
+;
+; Usage:
+;   OOS_LongEntry
+;     ; SEP/REP as needed
+;   ...
+;   OOS_LongExit
+; =========================================================
+macro OOS_LongEntry()
+    PHP
+    PHB
+    PHK
+    PLB
+endmacro
+
+macro OOS_LongExit()
+    PLB
+    PLP
+    RTL
 endmacro
