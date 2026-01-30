@@ -196,7 +196,7 @@ python3 scripts/mesen2_client.py time
 python3 scripts/mesen2_client.py diagnostics --json
 ```
 
-**Test Suites:** See [`Docs/Testing/Regression_Test_Suite.md`](Docs/Testing/Regression_Test_Suite.md)
+**Test Suites:** See [`Docs/Testing/README.md`](Docs/Testing/README.md)
 
 ---
 
@@ -282,7 +282,7 @@ python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py diff old.sfc new.sf
 
 -   **Active repo:** `~/src/hobby/z3dk`
 -   **Static analysis:** `scripts/oracle_analyzer.py --check-hooks --find-mx` validates M/X register state at hook entry points.
--   **JumpTableLocal ($008781):** Requires X=16-bit. z3dk flags callers with X=8-bit as errors.
+-   **JumpTableLocal ($008781):** Requires 8-bit Y on entry (PLY pops 1 byte). 16-bit Y causes stack underflow (PLY pops 2 bytes). z3dk flags callers with Y=16-bit as errors.
 -   **Build integration:** `build_rom.sh` invokes oracle_analyzer when available.
 -   **Tests:** `pytest tests/test_mx_flag_analysis.py -v` (15 tests, no ROM required).
 
