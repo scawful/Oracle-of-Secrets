@@ -22,15 +22,10 @@ Offspring2_Id:            skip 1
 Offspring3_Id:            skip 1
 Kydreeok_Id:              skip 1
 FishingOrPortalRod:       skip 1
-
-; ANALYSIS: These "Spoof" regions are potential hooks for a 
-;           "Simulation Mode" or "Shadow Link" combat AI, 
-;           where Link's stats can be temporarily overridden.
-; TODO: Reserve more space in the $7E07XX block for the Capture system.
 }
 base off
 
-; --- [ Section: Dreams and Music ] -----------------------
+; =========================================================
 
 function RGBto555(R,G,B) = ((R/8)<<10)|((G/8)<<5)|(B/8) ; zarby
 function menu_offset(y,x) = (y*64)+(x*2)
@@ -49,26 +44,7 @@ SongFlag       = $FE
 ; Overlay camera cache variable
 CameraCache    = $0632
 
-; Debug reinit flags (custom WRAM region)
-DBG_REINIT_FLAGS  = $7E0746
-DBG_REINIT_STATUS = $7E0747
-DBG_REINIT_ERROR  = $7E0748
-DBG_REINIT_SEQ    = $7E0749
-DBG_REINIT_LAST   = $7E074A
-DBG_REINIT_RSVD   = $7E074B
-DBG_WARP_ARM      = $7E074B
-DBG_WARP_REQUEST  = $7E074C
-DBG_WARP_AREA     = $7E074D
-DBG_WARP_X_LO     = $7E074E
-DBG_WARP_X_HI     = $7E074F
-DBG_WARP_Y_LO     = $7E0750
-DBG_WARP_Y_HI     = $7E0751
-DBG_WARP_STATUS   = $7E0752
-DBG_WARP_ERROR    = $7E0753
-DBG_WARP_GFX_PENDING = $7E0754
-
-; --- [ Section: OAM ] ------------------------------------
-
+; =========================================================
 ; The record format for the low table is 4 bytes:
 ;   byte OBJ*4+0: xxxxxxxx
 ;   byte OBJ*4+1: yyyyyyyy
@@ -92,9 +68,9 @@ OamPtr       = $90
 OamPtrH      = $92
 OamBackup   = $0FEC
 
-; --- [ Section: Sprite RAM ] -----------------------------
+; =========================================================
+; Sprite RAM
 
-; [ Position and Velocity ]
 SprY         = $0D00
 SprX         = $0D10
 SprYH        = $0D20
@@ -128,7 +104,6 @@ SprCustom    = $1CC0 ;
 SprDelay     = $0E80
 SprFlash     = $0B89 ; Enemy color flash buffer
 
-; [ Timers ]
 SprTimerA    = $0DF0 ; Action,    decreased by 1 each frame
 SprTimerB    = $0E00 ; Animation, decreased by 1 each frame
 SprTimerC    = $0E10 ;            decreased by 1 each frame
@@ -279,8 +254,7 @@ SprBulletproof = $0BA0
 SprRoom      = $0C9A ;X W Contains the area or room id the sprite has been loaded in
 SprDrop      = $0CBA ;X W 00: Drop nothing, 01: drop normal key, 03: Drop green rupee, OtherValues: Drop big key
 
-; --- [ Section: Overlord ] -------------------------------
-
+; Overlord
 OverlordId   = $0B00
 OverlordX    = $0B08
 OverlordXH   = $0B10
