@@ -154,6 +154,17 @@ scripts/symbols_filter_exclude.txt
 # Analysis artifacts (large JSON)
 Docs/Issues/*.json
 Docs/Issues/diagrams/
+
+# Local workspace/run files
+oracle-of-secrets.code-workspace
+run.sh
+z3dk.meadow.toml
+tests/screenshots/
+tests/baselines/
+tests/current/
+tests/diffs/
+tests/bridge_smoke_test.json
+tests/lr_swap_test.json
 Docs/GEMINI.md.bak_*
 checks.json
 Util/ZScreamNew/ZS_Patches/Items/AST Boots.asm
