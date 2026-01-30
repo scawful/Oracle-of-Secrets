@@ -20,7 +20,7 @@ org $0DDB85 ; RefreshIcon_long
   JSL HUD_Update
 
 org $0DFDAB ; UpdateHUDBuffer_UpdateHearts
-  JSL HUD_UpdateHearts
+  JSL HUD_UpdateHearts_long
   RTS
 
 ; Partial hearts draw position
@@ -36,6 +36,7 @@ org $0DF14F ; AnimateHeartRefill
 org $2E8000
 HUD_Update:
 {
+  PHP ; Save caller's P register
   JSR HUD_UpdateItemBox
 
   SEP #$30
@@ -86,7 +87,12 @@ HUD_Update:
   ; filling in the full and partially filled hearts (actual health)
   JSR HUD_UpdateHearts
 
+  BRA .after_ignore_entry ; Skip alternate entry's PHP on fall-through
+
   .ignore_health ; *$6FC09 ALTERNATE ENTRY POINT ; reentry hook
+  PHP ; Save caller's P register for alternate entry
+
+  .after_ignore_entry
 
   REP #$30
 
@@ -180,7 +186,7 @@ HUD_Update:
 
   .dont_blank_key_icon
 
-  SEP #$30
+  PLP ; Restore caller's P register
   RTL
 }
 
@@ -355,6 +361,12 @@ HUD_UpdateHearts:
 
   LDA.b [$0A], Y : TXY : STA.b [$07], Y
   RTS
+}
+
+HUD_UpdateHearts_long:
+{
+  JSR HUD_UpdateHearts
+  RTL
 }
 
 ; =========================================================
