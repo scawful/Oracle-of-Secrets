@@ -214,7 +214,9 @@ Sprite_BeanVendor_Main:
       LDA.b #$01 : STA.w SprMiscE, X
     +
 
-    LDA.w SprMiscE, X : BEQ +
+    LDA.w SprMiscE, X : BNE .drag_logic
+      JMP +
+    .drag_logic
       JSL InitMovement_Long
       LDA.b #$01 : STA.w $037F
       LDA.b #$02 : STA.w LinkSomaria
