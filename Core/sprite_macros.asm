@@ -1,20 +1,4 @@
-; =========================================================
-; Sprite Macros
-;
-; This file contains macros specifically for custom sprites.
-; =========================================================
-
-; --- [ Configuration ] -----------------------------------
-
-; =========================================================
-; Set_Sprite_Properties
-;
-; Purpose: Writes sprite properties and hooks into the ROM.
-;
-; Parameters:
-;   SprPrep: The prep routine label.
-;   SprMain: The main routine label.
-; =========================================================
+; Write Sprite Properties in the rom MACRO
 macro Set_Sprite_Properties(SprPrep, SprMain)
 {
   pushpc ; Save writing Position for the sprite
@@ -65,12 +49,6 @@ macro sta(...)
   endwhile
 endmacro
 
-; --- [ CPU State ] ---------------------------------------
-
-; =========================================================
-; m16 / m8 (REP/SEP #$30)
-; Purpose: Set 16-bit or 8-bit mode for both A and Index.
-; =========================================================
 macro m16()
   REP #$30
 endmacro
@@ -79,10 +57,6 @@ macro m8()
   SEP #$30
 endmacro
 
-; =========================================================
-; a16 / a8 (REP/SEP #$20)
-; Purpose: Set 16-bit or 8-bit mode for Accumulator.
-; =========================================================
 macro a16()
   REP #$20
 endmacro
@@ -91,10 +65,6 @@ macro a8()
   SEP #$20
 endmacro
 
-; =========================================================
-; index16 / index8 (REP/SEP #$10)
-; Purpose: Set 16-bit or 8-bit mode for Index (X/Y).
-; =========================================================
 macro index16()
   REP #$10
 endmacro
@@ -103,28 +73,14 @@ macro index8()
   SEP #$10
 endmacro
 
-; --- [ States & Logic ] ----------------------------------
-
-; =========================================================
-; GotoAction
-; Purpose: Sets the sprite's current action.
-; =========================================================
 macro GotoAction(action)
   LDA.b #<action> : STA.w SprAction, X
 endmacro
 
-; =========================================================
-; SetFrame
-; Purpose: Sets the sprite's animation frame.
-; =========================================================
 macro SetFrame(frame)
   LDA.b #<frame> : STA.w SprFrame, X
 endmacro
 
-; =========================================================
-; JumpTable / SpriteJumpTable
-; Purpose: Implements a jump table for actions.
-; =========================================================
 macro JumpTable(index, ...)
   LDA.w <index>
   JSL JumpTableLocal
@@ -169,17 +125,14 @@ macro CheckFlagLong(flag_addr, bit_pos, set_label, clear_label)
     BRA set_label
 endmacro
 
-; --- [ Animation ] ---------------------------------------
-
-; =========================================================
-; PlayAnimation / PlayAnimBackwards
-; Purpose: Increments/Decrements the sprite frame every X frames.
-; =========================================================
+; Increase the sprite frame every (frames_wait) frames
+; reset to (frame_start) when reaching (frame_end)
+; This is using SprTimerB
 macro PlayAnimation(frame_start, frame_end, frame_wait)
 {
   LDA.w SprTimerB, X : BNE +
     LDA.w SprFrame, X : INC : STA.w SprFrame, X
-    CMP.b #<frame_end>+1 : BCC ++
+                        CMP.b #<frame_end>+1 : BCC ++
       LDA.b #<frame_start> : STA.w SprFrame, X
     ++
     LDA.b #<frame_wait> : STA.w SprTimerB, X
@@ -203,12 +156,7 @@ macro StartOnFrame(frame)
   +
 endmacro
 
-; --- [ Messaging ] ---------------------------------------
-
-; =========================================================
-; ShowSolicitedMessage / ShowMessageOnContact / ShowUnconditionalMessage
-; Purpose: Displays a message box based on conditions.
-; =========================================================
+; Show message if the player is facing toward sprite and pressing A
 ; Return Carry Set if message is displayed
 ; can use BCC .label <> .label to see if message have been displayed
 macro ShowSolicitedMessage(message_id)
@@ -230,12 +178,7 @@ macro ShowUnconditionalMessage(message_id)
   JSL Sprite_ShowMessageUnconditional
 endmacro
 
-; --- [ Physics & Movement ] ------------------------------
-
-; =========================================================
-; MoveTowardPlayer
-; Purpose: Moves the sprite toward the player at a given speed.
-; =========================================================
+; Make the sprite move towards the player at a speed of (speed)
 macro MoveTowardPlayer(speed)
   LDA.b #<speed>
   JSL Sprite_ApplySpeedTowardsPlayer
@@ -285,20 +228,12 @@ macro PreventPlayerMovement()
 endmacro
 
 ; Will allow the player to move or open his menu
-; =========================================================
-; AllowPlayerMovement
-; Purpose: Allows the player to move or open their menu.
-; =========================================================
 macro AllowPlayerMovement()
   STZ.w $02E4
 endmacro
 
-; --- [ Values & Timers ] ---------------------------------
-
-; =========================================================
-; GetPlayerRupees
-; Purpose: Loads A with the current rupee count (16-bit).
-; =========================================================
+; This is a 16 bit will load A with current rupee count
+; to use with instructions CMP and BCC/BCS
 macro GetPlayerRupees()
   LDA $7EF360
 endmacro
@@ -315,12 +250,6 @@ macro SetSpriteSpeedX(speed)
   LDA.b #<speed> : STA.w SprXSpeed, x
 endmacro
 
-; --- [ SFX & Music ] ------------------------------------
-
-; =========================================================
-; PlaySFX1 / PlaySFX2 / PlayMusic
-; Purpose: Plays sound effects or music by writing to APU registers.
-; =========================================================
 macro PlaySFX1(sfxid)
   LDA.b #<sfxid> : STA $012E
 endmacro
@@ -333,12 +262,6 @@ macro PlayMusic(musicid)
   LDA.b #<musicid> : STA $012C
 endmacro
 
-; --- [ Timers ] -----------------------------------------
-
-; =========================================================
-; SetTimerA...F
-; Purpose: Sets various sprite-local timers.
-; =========================================================
 macro SetTimerA(length)
   LDA.b #<length> : STA.w SprTimerA, X
 endmacro
@@ -363,20 +286,10 @@ macro SetTimerF(length)
   LDA.b #<length> : STA.w SprTimerF, X
 endmacro
 
-; --- [ Misc ] -------------------------------------------
-
-; =========================================================
-; ErrorBeep
-; Purpose: Plays the standard error sound effect.
-; =========================================================
 macro ErrorBeep()
   LDA.b #$3C : STA.w $012E ; Error beep
 endmacro
 
-; =========================================================
-; NextAction
-; Purpose: Increments the sprite's current action.
-; =========================================================
 macro NextAction()
   INC $0D80, X
 endmacro
@@ -444,4 +357,3 @@ macro DrawSprite()
   RTS
 }
 endmacro
-

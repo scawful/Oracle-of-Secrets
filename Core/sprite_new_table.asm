@@ -34,10 +34,8 @@ NewSprTable:
   SEP #$20
   LDA NewSprRoutinesLong+2, Y
   STA $08
-  SEP #$30
+  SEP #$30 ; M=8-bit, X/Y=8-bit — JumpTableLocal stack math expects X=8.
   JMP [$0006]
-
-  ;do a JML and sprite will RTL back to previous code
 }
 
 Sprite_PrepExp_Long:
@@ -60,10 +58,10 @@ NewSprPrepTable:
 
   LDA NewSprPrepRoutinesLong, Y ; Load sprite Address
   STA $06
-  SEP #$20 ; Previously SEP #$30 -_- (that's fine for sprites below ~0x40 over that it will crash)
+  SEP #$20
   LDA NewSprPrepRoutinesLong+2, Y
   STA $08
-  SEP #$30
+  SEP #$30 ; M=8-bit, X/Y=8-bit — JumpTableLocal stack math expects X=8.
   JMP [$0006]
 }
 
