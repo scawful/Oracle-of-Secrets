@@ -22,7 +22,9 @@ python3 scripts/set_module_flags.py --disable menu
 ./scripts/build_rom.sh 168
 ```
 
-**Optional: cycle through modules in FixPlan order.** Run `./scripts/run_module_isolation.sh` to disable modules one at a time (Masks → Music → Menu → Items → Patches → Sprites → Dungeon → Overworld), build after each, and be prompted to test. Use `--next N` to run only step N (1–8); use `--next 9` to reset all.
+**Optional: cycle through modules in FixPlan order.**  
+- **Automated (recommended):** `./scripts/run_module_isolation.sh --auto` or `python3 scripts/run_module_isolation_auto.py` — disables each module, builds, reloads ROM in Mesen2, runs `bisect_softlock` (state 1, N frames), records pass/fail; requires Mesen2 with socket and save state 1.  
+- **Manual:** `./scripts/run_module_isolation.sh` to disable modules one at a time (Masks → … → Overworld), build after each, and be prompted to test. Use `--next N` for step N (1–8); `--next 9` to reset all.
 
 Reset to defaults:
 ```bash

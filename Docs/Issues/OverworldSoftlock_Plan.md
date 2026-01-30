@@ -62,7 +62,7 @@ Details: [OverworldSoftlock_Handoff.md](OverworldSoftlock_Handoff.md) (dynamic c
 
 1. **Isolation:** In `Util/macros.asm` set `!DISABLE_<MODULE> = 1` (or use `python3 scripts/set_module_flags.py --disable <module>`). Build: `./scripts/build_rom.sh 168`. Test state 1 (and 2 if desired).
 2. **Order (safest first):** Masks → Music → Menu → Items → Patches → Sprites → Dungeon → Overworld. See [OverworldSoftlock_FixPlan.md](OverworldSoftlock_FixPlan.md) Phase 1B table.
-3. **Optional:** Run `./scripts/run_module_isolation.sh` to cycle through modules in order (or `--next N` for step N, `--next 9` to reset).
+3. **Optional:** Run `./scripts/run_module_isolation.sh --auto` for automated isolation (build + reload + bisect_softlock per module), or `./scripts/run_module_isolation.sh` to cycle manually (or `--next N` for step N, `--next 9` to reset).
 4. **When crash disappears:** Re-enable that module, then bisect inside it (comment out `incsrc` lines in its `all_*.asm`) to find the file/routine.
 5. **Fix the identified routine**, then re-enable and verify.
 

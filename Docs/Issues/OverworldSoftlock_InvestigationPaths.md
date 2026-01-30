@@ -11,7 +11,7 @@
 
 | Order | Action | Why |
 |-------|--------|-----|
-| **1** | **Module isolation (Path C)** — run `./scripts/run_module_isolation.sh` or disable modules in order (Masks → … → Overworld), build, test state 1/2 | Tells you *which* module is guilty; then bisect inside that module. Highest leverage to narrow the bug. |
+| **1** | **Module isolation (Path C)** — run `./scripts/run_module_isolation.sh --auto` (or `python3 scripts/run_module_isolation_auto.py`) for automated build+test per module; or manual `./scripts/run_module_isolation.sh` / disable modules in order (Masks → … → Overworld), build, test state 1/2 | Tells you *which* module is guilty; then bisect inside that module. Highest leverage to narrow the bug. |
 | **2** | **BlockGFXCheck: add REP #$30 before RTS** (ZSCustomOverworld.asm ~3132) | One-line fix; removes 8-bit index leak on return. Low risk. |
 | **3** | **Git bisect (Path D)** — if you have a known-good commit (e.g. before Nov 22), run `git bisect run python3 scripts/bisect_softlock.py` | Finds the introducing commit; then inspect that diff. |
 | **4** | **NewLoadTransAuxGFX: normalize P before each JML exit** (e.g. REP #$30 before PLB/JML) | Removes path-dependent P; a few lines. |
