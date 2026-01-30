@@ -144,6 +144,9 @@ class MesenSocketBackend:
                 frames = parse_int(args[1]) if len(args) >= 2 else 5
                 ok = self.client.press_button(str(button), int(frames or 0))
                 return ok, f"PRESSED:{button}"
+            if command == "reset":
+                ok = self.client.reset()
+                return ok, "RESET"
 
             if command == "state":
                 state = self.client.get_oracle_state()
@@ -422,6 +425,64 @@ def load_manifest(path: Path) -> dict:
         return {}
 
 
+def load_test_manifest(path: Path) -> dict:
+    """Load the test suite manifest."""
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError:
+        return {}
+
+
+def get_tests_for_suite(manifest: dict, suite: str, repo_root: Path) -> list[Path]:
+    """Get list of test files for a suite from manifest."""
+    import glob as glob_module
+
+    suite_config = manifest.get("suites", {}).get(suite)
+    if not suite_config:
+        return []
+
+    test_patterns = suite_config.get("tests", [])
+    test_files = []
+
+    for pattern in test_patterns:
+        if "*" in pattern:
+            # Glob pattern
+            for f in glob_module.glob(str(repo_root / "tests" / pattern)):
+                path = Path(f)
+                if path.suffix == ".json" and path.is_file():
+                    test_files.append(path)
+        else:
+            # Exact path
+            test_path = repo_root / "tests" / pattern
+            if test_path.exists() and test_path.suffix == ".json":
+                test_files.append(test_path)
+
+    return test_files
+
+
+def get_tests_by_tag(manifest: dict, tag: str, repo_root: Path) -> list[Path]:
+    """Get list of test files matching a tag."""
+    tag_config = manifest.get("tags", {}).get(tag)
+    if not tag_config:
+        return []
+
+    test_names = tag_config.get("tests", [])
+    test_files = []
+
+    # Search for matching tests in all suites
+    for suite_config in manifest.get("suites", {}).values():
+        for pattern in suite_config.get("tests", []):
+            for test_name in test_names:
+                if test_name in pattern or pattern.endswith(f"{test_name}.json"):
+                    test_path = repo_root / "tests" / pattern
+                    if test_path.exists() and test_path not in test_files:
+                        test_files.append(test_path)
+
+    return test_files
+
+
 def resolve_save_state(save_state: Any, repo_root: Path, manifest_path: Path) -> dict | None:
     if not save_state:
         return None
@@ -452,7 +513,7 @@ def resolve_save_state(save_state: Any, repo_root: Path, manifest_path: Path) ->
         found = False
         for entry in entries:
             if entry.get("id") == state_id:
-                state_path = entry.get("state_path")
+                state_path = entry.get("state_path") or entry.get("path")
                 found = True
                 break
         if not found:
@@ -572,6 +633,16 @@ def evaluate_condition(actual: int, condition: str, expected: Any, values: list[
         if not parsed:
             return False, "Invalid expected list"
         return actual in parsed, f"{actual} in {parsed}"
+    if condition in ("less_than", "lt"):
+        exp = parse_int(expected)
+        if exp is None:
+            return False, "Invalid expected value"
+        return actual < exp, f"{actual} < {exp}"
+    if condition in ("greater_than", "gt"):
+        exp = parse_int(expected)
+        if exp is None:
+            return False, "Invalid expected value"
+        return actual > exp, f"{actual} > {exp}"
     return False, f"Unknown condition: {condition}"
 
 
@@ -828,7 +899,7 @@ Please analyze this failure and suggest potential fixes."""
 
 def run_test(test_path: Path, verbose: bool = False, dry_run: bool = False,
              skip_preconditions: bool = False, skip_load: bool = False,
-             skip_missing_state: bool = False) -> str:
+             skip_missing_state: bool = False, moe_enabled: bool = False) -> str:
     """Run a single test file. Returns 'passed', 'failed', or 'skipped'."""
 
     with open(test_path) as f:
@@ -934,7 +1005,10 @@ def run_test(test_path: Path, verbose: bool = False, dry_run: bool = False,
             log(f"\n{Colors.RED}Preconditions not met:{Colors.RESET}")
             for err in errors:
                 log(f"  • {err}", Colors.RED)
-            log(f"\nLoad save state: {test['saveState']['category']}/{test['saveState']['file']}")
+            if test.get("saveState"):
+                ss = test["saveState"]
+                label = ss.get("id") or ss.get("path") or ss.get("slot") or "unknown"
+                log(f"\nLoad save state: {label}")
             return "failed"
         log(f"{Colors.GREEN}All preconditions met{Colors.RESET}")
 
@@ -949,16 +1023,19 @@ def run_test(test_path: Path, verbose: bool = False, dry_run: bool = False,
             log(f"\n{Colors.RED}FAILED at step {i}: {step_desc}{Colors.RESET}")
             log(f"  {message}", Colors.RED)
 
-            # Route to expert
-            failure_info = {
-                'message': message,
-                'step': i,
-                'step_desc': step_desc,
-                'step_data': step
-            }
-            analysis = route_to_expert(failure_info, test, verbose)
-            log(f"\n{Colors.YELLOW}Expert Analysis:{Colors.RESET}")
-            log(analysis)
+            if moe_enabled:
+                # Route to expert
+                failure_info = {
+                    'message': message,
+                    'step': i,
+                    'step_desc': step_desc,
+                    'step_data': step
+                }
+                analysis = route_to_expert(failure_info, test, verbose)
+                log(f"\n{Colors.YELLOW}Expert Analysis:{Colors.RESET}")
+                log(analysis)
+            else:
+                log(f"\n{Colors.YELLOW}MoE analysis disabled; skipping expert routing.{Colors.RESET}")
 
             return "failed"
 
@@ -967,9 +1044,51 @@ def run_test(test_path: Path, verbose: bool = False, dry_run: bool = False,
     log(f"{Colors.GREEN}{'='*60}{Colors.RESET}")
     return "passed"
 
+def output_results_json(results: list[dict], passed: int, failed: int, skipped: int) -> None:
+    """Output results in JSON format."""
+    output = {
+        "summary": {
+            "passed": passed,
+            "failed": failed,
+            "skipped": skipped,
+            "total": passed + failed + skipped,
+        },
+        "tests": results,
+    }
+    print(json.dumps(output, indent=2))
+
+
+def output_results_junit(results: list[dict], passed: int, failed: int, skipped: int) -> None:
+    """Output results in JUnit XML format."""
+    import xml.etree.ElementTree as ET
+
+    testsuite = ET.Element("testsuite")
+    testsuite.set("name", "oracle-of-secrets")
+    testsuite.set("tests", str(passed + failed + skipped))
+    testsuite.set("failures", str(failed))
+    testsuite.set("skipped", str(skipped))
+
+    for result in results:
+        testcase = ET.SubElement(testsuite, "testcase")
+        testcase.set("name", result.get("name", "unknown"))
+        testcase.set("classname", result.get("file", "unknown"))
+
+        if result.get("status") == "failed":
+            failure = ET.SubElement(testcase, "failure")
+            failure.set("message", result.get("message", "Test failed"))
+        elif result.get("status") == "skipped":
+            ET.SubElement(testcase, "skipped")
+
+    tree = ET.ElementTree(testsuite)
+    import io
+    output = io.StringIO()
+    tree.write(output, encoding="unicode", xml_declaration=True)
+    print(output.getvalue())
+
+
 def main():
     parser = argparse.ArgumentParser(description='Oracle of Secrets Test Runner')
-    parser.add_argument('tests', nargs='+', help='Test JSON files to run')
+    parser.add_argument('tests', nargs='*', help='Test JSON files to run')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
     parser.add_argument('--dry-run', action='store_true', help='Show steps without executing')
     parser.add_argument('--skip-preconditions', action='store_true',
@@ -978,7 +1097,64 @@ def main():
                         help='Skip loading save states')
     parser.add_argument('--skip-missing-state', action='store_true',
                         help='Skip tests when save state files are missing')
+    parser.add_argument('--suite', '-s', type=str,
+                        help='Run tests from a manifest suite (smoke, regression, full)')
+    parser.add_argument('--manifest', '-m', type=str,
+                        help='Path to test manifest (default: tests/manifest.json)')
+    parser.add_argument('--tag', '-t', type=str,
+                        help='Run tests matching a specific tag')
+    parser.add_argument('--moe-enabled', action='store_true',
+                        help='Enable MoE analysis on failures')
+    parser.add_argument('--output-format', choices=['text', 'json', 'junit'],
+                        default='text', help='Output format')
+    parser.add_argument('--fail-fast', action='store_true',
+                        help='Stop on first failure')
     args = parser.parse_args()
+
+    repo_root = Path(__file__).parent.parent
+
+    # Determine test files to run
+    test_files = []
+
+    if args.suite or args.tag:
+        # Load manifest
+        manifest_path = Path(args.manifest) if args.manifest else repo_root / "tests" / "manifest.json"
+        manifest = load_test_manifest(manifest_path)
+
+        if not manifest:
+            log(f"{Colors.RED}Could not load manifest: {manifest_path}{Colors.RESET}")
+            return 1
+
+        if args.suite:
+            test_files = get_tests_for_suite(manifest, args.suite, repo_root)
+            if not test_files:
+                log(f"{Colors.RED}No tests found for suite: {args.suite}{Colors.RESET}")
+                log(f"Available suites: {', '.join(manifest.get('suites', {}).keys())}")
+                return 1
+
+        if args.tag:
+            tag_tests = get_tests_by_tag(manifest, args.tag, repo_root)
+            if not tag_tests:
+                log(f"{Colors.YELLOW}No tests found for tag: {args.tag}{Colors.RESET}")
+            else:
+                test_files.extend([t for t in tag_tests if t not in test_files])
+
+    # Add explicit test files
+    for test_pattern in args.tests:
+        test_path = Path(test_pattern)
+        if test_path.is_file():
+            if test_path not in test_files:
+                test_files.append(test_path)
+        else:
+            # Glob pattern
+            for p in Path('.').glob(test_pattern):
+                if p.suffix == '.json' and p not in test_files:
+                    test_files.append(p)
+
+    if not test_files:
+        log(f"{Colors.RED}No test files specified{Colors.RESET}")
+        parser.print_help()
+        return 1
 
     if os.environ.get("MESEN_AUTO_UNSTASH", "1") not in ("0", "false", "False"):
         run_yabai("unstash")
@@ -986,47 +1162,47 @@ def main():
     passed = 0
     failed = 0
     skipped = 0
+    results = []
 
-    for test_pattern in args.tests:
-        test_path = Path(test_pattern)
-        if test_path.is_file():
-            result = run_test(
-                test_path,
-                args.verbose,
-                args.dry_run,
-                args.skip_preconditions,
-                args.skip_load,
-                args.skip_missing_state,
-            )
-            if result == "passed":
-                passed += 1
-            elif result == "skipped":
-                skipped += 1
-            else:
-                failed += 1
+    for test_path in test_files:
+        result = run_test(
+            test_path,
+            args.verbose,
+            args.dry_run,
+            args.skip_preconditions,
+            args.skip_load,
+            args.skip_missing_state,
+            args.moe_enabled,
+        )
+
+        test_result = {
+            "name": test_path.stem,
+            "file": str(test_path),
+            "status": result,
+        }
+
+        if result == "passed":
+            passed += 1
+        elif result == "skipped":
+            skipped += 1
         else:
-            # Glob pattern
-            for p in Path('.').glob(test_pattern):
-                if p.suffix == '.json':
-                    result = run_test(
-                        p,
-                        args.verbose,
-                        args.dry_run,
-                        args.skip_preconditions,
-                        args.skip_load,
-                        args.skip_missing_state,
-                    )
-                    if result == "passed":
-                        passed += 1
-                    elif result == "skipped":
-                        skipped += 1
-                    else:
-                        failed += 1
+            failed += 1
+            if args.fail_fast:
+                test_result["message"] = "Test failed (fail-fast triggered)"
+                results.append(test_result)
+                break
 
-    # Summary
-    log(f"\n{'='*60}")
-    log(f"Results: {passed} passed, {failed} failed, {skipped} skipped")
-    log(f"{'='*60}")
+        results.append(test_result)
+
+    # Output results
+    if args.output_format == "json":
+        output_results_json(results, passed, failed, skipped)
+    elif args.output_format == "junit":
+        output_results_junit(results, passed, failed, skipped)
+    else:
+        log(f"\n{'='*60}")
+        log(f"Results: {passed} passed, {failed} failed, {skipped} skipped")
+        log(f"{'='*60}")
 
     if os.environ.get("MESEN_STASH_ON_FAIL", "0") not in ("0", "false", "False"):
         if failed > 0:
@@ -1042,7 +1218,12 @@ def main():
         else:
             run_yabai("hide")
 
-    return 0 if failed == 0 else 1
+    # Exit codes: 0 = all passed, 1 = failures, 2 = all skipped
+    if failed > 0:
+        return 1
+    if passed == 0 and skipped > 0:
+        return 2
+    return 0
 
 if __name__ == '__main__':
     sys.exit(main())

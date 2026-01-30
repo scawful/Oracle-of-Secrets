@@ -11,8 +11,13 @@ import tempfile
 from pathlib import Path
 
 from .client import OracleDebugClient
+from .capture import capture_debug_snapshot
 from .constants import ITEMS, STORY_FLAGS, WATCH_PROFILES, BREAKPOINT_PROFILES
+from .expr import ExprEvaluator, EvalContext, ExprError
 from .paths import MANIFEST_PATH
+from .state_diff import StateDiffer
+from .state_symbols import load_oos_symbols
+from .bridge import cleanup_stale_sockets
 
 # Try to import AgentBrain (might fail if run directly from lib)
 try:
@@ -24,6 +29,7 @@ SCRIPT_DIR = Path(__file__).resolve().parents[1]
 WATCH_PRESETS = {
     "debug": SCRIPT_DIR / "oracle_debug.watch",
     "story": SCRIPT_DIR / "oracle_story.watch",
+    "symbols": SCRIPT_DIR / "oracle_symbols.watch",
 }
 
 
@@ -62,6 +68,64 @@ def _parse_watch_file(path: Path, default_format: str) -> list[tuple[str, str, s
     return watches
 
 
+def _build_usdasm_symbol_payload(client: OracleDebugClient) -> tuple[dict | None, int, int, str]:
+    if not client._usdasm_labels:
+        client.load_usdasm_labels()
+    if not client._usdasm_labels:
+        return None, 0, 0, "No USDASM labels found to sync."
+
+    symbols_data: dict[str, dict[str, object]] = {}
+    filtered = 0
+    total = len(client._usdasm_labels)
+    for name, linear_addr in client._usdasm_labels.items():
+        bank = (linear_addr >> 16) & 0xFF
+        offset = linear_addr & 0xFFFF
+        if bank in (0x7E, 0x7F) or offset < 0x8000:
+            filtered += 1
+            continue
+        symbols_data[name] = {
+            "addr": f"{linear_addr:06X}",
+            "size": 1,
+            "type": "code",
+        }
+    return symbols_data, filtered, total, ""
+
+
+def _sync_usdasm_labels(client: OracleDebugClient, clear: bool) -> dict:
+    symbols_data, filtered, total, error = _build_usdasm_symbol_payload(client)
+    if error:
+        return {"success": False, "error": error, "filtered": filtered, "total": total}
+
+    temp_path = Path(tempfile.gettempdir()) / "vanilla_symbols.json"
+    try:
+        temp_path.write_text(json.dumps(symbols_data))
+        res = client.bridge.send_command(
+            "SYMBOLS_LOAD",
+            {"file": str(temp_path), "clear": "true" if clear else "false"},
+        )
+        if res.get("success"):
+            return {"success": True, "count": len(symbols_data), "filtered": filtered, "total": total}
+        return {
+            "success": False,
+            "error": res.get("error", "Unknown error"),
+            "count": len(symbols_data),
+            "filtered": filtered,
+            "total": total,
+        }
+    finally:
+        if temp_path.exists():
+            temp_path.unlink()
+
+
+def _resolve_z3dk_root(path: str | None) -> Path:
+    if path:
+        return Path(path).expanduser()
+    env_root = os.getenv("Z3DK_ROOT")
+    if env_root:
+        return Path(env_root).expanduser()
+    return Path.home() / "src" / "hobby" / "z3dk"
+
+
 def _coerce_bool(value: str | None) -> bool | None:
     if value is None:
         return None
@@ -88,6 +152,7 @@ def _preflight_socket(args: argparse.Namespace) -> None:
     if os.getenv("MESEN2_SOCKET_PATH") or os.getenv("MESEN2_INSTANCE") or os.getenv("MESEN2_REGISTRY_INSTANCE"):
         return
 
+    cleanup_stale_sockets()
     sockets = _find_socket_candidates()
     if not sockets:
         print("Error: No Mesen2 socket found. Launch an instance or set MESEN2_SOCKET_PATH.", file=sys.stderr)
@@ -139,6 +204,45 @@ def _load_watch_preset(client: OracleDebugClient, path: Path, default_format: st
     return True, f"Loaded {len(watches)} watch entries from {path} via socket"
 
 
+def _normalize_assert_expr(raw: str) -> str:
+    text = (raw or "").strip()
+    lower = text.lower()
+    if "@assert" in lower:
+        idx = lower.find("@assert")
+        text = text[idx + len("@assert"):].strip()
+    if text.startswith(":"):
+        text = text[1:].strip()
+    return text
+
+
+def _build_expr_evaluator(client: OracleDebugClient) -> ExprEvaluator:
+    table = load_oos_symbols()
+
+    def read8(addr: int) -> int:
+        return client.bridge.read_memory(addr)
+
+    def read16(addr: int) -> int:
+        return client.bridge.read_memory16(addr)
+
+    def resolve_value(name: str) -> int:
+        symbol = table.lookup_by_label(name)
+        if not symbol:
+            raise ExprError(f"Unknown symbol: {name}")
+        addr = symbol.address
+        label = symbol.label.upper()
+        if label.endswith(("H", "L", "U")):
+            return read8(addr)
+        if symbol.size >= 2:
+            return read16(addr)
+        hi = table.lookup_by_label(f"{symbol.label}H")
+        if hi and hi.address == addr + 1:
+            return read16(addr)
+        return read8(addr)
+
+    ctx = EvalContext(resolve_value=resolve_value, read_mem8=read8, read_mem16=read16)
+    return ExprEvaluator(ctx)
+
+
 class SessionLogger:
     """Logs CLI session activity to JSONL."""
     def __init__(self, path: str):
@@ -167,6 +271,10 @@ def main():
     parser.add_argument("--log", help="Log session activity to JSONL file")
     parser.add_argument("--vanilla", action="store_true", help="Include USDASM vanilla labels")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
+
+    # Commands list (no socket required; for agent discoverability)
+    commands_parser = subparsers.add_parser("commands", help="List available command names (no socket required)")
+    commands_parser.add_argument("--json", "-j", action="store_true", help="Output JSON array of {name, help}")
 
     # State command
     state_parser = subparsers.add_parser("state", help="Show game state")
@@ -197,6 +305,196 @@ def main():
     # Health command
     health_parser = subparsers.add_parser("health", help="Check socket health")
     health_parser.add_argument("--json", "-j", action="store_true")
+
+    capabilities_parser = subparsers.add_parser("capabilities", help="Show socket capabilities")
+    capabilities_parser.add_argument("--json", "-j", action="store_true")
+
+    metrics_parser = subparsers.add_parser("metrics", help="Show socket metrics")
+    metrics_parser.add_argument("--json", "-j", action="store_true")
+
+    history_parser = subparsers.add_parser("command-history", help="Show recent socket command history")
+    history_parser.add_argument("--count", type=int, default=20)
+    history_parser.add_argument("--json", "-j", action="store_true")
+
+    register_parser = subparsers.add_parser("agent-register", help="Register agent with socket server")
+    register_parser.add_argument("--id", dest="agent_id", required=True, help="Agent ID (unique)")
+    register_parser.add_argument("--name", dest="agent_name", help="Agent name")
+    register_parser.add_argument("--version", help="Agent version")
+    register_parser.add_argument("--json", "-j", action="store_true")
+
+    rom_info_parser = subparsers.add_parser("rom-info", help="Show loaded ROM info")
+    rom_info_parser.add_argument("--json", "-j", action="store_true")
+
+    cpu_parser = subparsers.add_parser("cpu", help="Show CPU registers")
+    cpu_parser.add_argument("--json", "-j", action="store_true")
+
+    pc_parser = subparsers.add_parser("pc", help="Get or set program counter")
+    pc_parser.add_argument("address", nargs="?", help="Optional address to set (hex)")
+    pc_parser.add_argument("--json", "-j", action="store_true")
+
+    eval_parser = subparsers.add_parser("eval", help="Evaluate debugger expression")
+    eval_parser.add_argument("expression", help="Expression string")
+    eval_parser.add_argument("--cpu", default="snes")
+    eval_parser.add_argument("--no-cache", action="store_true")
+    eval_parser.add_argument("--json", "-j", action="store_true")
+
+    expr_eval_parser = subparsers.add_parser("expr-eval", help="Evaluate mini-expr against symbols")
+    expr_eval_parser.add_argument("expression", help="Mini-expr string")
+    expr_eval_parser.add_argument("--json", "-j", action="store_true")
+
+    assert_parser = subparsers.add_parser("assert-run", help="Evaluate @assert annotations")
+    assert_parser.add_argument("--annotations",
+                               default=str(SCRIPT_DIR.parent / ".cache" / "annotations.json"),
+                               help="Path to annotations.json")
+    assert_parser.add_argument("--expr", action="append",
+                               help="Inline expression to evaluate (repeatable)")
+    assert_parser.add_argument("--strict", action="store_true",
+                               help="Exit non-zero if any assert fails or errors")
+    assert_parser.add_argument("--fail-fast", action="store_true",
+                               help="Stop on first failure/error")
+    assert_parser.add_argument("--json", "-j", action="store_true")
+
+    mem_read_parser = subparsers.add_parser("mem-read", help="Read memory")
+    mem_read_parser.add_argument("addr", help="Start address (hex)")
+    mem_read_parser.add_argument("--len", type=int, default=16)
+    mem_read_parser.add_argument("--memtype", default="wram")
+    mem_read_parser.add_argument("--json", "-j", action="store_true")
+
+    mem_write_parser = subparsers.add_parser("mem-write", help="Write memory")
+    mem_write_parser.add_argument("addr", help="Start address (hex)")
+    mem_write_parser.add_argument("values", help="Space-separated hex bytes")
+    mem_write_parser.add_argument("--memtype", default="wram")
+    mem_write_parser.add_argument("--json", "-j", action="store_true")
+
+    mem_size_parser = subparsers.add_parser("mem-size", help="Get memory region size")
+    mem_size_parser.add_argument("--memtype", default="wram")
+    mem_size_parser.add_argument("--json", "-j", action="store_true")
+
+    mem_search_parser = subparsers.add_parser("mem-search", help="Search memory for a value or pattern")
+    mem_search_parser.add_argument("--pattern", help="Pattern string (e.g., 'A9 00 8D')")
+    mem_search_parser.add_argument("--value", help="Value to search (hex)")
+    mem_search_parser.add_argument("--size", type=int, default=1)
+    mem_search_parser.add_argument("--start", help="Start address (hex)")
+    mem_search_parser.add_argument("--end", help="End address (hex)")
+    mem_search_parser.add_argument("--memtype", default="wram")
+    mem_search_parser.add_argument("--json", "-j", action="store_true")
+
+    mem_snapshot_parser = subparsers.add_parser("mem-snapshot", help="Create memory snapshot")
+    mem_snapshot_parser.add_argument("name", help="Snapshot name")
+    mem_snapshot_parser.add_argument("--memtype", default="WRAM")
+    mem_snapshot_parser.add_argument("--json", "-j", action="store_true")
+
+    mem_diff_parser = subparsers.add_parser("mem-diff", help="Diff memory snapshot")
+    mem_diff_parser.add_argument("name", help="Snapshot name")
+    mem_diff_parser.add_argument("--json", "-j", action="store_true")
+
+    cheat_parser = subparsers.add_parser("cheat", help="Manage cheat codes")
+    cheat_sub = cheat_parser.add_subparsers(dest="cheat_cmd")
+    cheat_add = cheat_sub.add_parser("add")
+    cheat_add.add_argument("code", help="Cheat code (e.g., 7E0DBE:99)")
+    cheat_add.add_argument("--format", default="ProActionReplay")
+    cheat_add.add_argument("--json", "-j", action="store_true")
+    cheat_list = cheat_sub.add_parser("list")
+    cheat_list.add_argument("--json", "-j", action="store_true")
+    cheat_clear = cheat_sub.add_parser("clear")
+    cheat_clear.add_argument("--json", "-j", action="store_true")
+
+    screenshot_parser = subparsers.add_parser("screenshot", help="Capture screenshot")
+    screenshot_parser.add_argument("--out", help="Output path (PNG)")
+    screenshot_parser.add_argument("--json", "-j", action="store_true")
+
+    run_parser = subparsers.add_parser("run", help="Run emulator for seconds/frames")
+    run_parser.add_argument("--seconds", type=float, default=0.0)
+    run_parser.add_argument("--frames", type=int, default=0)
+    run_parser.add_argument("--pause-after", choices=("true", "false"), default="true")
+
+    speed_parser = subparsers.add_parser("speed", help="Get or set emulation speed")
+    speed_parser.add_argument("multiplier", nargs="?", help="Speed multiplier (0=max, 1=normal)")
+    speed_parser.add_argument("--json", "-j", action="store_true")
+
+    rewind_parser = subparsers.add_parser("rewind", help="Rewind emulation")
+    rewind_parser.add_argument("--seconds", type=int, default=1)
+    rewind_parser.add_argument("--json", "-j", action="store_true")
+
+    p_watch_parser = subparsers.add_parser("p-watch", help="Manage P-register tracking")
+    p_watch_sub = p_watch_parser.add_subparsers(dest="p_cmd")
+    p_watch_start = p_watch_sub.add_parser("start")
+    p_watch_start.add_argument("--depth", type=int, default=1000)
+    p_watch_sub.add_parser("stop")
+    p_watch_sub.add_parser("status")
+
+    p_log_parser = subparsers.add_parser("p-log", help="Get recent P-register changes")
+    p_log_parser.add_argument("--count", type=int, default=50)
+    p_log_parser.add_argument("--json", "-j", action="store_true")
+
+    p_assert_parser = subparsers.add_parser("p-assert", help="Assert P-register value at address")
+    p_assert_parser.add_argument("addr", help="Address (hex)")
+    p_assert_parser.add_argument("expected", help="Expected P value (hex)")
+    p_assert_parser.add_argument("--mask", default="0xFF")
+    p_assert_parser.add_argument("--json", "-j", action="store_true")
+
+    mem_watch_parser = subparsers.add_parser("mem-watch", help="Manage memory write watches")
+    mem_watch_sub = mem_watch_parser.add_subparsers(dest="mem_watch_cmd")
+    mem_watch_add = mem_watch_sub.add_parser("add")
+    mem_watch_add.add_argument("addr", help="Address (hex)")
+    mem_watch_add.add_argument("--size", type=int, default=1)
+    mem_watch_add.add_argument("--depth", type=int, default=100)
+    mem_watch_sub.add_parser("list")
+    mem_watch_remove = mem_watch_sub.add_parser("remove")
+    mem_watch_remove.add_argument("id", type=int)
+    mem_watch_sub.add_parser("clear")
+
+    mem_blame_parser = subparsers.add_parser("mem-blame", help="Get write history for watched memory")
+    mem_blame_parser.add_argument("--addr", help="Address (hex)")
+    mem_blame_parser.add_argument("--watch-id", type=int)
+    mem_blame_parser.add_argument("--json", "-j", action="store_true")
+
+    symbols_load_parser = subparsers.add_parser("symbols-load", help="Load symbols JSON into Mesen2")
+    symbols_load_parser.add_argument("path", help="Path to symbols JSON")
+    symbols_load_parser.add_argument("--clear", action="store_true")
+    symbols_load_parser.add_argument("--json", "-j", action="store_true")
+
+    collision_overlay_parser = subparsers.add_parser("collision-overlay", help="Toggle collision overlay")
+    collision_overlay_parser.add_argument("--enable", action="store_true")
+    collision_overlay_parser.add_argument("--disable", action="store_true")
+    collision_overlay_parser.add_argument("--colmap", default="A")
+    collision_overlay_parser.add_argument("--highlight", help="Comma-separated tile values (hex)")
+    collision_overlay_parser.add_argument("--json", "-j", action="store_true")
+
+    collision_dump_parser = subparsers.add_parser("collision-dump", help="Dump collision map")
+    collision_dump_parser.add_argument("--colmap", default="A")
+    collision_dump_parser.add_argument("--json", "-j", action="store_true")
+
+    draw_path_parser = subparsers.add_parser("draw-path", help="Draw path overlay")
+    draw_path_parser.add_argument("points", nargs="?", default="",
+                                  help="Comma-separated x,y pairs (e.g. 10,10,20,15). Omit to clear.")
+    draw_path_parser.add_argument("--color", help="Hex color (e.g. 0x00FF00 or #00FF00)")
+    draw_path_parser.add_argument("--frames", type=int, help="Frames to display")
+    draw_path_parser.add_argument("--json", "-j", action="store_true")
+
+    lua_parser = subparsers.add_parser("lua", help="Execute Lua in Mesen2")
+    lua_parser.add_argument("code", nargs="?", help="Lua code string")
+    lua_parser.add_argument("--file", help="Lua file to execute")
+    lua_parser.add_argument("--json", "-j", action="store_true")
+
+    load_script_parser = subparsers.add_parser("load-script", help="Load Lua script into Mesen2")
+    load_script_parser.add_argument("path", help="Lua script path")
+    load_script_parser.add_argument("--name", default="cli_script")
+    load_script_parser.add_argument("--json", "-j", action="store_true")
+
+    state_compare_parser = subparsers.add_parser("state-compare", help="Diff two save slots")
+    state_compare_parser.add_argument("--slot-a", type=int, default=1)
+    state_compare_parser.add_argument("--slot-b", type=int, default=2)
+    state_compare_parser.add_argument("--regions", help="Comma-separated region names")
+    state_compare_parser.add_argument("--format", choices=("json", "markdown"), default="json")
+
+    # ROM load command (when UI shows load ROM screen)
+    rom_load_parser = subparsers.add_parser("rom-load", help="Load ROM by path via socket")
+    rom_load_parser.add_argument("path", help="Path to ROM (.sfc, .smc, .gb, etc.)")
+    rom_load_parser.add_argument("--patch", help="Optional patch file (IPS/BPS)")
+    rom_load_parser.add_argument("--stop", choices=("true", "false"), help="Stop current ROM first (default true)")
+    rom_load_parser.add_argument("--powercycle", choices=("true", "false"), help="Power-cycle load (default false)")
+    rom_load_parser.add_argument("--json", "-j", action="store_true")
 
     # Socket cleanup command
     socket_cleanup_parser = subparsers.add_parser("socket-cleanup", help="Remove stale Mesen2 sockets")
@@ -233,6 +531,39 @@ def main():
     trace_parser.add_argument("--indent", choices=("true", "false"), help="Indent code blocks")
     trace_parser.add_argument("--clear", action="store_true", help="Clear buffer when starting trace")
     trace_parser.add_argument("--json", "-j", action="store_true")
+
+    trace_run_parser = subparsers.add_parser("trace-run", help="Run frames and dump trace entries as JSONL")
+    trace_run_parser.add_argument("--frames", type=int, default=60, help="Frames to run before dumping trace")
+    trace_run_parser.add_argument("--count", type=int, default=2000, help="Trace entries to fetch")
+    trace_run_parser.add_argument("--offset", type=int, default=0, help="Trace buffer offset")
+    trace_run_parser.add_argument("--format", help="Trace format string")
+    trace_run_parser.add_argument("--condition", help="Trace condition")
+    trace_run_parser.add_argument("--labels", choices=("true", "false"), default="true",
+                                  help="Enable label resolution (default true)")
+    trace_run_parser.add_argument("--clear", action="store_true", help="Clear trace buffer before running")
+    trace_run_parser.add_argument("--output", "-o", help="Output JSONL path (default: stdout)")
+
+    freeze_guard_parser = subparsers.add_parser("freeze-guard", help="Detect stalls and capture snapshot")
+    freeze_guard_parser.add_argument("--frames", type=int, default=60, help="Frames to test for progress")
+    freeze_guard_parser.add_argument("--watch-profile", default="overworld", help="Watch profile for capture")
+    freeze_guard_parser.add_argument("--prefix", default="freeze_guard", help="Capture filename prefix")
+    freeze_guard_parser.add_argument("--out-dir", default=str(SCRIPT_DIR.parent / "Roms" / "SaveStates" / "bug_captures"),
+                                     help="Output directory for capture JSON/screenshot")
+    freeze_guard_parser.add_argument("--save-slot", type=int, help="Save state to slot on freeze")
+    freeze_guard_parser.add_argument("--no-screenshot", action="store_true", help="Skip screenshot capture")
+    freeze_guard_parser.add_argument("--json", "-j", action="store_true")
+
+    step_parser = subparsers.add_parser("step", help="Step CPU instructions (socket)")
+    step_parser.add_argument("count", nargs="?", type=int, default=1, help="Instructions to step (default 1)")
+    step_parser.add_argument(
+        "--mode",
+        choices=("instruction", "step", "into", "over", "out", "cycle", "ppu", "scanline", "frame", "nmi", "irq", "back"),
+        default="into",
+        help="Step mode (default: into)",
+    )
+    step_parser.add_argument("--pause", action="store_true",
+                             help="Pause before stepping (recommended)")
+    step_parser.add_argument("--json", "-j", action="store_true")
 
     # Watch loader command
     watch_load_parser = subparsers.add_parser(
@@ -422,6 +753,35 @@ def main():
     symbols_parser.add_argument("query", nargs="?", help="Symbol name or address to look up")
     symbols_parser.add_argument("--json", "-j", action="store_true")
 
+    labels_parser = subparsers.add_parser("labels", help="Manage Mesen2 labels")
+    labels_sub = labels_parser.add_subparsers(dest="labels_cmd")
+    labels_set = labels_sub.add_parser("set", help="Set label at address")
+    labels_set.add_argument("addr", help="Address (hex)")
+    labels_set.add_argument("label", help="Label name")
+    labels_set.add_argument("--comment", default="")
+    labels_set.add_argument("--memtype", default="WRAM")
+    labels_set.add_argument("--json", "-j", action="store_true")
+    labels_get = labels_sub.add_parser("get", help="Get label at address")
+    labels_get.add_argument("addr", help="Address (hex)")
+    labels_get.add_argument("--memtype", default="WRAM")
+    labels_get.add_argument("--json", "-j", action="store_true")
+    labels_lookup = labels_sub.add_parser("lookup", help="Resolve label to address")
+    labels_lookup.add_argument("label", help="Label name")
+    labels_lookup.add_argument("--json", "-j", action="store_true")
+    labels_clear = labels_sub.add_parser("clear", help="Clear all labels")
+    labels_clear.add_argument("--json", "-j", action="store_true")
+
+    # Labels refresh command (z3dk)
+    labels_refresh_parser = subparsers.add_parser(
+        "labels-refresh",
+        help="Regenerate label indexes via z3dk (USDASM + Oracle).",
+    )
+    labels_refresh_parser.add_argument("--z3dk-root", help="Path to z3dk repo (default: $Z3DK_ROOT or ~/src/hobby/z3dk)")
+    labels_refresh_parser.add_argument("--usdasm-root", help="Override USDASM disassembly root")
+    labels_refresh_parser.add_argument("--sync", action="store_true", help="Sync refreshed USDASM labels into Mesen2")
+    labels_refresh_parser.add_argument("--clear", action="store_true", help="Clear existing labels before syncing")
+    labels_refresh_parser.add_argument("--json", "-j", action="store_true")
+
     # Labels Sync command
     labels_sync_parser = subparsers.add_parser(
         "labels-sync",
@@ -463,6 +823,13 @@ def main():
     trig_rem.add_argument("id", type=int, help="Trigger ID")
 
     trigger_sub.add_parser("list", help="List watch triggers")
+
+    # Stack return decoder (STACK_RETADDR)
+    stack_ret_parser = subparsers.add_parser("stack-retaddr", help="Decode stack return addresses")
+    stack_ret_parser.add_argument("--mode", choices=("rtl", "rts"), default="rtl", help="Return type (default rtl)")
+    stack_ret_parser.add_argument("--count", type=int, default=4, help="Number of entries to decode")
+    stack_ret_parser.add_argument("--sp", help="Override SP (hex)")
+    stack_ret_parser.add_argument("--json", "-j", action="store_true")
 
     # Sync command
     sync_parser = subparsers.add_parser("sync", help="Notify YAZE of state save")
@@ -520,6 +887,20 @@ def main():
 
     if not args.command:
         parser.print_help()
+        return
+
+    if args.command == "commands":
+        names = sorted(subparsers.choices.keys())
+        choice_help = {}
+        for a in getattr(subparsers, "_choices_actions", []):
+            for opt in getattr(a, "option_strings", []) or []:
+                choice_help[opt] = (getattr(a, "help", None) or "").strip()
+        if getattr(args, "json", False):
+            arr = [{"name": n, "help": choice_help.get(n, "")} for n in names]
+            print(json.dumps(arr))
+        else:
+            for n in names:
+                print(n)
         return
 
     if args.command == "agent":
@@ -710,6 +1091,66 @@ def main():
             print(f"  {name}: {desc}{bit_info}")
         return
 
+    if args.command == "labels-refresh":
+        z3dk_root = _resolve_z3dk_root(args.z3dk_root)
+        script_path = z3dk_root / "scripts" / "generate_label_indexes.py"
+        if not script_path.exists():
+            print(f"Error: z3dk script not found at {script_path}", file=sys.stderr)
+            sys.exit(1)
+
+        cmd = [sys.executable, str(script_path)]
+        if args.usdasm_root:
+            cmd += ["--usdasm-root", str(Path(args.usdasm_root).expanduser())]
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            if args.json:
+                print(json.dumps({
+                    "ok": False,
+                    "error": result.stderr.strip(),
+                    "stdout": result.stdout.strip(),
+                }, indent=2))
+            else:
+                print(result.stdout.strip())
+                print(result.stderr.strip(), file=sys.stderr)
+            sys.exit(result.returncode)
+
+        # Refresh USDASM labels in the current client cache
+        client = OracleDebugClient()
+        loaded = client.load_usdasm_labels()
+
+        payload = {
+            "ok": True,
+            "usdasm_loaded": loaded,
+            "stdout": result.stdout.strip(),
+        }
+
+        if args.sync:
+            _preflight_socket(args)
+            client = OracleDebugClient()
+            if not client.ensure_connected():
+                print("Error: Could not connect to Mesen2 socket for label sync.", file=sys.stderr)
+                sys.exit(1)
+            sync_result = _sync_usdasm_labels(client, args.clear)
+            payload["sync"] = sync_result
+            if not sync_result.get("success"):
+                if args.json:
+                    print(json.dumps(payload, indent=2))
+                else:
+                    print(sync_result.get("error", "Label sync failed"), file=sys.stderr)
+                sys.exit(1)
+
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            if result.stdout.strip():
+                print(result.stdout.strip())
+            print(f"USDASM labels loaded: {loaded}")
+            if args.sync:
+                sync_info = payload.get("sync", {})
+                print(f"Synced {sync_info.get('count', 0)} labels (filtered {sync_info.get('filtered', 0)})")
+        return
+
     _preflight_socket(args)
     client = OracleDebugClient()
     if args.vanilla:
@@ -717,8 +1158,15 @@ def main():
 
     if args.command == "debug-status":
         info = client.health_check()
-        run_state = client.get_run_state()
-        state = client.get_oracle_state()
+        rom_info = client.get_rom_info()
+        rom_loaded = bool(rom_info)
+        run_state = client.get_run_state() if rom_loaded else {}
+        state = {}
+        if rom_loaded:
+            try:
+                state = client.get_oracle_state()
+            except Exception:
+                state = {}
         manifest = client.get_library_manifest()
         
         canon_states = [e["id"] for e in manifest.get("entries", []) if e.get("status") == "canon"]
@@ -726,9 +1174,11 @@ def main():
         status = {
             "health": info,
             "run_state": run_state,
-            "game_mode": state["mode_name"],
-            "location": state["area_name"],
-            "pos": (state["link_x"], state["link_y"]),
+            "rom_loaded": rom_loaded,
+            "rom_info": rom_info,
+            "game_mode": state.get("mode_name"),
+            "location": state.get("area_name"),
+            "pos": (state.get("link_x"), state.get("link_y")),
             "canon_states": canon_states,
             "watch_profile": client._watch_profile,
         }
@@ -738,8 +1188,13 @@ def main():
         else:
             print("=== Debug Status ===")
             print(f"Health: {'OK' if info.get('ok') else 'FAIL'} (Latency: {info.get('latency_ms')}ms)")
-            print(f"Emulator: {'Paused' if run_state.get('paused') else 'Running'} (Frame: {run_state.get('frame')})")
-            print(f"Game: {state['mode_name']} | {state['area_name']} | Pos: ({state['link_x']}, {state['link_y']})")
+            if not rom_loaded:
+                print("ROM: not loaded (load screen)")
+                print("Hint: python3 scripts/mesen2_client.py rom-load <path-to-rom>")
+            else:
+                print(f"ROM: {rom_info.get('filename')} (crc32={rom_info.get('crc32')})")
+                print(f"Emulator: {'Paused' if run_state.get('paused') else 'Running'} (Frame: {run_state.get('frame')})")
+                print(f"Game: {state.get('mode_name')} | {state.get('area_name')} | Pos: ({state.get('link_x')}, {state.get('link_y')})")
             print(f"Canon States: {len(canon_states)} available")
             if canon_states:
                 print(f"  Example: {canon_states[0]}")
@@ -748,8 +1203,15 @@ def main():
 
     if args.command == "health":
         info = client.health_check()
+        rom_info = client.get_rom_info()
+        rom_loaded = bool(rom_info)
         if args.json:
-            print(json.dumps(info, indent=2))
+            payload = dict(info)
+            payload["rom_loaded"] = rom_loaded
+            payload["rom_info"] = rom_info
+            if not rom_loaded and client.last_error:
+                payload["rom_error"] = client.last_error
+            print(json.dumps(payload, indent=2))
         else:
             status = "OK" if info.get("ok") else "FAIL"
             print(f"Health: {status}")
@@ -759,7 +1221,677 @@ def main():
                 print(f"Latency: {info.get('latency_ms')} ms")
             if info.get("error"):
                 print(f"Error: {info.get('error')}")
+            if not rom_loaded:
+                print("ROM: not loaded (load screen)")
+                print("Hint: python3 scripts/mesen2_client.py rom-load <path-to-rom>")
+            else:
+                print(f"ROM: {rom_info.get('filename')} (crc32={rom_info.get('crc32')})")
         if not info.get("ok"):
+            sys.exit(1)
+        return
+
+    if args.command == "capabilities":
+        res = client.bridge.capabilities()
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(json.dumps(res.get("data", {}), indent=2))
+            else:
+                print(f"Error: {res.get('error', 'Unknown error')}", file=sys.stderr)
+                sys.exit(1)
+        return
+
+    if args.command == "metrics":
+        res = client.bridge.metrics()
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(json.dumps(res.get("data", {}), indent=2))
+            else:
+                print(f"Error: {res.get('error', 'Unknown error')}", file=sys.stderr)
+                sys.exit(1)
+        return
+
+    if args.command == "command-history":
+        res = client.bridge.command_history(args.count)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(json.dumps(res.get("data", {}), indent=2))
+            else:
+                print(f"Error: {res.get('error', 'Unknown error')}", file=sys.stderr)
+                sys.exit(1)
+        return
+
+    if args.command == "agent-register":
+        res = client.bridge.register_agent(args.agent_id, agent_name=args.agent_name, version=args.version)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(json.dumps(res.get("data", {}), indent=2))
+            else:
+                print(f"Error: {res.get('error', 'Unknown error')}", file=sys.stderr)
+                sys.exit(1)
+        return
+
+    if args.command == "rom-info":
+        info = client.get_rom_info()
+        if args.json:
+            print(json.dumps(info, indent=2))
+        else:
+            if not info:
+                print("No ROM loaded")
+            else:
+                print("=== ROM Info ===")
+                for key in ("filename", "crc32", "sha1", "format", "consoleType"):
+                    if key in info:
+                        print(f"{key}: {info.get(key)}")
+        return
+
+    if args.command == "cpu":
+        regs = client.get_cpu_state()
+        if args.json:
+            print(json.dumps(regs, indent=2))
+        else:
+            if not regs:
+                print("No CPU state available")
+            else:
+                print("=== CPU Registers ===")
+                for key in ("A", "X", "Y", "SP", "PC", "K", "DB", "P"):
+                    if key in regs:
+                        val = regs.get(key)
+                        if isinstance(val, int):
+                            width = 2 if val <= 0xFF else 4
+                            print(f"{key}: ${val:0{width}X}")
+                        else:
+                            print(f"{key}: {val}")
+                flags = regs.get("flags")
+                if isinstance(flags, dict):
+                    flag_str = "".join([
+                        "N" if flags.get("N") else "n",
+                        "V" if flags.get("V") else "v",
+                        "M" if flags.get("M") else "m",
+                        "X" if flags.get("X") else "x",
+                        "D" if flags.get("D") else "d",
+                        "I" if flags.get("I") else "i",
+                        "Z" if flags.get("Z") else "z",
+                        "C" if flags.get("C") else "c",
+                    ])
+                    print(f"Flags: [{flag_str}]")
+        return
+
+    if args.command == "pc":
+        if args.address:
+            try:
+                addr = int(args.address.replace("$", "0x"), 16)
+            except ValueError:
+                print(f"Invalid address: {args.address}")
+                sys.exit(1)
+            res = client.set_pc(addr)
+            if args.json:
+                print(json.dumps(res, indent=2))
+            else:
+                if res.get("success"):
+                    print(f"PC set to 0x{addr:06X}")
+                else:
+                    print(f"Failed: {res.get('error')}")
+                    sys.exit(1)
+        else:
+            info = client.get_pc()
+            if args.json:
+                print(json.dumps(info, indent=2))
+            else:
+                full = info.get("full")
+                if full is not None:
+                    print(f"PC: 0x{full:06X}")
+                else:
+                    print("PC: unavailable")
+        return
+
+    if args.command == "eval":
+        res = client.eval_expression(args.expression, cpu_type=args.cpu, use_cache=not args.no_cache)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                data = res.get("data")
+                if isinstance(data, dict):
+                    value = data.get("hex") or data.get("value")
+                    label = data.get("type")
+                    if label:
+                        print(f"{value} ({label})")
+                    else:
+                        print(value)
+                else:
+                    print(data)
+            else:
+                print(f"Eval failed: {res.get('error')}")
+                sys.exit(1)
+        return
+
+    if args.command == "expr-eval":
+        evaluator = _build_expr_evaluator(client)
+        try:
+            value = evaluator.evaluate(args.expression)
+        except ExprError as exc:
+            if args.json:
+                print(json.dumps({"ok": False, "error": str(exc)}, indent=2))
+            else:
+                print(f"Expr error: {exc}")
+            sys.exit(1)
+        payload = {
+            "ok": True,
+            "expression": args.expression,
+            "value": value,
+            "hex": f"0x{value:X}",
+        }
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            print(f"{args.expression} = {value} (0x{value:X})")
+        return
+
+    if args.command == "assert-run":
+        evaluator = _build_expr_evaluator(client)
+        expressions: list[dict] = []
+        if args.expr:
+            for expr in args.expr:
+                expressions.append({"expr": expr, "source": "inline"})
+        else:
+            ann_path = Path(args.annotations).expanduser()
+            if not ann_path.exists():
+                print(f"Annotations not found: {ann_path}")
+                print("Hint: python3 z3dk/scripts/generate_annotations.py "
+                      f"--root {SCRIPT_DIR.parent} --out {ann_path}")
+                sys.exit(2)
+            try:
+                data = json.loads(ann_path.read_text())
+            except json.JSONDecodeError as exc:
+                print(f"Invalid annotations.json: {exc}")
+                sys.exit(2)
+            for entry in data.get("annotations", []):
+                if entry.get("type") != "assert":
+                    continue
+                expr = entry.get("expr") or entry.get("note") or ""
+                expressions.append({
+                    "expr": expr,
+                    "source": entry.get("source", "annotations"),
+                })
+
+        results = []
+        failed = 0
+        errors = 0
+        for entry in expressions:
+            raw = entry.get("expr", "")
+            expr = _normalize_assert_expr(raw)
+            if not expr:
+                continue
+            try:
+                value = evaluator.evaluate(expr)
+                ok = bool(value)
+                if not ok:
+                    failed += 1
+                results.append({
+                    "expression": expr,
+                    "source": entry.get("source", ""),
+                    "value": value,
+                    "ok": ok,
+                })
+                if args.fail_fast and not ok:
+                    break
+            except ExprError as exc:
+                errors += 1
+                results.append({
+                    "expression": expr,
+                    "source": entry.get("source", ""),
+                    "error": str(exc),
+                    "ok": False,
+                })
+                if args.fail_fast:
+                    break
+
+        summary = {
+            "total": len(results),
+            "failed": failed,
+            "errors": errors,
+            "passed": len([r for r in results if r.get("ok")]),
+        }
+
+        if args.json:
+            print(json.dumps({"summary": summary, "results": results}, indent=2))
+        else:
+            print(f"Assert run: {summary['passed']} passed, {failed} failed, {errors} errors")
+            for entry in results:
+                if entry.get("ok"):
+                    continue
+                src = entry.get("source", "")
+                if entry.get("error"):
+                    print(f"ERROR {src}: {entry.get('expression')} -> {entry.get('error')}")
+                else:
+                    value = entry.get("value")
+                    print(f"FAIL  {src}: {entry.get('expression')} (value={value})")
+
+        if args.strict and (failed or errors):
+            sys.exit(1)
+        return
+
+    if args.command == "mem-read":
+        try:
+            addr = int(args.addr.replace("$", "0x"), 16)
+        except ValueError:
+            print(f"Invalid address: {args.addr}")
+            sys.exit(1)
+        data = client.read_block(addr, args.len, memtype=args.memtype.upper())
+        if args.json:
+            print(json.dumps({"addr": f"0x{addr:06X}", "len": args.len, "bytes": data.hex()}, indent=2))
+        else:
+            hex_str = " ".join(data.hex()[i:i+2].upper() for i in range(0, len(data.hex()), 2))
+            print(f"0x{addr:06X}: {hex_str}")
+        return
+
+    if args.command == "mem-write":
+        try:
+            addr = int(args.addr.replace("$", "0x"), 16)
+        except ValueError:
+            print(f"Invalid address: {args.addr}")
+            sys.exit(1)
+        raw = args.values.replace(",", " ").split()
+        try:
+            data = bytes(int(b, 16) for b in raw)
+        except ValueError:
+            print("Invalid hex bytes")
+            sys.exit(1)
+        ok = client.write_block(addr, data, memtype=args.memtype.upper())
+        if args.json:
+            print(json.dumps({"ok": ok, "addr": f"0x{addr:06X}", "len": len(data)}, indent=2))
+        else:
+            print("Write OK" if ok else "Write failed")
+        if not ok:
+            sys.exit(1)
+        return
+
+    if args.command == "mem-size":
+        res = client.memory_size(memtype=args.memtype)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(res.get("data"))
+            else:
+                print(f"Error: {res.get('error')}")
+                sys.exit(1)
+        return
+
+    if args.command == "mem-search":
+        if not args.pattern and not args.value:
+            print("Provide --pattern or --value")
+            sys.exit(1)
+        start = int(args.start.replace("$", "0x"), 16) if args.start else None
+        end = int(args.end.replace("$", "0x"), 16) if args.end else None
+        if args.value:
+            val = int(args.value.replace("$", "0x"), 16)
+            pattern = val.to_bytes(args.size, "little").hex().upper()
+            pattern = " ".join(pattern[i:i+2] for i in range(0, len(pattern), 2))
+        else:
+            pattern = args.pattern
+        matches = client.bridge.search_memory(pattern, memtype=args.memtype, start=start, end=end)
+        payload = {"count": len(matches), "matches": [f"0x{m:06X}" for m in matches]}
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            print(f"Found {payload['count']} match(es)")
+            for m in payload["matches"][:20]:
+                print(f"  {m}")
+            if payload["count"] > 20:
+                print(f"  ... ({payload['count'] - 20} more)")
+        return
+
+    if args.command == "mem-snapshot":
+        ok = client.bridge.create_snapshot(args.name, memtype=args.memtype)
+        payload = {"ok": ok, "name": args.name, "memtype": args.memtype}
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            print(f"Snapshot '{args.name}' saved ({args.memtype})" if ok else "Snapshot failed")
+        if not ok:
+            sys.exit(1)
+        return
+
+    if args.command == "mem-diff":
+        changes = client.bridge.diff_snapshot(args.name)
+        payload = {"snapshot": args.name, "count": len(changes), "changes": changes}
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            print(f"Changes for '{args.name}': {payload['count']}")
+            for change in changes[:20]:
+                addr = change.get("addr", 0)
+                old_val = change.get("old", 0)
+                new_val = change.get("new", 0)
+                print(f"  0x{addr:06X}: 0x{old_val:02X} -> 0x{new_val:02X}")
+            if payload["count"] > 20:
+                print(f"  ... ({payload['count'] - 20} more)")
+        return
+
+    if args.command == "cheat":
+        if args.cheat_cmd == "add":
+            ok = client.bridge.add_cheat(args.code, format=args.format)
+            payload = {"ok": ok, "code": args.code, "format": args.format}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print("Cheat added" if ok else "Cheat add failed")
+            if not ok:
+                sys.exit(1)
+        elif args.cheat_cmd == "list":
+            cheats = client.bridge.list_cheats()
+            payload = {"count": len(cheats), "cheats": cheats}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                if not cheats:
+                    print("No cheats configured.")
+                else:
+                    for cheat in cheats:
+                        code = cheat.get("code", "")
+                        ctype = cheat.get("type", "")
+                        print(f"{code} ({ctype})")
+        elif args.cheat_cmd == "clear":
+            ok = client.bridge.clear_cheats()
+            payload = {"ok": ok}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print("Cheats cleared" if ok else "Cheat clear failed")
+            if not ok:
+                sys.exit(1)
+        else:
+            print("Choose a cheat command: add, list, clear")
+            sys.exit(1)
+        return
+
+    if args.command == "screenshot":
+        shot = client.screenshot()
+        if not shot:
+            print("Screenshot failed")
+            sys.exit(1)
+        if args.out:
+            out_path = Path(args.out).expanduser()
+            out_path.write_bytes(shot)
+            if args.json:
+                print(json.dumps({"path": str(out_path)}, indent=2))
+            else:
+                print(f"Saved: {out_path}")
+        else:
+            import base64
+            b64 = base64.b64encode(shot).decode("ascii")
+            if args.json:
+                print(json.dumps({"png_base64": b64}, indent=2))
+            else:
+                print(b64)
+        return
+
+    if args.command == "run":
+        seconds = max(0.0, args.seconds)
+        frames = max(0, args.frames)
+        pause_after = args.pause_after == "true"
+        if seconds <= 0 and frames <= 0:
+            print("Provide --seconds and/or --frames")
+            sys.exit(1)
+        run_state = client.get_run_state()
+        was_paused = bool(run_state.get("paused")) if run_state else False
+        if seconds > 0 and was_paused:
+            client.resume()
+        if seconds > 0:
+            time.sleep(seconds)
+        if frames > 0:
+            client.run_frames(frames)
+        if pause_after or was_paused:
+            client.pause()
+        print(f"Ran for {seconds:.2f}s and {frames} frame(s)")
+        return
+
+    if args.command == "speed":
+        if args.multiplier is None:
+            fps = client.bridge.get_speed()
+            payload = {"fps": fps}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print(f"FPS: {fps:.2f}")
+            return
+
+        try:
+            multiplier = float(args.multiplier)
+        except ValueError:
+            print(f"Invalid multiplier: {args.multiplier}")
+            sys.exit(1)
+        ok = client.bridge.set_speed(multiplier)
+        payload = {"ok": ok, "multiplier": multiplier}
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            print(f"Speed set to {multiplier}x" if ok else "Speed update failed")
+        if not ok:
+            sys.exit(1)
+        return
+
+    if args.command == "rewind":
+        seconds = max(0, args.seconds)
+        if seconds <= 0:
+            print("Provide --seconds > 0")
+            sys.exit(1)
+        ok = client.bridge.rewind(seconds)
+        payload = {"ok": ok, "seconds": seconds}
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            print(f"Rewound {seconds}s" if ok else "Rewind failed")
+        if not ok:
+            sys.exit(1)
+        return
+
+    if args.command == "p-watch":
+        if args.p_cmd == "start":
+            res = client.p_watch_start(depth=args.depth)
+        elif args.p_cmd == "stop":
+            res = client.p_watch_stop()
+        else:
+            res = client.p_watch_status()
+        print(json.dumps(res, indent=2))
+        return
+
+    if args.command == "p-log":
+        res = client.p_log(count=args.count)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(json.dumps(res.get("data", []), indent=2))
+            else:
+                print(f"Error: {res.get('error')}")
+                sys.exit(1)
+        return
+
+    if args.command == "p-assert":
+        try:
+            addr = int(args.addr.replace("$", "0x"), 16)
+            expected = int(args.expected.replace("$", "0x"), 16)
+            mask = int(args.mask.replace("$", "0x"), 16)
+        except ValueError:
+            print("Invalid hex value")
+            sys.exit(1)
+        res = client.p_assert(addr, expected, mask)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(res.get("data"))
+            else:
+                print(f"Error: {res.get('error')}")
+                sys.exit(1)
+        return
+
+    if args.command == "mem-watch":
+        if args.mem_watch_cmd == "add":
+            addr = int(args.addr.replace("$", "0x"), 16)
+            res = client.mem_watch_add(addr, size=args.size, depth=args.depth)
+        elif args.mem_watch_cmd == "remove":
+            res = client.mem_watch_remove(args.id)
+        elif args.mem_watch_cmd == "clear":
+            res = client.mem_watch_clear()
+        else:
+            res = client.mem_watch_list()
+        print(json.dumps(res, indent=2))
+        return
+
+    if args.command == "mem-blame":
+        addr = int(args.addr.replace("$", "0x"), 16) if args.addr else None
+        res = client.mem_blame(watch_id=args.watch_id, addr=addr)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(json.dumps(res.get("data", []), indent=2))
+            else:
+                print(f"Error: {res.get('error')}")
+                sys.exit(1)
+        return
+
+    if args.command == "symbols-load":
+        res = client.symbols_load(args.path, clear=args.clear)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(res.get("data"))
+            else:
+                print(f"Error: {res.get('error')}")
+                sys.exit(1)
+        return
+
+    if args.command == "collision-overlay":
+        enabled = True
+        if args.disable:
+            enabled = False
+        elif args.enable:
+            enabled = True
+        highlight = None
+        if args.highlight:
+            try:
+                highlight = [int(x.strip(), 16) for x in args.highlight.split(",") if x.strip()]
+            except ValueError:
+                print("Invalid highlight list")
+                sys.exit(1)
+        res = client.collision_overlay(enabled=enabled, colmap=args.colmap, highlight=highlight)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(res.get("data"))
+            else:
+                print(f"Error: {res.get('error')}")
+                sys.exit(1)
+        return
+
+    if args.command == "collision-dump":
+        res = client.collision_dump(colmap=args.colmap)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                print(json.dumps(res.get("data", {}), indent=2))
+            else:
+                print(f"Error: {res.get('error')}")
+                sys.exit(1)
+        return
+
+    if args.command == "draw-path":
+        points: list[tuple[int, int]] = []
+        if args.points:
+            parts = [p.strip() for p in args.points.split(",") if p.strip()]
+            if len(parts) % 2 != 0:
+                print("draw-path: expected even number of coordinates (x,y pairs)")
+                sys.exit(1)
+            try:
+                for i in range(0, len(parts), 2):
+                    x = int(parts[i].replace("$", "0x"), 0)
+                    y = int(parts[i + 1].replace("$", "0x"), 0)
+                    points.append((x, y))
+            except ValueError:
+                print("draw-path: invalid coordinate value")
+                sys.exit(1)
+        ok = client.draw_path(points, color=args.color, frames=args.frames)
+        if args.json:
+            print(json.dumps({"success": bool(ok)}, indent=2))
+        else:
+            print("OK" if ok else "Failed")
+        return
+
+    if args.command == "lua":
+        code = args.code
+        if args.file:
+            code = Path(args.file).read_text()
+        if not code:
+            print("Provide Lua code or --file")
+            sys.exit(1)
+        res = client.execute_lua(code)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("error"):
+                print(f"Error: {res['error']}")
+                sys.exit(1)
+            print(res)
+        return
+
+    if args.command == "load-script":
+        script_path = Path(args.path).expanduser()
+        if not script_path.exists():
+            print(f"Script not found: {script_path}")
+            sys.exit(1)
+        script_id = client.bridge.load_script(name=args.name, path=str(script_path))
+        payload = {"id": script_id}
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            if script_id >= 0:
+                print(f"Loaded script (id={script_id})")
+            else:
+                print("Load failed")
+                sys.exit(1)
+        return
+
+    if args.command == "state-compare":
+        regions = [r.strip() for r in args.regions.split(",")] if args.regions else None
+        differ = StateDiffer(client)
+        result = differ.diff_states(slot_a=args.slot_a, slot_b=args.slot_b, regions=regions)
+        if args.format == "markdown":
+            print(result.to_markdown())
+        else:
+            print(json.dumps(result.to_dict(), indent=2))
+        return
+
+    if args.command == "rom-load":
+        stop = None
+        if args.stop is not None:
+            stop = args.stop.lower() == "true"
+        powercycle = None
+        if args.powercycle is not None:
+            powercycle = args.powercycle.lower() == "true"
+        ok = client.load_rom(args.path, patch=args.patch, stop=stop, powercycle=powercycle)
+        if args.json:
+            print(json.dumps({"ok": ok, "rom": args.path, "error": client.last_error}, indent=2))
+        else:
+            if ok:
+                print(f"Loaded ROM: {args.path}")
+            else:
+                print(f"Failed to load ROM: {client.last_error}")
+        if not ok:
             sys.exit(1)
         return
 
@@ -995,26 +2127,40 @@ def main():
                 print(json.dumps({"action": "add", "address": addr, "mode": mode}, indent=2))
 
         elif args.remove:
-            # Note: MesenBridge add_breakpoint currently doesn't return ID, 
-            # and remove_breakpoint isn't exposed in client.py yet.
-            # We need to rely on the Lua bridge's RemoveBreakpoint if implemented, 
-            # or ClearBreakpoints.
-            print("Error: Removing specific breakpoints not yet supported by bridge.")
-            sys.exit(1)
+            ok = client.bridge.remove_breakpoint(args.remove)
+            if args.json:
+                print(json.dumps({"action": "remove", "id": args.remove, "ok": ok}, indent=2))
+            else:
+                print("Removed breakpoint" if ok else "Failed to remove breakpoint")
+            if not ok:
+                sys.exit(1)
 
         elif args.clear:
-            client.execute_lua("if DebugBridge and DebugBridge.clearBreakpoints then DebugBridge.clearBreakpoints() end")
-            print("Cleared all breakpoints.")
+            ok = client.bridge.clear_breakpoints()
             if args.json:
-                print(json.dumps({"action": "clear"}, indent=2))
+                print(json.dumps({"action": "clear", "ok": ok}, indent=2))
+            else:
+                print("Cleared all breakpoints." if ok else "Failed to clear breakpoints")
+            if not ok:
+                sys.exit(1)
 
         elif args.list:
-            # Requires bridge support to list
-            print("Error: Listing breakpoints not yet supported by bridge.")
-            sys.exit(1)
-        
+            bps = client.bridge.list_breakpoints()
+            if args.json:
+                print(json.dumps({"breakpoints": bps}, indent=2))
+            else:
+                if not bps:
+                    print("No breakpoints set")
+                else:
+                    print("=== Breakpoints ===")
+                    for bp in bps:
+                        addr = bp.get("addr") or bp.get("start")
+                        bptype = bp.get("type") or bp.get("bptype")
+                        bp_id = bp.get("id")
+                        print(f"{bp_id}: {addr} ({bptype})")
+
         else:
-            print("Usage: breakpoint --profile <name> OR --add <addr> OR --clear")
+            print("Usage: breakpoint --profile <name> OR --add <addr> OR --remove <id> OR --list OR --clear")
 
     elif args.command == "trace":
         if args.action:
@@ -1066,6 +2212,97 @@ def main():
                 disasm = row.get("disasm") or row.get("instruction") or ""
                 line = f"  {pc}: {bytecode} {disasm}".rstrip()
                 print(line if pc else f"  {row}")
+
+    elif args.command == "trace-run":
+        try:
+            labels = _coerce_bool(args.labels)
+        except ValueError as exc:
+            print(f"Error: {exc}")
+            sys.exit(1)
+
+        client.trace_control(
+            "start",
+            format=args.format,
+            condition=args.condition,
+            labels=labels,
+            clear=args.clear,
+        )
+        client.run_frames(max(1, int(args.frames)))
+        client.trace_control("stop")
+
+        count = max(1, int(args.count))
+        offset = max(0, int(args.offset))
+        success, entries = client.trace(count=count, offset=offset)
+        if not success:
+            print(f"Trace fetch failed: {client.last_error}")
+            sys.exit(1)
+
+        output_lines = [json.dumps(entry) for entry in entries]
+        if args.output:
+            output_path = Path(args.output).expanduser()
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text("\n".join(output_lines) + ("\n" if output_lines else ""))
+            print(f"Wrote {len(entries)} trace entries to {output_path}")
+        else:
+            for line in output_lines:
+                print(line)
+
+    elif args.command == "freeze-guard":
+        progressed = client.ensure_frame_progress(frames=max(1, int(args.frames)))
+        payload = {
+            "ok": progressed,
+            "frames": args.frames,
+            "capture": None,
+        }
+        if progressed:
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print("Frame counter advanced; no freeze detected.")
+            return
+
+        out_dir = Path(args.out_dir).expanduser()
+        capture = capture_debug_snapshot(
+            client,
+            out_dir,
+            watch_profile=args.watch_profile,
+            prefix=args.prefix,
+            screenshot=not args.no_screenshot,
+        )
+        payload["capture"] = capture
+
+        if args.save_slot is not None:
+            saved = client.save_state(slot=int(args.save_slot))
+            payload["saved_slot"] = int(args.save_slot)
+            payload["saved_ok"] = bool(saved)
+
+        if args.json:
+            print(json.dumps(payload, indent=2))
+        else:
+            print("Freeze detected; captured snapshot.")
+            if capture:
+                print(f"  JSON: {capture.get('json')}")
+                if capture.get("screenshot"):
+                    print(f"  Screenshot: {capture.get('screenshot')}")
+            if args.save_slot is not None:
+                print(f"  Saved slot {args.save_slot}: {'OK' if payload.get('saved_ok') else 'FAIL'}")
+        sys.exit(1)
+
+    elif args.command == "step":
+        if args.pause:
+            client.ensure_paused()
+        count = max(1, int(args.count))
+        res = client.step(count=count, mode=args.mode)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res is True:
+                print(f"Stepped {count} instruction(s) ({args.mode}).")
+            elif isinstance(res, dict) and res.get("success"):
+                print(f"Stepped {count} instruction(s) ({args.mode}).")
+            else:
+                print(f"Step failed: {res}")
+                sys.exit(1)
 
     elif args.command == "sprites":
         if args.all:
@@ -1778,6 +3015,69 @@ def main():
             print(f"Crystals: 0x{metadata['crystals']:02X}")
             print(f"Pendants: 0x{metadata['pendants']:02X}")
 
+    elif args.command == "labels":
+        if args.labels_cmd == "set":
+            try:
+                addr = int(args.addr.replace("$", "0x"), 16)
+            except ValueError:
+                print(f"Invalid address: {args.addr}")
+                sys.exit(1)
+            ok = client.bridge.set_label(addr, args.label, comment=args.comment, memtype=args.memtype)
+            payload = {
+                "ok": ok,
+                "addr": f"0x{addr:06X}",
+                "label": args.label,
+                "memtype": args.memtype,
+                "comment": args.comment,
+            }
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print("Label set" if ok else "Label set failed")
+            if not ok:
+                sys.exit(1)
+        elif args.labels_cmd == "get":
+            try:
+                addr = int(args.addr.replace("$", "0x"), 16)
+            except ValueError:
+                print(f"Invalid address: {args.addr}")
+                sys.exit(1)
+            label_info = client.bridge.get_label(addr, memtype=args.memtype)
+            payload = {"addr": f"0x{addr:06X}", "label": None, "comment": None, "memtype": args.memtype}
+            if label_info:
+                payload["label"] = label_info.get("label")
+                payload["comment"] = label_info.get("comment")
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                if payload["label"]:
+                    comment = f" ({payload['comment']})" if payload["comment"] else ""
+                    print(f"{payload['label']} @ 0x{addr:06X}{comment}")
+                else:
+                    print(f"No label at 0x{addr:06X}")
+        elif args.labels_cmd == "lookup":
+            addr = client.bridge.lookup_label(args.label)
+            payload = {"label": args.label, "addr": f"0x{addr:06X}" if addr is not None else None}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                if addr is not None:
+                    print(f"{args.label} = 0x{addr:06X}")
+                else:
+                    print(f"Label not found: {args.label}")
+        elif args.labels_cmd == "clear":
+            ok = client.bridge.clear_labels()
+            payload = {"ok": ok}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print("Labels cleared" if ok else "Label clear failed")
+            if not ok:
+                sys.exit(1)
+        else:
+            print("Choose labels command: set, get, lookup, clear")
+            sys.exit(1)
+
     elif args.command == "symbols":
         if args.query:
             # Check if query is an address
@@ -1810,48 +3110,17 @@ def main():
                 print("Use 'symbols <name>' or 'symbols <address>' to query.")
 
     elif args.command == "labels-sync":
-        # Load USDASM labels if not already loaded
-        if not client._usdasm_labels:
-            client.load_usdasm_labels()
-            
-        if not client._usdasm_labels:
-            print("Error: No USDASM labels found to sync.")
-            sys.exit(1)
-            
-        # Create symbol JSON for Mesen2
-        # Format: {"SymbolName": {"addr": "BBAAAA", "size": 1, "type": "code"}, ...}
-        symbols_data = {}
-        filtered = 0
-        total = len(client._usdasm_labels)
-        for name, linear_addr in client._usdasm_labels.items():
-            bank = (linear_addr >> 16) & 0xFF
-            offset = linear_addr & 0xFFFF
-            if bank in (0x7E, 0x7F) or offset < 0x8000:
-                filtered += 1
-                continue
-            symbols_data[name] = {
-                "addr": f"{linear_addr:06X}",
-                "size": 1,
-                "type": "code"
-            }
-            
-        temp_path = Path(tempfile.gettempdir()) / "vanilla_symbols.json"
-        try:
-            temp_path.write_text(json.dumps(symbols_data))
-            
-            res = client.bridge.send_command("SYMBOLS_LOAD", {"file": str(temp_path), "clear": "true" if args.clear else "false"})
-            
-            if res.get("success"):
-                if args.json:
-                    print(json.dumps({"success": True, "count": len(symbols_data), "filtered": filtered}, indent=2))
-                else:
-                    print(f"Successfully synced {len(symbols_data)} labels to Mesen2 (filtered {filtered}/{total} non-ROM).")
+        result = _sync_usdasm_labels(client, args.clear)
+        if args.json:
+            print(json.dumps(result, indent=2))
+        else:
+            if result.get("success"):
+                filtered = result.get("filtered", 0)
+                total = result.get("total", 0)
+                print(f"Successfully synced {result.get('count', 0)} labels to Mesen2 (filtered {filtered}/{total} non-ROM).")
             else:
-                print(f"Error syncing labels: {res.get('error', 'Unknown error')}")
+                print(f"Error syncing labels: {result.get('error', 'Unknown error')}")
                 sys.exit(1)
-        finally:
-            if temp_path.exists():
-                temp_path.unlink()
 
     elif args.command == "subscribe":
         if client.subscribe(args.events):
@@ -1912,6 +3181,97 @@ def main():
         elif args.trigger_cmd == "list":
             triggers = client.list_watch_triggers()
             print(json.dumps(triggers, indent=2))
+
+    elif args.command == "mem-watch":
+        if args.add:
+            if not args.addr:
+                print("Error: --addr is required for --add")
+                sys.exit(1)
+            try:
+                addr = int(args.addr, 0)
+            except ValueError:
+                print("Error: Invalid --addr")
+                sys.exit(1)
+            res = client.mem_watch("add", addr=addr, size=args.size, depth=args.depth)
+        elif args.remove is not None:
+            res = client.mem_watch("remove", watch_id=args.remove)
+        elif args.list:
+            res = client.mem_watch("list")
+        elif args.clear:
+            res = client.mem_watch("clear")
+        else:
+            print("Usage: mem-watch --add --addr <hex> [--size N] [--depth N] | --remove <id> | --list | --clear")
+            sys.exit(1)
+
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                data = res.get("data")
+                if isinstance(data, str):
+                    print(data)
+                else:
+                    print(json.dumps(data, indent=2))
+            else:
+                print(f"Error: {res.get('error', 'MEM_WATCH_WRITES failed')}")
+                sys.exit(1)
+
+    elif args.command == "mem-blame":
+        if args.watch_id is None and not args.addr:
+            print("Error: --watch-id or --addr is required")
+            sys.exit(1)
+        addr = None
+        if args.addr:
+            try:
+                addr = int(args.addr, 0)
+            except ValueError:
+                print("Error: Invalid --addr")
+                sys.exit(1)
+        res = client.mem_blame(watch_id=args.watch_id, addr=addr)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if res.get("success"):
+                data = res.get("data")
+                if isinstance(data, str):
+                    print(data)
+                else:
+                    print(json.dumps(data, indent=2))
+            else:
+                print(f"Error: {res.get('error', 'MEM_BLAME failed')}")
+                sys.exit(1)
+
+    elif args.command == "stack-retaddr":
+        sp = None
+        if args.sp:
+            try:
+                sp = int(args.sp, 0)
+            except ValueError:
+                print("Error: Invalid --sp")
+                sys.exit(1)
+        res = client.stack_retaddr(count=args.count, mode=args.mode, sp=sp)
+        if args.json:
+            print(json.dumps(res, indent=2))
+        else:
+            if not res.get("success"):
+                print(f"Error: {res.get('error', 'STACK_RETADDR failed')}")
+                sys.exit(1)
+            data = res.get("data", {})
+            if isinstance(data, str):
+                try:
+                    data = json.loads(data)
+                except json.JSONDecodeError:
+                    print(data)
+                    return
+            print(f"SP: {data.get('sp')} | Mode: {data.get('mode')} | Count: {data.get('count')}")
+            if data.get("bank"):
+                print(f"Bank: {data.get('bank')}")
+            entries = data.get("entries", [])
+            for entry in entries:
+                print(
+                    f"  [{entry.get('index')}] {entry.get('bytes')} "
+                    f"-> {entry.get('next')} ({entry.get('region')})"
+                )
 
     elif args.command == "sync":
         if client.save_state_sync(args.path):

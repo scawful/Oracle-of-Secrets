@@ -48,10 +48,14 @@ resolve_bin() {
     echo "$override"
     return
   fi
-  if command -v yaze-nightly >/dev/null 2>&1; then
-    echo "yaze-nightly"
-    return
-  fi
+  local resolved=""
+  for candidate in yaze-nightly yaze; do
+    resolved="$(command -v "$candidate" 2>/dev/null || true)"
+    if [[ -n "$resolved" && -x "$resolved" ]]; then
+      echo "$resolved"
+      return
+    fi
+  done
   local fallback1="$HOME/src/hobby/yaze/build_ai/bin/Debug/yaze.app/Contents/MacOS/yaze"
   local fallback2="$HOME/src/hobby/yaze/build/bin/yaze"
   if [[ -x "$fallback1" ]]; then

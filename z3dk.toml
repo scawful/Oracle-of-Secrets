@@ -13,3 +13,4 @@ defines = [
 ]
 symbols = "mesen"
 rom_path = "Roms/oos168x.sfc"
+main = "Oracle_main.asm"

@@ -107,10 +107,13 @@ class OracleDebugClient:
         """Load USDASM labels from a CSV index file."""
         if path is None:
             # Try to find it in the known location
-            candidates = [
-                Path(__file__).resolve().parents[3] / "z3dk" / ".context" / "knowledge" / "label_index_usdasm.csv",
-                Path.home() / "src/hobby/z3dk/.context/knowledge/label_index_usdasm.csv"
-            ]
+            candidates = []
+            env_root = os.getenv("Z3DK_ROOT")
+            if env_root:
+                candidates.append(Path(env_root).expanduser() / ".context" / "knowledge" / "label_index_usdasm.csv")
+            # Repo sibling (~/src/hobby/z3dk)
+            candidates.append(Path(__file__).resolve().parents[4] / "z3dk" / ".context" / "knowledge" / "label_index_usdasm.csv")
+            candidates.append(Path.home() / "src/hobby/z3dk/.context/knowledge/label_index_usdasm.csv")
             for candidate in candidates:
                 if candidate.exists():
                     path = candidate
@@ -492,7 +495,12 @@ class OracleDebugClient:
             Tuple of (results, error). If error is non-empty, the batch failed.
             On success, error is empty string and results contains command outputs.
         """
-        res = self.bridge.send_command("BATCH", commands=json.dumps(commands))
+        payload = {"commands": json.dumps(commands)}
+        try:
+            res = self.bridge.send_command("BATCH", payload)
+        except TypeError:
+            # Older bridge signature accepts kwargs instead of a params dict.
+            res = self.bridge.send_command("BATCH", commands=payload["commands"])
         if res.get("success"):
             data = res.get("data")
             if isinstance(data, str):
@@ -600,6 +608,36 @@ class OracleDebugClient:
             return data.get("triggers", [])
         return []
 
+    # --- Memory Write Attribution ---
+
+    def mem_watch(
+        self,
+        action: str,
+        *,
+        addr: int | None = None,
+        size: int | None = None,
+        depth: int | None = None,
+        watch_id: int | None = None,
+    ) -> dict:
+        """Manage MEM_WATCH_WRITES regions."""
+        params: dict[str, str] = {"action": action}
+        if addr is not None:
+            params["addr"] = f"0x{addr:06X}"
+        if size is not None:
+            params["size"] = str(size)
+        if depth is not None:
+            params["depth"] = str(depth)
+        if watch_id is not None:
+            params["watch_id"] = str(watch_id)
+        return self.bridge.send_command("MEM_WATCH_WRITES", params)
+
+    def stack_retaddr(self, *, count: int = 4, mode: str = "rtl", sp: int | None = None) -> dict:
+        """Decode return addresses from the current stack."""
+        params: dict[str, str] = {"count": str(count), "mode": mode}
+        if sp is not None:
+            params["sp"] = f"0x{sp:04X}"
+        return self.bridge.send_command("STACK_RETADDR", params)
+
     # --- Watch Profiles ---
 
     def set_watch_profile(self, profile: str) -> bool:
@@ -672,6 +710,82 @@ class OracleDebugClient:
     def write_address(self, addr: int, value: int) -> bool:
         """Write a byte to an address."""
         return self.bridge.write_memory(addr, value)
+
+    def read_block(self, addr: int, length: int, memtype: str = "WRAM") -> bytes:
+        """Read a block of memory from a region."""
+        return self.bridge.read_block(addr, length, memtype=memtype)
+
+    def write_block(self, addr: int, data: bytes, memtype: str = "WRAM") -> bool:
+        """Write a block of memory to a region."""
+        return self.bridge.write_block(addr, data, memtype=memtype)
+
+    def memory_size(self, memtype: str = "wram") -> dict:
+        """Return the memory size info from the socket API."""
+        return self.bridge.memory_size(memtype=memtype)
+
+    def eval_expression(self, expression: str, cpu_type: str = "snes", use_cache: bool = True) -> dict:
+        """Evaluate a debugger expression via socket API."""
+        return self.bridge.eval_expression(expression, cpu_type=cpu_type, use_cache=use_cache)
+
+    def get_pc(self) -> dict:
+        """Return PC/K/DB from CPU state."""
+        regs = self.get_cpu_state()
+        pc = regs.get("PC")
+        k = regs.get("K") or regs.get("DB")
+        full = None
+        if pc is not None and k is not None:
+            full = (int(k) << 16) | int(pc)
+        return {
+            "pc": pc,
+            "bank": k,
+            "full": full,
+        }
+
+    def set_pc(self, address: int) -> dict:
+        """Set the program counter via socket API."""
+        return self.bridge.set_pc(address)
+
+    def p_watch_start(self, depth: int = 1000) -> dict:
+        return self.bridge.p_watch_start(depth=depth)
+
+    def p_watch_stop(self) -> dict:
+        return self.bridge.p_watch_stop()
+
+    def p_watch_status(self) -> dict:
+        return self.bridge.p_watch_status()
+
+    def p_log(self, count: int = 50) -> dict:
+        return self.bridge.p_log(count=count)
+
+    def p_assert(self, addr: int, expected: int, mask: int = 0xFF) -> dict:
+        return self.bridge.p_assert(addr, expected, mask)
+
+    def mem_watch_add(self, addr: int, size: int = 1, depth: int = 100) -> dict:
+        return self.bridge.mem_watch_add(addr, size=size, depth=depth)
+
+    def mem_watch_remove(self, watch_id: int) -> dict:
+        return self.bridge.mem_watch_remove(watch_id)
+
+    def mem_watch_list(self) -> dict:
+        return self.bridge.mem_watch_list()
+
+    def mem_watch_clear(self) -> dict:
+        return self.bridge.mem_watch_clear()
+
+    def mem_blame(self, watch_id: int | None = None, addr: int | None = None) -> dict:
+        return self.bridge.mem_blame(watch_id=watch_id, addr=addr)
+
+    def symbols_load(self, file_path: str, clear: bool = False) -> dict:
+        return self.bridge.symbols_load(file_path, clear=clear)
+
+    def collision_overlay(self, enabled: bool = True, colmap: str = "A", highlight: list[int] | None = None) -> dict:
+        return self.bridge.collision_overlay(enabled=enabled, colmap=colmap, highlight=highlight)
+
+    def collision_dump(self, colmap: str = "A") -> dict:
+        return self.bridge.collision_dump(colmap=colmap)
+
+    def set_osd(self, text: str) -> dict:
+        return self.bridge.send_command("OSD", {"text": text})
 
     # --- Hypothesis Testing ---
 
@@ -1159,8 +1273,38 @@ class OracleDebugClient:
         self.last_error = ""
         return self.bridge.load_state(**kw)
 
+    def load_rom(
+        self,
+        path: str,
+        *,
+        patch: Optional[str] = None,
+        stop: Optional[bool] = None,
+        powercycle: Optional[bool] = None,
+    ) -> bool:
+        """Load a ROM by path via socket API."""
+        if not path:
+            self.last_error = "Missing ROM path"
+            return False
+        rom_path = Path(path).expanduser()
+        if not rom_path.exists():
+            self.last_error = f"ROM not found: {rom_path}"
+            return False
+        params: dict = {"path": str(rom_path)}
+        if patch:
+            params["patch"] = str(Path(patch).expanduser())
+        if stop is not None:
+            params["stop"] = str(stop).lower()
+        if powercycle is not None:
+            params["powercycle"] = str(powercycle).lower()
+        res = self.bridge.send_command("LOADROM", params)
+        if res.get("success"):
+            self.last_error = ""
+            return True
+        self.last_error = res.get("error", "") or "LOADROM failed"
+        return False
+
     def add_breakpoint(self, **kw):
-        # mesen2-mcp expects "bptype" for breakpoint kind; CLI uses "mode".
+        # Socket expects "bptype" for breakpoint kind; CLI uses "mode".
         if "mode" in kw and "bptype" not in kw:
             kw["bptype"] = kw.pop("mode")
         if "type" in kw and "bptype" not in kw:
@@ -1168,22 +1312,15 @@ class OracleDebugClient:
         return self.bridge.add_breakpoint(**kw)
 
     def get_cpu_state(self):
-        """Get CPU registers and flags via Lua bridge."""
-        # Try the bridge's native get_cpu_state first
+        """Get CPU registers and flags via socket API."""
         try:
             native = self.bridge.get_cpu_state()
-            if native:
-                # mesen2-mcp bridge returns the data dict directly (no success wrapper)
-                if isinstance(native, dict) and "success" not in native:
-                    return native
-                if isinstance(native, dict) and native.get("success"):
-                    return native.get("data")
+            if isinstance(native, dict) and native:
+                return native
         except Exception:
             pass
-        
-        # Fallback/Extended via Lua bridge REGISTERS command
-        res = self.bridge.send_command("REGISTERS")
-        if res.get("success"):
+        res = self.bridge.send_command("CPU")
+        if res.get("success") and isinstance(res.get("data"), dict):
             return res.get("data")
         return {}
 
@@ -1267,18 +1404,47 @@ class OracleDebugClient:
         return []
 
     def get_labels(self, filter_str: str = "") -> dict:
-        """Get labels, optionally filtered by name or address."""
-        res = self.bridge.send_command("LABELS", filter_str)
-        if res.get("success"):
-            return res.get("data")
-        return {}
+        """Get a label mapping for a name or address.
 
-    def search_memory(self, value: int, size: int = 1, start: int = 0x7E0000, end: int = 0x7FFFFF) -> list:
-        """Search memory for a value."""
-        res = self.bridge.send_command("MEMORY_SEARCH", value, size, start, end)
-        if res.get("success"):
-            return res.get("data", {}).get("addresses", [])
-        return []
+        Returns a dict of address->label for the requested item.
+        """
+        if not filter_str:
+            return {}
+
+        result: dict[str, str] = {}
+        try:
+            if filter_str.startswith(("0x", "$")):
+                addr = int(filter_str.replace("$", "0x"), 16)
+                label = self.get_symbol_at(addr)
+                if label:
+                    result[f"0x{addr:06X}"] = label
+                return result
+        except ValueError:
+            pass
+
+        addr = self.resolve_symbol(filter_str)
+        if addr is not None:
+            result[f"0x{addr:06X}"] = filter_str
+            return result
+
+        try:
+            addr = self.bridge.lookup_label(filter_str)
+        except Exception:
+            addr = None
+        if addr is not None:
+            result[f"0x{addr:06X}"] = filter_str
+        return result
+
+    def search_memory(self, value: int, size: int = 1, start: int = 0x7E0000, end: int = 0x7FFFFF) -> list[int]:
+        """Search memory for a value (little-endian)."""
+        if size < 1:
+            return []
+        try:
+            pattern = value.to_bytes(size, "little").hex().upper()
+        except OverflowError:
+            return []
+        pattern = " ".join(pattern[i:i+2] for i in range(0, len(pattern), 2))
+        return self.bridge.search_memory(pattern, memtype="WRAM", start=start, end=end)
 
     def get_collision_map(self) -> bytes | None:
         """Fetch the current collision map (ColMap A) from the bridge.
@@ -1328,7 +1494,7 @@ class OracleDebugClient:
             return res.get("data")
         return None
 
-    def draw_path(self, points: list[tuple[int, int]]) -> bool:
+    def draw_path(self, points: list[tuple[int, int]], color: str | None = None, frames: int | None = None) -> bool:
         """Draw a visual path on the emulator overlay.
         
         Args:
@@ -1337,23 +1503,25 @@ class OracleDebugClient:
         # Format as "x1,y1,x2,y2..."
         # Limit to reasonable length (CLI arg limits)
         if not points:
-            return self.bridge.send_command("DRAW_PATH", "").get("success", False)
-            
+            return self.bridge.draw_path("", color=color, frames=frames).get("success", False)
+
         # Take up to 50 points to avoid overflowing command buffer
-        # Resample if path is long? For now just truncate or send sparse
         chunks = []
-        for x, y in points[:50]: 
+        for x, y in points[:50]:
             chunks.append(f"{int(x)},{int(y)}")
-        
+
         arg = ",".join(chunks)
-        return self.bridge.send_command("DRAW_PATH", arg).get("success", False)
+        return self.bridge.draw_path(arg, color=color, frames=frames).get("success", False)
 
     def execute_lua(self, code: str) -> dict:
         """Execute arbitrary Lua code in the emulator."""
         # Use base64 to avoid issues with special characters in shell commands
         import base64
         encoded = base64.b64encode(code.encode()).decode()
-        res = self.bridge.send_command("EXEC_LUA", encoded)
+        try:
+            res = self.bridge.execute_lua(encoded)
+        except AttributeError:
+            res = self.bridge.send_command("EXEC_LUA", {"code": encoded})
         if res.get("success"):
             return res.get("data")
         return {"error": "Lua execution failed", "bridge_response": res}
@@ -1372,13 +1540,13 @@ class OracleDebugClient:
         """Wait until the CPU PC reaches a specific symbolic label."""
         import time
         # Resolve label to address
-        labels = self.get_labels(label_name)
-        addr = None
-        for a_str, name in labels.items():
-            if name == label_name:
-                addr = int(a_str.replace("$", "0x"), 16)
-                break
-        
+        addr = self.resolve_symbol(label_name)
+        if addr is None:
+            # Fallback: try socket label lookup
+            try:
+                addr = self.bridge.lookup_label(label_name)
+            except Exception:
+                addr = None
         if addr is None:
             raise ValueError(f"Label not found: {label_name}")
             

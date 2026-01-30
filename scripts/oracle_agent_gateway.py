@@ -70,24 +70,30 @@ def _resolve_scratchpad() -> Path:
     return _resolve_context_root() / "scratchpad"
 
 
-def _resolve_default_rom(oos_root: Path) -> Path | None:
+def _resolve_default_rom(oos_root: Path, skip_patched: bool = False, prefer: str = "dev") -> Path | None:
     roms_dir = oos_root / "Roms"
     if not roms_dir.exists():
         return None
 
-    preferred = [
-        "oos168x.sfc",
-        "oos168.sfc",
-        "oos169.sfc",
-        "oos-patched.sfc",
-        "Zelda_OracleOfSecrets.sfc",
-    ]
+    if prefer == "test":
+        preferred = ["oos168x.sfc", "oos168_test2.sfc", "oos168_test.sfc", "oos168.sfc", "oos169.sfc"]
+    else:
+        preferred = ["oos168_test2.sfc", "oos168_test.sfc", "oos168.sfc", "oos168x.sfc", "oos169.sfc"]
+
+    if not skip_patched:
+        preferred.append("oos-patched.sfc")
+        
+    preferred.append("Zelda_OracleOfSecrets.sfc")
+    
     for name in preferred:
         candidate = roms_dir / name
         if candidate.exists():
             return candidate
 
     sfcs = sorted(roms_dir.glob("*.sfc"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if skip_patched:
+        sfcs = [p for p in sfcs if p.name != "oos-patched.sfc"]
+        
     return sfcs[0] if sfcs else None
 
 
@@ -322,6 +328,11 @@ def action_health(_: dict[str, Any]) -> dict[str, Any]:
         from mesen2_client_lib.client import OracleDebugClient
         client = OracleDebugClient()
         status["mesen2_connected"] = client.is_connected()
+        rom_info = client.get_rom_info()
+        status["rom_loaded"] = bool(rom_info)
+        status["rom_info"] = rom_info
+        if not rom_info and client.last_error:
+            status["rom_error"] = client.last_error
     except Exception as exc:
         status["mesen2_connected"] = False
         status["mesen2_error"] = str(exc)
@@ -344,6 +355,24 @@ def action_health(_: dict[str, Any]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     status["default_rom"] = str(_resolve_default_rom(oos_root)) if oos_root else None
     return {"ok": True, "status": status}
+
+
+def action_load_rom(args: dict[str, Any]) -> dict[str, Any]:
+    oos_root = _resolve_oos_root()
+    default_rom = _resolve_default_rom(oos_root) if oos_root else None
+    rom_path = args.get("path") or args.get("rom") or (str(default_rom) if default_rom else None)
+    patch_path = args.get("patch")
+    if not rom_path:
+        return {"ok": False, "error": "Missing ROM path"}
+    try:
+        from mesen2_client_lib.client import OracleDebugClient
+        client = OracleDebugClient()
+        ok = client.load_rom(rom_path, patch=patch_path)
+        if ok:
+            return {"ok": True, "rom": rom_path}
+        return {"ok": False, "error": client.last_error or "LOADROM failed", "rom": rom_path}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc), "rom": rom_path}
 
 def action_open_afs_repo(_: dict[str, Any]) -> dict[str, Any]:
     return _open_path(_resolve_afs_root())
@@ -381,7 +410,7 @@ def action_yaze_start(_: dict[str, Any]) -> dict[str, Any]:
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
     script = oos_root / "scripts" / "yaze_service.sh"
-    rom = _resolve_default_rom(oos_root)
+    rom = _resolve_default_rom(oos_root, skip_patched=True)
     if not script.exists():
         return {"ok": False, "error": "yaze_service.sh not found"}
     if not rom:
@@ -408,7 +437,7 @@ def action_yaze_gui_toggle(_: dict[str, Any]) -> dict[str, Any]:
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
     script = oos_root / "scripts" / "yaze_service.sh"
-    rom = _resolve_default_rom(oos_root)
+    rom = _resolve_default_rom(oos_root, skip_patched=True)
     if not script.exists():
         return {"ok": False, "error": "yaze_service.sh not found"}
     if not rom:
@@ -423,7 +452,7 @@ def action_headless_workflow_start(_: dict[str, Any]) -> dict[str, Any]:
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
     script = oos_root / "scripts" / "agent_workflow_start.sh"
-    rom = _resolve_default_rom(oos_root)
+    rom = _resolve_default_rom(oos_root, prefer="test")
     if not script.exists():
         return {"ok": False, "error": "agent_workflow_start.sh not found"}
     if not rom:
@@ -469,6 +498,210 @@ def action_check_day_night(_: dict[str, Any]) -> dict[str, Any]:
 
 def action_check_zsow_status(_: dict[str, Any]) -> dict[str, Any]:
     return _run_mesen2_cli(["diagnostics", "--json"])
+
+
+def _parse_bool(value: Any, default: bool | None = None) -> bool | None:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    raw = str(value).strip().lower()
+    if raw in {"1", "true", "yes", "on"}:
+        return True
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    return default
+
+
+def _parse_int(value: Any, label: str) -> tuple[int | None, str | None]:
+    if value is None:
+        return None, None
+    if isinstance(value, int):
+        return value, None
+    raw = str(value).strip()
+    if not raw:
+        return None, None
+    if raw.startswith("$"):
+        raw = "0x" + raw[1:]
+    try:
+        return int(raw, 0), None
+    except ValueError:
+        return None, f"Invalid {label}: {value}"
+
+
+def _get_socket_client() -> tuple[Any | None, dict[str, Any] | None]:
+    try:
+        from mesen2_client_lib.client import OracleDebugClient
+    except Exception as exc:
+        return None, {"ok": False, "error": f"Import failed: {exc}"}
+
+    client = OracleDebugClient()
+    if not client.is_connected():
+        return None, {"ok": False, "error": "Mesen2 socket not found (expected /tmp/mesen2-*.sock)"}
+    return client, None
+
+
+def _wrap_socket_result(result: Any, default_error: str) -> dict[str, Any]:
+    if not isinstance(result, dict):
+        return {"ok": False, "error": default_error, "result": result}
+    if result.get("success"):
+        return {"ok": True, "result": result, "data": result.get("data")}
+    return {
+        "ok": False,
+        "error": result.get("error", default_error),
+        "result": result,
+    }
+
+
+def action_eval_expression(args: dict[str, Any]) -> dict[str, Any]:
+    client, err = _get_socket_client()
+    if err:
+        return err
+
+    expression = (args.get("expression") or args.get("expr") or "").strip()
+    if not expression:
+        return {"ok": False, "error": "Missing expression"}
+
+    cpu = str(args.get("cpu") or "snes").strip() or "snes"
+    cache = _parse_bool(args.get("cache"), True)
+    if "no_cache" in args:
+        no_cache = _parse_bool(args.get("no_cache"), False)
+        if no_cache is not None:
+            cache = not no_cache
+
+    res = client.eval_expression(expression, cpu_type=cpu, use_cache=bool(cache))
+    return _wrap_socket_result(res, "EVAL failed")
+
+
+def action_set_pc(args: dict[str, Any]) -> dict[str, Any]:
+    client, err = _get_socket_client()
+    if err:
+        return err
+
+    addr_value, addr_error = _parse_int(args.get("addr") or args.get("address"), "addr")
+    if addr_error:
+        return {"ok": False, "error": addr_error}
+    if addr_value is None:
+        return {"ok": False, "error": "Missing addr"}
+
+    cpu = args.get("cpu")
+    if cpu is not None and str(cpu).strip():
+        payload = {"addr": f"0x{addr_value:06X}", "cpu": str(cpu).strip()}
+        res = client.bridge.send_command("SET_PC", payload)
+    else:
+        res = client.set_pc(addr_value)
+    return _wrap_socket_result(res, "SET_PC failed")
+
+
+def action_memory_size(args: dict[str, Any]) -> dict[str, Any]:
+    client, err = _get_socket_client()
+    if err:
+        return err
+
+    memtype = str(args.get("memtype") or args.get("mem") or "wram").strip() or "wram"
+    res = client.memory_size(memtype=memtype)
+    return _wrap_socket_result(res, "MEMORY_SIZE failed")
+
+
+def action_draw_path(args: dict[str, Any]) -> dict[str, Any]:
+    client, err = _get_socket_client()
+    if err:
+        return err
+
+    points = (args.get("points") or "").strip()
+    if not points:
+        return {"ok": False, "error": "Missing points"}
+
+    color = args.get("color")
+    if isinstance(color, str) and not color.strip():
+        color = None
+    frames_value, frames_error = _parse_int(args.get("frames"), "frames")
+    if frames_error:
+        return {"ok": False, "error": frames_error}
+
+    res = client.bridge.draw_path(points, color=color, frames=frames_value)
+    return _wrap_socket_result(res, "DRAW_PATH failed")
+
+
+def action_mem_watch(args: dict[str, Any]) -> dict[str, Any]:
+    client, err = _get_socket_client()
+    if err:
+        return err
+
+    action = (args.get("action") or "list").strip().lower()
+    if action not in {"add", "remove", "clear", "list"}:
+        return {"ok": False, "error": f"Unknown mem-watch action: {action}"}
+
+    addr_value = None
+    if "addr" in args and args.get("addr"):
+        addr_value, addr_error = _parse_int(args.get("addr"), "addr")
+        if addr_error:
+            return {"ok": False, "error": addr_error}
+
+    size_value, size_error = _parse_int(args.get("size"), "size")
+    if size_error:
+        return {"ok": False, "error": size_error}
+
+    depth_value, depth_error = _parse_int(args.get("depth"), "depth")
+    if depth_error:
+        return {"ok": False, "error": depth_error}
+
+    watch_id_value, watch_id_error = _parse_int(args.get("watch_id"), "watch_id")
+    if watch_id_error:
+        return {"ok": False, "error": watch_id_error}
+
+    if action == "add" and addr_value is None:
+        return {"ok": False, "error": "Missing addr for mem-watch add"}
+    if action == "remove" and watch_id_value is None:
+        return {"ok": False, "error": "Missing watch_id for mem-watch remove"}
+
+    res = client.mem_watch(
+        action,
+        addr=addr_value,
+        size=size_value,
+        depth=depth_value,
+        watch_id=watch_id_value,
+    )
+    return _wrap_socket_result(res, "MEM_WATCH_WRITES failed")
+
+
+def action_mem_blame(args: dict[str, Any]) -> dict[str, Any]:
+    client, err = _get_socket_client()
+    if err:
+        return err
+
+    watch_id_value, watch_id_error = _parse_int(args.get("watch_id"), "watch_id")
+    if watch_id_error:
+        return {"ok": False, "error": watch_id_error}
+
+    addr_value, addr_error = _parse_int(args.get("addr"), "addr")
+    if addr_error:
+        return {"ok": False, "error": addr_error}
+
+    if watch_id_value is None and addr_value is None:
+        return {"ok": False, "error": "Missing watch_id or addr"}
+
+    res = client.mem_blame(watch_id=watch_id_value, addr=addr_value)
+    return _wrap_socket_result(res, "MEM_BLAME failed")
+
+
+def action_stack_retaddr(args: dict[str, Any]) -> dict[str, Any]:
+    client, err = _get_socket_client()
+    if err:
+        return err
+
+    count_value, count_error = _parse_int(args.get("count"), "count")
+    if count_error:
+        return {"ok": False, "error": count_error}
+    count_value = count_value or 4
+
+    mode = (args.get("mode") or "rtl").strip() or "rtl"
+    sp_value, sp_error = _parse_int(args.get("sp"), "sp")
+    if sp_error:
+        return {"ok": False, "error": sp_error}
+
+    res = client.stack_retaddr(count=count_value, mode=mode, sp=sp_value)
+    return _wrap_socket_result(res, "STACK_RETADDR failed")
 
 
 ACTIONS: dict[str, dict[str, Any]] = {
@@ -528,6 +761,10 @@ ACTIONS: dict[str, dict[str, Any]] = {
         "fn": action_health,
         "description": "Check Mesen2/yaze health status",
     },
+    "load_rom": {
+        "fn": action_load_rom,
+        "description": "Load ROM into Mesen2 (use when at the load ROM screen)",
+    },
     "open_afs_repo": {
         "fn": action_open_afs_repo,
         "description": "Open AFS repo",
@@ -579,6 +816,34 @@ ACTIONS: dict[str, dict[str, Any]] = {
     "check_zsow_status": {
         "fn": action_check_zsow_status,
         "description": "Report ZSCustomOverworld/overworld diagnostic snapshot",
+    },
+    "eval_expression": {
+        "fn": action_eval_expression,
+        "description": "Evaluate debugger expression (EVAL)",
+    },
+    "set_pc": {
+        "fn": action_set_pc,
+        "description": "Set program counter (SET_PC)",
+    },
+    "memory_size": {
+        "fn": action_memory_size,
+        "description": "Get memory size (MEMORY_SIZE)",
+    },
+    "draw_path": {
+        "fn": action_draw_path,
+        "description": "Draw path overlay (DRAW_PATH)",
+    },
+    "mem_watch": {
+        "fn": action_mem_watch,
+        "description": "Manage memory watch regions (MEM_WATCH_WRITES)",
+    },
+    "mem_blame": {
+        "fn": action_mem_blame,
+        "description": "Inspect memory write history (MEM_BLAME)",
+    },
+    "stack_retaddr": {
+        "fn": action_stack_retaddr,
+        "description": "Decode stack return addresses (STACK_RETADDR)",
     },
 }
 
@@ -684,6 +949,8 @@ def main() -> None:
     action_p.add_argument("--port", type=int, default=DEFAULT_PORT)
     action_p.add_argument("--json", action="store_true")
     action_p.add_argument("--no-local", action="store_true")
+    action_p.add_argument("--args-json", dest="args_json")
+    action_p.add_argument("--arg", action="append", default=[])
 
     list_p = sub.add_parser("list-actions", help="List available actions")
     list_p.add_argument("--json", action="store_true")
@@ -720,11 +987,34 @@ def main() -> None:
         return
 
     if args.cmd == "action":
+        action_args: dict[str, Any] = {}
+        if args.args_json:
+            try:
+                parsed = json.loads(args.args_json)
+                if not isinstance(parsed, dict):
+                    print(json.dumps({"ok": False, "error": "args_json must be a JSON object"}, indent=2))
+                    return
+                action_args.update(parsed)
+            except json.JSONDecodeError as exc:
+                print(json.dumps({"ok": False, "error": f"Invalid args_json: {exc}"}, indent=2))
+                return
+        if args.arg:
+            for item in args.arg:
+                if "=" not in item:
+                    print(json.dumps({"ok": False, "error": f"Invalid arg: {item} (expected key=value)"}, indent=2))
+                    return
+                key, value = item.split("=", 1)
+                key = key.strip()
+                if not key:
+                    print(json.dumps({"ok": False, "error": f"Invalid arg: {item} (empty key)"}, indent=2))
+                    return
+                action_args[key] = value.strip()
+
         url = f"http://127.0.0.1:{args.port}/action"
-        payload = {"action": args.name, "args": {}}
+        payload = {"action": args.name, "args": action_args}
         resp = request_json("POST", url, payload)
         if resp is None and not args.no_local:
-            resp = run_action(args.name, {})
+            resp = run_action(args.name, action_args)
         if args.json:
             print(json.dumps(resp or {"ok": False}, indent=2))
         else:

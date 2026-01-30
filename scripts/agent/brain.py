@@ -325,6 +325,34 @@ class SaveManager:
 
         return True, "Safe"
 
+    def is_state_valid_deep(self, state: GameState, strict: bool = True) -> Tuple[bool, str, dict]:
+        """Deep validation with emulator diagnostics and cutscene checks."""
+        ok, reason = self.is_state_valid(state)
+        if not ok:
+            return False, reason, {}
+
+        diag = self.client.get_diagnostics(deep=False)
+        run_state = diag.get("run_state", {})
+        if run_state.get("paused"):
+            return False, "Emulator paused", diag
+
+        overworld = diag.get("overworld", {})
+        if overworld.get("is_transition"):
+            return False, "In transition", diag
+
+        if not diag.get("camera_ok", True):
+            return False, "Camera misaligned", diag
+
+        story = self.client.get_story_state()
+        if story.get("in_cutscene"):
+            return False, "In cutscene", diag
+
+        warnings = diag.get("warnings") or []
+        if strict and warnings:
+            return False, f"Warnings: {', '.join(warnings)}", diag
+
+        return True, "Safe (deep)", diag
+
     def save_smart_state(self, slot: int, state: GameState) -> bool:
         """Save state only if valid."""
         is_valid, reason = self.is_state_valid(state)
@@ -334,6 +362,15 @@ class SaveManager:
         else:
             print(f"SaveManager: Cannot save. Reason: {reason}")
             return False
+
+    def save_smart_state_deep(self, slot: int, state: GameState, strict: bool = True) -> bool:
+        """Save state only if deep validation passes."""
+        is_valid, reason, _diag = self.is_state_valid_deep(state, strict=strict)
+        if is_valid:
+            print(f"SaveManager: State valid (deep). Saving to slot {slot}.")
+            return self.client.save_state(slot=slot)
+        print(f"SaveManager: Cannot save (deep). Reason: {reason}")
+        return False
 
     def save_labeled(self, label: str, state: GameState, tags: List[str] = None) -> bool:
         """Save a state to the library with a descriptive label and metadata."""
@@ -358,6 +395,44 @@ class SaveManager:
             return True
         except Exception as e:
             print(f"SaveManager: Failed to save labeled state: {e}")
+            return False
+
+    def save_labeled_deep(
+        self,
+        label: str,
+        state: GameState,
+        tags: List[str] = None,
+        strict: bool = True,
+    ) -> bool:
+        """Save a state to the library with deep validation and diagnostics."""
+        is_valid, reason, diag = self.is_state_valid_deep(state, strict=strict)
+        if not is_valid:
+            print(f"SaveManager: Cannot save labeled state '{label}' (deep). Reason: {reason}")
+            return False
+
+        story = self.client.get_story_state()
+        metadata = {
+            "area": state.area,
+            "room": state.room,
+            "mode": state.mode,
+            "health": state.health,
+            "link_pos": state.link_pos,
+            "link_state": state.link_state,
+            "indoors": state.is_indoors,
+            "camera_ok": diag.get("camera_ok"),
+            "warnings": diag.get("warnings") or [],
+            "transition": diag.get("overworld", {}).get("is_transition"),
+            "in_cutscene": story.get("in_cutscene"),
+        }
+
+        try:
+            state_id, warnings = self.library.save_labeled_state(self.client, label, metadata, tags)
+            if warnings:
+                print(f"SaveManager: Warnings for '{label}': {warnings}")
+            print(f"SaveManager: Saved labeled state '{label}' (ID: {state_id})")
+            return True
+        except Exception as e:
+            print(f"SaveManager: Failed to save labeled state (deep): {e}")
             return False
 
 
@@ -580,10 +655,19 @@ class AgentBrain:
         self.tick()
         self.saver.save_smart_state(slot, self.state)
 
+    def validate_and_save_deep(self, slot: int, strict: bool = True):
+        self.tick()
+        self.saver.save_smart_state_deep(slot, self.state, strict=strict)
+
     def save_labeled(self, label: str, tags: List[str] = None) -> bool:
         """Save current state with a label and metadata."""
         self.tick()
         return self.saver.save_labeled(label, self.state, tags)
+
+    def save_labeled_deep(self, label: str, tags: List[str] = None, strict: bool = True) -> bool:
+        """Save current state with deep validation."""
+        self.tick()
+        return self.saver.save_labeled_deep(label, self.state, tags, strict=strict)
 
     def move(self, direction: str, frames: int = 30) -> Tuple[int, int]:
         """Move Link in a direction and return displacement (dx, dy).
@@ -612,7 +696,13 @@ class AgentBrain:
         dy = end_y - start_y
         return (dx, dy)
 
-    def explore_area(self, steps: int = 10, save_slot_start: int = 30) -> List[Tuple[int, int, int]]:
+    def explore_area(
+        self,
+        steps: int = 10,
+        save_slot_start: int = 30,
+        deep_checks: bool = True,
+        strict: bool = True,
+    ) -> List[Tuple[int, int, int]]:
         """Randomly explore the current area and save at interesting positions.
 
         Args:
@@ -637,13 +727,19 @@ class AgentBrain:
 
             # Try to save if in a new position
             if abs(dx) > 5 or abs(dy) > 5:
-                is_valid, reason = self.saver.is_state_valid(self.state)
+                if deep_checks:
+                    is_valid, reason, _diag = self.saver.is_state_valid_deep(self.state, strict=strict)
+                else:
+                    is_valid, reason = self.saver.is_state_valid(self.state)
                 if is_valid:
                     if self.client.save_state(slot=slot):
                         saves.append((slot, area, pos))
                         print(f"[Step {step+1}] Saved slot {slot}: Area 0x{area:02X} @ {pos}")
                         # Also save to library
-                        self.save_labeled(f"explore_area_{area:02X}", tags=["exploration"])
+                        if deep_checks:
+                            self.save_labeled_deep(f"explore_area_{area:02X}", tags=["exploration"], strict=strict)
+                        else:
+                            self.save_labeled(f"explore_area_{area:02X}", tags=["exploration"])
                         slot += 1
                 else:
                     print(f"[Step {step+1}] Skip save: {reason}")

@@ -16,6 +16,7 @@ Usage:
 """
 
 import argparse
+import os
 import re
 import shutil
 import sys
@@ -79,9 +80,25 @@ def parse_wla_symbols(path: Path) -> Iterator[Symbol]:
                 name = match.group(3).strip()
                 yield Symbol(bank, addr, name)
 
-def filter_symbols(symbols: Iterator[Symbol], filter_type: str) -> Iterator[Symbol]:
+def _load_exclude_list() -> set[str]:
+    """Load optional label exclude list (one label per line)."""
+    exclude_path = Path(__file__).resolve().parent / "symbols_filter_exclude.txt"
+    if not exclude_path.exists():
+        return set()
+    entries = set()
+    for line in exclude_path.read_text(encoding='utf-8', errors='ignore').splitlines():
+        line = line.strip()
+        if not line or line.startswith('#'):
+            continue
+        entries.add(line)
+    return entries
+
+
+def filter_symbols(symbols: Iterator[Symbol], filter_type: str, exclude: set[str]) -> Iterator[Symbol]:
     """Filter symbols based on criteria."""
     for sym in symbols:
+        if sym.name in exclude:
+            continue
         if filter_type == 'all':
             yield sym
         elif filter_type == 'oracle':
@@ -112,9 +129,61 @@ def format_mlb_line(sym: Symbol, format_type: str) -> str:
         # Simple format: PRG:AAAA:name (address only, no bank)
         return f"PRG:{sym.address:X}:{sym.name}"
 
+def _ram_define(line: str) -> tuple[str, int, str] | None:
+    """Parse NAME = $7Exxxx style RAM defines."""
+    stripped = line.split(";", 1)
+    code = stripped[0].strip()
+    if not code or "=" not in code:
+        return None
+    name, value = [chunk.strip() for chunk in code.split("=", 1)]
+    if not name or name.startswith("!") or name.startswith("."):
+        return None
+    if not value.startswith("$"):
+        return None
+    try:
+        addr = int(value[1:], 16)
+    except ValueError:
+        return None
+    comment = stripped[1].strip() if len(stripped) > 1 else ""
+    return name, addr, comment
+
+
+def _parse_ram_file(path: Path) -> list[tuple[int, str, str]]:
+    if not path.exists():
+        return []
+    entries: list[tuple[int, str, str]] = []
+    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        parsed = _ram_define(line)
+        if not parsed:
+            continue
+        name, addr, comment = parsed
+        if not (0x7E0000 <= addr <= 0x7FFFFF or 0x700000 <= addr <= 0x7DFFFF):
+            continue
+        entries.append((addr, name, comment))
+    return entries
+
+
 def get_wram_symbols() -> list[tuple[int, str, str]]:
-    """Get common WRAM symbol definitions."""
-    # (address, name, comment)
+    """Get WRAM/SRAM symbol definitions (from ram.asm/sram.asm if available)."""
+    repo_root = Path(__file__).resolve().parents[1]
+    ram_path = repo_root / "Core" / "ram.asm"
+    sram_path = repo_root / "Core" / "sram.asm"
+
+    entries = _parse_ram_file(ram_path) + _parse_ram_file(sram_path)
+    if entries:
+        # Deduplicate by address+name
+        seen = set()
+        unique = []
+        for addr, name, comment in entries:
+            key = (addr, name)
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append((addr, name, comment))
+        unique.sort(key=lambda x: x[0])
+        return unique
+
+    # Fallback minimal list
     return [
         (0x7E0010, "GameMode", "Current game mode"),
         (0x7E0011, "GameSubmode", "Game submode"),
@@ -140,26 +209,73 @@ def get_wram_symbols() -> list[tuple[int, str, str]]:
         (0x7EF411, "WaterGateStates", "Water gate SRAM flags"),
     ]
 
+def _label_score(name: str) -> int:
+    """Heuristic scoring to pick the most meaningful label for an address."""
+    score = 0
+    if name.startswith("Oracle__"):
+        score -= 5
+    if name.endswith("_size"):
+        score -= 2
+    if "_offset_" in name or "_char_step" in name or "_prop_step" in name:
+        score -= 1
+    # Prefer longer, more descriptive names (cap the bonus)
+    score += min(len(name), 40) // 4
+    return score
+
+
+def _dedupe_by_address(symbols: list[Symbol]) -> tuple[list[Symbol], dict[int, list[str]]]:
+    """Collapse duplicate labels at the same address and return aliases map."""
+    by_addr: dict[int, list[Symbol]] = {}
+    for sym in symbols:
+        by_addr.setdefault(sym.full_address, []).append(sym)
+
+    result: list[Symbol] = []
+    aliases: dict[int, list[str]] = {}
+    for addr, entries in by_addr.items():
+        if len(entries) == 1:
+            result.append(entries[0])
+            continue
+        entries.sort(key=lambda s: (_label_score(s.name), s.name), reverse=True)
+        chosen = entries[0]
+        result.append(chosen)
+        alias_names = [s.name for s in entries[1:]]
+        if alias_names:
+            aliases[addr] = alias_names
+    result.sort(key=lambda s: s.full_address)
+    return result, aliases
+
+
 def export_symbols(
     input_path: Path,
     output_path: Path,
     filter_type: str = 'named',
     format_type: str = 'simple',
-    include_wram: bool = True
+    include_wram: bool = True,
+    dedupe: bool = True,
 ) -> int:
     """Export symbols to MLB format. Returns count of symbols exported."""
 
-    symbols = list(filter_symbols(parse_wla_symbols(input_path), filter_type))
+    exclude = _load_exclude_list()
+    symbols = list(filter_symbols(parse_wla_symbols(input_path), filter_type, exclude))
+    # Only keep ROM-mapped symbols (LoROM uses $8000-$FFFF in banks $00-$7D/$80-$FF).
+    # This drops constant defines like 00:00F8 that are not real ROM addresses.
+    rom_symbols = [
+        sym for sym in symbols
+        if sym.bank not in (0x7E, 0x7F) and sym.address >= 0x8000
+    ]
 
-    # Sort by address
-    symbols.sort(key=lambda s: s.full_address)
+    # Sort by address and optionally dedupe aliases
+    rom_symbols.sort(key=lambda s: s.full_address)
+    alias_map: dict[int, list[str]] = {}
+    if dedupe:
+        rom_symbols, alias_map = _dedupe_by_address(rom_symbols)
 
     with open(output_path, 'w', encoding='utf-8') as f:
         # Write header comment
         f.write(f"; Oracle of Secrets symbols\n")
         f.write(f"; Generated from {input_path.name}\n")
         f.write(f"; Filter: {filter_type}, Format: {format_type}\n")
-        f.write(f"; Total: {len(symbols)} ROM symbols\n")
+        f.write(f"; Total: {len(rom_symbols)} ROM symbols\n")
         f.write("\n")
 
         # Write WRAM symbols first
@@ -172,19 +288,29 @@ def export_symbols(
         # Write ROM symbols
         f.write("; === ROM Symbols ===\n")
         current_bank = -1
-        for sym in symbols:
+        for sym in rom_symbols:
             # Add bank separator comments
             if sym.bank != current_bank:
                 f.write(f"\n; Bank ${sym.bank:02X}\n")
                 current_bank = sym.bank
 
+            if sym.full_address in alias_map:
+                alias_list = alias_map[sym.full_address]
+                alias_preview = ", ".join(alias_list[:6])
+                if len(alias_list) > 6:
+                    alias_preview += ", ..."
+                f.write(f"; aliases: {alias_preview}\n")
             f.write(format_mlb_line(sym, format_type) + "\n")
 
-    return len(symbols)
+    return len(rom_symbols)
 
 def sync_to_mesen2(mlb_path: Path, rom_name: str = "oos168x") -> bool:
     """Copy MLB file to Mesen2 directory."""
-    mesen2_dir = Path.home() / "Documents" / "Mesen2" / "Debug"
+    env_home = os.getenv("MESEN2_HOME")
+    if env_home:
+        mesen2_dir = Path(env_home).expanduser() / "Debug"
+    else:
+        mesen2_dir = Path.home() / "Documents" / "Mesen2" / "Debug"
     mesen2_dir.mkdir(parents=True, exist_ok=True)
 
     # Mesen2 auto-loads .mlb files matching ROM name
@@ -238,6 +364,10 @@ def main():
         help='Skip WRAM symbol definitions'
     )
     parser.add_argument(
+        '--no-dedupe', action='store_true',
+        help='Do not deduplicate labels that share the same address'
+    )
+    parser.add_argument(
         '-v', '--verbose', action='store_true',
         help='Verbose output'
     )
@@ -264,7 +394,8 @@ def main():
         output_path,
         filter_type=args.filter,
         format_type=args.format,
-        include_wram=not args.no_wram
+        include_wram=not args.no_wram,
+        dedupe=not args.no_dedupe,
     )
 
     print(f"Exported {count} symbols to {output_path}")

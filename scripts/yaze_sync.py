@@ -28,7 +28,7 @@ from typing import Any
 
 # Configuration
 YAZE_HOST = os.getenv("YAZE_HOST", "127.0.0.1")
-YAZE_PORT = int(os.getenv("YAZE_PORT", "8080"))
+YAZE_PORT = int(os.getenv("YAZE_API_PORT") or os.getenv("YAZE_PORT", "8081"))
 YAZE_BASE_URL = f"http://{YAZE_HOST}:{YAZE_PORT}"
 
 MESEN2_BRIDGE_DIR = Path.home() / "Documents" / "Mesen2" / "bridge"

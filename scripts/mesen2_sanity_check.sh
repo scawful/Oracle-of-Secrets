@@ -139,9 +139,13 @@ if [[ -z "$SOCKET_PATH" ]]; then
     err "No live socket resolved for instance: $INSTANCE"
     exit 2
   else
-    newest="$(ls -t /tmp/mesen2-*.sock 2>/dev/null | head -n 1 || true)"
-    if [[ -n "$newest" && -S "$newest" ]]; then
-      SOCKET_PATH="$newest"
+    sockets=(/tmp/mesen2-*.sock)
+    if [[ ${#sockets[@]} -eq 1 && -S "${sockets[0]}" ]]; then
+      warn "Auto-attaching to sole socket: ${sockets[0]}"
+      SOCKET_PATH="${sockets[0]}"
+    elif [[ ${#sockets[@]} -gt 1 ]]; then
+      err "Multiple Mesen2 sockets found. Pass --socket or --instance."
+      exit 2
     fi
   fi
 fi
