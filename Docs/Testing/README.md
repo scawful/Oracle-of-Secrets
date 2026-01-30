@@ -81,6 +81,7 @@ python3 scripts/test_runner.py --suite regression --tag critical -q
 
 ## Related docs
 
+- **Sandbox and ROM versions:** [Sandbox_ROM_Guide.md](Sandbox_ROM_Guide.md) – Reproducible sandbox (git worktree), ROM version management (`rom_version_manage.py`), and safe bisect/isolation without touching the main repo.
 - **Save states:** `Docs/Testing/SaveStateLibrary.md`, `Docs/Testing/save_state_library.json`
 - **Overworld softlock:** `Docs/Issues/OverworldSoftlock_Plan.md`, `Docs/Issues/Module_Isolation_Plan.md`
 - **Gap analysis:** `Docs/Testing/gap_analysis_and_testing_plan.md`
