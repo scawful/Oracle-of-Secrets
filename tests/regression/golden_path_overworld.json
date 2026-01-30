@@ -1,0 +1,63 @@
+{
+  "name": "Golden path: overworld (no softlock)",
+  "description": "Minimal path that must never softlock: load overworld repro state (slot 1), run briefly, assert game mode and no black screen. Use as regression gate for B/C/D fixes.",
+  "version": "1.0",
+  "tags": ["regression", "critical", "golden_path", "softlock", "overworld"],
+  "timeout_seconds": 90,
+  "saveState": {
+    "slot": 1,
+    "waitSeconds": 3,
+    "allowMissing": true
+  },
+  "steps": [
+    {
+      "type": "comment",
+      "description": "Overworld repro state loaded (slot 1); run short sequence"
+    },
+    {
+      "type": "wait",
+      "seconds": 2,
+      "description": "Stabilize after load"
+    },
+    {
+      "type": "press",
+      "button": "UP",
+      "frames": 90,
+      "description": "Walk up ~1.5s to stress overworld"
+    },
+    {
+      "type": "wait",
+      "seconds": 3,
+      "description": "Allow transition or sustained play"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "condition": "not_equals",
+      "value": 0,
+      "description": "Game mode must not be 0 (no softlock/black screen)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "condition": "less_than",
+      "value": 32,
+      "description": "Game mode in valid range (0x00-0x1F)"
+    }
+  ],
+  "onFailure": {
+    "expert": "veran",
+    "context": "Golden path failed: overworld softlock or black screen. Check stack corruption chain; use repro_stack_corruption.py or module isolation.",
+    "capture": {
+      "cpu": true,
+      "stack_retaddr": true
+    }
+  },
+  "metadata": {
+    "related_issues": [
+      "Docs/Issues/OverworldSoftlock_Plan.md",
+      "Docs/Issues/OverworldSoftlock_RootCause.md"
+    ],
+    "created": "2026-01-30"
+  }
+}

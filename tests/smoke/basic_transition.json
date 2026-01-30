@@ -1,0 +1,61 @@
+{
+  "name": "Basic Overworld Transition",
+  "description": "Verify basic overworld screen transitions work",
+  "version": "1.0",
+  "tags": ["smoke", "overworld", "transition"],
+  "timeout_seconds": 30,
+  "saveState": {
+    "id": "1769374361_Link_s_House_Area",
+    "waitSeconds": 3,
+    "allowMissing": true
+  },
+  "preconditions": {
+    "$7E0010": {
+      "equals": 9,
+      "desc": "Game mode should be overworld (0x09)"
+    }
+  },
+  "steps": [
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "equals": 9,
+      "description": "Verify overworld mode"
+    },
+    {
+      "type": "press",
+      "button": "RIGHT",
+      "frames": 120,
+      "description": "Walk right for 2 seconds"
+    },
+    {
+      "type": "wait",
+      "seconds": 0.5,
+      "description": "Wait for movement to settle"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "in": [9, 14],
+      "description": "Should still be in overworld (9) or special overworld (14)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0020",
+      "condition": "less_than",
+      "value": 60000,
+      "description": "Link Y position should be valid (not overflowed)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0022",
+      "condition": "less_than",
+      "value": 60000,
+      "description": "Link X position should be valid (not overflowed)"
+    }
+  ],
+  "onFailure": {
+    "expert": "farore",
+    "context": "Basic overworld transition failed. Check transition handlers and boundary conditions."
+  }
+}

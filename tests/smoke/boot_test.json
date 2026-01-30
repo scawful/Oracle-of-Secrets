@@ -1,0 +1,35 @@
+{
+  "name": "Boot Test",
+  "description": "Verify ROM boots to title screen correctly",
+  "version": "1.0",
+  "tags": ["smoke", "critical", "boot"],
+  "timeout_seconds": 20,
+  "saveState": {
+    "id": "baseline_1",
+    "waitSeconds": 2,
+    "allowMissing": false
+  },
+  "preconditions": {
+    "$7E0010": {
+      "in": [9, 14],
+      "desc": "Game mode should be overworld (0x09) or special overworld (0x0E)"
+    }
+  },
+  "steps": [
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "in": [9, 14],
+      "description": "Should be in overworld mode after load"
+    },
+    {
+      "type": "screenshot",
+      "path": "tests/screenshots/boot_overworld.png",
+      "description": "Capture baseline overworld state"
+    }
+  ],
+  "onFailure": {
+    "expert": "farore",
+    "context": "Baseline boot state failed to load. Check save-state library and loadstate permissions."
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "name": "Stack Corruption: JumpTableLocal PLY Misalignment",
+  "description": "Regression test for P0 black screen bug - stack corruption when JumpTableLocal ($008781) is called with X=8-bit, causing PLY to pop only 1 byte of the 3-byte JSL return address",
+  "version": "1.0",
+  "tags": ["regression", "critical", "stack-corruption", "softlock", "black-screen", "jumptablelocal"],
+  "timeout_seconds": 120,
+  "bug_reference": {
+    "id": "B010",
+    "title": "Stack corruption via JumpTableLocal X=8-bit",
+    "description": "JumpTableLocal at $008781 uses PLY to pull the JSL return address. When X flag is 8-bit, PLY pops only 1 byte instead of 2, leaving the stack misaligned. This corrupts the return address, causing PC to land at invalid addresses like $83:A66D which attempts JSL $1D66CC (WRAM mirror).",
+    "symptoms": ["black_screen", "softlock", "PC at $83A66D", "invalid JSL to WRAM"],
+    "trigger": "Dungeon/overworld load when a prior routine leaves X=8-bit before calling JumpTableLocal",
+    "affected_addresses": ["$7E01FC", "$7E01FD", "$7E01FE"],
+    "root_cause_doc": "Docs/Issues/OverworldSoftlock_RootCause.md"
+  },
+  "saveState": {
+    "id": "overworld_start",
+    "slot": 2,
+    "waitSeconds": 3,
+    "allowMissing": true
+  },
+  "preconditions": {
+    "$7E0010": {
+      "not_equals": 0,
+      "desc": "Game should be in an active mode (not title screen)"
+    }
+  },
+  "steps": [
+    {
+      "type": "comment",
+      "description": "Press A to start game from save state"
+    },
+    {
+      "type": "press",
+      "button": "A",
+      "frames": 10,
+      "description": "Start game / dismiss menu"
+    },
+    {
+      "type": "wait",
+      "seconds": 2,
+      "description": "Wait for game to load and transition to begin"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "not_equals": 0,
+      "description": "Game mode should not be 0 (reset/dead state)"
+    },
+    {
+      "type": "mem_watch",
+      "action": "add",
+      "address": "$7E01FC",
+      "size": 3,
+      "depth": 500,
+      "description": "Watch stack region $01FC-$01FE for write attribution"
+    },
+    {
+      "type": "wait",
+      "seconds": 5,
+      "description": "Run game for 5 seconds (~300 frames) to trigger transitions"
+    },
+    {
+      "type": "press",
+      "button": "UP",
+      "frames": 120,
+      "description": "Walk up for 2 seconds to trigger screen transition"
+    },
+    {
+      "type": "wait",
+      "seconds": 3,
+      "description": "Wait for transition to complete"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "condition": "not_equals",
+      "value": 0,
+      "description": "CRITICAL: Game mode must not be 0 (indicates stack corruption / softlock)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "condition": "less_than",
+      "value": 32,
+      "description": "Game mode should be a valid mode (0x00-0x1F), not corrupted"
+    },
+    {
+      "type": "cpu_check",
+      "description": "Verify PC is in valid ROM range",
+      "pc_range": {
+        "min": "0x008000",
+        "max": "0xFFFFFF"
+      },
+      "invalid_pcs": ["0x83A66D"],
+      "check_p_register": {
+        "note": "If X=8-bit at JumpTableLocal entry, flag as regression"
+      }
+    },
+    {
+      "type": "screenshot",
+      "path": "tests/screenshots/stack_corruption_post_transition.png"
+    }
+  ],
+  "onFailure": {
+    "expert": "veran",
+    "context": "Stack corruption regression detected! PC may be at invalid address $83:A66D. Check P register state (X flag) at all JumpTableLocal call sites. Use repro_stack_corruption.py for detailed MEM_BLAME attribution. The root cause is upstream of the HUD hook - trace P register changes backward from $008781 to find where X becomes 8-bit.",
+    "capture": {
+      "cpu": true,
+      "stack_retaddr": true,
+      "mem_blame": {
+        "addr": "0x7E01FC",
+        "size": 3
+      },
+      "p_log": {
+        "count": 50
+      }
+    }
+  },
+  "metadata": {
+    "original_fix": {
+      "commit": null,
+      "files": ["TBD - awaiting root cause from Phase 3"],
+      "pattern": "Ensure X=16-bit before all JSL JumpTableLocal calls"
+    },
+    "related_issues": [
+      "Docs/Issues/OverworldSoftlock_ActionPlan.md",
+      "Docs/Issues/OverworldSoftlock_Handoff.md"
+    ],
+    "created": "2026-01-29",
+    "last_verified": null
+  }
+}

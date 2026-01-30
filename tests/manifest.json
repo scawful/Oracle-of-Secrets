@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "description": "Oracle of Secrets Regression Test Manifest",
+  "suites": {
+    "smoke": {
+      "description": "Quick validation tests (<1 min total)",
+      "timeout_seconds": 60,
+      "tests": [
+        "smoke/boot_test.json",
+        "smoke/basic_transition.json"
+      ],
+      "run_on": ["build", "pr", "release"],
+      "fail_fast": true
+    },
+    "regression": {
+      "description": "Known bug regression tests (<10 min total)",
+      "timeout_seconds": 600,
+      "tests": [
+        "regression/b007_y_overflow.json",
+        "regression/b009_mode_reset.json",
+        "regression/stack_corruption.json",
+        "regression/golden_path_overworld.json"
+      ],
+      "run_on": ["pr", "release"],
+      "fail_fast": false
+    },
+    "full": {
+      "description": "All tests including exploration",
+      "timeout_seconds": 1800,
+      "tests": [
+        "smoke/*.json",
+        "regression/*.json"
+      ],
+      "run_on": ["release"],
+      "fail_fast": false
+    }
+  },
+  "moe_analysis": {
+    "enabled": true,
+    "on_failure": "farore",
+    "summarize_with": "farore"
+  },
+  "defaults": {
+    "rom": "Roms/oos168x.sfc",
+    "state_library": "Roms/SaveStates/",
+    "screenshot_dir": "tests/screenshots/",
+    "timeout_per_test": 30
+  },
+  "tags": {
+    "critical": {
+      "description": "Tests that must pass for release",
+      "tests": ["boot_test", "b007_y_overflow", "stack_corruption"]
+    },
+    "golden_path": {
+      "description": "Golden path overworld regression (no softlock)",
+      "tests": ["golden_path_overworld"]
+    },
+    "overworld": {
+      "description": "Overworld-related tests",
+      "tests": ["basic_transition", "b007_y_overflow"]
+    },
+    "dungeon": {
+      "description": "Dungeon-related tests",
+      "tests": ["b009_mode_reset"]
+    }
+  }
+}

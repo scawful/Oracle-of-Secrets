@@ -1,0 +1,106 @@
+{
+  "name": "B007: Y-coordinate Overflow Regression",
+  "description": "Regression test for B007 - Y-coordinate overflow during Light World transitions",
+  "version": "1.0",
+  "tags": ["regression", "critical", "b007", "overflow", "transition"],
+  "timeout_seconds": 60,
+  "bug_reference": {
+    "id": "B007",
+    "title": "Y-coordinate overflow",
+    "description": "Link's Y position overflows during certain Light World transitions, causing soft lock or teleportation",
+    "symptoms": ["Link.Y > 60000", "game_mode == 0x09", "visual glitches"],
+    "trigger": "Light World transition from Pyramid area",
+    "affected_addresses": ["$7E0020", "$7E0022"]
+  },
+  "saveState": {
+    "id": "pyramid_bunny_start",
+    "path": "Roms/SaveStates/test_states/b007_start.mss",
+    "waitSeconds": 5,
+    "allowMissing": true
+  },
+  "preconditions": {
+    "$7E0010": {
+      "equals": 9,
+      "desc": "Should be in overworld mode"
+    }
+  },
+  "steps": [
+    {
+      "type": "assert",
+      "address": "$7E0020",
+      "condition": "less_than",
+      "value": 60000,
+      "description": "Initial Y position should be valid"
+    },
+    {
+      "type": "press",
+      "button": "UP",
+      "frames": 60,
+      "description": "Walk up for 1 second"
+    },
+    {
+      "type": "wait",
+      "seconds": 0.5
+    },
+    {
+      "type": "press",
+      "button": "LEFT",
+      "frames": 60,
+      "description": "Walk left for 1 second"
+    },
+    {
+      "type": "wait",
+      "seconds": 0.5
+    },
+    {
+      "type": "wait_addr",
+      "address": "$7E0011",
+      "not_equals": 0,
+      "timeout": 5,
+      "interval": 0.1,
+      "description": "Wait for any submodule activity (transition starting)"
+    },
+    {
+      "type": "wait",
+      "seconds": 2,
+      "description": "Wait for transition to complete"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0020",
+      "condition": "less_than",
+      "value": 60000,
+      "description": "CRITICAL: Y position must not overflow after transition"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0022",
+      "condition": "less_than",
+      "value": 60000,
+      "description": "X position must not overflow after transition"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "not_equals": 0,
+      "description": "Game mode should not reset (soft lock indicator)"
+    },
+    {
+      "type": "screenshot",
+      "path": "tests/screenshots/b007_post_transition.png"
+    }
+  ],
+  "onFailure": {
+    "expert": "nayru",
+    "context": "B007 regression detected! Y-coordinate overflow occurred during transition. Check Overworld/ZSCustomOverworld.asm transition handlers, specifically bounds checking before STA $0020/$0022."
+  },
+  "metadata": {
+    "original_fix": {
+      "commit": null,
+      "files": ["Overworld/ZSCustomOverworld.asm", "Overworld/transitions.asm"],
+      "pattern": "bounds_check_before_store"
+    },
+    "created": "2026-01-27",
+    "last_verified": null
+  }
+}

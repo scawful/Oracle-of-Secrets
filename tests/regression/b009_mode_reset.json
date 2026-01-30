@@ -1,0 +1,88 @@
+{
+  "name": "B009: Unexpected Game Mode Reset Regression",
+  "description": "Regression test for B009 - Game mode unexpectedly resetting to 0x00 during gameplay",
+  "version": "1.0",
+  "tags": ["regression", "b009", "mode", "crash"],
+  "timeout_seconds": 60,
+  "bug_reference": {
+    "id": "B009",
+    "title": "Unexpected game reset",
+    "description": "Game mode resets to 0x00 during certain gameplay situations, causing a soft lock",
+    "symptoms": ["game_mode == 0x00", "black screen", "unresponsive"],
+    "trigger": "Various dungeon/overworld transitions",
+    "affected_addresses": ["$7E0010", "$7E0011"]
+  },
+  "saveState": {
+    "id": "dungeon_entrance",
+    "path": "Roms/SaveStates/test_states/b009_start.mss",
+    "waitSeconds": 5,
+    "allowMissing": true
+  },
+  "preconditions": {
+    "$7E0010": {
+      "not_equals": 0,
+      "desc": "Game mode should not already be reset"
+    }
+  },
+  "steps": [
+    {
+      "type": "read16",
+      "address": "$7E0010",
+      "store": "initial_mode",
+      "description": "Record initial game mode"
+    },
+    {
+      "type": "press",
+      "button": "UP",
+      "frames": 30,
+      "description": "Walk towards door/entrance"
+    },
+    {
+      "type": "wait",
+      "seconds": 1
+    },
+    {
+      "type": "press",
+      "button": "A",
+      "frames": 5,
+      "description": "Interact/enter"
+    },
+    {
+      "type": "wait",
+      "seconds": 3,
+      "description": "Wait for transition"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "not_equals": 0,
+      "description": "CRITICAL: Game mode must not reset to 0x00"
+    },
+    {
+      "type": "wait_addr",
+      "address": "$7E0011",
+      "equals": 0,
+      "timeout": 10,
+      "description": "Wait for submodule to settle"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "in": [5, 6, 7, 9, 14],
+      "description": "Game mode should be a valid gameplay state"
+    }
+  ],
+  "onFailure": {
+    "expert": "veran",
+    "context": "B009 regression detected! Game mode reset to 0x00 during transition. Check state machine logic, particularly dungeon/overworld transition handlers and the mode switch table."
+  },
+  "metadata": {
+    "original_fix": {
+      "commit": null,
+      "files": ["Core/main.asm", "Dungeons/entrance.asm"],
+      "pattern": "mode_validation"
+    },
+    "created": "2026-01-27",
+    "last_verified": null
+  }
+}
