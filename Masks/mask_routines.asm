@@ -151,6 +151,7 @@ Palette_ArmorAndGloves:
     REP   #$30
     LDA.w #$0000  ; Ignore glove color modifier $7EF354
     JSL   $1BEE21 ; Read Original Palette Code
+  SEP #$30
   RTL
 
   PHX : PHY : PHA
@@ -286,7 +287,7 @@ LinkItem_CheckForSwordSwing_Masks:
   LDA !CurrentMask : BEQ .return
     CMP.b #$02 : BEQ .return  ; zora mask can use sword
       CMP.b #$06 : BEQ .return ; gbc link can use sword
-        LDA #$01
+        LDA #$00
         RTL
   .return
   LDA $3B : AND.b #$10 ; Restore Link_CheckForSwordSwing
@@ -302,7 +303,9 @@ Link_TransformMask:
 {
   PHB : PHK : PLB
   PHA ; save mask ID
-  JSL CheckNewRButtonPress : BEQ .return
+  JSL CheckNewRButtonPress : BCS .press
+    PLA : PLB : CLC : RTL
+  .press
     LDA $6C : BNE .return   ; in a doorway
     LDA $0FFC : BNE .return ; can't open menu
 
@@ -985,9 +988,12 @@ AncillaAdd_MagicBubbleShot:
 
 Ancilla0E_MagicBubbleLong:
 {
-  PHP : PHK : PLB
+  PHP
+  PHB
+  PHK : PLB
   JSR Ancilla_MagicBubbleShot
   PLB
+  PLP
   RTL
 }
 
@@ -1359,7 +1365,6 @@ CheckNewRButtonPress:
   ; For the AXLR buttons
   ; $1A is a timer which increases every frame the game is not lagging
   LDA $F6 : BIT #$10 : BEQ .fail
-    LDA $F6 : AND #$EF : STA $F6  ; Clear only R bit, not all inputs
     LDA $1A : AND #$0F : BEQ .fail
       SEC
       RTL
@@ -1372,7 +1377,6 @@ CheckNewLButtonPress:
 {
   ; L button is bit 5 ($20) of $F6
   LDA $F6 : BIT #$20 : BEQ .fail
-    LDA $F6 : AND #$DF : STA $F6  ; Clear only L bit, not all inputs
     LDA $1A : AND #$0F : BEQ .fail
       SEC
       RTL
