@@ -1,0 +1,307 @@
+#!/usr/bin/env python3
+"""
+Generate hooks.json by scanning ASM for org $XXXXXX directives.
+
+Heuristic: capture the first instruction after each org to classify hook kind.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional
+
+ORG_RE = re.compile(r'^\s*org\s+\$([0-9A-Fa-f]{6})\b')
+LABEL_RE = re.compile(r'^\s*[A-Za-z0-9_\.\+\-]+:\s*$')
+INSTR_RE = re.compile(r'^\s*([A-Za-z]{2,5})\b\s*(.*)$')
+COMMENT_RE = re.compile(r'^\s*;')
+DATA_LABEL_RE = re.compile(
+    r'^(Pool_|RoomData|RoomDataTiles|RoomDataObjects|OverworldMap|DungeonMap|'
+    r'Map16|Map32|Tile16|Tile32|Gfx|GFX|Pal|Palette|BG|OAM|Msg|Text|Font|'
+    r'Sfx|Sound|Table|Tables|Data|Buffer|Lookup|LUT|Offset|Offsets|Index|'
+    r'Indices|Pointer|Pointers|Ptrs|Ptr|List|Lists|Array|Arrays|Tiles|Tilemap|'
+    r'TileMap|Map|Maps)'
+)
+DATA_LABEL_SUFFIXES = (
+    '_data', '_table', '_tables', '_tiles', '_tilemap', '_map', '_maps',
+    '_gfx', '_pal', '_palettes', '_pointers', '_ptrs', '_ptr', '_lut',
+)
+LONG_ENTRY_RE = re.compile(r'(FullLongEntry|_LongEntry|_Long)$')
+ABI_RE = re.compile(r'@abi\s+([A-Za-z0-9_]+)', re.IGNORECASE)
+NO_RETURN_RE = re.compile(r'@no_return\\b', re.IGNORECASE)
+MX_RE = re.compile(r'^m(8|16)x(8|16)$', re.IGNORECASE)
+
+SKIP_DIRS = {
+    '.git', '.context', '.claude', '.cursor', 'Roms', 'docs',
+    'build', 'bin', 'obj', 'tools', 'tests', 'node_modules',
+}
+
+EXPECTED_MX = {
+    0x008000: (8, 8),     # Reset
+    0x0080C9: (8, 8),     # NMI
+    0x008781: (None, 8),  # JumpTableLocal (requires X=8-bit for stack math)
+    0x008891: (8, 8),     # APU sync wait
+    0x028364: (8, 8),     # Bed cutscene color init
+    0x028A5B: (8, 8),     # Follower transition
+    0x028BE7: (8, 8),     # Sanctuary song check
+    0x02C0C3: (16, 8),    # Overworld camera bounds (A 16-bit, X 8-bit)
+}
+
+EXPECTED_NAMES = {
+    0x008000: "Reset",
+    0x0080C9: "NMI_Handler",
+    0x008781: "JumpTableLocal",
+    0x008891: "APU_SyncWait",
+    0x028364: "BedCutscene_ColorFix",
+    0x028A5B: "CheckForFollowerIntraroomTransition",
+    0x028BE7: "Sanctuary_Song_Disable",
+    0x02C0C3: "Overworld_SetCameraBounds",
+}
+
+FORCE_ABI_ADDRESSES = set(EXPECTED_MX.keys())
+
+KIND_PRIORITY = {
+    'jsl': 3,
+    'jml': 3,
+    'jsr': 3,
+    'jmp': 3,
+    'patch': 2,
+    'data': 1,
+}
+
+@dataclass
+class HookEntry:
+    address: int
+    name: str
+    kind: str
+    target: Optional[str]
+    source: str
+    note: str = ''
+    module: str = ''
+    skip_abi: bool = False
+    abi_class: str = ''
+    expected_m: Optional[int] = None
+    expected_x: Optional[int] = None
+
+
+def _module_from_path(path: Path, root: Path) -> str:
+    rel = path.relative_to(root)
+    if not rel.parts:
+        return "root"
+    return rel.parts[0]
+
+
+def _is_data_label(label: Optional[str]) -> bool:
+    if not label:
+        return False
+    if label.startswith('$'):
+        return False
+    if DATA_LABEL_RE.match(label):
+        return True
+    lower = label.lower()
+    if lower.startswith('oracle_pos') and re.search(r'pos\\d_', lower):
+        return True
+    for suffix in DATA_LABEL_SUFFIXES:
+        if lower.endswith(suffix):
+            return True
+    return False
+
+
+def _abi_class(label: Optional[str]) -> str:
+    if not label:
+        return ''
+    if LONG_ENTRY_RE.search(label):
+        return 'long_entry'
+    return ''
+
+
+def _scan_annotations(lines: list[str], start_idx: int) -> tuple[str, bool, Optional[int], Optional[int]]:
+    abi_class = ''
+    no_return = False
+    expected_m = None
+    expected_x = None
+
+    for j in range(start_idx, min(start_idx + 20, len(lines))):
+        line = lines[j]
+        if COMMENT_RE.match(line) or ';' in line:
+            m = ABI_RE.search(line)
+            if m:
+                token = m.group(1).lower()
+                if token in ('long', 'long_entry', 'fulllongentry', 'full_long_entry'):
+                    abi_class = 'long_entry'
+                else:
+                    mx = MX_RE.match(token)
+                    if mx:
+                        expected_m = int(mx.group(1))
+                        expected_x = int(mx.group(2))
+            if NO_RETURN_RE.search(line):
+                no_return = True
+        if ORG_RE.match(line) and j != start_idx:
+            break
+    return abi_class, no_return, expected_m, expected_x
+
+
+def _first_instruction(lines: list[str], start_idx: int) -> tuple[str, Optional[str]]:
+    """Return (kind, target) based on first meaningful instruction after org."""
+    for j in range(start_idx + 1, min(start_idx + 15, len(lines))):
+        line = lines[j].strip()
+        if not line or COMMENT_RE.match(line):
+            continue
+        if LABEL_RE.match(line):
+            continue
+        # skip assembler directives
+        if line.lower().startswith(('pushpc', 'pullpc', 'org', 'if', 'endif', 'else', 'macro')):
+            continue
+        m = INSTR_RE.match(line)
+        if not m:
+            continue
+        op = m.group(1).lower()
+        operand = m.group(2).strip() if m.group(2) else ''
+
+        if op in ('jsl', 'jml', 'jsr', 'jmp'):
+            target = operand.split()[0] if operand else None
+            return op, target
+        if op in ('db', 'dw', 'dl', 'dd', 'incbin', 'incsrc', 'fill', 'pad'):
+            return 'data', None
+        return 'patch', None
+    return 'patch', None
+
+
+def _score_entry(entry: HookEntry) -> int:
+    return KIND_PRIORITY.get(entry.kind, 0)
+
+
+def _should_skip(path: Path) -> bool:
+    for part in path.parts:
+        if part in SKIP_DIRS:
+            return True
+    return False
+
+
+def scan_hooks(root: Path) -> list[HookEntry]:
+    hooks_by_addr: dict[int, HookEntry] = {}
+
+    for asm_path in root.rglob('*.asm'):
+        if _should_skip(asm_path):
+            continue
+        try:
+            lines = asm_path.read_text(encoding='utf-8', errors='ignore').splitlines()
+        except Exception:
+            continue
+
+        for idx, line in enumerate(lines):
+            m = ORG_RE.match(line)
+            if not m:
+                continue
+            addr = int(m.group(1), 16)
+            kind, target = _first_instruction(lines, idx)
+            abi_class_note, no_return, ann_m, ann_x = _scan_annotations(lines, idx)
+            source = f"{asm_path.relative_to(root)}:{idx + 1}"
+            name = target or f"hook_{addr:06X}"
+            module = _module_from_path(asm_path, root)
+            skip_abi = (
+                kind == 'data'
+                or kind in ('jmp', 'jml')
+                or _is_data_label(name)
+                or _is_data_label(target)
+                or (kind == 'patch' and name.startswith('hook_'))
+                or name.startswith('.')
+                or name.startswith('$')
+            )
+            if addr in EXPECTED_NAMES and (name.startswith('hook_') or name.startswith('.') or name.startswith('$')):
+                name = EXPECTED_NAMES[addr]
+            abi_class = abi_class_note or _abi_class(name or target)
+            if no_return:
+                skip_abi = True
+            if addr in FORCE_ABI_ADDRESSES:
+                skip_abi = False
+            entry = HookEntry(
+                address=addr,
+                name=name,
+                kind=kind,
+                target=target,
+                source=source,
+                module=module,
+                skip_abi=skip_abi,
+                abi_class=abi_class,
+                expected_m=ann_m,
+                expected_x=ann_x,
+            )
+
+            existing = hooks_by_addr.get(addr)
+            if not existing or _score_entry(entry) > _score_entry(existing):
+                hooks_by_addr[addr] = entry
+
+    return sorted(hooks_by_addr.values(), key=lambda e: e.address)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description='Generate hooks.json from ASM org directives')
+    parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1],
+                        help='Oracle repo root (default: repo root)')
+    parser.add_argument('-o', '--output', type=Path, default=Path('hooks.json'),
+                        help='Output hooks.json path (default: hooks.json in repo root)')
+    parser.add_argument('--rom', type=Path, default=Path('Roms/oos168x.sfc'),
+                        help='ROM path for metadata (optional)')
+    args = parser.parse_args()
+
+    root = args.root.resolve()
+    output = (root / args.output).resolve() if not args.output.is_absolute() else args.output
+
+    hooks = scan_hooks(root)
+
+    rom_meta = {}
+    rom_path = (root / args.rom).resolve() if not args.rom.is_absolute() else args.rom
+    if rom_path.exists():
+        rom_meta['path'] = str(rom_path.relative_to(root))
+        try:
+            sha1 = hashlib.sha1(rom_path.read_bytes()).hexdigest()
+            rom_meta['sha1'] = sha1
+        except Exception:
+            pass
+
+    data = {
+        'version': 1,
+        'rom': rom_meta,
+        'hooks': []
+    }
+
+    for entry in hooks:
+        hook = {
+            'name': entry.name,
+            'address': f"0x{entry.address:06X}",
+            'kind': entry.kind,
+            'source': entry.source,
+            'module': entry.module,
+            'skip_abi': bool(entry.skip_abi),
+        }
+        if entry.abi_class:
+            hook['abi_class'] = entry.abi_class
+        if entry.expected_m is not None or entry.expected_x is not None:
+            if entry.expected_m is not None:
+                hook['expected_m'] = entry.expected_m
+            if entry.expected_x is not None:
+                hook['expected_x'] = entry.expected_x
+        elif entry.address in EXPECTED_MX:
+            exp_m, exp_x = EXPECTED_MX[entry.address]
+            if exp_m is not None:
+                hook['expected_m'] = exp_m
+            if exp_x is not None:
+                hook['expected_x'] = exp_x
+        if entry.target:
+            hook['target'] = entry.target
+        if entry.note:
+            hook['note'] = entry.note
+        data['hooks'].append(hook)
+
+    output.write_text(json.dumps(data, indent=2) + "\n")
+    print(f"Wrote {len(hooks)} hooks to {output}")
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
