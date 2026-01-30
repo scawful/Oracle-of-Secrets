@@ -763,6 +763,7 @@ Menu_SongMenu:
         JMP .continue
       .max_1
       PLA : CMP.b #$02 : BCS .wrap_to_min
+      JMP .continue
       .max_2
       PLA : CMP.b #$03 : BCS .wrap_to_min
       JMP .continue
