@@ -2316,14 +2316,13 @@ Overworld_ReloadSubscreenOverlay_Interupt:
     ; Store the overlay for later.
     PHX
 
-    ; If the value is 0xFF that means we didn't set any overlay.
-    ; PREVIOUSLY: Loaded pyramid (0x96) by default.
-    ; FIX: Allow 0xFF to pass through so color math can be disabled.
-    ; CPX.w #$00FF : BNE .notFF
+    ; If the value is 0xFF that means we didn't set any overlay so load the
+    ; pyramid one by default.
+    CPX.w #$00FF : BNE .notFF
         ; The pyramid background.
-        ; LDX.w #$0096
+        LDX.w #$0096
 
-    ; .notFF
+    .notFF
     
     .loadSubScreenOverlay
 
@@ -3724,10 +3723,8 @@ Overworld_LoadBGColorAndSubscreenOverlay:
 
                 SEP #$30 ; Set A, X, and Y in 8bit mode.
 
-                ; Clear color math control registers to prevent brightness bug
-                STZ.b $9A ; CGADDSUB mirror
-                STZ.b $9C ; COLDATA L mirror
-                STZ.b $9D ; COLDATA H mirror
+                ; Clear color math control register to prevent brightness bug
+                STZ.b $9A
 
                 ; Don't set the subscreen during a warp to hide the transparent
                 ; color change. This will get set properly later in the warp
@@ -5342,7 +5339,6 @@ Pool_BufferAndBuildMap16Stripes_overworldScreenSize:
 
     if !UseVanillaPool > 0
     ; LW
-    ; DW
     db $01, $01, $00, $01, $01, $01, $01, $00
     db $01, $01, $00, $01, $01, $01, $01, $00
     db $00, $00, $00, $00, $00, $00, $00, $00
