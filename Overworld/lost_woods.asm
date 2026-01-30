@@ -37,7 +37,7 @@ LostWoods:
 
       normalfinish:
       ; Reset coordinates and scroll to fix camera drift/softlocks
-      JSL LostWoods_ResetCoordinates
+      ; JSL LostWoods_ResetCoordinates
       LDA.l Pool_Overworld_ActualScreenID_New, X
       STZ !ComboCounter
       RTL
@@ -168,12 +168,11 @@ LostWoods:
           BRA .reset_scroll
   
       .snap_west ; Target 0x28 (Left)
-          ; Snap X to Left Edge of 0x29 (0x0200)
-          LDA.w #$0200 : STA.b $22
-          ; Modulo Y to 0x29 Base (0x0A00)
-          LDA.b $20 : AND.w #$01FF : ORA.w #$0A00 : STA.b $20
-          BRA .reset_scroll
-  
+          ; West exit is the problematic path (camera misalign). Skip snapping to avoid
+          ; feeding altered coordinates into transition math; fall back to vanilla values,
+          ; but restore caller width flags before returning.
+          BRA .west_exit_restore
+
       .snap_north ; Target 0x21 (Up)
           ; Snap Y to Top Edge of 0x29 (0x0A00)
           LDA.w #$0A00 : STA.b $20
@@ -201,6 +200,9 @@ LostWoods:
       STZ.b $E3
       STZ.b $E7
       STZ.b $E9
+
+      .west_exit_restore
+      SEP #$20
 
       .done
       RTL
