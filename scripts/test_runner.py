@@ -416,23 +416,19 @@ def parse_int(value: Any) -> int | None:
     return None
 
 
-def load_manifest(path: Path) -> dict:
-    if not path.exists():
-        return {}
-    try:
-        return json.loads(path.read_text())
-    except json.JSONDecodeError:
-        return {}
-
-
 def load_test_manifest(path: Path) -> dict:
-    """Load the test suite manifest."""
+    """Load JSON manifest (suite config or save-state library)."""
     if not path.exists():
         return {}
     try:
         return json.loads(path.read_text())
     except json.JSONDecodeError:
         return {}
+
+
+def load_manifest(path: Path) -> dict:
+    """Alias for load_test_manifest (used by resolve_save_state)."""
+    return load_test_manifest(path)
 
 
 def get_tests_for_suite(manifest: dict, suite: str, repo_root: Path) -> list[Path]:
@@ -897,24 +893,28 @@ Please analyze this failure and suggest potential fixes."""
     else:
         return f"Orchestrator not found at {orchestrator_path}. Manual analysis needed:\n{prompt}"
 
-def run_test(test_path: Path, verbose: bool = False, dry_run: bool = False,
+def run_test(test_path: Path, verbose: bool = False, quiet: bool = False, dry_run: bool = False,
              skip_preconditions: bool = False, skip_load: bool = False,
-             skip_missing_state: bool = False, moe_enabled: bool = False) -> str:
-    """Run a single test file. Returns 'passed', 'failed', or 'skipped'."""
+             skip_missing_state: bool = False, moe_enabled: bool = False) -> tuple[str, str | None]:
+    """Run a single test file. Returns (status, message) where status is 'passed', 'failed', or 'skipped'; message is set on failure."""
 
     with open(test_path) as f:
         test = json.load(f)
 
-    log(f"\n{'='*60}", Colors.BOLD)
-    log(f"Test: {test['name']}", Colors.BOLD)
-    log(f"{'='*60}")
-    log(f"Description: {test.get('description', 'N/A')}")
+    def out(msg: str, color: str = ""):
+        if not quiet:
+            log(msg, color)
+
+    out(f"\n{'='*60}", Colors.BOLD)
+    out(f"Test: {test['name']}", Colors.BOLD)
+    out(f"{'='*60}")
+    out(f"Description: {test.get('description', 'N/A')}")
 
     if dry_run:
-        log(f"\n{Colors.YELLOW}[DRY RUN] Would execute {len(test.get('steps', []))} steps{Colors.RESET}")
+        out(f"\n{Colors.YELLOW}[DRY RUN] Would execute {len(test.get('steps', []))} steps{Colors.RESET}")
         for i, step in enumerate(test.get('steps', []), 1):
-            log(f"  {i}. {step['type']}: {step.get('description', step)}")
-        return "passed"
+            out(f"  {i}. {step['type']}: {step.get('description', step)}")
+        return "passed", None
 
     # Bring Mesen to front when tests start (optional)
     if os.environ.get("MESEN_AUTO_FOCUS", "1") not in ("0", "false", "False"):
@@ -926,14 +926,16 @@ def run_test(test_path: Path, verbose: bool = False, dry_run: bool = False,
                 pass
 
     # Check bridge connection
-    log("\nChecking bridge connection...")
-    log(f"Using backend: {BACKEND.backend_name()} (mode={BACKEND.mode})")
+    out("\nChecking bridge connection...")
+    out(f"Using backend: {BACKEND.backend_name()} (mode={BACKEND.mode})")
     success, output = mesen_cmd('ping')
     if not success:
+        if quiet:
+            return "failed", output
         log(f"{Colors.RED}Bridge not connected: {output}{Colors.RESET}")
         log("Start Mesen2 with bridge script loaded first.")
-        return "failed"
-    log(f"{Colors.GREEN}Bridge connected{Colors.RESET}")
+        return "failed", output
+    out(f"{Colors.GREEN}Bridge connected{Colors.RESET}")
 
     # Subscribe to events and show OSD message
     if BACKEND.backend_name() == "socket":
@@ -947,84 +949,84 @@ def run_test(test_path: Path, verbose: bool = False, dry_run: bool = False,
             manifest_path = repo_root / "Docs" / "Testing" / "save_state_library.json"
             resolved = resolve_save_state(test.get("saveState"), repo_root, manifest_path)
         except Exception as exc:
-            log(f"{Colors.RED}Invalid saveState: {exc}{Colors.RESET}")
-            return "failed"
+            if not quiet:
+                log(f"{Colors.RED}Invalid saveState: {exc}{Colors.RESET}")
+            return "failed", str(exc)
 
         if resolved:
             if resolved.get("warning"):
-                log(f"{Colors.YELLOW}{resolved['warning']} (using fallback){Colors.RESET}")
+                out(f"{Colors.YELLOW}{resolved['warning']} (using fallback){Colors.RESET}")
             if resolved["kind"] == "missing":
                 msg = resolved.get("reason", "Save state missing")
                 if skip_missing_state or resolved.get("allow_missing"):
-                    log(f"{Colors.YELLOW}{msg} (skipping){Colors.RESET}")
-                    return "skipped"
-                log(f"{Colors.RED}{msg}{Colors.RESET}")
-                return "failed"
+                    out(f"{Colors.YELLOW}{msg} (skipping){Colors.RESET}")
+                    return "skipped", msg
+                out(f"{Colors.RED}{msg}{Colors.RESET}")
+                return "failed", msg
             if resolved["kind"] == "path":
                 state_path = resolved["path"]
                 if not state_path.exists():
                     msg = f"Save state not found: {state_path}"
                     if skip_missing_state or resolved.get("allow_missing"):
-                        log(f"{Colors.YELLOW}{msg} (skipping){Colors.RESET}")
-                        return "skipped"
-                    log(f"{Colors.RED}{msg}{Colors.RESET}")
-                    return "failed"
-                log(f"\nLoading save state: {state_path}")
+                        out(f"{Colors.YELLOW}{msg} (skipping){Colors.RESET}")
+                        return "skipped", msg
+                    out(f"{Colors.RED}{msg}{Colors.RESET}")
+                    return "failed", msg
+                out(f"\nLoading save state: {state_path}")
                 success, output = mesen_cmd("loadstate", str(state_path), timeout=4.0)
                 if not success:
-                    log(f"{Colors.RED}Loadstate failed: {output}{Colors.RESET}")
-                    return "failed"
+                    out(f"{Colors.RED}Loadstate failed: {output}{Colors.RESET}")
+                    return "failed", output
             elif resolved["kind"] == "slot":
                 slot = resolved.get("slot")
                 if not slot:
-                    log(f"{Colors.RED}Invalid saveState slot{Colors.RESET}")
-                    return "failed"
-                log(f"\nLoading save slot: {slot}")
+                    out(f"{Colors.RED}Invalid saveState slot{Colors.RESET}")
+                    return "failed", "Invalid saveState slot"
+                out(f"\nLoading save slot: {slot}")
                 success, output = mesen_cmd("loadslot", str(slot), timeout=4.0)
                 if not success:
-                    log(f"{Colors.RED}Loadslot failed: {output}{Colors.RESET}")
-                    return "failed"
+                    out(f"{Colors.RED}Loadslot failed: {output}{Colors.RESET}")
+                    return "failed", output
 
             if resolved.get("wait_seconds", 0) > 0:
                 success, output = mesen_cmd("wait-load", str(int(resolved["wait_seconds"])), timeout=resolved["wait_seconds"] + 2)
                 if not success:
-                    log(f"{Colors.RED}Wait-load failed: {output}{Colors.RESET}")
-                    return "failed"
+                    out(f"{Colors.RED}Wait-load failed: {output}{Colors.RESET}")
+                    return "failed", output
 
             if resolved.get("reload_caches"):
-                log("Reloading runtime caches (L+R+Select+Start)...")
+                out("Reloading runtime caches (L+R+Select+Start)...")
                 # Hotkey: L+R+Select+Start
                 mesen_cmd("press", "L+R+SELECT+START", 5, timeout=2.0)
                 time.sleep(0.2)
 
     # Check preconditions
     if not skip_preconditions:
-        log("\nChecking preconditions...")
+        out("\nChecking preconditions...")
         passed, errors = check_preconditions(test, verbose)
         if not passed:
-            log(f"\n{Colors.RED}Preconditions not met:{Colors.RESET}")
+            out(f"\n{Colors.RED}Preconditions not met:{Colors.RESET}")
             for err in errors:
-                log(f"  • {err}", Colors.RED)
+                out(f"  • {err}", Colors.RED)
             if test.get("saveState"):
                 ss = test["saveState"]
                 label = ss.get("id") or ss.get("path") or ss.get("slot") or "unknown"
-                log(f"\nLoad save state: {label}")
-            return "failed"
-        log(f"{Colors.GREEN}All preconditions met{Colors.RESET}")
+                out(f"\nLoad save state: {label}")
+            return "failed", "; ".join(errors) if errors else "Preconditions not met"
+        out(f"{Colors.GREEN}All preconditions met{Colors.RESET}")
 
     # Execute steps
-    log("\nExecuting test steps...")
+    out("\nExecuting test steps...")
     for i, step in enumerate(test.get('steps', []), 1):
         step_desc = step.get('description', step['type'])
 
         success, message = execute_step(step, verbose)
 
         if not success:
-            log(f"\n{Colors.RED}FAILED at step {i}: {step_desc}{Colors.RESET}")
-            log(f"  {message}", Colors.RED)
+            out(f"\n{Colors.RED}FAILED at step {i}: {step_desc}{Colors.RESET}")
+            out(f"  {message}", Colors.RED)
 
-            if moe_enabled:
-                # Route to expert
+            if moe_enabled and not quiet:
                 failure_info = {
                     'message': message,
                     'step': i,
@@ -1034,15 +1036,15 @@ def run_test(test_path: Path, verbose: bool = False, dry_run: bool = False,
                 analysis = route_to_expert(failure_info, test, verbose)
                 log(f"\n{Colors.YELLOW}Expert Analysis:{Colors.RESET}")
                 log(analysis)
-            else:
-                log(f"\n{Colors.YELLOW}MoE analysis disabled; skipping expert routing.{Colors.RESET}")
+            elif not quiet:
+                out(f"\n{Colors.YELLOW}MoE analysis disabled; skipping expert routing.{Colors.RESET}")
 
-            return "failed"
+            return "failed", message
 
-    log(f"\n{Colors.GREEN}{'='*60}{Colors.RESET}")
-    log(f"{Colors.GREEN}TEST PASSED: {test['name']}{Colors.RESET}")
-    log(f"{Colors.GREEN}{'='*60}{Colors.RESET}")
-    return "passed"
+    out(f"\n{Colors.GREEN}{'='*60}{Colors.RESET}")
+    out(f"{Colors.GREEN}TEST PASSED: {test['name']}{Colors.RESET}")
+    out(f"{Colors.GREEN}{'='*60}{Colors.RESET}")
+    return "passed", None
 
 def output_results_json(results: list[dict], passed: int, failed: int, skipped: int) -> None:
     """Output results in JSON format."""
@@ -1109,6 +1111,8 @@ def main():
                         default='text', help='Output format')
     parser.add_argument('--fail-fast', action='store_true',
                         help='Stop on first failure')
+    parser.add_argument('-q', '--quiet', action='store_true',
+                        help='One line per test; no bridge/precondition/step chatter')
     args = parser.parse_args()
 
     repo_root = Path(__file__).parent.parent
@@ -1164,15 +1168,19 @@ def main():
     skipped = 0
     results = []
 
+    if args.quiet and len(test_files) > 1:
+        log(f"Suite: {args.suite or 'explicit'} ({len(test_files)} tests)")
+
     for test_path in test_files:
-        result = run_test(
+        result, fail_msg = run_test(
             test_path,
-            args.verbose,
-            args.dry_run,
-            args.skip_preconditions,
-            args.skip_load,
-            args.skip_missing_state,
-            args.moe_enabled,
+            verbose=args.verbose,
+            quiet=args.quiet,
+            dry_run=args.dry_run,
+            skip_preconditions=args.skip_preconditions,
+            skip_load=args.skip_load,
+            skip_missing_state=args.skip_missing_state,
+            moe_enabled=args.moe_enabled,
         )
 
         test_result = {
@@ -1180,15 +1188,23 @@ def main():
             "file": str(test_path),
             "status": result,
         }
+        if fail_msg:
+            test_result["message"] = fail_msg
 
         if result == "passed":
             passed += 1
+            if args.quiet:
+                log(f"  {Colors.GREEN}{test_path.stem}: PASS{Colors.RESET}")
         elif result == "skipped":
             skipped += 1
+            if args.quiet:
+                log(f"  {Colors.YELLOW}{test_path.stem}: SKIP{Colors.RESET}")
         else:
             failed += 1
+            if args.quiet:
+                log(f"  {Colors.RED}{test_path.stem}: FAIL{Colors.RESET}" + (f" — {fail_msg}" if fail_msg else ""))
             if args.fail_fast:
-                test_result["message"] = "Test failed (fail-fast triggered)"
+                test_result["message"] = fail_msg or "Test failed (fail-fast triggered)"
                 results.append(test_result)
                 break
 
