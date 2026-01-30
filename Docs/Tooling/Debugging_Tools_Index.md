@@ -289,6 +289,22 @@ python3 scripts/mesen2_client.py --log session.jsonl navigate --poi "beach"
 
 ---
 
+## Root Cause Debugging (Six-Phase Workflow)
+
+For taking any bug from reproduction to documented root cause, use the **Root Cause Debugging Workflow**:
+
+- **[Root_Cause_Debugging_Workflow.md](Root_Cause_Debugging_Workflow.md)** – Tool inventory (skills, MCPs, scripts, z3dk/z3ed) and six phases: **Reproduce → Capture → Instrument → Isolate → Map to source → Document and validate**. Each phase lists actions, tools, and outputs. Use this for black screen, softlock, transition hang, or corruption bugs.
+
+Phases in brief:
+1. **Reproduce** – State library, repro script, or test harness; get reproducible steps + savestate.
+2. **Capture** – Preflight diagnostics; on failure: pause, CPU/savestate/screenshot; store under `~/.context/projects/oracle-of-secrets/debug_captures/`.
+3. **Instrument** – Conditional breakpoints (e.g. `sp >= 0x0200`), P_WATCH, MEM_WATCH; reload savestate and replay until breakpoint/watch fires.
+4. **Isolate** – TRACE, MEM_BLAME, STACK_RETADDR, P_LOG to get faulting PC and opcode.
+5. **Map to source** – SYMBOLS_RESOLVE, z3ed, Hyrule Historian, book-of-mudora, z3dk; get routine name and source file.
+6. **Document and validate** – Update `Docs/Issues/*_RootCause.md` (see [HUD_Artifact_Bug.md](../Issues/HUD_Artifact_Bug.md) template); hypothesis test; run regression.
+
+---
+
 ## Debugging Workflows
 
 ### Workflow 1: Investigating a Known Soft Lock
@@ -421,6 +437,7 @@ ls /tmp/mesen2-*.sock && echo "Socket OK"
 
 ## See Also
 
+- [Root Cause Debugging Workflow](Root_Cause_Debugging_Workflow.md) – Six-phase workflow for root-cause debugging (Reproduce → Capture → Instrument → Isolate → Map → Document).
 - [Mesen2 Architecture](Mesen2_Architecture.md)
 - [Debugging Infrastructure Roadmap](Debugging_Infrastructure_Roadmap.md)
 - [Agent Workflow](AgentWorkflow.md)
