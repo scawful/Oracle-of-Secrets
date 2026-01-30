@@ -36,42 +36,90 @@
 ;            for targeted modifications within vanilla ROM addresses.
 ; =========================================================
 
-incsrc "Util/macros.asm"
-incsrc "Core/structs.asm"
+incsrc    "Util/macros.asm"
+incsrc    "Config/module_flags.asm"
+incsrc    "Core/structs.asm"
 
 ; Vanilla WRAM and SRAM
-incsrc "Core/ram.asm"
+incsrc    "Core/ram.asm"
 
 namespace Oracle
 {
+  ; Core always included — symbols, RAM, SRAM, message system
   incsrc "Core/link.asm"
   incsrc "Core/sram.asm"
   incsrc "Core/symbols.asm"
   incsrc "Core/message.asm"
 
-  %log_section("Music", !LOG_MUSIC)
-  incsrc "Music/all_music.asm"
+  ; --- Conditionally included modules ---
+  ; Toggle !DISABLE_* flags in Util/macros.asm for bug isolation.
+  ; Dependencies:
+  ;   Music     — standalone, no cross-module deps
+  ;   Overworld — uses Core symbols; ZSCustomOverworld also loaded separately
+  ;   Dungeon   — uses Core symbols, some Sprite symbols
+  ;   Sprites   — uses Core symbols, Items symbols (ForcePrizeDrop, etc.)
+  ;   Masks     — uses Core + Sprites symbols
+  ;   Items     — uses Core symbols, some Sprite symbols
+  ;   Menu      — uses Core symbols, some Items symbols
+  ;   Patches   — uses Core symbols, modifies vanilla ROM addresses
 
-  %log_section("Overworld", !LOG_OVERWORLD)
-  incsrc "Overworld/overworld.asm"
+  if !DISABLE_MUSIC == 0
+    %log_section("Music", !LOG_MUSIC)
+    incsrc "Music/all_music.asm"
+  else
+    print "*** MUSIC DISABLED ***"
+  endif
 
-  %log_section("Dungeon", !LOG_DUNGEON)
-  incsrc "Dungeons/dungeons.asm"
+  if !DISABLE_OVERWORLD == 0
+    %log_section("Overworld", !LOG_OVERWORLD)
+    incsrc "Overworld/overworld.asm"
+  else
+    print "*** OVERWORLD DISABLED ***"
+  endif
 
-  %log_section("Sprites", !LOG_SPRITES)
-  incsrc "Sprites/all_sprites.asm"
+  if !DISABLE_DUNGEON == 0
+    %log_section("Dungeon", !LOG_DUNGEON)
+    incsrc "Dungeons/dungeons.asm"
+  else
+    print "*** DUNGEON DISABLED ***"
+  endif
 
-  %log_section("Masks", !LOG_MASKS)
-  incsrc "Masks/all_masks.asm"
+  if !DISABLE_SPRITES == 0
+    %log_section("Sprites", !LOG_SPRITES)
+    incsrc "Sprites/all_sprites.asm"
+  else
+    print "*** SPRITES DISABLED ***"
+  endif
 
-  %log_section("Items", !LOG_ITEMS)
-  incsrc "Items/all_items.asm"
+  if !DISABLE_MASKS == 0
+    %log_section("Masks", !LOG_MASKS)
+    incsrc "Masks/all_masks.asm"
+  else
+    print "*** MASKS DISABLED ***"
+  endif
 
-  %log_section("Menu", !LOG_MENU)
-  incsrc "Menu/menu.asm"
+  if !DISABLE_ITEMS == 0
+    %log_section("Items", !LOG_ITEMS)
+    incsrc "Items/all_items.asm"
+  else
+    print "*** ITEMS DISABLED ***"
+  endif
+
+  if !DISABLE_MENU == 0
+    %log_section("Menu", !LOG_MENU)
+    incsrc "Menu/menu.asm"
+  else
+    print "*** MENU DISABLED ***"
+  endif
 
   ; incsrc "Util/item_cheat.asm"  ; DISABLED FOR TESTING
-  incsrc "Core/patches.asm"
+
+  if !DISABLE_PATCHES == 0
+    incsrc "Core/patches.asm"
+  else
+    print "*** PATCHES DISABLED ***"
+  endif
+
   ; incsrc "Core/capture.asm"
 
   print ""
@@ -79,5 +127,10 @@ namespace Oracle
 }
 namespace off
 
-incsrc "Overworld/ZSCustomOverworld.asm"
-%log_end("ZSCustomOverworld.asm", !LOG_OVERWORLD)
+; ZSCustomOverworld operates outside Oracle namespace (global scope)
+if !DISABLE_OVERWORLD == 0
+  incsrc    "Overworld/ZSCustomOverworld.asm"
+  %log_end("ZSCustomOverworld.asm", !LOG_OVERWORLD)
+else
+  print "*** ZSCustomOverworld DISABLED ***"
+endif
