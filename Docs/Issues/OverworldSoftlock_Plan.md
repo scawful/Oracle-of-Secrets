@@ -116,3 +116,4 @@ State library: see [Docs/Testing/SaveStateLibrary.md](../Testing/SaveStateLibrar
 | [OverworldSoftlock_Investigation_Alternatives.md](OverworldSoftlock_Investigation_Alternatives.md) | TCS breakpoint, JumpTableLocal patch, NMI validation |
 | [OverworldSoftlock_LessCerebralOptions.md](OverworldSoftlock_LessCerebralOptions.md) | Full text for Path A options |
 | [OverworldSoftlock_CodebaseAnalysis.md](OverworldSoftlock_CodebaseAnalysis.md) | ZSOW/time_system/sprite patterns and bug-risk analysis |
+| [OverworldSoftlock_InvestigationPaths.md](OverworldSoftlock_InvestigationPaths.md) | Contract docs, caller audit, usdasm/z3dk/ROM comparison, ZScream vs Oracle patching |

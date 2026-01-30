@@ -328,7 +328,17 @@ MyCustomHook:
 }
 ```
 
-### 5.3 Hook Documentation
+### 5.3 Hook contracts (P/stack)
+
+Document P and stack behavior at hook entry and exit so callers and future patches are safe:
+
+- **Entry:** Does the hook assume a specific P state (e.g. 16-bit A/X/Y)? If not, use PHP/PLP (or document “caller must set REP/SEP after JSL”).
+- **Exit:** Does the hook guarantee a single P state on all exit paths? If not, document “return P unspecified” or normalize before every RTL/RTS/JML.
+- **Stack:** JSR↔RTS and JSL↔RTL must pair; no unbalanced PHA/PLA/PHX/PLX/PHY/PLY across paths.
+
+Routines called from multiple contexts (e.g. Oracle_CheckIfNight from ZSCustomOverworld) should have a one-line contract in the source header. For audit and comparison workflows, see `Docs/Issues/OverworldSoftlock_InvestigationPaths.md` and `OverworldSoftlock_CodebaseAnalysis.md`.
+
+### 5.4 Hook Documentation
 
 ```asm
 ; =========================================================
