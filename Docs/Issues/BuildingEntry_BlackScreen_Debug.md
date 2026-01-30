@@ -32,11 +32,12 @@ All previous "fixes" (mode mismatch, DB addressing, etc.) were based on theory, 
    ```bash
    ~/src/tools/emu-launch -m Roms/oos168x.sfc scripts/mesen_transition_debug.lua
    ```
-3. Navigate to a building entrance that triggers the bug
-4. **Immediately pause when screen goes black**
-5. Record ALL values in the HUD overlay
-6. Check Mesen2's log output (Script Window)
-7. Screenshot the failure state
+3. **Primary repro (2026-01-30):** load Save State 2, highlight the file, press A to load into the dungeon (freeze on load screen).
+4. Alternate repro: navigate to a building/dungeon entrance that triggers the bug in normal play.
+5. **Immediately pause when screen goes black**
+6. Record ALL values in the HUD overlay
+7. Check Mesen2's log output (Script Window)
+8. Screenshot the failure state
 
 ### Capture Checklist
 
@@ -119,19 +120,27 @@ emu.addEventCallback(Main, emu.eventType.endFrame)
 - Capture script: `scripts/capture_blackscreen.lua`
 - Auto-test script: `scripts/auto_entrance_test.lua`
 
-### Capture #1: [PENDING]
+### Capture #1: 2026-01-30 (Save State 2 file-load dungeon freeze)
 
 ```
-GameMode: ???
-Submodule: ???
-INIDISP: ???
-Last log entries:
-  - ???
-  - ???
-  - ???
+Repro: Load slot 2 → highlight file → press A → run 600 frames → freeze
+
+GameMode ($7E0010): 0x07 (Underworld)
+Submodule ($7E0011): 0x0F
+INIDISP ($7E001A): 0x08
+INIDISP Queue ($7E0013): 0x0F
+Indoors ($7E001B): 0x01
+Room ID ($7E00A0): 0x0104 (Link's House)
+Entrance ID ($7E010E): 0x0000
+
+CPU snapshot:
+  PC=0x00B7B8  K=0x00  DBR=0x50  D=0x1009  P=0x34  SP=0x0D06  A=0xCB01
+Stack retaddr:
+  SP=0x0D06 -> [0]=0x04000C (WRAM mirror), [1]=0x1D8001 (ROM)
 ```
 
-**Analysis:** [To be filled after observation]
+**Analysis:** This freeze shows **stack corruption** (SP=0x0D06, DBR=0x50) similar to the
+overworld softlock chain. Treat as stack/return corruption until proven otherwise.
 
 ---
 

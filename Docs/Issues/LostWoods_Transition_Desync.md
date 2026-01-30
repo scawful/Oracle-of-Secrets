@@ -14,7 +14,7 @@ A coordinate reset function (`LostWoods_ResetCoordinates`) was added in commit 8
 
 The fix was disabled in `lost_woods.asm:42`. The original subtle bug is preferable to the severe regression.
 
-**Current state:** Slight camera offset when exiting Lost Woods after invalid combo. Non-fatal, playable.
+**Current state:** Slight camera offset when exiting Lost Woods after invalid combo. Non-fatal, playable. As of 2026-01-27, the west-exit snap is disabled to avoid feeding altered coordinates into the transition math; this reverts to the subtle offset rather than the severe misalignment.
 
 NOTE: Vanilla disassembly is external. In this workspace, JP gigaleak disassembly lives under `../alttp-gigaleak/DISASM/jpdasm/`. If you generate a US `usdasm` export for address parity, it lives under `../alttp-gigaleak/DISASM/usdasm/`. Adjust paths if your setup differs.
 

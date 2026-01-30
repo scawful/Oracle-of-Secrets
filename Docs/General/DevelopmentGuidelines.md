@@ -121,6 +121,95 @@ The 65816 processor has critical flags (M and X) that control register sizes:
 
 See `Docs/General/Troubleshooting.md` Section 3 for common processor state issues and solutions.
 
+### 2.6. Module Isolation System
+
+Oracle of Secrets supports selectively disabling entire feature modules at assembly time. This is primarily used for **bug isolation** — when a regression appears, disabling modules one at a time via binary search identifies which module introduced the problem.
+
+#### Configuration
+
+Module disable flags live in `Util/macros.asm`:
+
+```asm
+!DISABLE_MUSIC     = 0   ; Music/all_music.asm (Bank $20)
+!DISABLE_OVERWORLD = 0   ; Overworld/overworld.asm + ZSCustomOverworld.asm (Banks $28, $40-$41)
+!DISABLE_DUNGEON   = 0   ; Dungeons/dungeons.asm (Bank $2C)
+!DISABLE_SPRITES   = 0   ; Sprites/all_sprites.asm (Banks $30-$32)
+!DISABLE_MASKS     = 0   ; Masks/all_masks.asm (Banks $33-$3B)
+!DISABLE_ITEMS     = 0   ; Items/all_items.asm (Bank $2B)
+!DISABLE_MENU      = 0   ; Menu/menu.asm (Banks $2D-$2E)
+!DISABLE_PATCHES   = 0   ; Core/patches.asm (vanilla ROM address patches)
+```
+
+Set a flag to `1` to exclude that module from assembly. The build output will print `*** MODULE DISABLED ***` for each excluded module.
+
+#### Usage
+
+```bash
+# 1. Edit Util/macros.asm — set !DISABLE_MASKS = 1
+# 2. Rebuild
+./scripts/build_rom.sh 168
+# 3. Test in emulator — does the bug reproduce?
+# 4. Repeat: re-enable, disable next module
+```
+
+#### Module Inventory
+
+| Module | Flag | Hooks | Banks | What It Does |
+|--------|------|-------|-------|--------------|
+| Music | `!DISABLE_MUSIC` | 9 | $20 | Custom BGM, expanded song table |
+| Overworld | `!DISABLE_OVERWORLD` | 180 | $28, $40-$41 | World map, transitions, camera, overlays, ZSCustomOverworld |
+| Dungeon | `!DISABLE_DUNGEON` | 115 | $2C | Underworld logic, floor puzzles, key blocks, warp tags |
+| Sprites | `!DISABLE_SPRITES` | 76 | $30-$32 | Custom NPCs, bosses, enemies, sprite dispatch table |
+| Masks | `!DISABLE_MASKS` | 51 | $33-$3B | Transformation forms (Deku, Zora, Wolf, Bunny, Minish), GFX |
+| Items | `!DISABLE_ITEMS` | 64 | $2B | Custom items (fishing rod, portal rod, ocarina, magic rings) |
+| Menu | `!DISABLE_MENU` | 66 | $2D-$2E | HUD, item box, quest journal, song menu |
+| Patches | `!DISABLE_PATCHES` | ~20 | Various | Targeted vanilla ROM fixes (NPC behavior, sprite prep, etc.) |
+
+#### Dependencies
+
+Disabling a module may cause assembly errors if other modules reference its symbols. Known cross-module dependencies:
+
+| Module | Depends On | Symbols Referenced |
+|--------|------------|--------------------|
+| Sprites | Items | `ForcePrizeDrop_long`, damage class tables |
+| Masks | Sprites, Core | Sprite state addresses, ancilla routines |
+| Items | Sprites | `Sprite_TransmuteToBomb`, sprite spawn routines |
+| Menu | Items | Item address index tables, bottle content |
+| Dungeon | Sprites | Sprite prep pointers, enemy behavior |
+
+If a dependency error occurs, either:
+1. **Disable both modules** (the depending and depended-on module)
+2. **Add a stub** — define the missing symbol as a no-op address in `Core/symbols.asm`
+
+#### Recommended Isolation Order
+
+For binary search, disable in order of decreasing isolation safety (least likely to cause dependency errors):
+
+1. **Masks** — most self-contained, transformation GFX + routines
+2. **Music** — fully standalone
+3. **Menu** — HUD/journal, vanilla UI still works without it
+4. **Items** — custom items disabled, vanilla items still work
+5. **Patches** — targeted vanilla fixes, low risk
+6. **Sprites** — custom sprite dispatch, may break NPC interactions
+7. **Dungeon** — underworld hooks, breaks dungeon gameplay
+8. **Overworld** — world map + camera, breaks overworld gameplay
+
+#### Core (Always Included)
+
+These files are always assembled regardless of module flags:
+
+| File | Purpose |
+|------|---------|
+| `Util/macros.asm` | Assembly macros, flags, logging |
+| `Core/structs.asm` | Data structure definitions |
+| `Core/ram.asm` | Vanilla WRAM/SRAM address definitions |
+| `Core/link.asm` | Link state and movement hooks |
+| `Core/sram.asm` | Save RAM layout and access |
+| `Core/symbols.asm` | Vanilla routine addresses (used by all modules) |
+| `Core/message.asm` | Expanded dialogue system (Bank $2F) |
+
+These form the minimum viable Oracle ROM. Disabling all optional modules produces a ROM with vanilla gameplay plus the Core hooks, SRAM layout, and message system.
+
 ## 3. Key Custom Systems
 
 Oracle of Secrets introduces several major custom systems that form the foundation of the hack.

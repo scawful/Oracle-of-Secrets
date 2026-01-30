@@ -1,7 +1,7 @@
 # Mesen2-OoS Architecture & Socket API
 
 **Status**: Active / Production
-**Last Updated**: 2026-01-24
+**Last Updated**: 2026-01-27
 
 This document details the architecture of the custom Mesen2 fork used for Oracle of Secrets development, focusing on the Socket API that enables AI agents and external tools (like YAZE) to control the emulator.
 
@@ -98,7 +98,14 @@ Returns active ALTTP sprites.
 | `CPU` | None | Get registers (A, X, Y, PC, P, SP). |
 | `DISASM` | `addr`, `count` | Get disassembly lines. |
 | `BREAKPOINT` | `action` ("add"/"remove"), `addr`, `bptype` | Manage breakpoints. |
-| `TRACE` | `count` | Get last N trace entries. |
+| `TRACE` | `action` or `count` | Control trace logging or fetch trace entries (supports `count`/`offset`). |
+
+#### TRACE control and fetch
+- Control: `{"type":"TRACE","action":"start","clear":"true","format":"[Disassembly]","labels":"true","indent":"false","condition":""}`
+- Status: `{"type":"TRACE","action":"status"}`
+- Clear: `{"type":"TRACE","action":"clear"}`
+- Stop: `{"type":"TRACE","action":"stop"}`
+- Fetch: `{"type":"TRACE","count":"20","offset":"0"}` (default `count` 20, max 100)
 
 ### E. Advanced Features
 
@@ -110,14 +117,14 @@ Returns active ALTTP sprites.
 ## 4. Integration Guide
 
 ### For AI Agents
-Use the `MesenSocketClient` wrapper (Python) provided in `tools/mesen2-mcp/`.
+Use the Python `MesenBridge` (`scripts/mesen2_client_lib/bridge.py`) or the CLI `scripts/mesen2_client.py`.
 
 ```python
-# Check link state
-client.send({"type": "GAMESTATE"})
+from mesen2_client_lib.bridge import MesenBridge
 
-# Watch for a value change
-client.send({"type": "ADD_WATCH", "addr": "7E0010"})
+client = MesenBridge("/tmp/mesen2-<pid>.sock")
+client.send_command("GAMESTATE")
+client.send_command("MEM_WATCH_WRITES", {"action": "add", "addr": "0x7E0010"})
 ```
 
 ### For YAZE
@@ -127,4 +134,4 @@ The `MesenDebugPanel` in YAZE uses the C++ `MesenSocketClient` to poll `GAMESTAT
 
 -   **Build**: Use the custom Mesen2 fork build scripts.
 -   **Artifact**: `MesenCore.dylib` (macOS) / `MesenCore.dll` (Windows).
--   **Location**: Must be placed in the Mesen2 application directory or `tools/mesen2-mcp/` to be loaded.
+-   **Location**: Use the built fork in `/Applications/Mesen2 OOS.app` (do not install into tooling folders).

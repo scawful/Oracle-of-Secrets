@@ -12,7 +12,7 @@
 
 This document provides a high-level analysis of key banks in the Link to the Past disassembly. Use this guide to quickly locate relevant code and understand the overall structure of the game.
 
-NOTE: Vanilla disassembly is external. In this workspace, JP gigaleak disassembly lives under `../alttp-gigaleak/DISASM/jpdasm/`. If you generate a US `usdasm` export for address parity, it lives under `../alttp-gigaleak/DISASM/usdasm/`. Adjust paths if your setup differs.
+NOTE: Vanilla disassembly is external. In this workspace, the US `usdasm` lives under `../usdasm/` (preferred for PC mapping). The JP gigaleak disassembly lives under `../alttp-gigaleak/DISASM/jpdasm/` (some setups also keep a US export at `../alttp-gigaleak/DISASM/usdasm/`). Adjust paths if your setup differs.
 
 ## 1. Bank $00: Game Core & Main Loop
 
@@ -25,6 +25,7 @@ NOTE: Vanilla disassembly is external. In this workspace, JP gigaleak disassembl
 *   **`MainGameLoop:` (#_008034)**: Central loop, calls `Module_MainRouting`.
 *   **`Module_MainRouting:` (#_0080B5)**: Primary state machine dispatcher. Reads `MODE` (`$7E0010`) and uses `pool Module_MainRouting` to jump to the correct game module.
 *   **`Interrupt_NMI:` (#_0080C9)**: Runs every frame. Handles input (`NMI_ReadJoypads`), graphics DMA (`NMI_DoUpdates`), and sprite preparation (`NMI_PrepareSprites`).
+*   **`NMI_PrepareSprites:` (#_0085FC)**: Sprite/OAM packing loop inside the NMI handler. In `../usdasm/bank_00.asm` (around lines ~998-1071) it’s the `LDY #$1C ... DEY x4 ... BPL .next_block` loop used to pack sprite data.
 
 ### Search Heuristics:
 *   **Game Module Logic (Overworld, Underworld, Menus):** Search `bank_00.asm` for the `pool Module_MainRouting` jump table. The labels (e.g., `Module09_Overworld`) are the entry points for each game state, determined by WRAM `$7E0010` (`MODE`).

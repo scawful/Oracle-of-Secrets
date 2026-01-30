@@ -45,7 +45,7 @@ Use the build script to archive the previous patched ROM and produce a fresh pat
 
 What it does:
 1. Archives the existing `Roms/oos168x.sfc` to `~/Documents/OracleOfSecrets/Roms/`.
-2. Copies `Roms/oos168.sfc` → `Roms/oos168x.sfc`.
+2. Copies `Roms/oos168_test2.sfc` → `Roms/oos168x.sfc` when present (falls back to `oos168.sfc`).
 3. Runs `asar Oracle_main.asm Roms/oos168x.sfc`.
 
 ## Windows (Legacy)
@@ -58,7 +58,7 @@ If you need to run Asar manually:
 
 1.  **Copy the clean ROM**:
     ```sh
-    cp Roms/oos168.sfc Roms/oos168x.sfc
+    cp Roms/oos168_test2.sfc Roms/oos168x.sfc  # or oos168.sfc if test ROM isn't present
     ```
 
 2.  **Run Asar**:

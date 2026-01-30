@@ -10,6 +10,8 @@ The primary entry point for debugging is `scripts/mesen2_client.py`. It communic
 - `python3 scripts/mesen2_client.py debug-status`: High-level summary of emulator health, game mode, location, and available canon states.
 - `python3 scripts/mesen2_client.py debug-context`: Comprehensive discovery of all debugging assets (watch profiles, warps, items, flags).
 Note: `mesen2_client.py` requires an explicit `--socket` or `--instance` (or set `MESEN2_AUTO_ATTACH=1` to auto-select the newest socket).
+If `debug-status` or `health` reports **ROM not loaded (load screen)**, run:
+`python3 scripts/mesen2_client.py rom-load /path/to/Roms/oos168x.sfc`
 
 ## 2. Symbolic Debugging (USDASM Integration)
 

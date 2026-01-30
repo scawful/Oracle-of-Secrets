@@ -12,6 +12,10 @@
 - Room load hook re-enabled with explicit torch table check (no stale Z flag reliance)
 - Added runtime reload hotkey for save-state safety (message pointers + sprite graphics properties)
 
+**2026-01-27 Update (collision coverage fix):**
+- Expanded Room 0x27 swim mask to a full 4-row band (rows 41-44, cols 5-60) plus both vertical channels; tile count now 239 (was 174).
+- Goal: eliminate thin-strip-only swimming and edge gaps; needs verification in Mesen2 + headless `verify_water_gate.lua`.
+
 ### Current Build
 - **Source ROM:** `oos168.sfc` (MD5: `2eb02125e1f72e773aaf04e048c2d097`)
 - **Patched ROM:** `oos168x.sfc` (MD5: `6211297eeabb2f4b99040ba8cf2cce5a`)

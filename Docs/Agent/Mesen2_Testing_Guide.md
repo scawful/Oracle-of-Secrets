@@ -1,6 +1,6 @@
 # Mesen2 Testing Guide for AI Agents
 
-**Last Updated:** 2026-01-25
+**Last Updated:** 2026-01-29
 **For:** Claude, Codex, Gemini, and other AI agents
 
 ---
@@ -9,7 +9,7 @@
 
 This guide enables AI agents to interact with the Oracle of Secrets ROM running in the **Mesen2-OoS** fork via the **Unix Domain Socket API**.
 
-> **Note**: Legacy `mesen_cli.sh` and Lua bridges are deprecated. Use the Python `mesen2_client.py` or the `mesen2-mcp` tool.
+> **Note**: Legacy `mesen_cli.sh` and Lua bridges are deprecated. Use the Python `mesen2_client.py` or the `MesenBridge` in `scripts/mesen2_client_lib/bridge.py`.
 
 ## Architecture
 
@@ -28,7 +28,7 @@ Mesen2-OoS runs a custom C++ `SocketServer` on a separate thread, listening on `
 
 ```bash
 # 1. Launch Mesen2 with a source-tagged window title
-./scripts/mesen_launch.sh --multi --instance agent-demo --owner claude \
+./scripts/mesen2_launch_instance.sh --instance agent-demo --owner claude \
   --title "Claude" --source manual
 
 # Title shows ACTIVE + source tag for clarity.
@@ -36,6 +36,27 @@ Mesen2-OoS runs a custom C++ `SocketServer` on a separate thread, listening on `
 # 2. Interact via Python Client
 python3 scripts/mesen2_client.py state --json
 python3 scripts/mesen2_client.py press A
+```
+
+### Socket API Quick Commands (Preferred)
+
+```bash
+python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock state --json
+python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock diagnostics --json
+python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock press A --frames 5
+python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock load 2
+python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock save 2
+python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock breakpoint --add 0x0080C9:exec
+```
+
+Direct memory reads/writes (raw bridge):
+
+```bash
+PYTHONPATH=./scripts python3 - <<'PY'
+from mesen2_client_lib.bridge import MesenBridge
+b=MesenBridge('/tmp/mesen2-<pid>.sock')
+print(hex(b.read_memory(0x7E0739)))
+PY
 ```
 
 ### Instance Lifecycle (Required)
@@ -50,12 +71,11 @@ python3 scripts/mesen2_client.py press A
 ### Headless Automation (CI)
 
 ```bash
-# 1. Start Headless Server (uses MesenCore.dylib)
-cd ~/src/tools/mesen2-mcp
-python3 -m mesen2_mcp.server
+# 1. Start a headless Mesen2 OOS instance
+./scripts/mesen2_launch_instance.sh --headless --instance agent-headless --source ci --owner agent
 
-# 2. Interact
-# (The server exposes MCP tools directly)
+# 2. Interact via socket
+python3 scripts/mesen2_client.py --instance agent-headless state --json
 ```
 
 ## Key Memory Addresses
@@ -204,7 +224,9 @@ MESEN_INSTANCE=crashlab ./scripts/mesen_cli.sh status
 python3 scripts/state_library.py set-apply --set ow_baseline --rom Roms/oos168x.sfc --force
 ```
 
-### Automated CLI Tests (mesen_cli + bridge)
+### Automated CLI Tests (Legacy: mesen_cli + Lua bridge)
+
+These tests require the Lua bridge. Prefer the socket API for new workflows.
 
 Run the smoke test to verify the bridge and basic read/write commands:
 
@@ -224,7 +246,7 @@ If a local save state is missing, you can skip those tests:
 ./scripts/test_runner.py tests/*.json --skip-missing-state
 ```
 
-## Bridge Commands
+## Legacy Bridge Commands (Lua)
 
 | Command | Description | Example |
 |---------|-------------|---------|
@@ -381,12 +403,17 @@ SCRATCH_SPACE=8 MESEN_STASH_ON_FAIL=1 ./scripts/test_runner.py tests/*.json
 
 ## Bridge Requirements
 
-### Socket Bridge (Recommended)
+### Fork Socket API (Recommended)
+- **Socket:** `/tmp/mesen2-<pid>.sock` (auto‑started by `/Applications/Mesen2 OOS.app`).
+- **Client:** `python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock ...`
+- **Automation:** `mesen2_client.py` or `MesenBridge` (`scripts/mesen2_client_lib/bridge.py`) for CPU/stack/breakpoint capture.
+
+### Legacy Hub + Lua Bridge (Fallback)
 - **Hub:** `scripts/mesen_socket_server.py` running on port 8080.
 - **Client:** `scripts/mesen_socket_bridge.lua` loaded in Mesen2.
 - **Settings:** `AllowIoOsAccess` enabled in Mesen2 (for socket library).
 
-### Legacy File Bridge (Fallback)
+### Legacy File Bridge (Last Resort)
 If the Socket Hub is offline, `mesen_cli.sh` falls back to file polling.
 
 | File | Purpose |
@@ -398,7 +425,7 @@ If the Socket Hub is offline, `mesen_cli.sh` falls back to file polling.
 
 ## Mesen2 Settings Requirements
 
-The bridge script requires I/O access to write state files. This must be enabled in Mesen2:
+The **Lua bridge** requires I/O access to write state files. This must be enabled in Mesen2:
 
 **Setting:** `Script > Settings > Script Window > Restrictions > Allow access to I/O and OS functions`
 
@@ -416,7 +443,7 @@ Also ensure auto-start is enabled:
 
 ### Bridge not responding
 1. Check if Mesen2 is running: `pgrep -l Mesen`
-2. Check if I/O access is enabled in Mesen2 settings
+2. If using the Lua bridge, check if I/O access is enabled in Mesen2 settings
 3. Check if bridge script is loaded (look for message in Mesen2 console)
 4. Check state file age: `ls -la ~/Documents/Mesen2/bridge/state.json`
 

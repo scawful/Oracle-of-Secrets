@@ -148,7 +148,7 @@ echo '{"type":"SAVESTATE","slot":"1"}' | nc -U /tmp/mesen2-*.sock
 
 #### 5. Implement Breakpoint Profiles
 **Type:** Automated (code implementation)
-**Status:** Not Started
+**Status:** Done (2026-01-27)
 
 **Description:**
 Add preset breakpoint configurations for common debug scenarios.
@@ -203,7 +203,7 @@ Cross-area warps leave camera misconfigured. Bird travel properly handles this.
 
 #### 7. Agent Session Logging + Action Attribution
 **Type:** Automated (code implementation)
-**Status:** Not Started
+**Status:** Done (2026-01-27)
 
 **Description:**
 Create a lightweight session log that records all CLI actions, run-state transitions, and whether inputs were agent- or user-driven.
@@ -239,10 +239,10 @@ Extend diagnostics to include items, flags, sprites, and watch profile values fo
 
 #### 9. Black Screen / Crash Detector
 **Type:** Automated (code implementation)
-**Status:** Not Started
+**Status:** Done (2026-01-27)
 
 **Description:**
-Detect black-screen conditions automatically during overworld traversal tests.
+Detect black-screen conditions automatically during overworld traversal tests. Implemented via `sentinel.py` and `oracle_debugger` package.
 
 **Implementation Ideas:**
 1. Add `detect_black_screen()` to compare screenshot histogram or INIDISP values.
@@ -303,10 +303,10 @@ Apply camera fix based on bird travel research.
 
 #### 8. Enable Automated Regression Tests
 **Type:** Automated (infrastructure)
-**Status:** Partial
+**Status:** Done (2026-01-27)
 
 **Description:**
-Wire `test_runner.py` to use socket API for automated testing.
+Wire `test_runner.py` to use socket API for automated testing. Implemented via `test_runner.py` and `Regression_Test_Suite.md`.
 
 **Current State:**
 - `scripts/test_runner.py` exists
@@ -371,6 +371,10 @@ Automatically reload `.sym` file when ROM is rebuilt.
 
 | Task | Completion Date | Notes |
 |------|-----------------|-------|
+| P1.5 Breakpoint Profiles | 2026-01-27 | CLI command `breakpoint --profile` |
+| P2.7 Session Logging | 2026-01-27 | CLI arg `--log <file>` |
+| P2.8 Regression Tests | 2026-01-27 | `test_runner.py` + manifest |
+| P2.9 Sentinel/Crash Detector | 2026-01-27 | `sentinel.py` / `oracle_debugger` |
 | P_WATCH/P_LOG/P_ASSERT | 2026-01-24 | Commit f22c1c23 |
 | MEM_WATCH_WRITES/MEM_BLAME | 2026-01-24 | Commit f22c1c23 |
 | Frame-based INPUT injection | 2026-01-24 | Commit 73441358 |

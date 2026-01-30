@@ -42,12 +42,25 @@
 
 ## Debugging & Automation (Mesen2)
 
-- App: `/Applications/Mesen2 OOS.app` (fork). Socket auto-starts at `/tmp/mesen2-*.sock`.
-- Client: `python3 scripts/mesen2_client.py` (use `MESEN2_SOCKET_PATH` if multiple).
+- App: `/Applications/Mesen2 OOS.app` (fork). Socket defaults to `/tmp/mesen2-*.sock` unless `MESEN2_SOCKET_PATH` is set.
+- Client: `python3 scripts/mesen2_client.py` (auto-attaches only if a single socket exists; otherwise set `MESEN2_SOCKET_PATH` or use `--socket`).
 - Five commands to remember: `run-state`, `diagnostics --json`, `smart-save`, `lib-save`, `watch --profile overworld`.
-- Tests: `scripts/test_runner.py` uses the socket backend by default (`OOS_TEST_BACKEND=cli` forces legacy).
-- Fallback Lua bridge: `scripts/mesen_cli.sh` only after starting `mesen_socket_server.py` + `mesen_launch.sh --bridge socket`.
-- Headless option: `./scripts/agent_workflow_start.sh --rom Roms/oos168x.sfc`; stop with `agent_workflow_stop.sh`.
+- Tests: `scripts/test_runner.py` uses the socket backend by default.
+- Verification: Run `python3 scripts/mesen2_client.py health` to verify the Socket API connection.
+- Skill: `mesen2-oos-debugging` (CLI command map + troubleshooting).
+
+## Sandbox & Permissions
+
+The Antigravity shell environment uses a macOS Seatbelt sandbox.
+
+### Common Issues
+- **Operation not permitted**: Usually occurs if a file is listed in `.gitignore`. The sandbox denies access to ignored files by default to prevent accidental modification of sensitive assets.
+- **Fix**: Whitelist the file in `.gitignore` (e.g., `!run.sh`) or use an escape hatch.
+
+### Sandbox Modes
+- **Default**: Restricted to workspace, `/tmp`, and `$HOME`.
+- **Permissive**: Allows all file reads/writes. Use `SANDBOX_MODE=permissive <command>` to override restrictions.
+- **Extra Paths**: Set `SANDBOX_EXTRA_ALLOW=/path1:/path2` to grant specific access.
 
 ## Permissions
 

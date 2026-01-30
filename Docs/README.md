@@ -24,7 +24,23 @@ Welcome to the documentation for Oracle of Secrets. This directory is organized 
 -   **`General/DevelopmentGuidelines.md`**: Coding standards, architecture, and philosophy.
 -   **`Core/MemoryMap.md`**: Comprehensive WRAM/SRAM map.
 -   **`Tooling/AgentWorkflow.md`**: Extended workflow details when Quickstart is insufficient.
+-   **`Tooling/Oracle_Debugger_Package.md`**: Unified debugging orchestrator (NEW 2026-01).
+-   **`Tooling/Debugging_Tools_Index.md`**: Comprehensive reference for all debugging tools.
 -   **`Testing/SaveStateLibrary.md`**: How to maintain the save-state library for quick regression checks.
+-   **`Testing/Regression_Test_Suite.md`**: Automated regression testing infrastructure (NEW 2026-01).
 -   **`Guides/QuestFlow.md`**: A detailed walkthrough of the main story and side-quest progression.
 -   **`Guides/SpriteCreationGuide.md`**: A tutorial for creating new custom sprites.
 -   **`World/Overworld/ZSCustomOverworld.md`**: A deep dive into the data-driven overworld engine that powers the game world.
+
+## Debugging & Testing Quick Start
+
+```bash
+# Build with automatic smoke tests
+./scripts/build_rom.sh 168
+
+# Run regression test suite
+./scripts/run_regression_tests.sh regression
+
+# Start unified debugging orchestrator
+python3 scripts/oracle_debugger/orchestrator.py --monitor
+```

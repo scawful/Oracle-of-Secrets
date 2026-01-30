@@ -333,6 +333,7 @@ Every hook should document:
 ; Purpose: [What this hook adds/changes]
 ; Vanilla Code: [What original code did]
 ; Clobbered: [Registers modified]
+; P/M/X: [Entry/exit flag expectations; PHP/PLP if needed]
 ; Dependencies: [Other systems affected]
 ; =========================================================
 ```

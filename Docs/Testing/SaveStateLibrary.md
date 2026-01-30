@@ -206,9 +206,22 @@ Use consistent IDs and tags to keep the library searchable:
 - **dungeon/boss**: `d5_boss_ready`
 - **feature-specific**: `zt_water_gate_pre`, `zt_water_gate_post`
 
-### Quick CLI Access (Native Bridge)
+### Quick CLI Access (Fork Socket API)
 
-If you're using the socket bridge (preferred for agents), you can use the `oracle-` commands in `mesen_cli.sh`:
+Preferred: use the fork socket API via `mesen2_client.py`. The legacy `mesen_cli.sh` socket bridge is a fallback only.
+
+```bash
+# List library entries
+python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock library
+
+# Load an entry by its ID
+python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock lib-load baseline_1
+
+# Get detailed info about an entry
+python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock lib-info baseline_1 --json
+```
+
+Legacy (Lua bridge):
 
 ```bash
 # List all library entries (optionally filtered by tag)

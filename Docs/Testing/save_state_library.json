@@ -42,48 +42,6 @@
       "md5": "41ebb3077a65186edebbdb1ed5fedd37"
     },
     {
-      "id": "1769374361_Link_s_House_Area",
-      "path": "oos_1769374361_Link_s_House_Area.mss",
-      "label": "Link's House Area",
-      "created_at": 1769374361,
-      "tags": [
-        "overworld",
-        "start",
-        "indoor-entrance"
-      ],
-      "metadata": {
-        "module": 9,
-        "room": 32,
-        "area": 35,
-        "indoors": false,
-        "link_x": 1360,
-        "link_y": 2800,
-        "link_state": 0,
-        "link_form": 6,
-        "link_form_name": "GBC Link",
-        "link_dir": 2,
-        "time_hours": 10,
-        "time_minutes": 37,
-        "time_speed": 63,
-        "health": 48,
-        "max_health": 80,
-        "magic": 120,
-        "rupees": 999,
-        "game_state": 2,
-        "oosprog": 0,
-        "oosprog2": 16,
-        "crystals": 0,
-        "pendants": 0,
-        "location": "Ranch",
-        "summary": "Mode: Overworld | GameState: 2"
-      },
-      "md5": "1764b69fcb3755468ae5bfa19d5f9d13",
-      "status": "canon",
-      "capture_quality": "unique",
-      "verified_by": "scawful",
-      "verified_at": 1769464678
-    },
-    {
       "id": "1769374342_Village_West",
       "path": "oos_1769374342_Village_West.mss",
       "label": "Village West",
@@ -853,6 +811,171 @@
       "status": "deprecated",
       "deprecated_at": "2026-01-25T22:04:53.838068Z",
       "deprecated_reason": "Duplicate of baseline_1"
+    },
+    {
+      "id": "oos91x_4.mss",
+      "path": "legacy/oos91x_4.mss",
+      "label": "oos91x_4",
+      "created_at": 0,
+      "tags": [
+        "legacy",
+        "oos91x"
+      ],
+      "metadata": {},
+      "status": "legacy",
+      "captured_by": "legacy",
+      "md5": "47c2490e399aff9d70b8b7bcdff474ff",
+      "rom_base": "oos91x"
+    },
+    {
+      "id": "oos91x_10.mss",
+      "path": "legacy/oos91x_10.mss",
+      "label": "oos91x_10",
+      "created_at": 0,
+      "tags": [
+        "legacy",
+        "oos91x"
+      ],
+      "metadata": {},
+      "status": "legacy",
+      "captured_by": "legacy",
+      "md5": "24e83cdbcc6f56975f1e00bb27dfebb6",
+      "rom_base": "oos91x"
+    },
+    {
+      "id": "oos91x_11.mss",
+      "path": "legacy/oos91x_11.mss",
+      "label": "oos91x_11",
+      "created_at": 0,
+      "tags": [
+        "legacy",
+        "oos91x"
+      ],
+      "metadata": {},
+      "status": "legacy",
+      "captured_by": "legacy",
+      "md5": "3f0f01048f134e67ae5cef1cf99c19d9",
+      "rom_base": "oos91x"
+    },
+    {
+      "id": "oos91x_5.mss",
+      "path": "legacy/oos91x_5.mss",
+      "label": "oos91x_5",
+      "created_at": 0,
+      "tags": [
+        "legacy",
+        "oos91x"
+      ],
+      "metadata": {},
+      "status": "legacy",
+      "captured_by": "legacy",
+      "md5": "a0d09357441189e2989b32fc29af760e",
+      "rom_base": "oos91x"
+    },
+    {
+      "id": "oos91x_7.mss",
+      "path": "legacy/oos91x_7.mss",
+      "label": "oos91x_7",
+      "created_at": 0,
+      "tags": [
+        "legacy",
+        "oos91x"
+      ],
+      "metadata": {},
+      "status": "legacy",
+      "captured_by": "legacy",
+      "md5": "edd5390f209fec75c402d53dc721f675",
+      "rom_base": "oos91x"
+    },
+    {
+      "id": "oos91x_6.mss",
+      "path": "legacy/oos91x_6.mss",
+      "label": "oos91x_6",
+      "created_at": 0,
+      "tags": [
+        "legacy",
+        "oos91x"
+      ],
+      "metadata": {},
+      "status": "legacy",
+      "captured_by": "legacy",
+      "md5": "502f1ea1f5c290205ef63812173d078b",
+      "rom_base": "oos91x"
+    },
+    {
+      "id": "oos91x_2.mss",
+      "path": "legacy/oos91x_2.mss",
+      "label": "oos91x_2",
+      "created_at": 0,
+      "tags": [
+        "legacy",
+        "oos91x"
+      ],
+      "metadata": {},
+      "status": "legacy",
+      "captured_by": "legacy",
+      "md5": "9874626bf651d0183fac4430a60d0783",
+      "rom_base": "oos91x"
+    },
+    {
+      "id": "oos91x_3.mss",
+      "path": "legacy/oos91x_3.mss",
+      "label": "oos91x_3",
+      "created_at": 0,
+      "tags": [
+        "legacy",
+        "oos91x"
+      ],
+      "metadata": {},
+      "status": "legacy",
+      "captured_by": "legacy",
+      "md5": "3f0fab08c707217c6d7291fa1d9f732e",
+      "rom_base": "oos91x"
+    },
+    {
+      "id": "oos91x_1.mss",
+      "path": "legacy/oos91x_1.mss",
+      "label": "oos91x_1",
+      "created_at": 0,
+      "tags": [
+        "legacy",
+        "oos91x"
+      ],
+      "metadata": {},
+      "status": "legacy",
+      "captured_by": "legacy",
+      "md5": "0a17fa1e35c1daccc670d3311a0e0e1b",
+      "rom_base": "oos91x"
+    },
+    {
+      "id": "oos91x_8.mss",
+      "path": "legacy/oos91x_8.mss",
+      "label": "oos91x_8",
+      "created_at": 0,
+      "tags": [
+        "legacy",
+        "oos91x"
+      ],
+      "metadata": {},
+      "status": "legacy",
+      "captured_by": "legacy",
+      "md5": "aca5afebcd1c09042ffe1bdaafd42d9b",
+      "rom_base": "oos91x"
+    },
+    {
+      "id": "oos91x_9.mss",
+      "path": "legacy/oos91x_9.mss",
+      "label": "oos91x_9",
+      "created_at": 0,
+      "tags": [
+        "legacy",
+        "oos91x"
+      ],
+      "metadata": {},
+      "status": "legacy",
+      "captured_by": "legacy",
+      "md5": "f390de6866569d01bd4d2e61f00cca13",
+      "rom_base": "oos91x"
     }
   ],
   "library_root": "Roms/SaveStates/library",

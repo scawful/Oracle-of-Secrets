@@ -21,6 +21,11 @@
    - Optional label: `python3 scripts/mesen2_client.py savestate-label set 1 --label "Dark World south crash"`
    - Library capture: `python3 scripts/mesen2_client.py lib-save "Dark World south crash"`
 
+### Mesen2 socket and symbols
+- **Discovery:** `MESEN2_SOCKET_PATH` → `/tmp/mesen2-*.status` (read `socketPath`) → `/tmp/mesen2-*.sock` by mtime. Do not assume PID in socket name. See `~/src/hobby/mesen2-oos/docs/Agent_Integration_Guide.md`.
+- **Symbols:** `SYMBOLS_LOAD` accepts `file` or `path`; formats JSON or Mesen `.mlb`. `SYMBOLS_RESOLVE` with `addr=` resolves address→symbol. API: `~/src/hobby/mesen2-oos/docs/Socket_API_Reference.md`.
+- **STEP:** `mode` can be `into`, `over`, or `out`.
+
 ---
 
 ## Knowledge System (IMPORTANT)
@@ -167,11 +172,20 @@ Visual water at Y=39 needs collision data at Y=41.
 ## Build & Test
 
 ```bash
-# Build
+# Build (automatically runs smoke tests)
 cd ~/src/hobby/oracle-of-secrets
 ./scripts/build_rom.sh 168
 
-# Test
+# Build without tests
+SKIP_TESTS=1 ./scripts/build_rom.sh 168
+
+# Run regression tests
+./scripts/run_regression_tests.sh regression
+
+# Run all tests
+./scripts/run_regression_tests.sh full
+
+# Test manually
 ~/src/tools/emu-launch -m Roms/oos168x.sfc
 
 # Debug (Socket API)
@@ -182,11 +196,36 @@ python3 scripts/mesen2_client.py time
 python3 scripts/mesen2_client.py diagnostics --json
 ```
 
+**Test Suites:** See [`Docs/Testing/Regression_Test_Suite.md`](Docs/Testing/Regression_Test_Suite.md)
+
 ---
 
 ## Debugging Toolkit
 
 **Full documentation:** [`Docs/Tooling/Debugging_Tools_Index.md`](Docs/Tooling/Debugging_Tools_Index.md)
+
+### Unified Debugging Orchestrator (Recommended)
+
+**NEW (2026-01):** The `oracle_debugger` package coordinates all debugging tools in a single session.
+
+```bash
+# Start continuous monitoring (recommended for bug hunting)
+python3 scripts/oracle_debugger/orchestrator.py --monitor
+
+# Investigate a specific save state
+python3 scripts/oracle_debugger/orchestrator.py --investigate Roms/SaveStates/crash.mss
+
+# With verbose MoE analysis
+python3 scripts/oracle_debugger/orchestrator.py --monitor --verbose
+```
+
+**Features:**
+- Coordinates Sentinel, crash dump, and static analysis
+- Routes to MoE experts (Nayru, Veran, Farore, Din)
+- Auto-generates regression tests from detections
+- Produces Markdown reports in `crash_reports/`
+
+**Documentation:** [`Docs/Tooling/Oracle_Debugger_Package.md`](Docs/Tooling/Oracle_Debugger_Package.md)
 
 ### Real-Time Tools (`~/src/hobby/yaze/scripts/ai/`)
 
@@ -198,7 +237,7 @@ python3 scripts/mesen2_client.py diagnostics --json
 | **Fuzzer** | Stress testing | `python3 fuzzer.py --mode gameplay` |
 | **Code Graph** | Static analysis | `python3 code_graph.py callers <label>` |
 
-### Quick Debugging Workflow
+### Quick Debugging Workflow (Manual)
 
 ```bash
 # 1. Start Sentinel monitoring (runs in background)
@@ -216,13 +255,13 @@ cat crash_reports/crash_*.md | tail -100
 python3 scripts/ai/code_graph.py ~/src/hobby/oracle-of-secrets writes 7E0020
 ```
 
-### Unified Platform
+### Skill-Based Platform
 
 ```bash
 # Interactive debugging session
 python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py interactive
 
-# Regression tests
+# Regression tests via skill
 python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py regression
 
 # ROM comparison
@@ -235,8 +274,17 @@ python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py diff old.sfc new.sf
 
 -   **Active repo:** `~/src/hobby/mesen2-oos` (Socket Server enabled)
 -   **Architecture:** [`Docs/Tooling/Mesen2_Architecture.md`](Docs/Tooling/Mesen2_Architecture.md)
--   **Golden Path:** Agents use **Socket API** (`/tmp/mesen2-*.sock`) via `mesen2_client.py` or `mesen2-mcp` layer.
+-   **Golden Path:** Agents use **Socket API** (`/tmp/mesen2-*.sock`) via `mesen2_client.py` (see `mesen2-oos-debugging` skill).
+-   **Socket discovery:** Set `MESEN2_SOCKET_PATH` env var. Fallback: glob by mtime. Do NOT use `MESEN2_SOCKET` (deprecated).
 -   **Rule:** Only use `apps/Mesen2 OOS.app` (fork build). Do NOT use vanilla Mesen.
+
+## Z3DK Integration
+
+-   **Active repo:** `~/src/hobby/z3dk`
+-   **Static analysis:** `scripts/oracle_analyzer.py --check-hooks --find-mx` validates M/X register state at hook entry points.
+-   **JumpTableLocal ($008781):** Requires X=16-bit. z3dk flags callers with X=8-bit as errors.
+-   **Build integration:** `build_rom.sh` invokes oracle_analyzer when available.
+-   **Tests:** `pytest tests/test_mx_flag_analysis.py -v` (15 tests, no ROM required).
 
 ---
 
