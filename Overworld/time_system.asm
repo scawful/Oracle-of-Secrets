@@ -1,7 +1,4 @@
 ; ---------------------[ Time system ]---------------------
-; @doc Docs/Core/SystemArchitecture.md#42-time-system
-; @source Oracle custom time system (TimeState at $7EE000)
-; @verified UNKNOWN (needs audit)
 
 ; tiles locations on HUD
 !hud_min_low = $7EC7CC
@@ -17,15 +14,20 @@ org $0DFF07
   db $6C, $25, $90, $24, $90, $24
 
 ; Sprite_Main.dont_reset_drag
-; Executes every frame to update the clock
+; Executes every frame to update the clock.
+; Stack contract: HUD_ClockDisplay uses PHP/PLP only; RunClock and DrawClockToHud
+; must not perform unbalanced PHA/PLA/PHX/PLX/PHY/PLY so that PLP restores the same P.
 org $068361
   JSL HUD_ClockDisplay
 pullpc
 HUD_ClockDisplay:
 {
+  PHP ; Preserve caller M/X flags
   JSR RunClock
   JSR DrawClockToHud
+  REP #$30 ; Ensure 16-bit A/X/Y for vanilla garnish routine
   JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
+  PLP
   RTL
 }
 
@@ -38,7 +40,7 @@ LogoFadeInSetClock:
 {
   JSL $00ED7C ; IntroLogoPaletteFadeIn
   LDA.b #$08 : STA.l TimeState.Hours ; Set the time to 6:00am
-  LDA.b #$3F : STA.l TimeState.Speed ; Set the time speed (slower)
+  LDA.b #$3F : STA.l TimeState.Speed ; Set the time speed
   RTL
 }
 
@@ -120,7 +122,11 @@ TimeSystem_CheckCanRun:
               CLC : RTS
     .overworld
     ; Reload Sprite Gfx Properties
+    ; Vanilla routine expects M=16, X=16 (all other callers wrap with REP #$30)
+    PHP
+    REP #$30
     JSL $00FC62 ; Sprite_LoadGraphicsProperties
+    PLP
 
     LDA $11 : CMP #$23 : BNE .mosaic ; HDMA transfer? (warping)
       ; Lol what?
@@ -240,6 +246,9 @@ CheckForDailyQuests:
   RTS
 }
 
+; Contract: Does NOT preserve P. Callers must set REP/SEP as needed after JSL.
+; Return: A = game state / phase (0, 1, 2, or 3). P state unspecified.
+; Callers: LoadOverworldSprites_Interupt (ZSCustomOverworld.asm) does REP #$30 after JSL.
 CheckIfNight:
 {
   JSR LoadPeacetimeSprites : BCS +
@@ -256,6 +265,8 @@ CheckIfNight:
   RTL
 }
 
+; Contract: Does NOT preserve P. Sets SEP #$30 on entry; returns with REP #$30 on all paths.
+; Return: A = game state / phase (16-bit). Currently no active callers (hook sites commented out for ZSOWv3).
 CheckIfNight16Bit:
 {
   SEP #$30
@@ -449,22 +460,13 @@ ColorSubEffect:
 
 BackgroundFix:
 {
-  ; Called from ZSCustomOverworld with REP #$30 (16-bit A and X)
-  ; ColorSubEffect uses X for table indexing, so we need to ensure
-  ; consistent register widths. Save and restore P register state.
-  PHP
-  REP #$20                ; Ensure 16-bit A for color operations
-  SEP #$10                ; Ensure 8-bit X for table indexing safety
-
-  BEQ .no_effect          ; Branch if A=#$0000 (transparent bg)
+  BEQ .no_effect		;BRAnch if A=#$0000 (transparent bg)
     JSL ColorSubEffect
   .no_effect:
   STA.l PalCgram500_HUD
   STA.l PalBuf300_HUD
   STA.l PalCgram540_BG
   STA.l PalBuf340_BG
-
-  PLP                     ; Restore caller's P register state
   RTL
 }
 
@@ -513,6 +515,7 @@ GlovesFix:
 
 ColorBgFix:
 {
+  PHP
   PHA
   SEP #$30
   ; Check for save and quit
@@ -523,14 +526,18 @@ ColorBgFix:
     JSL ColorSubEffect
     STA.l PalCgram500_HUD
     STA.l PalCgram540_BG
+    PLP
     RTL
-  .vanilla
-  REP #$30
-  PLA
-  STA.l PalCgram500_HUD
-  RTL
+.vanilla
+    REP #$30
+    PLA
+    STA.l PalCgram500_HUD
+    PLP
+    RTL
 }
 
+; Contract: Does NOT modify P explicitly. Return P = entry P. Stack: no push/pull; JSR-safe.
+; Return: C set = use peacetime sprites; C clear = use normal phase. A clobbered.
 LoadPeacetimeSprites:
 {
   ; Map 2E, 2F if Crystals && 0x10 == 0
