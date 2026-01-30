@@ -115,3 +115,4 @@ State library: see [Docs/Testing/SaveStateLibrary.md](../Testing/SaveStateLibrar
 | [OverworldSoftlock_FixPlan.md](OverworldSoftlock_FixPlan.md) | Phase 1–5 detail, module list, bisect commands |
 | [OverworldSoftlock_Investigation_Alternatives.md](OverworldSoftlock_Investigation_Alternatives.md) | TCS breakpoint, JumpTableLocal patch, NMI validation |
 | [OverworldSoftlock_LessCerebralOptions.md](OverworldSoftlock_LessCerebralOptions.md) | Full text for Path A options |
+| [OverworldSoftlock_CodebaseAnalysis.md](OverworldSoftlock_CodebaseAnalysis.md) | ZSOW/time_system/sprite patterns and bug-risk analysis |
