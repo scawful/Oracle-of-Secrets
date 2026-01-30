@@ -23,7 +23,7 @@ oos165x.smp.sym
 oos165x.srm
 buildJ.bat
 oos165x.cht
-# Ignore ROM files and save states, but track metadata
+# Ignore ROM binaries by default; keep save-state folders
 Roms/*
 !Roms/SaveStates/
 Roms/SaveStates/*
@@ -96,7 +96,7 @@ Overworld/world_map/dw_gfx_new.bmp
 Menu/tilemaps/dung_map.bin
 Dungeons/intro_cutscene.asm
 Dungeons/water_switch.asm
-run.sh
+# !run.sh (temporarily allow for sandbox)
 Sprites/Bosses/left_kydreeok_head.asm
 Sprites/Bosses/kydreeok_wings.asm
 Sprites/Bosses/kydreeok_body.zsm
@@ -130,6 +130,8 @@ Util/ZScreamNew/ZScream.exe.manifest
 Util/ZScreamNew/ZS_Patches/Version.txt
 Util/ZScreamNew/ZS_Patches/Hex Edits/Misc Small Patches.asm
 
+Docs/Status/ralph/*
+
 # Local tooling/editor state
 .DS_Store
 .claude/
@@ -138,6 +140,20 @@ Util/ZScreamNew/ZS_Patches/Hex Edits/Misc Small Patches.asm
 .vscode/
 .context
 Oracle-of-Secrets.yaze
+
+# Agent/cache artifacts
+.agent/
+.cache/
+__pycache__/
+hooks.json
+nav_attach.sh
+checks.json
+scripts/oracle_symbols.watch
+scripts/symbols_filter_exclude.txt
+
+# Analysis artifacts (large JSON)
+Docs/Issues/*.json
+Docs/Issues/diagrams/
 Docs/GEMINI.md.bak_*
 checks.json
 Util/ZScreamNew/ZS_Patches/Items/AST Boots.asm
