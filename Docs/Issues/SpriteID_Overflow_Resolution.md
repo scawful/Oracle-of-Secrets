@@ -44,6 +44,24 @@ Added to both `NewSprTable` and `NewSprPrepTable` in `Core/sprite_new_table.asm`
 
 The maximum valid sprite ID is **`$F2`** (243 entries, `$00`-`$F2`). Any sprite assigned an ID > `$F2` will overflow all 8 vanilla property tables in bank `$0D` and the 2 vanilla pointer tables in bank `$06`.
 
+## Prevention: Sprite ID Bounds Guards
+
+Two static analysis layers now prevent this class of bug:
+
+### Assembler assertion (`Core/sprite_macros.asm`)
+```asm
+assert !SPRID <= $F2, "Sprite ID !SPRID exceeds vanilla table limit ($F2 max)."
+```
+Build fails instantly if any sprite file sets `!SPRID` above `$F2`. Zero runtime cost.
+
+### z3dk ROM validation (`oracle_analyzer.py --check-sprite-tables`)
+Scans the built ROM binary for:
+- **Sentinel check:** Verifies `SpritePrep_LoadProperties` at `$0DB818` hasn't been overwritten (Table 8 overflow)
+- **Inter-table gap scan:** Checks bytes in the `$F3`-`$FF` range of each table for non-zero values
+- **Pointer table check:** Validates `$069283` (Main) and `$06865B` (Prep) have no entries past `$F2`
+
+Both checks run automatically during `build_rom.sh`.
+
 ## Related fixes (same investigation)
 
 - **Menu_Exit SEP #$20** (`Menu/menu.asm`): Restored M=8 before RTS to prevent width leak

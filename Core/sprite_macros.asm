@@ -1,6 +1,8 @@
 ; Write Sprite Properties in the rom MACRO
 macro Set_Sprite_Properties(SprPrep, SprMain)
 {
+  assert !SPRID <= $F2, "Sprite ID !SPRID exceeds vanilla table limit ($F2 max). Use an ID in range $00-$F2."
+
   pushpc ; Save writing Position for the sprite
   org $0DB080+!SPRID ; Oam Harmless ($0E40)
   db ((!Harmless<<7)|(!HVelocity<<6)|!NbrTiles)

@@ -6,7 +6,7 @@ See also: [Global Rules](file:///Users/scawful/src/config/zelda-dev/rules.md)
 ## 1. Build and Verification
 - **Command**: Recommended: `mesen-agent build`. Legacy: `./scripts/build_rom.sh 168`.
 - **Verification**: Run `python3 scripts/check_zscream_overlap.py` after every build that adds new code or data.
-- **Static Analysis**: z3dk's `oracle_analyzer.py --check-hooks --find-mx` validates M/X register state at hook entry points (e.g., JumpTableLocal at $008781 requires 8-bit Y; 16-bit Y causes stack underflow). Run via build script or manually from `~/src/hobby/z3dk/scripts/`.
+- **Static Analysis**: z3dk's `oracle_analyzer.py --check-hooks --find-mx --check-sprite-tables` validates M/X register state at hook entry points and checks sprite property tables for ID overflow past `$F2`. Run via build script or manually from `~/src/hobby/z3dk/scripts/`.
 - **Symbols**: Ensure `Roms/oos168x.mlb` is updated after builds for proper symbol debugging in Mesen2.
 
 ## 1.1 Critical Guardrails (softlock/color investigations)

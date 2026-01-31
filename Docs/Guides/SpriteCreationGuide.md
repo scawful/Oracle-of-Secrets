@@ -25,8 +25,8 @@ This guide provides a step-by-step walkthrough for creating a new custom sprite 
     %log_end("my_new_enemy", !LOG_SPRITES)
     ```
 
-3.  **Assign a Sprite ID:** Choose an unused sprite ID for your sprite. You can either:
-    *   Use a completely new ID (e.g., `$A0` through `$FF` range)
+3.  **Assign a Sprite ID:** Choose an unused sprite ID in the valid range `$00`-`$F2` (max 243 entries). IDs above `$F2` will overflow the vanilla property tables and **fail the build** with an assembler assertion error. You can either:
+    *   Use a completely new ID within the `$00`-`$F2` range
     *   Override a vanilla sprite ID (for replacing existing sprites)
     *   Share an ID with another sprite and use `SprSubtype` to differentiate behaviors
 
@@ -39,7 +39,7 @@ At the top of your new sprite file, define its core properties using the provide
 ; Sprite Properties
 ; =========================================================
 
-!SPRID              = $XX ; CHOOSE AN UNUSED SPRITE ID or use a constant like Sprite_MyNewEnemy
+!SPRID              = $XX ; CHOOSE AN UNUSED SPRITE ID ($00-$F2 max) or use a constant like Sprite_MyNewEnemy
 !NbrTiles           = 02  ; Number of 8x8 tiles used in the largest frame
 !Harmless           = 00  ; 00 = Harmful, 01 = Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is

@@ -163,7 +163,7 @@ if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
     # Run static analysis - fail build on errors (warnings are OK)
     set +e
     if [[ "$analyzer_script" == *"oracle_analyzer"* ]]; then
-      python3 "$analyzer_script" "$patched_rom" --hooks "$hooks_json" --check-hooks --find-mx --find-width-imbalance --check-abi
+      python3 "$analyzer_script" "$patched_rom" --hooks "$hooks_json" --check-hooks --find-mx --find-width-imbalance --check-abi --check-sprite-tables
     else
       python3 "$analyzer_script" "$patched_rom" --hooks "$hooks_json"
     fi
