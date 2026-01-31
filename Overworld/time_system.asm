@@ -515,7 +515,13 @@ GlovesFix:
 
 ColorBgFix:
 {
+  ; [2026-01-30] Defensive width-match fix: force M=16 before PHA so it
+  ; always pushes 2 bytes, matching the PLA after REP #$30 on both exits.
+  ; TESTED: Did NOT fix State 1 (OW softlock) or State 2 (dungeon freeze).
+  ; Kept as a correctness hardening — all observed callers already have
+  ; M=16 at entry, so this is a no-op in practice.
   PHP
+  REP #$20        ; force M=16 so PHA pushes 2 bytes (width-match fix)
   PHA
   SEP #$30
   ; Check for save and quit

@@ -63,7 +63,7 @@ Sprite_Wolfos_Prep:
   LDA.b $1B : BNE .spawn_wolfos
     ; Outdoors
     ; Check if the wolfos has been defeated
-    LDA.l $7EF303 : CMP.b #$01 : BNE .spawn_wolfos
+    LDA.l InCutSceneFlag : CMP.b #$01 : BNE .spawn_wolfos
       STZ.w SprState, X ; Don't spawn the sprite
       PLB
       RTL
