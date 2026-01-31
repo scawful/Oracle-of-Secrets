@@ -459,6 +459,7 @@ Menu_Exit:
   INC.b $15
   INC.b $16
 
+  SEP #$20 ; Restore M=8 before return (REP #$20 at line 432 set M=16)
   RTS
 }
 
