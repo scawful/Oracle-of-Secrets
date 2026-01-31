@@ -24,6 +24,7 @@ NewSprTable:
   LDA $0E20, X ; Load Sprite ID
   REP #$30
   AND.w #$00FF
+  CMP.w #$00F3 : BCS .null_sprite ; Bounds check: ID must be <= $F2
   STA $06
   ASL A ; *2
   CLC : ADC $06 ; *3
@@ -34,8 +35,13 @@ NewSprTable:
   SEP #$20
   LDA NewSprRoutinesLong+2, Y
   STA $08
+  ORA $06 : ORA $07 : BEQ .null_sprite ; Guard: skip if pointer is $000000
   SEP #$30 ; M=8-bit, X/Y=8-bit — JumpTableLocal stack math expects X=8.
   JMP [$0006]
+
+  .null_sprite
+  SEP #$30
+  RTL
 }
 
 Sprite_PrepExp_Long:
@@ -51,6 +57,7 @@ NewSprPrepTable:
   LDA $0E20, X ; Load Sprite ID
   REP #$30
   AND.w #$00FF
+  CMP.w #$00F3 : BCS .null_sprite ; Bounds check: ID must be <= $F2
   STA $06
   ASL A ; *2
   CLC : ADC $06 ; *3
@@ -61,8 +68,13 @@ NewSprPrepTable:
   SEP #$20
   LDA NewSprPrepRoutinesLong+2, Y
   STA $08
+  ORA $06 : ORA $07 : BEQ .null_sprite ; Guard: skip if pointer is $000000
   SEP #$30 ; M=8-bit, X/Y=8-bit — JumpTableLocal stack math expects X=8.
   JMP [$0006]
+
+  .null_sprite
+  SEP #$30
+  RTL
 }
 
 NewSprRoutinesLong:

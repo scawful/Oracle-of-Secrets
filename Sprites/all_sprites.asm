@@ -34,7 +34,7 @@ incsrc "Sprites/NPCs/mask_salesman.asm"
 %log_end("Sprite_MaskSalesman", !LOG_SPRITES)
 
 %log_start("windmill_guy", !LOG_SPRITES)
-Sprite_WindmillGuy = $F8
+Sprite_WindmillGuy = $B2
 incsrc "Sprites/NPCs/windmill_guy.asm"
 %log_end("windmill_guy", !LOG_SPRITES)
 
