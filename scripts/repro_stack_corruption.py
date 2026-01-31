@@ -16,13 +16,15 @@ P_LOG, and MEM_BLAME for full attribution.
 
 Usage:
     python3 repro_stack_corruption.py [--output report.json] [--slot 1]
-                                      [--frames 600] [--strategy auto] [--press-a]
+                                      [--frames 600] [--strategy auto]
+                                      [--press-a] [--press-seq "down;a"]
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -71,6 +73,26 @@ def _check_sp_corrupt(cpu: dict) -> bool:
     return sp > SP_VALID_MAX or sp < 0x0100
 
 
+def _parse_press_sequence(seq: str) -> list[str]:
+    """Parse a semicolon-delimited button sequence (e.g., 'down;a')."""
+    if not seq:
+        return []
+    normalized = seq.replace("|", ";")
+    steps = [step.strip() for step in normalized.split(";")]
+    return [s for s in steps if s]
+
+
+def _apply_press_sequence(bridge: MesenBridge, seq: str, frames: int = 6, delay: float = 0.2) -> None:
+    """Apply a button sequence while running (resume, press, delay)."""
+    steps = _parse_press_sequence(seq)
+    if not steps:
+        return
+    bridge.send_command("RESUME")
+    for step in steps:
+        bridge.send_command("INPUT", buttons=step.upper(), frames=str(frames))
+        time.sleep(max(delay, frames / 60.0))
+
+
 def _capture_full_attribution(bridge: MesenBridge, report: dict, watch_id=None, watch_id_1f0a=None) -> None:
     """Capture full attribution data after corruption detected."""
 
@@ -80,7 +102,7 @@ def _capture_full_attribution(bridge: MesenBridge, report: dict, watch_id=None, 
         report["cpu"] = cpu_resp["data"]
 
     # Execution trace (500 instructions leading to this point)
-    trace_resp = bridge.send_command("TRACE", count="500")
+    trace_resp = bridge.send_command("TRACE", count="100")
     if trace_resp.get("success"):
         report["trace"] = trace_resp["data"]
 
@@ -140,9 +162,38 @@ def _capture_full_attribution(bridge: MesenBridge, report: dict, watch_id=None, 
 
     # Try to identify the exact SP-corrupting instruction from trace
     if "trace" in report and "cpu" in report:
-        sp_val = _parse_int(report["cpu"].get("sp", "0"))
         trace_entries = report["trace"].get("entries", [])
         report["sp_corruption_analysis"] = _analyze_trace_for_sp_corruption(trace_entries)
+
+        if not report["sp_corruption_analysis"].get("found") and trace_entries:
+            analysis, window, offset = _scan_trace_for_sp_transition(bridge, trace_entries)
+            if analysis.get("found"):
+                report["sp_corruption_analysis"] = analysis
+                report["trace_extended"] = {
+                    "offset_max": offset,
+                    "entries": window or [],
+                }
+            else:
+                report["trace_scan"] = {
+                    "offset_max": offset,
+                    "found": False,
+                }
+
+
+def _extract_sp_from_trace_entry(entry: dict) -> int | None:
+    """Extract SP from a trace entry (direct field or formatted trace string)."""
+    if entry.get("cpu") not in (None, 0):
+        return None
+    sp_raw = entry.get("sp")
+    if sp_raw:
+        return _parse_int(sp_raw)
+
+    disasm = entry.get("disasm", "")
+    match = re.search(r"\bSP=([0-9A-Fa-f]+)\b", disasm)
+    if match:
+        return int(match.group(1), 16)
+
+    return None
 
 
 def _analyze_trace_for_sp_corruption(trace_entries: list) -> dict:
@@ -155,10 +206,13 @@ def _analyze_trace_for_sp_corruption(trace_entries: list) -> dict:
     }
 
     prev_sp = None
+    prev_entry = None
     for i, entry in enumerate(reversed(trace_entries)):
-        sp = _parse_int(entry.get("sp", "0"))
+        sp = _extract_sp_from_trace_entry(entry)
+        if sp is None:
+            continue
         pc = entry.get("pc", "?")
-        opcode = entry.get("opcode", "?")
+        opcode = entry.get("opcode") or entry.get("disasm", "?")
 
         if sp <= SP_VALID_MAX and sp >= 0x0100:
             # This is the last instruction with valid SP
@@ -169,18 +223,48 @@ def _analyze_trace_for_sp_corruption(trace_entries: list) -> dict:
                 analysis["last_valid_opcode"] = opcode
                 analysis["first_corrupt_sp"] = f"0x{prev_sp:04X}"
                 # The NEXT instruction (in forward order) is the corruption point
-                if i > 0:
-                    corrupt_entry = trace_entries[len(trace_entries) - i]
+                if prev_entry is not None:
                     analysis["corruption_instruction"] = {
-                        "pc": corrupt_entry.get("pc", "?"),
-                        "opcode": corrupt_entry.get("opcode", "?"),
+                        "pc": prev_entry.get("pc", "?"),
+                        "opcode": prev_entry.get("opcode") or prev_entry.get("disasm", "?"),
                         "sp_after": f"0x{prev_sp:04X}",
-                        "trace_index": len(trace_entries) - i,
                     }
                 break
         prev_sp = sp
+        prev_entry = entry
 
     return analysis
+
+
+def _scan_trace_for_sp_transition(
+    bridge: MesenBridge,
+    entries: list,
+    max_offset: int = 20000,
+    page_size: int = 100,
+) -> tuple[dict, list | None, int]:
+    """Scan trace pages (older offsets) to find the SP transition."""
+    analysis = _analyze_trace_for_sp_corruption(entries)
+    if analysis.get("found"):
+        return analysis, None, 0
+
+    offset = page_size
+    while offset <= max_offset:
+        resp = bridge.send_command("TRACE", count=str(page_size), offset=str(offset))
+        if not resp.get("success"):
+            break
+        page_entries = resp.get("data", {}).get("entries", [])
+        if not page_entries:
+            break
+
+        entries.extend(page_entries)
+        analysis = _analyze_trace_for_sp_corruption(entries)
+        if analysis.get("found"):
+            window = entries[-(page_size * 2):]
+            return analysis, window, offset
+
+        offset += page_size
+
+    return analysis, None, offset - page_size
 
 
 def run_repro(
@@ -191,6 +275,13 @@ def run_repro(
     watch_depth: int = 500,
     strategy: str = "auto",
     press_a: bool = False,
+    press_seq: str | None = None,
+    press_frames: int = 10,
+    press_delay: float = 0.2,
+    keep_paused: bool = False,
+    save_last_good_path: str | None = None,
+    step_after_save: bool = False,
+    step_max: int = 50000,
 ) -> dict:
     """Execute the stack corruption repro workflow.
 
@@ -209,6 +300,13 @@ def run_repro(
         "breakpoint_addr": f"0x{breakpoint_addr:06X}",
         "watch_addr": STACK_WATCH_START,
         "watch_size": STACK_WATCH_SIZE,
+        "press_seq": press_seq,
+        "press_frames": press_frames,
+        "press_delay": press_delay,
+        "keep_paused": keep_paused,
+        "save_last_good_path": save_last_good_path,
+        "step_after_save": step_after_save,
+        "step_max": step_max,
     }
 
     bp_ids = []
@@ -296,6 +394,9 @@ def run_repro(
 
     # 4. Enable P_WATCH to capture register state changes
     bridge.send_command("P_WATCH", action="start", depth="2000")
+    # 4b. Enable TRACE logging (ring buffer) for attribution
+    trace_format = "PC=[PC] A=[A,4h] X=[X,4h] Y=[Y,4h] SP=[SP,4h] P=[P] [Disassembly]"
+    bridge.send_command("TRACE", action="start", clear="true", labels="true", format=trace_format)
 
     # 5. Load save state
     load_resp = bridge.send_command("LOADSTATE", slot=str(slot))
@@ -303,14 +404,23 @@ def run_repro(
         report["error"] = f"Failed to load state {slot}: {load_resp.get('error')}"
         return report
 
-    # 6. Send A button to start the game
-    if press_a:
-        bridge.send_command("INPUT", buttons="A", frames="10")
+    # 6. Optional input sequence (e.g., file-select navigation)
+    press_seq = report.get("press_seq")
+    if press_a and not press_seq:
+        press_seq = "A"
+        report["press_seq"] = press_seq
+    if press_seq:
+        _apply_press_sequence(
+            bridge,
+            press_seq,
+            frames=int(report.get("press_frames", 10)),
+            delay=float(report.get("press_delay", 0.2)),
+        )
 
     # 7. Run and monitor based on strategy
     if active_strategy == "polling":
         # Frame-by-frame SP polling (slowest but most reliable)
-        _run_polling_strategy(bridge, report, max_frames)
+        _run_polling_strategy(bridge, report, max_frames, save_last_good_path)
     elif active_strategy == "tcs":
         # TCS breakpoint — need to check A register on each hit
         _run_tcs_strategy(bridge, report, max_frames)
@@ -320,6 +430,10 @@ def run_repro(
 
     # 8. Pause if still running
     bridge.send_command("PAUSE")
+
+    # 8b. Optional: reload last-good state and step to the corrupting instruction
+    if step_after_save and save_last_good_path and report.get("status") == "sp_corruption_detected":
+        report["step_analysis"] = _step_from_saved_state(bridge, save_last_good_path, step_max)
 
     # 9. Capture full attribution data
     _capture_full_attribution(bridge, report, watch_id, watch_id_1f0a)
@@ -331,8 +445,10 @@ def run_repro(
         bridge.send_command("MEM_WATCH_WRITES", action="remove", watch_id=str(watch_id_1f0a))
     for bp_id in bp_ids:
         bridge.send_command("BREAKPOINT", action="remove", id=str(bp_id))
+    bridge.send_command("TRACE", action="stop")
     bridge.send_command("P_WATCH", action="stop")
-    bridge.send_command("RESUME")
+    if not keep_paused:
+        bridge.send_command("RESUME")
 
     return report
 
@@ -417,21 +533,17 @@ def _run_tcs_strategy(bridge, report, max_frames):
 
                     # But the NMI TCS loads from $1F0A, not A directly
                     # We need to read $7E1F0A to see what SP will become
-                    mem_resp = bridge.send_command("READ_MEMORY", addr="0x7E1F0A", size="2")
-                    if mem_resp.get("success"):
-                        sp_new_bytes = mem_resp["data"].get("bytes", [])
-                        if len(sp_new_bytes) >= 2:
-                            sp_new = sp_new_bytes[0] | (sp_new_bytes[1] << 8)
-                            tcs_hit["sp_from_1F0A"] = f"0x{sp_new:04X}"
-                            if sp_new > SP_VALID_MAX or sp_new < 0x0100:
-                                report["status"] = "sp_corruption_via_tcs"
-                                report["detection_method"] = "tcs_bad_1F0A"
-                                report["frames_to_repro"] = frames_elapsed
-                                report["cpu"] = cpu
-                                report["corrupt_sp_source"] = f"0x{sp_new:04X}"
-                                report["tcs_hits"] = tcs_hits
-                                print(f"SP corruption via TCS! $1F0A=0x{sp_new:04X} at frame ~{frames_elapsed}", file=sys.stderr)
-                                return
+                    sp_new = bridge.read_memory16(0x7E1F0A)
+                    tcs_hit["sp_from_1F0A"] = f"0x{sp_new:04X}"
+                    if sp_new > SP_VALID_MAX or sp_new < 0x0100:
+                        report["status"] = "sp_corruption_via_tcs"
+                        report["detection_method"] = "tcs_bad_1F0A"
+                        report["frames_to_repro"] = frames_elapsed
+                        report["cpu"] = cpu
+                        report["corrupt_sp_source"] = f"0x{sp_new:04X}"
+                        report["tcs_hits"] = tcs_hits
+                        print(f"SP corruption via TCS! $1F0A=0x{sp_new:04X} at frame ~{frames_elapsed}", file=sys.stderr)
+                        return
 
                 # Also check if SP is already corrupt
                 if _check_sp_corrupt(cpu):
@@ -447,13 +559,34 @@ def _run_tcs_strategy(bridge, report, max_frames):
     report["tcs_hits"] = tcs_hits
 
 
-def _run_polling_strategy(bridge, report, max_frames):
+def _run_polling_strategy(bridge, report, max_frames, save_last_good_path: str | None = None):
     """Frame-by-frame SP polling (slowest but most reliable fallback)."""
     sp_history = []
+    polling_mode = "frame"
+
+    # Ensure a stable paused baseline for frame stepping
+    bridge.send_command("PAUSE")
+
+    def _advance_one_frame() -> None:
+        nonlocal polling_mode
+        state_before = bridge.get_state().get("data", {})
+        frame_before = state_before.get("frame")
+        bridge.send_command("FRAME", count="1")
+        state_after = bridge.get_state().get("data", {})
+        frame_after = state_after.get("frame")
+
+        # Some builds advance only ~1 CPU cycle for FRAME. If so, fallback to resume/pause.
+        if frame_before is None or frame_after is None:
+            return
+        if frame_after == frame_before:
+            polling_mode = "resume_pause"
+            bridge.send_command("RESUME")
+            time.sleep(1 / 60.0)
+            bridge.send_command("PAUSE")
 
     for frame in range(max_frames):
         # Advance exactly 1 frame
-        bridge.send_command("FRAME", count="1")
+        _advance_one_frame()
 
         # Read CPU state
         cpu_resp = bridge.send_command("CPU")
@@ -473,6 +606,17 @@ def _run_polling_strategy(bridge, report, max_frames):
         if len(sp_history) > 100:
             sp_history.pop(0)
 
+        # Save last-good state if requested
+        if save_last_good_path and 0x0100 <= sp <= SP_VALID_MAX:
+            save_resp = bridge.send_command(
+                "SAVESTATE",
+                path=save_last_good_path,
+                allow_external="true",
+            )
+            if save_resp.get("success"):
+                report["last_good_state_path"] = save_last_good_path
+                report["last_good_frame"] = frame
+
         # Check for SP corruption
         if sp > SP_VALID_MAX or sp < 0x0100:
             report["status"] = "sp_corruption_detected"
@@ -481,6 +625,7 @@ def _run_polling_strategy(bridge, report, max_frames):
             report["cpu"] = cpu
             report["corrupt_sp"] = f"0x{sp:04X}"
             report["sp_history"] = sp_history
+            report["polling_mode"] = polling_mode
             print(f"SP corruption detected at frame {frame}! SP=0x{sp:04X}, PC=0x{pc:06X}", file=sys.stderr)
 
             # Pause and capture trace immediately
@@ -488,6 +633,50 @@ def _run_polling_strategy(bridge, report, max_frames):
             return
 
     report["sp_history_tail"] = sp_history[-20:]
+    report["polling_mode"] = polling_mode
+
+
+def _step_from_saved_state(bridge: MesenBridge, state_path: str, max_steps: int = 50000) -> dict:
+    """Load last-good state and step until SP corruption is observed."""
+    result = {
+        "status": "not_started",
+        "state_path": state_path,
+        "max_steps": max_steps,
+    }
+
+    bridge.send_command("PAUSE")
+    load_resp = bridge.send_command("LOADSTATE", path=state_path, allow_external="true")
+    if not load_resp.get("success"):
+        result["status"] = "load_failed"
+        result["error"] = load_resp.get("error")
+        return result
+
+    result["status"] = "stepping"
+    for step in range(max_steps):
+        bridge.send_command("STEP", count="1")
+        cpu_resp = bridge.send_command("CPU")
+        if not cpu_resp.get("success"):
+            continue
+
+        cpu = cpu_resp["data"]
+        sp = _parse_int(cpu.get("sp", "0"))
+        if sp < 0x0100 or sp > SP_VALID_MAX:
+            disasm = bridge.send_command("DISASM", addr=cpu.get("pc"), count="1")
+            result.update({
+                "status": "corruption_detected",
+                "step": step,
+                "pc": cpu.get("pc"),
+                "sp": cpu.get("sp"),
+                "a": cpu.get("a"),
+                "x": cpu.get("x"),
+                "y": cpu.get("y"),
+                "p": cpu.get("p"),
+                "disasm": disasm.get("data") if disasm.get("success") else disasm,
+            })
+            return result
+
+    result["status"] = "not_found"
+    return result
 
 
 def main() -> int:
@@ -500,8 +689,22 @@ def main() -> int:
                         help=f"Save state slot to load (default: {DEFAULT_SLOT})")
     parser.add_argument("--press-a", action="store_true",
                         help="Press A after load (use for file-load dungeon freeze repro)")
+    parser.add_argument("--press-seq", default=None,
+                        help="Semicolon-delimited button sequence (e.g., 'down;a') for file select navigation")
+    parser.add_argument("--press-frames", type=int, default=6,
+                        help="Frames to hold each press in --press-seq (default: 6)")
+    parser.add_argument("--press-delay", type=float, default=0.2,
+                        help="Delay between sequence steps in seconds (default: 0.2)")
     parser.add_argument("--frames", type=int, default=DEFAULT_MAX_FRAMES,
                         help=f"Max frames to wait (default: {DEFAULT_MAX_FRAMES})")
+    parser.add_argument("--keep-paused", action="store_true",
+                        help="Leave emulator paused after repro (skip RESUME cleanup)")
+    parser.add_argument("--save-last-good", default=None,
+                        help="Path to save the last-good state during polling")
+    parser.add_argument("--step-after-save", action="store_true",
+                        help="After corruption, load last-good state and step to the corrupting instruction")
+    parser.add_argument("--step-max", type=int, default=50000,
+                        help="Max instructions to step when --step-after-save (default: 50000)")
     parser.add_argument("--breakpoint", default=f"0x{CORRUPTION_PC:06X}",
                         help=f"Breakpoint address (default: 0x{CORRUPTION_PC:06X})")
     parser.add_argument("--depth", type=int, default=500,
@@ -533,10 +736,17 @@ def main() -> int:
         bridge,
         slot=args.slot,
         press_a=args.press_a,
+        press_seq=args.press_seq,
+        press_frames=args.press_frames,
+        press_delay=args.press_delay,
         max_frames=args.frames,
         breakpoint_addr=bp_addr,
         watch_depth=args.depth,
         strategy=args.strategy,
+        keep_paused=args.keep_paused,
+        save_last_good_path=args.save_last_good,
+        step_after_save=args.step_after_save,
+        step_max=args.step_max,
     )
 
     output = json.dumps(report, indent=2)
