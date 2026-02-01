@@ -1,8 +1,47 @@
 # Kydrog: The Fallen Knight - Narrative Arc
 
 **Status:** Design Document
-**Date:** 2026-01-22
+**Date:** 2026-02-01
 **Related:** story_bible.md, shrine_cosmology.md, intro_flow_analysis.md
+**Version:** 2.0 (Updated for two-villain-track structure)
+
+---
+
+## Two-Villain-Track Structure (2.0 Update)
+
+**Important narrative framework:** Kydrog and Ganondorf are NOT coordinating. They serve different masters:
+
+### Track A — Kydrog (Visible Threat)
+- Kidnaps Farore, raids Kalyxo, occupies dungeons
+- Thinks he's pursuing the Triforce for himself
+- Unaware he's being manipulated by Ganondorf
+- Player's primary antagonist D1-D7
+- Believes he's independent and in control
+
+### Track B — Ganondorf + Twinrova (Hidden Threat)
+- Twinrova operates independently on Kalyxo (Glacia Estate as staging ground)
+- Ganondorf stays hidden in Lava Lands, pulling strings
+- Goal: get Farore's knowledge to break the seal from inside
+- Player doesn't realize this track exists until mid-to-late game
+
+### Key Reveal Moments
+1. **D5 aftermath** — Twinrova hints she doesn't answer to Kydrog
+2. **Late game (D7/post-D7)** — Kydrog doesn't know about Twinrova's independent operations
+3. **Endgame** — Ganondorf revealed as true enemy, Kydrog finally learns he was being used
+
+### Meadow of Shadows Connection
+
+The Meadow of Shadows depicts Kydrog's original quest (from a pre-Oracle Games era):
+1. The Abyss is destabilizing (bright meadow beginning to corrupt)
+2. Kydrog is sent to investigate and stop it
+3. He journeys to confront what he believes is "ancient evil stirring in the deep"
+4. He fails, dies, becomes Stalfos in the realm
+5. **Centuries later:** Twinrova's ritual cracks the seal, Ganondorf enters the realm
+6. Ganondorf's presence rapidly corrupts the bright meadow into the orange wasteland (the Eon Abyss we see in Oracle of Secrets)
+7. Ganondorf finds Kydrog (now a long-suffering Stalfos), amplifies his ambition, gives him new purpose as Pirate King
+8. **Post-game possibility:** The realm attempts to heal after Ganondorf is re-sealed, returning toward its original bright state
+
+The same location, two eras: Meadow of Shadows (bright, Minish Cap aesthetic) and Oracle of Secrets (corrupted orange wasteland).
 
 ---
 
@@ -283,10 +322,10 @@ A shadow-bat flees through a portal. Link pursues.
 
 ### Lava Lands - Final Confrontation
 
-**Environment:** The heart of the Abyss, where Ganondorf is sealed
+**Environment:** The heart of the Abyss, where Ganondorf established his stronghold. The Lava Lands existed as part of the pocket dimension long before Ganondorf's arrival, but he claimed them as his fortress when he slipped through the fractured seal.
 
 **Kydreeok (Final Boss):**
-Kydrog's dragon form - what the Abyss made of him over centuries
+Kydrog's dragon form - what the Abyss, combined with Ganondorf's influence, made of him over centuries. His true shape, twisted and corrupted.
 
 **Pre-fight dialogue:**
 ```
@@ -331,9 +370,12 @@ Options for what happens:
 
 ---
 
-## Ganondorf (Future Consideration)
+## Ganondorf Encounter (Future Consideration)
 
-The story bible notes Ganondorf as a fightable boss is "pending sprite work." If implemented:
+The story bible notes Ganondorf as a fightable encounter is "pending sprite work." If implemented:
+
+**Pre-Encounter Context:**
+After Kydreeok falls, the player learns that Ganondorf was not anciently sealed in the Abyss. Rather, he is an intruder from a conquered timeline who recently arrived through the fracture created by Twinrova's ritual. He established himself in the Lava Lands and has been orchestrating events from the shadows—using both Kydrog and Twinrova to achieve his goal of breaking through the seal.
 
 **The Confrontation:**
 After Kydreeok, Link approaches the seal. Ganondorf speaks:
@@ -341,8 +383,8 @@ After Kydreeok, Link approaches the seal. Ganondorf speaks:
 So. Another hero.
 
 [V]I have watched your kind
-for centuries. You always come.
-You always fail.[K]
+across timelines. You always come.
+You always fall.[K]
 
 [V]The knight who became Kydrog.
 The guardians who gave their lives.
@@ -354,21 +396,29 @@ It's hope. Hope that can't be kept.
 ```
 
 **The Fight:**
-Not just physical - Ganondorf represents despair itself. Link must resist the same whispers that broke Kydrog.
+Not just physical - Ganondorf represents despair itself and the corruption of the boundary. Link must resist the same whispers that broke Kydrog, and prove that hope, unlike Ganondorf's nihilism, can endure.
 
 **Victory:**
-The seal is restored. Ganondorf is bound again - perhaps stronger this time, with Link's contribution.
+The seal is restored, reinforced by both Link's victory and the contributions of the guardians' essences. Ganondorf is bound again—not destroyed, but sealed back into the Sacred Realm, his recent incursion ended.
 
 ---
 
-## Open Questions
+## Open Questions for Kydrog Arc
 
-1. **How is Farore bound in the Meadow Blade?** (Choose Option A, B, or C above)
+1. **How is Farore bound in the Meadow Blade?** (See Section 2 - Choose Option A, B, or C)
 
-2. **Does Kydrog know Farore speaks through his old sword?** If yes, that adds another layer to his rage.
+2. **Does Kydrog know Farore speaks through his old sword?** If yes, that adds another layer to his rage and despair. Possibly a revelation moment.
 
-3. **What's Kydrog's living name?** Story bible suggests: Kel, Rulf, Dorn, or left unnamed. A name revealed at his death could be powerful.
+3. **What's Kydrog's living name?** Story bible suggests: Kel, Rulf, Dorn, or left unnamed as "The Fallen Knight." A name revealed at his death could be powerful.
 
-4. **Is there a Ganondorf fight?** If not, what's the final story beat after Kydreeok?
+4. **Visibility of Twinrova Track Before Endgame:** How much should the player suspect Twinrova's independent operations before D5? Should there be earlier hints?
 
-5. **Post-game state?** Does the Eon Abyss heal after Ganondorf is re-sealed? Do the Zoras fully reunite?
+5. **Kydrog's Realization of Manipulation:** When does Kydrog become aware he was being used by Ganondorf? Before Kydreeok? After? Does he have final words about it?
+
+6. **Is there a direct Ganondorf fight?** If not, what's the final story beat after Kydreeok? Does the seal restoration happen automatically, or does Link need to take an action?
+
+### Resolved by Story Bible 2.0
+
+- **Post-game state:** The Eon Abyss heals over time as the realm returns to its original bright state after Ganondorf is re-sealed.
+- **Ganondorf's origin:** No longer anciently sealed. He is the Dark Victor intruder from Ages/Seasons, who arrived recently through the fractured seal and orchestrated events from Lava Lands.
+- **Kydrog as independent actor:** Confirmed—Kydrog pursues his own conquest, unaware Ganondorf pulls the strings.

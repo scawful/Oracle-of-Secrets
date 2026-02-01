@@ -1,7 +1,7 @@
 # Oracle of Secrets - Story Bible
 
-**Version:** 1.0
-**Last Updated:** 2026-01-22
+**Version:** 2.0
+**Last Updated:** 2026-02-01
 **Status:** Active Development
 
 ---
@@ -21,39 +21,47 @@ A remote island in the eastern seas, home to Farore, the Oracle of Secrets. Kaly
 
 ### The Eon Abyss
 
-The Eon Abyss is not merely another dimension—it is Kalyxo's **shadow reflection**, a mirror-world that shows what the island becomes when hope dies. Time moves differently there; centuries in the Abyss may be moments on Kalyxo, or vice versa.
+The Eon Abyss is a **separate pocket dimension** connected to Kalyxo through dimensional thin spots and portal magic. Some areas echo Kalyxo's geography for thematic purposes, but the realm has its own distinct layout and many unique locations.
 
-The Abyss was not always a place of darkness. In the Age of Secrets, it served as a realm of possibility—a place where the island's magic could be amplified and shaped. But when Kydrog was sealed within it, his hatred and despair corrupted the reflection. Now the Abyss bleeds through at the edges, causing the island's slow decline.
+The Abyss was formed as a consequence of the Imprisoning War. When the Sages sealed Ganondorf in the Sacred Realm, the seal's pressure bled through to dimensional weak points. Kalyxo sits on a natural thin boundary, and over time, this pressure bleed-through created the pocket dimension on the other side. Originally, it was a bright and lush realm. The ancient Kalyxians discovered it and established the three Shrines as boundary anchors to stabilize and maintain it. For a long time, it was stable and verdant, serving as a realm for study and pilgrimage.
+
+The realm possesses a TRUE NAME (TBD—to be determined later as part of ongoing narrative development). Over centuries, as it corrupted, Kalyxians came to call it "the Eon Abyss" because the bright world they once knew was lost to eons past.
+
+**Visual Aesthetic:** Orange-tinted, 8-bit Gameboy style using Oracle of Ages past palettes, Subrosia assets, and Links Awakening graphics. The landscape is mostly barren wasteland.
 
 **Key Locations:**
-- Temporal Pyramid (the seal's heart, where Kydrog was bound)
-- Forest of Dreams (corrupted reflection of Kalyxo's woods)
-- Lava Lands (the deepest layer, where Kydrog's true form waits)
-- Fortress of Secrets (Kydrog's stronghold, built from stolen memories)
+- NW: Temporal Pyramid (time-distorted visions)
+- N: Lupo Mountain
+- NE: Lava Lands (Subrosia-style assets)
+- E: Fortress of Secrets (modified Temple of Seasons)
+- W: Forest of Dreams
+- Center: Swamp and Shrine of Wisdom
+- SE/SW: Beach and desert areas
+- S: Underwater sections
 
 ### The Relationship Between Worlds
 
-The Eon Abyss reflects Kalyxo like a dark mirror. What thrives on the island withers in the Abyss; what is forgotten on Kalyxo grows monstrous below. The three Shrines serve as **anchor points** between the worlds—they were used to create the seal, and they maintain the boundary.
+The Eon Abyss exists in the shadow of Kalyxo, separated by a dimensional boundary. The three Shrines serve as **anchor points** that stabilize and maintain this boundary. They were established during the Age of Discovery to keep the realms in equilibrium.
 
 When the seal weakens:
-- Shadows grow longer on Kalyxo
-- The dead stir in forgotten places
 - Portals flicker open unbidden
-- Kydrog's influence seeps through
+- Creatures from the Abyss find paths to Kalyxo
+- Time distortions increase near thin spots
+- The Abyss's corruption spreads across the boundary
 
 ---
 
 ## 2. Timeline of Eras
 
-### The Age of Secrets (Ancient Past)
+### The Imprisoning War (Ancient Past - Foundation Event)
 
-The golden age of Kalyxo. The Oracle bloodline flourished, and the island's inhabitants—Zora, Gorons, and the native Kalyxians—lived in harmony. The Shrines of Wisdom, Power, and Courage were places of pilgrimage where the boundary between worlds could be safely traversed.
+Long ago, in a distant timeline, a hero fought and defeated Ganondorf, the Gerudo King. Rather than destroying him utterly, the Sages sealed him in the Sacred Realm. This seal created an enormous pressure on dimensional weak points throughout existence.
 
-**The First Sealing:** Long ago, a hero from another land defeated a great evil—Ganondorf, the Gerudo King—and sealed him in the Eon Abyss rather than destroy him utterly. The three Shrines were used as anchor points for the seal, binding him to the Lava Lands at the Abyss's heart.
+### The Age of Discovery (Ancient Past)
 
-The Gossip Stones are **petrified witnesses** to this sealing—Kalyxians who chose to become eternal watchers, preserving the memory of what happened so it would never be forgotten.
+Over centuries, the pressure from the Sacred Realm seal bled through to Kalyxo, a natural thin spot in the boundary between realities. The pocket dimension on the other side—initially bright and lush, with its own true name (TBD)—began to stabilize on the Kalyxian side.
 
-**Note:** This is a different Ganondorf than the Pig Ganon of Ages/Seasons. The Zelda timeline has multiple incarnations of Ganon/Ganondorf across eras.
+The ancient Kalyxians discovered this realm and established the **three Shrines as boundary anchors**, using them to stabilize the connection and prevent uncontrolled incursions. The Gossip Stones are **petrified witnesses** to this era—Kalyxians who chose to become eternal watchers, preserving the memory of the boundary's establishment.
 
 ### The Age of Portals (Centuries Ago)
 
@@ -65,22 +73,28 @@ The Hylian Kingdom, hearing rumors of portal magic that could threaten their bor
 
 Hylian restrictions caused the island's population to dwindle. The Zora withdrew to their sanctuary. The Gorons retreated to their mines. The native Kalyxians scattered or submitted. The Oracle Farore maintained the seal in secret, but with fewer believers and less magic flowing through the land, the seal began to weaken.
 
+### Kydrog's Era (Pre-Oracle Games)
+
+A realm once bright and lush begins destabilizing. A hero knight—later known as Kydrog—is sent to investigate the Meadow of Shadows, an accessible portion of the pocket dimension where the boundary has grown particularly thin. He journeys deeper than anyone before him but ultimately fails and dies, becoming a Stalfos claimed by the Abyss. (This period is depicted in the *Meadow of Shadows* ROM hack.)
+
+### The Fracture (Post-Ages/Seasons)
+
+Twinrova's revival ritual in the Oracle games cracks the Imprisoning War seal. Ganondorf (the true Dark Victor from a conquered timeline) slips through the fracture into the Eon Abyss. His presence immediately corrupts the once-bright pocket dimension, transforming it from lush meadow into the orange wasteland now called the Eon Abyss.
+
+Ganondorf finds Kydrog (already a Stalfos) and recognizes his potential. He cultivates the spirit's bitterness and rage, giving the fallen knight purpose as the Pirate King and amplifying his ambition. Twinrova is reconstituted by Ganondorf from the essence left by their sacrifice, and they become his servants, though Kydrog is not aware of this arrangement.
+
 ### The Present Day (Post-Linked Ending)
 
-**Oracle of Secrets is Chapter 3** of the Oracle trilogy, set sometime after the events of Ages/Seasons.
-
-What happened before:
-- In Holodrum and Labrynna, Twinrova lit the Flames of Sorrow, Despair, and Destruction
-- They resurrected Pig Ganon, but the ritual was incomplete
-- A hero defeated the mindless Ganon
+**Oracle of Secrets is Chapter 3** of the Oracle trilogy, set after the events of Ages/Seasons.
 
 What happens now:
-- Twinrova, undeterred, have found a new master: the Ganondorf sealed in the Eon Abyss
-- They've been working through Kydrog to weaken the seal
-- Kydrog invades Kalyxo, kidnaps Farore, and casts Link into the Abyss
+- Kydrog invades Kalyxo under his own agenda, unaware he serves Ganondorf's purposes
+- He kidnaps Farore and casts Link into the Abyss
 - Link survives, becoming the first person in centuries to walk between worlds freely
+- Twinrova operates independently on Kalyxo (using Glacia Estate as a staging ground) while Ganondorf remains hidden in the Lava Lands, pulling strings
+- Two villain tracks converge: Kydrog's visible invasion and Ganondorf's hidden scheme to break the seal from within
 
-The stakes are higher: if Ganondorf escapes, this won't be a mindless beast—it will be the calculating wizard-king at full power.
+The stakes are higher: if Ganondorf fully escapes, it won't be through brute force—it will be through manipulation and the seal's gradual decay.
 
 ---
 
@@ -115,69 +129,27 @@ The current Oracle of Secrets, keeper of hidden knowledge and guardian of the se
 
 **Redemption Potential:** When Kydrog finally falls, there may be a moment of clarity—the hero he once was surfacing briefly. Whether he can act on it, and how, remains to be seen. (Options: empowers the Meadow Blade, reveals Ganon's weakness, simply finds peace)
 
-### The Great Maku Tree
+### Twinrova
 
-Ancient tree spirit who serves as Farore's sanctuary and counsel. The Maku Tree remembers the Age of Secrets and knows the locations of the Triforce Essences—fragments of sacred power scattered across Kalyxo when the seal was created.
+**Origin & Nature:** When Twinrova performed the revival ritual in the Oracle games, they sacrificed themselves. This sacrifice cracked the Imprisoning War seal, allowing Ganondorf to slip through into the Eon Abyss. Once there, Ganondorf reconstituted Twinrova from the essence left by their sacrifice—they are real, not memory constructs.
 
-### Impa
+**Relationship to Kydrog:** Twinrova serves Ganondorf directly. Kydrog is unaware of their operations. They act independently on Kalyxo (using Glacia Estate as a staging ground) while Kydrog pursues his own conquest of the island, not realizing that both tracks serve Ganondorf's ultimate goal.
 
-Zelda's attendant from Hyrule, sent to Kalyxo to assess the situation after the Oracle games' events. She helps Link escape the initial ambush and serves as his guide in the early game.
+**Goal:** They seek to help Ganondorf fully break through the seal and permanently merge the worlds, granting them true existence in a Ganondorf-rewritten timeline.
 
-### Ganondorf, The Intuder
+### Ganondorf, The Intruder
 
 **The Dark Victor:** This is not a resurrection. This is an invasion.
-In a timeline where the Hero of Time fell and darkness reigned supreme, Ganondorf achieved total victory. But a god-king craves new worlds to conquer. Slipping through a fracture in reality caused by the botched resurrection in *Ages/Seasons*, this "Dark Victor" entered the world of the Oracles.
 
-**The Anomaly:** Because he does not belong to this timeline, reality rejects him. He is forced to hide in the **Eon Abyss**, the shadow of existence, to avoid being erased by the universe's natural defenses.
+In a timeline where the Hero of Time fell and darkness reigned supreme, Ganondorf achieved total victory. But a god-king craves new worlds to conquer. Slipping through a fracture in reality caused by Twinrova's ritual in *Ages/Seasons*, this Ganondorf entered the world of the Oracles.
+
+**The Anomaly:** Because he does not belong to this timeline, reality rejects him. He is forced to hide in the **Eon Abyss** to avoid being erased by the universe's natural defenses. He established himself in the Lava Lands, a region that existed as part of the pocket dimension long before his arrival.
 
 **His Goal:** He seeks Farore not just for her divinity, but because as the Oracle of Secrets, she holds the "source code" to this reality. If he consumes her knowledge, he can rewrite the timeline to make his existence permanent, effectively overwriting the history where Link won.
 
 **Visuals:** He wears the tattered cloak of a king, but his form flickers like a glitch. He carries trophies from his victory—perhaps a cracked Hylian Shield or a corrupted Ocarina.
 
-### Twinrova (The Echoes)
-
-**Origin:** The Twinrova from this world died in the Linked Ending. These versions are **Memory Constructs**—manifestations of their intense ambition and malice, given form by the Eon Abyss.
-
-**Nature:** They are "Echoes" of the witches, existing only where the Abyss bleeds into Kalyxo. They are desperate to merge the worlds because it is the only way they can become "real" again. They serve the Intruder Ganondorf because he promises them true resurrection in his rewritten world.
-
-### Impa & The Maku Tree
-
-**Impa:** No longer just a nursemaid. She recognizes the "wrongness" of this Ganondorf's magic—it feels like the ancient stories of the Great War, but twisted. She serves as Link's strategic commander, coordinating the resistance from the Hall of Secrets.
-
-**The Maku Tree:** The Maku Tree senses the timeline rot. It is the only entity old enough to remember the "correct" history, and its roots act as a stabilizer for reality. Losing the Maku Tree would mean the instant collapse of the timeline.
-
----
-
-## 3. Key Characters
-
-### Farore, Oracle of Secrets
-
-The current Oracle of Secrets, keeper of hidden knowledge and guardian of the seal. Farore knows the true history of Kydrog—including who he once was. She maintains the seal through ritual and will, but cannot strengthen it alone.
-
-**Role in Story:** Kidnapped in the prologue, rescued after D7. Provides exposition and guides Link to the final confrontation.
-
-**Secret:** Farore may be the last descendant of the Oracle bloodline—the same bloodline as the guardians who created the seal. This is why Kydrog needs her specifically.
-
-### Kydrog, The Pirate King
-
-**True Origin:** Kydrog was once a hero—a knight sent to investigate disturbances in the Meadow of Shadows, a liminal realm where the boundary to the Eon Abyss had grown thin. He sought to stop an ancient evil stirring in the deep. He failed. He died. The Abyss claimed him.
-
-**The Corruption:** As a newly-risen Stalfos, the fallen hero wandered the Eon Abyss in confusion and despair. Ganon, sealed in the deepest layer, sensed a hero's spirit—and began to whisper. Over centuries, Ganon nurtured the knight's bitterness: anger at his failure, resentment toward those who couldn't save him, hatred for the Oracle who held secrets that might have helped him. These feelings were real. Ganon simply... cultivated them.
-
-**The Transformation:** The knight became Kydrog—the Stalfos King of Pirates. He built a twisted empire in the Abyss, his Dragon Ship sailing between realities, crewed by spirits of the drowned. He styles himself "King of Pirates" because he plunders not treasure, but **memories and magic**. He has his own goals, his own rage. He is not Ganon's puppet—but he is Ganon's pawn.
-
-**His Living Name:** Lost to time. The Gossip Stones no longer speak it. (TBD - considering: Kel, Rulf, Dorn, or left unnamed as "The Fallen Knight")
-
-**His Weapon:** The Meadow Blade—left behind when he fell. Now found in Kalyxo Castle, waiting for a new hero.
-
-**Forms:**
-- Pirate Form (D7 boss) - His preferred manifestation, humanoid Stalfos lord
-- Dragon Form (Kydreeok) - His corrupted true shape, a multi-headed gleeok-like abomination
-- Skeleton Stalfos (Final phase) - What remains when the dragon form is broken
-
-**Motivation:** Kydrog believes he wants the Triforce to remake himself, to undo his death, to have the power he lacked. What he doesn't fully realize is that his actions serve Ganon's escape. Capturing Farore, gathering the essences, weakening the seals—it all feeds the prison's decay.
-
-**Redemption Potential:** When Kydrog finally falls, there may be a moment of clarity—the hero he once was surfacing briefly. Whether he can act on it, and how, remains to be seen. (Options: empowers the Meadow Blade, reveals Ganon's weakness, simply finds peace)
+**Hidden Strategy:** While Kydrog conducts his visible invasion, Ganondorf remains concealed in the Lava Lands, orchestrating from the shadows. He has arranged for Twinrova to gather intelligence and weaken the seal from within, making Kydrog's actions serve his purposes.
 
 ### Native Kalyxians
 
@@ -185,15 +157,15 @@ The original inhabitants of Kalyxo, now scattered and diminished. They remember 
 
 ### The Zora of Kalyxo
 
-A distinct branch of Zora who developed crystal-mirror magic. They built the Zora Temple as both a place of worship and a research facility for portal technology. The Sea Zora and River Zora have a long-standing conflict (details TBD).
+A distinct branch of Zora who developed crystal-mirror magic. They built the Zora Temple as both a place of worship and a research facility for portal technology. The Sea Zora and River Zora have a long-standing conflict: Kydrog engineered this schism by having his pirate forces capture River Zoras, making it appear the Sea Zora were responsible. This division weakened the Zoras' ability to resist his invasion.
 
-After Hylian occupation, they retreated to their sanctuary and became isolationist. Link must earn their trust to access the Zora Temple.
+After Hylian occupation, they retreated to their sanctuary and became isolationist. Link must earn their trust to access the Zora Temple. Healing the Zora schism is crucial to rebuilding alliances against Kydrog.
 
 ### The Gorons
 
 Mountain-dwelling miners who provided the crystals for Zora portal technology. They inhabit the Goron Mines on Mount Snowpeak. Their relationship with the Zora was once symbiotic—crystals for fish, stone for water magic.
 
-The Hylian occupation disrupted trade routes, and the Gorons now guard their mines jealously. The Rock Meat collection quest rebuilds trust.
+The Hylian occupation disrupted trade routes, and the Gorons now guard their mines jealously. The Rock Meat collection quest rebuilds trust and unlocks their support.
 
 ### Hylian Occupation Forces
 
@@ -201,9 +173,46 @@ Not villains, but not heroes either. The Hylian soldiers at Kalyxo Castle believ
 
 The Castle Prison sequence shows this gray morality: Link is imprisoned not by evil guards, but by scared soldiers following orders.
 
+### Impa
+
+Zelda's attendant from Hyrule, sent to Kalyxo to assess the situation after the Oracle games' events. She recognizes the "wrongness" of Ganondorf's magic—it feels like the ancient stories of the Great War, but twisted. She helps Link escape the initial ambush and serves as his guide in the early game. After D7, she coordinates the resistance from the Hall of Secrets.
+
+### The Great Maku Tree
+
+Ancient tree spirit who serves as Farore's sanctuary and counsel. The Maku Tree remembers the Age of Secrets and knows the locations of the Triforce Essences—fragments of sacred power scattered across Kalyxo when the seal was created. It senses the timeline distortion caused by Ganondorf's presence and is the only entity old enough to remember the "correct" history. Its roots act as a stabilizer for reality.
+
 ---
 
-## 5. Sacred Sites
+## 4. Sacred Sites and Dungeons
+
+### Main Dungeons (Kalyxo - Light World)
+
+All seven primary dungeons (D1-D7) are located on Kalyxo island in the light world:
+
+| Dungeon | Location | Theme |
+|---------|----------|-------|
+| D1 - Mushroom Grotto | Korok Cove (forested wetlands) | Nature, growth |
+| D2 - Tail Palace | Sky regions (accessible via bird transport) | Flight, aspiration |
+| D3 - Kalyxo Castle | Northern highlands | Authority, power |
+| D4 - Zora Temple | Eastern coast (Zora Sanctuary) | Water, reflection |
+| D5 - Glacia Estate | Mount Snowpeak (Snowpeak mountains) | Duality, fire in ice |
+| D6 - Goron Mines | Mount Snowpeak | Foundation, earth |
+| D7 - Dragon Ship | Mobile (sails between worlds) | Endings, ambition |
+
+### Pocket Dimension Locations (Eon Abyss)
+
+The Shrine bosses and endgame dungeons are found in the Eon Abyss:
+
+| Location | Purpose |
+|----------|---------|
+| S1 - Shrine of Wisdom | Shrine challenge (flooded) |
+| S2 - Shrine of Power | Shrine challenge (volcanic) |
+| S3 - Shrine of Courage | Shrine challenge (shadowed) |
+| D8 - Fortress of Secrets | Modified Temple of Seasons, contains Dark Link |
+| Temporal Pyramid | Final pre-boss dungeon, visions of past/future |
+| Lava Lands | Ganondorf's stronghold, location of Kydreeok encounter |
+
+### Sacred Sites
 
 ### The Three Shrines
 
@@ -229,7 +238,7 @@ The final dungeon (Fortress of Secrets) leads here, where Kydrog waits in his tr
 
 ---
 
-## 6. Magic Systems
+## 5. Magic Systems
 
 ### Portal/Mirror Magic
 
@@ -269,7 +278,7 @@ Masks in Oracle of Secrets are vessels for **trapped spirits or echoes**. The So
 
 ---
 
-## 7. Main Quest Summary
+## 6. Main Quest Summary
 
 ### Part 0: Call to Action
 - Link awakens on Kalyxo, summoned by the Goddesses
@@ -309,7 +318,7 @@ Masks in Oracle of Secrets are vessels for **trapped spirits or echoes**. The So
 
 ---
 
-## 8. Gossip Stone Registry
+## 7. Gossip Stone Registry
 
 The Gossip Stones are petrified Kalyxians who witnessed the original sealing of Kydrog. They speak only to those who have proven themselves worthy (progression-gated or item-gated TBD).
 
@@ -339,7 +348,7 @@ Their messages fall into three categories:
 
 ---
 
-## 9. Meadow of Shadows (Prequel Context)
+## 8. Meadow of Shadows (Prequel Context)
 
 *Meadow of Shadows is a separate ROM hack depicting the fallen hero's final quest. This section provides context for how it connects to Oracle of Secrets.*
 
@@ -376,15 +385,22 @@ Meadow of Shadows could be expanded to:
 
 ---
 
-## 10. Open Questions
+## 9. Open Questions and TBD Items
 
-*Items requiring creative decisions:*
+*Items requiring creative decisions or deferred decisions:*
 
-1. **Sea Zora vs River Zora conflict** - What caused it? How does Link resolve it?
-2. **Ranch Girl / Twinrova connection** - Is she their daughter? A transformed victim? A spy?
-3. **Kydrog's original identity** - Was he a good king corrupted, or always ambitious?
-4. **The Oracle bloodline** - Are there other descendants? Did the guardians have families?
-5. **Post-game state** - Does the Eon Abyss remain accessible? Does it heal?
+1. **True Name of the Realm** - The Eon Abyss has an ancient true name, now lost or forgotten. This should be determined during ongoing narrative development. (TBD)
+2. **Exact Timing of Kydrog's Era** - The precise relationship between Kydrog's original quest, the Meadow of Shadows period, and the Ages/Seasons timeline needs refinement.
+3. **Twinrova's Visibility Before D5** - How much of Twinrova's independent operations should be visible or hinted at to the player before the Glacia Estate dungeon?
+4. **Kydrog's Awareness of Ganondorf** - Does Kydrog learn about Ganondorf's true presence before or after the Kydreeok fight, and how does he react?
+5. **Kydrog's Original Living Name** - Once chosen, this should be revealed at a significant narrative moment (perhaps at his death). Current candidates: Kel, Rulf, Dorn, or left unnamed as "The Fallen Knight."
+
+### Resolved Questions
+
+- **Sea Zora vs River Zora conflict:** RESOLVED—Kydrog engineered it through his pirate forces to weaken the Zoras' collective resistance.
+- **Ranch Girl / Twinrova connection:** RESOLVED—Transformed victim. She witnessed Twinrova during their operations and was cursed into silence.
+- **Kydrog's original nature:** RESOLVED—He was a genuine hero knight, sent to investigate the Meadow of Shadows. Not corrupted from goodness, but gradually broken by despair and then cultivated by Ganondorf.
+- **Post-game state:** RESOLVED—The Eon Abyss heals over time as the realm attempts to return to its original bright state after Ganondorf is re-sealed.
 
 ---
 
