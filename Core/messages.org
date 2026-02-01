@@ -234,7 +234,17 @@ Press [B] to activate the cart.
 [V]He will know what to do next.
 [V]Good luck, [L][...]
 
-** TODO 37 - Hint Guy
+** 37 - Shrine of Origins Guide
+Ah, a seeker of truth arrives!
+[2]This sacred shrine tests not
+[3]strength, but clarity.[K]
+[V]Many have stood where you stand,
+[V]gazing upon the shimmering
+[V]artifacts within.[K]
+[V]Only the pure of heart may claim
+[V]what lies beyond. Seek the light
+[V]and it shall guide you.
+
 ** 38 - Shrine of Origins Hint
 Shrine of Origins
 [2]
@@ -378,7 +388,7 @@ Very well, for the low cost of
 [V]    > I'll take it!
 [V]       I'm okay for now.[CH2I]
 
-** TODO 7E - Verify NPC
+** 7E - Kalyxo Scholar
 Surprisingly, the Goddesses
 [2]created this world to be a
 [3]time capsule of sorts.[K]
@@ -393,9 +403,9 @@ Surprisingly, the Goddesses
 Through this way and you will
 [2]find the place we once called
 [3]home[...][K]
-[V]The Tail Palace is infested with
-[V]stalfos pirates and the native
-[V]moldorm are most displeased[...]
+[V]The Tail Palace is infested
+[V]with stalfos pirates and the
+[V]native moldorm are displeased[...]
 
 ** 81 - Mask Salesman Retrieved Ocarina
 Oh! Oh!! Oh!!!
@@ -732,7 +742,7 @@ Oh my, oh my! [L], my dear
 [V]Now where to find one?
 [V][...] [...] [...]
 [V][K]
-[V]                        [...] Ah, yes!
+[V]                       [...] Ah, yes!
 [V]There's a lass, quite a musical
 [V]soul, living on Toto Ranch.[K]
 [V]She may just know where to
@@ -766,7 +776,7 @@ Oh my, oh my! [L], my dear
 [V]amidst a sea of lava!
 
 [P:01]Hocus pocus!
-[2]You will heal the sick child with
+[2]You will heal a sick child with
 [3]your melodies, and in return[K]
 [V]he will help you gain access to
 [V]knowledge forbidden.
@@ -823,7 +833,7 @@ Hah! Thank you. They say
 [V]a way to heal its soul. Some
 [V]say it's cursed, wandering the
 [V]grounds endlessly[...][K]
-[V]If youre brave enough, you
+[V]If you're brave enough, you
 [V]might find it and discover its
 [V]secrets. Just be careful[...]
 
@@ -837,7 +847,7 @@ Thank you, kindly. To tell you
 [V]Rumor has it that only those
 [V]who can soar through the skies
 [V]can find their way aboard[...][K]
-[V][...]So unless youve got wings
+[V][...]So unless you've got wings
 [V]or magic that lets you fly,
 [V]that ship will be out of reach.[K]
 [V]Ha ha ha[...]
@@ -1140,8 +1150,8 @@ Oh, [L]... I'm afraid that
 [2]my roots have grown weak. The
 [3]island no longer fills me with[K]
 [V]the joy it once did. I feel as
-[V]though I'm wilting, drying up in
-[V]the sunlight...
+[V]though I'm wilting, drying up
+[V]in the sunlight...
 
 ** 141 - Deku Scrub NPC Deku Mask
 Oh... what is this?
@@ -1167,7 +1177,7 @@ Chomp chomp chomp...
 [V]    >  I'll take it!
 [V]        Sounds like a scam.[CH2I]
 
-** TODO 143 - Village Mayor
+** 143 - Village Mayor
 Welcome, young one, to this
 [2]Village of Wayward, for which
 [3]I am the mayor.[K]
@@ -1874,3 +1884,160 @@ Ahoy, matey! You're lookin'
 [V]here in the abyss somewhere.[K]
 [V]If you're lookin' to find him,
 [V]that's a good place to start.
+
+** 1BC - Zora Waterfall Hint
+The waterfall trembles in the
+[2]storm... Play again here to
+[3]reveal what lies behind it.
+
+** 1BD - Desert Goron (Shrine Guidance)
+Greetings, young one! I am the
+[2]guardian of these sands.
+[3]Seek the Shrine of Power?[K]
+[V]It tests the strength of those
+[V]worthy to wield the Power Glove.
+[V]With that glove, you can lift[K]
+[V]Rock Sirloins from the mountain
+[V]peaks. The Gorons treasure
+[V]such offerings greatly.[K]
+[V]Five meats will earn you
+[V]passage to our sacred mines.
+[V]But first... prove yourself!
+
+** 1BE - Garo (Desert Wanderer)
+[...]The shrine lies hidden
+[2]where sand meets stone.[K]
+[V]Long ago, my kinfolk mined
+[V]these mountains alongside the
+[V]Gorons. Ancient secrets[K]
+[V]slumber beneath the earth.
+[V]If you possess true strength,
+[V]the shrine will test it.[K]
+[V]Success grants the glove
+[V]that heavy stones obey.
+
+** 1BF - Village Elder Post-D1
+[W:02]Ah, [L], you've returned!
+[2]With the first dungeon cleared,
+[3]new paths await you.[K]
+[V]Seek the Mask Salesman near
+[V]Tail Pond. He has knowledge
+[V]of strange transformations[...][K]
+[V]And speak with Impa when you
+[V]can. She may know what Kydrog
+[V]plans next.
+
+** 1C0 - Shrine of Power Entrance Sign
+Shrine of Power
+[2]
+[3]Only the worthy may enter.[K]
+[V]Test your strength against the
+[V]trials within to earn the
+[V]Power Glove of the Gorons.
+
+** 1C1 - Shrine of Power Interior Sign
+Beware: the floors of this shrine
+[2]are not always what they seem.
+[3]Trust your instincts.[K]
+[V]The Roc's Feather will carry
+[V]you where solid ground will not.
+
+** 1C2 - Goron Mine Guard (No Meat)
+Halt! The mines are sacred ground
+[2]to us Gorons. You can't just
+[3]waltz in here, outsider![K]
+[V]If you want passage, bring us
+[V]five Rock Sirloins. Prove you
+[V]respect Goron traditions.[K]
+[V]You'll need the Power Glove
+[V]from the Shrine of Power
+[V]to even lift those beauties.
+
+** 1C3 - Goron Mine Guard (Some Meat)
+Hmm, you've brought some Rock
+[2]Sirloins, but not enough!
+[3]We need five in total.[K]
+[V]Keep searching the mountains
+[V]and desert. The Power Glove
+[V]makes short work of them.
+
+** 1C4 - Goron Mine Guard (Enough Meat)
+Five Rock Sirloins! Now THAT
+[2]is a proper offering!
+[3]Welcome to the Goron Mines![K]
+[V]Be careful in there, friend.
+[V]The minecarts are fast and the
+[V]tunnels run deep.
+
+** 1C5 - Maku Tree Post-D1 Hint
+[W:02][S:03][L]! Well done clearing
+[2]the first dungeon! I can feel
+[3]my power returning, slowly.[K]
+[V]I sense a strange presence near
+[V]Tail Pond... someone who deals
+[V]in masks and forbidden magic.[K]
+[V]Seek him out. The masks may be
+[V]key to reaching places you
+[V]cannot go as you are now.
+
+** 1C6 - Maku Tree Post-D3 Hint
+[W:02][S:03][L], the Zora Temple
+[2]beckons. The sea Zoras speak of
+[3]a princess trapped within.[K]
+[V]But first, you must gain the
+[V]trust of the Zoras. Speak with
+[V]them along the coast.[K]
+[V]The truth of their conflict
+[V]lies buried in that temple.
+
+** 1C7 - Maku Tree Post-D5 Hint
+[W:02][S:03]The desert calls, [L].
+[2]I sense great power buried
+[3]beneath the southern sands.[K]
+[V]The Gorons guard the entrance
+[V]to their mines, but they trade
+[V]in Rock Sirloins, not rupees.[K]
+[V]Seek the Shrine of Power first.
+[V]The glove within will let you
+[V]gather what the Gorons need.
+
+** 1C9 - Maku Tree Post-D2 Hint
+[W:02][S:03]The Tail Palace is
+[2]cleansed, [L]! Another essence
+[3]secured. Your strength grows.[K]
+[V]I sense a great castle to the
+[V]east where secrets sleep behind
+[V]locked doors.[K]
+[V]Kalyxo Castle awaits you, [L].
+[V]But beware, its halls are not
+[V]as empty as they seem.
+
+** 1CA - Maku Tree Post-D4 Hint
+[W:02][S:03]The Zora Temple is
+[2]cleansed! Well done, [L].
+[3]Your courage inspires hope.[K]
+[V]To the south lies a frozen
+[V]estate, touched by curse and
+[V]ancient ice.[K]
+[V]The essence of Glacia calls
+[V]to you. Seek the estate beyond
+[V]the frozen ridge.
+
+** 1CB - Maku Tree Post-D6 Hint
+[W:02][S:03]Excellent work, [L]!
+[2]The Goron Mines are freed!
+[3]You are nearly at the end.[K]
+[V]Only one path remains. Kydrog
+[V]waits on his Dragon Ship off
+[V]the coast.[K]
+[V]This final battle will test
+[V]everything you have learned.
+[V]Prepare yourself, hero.
+
+** 1C8 - Dark Link Defeated
+[W:02]You have bested my shadow[...]
+[2]But this is only the beginning.
+[3]Kydrog awaits beyond this door.[K]
+[V]Prepare yourself, hero.
+[V]The Fortress of Secrets holds
+[V]its final challenge.
