@@ -1,0 +1,2649 @@
+{
+  "rom": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/oos168x.sfc",
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "message": "JSL from $00F82E to $0DA18E: M flag mismatch",
+      "address": 63534,
+      "context": {
+        "caller_state": "M=16 X=16 stk=148",
+        "callee_state": "M=8 X=16 stk=116",
+        "target": "$0DA18E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $00F83A to $0DDB75: M flag mismatch",
+      "address": 63546,
+      "context": {
+        "caller_state": "M=16 X=16 stk=154",
+        "callee_state": "M=8 X=16 stk=90",
+        "target": "$0DDB75"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $01B95B to Oracle_CustomRoomCollision: M flag mismatch",
+      "address": 112987,
+      "context": {
+        "caller_state": "M=16 X=16 stk=163",
+        "callee_state": "M=8 X=? stk=138",
+        "target": "$258001"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $01C411 to $07F25A: M flag mismatch",
+      "address": 115729,
+      "context": {
+        "caller_state": "M=8 X=8 stk=24",
+        "callee_state": "M=16 X=? stk=193",
+        "target": "$07F25A"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $01C41C to $07F3F3: M flag mismatch",
+      "address": 115740,
+      "context": {
+        "caller_state": "M=8 X=8 stk=24",
+        "callee_state": "M=16 X=? stk=193",
+        "target": "$07F3F3"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $01C46D to $09AF32: X flag mismatch",
+      "address": 115821,
+      "context": {
+        "caller_state": "M=8 X=8 stk=24",
+        "callee_state": "M=? X=16 stk=221",
+        "target": "$09AF32"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $01C498 to $09AF32: X flag mismatch",
+      "address": 115864,
+      "context": {
+        "caller_state": "M=8 X=8 stk=24",
+        "callee_state": "M=? X=16 stk=221",
+        "target": "$09AF32"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $01C742 to Oracle_Ancilla_SpawnFallingPrize: X flag mismatch",
+      "address": 116546,
+      "context": {
+        "caller_state": "M=8 X=8 stk=1",
+        "callee_state": "M=? X=16 stk=224",
+        "target": "$2CB556"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028116 to $0ED3EB: M flag mismatch",
+      "address": 164118,
+      "context": {
+        "caller_state": "M=8 X=8 stk=26",
+        "callee_state": "M=16 X=8 stk=237",
+        "target": "$0ED3EB"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028158 to $00E2D0: X flag mismatch",
+      "address": 164184,
+      "context": {
+        "caller_state": "M=8 X=8 stk=5",
+        "callee_state": "M=8 X=16 stk=140",
+        "target": "$00E2D0"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0281A0 to $0DFA6C: M flag mismatch, X flag mismatch",
+      "address": 164256,
+      "context": {
+        "caller_state": "M=8 X=8 stk=29",
+        "callee_state": "M=16 X=16 stk=109",
+        "target": "$0DFA6C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028216 to $0DFA6C: M flag mismatch, X flag mismatch",
+      "address": 164374,
+      "context": {
+        "caller_state": "M=8 X=8 stk=29",
+        "callee_state": "M=16 X=16 stk=109",
+        "target": "$0DFA6C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028260 to Oracle_ResetTrackVars: X flag mismatch",
+      "address": 164448,
+      "context": {
+        "caller_state": "M=8 X=8 stk=37",
+        "callee_state": "M=8 X=16 stk=148",
+        "target": "$31B439"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02826D to $0E942A: X flag mismatch",
+      "address": 164461,
+      "context": {
+        "caller_state": "M=8 X=8 stk=43",
+        "callee_state": "M=8 X=16 stk=155",
+        "target": "$0E942A"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028279 to $00D337: X flag mismatch",
+      "address": 164473,
+      "context": {
+        "caller_state": "M=8 X=8 stk=46",
+        "callee_state": "M=8 X=16 stk=158",
+        "target": "$00D337"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02827D to $01B8BF: X flag mismatch",
+      "address": 164477,
+      "context": {
+        "caller_state": "M=8 X=8 stk=49",
+        "callee_state": "M=8 X=16 stk=161",
+        "target": "$01B8BF"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028286 to InitTilesets: X flag mismatch",
+      "address": 164486,
+      "context": {
+        "caller_state": "M=8 X=8 stk=52",
+        "callee_state": "M=8 X=16 stk=164",
+        "target": "$00E19B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028299 to LoadGearPalettes_bunny: X flag mismatch",
+      "address": 164505,
+      "context": {
+        "caller_state": "M=8 X=8 stk=57",
+        "callee_state": "M=8 X=16 stk=169",
+        "target": "$0ED6DD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028454 to Tagalong_Init: X flag mismatch",
+      "address": 164948,
+      "context": {
+        "caller_state": "M=8 X=16 stk=198",
+        "callee_state": "M=8 X=8 stk=221",
+        "target": "$099EFC"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028471 to Sprite_OverworldReloadAll: M flag mismatch, X flag mismatch",
+      "address": 164977,
+      "context": {
+        "caller_state": "M=8 X=16 stk=204",
+        "callee_state": "M=16 X=8 stk=115",
+        "target": "$09C499"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0287BA to $00E3FA: M flag mismatch, X flag mismatch",
+      "address": 165818,
+      "context": {
+        "caller_state": "M=8 X=8 stk=8",
+        "callee_state": "M=16 X=16 stk=156",
+        "target": "$00E3FA"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0287E1 to $00F567: M flag mismatch, X flag mismatch",
+      "address": 165857,
+      "context": {
+        "caller_state": "M=8 X=8 stk=24",
+        "callee_state": "M=16 X=16 stk=160",
+        "target": "$00F567"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028852 to $0DA18E: X flag mismatch",
+      "address": 165970,
+      "context": {
+        "caller_state": "M=8 X=8 stk=33",
+        "callee_state": "M=8 X=16 stk=116",
+        "target": "$0DA18E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028856 to $0DDB75: X flag mismatch",
+      "address": 165974,
+      "context": {
+        "caller_state": "M=8 X=8 stk=36",
+        "callee_state": "M=8 X=16 stk=90",
+        "target": "$0DDB75"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028A40 to $01B8B4: X flag mismatch",
+      "address": 166464,
+      "context": {
+        "caller_state": "M=8 X=8 stk=8",
+        "callee_state": "M=8 X=16 stk=194",
+        "target": "$01B8B4"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from DeleteCertainAncillaeStopDashing to $09AC6B: M flag mismatch, X flag mismatch",
+      "address": 166668,
+      "context": {
+        "caller_state": "M=8 X=8 stk=71",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$09AC6B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $028BF7 to $09AF32: X flag mismatch",
+      "address": 166903,
+      "context": {
+        "caller_state": "M=8 X=8 stk=0",
+        "callee_state": "M=? X=16 stk=221",
+        "target": "$09AF32"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0299A0 to $07E245: X flag mismatch",
+      "address": 170400,
+      "context": {
+        "caller_state": "M=8 X=8 stk=0",
+        "callee_state": "M=8 X=16 stk=113",
+        "target": "$07E245"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02A249 to $1BF0C2: X flag mismatch",
+      "address": 172617,
+      "context": {
+        "caller_state": "M=8 X=8 stk=81",
+        "callee_state": "M=8 X=16 stk=135",
+        "target": "$1BF0C2"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02A26E to $1BEE74: X flag mismatch",
+      "address": 172654,
+      "context": {
+        "caller_state": "M=8 X=8 stk=84",
+        "callee_state": "M=8 X=16 stk=138",
+        "target": "$1BEE74"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02A5CC to $00E3FA: M flag mismatch, X flag mismatch",
+      "address": 173516,
+      "context": {
+        "caller_state": "M=8 X=8 stk=224",
+        "callee_state": "M=16 X=16 stk=156",
+        "target": "$00E3FA"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02AC08 to $09C49D: M flag mismatch",
+      "address": 175112,
+      "context": {
+        "caller_state": "M=8 X=8 stk=2",
+        "callee_state": "M=16 X=8 stk=118",
+        "target": "$09C49D"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02B3CE to ReadOverlayArray: X flag mismatch",
+      "address": 177102,
+      "context": {
+        "caller_state": "M=16 X=8 stk=10",
+        "callee_state": "M=16 X=16 stk=7",
+        "target": "$2899EF"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02B3E8 to Sprite_OverworldReloadAll: M flag mismatch",
+      "address": 177128,
+      "context": {
+        "caller_state": "M=8 X=8 stk=16",
+        "callee_state": "M=16 X=8 stk=115",
+        "target": "$09C499"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02B3FD to Sprite_ReinitWarpVortex: X flag mismatch",
+      "address": 177149,
+      "context": {
+        "caller_state": "M=8 X=8 stk=24",
+        "callee_state": "M=8 X=16 stk=210",
+        "target": "$09AF89"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02BE5E to Oracle_Graphics_Transfer: X flag mismatch",
+      "address": 179806,
+      "context": {
+        "caller_state": "M=8 X=8 stk=0",
+        "callee_state": "M=8 X=16 stk=299",
+        "target": "$30EE40"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from Overworld_SetCameraBounds_Interupt to NewOverworld_SetCameraBounds: X flag mismatch",
+      "address": 180419,
+      "context": {
+        "caller_state": "M=16 X=8 stk=126",
+        "callee_state": "M=16 X=16 stk=200",
+        "target": "$28A177"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02C65B to $1BEE74: X flag mismatch",
+      "address": 181851,
+      "context": {
+        "caller_state": "M=8 X=8 stk=61",
+        "callee_state": "M=8 X=16 stk=138",
+        "target": "$1BEE74"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02D61D to $222222: M flag mismatch, X flag mismatch",
+      "address": 185885,
+      "context": {
+        "caller_state": "M=8 X=8 stk=10",
+        "callee_state": "M=16 X=16 stk=121",
+        "target": "$222222"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02D62D to $220022: M flag mismatch, X flag mismatch",
+      "address": 185901,
+      "context": {
+        "caller_state": "M=8 X=8 stk=16",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$220022"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02D635 to $202222: M flag mismatch, X flag mismatch",
+      "address": 185909,
+      "context": {
+        "caller_state": "M=8 X=8 stk=19",
+        "callee_state": "M=16 X=16 stk=130",
+        "target": "$202222"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02D63C to $220022: M flag mismatch, X flag mismatch",
+      "address": 185916,
+      "context": {
+        "caller_state": "M=8 X=8 stk=24",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$220022"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02D648 to $220222: M flag mismatch, X flag mismatch",
+      "address": 185928,
+      "context": {
+        "caller_state": "M=8 X=8 stk=30",
+        "callee_state": "M=16 X=16 stk=141",
+        "target": "$220222"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02D651 to $220200: M flag mismatch, X flag mismatch",
+      "address": 185937,
+      "context": {
+        "caller_state": "M=8 X=8 stk=35",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$220200"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02D68E to $020000: M flag mismatch, X flag mismatch",
+      "address": 185998,
+      "context": {
+        "caller_state": "M=8 X=8 stk=44",
+        "callee_state": "M=16 X=16 stk=155",
+        "target": "$020000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $02ECCF to Sprite_ResetAll: M flag mismatch",
+      "address": 191695,
+      "context": {
+        "caller_state": "M=16 X=? stk=118",
+        "callee_state": "M=8 X=8 stk=191",
+        "target": "$09C44E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $039A6E to $E18666: X flag mismatch",
+      "address": 236142,
+      "context": {
+        "caller_state": "M=8 X=16 stk=153",
+        "callee_state": "M=8 X=8 stk=141",
+        "target": "$E18666"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $039AB6 to $C9ED10: X flag mismatch",
+      "address": 236214,
+      "context": {
+        "caller_state": "M=16 X=8 stk=146",
+        "callee_state": "M=16 X=16 stk=156",
+        "target": "$C9ED10"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $04840C to $BFC242: X flag mismatch",
+      "address": 295948,
+      "context": {
+        "caller_state": "M=16 X=16 stk=154",
+        "callee_state": "M=? X=8 stk=166",
+        "target": "$BFC242"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $048922 to $E3E300: M flag mismatch",
+      "address": 297250,
+      "context": {
+        "caller_state": "M=8 X=8 stk=235",
+        "callee_state": "M=16 X=? stk=99",
+        "target": "$E3E300"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $049133 to $2A2525: M flag mismatch",
+      "address": 299315,
+      "context": {
+        "caller_state": "M=8 X=? stk=157",
+        "callee_state": "M=16 X=16 stk=133",
+        "target": "$2A2525"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $04EB91 to Oracle_Sprite_ProjectSpeedTowardsPlayer: X flag mismatch",
+      "address": 322449,
+      "context": {
+        "caller_state": "M=8 X=8 stk=226",
+        "callee_state": "M=8 X=16 stk=132",
+        "target": "$06EA1A"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $04EC12 to $05DF6C: X flag mismatch",
+      "address": 322578,
+      "context": {
+        "caller_state": "M=8 X=8 stk=165",
+        "callee_state": "M=? X=16 stk=120",
+        "target": "$05DF6C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $05A39F to Oracle_Sprite_Lanmola_Init_DataLONG: X flag mismatch",
+      "address": 369567,
+      "context": {
+        "caller_state": "M=8 X=8 stk=182",
+        "callee_state": "M=? X=16 stk=202",
+        "target": "$2CB628"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $05E19A to $05DF75: X flag mismatch",
+      "address": 385434,
+      "context": {
+        "caller_state": "M=? X=16 stk=133",
+        "callee_state": "M=? X=8 stk=148",
+        "target": "$05DF75"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0694D6 to Oracle_Sprite_RepelDash: X flag mismatch",
+      "address": 431318,
+      "context": {
+        "caller_state": "M=8 X=8 stk=15",
+        "callee_state": "M=? X=16 stk=228",
+        "target": "$079291"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $06A7E0 to Oracle_Sprite_SpawnDynamically_slot_limited: M flag mismatch",
+      "address": 436192,
+      "context": {
+        "caller_state": "M=16 X=8 stk=321",
+        "callee_state": "M=8 X=? stk=131",
+        "target": "$1DF65F"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $06E83F to $06ECE0: M flag mismatch",
+      "address": 452671,
+      "context": {
+        "caller_state": "M=8 X=16 stk=132",
+        "callee_state": "M=16 X=? stk=94",
+        "target": "$06ECE0"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $07869B to $08ED89: M flag mismatch",
+      "address": 493211,
+      "context": {
+        "caller_state": "M=8 X=8 stk=226",
+        "callee_state": "M=16 X=? stk=90",
+        "target": "$08ED89"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0790BA to Oracle_Link_HandleVelocityAndSandDrag: X flag mismatch",
+      "address": 495802,
+      "context": {
+        "caller_state": "M=8 X=8 stk=7",
+        "callee_state": "M=8 X=16 stk=213",
+        "target": "$07E3DD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $079553 to $07E245: X flag mismatch",
+      "address": 496979,
+      "context": {
+        "caller_state": "M=8 X=8 stk=138",
+        "callee_state": "M=8 X=16 stk=113",
+        "target": "$07E245"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $07A3B7 to $1DFD4B: X flag mismatch",
+      "address": 500663,
+      "context": {
+        "caller_state": "M=8 X=8 stk=6",
+        "callee_state": "M=? X=16 stk=208",
+        "target": "$1DFD4B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $07A76E to Oracle_DekuLink_HoverBasedOnInput: M flag mismatch, X flag mismatch",
+      "address": 501614,
+      "context": {
+        "caller_state": "M=8 X=8 stk=13",
+        "callee_state": "M=16 X=16 stk=214",
+        "target": "$3A8369"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $07D74E to $367918: M flag mismatch",
+      "address": 513870,
+      "context": {
+        "caller_state": "M=16 X=8 stk=15",
+        "callee_state": "M=8 X=8 stk=151",
+        "target": "$367918"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $07DC2A to $00882E: M flag mismatch",
+      "address": 515114,
+      "context": {
+        "caller_state": "M=8 X=8 stk=125",
+        "callee_state": "M=16 X=? stk=91",
+        "target": "$00882E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $07FA69 to Oracle_UpdateGbcPalette: M flag mismatch, X flag mismatch",
+      "address": 522857,
+      "context": {
+        "caller_state": "M=8 X=8 stk=6",
+        "callee_state": "M=16 X=16 stk=124",
+        "target": "$3BF000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $088309 to Oracle_Ancilla_CheckDamageToSprite: M flag mismatch",
+      "address": 557833,
+      "context": {
+        "caller_state": "M=8 X=8 stk=190",
+        "callee_state": "M=16 X=? stk=92",
+        "target": "$06ECB7"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $088E60 to Oracle_Ancilla_CheckDamageToSprite: M flag mismatch",
+      "address": 560736,
+      "context": {
+        "caller_state": "M=8 X=8 stk=7",
+        "callee_state": "M=16 X=? stk=92",
+        "target": "$06ECB7"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $08979A to $01D1F4: M flag mismatch",
+      "address": 563098,
+      "context": {
+        "caller_state": "M=16 X=16 stk=211",
+        "callee_state": "M=8 X=? stk=124",
+        "target": "$01D1F4"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $08BBB2 to $06ECE0: M flag mismatch",
+      "address": 572338,
+      "context": {
+        "caller_state": "M=8 X=? stk=120",
+        "callee_state": "M=16 X=? stk=94",
+        "target": "$06ECE0"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $08D97A to Oracle_Sparkle_PrepOAMFromRadial: M flag mismatch, X flag mismatch",
+      "address": 579962,
+      "context": {
+        "caller_state": "M=8 X=8 stk=164",
+        "callee_state": "M=16 X=16 stk=103",
+        "target": "$08DA17"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $08DD6D to Oracle_Sparkle_PrepOAMFromRadial: M flag mismatch",
+      "address": 580973,
+      "context": {
+        "caller_state": "M=8 X=16 stk=292",
+        "callee_state": "M=16 X=16 stk=103",
+        "target": "$08DA17"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $098B66 to $046918: M flag mismatch, X flag mismatch",
+      "address": 625510,
+      "context": {
+        "caller_state": "M=8 X=8 stk=8",
+        "callee_state": "M=16 X=16 stk=113",
+        "target": "$046918"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $09A4BD to $E20490: M flag mismatch",
+      "address": 631997,
+      "context": {
+        "caller_state": "M=8 X=? stk=120",
+        "callee_state": "M=16 X=? stk=76",
+        "target": "$E20490"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from Sprite_OverworldReloadAll to $09C22F: M flag mismatch",
+      "address": 640153,
+      "context": {
+        "caller_state": "M=16 X=8 stk=115",
+        "callee_state": "M=8 X=8 stk=194",
+        "target": "$09C22F"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $09C49D to $09C452: M flag mismatch",
+      "address": 640157,
+      "context": {
+        "caller_state": "M=16 X=8 stk=118",
+        "callee_state": "M=8 X=8 stk=194",
+        "target": "$09C452"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $09EDC5 to $09AF32: X flag mismatch",
+      "address": 650693,
+      "context": {
+        "caller_state": "M=8 X=8 stk=0",
+        "callee_state": "M=? X=16 stk=221",
+        "target": "$09AF32"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $09EDEA to $05DF6C: X flag mismatch",
+      "address": 650730,
+      "context": {
+        "caller_state": "M=8 X=8 stk=5",
+        "callee_state": "M=? X=16 stk=120",
+        "target": "$05DF6C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $09F29D to $0DA18E: X flag mismatch",
+      "address": 651933,
+      "context": {
+        "caller_state": "M=8 X=8 stk=8",
+        "callee_state": "M=8 X=16 stk=116",
+        "target": "$0DA18E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0AB90C to InitTilesets: M flag mismatch",
+      "address": 702732,
+      "context": {
+        "caller_state": "M=16 X=16 stk=145",
+        "callee_state": "M=8 X=16 stk=164",
+        "target": "$00E19B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0AE12C to InitTilesets: X flag mismatch",
+      "address": 713004,
+      "context": {
+        "caller_state": "M=8 X=8 stk=3",
+        "callee_state": "M=8 X=16 stk=164",
+        "target": "$00E19B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0BA0C6 to $02000A: M flag mismatch",
+      "address": 762054,
+      "context": {
+        "caller_state": "M=8 X=8 stk=355",
+        "callee_state": "M=16 X=8 stk=201",
+        "target": "$02000A"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0BAD68 to $0D0200: M flag mismatch",
+      "address": 765288,
+      "context": {
+        "caller_state": "M=8 X=8 stk=300",
+        "callee_state": "M=16 X=? stk=117",
+        "target": "$0D0200"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0BBBA6 to $373523: M flag mismatch, X flag mismatch",
+      "address": 768934,
+      "context": {
+        "caller_state": "M=8 X=8 stk=10",
+        "callee_state": "M=16 X=16 stk=144",
+        "target": "$373523"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0BDCDF to $37008E: M flag mismatch",
+      "address": 777439,
+      "context": {
+        "caller_state": "M=8 X=8 stk=287",
+        "callee_state": "M=16 X=? stk=104",
+        "target": "$37008E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0BDCEE to $BC0697: M flag mismatch",
+      "address": 777454,
+      "context": {
+        "caller_state": "M=8 X=8 stk=293",
+        "callee_state": "M=16 X=? stk=110",
+        "target": "$BC0697"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0BE9E4 to $202322: M flag mismatch, X flag mismatch",
+      "address": 780772,
+      "context": {
+        "caller_state": "M=8 X=8 stk=290",
+        "callee_state": "M=16 X=16 stk=139",
+        "target": "$202322"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0BFFEE to $09AC6B: M flag mismatch, X flag mismatch",
+      "address": 786414,
+      "context": {
+        "caller_state": "M=8 X=8 stk=141",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$09AC6B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0CA067 to $8B009F: M flag mismatch, X flag mismatch",
+      "address": 827495,
+      "context": {
+        "caller_state": "M=8 X=8 stk=225",
+        "callee_state": "M=16 X=16 stk=110",
+        "target": "$8B009F"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0CB4F1 to $212F01: M flag mismatch, X flag mismatch",
+      "address": 832753,
+      "context": {
+        "caller_state": "M=8 X=8 stk=296",
+        "callee_state": "M=16 X=16 stk=113",
+        "target": "$212F01"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0CB4F8 to $0E0302: M flag mismatch",
+      "address": 832760,
+      "context": {
+        "caller_state": "M=8 X=8 stk=299",
+        "callee_state": "M=16 X=? stk=114",
+        "target": "$0E0302"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0CC21A to $00E2D0: X flag mismatch",
+      "address": 836122,
+      "context": {
+        "caller_state": "M=8 X=8 stk=27",
+        "callee_state": "M=8 X=16 stk=140",
+        "target": "$00E2D0"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0CC21E to InitTilesets: X flag mismatch",
+      "address": 836126,
+      "context": {
+        "caller_state": "M=8 X=8 stk=30",
+        "callee_state": "M=8 X=16 stk=164",
+        "target": "$00E19B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0CC224 to $00D337: X flag mismatch",
+      "address": 836132,
+      "context": {
+        "caller_state": "M=8 X=8 stk=33",
+        "callee_state": "M=8 X=16 stk=158",
+        "target": "$00D337"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0CEF1D to $0ABA30: X flag mismatch",
+      "address": 847645,
+      "context": {
+        "caller_state": "M=8 X=8 stk=11",
+        "callee_state": "M=? X=16 stk=234",
+        "target": "$0ABA30"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from Oracle__0CF0DE to Oracle_Attract_SetUpConclusionHDMA: M flag mismatch",
+      "address": 848094,
+      "context": {
+        "caller_state": "M=16 X=8 stk=0",
+        "callee_state": "M=8 X=8 stk=3",
+        "target": "$0ABC33"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from Oracle__0CF714 to Oracle_Attract_SetUpConclusionHDMA: M flag mismatch",
+      "address": 849684,
+      "context": {
+        "caller_state": "M=16 X=8 stk=3",
+        "callee_state": "M=8 X=8 stk=3",
+        "target": "$0ABC33"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0DABA2 to Oracle_HookMaskCheck: M flag mismatch",
+      "address": 895906,
+      "context": {
+        "caller_state": "M=16 X=16 stk=123",
+        "callee_state": "M=8 X=? stk=109",
+        "target": "$2B8339"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0DBD3A to $05DF6C: X flag mismatch",
+      "address": 900410,
+      "context": {
+        "caller_state": "M=8 X=8 stk=4",
+        "callee_state": "M=? X=16 stk=120",
+        "target": "$05DF6C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0DC23D to $05DF6C: X flag mismatch",
+      "address": 901693,
+      "context": {
+        "caller_state": "M=8 X=8 stk=223",
+        "callee_state": "M=? X=16 stk=120",
+        "target": "$05DF6C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0DD71E to $05DF6C: X flag mismatch",
+      "address": 907038,
+      "context": {
+        "caller_state": "M=8 X=8 stk=156",
+        "callee_state": "M=? X=16 stk=120",
+        "target": "$05DF6C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0DFB91 to Oracle_HUD_Update: M flag mismatch",
+      "address": 916369,
+      "context": {
+        "caller_state": "M=16 X=16 stk=114",
+        "callee_state": "M=8 X=? stk=98",
+        "target": "$2E8000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from Oracle_newIgnoreItemBox to Oracle_HUD_Update: M flag mismatch",
+      "address": 916374,
+      "context": {
+        "caller_state": "M=16 X=16 stk=97",
+        "callee_state": "M=8 X=? stk=98",
+        "target": "$2E8000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0EDDF4 to $02AD5C: M flag mismatch",
+      "address": 974324,
+      "context": {
+        "caller_state": "M=16 X=16 stk=146",
+        "callee_state": "M=8 X=? stk=98",
+        "target": "$02AD5C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F8409 to $0F2323: X flag mismatch",
+      "address": 1016841,
+      "context": {
+        "caller_state": "M=16 X=8 stk=181",
+        "callee_state": "M=? X=16 stk=175",
+        "target": "$0F2323"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9A88 to $222222: M flag mismatch, X flag mismatch",
+      "address": 1022600,
+      "context": {
+        "caller_state": "M=8 X=8 stk=168",
+        "callee_state": "M=16 X=16 stk=121",
+        "target": "$222222"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9A98 to $220022: M flag mismatch, X flag mismatch",
+      "address": 1022616,
+      "context": {
+        "caller_state": "M=8 X=8 stk=174",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$220022"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9AA0 to $202222: M flag mismatch, X flag mismatch",
+      "address": 1022624,
+      "context": {
+        "caller_state": "M=8 X=8 stk=177",
+        "callee_state": "M=16 X=16 stk=130",
+        "target": "$202222"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9AA7 to $220022: M flag mismatch, X flag mismatch",
+      "address": 1022631,
+      "context": {
+        "caller_state": "M=8 X=8 stk=182",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$220022"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9AB3 to $220222: M flag mismatch, X flag mismatch",
+      "address": 1022643,
+      "context": {
+        "caller_state": "M=8 X=8 stk=188",
+        "callee_state": "M=16 X=16 stk=141",
+        "target": "$220222"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9ABC to $220200: M flag mismatch, X flag mismatch",
+      "address": 1022652,
+      "context": {
+        "caller_state": "M=8 X=8 stk=193",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$220200"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9AF9 to $020000: M flag mismatch, X flag mismatch",
+      "address": 1022713,
+      "context": {
+        "caller_state": "M=8 X=8 stk=202",
+        "callee_state": "M=16 X=16 stk=155",
+        "target": "$020000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9B03 to $222222: M flag mismatch, X flag mismatch",
+      "address": 1022723,
+      "context": {
+        "caller_state": "M=8 X=8 stk=208",
+        "callee_state": "M=16 X=16 stk=121",
+        "target": "$222222"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9B13 to $220022: M flag mismatch, X flag mismatch",
+      "address": 1022739,
+      "context": {
+        "caller_state": "M=8 X=8 stk=214",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$220022"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9B1B to $202222: M flag mismatch, X flag mismatch",
+      "address": 1022747,
+      "context": {
+        "caller_state": "M=8 X=8 stk=217",
+        "callee_state": "M=16 X=16 stk=130",
+        "target": "$202222"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9B22 to $220022: M flag mismatch, X flag mismatch",
+      "address": 1022754,
+      "context": {
+        "caller_state": "M=8 X=8 stk=222",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$220022"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9B2E to $220222: M flag mismatch, X flag mismatch",
+      "address": 1022766,
+      "context": {
+        "caller_state": "M=8 X=8 stk=228",
+        "callee_state": "M=16 X=16 stk=141",
+        "target": "$220222"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9B37 to $220200: M flag mismatch, X flag mismatch",
+      "address": 1022775,
+      "context": {
+        "caller_state": "M=8 X=8 stk=233",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$220200"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0F9B74 to $020000: M flag mismatch, X flag mismatch",
+      "address": 1022836,
+      "context": {
+        "caller_state": "M=8 X=8 stk=242",
+        "callee_state": "M=16 X=16 stk=155",
+        "target": "$020000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0FA2EE to $3D2E1D: X flag mismatch",
+      "address": 1024750,
+      "context": {
+        "caller_state": "M=8 X=8 stk=159",
+        "callee_state": "M=? X=16 stk=102",
+        "target": "$3D2E1D"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0FA304 to $1D635D: X flag mismatch",
+      "address": 1024772,
+      "context": {
+        "caller_state": "M=8 X=8 stk=163",
+        "callee_state": "M=? X=16 stk=106",
+        "target": "$1D635D"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $0FA4F6 to $1D1D1D: X flag mismatch",
+      "address": 1025270,
+      "context": {
+        "caller_state": "M=8 X=8 stk=167",
+        "callee_state": "M=? X=16 stk=110",
+        "target": "$1D1D1D"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $138353 to $FF0600: X flag mismatch",
+      "address": 1278803,
+      "context": {
+        "caller_state": "M=8 X=8 stk=177",
+        "callee_state": "M=? X=16 stk=250",
+        "target": "$FF0600"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $13A031 to $902092: X flag mismatch",
+      "address": 1286193,
+      "context": {
+        "caller_state": "M=8 X=8 stk=167",
+        "callee_state": "M=8 X=16 stk=205",
+        "target": "$902092"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $13FB39 to $FF0200: X flag mismatch",
+      "address": 1309497,
+      "context": {
+        "caller_state": "M=8 X=8 stk=232",
+        "callee_state": "M=? X=16 stk=244",
+        "target": "$FF0200"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $14FCCF to $0E001F: M flag mismatch, X flag mismatch",
+      "address": 1375439,
+      "context": {
+        "caller_state": "M=8 X=8 stk=263",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$0E001F"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $158670 to $230CFF: X flag mismatch",
+      "address": 1410672,
+      "context": {
+        "caller_state": "M=8 X=8 stk=159",
+        "callee_state": "M=? X=16 stk=115",
+        "target": "$230CFF"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $16F0EF to $3C107B: M flag mismatch",
+      "address": 1503471,
+      "context": {
+        "caller_state": "M=16 X=8 stk=145",
+        "callee_state": "M=8 X=8 stk=111",
+        "target": "$3C107B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $189071 to $2C3C42: X flag mismatch",
+      "address": 1609841,
+      "context": {
+        "caller_state": "M=8 X=8 stk=161",
+        "callee_state": "M=? X=16 stk=116",
+        "target": "$2C3C42"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $198E36 to $DC2E78: X flag mismatch",
+      "address": 1674806,
+      "context": {
+        "caller_state": "M=16 X=16 stk=292",
+        "callee_state": "M=? X=8 stk=129",
+        "target": "$DC2E78"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $19CB4F to $FD7A21: M flag mismatch, X flag mismatch",
+      "address": 1690447,
+      "context": {
+        "caller_state": "M=8 X=8 stk=149",
+        "callee_state": "M=16 X=16 stk=210",
+        "target": "$FD7A21"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $19DB6C to $FD121E: M flag mismatch, X flag mismatch",
+      "address": 1694572,
+      "context": {
+        "caller_state": "M=16 X=16 stk=148",
+        "callee_state": "M=8 X=8 stk=146",
+        "target": "$FD121E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $19DC38 to $038420: M flag mismatch, X flag mismatch",
+      "address": 1694776,
+      "context": {
+        "caller_state": "M=16 X=16 stk=159",
+        "callee_state": "M=8 X=8 stk=157",
+        "target": "$038420"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $19DC85 to $2200DE: M flag mismatch, X flag mismatch",
+      "address": 1694853,
+      "context": {
+        "caller_state": "M=8 X=8 stk=157",
+        "callee_state": "M=16 X=16 stk=127",
+        "target": "$2200DE"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $19E21A to $24CE2E: M flag mismatch",
+      "address": 1696282,
+      "context": {
+        "caller_state": "M=16 X=16 stk=116",
+        "callee_state": "M=8 X=16 stk=135",
+        "target": "$24CE2E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $19E53F to $2F4333: M flag mismatch, X flag mismatch",
+      "address": 1697087,
+      "context": {
+        "caller_state": "M=8 X=8 stk=176",
+        "callee_state": "M=16 X=16 stk=252",
+        "target": "$2F4333"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1ABB88 to $24936D: M flag mismatch, X flag mismatch",
+      "address": 1751944,
+      "context": {
+        "caller_state": "M=8 X=8 stk=159",
+        "callee_state": "M=16 X=16 stk=162",
+        "target": "$24936D"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1AFC96 to Oracle_Sprite_MoveLong: M flag mismatch",
+      "address": 1768598,
+      "context": {
+        "caller_state": "M=16 X=8 stk=194",
+        "callee_state": "M=8 X=8 stk=181",
+        "target": "$1D808C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1AFEF0 to Oracle_Sprite_ShowMessageMinimal: X flag mismatch",
+      "address": 1769200,
+      "context": {
+        "caller_state": "M=8 X=8 stk=143",
+        "callee_state": "M=? X=16 stk=210",
+        "target": "$05FA8E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1BC0F1 to $02AD5C: M flag mismatch",
+      "address": 1818865,
+      "context": {
+        "caller_state": "M=16 X=16 stk=104",
+        "callee_state": "M=8 X=? stk=98",
+        "target": "$02AD5C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1BC22B to $02AD5C: M flag mismatch",
+      "address": 1819179,
+      "context": {
+        "caller_state": "M=16 X=16 stk=214",
+        "callee_state": "M=8 X=? stk=98",
+        "target": "$02AD5C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1C984D to $A62929: M flag mismatch, X flag mismatch",
+      "address": 1873997,
+      "context": {
+        "caller_state": "M=8 X=8 stk=157",
+        "callee_state": "M=16 X=16 stk=180",
+        "target": "$A62929"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1D80E7 to $0DBBA1: M flag mismatch",
+      "address": 1933543,
+      "context": {
+        "caller_state": "M=16 X=16 stk=225",
+        "callee_state": "M=8 X=? stk=109",
+        "target": "$0DBBA1"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1D865F to Oracle_Sprite_SpawnPoofGarnish: M flag mismatch",
+      "address": 1934943,
+      "context": {
+        "caller_state": "M=16 X=16 stk=242",
+        "callee_state": "M=8 X=? stk=123",
+        "target": "$05AB9C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1DA4EC to Oracle_Sprite_ShowMessageMinimal: X flag mismatch",
+      "address": 1942764,
+      "context": {
+        "caller_state": "M=8 X=8 stk=15",
+        "callee_state": "M=? X=16 stk=210",
+        "target": "$05FA8E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1DE150 to Oracle_Sprite_TransmuteToBomb: M flag mismatch",
+      "address": 1958224,
+      "context": {
+        "caller_state": "M=16 X=16 stk=228",
+        "callee_state": "M=8 X=? stk=122",
+        "target": "$06AD50"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1E872B to $20A90C: M flag mismatch, X flag mismatch",
+      "address": 2000683,
+      "context": {
+        "caller_state": "M=8 X=8 stk=176",
+        "callee_state": "M=16 X=16 stk=138",
+        "target": "$20A90C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1E8EA7 to Oracle_Sprite_ProjectSpeedTowardsPlayer: X flag mismatch",
+      "address": 2002599,
+      "context": {
+        "caller_state": "M=8 X=8 stk=174",
+        "callee_state": "M=8 X=16 stk=132",
+        "target": "$06EA1A"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1EB59B to Oracle_AdvancedArrghus: X flag mismatch",
+      "address": 2012571,
+      "context": {
+        "caller_state": "M=8 X=8 stk=0",
+        "callee_state": "M=? X=16 stk=127",
+        "target": "$32F97D"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1EE164 to Oracle_SpriteSFX_QueueSFX3WithPan: M flag mismatch",
+      "address": 2023780,
+      "context": {
+        "caller_state": "M=16 X=16 stk=278",
+        "callee_state": "M=8 X=? stk=103",
+        "target": "$0DBB8A"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1FA86F to $2A7200: X flag mismatch",
+      "address": 2074735,
+      "context": {
+        "caller_state": "M=8 X=8 stk=228",
+        "callee_state": "M=? X=16 stk=244",
+        "target": "$2A7200"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1FC573 to $2235B5: M flag mismatch",
+      "address": 2082163,
+      "context": {
+        "caller_state": "M=8 X=? stk=202",
+        "callee_state": "M=16 X=16 stk=150",
+        "target": "$2235B5"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1FCDF8 to $22FE01: M flag mismatch, X flag mismatch",
+      "address": 2084344,
+      "context": {
+        "caller_state": "M=8 X=8 stk=218",
+        "callee_state": "M=16 X=16 stk=189",
+        "target": "$22FE01"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1FCE99 to $2A4131: M flag mismatch, X flag mismatch",
+      "address": 2084505,
+      "context": {
+        "caller_state": "M=8 X=8 stk=203",
+        "callee_state": "M=16 X=16 stk=133",
+        "target": "$2A4131"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $1FD565 to $224F32: M flag mismatch",
+      "address": 2086245,
+      "context": {
+        "caller_state": "M=8 X=16 stk=194",
+        "callee_state": "M=16 X=16 stk=139",
+        "target": "$224F32"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $268222 to $0088D6: M flag mismatch, X flag mismatch",
+      "address": 2523682,
+      "context": {
+        "caller_state": "M=8 X=8 stk=142",
+        "callee_state": "M=16 X=16 stk=4",
+        "target": "$0088D6"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $268365 to $0F0224: M flag mismatch, X flag mismatch",
+      "address": 2524005,
+      "context": {
+        "caller_state": "M=8 X=8 stk=187",
+        "callee_state": "M=16 X=16 stk=189",
+        "target": "$0F0224"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $268480 to $008315: M flag mismatch, X flag mismatch",
+      "address": 2524288,
+      "context": {
+        "caller_state": "M=8 X=8 stk=199",
+        "callee_state": "M=16 X=16 stk=186",
+        "target": "$008315"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $278D27 to $22334F: M flag mismatch",
+      "address": 2592039,
+      "context": {
+        "caller_state": "M=8 X=16 stk=269",
+        "callee_state": "M=16 X=16 stk=150",
+        "target": "$22334F"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $27D80B to $116930: X flag mismatch",
+      "address": 2611211,
+      "context": {
+        "caller_state": "M=8 X=16 stk=271",
+        "callee_state": "M=8 X=8 stk=264",
+        "target": "$116930"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $27DA1A to $224F81: M flag mismatch",
+      "address": 2611738,
+      "context": {
+        "caller_state": "M=8 X=16 stk=249",
+        "callee_state": "M=16 X=16 stk=150",
+        "target": "$224F81"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $2889BA to $252323: X flag mismatch",
+      "address": 2656698,
+      "context": {
+        "caller_state": "M=8 X=8 stk=8",
+        "callee_state": "M=8 X=16 stk=144",
+        "target": "$252323"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $289D6C to InitTilesets: X flag mismatch",
+      "address": 2661740,
+      "context": {
+        "caller_state": "M=8 X=8 stk=4",
+        "callee_state": "M=8 X=16 stk=164",
+        "target": "$00E19B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $2B867D to Oracle_Sparkle_PrepOAMFromRadial: M flag mismatch, X flag mismatch",
+      "address": 2852477,
+      "context": {
+        "caller_state": "M=8 X=8 stk=159",
+        "callee_state": "M=16 X=16 stk=103",
+        "target": "$08DA17"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $2B97DE to Oracle_Sprite_DrawWaterRipple: M flag mismatch",
+      "address": 2856926,
+      "context": {
+        "caller_state": "M=8 X=8 stk=6",
+        "callee_state": "M=16 X=8 stk=185",
+        "target": "$059FFA"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $2CB8E1 to Oracle_ThrownSprite_TileAndSpriteInteraction_long: X flag mismatch",
+      "address": 2930913,
+      "context": {
+        "caller_state": "M=8 X=8 stk=15",
+        "callee_state": "M=? X=16 stk=235",
+        "target": "$06DFF2"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $309B35 to $280000: M flag mismatch",
+      "address": 3185461,
+      "context": {
+        "caller_state": "M=8 X=? stk=200",
+        "callee_state": "M=16 X=16 stk=173",
+        "target": "$280000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $309DA7 to $280000: M flag mismatch",
+      "address": 3186087,
+      "context": {
+        "caller_state": "M=8 X=? stk=200",
+        "callee_state": "M=16 X=16 stk=173",
+        "target": "$280000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $30D983 to Oracle_Sprite_CheckIfRecoiling: X flag mismatch",
+      "address": 3201411,
+      "context": {
+        "caller_state": "M=8 X=16 stk=240",
+        "callee_state": "M=8 X=8 stk=178",
+        "target": "$318571"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from Oracle_ResetTrackVars to Oracle_RebuildHUD_Keys: M flag mismatch",
+      "address": 3257401,
+      "context": {
+        "caller_state": "M=8 X=16 stk=148",
+        "callee_state": "M=16 X=16 stk=109",
+        "target": "$0DFA68"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $3489D5 to Oracle_Overworld_DrawMap16_Persist: M flag mismatch, X flag mismatch",
+      "address": 3443157,
+      "context": {
+        "caller_state": "M=8 X=8 stk=5",
+        "callee_state": "M=16 X=16 stk=113",
+        "target": "$1BC97C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $3489DF to Oracle_Overworld_DrawMap16_Persist: M flag mismatch, X flag mismatch",
+      "address": 3443167,
+      "context": {
+        "caller_state": "M=8 X=8 stk=8",
+        "callee_state": "M=16 X=16 stk=113",
+        "target": "$1BC97C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $3489E9 to Oracle_Overworld_DrawMap16_Persist: M flag mismatch, X flag mismatch",
+      "address": 3443177,
+      "context": {
+        "caller_state": "M=8 X=8 stk=11",
+        "callee_state": "M=16 X=16 stk=113",
+        "target": "$1BC97C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $3489F3 to Oracle_Overworld_DrawMap16_Persist: M flag mismatch, X flag mismatch",
+      "address": 3443187,
+      "context": {
+        "caller_state": "M=8 X=8 stk=14",
+        "callee_state": "M=16 X=16 stk=113",
+        "target": "$1BC97C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $3489FD to Oracle_Overworld_DrawMap16_Persist: M flag mismatch, X flag mismatch",
+      "address": 3443197,
+      "context": {
+        "caller_state": "M=8 X=8 stk=17",
+        "callee_state": "M=16 X=16 stk=113",
+        "target": "$1BC97C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $348A07 to Oracle_Overworld_DrawMap16_Persist: M flag mismatch, X flag mismatch",
+      "address": 3443207,
+      "context": {
+        "caller_state": "M=8 X=8 stk=20",
+        "callee_state": "M=16 X=16 stk=113",
+        "target": "$1BC97C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from Oracle_ForceResetMask_GameOver_gbc_link to Oracle_UpdateGbcPalette: M flag mismatch, X flag mismatch",
+      "address": 3833936,
+      "context": {
+        "caller_state": "M=8 X=8 stk=3",
+        "callee_state": "M=16 X=16 stk=124",
+        "target": "$3BF000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $3A8709 to Oracle_Ancilla_CheckTileCollision_long: M flag mismatch",
+      "address": 3835657,
+      "context": {
+        "caller_state": "M=8 X=8 stk=31",
+        "callee_state": "M=16 X=? stk=82",
+        "target": "$08923B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $3BF0C4 to Oracle_UpdateGbcPalette: M flag mismatch, X flag mismatch",
+      "address": 3928260,
+      "context": {
+        "caller_state": "M=8 X=8 stk=3",
+        "callee_state": "M=16 X=16 stk=124",
+        "target": "$3BF000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $3BF0E6 to Oracle_UpdateGbcPalette: M flag mismatch, X flag mismatch",
+      "address": 3928294,
+      "context": {
+        "caller_state": "M=8 X=8 stk=24",
+        "callee_state": "M=16 X=16 stk=124",
+        "target": "$3BF000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "JSL from $3F8827 to $E3E1AE: M flag mismatch",
+      "address": 4163623,
+      "context": {
+        "caller_state": "M=8 X=16 stk=126",
+        "callee_state": "M=16 X=? stk=99",
+        "target": "$E3E1AE"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HookMaskCheck' exit M flag unknown at $0085C4",
+      "address": 34244,
+      "context": {
+        "hook": "$0085C4",
+        "state": "M=? X=? stk=-3"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HookMaskCheck' exit X flag unknown at $0085C4",
+      "address": 34244,
+      "context": {
+        "hook": "$0085C4",
+        "state": "M=? X=? stk=-3"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ActivateSubScreen' exit PHB/PLB imbalance at $00D9B8: pushes=3, pulls=6",
+      "address": 55736,
+      "context": {
+        "hook": "SheetsTable_0AA4",
+        "pair": "PHB/PLB"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ActivateSubScreen' exit PHD/PLD imbalance at $00D9B8: pushes=1, pulls=0",
+      "address": 55736,
+      "context": {
+        "hook": "SheetsTable_0AA4",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ActivateSubScreen' exit PHP/PLP imbalance at $00D9B8: pushes=2, pulls=0",
+      "address": 55736,
+      "context": {
+        "hook": "SheetsTable_0AA4",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ReadOverlayArray' has no recorded return states (ABI exit not verified)",
+      "address": 61115,
+      "context": {
+        "hook": "Palette_InitWhiteFilter_Interupt"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'CustomRoomCollision' has no recorded return states (ABI exit not verified)",
+      "address": 112987,
+      "context": {
+        "hook": "$01B95B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Ancilla_SpawnFallingPrize' has no recorded return states (ABI exit not verified)",
+      "address": 116546,
+      "context": {
+        "hook": "$01C742"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ResetTrackVars' has no recorded return states (ABI exit not verified)",
+      "address": 164448,
+      "context": {
+        "hook": "$028260"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'CheckForTingleMaps' has no recorded return states (ABI exit not verified)",
+      "address": 166143,
+      "context": {
+        "hook": "$0288FF"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'EnableSubScreenCheckForPyramid' has no recorded return states (ABI exit not verified)",
+      "address": 177057,
+      "context": {
+        "hook": "$02B3A1"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Oracle_CgramAuxToMain_Impl' has no recorded return states (ABI exit not verified)",
+      "address": 182121,
+      "context": {
+        "hook": "Overworld_CgramAuxToMain"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'LoadSpecialOverworld' has no recorded return states (ABI exit not verified)",
+      "address": 190732,
+      "context": {
+        "hook": "$02E90C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HUD_ClockDisplay' has no recorded return states (ABI exit not verified)",
+      "address": 426849,
+      "context": {
+        "hook": "$068361"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ReinitDispatcher' has no recorded return states (ABI exit not verified)",
+      "address": 426853,
+      "context": {
+        "hook": "$068365"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'WarpingSwitchLong' has no recorded return states (ABI exit not verified)",
+      "address": 440528,
+      "context": {
+        "hook": "$06B8D0"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'SpriteDraw_Locksmith' has no recorded return states (ABI exit not verified)",
+      "address": 441516,
+      "context": {
+        "hook": "Oracle_Sprite_39_ZoraBaby"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForBlast' has no recorded return states (ABI exit not verified)",
+      "address": 453823,
+      "context": {
+        "hook": "$06ECBF"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ApplyGoldstarDamageClass' has no recorded return states (ABI exit not verified)",
+      "address": 453874,
+      "context": {
+        "hook": "$06ECF2"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'FistBump' has no recorded return states (ABI exit not verified)",
+      "address": 453994,
+      "context": {
+        "hook": "$06ED6A"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForPower' has no recorded return states (ABI exit not verified)",
+      "address": 454080,
+      "context": {
+        "hook": "$06EDC0"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForArmor' has no recorded return states (ABI exit not verified)",
+      "address": 455680,
+      "context": {
+        "hook": "$06F400"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'FistBump3' has no recorded return states (ABI exit not verified)",
+      "address": 456388,
+      "context": {
+        "hook": "$06F6C4"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'AddMonsterKilled' has no recorded return states (ABI exit not verified)",
+      "address": 456995,
+      "context": {
+        "hook": "$06F923"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Ancilla_SpawnFallingPrize' has no recorded return states (ABI exit not verified)",
+      "address": 457268,
+      "context": {
+        "hook": "$06FA34"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRings_CheckForHeart' has no recorded return states (ABI exit not verified)",
+      "address": 491788,
+      "context": {
+        "hook": "$07810C"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'LinkState_UsingZoraMask_dungeon_resurface' has no recorded return states (ABI exit not verified)",
+      "address": 492242,
+      "context": {
+        "hook": "$0782D2"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Link_HoverIfMooshWantsToDash' has no recorded return states (ABI exit not verified)",
+      "address": 495763,
+      "context": {
+        "hook": "$079093"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'LoadOverworldPitAreas' has no recorded return states (ABI exit not verified)",
+      "address": 496857,
+      "context": {
+        "hook": "$0794D9"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'LinkState_UsingZoraMask' has no recorded return states (ABI exit not verified)",
+      "address": 497537,
+      "context": {
+        "hook": "$079781"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'CheckForMinishLift' has no recorded return states (ABI exit not verified)",
+      "address": 498738,
+      "context": {
+        "hook": "$079C32"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForLight' has no recorded return states (ABI exit not verified)",
+      "address": 498807,
+      "context": {
+        "hook": "$079C77"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'LinkItem_NewFlute' has no recorded return states (ABI exit not verified)",
+      "address": 500699,
+      "context": {
+        "hook": "Oracle_LinkItem_FluteHook"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'BeginGoldstarOrHookshot' has no recorded return states (ABI exit not verified)",
+      "address": 502586,
+      "context": {
+        "hook": "$07AB3A"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'BallChain_ResetTimer' has no recorded return states (ABI exit not verified)",
+      "address": 502703,
+      "context": {
+        "hook": "$07ABAF"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'LinkState_UsingZoraMask_dungeon_stairs' has no recorded return states (ABI exit not verified)",
+      "address": 508679,
+      "context": {
+        "hook": "$07C307"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'CheckIfJumpingForSpikeDamage' has no recorded return states (ABI exit not verified)",
+      "address": 512578,
+      "context": {
+        "hook": "$07D242"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForSteadfast' exit M flag unknown at $07E237",
+      "address": 516663,
+      "context": {
+        "hook": "$07E1BE",
+        "state": "M=? X=? stk=106"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForSteadfast' exit X flag unknown at $07E237",
+      "address": 516663,
+      "context": {
+        "hook": "$07E1BE",
+        "state": "M=? X=? stk=106"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForSteadfast' exit PHD/PLD imbalance at $07E237: pushes=6, pulls=0",
+      "address": 516663,
+      "context": {
+        "hook": "$07E1BE",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForSteadfast' exit PHP/PLP imbalance at $07E237: pushes=59, pulls=0",
+      "address": 516663,
+      "context": {
+        "hook": "$07E1BE",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForSteadfast' exit M flag unknown at $07E226",
+      "address": 516646,
+      "context": {
+        "hook": "$07E1BE",
+        "state": "M=? X=? stk=106"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForSteadfast' exit X flag unknown at $07E226",
+      "address": 516646,
+      "context": {
+        "hook": "$07E1BE",
+        "state": "M=? X=? stk=106"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForSteadfast' exit PHD/PLD imbalance at $07E226: pushes=6, pulls=0",
+      "address": 516646,
+      "context": {
+        "hook": "$07E1BE",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'MagicRing_CheckForSteadfast' exit PHP/PLP imbalance at $07E226: pushes=58, pulls=0",
+      "address": 516646,
+      "context": {
+        "hook": "$07E1BE",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Link_CheckForBunnyRun' has no recorded return states (ABI exit not verified)",
+      "address": 516912,
+      "context": {
+        "hook": "$07E330"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'DekuLink_CancelBeforeTransition' has no recorded return states (ABI exit not verified)",
+      "address": 521298,
+      "context": {
+        "hook": "$07F452"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Ancilla0E_MagicBubbleLong' exit PHP/PLP imbalance at $0884BF: pushes=2, pulls=0",
+      "address": 558271,
+      "context": {
+        "hook": "$088399",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Ancilla_HandlePortalCollision' exit M flag unknown at $088E4E",
+      "address": 560718,
+      "context": {
+        "hook": "$088DC3",
+        "state": "M=? X=? stk=4"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Ancilla_HandlePortalCollision' exit X flag unknown at $088E4E",
+      "address": 560718,
+      "context": {
+        "hook": "$088DC3",
+        "state": "M=? X=? stk=4"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Ancilla_HandlePortalCollision' exit PHP/PLP imbalance at $088EEB: pushes=9, pulls=0",
+      "address": 560875,
+      "context": {
+        "hook": "$088DC3",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'BallChain_SFX_Control' has no recorded return states (ABI exit not verified)",
+      "address": 572799,
+      "context": {
+        "hook": "$08BD7F"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Goldstar_SetChainProperties' has no recorded return states (ABI exit not verified)",
+      "address": 573211,
+      "context": {
+        "hook": "$08BF1B"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'BallChain_DrawOrReturn' has no recorded return states (ABI exit not verified)",
+      "address": 573229,
+      "context": {
+        "hook": "$08BF2D"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'BallChain_DrawChainOrHookshot' has no recorded return states (ABI exit not verified)",
+      "address": 573402,
+      "context": {
+        "hook": "$08BFDA"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Kiki_CheckIfScared' has no recorded return states (ABI exit not verified)",
+      "address": 631238,
+      "context": {
+        "hook": "$09A1C6"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'CheckForMinecartFollowerDraw' has no recorded return states (ABI exit not verified)",
+      "address": 631839,
+      "context": {
+        "hook": "$09A41F"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'AddMonsterKilled2' exit PHD/PLD imbalance at $09C326: pushes=44, pulls=0",
+      "address": 639782,
+      "context": {
+        "hook": "$09C2F5",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'AddMonsterKilled2' exit PHP/PLP imbalance at $09C326: pushes=74, pulls=0",
+      "address": 639782,
+      "context": {
+        "hook": "$09C2F5",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'LoadOverworldSpritesLong' has no recorded return states (ABI exit not verified)",
+      "address": 640172,
+      "context": {
+        "hook": "$09C4AC"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'FixMaskPaletteOnExit' has no recorded return states (ABI exit not verified)",
+      "address": 703606,
+      "context": {
+        "hook": "$0ABC76"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Load1' exit PHD/PLD imbalance at $0AE7F2: pushes=4, pulls=0",
+      "address": 714738,
+      "context": {
+        "hook": "$0AE652",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Load2' has no recorded return states (ABI exit not verified)",
+      "address": 714422,
+      "context": {
+        "hook": "$0AE6B6"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Load3' has no recorded return states (ABI exit not verified)",
+      "address": 714522,
+      "context": {
+        "hook": "$0AE71A"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Load4' has no recorded return states (ABI exit not verified)",
+      "address": 714622,
+      "context": {
+        "hook": "$0AE77E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ReplaceBGColor' has no recorded return states (ABI exit not verified)",
+      "address": 786118,
+      "context": {
+        "hook": "$0BFEC6"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'LinkOAM_GoldstarWeaponTiles' has no recorded return states (ABI exit not verified)",
+      "address": 894691,
+      "context": {
+        "hook": "$0DA6E3"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HookMaskCheck' has no recorded return states (ABI exit not verified)",
+      "address": 895906,
+      "context": {
+        "hook": "$0DABA2"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HUD_Update' has no recorded return states (ABI exit not verified)",
+      "address": 908165,
+      "context": {
+        "hook": "$0DDB85"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'newIgnoreItemBox' has no recorded return states (ABI exit not verified)",
+      "address": 908577,
+      "context": {
+        "hook": "$0DDD21"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'SearchForEquippedItem_Override' exit X flag unknown at $0DE39D",
+      "address": 910237,
+      "context": {
+        "hook": "Oracle_SearchForEquippedItem",
+        "state": "M=8 X=? stk=96"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'SearchForEquippedItem_Override' exit PHB/PLB imbalance at $0DE39D: pushes=1, pulls=3",
+      "address": 910237,
+      "context": {
+        "hook": "Oracle_SearchForEquippedItem",
+        "pair": "PHB/PLB"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'SearchForEquippedItem_Override' exit PHD/PLD imbalance at $0DE39D: pushes=6, pulls=0",
+      "address": 910237,
+      "context": {
+        "hook": "Oracle_SearchForEquippedItem",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'SearchForEquippedItem_Override' exit PHP/PLP imbalance at $0DE39D: pushes=60, pulls=0",
+      "address": 910237,
+      "context": {
+        "hook": "Oracle_SearchForEquippedItem",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ResetTrackVars' has no recorded return states (ABI exit not verified)",
+      "address": 916072,
+      "context": {
+        "hook": "Oracle_RebuildHUD_Keys"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HUD_Update' exit PHD/PLD imbalance at $0DFB95: pushes=4, pulls=0",
+      "address": 916373,
+      "context": {
+        "hook": "$0DFB91",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HUD_Update' exit PHP/PLP imbalance at $0DFB95: pushes=56, pulls=0",
+      "address": 916373,
+      "context": {
+        "hook": "$0DFB91",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HUD_Update_ignore_health' exit PHD/PLD imbalance at $0DFC0D: pushes=7, pulls=5",
+      "address": 916493,
+      "context": {
+        "hook": "$0DFC09",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HUD_Update_ignore_health' exit PHP/PLP imbalance at $0DFC0D: pushes=63, pulls=0",
+      "address": 916493,
+      "context": {
+        "hook": "$0DFC09",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Dungeon_LoadCustomTileAttr' exit PHD/PLD imbalance at $0E942E: pushes=6, pulls=2",
+      "address": 955438,
+      "context": {
+        "hook": "$0E942A",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Dungeon_LoadCustomTileAttr' exit PHP/PLP imbalance at $0E942E: pushes=56, pulls=0",
+      "address": 955438,
+      "context": {
+        "hook": "$0E942A",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Overworld_CheckForSpecialOverworldTrigger' exit PHB/PLB imbalance at $0EDE99: pushes=1, pulls=2",
+      "address": 974489,
+      "context": {
+        "hook": "Overworld_CheckForSpecialOverworldTrigger",
+        "pair": "PHB/PLB"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Overworld_CheckForSpecialOverworldTrigger' exit PHD/PLD imbalance at $0EDE99: pushes=5, pulls=3",
+      "address": 974489,
+      "context": {
+        "hook": "Overworld_CheckForSpecialOverworldTrigger",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Overworld_CheckForSpecialOverworldTrigger' exit PHP/PLP imbalance at $0EDE99: pushes=57, pulls=0",
+      "address": 974489,
+      "context": {
+        "hook": "Overworld_CheckForSpecialOverworldTrigger",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Overworld_UseEntranceEntry' exit PHD/PLD imbalance at $1BBBF8: pushes=8, pulls=2",
+      "address": 1817592,
+      "context": {
+        "hook": "Overworld_Entrance",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'Overworld_UseEntranceEntry' exit PHP/PLP imbalance at $1BBBF8: pushes=59, pulls=0",
+      "address": 1817592,
+      "context": {
+        "hook": "Overworld_Entrance",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ApplyTwinrovaGraphics' exit PHD/PLD imbalance at $1DA080: pushes=10, pulls=2",
+      "address": 1941632,
+      "context": {
+        "hook": "Oracle_Blind_SpawnFromMaiden",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ApplyTwinrovaGraphics' exit PHP/PLP imbalance at $1DA080: pushes=56, pulls=0",
+      "address": 1941632,
+      "context": {
+        "hook": "Oracle_Blind_SpawnFromMaiden",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'KingDodongo_NewHealthSystem' has no recorded return states (ABI exit not verified)",
+      "address": 1999130,
+      "context": {
+        "hook": "$1E811A"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'NewSpikeCollision' has no recorded return states (ABI exit not verified)",
+      "address": 2014478,
+      "context": {
+        "hook": "$1EBD0E"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'CheckForBook' exit M flag unknown at $1EE0D0",
+      "address": 2023632,
+      "context": {
+        "hook": "$1EE05F",
+        "state": "M=? X=? stk=5"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'CheckForBook' exit X flag unknown at $1EE0D0",
+      "address": 2023632,
+      "context": {
+        "hook": "$1EE05F",
+        "state": "M=? X=? stk=5"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'WagonSprite_Long' has no recorded return states (ABI exit not verified)",
+      "address": 2326528,
+      "context": {
+        "hook": "$238000"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HUD_UpdateItemBox' exit PHB/PLB imbalance at $2E8191: pushes=1, pulls=3",
+      "address": 3047825,
+      "context": {
+        "hook": "Oracle_HUD_Update",
+        "pair": "PHB/PLB"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HUD_UpdateItemBox' exit PHD/PLD imbalance at $2E8191: pushes=6, pulls=0",
+      "address": 3047825,
+      "context": {
+        "hook": "Oracle_HUD_Update",
+        "pair": "PHD/PLD"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'HUD_UpdateItemBox' exit PHP/PLP imbalance at $2E8191: pushes=60, pulls=0",
+      "address": 3047825,
+      "context": {
+        "hook": "Oracle_HUD_Update",
+        "pair": "PHP/PLP"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'ReinitDispatcher' has no recorded return states (ABI exit not verified)",
+      "address": 3974698,
+      "context": {
+        "hook": "$3CA62A"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Hook 'NewIntroRain' has no recorded return states (ABI exit not verified)",
+      "address": 8553302,
+      "context": {
+        "hook": "$828356"
+      }
+    }
+  ],
+  "summary": {
+    "hook_violations": 0,
+    "mx_mismatches": 181,
+    "potential_hangs": 0,
+    "color_issues": 0,
+    "hook_state_drift": 0,
+    "hook_abi_issues": 98
+  }
+}

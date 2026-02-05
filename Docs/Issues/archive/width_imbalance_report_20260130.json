@@ -1,0 +1,5814 @@
+{
+  "rom": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/oos168x.sfc",
+  "diagnostics": [
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0A2323: PHY at $0A290E (X=16-bit, 2B) vs PLY at $0A2BF6 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 665870,
+      "context": {
+        "routine": "$0A2323",
+        "push_addr": "$0A290E",
+        "pull_addr": "$0A2BF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0A2323: PHX at $0A290D (X=16-bit, 2B) vs PLX at $0A2BF7 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 665869,
+      "context": {
+        "routine": "$0A2323",
+        "push_addr": "$0A290D",
+        "pull_addr": "$0A2BF7",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06AB93: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "$06AB93",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06AB93: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "$06AB93",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $042006: PHY at $043519 (X=16-bit, 2B) vs PLY at $0401C8 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275737,
+      "context": {
+        "routine": "$042006",
+        "push_addr": "$043519",
+        "pull_addr": "$0401C8",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $042006: PHY at $04350D (X=16-bit, 2B) vs PLY at $04022A (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275725,
+      "context": {
+        "routine": "$042006",
+        "push_addr": "$04350D",
+        "pull_addr": "$04022A",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $042006: PHY at $04350C (X=16-bit, 2B) vs PLY at $04023A (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275724,
+      "context": {
+        "routine": "$042006",
+        "push_addr": "$04350C",
+        "pull_addr": "$04023A",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06812D: PHA at $1BC1C3 (M=16-bit, 2B) vs PLA at $068142 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1819075,
+      "context": {
+        "routine": "$06812D",
+        "push_addr": "$1BC1C3",
+        "pull_addr": "$068142",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $FB00FD: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $FB0129 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$FB00FD",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$FB0129",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $041A1A: PHY at $043519 (X=16-bit, 2B) vs PLY at $0401C8 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275737,
+      "context": {
+        "routine": "$041A1A",
+        "push_addr": "$043519",
+        "pull_addr": "$0401C8",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $041A1A: PHY at $043519 (X=16-bit, 2B) vs PLY at $0401C8 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275737,
+      "context": {
+        "routine": "$041A1A",
+        "push_addr": "$043519",
+        "pull_addr": "$0401C8",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $068156: PHA at $1BC1C3 (M=16-bit, 2B) vs PLA at $068189 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1819075,
+      "context": {
+        "routine": "$068156",
+        "push_addr": "$1BC1C3",
+        "pull_addr": "$068189",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $B15D15: PHX at $1A59C2 (X=16-bit, 2B) vs PLX at $B15D4F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1726914,
+      "context": {
+        "routine": "$B15D15",
+        "push_addr": "$1A59C2",
+        "pull_addr": "$B15D4F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $B15D15: PHX at $1D30DE (X=16-bit, 2B) vs PLX at $B15D53 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1913054,
+      "context": {
+        "routine": "$B15D15",
+        "push_addr": "$1D30DE",
+        "pull_addr": "$B15D53",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1AFC21: PHX at $1A59C2 (X=16-bit, 2B) vs PLX at $1AFC2E (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1726914,
+      "context": {
+        "routine": "$1AFC21",
+        "push_addr": "$1A59C2",
+        "pull_addr": "$1AFC2E",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E18666: PHY at $043519 (X=16-bit, 2B) vs PLY at $0401C8 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275737,
+      "context": {
+        "routine": "$E18666",
+        "push_addr": "$043519",
+        "pull_addr": "$0401C8",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0AAAA8: PHX at $0A9C31 (X=8-bit, 1B) vs PLX at $0AABFC (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 695345,
+      "context": {
+        "routine": "$0AAAA8",
+        "push_addr": "$0A9C31",
+        "pull_addr": "$0AABFC",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06C90E: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "$06C90E",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Sprite_TransmuteToBomb: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "Oracle_Sprite_TransmuteToBomb",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Sprite_TransmuteToBomb: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "Oracle_Sprite_TransmuteToBomb",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Sprite_TransmuteToBomb: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "Oracle_Sprite_TransmuteToBomb",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $09C55E: PHA at $09C567 (M=16-bit, 2B) vs PLA at $09C584 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 640359,
+      "context": {
+        "routine": "$09C55E",
+        "push_addr": "$09C567",
+        "pull_addr": "$09C584",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $09C55E: PHA at $09C563 (M=16-bit, 2B) vs PLA at $09C588 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 640355,
+      "context": {
+        "routine": "$09C55E",
+        "push_addr": "$09C563",
+        "pull_addr": "$09C588",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $09C55E: PHA at $09C560 (M=16-bit, 2B) vs PLA at $09C58B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 640352,
+      "context": {
+        "routine": "$09C55E",
+        "push_addr": "$09C560",
+        "pull_addr": "$09C58B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $038B0C: PHY at $030CC8 (X=16-bit, 2B) vs PLY at $038B42 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 199880,
+      "context": {
+        "routine": "$038B0C",
+        "push_addr": "$030CC8",
+        "pull_addr": "$038B42",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $038B0C: PHY at $030CC8 (X=16-bit, 2B) vs PLY at $038B2F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 199880,
+      "context": {
+        "routine": "$038B0C",
+        "push_addr": "$030CC8",
+        "pull_addr": "$038B2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E12108: PHY at $043519 (X=16-bit, 2B) vs PLY at $0401C8 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275737,
+      "context": {
+        "routine": "$E12108",
+        "push_addr": "$043519",
+        "pull_addr": "$0401C8",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E12108: PHY at $043519 (X=16-bit, 2B) vs PLY at $0401C8 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275737,
+      "context": {
+        "routine": "$E12108",
+        "push_addr": "$043519",
+        "pull_addr": "$0401C8",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0F9C05: PHA at $0FFA9E (M=8-bit, 1B) vs PLA at $0F9FFF (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1047198,
+      "context": {
+        "routine": "$0F9C05",
+        "push_addr": "$0FFA9E",
+        "pull_addr": "$0F9FFF",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $05DF6C: PHX at $05DF7A (X=16-bit, 2B) vs PLX at $05DFE3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 384890,
+      "context": {
+        "routine": "$05DF6C",
+        "push_addr": "$05DF7A",
+        "pull_addr": "$05DFE3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $089873: PHX at $0898C6 (X=16-bit, 2B) vs PLX at $0898D2 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 563398,
+      "context": {
+        "routine": "$089873",
+        "push_addr": "$0898C6",
+        "pull_addr": "$0898D2",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $2833CB: PHX at $2701AC (X=8-bit, 1B) vs PLX at $2833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$2833CB",
+        "push_addr": "$2701AC",
+        "pull_addr": "$2833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CD0B0A: PHY at $04350D (X=16-bit, 2B) vs PLY at $CD0BA9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275725,
+      "context": {
+        "routine": "$CD0B0A",
+        "push_addr": "$04350D",
+        "pull_addr": "$CD0BA9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CDFCFC: PHX at $04356D (X=16-bit, 2B) vs PLX at $CD911C (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$CDFCFC",
+        "push_addr": "$04356D",
+        "pull_addr": "$CD911C",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CD00F6: PHX at $04356D (X=16-bit, 2B) vs PLX at $CD911C (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$CD00F6",
+        "push_addr": "$04356D",
+        "pull_addr": "$CD911C",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CD00F6: PHX at $04356D (X=16-bit, 2B) vs PLX at $CD911C (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$CD00F6",
+        "push_addr": "$04356D",
+        "pull_addr": "$CD911C",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1AC90E: PHA at $1BC1C3 (M=16-bit, 2B) vs PLA at $068189 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1819075,
+      "context": {
+        "routine": "$1AC90E",
+        "push_addr": "$1BC1C3",
+        "pull_addr": "$068189",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1AC90E: PHA at $1BC1C3 (M=16-bit, 2B) vs PLA at $068189 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1819075,
+      "context": {
+        "routine": "$1AC90E",
+        "push_addr": "$1BC1C3",
+        "pull_addr": "$068189",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1AC90E: PHA at $1BC1C3 (M=16-bit, 2B) vs PLA at $068189 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1819075,
+      "context": {
+        "routine": "$1AC90E",
+        "push_addr": "$1BC1C3",
+        "pull_addr": "$068189",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $091882: PHX at $0918C6 (X=16-bit, 2B) vs PLX at $0918D2 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 596166,
+      "context": {
+        "routine": "$091882",
+        "push_addr": "$0918C6",
+        "pull_addr": "$0918D2",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $8B0EC6: PHA at $081495 (M=8-bit, 1B) vs PLA at $0814A2 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 529557,
+      "context": {
+        "routine": "$8B0EC6",
+        "push_addr": "$081495",
+        "pull_addr": "$0814A2",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $8B0EC6: PHA at $081495 (M=8-bit, 1B) vs PLA at $0814A2 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 529557,
+      "context": {
+        "routine": "$8B0EC6",
+        "push_addr": "$081495",
+        "pull_addr": "$0814A2",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $8B0EC6: PHA at $081495 (M=8-bit, 1B) vs PLA at $0814A2 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 529557,
+      "context": {
+        "routine": "$8B0EC6",
+        "push_addr": "$081495",
+        "pull_addr": "$0814A2",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $8B0EC6: PHA at $081495 (M=8-bit, 1B) vs PLA at $0814A2 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 529557,
+      "context": {
+        "routine": "$8B0EC6",
+        "push_addr": "$081495",
+        "pull_addr": "$0814A2",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E833CB: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E833CB",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E833CB: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E833CB",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CD1D00: PHX at $04356D (X=16-bit, 2B) vs PLX at $CD911C (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$CD1D00",
+        "push_addr": "$04356D",
+        "pull_addr": "$CD911C",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1AFC9A: PHA at $1BC1C3 (M=16-bit, 2B) vs PLA at $068189 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1819075,
+      "context": {
+        "routine": "$1AFC9A",
+        "push_addr": "$1BC1C3",
+        "pull_addr": "$068189",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in LoadSubscreenOverlay: PHX at Overworld_ReloadSubscreenOverlay_Interupt_noSongOfStorms (X=16-bit, 2B) vs PLX at $02B051 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 176146,
+      "context": {
+        "routine": "LoadSubscreenOverlay",
+        "push_addr": "$02B012",
+        "pull_addr": "$02B051",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_LoadOverworldPitAreas: PHA at $081495 (M=8-bit, 1B) vs PLA at $0814A2 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 529557,
+      "context": {
+        "routine": "Oracle_LoadOverworldPitAreas",
+        "push_addr": "$081495",
+        "pull_addr": "$0814A2",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_LoadOverworldPitAreas: PHA at $081495 (M=8-bit, 1B) vs PLA at $0814A2 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 529557,
+      "context": {
+        "routine": "Oracle_LoadOverworldPitAreas",
+        "push_addr": "$081495",
+        "pull_addr": "$0814A2",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $01FFD9: PHA at $081495 (M=8-bit, 1B) vs PLA at $0814A2 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 529557,
+      "context": {
+        "routine": "$01FFD9",
+        "push_addr": "$081495",
+        "pull_addr": "$0814A2",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0CD722: PHA at $0C210D (M=16-bit, 2B) vs PLA at $0CD724 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 794893,
+      "context": {
+        "routine": "$0CD722",
+        "push_addr": "$0C210D",
+        "pull_addr": "$0CD724",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0CD722: PHA at $0C20C3 (M=16-bit, 2B) vs PLA at $0CD767 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 794819,
+      "context": {
+        "routine": "$0CD722",
+        "push_addr": "$0C20C3",
+        "pull_addr": "$0CD767",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DC3E8F: PHA at $DC3EAE (M=8-bit, 1B) vs PLA at $DC3ED7 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 14433966,
+      "context": {
+        "routine": "$DC3E8F",
+        "push_addr": "$DC3EAE",
+        "pull_addr": "$DC3ED7",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $840B13: PHY at $04350B (X=16-bit, 2B) vs PLY at $8401C8 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275723,
+      "context": {
+        "routine": "$840B13",
+        "push_addr": "$04350B",
+        "pull_addr": "$8401C8",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9AD1C6: PHX at $04356D (X=16-bit, 2B) vs PLX at $9AD24E (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$9AD1C6",
+        "push_addr": "$04356D",
+        "pull_addr": "$9AD24E",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9AD1C6: PHX at $04356D (X=16-bit, 2B) vs PLX at $9AD24E (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$9AD1C6",
+        "push_addr": "$04356D",
+        "pull_addr": "$9AD24E",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9AD1C6: PHX at $04356D (X=16-bit, 2B) vs PLX at $9AD24E (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$9AD1C6",
+        "push_addr": "$04356D",
+        "pull_addr": "$9AD24E",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $203323: PHX at $0A9C31 (X=8-bit, 1B) vs PLX at $203326 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 695345,
+      "context": {
+        "routine": "$203323",
+        "push_addr": "$0A9C31",
+        "pull_addr": "$203326",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $203323: PHX at $0A9C31 (X=8-bit, 1B) vs PLX at $203326 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 695345,
+      "context": {
+        "routine": "$203323",
+        "push_addr": "$0A9C31",
+        "pull_addr": "$203326",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06FF78: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "$06FF78",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06FF78: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "$06FF78",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06A90E: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "$06A90E",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06A90E: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "$06A90E",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $02F7CB: PHX at Overworld_ReloadSubscreenOverlay_Interupt_noSongOfStorms (X=16-bit, 2B) vs PLX at $02B051 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 176146,
+      "context": {
+        "routine": "$02F7CB",
+        "push_addr": "$02B012",
+        "pull_addr": "$02B051",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0406D7: PHA at $0C210D (M=16-bit, 2B) vs PLA at $0406ED (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 794893,
+      "context": {
+        "routine": "$0406D7",
+        "push_addr": "$0C210D",
+        "pull_addr": "$0406ED",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0E97D9: PHY at $030CC8 (X=16-bit, 2B) vs PLY at $038B2F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 199880,
+      "context": {
+        "routine": "$0E97D9",
+        "push_addr": "$030CC8",
+        "pull_addr": "$038B2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Link_Initialize: PHY at $030CC8 (X=16-bit, 2B) vs PLY at $038B2F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 199880,
+      "context": {
+        "routine": "Oracle_Link_Initialize",
+        "push_addr": "$030CC8",
+        "pull_addr": "$038B2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0DE395: PHY at $030CC8 (X=16-bit, 2B) vs PLY at $038B2F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 199880,
+      "context": {
+        "routine": "$0DE395",
+        "push_addr": "$030CC8",
+        "pull_addr": "$038B2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0DDD32: PHY at $030CC8 (X=16-bit, 2B) vs PLY at $038B2F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 199880,
+      "context": {
+        "routine": "$0DDD32",
+        "push_addr": "$030CC8",
+        "pull_addr": "$038B2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CDC972: PHX at $04356D (X=16-bit, 2B) vs PLX at $CDC976 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$CDC972",
+        "push_addr": "$04356D",
+        "pull_addr": "$CDC976",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CD0084: PHX at $04356D (X=16-bit, 2B) vs PLX at $CD911C (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$CD0084",
+        "push_addr": "$04356D",
+        "pull_addr": "$CD911C",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $8907FF: PHY at $030265 (X=16-bit, 2B) vs PLY at $8907C3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$8907FF",
+        "push_addr": "$030265",
+        "pull_addr": "$8907C3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A833CB: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A833CB",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A833CB: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A833CB",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1AE11F: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$1AE11F",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1AE11F: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$1AE11F",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1AE11F: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$1AE11F",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1AE11F: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$1AE11F",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $02FD26: PHX at Overworld_ReloadSubscreenOverlay_Interupt_noSongOfStorms (X=16-bit, 2B) vs PLX at $02B051 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 176146,
+      "context": {
+        "routine": "$02FD26",
+        "push_addr": "$02B012",
+        "pull_addr": "$02B051",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7B9B3: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7B9B3",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7B9B3: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7B9B3",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7B9B3: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7B9B3",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7B9B3: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7B9B3",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7B9B3: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7B9B3",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7B9B3: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7B9B3",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7B9B3: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7B9B3",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $04A182: PHA at $0C210D (M=16-bit, 2B) vs PLA at $04EE21 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 794893,
+      "context": {
+        "routine": "$04A182",
+        "push_addr": "$0C210D",
+        "pull_addr": "$04EE21",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $04A182: PHA at $0C210D (M=16-bit, 2B) vs PLA at $04EE21 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 794893,
+      "context": {
+        "routine": "$04A182",
+        "push_addr": "$0C210D",
+        "pull_addr": "$04EE21",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $04A182: PHA at $0C210D (M=16-bit, 2B) vs PLA at $04EE21 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 794893,
+      "context": {
+        "routine": "$04A182",
+        "push_addr": "$0C210D",
+        "pull_addr": "$04EE21",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $04A182: PHA at $0C210D (M=16-bit, 2B) vs PLA at $04EE21 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 794893,
+      "context": {
+        "routine": "$04A182",
+        "push_addr": "$0C210D",
+        "pull_addr": "$04EE21",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_AncillaAdd_BushPoof: PHA at $DC3EAE (M=8-bit, 1B) vs PLA at $DC3ED7 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 14433966,
+      "context": {
+        "routine": "Oracle_AncillaAdd_BushPoof",
+        "push_addr": "$DC3EAE",
+        "pull_addr": "$DC3ED7",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $93AE03: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$93AE03",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $93AE03: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$93AE03",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0DDFAF: PHY at $030CC8 (X=16-bit, 2B) vs PLY at $038B2F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 199880,
+      "context": {
+        "routine": "$0DDFAF",
+        "push_addr": "$030CC8",
+        "pull_addr": "$038B2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9A40C8: PHX at $04356D (X=16-bit, 2B) vs PLX at $9AD24E (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$9A40C8",
+        "push_addr": "$04356D",
+        "pull_addr": "$9AD24E",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1C3E1E: PHA at $1C3EAE (M=8-bit, 1B) vs PLA at $1C3ED7 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1851054,
+      "context": {
+        "routine": "$1C3E1E",
+        "push_addr": "$1C3EAE",
+        "pull_addr": "$1C3ED7",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $88EE0F: PHX at $1A59C2 (X=16-bit, 2B) vs PLX at $88EE55 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1726914,
+      "context": {
+        "routine": "$88EE0F",
+        "push_addr": "$1A59C2",
+        "pull_addr": "$88EE55",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $FDA80E: PHX at $1A59C2 (X=16-bit, 2B) vs PLX at $095DC3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1726914,
+      "context": {
+        "routine": "$FDA80E",
+        "push_addr": "$1A59C2",
+        "pull_addr": "$095DC3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Overworld_GetPitDestination: PHA at $081495 (M=8-bit, 1B) vs PLA at $0814A2 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 529557,
+      "context": {
+        "routine": "Oracle_Overworld_GetPitDestination",
+        "push_addr": "$081495",
+        "pull_addr": "$0814A2",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $841A1A: PHY at $04350B (X=16-bit, 2B) vs PLY at $8401C8 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275723,
+      "context": {
+        "routine": "$841A1A",
+        "push_addr": "$04350B",
+        "pull_addr": "$8401C8",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $841A1A: PHY at $04350B (X=16-bit, 2B) vs PLY at $8401C8 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275723,
+      "context": {
+        "routine": "$841A1A",
+        "push_addr": "$04350B",
+        "pull_addr": "$8401C8",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9A60C1: PHX at $04356D (X=16-bit, 2B) vs PLX at $9AD24E (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$9A60C1",
+        "push_addr": "$04356D",
+        "pull_addr": "$9AD24E",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $3F8188: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $3F81B7 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$3F8188",
+        "push_addr": "$3F3510",
+        "pull_addr": "$3F81B7",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $3F8188: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $3F81B7 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$3F8188",
+        "push_addr": "$3F3510",
+        "pull_addr": "$3F81B7",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Sprite_Twinrova_Draw: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "Oracle_Sprite_Twinrova_Draw",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Sprite_Twinrova_Draw: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "Oracle_Sprite_Twinrova_Draw",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Sprite_Twinrova_Draw: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "Oracle_Sprite_Twinrova_Draw",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Sprite_Twinrova_Draw: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "Oracle_Sprite_Twinrova_Draw",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Sprite_Twinrova_CheckIfDead: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "Oracle_Sprite_Twinrova_CheckIfDead",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0B9E9B: PHX at $0A9C31 (X=8-bit, 1B) vs PLX at $0B35D4 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 695345,
+      "context": {
+        "routine": "$0B9E9B",
+        "push_addr": "$0A9C31",
+        "pull_addr": "$0B35D4",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06AA14: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "$06AA14",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E84873: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E84873",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E84873: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E84873",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E84873: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E84873",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E84873: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E84873",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E84873: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E84873",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E84873: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E84873",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E84873: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E84873",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $93A404: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$93A404",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $840700: PHX at $04356D (X=16-bit, 2B) vs PLX at $846C36 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$840700",
+        "push_addr": "$04356D",
+        "pull_addr": "$846C36",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $3E3A08: PHA at $3E112D (M=16-bit, 2B) vs PLA at $3E3A2F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4067629,
+      "context": {
+        "routine": "$3E3A08",
+        "push_addr": "$3E112D",
+        "pull_addr": "$3E3A2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $947F8C: PHY at $030265 (X=16-bit, 2B) vs PLY at $947EFA (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$947F8C",
+        "push_addr": "$030265",
+        "pull_addr": "$947EFA",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Sprite_Twinrova_Main: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "Oracle_Sprite_Twinrova_Main",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $061AD0: PHX at $079294 (X=16-bit, 2B) vs PLX at $061B29 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 496276,
+      "context": {
+        "routine": "$061AD0",
+        "push_addr": "$079294",
+        "pull_addr": "$061B29",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06F257: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "$06F257",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06F257: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "$06F257",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E8067A: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E8067A",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9A3A0E: PHX at $04356D (X=16-bit, 2B) vs PLX at $9AD24E (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$9A3A0E",
+        "push_addr": "$04356D",
+        "pull_addr": "$9AD24E",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9A0312: PHX at $04356D (X=16-bit, 2B) vs PLX at $9AD24E (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$9A0312",
+        "push_addr": "$04356D",
+        "pull_addr": "$9AD24E",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1FC26B: PHY at $030716 (X=16-bit, 2B) vs PLY at $1FC2CF (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 198422,
+      "context": {
+        "routine": "$1FC26B",
+        "push_addr": "$030716",
+        "pull_addr": "$1FC2CF",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1FC26B: PHY at $030716 (X=16-bit, 2B) vs PLY at $1FC2CF (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 198422,
+      "context": {
+        "routine": "$1FC26B",
+        "push_addr": "$030716",
+        "pull_addr": "$1FC2CF",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $95E4F6: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$95E4F6",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $BF8188: PHY at $BF3510 (X=16-bit, 2B) vs PLY at $BF81B7 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 12530960,
+      "context": {
+        "routine": "$BF8188",
+        "push_addr": "$BF3510",
+        "pull_addr": "$BF81B7",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $BF8188: PHY at $BF3510 (X=16-bit, 2B) vs PLY at $BF81B7 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 12530960,
+      "context": {
+        "routine": "$BF8188",
+        "push_addr": "$BF3510",
+        "pull_addr": "$BF81B7",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $32850D: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$32850D",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $32850D: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$32850D",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $32D8AD: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$32D8AD",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $32A90B: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$32A90B",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C88689: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C889FB (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C88689",
+        "push_addr": "$C78294",
+        "pull_addr": "$C889FB",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C88689: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C88622 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C88689",
+        "push_addr": "$C78294",
+        "pull_addr": "$C88622",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E846AE: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E846AE",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E846AE: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E846AE",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9A3029: PHX at $04356D (X=16-bit, 2B) vs PLX at $9AD24E (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$9A3029",
+        "push_addr": "$04356D",
+        "pull_addr": "$9AD24E",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9533F9: PHY at $030265 (X=16-bit, 2B) vs PLY at $956ABF (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$9533F9",
+        "push_addr": "$030265",
+        "pull_addr": "$956ABF",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A84873: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A84873",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A84873: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A84873",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A84873: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A84873",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A84873: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A84873",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A84873: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A84873",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A84873: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A84873",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A84873: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A84873",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_Link_SetupHitBox: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "Oracle_Link_SetupHitBox",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E04571: PHY at $19CF80 (X=16-bit, 2B) vs PLY at $E0459A (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1691520,
+      "context": {
+        "routine": "$E04571",
+        "push_addr": "$19CF80",
+        "pull_addr": "$E0459A",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E04571: PHY at $19CF65 (X=16-bit, 2B) vs PLY at $E045CA (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1691493,
+      "context": {
+        "routine": "$E04571",
+        "push_addr": "$19CF65",
+        "pull_addr": "$E045CA",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E04571: PHY at $19CF80 (X=16-bit, 2B) vs PLY at $E0459A (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1691520,
+      "context": {
+        "routine": "$E04571",
+        "push_addr": "$19CF80",
+        "pull_addr": "$E0459A",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $06F705: PHA at $06ECC8 (M=16-bit, 2B) vs PLA at $06ACF1 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 453832,
+      "context": {
+        "routine": "$06F705",
+        "push_addr": "$06ECC8",
+        "pull_addr": "$06ACF1",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $8AAAA8: PHX at $8A9C31 (X=8-bit, 1B) vs PLX at $8AABFC (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 9083953,
+      "context": {
+        "routine": "$8AAAA8",
+        "push_addr": "$8A9C31",
+        "pull_addr": "$8AABFC",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E80526: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E80526",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $BC8703: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$BC8703",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $BC8703: PHA at $27C7BE (M=16-bit, 2B) vs PLA at $BC8726 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607038,
+      "context": {
+        "routine": "$BC8703",
+        "push_addr": "$27C7BE",
+        "pull_addr": "$BC8726",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $932000: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$932000",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $93FF08: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$93FF08",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $934338: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$934338",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D90F7A: PHY at $04350C (X=16-bit, 2B) vs PLY at $D9CCC2 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275724,
+      "context": {
+        "routine": "$D90F7A",
+        "push_addr": "$04350C",
+        "pull_addr": "$D9CCC2",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D90F7A: PHY at $04350B (X=16-bit, 2B) vs PLY at $D9CCCB (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275723,
+      "context": {
+        "routine": "$D90F7A",
+        "push_addr": "$04350B",
+        "pull_addr": "$D9CCCB",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $04EBE5: PHY at $030716 (X=16-bit, 2B) vs PLY at $1FC2CF (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 198422,
+      "context": {
+        "routine": "$04EBE5",
+        "push_addr": "$030716",
+        "pull_addr": "$1FC2CF",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1DD1A8: PHY at $030716 (X=16-bit, 2B) vs PLY at $1FC2CF (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 198422,
+      "context": {
+        "routine": "$1DD1A8",
+        "push_addr": "$030716",
+        "pull_addr": "$1FC2CF",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $FF8188: PHY at $FF3510 (X=16-bit, 2B) vs PLY at $FF81B7 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 16725264,
+      "context": {
+        "routine": "$FF8188",
+        "push_addr": "$FF3510",
+        "pull_addr": "$FF81B7",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $FF8188: PHY at $030265 (X=16-bit, 2B) vs PLY at $FF8229 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$FF8188",
+        "push_addr": "$030265",
+        "pull_addr": "$FF8229",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $FF8188: PHY at $FF3510 (X=16-bit, 2B) vs PLY at $FF81B7 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 16725264,
+      "context": {
+        "routine": "$FF8188",
+        "push_addr": "$FF3510",
+        "pull_addr": "$FF81B7",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $FF8188: PHY at $030265 (X=16-bit, 2B) vs PLY at $FF8229 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$FF8188",
+        "push_addr": "$030265",
+        "pull_addr": "$FF8229",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $95FCB8: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$95FCB8",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A8067A: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A8067A",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_RestoreFloorTile: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "Oracle_RestoreFloorTile",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $32690D: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$32690D",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $32690D: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$32690D",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $19FF84: PHY at $19CF80 (X=16-bit, 2B) vs PLY at $E06821 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1691520,
+      "context": {
+        "routine": "$19FF84",
+        "push_addr": "$19CF80",
+        "pull_addr": "$E06821",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D85C20: PHY at $19CF80 (X=16-bit, 2B) vs PLY at $E06821 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1691520,
+      "context": {
+        "routine": "$D85C20",
+        "push_addr": "$19CF80",
+        "pull_addr": "$E06821",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D85C20: PHY at $19CF80 (X=16-bit, 2B) vs PLY at $E06821 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 1691520,
+      "context": {
+        "routine": "$D85C20",
+        "push_addr": "$19CF80",
+        "pull_addr": "$E06821",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in Oracle_ApplyManhandlaGraphics: PHX at Oracle_ApplyManhandlaGraphics (X=16-bit, 2B) vs PLX at $30B05A (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 3190820,
+      "context": {
+        "routine": "Oracle_ApplyManhandlaGraphics",
+        "push_addr": "$30B024",
+        "pull_addr": "$30B05A",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C79195: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C79195",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C79195: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C79195",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C79195: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C79195",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7AE54: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7AE54",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E80470: PHX at $2701AC (X=8-bit, 1B) vs PLX at $E833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 2556332,
+      "context": {
+        "routine": "$E80470",
+        "push_addr": "$2701AC",
+        "pull_addr": "$E833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $93F90F: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$93F90F",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $931300: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$931300",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $931300: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$931300",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $931300: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$931300",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $838B0C: PHY at $830CC8 (X=16-bit, 2B) vs PLY at $838B42 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 8588488,
+      "context": {
+        "routine": "$838B0C",
+        "push_addr": "$830CC8",
+        "pull_addr": "$838B42",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $838B0C: PHY at $830CC8 (X=16-bit, 2B) vs PLY at $838B2F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 8588488,
+      "context": {
+        "routine": "$838B0C",
+        "push_addr": "$830CC8",
+        "pull_addr": "$838B2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $838B0C: PHX at $04356D (X=16-bit, 2B) vs PLX at $8301A2 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$838B0C",
+        "push_addr": "$04356D",
+        "pull_addr": "$8301A2",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $838B0C: PHY at $830CC8 (X=16-bit, 2B) vs PLY at $838B2F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 8588488,
+      "context": {
+        "routine": "$838B0C",
+        "push_addr": "$830CC8",
+        "pull_addr": "$838B2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $838B0C: PHX at $04356D (X=16-bit, 2B) vs PLX at $8301A2 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$838B0C",
+        "push_addr": "$04356D",
+        "pull_addr": "$8301A2",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $940420: PHY at $030265 (X=16-bit, 2B) vs PLY at $947EFA (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$940420",
+        "push_addr": "$030265",
+        "pull_addr": "$947EFA",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $89877C: PHY at $030265 (X=16-bit, 2B) vs PLY at $892985 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$89877C",
+        "push_addr": "$030265",
+        "pull_addr": "$892985",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $952AE0: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$952AE0",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $952AE0: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$952AE0",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $952AE0: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$952AE0",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $952AE0: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$952AE0",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $95F0E0: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$95F0E0",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $95F0E0: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$95F0E0",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $95CFC3: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$95CFC3",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $F1EA64: PHX at $F1A922 (X=8-bit, 1B) vs PLX at $F1EAD0 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 15837474,
+      "context": {
+        "routine": "$F1EA64",
+        "push_addr": "$F1A922",
+        "pull_addr": "$F1EAD0",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A846AE: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A846AE",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A846AE: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A846AE",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C8E23D: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C8E2C4 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C8E23D",
+        "push_addr": "$C78294",
+        "pull_addr": "$C8E2C4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9FFE69: PHY at $8BCB92 (X=8-bit, 1B) vs PLY at $A02921 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 9161618,
+      "context": {
+        "routine": "$9FFE69",
+        "push_addr": "$8BCB92",
+        "pull_addr": "$A02921",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $870F38: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$870F38",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $870F38: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$870F38",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $FC1DFF: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$FC1DFF",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $FC1DFF: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$FC1DFF",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $93DCF9: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$93DCF9",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F8DAA: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F8DAA",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $F1EAEC: PHX at $F1A922 (X=8-bit, 1B) vs PLX at $F1EB56 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 15837474,
+      "context": {
+        "routine": "$F1EAEC",
+        "push_addr": "$F1A922",
+        "pull_addr": "$F1EB56",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A80526: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A80526",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $32F8D8: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$32F8D8",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C91890: PHX at $C918C6 (X=16-bit, 2B) vs PLX at $C918D2 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13179078,
+      "context": {
+        "routine": "$C91890",
+        "push_addr": "$C918C6",
+        "pull_addr": "$C918D2",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7C16D: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7C16D",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C783D3: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C783D3",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C783D3: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C783D3",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C783D3: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C783D3",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $041200: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$041200",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $041200: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$041200",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $93C500: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$93C500",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $93C500: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$93C500",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $93C500: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$93C500",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F4CD5: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F4CD5",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $950500: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$950500",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $950500: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$950500",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $95AC84: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$95AC84",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C38B0C: PHY at $C30CC8 (X=16-bit, 2B) vs PLY at $C38B42 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 12782792,
+      "context": {
+        "routine": "$C38B0C",
+        "push_addr": "$C30CC8",
+        "pull_addr": "$C38B42",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C38B0C: PHY at $C30CC8 (X=16-bit, 2B) vs PLY at $C38B2F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 12782792,
+      "context": {
+        "routine": "$C38B0C",
+        "push_addr": "$C30CC8",
+        "pull_addr": "$C38B2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C38B0C: PHY at $C30CC8 (X=16-bit, 2B) vs PLY at $C38B2F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 12782792,
+      "context": {
+        "routine": "$C38B0C",
+        "push_addr": "$C30CC8",
+        "pull_addr": "$C38B2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C38B0C: PHY at $C30CC8 (X=16-bit, 2B) vs PLY at $C38B2F (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 12782792,
+      "context": {
+        "routine": "$C38B0C",
+        "push_addr": "$C30CC8",
+        "pull_addr": "$C38B2F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A80470: PHX at $A701AC (X=8-bit, 1B) vs PLX at $A833F8 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 10944940,
+      "context": {
+        "routine": "$A80470",
+        "push_addr": "$A701AC",
+        "pull_addr": "$A833F8",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $32EAEC: PHA at $1AE24A (M=8-bit, 1B) vs PLA at $1AE488 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 1761866,
+      "context": {
+        "routine": "$32EAEC",
+        "push_addr": "$1AE24A",
+        "pull_addr": "$1AE488",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7E1BE: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7E1BE",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7E1BE: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7E1BE",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7E1BE: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7E1BE",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A05956: PHY at $8BCB92 (X=8-bit, 1B) vs PLY at $A05933 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 9161618,
+      "context": {
+        "routine": "$A05956",
+        "push_addr": "$8BCB92",
+        "pull_addr": "$A05933",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $057700: PHX at $052A78 (X=16-bit, 2B) vs PLX at $053438 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 338552,
+      "context": {
+        "routine": "$057700",
+        "push_addr": "$052A78",
+        "pull_addr": "$053438",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $933078: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$933078",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0ED657: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$0ED657",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB8322: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CB4484 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB8322",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CB4484",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB8322: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CB4484 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB8322",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CB4484",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $89F90A: PHY at $030265 (X=16-bit, 2B) vs PLY at $892985 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$89F90A",
+        "push_addr": "$030265",
+        "pull_addr": "$892985",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $95F303: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$95F303",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $95C005: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$95C005",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $95FAFE: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$95FAFE",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7C229: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7C229",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7FA28: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C7BEF6 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7FA28",
+        "push_addr": "$C78294",
+        "pull_addr": "$C7BEF6",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C78F1D: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C78F1D",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C72020: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C72020",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C78C44: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C78C44",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C78C44: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C78C44",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9548FC: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$9548FC",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D534D0: PHY at $088EF0 (X=16-bit, 2B) vs PLY at $D56ABF (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 560880,
+      "context": {
+        "routine": "$D534D0",
+        "push_addr": "$088EF0",
+        "pull_addr": "$D56ABF",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C79495 (M=8-bit, 1B) vs PLA at $C794A2 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 13079701,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C79495",
+        "pull_addr": "$C794A2",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C79495 (M=8-bit, 1B) vs PLA at $C794A2 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 13079701,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C79495",
+        "pull_addr": "$C794A2",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C792A0: PHA at $C79495 (M=8-bit, 1B) vs PLA at $C794A2 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 13079701,
+      "context": {
+        "routine": "$C792A0",
+        "push_addr": "$C79495",
+        "pull_addr": "$C794A2",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7A050: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7A050",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C78946: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C78946",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $931E3E: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$931E3E",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F50DD: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F50DD",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F8FB6: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F8FB6",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F8FB6: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F8FB6",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F8FB6: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F8FB6",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F8FB6: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F8FB6",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F8FB6: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F8FB6",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F8FB6: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F8FB6",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F8FB6: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F8FB6",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F8FB6: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F8FB6",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F8FB6: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F8FB6",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $132088: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132092 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$132088",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132092",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F4BF1: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F4BF1",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1FA75A: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1FA75A",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1FA75A: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1FA75A",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $95FE85: PHY at $030265 (X=16-bit, 2B) vs PLY at $95A0B4 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$95FE85",
+        "push_addr": "$030265",
+        "pull_addr": "$95A0B4",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7F514: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7F514",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $022500: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$022500",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $93B77B: PHA at $27C7C4 (M=16-bit, 2B) vs PLA at $93D85B (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607044,
+      "context": {
+        "routine": "$93B77B",
+        "push_addr": "$27C7C4",
+        "pull_addr": "$93D85B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D5A024: PHA at $27C7BE (M=16-bit, 2B) vs PLA at $D5F877 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607038,
+      "context": {
+        "routine": "$D5A024",
+        "push_addr": "$27C7BE",
+        "pull_addr": "$D5F877",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D5A024: PHA at $27C7BE (M=16-bit, 2B) vs PLA at $D5F877 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607038,
+      "context": {
+        "routine": "$D5A024",
+        "push_addr": "$27C7BE",
+        "pull_addr": "$D5F877",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D5A024: PHA at $27C7BE (M=16-bit, 2B) vs PLA at $D5F877 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607038,
+      "context": {
+        "routine": "$D5A024",
+        "push_addr": "$27C7BE",
+        "pull_addr": "$D5F877",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1FA79A: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1FA79A",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $FE3A08: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$FE3A08",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0DC21C: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$0DC21C",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0DC21C: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$0DC21C",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0DC21C: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$0DC21C",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBC56D: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBC56D",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBC56D: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBC56D",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBC56D: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBC56D",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBC56D: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBC56D",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBC56D: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBC56D",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBC56D: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBC56D",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $07090F: PHY at $030265 (X=16-bit, 2B) vs PLY at $94CFAB (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$07090F",
+        "push_addr": "$030265",
+        "pull_addr": "$94CFAB",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $07090F: PHY at $030265 (X=16-bit, 2B) vs PLY at $94CFAB (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$07090F",
+        "push_addr": "$030265",
+        "pull_addr": "$94CFAB",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $07090F: PHY at $030265 (X=16-bit, 2B) vs PLY at $94CFAB (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$07090F",
+        "push_addr": "$030265",
+        "pull_addr": "$94CFAB",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DD1400: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132092 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$DD1400",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132092",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DD1400: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132092 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$DD1400",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132092",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $130FFE: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $131004 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$130FFE",
+        "push_addr": "$3F3510",
+        "pull_addr": "$131004",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF9F0F: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF9F6C (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF9F0F",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF9F6C",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C7E5F0: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C7E5F0",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C782DA: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C782DA",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $A04028: PHY at $8BCB92 (X=8-bit, 1B) vs PLY at $A02921 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 9161618,
+      "context": {
+        "routine": "$A04028",
+        "push_addr": "$8BCB92",
+        "pull_addr": "$A02921",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F9443: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F9443",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF04EF: PHY at $030265 (X=16-bit, 2B) vs PLY at $94CFAB (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$DF04EF",
+        "push_addr": "$030265",
+        "pull_addr": "$94CFAB",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF04EF: PHY at $030265 (X=16-bit, 2B) vs PLY at $94CFAB (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 197221,
+      "context": {
+        "routine": "$DF04EF",
+        "push_addr": "$030265",
+        "pull_addr": "$94CFAB",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DD28A6: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132092 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$DD28A6",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132092",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF650D: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF9F6C (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF650D",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF9F6C",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C79900: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C79900",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C78A00: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C78A00",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $C766A5: PHA at $C78294 (M=16-bit, 2B) vs PLA at $C78712 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13075092,
+      "context": {
+        "routine": "$C766A5",
+        "push_addr": "$C78294",
+        "pull_addr": "$C78712",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB0568: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB0568",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB05A9: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB05A9",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB81AE: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB81AE",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBE193: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBE193",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F9379: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F9379",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1F9379: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$1F9379",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB3E91: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB3E91",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB3E91: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB3E91",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $9F5956: PHY at $8BCB92 (X=8-bit, 1B) vs PLY at $9F5A3A (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 9161618,
+      "context": {
+        "routine": "$9F5956",
+        "push_addr": "$8BCB92",
+        "pull_addr": "$9F5A3A",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB0128: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB0128",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB0128: PHX at $CBCCDF (X=8-bit, 1B) vs PLX at $CB35D4 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 13356255,
+      "context": {
+        "routine": "$CB0128",
+        "push_addr": "$CBCCDF",
+        "pull_addr": "$CB35D4",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB216A: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB216A",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $13E000: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132092 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$13E000",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132092",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $139443: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132092 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$139443",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132092",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DDB059: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132092 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$DDB059",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132092",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DDB059: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132092 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$DDB059",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132092",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D5F48A: PHY at $088EF0 (X=16-bit, 2B) vs PLY at $D5F49B (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 560880,
+      "context": {
+        "routine": "$D5F48A",
+        "push_addr": "$088EF0",
+        "pull_addr": "$D5F49B",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D55E89: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $D58190 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$D55E89",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$D58190",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D55E89: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $D58190 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$D55E89",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$D58190",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D55E89: PHY at $088EF0 (X=16-bit, 2B) vs PLY at $D5823C (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 560880,
+      "context": {
+        "routine": "$D55E89",
+        "push_addr": "$088EF0",
+        "pull_addr": "$D5823C",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D55E89: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $D58190 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$D55E89",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$D58190",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D55E89: PHY at $088EF0 (X=16-bit, 2B) vs PLY at $D5823C (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 560880,
+      "context": {
+        "routine": "$D55E89",
+        "push_addr": "$088EF0",
+        "pull_addr": "$D5823C",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D55E89: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $D58190 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$D55E89",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$D58190",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D55E89: PHY at $088EF0 (X=16-bit, 2B) vs PLY at $D5823C (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 560880,
+      "context": {
+        "routine": "$D55E89",
+        "push_addr": "$088EF0",
+        "pull_addr": "$D5823C",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $FD1A99: PHX at $04356D (X=16-bit, 2B) vs PLX at $1F8DF3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 275821,
+      "context": {
+        "routine": "$FD1A99",
+        "push_addr": "$04356D",
+        "pull_addr": "$1F8DF3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBE89B: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBE89B",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB0169: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB0169",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB0169: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB0169",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB9F9F: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB9F9F",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DFCEBD: PHX at $049A43 (X=8-bit, 1B) vs PLX at $DF2901 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 301635,
+      "context": {
+        "routine": "$DFCEBD",
+        "push_addr": "$049A43",
+        "pull_addr": "$DF2901",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E7D99E: PHA at $E7C9A4 (M=16-bit, 2B) vs PLA at $E7DA43 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 15190436,
+      "context": {
+        "routine": "$E7D99E",
+        "push_addr": "$E7C9A4",
+        "pull_addr": "$E7DA43",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB20AE: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB20AE",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBCFCF: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBCFCF",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DDB079: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132092 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$DDB079",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132092",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF8DAA: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF8DAA",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E306F1: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132092 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$E306F1",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132092",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D588E0: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $D543E3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$D588E0",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$D543E3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF4CD5: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF4CD5",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB2322: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB2322",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB00AB: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB00AB",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB00AB: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB00AB",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $E3080A: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132092 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$E3080A",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132092",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D5F8D4: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $D543E3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$D5F8D4",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$D543E3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D59020: PHY at $088EF0 (X=16-bit, 2B) vs PLY at $D58FBE (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 560880,
+      "context": {
+        "routine": "$D59020",
+        "push_addr": "$088EF0",
+        "pull_addr": "$D58FBE",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D59020: PHY at $088EF0 (X=16-bit, 2B) vs PLY at $D58FBE (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 560880,
+      "context": {
+        "routine": "$D59020",
+        "push_addr": "$088EF0",
+        "pull_addr": "$D58FBE",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D59020: PHY at $088EF0 (X=16-bit, 2B) vs PLY at $D58FBE (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 560880,
+      "context": {
+        "routine": "$D59020",
+        "push_addr": "$088EF0",
+        "pull_addr": "$D58FBE",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D583FC: PHA at $27C7BE (M=16-bit, 2B) vs PLA at $D58420 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607038,
+      "context": {
+        "routine": "$D583FC",
+        "push_addr": "$27C7BE",
+        "pull_addr": "$D58420",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB99DD: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB99DD",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBB9A9: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBB9A9",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB6898: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB6898",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB29E9: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB29E9",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D50A03: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $D543E3 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$D50A03",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$D543E3",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF50DD: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF50DD",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF8FB6: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF8FB6",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF8FB6: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF8FB6",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF8FB6: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF8FB6",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF8FB6: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF8FB6",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBF3F2: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBF3F2",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB38E1: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB38E1",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB38E1: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB38E1",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF4BF1: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF4BF1",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DFA75A: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DFA75A",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DFA75A: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DFA75A",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D5FE85: PHA at $27C7BE (M=16-bit, 2B) vs PLA at $D5B011 (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 2607038,
+      "context": {
+        "routine": "$D5FE85",
+        "push_addr": "$27C7BE",
+        "pull_addr": "$D5B011",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB0EC6: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB0EC6",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB0EC6: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB0EC6",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB2462: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB2462",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $1303FF: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $13042E (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$1303FF",
+        "push_addr": "$3F3510",
+        "pull_addr": "$13042E",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DFA79A: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DFA79A",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CBF01B: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CBF01B",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF9443: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF9443",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D598F0: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $D58190 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$D598F0",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$D58190",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $D598F0: PHY at $088EF0 (X=16-bit, 2B) vs PLY at $D5823C (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 560880,
+      "context": {
+        "routine": "$D598F0",
+        "push_addr": "$088EF0",
+        "pull_addr": "$D5823C",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB33FF: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB33FF",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB33FF: PHY at $CBCB92 (X=8-bit, 1B) vs PLY at $CB9B53 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 13355922,
+      "context": {
+        "routine": "$CB33FF",
+        "push_addr": "$CBCB92",
+        "pull_addr": "$CB9B53",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF9379: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF9379",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $DF9379: PHX at $08F9BB (X=16-bit, 2B) vs PLX at $DF8DF9 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 588219,
+      "context": {
+        "routine": "$DF9379",
+        "push_addr": "$08F9BB",
+        "pull_addr": "$DF8DF9",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB66F4: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB66F4",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB0507: PHA at $CB446C (M=16-bit, 2B) vs PLA at $CBC63F (M=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 13321324,
+      "context": {
+        "routine": "$CB0507",
+        "push_addr": "$CB446C",
+        "pull_addr": "$CBC63F",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $CB0507: PHY at $CBCB92 (X=8-bit, 1B) vs PLY at $CB9B53 (X=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 13355922,
+      "context": {
+        "routine": "$CB0507",
+        "push_addr": "$CBCB92",
+        "pull_addr": "$CB9B53",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $132F3E: PHY at $3F3510 (X=16-bit, 2B) vs PLY at $132F65 (X=8-bit, 1B) \u2014 stack shift of 1 byte(s)",
+      "address": 4142352,
+      "context": {
+        "routine": "$132F3E",
+        "push_addr": "$3F3510",
+        "pull_addr": "$132F65",
+        "push_width": "16-bit",
+        "pull_width": "8-bit",
+        "flag": "X",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $01C329: PHA at $01C37F (M=8-bit, 1B) vs PLA at $01C4A4 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 115583,
+      "context": {
+        "routine": "$01C329",
+        "push_addr": "$01C37F",
+        "pull_addr": "$01C4A4",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $02F77C: PHA at $027389 (M=8-bit, 1B) vs PLA at $02F7AD (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 160649,
+      "context": {
+        "routine": "$02F77C",
+        "push_addr": "$027389",
+        "pull_addr": "$02F7AD",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $0513D0: PHA at $05C22A (M=8-bit, 1B) vs PLA at $051FB9 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 377386,
+      "context": {
+        "routine": "$0513D0",
+        "push_addr": "$05C22A",
+        "pull_addr": "$051FB9",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "error",
+      "message": "Width-dependent stack imbalance in $07D607: PHA at $07D5CD (M=8-bit, 1B) vs PLA at $07D631 (M=16-bit, 2B) \u2014 stack shift of 1 byte(s)",
+      "address": 513485,
+      "context": {
+        "routine": "$07D607",
+        "push_addr": "$07D5CD",
+        "pull_addr": "$07D631",
+        "push_width": "8-bit",
+        "pull_width": "16-bit",
+        "flag": "M",
+        "stack_shift": 1
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Dynamic TCS at $0082CE: SP loaded from $1F0A with A in 16-bit mode \u2014 verify $1F0A is never corrupted",
+      "address": 33486,
+      "context": {
+        "source_addr": "$1F0A",
+        "state": "M=16 X=16 stk=106"
+      }
+    },
+    {
+      "severity": "warning",
+      "message": "Dynamic TCS at $008329: SP loaded from $1F0A with A in 16-bit mode \u2014 verify $1F0A is never corrupted",
+      "address": 33577,
+      "context": {
+        "source_addr": "$1F0A",
+        "state": "M=16 X=16 stk=189"
+      }
+    }
+  ],
+  "summary": {
+    "hook_violations": 0,
+    "mx_mismatches": 181,
+    "potential_hangs": 0,
+    "color_issues": 0,
+    "hook_state_drift": 0,
+    "hook_abi_issues": 98,
+    "width_stack_imbalances": 415
+  }
+}

@@ -1,0 +1,570 @@
+{
+  "socket": "/tmp/mesen2-oos-codex-softlock-20260130.sock",
+  "captures": {
+    "slot2_loaded": {
+      "diagnostics": {
+        "run_state": {
+          "running": true,
+          "paused": false,
+          "frame": 1594,
+          "fps": 60.1,
+          "consoleType": 0,
+          "debugging": true,
+          "lastSave": null,
+          "lastLoad": {
+            "success": true,
+            "path": "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-softlock-20260130/SaveStates/oos168x_2.mss",
+            "frame": 1594,
+            "timestampMs": 1769814362230
+          }
+        },
+        "rom_info": {
+          "filename": "oos168x.sfc",
+          "format": "Sfc",
+          "consoleType": 0,
+          "crc32": "48A41F4C",
+          "sha1": "6C9882E45978E796BFE4AB5DBFCF5DE71F6E93F6",
+          "frameCount": 1594
+        },
+        "oracle_state": {
+          "mode": 1,
+          "mode_name": "File Select",
+          "submode": 5,
+          "area": 0,
+          "area_name": "Area 0x00",
+          "room": 0,
+          "room_name": "Area 0x00",
+          "dungeon_room": 0,
+          "indoors": 0,
+          "link_x": 0,
+          "link_y": 0,
+          "link_z": 0,
+          "link_dir": 0,
+          "link_dir_name": "Up",
+          "link_state": 0,
+          "link_form": 0,
+          "link_form_name": "Normal",
+          "scroll_x": 0,
+          "scroll_y": 0,
+          "time_hours": 8,
+          "time_minutes": 0,
+          "time_speed": 63,
+          "health": 0,
+          "max_health": 0,
+          "magic": 0,
+          "rupees": 0
+        },
+        "time_state": {
+          "hours": 8,
+          "minutes": 0,
+          "speed": 63,
+          "phase": "day",
+          "is_night": false,
+          "subcolor": "0x0000",
+          "palette": {
+            "red": "0x0001",
+            "green": "0x0020",
+            "blue": "0x0400"
+          }
+        },
+        "overworld": {
+          "mode": 1,
+          "mode_name": "File Select",
+          "submode": 5,
+          "submode_name": "START_SCROLL",
+          "indoors": false,
+          "is_overworld": false,
+          "is_transition": false
+        },
+        "camera": {
+          "scroll_x": 0,
+          "scroll_y": 0,
+          "link_x": 0,
+          "link_y": 0,
+          "offset_x": 0,
+          "offset_y": 0
+        },
+        "camera_ok": true,
+        "warnings": []
+      },
+      "cpu": {
+        "pc": "0x0080C9",
+        "flags": "0x30",
+        "a": "0xB700",
+        "x": "0x0000",
+        "y": "0x0000",
+        "sp": "0x01FB",
+        "d": "0x0000",
+        "k": "0x00",
+        "dbr": "0x00",
+        "p": "0x36",
+        "cycles": 69583347,
+        "consoleType": 0
+      },
+      "ram": {
+        "mode": 1,
+        "submode": 5,
+        "frame_counter": 4,
+        "indoors": 0,
+        "link_x": 0,
+        "link_y": 0,
+        "room_layout": 0,
+        "area_id": 0,
+        "inidisp": 15,
+        "inidisp_dp": 15
+      }
+    },
+    "slot2_after_press_a_240": {
+      "diagnostics": {
+        "run_state": {
+          "running": true,
+          "paused": false,
+          "frame": 1594,
+          "fps": 60.1,
+          "consoleType": 0,
+          "debugging": true,
+          "lastSave": null,
+          "lastLoad": {
+            "success": true,
+            "path": "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-softlock-20260130/SaveStates/oos168x_2.mss",
+            "frame": 1594,
+            "timestampMs": 1769814362230
+          }
+        },
+        "rom_info": {
+          "filename": "oos168x.sfc",
+          "format": "Sfc",
+          "consoleType": 0,
+          "crc32": "48A41F4C",
+          "sha1": "6C9882E45978E796BFE4AB5DBFCF5DE71F6E93F6",
+          "frameCount": 1594
+        },
+        "oracle_state": {
+          "mode": 1,
+          "mode_name": "File Select",
+          "submode": 5,
+          "area": 0,
+          "area_name": "Area 0x00",
+          "room": 0,
+          "room_name": "Area 0x00",
+          "dungeon_room": 0,
+          "indoors": 0,
+          "link_x": 0,
+          "link_y": 0,
+          "link_z": 0,
+          "link_dir": 0,
+          "link_dir_name": "Up",
+          "link_state": 0,
+          "link_form": 0,
+          "link_form_name": "Normal",
+          "scroll_x": 0,
+          "scroll_y": 0,
+          "time_hours": 8,
+          "time_minutes": 0,
+          "time_speed": 63,
+          "health": 0,
+          "max_health": 0,
+          "magic": 0,
+          "rupees": 0
+        },
+        "time_state": {
+          "hours": 8,
+          "minutes": 0,
+          "speed": 63,
+          "phase": "day",
+          "is_night": false,
+          "subcolor": "0x0000",
+          "palette": {
+            "red": "0x0001",
+            "green": "0x0020",
+            "blue": "0x0400"
+          }
+        },
+        "overworld": {
+          "mode": 1,
+          "mode_name": "File Select",
+          "submode": 5,
+          "submode_name": "START_SCROLL",
+          "indoors": false,
+          "is_overworld": false,
+          "is_transition": false
+        },
+        "camera": {
+          "scroll_x": 0,
+          "scroll_y": 0,
+          "link_x": 0,
+          "link_y": 0,
+          "offset_x": 0,
+          "offset_y": 0
+        },
+        "camera_ok": true,
+        "warnings": []
+      },
+      "cpu": {
+        "pc": "0x0080CA",
+        "flags": "0x30",
+        "a": "0xB700",
+        "x": "0x0000",
+        "y": "0x0000",
+        "sp": "0x01FB",
+        "d": "0x0000",
+        "k": "0x00",
+        "dbr": "0x00",
+        "p": "0x36",
+        "cycles": 69583349,
+        "consoleType": 0
+      },
+      "ram": {
+        "mode": 1,
+        "submode": 5,
+        "frame_counter": 4,
+        "indoors": 0,
+        "link_x": 0,
+        "link_y": 0,
+        "room_layout": 0,
+        "area_id": 0,
+        "inidisp": 15,
+        "inidisp_dp": 15
+      }
+    },
+    "slot2_after_press_a_840": {
+      "diagnostics": {
+        "run_state": {
+          "running": true,
+          "paused": true,
+          "frame": 1594,
+          "fps": 60.1,
+          "consoleType": 0,
+          "debugging": true,
+          "lastSave": null,
+          "lastLoad": {
+            "success": true,
+            "path": "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-softlock-20260130/SaveStates/oos168x_2.mss",
+            "frame": 1594,
+            "timestampMs": 1769814362230
+          }
+        },
+        "rom_info": {
+          "filename": "oos168x.sfc",
+          "format": "Sfc",
+          "consoleType": 0,
+          "crc32": "48A41F4C",
+          "sha1": "6C9882E45978E796BFE4AB5DBFCF5DE71F6E93F6",
+          "frameCount": 1594
+        },
+        "oracle_state": {
+          "mode": 1,
+          "mode_name": "File Select",
+          "submode": 5,
+          "area": 0,
+          "area_name": "Area 0x00",
+          "room": 0,
+          "room_name": "Area 0x00",
+          "dungeon_room": 0,
+          "indoors": 0,
+          "link_x": 0,
+          "link_y": 0,
+          "link_z": 0,
+          "link_dir": 0,
+          "link_dir_name": "Up",
+          "link_state": 0,
+          "link_form": 0,
+          "link_form_name": "Normal",
+          "scroll_x": 0,
+          "scroll_y": 0,
+          "time_hours": 8,
+          "time_minutes": 0,
+          "time_speed": 63,
+          "health": 0,
+          "max_health": 0,
+          "magic": 0,
+          "rupees": 0
+        },
+        "time_state": {
+          "hours": 8,
+          "minutes": 0,
+          "speed": 63,
+          "phase": "day",
+          "is_night": false,
+          "subcolor": "0x0000",
+          "palette": {
+            "red": "0x0001",
+            "green": "0x0020",
+            "blue": "0x0400"
+          }
+        },
+        "overworld": {
+          "mode": 1,
+          "mode_name": "File Select",
+          "submode": 5,
+          "submode_name": "START_SCROLL",
+          "indoors": false,
+          "is_overworld": false,
+          "is_transition": false
+        },
+        "camera": {
+          "scroll_x": 0,
+          "scroll_y": 0,
+          "link_x": 0,
+          "link_y": 0,
+          "offset_x": 0,
+          "offset_y": 0
+        },
+        "camera_ok": true,
+        "warnings": []
+      },
+      "cpu": {
+        "pc": "0x0080CA",
+        "flags": "0x30",
+        "a": "0xB700",
+        "x": "0x0000",
+        "y": "0x0000",
+        "sp": "0x01FB",
+        "d": "0x0000",
+        "k": "0x00",
+        "dbr": "0x00",
+        "p": "0x36",
+        "cycles": 69583349,
+        "consoleType": 0
+      },
+      "ram": {
+        "mode": 1,
+        "submode": 5,
+        "frame_counter": 4,
+        "indoors": 0,
+        "link_x": 0,
+        "link_y": 0,
+        "room_layout": 0,
+        "area_id": 0,
+        "inidisp": 15,
+        "inidisp_dp": 15
+      }
+    },
+    "slot1_loaded": {
+      "diagnostics": {
+        "run_state": {
+          "running": true,
+          "paused": true,
+          "frame": 1810,
+          "fps": 60.1,
+          "consoleType": 0,
+          "debugging": true,
+          "lastSave": null,
+          "lastLoad": {
+            "success": true,
+            "path": "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-softlock-20260130/SaveStates/oos168x_1.mss",
+            "frame": 1810,
+            "timestampMs": 1769814362249
+          }
+        },
+        "rom_info": {
+          "filename": "oos168x.sfc",
+          "format": "Sfc",
+          "consoleType": 0,
+          "crc32": "48A41F4C",
+          "sha1": "6C9882E45978E796BFE4AB5DBFCF5DE71F6E93F6",
+          "frameCount": 1810
+        },
+        "oracle_state": {
+          "mode": 9,
+          "mode_name": "Overworld",
+          "submode": 0,
+          "area": 64,
+          "area_name": "Temporal Pyramid",
+          "room": 32,
+          "room_name": "Temporal Pyramid",
+          "dungeon_room": 0,
+          "indoors": 0,
+          "link_x": 744,
+          "link_y": 645,
+          "link_z": 65535,
+          "link_dir": 2,
+          "link_dir_name": "Down",
+          "link_state": 0,
+          "link_form": 6,
+          "link_form_name": "GBC Link",
+          "scroll_x": 2,
+          "scroll_y": 1,
+          "time_hours": 8,
+          "time_minutes": 8,
+          "time_speed": 63,
+          "health": 48,
+          "max_health": 80,
+          "magic": 128,
+          "rupees": 999
+        },
+        "time_state": {
+          "hours": 8,
+          "minutes": 8,
+          "speed": 63,
+          "phase": "day",
+          "is_night": false,
+          "subcolor": "0x7A18",
+          "palette": {
+            "red": "0x0018",
+            "green": "0x0200",
+            "blue": "0x7800"
+          }
+        },
+        "overworld": {
+          "mode": 9,
+          "mode_name": "Overworld",
+          "submode": 0,
+          "submode_name": "PLAYER_CONTROL",
+          "indoors": false,
+          "is_overworld": true,
+          "is_transition": false
+        },
+        "camera": {
+          "scroll_x": 514,
+          "scroll_y": 513,
+          "link_x": 744,
+          "link_y": 645,
+          "offset_x": 230,
+          "offset_y": 132
+        },
+        "camera_ok": false,
+        "warnings": []
+      },
+      "cpu": {
+        "pc": "0x008034",
+        "flags": "0x30",
+        "a": "0xB700",
+        "x": "0x0000",
+        "y": "0x0000",
+        "sp": "0x01FF",
+        "d": "0x0000",
+        "k": "0x00",
+        "dbr": "0x00",
+        "p": "0x32",
+        "cycles": 78171795,
+        "consoleType": 0
+      },
+      "ram": {
+        "mode": 9,
+        "submode": 0,
+        "frame_counter": 118,
+        "indoors": 0,
+        "link_x": 744,
+        "link_y": 645,
+        "room_layout": 32,
+        "area_id": 64,
+        "inidisp": 15,
+        "inidisp_dp": 15
+      }
+    },
+    "slot1_after_600": {
+      "diagnostics": {
+        "run_state": {
+          "running": true,
+          "paused": true,
+          "frame": 1810,
+          "fps": 60.1,
+          "consoleType": 0,
+          "debugging": true,
+          "lastSave": null,
+          "lastLoad": {
+            "success": true,
+            "path": "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-softlock-20260130/SaveStates/oos168x_1.mss",
+            "frame": 1810,
+            "timestampMs": 1769814362249
+          }
+        },
+        "rom_info": {
+          "filename": "oos168x.sfc",
+          "format": "Sfc",
+          "consoleType": 0,
+          "crc32": "48A41F4C",
+          "sha1": "6C9882E45978E796BFE4AB5DBFCF5DE71F6E93F6",
+          "frameCount": 1810
+        },
+        "oracle_state": {
+          "mode": 9,
+          "mode_name": "Overworld",
+          "submode": 0,
+          "area": 64,
+          "area_name": "Temporal Pyramid",
+          "room": 32,
+          "room_name": "Temporal Pyramid",
+          "dungeon_room": 0,
+          "indoors": 0,
+          "link_x": 744,
+          "link_y": 645,
+          "link_z": 65535,
+          "link_dir": 2,
+          "link_dir_name": "Down",
+          "link_state": 0,
+          "link_form": 6,
+          "link_form_name": "GBC Link",
+          "scroll_x": 2,
+          "scroll_y": 1,
+          "time_hours": 8,
+          "time_minutes": 8,
+          "time_speed": 63,
+          "health": 48,
+          "max_health": 80,
+          "magic": 128,
+          "rupees": 999
+        },
+        "time_state": {
+          "hours": 8,
+          "minutes": 8,
+          "speed": 63,
+          "phase": "day",
+          "is_night": false,
+          "subcolor": "0x7A18",
+          "palette": {
+            "red": "0x0018",
+            "green": "0x0200",
+            "blue": "0x7800"
+          }
+        },
+        "overworld": {
+          "mode": 9,
+          "mode_name": "Overworld",
+          "submode": 0,
+          "submode_name": "PLAYER_CONTROL",
+          "indoors": false,
+          "is_overworld": true,
+          "is_transition": false
+        },
+        "camera": {
+          "scroll_x": 514,
+          "scroll_y": 513,
+          "link_x": 744,
+          "link_y": 645,
+          "offset_x": 230,
+          "offset_y": 132
+        },
+        "camera_ok": false,
+        "warnings": []
+      },
+      "cpu": {
+        "pc": "0x008034",
+        "flags": "0x30",
+        "a": "0xB700",
+        "x": "0x0000",
+        "y": "0x0000",
+        "sp": "0x01FF",
+        "d": "0x0000",
+        "k": "0x00",
+        "dbr": "0x00",
+        "p": "0x32",
+        "cycles": 78171795,
+        "consoleType": 0
+      },
+      "ram": {
+        "mode": 9,
+        "submode": 0,
+        "frame_counter": 118,
+        "indoors": 0,
+        "link_x": 744,
+        "link_y": 645,
+        "room_layout": 32,
+        "area_id": 64,
+        "inidisp": 15,
+        "inidisp_dp": 15
+      }
+    }
+  }
+}
