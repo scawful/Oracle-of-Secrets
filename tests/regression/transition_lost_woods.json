@@ -1,0 +1,91 @@
+{
+  "name": "Lost Woods Entry and Exit",
+  "description": "Verify Lost Woods entry/exit transitions don't cause camera desync or softlock",
+  "version": "1.0",
+  "tags": ["regression", "transition", "overworld", "lost_woods"],
+  "timeout_seconds": 45,
+  "saveState": {
+    "id": "pre_lost_woods",
+    "waitSeconds": 2,
+    "allowMissing": true
+  },
+  "preconditions": {
+    "$7E0010": {
+      "equals": 9,
+      "desc": "Game mode should be overworld (0x09)"
+    }
+  },
+  "steps": [
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "equals": 9,
+      "description": "Start in overworld mode"
+    },
+    {
+      "type": "press",
+      "button": "UP",
+      "frames": 60,
+      "description": "Walk north into Lost Woods"
+    },
+    {
+      "type": "wait",
+      "seconds": 3,
+      "description": "Wait for Lost Woods transition"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "in": [9, 14],
+      "description": "Should be in overworld (9) or special area (14)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E2100",
+      "condition": "not_equals",
+      "value": 0,
+      "description": "INIDISP not 0 (no black screen)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0020",
+      "condition": "less_than",
+      "value": 60000,
+      "description": "Link Y position valid"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0022",
+      "condition": "less_than",
+      "value": 60000,
+      "description": "Link X position valid"
+    },
+    {
+      "type": "press",
+      "button": "DOWN",
+      "frames": 120,
+      "description": "Walk south to exit Lost Woods"
+    },
+    {
+      "type": "wait",
+      "seconds": 3,
+      "description": "Wait for exit transition"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "in": [9, 14],
+      "description": "Should be back in overworld after exit"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0011",
+      "equals": 0,
+      "description": "Submodule should be idle (not stuck in transition)"
+    }
+  ],
+  "onFailure": {
+    "expert": "farore",
+    "context": "Lost Woods transition failed. Known issue area — check camera desync, ZSCustomOverworld special area handling, and transition coordinate preservation."
+  }
+}

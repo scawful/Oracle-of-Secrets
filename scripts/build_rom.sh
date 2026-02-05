@@ -135,6 +135,12 @@ fi
 # Run ZScream overlap check
 python3 "$repo_root/scripts/check_zscream_overlap.py"
 
+# Generate annotations.json if requested (ASM @watch/@assert tags)
+if [[ "${OOS_GENERATE_ANNOTATIONS:-0}" == "1" ]]; then
+  annotations_out="$repo_root/.cache/annotations.json"
+  python3 "$repo_root/scripts/generate_annotations.py" --root "$repo_root" --out "$annotations_out" || true
+fi
+
 # Run static analysis if hooks.json exists
 hooks_json="$repo_root/hooks.json"
 if [[ -f "$patched_rom" ]]; then
@@ -142,6 +148,37 @@ if [[ -f "$patched_rom" ]]; then
     echo "[*] Generating hooks.json..."
     python3 "$repo_root/scripts/generate_hooks_json.py" --root "$repo_root" --output "$hooks_json" --rom "$patched_rom" || true
   fi
+fi
+
+# Optional validation: ensure hooks.json matches generator output
+# Set OOS_VALIDATE_ON_BUILD=1 to run hook + sprite checks non-fatally on every build.
+validate_on_build="${OOS_VALIDATE_ON_BUILD:-0}"
+if [[ "${OOS_VALIDATE_HOOKS:-0}" == "1" || "$validate_on_build" == "1" ]]; then
+  if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
+    if [[ "$validate_on_build" == "1" && "${OOS_VALIDATE_HOOKS:-0}" != "1" ]]; then
+      echo "[*] Validating hooks.json (non-fatal)..."
+    else
+      echo "[*] Validating hooks.json..."
+    fi
+    python3 "$repo_root/scripts/verify_hooks_json.py" \
+      --root "$repo_root" --rom "$patched_rom" --hooks "$hooks_json" || true
+  else
+    echo "[-] Warning: hooks.json or patched ROM missing; skipping hook validation."
+  fi
+fi
+
+# Optional validation: sprite registry
+if [[ "${OOS_VALIDATE_SPRITES:-0}" == "1" || "$validate_on_build" == "1" ]]; then
+  if [[ "$validate_on_build" == "1" && "${OOS_VALIDATE_SPRITES:-0}" != "1" ]]; then
+    echo "[*] Validating sprite registry (non-fatal)..."
+  else
+    echo "[*] Validating sprite registry..."
+  fi
+  sprite_validate_args=("$repo_root/scripts/validate_sprite_registry.py")
+  if [[ "${OOS_VALIDATE_SPRITES_STRICT:-0}" == "1" ]]; then
+    sprite_validate_args+=("--strict")
+  fi
+  python3 "${sprite_validate_args[@]}" || true
 fi
 
 if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
@@ -160,13 +197,20 @@ if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
   fi
 
   if [[ -n "$analyzer_script" ]]; then
-    # Run static analysis - fail build on errors (warnings are OK)
-    set +e
+    # Run static analysis - fail build on errors (warnings are OK unless --strict)
+    lint_args=()
     if [[ "$analyzer_script" == *"oracle_analyzer"* ]]; then
-      python3 "$analyzer_script" "$patched_rom" --hooks "$hooks_json" --check-hooks --find-mx --find-width-imbalance --check-abi --check-sprite-tables
+      lint_args+=("$patched_rom" --hooks "$hooks_json" --check-hooks --find-mx --find-width-imbalance --check-abi --check-sprite-tables --check-phb-plb --check-jsl-targets --check-rtl-rts)
+      # Strict mode: treat warnings as errors (set OOS_LINT_STRICT=1 to enable)
+      if [[ "${OOS_LINT_STRICT:-0}" == "1" ]]; then
+        lint_args+=(--strict)
+      fi
     else
-      python3 "$analyzer_script" "$patched_rom" --hooks "$hooks_json"
+      lint_args+=("$patched_rom" --hooks "$hooks_json")
     fi
+
+    set +e
+    python3 "$analyzer_script" "${lint_args[@]}"
     analysis_exit=$?
     set -e
 

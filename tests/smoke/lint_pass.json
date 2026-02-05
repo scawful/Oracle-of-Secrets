@@ -1,0 +1,20 @@
+{
+  "name": "Static Analysis Lint Pass",
+  "description": "Verify oracle_analyzer.py reports zero errors on the built ROM (Tier 1, no emulator needed)",
+  "version": "1.0",
+  "tags": ["smoke", "lint", "static-analysis", "tier1"],
+  "timeout_seconds": 60,
+  "requiresEmulator": false,
+  "steps": [
+    {
+      "type": "exec",
+      "command": "python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc --hooks hooks.json --check-hooks --find-mx --find-width-imbalance --check-abi --check-sprite-tables --check-phb-plb --check-jsl-targets --check-rtl-rts",
+      "expectedExitCode": 0,
+      "description": "oracle_analyzer.py should report zero errors"
+    }
+  ],
+  "onFailure": {
+    "expert": "nayru",
+    "context": "Static analysis lint failed. Check the oracle_analyzer output for specific errors — likely register width mismatches, stack imbalances, or hook ABI violations."
+  }
+}

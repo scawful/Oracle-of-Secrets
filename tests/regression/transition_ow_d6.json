@@ -1,0 +1,75 @@
+{
+  "name": "Overworld to Dungeon 6 Transition",
+  "description": "Verify OW→D6 entrance transition completes without black screen",
+  "version": "1.0",
+  "tags": ["regression", "transition", "overworld", "dungeon", "d6"],
+  "timeout_seconds": 30,
+  "saveState": {
+    "id": "pre_d6_entrance",
+    "waitSeconds": 2,
+    "allowMissing": true
+  },
+  "preconditions": {
+    "$7E0010": {
+      "equals": 9,
+      "desc": "Game mode should be overworld (0x09)"
+    }
+  },
+  "steps": [
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "equals": 9,
+      "description": "Start in overworld mode"
+    },
+    {
+      "type": "press",
+      "button": "UP",
+      "frames": 60,
+      "description": "Walk into D6 entrance"
+    },
+    {
+      "type": "wait",
+      "seconds": 3,
+      "description": "Wait for dungeon transition to complete"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "equals": 7,
+      "description": "Should be in dungeon mode (0x07)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E2100",
+      "condition": "not_equals",
+      "value": 0,
+      "description": "INIDISP not 0 (no forced blank / black screen)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0020",
+      "condition": "less_than",
+      "value": 60000,
+      "description": "Link Y position valid"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0022",
+      "condition": "less_than",
+      "value": 60000,
+      "description": "Link X position valid"
+    },
+    {
+      "type": "assert",
+      "address": "$7E00A0",
+      "condition": "not_equals",
+      "value": 0,
+      "description": "Dungeon room ID should be set (not 0)"
+    }
+  ],
+  "onFailure": {
+    "expert": "veran",
+    "context": "OW→D6 transition failed. Check dungeon entrance table, ZSCustomOverworld dungeon warp, and Module_MainRouting flow."
+  }
+}

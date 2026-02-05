@@ -41,6 +41,12 @@ python3 z3dk/scripts/generate_annotations.py \
   --root oracle-of-secrets \
   --out oracle-of-secrets/.cache/annotations.json
 ```
+Or use the local generator when z3dk isn't available:
+```
+python3 oracle-of-secrets/scripts/generate_annotations.py \
+  --root oracle-of-secrets \
+  --out oracle-of-secrets/.cache/annotations.json
+```
 
 2) Generate a watch file from annotations:
 ```

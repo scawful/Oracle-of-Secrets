@@ -1,0 +1,73 @@
+{
+  "name": "Dungeon 6 Inter-Room Transition",
+  "description": "Verify D6 room-to-room transitions work without state corruption",
+  "version": "1.0",
+  "tags": ["regression", "transition", "dungeon", "d6", "interroom"],
+  "timeout_seconds": 30,
+  "saveState": {
+    "id": "inside_d6",
+    "waitSeconds": 2,
+    "allowMissing": true
+  },
+  "preconditions": {
+    "$7E0010": {
+      "equals": 7,
+      "desc": "Game mode should be dungeon (0x07)"
+    }
+  },
+  "steps": [
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "equals": 7,
+      "description": "Start in dungeon mode"
+    },
+    {
+      "type": "snapshot",
+      "name": "initial_room",
+      "addresses": ["$7E00A0"],
+      "description": "Capture initial room ID"
+    },
+    {
+      "type": "press",
+      "button": "UP",
+      "frames": 120,
+      "description": "Walk north through door"
+    },
+    {
+      "type": "wait",
+      "seconds": 2,
+      "description": "Wait for room transition"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "in": [7, 9],
+      "description": "Should still be in dungeon (7) or overworld if exited (9)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E2100",
+      "condition": "not_equals",
+      "value": 0,
+      "description": "INIDISP not 0 (no black screen)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0020",
+      "condition": "less_than",
+      "value": 60000,
+      "description": "Link Y position valid"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0011",
+      "equals": 0,
+      "description": "Submodule should be 0 (idle, not stuck in transition)"
+    }
+  ],
+  "onFailure": {
+    "expert": "veran",
+    "context": "D6 inter-room transition failed. Check dungeon door tables, room transition subroutines, and submodule state."
+  }
+}

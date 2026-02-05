@@ -1,0 +1,58 @@
+#!/bin/bash
+# Oracle of Secrets - Pre-commit lint hook
+# Runs oracle_analyzer.py --diff --strict on staged .asm files.
+#
+# Install: git config core.hooksPath .githooks
+# Skip:    git commit --no-verify (use sparingly)
+
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+oracle_analyzer="$repo_root/../z3dk/scripts/oracle_analyzer.py"
+
+# Check if the analyzer exists
+if [[ ! -f "$oracle_analyzer" ]]; then
+  echo "[lint] oracle_analyzer.py not found at $oracle_analyzer, skipping lint."
+  exit 0
+fi
+
+# Check if any .asm files are staged
+staged_asm="$(git diff --cached --name-only --diff-filter=ACM -- '*.asm' || true)"
+if [[ -z "$staged_asm" ]]; then
+  exit 0
+fi
+
+echo "[lint] Checking staged ASM files..."
+
+# Check if ROM and hooks exist (needed for full analysis)
+rom="$repo_root/Roms/oos168x.sfc"
+hooks="$repo_root/hooks.json"
+
+if [[ ! -f "$rom" ]]; then
+  echo "[lint] ROM not found ($rom), skipping lint. Build first."
+  exit 0
+fi
+
+# Run the analyzer in diff+strict mode
+lint_args=("$rom" --strict --diff --project-root "$repo_root")
+
+if [[ -f "$hooks" ]]; then
+  lint_args+=(--hooks "$hooks")
+fi
+
+lint_args+=(--check-hooks --find-mx --find-width-imbalance --check-abi --check-phb-plb --check-jsl-targets --check-rtl-rts)
+
+set +e
+python3 "$oracle_analyzer" "${lint_args[@]}"
+lint_exit=$?
+set -e
+
+if [[ $lint_exit -ne 0 ]]; then
+  echo ""
+  echo "[lint] BLOCKED: Static analysis found issues in staged ASM files."
+  echo "[lint] Fix the issues above, or use 'git commit --no-verify' to skip."
+  exit 1
+fi
+
+echo "[lint] All checks passed."
+exit 0

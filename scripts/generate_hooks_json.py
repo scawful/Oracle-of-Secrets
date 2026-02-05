@@ -34,6 +34,8 @@ LONG_ENTRY_RE = re.compile(r'(FullLongEntry|_LongEntry|_Long)$')
 ABI_RE = re.compile(r'@abi\s+([A-Za-z0-9_]+)', re.IGNORECASE)
 NO_RETURN_RE = re.compile(r'@no_return\\b', re.IGNORECASE)
 MX_RE = re.compile(r'^m(8|16)x(8|16)$', re.IGNORECASE)
+HOOK_DIRECTIVE_RE = re.compile(r'@hook\\b(.*)', re.IGNORECASE)
+HOOK_KV_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)=(\"[^\"]*\"|'[^']*'|\\S+)")
 
 SKIP_DIRS = {
     '.git', '.context', '.claude', '.cursor', 'Roms', 'docs',
@@ -145,6 +147,50 @@ def _scan_annotations(lines: list[str], start_idx: int) -> tuple[str, bool, Opti
     return abi_class, no_return, expected_m, expected_x
 
 
+def _parse_bool(value: str) -> Optional[bool]:
+    lowered = value.strip().lower()
+    if lowered in {"1", "true", "yes", "y"}:
+        return True
+    if lowered in {"0", "false", "no", "n"}:
+        return False
+    return None
+
+
+def _parse_int(value: str) -> Optional[int]:
+    token = value.strip()
+    if not token:
+        return None
+    if token.startswith(('"', "'")) and token.endswith(('"', "'")):
+        token = token[1:-1]
+    if token.startswith("$"):
+        token = "0x" + token[1:]
+    try:
+        return int(token, 0)
+    except ValueError:
+        return None
+
+
+def _scan_hook_directive(lines: list[str], start_idx: int) -> dict:
+    directive: dict[str, object] = {}
+    for j in range(start_idx, min(start_idx + 20, len(lines))):
+        line = lines[j]
+        if ";" in line:
+            comment = line.split(";", 1)[1]
+            m = HOOK_DIRECTIVE_RE.search(comment)
+            if m:
+                tail = m.group(1).strip()
+                for kv in HOOK_KV_RE.finditer(tail):
+                    key = kv.group(1).lower()
+                    val = kv.group(2)
+                    if val.startswith(('"', "'")) and val.endswith(('"', "'")):
+                        val = val[1:-1]
+                    directive[key] = val
+                directive.setdefault("_present", True)
+        if ORG_RE.match(line) and j != start_idx:
+            break
+    return directive
+
+
 def _first_instruction(lines: list[str], start_idx: int) -> tuple[str, Optional[str]]:
     """Return (kind, target) based on first meaningful instruction after org."""
     for j in range(start_idx + 1, min(start_idx + 15, len(lines))):
@@ -200,8 +246,16 @@ def scan_hooks(root: Path) -> list[HookEntry]:
             addr = int(m.group(1), 16)
             kind, target = _first_instruction(lines, idx)
             abi_class_note, no_return, ann_m, ann_x = _scan_annotations(lines, idx)
+            hook_directive = _scan_hook_directive(lines, idx)
             source = f"{asm_path.relative_to(root)}:{idx + 1}"
-            name = target or f"hook_{addr:06X}"
+            directive_name = hook_directive.get("name")
+            directive_kind = hook_directive.get("kind")
+            directive_target = hook_directive.get("target")
+            name = (directive_name or target or f"hook_{addr:06X}")
+            if directive_kind:
+                kind = str(directive_kind).lower()
+            if directive_target:
+                target = str(directive_target)
             module = _module_from_path(asm_path, root)
             skip_abi = (
                 kind == 'data'
@@ -212,19 +266,42 @@ def scan_hooks(root: Path) -> list[HookEntry]:
                 or name.startswith('.')
                 or name.startswith('$')
             )
+            directive_skip = hook_directive.get("skip_abi")
+            if directive_skip is not None:
+                parsed = _parse_bool(str(directive_skip))
+                if parsed is not None:
+                    skip_abi = parsed
             if addr in EXPECTED_NAMES and (name.startswith('hook_') or name.startswith('.') or name.startswith('$')):
                 name = EXPECTED_NAMES[addr]
-            abi_class = abi_class_note or _abi_class(name or target)
+            directive_abi = hook_directive.get("abi") or hook_directive.get("abi_class")
+            if directive_abi:
+                abi_class = str(directive_abi)
+            else:
+                abi_class = abi_class_note or _abi_class(name or target)
             if no_return:
                 skip_abi = True
             if addr in FORCE_ABI_ADDRESSES:
                 skip_abi = False
+            directive_expected_m = _parse_int(str(hook_directive.get("expected_m"))) if hook_directive.get("expected_m") is not None else None
+            directive_expected_x = _parse_int(str(hook_directive.get("expected_x"))) if hook_directive.get("expected_x") is not None else None
+            if directive_expected_m is not None:
+                ann_m = directive_expected_m
+            if directive_expected_x is not None:
+                ann_x = directive_expected_x
+            directive_module = hook_directive.get("module")
+            if directive_module:
+                module = str(directive_module)
+            note = ''
+            directive_note = hook_directive.get("note")
+            if directive_note:
+                note = str(directive_note)
             entry = HookEntry(
                 address=addr,
                 name=name,
                 kind=kind,
                 target=target,
                 source=source,
+                note=note,
                 module=module,
                 skip_abi=skip_abi,
                 abi_class=abi_class,

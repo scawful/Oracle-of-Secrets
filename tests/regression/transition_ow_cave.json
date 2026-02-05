@@ -1,0 +1,68 @@
+{
+  "name": "Overworld to Cave Transition",
+  "description": "Verify OW→Cave transition completes without black screen or softlock",
+  "version": "1.0",
+  "tags": ["regression", "transition", "overworld", "cave"],
+  "timeout_seconds": 30,
+  "saveState": {
+    "id": "ow_cave_entrance",
+    "waitSeconds": 2,
+    "allowMissing": true
+  },
+  "preconditions": {
+    "$7E0010": {
+      "equals": 9,
+      "desc": "Game mode should be overworld (0x09)"
+    }
+  },
+  "steps": [
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "equals": 9,
+      "description": "Start in overworld mode"
+    },
+    {
+      "type": "press",
+      "button": "UP",
+      "frames": 30,
+      "description": "Walk into cave entrance"
+    },
+    {
+      "type": "wait",
+      "seconds": 3,
+      "description": "Wait for transition to complete"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "in": [7, 9, 14],
+      "description": "Should be in dungeon mode (7), overworld (9), or special area (14)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0010",
+      "condition": "not_equals",
+      "value": 0,
+      "description": "Game mode must not be 0 (reset/crash)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E2100",
+      "condition": "not_equals",
+      "value": 0,
+      "description": "INIDISP should not be 0 (forced blank = black screen)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E0020",
+      "condition": "less_than",
+      "value": 60000,
+      "description": "Link Y position valid (not overflowed)"
+    }
+  ],
+  "onFailure": {
+    "expert": "veran",
+    "context": "OW→Cave transition failed. Possible black screen or mode corruption. Check Module_MainRouting and transition subroutines."
+  }
+}

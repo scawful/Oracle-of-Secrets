@@ -1,16 +1,54 @@
-include_paths = [
+# z3dk project configuration for Oracle of Secrets
+# Enables z3lsp diagnostics and lint pipeline integration.
+
+[project]
+preset = "alttp"
+mapper = "lorom"
+main = "Oracle_main.asm"
+symbols = "wla"
+rom_path = "Roms/oos168x.sfc"
+
+[project.defines]
+ORACLE = "1"
+
+[project.include_paths]
+paths = [
   ".",
   "Core",
-  "Util",
-  "Dungeons",
-  "Items",
   "Sprites",
+  "Sprites/Bosses",
+  "Sprites/Enemies",
+  "Sprites/NPCs",
+  "Sprites/Objects",
   "Overworld",
-  "Menu"
+  "Dungeons",
+  "Dungeons/Collision",
+  "Items",
+  "Masks",
+  "Menu",
+  "Music",
+  "Util",
+  "Data",
 ]
-defines = [
-  "ORACLE=1"
-]
-symbols = "mesen"
-rom_path = "Roms/oos168x.sfc"
-main = "Oracle_main.asm"
+
+[emit]
+diagnostics = "diagnostics.json"
+symbols_mlb = "Roms/oos168x.mlb"
+hooks = "hooks.json"
+
+[lint]
+strict = false
+check_hooks = true
+find_mx = true
+find_width_imbalance = true
+check_abi = true
+check_sprite_tables = true
+
+[lint.prohibited_memory_ranges]
+"$7EF300-$7EF304" = "ZSOW overlay flags (do not use for Oracle story flags)"
+"$7EF340-$7EF37F" = "Vanilla room data (use SRAM extension instead)"
+
+[hooks]
+root = "."
+rom = "Roms/oos168x.sfc"
+output = "hooks.json"
