@@ -9,12 +9,6 @@ See also: [Global Rules](file:///Users/scawful/src/config/zelda-dev/rules.md)
 - **Static Analysis**: z3dk's `oracle_analyzer.py --check-hooks --find-mx --check-sprite-tables` validates M/X register state at hook entry points and checks sprite property tables for ID overflow past `$F2`. Run via build script or manually from `~/src/hobby/z3dk/scripts/`.
 - **Symbols**: Ensure `Roms/oos168x.mlb` is updated after builds for proper symbol debugging in Mesen2.
 
-## 1.1 Critical Guardrails (softlock/color investigations)
-- **No silent doc/comment pruning**: Do not delete analysis blocks, inline notes, or commentary without an explicit commit note. Treat docs/comments as evidence; if you must prune, set `ALLOW_DOC_PRUNE=1` and explain why.
-- **Critical file watchlist**: Changes to `Overworld/time_system.asm`, `Overworld/ZSCustomOverworld.asm`, `Dungeons/dungeons.asm`, `Sprites/NPCs/followers.asm`, and `Core/patches.asm` require (a) a captured failing state, and (b) an entry in `Docs/Issues/OverworldSoftlock_Handoff.md` before merge.
-- **Color math hygiene**: Area transitions must clear `$9A/$9C/$9D` and restore caller P. Calls into `BackgroundFix/Oracle_BackgroundFix` must ensure A=16‑bit, X=8‑bit, and wrap PHP/PLP (or document the calling convention at the site).
-- **State-first fixes**: Do not apply fixes to Module06/07 load paths without a captured black‑screen frame (addresses: $7E0010/$7E0011/$7E001A/$7E0013/$7E00A0/$7E010E/$9A/$9C/$9D/$1D + PC) attached to the issue doc.
-
 ## 2. Debugging Workflow
 - **Launcher**: Recommended: `mesen-agent launch oos`. Legacy: `./scripts/start_debug_session.sh`.
 - **Client**: Use `python3 scripts/mesen2_client.py` for state inspection, health checks, and watch profile management.

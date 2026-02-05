@@ -4,6 +4,19 @@ Source code for all assembly-level hacks in the game. Learn more about the proje
 
 Build using [Asar](https://github.com/RPGHacker/asar). Use `./scripts/build_rom.sh <version>` on macOS/Linux, and `build.bat` on Windows (legacy). See `Docs/General/AsarUsage.md` for the ROM naming scheme.
 
+## Dev loop
+Quick build + sync helper:
+- `scripts/dev_loop.sh 168 --z3asm --mesen-sync --reload --validate`
+
+## Hook tagging (optional)
+Use `scripts/tag_org_hooks.py` to tag org blocks with `@hook` comments and normalize metadata.
+
+Examples:
+- `python3 scripts/tag_org_hooks.py --root . --dry-run`
+- `python3 scripts/tag_org_hooks.py --root . --apply --normalize --module-from-path`
+
+Supported `@hook` fields: `name`, `kind`, `target`, `module`, `note`, `expected_m`, `expected_x`, `skip_abi`, `abi`.
+
 ## Z3DK configs
 - `z3dk.toml`: Oracle of Secrets main entry (`Oracle_main.asm`).
 - `z3dk.meadow.toml`: Meadow of Shadows template (copy to `z3dk.toml` when working on Meadow).

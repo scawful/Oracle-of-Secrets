@@ -13,8 +13,9 @@
 A remote island in the eastern seas, home to Farore, the Oracle of Secrets. Kalyxo exists at a unique convergence point where the boundaries between realms are thin. The island's geography mirrors its dual nature: lush forests and peaceful villages on the surface, with ancient ruins and sealed chambers beneath.
 
 **Key Locations:**
+
 - Wayward Village (main settlement)
-- Hall of Secrets (Farore's sanctuary, the Great Maku Tree)
+- Hall of Secrets (Farore's sanctuary)
 - Mount Snowpeak (northern highlands)
 - Zora Sanctuary (eastern coast)
 - Korok Cove (forested wetlands)
@@ -30,6 +31,7 @@ The realm possesses a TRUE NAME (TBD—to be determined later as part of ongoing
 **Visual Aesthetic:** Orange-tinted, 8-bit Gameboy style using Oracle of Ages past palettes, Subrosia assets, and Links Awakening graphics. The landscape is mostly barren wasteland.
 
 **Key Locations:**
+
 - NW: Temporal Pyramid (time-distorted visions)
 - N: Lupo Mountain
 - NE: Lava Lands (Subrosia-style assets)
@@ -44,6 +46,7 @@ The realm possesses a TRUE NAME (TBD—to be determined later as part of ongoing
 The Eon Abyss exists in the shadow of Kalyxo, separated by a dimensional boundary. The three Shrines serve as **anchor points** that stabilize and maintain this boundary. They were established during the Age of Discovery to keep the realms in equilibrium.
 
 When the seal weakens:
+
 - Portals flicker open unbidden
 - Creatures from the Abyss find paths to Kalyxo
 - Time distortions increase near thin spots

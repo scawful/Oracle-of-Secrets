@@ -2,6 +2,52 @@
 
 This document details the various systems and enhancements for dungeons and other indoor areas found within the `Dungeons/` directory. These systems provide a framework for creating unique puzzles, mechanics, and environmental behaviors that go far beyond the vanilla game's capabilities.
 
+## Dungeon Maps
+
+Oracle of Secrets contains **7 dungeons** plus the Fortress of Secrets (final dungeon).
+
+| # | Dungeon | Entrance ID | OW | Map | Tracks | Status |
+|---|---------|-------------|-----|-----|--------|--------|
+| D1 | Mushroom Grotto | 0x26 | 0x10 | [Map](MushroomGrotto_Map.md) | - | Stub |
+| D2 | Tail Palace | 0x15 | 0x2F | [Map](TailPalace_Map.md) | - | Stub |
+| D3 | Kalyxo Castle | 0x28/0x2B | 0x0B | [Map](KalyxoCastle_Map.md) | - | Stub |
+| D4 | Zora Temple | 0x25 | 0x1E | [Map](ZoraTemple_Map.md) | - | Stub |
+| D5 | Glacia Estate | 0x34 | 0x06 | [Map](GlaciaEstate_Map.md) | - | Stub |
+| D6 | **Goron Mines** | 0x27 | 0x36 | [Map](GoronMines_Map.md) | [Tracks](GoronMines_Tracks.md) | **Complete** |
+| D7 | Dragon Ship | 0x35 | 0x30 | [Map](DragonShip_Map.md) | - | Stub |
+
+**Final Dungeon:** [Fortress of Secrets](../SpecialAreas/FortressOfSecrets.md) (entrance 0x37)
+
+**Template:** [DUNGEON_TEMPLATE.md](DUNGEON_TEMPLATE.md) - Use this template when documenting new dungeons.
+
+### Generating Dungeon Documentation
+
+Use the `location_mapper.py` script to generate maps:
+
+```bash
+# List all locations (dungeons, shrines, caves, etc.)
+python3 ~/src/hobby/yaze/scripts/location_mapper.py --list
+
+# List only dungeons
+python3 ~/src/hobby/yaze/scripts/location_mapper.py --list --type dungeon
+
+# Generate overview for a dungeon
+python3 ~/src/hobby/yaze/scripts/location_mapper.py --location goron_mines
+
+# Show track details for a specific room
+python3 ~/src/hobby/yaze/scripts/location_mapper.py --tracks --room 0x78
+
+# Save output to docs folder
+python3 ~/src/hobby/yaze/scripts/location_mapper.py --location goron_mines --save
+
+# Get room objects as JSON
+python3 ~/src/hobby/yaze/scripts/location_mapper.py --json --room 0x78
+```
+
+**Legacy script:** `dungeon_overview.py` is still available but `location_mapper.py` is preferred.
+
+---
+
 ## 1. Overview
 
 The code in this directory can be broadly categorized into three main areas:

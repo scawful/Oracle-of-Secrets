@@ -1,14 +1,5 @@
 ---
 
-## Ralph Loop Findings (2026-01-24)
-
-### Critical Findings
-- **Mesen2 Fork Instability:** Socket server crashes intermittently during script execution. Do not switch emulators; restart the fork and capture logs instead.
-- **Black Screen Bug:** Tier 1 (Static Analysis) passed, but Tier 2 (Smoke Testing) and Tier 3 (State Capture) are **PENDING**. Do not assume it is fully fixed.
-- **YAZE Save State Gap:** YAZE proto has save/load RPCs, but the MCP bridge exposure is **PENDING** (Task P1.3 in `Mesen2_Debug_Backlog.md`).
-
----
-
 ## Quick Start
 
 1. **Read First:** Check `Docs/GEMINI.md` for the core profile and collaboration strategy
@@ -154,18 +145,17 @@ dw State_Idle, State_Chase, State_Attack
 **WRONG:** `LDA.w SprTimerD, X` for probe detection
 **RIGHT:** `LDA.w SprState, X` (vanilla sets `$0D80,X`, not `$0EE0,X`)
 
-### 2. Black Screen Bug Status (2026-01-24)
-- **Tier 1 (Static):** Long addressing and SEP/REP verified.
-- **Tier 2 (Visual):** **PENDING**. Verification needed for all transitions (OW→Cave, etc.).
-- **Infrastructure:** Use `oracle-debugger` skill or YAZE AI tools for autonomous capture.
-
-### 3. ZSCustomOverworld Transitions
+### 2. ZSCustomOverworld Transitions
 **NEVER** modify coordinates (`$20-$23`) during transition flow.
 Use post-transition hooks instead.
 
 ### 3. Collision Offsets
 `TileDetect_MainHandler` adds +20 pixel Y offset before checking.
 Visual water at Y=39 needs collision data at Y=41.
+
+### 4. JumpTableLocal Y-Width
+`JumpTableLocal ($008781)` requires 8-bit Y on entry (PLY pops 1 byte).
+16-bit Y causes stack underflow. z3dk analyzer flags callers with Y=16-bit as errors.
 
 ---
 

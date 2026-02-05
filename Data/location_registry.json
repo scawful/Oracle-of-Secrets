@@ -1,0 +1,586 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.1.0",
+  "game": "Oracle of Secrets",
+  "rom_title_pattern": "THE LEGEND OF ZELDA",
+  "description": "Canonical location registry for Oracle of Secrets ROM hack",
+  "last_z3ed_analysis": "2026-02-04",
+  "analysis_notes": "Room metadata extracted via z3ed dungeon-describe-room and dungeon-room-header commands. Anomaly rooms identified by palette/blockset mismatches. See Data/dungeon_metadata.json for full analysis.",
+
+  "location_types": {
+    "dungeon": "Multi-room dungeon with boss, dungeon item, and big chest",
+    "shrine": "Mini-dungeon with puzzle focus, no boss",
+    "fortress": "Enemy stronghold, combat-focused",
+    "cave": "Simple underground area, 1-3 rooms",
+    "house": "NPC dwelling, safe zone",
+    "shop": "Merchant location",
+    "fairy": "Fairy fountain, healing location",
+    "special": "Unique location (Triforce Chamber, Developer's Den)"
+  },
+
+  "dungeons": {
+    "D1_mushroom_grotto": {
+      "name": "Mushroom Grotto",
+      "dungeon_id": 1,
+      "entrance_id": "0x26",
+      "entrance_room": "0x4A",
+      "ow_screen": "0x10",
+      "blockset": 7,
+      "palette": 15,
+      "theme": "forest",
+      "boss": {
+        "name": "TBD",
+        "room": "0x33",
+        "notes": "Room has 463 objects - highest in dungeon, spriteset=30"
+      },
+      "dungeon_item": "TBD",
+      "big_chest_room": null,
+      "miniboss": null,
+      "floors": ["F1"],
+      "rooms": {
+        "0x07": { "name": "Room 0x07", "floor": "F1" },
+        "0x09": { "name": "Room 0x09", "floor": "F1" },
+        "0x0A": { "name": "Room 0x0A", "floor": "F1" },
+        "0x0B": { "name": "Room 0x0B", "floor": "F1" },
+        "0x17": { "name": "Room 0x17", "floor": "F1" },
+        "0x19": { "name": "Room 0x19", "floor": "F1" },
+        "0x1A": { "name": "Room 0x1A", "floor": "F1" },
+        "0x1B": { "name": "Room 0x1B", "floor": "F1" },
+        "0x2A": { "name": "Room 0x2A", "floor": "F1" },
+        "0x2B": { "name": "Room 0x2B", "floor": "F1" },
+        "0x32": { "name": "Room 0x32", "floor": "F1" },
+        "0x33": { "name": "Boss Arena", "floor": "F1", "object_count": 463, "notes": "Highest object count - likely boss room" },
+        "0x3A": { "name": "Room 0x3A", "floor": "F1" },
+        "0x3B": { "name": "Room 0x3B", "floor": "F1" },
+        "0x43": { "name": "Room 0x43", "floor": "F1" },
+        "0x4A": { "name": "Entrance", "floor": "F1", "is_entrance": true },
+        "0x4B": { "name": "Room 0x4B", "floor": "F1" },
+        "0x53": { "name": "Room 0x53", "floor": "F1" },
+        "0x5B": { "name": "Room 0x5B", "floor": "F1" },
+        "0x63": { "name": "Room 0x63", "floor": "F1" },
+        "0x6A": { "name": "Room 0x6A", "floor": "F1" }
+      },
+      "difficulty": {
+        "order": 1,
+        "enemy_level": "low",
+        "puzzle_complexity": "simple",
+        "required_items": []
+      }
+    },
+
+    "D2_tail_palace": {
+      "name": "Tail Palace",
+      "dungeon_id": 2,
+      "entrance_id": "0x2F",
+      "entrance_room": "0x5F",
+      "ow_screen": "0x2F",
+      "blockset": 5,
+      "palette": 6,
+      "theme": "palace",
+      "boss": {
+        "name": "TBD",
+        "room": "0x2F",
+        "notes": "Room has unique blockset=6, palette=24 - visually distinct boss arena"
+      },
+      "special_areas": {
+        "0x1D_0x2D": {
+          "name": "Special Wing",
+          "rooms": ["0x1D", "0x2D"],
+          "blockset": 14,
+          "palette": 3,
+          "notes": "Connected area with different visual theme"
+        }
+      },
+      "dungeon_item": "TBD",
+      "big_chest_room": null,
+      "miniboss": null,
+      "floors": ["F1"],
+      "rooms": {
+        "0x0E": { "name": "Room 0x0E", "floor": "F1" },
+        "0x1D": { "name": "Special Wing", "floor": "F1", "blockset_override": 14, "palette_override": 3, "notes": "Different visual theme area" },
+        "0x1E": { "name": "Room 0x1E", "floor": "F1" },
+        "0x1F": { "name": "Transition Room", "floor": "F1", "palette_override": 3, "object_count": 0, "notes": "Empty transition room" },
+        "0x2D": { "name": "Special Wing Lower", "floor": "F1", "blockset_override": 14, "palette_override": 3, "notes": "Connected to 0x1D via stairs" },
+        "0x2E": { "name": "Room 0x2E", "floor": "F1" },
+        "0x2F": { "name": "Boss Arena", "floor": "F1", "blockset_override": 6, "palette_override": 24, "notes": "Unique blockset/palette - likely boss room" },
+        "0x3E": { "name": "Room 0x3E", "floor": "F1" },
+        "0x3F": { "name": "Room 0x3F", "floor": "F1" },
+        "0x4E": { "name": "Room 0x4E", "floor": "F1" },
+        "0x4F": { "name": "Room 0x4F", "floor": "F1" },
+        "0x5E": { "name": "Room 0x5E", "floor": "F1" },
+        "0x5F": { "name": "Entrance", "floor": "F1", "is_entrance": true },
+        "0x6E": { "name": "Room 0x6E", "floor": "F1" },
+        "0x6F": { "name": "Room 0x6F", "floor": "F1" },
+        "0x7E": { "name": "Room 0x7E", "floor": "F1" },
+        "0xDE": { "name": "Room 0xDE", "floor": "F1" }
+      },
+      "difficulty": {
+        "order": 2,
+        "enemy_level": "low",
+        "puzzle_complexity": "moderate",
+        "required_items": []
+      }
+    },
+
+    "D3_kalyxo_castle": {
+      "name": "Kalyxo Castle",
+      "dungeon_id": 3,
+      "entrance_ids": ["0x28", "0x2B", "0x2A", "0x32"],
+      "entrance_room": "0x56",
+      "ow_screen": "0x0B",
+      "blockset": 2,
+      "palette": 12,
+      "theme": "castle",
+      "boss": {
+        "name": "TBD",
+        "room": null
+      },
+      "dungeon_item": "TBD",
+      "big_chest_room": null,
+      "miniboss": null,
+      "floors": ["F1", "B1"],
+      "rooms": {
+        "0x29": { "name": "Room 0x29", "floor": "F1" },
+        "0x30": { "name": "Room 0x30", "floor": "F1" },
+        "0x39": { "name": "Room 0x39", "floor": "F1" },
+        "0x47": { "name": "Room 0x47", "floor": "F1" },
+        "0x48": { "name": "Room 0x48", "floor": "F1" },
+        "0x49": { "name": "Room 0x49", "floor": "F1" },
+        "0x51": { "name": "Room 0x51", "floor": "F1" },
+        "0x56": { "name": "Entrance", "floor": "F1", "is_entrance": true },
+        "0x57": { "name": "Room 0x57", "floor": "F1" },
+        "0x58": { "name": "Room 0x58", "floor": "F1" },
+        "0x59": { "name": "Room 0x59", "floor": "F1" },
+        "0x66": { "name": "Room 0x66", "floor": "F1" },
+        "0x67": { "name": "Room 0x67", "floor": "F1" },
+        "0x68": { "name": "Room 0x68", "floor": "F1" }
+      },
+      "difficulty": {
+        "order": 3,
+        "enemy_level": "moderate",
+        "puzzle_complexity": "moderate",
+        "required_items": []
+      }
+    },
+
+    "D4_zora_temple": {
+      "name": "Zora Temple",
+      "dungeon_id": 4,
+      "entrance_ids": ["0x25", "0x4E"],
+      "entrance_room": "0x28",
+      "ow_screen": "0x1E",
+      "blockset": 1,
+      "palette": 9,
+      "theme": "water",
+      "boss": {
+        "name": "TBD",
+        "room": null
+      },
+      "dungeon_item": "TBD",
+      "big_chest_room": null,
+      "miniboss": null,
+      "floors": ["F1"],
+      "rooms": {
+        "0x06": { "name": "Room 0x06", "floor": "F1" },
+        "0x16": { "name": "Room 0x16", "floor": "F1" },
+        "0x18": { "name": "Room 0x18", "floor": "F1" },
+        "0x25": { "name": "Room 0x25", "floor": "F1" },
+        "0x26": { "name": "Room 0x26", "floor": "F1" },
+        "0x27": { "name": "Room 0x27", "floor": "F1" },
+        "0x28": { "name": "Entrance", "floor": "F1", "is_entrance": true },
+        "0x34": { "name": "Room 0x34", "floor": "F1" },
+        "0x35": { "name": "Room 0x35", "floor": "F1" },
+        "0x36": { "name": "Room 0x36", "floor": "F1" },
+        "0x37": { "name": "Central Chamber", "floor": "F1", "object_count": 227, "notes": "Highest object count in dungeon - key puzzle or boss area" },
+        "0x38": { "name": "Room 0x38", "floor": "F1" },
+        "0x44": { "name": "Room 0x44", "floor": "F1" },
+        "0x45": { "name": "Room 0x45", "floor": "F1" },
+        "0x46": { "name": "Room 0x46", "floor": "F1" }
+      },
+      "difficulty": {
+        "order": 4,
+        "enemy_level": "moderate",
+        "puzzle_complexity": "high",
+        "required_items": ["Zora Mask"]
+      }
+    },
+
+    "D5_glacia_estate": {
+      "name": "Glacia Estate",
+      "dungeon_id": 5,
+      "entrance_id": "0x34",
+      "entrance_room": "0xDB",
+      "ow_screen": "0x06",
+      "blockset": 11,
+      "palette": 19,
+      "theme": "ice",
+      "boss": {
+        "name": "TBD",
+        "room": null
+      },
+      "dungeon_item": "TBD",
+      "big_chest_room": null,
+      "miniboss": null,
+      "floors": ["F1"],
+      "rooms": {
+        "0x9E": { "name": "Room 0x9E", "floor": "F1" },
+        "0x9F": { "name": "Room 0x9F", "floor": "F1" },
+        "0xAC": { "name": "Room 0xAC", "floor": "F1" },
+        "0xAD": { "name": "Room 0xAD", "floor": "F1" },
+        "0xAE": { "name": "Room 0xAE", "floor": "F1" },
+        "0xAF": { "name": "Room 0xAF", "floor": "F1" },
+        "0xBB": { "name": "Room 0xBB", "floor": "F1" },
+        "0xBC": { "name": "Room 0xBC", "floor": "F1" },
+        "0xBD": { "name": "Room 0xBD", "floor": "F1" },
+        "0xBE": { "name": "Room 0xBE", "floor": "F1" },
+        "0xBF": { "name": "Room 0xBF", "floor": "F1" },
+        "0xCB": { "name": "Room 0xCB", "floor": "F1" },
+        "0xCC": { "name": "Room 0xCC", "floor": "F1" },
+        "0xCD": { "name": "Room 0xCD", "floor": "F1" },
+        "0xCE": { "name": "Room 0xCE", "floor": "F1" },
+        "0xCF": { "name": "Room 0xCF", "floor": "F1" },
+        "0xDB": { "name": "Entrance", "floor": "F1", "is_entrance": true },
+        "0xDC": { "name": "Room 0xDC", "floor": "F1" },
+        "0xDD": { "name": "Room 0xDD", "floor": "F1" }
+      },
+      "difficulty": {
+        "order": 5,
+        "enemy_level": "high",
+        "puzzle_complexity": "high",
+        "required_items": ["Fire Rod"]
+      }
+    },
+
+    "D6_goron_mines": {
+      "name": "Goron Mines",
+      "dungeon_id": 6,
+      "entrance_id": "0x27",
+      "entrance_room": "0x98",
+      "ow_screen": "0x36",
+      "blockset": 4,
+      "palette": 7,
+      "theme": "fire/mine",
+      "boss": {
+        "name": "King Dodongo",
+        "room": "0xC8",
+        "reskin": "King Helmasaur"
+      },
+      "dungeon_item": "Hammer, Fire Shield",
+      "big_chest_room": "0x88",
+      "miniboss": {
+        "name": "Lanmolas",
+        "room": "0x78"
+      },
+      "floors": ["F1", "B1", "B2"],
+      "rooms": {
+        "0x69": { "name": "B1 Side", "floor": "B1", "connections": ["stair->0x79"] },
+        "0x77": { "name": "NW Hall", "floor": "F1", "tracks": 48, "connections": ["stair->B1 NW"] },
+        "0x78": { "name": "Lanmolas Miniboss", "floor": "F1", "tracks": 145, "is_miniboss": true, "connections": ["stair->Big Chest"] },
+        "0x79": { "name": "NE Hall", "floor": "F1", "tracks": 25, "connections": ["stair->B1 Side"] },
+        "0x87": { "name": "West Hall", "floor": "F1", "tracks": 84, "connections": ["stair->NW Hall", "stair->0x0B"] },
+        "0x88": { "name": "Big Chest", "floor": "F1", "tracks": 23, "is_big_chest": true, "connections": ["stair->Lanmolas Miniboss", "hole->Pre-Boss"] },
+        "0x89": { "name": "East Hall", "floor": "F1", "tracks": 54, "connections": ["hole->B2 West"] },
+        "0x97": { "name": "SW Hall", "floor": "F1", "tracks": 38, "connections": ["stair->B1 SW", "hole->B1 SW"] },
+        "0x98": { "name": "Entrance", "floor": "F1", "tracks": 27, "is_entrance": true, "connections": ["stair->0xD2", "stair->0x01", "stair->0x0B", "stair->0x05", "hole->B1 SE"] },
+        "0x99": { "name": "SE Hall", "floor": "F1", "connections": ["stair->B2 East", "stair->0x28", "stair->0x0E"] },
+        "0xA8": { "name": "B1 NW", "floor": "B1", "tracks": 10, "connections": ["stair->NW Hall"] },
+        "0xA9": { "name": "B1 NE", "floor": "B1", "connections": ["stair->B2 East"] },
+        "0xB8": { "name": "B1 SW", "floor": "B1", "tracks": 51, "connections": ["stair->SW Hall"] },
+        "0xB9": { "name": "B1 SE", "floor": "B1", "tracks": 46, "connections": ["stair->0x08", "stair->0x17", "hole->0x05"] },
+        "0xC8": { "name": "Boss (King Dodongo)", "floor": "B2", "is_boss": true, "connections": ["stair->Pre-Boss"] },
+        "0xD7": { "name": "B2 West", "floor": "B2", "tracks": 66, "connections": ["stair->0x08", "stair->0x17", "hole->0x05"] },
+        "0xD8": { "name": "Pre-Boss", "floor": "B2", "tracks": 74, "connections": ["stair->Boss (King Dodongo)", "hole->0x05"] },
+        "0xD9": { "name": "B2 Mid", "floor": "B2", "tracks": 37, "connections": ["stair->0x08", "stair->0x17", "hole->0x05"] },
+        "0xDA": { "name": "B2 East", "floor": "B2", "tracks": 49, "connections": ["stair->SE Hall"] }
+      },
+      "difficulty": {
+        "order": 6,
+        "enemy_level": "high",
+        "puzzle_complexity": "moderate",
+        "required_items": ["Hammer"]
+      }
+    },
+
+    "D7_dragon_ship": {
+      "name": "Dragon Ship",
+      "dungeon_id": 7,
+      "entrance_id": "0x35",
+      "entrance_room": "0xD6",
+      "ow_screen": "0x30",
+      "blockset": 9,
+      "palette": 5,
+      "theme": "naval/ship",
+      "boss": {
+        "name": "TBD",
+        "room": null
+      },
+      "dungeon_item": "TBD",
+      "big_chest_room": null,
+      "miniboss": null,
+      "floors": ["F1"],
+      "rooms": {
+        "0xB7": { "name": "Room 0xB7", "floor": "F1" },
+        "0xC6": { "name": "Room 0xC6", "floor": "F1" },
+        "0xC7": { "name": "Room 0xC7", "floor": "F1" },
+        "0xD5": { "name": "Room 0xD5", "floor": "F1" },
+        "0xD6": { "name": "Entrance", "floor": "F1", "is_entrance": true }
+      },
+      "difficulty": {
+        "order": 7,
+        "enemy_level": "very_high",
+        "puzzle_complexity": "high",
+        "required_items": []
+      }
+    }
+  },
+
+  "shrines": {
+    "shrine_courage": {
+      "name": "Shrine of Courage",
+      "entrance_room": null,
+      "theme": "ancient",
+      "rooms": ["0x07", "0x16", "0x17", "0x23", "0x26", "0x33", "0x43", "0x53"]
+    },
+    "shrine_power": {
+      "name": "Shrine of Power",
+      "entrance_room": null,
+      "theme": "ancient",
+      "rooms": ["0x73", "0x74", "0x75", "0x76", "0x83", "0x84", "0x85", "0x86"]
+    },
+    "shrine_wisdom": {
+      "name": "Shrine of Wisdom",
+      "entrance_room": null,
+      "theme": "ancient",
+      "rooms": ["0x7A", "0x8A", "0x9A", "0xAA", "0xBA", "0xC9", "0xCA"]
+    }
+  },
+
+  "fortress": {
+    "fortress_secrets": {
+      "name": "Fortress of Secrets",
+      "entrance_room": null,
+      "ow_screens": ["0x1E", "0x1F", "0x26", "0x27"],
+      "theme": "enemy_stronghold",
+      "rooms": ["0x0C", "0x0D", "0x2C", "0x3D", "0x4C", "0x4D", "0x5C", "0x5D", "0x6B", "0x6C", "0x6D", "0x7B", "0x7C", "0x7D", "0x8B", "0x8C", "0x8D", "0x9B", "0x9C", "0x9D"]
+    }
+  },
+
+  "caves": {
+    "tail_cave_route": {
+      "name": "Tail Cave Route",
+      "rooms": ["0xE6", "0xE7"]
+    },
+    "mountain_cave": {
+      "name": "Mountain Cave",
+      "rooms": ["0xE8"]
+    },
+    "village_cave": {
+      "name": "Village Cave",
+      "rooms": ["0xFD", "0xFE"]
+    },
+    "frostpeak_cave": {
+      "name": "Frostpeak Cave",
+      "rooms": ["0xD3", "0xD4", "0xE4", "0xE5", "0xEE", "0xEF"]
+    },
+    "abyss_lava_cave": {
+      "name": "Abyss Lava Cave",
+      "rooms": ["0xD0", "0xD1", "0xD2"]
+    },
+    "wolfos_cave": {
+      "name": "Wolfos Cave",
+      "rooms": ["0x120"]
+    },
+    "spike_cave": {
+      "name": "Spike Cave",
+      "rooms": ["0x117"]
+    },
+    "zeniea_cave": {
+      "name": "Zeniea Cave",
+      "rooms": ["0x10A"]
+    }
+  },
+
+  "special": {
+    "triforce_chamber": {
+      "name": "Triforce Chamber",
+      "rooms": ["0x00"]
+    },
+    "hall_of_secrets": {
+      "name": "Hall of Secrets",
+      "rooms": ["0x01", "0x12", "0x40", "0x41", "0x42"]
+    },
+    "developers_den": {
+      "name": "Developer's Den",
+      "rooms": ["0x03"]
+    },
+    "kydrogs_ship": {
+      "name": "Kydrog's Ship",
+      "rooms": ["0xA0", "0xA1", "0xA2", "0xA3", "0xA5", "0xB0", "0xB1", "0xB2", "0xB3", "0xB4", "0xB5", "0xB6", "0xC0", "0xC1", "0xC2", "0xC3", "0xC4", "0xC5", "0xD5", "0xD6"]
+    },
+    "kydrogs_den": {
+      "name": "Kydrog's Den",
+      "rooms": ["0xA4"]
+    },
+    "castle_basement": {
+      "name": "Castle Basement",
+      "rooms": ["0x54", "0x55", "0x70", "0x71", "0x72", "0x80", "0x81", "0x82"]
+    }
+  },
+
+  "houses": {
+    "chest_game": { "name": "Chest Game", "room": "0x100" },
+    "ranch_girl_house": { "name": "Ranch Girl House", "room": "0x101" },
+    "sick_boy_house": { "name": "Sick Boy House", "room": "0x102" },
+    "village_bar": { "name": "Village Bar", "room": "0x103" },
+    "your_house": { "name": "Your House", "room": "0x104" },
+    "zora_chambers": { "name": "Zora Chambers", "room": "0x105" },
+    "village_library": { "name": "Village Library", "room": "0x107" },
+    "ranch_house": { "name": "Ranch House", "room": "0x108" },
+    "potion_shop": { "name": "Potion Shop", "room": "0x109" },
+    "zora_waterfall": { "name": "Zora Waterfall", "room": "0x10B" },
+    "goron_storage": { "name": "Goron Storage", "room": "0x10D" },
+    "kaly_hotel": { "name": "Kaly Hotel", "room": "0x10F" },
+    "arrow_minigame": { "name": "Arrow Minigame", "room": "0x111" },
+    "magic_school": { "name": "Magic School", "room": "0x112" },
+    "below_graveyard": { "name": "Below Graveyard", "room": "0x113" },
+    "town_hall": { "name": "Town Hall", "room": "0x119" },
+    "bomb_shop": { "name": "Bomb Shop", "room": "0x11C" },
+    "mayoral_basement": { "name": "Mayoral Basement", "room": "0x11D" },
+    "happy_mask_shop": { "name": "Happy Mask Shop", "room": "0x11F" },
+    "swordsmiths_hut": { "name": "Swordsmiths Hut", "room": "0x121" },
+    "fortune_teller": { "name": "Fortune Teller", "room": "0x122" }
+  },
+
+  "fairy_fountains": {
+    "fairy_fountain_1": { "name": "Fairy Fountain", "room": "0x08" },
+    "fairy_fountain_2": { "name": "Fairy Fountain", "room": "0x114" },
+    "fairy_fountain_3": { "name": "Fairy Fountain", "room": "0x115" },
+    "fairy_fountain_4": { "name": "Fairy Fountain", "room": "0x116" }
+  },
+
+  "overworld_areas": {
+    "light_world": {
+      "0x00": "Ranch",
+      "0x01": "Ranch",
+      "0x02": "Pyramid",
+      "0x03": "Land of Tree",
+      "0x04": "Snow Mountain",
+      "0x05": "Snow Mountain",
+      "0x06": "Snow Mountain",
+      "0x07": "Snow Mountain",
+      "0x08": "Ranch",
+      "0x09": "Ranch",
+      "0x0A": "Inn",
+      "0x0B": "Kalyxo Castle",
+      "0x0C": "Kalyxo Castle",
+      "0x0D": "Potion Shop",
+      "0x0E": "Hall of Secrets",
+      "0x0F": "Cemetery",
+      "0x10": "Toadstool Woods",
+      "0x11": "Ranch Path",
+      "0x12": "Crossroads",
+      "0x13": "Kalyxo Castle",
+      "0x14": "Kalyxo Castle",
+      "0x15": "Mountainside",
+      "0x16": "Path of Secrets",
+      "0x17": "Ancient Shrine",
+      "0x18": "Toadstool Woods",
+      "0x19": "Toadstool Woods",
+      "0x1A": "Crossroads",
+      "0x1B": "Kalyxo Castle",
+      "0x1C": "Kalyxo Road",
+      "0x1D": "Crossroads",
+      "0x1E": "Sunken City",
+      "0x1F": "Sunken City",
+      "0x20": "Toadstool Woods",
+      "0x21": "Toadstool Woods",
+      "0x22": "Swordsmiths",
+      "0x23": "Wayward Village",
+      "0x24": "Wayward Village",
+      "0x25": "Village Road",
+      "0x26": "Sunken City",
+      "0x27": "Sunken City",
+      "0x28": "Toadstool Woods",
+      "0x29": "Toadstool Woods",
+      "0x2A": "Village Road",
+      "0x2B": "Wayward Village",
+      "0x2C": "Wayward Village",
+      "0x2D": "Valley",
+      "0x2E": "City Road",
+      "0x2F": "Tail Palace",
+      "0x30": "Dragon Ship",
+      "0x31": "Dragon Ship",
+      "0x32": "Secret Beach",
+      "0x33": "Loom Beach",
+      "0x34": "Loom Beach",
+      "0x35": "Beach Path",
+      "0x36": "Garo Desert",
+      "0x37": "Garo Desert",
+      "0x38": "Dragon Ship",
+      "0x39": "Dragon Ship",
+      "0x3A": "Lost Sea",
+      "0x3B": "Loom Beach",
+      "0x3C": "Loom Beach",
+      "0x3D": "Loom Waterfall",
+      "0x3E": "Garo Desert",
+      "0x3F": "Garo Desert"
+    },
+    "dark_world": {
+      "0x00": "Temporal Gate",
+      "0x01": "Temporal Gate",
+      "0x02": "Pyramid of Eons",
+      "0x03": "Lava Lands",
+      "0x04": "Lava Lands",
+      "0x05": "Lava Lands",
+      "0x06": "Lava Lands",
+      "0x07": "Lava Lands",
+      "0x08": "Temporal Gate",
+      "0x09": "Temporal Gate",
+      "0x0A": "Lupo Waterfall",
+      "0x0B": "Lupo Mountain",
+      "0x0C": "Lupo Mountain",
+      "0x0D": "Lupo Mountain",
+      "0x0E": "Lava Lands",
+      "0x0F": "Lava Lands",
+      "0x10": "Shrine Courage",
+      "0x13": "Lupo Mountain",
+      "0x14": "Lupo Mountain",
+      "0x15": "Lupo Mountain",
+      "0x16": "Lava Lands",
+      "0x17": "Lava Lands",
+      "0x1E": "The Fortress",
+      "0x1F": "The Fortress",
+      "0x23": "Wisdom Swamp",
+      "0x24": "Wisdom Swamp",
+      "0x26": "The Fortress",
+      "0x27": "The Fortress",
+      "0x2B": "Wisdom Swamp",
+      "0x2C": "Wisdom Swamp",
+      "0x30": "Underwater",
+      "0x31": "Underwater",
+      "0x32": "Underwater",
+      "0x33": "Underwater",
+      "0x34": "Underwater",
+      "0x35": "Underwater",
+      "0x36": "Abyss Beach",
+      "0x37": "Abyss Beach",
+      "0x38": "Underwater",
+      "0x39": "Underwater",
+      "0x3A": "Underwater",
+      "0x3B": "Underwater",
+      "0x3C": "Underwater",
+      "0x3D": "Underwater",
+      "0x3E": "Abyss Beach",
+      "0x3F": "Abyss Beach"
+    }
+  },
+
+  "progression": {
+    "order": ["D1_mushroom_grotto", "D2_tail_palace", "D3_kalyxo_castle", "D4_zora_temple", "D5_glacia_estate", "D6_goron_mines", "D7_dragon_ship"],
+    "item_gates": {
+      "D4_zora_temple": ["Zora Mask"],
+      "D5_glacia_estate": ["Fire Rod"],
+      "D6_goron_mines": ["Hammer"]
+    }
+  }
+}
