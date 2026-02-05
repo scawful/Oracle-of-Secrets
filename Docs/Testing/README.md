@@ -68,7 +68,7 @@ python3 scripts/test_runner.py --suite regression --tag critical -q
 ## Test definitions
 
 - Tests are JSON files under `tests/` (e.g. `tests/regression/golden_path_overworld.json`).
-- Each has `name`, optional `saveState` (slot/path/id), and `steps` (wait, press, assert, screenshot, etc.).
+- Each has `name`, optional `saveState` (slot/path/id), and `steps` (wait, press, assert, screenshot, exec, etc.).
 - Save state resolution: slot, path, or id from manifest/library. Default library root: `Roms/SaveStates/library` (see `tests/manifest.json` defaults and `Docs/Testing/SaveStateLibrary.md`).
 
 ## Environment

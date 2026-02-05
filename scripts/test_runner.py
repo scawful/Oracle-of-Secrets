@@ -15,6 +15,7 @@ Usage:
 import argparse
 import json
 import os
+import shlex
 import subprocess
 import sys
 import time
@@ -50,6 +51,8 @@ if Path(YAZE_MCP_ROOT).exists():
         HAS_YAZE_BACKEND = True
     except Exception:
         HAS_YAZE_BACKEND = False
+
+REPO_ROOT = Path(__file__).parent.parent
 
 # Colors for terminal output
 class Colors:
@@ -845,6 +848,54 @@ def execute_step(step: dict, verbose: bool = False) -> tuple[bool, str]:
             if time.time() - start >= timeout:
                 return False, f"state.{key}: timeout after {timeout}s"
             time.sleep(interval)
+    elif step_type == "exec":
+        cmd = step.get("command")
+        if not cmd:
+            return False, "Missing command in exec step"
+
+        if isinstance(cmd, list):
+            args = [str(a) for a in cmd]
+        else:
+            args = shlex.split(str(cmd))
+
+        extra_args = step.get("args")
+        if extra_args:
+            if not isinstance(extra_args, list):
+                return False, "exec args must be a list"
+            args.extend([str(a) for a in extra_args])
+
+        env = os.environ.copy()
+        step_env = step.get("env")
+        if isinstance(step_env, dict):
+            env.update({str(k): str(v) for k, v in step_env.items()})
+
+        cwd = step.get("cwd") or str(REPO_ROOT)
+        timeout = step.get("timeout", step.get("timeout_seconds"))
+
+        if verbose:
+            log(f"  → Exec: {' '.join(args)} (cwd={cwd})", Colors.BLUE)
+
+        try:
+            result = subprocess.run(
+                args,
+                cwd=cwd,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            return False, f"Exec timed out after {timeout}s"
+
+        expected = step.get("expectedExitCode", 0)
+        output = (result.stdout + "\n" + result.stderr).strip()
+        if result.returncode != expected:
+            return False, (
+                f"Exec exit {result.returncode} (expected {expected}). "
+                f"{output}".strip()
+            )
+        return True, output or "OK"
 
     else:
         return False, f"Unknown step type: {step_type}"
