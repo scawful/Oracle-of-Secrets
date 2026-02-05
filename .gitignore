@@ -206,4 +206,5 @@ Sprites/NPCs/piratian.zsm
 Masks/gfx/moosh.png
 Masks/gfx/moosh.pal
 Dungeons/DungeonMaps.asm
+Data/Generated/
 __pycache__/

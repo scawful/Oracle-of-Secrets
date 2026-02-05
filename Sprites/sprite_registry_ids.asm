@@ -1,0 +1,45 @@
+; Auto-generated from Sprites/registry.csv
+; Do not edit by hand.
+
+Sprite_Farore = $73
+Sprite_KydrogNPC = $7B
+Sprite_MakuTree = $9E
+Sprite_MaskSalesman = $E8
+Sprite_WindmillGuy = $B2
+Sprite_BeanVendor = $07
+Sprite_VillageElder = $07
+Sprite_Mermaid = $F0
+Sprite_Maple = $F0 ; Subtype 1
+Sprite_Librarian = $F0 ; Subtype 2
+Sprite_Manhandla = $88
+Sprite_BusinessScrub = $14
+Sprite_Goriya = $2C
+Sprite_Darknut = $1D
+Sprite_SeaUrchin = $AE
+Sprite_Korok = $F1
+Sprite_Vasu = $D7
+Sprite_KydrogBoss = $CB
+Sprite_DekuScrubNPCs = $A0
+Sprite_AntiKirby = $A8
+Sprite_HelmetChuchu = $05
+Sprite_Booki = $CC
+Sprite_ThunderGhost = $CD
+Sprite_SwitchTrack = $B0
+Sprite_Mineswitch = $AF
+Sprite_VillageDog = $25
+Sprite_Minecart = $A3
+Sprite_DarkLink = $C1
+Sprite_Puffstool = $B1
+Sprite_DekuLeaf = $77
+Sprite_Portal = $03
+Sprite_Poltergeist = $EF
+Sprite_PolsVoice = $A4
+Sprite_Wolfos = $A9
+Sprite_IceBlock = $D5
+Sprite_Twinrova = $CE
+Sprite_Kydreeok = $7A
+Sprite_KydreeokHead = $CF
+Sprite_CloudBridge = $D2
+Sprite_EonOwl = $0A
+Sprite_KaeporaGaebora = $0A
+Sprite_ZoraPrincess = $B8

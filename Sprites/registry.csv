@@ -1,0 +1,44 @@
+name,id,paths,group,notes,allow_dupe
+Sprite_Farore,$73,Sprites/NPCs/farore.asm,Sprite_Farore,,
+Sprite_KydrogNPC,$7B,Sprites/Bosses/kydrog.asm,Sprite_KydrogNPC,,
+Sprite_MakuTree,$9E,Sprites/NPCs/maku_tree.asm,Sprite_MakuTree,,
+Sprite_MaskSalesman,$E8,Sprites/NPCs/mask_salesman.asm,Sprite_MaskSalesman,,
+Sprite_WindmillGuy,$B2,Sprites/NPCs/windmill_guy.asm,windmill_guy,,
+Sprite_BeanVendor,$07,Sprites/NPCs/village_elder.asm;Sprites/NPCs/bean_vendor.asm,village_elder,,1
+Sprite_VillageElder,$07,Sprites/NPCs/village_elder.asm;Sprites/NPCs/bean_vendor.asm,village_elder,,1
+Sprite_Mermaid,$F0,Sprites/NPCs/mermaid.asm,mermaid,,1
+Sprite_Maple,$F0,Sprites/NPCs/mermaid.asm,mermaid,Subtype 1,1
+Sprite_Librarian,$F0,Sprites/NPCs/mermaid.asm,mermaid,Subtype 2,1
+Sprite_Manhandla,$88,Sprites/Bosses/manhandla.asm,manhandla,,
+Sprite_BusinessScrub,$14,Sprites/Enemies/business_scrub.asm,business_scrub,,
+Sprite_Goriya,$2C,Sprites/Enemies/goriya.asm,goriya,,
+Sprite_Darknut,$1D,Sprites/Enemies/darknut.asm,darknut,,
+Sprite_SeaUrchin,$AE,Sprites/Enemies/sea_urchin.asm,sea_urchin,,
+Sprite_Korok,$F1,Sprites/NPCs/korok.asm,korok,,
+Sprite_Vasu,$D7,Sprites/NPCs/vasu.asm,vasu,,
+Sprite_KydrogBoss,$CB,Sprites/Bosses/kydrog_boss.asm,kydrog_boss,,
+Sprite_DekuScrubNPCs,$A0,Sprites/NPCs/deku_scrub.asm,deku_scrub,,
+Sprite_AntiKirby,$A8,Sprites/Enemies/anti_kirby.asm,anti_kirby,,
+Sprite_HelmetChuchu,$05,Sprites/Enemies/helmet_chuchu.asm,helmet_chuchu,,
+Sprite_Booki,$CC,Sprites/Enemies/booki.asm,booki,,
+Sprite_ThunderGhost,$CD,Sprites/Enemies/thunder_ghost.asm,thunder_ghost,,
+Sprite_SwitchTrack,$B0,Sprites/Objects/switch_track.asm,switch_track,,
+Sprite_Mineswitch,$AF,Sprites/Objects/mineswitch.asm,mineswitch,,
+Sprite_VillageDog,$25,Sprites/NPCs/village_dog.asm,village_dog,,
+Sprite_Minecart,$A3,Sprites/Objects/minecart.asm,minecart,,
+Sprite_DarkLink,$C1,Sprites/Bosses/dark_link.asm,dark_link,,
+Sprite_Puffstool,$B1,Sprites/Enemies/puffstool.asm,puffstool,,
+Sprite_DekuLeaf,$77,Sprites/Objects/deku_leaf.asm,deku_leaf,,
+Sprite_Portal,$03,Sprites/Objects/portal_sprite.asm,portal_sprite,,
+Sprite_Poltergeist,$EF,Sprites/Enemies/poltergeist.asm,poltergeist,,
+Sprite_PolsVoice,$A4,Sprites/Enemies/pols_voice.asm,pols_voice,,
+Sprite_Wolfos,$A9,Sprites/Bosses/wolfos.asm,wolfos,,
+Sprite_IceBlock,$D5,Sprites/Objects/ice_block.asm,ice_block,,
+Sprite_Twinrova,$CE,Sprites/Bosses/twinrova.asm,twinrova,,
+Sprite_Kydreeok,$7A,Sprites/Bosses/kydreeok.asm,kydreeok,,
+Sprite_KydreeokHead,$CF,Sprites/Bosses/kydreeok_head.asm,kydreeok_head,,
+Sprite_CloudBridge,$D2,Sprites/Objects/cloud_bridge.asm,cloud_bridge,,
+Sprite_EonOwl,$0A,Sprites/NPCs/eon_owl.asm,eon_owl,,1
+Sprite_KaeporaGaebora,$0A,Sprites/NPCs/eon_owl.asm,eon_owl,,1
+Sprite_ZoraPrincess,$B8,Sprites/NPCs/eon_zora.asm;Sprites/NPCs/eon_zora_elder.asm;Sprites/NPCs/zora.asm;Sprites/NPCs/zora_princess.asm,zora_princess,,
+Sprite_VampireBat,$11,Sprites/Bosses/vampire_bat.asm,vampire_bat,Keese subtype 02 miniboss,
