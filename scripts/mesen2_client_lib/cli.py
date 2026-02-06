@@ -357,17 +357,21 @@ def main():
     mem_read_parser = subparsers.add_parser("mem-read", help="Read memory")
     mem_read_parser.add_argument("addr", help="Start address (hex)")
     mem_read_parser.add_argument("--len", type=int, default=16)
-    mem_read_parser.add_argument("--memtype", default="wram")
+    # Default to the SNES CPU address space so `mem-read 0x7E0010` works as expected.
+    # Use `--memtype wram` if you want raw WRAM offsets (0x000000-0x01FFFF).
+    mem_read_parser.add_argument("--memtype", default="SnesMemory")
     mem_read_parser.add_argument("--json", "-j", action="store_true")
 
     mem_write_parser = subparsers.add_parser("mem-write", help="Write memory")
     mem_write_parser.add_argument("addr", help="Start address (hex)")
     mem_write_parser.add_argument("values", help="Space-separated hex bytes")
-    mem_write_parser.add_argument("--memtype", default="wram")
+    # Match `mem-read` defaults (CPU address space).
+    mem_write_parser.add_argument("--memtype", default="SnesMemory")
     mem_write_parser.add_argument("--json", "-j", action="store_true")
 
     mem_size_parser = subparsers.add_parser("mem-size", help="Get memory region size")
-    mem_size_parser.add_argument("--memtype", default="wram")
+    # SnesMemory is the most common debugging target (full CPU address space).
+    mem_size_parser.add_argument("--memtype", default="SnesMemory")
     mem_size_parser.add_argument("--json", "-j", action="store_true")
 
     mem_search_parser = subparsers.add_parser("mem-search", help="Search memory for a value or pattern")
@@ -376,7 +380,8 @@ def main():
     mem_search_parser.add_argument("--size", type=int, default=1)
     mem_search_parser.add_argument("--start", help="Start address (hex)")
     mem_search_parser.add_argument("--end", help="End address (hex)")
-    mem_search_parser.add_argument("--memtype", default="wram")
+    # Default to CPU address space for searches across ROM/RAM mirrors.
+    mem_search_parser.add_argument("--memtype", default="SnesMemory")
     mem_search_parser.add_argument("--json", "-j", action="store_true")
 
     mem_snapshot_parser = subparsers.add_parser("mem-snapshot", help="Create memory snapshot")
