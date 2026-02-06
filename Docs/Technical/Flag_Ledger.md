@@ -72,7 +72,9 @@
 | IntroState | $7EF39E | Value | TBD | TBD | Link's House intro sequence | Core/sram.asm | 2026-01-23 (code) | Value semantics TBD |
 | JournalState | $7EF39C | Value | TBD | TBD | Journal / story state | Core/sram.asm | 2026-01-23 (code) | Value semantics TBD |
 | ElderGuideStage | $7EF304 | Value | TBD | TBD | Village Elder map guidance stage | Core/sram.asm | 2026-01-24 (code) | Bits 0-3 stage; bit 6 pyramid icon |
-| ImpaGuideStage | $7EF305 | Value | TBD | TBD | Impa guidance stage / Hall of Secrets indicator | Core/sram.asm | 2026-01-24 (code) | Bits 0-3 stage; bit 7 Hall of Secrets icon |
+| ZoraWaterfallHint | $7EF305 | $01 | OcarinaEffect_SummonStorms | TBD | Zora waterfall hint shown | Core/sram.asm; Items/ocarina.asm | 2026-02-06 (code) | 1 = hint shown |
+| CastleAmbushFlags | $7EF306 | $03 | Oracle_CaptureAndWarp | TBD | D3 prison capture state | Core/sram.asm; Sprites/Enemies/custom_guard.asm | 2026-02-06 (code) | Bit 0 captured; bit 1 escaped |
+| ImpaGuideStage | TBD | Value | TBD | TBD | Impa guidance stage / Hall of Secrets indicator | Docs/Planning/map_icon_guidance_notes.md | 2026-01-24 (design) | Planned; previously noted at $7EF305 |
 
 ## Update Workflow
 

@@ -24,6 +24,7 @@
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
 !ENABLE_MINECART_PLANNED_TRACK_TABLE = 1
 !ENABLE_MINECART_CART_SHUTTERS       = 0
+!ENABLE_D3_PRISON_SEQUENCE           = 0
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.

@@ -221,7 +221,17 @@ InCutSceneFlag          = $7EF303
 ;   Low nibble used for post-D1 guidance to Tail Pond
 ElderGuideStage         = $7EF304
 
-; Reserved: $7EF305-30F available for future use
+; Zora waterfall hint shown flag (first-time hint at waterfall dismiss)
+;   Set by: ocarina.asm OcarinaEffect_SummonStorms
+ZoraWaterfallHint       = $7EF305
+
+; Castle Ambush System ($7EF306) - D3 prison capture sequence
+;   Set by: custom_guard.asm | Read by: custom_guard.asm
+CastleAmbushFlags       = $7EF306
+!CastleAmbush_HasBeenCaptured = $01  ; bit 0 - Player captured (one-shot)
+!CastleAmbush_HasEscaped      = $02  ; bit 1 - Player escaped prison
+
+; Reserved: $7EF307-30F available for future use
 
 ; ---------------------------------------------------------
 ; Main Story State ($7EF3C5)
@@ -632,15 +642,18 @@ SideQuestProg2          = SideQuestProgress2
 ; IMPORTANT: Update this section when claiming addresses!
 ;
 ; ---------------------------------------------------------
-; Story Extension Block ($7EF304-30F) - 12 bytes
+; Story Extension Block ($7EF307-30F) - 9 bytes
 ; ---------------------------------------------------------
 ; Purpose: Reserved for additional story/quest flags
 ; Suggested uses:
 ;   - Additional NPC encounter flags
 ;   - Extended side quest progress
 ;   - World event triggers
+; Allocated: $7EF304 = ElderGuideStage
+;            $7EF305 = ZoraWaterfallHint
+;            $7EF306 = CastleAmbushFlags
 ;
-FreeBlock_Story    = $7EF304  ; 12 bytes ($7EF304-30F)
+FreeBlock_Story    = $7EF307  ; 9 bytes ($7EF307-30F)
 
 ; ---------------------------------------------------------
 ; Item Extension Block ($7EF310-33F) - 48 bytes
