@@ -132,6 +132,14 @@ z3ed minecart audit (Goron Mines focus):
 ../yaze/scripts/z3ed dungeon-map --rom Roms/oos168x.sfc --room 0xD9
 ```
 
+Audit snapshot (2026-02-06, build: `Roms/oos168x.sfc`):
+- Rooms flagged by `--only-issues`: `0xA8`, `0xB8`, `0xD8`, `0xDA`.
+- Room `0xA8`: minecart sprite subtype `2` is not placed on a stop tile (B7-BA); room track objects are subtype `6` only. Action: decide intended track ID for the cart and align (sprite subtype vs track object subtype), then place the cart on a stop tile so `Sprite_Minecart_Prep` sets direction deterministically.
+- Room `0xB8`: minecart collision tiles present but **no stop tiles**. Action: add at least one stop tile (B7-BA) at the intended entry/exit points or cart spawn positions.
+- Room `0xD8`: two minecart sprites (subtype `3` at tile `(44,54)`, subtype `1` at tile `(16,14)`), neither on a stop tile. Action: move sprites onto stop tiles (or place stop tiles under them) so carts do not default to “north” behavior on spawn.
+- Room `0xDA`: minecart sprite subtype `2` is not on a stop tile; room track objects include subtypes `{6,7,9,11,12}` (no `2`). Action: align the sprite's track subtype to the intended track objects, and ensure a stop tile is under the cart.
+- Invariant: inactive carts determine their starting direction only from the stop tile under them (see `Sprites/Objects/minecart.asm` `Sprite_Minecart_Prep`). If no stop tile matches, behavior defaults to “north” (`Minecart_WaitVert`), which often looks like a broken cart.
+
 ---
 
 ## Design Philosophy

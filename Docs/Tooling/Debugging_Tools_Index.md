@@ -6,15 +6,17 @@ Comprehensive reference for all debugging tools available for Oracle of Secrets 
 
 | Tool | Location | Purpose | When to Use |
 |------|----------|---------|-------------|
-| **Sentinel** | `yaze/scripts/ai/sentinel.py` | Real-time soft lock detection | Continuous monitoring during play |
-| **Crash Investigator** | `yaze/scripts/ai/crash_dump.py` | Post-mortem analysis | After crash/breakpoint hit |
-| **Profiler** | `yaze/scripts/ai/profiler.py` | CPU hotspot analysis | Finding performance bottlenecks |
-| **Fuzzer** | `yaze/scripts/ai/fuzzer.py` | Automated stress testing | Finding edge-case crashes |
-| **State Query** | `yaze/scripts/ai/state_query.py` | Semantic game state queries | Scripting tests |
-| **Code Graph** | `yaze/scripts/ai/code_graph.py` | Static ASM analysis | Finding callers/writers |
-| **Memory Cartographer** | `yaze/scripts/ai/memory_cartographer.py` | RAM searching | Finding unknown addresses |
+| **Sentinel** | `~/src/hobby/yaze/scripts/ai/sentinel.py` | Real-time soft lock detection | Continuous monitoring during play |
+| **Crash Investigator** | `~/src/hobby/yaze/scripts/ai/crash_dump.py` | Post-mortem analysis | After crash/breakpoint hit |
+| **Profiler** | `~/src/hobby/yaze/scripts/ai/profiler.py` | CPU hotspot analysis | Finding performance bottlenecks |
+| **Fuzzer** | `~/src/hobby/yaze/scripts/ai/fuzzer.py` | Automated stress testing | Finding edge-case crashes |
+| **State Query** | `~/src/hobby/yaze/scripts/ai/state_query.py` | Semantic game state queries | Scripting tests |
+| **Code Graph** | `~/src/hobby/yaze/scripts/ai/code_graph.py` | Static ASM analysis | Finding callers/writers |
+| **Memory Cartographer** | `~/src/hobby/yaze/scripts/ai/memory_cartographer.py` | RAM searching | Finding unknown addresses |
 | **Oracle Debugger** | `~/.claude/skills/oracle-debugger/` | Unified platform | Comprehensive sessions |
-| **mesen2_client.py** | `oracle-of-secrets/scripts/` | CLI interface | Direct emulator control |
+| **mesen2_client.py** | `~/src/hobby/oracle-of-secrets/scripts/mesen2_client.py` | CLI interface | Direct emulator control |
+| **Campaign CLI** | `~/src/hobby/oracle-of-secrets/scripts/campaign/` | Autonomous campaign tooling | Repeatable milestone checks + dashboards |
+| **Campaign Autonomous Debugger** | `~/src/hobby/oracle-of-secrets/scripts/campaign/autonomous_debugger.py` | Softlock/anomaly monitor + auto-capture | Overnight runs + CI smoke validation |
 
 ---
 
@@ -97,7 +99,29 @@ python3 scripts/ai/sentinel.py \
 
 ---
 
-### 2. Post-Mortem Analysis
+### 2. Autonomous Campaign
+
+#### Campaign Autonomous Debugger (`oracle-of-secrets/scripts/campaign/autonomous_debugger.py`)
+
+Monitors live gameplay and/or runs a campaign loop, detects softlocks/anomalies, and captures artifacts.
+
+**Usage:**
+```bash
+# Monitor manual play (artifacts default to /tmp/oos_autodebug)
+python3 -m scripts.campaign.autonomous_debugger --monitor
+
+# Run the campaign orchestrator with monitoring injected
+python3 -m scripts.campaign.autonomous_debugger --campaign
+
+# CI-friendly: fail non-zero if any anomaly is detected
+python3 -m scripts.campaign.autonomous_debugger --monitor --fail-on-anomaly --trace-count 2000
+```
+
+**Artifact locations (defaults):**
+- Reports: `/tmp/oos_autodebug/reports`
+- Savestates: `/tmp/oos_autodebug/states`
+
+### 3. Post-Mortem Analysis
 
 #### Crash Investigator (`~/src/hobby/yaze/scripts/ai/crash_dump.py`)
 
@@ -122,7 +146,7 @@ python3 scripts/ai/crash_dump.py dump
 
 ---
 
-### 3. Performance Analysis
+### 4. Performance Analysis
 
 #### Profiler (`~/src/hobby/yaze/scripts/ai/profiler.py`)
 
@@ -142,7 +166,7 @@ python3 scripts/ai/profiler.py --duration 10  # Profile for 10 seconds
 
 ---
 
-### 4. Stress Testing
+### 5. Stress Testing
 
 #### Fuzzer / Chaos Monkey (`~/src/hobby/yaze/scripts/ai/fuzzer.py`)
 
@@ -165,7 +189,7 @@ python3 scripts/ai/fuzzer.py --mode glitch --duration 30
 
 ---
 
-### 5. State Queries
+### 6. State Queries
 
 #### State Query (`~/src/hobby/yaze/scripts/ai/state_query.py`)
 
@@ -183,7 +207,7 @@ python3 scripts/ai/state_query.py has bow
 
 ---
 
-### 6. Static Analysis
+### 7. Static Analysis
 
 #### Code Graph (`~/src/hobby/yaze/scripts/ai/code_graph.py`)
 
@@ -209,7 +233,7 @@ python3 scripts/ai/code_graph.py $ORACLE_DIR writes 7E0020
 
 ---
 
-### 7. Memory Searching
+### 8. Memory Searching
 
 #### Memory Cartographer (`~/src/hobby/yaze/scripts/ai/memory_cartographer.py`)
 
@@ -234,7 +258,7 @@ python3 scripts/ai/memory_cartographer.py interactive
 
 ---
 
-### 8. Oracle Debugger Skill (`~/.claude/skills/oracle-debugger/`)
+### 9. Oracle Debugger Skill (`~/.claude/skills/oracle-debugger/`)
 
 Claude skill wrapper providing additional capabilities:
 
@@ -255,7 +279,7 @@ python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py diff old.sfc new.sf
 
 ---
 
-### 9. CLI Interface
+### 10. CLI Interface
 
 #### mesen2_client.py (`~/src/hobby/oracle-of-secrets/scripts/mesen2_client.py`)
 

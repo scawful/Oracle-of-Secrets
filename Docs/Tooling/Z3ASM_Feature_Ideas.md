@@ -16,6 +16,11 @@ Example (Asar-safe today):
 ```
 **Benefits:** Eliminates heuristic hook classification, reduces false positives, and provides explicit ABI expectations.
 
+Practical extension:
+- Feature-gated org blocks should be representable without heuristics (e.g., “this hook is only active when `!ENABLE_*` is on”), so tooling can align to the built ROM.
+  - Example (Asar-safe):
+    - `org $01CC14 ; @hook name=RoomTag_ShutterDoorRequiresCart kind=jml target=RoomTag_ShutterDoorRequiresCart feature=!ENABLE_MINECART_CART_SHUTTERS`
+
 ### 2) Annotation emit (`@watch`, `@assert`, `@abi`)
 **Idea:** z3asm parses comment tags and emits `annotations.json` alongside other structured outputs.
 

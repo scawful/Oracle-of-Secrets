@@ -2,6 +2,24 @@
 
 Stage: Alpha (per PROJECT.toml)
 
+## Planning pointers
+- Roadmap: `ROADMAP.md`
+- Backlog + epics: `oracle.org`
+- Release definition + guardrails: `Docs/Plans/release_2026_definition.md`
+- Tooling references: `Docs/Tooling/` (esp. `AgentWorkflow.md`, `Z3DK_Analyzer_Findings.md`)
+- Stability “stop-ship” notes: `Docs/STABILITY.md`
+- Feature isolation flags: `Config/module_flags.asm` + `Config/feature_flags.asm`
+
+## Current focus (2026-02-06)
+- **Goron Mines (D6) minecart**: fix room-data invariants + expand to signature mechanic.
+  - Use `z3ed dungeon-minecart-audit` to catch: missing stop tiles, carts not placed on stop tiles, track subtype mismatches.
+  - Design plan: `Docs/Plans/goron_mines_minecart_design.md`
+- **Progression consistency**: start converting NPCs to shared helpers (crystal count, MapIcon, reaction tables).
+  - Spec + test plan: `Docs/Plans/progression_infrastructure.md`
+- **Regression guardrails**: use feature/module flags plus the autonomous debugger to catch hardlocks early.
+  - Smoke suite: `bash scripts/run_regression_tests.sh smoke --no-moe --fail-fast`
+  - Manual play monitor: `python3 -m scripts.campaign.autonomous_debugger --monitor --fail-on-anomaly`
+
 ## Current focus (2026-01-24)
 - **Follower Transition Fixes Applied** - Fixed black screen on building entry, stairs, room transitions
   - Two bugs fixed: 16-bit/8-bit mode mismatch + Data Bank addressing
