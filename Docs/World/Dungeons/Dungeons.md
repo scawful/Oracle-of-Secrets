@@ -69,14 +69,14 @@ Room "tags" are a vanilla mechanic that allows a room to have special properties
 
 ### Floor Puzzle (`floor_puzzle.asm`)
 
--   **Hook:** Replaces Tag `0x00` (`holes_0`).
+-   **Hook:** Replaces Tag `0x33` (`holes_0`).
 -   **Functionality:** Implements a "light all the tiles" puzzle. When Link steps on a special "off" tile (`$0DED`), it transforms into an "on" tile (`$0DEE`) and plays a sound. The system then checks if any "off" tiles remain.
     -   If all tiles are on, it opens the room's shutter doors (`$0468`) and plays the secret sound.
     -   If the player steps on a tile that is already "on", it can trigger a kill room effect (`STZ.b $AE`).
 
 ### Crumble Floor (`crumblefloor_tag.asm`)
 
--   **Hook:** Replaces Tag `0x03` (`holes_3`).
+-   **Hook:** Replaces Tag `0x35` (`holes_3`).
 -   **Functionality:** Creates floors that crumble away after being walked on.
     -   It tracks the tile Link is currently standing on.
     -   If he steps on a specific "crumble" tile (`$0C62` or `$0C63`), the code replaces it with a cracked tile and then a pit tile, spawning a falling tile visual effect (`Garnish 03`).
@@ -84,12 +84,12 @@ Room "tags" are a vanilla mechanic that allows a room to have special properties
 
 ### Positional Warp (`together_warp_tag.asm`)
 
--   **Hook:** Replaces Tag `0x08` (`Holes8`).
+-   **Hook:** Replaces Tag `0x3A` (`Holes8`).
 -   **Functionality:** Changes the room's warp destination based on the player's position. It divides the room into four quadrants and sets the target room index based on which quadrant the player is in when they trigger a warp (e.g., by falling in a pit). This allows a single room to lead to four different destinations.
 
 ### Minish Shutter Door (`custom_tag.asm`)
 
--   **Hook:** Replaces Tag `0x05` (`Holes5`).
+-   **Hook:** Replaces Tag `0x37` (`Holes5`).
 -   **Functionality:** Creates a shutter door that only opens if the player is in Minish Form (`!CurrentMask == 0x05`). If the condition is met, it opens the door and plays the corresponding sound effect.
 
 ### Intro Cutscene (`custom_tag.asm`)

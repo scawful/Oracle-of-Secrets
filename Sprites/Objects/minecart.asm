@@ -1108,10 +1108,10 @@ CheckIfPlayerIsOn:
 
 pushpc
 
-org $0DFA68
+org $0DFA68 ; @hook module=Sprites
   RebuildHUD_Keys:
 
-org $028260
+org $028260 ; @hook module=Sprites
   JSL ResetTrackVars
 
 pullpc
@@ -1378,7 +1378,30 @@ Sprite_Minecart_DrawBottom:
 }
 
 ; =========================================================
-; Shutter door only opens if the player is in the cart
+; Shutter door only opens if the player is in the cart.
+;
+; STATUS: UNTESTED — needs runtime verification before enabling.
+;   - Confirm shutter stays closed without cart
+;   - Confirm shutter opens when riding cart into tagged room
+;   - Confirm no regression on Crumble Floor (tag 0x34) or other Holes tags
+;   - Confirm JML $01CC5A return path is correct for tag 0x37 context
+;
+; Hook: Tag 0x38 at $01CC14 (vanilla Holes6 routine).
+; The old hook at $01CC08 (Holes3/tag 0x35) conflicts with
+; Dungeons/crumblefloor_tag.asm — do NOT use that address.
+; Note: Tag 0x37 (Holes5) is already repurposed for Minish shutter doors
+; (see Dungeons/custom_tag.asm: RoomTag_MinishShutterDoor).
+;
+; To enable: set !ENABLE_MINECART_CART_SHUTTERS = 1 in
+; Config/feature_flags.asm, then assign tag 0x38 to the
+; target room(s) in the yaze room header editor.
+
+if !ENABLE_MINECART_CART_SHUTTERS
+pushpc
+org $01CC14 ; @hook module=Sprites name=RoomTag_ShutterDoorRequiresCart kind=jml target=RoomTag_ShutterDoorRequiresCart
+  JML RoomTag_ShutterDoorRequiresCart
+pullpc
+endif
 
 RoomTag_ShutterDoorRequiresCart:
 {
@@ -1398,15 +1421,5 @@ RoomTag_ShutterDoorRequiresCart:
   .no_cart
   JML $01CC5A
 }
-
-pushpc
-
-; JML to return here 01CC5A
-;org $01CC08
-;RoomTag_Holes3:
-;JML RoomTag_ShutterDoorRequiresCart
-; LDA.b #$06 : BRA RoomTag_TriggerHoles
-
-pullpc
 
 ; =========================================================

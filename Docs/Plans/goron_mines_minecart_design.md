@@ -40,7 +40,7 @@ Design proposals for expanding Goron Mines' minecart system from 4 functional tr
 |---------|----------|---------------|
 | Switch corners (D0-D3) | `minecart.asm` collision handlers | Place SwitchTrack sprites (`$B0`) in rooms |
 | Speed switch (`$36`) | Every move routine checks `LDA $36` | Set `$36` to nonzero (needs a trigger sprite/tag) |
-| Cart-required shutters | Room tag hook | Needs a dedicated room tag. `$01CC08` (Holes3) is currently used by Crumble Floor. Prefer a feature-gated hook once a safe tag is chosen. |
+| Cart-required shutters | Room tag hook at `$01CC14` (Tag 0x38) | **UNTESTED.** Set `!ENABLE_MINECART_CART_SHUTTERS = 1` in `Config/feature_flags.asm`. Assign Tag 0x38 to target rooms in yaze. Hook is feature-gated — when disabled, vanilla behavior remains. Guardrail: Tag 0x37 (Holes5) is already used by Minish shutters. Needs runtime test: shutter behavior with/without cart, no Crumble Floor regression, JML return path correct. |
 | Cart lift/toss | Wait state handlers | Uncomment `JSR Minecart_HandleLiftAndToss` |
 
 ### Track Slot Usage (Starting Table)
@@ -96,6 +96,8 @@ Feature isolation:
 python3 scripts/set_feature_flags.py --list
 python3 scripts/set_feature_flags.py --disable minecart_planned_track_table
 python3 scripts/set_feature_flags.py --enable minecart_planned_track_table
+python3 scripts/set_feature_flags.py --enable minecart_cart_shutters
+python3 scripts/set_feature_flags.py --disable minecart_cart_shutters
 ```
 
 Build:
@@ -105,6 +107,10 @@ Build:
 
 z3dk analyzer delta (baseline vs current):
 ```bash
+# Create/update a baseline snapshot before making changes (do not commit ROMs)
+cp -p Roms/oos168x.sfc Roms/oos168x_base.sfc
+
+python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x_base.sfc --hooks hooks.json --json > /tmp/oos_an_base.json
 python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc --hooks hooks.json --json > /tmp/oos_an_cur.json
 python3 ../z3dk/scripts/oracle_analyzer_delta.py --baseline /tmp/oos_an_base.json --current /tmp/oos_an_cur.json --severity all
 ```
@@ -117,6 +123,14 @@ Room sampling (Goron Mines focus):
 - F1: `0x98`, `0x88`, `0x87`, `0x77`, `0x78`, `0x79`, `0x89`, `0x97`
 - B1: `0xA8`, `0xB8`, `0xB9`
 - B2: `0xD7`, `0xD8`, `0xD9`, `0xDA`
+
+z3ed minecart audit (Goron Mines focus):
+```bash
+../yaze/scripts/z3ed dungeon-minecart-audit --rom Roms/oos168x.sfc --rooms 0x77,0xA8,0xB8,0xD8,0xD9,0xDA --only-matches
+../yaze/scripts/z3ed dungeon-minecart-audit --rom Roms/oos168x.sfc --rooms 0x77,0xA8,0xB8,0xD8,0xD9,0xDA --only-issues
+../yaze/scripts/z3ed dungeon-list-custom-collision --rom Roms/oos168x.sfc --room 0xD9 --nonzero
+../yaze/scripts/z3ed dungeon-map --rom Roms/oos168x.sfc --room 0xD9
+```
 
 ---
 
@@ -400,9 +414,9 @@ B2 is the climax. **Enable the speed switch (`$36`)** and **hook `RoomTag_Shutte
 ### Enable: Cart-Required Shutters
 
 **Implementation:**
-- Uncomment the hook at `$01CC08` in `RoomTag_ShutterDoorRequiresCart`
-- Apply tag to rooms where doors should only open while Link is riding
-- This forces the player to approach certain doors from a cart stop tile adjacent to the door
+- Enable `!ENABLE_MINECART_CART_SHUTTERS = 1` (via `Config/feature_flags.asm` or `scripts/set_feature_flags.py`)
+- Apply Tag `0x38` (Holes6) to rooms where doors should only open while Link is riding
+- Runtime test: shutter stays closed without cart, opens when riding into tagged room, no regressions (Crumble Floor tag, Minish shutter tag)
 
 ### Room 0xDA (B2 East) — "Arrival Platform" [Track 11, NEW]
 
@@ -650,7 +664,7 @@ The minecart calls `HandleIndoorCameraAndDoors` (`$07F42F`) every frame during m
 ## Implementation Order
 
 ### Phase 1: Enable Dead Code
-1. Uncomment `RoomTag_ShutterDoorRequiresCart` hook at `$01CC08`
+1. Enable `!ENABLE_MINECART_CART_SHUTTERS = 1` and assign Tag `0x38` (Holes6) to a test room
 2. Add a speed crystal sprite or tag that sets `$36`
 3. Test both features in isolation before combining with track designs
 
@@ -674,9 +688,8 @@ The minecart calls `HandleIndoorCameraAndDoors` (`$07F42F`) every frame during m
 
 ### Phase 5: Set Pieces & Polish
 1. Holewarp Drop Ride (0x88 → 0xD8)
-2. Express Lane post-boss ride
-3. Per-room camera origin positions
-4. Final playtesting and balance
+2. Per-room camera origin positions
+3. Final playtesting and balance
 
 ---
 
