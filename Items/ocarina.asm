@@ -116,7 +116,7 @@ AddWeathervaneExplosion = $098D11
 Player_DoSfx1 = $078021
 Overworld_ReloadSubscreenOverlayAndAdvance_long = $02B1F4
 
-org $07A3DB
+org $07A3DB ; @hook module=Items
 LinkItem_FluteHook:
   JSR LinkItem_NewFlute
   RTS
@@ -150,11 +150,17 @@ LinkItem_NewFlute:
     .song_of_time
     LDA.b #$27 : JSR $802F ; Player_DoSfx3
     LDA.b #$02 : STA.b SongFlag
+    ; Purple tint for Song of Time (~32 frames)
+    LDA.b #$20 : STA.l SongTintTimer
+    LDA.b #$62 : STA.l SongTintColor : STA.b $9A
     RTS
 
     .song_of_healing
     LDA.b #$13 : JSR Player_DoSfx2
     LDA.b #$01 : STA.b SongFlag
+    ; Green tint for Song of Healing (~32 frames)
+    LDA.b #$20 : STA.l SongTintTimer
+    LDA.b #$52 : STA.l SongTintColor : STA.b $9A
     RTS
 
     .song_of_storms
@@ -162,10 +168,14 @@ LinkItem_NewFlute:
     LDA.b #$2F : JSR Player_DoSfx2
     LDA.b #$03 : STA.b SongFlag
     JSL OcarinaEffect_SummonStorms
+    ; Song of Storms tint handled by rain system ($9A = $72)
     RTS
 
   .song_of_soaring
   LDA.b #$3E : JSR Player_DoSfx2
+  ; White flash for Song of Soaring (~16 frames)
+  LDA.b #$10 : STA.l SongTintTimer
+  LDA.b #$32 : STA.l SongTintColor : STA.b $9A
 
   ; Are we indoors?
   LDA.b $1B : BNE .return
@@ -275,12 +285,20 @@ OcarinaEffect_SummonStorms:
   JMP .summon_storms
 
   .dismiss_storms
+      ; Check for Zora Temple Waterfall area — show first-time hint
+      LDA.w $8A : CMP.b #$1E : BNE .normal_dismiss
+        LDA.l ZoraWaterfallHint : BNE .skip_waterfall_hint
+          LDA #$01 : STA.l ZoraWaterfallHint
+          ; TODO: replace with dedicated waterfall hint message when authored.
+          ; Using an existing Sea Zora message avoids a blank placeholder.
+          LDA.b #$A6 : LDY.b #$01 ; TODO(dialogue): replace with dedicated waterfall hint text
+          JSL Sprite_ShowMessageUnconditional
+        .skip_waterfall_hint
+
       ; Check for Zora Temple Waterfall Trigger
-      ; Map 1E, High Precision Zone (16x16 pixels)
+      ; High Precision Zone (16x16 pixels)
       ; Target: Y=$06A8, X=$0CB7 (At the statue)
       ; Range: Y=$06A0-$06B0, X=$0CB0-$0CC0
-      
-      LDA.w $8A : CMP.b #$1E : BNE .normal_dismiss
       
       ; Y Coordinate Check
       LDA.b $21 : CMP.b #$06 : BNE .normal_dismiss ; High Byte
@@ -360,27 +378,37 @@ PlayThunderAndRain:
   RTL
 }
 
-; Temporarily commented out while porting to ZSOWv3
-; CheckRealTable:
-; {
-;   LDA $7EE00E : CMP #$00 : BEQ .continue
-;     JML RainAnimation_Overridden_rainOverlaySet
-;   .continue
-;   LDA #$05 : STA $012D
-;   LDA.b $8A : ASL : TAX
-;   LDA.l Pool_OverlayTable, X
-;   CMP.b #$9F : BNE .not_rain_area
-;     RTL
-;   .not_rain_area
-;   STZ.b $1D
-;   JML RainAnimation_Overridden_skipMovement
-; }
+; Tick the song tint timer each frame.
+; Decrements SongTintTimer; while active, applies SongTintColor to $9A.
+; When timer expires, restores $9A to $00 (unless rain is active).
+; Safe to call from any M/X width (forces 8-bit A).
+SongTintTick:
+{
+  PHP
+  SEP #$20
+  LDA.l SongTintTimer : BEQ .done
+    DEC : STA.l SongTintTimer : BNE .apply
+      ; Timer just expired — clear tint (unless storms keep it)
+      LDA.l $7EE00E : BNE .done
+      STZ.b $9A
+      BRA .done
+    .apply
+    LDA.l SongTintColor : STA.b $9A
+  .done
+  PLP
+  RTL
+}
+
+; Rain animation (lightning, thunder, overlay scroll) handled natively
+; by ZSOWv3 RainAnimation at $02A4CD when $8C == $9F.
+; Song of Storms sets $8C via OcarinaEffect_SummonStorms.
 
 ResetOcarinaFlag:
 {
   ; NOTE: Removed automatic clearing of $7EE00E on screen transitions.
   ; Rain flag is now only cleared when player plays Song of Storms again.
   ; The visibility is controlled in ZSCustomOverworld.asm.
+  ; Song tint ticking handled in HUD_ClockDisplay (Overworld/time_system.asm).
   LDA.w $0416 : ASL A
   RTL
 }
@@ -468,62 +496,7 @@ UpdateFluteSong_Long:
 pushpc ; Bank2B freespace
 
 ; OverworldTransitionScrollAndLoadMap
-org $02F210 : JSL ResetOcarinaFlag
+org $02F210 : JSL ResetOcarinaFlag ; @hook module=Items name=ResetOcarinaFlag kind=jsl target=ResetOcarinaFlag
 
-; ZS OW
-; Temporarily commented out while porting to ZSOWv3
-; org $02A4CD
-; RainAnimation_Overridden:
-; {
-;   JSL CheckRealTable : BEQ .rainOverlaySet
-;     ; LDA.b $8C : CMP.b #$9F :
-;     ; Check the progress indicator
-;     LDA.l GameState : CMP.b #$02 : BRA .skipMovement
-;   .rainOverlaySet
-
-;   ; If misery mire has been opened already, we're done.
-;   ; LDA.l $7EF2F0 : AND.b #$20 : BNE .skipMovement
-;   ; Check the frame counter.
-;   ; On the third frame do a flash of lightning.
-;   LDA.b $1A
-
-;   CMP.b #$03 : BEQ .lightning ; On the 0x03rd frame, cue the lightning.
-;   CMP.b #$05 : BEQ .normalLight ; On the 0x05th frame, normal light level.
-;   CMP.b #$24 : BEQ .thunder ; On the 0x24th frame, cue the thunder.
-;   CMP.b #$2C : BEQ .normalLight ; On the 0x2Cth frame, normal light level.
-;   CMP.b #$58 : BEQ .lightning ; On the 0x58th frame, cue the lightning.
-;   CMP.b #$5A : BNE .moveOverlay ; On the 0x5Ath frame, normal light level.
-
-;   .normalLight
-
-;   ; Keep the screen semi-dark.
-;   LDA.b #$72
-
-;   BRA .setBrightness
-
-;   .thunder
-
-;   ; Play the thunder sound when outdoors.
-;   ; LDX.b #$36 : STX.w $012E
-;   JSL PlayThunderAndRain
-
-;   .lightning
-
-;   LDA.b #$32 ; Make the screen flash with lightning.
-
-;   .setBrightness
-
-;   STA.b $9A
-
-;   .moveOverlay
-
-;   ; Overlay is only moved every 4th frame.
-;   LDA.b $1A : AND.b #$03 : BNE .skipMovement
-;     LDA.w $0494 : INC A : AND.b #$03 : STA.w $0494 : TAX
-;     LDA.b $E1 : CLC : ADC.l $02A46D, X : STA.b $E1
-;     LDA.b $E7 : CLC : ADC.l $02A471, X : STA.b $E7
-;   .skipMovement
-
-;   RTL
-; }
-; assert pc() <= $02A52D
+; ZSOWv3 RainAnimation at $02A4CD handles all rain visuals natively.
+; See Overworld/ZSCustomOverworld.asm:RainAnimation for the active code.

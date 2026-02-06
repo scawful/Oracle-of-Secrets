@@ -7,7 +7,7 @@
 !hud_hours_high = $7EC7C4
 
 ; HUD Template adjusts timer's color
-org $0DFF07
+org $0DFF07 ; @hook module=Overworld
   db $10, $24, $11, $24
   db $6C, $25
   db $90, $24, $90, $24
@@ -17,12 +17,13 @@ org $0DFF07
 ; Executes every frame to update the clock.
 ; Stack contract: HUD_ClockDisplay uses PHP/PLP only; RunClock and DrawClockToHud
 ; must not perform unbalanced PHA/PLA/PHX/PLX/PHY/PLY so that PLP restores the same P.
-org $068361
+org $068361 ; @hook module=Overworld
   JSL HUD_ClockDisplay
 pullpc
 HUD_ClockDisplay:
 {
   PHP ; Preserve caller M/X flags
+  JSL SongTintTick ; Per-frame song tint decay (safe for any M/X width)
   JSR RunClock
   JSR DrawClockToHud
   REP #$30 ; Ensure 16-bit A/X/Y for vanilla garnish routine
@@ -33,7 +34,7 @@ HUD_ClockDisplay:
 
 ; Zarby Intro and Credits fix
 pushpc
-org $0CC265 ; Intro_FadeLogoIn
+org $0CC265 ; Intro_FadeLogoIn ; @hook module=Overworld
   JSL LogoFadeInSetClock
 pullpc
 LogoFadeInSetClock:
@@ -45,7 +46,7 @@ LogoFadeInSetClock:
 }
 
 pushpc
-org $0CCA59
+org $0CCA59 ; @hook module=Overworld
   JSL ResetClockTriforceRoom
 pullpc
 ResetClockTriforceRoom:
@@ -306,7 +307,7 @@ pushpc
 
 Overworld_CopyPalettesToCache = $02C769
 
-org $02FF80 ; free space on bank $02
+org $02FF80 ; free space on bank $02 ; @hook module=Overworld
 PaletteBufferToEffective:
   ; JSR $C769	; $02:C65F -> palette buffer to effective routine
   JSR $C65F
@@ -341,13 +342,13 @@ PalCgram540_BG = $7EC540
 PalCgram600_Spr = $7EC600
 
 ; Palettes_LoadSingle.next_color
-org $1BEF3D : JSL LoadDayNightPaletteEffect
+org $1BEF3D : JSL LoadDayNightPaletteEffect ; @hook module=Overworld name=LoadDayNightPaletteEffect kind=jsl target=LoadDayNightPaletteEffect
 
 ; Palettes_LoadMultiple.next_color
-org $1BEF61 : JSL LoadDayNightPaletteEffect
+org $1BEF61 : JSL LoadDayNightPaletteEffect ; @hook module=Overworld name=LoadDayNightPaletteEffect kind=jsl target=LoadDayNightPaletteEffect
 
 ; Palettes_LoadMultiple_Arbitrary.next_color
-org $1BEF84 : JSL LoadDayNightPaletteEffect
+org $1BEF84 : JSL LoadDayNightPaletteEffect ; @hook module=Overworld name=LoadDayNightPaletteEffect kind=jsl target=LoadDayNightPaletteEffect
 
 pullpc
 LoadDayNightPaletteEffect:
@@ -614,7 +615,7 @@ RestoreTimeForDungeonMap:
 pushpc
 
 ; SetBGColorMainBuffer
-org $0ED5F9 : JSL ColorBgFix
+org $0ED5F9 : JSL ColorBgFix ; @hook module=Overworld name=ColorBgFix kind=jsl target=ColorBgFix
 
 ; OverworldMosaicTransition_HandleScreensAndLoadShroom
 org $02AE92 : NOP #6
@@ -645,19 +646,19 @@ org $02AE92 : NOP #6
 ; $1B/EE39 6B          RTL
 
 ; Palettes_Load_LinkGloves
-org $1BEE2D : JSL GlovesFix
+org $1BEE2D : JSL GlovesFix ; @hook module=Overworld name=GlovesFix kind=jsl target=GlovesFix
 
 ; org $0ABA5A
 ; TODO: Handle overworld map palette for flashing icons
 
 ; Module0E_03_00_DarkenAndPrep
-org $0ED956 : JSL FixDungeonMapColors
+org $0ED956 : JSL FixDungeonMapColors ; @hook module=Overworld name=FixDungeonMapColors kind=jsl target=FixDungeonMapColors
 
 ; UnderworldMap_RecoverGFX
-org $0AEFA6 : JSL RestoreTimeForDungeonMap
+org $0AEFA6 : JSL RestoreTimeForDungeonMap ; @hook module=Overworld name=RestoreTimeForDungeonMap kind=jsl target=RestoreTimeForDungeonMap
 
 ; RefreshLinkEquipmentPalettes
-org $0ED745 : JSL FixShockPalette
+org $0ED745 : JSL FixShockPalette ; @hook module=Overworld name=FixShockPalette kind=jsl target=FixShockPalette
 
 ; GameOver_SaveAndQuit:
-org $09F604 : JSL FixSaveAndQuit
+org $09F604 : JSL FixSaveAndQuit ; @hook module=Overworld name=FixSaveAndQuit kind=jsl target=FixSaveAndQuit
