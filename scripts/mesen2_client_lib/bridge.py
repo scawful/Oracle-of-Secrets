@@ -713,7 +713,8 @@ class MesenBridge:
     def p_assert(self, addr: int, expected: int, mask: int = 0xFF) -> dict[str, Any]:
         return self.send_command("P_ASSERT", {
             "addr": f"0x{addr:06X}",
-            "expected": f"0x{expected:02X}",
+            # Mesen2-OOS socket API expects `expected_p`.
+            "expected_p": f"0x{expected:02X}",
             "mask": f"0x{mask:02X}",
         })
 
