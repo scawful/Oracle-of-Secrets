@@ -134,6 +134,62 @@ Message_1BA:
   db $00, $21, $42, $59, $E3, $59, $29, $25, $93, $59, $DA, $59, $21, $1E, $1A, $1D, $59, $C7, $DF, $2B, $1D, $42, $75, $32, $1E, $2C, $3F, $59, $E6, $59, $27, $1E, $31, $2D, $59, $2D, $21, $CE, $91, $BB, $28, $26, $2C, $76, $B4, $59, $0A, $1A, $25, $32, $31, $28, $59, $02, $92, $25, $1E, $41, $7E, $73, $08, $51, $2F, $1E, $59, $2D, $1A, $24, $A0, $D8, $59, $25, $22, $97, $2B, $2D, $32, $59, $C6, $73, $BD, $2B, $24, $B3, $D8, $59, $1C, $92, $25, $1E, $59, $C7, $59, $E3, $2B, $59, $BD, $29, $41, $73, $01, $1E, $DF, $CE, $59, $B6, $2C, $59, $2C, $B1, $9F, $30, $2C, $59, $2B, $2E, $27, $59, $1D, $1E, $1E, $29, $41, $7E, $73, $12, $1E, $1E, $24, $59, $D8, $59, $0C, $1E, $1A, $9F, $30, $59, $01, $BA, $1D, $1E, $59, $2D, $21, $A6, $1E, $42, $73, $25, $1E, $20, $A5, $1D, $2C, $59, $2C, $1A, $32, $59, $B6, $59, $21, $28, $25, $1D, $2C, $59, $CB, $A1, $1F, $B6, $73, $A8, $59, $E3, $2B, $59, $2A, $2E, $1E, $D3, $41, $7F
 Message_1BB:
   db $00, $21, $28, $32, $42, $59, $26, $94, $1E, $32, $3E, $59, $E8, $51, $CD, $BB, $28, $24, $B4, $51, $75, $A8, $59, $D8, $59, $0F, $22, $2B, $94, $1E, $59, $0A, $B4, $20, $42, $59, $1E, $21, $3F, $76, $16, $1E, $25, $25, $42, $59, $08, $59, $1C, $93, $51, $2D, $59, $21, $1E, $25, $29, $59, $E3, $59, $2D, $21, $A6, $1E, $41, $7E, $73, $01, $2E, $2D, $59, $08, $59, $1C, $93, $59, $2D, $1E, $25, $25, $59, $E3, $59, $2D, $B0, $2C, $59, $D8, $73, $0F, $22, $2B, $94, $1E, $59, $0A, $B3, $B1, $1D, $59, $93, $59, $28, $25, $1D, $59, $2C, $B0, $29, $42, $73, $21, $A6, $1E, $59, $B4, $59, $D8, $59, $1A, $1B, $32, $2C, $2C, $59, $D2, $BE, $E1, $A6, $1E, $41, $7E, $73, $08, $1F, $59, $E3, $51, $CD, $BB, $28, $24, $B4, $51, $59, $DA, $59, $1F, $B4, $1D, $59, $B0, $26, $42, $73, $2D, $21, $94, $8B, $1A, $59, $AC, $28, $1D, $59, $29, $BA, $1C, $1E, $59, $DA, $59, $D3, $1A, $2B, $2D, $41, $7F
+; ---------------------------------------------------------
+; Messages $1BC-$1C4: Reserved filler (sequential walker padding)
+; Messages $1C5-$1CB: Maku Tree dungeon hint cascade
+; ---------------------------------------------------------
+
+; Reserved filler ($1BC-$1C4)
+Message_1BC:
+  db $41, $41, $41, $7F
+Message_1BD:
+  db $41, $41, $41, $7F
+Message_1BE:
+  db $41, $41, $41, $7F
+Message_1BF:
+  db $41, $41, $41, $7F
+Message_1C0:
+  db $41, $41, $41, $7F
+Message_1C1:
+  db $41, $41, $41, $7F
+Message_1C2:
+  db $41, $41, $41, $7F
+Message_1C3:
+  db $41, $41, $41, $7F
+Message_1C4:
+  db $41, $41, $41, $7F
+
+; Maku Tree hint messages ($1C5-$1CB)
+; Placeholder text until yaze message editor can author real dialogue
+Message_1C5:  ; Post-D1: hint toward Tail Palace
+  db $41, $41, $41, $7F
+Message_1C6:  ; Post-D3: hint toward Zora Temple
+  db $41, $41, $41, $7F
+Message_1C7:  ; Post-D5: hint toward Goron Mines
+  db $41, $41, $41, $7F
+Message_1C8:  ; Post-D2: hint toward Kalyxo Castle
+  db $41, $41, $41, $7F
+Message_1C9:  ; Post-D4: hint toward Glacia Estate
+  db $41, $41, $41, $7F
+Message_1CA:  ; Post-D7: reserved (endgame)
+  db $41, $41, $41, $7F
+Message_1CB:  ; Post-D6: hint toward Dragon Ship
+  db $41, $41, $41, $7F
+
+; D3 Prison Sequence messages ($1CC-$1D1)
+Message_1CC:  ; Guard capture taunt
+  db $41, $41, $41, $7F
+Message_1CD:  ; Prison cell wake-up text
+  db $41, $41, $41, $7F
+Message_1CE:  ; Prison cell description
+  db $41, $41, $41, $7F
+Message_1CF:  ; Cellmate NPC line 1 (optional)
+  db $41, $41, $41, $7F
+Message_1D0:  ; Cellmate NPC line 2 / escape hint
+  db $41, $41, $41, $7F
+Message_1D1:  ; Post-escape flavor text
+  db $41, $41, $41, $7F
+
  db $FF ; end of message pointers checks
 
 

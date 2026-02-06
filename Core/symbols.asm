@@ -22,6 +22,8 @@ Offspring2_Id:            skip 1
 Offspring3_Id:            skip 1
 Kydreeok_Id:              skip 1
 FishingOrPortalRod:       skip 1
+SongTintTimer:            skip 1  ; Frames remaining for song color tint
+SongTintColor:            skip 1  ; Color value to apply to $9A during tint
 }
 base off
 
@@ -520,6 +522,14 @@ RoomIndex    = $A0 ; Return the current room ID
 AreaIndex    = $8A ; Return the current overworld area ID
 
 MsgChoice    = $1CE8 ; Choice made in a message box
+
+; D3 Prison Sequence Message IDs (expanded bank)
+!Msg_GuardCaptureTaunt   = $1CC
+!Msg_PrisonWakeUp        = $1CD
+!Msg_PrisonCellDesc      = $1CE
+!Msg_CellmateHint1       = $1CF
+!Msg_CellmateHint2       = $1D0
+!Msg_PostEscapeFlavor    = $1D1
 
 ; set the mosaic setting ($2106) XXXXDCBA
 ;   [ABCD BG1/BG2/BG3/BG4][X size of the mosaic pixels 0-16]
