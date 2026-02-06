@@ -1,5 +1,42 @@
 # Progression Infrastructure — Centralized Helpers
 
+## Implementation Status
+
+**STATUS: UNTESTED** — Routines implemented in `Core/progression.asm` (2026-02-06).
+Assembles at `$2FA112`–`$2FA164` (82 bytes, bank $2F). Build clean.
+No NPC conversions yet — these are passive JSL targets.
+
+| Routine | Status | Notes |
+|---------|--------|-------|
+| `GetCrystalCount` | Implemented, UNTESTED | Popcount of crystal bitfield, returns 0-7 in A |
+| `UpdateMapIcon` | Implemented, UNTESTED | Sets MapIcon = crystal_count + 1 |
+| `SelectReactionMessage` | Implemented, UNTESTED | Table-walker, returns A/Y for Sprite_Show* JSLs |
+
+### Resolved Design Decisions
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| MapIcon formula | `count + 1` (not bitmask scan) | MapIcon is a reveal THRESHOLD controlling how many markers the world map shows (`world_map.asm` `MapIconDraw`). Higher value = more markers visible. Not a "go here next" pointer. |
+| Non-linear dungeon order | Not a problem for MapIcon | Crystal count maps cleanly to reveal threshold regardless of which specific dungeons are done. The Maku Tree cascade handles "which specific dungeon to hint at" separately. |
+| Reaction table location | 24-bit pointer in $00-$02 | Cross-bank compatible. NPC tables live in their sprite bank, shared walker in Core bank. Uses `[$00], Y` indirect long. |
+| NPC conversion scope | One NPC at a time (guardrail) | Convert Zora first (simplest: one threshold). Then Ranch Girl, Bug Net Kid, etc. |
+| Feature flag needed? | No | Routines are passive — no hooks. They only execute when an NPC explicitly JSLs to them. |
+
+### Known Consumers (Not Yet Wired)
+
+| NPC | Current Pattern | Would Use |
+|-----|-----------------|-----------|
+| Maku Tree | Full cascade (D7→D1 bit checks + per-dungeon MapIcon) | Already complete — keep its own logic |
+| Zora | `Crystals AND #$20` inline | `SelectReactionMessage` with 2-entry table |
+| Village Elder | `$7EF37A AND #$01/10` + ElderGuideStage | `GetCrystalCount` for threshold, keep special Tail Pond MapIcon |
+| Deku Scrub | `Crystals AND #$10` (despawn check) | `GetCrystalCount` CMP #threshold |
+| Eon Owl | `$7EF37A CMP #$77` (exact bitmask) | Does NOT use count — needs exact bits |
+| Ranch Girl | Unknown | `SelectReactionMessage` |
+| Bug Net Kid | Unknown | `SelectReactionMessage` |
+| Bottle Vendor | Unknown | `SelectReactionMessage` |
+
+---
+
 ## Summary
 
 Design centralized progression routines to replace scattered, ad-hoc crystal checks and MapIcon logic across multiple NPCs. Introduces three shared systems: a **MapIcon advancement table**, a **crystal count helper**, and an **NPC reaction framework** for threshold-based alternate messages.
@@ -11,8 +48,16 @@ Design centralized progression routines to replace scattered, ad-hoc crystal che
 Multiple files independently check crystal flags and story progression, each with its own implementation:
 
 **Maku Tree** (`Sprites/NPCs/maku_tree.asm:147–176`):
-- Waterfall checks D5 → D3 → D1 (missing D2, D4, D6)
-- Sets MapIcon only on first meeting
+- Full D7→D1 cascade with per-dungeon MapIcon and hints (COMPLETE)
+- Uses bit-by-bit checks (appropriate for its detailed cascade logic)
+
+**Zora NPC** (`Sprites/NPCs/zora.asm:154–167`):
+- Checks `!Crystal_D4_ZoraTemple` ($20) for post-D4 dialogue
+- Hardcoded message IDs ($1A4, $1A5, $1A6)
+
+**Village Elder, Deku Scrub, other NPCs:**
+- Each has its own flag-check pattern
+- No shared infrastructure
 
 **Zora NPC** (`Sprites/NPCs/zora.asm:154–167`):
 - Checks `!Crystal_D4_ZoraTemple` ($20) for post-D4 dialogue
@@ -191,12 +236,12 @@ These use the same framework but check `StoryProgress` / `StoryProgress2` instea
 | `Sprites/NPCs/bug_net_kid.asm` | Add reaction table |
 | `Sprites/NPCs/followers.asm` | Add crystal-gated commentary |
 
-## Open Questions
+## Open Questions (Resolved 2026-02-06)
 
-1. **Non-linear dungeon order:** The MapIcon table assumes D1→D2→D3→... in order. If the player can do dungeons out of order, the "next dungeon" isn't predictable by crystal count alone. Do we need a bitmask-based "first uncompleted dungeon" lookup instead?
-2. **Reaction table location:** Should NPC reaction tables live in each NPC's ASM file (locality) or in a central `progression.asm` (discoverability)? Recommend: tables in NPC files, shared routines in `Core/progression.asm`.
-3. **Story flag reactions:** Should story-flag checks use the same framework as crystal checks, or a separate system? The threshold model maps cleanly to crystal counts but less cleanly to bitfield flags.
-4. **Performance:** `GetCrystalCount` loops through 7 bits. This is negligible (~30 cycles) but could be replaced with a lookup table if called frequently per frame. Not a concern for NPC dialogue triggers.
+1. ~~**Non-linear dungeon order:**~~ **RESOLVED.** MapIcon is a reveal threshold, not a "go here" pointer. `count + 1` works regardless of completion order. The Maku Tree cascade handles specific dungeon hints separately.
+2. ~~**Reaction table location:**~~ **RESOLVED.** Tables in NPC files, shared walker (`SelectReactionMessage`) in `Core/progression.asm`. 24-bit pointer in $00-$02 for cross-bank access.
+3. **Story flag reactions:** Still open. The `SelectReactionMessage` threshold model works for crystal counts. For story-flag reactions (OOSPROG bits), a separate `SelectStoryReactionMessage` that checks story flags instead of crystal count may be needed. Deferred until an NPC actually needs it.
+4. ~~**Performance:**~~ **RESOLVED.** ~40 cycles for 7-bit popcount. Negligible for NPC triggers. No lookup table needed.
 
 ## Dependencies
 

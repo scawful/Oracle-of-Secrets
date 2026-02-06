@@ -51,6 +51,7 @@ namespace Oracle
   incsrc "Core/sram.asm"
   incsrc "Core/symbols.asm"
   incsrc "Core/message.asm"
+  incsrc "Core/progression.asm"
 
   ; --- Conditionally included modules ---
   ; Toggle !DISABLE_* flags in Util/macros.asm for bug isolation.
