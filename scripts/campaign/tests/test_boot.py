@@ -13,9 +13,12 @@ Usage:
 
 from __future__ import annotations
 
+import os
 import sys
 import time
 from pathlib import Path
+
+import pytest
 
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
@@ -34,6 +37,8 @@ class TestBoot:
     @classmethod
     def setup_class(cls):
         """Set up emulator connection for all tests."""
+        require_emulator = os.environ.get("OOS_TEST_REQUIRE_EMULATOR") == "1"
+
         cls.emu = Mesen2Emulator()
         cls.parser = GameStateParser()
         cls._connected = False
@@ -41,7 +46,18 @@ class TestBoot:
         try:
             cls._connected = cls.emu.connect()
         except Exception as e:
+            cls._connected = False
             print(f"Warning: Could not connect to emulator: {e}")
+
+        if not cls._connected:
+            msg = (
+                "Mesen2 backend not available. Start Mesen2-OOS with the socket API enabled "
+                "(or set MESEN2_SOCKET_PATH), then re-run. "
+                "Set OOS_TEST_REQUIRE_EMULATOR=1 to make this a hard failure."
+            )
+            if require_emulator:
+                pytest.fail(msg)
+            pytest.skip(msg)
 
     def test_emulator_connection(self):
         """Test that we can connect to Mesen2."""

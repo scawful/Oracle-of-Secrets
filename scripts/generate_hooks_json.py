@@ -100,6 +100,8 @@ class HookEntry:
     abi_class: str = ''
     expected_m: Optional[int] = None
     expected_x: Optional[int] = None
+    expected_exit_m: Optional[int] = None
+    expected_exit_x: Optional[int] = None
 
 
 def _module_from_path(path: Path, root: Path) -> str:
@@ -575,6 +577,9 @@ def scan_hooks(root: Path) -> list[HookEntry]:
                 ann_m = directive_expected_m
             if directive_expected_x is not None:
                 ann_x = directive_expected_x
+            # Explicit exit expectations from @hook directive
+            ann_exit_m = _parse_int(str(hook_directive.get("expected_exit_m"))) if hook_directive.get("expected_exit_m") is not None else None
+            ann_exit_x = _parse_int(str(hook_directive.get("expected_exit_x"))) if hook_directive.get("expected_exit_x") is not None else None
             directive_module = hook_directive.get("module")
             if directive_module:
                 module = str(directive_module)
@@ -594,6 +599,8 @@ def scan_hooks(root: Path) -> list[HookEntry]:
                 abi_class=abi_class,
                 expected_m=ann_m,
                 expected_x=ann_x,
+                expected_exit_m=ann_exit_m,
+                expected_exit_x=ann_exit_x,
             )
 
             existing = hooks_by_addr.get(addr)
@@ -645,17 +652,34 @@ def main() -> int:
         }
         if entry.abi_class:
             hook['abi_class'] = entry.abi_class
-        if entry.expected_m is not None or entry.expected_x is not None:
-            if entry.expected_m is not None:
-                hook['expected_m'] = entry.expected_m
-            if entry.expected_x is not None:
-                hook['expected_x'] = entry.expected_x
-        elif entry.address in EXPECTED_MX:
-            exp_m, exp_x = EXPECTED_MX[entry.address]
-            if exp_m is not None:
-                hook['expected_m'] = exp_m
-            if exp_x is not None:
-                hook['expected_x'] = exp_x
+
+        # Resolve entry register-width expectations
+        eff_m = entry.expected_m
+        eff_x = entry.expected_x
+        if eff_m is None and entry.address in EXPECTED_MX:
+            eff_m = EXPECTED_MX[entry.address][0]
+        if eff_x is None and entry.address in EXPECTED_MX:
+            eff_x = EXPECTED_MX[entry.address][1]
+        if eff_m is not None:
+            hook['expected_m'] = eff_m
+        if eff_x is not None:
+            hook['expected_x'] = eff_x
+
+        # Resolve exit register-width expectations.
+        # Explicit @hook values take priority. Otherwise, auto-propagate:
+        # hooks that redirect to or return to vanilla code (jsl, jml) should
+        # restore the caller's register width on exit.
+        exit_m = entry.expected_exit_m
+        exit_x = entry.expected_exit_x
+        if exit_m is None and entry.kind in ('jsl', 'jml') and eff_m is not None:
+            exit_m = eff_m
+        if exit_x is None and entry.kind in ('jsl', 'jml') and eff_x is not None:
+            exit_x = eff_x
+        if exit_m is not None:
+            hook['expected_exit_m'] = exit_m
+        if exit_x is not None:
+            hook['expected_exit_x'] = exit_x
+
         if entry.target:
             hook['target'] = entry.target
         if entry.note:
