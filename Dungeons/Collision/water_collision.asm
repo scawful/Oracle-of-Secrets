@@ -202,6 +202,7 @@ Underworld_LoadRoom_ExitHook:
   RTL
 
   .draw_next_torch
+  SEP #$30
   JML $0188C9
 }
 
