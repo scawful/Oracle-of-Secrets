@@ -13,10 +13,18 @@ Oracle of Secrets contains **7 dungeons** plus the Fortress of Secrets (final du
 | D3 | Kalyxo Castle | 0x28/0x2B | 0x0B | [Map](KalyxoCastle_Map.md) | - | Stub |
 | D4 | Zora Temple | 0x25 | 0x1E | [Map](ZoraTemple_Map.md) | - | Stub |
 | D5 | Glacia Estate | 0x34 | 0x06 | [Map](GlaciaEstate_Map.md) | - | Stub |
-| D6 | **Goron Mines** | 0x27 | 0x36 | [Map](GoronMines_Map.md) | [Tracks](GoronMines_Tracks.md) | **Complete** |
+| D6 | **Goron Mines** | 0x27 | 0x36 | [Map](GoronMines_Map.md) | [Tracks](GoronMines_Tracks.md) | **In Progress** — 4/17 tracks placed (0-3), B1/B2 unfinished |
 | D7 | Dragon Ship | 0x35 | 0x30 | [Map](DragonShip_Map.md) | - | Stub |
 
-**Final Dungeon:** [Fortress of Secrets](../SpecialAreas/FortressOfSecrets.md) (entrance 0x37)
+**Final Dungeon:** [Fortress of Secrets](../SpecialAreas/FortressOfSecrets.md) (entrance 0x37) — rooms allocated and connected but skeletal structure; Portal Rod item has bugs
+
+### Shrine Dungeons
+
+| # | Shrine | Status | Notes |
+|---|--------|--------|-------|
+| S1 | Shrine of Wisdom | **Complete** | Flooded, memory-based puzzles |
+| S2 | Shrine of Power | **Complete** | Volcanic; has collision issues over pit edges |
+| S3 | Shrine of Courage | **Complete** | Shadow/temporal themes |
 
 **Template:** [DUNGEON_TEMPLATE.md](DUNGEON_TEMPLATE.md) - Use this template when documenting new dungeons.
 

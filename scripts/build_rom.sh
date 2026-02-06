@@ -144,7 +144,16 @@ fi
 # Run static analysis if hooks.json exists
 hooks_json="$repo_root/hooks.json"
 if [[ -f "$patched_rom" ]]; then
+  regen_hooks=0
   if [[ ! -f "$hooks_json" || "${OOS_GENERATE_HOOKS:-0}" == "1" ]]; then
+    regen_hooks=1
+  elif [[ -f "$repo_root/Config/module_flags.asm" && "$repo_root/Config/module_flags.asm" -nt "$hooks_json" ]]; then
+    regen_hooks=1
+  elif [[ -f "$repo_root/Config/feature_flags.asm" && "$repo_root/Config/feature_flags.asm" -nt "$hooks_json" ]]; then
+    regen_hooks=1
+  fi
+
+  if [[ "$regen_hooks" == "1" ]]; then
     echo "[*] Generating hooks.json..."
     python3 "$repo_root/scripts/generate_hooks_json.py" --root "$repo_root" --output "$hooks_json" --rom "$patched_rom" || true
   fi
@@ -216,7 +225,9 @@ if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
 
     if [[ $analysis_exit -ne 0 ]]; then
       echo "[-] Static analysis found errors!"
-      if [[ "${OOS_ANALYSIS_FATAL:-1}" == "1" ]]; then
+      # Default is non-fatal (developer workflow). Set OOS_ANALYSIS_FATAL=1 to
+      # fail the build when the analyzer returns nonzero.
+      if [[ "${OOS_ANALYSIS_FATAL:-0}" == "1" ]]; then
         exit $analysis_exit
       else
         echo "[-] (Non-fatal: set OOS_ANALYSIS_FATAL=1 to block builds)"

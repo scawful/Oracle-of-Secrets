@@ -38,6 +38,7 @@
 
 incsrc    "Util/macros.asm"
 incsrc    "Config/module_flags.asm"
+incsrc    "Config/feature_flags.asm"
 incsrc    "Core/structs.asm"
 
 ; Vanilla WRAM and SRAM

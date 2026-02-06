@@ -49,6 +49,41 @@ These are likely genuine ABI risks and should be investigated in Oracle code:
 - **Tile16 blank entries**: indices `0xEA4–0xEA7`
   - Likely tied to the bad copy into `oos168x.sfc` (see test ROM confusion).
 
+## 2026-02 Direction (Make Analyzer Output Trustworthy)
+The analyzer is only as good as `hooks.json` and symbol alignment. Two practical issues were observed in practice:
+1) **Feature-gated org blocks**: if a hook payload is controlled by a feature flag, tooling must see the *active* branch.
+2) **Non-assembled ASM trees**: directories like `Util/ZScreamNew/` should not contribute hooks unless they are included in the build.
+
+Guardrails implemented/planned on the Oracle side:
+- Feature flags standardized via `Config/feature_flags.asm` and `scripts/set_feature_flags.py`.
+- `scripts/generate_hooks_json.py` should respect module + feature flags when determining the first instruction after an `org`.
+- `scripts/build_rom.sh` regenerates `hooks.json` automatically when `Config/module_flags.asm` or `Config/feature_flags.asm` changes.
+
+Recommended z3dk improvements (signal over noise):
+- **Diff mode**: compare two analyzer runs (or two ROMs) and report only new issues.
+- **Focus filters**: restrict to `module=` (Core/Dungeons/Sprites/Overworld) and/or a bank range.
+- **Suppressions**: allow a small baseline suppression file for known legacy warnings so new changes stand out.
+- **Hook kind verification**: stronger `--check-hooks` output that points to the generating `org` source line.
+
+## Analyzer Delta Workflow (Baseline vs Current)
+
+Goal: show only **new** and **resolved** diagnostics between two analyzer runs.
+
+1) Generate analyzer JSON for both ROMs (keep outputs in `/tmp`, do not commit):
+```bash
+python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x_base.sfc --hooks hooks.json --json > /tmp/oos_an_base.json
+python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc      --hooks hooks.json --json > /tmp/oos_an_cur.json
+```
+
+2) Compute the delta:
+```bash
+python3 ../z3dk/scripts/oracle_analyzer_delta.py --baseline /tmp/oos_an_base.json --current /tmp/oos_an_cur.json --severity all
+```
+
+Notes:
+- If you only care about new warnings/errors, omit `--severity all` (default is `error,warning`).
+- The delta key is intentionally stable (severity + address + message, plus optional context keys) so reordering does not create noise.
+
 ## Next steps
 1) Re-run analyzer after regenerating hooks.json (skip_abi/module in effect).
 2) Inspect the ABI for the Oracle routines above (prolog/epilog M/X handling).

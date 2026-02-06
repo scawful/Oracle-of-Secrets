@@ -141,36 +141,17 @@ NPCReaction_RanchGirl:
   db $00 : dw $yyyy   ; default message
 ```
 
-**Shared dispatch routine:**
-```asm
-; A = pointer to NPC reaction table (bank-local)
-; Shows the first message whose threshold is met
-ShowReactionMessage:
-{
-  PHB : PHK : PLB
-  TAY                  ; Y = table pointer
-  JSL GetCrystalCount  ; A = crystal count
-  STA.b $00            ; temp store count
-  .check_loop
-    LDA ($00), Y       ; load threshold
-    BEQ .use_this      ; threshold 0 = default (always matches)
-    CMP.b $00          ; compare threshold to count
-    BEQ .use_this
-    BCC .use_this      ; count >= threshold
-    INY #3             ; skip to next entry
-    BRA .check_loop
-  .use_this
-    INY
-    LDA ($00), Y : STA.b $01  ; message ID low
-    INY
-    LDA ($00), Y : STA.b $02  ; message ID high
-    ; ... show message using $01-$02
-  PLB
-  RTL
-}
+**Shared dispatch algorithm (pseudocode):**
+```text
+count = GetCrystalCount()
+for (threshold, message_id) in reaction_table:
+  if threshold == 0 or count >= threshold:
+    return message_id
 ```
 
-*Note: The above is pseudocode illustrating the pattern. Actual implementation needs to match the project's message display macro conventions.*
+Implementation notes:
+- Keep reaction tables in each NPC ASM file (locality), but keep the iterator/selection routine in shared code (`Core/progression.asm`).
+- Prefer returning a 16-bit message ID and let the caller use existing message display macros (so you don't duplicate message plumbing).
 
 ### NPCs That Should Use the Shared System
 
@@ -222,3 +203,20 @@ These use the same framework but check `StoryProgress` / `StoryProgress2` instea
 - `maku_tree_hint_cascade.md` — The Maku Tree's refactored hint dispatch is the first consumer of this infrastructure.
 - `gossip_stone_additions.md` — Gossip Stones may use the reaction framework for progression-gated messages.
 - `kydrog_mask_stalfos_form.md` — `!Story_AbyssSevered` flag is defined here and consumed by the reaction framework.
+
+## Dev Checklist (Guardrails + Validation)
+
+Guardrails:
+- Keep the first implementation scoped: add shared helpers first, then convert one NPC at a time (avoid multi-NPC refactors in one commit).
+- If a converted NPC becomes unstable, prefer feature-gating its new path (so you can keep shared helpers without blocking builds).
+
+Validation:
+```bash
+./scripts/build_rom.sh 168
+python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc --hooks hooks.json --check-hooks --find-mx --find-width-imbalance --check-abi --check-phb-plb --check-jsl-targets --check-rtl-rts --strict
+```
+
+Runtime spot-checks (minimum):
+- MapIcon advances correctly after each crystal (verify `MapIcon` at `$7EF3C7` changes as expected).
+- Zora NPC switches to the post-threshold message without breaking existing dialogue flow.
+- Maku Tree waterfall guidance uses the centralized mapping and does not regress to a partial dungeon set.

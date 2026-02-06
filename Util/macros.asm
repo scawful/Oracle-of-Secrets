@@ -17,6 +17,13 @@
 !DISABLE_MENU      = 0
 !DISABLE_PATCHES   = 0
 
+; --- Feature Toggle Flags ---
+; Set to 1 to enable a feature, 0 to disable (isolation testing).
+; Override these via Config/feature_flags.asm (generate with scripts/set_feature_flags.py).
+!ENABLE_WATER_GATE_HOOKS            = 1
+!ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
+!ENABLE_MINECART_PLANNED_TRACK_TABLE = 1
+
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
 !LOG_MUSIC     = 1
@@ -112,4 +119,24 @@ macro OOS_LongExit()
     PLB
     PLP
     RTL
+endmacro
+
+; =========================================================
+; OOS_Hook / OOS_HookMx
+;
+; Purpose: Standardize hook declarations for hooks.json generation.
+;          These macros only set org + emit an @hook tag for tooling.
+;
+; Usage:
+;   %OOS_Hook($02C0C3, jsl, NewOverworld_SetCameraBounds, Overworld_SetCameraBounds)
+;   %OOS_HookMx($02C0C3, jsl, NewOverworld_SetCameraBounds, Overworld_SetCameraBounds, 16, 8)
+; =========================================================
+macro OOS_Hook(addr, kind, target, name)
+    org <addr>
+    ; @hook module=Util name=<name> kind=<kind> target=<target>
+endmacro
+
+macro OOS_HookMx(addr, kind, target, name, expected_m, expected_x)
+    org <addr>
+    ; @hook module=Util name=<name> kind=<kind> target=<target> expected_m=<expected_m> expected_x=<expected_x>
 endmacro

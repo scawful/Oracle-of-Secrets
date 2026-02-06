@@ -1,5 +1,16 @@
 # Goron Mines — Minecart Track Design Plan
 
+## Resolved Design Decisions (2026-02-05)
+
+| Question | Decision | Rationale |
+|----------|----------|-----------|
+| Crumble floor (0xD9) | Real pit drops | Makes cart mandatory — the signature B2 pressure mechanic. Pit table expansion is a separate/low-priority task. |
+| Switches per room | One switch per room | Simple: one crystal toggles all D0-D3 tiles in the room simultaneously. |
+| Express Lane (post-boss ride) | **Removed** | All dungeon endings use the same flow. No special post-boss track needed. |
+| Tag 62 in room 0xB9 | NOP/unused | No conflict with tracks. Available for hooking later if needed. |
+| Pit damage table | Check capacity separately | Don't block track work on pit table expansion. Handle as independent task if needed. |
+| Holewarp Drop Ride (0x88→0xD8) | Deferred | Not in core scope — interesting set piece but not essential for the dungeon to feel complete. |
+
 ## Summary
 
 Design proposals for expanding Goron Mines' minecart system from 4 functional tracks to a full dungeon-defining mechanic. The minecart code supports 32 tracks, switch-routed junctions, speed zones, cart-required shutters, and multi-room rides — most of which are coded but unused. This plan organizes ideas by floor and mechanic, with specific room assignments and track slot allocations.
@@ -29,18 +40,26 @@ Design proposals for expanding Goron Mines' minecart system from 4 functional tr
 |---------|----------|---------------|
 | Switch corners (D0-D3) | `minecart.asm` collision handlers | Place SwitchTrack sprites (`$B0`) in rooms |
 | Speed switch (`$36`) | Every move routine checks `LDA $36` | Set `$36` to nonzero (needs a trigger sprite/tag) |
-| Cart-required shutters | `RoomTag_ShutterDoorRequiresCart` | Uncomment hook at `$01CC08` |
+| Cart-required shutters | Room tag hook | Needs a dedicated room tag. `$01CC08` (Holes3) is currently used by Crumble Floor. Prefer a feature-gated hook once a safe tag is chosen. |
 | Cart lift/toss | Wait state handlers | Uncomment `JSR Minecart_HandleLiftAndToss` |
 
-### Track Slot Usage
+### Track Slot Usage (Starting Table)
 
-| Track | Subtype | Room | Status |
-|-------|---------|------|--------|
+This is the starting-room/coord table used only when a track has never been
+initialized in RAM (`MinecartTrackRoom[track] == 0`). See
+`Sprites/Objects/minecart.asm` (`Sprite_Minecart_Prep`).
+
+Guardrail:
+- `!ENABLE_MINECART_PLANNED_TRACK_TABLE` (toggle via `Config/feature_flags.asm`).
+
+| Track | Subtype | Starting Room(s) | Status |
+|-------|---------|------------------|--------|
 | 0 | 0x00 | 0x98 (Entrance) | Active — tutorial straight line |
 | 1 | 0x01 | 0x88 (Big Chest) | Active — horizontal at Y=26 |
 | 2 | 0x02 | 0x87 (West Hall) | Active — T-junction layout |
 | 3 | 0x03 | 0x88 (Big Chest) | Active — second cart in same room |
-| 4-31 | 0x04-0x1F | 0x89 (placeholder) | **Uninitialized** — all share X=0x1300, Y=0x1100 |
+| 4-16 | 0x04-0x10 | See Track Slot Allocation (below) | Planned — rooms assigned; coords are **ESTIMATES** until sprites are placed |
+| 17-31 | 0x11-0x1F | `$0000` | Reserved — self-disables if used |
 
 ### Room Track Object Counts (from z3ed)
 
@@ -67,6 +86,37 @@ Design proposals for expanding Goron Mines' minecart system from 4 functional tr
 | 0xC8 | Boss | 0 | No | Boss arena, track-free |
 
 **14 of 19 rooms have track tiles drawn. Only 3 rooms have functional cart sprites.**
+
+---
+
+## Dev Checklist (Build + Tooling + Runtime)
+
+Feature isolation:
+```bash
+python3 scripts/set_feature_flags.py --list
+python3 scripts/set_feature_flags.py --disable minecart_planned_track_table
+python3 scripts/set_feature_flags.py --enable minecart_planned_track_table
+```
+
+Build:
+```bash
+./scripts/build_rom.sh 168
+```
+
+z3dk analyzer delta (baseline vs current):
+```bash
+python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc --hooks hooks.json --json > /tmp/oos_an_cur.json
+python3 ../z3dk/scripts/oracle_analyzer_delta.py --baseline /tmp/oos_an_base.json --current /tmp/oos_an_cur.json --severity all
+```
+Notes:
+- Keep analyzer JSON in `/tmp` (do not commit outputs).
+- If a cart despawns instantly, check `Sprite_Minecart_Prep` coord sanity checks:
+  track `MinecartTrackX/Y` must match the placed minecart sprite `SprCachedX/Y`.
+
+Room sampling (Goron Mines focus):
+- F1: `0x98`, `0x88`, `0x87`, `0x77`, `0x78`, `0x79`, `0x89`, `0x97`
+- B1: `0xA8`, `0xB8`, `0xB9`
+- B2: `0xD7`, `0xD8`, `0xD9`, `0xDA`
 
 ---
 
@@ -487,20 +537,9 @@ B2 is the climax. **Enable the speed switch (`$36`)** and **hook `RoomTag_Shutte
 
 **Technical note:** The room transition follower system already supports this — it caches the track subtype and direction (`!MinecartTrackCache`, `!MinecartDirectionCache`) and spawns a new cart on the other side. The key is ensuring collision tiles align at door boundaries so the transition is seamless.
 
-### The "Express Lane" (Post-Boss Victory Ride)
+### ~~The "Express Lane" (Post-Boss Victory Ride)~~ — REMOVED
 
-**Concept:** After defeating King Dodongo, a crystal switch in 0xD8 activates a speed track running the entire length of B2 back to F1.
-
-**Route:** 0xD8 → 0xD9 → 0xDA → staircase → 0x99 → 0x98 (exit)
-
-**Setup:**
-- Boss drops a crystal that permanently toggles switch corners in the B2 corridor
-- A cart appears at a stop tile in 0xD8
-- Speed is set to fast (`$36 = 1`)
-- The ride chains through 4+ rooms back to the entrance
-- No junctions, no puzzles — pure victory lap
-
-**Purpose:** Narrative closure. The mine is conquered; the player rides out in style. Also solves the "how do I get back to the entrance from B2?" navigation problem.
+**Decision (2026-02-05):** Removed. All dungeon endings use the same flow (crystal → maiden → teleport out). A custom post-boss ride isn't needed and would be the only dungeon with a unique exit mechanic.
 
 ---
 
@@ -527,10 +566,9 @@ B2 is the climax. **Enable the speed switch (`$36`)** and **hook `RoomTag_Shutte
 | 14 | 0x0E | 0x79 (NE Hall) | F1 | Optional explorer cart | Low |
 | 15 | 0x0F | 0x97 (SW Hall) | F1 | One-way express ride | Low |
 | 16 | 0x10 | 0xD8 (Pre-Boss) | B2 | Final approach / boss gate | High |
-| 17 | 0x11 | 0xD8 (Pre-Boss) | B2 | Express Lane exit cart | Low |
-| 18-31 | 0x12-0x1F | — | — | Reserved for future use | — |
+| 17-31 | 0x11-0x1F | — | — | Reserved for future use | — |
 
-**Summary:** 18 active tracks (4 existing + 14 new), 14 reserved.
+**Summary:** 17 active tracks (4 existing + 13 new), 15 reserved. Express Lane (Track 17) removed.
 
 ### Priority Tiers
 
@@ -538,7 +576,7 @@ B2 is the climax. **Enable the speed switch (`$36`)** and **hook `RoomTag_Shutte
 - Tracks 4-6: Switchback Descent + B1 switch tutorial + first fork puzzle
 - Tracks 11-12: B2 gauntlet start + crumble speedway
 - Track 16: Pre-Boss final approach
-- Enable `RoomTag_ShutterDoorRequiresCart` for boss door
+- Implement cart-required shutter door (needs a dedicated room tag; feature-gate the hook). Intended routine: `RoomTag_ShutterDoorRequiresCart`.
 
 **Tier 2 — Enhanced Puzzles (significantly improves dungeon quality):**
 - Tracks 7-8: Dual-cart B1 puzzles
@@ -549,8 +587,7 @@ B2 is the climax. **Enable the speed switch (`$36`)** and **hook `RoomTag_Shutte
 
 **Tier 3 — Polish & Flavor (nice-to-have):**
 - Tracks 14-15: F1 optional exploration
-- Track 17: Post-boss Express Lane
-- Holewarp Drop Ride set piece
+- Holewarp Drop Ride set piece (deferred)
 - Per-room camera origin positions
 
 ---
@@ -645,15 +682,15 @@ The minecart calls `HandleIndoorCameraAndDoors` (`$07F42F`) every frame during m
 
 ## Open Questions
 
-1. **Should the crumble floor in 0xD9 actually damage Link when not on the cart, or just make noise/visual cue?** Pure punishment (fall into pit) vs. pressure (timer, crumble animation).
+1. ~~**Should the crumble floor in 0xD9 actually damage Link when not on the cart, or just make noise/visual cue?**~~ **RESOLVED:** Real pit drops. Makes cart mandatory.
 
-2. **How many SwitchTrack sprites can exist in one room?** If only one, all D0-D3 tiles toggle together. If multiple, they could control independent sets (but the code may not support this).
+2. **How many SwitchTrack sprites can exist in one room?** If only one, all D0-D3 tiles toggle together. If multiple, they could control independent sets (but the code may not support this). **Decision:** One switch per room for simplicity. Multiple-set control deferred.
 
-3. **Should the Express Lane be story-gated (post-boss flag) or always available?** If always available, it's a sequence break opportunity. If gated, it's a reward.
+3. ~~**Should the Express Lane be story-gated (post-boss flag) or always available?**~~ **RESOLVED:** Express Lane removed entirely. All dungeon endings use the same flow.
 
-4. **Can the holewarp drop preserve cart state?** The holewarp handler may not carry the minecart follower data the same way door transitions do. Needs testing.
+4. **Can the holewarp drop preserve cart state?** The holewarp handler may not carry the minecart follower data the same way door transitions do. Needs testing. **Status:** Deferred — Holewarp Drop Ride not in core scope.
 
-5. **What is tag1=62 in room 0xB9?** This undocumented tag might interfere with or complement a track puzzle. Need to verify behavior.
+5. ~~**What is tag1=62 in room 0xB9?**~~ **RESOLVED:** NOP/unused tag. No conflict with tracks. Available for hooking later.
 
 ---
 

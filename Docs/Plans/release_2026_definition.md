@@ -25,6 +25,12 @@ This doc defines what a **full content release in 2026** means for Oracle of Sec
 - `python3 scripts/test_runner.py --tag transition` (if a transition system changed)
 - `python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc --hooks hooks.json --check-hooks --find-mx --find-width-imbalance --check-abi --check-phb-plb --check-jsl-targets --check-rtl-rts`
 
+**Strongly recommended (catch regressions early):**
+- Analyzer delta vs last known-good ROM (keep JSON outputs in `/tmp`, do not commit):
+  - `python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x_base.sfc --hooks hooks.json --json > /tmp/oos_an_base.json`
+  - `python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc      --hooks hooks.json --json > /tmp/oos_an_cur.json`
+  - `python3 ../z3dk/scripts/oracle_analyzer_delta.py --baseline /tmp/oos_an_base.json --current /tmp/oos_an_cur.json`
+
 **Nice to have:**
 - A short highlight list of what is newly playable (1-3 bullets)
 - Updated dungeon map docs for touched areas
@@ -70,6 +76,11 @@ This doc defines what a **full content release in 2026** means for Oracle of Sec
 - **One subsystem per commit** (Core/Overworld/Dungeons/Sprites/etc.).
 - Avoid multi-area changes unless the change is shared infrastructure.
 - Avoid "cleanup" + "behavior" in the same commit.
+
+### 1.5) Feature isolation (hooks you can turn off)
+- Prefer feature-gating risky `org` hooks instead of commenting them out.
+- Canonical override: `Config/feature_flags.asm` (generate with `python3 scripts/set_feature_flags.py ...`).
+- Keep tooling aligned: `scripts/build_rom.sh` regenerates `hooks.json` when flag files change so analyzer output matches the built ROM.
 
 ### 2) Mandatory guardrails for ASM edits
 - Run analyzer (strict if possible):
