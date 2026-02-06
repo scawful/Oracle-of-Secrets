@@ -17,14 +17,15 @@ MANIFEST="$REPO_ROOT/tests/manifest.json"
 
 SUITE="smoke"
 ARGS=()
+MOE_OVERRIDE=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     smoke|regression|full) SUITE="$1"; shift ;;
     --quick) SUITE=smoke; shift ;;
     --full)  SUITE=full; shift ;;
-    --moe)   ARGS+=(--moe-enabled); shift ;;
-    --no-moe) shift ;;
+    --moe)   MOE_OVERRIDE="1"; shift ;;
+    --no-moe) MOE_OVERRIDE="0"; shift ;;
     -q|--quiet)   ARGS+=(-q); shift ;;
     --verbose|-v) ARGS+=(-v); shift ;;
     --junit) ARGS+=(--output-format junit); shift ;;
@@ -41,8 +42,12 @@ done
 
 ARGS=("--suite" "$SUITE" "--manifest" "$MANIFEST" "${ARGS[@]}")
 
-# MoE default from env
-if [[ "${OOS_MOE_ENABLED:-1}" == "1" ]]; then
+# MoE default from env, unless overridden by CLI.
+if [[ "$MOE_OVERRIDE" == "1" ]]; then
+  ARGS+=(--moe-enabled)
+elif [[ "$MOE_OVERRIDE" == "0" ]]; then
+  :
+elif [[ "${OOS_MOE_ENABLED:-1}" == "1" ]]; then
   ARGS+=(--moe-enabled)
 fi
 
