@@ -207,4 +207,7 @@ Masks/gfx/moosh.png
 Masks/gfx/moosh.pal
 Dungeons/DungeonMaps.asm
 Data/Generated/
+
+# Generated hack manifest for yaze integration (do not commit).
+hack_manifest.json
 __pycache__/
