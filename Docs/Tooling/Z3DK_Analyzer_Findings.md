@@ -60,22 +60,25 @@ Guardrails implemented/planned on the Oracle side:
 - `scripts/build_rom.sh` regenerates `hooks.json` automatically when `Config/module_flags.asm` or `Config/feature_flags.asm` changes.
 
 Recommended z3dk improvements (signal over noise):
-- **Diff mode**: compare two analyzer runs (or two ROMs) and report only new issues.
-- **Focus filters**: restrict to `module=` (Core/Dungeons/Sprites/Overworld) and/or a bank range.
-- **Suppressions**: allow a small baseline suppression file for known legacy warnings so new changes stand out.
-- **Hook kind verification**: stronger `--check-hooks` output that points to the generating `org` source line.
+- **Diff mode**: implemented via `oracle_analyzer_delta.py` (baseline vs current JSON).
+- **Suppressions**: implemented via `oracle_analyzer_delta.py --exclude-file <patterns.txt>` (one regex per line, `#` comments).
+- **CI-friendly delta wrapper**: implemented via `oracle_analyzer_ci_delta.py` (writes temp JSON under `/tmp`, fails only on NEW diagnostics).
+- **Focus filters**: still desired (e.g., filter by `module=` or bank range).
+- **Hook kind verification**: still desired (show the generating `org` source line for each hook).
 
 ## Analyzer Delta Workflow (Baseline vs Current)
 
 Goal: show only **new** and **resolved** diagnostics between two analyzer runs.
 
-1) Generate analyzer JSON for both ROMs (keep outputs in `/tmp`, do not commit):
+### Option A: Manual JSON (dev / ad-hoc)
+
+Generate analyzer JSON for both ROMs (keep outputs in `/tmp`, do not commit):
 ```bash
 python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x_base.sfc --hooks hooks.json --json > /tmp/oos_an_base.json
 python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc      --hooks hooks.json --json > /tmp/oos_an_cur.json
 ```
 
-2) Compute the delta:
+Compute the delta:
 ```bash
 python3 ../z3dk/scripts/oracle_analyzer_delta.py --baseline /tmp/oos_an_base.json --current /tmp/oos_an_cur.json --severity all
 ```
@@ -83,6 +86,22 @@ python3 ../z3dk/scripts/oracle_analyzer_delta.py --baseline /tmp/oos_an_base.jso
 Notes:
 - If you only care about new warnings/errors, omit `--severity all` (default is `error,warning`).
 - The delta key is intentionally stable (severity + address + message, plus optional context keys) so reordering does not create noise.
+- For controlled suppressions, use `--exclude-file path/to/patterns.txt`.
+
+### Option B: CI-style Wrapper (recommended for regressions)
+
+Run analyzer on baseline/current ROMs and fail only on NEW diagnostics:
+```bash
+python3 ../z3dk/scripts/oracle_analyzer_ci_delta.py \
+  --baseline-rom Roms/oos168x_base.sfc \
+  --current-rom  Roms/oos168x.sfc \
+  --hooks hooks.json \
+  --severity error \
+  --exclude-file scripts/oracle_analyzer_delta_excludes.txt
+```
+Notes:
+- This writes intermediate JSON under `/tmp` and does not create repo artifacts.
+- Use `--keep-temp` if you need to inspect the generated JSON while debugging.
 
 ## Next steps
 1) Re-run analyzer after regenerating hooks.json (skip_abi/module in effect).

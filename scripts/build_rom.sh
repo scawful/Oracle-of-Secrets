@@ -93,6 +93,16 @@ if [[ ! -f "$base_rom" ]]; then
 fi
 echo "Using base ROM: $base_rom"
 
+# Feature-flag guardrails (non-fatal by default).
+if ! python3 "$repo_root/scripts/verify_feature_flags.py" --root "$repo_root"; then
+  echo "[-] Feature flag verification failed!" >&2
+  # Default is non-fatal (developer workflow). Set OOS_FLAGS_FATAL=1 to
+  # fail the build when feature flags are inconsistent.
+  if [[ "${OOS_FLAGS_FATAL:-0}" == "1" ]]; then
+    exit 1
+  fi
+fi
+
 backup_root="$HOME/Documents/OracleOfSecrets/Roms"
 mkdir -p "$backup_root"
 

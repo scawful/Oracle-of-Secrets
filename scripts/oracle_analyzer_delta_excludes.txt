@@ -1,0 +1,11 @@
+# oracle_analyzer_delta.py --exclude-file patterns
+#
+# One regex per line. Lines starting with '#' are comments.
+#
+# Keep this file small and focused:
+# - Prefer fixing real issues over suppressing.
+# - Only suppress known legacy noise that is not actionable.
+#
+# Example:
+# ^Oracle__0CF0DE\b
+
