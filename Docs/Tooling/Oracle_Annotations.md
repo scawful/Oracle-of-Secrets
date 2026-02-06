@@ -6,6 +6,26 @@ enable optional runtime checks.
 
 ## Supported tags
 
+### Hook tags
+```
+; @hook
+; @hook module=Dungeons name=WaterGate_FillComplete kind=jml target=WaterGate_FillComplete_Hook
+; @hook expected_m=8 expected_x=8
+; @hook skip_abi=1 note="size-preserving patch"
+```
+Attach these to `org $XXXXXX` lines (or within ~20 lines below) so tooling can generate
+an accurate `hooks.json`.
+
+Supported fields (parsed by `scripts/generate_hooks_json.py`):
+- `module`, `name`, `kind`, `target`
+- `expected_m`, `expected_x`
+- `skip_abi`, `abi` / `abi_class`
+- `note`
+
+Helpers:
+- `python3 scripts/tag_org_hooks.py --root . --apply --normalize --module-from-path`
+- `python3 scripts/verify_hooks_json.py --root . --rom Roms/oos168x.sfc --hooks hooks.json`
+
 ### Watch tags
 ```
 ; @watch
