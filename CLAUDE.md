@@ -1,108 +1,165 @@
----
-
 ## Quick Start
 
-1. **Read First:** Check `Docs/GEMINI.md` for the core profile and collaboration strategy
-2. **Query Memory:** Search the knowledge graph before starting work
-3. **Check Context:** Read relevant knowledge docs from `~/.context/projects/oracle-of-secrets/`
-4. **Document Progress:** Update scratchpad and handoff docs during/after work
-5. **Debug Preflight:** `python3 scripts/mesen2_client.py run-state` + `diagnostics --json`
-   - Deep capture (items/flags/sprites/watch): `python3 scripts/mesen2_client.py diagnostics --deep --json`
-6. **Capture Repro State:** `python3 scripts/mesen2_client.py smart-save 1` (slots 1-99 or configured)
-   - Optional label: `python3 scripts/mesen2_client.py savestate-label set 1 --label "Dark World south crash"`
-   - Library capture: `python3 scripts/mesen2_client.py lib-save "Dark World south crash"`
+1. **Read AFS context** — `MEMORY.md` loads automatically; then read `scratchpad/agent_handoff.md` for current priorities
+2. **Find anything** — Use `CONTEXT_INDEX.md` to route any concept to its authoritative file
+3. **Check context** — Read relevant `knowledge/` docs before modifying code
+4. **Debug preflight** — `python3 scripts/mesen2_client.py run-state` + `diagnostics --json`
+5. **Capture repro state** — `python3 scripts/mesen2_client.py smart-save 1`
+6. **Document progress** — Update `scratchpad/agent_handoff.md` during/after work
 
-### Mesen2 socket and symbols
+### Mesen2 Socket & Symbols
+
 - **Discovery:** `MESEN2_SOCKET_PATH` → `/tmp/mesen2-*.status` (read `socketPath`) → `/tmp/mesen2-*.sock` by mtime. Do not assume PID in socket name. See `~/src/hobby/mesen2-oos/docs/Agent_Integration_Guide.md`.
 - **Symbols:** `SYMBOLS_LOAD` accepts `file` or `path`; formats JSON or Mesen `.mlb`. `SYMBOLS_RESOLVE` with `addr=` resolves address→symbol. API: `~/src/hobby/mesen2-oos/docs/Socket_API_Reference.md`.
 - **STEP:** `mode` can be `into`, `over`, or `out`.
 
 ---
 
-## Knowledge System (IMPORTANT)
+## Agentic File System (AFS)
 
-### Memory Graph - Query Before Coding
+The AFS is the structured context layer that lives outside the project repo. It gives agents persistent memory, reference docs, and working state across sessions.
 
-**Always query the memory graph at session start for Oracle work:**
+### Location
 
 ```
-mcp__memory__search_nodes("Oracle")
+~/.context/projects/oracle-of-secrets/
 ```
 
-**Key entities to check:**
-- `OracleOfSecrets` - Project overview, recent issues, lessons learned
-- `OracleSRAMLayout` - Save RAM addresses and story flags
-- `OracleWRAMLayout` - Working RAM addresses
-- `OracleSpriteFramework` - Sprite development patterns
-- `OracleVanillaRoutines` - Key vanilla addresses to call
-- `OracleKnownIssues` - Active bugs and gotchas
-- `Oracle65816Patterns` - Code conventions
+### Structure
 
-**Before modifying vanilla behavior:**
 ```
-mcp__memory__open_nodes(["VanillaProbeSystem", "ZSCustomOverworld"])
+├── CONTEXT_INDEX.md        # Concept→file routing table (read after MEMORY.md)
+├── metadata.json           # AFS policies and directory config
+│
+├── knowledge/              # REFERENCE (read-mostly)
+│   ├── oracle_quick_reference.md    # RAM, banks, code patterns
+│   ├── sprite_development_guide.md  # Sprite template + vanilla routines
+│   ├── asm_patterns.md              # Addressing modes, hitboxes, input
+│   ├── debugging_patterns.md        # Bug patterns, transitions, regression
+│   ├── OoS_Code_Guidelines.md      # Register preservation, hooks, banks
+│   ├── ZSOW_v3_Integration.md      # Overworld engine memory map
+│   ├── debug_info.md               # Auto-generated warp/item/flag tables
+│   └── architecture_diagram.mmd    # Mermaid architecture graph
+│
+├── memory/                 # LONG-TERM CONSTRAINTS (writable)
+│   └── technical_debt.md   # 9 tracked debt items by severity
+│
+├── scratchpad/             # WORKING MEMORY (writable, ephemeral)
+│   ├── agent_handoff.md           # Current priorities + session state
+│   ├── next_session_prompt.md     # Focused task prompt for next agent
+│   ├── active_investigations.md   # Live bug tracking with repro/root cause
+│   ├── lessons_learned.md         # Pre-debug checklist, common patterns
+│   └── state.md                   # Progress tracking
+│
+├── history/                # Event log (append-only)
+├── global/                 # Reserved (cross-project, empty)
+├── hivemind/               # Reserved (cross-session learning, empty)
+├── items/                  # Reserved (empty)
+└── tools/                  # Reserved (empty)
 ```
 
-### AFS Knowledge Docs
+### How to Use the AFS
 
-**Located at:** `~/.context/projects/oracle-of-secrets/knowledge/`
+**Session start — read in this order:**
 
-| Document | When to Read |
-|----------|--------------|
-| `oracle_quick_reference.md` | Starting any Oracle task |
-| `sprite_development_guide.md` | Creating/modifying sprites |
-| `debugging_patterns.md` | Investigating bugs, post-regression |
+1. `MEMORY.md` — Auto-loaded. Contains Quick Nav, gotchas, SRAM layout, dialogue reference
+2. `scratchpad/agent_handoff.md` — Current priorities, what was established last session
+3. `scratchpad/next_session_prompt.md` — Specific task instructions (if set)
+4. `CONTEXT_INDEX.md` — Look up any concept → find the right file
 
-**Read before implementation:**
-```
-Read ~/.context/projects/oracle-of-secrets/knowledge/oracle_quick_reference.md
-```
+**Finding information:**
 
-### Scratchpad & Handoffs
+The `CONTEXT_INDEX.md` maps every Oracle concept to its authoritative file(s), organized by domain:
+- Assembly & Code Patterns
+- Sprite Development
+- Overworld & Transitions
+- Debugging & Testing
+- Story & Dialogue
+- World Building
+- Items & Masks
+- Tooling & Build
+- Technical Debt & Issues
 
-**Located at:** `~/.context/projects/oracle-of-secrets/scratchpad/`
+Example: need sprite hitbox info? → CONTEXT_INDEX → `knowledge/asm_patterns.md`
+Example: need D4 dungeon map? → CONTEXT_INDEX → `Docs/World/Dungeons/Dungeons.md`
 
-| File | Purpose |
-|------|---------|
-| `agent_handoff.md` | Cross-session coordination, current status |
-| `debugging_session_*.md` | Session logs for complex investigations |
+**During work:**
 
-**Always check handoff at session start:**
-```
-Read ~/.context/projects/oracle-of-secrets/scratchpad/agent_handoff.md
-```
+- Before modifying code: check CONTEXT_INDEX for related systems
+- If you hit a bug: read `knowledge/debugging_patterns.md` first
+- After discovering something new: add to `scratchpad/active_investigations.md` or `memory/technical_debt.md`
+
+**When finishing:**
+
+1. Update `scratchpad/agent_handoff.md` with session summary
+2. Update `memory/technical_debt.md` if new debt discovered
+3. Create issue doc if bug found: `Docs/Issues/<name>.md`
+
+### Policies
+
+| Directory | Access | Purpose |
+|-----------|--------|---------|
+| `knowledge/` | Read-only | Reference docs — don't modify without good reason |
+| `memory/` | Writable | Long-term constraints (technical debt, specs) |
+| `scratchpad/` | Writable | Working memory, session state, investigations |
+| `history/` | Append-only | Event logs |
+
+### AFS vs Repo Docs
+
+- **AFS paths** (`knowledge/`, `memory/`, `scratchpad/`): relative to `~/.context/projects/oracle-of-secrets/`
+- **Repo paths** (`Core/`, `Sprites/`, `Docs/`, `Items/`): relative to `~/src/hobby/oracle-of-secrets/`
+- **`MEMORY.md`**: the auto-loaded agent memory file
+- **`project CLAUDE.md`**: this file
+
+The AFS holds agent-facing context (how to work on the project). The repo `Docs/` directory holds project documentation (what the project is). The CONTEXT_INDEX.md bridges both.
 
 ---
 
-## Proactive Knowledge Management
+## Current Priorities
 
-### When Starting a Session
+**Source of truth:** `scratchpad/agent_handoff.md`
 
-1. Query memory graph for relevant entities
-2. Read `agent_handoff.md` for current status
-3. Check `OracleKnownIssues` for gotchas related to your task
-4. Read relevant knowledge docs
+### Priority 1: D6 Goron Mines Minecarts (Make Rooms Playable)
 
-### During Work
+Goal: make the four flagged rooms playable by aligning minecart spawn placement, track IDs, and custom collision.
 
-1. **Before modifying code:** Check memory graph for related systems
-2. **After discovering something:** Add observations to relevant entities
-3. **If you hit a bug:** Check `debugging_patterns.md` first
+- **Rooms:** `0xA8`, `0xB8`, `0xD8`, `0xDA` (see `Docs/Plans/goron_mines_minecart_design.md`)
+- **Validation (CLI):** `../yaze/scripts/z3ed dungeon-minecart-audit --rom Roms/oos168x.sfc --rooms 0xA8,0xB8,0xD8,0xDA --only-issues`
+- **Fix checklist:**
+  - Cart sprites (`0xA3`) are placed on stop tiles (`0xB7`-`0xBA`)
+  - Cart `SprSubtype` matches the rail object (`0x0031`) subtype used in the room
+  - Switch corners (`0xD0`-`0xD3`) and `Sprite_SwitchTrack` (`0xB0`) are placed when puzzle routing requires them
+- **Guardrails:** `!ENABLE_MINECART_PLANNED_TRACK_TABLE`, `!ENABLE_MINECART_CART_SHUTTERS`
 
-### When Finishing
+### Priority 2: Maku Tree Hint Cascade (Complete, Needs Dialogue)
 
-1. **Update memory graph** with new discoveries:
-   ```
-   mcp__memory__add_observations({
-     observations: [{
-       entityName: "OracleKnownIssues",
-       contents: ["New issue discovered: ..."]
-     }]
-   })
-   ```
+The dispatch logic is wired for D1-D7 in `Sprites/NPCs/maku_tree.asm`, but the messages are placeholders.
 
-2. **Update handoff doc** with session summary
-3. **Create issue doc** if bug found: `Docs/Issues/<name>.md`
+- **Messages:** `Core/message.asm` (`Message_1C5`-`Message_1D1`)
+- **TODO(dialogue):** replace placeholder bytes with real text; keep IDs stable.
+
+### Priority 3: D4 Water Gate Hooks (Enabled, Needs Runtime Regression)
+
+Hooks are enabled behind feature flags; the remaining work is runtime regression coverage.
+
+- **Flags:** `!ENABLE_WATER_GATE_HOOKS`, `!ENABLE_WATER_GATE_OVERLAY_REDIRECT`
+- **Next:** Mesen2 regression pass (D1-D7 enter/exit) plus D4 end-to-end water fill persistence.
+
+### Priority 4: Progression Helpers (Complete, Start Conversions)
+
+Shared helpers exist in `Core/progression.asm` (`GetCrystalCount`, `UpdateMapIcon`, `SelectReactionMessage`).
+
+- **Next:** convert one NPC at a time (start with `Sprites/NPCs/zora.asm`) to use `SelectReactionMessage` to reduce scattered inline crystal checks.
+
+### Tooling Direction (Guardrails)
+
+- **Feature flags:**
+  - Defaults live in `Util/macros.asm`
+  - Overrides live in `Config/feature_flags.asm` (generated)
+  - Gate risky hooks, and annotate org sites with `; @hook module=...` so `hooks.json` and `hack_manifest.json` stay accurate
+- **z3dk:**
+  - Prefer baseline-vs-current diffs (`oracle_analyzer_delta.py`) over chasing absolute warning counts
+  - Keep analyzer reports in `/tmp` and commit only code/docs (no report dumps)
 
 ---
 
@@ -196,7 +253,7 @@ python3 scripts/mesen2_client.py diagnostics --json
 
 ### Unified Debugging Orchestrator (Recommended)
 
-**NEW (2026-01):** The `oracle_debugger` package coordinates all debugging tools in a single session.
+The `oracle_debugger` package coordinates all debugging tools in a single session.
 
 ```bash
 # Start continuous monitoring (recommended for bug hunting)
@@ -280,8 +337,10 @@ python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py diff old.sfc new.sf
 
 ## Documentation Hierarchy
 
-1. **This file** (`CLAUDE.md`) - Quick agent reference
-2. **`Docs/GEMINI.md`** - Full collaboration strategy
-3. **`Docs/General/DevelopmentGuidelines.md`** - Architecture rules
-4. **`~/.context/projects/oracle-of-secrets/knowledge/`** - Technical references
-5. **`~/.context/projects/oracle-of-secrets/scratchpad/`** - Session state
+1. **This file** (`CLAUDE.md`) — Quick agent reference, AFS guide, priorities
+2. **`CONTEXT_INDEX.md`** — Concept→file routing table (in AFS root)
+3. **`MEMORY.md`** — Auto-loaded agent memory (gotchas, SRAM, dialogue)
+4. **`Docs/General/DevelopmentGuidelines.md`** — Architecture rules
+5. **`Docs/GEMINI.md`** — Full collaboration strategy
+6. **`~/.context/projects/oracle-of-secrets/knowledge/`** — Technical references
+7. **`~/.context/projects/oracle-of-secrets/scratchpad/`** — Session state

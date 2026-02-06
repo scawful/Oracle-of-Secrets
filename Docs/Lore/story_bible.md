@@ -140,19 +140,23 @@ The current Oracle of Secrets, keeper of hidden knowledge and guardian of the se
 
 **Goal:** They seek to help Ganondorf fully break through the seal and permanently merge the worlds, granting them true existence in a Ganondorf-rewritten timeline.
 
-### Ganondorf, The Intruder
+### Ganondorf
 
-**The Dark Victor:** This is not a resurrection. This is an invasion.
+**In-Game Presentation:** Ganondorf's specific timeline origin is **intentionally ambiguous** in the player-facing text. The endgame dialogue (see `endgame_narrative_arc.md`) supports multiple interpretations — he could be the ALTTP Ganon who survived through contingency, or an intruder from a conquered timeline. This ambiguity is a deliberate design choice: deeper lore can be explored through Gossip Stones and telepathy tiles without the main plot depending on it.
 
-In a timeline where the Hero of Time fell and darkness reigned supreme, Ganondorf achieved total victory. But a god-king craves new worlds to conquer. Slipping through a fracture in reality caused by Twinrova's ritual in *Ages/Seasons*, this Ganondorf entered the world of the Oracles.
+**Behind-the-Scenes Context (Story Bible canonical version):**
 
-**The Anomaly:** Because he does not belong to this timeline, reality rejects him. He is forced to hide in the **Eon Abyss** to avoid being erased by the universe's natural defenses. He established himself in the Lava Lands, a region that existed as part of the pocket dimension long before his arrival.
+Twinrova's revival ritual in the Oracle games cracked the Imprisoning War seal, creating a fracture between realities. Ganondorf entered through this fracture into the Eon Abyss. Whether this is ALTTP's Ganon finding a way to persist after defeat, or a version from a timeline where the Hero of Time fell, is left to interpretation.
 
-**His Goal:** He seeks Farore not just for her divinity, but because as the Oracle of Secrets, she holds the "source code" to this reality. If he consumes her knowledge, he can rewrite the timeline to make his existence permanent, effectively overwriting the history where Link won.
+**The Anomaly:** Because he does not belong in this era (regardless of which origin), Ganondorf is forced to hide in the **Eon Abyss**. He established himself in the Lava Lands, a region that existed as part of the pocket dimension long before his arrival.
 
-**Visuals:** He wears the tattered cloak of a king, but his form flickers like a glitch. He carries trophies from his victory—perhaps a cracked Hylian Shield or a corrupted Ocarina.
+**His Goal:** He seeks Farore because as the Oracle of Secrets, she holds knowledge of the seal's structure. If he can exploit her knowledge, he can break through the seal permanently and establish himself in the world.
+
+**Visuals:** Humanoid Ganondorf (wizard-king form, not Pig Ganon). Dark armor, Gerudo features, tattered king's cloak. His form may flicker or distort, hinting at his anomalous existence.
 
 **Hidden Strategy:** While Kydrog conducts his visible invasion, Ganondorf remains concealed in the Lava Lands, orchestrating from the shadows. He has arranged for Twinrova to gather intelligence and weaken the seal from within, making Kydrog's actions serve his purposes.
+
+**Design Note:** The three-wish Triforce system (Power/Wisdom/Courage wishes with twisting) was considered and rejected — it creates more questions than it answers and conflicts with established Triforce canon. The simpler "Twinrova cracked the seal" mechanism is sufficient and doesn't invite plot hole analysis.
 
 ### Native Kalyxians
 
@@ -266,6 +270,34 @@ Seven crystallized fragments of Triforce energy, scattered across Kalyxo when th
 | Demise's Thorn | D7 Dragon Ship | Endings, the price of ambition |
 
 Collecting all seven essences allows Link to break the seal on the Fortress of Secrets.
+
+### Essence Presentation (In-Game)
+
+The essences use ALTTP's crystal maiden infrastructure, repurposed for Oracle-specific lore delivery. After each dungeon boss (D1-D7), a crystal maiden appears and delivers dungeon-specific exposition before Link receives the essence.
+
+**Maiden Lore Delivery (Messages 0x132-0x138):**
+
+| Dungeon | Maiden Role | Lore Delivered |
+|---------|------------|----------------|
+| D1 | Forest keeper | Introduces the seven essences, Kalyxo as Triforce sanctuary, Kydrog from the Eon Abyss |
+| D2 | Tail Palace witness | Palace history, essence as beacon of ancestral hope |
+| D3 | Kalyxo historian | Hyrule's invasion and occupation of Kalyxo, political decay enabling Kydrog |
+| D4 | Zora scholar | Zora technology (Ocarina and Hookshot are Zora inventions), hints at waterfall secret |
+| D5 | Twinrova's captive | Twinrova's failed Ganon revival, her alliance with Kydrog, Farore was hiding at Glacia |
+| D6 | Goron ally | Goron mine collapse from Kydrog's instability, directs Link to Dragon Ship |
+| D7 | Farore (rescued) | Full endgame exposition — Kydrog cheats death, Master Sword required |
+
+**Note on D4 Zora Princess vs Maiden:** The Zora Princess is a **mid-dungeon NPC** encountered after getting the big key. Playing the Song of Healing frees her and grants the Zora Mask, enabling dive to complete the rest of D4. She is **NOT** the D4 crystal maiden — the maiden who appears after the boss is a separate character (identity TBD, possibly another Zora). The princess is a rescue/item-grant NPC similar to Oracle series companion rescues.
+
+**Zora Baby Follower System:** Before reaching the princess, the Zora Baby follower NPC triggers water gate and water dam puzzle events within D4. These events are part of the dungeon progression, not post-dungeon content.
+
+**Menu Representation:** Essences display as triforce triangle icons in the quest menu. The GFX tile sheet is fully allocated with custom item icons, masks, and UI elements — unique per-essence icons are not feasible without sacrificing existing graphics. Essences are tracked at SRAM address `$7EF37A` (7-bit crystal bitfield, one per dungeon).
+
+**Three-Layer Lore System:** The game uses three complementary vehicles for progressive world-building:
+
+1. **Crystal Maidens** — Long-form exposition after each boss (D1-D7), delivers plot-critical lore
+2. **Maku Tree Cascade** — Post-crystal guidance pointing to the next dungeon (see `maku_tree_hint_cascade.md`)
+3. **Gossip Stones** — Optional cryptic fragments for deep lore (21 stones, progression-gated, see `gossip_stones.md`)
 
 ### Masks & Transformations
 
@@ -404,6 +436,10 @@ Meadow of Shadows could be expanded to:
 - **Ranch Girl / Twinrova connection:** RESOLVED—Transformed victim. She witnessed Twinrova during their operations and was cursed into silence.
 - **Kydrog's original nature:** RESOLVED—He was a genuine hero knight, sent to investigate the Meadow of Shadows. Not corrupted from goodness, but gradually broken by despair and then cultivated by Ganondorf.
 - **Post-game state:** RESOLVED—The Eon Abyss heals over time as the realm attempts to return to its original bright state after Ganondorf is re-sealed.
+- **Ganondorf's timeline origin:** RESOLVED—Intentionally ambiguous in-game. The endgame dialogue supports both ALTTP-Ganon and alternate-timeline interpretations. Deep lore (Gossip Stones, telepathy tiles) can explore this without committing the main plot. See Ganondorf section above and `endgame_narrative_arc.md`.
+- **Three-wish Triforce system:** RESOLVED—Rejected. Creates plot holes (why not wish for something better?), introduces non-canon Triforce mechanics. The "Twinrova cracked the seal" mechanism is simpler and sufficient.
+- **Crystal maiden vs Oracle-style essences:** RESOLVED—Keep maidens. They deliver essential plot exposition (messages 0x132-0x138). GFX sheet is full, so unique essence icons are not feasible. Improve via text: name essences at collection, give D1/D2/D6 maidens distinct identities. See `essence_maiden_presentation.md`.
+- **Kydrog's living name:** RESOLVED—Left unnamed ("The Fallen Knight"). Adds mystery. Gossip Stones don't speak it. (Decided in `narrative_design_master_plan.md`)
 
 ---
 

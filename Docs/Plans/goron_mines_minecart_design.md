@@ -63,29 +63,34 @@ Guardrail:
 
 ### Room Track Object Counts (from z3ed)
 
-| Room | Floor | Track Objects | Has Cart Sprite? | Notes |
-|------|-------|---------------|-------------------|-------|
-| 0x98 | F1 | 27 | Yes (Track 0) | Entrance, simple horizontal |
-| 0x88 | F1 | 23 | Yes (Tracks 1,3) | Big Chest room, dual carts |
-| 0x87 | F1 | 84 | Yes (Track 2) | West Hall, T-junction |
-| 0x78 | F1 | 145 | No | Miniboss arena — massive grid |
-| 0x77 | F1 | 48 | No | NW Hall |
-| 0x79 | F1 | 25 | No | NE Hall |
-| 0x89 | F1 | 54 | No | East Hall, holewarp to B2 |
-| 0x97 | F1 | 38 | No | SW Hall, one-way shutter north |
-| 0x99 | F1 | 0 | No | SE Hall |
-| 0xA8 | B1 | 10 | No | B1 NW, shutters |
-| 0xA9 | B1 | 0 | No | B1 NE, small key door |
-| 0xB8 | B1 | 51 | No | B1 SW |
-| 0xB9 | B1 | 46 | No | B1 SE, tag1=62 |
-| 0x69 | B1 | 0 | No | B1 Side room |
-| 0xD7 | B2 | 66 | No | B2 West, small key east |
-| 0xD8 | B2 | 74 | No | Pre-Boss, Big Key north |
-| 0xD9 | B2 | 37 | No | B2 Mid, crumble floor |
-| 0xDA | B2 | 49 | No | B2 East, stair hub |
-| 0xC8 | Boss | 0 | No | Boss arena, track-free |
+| Room | Floor | Track Objects | Total Objects | Sprites | Has Cart? | Audit Status |
+|------|-------|---------------|---------------|---------|-----------|-------------|
+| 0x98 | F1 | 27 | — | — | Yes (Track 0) | Active |
+| 0x88 | F1 | 23 | — | — | Yes (Tracks 1,3) | Active |
+| 0x87 | F1 | 84 | — | — | Yes (Track 2) | Active |
+| 0x78 | F1 | 145 | — | — | No | Not audited |
+| 0x77 | F1 | 48 | — | — | No | Not audited |
+| 0x79 | F1 | 25 | — | — | No | Not audited |
+| 0x89 | F1 | 54 | — | — | No | Not audited |
+| 0x97 | F1 | 38 | — | — | No | Not audited |
+| 0x99 | F1 | 0 | — | — | No | Empty |
+| **0xA8** | **B1** | **10** | **83** | **12** | **Yes (A3 subtype 2)** | **FLAGGED — not on stop tile; subtype mismatch (2 vs {6})** |
+| 0xA9 | B1 | 0 | — | — | No | Empty |
+| **0xB8** | **B1** | **51** | **132** | **7** | **No** | **FLAGGED — missing stop tiles (B7-BA); cart sprites missing** |
+| 0xB9 | B1 | 46 | — | — | No | Not audited |
+| 0x69 | B1 | 0 | — | — | No | Empty |
+| 0xD7 | B2 | 66 | — | — | No | Not audited |
+| **0xD8** | **B2** | **73** | **156** | **7** | **Yes x2 (A3 subtypes 1,3)** | **FLAGGED — carts not on stop tiles (B7-BA)** |
+| 0xD9 | B2 | 37 | — | — | No | Not audited |
+| **0xDA** | **B2** | **49** | **100** | **11** | **Yes (A3 subtype 2)** | **FLAGGED — not on stop tile; subtype mismatch (2 vs {6,7,9,11,12})** |
+| 0xC8 | Boss | 0 | — | — | No | Empty |
 
-**14 of 19 rooms have track tiles drawn. Only 3 rooms have functional cart sprites.**
+**14 of 19 rooms have track tiles drawn. Only 3 rooms (0x98, 0x88, 0x87) have functional cart sprites.**
+**4 rooms audited (2026-02-06): 0xA8, 0xB8, 0xD8, 0xDA — all flagged, but for different reasons (see per-room audit below):**
+- `0xA8`: cart present + stop tiles present, but cart is not on a stop tile and subtype mismatches track objects.
+- `0xB8`: custom collision present but no stop tiles; no cart sprites.
+- `0xD8`: two carts present + stop tiles present, but neither cart is on a stop tile.
+- `0xDA`: cart present + stop tiles present, but cart is not on a stop tile and subtype mismatches track objects.
 
 ---
 
@@ -133,12 +138,208 @@ z3ed minecart audit (Goron Mines focus):
 ```
 
 Audit snapshot (2026-02-06, build: `Roms/oos168x.sfc`):
-- Rooms flagged by `--only-issues`: `0xA8`, `0xB8`, `0xD8`, `0xDA`.
-- Room `0xA8`: minecart sprite subtype `2` is not placed on a stop tile (B7-BA); room track objects are subtype `6` only. Action: decide intended track ID for the cart and align (sprite subtype vs track object subtype), then place the cart on a stop tile so `Sprite_Minecart_Prep` sets direction deterministically.
-- Room `0xB8`: minecart collision tiles present but **no stop tiles**. Action: add at least one stop tile (B7-BA) at the intended entry/exit points or cart spawn positions.
-- Room `0xD8`: two minecart sprites (subtype `3` at tile `(44,54)`, subtype `1` at tile `(16,14)`), neither on a stop tile. Action: move sprites onto stop tiles (or place stop tiles under them) so carts do not default to “north” behavior on spawn.
-- Room `0xDA`: minecart sprite subtype `2` is not on a stop tile; room track objects include subtypes `{6,7,9,11,12}` (no `2`). Action: align the sprite's track subtype to the intended track objects, and ensure a stop tile is under the cart.
-- Invariant: inactive carts determine their starting direction only from the stop tile under them (see `Sprites/Objects/minecart.asm` `Sprite_Minecart_Prep`). If no stop tile matches, behavior defaults to “north” (`Minecart_WaitVert`), which often looks like a broken cart.
+
+**Rooms flagged by Codex `--only-issues`:** `0xA8`, `0xB8`, `0xD8`, `0xDA`.
+
+**Invariant:** Inactive carts determine their starting direction only from the stop tile
+under them (see `Sprites/Objects/minecart.asm` `Sprite_Minecart_Prep`). If no stop tile
+matches, behavior defaults to "north" (`Minecart_WaitVert`), which often looks like a
+broken cart.
+
+#### Room 0xA8 (B1 NW) — Track 5 planned
+
+| Data Point | Value | Issue? |
+|-----------|-------|--------|
+| Total objects | 83 | OK |
+| Track objects (0x0031) | 10 | Low — only vertical strip at x=14, y=44..62 (size=6) |
+| Total sprites (doctor) | 12 | OK |
+| Minecart sprite (0xA3) | Present (x=7, y=24, subtype=2) | ISSUE: not on a stop tile; subtype mismatch vs track objects `{6}` |
+| Stop tiles (B7-BA) | 8 (`0xB7` at x=13-16, y=44-45) | ISSUE: stops exist, but none under the cart |
+| Switch corners (D0-D3) | Missing (0) | Needed for planned switch tutorial puzzle |
+| SwitchTrack sprite (0xB0) | Missing (0) | Needed for planned switch tutorial puzzle |
+| Track object layout | Vertical column at x=14, y=44 to y=62 | Only 10 tiles, all same x — a single N-S segment |
+
+**Track objects detail (x=14 column):**
+```
+y=44 size=6, y=46 size=6, y=48 size=6, y=50 size=6, y=52 size=6
+y=54 size=6, y=56 size=6, y=58 size=6, y=60 size=6, y=62 size=6
+```
+
+**Assessment:** Room has minimal rail objects (10), but it already has custom collision
+data (including stop tiles) and a minecart sprite. The current blockers are alignment:
+the cart is not placed on a stop tile, and its subtype (`2`) does not match the room's
+track-object subtype set (`{6}`) or the planned track ID (`5`).
+
+**Fix plan:**
+1. Place the cart on an existing stop tile:
+   - Current cart tile position: `(14,48)` (x=7,y=24).
+   - Existing stops: `0xB7` at `x=13-16, y=44-45`.
+   - Likely fix: move the cart to `y=22` (tile_y=44) so it lands on the `0xB7` cluster.
+2. Align track IDs:
+   - Planned: Track `5`.
+   - Current room rails: subtype `{6}`.
+   - Current cart: subtype `2`.
+   - Decide the intended track index for this room and update both the cart subtype and all track-object subtypes to match.
+3. Re-run `dungeon-minecart-audit` until the room has no `on_stop_tile` and subtype-mismatch issues.
+4. Only after alignment is correct, implement the planned switch tutorial (SwitchTrack sprite `$B0` + D0 switch corners), then validate runtime in Mesen2.
+
+---
+
+#### Room 0xB8 (B1 SW) — Tracks 6 & 7 planned
+
+| Data Point | Value | Issue? |
+|-----------|-------|--------|
+| Total objects | 132 | High — dense room |
+| Track objects (0x0031) | 51 | Good coverage |
+| Total sprites (doctor) | 7 | OK |
+| Minecart sprite (0xA3) | Not placed | ISSUE: no carts present |
+| Stop tiles (B7-BA) | 0 | ISSUE: collision has track tiles, but no stop tiles exist |
+| Switch corners (D0-D3) | Missing (0) | Needed for planned fork puzzle |
+| SwitchTrack sprite (0xB0) | Missing (0) | Needed for planned fork puzzle |
+| Track object layout | Full horizontal row at y=51, x=14..62 (size 7-10) | Single E-W line |
+
+**Track objects detail (y=51 row, all size=7 except x=14 size=10, x=16 size=7):**
+```
+x=14..16..18..20..22..24..26..28..30..32..34..36..38..40..42..44..46..48..50..52..54..56..58..60..62
+25 objects at y=51 (continuous east-west rail across room bottom)
+```
+
+Plus: y=0..45 vertical tracks at x=14 (26 objects, size=1, covering y=0 to y=49) forming
+a full N-S corridor on the left side. Total coverage: L-shaped track network.
+
+**Assessment:** Track infrastructure is substantial — a full east-west rail at y=51 and a
+full north-south rail at x=14 forming an L. But no switch corners (D0-D3), no stop tiles
+(B7-BA), and no cart sprites. The design doc calls for dual-cart fork puzzle with D1/D2/D3
+corners.
+
+**Fix plan:**
+1. Add stop tiles (B7-BA) at intended cart spawn/parking points (no stop tiles currently exist in this room).
+2. Place 2 minecart sprites (0xA3) on stop tiles, using subtypes 6 and 7.
+3. Place/verify SwitchTrack sprite (0xB0) for the crystal-switch routing.
+4. Add switch corner collision (D1, D2, D3) at junction points to form the fork puzzle.
+5. Connect the L-shaped rails via corners to create the intended fork layout.
+6. Update track table X/Y for Tracks 6 & 7 after final sprite placement.
+
+---
+
+#### Room 0xD8 (B2 Pre-Boss) — Track 16 planned (ROM currently has carts subtypes 1 & 3)
+
+| Data Point | Value | Issue? |
+|-----------|-------|--------|
+| Total objects | 156 | Very high — most complex room |
+| Track objects (0x0031) | 73 | Excellent coverage |
+| Total sprites (doctor) | 7 | OK |
+| Minecart sprites (0xA3) | Present x2 (subtypes 3 at x=22,y=27; 1 at x=8,y=7) | ISSUE: neither is on a stop tile |
+| Stop tiles (B7-BA) | 16 (B9 at x=14,y=13-16; BA at x=52-53,y=13-16; BA at x=56,y=53-56) | ISSUE: no stop tile under either cart |
+| Switch corners (D0-D3) | Missing (0) | Needed for planned boss-gate routing puzzle |
+| SwitchTrack sprite (0xB0) | Missing (0) | Needed for planned boss-gate routing puzzle |
+
+**Track objects detail — 3 distinct track networks:**
+
+**Network 1 — Horizontal at y=14 (east-west, upper room):**
+```
+x=13,15 (size=7), x=17,19..35 (size=0, single tiles), x=37,39,41,43,45,47,49,51,52 (size=7)
+~30 objects spanning x=13 to x=52 — full-width horizontal rail
+```
+
+**Network 2 — Vertical at x=33, y=40..47 (mid-room connector):**
+```
+y=40 size=3, y=42 size=1, y=44 size=1, y=45 size=1, y=47 size=0
+5 objects — short vertical segment connecting upper and lower networks
+```
+
+**Network 3 — Horizontal at y=54 + y=40 (lower room):**
+```
+y=54: x=17(size=4), x=19..37(size=0), x=39..55(size=7) — ~25 objects
+y=40: x=0..31(size=0) + x=19,21..31(size=0) — ~22 objects
+```
+
+Plus: y=47 horizontal segment, y=49/51/52 vertical at x=17 connecting y=47 to y=54.
+
+**Assessment:** This room has the most elaborate track network in D6 — 73 objects forming
+3 horizontal lines at y=14, y=40, and y=54 connected by vertical segments. The design doc
+calls for a D1/D2 switch-routed puzzle leading to the Big Key chest (y=54 area) and then
+north to the boss gate (y=14 area). Track rails exist and stop tiles exist, and the two
+minecart sprites are present, but neither cart is placed on a stop tile so they will not
+spawn into a stable waiting state.
+
+**Fix plan:**
+1. Put both carts on stop tiles (B7-BA):
+   - Cart A: tile `(16,14)` (x=8,y=7) is close to the existing `0xB9` stop at `(14,14)`. Likely fix: move the cart left by 1 (x=8 -> x=7).
+   - Cart B: tile `(44,54)` (x=22,y=27) currently has no stop tile under it. Either paint a stop tile under it, or move it to the existing `0xBA` stop column at `x=56, y=53-56`.
+2. Re-run `dungeon-minecart-audit` until both carts report `on_stop_tile=true`.
+3. Decide whether these carts should remain Track 1/3 (holewarp drop ride) or be migrated to the planned Track 16 puzzle; adjust cart subtypes and rail subtypes accordingly.
+4. Place/verify SwitchTrack sprite(s) and add switch corners (D1, D2) for route selection.
+5. Apply Tag 0x38 (cart-required shutter) to the boss door only after enabling `!ENABLE_MINECART_CART_SHUTTERS` and runtime-testing the tag return path.
+6. Update track table X/Y for Track 16 after final sprite placement.
+
+---
+
+#### Room 0xDA (B2 East) — Track 11 planned
+
+| Data Point | Value | Issue? |
+|-----------|-------|--------|
+| Total objects | 100 | Moderate |
+| Track objects (0x0031) | 49 | Good coverage |
+| Total sprites (doctor) | 11 | OK |
+| Minecart sprite (0xA3) | Present (x=26, y=6, subtype=2) | ISSUE: not on a stop tile; subtype mismatch vs track objects `{6,7,9,11,12}` |
+| Stop tiles (B7-BA) | 4 (`0xB7` at x=51-54, y=10) | ISSUE: cart tile is `(52,12)` (x=26,y=6); likely move to `y=5` (tile_y=10) |
+| Switch corners (D0-D3) | Missing (0) | Optional for this room |
+| SwitchTrack sprite (0xB0) | Missing (0) | Optional for this room |
+
+**Track objects detail — 3 track networks:**
+
+**Network 1 — U-shaped in upper half:**
+```
+Horizontal y=8: x=0..22 (14 objects, size=7) — full-width rail
+Vertical x=22: y=8..24 (8 objects, size=6/9/11/12) — right-side descent
+Horizontal y=16: x=22..52 (18 objects, size=7/11/12) — mid-level rail
+Vertical x=52: y=10..16 (4 objects, size=6) — connector
+Horizontal y=24: x=0..22 (13 objects, size=7) — bottom horizontal
+```
+
+**Network 2 — Isolated vertical at x=22, y=8-24:**
+Part of Network 1's U-shape — connects y=8 to y=24 via right-side corridor.
+
+**Assessment:** Track infrastructure forms a large U-shaped circuit in the upper half of
+the room (y=8 to y=24). Lower half (y=40-56) has lava/pit area with no tracks. This room
+already has stop tiles and a minecart sprite, but the cart is not placed on a stop tile
+and its subtype (`2`) does not match the room's rail subtypes (which include the planned
+Track `11`).
+
+**Fix plan:**
+1. Move the cart onto an existing stop tile (current cart tile `(52,12)`; stops at `x=51-54, y=10`).
+   - Likely fix: move the cart to `y=5` (tile_y=10).
+2. Align track IDs:
+   - Planned: Track `11`.
+   - Current cart: subtype `2`.
+   - Rails already include subtype `11`, so the simplest path is to change the cart subtype to `11`.
+3. Re-run `dungeon-minecart-audit` until the cart reports `on_stop_tile=true` and no subtype-mismatch issue.
+4. Update track table X/Y for Track 11 after final sprite placement.
+
+---
+
+#### Summary: Per-Room Fix Priority
+
+| Room | Tracks | Track Objects | Cart | Stop Tiles | Switch Corners | Switch Sprite | Fix Effort |
+|------|--------|---------------|------|------------|----------------|---------------|------------|
+| 0xA8 | 5 | 10 (minimal) | Present (broken) | Present (8, cart not on one) | Missing (0; planned D0) | Missing (0; SwitchTrack 0xB0) | **Heavy** — track ID + stop alignment, then switch tutorial |
+| 0xB8 | 6,7 | 51 (good L-shape) | Missing | Missing | Missing (0; planned D1-D3) | Missing (0; SwitchTrack 0xB0) | **Heavy** — add stops + carts + puzzle routing |
+| 0xD8 | 16 | 73 (3 networks) | Present x2 (broken; subtypes 1,3) | Present (16, carts not on one) | Missing (0; planned D1,D2) | Missing (0; SwitchTrack 0xB0) | **Heavy** — most complex routing + decide track IDs |
+| 0xDA | 11 | 49 (U-shape) | Present (broken) | Present (4, cart not on one) | Missing (0) | Missing (0; SwitchTrack 0xB0) | **Moderate** — stop + subtype alignment |
+
+**All 4 rooms:** Track rail objects (0x0031) exist and form viable networks. Room `0xB8`
+is missing stop tiles and carts. Rooms `0xA8`, `0xD8`, and `0xDA` already have stop tiles
+and minecart sprites, but the carts are not placed on stop tiles (and in `0xA8`/`0xDA`
+there is also a cart-subtype mismatch vs rail subtypes). These are still not playable as
+intended minecart puzzles until placement/subtype alignment is fixed.
+
+**Blocking dependency:** Moving/adding cart sprites (0xA3) and placing SwitchTrack sprites
+(0xB0) requires the yaze sprite editor. Stop tiles (B7-BA) and switch corners (D0-D3) are
+collision data that can potentially be set via the custom collision overlay in ASM
+(`$258090`), but are most safely edited in yaze's dungeon editor.
+
+**Recommended order:** 0xDA (simplest) → 0xA8 (tutorial) → 0xB8 (dual-cart) → 0xD8 (boss gate)
 
 ---
 

@@ -153,9 +153,33 @@ The 4 new messages need IDs. Proposed range: `$1D0`–`$1D3` (or wherever the ne
 4. **Stone discovery:** Should Gossip Stones be always visible, or appear only after the player obtains a specific item (e.g., Mask of Truth equivalent)?
 5. **Remaining stones:** GS01, GS02, GS04, GS10, GS11 are unassigned. Should they be reserved for future use or given generic lore messages now?
 
+## Relationship to Crystal Maidens
+
+Gossip Stones and crystal maidens serve **different lore layers** and should not duplicate content:
+
+- **Crystal Maidens** (messages 0x132-0x138): Long-form plot exposition after each boss. Covers political history, technology, conspiracies. The player sees these once, in sequence.
+- **Gossip Stones** (GS01-GS21): Short, cryptic, optional fragments. The player discovers these out of order through exploration. Best used for foreshadowing, atmosphere, and "maybe-true" deep lore.
+
+**Rule:** If a maiden already covers a topic (e.g., D3 maiden explains Hyrule's occupation), the corresponding Gossip Stone should add texture or mystery, not repeat the same information.
+
+## Cosmology Consistency
+
+All Gossip Stone messages must align with Story Bible v2.0 cosmology:
+- Kalyxo is a "remote island at a convergence point" — NOT the first creation of the Goddesses
+- The Eon Abyss is a pocket dimension formed by Sacred Realm seal pressure — NOT a remnant of an older world
+- Ganondorf's origin is intentionally ambiguous — stones may hint but should not commit to a specific timeline
+
+## External Contributions
+
+Ridoyie has offered to contribute world lore text for Gossip Stones. His contributions are:
+- **Blocked on** yaze message editor expanded bin support
+- **Format:** Must follow 32-char line width, 2-3 lines max, cryptic/poetic tone, first-person plural ("We") voice
+- **Review needed:** His proposed cosmology lines conflict with established lore (see above). Direct him to the existing gossip_stones.md registry for tone/format reference.
+
 ## Dependencies
 
 - `scholar_dialogue_rewrite.md` — The priestess lore in GS09 must be consistent with the Scholar's dialogue.
 - `kydrog_mask_stalfos_form.md` — GS08's spirit-body message foreshadows the Stalfos Form.
 - `endgame_narrative_arc.md` — GS05's Twinrova hint and GS07's Kydrog hint set up endgame revelations.
 - `progression_infrastructure.md` — Gossip Stones can use the shared NPC reaction framework for gating.
+- `essence_maiden_presentation.md` — Coordinates with maiden dialogue improvements; both blocked on message editor.
