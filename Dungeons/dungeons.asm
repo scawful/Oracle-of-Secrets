@@ -7,13 +7,13 @@ print  "End of keyblock.asm               ", pc
 org $098823 : LDY.b #$68
 
 ; Disable hardcoded sanctuary song
-org $028BE7 : NOP #2
+org $028BE7 : NOP #2 ; @hook module=Dungeons name=Sanctuary_Song_Disable kind=patch expected_m=8 expected_x=8
 
 ; Fixed color fade-in effect for bed cutscene
 ; NOTE: This only runs when GameState=0 and specific flag not set (Link's intro)
 ; Vanilla values restored - previously incorrectly set to all zeros
 ; Module06_UnderworldLoad bed cutscene block at $028364
-org $028364
+org $028364 ; @hook module=Dungeons name=BedCutscene_ColorFix kind=patch expected_m=8 expected_x=8
 {
   ; Fixed color for bed cutscene (vanilla values)
   LDA.b #$30 : STA.b $9C   ; COLDATA R component
@@ -86,7 +86,7 @@ TransferDungeonMapGfx:
 }
 
 pushpc
-org $0288FF
+org $0288FF ; @hook module=Dungeons
 JSL CheckForTingleMaps : NOP
 pullpc
 
@@ -141,7 +141,7 @@ db $A1, $72, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 1C } | Size: 06
 db $FF, $FF ; End
 
 ; Water collision system - placed in Bank $2C after main dungeon code
-; incsrc "Collision/water_collision.asm"
+incsrc "Collision/water_collision.asm"
 
 print "End of dungeons.asm               ", pc
 
@@ -149,12 +149,14 @@ pushpc
 
 ; Transfer Dungeon Map Graphics
 ; Module0E_03_01_00_PrepMapGraphics
-org $0AE152 : JSL TransferDungeonMapGfx
+org $0AE152 : JSL TransferDungeonMapGfx ; @hook module=Dungeons name=TransferDungeonMapGfx kind=jsl target=TransferDungeonMapGfx
 
 ; RoomTag_GetHeartForPrize
 ; Swap LW/DW check on spawn falling prize
 org $01C71B : LDA.l $7EF37A ; Crystals in LW
 org $01C727 : LDA.l $7EF374 ; Pendants in DW
+
+RoomTag_OperateWaterFlooring = $01CC95
 
 org $01F195 ; Replace static LDA
 LDA $0682
@@ -162,18 +164,37 @@ LDA $0682
 org $01F1C9 ; Replace static LDA
 LDA $0682
 
-; Water gate collision write + persistence (DISABLED pending regression fix)
-; org $01F3D2 ; do tilemapcollision stuff for the dam
-; JML WaterGate_FillComplete_Hook
-; NOP #4 ; Pad to 8 bytes (replaces STZ $1E + STZ $1F + JSL IrisSpotlight_ResetTable)
+; Water gate collision write + persistence
+org $01F3D2 ; do tilemapcollision stuff for the dam
+if !ENABLE_WATER_GATE_HOOKS == 1
+  JML WaterGate_FillComplete_Hook
+  NOP #4 ; Pad to 8 bytes (replaces STZ $1E + STZ $1F + JSL IrisSpotlight_ResetTable)
+else
+  STZ.b $1E
+  STZ.b $1F
+  JSL IrisSpotlight_ResetTable
+endif
 
-; Underworld_LoadRoom exit hook (torch loop end) - DISABLED pending regression fix
-; org $0188DF
-; JML Underworld_LoadRoom_ExitHook
+; Underworld_LoadRoom exit hook (torch loop end) - re-enabled with explicit $FFFF check
+org $0188DF
+if !ENABLE_WATER_GATE_HOOKS == 1
+  JML Underworld_LoadRoom_ExitHook
+else
+  BNE $0188C9
+  SEP #$30
+endif
 
 
-; RoomTag_WaterGate
-; org $01CBAC
-; LDA.w #NewWaterOverlayData>>16
-; STA.b $B9
-; LDA.w #NewWaterOverlayData>>0
+; RoomTag_WaterGate - redirect overlay data to custom water segments
+org $01CBAC
+if !ENABLE_WATER_GATE_OVERLAY_REDIRECT == 1
+  LDA.w #NewWaterOverlayData>>16
+  STA.b $B9
+  LDA.w #NewWaterOverlayData>>0
+  JSR RoomTag_OperateWaterFlooring
+else
+  LDA.w #WaterOverlayData>>16
+  STA.b $B9
+  LDA.w #WaterOverlayData>>0
+  JSR RoomTag_OperateWaterFlooring
+endif

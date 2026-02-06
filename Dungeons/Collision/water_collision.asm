@@ -199,7 +199,6 @@ Underworld_LoadRoom_ExitHook:
 
   SEP #$30
   JSL WaterGate_CheckRoomEntry
-  PLB
   RTL
 
   .draw_next_torch
