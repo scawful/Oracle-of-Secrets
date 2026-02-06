@@ -165,7 +165,7 @@ org $01F1C9 ; Replace static LDA
 LDA $0682
 
 ; Water gate collision write + persistence
-org $01F3D2 ; do tilemapcollision stuff for the dam
+org $01F3D2 ; @hook module=Dungeons name=WaterGate_FillComplete_Hook kind=jml target=WaterGate_FillComplete_Hook expected_m=8 expected_x=8
 if !ENABLE_WATER_GATE_HOOKS == 1
   JML WaterGate_FillComplete_Hook
   NOP #4 ; Pad to 8 bytes (replaces STZ $1E + STZ $1F + JSL IrisSpotlight_ResetTable)
@@ -175,8 +175,11 @@ else
   JSL IrisSpotlight_ResetTable
 endif
 
-; Underworld_LoadRoom exit hook (torch loop end) - re-enabled with explicit $FFFF check
-org $0188DF
+; Underworld_LoadRoom exit hook (torch loop end).
+; Uses the vanilla CMP.w #$FFFF Z flag at $0188DC to decide whether to re-enter
+; the torch draw loop at $0188C9.
+; CRITICAL: vanilla at $0188C9 runs in 16-bit A/X/Y. Do NOT SEP #$30 before JML back.
+org $0188DF ; @hook module=Dungeons name=Underworld_LoadRoom_ExitHook kind=jml target=Underworld_LoadRoom_ExitHook expected_m=16 expected_x=16
 if !ENABLE_WATER_GATE_HOOKS == 1
   JML Underworld_LoadRoom_ExitHook
 else

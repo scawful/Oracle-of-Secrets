@@ -191,18 +191,36 @@ WaterGate_CheckRoomEntry:
 ; into the draw loop. Otherwise apply persistent water collision.
 Underworld_LoadRoom_ExitHook:
 {
-  REP #$30
-  LDX.b $BA
-  LDA.l $7EFB40,X
-  CMP.w #$FFFF
+  ; Hooked at $0188DF, replacing:
+  ;   BNE .draw_next_torch
+  ;   SEP #$30
+  ;
+  ; On entry, Z reflects the prior `CMP #$FFFF` at $0188DC.
+  ; If Z=0, torches remain and we must jump back into the draw loop
+  ; without changing A/X/Y/P beyond what vanilla would.
   BNE .draw_next_torch
 
+  ; Vanilla fallthrough: SEP #$30 : RTL
+  ; We additionally call WaterGate_CheckRoomEntry, but must not leak
+  ; altered flags/registers to the caller (vanilla returns with Z=1).
   SEP #$30
+
+  PHP
+  PHA
+  PHX
+  PHY
+
   JSL WaterGate_CheckRoomEntry
+
+  PLY
+  PLX
+  PLA
+  PLP
+
   RTL
 
   .draw_next_torch
-  SEP #$30
+  ; IMPORTANT: Do NOT set SEP here; the vanilla torch draw loop runs in 16-bit mode.
   JML $0188C9
 }
 
