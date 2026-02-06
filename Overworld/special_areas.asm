@@ -1,6 +1,6 @@
 ; =========================================================
 
-org $0EDE49
+org $0EDE49 ; @hook module=Overworld
 JSL Overworld_CheckForSpecialOverworldTrigger
 RTL
 
@@ -246,7 +246,7 @@ pushpc
 
 OverworldPalettesLoader = $0ED5A8
 
-org $02E90C ; LoadSpecialOverworld interrupt
+org $02E90C ; LoadSpecialOverworld interrupt ; @hook module=Overworld
   JSL LoadSpecialOverworld
   RTS
 

@@ -324,14 +324,14 @@ SearchForEquippedItem_Override:
 
 pushpc
 
-org $0DDEB0
+org $0DDEB0 ; @hook module=Menu
 ItemMenu_CheckForOwnership:
 {
   JSL DoWeHaveThisItem_Override
   RTS
 }
 
-org $0DE399
+org $0DE399 ; @hook module=Menu
 SearchForEquippedItem:
 {
   JSL SearchForEquippedItem_Override

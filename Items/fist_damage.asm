@@ -10,18 +10,18 @@ org $06EB90
 NOP
 NOP
 
-org $06ED6A
+org $06ED6A ; @hook module=Items
 JSL FistBump ; $1BB4D0
 
-org $06F2D6
+org $06F2D6 ; @hook module=Items
 db $80, $05 ; BRA 05 ??
 JSL FistBump2 ; $1BB572
 RTS
 
-org $06F3C7
+org $06F3C7 ; @hook module=Items
 JMP $F2D8
 
-org $06F6C4
+org $06F6C4 ; @hook module=Items
 JSL FistBump3 ; $1BB380
 NOP
 

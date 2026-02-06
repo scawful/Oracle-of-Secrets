@@ -2,7 +2,7 @@
 ; Change Link's sprite by setting $BC to the gfx bank
 
 ; InitializeMemoryAndSRAM
-org $008827 : JSL StartupMasks
+org $008827 : JSL StartupMasks ; @hook module=Masks name=StartupMasks kind=jsl target=StartupMasks
 
 ; Link Sprite hook before game starts
 org $008A01 : LDA $BC
@@ -11,23 +11,23 @@ org $008A01 : LDA $BC
 ; Change Link's palette based on $02B2 (mask value)
 
 ; Palettes_Load_LinkArmorAndGloves
-org $1BEDF9
+org $1BEDF9 ; @hook module=Masks
   JSL Palette_ArmorAndGloves ; 4bytes
   RTL                        ; 1byte
   NOP #$01
 
 ; Palettes_Load_LinkGloves
-org $1BEE1B
+org $1BEE1B ; @hook module=Masks
   JSL Palette_ArmorAndGloves_part_two
   RTL
 
 ; =========================================================
 
 ; GameOver_DelayBeforeIris
-org $09F347 : JSL ForceResetMask_GameOver
+org $09F347 : JSL ForceResetMask_GameOver ; @hook module=Masks name=ForceResetMask_GameOver kind=jsl target=ForceResetMask_GameOver
 
 ; Module17_SaveAndQuit
-org $09F7B5 : JSL ForceResetMask_SaveAndQuit
+org $09F7B5 : JSL ForceResetMask_SaveAndQuit ; @hook module=Masks name=ForceResetMask_SaveAndQuit kind=jsl target=ForceResetMask_SaveAndQuit
 
 ; =========================================================
 ; EXPANDED SPACE
@@ -242,7 +242,7 @@ Oracle_CgramAuxToMain_Impl:
 }
 
 pushpc
-org $02C769 ; Hook vanilla Overworld_CopyPalettesToCache
+org $02C769 ; Hook vanilla Overworld_CopyPalettesToCache ; @hook module=Masks
   JSL Oracle_CgramAuxToMain_Impl
   RTS
 pullpc
@@ -279,7 +279,7 @@ LinkState_ResetMaskAnimated:
 
 pushpc
 ; Link_CheckForSwordSwing
-org $079CD9 : JSL LinkItem_CheckForSwordSwing_Masks
+org $079CD9 : JSL LinkItem_CheckForSwordSwing_Masks ; @hook module=Masks name=LinkItem_CheckForSwordSwing_Masks kind=jsl target=LinkItem_CheckForSwordSwing_Masks
 pullpc
 
 LinkItem_CheckForSwordSwing_Masks:
@@ -376,7 +376,7 @@ DekuLink_SpinOrRecoil:
 
 pushpc
 ; Spin and die, LinkOAM_AnimationStepDataOffsets
-org $0DA3FD
+org $0DA3FD ; @hook module=Masks
   JML DekuLink_SpinOrRecoil
 pullpc
 
@@ -541,18 +541,18 @@ DekuLink_SkipPitSlip:
 
 pushpc
 
-org $07C729 : JSL DekuLink_SkipPitSlip
+org $07C729 : JSL DekuLink_SkipPitSlip ; @hook module=Masks name=DekuLink_SkipPitSlip kind=jsl target=DekuLink_SkipPitSlip
 
-org $07BCEE : JSL DekuLink_SkipPitSlip
+org $07BCEE : JSL DekuLink_SkipPitSlip ; @hook module=Masks name=DekuLink_SkipPitSlip kind=jsl target=DekuLink_SkipPitSlip
 
 org $088399 : dw Ancilla0E_MagicBubble
 
-org $08FFDA ; Bank 08 Free space
+org $08FFDA ; Bank 08 Free space ; @hook module=Masks
   Ancilla0E_MagicBubble:
     JSL Ancilla0E_MagicBubbleLong
     RTS
 
-org $07903F : JSL DekuLink_CheckForDash
+org $07903F : JSL DekuLink_CheckForDash ; @hook module=Masks name=DekuLink_CheckForDash kind=jsl target=DekuLink_CheckForDash
 
 pullpc
 
@@ -1268,7 +1268,7 @@ DekuLink_CancelBeforeTransition:
 }
 
 pushpc
-org $07F452
+org $07F452 ; @hook module=Masks
   JSL DekuLink_CancelBeforeTransition
 pullpc
 
@@ -1344,7 +1344,7 @@ LinkOAM_CheckForDrawShield:
 
 pushpc
 
-org $07A94F : JSL CheckForTwoWayMirror
+org $07A94F : JSL CheckForTwoWayMirror ; @hook module=Masks name=CheckForTwoWayMirror kind=jsl target=CheckForTwoWayMirror
 
 pullpc
 

@@ -6,7 +6,7 @@
 ; game will switch to part 1 after your uncle lEFt the house
 lorom
 
-org $05DF12
+org $05DF12 ; @hook module=Meadow_main.asm
   JSL $04ECA0
   NOP
   NOP
@@ -25,7 +25,7 @@ org $04ECA0
 
 lorom
 
-org $0cdc5a
+org $0cdc5a ; @hook module=Meadow_main.asm
 JSR $ffb1
 
 org $0cffb1

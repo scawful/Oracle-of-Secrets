@@ -365,7 +365,7 @@ endif
 ; these spots. We could potentially add these to a "repair ROM" asm feature.
 
 ; Main Palette loading routine.
-org $0ED5E7 ; $0755E7
+org $0ED5E7 ; $0755E7 ; @hook module=Overworld
     JSL.l Palette_OverworldBgAux3
 
 ; Repairs an old ZS call.
@@ -1476,7 +1476,7 @@ if !Func00DA63 == 1
 ; use depending on the area. The second half reloads global sprite #2 sheet
 ; (rock vs skulls, different bush gfx, fish vs bone fish, etc.) based on what
 ; world we are in.
-org $00DA63 ; $005A63
+org $00DA63 ; $005A63 ; @hook module=Overworld
 AnimateMirrorWarp_LoadSubscreen:
 {
     JSL.l ActivateSubScreen
@@ -1704,25 +1704,25 @@ if !Func0283EE == 1
 
 ; Replaces a bunch of calls to a shared function.
 ; Intro_SetupScreen:
-org $028027 ; $010027
+org $028027 ; $010027 ; @hook module=Overworld
     JSR.w Overworld_LoadMusicIfNeeded
 
 assert pc() <= $02802B
 
 ; Dungeon_LoadSongBankIfNeeded:
-org $029C0C ; $011C0C
+org $029C0C ; $011C0C ; @hook module=Overworld
     JMP.w Overworld_LoadMusicIfNeeded
 
 assert pc() <= $029C0F
 
 ; Mirror_LoadMusic:
-org $029D1E ; $011D1E
+org $029D1E ; $011D1E ; @hook module=Overworld
     JSR.w Overworld_LoadMusicIfNeeded
 
 assert pc() <= $029D21
 
 ; GanonEmerges_LoadPyramidArea:
-org $029F82 ; $011F82
+org $029F82 ; $011F82 ; @hook module=Overworld
     JSR.w Overworld_LoadMusicIfNeeded
 
 assert pc() <= $029F85
@@ -1988,7 +1988,7 @@ endif
 if !Func028632 == 1
 
 ; Changes a function that loads animated tiles under certain conditions.
-org $028632 ; $010632
+org $028632 ; $010632 ; @hook module=Overworld
 Credits_LoadScene_Overworld_PrepGFX_Interupt:
 {
     ; The decompression function increases it by 1 so subtract 1 here.
@@ -2473,7 +2473,7 @@ endif
 if !Func02B2D4 == 1
 
 ; Turns on the subscreen if the pyramid is loaded.
-org $02B2D4 ; $0132D4
+org $02B2D4 ; $0132D4 ; @hook module=Overworld
 Func02B2D4:
 {
     JSR.w Overworld_LoadSubscreenAndSilenceSFX1
@@ -2601,7 +2601,7 @@ endif
 if !Func02BC44 == 1
 
 ; Controls overworld vertical subscreen movement for the pyramid BG.
-org $02BC44 ; $013C44
+org $02BC44 ; $013C44 ; @hook module=Overworld
 Overworld_OperateCameraScroll_Interupt:
 {
     ; Check for the pyramid BG.
@@ -2741,7 +2741,7 @@ if !Func02C692 == 1
 ; Replaces a call to a shared function. Normally this is goes to .lightworld
 ; to change the main color palette manually but we change it here so that it
 ; just uses the same table as everything else.
-org $02A07A ; $01207A
+org $02A07A ; $01207A ; @hook module=Overworld
     JSR.w Overworld_LoadAreaPalettes
 
 assert pc() <= $02A07D ; $01207D
@@ -2840,6 +2840,9 @@ org $02A4CD ; $0124CD
 RainAnimation:
 {
     LDA.b $8C : CMP.b #$9F : BEQ .rainOverlaySet
+        ; Backup: if Song of Storms flag is set, rain should still animate
+        ; even if $8C was momentarily cleared during a transition.
+        LDA.l $7EE00E : BNE .rainOverlaySet
         ; Check the progress indicator.
         LDA.l $7EF3C5 : CMP.b #$02 : BRA .skipMovement
             .rainOverlaySet
@@ -2895,7 +2898,7 @@ RainAnimation:
 
     RTL
 }
-assert pc() <= $02A52D ; $01252D
+assert pc() <= $02A52D ; $012533 (6 bytes added for $7EE00E resilience check)
 
 else
 
@@ -2919,7 +2922,7 @@ endif
 
 if !Func02ABBE == 1
 
-org $02ABBE ; $012BBE
+org $02ABBE ; $012BBE ; @hook module=Overworld
     JSL.l NewOverworld_FinishTransGfx
     NOP : NOP : NOP
 
@@ -3518,7 +3521,7 @@ pushpc
 
 if !Func0ABC5A == 1
 
-org $0ABC5A ; $053C5A
+org $0ABC5A ; $053C5A ; @hook module=Overworld
     JSL.l CheckForChangeGraphicsNormalLoad
 
 assert pc() <= $0ABC5E ; $053C5E
@@ -3567,7 +3570,7 @@ pushpc
 if !Func0AB8F5 == 1
 
 ; Loads different animated tiles when returning from bird travel.
-org $0AB8F5 ; $0538F5
+org $0AB8F5 ; $0538F5 ; @hook module=Overworld
 BirdTravel_LoadTargetArea_Interupt:
 {
     JSL.l ReadAnimatedTable : STA.w AnimatedTileGFXSet
@@ -3675,7 +3678,7 @@ org $0BFE70 ; $05FE70
 ; Loads different special transparent colors and overlay speeds based on the
 ; overlay during transition and under other certain cases. TODO: Exact cases need
 ; to be investigated. When leaving dungeon.
-org $0BFEB6 ; $05FEB6
+org $0BFEB6 ; $05FEB6 ; @hook module=Overworld
 Overworld_LoadBGColorAndSubscreenOverlay:
 {
     JSL.l ReplaceBGColor
@@ -3941,7 +3944,7 @@ if !Func0ED627 == 1
 ; Loads the transparent color during mirror\warp, entering/leaving special
 ; overworlds, exiting dungeons, loading end credits overworld scenes, whirlpool
 ; warps, and bird travel.
-org $0ED627 ; $075627
+org $0ED627 ; $075627 ; @hook module=Overworld
     JML.l InitColorLoad2
     NOP
 
@@ -4062,20 +4065,20 @@ endif
 if !Func00D585 == 1
 
 ; Interupts the vanilla LoadTransAuxGFX function
-org $00D673 ; $005673
+org $00D673 ; $005673 ; @hook module=Overworld
     JML.l NewLoadTransAuxGFX
 
 assert pc() <= $00D677 ; $005677
 
-org $00D677 ; $005677
+org $00D677 ; $005677 ; @hook module=Overworld
 LoadTransAuxGFX_return:
 
-org $008C8A ; $000C8A
+org $008C8A ; $000C8A ; @hook module=Overworld
     dw NMI_UpdateChr_Bg2HalfAndAnimated
 
 assert pc() <= $008C8C ; $000C8C
 
-org $02ABB4 ; $012BB4
+org $02ABB4 ; $012BB4 ; @hook module=Overworld
     JSL.l NewPrepTransAuxGFX
 
 assert pc() <= $02ABB8 ; $012BB8
@@ -4329,27 +4332,27 @@ pushpc
 
 if !Func00E221 == 1
 
-org $00E221 ; $006221
+org $00E221 ; $006221 ; @hook module=Overworld
     JML.l InitTilesetsLongCalls
 
 assert pc() <= $00E225 ; $006225
 
-org $00D904 ; $005904
+org $00D904 ; $005904 ; @hook module=Overworld
     JML.l AnimateMirrorWarp_DecompressNewTileSetsLongCalls
 
 assert pc() <= $00D908 ; $005908
 
-org $00D97D ; $00597D
+org $00D97D ; $00597D ; @hook module=Overworld
     JML.l AnimateMirrorWarp_DecompressNewTileSetsLongCalls2
 
 assert pc() <= $00D981 ; $005981
 
-org $00D9BC ; $0059BC
+org $00D9BC ; $0059BC ; @hook module=Overworld
     JML.l AnimateMirrorWarp_DecompressBackgroundsALongCalls
 
 assert pc() <= $00D9C1 ; $0059C1
 
-org $00DA2F ; $005A2F
+org $00DA2F ; $005A2F ; @hook module=Overworld
     JML.l AnimateMirrorWarp_DecompressBackgroundsCLongCalls
 
 else
@@ -4636,12 +4639,12 @@ pushpc
 
 if !Func00E221 == 1
 
-org $02B490 ; $013490
+org $02B490 ; $013490 ; @hook module=Overworld
     JSL.l Whirlpool_LoadDestinationMap_Interupt
 
 else
 
-org $02B490 ; $013490
+org $02B490 ; $013490 ; @hook module=Overworld
     JSL.l BirdTravel_LoadAmbientOverlay
 
 endif
@@ -4740,6 +4743,9 @@ OverworldHandleTransitions:
     ; Just makes sure we're not using a medallion or input is disabled.
     JSL.l Player_IsScreenTransitionPermitted : BCS .noTransition
         STY.b $02 : STZ.b $03
+
+        ; Lost Woods early interception (v168)
+        ; JSL Oracle_LostWoods_TransitionCheck : BCS .noTransition
 
         JSR.w DeleteCertainAncillaeStopDashing
 
@@ -4844,7 +4850,7 @@ OverworldHandleTransitions:
 
         RTS
 }
-assert pc() <= $02AB08 ; $012B08
+assert pc() <= $02AB0D ; $012B0D (next org at $02AB0D)
 
 org $02A62C ; $01262C
 OverworldScreenTileMapChange:
@@ -4974,7 +4980,7 @@ pushpc
 
 if !Func02C0C3 == $01
 
-org $02C0C3 ; $0140C3
+org $02C0C3 ; $0140C3 ; @hook module=Overworld name=Overworld_SetCameraBounds expected_m=16 expected_x=8
 Overworld_SetCameraBounds_Interupt:
 {
     JSL.l NewOverworld_SetCameraBounds
@@ -5059,12 +5065,12 @@ pushpc
 
 if !Func02E598 == $01
 
-org $02E598 ; $016598
+org $02E598 ; $016598 ; @hook module=Overworld
     JSL.l Copy0716
     NOP
 assert pc() <= $02E59D ; $01659D
 
-org $02EADC ; $016ADC
+org $02EADC ; $016ADC ; @hook module=Overworld
     JSL.l Copy0716
     NOP
 assert pc() <= $02EAE1 ; $016AE1
@@ -5600,7 +5606,7 @@ pushpc
 
 if !Func02A5D3 == $01
 
-org $02A5D3 ; $0125D3
+org $02A5D3 ; $0125D3 ; @hook module=Overworld
 Overworld_PlayerControl_Interupt:
 {
     ; NOTE: Lost Woods camera drift fix was attempted here but broke small-to-large
@@ -5661,7 +5667,7 @@ endif
 
 if !Func00FC67 == $01
 
-org $00FC67 ; $007C67
+org $00FC67 ; $007C67 ; @hook module=Overworld
 JSL.l Sprite_LoadGfxProperties_Interupt
 NOP : NOP : NOP
 
@@ -5743,10 +5749,10 @@ LDA.l Overworld_HandleOverlaysAndBombDoors_bombable_door_location_New, X
 
 else
 
-org $1BC8B4 ; $0DC8B4
+org $1BC8B4 ; $0DC8B4 ; @hook module=Overworld
 db $B0, $7D
 
-org $02EF64 ; $016F64
+org $02EF64 ; $016F64 ; @hook module=Overworld
 db $BF, $C5, $ED, $02
 
 endif
@@ -5755,7 +5761,7 @@ endif
 
 if !Func07B518 == $01
 
-org $07B518 ; $03B518
+org $07B518 ; $03B518 ; @hook module=Overworld
 JSL Link_Read_Interupt
 
 else

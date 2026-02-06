@@ -1,7 +1,7 @@
-org $01C742
+org $01C742 ; @hook module=Sprites
   JSL Ancilla_SpawnFallingPrize
 
-org $06FA34
+org $06FA34 ; @hook module=Sprites
   JSL Ancilla_SpawnFallingPrize
 
 org $098BC1

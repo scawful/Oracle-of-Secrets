@@ -240,11 +240,11 @@ ZoraBaby_GlobalBehavior:
 pushpc
 
 ; Make Zora sway like a girl
-org $09AA5E : JSL CheckForZoraBabyFollower
+org $09AA5E : JSL CheckForZoraBabyFollower ; @hook module=Sprites name=CheckForZoraBabyFollower kind=jsl target=CheckForZoraBabyFollower
 
 ; Follower_BasicMover
 ; Jump to ZoraBaby sprite on star tile
-org $09A19C : JSL CheckForZoraBabyTransitionToSprite
+org $09A19C : JSL CheckForZoraBabyTransitionToSprite ; @hook module=Sprites name=CheckForZoraBabyTransitionToSprite kind=jsl target=CheckForZoraBabyTransitionToSprite
 
 ; Make Zora follower blue palette
 org $09A902 : db $02
@@ -284,7 +284,7 @@ SpriteDraw_Locksmith = $06BDAC
 Sprite_CheckIfActive_Bank06 = $06D9EC
 
 ; Overrides Sprite_39_Locksmith
-org $06BCAC
+org $06BCAC ; @hook module=Sprites
 Sprite_39_ZoraBaby:
 {
   JSR SpriteDraw_Locksmith
@@ -575,7 +575,7 @@ pushpc
 
 ; Kiki
 dont_scare_kiki = $09A1E4
-org $09A1C6
+org $09A1C6 ; @hook module=Sprites
 JSL Kiki_CheckIfScared
 BCC dont_scare_kiki
 NOP #3
@@ -1053,7 +1053,7 @@ TileBehavior_StopLeft_Long:
 
 pushpc
 
-org $07A5F7
+org $07A5F7 ; @hook module=Sprites
   JSL LinkState_Minecart
   RTS
 
@@ -1068,7 +1068,7 @@ TileBehavior_StopLeft:
 assert pc() <= $07A64B
 
 ; Minecart Track tile types
-org $07D938
+org $07D938 ; @hook module=Sprites
   dw TileBehavior_Nothing ; 0xB0 UW LR
   dw TileBehavior_Nothing ; 0xB1 UW UD
   dw TileBehavior_Nothing ; 0xB2 UW TL
@@ -1085,14 +1085,14 @@ org $07D938
   dw TileBehavior_Nothing ; TileBehavior_Pit     ; 0xBD UW Any
 
 ; Follower_OldManUnused
-org $09A41F
+org $09A41F ; @hook module=Sprites
   JSL CheckForMinecartFollowerDraw
   RTS
 
 ; Module07_02_01_LoadNextRoom
-org $028A5B : JSL CheckForFollowerInterroomTransition
+org $028A5B : JSL CheckForFollowerInterroomTransition ; @hook module=Sprites name=CheckForFollowerIntraroomTransition kind=jsl target=CheckForFollowerInterroomTransition expected_m=8 expected_x=8
 
 ; UnderworldTransition_Intraroom_PrepTransition
-org $0289BF : JSL CheckForFollowerIntraroomTransition
+org $0289BF : JSL CheckForFollowerIntraroomTransition ; @hook module=Sprites name=CheckForFollowerIntraroomTransition kind=jsl target=CheckForFollowerIntraroomTransition
 
 pullpc

@@ -27,7 +27,7 @@
 !DBG_WARP_STATUS_ARMED    = $5A
 
 ; Overwrite JSL executed every frame
-org $068365 : JSL $3CA62A
+org $068365 : JSL $3CA62A ; @hook module=Util name=$3CA62A kind=jsl target=$3CA62A
 
 Follower_Main                             = $099F91
 CreateMessagePointers                     = $0ED3EB
@@ -35,7 +35,7 @@ Sprite_LoadGraphicsProperties             = $00FC41
 Sprite_ReloadAll_Overworld                = $09C499
 Overworld_ReloadSubscreenOverlay_Interupt = $02AF58
 
-org                                       $3CA62A               ; Expanded space for our routine
+org                                       $3CA62A               ; Expanded space for our routine ; @hook module=Util
 {
 if                                        !DEBUG_REINIT == 1
   JSL ReinitDispatcher
@@ -146,7 +146,7 @@ END:
 
 ; Reuse an unused Arrow table byte range in bank $09 as a return stub.
 pushpc
-org $099090
+org $099090 ; @hook module=Util
 Underworld_LoadSprites_ReturnStub:
   JML Debug_LoadUnderworldSprites_Return
 pullpc

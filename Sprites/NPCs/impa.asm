@@ -64,7 +64,7 @@ Impa_SetSpawnPointFlag:
 pushpc
 
 ; Zelda_AtSanctuary
-org $05EE46 : JSL Impa_SetSpawnPointFlag
+org $05EE46 : JSL Impa_SetSpawnPointFlag ; @hook module=Sprites name=Impa_SetSpawnPointFlag kind=jsl target=Impa_SetSpawnPointFlag
 
 ; TODO: Figure out what to do with this
 org $05EBCF : LDA $7EF359 : CMP.b #$05

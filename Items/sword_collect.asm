@@ -1,5 +1,5 @@
 ; Collect items with sword
-org $86F725
+org $86F725 ; @hook module=Items
  JSL collectSword
 
 pullpc

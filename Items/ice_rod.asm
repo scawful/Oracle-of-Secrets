@@ -6,7 +6,7 @@
 IceRodTileRam = $03EF
 
 ; Ancilla_CheckTileCollision_Targeted_continue
-org $088A5D
+org $088A5D ; @hook module=Items
   JSL $0EFBA0
 
 org $0EFBA0 ; main code
@@ -107,7 +107,7 @@ VramDmaTransfer:
 
 ; bug fix to not swim through tiles but jump onto them
 ; TileBehavior_GanonIce
-org $07DC9E
+org $07DC9E ; @hook module=Items
   JSL $0EFC80
   NOP
 
@@ -118,7 +118,7 @@ org $0EFC80
   RTL
 
 ; bug fix to stop gliding on shallow water when leaving ice tile
-org $07DD1B
+org $07DD1B ; @hook module=Items
   JSL $0EFC90
   RTS
 

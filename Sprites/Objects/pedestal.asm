@@ -6,7 +6,7 @@
 
 pushpc
 ; Sprite_B3_PedestalPlaque
-org $1EE05F
+org $1EE05F ; @hook module=Sprites
   JSL CheckForBook
 pullpc
 

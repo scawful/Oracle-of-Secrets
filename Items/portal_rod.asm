@@ -37,7 +37,7 @@ LinkItem_PortalRod:
 assert pc() <= $07A568
 
 ; Ancilla_CheckSpriteCollision
-org $088DC3
+org $088DC3 ; @hook module=Items
 JSL Ancilla_HandlePortalCollision : NOP
 
 pullpc

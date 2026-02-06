@@ -1,7 +1,7 @@
 ; =========================================================
 ;  Menu - Headsup Display
 
-org $0DFB91 ; UpdateHUDBuffer
+org $0DFB91 ; UpdateHUDBuffer ; @hook module=Menu
   JSL HUD_Update
   RTS
 
@@ -9,17 +9,17 @@ newIgnoreItemBox: ; UpdateHUDBuffer_skip_item
   JSL HUD_Update
   RTS
 
-org $0DDD21 ; RefillLogic_heart_refill_done
+org $0DDD21 ; RefillLogic_heart_refill_done ; @hook module=Menu
   JSR newIgnoreItemBox
 
-org $0DFC09 ; UpdateHUDBuffer_skip_hearts
+org $0DFC09 ; UpdateHUDBuffer_skip_hearts ; @hook module=Menu
   JSL HUD_Update_ignore_health
   RTS
 
-org $0DDB85 ; RefreshIcon_long
+org $0DDB85 ; RefreshIcon_long ; @hook module=Menu
   JSL HUD_Update
 
-org $0DFDAB ; UpdateHUDBuffer_UpdateHearts
+org $0DFDAB ; UpdateHUDBuffer_UpdateHearts ; @hook module=Menu
   JSL HUD_UpdateHearts_long
   RTS
 

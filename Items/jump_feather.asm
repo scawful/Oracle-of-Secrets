@@ -20,7 +20,7 @@ org $07AFF8 ; LinkItem_BugCatchingNet
 
 ; TileDetect_MainHandler_no_moon_pearl
 ; org $07D23D
-org $07D242
+org $07D242 ; @hook module=Items
   JSL CheckIfJumpingForSpikeDamage
   NOP #2
 assert pc() <= $07D248

@@ -1,10 +1,10 @@
 pushpc
-org $06FFF8 ; New Jumptable for sprites
+org $06FFF8 ; New Jumptable for sprites ; @hook module=Core
 NewMainSprFunction:
   JSL SpriteActiveExp_MainLong
   RTS
 
-org $068EB9
+org $068EB9 ; @hook module=Core
 NewSprPrepFunction:
   JSL Sprite_PrepExp_Long
   RTS

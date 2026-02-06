@@ -16,7 +16,7 @@
 
 RoomPointer = $258090
 
-org $01B95B
+org $01B95B ; @hook module=Dungeons
   JSL CustomRoomCollision
   NOP #6
 

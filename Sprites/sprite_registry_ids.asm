@@ -43,3 +43,4 @@ Sprite_CloudBridge = $D2
 Sprite_EonOwl = $0A
 Sprite_KaeporaGaebora = $0A
 Sprite_ZoraPrincess = $B8
+Sprite_VampireBat = $11 ; Keese subtype 02 miniboss

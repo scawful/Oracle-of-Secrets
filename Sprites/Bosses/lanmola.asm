@@ -16,7 +16,7 @@ org $068F95 ; skip SpritePrep_Bosses
     JSL Lanmola_FinishInitialization ;JSR $8F1C ; original JSR
 
 org $05B60E : dw Sprite_Lanmola
-org $1AF9D6 : JSL SetShrapnelTimer
+org $1AF9D6 : JSL SetShrapnelTimer ; @hook module=Sprites name=SetShrapnelTimer kind=jsl target=SetShrapnelTimer
 org $1AF981 : Lanmola_SpawnShrapnel:
 org $1DF614 : Sprite_ConvertVelocityToAngle:
 
@@ -42,8 +42,10 @@ Lanmola_FinishInitialization:
   PLB
   RTL
 
+  ; Reduced from 4 lanmolas to 2 for v168 beta (performance fix).
+  ; Original: db $80, $CF, $FF, $60
   .starting_delay
-    db $80, $CF, $FF, $60
+    db $80, $CF
 }
 
 Sprite_Lanmola:
@@ -243,8 +245,8 @@ Lanmola_Death: ;0x05
       LDA $7EEAB8, X : ORA $00 : STA $7EEAB8, X
       PLX ; pull back x because sprite will crash otherwise even if it's dying...
 
-      ; There can only be 4 so we only need to check for 4
-      PHX : LDX.b #$03
+      ; Reduced to 2 lanmolas for v168 beta (was 4, LDX #$03)
+      PHX : LDX.b #$01
 
       .next_sprite
           LDA $0E20, X : CMP.b #$54 : BNE .notLanmola

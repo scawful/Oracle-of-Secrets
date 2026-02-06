@@ -378,7 +378,7 @@ FixMaskPaletteOnExit:
 
 assert pc() <= $0AC387
 
-org $0ABC76
+org $0ABC76 ; @hook module=Overworld
   JSL FixMaskPaletteOnExit
 
 org $0AC589
@@ -406,11 +406,11 @@ WorldMap_CalculateOAMCoordinates:
 ; LW OVERWORLD MAP
 ; =========================================================
 
-org $008E54 ;STZ $2115
+org $008E54 ;STZ $2115 ; @hook module=Overworld
   JSL DMAOwMap
   RTS
 
-org $00E399
+org $00E399 ; @hook module=Overworld
   JSL DMAOwMapGfx
   RTL
 
@@ -420,14 +420,14 @@ org $00E399
 org $008FF3
   RTS ; do nothing during DW update, we'll handle it in the LW routine
 
-org $408000
+org $408000 ; @hook module=Overworld
   LWWorldMap_Tiles:
     incbin world_map/LwMapTileset.bin
 
   LWWorldMap_Gfx:
     incbin world_map/LwMapGfx.bin
 
-org $418000
+org $418000 ; @hook module=Overworld
   DWWorldMap_Tiles:
     incbin world_map/DwMapTileset.bin
 

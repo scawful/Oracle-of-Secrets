@@ -91,6 +91,7 @@ Sprite_Kydreeok_CheckIfDead:
 
   LDA.w SprMiscD, X : CMP.b #$02 : BEQ .dead
     LDA.b #$02 : STA.w SprMiscD, X
+    LDA.b #$0A : STA $36
     LDY.b #$01 : JSR ApplyKydreeokGraphics
     JSR SpawnLeftHead
     JSR SpawnRightHead
@@ -218,10 +219,16 @@ Sprite_Kydreeok_Main:
     %StartOnFrame(0)
     %PlayAnimation(0, 2, 10)
 
-    JSL GetRandomInt : AND.b #$7F : BNE .dont_fly
-      LDA.b #$40 : STA.w SprTimerA, X
-      %GotoAction(6)
-      RTS
+    LDA.w SprMiscD, X : CMP.b #$02 : BEQ .phase_two
+      JSL GetRandomInt : AND.b #$7F : BNE .dont_fly
+        LDA.b #$40 : STA.w SprTimerA, X
+        %GotoAction(6)
+        RTS
+    .phase_two
+      JSL GetRandomInt : AND.b #$3F : BNE .dont_fly
+        LDA.b #$50 : STA.w SprTimerA, X
+        %GotoAction(6)
+        RTS
     .dont_fly
 
     PHX

@@ -65,10 +65,10 @@ Overlord_SpawnSoldierPath:
 pushpc
 
 ; Overlord04_Unused
-org $09B7AE
+org $09B7AE ; @hook module=Sprites
   dw Overlord_KalyxoCastleGuards
 
-org $09F253
+org $09F253 ; @hook module=Sprites
 Overlord_KalyxoCastleGuards:
   JSL SummonGuards
   RTS

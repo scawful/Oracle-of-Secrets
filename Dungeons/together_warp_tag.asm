@@ -8,7 +8,7 @@
 ; depending on the player's position in the room. This uses
 ; the 4 "stairs" properties in the room header.
 
-org $01CC1C : JML WarpTag
+org $01CC1C : JML WarpTag ; @hook module=Dungeons name=WarpTag kind=jml target=WarpTag
 
 WarpTag_Return = $01CC5A
 

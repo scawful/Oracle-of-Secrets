@@ -12,7 +12,7 @@
 ; ====================================================
 
 ; Sprite_2D_NecklessMan_bounce
-org $06C0B2
+org $06C0B2 ; @hook module=Items
 {
   JSL FloaterBoySpriteCheck
   RTS

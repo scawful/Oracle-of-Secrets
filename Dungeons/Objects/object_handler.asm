@@ -5,24 +5,24 @@ TileBehavior_Nothing = $07DC54
 TileBehavior_Pit = $07DC8B
 TileBehavior_Door = $07DD0A
 
-org $018262 ; Object ID 0x31
+org $018262 ; Object ID 0x31 ; @hook module=Dungeons
   dw ExpandedObject
 
-org $018264 ; Object ID 0x32
+org $018264 ; Object ID 0x32 ; @hook module=Dungeons
   dw ExpandedObject2
 
-org $0182A8 ; Object ID 0x54
+org $0182A8 ; Object ID 0x54 ; @hook module=Dungeons
   dw SpriteBodyObjects
 
 ; RoomDraw_WeirdUglyPot
-org $018650 ; Object ID 230
+org $018650 ; Object ID 230 ; @hook module=Dungeons
   dw HeavyPot
 
 ; Heavy rock object draw code
 DrawBigGraySegment_hook = $01B350
 
 ; Bank01 Free Space
-org $01B53C
+org $01B53C ; @hook module=Dungeons
   ExpandedObject:
     JSL CustomObjectHandler
     RTS

@@ -2,7 +2,7 @@
 ; ================================================
 ; use holes_0 tag routine
 
-org $01CC00 ; holes_0 tag routine
+org $01CC00 ; holes_0 tag routine ; @hook module=Dungeons
 JSL NewTagRoutine
 RTS
 

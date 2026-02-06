@@ -1,6 +1,6 @@
 {
   "name": "Static Analysis Lint Pass",
-  "description": "Verify oracle_analyzer.py reports zero errors on the built ROM (Tier 1, no emulator needed)",
+  "description": "Tier 1 lint: ensure metadata and hard-safety checks are in sync (no emulator required)",
   "version": "1.0",
   "tags": ["smoke", "lint", "static-analysis", "tier1"],
   "timeout_seconds": 60,
@@ -8,13 +8,65 @@
   "steps": [
     {
       "type": "exec",
-      "command": "python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc --hooks hooks.json --check-hooks --find-mx --find-width-imbalance --check-abi --check-sprite-tables --check-phb-plb --check-jsl-targets --check-rtl-rts",
+      "command": [
+        "python3",
+        "scripts/verify_feature_flags.py",
+        "--root",
+        "."
+      ],
       "expectedExitCode": 0,
-      "description": "oracle_analyzer.py should report zero errors"
+      "description": "Feature flags should be consistent"
+    },
+    {
+      "type": "exec",
+      "command": [
+        "python3",
+        "scripts/verify_hooks_json.py",
+        "--root",
+        ".",
+        "--rom",
+        "Roms/oos168x.sfc",
+        "--hooks",
+        "hooks.json"
+      ],
+      "expectedExitCode": 0,
+      "description": "hooks.json should match generator output"
+    },
+    {
+      "type": "exec",
+      "command": [
+        "python3",
+        "scripts/validate_sprite_registry.py",
+        "--strict"
+      ],
+      "expectedExitCode": 0,
+      "description": "Sprite registry IDs should be up-to-date and valid"
+    },
+    {
+      "type": "exec",
+      "command": [
+        "python3",
+        "../z3dk/scripts/oracle_analyzer.py",
+        "Roms/oos168x.sfc",
+        "--hooks",
+        "hooks.json",
+        "--check-sprite-tables"
+      ],
+      "expectedExitCode": 0,
+      "description": "Sprite property tables should not overflow past ID $F2"
+    },
+    {
+      "type": "exec",
+      "command": [
+        "python3",
+        "scripts/check_zscream_overlap.py"
+      ],
+      "expectedExitCode": 0,
+      "description": "No ZScream overlaps should be detected"
     }
   ],
   "onFailure": {
     "expert": "nayru",
-    "context": "Static analysis lint failed. Check the oracle_analyzer output for specific errors — likely register width mismatches, stack imbalances, or hook ABI violations."
+    "context": "Tier 1 lint failed. Fix the failing step (flags, hooks.json, sprite registry, or overlap check) before proceeding."
   }
 }

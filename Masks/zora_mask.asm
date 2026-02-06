@@ -66,7 +66,7 @@ assert pc() <= $07A5CE
 ; =========================================================
 
 ; End of LinkState_Swimming
-org $079781
+org $079781 ; @hook module=Masks
   JSR LinkState_UsingZoraMask
   RTS
 
@@ -163,7 +163,7 @@ LinkState_UsingZoraMask:
 pushpc
 
 ; End of LinkState_Default
-org $0782D2
+org $0782D2 ; @hook module=Masks
   JSR LinkState_UsingZoraMask_dungeon_resurface
   JSR $E8F0  ; HandleIndoorCameraAndDoors
   CLC
@@ -229,7 +229,7 @@ pushpc
 
 ; C2C3
 ; Link_HopInOrOutOfWater_Vertical
-org $07C307
+org $07C307 ; @hook module=Masks
   JSR LinkState_UsingZoraMask_dungeon_stairs
   RTS
 

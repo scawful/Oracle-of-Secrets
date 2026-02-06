@@ -4,7 +4,7 @@
 ; By Jeimuzu & Zarby
 ; -----------------------------------------------------------------------------------
 
-org $0E942A
+org $0E942A ; @hook module=Dungeons
     JSL Dungeon_LoadCustomTileAttr
     RTL
 

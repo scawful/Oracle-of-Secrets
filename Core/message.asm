@@ -160,34 +160,36 @@ Message_1C4:
   db $41, $41, $41, $7F
 
 ; Maku Tree hint messages ($1C5-$1CB)
-; Placeholder text until yaze message editor can author real dialogue
-Message_1C5:  ; Post-D1: hint toward Tail Palace
+; Placeholder text until yaze message editor can author real dialogue.
+; TODO(dialogue): Replace the placeholder bytes with real dialogue.
+Message_1C5:  ; TODO(dialogue): Post-D1 hint toward Tail Palace
   db $41, $41, $41, $7F
-Message_1C6:  ; Post-D3: hint toward Zora Temple
+Message_1C6:  ; TODO(dialogue): Post-D3 hint toward Zora Temple
   db $41, $41, $41, $7F
-Message_1C7:  ; Post-D5: hint toward Goron Mines
+Message_1C7:  ; TODO(dialogue): Post-D5 hint toward Goron Mines
   db $41, $41, $41, $7F
-Message_1C8:  ; Post-D2: hint toward Kalyxo Castle
+Message_1C8:  ; TODO(dialogue): Post-D2 hint toward Kalyxo Castle
   db $41, $41, $41, $7F
-Message_1C9:  ; Post-D4: hint toward Glacia Estate
+Message_1C9:  ; TODO(dialogue): Post-D4 hint toward Glacia Estate
   db $41, $41, $41, $7F
-Message_1CA:  ; Post-D7: reserved (endgame)
+Message_1CA:  ; TODO(dialogue): Post-D7 reserved (endgame)
   db $41, $41, $41, $7F
-Message_1CB:  ; Post-D6: hint toward Dragon Ship
+Message_1CB:  ; TODO(dialogue): Post-D6 hint toward Dragon Ship
   db $41, $41, $41, $7F
 
 ; D3 Prison Sequence messages ($1CC-$1D1)
-Message_1CC:  ; Guard capture taunt
+; TODO(dialogue): Replace the placeholder bytes with real dialogue.
+Message_1CC:  ; TODO(dialogue): Guard capture taunt
   db $41, $41, $41, $7F
-Message_1CD:  ; Prison cell wake-up text
+Message_1CD:  ; TODO(dialogue): Prison cell wake-up text
   db $41, $41, $41, $7F
-Message_1CE:  ; Prison cell description
+Message_1CE:  ; TODO(dialogue): Prison cell description
   db $41, $41, $41, $7F
-Message_1CF:  ; Cellmate NPC line 1 (optional)
+Message_1CF:  ; TODO(dialogue): Cellmate NPC line 1 (optional)
   db $41, $41, $41, $7F
-Message_1D0:  ; Cellmate NPC line 2 / escape hint
+Message_1D0:  ; TODO(dialogue): Cellmate NPC line 2 / escape hint
   db $41, $41, $41, $7F
-Message_1D1:  ; Post-escape flavor text
+Message_1D1:  ; TODO(dialogue): Post-escape flavor text
   db $41, $41, $41, $7F
 
  db $FF ; end of message pointers checks

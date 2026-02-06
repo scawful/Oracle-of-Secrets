@@ -53,6 +53,8 @@ Sprite_KydreeokHead_Prep:
   LDA.b #$FF : STA.w SprHealth, X
   LDA.b #$09 : STA.w SprBump,   X ; bump damage type
   STZ.w SprMiscE, X
+  STZ.w SprMiscF, X
+  STZ.w SprTimerC, X
   PLB
   RTL
 }
@@ -60,6 +62,35 @@ Sprite_KydreeokHead_Prep:
 SpeedTable:
   db $00, $02, $04, $06, $07, $01, $06, $03
   db 0, -2, -4, -6, -7, -1, -6, -3
+
+KydreeokHead_UpdateTracking:
+{
+  LDA.w SprTimerC, X : BNE .use_cached
+    JSL GetRandomInt : AND #$07 : CLC : ADC #$08 : STA.w SprTimerC, X
+    JSL GetRandomInt : AND #$0F : TAY
+    LDA.w SpeedTable, Y : STA.w SprMiscE, X
+    JSL GetRandomInt : AND #$0F : TAY
+    LDA.w SpeedTable, Y : STA.w SprMiscF, X
+    JSR KydreeokHead_BiasTowardPlayer
+  .use_cached
+  RTS
+}
+
+KydreeokHead_BiasTowardPlayer:
+{
+  PHX
+  JSL Sprite_IsToRightOfPlayer
+  LDA.w SprMiscE, X : CLC : ADC.w .bias_x, Y : STA.w SprMiscE, X
+  JSL Sprite_IsBelowPlayer
+  LDA.w SprMiscF, X : CLC : ADC.w .bias_y, Y : STA.w SprMiscF, X
+  PLX
+  RTS
+
+  .bias_x
+    db 1, -1
+  .bias_y
+    db 1, -1
+}
 
 Sprite_KydreeokHead_Main:
 {
@@ -198,10 +229,11 @@ Sprite_KydreeokHead_Main:
 
 KydreeokHead_RotationMove:
 {
-  JSL   GetRandomInt : AND #$0F : TAY
-  LDA.w SpeedTable, Y : STA.w SprXSpeed, X : STA $00
-  JSL   GetRandomInt : AND #$0F : TAY
-  LDA.w SpeedTable, Y : STA.w SprYSpeed, X : STA $01
+  JSR KydreeokHead_UpdateTracking
+  LDA.w SprMiscE, X : STA.w SprXSpeed, X
+  LDA.w SprMiscF, X : STA.w SprYSpeed, X
+  LDA.w SprXSpeed, X : STA $00
+  LDA.w SprYSpeed, X : STA $01
 
   JSR KydreeokHead_NeckControl
   JSR MoveWithBody
@@ -274,17 +306,141 @@ RotateHeadUsingSpeedValues:
 RandomlyAttack:
 {
   JSL Sprite_DamageFlash_Long
-  JSL GetRandomInt : AND #$7F : BNE .no_attack
-    CLC
-    JSL GetRandomInt : AND #$0F : BNE .no_attack
-      LDA   #$CF
-      JSL   Sprite_SpawnDynamically
-      JSL   Sprite_SetSpawnedCoords
-      JSL   Fireball_SpawnTrailGarnish
-      LDA.b #$05 : STA.w SprAction, Y
-      LDA   #$20 : STA.w SprTimerA, Y
+
+  LDA.w SprTimerB, X : BNE .cooldown
+    JSL GetRandomInt : AND #$1F : BNE .no_attack
+      LDY.w Kydreeok_Id
+      LDA.w SprMiscD, Y : STA $0F
+
+      JSL GetRandomInt : AND #$0F : BEQ .breath
+
+      LDA.b $0F : CMP.b #$02 : BCC .targeted
+      JSL GetRandomInt : AND #$01 : BNE .targeted
+        LDA.b #$40 : STA.w SprTimerB, X
+        JSR KydreeokHead_SpawnFireballSpread
+        RTS
+    .targeted
+      LDA.b #$30 : STA.w SprTimerB, X
+      JSR KydreeokHead_SpawnFireballTargeted
+      RTS
+    .breath
+      LDA.b #$50 : STA.w SprTimerB, X
+      JSR KydreeokHead_SpawnBreath
+      RTS
   .no_attack
   RTS
+  .cooldown
+  RTS
+}
+
+KydreeokHead_PrepFireballCoords:
+{
+  LDA.w SprX, X : STA $00
+  LDA.w SprXH, X : STA $01
+  LDA.w SprY, X : STA $02
+  LDA.w SprYH, X : STA $03
+  LDA.w SprHeight, X : STA $04
+  RTS
+}
+
+KydreeokHead_ConfigureFireball:
+{
+  LDA.w SprDefl, Y : ORA.b #$08 : STA.w SprDefl, Y
+  LDA.b #$04 : STA.w SprBump, Y
+  RTS
+}
+
+KydreeokHead_SpawnBreath:
+{
+  LDA   #$CF
+  JSL   Sprite_SpawnDynamically : BMI .exit
+    JSL   Sprite_SetSpawnedCoords
+    JSL   Fireball_SpawnTrailGarnish
+    LDA.b #$05 : STA.w SprAction, Y
+    LDA   #$20 : STA.w SprTimerA, Y
+  .exit
+  RTS
+}
+
+KydreeokHead_SpawnFireballTargeted:
+{
+  JSR KydreeokHead_PrepFireballCoords
+  JSL Sprite_SpawnFireball : BMI .exit
+    JSR KydreeokHead_ConfigureFireball
+    PHX
+    TYX
+    JSL Sprite_DirectionToFacePlayer
+    LDA.w .speed_x, Y : STA.w SprXSpeed, X
+    LDA.w .speed_y, Y : STA.w SprYSpeed, X
+    LDA.w SprX, X : CLC : ADC.w .offset_x_low, Y : STA.w SprX, X
+    LDA.w SprXH, X : ADC.w .offset_x_high, Y : STA.w SprXH, X
+    LDA.w SprY, X : CLC : ADC.w .offset_y_low, Y : STA.w SprY, X
+    LDA.w SprYH, X : ADC.w .offset_y_high, Y : STA.w SprYH, X
+    PLX
+  .exit
+  RTS
+
+  .offset_x_low
+    db  12, -12,   0,   0
+  .offset_x_high
+    db   0,  -1,   0,   0
+  .offset_y_low
+    db   0,   0,  12, -12
+  .offset_y_high
+    db   0,   0,   0,  -1
+  .speed_y
+    db   0,   0,  32, -32
+  .speed_x
+    db  32, -32,   0,   0
+}
+
+KydreeokHead_SpawnFireballSpread:
+{
+  PHX
+  JSL Sprite_DirectionToFacePlayer
+  STY $0E
+  PLX
+
+  LDA.b #$00 : STA $0F
+  .spawn_loop
+    JSR KydreeokHead_PrepFireballCoords
+    JSL Sprite_SpawnFireball : BMI .next
+      JSR KydreeokHead_ConfigureFireball
+      PHX
+      TYX
+      LDA.b $0E : ASL A : CLC : ADC.b $0E : CLC : ADC.b $0F : TAY
+      LDA.w .spread_speed_x, Y : STA.w SprXSpeed, X
+      LDA.w .spread_speed_y, Y : STA.w SprYSpeed, X
+      LDY.b $0E
+      LDA.w SprX, X : CLC : ADC.w .offset_x_low, Y : STA.w SprX, X
+      LDA.w SprXH, X : ADC.w .offset_x_high, Y : STA.w SprXH, X
+      LDA.w SprY, X : CLC : ADC.w .offset_y_low, Y : STA.w SprY, X
+      LDA.w SprYH, X : ADC.w .offset_y_high, Y : STA.w SprYH, X
+      PLX
+    .next
+    INC $0F
+    LDA.b $0F : CMP.b #$03 : BCC .spawn_loop
+  RTS
+
+  .offset_x_low
+    db  12, -12,   0,   0
+  .offset_x_high
+    db   0,  -1,   0,   0
+  .offset_y_low
+    db   0,   0,  12, -12
+  .offset_y_high
+    db   0,   0,   0,  -1
+
+  .spread_speed_x
+    db  32,  32,  32
+    db -32, -32, -32
+    db  -8,   0,   8
+    db  -8,   0,   8
+  .spread_speed_y
+    db  -8,   0,   8
+    db  -8,   0,   8
+    db  32,  32,  32
+    db -32, -32, -32
 }
 
 MoveWithBody:

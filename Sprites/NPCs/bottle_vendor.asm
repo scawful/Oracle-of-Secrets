@@ -1,7 +1,7 @@
 
 pushpc
 ; BottleVendor_OutOfStock
-org $05EAC2 : JSL BottleVendor_MilkHandler
+org $05EAC2 : JSL BottleVendor_MilkHandler ; @hook module=Sprites name=BottleVendor_MilkHandler kind=jsl target=BottleVendor_MilkHandler
 pullpc
 
 BottleVendor_MilkHandler:

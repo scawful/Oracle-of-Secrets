@@ -875,7 +875,7 @@ Follower_BasicMover:
   ; Clear door tilemap position for some reason
   STZ.w $068E : STZ.w $0690
 
-  ; TODO: Find out what submodule this is.
+  ; Submodule $05 = "Opened Chest / Got Item" — triggers post-boss sequence
   LDA.b #$05 : STA.b $11
 
   ; SONG 15
@@ -933,7 +933,7 @@ Follower_CheckBlindTrigger:
 ; Called during Blind Maiden section of Follower_BasicMover
 ; to spawn Twinrova from the Blind Maiden.
 
-org $1DA03C
+org $1DA03C ; @hook module=Sprites
 Blind_SpawnFromMaiden:
 {
   JSL ApplyTwinrovaGraphics
@@ -1007,8 +1007,10 @@ org $01B3E1
     CMP.w #$00AD
 
 ; =========================================================
-; TODO: Decide if we want to use this garnish in the fight.
-; Currently unused.
+; Laser trail garnish inherited from Blind's laser attack.
+; Currently active but AND #$00 disables the delay check,
+; so garnish spawns every frame. Consider adding a delay
+; mask (e.g. AND #$03) to reduce particle count post-beta.
 
 org $1DA0B1
 BlindLaser_SpawnTrailGarnish:
@@ -1058,7 +1060,7 @@ BlindLaser_SpawnTrailGarnish:
 ; =========================================================
 ; Mantle and Maiden
 
-org $068841
+org $068841 ; @hook module=Sprites
   JSL NewMantlePrep
   RTS
 
@@ -1085,7 +1087,7 @@ NewMantlePrep:
 
 pushpc
 
-org $09A1EC : JSL CheckForMaidenInLibrary
+org $09A1EC : JSL CheckForMaidenInLibrary ; @hook module=Sprites name=CheckForMaidenInLibrary kind=jsl target=CheckForMaidenInLibrary
 
 ; Prevent mantle from setting spawn point
 org $1AFC6D

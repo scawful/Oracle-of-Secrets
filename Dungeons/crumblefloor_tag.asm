@@ -1,7 +1,7 @@
 ; Crumble Floor Room Tag
 
 pushpc
-org $01CC08 ; holes_3 tag routine
+org $01CC08 ; holes_3 tag routine ; @hook module=Dungeons
 JSL CrumbleFloorTag_Main
 RTS
 pullpc

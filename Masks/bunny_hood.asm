@@ -52,7 +52,7 @@ print "End of Bunny Hood GFX             ", pc
 ; Bunny Hood Speed Modification
 
 ; Link_HandleVelocity_load_subvel
-org $07E330
+org $07E330 ; @hook module=Masks
   JSR Link_CheckForBunnyRun
   CLC
 

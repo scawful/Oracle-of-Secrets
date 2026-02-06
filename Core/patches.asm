@@ -2,13 +2,13 @@
 ; It is included from Oracle_main.asm.
 
 ; UnderworldTransition_ScrollRoom
-org $02BE5E : JSL Graphics_Transfer
+org $02BE5E : JSL Graphics_Transfer ; @hook module=Core name=Graphics_Transfer kind=jsl target=Graphics_Transfer
 
 ; Whirlpool
-org $1EEEE4 : JSL DontTeleportWithoutFlippers
+org $1EEEE4 : JSL DontTeleportWithoutFlippers ; @hook module=Core name=DontTeleportWithoutFlippers kind=jsl target=DontTeleportWithoutFlippers
 
 ; SpriteDraw_Roller
-org $058EE6 : JSL PutRollerBeneathLink
+org $058EE6 : JSL PutRollerBeneathLink ; @hook module=Core name=PutRollerBeneathLink kind=jsl target=PutRollerBeneathLink
 
 ; =========================================================
 
@@ -34,7 +34,7 @@ org $06F381 : CMP.b #$CF
 InCutScene = $7EF303
 
 ; Player2JoypadReturn
-org $0083F8
+org $0083F8 ; @hook module=Core name=Player2JoypadReturn_InputClamp kind=patch
   LDA InCutScene : BEQ .notInCutscene
     STZ $F0
     STZ $F2
@@ -49,7 +49,7 @@ assert pc() <= $00841E
 
 ; =========================================================
 
-org $1EF27D
+org $1EF27D ; @hook module=Core
 ShopItem_Banana:
 {
   JSR $F4CE   ; SpriteDraw_ShopItem

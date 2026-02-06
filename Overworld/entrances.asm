@@ -11,7 +11,7 @@ Overworld_EntranceScreens = $1BB96F
 Overworld_Entrance_ID = $1BBB73
 
 pushpc
-org $1BBBF4
+org $1BBBF4 ; @hook module=Overworld
   JSL Overworld_UseEntranceEntry
   RTL
 pullpc

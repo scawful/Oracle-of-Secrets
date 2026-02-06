@@ -132,7 +132,7 @@ LoadOverworldSongsExpanded:
 
 pushpc
 
-org $008919 ; LoadOverworldSongs
+org $008919 ; LoadOverworldSongs ; @hook module=Music
   JSL LoadOverworldSongsExpanded
 
 pullpc

@@ -27,5 +27,5 @@ Link_HoverIfMooshWantsToDash:
 }
 print "End of Masks/moosh.asm            ", pc
 
-org $079093
+org $079093 ; @hook module=Masks
   JSL Link_HoverIfMooshWantsToDash

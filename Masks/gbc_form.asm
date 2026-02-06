@@ -90,16 +90,16 @@ OverworldTransition_CheckForGbcLink:
 }
 
 ; Module08_02_LoadAndAdvance
-org $02EDC0 : JSL LoadOverworld_CheckForGbcLink
+org $02EDC0 : JSL LoadOverworld_CheckForGbcLink ; @hook module=Masks name=LoadOverworld_CheckForGbcLink kind=jsl target=LoadOverworld_CheckForGbcLink
 
 ; Overworld_RunScrollTransition
-org $02ABDA : JSL OverworldTransition_CheckForGbcLink
+org $02ABDA : JSL OverworldTransition_CheckForGbcLink ; @hook module=Masks name=OverworldTransition_CheckForGbcLink kind=jsl target=OverworldTransition_CheckForGbcLink
 
 ; LinkState_CrossingWorlds
-org $07A9B1 : JSL LinkState_GameboyForm
+org $07A9B1 : JSL LinkState_GameboyForm ; @hook module=Masks name=LinkState_GameboyForm kind=jsl target=LinkState_GameboyForm
 
 ; Module07_Underworld
-org $0287A4 : JSL LinkState_GameboyInDungeonEntrance
+org $0287A4 : JSL LinkState_GameboyInDungeonEntrance ; @hook module=Masks name=LinkState_GameboyInDungeonEntrance kind=jsl target=LinkState_GameboyInDungeonEntrance
 
 pullpc
 LinkState_GameboyForm:

@@ -958,14 +958,17 @@ Sprite_DarkLink_Main:
     RTS
   }
 
-  ; TODO: Trigger cutscene for ending Fortress of Secrets
+  ; Dark Link defeated — set Fortress completion flag and show message.
   OpenDoor:
   {
     INC.w SprMiscF, X
-    ;LDA #$1A : STA.b $11 ; ganon open door routine
-    ; handled by the room tag?
+    ; handled by the room tag
     LDA #$04 : STZ.w SprState, X
     LDA.b #$80 : STA $0403
+
+    ; Set Fortress of Secrets completion flag
+    LDA.l OOSPROG : ORA.b #!Story_FortressComplete : STA.l OOSPROG
+
     %GotoAction(14)
 
     RTS
@@ -973,6 +976,8 @@ Sprite_DarkLink_Main:
 
   Dead:
   {
+    ; Play victory fanfare
+    LDA.b #$1B : STA $012F
     RTS
   }
 

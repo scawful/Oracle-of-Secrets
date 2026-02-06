@@ -20,7 +20,7 @@ DamageSubclassValue = $0DB8F1
 
 pushpc
 ; Sprite_ApplyCalculatedDamage
-org $06EDC0
+org $06EDC0 ; @hook module=Items
 JSL MagicRing_CheckForPower
 pullpc
 
@@ -43,7 +43,7 @@ MagicRing_CheckForPower:
 
 pushpc
 ; Sprite_AttemptDamageToLinkPlusRecoil
-org $06F400
+org $06F400 ; @hook module=Items
   JSL MagicRing_CheckForArmor
 pullpc
 
@@ -84,7 +84,7 @@ MagicRing_CheckForSteadfast:
 }
 
 pushpc
-org $07E1BE
+org $07E1BE ; @hook module=Items
   JSL MagicRing_CheckForSteadfast
 pullpc
 
@@ -109,7 +109,7 @@ MagicRing_CheckForLight:
 }
 
 pushpc
-org $079C77
+org $079C77 ; @hook module=Items
   JSL MagicRing_CheckForLight
 pullpc
 
@@ -132,7 +132,7 @@ MagicRing_CheckForBlast:
 AncillaDamageClasses = $06EC7E
 
 pushpc
-org $06ECBF
+org $06ECBF ; @hook module=Items
   JSL MagicRing_CheckForBlast
 pullpc
 
@@ -156,6 +156,6 @@ MagicRings_CheckForHeart:
 }
 
 pushpc
-org $07810C
+org $07810C ; @hook module=Items
   JSL MagicRings_CheckForHeart
 pullpc

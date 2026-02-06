@@ -13,7 +13,7 @@ org $0691D7 ; SpritePrep_SpikeBlock:
 JSL NewSpikePrep
 RTS
 
-org $1EBD0E
+org $1EBD0E ; @hook module=Dungeons
 JSL NewSpikeCollision
 RTS
 

@@ -33,10 +33,10 @@ DATA_LABEL_SUFFIXES = (
 )
 LONG_ENTRY_RE = re.compile(r'(FullLongEntry|_LongEntry|_Long)$')
 ABI_RE = re.compile(r'@abi\s+([A-Za-z0-9_]+)', re.IGNORECASE)
-NO_RETURN_RE = re.compile(r'@no_return\\b', re.IGNORECASE)
+NO_RETURN_RE = re.compile(r'@no_return\b', re.IGNORECASE)
 MX_RE = re.compile(r'^m(8|16)x(8|16)$', re.IGNORECASE)
-HOOK_DIRECTIVE_RE = re.compile(r'@hook\\b(.*)', re.IGNORECASE)
-HOOK_KV_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)=(\"[^\"]*\"|'[^']*'|\\S+)")
+HOOK_DIRECTIVE_RE = re.compile(r'@hook\b(.*)', re.IGNORECASE)
+HOOK_KV_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)=(\"[^\"]*\"|'[^']*'|\S+)")
 
 DEFINE_ASSIGN_RE = re.compile(
     r"^\s*!([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(\$[0-9A-Fa-f]+|0x[0-9A-Fa-f]+|\d+)\b"
@@ -117,7 +117,7 @@ def _is_data_label(label: Optional[str]) -> bool:
     if DATA_LABEL_RE.match(label):
         return True
     lower = label.lower()
-    if lower.startswith('oracle_pos') and re.search(r'pos\\d_', lower):
+    if lower.startswith('oracle_pos') and re.search(r'pos\d_', lower):
         return True
     for suffix in DATA_LABEL_SUFFIXES:
         if lower.endswith(suffix):
@@ -141,6 +141,8 @@ def _scan_annotations(lines: list[str], start_idx: int) -> tuple[str, bool, Opti
 
     for j in range(start_idx, min(start_idx + 20, len(lines))):
         line = lines[j]
+        if ORG_RE.match(line) and j != start_idx:
+            break
         if COMMENT_RE.match(line) or ';' in line:
             m = ABI_RE.search(line)
             if m:
@@ -154,8 +156,6 @@ def _scan_annotations(lines: list[str], start_idx: int) -> tuple[str, bool, Opti
                         expected_x = int(mx.group(2))
             if NO_RETURN_RE.search(line):
                 no_return = True
-        if ORG_RE.match(line) and j != start_idx:
-            break
     return abi_class, no_return, expected_m, expected_x
 
 
@@ -186,6 +186,8 @@ def _scan_hook_directive(lines: list[str], start_idx: int) -> dict:
     directive: dict[str, object] = {}
     for j in range(start_idx, min(start_idx + 20, len(lines))):
         line = lines[j]
+        if ORG_RE.match(line) and j != start_idx:
+            break
         if ";" in line:
             comment = line.split(";", 1)[1]
             m = HOOK_DIRECTIVE_RE.search(comment)
@@ -198,8 +200,6 @@ def _scan_hook_directive(lines: list[str], start_idx: int) -> dict:
                         val = val[1:-1]
                     directive[key] = val
                 directive.setdefault("_present", True)
-        if ORG_RE.match(line) and j != start_idx:
-            break
     return directive
 
 
@@ -325,8 +325,37 @@ def _eval_condition(expr: str, defines: dict[str, int]) -> Optional[bool]:
         return None
 
 
+def _inline_org_payload(line: str) -> tuple[str, Optional[str]] | None:
+    """Return the opcode/target if the org payload is on the same line.
+
+    Example: `org $01CC18 : JML CustomTag` should classify as (jml, CustomTag).
+    """
+    directive = line.split(";", 1)[0]
+    if ":" not in directive:
+        return None
+    _, tail = directive.split(":", 1)
+    payload = tail.strip()
+    if not payload:
+        return None
+    m = INSTR_RE.match(payload)
+    if not m:
+        return None
+    op = m.group(1).lower()
+    operand = m.group(2).strip() if m.group(2) else ""
+    if op in ("jsl", "jml", "jsr", "jmp"):
+        target = operand.split()[0] if operand else None
+        return op, target
+    if op in ("db", "dw", "dl", "dd", "incbin", "incsrc", "fill", "pad"):
+        return "data", None
+    return "patch", None
+
+
 def _first_instruction(lines: list[str], start_idx: int, defines: dict[str, int]) -> tuple[str, Optional[str]]:
     """Return (kind, target) based on first meaningful instruction after org."""
+    inline = _inline_org_payload(lines[start_idx])
+    if inline is not None:
+        return inline
+
     active = True
     stack: list[dict[str, object]] = []
 
@@ -446,7 +475,54 @@ def scan_hooks(root: Path) -> list[HookEntry]:
             continue
 
         defines = dict(global_defines)
+        active = True
+        stack: list[dict[str, object]] = []
         for idx, line in enumerate(lines):
+            # Conditional compilation (best-effort) so hooks.json matches the
+            # ROM when feature/module flags toggle entire org blocks.
+            directive = line.split(";", 1)[0].strip()
+            m_if = IF_DIRECTIVE_RE.match(directive)
+            if m_if:
+                kind = m_if.group(1).lower()
+                expr = m_if.group(2).strip()
+                parent_active = active
+                cond = _eval_condition(expr, defines)
+                cond_val = bool(cond) if cond is not None else True
+                if kind == "if":
+                    branch_taken = parent_active and cond_val
+                    active = parent_active and cond_val
+                    stack.append({"parent_active": parent_active, "branch_taken": branch_taken})
+                else:  # elseif
+                    if not stack:
+                        continue
+                    frame = stack[-1]
+                    parent_active = bool(frame["parent_active"])
+                    already = bool(frame["branch_taken"])
+                    if not parent_active or already:
+                        active = False
+                    else:
+                        active = parent_active and cond_val
+                        frame["branch_taken"] = active
+                continue
+            if ELSE_DIRECTIVE_RE.match(directive):
+                if not stack:
+                    continue
+                frame = stack[-1]
+                parent_active = bool(frame["parent_active"])
+                already = bool(frame["branch_taken"])
+                active = parent_active and not already
+                frame["branch_taken"] = True
+                continue
+            if ENDIF_DIRECTIVE_RE.match(directive):
+                if not stack:
+                    continue
+                frame = stack.pop()
+                active = bool(frame["parent_active"])
+                continue
+
+            if not active:
+                continue
+
             parsed = _parse_define_assignment(line)
             if parsed is not None:
                 name, value = parsed

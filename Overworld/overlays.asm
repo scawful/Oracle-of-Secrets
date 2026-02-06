@@ -17,23 +17,23 @@ org $07866D
   LDA.b #$1B : STA.b $5D
   RTL
 
-org $1BCADE
+org $1BCADE ; @hook module=Overworld
 JSL ZoraTemple_EntranceAnimation
 RTS
 
-org $1BCBA6
+org $1BCBA6 ; @hook module=Overworld
 JSL Castle_EntranceAnimation
 RTS
 
-org $1BCCD4
+org $1BCCD4 ; @hook module=Overworld
 JSL TailPalace_EntranceAnimation
 RTS
 
-org $1BCE28
+org $1BCE28 ; @hook module=Overworld
 JSL Goron_EntranceAnimation
 RTS
 
-org $1BCFD9
+org $1BCFD9 ; @hook module=Overworld
 JSL Fortress_EntranceAnimation
 RTS
 

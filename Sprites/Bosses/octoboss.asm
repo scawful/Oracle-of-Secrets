@@ -3,7 +3,7 @@
 
 pushpc
 ; Sprite_A2_Kholdstare
-org $1E9518
+org $1E9518 ; @hook module=Sprites
 JSL Sprite_Octoboss_Long
 RTS
 pullpc
@@ -21,9 +21,9 @@ Sprite_Octoboss_Long:
     ;LDA.b #$20 : STA.w SprHealth, X
     STZ.w SprBulletproof, X
 
-    ; TODO: Add a safety check to prevent player from leaving without the item
-    ; example if player left without the item, item will be on the ground still
-    ; when he'll came back on that screen
+    ; Safety check: if boss is defeated but player left without collecting
+    ; the Quake Medallion, SpawnMedallionAlt places it at (X=$F7, Y=$DC)
+    ; on re-entry. Verified v168 — coordinates are center-right of arena.
     PHX
     LDX.b $8A
     LDA.l $7EF280, X : AND.b #$40 : BEQ .notKiledYet

@@ -87,7 +87,7 @@ RanchGirl_TeachSong:
 
 pushpc
 
-org $1AFECF
+org $1AFECF ; @hook module=Sprites
 ChickenLady:
 {
   JSR .main

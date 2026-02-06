@@ -26,7 +26,7 @@ SpritePrep_SickKid:
   RTS
 }
 
-org $06B962
+org $06B962 ; @hook module=Sprites
 BugNetKid_Resting:
 {
   JSL Sprite_CheckIfPlayerPreoccupied : BCS .dont_awaken

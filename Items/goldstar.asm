@@ -34,7 +34,7 @@ org $0085C4 : dw $0040
 ; Zarby Code
 ; Handles the layout of OAM tile patterns for the hookshot
 
-org $0DABA2 ; LinkOAM_SetWeaponVRAMOffsets
+org $0DABA2 ; LinkOAM_SetWeaponVRAMOffsets ; @hook module=Items
   JSL HookMaskCheck
   BRA LinkOAM_SetWeaponVRAMOffsets_not_rod_hook
 
@@ -77,7 +77,7 @@ CheckForBallChain:
 ; =========================================================
 
 pushpc
-org $08BF2D
+org $08BF2D ; @hook module=Items
   JSL BallChain_DrawOrReturn
   assert pc() <= $08BF32
 pullpc
@@ -96,7 +96,7 @@ BallChain_DrawOrReturn:
 ; =========================================================
 
 pushpc
-org $08BF0C
+org $08BF0C ; @hook module=Items
   JML BallChain_ExtraCollisionLogic
 pullpc
 
@@ -221,7 +221,7 @@ GoldstarHandleGfx:
 ; =========================================================
 
 pushpc
-org $07ABAF
+org $07ABAF ; @hook module=Items
   JSL BallChain_ResetTimer
 pullpc
 
@@ -242,7 +242,7 @@ BallChain_ResetTimer:
 ; =========================================================
 
 pushpc
-org $08BFDA
+org $08BFDA ; @hook module=Items
   JSL BallChain_DrawChainOrHookshot
   NOP #8
   NOP #5
@@ -283,7 +283,7 @@ struct HookshotSpriteData $08BD4C
 endstruct
 
 pushpc
-org $08BF1B ; AncillaDraw_HookshotChain
+org $08BF1B ; AncillaDraw_HookshotChain ; @hook module=Items
   JSL Goldstar_SetChainProperties
   NOP #3
 pullpc
@@ -305,7 +305,7 @@ Goldstar_SetChainProperties:
 ; =========================================================
 
 pushpc
-org $0DA6E3
+org $0DA6E3 ; @hook module=Items
   JSL LinkOAM_GoldstarWeaponTiles
   NOP
 pullpc
@@ -334,7 +334,7 @@ LinkOAM_GoldstarWeaponTiles:
 ; =========================================================
 
 pushpc
-org $08BFB0
+org $08BFB0 ; @hook module=Items
   JML HookshotChain_AncillaDraw
 
 org $08BD64
@@ -582,7 +582,7 @@ Routine_22DAD0:
 ; =========================================================
 
 pushpc
-org $08BF94
+org $08BF94 ; @hook module=Items
   JML BallChain_TryAncillaDraw
   NOP
 pullpc
@@ -609,7 +609,7 @@ BallChain_TryAncillaDraw:
 ; =========================================================
 
 pushpc
-org $08F7DC
+org $08F7DC ; @hook module=Items
   JML BallChain_CheckProximityToLink
 pullpc
 
@@ -717,7 +717,7 @@ Routine_22DBD0:
 ; =========================================================
 
 pushpc
-org $08BDFD
+org $08BDFD ; @hook module=Items
   JML HookshotOrBallChain_Extending_ignore_collision
 pullpc
 
@@ -749,7 +749,7 @@ ClearAncillaVariables:
 ; =========================================================
 
 pushpc
-org $08BD7F
+org $08BD7F ; @hook module=Items
   JSL BallChain_SFX_Control
   NOP #1
 pullpc
@@ -899,7 +899,7 @@ BallChain_StartAnimationFlag:
 ; =========================================================
 
 pushpc
-org $07AB95
+org $07AB95 ; @hook module=Items
   JSL BallChain_Finish
   NOP #2
 pullpc
@@ -1035,22 +1035,22 @@ pushpc
 ; Main Hookshot/Goldstar hooks
 
 ; LinkItem_Hookshot
-org $07AB25
+org $07AB25 ; @hook module=Items
   JSL CheckForSwitchToGoldstar
 
 ; Ancilla_CheckDamageToSprite.not_airborne
-org $06ECF2
+org $06ECF2 ; @hook module=Items
   JSL ApplyGoldstarDamageClass
 
 ; LinkItem_Hookshot
-org $07AB3A ;$07AB40
+org $07AB3A ;$07AB40 ; @hook module=Items
   JSL BeginGoldstarOrHookshot
   RTS
 
-org $008B2A
+org $008B2A ; @hook module=Items
   JML MaybeUploadBirdGraphicsToOam
 
-org $07AD49
+org $07AD49 ; @hook module=Items
 LinkHookshot_GetDragged:
   JSL Goldstar_GetDragged
 

@@ -67,7 +67,7 @@ Link_HandleChangeInZVelocity_preset =  $078932
 PlaySFX_Set2 = $078028
 PlaySFX_Set3 = $07802F
 
-org $07A6BE
+org $07A6BE ; @hook module=Masks
 LinkState_UsingQuake:
 {
   .anim_step

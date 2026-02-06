@@ -101,7 +101,7 @@ LoadDarkWorldIntro:
 pushpc
 
 ; Module05_LoadFile
-org $028192 : JSL LoadDarkWorldIntro
+org $028192 : JSL LoadDarkWorldIntro ; @hook module=Overworld name=LoadDarkWorldIntro kind=jsl target=LoadDarkWorldIntro
 
 ; Module05_LoadFile
 ; Check for goldstar instead of mirror for mountain spawn option
@@ -130,7 +130,7 @@ LoadOverworldPitAreas:
 Overworld_GetPitDestination = $1BB860
 
 ; DetermineConsequencesOfFalling
-org $0794D9
+org $0794D9 ; @hook module=Overworld
   JSL LoadOverworldPitAreas : BCC .overworld_pit_transition
     JSL $01FFD9 ; TakeDamageFromPit
     RTS
