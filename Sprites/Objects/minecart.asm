@@ -356,7 +356,9 @@ Sprite_Minecart_Main:
       .not_ready
     .lifting
 
-    ;JSR Minecart_HandleLiftAndToss
+    if !ENABLE_MINECART_LIFT_TOSS
+      JSR Minecart_HandleLiftAndToss
+    endif
     RTS
   }
 
@@ -393,7 +395,9 @@ Sprite_Minecart_Main:
       .not_ready
     .lifting
 
-    ;JSR Minecart_HandleLiftAndToss
+    if !ENABLE_MINECART_LIFT_TOSS
+      JSR Minecart_HandleLiftAndToss
+    endif
     RTS
   }
 
@@ -1185,12 +1189,45 @@ Minecart_HandleTossedCart:
   .low_enough
 
   LDA.w SprTimerC, X : BNE .not_tossed
+    ; Grid-align to 8x8 tile boundary
     LDA.w SprX, X : AND.b #$F8 : STA.w SprX, X
     LDA.w SprY, X : AND.b #$F8 : STA.w SprY, X
     STZ.w SprMiscG, X
     STZ.w SprYSpeed, X
     STZ.w SprXSpeed, X
     STZ.w SprHeight, X
+
+if !ENABLE_MINECART_LIFT_TOSS
+    ; After toss landing, read the stop tile to set departure direction.
+    ; Same pattern as Init: setup coords in $00-$03, call GetTileAttr.
+    LDA.w SprY, X : AND.b #$F8 : STA.b $00
+    LDA.w SprYH, X             : STA.b $01
+    LDA.w SprX, X : AND.b #$F8 : STA.b $02
+    LDA.w SprXH, X             : STA.b $03
+    LDA.b #$00 : JSL Sprite_GetTileAttr
+
+    LDA.w SPRTILE
+    CMP.b #$B7 : BEQ .toss_goSouth
+    CMP.b #$B8 : BEQ .toss_goNorth
+    CMP.b #$B9 : BEQ .toss_goEast
+    CMP.b #$BA : BEQ .toss_goWest
+    ; Not on a stop tile — default to vert wait
+    %GotoAction(1)
+    RTS
+  .toss_goSouth
+    LDA.b #South : STA.w SprMiscB, X
+    %GotoAction(1) : RTS
+  .toss_goNorth
+    LDA.b #North : STA.w SprMiscB, X
+    %GotoAction(1) : RTS
+  .toss_goEast
+    LDA.b #East : STA.w SprMiscB, X
+    %GotoAction(0) : RTS
+  .toss_goWest
+    LDA.b #West : STA.w SprMiscB, X
+    %GotoAction(0) : RTS
+endif
+
   .not_tossed
   RTS
 }
