@@ -921,6 +921,42 @@ Context: {context}
 
 Please analyze this failure and suggest potential fixes."""
 
+    # Avoid blowing past OS argv limits when failures include large blobs
+    # (e.g. static analysis output). Save the full prompt to /tmp and truncate
+    # the routed prompt to a reasonable size.
+    max_chars = 12000
+    try:
+        max_chars = int(os.getenv("OOS_MOE_MAX_PROMPT_CHARS", str(max_chars)))
+    except Exception:
+        max_chars = 12000
+
+    prompt_path: Path | None = None
+    if max_chars > 0 and len(prompt) > max_chars:
+        try:
+            import tempfile
+            from datetime import datetime
+
+            prompt_path = Path(tempfile.gettempdir()) / (
+                "oos_moe_prompt_" + datetime.now().strftime("%Y%m%d_%H%M%S") + ".txt"
+            )
+            prompt_path.write_text(prompt)
+        except Exception:
+            prompt_path = None
+
+        head_len = max(1, max_chars // 2)
+        tail_len = max(1, max_chars - head_len)
+        prompt_excerpt = (
+            prompt[:head_len]
+            + "\n\n...[snip]...\n\n"
+            + prompt[-tail_len:]
+        )
+        note = f"\n\n[Prompt truncated to {max_chars} chars to fit argv limits."
+        if prompt_path:
+            note += f" Full prompt saved to {prompt_path}]"
+        else:
+            note += " Full prompt could not be saved.]"
+        prompt = prompt_excerpt + note
+
     log(f"\n{Colors.YELLOW}Routing to {expert} for analysis...{Colors.RESET}")
 
     # Try to call MoE orchestrator
