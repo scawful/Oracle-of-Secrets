@@ -370,7 +370,7 @@ class OverworldNavigator:
         # Read key memory addresses
         game_mode = self._read_byte(0x7E0010)
         submodule = self._read_byte(0x7E0011)
-        inidisp = self._read_byte(0x7E001A)
+        inidisp = self._read_byte(0x7E0013)  # INIDISP queue (WRAM)
         area_id = self._read_byte(0x7E008A)
 
         # Link position (16-bit values)

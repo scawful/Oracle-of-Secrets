@@ -262,7 +262,14 @@ class Mesen2Emulator(EmulatorInterface):
     # Key RAM addresses for Oracle of Secrets
     RAM_MODE = 0x7E0010
     RAM_SUBMODE = 0x7E0011
-    RAM_INIDISP = 0x7E001A
+    # INIDISP is a PPU register ($2100). We typically track the queued value
+    # written by the game during NMI to avoid needing PPU-register reads and to
+    # enable MEM_BLAME attribution on the queue writer.
+    RAM_INIDISPQ = 0x7E0013
+    # Backwards compatibility: older code/tests treat RAM_INIDISP as the
+    # INIDISP queue address in WRAM.
+    RAM_INIDISP = RAM_INIDISPQ
+    RAM_FRAME = 0x7E001A
     RAM_INDOORS = 0x7E001B
     RAM_AREA_ID = 0x7E008A
     RAM_ROOM_LAYOUT = 0x7E00A0
@@ -399,11 +406,13 @@ class Mesen2Emulator(EmulatorInterface):
             link_direction=bridge.read_memory(self.RAM_LINK_DIR),
             link_state=bridge.read_memory(self.RAM_LINK_STATE),
             indoors=bridge.read_memory(self.RAM_INDOORS) != 0,
-            inidisp=bridge.read_memory(self.RAM_INIDISP),
+            inidisp=bridge.read_memory(self.RAM_INIDISPQ),
             health=bridge.read_memory(self.RAM_HEALTH),
             max_health=bridge.read_memory(self.RAM_MAX_HEALTH),
             raw_data={
                 "room_id": bridge.read_memory16(self.RAM_ROOM_ID),
+                "frame": bridge.read_memory(self.RAM_FRAME),
+                "inidispq": bridge.read_memory(self.RAM_INIDISPQ),
             }
         )
 

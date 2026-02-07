@@ -41,7 +41,7 @@ def mock_bridge():
     memory_map = {
         0x7E0010: 0x09,  # GameMode = overworld
         0x7E0011: 0x00,  # Submodule
-        0x7E001A: 0x0F,  # INIDISP = normal
+        0x7E0013: 0x0F,  # INIDISPQ = normal
         0x7E008A: 0x29,  # Area = Village Center
         0x7E0020: 0x68,  # Link Y low
         0x7E0021: 0x0E,  # Link Y high (3688)
@@ -470,7 +470,7 @@ class TestStuckDetection:
             mem_map = {
                 0x7E0010: 0x09,  # Overworld mode
                 0x7E0011: 0x00,
-                0x7E001A: 0x0F,
+                0x7E0013: 0x0F,
                 0x7E008A: 0x29,
                 0x7E0022: x & 0xFF,
                 0x7E0023: x >> 8,
@@ -710,7 +710,7 @@ class TestPatrol:
         mem_map = {
             0x7E0010: 0x09,  # Overworld mode
             0x7E0011: 0x00,
-            0x7E001A: 0x0F,
+            0x7E0013: 0x0F,
             0x7E008A: 0x29,
             0x7E0022: 0x50,  # X low = 80
             0x7E0023: 0x0D,  # X high = 13 -> 3408

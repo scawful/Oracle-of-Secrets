@@ -577,7 +577,8 @@ class DebugSession:
         oracle_addrs = {
             "GameMode": 0x7E0010,
             "SubMode": 0x7E0011,
-            "INIDISP": 0x7E001A,
+            "INIDISPQ": 0x7E0013,
+            "Frame": 0x7E001A,
             "LinkState": 0x7E005D,
             "OOSPROG": 0x7EF3D6,
             "GameState": 0x7EF3C5,

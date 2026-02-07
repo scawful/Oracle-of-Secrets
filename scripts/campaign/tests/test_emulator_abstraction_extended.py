@@ -311,7 +311,7 @@ class TestMesen2EmulatorConstants:
 
     def test_ram_inidisp_address(self):
         """Test RAM_INIDISP address."""
-        assert Mesen2Emulator.RAM_INIDISP == 0x7E001A
+        assert Mesen2Emulator.RAM_INIDISP == 0x7E0013
 
     def test_ram_indoors_address(self):
         """Test RAM_INDOORS address."""

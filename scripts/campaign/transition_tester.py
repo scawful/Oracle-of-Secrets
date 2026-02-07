@@ -118,7 +118,7 @@ class TransitionTester:
     # SNES memory addresses
     ADDR_GAME_MODE = 0x7E0010
     ADDR_SUBMODULE = 0x7E0011
-    ADDR_INIDISP = 0x7E001A
+    ADDR_INIDISP = 0x7E0013  # INIDISP queue (WRAM)
     ADDR_LINK_X = 0x7E0022
     ADDR_LINK_Y = 0x7E0020
     ADDR_AREA_ID = 0x7E008A

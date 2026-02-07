@@ -319,7 +319,7 @@ class TestBuildingNavigatorInit:
         """Should have memory addresses defined."""
         assert navigator.ADDR_GAME_MODE == 0x7E0010
         assert navigator.ADDR_SUBMODULE == 0x7E0011
-        assert navigator.ADDR_INIDISP == 0x7E001A
+        assert navigator.ADDR_INIDISP == 0x7E0013
         assert navigator.ADDR_LINK_X == 0x7E0022
         assert navigator.ADDR_LINK_Y == 0x7E0020
 
@@ -333,7 +333,7 @@ class TestCaptureState:
         mock_bridge.read_memory.side_effect = lambda addr: {
             0x7E0010: 0x09,  # mode
             0x7E0011: 0x00,  # submodule
-            0x7E001A: 0x0F,  # inidisp
+            0x7E0013: 0x0F,  # inidispq
             0x7E008A: 0x29,  # area
             0x7E00A0: 0x00,  # room
         }.get(addr, 0)
@@ -472,7 +472,7 @@ class TestEnterBuilding:
 
             if addr == 0x7E0010:
                 return mode
-            elif addr == 0x7E001A:
+            elif addr == 0x7E0013:
                 return inidisp
             return 0
 
@@ -532,7 +532,7 @@ class TestExitBuilding:
 
             if addr == 0x7E0010:
                 return mode
-            elif addr == 0x7E001A:
+            elif addr == 0x7E0013:
                 return inidisp
             return 0
 
@@ -562,7 +562,7 @@ class TestWaitForTransition:
         # Configure stable indoor state
         mock_bridge.read_memory.side_effect = lambda addr: {
             0x7E0010: 0x07,  # Indoor
-            0x7E001A: 0x0F,  # Normal INIDISP
+            0x7E0013: 0x0F,  # Normal INIDISPQ
         }.get(addr, 0)
         mock_bridge.read_memory16.return_value = 256
 
@@ -586,7 +586,7 @@ class TestWaitForTransition:
         mock_bridge.read_memory.side_effect = lambda addr: {
             0x7E0010: 0x06,   # Stuck in transition mode
             0x7E0011: 0x00,
-            0x7E001A: 0x00,
+            0x7E0013: 0x00,
         }.get(addr, 0)
         mock_bridge.read_memory16.return_value = 256
 
@@ -608,7 +608,7 @@ class TestWaitForTransition:
         # Configure stuck in transition mode
         mock_bridge.read_memory.side_effect = lambda addr: {
             0x7E0010: 0x06,  # Transition mode
-            0x7E001A: 0x00,
+            0x7E0013: 0x00,
         }.get(addr, 0)
         mock_bridge.read_memory16.return_value = 256
 

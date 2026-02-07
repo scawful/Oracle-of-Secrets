@@ -51,7 +51,7 @@ class TestMemoryCheck:
 
     def test_expected_value_check(self):
         """Test check with expected value."""
-        check = MemoryCheck(0x7E001A, "INIDISP", expected_value=0x0F)
+        check = MemoryCheck(0x7E0013, "INIDISPQ", expected_value=0x0F)
         assert check.expected_value == 0x0F
 
     def test_expected_range_check(self):
@@ -66,7 +66,7 @@ class TestMemoryCheck:
 
     def test_bitmask_check(self):
         """Test check with bitmask."""
-        check = MemoryCheck(0x7E001A, "INIDISP bit 7", bitmask=0x80)
+        check = MemoryCheck(0x7E0013, "INIDISPQ bit 7", bitmask=0x80)
         assert check.bitmask == 0x80
 
 
@@ -130,7 +130,7 @@ class TestCriticalAddresses:
 
     def test_inidisp_address(self):
         """Verify INIDISP address."""
-        assert CriticalAddresses.INIDISP == 0x7E001A
+        assert CriticalAddresses.INIDISP == 0x7E0013
 
     def test_link_x_addresses(self):
         """Verify Link X position addresses."""
@@ -194,7 +194,7 @@ class TestStrictVerifier:
         mock_emulator.read_memory.side_effect = [
             MemoryRead(0x7E0010, 0x09, 1),  # Mode = overworld
             MemoryRead(0x7E0011, 0x00, 1),  # Submodule = 0
-            MemoryRead(0x7E001A, 0x0F, 1),  # INIDISP = screen on
+            MemoryRead(0x7E0013, 0x0F, 1),  # INIDISPQ = screen on
         ]
 
         report = verifier.verify_playable_state()
@@ -207,7 +207,7 @@ class TestStrictVerifier:
         mock_emulator.read_memory.side_effect = [
             MemoryRead(0x7E0010, 0x07, 1),  # Mode = dungeon
             MemoryRead(0x7E0011, 0x00, 1),  # Submodule = 0
-            MemoryRead(0x7E001A, 0x80, 1),  # INIDISP = screen OFF
+            MemoryRead(0x7E0013, 0x80, 1),  # INIDISPQ = screen OFF
         ]
 
         report = verifier.verify_playable_state()
@@ -339,10 +339,10 @@ class TestBitmaskVerification:
 
     def test_bitmask_check_bit7_set(self, verifier):
         """Test bitmask extracts bit 7."""
-        verifier._snapshot_before = {0x7E001A: 0x8F}  # Bit 7 set
-        verifier._snapshot_after = {0x7E001A: 0x8F}
+        verifier._snapshot_before = {0x7E0013: 0x8F}  # Bit 7 set
+        verifier._snapshot_after = {0x7E0013: 0x8F}
 
-        check = MemoryCheck(0x7E001A, "INIDISP bit 7", bitmask=0x80, expected_value=0x00)
+        check = MemoryCheck(0x7E0013, "INIDISPQ bit 7", bitmask=0x80, expected_value=0x00)
         result = verifier._verify_check(check)
 
         # Expected 0x00, but got 0x80 (bit 7 set)
@@ -350,10 +350,10 @@ class TestBitmaskVerification:
 
     def test_bitmask_check_bit7_clear(self, verifier):
         """Test bitmask with bit 7 clear."""
-        verifier._snapshot_before = {0x7E001A: 0x0F}  # Bit 7 clear
-        verifier._snapshot_after = {0x7E001A: 0x0F}
+        verifier._snapshot_before = {0x7E0013: 0x0F}  # Bit 7 clear
+        verifier._snapshot_after = {0x7E0013: 0x0F}
 
-        check = MemoryCheck(0x7E001A, "INIDISP bit 7", bitmask=0x80, expected_value=0x00)
+        check = MemoryCheck(0x7E0013, "INIDISPQ bit 7", bitmask=0x80, expected_value=0x00)
         result = verifier._verify_check(check)
 
         # Expected 0x00, got 0x00 (bit 7 clear)

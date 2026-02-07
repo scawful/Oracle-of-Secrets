@@ -162,7 +162,8 @@ class CampaignOrchestrator:
     def __init__(
         self,
         emulator: Optional[EmulatorInterface] = None,
-        log_dir: Optional[Path] = None
+        log_dir: Optional[Path] = None,
+        tick_callback: Optional[Callable[[ParsedGameState], None]] = None,
     ):
         """Initialize orchestrator.
 
@@ -183,6 +184,7 @@ class CampaignOrchestrator:
         self._progress = CampaignProgress()
         self._current_state: Optional[ParsedGameState] = None
         self._current_plan: Optional[Plan] = None
+        self._tick_callback = tick_callback
 
         self._setup_milestones()
 
@@ -257,6 +259,13 @@ class CampaignOrchestrator:
         raw = self._emu.read_state()
         self._current_state = self._parser.parse(raw)
 
+        if self._tick_callback is not None and self._current_state is not None:
+            try:
+                self._tick_callback(self._current_state)
+            except Exception:
+                # Tick callbacks are best-effort; callers may raise to abort.
+                raise
+
         # Track black screens
         if self._current_state.is_black_screen and self._current_state.is_playing:
             self._progress.black_screens_detected += 1
@@ -285,6 +294,8 @@ class CampaignOrchestrator:
             nonlocal frames_played
             frames_played += 1
             parsed = self._parser.parse(state)
+            if self._tick_callback is not None:
+                self._tick_callback(parsed)
             if frames_played % 60 == 0:
                 self._logger.debug(
                     f"Frame {frame}: Mode={parsed.mode_name}, "
@@ -332,6 +343,9 @@ class CampaignOrchestrator:
                     f"Plan progress: Action {plan.current_action_index + 1}/"
                     f"{len(plan.actions)}, Phase: {state.phase.name}"
                 )
+
+            if self._tick_callback is not None:
+                self._tick_callback(state)
 
         self._progress.current_phase = CampaignPhase.NAVIGATING
         status = self._planner.execute_plan(plan, callback=plan_callback)

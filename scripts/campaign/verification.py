@@ -90,7 +90,8 @@ class CriticalAddresses:
     # Core State
     GAME_MODE = 0x7E0010
     SUBMODULE = 0x7E0011
-    INIDISP = 0x7E001A
+    INIDISP = 0x7E0013  # INIDISP queue (written during NMI)
+    FRAME_COUNTER = 0x7E001A
     INDOORS = 0x7E001B
 
     # Link Position (16-bit)

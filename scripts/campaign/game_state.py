@@ -251,12 +251,14 @@ class GameStateParser:
         )
         can_use_items = can_move and not is_menu_open and not is_dialogue_open
 
+        room_id = snapshot.raw_data.get("room_id", snapshot.room) if isinstance(snapshot.raw_data, dict) else snapshot.room
+
         state = ParsedGameState(
             raw=snapshot,
             phase=phase,
             location_name=location_name,
             area_id=snapshot.area,
-            room_id=snapshot.room,
+            room_id=room_id,
             is_indoors=snapshot.indoors,
             link_action=link_action,
             link_direction=link_direction,

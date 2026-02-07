@@ -493,7 +493,7 @@ class TestAddressConstants:
 
     def test_inidisp_address(self):
         """ADDR_INIDISP is correct."""
-        assert TransitionTester.ADDR_INIDISP == 0x7E001A
+        assert TransitionTester.ADDR_INIDISP == 0x7E0013
 
     def test_link_x_address(self):
         """ADDR_LINK_X is correct."""

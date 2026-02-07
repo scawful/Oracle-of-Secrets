@@ -208,7 +208,7 @@ class TestMesen2EmulatorWithMocks:
             0x7E002F: 0x02,  # direction
             0x7E005D: 0x01,  # state
             0x7E001B: 0x00,  # indoors
-            0x7E001A: 0x0F,  # inidisp
+            0x7E0013: 0x0F,  # inidispq
             0x7EF36D: 24,    # health
             0x7EF36C: 24,    # max_health
         }.get(addr, 0)
@@ -276,7 +276,7 @@ class TestRAMAddresses:
 
     def test_inidisp_address(self):
         """Verify INIDISP address."""
-        assert Mesen2Emulator.RAM_INIDISP == 0x7E001A
+        assert Mesen2Emulator.RAM_INIDISP == 0x7E0013
 
     def test_link_position_addresses(self):
         """Verify Link position addresses."""

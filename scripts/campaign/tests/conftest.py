@@ -25,7 +25,7 @@ def mock_mesen_bridge():
     memory_map = {
         0x7E0010: 0x09,    # mode (overworld)
         0x7E0011: 0x00,    # submode
-        0x7E001A: 0x0F,    # inidisp (screen on)
+        0x7E0013: 0x0F,    # inidispq (screen on, full brightness)
         0x7E001B: 0x00,    # indoors (false)
         0x7E008A: 0x29,    # area (village center)
         0x7E00A0: 0x00,    # room layout

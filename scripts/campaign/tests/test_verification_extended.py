@@ -106,7 +106,7 @@ class TestMemoryCheckDataclass:
     def test_with_bitmask(self):
         """Test MemoryCheck with bitmask."""
         check = MemoryCheck(
-            address=0x7E001A,
+            address=0x7E0013,
             name="INIDISP",
             bitmask=0x80
         )
@@ -573,9 +573,9 @@ class TestVerificationCheckLogic:
 
     def test_bitmask_applied(self, verifier):
         """Test bitmask is applied to values."""
-        verifier._snapshot_before = {0x7E001A: 0x0F}
-        verifier._snapshot_after = {0x7E001A: 0x8F}
-        check = MemoryCheck(0x7E001A, "INIDISP", bitmask=0x80, expected_value=0x80)
+        verifier._snapshot_before = {0x7E0013: 0x0F}
+        verifier._snapshot_after = {0x7E0013: 0x8F}
+        check = MemoryCheck(0x7E0013, "INIDISPQ", bitmask=0x80, expected_value=0x80)
 
         result = verifier._verify_check(check)
         # After applying mask: 0x8F & 0x80 = 0x80
@@ -583,9 +583,9 @@ class TestVerificationCheckLogic:
 
     def test_bitmask_check_zero(self, verifier):
         """Test bitmask check for zero."""
-        verifier._snapshot_before = {0x7E001A: 0x0F}
-        verifier._snapshot_after = {0x7E001A: 0x0F}
-        check = MemoryCheck(0x7E001A, "INIDISP", bitmask=0x80, expected_value=0x00)
+        verifier._snapshot_before = {0x7E0013: 0x0F}
+        verifier._snapshot_after = {0x7E0013: 0x0F}
+        check = MemoryCheck(0x7E0013, "INIDISPQ", bitmask=0x80, expected_value=0x00)
 
         result = verifier._verify_check(check)
         # After applying mask: 0x0F & 0x80 = 0x00
