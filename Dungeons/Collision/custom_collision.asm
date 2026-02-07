@@ -32,9 +32,13 @@ CustomRoomCollision:
     INC $0200
   .notEndOfTable
 
+  ; This hook runs during room load. Preserve P (including M/X width)
+  ; so we don't leak 16-bit width back into vanilla transition code.
+  PHP
+
   REP #$30
   LDA.b $A0 : ASL : ADC.b $A0 : TAX
-  LDA.l RoomPointer, X : BEQ .easyout
+  LDA.l RoomPointer, X : BEQ .plp_rtl
 
   STA.b $08
 
@@ -73,6 +77,11 @@ CustomRoomCollision:
 
   .done
   PLB
+  PLP
+  RTL
+
+  .plp_rtl
+  PLP
   RTL
 
   .new_rectangle
