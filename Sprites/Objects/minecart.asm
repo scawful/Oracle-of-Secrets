@@ -562,7 +562,12 @@ StopCart:
   LDA.w $A0 : STA.w !MinecartTrackRoom, Y
   SEP #$20
 
+  ; !MinecartCurrent is an 8-bit sprite slot index, but it can be read with
+  ; X=16-bit in transition hooks. Always keep the high byte cleared to avoid
+  ; out-of-range indexing corruption if X width leaks.
+  REP #$20
   STZ.w !MinecartCurrent
+  SEP #$20
 
   RTS
 }
@@ -587,7 +592,10 @@ Minecart_SetDirectionNorth:
   STA.w !MinecartDirection, X : STA.w !MinecartDirectionCache
   LDA.b #Up    : STA !SpriteDirection, X
 
-  TXA : STA.w !MinecartCurrent
+  PHP
+  REP #$20
+  TXA : AND.w #$00FF : STA.w !MinecartCurrent
+  PLP
   RTS
 }
 
@@ -602,7 +610,10 @@ Minecart_SetDirectionEast:
   STA.w !MinecartDirection, X : STA.w !MinecartDirectionCache
   LDA.b #Right : STA !SpriteDirection, X
 
-  TXA : STA.w !MinecartCurrent
+  PHP
+  REP #$20
+  TXA : AND.w #$00FF : STA.w !MinecartCurrent
+  PLP
   RTS
 }
 
@@ -617,7 +628,10 @@ Minecart_SetDirectionSouth:
   STA.w !MinecartDirection, X : STA.w !MinecartDirectionCache
   LDA.b #Down  : STA.w !SpriteDirection, X
 
-  TXA : STA.w !MinecartCurrent
+  PHP
+  REP #$20
+  TXA : AND.w #$00FF : STA.w !MinecartCurrent
+  PLP
   RTS
 }
 
@@ -632,7 +646,10 @@ Minecart_SetDirectionWest:
   STA.w !MinecartDirection, X : STA.w !MinecartDirectionCache
   LDA.b #Left : STA.w !SpriteDirection, X
 
-  TXA : STA.w !MinecartCurrent
+  PHP
+  REP #$20
+  TXA : AND.w #$00FF : STA.w !MinecartCurrent
+  PLP
   RTS
 }
 

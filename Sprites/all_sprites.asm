@@ -126,10 +126,24 @@ PutRollerBeneathLink:
 
 Graphics_Transfer:
 {
+  ; Hooked into UnderworldTransition_ScrollRoom ($02BE5E). Keep this hook
+  ; transparent to the caller: preserve DB/X/Y/P and re-emit the original
+  ; `LDA $11 : CMP #$02` flags for the caller's branch.
+  PHP
+  PHX
+  PHY
+  PHB : PHK : PLB
+
   LDA.b $A0 : CMP.b #$5A : BNE +
     JSR ApplyManhandlaGraphics
     JSR ApplyManhandlaPalette
   +
+
+  PLB
+  PLY
+  PLX
+  PLP
+
   LDA.b $11 : CMP.b #$02
   RTL
 }

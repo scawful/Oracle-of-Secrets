@@ -118,6 +118,13 @@ ZoraBaby_RevertToSprite:
 
 CheckForZoraBabyTransitionToSprite:
 {
+  ; Hooked at $09A19C (overwriting `LDX $10 : LDY $11`) and returns to vanilla at
+  ; $09A1A0 where the code immediately executes 8-bit `CPY.b`/`CPX.b` tests.
+  ; Be width-safe and ensure we exit with M/X=8 so the vanilla immediates can't
+  ; desync if some upstream routine leaked 16-bit index width.
+  PHP
+  SEP #$30
+
   LDA.l $7EF3CC : CMP.b #$09 : BNE .not_zora
     ; If we are standing on a star tile
     LDA.w $0114 : CMP.b #$3B : BNE +
@@ -132,6 +139,10 @@ CheckForZoraBabyTransitionToSprite:
   .not_zora
   LDX.b $10
   LDY.b $11
+
+  ; Restore flags from entry, but keep M/X=8 per vanilla contract at $09A1A0.
+  PLP
+  SEP #$30
   RTL
 }
 
@@ -163,16 +174,68 @@ UploadZoraBabyGraphicsPrep:
 ; Check if the Zora baby is on top of the water gate switch
 ; Returns carry set if the Zora baby is on top of the switch
 
-ZoraBaby_CheckForWaterSwitchSprite:
+; ---------------------------------------------------------
+; Helpers (shared by both switch types)
+;
+; NOTE: We keep these helpers small and side-effect free because
+; they run every frame while the Zora Baby is active.
+
+; Find the first sprite slot matching type A.
+; Inputs:
+; - A (8-bit): desired sprite type (SprType)
+; Outputs:
+; - C set if found
+; - Y = slot index (0..$10) when found
+; Clobbers: A, X, $00
+ZoraBaby_FindSpriteOfType:
 {
   PHX
-  LDX #$10
-  -
-    LDA.w SprType, X
-    CMP #$21 : BEQ ZoraBaby_CheckForWaterGateSwitch_found_switch
-  DEX : BPL -
-  ; Water gate switch not found
+  STA.b $00
+  LDX.b #$10
+  .loop
+    LDA.w SprType, X : CMP.b $00 : BEQ .found
+  DEX : BPL .loop
   PLX
+  CLC
+  RTS
+  .found
+  TXY
+  PLX
+  SEC
+  RTS
+}
+
+; Check if the Zora Baby (slot X) is on top of another sprite (slot Y).
+; Outputs:
+; - C set if overlapping
+; Clobbers: A
+ZoraBaby_IsOnTopOfSprite:
+{
+  ; Check if the Zora baby is on top of the switch.
+  ; (Uses the historic thresholds that were tuned for these sprites.)
+  LDA.w SprX, X : CLC : ADC #$09 : CMP.w SprX, Y : BCC .not_on_switch
+  LDA.w SprX, X : SEC : SBC #$09 : CMP.w SprX, Y : BCS .not_on_switch
+  LDA.w SprY, X : CLC : ADC #$12 : CMP.w SprY, Y : BCC .not_on_switch
+  LDA.w SprY, X : SEC : SBC #$12 : CMP.w SprY, Y : BCS .not_on_switch
+    SEC
+    RTS
+  .not_on_switch
+  CLC
+  RTS
+}
+
+; ---------------------------------------------------------
+; Switch detectors
+;
+; Returns carry set if the Zora baby is on top of the switch.
+
+ZoraBaby_CheckForWaterSwitchSprite:
+{
+  ; Sprite type $21: generic pull switch (used elsewhere).
+  LDA.b #$21
+  JSR ZoraBaby_FindSpriteOfType : BCC .not_on_switch
+  JSR ZoraBaby_IsOnTopOfSprite
+  RTS
   .not_on_switch
   CLC
   RTS
@@ -180,31 +243,14 @@ ZoraBaby_CheckForWaterSwitchSprite:
 
 ZoraBaby_CheckForWaterGateSwitch:
 {
-  PHX
-
-  LDX #$10
-  -
-  LDA.w SprType, X : CMP #$04 : BEQ .found_switch
-    DEX : BPL -
-    ; Water gate switch not found
-    PLX
+  ; Sprite type $04: water gate switch sprite.
+  LDA.b #$04
+  JSR ZoraBaby_FindSpriteOfType : BCC .not_on_switch
+  JSR ZoraBaby_IsOnTopOfSprite
+  RTS
   .not_on_switch
   CLC
   RTS
-
-  .found_switch
-  TXY
-  PLX
-
-  ; X is the Zora baby Sprite
-  ; Y is the Water gate switch Sprite
-  ; Check if the Zora baby is on top of the switch
-  LDA.w SprX, X : CLC : ADC #$09 : CMP.w SprX, Y : BCC .not_on_switch
-  LDA.w SprX, X : SEC : SBC #$09 : CMP.w SprX, Y : BCS .not_on_switch
-  LDA.w SprY, X : CLC : ADC #$12 : CMP.w SprY, Y : BCC .not_on_switch
-  LDA.w SprY, X : SEC : SBC #$12 : CMP.w SprY, Y : BCS .not_on_switch
-    SEC
-    RTS
 }
 
 ZoraBaby_GlobalBehavior:
@@ -943,8 +989,14 @@ CheckForMinecartFollowerDraw:
 
 CheckForFollowerInterroomTransition:
 {
+  ; Called from Module07_02_01_LoadNextRoom ($028A5B). Be width-transparent:
+  ; do not assume caller M/X width, and do not desync immediates by using
+  ; 8-bit immediates while M=16.
+  PHP
+  SEP #$20 ; A=8 for flag reads + immediates in our logic
+
   LDA.w !LinkInCart : BEQ .not_in_cart
-    ; Use long addressing — DBR is $02 (caller is Module07 in bank $02)
+    ; Use long addressing so DBR doesn't matter.
     LDA.b #$0B : STA.l $7EF3CC
 
     ; Pause the current cart so that it doesn't draw anymore
@@ -953,17 +1005,28 @@ CheckForFollowerInterroomTransition:
     LDA.b #$01 : STA.l $7E0F00, X
     PLX
   .not_in_cart
+
+  PLP
   JSL $01873A ; Underworld_LoadRoom
   RTL
 }
 
 CheckForFollowerIntraroomTransition:
 {
+  ; Called from UnderworldTransition_Intraroom_PrepTransition ($0289BF).
+  ; Vanilla is in M=16 here and does `STA.l $7EC007` as a 16-bit store.
+  ; Keep that behavior, then temporarily switch to A=8 for our own logic.
   STA.l $7EC007
+
+  PHP
+  SEP #$20 ; A=8 for reading 8-bit flags + immediates
+
   LDA.w !LinkInCart : BEQ .not_in_cart
-    ; Use long addressing — DBR is $02 (caller is bank $02 transition code)
+    ; Use long addressing so DBR doesn't matter.
     LDA.b #$0B : STA.l $7EF3CC
   .not_in_cart
+
+  PLP
   RTL
 }
 
@@ -1090,9 +1153,21 @@ org $09A41F ; @hook module=Sprites
   RTS
 
 ; Module07_02_01_LoadNextRoom
-org $028A5B : JSL CheckForFollowerInterroomTransition ; @hook module=Sprites name=CheckForFollowerIntraroomTransition kind=jsl target=CheckForFollowerInterroomTransition expected_m=8 expected_x=8
+org $028A5B ; @hook module=Sprites name=CheckForFollowerInterroomTransition kind=jsl target=CheckForFollowerInterroomTransition expected_m=8 expected_x=8
+if !ENABLE_FOLLOWER_TRANSITION_HOOKS
+  JSL CheckForFollowerInterroomTransition
+else
+  ; Vanilla (USDASM #_028A5B): JSL Underworld_LoadRoom ($01873A)
+  JSL $01873A
+endif
 
 ; UnderworldTransition_Intraroom_PrepTransition
-org $0289BF : JSL CheckForFollowerIntraroomTransition ; @hook module=Sprites name=CheckForFollowerIntraroomTransition kind=jsl target=CheckForFollowerIntraroomTransition
+org $0289BF ; @hook module=Sprites name=CheckForFollowerIntraroomTransition kind=jsl target=CheckForFollowerIntraroomTransition
+if !ENABLE_FOLLOWER_TRANSITION_HOOKS
+  JSL CheckForFollowerIntraroomTransition
+else
+  ; Vanilla (USDASM #_0289BF): STA.l $7EC007
+  STA.l $7EC007
+endif
 
 pullpc

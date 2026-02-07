@@ -864,8 +864,13 @@ ApplyManhandlaPalette:
 
 ApplyManhandlaGraphics:
 {
+  ; Called from transition code (e.g. UnderworldTransition_ScrollRoom).
+  ; Do not assume X/Y width on entry: if X=16-bit, STX would write 2 bytes
+  ; to PPU regs ($2100/$2101, etc) and PHX/PLX would desync the stack.
+  PHP
+  SEP #$10               ; Force X/Y=8-bit for STX and PHX/PLX symmetry.
   PHX
-  REP #$20               ; A = 16, XY = 8
+  REP #$20               ; A = 16
   LDX #$80 : STX $2100   ; turn the screen off (required)
   LDX #$80 : STX $2115   ; Set the video port register every time we write it increase by 1
   LDA #$5000 : STA $2116 ; Destination of the DMA $5800 in vram, need to be divided by 2
@@ -880,6 +885,7 @@ ApplyManhandlaGraphics:
   LDX #$0F : STX $2100                    ; Turn the screen back on
   SEP #$30
   PLX
+  PLP
   RTS
 
   ManhandlaGraphics:

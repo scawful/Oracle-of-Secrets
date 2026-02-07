@@ -17,8 +17,18 @@
 RoomPointer = $258090
 
 org $01B95B ; @hook module=Dungeons name=CustomRoomCollision kind=jsl target=CustomRoomCollision expected_m=16 expected_x=16 expected_exit_m=16 expected_exit_x=16
+if !ENABLE_CUSTOM_ROOM_COLLISION
   JSL CustomRoomCollision
   NOP #6
+else
+  ; Vanilla (USDASM #_01B95B):
+  ;   LDA.b $B4 : CMP.w #$2000 : BNE .more_to_go : INC.w $0200
+  LDA.b $B4
+  CMP.w #$2000
+  BNE +            ; +3 bytes to INC
+  INC.w $0200
++
+endif
 
 org $258000
 CustomRoomCollision_easyout:

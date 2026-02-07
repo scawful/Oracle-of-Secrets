@@ -20,12 +20,16 @@
 ; --- Feature Toggle Flags ---
 ; Set to 1 to enable a feature, 0 to disable (isolation testing).
 ; Override these via Config/feature_flags.asm (generate with scripts/set_feature_flags.py).
+!ENABLE_CUSTOM_ROOM_COLLISION         = 1
+!ENABLE_FOLLOWER_TRANSITION_HOOKS     = 1
+!ENABLE_GRAPHICS_TRANSFER_SCROLL_HOOK = 1
 !ENABLE_WATER_GATE_HOOKS            = 1
 !ENABLE_WATER_GATE_OVERLAY_REDIRECT = 1
 !ENABLE_MINECART_PLANNED_TRACK_TABLE = 1
 !ENABLE_MINECART_CART_SHUTTERS       = 0
 !ENABLE_MINECART_LIFT_TOSS           = 0
 !ENABLE_D3_PRISON_SEQUENCE           = 0
+!ENABLE_JUMPTABLELOCAL_GUARD         = 1
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
