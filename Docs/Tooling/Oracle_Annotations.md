@@ -19,8 +19,16 @@ an accurate `hooks.json`.
 Supported fields (parsed by `scripts/generate_hooks_json.py`):
 - `module`, `name`, `kind`, `target`
 - `expected_m`, `expected_x`
+- `expected_exit_m`, `expected_exit_x`
 - `skip_abi`, `abi` / `abi_class`
 - `note`
+
+### Hook ABI Rule (Crash Prevention)
+If a hook changes register width (e.g. `REP/SEP`) it must either:
+- Restore `P` (e.g. `PHP`/`PLP`) on **all** exits, or
+- Explicitly set the expected exit width (and ensure the code matches).
+
+The dungeon transition blackout (reported 2026-02-06, fixed 2026-02-07) was caused by a room-load hook (`CustomRoomCollision` at `$01B95B`) executing `REP #$30` and returning early without restoring `P`, leaking M/X width into vanilla transition code.
 
 Helpers:
 - `python3 scripts/tag_org_hooks.py --root . --apply --normalize --module-from-path`

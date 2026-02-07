@@ -4,16 +4,21 @@
 **Severity:** Critical
 **Symptom:** Screen goes black and game locks up when transitioning between dungeon rooms during casual exploration.
 **Reproducibility:** Intermittent (likely correlated with rooms that draw torches during load).
-**Status:** Still reproduces on the latest ROM (2026-02-06). Torch-loop register-width fix is correct but not sufficient.
+**Status:** Fixed (confirmed 2026-02-07).
 
-**Attempted fix (NOT VALIDATED — bug still reproduces):**
+**Attempted fix (not the root cause):**
 - Removed `SEP #$30` before re-entering the vanilla torch draw loop at `$0188C9` (that loop runs in **16-bit** mode).
 - Preserved `P/A/X/Y` around the injected `JSL WaterGate_CheckRoomEntry` so this hook returns with **vanilla** flags/register state (notably `Z=1` from the sentinel compare).
-- These changes are reasonable but UNPROVEN. The bug still occurs, so either there's a second cause, the analysis was wrong, or the fix has its own bug.
+- These changes are still reasonable, but the blackout persisted because the real culprit was elsewhere.
+
+**Root cause (confirmed):** `CustomRoomCollision` hook (`org $01B95B`, `Dungeons/Collision/custom_collision.asm`) executed `REP #$30` and could return to vanilla without restoring `P` (M/X register width + flags) on the early-out path (no custom collision data for the room).
+
+**Fix (confirmed):** Preserve/restore `P` inside `CustomRoomCollision` via `PHP`/`PLP` so the hook becomes width-transparent to the caller.
+- Commit: `b59959f` (`fix: preserve P (M/X width) in CustomRoomCollision hook`)
 
 ---
 
-## Primary Suspect: Water Gate Room Load Hook
+## Previously Suspected: Water Gate Room Load Hook (Not Culprit)
 
 **Hook site:** `Dungeons/dungeons.asm` (`org $0188DF`)
 **Implementation:** `Dungeons/Collision/water_collision.asm` (`Underworld_LoadRoom_ExitHook`)
@@ -59,11 +64,11 @@ Secondary correctness issue: adding `JSL WaterGate_CheckRoomEntry` on the exit p
 
 ---
 
-## Quick Validation
+## Validation
 
-1. Rebuild with the fix and try repeated dungeon room transitions (include rooms with torches).
-2. It still reproduces on the latest ROM, so we need deeper capture.
-3. Disable the water gate system to confirm correlation:
+1. Rebuild with the `CustomRoomCollision` `PHP/PLP` fix and try repeated dungeon room transitions (include rooms with torches).
+2. Blackout no longer reproduces (confirmed 2026-02-07).
+3. Optional: keep the capture workflow around for future regressions.
 
 ```asm
 ; Config/feature_flags.asm
@@ -73,7 +78,7 @@ Secondary correctness issue: adding `JSL WaterGate_CheckRoomEntry` on the exit p
 
 ---
 
-## New Debugging Plan (Mesen2 socket API)
+## Debugging Plan (Keep For Future Regressions)
 
 Goal: capture enough ground truth at the moment of failure to answer:
 - Is the screen forced-blanked? (`INIDISP` mirror at `$7E001A` == `$80`)

@@ -23,7 +23,7 @@ Result after filters on `oos168x.sfc`:
 
 ## Valid / likely real issues (post-filter focus)
 These are likely genuine ABI risks and should be investigated in Oracle code:
-- `Oracle_CustomRoomCollision` (caller `$01B95B`): **M flag mismatch**
+- `Oracle_CustomRoomCollision` (caller `$01B95B`): **FIXED 2026-02-07** (root cause of dungeon transition blackout; preserved `P` via `PHP/PLP` in `Dungeons/Collision/custom_collision.asm`)
 - `Oracle_UseImplicitRegIndexedLocalJumpTable` (multiple call sites): **M/X mismatch**
 - `Oracle_HUD_Update` (caller `$0DFB91` / `Oracle_newIgnoreItemBox`): **M mismatch**
 - `Oracle_Graphics_Transfer` (caller `$02BE5E`): **X mismatch**
