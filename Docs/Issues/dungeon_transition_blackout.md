@@ -6,9 +6,10 @@
 **Reproducibility:** Intermittent (likely correlated with rooms that draw torches during load).
 **Status:** Still reproduces on the latest ROM (2026-02-06). Torch-loop register-width fix is correct but not sufficient.
 
-**Fix (implemented, keep):**
-- Do **not** execute `SEP #$30` before re-entering the vanilla torch draw loop at `$0188C9` (that loop runs in **16-bit** mode).
-- Preserve `P/A/X/Y` around the injected `JSL WaterGate_CheckRoomEntry` so this hook returns with **vanilla** flags/register state (notably `Z=1` from the sentinel compare).
+**Attempted fix (NOT VALIDATED — bug still reproduces):**
+- Removed `SEP #$30` before re-entering the vanilla torch draw loop at `$0188C9` (that loop runs in **16-bit** mode).
+- Preserved `P/A/X/Y` around the injected `JSL WaterGate_CheckRoomEntry` so this hook returns with **vanilla** flags/register state (notably `Z=1` from the sentinel compare).
+- These changes are reasonable but UNPROVEN. The bug still occurs, so either there's a second cause, the analysis was wrong, or the fix has its own bug.
 
 ---
 
@@ -39,7 +40,7 @@ So `$0188C9` (loop head) assumes **16-bit A** and **16-bit X/Y**. `SEP #$30` hap
 
 ---
 
-## Root Cause (High Confidence)
+## Suspected Cause (UNCONFIRMED — no runtime evidence)
 
 The hook previously executed `SEP #$30` on the `.draw_next_torch` path and then `JML $0188C9`.
 
@@ -49,7 +50,7 @@ Secondary correctness issue: adding `JSL WaterGate_CheckRoomEntry` on the exit p
 
 ---
 
-## Fix Implemented (Pending Validation)
+## Code Changes Applied (NOT VALIDATED — bug still reproduces)
 
 **File:** `Dungeons/Collision/water_collision.asm`
 
@@ -80,6 +81,21 @@ Goal: capture enough ground truth at the moment of failure to answer:
 - Are we hung in a tight loop (PC not advancing), or alive-but-stuck (PC advances, mode doesn't)?
 - Who last wrote the values that kept us black (write attribution via `mem-blame`)?
 
+### TL;DR (use the capture script)
+
+```bash
+# Before reproducing:
+python3 scripts/capture_blackout.py arm --save-seed
+
+# After blackout occurs (do NOT reset emulator):
+python3 scripts/capture_blackout.py capture
+
+# Review recent captures:
+python3 scripts/capture_blackout.py summary
+```
+
+If you want a wider net (fade + stack + color math), add `--deep` to both `arm` and `capture`.
+
 ### 0. Preflight (pick the right instance)
 If multiple sockets exist, target explicitly:
 
@@ -104,7 +120,9 @@ Start these once per session:
 
 ```bash
 python3 scripts/mesen2_client.py p-watch start --depth 8000
+python3 scripts/mesen2_client.py trace --action start --clear
 
+python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E0013  # INIDISP queue (INIDISPQ)
 python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E001A  # INIDISP mirror
 python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E0010  # GameMode
 python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E0011  # SubMode
@@ -125,7 +143,7 @@ Once it happens, immediately capture:
 
 ```bash
 python3 scripts/mesen2_client.py smart-save 21
-python3 scripts/mesen2_client.py savestate-label 21 "blackout"
+python3 scripts/mesen2_client.py savestate-label set 21 --label blackout
 
 python3 scripts/mesen2_client.py capture --json > /tmp/oos_blackout_capture.json
 python3 scripts/mesen2_client.py cpu --json > /tmp/oos_blackout_cpu.json
@@ -133,10 +151,17 @@ python3 scripts/mesen2_client.py stack-retaddr --count 12 --json > /tmp/oos_blac
 
 python3 scripts/mesen2_client.py p-log --count 200 --json > /tmp/oos_blackout_p_log.json
 
-python3 scripts/mesen2_client.py mem-blame --addr 0x7E001A > /tmp/oos_blackout_inidisp_blame.json
-python3 scripts/mesen2_client.py mem-blame --addr 0x7E0010 > /tmp/oos_blackout_mode_blame.json
-python3 scripts/mesen2_client.py mem-blame --addr 0x7E0011 > /tmp/oos_blackout_submode_blame.json
-python3 scripts/mesen2_client.py mem-blame --addr 0x7E00A0 > /tmp/oos_blackout_room_blame.json
+python3 scripts/mesen2_client.py mem-read --len 1 0x7E0013 --json > /tmp/oos_blackout_inidispq.json
+python3 scripts/mesen2_client.py mem-read --len 1 0x7E001A --json > /tmp/oos_blackout_inidisp.json
+python3 scripts/mesen2_client.py mem-read --len 1 0x7E0010 --json > /tmp/oos_blackout_mode.json
+python3 scripts/mesen2_client.py mem-read --len 1 0x7E0011 --json > /tmp/oos_blackout_submode.json
+python3 scripts/mesen2_client.py mem-read --len 2 0x7E00A4 --json > /tmp/oos_blackout_room_id.json
+
+python3 scripts/mesen2_client.py mem-blame --addr 0x7E0013 --json > /tmp/oos_blackout_inidispq_blame.json
+python3 scripts/mesen2_client.py mem-blame --addr 0x7E001A --json > /tmp/oos_blackout_inidisp_blame.json
+python3 scripts/mesen2_client.py mem-blame --addr 0x7E0010 --json > /tmp/oos_blackout_mode_blame.json
+python3 scripts/mesen2_client.py mem-blame --addr 0x7E0011 --json > /tmp/oos_blackout_submode_blame.json
+python3 scripts/mesen2_client.py mem-blame --addr 0x7E00A0 --json > /tmp/oos_blackout_room_blame.json
 
 python3 scripts/mesen2_client.py disasm --count 40 --json > /tmp/oos_blackout_disasm.json
 python3 scripts/mesen2_client.py trace --count 100 --json > /tmp/oos_blackout_trace.json
@@ -167,3 +192,4 @@ If the blackout persists with those OFF, the root cause is elsewhere (widen the 
 | `Dungeons/Collision/water_collision.asm` | Hook implementation |
 | `Config/feature_flags.asm` | `!ENABLE_WATER_GATE_HOOKS` toggle |
 | `scripts/mesen2_client.py` | Mesen2 socket API client |
+| `scripts/capture_blackout.py` | Automated Phase 1 evidence capture |
