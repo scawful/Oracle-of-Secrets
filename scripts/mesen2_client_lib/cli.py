@@ -153,9 +153,22 @@ def _preflight_socket(args: argparse.Namespace) -> None:
         return
 
     cleanup_stale_sockets()
+    # Prefer bridge-based discovery: it understands status files and can probe
+    # sockets even when the path isn't stat()-able in sandboxed environments.
+    try:
+        bridge = MesenBridge()
+        discovered = bridge.socket_path
+    except Exception:
+        discovered = None
+
+    if discovered:
+        os.environ["MESEN2_SOCKET_PATH"] = str(discovered)
+        return
+
     sockets = _find_socket_candidates()
     if not sockets:
         print("Error: No Mesen2 socket found. Launch an instance or set MESEN2_SOCKET_PATH.", file=sys.stderr)
+        print("Hint: if you have a /tmp/mesen2-*.status but no .sock, your Mesen2 socket server may not be running.", file=sys.stderr)
         sys.exit(2)
 
     if os.getenv("MESEN2_AUTO_ATTACH"):

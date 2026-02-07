@@ -143,14 +143,22 @@ class MesenBridge:
 
     @property
     def socket_path(self) -> str | None:
-        """Get or discover the socket path. Canonical order: explicit path -> MESEN2_SOCKET_PATH -> status files (mesen2-*.status, socketPath) -> glob mesen2-*.sock by mtime."""
-        if self._socket_path and os.path.exists(self._socket_path):
+        """Get or discover the socket path.
+
+        Canonical order: explicit path -> MESEN2_SOCKET_PATH -> status files
+        (mesen2-*.status, socketPath) -> glob mesen2-*.sock by mtime.
+
+        Note: In some sandboxed environments, the socket path may not be
+        stat()-able even though connect() succeeds. Prefer probing to
+        os.path.exists() to reduce false "no socket" failures.
+        """
+        if self._socket_path and self._probe_socket(self._socket_path):
             return self._socket_path
 
         # Env (prefer MESEN2_SOCKET_PATH, then deprecated MESEN2_SOCKET)
         for env_var in ("MESEN2_SOCKET_PATH", "MESEN2_SOCKET"):
             env_socket = os.getenv(env_var)
-            if env_socket and os.path.exists(env_socket):
+            if env_socket and self._probe_socket(env_socket):
                 self._socket_path = env_socket
                 return self._socket_path
 
@@ -163,7 +171,7 @@ class MesenBridge:
                     with open(sf) as f:
                         data = json.load(f)
                     sp = data.get("socketPath")
-                    if sp and isinstance(sp, str) and os.path.exists(sp):
+                    if sp and isinstance(sp, str) and self._probe_socket(sp):
                         candidates.append((os.path.getmtime(sf), sp))
                 except (OSError, json.JSONDecodeError, KeyError):
                     continue
@@ -290,7 +298,9 @@ class MesenBridge:
     ) -> dict[str, Any]:
         """Send a command to Mesen2 and wait for response."""
         path = self.socket_path
-        if not path or not os.path.exists(path):
+        # Do not require stat()-ability; some environments may hide socket
+        # paths even though connect() works.
+        if not path:
             raise ConnectionError("Mesen2 socket not found. Is Mesen2 running?")
 
         payload: dict[str, Any] = {}
