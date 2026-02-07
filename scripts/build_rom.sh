@@ -2,8 +2,14 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>]" >&2
+  echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags]" >&2
   echo "Base ROM defaults to Roms/oos<version>_test2.sfc when present, otherwise Roms/oos<version>.sfc (override with OOS_BASE_ROM)." >&2
+  echo "" >&2
+  echo "Feature flag overrides:" >&2
+  echo "  --enable  <csv>   Comma-separated feature names to enable (e.g. water_gate_hooks, ENABLE_WATER_GATE_HOOKS)." >&2
+  echo "  --disable <csv>   Comma-separated feature names to disable." >&2
+  echo "  --profile <name>  Preset profile (defaults|all-on|all-off) applied before enable/disable lists." >&2
+  echo "  --persist-flags   Keep the generated Config/feature_flags.asm (otherwise it is restored after build)." >&2
   exit 1
 }
 
@@ -23,6 +29,10 @@ emit_symbols=1
 mesen_sync=0
 skip_tests=0
 asar_bin="${ASAR_BIN:-asar}"
+feat_enable=""
+feat_disable=""
+feat_profile="defaults"
+persist_flags=0
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -42,6 +52,22 @@ while [[ $# -gt 0 ]]; do
       skip_tests=1
       shift
       ;;
+    --enable)
+      feat_enable="${2:-}"
+      shift 2
+      ;;
+    --disable)
+      feat_disable="${2:-}"
+      shift 2
+      ;;
+    --profile)
+      feat_profile="${2:-defaults}"
+      shift 2
+      ;;
+    --persist-flags)
+      persist_flags=1
+      shift
+      ;;
     --asar=*)
       asar_bin="${1#--asar=}"
       shift
@@ -55,6 +81,43 @@ done
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 rom_dir="$repo_root/Roms"
+feature_flags_path="$repo_root/Config/feature_flags.asm"
+
+# Optional: temporarily generate Config/feature_flags.asm for this build, then restore.
+flags_modified=0
+flags_backup=""
+restore_flags() {
+  if [[ "$flags_modified" != "1" ]]; then
+    return 0
+  fi
+  if [[ "$persist_flags" == "1" ]]; then
+    echo "[*] Persisting feature flags: $feature_flags_path"
+    return 0
+  fi
+  if [[ -n "$flags_backup" && -f "$flags_backup" ]]; then
+    cp -f "$flags_backup" "$feature_flags_path"
+    rm -f "$flags_backup" || true
+    echo "[*] Restored feature flags: $feature_flags_path"
+  else
+    rm -f "$feature_flags_path" || true
+    echo "[*] Removed temporary feature flags: $feature_flags_path"
+  fi
+}
+trap restore_flags EXIT
+
+if [[ -n "$feat_enable" || -n "$feat_disable" || "$feat_profile" != "defaults" ]]; then
+  if [[ -f "$feature_flags_path" ]]; then
+    flags_backup="$(mktemp "$rom_dir/.feature_flags_backup.XXXXXX")"
+    cp -f "$feature_flags_path" "$flags_backup"
+  fi
+  python3 "$repo_root/scripts/set_feature_flags.py" \
+    --macros "$repo_root/Util/macros.asm" \
+    --output "$feature_flags_path" \
+    --profile "$feat_profile" \
+    --enable "$feat_enable" \
+    --disable "$feat_disable"
+  flags_modified=1
+fi
 
 if [[ "$asar_bin" == "z3asm" ]]; then
   local_z3asm="$repo_root/../z3dk/build/src/z3asm/bin/z3asm"
@@ -103,8 +166,24 @@ if ! python3 "$repo_root/scripts/verify_feature_flags.py" --root "$repo_root"; t
   fi
 fi
 
-backup_root="$HOME/Documents/OracleOfSecrets/Roms"
-mkdir -p "$backup_root"
+backup_root_default="$HOME/Documents/OracleOfSecrets/Roms"
+backup_root="${OOS_BACKUP_ROOT:-$backup_root_default}"
+if ! mkdir -p "$backup_root" 2>/dev/null; then
+  # Some environments (including sandboxed agents) cannot write to $HOME/Documents.
+  # Fall back to a repo-local archive directory so builds remain usable.
+  backup_root="$rom_dir/_archives"
+  mkdir -p "$backup_root"
+  echo "WARNING: backup root not writable; using: $backup_root" >&2
+else
+  # Some environments can create the directory but disallow file writes.
+  if ! tmpfile="$(mktemp "$backup_root/.writetest.XXXXXX" 2>/dev/null)"; then
+    backup_root="$rom_dir/_archives"
+    mkdir -p "$backup_root"
+    echo "WARNING: backup root not writable; using: $backup_root" >&2
+  else
+    rm -f "$tmpfile" || true
+  fi
+fi
 
 if [[ -f "$patched_rom" ]]; then
   timestamp="$(date +"%Y%m%d-%H%M%S")"
@@ -259,10 +338,16 @@ elif [[ -f "$repo_root/scripts/run_regression_tests.sh" ]]; then
   set -e
 
   if [[ $smoke_exit -ne 0 ]]; then
-    echo "[-] Smoke tests failed! Build may be broken."
-    # Don't fail the build by default - tests require Mesen2 running
-    # Uncomment to make test failures fatal:
-    # exit $smoke_exit
+    if [[ $smoke_exit -eq 2 ]]; then
+      echo "[*] Smoke tests skipped (no emulator backend)."
+      echo "[*] If you want smoke tests to run/fail: start Mesen2-OOS or set OOS_TEST_REQUIRE_EMULATOR=1."
+      echo "[*] (Or pass --skip-tests to silence this message.)"
+    else
+      echo "[-] Smoke tests failed! Build may be broken."
+      # Don't fail the build by default - tests require Mesen2 running
+      # Uncomment to make test failures fatal:
+      # exit $smoke_exit
+    fi
   else
     echo "[+] Smoke tests passed."
   fi
