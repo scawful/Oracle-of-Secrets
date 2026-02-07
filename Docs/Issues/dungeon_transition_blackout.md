@@ -85,7 +85,7 @@ Goal: capture enough ground truth at the moment of failure to answer:
 
 ```bash
 # Before reproducing:
-python3 scripts/capture_blackout.py arm --save-seed
+python3 scripts/capture_blackout.py arm --save-seed --assert-jtl
 
 # After blackout occurs (do NOT reset emulator):
 python3 scripts/capture_blackout.py capture
@@ -121,6 +121,9 @@ Start these once per session:
 ```bash
 python3 scripts/mesen2_client.py p-watch start --depth 8000
 python3 scripts/mesen2_client.py trace --action start --clear
+
+# JumpTableLocal ($008781) requires X/Y=8-bit on entry; 16-bit causes stack corruption and black screens.
+python3 scripts/mesen2_client.py p-assert 0x008781 0x10 --mask 0x10
 
 python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E0013  # INIDISP queue (INIDISPQ)
 python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E001A  # INIDISP mirror

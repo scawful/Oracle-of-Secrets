@@ -10,6 +10,10 @@ Usage:
     # Before reproducing, arm instrumentation:
     python3 capture_blackout.py arm --save-seed
 
+    # Optional: also assert JumpTableLocal is entered with X/Y=8-bit.
+    # If the assert triggers, capture immediately (no need to reach the blackout).
+    python3 capture_blackout.py arm --save-seed --assert-jtl
+
     # After blackout occurs (do NOT reset):
     python3 capture_blackout.py capture
 
@@ -56,6 +60,9 @@ WATCH_ADDRS_DEEP: list[tuple[str, int, str]] = [
     ("0x7E01FC", 3, "Stack page tail ($01FC-$01FE)"),
     ("0x7E1F0A", 2, "NMI SP save ($1F0A)"),
 ]
+
+JUMPTABLELOCAL_ADDR = "0x008781"  # JumpTableLocal
+JUMPTABLELOCAL_XFLAG = "0x10"  # P bit 0x10 set => X/Y are 8-bit
 
 def run_mesen_cmd(*args, json_output=False):
     """Run a mesen2_client.py command and return output."""
@@ -166,12 +173,36 @@ def cmd_arm(args):
     print("   OK")
     print()
 
+    # Optional: assert JumpTableLocal index-width contract (X/Y must be 8-bit on entry).
+    if args.assert_jtl:
+        print("4. Arming JumpTableLocal (0x008781) X/Y width assert (require X/Y=8-bit)...")
+        out = run_mesen_cmd(
+            "p-assert",
+            JUMPTABLELOCAL_ADDR,
+            JUMPTABLELOCAL_XFLAG,
+            "--mask",
+            JUMPTABLELOCAL_XFLAG,
+            json_output=True,
+        )
+        if out:
+            try:
+                payload = json.loads(out)
+                data = payload.get("data") if isinstance(payload, dict) else None
+                assert_id = data.get("id") if isinstance(data, dict) else None
+                if assert_id is not None:
+                    print(f"   OK (id={assert_id})")
+                else:
+                    print("   OK")
+            except json.JSONDecodeError:
+                print("   OK")
+        print()
+
     # Add memory watches
     watch_addrs = list(WATCH_ADDRS_BASE)
     if args.deep:
         watch_addrs.extend(WATCH_ADDRS_DEEP)
 
-    print("4. Adding memory watches...")
+    print("5. Adding memory watches...")
     for addr, size, desc in watch_addrs:
         if size != 1:
             run_mesen_cmd("mem-watch", "add", "--depth", "4000", "--size", str(size), addr)
@@ -182,16 +213,20 @@ def cmd_arm(args):
 
     # Create repro seed state
     if args.save_seed:
-        print(f"5. Saving repro seed state (slot {REPRO_SLOT})...")
+        print(f"6. Saving repro seed state (slot {REPRO_SLOT})...")
         run_mesen_cmd("smart-save", str(REPRO_SLOT))
         run_mesen_cmd("lib-save", "Blackout repro seed", "-t", "dungeon", "-t", "blackout", "-t", "repro")
         print("   OK")
     else:
-        print("5. Skipping seed save (use --save-seed to create one)")
+        print("6. Skipping seed save (use --save-seed to create one)")
     print()
 
     print("=== Instrumentation Armed ===")
-    print("Now reproduce the blackout. When it happens, immediately run:")
+    if args.assert_jtl:
+        print("If the JumpTableLocal assert triggers, capture immediately (no need to reach the blackout):")
+        print(f"    python3 {Path(__file__).name} capture")
+        print()
+    print("Otherwise, reproduce the blackout. When it happens, immediately run:")
     print(f"    python3 {Path(__file__).name} capture")
     return 0
 
@@ -427,6 +462,11 @@ def main():
     arm_parser = subparsers.add_parser("arm", help="Arm instrumentation before reproducing")
     arm_parser.add_argument("--save-seed", action="store_true", help="Save a repro seed state")
     arm_parser.add_argument("--deep", action="store_true", help="Add extra watches (fade + stack + color math)")
+    arm_parser.add_argument(
+        "--assert-jtl",
+        action="store_true",
+        help="Assert JumpTableLocal is entered with X/Y=8-bit (breaks on violation)",
+    )
 
     # capture subcommand
     capture_parser = subparsers.add_parser("capture", help="Capture evidence after blackout")
