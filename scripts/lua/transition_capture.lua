@@ -9,7 +9,7 @@
   Key addresses monitored:
   - GameMode ($7E0010)
   - Submodule ($7E0011)
-  - INIDISP ($7E001A)
+  - INIDISPQ ($7E0013)
   - FADETIME ($7EC007)
   - P register at hook entry points
 ]]
@@ -34,7 +34,8 @@ local RAM = {
   GAMEMODE = 0x7E0010,
   SUBMODULE = 0x7E0011,
   SUBSUBMODULE = 0x7E00B0,
-  INIDISP = 0x7E001A,
+  INIDISPQ = 0x7E0013,
+  FRAME = 0x7E001A,
   FADETIME = 0x7EC007,
   FADETIME_HI = 0x7EC008,
   MOSAICLEVEL = 0x7EC011,
@@ -97,8 +98,8 @@ end
 
 -- Check if screen is blanked (potential black screen bug)
 local function isScreenBlanked()
-  local inidisp = readByte(RAM.INIDISP)
-  return (inidisp & 0x80) ~= 0  -- Bit 7 = force blank
+  local inidispq = readByte(RAM.INIDISPQ)
+  return (inidispq & 0x80) ~= 0  -- Bit 7 = force blank (queued)
 end
 
 -- Check if we're in a transition state
@@ -138,7 +139,8 @@ local function captureState(reason)
       gameMode = readByte(RAM.GAMEMODE),
       submodule = readByte(RAM.SUBMODULE),
       subsubmodule = readByte(RAM.SUBSUBMODULE),
-      inidisp = readByte(RAM.INIDISP),
+      frameCounter = readByte(RAM.FRAME),
+      inidispq = readByte(RAM.INIDISPQ),
       fadeTime = readWord(RAM.FADETIME),
       mosaicLevel = readByte(RAM.MOSAICLEVEL),
       linkX = readWord(RAM.LINK_X),
@@ -153,8 +155,8 @@ local function captureState(reason)
   log(1, string.format("=== STATE CAPTURE: %s ===", reason))
   log(1, string.format("  GameMode: %s, Submodule: %s",
     formatHex(capture.ram.gameMode), formatHex(capture.ram.submodule)))
-  log(1, string.format("  INIDISP: %s (blank=%s)",
-    formatHex(capture.ram.inidisp), tostring(isScreenBlanked())))
+  log(1, string.format("  Frame: %s, INIDISPQ: %s (blank=%s)",
+    formatHex(capture.ram.frameCounter), formatHex(capture.ram.inidispq), tostring(isScreenBlanked())))
   log(1, string.format("  FADETIME: %s, MosaicLevel: %s",
     formatHex(capture.ram.fadeTime, 4), formatHex(capture.ram.mosaicLevel)))
   log(1, string.format("  Link: X=%s, Y=%s",

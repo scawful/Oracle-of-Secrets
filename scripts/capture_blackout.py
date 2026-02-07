@@ -32,6 +32,7 @@ from pathlib import Path
 # Configuration
 MESEN2_CLIENT = Path(__file__).parent / "mesen2_client.py"
 OUTPUT_DIR = Path("/tmp/oos_blackout")
+LAST_CAPTURE_MARKER = Path(__file__).resolve().parents[1] / "scratchpad" / "last_blackout_capture.json"
 REPRO_SLOT = 20
 CAPTURE_SLOT = 21
 
@@ -40,7 +41,7 @@ _MESEN2_GLOBAL_ARGS: list[str] = []
 # Memory addresses to watch (base set)
 WATCH_ADDRS_BASE: list[tuple[str, int, str]] = [
     ("0x7E0013", 1, "INIDISP queue (INIDISPQ)"),
-    ("0x7E001A", 1, "INIDISP mirror"),
+    ("0x7E001A", 1, "Frame counter (FRAME)"),
     ("0x7E0010", 1, "GameMode"),
     ("0x7E0011", 1, "SubMode"),
     ("0x7E00A0", 1, "Room layout index"),
@@ -243,6 +244,17 @@ def cmd_capture(args):
     print(f"Output directory: {output_dir}")
     print()
 
+    # Write a repo-local marker so other tools/agents can find the latest capture
+    # without copying paths around.
+    try:
+        LAST_CAPTURE_MARKER.parent.mkdir(parents=True, exist_ok=True)
+        LAST_CAPTURE_MARKER.write_text(
+            json.dumps({"timestamp": timestamp, "path": str(output_dir)}, indent=2) + "\n",
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+
     # Save failure state
     print(f"1. Saving failure state (slot {CAPTURE_SLOT})...")
     run_mesen_cmd("smart-save", str(CAPTURE_SLOT))
@@ -289,7 +301,7 @@ def cmd_capture(args):
     print("6. Capturing mem-blame for key addresses...")
     blame_addrs = [
         ("0x7E0013", "inidispq"),
-        ("0x7E001A", "inidisp"),
+        ("0x7E001A", "frame"),
         ("0x7E0010", "mode"),
         ("0x7E0011", "submode"),
         ("0x7E00A0", "room_layout"),
@@ -343,7 +355,7 @@ def cmd_capture(args):
 
     # Key values
     try:
-        inidisp = (values.get("0x7E001A") or {}).get("value_le")
+        frame = (values.get("0x7E001A") or {}).get("value_le")
         inidispq = (values.get("0x7E0013") or {}).get("value_le")
         mode = (values.get("0x7E0010") or {}).get("value_le")
         submode = (values.get("0x7E0011") or {}).get("value_le")
@@ -357,23 +369,23 @@ def cmd_capture(args):
             print(f"  RoomID: ${room_id:04X}")
         if isinstance(inidispq, int):
             print(f"  INIDISPQ: ${inidispq:02X}")
-        if isinstance(inidisp, int):
-            print(f"  INIDISP:  ${inidisp:02X}")
-            if (inidisp & 0x80) != 0:
+            if (inidispq & 0x80) != 0:
                 print("    ^ Forced blank bit set (0x80).")
+        if isinstance(frame, int):
+            print(f"  Frame:  {frame}")
     except Exception:
         pass
 
-    # Last INIDISP writer (MEM_BLAME)
-    inidisp_blame_path = output_dir / "blame_inidisp.json"
-    if inidisp_blame_path.exists():
+    # Last INIDISPQ writer (MEM_BLAME)
+    inidispq_blame_path = output_dir / "blame_inidispq.json"
+    if inidispq_blame_path.exists():
         try:
-            blame_res = json.loads(inidisp_blame_path.read_text())
+            blame_res = json.loads(inidispq_blame_path.read_text())
             summary = _summarize_blame(blame_res)
             last = summary.get("last") if isinstance(summary, dict) else None
             if isinstance(last, dict):
                 print(
-                    "  Last INIDISP write: "
+                    "  Last INIDISPQ write: "
                     f"pc={last.get('pc')} value={last.get('value')} opcode={last.get('opcode')} sp={last.get('sp')}"
                 )
         except json.JSONDecodeError:
@@ -390,6 +402,16 @@ def cmd_summary(args):
     if not OUTPUT_DIR.exists():
         print(f"No captures found at {OUTPUT_DIR}")
         return 1
+
+    if LAST_CAPTURE_MARKER.exists():
+        try:
+            meta = json.loads(LAST_CAPTURE_MARKER.read_text(encoding="utf-8"))
+            p = meta.get("path")
+            if p:
+                print(f"Last capture marker: {p}")
+                print()
+        except Exception:
+            pass
 
     captures = sorted(OUTPUT_DIR.iterdir(), reverse=True)
     if not captures:
@@ -409,7 +431,7 @@ def cmd_summary(args):
                 cpu = json.loads(cpu_path.read_text())
                 pc = cpu.get("PC") or cpu.get("pc")
 
-            inidisp = None
+            frame = None
             inidispq = None
             mode = None
             submode = None
@@ -417,7 +439,7 @@ def cmd_summary(args):
             values_path = capture_dir / "values.json"
             if values_path.exists():
                 vals = json.loads(values_path.read_text())
-                inidisp = (vals.get("0x7E001A") or {}).get("value_le")
+                frame = (vals.get("0x7E001A") or {}).get("value_le")
                 inidispq = (vals.get("0x7E0013") or {}).get("value_le")
                 mode = (vals.get("0x7E0010") or {}).get("value_le")
                 submode = (vals.get("0x7E0011") or {}).get("value_le")
@@ -434,8 +456,8 @@ def cmd_summary(args):
                 bits.append(f"Sub=${submode:02X}")
             if isinstance(inidispq, int):
                 bits.append(f"INIDISPQ=${inidispq:02X}")
-            if isinstance(inidisp, int):
-                bits.append(f"INIDISP=${inidisp:02X}")
+            if isinstance(frame, int):
+                bits.append(f"Frame={frame}")
             if isinstance(room_id, int):
                 bits.append(f"RoomID=${room_id:04X}")
             if bits:

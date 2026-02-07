@@ -10,7 +10,7 @@ local logEnabled = true
 local MODE      = 0x7E0010  -- Game module (6=UnderworldLoad, 7=Underworld, 9=Overworld)
 local SUBMODULE = 0x7E0011  -- Submodule state within current module
 local INIDISP_Q = 0x7E0013  -- INIDISP queue (screen brightness)
-local INIDISP_C = 0x7E001A  -- INIDISP copy
+local FRAME     = 0x7E001A  -- Frame counter (main loop progress)
 local MOSAIC    = 0x7E0094  -- Mosaic effect
 local ENTRANCE  = 0x7E010E  -- Entrance ID
 local ROOM      = 0x7E00A0  -- Current room ID
@@ -79,7 +79,7 @@ function Main()
     local mode = emu.read(MODE, emu.memType.snesMemory)
     local submodule = emu.read(SUBMODULE, emu.memType.snesMemory)
     local inidispQ = emu.read(INIDISP_Q, emu.memType.snesMemory)
-    local inidispC = emu.read(INIDISP_C, emu.memType.snesMemory)
+    local frame = emu.read(FRAME, emu.memType.snesMemory)
     local entrance = emu.read(ENTRANCE, emu.memType.snesMemory)
     local room = emu.read(ROOM, emu.memType.snesMemory)
 
@@ -93,16 +93,13 @@ function Main()
         lastSubmodule = submodule
     end
 
-    -- Log INIDISP changes (screen brightness)
-    if inidispC ~= lastINIDISP then
-        log(string.format("INIDISP: %02X -> %02X (Q=%02X)", lastINIDISP, inidispC, inidispQ))
-        -- Warn if screen goes black
-        if inidispC == 0x00 or inidispC == 0x80 then
-            log("  WARNING: Screen blanked!")
-        elseif lastINIDISP == 0x00 and inidispC == 0x0F then
-            log("  Screen restored to full brightness")
+    -- Log INIDISPQ changes (screen brightness / forced blank queue)
+    if inidispQ ~= lastINIDISP then
+        log(string.format("INIDISPQ: %02X -> %02X", lastINIDISP, inidispQ))
+        if (inidispQ & 0x80) ~= 0 or (inidispQ & 0x0F) == 0x00 then
+            log("  WARNING: Screen likely blanked (queued)!")
         end
-        lastINIDISP = inidispC
+        lastINIDISP = inidispQ
     end
 
     -- Draw HUD overlay
@@ -112,8 +109,8 @@ function Main()
     y = y + 10
     emu.drawString(4, y, string.format("Sub:  %s (%02X)", getSubmoduleName(mode, submodule), submodule), 0xFFFFFF, 0, 1)
     y = y + 10
-    emu.drawString(4, y, string.format("INIDISP: %02X (Q=%02X)", inidispC, inidispQ),
-        inidispC == 0x00 and 0xFF0000 or 0xFFFFFF, 0, 1)
+    emu.drawString(4, y, string.format("INIDISPQ: %02X  Frame: %02X", inidispQ, frame),
+        ((inidispQ & 0x80) ~= 0 or (inidispQ & 0x0F) == 0x00) and 0xFF0000 or 0xFFFFFF, 0, 1)
     y = y + 10
     emu.drawString(4, y, string.format("Room: %02X  Entrance: %02X", room, entrance), 0xFFFFFF, 0, 1)
     y = y + 10
@@ -135,4 +132,4 @@ end
 
 -- Register main draw callback
 emu.addEventCallback(Main, emu.eventType.endFrame)
-emu.log("Transition debug script loaded. Watch for MODE/INIDISP changes.")
+emu.log("Transition debug script loaded. Watch for MODE/INIDISPQ changes.")

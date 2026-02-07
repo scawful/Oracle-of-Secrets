@@ -1017,11 +1017,23 @@ def run_test(test_path: Path, verbose: bool = False, quiet: bool = False, dry_ru
     out(f"Using backend: {BACKEND.backend_name()} (mode={BACKEND.mode})")
     success, output = mesen_cmd('ping')
     if not success:
+        require_emulator = os.environ.get("OOS_TEST_REQUIRE_EMULATOR") == "1"
+        msg = (
+            f"Bridge not connected: {output}. "
+            "Start Mesen2-OOS with the socket API enabled (or set MESEN2_SOCKET_PATH) and re-run. "
+            "Set OOS_TEST_REQUIRE_EMULATOR=1 to make this a hard failure."
+        )
+        if require_emulator:
+            if quiet:
+                return "failed", msg
+            log(f"{Colors.RED}{msg}{Colors.RESET}")
+            return "failed", msg
+
+        # Default dev workflow: skip tests when no emulator backend is available.
         if quiet:
-            return "failed", output
-        log(f"{Colors.RED}Bridge not connected: {output}{Colors.RESET}")
-        log("Start Mesen2 with bridge script loaded first.")
-        return "failed", output
+            return "skipped", msg
+        log(f"{Colors.YELLOW}{msg}{Colors.RESET}")
+        return "skipped", msg
     out(f"{Colors.GREEN}Bridge connected{Colors.RESET}")
 
     # Subscribe to events and show OSD message
