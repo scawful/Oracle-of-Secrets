@@ -34,6 +34,69 @@ Design proposals for expanding Goron Mines' minecart system from 4 functional tr
 | Track persistence | Working | `MinecartTrackRoom/X/Y` tables at `$0728/$0768/$07A8` |
 | Custom collision overlay | Working | Per-room data at ROM `$258090` |
 
+### Authoring Pipeline (Do This Before Adding New Puzzles)
+
+The minecart engine is collision-tile driven: carts read tile attributes (`Sprite_GetTileAttr`) and dispatch on minecart collision tiles (`$B0-$BE`, `$D0-$D3`, stops `$B7-$BA`). That means the content pipeline must keep **room collision data** consistent, or carts will look "broken" even when the engine is fine.
+
+**Pipeline for a room you want to activate:**
+
+1. **Generate or update track collision** from rail objects (Object `0x31`) using z3ed:
+   - Prefer dry-run first.
+2. **Ensure stop tiles exist** (`$B7-$BA`) at intended spawn/parking points.
+3. **Place minecart sprites on stop tiles.**
+   - The minecart prep routine derives starting direction **only** from the stop tile under the cart.
+4. **Run `dungeon-minecart-audit`** and fix any remaining invariants before doing runtime playtests.
+
+**Important note on audit fields:** `track_object_subtypes` reported by z3ed are the **Object 0x31 size/subtype bytes**, not "track IDs". Do not treat "minecart sprite subtype not referenced by track objects" as a correctness requirement for runtime; the real authoring invariants are collision tiles + stops + cart placement.
+
+### Track Authoring Contract (Engine Requirements)
+
+These constraints are implied by `Sprites/Objects/minecart.asm`. If any are false, carts will despawn or behave “wrong” even when the room art looks correct.
+
+1. **Rooms with rails or carts must have custom minecart collision data.**
+   - If `has_custom_collision_data=false`, carts cannot dispatch on `$B0-$BE/$D0-$D3` tile IDs.
+2. **Every placed cart must sit on a stop tile (`$B7-$BA`).**
+   - `Sprite_Minecart_Prep` derives the initial direction from the stop tile under the cart.
+3. **Track IDs are stateful and coordinate-validated.**
+   - Track state lives in `MinecartTrackRoom/X/Y` (`$0728/$0768/$07A8`).
+   - If the cart sprite's coords do not match the stored coords, the sprite is killed in `_Prep`.
+4. **If a track has never been initialized, its starting room/coords must match the placed cart.**
+   - Update `Sprites/Objects/data/minecart_tracks.asm` (or the planned track table) to match the intended starting stop tile.
+5. **Door transitions must be aligned at the boundary.**
+   - If a cart ride is meant to pass through a doorway, collision tiles must line up so the transition is seamless.
+
+Implication: before “improving puzzles”, we first make these invariants true in each targeted room.
+
+### Minecart Collision Tile IDs (Quick Reference)
+
+This is the collision tile vocabulary the minecart logic dispatches on (`Sprites/Objects/minecart.asm`).
+
+- `$B0-$B1`: straight track tiles (orientation determined by how collision is authored)
+- `$B2`: corner (top-left)
+- `$B3`: corner (bottom-left)
+- `$B4`: corner (top-right)
+- `$B5`: corner (bottom-right)
+- `$B6`: 4-way intersection (D-pad choice)
+- `$BB`: T-junction (north)
+- `$BC`: T-junction (south)
+- `$BD`: T-junction (east)
+- `$BE`: T-junction (west)
+- `$B7-$BA`: stop tiles (also used to derive initial direction in `_Prep`)
+  - `$B7` -> depart south
+  - `$B8` -> depart north
+  - `$B9` -> depart east
+  - `$BA` -> depart west
+- `$D0-$D3`: switch corners (toggled by SwitchTrack sprite `0xB0`)
+
+### Stop Tile Placement Guidelines
+
+- **Every cart spawn must sit on a stop tile** (`$B7-$BA`). This is required for `_Prep` to set a sane initial direction.
+- Use stops as “checkpoints”:
+  - wrong routes should end at a stop that is close to where the player can retry (short recovery).
+- For intended multi-room rides:
+  - align track collision at door boundaries and validate transitions in runtime.
+  - if continuity is flaky, convert the boundary into a deliberate “stop at the door, then re-board” beat (still feels good if downtime is minimal).
+
 ### What's Coded but Disabled
 
 | Feature | Location | How to Enable |
@@ -85,12 +148,14 @@ Guardrail:
 | **0xDA** | **B2** | **49** | **100** | **11** | **Yes (A3 subtype 2)** | **FLAGGED — not on stop tile; subtype mismatch (2 vs {6,7,9,11,12})** |
 | 0xC8 | Boss | 0 | — | — | No | Empty |
 
-**14 of 19 rooms have track tiles drawn. Only 3 rooms (0x98, 0x88, 0x87) have functional cart sprites.**
-**4 rooms audited (2026-02-06): 0xA8, 0xB8, 0xD8, 0xDA — all flagged, but for different reasons (see per-room audit below):**
-- `0xA8`: cart present + stop tiles present, but cart is not on a stop tile and subtype mismatches track objects.
-- `0xB8`: custom collision present but no stop tiles; no cart sprites.
-- `0xD8`: two carts present + stop tiles present, but neither cart is on a stop tile.
-- `0xDA`: cart present + stop tiles present, but cart is not on a stop tile and subtype mismatches track objects.
+**14 of 19 rooms have track tiles drawn. Only 3 rooms (0x98, 0x88, 0x87) are currently "functional carts" rooms.**
+
+**Audit update (2026-02-07):** z3ed emitted **10 rooms with issues** in the requested sample set. The issues that actually block authoring/playability are:
+- `0x78`, `0x79`: minecart content exists but **no custom collision data**
+- `0xB8`: minecart collision exists but **no stop tiles**
+- `0x89`, `0xA8`, `0xD8`, `0xDA`: carts placed but **not on stop tiles**
+
+The detailed per-room writeups below focus on the originally investigated subset (`0xA8`, `0xB8`, `0xD8`, `0xDA`). Add similar writeups for `0x78`, `0x79`, and `0x89` once we decide which rooms are in-scope for near-term activation.
 
 ---
 
@@ -137,9 +202,15 @@ z3ed minecart audit (Goron Mines focus):
 ../yaze/scripts/z3ed dungeon-map --rom Roms/oos168x.sfc --room 0xD9
 ```
 
-Audit snapshot (2026-02-06, build: `Roms/oos168x.sfc`):
+Audit snapshot (2026-02-07, ROM copy: `/tmp/oos168x_minecart_audit_20260207.sfc`, sha256: `afff5b8b5ee70b883a2c9992da17e141dc60fc287d9cfdf838257c97adb4ff33`):
 
-**Rooms flagged by Codex `--only-issues`:** `0xA8`, `0xB8`, `0xD8`, `0xDA`.
+**Rooms with content-breaking issues (z3ed `dungeon-minecart-audit --only-issues`):**
+- Missing custom collision data (cannot work): `0x78`, `0x79`
+- No stop tiles: `0xB8`
+- Carts not placed on stop tiles: `0x89`, `0xA8`, `0xD8`, `0xDA`
+
+**Rooms emitted as "issues" due only to subtype bookkeeping (likely non-blocking):**
+- `0x87`, `0x88`, `0x97` (reported "minecart sprite subtype not referenced by track objects")
 
 **Invariant:** Inactive carts determine their starting direction only from the stop tile
 under them (see `Sprites/Objects/minecart.asm` `Sprite_Minecart_Prep`). If no stop tile
@@ -361,6 +432,48 @@ collision data that can potentially be set via the custom collision overlay in A
 4. **Persistence matters** — Puzzles should exploit the fact that carts stay where you leave them
 5. **Camera-friendly** — Track layouts should keep action within a single camera quadrant when possible (layout 7 rooms have the most space)
 
+### Layout Improvement Pass (v2) — Make It Play Better
+
+The structure and set pieces are good. The main improvements needed are about readability, fewer frustrating dead-ends, and reducing camera snap disorientation during faster rides.
+
+**v2 goals:**
+- Reduce “rode the cart and nothing happened” moments:
+  - carts always start on stop tiles
+  - stops exist at intended boarding/parking points
+- Keep critical decisions legible:
+  - introduce switch corners in a single-purpose tutorial room before combining them with multi-cart forks
+- Keep most required rides within 1-2 camera quadrants where possible.
+
+**Near-term v2 priorities (by player impact):**
+- **B2 gauntlet clarity:** `0xDA -> 0xD9 -> 0xD8` should read as one continuous “commit to the ride” sequence, with short failure recovery.
+- **B1 fork readability:** `0xA8` and `0xB8` should be solvable after one failure without long on-foot resets.
+- **F1 optionality:** exploration carts should reward curiosity without trapping the player into long backtracks.
+
+**Implementation approach:**
+- Fix invariants first (custom collision, stops, cart placement, starting table alignment).
+- Then adjust collision topology (junction placement, switch corners, stop placement) to match the intended puzzle beats.
+
+### v2 Critical Path Walkthrough (Minecart-Forward)
+
+This is the intended “teach -> combine -> climax” experience for Goron Mines once layouts are tightened.
+
+1. **F1: Teach the controls and basic vocabulary**
+   - `0x98`: ride + stop near an obvious exit (board/disembark loop).
+   - `0x87`: first “choose a direction” junction with an obvious reward branch.
+2. **F1 -> B1: First “wow” moment**
+   - `0x77 -> 0xA8 -> 0xB8`: continuous descent ride (or near-continuous with minimal downtime).
+   - Player learns “switch corners exist” in `0xA8` before being asked to solve the fork in `0xB8`.
+3. **B1: Puzzles that feel deliberate**
+   - `0xA8`: 1-switch tutorial, short recovery.
+   - `0xB8`: fork room, one main path cart and one reward cart.
+   - `0xB9`: optional/late “advanced routing” (should not be required to understand the rest of the dungeon).
+4. **B2: Climax**
+   - `0xDA`: safe staging, then commit.
+   - `0xD9`: crumble floor + speed (or pseudo-speed) creates pressure.
+   - `0xD8`: “everything comes together” room: Big Key access + cart-required boss gate.
+
+**v2 recovery rule:** Wrong rides should usually return you to a stop that is within 1 room and 1 camera quadrant of where you can retry.
+
 ---
 
 ## Floor 1 — Tutorial & Exploration
@@ -375,6 +488,7 @@ collision data that can potentially be set via the custom collision overlay in A
 - The track currently ends at the east wall. Adding a **stop tile (B9 or BA)** near the north door would make the cart feel purposeful — "ride east, stop at the door, get off and go north"
 - Consider a brief visual cue: a Goron NPC near the entrance who says something like "The old mine rails still work! Press B to ride"
 - The track has no-floor segments (X=0-10) before floor segments (X=12-52). This could be a visual hint that the track extends further in that direction (into a wall = came from somewhere)
+- v2: make the first ride end at an obvious actionable place (door, chest alcove, or a switch), not just “ride into a wall”.
 
 ### Room 0x88 (Big Chest) — "Two Carts, Two Paths" [Tracks 1 & 3, existing]
 
@@ -387,6 +501,8 @@ collision data that can potentially be set via the custom collision overlay in A
 - **Track 3 path:** Leads toward the holewarp zone. If the player rides this one without knowing what's below, they fall to Pre-Boss (0xD8). This is a **trap-slash-shortcut** depending on how prepared the player is.
 - Differentiate the two visually: Track 1 has floor tiles under it (safe), Track 3 has no-floor tiles near the holewarp (danger)
 - The holewarp at 0x88→0xD8 could become a **deliberate cart drop** later in the game (see "Holewarp Drop Ride" below)
+- v2: avoid “early accidental boss-route” frustration:
+  - keep Track 3 as a shortcut, but gate it behind a late trigger (switch/state) or force an intentional commit (stop tile + clear warning before the drop).
 
 ### Room 0x87 (West Hall) — "First Junction" [Track 2, existing]
 
@@ -400,6 +516,8 @@ collision data that can potentially be set via the custom collision overlay in A
   - **Go south (Y=34 line):** Leads to a dead-end stop tile near a chest or switch
 - The shutter door north (double, connects to 0x77) could be visually teased from the cart — "I can see the door, but can I reach it by riding?"
 - This room uses layout 7 (large), so there's plenty of space for track routing without camera issues
+- v2: make the reward branch short and readable:
+  - one “reward stop” that returns you to the junction with minimal on-foot backtrack.
 
 ### Room 0x78 (Lanmolas Miniboss) — "Grid Unlock" [Track 9, NEW]
 
@@ -434,6 +552,13 @@ Legend: [B6] = 4-way junction, 4 = T-intersection
 
 **Track slot:** Track 9 (subtype 0x09), starts in room 0x78 at the left-middle stop tile
 
+**v2 improvements (recommended):**
+- Consider shrinking the grid to a **3x3 decision grid** instead of 5x3:
+  - the current concept is strong but likely too wide to read at minecart speed
+- Put the **goal (chest alcove)** in camera view of the key decision junction so the player can route visually.
+- Keep punishment short:
+  - exactly 1 fail loop that returns to the start stop tile (avoid multiple dead-end stops).
+
 ### Room 0x77 (NW Hall) — "Descent Gateway" [Track 4, NEW]
 
 **Current:** 48 track objects. No cart. Staircase connection to 0xA8 (B1 NW).
@@ -448,6 +573,10 @@ Legend: [B6] = 4-way junction, 4 = T-intersection
 - When the cart hits the staircase door, the room transition fires and the ride continues in 0xA8
 
 **Track slot:** Track 4, starts in room 0x77
+
+**v2 improvements (recommended):**
+- Ensure the boarding stop is in the same camera quadrant as the staircase exit so the player sees “board -> descend”.
+- Add 1 optional parking stop (1-tile spur) with a small reward to teach that stops can be used intentionally.
 
 ### Room 0x89 (East Hall) — "The Mine Shaft" [Track 10, NEW]
 
@@ -474,6 +603,11 @@ Legend: [B6] = 4-way junction, 4 = T-intersection
 - No coming back from the south path! Player must decide
 
 **Track slot:** Track 10, starts in room 0x89
+
+**v2 improvements (recommended):**
+- Make the holewarp branch an intentional choice:
+  - place the south stop immediately adjacent to the drop so it reads as “commit to the fall”.
+- Ensure the exploration chest branch is solvable with **junction choice only** (no switch logic needed).
 
 ### Room 0x79 (NE Hall) — "Optional Explorer Cart" [Track 14, NEW]
 
@@ -548,6 +682,12 @@ The SwitchTrack sprite (`$B0`) is the crystal switch that toggles all D0-D3 tile
 
 **Track slot:** Track 5, starts in room 0xA8
 
+**v2 improvements (recommended):**
+- Keep this room single-purpose:
+  - exactly 1 switch corner that blocks the exit in the default state
+  - crystal switch reachable without leaving camera view
+- Add a “parking stop” right before the switch corner so the player can dismount and hit the switch without walking across the room.
+
 ### Room 0xB8 (B1 SW) — "Fork in the Mine" [Tracks 6 & 7, NEW]
 
 **Current:** 51 track objects. Staircase from 0x97 (F1 SW). No current cart.
@@ -576,6 +716,15 @@ The SwitchTrack sprite (`$B0`) is the crystal switch that toggles all D0-D3 tile
 **Key design point:** The two carts should NOT both lead to the exit in the same switch state. This forces the player to commit to one path.
 
 **Track slots:** Track 6 and Track 7, both start in room 0xB8
+
+**v2 improvements (recommended):**
+- Reduce cognitive load by making one cart clearly the **main path** and one cart clearly the **reward path**:
+  - main path cart is nearest the `0xA8` arrival
+  - reward cart is nearest the staircase so it feels optional
+- Avoid “both carts lead to nothing” states:
+  - at least one cart/switch state should always return to a neutral stop (short recovery).
+- Keep the switch effect legible:
+  - one switch state corresponds to “left route”, the other to “right route” (don’t hide it behind multiple corners).
 
 ### Room 0xB9 (B1 SE) — "Advanced Routing" [Track 8, NEW]
 
@@ -649,6 +798,12 @@ B2 is the climax. **Enable the speed switch (`$36`)** and **hook `RoomTag_Shutte
 
 **Track slot:** Track 11, starts in room 0xDA
 
+**v2 improvements (recommended):**
+- Treat `0xDA` as the “breather” before B2 speed:
+  - cart starts here at normal speed
+  - player can safely dismount and see the gauntlet entry before committing
+- Place the optional chest stop so it does not force a full reset to resume the main ride.
+
 ### Room 0xD9 (B2 Mid) — "Crumble Floor Speedway" [Track 12, NEW]
 
 **Current:** 37 track objects. tag1=3 (crumble floor), tag2=44. One-way shutters west and north. Bombable wall east to 0xDA.
@@ -674,6 +829,11 @@ B2 is the climax. **Enable the speed switch (`$36`)** and **hook `RoomTag_Shutte
 - The crumble floor creates urgency — even if you stop, you need to get moving again quickly or get off and walk on solid ground (but there might not be much solid ground)
 
 **Track slot:** Track 12, starts in room 0xD9 (or continues from Track 11 via room transition)
+
+**v2 improvements (recommended):**
+- Keep the “wrong switch state” punishment short:
+  - wrong route should lead to a stop that returns you to the entry point, not to a long on-foot backtrack.
+- If speed is enabled here, add at least one straightaway before the first decision so the player acclimates.
 
 ### Room 0xD7 (B2 West) — "The Loop Back" [Track 13, NEW]
 
@@ -723,6 +883,12 @@ B2 is the climax. **Enable the speed switch (`$36`)** and **hook `RoomTag_Shutte
 **Teaching payoff:** Everything the player learned (junctions, switches, speed) comes together in this one room.
 
 **Track slot:** Track 16 (dedicated Pre-Boss cart), or continue from Track 12/13 via room transitions
+
+**v2 improvements (recommended):**
+- Make the boss approach “two-step readable”:
+  1. one ride gets the Big Key (or positions you to reach it)
+  2. one ride takes you to the boss door (cart-required shutter)
+- Keep all required switch interactions in the same camera quadrant as the relevant junction.
 
 ---
 
@@ -871,6 +1037,17 @@ The minecart calls `HandleIndoorCameraAndDoors` (`$07F42F`) every frame during m
 ---
 
 ## Implementation Order
+
+### Phase 0: Fix Authoring Invariants (Before New Puzzles)
+
+Goal: make the existing rooms *actually runnable* so iteration isn’t fighting despawns/invalid states.
+
+1. For each in-scope room, ensure custom collision exists (minecart tiles present).
+2. Ensure every cart is placed on a stop tile (`$B7-$BA`).
+3. If a cart is moved to a new start stop, update `Sprites/Objects/data/minecart_tracks.asm` so first-load `_Prep` does not kill it.
+4. Re-run validation until clean:
+   - `z3ed dungeon-minecart-audit --only-issues` (must be empty for targeted rooms)
+5. Only after Phase 0 is true should we start layering switch corners, multi-cart forks, speed zones, and cart-required shutters.
 
 ### Phase 1: Enable Dead Code
 1. Enable `!ENABLE_MINECART_CART_SHUTTERS = 1` and assign Tag `0x38` (Holes6) to a test room

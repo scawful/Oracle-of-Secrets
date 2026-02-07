@@ -61,6 +61,9 @@ Repeatable six-phase workflow for debugging Oracle of Secrets bugs (black screen
 - Use a **state from the state library** (or create one at the failure point): `mesen2_client.py load <slot>`, `lib-load "label"`, or `smart-save` / `lib-save`.
 - If the bug is scripted: run **repro script** (e.g. `repro_stack_corruption.py`) or **test harness** from zelda-debugger skill (`test_harness.py --test building_entry`).
 - For navigation-dependent bugs: use **hyrule-navigator** to get to the POI/entrance, then capture state.
+- For transition blackouts specifically: use the deterministic repro helper (press + watchdog + capture):
+  - `python3 scripts/repro_blackout_transition.py --lib <state_id> --arm`
+  - Add `--launch --instance oos-blackout` if you want the tooling to spawn a headless Mesen2 instance.
 
 **Output:** Reproducible steps + savestate path/slot.
 
@@ -88,7 +91,7 @@ Repeatable six-phase workflow for debugging Oracle of Secrets bugs (black screen
 
 - **Conditional breakpoints** (e.g. SP corruption): break when `sp >= 0x0200` or on TCS with `a >= 0x0200` (see [RootCause_Investigation_Handoff.md](../Issues/RootCause_Investigation_Handoff.md)).
 - **P_WATCH** (zelda-debugger / mesen2_client): depth 500–2000 to catch SEP/REP/PLP that corrupt P before a suspicious instruction.
-- **MEM_WATCH** on key addresses (e.g. GameMode `$7E0010`, Submodule `$7E0011`, INIDISP `$7E001A`, or stack page); then use **MEM_BLAME** after hit.
+- **MEM_WATCH** on key addresses (e.g. GameMode `$7E0010`, Submodule `$7E0011`, `INIDISPQ` `$7E0013`, or stack page); then use **MEM_BLAME** after hit.
 - Reload the **same savestate** from Phase 2 and replay; when breakpoint or watch fires, leave emulation paused for Phase 4.
 
 **Output:** Breakpoint/watch configuration and the pause point (PC, SP, key RAM values).

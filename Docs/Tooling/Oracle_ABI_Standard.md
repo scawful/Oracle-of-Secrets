@@ -42,3 +42,21 @@ OOS_LongExit
 - Long-entry routines should use `SEP/REP` internally as needed.
 - `OOS_LongEntry`/`OOS_LongExit` preserve P and DB so caller state is restored.
 - This standard is backwards-compatible with Asar (pure macro expansion).
+
+## Patch Hooks: "Width-Transparent" Contract (Non-Long-Entry)
+Not all hooks jump to a long-entry routine. Some hooks replace 2-8 bytes of
+vanilla code and then return into vanilla at a specific address that expects a
+specific `P` state (especially M/X width).
+
+Rules:
+- If you patch a callsite that is inside a known-width region (e.g. after `SEP #$20`,
+  or before `CPX.b` / `CPY.b` / `CMP.b`), your hook must **exit** with that same
+  width expectation.
+- For "inline" patch hooks that resume vanilla immediately, prefer being
+  *width-transparent*: `PHP` on entry, do your temporary `SEP/REP` work, `PLP`
+  before returning, and if needed, explicitly re-assert the required width
+  (`SEP #$30` or `REP #$30`) that vanilla expects at the resume address.
+
+Practical guideline:
+- If the next vanilla instruction uses an 8-bit immediate compare (`CPX.b`, `CPY.b`,
+  `CMP.b`), ensure you return with M/X=8 to avoid immediate-length desync.

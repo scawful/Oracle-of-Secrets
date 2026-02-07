@@ -28,7 +28,7 @@ If a hook changes register width (e.g. `REP/SEP`) it must either:
 - Restore `P` (e.g. `PHP`/`PLP`) on **all** exits, or
 - Explicitly set the expected exit width (and ensure the code matches).
 
-The dungeon transition blackout (reported 2026-02-06, fixed 2026-02-07) was caused by a room-load hook (`CustomRoomCollision` at `$01B95B`) executing `REP #$30` and returning early without restoring `P`, leaking M/X width into vanilla transition code.
+The dungeon transition blackout investigation (reported 2026-02-06) identified a confirmed contributor: a room-load hook (`CustomRoomCollision` at `$01B95B`) executed `REP #$30` and could return early without restoring `P`, leaking M/X width into vanilla transition code. That specific issue was fixed on 2026-02-07, but **blackouts can still occur** from other register-width leaks (notably X/Y width leaks into `JumpTableLocal` at `$008781`). Treat the ABI rule below as ongoing policy, not a one-off.
 
 Helpers:
 - `python3 scripts/tag_org_hooks.py --root . --apply --normalize --module-from-path`

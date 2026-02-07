@@ -71,7 +71,7 @@ Each dungeon boss (D1-D7) is followed by a crystal maiden sequence (repurposed f
 - D1, D2, D6 maidens open with generic "freed from Kydrog" language — candidates for identity refinement
 - D7 is Farore herself (not a maiden), delivering full endgame exposition after rescue
 
-**Planned improvements** (blocked on yaze message editor expanded bin support):
+**Planned improvements** (not blocked; yaze GUI support is a convenience, not a requirement):
 - Give D1/D2/D6 maidens distinct character identities
 - Add essence names to collection receipt text ("You got the Whispering Vines!")
 - Revision pass on all maiden dialogue for consistency with Story Bible v2.0

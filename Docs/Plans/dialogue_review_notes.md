@@ -4,7 +4,7 @@
 
 Comprehensive review of all 397 messages extracted from the Oracle of Secrets dev ROM (`oos168.sfc`) via z3ed CLI, plus 47 expanded bank messages from `Core/message.asm`. Each section analyzes dialogue by narrative function, grades current quality, and proposes specific improvements to align with Story Bible v2.0 and improve player progression clarity.
 
-**All dialogue edits are BLOCKED on yaze message editor expanded bin support** unless noted otherwise.
+All dialogue edits are **not blocked**. The yaze GUI improvements are a quality-of-life item, but dialogue can be authored today via:\n+\n+- Editing `Core/messages.org` and rebuilding (`./scripts/build_rom.sh 168`).\n+- If you need ROM-side patching without rebuilding, use tooling/CLI import-export workflows (e.g., yaze/z3ed CLI message write paths) as a temporary bridge.\n+\n+Treat “yaze message editor expanded bin support” as a UI/workflow accelerator, not a hard dependency.
 
 ### z3ed Message Extraction (2026-02-05)
 
@@ -732,11 +732,9 @@ Note: `message-export-bundle` currently fails on expanded messages (UTF-8 encodi
 
 ## Dependencies
 
-### Blocked
-- All **vanilla table dialogue edits** BLOCKED on yaze message editor expanded bin support
-- Ganondorf ambiguity fixes (0x136, 0x173) require message editor
-- Maiden identity rewrites (D1/D2/D6) require message editor
-- Message 371 (vanilla ALTTP Triforce text) full rewrite requires message editor
+### Requires A Workflow Choice (Not Blocked)
+- **Vanilla table dialogue edits:** edit `Core/messages.org` and rebuild, or use z3ed export/import to round-trip ROM -> org -> ROM as needed.
+- **Expanded bank dialogue (0x18D+):** either author in `Core/message.asm` expanded entries (preferred for deterministic builds) or use z3ed tooling for decode/export while yaze GUI support is being improved.
 
 ### Not Blocked (ASM-only or message.asm)
 - **Windmill Guy messages (0x1D5-0x1D8):** Can be added to `Core/message.asm` as new expanded entries

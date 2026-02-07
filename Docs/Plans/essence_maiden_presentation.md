@@ -2,7 +2,7 @@
 
 ## Summary
 
-Refine the crystal maiden dialogue and essence collection text to strengthen the game's Oracle identity while working within existing mechanical and graphical constraints. All dialogue changes are **blocked on yaze message editor** expanded bin support.
+Refine the crystal maiden dialogue and essence collection text to strengthen the game's Oracle identity while working within existing mechanical and graphical constraints.\n+\n+Dialogue authoring is **not blocked**: edit `Core/messages.org` (and any associated message tables) and rebuild the ROM. yaze GUI support is a convenience item, not a dependency.
 
 ## Current State
 

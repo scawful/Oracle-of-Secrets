@@ -269,7 +269,8 @@ mcp__memory__open_nodes(["OracleOfSecrets", "OracleKnownIssues"])
 |--------|---------|--------|---------|
 | GameMode | $7E0010 | Vanilla | All |
 | Submodule | $7E0011 | Vanilla | All |
-| INIDISP | $7E001A | Vanilla | Black screen debug |
+| INIDISPQ | $7E0013 | Vanilla | Black screen debug (queued PPU $2100) |
+| FrameCounter | $7E001A | Vanilla | Hang detection (main-loop progress) |
 | Module_LoadFile | $02D8EB | USDASM | Mesen2 breakpoints |
 | CheckForFollowerIntraroomTransition | $0289BF | Oracle | SEP/REP fix |
 | WarpDispatcher | $3CB400 | Oracle | Debug warp |

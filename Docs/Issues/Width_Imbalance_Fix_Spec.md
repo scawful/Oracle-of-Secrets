@@ -63,3 +63,13 @@ Requires patching vanilla at `$06ACF1` (e.g. replace PLA with JSL to a stub that
 - [OverworldSoftlock_RootCause.md](OverworldSoftlock_RootCause.md) — mechanism, TCS sites, width analysis
 - [OverworldSoftlock_FixPlan.md](OverworldSoftlock_FixPlan.md) — Fix 1.3–1.6, Option A/B patterns
 - `width_imbalance_report_20260130.json` — full static analysis output
+
+## Additional Oracle-Side Guard (Not A Vanilla Patch)
+
+The static report also flagged a width-dependent `PHX/PLX` mismatch risk in `ApplyManhandlaGraphics` (`Sprites/Bosses/manhandla.asm`) when invoked from transition code.
+
+Practical hazard:
+- `STX` to PPU regs (`$2100`, etc.) is only safe when X is **8-bit**.
+
+Fix applied in Oracle ASM (no vanilla patch required):
+- `ApplyManhandlaGraphics`: `PHP : SEP #$10` before `PHX`/`STX`, and `PLP` on exit.

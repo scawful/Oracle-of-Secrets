@@ -45,3 +45,15 @@ If X/Y are 16-bit on entry:
 - For runtime validation in Mesen2-OOS, you can set a conditional P breakpoint:
   - Break if X/Y are NOT 8-bit at `$008781`:
     - `python3 scripts/mesen2_client.py p-assert 0x008781 0x10 --mask 0x10`
+
+### Mitigation / Safety Net (Feature-Flagged)
+Oracle includes an optional guard patch that makes `JumpTableLocal` self-healing by forcing `SEP #$10` on entry
+(before the first `STY/PLY`). This prevents the catastrophic stack-corruption blackout even if an upstream width leak
+still exists.
+
+- Flag: `!ENABLE_JUMPTABLELOCAL_GUARD` (default: `1`)
+- Patch site: `Core/patches.asm` at `$008781`
+
+Use this as:
+- A stability mitigation (keep it ON while playing), and
+- A diagnosis lever (turn it OFF to reproduce and capture the upstream leak).

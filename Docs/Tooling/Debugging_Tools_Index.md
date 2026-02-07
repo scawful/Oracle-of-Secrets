@@ -121,6 +121,49 @@ python3 -m scripts.campaign.autonomous_debugger --monitor --fail-on-anomaly --tr
 - Reports: `/tmp/oos_autodebug/reports`
 - Savestates: `/tmp/oos_autodebug/states`
 
+#### Agentic Autodebug (`oracle-of-secrets/scripts/campaign/agentic_autodebug.py`)
+
+World-aware anomaly capture with an "arm → detect → capture → freeze" flow. This tool is designed to reduce
+path copy/paste: it writes a repo-local marker and a short markdown report for the latest capture.
+
+**Usage:**
+```bash
+# Arm instrumentation (P-watch, trace, mem-watches, JumpTableLocal p-assert)
+python3 -m scripts.campaign.agentic_autodebug arm
+
+# Monitor manual play and auto-capture on anomaly
+python3 -m scripts.campaign.agentic_autodebug monitor --duration 600 --poll-hz 4
+
+# Run campaign autopilot with per-frame anomaly detection (captures and freezes on anomaly)
+python3 -m scripts.campaign.agentic_autodebug run --max-iterations 50
+
+# Triage the latest capture without copying paths
+python3 -m scripts.campaign.agentic_autodebug triage --latest
+```
+
+**Artifact locations (defaults):**
+- Captures: `/tmp/oos_autodebug/agentic/captures`
+- Latest marker: `.cache/oos_agentic_autodebug/last_capture.json`
+- Latest report: `.cache/oos_agentic_autodebug/latest_report.md`
+
+#### Blackout Repro Harness (`oracle-of-secrets/scripts/repro_blackout_transition.py`)
+
+Deterministic "seed state + one input" harness for dungeon transition blackouts. This is intended for rapid A/B testing with feature flags.
+
+**Usage:**
+```bash
+# From a seed savestate in slot 20 (default), hold DOWN to take stairs, monitor for blank/hang, auto-capture on anomaly.
+python3 scripts/repro_blackout_transition.py
+
+# Build a ROM variant first (feature flags), then run the repro.
+python3 scripts/repro_blackout_transition.py --build --disable custom_room_collision,water_gate_hooks
+```
+
+**Feature-flag iteration (fast A/B):**
+- `./scripts/build_rom.sh 168 --disable <csv>` builds a ROM variant with temporary `Config/feature_flags.asm` overrides.
+- Use `--profile all-off` to start from a minimal baseline, then selectively `--enable <csv>`.
+- Add `--persist-flags` if you want the generated `Config/feature_flags.asm` left on disk (otherwise it is restored/removed after build).
+
 ### 3. Post-Mortem Analysis
 
 #### Crash Investigator (`~/src/hobby/yaze/scripts/ai/crash_dump.py`)
