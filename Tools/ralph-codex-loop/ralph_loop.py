@@ -81,7 +81,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     },
     "model": "gpt-5.2-codex-xhigh",
     "session_log_dir": "~/.context/projects/oracle-of-secrets/scratchpad/sessions",
-    "status_dir": str((ROOT / "Docs/Status/ralph").resolve()),
+    "status_dir": str((ROOT / "Docs/Planning/Status/ralph").resolve()),
     "autosave_dir": "",
     "input_chunk_frames": 20,
     "dangerous_paths": ["dw_softlock_south"],
@@ -123,7 +123,7 @@ def load_config() -> Dict[str, Any]:
     # normalize key paths
     cfg["mesen_client"] = str(expand(cfg["mesen_client"]))
     cfg["rom"] = str(expand(cfg["rom"]))
-    cfg["status_dir"] = str(expand(cfg.get("status_dir", ROOT / "Docs/Status/ralph")))
+    cfg["status_dir"] = str(expand(cfg.get("status_dir", ROOT / "Docs/Planning/Status/ralph")))
     cfg["session_log_dir"] = str(expand(cfg.get("session_log_dir", "~/.context/projects/oracle-of-secrets/scratchpad/sessions")))
     return cfg
 

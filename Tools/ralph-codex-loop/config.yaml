@@ -50,4 +50,4 @@ models:
 
 # Logging
 session_log_dir: "~/.context/projects/oracle-of-secrets/scratchpad/sessions"
-status_dir: "../Docs/Status/ralph"
+status_dir: "../Docs/Planning/Status/ralph"

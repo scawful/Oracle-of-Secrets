@@ -3,6 +3,10 @@
 **Date:** 2026-01-21
 **Status:** Implemented
 
+> NOTE (2026-02-07): This document describes a legacy Lua/file-bridge era (`mesen_live_bridge.lua`, `mesen_cli.sh`).
+> Oracle of Secrets now uses the Mesen2 OOS fork socket API via `python3 scripts/mesen2_client.py` as the supported path.
+> Keep this doc for historical context only.
+
 
 ### 1. Add Screenshot Command to Bridge
 

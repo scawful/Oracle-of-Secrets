@@ -42,7 +42,7 @@ Configuration
 Outputs
 - Session logs: `~/.context/projects/oracle-of-secrets/scratchpad/sessions/<date>_ralph.md`
 - Latest socket hint: `.context/scratchpad/mesen2/latest_socket.txt` (if present)
-- Diagnostic captures: `Docs/Status/ralph/diag_*.json` (created on demand)
+- Diagnostic captures: `Docs/Planning/Status/ralph/diag_*.json` (created on demand)
 
 Next steps (recommended)
 - Wire real path planner to Collision/Overworld navigator (use nav_attach.sh).

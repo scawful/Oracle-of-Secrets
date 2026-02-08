@@ -1,6 +1,9 @@
 # Oracle of Secrets - Testing Infrastructure Gap Analysis
 
 > NOTE (2026-01-24): oos168x/oos168_test2 save states are deprecated. Use patched oos168x states only; stale packs are archived under `Roms/SaveStates/library/_stale_oos_20260124`.
+>
+> NOTE (2026-02-07): This document is a historical gap analysis. Some referenced scripts (`state_library.py`, `mesen_cli.sh`) have been removed.
+> For current workflows, start from `RUNBOOK.md`.
 
 **Date:** 2026-01-22
 **Status:** Analysis Complete
@@ -59,7 +62,7 @@ Located at: `~/Documents/Mesen2/SaveStates/`
 
 ### Gap 1: Empty State Library Manifest
 
-**File:** `Docs/Testing/save_state_library.json`
+**File:** `Docs/Tooling/Testing/save_state_library.json`
 
 ```json
 {

@@ -1,5 +1,12 @@
 # State Quality & Emulator Management Roadmap
 
+> NOTE (2026-02-07): This roadmap predates the current save-data/profile tooling.
+> References to `scripts/mesen2_client_lib/state_library.py`, `state_library.py`, and `mesen_cli.sh` are historical.
+> Current entry points:
+> - `RUNBOOK.md`
+> - `python3 scripts/mesen2_client.py library` (savestate library)
+> - `python3 scripts/mesen2_client.py save-data ...` (profiles, snapshots, `.srm` hot reload)
+
 ## Problem Statement
 
 1. **State Quality**: 11 "baseline" states are identical copies - no validation on capture
@@ -72,7 +79,7 @@ Add stale socket detection before connecting.
 
 ### 2.1 Schema Update
 
-**File:** `Docs/Testing/save_state_library.json`
+**File:** `Docs/Tooling/Testing/save_state_library.json`
 
 Add new fields to manifest entries:
 ```json

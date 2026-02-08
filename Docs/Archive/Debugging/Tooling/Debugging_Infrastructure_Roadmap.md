@@ -3,6 +3,10 @@
 **Created:** 2026-01-25
 **Last Updated:** 2026-01-25
 
+> NOTE (2026-02-07): This document contains historical references (skills/MCPs, `state_library.py`, `mesen_cli.sh`).
+> The current supported workflow is the Mesen2 OOS fork socket API via `python3 scripts/mesen2_client.py`.
+> Start from `RUNBOOK.md` and `Docs/Tooling/Tooling/Root_Cause_Debugging_Workflow.md`.
+
 ## Implementation Status
 
 | Phase | Status | Notes |
