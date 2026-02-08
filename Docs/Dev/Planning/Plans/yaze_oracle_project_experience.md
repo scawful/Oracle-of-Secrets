@@ -31,6 +31,16 @@ Yaze has strong infrastructure (panel system, room rendering, shortcuts, hack ma
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## Current State (2026-02-08)
+
+Already supported in yaze (via `HackManifest::LoadProjectRegistry()`):
+- `dungeons.json` (project registry)
+- `overworld.json` (project registry)
+- `oracle_resource_labels.json` (preferred) or `oracle_room_labels.json` (legacy)
+- `story_events.json`
+
+Remaining work is primarily UI/UX in yaze (DungeonMapPanel zoom/links/badges, Oracle menu/shortcuts, build status surface).
+
 ## Feature 1: Dungeon Registry in Project Metadata
 
 ### What
@@ -198,7 +208,7 @@ The `ResourceLabelProvider` already supports project overrides via `SetProjectLa
 }
 ```
 
-**Source:** The Oracle data sheet CSV (`Docs/Ref/Sheets/Oracle of Secrets Data Sheet - Rooms and Entrances.csv`, column 7) already has all the Oracle room names. A script can extract them into this format.
+**Source:** The Oracle data sheet CSV (`Docs/Technical/Sheets/Oracle of Secrets Data Sheet - Rooms and Entrances.csv`, column 7) already has all the Oracle room names. A script can extract them into this format.
 
 ### Auto-Load
 

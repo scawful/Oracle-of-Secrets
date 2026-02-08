@@ -1,0 +1,611 @@
+{
+  "_meta": {
+    "generated_by": "scripts/extract_story_events.py",
+    "description": "Oracle of Secrets story event graph for yaze integration",
+    "source": "Docs/Planning/Story_Event_Graph.md",
+    "event_count": 17,
+    "edge_count": 17
+  },
+  "events": [
+    {
+      "id": "EV-001",
+      "name": "Intro begins (Link’s House / Loom Beach)",
+      "flags": [
+        {
+          "name": "IntroState",
+          "operation": "increment"
+        },
+        {
+          "name": "Story2_LegacyHouseFlag"
+        }
+      ],
+      "locations": [
+        {
+          "name": "Link's House",
+          "entrance_id": "0/1"
+        },
+        {
+          "name": "Loom Beach",
+          "overworld_id": "0x33"
+        }
+      ],
+      "scripts": [
+        "HouseTag_TelepathicPlea"
+      ],
+      "text_ids": [
+        "0x1F"
+      ],
+      "evidence": "Dungeons/custom_tag.asm; Docs/Technical/Sheets/Rooms and Entrances.csv",
+      "last_verified": "2026-01-23 (code)",
+      "notes": "GameState=1 setter not located; no uncle NPC in OOS (legacy vanilla flag only)",
+      "dependencies": [],
+      "unlocks": [
+        "EV-002",
+        "EV-015"
+      ]
+    },
+    {
+      "id": "EV-002",
+      "name": "Maku Tree met",
+      "flags": [
+        {
+          "name": "MakuTreeQuest",
+          "value": "1"
+        },
+        {
+          "name": "Story_HallOfSecrets",
+          "register": "OOSPROG",
+          "bit": 1
+        }
+      ],
+      "locations": [
+        {
+          "name": "Hall of Secrets",
+          "entrance_id": "2",
+          "overworld_id": "0x0E"
+        }
+      ],
+      "scripts": [
+        "MakuTree_MeetLink"
+      ],
+      "text_ids": [
+        "0x20",
+        "0x22"
+      ],
+      "evidence": "Sprites/NPCs/maku_tree.asm; Docs/Planning/world_map_diagram.md",
+      "last_verified": "2026-01-24 (design)",
+      "notes": "Hall of Secrets is repurposed sanctuary interior",
+      "dependencies": [
+        "EV-001"
+      ],
+      "unlocks": [
+        "EV-003"
+      ]
+    },
+    {
+      "id": "EV-003",
+      "name": "Hall of Secrets unlocked",
+      "flags": [
+        {
+          "name": "Story_HallOfSecrets",
+          "register": "OOSPROG",
+          "bit": 1
+        }
+      ],
+      "locations": [
+        {
+          "name": "Sanctuary / Hall of Secrets",
+          "entrance_id": "2",
+          "overworld_id": "0x0E"
+        }
+      ],
+      "scripts": [
+        "MakuTree_MeetLink"
+      ],
+      "text_ids": [
+        "0x20"
+      ],
+      "evidence": "Sprites/NPCs/maku_tree.asm; Docs/Technical/Sheets/Rooms and Entrances.csv",
+      "last_verified": "2026-01-23 (code)",
+      "notes": "Location mapping via sheets",
+      "dependencies": [
+        "EV-002"
+      ],
+      "unlocks": [
+        "EV-004",
+        "EV-016"
+      ]
+    },
+    {
+      "id": "EV-004",
+      "name": "Pendant quest enabled (intro progress)",
+      "flags": [
+        {
+          "name": "Story_PendantQuest",
+          "register": "OOSPROG",
+          "bit": 2
+        }
+      ],
+      "locations": [
+        {
+          "name": "Sanctuary / Hall of Secrets"
+        }
+      ],
+      "scripts": [
+        "Impa_SetSpawnPointFlag"
+      ],
+      "text_ids": [],
+      "evidence": "Sprites/NPCs/impa.asm",
+      "last_verified": "2026-01-23 (code)",
+      "notes": "Hooked at Zelda_AtSanctuary",
+      "dependencies": [
+        "EV-003"
+      ],
+      "unlocks": [
+        "EV-005",
+        "EV-012",
+        "EV-014"
+      ]
+    },
+    {
+      "id": "EV-005",
+      "name": "Kydrog encounter / banishment",
+      "flags": [
+        {
+          "name": "Story2_KydrogEncounter",
+          "register": "OOSPROG2",
+          "bit": 2
+        },
+        {
+          "name": "GameState",
+          "value": "2"
+        }
+      ],
+      "locations": [
+        {
+          "name": "Forest Glade",
+          "special_world_id": "0x80"
+        }
+      ],
+      "scripts": [
+        "WarpPlayerAway",
+        "FaroreFollowPlayer"
+      ],
+      "text_ids": [
+        "0x21"
+      ],
+      "evidence": "Sprites/Bosses/kydrog.asm; Sprites/NPCs/farore.asm",
+      "last_verified": "2026-01-24 (design)",
+      "notes": "Canon: encounter happens on SW 0x80; LW 0x2A is a forest crossroads",
+      "dependencies": [
+        "EV-004"
+      ],
+      "unlocks": [
+        "EV-006",
+        "EV-009"
+      ]
+    },
+    {
+      "id": "EV-006",
+      "name": "Book of Secrets obtained",
+      "flags": [
+        {
+          "name": "Story2_BookOfSecrets",
+          "register": "OOSPROG2",
+          "bit": 5
+        }
+      ],
+      "locations": [],
+      "scripts": [],
+      "text_ids": [],
+      "evidence": "Core/sram.asm",
+      "last_verified": "2026-01-23 (code)",
+      "notes": "Setter not traced; check Items/book*",
+      "dependencies": [
+        "EV-005"
+      ],
+      "unlocks": [
+        "EV-007"
+      ]
+    },
+    {
+      "id": "EV-007",
+      "name": "Fortress of Secrets complete",
+      "flags": [
+        {
+          "name": "Story_FortressComplete",
+          "register": "OOSPROG",
+          "bit": 7
+        }
+      ],
+      "locations": [
+        {
+          "name": "Fortress of Secrets",
+          "entrance_id": "0x0C/0x37"
+        }
+      ],
+      "scripts": [],
+      "text_ids": [],
+      "evidence": "Core/sram.asm; Docs/Technical/Sheets/Rooms and Entrances.csv",
+      "last_verified": "2026-01-23 (code)",
+      "notes": "Completion routine not traced",
+      "dependencies": [
+        "EV-006"
+      ],
+      "unlocks": [
+        "EV-008"
+      ]
+    },
+    {
+      "id": "EV-008",
+      "name": "Farore rescued / endgame",
+      "flags": [
+        {
+          "name": "GameState",
+          "value": "3"
+        }
+      ],
+      "locations": [],
+      "scripts": [],
+      "text_ids": [],
+      "evidence": "Core/sram.asm",
+      "last_verified": "2026-01-23 (code)",
+      "notes": "Setter not traced",
+      "dependencies": [
+        "EV-007"
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "EV-009",
+      "name": "Mask Salesman met",
+      "flags": [
+        {
+          "name": "SideQuest_MetMaskSalesman (bit 0)"
+        }
+      ],
+      "locations": [
+        {
+          "name": "Tail Pond",
+          "overworld_id": "0x2D"
+        }
+      ],
+      "scripts": [
+        "NoOcarina"
+      ],
+      "text_ids": [
+        "0xE9"
+      ],
+      "evidence": "Sprites/NPCs/mask_salesman.asm; Docs/Planning/world_map_diagram.md",
+      "last_verified": "2026-01-24 (design)",
+      "notes": "Shop always present; overworld access blocked by Stalfos guards during intro (clears after GameState moves to 2)",
+      "dependencies": [
+        "EV-005"
+      ],
+      "unlocks": [
+        "EV-010"
+      ]
+    },
+    {
+      "id": "EV-010",
+      "name": "Song of Healing taught",
+      "flags": [
+        {
+          "name": "SideQuest2_SongOfHealing (bit 2)"
+        }
+      ],
+      "locations": [
+        {
+          "name": "Tail Pond",
+          "overworld_id": "0x2D"
+        }
+      ],
+      "scripts": [
+        "TeachLinkSong"
+      ],
+      "text_ids": [
+        "0x81"
+      ],
+      "evidence": "Sprites/NPCs/mask_salesman.asm; Docs/Planning/world_map_diagram.md",
+      "last_verified": "2026-01-24 (design)",
+      "notes": "Shop always present; overworld access blocked by Stalfos guards during intro (clears after GameState moves to 2)",
+      "dependencies": [
+        "EV-009"
+      ],
+      "unlocks": [
+        "EV-011",
+        "EV-013"
+      ]
+    },
+    {
+      "id": "EV-011",
+      "name": "Ranch Girl transformed back",
+      "flags": [
+        {
+          "name": "SideQuest2_RanchGirl (bit 0)"
+        }
+      ],
+      "locations": [
+        {
+          "name": "Loom Ranch",
+          "overworld_id": "0x00"
+        }
+      ],
+      "scripts": [
+        "RanchGirl_Message"
+      ],
+      "text_ids": [
+        "0x17D"
+      ],
+      "evidence": "Sprites/NPCs/ranch_girl.asm; Docs/Planning/world_map_diagram.md",
+      "last_verified": "2026-01-23 (code)",
+      "notes": "Location mapped to OW 0x00",
+      "dependencies": [
+        "EV-010"
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "EV-012",
+      "name": "Found withering Deku Scrub (main quest)",
+      "flags": [
+        {
+          "name": "SideQuest_DekuScrubFound (bit 2)"
+        }
+      ],
+      "locations": [
+        {
+          "name": "Tail Pond",
+          "overworld_id": "0x2D"
+        }
+      ],
+      "scripts": [
+        "EstadoInactivo"
+      ],
+      "text_ids": [
+        "0x140"
+      ],
+      "evidence": "Sprites/NPCs/deku_scrub.asm; Docs/Planning/world_map_diagram.md",
+      "last_verified": "2026-01-24 (design)",
+      "notes": "Main quest beat between D1 and D2; requires D1 mushroom → witches east of castle for magic powder/collectible bag; flags live in SideQuestProg",
+      "dependencies": [
+        "EV-004"
+      ],
+      "unlocks": [
+        "EV-013"
+      ]
+    },
+    {
+      "id": "EV-013",
+      "name": "Deku Scrub soul freed (main quest)",
+      "flags": [
+        {
+          "name": "SideQuest2_DekuSoulFreed (bit 4)"
+        }
+      ],
+      "locations": [
+        {
+          "name": "Tail Pond",
+          "overworld_id": "0x2D"
+        }
+      ],
+      "scripts": [
+        "QuiereCuracion"
+      ],
+      "text_ids": [
+        "0x141"
+      ],
+      "evidence": "Sprites/NPCs/deku_scrub.asm; Docs/Planning/world_map_diagram.md",
+      "last_verified": "2026-01-24 (design)",
+      "notes": "Main quest beat between D1 and D2; Song of Healing required (Mask Salesman hints OK); flags live in SideQuestProg2",
+      "dependencies": [
+        "EV-010",
+        "EV-012"
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "EV-014",
+      "name": "Village Elder met",
+      "flags": [
+        {
+          "name": "Story_VillageElderMet (bit 4)"
+        }
+      ],
+      "locations": [
+        {
+          "name": "Wayward Village",
+          "entrance_id": "0x97",
+          "room_id": "0x202"
+        }
+      ],
+      "scripts": [
+        "Sprite_VillageElder_Main"
+      ],
+      "text_ids": [
+        "0x143"
+      ],
+      "evidence": "Sprites/NPCs/village_elder.asm; Docs/Planning/npc_home_dialogue_audit.md",
+      "last_verified": "2026-01-24 (rom)",
+      "notes": "Elder appears as subtype sprite in room 0x202; confirm subtype mapping",
+      "dependencies": [
+        "EV-004"
+      ],
+      "unlocks": [
+        "EV-017"
+      ]
+    },
+    {
+      "id": "EV-015",
+      "name": "Impa intro / sanctuary visit",
+      "flags": [
+        {
+          "name": "Story_PendantQuest (bit 2)"
+        }
+      ],
+      "locations": [
+        {
+          "name": "Sanctuary / Hall of Secrets"
+        }
+      ],
+      "scripts": [
+        "Impa_SetSpawnPointFlag"
+      ],
+      "text_ids": [],
+      "evidence": "Sprites/NPCs/impa.asm",
+      "last_verified": "2026-01-23 (code)",
+      "notes": "Duplicate of EV-004; keep until clarified",
+      "dependencies": [
+        "EV-001"
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "EV-016",
+      "name": "Mirror of Time obtained",
+      "flags": [
+        {
+          "name": "Inventory: Mirror ($7EF353 = $02)"
+        }
+      ],
+      "locations": [
+        {
+          "name": "Hall of Secrets",
+          "entrance_id": "0x02",
+          "overworld_id": "0x0E"
+        }
+      ],
+      "scripts": [
+        "Impa grants Mirror"
+      ],
+      "text_ids": [
+        "0x6E"
+      ],
+      "evidence": "Design decision (user confirmation)",
+      "last_verified": "2026-01-24 (design)",
+      "notes": "Canonical: Impa grants Mirror in Hall of Secrets; setter not yet located",
+      "dependencies": [
+        "EV-003"
+      ],
+      "unlocks": []
+    },
+    {
+      "id": "EV-017",
+      "name": "Tail Pond map marker set",
+      "flags": [
+        {
+          "name": "MapIcon",
+          "value": "Tail"
+        },
+        {
+          "name": "ElderGuideStage stage=1"
+        }
+      ],
+      "locations": [
+        {
+          "name": "Wayward Village"
+        }
+      ],
+      "scripts": [
+        "Sprite_VillageElder_Main"
+      ],
+      "text_ids": [
+        "0x177"
+      ],
+      "evidence": "Sprites/NPCs/village_elder.asm (draft)",
+      "last_verified": "2026-01-24 (design)",
+      "notes": "Draft/untested: triggered after D1, before D2",
+      "dependencies": [
+        "EV-014"
+      ],
+      "unlocks": []
+    }
+  ],
+  "edges": [
+    {
+      "from": "EV-001",
+      "to": "EV-002",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-002",
+      "to": "EV-003",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-003",
+      "to": "EV-004",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-004",
+      "to": "EV-005",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-005",
+      "to": "EV-006",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-006",
+      "to": "EV-007",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-007",
+      "to": "EV-008",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-005",
+      "to": "EV-009",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-009",
+      "to": "EV-010",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-010",
+      "to": "EV-011",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-004",
+      "to": "EV-012",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-012",
+      "to": "EV-013",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-010",
+      "to": "EV-013",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-004",
+      "to": "EV-014",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-001",
+      "to": "EV-015",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-003",
+      "to": "EV-016",
+      "type": "dependency"
+    },
+    {
+      "from": "EV-014",
+      "to": "EV-017",
+      "type": "dependency"
+    }
+  ]
+}

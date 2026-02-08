@@ -152,6 +152,12 @@ Docs/Planning/Status/ralph/
 .context
 Oracle-of-Secrets.yaze
 
+# Portable yaze project bundles (macOS/iOS). These are workspace artifacts
+# (often iCloud Drive documents) and should not be committed.
+*.yazeproj
+*.yazeproj/
+build/yazeproj/
+
 # Agent/cache artifacts
 .agent/
 .cache/

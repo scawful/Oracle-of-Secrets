@@ -18,8 +18,11 @@ This repo has accumulated scripts over time. The goal is to keep a small “gold
 ## Generation / Validation
 - Hook metadata: `scripts/generate_hooks_json.py`, `scripts/verify_hooks_json.py`
 - Hack manifest: `scripts/generate_hack_manifest.py`
+- Yaze project registry outputs (iOS/Mac Oracle dashboards): `scripts/extract_resource_labels.py` → `Docs/Dev/Planning/oracle_resource_labels.json`
+- Yaze story events export (iOS/Mac Oracle dashboards): `scripts/extract_story_events.py` → `Docs/Dev/Planning/story_events.json`
 - Symbol export: `scripts/export_symbols.py`
 - Docs lint: `scripts/lint_docs.py`
+- Portable iOS/Mac project bundle: `scripts/export_yazeproj_bundle.py` → `*.yazeproj`
 
 ## Automation (Experimental / WIP)
 - `scripts/campaign/` (agentic automation, autonomous debugging)

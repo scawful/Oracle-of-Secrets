@@ -20,6 +20,18 @@ Legacy:
 python3 scripts/check_zscream_overlap.py
 ```
 
+## Yaze (Mac/iPad Project Bundles)
+Refresh the Oracle dashboards (dungeons/overworld labels, story graph) used by yaze's Oracle project registry:
+```bash
+python3 scripts/extract_resource_labels.py
+python3 scripts/extract_story_events.py
+```
+
+Export an iCloud-friendly `.yazeproj` bundle (openable on macOS and iOS yaze):
+```bash
+python3 scripts/export_yazeproj_bundle.py --rom Roms/oos168_test2.sfc --refresh-planning --force
+```
+
 ## Launch + Attach
 Recommended launcher:
 ```bash
