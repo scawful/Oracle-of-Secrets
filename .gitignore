@@ -3,7 +3,9 @@ oos111.sfc
 oos111x-1.bst
 oos111x-2.bst
 oos111x-3.bst
+# Local model configs (machine-specific)
 Docs/Tooling/lmstudio_models.json
+Docs/Debugging/lmstudio_models.json
 oos111x.bp
 oos111x.cht
 oos111x.cpu.sym
@@ -34,6 +36,13 @@ Roms/SaveStates/oos168x/*
 Roms/SaveStates/oos168x/**/*.mss
 Roms/SaveStates/oos168x/**/*.srm
 Roms/SaveStates/overworld/*.mss
+
+# Save-data snapshot library (WRAM savefile mirror dumps, not full ROMs)
+!Roms/SaveData/
+Roms/SaveData/*
+!Roms/SaveData/library/
+Roms/SaveData/library/*
+!Roms/SaveData/library/*.bin
 Dungeons/Assets
 Items/gfx/jump_frames.xcf
 Masks/etc
@@ -130,7 +139,9 @@ Util/ZScreamNew/ZScream.exe.manifest
 Util/ZScreamNew/ZS_Patches/Version.txt
 Util/ZScreamNew/ZS_Patches/Hex Edits/Misc Small Patches.asm
 
-Docs/Status/ralph/*
+# Ralph debug session dumps (ephemeral trace/capture artifacts)
+Docs/Status/ralph/
+Docs/Planning/Status/ralph/
 
 # Local tooling/editor state
 .DS_Store
@@ -154,6 +165,12 @@ scripts/symbols_filter_exclude.txt
 # Analysis artifacts (large JSON)
 Docs/Issues/*.json
 Docs/Issues/diagrams/
+Docs/Debugging/Issues/*.json
+Docs/Debugging/Issues/diagrams/
+
+# Debug testing artifacts (machine-specific save profiles)
+Docs/Debugging/Testing/save_data_library.json
+Docs/Debugging/Testing/save_data_profiles/
 
 # Local workspace/run files
 oracle-of-secrets.code-workspace
@@ -198,6 +215,9 @@ Overworld/weathervane.asm
 Util/banana.asm
 Menu/tilemaps/sheet.png
 Sprites/NPCs/project_files/eon_owl.zsm
+
+# Local scratchpad notes (not for version control)
+scratchpad/
 Music/wip/oot_title.asm
 Music/wip/phantom_ganon.asm
 Music/wip/template_song.asm
