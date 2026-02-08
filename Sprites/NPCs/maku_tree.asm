@@ -18,27 +18,30 @@
 ;   0: Handler - Check if met before, branch accordingly
 ;   1: MeetLink - First meeting, show message 0x20, give heart container
 ;   2: SpawnHeartContainer - Award heart container item
-;   3: HasMetLink - Subsequent visits, show message 0x22
+;   3: HasMetLink - Threshold-based reaction table via SelectReactionMessage
 ;
 ; MESSAGES:
 ;   0x20  - First meeting (introduces quest, dungeon guidance)
-;   0x22  - Subsequent visits (generic, before any dungeon completion)
-;   0x1C5 - Post-D1: hint toward Tail Palace (D2)
-;   0x1C6 - Post-D3: hint toward Zora Temple (D4)
-;   0x1C7 - Post-D5: hint toward Goron Mines (D6)
-;   0x1C8 - Post-D2: hint toward Kalyxo Castle (D3)
-;   0x1C9 - Post-D4: hint toward Glacia Estate (D5)
-;   0x1CA - Post-D7: reserved (endgame)
-;   0x1CB - Post-D6: hint toward Dragon Ship (D7)
+;   0x22  - Subsequent visits (0 crystals, vanilla revisit)
+;   0x1C5 - 1+ crystals: calm encouragement
+;   0x1C6 - 3+ crystals: senses deeper threat
+;   0x1C7 - 5+ crystals: urgency rising
+;   0x1CA - 7 crystals: endgame, seek Shrines
+;   0x1C8 - RESERVED
+;   0x1C9 - RESERVED
+;   0x1CB - RESERVED
 ;
 ; FLAGS WRITTEN:
 ;   MakuTreeQuest = 1 - Met Maku Tree
-;   MapIcon = varies - Set to next dungeon based on progression
+;   MapIcon = count+1 - Progressive marker reveal (via UpdateMapIcon)
 ;   $7EF3D6 |= 0x02 - OOSPROG bit 1 (Hall of Secrets flag)
 ;
 ; FLAGS READ:
 ;   MakuTreeQuest - Check if already met
 ;   OOSPROG2 bit 2 - Check if Kydrog encounter done (for music)
+;
+; DEPENDS ON:
+;   - Core/progression.asm (SelectReactionMessage, UpdateMapIcon)
 ;
 ; RELATED:
 ;   - farore.asm (leads Link to Maku area)
@@ -148,76 +151,40 @@ Sprite_MakuTree_Main:
 
   MakuTree_HasMetLink:
   {
-    ; Progressive hints based on dungeon completion.
-    ; Check from latest progression to earliest so the
-    ; most relevant hint is shown. Each hit advances MapIcon
-    ; (world-map marker reveal threshold; see Overworld/world_map.asm)
-    ; so more dungeon markers become visible.
-    ;
-    ; Uses JMP instead of BRA/BCC for long-distance branches
-    ; (cascade exceeds ±127 byte BRA range).
+    ; Threshold-based reaction using crystal count.
+    ; SelectReactionMessage walks MakuTreeReactionTable (descending
+    ; thresholds) and returns A/Y pre-loaded for the message JSL.
+    ; UpdateMapIcon sets MapIcon = crystal_count + 1 (progressive
+    ; marker reveal, not "go here next").
+    ; Clobbers $00-$02 (table pointer), $04 (temp) — safe in sprite context.
 
-    ; After D7 (Dragon Ship) → endgame / no further dungeon
-    LDA.l Crystals
-    AND.b #!Crystal_D7_DragonShip : BEQ .check_d6
-      %ShowSolicitedMessage($1CA) : BCS + : JMP .no_talk : + ; TODO(dialogue): placeholder endgame hint text
-      JMP .talked
+    ; Set up 24-bit pointer to reaction table
+    REP #$20
+    LDA.w #MakuTreeReactionTable : STA $00
+    SEP #$20
+    LDA.b #MakuTreeReactionTable>>16 : STA $02
 
-    .check_d6
-    ; After D6 (Goron Mines) → hint toward Dragon Ship (D7)
-    LDA.l Crystals
-    AND.b #!Crystal_D6_GoronMines : BEQ .check_d5
-      %ShowSolicitedMessage($1CB) : BCS + : JMP .no_talk : + ; TODO(dialogue): placeholder hint text
-      LDA.b #!MapIcon_D7_DragonShip : STA.l MapIcon
-      JMP .talked
-
-    .check_d5
-    ; After D5 (Glacia Estate) → hint toward Goron Mines (D6)
-    LDA.l Crystals
-    AND.b #!Crystal_D5_GlaciaEstate : BEQ .check_d4
-      %ShowSolicitedMessage($1C7) : BCS + : JMP .no_talk : + ; TODO(dialogue): placeholder hint text
-      LDA.b #!MapIcon_D6_GoronMines : STA.l MapIcon
-      JMP .talked
-
-    .check_d4
-    ; After D4 (Zora Temple) → hint toward Glacia Estate (D5)
-    LDA.l Crystals
-    AND.b #!Crystal_D4_ZoraTemple : BEQ .check_d3
-      %ShowSolicitedMessage($1C9) : BCS + : JMP .no_talk : + ; TODO(dialogue): placeholder hint text
-      LDA.b #!MapIcon_D5_GlaciaEstate : STA.l MapIcon
-      JMP .talked
-
-    .check_d3
-    ; After D3 (Kalyxo Castle) → hint toward Zora Temple (D4)
-    LDA.l Crystals
-    AND.b #!Crystal_D3_KalyxoCastle : BEQ .check_d2
-      %ShowSolicitedMessage($1C6) : BCS + : JMP .no_talk : + ; TODO(dialogue): placeholder hint text
-      LDA.b #!MapIcon_D4_ZoraTemple : STA.l MapIcon
-      JMP .talked
-
-    .check_d2
-    ; After D2 (Tail Palace) → hint toward Kalyxo Castle (D3)
-    LDA.l Crystals
-    AND.b #!Crystal_D2_TailPalace : BEQ .check_d1
-      %ShowSolicitedMessage($1C8) : BCS + : JMP .no_talk : + ; TODO(dialogue): placeholder hint text
-      LDA.b #!MapIcon_D3_KalyxoCastle : STA.l MapIcon
-      JMP .talked
-
-    .check_d1
-    ; After D1 (Mushroom Grotto) → hint toward Tail Palace (D2)
-    LDA.l Crystals
-    AND.b #!Crystal_D1_MushroomGrotto : BEQ .default
-      %ShowSolicitedMessage($1C5) : BCS + : JMP .no_talk : + ; TODO(dialogue): placeholder hint text
-      LDA.b #!MapIcon_D2_TailPalace : STA.l MapIcon
-      JMP .talked
-
-    .default
-    ; Before any dungeon completion, show generic guidance
-    %ShowSolicitedMessage($22) : BCS + : JMP .no_talk : +
+    ; Select message by crystal count threshold
+    JSL SelectReactionMessage
+    ; A = msg low, Y = msg high
+    JSL Sprite_ShowSolicitedMessageIfPlayerFacing
+    BCC .no_talk
 
     .talked
+    JSL UpdateMapIcon
     LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
+
     .no_talk
     RTS
   }
+
+  ; Descending thresholds, sentinel-terminated.
+  ; Format: db threshold : dw message_id
+  ; First entry where crystal_count >= threshold wins.
+  MakuTreeReactionTable:
+    db $07 : dw $01CA  ; 7 crystals → endgame
+    db $05 : dw $01C7  ; 5+ → urgency
+    db $03 : dw $01C6  ; 3+ → mid-game
+    db $01 : dw $01C5  ; 1+ → early
+    db $00 : dw $0022  ; 0  → vanilla revisit
 }

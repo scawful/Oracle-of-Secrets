@@ -159,22 +159,110 @@ Message_1C3:
 Message_1C4:
   db $41, $41, $41, $7F
 
-; Maku Tree hint messages ($1C5-$1CB)
-; Placeholder text until yaze message editor can author real dialogue.
-; TODO(dialogue): Replace the placeholder bytes with real dialogue.
-Message_1C5:  ; TODO(dialogue): Post-D1 hint toward Tail Palace
+; Maku Tree threshold messages ($1C5, $1C6, $1C7, $1CA)
+; Selected by crystal COUNT via SelectReactionMessage table
+; in maku_tree.asm. Not tied to specific dungeons.
+;
+; $1C5 = 1+ crystals (calm encouragement)
+; $1C6 = 3+ crystals (senses deeper threat)
+; $1C7 = 5+ crystals (urgency rising)
+; $1CA = 7 crystals  (endgame, seek Shrines)
+
+; --- $1C5: 1+ crystals — "My roots stir with new warmth" ---
+; Page 1: "Ah, {Link}... / My roots stir with / new warmth."
+; Page 2: "You have freed a / light that was / long dimmed."
+; Page 3: "The island recalls / your courage. / Press on..."
+Message_1C5:
+  db $00, $21, $42, $59, $6A, $43
+  db $75, $0C, $32, $59, $2B, $28, $28, $2D, $2C, $59, $2C, $2D, $22, $2B, $59, $30, $22, $2D, $21
+  db $76, $27, $1E, $30, $59, $30, $1A, $2B, $26, $2D, $21, $41
+  db $7E, $73
+  db $18, $28, $2E, $59, $21, $1A, $2F, $1E, $59, $1F, $2B, $1E, $1E, $1D, $59, $1A
+  db $75, $25, $22, $20, $21, $2D, $59, $2D, $21, $1A, $2D, $59, $30, $1A, $2C
+  db $76, $25, $28, $27, $20, $59, $1D, $22, $26, $26, $1E, $1D, $41
+  db $7E, $73
+  db $13, $21, $1E, $59, $22, $2C, $25, $1A, $27, $1D, $59, $2B, $1E, $1C, $1A, $25, $25, $2C
+  db $75, $32, $28, $2E, $2B, $59, $1C, $28, $2E, $2B, $1A, $20, $1E, $41
+  db $76, $0F, $2B, $1E, $2C, $2C, $59, $28, $27, $43
+  db $7F
+
+; --- $1C6: 3+ crystals — "Something shifts in the deep soil" ---
+; Page 1: "Ah, {Link}... / Something shifts in / the deep soil."
+; Page 2: "With each light / restored, a shadow / retreats..."
+; Page 3: "But another stirs / in its place, older / than my roots know."
+; Page 4: "Be watchful, child."
+Message_1C6:
+  db $00, $21, $42, $59, $6A, $43
+  db $75, $12, $28, $26, $1E, $2D, $21, $22, $27, $20, $59, $2C, $21, $22, $1F, $2D, $2C, $59, $22, $27
+  db $76, $2D, $21, $1E, $59, $1D, $1E, $1E, $29, $59, $2C, $28, $22, $25, $41
+  db $7E, $73
+  db $16, $22, $2D, $21, $59, $1E, $1A, $1C, $21, $59, $25, $22, $20, $21, $2D
+  db $75, $2B, $1E, $2C, $2D, $28, $2B, $1E, $1D, $42, $59, $1A, $59, $2C, $21, $1A, $1D, $28, $30
+  db $76, $2B, $1E, $2D, $2B, $1E, $1A, $2D, $2C, $43
+  db $7E, $73
+  db $01, $2E, $2D, $59, $1A, $27, $28, $2D, $21, $1E, $2B, $59, $2C, $2D, $22, $2B, $2C
+  db $75, $22, $27, $59, $22, $2D, $2C, $59, $29, $25, $1A, $1C, $1E, $42, $59, $28, $25, $1D, $1E, $2B
+  db $76, $2D, $21, $1A, $27, $59, $26, $32, $59, $2B, $28, $28, $2D, $2C, $59, $24, $27, $28, $30, $41
+  db $7E, $73
+  db $01, $1E, $59, $30, $1A, $2D, $1C, $21, $1F, $2E, $25, $42, $59, $1C, $21, $22, $25, $1D, $41
+  db $7F
+
+; --- $1C7: 5+ crystals — "The wind carries a bitter scent" ---
+; Page 1: "Ah, {Link}... / The wind carries / a bitter scent."
+; Page 2: "Five lights burn, / yet the darkness / grows bolder."
+; Page 3: "I have watched this / island for ages, / never felt such"
+; Page 4: "trembling beneath / the earth. Steel / yourself."
+Message_1C7:
+  db $00, $21, $42, $59, $6A, $43
+  db $75, $13, $21, $1E, $59, $30, $22, $27, $1D, $59, $1C, $1A, $2B, $2B, $22, $1E, $2C
+  db $76, $1A, $59, $1B, $22, $2D, $2D, $1E, $2B, $59, $2C, $1C, $1E, $27, $2D, $41
+  db $7E, $73
+  db $05, $22, $2F, $1E, $59, $25, $22, $20, $21, $2D, $2C, $59, $1B, $2E, $2B, $27, $42
+  db $75, $32, $1E, $2D, $59, $2D, $21, $1E, $59, $1D, $1A, $2B, $24, $27, $1E, $2C, $2C
+  db $76, $20, $2B, $28, $30, $2C, $59, $1B, $28, $25, $1D, $1E, $2B, $41
+  db $7E, $73
+  db $08, $59, $21, $1A, $2F, $1E, $59, $30, $1A, $2D, $1C, $21, $1E, $1D, $59, $2D, $21, $22, $2C
+  db $75, $22, $2C, $25, $1A, $27, $1D, $59, $1F, $28, $2B, $59, $1A, $20, $1E, $2C, $42
+  db $76, $27, $1E, $2F, $1E, $2B, $59, $1F, $1E, $25, $2D, $59, $2C, $2E, $1C, $21
+  db $7E, $73
+  db $2D, $2B, $1E, $26, $1B, $25, $22, $27, $20, $59, $1B, $1E, $27, $1E, $1A, $2D, $21
+  db $75, $2D, $21, $1E, $59, $1E, $1A, $2B, $2D, $21, $41, $59, $12, $2D, $1E, $1E, $25
+  db $76, $32, $28, $2E, $2B, $2C, $1E, $25, $1F, $41
+  db $7F
+
+Message_1C8:  ; RESERVED (available for dreams/NPCs)
   db $41, $41, $41, $7F
-Message_1C6:  ; TODO(dialogue): Post-D3 hint toward Zora Temple
+Message_1C9:  ; RESERVED
   db $41, $41, $41, $7F
-Message_1C7:  ; TODO(dialogue): Post-D5 hint toward Goron Mines
-  db $41, $41, $41, $7F
-Message_1C8:  ; TODO(dialogue): Post-D2 hint toward Kalyxo Castle
-  db $41, $41, $41, $7F
-Message_1C9:  ; TODO(dialogue): Post-D4 hint toward Glacia Estate
-  db $41, $41, $41, $7F
-Message_1CA:  ; TODO(dialogue): Post-D7 reserved (endgame)
-  db $41, $41, $41, $7F
-Message_1CB:  ; TODO(dialogue): Post-D6 hint toward Dragon Ship
+
+; --- $1CA: 7 crystals — "All seven lights burn within me" ---
+; Page 1: "Ah, {Link}... / All seven lights / burn within me."
+; Page 2: "The seal weakens, / but your strength / has grown."
+; Page 3: "The ancient Shrines / hold the final / keys. Seek them out."
+; Page 4: "I have faith in / you, {Link}. You carry / the hope of this"
+; Page 5: "island upon your / shoulders..."
+Message_1CA:
+  db $00, $21, $42, $59, $6A, $43
+  db $75, $00, $25, $25, $59, $2C, $1E, $2F, $1E, $27, $59, $25, $22, $20, $21, $2D, $2C
+  db $76, $1B, $2E, $2B, $27, $59, $30, $22, $2D, $21, $22, $27, $59, $26, $1E, $41
+  db $7E, $73
+  db $13, $21, $1E, $59, $2C, $1E, $1A, $25, $59, $30, $1E, $1A, $24, $1E, $27, $2C, $42
+  db $75, $1B, $2E, $2D, $59, $32, $28, $2E, $2B, $59, $2C, $2D, $2B, $1E, $27, $20, $2D, $21
+  db $76, $21, $1A, $2C, $59, $20, $2B, $28, $30, $27, $41
+  db $7E, $73
+  db $13, $21, $1E, $59, $1A, $27, $1C, $22, $1E, $27, $2D, $59, $12, $21, $2B, $22, $27, $1E, $2C
+  db $75, $21, $28, $25, $1D, $59, $2D, $21, $1E, $59, $1F, $22, $27, $1A, $25
+  db $76, $24, $1E, $32, $2C, $41, $59, $12, $1E, $1E, $24, $59, $2D, $21, $1E, $26, $59, $28, $2E, $2D, $41
+  db $7E, $73
+  db $08, $59, $21, $1A, $2F, $1E, $59, $1F, $1A, $22, $2D, $21, $59, $22, $27
+  db $75, $32, $28, $2E, $42, $59, $6A, $41, $59, $18, $28, $2E, $59, $1C, $1A, $2B, $2B, $32
+  db $76, $2D, $21, $1E, $59, $21, $28, $29, $1E, $59, $28, $1F, $59, $2D, $21, $22, $2C
+  db $7E, $73
+  db $22, $2C, $25, $1A, $27, $1D, $59, $2E, $29, $28, $27, $59, $32, $28, $2E, $2B
+  db $75, $2C, $21, $28, $2E, $25, $1D, $1E, $2B, $2C, $43
+  db $7F
+
+Message_1CB:  ; RESERVED
   db $41, $41, $41, $7F
 
 ; D3 Prison Sequence messages ($1CC-$1D1)
