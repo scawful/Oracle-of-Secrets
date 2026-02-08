@@ -81,7 +81,7 @@ AnimatedTileGFXSet         = $0FC0   ; [0x01]
 ExpandedSpritePalArray     = $7EFDC0 ; [0x40]
 
 ; NOTE: Lost Woods camera drift fix was attempted but broke transitions.
-; See Docs/Issues/lost_woods_camera_desync.md for details and research needed.
+; See Docs/Debugging/Issues/lost_woods_camera_desync.md for details and research needed.
 
 ; $0716 is not actually free, but labled as such for the sake of organization.
 ; $0718 is free RAM and took the horizontal responsibility away from $0716.
@@ -5610,7 +5610,7 @@ org $02A5D3 ; $0125D3 ; @hook module=Overworld
 Overworld_PlayerControl_Interupt:
 {
     ; NOTE: Lost Woods camera drift fix was attempted here but broke small-to-large
-    ; transitions. See Docs/Issues/lost_woods_camera_desync.md for details.
+    ; transitions. See Docs/Debugging/Issues/lost_woods_camera_desync.md for details.
     ; The scroll drift from wrong puzzle moves persists but is visual-only.
 
     JSL.l Overworld_Entrance

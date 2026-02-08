@@ -6,8 +6,8 @@
 ; scattered ad-hoc progression checks found across the
 ; codebase (maku_tree.asm, zora.asm, village_elder.asm, etc.)
 ;
-; STATUS: UNTESTED — all routines need runtime verification
-;   before being wired into NPC code. See test plan at bottom.
+; STATUS: UNTESTED — needs Mesen2 runtime verification.
+;   First consumer: maku_tree.asm (MakuTreeReactionTable).
 ;
 ; Created: 2026-02-06
 ; File: Core/progression.asm
@@ -17,7 +17,7 @@
 ; USAGE NOTES:
 ;   All routines are JSL targets — callable from any bank.
 ;   No hooks or org patches — these are passive helpers.
-;   No NPC conversions yet (per guardrail: one at a time).
+;   First consumer: Maku Tree (maku_tree.asm). Next: Zora NPC.
 ;
 ; DESIGN DECISIONS:
 ;   - GetCrystalCount uses shift-and-count (popcount) since
