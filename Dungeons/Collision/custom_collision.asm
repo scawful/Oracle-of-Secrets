@@ -45,6 +45,12 @@ CustomRoomCollision:
   ; This hook runs during room load. Preserve P (including M/X width)
   ; so we don't leak 16-bit width back into vanilla transition code.
   PHP
+  ; Do not assume Direct Page is $0000. This routine uses DP mirrors ($A0) and
+  ; DP scratch ($00-$0F); preserve D and set D=$0000 while we run.
+  PHD
+  REP #$20
+  LDA.w #$0000
+  TCD
 
   REP #$30
   LDA.b $A0 : ASL : ADC.b $A0 : TAX
@@ -86,11 +92,24 @@ CustomRoomCollision:
   BRA .single_tiles
 
   .done
+  ; Water gate persistence restore (room-entry collision reapply).
+  ;
+  ; This runs at the end of the collision map streaming pass (when $B4 reaches
+  ; $2000). Doing it here avoids the old global torch-loop hook at $0188DF,
+  ; which was implicated in deterministic dungeon transition corruption.
+  if !ENABLE_WATER_GATE_HOOKS == 1 && !ENABLE_WATER_GATE_ROOMENTRY_RESTORE == 1
+    LDA $B4 : CMP.w #$2000 : BNE +
+      JSL WaterGate_CheckRoomEntry
+    +
+  endif
+
   PLB
+  PLD
   PLP
   RTL
 
   .plp_rtl
+  PLD
   PLP
   RTL
 

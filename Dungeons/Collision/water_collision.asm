@@ -10,7 +10,7 @@
 ; - Integration with vanilla water fill animation completion
 ;
 ; =========================================================
-; @doc Docs/Issues/WaterCollision_Handoff.md
+; @doc Docs/Debugging/Issues/WaterCollision_Handoff.md
 ; @source Derived from vanilla disassembly + runtime tests (see doc)
 ; @verified UNKNOWN (needs audit)
 
@@ -19,6 +19,27 @@
 ; Bit 0: Zora Temple water gate room (0x27)
 ; Bit 1: Zora Temple water grate room (0x25)
 ; Bits 2-7: Reserved for future water gates
+
+; =========================================================
+; Editor-Authored Water Fill Table (Yaze)
+; =========================================================
+; Yaze serializes painted water fill zones into the ZScream expanded custom
+; collision bank and the runtime consumes it directly.
+;
+; ROM location (SNES): $25:E000..$25:FFFF (reserved 0x2000 bytes)
+; ROM location (PC):   $12E000..$12FFFF
+;
+; Format:
+;   db zone_count
+;   repeat zone_count:
+;     db room_id
+;     db sram_bit_mask
+;     dw data_offset (relative to table start)
+;   then data sections:
+;     db tile_count
+;     dw offsets...
+;
+Oracle_WaterFillTable = $25E000
 
 ; =========================================================
 ; Water Fill Completion Hook
@@ -38,37 +59,122 @@ WaterGate_FillComplete_Hook:
   JSL IrisSpotlight_ResetTable
 
   ; Apply collision updates for water-filled area
+  ;
+  ; CRITICAL: do not assume Direct Page (D) is $0000 here. Several callers in
+  ; the underworld transition stack run with a non-zero D, and this module uses
+  ; DP scratch ($00-$05) and DP reads ($A0). If D is not $0000, those become
+  ; accidental writes into unrelated state (including GameMode/SubMode).
+  PHD
+  REP #$20
+  LDA.w #$0000
+  TCD
+  SEP #$20
+
   PHB : PHK : PLB
 
   SEP #$20
   LDA.b $A0
 
-  ; Room 0x27 - Zora Temple water gate
+  ; Prefer editor-authored WaterFillTable (yaze) when present.
+  JSR WaterFill_FindRoomInTable
+  BCC .legacy_fallback
+    JSR WaterGate_ApplyCollision
+    JSR WaterGate_SetPersistenceFlag
+    BRA .done
+
+  .legacy_fallback
+  ; Back-compat: if the table is missing/uninitialized, fall back to the
+  ; original hardcoded D4 room data.
+  LDA.b $A0
   CMP.b #$27 : BNE .check_room_25
     REP #$20
     LDA.w #WaterGate_Room27_Data : STA.b $00
     SEP #$20
     LDA.b #WaterGate_Room27_Data>>16 : STA.b $02
+    LDA.b #$01 : STA.b $03
     JSR WaterGate_ApplyCollision
     JSR WaterGate_SetPersistenceFlag
     BRA .done
 
   .check_room_25
-  ; Room 0x25 - Zora Temple water grate
   CMP.b #$25 : BNE .done
     REP #$20
     LDA.w #WaterGate_Room25_Data : STA.b $00
     SEP #$20
     LDA.b #WaterGate_Room25_Data>>16 : STA.b $02
+    LDA.b #$02 : STA.b $03
     JSR WaterGate_ApplyCollision
     JSR WaterGate_SetPersistenceFlag
 
   .done
   SEP #$30
   PLB
+  PLD
 
   ; Return to the instruction after the replaced code (RTL at $01F3DA)
   JML $01F3DA
+}
+
+; =========================================================
+; Water Fill Table Lookup (Yaze)
+; =========================================================
+; Input:
+;   A (8-bit) = room id ($A0)
+; Output:
+;   C=1 if found, C=0 if not found/invalid
+;   $00-$02 = 24-bit pointer to tile data (db tile_count, dw offsets...)
+;   $03     = SRAM bit mask for this room (single bit in WaterGateStates)
+;
+; Clobbers: A, X, $04-$05
+; Requires: Direct Page (D) = $0000
+WaterFill_FindRoomInTable:
+{
+  ; Save target room id.
+  STA.b $05
+
+  ; zone_count (0 means absent). Treat >8 as absent for safety.
+  LDA.l Oracle_WaterFillTable
+  BEQ .not_found
+  CMP.b #$09 : BCS .not_found
+  STA.b $04
+
+  ; Scan entries: [room_id, mask, data_off_lo, data_off_hi] * zone_count
+  REP #$10
+  LDX.w #$0000
+
+  .next
+    LDA.b $04 : BEQ .not_found_x
+    LDA.l Oracle_WaterFillTable+1, X
+    CMP.b $05 : BEQ .found
+    INX : INX : INX : INX
+    DEC.b $04
+    BRA .next
+
+  .found
+    ; SRAM bit mask for this room.
+    LDA.l Oracle_WaterFillTable+2, X : STA.b $03
+
+    ; Data pointer: $25:(E000 + data_off)
+    LDA.l Oracle_WaterFillTable+4, X
+    CLC : ADC.b #$E0
+    STA.b $01
+    LDA.l Oracle_WaterFillTable+3, X
+    STA.b $00
+    LDA.b #$25 : STA.b $02
+
+    SEP #$10
+    SEC
+    RTS
+
+  .not_found_x
+  SEP #$10
+  .not_found
+  STZ.b $00
+  STZ.b $01
+  STZ.b $02
+  STZ.b $03
+  CLC
+  RTS
 }
 
 ; =========================================================
@@ -83,6 +189,13 @@ WaterGate_FillComplete_Hook:
 ;
 WaterGate_ApplyCollision:
 {
+  ; See note in WaterGate_FillComplete_Hook: ensure DP base is $0000 while
+  ; using $00-$05 scratch and [$00] indirect addressing.
+  PHD
+  REP #$20
+  LDA.w #$0000
+  TCD
+
   PHB
   PEA.w $7F7F : PLB : PLB  ; Set bank to $7F for collision writes
 
@@ -112,6 +225,7 @@ WaterGate_ApplyCollision:
   .done
   SEP #$30                  ; Restore 8-bit A and X/Y
   PLB
+  PLD
   RTS
 }
 
@@ -122,21 +236,13 @@ WaterGate_ApplyCollision:
 ;
 WaterGate_SetPersistenceFlag:
 {
+  ; $03 is the per-room bit mask (from WaterFill_FindRoomInTable or legacy
+  ; fallback). If it's zero, do nothing.
   SEP #$20
-  LDA.b $A0
-
-  ; Room 0x27 - Zora Temple water gate
-  CMP.b #$27 : BNE +
-    LDA.l WaterGateStates : ORA.b #$01 : STA.l WaterGateStates
-    RTS
-  +
-
-  ; Room 0x25 - Zora Temple water grate
-  CMP.b #$25 : BNE +
-    LDA.l WaterGateStates : ORA.b #$02 : STA.l WaterGateStates
-    RTS
-  +
-
+  LDA.b $03 : BEQ .done
+  ORA.l WaterGateStates
+  STA.l WaterGateStates
+.done
   RTS
 }
 
@@ -147,40 +253,69 @@ WaterGate_SetPersistenceFlag:
 ;
 WaterGate_CheckRoomEntry:
 {
+  ; This is called from room-load hooks; it must be ABI-transparent.
+  ; Preserve P/A/X/Y/DB/D and restore on exit.
+  PHP
   PHB : PHK : PLB
-  SEP #$20
+  PHD
 
+  REP #$30
+  PHA
+  PHX
+  PHY
+
+  ; Ensure Direct Page is $0000 before reading DP mirrors ($A0) or using DP
+  ; scratch. Several underworld callers run with non-zero D.
+  LDA.w #$0000
+  TCD
+
+  SEP #$20
   LDA.b $A0
 
-  ; Room 0x27 - Zora Temple water gate
-  CMP.b #$27 : BNE .check_room_25
-    LDA.l WaterGateStates : AND.b #$01 : BEQ .no_persistence
+  ; Prefer editor-authored WaterFillTable (yaze) when present.
+  JSR WaterFill_FindRoomInTable
+  BCC .legacy_fallback
+    LDA.l WaterGateStates : AND.b $03 : BEQ .done
       ; Water was filled before - restore collision
       LDA.b #$02 : STA.w $0403  ; Set door flag to skip animation
+      JSR WaterGate_ApplyCollision
+      BRA .done
+
+  .legacy_fallback
+  ; Back-compat: if the table is missing/uninitialized, fall back to the
+  ; original hardcoded D4 room data.
+  LDA.b $A0
+
+  CMP.b #$27 : BNE .check_room_25
+    LDA.l WaterGateStates : AND.b #$01 : BEQ .done
+      LDA.b #$02 : STA.w $0403
       REP #$20
       LDA.w #WaterGate_Room27_Data : STA.b $00
       SEP #$20
       LDA.b #WaterGate_Room27_Data>>16 : STA.b $02
+      LDA.b #$01 : STA.b $03
       JSR WaterGate_ApplyCollision
-      SEP #$30
       BRA .done
 
   .check_room_25
-  ; Room 0x25 - Zora Temple water grate
-  CMP.b #$25 : BNE .no_persistence
-    LDA.l WaterGateStates : AND.b #$02 : BEQ .no_persistence
-      ; Water grate was opened - restore collision
+  CMP.b #$25 : BNE .done
+    LDA.l WaterGateStates : AND.b #$02 : BEQ .done
       LDA.b #$02 : STA.w $0403
       REP #$20
       LDA.w #WaterGate_Room25_Data : STA.b $00
       SEP #$20
       LDA.b #WaterGate_Room25_Data>>16 : STA.b $02
+      LDA.b #$02 : STA.b $03
       JSR WaterGate_ApplyCollision
-      SEP #$30
 
-  .no_persistence
   .done
+  REP #$30
+  PLY
+  PLX
+  PLA
+  PLD
   PLB
+  PLP
   RTL
 }
 
@@ -210,7 +345,18 @@ Underworld_LoadRoom_ExitHook:
   PHX
   PHY
 
+  ; Only run persistence restore in the specific water-gate rooms.
+  ; This hook runs on *every* underworld room load (torch loop), so we must
+  ; avoid invoking custom logic unless we're in the target rooms.
+  ;
+  ; Room ID is mirrored in $7E00A0 (direct page $A0).
+  SEP #$20
+  LDA.b $A0
+  CMP.b #$27 : BEQ .do_watergate
+  CMP.b #$25 : BNE .skip_watergate
+.do_watergate
   JSL WaterGate_CheckRoomEntry
+.skip_watergate
 
   PLY
   PLX

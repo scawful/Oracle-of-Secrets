@@ -176,28 +176,35 @@ else
 endif
 
 ; Underworld_LoadRoom exit hook (torch loop end).
-; Uses the vanilla CMP.w #$FFFF Z flag at $0188DC to decide whether to re-enter
-; the torch draw loop at $0188C9.
-; CRITICAL: vanilla at $0188C9 runs in 16-bit A/X/Y. Do NOT SEP #$30 before JML back.
-org $0188DF ; @hook module=Dungeons name=Underworld_LoadRoom_ExitHook kind=jml target=Underworld_LoadRoom_ExitHook expected_m=16 expected_x=16
-if !ENABLE_WATER_GATE_HOOKS == 1
-  JML Underworld_LoadRoom_ExitHook
-else
+; IMPORTANT:
+; We previously installed a JML hook here to run water-gate "room-entry restore"
+; logic, but that global hook was implicated in deterministic dungeon transition
+; corruption/blackouts.
+;
+; Persistence restore is now implemented via a safer room-load hook
+; (see `Dungeons/Collision/custom_collision.asm`), so we keep this site vanilla.
+org $0188DF ; @hook module=Dungeons name=Underworld_LoadRoom_ExitHook kind=patch expected_m=16 expected_x=16
   BNE $0188C9
   SEP #$30
-endif
 
 
 ; RoomTag_WaterGate - redirect overlay data to custom water segments
 org $01CBAC
 if !ENABLE_WATER_GATE_OVERLAY_REDIRECT == 1
-  LDA.w #NewWaterOverlayData>>16
+  ; Vanilla uses ROM-mirrored banks ($80+). Keep the high-bit set so the tag's
+  ; pointer walker always reads from ROM space even when it bankswitches.
+  ;
+  ; NewWaterOverlayData lives in bank $2C (mirrors at $AC).
+  LDA.w #(NewWaterOverlayData>>16)|$0080
   STA.b $B9
   LDA.w #NewWaterOverlayData>>0
   JSR RoomTag_OperateWaterFlooring
 else
-  LDA.w #WaterOverlayData>>16
+  ; Vanilla WaterOverlayData pointer (bank $84, addr $EE8B).
+  ; Keep as constants so this branch still assembles even when the vanilla
+  ; disassembly label isn't available in this codebase.
+  LDA.w #$0084
   STA.b $B9
-  LDA.w #WaterOverlayData>>0
+  LDA.w #$EE8B
   JSR RoomTag_OperateWaterFlooring
 endif
