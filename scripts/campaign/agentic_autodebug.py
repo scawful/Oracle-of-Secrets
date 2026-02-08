@@ -116,11 +116,13 @@ class DetectorSuite:
         self,
         *,
         forced_blank_frames: int = 120,
+        brightness_zero_s: float = 2.0,
         mode06_frames: int = 360,
         pause_frames: int = 30,
         frame_stall_ticks: int = 30,
     ) -> None:
         self.forced_blank_frames = int(forced_blank_frames)
+        self.brightness_zero_s = float(brightness_zero_s)
         self.mode06_frames = int(mode06_frames)
         self.pause_frames = int(pause_frames)
         self.frame_stall_ticks = int(frame_stall_ticks)
@@ -129,6 +131,8 @@ class DetectorSuite:
         self._paused_run = 0
         self._stall_run = 0
         self._last_frame: int | None = None
+        self._last_ts: float | None = None
+        self._brightness_zero_run_s: float = 0.0
 
     def update(
         self,
@@ -141,14 +145,31 @@ class DetectorSuite:
         submode = int(getattr(raw_state, "submode", 0) or 0)
         inidisp = int(getattr(raw_state, "inidisp", 0) or 0)
         forced_blank = (inidisp & 0x80) != 0
+        brightness = inidisp & 0x0F
         paused = bool((run_state or {}).get("paused")) if run_state is not None else False
         frame = int(((getattr(raw_state, "raw_data", {}) or {}).get("frame")) or 0)
+        now = time.time()
+        dt = 0.0
+        if self._last_ts is None:
+            self._last_ts = now
+        else:
+            dt = max(0.0, float(now - self._last_ts))
+            self._last_ts = now
 
         # Forced blank streak
         if forced_blank and mode in (0x06, 0x07):
             self._forced_blank_run += 1
         else:
             self._forced_blank_run = 0
+
+        # Brightness 0 streak (black screen without forced blank).
+        #
+        # Be conservative: brightness can be 0 during fades, but it should not
+        # persist once we claim we're back in normal play (submode 0).
+        if brightness == 0 and mode in (0x07, 0x09) and submode == 0 and not paused:
+            self._brightness_zero_run_s += dt
+        else:
+            self._brightness_zero_run_s = 0.0
 
         # Mode 0x06 streak (transition/load hang)
         if mode == 0x06:
@@ -219,6 +240,23 @@ class DetectorSuite:
                 severity="critical",
                 description=f"Mode 0x06 persisted for {self._mode06_run} ticks (hung transition/load)",
                 timestamp=time.time(),
+                context={
+                    "mode": mode,
+                    "submode": submode,
+                    "inidisp": inidisp,
+                    "frame": frame,
+                    "area": area,
+                    "room_id": room_id,
+                    "pos": [x, y],
+                },
+            )
+
+        if self._brightness_zero_run_s >= self.brightness_zero_s:
+            return AutodebugAnomaly(
+                kind="brightness_zero",
+                severity="critical",
+                description=f"Brightness 0 persisted for {self._brightness_zero_run_s:.2f}s in normal play (black screen?)",
+                timestamp=now,
                 context={
                     "mode": mode,
                     "submode": submode,
@@ -314,13 +352,24 @@ class AgenticAutodebugSession:
         watch_addrs: list[tuple[int, int, str]] = [
             (0x7E0013, 1, "INIDISPQ"),
             (0x7E001A, 1, "FRAME"),
+            (0x7E009B, 1, "HDMAENQ"),
             (0x7E0010, 1, "GameMode"),
             (0x7E0011, 1, "SubMode"),
+            # Link coordinates are often the first obvious casualty of a bad transition/collision write.
+            (0x7E0020, 2, "LinkY"),
+            (0x7E0022, 2, "LinkX"),
+            (0x7E0024, 2, "LinkZ"),
             (0x7E00A0, 1, "RoomLayout"),
             (0x7E00A4, 2, "RoomID16"),
             (0x7EC005, 2, "RMFADE"),
             (0x7EC007, 2, "FADETIME"),
             (0x7EC00B, 2, "FADETGT"),
+            (0x7EC017, 2, "DARKNESS"),
+            (0x7E044A, 2, "EGSTR"),
+            (0x7E0458, 2, "DARKLAMP"),
+            (0x7E045A, 2, "LIGHT"),
+            (0x7E067C, 2, "IRISTOP"),
+            (0x7E067E, 2, "IRISTYPE"),
             (0x7E009A, 1, "ColorMath9A"),
             (0x7E009C, 1, "ColorMath9C"),
             (0x7E009D, 1, "ColorMath9D"),
@@ -538,6 +587,9 @@ class AgenticAutodebugSession:
             ("frame", 0x7E001A, 1),
             ("mode", 0x7E0010, 1),
             ("submode", 0x7E0011, 1),
+            ("link_y", 0x7E0020, 2),
+            ("link_x", 0x7E0022, 2),
+            ("link_z", 0x7E0024, 2),
             ("room_layout", 0x7E00A0, 1),
             ("room_id", 0x7E00A4, 2),
             ("rmfade", 0x7EC005, 2),

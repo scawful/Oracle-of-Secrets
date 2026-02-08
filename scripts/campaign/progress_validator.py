@@ -297,7 +297,7 @@ class ProgressValidator:
         import time
 
         if library_path is None:
-            library_path = Path(__file__).parent.parent.parent / "Docs/Testing/save_state_library.json"
+            library_path = Path(__file__).parent.parent.parent / "Docs/Debugging/Testing/save_state_library.json"
 
         snapshot = self.capture_progress()
         report = ProgressReport(

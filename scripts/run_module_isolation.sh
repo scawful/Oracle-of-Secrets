@@ -13,7 +13,7 @@
 # If crash disappears, the disabled module is implicated; then bisect inside that module.
 #
 # Order (safest first): Masks, Music, Menu, Items, Patches, Sprites, Dungeon, Overworld.
-# See Docs/Issues/OverworldSoftlock_FixPlan.md Phase 1B and Module_Isolation_Plan.md.
+# See Docs/Debugging/Issues/OverworldSoftlock_FixPlan.md Phase 1B and Module_Isolation_Plan.md.
 
 set -e
 

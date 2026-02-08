@@ -46,6 +46,7 @@ WATCH_ADDRS_BASE: list[tuple[str, int, str]] = [
     ("0x7E0011", 1, "SubMode"),
     ("0x7E00A0", 1, "Room layout index"),
     ("0x7E00A4", 2, "Room ID (16-bit)"),
+    ("0x7E009B", 1, "HDMA enable queue (HDMAENQ)"),
 ]
 
 # Optional deeper instrumentation (fade state + color math + stack)
@@ -55,6 +56,12 @@ WATCH_ADDRS_DEEP: list[tuple[str, int, str]] = [
     ("0x7EC009", 2, "RMFADEDIR (fade direction)"),
     ("0x7EC00B", 2, "FADETGT (target fade level)"),
     ("0x7EC011", 2, "MOSAICLEVEL (mosaic level)"),
+    ("0x7EC017", 2, "DARKNESS (room darkness level)"),
+    ("0x7E044A", 2, "EGSTR (layer interaction / darkness behavior)"),
+    ("0x7E0458", 2, "DARKLAMP (lamp-in-dark-room flag)"),
+    ("0x7E045A", 2, "LIGHT (torches lit count)"),
+    ("0x7E067C", 2, "IRISTOP (spotlight HDMA top)"),
+    ("0x7E067E", 2, "IRISTYPE (spotlight type)"),
     ("0x7E009A", 1, "Color math ($9A)"),
     ("0x7E009C", 1, "Color math ($9C)"),
     ("0x7E009D", 1, "Color math ($9D)"),
@@ -312,6 +319,11 @@ def cmd_capture(args):
             ("0x7EC005", "rmfade"),
             ("0x7EC007", "fadetime"),
             ("0x7EC00B", "fadetgt"),
+            ("0x7E009B", "hdmaenq"),
+            ("0x7EC017", "darkness"),
+            ("0x7E0458", "darklamp"),
+            ("0x7E045A", "light"),
+            ("0x7E067E", "iristype"),
             ("0x7E01FC", "stack_tail"),
             ("0x7E1F0A", "sp_save"),
         ])
@@ -371,6 +383,8 @@ def cmd_capture(args):
             print(f"  INIDISPQ: ${inidispq:02X}")
             if (inidispq & 0x80) != 0:
                 print("    ^ Forced blank bit set (0x80).")
+            elif (inidispq & 0x0F) == 0:
+                print("    ^ Brightness is 0 (screen black without forced blank).")
         if isinstance(frame, int):
             print(f"  Frame:  {frame}")
     except Exception:

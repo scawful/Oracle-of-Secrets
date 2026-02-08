@@ -32,7 +32,12 @@ if str(REPO_ROOT) not in sys.path:
 ADDR_MODE = 0x7E0010
 ADDR_SUBMODE = 0x7E0011
 ADDR_INIDISPQ = 0x7E0013
-ADDR_FRAME = 0x7E001A
+ADDR_FRAME = 0x7E001A  # Optional debug read; do not use for progress/stall detection.
+
+# If GameMode enters the 0x30+ range during normal play, we treat it as corruption.
+# This is intentionally conservative to avoid false positives.
+INVALID_MODE_MIN = 0x30
+APU_SPIN_FULL_PC = 0x0088EC  # CMP $2140 ; BNE $0088EC (common hang signature)
 
 
 def _run(cmd: list[str], *, cwd: Path, timeout_s: int | None = None) -> int:
@@ -53,6 +58,7 @@ def _launch_mesen2_instance(*, instance: str, rom_path: Path, home_dir: Path, he
         str(rom_path),
         "--home",
         str(home_dir),
+        "--no-state-set",
     ]
     if headless:
         cmd.append("--headless")
@@ -80,6 +86,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Repro dungeon transition blackout from a seed state.")
     ap.add_argument("--version", type=int, default=168, help="ROM version (default 168)")
     ap.add_argument("--build", action="store_true", help="Build ROM before running (supports --enable/--disable)")
+    ap.add_argument(
+        "--rom-load",
+        action="store_true",
+        help="After --build, hot-load the built ROM into the connected Mesen2 instance (LOADROM).",
+    )
     ap.add_argument("--enable", default="", help="Comma-separated feature flags to enable (passed to build_rom.sh)")
     ap.add_argument("--disable", default="", help="Comma-separated feature flags to disable (passed to build_rom.sh)")
     ap.add_argument("--profile", default="defaults", help="Feature profile: defaults|all-on|all-off (passed to build_rom.sh)")
@@ -137,6 +148,7 @@ def main() -> int:
         if rc != 0:
             print("Build failed; aborting.", file=sys.stderr)
             return 2
+    rom_path = (REPO_ROOT / "Roms" / f"oos{int(args.version)}x.sfc").resolve()
 
     try:
         from scripts.mesen2_client_lib.client import OracleDebugClient
@@ -167,24 +179,35 @@ def main() -> int:
             home_dir=home_dir,
             headless=not bool(args.launch_ui),
         )
-        # Give the socket a moment to appear.
-        time.sleep(0.5)
+        # Give the socket a moment to appear and respond.
+        deadline = time.time() + 20.0
+        while time.time() < deadline:
+            if client.bridge.ensure_connected():
+                break
+            time.sleep(0.5)
         if not client.bridge.ensure_connected():
             print("Mesen2 still not connected after launch attempt.", file=sys.stderr)
             return 125
 
+    if args.build and args.rom_load:
+        if not rom_path.exists():
+            print(f"Built ROM not found: {rom_path}", file=sys.stderr)
+            return 2
+        if not client.load_rom(str(rom_path)):
+            print(f"ROM hot-load failed: {client.last_error}", file=sys.stderr)
+            return 2
+        # Give the ROM a moment to initialize before we load savestates.
+        time.sleep(0.25)
+
     # Load seed state
     if args.arm:
-        arm_cmd = [
-            sys.executable,
-            "-m",
-            "scripts.campaign.agentic_autodebug",
-            "arm",
-        ]
+        arm_cmd = [sys.executable, "-m", "scripts.campaign.agentic_autodebug"]
+        # Global args must appear before the subcommand for argparse.
         if os.environ.get("MESEN2_SOCKET_PATH"):
             arm_cmd += ["--socket", os.environ["MESEN2_SOCKET_PATH"]]
         elif args.instance:
             arm_cmd += ["--instance", str(args.instance)]
+        arm_cmd += ["arm"]
         _run(arm_cmd, cwd=REPO_ROOT, timeout_s=30)
 
     if args.lib:
@@ -198,25 +221,75 @@ def main() -> int:
         print(f"Failed to load seed state ({seed_desc}).", file=sys.stderr)
         return 125
 
-    # Ensure running
-    client.bridge.resume()
-    time.sleep(0.05)
+    # Nudge a couple frames so the engine can settle after load.
+    client.bridge.run_frames(count=2)
 
     # Input sequence to trigger the transition.
-    client.press_button(str(args.press), frames=int(args.press_frames), ensure_running=True)
+    # Do not require "running" here; the socket server may keep the emulator paused
+    # while still allowing frame-stepping.
+    ok = client.press_button(str(args.press), frames=int(args.press_frames), ensure_running=False)
+    if not ok:
+        print(f"Input injection failed: {client.last_error}", file=sys.stderr)
+        return 2
     client.bridge.run_frames(count=int(args.settle_frames))
 
     # Watch loop
-    last_frame = None
     stall = 0
     forced_blank_ticks = 0
+    brightness0_ticks = 0
+    apu_spin_ticks = 0
+    invalid_mode_ticks = 0
+    last_cycles = None
 
     for t in range(0, int(args.max_frames), max(1, int(args.poll_every))):
-        client.bridge.run_frames(count=max(1, int(args.poll_every)))
+        step_n = max(1, int(args.poll_every))
+        cyc0 = client.get_cpu_state().get("CYC")
+        if not client.bridge.run_frames(count=step_n):
+            print("Anomaly detected: failed to advance emulator frames; triggering capture...")
+            if not args.no_capture:
+                _run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "scripts.campaign.agentic_autodebug",
+                        "capture",
+                        "--kind",
+                        str(args.capture_kind),
+                        "--desc",
+                        str(args.capture_desc),
+                    ],
+                    cwd=REPO_ROOT,
+                    timeout_s=60,
+                )
+                _run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "scripts.campaign.agentic_autodebug",
+                        "triage",
+                        "--latest",
+                    ],
+                    cwd=REPO_ROOT,
+                    timeout_s=30,
+                )
+            return 1
+
+        cyc1 = client.get_cpu_state().get("CYC")
+        if cyc0 is not None and cyc1 is not None:
+            progressed = int(cyc1) != int(cyc0)
+        else:
+            progressed = True
+
+        if not progressed:
+            stall += 1
+        else:
+            stall = 0
+
         mode = client.bridge.read_memory(ADDR_MODE)
         submode = client.bridge.read_memory(ADDR_SUBMODE)
         inidispq = client.bridge.read_memory(ADDR_INIDISPQ)
-        frame = client.bridge.read_memory(ADDR_FRAME)
+        wram_frame = client.bridge.read_memory(ADDR_FRAME)
+        pc_full = client.get_pc().get("full")
 
         # "Forced blank" inidispq persists outside the brief transition window.
         if (inidispq & 0x80) != 0 and mode in (0x06, 0x07, 0x09):
@@ -224,21 +297,37 @@ def main() -> int:
         else:
             forced_blank_ticks = 0
 
-        # Frame stall detection (main loop not advancing).
-        if last_frame is None:
-            last_frame = frame
-            stall = 0
+        # Brightness 0 (black screen without forced blank). Be conservative:
+        # only count it when we're back in submode 0 (normal play), to avoid
+        # false positives during fades.
+        if (inidispq & 0x0F) == 0 and (inidispq & 0x80) == 0 and mode in (0x07, 0x09) and submode == 0:
+            brightness0_ticks += 1
         else:
-            if frame == last_frame and mode != 0x00:
-                stall += 1
-            else:
-                stall = 0
-                last_frame = frame
+            brightness0_ticks = 0
 
-        print(f"t={t:4d} mode=0x{mode:02X} sub=0x{submode:02X} inidispq=0x{inidispq:02X} frame={frame:3d}")
+        # APU spin loop: emulator is alive but the game is wedged.
+        if pc_full == APU_SPIN_FULL_PC:
+            apu_spin_ticks += 1
+        else:
+            apu_spin_ticks = 0
+
+        # Invalid mode detection (common corruption signature).
+        if mode >= INVALID_MODE_MIN:
+            invalid_mode_ticks += 1
+        else:
+            invalid_mode_ticks = 0
+
+        # Optional stall diagnostic: CPU cycle counter didn't advance across our step window.
+        # This indicates the socket server isn't actually executing frames/instructions.
+        last_cycles = cyc1
+
+        print(
+            f"t={t:4d} mode=0x{mode:02X} sub=0x{submode:02X} inidispq=0x{inidispq:02X} "
+            f"wram_frame={wram_frame:3d} pc=0x{(pc_full or 0):06X} cyc={cyc1}"
+        )
 
         # Trip conditions: either we are forced-blanked too long, or main loop is stalled.
-        if forced_blank_ticks >= 12 or stall >= 12:
+        if forced_blank_ticks >= 12 or brightness0_ticks >= 12 or stall >= 12 or apu_spin_ticks >= 6 or invalid_mode_ticks >= 3:
             print("Anomaly detected; triggering capture...")
             if not args.no_capture:
                 # Use the shared capture tool (more complete forensics).

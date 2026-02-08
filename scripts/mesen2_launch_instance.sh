@@ -14,16 +14,11 @@ OPTIONS:
   --title TITLE          Window title suffix (default: instance name)
   --source NAME          Agent source tag (default: agent; used in default instance name)
   --rom PATH             ROM to load (default: Roms/oos168x.sfc)
-  --state-set NAME       Save-state set to apply (default: oos168x_current)
-  --state-manifest PATH  Override save-state manifest path
-  --no-state-set         Skip applying a save-state set
-  --state-allow-partial  Allow missing slots when applying state set
-  --state-allow-stale    Allow state set apply even if ROM MD5 mismatches
-  --state-force          Overwrite existing states when applying state set
-  --allow-stale          Alias for --state-allow-stale
-  --force                Alias for --state-force (state apply only)
+  --no-state-set         (default) Do not copy any save-state “slot pack” into the isolated profile.
+                         Use `mesen2_client.py lib-load <id>` instead.
   --reuse                If socket already exists, do not launch; just print env
   --socket-force         Remove existing socket file (unsafe)
+  --instance-guid GUID   Override MESEN2_INSTANCE_GUID for single-instance isolation
   --lua PATH             Lua script to load on launch
   --home PATH            MESEN2_HOME override (default: platform-specific isolated dir)
   --socket PATH          Socket path override (default: /tmp/mesen2-<instance>.sock)
@@ -39,7 +34,7 @@ OPTIONS:
   -h, --help             Show help
 
 ENV OUTPUT:
-  The script prints export lines for MESEN2_HOME / MESEN2_SOCKET_PATH / MESEN2_INSTANCE.
+  The script prints export lines for MESEN2_HOME / MESEN2_SOCKET_PATH / MESEN2_INSTANCE / MESEN2_INSTANCE_GUID.
 EOF
 }
 
@@ -55,7 +50,7 @@ SOURCE="agent"
 ROM_PATH="${ROOT_DIR}/Roms/oos168x.sfc"
 STATE_SET="oos168x_current"
 STATE_MANIFEST=""
-NO_STATE_SET=0
+NO_STATE_SET=1
 STATE_ALLOW_PARTIAL=0
 STATE_ALLOW_STALE=0
 STATE_FORCE=0
@@ -75,6 +70,8 @@ COPY_SETTINGS=1
 COPY_SETTINGS_FORCE=0
 COPY_FROM=""
 SETTINGS_STATUS=""
+INSTANCE_GUID=""
+INSTANCE_GUID_SET=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -83,19 +80,20 @@ while [[ $# -gt 0 ]]; do
     --title) TITLE="$2"; shift 2 ;;
     --source) SOURCE="$2"; shift 2 ;;
     --rom) ROM_PATH="$2"; shift 2 ;;
-    --state-set) STATE_SET="$2"; shift 2 ;;
-    --state-manifest) STATE_MANIFEST="$2"; shift 2 ;;
     --no-state-set) NO_STATE_SET=1; shift ;;
-    --state-allow-partial) STATE_ALLOW_PARTIAL=1; shift ;;
-    --state-allow-stale) STATE_ALLOW_STALE=1; shift ;;
-    --state-force) STATE_FORCE=1; shift ;;
-    --allow-stale) STATE_ALLOW_STALE=1; shift ;;
-    --force) STATE_FORCE=1; shift ;;
+    --state-set) echo "Error: --state-set is deprecated; use mesen2_client.py lib-load instead." >&2; exit 2 ;;
+    --state-manifest) echo "Error: --state-manifest is deprecated; use mesen2_client.py lib-load instead." >&2; exit 2 ;;
+    --state-allow-partial) echo "Error: --state-allow-partial is deprecated." >&2; exit 2 ;;
+    --state-allow-stale) echo "Error: --state-allow-stale is deprecated." >&2; exit 2 ;;
+    --state-force) echo "Error: --state-force is deprecated." >&2; exit 2 ;;
+    --allow-stale) echo "Error: --allow-stale is deprecated." >&2; exit 2 ;;
+    --force) echo "Error: --force is deprecated." >&2; exit 2 ;;
     --reuse) REUSE=1; shift ;;
     --socket-force) SOCKET_FORCE=1; shift ;;
     --lua) LUA_SCRIPT="$2"; shift 2 ;;
     --home) HOME_DIR="$2"; HOME_DIR_SET=1; shift 2 ;;
     --socket) SOCKET_PATH="$2"; SOCKET_PATH_SET=1; shift 2 ;;
+    --instance-guid) INSTANCE_GUID="$2"; INSTANCE_GUID_SET=1; shift 2 ;;
     --app) APP_PATH="$2"; shift 2 ;;
     --headless) HEADLESS=1; shift ;;
     --no-save-settings) NO_SAVE_SETTINGS=1; shift ;;
@@ -254,6 +252,39 @@ fi
 
 mkdir -p "${HOME_DIR}/SaveStates" "${HOME_DIR}/Saves"
 
+resolve_or_generate_instance_guid() {
+  local guid_path="${HOME_DIR}/instance_guid.txt"
+
+  if [[ "${INSTANCE_GUID_SET}" -eq 1 ]]; then
+    printf '%s' "${INSTANCE_GUID}" > "${guid_path}"
+    echo "${INSTANCE_GUID}"
+    return
+  fi
+
+  if [[ -f "${guid_path}" ]]; then
+    # Reuse stable GUID for this instance home.
+    local existing
+    existing="$(cat "${guid_path}" 2>/dev/null | tr -d '[:space:]' || true)"
+    if [[ -n "${existing}" ]]; then
+      INSTANCE_GUID="${existing}"
+      echo "${INSTANCE_GUID}"
+      return
+    fi
+  fi
+
+  # Generate a new GUID for this instance (prevents SingleInstance pipe collisions).
+  INSTANCE_GUID="$(
+    python3 - <<'PY'
+import uuid
+print(str(uuid.uuid4()).upper())
+PY
+  )"
+  printf '%s' "${INSTANCE_GUID}" > "${guid_path}"
+  echo "${INSTANCE_GUID}"
+}
+
+INSTANCE_GUID="$(resolve_or_generate_instance_guid)"
+
 if [[ "${COPY_SETTINGS}" -eq 1 ]]; then
   SETTINGS_NEEDS_SEED=1
   if [[ -f "${HOME_DIR}/settings.json" ]]; then
@@ -296,9 +327,6 @@ if [[ "${COPY_SETTINGS}" -eq 1 ]]; then
       cp "${COPY_FROM}/Input.xml" "${HOME_DIR}/Input.xml"
       echo "Seeded Input.xml from ${COPY_FROM}"
     fi
-    if [[ -f "${COPY_FROM}/instance_guid.txt" && ! -f "${HOME_DIR}/instance_guid.txt" ]]; then
-      cp "${COPY_FROM}/instance_guid.txt" "${HOME_DIR}/instance_guid.txt"
-    fi
   else
     if [[ "${SETTINGS_NEEDS_SEED}" -eq 0 ]]; then
       SETTINGS_STATUS="existing config (reused profile)"
@@ -312,23 +340,8 @@ else
 fi
 
 if [[ "${NO_STATE_SET}" -eq 0 ]]; then
-  set_cmd=(python3 "${ROOT_DIR}/scripts/state_library.py" set-apply --set "${STATE_SET}")
-  if [[ -n "${STATE_MANIFEST}" ]]; then
-    set_cmd+=(--manifest "${STATE_MANIFEST}")
-  fi
-  set_cmd+=(--mesen-dir "${HOME_DIR}/SaveStates" --mesen-saves-dir "${HOME_DIR}/Saves")
-  set_cmd+=(--rom "${ROM_PATH}")
-  if [[ "${STATE_ALLOW_PARTIAL}" -eq 1 ]]; then
-    set_cmd+=(--allow-partial)
-  fi
-  if [[ "${STATE_ALLOW_STALE}" -eq 1 ]]; then
-    set_cmd+=(--allow-stale)
-  fi
-  if [[ "${STATE_FORCE}" -eq 1 ]]; then
-    set_cmd+=(--force)
-  fi
-  echo "Applying state set '${STATE_SET}' to ${HOME_DIR}/SaveStates..."
-  "${set_cmd[@]}"
+  echo "Error: state-set copying is deprecated. Use mesen2_client.py lib-load after launch." >&2
+  exit 2
 fi
 
 MESEN_BIN=""
@@ -368,6 +381,7 @@ fi
 export MESEN2_HOME="${HOME_DIR}"
 export MESEN2_SOCKET_PATH="${SOCKET_PATH}"
 export MESEN2_INSTANCE="${INSTANCE}"
+export MESEN2_INSTANCE_GUID="${INSTANCE_GUID}"
 export MESEN2_AGENT_TITLE="${TITLE}"
 export MESEN2_AGENT_SOURCE="${SOURCE}"
 export MESEN2_AGENT_ACTIVE=1
@@ -384,9 +398,18 @@ echo "Settings: ${SETTINGS_STATUS}"
 echo "Home:     ${HOME_DIR}"
 echo "Socket:   ${SOCKET_PATH}"
 echo "Binary:   ${MESEN_BIN}"
+echo "GUID:     ${MESEN2_INSTANCE_GUID}"
 echo "==================================="
 
-launch_args=("${ROM_PATH}" "--instanceName=${INSTANCE}" "--multiinstance")
+launch_args=()
+# On macOS, launching the app bundle via `open -n` is the most reliable way to
+# spawn a separate instance. Some Mesen builds do not accept the legacy
+# `--multiinstance/--instanceName` CLI args and will exit immediately.
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  launch_args+=("${ROM_PATH}")
+else
+  launch_args+=("${ROM_PATH}" "--instanceName=${INSTANCE}" "--multiinstance")
+fi
 if [[ -n "${LUA_SCRIPT}" ]]; then
   launch_args+=("${LUA_SCRIPT}")
 fi
@@ -399,9 +422,18 @@ fi
 
 if [[ "${REUSE}" -eq 0 ]]; then
   if command -v nohup >/dev/null 2>&1; then
-    nohup "${MESEN_BIN}" "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+      # Launch the app bundle; it inherits our exported env (socket path, home).
+      nohup open -n -a "${APP_PATH}" --args "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
+    else
+      nohup "${MESEN_BIN}" "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
+    fi
   else
-    "${MESEN_BIN}" "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+      open -n -a "${APP_PATH}" --args "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
+    else
+      "${MESEN_BIN}" "${launch_args[@]}" >/tmp/mesen2_"${INSTANCE}".log 2>&1 &
+    fi
   fi
   # Prevent SIGHUP from killing the background process when the shell exits.
   if [[ -n "${BASH_VERSION:-}" ]]; then
@@ -436,6 +468,7 @@ echo "Exports:"
 echo "  export MESEN2_HOME=\"${MESEN2_HOME}\""
 echo "  export MESEN2_SOCKET_PATH=\"${MESEN2_SOCKET_PATH}\""
 echo "  export MESEN2_INSTANCE=\"${MESEN2_INSTANCE}\""
+echo "  export MESEN2_INSTANCE_GUID=\"${MESEN2_INSTANCE_GUID}\""
 echo ""
 echo "Verify:"
 echo "  python3 ${ROOT_DIR}/scripts/mesen2_client.py --socket \"${MESEN2_SOCKET_PATH}\" health"

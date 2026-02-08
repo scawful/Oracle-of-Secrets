@@ -245,7 +245,7 @@ def action_open_state_library(_: dict[str, Any]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    path = oos_root / "Docs" / "Testing" / "save_state_library.json"
+    path = oos_root / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
     return _open_path(path)
 
 
@@ -451,23 +451,26 @@ def action_headless_workflow_start(_: dict[str, Any]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    script = oos_root / "scripts" / "agent_workflow_start.sh"
+    script = oos_root / "scripts" / "yaze_service.sh"
     rom = _resolve_default_rom(oos_root, prefer="test")
     if not script.exists():
-        return {"ok": False, "error": "agent_workflow_start.sh not found"}
+        return {"ok": False, "error": "yaze_service.sh not found"}
     if not rom:
         return {"ok": False, "error": "No ROM found in Roms/"}
-    return _spawn([str(script), "--rom", str(rom), "--export-fast"], cwd=oos_root)
+    # "Headless workflow" maps to the yaze server mode (no GUI).
+    return _spawn([str(script), "start", "--rom", str(rom)], cwd=oos_root)
 
 
 def action_headless_workflow_stop(_: dict[str, Any]) -> dict[str, Any]:
+    if not _yaze_allowed():
+        return {"ok": False, "error": "Headless YAZE workflow disabled for agents. Use Mesen2 OOS only."}
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    script = oos_root / "scripts" / "agent_workflow_stop.sh"
+    script = oos_root / "scripts" / "yaze_service.sh"
     if not script.exists():
-        return {"ok": False, "error": "agent_workflow_stop.sh not found"}
-    return _spawn([str(script)], cwd=oos_root)
+        return {"ok": False, "error": "yaze_service.sh not found"}
+    return _spawn([str(script), "stop"], cwd=oos_root)
 
 
 def action_start_llm_gateway(_: dict[str, Any]) -> dict[str, Any]:

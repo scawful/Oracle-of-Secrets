@@ -1,7 +1,7 @@
 """Location data for Oracle of Secrets.
 
 Comprehensive mapping of area IDs and room IDs to human-readable names.
-Derived from Docs/Sheets/Oracle of Secrets Data Sheet - Rooms and Entrances.csv
+Derived from Docs/Technical/Sheets/Oracle of Secrets Data Sheet - Rooms and Entrances.csv
 
 Campaign Goals Supported:
 - D.1: Game state parser (location awareness)

@@ -4,7 +4,8 @@ Test runner for Oracle of Secrets with MoE orchestrator integration.
 
 Executes test definitions and routes failures to specialized Triforce models.
 
-Defaults to the Mesen2 fork socket API. Set OOS_TEST_BACKEND=cli to force legacy mesen_cli.sh.
+Defaults to the Mesen2 fork socket API. Set `OOS_TEST_BACKEND=yaze` to force the
+YAZE gRPC backend; otherwise `auto` will use the socket backend when available.
 
 Usage:
     ./scripts/test_runner.py tests/lr_swap_test.json
@@ -338,6 +339,9 @@ class YazeBackend:
 class MesenBackend:
     def __init__(self):
         mode = os.environ.get("OOS_TEST_BACKEND", "auto").lower()
+        if mode == "cli":
+            # Legacy backend removed; treat as socket for compatibility with older envs.
+            mode = "socket"
         self.mode = mode
         self.socket_backend = None
         self.yaze_backend = None
@@ -376,7 +380,7 @@ BACKEND = MesenBackend()
 
 
 def mesen_cmd(cmd: str, *args, timeout: float = 2.0) -> tuple[bool, str]:
-    """Execute command via socket API (default) or mesen_cli fallback."""
+    """Execute command via socket API (default) or YAZE gRPC backend."""
     return BACKEND.send(cmd, *args, timeout=timeout)
 
 
@@ -655,7 +659,7 @@ def normalize_state_value(value: Any) -> tuple[str, Any]:
     return "str", str(value)
 
 def parse_mesen_value(output: str) -> int | None:
-    """Parse value from mesen_cli.sh read output."""
+    """Parse integer value from the backend read output."""
     # Format: "READ:0x7E0739=0x02 (2)"
     try:
         if '=' in output and '0x' in output:
@@ -1045,7 +1049,7 @@ def run_test(test_path: Path, verbose: bool = False, quiet: bool = False, dry_ru
     if not skip_load and test.get("saveState"):
         try:
             repo_root = Path(__file__).parent.parent
-            manifest_path = repo_root / "Docs" / "Testing" / "save_state_library.json"
+            manifest_path = repo_root / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
             resolved = resolve_save_state(test.get("saveState"), repo_root, manifest_path)
         except Exception as exc:
             if not quiet:

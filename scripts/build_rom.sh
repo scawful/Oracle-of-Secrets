@@ -294,7 +294,9 @@ if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
     analyzer_script=""
   fi
 
-  if [[ -n "$analyzer_script" ]]; then
+  if [[ "${SKIP_ANALYSIS:-0}" == "1" ]]; then
+    echo "[*] Skipping static analysis (SKIP_ANALYSIS=1)"
+  elif [[ -n "$analyzer_script" ]]; then
     # Run static analysis - fail build on errors (warnings are OK unless --strict)
     lint_args=()
     if [[ "$analyzer_script" == *"oracle_analyzer"* ]]; then

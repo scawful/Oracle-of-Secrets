@@ -9,6 +9,7 @@ from __future__ import annotations
 import glob
 import json
 import os
+import errno
 import socket
 import time
 from pathlib import Path
@@ -89,7 +90,17 @@ def cleanup_stale_sockets(verbose: bool = False) -> list[str]:
 
         try:
             os.kill(pid, 0)
-        except OSError:
+        except OSError as exc:
+            # Only treat ESRCH (no such process) as stale.
+            # In sandboxed environments we may get EPERM for a *live* PID; do not delete.
+            if getattr(exc, "errno", None) == errno.EPERM:
+                if verbose:
+                    print(f"Skip socket (no permission to probe PID {pid}): {sock_path}")
+                continue
+            if getattr(exc, "errno", None) != errno.ESRCH:
+                if verbose:
+                    print(f"Skip socket (unknown kill() failure for PID {pid}): {sock_path} ({exc})")
+                continue
             try:
                 os.unlink(sock_path)
                 removed.append(sock_path)
@@ -145,23 +156,37 @@ class MesenBridge:
     def socket_path(self) -> str | None:
         """Get or discover the socket path.
 
-        Canonical order: explicit path -> MESEN2_SOCKET_PATH -> status files
-        (mesen2-*.status, socketPath) -> glob mesen2-*.sock by mtime.
+        Canonical order:
+          1) explicit path (constructor arg)
+          2) MESEN2_SOCKET_PATH / MESEN2_SOCKET env vars
+          3) status files (mesen2-*.status, socketPath) by mtime
+          4) glob /tmp/mesen2-*.sock by mtime
 
-        Note: In some sandboxed environments, the socket path may not be
-        stat()-able even though connect() succeeds. Prefer probing to
-        os.path.exists() to reduce false "no socket" failures.
+        Important: if an explicit socket path is provided, return it as-is.
+        Callers can use `is_connected()`/`check_health()` to validate.
+
+        We only probe sockets (PING) during *auto-discovery* to avoid picking
+        stale sockets, and to keep unit tests deterministic (no surprise
+        discovery of a real emulator socket).
         """
-        if self._socket_path and self._probe_socket(self._socket_path):
+        # Explicit path: do not probe (tests + deterministic callers).
+        if self._socket_path:
             return self._socket_path
 
-        # Env (prefer MESEN2_SOCKET_PATH, then deprecated MESEN2_SOCKET)
+        # Env (prefer MESEN2_SOCKET_PATH, then deprecated MESEN2_SOCKET).
+        # Do not probe; send_command() will fail clearly if it's wrong.
         for env_var in ("MESEN2_SOCKET_PATH", "MESEN2_SOCKET"):
             env_socket = os.getenv(env_var)
-            if env_socket and self._probe_socket(env_socket):
+            if env_socket:
                 self._socket_path = env_socket
                 return self._socket_path
 
+        discovered = self._discover_socket_path()
+        if discovered:
+            self._socket_path = discovered
+        return self._socket_path
+
+    def _discover_socket_path(self) -> str | None:
         # Status files: read socketPath, sort by status file mtime (newest first)
         status_files = glob.glob("/tmp/mesen2-*.status")
         if status_files:
@@ -171,14 +196,17 @@ class MesenBridge:
                     with open(sf) as f:
                         data = json.load(f)
                     sp = data.get("socketPath")
-                    if sp and isinstance(sp, str) and self._probe_socket(sp):
+                    if sp and isinstance(sp, str):
                         candidates.append((os.path.getmtime(sf), sp))
                 except (OSError, json.JSONDecodeError, KeyError):
                     continue
             if candidates:
                 candidates.sort(key=lambda x: -x[0])
-                self._socket_path = candidates[0][1]
-                return self._socket_path
+                # Prefer first socketPath that responds to PING; else fall back to most recent.
+                for _, sp in candidates:
+                    if self._probe_socket(sp):
+                        return sp
+                return candidates[0][1]
 
         # Fallback: glob sockets by socket file mtime (do not assume PID in name)
         sockets = glob.glob("/tmp/mesen2-*.sock")
@@ -188,10 +216,8 @@ class MesenBridge:
         # Prefer first socket that responds to PING; else use most recent
         for candidate in sockets:
             if self._probe_socket(candidate):
-                self._socket_path = candidate
-                return self._socket_path
-        self._socket_path = sockets[0]
-        return self._socket_path
+                return candidate
+        return sockets[0]
 
     @staticmethod
     def _probe_socket(path: str) -> bool:
@@ -535,8 +561,50 @@ class MesenBridge:
         return result.get("success", False)
 
     def run_frames(self, count: int = 1) -> bool:
-        result = self.send_command("FRAME", {"count": str(count)})
-        return result.get("success", False)
+        """Advance emulation by `count` frames.
+
+        On the Mesen2-OOS fork, the most reliable cross-build behavior is:
+        - RESUME (if paused)
+        - wait wall-clock time for `count` frames (based on STATE.fps)
+        - PAUSE (if we resumed)
+
+        Some socket builds expose STEP/FRAME-style frame stepping, but it is not
+        consistently implemented across local setups and can result in "OK"
+        responses without advancing game logic. We intentionally avoid relying
+        on those semantics here.
+        """
+        count = max(0, int(count))
+        if count <= 0:
+            return True
+
+        # Fetch FPS + paused state.
+        fps = 60.0
+        was_paused = False
+        try:
+            state = self.send_command("STATE", timeout=2.0)
+            if state.get("success"):
+                data = state.get("data", {})
+                if isinstance(data, str):
+                    try:
+                        data = json.loads(data)
+                    except Exception:
+                        data = {}
+                if isinstance(data, dict):
+                    was_paused = bool(data.get("paused", False))
+                    fps_val = data.get("fps")
+                    if isinstance(fps_val, (int, float)) and fps_val > 1:
+                        fps = float(fps_val)
+        except Exception:
+            pass
+
+        # Run.
+        if was_paused:
+            self.resume()
+            time.sleep(0.01)
+        time.sleep(count / max(1.0, fps))
+        if was_paused:
+            self.pause()
+        return True
 
     def get_rom_info(self) -> dict[str, Any]:
         result = self.send_command("ROMINFO")

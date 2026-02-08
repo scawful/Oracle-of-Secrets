@@ -454,7 +454,7 @@ def cmd_config(args):
     project_root = Path(__file__).parent.parent.parent
     campaign_dir = project_root / "Docs" / "Campaign"
     test_dir = Path(__file__).parent / "tests"
-    state_library = project_root / "Docs" / "Testing" / "save_state_library.json"
+    state_library = project_root / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
 
     paths = {
         'project_root': str(project_root.resolve()),
@@ -544,7 +544,7 @@ def cmd_health(args):
     })
 
     # Check 3: Save state library exists
-    state_lib = Path(__file__).parent.parent.parent / "Docs/Testing/save_state_library.json"
+    state_lib = Path(__file__).parent.parent.parent / "Docs/Debugging/Testing/save_state_library.json"
     state_exists = state_lib.exists()
     checks.append({
         'name': 'State Library',
@@ -1000,7 +1000,7 @@ def cmd_summary(args):
     import re
     from datetime import datetime
 
-    library_path = Path(__file__).parent.parent.parent / "Docs/Testing/save_state_library.json"
+    library_path = Path(__file__).parent.parent.parent / "Docs/Debugging/Testing/save_state_library.json"
     test_dir = Path(__file__).parent / "tests"
     log_path = _campaign_log_path()
 
@@ -1087,7 +1087,7 @@ def cmd_watch(args):
     import time
     from datetime import datetime
 
-    library_path = Path(__file__).parent.parent.parent / "Docs/Testing/save_state_library.json"
+    library_path = Path(__file__).parent.parent.parent / "Docs/Debugging/Testing/save_state_library.json"
     test_dir = Path(__file__).parent / "tests"
     log_path = _campaign_log_path()
 
@@ -1397,7 +1397,7 @@ def cmd_dashboard(args):
     import re
     from datetime import datetime
 
-    library_path = Path(__file__).parent.parent.parent / "Docs/Testing/save_state_library.json"
+    library_path = Path(__file__).parent.parent.parent / "Docs/Debugging/Testing/save_state_library.json"
     test_dir = Path(__file__).parent / "tests"
     log_path = _campaign_log_path()
 
@@ -1527,7 +1527,7 @@ def cmd_states(args):
     """List save states in library."""
     import json
 
-    library_path = Path(__file__).parent.parent.parent / "Docs/Testing/save_state_library.json"
+    library_path = Path(__file__).parent.parent.parent / "Docs/Debugging/Testing/save_state_library.json"
 
     if not library_path.exists():
         print(f"ERROR: Library not found at {library_path}")
@@ -1572,7 +1572,7 @@ def cmd_validate(args):
     """Validate save state library integrity."""
     import json
 
-    library_path = Path(__file__).parent.parent.parent / "Docs/Testing/save_state_library.json"
+    library_path = Path(__file__).parent.parent.parent / "Docs/Debugging/Testing/save_state_library.json"
     project_root = Path(__file__).parent.parent.parent
 
     if not library_path.exists():
@@ -1671,7 +1671,7 @@ def cmd_compare(args):
     """Compare two save state library entries."""
     import json
 
-    library_path = Path(__file__).parent.parent.parent / "Docs/Testing/save_state_library.json"
+    library_path = Path(__file__).parent.parent.parent / "Docs/Debugging/Testing/save_state_library.json"
 
     if not library_path.exists():
         print(f"ERROR: Library not found at {library_path}")
@@ -1767,7 +1767,7 @@ def cmd_regression(args):
     import json
     import re
 
-    library_path = Path(__file__).parent.parent.parent / "Docs/Testing/save_state_library.json"
+    library_path = Path(__file__).parent.parent.parent / "Docs/Debugging/Testing/save_state_library.json"
 
     if not library_path.exists():
         print(f"ERROR: Library not found at {library_path}")

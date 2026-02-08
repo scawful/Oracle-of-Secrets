@@ -31,6 +31,16 @@ from .constants import (
 )
 from .issues import KNOWN_ISSUES
 from .state_library import StateLibrary
+from .save_data_library import SaveDataLibrary
+from .save_data_io import read_savefile_bytes, write_savefile_bytes
+from .cart_sram import (
+    apply_inverse_checksum,
+    resolve_active_slot,
+    read_slot_saveblock,
+    write_slot_saveblock,
+    dump_srm_to_file,
+    load_srm_from_file,
+)
 
 
 NAME_ENTRY_GUARD_ENV = "OOS_NAME_ENTRY_GUARD"
@@ -96,6 +106,7 @@ class OracleDebugClient:
         self._last_area: Optional[int] = None
         self._watch_profile = "overworld"
         self.state_library = StateLibrary()
+        self.save_data_library = SaveDataLibrary()
         self.last_error = ""
         self._usdasm_labels: dict[str, int] = {}
         self._usdasm_index: dict[int, str] = {}
@@ -955,7 +966,7 @@ class OracleDebugClient:
         x: int | None = None,
         y: int | None = None,
         kind: str = "ow",
-        use_rom_warp: bool = True,
+        use_rom_warp: bool = False,
         timeout_frames: int = 120,
     ) -> bool:
         """Warp Link to a location or specific coordinates.
@@ -980,6 +991,12 @@ class OracleDebugClient:
         Returns:
             True if warp was successful, False otherwise
         """
+        # NOTE: The ROM-integrated warp handler is not currently active in the shipped
+        # Oracle of Secrets ROM (DBG_WARP_* registers are not consumed anywhere).
+        # Keep ROM-warp behind an explicit opt-in to avoid writing to unknown WRAM.
+        if use_rom_warp and not _env_flag("OOS_ENABLE_ROM_WARP", False):
+            use_rom_warp = False
+
         target_area = area
         if location and location in WARP_LOCATIONS:
             target_area, x, y, _ = WARP_LOCATIONS[location]
@@ -999,7 +1016,13 @@ class OracleDebugClient:
             success &= self.bridge.write_memory16(OracleRAM.LINK_Y, y)
             return success
 
-        # Use ROM debug warp system
+        # Use ROM debug warp system (opt-in only; see note above).
+        # The ROM warp handler runs during normal frame execution. If the emulator
+        # is paused, the request will never be processed (status stays armed).
+        if not self.ensure_running():
+            self.last_error = "Emulator is paused (or run-state unavailable); cannot process warp request"
+            return False
+
         # 1. Write target area
         if target_area is not None:
             self.bridge.write_memory(OracleRAM.DBG_WARP_AREA, target_area)
@@ -1027,16 +1050,21 @@ class OracleDebugClient:
 
         # 5. Poll for completion (optional - warp happens on next frame)
         # The ROM code sets status to 3 when complete
-        import time
         for _ in range(timeout_frames):
+            # Advance a frame so the ROM warp handler can run deterministically,
+            # even on setups where "sleep" doesn't advance emulation.
+            try:
+                self.bridge.run_frames(count=1)
+            except Exception:
+                # Fall back to polling only.
+                pass
             status = self.bridge.read_memory(OracleRAM.DBG_WARP_STATUS)
             if status == 3:  # Complete
                 return True
             if status in (0, OracleRAM.DBG_WARP_STATUS_ARMED):  # Not yet processed/armed
-                time.sleep(1 / 60)  # Wait one frame
                 continue
             # Status 1 or 2 means still processing
-            time.sleep(1 / 60)
+            continue
 
         # Check for errors
         error = self.bridge.read_memory(OracleRAM.DBG_WARP_ERROR)
@@ -1313,15 +1341,60 @@ class OracleDebugClient:
 
     def get_cpu_state(self):
         """Get CPU registers and flags via socket API."""
+        def _hex_to_int(v):
+            if isinstance(v, int):
+                return v
+            if isinstance(v, str):
+                s = v.strip().lower().replace('"', "")
+                try:
+                    if s.startswith("0x"):
+                        return int(s, 16)
+                    if s.startswith("$"):
+                        return int("0x" + s[1:], 16)
+                    # Some servers return decimal strings.
+                    if s.isdigit():
+                        return int(s, 10)
+                except Exception:
+                    return v
+            return v
+
+        def _normalize(regs: dict) -> dict:
+            # Some socket builds return lowercase keys + hex strings.
+            # Normalize to the uppercase convention used by CLI + helpers.
+            mapping = {
+                "a": "A",
+                "x": "X",
+                "y": "Y",
+                "sp": "SP",
+                "pc": "PC",
+                "k": "K",
+                "p": "P",
+                "d": "D",
+                "dbr": "DB",
+                "db": "DB",
+                "pb": "K",
+                "flags": "flags",
+                "cycles": "CYC",
+            }
+            out: dict = {}
+            # Start with existing keys; coerce obvious hex strings to ints.
+            for k, v in regs.items():
+                out[k] = _hex_to_int(v)
+            # Promote lowercase to uppercase when missing.
+            for src, dst in mapping.items():
+                if src in out and dst not in out:
+                    out[dst] = out[src]
+            return out
+
         try:
             native = self.bridge.get_cpu_state()
             if isinstance(native, dict) and native:
-                return native
+                return _normalize(native)
         except Exception:
             pass
         res = self.bridge.send_command("CPU")
         if res.get("success") and isinstance(res.get("data"), dict):
-            return res.get("data")
+            return _normalize(res.get("data"))
         return {}
 
     def disassemble(self, address: int, count: int = 10) -> list:
@@ -1630,6 +1703,84 @@ class OracleDebugClient:
     def get_library_sets(self) -> list[dict]:
         """List all state sets in the library."""
         return self.state_library.get_sets()
+
+    # --- Save Data (WRAM savefile mirror) Integration ---
+
+    def read_save_data(self) -> bytes:
+        """Read the active savefile block from WRAM ($7EF000-$7EF4FF)."""
+        return read_savefile_bytes(self.bridge)
+
+    def write_save_data(self, blob: bytes) -> None:
+        """Write a savefile block into WRAM ($7EF000-$7EF4FF)."""
+        write_savefile_bytes(self.bridge, blob)
+
+    def save_save_data_to_library(
+        self,
+        label: str,
+        *,
+        tags: Optional[list[str]] = None,
+        captured_by: str = "agent",
+        metadata: Optional[dict] = None,
+    ) -> tuple[str, list[str]]:
+        if metadata is None:
+            metadata = self.capture_state_metadata()
+        return self.save_data_library.save_current(
+            self.bridge,
+            label=label,
+            tags=tags,
+            captured_by=captured_by,
+            metadata=metadata,
+        )
+
+    def list_save_data_entries(self, tag: Optional[str] = None, status: Optional[str] = None) -> list[dict]:
+        return self.save_data_library.list_entries(tag=tag, status=status)
+
+    def load_save_data_entry(self, entry_id: str) -> bool:
+        return self.save_data_library.load_into_wram(self.bridge, entry_id)
+
+    def load_save_data_path(self, path: Path) -> bool:
+        return self.save_data_library.load_from_path(self.bridge, path)
+
+    # --- Cart SRAM (.srm) integration ---
+
+    def active_save_slot(self) -> int:
+        """Active save slot (1..3) from SRAMOFF ($701FFE)."""
+        return resolve_active_slot(self.bridge)
+
+    def repair_save_data_checksum(self) -> dict:
+        """Recompute and write inverse checksum for the active WRAMSAVE block."""
+        blob = self.read_save_data()
+        fixed = apply_inverse_checksum(blob)
+        changed = fixed != blob
+        if changed:
+            self.write_save_data(fixed)
+        inv = fixed[0x4FE] | (fixed[0x4FF] << 8)
+        return {"changed": changed, "inverse_checksum": inv}
+
+    def sync_wram_save_to_sram(self, slot: int | None = None) -> dict:
+        """Persist the active WRAMSAVE block into cart SRAM (main + mirror)."""
+        slot = int(slot or self.active_save_slot())
+        blob = self.read_save_data()
+        blob = apply_inverse_checksum(blob)
+        self.write_save_data(blob)  # keep WRAM consistent with what we persist
+        write_slot_saveblock(self.bridge, slot, blob, write_mirror=True)
+        return {"slot": slot, "bytes": len(blob)}
+
+    def sync_sram_to_wram_save(self, slot: int | None = None, prefer_mirror: bool = False) -> dict:
+        """Hot-load save variables by copying SRAM slot -> WRAMSAVE."""
+        slot = int(slot or self.active_save_slot())
+        blob = read_slot_saveblock(self.bridge, slot, prefer_mirror=prefer_mirror)
+        self.write_save_data(blob)
+        inv = blob[0x4FE] | (blob[0x4FF] << 8)
+        return {"slot": slot, "bytes": len(blob), "inverse_checksum": inv}
+
+    def srm_dump(self, path: Path) -> dict:
+        dump_srm_to_file(self.bridge, Path(path))
+        return {"path": str(path)}
+
+    def srm_load(self, path: Path, preserve_sramoff: bool = True) -> dict:
+        load_srm_from_file(self.bridge, Path(path), preserve_sramoff=preserve_sramoff)
+        return {"path": str(path), "preserve_sramoff": bool(preserve_sramoff)}
 
     def capture_state_metadata(self) -> dict:
         """Capture current game state as metadata for library entries."""

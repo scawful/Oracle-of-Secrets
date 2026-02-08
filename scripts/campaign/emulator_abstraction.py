@@ -94,8 +94,19 @@ class GameStateSnapshot:
 
     @property
     def is_black_screen(self) -> bool:
-        """Check for black screen condition (INIDISP = 0x80)."""
-        return self.inidisp == 0x80 and self.mode in (0x06, 0x07)
+        """Check for black screen condition.
+
+        This is intentionally *narrow* and matches the project's historical
+        "transition blackout" signature:
+
+        - INIDISP == 0x80 exactly (forced blank + zero brightness)
+        - Mode in (0x06, 0x07) (transition / underworld)
+
+        Other darkness states (e.g. dark rooms / lamp overlay) should be
+        detected separately to avoid false positives.
+        """
+        inidisp = int(self.inidisp) & 0xFF
+        return inidisp == 0x80 and self.mode in (0x06, 0x07)
 
     @property
     def position(self) -> Tuple[int, int]:

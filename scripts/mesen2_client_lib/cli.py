@@ -14,10 +14,11 @@ from .client import OracleDebugClient
 from .capture import capture_debug_snapshot
 from .constants import ITEMS, STORY_FLAGS, WATCH_PROFILES, BREAKPOINT_PROFILES
 from .expr import ExprEvaluator, EvalContext, ExprError
-from .paths import MANIFEST_PATH
+from .paths import MANIFEST_PATH, SAVE_DATA_MANIFEST_PATH, SAVE_DATA_PROFILE_DIR
 from .state_diff import StateDiffer
 from .state_symbols import load_oos_symbols
-from .bridge import cleanup_stale_sockets
+from .bridge import cleanup_stale_sockets, MesenBridge
+from .save_data_profiles import list_profiles as list_save_profiles, load_profile as load_save_profile, apply_profile as apply_save_profile
 
 # Try to import AgentBrain (might fail if run directly from lib)
 try:
@@ -644,6 +645,16 @@ def main():
     pos_parser.add_argument("x", type=int)
     pos_parser.add_argument("y", type=int)
 
+    # Warp command (ROM debug warp system; overworld only for now)
+    warp_parser = subparsers.add_parser("warp", help="Warp to a named location (or area,x,y)")
+    warp_parser.add_argument("location", nargs="?", help="Location key from WARP_LOCATIONS")
+    warp_parser.add_argument("--area", type=str, default="", help="Overworld area ID (hex or dec)")
+    warp_parser.add_argument("--x", type=str, default="", help="Target X (hex or dec)")
+    warp_parser.add_argument("--y", type=str, default="", help="Target Y (hex or dec)")
+    warp_parser.add_argument("--list", action="store_true", help="List available warp locations")
+    warp_parser.add_argument("--rom", action="store_true", help="Use ROM warp handler (requires OOS_ENABLE_ROM_WARP=1)")
+    warp_parser.add_argument("--force", action="store_true", help="Allow cross-area legacy RAM warp (unsafe)")
+
     # Navigation command
     nav_parser = subparsers.add_parser("navigate", help="Navigate Link autonomously")
     nav_group = nav_parser.add_mutually_exclusive_group(required=True)
@@ -765,6 +776,75 @@ def main():
 
     capture_parser = subparsers.add_parser("capture", help="Capture current state metadata")
     capture_parser.add_argument("--json", "-j", action="store_true")
+
+    # Save-data (WRAM savefile mirror) commands
+    save_data_parser = subparsers.add_parser(
+        "save-data",
+        help="Manage save-data snapshots (WRAM $7EF000-$7EF4FF) and item/flag profiles",
+    )
+    save_data_sub = save_data_parser.add_subparsers(dest="save_data_cmd", required=True)
+
+    save_data_dump = save_data_sub.add_parser("dump", help="Dump active save-data block to a file")
+    save_data_dump.add_argument("path", help="Output path (binary)")
+    save_data_dump.add_argument("--json", "-j", action="store_true")
+
+    save_data_load = save_data_sub.add_parser("load", help="Load a save-data block file into WRAM")
+    save_data_load.add_argument("path", help="Input path (binary)")
+    save_data_load.add_argument("--json", "-j", action="store_true")
+
+    save_data_lib_list = save_data_sub.add_parser("lib-list", help="List save-data library entries")
+    save_data_lib_list.add_argument("--tag", "-t", help="Filter by tag")
+    save_data_lib_list.add_argument("--status", choices=("draft", "canon", "deprecated"), help="Filter by status")
+    save_data_lib_list.add_argument("--json", "-j", action="store_true")
+
+    save_data_lib_save = save_data_sub.add_parser("lib-save", help="Save current save-data block to library")
+    save_data_lib_save.add_argument("label", help="Label for this save-data snapshot")
+    save_data_lib_save.add_argument("--tag", "-t", action="append", dest="tags", help="Optional tag (repeatable)")
+    save_data_lib_save.add_argument("--captured-by", choices=["human", "agent"], default="agent")
+    save_data_lib_save.add_argument("--json", "-j", action="store_true")
+
+    save_data_lib_load = save_data_sub.add_parser("lib-load", help="Load a save-data library entry into WRAM")
+    save_data_lib_load.add_argument("id", help="Entry ID from save_data_library.json")
+    save_data_lib_load.add_argument("--json", "-j", action="store_true")
+
+    save_data_profile_list = save_data_sub.add_parser("profile-list", help="List save-data profiles (item/flag loadouts)")
+    save_data_profile_list.add_argument("--json", "-j", action="store_true")
+
+    save_data_profile_apply = save_data_sub.add_parser("profile-apply", help="Apply a save-data profile")
+    save_data_profile_apply.add_argument("profile", help="Profile id (stem) or path to JSON file")
+    save_data_profile_apply.add_argument("--dry-run", action="store_true")
+    save_data_profile_apply.add_argument("--json", "-j", action="store_true")
+
+    save_data_profile_capture = save_data_sub.add_parser("profile-capture", help="Capture current items/flags into a profile JSON")
+    save_data_profile_capture.add_argument("id", help="Profile id (filename stem)")
+    save_data_profile_capture.add_argument("--flags", action="store_true", help="Include story flags (default: items only)")
+    save_data_profile_capture.add_argument("--only-nonzero", action="store_true", help="Only include nonzero items/true flags")
+    save_data_profile_capture.add_argument("--out", default="", help="Override output path (default: Docs/Debugging/Testing/save_data_profiles/<id>.json)")
+    save_data_profile_capture.add_argument("--json", "-j", action="store_true")
+
+    save_data_repair = save_data_sub.add_parser("repair-checksum", help="Recompute inverse checksum for WRAMSAVE ($7EF4FE)")
+    save_data_repair.add_argument("--json", "-j", action="store_true")
+
+    save_data_sync_to_sram = save_data_sub.add_parser("sync-to-sram", help="Persist WRAMSAVE -> cart SRAM slot (main + mirror)")
+    save_data_sync_to_sram.add_argument("--slot", type=int, default=0, help="Save slot 1..3 (default: active)")
+    save_data_sync_to_sram.add_argument("--json", "-j", action="store_true")
+
+    save_data_sync_from_sram = save_data_sub.add_parser("sync-from-sram", help="Hot-load cart SRAM slot -> WRAMSAVE")
+    save_data_sync_from_sram.add_argument("--slot", type=int, default=0, help="Save slot 1..3 (default: active)")
+    save_data_sync_from_sram.add_argument("--prefer-mirror", action="store_true", help="Load from mirror copy (+0x0F00) instead of main")
+    save_data_sync_from_sram.add_argument("--json", "-j", action="store_true")
+
+    save_data_srm_dump = save_data_sub.add_parser("srm-dump", help="Dump cart SRAM (8192 bytes) to a .srm file")
+    save_data_srm_dump.add_argument("path", help="Output .srm path")
+    save_data_srm_dump.add_argument("--json", "-j", action="store_true")
+
+    save_data_srm_load = save_data_sub.add_parser("srm-load", help="Load a .srm into cart SRAM (and optionally hot-load into WRAMSAVE)")
+    save_data_srm_load.add_argument("path", help="Input .srm path")
+    save_data_srm_load.add_argument("--no-preserve-sramoff", action="store_true", help="Do not preserve SRAMOFF ($701FFE) across load")
+    save_data_srm_load.add_argument("--hot", action="store_true", help="After load, sync SRAM slot -> WRAMSAVE (hot reload)")
+    save_data_srm_load.add_argument("--slot", type=int, default=0, help="Save slot 1..3 to hot-load (default: active)")
+    save_data_srm_load.add_argument("--prefer-mirror", action="store_true", help="Hot-load from mirror copy (+0x0F00)")
+    save_data_srm_load.add_argument("--json", "-j", action="store_true")
 
     # Symbols command
     symbols_parser = subparsers.add_parser("symbols", help="Query symbols and labels")
@@ -2479,6 +2559,72 @@ def main():
         else:
             print("Position set failed")
 
+    elif args.command == "warp":
+        from .constants import WARP_LOCATIONS
+
+        def _parse_int(raw: str) -> int:
+            s = (raw or "").strip()
+            if not s:
+                raise ValueError("empty")
+            return int(s, 0)
+
+        if args.list:
+            print("=== Warp Locations ===")
+            for k in sorted(WARP_LOCATIONS.keys()):
+                area, x, y, desc = WARP_LOCATIONS[k]
+                print(f"  {k}: area=0x{area:02X} x=0x{x:04X} y=0x{y:04X}  ({desc})")
+            return
+
+        location = (args.location or "").strip().lower() or None
+
+        area = None
+        x = None
+        y = None
+        if args.area:
+            area = _parse_int(args.area)
+        if args.x:
+            x = _parse_int(args.x)
+        if args.y:
+            y = _parse_int(args.y)
+
+        if location is None and (area is None or x is None or y is None):
+            print("Error: provide a location key, or --area/--x/--y")
+            print("Use: mesen2_client.py warp --list")
+            sys.exit(1)
+
+        # Default behavior: safe same-area teleport only (doesn't rely on any ROM hooks).
+        try:
+            target_area = area
+            target_x = x
+            target_y = y
+            if location and location in WARP_LOCATIONS:
+                target_area, target_x, target_y, _ = WARP_LOCATIONS[location]
+
+            current_area = client.bridge.read_memory(OracleRAM.AREA_ID)
+            cross_area = target_area is not None and int(target_area) != int(current_area)
+
+            if cross_area and not args.force and not args.rom:
+                print(f"Error: cross-area warp requested (0x{current_area:02X} -> 0x{int(target_area):02X}).")
+                print("Use Song of Soaring for fast travel, or pass --force (unsafe), or --rom (requires ROM support).")
+                sys.exit(1)
+
+            if not cross_area and not args.rom:
+                ok = client.set_position(int(target_x), int(target_y))
+            else:
+                ok = client.warp_to(location=location, area=area, x=x, y=y, use_rom_warp=bool(args.rom))
+        except Exception as exc:
+            print(f"Warp failed: {exc}")
+            sys.exit(1)
+        if ok:
+            if location:
+                desc = WARP_LOCATIONS.get(location, (None, None, None, ""))[3]
+                print(f"Warped: {location} ({desc})")
+            else:
+                print(f"Warped: area=0x{area:02X} x={x} y={y}")
+        else:
+            print(f"Warp failed: {client.last_error or 'unknown error'}")
+            sys.exit(2)
+
     elif args.command == "move":
         if args.direction:
             ok = client.hold_direction(args.direction, frames=args.distance)
@@ -3032,6 +3178,388 @@ def main():
             print(f"OOSPROG2: 0x{metadata['oosprog2']:02X}")
             print(f"Crystals: 0x{metadata['crystals']:02X}")
             print(f"Pendants: 0x{metadata['pendants']:02X}")
+
+    elif args.command == "save-data":
+        if args.save_data_cmd == "dump":
+            out_path = Path(args.path).expanduser()
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            blob = client.read_save_data()
+            out_path.write_bytes(blob)
+            payload = {"ok": True, "path": str(out_path), "bytes": len(blob)}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print(f"Wrote {len(blob)} bytes: {out_path}")
+
+        elif args.save_data_cmd == "load":
+            in_path = Path(args.path).expanduser()
+            try:
+                # Auto-pause for safety (restore previous pause state).
+                was_paused = False
+                try:
+                    st = client.bridge.get_state()
+                    data = st.get("data", {})
+                    if isinstance(data, str):
+                        try:
+                            data = json.loads(data)
+                        except Exception:
+                            data = {}
+                    if isinstance(data, dict):
+                        was_paused = bool(data.get("paused", False))
+                except Exception:
+                    was_paused = False
+
+                if not was_paused:
+                    client.bridge.pause()
+                client.load_save_data_path(in_path)
+            finally:
+                try:
+                    if not was_paused:
+                        client.bridge.resume()
+                except Exception:
+                    pass
+
+            payload = {"ok": True, "path": str(in_path)}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print(f"Loaded save-data into WRAM: {in_path}")
+
+        elif args.save_data_cmd == "lib-list":
+            entries = client.list_save_data_entries(tag=args.tag, status=args.status)
+            if args.json:
+                print(json.dumps(entries, indent=2))
+            else:
+                if not entries:
+                    print("No save-data entries" + (f" with tag '{args.tag}'" if args.tag else ""))
+                    print(f"Manifest path: {SAVE_DATA_MANIFEST_PATH}")
+                else:
+                    print(f"=== Save-Data Library ({len(entries)} entries) ===")
+                    for entry in entries:
+                        tags = ", ".join(entry.get("tags", []))
+                        desc = entry.get("label") or entry.get("id") or "No label"
+                        status = entry.get("status", "draft")
+                        status_badge = {"canon": "[CANON]", "deprecated": "[DEPR]", "draft": "[draft]"}.get(status, "[?]")
+                        print(f"  {status_badge} {entry['id']}: {desc}")
+                        if tags:
+                            print(f"         Tags: {tags}")
+
+        elif args.save_data_cmd == "lib-save":
+            try:
+                entry_id, warnings = client.save_save_data_to_library(
+                    args.label,
+                    tags=args.tags,
+                    captured_by=args.captured_by,
+                )
+            except Exception as e:
+                print(f"Error: {e}")
+                sys.exit(1)
+            payload = {
+                "ok": True,
+                "id": entry_id,
+                "label": args.label,
+                "tags": args.tags or [],
+                "status": "draft",
+                "warnings": warnings,
+            }
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print(f"Saved save-data: {args.label} ({entry_id}) [status: draft]")
+                for warn in warnings:
+                    print(f"  WARNING: {warn}")
+                print(f"Manifest path: {SAVE_DATA_MANIFEST_PATH}")
+
+        elif args.save_data_cmd == "lib-load":
+            try:
+                was_paused = False
+                try:
+                    st = client.bridge.get_state()
+                    data = st.get("data", {})
+                    if isinstance(data, str):
+                        try:
+                            data = json.loads(data)
+                        except Exception:
+                            data = {}
+                    if isinstance(data, dict):
+                        was_paused = bool(data.get("paused", False))
+                except Exception:
+                    was_paused = False
+
+                if not was_paused:
+                    client.bridge.pause()
+                client.load_save_data_entry(args.id)
+            except Exception as e:
+                print(f"Error: {e}")
+                sys.exit(1)
+            finally:
+                try:
+                    if not was_paused:
+                        client.bridge.resume()
+                except Exception:
+                    pass
+
+            payload = {"ok": True, "id": args.id}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print(f"Loaded save-data entry into WRAM: {args.id}")
+
+        elif args.save_data_cmd == "profile-list":
+            profiles = list_save_profiles()
+            if args.json:
+                print(json.dumps([
+                    {
+                        "id": p.profile_id,
+                        "label": p.label,
+                        "description": p.description,
+                        "path": str(p.path),
+                    }
+                    for p in profiles
+                ], indent=2))
+            else:
+                print(f"Profiles dir: {SAVE_DATA_PROFILE_DIR}")
+                if not profiles:
+                    print("No profiles found.")
+                else:
+                    print(f"=== Save-Data Profiles ({len(profiles)}) ===")
+                    for p in profiles:
+                        desc = f" - {p.description}" if p.description else ""
+                        print(f"  {p.profile_id}: {p.label}{desc}")
+
+        elif args.save_data_cmd == "profile-apply":
+            try:
+                profile = load_save_profile(args.profile)
+            except Exception as e:
+                print(f"Error: {e}")
+                sys.exit(1)
+
+            was_paused = False
+            try:
+                try:
+                    st = client.bridge.get_state()
+                    data = st.get("data", {})
+                    if isinstance(data, str):
+                        try:
+                            data = json.loads(data)
+                        except Exception:
+                            data = {}
+                    if isinstance(data, dict):
+                        was_paused = bool(data.get("paused", False))
+                except Exception:
+                    was_paused = False
+
+                if not was_paused and not args.dry_run:
+                    client.bridge.pause()
+                actions = apply_save_profile(client, profile, dry_run=args.dry_run)
+            except Exception as e:
+                print(f"Error: {e}")
+                sys.exit(1)
+            finally:
+                try:
+                    if not was_paused and not args.dry_run:
+                        client.bridge.resume()
+                except Exception:
+                    pass
+
+            payload = {
+                "ok": True,
+                "profile": profile.profile_id,
+                "label": profile.label,
+                "dry_run": bool(args.dry_run),
+                "actions": actions,
+            }
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                prefix = "DRY-RUN " if args.dry_run else ""
+                print(f"{prefix}Applied profile: {profile.profile_id} ({profile.label})")
+                for a in actions:
+                    print(f"  - {a}")
+
+        elif args.save_data_cmd == "profile-capture":
+            profile_id = str(args.id).strip()
+            if not profile_id:
+                print("Error: profile id is required")
+                sys.exit(1)
+
+            out_path = Path(args.out).expanduser() if args.out else (Path(SAVE_DATA_PROFILE_DIR) / f"{profile_id}.json")
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+
+            items = client.get_all_items()
+            item_values = {k: int(v.get("value", 0) or 0) for k, v in items.items()}
+            if args.only_nonzero:
+                item_values = {k: v for k, v in item_values.items() if v != 0}
+
+            flag_values = {}
+            if args.flags:
+                flags = client.get_all_flags()
+                flag_values = {k: bool(v.get("is_set", False)) for k, v in flags.items()}
+                if args.only_nonzero:
+                    flag_values = {k: v for k, v in flag_values.items() if v}
+
+            payload = {
+                "version": 1,
+                "id": profile_id,
+                "label": profile_id,
+                "description": "Captured from running emulator via mesen2_client.py",
+                "items": item_values,
+            }
+            if args.flags:
+                payload["flags"] = flag_values
+
+            out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+            result = {"ok": True, "path": str(out_path), "items": len(item_values), "flags": len(flag_values)}
+            if args.json:
+                print(json.dumps(result, indent=2))
+            else:
+                print(f"Wrote profile: {out_path}")
+                print(f"  Items: {len(item_values)}" + (" (nonzero)" if args.only_nonzero else ""))
+                if args.flags:
+                    print(f"  Flags: {len(flag_values)}" + (" (true only)" if args.only_nonzero else ""))
+
+        elif args.save_data_cmd == "repair-checksum":
+            result = client.repair_save_data_checksum()
+            payload = {"ok": True, **result}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                changed = "updated" if result.get("changed") else "already consistent"
+                inv = result.get("inverse_checksum")
+                print(f"Inverse checksum: 0x{int(inv):04X} ({changed})")
+
+        elif args.save_data_cmd == "sync-to-sram":
+            slot = int(args.slot or 0) or None
+            try:
+                was_paused = False
+                try:
+                    st = client.bridge.get_state()
+                    data = st.get("data", {})
+                    if isinstance(data, str):
+                        try:
+                            data = json.loads(data)
+                        except Exception:
+                            data = {}
+                    if isinstance(data, dict):
+                        was_paused = bool(data.get("paused", False))
+                except Exception:
+                    was_paused = False
+
+                if not was_paused:
+                    client.bridge.pause()
+                res = client.sync_wram_save_to_sram(slot=slot)
+            except Exception as e:
+                print(f"Error: {e}")
+                sys.exit(1)
+            finally:
+                try:
+                    if not was_paused:
+                        client.bridge.resume()
+                except Exception:
+                    pass
+
+            payload = {"ok": True, **res}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print(f"Synced WRAMSAVE -> SRAM slot {res['slot']} ({res['bytes']} bytes)")
+
+        elif args.save_data_cmd == "sync-from-sram":
+            slot = int(args.slot or 0) or None
+            try:
+                was_paused = False
+                try:
+                    st = client.bridge.get_state()
+                    data = st.get("data", {})
+                    if isinstance(data, str):
+                        try:
+                            data = json.loads(data)
+                        except Exception:
+                            data = {}
+                    if isinstance(data, dict):
+                        was_paused = bool(data.get("paused", False))
+                except Exception:
+                    was_paused = False
+
+                if not was_paused:
+                    client.bridge.pause()
+                res = client.sync_sram_to_wram_save(slot=slot, prefer_mirror=bool(args.prefer_mirror))
+            except Exception as e:
+                print(f"Error: {e}")
+                sys.exit(1)
+            finally:
+                try:
+                    if not was_paused:
+                        client.bridge.resume()
+                except Exception:
+                    pass
+
+            payload = {"ok": True, **res}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print(
+                    f"Synced SRAM slot {res['slot']} -> WRAMSAVE ({res['bytes']} bytes, inv=0x{int(res['inverse_checksum']):04X})"
+                )
+
+        elif args.save_data_cmd == "srm-dump":
+            out_path = Path(args.path).expanduser()
+            try:
+                res = client.srm_dump(out_path)
+            except Exception as e:
+                print(f"Error: {e}")
+                sys.exit(1)
+            payload = {"ok": True, **res}
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print(f"Wrote .srm: {out_path}")
+
+        elif args.save_data_cmd == "srm-load":
+            in_path = Path(args.path).expanduser()
+            preserve = not bool(args.no_preserve_sramoff)
+            try:
+                was_paused = False
+                try:
+                    st = client.bridge.get_state()
+                    data = st.get("data", {})
+                    if isinstance(data, str):
+                        try:
+                            data = json.loads(data)
+                        except Exception:
+                            data = {}
+                    if isinstance(data, dict):
+                        was_paused = bool(data.get("paused", False))
+                except Exception:
+                    was_paused = False
+
+                if not was_paused:
+                    client.bridge.pause()
+                res = client.srm_load(in_path, preserve_sramoff=preserve)
+                hot_res = None
+                if args.hot:
+                    slot = int(args.slot or 0) or None
+                    hot_res = client.sync_sram_to_wram_save(slot=slot, prefer_mirror=bool(args.prefer_mirror))
+            except Exception as e:
+                print(f"Error: {e}")
+                sys.exit(1)
+            finally:
+                try:
+                    if not was_paused:
+                        client.bridge.resume()
+                except Exception:
+                    pass
+
+            payload = {"ok": True, **res}
+            if args.hot:
+                payload["hot"] = hot_res
+            if args.json:
+                print(json.dumps(payload, indent=2))
+            else:
+                print(f"Loaded .srm into cart SRAM: {in_path}")
+                if args.hot and hot_res:
+                    print(f"Hot-loaded slot {hot_res['slot']} -> WRAMSAVE")
 
     elif args.command == "labels":
         if args.labels_cmd == "set":

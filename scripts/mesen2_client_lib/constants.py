@@ -1,5 +1,16 @@
 """Oracle-specific constants for the Mesen2 client."""
 
+# =========================================================
+# Save Data (WRAM mirror of SRAM file)
+# =========================================================
+#
+# Oracle/ALTTP save data is staged in WRAM at $7EF000 while playing.
+# The on-cart SRAM files live at $70:0000/$70:0500/$70:0A00 etc, but for
+# iteration/debugging it is usually safer to patch the WRAM mirror and then
+# do an in-game save.
+SAVEFILE_WRAM_START = 0x7EF000
+SAVEFILE_WRAM_SIZE = 0x0500  # $7EF000-$7EF4FF (includes checksum bytes at $7EF4FE-$7EF4FF)
+
 
 # =========================================================
 # Oracle RAM Addresses (from oracle_quick_reference.md)
@@ -108,7 +119,22 @@ class OracleRAM:
     DEKU_MASK = 0x7EF349  # 1=Have
     LAMP = 0x7EF34A  # 1=Have
     HAMMER = 0x7EF34B  # 1=Have
-    FLUTE = 0x7EF34C  # 1=Shovel, 2=Inactive, 3=Active (Ocarina)
+    # Ocarina song progression (see Items/ocarina.asm UpdateFluteSong_Long).
+    # 00 - No Ocarina
+    # 01 - Ocarina (no songs)
+    # 02 - 1 song (Healing)
+    # 03 - 2 songs (Healing, Storms)
+    # 04 - 3 songs (Healing, Storms, Soaring)
+    # 05 - 4 songs (Healing, Storms, Soaring, Time)
+    FLUTE = 0x7EF34C
+
+    # Current selected ocarina song (WRAM, not SRAM).
+    # 00 - none
+    # 01 - Healing
+    # 02 - Storms
+    # 03 - Soaring
+    # 04 - Time
+    OCARINA_SONG = 0x7E030F
     ROCS_FEATHER = 0x7EF34D  # 1=Have
     BOOK = 0x7EF34E  # 1=Have (Book of Secrets)
     BOTTLE_INDEX = 0x7EF34F  # Currently selected bottle
@@ -255,7 +281,29 @@ ITEMS = {
     "icerod": (OracleRAM.ICE_ROD, "Ice Rod", {0: "None", 1: "Have"}),
     "lamp": (OracleRAM.LAMP, "Lamp", {0: "None", 1: "Have"}),
     "hammer": (OracleRAM.HAMMER, "Hammer", {0: "None", 1: "Have"}),
-    "flute": (OracleRAM.FLUTE, "Flute/Ocarina", {0: "None", 1: "Shovel", 2: "Inactive", 3: "Active"}),
+    "flute": (
+        OracleRAM.FLUTE,
+        "Ocarina Song Progression",
+        {
+            0: "None",
+            1: "Ocarina (no songs)",
+            2: "Songs: Healing",
+            3: "Songs: Healing, Storms",
+            4: "Songs: Healing, Storms, Soaring",
+            5: "Songs: Healing, Storms, Soaring, Time",
+        },
+    ),
+    "ocarina_song": (
+        OracleRAM.OCARINA_SONG,
+        "Ocarina Selected Song",
+        {
+            0: "None",
+            1: "Healing",
+            2: "Storms",
+            3: "Soaring",
+            4: "Time",
+        },
+    ),
     "feather": (OracleRAM.ROCS_FEATHER, "Roc's Feather", {0: "None", 1: "Have"}),
     "book": (OracleRAM.BOOK, "Book of Secrets", {0: "None", 1: "Have"}),
     "somaria": (OracleRAM.SOMARIA, "Cane of Somaria", {0: "None", 1: "Have"}),
@@ -351,7 +399,11 @@ WARP_LOCATIONS = {
     "ranch": (0x30, 512, 512, "Ranch"),
     "graveyard": (0x02, 512, 512, "Graveyard"),
     "river": (0x36, 512, 512, "River Area"),
-    "zoradomain": (0x22, 512, 512, "Zora Domain OW"),
+    # Zora Temple waterfall statue trigger coords are defined in Items/ocarina.asm:
+    #   area ($8A) == 0x1E, X=0x0CB7, Y=0x06A8
+    "zora_waterfall": (0x1E, 0x0CB7, 0x06A8, "Zora Temple Waterfall Statue"),
+    "zora_temple": (0x1E, 0x0CB7, 0x06A8, "Zora Temple Area (Waterfall Statue)"),
+    "zoradomain": (0x22, 512, 512, "Zora Domain OW (unknown coords)"),
     "forestentrance": (0x28, 512, 512, "Forest Entrance"),
     # Shrines
     "courageshrine": (0x50, 512, 512, "Shrine of Courage"),
@@ -361,7 +413,7 @@ WARP_LOCATIONS = {
     "d1": (0x0C, 512, 512, "D1 Mushroom Grotto"),
     "d2": (0x0A, 512, 512, "D2 Tail Palace"),
     "d3": (0x10, 512, 512, "D3 Kalyxo Castle"),
-    "d4": (0x16, 512, 512, "D4 Zora Temple"),
+    "d4": (0x1E, 0x0CB7, 0x06A8, "D4 Zora Temple (OW warp: waterfall statue)"),
     "d5": (0x12, 512, 512, "D5 Glacia Estate"),
     "d6": (0x0E, 512, 512, "D6 Goron Mines"),
     "d7": (0x18, 512, 512, "D7 Dragon Ship"),

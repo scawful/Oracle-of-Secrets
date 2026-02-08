@@ -34,7 +34,8 @@ except ImportError:
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SAVESTATE_DIR = REPO_ROOT / "Roms" / "SaveStates" / "oos168x" / "overworld"
-MANIFEST_PATH = REPO_ROOT / "Docs" / "Testing" / "save_state_library.json"
+MANIFEST_PATH = REPO_ROOT / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
+MESEN2_CLIENT = REPO_ROOT / "scripts" / "mesen2_client.py"
 
 # Overworld area definitions
 AREA_NAMES = {
@@ -157,7 +158,9 @@ def get_bridge():
     if not bridge.is_connected():
         print("ERROR: Not connected to Mesen2")
         print("Start Mesen2 with socket server enabled:")
-        print("  ./scripts/mesen_launch.sh")
+        print("  mesen-agent launch oos")
+        print("  # or isolated:")
+        print("  ./scripts/mesen2_launch_instance.sh --instance oos-overworld-capture --owner you --source manual")
         sys.exit(1)
 
     return bridge
@@ -216,7 +219,13 @@ def cmd_list_required(args):
     if MANIFEST_PATH.exists():
         manifest = json.loads(MANIFEST_PATH.read_text())
         for entry in manifest.get("entries", []):
-            existing.add(entry.get("id"))
+            label = (entry.get("label") or "").strip()
+            tags = set(entry.get("tags") or [])
+            # Consider a checkpoint captured if its canonical id appears as a label or tag.
+            if label:
+                existing.add(label)
+            for t in tags:
+                existing.add(str(t))
 
     for cp in REQUIRED_CHECKPOINTS:
         status = "[EXISTS]" if cp["id"] in existing else "[NEEDED]"
@@ -257,26 +266,12 @@ def cmd_capture(args):
     print(f"\nCapturing checkpoint: {state_id}")
     print_state(state)
 
-    # Trigger save state
-    slot = args.slot or 10
-    print(f"\nSaving to slot {slot}...")
-
-    # Use mesen_cli to save state
-    cli_path = REPO_ROOT / "scripts" / "mesen_cli.sh"
-    result = subprocess.run(
-        [str(cli_path), "savestate", str(slot)],
-        capture_output=True, text=True, cwd=REPO_ROOT
-    )
-
-    if result.returncode != 0:
-        print(f"ERROR: Failed to save state: {result.stderr}")
+    if not MESEN2_CLIENT.exists():
+        print("ERROR: scripts/mesen2_client.py not found")
         sys.exit(1)
 
-    # Wait for save
-    subprocess.run(
-        [str(cli_path), "wait-save", "5"],
-        capture_output=True, text=True, cwd=REPO_ROOT
-    )
+    if getattr(args, "slot", None) is not None:
+        print("NOTE: --slot is deprecated; this script now saves directly to the state library.")
 
     # Create metadata JSON
     metadata = {
@@ -300,19 +295,31 @@ def cmd_capture(args):
         },
     }
 
-    # Save metadata
-    SAVESTATE_DIR.mkdir(parents=True, exist_ok=True)
-    meta_path = SAVESTATE_DIR / f"{state_id}.json"
-    meta_path.write_text(json.dumps(metadata, indent=2))
+    tags = list(dict.fromkeys(["overworld", state_id] + (metadata.get("tags") or [])))
 
-    print(f"\nMetadata saved to: {meta_path}")
-    print(f"\nTo import to library:")
-    print(f"  python3 scripts/state_library.py import \\")
-    print(f"    --id {state_id} \\")
-    print(f"    --rom Roms/oos168x.sfc \\")
-    print(f"    --slot {slot} \\")
-    print(f"    --tags '{','.join(metadata['tags'])}' \\")
-    print(f"    --description '{metadata['description']}'")
+    print("\nSaving to state library...")
+    cmd = [sys.executable, str(MESEN2_CLIENT), "lib-save", state_id, "--captured-by", "human", "--json"]
+    for t in tags:
+        cmd += ["-t", str(t)]
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO_ROOT)
+    if result.returncode != 0:
+        err = result.stderr.strip() or result.stdout.strip()
+        print(f"ERROR: lib-save failed: {err}")
+        sys.exit(1)
+
+    entry_id = None
+    try:
+        out = json.loads(result.stdout)
+        entry_id = out.get("id") or out.get("entry", {}).get("id")
+    except Exception:
+        pass
+
+    if entry_id:
+        print(f"Saved: {entry_id}")
+    else:
+        print("Saved (see library list for id).")
+    print("\nNext:")
+    print("  MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py library")
 
 
 def cmd_interactive(args):
@@ -362,7 +369,7 @@ def main():
 
     capture_cmd = sub.add_parser("capture", help="Capture current state")
     capture_cmd.add_argument("--name", help="Checkpoint name/id")
-    capture_cmd.add_argument("--slot", type=int, default=10, help="Save slot (default: 10)")
+    capture_cmd.add_argument("--slot", type=int, default=None, help="(deprecated) Save slot (no longer used)")
     capture_cmd.set_defaults(func=cmd_capture)
 
     interactive_cmd = sub.add_parser("interactive", help="Interactive capture mode")

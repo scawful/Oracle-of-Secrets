@@ -36,7 +36,7 @@ from typing import Dict, List, Optional
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 ROM_PATH = PROJECT_ROOT / "Roms" / "oos168x.sfc"
-STATE_LIBRARY_PATH = PROJECT_ROOT / "Docs" / "Testing" / "save_state_library.json"
+STATE_LIBRARY_PATH = PROJECT_ROOT / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
 SAVE_STATES_DIR = PROJECT_ROOT / "Roms" / "SaveStates" / "library"
 
 # Mesen2 OOS app locations (agent-only)

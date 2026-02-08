@@ -45,7 +45,7 @@ except ImportError:
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SAVESTATE_ROOT = REPO_ROOT / "Roms" / "SaveStates" / "oos168x"
 SAVESTATE_SHARED = REPO_ROOT / "Roms" / "SaveStates"  # Shared metadata location
-MANIFEST_PATH = REPO_ROOT / "Docs" / "Testing" / "save_state_library.json"
+MANIFEST_PATH = REPO_ROOT / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
 
 CATEGORIES = ["overworld", "dungeons", "bosses", "events", "items"]
 
@@ -326,7 +326,7 @@ def cmd_capture(args):
     print(f"\nTo complete import:")
     print(f"  1. Find save state file from Mesen2 slot {slot}")
     print(f"  2. Copy to: {state_path}")
-    print(f"  3. Run: python3 scripts/state_library.py import \\")
+    print(f"  3. Use: python3 scripts/mesen2_client.py lib-save \\")
     print(f"       --id {state_id} \\")
     print(f"       --rom Roms/oos168x.sfc \\")
     print(f"       --slot {slot}")
