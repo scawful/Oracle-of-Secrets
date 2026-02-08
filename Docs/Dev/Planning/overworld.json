@@ -1,0 +1,1957 @@
+{
+  "_meta": {
+    "generated_by": "scripts/extract_overworld_registry.py",
+    "description": "Oracle of Secrets overworld area registry",
+    "notes": [
+      "Primary source: Docs/Planning/world_map_diagram.md",
+      "GFX/Sprite data from CSV sheets",
+      "Items from overworld_item_inventory.json",
+      "Dungeon entrances from dungeons.json",
+      "area_id formula: LW=row*8+col, DW=0x40+row*8+col, SW=0x80+row*8+col"
+    ]
+  },
+  "worlds": [
+    {
+      "id": "LW",
+      "name": "Kalyxo Island",
+      "range": "0x00-0x3F"
+    },
+    {
+      "id": "DW",
+      "name": "Eon Abyss",
+      "range": "0x40-0x7F"
+    },
+    {
+      "id": "SW",
+      "name": "Special World",
+      "range": "0x80-0x9F"
+    }
+  ],
+  "areas": [
+    {
+      "area_id": "0x00",
+      "name": "Ranch Area",
+      "world": "LW",
+      "grid_row": 0,
+      "grid_col": 0,
+      "notable_features": [
+        "Ranch Shed, Ocarina Girl's House, Chicken House"
+      ],
+      "gfx_id": "0x20",
+      "sprite_set": "0x06",
+      "items": [
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(40,59)",
+          "item_name": "Bow"
+        },
+        {
+          "item_id": "0x03",
+          "tile_pos": "(52,32)",
+          "item_name": "Tempered Sword"
+        },
+        {
+          "item_id": "0x03",
+          "tile_pos": "(53,33)",
+          "item_name": "Tempered Sword"
+        },
+        {
+          "item_id": "0x03",
+          "tile_pos": "(27,21)",
+          "item_name": "Tempered Sword"
+        }
+      ],
+      "npcs": [
+        "Ranch Girl (Cucoo)",
+        "Ocarina Girl"
+      ]
+    },
+    {
+      "area_id": "0x02",
+      "name": "Hall of Secrets Pyramid Route",
+      "world": "LW",
+      "grid_row": 0,
+      "grid_col": 2,
+      "notable_features": [
+        "Cave to Hall of Secrets"
+      ],
+      "gfx_id": "0x3B",
+      "sprite_set": "0x07",
+      "items": [
+        {
+          "item_id": "0x07",
+          "tile_pos": "(14,10)",
+          "item_name": "Mirror Shield"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(17,11)",
+          "item_name": "Golden Sword"
+        }
+      ]
+    },
+    {
+      "area_id": "0x04",
+      "name": "Snow Mountain West Peak",
+      "world": "LW",
+      "grid_row": 0,
+      "grid_col": 4,
+      "notable_features": [
+        "Cave to East Peak"
+      ],
+      "gfx_id": "0x3E",
+      "sprite_set": "0x10",
+      "items": [
+        {
+          "item_id": "0x06",
+          "tile_pos": "(12,22)",
+          "item_name": "Fire Shield"
+        },
+        {
+          "item_id": "0x06",
+          "tile_pos": "(3,26)",
+          "item_name": "Fire Shield"
+        }
+      ]
+    },
+    {
+      "area_id": "0x05",
+      "name": "Snow Mountain East Peak",
+      "world": "LW",
+      "grid_row": 0,
+      "grid_col": 5,
+      "notable_features": [
+        "Portal cave, Cave to West Peak"
+      ],
+      "gfx_id": "0x3E",
+      "sprite_set": "0x05",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(21,21)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(5,10)",
+          "item_name": "Golden Sword"
+        }
+      ]
+    },
+    {
+      "area_id": "0x06",
+      "name": "Glacia Estate Approach",
+      "world": "LW",
+      "grid_row": 0,
+      "grid_col": 6,
+      "notable_features": [
+        "D5 Entrance"
+      ],
+      "gfx_id": "0x3E",
+      "sprite_set": "0x05",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(9,19)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(12,19)",
+          "item_name": "Golden Sword"
+        }
+      ],
+      "entrances": [
+        {
+          "entrance_id": "0x34",
+          "room_name": "0xDB",
+          "dungeon_id": "D5"
+        }
+      ]
+    },
+    {
+      "area_id": "0x07",
+      "name": "Snow Mountain Peak",
+      "world": "LW",
+      "grid_row": 0,
+      "grid_col": 7,
+      "notable_features": [
+        "Old Man Mountain Quest"
+      ],
+      "gfx_id": "0x3E",
+      "sprite_set": "0x05",
+      "items": [
+        {
+          "item_id": "0x06",
+          "tile_pos": "(5,23)",
+          "item_name": "Fire Shield"
+        },
+        {
+          "item_id": "0x06",
+          "tile_pos": "(8,23)",
+          "item_name": "Fire Shield"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(24,5)",
+          "item_name": "Golden Sword"
+        }
+      ]
+    },
+    {
+      "area_id": "0x0A",
+      "name": "West Hotel Area",
+      "world": "LW",
+      "grid_row": 1,
+      "grid_col": 2,
+      "notable_features": [
+        "West Hotel entrance"
+      ],
+      "gfx_id": "0x27",
+      "sprite_set": "0x07",
+      "items": [
+        {
+          "item_id": "0x86",
+          "tile_pos": "(10,1)"
+        }
+      ]
+    },
+    {
+      "area_id": "0x0B",
+      "name": "Kalyxo Castle",
+      "world": "LW",
+      "grid_row": 1,
+      "grid_col": 3,
+      "notable_features": [
+        "D3"
+      ],
+      "gfx_id": "0x24",
+      "sprite_set": "0x03",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(7,15)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(12,15)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x14",
+          "tile_pos": "(26,10)",
+          "item_name": "Shovel"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(24,4)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(23,8)",
+          "item_name": "Bow"
+        },
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(33,8)",
+          "item_name": "Bow"
+        }
+      ],
+      "entrances": [
+        {
+          "entrance_id": "0x0A",
+          "room_name": "0x68",
+          "dungeon_id": "D3"
+        },
+        {
+          "entrance_id": "0x28",
+          "room_name": "0x68",
+          "dungeon_id": "D3"
+        },
+        {
+          "entrance_id": "0x2A",
+          "room_name": "0x58",
+          "dungeon_id": "D3"
+        },
+        {
+          "entrance_id": "0x2B",
+          "room_name": "0x59",
+          "dungeon_id": "D3"
+        }
+      ]
+    },
+    {
+      "area_id": "0x0D",
+      "name": "Witch Shop Area",
+      "world": "LW",
+      "grid_row": 1,
+      "grid_col": 5,
+      "notable_features": [
+        "Witch Shop, Mountain caves"
+      ],
+      "gfx_id": "0x2B",
+      "sprite_set": "0x0D",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(7,6)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(10,6)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(12,10)",
+          "item_name": "Boomerang"
+        }
+      ]
+    },
+    {
+      "area_id": "0x0E",
+      "name": "Hall of Secrets",
+      "world": "LW",
+      "grid_row": 1,
+      "grid_col": 6,
+      "notable_features": [
+        "Repurposed vanilla sanctuary interior; main story hub"
+      ],
+      "gfx_id": "0x29",
+      "sprite_set": "0x10",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(16,25)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(12,24)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(10,24)",
+          "item_name": "Boomerang"
+        }
+      ],
+      "npcs": [
+        "Maku Tree",
+        "Impa (telepathic)"
+      ]
+    },
+    {
+      "area_id": "0x0F",
+      "name": "Graveyard",
+      "world": "LW",
+      "grid_row": 1,
+      "grid_col": 7,
+      "notable_features": [
+        "Hidden Grave, Waterfall cave"
+      ],
+      "gfx_id": "0x29",
+      "sprite_set": "0x03",
+      "items": [
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(19,24)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(10,20)",
+          "item_name": "Bow"
+        }
+      ]
+    },
+    {
+      "area_id": "0x10",
+      "name": "Mushroom Grotto",
+      "world": "LW",
+      "grid_row": 2,
+      "grid_col": 0,
+      "notable_features": [
+        "D1 Entrance"
+      ],
+      "gfx_id": "0x21",
+      "sprite_set": "0x0F",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(23,22)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(10,5)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(4,5)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(10,10)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(13,11)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(8,12)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(5,17)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(5,19)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(6,18)",
+          "item_name": "Golden Sword"
+        }
+      ],
+      "entrances": [
+        {
+          "entrance_id": "0x26",
+          "room_name": "0x4A",
+          "dungeon_id": "D1"
+        }
+      ]
+    },
+    {
+      "area_id": "0x15",
+      "name": "Fairy Fountain East",
+      "world": "LW",
+      "grid_row": 2,
+      "grid_col": 5,
+      "notable_features": [
+        "Deluxe Fairy, Rock Heart Piece Cave"
+      ],
+      "gfx_id": "0x27",
+      "sprite_set": "0x00",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(12,4)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(28,6)",
+          "item_name": "Boomerang"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(16,10)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(14,26)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(10,25)",
+          "item_name": "Hookshot"
+        }
+      ]
+    },
+    {
+      "area_id": "0x17",
+      "name": "South of Graveyard",
+      "world": "LW",
+      "grid_row": 2,
+      "grid_col": 7,
+      "notable_features": [
+        "Tree House entrance"
+      ],
+      "gfx_id": "0x29",
+      "sprite_set": "0x01",
+      "items": [
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(3,23)",
+          "item_name": "Bow"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(20,15)",
+          "item_name": "Hookshot"
+        }
+      ]
+    },
+    {
+      "area_id": "0x18",
+      "name": "Toadstool Woods",
+      "world": "LW",
+      "grid_row": 3,
+      "grid_col": 0,
+      "notable_features": [
+        "Mushroom House, Old Woman House, Log Cave, Chest/Bonzai Games"
+      ],
+      "gfx_id": "0x21",
+      "sprite_set": "0x07",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(37,55)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(12,23)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(27,8)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(11,37)",
+          "item_name": "Golden Sword"
+        }
+      ]
+    },
+    {
+      "area_id": "0x1A",
+      "name": "Archery Area",
+      "world": "LW",
+      "grid_row": 3,
+      "grid_col": 2,
+      "notable_features": [
+        "Archery Minigame"
+      ],
+      "gfx_id": "0x24",
+      "sprite_set": "0x01",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(14,20)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(15,11)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x07",
+          "tile_pos": "(13,21)",
+          "item_name": "Mirror Shield"
+        }
+      ]
+    },
+    {
+      "area_id": "0x1D",
+      "name": "Fairy Fountain South",
+      "world": "LW",
+      "grid_row": 3,
+      "grid_col": 5,
+      "notable_features": [
+        "Deluxe Fairy (East/South entrances)"
+      ],
+      "gfx_id": "0x24",
+      "sprite_set": "0x04",
+      "items": [
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(4,25)",
+          "item_name": "Bow"
+        },
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(6,25)",
+          "item_name": "Bow"
+        },
+        {
+          "item_id": "0x09",
+          "tile_pos": "(5,25)",
+          "item_name": "Ice Rod"
+        },
+        {
+          "item_id": "0x0A",
+          "tile_pos": "(7,25)",
+          "item_name": "Hammer"
+        },
+        {
+          "item_id": "0x0A",
+          "tile_pos": "(16,7)",
+          "item_name": "Hammer"
+        },
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(17,6)",
+          "item_name": "Bow"
+        },
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(15,12)",
+          "item_name": "Bow"
+        },
+        {
+          "item_id": "0x09",
+          "tile_pos": "(16,12)",
+          "item_name": "Ice Rod"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(14,12)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(8,6)",
+          "item_name": "Hookshot"
+        }
+      ]
+    },
+    {
+      "area_id": "0x1E",
+      "name": "Zora Sanctuary",
+      "world": "LW",
+      "grid_row": 3,
+      "grid_col": 6,
+      "notable_features": [
+        "D4 (Zora Temple)"
+      ],
+      "gfx_id": "0x25",
+      "sprite_set": "0x0E",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(27,58)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(22,58)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(3,48)",
+          "item_name": "Boomerang"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(6,48)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(22,61)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(27,61)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x14",
+          "tile_pos": "(60,59)",
+          "item_name": "Shovel"
+        }
+      ],
+      "entrances": [
+        {
+          "entrance_id": "0x25",
+          "room_name": "0x28",
+          "dungeon_id": "D4"
+        }
+      ],
+      "npcs": [
+        "Zora Princess",
+        "Sea Zora",
+        "Zora Baby"
+      ]
+    },
+    {
+      "area_id": "0x22",
+      "name": "Smith's House Area",
+      "world": "LW",
+      "grid_row": 4,
+      "grid_col": 2,
+      "notable_features": [
+        "Smith's House"
+      ],
+      "gfx_id": "0x38",
+      "sprite_set": "0x3B",
+      "items": [
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(17,16)",
+          "item_name": "Bow"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(18,16)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(17,17)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(23,10)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(27,18)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(27,25)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x07",
+          "tile_pos": "(26,22)",
+          "item_name": "Mirror Shield"
+        }
+      ]
+    },
+    {
+      "area_id": "0x23",
+      "name": "Wayward Village",
+      "world": "LW",
+      "grid_row": 4,
+      "grid_col": 3,
+      "notable_features": [
+        "Village center: Tavern, Shop, Library, Mayor's House, Sick Boy's House"
+      ],
+      "gfx_id": "0x3F",
+      "sprite_set": "0x0A",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(55,30)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(11,17)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(26,55)",
+          "item_name": "Bow"
+        }
+      ],
+      "npcs": [
+        "Elder",
+        "Mayor",
+        "Sick Boy",
+        "Librarian"
+      ]
+    },
+    {
+      "area_id": "0x25",
+      "name": "Kalyxo Field",
+      "world": "LW",
+      "grid_row": 4,
+      "grid_col": 5,
+      "notable_features": [
+        "Cave system (Start/River/End)"
+      ],
+      "gfx_id": "0x3F",
+      "sprite_set": "0x04"
+    },
+    {
+      "area_id": "0x29",
+      "name": "Lost Woods",
+      "world": "LW",
+      "grid_row": 5,
+      "grid_col": 1,
+      "notable_features": [
+        "Maze puzzle area"
+      ],
+      "gfx_id": "0x21",
+      "sprite_set": "0x07",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(10,16)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(16,7)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(22,22)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(19,27)",
+          "item_name": "Hookshot"
+        }
+      ]
+    },
+    {
+      "area_id": "0x2A",
+      "name": "Forest Crossroads",
+      "world": "LW",
+      "grid_row": 5,
+      "grid_col": 2,
+      "notable_features": [
+        "Wayward Village / Lost Woods / Loom Beach West junction; tree entrance to SW 0x80 (Forest Glade)"
+      ],
+      "gfx_id": "0x3F",
+      "sprite_set": "0x09",
+      "items": [
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(4,25)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(5,26)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(13,20)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(4,9)",
+          "item_name": "Hookshot"
+        }
+      ]
+    },
+    {
+      "area_id": "0x2D",
+      "name": "Tail Pond",
+      "world": "LW",
+      "grid_row": 5,
+      "grid_col": 5,
+      "notable_features": [
+        "Pond area; Happy Mask Salesman Shop; withered Deku Scrub (main quest) outside; Tail Palace Cave Start"
+      ],
+      "gfx_id": "0x27",
+      "sprite_set": "0x04",
+      "npcs": [
+        "Happy Mask Salesman",
+        "withered Deku Scrub"
+      ]
+    },
+    {
+      "area_id": "0x2E",
+      "name": "Tail Palace Cave",
+      "world": "LW",
+      "grid_row": 5,
+      "grid_col": 6,
+      "notable_features": [
+        "Cave route end"
+      ],
+      "gfx_id": "0x27",
+      "sprite_set": "0x0F"
+    },
+    {
+      "area_id": "0x2F",
+      "name": "Tail Palace",
+      "world": "LW",
+      "grid_row": 5,
+      "grid_col": 7,
+      "notable_features": [
+        "D2 Entrance"
+      ],
+      "gfx_id": "0x40",
+      "sprite_set": "0x26",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(18,13)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(22,13)",
+          "item_name": "Golden Sword"
+        }
+      ]
+    },
+    {
+      "area_id": "0x30",
+      "name": "Dragon Ship Dock",
+      "world": "LW",
+      "grid_row": 6,
+      "grid_col": 0,
+      "notable_features": [
+        "D7 (Dragon Ship)"
+      ],
+      "gfx_id": "0x38",
+      "sprite_set": "0x3C",
+      "entrances": [
+        {
+          "entrance_id": "0x35",
+          "room_name": "0xD6",
+          "dungeon_id": "D7"
+        }
+      ]
+    },
+    {
+      "area_id": "0x32",
+      "name": "Beach Cave",
+      "world": "LW",
+      "grid_row": 6,
+      "grid_col": 2,
+      "notable_features": [
+        "Beach Cave (Intro/Route)"
+      ],
+      "gfx_id": "0x30",
+      "sprite_set": "0x0A",
+      "items": [
+        {
+          "item_id": "0x0C",
+          "tile_pos": "(22,2)",
+          "item_name": "Bow"
+        }
+      ]
+    },
+    {
+      "area_id": "0x33",
+      "name": "Loom Beach",
+      "world": "LW",
+      "grid_row": 6,
+      "grid_col": 3,
+      "notable_features": [
+        "Tiny House entrance"
+      ],
+      "gfx_id": "0x30",
+      "sprite_set": "0x04",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(16,11)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(14,10)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(26,20)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0A",
+          "tile_pos": "(29,20)",
+          "item_name": "Hammer"
+        }
+      ]
+    },
+    {
+      "area_id": "0x36",
+      "name": "Goron Area",
+      "world": "LW",
+      "grid_row": 6,
+      "grid_col": 6,
+      "notable_features": [
+        "D6 (Goron Mines)"
+      ],
+      "gfx_id": "0x42",
+      "sprite_set": "0x08",
+      "entrances": [
+        {
+          "entrance_id": "0x27",
+          "room_name": "0x98",
+          "dungeon_id": "D6"
+        }
+      ],
+      "npcs": [
+        "Kalyxian Goron"
+      ]
+    },
+    {
+      "area_id": "0x40",
+      "name": "Temporal Pyramid",
+      "world": "DW",
+      "grid_row": 0,
+      "grid_col": 0,
+      "notable_features": [
+        "Large area, Master Sword hidden in 0x41 corner"
+      ],
+      "gfx_id": "0x41",
+      "sprite_set": "0x18",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(26,54)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(29,54)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(44,54)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(49,54)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(11,45)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(14,43)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(14,47)",
+          "item_name": "Golden Sword"
+        }
+      ],
+      "npcs": [
+        "(forest spirits?)"
+      ]
+    },
+    {
+      "area_id": "0x41",
+      "name": "Temporal Pyramid",
+      "world": "DW",
+      "grid_row": 0,
+      "grid_col": 1,
+      "notable_features": [
+        "Large area, Master Sword hidden in 0x41 corner"
+      ],
+      "gfx_id": "0x41",
+      "sprite_set": "0x18"
+    },
+    {
+      "area_id": "0x43",
+      "name": "Lava Lands",
+      "world": "DW",
+      "grid_row": 0,
+      "grid_col": 3,
+      "notable_features": [
+        "Volcanic region, 0x57 has final boss hole"
+      ],
+      "gfx_id": "0x3D"
+    },
+    {
+      "area_id": "0x44",
+      "name": "Lava Lands",
+      "world": "DW",
+      "grid_row": 0,
+      "grid_col": 4,
+      "notable_features": [
+        "Volcanic region, 0x57 has final boss hole"
+      ],
+      "gfx_id": "0x3D"
+    },
+    {
+      "area_id": "0x45",
+      "name": "Lava Lands",
+      "world": "DW",
+      "grid_row": 0,
+      "grid_col": 5,
+      "notable_features": [
+        "Volcanic region, 0x57 has final boss hole"
+      ],
+      "gfx_id": "0x3D"
+    },
+    {
+      "area_id": "0x46",
+      "name": "Lava Lands",
+      "world": "DW",
+      "grid_row": 0,
+      "grid_col": 6,
+      "notable_features": [
+        "Volcanic region, 0x57 has final boss hole"
+      ],
+      "gfx_id": "0x3D",
+      "items": [
+        {
+          "item_id": "0x14",
+          "tile_pos": "(11,14)",
+          "item_name": "Shovel"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(19,14)",
+          "item_name": "Boomerang"
+        },
+        {
+          "item_id": "0x0A",
+          "tile_pos": "(16,16)",
+          "item_name": "Hammer"
+        },
+        {
+          "item_id": "0x09",
+          "tile_pos": "(14,16)",
+          "item_name": "Ice Rod"
+        }
+      ]
+    },
+    {
+      "area_id": "0x47",
+      "name": "Lava Lands",
+      "world": "DW",
+      "grid_row": 0,
+      "grid_col": 7,
+      "notable_features": [
+        "Volcanic region, 0x57 has final boss hole"
+      ],
+      "gfx_id": "0x3D"
+    },
+    {
+      "area_id": "0x4B",
+      "name": "Lupo Mountain",
+      "world": "DW",
+      "grid_row": 1,
+      "grid_col": 3,
+      "notable_features": [
+        "S2 (Shrine of Power)"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x14",
+      "items": [
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(25,25)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(11,31)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(38,17)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(38,20)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(53,18)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(60,19)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(45,30)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(48,32)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(20,57)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(27,57)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x02",
+          "tile_pos": "(45,56)",
+          "item_name": "Master Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(43,58)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x03",
+          "tile_pos": "(44,57)",
+          "item_name": "Tempered Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(45,59)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(42,56)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x12",
+          "tile_pos": "(26,58)",
+          "item_name": "Quake Medallion"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(21,58)",
+          "item_name": "Golden Sword"
+        }
+      ]
+    },
+    {
+      "area_id": "0x4C",
+      "name": "Lupo Mountain",
+      "world": "DW",
+      "grid_row": 1,
+      "grid_col": 4,
+      "notable_features": [
+        "S2 (Shrine of Power)"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x14"
+    },
+    {
+      "area_id": "0x4D",
+      "name": "Lava Lands",
+      "world": "DW",
+      "grid_row": 1,
+      "grid_col": 5,
+      "notable_features": [
+        "Volcanic region, 0x57 has final boss hole"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x14"
+    },
+    {
+      "area_id": "0x4E",
+      "name": "Lava Lands",
+      "world": "DW",
+      "grid_row": 1,
+      "grid_col": 6,
+      "notable_features": [
+        "Volcanic region, 0x57 has final boss hole"
+      ],
+      "gfx_id": "0x3D"
+    },
+    {
+      "area_id": "0x4F",
+      "name": "Lava Lands",
+      "world": "DW",
+      "grid_row": 1,
+      "grid_col": 7,
+      "notable_features": [
+        "Volcanic region, 0x57 has final boss hole"
+      ],
+      "gfx_id": "0x3D"
+    },
+    {
+      "area_id": "0x50",
+      "name": "Shrine of Courage",
+      "world": "DW",
+      "grid_row": 2,
+      "grid_col": 0,
+      "notable_features": [
+        "S3 Entrance"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x15",
+      "items": [
+        {
+          "item_id": "0x04",
+          "tile_pos": "(19,18)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(18,17)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(13,13)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(16,13)",
+          "item_name": "Golden Sword"
+        }
+      ]
+    },
+    {
+      "area_id": "0x51",
+      "name": "Connector",
+      "world": "DW",
+      "grid_row": 2,
+      "grid_col": 1,
+      "notable_features": [
+        "Links Shrine of Courage to Pyramid"
+      ],
+      "gfx_id": "0x3F",
+      "sprite_set": "0x16",
+      "items": [
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(16,7)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x14",
+          "tile_pos": "(14,7)",
+          "item_name": "Shovel"
+        }
+      ]
+    },
+    {
+      "area_id": "0x53",
+      "name": "Lupo Mountain",
+      "world": "DW",
+      "grid_row": 2,
+      "grid_col": 3,
+      "notable_features": [
+        "S2 (Shrine of Power)"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x14"
+    },
+    {
+      "area_id": "0x54",
+      "name": "Lupo Mountain",
+      "world": "DW",
+      "grid_row": 2,
+      "grid_col": 4,
+      "notable_features": [
+        "S2 (Shrine of Power)"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x14"
+    },
+    {
+      "area_id": "0x55",
+      "name": "Lava Lands",
+      "world": "DW",
+      "grid_row": 2,
+      "grid_col": 5,
+      "notable_features": [
+        "Volcanic region, 0x57 has final boss hole"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x18"
+    },
+    {
+      "area_id": "0x56",
+      "name": "Lava Lands",
+      "world": "DW",
+      "grid_row": 2,
+      "grid_col": 6,
+      "notable_features": [
+        "Volcanic region, 0x57 has final boss hole"
+      ],
+      "gfx_id": "0x3D"
+    },
+    {
+      "area_id": "0x57",
+      "name": "Final Boss Chamber",
+      "world": "DW",
+      "grid_row": 2,
+      "grid_col": 7,
+      "notable_features": [
+        "Hole to Ganon/Kydreeok fight"
+      ],
+      "gfx_id": "0x3D",
+      "items": [
+        {
+          "item_id": "0x80",
+          "tile_pos": "(15,10)"
+        }
+      ]
+    },
+    {
+      "area_id": "0x58",
+      "name": "Forest of Dreams",
+      "world": "DW",
+      "grid_row": 3,
+      "grid_col": 0,
+      "notable_features": [
+        "Intro area, connects to S3 later"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x16",
+      "items": [
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(30,9)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x06",
+          "tile_pos": "(8,18)",
+          "item_name": "Fire Shield"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(39,29)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x14",
+          "tile_pos": "(16,34)",
+          "item_name": "Shovel"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(23,50)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(27,61)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(32,57)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(13,44)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(8,57)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(48,29)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x06",
+          "tile_pos": "(9,19)",
+          "item_name": "Fire Shield"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(48,20)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(39,20)",
+          "item_name": "Hookshot"
+        }
+      ]
+    },
+    {
+      "area_id": "0x59",
+      "name": "Forest of Dreams",
+      "world": "DW",
+      "grid_row": 3,
+      "grid_col": 1,
+      "notable_features": [
+        "Intro area, connects to S3 later"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x16"
+    },
+    {
+      "area_id": "0x5E",
+      "name": "Fortress of Secrets",
+      "world": "DW",
+      "grid_row": 3,
+      "grid_col": 6,
+      "notable_features": [
+        "D8 Entrance"
+      ],
+      "gfx_id": "0x32",
+      "sprite_set": "0x17",
+      "entrances": [
+        {
+          "entrance_id": "0x37",
+          "room_name": "0x0C",
+          "dungeon_id": "FOS"
+        }
+      ]
+    },
+    {
+      "area_id": "0x60",
+      "name": "Forest of Dreams",
+      "world": "DW",
+      "grid_row": 4,
+      "grid_col": 0,
+      "notable_features": [
+        "Intro area, connects to S3 later"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x16"
+    },
+    {
+      "area_id": "0x61",
+      "name": "Forest of Dreams",
+      "world": "DW",
+      "grid_row": 4,
+      "grid_col": 1,
+      "notable_features": [
+        "Intro area, connects to S3 later"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x16"
+    },
+    {
+      "area_id": "0x63",
+      "name": "Swamp",
+      "world": "DW",
+      "grid_row": 4,
+      "grid_col": 3,
+      "notable_features": [
+        "S1 (Shrine of Wisdom)"
+      ],
+      "gfx_id": "0x41",
+      "sprite_set": "0x16",
+      "items": [
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(14,39)",
+          "item_name": "Boomerang"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(36,58)",
+          "item_name": "Boomerang"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(45,19)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(21,50)",
+          "item_name": "Boomerang"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(17,38)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(48,44)",
+          "item_name": "Boomerang"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(50,19)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(20,51)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(35,52)",
+          "item_name": "Boomerang"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(15,27)",
+          "item_name": "Boomerang"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(57,31)",
+          "item_name": "Boomerang"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(58,30)",
+          "item_name": "Boomerang"
+        },
+        {
+          "item_id": "0x0D",
+          "tile_pos": "(3,41)",
+          "item_name": "Boomerang"
+        }
+      ]
+    },
+    {
+      "area_id": "0x64",
+      "name": "Swamp",
+      "world": "DW",
+      "grid_row": 4,
+      "grid_col": 4,
+      "notable_features": [
+        "S1 (Shrine of Wisdom)"
+      ],
+      "gfx_id": "0x41",
+      "sprite_set": "0x16"
+    },
+    {
+      "area_id": "0x68",
+      "name": "Forest of Dreams",
+      "world": "DW",
+      "grid_row": 5,
+      "grid_col": 0,
+      "notable_features": [
+        "Intro area, connects to S3 later"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x16",
+      "items": [
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(5,8)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(20,20)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x04",
+          "tile_pos": "(5,11)",
+          "item_name": "Golden Sword"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(19,26)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0A",
+          "tile_pos": "(8,14)",
+          "item_name": "Hammer"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(9,15)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(19,21)",
+          "item_name": "Hookshot"
+        }
+      ]
+    },
+    {
+      "area_id": "0x69",
+      "name": "Forest of Dreams",
+      "world": "DW",
+      "grid_row": 5,
+      "grid_col": 1,
+      "notable_features": [
+        "Intro area, connects to S3 later"
+      ],
+      "gfx_id": "0x43",
+      "sprite_set": "0x19",
+      "items": [
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(14,17)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(26,10)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(13,2)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0A",
+          "tile_pos": "(13,4)",
+          "item_name": "Hammer"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(12,3)",
+          "item_name": "Hookshot"
+        }
+      ]
+    },
+    {
+      "area_id": "0x6A",
+      "name": "Forest of Dreams",
+      "world": "DW",
+      "grid_row": 5,
+      "grid_col": 2,
+      "notable_features": [
+        "Intro area, connects to S3 later"
+      ],
+      "gfx_id": "0x41",
+      "sprite_set": "0x16",
+      "items": [
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(6,20)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(19,18)",
+          "item_name": "Hookshot"
+        },
+        {
+          "item_id": "0x0B",
+          "tile_pos": "(12,10)",
+          "item_name": "Hookshot"
+        }
+      ]
+    },
+    {
+      "area_id": "0x6B",
+      "name": "Swamp",
+      "world": "DW",
+      "grid_row": 5,
+      "grid_col": 3,
+      "notable_features": [
+        "S1 (Shrine of Wisdom)"
+      ],
+      "gfx_id": "0x41",
+      "sprite_set": "0x16"
+    },
+    {
+      "area_id": "0x6C",
+      "name": "Swamp",
+      "world": "DW",
+      "grid_row": 5,
+      "grid_col": 4,
+      "notable_features": [
+        "S1 (Shrine of Wisdom)"
+      ],
+      "gfx_id": "0x41",
+      "sprite_set": "0x16"
+    },
+    {
+      "area_id": "0x70",
+      "name": "Underwater Area",
+      "world": "DW",
+      "grid_row": 6,
+      "grid_col": 0,
+      "notable_features": [
+        "Access via Mermaid NPC whirlpool on LW 0x3C (Zora Mask required)"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x71",
+      "name": "Underwater Area",
+      "world": "DW",
+      "grid_row": 6,
+      "grid_col": 1,
+      "notable_features": [
+        "Access via Mermaid NPC whirlpool on LW 0x3C (Zora Mask required)"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x72",
+      "name": "Underwater Area",
+      "world": "DW",
+      "grid_row": 6,
+      "grid_col": 2,
+      "notable_features": [
+        "Access via Mermaid NPC whirlpool on LW 0x3C (Zora Mask required)"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x73",
+      "name": "Underwater Area",
+      "world": "DW",
+      "grid_row": 6,
+      "grid_col": 3,
+      "notable_features": [
+        "Access via Mermaid NPC whirlpool on LW 0x3C (Zora Mask required)"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x74",
+      "name": "Underwater Area",
+      "world": "DW",
+      "grid_row": 6,
+      "grid_col": 4,
+      "notable_features": [
+        "Access via Mermaid NPC whirlpool on LW 0x3C (Zora Mask required)"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x75",
+      "name": "Octobos Area",
+      "world": "DW",
+      "grid_row": 6,
+      "grid_col": 5,
+      "notable_features": [
+        "Octobos enemy location"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x76",
+      "name": "Beach/Desert",
+      "world": "DW",
+      "grid_row": 6,
+      "grid_col": 6,
+      "notable_features": [
+        "Coastal desert region"
+      ],
+      "gfx_id": "0x3D"
+    },
+    {
+      "area_id": "0x77",
+      "name": "Beach/Desert",
+      "world": "DW",
+      "grid_row": 6,
+      "grid_col": 7,
+      "notable_features": [
+        "Coastal desert region"
+      ],
+      "gfx_id": "0x3D"
+    },
+    {
+      "area_id": "0x78",
+      "name": "Underwater Area",
+      "world": "DW",
+      "grid_row": 7,
+      "grid_col": 0,
+      "notable_features": [
+        "Access via Mermaid NPC whirlpool on LW 0x3C (Zora Mask required)"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x79",
+      "name": "Underwater Area",
+      "world": "DW",
+      "grid_row": 7,
+      "grid_col": 1,
+      "notable_features": [
+        "Access via Mermaid NPC whirlpool on LW 0x3C (Zora Mask required)"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x7A",
+      "name": "Underwater Area",
+      "world": "DW",
+      "grid_row": 7,
+      "grid_col": 2,
+      "notable_features": [
+        "Access via Mermaid NPC whirlpool on LW 0x3C (Zora Mask required)"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x7B",
+      "name": "Underwater Area",
+      "world": "DW",
+      "grid_row": 7,
+      "grid_col": 3,
+      "notable_features": [
+        "Access via Mermaid NPC whirlpool on LW 0x3C (Zora Mask required)"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x7C",
+      "name": "Underwater Area",
+      "world": "DW",
+      "grid_row": 7,
+      "grid_col": 4,
+      "notable_features": [
+        "Access via Mermaid NPC whirlpool on LW 0x3C (Zora Mask required)"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x7D",
+      "name": "Underwater Area",
+      "world": "DW",
+      "grid_row": 7,
+      "grid_col": 5,
+      "notable_features": [
+        "Access via Mermaid NPC whirlpool on LW 0x3C (Zora Mask required)"
+      ],
+      "gfx_id": "0x28"
+    },
+    {
+      "area_id": "0x7E",
+      "name": "Beach/Desert",
+      "world": "DW",
+      "grid_row": 7,
+      "grid_col": 6,
+      "notable_features": [
+        "Coastal desert region"
+      ],
+      "gfx_id": "0x3D"
+    },
+    {
+      "area_id": "0x7F",
+      "name": "Beach/Desert",
+      "world": "DW",
+      "grid_row": 7,
+      "grid_col": 7,
+      "notable_features": [
+        "Coastal desert region"
+      ],
+      "gfx_id": "0x3D"
+    },
+    {
+      "area_id": "0x80",
+      "name": "Forest Glade (Kydrog encounter)",
+      "world": "SW",
+      "grid_row": 0,
+      "grid_col": 0,
+      "notable_features": []
+    }
+  ]
+}

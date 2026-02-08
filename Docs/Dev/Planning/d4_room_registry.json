@@ -1,0 +1,442 @@
+{
+  "dungeon": "D4 Zora Temple",
+  "room_count": 16,
+  "corrected": "2026-02-08",
+  "notes": "Previous 15-room set was wrong. Rooms 0x25, 0x27, 0x18 confirmed D4 via palette/stair analysis.",
+  "rooms": [
+    {
+      "room_id": "0x06",
+      "name": "Arrghus Boss",
+      "stairs": [
+        "0x0C",
+        "0x25"
+      ],
+      "holewarp": "0x05",
+      "stair_labels": [
+        "0x0C (OUTSIDE D4)",
+        "0x25 (Water Grate Room)"
+      ],
+      "holewarp_label": "0x05 (OUTSIDE D4)",
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 20,
+      "tag1": 37,
+      "tag2": 0,
+      "sprites": 14,
+      "sprite_list": [
+        "{'sprite_id': '0x8C', 'name': 'Arrghus', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8D', 'name': 'ArrghusFuzz', 'x': 7, 'y': 23, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 108
+    },
+    {
+      "room_id": "0x16",
+      "name": "Swimming Treadmill",
+      "stairs": [
+        "0x18"
+      ],
+      "holewarp": null,
+      "stair_labels": [
+        "0x18 (Cave / Stairwell)"
+      ],
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 30,
+      "tag1": 0,
+      "tag2": 0,
+      "sprites": 7,
+      "sprite_list": [
+        "{'sprite_id': '0x8F', 'name': 'Blob', 'x': 22, 'y': 7, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8F', 'name': 'Blob', 'x': 25, 'y': 7, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8F', 'name': 'Blob', 'x': 23, 'y': 9, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8F', 'name': 'Blob', 'x': 24, 'y': 9, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xCA', 'name': 'Chomp', 'x': 16, 'y': 21, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xC7', 'name': 'FuzzyStack', 'x': 7, 'y': 27, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xA7', 'name': 'Stalfos', 'x': 23, 'y': 25, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 67
+    },
+    {
+      "room_id": "0x18",
+      "name": "Cave / Stairwell",
+      "stairs": [
+        "0x16",
+        "0x45"
+      ],
+      "holewarp": null,
+      "stair_labels": [
+        "0x16 (Swimming Treadmill)",
+        "0x45 (OUTSIDE D4)"
+      ],
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 17,
+      "tag1": 0,
+      "tag2": 0,
+      "sprites": 7,
+      "sprite_list": [
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 11, 'y': 19, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 12, 'y': 13, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xC5', 'name': 'Shooter', 'x': 15, 'y': 11, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 20, 'y': 20, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x9A', 'name': 'Splash', 'x': 24, 'y': 6, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 12, 'y': 9, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x9A', 'name': 'Splash', 'x': 8, 'y': 6, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 141
+    },
+    {
+      "room_id": "0x25",
+      "name": "Water Grate Room",
+      "stairs": [
+        "0x34"
+      ],
+      "holewarp": null,
+      "stair_labels": [
+        "0x34 (Push Block / Pre-Big Key)"
+      ],
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 17,
+      "tag1": 24,
+      "tag2": 0,
+      "sprites": 2,
+      "sprite_list": [
+        "{'sprite_id': '0x21', 'name': 'PushSwitch', 'x': 7, 'y': 6, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x39', 'name': 'GuyByTheSign', 'x': 19, 'y': 5, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 53
+    },
+    {
+      "room_id": "0x26",
+      "name": "Statue Room",
+      "stairs": [],
+      "holewarp": "0x66",
+      "stair_labels": [],
+      "holewarp_label": "0x66 (Hidden Chest / Hidden Door)",
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 17,
+      "tag1": 0,
+      "tag2": 0,
+      "sprites": 0,
+      "objects": 119
+    },
+    {
+      "room_id": "0x27",
+      "name": "Water Gate Room",
+      "stairs": [],
+      "holewarp": null,
+      "stair_labels": [],
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 8,
+      "tag1": 0,
+      "tag2": 26,
+      "sprites": 2,
+      "sprite_list": [
+        "{'sprite_id': '0x39', 'name': 'GuyByTheSign', 'x': 7, 'y': 5, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x04', 'name': 'PullSwitch', 'x': 25, 'y': 7, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 77
+    },
+    {
+      "room_id": "0x28",
+      "name": "Entrance",
+      "stairs": [
+        "0x38"
+      ],
+      "holewarp": "0x45",
+      "stair_labels": [
+        "0x38 (Key Pot)"
+      ],
+      "holewarp_label": "0x45 (OUTSIDE D4)",
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 17,
+      "tag1": 0,
+      "tag2": 0,
+      "sprites": 0,
+      "objects": 134
+    },
+    {
+      "room_id": "0x34",
+      "name": "Push Block / Pre-Big Key",
+      "stairs": [
+        "0x25"
+      ],
+      "holewarp": null,
+      "stair_labels": [
+        "0x25 (Water Grate Room)"
+      ],
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 17,
+      "tag1": 0,
+      "tag2": 0,
+      "sprites": 12,
+      "sprite_list": [
+        "{'sprite_id': '0x7E', 'name': 'FireBlade', 'x': 26, 'y': 5, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 9, 'y': 17, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 6, 'y': 11, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x9A', 'name': 'Splash', 'x': 20, 'y': 5, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x24', 'name': 'BlueMiri', 'x': 25, 'y': 11, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xA7', 'name': 'Stalfos', 'x': 27, 'y': 20, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xA7', 'name': 'Stalfos', 'x': 20, 'y': 20, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 3, 'y': 20, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 11, 'y': 19, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x9D', 'name': 'VRat', 'x': 4, 'y': 3, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x9D', 'name': 'VRat', 'x': 9, 'y': 3, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x24', 'name': 'BlueMiri', 'x': 24, 'y': 24, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 110
+    },
+    {
+      "room_id": "0x35",
+      "name": "Big Key / BS",
+      "stairs": [
+        "0x25"
+      ],
+      "holewarp": "0x44",
+      "stair_labels": [
+        "0x25 (Water Grate Room)"
+      ],
+      "holewarp_label": "0x44 (OUTSIDE D4)",
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 17,
+      "tag1": 0,
+      "tag2": 0,
+      "sprites": 11,
+      "sprite_list": [
+        "{'sprite_id': '0x23', 'name': 'RedMiri', 'x': 20, 'y': 10, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8A', 'name': 'SpikeBlock', 'x': 20, 'y': 11, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xA7', 'name': 'Stalfos', 'x': 22, 'y': 4, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8F', 'name': 'Blob', 'x': 6, 'y': 28, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xA7', 'name': 'Stalfos', 'x': 5, 'y': 17, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x80', 'name': 'Lanmola', 'x': 12, 'y': 8, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x24', 'name': 'BlueMiri', 'x': 9, 'y': 18, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x9A', 'name': 'Splash', 'x': 25, 'y': 17, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 22, 'y': 14, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 27, 'y': 19, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x1E', 'name': 'PegSwitch', 'x': 10, 'y': 15, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 167
+    },
+    {
+      "room_id": "0x36",
+      "name": "Big Chest Room",
+      "stairs": [],
+      "holewarp": "0x26",
+      "stair_labels": [],
+      "holewarp_label": "0x26 (Statue Room)",
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 17,
+      "tag1": 0,
+      "tag2": 0,
+      "sprites": 7,
+      "sprite_list": [
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 26, 'y': 5, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 25, 'y': 10, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 27, 'y': 24, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xA7', 'name': 'Stalfos', 'x': 7, 'y': 25, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xA7', 'name': 'Stalfos', 'x': 5, 'y': 8, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x23', 'name': 'RedMiri', 'x': 13, 'y': 6, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x23', 'name': 'RedMiri', 'x': 18, 'y': 6, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 116
+    },
+    {
+      "room_id": "0x37",
+      "name": "Map Chest / Water Fill",
+      "stairs": [
+        "0x28",
+        "0x20",
+        "0x06",
+        "0x05"
+      ],
+      "holewarp": null,
+      "stair_labels": [
+        "0x28 (Entrance)",
+        "0x20 (OUTSIDE D4)",
+        "0x06 (Arrghus Boss)",
+        "0x05 (OUTSIDE D4)"
+      ],
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 17,
+      "tag1": 39,
+      "tag2": 0,
+      "sprites": 6,
+      "sprite_list": [
+        "{'sprite_id': '0x1E', 'name': 'PegSwitch', 'x': 11, 'y': 4, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x7E', 'name': 'FireBlade', 'x': 8, 'y': 8, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x7E', 'name': 'FireBlade', 'x': 14, 'y': 11, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xA7', 'name': 'Stalfos', 'x': 7, 'y': 9, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x24', 'name': 'BlueMiri', 'x': 24, 'y': 21, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x8A', 'name': 'SpikeBlock', 'x': 9, 'y': 8, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 227
+    },
+    {
+      "room_id": "0x38",
+      "name": "Key Pot",
+      "stairs": [
+        "0x28",
+        "0x20",
+        "0x06",
+        "0x05"
+      ],
+      "holewarp": null,
+      "stair_labels": [
+        "0x28 (Entrance)",
+        "0x20 (OUTSIDE D4)",
+        "0x06 (Arrghus Boss)",
+        "0x05 (OUTSIDE D4)"
+      ],
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 17,
+      "tag1": 0,
+      "tag2": 0,
+      "sprites": 6,
+      "sprite_list": [
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 11, 'y': 20, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 11, 'y': 25, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x9A', 'name': 'Splash', 'x': 7, 'y': 26, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xC5', 'name': 'Shooter', 'x': 28, 'y': 24, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x9A', 'name': 'Splash', 'x': 14, 'y': 23, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x81', 'name': 'WaterBug', 'x': 19, 'y': 23, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 134
+    },
+    {
+      "room_id": "0x46",
+      "name": "Compass Chest",
+      "stairs": [
+        "0x25"
+      ],
+      "holewarp": null,
+      "stair_labels": [
+        "0x25 (Water Grate Room)"
+      ],
+      "palette": 9,
+      "blockset": 1,
+      "spriteset": 27,
+      "tag1": 0,
+      "tag2": 0,
+      "sprites": 6,
+      "sprite_list": [
+        "{'sprite_id': '0xA6', 'name': 'RedLizard', 'x': 27, 'y': 15, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xA5', 'name': 'GreenLizard', 'x': 14, 'y': 20, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0xA6', 'name': 'RedLizard', 'x': 9, 'y': 7, 'subtype': 0, 'layer': 1}",
+        "{'sprite_id': '0xA5', 'name': 'GreenLizard', 'x': 20, 'y': 22, 'subtype': 0, 'layer': 1}",
+        "{'sprite_id': '0xA7', 'name': 'Stalfos', 'x': 6, 'y': 17, 'subtype': 0, 'layer': 1}",
+        "{'sprite_id': '0xA7', 'name': 'Stalfos', 'x': 4, 'y': 26, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 112
+    },
+    {
+      "room_id": "0x54",
+      "name": "Upstairs Pits",
+      "stairs": [
+        "0x44"
+      ],
+      "holewarp": "0x64",
+      "stair_labels": [
+        "0x44 (OUTSIDE D4)"
+      ],
+      "holewarp_label": "0x64 (OUTSIDE D4)",
+      "palette": 1,
+      "blockset": 1,
+      "spriteset": 33,
+      "tag1": 0,
+      "tag2": 0,
+      "sprites": 6,
+      "sprite_list": [
+        "{'sprite_id': '0x6D', 'name': 'Rat', 'x': 6, 'y': 22, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x6E', 'name': 'Rope', 'x': 5, 'y': 11, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x6F', 'name': 'Keese', 'x': 20, 'y': 18, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x6F', 'name': 'Keese', 'x': 27, 'y': 18, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x6E', 'name': 'Rope', 'x': 10, 'y': 6, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x6D', 'name': 'Rat', 'x': 10, 'y': 25, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 58
+    },
+    {
+      "room_id": "0x66",
+      "name": "Hidden Chest / Hidden Door",
+      "stairs": [
+        "0x58"
+      ],
+      "holewarp": null,
+      "stair_labels": [
+        "0x58 (OUTSIDE D4)"
+      ],
+      "palette": 12,
+      "blockset": 2,
+      "spriteset": 33,
+      "tag1": 4,
+      "tag2": 0,
+      "sprites": 4,
+      "sprite_list": [
+        "{'sprite_id': '0x41', 'name': 'BlueSoldier', 'x': 20, 'y': 20, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x41', 'name': 'BlueSoldier', 'x': 27, 'y': 20, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x48', 'name': 'RedSpearKnight', 'x': 4, 'y': 20, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x42', 'name': 'GreenSoldier', 'x': 7, 'y': 26, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 85
+    },
+    {
+      "room_id": "0x76",
+      "name": "Water Drain",
+      "stairs": [
+        "0x03",
+        "0x03",
+        "0x03",
+        "0x03"
+      ],
+      "holewarp": "0x03",
+      "stair_labels": [
+        "0x03 (OUTSIDE D4)",
+        "0x03 (OUTSIDE D4)",
+        "0x03 (OUTSIDE D4)",
+        "0x03 (OUTSIDE D4)"
+      ],
+      "holewarp_label": "0x03 (OUTSIDE D4)",
+      "palette": 24,
+      "blockset": 13,
+      "spriteset": 30,
+      "tag1": 0,
+      "tag2": 0,
+      "sprites": 11,
+      "sprite_list": [
+        "{'sprite_id': '0x91', 'name': 'StalfosKnight', 'x': 8, 'y': 13, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x91', 'name': 'StalfosKnight', 'x': 16, 'y': 8, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x91', 'name': 'StalfosKnight', 'x': 25, 'y': 11, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x91', 'name': 'StalfosKnight', 'x': 10, 'y': 21, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x23', 'name': 'RedMiri', 'x': 20, 'y': 16, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x23', 'name': 'RedMiri', 'x': 28, 'y': 19, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x23', 'name': 'RedMiri', 'x': 28, 'y': 24, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x23', 'name': 'RedMiri', 'x': 24, 'y': 22, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x23', 'name': 'RedMiri', 'x': 9, 'y': 9, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x23', 'name': 'RedMiri', 'x': 5, 'y': 21, 'subtype': 0, 'layer': 0}",
+        "{'sprite_id': '0x23', 'name': 'RedMiri', 'x': 15, 'y': 19, 'subtype': 0, 'layer': 0}"
+      ],
+      "objects": 363
+    }
+  ]
+}
