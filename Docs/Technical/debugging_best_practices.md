@@ -68,7 +68,7 @@ After ANY change to overworld or coordinate code:
    - Watch RAM addresses during transition: `$20-$23`, `$E1-$E9`
    - Use sprite viewer to verify probe spawning/despawning
    - Set breakpoints on `OverworldHandleTransitions`
-   - Run `python3 scripts/overworld_explorer.py transitions` for coverage
+   - Run `python3 scripts/campaign/transition_tester.py` for transition coverage + black-screen detection
 
 ### Sprite Systems
 After changes to sprite detection/AI:
@@ -122,14 +122,14 @@ After changes to sprite detection/AI:
 ### Response Steps
 
 1. **Major:** Revert changes immediately, document what broke
-2. **Minor:** Keep stable version, create issue doc in `Docs/Issues/`
+2. **Minor:** Keep stable version, create issue doc in `Docs/Debugging/Issues/`
 3. **Always:** Add NOTE comment explaining disabled code
 
 ### Comment Template for Disabled Code
 ```asm
 ; NOTE: [Feature] was causing [problem description]
 ; The [specific mechanism] interfered with [other system].
-; Disabled pending investigation. See Docs/Issues/[issue_file].md
+; Disabled pending investigation. See Docs/Debugging/Issues/[issue_file].md
 ; JSL DisabledRoutine
 ```
 

@@ -216,12 +216,12 @@
   ],
   "captureTool": "scripts/capture_overworld_states.py",
   "captureInstructions": [
-    "1. Start Mesen2 with socket server: ./scripts/mesen_launch.sh",
+    "1. Start Mesen2 OOS fork with socket server: mesen-agent launch oos (or ./scripts/mesen2_launch_instance.sh ...)",
     "2. Load oos168x ROM",
     "3. Navigate to desired checkpoint location",
     "4. Run: ./scripts/capture_overworld_states.py check",
     "5. Run: ./scripts/capture_overworld_states.py capture --name <checkpoint_id>",
-    "6. Import to library: python3 scripts/state_library.py import ..."
+    "6. The capture command saves directly into the state library (use: MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py library)"
   ],
   "notes": "Legacy oos168x overworld savestate removed; use oos91x baseline states instead."
 }

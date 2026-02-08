@@ -3,22 +3,35 @@
 **Reported:** 2026-02-06
 **Severity:** Critical
 **Symptom:** Screen goes black and game locks up when transitioning between dungeon rooms during casual exploration.
-**Reproducibility:** Intermittent (likely correlated with rooms that draw torches during load).
-**Status:** INVESTIGATING (reopened 2026-02-07).
+**Reproducibility:** Deterministic from seed state (Zora Temple entrance stairs).
+**Status:** FIXED (2026-02-07).
 
-**Attempted fix (not the root cause):**
-- Removed `SEP #$30` before re-entering the vanilla torch draw loop at `$0188C9` (that loop runs in **16-bit** mode).
-- Preserved `P/A/X/Y` around the injected `JSL WaterGate_CheckRoomEntry` so this hook returns with **vanilla** flags/register state (notably `Z=1` from the sentinel compare).
-- These changes are still reasonable, but the blackout persisted because **at least one** culprit was elsewhere.
+## Confirmed Root Cause + Fix (2026-02-07)
 
-**Root cause (one confirmed contributor):** `CustomRoomCollision` hook (`org $01B95B`, `Dungeons/Collision/custom_collision.asm`) executed `REP #$30` and could return to vanilla without restoring `P` (M/X register width + flags) on the early-out path (no custom collision data for the room).
+### Root cause
+The **water gate “room-entry persistence” hook** (`Underworld_LoadRoom_ExitHook` installed at `org $0188DF`) was corrupting state during room transitions.
 
-**Fix applied:** Preserve/restore `P` inside `CustomRoomCollision` via `PHP`/`PLP` so the hook becomes width-transparent to the caller.
-- Commit: `b59959f` (`fix: preserve P (M/X width) in CustomRoomCollision hook`)
+Observed failure signature:
+- `GameMode` becomes `0x35` (invalid), multiple WRAM fields become `0x0535`-patterned garbage
+- CPU hangs in APU handshake spin: `PC=0x0088EC` (`CMP $2140 ; BNE $0088EC`)
 
-**But:** Dungeon blackouts were still observed after this fix on later ROMs, which implies either:
-- The ROM under test did not include the fix (ROM parity issue), or
-- There is a second, independent blackout cause (most likely another register-width leak into a transition/jump-table routine).
+Repro seed:
+- State library: `zora_temple_stairs_seed_20260207`
+- Action: walk straight ahead into the staircase (no follower/cart required)
+
+### Fix
+We **removed** the `$0188DF` global torch-loop hook entirely (restored vanilla bytes at that site) and implemented persistence restore in a safer room-load hook:
+- `$0188DF` remains **vanilla** (no hook install).
+- Feature flag `!ENABLE_WATER_GATE_ROOMENTRY_RESTORE` now enables room-entry restore via `CustomRoomCollision` (`org $01B95B`) after collision streaming finishes.
+
+Validated via `scripts/repro_blackout_transition.py` on seed state `zora_temple_stairs_seed_20260207`:
+- With `ENABLE_WATER_GATE_ROOMENTRY_RESTORE=1`: no `GameMode=0x35` corruption, no APU hang.
+- With `ENABLE_WATER_GATE_ROOMENTRY_RESTORE=0`: also clean (baseline).
+
+### Follow-up
+Water gate persistence restore is now room-load safe, but it should still be treated as "writes lots of collision" code:
+- keep it ABI-transparent (preserve `P` and never assume `D=$0000`)
+- prefer running it once per room load (current implementation does this)
 
 ## New Hypothesis (Unverified): 8-bit Width Contract Violation Near $09A19C
 
@@ -76,9 +89,8 @@ Fix pattern used:
 
 **Hook site:** `Dungeons/dungeons.asm` (`org $0188DF`)
 **Implementation:** `Dungeons/Collision/water_collision.asm` (`Underworld_LoadRoom_ExitHook`)
-**Feature flag:** `!ENABLE_WATER_GATE_HOOKS = 1` (currently ON)
 
-This hook lives in the underworld room-load torch drawing routine. Even though the water-gate logic is room-gated, the hook itself runs on any room that reaches the torch loop.
+This hook is no longer installed. `$0188DF` is patched back to vanilla.
 
 ---
 

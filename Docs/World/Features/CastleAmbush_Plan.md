@@ -570,8 +570,8 @@ $?? = Custom dungeon cell (TBD)
 
 ### Create:
 - [ ] `Sprites/Enemies/castle_guard.asm` - Main guard implementation
-- [ ] `Docs/Features/CastleAmbush.md` - System documentation
-- [ ] `Docs/Sprites/Enemies/CastleGuard.md` - Sprite documentation
+- [ ] `Docs/World/Features/CastleAmbush.md` - System documentation
+- [ ] `Docs/World/Sprites/Enemies/CastleGuard.md` - Sprite documentation
 
 ### Modify:
 - [ ] `Core/capture.asm` - Add enhanced version
@@ -603,8 +603,8 @@ $?? = Custom dungeon cell (TBD)
 
 ## See Also
 
-- `Docs/Sprites/ProbeSprites.md` - Probe detection system
-- `Docs/Sprites/Enemies/Darknut.md` - Similar guard-type enemy
-- `Docs/Guides/SpriteCreationGuide.md` - Sprite creation reference
+- `Docs/World/Sprites/ProbeSprites.md` - Probe detection system
+- `Docs/World/Sprites/Enemies/Darknut.md` - Similar guard-type enemy
+- `Docs/World/Guides/SpriteCreationGuide.md` - Sprite creation reference
 - `Core/capture.asm` - Core warp functionality
 - `Sprites/experimental/probe.asm` - Probe system reference

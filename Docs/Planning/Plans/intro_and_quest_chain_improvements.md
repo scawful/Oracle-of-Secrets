@@ -202,7 +202,7 @@ Options (ranked by effort):
 
 ## Dependencies
 
-- All dialogue changes **BLOCKED** on yaze message editor expanded bin support
+- Dialogue changes are **UNBLOCKED** — yaze message editor + z3ed CLI both support expanded write path (commit `4b6a78ed`). Edit `Core/message.asm` or use tooling.
 - Elder woman dialogue revision coordinates with `gossip_stone_additions.md` (shouldn't duplicate stone content)
 - Maku Tree speech revision coordinates with `maku_tree_hint_cascade.md`
 - Journal entry improvements are ASM changes to `menu_journal.asm` — may not need message editor

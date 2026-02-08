@@ -172,7 +172,7 @@ All Gossip Stone messages must align with Story Bible v2.0 cosmology:
 ## External Contributions
 
 Ridoyie has offered to contribute world lore text for Gossip Stones. His contributions are:
-- **Blocked on** yaze message editor expanded bin support
+- **UNBLOCKED** — yaze message editor + z3ed CLI both support expanded write path (commit `4b6a78ed`)
 - **Format:** Must follow 32-char line width, 2-3 lines max, cryptic/poetic tone, first-person plural ("We") voice
 - **Review needed:** His proposed cosmology lines conflict with established lore (see above). Direct him to the existing gossip_stones.md registry for tone/format reference.
 
@@ -182,4 +182,4 @@ Ridoyie has offered to contribute world lore text for Gossip Stones. His contrib
 - `kydrog_mask_stalfos_form.md` — GS08's spirit-body message foreshadows the Stalfos Form.
 - `endgame_narrative_arc.md` — GS05's Twinrova hint and GS07's Kydrog hint set up endgame revelations.
 - `progression_infrastructure.md` — Gossip Stones can use the shared NPC reaction framework for gating.
-- `essence_maiden_presentation.md` — Coordinates with maiden dialogue improvements; both blocked on message editor.
+- `essence_maiden_presentation.md` — Coordinates with maiden dialogue improvements.

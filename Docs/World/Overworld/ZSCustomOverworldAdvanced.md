@@ -1202,4 +1202,4 @@ Example:
 
 For basic ZScream usage, see `ZSCustomOverworld.md`.  
 For general overworld documentation, see `Overworld.md`.  
-For troubleshooting ALTTP issues, see `Docs/General/Troubleshooting.md` (Task 4).
+For troubleshooting ALTTP issues, see `Docs/Debugging/Guides/Troubleshooting.md` (Task 4).

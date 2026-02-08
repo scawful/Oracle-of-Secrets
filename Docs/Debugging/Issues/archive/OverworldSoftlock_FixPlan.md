@@ -14,7 +14,7 @@ so the root cause is a **recent change**, not a fundamental design flaw. Static 
 (PHP/PLP hardening) are correct defensive improvements but do not address the regression.
 **Module isolation** — disabling features to identify the guilty module — is the correct next step.
 
-See `Docs/General/DevelopmentGuidelines.md` Section 2.6 for module isolation infrastructure.
+See `Docs/Debugging/Guides/DevelopmentGuidelines.md` Section 2.6 for module isolation infrastructure.
 
 **Eliminated vector:** Direct write to `$7E1F0A` (POLYSTACKL) — write watch showed no
 rogue writes during repro (per `RootCause_Investigation_Handoff.md:88`).
@@ -149,7 +149,7 @@ ABI patterns, but fixing them hasn't resolved the crash. The root cause is a spe
 change, not a fundamental design flaw. Disabling modules identifies which one introduced it.
 
 **Infrastructure:** `Util/macros.asm` has `!DISABLE_*` flags. `Oracle_main.asm` wraps each
-module include with conditionals. See `Docs/General/DevelopmentGuidelines.md` Section 2.6.
+module include with conditionals. See `Docs/Debugging/Guides/DevelopmentGuidelines.md` Section 2.6.
 
 ### Isolation Protocol
 
@@ -287,10 +287,10 @@ Focus on bank 06 hooks first (sprite/HUD path), then expand outward.
 
 | File | Role |
 |------|------|
-| `Docs/Issues/OverworldSoftlock_RootCause.md` | Detailed mechanism + static findings |
-| `Docs/Issues/OverworldSoftlock_Handoff.md` | Session 1-3 history |
-| `Docs/Issues/OverworldSoftlock_FixPlan.md` | **THIS FILE** — active fix plan |
-| `Docs/Issues/width_imbalance_report_20260130.json` | 413 width imbalances |
+| `Docs/Debugging/Issues/OverworldSoftlock_RootCause.md` | Detailed mechanism + static findings |
+| `Docs/Debugging/Issues/OverworldSoftlock_Handoff.md` | Session 1-3 history |
+| `Docs/Debugging/Issues/OverworldSoftlock_FixPlan.md` | **THIS FILE** — active fix plan |
+| `Docs/Debugging/Issues/width_imbalance_report_20260130.json` | 413 width imbalances |
 | `hooks.json` | Hook registry (709 entries) |
 | `scripts/repro_stack_corruption.py` | Dynamic repro script |
 | `z3dk/scripts/oracle_analyzer.py` | Static analyzer |

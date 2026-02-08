@@ -5,17 +5,17 @@ Stage: Alpha (per PROJECT.toml)
 ## Planning pointers
 - Roadmap: `ROADMAP.md`
 - Backlog + epics: `oracle.org`
-- Release definition + guardrails: `Docs/Plans/release_2026_definition.md`
-- Tooling references: `Docs/Tooling/` (esp. `AgentWorkflow.md`, `Z3DK_Analyzer_Findings.md`)
+- Release definition + guardrails: `Docs/Planning/Plans/release_2026_definition.md`
+- Tooling references: `Docs/Debugging/` (esp. `AgentWorkflow.md`, `Z3DK_Analyzer_Findings.md`)
 - Stability “stop-ship” notes: `Docs/STABILITY.md`
 - Feature isolation flags: `Config/module_flags.asm` + `Config/feature_flags.asm`
 
 ## Current focus (2026-02-06)
 - **Goron Mines (D6) minecart**: fix room-data invariants + expand to signature mechanic.
   - Use `z3ed dungeon-minecart-audit` to catch: missing stop tiles, carts not placed on stop tiles, track subtype mismatches.
-  - Design plan: `Docs/Plans/goron_mines_minecart_design.md`
+  - Design plan: `Docs/Planning/Plans/goron_mines_minecart_design.md`
 - **Progression consistency**: start converting NPCs to shared helpers (crystal count, MapIcon, reaction tables).
-  - Spec + test plan: `Docs/Plans/progression_infrastructure.md`
+  - Spec + test plan: `Docs/Planning/Plans/progression_infrastructure.md`
 - **Regression guardrails**: use feature/module flags plus the autonomous debugger to catch hardlocks early.
   - Smoke suite: `bash scripts/run_regression_tests.sh smoke --no-moe --fail-fast`
   - Manual play monitor: `python3 -m scripts.campaign.autonomous_debugger --monitor --fail-on-anomaly`
@@ -122,7 +122,7 @@ Shifted all collision data in `Dungeons/Collision/water_collision.asm` down by 3
 
 ### Files Modified
 - `Dungeons/Collision/water_collision.asm` - Corrected collision offsets
-- `Docs/Issues/WaterCollision_Handoff.md` - Added root cause analysis
+- `Docs/Debugging/Issues/WaterCollision_Handoff.md` - Added root cause analysis
 
 ### Verification Needed
 1. Build ROM with Asar
@@ -150,7 +150,7 @@ Shifted all collision data in `Dungeons/Collision/water_collision.asm` down by 3
 
 ## What exists today
 - Repo contains the Oracle-of-Secrets ASM source tree (see folders like `Core/`, `Dungeons/`, `Items/`).
-- `build.bat` exists for Windows builds; manual Asar usage is documented in `Docs/General/AsarUsage.md`.
+- `build.bat` exists for Windows builds; manual Asar usage is documented in `Docs/Debugging/Guides/AsarUsage.md`.
 - `Docs/README.md` exists.
 
 ## What does NOT exist
@@ -173,7 +173,7 @@ To build the Oracle of Secrets ROM:
    ```
 4. Output will be generated at `Roms/oos168x.sfc` (patched).
 
-For specific sprite or dungeon work, use the corresponding ASM files in `Sprites/` or `Dungeons/` with `asar` directly as documented in `Docs/General/AsarUsage.md`.
+For specific sprite or dungeon work, use the corresponding ASM files in `Sprites/` or `Dungeons/` with `asar` directly as documented in `Docs/Debugging/Guides/AsarUsage.md`.
 
 ## Source of truth
 - `README.md`

@@ -1,12 +1,12 @@
 # Agent Workflow (Lean)
 
-Use this file only when the one-page `Docs/Agent/Quickstart.md` is not enough. The goal is to keep every agent on the same minimal path.
+Use this file only when the one-page `Docs/Debugging/Agent/Quickstart.md` is not enough. The goal is to keep every agent on the same minimal path.
 
 ## Core stack (preferred)
 - Emulator: `/Applications/Mesen2 OOS.app` (fork with socket auto-start).
 - Client: `python3 scripts/mesen2_client.py` (auto-attaches only if a single socket exists; otherwise set `MESEN2_SOCKET_PATH` or use `--socket`/`--instance`).
 - Build: `./scripts/build_rom.sh 168` (or version from ROM name).
-- States: `scripts/state_library.py` + `lib-verify-all` guardrail.
+- States: `mesen2_client.py` state library (`library`, `lib-load`, `lib-save`) + `lib-verify-all` guardrail.
 
 ## Five commands you actually need
 ```
@@ -21,13 +21,12 @@ Other quick hits: `press`, `move`, `state-diff`, `labels-sync`, `capture --json`
 ## Baseline loop (GUI)
 1. Build ROM; open in Mesen2 (socket ready).
 2. Run the five commands above to preflight and capture.
-3. Debug with `watch` + `press/move`; keep notes in `.context/.../agent_handoff.md` or `Docs/Issues/`.
+3. Debug with `watch` + `press/move`; keep notes in `.context/.../agent_handoff.md` or `Docs/Debugging/Issues/`.
 4. Re-run `lib-verify-all` after ROM rebuilds.
 
 ## Headless / CI (when GUI is impossible)
-- `./scripts/agent_workflow_start.sh --rom Roms/oos168x.sfc` (spins up yaze server + exports).
-- `./scripts/agent_workflow_stop.sh` to tear down.
-- Prefer socket control (`mesen2_client.py`) with deterministic `MESEN2_SOCKET_PATH` when headless.
+- Use `./scripts/mesen2_launch_instance.sh --headless --instance <name> --source ci --owner agent`.
+- Prefer socket control (`mesen2_client.py`) with deterministic `MESEN2_SOCKET_PATH`/`--instance` when headless.
 
 ## Paths that matter
 - ROMs: `Roms/`

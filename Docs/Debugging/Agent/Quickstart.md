@@ -19,7 +19,7 @@ Use this before any other Oracle-of-Secrets doc. It is the shortest path to repr
    - `python3 scripts/mesen2_client.py smart-save 5 --label "<bug>"`
    - `python3 scripts/mesen2_client.py lib-save "<bug>"`
    - Optional snapshot for notes: `python3 scripts/mesen2_client.py capture --json`
-5) **Debug/fix:** use `watch --profile overworld`, `state-diff`, `press/move`, and `labels-sync` as needed. Log the result in `.context/.../scratchpad/agent_handoff.md` (if present) or `Docs/Issues/`.
+5) **Debug/fix:** use `watch --profile overworld`, `state-diff`, `press/move`, and `labels-sync` as needed. Log the result in `.context/.../scratchpad/agent_handoff.md` (if present) or `Docs/Debugging/Issues/`.
 
 ## Stability Guardrails (read once)
 - **Color math:** Overworld transitions must clear CGADDSUB + COLDATA mirrors (`$9A/$9C/$9D`). See `Docs/STABILITY.md#1-ppu-register-management` before touching overlays.
@@ -31,5 +31,9 @@ Use this before any other Oracle-of-Secrets doc. It is the shortest path to repr
 - Socket missing? Relaunch Mesen2 and run `python3 scripts/mesen2_client.py socket-cleanup`.
 - Input prefs reset prompt? Relaunch with `./scripts/mesen2_launch_instance.sh --copy-settings-force`.
 - Mesen2 older than repo? Rebuild the fork (`cd ../mesen2-oos && make`) and relaunch, or run `./scripts/mesen2_sanity_check.sh --instance <name>`.
-- Need headless/CI? `./scripts/agent_workflow_start.sh --rom Roms/oos168x.sfc` (details in `Docs/Tooling/AgentWorkflow.md`).
-- Need deeper background? Check `Docs/STABILITY.md` and `Docs/General/Troubleshooting.md` only after the quickstart.
+- Need headless? Use `./scripts/mesen2_launch_instance.sh --headless --instance <name> --source ci --owner agent` and then attach with `python3 scripts/mesen2_client.py --instance <name> ...`.
+- Need deeper background? Check `Docs/STABILITY.md` and `Docs/Debugging/Guides/Troubleshooting.md` only after the quickstart.
+
+## Where To Look
+- Build/debug/test runbook: `RUNBOOK.md`
+- Docs index: `Docs/README.md`

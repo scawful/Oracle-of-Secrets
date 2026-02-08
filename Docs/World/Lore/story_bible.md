@@ -364,7 +364,7 @@ Their messages fall into three categories:
 
 ### Stone Locations & Messages
 
-*See `Docs/Lore/gossip_stones.md` for full registry*
+*See `Docs/World/Lore/gossip_stones.md` for full registry*
 
 | ID | Location | Category | Trigger |
 |----|----------|----------|---------|

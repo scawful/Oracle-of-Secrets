@@ -1,174 +1,174 @@
 {
   "entries": [
     {
-      "id": "1769464731_Zora_Temple_Entry",
-      "path": "oos_1769464731_Zora_Temple_Entry.mss",
-      "label": "Zora Temple Entry",
+      "captured_by": "agent",
       "created_at": 1769464731,
+      "id": "1769464731_Zora_Temple_Entry",
+      "label": "Zora Temple Entry",
+      "md5": "41ebb3077a65186edebbdb1ed5fedd37",
+      "metadata": {
+        "area": 64,
+        "crystals": 0,
+        "game_state": 2,
+        "health": 48,
+        "indoors": false,
+        "link_dir": 2,
+        "link_form": 6,
+        "link_form_name": "GBC Link",
+        "link_state": 0,
+        "link_x": 744,
+        "link_y": 531,
+        "location": "Temporal Pyramid",
+        "magic": 120,
+        "max_health": 80,
+        "module": 9,
+        "oosprog": 0,
+        "oosprog2": 16,
+        "pendants": 0,
+        "room": 32,
+        "rupees": 999,
+        "summary": "Mode: Overworld | GameState: 2",
+        "time_hours": 10,
+        "time_minutes": 0,
+        "time_speed": 63
+      },
+      "path": "oos_1769464731_Zora_Temple_Entry.mss",
+      "status": "canon",
       "tags": [
         "dungeon",
         "entrance"
       ],
-      "metadata": {
-        "module": 9,
-        "room": 32,
-        "area": 64,
-        "indoors": false,
-        "link_x": 744,
-        "link_y": 531,
-        "link_state": 0,
-        "link_form": 6,
-        "link_form_name": "GBC Link",
-        "link_dir": 2,
-        "time_hours": 10,
-        "time_minutes": 0,
-        "time_speed": 63,
-        "health": 48,
-        "max_health": 80,
-        "magic": 120,
-        "rupees": 999,
-        "game_state": 2,
-        "oosprog": 0,
-        "oosprog2": 16,
-        "crystals": 0,
-        "pendants": 0,
-        "location": "Temporal Pyramid",
-        "summary": "Mode: Overworld | GameState: 2"
-      },
-      "status": "canon",
-      "captured_by": "agent",
-      "verified_by": "scawful",
       "verified_at": 1769464736,
-      "md5": "41ebb3077a65186edebbdb1ed5fedd37"
+      "verified_by": "scawful"
     },
     {
-      "id": "1769374342_Village_West",
-      "path": "oos_1769374342_Village_West.mss",
-      "label": "Village West",
+      "capture_quality": "unique",
       "created_at": 1769374342,
+      "id": "1769374342_Village_West",
+      "label": "Village West",
+      "md5": "19e3ae00c10d06ab8f5e09269d8bd13b",
+      "metadata": {
+        "area": 35,
+        "crystals": 0,
+        "game_state": 2,
+        "health": 48,
+        "indoors": false,
+        "link_dir": 2,
+        "link_form": 6,
+        "link_form_name": "GBC Link",
+        "link_state": 0,
+        "link_x": 1572,
+        "link_y": 2790,
+        "location": "Ranch",
+        "magic": 120,
+        "max_health": 80,
+        "module": 9,
+        "oosprog": 0,
+        "oosprog2": 16,
+        "pendants": 0,
+        "room": 32,
+        "rupees": 999,
+        "summary": "Mode: Overworld | GameState: 2",
+        "time_hours": 10,
+        "time_minutes": 20,
+        "time_speed": 63
+      },
+      "path": "oos_1769374342_Village_West.mss",
+      "status": "canon",
       "tags": [
         "overworld",
         "village",
         "transition",
         "large-map"
       ],
-      "metadata": {
-        "module": 9,
-        "room": 32,
-        "area": 35,
-        "indoors": false,
-        "link_x": 1572,
-        "link_y": 2790,
-        "link_state": 0,
-        "link_form": 6,
-        "link_form_name": "GBC Link",
-        "link_dir": 2,
-        "time_hours": 10,
-        "time_minutes": 20,
-        "time_speed": 63,
-        "health": 48,
-        "max_health": 80,
-        "magic": 120,
-        "rupees": 999,
-        "game_state": 2,
-        "oosprog": 0,
-        "oosprog2": 16,
-        "crystals": 0,
-        "pendants": 0,
-        "location": "Ranch",
-        "summary": "Mode: Overworld | GameState: 2"
-      },
-      "md5": "19e3ae00c10d06ab8f5e09269d8bd13b",
-      "status": "canon",
-      "capture_quality": "unique",
-      "verified_by": "scawful",
-      "verified_at": 1769464681
+      "verified_at": 1769464681,
+      "verified_by": "scawful"
     },
     {
-      "id": "1769374328_Lost_Woods_Center",
-      "path": "oos_1769374328_Lost_Woods_Center.mss",
-      "label": "Lost Woods Center",
+      "capture_quality": "unique",
       "created_at": 1769374328,
+      "id": "1769374328_Lost_Woods_Center",
+      "label": "Lost Woods Center",
+      "md5": "cee6e40fb180e238089c866098fce2e2",
+      "metadata": {
+        "area": 41,
+        "crystals": 0,
+        "game_state": 2,
+        "health": 48,
+        "indoors": false,
+        "link_dir": 2,
+        "link_form": 6,
+        "link_form_name": "GBC Link",
+        "link_state": 0,
+        "link_x": 512,
+        "link_y": 512,
+        "location": "Church",
+        "magic": 120,
+        "max_health": 80,
+        "module": 9,
+        "oosprog": 0,
+        "oosprog2": 16,
+        "pendants": 0,
+        "room": 32,
+        "rupees": 999,
+        "summary": "Mode: Overworld | GameState: 2",
+        "time_hours": 10,
+        "time_minutes": 6,
+        "time_speed": 63
+      },
+      "path": "oos_1769374328_Lost_Woods_Center.mss",
+      "status": "canon",
       "tags": [
         "overworld",
         "lost-woods",
         "transition",
         "puzzle"
       ],
-      "metadata": {
-        "module": 9,
-        "room": 32,
-        "area": 41,
-        "indoors": false,
-        "link_x": 512,
-        "link_y": 512,
-        "link_state": 0,
-        "link_form": 6,
-        "link_form_name": "GBC Link",
-        "link_dir": 2,
-        "time_hours": 10,
-        "time_minutes": 6,
-        "time_speed": 63,
-        "health": 48,
-        "max_health": 80,
-        "magic": 120,
-        "rupees": 999,
-        "game_state": 2,
-        "oosprog": 0,
-        "oosprog2": 16,
-        "crystals": 0,
-        "pendants": 0,
-        "location": "Church",
-        "summary": "Mode: Overworld | GameState: 2"
-      },
-      "md5": "cee6e40fb180e238089c866098fce2e2",
-      "status": "canon",
-      "capture_quality": "unique",
-      "verified_by": "scawful",
-      "verified_at": 1769464681
+      "verified_at": 1769464681,
+      "verified_by": "scawful"
     },
     {
-      "id": "1769374193_Dark_World_Pyramid_checkpoint",
-      "path": "oos_1769374193_Dark_World_Pyramid_checkpoint.mss",
-      "label": "Dark World Pyramid checkpoint",
+      "capture_quality": "unique",
       "created_at": 1769374193,
+      "id": "1769374193_Dark_World_Pyramid_checkpoint",
+      "label": "Dark World Pyramid checkpoint",
+      "md5": "46ca8715852b08c781b8c6590994a2a6",
+      "metadata": {
+        "area": 64,
+        "crystals": 0,
+        "game_state": 2,
+        "health": 48,
+        "indoors": false,
+        "link_dir": 2,
+        "link_form": 6,
+        "link_form_name": "GBC Link",
+        "link_state": 0,
+        "link_x": 744,
+        "link_y": 531,
+        "location": "Temporal Pyramid",
+        "magic": 120,
+        "max_health": 80,
+        "module": 9,
+        "oosprog": 0,
+        "oosprog2": 16,
+        "pendants": 0,
+        "room": 32,
+        "rupees": 999,
+        "summary": "Mode: Overworld | GameState: 2",
+        "time_hours": 9,
+        "time_minutes": 13,
+        "time_speed": 63
+      },
+      "path": "oos_1769374193_Dark_World_Pyramid_checkpoint.mss",
+      "status": "canon",
       "tags": [
         "overworld",
         "dark-world",
         "pyramid",
         "transition"
       ],
-      "metadata": {
-        "module": 9,
-        "room": 32,
-        "area": 64,
-        "indoors": false,
-        "link_x": 744,
-        "link_y": 531,
-        "link_state": 0,
-        "link_form": 6,
-        "link_form_name": "GBC Link",
-        "link_dir": 2,
-        "time_hours": 9,
-        "time_minutes": 13,
-        "time_speed": 63,
-        "health": 48,
-        "max_health": 80,
-        "magic": 120,
-        "rupees": 999,
-        "game_state": 2,
-        "oosprog": 0,
-        "oosprog2": 16,
-        "crystals": 0,
-        "pendants": 0,
-        "location": "Temporal Pyramid",
-        "summary": "Mode: Overworld | GameState: 2"
-      },
-      "md5": "46ca8715852b08c781b8c6590994a2a6",
-      "status": "canon",
-      "capture_quality": "unique",
-      "verified_by": "scawful",
-      "verified_at": 1769464681
+      "verified_at": 1769464681,
+      "verified_by": "scawful"
     },
     {
       "description": "Early game overworld - Link's house area",
@@ -179,6 +179,7 @@
       },
       "id": "baseline_1",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Start Area",
         "location": "Overworld - Link's House",
@@ -191,10 +192,11 @@
         "overworld",
         "early-game",
         "boot"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.837914Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Menu and item system testing state",
       "gameState": {
         "indoors": false,
@@ -203,6 +205,7 @@
       },
       "id": "baseline_2",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Menu Test",
         "location": "Overworld",
@@ -210,18 +213,17 @@
       },
       "path": "baseline/oos168x_2.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "baseline",
         "menu",
         "items",
         "overworld"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.837914Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838044Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Mid-game progression state",
       "gameState": {
         "indoors": false,
@@ -230,6 +232,7 @@
       },
       "id": "baseline_3",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Progression",
         "location": "Overworld",
@@ -237,17 +240,16 @@
       },
       "path": "baseline/oos168x_3.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "baseline",
         "progression",
         "overworld"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838044Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838046Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Dungeon entrance testing state",
       "gameState": {
         "indoors": true,
@@ -256,6 +258,7 @@
       },
       "id": "baseline_4",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Dungeon Entry",
         "location": "Dungeon Entrance",
@@ -263,17 +266,16 @@
       },
       "path": "baseline/oos168x_4.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "baseline",
         "dungeon",
         "entrance"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838046Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838048Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Hookshot and Goldstar dual-equip state",
       "gameState": {
         "indoors": false,
@@ -282,6 +284,7 @@
       },
       "id": "baseline_5",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "L/R Swap Test",
         "location": "Overworld",
@@ -289,19 +292,18 @@
       },
       "path": "baseline/oos168x_5.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "baseline",
         "items",
         "hookshot",
         "goldstar",
         "lr-swap"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838048Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838049Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Overworld transition testing - western area",
       "gameState": {
         "indoors": false,
@@ -310,6 +312,7 @@
       },
       "id": "baseline_6",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Western OW",
         "location": "Overworld - Western Area",
@@ -317,18 +320,17 @@
       },
       "path": "baseline/oos168x_6.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "baseline",
         "overworld",
         "transition",
         "western"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838049Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838050Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Water temple / Zora area state",
       "gameState": {
         "indoors": true,
@@ -337,6 +339,7 @@
       },
       "id": "baseline_7",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Zora Temple",
         "location": "Zora Temple",
@@ -344,18 +347,17 @@
       },
       "path": "baseline/oos168x_7.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "baseline",
         "dungeon",
         "water",
         "zora-temple"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838050Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838051Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Water gate room - pre-activation",
       "gameState": {
         "indoors": true,
@@ -364,6 +366,7 @@
       },
       "id": "baseline_8",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Water Gate Pre",
         "location": "Room 0x27 (Zora Temple)",
@@ -371,19 +374,18 @@
       },
       "path": "baseline/oos168x_8.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "baseline",
         "dungeon",
         "water-gate",
         "zora-temple",
         "pre-fill"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838051Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838052Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Water gate room - post-activation",
       "gameState": {
         "indoors": true,
@@ -392,6 +394,7 @@
       },
       "id": "baseline_9",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Water Gate Post",
         "location": "Room 0x27 (Zora Temple)",
@@ -399,19 +402,18 @@
       },
       "path": "baseline/oos168x_9.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "baseline",
         "dungeon",
         "water-gate",
         "zora-temple",
         "post-fill"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838052Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838053Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Late game / boss area state",
       "gameState": {
         "indoors": true,
@@ -420,6 +422,7 @@
       },
       "id": "baseline_10",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Boss Area",
         "location": "Dungeon - Boss Region",
@@ -427,18 +430,17 @@
       },
       "path": "baseline/oos168x_10.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "baseline",
         "late-game",
         "boss",
         "dungeon"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838053Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838054Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Extended testing state - full inventory",
       "gameState": {
         "indoors": false,
@@ -447,6 +449,7 @@
       },
       "id": "baseline_11",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Full Inventory",
         "location": "Overworld",
@@ -454,18 +457,17 @@
       },
       "path": "baseline/oos168x_11.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "baseline",
         "full-inventory",
         "late-game",
         "testing"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838054Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838055Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x baseline - Early game overworld - Link's house area",
       "gameState": {
         "indoors": false,
@@ -474,6 +476,7 @@
       },
       "id": "current_1",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Current Start Area",
         "location": "Overworld - Link's House",
@@ -481,19 +484,18 @@
       },
       "path": "baseline/oos168x_1.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "boot",
         "current",
         "early-game",
         "oos168x",
         "overworld"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838055Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838056Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x baseline - Menu and item system testing state",
       "gameState": {
         "indoors": false,
@@ -502,6 +504,7 @@
       },
       "id": "current_2",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Current Menu Test",
         "location": "Overworld",
@@ -509,19 +512,18 @@
       },
       "path": "baseline/oos168x_2.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "current",
         "items",
         "menu",
         "oos168x",
         "overworld"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838056Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838057Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x baseline - Mid-game progression state",
       "gameState": {
         "indoors": false,
@@ -530,6 +532,7 @@
       },
       "id": "current_3",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Current Progression",
         "location": "Overworld",
@@ -537,18 +540,17 @@
       },
       "path": "baseline/oos168x_3.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "current",
         "oos168x",
         "overworld",
         "progression"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838057Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838058Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x baseline - Dungeon entrance testing state",
       "gameState": {
         "indoors": true,
@@ -557,6 +559,7 @@
       },
       "id": "current_4",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Current Dungeon Entry",
         "location": "Dungeon Entrance",
@@ -564,18 +567,17 @@
       },
       "path": "baseline/oos168x_4.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "current",
         "dungeon",
         "entrance",
         "oos168x"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838058Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838059Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x baseline - Hookshot and Goldstar dual-equip state",
       "gameState": {
         "indoors": false,
@@ -584,6 +586,7 @@
       },
       "id": "current_5",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Current L/R Swap Test",
         "location": "Overworld",
@@ -591,6 +594,7 @@
       },
       "path": "baseline/oos168x_5.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "current",
         "goldstar",
@@ -598,13 +602,11 @@
         "items",
         "lr-swap",
         "oos168x"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838059Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838060Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x baseline - Overworld transition testing - western area",
       "gameState": {
         "indoors": false,
@@ -613,6 +615,7 @@
       },
       "id": "current_6",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Current Western OW",
         "location": "Overworld - Western Area",
@@ -620,19 +623,18 @@
       },
       "path": "baseline/oos168x_6.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "current",
         "oos168x",
         "overworld",
         "transition",
         "western"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838060Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838061Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x baseline - Water temple / Zora area state",
       "gameState": {
         "indoors": true,
@@ -641,6 +643,7 @@
       },
       "id": "current_7",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Current Zora Temple",
         "location": "Zora Temple",
@@ -648,19 +651,18 @@
       },
       "path": "baseline/oos168x_7.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "current",
         "dungeon",
         "oos168x",
         "water",
         "zora-temple"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838061Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838063Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x baseline - Water gate room - pre-activation",
       "gameState": {
         "indoors": true,
@@ -669,6 +671,7 @@
       },
       "id": "current_8",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Current Water Gate Pre",
         "location": "Room 0x27 (Zora Temple)",
@@ -676,6 +679,7 @@
       },
       "path": "baseline/oos168x_8.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "current",
         "dungeon",
@@ -683,13 +687,11 @@
         "pre-fill",
         "water-gate",
         "zora-temple"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838063Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838064Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x baseline - Water gate room - post-activation",
       "gameState": {
         "indoors": true,
@@ -698,6 +700,7 @@
       },
       "id": "current_9",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Current Water Gate Post",
         "location": "Room 0x27 (Zora Temple)",
@@ -705,6 +708,7 @@
       },
       "path": "baseline/oos168x_9.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "current",
         "dungeon",
@@ -712,13 +716,11 @@
         "post-fill",
         "water-gate",
         "zora-temple"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838064Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838065Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x baseline - Late game / boss area state",
       "gameState": {
         "indoors": true,
@@ -727,6 +729,7 @@
       },
       "id": "current_10",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Current Boss Area",
         "location": "Dungeon - Boss Region",
@@ -734,19 +737,18 @@
       },
       "path": "baseline/oos168x_10.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "boss",
         "current",
         "dungeon",
         "late-game",
         "oos168x"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838065Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838066Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x baseline - Extended testing state - full inventory",
       "gameState": {
         "indoors": false,
@@ -755,6 +757,7 @@
       },
       "id": "current_11",
       "imported": "2026-01-21T00:00:00Z",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "meta": {
         "label": "Current Full Inventory",
         "location": "Overworld",
@@ -762,230 +765,248 @@
       },
       "path": "baseline/oos168x_11.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "current",
         "full-inventory",
         "late-game",
         "oos168x",
         "testing"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838066Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838067Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Baseline oos168x - Start Area",
       "gameState": {
         "indoors": false,
         "mode": "0x09"
       },
       "id": "oos168x_baseline_1",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "path": "baseline/oos168x_1.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "baseline",
         "oos168x",
         "boot"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838067Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "deprecated_at": "2026-01-25T22:04:53.838068Z",
+      "deprecated_reason": "Duplicate of baseline_1",
       "description": "Current oos168x - Start Area",
       "gameState": {
         "indoors": false,
         "mode": "0x09"
       },
       "id": "oos168x_current_1",
+      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
       "path": "baseline/oos168x_1.mss",
       "rom_base": "oos168x",
+      "status": "deprecated",
       "tags": [
         "current",
         "oos168x",
         "boot"
-      ],
-      "md5": "2213ffd8bc1eca1dd7a9a8bb49b71b34",
-      "status": "deprecated",
-      "deprecated_at": "2026-01-25T22:04:53.838068Z",
-      "deprecated_reason": "Duplicate of baseline_1"
+      ]
     },
     {
+      "captured_by": "legacy",
+      "created_at": 0,
       "id": "oos91x_4.mss",
-      "path": "legacy/oos91x_4.mss",
       "label": "oos91x_4",
-      "created_at": 0,
-      "tags": [
-        "legacy",
-        "oos91x"
-      ],
-      "metadata": {},
-      "status": "legacy",
-      "captured_by": "legacy",
       "md5": "47c2490e399aff9d70b8b7bcdff474ff",
-      "rom_base": "oos91x"
+      "metadata": {},
+      "path": "legacy/oos91x_4.mss",
+      "rom_base": "oos91x",
+      "status": "legacy",
+      "tags": [
+        "legacy",
+        "oos91x"
+      ]
     },
     {
+      "captured_by": "legacy",
+      "created_at": 0,
       "id": "oos91x_10.mss",
-      "path": "legacy/oos91x_10.mss",
       "label": "oos91x_10",
-      "created_at": 0,
-      "tags": [
-        "legacy",
-        "oos91x"
-      ],
-      "metadata": {},
-      "status": "legacy",
-      "captured_by": "legacy",
       "md5": "24e83cdbcc6f56975f1e00bb27dfebb6",
-      "rom_base": "oos91x"
+      "metadata": {},
+      "path": "legacy/oos91x_10.mss",
+      "rom_base": "oos91x",
+      "status": "legacy",
+      "tags": [
+        "legacy",
+        "oos91x"
+      ]
     },
     {
+      "captured_by": "legacy",
+      "created_at": 0,
       "id": "oos91x_11.mss",
-      "path": "legacy/oos91x_11.mss",
       "label": "oos91x_11",
-      "created_at": 0,
-      "tags": [
-        "legacy",
-        "oos91x"
-      ],
-      "metadata": {},
-      "status": "legacy",
-      "captured_by": "legacy",
       "md5": "3f0f01048f134e67ae5cef1cf99c19d9",
-      "rom_base": "oos91x"
+      "metadata": {},
+      "path": "legacy/oos91x_11.mss",
+      "rom_base": "oos91x",
+      "status": "legacy",
+      "tags": [
+        "legacy",
+        "oos91x"
+      ]
     },
     {
+      "captured_by": "legacy",
+      "created_at": 0,
       "id": "oos91x_5.mss",
-      "path": "legacy/oos91x_5.mss",
       "label": "oos91x_5",
-      "created_at": 0,
-      "tags": [
-        "legacy",
-        "oos91x"
-      ],
-      "metadata": {},
-      "status": "legacy",
-      "captured_by": "legacy",
       "md5": "a0d09357441189e2989b32fc29af760e",
-      "rom_base": "oos91x"
+      "metadata": {},
+      "path": "legacy/oos91x_5.mss",
+      "rom_base": "oos91x",
+      "status": "legacy",
+      "tags": [
+        "legacy",
+        "oos91x"
+      ]
     },
     {
+      "captured_by": "legacy",
+      "created_at": 0,
       "id": "oos91x_7.mss",
-      "path": "legacy/oos91x_7.mss",
       "label": "oos91x_7",
-      "created_at": 0,
-      "tags": [
-        "legacy",
-        "oos91x"
-      ],
-      "metadata": {},
-      "status": "legacy",
-      "captured_by": "legacy",
       "md5": "edd5390f209fec75c402d53dc721f675",
-      "rom_base": "oos91x"
+      "metadata": {},
+      "path": "legacy/oos91x_7.mss",
+      "rom_base": "oos91x",
+      "status": "legacy",
+      "tags": [
+        "legacy",
+        "oos91x"
+      ]
     },
     {
+      "captured_by": "legacy",
+      "created_at": 0,
       "id": "oos91x_6.mss",
-      "path": "legacy/oos91x_6.mss",
       "label": "oos91x_6",
-      "created_at": 0,
-      "tags": [
-        "legacy",
-        "oos91x"
-      ],
-      "metadata": {},
-      "status": "legacy",
-      "captured_by": "legacy",
       "md5": "502f1ea1f5c290205ef63812173d078b",
-      "rom_base": "oos91x"
+      "metadata": {},
+      "path": "legacy/oos91x_6.mss",
+      "rom_base": "oos91x",
+      "status": "legacy",
+      "tags": [
+        "legacy",
+        "oos91x"
+      ]
     },
     {
+      "captured_by": "legacy",
+      "created_at": 0,
       "id": "oos91x_2.mss",
-      "path": "legacy/oos91x_2.mss",
       "label": "oos91x_2",
-      "created_at": 0,
-      "tags": [
-        "legacy",
-        "oos91x"
-      ],
-      "metadata": {},
-      "status": "legacy",
-      "captured_by": "legacy",
       "md5": "9874626bf651d0183fac4430a60d0783",
-      "rom_base": "oos91x"
+      "metadata": {},
+      "path": "legacy/oos91x_2.mss",
+      "rom_base": "oos91x",
+      "status": "legacy",
+      "tags": [
+        "legacy",
+        "oos91x"
+      ]
     },
     {
+      "captured_by": "legacy",
+      "created_at": 0,
       "id": "oos91x_3.mss",
-      "path": "legacy/oos91x_3.mss",
       "label": "oos91x_3",
-      "created_at": 0,
-      "tags": [
-        "legacy",
-        "oos91x"
-      ],
-      "metadata": {},
-      "status": "legacy",
-      "captured_by": "legacy",
       "md5": "3f0fab08c707217c6d7291fa1d9f732e",
-      "rom_base": "oos91x"
+      "metadata": {},
+      "path": "legacy/oos91x_3.mss",
+      "rom_base": "oos91x",
+      "status": "legacy",
+      "tags": [
+        "legacy",
+        "oos91x"
+      ]
     },
     {
+      "captured_by": "legacy",
+      "created_at": 0,
       "id": "oos91x_1.mss",
-      "path": "legacy/oos91x_1.mss",
       "label": "oos91x_1",
-      "created_at": 0,
-      "tags": [
-        "legacy",
-        "oos91x"
-      ],
-      "metadata": {},
-      "status": "legacy",
-      "captured_by": "legacy",
       "md5": "0a17fa1e35c1daccc670d3311a0e0e1b",
-      "rom_base": "oos91x"
+      "metadata": {},
+      "path": "legacy/oos91x_1.mss",
+      "rom_base": "oos91x",
+      "status": "legacy",
+      "tags": [
+        "legacy",
+        "oos91x"
+      ]
     },
     {
+      "captured_by": "legacy",
+      "created_at": 0,
       "id": "oos91x_8.mss",
-      "path": "legacy/oos91x_8.mss",
       "label": "oos91x_8",
-      "created_at": 0,
+      "md5": "aca5afebcd1c09042ffe1bdaafd42d9b",
+      "metadata": {},
+      "path": "legacy/oos91x_8.mss",
+      "rom_base": "oos91x",
+      "status": "legacy",
       "tags": [
         "legacy",
         "oos91x"
-      ],
-      "metadata": {},
-      "status": "legacy",
-      "captured_by": "legacy",
-      "md5": "aca5afebcd1c09042ffe1bdaafd42d9b",
-      "rom_base": "oos91x"
+      ]
     },
     {
-      "id": "oos91x_9.mss",
-      "path": "legacy/oos91x_9.mss",
-      "label": "oos91x_9",
+      "captured_by": "legacy",
       "created_at": 0,
+      "id": "oos91x_9.mss",
+      "label": "oos91x_9",
+      "md5": "f390de6866569d01bd4d2e61f00cca13",
+      "metadata": {},
+      "path": "legacy/oos91x_9.mss",
+      "rom_base": "oos91x",
+      "status": "legacy",
       "tags": [
         "legacy",
         "oos91x"
-      ],
-      "metadata": {},
-      "status": "legacy",
-      "captured_by": "legacy",
-      "md5": "f390de6866569d01bd4d2e61f00cca13",
-      "rom_base": "oos91x"
+      ]
+    },
+    {
+      "created_at": "2026-02-07T11:46:05.785692+00:00",
+      "description": "Paused at Zora Temple entrance; walk straight ahead into stairs to attempt repro.",
+      "id": "zora_temple_stairs_seed_20260207",
+      "meta": {
+        "label": "Zora Temple stairs seed"
+      },
+      "rom_base": "oos168x",
+      "rom_md5": "543a8b5c6d548b32578762821a47e211",
+      "rom_path": "Roms/oos168x.sfc",
+      "slot": "",
+      "source_state": "/Users/scawful/Documents/Mesen2/SaveStates/oos168x_5.mss",
+      "state_path": "Roms/SaveStates/library/oos168x/zora_temple_stairs_seed_20260207.mss",
+      "tags": [
+        "dungeon",
+        "blackout",
+        "repro",
+        "zora_temple"
+      ]
     }
   ],
   "library_root": "Roms/SaveStates/library",
   "sets": [
     {
-      "name": "oos168x_baseline",
       "description": "Complete oos168x baseline states for regression testing (refreshed 2026-01-21)",
+      "name": "oos168x_baseline",
       "rom_base": "oos168x",
       "slots": {
         "1": "baseline_1",
+        "10": "baseline_10",
         "2": "baseline_2",
         "3": "baseline_3",
         "4": "baseline_4",
@@ -993,16 +1014,16 @@
         "6": "baseline_6",
         "7": "baseline_7",
         "8": "baseline_8",
-        "9": "baseline_9",
-        "10": "baseline_10"
+        "9": "baseline_9"
       }
     },
     {
-      "name": "oos168x_current",
       "description": "Alias set for current testing using refreshed oos168x baseline states",
+      "name": "oos168x_current",
       "rom_base": "oos168x",
       "slots": {
         "1": "current_1",
+        "10": "current_10",
         "2": "current_2",
         "3": "current_3",
         "4": "current_4",
@@ -1010,8 +1031,7 @@
         "6": "current_6",
         "7": "current_7",
         "8": "current_8",
-        "9": "current_9",
-        "10": "current_10"
+        "9": "current_9"
       }
     }
   ],

@@ -26,7 +26,7 @@ MESEN2_SOCKET_PATH=/tmp/mesen2-test.sock \
 2) **Static scan (z3dk):**
 ```
 cd ../z3dk
-./build/src/z3analyze --rom ../hobby/oracle-of-secrets/Roms/oos168x.sfc --scan apu-handshake --report ../hobby/oracle-of-secrets/Docs/Issues/B010_static_report.txt
+./build/src/z3analyze --rom ../hobby/oracle-of-secrets/Roms/oos168x.sfc --scan apu-handshake --report ../hobby/oracle-of-secrets/Docs/Debugging/Issues/B010_static_report.txt
 ```
 (Command placeholder—update when the new z3dk passes land.)
 
@@ -44,5 +44,5 @@ Verify $9A/$1D and overlay ID return to 0/FF when leaving the house/Spotlight.
 ## Agent guidance
 - Always record ROM CRC (current: C4E2E26E) and emulator build path.  
 - Do not assume prior fixes; treat B010 as open.  
-- Keep new test artifacts in `Docs/Issues/B010_*` or `Docs/Tooling/` with dates.  
+- Keep new test artifacts in `Docs/Debugging/Issues/B010_*` or `Docs/Debugging/` with dates.  
 - Update this plan when z3dk dynamic hooks ship or when new automation is added.

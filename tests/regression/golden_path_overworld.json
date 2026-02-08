@@ -55,8 +55,8 @@
   },
   "metadata": {
     "related_issues": [
-      "Docs/Issues/OverworldSoftlock_Plan.md",
-      "Docs/Issues/OverworldSoftlock_RootCause.md"
+      "Docs/Debugging/Issues/OverworldSoftlock_Plan.md",
+      "Docs/Debugging/Issues/OverworldSoftlock_RootCause.md"
     ],
     "created": "2026-01-30"
   }

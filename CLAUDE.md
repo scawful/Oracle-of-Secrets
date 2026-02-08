@@ -93,7 +93,7 @@ Example: need D4 dungeon map? → CONTEXT_INDEX → `Docs/World/Dungeons/Dungeon
 
 1. Update `scratchpad/agent_handoff.md` with session summary
 2. Update `memory/technical_debt.md` if new debt discovered
-3. Create issue doc if bug found: `Docs/Issues/<name>.md`
+3. Create issue doc if bug found: `Docs/Debugging/Issues/<name>.md`
 
 ### Policies
 
@@ -123,7 +123,7 @@ The AFS holds agent-facing context (how to work on the project). The repo `Docs/
 
 Goal: make the four flagged rooms playable by aligning minecart spawn placement, track IDs, and custom collision.
 
-- **Rooms:** `0xA8`, `0xB8`, `0xD8`, `0xDA` (see `Docs/Plans/goron_mines_minecart_design.md`)
+- **Rooms:** `0xA8`, `0xB8`, `0xD8`, `0xDA` (see `Docs/Planning/Plans/goron_mines_minecart_design.md`)
 - **Validation (CLI):** `../yaze/scripts/z3ed dungeon-minecart-audit --rom Roms/oos168x.sfc --rooms 0xA8,0xB8,0xD8,0xDA --only-issues`
 - **Fix checklist:**
   - Cart sprites (`0xA3`) are placed on stop tiles (`0xB7`-`0xBA`)
@@ -131,25 +131,17 @@ Goal: make the four flagged rooms playable by aligning minecart spawn placement,
   - Switch corners (`0xD0`-`0xD3`) and `Sprite_SwitchTrack` (`0xB0`) are placed when puzzle routing requires them
 - **Guardrails:** `!ENABLE_MINECART_PLANNED_TRACK_TABLE`, `!ENABLE_MINECART_CART_SHUTTERS`
 
-### Priority 2: Maku Tree Hint Cascade (Complete, Needs Dialogue)
+### Priority 2: Runtime Testing — Maku Tree + Progression + Water Gate
 
-The dispatch logic is wired for D1-D7 in `Sprites/NPCs/maku_tree.asm`, but the messages are placeholders.
+Multiple systems are COMPLETE but UNTESTED at runtime. Blocked on Mesen2 SRAM management improvements (Codex in progress).
 
-- **Messages:** `Core/message.asm` (`Message_1C5`-`Message_1D1`)
-- **TODO(dialogue):** replace placeholder bytes with real text; keep IDs stable.
+- **Maku Tree threshold dialogue:** `maku_tree.asm` uses `SelectReactionMessage` with crystal-count thresholds. 4 messages encoded ($1C5, $1C6, $1C7, $1CA). Needs Mesen2 crystal injection to verify.
+- **Progression helpers:** `Core/progression.asm` — `GetCrystalCount`, `UpdateMapIcon`, `SelectReactionMessage` all untested. First real consumer is the Maku Tree.
+- **D4 Water Gate hooks:** Enabled (`!ENABLE_WATER_GATE_HOOKS`). Needs D1-D7 enter/exit regression + D4 water fill persistence.
 
-### Priority 3: D4 Water Gate Hooks (Enabled, Needs Runtime Regression)
+### Priority 3: NPC Conversion to Progression Helpers
 
-Hooks are enabled behind feature flags; the remaining work is runtime regression coverage.
-
-- **Flags:** `!ENABLE_WATER_GATE_HOOKS`, `!ENABLE_WATER_GATE_OVERLAY_REDIRECT`
-- **Next:** Mesen2 regression pass (D1-D7 enter/exit) plus D4 end-to-end water fill persistence.
-
-### Priority 4: Progression Helpers (Complete, Start Conversions)
-
-Shared helpers exist in `Core/progression.asm` (`GetCrystalCount`, `UpdateMapIcon`, `SelectReactionMessage`).
-
-- **Next:** convert one NPC at a time (start with `Sprites/NPCs/zora.asm`) to use `SelectReactionMessage` to reduce scattered inline crystal checks.
+Once runtime testing validates `SelectReactionMessage`, convert NPCs one at a time starting with `Sprites/NPCs/zora.asm`.
 
 ### Tooling Direction (Guardrails)
 
@@ -243,84 +235,41 @@ python3 scripts/mesen2_client.py time
 python3 scripts/mesen2_client.py diagnostics --json
 ```
 
-**Test Suites:** See [`Docs/Testing/README.md`](Docs/Testing/README.md)
+**Test Suites:** See [`Docs/Debugging/Testing/README.md`](Docs/Debugging/Testing/README.md)
 
 ---
 
 ## Debugging Toolkit
 
-**Full documentation:** [`Docs/Tooling/Debugging_Tools_Index.md`](Docs/Tooling/Debugging_Tools_Index.md)
+**Current docs:**
+- `RUNBOOK.md` (repo root)
+- `Docs/Debugging/Debugging_Tools_Index.md`
+- `Docs/Debugging/Root_Cause_Debugging_Workflow.md`
 
-### Unified Debugging Orchestrator (Recommended)
-
-The `oracle_debugger` package coordinates all debugging tools in a single session.
-
-```bash
-# Start continuous monitoring (recommended for bug hunting)
-python3 scripts/oracle_debugger/orchestrator.py --monitor
-
-# Investigate a specific save state
-python3 scripts/oracle_debugger/orchestrator.py --investigate Roms/SaveStates/crash.mss
-
-# With verbose MoE analysis
-python3 scripts/oracle_debugger/orchestrator.py --monitor --verbose
-```
-
-**Features:**
-- Coordinates Sentinel, crash dump, and static analysis
-- Routes to MoE experts (Nayru, Veran, Farore, Din)
-- Auto-generates regression tests from detections
-- Produces Markdown reports in `crash_reports/`
-
-**Documentation:** [`Docs/Tooling/Oracle_Debugger_Package.md`](Docs/Tooling/Oracle_Debugger_Package.md)
-
-### Real-Time Tools (`~/src/hobby/yaze/scripts/ai/`)
-
-| Tool | Purpose | Command |
-|------|---------|---------|
-| **Sentinel** | Soft lock detection | `python3 sentinel.py` |
-| **Crash Dump** | Post-mortem analysis | `python3 crash_dump.py dump` |
-| **Profiler** | CPU hotspots | `python3 profiler.py --duration 10` |
-| **Fuzzer** | Stress testing | `python3 fuzzer.py --mode gameplay` |
-| **Code Graph** | Static analysis | `python3 code_graph.py callers <label>` |
-
-### Quick Debugging Workflow (Manual)
+**Golden path (local + supported):**
 
 ```bash
-# 1. Start Sentinel monitoring (runs in background)
-cd ~/src/hobby/yaze
-python3 scripts/ai/sentinel.py &
+# Preflight
+MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py diagnostics
 
-# 2. Load repro state and play
-python3 ~/src/hobby/oracle-of-secrets/scripts/mesen2_client.py load 1
+# Capture / repro
+MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-save "repro seed" -t repro
+MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-load <state_id>
 
-# 3. Sentinel auto-captures when soft lock detected
-# Check reports:
-cat crash_reports/crash_*.md | tail -100
-
-# 4. Static analysis if needed
-python3 scripts/ai/code_graph.py ~/src/hobby/oracle-of-secrets writes 7E0020
+# Blackout bundle
+python3 scripts/capture_blackout.py arm --deep
+python3 scripts/capture_blackout.py capture
 ```
 
-### Skill-Based Platform
-
-```bash
-# Interactive debugging session
-python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py interactive
-
-# Regression tests via skill
-python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py regression
-
-# ROM comparison
-python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py diff old.sfc new.sfc
-```
+Notes:
+- `~/src/hobby/usdasm` is the vanilla disassembly source of truth when checking caller expectations (M/X/stack).
 
 ---
 
 ## Mesen2 Fork
 
 -   **Active repo:** `~/src/hobby/mesen2-oos` (Socket Server enabled)
--   **Architecture:** [`Docs/Tooling/Mesen2_Architecture.md`](Docs/Tooling/Mesen2_Architecture.md)
+-   **Architecture:** [`Docs/Debugging/Mesen2_Architecture.md`](Docs/Debugging/Mesen2_Architecture.md)
 -   **Golden Path:** Agents use **Socket API** (`/tmp/mesen2-*.sock`) via `mesen2_client.py` (see `mesen2-oos-debugging` skill).
 -   **Socket discovery:** Set `MESEN2_SOCKET_PATH` env var. Fallback: glob by mtime. Do NOT use `MESEN2_SOCKET` (deprecated).
 -   **Rule:** Only use `apps/Mesen2 OOS.app` (fork build). Do NOT use vanilla Mesen.
@@ -328,7 +277,7 @@ python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py diff old.sfc new.sf
 ## Z3DK Integration
 
 -   **Active repo:** `~/src/hobby/z3dk`
--   **Static analysis:** `scripts/oracle_analyzer.py --check-hooks --find-mx` validates M/X register state at hook entry points.
+-   **Static analysis:** `python3 ../z3dk/scripts/oracle_analyzer.py --check-hooks --find-mx` validates M/X register state at hook entry points.
 -   **JumpTableLocal ($008781):** Requires 8-bit Y on entry (PLY pops 1 byte). 16-bit Y causes stack underflow (PLY pops 2 bytes). z3dk flags callers with Y=16-bit as errors.
 -   **Build integration:** `build_rom.sh` invokes oracle_analyzer when available.
 -   **Tests:** `pytest tests/test_mx_flag_analysis.py -v` (15 tests, no ROM required).
@@ -340,7 +289,7 @@ python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py diff old.sfc new.sf
 1. **This file** (`CLAUDE.md`) — Quick agent reference, AFS guide, priorities
 2. **`CONTEXT_INDEX.md`** — Concept→file routing table (in AFS root)
 3. **`MEMORY.md`** — Auto-loaded agent memory (gotchas, SRAM, dialogue)
-4. **`Docs/General/DevelopmentGuidelines.md`** — Architecture rules
+4. **`Docs/Debugging/Guides/DevelopmentGuidelines.md`** — Architecture rules
 5. **`Docs/GEMINI.md`** — Full collaboration strategy
 6. **`~/.context/projects/oracle-of-secrets/knowledge/`** — Technical references
 7. **`~/.context/projects/oracle-of-secrets/scratchpad/`** — Session state

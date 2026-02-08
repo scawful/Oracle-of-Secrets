@@ -36,7 +36,7 @@ Commands:
 ```
 
 ### Implementation Plan
-1. Create `scripts/debug_assistant.py` with socket client
+1. Use `python3 scripts/mesen2_client.py assistant` as the entry point (socket API).
 2. Define watch profiles per area type:
    - Overworld: $8A, $20-$23, $E1-$E9
    - Dungeon: $A0, $048E, sprite slots
@@ -44,7 +44,7 @@ Commands:
 3. Add pattern detection for known issues:
    - Lost Woods: Scroll register drift
    - Water collision: $7F2000 collision map
-4. Integrate with CLI: `./scripts/mesen_cli.sh assistant`
+4. Integrate with CLI: `python3 scripts/mesen2_client.py assistant`
 
 ### Example Session
 ```

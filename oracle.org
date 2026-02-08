@@ -30,7 +30,7 @@ This section provides a high-level overview of the major development efforts (Ep
 
 ** Handoff Notes
 *** Latest Handoff (Lore + Infra Planning)
-    - See: =Docs/Status/handoff_lore_infra_planning_2026-01-24.md=
+    - See: =Docs/Planning/Status/handoff_lore_infra_planning_2026-01-24.md=
 
 * Technical Debt & Refactoring
   :PROPERTIES:
@@ -193,7 +193,7 @@ CLOSED: [2025-12-09 Mon]
     - *Analysis:* The `lost_woods.asm` puzzle logic was executing prematurely on entry, corrupting coordinates.
     - *Fix:* Added a check to ensure puzzle logic only runs when *inside* Area 0x29. Added `LostWoods_ResetCoordinates` to snap Link's position and clear scroll drifts on exit.
     - *Status:* Main "skipping" bug resolved.
-    - *Regression:* Minor camera/coordinate desync when returning West (0x28). Documented in [[file:Docs/Issues/LostWoods_Transition_Desync.md][LostWoods_Transition_Desync.md]]. Low priority.
+    - *Regression:* Minor camera/coordinate desync when returning West (0x28). Documented in [[file:Docs/Debugging/Issues/LostWoods_Transition_Desync.md][LostWoods_Transition_Desync.md]]. Low priority.
 
 *** DONE [#A] ZSOW vs. Day/Night Sprites
     :PROPERTIES:

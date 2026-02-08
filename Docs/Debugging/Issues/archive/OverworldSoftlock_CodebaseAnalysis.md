@@ -165,5 +165,5 @@ The Handoff/FixPlan mention PHP/PLP on SpriteActiveExp_MainLong / Sprite_PrepExp
 - [OverworldSoftlock_Plan.md](OverworldSoftlock_Plan.md) — Paths A–D and tooling.
 - [OverworldSoftlock_RootCause.md](OverworldSoftlock_RootCause.md) — Mechanism (JumpTableLocal, SP corruption, $7E1F0A).
 - [OverworldSoftlock_FixPlan.md](OverworldSoftlock_FixPlan.md) — Phase 1B module order, Phase 2 ZSOW NMI audit.
-- [Docs/Core/StyleGuide.md](../Core/StyleGuide.md) — Section 4 (processor state), Section 5 (hooks).
-- [Docs/General/Troubleshooting.md](../General/Troubleshooting.md) — Stack overflow/underflow and JSR/JSL pairing.
+- [Docs/Technical/Core/StyleGuide.md](../Core/StyleGuide.md) — Section 4 (processor state), Section 5 (hooks).
+- [Docs/Debugging/Guides/Troubleshooting.md](../General/Troubleshooting.md) — Stack overflow/underflow and JSR/JSL pairing.

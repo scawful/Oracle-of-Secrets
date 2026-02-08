@@ -101,9 +101,9 @@ This session focused on enriching AFS context around Mesen2 + Oracle of Secrets 
 
 | File | Purpose |
 |------|---------|
-| `Docs/Issues/OvernightStatus.md` | This file - session summary |
-| `Docs/Issues/Mesen2_Debug_Backlog.md` | Prioritized integration tasks |
-| `Docs/Issues/KnowledgeGraph.md` | Cross-project relationships |
+| `Docs/Debugging/Issues/OvernightStatus.md` | This file - session summary |
+| `Docs/Debugging/Issues/Mesen2_Debug_Backlog.md` | Prioritized integration tasks |
+| `Docs/Debugging/Issues/KnowledgeGraph.md` | Cross-project relationships |
 
 ---
 
@@ -131,9 +131,9 @@ This session focused on enriching AFS context around Mesen2 + Oracle of Secrets 
 
 ### Post-Session (Oracle of Secrets) - NEW FILES ADDED
 ```
-?? Docs/Issues/OvernightStatus.md     (6.3k)
-?? Docs/Issues/Mesen2_Debug_Backlog.md (8.6k)
-?? Docs/Issues/KnowledgeGraph.md       (9.7k)
+?? Docs/Debugging/Issues/OvernightStatus.md     (6.3k)
+?? Docs/Debugging/Issues/Mesen2_Debug_Backlog.md (8.6k)
+?? Docs/Debugging/Issues/KnowledgeGraph.md       (9.7k)
 ```
 
 ---
@@ -158,7 +158,7 @@ This session focused on enriching AFS context around Mesen2 + Oracle of Secrets 
 ls ~/.context/embedding_service/
 
 # Queue docs for embedding
-python3 -m afs.embedding.queue --path Docs/Issues/
+python3 -m afs.embedding.queue --path Docs/Debugging/Issues/
 ```
 
 ---

@@ -162,9 +162,9 @@ State 1 (overworld) and State 2 (dungeon load) may have **different root causes*
 
 | File | Role |
 |------|------|
-| `Docs/Issues/OverworldSoftlock_RootCause.md` | Detailed mechanism + static findings |
-| `Docs/Issues/OverworldSoftlock_ActionPlan.md` | Original action plan |
-| `Docs/Issues/Menu_Regression_Debugging_Plan.md` | Menu bug categories (separate) |
+| `Docs/Debugging/Issues/OverworldSoftlock_RootCause.md` | Detailed mechanism + static findings |
+| `Docs/Debugging/Issues/OverworldSoftlock_ActionPlan.md` | Original action plan |
+| `Docs/Debugging/Issues/Menu_Regression_Debugging_Plan.md` | Menu bug categories (separate) |
 | `~/.context/scratchpad/overworld_softlock_evidence_20260128.md` | Evidence ledger |
 | `scripts/repro_stack_corruption.py` | Dynamic repro script |
 | `z3dk/scripts/oracle_analyzer.py` | Static analyzer |

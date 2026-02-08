@@ -2,7 +2,11 @@
 
 Source code for all assembly-level hacks in the game. Learn more about the project at [halext.org](https://halext.org/labs/Oracle)
 
-Build using [Asar](https://github.com/RPGHacker/asar). Use `./scripts/build_rom.sh <version>` on macOS/Linux, and `build.bat` on Windows (legacy). See `Docs/General/AsarUsage.md` for the ROM naming scheme.
+Build using [Asar](https://github.com/RPGHacker/asar). Recommended: `mesen-agent build`. Legacy: `./scripts/build_rom.sh <version>` on macOS/Linux, and `build.bat` on Windows. See `Docs/Debugging/Guides/AsarUsage.md` for the ROM naming scheme and `python3 scripts/check_zscream_overlap.py` for post-build overlap verification.
+
+## Runbook (Start Here)
+- `RUNBOOK.md` (build, debug, test, save-data profiles, blackout capture)
+- `Docs/README.md` (documentation index)
 
 ## Dev loop
 Quick build + sync helper:

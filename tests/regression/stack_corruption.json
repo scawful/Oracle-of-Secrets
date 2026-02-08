@@ -11,7 +11,7 @@
     "symptoms": ["black_screen", "softlock", "PC at $83A66D", "invalid JSL to WRAM"],
     "trigger": "Dungeon/overworld load when a prior routine leaves X=8-bit before calling JumpTableLocal",
     "affected_addresses": ["$7E01FC", "$7E01FD", "$7E01FE"],
-    "root_cause_doc": "Docs/Issues/OverworldSoftlock_RootCause.md"
+    "root_cause_doc": "Docs/Debugging/Issues/OverworldSoftlock_RootCause.md"
   },
   "saveState": {
     "id": "overworld_start",
@@ -124,8 +124,8 @@
       "pattern": "Ensure X=16-bit before all JSL JumpTableLocal calls"
     },
     "related_issues": [
-      "Docs/Issues/OverworldSoftlock_ActionPlan.md",
-      "Docs/Issues/OverworldSoftlock_Handoff.md"
+      "Docs/Debugging/Issues/OverworldSoftlock_ActionPlan.md",
+      "Docs/Debugging/Issues/OverworldSoftlock_Handoff.md"
     ],
     "created": "2026-01-29",
     "last_verified": null

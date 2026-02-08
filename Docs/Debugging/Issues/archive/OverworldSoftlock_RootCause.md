@@ -216,7 +216,7 @@ regression categories**:
 - **D**: Data table misalignment
 - **E**: Signed/unsigned comparison bugs
 
-See `Docs/Issues/Menu_Regression_Debugging_Plan.md` for full analysis.
+See `Docs/Debugging/Issues/Menu_Regression_Debugging_Plan.md` for full analysis.
 
 ### Suspect 3: ZSCustomOverworld v3 Port
 
@@ -250,10 +250,10 @@ ROM diff analysis shows:
 
 ## References
 
-- Plan (next steps): `Docs/Issues/OverworldSoftlock_Plan.md`
-- Action plan (historical): `Docs/Issues/OverworldSoftlock_ActionPlan.md`
-- Handoff: `Docs/Issues/OverworldSoftlock_Handoff.md`
-- Menu regression plan: `Docs/Issues/Menu_Regression_Debugging_Plan.md`
+- Plan (next steps): `Docs/Debugging/Issues/OverworldSoftlock_Plan.md`
+- Action plan (historical): `Docs/Debugging/Issues/OverworldSoftlock_ActionPlan.md`
+- Handoff: `Docs/Debugging/Issues/OverworldSoftlock_Handoff.md`
+- Menu regression plan: `Docs/Debugging/Issues/Menu_Regression_Debugging_Plan.md`
 - Evidence ledger: `~/.context/scratchpad/overworld_softlock_evidence_20260128.md`
 - Regression test: `tests/regression/stack_corruption.json`
 - Repro script: `scripts/repro_stack_corruption.py`

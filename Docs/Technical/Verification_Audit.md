@@ -23,9 +23,9 @@
 
 | Document | Last Verified | Source Tier | Status | Owner | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Docs/Core/Ram.md | UNKNOWN | ROM + runtime | Needs audit | TBD | Fill table with evidence |
-| Docs/Core/MemoryMap.md | UNKNOWN | ROM + runtime | Needs audit | TBD | Check SRAM usage notes |
-| Docs/Core/SystemArchitecture.md | UNKNOWN | ROM + docs | Needs audit | TBD | Confirm TimeState and transitions |
+| Docs/Technical/Core/Ram.md | UNKNOWN | ROM + runtime | Needs audit | TBD | Fill table with evidence |
+| Docs/Technical/Core/MemoryMap.md | UNKNOWN | ROM + runtime | Needs audit | TBD | Check SRAM usage notes |
+| Docs/Technical/Core/SystemArchitecture.md | UNKNOWN | ROM + docs | Needs audit | TBD | Confirm TimeState and transitions |
 | Docs/Technical/Flag_Ledger.md | 2026-01-23 | ROM (sram.asm) | Partial | TBD | Runtime verification pending |
 | Docs/Planning/Story_Event_Graph.md | 2026-01-23 | ROM + lore | Partial | TBD | Map routines + rooms |
 
@@ -39,6 +39,6 @@
 
 1) `Docs/Technical/Flag_Ledger.md`
 2) `Docs/Planning/Story_Event_Graph.md`
-3) `Docs/Core/Ram.md`
-4) `Docs/Core/MemoryMap.md`
-5) `Docs/Core/SystemArchitecture.md`
+3) `Docs/Technical/Core/Ram.md`
+4) `Docs/Technical/Core/MemoryMap.md`
+5) `Docs/Technical/Core/SystemArchitecture.md`

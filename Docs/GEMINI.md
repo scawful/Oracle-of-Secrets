@@ -1,6 +1,6 @@
 # Gemini Agentic Profile & Context Strategy
 
-**If you only read one thing:** follow `Docs/Agent/Quickstart.md` (build → preflight → capture → debug).
+**If you only read one thing:** follow `Docs/Debugging/Agent/Quickstart.md` (build → preflight → capture → debug).
 
 ## Core Philosophy (Trimmed)
 
@@ -27,7 +27,7 @@
 
 ### General Workflow
 
-- **Builds:** Use repo build scripts (see `Docs/General/AsarUsage.md`).
+- **Builds:** Use repo build scripts (see `Docs/Debugging/Guides/AsarUsage.md`).
 - **Permissions:** Full access to `.context`. Restricted/Verify access to Project Root. Read-only for OS (`~/.config`, `/opt/homebrew`).
 - **Journaling:** Run `~/Journal/scripts/gather_context.sh` before reflecting.
 

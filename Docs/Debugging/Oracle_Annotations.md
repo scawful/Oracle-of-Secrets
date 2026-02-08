@@ -30,6 +30,13 @@ If a hook changes register width (e.g. `REP/SEP`) it must either:
 
 The dungeon transition blackout investigation (reported 2026-02-06) identified a confirmed contributor: a room-load hook (`CustomRoomCollision` at `$01B95B`) executed `REP #$30` and could return early without restoring `P`, leaking M/X width into vanilla transition code. That specific issue was fixed on 2026-02-07, but **blackouts can still occur** from other register-width leaks (notably X/Y width leaks into `JumpTableLocal` at `$008781`). Treat the ABI rule below as ongoing policy, not a one-off.
 
+### Hook DP Rule (Corruption Prevention)
+If hook code reads DP mirrors (e.g. `LDA.b $A0`) or uses DP scratch (`$00-$0F`), it must either:
+- Preserve + set `D=$0000` while doing DP work (`PHD` / `LDA #$0000` / `TCD` / `PLD`), or
+- Use absolute/long addressing instead of DP mirrors (e.g. `LDA.l $7E00A0`).
+
+Do not install hooks inside "global hot loops" (e.g. the underworld torch draw loop) unless the hook is *provably* transparent and cannot run mid-transition.
+
 Helpers:
 - `python3 scripts/tag_org_hooks.py --root . --apply --normalize --module-from-path`
 - `python3 scripts/verify_hooks_json.py --root . --rom Roms/oos168x.sfc --hooks hooks.json`
@@ -65,7 +72,7 @@ These are already parsed into `hooks.json` for analysis and disassembly.
 ## Tooling pipeline
 1) Generate annotations:
 ```
-python3 z3dk/scripts/generate_annotations.py \
+python3 ../z3dk/scripts/generate_annotations.py \
   --root oracle-of-secrets \
   --out oracle-of-secrets/.cache/annotations.json
 ```
@@ -78,7 +85,7 @@ python3 oracle-of-secrets/scripts/generate_annotations.py \
 
 2) Generate a watch file from annotations:
 ```
-python3 z3dk/scripts/generate_watch.py \
+python3 ../z3dk/scripts/generate_watch.py \
   --mlb oracle-of-secrets/Roms/oos168x.mlb \
   --annotations oracle-of-secrets/.cache/annotations.json \
   --out oracle-of-secrets/scripts/oracle_symbols.watch --dedupe

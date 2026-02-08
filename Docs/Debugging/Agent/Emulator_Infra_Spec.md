@@ -4,6 +4,8 @@
 **Scope:** Oracle-of-Secrets emulator/debug/test infrastructure
 **Focus:** (1) Bridge spec + capability map + selftest harness, (3) runtime reinit hooks + RPC mapping
 
+> NOTE (2026-02-07): The supported client surface is `python3 scripts/mesen2_client.py` (socket API).
+
 ---
 
 ## 0) Goals (Accuracy First)
@@ -121,7 +123,7 @@ Save-states can leave **stale runtime caches** (dialog pointer tables, sprite ta
   - **Fallback:** early in `Module_MainRouting` when `MODE` is stable
 
 ### 2.4 WRAM Contract
-Finalized in `Docs/Agent/Reinit_Hooks_Spec.md`:
+Finalized in `Docs/Debugging/Agent/Reinit_Hooks_Spec.md`:
 - `DBG_REINIT_FLAGS`  = `$7E0746` (bitfield) -> requested reinit targets
 - `DBG_REINIT_STATUS` = `$7E0747` (bitfield) -> completed targets
 - `DBG_REINIT_ERROR`  = `$7E0748` (bitfield) -> failed targets
@@ -138,7 +140,7 @@ Finalized in `Docs/Agent/Reinit_Hooks_Spec.md`:
 
 ### 2.6 Hook Placement
 **Chosen (debug build):** per-frame hook in `Util/item_cheat.asm` at `org $068365`  
-See `Docs/Agent/Reinit_Hooks_Spec.md` for gating rules and rationale.
+See `Docs/Debugging/Agent/Reinit_Hooks_Spec.md` for gating rules and rationale.
 
 ### 2.7 RPC Mapping
 - `reinit.queue`:
@@ -159,7 +161,7 @@ See `Docs/Agent/Reinit_Hooks_Spec.md` for gating rules and rationale.
 ## 3) Implementation Plan (High-Level)
 
 ### Phase A: Bridge Spec + Capabilities
-- JSON-RPC schema + capability names (`Docs/Agent/Emulator_Infra_RPC.md`).
+- JSON-RPC schema + capability names (`Docs/Debugging/Agent/Emulator_Infra_RPC.md`).
 - Implement `bridge.hello` + `bridge.selftest`.
 - Emit `capabilities.json` per instance.
 
@@ -170,7 +172,7 @@ See `Docs/Agent/Reinit_Hooks_Spec.md` for gating rules and rationale.
 
 ### Phase C: RPC Mapping
 - Implement `reinit.queue` and `reinit.status` in bridge.
-- Add CLI helpers: `mesen_cli.sh reinit dialog,sprites`.
+- Add CLI helpers: `python3 scripts/mesen2_client.py reinit dialog,sprites`.
 
 ### Phase D: Validation
 - Contract tests for `reinit.queue` and status transitions.
@@ -185,5 +187,5 @@ See `Docs/Agent/Reinit_Hooks_Spec.md` for gating rules and rationale.
 ---
 
 ## 5) Immediate Next Outputs (No Test Runs)
-- Detailed reinit hook spec (`Docs/Agent/Reinit_Hooks_Spec.md`).
+- Detailed reinit hook spec (`Docs/Debugging/Agent/Reinit_Hooks_Spec.md`).
 - Capability list + selftest matrix.

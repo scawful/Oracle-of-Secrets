@@ -92,10 +92,10 @@ Three suspect commits: `8b23049` (menu), `93bd42b` (time system), `d41dcda` (ZSO
 
 | File | Why |
 |------|-----|
-| `Docs/Issues/Opus_Softlock_Analysis_20260130.md` | Full codebase review and architecture analysis |
-| `Docs/Issues/Width_Imbalance_Fix_Spec.md` | The 4 highest-impact width mismatches (items 1-4) |
-| `Docs/Issues/Mesen2_Breakpoints_and_State2_Freeze_Handoff.md` | State 2 breakpoint results, SP polling data |
-| `Docs/Issues/OverworldSoftlock_RootCause.md` | Original root cause analysis |
+| `Docs/Debugging/Issues/Opus_Softlock_Analysis_20260130.md` | Full codebase review and architecture analysis |
+| `Docs/Debugging/Issues/Width_Imbalance_Fix_Spec.md` | The 4 highest-impact width mismatches (items 1-4) |
+| `Docs/Debugging/Issues/Mesen2_Breakpoints_and_State2_Freeze_Handoff.md` | State 2 breakpoint results, SP polling data |
+| `Docs/Debugging/Issues/OverworldSoftlock_RootCause.md` | Original root cause analysis |
 | `Config/module_flags.asm` | Module isolation flags (all currently enabled) |
 | `Overworld/time_system.asm:516` | ColorBgFix with applied defensive fix |
 

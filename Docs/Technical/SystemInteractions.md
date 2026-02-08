@@ -16,8 +16,8 @@
 
 **Cross-References:**
 - `Docs/World/Overworld/ZSCustomOverworldAdvanced.md` - ZScream technical details
-- `Docs/General/Troubleshooting.md` - System conflict debugging
-- `Docs/Core/MemoryMap.md` - Shared memory regions
+- `Docs/Debugging/Guides/Troubleshooting.md` - System conflict debugging
+- `Docs/Technical/Core/MemoryMap.md` - Shared memory regions
 
 NOTE: Vanilla disassembly is external. In this workspace, JP gigaleak disassembly lives under `../alttp-gigaleak/DISASM/jpdasm/`. If you generate a US `usdasm` export for address parity, it lives under `../alttp-gigaleak/DISASM/usdasm/`. Adjust paths if your setup differs.
 
@@ -1300,7 +1300,7 @@ When multiple systems need to modify the same resource:
 - Use bridge function pattern (see Section 6.2)
 - Verify calling syntax with prefix
 
-See `Docs/General/Troubleshooting.md` for comprehensive debugging guide.
+See `Docs/Debugging/Guides/Troubleshooting.md` for comprehensive debugging guide.
 
 ---
 
@@ -1308,9 +1308,9 @@ See `Docs/General/Troubleshooting.md` for comprehensive debugging guide.
 
 **Core Documentation:**
 - `Docs/World/Overworld/ZSCustomOverworldAdvanced.md` - ZScream internals
-- `Docs/General/Troubleshooting.md` - Problem-solving guide
-- `Docs/General/DevelopmentGuidelines.md` - Best practices
-- `Docs/Core/MemoryMap.md` - Memory layout
+- `Docs/Debugging/Guides/Troubleshooting.md` - Problem-solving guide
+- `Docs/Debugging/Guides/DevelopmentGuidelines.md` - Best practices
+- `Docs/Technical/Core/MemoryMap.md` - Memory layout
 
 **System-Specific:**
 - `Overworld/ZSCustomOverworld.asm` - Custom overworld engine

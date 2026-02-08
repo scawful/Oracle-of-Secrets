@@ -321,5 +321,5 @@ The followers.asm file contains complex cached position/animation code:
 ## Related Documents
 
 - `Docs/Planning/narrative_design_master_plan.md` - Story context for sprites
-- `Docs/Lore/dungeon_narratives.md` - Where bosses appear
+- `Docs/World/Lore/dungeon_narratives.md` - Where bosses appear
 - `Core/messages.org` - Sprite dialogue (if any)

@@ -104,7 +104,7 @@ Manual: for each step run `./scripts/build_rom.sh 168`, test in emulator, then `
 | **Known-good (optional)** | After load, before overworld | Save just before overworld play; use to shorten repro. |
 | **Known-good (optional)** | Key event X | Capture after specific transitions for bisect or sharing. |
 
-State library: see [Docs/Testing/SaveStateLibrary.md](../Testing/SaveStateLibrary.md) and `scripts/mesen2_client.py lib-save` / `lib-load`.
+State library: see [Docs/Debugging/Testing/SaveStateLibrary.md](../Testing/SaveStateLibrary.md) and `scripts/mesen2_client.py lib-save` / `lib-load`.
 
 **Key refs:**
 

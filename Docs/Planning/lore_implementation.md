@@ -1,7 +1,7 @@
 # Oracle of Secrets - Lore Implementation Tracker
 
 **Last Updated:** 2026-01-22
-**Reference:** `Docs/Lore/story_bible.md`, `Docs/Lore/gossip_stones.md`
+**Reference:** `Docs/World/Lore/story_bible.md`, `Docs/World/Lore/gossip_stones.md`
 
 ---
 

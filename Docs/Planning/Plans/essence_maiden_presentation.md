@@ -67,21 +67,23 @@ Complete the Maku Tree hint dispatch for all 7 dungeons. Currently D1, D3, D5 ar
 
 The menu GFX sheet is fully allocated with custom item icons, masks, fonts, and UI elements. Unique per-essence icons would require sacrificing existing graphics. The triforce triangle icons are compact and functional. **Decision: Keep triforce icons.**
 
-### Yaze Message Editor (Blocking Dialogue Changes)
+### Yaze Message Editor (AVAILABLE)
 
-All maiden dialogue and essence collection text changes require editing the expanded message bin file. The yaze message editor needs infrastructure work to support saving the expanded bin alongside the ROM message table.
+The yaze message editor expanded write path is functional as of commit `4b6a78ed` (2026-02-06). Both the GUI (Ctrl+S) and z3ed CLI (`message-write`) write directly to main ROM with capacity validation. Dialogue authoring is **unblocked**.
 
-**Blocked items:**
+**Workflow options:**
+1. Edit `Core/message.asm` hex directly and rebuild (`./scripts/build_rom.sh 168`)
+2. Use z3ed CLI: `z3ed message-write --rom <rom> --id <id> --text "<text>"`
+3. Use yaze GUI message editor (expanded bank save works)
+
+**Ready to author:**
 - Essence collection text (items 1 above)
 - Maiden identity rewrites (item 2 above)
 - Story Bible consistency pass (item 3 above)
 
-**Not blocked:**
-- Maku Tree cascade (item 4 — pure ASM, uses existing message IDs)
-
 ### Ridoyie's Contributions
 
-Ridoyie has offered to contribute maiden dialogue and world lore text. His contributions are blocked on the same message editor tooling. Once the editor supports expanded bin editing:
+Ridoyie has offered to contribute maiden dialogue and world lore text. Tooling is now available:
 - Share current maiden dialogue (0x132-0x138) for his review
 - His proposed lore beats (Kalyxo's cosmic importance, Eon Abyss nature) can be evaluated against Story Bible v2.0 cosmology
 - Gossip Stones are the best vehicle for "optional deep lore" — direct him toward the 32-char line format
@@ -98,17 +100,16 @@ Ridoyie has offered to contribute maiden dialogue and world lore text. His contr
 
 ## Affected Files
 
-| File | Change | Blocked? |
+| File | Change | Status |
 |---|---|---|
-| `Core/messages.org` | Essence receipt text, maiden dialogue rewrites | Yes (message editor) |
-| `Core/message.asm` | Compiled from messages.org | Yes (message editor) |
-| `Sprites/NPCs/maku_tree.asm` | Complete D2/D4/D6 hint cascade | No |
-| `Core/symbols.asm` | New message IDs for D2/D4/D6 Maku hints | No |
+| `Core/messages.org` | Essence receipt text, maiden dialogue rewrites | Ready to author |
+| `Core/message.asm` | Compiled from messages.org | Ready to author |
+| `Sprites/NPCs/maku_tree.asm` | Threshold-based dialogue | Done (UNTESTED) |
+| `Core/symbols.asm` | Message IDs | Done |
 
 ## Dependencies
 
-- `maku_tree_hint_cascade.md` — Maku Tree completion is independent and can proceed now
+- `maku_tree_hint_cascade.md` — Maku Tree threshold dialogue done, needs runtime testing
 - `gossip_stone_additions.md` — Gossip Stones are a separate lore layer; no conflict
 - `endgame_narrative_arc.md` — Ganondorf dialogue is already written and ambiguous
 - `scholar_dialogue_rewrite.md` — Maiden lore must stay consistent with Scholar's exposition
-- Yaze message editor (~/src/hobby/yaze/) — Expanded bin save support needed before dialogue edits

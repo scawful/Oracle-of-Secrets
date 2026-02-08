@@ -65,7 +65,7 @@ MyFunction:
     RTL
 ```
 
-See `Docs/General/Troubleshooting.md` Section 3 for comprehensive processor state troubleshooting.
+See `Docs/Debugging/Guides/Troubleshooting.md` Section 3 for comprehensive processor state troubleshooting.
 
 ## 4. Memory Mapping
 

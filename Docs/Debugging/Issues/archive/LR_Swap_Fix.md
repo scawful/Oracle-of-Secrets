@@ -119,6 +119,6 @@ Used the new Mesen2 CLI bridge to:
 
 ## Related Documentation
 
-- `Docs/Agent/Mesen2_Testing_Guide.md` - Full testing guide for agents
+- `Docs/Debugging/Agent/Mesen2_Testing_Guide.md` - Full testing guide for agents
 - `scripts/mesen_cli.sh` - CLI tool for bridge interaction
 - `scripts/mesen_live_bridge.lua` - Mesen2 Lua bridge script

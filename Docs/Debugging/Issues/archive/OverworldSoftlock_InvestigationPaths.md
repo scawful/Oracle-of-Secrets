@@ -35,7 +35,7 @@
 - **BlockGFXCheck** (ZSCustomOverworld.asm ~3054): Document “Returns with 8-bit index (SEP #$30); caller must restore if 16-bit expected” or add REP #$30 before RTS.
 - **NewLoadTransAuxGFX** (ZSCustomOverworld.asm 4149): Document “Return P is path-dependent; early exit = entry P, long path = REP #$10” and/or normalize P before every JML exit.
 - **NMI_UpdateChr_Bg2HalfAndAnimated** (ZSCustomOverworld.asm 4118): Document “Caller must use JSR (2-byte return); we RTS. If NMI ever JSLs to table, change to RTL.”
-- **HUD_ClockDisplay** (time_system.asm): Already has stack contract in comments; ensure every hook in the crash chain has a one-line contract in code or in [Docs/Core/StyleGuide.md](../Core/StyleGuide.md) “Hook contracts” section.
+- **HUD_ClockDisplay** (time_system.asm): Already has stack contract in comments; ensure every hook in the crash chain has a one-line contract in code or in [Docs/Technical/Core/StyleGuide.md](../Core/StyleGuide.md) “Hook contracts” section.
 
 ---
 
@@ -69,7 +69,7 @@
 ### 2.3 Paths to investigate further
 
 - Run the above for **CheckIfNight**, **BlockGFXCheck**, **NewLoadTransAuxGFX**, **NMI_UpdateChr_Bg2HalfAndAnimated**, and any hook in the crash chain (HUD_ClockDisplay, Sprite_ExecuteSingle, JumpTableLocal).
-- Add a “Hook contracts” subsection to StyleGuide or a dedicated `Docs/Issues/Hook_Contracts.md` that lists every hook’s P/stack contract and callers.
+- Add a “Hook contracts” subsection to StyleGuide or a dedicated `Docs/Debugging/Issues/Hook_Contracts.md` that lists every hook’s P/stack contract and callers.
 
 ---
 

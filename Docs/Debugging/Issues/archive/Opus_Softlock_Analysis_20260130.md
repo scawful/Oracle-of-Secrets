@@ -329,11 +329,11 @@ The root cause is almost certainly a **width-dependent stack imbalance in the sp
 
 | Document | Path |
 |----------|------|
-| Root Cause Analysis | `Docs/Issues/OverworldSoftlock_RootCause.md` |
-| Investigation Synthesis | `Docs/Issues/OverworldDungeon_Softlock_RootCause_Investigation.md` |
-| Building Entry Debug | `Docs/Issues/BuildingEntry_BlackScreen_Debug.md` |
-| Investigation Plan | `Docs/Issues/OverworldSoftlock_Plan.md` |
-| Handoff Notes | `Docs/Issues/OverworldSoftlock_Handoff.md` |
+| Root Cause Analysis | `Docs/Debugging/Issues/OverworldSoftlock_RootCause.md` |
+| Investigation Synthesis | `Docs/Debugging/Issues/OverworldDungeon_Softlock_RootCause_Investigation.md` |
+| Building Entry Debug | `Docs/Debugging/Issues/BuildingEntry_BlackScreen_Debug.md` |
+| Investigation Plan | `Docs/Debugging/Issues/OverworldSoftlock_Plan.md` |
+| Handoff Notes | `Docs/Debugging/Issues/OverworldSoftlock_Handoff.md` |
 | Repro Script | `scripts/repro_stack_corruption.py` |
 | Static Analyzer | `~/src/hobby/z3dk/scripts/oracle_analyzer.py` |
 | Module Flags | `Config/module_flags.asm` |

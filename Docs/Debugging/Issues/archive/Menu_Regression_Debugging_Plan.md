@@ -295,6 +295,6 @@ local tests = {
 
 1. Build ROM and run existing tests
 2. Execute Phase 1 triage with Mesen2
-3. Document any new findings in `Docs/Issues/`
+3. Document any new findings in `Docs/Debugging/Issues/`
 4. Create targeted fixes with single-purpose commits
 5. Update regression test matrix after each fix

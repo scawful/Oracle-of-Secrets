@@ -41,7 +41,7 @@ We maintain a library of "Canon States" which are verified, stable points in the
    ```bash
    python3 scripts/mesen2_client.py repro <state_id> --trace --watch overworld
    ```
-   This command loads the state, sets the watch profile, and starts an execution trace (legacy DebugBridge). For socket-side trace control, use `TRACE` start/stop/status/clear (see `Docs/Tooling/Mesen2_Architecture.md`).
+   This command loads the state, sets the watch profile, and starts an execution trace (legacy DebugBridge). For socket-side trace control, use `TRACE` start/stop/status/clear (see `Docs/Debugging/Mesen2_Architecture.md`).
 3. **Analyze**: Use `disasm` and `symbols` to investigate the code around the crash or bug.
 
 ## 4.1 Isolated Mesen2 Instance (agent-safe)
@@ -85,7 +85,7 @@ agent.validate_and_save(slot=1)   # Safe save with collision checking
 
 | Resource | Path |
 |----------|------|
-| State Library | `Docs/Testing/save_state_library.json` |
+| State Library | `Docs/Debugging/Testing/save_state_library.json` |
 | USDASM Labels | `z3dk/.context/knowledge/label_index_usdasm.csv` |
 | Watch Profiles | `scripts/mesen2_client_lib/constants.py` |
 | Game Constants | `scripts/mesen2_client_lib/constants.py` |

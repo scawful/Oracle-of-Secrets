@@ -34,7 +34,10 @@ This document is the current, minimal, technical truth for the Zora Temple water
 From `Config/feature_flags.asm`:
 
 - `!ENABLE_WATER_GATE_HOOKS`
-  - Controls the fill-complete hook and the room-load persistence hook.
+  - Controls the fill-complete hook (and legacy room-load persistence hook if enabled).
+- `!ENABLE_WATER_GATE_ROOMENTRY_RESTORE` (**default OFF**)
+  - Enables water-gate persistence restore (re-apply collision on room entry when SRAM bit is set).
+  - Implementation is **room-load safe**: called from `CustomRoomCollision` (`org $01B95B`) after collision streaming completes.
 - `!ENABLE_WATER_GATE_OVERLAY_REDIRECT`
   - Controls whether room tag overlay flooring reads from `NewWaterOverlayData`.
 
@@ -65,10 +68,9 @@ Hook: `WaterGate_FillComplete_Hook` (installed at `org $01F3D2` in `Dungeons/dun
 
 ### 2) When entering the room later (persistence)
 
-Hook: `Underworld_LoadRoom_ExitHook` (installed at `org $0188DF`).
-
-- It must preserve the vanilla torch-loop behavior and register state.
-- On the vanilla fallthrough path, it calls `WaterGate_CheckRoomEntry` (JSL) and returns.
+Implementation:
+- Persistence restore runs during room load via `CustomRoomCollision` (`org $01B95B`) when `!ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 1`.
+- The old global torch-loop hook at `$0188DF` is no longer installed (site is kept vanilla).
 
 `WaterGate_CheckRoomEntry`:
 - If room is `0x27` and bit0 is set: sets `$0403 = 2` (skip animation) and reapplies collision.
@@ -102,17 +104,23 @@ This is the expected trigger path for starting the water fill/grate sequence.
 
 Minimum tests (must pass on the same ROM build):
 
+0. **Choose persistence strategy**
+- Default build (recommended): keep `!ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 0` to avoid dungeon blackout corruption.
+- If you need to test legacy persistence restore anyway: build with `--enable water_gate_roomentry_restore` and only test in Zora Temple rooms.
+
 1. **Room 0x27 gate fill**
 - Trigger the switch/fill.
 - After animation completes, verify swim area collision behaves correctly.
 - Leave the room and re-enter.
 - Expected: collision state persists (no need to re-trigger fill).
+  - Note: requires a persistence mechanism. The legacy mechanism is currently disabled by default.
 
 2. **Room 0x25 grate open**
 - Trigger the grate open.
 - Verify collision changes (new swim area).
 - Leave/re-enter.
 - Expected: collision state persists.
+  - Note: requires a persistence mechanism. The legacy mechanism is currently disabled by default.
 
 3. **Save/load persistence**
 - Save after opening/filling.

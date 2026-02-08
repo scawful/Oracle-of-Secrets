@@ -1340,7 +1340,7 @@ When stuck:
 
 For further help:
 - Read `Docs/World/Overworld/ZSCustomOverworldAdvanced.md` for ZScream details
-- Check `Docs/Core/Ram.md` for memory map
-- Review `Docs/General/DevelopmentGuidelines.md` for best practices
+- Check `Docs/Technical/Core/Ram.md` for memory map
+- Review `Docs/Debugging/Guides/DevelopmentGuidelines.md` for best practices
 
 Happy debugging! 🎮

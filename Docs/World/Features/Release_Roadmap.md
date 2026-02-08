@@ -123,7 +123,7 @@
 
 ### 3.3 Reactive NPC Dialogue
 
-Per `Docs/Features/Narrative_Improvements.md`:
+Per `Docs/World/Features/Narrative_Improvements.md`:
 - Goal: 3-5 NPCs checking OOSPROG flags
 - Key NPCs: Mayor, Potion Shop Witch, Library NPC
 - Triggers: After D3 (Kalyxo Castle) and D6 (Goron Mines)

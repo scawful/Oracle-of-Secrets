@@ -426,7 +426,7 @@ See: `Core/capture.asm` and `Sprites/Enemies/custom_guard.asm` (experimental)
 
 ## See Also
 
-- `Docs/Sprites/Enemies/Darknut.md` - Darknut implementation with probes
-- `Docs/Guides/SpriteCreationGuide.md` Section 10.9 - Advanced AI Patterns
+- `Docs/World/Sprites/Enemies/Darknut.md` - Darknut implementation with probes
+- `Docs/World/Guides/SpriteCreationGuide.md` Section 10.9 - Advanced AI Patterns
 - `Core/sprite_functions.asm` - `Sprite_SpawnProbeAlways_long` function
 - `Core/symbols.asm` - Probe-related function addresses

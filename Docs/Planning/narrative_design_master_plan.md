@@ -292,8 +292,8 @@ Both relationships were damaged by outside forces (Hylian occupation, Kydrog's s
 | `Core/messages.org` | Enhanced Princess dialogue (0C6), intermediate Sea Zora dialogue, River Zora NPCs, reconciliation scene |
 | `Sprites/NPCs/zora_baby.asm` | Additional dialogue reactions during D4 |
 | `Sprites/NPCs/zora.asm` | New River Zora variants for East Kalyxo, intermediate dialogue states |
-| `Docs/Lore/story_bible.md` | Update Zora conflict section with resolved narrative |
-| `Docs/Lore/gossip_stones.md` | Optional: Add stone hinting at manipulation |
+| `Docs/World/Lore/story_bible.md` | Update Zora conflict section with resolved narrative |
+| `Docs/World/Lore/gossip_stones.md` | Optional: Add stone hinting at manipulation |
 
 ---
 
@@ -950,7 +950,7 @@ Thank you, hero of Kalyxo.
 | `Sprites/NPCs/zora.asm` | River Zora variants, reconciliation states |
 | `Sprites/Bosses/kydreeok.asm` | Redemption scene |
 | `Sprites/Bosses/ganondorf.asm` | Three-phase pattern (TBD) |
-| `Docs/Lore/story_bible.md` | Update open questions with decisions |
+| `Docs/World/Lore/story_bible.md` | Update open questions with decisions |
 
 ---
 

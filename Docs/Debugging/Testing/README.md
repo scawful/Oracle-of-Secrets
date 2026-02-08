@@ -59,17 +59,17 @@ python3 scripts/test_runner.py --suite regression --tag critical -q
 
 - **Module isolation:** Find which Oracle module is implicated in a softlock by disabling modules one at a time and running the softlock check.  
   `./scripts/run_module_isolation.sh --auto` (or manual `./scripts/run_module_isolation.sh` / `--next N`).  
-  See `Docs/Issues/Module_Isolation_Plan.md` and `Docs/Issues/OverworldSoftlock_Plan.md` (Path C).
+  See `Docs/Debugging/Issues/Module_Isolation_Plan.md` and `Docs/Debugging/Issues/OverworldSoftlock_Plan.md` (Path C).
 
 - **Git bisect:** Find the introducing commit.  
   `git bisect start HEAD <good-commit>` then `git bisect run python3 scripts/bisect_softlock.py`.  
-  See `Docs/Issues/OverworldSoftlock_Plan.md` (Path D).
+  See `Docs/Debugging/Issues/OverworldSoftlock_Plan.md` (Path D).
 
 ## Test definitions
 
 - Tests are JSON files under `tests/` (e.g. `tests/regression/golden_path_overworld.json`).
 - Each has `name`, optional `saveState` (slot/path/id), and `steps` (wait, press, assert, screenshot, exec, etc.).
-- Save state resolution: slot, path, or id from manifest/library. Default library root: `Roms/SaveStates/library` (see `tests/manifest.json` defaults and `Docs/Testing/SaveStateLibrary.md`).
+- Save state resolution: slot, path, or id from manifest/library. Default library root: `Roms/SaveStates/library` (see `tests/manifest.json` defaults and `Docs/Debugging/Testing/SaveStateLibrary.md`).
 
 ## Environment
 
@@ -82,6 +82,6 @@ python3 scripts/test_runner.py --suite regression --tag critical -q
 ## Related docs
 
 - **Sandbox and ROM versions:** [Sandbox_ROM_Guide.md](Sandbox_ROM_Guide.md) – Reproducible sandbox (git worktree), ROM version management (`rom_version_manage.py`), and safe bisect/isolation without touching the main repo.
-- **Save states:** `Docs/Testing/SaveStateLibrary.md`, `Docs/Testing/save_state_library.json`
-- **Overworld softlock:** `Docs/Issues/OverworldSoftlock_Plan.md`, `Docs/Issues/Module_Isolation_Plan.md`
-- **Gap analysis:** `Docs/Testing/gap_analysis_and_testing_plan.md`
+- **Save states:** `Docs/Debugging/Testing/SaveStateLibrary.md`, `Docs/Debugging/Testing/save_state_library.json`
+- **Overworld softlock:** `Docs/Debugging/Issues/OverworldSoftlock_Plan.md`, `Docs/Debugging/Issues/Module_Isolation_Plan.md`
+- Historical gap-analysis docs live under `Docs/Archive/` (do not treat them as current guidance).

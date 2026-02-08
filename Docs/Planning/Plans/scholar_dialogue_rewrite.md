@@ -105,4 +105,4 @@ The Scholar serves as the player's primary **lore exposition NPC** for the Abyss
 
 - `gossip_stone_additions.md` — The priestess/Farore bloodline hint appears in both the Scholar dialogue and a Gossip Stone. Ensure consistency.
 - `endgame_narrative_arc.md` — The "spirits take physical form" rule established here pays off in the endgame.
-- Story Bible v2.0 (`Docs/Lore/story_bible.md`) — Primary lore source.
+- Story Bible v2.0 (`Docs/World/Lore/story_bible.md`) — Primary lore source.

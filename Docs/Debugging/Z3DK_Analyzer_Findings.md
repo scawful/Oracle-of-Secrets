@@ -108,5 +108,5 @@ Notes:
 2) Inspect the ABI for the Oracle routines above (prolog/epilog M/X handling).
 3) Confirm Tile16 data in `oos168x.sfc` vs `oos168x_test2.sfc` or backups.
 
-See `Docs/Tooling/Oracle_ABI_Standard.md` for the new long-entry ABI convention
+See `Docs/Debugging/Oracle_ABI_Standard.md` for the new long-entry ABI convention
 and macros (`OOS_LongEntry` / `OOS_LongExit`).

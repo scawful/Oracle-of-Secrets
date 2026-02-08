@@ -181,7 +181,7 @@ grep -rn "RoutineName" --include="*.asm"
 
 ### Step 5: Document Root Cause
 
-Update `Docs/Issues/OverworldSoftlock_RootCause.md` with:
+Update `Docs/Debugging/Issues/OverworldSoftlock_RootCause.md` with:
 - Exact PC that corrupts SP
 - Source file and line number
 - The instruction (TCS with what A value? Stack overflow from what?)
@@ -415,10 +415,10 @@ These may not directly cause SP corruption, but any of them could cascade into w
 ### Evidence & Logs
 | File | Content |
 |------|---------|
-| `Docs/Issues/OverworldSoftlock_RootCause.md` | Root cause doc (TBD section unfilled) |
-| `Docs/Issues/OverworldSoftlock_Handoff.md` | Previous handoff (updated 2026-01-29) |
-| `Docs/Issues/OverworldSoftlock_ActionPlan.md` | Execution plan with commands |
-| `Docs/Tooling/Z3DK_Analyzer_Findings.md` | Static analysis results |
+| `Docs/Debugging/Issues/OverworldSoftlock_RootCause.md` | Root cause doc (TBD section unfilled) |
+| `Docs/Debugging/Issues/OverworldSoftlock_Handoff.md` | Previous handoff (updated 2026-01-29) |
+| `Docs/Debugging/Issues/OverworldSoftlock_ActionPlan.md` | Execution plan with commands |
+| `Docs/Debugging/Tooling/Z3DK_Analyzer_Findings.md` | Static analysis results |
 | `~/.context/.../save2_jump_table_rootcause_20260129.md` | JumpTableLocal correction |
 | `~/.context/.../loadfile_dbr_dispatch_20260129.md` | DBR=0x50 root cause trace |
 | `~/.context/.../save2_capture_20260127.md` | Save state 2 captures (file-load dungeon freeze) |

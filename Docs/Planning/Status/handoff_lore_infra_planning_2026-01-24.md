@@ -24,7 +24,7 @@ Scope: Story canon updates, map guidance infrastructure, and item-flow planning.
 - `Docs/Planning/map_icon_guidance_notes.md` (verbatim guidance from Codex history).
 - `Docs/Planning/item_flow_balance_check.md` (captures optional Storms + Tail Pond marker plan).
 - `Docs/Planning/Story_Event_Graph.md` (adds EV-016 Mirror grant plan + EV-017 Tail Pond marker).
-- `Docs/Guides/QuestFlow.md` (notes Impa grants Mirror; Elder hint added to D1.5 flow).
+- `Docs/World/Guides/QuestFlow.md` (notes Impa grants Mirror; Elder hint added to D1.5 flow).
 - `Docs/Planning/item_audit.md` (Mirror note updated).
 - `oracle.org` (TODOs for Impa grant, Tail Pond marker wiring, manual coordinate tuning).
 

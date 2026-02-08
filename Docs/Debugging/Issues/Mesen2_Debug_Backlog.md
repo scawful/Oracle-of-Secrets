@@ -120,7 +120,7 @@ rpc ListStates(ListStatesRequest) returns (ListStatesResponse);
 **Status:** Partial (manifest exists, states missing)
 
 **Description:**
-State library manifest at `Docs/Testing/save_state_library.json` has 22 entries but `.mss` files may be missing.
+State library manifest at `Docs/Debugging/Testing/save_state_library.json` has 22 entries but `.mss` files may be missing.
 
 **State Types Needed:**
 | Type | Count | Purpose |
@@ -252,7 +252,8 @@ Detect black-screen conditions automatically during overworld traversal tests. I
 **Files:**
 - `scripts/mesen2_client_lib/client.py`
 - `scripts/mesen2_client_lib/cli.py`
-- `scripts/overworld_explorer.py` (if present)
+- `scripts/campaign/overworld_navigator.py`
+- `scripts/campaign/transition_tester.py`
 
 **Acceptance Criteria:**
 - CLI command reports PASS/FAIL per area.
@@ -322,7 +323,7 @@ Wire `test_runner.py` to use socket API for automated testing. Implemented via `
 **Acceptance Criteria:**
 - `python3 scripts/test_runner.py --suite regression` runs tests
 - Tests use save state library for setup
-- Results logged to `Docs/Testing/results/`
+- Results logged to `Docs/Debugging/Testing/results/`
 
 ---
 

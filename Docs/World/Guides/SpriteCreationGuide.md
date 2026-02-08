@@ -864,8 +864,8 @@ JSL Sprite_ShowMessageUnconditional ; Text feedback
 *   `Core/structs.asm` - Sprite structure definitions
 
 **Documentation:**
-*   `Docs/Sprites/` - Detailed documentation for existing sprites
-*   `Docs/Sprites/Overlords.md` - Overlord system documentation
+*   `Docs/World/Sprites/` - Detailed documentation for existing sprites
+*   `Docs/World/Sprites/Overlords.md` - Overlord system documentation
 *   `Sprites/all_sprites.asm` - See how sprites are organized and included
 
 **Example Sprites:**

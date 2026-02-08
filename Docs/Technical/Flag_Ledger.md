@@ -6,7 +6,7 @@
 **Primary Sources:** Core/sram.asm (bit/value definitions), sprite scripts (setters), water_collision.asm (water gate bits)
 **Confidence:** Partial (runtime snapshot captured, semantics still unverified)
 
-**Runtime Snapshot:** Docs/Status/runtime_verification_20260123_180426.json
+**Runtime Snapshot:** Docs/Planning/Status/runtime_verification_20260123_180426.json
 **Runtime Notes:** Mesen2 socket connected; screenshot captured successfully.
 
 ## Source Tiering (for evidence column)

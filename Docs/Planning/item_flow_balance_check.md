@@ -4,8 +4,8 @@ Date: 2026-01-24
 Status: Draft for Q and A (not canonical yet)
 
 Scope: Early to midgame item progression, song gating, map icon guidance, and hint coverage.
-Sources: Docs/Guides/QuestFlow.md, Docs/Planning/Story_Event_Graph.md, Core/messages.org,
-Docs/Sprites/NPCs/*.md, Overworld/world_map.asm, Core/sram.asm, Docs/Planning/item_audit.md.
+Sources: Docs/World/Guides/QuestFlow.md, Docs/Planning/Story_Event_Graph.md, Core/messages.org,
+Docs/World/Sprites/NPCs/*.md, Overworld/world_map.asm, Core/sram.asm, Docs/Planning/item_audit.md.
 
 ## Current flow snapshot (from docs + code)
 

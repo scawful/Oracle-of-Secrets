@@ -46,7 +46,7 @@ Use these tags for evidence, assumptions, and doc anchors. They are short, searc
 - `;@assumption` - Explicit assumptions that still need verification.
 - `;@risk` - Known risk or regression area for this logic.
 - `;@todo` - Verification or research to perform.
-- `;@doc` - Doc anchor reference (e.g., `Docs/Core/Ram.md#verification`).
+- `;@doc` - Doc anchor reference (e.g., `Docs/Technical/Core/Ram.md#verification`).
 
 ---
 
@@ -336,7 +336,7 @@ Document P and stack behavior at hook entry and exit so callers and future patch
 - **Exit:** Does the hook guarantee a single P state on all exit paths? If not, document “return P unspecified” or normalize before every RTL/RTS/JML.
 - **Stack:** JSR↔RTS and JSL↔RTL must pair; no unbalanced PHA/PLA/PHX/PLX/PHY/PLY across paths.
 
-Routines called from multiple contexts (e.g. Oracle_CheckIfNight from ZSCustomOverworld) should have a one-line contract in the source header. For audit and comparison workflows, see `Docs/Issues/OverworldSoftlock_InvestigationPaths.md` and `OverworldSoftlock_CodebaseAnalysis.md`.
+Routines called from multiple contexts (e.g. Oracle_CheckIfNight from ZSCustomOverworld) should have a one-line contract in the source header. For audit and comparison workflows, see `Docs/Debugging/Issues/OverworldSoftlock_InvestigationPaths.md` and `OverworldSoftlock_CodebaseAnalysis.md`.
 
 ### 5.4 Hook Documentation
 

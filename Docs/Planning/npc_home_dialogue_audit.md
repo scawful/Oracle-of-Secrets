@@ -2,7 +2,7 @@
 
 **Date:** 2026-01-24
 **Purpose:** Map NPC placements to rooms/screens and dialogue IDs; prioritize vanilla NPC reuse audit.
-**Sources:** z3ed `overworld-list-sprites` (Roms/oos168_test2.sfc), `Core/messages.org`, `Sprites/NPCs/*.asm`, `Docs/Sheets/Oracle of Secrets Data Sheet - Custom Sprites.csv`
+**Sources:** z3ed `overworld-list-sprites` (Roms/oos168_test2.sfc), `Core/messages.org`, `Sprites/NPCs/*.asm`, `Docs/Technical/Sheets/Oracle of Secrets Data Sheet - Custom Sprites.csv`
 **Note:** `z3ed message-search` is now implemented and working; message text can be verified directly from ROM (`Roms/oos168_test2.sfc`).
 
 ---
@@ -49,14 +49,14 @@
 - **Sprite file:** `Sprites/NPCs/village_elder.asm`
 - **Message IDs:** `0x143` (first meeting), `0x019` (already met)
 - **ROM text (oos168_test2.sfc):**
-  - `0x143`: "Welcome, young one, to this... I will mark the spot on your map." (full text in `Docs/Sprites/NPCs/VillageElder.md`)
+  - `0x143`: "Welcome, young one, to this... I will mark the spot on your map." (full text in `Docs/World/Sprites/NPCs/VillageElder.md`)
 - **Status:** `0x143` is now in `Core/messages.org`.
 - **Action:** Discuss progress-based updates (ties to Fortune Teller + Scrolls).
 
 ### Fortune Teller
 - **Sprite file:** `Sprites/NPCs/fortune_teller.asm` (vanilla override)
 - **Message IDs:** `0xEA`-`0xFD` (Fortune Teller hints)
-- **Reference:** `Docs/Sprites/NPCs/FortuneTeller.md` now contains full text for all fortune messages.
+- **Reference:** `Docs/World/Sprites/NPCs/FortuneTeller.md` now contains full text for all fortune messages.
 **Note:** Fortune Teller appears in multiple entrances (LW/DW split); entrances can override blocksets/palettes for the same room.
 
 ### Librarian (Mermaid sprite)
@@ -65,7 +65,7 @@
 - **ROM text (oos168_test2.sfc):**
   - `0x012E`: "In your quest you may find... secret scrolls, bring them all to me for translation."
 - **Status:** `0x012E` is now in `Core/messages.org`.
-- **Reference:** `Docs/Sprites/NPCs/Mermaid.md` now contains full scroll message text.
+- **Reference:** `Docs/World/Sprites/NPCs/Mermaid.md` now contains full scroll message text.
 
 ---
 
