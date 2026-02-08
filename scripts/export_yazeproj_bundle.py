@@ -164,7 +164,7 @@ def write_project_file(bundle_root: Path, name: str) -> None:
             "patches_folder=project",
             "labels_filename=",
             "symbols_filename=",
-            "output_folder=output",
+            "output_folder=project/Roms",
             "custom_objects_folder=project/Dungeons/Objects/Data",
             "hack_manifest_file=project/hack_manifest.json",
             "additional_roms=",
@@ -177,12 +177,12 @@ def write_project_file(bundle_root: Path, name: str) -> None:
             "[build]",
             # Build is typically run on macOS (or remote build host), not iOS.
             # Keep this deterministic and repo-local.
-            "build_script=scripts/build_rom.sh 168",
-            "output_folder=output",
+            "build_script=OOS_BASE_ROM=rom OOS_BACKUP_ROOT=backups project/scripts/build_rom.sh 168",
+            "output_folder=project/Roms",
             "git_repository=project",
             "track_changes=false",
             "build_configurations=",
-            "build_target=output/oos168x.sfc",
+            "build_target=project/Roms/oos168x.sfc",
             "asm_entry_point=Oracle_main.asm",
             "asm_sources=",
             "last_build_hash=",
@@ -306,6 +306,11 @@ def main() -> int:
 
     # Copy repo snapshot to bundle/project/.
     copy_repo_snapshot(repo_root, out_bundle / "project")
+    # Build scripts expect a writable Roms/ folder inside the code snapshot.
+    # We intentionally do not copy the repo's real Roms/ directory into the
+    # bundle (too large + machine-specific), but an empty directory keeps the
+    # build pipeline functional when invoked with OOS_BASE_ROM=rom.
+    (out_bundle / "project" / "Roms").mkdir(parents=True, exist_ok=True)
 
     # Write config + metadata.
     write_project_file(out_bundle, args.name)
