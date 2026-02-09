@@ -51,4 +51,4 @@ python3 scripts/capture_blackout.py summary
   - This repo includes `scripts/yaze_service.sh` to start/stop yaze server/GUI.
   - Keep Oracle docs independent of external YAZE AI helper scripts; those are not part of this repo’s supported debugging path.
 
-- YAZE iOS/macOS project bundles (portable `.yazeproj` packages for iCloud Drive): `python3 scripts/export_yazeproj_bundle.py --rom Roms/oos168_test2.sfc --refresh-planning --force`
+- YAZE iOS/macOS project bundles (portable `.yazeproj` packages for iCloud Drive): `python3 scripts/export_yazeproj_bundle.py --rom Roms/oos168_test2.sfc --refresh-planning --force --out-icloud`

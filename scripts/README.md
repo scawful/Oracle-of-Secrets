@@ -22,7 +22,7 @@ This repo has accumulated scripts over time. The goal is to keep a small “gold
 - Yaze story events export (iOS/Mac Oracle dashboards): `scripts/extract_story_events.py` → `Docs/Dev/Planning/story_events.json`
 - Symbol export: `scripts/export_symbols.py`
 - Docs lint: `scripts/lint_docs.py`
-- Portable iOS/Mac project bundle: `scripts/export_yazeproj_bundle.py` → `*.yazeproj`
+- Portable iOS/Mac project bundle: `scripts/export_yazeproj_bundle.py --out-icloud` → `iCloud Drive/Yaze/Projects/*.yazeproj`
 
 ## Automation (Experimental / WIP)
 - `scripts/campaign/` (agentic automation, autonomous debugging)

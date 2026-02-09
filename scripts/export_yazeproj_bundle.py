@@ -50,6 +50,35 @@ def iso8601_now_utc() -> str:
     return _dt.datetime.now(tz=_dt.timezone.utc).isoformat(timespec="seconds")
 
 
+def default_icloud_drive_root() -> Path | None:
+    """
+    Return the local filesystem path to iCloud Drive on macOS, if available.
+
+    This is the canonical location for "iCloud Drive" contents:
+      ~/Library/Mobile Documents/com~apple~CloudDocs
+    """
+    p = Path.home() / "Library" / "Mobile Documents" / "com~apple~CloudDocs"
+    return p if p.exists() else None
+
+
+def slugify_project_id(name: str) -> str:
+    """
+    Create a stable, filesystem-agnostic project_id from a human-readable name.
+    """
+    out = []
+    prev_underscore = False
+    for ch in name.lower():
+        if ch.isalnum():
+            out.append(ch)
+            prev_underscore = False
+            continue
+        if not prev_underscore:
+            out.append("_")
+            prev_underscore = True
+    s = "".join(out).strip("_")
+    return s or "yaze_project"
+
+
 def should_skip(rel: Path) -> bool:
     """
     Decide whether to exclude a path from the bundled project snapshot.
@@ -133,6 +162,7 @@ def write_project_file(bundle_root: Path, name: str) -> None:
     For `.yazeproj` bundles, yaze stores `project.yaze` at bundle root.
     """
     now = _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    project_id = slugify_project_id(name)
 
     # Keep this file intentionally minimal and portable. yaze will add more
     # settings as users customize the project.
@@ -153,7 +183,7 @@ def write_project_file(bundle_root: Path, name: str) -> None:
             f"last_modified={now}",
             "yaze_version=",
             "created_by=export_yazeproj_bundle.py",
-            "project_id=",
+            f"project_id={project_id}",
             "tags=",
             "",
             "[files]",
@@ -168,6 +198,15 @@ def write_project_file(bundle_root: Path, name: str) -> None:
             "custom_objects_folder=project/Dungeons/Objects/Data",
             "hack_manifest_file=project/hack_manifest.json",
             "additional_roms=",
+            "",
+            "[feature_flags]",
+            # Oracle-of-Secrets relies on ZSCustomOverworld and custom object
+            # support; make the portable bundle open with the right defaults.
+            "load_custom_overworld=true",
+            "apply_zs_custom_overworld_asm=true",
+            "save_dungeon_maps=true",
+            "save_graphics_sheet=true",
+            "enable_custom_objects=true",
             "",
             "[rom]",
             "role=dev",
@@ -211,6 +250,37 @@ def write_ios_manifest(bundle_root: Path, name: str, rom_sha1: str) -> None:
     )
 
 
+def verify_bundle(bundle_root: Path) -> None:
+    required = [
+        bundle_root / "project.yaze",
+        bundle_root / "manifest.json",
+        bundle_root / "rom",
+        bundle_root / "project" / "hack_manifest.json",
+        bundle_root
+        / "project"
+        / "Docs"
+        / "Dev"
+        / "Planning"
+        / "oracle_resource_labels.json",
+        bundle_root / "project" / "Docs" / "Dev" / "Planning" / "story_events.json",
+        bundle_root / "project" / "Docs" / "Dev" / "Planning" / "overworld.json",
+    ]
+    missing = [p for p in required if not p.exists()]
+    if missing:
+        raise FileNotFoundError(
+            "Bundle is missing required files:\n"
+            + "\n".join(f"  - {p}" for p in missing)
+        )
+
+    # Ensure manifest checksum matches ROM file.
+    manifest = json.loads((bundle_root / "manifest.json").read_text(encoding="utf-8"))
+    rom_sha1 = sha1_file(bundle_root / "rom")
+    if manifest.get("romChecksum") != rom_sha1:
+        raise ValueError(
+            f"manifest.json romChecksum mismatch: {manifest.get('romChecksum')} != {rom_sha1}"
+        )
+
+
 def refresh_planning_outputs(repo_root: Path) -> None:
     # Keep these local and deterministic: yaze reads them from
     # Docs/Dev/Planning/ via HackManifest::LoadProjectRegistry().
@@ -239,6 +309,12 @@ def main() -> int:
         "--name",
         default="Oracle-of-Secrets",
         help="Bundle name (default: Oracle-of-Secrets)",
+    )
+    parser.add_argument(
+        "--out-icloud",
+        action="store_true",
+        default=False,
+        help="Write bundle into iCloud Drive at 'Yaze/Projects/<Name>.yazeproj' (macOS only)",
     )
     parser.add_argument(
         "--out",
@@ -281,43 +357,70 @@ def main() -> int:
         return 2
 
     out_bundle = args.out
+    if args.out_icloud:
+        icloud_root = default_icloud_drive_root()
+        if icloud_root is None:
+            print(
+                "ERROR: iCloud Drive folder not found at "
+                "'~/Library/Mobile Documents/com~apple~CloudDocs'",
+                file=sys.stderr,
+            )
+            return 2
+        out_bundle = (
+            icloud_root / "Yaze" / "Projects" / f"{args.name}.yazeproj"
+        )
     if not out_bundle.is_absolute():
         out_bundle = (repo_root / out_bundle).resolve()
 
-    if out_bundle.exists():
-        if not args.force:
-            print(f"ERROR: output already exists: {out_bundle}", file=sys.stderr)
-            print("Pass --force to overwrite.", file=sys.stderr)
-            return 2
-        shutil.rmtree(out_bundle)
+    staging_bundle = out_bundle.with_name(out_bundle.name + ".staging")
+    old_bundle = out_bundle.with_name(out_bundle.name + ".old")
+
+    if out_bundle.exists() and not args.force:
+        print(f"ERROR: output already exists: {out_bundle}", file=sys.stderr)
+        print("Pass --force to overwrite.", file=sys.stderr)
+        return 2
+
+    if staging_bundle.exists():
+        shutil.rmtree(staging_bundle)
 
     if args.refresh_planning:
         refresh_planning_outputs(repo_root)
 
     # Create bundle layout.
-    out_bundle.mkdir(parents=True, exist_ok=True)
-    (out_bundle / "backups").mkdir(parents=True, exist_ok=True)
-    (out_bundle / "output").mkdir(parents=True, exist_ok=True)
+    staging_bundle.mkdir(parents=True, exist_ok=True)
+    (staging_bundle / "backups").mkdir(parents=True, exist_ok=True)
+    (staging_bundle / "output").mkdir(parents=True, exist_ok=True)
 
     # Copy ROM to bundle root as `rom` (no extension).
-    rom_dst = out_bundle / "rom"
+    rom_dst = staging_bundle / "rom"
     shutil.copy2(rom_path, rom_dst)
     rom_sha1 = sha1_file(rom_dst)
 
     # Copy repo snapshot to bundle/project/.
-    copy_repo_snapshot(repo_root, out_bundle / "project")
+    copy_repo_snapshot(repo_root, staging_bundle / "project")
     # Build scripts expect a writable Roms/ folder inside the code snapshot.
     # We intentionally do not copy the repo's real Roms/ directory into the
     # bundle (too large + machine-specific), but an empty directory keeps the
     # build pipeline functional when invoked with OOS_BASE_ROM=rom.
-    (out_bundle / "project" / "Roms").mkdir(parents=True, exist_ok=True)
+    (staging_bundle / "project" / "Roms").mkdir(parents=True, exist_ok=True)
 
     # Write config + metadata.
-    write_project_file(out_bundle, args.name)
-    write_ios_manifest(out_bundle, args.name, rom_sha1)
+    write_project_file(staging_bundle, args.name)
+    write_ios_manifest(staging_bundle, args.name, rom_sha1)
+    verify_bundle(staging_bundle)
+
+    # Swap bundle into place (reduce the chance of iCloud syncing a partial
+    # directory tree). Keep a short-lived `.old` copy when overwriting.
+    if old_bundle.exists():
+        shutil.rmtree(old_bundle)
+    if out_bundle.exists():
+        out_bundle.rename(old_bundle)
+    staging_bundle.rename(out_bundle)
+    if old_bundle.exists():
+        shutil.rmtree(old_bundle)
 
     print(f"Wrote bundle: {out_bundle}")
-    print(f"  ROM: {rom_path} -> {rom_dst} (sha1={rom_sha1})")
+    print(f"  ROM: {rom_path} -> {out_bundle / 'rom'} (sha1={rom_sha1})")
     print("  Project snapshot: project/ (filtered)")
     print("  Open in yaze: File -> Open -> select the .yazeproj directory")
     return 0

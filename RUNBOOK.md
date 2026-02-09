@@ -29,7 +29,7 @@ python3 scripts/extract_story_events.py
 
 Export an iCloud-friendly `.yazeproj` bundle (openable on macOS and iOS yaze):
 ```bash
-python3 scripts/export_yazeproj_bundle.py --rom Roms/oos168_test2.sfc --refresh-planning --force
+python3 scripts/export_yazeproj_bundle.py --rom Roms/oos168_test2.sfc --refresh-planning --force --out-icloud
 ```
 
 ## Launch + Attach
