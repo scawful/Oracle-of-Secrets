@@ -1,4 +1,9 @@
-from mesen2_client_lib.cart_sram import compute_inverse_checksum, apply_inverse_checksum, validate_inverse_checksum
+from mesen2_client_lib.cart_sram import (
+    compute_inverse_checksum,
+    apply_inverse_checksum,
+    validate_inverse_checksum,
+    resolve_active_slot,
+)
 
 
 def test_inverse_checksum_roundtrip():
@@ -24,3 +29,18 @@ def test_inverse_checksum_matches_compute():
     fixed = apply_inverse_checksum(b)
     stored = fixed[0x4FE] | (fixed[0x4FF] << 8)
     assert stored == inv
+
+
+class DummyBridge:
+    def __init__(self, raw: int):
+        self.raw = raw
+
+    def read_memory16(self, _addr: int) -> int:
+        return self.raw
+
+
+def test_resolve_active_slot_uses_sramoff_table_index_values():
+    assert resolve_active_slot(DummyBridge(0x0002)) == 1
+    assert resolve_active_slot(DummyBridge(0x0004)) == 2
+    assert resolve_active_slot(DummyBridge(0x0006)) == 3
+    assert resolve_active_slot(DummyBridge(0x0000)) == 1

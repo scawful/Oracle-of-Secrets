@@ -14,8 +14,11 @@ OPTIONS:
   --title TITLE          Window title suffix (default: instance name)
   --source NAME          Agent source tag (default: agent; used in default instance name)
   --rom PATH             ROM to load (default: Roms/oos168x.sfc)
+  --seed-project-states  (default) Seed F-key slots from Roms/SaveStates/<rom-base>/ into isolated SaveStates.
+  --no-seed-project-states
+                         Do not seed project slot files into isolated SaveStates.
   --no-state-set         (default) Do not copy any save-state “slot pack” into the isolated profile.
-                         Use `mesen2_client.py lib-load <id>` instead.
+                         Use `mesen2_client.py load <path>` instead.
   --reuse                If socket already exists, do not launch; just print env
   --socket-force         Remove existing socket file (unsafe)
   --instance-guid GUID   Override MESEN2_INSTANCE_GUID for single-instance isolation
@@ -72,6 +75,7 @@ COPY_FROM=""
 SETTINGS_STATUS=""
 INSTANCE_GUID=""
 INSTANCE_GUID_SET=0
+SEED_PROJECT_STATES=1
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -80,9 +84,11 @@ while [[ $# -gt 0 ]]; do
     --title) TITLE="$2"; shift 2 ;;
     --source) SOURCE="$2"; shift 2 ;;
     --rom) ROM_PATH="$2"; shift 2 ;;
+    --seed-project-states) SEED_PROJECT_STATES=1; shift ;;
+    --no-seed-project-states) SEED_PROJECT_STATES=0; shift ;;
     --no-state-set) NO_STATE_SET=1; shift ;;
-    --state-set) echo "Error: --state-set is deprecated; use mesen2_client.py lib-load instead." >&2; exit 2 ;;
-    --state-manifest) echo "Error: --state-manifest is deprecated; use mesen2_client.py lib-load instead." >&2; exit 2 ;;
+    --state-set) echo "Error: --state-set is deprecated; use mesen2_client.py load <path> instead." >&2; exit 2 ;;
+    --state-manifest) echo "Error: --state-manifest is deprecated; use mesen2_client.py load <path> instead." >&2; exit 2 ;;
     --state-allow-partial) echo "Error: --state-allow-partial is deprecated." >&2; exit 2 ;;
     --state-allow-stale) echo "Error: --state-allow-stale is deprecated." >&2; exit 2 ;;
     --state-force) echo "Error: --state-force is deprecated." >&2; exit 2 ;;
@@ -252,6 +258,45 @@ fi
 
 mkdir -p "${HOME_DIR}/SaveStates" "${HOME_DIR}/Saves"
 
+seed_project_states() {
+  if [[ "${SEED_PROJECT_STATES}" -eq 0 ]]; then
+    return
+  fi
+
+  local src_dir="${ROOT_DIR}/Roms/SaveStates/${ROM_BASE}"
+  if [[ ! -d "${src_dir}" ]]; then
+    return
+  fi
+
+  local copied=0
+  local slot
+  for slot in {1..12}; do
+    local src="${src_dir}/${ROM_BASE}_${slot}.mss"
+    local dst="${HOME_DIR}/SaveStates/${ROM_BASE}_${slot}.mss"
+    if [[ -f "${src}" && ! -f "${dst}" ]]; then
+      cp "${src}" "${dst}"
+      copied=$((copied + 1))
+    fi
+
+    local meta_src meta_dst
+    for meta_src in \
+      "${src}.label" \
+      "${src}.state.json" \
+      "${src_dir}/${ROM_BASE}_${slot}.label.txt"; do
+      if [[ -f "${meta_src}" ]]; then
+        meta_dst="${HOME_DIR}/SaveStates/$(basename "${meta_src}")"
+        [[ -f "${meta_dst}" ]] || cp "${meta_src}" "${meta_dst}"
+      fi
+    done
+  done
+
+  if [[ "${copied}" -gt 0 ]]; then
+    echo "Seeded ${copied} project save-state slot(s) from ${src_dir}"
+  fi
+}
+
+seed_project_states
+
 resolve_or_generate_instance_guid() {
   local guid_path="${HOME_DIR}/instance_guid.txt"
 
@@ -340,7 +385,7 @@ else
 fi
 
 if [[ "${NO_STATE_SET}" -eq 0 ]]; then
-  echo "Error: state-set copying is deprecated. Use mesen2_client.py lib-load after launch." >&2
+  echo "Error: state-set copying is deprecated. Use mesen2_client.py load <path> after launch." >&2
   exit 2
 fi
 

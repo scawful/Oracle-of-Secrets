@@ -959,6 +959,119 @@ class OracleDebugClient:
 
     # --- Warp / Teleport ---
 
+    def _fallback_overworld_warp(
+        self,
+        target_area: int,
+        x: int,
+        y: int,
+        *,
+        force_reload: bool,
+        settle_frames: int = 8,
+    ) -> bool:
+        """Fallback warp path that forces an overworld reload to keep camera sane."""
+        success = True
+
+        # Treat fallback warps as overworld fly jumps.
+        success &= self.bridge.write_memory(OracleRAM.INDOORS, 0)
+        success &= self.bridge.write_memory(OracleRAM.AREA_ID, int(target_area) & 0xFF)
+        success &= self.bridge.write_memory16(OracleRAM.LINK_X, int(x) & 0xFFFF)
+        success &= self.bridge.write_memory16(OracleRAM.LINK_Y, int(y) & 0xFFFF)
+
+        # Prime camera close to target to reduce offset artifacts during reload.
+        cam_x = max(0, int(x) - 0x0080)
+        cam_y = max(0, int(y) - 0x0070)
+        success &= self.bridge.write_memory(OracleRAM.SCROLL_X_LO, cam_x & 0xFF)
+        success &= self.bridge.write_memory(OracleRAM.SCROLL_X_HI, (cam_x >> 8) & 0xFF)
+        success &= self.bridge.write_memory(OracleRAM.SCROLL_Y_LO, cam_y & 0xFF)
+        success &= self.bridge.write_memory(OracleRAM.SCROLL_Y_HI, (cam_y >> 8) & 0xFF)
+
+        if force_reload:
+            success &= self.bridge.write_memory(OracleRAM.MODE, GameMode.OVERWORLD_LOAD)
+            success &= self.bridge.write_memory(OracleRAM.SUBMODE, 0)
+
+        if not success:
+            self.last_error = "Fallback warp write failure"
+            return False
+
+        for _ in range(max(1, settle_frames)):
+            try:
+                self.bridge.run_frames(count=1)
+            except Exception:
+                break
+
+        landed_area = self.bridge.read_memory(OracleRAM.AREA_ID)
+        if landed_area != (int(target_area) & 0xFF):
+            self.last_error = (
+                f"Fallback warp landed in 0x{landed_area:02X}, expected 0x{int(target_area) & 0xFF:02X}"
+            )
+            return False
+        return True
+
+    def fly_to(
+        self,
+        location: str | None = None,
+        area: int | None = None,
+        x: int | None = None,
+        y: int | None = None,
+        *,
+        mirror: bool = False,
+        prefer_rom_warp: bool = True,
+        settle_frames: int = 8,
+    ) -> bool:
+        """Flybird-style warp with mirror support and camera-safe fallback."""
+        target_area = area
+        if location and location in WARP_LOCATIONS:
+            target_area, x, y, _ = WARP_LOCATIONS[location]
+
+        if x is None or y is None:
+            raise ValueError("Must specify location name or x+y coordinates")
+
+        current_area = self.bridge.read_memory(OracleRAM.AREA_ID)
+        if target_area is None:
+            target_area = current_area
+
+        if mirror:
+            target_area = int(target_area) ^ 0x40
+
+        was_paused = self.is_paused()
+        if was_paused:
+            if not self.resume():
+                self.last_error = "Unable to resume before fly warp"
+                return False
+
+        try:
+            ok = False
+            if prefer_rom_warp:
+                ok = self.warp_to(
+                    location=None,
+                    area=int(target_area),
+                    x=int(x),
+                    y=int(y),
+                    use_rom_warp=True,
+                )
+                if ok:
+                    # Guard against transient ROM-warp acknowledgements that snap back.
+                    try:
+                        self.bridge.run_frames(count=2)
+                    except Exception:
+                        pass
+                    landed_area = self.bridge.read_memory(OracleRAM.AREA_ID)
+                    if landed_area != (int(target_area) & 0xFF):
+                        ok = False
+
+            if not ok:
+                ok = self._fallback_overworld_warp(
+                    int(target_area),
+                    int(x),
+                    int(y),
+                    force_reload=False,
+                    settle_frames=settle_frames,
+                )
+            return ok
+        finally:
+            if was_paused:
+                self.pause()
+
     def warp_to(
         self,
         location: str | None = None,
@@ -991,12 +1104,6 @@ class OracleDebugClient:
         Returns:
             True if warp was successful, False otherwise
         """
-        # NOTE: The ROM-integrated warp handler is not currently active in the shipped
-        # Oracle of Secrets ROM (DBG_WARP_* registers are not consumed anywhere).
-        # Keep ROM-warp behind an explicit opt-in to avoid writing to unknown WRAM.
-        if use_rom_warp and not _env_flag("OOS_ENABLE_ROM_WARP", False):
-            use_rom_warp = False
-
         target_area = area
         if location and location in WARP_LOCATIONS:
             target_area, x, y, _ = WARP_LOCATIONS[location]
@@ -1005,18 +1112,20 @@ class OracleDebugClient:
             raise ValueError("Must specify location name or x+y coordinates")
 
         current_area = self.bridge.read_memory(OracleRAM.AREA_ID)
-        needs_area_change = target_area is not None and target_area != current_area
+        if target_area is None:
+            target_area = current_area
+        needs_area_change = target_area != current_area
 
         if not use_rom_warp:
-            # Legacy direct RAM write (may cause issues for cross-area warps)
-            success = True
-            if needs_area_change:
-                success &= self.bridge.write_memory(OracleRAM.AREA_ID, target_area)
-            success &= self.bridge.write_memory16(OracleRAM.LINK_X, x)
-            success &= self.bridge.write_memory16(OracleRAM.LINK_Y, y)
-            return success
+            return self._fallback_overworld_warp(
+                int(target_area),
+                int(x),
+                int(y),
+                force_reload=False,
+                settle_frames=4,
+            )
 
-        # Use ROM debug warp system (opt-in only; see note above).
+        # Use ROM debug warp system.
         # The ROM warp handler runs during normal frame execution. If the emulator
         # is paused, the request will never be processed (status stays armed).
         if not self.ensure_running():
@@ -1048,41 +1157,50 @@ class OracleDebugClient:
         else:
             print(f"Debug teleport: pos ({x}, {y}) in area 0x{current_area:02X}")
 
-        # 5. Poll for completion (optional - warp happens on next frame)
-        # The ROM code sets status to 3 when complete
+        # 5. Poll for completion (the ROM code sets status to 3 when complete).
+        completed = False
         for _ in range(timeout_frames):
-            # Advance a frame so the ROM warp handler can run deterministically,
-            # even on setups where "sleep" doesn't advance emulation.
             try:
                 self.bridge.run_frames(count=1)
             except Exception:
-                # Fall back to polling only.
                 pass
             status = self.bridge.read_memory(OracleRAM.DBG_WARP_STATUS)
-            if status == 3:  # Complete
-                return True
-            if status in (0, OracleRAM.DBG_WARP_STATUS_ARMED):  # Not yet processed/armed
-                continue
-            # Status 1 or 2 means still processing
-            continue
+            if status == 3:
+                completed = True
+                break
 
-        # Check for errors
+        # Check explicit ROM-side errors.
         error = self.bridge.read_memory(OracleRAM.DBG_WARP_ERROR)
         if error:
             error_msgs = {
                 1: "Wrong game mode (not in overworld/dungeon play)",
                 2: "Underworld warps not yet supported",
-                3: "Cross-world warp (LW<->DW) - use mirror first, then warp within that world",
+                3: "Cross-world warp (LW<->DW) - use mirror or fallback warp",
                 4: "Invalid request byte (garbage request)",
                 5: "Warp not armed (missing arm byte)",
                 6: "Warp not armed (status mismatch)",
             }
-            print(f"Warp failed: {error_msgs.get(error, f'Error code {error}')}")
+            self.last_error = error_msgs.get(error, f"Error code {error}")
             return False
 
-        # Timeout - warp may still be in progress
-        print("Warp status check timed out (warp may still be processing)")
-        return True  # Assume success if no error
+        # Validate landing to avoid false success on silent no-op.
+        landed_area = self.bridge.read_memory(OracleRAM.AREA_ID)
+        landed_x = self.bridge.read_memory16(OracleRAM.LINK_X)
+        landed_y = self.bridge.read_memory16(OracleRAM.LINK_Y)
+
+        if needs_area_change and landed_area != int(target_area):
+            self.last_error = (
+                f"ROM warp did not change area (now 0x{landed_area:02X}, target 0x{int(target_area):02X})"
+            )
+            return False
+
+        if not completed and abs(landed_x - int(x)) > 0x0200 and abs(landed_y - int(y)) > 0x0200:
+            self.last_error = (
+                f"ROM warp timed out near ({landed_x},{landed_y}); expected near ({int(x)},{int(y)})"
+            )
+            return False
+
+        return True
 
     def set_position(self, x: int, y: int) -> bool:
         """Set Link's position without changing area (instant teleport)."""

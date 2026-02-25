@@ -42,9 +42,6 @@ def _resolve_instance_socket() -> None:
         os.environ["MESEN2_SOCKET_PATH"] = socket_path
 
 
-_resolve_instance_socket()
-
-
 def _env_bool(name: str, default: bool) -> bool:
     raw = os.getenv(name)
     if raw is None:
@@ -172,6 +169,10 @@ class MesenBridge:
         # Explicit path: do not probe (tests + deterministic callers).
         if self._socket_path:
             return self._socket_path
+
+        # Resolve instance->socket lazily so CLI/env can set MESEN2_INSTANCE
+        # after module import (e.g., via --instance).
+        _resolve_instance_socket()
 
         # Env (prefer MESEN2_SOCKET_PATH, then deprecated MESEN2_SOCKET).
         # Do not probe; send_command() will fail clearly if it's wrong.

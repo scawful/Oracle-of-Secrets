@@ -124,9 +124,13 @@ def resolve_active_slot(bridge) -> int:
     except Exception:
         raw = 0
 
-    # Most commonly 0,2,4. Be defensive.
-    if raw in (0, 2, 4):
-        return (raw // 2) + 1
+    # In ALTTP/OOS flow, $701FFE stores table index values 2/4/6 for slots 1/2/3.
+    if raw in (2, 4, 6):
+        return raw // 2
+
+    # Some paths can leave SRAMOFF unset/zero; default to slot 1.
+    if raw == 0:
+        return 1
 
     # Fallback: treat it as file index (0..2) if small.
     if 0 <= raw <= 2:

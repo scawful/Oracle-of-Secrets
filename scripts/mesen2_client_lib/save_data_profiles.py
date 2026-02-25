@@ -23,7 +23,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .constants import ITEMS, STORY_FLAGS, SAVEFILE_WRAM_SIZE, SAVEFILE_WRAM_START
 from .paths import SAVE_DATA_PROFILE_DIR
+
+
+SAVEFILE_WRAM_END = SAVEFILE_WRAM_START + SAVEFILE_WRAM_SIZE
 
 
 @dataclass(frozen=True)
@@ -42,6 +46,18 @@ class SaveDataProfile:
     @property
     def description(self) -> str:
         return str(self.data.get("description") or "")
+
+
+@dataclass(frozen=True)
+class ProfileExpectation:
+    kind: str
+    name: str
+    addr: int
+    size: int
+    value: int | bool
+    memtype: str | None = None
+    mask: int | None = None
+    persistent: bool = False
 
 
 def profile_dir() -> Path:
@@ -88,53 +104,170 @@ def _parse_int(value: Any) -> int:
     raise ValueError(f"Invalid int value: {value!r}")
 
 
-def apply_profile(client, profile: SaveDataProfile, *, dry_run: bool = False) -> list[str]:
-    """Apply a profile using high-level setters + optional raw writes.
+def _is_wram_memtype(memtype: str | None) -> bool:
+    if memtype is None:
+        return True
+    return str(memtype).strip().upper() == "WRAM"
 
-    Returns a list of actions taken (for logging/printing).
-    """
-    actions: list[str] = []
+
+def is_persistent_save_address(addr: int, *, size: int = 1, memtype: str | None = None) -> bool:
+    if not _is_wram_memtype(memtype):
+        return False
+    end_addr = addr + max(1, size) - 1
+    return SAVEFILE_WRAM_START <= addr and end_addr < SAVEFILE_WRAM_END
+
+
+def iter_profile_expectations(profile: SaveDataProfile) -> list[ProfileExpectation]:
+    """Parse profile data into normalized operations for apply/verify paths."""
     data = profile.data or {}
+    expectations: list[ProfileExpectation] = []
 
     items = data.get("items") or {}
     if not isinstance(items, dict):
         raise ValueError("Profile 'items' must be a JSON object")
-    for k, v in items.items():
-        value = _parse_int(v)
-        actions.append(f"item:{k}={value}")
-        if not dry_run:
-            client.set_item(k, value)
+    for key, raw_value in items.items():
+        if key not in ITEMS:
+            raise ValueError(f"Unknown item in profile: {key}")
+        addr, _, _ = ITEMS[key]
+        size = 2 if key == "rupees" else 1
+        value = _parse_int(raw_value)
+        expectations.append(
+            ProfileExpectation(
+                kind="item",
+                name=key,
+                addr=addr,
+                size=size,
+                value=value,
+                persistent=is_persistent_save_address(addr, size=size),
+            )
+        )
 
     flags = data.get("flags") or {}
     if not isinstance(flags, dict):
         raise ValueError("Profile 'flags' must be a JSON object")
-    for k, v in flags.items():
-        # Allow bool or 0/1.
-        val_bool = bool(v) if isinstance(v, bool) else bool(_parse_int(v))
-        actions.append(f"flag:{k}={'1' if val_bool else '0'}")
-        if not dry_run:
-            client.set_flag(k, val_bool)
+    for key, raw_value in flags.items():
+        if key not in STORY_FLAGS:
+            raise ValueError(f"Unknown flag in profile: {key}")
+        addr, _, mask_or_values = STORY_FLAGS[key]
+        if isinstance(mask_or_values, int):
+            value = bool(raw_value) if isinstance(raw_value, bool) else bool(_parse_int(raw_value))
+            expectations.append(
+                ProfileExpectation(
+                    kind="flag_bit",
+                    name=key,
+                    addr=addr,
+                    size=1,
+                    value=value,
+                    mask=mask_or_values,
+                    persistent=is_persistent_save_address(addr),
+                )
+            )
+        else:
+            value = _parse_int(raw_value) & 0xFF
+            expectations.append(
+                ProfileExpectation(
+                    kind="flag_byte",
+                    name=key,
+                    addr=addr,
+                    size=1,
+                    value=value,
+                    persistent=is_persistent_save_address(addr),
+                )
+            )
 
     writes = data.get("writes") or []
     if writes:
         if not isinstance(writes, list):
             raise ValueError("Profile 'writes' must be a list")
-        for w in writes:
-            if not isinstance(w, dict):
+        for write_entry in writes:
+            if not isinstance(write_entry, dict):
                 raise ValueError("Profile 'writes' entries must be objects")
-            addr = _parse_int(w.get("addr"))
-            wtype = (w.get("type") or "u8").lower()
-            memtype = w.get("memtype") or None
+            addr = _parse_int(write_entry.get("addr"))
+            wtype = str(write_entry.get("type") or "u8").lower()
+            memtype_raw = write_entry.get("memtype")
+            memtype = str(memtype_raw).strip() if memtype_raw is not None else None
+            memtype = memtype or None
             if wtype == "u16":
-                value = _parse_int(w.get("value"))
-                actions.append(f"write16:{addr:06X}={value:04X}({memtype or 'default'})")
-                if not dry_run:
-                    client.bridge.write_memory16(addr, value, memtype=memtype)
+                value = _parse_int(write_entry.get("value")) & 0xFFFF
+                size = 2
             else:
-                value = _parse_int(w.get("value"))
-                actions.append(f"write8:{addr:06X}={value:02X}({memtype or 'default'})")
-                if not dry_run:
-                    client.bridge.write_memory(addr, value, memtype=memtype)
+                value = _parse_int(write_entry.get("value")) & 0xFF
+                size = 1
+            expectations.append(
+                ProfileExpectation(
+                    kind="write",
+                    name=f"0x{addr:06X}",
+                    addr=addr,
+                    size=size,
+                    value=value,
+                    memtype=memtype,
+                    persistent=is_persistent_save_address(addr, size=size, memtype=memtype),
+                )
+            )
+
+    return expectations
+
+
+def summarize_expectations(expectations: list[ProfileExpectation]) -> dict[str, int]:
+    persistent = sum(1 for entry in expectations if entry.persistent)
+    total = len(expectations)
+    return {
+        "total": total,
+        "persistent": persistent,
+        "volatile": total - persistent,
+    }
+
+
+def apply_profile(
+    client,
+    profile: SaveDataProfile,
+    *,
+    dry_run: bool = False,
+    expectations: list[ProfileExpectation] | None = None,
+) -> list[str]:
+    """Apply a profile using high-level setters + optional raw writes.
+
+    Returns a list of actions taken (for logging/printing).
+    """
+    actions: list[str] = []
+    ops = expectations if expectations is not None else iter_profile_expectations(profile)
+
+    for op in ops:
+        if op.kind == "item":
+            value = int(op.value)
+            actions.append(f"item:{op.name}={value}")
+            if not dry_run and not client.set_item(op.name, value):
+                raise RuntimeError(f"Failed to set item: {op.name}")
+            continue
+
+        if op.kind == "flag_bit":
+            value = bool(op.value)
+            actions.append(f"flag:{op.name}={'1' if value else '0'}")
+            if not dry_run and not client.set_flag(op.name, value):
+                raise RuntimeError(f"Failed to set flag bit: {op.name}")
+            continue
+
+        if op.kind == "flag_byte":
+            value = int(op.value) & 0xFF
+            actions.append(f"flag:{op.name}=0x{value:02X}")
+            if not dry_run and not client.set_flag(op.name, value):
+                raise RuntimeError(f"Failed to set flag byte: {op.name}")
+            continue
+
+        if op.kind == "write":
+            value = int(op.value)
+            memtype = op.memtype
+            mem_name = memtype or "default"
+            if op.size == 2:
+                actions.append(f"write16:{op.addr:06X}={value:04X}({mem_name})")
+                if not dry_run and not client.bridge.write_memory16(op.addr, value, memtype=memtype):
+                    raise RuntimeError(f"Failed write16 at 0x{op.addr:06X}")
+            else:
+                actions.append(f"write8:{op.addr:06X}={value:02X}({mem_name})")
+                if not dry_run and not client.bridge.write_memory(op.addr, value, memtype=memtype):
+                    raise RuntimeError(f"Failed write8 at 0x{op.addr:06X}")
+            continue
+
+        raise ValueError(f"Unsupported profile operation kind: {op.kind}")
 
     return actions
-

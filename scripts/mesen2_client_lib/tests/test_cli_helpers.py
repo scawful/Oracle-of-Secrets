@@ -1,5 +1,8 @@
+import argparse
 import json
 from pathlib import Path
+
+import pytest
 
 from mesen2_client_lib import cli
 
@@ -58,3 +61,66 @@ def test_sync_usdasm_labels_loads_filtered_payload():
     assert bridge.loaded_payload is not None
     assert "RomLabel" in bridge.loaded_payload
     assert "WramLabel" not in bridge.loaded_payload
+
+
+def test_resolve_slot_or_path_with_slot_string():
+    slot, path, error = cli._resolve_slot_or_path("7", None)
+    assert error is None
+    assert slot == 7
+    assert path is None
+
+
+def test_resolve_slot_or_path_with_positional_path():
+    slot, path, error = cli._resolve_slot_or_path("Roms/SaveStates/oos168x/oos168x_1.mss", None)
+    assert error is None
+    assert slot is None
+    assert path == "Roms/SaveStates/oos168x/oos168x_1.mss"
+
+
+def test_resolve_slot_or_path_rejects_conflicting_target_and_path():
+    slot, path, error = cli._resolve_slot_or_path("7", "foo.mss")
+    assert slot is None
+    assert path is None
+    assert error is not None
+
+
+def test_resolve_slot_or_path_missing_target():
+    slot, path, error = cli._resolve_slot_or_path(None, None)
+    assert slot is None
+    assert path is None
+    assert error == "Missing slot or path"
+
+
+def test_normalize_filesystem_path_makes_absolute(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    out = cli._normalize_filesystem_path("states/test.mss")
+    assert out == str((tmp_path / "states" / "test.mss").resolve())
+
+
+def test_preflight_socket_instance_clears_stale_socket_env(tmp_path, monkeypatch):
+    registry_dir = tmp_path / "instances"
+    registry_dir.mkdir(parents=True, exist_ok=True)
+    (registry_dir / "oos-codex-target.json").write_text(
+        json.dumps({"instance": "oos-codex-target", "socket": "/tmp/mesen2-oos-codex-target.sock"})
+    )
+
+    monkeypatch.setenv("MESEN2_SOCKET_PATH", "/tmp/mesen2-stale.sock")
+    monkeypatch.delenv("MESEN2_INSTANCE", raising=False)
+    monkeypatch.setenv("MESEN2_REGISTRY_DIR", str(registry_dir))
+    args = argparse.Namespace(socket=None, instance="oos-codex-target")
+
+    cli._preflight_socket(args)
+
+    assert cli.os.environ.get("MESEN2_SOCKET_PATH") == "/tmp/mesen2-oos-codex-target.sock"
+    assert cli.os.environ.get("MESEN2_INSTANCE") == "oos-codex-target"
+
+
+def test_preflight_socket_instance_missing_fails_fast(monkeypatch):
+    monkeypatch.delenv("MESEN2_SOCKET_PATH", raising=False)
+    monkeypatch.setenv("MESEN2_INSTANCE", "oos-codex-stale")
+    args = argparse.Namespace(socket=None, instance="oos-instance-does-not-exist")
+
+    with pytest.raises(SystemExit) as exc:
+        cli._preflight_socket(args)
+
+    assert exc.value.code == 2

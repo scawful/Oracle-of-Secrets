@@ -12,13 +12,17 @@ from pathlib import Path
 
 from .client import OracleDebugClient
 from .capture import capture_debug_snapshot
-from .constants import ITEMS, STORY_FLAGS, WATCH_PROFILES, BREAKPOINT_PROFILES
+from .constants import ITEMS, STORY_FLAGS, WATCH_PROFILES, BREAKPOINT_PROFILES, OracleRAM
 from .expr import ExprEvaluator, EvalContext, ExprError
 from .paths import MANIFEST_PATH, SAVE_DATA_MANIFEST_PATH, SAVE_DATA_PROFILE_DIR
 from .state_diff import StateDiffer
 from .state_symbols import load_oos_symbols
 from .bridge import cleanup_stale_sockets, MesenBridge
-from .save_data_profiles import list_profiles as list_save_profiles, load_profile as load_save_profile, apply_profile as apply_save_profile
+from .save_data_profiles import (
+    list_profiles as list_save_profiles,
+    load_profile as load_save_profile,
+)
+from .save_data_transaction import apply_profile_transaction
 
 # Try to import AgentBrain (might fail if run directly from lib)
 try:
@@ -138,9 +142,62 @@ def _coerce_bool(value: str | None) -> bool | None:
     raise ValueError(f"Invalid boolean value: {value}")
 
 
+def _resolve_slot_or_path(slot_or_path: str | None, explicit_path: str | None) -> tuple[int | None, str | None, str | None]:
+    """Resolve a CLI target into either a slot number or state-file path."""
+    if explicit_path and slot_or_path:
+        return None, None, "Provide either a positional target or --path, not both."
+
+    if explicit_path:
+        return None, explicit_path, None
+
+    if slot_or_path is None:
+        return None, None, "Missing slot or path"
+
+    target = str(slot_or_path).strip()
+    if not target:
+        return None, None, "Missing slot or path"
+
+    if re.fullmatch(r"\d+", target):
+        return int(target), None, None
+
+    return None, target, None
+
+
+def _normalize_filesystem_path(path: str) -> str:
+    candidate = Path(path).expanduser()
+    if not candidate.is_absolute():
+        candidate = (Path.cwd() / candidate).resolve()
+    return str(candidate)
+
+
 def _find_socket_candidates() -> list[Path]:
     candidates = sorted(Path("/tmp").glob("mesen2-*.sock"), key=lambda p: p.stat().st_mtime, reverse=True)
     return [p for p in candidates if p.is_socket()]
+
+
+def _registry_dir() -> Path:
+    override = os.getenv("MESEN2_REGISTRY_DIR")
+    if override:
+        return Path(override).expanduser().resolve()
+    return (Path(__file__).resolve().parents[2] / ".context" / "scratchpad" / "mesen2" / "instances").resolve()
+
+
+def _resolve_instance_socket_path(instance: str) -> str | None:
+    record_path = _registry_dir() / f"{instance}.json"
+    if record_path.exists():
+        try:
+            data = json.loads(record_path.read_text())
+            socket_path = data.get("socket")
+            if isinstance(socket_path, str) and socket_path:
+                return socket_path
+        except json.JSONDecodeError:
+            pass
+
+    guessed = Path(f"/tmp/mesen2-{instance}.sock")
+    if guessed.exists():
+        return str(guessed)
+
+    return None
 
 
 def _preflight_socket(args: argparse.Namespace) -> None:
@@ -148,7 +205,19 @@ def _preflight_socket(args: argparse.Namespace) -> None:
         os.environ["MESEN2_SOCKET_PATH"] = args.socket
         return
     if args.instance:
+        # Explicit instance targeting must win over any pre-existing resolved
+        # socket path from prior invocations in the same shell.
+        os.environ.pop("MESEN2_SOCKET_PATH", None)
         os.environ["MESEN2_INSTANCE"] = args.instance
+        socket_path = _resolve_instance_socket_path(args.instance)
+        if not socket_path:
+            print(
+                f"Error: could not resolve instance '{args.instance}' to a socket. "
+                "Use --socket, launch/claim the instance, or update the registry.",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        os.environ["MESEN2_SOCKET_PATH"] = socket_path
         return
     if os.getenv("MESEN2_SOCKET_PATH") or os.getenv("MESEN2_INSTANCE") or os.getenv("MESEN2_REGISTRY_INSTANCE"):
         return
@@ -645,15 +714,27 @@ def main():
     pos_parser.add_argument("x", type=int)
     pos_parser.add_argument("y", type=int)
 
-    # Warp command (ROM debug warp system; overworld only for now)
+    # Warp command (legacy + compatibility).
     warp_parser = subparsers.add_parser("warp", help="Warp to a named location (or area,x,y)")
     warp_parser.add_argument("location", nargs="?", help="Location key from WARP_LOCATIONS")
     warp_parser.add_argument("--area", type=str, default="", help="Overworld area ID (hex or dec)")
     warp_parser.add_argument("--x", type=str, default="", help="Target X (hex or dec)")
     warp_parser.add_argument("--y", type=str, default="", help="Target Y (hex or dec)")
     warp_parser.add_argument("--list", action="store_true", help="List available warp locations")
-    warp_parser.add_argument("--rom", action="store_true", help="Use ROM warp handler (requires OOS_ENABLE_ROM_WARP=1)")
-    warp_parser.add_argument("--force", action="store_true", help="Allow cross-area legacy RAM warp (unsafe)")
+    warp_parser.add_argument("--rom", action="store_true", help="Force ROM debug warp path")
+    warp_parser.add_argument("--force", action="store_true", help="Force legacy direct RAM warp")
+    warp_parser.add_argument("--mirror", action="store_true", help="Toggle target world bit (LW<->DW)")
+
+    # Fly command (recommended dynamic jump flow).
+    fly_parser = subparsers.add_parser("fly", help="Flybird-style dynamic warp with camera-safe fallback")
+    fly_parser.add_argument("location", nargs="?", help="Location key from WARP_LOCATIONS")
+    fly_parser.add_argument("--area", type=str, default="", help="Overworld area ID (hex or dec)")
+    fly_parser.add_argument("--x", type=str, default="", help="Target X (hex or dec)")
+    fly_parser.add_argument("--y", type=str, default="", help="Target Y (hex or dec)")
+    fly_parser.add_argument("--list", action="store_true", help="List available fly locations")
+    fly_parser.add_argument("--mirror", action="store_true", help="Toggle target world bit (LW<->DW)")
+    fly_parser.add_argument("--no-rom", action="store_true", help="Skip ROM debug warp attempt and use fallback directly")
+    fly_parser.add_argument("--settle", type=int, default=8, help="Fallback settle frames (default: 8)")
 
     # Navigation command
     nav_parser = subparsers.add_parser("navigate", help="Navigate Link autonomously")
@@ -703,7 +784,7 @@ def main():
     save_parser.add_argument("--path", "-p", help="Custom save path")
 
     load_parser = subparsers.add_parser("load", help="Load state")
-    load_parser.add_argument("slot", type=int, nargs="?", help="Slot number (1-99 or configured)")
+    load_parser.add_argument("target", nargs="?", help="Slot number (1-99) or path to state file (.mss)")
     load_parser.add_argument("--path", "-p", help="Custom load path")
 
     label_parser = subparsers.add_parser("savestate-label", help="Get/set save state labels")
@@ -812,6 +893,9 @@ def main():
 
     save_data_profile_apply = save_data_sub.add_parser("profile-apply", help="Apply a save-data profile")
     save_data_profile_apply.add_argument("profile", help="Profile id (stem) or path to JSON file")
+    save_data_profile_apply.add_argument("--slot", type=int, default=0, help="Target save slot 1..3 (default: active)")
+    save_data_profile_apply.add_argument("--no-persist", action="store_true", help="Apply to live memory only (skip WRAMSAVE -> SRAM sync)")
+    save_data_profile_apply.add_argument("--no-verify", action="store_true", help="Skip readback verification")
     save_data_profile_apply.add_argument("--dry-run", action="store_true")
     save_data_profile_apply.add_argument("--json", "-j", action="store_true")
 
@@ -957,7 +1041,7 @@ def main():
     save_agent.add_argument("--path")
 
     load_agent = agent_sub.add_parser("load", help="Load state")
-    load_agent.add_argument("slot", nargs="?", type=int)
+    load_agent.add_argument("target", nargs="?", help="Slot number or path to state file")
     load_agent.add_argument("--path")
 
     label_agent = agent_sub.add_parser("savestate-label", help="Get/set save state labels")
@@ -1063,18 +1147,22 @@ def main():
                 emit({"error": "Missing slot or path"}, ok=False)
             return
         if args.agent_cmd == "load":
-            if args.path:
-                ok = client.load_state(path=args.path)
+            slot, path, error = _resolve_slot_or_path(getattr(args, "target", None), args.path)
+            if error:
+                emit({"error": error}, ok=False)
+            elif path:
+                normalized_path = _normalize_filesystem_path(path)
+                ok = client.load_state(path=normalized_path)
                 if ok:
-                    emit({"loaded": args.path}, ok=True)
+                    emit({"loaded": normalized_path}, ok=True)
                 else:
-                    emit({"error": client.last_error or "Load failed", "path": args.path}, ok=False)
-            elif args.slot is not None:
-                ok = client.load_state(slot=args.slot)
+                    emit({"error": client.last_error or "Load failed", "path": normalized_path}, ok=False)
+            elif slot is not None:
+                ok = client.load_state(slot=slot)
                 if ok:
-                    emit({"loaded": args.slot}, ok=True)
+                    emit({"loaded": slot}, ok=True)
                 else:
-                    emit({"error": "Load failed", "slot": args.slot}, ok=False)
+                    emit({"error": "Load failed", "slot": slot}, ok=False)
             else:
                 emit({"error": "Missing slot or path"}, ok=False)
             return
@@ -2559,7 +2647,7 @@ def main():
         else:
             print("Position set failed")
 
-    elif args.command == "warp":
+    elif args.command in ("warp", "fly"):
         from .constants import WARP_LOCATIONS
 
         def _parse_int(raw: str) -> int:
@@ -2569,7 +2657,8 @@ def main():
             return int(s, 0)
 
         if args.list:
-            print("=== Warp Locations ===")
+            heading = "Fly Locations" if args.command == "fly" else "Warp Locations"
+            print(f"=== {heading} ===")
             for k in sorted(WARP_LOCATIONS.keys()):
                 area, x, y, desc = WARP_LOCATIONS[k]
                 print(f"  {k}: area=0x{area:02X} x=0x{x:04X} y=0x{y:04X}  ({desc})")
@@ -2589,10 +2678,9 @@ def main():
 
         if location is None and (area is None or x is None or y is None):
             print("Error: provide a location key, or --area/--x/--y")
-            print("Use: mesen2_client.py warp --list")
+            print(f"Use: mesen2_client.py {args.command} --list")
             sys.exit(1)
 
-        # Default behavior: safe same-area teleport only (doesn't rely on any ROM hooks).
         try:
             target_area = area
             target_x = x
@@ -2601,28 +2689,66 @@ def main():
                 target_area, target_x, target_y, _ = WARP_LOCATIONS[location]
 
             current_area = client.bridge.read_memory(OracleRAM.AREA_ID)
-            cross_area = target_area is not None and int(target_area) != int(current_area)
+            if target_area is None:
+                target_area = current_area
 
-            if cross_area and not args.force and not args.rom:
-                print(f"Error: cross-area warp requested (0x{current_area:02X} -> 0x{int(target_area):02X}).")
-                print("Use Song of Soaring for fast travel, or pass --force (unsafe), or --rom (requires ROM support).")
-                sys.exit(1)
+            if getattr(args, "mirror", False):
+                target_area = int(target_area) ^ 0x40
 
-            if not cross_area and not args.rom:
-                ok = client.set_position(int(target_x), int(target_y))
+            cross_area = int(target_area) != int(current_area)
+
+            if args.command == "fly":
+                ok = client.fly_to(
+                    location=None,
+                    area=int(target_area),
+                    x=int(target_x),
+                    y=int(target_y),
+                    mirror=False,
+                    prefer_rom_warp=not bool(args.no_rom),
+                    settle_frames=max(1, int(args.settle)),
+                )
             else:
-                ok = client.warp_to(location=location, area=area, x=x, y=y, use_rom_warp=bool(args.rom))
+                if args.force:
+                    ok = client.warp_to(
+                        location=None,
+                        area=int(target_area),
+                        x=int(target_x),
+                        y=int(target_y),
+                        use_rom_warp=False,
+                    )
+                elif args.rom:
+                    ok = client.warp_to(
+                        location=None,
+                        area=int(target_area),
+                        x=int(target_x),
+                        y=int(target_y),
+                        use_rom_warp=True,
+                    )
+                elif cross_area or bool(args.mirror):
+                    ok = client.fly_to(
+                        location=None,
+                        area=int(target_area),
+                        x=int(target_x),
+                        y=int(target_y),
+                        mirror=False,
+                        prefer_rom_warp=True,
+                        settle_frames=8,
+                    )
+                else:
+                    ok = client.set_position(int(target_x), int(target_y))
         except Exception as exc:
-            print(f"Warp failed: {exc}")
+            print(f"{args.command.title()} failed: {exc}")
             sys.exit(1)
+
         if ok:
             if location:
                 desc = WARP_LOCATIONS.get(location, (None, None, None, ""))[3]
-                print(f"Warped: {location} ({desc})")
+                mirror_tag = " [mirrored]" if getattr(args, "mirror", False) else ""
+                print(f"{args.command.title()}ed: {location} ({desc}){mirror_tag}")
             else:
-                print(f"Warped: area=0x{area:02X} x={x} y={y}")
+                print(f"{args.command.title()}ed: area=0x{int(target_area):02X} x={int(target_x)} y={int(target_y)}")
         else:
-            print(f"Warp failed: {client.last_error or 'unknown error'}")
+            print(f"{args.command.title()} failed: {client.last_error or 'unknown error'}")
             sys.exit(2)
 
     elif args.command == "move":
@@ -2813,35 +2939,53 @@ def main():
             print("Frame advance failed")
 
     elif args.command == "save":
+        ok = False
         if args.path:
             if client.save_state(path=args.path):
                 print(f"Saved to {args.path}")
+                ok = True
             else:
                 print("Save failed")
-        elif args.slot:
+        elif args.slot is not None:
             if client.save_state(slot=args.slot):
                 print(f"Saved to slot {args.slot}")
+                ok = True
             else:
                 print("Save failed")
         else:
             print("Usage: save <slot> OR save --path <file>")
+            sys.exit(1)
+        if not ok:
+            sys.exit(1)
 
     elif args.command == "load":
-        if args.path:
-            if client.load_state(path=args.path):
-                print(f"Loaded from {args.path}")
+        ok = False
+        slot, path, error = _resolve_slot_or_path(getattr(args, "target", None), args.path)
+        if error:
+            print(error)
+            print("Usage: load <slot|path> OR load --path <file>")
+            sys.exit(1)
+        if path:
+            normalized_path = _normalize_filesystem_path(path)
+            if client.load_state(path=normalized_path):
+                print(f"Loaded from {normalized_path}")
+                ok = True
             else:
                 if client.last_error:
                     print(f"Load failed: {client.last_error}")
                 else:
                     print("Load failed")
-        elif args.slot:
-            if client.load_state(slot=args.slot):
-                print(f"Loaded from slot {args.slot}")
+        elif slot is not None:
+            if client.load_state(slot=slot):
+                print(f"Loaded from slot {slot}")
+                ok = True
             else:
                 print("Load failed")
         else:
             print("Usage: load <slot> OR load --path <file>")
+            sys.exit(1)
+        if not ok:
+            sys.exit(1)
 
     elif args.command == "savestate-label":
         if args.slot is None and not args.path:
@@ -3334,6 +3478,10 @@ def main():
                 print(f"Error: {e}")
                 sys.exit(1)
 
+            persist = (not bool(args.no_persist)) and (not bool(args.dry_run))
+            verify = (not bool(args.no_verify)) and (not bool(args.dry_run))
+            slot = int(args.slot or 0) or None
+
             was_paused = False
             try:
                 try:
@@ -3351,7 +3499,14 @@ def main():
 
                 if not was_paused and not args.dry_run:
                     client.bridge.pause()
-                actions = apply_save_profile(client, profile, dry_run=args.dry_run)
+                result = apply_profile_transaction(
+                    client,
+                    profile,
+                    slot=slot,
+                    persist=persist,
+                    verify=verify,
+                    dry_run=args.dry_run,
+                )
             except Exception as e:
                 print(f"Error: {e}")
                 sys.exit(1)
@@ -3363,19 +3518,37 @@ def main():
                     pass
 
             payload = {
-                "ok": True,
-                "profile": profile.profile_id,
-                "label": profile.label,
-                "dry_run": bool(args.dry_run),
-                "actions": actions,
+                "ok": bool(result.get("ok", True)),
+                **result,
             }
             if args.json:
                 print(json.dumps(payload, indent=2))
             else:
                 prefix = "DRY-RUN " if args.dry_run else ""
                 print(f"{prefix}Applied profile: {profile.profile_id} ({profile.label})")
-                for a in actions:
-                    print(f"  - {a}")
+                print(
+                    f"  Targets: {result['targets']['total']} "
+                    f"(persistent={result['targets']['persistent']}, volatile={result['targets']['volatile']})"
+                )
+                if not args.dry_run:
+                    print(f"  Persisted to SRAM: {'yes' if result.get('persisted') else 'no'}")
+                    if result.get("persisted") and result.get("slot"):
+                        print(f"  Slot: {result['slot']}")
+                    if result.get("verified"):
+                        wram_ok = len(result.get("wram_issues") or []) == 0
+                        sram_ok = len(result.get("sram_issues") or []) == 0
+                        print(f"  WRAM verify: {'OK' if wram_ok else 'FAIL'}")
+                        if result.get("persisted"):
+                            print(f"  SRAM verify: {'OK' if sram_ok else 'FAIL'}")
+                for warn in result.get("warnings") or []:
+                    print(f"  WARNING: {warn}")
+                for err in result.get("errors") or []:
+                    print(f"  ERROR: {err}")
+                for action in result.get("actions") or []:
+                    print(f"  - {action}")
+
+            if not payload.get("ok", False):
+                sys.exit(1)
 
         elif args.save_data_cmd == "profile-capture":
             profile_id = str(args.id).strip()

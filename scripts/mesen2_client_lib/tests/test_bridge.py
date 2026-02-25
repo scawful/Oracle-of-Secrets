@@ -2,6 +2,8 @@
 Unit tests for the Mesen2 socket bridge module.
 """
 
+import json
+
 import pytest
 
 from mesen2_client_lib.bridge import MesenBridge
@@ -23,6 +25,20 @@ class TestBridgeConnection:
         Path(mock_socket_path).touch()
         bridge = MesenBridge(socket_path=mock_socket_path)
         assert bridge.is_connected() is False
+
+    def test_socket_path_resolves_from_instance_registry(self, tmp_path, monkeypatch):
+        registry_dir = tmp_path / "instances"
+        registry_dir.mkdir(parents=True, exist_ok=True)
+        (registry_dir / "oos-target.json").write_text(
+            json.dumps({"instance": "oos-target", "socket": "/tmp/mesen2-oos-target.sock"})
+        )
+
+        monkeypatch.delenv("MESEN2_SOCKET_PATH", raising=False)
+        monkeypatch.setenv("MESEN2_INSTANCE", "oos-target")
+        monkeypatch.setenv("MESEN2_REGISTRY_DIR", str(registry_dir))
+
+        bridge = MesenBridge()
+        assert bridge.socket_path == "/tmp/mesen2-oos-target.sock"
 
 
 class TestBridgeCommands:
