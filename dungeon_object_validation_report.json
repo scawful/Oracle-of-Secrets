@@ -1,0 +1,14 @@
+{
+  "summary": {
+    "object_count": 77,
+    "size_cases": 1,
+    "test_cases": 77,
+    "mismatch_count": 1,
+    "empty_traces": 0,
+    "negative_offsets": 1,
+    "skipped_nothing": 0
+  },
+  "mismatches": [
+    {"object_id":"0x0DC","size":1,"has_tiles":true,"trace_width":2,"trace_height":7,"trace_min_x":49,"trace_min_y":23,"trace_offset_x":0,"trace_offset_y":0,"expected_width":2,"expected_height":5,"expected_offset_x":0,"expected_offset_y":0,"room_id":39,"object_index":5,"object_x":49,"object_y":23,"object_layer":0,"size_mismatch":true,"offset_mismatch":false}
+  ]
+}

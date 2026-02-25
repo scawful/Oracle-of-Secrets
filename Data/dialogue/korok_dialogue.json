@@ -1,0 +1,60 @@
+{
+  "format": "yaze-message-bundle",
+  "version": 1,
+  "counts": {
+    "vanilla": 0,
+    "expanded": 10
+  },
+  "messages": [
+    {
+      "id": 99,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Yahaha! You found me![K][2]The trees remember when pirates[V]wore scales...[K]"
+    },
+    {
+      "id": 100,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Yahaha! You found me![K][2]Before the silence, this was[V]the Age of Secrets.[K]"
+    },
+    {
+      "id": 101,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Yahaha! You found me![K][2]The island of Kalyxo has seen[V]many masters. None last.[K]"
+    },
+    {
+      "id": 102,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Yahaha! You found me![K][2]The guardians of the shrines[V]were bound by Farore's will.[K]"
+    },
+    {
+      "id": 103,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Yahaha! You found me![K][2]The old king sleeps beneath the[V]mountain of fire...[K]"
+    },
+    {
+      "id": 104,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Yahaha! You found me![K][2]The first hero did not banish[V]the evil, he only sealed it.[K]"
+    },
+    {
+      "id": 105,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Yahaha! You found me![K][2]The Eon Abyss... it sang a sad[V]song before the darkness came.[K]"
+    },
+    {
+      "id": 106,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Yahaha! You found me![K][2]The twin witches watch from the[V]shadows. Their magic is old.[K]"
+    },
+    {
+      "id": 107,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Yahaha! You found me![K][2]Farore's binding weakens. The[V]seals will not hold forever.[K]"
+    },
+    {
+      "id": 108,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Yahaha! You found me![K][2]We watched the hero fall. We[V]watched the knight rise. Same[V]soul, different shadow...[K]"
+    }
+  ]
+}

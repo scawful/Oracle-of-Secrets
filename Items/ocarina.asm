@@ -150,17 +150,21 @@ LinkItem_NewFlute:
     .song_of_time
     LDA.b #$27 : JSR $802F ; Player_DoSfx3
     LDA.b #$02 : STA.b SongFlag
+if !ENABLE_OCARINA_SONG_TINT == 1
     ; Purple tint for Song of Time (~32 frames)
     LDA.b #$20 : STA.l SongTintTimer
     LDA.b #$62 : STA.l SongTintColor : STA.b $9A
+endif
     RTS
 
     .song_of_healing
     LDA.b #$13 : JSR Player_DoSfx2
     LDA.b #$01 : STA.b SongFlag
+if !ENABLE_OCARINA_SONG_TINT == 1
     ; Green tint for Song of Healing (~32 frames)
     LDA.b #$20 : STA.l SongTintTimer
     LDA.b #$52 : STA.l SongTintColor : STA.b $9A
+endif
     RTS
 
     .song_of_storms
@@ -173,9 +177,11 @@ LinkItem_NewFlute:
 
   .song_of_soaring
   LDA.b #$3E : JSR Player_DoSfx2
+if !ENABLE_OCARINA_SONG_TINT == 1
   ; White flash for Song of Soaring (~16 frames)
   LDA.b #$10 : STA.l SongTintTimer
   LDA.b #$32 : STA.l SongTintColor : STA.b $9A
+endif
 
   ; Are we indoors?
   LDA.b $1B : BNE .return
@@ -386,6 +392,10 @@ SongTintTick:
 {
   PHP
   SEP #$20
+if !ENABLE_OCARINA_SONG_TINT == 0
+  LDA.b #$00 : STA.l SongTintTimer
+  BRA .done
+endif
   LDA.l SongTintTimer : BEQ .done
     DEC : STA.l SongTintTimer : BNE .apply
       ; Timer just expired — clear tint (unless storms keep it)

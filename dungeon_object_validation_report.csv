@@ -1,0 +1,2 @@
+category,object_id,size,has_tiles,trace_width,trace_height,trace_min_x,trace_min_y,trace_offset_x,trace_offset_y,room_id,object_index,object_x,object_y,object_layer,expected_width,expected_height,expected_offset_x,expected_offset_y,size_mismatch,offset_mismatch
+mismatch,0x0DC,1,true,2,7,49,23,0,0,39,5,49,23,0,2,5,0,0,true,false

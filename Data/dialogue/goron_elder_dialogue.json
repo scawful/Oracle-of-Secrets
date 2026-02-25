@@ -1,0 +1,35 @@
+{
+  "format": "yaze-message-bundle",
+  "version": 1,
+  "counts": {
+    "vanilla": 0,
+    "expanded": 5
+  },
+  "messages": [
+    {
+      "id": 83,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Our ways are not for outsiders.[K][2]Unless they prove their respect[V]for the mountain itself.[K][3]Bring us offerings of Rock Meat,[V]and we shall see if you are[V]worthy of our trust.[K]"
+    },
+    {
+      "id": 84,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]You bring offerings of stone...[K][2]Perhaps you do understand our[V]ways after all, little one.[K][3]Continue, and the heart of the[V]mountain may yet open to you.[K]"
+    },
+    {
+      "id": 85,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]You have shown great respect.[K][2]The stone door answers to those[V]who honor the earth.[K][3]It is my honor to unseal the[V]path. The Goron Mines await.[K]"
+    },
+    {
+      "id": 86,
+      "bank": "expanded",
+      "raw": "[W:02][S:03][L], you have done it![V]You have saved our home and[V]earned the mountain's trust.[K][2]Please, take this tunic. It is[V]woven with the fire of the[V]earth itself. It will shield[K][3]you from even the most intense[V]heat. You are a brother to[V]the Gorons now.[K]"
+    },
+    {
+      "id": 87,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Welcome, brother [L].[K][2]Our people were once close with[V]the Zora of the river. But[V]when the Hylians came...[K][3]...trade was broken. Mistrust[V]grew. Perhaps it is time for[V]that to change.[K]"
+    }
+  ]
+}

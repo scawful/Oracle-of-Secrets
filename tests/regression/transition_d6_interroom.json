@@ -7,7 +7,7 @@
   "saveState": {
     "id": "inside_d6",
     "waitSeconds": 2,
-    "allowMissing": true
+    "allowMissing": false
   },
   "preconditions": {
     "$7E0010": {
@@ -23,10 +23,10 @@
       "description": "Start in dungeon mode"
     },
     {
-      "type": "snapshot",
-      "name": "initial_room",
-      "addresses": ["$7E00A0"],
-      "description": "Capture initial room ID"
+      "type": "assert",
+      "address": "$7E00A0",
+      "equals": 152,
+      "description": "Start in D6 entrance room (0x98)"
     },
     {
       "type": "press",
@@ -47,6 +47,13 @@
     },
     {
       "type": "assert",
+      "address": "$7E00A0",
+      "condition": "not_equals",
+      "value": 152,
+      "description": "Room ID should change after moving north"
+    },
+    {
+      "type": "assert",
       "address": "$7E2100",
       "condition": "not_equals",
       "value": 0,
@@ -60,10 +67,12 @@
       "description": "Link Y position valid"
     },
     {
-      "type": "assert",
-      "address": "$7E0011",
+      "type": "wait_state",
+      "key": "submode",
       "equals": 0,
-      "description": "Submodule should be 0 (idle, not stuck in transition)"
+      "timeout": 6.0,
+      "interval": 0.2,
+      "description": "Submodule should return to idle after room transition"
     }
   ],
   "onFailure": {

@@ -1,0 +1,30 @@
+{
+  "format": "yaze-message-bundle",
+  "version": 1,
+  "counts": {
+    "vanilla": 0,
+    "expanded": 4
+  },
+  "messages": [
+    {
+      "id": 72,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]This windmill has been grinding[V]to a halt for ages.[K][2]It needs a song to get it[V]spinning right, but what's the[V]use talking to you?[K][3]You don't even have an[V]instrument![K]"
+    },
+    {
+      "id": 73,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]That ocarina... a fine piece.[K][2]But the windmill's heart is[V]broken. It's full of rage.[V]It won't listen to a new song.[K][3]Perhaps if you knew a song of[V]healing... it might calm the[V]gears. Then I could teach you.[K]"
+    },
+    {
+      "id": 74,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]You... you played the song![V]The angry spirit in the gears[V]is calm now... Thank you.[K][2]Now, listen well... for what[V]I will teach you is the song[V]that powers this windmill.[K][3]It is the Song of Storms! The[V]very melody that calls the[V]rain itself! Listen...[K]"
+    },
+    {
+      "id": 75,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]The windmill spins once more,[V]thanks to you, [L].[K][2]The storms answer your call now.[V]Use the song wisely.[K]"
+    }
+  ]
+}

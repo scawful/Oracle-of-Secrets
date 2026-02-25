@@ -1,0 +1,25 @@
+{
+  "format": "yaze-message-bundle",
+  "version": 1,
+  "counts": {
+    "vanilla": 0,
+    "expanded": 3
+  },
+  "messages": [
+    {
+      "id": 91,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Hee hee! A customer! Welcome![K][2]I sell only the finest Magic[V]Beans! Plant one in soft soil,[V]and who knows what'll grow![K][3]Might be a ladder to the sky,[V]hee hee! Care to try one?[K]"
+    },
+    {
+      "id": 92,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]One Magic Bean for you! That'll[V]be 100 Rupees, please![K][2]Hee hee! Happy planting![K]"
+    },
+    {
+      "id": 93,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Ah, you know the old melody![K][2]My beans just love a good storm.[V]It makes their magic grow extra[V]strong, hee hee![K]"
+    }
+  ]
+}

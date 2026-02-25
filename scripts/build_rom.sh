@@ -156,6 +156,43 @@ if [[ ! -f "$base_rom" ]]; then
 fi
 echo "Using base ROM: $base_rom"
 
+# Keep water-gate runtime tables synced with Yaze-authored room data.
+# Defaults to the ROM declared in Oracle-of-Secrets.yaze (rom_filename),
+# then falls back to the selected base ROM.
+if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" || "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
+  water_table_rom="${OOS_WATER_TABLE_ROM:-}"
+  if [[ -z "$water_table_rom" ]]; then
+    yaze_project="$repo_root/Oracle-of-Secrets.yaze"
+    if [[ -f "$yaze_project" ]]; then
+      yaze_rom_rel="$(awk -F= '/^rom_filename=/{print $2; exit}' "$yaze_project" || true)"
+      if [[ -n "$yaze_rom_rel" ]]; then
+        if [[ "$yaze_rom_rel" = /* ]]; then
+          water_table_rom="$yaze_rom_rel"
+        else
+          water_table_rom="$repo_root/$yaze_rom_rel"
+        fi
+      fi
+    fi
+  fi
+  if [[ -z "$water_table_rom" || ! -f "$water_table_rom" ]]; then
+    water_table_rom="$base_rom"
+  fi
+  water_table_rom_arg="$water_table_rom"
+  if [[ "$water_table_rom_arg" == "$repo_root/"* ]]; then
+    water_table_rom_arg="${water_table_rom_arg#$repo_root/}"
+  fi
+fi
+
+if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]]; then
+  echo "[*] Generating water-gate runtime tables from: $water_table_rom_arg"
+  python3 "$repo_root/scripts/generate_water_gate_runtime_tables.py" --rom "$water_table_rom_arg"
+fi
+
+if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
+  echo "[*] Generating water-fill table from custom collision markers: $water_table_rom_arg"
+  python3 "$repo_root/scripts/generate_water_fill_table.py" --rom "$water_table_rom_arg"
+fi
+
 # Feature-flag guardrails (non-fatal by default).
 if ! python3 "$repo_root/scripts/verify_feature_flags.py" --root "$repo_root"; then
   echo "[-] Feature flag verification failed!" >&2
@@ -163,6 +200,36 @@ if ! python3 "$repo_root/scripts/verify_feature_flags.py" --root "$repo_root"; t
   # fail the build when feature flags are inconsistent.
   if [[ "${OOS_FLAGS_FATAL:-0}" == "1" ]]; then
     exit 1
+  fi
+fi
+
+# Validate Oracle menu registry (bins + component tables) before patching.
+if [[ "${OOS_SKIP_MENU_VALIDATE:-0}" != "1" ]]; then
+  z3ed_cli="${OOS_Z3ED_BIN:-}"
+  if [[ -z "$z3ed_cli" ]]; then
+    local_z3ed="$repo_root/../yaze/scripts/z3ed"
+    if [[ -x "$local_z3ed" ]]; then
+      z3ed_cli="$local_z3ed"
+    elif command -v z3ed >/dev/null 2>&1; then
+      z3ed_cli="$(command -v z3ed)"
+    fi
+  fi
+
+  if [[ -n "$z3ed_cli" ]]; then
+    echo "[*] Validating Oracle menu registry..."
+    menu_validate_args=(oracle-menu-validate --project "$repo_root")
+    if [[ "${OOS_MENU_VALIDATE_STRICT:-0}" == "1" ]]; then
+      menu_validate_args+=(--strict)
+    fi
+    if ! "$z3ed_cli" "${menu_validate_args[@]}"; then
+      echo "[-] Oracle menu validation failed." >&2
+      if [[ "${OOS_MENU_VALIDATE_FATAL:-1}" == "1" ]]; then
+        exit 1
+      fi
+      echo "[-] (Non-fatal: set OOS_MENU_VALIDATE_FATAL=1 to block builds)"
+    fi
+  else
+    echo "[-] Warning: z3ed CLI not found; skipping Oracle menu validation." >&2
   fi
 fi
 

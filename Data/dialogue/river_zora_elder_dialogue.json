@@ -1,0 +1,25 @@
+{
+  "format": "yaze-message-bundle",
+  "version": 1,
+  "counts": {
+    "vanilla": 0,
+    "expanded": 3
+  },
+  "messages": [
+    {
+      "id": 88,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Hmph. An outsider.[K][2]You carry the Princess's words?[V]Her authority means little here.[K][3]The Hylians abandoned us long[V]ago. Show me proof that you[V]truly understand our pain.[K]"
+    },
+    {
+      "id": 89,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]That mask... it cannot be...[K][2]All these years... we mourned...[V]we cursed our kin who we[V]thought had betrayed us.[K][3]And it was HIM. The Pirate[V]King, Kydrog... he used our[V]likeness to sow hatred.[K][3][L], you have lifted a[V]shadow from our hearts that is[V]centuries old.[K]"
+    },
+    {
+      "id": 90,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]You gave us our names back,[V][L]. For that, we owe[V]you a great debt.[K][2]The river flows with a renewed[V]spirit. If you seek passage to[V]the hidden shoals, ask me.[K]"
+    }
+  ]
+}

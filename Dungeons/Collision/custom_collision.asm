@@ -15,6 +15,7 @@
 ; if <offset> == $FFFF, stop
 
 RoomPointer = $258090
+!WATER_FILL_MARKER_TILE = $F5
 
 org $01B95B ; @hook module=Dungeons name=CustomRoomCollision kind=jsl target=CustomRoomCollision expected_m=16 expected_x=16 expected_exit_m=16 expected_exit_x=16
 if !ENABLE_CUSTOM_ROOM_COLLISION
@@ -30,7 +31,9 @@ else
 +
 endif
 
-org $258000
+; Runtime routine lives in reserved high bank-$2C patch space.
+; Keep it below JumpTableLocal_Guard at $2C:FF00.
+org $2CFE00
 CustomRoomCollision_easyout:
 {
   RTL
@@ -76,6 +79,8 @@ CustomRoomCollision:
   BCC .new_rectangle
 
   .single_tiles
+  CMP.w #$F0F0
+  BEQ .single_tiles_load_next
   CMP.w #$FFFF
   BEQ .done
 
@@ -83,9 +88,12 @@ CustomRoomCollision:
 
   SEP #$20
   LDA.b [$08],Y
+  CMP.b #!WATER_FILL_MARKER_TILE : BEQ .skip_single_store
   STA.w $2000,X
+.skip_single_store
   REP #$20
   INY
+  .single_tiles_load_next
   LDA.b [$08],Y
   INY
   INY
@@ -134,7 +142,9 @@ CustomRoomCollision:
 
   .next_column
   LDA.b [$08],Y
+  CMP.b #!WATER_FILL_MARKER_TILE : BEQ .skip_rect_store
   STA.w $2000,X
+.skip_rect_store
   INY
   INX
   DEC.b $0C
@@ -146,3 +156,4 @@ CustomRoomCollision:
   REP #$21
   JMP .read_next
 }
+assert pc() <= $2CFF00 ; do not overlap JumpTableLocal_Guard

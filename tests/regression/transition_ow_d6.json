@@ -7,7 +7,7 @@
   "saveState": {
     "id": "pre_d6_entrance",
     "waitSeconds": 2,
-    "allowMissing": true
+    "allowMissing": false
   },
   "preconditions": {
     "$7E0010": {

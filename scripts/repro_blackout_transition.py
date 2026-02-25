@@ -15,6 +15,7 @@ positioned "one action away" from the problematic transition.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -33,6 +34,15 @@ ADDR_MODE = 0x7E0010
 ADDR_SUBMODE = 0x7E0011
 ADDR_INIDISPQ = 0x7E0013
 ADDR_FRAME = 0x7E001A  # Optional debug read; do not use for progress/stall detection.
+ADDR_MODE_CACHE = 0x7E010C
+ADDR_ENTRANCE = 0x7E010E
+ADDR_SONGQ = 0x7E0132
+ADDR_LASTAPU0 = 0x7E0133
+ADDR_SONGBANK = 0x7E0136
+ADDR_APUIO0 = 0x002140
+ADDR_APUIO1 = 0x002141
+ADDR_APUIO2 = 0x002142
+ADDR_APUIO3 = 0x002143
 
 # If GameMode enters the 0x30+ range during normal play, we treat it as corruption.
 # This is intentionally conservative to avoid false positives.
@@ -67,6 +77,18 @@ def _launch_mesen2_instance(*, instance: str, rom_path: Path, home_dir: Path, he
 
 def _csv(raw: str | None) -> str:
     return (raw or "").strip()
+
+
+def _emit_report(path_arg: str | None, payload: dict) -> None:
+    out_raw = (path_arg or "").strip()
+    if not out_raw:
+        return
+    out_path = Path(out_raw).expanduser()
+    if not out_path.is_absolute():
+        out_path = (REPO_ROOT / out_path).resolve()
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"Wrote report: {out_path}")
 
 
 def build_rom(version: int, *, enable: str, disable: str, profile: str, persist_flags: bool) -> int:
@@ -127,6 +149,11 @@ def main() -> int:
         "--no-capture",
         action="store_true",
         help="Do not trigger agentic_autodebug capture when an anomaly is detected (still exits 1).",
+    )
+    ap.add_argument(
+        "--report-out",
+        default="",
+        help="Optional JSON report output path (relative to repo root if not absolute).",
     )
     args = ap.parse_args()
 
@@ -199,6 +226,23 @@ def main() -> int:
         # Give the ROM a moment to initialize before we load savestates.
         time.sleep(0.25)
 
+    report: dict = {
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "version": int(args.version),
+        "profile": str(args.profile or "defaults"),
+        "enable": _csv(args.enable),
+        "disable": _csv(args.disable),
+        "instance": str(args.instance or ""),
+        "socket": os.environ.get("MESEN2_SOCKET_PATH", ""),
+        "seed": args.lib or args.state or f"slot:{int(args.slot)}",
+        "press": str(args.press),
+        "press_frames": int(args.press_frames),
+        "settle_frames": int(args.settle_frames),
+        "max_frames": int(args.max_frames),
+        "poll_every": int(args.poll_every),
+        "rom_path": str(rom_path),
+    }
+
     # Load seed state
     if args.arm:
         arm_cmd = [sys.executable, "-m", "scripts.campaign.agentic_autodebug"]
@@ -213,7 +257,11 @@ def main() -> int:
     if args.lib:
         ok = client.load_library_state(str(args.lib))
     elif args.state:
-        ok = client.load_state(path=args.state)
+        state_path = Path(str(args.state)).expanduser()
+        if not state_path.is_absolute():
+            state_path = (REPO_ROOT / state_path).resolve()
+        report["seed"] = str(state_path)
+        ok = client.load_state(path=str(state_path))
     else:
         ok = client.load_state(slot=int(args.slot))
     if not ok:
@@ -246,6 +294,23 @@ def main() -> int:
         cyc0 = client.get_cpu_state().get("CYC")
         if not client.bridge.run_frames(count=step_n):
             print("Anomaly detected: failed to advance emulator frames; triggering capture...")
+            snapshot = {
+                "pc": client.get_pc().get("full"),
+                "mode": client.bridge.read_memory(ADDR_MODE),
+                "submode": client.bridge.read_memory(ADDR_SUBMODE),
+                "inidispq": client.bridge.read_memory(ADDR_INIDISPQ),
+                "songq": client.bridge.read_memory(ADDR_SONGQ),
+                "songbank": client.bridge.read_memory(ADDR_SONGBANK),
+                "mode_cache": client.bridge.read_memory(ADDR_MODE_CACHE),
+                "entrance": client.bridge.read_memory(ADDR_ENTRANCE),
+                "apuio0": client.bridge.read_memory(ADDR_APUIO0),
+                "apuio1": client.bridge.read_memory(ADDR_APUIO1),
+                "apuio2": client.bridge.read_memory(ADDR_APUIO2),
+                "apuio3": client.bridge.read_memory(ADDR_APUIO3),
+            }
+            report["result"] = "anomaly"
+            report["reason"] = "run_frames_failed"
+            report["snapshot"] = snapshot
             if not args.no_capture:
                 _run(
                     [
@@ -272,6 +337,7 @@ def main() -> int:
                     cwd=REPO_ROOT,
                     timeout_s=30,
                 )
+            _emit_report(args.report_out, report)
             return 1
 
         cyc1 = client.get_cpu_state().get("CYC")
@@ -290,6 +356,15 @@ def main() -> int:
         inidispq = client.bridge.read_memory(ADDR_INIDISPQ)
         wram_frame = client.bridge.read_memory(ADDR_FRAME)
         pc_full = client.get_pc().get("full")
+        songq = client.bridge.read_memory(ADDR_SONGQ)
+        last_apu0 = client.bridge.read_memory(ADDR_LASTAPU0)
+        songbank = client.bridge.read_memory(ADDR_SONGBANK)
+        mode_cache = client.bridge.read_memory(ADDR_MODE_CACHE)
+        entrance = client.bridge.read_memory(ADDR_ENTRANCE)
+        apuio0 = client.bridge.read_memory(ADDR_APUIO0)
+        apuio1 = client.bridge.read_memory(ADDR_APUIO1)
+        apuio2 = client.bridge.read_memory(ADDR_APUIO2)
+        apuio3 = client.bridge.read_memory(ADDR_APUIO3)
 
         # "Forced blank" inidispq persists outside the brief transition window.
         if (inidispq & 0x80) != 0 and mode in (0x06, 0x07, 0x09):
@@ -328,6 +403,42 @@ def main() -> int:
 
         # Trip conditions: either we are forced-blanked too long, or main loop is stalled.
         if forced_blank_ticks >= 12 or brightness0_ticks >= 12 or stall >= 12 or apu_spin_ticks >= 6 or invalid_mode_ticks >= 3:
+            reasons: list[str] = []
+            if forced_blank_ticks >= 12:
+                reasons.append("forced_blank")
+            if brightness0_ticks >= 12:
+                reasons.append("brightness_zero")
+            if stall >= 12:
+                reasons.append("cpu_stall")
+            if apu_spin_ticks >= 6:
+                reasons.append("apu_spin_0088EC")
+            if invalid_mode_ticks >= 3:
+                reasons.append("invalid_mode")
+            report["result"] = "anomaly"
+            report["reason"] = ",".join(reasons) if reasons else "unknown"
+            report["snapshot"] = {
+                "t": int(t),
+                "pc": int(pc_full or 0),
+                "mode": int(mode),
+                "submode": int(submode),
+                "mode_cache": int(mode_cache),
+                "entrance": int(entrance),
+                "inidispq": int(inidispq),
+                "wram_frame": int(wram_frame),
+                "songq": int(songq),
+                "last_apu0": int(last_apu0),
+                "songbank": int(songbank),
+                "apuio0": int(apuio0),
+                "apuio1": int(apuio1),
+                "apuio2": int(apuio2),
+                "apuio3": int(apuio3),
+                "forced_blank_ticks": int(forced_blank_ticks),
+                "brightness0_ticks": int(brightness0_ticks),
+                "stall_ticks": int(stall),
+                "apu_spin_ticks": int(apu_spin_ticks),
+                "invalid_mode_ticks": int(invalid_mode_ticks),
+                "cycles": int(cyc1 or 0),
+            }
             print("Anomaly detected; triggering capture...")
             if not args.no_capture:
                 # Use the shared capture tool (more complete forensics).
@@ -356,9 +467,27 @@ def main() -> int:
                     cwd=REPO_ROOT,
                     timeout_s=30,
                 )
+            _emit_report(args.report_out, report)
             return 1
 
     print("No anomaly detected in window.")
+    report["result"] = "ok"
+    report["snapshot"] = {
+        "pc": int(client.get_pc().get("full") or 0),
+        "mode": int(client.bridge.read_memory(ADDR_MODE)),
+        "submode": int(client.bridge.read_memory(ADDR_SUBMODE)),
+        "mode_cache": int(client.bridge.read_memory(ADDR_MODE_CACHE)),
+        "entrance": int(client.bridge.read_memory(ADDR_ENTRANCE)),
+        "inidispq": int(client.bridge.read_memory(ADDR_INIDISPQ)),
+        "songq": int(client.bridge.read_memory(ADDR_SONGQ)),
+        "last_apu0": int(client.bridge.read_memory(ADDR_LASTAPU0)),
+        "songbank": int(client.bridge.read_memory(ADDR_SONGBANK)),
+        "apuio0": int(client.bridge.read_memory(ADDR_APUIO0)),
+        "apuio1": int(client.bridge.read_memory(ADDR_APUIO1)),
+        "apuio2": int(client.bridge.read_memory(ADDR_APUIO2)),
+        "apuio3": int(client.bridge.read_memory(ADDR_APUIO3)),
+    }
+    _emit_report(args.report_out, report)
     return 0
 
 

@@ -2225,9 +2225,6 @@ Overworld_ReloadSubscreenOverlay_Interupt:
 
                     .loadOverlayShortcut
 
-                    ; Save the overlay for later.
-                    PHX
-
                     JMP.w .loadSubScreenOverlay
 
                 .masterSwordRecieved
@@ -2347,8 +2344,9 @@ Overworld_ReloadSubscreenOverlay_Interupt:
     ; Puts BG1 on the subscreen.
     LDA.b #$01 : STA.b $1D
 
-    ; Pull the 16 bit overlay from earlier and just discard the high byte.
-    PLX : PLA
+    ; Recover the selected overlay ID from the mirror set above.
+    ; Using $8C avoids width-dependent PHX/PLX stack pops here.
+    LDX.b $8C
         
     ; One possible configuration for SNES.AddSubtractSelectAndEnable (CGADSUB).
     LDA.b #$72

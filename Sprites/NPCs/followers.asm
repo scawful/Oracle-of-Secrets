@@ -257,29 +257,138 @@ ZoraBaby_GlobalBehavior:
 {
   JSL Sprite_BehaveAsBarrier
   JSR Follower_WatchLink
-  LDA.w SprAction, X : CMP.b #$02 : BEQ +
-    JSL Sprite_CheckIfLifted
-    JSL ThrownSprite_TileAndSpriteInteraction_long
-    JSL Sprite_Move
+  LDA.w SprAction, X : CMP.b #$02 : BEQ .done
 
-    JSR ZoraBaby_CheckForWaterGateSwitch : BCC ++
-      ; Face head up towards switch
-      LDA.b #$20 : STA.w FollowerHeadOffset
-      ; Set end of switch graphics
-      LDA.b #$0D : STA.w SprGfx, Y
-      ; Set the water gate tag
-      LDA.b #$01 : STA.w $0642
-      ; Goto ZoraBaby_PullSwitch
-      LDA.b #$05 : STA.w SprAction, X
-    ++
+  ; Keep normal lift/throw movement active for all live states except action 2.
+  JSL Sprite_CheckIfLifted
+  JSL ThrownSprite_TileAndSpriteInteraction_long
+  JSL Sprite_Move
 
-    JSR ZoraBaby_CheckForWaterSwitchSprite : BCC +
-      ; Set end of switch graphics
-      LDA.b #$01 : STA.w SprAction, Y
-      ; Goto ZoraBaby_PullSwitch
-      LDA.b #$05 : STA.w SprAction, X
-      LDA.w SprX, X : CLC : ADC #$10 : STA.w SprX, X
+  ; Only allow switch triggers when the baby is in roam/wait states.
+  ; Prevents re-trigger loops while transitioning back to follower state.
+  LDA.w SprAction, X : CMP.b #$00 : BEQ .can_trigger
+                     CMP.b #$04 : BNE .done
+  .can_trigger
+  JSR ZoraBaby_CheckForWaterGateSwitch : BCC .no_water_gate_switch
+    ; Face head up towards switch
+    LDA.b #$20 : STA.w FollowerHeadOffset
+    ; Set end of switch graphics
+    LDA.b #$0D : STA.w SprGfx, Y
+    ; Set the water gate tag
+    LDA.b #$01 : STA.w $0642
+    ; Goto ZoraBaby_PullSwitch
+    LDA.b #$05 : STA.w SprAction, X
+    BRA .done
+  .no_water_gate_switch
+
+  JSR ZoraBaby_CheckForWaterSwitchSprite : BCC .done
+    ; Set end of switch graphics
+    LDA.b #$01 : STA.w SprAction, Y
+    ; Goto ZoraBaby_PullSwitch
+    LDA.b #$05 : STA.w SprAction, X
+    LDA.w SprX, X : CLC : ADC #$10 : STA.w SprX, X
+  .done
+  RTL
+}
+
+; Lookup post-switch cutscene target for current room.
+; Table is generated from room objects/sprites (Yaze-authored data).
+; Returns C set and $00/$01 = target X/Y in pixel space.
+ZoraBaby_FindSwitchSequenceTarget:
+{
+  ; Runtime selection: choose nearest authored marker for current room.
+  ; This supports multiple per-room candidates (e.g. two wall holes in room $27).
+  STX.b $07
+  PHX
+  PHY
+
+  LDA.b #$FF : STA.b $02
+  STZ.b $03
+  LDX.b #$00
+
+  .loop
+    LDA.l ZoraBabySwitchTargetTable, X
+    CMP.b #$FF : BEQ .done
+    CMP.b $A0  : BNE .next_entry
+
+    LDA.l ZoraBabySwitchTargetTable+1, X : STA.b $04
+    LDA.l ZoraBabySwitchTargetTable+2, X : STA.b $05
+
+    LDY.b $07
+    LDA.w SprX, Y : SEC : SBC.b $04 : BPL +
+      EOR.b #$FF : INC A
+    +
+    STA.b $06
+
+    LDA.w SprY, Y : SEC : SBC.b $05 : BPL +
+      EOR.b #$FF : INC A
+    +
+    CLC : ADC.b $06 : CMP.b $02 : BCS .next_entry
+      STA.b $02
+      LDA.b $04 : STA.b $00
+      LDA.b $05 : STA.b $01
+      LDA.b #$01 : STA.b $03
+
+  .next_entry
+    INX : INX : INX
+    BRA .loop
+
+  .done
+    PLY
+    PLX
+    LDA.b $03 : BEQ .not_found
+    SEC
+    RTS
+
+  .not_found
+    CLC
+    RTS
+}
+
+; Shared post-switch sequence:
+; - walk toward room-authored marker target
+; - when close enough, hand back to follower flow
+ZoraBaby_RunPostSwitchSequence:
+{
+  PHB : PHK : PLB
+  SEP #$30
+
+  JSR ZoraBaby_FindSwitchSequenceTarget : BCC .fallback_follow
+
+  ; Manhattan-distance check against target.
+  LDA.w SprX, X : SEC : SBC.b $00 : BPL +
+    EOR.b #$FF : INC A
   +
+  STA.b $02
+
+  LDA.w SprY, X : SEC : SBC.b $01 : BPL +
+    EOR.b #$FF : INC A
+  +
+  CLC : ADC.b $02 : CMP.b #$06 : BCS .move_to_target
+    STZ.w SprXSpeed, X
+    STZ.w SprYSpeed, X
+    LDA.b #$01 : STA.w SprAction, X
+    BRA .done
+
+  .move_to_target
+    ; Build 16-bit target coords for Sprite_ProjectSpeedTowardsEntityLong.
+    LDA.b $00 : STA.b $04
+    LDA.w SprXH, X : STA.b $05
+    LDA.b $01 : STA.b $06
+    LDA.w SprYH, X : STA.b $07
+
+    LDA.b #$08
+    JSL Sprite_ProjectSpeedTowardsEntityLong
+    LDA.b $01 : STA.w SprXSpeed, X
+    LDA.b $00 : STA.w SprYSpeed, X
+    JSL Sprite_Move
+    BRA .done
+
+  .fallback_follow
+    LDA.b #$01 : STA.w SprAction, X
+
+  .done
+  PLB
   RTL
 }
 
@@ -465,6 +574,7 @@ Sprite_39_ZoraBaby:
   ZoraBaby_PostSwitch:
   {
     SEP #$30
+    JSL ZoraBaby_RunPostSwitchSequence
     RTS
   }
 }

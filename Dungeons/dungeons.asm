@@ -126,19 +126,43 @@ CheckForTingleMaps:
   LDA.w $040C : CMP.b #$FF : RTL
 }
 
-NewWaterOverlayData:
-; Horizontal
-db $1B, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 06, 28 } | Size: 0D
-db $51, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 14, 28 } | Size: 05
-db $71, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 1C, 28 } | Size: 05
-db $92, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 24, 28 } | Size: 09
-db $A2, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 24, 28 } | Size: 09
-db $C1, $A1, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 0C } | Size: 07
+incsrc "Dungeons/generated/water_gate_runtime_tables.asm"
+incsrc "Dungeons/generated/water_fill_table.asm"
 
-; Vertical
-db $A1, $33, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 0C } | Size: 07
-db $A1, $72, $C9 ; 0x0C9: Flood water (medium) ⇲ | { 28, 1C } | Size: 06
-db $FF, $FF ; End
+WaterGate_SelectOverlayPointer:
+{
+  ; Called from RoomTag_WaterGate ($01CBAC). Returns:
+  ;   A   = 16-bit pointer to room-authored overlay data list
+  ;   $B9 = bank byte in ROM-mirrored space ($80+)
+  PHX
+  PHP
+  SEP #$30
+  LDA.b #(WaterOverlayData_Empty>>16)|$80
+  STA.b $B9
+
+  LDX.b #$00
+  .search
+    LDA.l WaterOverlayRoomTable, X
+    CMP.b #$FF : BEQ .default
+    CMP.b $A0  : BEQ .found
+    INX : INX : INX
+    BRA .search
+
+  .found
+    INX
+    REP #$20
+    LDA.l WaterOverlayRoomTable, X
+    BRA .done
+
+  .default
+  REP #$20
+  LDA.w #WaterOverlayData_Empty
+
+  .done
+  PLP
+  PLX
+  RTL
+}
 
 ; Water collision system - placed in Bank $2C after main dungeon code
 incsrc "Collision/water_collision.asm"
@@ -184,21 +208,19 @@ endif
 ; Persistence restore is now implemented via a safer room-load hook
 ; (see `Dungeons/Collision/custom_collision.asm`), so we keep this site vanilla.
 org $0188DF ; @hook module=Dungeons name=Underworld_LoadRoom_ExitHook kind=patch expected_m=16 expected_x=16
-  BNE $0188C9
+  ; Keep vanilla branch opcode bytes at this site.
+  ; Using an absolute literal with BNE here can mis-assemble the relative offset.
+  db $D0, $E8
   SEP #$30
 
 
 ; RoomTag_WaterGate - redirect overlay data to custom water segments
 org $01CBAC
 if !ENABLE_WATER_GATE_OVERLAY_REDIRECT == 1
-  ; Vanilla uses ROM-mirrored banks ($80+). Keep the high-bit set so the tag's
-  ; pointer walker always reads from ROM space even when it bankswitches.
-  ;
-  ; NewWaterOverlayData lives in bank $2C (mirrors at $AC).
-  LDA.w #(NewWaterOverlayData>>16)|$0080
-  STA.b $B9
-  LDA.w #NewWaterOverlayData>>0
+  ; Use room-authored overlay tables generated from dungeon object data.
+  JSL WaterGate_SelectOverlayPointer
   JSR RoomTag_OperateWaterFlooring
+  NOP #4
 else
   ; Vanilla WaterOverlayData pointer (bank $84, addr $EE8B).
   ; Keep as constants so this branch still assembles even when the vanilla

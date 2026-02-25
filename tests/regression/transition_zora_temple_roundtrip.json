@@ -1,0 +1,86 @@
+{
+  "name": "Zora Temple Entrance Roundtrip",
+  "description": "Verify Zora Temple stairs transition works in both directions without black screen or APU spin lock.",
+  "version": "1.0",
+  "tags": ["regression", "transition", "zora", "dungeon", "overworld", "roundtrip"],
+  "timeout_seconds": 45,
+  "saveState": {
+    "id": "zora_temple_stairs_seed_20260207",
+    "waitSeconds": 2,
+    "allowMissing": false
+  },
+  "preconditions": {
+    "$7E0010": {
+      "equals": 7,
+      "desc": "Seed should start inside dungeon mode (0x07)"
+    },
+    "$7E00A0": {
+      "equals": 40,
+      "desc": "Seed should start in Zora Temple entrance room (0x28)"
+    }
+  },
+  "steps": [
+    {
+      "type": "press",
+      "button": "DOWN",
+      "frames": 120,
+      "description": "Exit Zora Temple to overworld"
+    },
+    {
+      "type": "wait_state",
+      "key": "mode",
+      "equals": 9,
+      "timeout": 10.0,
+      "interval": 0.2,
+      "description": "Should settle in overworld mode (0x09)"
+    },
+    {
+      "type": "wait_state",
+      "key": "submode",
+      "equals": 0,
+      "timeout": 10.0,
+      "interval": 0.2,
+      "description": "Overworld submode should settle to idle (0x00)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E2100",
+      "condition": "not_equals",
+      "value": 0,
+      "description": "INIDISP should not be 0 (no persistent black frame)"
+    },
+    {
+      "type": "press",
+      "button": "UP",
+      "frames": 120,
+      "description": "Re-enter Zora Temple from overworld"
+    },
+    {
+      "type": "wait_state",
+      "key": "mode",
+      "equals": 7,
+      "timeout": 10.0,
+      "interval": 0.2,
+      "description": "Should settle in dungeon mode (0x07)"
+    },
+    {
+      "type": "wait_state",
+      "key": "submode",
+      "equals": 0,
+      "timeout": 10.0,
+      "interval": 0.2,
+      "description": "Dungeon submode should settle to idle (0x00)"
+    },
+    {
+      "type": "assert",
+      "address": "$7E2100",
+      "condition": "not_equals",
+      "value": 0,
+      "description": "INIDISP should not be 0 after re-entry"
+    }
+  ],
+  "onFailure": {
+    "expert": "veran",
+    "context": "Zora Temple roundtrip failed. Inspect song-bank transfer path, APUIO handshake, and transition mode/submode flow."
+  }
+}

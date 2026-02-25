@@ -1,0 +1,25 @@
+{
+  "format": "yaze-message-bundle",
+  "version": 1,
+  "counts": {
+    "vanilla": 3,
+    "expanded": 0
+  },
+  "messages": [
+    {
+      "id": 306,
+      "bank": "vanilla",
+      "raw": "[W:02][S:03]Thank you, [L]![K][2]I am the guardian of this grove,[V]keeper of the Whispering Vines.[K][3]You have claimed the first[V]essence, the Mushroom Grotto's[V]heart. It will aid you.[K][3]Seek the palace where the stars[V]are charted. Another of my[V]sisters waits for you there.[K]"
+    },
+    {
+      "id": 307,
+      "bank": "vanilla",
+      "raw": "[W:02][S:03]Thank you, [L]![K][2]I am an observer of the sky,[V]a student of the Tail Palace.[K][3]This is the Celestial Veil, an[V]essence that sees beyond what[V]is visible to the naked eye.[K][3]The Pirate King's fleet gathers[V]strength. You must find the[V]sunken temple of the Zora.[K]"
+    },
+    {
+      "id": 311,
+      "bank": "vanilla",
+      "raw": "[W:02][S:03]Thank you, [L]![K][2]I served as the trade liaison[V]between Goron and Zora, in[V]the time before the mistrust.[K][3]This is the Seismic Whisper, the[V]very soul of the mountain. It[V]remembers the old alliances.[K][3]Only one crystal remains. It is[V]hidden in a tower of illusion,[V]guarded by twin witches...[K]"
+    }
+  ]
+}

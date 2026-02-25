@@ -35,6 +35,8 @@
 !ConsecutiveHits    = $AC ; 0x01
 !KydrogPhase        = $7A ; 0x01
 !WalkSpeed          = 10  ; 0x01
+!KydrogRescueStage  = SprMiscF ; 0x00 message pending, 0x01 commit pending, 0x02 committed
+!KydrogRescueMsg    = $0138    ; Temporary rescue text until dedicated Kydrog defeat slot lands
 
 Sprite_KydrogBoss_Long:
 {
@@ -62,6 +64,7 @@ Sprite_KydrogBoss_CheckIfDead:
       LDA.b #$04 : STA.w SprState, X ;kill sprite boss style
       LDA.b #$09 : STA.w SprAction, X ;go to KydrogBoss_Death stage
       STZ.w $0D90,X
+      STZ.w !KydrogRescueStage, X
 
       LDA.b #$E0 : STA.w SprTimerA,X
       PLX
@@ -73,6 +76,7 @@ Sprite_KydrogBoss_Prep:
 {
   PHB : PHK : PLB
   LDA #$00 : STA !KydrogPhase
+  STZ.w !KydrogRescueStage, X
 
   LDA.b #$A0 : STA.w SprHealth, X ; health
   LDA.b #$80 : STA.w SprDefl, X
@@ -328,6 +332,9 @@ Sprite_KydrogBoss_Main:
     %PlayAnimation(0, 0, 10)
 
     JSL Sprite_KillFriends
+  if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
+    JSR KydrogBoss_Death_FaroreRescueScaffold
+  endif
     LDA.w SprFlash, X : INC : CMP.b #$08 : BNE .dontReset
       LDA.b #$00
     .dontReset
@@ -335,6 +342,44 @@ Sprite_KydrogBoss_Main:
 
     RTS
   }
+
+  if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
+  KydrogBoss_Death_FaroreRescueScaffold:
+  {
+    ; Stage 0: show the rescue dialogue once.
+    LDA.w !KydrogRescueStage, X : BNE .wait_for_commit
+      %ShowUnconditionalMessage(!KydrogRescueMsg)
+      LDA.b #$01 : STA.w !KydrogRescueStage, X
+      RTS
+
+    ; Stage 1: commit progression late in the death window.
+    .wait_for_commit
+    CMP.b #$01 : BNE .return
+    LDA.w SprTimerA, X : CMP.b #$20 : BCS .return
+      JSR KydrogBoss_ApplyFaroreRescueProgression
+      LDA.b #$02 : STA.w !KydrogRescueStage, X
+    .return
+    RTS
+  }
+
+  KydrogBoss_ApplyFaroreRescueProgression:
+  {
+    PHP
+    SEP #$20
+
+    ; Ensure D7 crystal progress is set once Kydrog is defeated.
+    LDA.l Crystals
+    ORA.b #!Crystal_D7_DragonShip
+    STA.l Crystals
+
+    ; Promote story state to post-D7 once the rescue path is active.
+    LDA.b #!GameState_FaroreRescued
+    STA.l GameState
+
+    PLP
+    RTS
+  }
+  endif
 
   KydrogBoss_Ascend: ; 0x0A
   {

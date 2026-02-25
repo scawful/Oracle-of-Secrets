@@ -1,0 +1,35 @@
+{
+  "format": "yaze-message-bundle",
+  "version": 1,
+  "counts": {
+    "vanilla": 0,
+    "expanded": 5
+  },
+  "messages": [
+    {
+      "id": 94,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Ahoy there, young adventurer![V]Don't mind me, just mapping[V]this mysterious island.[K][2]The sea remembers what the land[V]forgets, you see! Kalyxo is[V]full of secrets lost to time.[K][3]Bring me Secret Shells, and I[V]will mark your map with the[V]forgotten paths I uncover![K]"
+    },
+    {
+      "id": 95,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Five shells! Splendid! These[V]whisper tales of a hidden[V]grotto near the coast.[K][2]Here, I'll mark it on your map.[V]Happy hunting![K]"
+    },
+    {
+      "id": 96,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Ten! Remarkable! These hold[V]memories of Old Kalyxo, from[V]before the great sinking.[K][2]They speak of a lonely peak[V]with a great treasure. Look, I[V]have added it to your chart.[K]"
+    },
+    {
+      "id": 97,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]Twenty! By the stars, you're[V]a natural explorer! I feel a[V]kindred spirit in you![K][2]This is more than a hobby for[V]me. It is a promise I made...[V]Here, take this. For your heart.[K]"
+    },
+    {
+      "id": 98,
+      "bank": "expanded",
+      "raw": "[W:02][S:03]You've found them all...[K][2]Each one a life, a story, a[V]memory. To map the world is to[V]ensure no one is forgotten.[K][3]You are a true cartographer,[V][L]. Please, take this map[V]of the stars. It may help you[K][3]find your way in the darkest[V]of nights.[K]"
+    }
+  ]
+}

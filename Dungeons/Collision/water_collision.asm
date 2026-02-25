@@ -400,56 +400,41 @@ WaterGateCollisionTable:
 ; =========================================================
 ; Collision offsets for swimming area after water fills.
 ;
-; IMPORTANT: The game checks collision at Link's position + ~20 pixels Y.
-; This means collision data must be placed 2-3 tiles BELOW where Link
-; visually stands. Visual water at Y=39-40 requires collision at Y=41-43.
+; Derived from Layer-2 swim mask objects (0xD9) in room data:
+; - Expand each horizontal segment by +2..+4 rows in Y for Link's water probe.
+; - This matches the approach used for room 0x25 and keeps visual/collision sync.
 ;
-; Full coverage: Y=41-43 horizontal (X=5-57), plus vertical channels.
 ; Formula: offset = (Y * 64) + X
 
 WaterGate_Room27_Data:
 {
-  ; Tile count: expanded coverage (vertical channels + full 4-row swim mask)
-  ; 8 + 7 + (56*4) = 239 tiles
-  db 239
+  ; Tile count: exact D9-derived placement for room 0x27
+  db 240
 
-  ; Vertical channel (Y=15, X=40-47) - 8 tiles
-  ; Shifted from Y=12 to Y=15 to match +3 tile offset
-  dw $03E8, $03E9, $03EA, $03EB, $03EC, $03ED, $03EE, $03EF
-
-  ; Vertical channel (Y=31, X=40-46) - 7 tiles
-  ; Shifted from Y=28 to Y=31 to match +3 tile offset
-  dw $07E8, $07E9, $07EA, $07EB, $07EC, $07ED, $07EE
-
-  ; Main swim area (rows 41-44, cols 5-60) - 56 tiles per row
-  ; Link checks collision ~20px below his feet, so we cover a 4-row band.
-  dw $0A45, $0A46, $0A47, $0A48, $0A49, $0A4A, $0A4B, $0A4C, $0A4D, $0A4E
-  dw $0A4F, $0A50, $0A51, $0A52, $0A53, $0A54, $0A55, $0A56, $0A57, $0A58
-  dw $0A59, $0A5A, $0A5B, $0A5C, $0A5D, $0A5E, $0A5F, $0A60, $0A61, $0A62
-  dw $0A63, $0A64, $0A65, $0A66, $0A67, $0A68, $0A69, $0A6A, $0A6B, $0A6C
-  dw $0A6D, $0A6E, $0A6F, $0A70, $0A71, $0A72, $0A73, $0A74, $0A75, $0A76
-  dw $0A77, $0A78, $0A79, $0A7A, $0A7B, $0A7C
-
-  dw $0A85, $0A86, $0A87, $0A88, $0A89, $0A8A, $0A8B, $0A8C, $0A8D, $0A8E
-  dw $0A8F, $0A90, $0A91, $0A92, $0A93, $0A94, $0A95, $0A96, $0A97, $0A98
-  dw $0A99, $0A9A, $0A9B, $0A9C, $0A9D, $0A9E, $0A9F, $0AA0, $0AA1, $0AA2
-  dw $0AA3, $0AA4, $0AA5, $0AA6, $0AA7, $0AA8, $0AA9, $0AAA, $0AAB, $0AAC
-  dw $0AAD, $0AAE, $0AAF, $0AB0, $0AB1, $0AB2, $0AB3, $0AB4, $0AB5, $0AB6
-  dw $0AB7, $0AB8, $0AB9, $0ABA, $0ABB, $0ABC
-
-  dw $0AC5, $0AC6, $0AC7, $0AC8, $0AC9, $0ACA, $0ACB, $0ACC, $0ACD, $0ACE
-  dw $0ACF, $0AD0, $0AD1, $0AD2, $0AD3, $0AD4, $0AD5, $0AD6, $0AD7, $0AD8
-  dw $0AD9, $0ADA, $0ADB, $0ADC, $0ADD, $0ADE, $0ADF, $0AE0, $0AE1, $0AE2
-  dw $0AE3, $0AE4, $0AE5, $0AE6, $0AE7, $0AE8, $0AE9, $0AEA, $0AEB, $0AEC
-  dw $0AED, $0AEE, $0AEF, $0AF0, $0AF1, $0AF2, $0AF3, $0AF4, $0AF5, $0AF6
-  dw $0AF7, $0AF8, $0AF9, $0AFA, $0AFB, $0AFC
-
-  dw $0B05, $0B06, $0B07, $0B08, $0B09, $0B0A, $0B0B, $0B0C, $0B0D, $0B0E
-  dw $0B0F, $0B10, $0B11, $0B12, $0B13, $0B14, $0B15, $0B16, $0B17, $0B18
-  dw $0B19, $0B1A, $0B1B, $0B1C, $0B1D, $0B1E, $0B1F, $0B20, $0B21, $0B22
-  dw $0B23, $0B24, $0B25, $0B26, $0B27, $0B28, $0B29, $0B2A, $0B2B, $0B2C
-  dw $0B2D, $0B2E, $0B2F, $0B30, $0B31, $0B32, $0B33, $0B34, $0B35, $0B36
-  dw $0B37, $0B38, $0B39, $0B3A, $0B3B, $0B3C
+  dw $00A7, $00A8, $00A9, $00AA, $00AB, $00AC, $00AD, $00AE, $00AF, $00B0
+  dw $00E7, $00E8, $00E9, $00EA, $00EB, $00EC, $00ED, $00EE, $00EF, $00F0
+  dw $0127, $0128, $0129, $012A, $012B, $012C, $012D, $012E, $012F, $0130
+  dw $04A7, $04A8, $04A9, $04AA, $04AB, $04AC, $04AD, $04AE, $04AF, $04B0
+  dw $04E7, $04E8, $04E9, $04EA, $04EB, $04EC, $04ED, $04EE, $04EF, $04F0
+  dw $0527, $0528, $0529, $052A, $052B, $052C, $052D, $052E, $052F, $0530
+  dw $08A7, $08A8, $08A9, $08AA, $08AB, $08AC, $08AD, $08AE, $08E7, $08E8
+  dw $08E9, $08EA, $08EB, $08EC, $08ED, $08EE, $0927, $0928, $0929, $092A
+  dw $092B, $092C, $092D, $092E, $0A45, $0A46, $0A47, $0A48, $0A49, $0A4A
+  dw $0A4B, $0A4C, $0A4D, $0A4E, $0A4F, $0A50, $0A51, $0A52, $0A53, $0A55
+  dw $0A56, $0A57, $0A58, $0A59, $0A5A, $0A5B, $0A5C, $0A5D, $0A5E, $0A5F
+  dw $0A60, $0A61, $0A62, $0A63, $0A64, $0A65, $0A66, $0A67, $0A68, $0A69
+  dw $0A6A, $0A6B, $0A6C, $0A6D, $0A6E, $0A6F, $0A70, $0A71, $0A72, $0A73
+  dw $0A74, $0A75, $0A76, $0A77, $0A78, $0A79, $0A85, $0A86, $0A87, $0A88
+  dw $0A89, $0A8A, $0A8B, $0A8C, $0A8D, $0A8E, $0A8F, $0A90, $0A91, $0A92
+  dw $0A93, $0A95, $0A96, $0A97, $0A98, $0A99, $0A9A, $0A9B, $0A9C, $0A9D
+  dw $0A9E, $0A9F, $0AA0, $0AA1, $0AA2, $0AA3, $0AA4, $0AA5, $0AA6, $0AA7
+  dw $0AA8, $0AA9, $0AAA, $0AAB, $0AAC, $0AAD, $0AAE, $0AAF, $0AB0, $0AB1
+  dw $0AB2, $0AB3, $0AB4, $0AB5, $0AB6, $0AB7, $0AB8, $0AB9, $0AC5, $0AC6
+  dw $0AC7, $0AC8, $0AC9, $0ACA, $0ACB, $0ACC, $0ACD, $0ACE, $0ACF, $0AD0
+  dw $0AD1, $0AD2, $0AD3, $0AD5, $0AD6, $0AD7, $0AD8, $0AD9, $0ADA, $0ADB
+  dw $0ADC, $0ADD, $0ADE, $0ADF, $0AE0, $0AE1, $0AE2, $0AE3, $0AE4, $0AE5
+  dw $0AE6, $0AE7, $0AE8, $0AE9, $0AEA, $0AEB, $0AEC, $0AED, $0AEE, $0AEF
+  dw $0AF0, $0AF1, $0AF2, $0AF3, $0AF4, $0AF5, $0AF6, $0AF7, $0AF8, $0AF9
 }
 
 ; =========================================================

@@ -23,6 +23,7 @@
         "regression/golden_path_overworld.json",
         "regression/transition_ow_cave.json",
         "regression/transition_ow_d6.json",
+        "regression/transition_zora_temple_roundtrip.json",
         "regression/transition_d6_interroom.json",
         "regression/transition_lost_woods.json"
       ],
@@ -66,11 +67,11 @@
     },
     "dungeon": {
       "description": "Dungeon-related tests",
-      "tests": ["b009_mode_reset", "transition_d6_interroom"]
+      "tests": ["b009_mode_reset", "transition_d6_interroom", "transition_zora_temple_roundtrip"]
     },
     "transition": {
       "description": "All transition tests (OW→cave, OW→dungeon, inter-room, Lost Woods)",
-      "tests": ["transition_ow_cave", "transition_ow_d6", "transition_d6_interroom", "transition_lost_woods"]
+      "tests": ["transition_ow_cave", "transition_ow_d6", "transition_zora_temple_roundtrip", "transition_d6_interroom", "transition_lost_woods"]
     },
     "lint": {
       "description": "Static analysis / lint tests (no emulator required)",

@@ -417,7 +417,7 @@ Sprite_Octorok_Draw:
 
   LDA.w SprFrame, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprFlash : STA $08
+  LDA.w SprFlash, X : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
@@ -479,13 +479,14 @@ Sprite_Octorok_Draw:
   db $A2
   db $AA ; Water Octorok
   .properties
-  db $0D
-  db $4D
-  db $0D
-  db $4D
-  db $0D
-  db $0D
-  db $4D
-  db $4D
+  ; Keep land Octoroks above dense OW grass/sub-layer blends.
+  db $2D
+  db $6D
+  db $2D
+  db $6D
+  db $2D
+  db $2D
+  db $6D
+  db $6D
   db $3D ; Water Octorok
 }
