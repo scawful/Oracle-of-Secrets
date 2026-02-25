@@ -33,7 +33,6 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from scripts.mesen2_client_lib.bridge import MesenBridge
 from scripts.mesen2_client_lib.client import OracleDebugClient
 from scripts.mesen2_client_lib.constants import OracleRAM
 from scripts.mesen2_client_lib.dungeon_navigator import DungeonNavigator
@@ -63,6 +62,36 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--no-navigate", action="store_true",
                    help="Skip navigation, just render each room statically")
     return p.parse_args()
+
+
+def verify_or_regen_state(z3ed: str, state_path: str, rom: str) -> bool:
+    """Verify savestate freshness via z3ed mesen-state-verify.
+
+    If no metadata sidecar exists yet, regenerates it first.  Returns True
+    if the state passes (or was freshly pinned), False if hashes diverge.
+    """
+    def _run(cmd: list[str]) -> subprocess.CompletedProcess:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+
+    verify_cmd = [z3ed, "mesen-state-verify", "--state", state_path, "--rom-file", rom]
+    result = _run(verify_cmd)
+    if result.returncode == 0:
+        return True
+
+    # If meta is missing, regen then re-verify
+    if "meta" in result.stdout.lower() or result.returncode != 0:
+        regen_cmd = [z3ed, "mesen-state-regen", "--state", state_path, "--rom-file", rom]
+        regen = _run(regen_cmd)
+        if regen.returncode != 0:
+            print(f"  [verify] regen failed: {regen.stderr.strip()}")
+            return False
+        result = _run(verify_cmd)
+        if result.returncode == 0:
+            print(f"  [verify] pinned fresh metadata for {Path(state_path).name}")
+            return True
+
+    print(f"  [verify] STALE: {result.stdout.strip() or result.stderr.strip()}")
+    return False
 
 
 def render_room(z3ed: str, rom: str, room_id: int, output_path: Path) -> bool:
@@ -123,6 +152,12 @@ def main() -> int:
     except Exception as exc:
         print(f"  [ERROR] Cannot reach Mesen2: {exc}")
         return 1
+
+    # Verify save state freshness (ROM SHA1 + state SHA1 must match meta)
+    if not verify_or_regen_state(Z3ED, args.save_state, args.rom):
+        print("  [ERROR] Save state is stale or ROM mismatch — aborting.")
+        return 1
+    print(f"  Save state verified fresh.")
 
     # Load save state
     print(f"  Loading save state: {Path(args.save_state).name}")
