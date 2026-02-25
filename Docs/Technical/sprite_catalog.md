@@ -185,7 +185,7 @@ Several NPCs use a dispatcher pattern that routes to different behaviors:
 - **Song of Healing:** Used by Mask Salesman (teaches), Deku Scrub (Deku Mask), Bug Net Kid (Boots)
 - **WORLDFLAG routing:** Zora, Goron, Village Dog, Piratian
 - **Progress-based dialogue:** Fortune Teller, Maku Tree, Village Elder
-- **SideQuestProg flags:** Korok minigame, trading sequence tracking
+- **SideQuestProg flags:** Korok minigame tracking
 
 #### Files Needing Attention
 | File | Issue | Priority |

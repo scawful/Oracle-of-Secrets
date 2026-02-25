@@ -1,0 +1,374 @@
+{
+  "run_state": {
+    "running": true,
+    "paused": true,
+    "frame": 20424,
+    "fps": 60.1,
+    "consoleType": 0,
+    "debugging": true,
+    "lastSave": {
+      "success": true,
+      "path": "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-top-20260214/SaveStates/oos168x_99.mss",
+      "frame": 22792,
+      "timestampMs": 1771047843659
+    },
+    "lastLoad": {
+      "success": true,
+      "path": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/SaveStates/oos168x/zora_temple_outside_entry_approved_2026-02-14.mss",
+      "frame": 20169,
+      "timestampMs": 1771049362940
+    }
+  },
+  "rom_info": {
+    "filename": "oos168x.sfc",
+    "format": "Sfc",
+    "consoleType": 0,
+    "crc32": "9780E447",
+    "sha1": "32AE3405787000B8C990BC29EAF8261AF5E70F8F",
+    "frameCount": 20424
+  },
+  "oracle_state": {
+    "mode": 7,
+    "mode_name": "Dungeon",
+    "submode": 0,
+    "area": 0,
+    "area_name": "Inside: Zora Temple (Entrance)",
+    "room": 40,
+    "room_name": "Zora Temple (Entrance)",
+    "dungeon_room": 40,
+    "indoors": 1,
+    "link_x": 4344,
+    "link_y": 1496,
+    "link_z": 65535,
+    "link_dir": 0,
+    "link_dir_name": "Up",
+    "link_state": 0,
+    "link_form": 0,
+    "link_form_name": "Normal",
+    "scroll_x": 16,
+    "scroll_y": 5,
+    "time_hours": 12,
+    "time_minutes": 35,
+    "time_speed": 63,
+    "health": 160,
+    "max_health": 160,
+    "magic": 128,
+    "rupees": 999
+  },
+  "time_state": {
+    "hours": 12,
+    "minutes": 35,
+    "speed": 63,
+    "phase": "day",
+    "is_night": false,
+    "subcolor": "0x6B56",
+    "palette": {
+      "red": "0x0000",
+      "green": "0x0000",
+      "blue": "0x0000"
+    }
+  },
+  "overworld": {
+    "mode": 7,
+    "mode_name": "Dungeon",
+    "submode": 0,
+    "submode_name": "PLAYER_CONTROL",
+    "indoors": true,
+    "is_overworld": false,
+    "is_transition": false
+  },
+  "camera": {
+    "scroll_x": 4112,
+    "scroll_y": 1285,
+    "link_x": 4344,
+    "link_y": 1496,
+    "offset_x": 232,
+    "offset_y": 211
+  },
+  "camera_ok": false,
+  "warnings": [],
+  "story_state": {
+    "game_state": 2,
+    "oosprog": 0,
+    "oosprog2": 16,
+    "side_quest": 0,
+    "side_quest2": 0,
+    "crystals": 0,
+    "pendants": 0,
+    "maku_tree_quest": 0,
+    "kydrog_farore_removed": 1,
+    "deku_mask_quest": 0,
+    "zora_mask_quest": 0,
+    "in_cutscene": 0
+  },
+  "items": {
+    "bow": {
+      "value": 4,
+      "description": "Silver+Arrows"
+    },
+    "boomerang": {
+      "value": 2,
+      "description": "Red"
+    },
+    "hookshot": {
+      "value": 2,
+      "description": "Goldstar"
+    },
+    "bombs": {
+      "value": 50,
+      "description": "50"
+    },
+    "powder": {
+      "value": 2,
+      "description": "Powder"
+    },
+    "firerod": {
+      "value": 1,
+      "description": "Have"
+    },
+    "icerod": {
+      "value": 1,
+      "description": "Have"
+    },
+    "lamp": {
+      "value": 1,
+      "description": "Have"
+    },
+    "hammer": {
+      "value": 1,
+      "description": "Have"
+    },
+    "flute": {
+      "value": 5,
+      "description": "Songs: Healing, Storms, Soaring, Time"
+    },
+    "ocarina_song": {
+      "value": 3,
+      "description": "Soaring"
+    },
+    "feather": {
+      "value": 1,
+      "description": "Have"
+    },
+    "book": {
+      "value": 1,
+      "description": "Have"
+    },
+    "somaria": {
+      "value": 1,
+      "description": "Have"
+    },
+    "mirror": {
+      "value": 2,
+      "description": "Mirror"
+    },
+    "zoramask": {
+      "value": 1,
+      "description": "Have"
+    },
+    "dekumask": {
+      "value": 1,
+      "description": "Have"
+    },
+    "bunnymask": {
+      "value": 1,
+      "description": "Have"
+    },
+    "stonemask": {
+      "value": 1,
+      "description": "Have"
+    },
+    "wolfmask": {
+      "value": 1,
+      "description": "Have"
+    },
+    "sword": {
+      "value": 4,
+      "description": "Golden"
+    },
+    "shield": {
+      "value": 3,
+      "description": "Mirror"
+    },
+    "armor": {
+      "value": 2,
+      "description": "Red"
+    },
+    "gloves": {
+      "value": 2,
+      "description": "Titan"
+    },
+    "boots": {
+      "value": 1,
+      "description": "Have"
+    },
+    "flippers": {
+      "value": 1,
+      "description": "Have"
+    },
+    "moonpearl": {
+      "value": 1,
+      "description": "Have"
+    },
+    "health": {
+      "value": 160,
+      "description": "160"
+    },
+    "maxhealth": {
+      "value": 160,
+      "description": "160"
+    },
+    "magic": {
+      "value": 128,
+      "description": "128"
+    },
+    "rupees": {
+      "value": 999,
+      "description": "999"
+    },
+    "arrows": {
+      "value": 70,
+      "description": "70"
+    },
+    "keys": {
+      "value": 0,
+      "description": "0"
+    }
+  },
+  "flags": {
+    "gamestate": {
+      "value": 2,
+      "is_set": true
+    },
+    "oosprog": {
+      "value": 0,
+      "is_set": false
+    },
+    "intro": {
+      "value": 0,
+      "is_set": false
+    },
+    "hall": {
+      "value": 0,
+      "is_set": false
+    },
+    "pendant": {
+      "value": 0,
+      "is_set": false
+    },
+    "mastersword": {
+      "value": 0,
+      "is_set": false
+    },
+    "fortress": {
+      "value": 0,
+      "is_set": false
+    },
+    "oosprog2": {
+      "value": 16,
+      "is_set": true
+    },
+    "impa": {
+      "value": 16,
+      "is_set": false
+    },
+    "sanctuary": {
+      "value": 16,
+      "is_set": false
+    },
+    "kydrog": {
+      "value": 16,
+      "is_set": false
+    },
+    "bookflag": {
+      "value": 16,
+      "is_set": false
+    },
+    "crystals": {
+      "value": 0,
+      "is_set": false
+    },
+    "d1": {
+      "value": 0,
+      "is_set": false
+    },
+    "d2": {
+      "value": 0,
+      "is_set": false
+    },
+    "d3": {
+      "value": 0,
+      "is_set": false
+    },
+    "d4": {
+      "value": 0,
+      "is_set": false
+    },
+    "d5": {
+      "value": 0,
+      "is_set": false
+    },
+    "d6": {
+      "value": 0,
+      "is_set": false
+    },
+    "d7": {
+      "value": 0,
+      "is_set": false
+    },
+    "pendants": {
+      "value": 0,
+      "is_set": false
+    },
+    "wisdom": {
+      "value": 0,
+      "is_set": false
+    },
+    "power": {
+      "value": 0,
+      "is_set": false
+    },
+    "courage": {
+      "value": 0,
+      "is_set": false
+    },
+    "sidequest": {
+      "value": 0,
+      "is_set": false
+    },
+    "masksalesman": {
+      "value": 0,
+      "is_set": false
+    },
+    "dekufound": {
+      "value": 0,
+      "is_set": false
+    },
+    "goronquest": {
+      "value": 0,
+      "is_set": false
+    },
+    "makutree": {
+      "value": 0,
+      "is_set": false
+    },
+    "dekuquest": {
+      "value": 0,
+      "is_set": false
+    },
+    "zoraquest": {
+      "value": 0,
+      "is_set": false
+    }
+  },
+  "watch_profile": "overworld",
+  "watch_values": {
+    "AreaID": "0x00",
+    "ScrollX": "0x10",
+    "ScrollY": "0x05",
+    "LinkX": 4344,
+    "LinkY": 1496,
+    "Mode": "0x07"
+  },
+  "sprites": []
+}

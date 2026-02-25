@@ -1,0 +1,386 @@
+{
+  "success": true,
+  "data": {
+    "writes": [
+      {
+        "pc": "0x02B6F9",
+        "addr": "0x7E0011",
+        "value": "0x01",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957901
+      },
+      {
+        "pc": "0x02B72D",
+        "addr": "0x7E0011",
+        "value": "0x02",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957995
+      },
+      {
+        "pc": "0x000064",
+        "addr": "0x7E0011",
+        "value": "0x36",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939410702
+      },
+      {
+        "pc": "0x003A62",
+        "addr": "0x7E0011",
+        "value": "0x00",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939432894
+      },
+      {
+        "pc": "0x000D1C",
+        "addr": "0x7E0011",
+        "value": "0x40",
+        "size": 1,
+        "opcode": "0x44",
+        "sp": "0x0106",
+        "cycle": 939525129
+      },
+      {
+        "pc": "0x02B6F9",
+        "addr": "0x7E0011",
+        "value": "0x01",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957901
+      },
+      {
+        "pc": "0x02B72D",
+        "addr": "0x7E0011",
+        "value": "0x02",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957995
+      },
+      {
+        "pc": "0x000064",
+        "addr": "0x7E0011",
+        "value": "0x36",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939410702
+      },
+      {
+        "pc": "0x003A62",
+        "addr": "0x7E0011",
+        "value": "0x00",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939432894
+      },
+      {
+        "pc": "0x000D1C",
+        "addr": "0x7E0011",
+        "value": "0x40",
+        "size": 1,
+        "opcode": "0x44",
+        "sp": "0x0106",
+        "cycle": 939525129
+      },
+      {
+        "pc": "0x02B6F9",
+        "addr": "0x7E0011",
+        "value": "0x01",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957901
+      },
+      {
+        "pc": "0x02B72D",
+        "addr": "0x7E0011",
+        "value": "0x02",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957995
+      },
+      {
+        "pc": "0x000064",
+        "addr": "0x7E0011",
+        "value": "0x36",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939410702
+      },
+      {
+        "pc": "0x003A62",
+        "addr": "0x7E0011",
+        "value": "0x00",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939432894
+      },
+      {
+        "pc": "0x02B6F9",
+        "addr": "0x7E0011",
+        "value": "0x01",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957924
+      },
+      {
+        "pc": "0x02B72D",
+        "addr": "0x7E0011",
+        "value": "0x02",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938958018
+      },
+      {
+        "pc": "0x02B6F9",
+        "addr": "0x7E0011",
+        "value": "0x01",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957924
+      },
+      {
+        "pc": "0x02B72D",
+        "addr": "0x7E0011",
+        "value": "0x02",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938958018
+      },
+      {
+        "pc": "0x000064",
+        "addr": "0x7E0011",
+        "value": "0x36",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939410725
+      },
+      {
+        "pc": "0x003A62",
+        "addr": "0x7E0011",
+        "value": "0x00",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939432917
+      },
+      {
+        "pc": "0x000D1C",
+        "addr": "0x7E0011",
+        "value": "0x40",
+        "size": 1,
+        "opcode": "0x44",
+        "sp": "0x0106",
+        "cycle": 939525152
+      },
+      {
+        "pc": "0x02B6F9",
+        "addr": "0x7E0011",
+        "value": "0x01",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957901
+      },
+      {
+        "pc": "0x02B72D",
+        "addr": "0x7E0011",
+        "value": "0x02",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957995
+      },
+      {
+        "pc": "0x000064",
+        "addr": "0x7E0011",
+        "value": "0x36",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939410702
+      },
+      {
+        "pc": "0x003A62",
+        "addr": "0x7E0011",
+        "value": "0x00",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939432894
+      },
+      {
+        "pc": "0x000D1C",
+        "addr": "0x7E0011",
+        "value": "0x40",
+        "size": 1,
+        "opcode": "0x44",
+        "sp": "0x0106",
+        "cycle": 939525129
+      },
+      {
+        "pc": "0x02B6F9",
+        "addr": "0x7E0011",
+        "value": "0x01",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957901
+      },
+      {
+        "pc": "0x02B72D",
+        "addr": "0x7E0011",
+        "value": "0x02",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957995
+      },
+      {
+        "pc": "0x000064",
+        "addr": "0x7E0011",
+        "value": "0x36",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939410702
+      },
+      {
+        "pc": "0x003A62",
+        "addr": "0x7E0011",
+        "value": "0x00",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939432894
+      },
+      {
+        "pc": "0x02B6F9",
+        "addr": "0x7E0011",
+        "value": "0x01",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957924
+      },
+      {
+        "pc": "0x02B72D",
+        "addr": "0x7E0011",
+        "value": "0x02",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938958018
+      },
+      {
+        "pc": "0x02B6F9",
+        "addr": "0x7E0011",
+        "value": "0x01",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957924
+      },
+      {
+        "pc": "0x02B72D",
+        "addr": "0x7E0011",
+        "value": "0x02",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938958018
+      },
+      {
+        "pc": "0x000064",
+        "addr": "0x7E0011",
+        "value": "0x36",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939410725
+      },
+      {
+        "pc": "0x003A62",
+        "addr": "0x7E0011",
+        "value": "0x00",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939432917
+      },
+      {
+        "pc": "0x000D1C",
+        "addr": "0x7E0011",
+        "value": "0x40",
+        "size": 1,
+        "opcode": "0x44",
+        "sp": "0x0106",
+        "cycle": 939525152
+      },
+      {
+        "pc": "0x02B6F9",
+        "addr": "0x7E0011",
+        "value": "0x01",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938957924
+      },
+      {
+        "pc": "0x02B72D",
+        "addr": "0x7E0011",
+        "value": "0x02",
+        "size": 1,
+        "opcode": "0xE6",
+        "sp": "0x01EE",
+        "cycle": 938958018
+      },
+      {
+        "pc": "0x000064",
+        "addr": "0x7E0011",
+        "value": "0x36",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939410725
+      },
+      {
+        "pc": "0x003A62",
+        "addr": "0x7E0011",
+        "value": "0x00",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0011",
+        "cycle": 939432917
+      },
+      {
+        "pc": "0x000D1C",
+        "addr": "0x7E0011",
+        "value": "0x40",
+        "size": 1,
+        "opcode": "0x44",
+        "sp": "0x0106",
+        "cycle": 939525152
+      }
+    ],
+    "count": 42
+  }
+}

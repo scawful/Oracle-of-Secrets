@@ -1,0 +1,26 @@
+{
+  "success": true,
+  "data": {
+    "writes": [
+      {
+        "pc": "0x0080F3",
+        "addr": "0x002140",
+        "value": "0xF1",
+        "size": 1,
+        "opcode": "0x8D",
+        "sp": "0x01E6",
+        "cycle": 704164298
+      },
+      {
+        "pc": "0x0080F3",
+        "addr": "0x002140",
+        "value": "0x16",
+        "size": 1,
+        "opcode": "0x8D",
+        "sp": "0x01F2",
+        "cycle": 710045321
+      }
+    ],
+    "count": 2
+  }
+}

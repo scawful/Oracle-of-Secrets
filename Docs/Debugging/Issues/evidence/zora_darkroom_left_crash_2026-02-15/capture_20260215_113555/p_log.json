@@ -1,0 +1,1609 @@
+{
+  "success": true,
+  "data": {
+    "entries": [
+      {
+        "pc": "0x00D07A",
+        "old_p": "0x33",
+        "new_p": "0x31",
+        "opcode": "0xAE",
+        "flags_changed": "Z",
+        "cycle": 939526076
+      },
+      {
+        "pc": "0x00D078",
+        "old_p": "0xB1",
+        "new_p": "0x33",
+        "opcode": "0xA6",
+        "flags_changed": "NZ",
+        "cycle": 939526072
+      },
+      {
+        "pc": "0x00D06F",
+        "old_p": "0x30",
+        "new_p": "0xB1",
+        "opcode": "0xFD",
+        "flags_changed": "NC",
+        "cycle": 939526061
+      },
+      {
+        "pc": "0x00D06E",
+        "old_p": "0xB0",
+        "new_p": "0x30",
+        "opcode": "0xFA",
+        "flags_changed": "N",
+        "cycle": 939526057
+      },
+      {
+        "pc": "0x00D06B",
+        "old_p": "0xB1",
+        "new_p": "0xB0",
+        "opcode": "0xEC",
+        "flags_changed": "C",
+        "cycle": 939526053
+      },
+      {
+        "pc": "0x00D068",
+        "old_p": "0x33",
+        "new_p": "0xB1",
+        "opcode": "0xDD",
+        "flags_changed": "NZ",
+        "cycle": 939526049
+      },
+      {
+        "pc": "0x00D067",
+        "old_p": "0x3B",
+        "new_p": "0x33",
+        "opcode": "0xD8",
+        "flags_changed": "D",
+        "cycle": 939526045
+      },
+      {
+        "pc": "0x00D064",
+        "old_p": "0x39",
+        "new_p": "0x3B",
+        "opcode": "0xCE",
+        "flags_changed": "Z",
+        "cycle": 939526043
+      },
+      {
+        "pc": "0x00D060",
+        "old_p": "0xB9",
+        "new_p": "0x39",
+        "opcode": "0xBC",
+        "flags_changed": "N",
+        "cycle": 939526034
+      },
+      {
+        "pc": "0x00D050",
+        "old_p": "0x39",
+        "new_p": "0xB9",
+        "opcode": "0x98",
+        "flags_changed": "N",
+        "cycle": 939526000
+      },
+      {
+        "pc": "0x000D50",
+        "old_p": "0x31",
+        "new_p": "0x39",
+        "opcode": "0xF8",
+        "flags_changed": "D",
+        "cycle": 939525804
+      },
+      {
+        "pc": "0x00F2F6",
+        "old_p": "0xB1",
+        "new_p": "0x31",
+        "opcode": "0xA9",
+        "flags_changed": "N",
+        "cycle": 939525793
+      },
+      {
+        "pc": "0x00F2F2",
+        "old_p": "0x31",
+        "new_p": "0xB1",
+        "opcode": "0xA9",
+        "flags_changed": "N",
+        "cycle": 939525788
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0xB5",
+        "new_p": "0x31",
+        "opcode": "0x40",
+        "flags_changed": "NI",
+        "cycle": 939525780
+      },
+      {
+        "pc": "0x00831D",
+        "old_p": "0x35",
+        "new_p": "0xB5",
+        "opcode": "0x68",
+        "flags_changed": "N",
+        "cycle": 939525774
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0xB5",
+        "new_p": "0x35",
+        "opcode": "0xFA",
+        "flags_changed": "N",
+        "cycle": 939525770
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x35",
+        "new_p": "0xB5",
+        "opcode": "0x7A",
+        "flags_changed": "N",
+        "cycle": 939525766
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x37",
+        "new_p": "0x35",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939525746
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x35",
+        "new_p": "0x37",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939525733
+      },
+      {
+        "pc": "0x000D4B",
+        "old_p": "0x31",
+        "new_p": "0x35",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939525705
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0xB5",
+        "new_p": "0x31",
+        "opcode": "0x40",
+        "flags_changed": "NI",
+        "cycle": 939525698
+      },
+      {
+        "pc": "0x00831D",
+        "old_p": "0x35",
+        "new_p": "0xB5",
+        "opcode": "0x68",
+        "flags_changed": "N",
+        "cycle": 939525692
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0xB5",
+        "new_p": "0x35",
+        "opcode": "0xFA",
+        "flags_changed": "N",
+        "cycle": 939525688
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x35",
+        "new_p": "0xB5",
+        "opcode": "0x7A",
+        "flags_changed": "N",
+        "cycle": 939525684
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x37",
+        "new_p": "0x35",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939525664
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x35",
+        "new_p": "0x37",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939525651
+      },
+      {
+        "pc": "0x000D49",
+        "old_p": "0x31",
+        "new_p": "0x35",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939525623
+      },
+      {
+        "pc": "0x000D47",
+        "old_p": "0x30",
+        "new_p": "0x31",
+        "opcode": "0xE0",
+        "flags_changed": "C",
+        "cycle": 939525616
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0xB4",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "NI",
+        "cycle": 939525614
+      },
+      {
+        "pc": "0x00831D",
+        "old_p": "0x34",
+        "new_p": "0xB4",
+        "opcode": "0x68",
+        "flags_changed": "N",
+        "cycle": 939525608
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0xB4",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "N",
+        "cycle": 939525604
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0xB4",
+        "opcode": "0x7A",
+        "flags_changed": "N",
+        "cycle": 939525600
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939525580
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939525567
+      },
+      {
+        "pc": "0x000D45",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939525539
+      },
+      {
+        "pc": "0x000D40",
+        "old_p": "0xB1",
+        "new_p": "0x30",
+        "opcode": "0x0E",
+        "flags_changed": "NC",
+        "cycle": 939525525
+      },
+      {
+        "pc": "0x000D3D",
+        "old_p": "0xB0",
+        "new_p": "0xB1",
+        "opcode": "0x0A",
+        "flags_changed": "C",
+        "cycle": 939525510
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0xB4",
+        "new_p": "0xB0",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939525508
+      },
+      {
+        "pc": "0x00831D",
+        "old_p": "0x34",
+        "new_p": "0xB4",
+        "opcode": "0x68",
+        "flags_changed": "N",
+        "cycle": 939525502
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0xB4",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "N",
+        "cycle": 939525498
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0xB4",
+        "opcode": "0x7A",
+        "flags_changed": "N",
+        "cycle": 939525494
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939525474
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0xB4",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "NZ",
+        "cycle": 939525461
+      },
+      {
+        "pc": "0x000D3B",
+        "old_p": "0xB0",
+        "new_p": "0xB4",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939525433
+      },
+      {
+        "pc": "0x000D3A",
+        "old_p": "0x30",
+        "new_p": "0xB0",
+        "opcode": "0x0A",
+        "flags_changed": "N",
+        "cycle": 939525426
+      },
+      {
+        "pc": "0x000D35",
+        "old_p": "0x31",
+        "new_p": "0x30",
+        "opcode": "0x0A",
+        "flags_changed": "C",
+        "cycle": 939525410
+      },
+      {
+        "pc": "0x000D34",
+        "old_p": "0xB0",
+        "new_p": "0x31",
+        "opcode": "0x0A",
+        "flags_changed": "NC",
+        "cycle": 939525408
+      },
+      {
+        "pc": "0x000D33",
+        "old_p": "0x30",
+        "new_p": "0xB0",
+        "opcode": "0x0A",
+        "flags_changed": "N",
+        "cycle": 939525406
+      },
+      {
+        "pc": "0x000D2F",
+        "old_p": "0x31",
+        "new_p": "0x30",
+        "opcode": "0x06",
+        "flags_changed": "C",
+        "cycle": 939525396
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x35",
+        "new_p": "0x31",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939525384
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0xB5",
+        "new_p": "0x35",
+        "opcode": "0xFA",
+        "flags_changed": "N",
+        "cycle": 939525374
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x35",
+        "new_p": "0xB5",
+        "opcode": "0x7A",
+        "flags_changed": "N",
+        "cycle": 939525370
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x37",
+        "new_p": "0x35",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939525350
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x35",
+        "new_p": "0x37",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939525337
+      },
+      {
+        "pc": "0x000D2B",
+        "old_p": "0x31",
+        "new_p": "0x35",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939525309
+      },
+      {
+        "pc": "0x000D29",
+        "old_p": "0x33",
+        "new_p": "0x31",
+        "opcode": "0x07",
+        "flags_changed": "Z",
+        "cycle": 939525302
+      },
+      {
+        "pc": "0x000D27",
+        "old_p": "0xB0",
+        "new_p": "0x33",
+        "opcode": "0x06",
+        "flags_changed": "NZC",
+        "cycle": 939525296
+      },
+      {
+        "pc": "0x000D25",
+        "old_p": "0x30",
+        "new_p": "0xB0",
+        "opcode": "0x06",
+        "flags_changed": "N",
+        "cycle": 939525290
+      },
+      {
+        "pc": "0x000D23",
+        "old_p": "0x32",
+        "new_p": "0x30",
+        "opcode": "0x07",
+        "flags_changed": "Z",
+        "cycle": 939525284
+      },
+      {
+        "pc": "0x000D17",
+        "old_p": "0x30",
+        "new_p": "0x32",
+        "opcode": "0x3D",
+        "flags_changed": "Z",
+        "cycle": 939523472
+      },
+      {
+        "pc": "0x000D15",
+        "old_p": "0x32",
+        "new_p": "0x30",
+        "opcode": "0x77",
+        "flags_changed": "Z",
+        "cycle": 939523468
+      },
+      {
+        "pc": "0x000D14",
+        "old_p": "0x30",
+        "new_p": "0x32",
+        "opcode": "0x2B",
+        "flags_changed": "Z",
+        "cycle": 939523462
+      },
+      {
+        "pc": "0x000D10",
+        "old_p": "0xB0",
+        "new_p": "0x30",
+        "opcode": "0x2F",
+        "flags_changed": "N",
+        "cycle": 939523457
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0xB0",
+        "opcode": "0x40",
+        "flags_changed": "NI",
+        "cycle": 939523452
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939523442
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939523438
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939523418
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0xB4",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "NZ",
+        "cycle": 939523405
+      },
+      {
+        "pc": "0x000D0E",
+        "old_p": "0xB0",
+        "new_p": "0xB4",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939523377
+      },
+      {
+        "pc": "0x000D0C",
+        "old_p": "0x30",
+        "new_p": "0xB0",
+        "opcode": "0xC0",
+        "flags_changed": "N",
+        "cycle": 939523370
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939523350
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939523340
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939523336
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939523316
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939523303
+      },
+      {
+        "pc": "0x000CFF",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939523275
+      },
+      {
+        "pc": "0x000CFC",
+        "old_p": "0xB0",
+        "new_p": "0x30",
+        "opcode": "0x0D",
+        "flags_changed": "N",
+        "cycle": 939523268
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0xB0",
+        "opcode": "0x40",
+        "flags_changed": "NI",
+        "cycle": 939523264
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939523254
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939523250
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939523230
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0xB4",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "NZ",
+        "cycle": 939523217
+      },
+      {
+        "pc": "0x000CFA",
+        "old_p": "0xB0",
+        "new_p": "0xB4",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939523189
+      },
+      {
+        "pc": "0x000CF8",
+        "old_p": "0x30",
+        "new_p": "0xB0",
+        "opcode": "0x26",
+        "flags_changed": "N",
+        "cycle": 939523182
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939523176
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939523166
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939523162
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939523142
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939523129
+      },
+      {
+        "pc": "0x000CF6",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939523101
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939523094
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939523084
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939523080
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939523060
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939523047
+      },
+      {
+        "pc": "0x000CF4",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939523019
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939523006
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522996
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522992
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522972
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939522959
+      },
+      {
+        "pc": "0x000CF0",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522931
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939522924
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522914
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522910
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522890
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939522877
+      },
+      {
+        "pc": "0x000CEE",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522849
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939522842
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522832
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522828
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522808
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939522795
+      },
+      {
+        "pc": "0x000CEC",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522767
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939522760
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522750
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522746
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522726
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939522713
+      },
+      {
+        "pc": "0x000CEA",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522685
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939522678
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522668
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522664
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522644
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939522631
+      },
+      {
+        "pc": "0x000CE8",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522603
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939522596
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522586
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522582
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522562
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939522549
+      },
+      {
+        "pc": "0x000CE6",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522521
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939522514
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522504
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522500
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522480
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939522467
+      },
+      {
+        "pc": "0x000CE4",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522439
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939522432
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522422
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522418
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522398
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939522385
+      },
+      {
+        "pc": "0x000CE2",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522357
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939522346
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522336
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522332
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522312
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939522299
+      },
+      {
+        "pc": "0x000CDE",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522271
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939522264
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522254
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522250
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522230
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939522217
+      },
+      {
+        "pc": "0x000CDC",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522189
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x34",
+        "new_p": "0x30",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939522172
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522162
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522158
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522138
+      },
+      {
+        "pc": "0x0082E1",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0xAB",
+        "flags_changed": "Z",
+        "cycle": 939522125
+      },
+      {
+        "pc": "0x000CD6",
+        "old_p": "0x30",
+        "new_p": "0x34",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522097
+      },
+      {
+        "pc": "0x000CD2",
+        "old_p": "0x32",
+        "new_p": "0x30",
+        "opcode": "0x03",
+        "flags_changed": "Z",
+        "cycle": 939522084
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x36",
+        "new_p": "0x32",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939522080
+      },
+      {
+        "pc": "0x00831D",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x68",
+        "flags_changed": "Z",
+        "cycle": 939522074
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939522070
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939522066
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939522046
+      },
+      {
+        "pc": "0x000CD0",
+        "old_p": "0x32",
+        "new_p": "0x36",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939522005
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x36",
+        "new_p": "0x32",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939521998
+      },
+      {
+        "pc": "0x00831D",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x68",
+        "flags_changed": "Z",
+        "cycle": 939521992
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939521988
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939521984
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939521964
+      },
+      {
+        "pc": "0x000CCE",
+        "old_p": "0x32",
+        "new_p": "0x36",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939521923
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x36",
+        "new_p": "0x32",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939521916
+      },
+      {
+        "pc": "0x00831D",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x68",
+        "flags_changed": "Z",
+        "cycle": 939521910
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939521906
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939521902
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939521882
+      },
+      {
+        "pc": "0x000CCC",
+        "old_p": "0x32",
+        "new_p": "0x36",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939521841
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x36",
+        "new_p": "0x32",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939521834
+      },
+      {
+        "pc": "0x00831D",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x68",
+        "flags_changed": "Z",
+        "cycle": 939521828
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939521824
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939521820
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939521800
+      },
+      {
+        "pc": "0x000CCA",
+        "old_p": "0x32",
+        "new_p": "0x36",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939521759
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x36",
+        "new_p": "0x32",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939521752
+      },
+      {
+        "pc": "0x00831D",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x68",
+        "flags_changed": "Z",
+        "cycle": 939521746
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939521742
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939521738
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939521718
+      },
+      {
+        "pc": "0x000CC8",
+        "old_p": "0x32",
+        "new_p": "0x36",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939521677
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x36",
+        "new_p": "0x32",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939521670
+      },
+      {
+        "pc": "0x00831D",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x68",
+        "flags_changed": "Z",
+        "cycle": 939521664
+      },
+      {
+        "pc": "0x00831C",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xFA",
+        "flags_changed": "Z",
+        "cycle": 939521660
+      },
+      {
+        "pc": "0x00831B",
+        "old_p": "0x34",
+        "new_p": "0x36",
+        "opcode": "0x7A",
+        "flags_changed": "Z",
+        "cycle": 939521656
+      },
+      {
+        "pc": "0x0082E9",
+        "old_p": "0x36",
+        "new_p": "0x34",
+        "opcode": "0xAD",
+        "flags_changed": "Z",
+        "cycle": 939521636
+      },
+      {
+        "pc": "0x000CC6",
+        "old_p": "0x32",
+        "new_p": "0x36",
+        "opcode": "0x00",
+        "flags_changed": "I",
+        "cycle": 939521595
+      },
+      {
+        "pc": "0x00831E",
+        "old_p": "0x36",
+        "new_p": "0x32",
+        "opcode": "0x40",
+        "flags_changed": "I",
+        "cycle": 939521588
+      }
+    ],
+    "total": 8000,
+    "returned": 200
+  }
+}

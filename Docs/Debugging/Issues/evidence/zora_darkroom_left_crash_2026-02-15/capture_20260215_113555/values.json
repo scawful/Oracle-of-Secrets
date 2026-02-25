@@ -1,0 +1,163 @@
+{
+  "0x7E0013": {
+    "desc": "INIDISP queue (INIDISPQ)",
+    "size": 1,
+    "ok": true,
+    "bytes": "40",
+    "value_le": 64
+  },
+  "0x7E001A": {
+    "desc": "Frame counter (FRAME)",
+    "size": 1,
+    "ok": true,
+    "bytes": "40",
+    "value_le": 64
+  },
+  "0x7E0010": {
+    "desc": "GameMode",
+    "size": 1,
+    "ok": true,
+    "bytes": "40",
+    "value_le": 64
+  },
+  "0x7E0011": {
+    "desc": "SubMode",
+    "size": 1,
+    "ok": true,
+    "bytes": "40",
+    "value_le": 64
+  },
+  "0x7E00A0": {
+    "desc": "Room layout index",
+    "size": 1,
+    "ok": true,
+    "bytes": "40",
+    "value_le": 64
+  },
+  "0x7E00A4": {
+    "desc": "Room ID (16-bit)",
+    "size": 2,
+    "ok": true,
+    "bytes": "4040",
+    "value_le": 16448
+  },
+  "0x7E009B": {
+    "desc": "HDMA enable queue (HDMAENQ)",
+    "size": 1,
+    "ok": true,
+    "bytes": "40",
+    "value_le": 64
+  },
+  "0x7EC005": {
+    "desc": "RMFADE/RMFADE2 (room fade flags)",
+    "size": 2,
+    "ok": true,
+    "bytes": "0100",
+    "value_le": 1
+  },
+  "0x7EC007": {
+    "desc": "FADETIME (transition fade timer)",
+    "size": 2,
+    "ok": true,
+    "bytes": "0000",
+    "value_le": 0
+  },
+  "0x7EC009": {
+    "desc": "RMFADEDIR (fade direction)",
+    "size": 2,
+    "ok": true,
+    "bytes": "0000",
+    "value_le": 0
+  },
+  "0x7EC00B": {
+    "desc": "FADETGT (target fade level)",
+    "size": 2,
+    "ok": true,
+    "bytes": "1f00",
+    "value_le": 31
+  },
+  "0x7EC011": {
+    "desc": "MOSAICLEVEL (mosaic level)",
+    "size": 2,
+    "ok": true,
+    "bytes": "0000",
+    "value_le": 0
+  },
+  "0x7EC017": {
+    "desc": "DARKNESS (room darkness level)",
+    "size": 2,
+    "ok": true,
+    "bytes": "0000",
+    "value_le": 0
+  },
+  "0x7E044A": {
+    "desc": "EGSTR (layer interaction / darkness behavior)",
+    "size": 2,
+    "ok": true,
+    "bytes": "0636",
+    "value_le": 13830
+  },
+  "0x7E0458": {
+    "desc": "DARKLAMP (lamp-in-dark-room flag)",
+    "size": 2,
+    "ok": true,
+    "bytes": "0036",
+    "value_le": 13824
+  },
+  "0x7E045A": {
+    "desc": "LIGHT (torches lit count)",
+    "size": 2,
+    "ok": true,
+    "bytes": "0636",
+    "value_le": 13830
+  },
+  "0x7E067C": {
+    "desc": "IRISTOP (spotlight HDMA top)",
+    "size": 2,
+    "ok": true,
+    "bytes": "0636",
+    "value_le": 13830
+  },
+  "0x7E067E": {
+    "desc": "IRISTYPE (spotlight type)",
+    "size": 2,
+    "ok": true,
+    "bytes": "0036",
+    "value_le": 13824
+  },
+  "0x7E009A": {
+    "desc": "Color math ($9A)",
+    "size": 1,
+    "ok": true,
+    "bytes": "7e",
+    "value_le": 126
+  },
+  "0x7E009C": {
+    "desc": "Color math ($9C)",
+    "size": 1,
+    "ok": true,
+    "bytes": "40",
+    "value_le": 64
+  },
+  "0x7E009D": {
+    "desc": "Color math ($9D)",
+    "size": 1,
+    "ok": true,
+    "bytes": "40",
+    "value_le": 64
+  },
+  "0x7E01FC": {
+    "desc": "Stack page tail ($01FC-$01FE)",
+    "size": 3,
+    "ok": true,
+    "bytes": "060006",
+    "value_le": 393222
+  },
+  "0x7E1F0A": {
+    "desc": "NMI SP save ($1F0A)",
+    "size": 2,
+    "ok": true,
+    "bytes": "131f",
+    "value_le": 7955
+  }
+}

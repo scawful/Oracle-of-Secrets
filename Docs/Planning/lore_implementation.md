@@ -1,6 +1,6 @@
 # Oracle of Secrets - Lore Implementation Tracker
 
-**Last Updated:** 2026-01-22
+**Last Updated:** 2026-02-12
 **Reference:** `Docs/World/Lore/story_bible.md`, `Docs/World/Lore/gossip_stones.md`
 
 ---
@@ -74,13 +74,30 @@ These messages already support our story bible:
 - `100-13F`: Zora Baby, Ranch Girl, attract scenes, maidens
 - `190-1AF`: Tingle, Librarian, Sea Zora lore
 
-### Proposed Reservations
-| Range | Purpose | Count |
-|-------|---------|-------|
-| `200-214` | Gossip Stones (GS01-GS21) | 21 |
-| `220-22F` | Dream Sequences | 16 |
-| `230-23F` | Reactive NPC variants | 16 |
-| `240-24F` | Twinrova expanded dialogue | 16 |
+### Proposed Reservations (Updated 2026-02-12)
+
+**Expanded bank currently ends at 0x1BB.** Ranges below require bank extension. Verify capacity before committing.
+
+| Range | Purpose | Count | Status |
+|-------|---------|-------|--------|
+| `1BC-1D4` | *(gap — available)* | 25 | Unassigned |
+| `1D5-1D8` | Windmill Guy (Song of Storms chain) | 4 | Assigned to Gemini Task 1 |
+| `1D9-1DF` | *(gap — available)* | 7 | Unassigned |
+| `1E0-1E4` | Goron Elder (Rock Meat quest) | 5 | Assigned to Gemini Task 1 |
+| `1E5-1E7` | River Zora Elder (Reconciliation) | 3 | Assigned to Gemini Task 1 |
+| `1E8-1EA` | Bean Vendor (Magic Bean quest) | 3 | Assigned to Gemini Task 1 |
+| `1EB-1EF` | Cartographer (Seashell quest) | 5 | Assigned to Gemini Task 1 |
+| `1F0-1F9` | Koroks (10 unique lore fragments) | 10 | Assigned to Gemini Task 1 |
+| `1FA-1FF` | *(gap — available)* | 6 | Unassigned |
+| `200-214` | Gossip Stones (GS01-GS21) | 21 | Text written, placement blocked |
+| `220-224` | Dream Sequences (3 core) | 5 | Designed, not implemented |
+| `225-229` | Dream Sequences (2 bonus) | 5 | Designed, lower priority |
+| `230-23F` | Reactive NPC variants | 16 | Planned |
+| `240-24F` | Twinrova expanded dialogue | 16 | Draft exists (0x240-0x241) |
+
+**Gemini dialogue bundles (2026-02-12):** ~50 messages across 7 JSON files. Codex building batch import to load them. See `scratchpad/gemini_prompts_2026-02-12.md`.
+
+**Maiden identity upgrades** reuse existing IDs: 0x132 (D1), 0x133 (D2), 0x137 (D6). Gemini drafting replacement text.
 
 ---
 
@@ -176,16 +193,26 @@ We remember when these woods
 - Existing: `Dungeons/attract_scenes.asm`
 - Existing: `Core/messages.org` attract format (`[SPD:00][C:07][S:03][W:02][IMG]`)
 
-### Dream Scripts Needed
+### Dream Scripts Needed (Aligned with narrative_design_master_plan.md)
 
-| Dream | Trigger | Content | Message IDs |
-|-------|---------|---------|-------------|
-| **Deku Business Scrub** | Post-pendant | Deku lore, Tail Palace foreshadow | `220`-`221` |
-| **Ranch Girl / Twinrova** | Post-D5 | See transformation, lineage reveal | `222`-`224` |
-| **Hyrule Castle** | Song of Time | Historical context, Hylian occupation | `225`-`227` |
-| **River Zora King** | Zora progression | Zora conflict backstory | `228`-`229` |
-| **Kydrog Sealing** | Major milestone | See original sealing, Ganondorf | `22A`-`22C` |
-| **Mine Collapse** | Goron Mines | Mining disaster, earth themes | `22D`-`22F` |
+**3 Core Dreams (narrative-critical, no skip):**
+
+| Dream | Trigger | Content | Message IDs | Complexity |
+|-------|---------|---------|-------------|------------|
+| **Dream 1: The Sealing War** | Post-D2 | Ancient Soldier witnesses Kydrog's fall | `220`-`222` | HIGH — custom sprite |
+| **Dream 2: Ranch Girl's Secret** | Post-D5 | Twinrova's curse on Ranch Girl revealed | `223`-`225` | MEDIUM — HDMA effects |
+| **Dream 3: Observatory Vision** | Sky Islands | Ganondorf's imprisonment, 3-phase weakness | `226`-`228` | **LOW — implement first** |
+
+**2 Bonus Dreams (optional, lower priority):**
+
+| Dream | Trigger | Content | Message IDs | Complexity |
+|-------|---------|---------|-------------|------------|
+| **Dream 4: The Reflection** | Post-D3 | Mirror shows Kydrog as knight → skeleton | `229`-`22A` | MEDIUM |
+| **Dream 5: The Giant's Message** | Post-D6 | Shadowed silhouette warns of seal breaking | `22B`-`22C` | LOW |
+
+**Implementation order:** Dream 3 first (static images + text, highest narrative payoff), then Dream 1 and 2. Bonus dreams are post-RC polish.
+
+**SRAM tracking:** `$7EF410` bitfield (bits 0-4, one per dream).
 
 ---
 
@@ -227,20 +254,32 @@ set foot on this island!
 
 ## Open Questions
 
-1. **Gossip Stone activation** - Always talk, or require item/progression?
-2. **Kydrog's living name** - Still TBD (Kel, Rulf, Dorn, or unnamed)
-3. **Dream sequence scripting** - Need attract_scenes.asm format research
-4. **Message ID verification** - Confirm proposed ranges don't conflict
+1. **Gossip Stone delivery method** — Sprite only on one map sheet (graphics blocker). Options: telepathic signs, owl statues, fortune teller expansion. See "Alternative Delivery Methods" above.
+2. **Kydrog's living name** — Finalized as unnamed ("lost to time") per narrative_design_master_plan.md
+3. **Expanded message bank capacity** — Current bank ends at 0x1BB. Ranges 0x1BC-0x24F proposed but **capacity not verified**. Need to check how many expanded messages the bank can hold before committing IDs.
+4. **Windmill Guy blocker** — Messages 0x1D5-0x1D8 referenced in `windmill_guy.asm` but don't exist. Bank extension needed.
 
 ---
 
-## Next Actions
+## Next Actions (Updated 2026-02-12)
 
-1. [ ] Reserve message ID ranges in `messages.org`
-2. [ ] Write Gossip Stone messages (copy from `gossip_stones.md`)
-3. [ ] Expand Twinrova dialogue (pre/post D5 boss)
-4. [ ] Research attract_scenes.asm format for dreams
-5. [ ] Place Gossip Stone sprites in overworld (requires yaze)
+### In Progress (Agent Work)
+- [x] Write Gossip Stone messages — text complete in `gossip_stones.md`
+- [ ] **Codex:** Message batch import/export in yaze — enables bulk dialogue loading
+- [ ] **Codex:** Object dimension wiring in dungeon editor — unblocks room editing
+- [ ] **Gemini:** Draft 50+ NPC dialogue messages in `yaze-message-bundle` v1 JSON
+- [ ] **Gemini:** 32-char wrap validation on all drafted dialogue
+
+### Ready to Do (Unblocked)
+- [ ] Verify expanded message bank capacity (how far past 0x1BB can we go?)
+- [ ] Expand Twinrova dialogue (pre/post D5 boss) — draft exists at 0x240-0x241
+- [ ] Update `messages.org` with reserved ID ranges
+
+### Blocked
+- [ ] Place Gossip Stone sprites — blocked on graphics sheet constraint
+- [ ] Dream sequence ASM — blocked on attract_scenes.asm format research
+- [ ] NPC dialogue loading — blocked on Codex batch import feature
+- [ ] Runtime test Maku Tree — blocked on Mesen2 SRAM tooling
 
 ---
 

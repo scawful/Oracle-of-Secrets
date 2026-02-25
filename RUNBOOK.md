@@ -14,6 +14,12 @@ mesen-agent build
 python3 scripts/check_zscream_overlap.py
 ```
 
+`scripts/build_rom.sh` now runs `z3ed oracle-menu-validate` by default as a
+pre-build guard. Controls:
+- `OOS_SKIP_MENU_VALIDATE=1` skips the check.
+- `OOS_MENU_VALIDATE_STRICT=1` fails on warnings in addition to errors.
+- `OOS_MENU_VALIDATE_FATAL=0` keeps failures non-fatal (not recommended).
+
 Legacy:
 ```bash
 ./scripts/build_rom.sh 168
@@ -57,20 +63,38 @@ MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py diagnostics
 MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-verify-all
 ```
 
-## Save-State Library (Fast Repro)
+## Save-State Workflow (CODE RED 2026-02-14)
+Default policy: do **not** use library IDs for active debugging unless explicitly requested.
+Use project save files in `Roms/SaveStates/oos168x/` first.
+
+Launcher behavior:
+- New isolated instances now seed F-key slot files from `Roms/SaveStates/<rom-base>/` into that instance's `SaveStates/` by default.
+- Disable seeding with `scripts/mesen2_launch_instance.sh --no-seed-project-states` when you need a blank instance.
+
+```bash
+MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py load Roms/SaveStates/oos168x/oos168x_1.mss
+MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py load Roms/SaveStates/oos168x/oos168x_2.mss
+```
+
+Library usage is opt-in only:
 ```bash
 MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py library
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-save "my repro seed" -t repro -t blackout
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-load <state_id>
+MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-load <state_id>  # only when explicitly requested
 ```
+
+`load <slot|path>` now accepts positional file paths and resolves relative paths to absolute paths.
 
 ## Save Variables: Profiles, Snapshots, `.srm` Hot Reload
 Profiles (editable JSON loadouts):
 ```bash
 MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py save-data profile-list
 MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py save-data profile-apply zora_temple_debug
+MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py save-data profile-apply zora_temple_debug --no-persist
 MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py save-data profile-capture my_loadout --flags --only-nonzero
 ```
+
+`profile-apply` now performs transactional apply by default (WRAM apply + readback verify + WRAMSAVE->SRAM persist + SRAM verify).
+Use `--no-persist` for temporary WRAM-only testing.
 
 Save-data snapshot library (WRAM savefile mirror `$7EF000-$7EF4FF`):
 ```bash

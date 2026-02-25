@@ -1,0 +1,17 @@
+{
+  "success": true,
+  "data": {
+    "writes": [
+      {
+        "pc": "0x028CB9",
+        "addr": "0x7EC007",
+        "value": "0x00",
+        "size": 1,
+        "opcode": "0x8F",
+        "sp": "0x01F7",
+        "cycle": 938994657
+      }
+    ],
+    "count": 1
+  }
+}

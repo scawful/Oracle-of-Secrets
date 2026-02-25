@@ -978,6 +978,52 @@
       ]
     },
     {
+      "created_at": "2026-02-14T05:20:00+00:00",
+      "description": "Goron Desert D6 approach state; Link stands at mine entrance threshold.",
+      "id": "pre_d6_entrance",
+      "md5": "66c5039332a002b013963acd8ffb1a22",
+      "meta": {
+        "label": "D6 pre-entrance",
+        "location": "Goron Desert (OW 0x36)",
+        "notes": "Resaved under current oos168x ROM; deterministic load validated on 2026-02-14."
+      },
+      "rom_base": "oos168x",
+      "rom_md5": "42fc6a43a696df12c56ac8e2a4e1e0fd",
+      "rom_path": "Roms/oos168x.sfc",
+      "state_path": "Roms/SaveStates/library/oos168x/pre_d6_entrance.mss",
+      "status": "draft",
+      "tags": [
+        "d6",
+        "goron_mines",
+        "transition",
+        "blackout",
+        "regression"
+      ]
+    },
+    {
+      "created_at": "2026-02-14T05:24:00+00:00",
+      "description": "Goron Mines entrance interior seed for inter-room transition validation.",
+      "id": "inside_d6",
+      "md5": "1df311f57ac628d2e026e2513e140f71",
+      "meta": {
+        "label": "D6 inside entrance",
+        "location": "Inside: Goron Mines (Entrance, room 0x98)",
+        "notes": "Resaved under current oos168x ROM; deterministic load validated on 2026-02-14."
+      },
+      "rom_base": "oos168x",
+      "rom_md5": "42fc6a43a696df12c56ac8e2a4e1e0fd",
+      "rom_path": "Roms/oos168x.sfc",
+      "state_path": "Roms/SaveStates/library/oos168x/inside_d6.mss",
+      "status": "draft",
+      "tags": [
+        "d6",
+        "goron_mines",
+        "dungeon",
+        "transition",
+        "regression"
+      ]
+    },
+    {
       "created_at": "2026-02-07T11:46:05.785692+00:00",
       "description": "Paused at Zora Temple entrance; walk straight ahead into stairs to attempt repro.",
       "id": "zora_temple_stairs_seed_20260207",

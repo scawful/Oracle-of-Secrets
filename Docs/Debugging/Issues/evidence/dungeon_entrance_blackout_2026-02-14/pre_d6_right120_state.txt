@@ -1,0 +1,18 @@
+=== Oracle Game State ===
+Mode: Overworld (0x09)
+Location: Goron Desert
+Area: 0x36 | Room: 0x04
+Indoors: False
+Link: (5351, 3569, Z=65535)
+Direction: Right
+Form: Normal (0x00)
+Scroll: (22, 13)
+
+=== Time System ===
+Time: 05:52
+Speed: 0
+
+=== Player Stats ===
+Health: 68/80
+Magic: 128
+Rupees: 999

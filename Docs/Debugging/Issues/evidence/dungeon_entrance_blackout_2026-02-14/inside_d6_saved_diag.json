@@ -1,0 +1,90 @@
+{
+  "run_state": {
+    "running": true,
+    "paused": false,
+    "frame": 7283,
+    "fps": 60.1,
+    "consoleType": 0,
+    "debugging": true,
+    "lastSave": {
+      "success": true,
+      "path": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/SaveStates/library/oos168x/inside_d6.mss",
+      "frame": 7273,
+      "timestampMs": 1771045270666
+    },
+    "lastLoad": {
+      "success": true,
+      "path": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/SaveStates/library/oos168x/inside_d6.mss",
+      "frame": 7273,
+      "timestampMs": 1771045270737
+    }
+  },
+  "rom_info": {
+    "filename": "oos168x.sfc",
+    "format": "Sfc",
+    "consoleType": 0,
+    "crc32": "2824EC27",
+    "sha1": "F7B46AD5D765F3D6B586AC235CA95ACE4B9DC32E",
+    "frameCount": 7283
+  },
+  "oracle_state": {
+    "mode": 7,
+    "mode_name": "Dungeon",
+    "submode": 0,
+    "area": 0,
+    "area_name": "Inside: Goron Mines (Entrance)",
+    "room": 152,
+    "room_name": "Goron Mines (Entrance)",
+    "dungeon_room": 152,
+    "indoors": 1,
+    "link_x": 4217,
+    "link_y": 4677,
+    "link_z": 65535,
+    "link_dir": 2,
+    "link_dir_name": "Down",
+    "link_state": 0,
+    "link_form": 0,
+    "link_form_name": "Normal",
+    "scroll_x": 16,
+    "scroll_y": 18,
+    "time_hours": 0,
+    "time_minutes": 31,
+    "time_speed": 0,
+    "health": 68,
+    "max_health": 80,
+    "magic": 128,
+    "rupees": 999
+  },
+  "time_state": {
+    "hours": 0,
+    "minutes": 32,
+    "speed": 0,
+    "phase": "night",
+    "is_night": true,
+    "subcolor": "0x0000",
+    "palette": {
+      "red": "0x0000",
+      "green": "0x0000",
+      "blue": "0x0000"
+    }
+  },
+  "overworld": {
+    "mode": 7,
+    "mode_name": "Dungeon",
+    "submode": 0,
+    "submode_name": "PLAYER_CONTROL",
+    "indoors": true,
+    "is_overworld": false,
+    "is_transition": false
+  },
+  "camera": {
+    "scroll_x": 4112,
+    "scroll_y": 4626,
+    "link_x": 4217,
+    "link_y": 4677,
+    "offset_x": 105,
+    "offset_y": 51
+  },
+  "camera_ok": true,
+  "warnings": []
+}

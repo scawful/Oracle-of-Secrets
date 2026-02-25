@@ -148,12 +148,29 @@ Guardrail:
 | **0xDA** | **B2** | **49** | **100** | **11** | **Yes (A3 subtype 2)** | **FLAGGED — not on stop tile; subtype mismatch (2 vs {6,7,9,11,12})** |
 | 0xC8 | Boss | 0 | — | — | No | Empty |
 
-**14 of 19 rooms have track tiles drawn. Only 3 rooms (0x98, 0x88, 0x87) are currently "functional carts" rooms.**
+**14 of 19 rooms have track tiles drawn.**
 
-**Audit update (2026-02-07):** z3ed emitted **10 rooms with issues** in the requested sample set. The issues that actually block authoring/playability are:
-- `0x78`, `0x79`: minecart content exists but **no custom collision data**
-- `0xB8`: minecart collision exists but **no stop tiles**
-- `0x89`, `0xA8`, `0xD8`, `0xDA`: carts placed but **not on stop tiles**
+**Audit update (2026-02-13):**
+- `dungeon-minecart-audit` over the 15 track-start rooms (`0x98,0x88,0x87,0x77,0xA8,0xB8,0xB9,0x78,0x89,0xDA,0xD9,0xD7,0x79,0x97,0xD8`) reports **13/15 with custom collision data** and **2/15 without** (`0x78`, `0x79`).
+- `minecart_tracks.asm` start-position table now resolves to valid stop tiles for **13/17 tracks** (tracks `0-5,8,10-13,15-16`).
+- The remaining **4/17 tracks are intentionally blocked** by missing room prerequisites:
+  - `6,7` -> room `0xB8` has no stop tiles (`B7-B9`).
+  - `9,14` -> rooms `0x78`/`0x79` have no custom collision data.
+
+This means the coordinate-table cleanup is accurate for all currently eligible tracks, but not all 17 tracks are runtime-ready yet.
+
+**Verification rerun (2026-02-13 PM, post-track-table edits):**
+- Command: `../yaze/scripts/z3ed dungeon-minecart-audit --rom Roms/oos168x.sfc --rooms 0x98,0x88,0x87,0x77,0xA8,0xB8,0xB9,0x78,0x89,0xDA,0xD9,0xD7,0x79,0x97,0xD8 --only-issues`
+- Result: `10/15` rooms still emit issues.
+- Hard blockers confirmed: `0x78` and `0x79` still have no custom collision data; `0xB8` still has no stop tiles.
+- Placement blockers confirmed: `0xA8`, `0x89`, `0xDA`, and `0xD8` have minecart sprites not on stop tiles.
+- Accuracy note: claims like "all 17 tracks verified and ready" are incorrect for current ROM state.
+
+**Immediate next work:**
+1. Place/reposition minecart sprites for the verified-track rooms (focus tracks `4,5,8,10,11,12,13,15,16`).
+2. Author custom collision data for rooms `0x78` and `0x79`.
+3. Add stop tiles (`B7-B9`) in room `0xB8` and then finalize tracks `6` and `7`.
+4. Add switch-corner tiles (`D0-D3`) + `SwitchTrack` sprites where switch routing is intended.
 
 The detailed per-room writeups below focus on the originally investigated subset (`0xA8`, `0xB8`, `0xD8`, `0xDA`). Add similar writeups for `0x78`, `0x79`, and `0x89` once we decide which rooms are in-scope for near-term activation.
 

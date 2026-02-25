@@ -28,7 +28,7 @@
 | GameState_Start | $7EF3C5 | $00 | HouseTag_WakeUpPlayer (custom_tag.asm) | TBD | Intro start | Dungeons/custom_tag.asm | 2026-01-23 (code) | Value 0 set in house intro |
 | GameState_LoomBeach | $7EF3C5 | $01 | TBD | TBD | Intro sequence begun | Core/sram.asm | 2026-01-23 (code) | Setter not located |
 | GameState_KydrogComplete | $7EF3C5 | $02 | FaroreFollowPlayer (Sprite_Farore); Meadow_main hook | TBD | Sent to Eon Abyss | Sprites/NPCs/farore.asm; Meadow_main.asm | 2026-01-23 (code) | Runtime snapshot shows GameState=2 |
-| GameState_FaroreRescued | $7EF3C5 | $03 | TBD | TBD | D7 complete, endgame | Core/sram.asm | 2026-01-23 (code) | Setter not located |
+| GameState_FaroreRescued | $7EF3C5 | $03 | KydrogBoss_ApplyFaroreRescueProgression (feature-gated) | TBD | D7 complete, endgame | Core/sram.asm; Sprites/Bosses/kydrog_boss.asm | 2026-02-13 (code) | Guarded by !ENABLE_D7_FARORE_RESCUE_SEQUENCE; staged in Kydrog death via SprMiscF (message first, commit second) |
 | Story_IntroComplete | $7EF3D6 | $01 | TBD | TBD | Met Maku Tree (per sram.asm) | Core/sram.asm | 2026-01-23 (code) | Setter not located; Maku Tree sets bit 1, not bit 0 |
 | Story_HallOfSecrets | $7EF3D6 | $02 | MakuTree_MeetLink (Sprite_MakuTree) | TBD | Hall of Secrets unlocked | Sprites/NPCs/maku_tree.asm | 2026-01-23 (code) | Bit 1 |
 | Story_PendantQuest | $7EF3D6 | $04 | Impa_SetSpawnPointFlag | TBD | Intro progress / sanctuary | Sprites/NPCs/impa.asm | 2026-01-23 (code) | Bit 2 |
@@ -45,7 +45,7 @@
 | Crystal_D1_MushroomGrotto | $7EF37A | $01 | Dungeon completion (vanilla) | TBD | Dungeon complete (D1) | Core/sram.asm | 2026-01-23 (code) | Routine not traced in repo |
 | Crystal_D6_GoronMines | $7EF37A | $02 | Dungeon completion (vanilla) | TBD | Dungeon complete (D6) | Core/sram.asm | 2026-01-23 (code) | Routine not traced in repo |
 | Crystal_D5_GlaciaEstate | $7EF37A | $04 | Dungeon completion (vanilla) | TBD | Dungeon complete (D5) | Core/sram.asm | 2026-01-23 (code) | Routine not traced in repo |
-| Crystal_D7_DragonShip | $7EF37A | $08 | Dungeon completion (vanilla) | TBD | Dungeon complete (D7) | Core/sram.asm | 2026-01-23 (code) | Routine not traced in repo |
+| Crystal_D7_DragonShip | $7EF37A | $08 | KydrogBoss_ApplyFaroreRescueProgression (feature-gated); Dungeon completion (vanilla path TBD) | TBD | Dungeon complete (D7) | Core/sram.asm; Sprites/Bosses/kydrog_boss.asm | 2026-02-13 (code) | Feature-gated staged death path sets bit once after one-shot dialogue; final maiden flow still pending |
 | Crystal_D2_TailPalace | $7EF37A | $10 | Dungeon completion (vanilla) | TBD | Dungeon complete (D2) | Core/sram.asm | 2026-01-23 (code) | Routine not traced in repo |
 | Crystal_D4_ZoraTemple | $7EF37A | $20 | Dungeon completion (vanilla) | TBD | Dungeon complete (D4) | Core/sram.asm | 2026-01-23 (code) | Routine not traced in repo |
 | Crystal_D3_KalyxoCastle | $7EF37A | $40 | Dungeon completion (vanilla) | TBD | Dungeon complete (D3) | Core/sram.asm | 2026-01-23 (code) | Routine not traced in repo |

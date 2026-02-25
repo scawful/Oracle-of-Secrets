@@ -19,7 +19,7 @@
 | **River Zora Village** | Map 0x99 (central) | Heart of East Kalyxo. Central hub, feels established. |
 | **Ganondorf Weakness** | Three-phase pattern | Attack when he summons portal energy. Ties to seal lore. |
 | **Sky Island NPCs** | Cumuli (cloud creatures) | Fluffy, shy, hide when weather changes. Easy to draw. |
-| **Trading Sequence Reward** | Upgraded Ocarina | Plays all songs with enhanced effects. |
+| ~~**Trading Sequence**~~ | **CUT** | Too much NPC/item work for the scope. See "Cut Features" below. |
 
 ### Sprite/Graphics Notes
 - **Ancient Soldier:** Classic Hylian Knight style
@@ -215,7 +215,7 @@ Perhaps we should... listen.
 | **Korok Minigame** | Hide-and-seek throughout region | Heart pieces at milestones |
 | **Exploration** | Hidden caves, underwater passages, environmental puzzles | Rupees, lore tablets, secrets |
 | **River Zora Village** | Reconciliation scene, NPC interactions | Narrative payoff |
-| **Trading Sequence** | Part of island-wide trading chain | Links to other regions |
+| ~~Trading Sequence~~ | CUT — not in scope for release | — |
 
 **Note:** Zora Mask upgrade is on map 0x1E (separate from East Kalyxo)
 
@@ -311,8 +311,10 @@ Both relationships were damaged by outside forces (Hylian occupation, Kydrog's s
 
 ## Korok Minigame (Refined)
 
-**Scale:** 10 Koroks total, contained to East Kalyxo region
+**Implementation:** Single large map in the special overworld (Korok Cove area). All Koroks are contained in one map — NOT scattered across the world like BotW.
+**Scale:** ~10 Koroks in one area
 **Rewards:** Rupees for individual finds, heart pieces at milestones
+**Sprite:** Already exists — 3 variants (Makar, Hollo, Rown) via `SprSubtype`
 
 | Milestone | Reward |
 |-----------|--------|
@@ -320,21 +322,11 @@ Both relationships were damaged by outside forces (Hylian occupation, Kydrog's s
 | 5 Koroks | Heart piece |
 | 10 Koroks | Heart piece |
 
-**Hiding Spots:**
-- Under Hammer-smashable rocks (2-3)
-- In trees (roll into them) (2-3)
-- Underwater (need Flippers) (2)
-- Behind waterfalls (1-2)
-- Environmental puzzle (1)
-
 ---
 
-## Trading Sequence (Placeholder)
+## ~~Trading Sequence~~ — CUT
 
-**East Kalyxo Role:** One stop in a longer island-wide chain (passes through)
-**Final Reward:** Unique item (TBD)
-
-**Note:** Trading sequence needs to be planned with full item/lore context. The chain should weave across key regions and tie into the broader narrative. Design this after all items and NPCs are solidified.
+> **Status: Not in scope for 2026 release.** The 10-trade island-wide chain was a brainstorming idea but requires too many new NPCs, item sprites, and day/night gating for the remaining development time. If revisited post-release, the design notes are preserved in git history.
 
 ---
 
@@ -472,8 +464,7 @@ Gather your strength first.
 2. **What environmental puzzles for Korok hiding spots?**
    - TBD during implementation
 
-3. ~~**Trading sequence details**~~ → **Final reward: Upgraded Ocarina**
-   - Chain details TBD after NPC review
+3. ~~**Trading sequence**~~ → **CUT** (not in scope for release)
 
 4. **Twinrova boss fight dialogue** - DRAFTED (see below)
 
@@ -870,47 +861,9 @@ Thank you, hero of Kalyxo.
 
 ---
 
-## Trading Sequence: Upgraded Ocarina
+## ~~Trading Sequence: Upgraded Ocarina~~ — CUT
 
-**Final Reward:** Upgraded Ocarina (enhanced song effects)
-**Chain Length:** 10 trades
-**Theme:** Classic Random (traditional Zelda style)
-**Timing:** Completable mid-game (after D6, before final dungeon)
-**Day/Night:** Some NPCs only trade at certain times
-
-### Enhanced Song Effects
-
-| Song | Base Effect | Upgraded Effect |
-|------|-------------|-----------------|
-| Song of Storms | Calls rain | Rain lasts longer, affects larger area |
-| Song of Healing | Frees spirits | Also restores hearts |
-| Song of Soaring | Warp to owl points | Adds new warp destinations |
-
-### Trading Chain
-
-**CONSTRAINT:** Limited 2bpp graphics - must be intentional about item sprites. Prefer items that can reuse existing graphics or simple shapes.
-
-| # | Item | Given By | Location | Notes |
-|---|------|----------|----------|-------|
-| 1 | Letter/Note | Villager | Wayward Village | Starting item, simple sprite, delivery request |
-| 2 | Worn Pendant | Zora Elder | Zora Sanctuary | Sentimental value, "lost by my daughter" |
-| 3 | Empty Bottle | Korok | Korok Cove | Reuses existing bottle sprite |
-| 4 | Honey | Beekeeper | Toto Ranch | Day only, "fill this bottle" |
-| 5 | Rock Candy | Goron Child | Mount Snowpeak | Night only, "Gorons love honey!" |
-| 6 | Glowing Stone | Old Miner | Hall of Secrets | "Mined this before the accident" |
-| 7 | Star Fragment | Cumuli | Sky Islands | Weather-dependent (clear sky) |
-| 8 | Ancient Coin | Piratian | East Kalyxo | "From the old captain's hoard" |
-| 9 | Rusted Compass | Sea Zora | Zora Falls | "Points to what the heart seeks" |
-| 10 | Upgraded Ocarina | Instrument Maker | Wayward Village | Full circle return |
-
-### NPC Schedules
-
-| NPC | Location | Available |
-|-----|----------|-----------|
-| Beekeeper | Toto Ranch | Day (6am-6pm) |
-| Goron Child | Mount Snowpeak | Night (8pm-4am) |
-| Cumuli | Sky Islands | Clear weather only |
-| Others | Various | Always available |
+> **Not in scope for 2026 release.** The full 10-trade chain, NPC schedules, and Upgraded Ocarina reward were brainstormed but are too much implementation work. Design notes preserved in git history for potential post-release content.
 
 ---
 
@@ -935,7 +888,7 @@ Thank you, hero of Kalyxo.
 ### Phase 4: Gameplay Implementation
 - [ ] Dream sequence triggers and flow
 - [ ] Sky Islands weather mechanics
-- [ ] Trading sequence chain
+- ~~[ ] Trading sequence chain~~ — CUT
 - [ ] Post-game Abyss changes
 
 ---
@@ -945,7 +898,7 @@ Thank you, hero of Kalyxo.
 | File | Changes |
 |------|---------|
 | `Core/messages.org` | All new dialogue, gossip stones, boss text |
-| `Core/sram.asm` | Dreams bitfield, trading flags, reconciliation flag |
+| `Core/sram.asm` | Dreams bitfield, reconciliation flag |
 | `Sprites/NPCs/ranch_girl.asm` | Post-curse restoration state |
 | `Sprites/NPCs/zora.asm` | River Zora variants, reconciliation states |
 | `Sprites/Bosses/kydreeok.asm` | Redemption scene |
@@ -973,8 +926,7 @@ All major narrative decisions have been finalized. This section captures the com
 | Dream Skip | No skip option (dreams are short, narrative important) |
 | Sky Islands Unlock | After D6 + Shrines completed |
 | Post-Game Abyss | Heals over time (subtle visual changes) |
-| Trading Sequence | 10 trades, Classic Random theme, day/night dependent |
-| Trading Reward | Upgraded Ocarina |
+| ~~Trading Sequence~~ | **CUT** — not in scope for release |
 
 ### Sprites & Graphics
 
@@ -1019,7 +971,7 @@ All major narrative decisions have been finalized. This section captures the com
 
 ## Next Session Priorities
 
-1. ✅ Finalize trading sequence items (10 defined)
+1. ~~✅ Finalize trading sequence items~~ — CUT
 2. [ ] Assign Gossip Stone message IDs (21 stones → messages.org)
 3. [ ] Create sprite specifications for Ancient Soldier and Cumuli
 4. [ ] Draft remaining dream dialogue for messages.org

@@ -1,0 +1,32 @@
+{
+  "disable": "",
+  "enable": "",
+  "instance": "oos-codex-top-20260214",
+  "max_frames": 900,
+  "poll_every": 10,
+  "press": "UP",
+  "press_frames": 60,
+  "profile": "defaults",
+  "result": "ok",
+  "rom_path": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/oos168x.sfc",
+  "seed": "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-top-20260214/SaveStates/oos168x_2.mss",
+  "settle_frames": 120,
+  "snapshot": {
+    "apuio0": 0,
+    "apuio1": 0,
+    "apuio2": 0,
+    "apuio3": 0,
+    "entrance": 37,
+    "inidispq": 15,
+    "last_apu0": 22,
+    "mode": 7,
+    "mode_cache": 7,
+    "pc": 32969,
+    "songbank": 0,
+    "songq": 22,
+    "submode": 0
+  },
+  "socket": "/tmp/mesen2-oos-codex-top-20260214.sock",
+  "ts": "2026-02-14T13:54:07",
+  "version": 168
+}

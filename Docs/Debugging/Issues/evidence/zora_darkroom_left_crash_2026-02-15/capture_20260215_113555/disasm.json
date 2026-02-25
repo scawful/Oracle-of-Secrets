@@ -1,0 +1,242 @@
+[
+  {
+    "addr": "0x3D8000",
+    "text": "",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3DFFFF",
+    "text": "",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0000",
+    "text": "unidentified",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0000",
+    "text": "",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E06FF",
+    "text": "",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0700",
+    "text": "OWPOSM:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0700",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0702",
+    "text": "UNUSED_7E0702:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0702",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0704",
+    "text": "UNUSED_7E0704:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0704",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0706",
+    "text": "UNUSED_7E0706:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0706",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0708",
+    "text": "OWBGSY:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0708",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E070A",
+    "text": "OWBGSYO:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E070A",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E070C",
+    "text": "OWBGSX:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E070C",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E070E",
+    "text": "OWBGSXO:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E070E",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0710",
+    "text": "SKIPOAM:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0710",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0712",
+    "text": "OWSCRSIZE:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0712",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0714",
+    "text": "PREVSIZE:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0714",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0716",
+    "text": "OWSCROLL:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0716",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0718",
+    "text": "OWCameraBoundsE:",
+    "bytes": "",
+    "opSize": 0
+  },
+  {
+    "addr": "0x3E0718",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E071A",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E071C",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E071E",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0720",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0722",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0724",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0726",
+    "text": "EOR ($52)",
+    "bytes": "5252",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E0728",
+    "text": "EOR ($36)",
+    "bytes": "5236",
+    "opSize": 2
+  },
+  {
+    "addr": "0x3E072A",
+    "text": "PHD ",
+    "bytes": "0B",
+    "opSize": 1
+  }
+]

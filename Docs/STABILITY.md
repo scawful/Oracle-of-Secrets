@@ -29,14 +29,15 @@ STZ.b $9D ; COLDATA H mirror
 
 **Root Cause:** Unbounded polling loops waiting for a handshake from the SPC700 ($2140-$2143). If the SPC state is desynced or unresponsive, the CPU spins forever.
 
-**Mitigation:**
-A timeouted handshake routine `SPC_Upload_WithTimeout` is implemented in `Core/patches.asm`. It uses a 16-bit counter to bail out of the handshake loop if the SPC does not respond within ~65k iterations, preventing a hard lock of the system.
+**Current Status (2026-02-22):**
+- The temporary timeout-hook experiment has been removed from `Core/patches.asm`.
+- Do not treat feature-flag toggles as a mitigation path for this issue.
+- Active work is root-cause debugging of song-bank handshake failures and transition flow.
 
 **Diagnostics:**
-Handshake status is logged to FreeRAM at `$7E0730`:
-- `$0010`: Entering handshake
-- `$0020`: Handshake success
-- `$00FF`: Timeout occurred
+Use `scripts/repro_blackout_transition.py --report-out <path>` to capture the final
+transition/APUIO snapshot for each repro run. No persistent WRAM logging is enabled by
+default in this path.
 
 ---
 

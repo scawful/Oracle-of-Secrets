@@ -18,7 +18,7 @@ Side quests are generally **not required** for main progression but enrich the e
 
 ---
 
-## Trading Sequences
+## Quest Chains
 
 ### The Lost Voice (Ranch Girl Quest)
 
@@ -145,7 +145,7 @@ The Gorons have retreated from outside contact since the Hylian occupation disru
 > "The small ones play where roots drink deep. Count them if you can, seeker. They reward those with patient eyes."
 
 #### Narrative Purpose
-The Koroks are ancient forest spirits who remember the Age of Secrets. They've hidden throughout East Kalyxo and Korok Cove, playing a game that tests observation and patience. Finding them all reveals fragments of forgotten lore.
+The Koroks are ancient forest spirits who remember the Age of Secrets. They live in a single large special overworld map (Korok Cove area) — this is NOT a BotW-style collectathon scattered across the world. All Koroks are contained in one area.
 
 #### Quest Flow
 
@@ -155,20 +155,10 @@ The Koroks are ancient forest spirits who remember the Age of Secrets. They've h
 | 5 | Heart Piece |
 | 10 | Heart Piece |
 
-#### Korok Hiding Spots (10 total)
-
-| # | Location | Method to Find |
-|---|----------|----------------|
-| 1 | Korok Cove tree | Roll into tree |
-| 2 | Korok Cove pond | Dive underwater |
-| 3 | East Kalyxo rock | Hammer smash |
-| 4 | East Kalyxo tree | Roll into tree |
-| 5 | Behind waterfall | Walk through |
-| 6 | Buried in clearing | Dig spot |
-| 7 | Under hammer rock | Hammer smash |
-| 8 | Underwater passage | Zora Mask dive |
-| 9 | Environmental puzzle | Solve it |
-| 10 | Hidden cave | Bomb wall |
+#### Implementation
+- **Single map:** One large special overworld area with ~10 Koroks placed in it
+- **Sprite:** Already exists with 3 variants (Makar, Hollo, Rown) via `SprSubtype`
+- **Scope:** Straightforward placement + dialogue assignment, no complex gating needed
 
 #### Korok Dialogue
 Each Korok shares a fragment when found:
@@ -178,7 +168,6 @@ Each Korok shares a fragment when found:
 
 #### Access Requirements
 - **Korok Cove:** Always accessible
-- **East Kalyxo:** Hammer required (post-D6)
 
 #### Related Files
 - `Sprites/NPCs/korok.asm`
@@ -442,6 +431,16 @@ You have given us our names back.
 - [ ] Korok found bitfield
 - [ ] Bean planted bitfield
 - [ ] Reconciliation flag
+
+---
+
+## Cut Features (Not In Scope for 2026 Release)
+
+The following were brainstormed but are not planned for implementation:
+
+- **Island-wide Trading Sequence** (10-trade chain, Upgraded Ocarina reward) — Too many NPCs, item sprites, and day/night gating. Design notes preserved in git history.
+
+These may be revisited post-release.
 
 ### Related Documents
 - `dungeon_narratives.md`: Dungeon quest connections

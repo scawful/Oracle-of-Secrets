@@ -1,0 +1,19 @@
+=== Oracle Game State ===
+Mode: Dungeon (0x07)
+Location: Inside: Goron Mines (Entrance)
+Area: 0x00 | Room: 0x98
+Dungeon Room: 0x98 (Goron Mines (Entrance))
+Indoors: True
+Link: (4217, 4677, Z=65535)
+Direction: Down
+Form: Normal (0x00)
+Scroll: (16, 18)
+
+=== Time System ===
+Time: 00:31
+Speed: 0
+
+=== Player Stats ===
+Health: 68/80
+Magic: 128
+Rupees: 999

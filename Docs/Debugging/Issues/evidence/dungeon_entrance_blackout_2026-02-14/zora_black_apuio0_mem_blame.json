@@ -1,0 +1,35 @@
+{
+  "success": true,
+  "data": {
+    "writes": [
+      {
+        "pc": "0x0080F3",
+        "addr": "0x002140",
+        "value": "0xF1",
+        "size": 1,
+        "opcode": "0x8D",
+        "sp": "0x01E6",
+        "cycle": 827516494
+      },
+      {
+        "pc": "0x029BFF",
+        "addr": "0x002140",
+        "value": "0xFF",
+        "size": 1,
+        "opcode": "0x8D",
+        "sp": "0x01FA",
+        "cycle": 831853994
+      },
+      {
+        "pc": "0x0088E9",
+        "addr": "0x002140",
+        "value": "0xCC",
+        "size": 1,
+        "opcode": "0x8D",
+        "sp": "0x01F4",
+        "cycle": 831854114
+      }
+    ],
+    "count": 3
+  }
+}

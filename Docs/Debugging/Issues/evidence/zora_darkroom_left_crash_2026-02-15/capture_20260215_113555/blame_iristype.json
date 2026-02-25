@@ -1,0 +1,26 @@
+{
+  "success": true,
+  "data": {
+    "writes": [
+      {
+        "pc": "0x000064",
+        "addr": "0x7E067E",
+        "value": "0x66",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x067E",
+        "cycle": 939405792
+      },
+      {
+        "pc": "0x003604",
+        "addr": "0x7E067E",
+        "value": "0x00",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x067E",
+        "cycle": 939414101
+      }
+    ],
+    "count": 2
+  }
+}

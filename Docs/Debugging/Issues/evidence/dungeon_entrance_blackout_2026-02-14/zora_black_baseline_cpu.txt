@@ -1,0 +1,9 @@
+=== CPU Registers ===
+A: $D0CC
+X: $2CBF
+Y: $04
+SP: $01F4
+PC: $88EC
+K: $00
+DB: $00
+P: $65

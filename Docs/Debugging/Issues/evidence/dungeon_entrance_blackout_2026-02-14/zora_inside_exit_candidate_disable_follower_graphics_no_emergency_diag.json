@@ -1,0 +1,90 @@
+{
+  "run_state": {
+    "running": true,
+    "paused": true,
+    "frame": 11602,
+    "fps": 60.1,
+    "consoleType": 0,
+    "debugging": true,
+    "lastSave": {
+      "success": true,
+      "path": "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-top-20260214/SaveStates/oos168x_99.mss",
+      "frame": 22792,
+      "timestampMs": 1771047843659
+    },
+    "lastLoad": {
+      "success": true,
+      "path": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/SaveStates/library/oos168x/zora_temple_stairs_seed_20260207.mss",
+      "frame": 11358,
+      "timestampMs": 1771052951707
+    }
+  },
+  "rom_info": {
+    "filename": "oos168x.sfc",
+    "format": "Sfc",
+    "consoleType": 0,
+    "crc32": "5D8913E7",
+    "sha1": "424C1BB626BAC7E43045EB5341A8C40AAC9DED6D",
+    "frameCount": 11602
+  },
+  "oracle_state": {
+    "mode": 8,
+    "mode_name": "Overworld Load",
+    "submode": 1,
+    "area": 30,
+    "area_name": "Area 0x1E",
+    "room": 40,
+    "room_name": "Area 0x1E",
+    "dungeon_room": 40,
+    "indoors": 0,
+    "link_x": 3880,
+    "link_y": 1560,
+    "link_z": 65535,
+    "link_dir": 2,
+    "link_dir_name": "Down",
+    "link_state": 0,
+    "link_form": 0,
+    "link_form_name": "Normal",
+    "scroll_x": 14,
+    "scroll_y": 6,
+    "time_hours": 10,
+    "time_minutes": 7,
+    "time_speed": 63,
+    "health": 160,
+    "max_health": 160,
+    "magic": 128,
+    "rupees": 999
+  },
+  "time_state": {
+    "hours": 10,
+    "minutes": 7,
+    "speed": 63,
+    "phase": "day",
+    "is_night": false,
+    "subcolor": "0x2669",
+    "palette": {
+      "red": "0x0009",
+      "green": "0x0260",
+      "blue": "0x2400"
+    }
+  },
+  "overworld": {
+    "mode": 8,
+    "mode_name": "Overworld Load",
+    "submode": 1,
+    "submode_name": "LOAD_AUX_GFX",
+    "indoors": false,
+    "is_overworld": false,
+    "is_transition": true
+  },
+  "camera": {
+    "scroll_x": 3598,
+    "scroll_y": 1542,
+    "link_x": 3880,
+    "link_y": 1560,
+    "offset_x": 282,
+    "offset_y": 18
+  },
+  "camera_ok": false,
+  "warnings": []
+}

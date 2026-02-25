@@ -1,0 +1,90 @@
+{
+  "run_state": {
+    "running": true,
+    "paused": false,
+    "frame": 7445,
+    "fps": 60.1,
+    "consoleType": 0,
+    "debugging": true,
+    "lastSave": {
+      "success": true,
+      "path": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/SaveStates/library/oos168x/inside_d6.mss",
+      "frame": 7273,
+      "timestampMs": 1771045270666
+    },
+    "lastLoad": {
+      "success": true,
+      "path": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/SaveStates/library/oos168x/pre_d6_entrance.mss",
+      "frame": 7061,
+      "timestampMs": 1771045677289
+    }
+  },
+  "rom_info": {
+    "filename": "oos168x.sfc",
+    "format": "Sfc",
+    "consoleType": 0,
+    "crc32": "2824EC27",
+    "sha1": "F7B46AD5D765F3D6B586AC235CA95ACE4B9DC32E",
+    "frameCount": 7445
+  },
+  "oracle_state": {
+    "mode": 9,
+    "mode_name": "Overworld",
+    "submode": 6,
+    "area": 54,
+    "area_name": "Goron Desert",
+    "room": 4,
+    "room_name": "Goron Desert",
+    "dungeon_room": 260,
+    "indoors": 0,
+    "link_x": 5287,
+    "link_y": 3569,
+    "link_z": 65535,
+    "link_dir": 6,
+    "link_dir_name": "Right",
+    "link_state": 0,
+    "link_form": 0,
+    "link_form_name": "Normal",
+    "scroll_x": 22,
+    "scroll_y": 13,
+    "time_hours": 5,
+    "time_minutes": 44,
+    "time_speed": 0,
+    "health": 68,
+    "max_health": 80,
+    "magic": 128,
+    "rupees": 999
+  },
+  "time_state": {
+    "hours": 5,
+    "minutes": 44,
+    "speed": 0,
+    "phase": "night",
+    "is_night": true,
+    "subcolor": "0x2669",
+    "palette": {
+      "red": "0x0003",
+      "green": "0x01A0",
+      "blue": "0x1400"
+    }
+  },
+  "overworld": {
+    "mode": 9,
+    "mode_name": "Overworld",
+    "submode": 6,
+    "submode_name": "RUN_SCROLL",
+    "indoors": false,
+    "is_overworld": true,
+    "is_transition": true
+  },
+  "camera": {
+    "scroll_x": 5654,
+    "scroll_y": 3341,
+    "link_x": 5287,
+    "link_y": 3569,
+    "offset_x": 367,
+    "offset_y": 228
+  },
+  "camera_ok": false,
+  "warnings": []
+}

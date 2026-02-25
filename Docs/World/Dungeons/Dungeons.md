@@ -22,9 +22,11 @@ Oracle of Secrets contains **7 dungeons** plus the Fortress of Secrets (final du
 
 | # | Shrine | Status | Notes |
 |---|--------|--------|-------|
-| S1 | Shrine of Wisdom | **Complete** | Flooded, memory-based puzzles |
-| S2 | Shrine of Power | **Complete** | Volcanic; has collision issues over pit edges |
-| S3 | Shrine of Courage | **Complete** | Shadow/temporal themes |
+| S1 | Shrine of Wisdom | **Beta** | 7 rooms exist; pendant item mismatch (chest has 0x38 not 0x39); 4/7 rooms undocumented in dungeons.json |
+| S2 | Shrine of Power | **Beta** | 7 rooms mapped in `dungeons.json` (0x73-0x86); no boss by design; pendant mismatch (0x39 not 0x3A); lava collision issue |
+| S3 | Shrine of Courage | **Stub** | Partial `dungeons.json` entry (0x33/0x43/0x53/0x63) now split from S2; remaining rooms (0x07/0x16/0x23/0x26), entrance conflict, and pendant placement still pending |
+
+> **Note (2026-02-13):** Previous "Complete" statuses were incorrect. Assessment revealed pendant items are wrong in all three shrines, S3 is still incomplete, and shrine ownership data needed cleanup across docs/JSON.
 
 **Template:** [DUNGEON_TEMPLATE.md](DUNGEON_TEMPLATE.md) - Use this template when documenting new dungeons.
 

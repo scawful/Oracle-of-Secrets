@@ -1,0 +1,35 @@
+{
+  "success": true,
+  "data": {
+    "writes": [
+      {
+        "pc": "0x000064",
+        "addr": "0x7E0013",
+        "value": "0x00",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0013",
+        "cycle": 939410723
+      },
+      {
+        "pc": "0x003641",
+        "addr": "0x7E0013",
+        "value": "0x43",
+        "size": 1,
+        "opcode": "0x00",
+        "sp": "0x0013",
+        "cycle": 939432710
+      },
+      {
+        "pc": "0x000D1C",
+        "addr": "0x7E0013",
+        "value": "0x40",
+        "size": 1,
+        "opcode": "0x44",
+        "sp": "0x0106",
+        "cycle": 939525138
+      }
+    ],
+    "count": 3
+  }
+}

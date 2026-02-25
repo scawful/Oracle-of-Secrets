@@ -1,0 +1,65 @@
+at_breakpoint
+PC: 0x2CFCA8
+SP: $01F4
+PC: $2CFCA8
+K: $2C
+step_1
+PC: 0x2CFCAB
+SP: $01F4
+PC: $2CFCAB
+K: $2C
+step_2
+PC: 0x2CFCAE
+SP: $01F4
+PC: $2CFCAE
+K: $2C
+step_3
+PC: 0x2CFCB1
+SP: $01F4
+PC: $2CFCB1
+K: $2C
+step_4
+PC: 0x2CFCB2
+SP: $01F5
+PC: $2CFCB2
+K: $2C
+step_5
+PC: 0x2C8923
+SP: $01F7
+PC: $2C8923
+K: $2C
+step_6
+PC: 0x00FFFF
+SP: $01F3
+PC: $FFFF
+K: $00
+step_7
+PC: 0x008002
+SP: $01F3
+PC: $8002
+K: $00
+step_8
+PC: 0x00FFFF
+SP: $01EF
+PC: $FFFF
+K: $00
+step_9
+PC: 0x008002
+SP: $01EF
+PC: $8002
+K: $00
+step_10
+PC: 0x00FFFF
+SP: $01EB
+PC: $FFFF
+K: $00
+step_11
+PC: 0x008002
+SP: $01EB
+PC: $8002
+K: $00
+step_12
+PC: 0x00FFFF
+SP: $01E7
+PC: $FFFF
+K: $00

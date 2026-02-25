@@ -3699,54 +3699,6 @@
       "crystal_bit": null,
       "rooms": [
         {
-          "id": "0x33",
-          "name": "Lanmolas (Boss)",
-          "grid_row": 3,
-          "grid_col": 3,
-          "type": "boss",
-          "palette": 15,
-          "blockset": 7,
-          "spriteset": 30,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
-          "id": "0x43",
-          "name": "Torch Puzzle / Moving Wall",
-          "grid_row": 4,
-          "grid_col": 3,
-          "type": "normal",
-          "palette": 15,
-          "blockset": 7,
-          "spriteset": 29,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
-          "id": "0x53",
-          "name": "Popos 2 / Beamos Hellway",
-          "grid_row": 5,
-          "grid_col": 3,
-          "type": "normal",
-          "palette": 15,
-          "blockset": 7,
-          "spriteset": 29,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
-          "id": "0x63",
-          "name": "Final Section Entrance",
-          "grid_row": 6,
-          "grid_col": 3,
-          "type": "normal",
-          "palette": 15,
-          "blockset": 7,
-          "spriteset": 29,
-          "tag1": 50,
-          "tag2": 0
-        },
-        {
           "id": "0x73",
           "name": "Big Chest",
           "grid_row": 7,
@@ -3833,16 +3785,6 @@
       ],
       "stairs": [
         {
-          "from": "0x33",
-          "to": "0x43",
-          "label": "Lanmolas (Boss) \u2194 Torch Puzzle / Moving Wall"
-        },
-        {
-          "from": "0x53",
-          "to": "0x63",
-          "label": "Popos 2 / Beamos Hellway \u2194 Final Section Entrance"
-        },
-        {
           "from": "0x73",
           "to": "0x84",
           "label": "Big Chest \u2194 Main Entrance"
@@ -3907,26 +3849,6 @@
       ],
       "doors": [
         {
-          "from": "0x33",
-          "to": "0x43",
-          "direction": "south"
-        },
-        {
-          "from": "0x43",
-          "to": "0x53",
-          "direction": "south"
-        },
-        {
-          "from": "0x53",
-          "to": "0x63",
-          "direction": "south"
-        },
-        {
-          "from": "0x63",
-          "to": "0x73",
-          "direction": "south"
-        },
-        {
           "from": "0x73",
           "to": "0x74",
           "direction": "east"
@@ -3978,7 +3900,96 @@
           "entrance_id": "0x05",
           "room_id": "0x86",
           "overworld_area": "Shrine of Power"
+        }
+      ]
+    },
+    {
+      "id": "SOC",
+      "name": "Shrine of Courage",
+      "vanilla_name": "Palace of Darkness",
+      "crystal_bit": null,
+      "rooms": [
+        {
+          "id": "0x33",
+          "name": "Trial Chamber",
+          "grid_row": 3,
+          "grid_col": 3,
+          "type": "normal",
+          "palette": 15,
+          "blockset": 7,
+          "spriteset": 30,
+          "tag1": 0,
+          "tag2": 0
         },
+        {
+          "id": "0x43",
+          "name": "Torch Puzzle / Moving Wall",
+          "grid_row": 4,
+          "grid_col": 3,
+          "type": "normal",
+          "palette": 15,
+          "blockset": 7,
+          "spriteset": 29,
+          "tag1": 0,
+          "tag2": 0
+        },
+        {
+          "id": "0x53",
+          "name": "Popos 2 / Beamos Hellway",
+          "grid_row": 5,
+          "grid_col": 3,
+          "type": "normal",
+          "palette": 15,
+          "blockset": 7,
+          "spriteset": 29,
+          "tag1": 0,
+          "tag2": 0
+        },
+        {
+          "id": "0x63",
+          "name": "Final Section Entrance",
+          "grid_row": 6,
+          "grid_col": 3,
+          "type": "entrance",
+          "palette": 15,
+          "blockset": 7,
+          "spriteset": 29,
+          "tag1": 50,
+          "tag2": 0
+        }
+      ],
+      "stairs": [
+        {
+          "from": "0x33",
+          "to": "0x43",
+          "label": "Trial Chamber \u2194 Torch Puzzle / Moving Wall"
+        },
+        {
+          "from": "0x53",
+          "to": "0x63",
+          "label": "Popos 2 / Beamos Hellway \u2194 Final Section Entrance"
+        }
+      ],
+      "holewarps": [],
+      "doors": [
+        {
+          "from": "0x33",
+          "to": "0x43",
+          "direction": "south"
+        },
+        {
+          "from": "0x43",
+          "to": "0x53",
+          "direction": "south"
+        },
+        {
+          "from": "0x53",
+          "to": "0x63",
+          "direction": "south"
+        }
+      ],
+      "features": {},
+      "overworld_entrances": [
         {
           "entrance_id": "0x62",
           "room_id": "0x63",

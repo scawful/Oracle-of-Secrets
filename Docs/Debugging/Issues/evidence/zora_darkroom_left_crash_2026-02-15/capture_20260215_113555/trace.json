@@ -1,0 +1,607 @@
+{
+  "success": true,
+  "count": 100,
+  "offset": 0,
+  "entries": [
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    },
+    {
+      "pc": "0x000754",
+      "cpu": 1,
+      "bytes": "5EEC8F",
+      "disasm": "CMP Y,!$8FEC"
+    },
+    {
+      "pc": "0x000752",
+      "cpu": 1,
+      "bytes": "4785",
+      "disasm": "EOR A,[$85+X]"
+    },
+    {
+      "pc": "0x000750",
+      "cpu": 1,
+      "bytes": "122E",
+      "disasm": "CLR1 $2E.0"
+    },
+    {
+      "pc": "0x00075D",
+      "cpu": 1,
+      "bytes": "90F1",
+      "disasm": "BCC $0750"
+    },
+    {
+      "pc": "0x00075A",
+      "cpu": 1,
+      "bytes": "D56670",
+      "disasm": "MOV !$7066+X,A"
+    },
+    {
+      "pc": "0x000758",
+      "cpu": 1,
+      "bytes": "DA1A",
+      "disasm": "MOVW $1A,YA"
+    },
+    {
+      "pc": "0x000757",
+      "cpu": 1,
+      "bytes": "26",
+      "disasm": "AND A,(X)"
+    }
+  ]
+}

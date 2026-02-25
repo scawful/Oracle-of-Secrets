@@ -5,6 +5,55 @@
 
 This document is the current, minimal, technical truth for the Zora Temple water-gate system: what code is involved, what it is supposed to do, and how to test it without guesswork.
 
+## Follow-up Patch (2026-02-16)
+
+Applied data-driven fixes for active Zora Baby + water gate regressions:
+
+- `Sprites/NPCs/followers.asm`
+  - Added switch-trigger debounce in `ZoraBaby_GlobalBehavior` (only trigger in actions `0` or `4`).
+  - Added room-based post-switch target lookup (`ZoraBabySwitchTargetTable`) and movement routine (`ZoraBaby_RunPostSwitchSequence`) so the baby can walk toward room-authored markers before follower handoff.
+  - Target selection is runtime-nearest among all authored markers for the current room.
+  - `ZoraBaby_PostSwitch` now runs the movement sequence instead of immediately snapping to follow.
+- `Dungeons/dungeons.asm`
+  - Removed hardcoded water overlay blob.
+  - Added table-driven selector `WaterGate_SelectOverlayPointer` and switched `org $01CBAC` to `JSL` selector + `JSR RoomTag_OperateWaterFlooring`.
+  - Overlay data now comes from generated tables (`Dungeons/generated/water_gate_runtime_tables.asm`) instead of manual patch bytes.
+- `scripts/generate_water_gate_runtime_tables.py` (new)
+  - Extracts room overlay object streams (default object ids `0xC9,0xD9`) and Zora Baby switch targets from ROM room data.
+- `scripts/build_rom.sh`
+  - Auto-runs table generation before assembly, preferring `Oracle-of-Secrets.yaze` `rom_filename` as source ROM.
+
+Runtime expectations to verify:
+
+- Throwing Zora Baby onto switch should show one message and not loop infinitely.
+- Zora Baby should walk briefly toward the room marker target after switch interaction, then return to follower flow.
+- Room overlay segments are generated from room-authored objects (default ids `0xC9`/`0xD9`) and selected per-room at runtime.
+
+## Yaze Authoring Controls
+
+Use these room-data controls to drive runtime behavior without hand-editing ASM:
+
+- Water drain/gate overlay segments:
+  - Place water overlay objects in the room (`0x0C9` flood and/or `0x0D9` swim-mask forms).
+  - Build regenerates `WaterOverlayRoomTable` automatically.
+- Zora Baby post-switch walk target:
+  - Place one marker object near the desired destination using ids in priority order:
+    - `0x0124` (preferred)
+    - `0x0137`
+    - `0x0135`
+  - Build regenerates `ZoraBabySwitchTargetTable`; baby picks the nearest marker at runtime.
+- Water fill collision zones (switch-activated):
+  - Paint custom collision tile `0xF5` in the room where water should become swimmable after switch activation.
+  - `CustomRoomCollision` now treats `0xF5` as an authoring marker and does **not** apply it during normal room load.
+  - Build regenerates `Dungeons/generated/water_fill_table.asm` (ROM `$25:E000`) from those marker offsets.
+  - At water fill completion, runtime writes deep-water collision (`0x08`) to those offsets.
+  - Preset-driven CLI workflow (recommended):
+    - `python3 scripts/water_fill_author.py --rom Roms/oos168x.sfc --preset zora_d4 --write`
+    - Presets:
+      - `room25_lower_band` (lower-half drain band)
+      - `room27_upside_t` (dam upside-T with right-side stair gap)
+      - `zora_d4` (applies both)
+
 ## Scope
 
 - Zora Temple rooms:
@@ -24,22 +73,30 @@ This document is the current, minimal, technical truth for the Zora Temple water
 - `Dungeons/dungeons.asm`
   - Hooks:
     - `org $01F3D2` -> `WaterGate_FillComplete_Hook` (feature-gated)
-    - `org $0188DF` -> `Underworld_LoadRoom_ExitHook` (feature-gated)
+    - `org $0188DF` -> kept vanilla (`db $D0,$E8`) to avoid transition corruption
     - `org $01CBAC` -> overlay data redirect (feature-gated)
+  - Data include:
+    - `incsrc "Dungeons/generated/water_gate_runtime_tables.asm"`
 - `Sprites/NPCs/followers.asm`
   - Zora Baby follower logic that pulls the relevant switch sprites.
+- `scripts/generate_water_gate_runtime_tables.py`
+  - Generates room overlay + Zora Baby target tables from ROM dungeon data.
+- `scripts/generate_water_fill_table.py`
+  - Generates runtime water-fill table from `0xF5` markers in room custom collision data.
+- `scripts/water_fill_author.py`
+  - Applies room presets for marker painting via `z3ed` with readback validation.
 
 ## Feature Flags
 
 From `Config/feature_flags.asm`:
 
 - `!ENABLE_WATER_GATE_HOOKS`
-  - Controls the fill-complete hook (and legacy room-load persistence hook if enabled).
+  - Controls the fill-complete hook.
 - `!ENABLE_WATER_GATE_ROOMENTRY_RESTORE` (**default OFF**)
   - Enables water-gate persistence restore (re-apply collision on room entry when SRAM bit is set).
   - Implementation is **room-load safe**: called from `CustomRoomCollision` (`org $01B95B`) after collision streaming completes.
 - `!ENABLE_WATER_GATE_OVERLAY_REDIRECT`
-  - Controls whether room tag overlay flooring reads from `NewWaterOverlayData`.
+  - Controls whether room tag overlay flooring reads from generated room-authored tables.
 
 If you are debugging a regression, isolate by turning these off one at a time.
 
@@ -55,6 +112,16 @@ Room entry re-applies collision if the bit is set.
 
 ## What The System Actually Does
 
+### 0) Build-time table generation
+
+- Script: `python3 scripts/generate_water_gate_runtime_tables.py --rom <rom>`
+- Script: `python3 scripts/generate_water_fill_table.py --rom <rom>`
+- Auto-run during build (`scripts/build_rom.sh`) unless `OOS_SKIP_WATER_TABLE_GEN=1`.
+- Outputs:
+  - `WaterOverlayRoomTable` / `WaterOverlayData_*` (from object ids `0xC9,0xD9` by default)
+  - `ZoraBabySwitchTargetTable` (marker priority default: `0x124,0x137,0x135`)
+  - `WaterFillTable_Generated` at `$25:E000` (from custom collision marker tile `0xF5`)
+
 ### 1) When the water fill animation completes
 
 Hook: `WaterGate_FillComplete_Hook` (installed at `org $01F3D2` in `Dungeons/dungeons.asm`).
@@ -66,7 +133,13 @@ Hook: `WaterGate_FillComplete_Hook` (installed at `org $01F3D2` in `Dungeons/dun
   - writes deep-water collision (`$08`) into both layers (`$7F2000` and `$7F3000`)
   - sets the persistence bit in SRAM
 
-### 2) When entering the room later (persistence)
+### 2) Overlay selection at runtime
+
+- `RoomTag_WaterGate` (`org $01CBAC`) calls `WaterGate_SelectOverlayPointer`.
+- Selector scans `WaterOverlayRoomTable` for current room `$A0`.
+- If no entry exists, it falls back to `WaterOverlayData_Empty`.
+
+### 3) When entering the room later (persistence)
 
 Implementation:
 - Persistence restore runs during room load via `CustomRoomCollision` (`org $01B95B`) when `!ENABLE_WATER_GATE_ROOMENTRY_RESTORE = 1`.
@@ -76,7 +149,7 @@ Implementation:
 - If room is `0x27` and bit0 is set: sets `$0403 = 2` (skip animation) and reapplies collision.
 - If room is `0x25` and bit1 is set: sets `$0403 = 2` and reapplies collision.
 
-### 3) Collision placement gotcha (why offsets look too low)
+### 4) Collision placement gotcha (why offsets look too low)
 
 Vanilla collision checks for swimming/water are not at Link's visual center. The deep-water detect path uses an offset (~+20 px Y), so collision data must be placed **2-3 tiles below** where Link appears to stand.
 

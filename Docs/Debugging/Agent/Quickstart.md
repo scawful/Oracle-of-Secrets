@@ -23,7 +23,7 @@ Use this before any other Oracle-of-Secrets doc. It is the shortest path to repr
 
 ## Stability Guardrails (read once)
 - **Color math:** Overworld transitions must clear CGADDSUB + COLDATA mirrors (`$9A/$9C/$9D`). See `Docs/STABILITY.md#1-ppu-register-management` before touching overlays.
-- **APU timeouts:** All SPC handshakes go through `SPC_Upload_WithTimeout` in `Core/patches.asm`. Do not add unbounded polls.
+- **APU handshake:** Current tree uses vanilla song-bank handshake flow (timeout-hook experiment removed). Do not add unbounded APUIO polling loops; debug with reproducible traces/evidence.
 - **Input injection:** Prefer socket inputs (`press`, `navigate`, `setInputOverrides`) over direct WRAM writes to avoid desyncs.
 - **Savestate hygiene:** Run `lib-verify-all` after rebuilding; re-export states if mismatched.
 

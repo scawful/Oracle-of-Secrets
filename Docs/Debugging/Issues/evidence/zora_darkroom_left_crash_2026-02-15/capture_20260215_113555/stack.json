@@ -1,0 +1,107 @@
+{
+  "success": true,
+  "data": {
+    "sp": "0x01F8",
+    "mode": "rtl",
+    "count": 12,
+    "bank": "0x00",
+    "entries": [
+      {
+        "index": 0,
+        "stack_addr": "0x0001F9",
+        "bytes": "0D0600",
+        "raw": "0x00060D",
+        "next": "0x00060E",
+        "region": "wram_mirror"
+      },
+      {
+        "index": 1,
+        "stack_addr": "0x0001FC",
+        "bytes": "060006",
+        "raw": "0x060006",
+        "next": "0x060007",
+        "region": "wram_mirror"
+      },
+      {
+        "index": 2,
+        "stack_addr": "0x0001FF",
+        "bytes": "000636",
+        "raw": "0x360600",
+        "next": "0x360601",
+        "region": "wram_mirror"
+      },
+      {
+        "index": 3,
+        "stack_addr": "0x000202",
+        "bytes": "003606",
+        "raw": "0x063600",
+        "next": "0x063601",
+        "region": "io"
+      },
+      {
+        "index": 4,
+        "stack_addr": "0x000205",
+        "bytes": "360036",
+        "raw": "0x360036",
+        "next": "0x360037",
+        "region": "wram_mirror"
+      },
+      {
+        "index": 5,
+        "stack_addr": "0x000208",
+        "bytes": "063600",
+        "raw": "0x003606",
+        "next": "0x003607",
+        "region": "io"
+      },
+      {
+        "index": 6,
+        "stack_addr": "0x00020B",
+        "bytes": "360636",
+        "raw": "0x360636",
+        "next": "0x360637",
+        "region": "wram_mirror"
+      },
+      {
+        "index": 7,
+        "stack_addr": "0x00020E",
+        "bytes": "003606",
+        "raw": "0x063600",
+        "next": "0x063601",
+        "region": "io"
+      },
+      {
+        "index": 8,
+        "stack_addr": "0x000211",
+        "bytes": "360036",
+        "raw": "0x360036",
+        "next": "0x360037",
+        "region": "wram_mirror"
+      },
+      {
+        "index": 9,
+        "stack_addr": "0x000214",
+        "bytes": "063600",
+        "raw": "0x003606",
+        "next": "0x003607",
+        "region": "io"
+      },
+      {
+        "index": 10,
+        "stack_addr": "0x000217",
+        "bytes": "360636",
+        "raw": "0x360636",
+        "next": "0x360637",
+        "region": "wram_mirror"
+      },
+      {
+        "index": 11,
+        "stack_addr": "0x00021A",
+        "bytes": "003606",
+        "raw": "0x063600",
+        "next": "0x063601",
+        "region": "io"
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "disable": "",
+  "enable": "",
+  "instance": "",
+  "max_frames": 720,
+  "poll_every": 20,
+  "press": "DOWN",
+  "press_frames": 120,
+  "profile": "defaults",
+  "result": "ok",
+  "rom_path": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/oos168x.sfc",
+  "seed": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/SaveStates/library/oos168x/zora_temple_stairs_seed_20260207.mss",
+  "settle_frames": 240,
+  "snapshot": {
+    "apuio0": 0,
+    "apuio1": 0,
+    "apuio2": 0,
+    "apuio3": 0,
+    "entrance": 37,
+    "inidispq": 15,
+    "last_apu0": 2,
+    "mode": 9,
+    "mode_cache": 9,
+    "pc": 32820,
+    "songbank": 0,
+    "songq": 2,
+    "submode": 0
+  },
+  "socket": "",
+  "ts": "2026-02-14T03:22:11",
+  "version": 168
+}

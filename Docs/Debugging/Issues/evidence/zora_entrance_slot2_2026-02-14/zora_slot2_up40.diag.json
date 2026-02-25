@@ -1,0 +1,85 @@
+{
+  "run_state": {
+    "running": true,
+    "paused": true,
+    "frame": 17432,
+    "fps": 60.1,
+    "consoleType": 0,
+    "debugging": true,
+    "lastSave": null,
+    "lastLoad": {
+      "success": true,
+      "path": "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-top-20260214/SaveStates/oos168x_2.mss",
+      "frame": 17129,
+      "timestampMs": 1771092513548
+    }
+  },
+  "rom_info": {
+    "filename": "oos168x.sfc",
+    "format": "Sfc",
+    "consoleType": 0,
+    "crc32": "BCB96D74",
+    "sha1": "AF1C54FD2D04D355A6DA6188F0495F3F0AF84CC5",
+    "frameCount": 17432
+  },
+  "oracle_state": {
+    "mode": 128,
+    "mode_name": "Unknown (0x80)",
+    "submode": 0,
+    "area": 180,
+    "area_name": "Inside: Zora Temple (Entrance)",
+    "room": 128,
+    "room_name": "Zora Temple (Entrance)",
+    "dungeon_room": 40,
+    "indoors": 4,
+    "link_x": 1204,
+    "link_y": 128,
+    "link_z": 128,
+    "link_dir": 4,
+    "link_dir_name": "Left",
+    "link_state": 0,
+    "link_form": 0,
+    "link_form_name": "Normal",
+    "scroll_x": 0,
+    "scroll_y": 4,
+    "time_hours": 11,
+    "time_minutes": 41,
+    "time_speed": 63,
+    "health": 160,
+    "max_health": 160,
+    "magic": 128,
+    "rupees": 999
+  },
+  "time_state": {
+    "hours": 11,
+    "minutes": 41,
+    "speed": 63,
+    "phase": "day",
+    "is_night": false,
+    "subcolor": "0x6B56",
+    "palette": {
+      "red": "0x0000",
+      "green": "0x0000",
+      "blue": "0x0000"
+    }
+  },
+  "overworld": {
+    "mode": 128,
+    "mode_name": "0x80",
+    "submode": 0,
+    "submode_name": "PLAYER_CONTROL",
+    "indoors": true,
+    "is_overworld": false,
+    "is_transition": false
+  },
+  "camera": {
+    "scroll_x": 1024,
+    "scroll_y": 4,
+    "link_x": 1204,
+    "link_y": 128,
+    "offset_x": 180,
+    "offset_y": 124
+  },
+  "camera_ok": true,
+  "warnings": []
+}

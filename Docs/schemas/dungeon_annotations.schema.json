@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Yaze Dungeon Annotations",
+  "description": "Schema for persistent room-level annotations in Yaze Dungeon Editor",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version for future compatibility",
+      "pattern": "^\d+\.\d+\.\d+$"
+    },
+    "annotations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the annotation (e.g., UUID or GUID)"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["pin", "region", "connection"],
+            "description": "Type of annotation"
+          },
+          "label": {
+            "type": "string",
+            "description": "Text label for the annotation"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["bug", "todo", "note", "design", "story"],
+            "description": "Category of the annotation"
+          },
+          "color_hex": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "Hexadecimal color code (e.g., #RRGGBB)"
+          },
+          "visible": {
+            "type": "boolean",
+            "description": "Whether the annotation is currently visible in the editor"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of creation in ISO 8601 format"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of last update in ISO 8601 format"
+          },
+          "data": {
+            "type": "object",
+            "description": "Specific data for each annotation type",
+            "oneOf": [
+              { "$ref": "#/definitions/pin_data" },
+              { "$ref": "#/definitions/region_data" },
+              { "$ref": "#/definitions/connection_data" }
+            ]
+          }
+        },
+        "required": ["id", "type", "label", "category", "color_hex", "visible", "data", "created_at", "updated_at"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["version", "annotations"],
+  "additionalProperties": false,
+  "definitions": {
+    "pin_data": {
+      "type": "object",
+      "properties": {
+        "room_id": {
+          "type": "integer",
+          "description": "ID of the room where the pin is located"
+        },
+        "x": {
+          "type": "integer",
+          "description": "X coordinate relative to the room (e.g., in pixels or grid units)"
+        },
+        "y": {
+          "type": "integer",
+          "description": "Y coordinate relative to the room (e.g., in pixels or grid units)"
+        }
+      },
+      "required": ["room_id", "x", "y"],
+      "additionalProperties": false
+    },
+    "region_data": {
+      "type": "object",
+      "properties": {
+        "room_id": {
+          "type": "integer",
+          "description": "ID of the room where the region is located"
+        },
+        "x": { "type": "integer" },
+        "y": { "type": "integer" },
+        "width": { "type": "integer" },
+        "height": { "type": "integer" }
+      },
+      "required": ["room_id", "x", "y", "width", "height"],
+      "additionalProperties": false
+    },
+    "connection_data": {
+      "type": "object",
+      "properties": {
+        "from_room_id": { "type": "integer", "description": "ID of the source room for the connection" },
+        "to_room_id": { "type": "integer", "description": "ID of the target room for the connection" },
+        "story_event_node_id": {
+          "type": "string",
+          "description": "Optional: Link to a specific node in the story event graph (e.g., a UUID for a story event node)"
+        }
+      },
+      "required": ["from_room_id", "to_room_id"],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "run_state": {
+    "running": true,
+    "paused": true,
+    "frame": 11358,
+    "fps": 60.1,
+    "consoleType": 0,
+    "debugging": true,
+    "lastSave": {
+      "success": true,
+      "path": "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-top-20260214/SaveStates/oos168x_99.mss",
+      "frame": 22792,
+      "timestampMs": 1771047843659
+    },
+    "lastLoad": {
+      "success": true,
+      "path": "/Users/scawful/src/hobby/oracle-of-secrets/Roms/SaveStates/library/oos168x/zora_temple_stairs_seed_20260207.mss",
+      "frame": 11358,
+      "timestampMs": 1771051441792
+    }
+  },
+  "rom_info": {
+    "filename": "oos168x.sfc",
+    "format": "Sfc",
+    "consoleType": 0,
+    "crc32": "9A6CABF8",
+    "sha1": "C1FCE0298585252965EB7898B221333142E56F79",
+    "frameCount": 11358
+  },
+  "oracle_state": {
+    "mode": 7,
+    "mode_name": "Dungeon",
+    "submode": 0,
+    "area": 0,
+    "area_name": "Inside: Zora Temple (Entrance)",
+    "room": 40,
+    "room_name": "Zora Temple (Entrance)",
+    "dungeon_room": 40,
+    "indoors": 1,
+    "link_x": 4344,
+    "link_y": 1341,
+    "link_z": 65535,
+    "link_dir": 0,
+    "link_dir_name": "Up",
+    "link_state": 0,
+    "link_form": 0,
+    "link_form_name": "Normal",
+    "scroll_x": 16,
+    "scroll_y": 4,
+    "time_hours": 10,
+    "time_minutes": 5,
+    "time_speed": 63,
+    "health": 160,
+    "max_health": 160,
+    "magic": 128,
+    "rupees": 999
+  },
+  "time_state": {
+    "hours": 10,
+    "minutes": 5,
+    "speed": 63,
+    "phase": "day",
+    "is_night": false,
+    "subcolor": "0x6B56",
+    "palette": {
+      "red": "0x0000",
+      "green": "0x0000",
+      "blue": "0x0000"
+    }
+  },
+  "overworld": {
+    "mode": 7,
+    "mode_name": "Dungeon",
+    "submode": 0,
+    "submode_name": "PLAYER_CONTROL",
+    "indoors": true,
+    "is_overworld": false,
+    "is_transition": false
+  },
+  "camera": {
+    "scroll_x": 4112,
+    "scroll_y": 1028,
+    "link_x": 4344,
+    "link_y": 1341,
+    "offset_x": 232,
+    "offset_y": 313
+  },
+  "camera_ok": false,
+  "warnings": []
+}

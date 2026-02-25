@@ -1,0 +1,5 @@
+=== Emulator Run State ===
+Running: True
+Paused: True
+Frame: 11601
+FPS: 60.1
