@@ -499,12 +499,15 @@ class MesenBridge:
         result = self.send_command("SAVESTATE", params)
         return result.get("success", False)
 
-    def load_state(self, slot: int | None = None, path: str | None = None) -> bool:
+    def load_state(self, slot: int | None = None, path: str | None = None, allow_external: bool = True) -> bool:
+        import os
         params: dict[str, str] = {}
         if slot is not None:
             params["slot"] = str(slot)
         if path is not None:
-            params["path"] = path
+            params["path"] = os.path.abspath(path)
+        if allow_external:
+            params["allow_external"] = "true"
         result = self.send_command("LOADSTATE", params)
         return result.get("success", False)
 

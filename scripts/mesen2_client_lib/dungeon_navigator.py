@@ -272,6 +272,10 @@ class DungeonNavigator:
             if not self._traverse_door(edge):
                 print(f"[DungeonNavigator] Step {step_num} failed")
                 return False
+            # After each room transition, wait for the walk-in animation
+            # to complete (~60 frames) before attempting the next step.
+            if step_idx < len(path) - 1:
+                time.sleep(60 / 60)
 
         final = self._read_room_id()
         if final != target_room_id:
@@ -287,43 +291,94 @@ class DungeonNavigator:
     # Door traversal primitive
     # ------------------------------------------------------------------
 
-    def _traverse_door(self, edge: DoorEdge) -> bool:
-        """Teleport Link to door alignment position and press direction.
+    def _pick_closest_door(self, edge: DoorEdge, link_x: int, link_y: int) -> DoorEdge:
+        """Among all door edges with same (from_room, to_room, direction),
+        return the one whose alignment coordinate is closest to Link."""
+        graph = self.get_graph()
+        candidates = [
+            e for e in graph.door_edges.get(edge.from_room, [])
+            if e.to_room == edge.to_room and e.direction == edge.direction
+        ]
+        if len(candidates) <= 1:
+            return edge
 
-        For N/S doors: aligns Link's X to the door tile's X coordinate.
-        For E/W doors: aligns Link's Y to the door tile's Y coordinate.
-        Then presses the direction button and polls ROOM_ID.
+        def alignment_dist(e: DoorEdge) -> int:
+            wx, wy = e.world_pos()
+            return abs(wx - link_x) if e.aligns_x else abs(wy - link_y)
+
+        best = min(candidates, key=alignment_dist)
+        if best.tile_x != edge.tile_x or best.tile_y != edge.tile_y:
+            print(
+                f"[DungeonNavigator] Selecting door at tile({best.tile_x},{best.tile_y}) "
+                f"over tile({edge.tile_x},{edge.tile_y}) (closer to Link at "
+                f"x={link_x},y={link_y})"
+            )
+        return best
+
+    def _traverse_door(self, edge: DoorEdge) -> bool:
+        """Navigate Link to a door and press through it.
+
+        For N/S doors:
+          - Teleports Link's X to align with the door column (tile_x).
+          - Keeps Link's current Y and presses the direction.
+
+        For E/W doors:
+          - Walks Link up or down first (perpendicular pre-alignment) to
+            approach the door's Y row (tile_y), since teleporting into the
+            door Y may land inside collision.
+          - Then presses the direction button.
+
+        When multiple door edges exist for the same (from_room, to_room,
+        direction), picks the one whose alignment coordinate is closest to
+        Link's current position.
         """
         link_x = self.client.bridge.read_memory16(OracleRAM.LINK_X)
         link_y = self.client.bridge.read_memory16(OracleRAM.LINK_Y)
-        door_x, door_y = edge.world_pos()
 
-        if edge.aligns_x:
-            # N/S door: align X, keep Y (walk toward wall)
-            target_x, target_y = door_x, link_y
-        else:
-            # E/W door: align Y, keep X (walk toward wall)
-            target_x, target_y = link_x, door_y
-
-        # Teleport to aligned position
-        self.client.set_position(target_x, target_y)
-        time.sleep(0.05)  # let position stabilize
-
-        # Press direction and poll for room change
+        # Pick the door closest to Link's current position
+        best_edge = self._pick_closest_door(edge, link_x, link_y)
+        door_x, door_y = best_edge.world_pos()
         expected_room = edge.to_room
         start_room = self._read_room_id()
 
+        if best_edge.aligns_x:
+            # N/S door: teleport X alignment, keep Y, then press direction
+            self.client.set_position(door_x, link_y)
+            time.sleep(0.05)
+        else:
+            # E/W door: walk perpendicular (up/down) toward door_y first.
+            # Avoids teleporting into collision-blocked rows.  Run until Link
+            # reaches door_y or stops moving (natural collision boundary).
+            perp_button = "up" if door_y < link_y else "down"
+            prev_y = link_y
+            stuck_count = 0
+            for _ in range(self.timeout_frames):
+                self.client.press_button(perp_button, frames=4)
+                time.sleep(4 / 60)
+                # Bail early if room changed during pre-alignment
+                if self._read_room_id() != start_room:
+                    return self._read_room_id() == expected_room
+                cur_y = self.client.bridge.read_memory16(OracleRAM.LINK_Y)
+                if abs(cur_y - door_y) < 32:
+                    break  # close enough to door row
+                if cur_y == prev_y:
+                    stuck_count += 1
+                    if stuck_count >= 8:
+                        break  # Link isn't moving, stop pre-aligning
+                else:
+                    stuck_count = 0
+                prev_y = cur_y
+
+        # Press door direction and poll for room change
         for _ in range(self.timeout_frames):
-            self.client.press_button(edge.button, frames=4)
+            self.client.press_button(best_edge.button, frames=4)
+            time.sleep(4 / 60)
             current = self._read_room_id()
             if current == expected_room:
-                # Wait a few frames for the transition to settle
                 time.sleep(8 / 60)
-                final = self._read_room_id()
-                if final == expected_room:
+                if self._read_room_id() == expected_room:
                     return True
             elif current != start_room:
-                # Entered a different room — wrong door
                 print(
                     f"[DungeonNavigator] Warning: entered 0x{current:02X} "
                     f"instead of 0x{expected_room:02X}"
@@ -360,7 +415,10 @@ class DungeonNavigator:
         )
 
     def _run_z3ed(self, *args) -> dict:
-        cmd = [self.z3ed_path, "--rom", self.rom_path, "--format", "json"] + list(args)
+        # z3ed requires: z3ed <command> --rom <path> --format json [command-flags]
+        subcmd = list(args[:1])
+        flags = list(args[1:])
+        cmd = [self.z3ed_path] + subcmd + ["--rom", self.rom_path, "--format", "json"] + flags
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         if result.returncode != 0:
             raise RuntimeError(f"z3ed command failed: {result.stderr.strip()}")

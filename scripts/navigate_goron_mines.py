@@ -6,10 +6,22 @@ Usage:
         --instance smoke-test \
         --rom Roms/oos168x.sfc \
         [--save-state Roms/SaveStates/library/oos168x/inside_d6.mss] \
-        [--target-rooms 0xA8,0xD8,0xDA]
+        [--target-rooms 0x88,0xA8,0xD8,0xDA]
 
 Navigates to each target room, waits for the room to settle, and
 captures a dungeon-render PNG + live screenshot for comparison.
+
+Live navigation notes (inside_d6.mss save state, room 0x98):
+  0x88  REACHABLE  — north door from 0x98 (active minecart room, tracks 1/3)
+  0x87  REACHABLE  — 0x98→0x88→west door (active minecart room, track 2)
+  0x97  BLOCKED    — west door in 0x98, inaccessible from save-state corridor
+  0x99  BLOCKED    — east door in 0x98, inaccessible from save-state corridor
+  0xA8  BLOCKED    — south door in 0x98, large-room interior (ROOM_ID stays 0x98)
+  0xD8  BLOCKED    — no door path from 0x98; needs 0x88 holewarp (not placed)
+  0xDA  BLOCKED    — no door path from 0x98; needs 0x99 stair1 (not placed)
+
+To test B2 rooms (0xD8, 0xDA): create save states starting in those rooms
+and pass them with --save-state + --target-rooms.
 """
 
 from __future__ import annotations
@@ -32,7 +44,7 @@ DEFAULT_ROM = str(REPO_ROOT / "Roms" / "oos168x.sfc")
 DEFAULT_SAVE_STATE = str(
     REPO_ROOT / "Roms" / "SaveStates" / "library" / "oos168x" / "inside_d6.mss"
 )
-DEFAULT_TARGETS = [0xA8, 0xD8, 0xDA]
+DEFAULT_TARGETS = [0x88, 0xA8, 0xD8, 0xDA]
 GORON_MINES_ENTRANCE = 0x27
 Z3ED = str(Path.home() / "src/hobby/yaze/build/bin/Debug/z3ed")
 OUTPUT_DIR = REPO_ROOT / "Roms" / "Screenshots" / "minecart_smoke"
@@ -101,8 +113,8 @@ def main() -> int:
         return 0
 
     print(f"\n=== Live navigation via {sock} ===")
-    bridge = MesenBridge(sock)
-    client = OracleDebugClient(bridge)
+    client = OracleDebugClient(sock)
+    bridge = client.bridge
 
     # Health check
     try:
@@ -115,7 +127,10 @@ def main() -> int:
     # Load save state
     print(f"  Loading save state: {Path(args.save_state).name}")
     try:
-        bridge.send_command("LOAD_STATE", {"path": str(args.save_state)})
+        ok = bridge.load_state(path=str(args.save_state))
+        if not ok:
+            print("  [ERROR] LOADSTATE command returned failure")
+            return 1
         time.sleep(0.5)
     except Exception as exc:
         print(f"  [ERROR] Failed to load save state: {exc}")
@@ -135,7 +150,7 @@ def main() -> int:
         print(f"\n--- Room 0x{room_id:02X} ---")
 
         # Reload save state to start fresh from entrance each time
-        bridge.send_command("LOAD_STATE", {"path": str(args.save_state)})
+        bridge.load_state(path=str(args.save_state))
         time.sleep(0.5)
 
         current = nav._read_room_id()
@@ -159,8 +174,14 @@ def main() -> int:
         # Screenshot
         out = OUTPUT_DIR / f"room_{room_id:02X}_live.png"
         try:
-            bridge.send_command("SCREENSHOT", {"path": str(out)})
-            print(f"  [screenshot] → {out.name}")
+            result = bridge.send_command("SCREENSHOT", {})
+            png_b64 = result.get("data", "")
+            if png_b64:
+                import base64
+                out.write_bytes(base64.b64decode(png_b64))
+                print(f"  [screenshot] → {out.name}")
+            else:
+                print(f"  [screenshot] FAILED: empty response")
         except Exception as exc:
             print(f"  [screenshot] FAILED: {exc}")
 
