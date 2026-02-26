@@ -110,3 +110,17 @@ Notes:
 
 See `Docs/Debugging/Oracle_ABI_Standard.md` for the new long-entry ABI convention
 and macros (`OOS_LongEntry` / `OOS_LongExit`).
+
+---
+
+## 2026-02-25: `--check-sprite-tables` generating 27 false positives
+
+After `4394bad` the smoke test step 4 reports 27 sprite table overflow errors. **All are false positives.** Full analysis: `Docs/Debugging/Issues/analyzer_false_positives_2026-02-25.md`.
+
+Summary of what is wrong in the analyzer (`find_sprite_table_overflow`, lines 1132–1260):
+
+1. **Stale sentinel at $0DB818.** The base ROM already hooks `SpritePrep_LoadProperties` with `JSL $0DB871 : PHY`; the sentinel bytes `8B 4B AB BD...` no longer appear there. Update `LOAD_PROPERTIES_SENTINEL` or teach the check to recognize the hooked pattern as valid.
+
+2. **Twinrova hook bytes misread as pointer overflow.** `twinrova.asm:1063` uses `org $068841 ; @hook` to write `JSL NewMantlePrep : RTS` (5 bytes). The analyzer sees non-zero bytes at the sprite ID $F3–$F5 positions in the prep pointer table and flags them as overflow. Fix: skip addresses covered by a `hooks.json` entry before reporting overflow.
+
+3. **Sprite main pointer gap ($F3–$FF) is pure vanilla data.** OOS writes nothing to `$069469`–`$069481`; base and patched ROMs are identical there. The inter-table gap scan should compare against the base ROM rather than checking for non-zero.
