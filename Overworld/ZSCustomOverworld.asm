@@ -2310,9 +2310,6 @@ Overworld_ReloadSubscreenOverlay_Interupt:
         LDX.w #$009F
     .noSongOfStorms
 
-    ; Store the overlay for later.
-    PHX
-
     ; If the value is 0xFF that means we didn't set any overlay so load the
     ; pyramid one by default.
     CPX.w #$00FF : BNE .notFF
