@@ -1,6 +1,7 @@
 """CLI entrypoint for the Oracle Mesen2 debug client."""
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -36,6 +37,65 @@ WATCH_PRESETS = {
     "story": SCRIPT_DIR / "oracle_story.watch",
     "symbols": SCRIPT_DIR / "oracle_symbols.watch",
 }
+
+SAVE_STATE_LIBRARY_MARKER = f"{os.sep}Roms{os.sep}SaveStates{os.sep}library{os.sep}"
+
+
+def _sha1_file(path: Path) -> str:
+    h = hashlib.sha1()
+    with path.open("rb") as f:
+        while True:
+            chunk = f.read(1024 * 1024)
+            if not chunk:
+                break
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _validate_state_freshness(path: Path, client: OracleDebugClient) -> tuple[bool, str]:
+    """Validate save-state path against optional .meta sidecar + loaded ROM.
+
+    Returns:
+        (ok, message). message is suitable for CLI output when ok=False.
+    """
+    meta_path = Path(str(path) + ".meta.json")
+    in_library = SAVE_STATE_LIBRARY_MARKER in str(path)
+    if not meta_path.exists():
+        if in_library:
+            return (
+                False,
+                f"Refusing to load unverified library state (missing meta): {meta_path}\n"
+                "Run: z3ed mesen-state-regen --state <state.mss> --rom-file Roms/oos168x.sfc\n"
+                "Then: z3ed mesen-state-verify --state <state.mss> --rom-file Roms/oos168x.sfc",
+            )
+        return True, ""
+
+    try:
+        meta = json.loads(meta_path.read_text())
+    except Exception as exc:
+        return False, f"Refusing to load state with unreadable meta ({meta_path}): {exc}"
+
+    expected_state_sha1 = str(meta.get("state_sha1", "")).strip().lower()
+    if expected_state_sha1:
+        actual_state_sha1 = _sha1_file(path)
+        if actual_state_sha1 != expected_state_sha1:
+            return (
+                False,
+                f"State SHA1 mismatch for {path.name}: expected {expected_state_sha1}, got {actual_state_sha1}",
+            )
+
+    expected_rom_sha1 = str(meta.get("rom_sha1", "")).strip().lower()
+    if expected_rom_sha1:
+        rom_info = client.get_rom_info() or {}
+        loaded_rom_sha1 = str(rom_info.get("sha1", "")).strip().lower()
+        if loaded_rom_sha1 and loaded_rom_sha1 != expected_rom_sha1:
+            return (
+                False,
+                "ROM SHA1 mismatch for state meta: "
+                f"meta={expected_rom_sha1} loaded={loaded_rom_sha1}. "
+                "Load the matching ROM or regenerate state metadata.",
+            )
+    return True, ""
 
 
 def _normalize_watch_id(label: str, index: int, used: set[str]) -> str:
@@ -786,6 +846,11 @@ def main():
     load_parser = subparsers.add_parser("load", help="Load state")
     load_parser.add_argument("target", nargs="?", help="Slot number (1-99) or path to state file (.mss)")
     load_parser.add_argument("--path", "-p", help="Custom load path")
+    load_parser.add_argument(
+        "--allow-stale",
+        action="store_true",
+        help="Bypass state freshness checks for path loads (unsafe; use only for forensics)",
+    )
 
     label_parser = subparsers.add_parser("savestate-label", help="Get/set save state labels")
     label_parser.add_argument("action", choices=("get", "set", "clear"))
@@ -2967,6 +3032,11 @@ def main():
             sys.exit(1)
         if path:
             normalized_path = _normalize_filesystem_path(path)
+            if not args.allow_stale:
+                ok_fresh, fresh_msg = _validate_state_freshness(Path(normalized_path), client)
+                if not ok_fresh:
+                    print(fresh_msg)
+                    sys.exit(1)
             if client.load_state(path=normalized_path):
                 print(f"Loaded from {normalized_path}")
                 ok = True

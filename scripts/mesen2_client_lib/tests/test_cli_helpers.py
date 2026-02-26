@@ -8,12 +8,18 @@ from mesen2_client_lib import cli
 
 
 class DummyClient:
-    def __init__(self, labels):
+    def __init__(self, labels, rom_sha1=""):
         self._usdasm_labels = labels
+        self._rom_sha1 = rom_sha1
         self.bridge = None
 
     def load_usdasm_labels(self):
         return len(self._usdasm_labels)
+
+    def get_rom_info(self):
+        if not self._rom_sha1:
+            return {}
+        return {"sha1": self._rom_sha1}
 
 
 class DummyBridge:
@@ -124,3 +130,47 @@ def test_preflight_socket_instance_missing_fails_fast(monkeypatch):
         cli._preflight_socket(args)
 
     assert exc.value.code == 2
+
+
+def test_validate_state_freshness_rejects_missing_meta_for_library(tmp_path):
+    state_path = tmp_path / "Roms" / "SaveStates" / "library" / "oos168x" / "state.mss"
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_bytes(b"state")
+
+    ok, message = cli._validate_state_freshness(state_path, DummyClient({}))
+    assert ok is False
+    assert "missing meta" in message.lower()
+
+
+def test_validate_state_freshness_accepts_non_library_without_meta(tmp_path):
+    state_path = tmp_path / "tmp" / "scratch.mss"
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_bytes(b"state")
+
+    ok, message = cli._validate_state_freshness(state_path, DummyClient({}))
+    assert ok is True
+    assert message == ""
+
+
+def test_validate_state_freshness_rejects_rom_sha_mismatch(tmp_path):
+    state_path = tmp_path / "Roms" / "SaveStates" / "library" / "oos168x" / "state.mss"
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = b"state"
+    state_path.write_bytes(payload)
+    state_sha1 = cli._sha1_file(state_path)
+    meta_path = Path(str(state_path) + ".meta.json")
+    meta_path.write_text(
+        json.dumps(
+            {
+                "schema": "mesen_state_meta/v1",
+                "state_sha1": state_sha1,
+                "rom_sha1": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            }
+        )
+    )
+
+    ok, message = cli._validate_state_freshness(
+        state_path, DummyClient({}, rom_sha1="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
+    )
+    assert ok is False
+    assert "rom sha1 mismatch" in message.lower()
