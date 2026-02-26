@@ -846,11 +846,6 @@ def main():
     load_parser = subparsers.add_parser("load", help="Load state")
     load_parser.add_argument("target", nargs="?", help="Slot number (1-99) or path to state file (.mss)")
     load_parser.add_argument("--path", "-p", help="Custom load path")
-    load_parser.add_argument(
-        "--allow-stale",
-        action="store_true",
-        help="Bypass state freshness checks for path loads (unsafe; use only for forensics)",
-    )
 
     label_parser = subparsers.add_parser("savestate-label", help="Get/set save state labels")
     label_parser.add_argument("action", choices=("get", "set", "clear"))
@@ -3032,11 +3027,10 @@ def main():
             sys.exit(1)
         if path:
             normalized_path = _normalize_filesystem_path(path)
-            if not args.allow_stale:
-                ok_fresh, fresh_msg = _validate_state_freshness(Path(normalized_path), client)
-                if not ok_fresh:
-                    print(fresh_msg)
-                    sys.exit(1)
+            ok_fresh, fresh_msg = _validate_state_freshness(Path(normalized_path), client)
+            if not ok_fresh:
+                print(fresh_msg)
+                sys.exit(1)
             if client.load_state(path=normalized_path):
                 print(f"Loaded from {normalized_path}")
                 ok = True
