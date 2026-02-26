@@ -1212,6 +1212,9 @@ def main():
                 emit({"error": error}, ok=False)
             elif path:
                 normalized_path = _normalize_filesystem_path(path)
+                ok_fresh, fresh_msg = _validate_state_freshness(Path(normalized_path), client)
+                if not ok_fresh:
+                    emit({"error": fresh_msg, "path": normalized_path}, ok=False)
                 ok = client.load_state(path=normalized_path)
                 if ok:
                     emit({"loaded": normalized_path}, ok=True)
