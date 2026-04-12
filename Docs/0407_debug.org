@@ -1,0 +1,4 @@
+
+* Custom Dungeon Background Color Override based on Day/Night Time
+
+Regression identified. When warping from the darkworld, the special color reserved for "transparent" sections of the graphics do not properly adjust their tint to the time of the day and appear incorrectly colored.

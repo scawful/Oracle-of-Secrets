@@ -48,7 +48,7 @@ Use these room-data controls to drive runtime behavior without hand-editing ASM:
   - Build regenerates `Dungeons/generated/water_fill_table.asm` (ROM `$25:E000`) from those marker offsets.
   - At water fill completion, runtime writes deep-water collision (`0x08`) to those offsets.
   - Preset-driven CLI workflow (recommended):
-    - `python3 scripts/water_fill_author.py --rom Roms/oos168x.sfc --preset zora_d4 --write`
+    - `python3 scripts/water_fill_author.py --rom Roms/oos168.sfc --preset zora_d4 --write`
     - Presets:
       - `room25_lower_band` (lower-half drain band)
       - `room27_upside_t` (dam upside-T with right-side stair gap)

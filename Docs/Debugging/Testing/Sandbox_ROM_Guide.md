@@ -29,7 +29,7 @@
 
 ### 1.1 Where ROMs live
 
-- Put all ROMs in **`Roms/`** (e.g. `oos168x.sfc`, `oos167x.sfc`, `oos166_pass.sfc`, `bisect_old.sfc`). The build script uses `Roms/oos<version>.sfc` or `Roms/oos<version>_test2.sfc` as base and writes `Roms/oos<version>x.sfc`.
+- Put all ROMs in **`Roms/`** (e.g. `oos168x.sfc`, `oos167x.sfc`, `oos166_pass.sfc`, `bisect_old.sfc`). The build script uses `Roms/oos<version>.sfc` or `Roms/oos<version>.sfc` as base and writes `Roms/oos<version>x.sfc`.
 - Keep “pass” and “fail” versions for the same scenario so you can diff or bisect (e.g. `oos168x.sfc` = current, `oos168x_pass_20260101.sfc` = known good backup).
 
 ### 1.2 Optional catalog: `Roms/versions.json`

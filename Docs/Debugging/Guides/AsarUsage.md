@@ -2,26 +2,21 @@
 
 This document outlines best practices for using Asar and managing ROM files within the Oracle of Secrets project.
 
-## Safety First: Preserve the Clean ROM
+## ROM Naming Convention
 
-The most important rule is to **never modify the clean ROM directly**. The dev ROM for the current cycle may be a ZScream-edited file, for example:
+| File | Role |
+|---|---|
+| `Roms/oos<VERSION>.sfc` | Unpatched base ROM — the **edit target** (yaze, z3ed, ZScream) |
+| `Roms/oos<VERSION>x.sfc` | Asar-patched output — **test/emulator target only**, never edited directly |
 
-- `Roms/oos168_test2.sfc` (current dev ROM, ZScream 3.2.5 + ZSCustomOverworld v3)
+Current version: **168** (`oos168.sfc` / `oos168x.sfc`).
 
-The legacy clean base is still kept read-only:
+When the version increments: `oos169.sfc` (base) and `oos169x.sfc` (patched).
 
-- `Roms/oos168.sfc` (read-only)
+> **Historical note:** `oos168_test2.sfc` was a transitional name used during the ZSCustomOverworld v3 port.
+> The standard naming (`oos168.sfc`) is canonical going forward.
 
-Patched output is always written to:
-
-- `Roms/oos168x.sfc`
-
-Emulator/testing runs should always use the patched ROM (`oos168x.sfc`), not the dev/edit ROM.
-
-When we move to the next version, the number increments:
-
-- `Roms/oos169.sfc` (clean, read-only)
-- `Roms/oos169x.sfc` (patched output)
+Emulator/testing runs should always use the patched ROM (`oos168x.sfc`), not the base ROM.
 
 The `Roms/` directory is ignored by git, so you don't have to worry about committing ROM files.
 
@@ -45,7 +40,7 @@ Use the build script to archive the previous patched ROM and produce a fresh pat
 
 What it does:
 1. Archives the existing `Roms/oos168x.sfc` to `~/Documents/OracleOfSecrets/Roms/`.
-2. Copies `Roms/oos168_test2.sfc` → `Roms/oos168x.sfc` when present (falls back to `oos168.sfc`).
+2. Copies `Roms/oos168.sfc` → `Roms/oos168x.sfc` (base ROM to patched output).
 3. Runs `asar Oracle_main.asm Roms/oos168x.sfc`.
 
 ## Windows (Legacy)
@@ -58,7 +53,7 @@ If you need to run Asar manually:
 
 1.  **Copy the clean ROM**:
     ```sh
-    cp Roms/oos168_test2.sfc Roms/oos168x.sfc  # or oos168.sfc if test ROM isn't present
+    cp Roms/oos168.sfc Roms/oos168x.sfc
     ```
 
 2.  **Run Asar**:

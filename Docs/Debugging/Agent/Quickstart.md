@@ -4,7 +4,7 @@ Use this before any other Oracle-of-Secrets doc. It is the shortest path to repr
 
 ## Defaults
 - Repo: `~/src/hobby/oracle-of-secrets`
-- ROMs: `Roms/oos168x.sfc` (release), `Roms/oos168_test2.sfc` (dev/edit)
+- ROMs: `Roms/oos168.sfc` (base/edit target), `Roms/oos168x.sfc` (patched, use in emulator)
 - Emulator: `/Applications/Mesen2 OOS.app` (socket auto-starts at `/tmp/mesen2-*.sock`)
 - Client CLI: `python3 scripts/mesen2_client.py`
 

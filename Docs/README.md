@@ -23,13 +23,16 @@ Welcome to the documentation for Oracle of Secrets. This directory is organized 
 ## Debugging & Testing Quick Start
 
 ```bash
-# Build + overlap check
-mesen-agent build
-python3 scripts/check_zscream_overlap.py
+# Build + symbol sync + optional reset
+Scripts/Build/dev_loop.sh 168 --mesen-sync --reload
+
+# Or compatibility wrapper
+./build.sh 168
 
 # Run regression test suite
-./scripts/run_regression_tests.sh regression
+./Scripts/Validate/run_regression_tests.sh regression
 
-# Socket API client (preferred)
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py diagnostics
+# Launch isolated Mesen2 + attach by instance
+./Scripts/Mesen2/mesen2_launch_instance.sh --instance oos-you-debug --owner you --source manual
+python3 Scripts/Mesen2/mesen2_client.py --instance oos-you-debug diagnostics
 ```

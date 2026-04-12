@@ -9,6 +9,7 @@ Primary entry point is still `RUNBOOK.md` at the repo root, but if you are brows
 - Root-cause workflow: `Root_Cause_Debugging_Workflow.md`
 - Fast travel / save-data profiles: `Fast_Travel_and_Test_Setups.md`
 - Save-state library: `Testing/SaveStateLibrary.md`
+- Native in-window debug panel plan: `Agent/Mesen2_OOS_Native_Debug_Panel_Plan.md`
 
 ## Structure
 

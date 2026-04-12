@@ -29,8 +29,8 @@ All paths relative to `~/.context/knowledge/`.
 
 ## Rules
 1. Keep edits minimal, reversible, and task-scoped.
-2. Prefer `scripts/` tools over ad-hoc shell commands.
-3. Validate with `./scripts/build_rom.sh 168` + `check_zscream_overlap.py` when changing ASM.
+2. Prefer `Scripts/` tools over ad-hoc shell commands.
+3. Validate with `./Scripts/Build/build_rom.sh 168` + `check_zscream_overlap.py` when changing ASM.
 4. Never claim verification that was not actually run.
 5. Escalate ambiguity quickly.
 

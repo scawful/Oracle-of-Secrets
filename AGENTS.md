@@ -1,22 +1,17 @@
-# AGENTS.md (Compact)
+# AGENTS.md
 
-Purpose: high-signal operating rules only.
+## ROM Naming
+- `Roms/oos<VERSION>.sfc` — unpatched base, the **edit target**
+- `Roms/oos<VERSION>x.sfc` — Asar-patched, **test in emulator only** (never edit directly)
+- Current: `oos168.sfc` / `oos168x.sfc`
 
-Core Rules
-1. Clarify goals, constraints, and done criteria before major edits.
-2. Prefer the smallest working change over architecture churn.
-3. Read local `README.md` and nearby docs before coding.
-4. Touch only task-related files.
-5. Keep hygiene high: no dead code or commented-out leftovers.
-6. Run the fastest relevant verification command before finishing.
-7. If checks cannot run, report exactly why and residual risk.
-8. Ask before destructive actions (`rm`, force-push, history rewrite).
+## Essentials
+- Build: `./Scripts/Build/build_rom.sh 168`
+- After ASM changes: `python3 Scripts/Build/check_zscream_overlap.py`
+- Current work: `.context/scratchpad/agent_handoff.md`
+- File routing: `.context/CONTEXT_INDEX.md`
 
-Delivery Contract
-- Report what changed.
-- Report what was verified.
-- Report known gaps or follow-ups.
-
-Reference Material
-- Detailed historical guidance: `.context/knowledge/agent-reference.md`.
-- Project docs remain the source of truth for architecture and workflows.
+## Rules
+1. Read `agent_handoff.md` first.
+2. Smallest working change. Touch only task-related files.
+3. Never claim verification not actually run.

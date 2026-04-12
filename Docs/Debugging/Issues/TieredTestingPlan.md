@@ -71,7 +71,7 @@ xxd -s $OFFSET -l 32 Roms/oos168x.sfc
 
 Visual pass/fail only - no automation needed.
 
-**ROM Target:** Use the patched ROM (`oos168x.sfc`) built from the current dev ROM (`oos168_test2.sfc`).
+**ROM Target:** Use the patched ROM (`oos168x.sfc`) built from the current dev ROM (`oos168.sfc`).
 
 **Test Matrix:**
 
@@ -240,7 +240,7 @@ This is O(n × m) where n = changes, m = test locations.
 
 ### 2026-01-24 - Tier 2 Automated Smoke (dev ROM attempt; superseded)
 
-**ROM:** `Roms/oos168_test2.sfc` (dev ROM; superseded by patched target)
+**ROM:** `Roms/oos168.sfc` (dev ROM; superseded by patched target)
 **Method:** Mesen2 socket API + input injection (no visual confirmation)
 **Note:** No dedicated test2 save states exist. Used oos168x slot states as temporary entry points.
 
@@ -258,7 +258,7 @@ This is O(n × m) where n = changes, m = test locations.
 - **Black screen:** Not observed during automated attempts (INIDISP remained 0x00).
 
 **Follow-ups:**
-1. Capture **dev-based** entrance/stair save states (from the patched `oos168x.sfc` built on `oos168_test2.sfc`) and add to library.
+1. Capture **dev-based** entrance/stair save states (from the patched `oos168x.sfc` built on `oos168.sfc`) and add to library.
 2. Re-run Tier 2 on the patched ROM with those states to validate fade/transition behavior visually.
 
 ### 2026-01-24 - Tier 2 Test Launcher Created (Iteration 61)

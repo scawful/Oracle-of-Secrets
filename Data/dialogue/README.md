@@ -22,7 +22,7 @@ yaze-message-bundle JSON files for NPC dialogue. Source for Gemini/Codex import 
 ### Safe workflow
 
 0. Normalize/validate bundle IDs:
-   - `python3 scripts/normalize_dialogue_bundles.py --glob 'Data/dialogue/*.json' --strict`
+   - `python3 Scripts/normalize_dialogue_bundles.py --glob 'Data/dialogue/*.json' --strict`
 
 1. Validate bundle format/encoding:
    - `z3ed message-import-bundle --file Data/dialogue/<bundle>.json --strict`

@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "macros": [
+    {
+      "id": "maku_threshold_0",
+      "label": "Maku Prep (0 Crystals)",
+      "primary": true,
+      "shortcut": "<Control-Key-1>",
+      "steps": [
+        { "action": "apply_profile", "profile": "all_items_no_progress" },
+        { "action": "setflag", "flag": "gamestate", "value": "2" },
+        { "action": "setflag", "flag": "intro", "value": "true" },
+        { "action": "setflag", "flag": "hall", "value": "false" },
+        { "action": "setflag", "flag": "makutree", "value": "1" },
+        { "action": "setflag", "flag": "crystals", "value": "0x00" },
+        { "action": "sync_sram" },
+        { "action": "fly", "location": "makutree" },
+        { "action": "frame", "frames": 8 }
+      ]
+    },
+    {
+      "id": "maku_threshold_3",
+      "label": "Maku Prep (3 Crystals)",
+      "primary": true,
+      "shortcut": "<Control-Key-2>",
+      "steps": [
+        { "action": "apply_profile", "profile": "all_items_no_progress" },
+        { "action": "setflag", "flag": "gamestate", "value": "2" },
+        { "action": "setflag", "flag": "intro", "value": "true" },
+        { "action": "setflag", "flag": "hall", "value": "false" },
+        { "action": "setflag", "flag": "makutree", "value": "1" },
+        { "action": "setflag", "flag": "crystals", "value": "0x15" },
+        { "action": "sync_sram" },
+        { "action": "fly", "location": "makutree" },
+        { "action": "frame", "frames": 8 }
+      ]
+    },
+    {
+      "id": "d4_water_gate_prep",
+      "label": "D4 Water Gate Prep",
+      "primary": true,
+      "shortcut": "<Control-Key-3>",
+      "steps": [
+        { "action": "apply_profile", "profile": "zora_temple_debug" },
+        { "action": "setflag", "flag": "gamestate", "value": "2" },
+        { "action": "sync_sram" },
+        { "action": "fly", "location": "zora_temple" },
+        { "action": "frame", "frames": 8 }
+      ]
+    },
+    {
+      "id": "d6_entrance_prep",
+      "label": "D6 Entrance Prep",
+      "primary": true,
+      "shortcut": "<Control-Key-4>",
+      "steps": [
+        { "action": "apply_profile", "profile": "all_items_no_progress" },
+        { "action": "setflag", "flag": "gamestate", "value": "2" },
+        { "action": "sync_sram" },
+        { "action": "fly", "location": "d6" },
+        { "action": "frame", "frames": 8 }
+      ]
+    },
+    {
+      "id": "soaring_debug_prep",
+      "label": "Soaring Debug Prep",
+      "shortcut": "<Control-Key-5>",
+      "steps": [
+        { "action": "apply_profile", "profile": "soaring_debug" },
+        { "action": "sync_sram" }
+      ]
+    }
+  ]
+}

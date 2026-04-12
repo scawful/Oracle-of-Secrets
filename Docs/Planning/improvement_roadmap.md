@@ -1,7 +1,16 @@
 # Oracle of Secrets - Improvement Roadmap
 
 **Created:** 2026-01-23
-**Status:** Planning
+**Status:** Historical planning reference
+
+## Current Status Note
+
+This roadmap captures an earlier planning pass. Several items below are now
+implemented in the repo, including `scripts/mesen2_client.py`, save-data
+profiles, save-state library flows, and regression runner entry points.
+
+Use `Docs/Planning/Plans/development_workflow_alignment_2026-03-28.md` for the
+current tooling, testing, and workflow plan.
 
 ---
 

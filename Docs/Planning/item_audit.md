@@ -1,4 +1,4 @@
-# Item Audit (oos168_test2.sfc)
+# Item Audit (oos168.sfc)
 
 Date: 2026-01-24 01:15:55
 
@@ -15,7 +15,7 @@ Sources:
 Design note: Mirror is canonically intended for the Hall of Secrets (Impa grant); relocation pending.
 
 ## Specific locations checked
-- Old Man cave: room `0x00D1` (from `Sprites/NPCs/followers.asm` trigger list) has **no chests** in oos168_test2.
+- Old Man cave: room `0x00D1` (from `Sprites/NPCs/followers.asm` trigger list) has **no chests** in oos168.
 - Grave Cave: room `0x113` has two chests (item ids `0x1A`, `0x19`), which are **Cape** / **Byrna** in vanilla labels.
 
 ## Mirror item ID confirmation (ROM table)

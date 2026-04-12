@@ -2,8 +2,8 @@
 
 **Date:** 2026-01-24
 **Purpose:** Map NPC placements to rooms/screens and dialogue IDs; prioritize vanilla NPC reuse audit.
-**Sources:** z3ed `overworld-list-sprites` (Roms/oos168_test2.sfc), `Core/messages.org`, `Sprites/NPCs/*.asm`, `Docs/Technical/Sheets/Oracle of Secrets Data Sheet - Custom Sprites.csv`
-**Note:** `z3ed message-search` is now implemented and working; message text can be verified directly from ROM (`Roms/oos168_test2.sfc`).
+**Sources:** z3ed `overworld-list-sprites` (Roms/oos168.sfc), `Core/messages.org`, `Sprites/NPCs/*.asm`, `Docs/Technical/Sheets/Oracle of Secrets Data Sheet - Custom Sprites.csv`
+**Note:** `z3ed message-search` is now implemented and working; message text can be verified directly from ROM (`Roms/oos168.sfc`).
 
 ---
 
@@ -48,7 +48,7 @@
 ### Village Elder (Wayward Village, interior)
 - **Sprite file:** `Sprites/NPCs/village_elder.asm`
 - **Message IDs:** `0x143` (first meeting), `0x019` (already met)
-- **ROM text (oos168_test2.sfc):**
+- **ROM text (oos168.sfc):**
   - `0x143`: "Welcome, young one, to this... I will mark the spot on your map." (full text in `Docs/World/Sprites/NPCs/VillageElder.md`)
 - **Status:** `0x143` is now in `Core/messages.org`.
 - **Action:** Discuss progress-based updates (ties to Fortune Teller + Scrolls).
@@ -62,7 +62,7 @@
 ### Librarian (Mermaid sprite)
 - **Sprite file:** `Sprites/NPCs/mermaid.asm` (Librarian subtype)
 - **Message IDs:** `0x012E`, `0x01A0`-`0x01A3` (scroll offer, translation, completion)
-- **ROM text (oos168_test2.sfc):**
+- **ROM text (oos168.sfc):**
   - `0x012E`: "In your quest you may find... secret scrolls, bring them all to me for translation."
 - **Status:** `0x012E` is now in `Core/messages.org`.
 - **Reference:** `Docs/World/Sprites/NPCs/Mermaid.md` now contains full scroll message text.
@@ -136,7 +136,7 @@
 | `0xF3` | (unnamed) | OW 0x23 unknown |
 
 ## Room Metadata (Rooms & Entrances Sheet)
-- Generated `Docs/Planning/room_metadata_audit.csv` from the sheet's room IDs using `z3ed dungeon-describe-room` on `Roms/oos168_test2.sfc`.
+- Generated `Docs/Planning/room_metadata_audit.csv` from the sheet's room IDs using `z3ed dungeon-describe-room` on `Roms/oos168.sfc`.
 - Added `heuristic_tags` (name-based) to quickly flag boss/entrance/chest/etc. Treat as provisional until sprite/object audits land.
 - **Update:** Room metadata refreshed after z3ed rebuild; blockset/spriteset/palette values now populated.
 ## Next Steps
