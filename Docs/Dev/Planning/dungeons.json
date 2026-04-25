@@ -9,7 +9,8 @@
       "stairs/holewarps extracted from ROM room headers (bytes +9 to +13)",
       "doors inferred from grid adjacency within same dungeon (may overcount)",
       "Room types: entrance/boss/mini_boss/connector/normal",
-      "Room names from oracle_room_labels.json (corrected 2026-02-08)"
+      "Room names from oracle_room_labels.json (corrected 2026-02-08)",
+      "2026-04-25 manual registry correction: align D5/D6/S1 room ownership with RC checklist, location_registry.json, and dungeon map docs; remove stale D2 claims for D5 Glacia rooms; keeps S3/D4 disputed rooms unchanged pending a separate runtime audit"
     ]
   },
   "dungeons": [
@@ -548,66 +549,6 @@
           "tag2": 0
         },
         {
-          "id": "0xAE",
-          "name": "Upper Hall",
-          "grid_row": 10,
-          "grid_col": 14,
-          "type": "normal",
-          "palette": 19,
-          "blockset": 11,
-          "spriteset": 41,
-          "tag1": 22,
-          "tag2": 0
-        },
-        {
-          "id": "0xAF",
-          "name": "Ice Bridge",
-          "grid_row": 10,
-          "grid_col": 15,
-          "type": "normal",
-          "palette": 19,
-          "blockset": 11,
-          "spriteset": 41,
-          "tag1": 22,
-          "tag2": 0
-        },
-        {
-          "id": "0xBE",
-          "name": "Block Puzzle",
-          "grid_row": 11,
-          "grid_col": 14,
-          "type": "normal",
-          "palette": 19,
-          "blockset": 11,
-          "spriteset": 41,
-          "tag1": 4,
-          "tag2": 0
-        },
-        {
-          "id": "0xBF",
-          "name": "Switch Room",
-          "grid_row": 11,
-          "grid_col": 15,
-          "type": "normal",
-          "palette": 19,
-          "blockset": 11,
-          "spriteset": 41,
-          "tag1": 22,
-          "tag2": 0
-        },
-        {
-          "id": "0xCE",
-          "name": "Hole to Kholdstare",
-          "grid_row": 12,
-          "grid_col": 14,
-          "type": "normal",
-          "palette": 19,
-          "blockset": 11,
-          "spriteset": 41,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
           "id": "0xDE",
           "name": "Kholdstare (Boss)",
           "grid_row": 13,
@@ -650,11 +591,6 @@
           "from": "0x5F",
           "to": "0x7F",
           "label": "Hidden Chest / Spike Floor \u2194 Big Spike Traps"
-        },
-        {
-          "from": "0xAF",
-          "to": "0xCE",
-          "label": "Ice Bridge \u2194 Hole to Kholdstare"
         }
       ],
       "holewarps": [
@@ -682,11 +618,6 @@
           "from": "0x5E",
           "to": "0x3E",
           "label": "Lonely Firebar \u2192 Stalfos Knights / Conveyor Hellway"
-        },
-        {
-          "from": "0xCE",
-          "to": "0xAF",
-          "label": "Hole to Kholdstare \u2192 Ice Bridge"
         }
       ],
       "doors": [
@@ -764,36 +695,6 @@
           "from": "0x7E",
           "to": "0x8E",
           "direction": "south"
-        },
-        {
-          "from": "0xAE",
-          "to": "0xAF",
-          "direction": "east"
-        },
-        {
-          "from": "0xAE",
-          "to": "0xBE",
-          "direction": "south"
-        },
-        {
-          "from": "0xAF",
-          "to": "0xBF",
-          "direction": "south"
-        },
-        {
-          "from": "0xBE",
-          "to": "0xBF",
-          "direction": "east"
-        },
-        {
-          "from": "0xBE",
-          "to": "0xCE",
-          "direction": "south"
-        },
-        {
-          "from": "0xCE",
-          "to": "0xDE",
-          "direction": "south"
         }
       ],
       "features": {},
@@ -803,7 +704,8 @@
           "room_id": "0x0E",
           "overworld_area": "Tail Palace area"
         }
-      ]
+      ],
+      "spatial_clusters": []
     },
     {
       "id": "D3",
@@ -1407,54 +1309,6 @@
       "crystal_bit": "0x04",
       "rooms": [
         {
-          "id": "0x44",
-          "name": "Big Chest",
-          "grid_row": 4,
-          "grid_col": 4,
-          "type": "normal",
-          "palette": 9,
-          "blockset": 1,
-          "spriteset": 17,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
-          "id": "0x45",
-          "name": "Jail Cells",
-          "grid_row": 4,
-          "grid_col": 5,
-          "type": "normal",
-          "palette": 9,
-          "blockset": 1,
-          "spriteset": 30,
-          "tag1": 28,
-          "tag2": 0
-        },
-        {
-          "id": "0x64",
-          "name": "West Attic",
-          "grid_row": 6,
-          "grid_col": 4,
-          "type": "normal",
-          "palette": 1,
-          "blockset": 1,
-          "spriteset": 33,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
-          "id": "0x65",
-          "name": "East Attic",
-          "grid_row": 6,
-          "grid_col": 5,
-          "type": "normal",
-          "palette": 1,
-          "blockset": 1,
-          "spriteset": 17,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
           "id": "0x9E",
           "name": "Big Chest Key",
           "grid_row": 9,
@@ -1479,18 +1333,6 @@
           "tag2": 0
         },
         {
-          "id": "0xAB",
-          "name": "Moving Spikes / Key Pot",
-          "grid_row": 10,
-          "grid_col": 11,
-          "type": "normal",
-          "palette": 13,
-          "blockset": 5,
-          "spriteset": 27,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
           "id": "0xAC",
           "name": "Blind The Thief (Boss)",
           "grid_row": 10,
@@ -1500,6 +1342,42 @@
           "blockset": 11,
           "spriteset": 28,
           "tag1": 37,
+          "tag2": 0
+        },
+        {
+          "id": "0xAD",
+          "name": "Room 0xAD",
+          "grid_row": 10,
+          "grid_col": 13,
+          "type": "normal",
+          "palette": 19,
+          "blockset": 11,
+          "spriteset": 28,
+          "tag1": 0,
+          "tag2": 0
+        },
+        {
+          "id": "0xAE",
+          "name": "Room 0xAE",
+          "grid_row": 10,
+          "grid_col": 14,
+          "type": "normal",
+          "palette": 19,
+          "blockset": 11,
+          "spriteset": 41,
+          "tag1": 0,
+          "tag2": 0
+        },
+        {
+          "id": "0xAF",
+          "name": "Room 0xAF",
+          "grid_row": 10,
+          "grid_col": 15,
+          "type": "normal",
+          "palette": 19,
+          "blockset": 11,
+          "spriteset": 41,
+          "tag1": 0,
           "tag2": 0
         },
         {
@@ -1527,6 +1405,42 @@
           "tag2": 0
         },
         {
+          "id": "0xBD",
+          "name": "Room 0xBD",
+          "grid_row": 11,
+          "grid_col": 13,
+          "type": "normal",
+          "palette": 19,
+          "blockset": 11,
+          "spriteset": 3,
+          "tag1": 0,
+          "tag2": 0
+        },
+        {
+          "id": "0xBE",
+          "name": "Room 0xBE",
+          "grid_row": 11,
+          "grid_col": 14,
+          "type": "normal",
+          "palette": 19,
+          "blockset": 11,
+          "spriteset": 41,
+          "tag1": 0,
+          "tag2": 0
+        },
+        {
+          "id": "0xBF",
+          "name": "Room 0xBF",
+          "grid_row": 11,
+          "grid_col": 15,
+          "type": "normal",
+          "palette": 19,
+          "blockset": 11,
+          "spriteset": 41,
+          "tag1": 0,
+          "tag2": 0
+        },
+        {
           "id": "0xCB",
           "name": "North West Entrance",
           "grid_row": 12,
@@ -1547,6 +1461,42 @@
           "palette": 19,
           "blockset": 11,
           "spriteset": 28,
+          "tag1": 0,
+          "tag2": 0
+        },
+        {
+          "id": "0xCD",
+          "name": "Room 0xCD",
+          "grid_row": 12,
+          "grid_col": 13,
+          "type": "normal",
+          "palette": 19,
+          "blockset": 11,
+          "spriteset": 41,
+          "tag1": 0,
+          "tag2": 0
+        },
+        {
+          "id": "0xCE",
+          "name": "Room 0xCE",
+          "grid_row": 12,
+          "grid_col": 14,
+          "type": "normal",
+          "palette": 19,
+          "blockset": 11,
+          "spriteset": 41,
+          "tag1": 0,
+          "tag2": 0
+        },
+        {
+          "id": "0xCF",
+          "name": "Room 0xCF",
+          "grid_row": 12,
+          "grid_col": 15,
+          "type": "normal",
+          "palette": 19,
+          "blockset": 11,
+          "spriteset": 41,
           "tag1": 0,
           "tag2": 0
         },
@@ -1573,14 +1523,21 @@
           "spriteset": 41,
           "tag1": 39,
           "tag2": 0
+        },
+        {
+          "id": "0xDD",
+          "name": "Room 0xDD",
+          "grid_row": 13,
+          "grid_col": 13,
+          "type": "normal",
+          "palette": 19,
+          "blockset": 11,
+          "spriteset": 41,
+          "tag1": 0,
+          "tag2": 0
         }
       ],
       "stairs": [
-        {
-          "from": "0xAB",
-          "to": "0x64",
-          "label": "Moving Spikes / Key Pot \u2194 West Attic"
-        },
         {
           "from": "0xCC",
           "to": "0xDC",
@@ -1601,29 +1558,24 @@
       ],
       "doors": [
         {
-          "from": "0x44",
-          "to": "0x45",
-          "direction": "east"
-        },
-        {
-          "from": "0x64",
-          "to": "0x65",
-          "direction": "east"
-        },
-        {
           "from": "0x9E",
           "to": "0x9F",
           "direction": "east"
         },
         {
-          "from": "0xAB",
-          "to": "0xAC",
+          "from": "0xAC",
+          "to": "0xAD",
           "direction": "east"
         },
         {
-          "from": "0xAB",
-          "to": "0xBB",
-          "direction": "south"
+          "from": "0xAD",
+          "to": "0xAE",
+          "direction": "east"
+        },
+        {
+          "from": "0xAE",
+          "to": "0xAF",
+          "direction": "east"
         },
         {
           "from": "0xAC",
@@ -1631,8 +1583,38 @@
           "direction": "south"
         },
         {
+          "from": "0xAD",
+          "to": "0xBD",
+          "direction": "south"
+        },
+        {
+          "from": "0xAE",
+          "to": "0xBE",
+          "direction": "south"
+        },
+        {
+          "from": "0xAF",
+          "to": "0xBF",
+          "direction": "south"
+        },
+        {
           "from": "0xBB",
           "to": "0xBC",
+          "direction": "east"
+        },
+        {
+          "from": "0xBC",
+          "to": "0xBD",
+          "direction": "east"
+        },
+        {
+          "from": "0xBD",
+          "to": "0xBE",
+          "direction": "east"
+        },
+        {
+          "from": "0xBE",
+          "to": "0xBF",
           "direction": "east"
         },
         {
@@ -1646,8 +1628,38 @@
           "direction": "south"
         },
         {
+          "from": "0xBD",
+          "to": "0xCD",
+          "direction": "south"
+        },
+        {
+          "from": "0xBE",
+          "to": "0xCE",
+          "direction": "south"
+        },
+        {
+          "from": "0xBF",
+          "to": "0xCF",
+          "direction": "south"
+        },
+        {
           "from": "0xCB",
           "to": "0xCC",
+          "direction": "east"
+        },
+        {
+          "from": "0xCC",
+          "to": "0xCD",
+          "direction": "east"
+        },
+        {
+          "from": "0xCD",
+          "to": "0xCE",
+          "direction": "east"
+        },
+        {
+          "from": "0xCE",
+          "to": "0xCF",
           "direction": "east"
         },
         {
@@ -1661,8 +1673,18 @@
           "direction": "south"
         },
         {
+          "from": "0xCD",
+          "to": "0xDD",
+          "direction": "south"
+        },
+        {
           "from": "0xDB",
           "to": "0xDC",
+          "direction": "east"
+        },
+        {
+          "from": "0xDC",
+          "to": "0xDD",
           "direction": "east"
         }
       ],
@@ -1676,27 +1698,32 @@
       ],
       "spatial_clusters": [
         {
-          "name": "Upper Attic",
+          "name": "Upper Estate",
           "rooms": [
-            "0x44",
-            "0x45",
-            "0x64",
-            "0x65"
+            "0x9E",
+            "0x9F"
           ]
         },
         {
-          "name": "Main Dungeon",
+          "name": "Main Estate",
           "rooms": [
-            "0x9E",
-            "0x9F",
-            "0xAB",
             "0xAC",
+            "0xAD",
+            "0xAE",
+            "0xAF",
             "0xBB",
             "0xBC",
+            "0xBD",
+            "0xBE",
+            "0xBF",
             "0xCB",
             "0xCC",
+            "0xCD",
+            "0xCE",
+            "0xCF",
             "0xDB",
-            "0xDC"
+            "0xDC",
+            "0xDD"
           ]
         }
       ]
@@ -1707,6 +1734,18 @@
       "vanilla_name": "Misery Mire",
       "crystal_bit": "0x02",
       "rooms": [
+        {
+          "id": "0x69",
+          "name": "B1 Side",
+          "grid_row": 6,
+          "grid_col": 9,
+          "type": "normal",
+          "palette": 7,
+          "blockset": 4,
+          "spriteset": 8,
+          "tag1": 52,
+          "tag2": 0
+        },
         {
           "id": "0x77",
           "name": "Northwest Hall",
@@ -1780,54 +1819,6 @@
           "tag2": 0
         },
         {
-          "id": "0x90",
-          "name": "Vitreous (Boss)",
-          "grid_row": 9,
-          "grid_col": 0,
-          "type": "boss",
-          "palette": 5,
-          "blockset": 1,
-          "spriteset": 22,
-          "tag1": 37,
-          "tag2": 0
-        },
-        {
-          "id": "0x91",
-          "name": "Final Switch",
-          "grid_row": 9,
-          "grid_col": 1,
-          "type": "normal",
-          "palette": 5,
-          "blockset": 1,
-          "spriteset": 10,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
-          "id": "0x92",
-          "name": "Dark Bomb Wall / Switches",
-          "grid_row": 9,
-          "grid_col": 2,
-          "type": "normal",
-          "palette": 5,
-          "blockset": 1,
-          "spriteset": 10,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
-          "id": "0x93",
-          "name": "Dark Cane Floor Switch Puzzle",
-          "grid_row": 9,
-          "grid_col": 3,
-          "type": "normal",
-          "palette": 5,
-          "blockset": 4,
-          "spriteset": 28,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
           "id": "0x97",
           "name": "Torch Puzzle / Moving Wall",
           "grid_row": 9,
@@ -1864,54 +1855,6 @@
           "tag2": 0
         },
         {
-          "id": "0xA0",
-          "name": "Pre-Vitreous",
-          "grid_row": 10,
-          "grid_col": 0,
-          "type": "normal",
-          "palette": 30,
-          "blockset": 9,
-          "spriteset": 29,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
-          "id": "0xA1",
-          "name": "Fish",
-          "grid_row": 10,
-          "grid_col": 1,
-          "type": "normal",
-          "palette": 30,
-          "blockset": 9,
-          "spriteset": 19,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
-          "id": "0xA2",
-          "name": "Bridge Key Chest",
-          "grid_row": 10,
-          "grid_col": 2,
-          "type": "normal",
-          "palette": 30,
-          "blockset": 9,
-          "spriteset": 38,
-          "tag1": 41,
-          "tag2": 0
-        },
-        {
-          "id": "0xA3",
-          "name": "Track Room",
-          "grid_row": 10,
-          "grid_col": 3,
-          "type": "normal",
-          "palette": 5,
-          "blockset": 3,
-          "spriteset": 29,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
           "id": "0xA8",
           "name": "Stalfos Spawn / Track Room",
           "grid_row": 10,
@@ -1933,54 +1876,6 @@
           "blockset": 4,
           "spriteset": 27,
           "tag1": 8,
-          "tag2": 0
-        },
-        {
-          "id": "0xAA",
-          "name": "Map Chest",
-          "grid_row": 10,
-          "grid_col": 10,
-          "type": "normal",
-          "palette": 13,
-          "blockset": 8,
-          "spriteset": 44,
-          "tag1": 50,
-          "tag2": 0
-        },
-        {
-          "id": "0xB1",
-          "name": "Hourglass",
-          "grid_row": 11,
-          "grid_col": 1,
-          "type": "normal",
-          "palette": 30,
-          "blockset": 9,
-          "spriteset": 36,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
-          "id": "0xB2",
-          "name": "Slug",
-          "grid_row": 11,
-          "grid_col": 2,
-          "type": "normal",
-          "palette": 30,
-          "blockset": 9,
-          "spriteset": 30,
-          "tag1": 0,
-          "tag2": 22
-        },
-        {
-          "id": "0xB3",
-          "name": "Spike Key Chest",
-          "grid_row": 11,
-          "grid_col": 3,
-          "type": "normal",
-          "palette": 5,
-          "blockset": 3,
-          "spriteset": 29,
-          "tag1": 0,
           "tag2": 0
         },
         {
@@ -2008,54 +1903,6 @@
           "tag2": 0
         },
         {
-          "id": "0xBA",
-          "name": "Dark Antifairy / Key Pot",
-          "grid_row": 11,
-          "grid_col": 10,
-          "type": "normal",
-          "palette": 13,
-          "blockset": 8,
-          "spriteset": 44,
-          "tag1": 60,
-          "tag2": 0
-        },
-        {
-          "id": "0xC1",
-          "name": "Compass Chest / Tile",
-          "grid_row": 12,
-          "grid_col": 1,
-          "type": "normal",
-          "palette": 30,
-          "blockset": 9,
-          "spriteset": 19,
-          "tag1": 1,
-          "tag2": 2
-        },
-        {
-          "id": "0xC2",
-          "name": "Big Hub",
-          "grid_row": 12,
-          "grid_col": 2,
-          "type": "normal",
-          "palette": 30,
-          "blockset": 9,
-          "spriteset": 29,
-          "tag1": 10,
-          "tag2": 0
-        },
-        {
-          "id": "0xC3",
-          "name": "Lower Big Chest",
-          "grid_row": 12,
-          "grid_col": 3,
-          "type": "normal",
-          "palette": 5,
-          "blockset": 3,
-          "spriteset": 29,
-          "tag1": 0,
-          "tag2": 0
-        },
-        {
           "id": "0xC8",
           "name": "Armos Knights (Boss)",
           "grid_row": 12,
@@ -2065,54 +1912,6 @@
           "blockset": 4,
           "spriteset": 21,
           "tag1": 37,
-          "tag2": 0
-        },
-        {
-          "id": "0xC9",
-          "name": "Lower Entrance",
-          "grid_row": 12,
-          "grid_col": 9,
-          "type": "entrance",
-          "palette": 13,
-          "blockset": 8,
-          "spriteset": 44,
-          "tag1": 23,
-          "tag2": 0
-        },
-        {
-          "id": "0xCA",
-          "name": "Unidentified",
-          "grid_row": 12,
-          "grid_col": 10,
-          "type": "normal",
-          "palette": 13,
-          "blockset": 8,
-          "spriteset": 44,
-          "tag1": 19,
-          "tag2": 50
-        },
-        {
-          "id": "0xD1",
-          "name": "Conveyor Slug / Big Key",
-          "grid_row": 13,
-          "grid_col": 1,
-          "type": "normal",
-          "palette": 25,
-          "blockset": 6,
-          "spriteset": 29,
-          "tag1": 23,
-          "tag2": 0
-        },
-        {
-          "id": "0xD2",
-          "name": "Wizzrobes",
-          "grid_row": 13,
-          "grid_col": 2,
-          "type": "normal",
-          "palette": 25,
-          "blockset": 6,
-          "spriteset": 29,
-          "tag1": 0,
           "tag2": 0
         },
         {
@@ -2181,44 +1980,14 @@
           "label": "West Hall \u2194 Northwest Hall"
         },
         {
-          "from": "0x90",
-          "to": "0x91",
-          "label": "Vitreous (Boss) \u2194 Final Switch"
-        },
-        {
-          "from": "0x91",
-          "to": "0x92",
-          "label": "Final Switch \u2194 Dark Bomb Wall / Switches"
-        },
-        {
           "from": "0x97",
           "to": "0xB8",
           "label": "Torch Puzzle / Moving Wall \u2194 Big Key / L-Shaped Rail"
         },
         {
-          "from": "0x98",
-          "to": "0xD2",
-          "label": "Main Entrance \u2194 Wizzrobes"
-        },
-        {
           "from": "0x99",
           "to": "0xDA",
           "label": "Southeast Hall \u2194 U-Shape Rail Room"
-        },
-        {
-          "from": "0xA0",
-          "to": "0x91",
-          "label": "Pre-Vitreous \u2194 Final Switch"
-        },
-        {
-          "from": "0xA2",
-          "to": "0x93",
-          "label": "Bridge Key Chest \u2194 Dark Cane Floor Switch Puzzle"
-        },
-        {
-          "from": "0xA3",
-          "to": "0x93",
-          "label": "Track Room \u2194 Dark Cane Floor Switch Puzzle"
         },
         {
           "from": "0xA9",
@@ -2231,9 +2000,9 @@
           "label": "Armos Knights (Boss) \u2194 3-Network Rail / Pre-Armos Knights"
         },
         {
-          "from": "0xC9",
-          "to": "0xCA",
-          "label": "Lower Entrance \u2194 Unidentified"
+          "from": "0x79",
+          "to": "0x69",
+          "label": "Northeast Hall \u2194 B1 Side"
         }
       ],
       "holewarps": [
@@ -2310,41 +2079,6 @@
           "direction": "south"
         },
         {
-          "from": "0x90",
-          "to": "0x91",
-          "direction": "east"
-        },
-        {
-          "from": "0x90",
-          "to": "0xA0",
-          "direction": "south"
-        },
-        {
-          "from": "0x91",
-          "to": "0x92",
-          "direction": "east"
-        },
-        {
-          "from": "0x91",
-          "to": "0xA1",
-          "direction": "south"
-        },
-        {
-          "from": "0x92",
-          "to": "0x93",
-          "direction": "east"
-        },
-        {
-          "from": "0x92",
-          "to": "0xA2",
-          "direction": "south"
-        },
-        {
-          "from": "0x93",
-          "to": "0xA3",
-          "direction": "south"
-        },
-        {
           "from": "0x97",
           "to": "0x98",
           "direction": "east"
@@ -2365,36 +2099,6 @@
           "direction": "south"
         },
         {
-          "from": "0xA0",
-          "to": "0xA1",
-          "direction": "east"
-        },
-        {
-          "from": "0xA1",
-          "to": "0xA2",
-          "direction": "east"
-        },
-        {
-          "from": "0xA1",
-          "to": "0xB1",
-          "direction": "south"
-        },
-        {
-          "from": "0xA2",
-          "to": "0xA3",
-          "direction": "east"
-        },
-        {
-          "from": "0xA2",
-          "to": "0xB2",
-          "direction": "south"
-        },
-        {
-          "from": "0xA3",
-          "to": "0xB3",
-          "direction": "south"
-        },
-        {
           "from": "0xA8",
           "to": "0xA9",
           "direction": "east"
@@ -2406,42 +2110,7 @@
         },
         {
           "from": "0xA9",
-          "to": "0xAA",
-          "direction": "east"
-        },
-        {
-          "from": "0xA9",
           "to": "0xB9",
-          "direction": "south"
-        },
-        {
-          "from": "0xAA",
-          "to": "0xBA",
-          "direction": "south"
-        },
-        {
-          "from": "0xB1",
-          "to": "0xB2",
-          "direction": "east"
-        },
-        {
-          "from": "0xB1",
-          "to": "0xC1",
-          "direction": "south"
-        },
-        {
-          "from": "0xB2",
-          "to": "0xB3",
-          "direction": "east"
-        },
-        {
-          "from": "0xB2",
-          "to": "0xC2",
-          "direction": "south"
-        },
-        {
-          "from": "0xB3",
-          "to": "0xC3",
           "direction": "south"
         },
         {
@@ -2455,69 +2124,9 @@
           "direction": "south"
         },
         {
-          "from": "0xB9",
-          "to": "0xBA",
-          "direction": "east"
-        },
-        {
-          "from": "0xB9",
-          "to": "0xC9",
-          "direction": "south"
-        },
-        {
-          "from": "0xBA",
-          "to": "0xCA",
-          "direction": "south"
-        },
-        {
-          "from": "0xC1",
-          "to": "0xC2",
-          "direction": "east"
-        },
-        {
-          "from": "0xC1",
-          "to": "0xD1",
-          "direction": "south"
-        },
-        {
-          "from": "0xC2",
-          "to": "0xC3",
-          "direction": "east"
-        },
-        {
-          "from": "0xC2",
-          "to": "0xD2",
-          "direction": "south"
-        },
-        {
-          "from": "0xC8",
-          "to": "0xC9",
-          "direction": "east"
-        },
-        {
           "from": "0xC8",
           "to": "0xD8",
           "direction": "south"
-        },
-        {
-          "from": "0xC9",
-          "to": "0xCA",
-          "direction": "east"
-        },
-        {
-          "from": "0xC9",
-          "to": "0xD9",
-          "direction": "south"
-        },
-        {
-          "from": "0xCA",
-          "to": "0xDA",
-          "direction": "south"
-        },
-        {
-          "from": "0xD1",
-          "to": "0xD2",
-          "direction": "east"
         },
         {
           "from": "0xD7",
@@ -2538,7 +2147,6 @@
       "features": {
         "minecart_tracks": {
           "rooms": [
-            "0xA3",
             "0xA8",
             "0xB8",
             "0xD8",
@@ -2556,7 +2164,7 @@
       ],
       "spatial_clusters": [
         {
-          "name": "Upper Floors",
+          "name": "F1 Main Level",
           "rooms": [
             "0x77",
             "0x78",
@@ -2570,38 +2178,19 @@
           ]
         },
         {
-          "name": "West Wing",
+          "name": "B1",
           "rooms": [
-            "0x90",
-            "0x91",
-            "0x92",
-            "0x93",
-            "0xA0",
-            "0xA1",
-            "0xA2",
-            "0xA3",
-            "0xB1",
-            "0xB2",
-            "0xB3",
-            "0xC1",
-            "0xC2",
-            "0xC3",
-            "0xD1",
-            "0xD2"
+            "0x69",
+            "0xA8",
+            "0xA9",
+            "0xB8",
+            "0xB9"
           ]
         },
         {
-          "name": "East Wing / Basement",
+          "name": "B2 / Boss",
           "rooms": [
-            "0xA8",
-            "0xA9",
-            "0xAA",
-            "0xB8",
-            "0xB9",
-            "0xBA",
             "0xC8",
-            "0xC9",
-            "0xCA",
             "0xD7",
             "0xD8",
             "0xD9",
@@ -4038,6 +3627,54 @@
           "spriteset": 44,
           "tag1": 10,
           "tag2": 0
+        },
+        {
+          "id": "0xAA",
+          "name": "Map Chest",
+          "grid_row": 10,
+          "grid_col": 10,
+          "type": "normal",
+          "palette": 13,
+          "blockset": 8,
+          "spriteset": 44,
+          "tag1": 50,
+          "tag2": 0
+        },
+        {
+          "id": "0xBA",
+          "name": "Dark Antifairy / Key Pot",
+          "grid_row": 11,
+          "grid_col": 10,
+          "type": "normal",
+          "palette": 13,
+          "blockset": 8,
+          "spriteset": 44,
+          "tag1": 60,
+          "tag2": 0
+        },
+        {
+          "id": "0xC9",
+          "name": "Lower Entrance",
+          "grid_row": 12,
+          "grid_col": 9,
+          "type": "entrance",
+          "palette": 13,
+          "blockset": 8,
+          "spriteset": 44,
+          "tag1": 23,
+          "tag2": 0
+        },
+        {
+          "id": "0xCA",
+          "name": "Unidentified",
+          "grid_row": 12,
+          "grid_col": 10,
+          "type": "normal",
+          "palette": 13,
+          "blockset": 8,
+          "spriteset": 44,
+          "tag1": 19,
+          "tag2": 50
         }
       ],
       "stairs": [],
@@ -4052,6 +3689,26 @@
           "from": "0x8A",
           "to": "0x9A",
           "direction": "south"
+        },
+        {
+          "from": "0x9A",
+          "to": "0xAA",
+          "direction": "south"
+        },
+        {
+          "from": "0xAA",
+          "to": "0xBA",
+          "direction": "south"
+        },
+        {
+          "from": "0xBA",
+          "to": "0xCA",
+          "direction": "south"
+        },
+        {
+          "from": "0xC9",
+          "to": "0xCA",
+          "direction": "east"
         }
       ],
       "features": {},
