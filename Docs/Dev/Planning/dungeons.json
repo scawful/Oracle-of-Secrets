@@ -23,6 +23,7 @@
         {
           "id": "0x09",
           "name": "Mushroom Grotto",
+          "floor": "F1",
           "grid_row": 0,
           "grid_col": 9,
           "type": "normal",
@@ -35,6 +36,7 @@
         {
           "id": "0x0A",
           "name": "Stalfos Trap",
+          "floor": "F1",
           "grid_row": 0,
           "grid_col": 10,
           "type": "normal",
@@ -47,6 +49,7 @@
         {
           "id": "0x0B",
           "name": "Turtle",
+          "floor": "F1",
           "grid_row": 0,
           "grid_col": 11,
           "type": "normal",
@@ -59,6 +62,7 @@
         {
           "id": "0x19",
           "name": "Dark Maze",
+          "floor": "F1",
           "grid_row": 1,
           "grid_col": 9,
           "type": "normal",
@@ -71,6 +75,7 @@
         {
           "id": "0x1A",
           "name": "Big Chest",
+          "floor": "F1",
           "grid_row": 1,
           "grid_col": 10,
           "type": "normal",
@@ -83,6 +88,7 @@
         {
           "id": "0x1B",
           "name": "Mimics / Moving Wall",
+          "floor": "F1",
           "grid_row": 1,
           "grid_col": 11,
           "type": "normal",
@@ -95,6 +101,7 @@
         {
           "id": "0x2A",
           "name": "Big Hub",
+          "floor": "F1",
           "grid_row": 2,
           "grid_col": 10,
           "type": "normal",
@@ -107,6 +114,7 @@
         {
           "id": "0x2B",
           "name": "Map Chest / Fairy",
+          "floor": "F1",
           "grid_row": 2,
           "grid_col": 11,
           "type": "normal",
@@ -119,6 +127,7 @@
         {
           "id": "0x3A",
           "name": "Bombable Floor",
+          "floor": "F1",
           "grid_row": 3,
           "grid_col": 10,
           "type": "normal",
@@ -131,6 +140,7 @@
         {
           "id": "0x3B",
           "name": "Spike Block / Conveyor",
+          "floor": "F1",
           "grid_row": 3,
           "grid_col": 11,
           "type": "normal",
@@ -143,6 +153,7 @@
         {
           "id": "0x4A",
           "name": "Entrance",
+          "floor": "F1",
           "grid_row": 4,
           "grid_col": 10,
           "type": "entrance",
@@ -155,6 +166,7 @@
         {
           "id": "0x4B",
           "name": "Warps / South Mimics",
+          "floor": "F1",
           "grid_row": 4,
           "grid_col": 11,
           "type": "normal",
@@ -179,6 +191,7 @@
         {
           "id": "0x6A",
           "name": "Rupee",
+          "floor": "F1",
           "grid_row": 6,
           "grid_col": 10,
           "type": "normal",
@@ -383,6 +396,7 @@
         {
           "id": "0x0E",
           "name": "Entrance",
+          "floor": "F1",
           "grid_row": 0,
           "grid_col": 14,
           "type": "entrance",
@@ -395,6 +409,7 @@
         {
           "id": "0x1E",
           "name": "Bomb Floor / Bari",
+          "floor": "F1",
           "grid_row": 1,
           "grid_col": 14,
           "type": "normal",
@@ -407,6 +422,7 @@
         {
           "id": "0x1F",
           "name": "Pengator / Big Key",
+          "floor": "F1",
           "grid_row": 1,
           "grid_col": 15,
           "type": "normal",
@@ -419,6 +435,7 @@
         {
           "id": "0x2E",
           "name": "Compass",
+          "floor": "F1",
           "grid_row": 2,
           "grid_col": 14,
           "type": "normal",
@@ -431,6 +448,7 @@
         {
           "id": "0x3E",
           "name": "Stalfos Knights / Conveyor Hellway",
+          "floor": "F1",
           "grid_row": 3,
           "grid_col": 14,
           "type": "normal",
@@ -443,6 +461,7 @@
         {
           "id": "0x3F",
           "name": "Map Chest",
+          "floor": "F1",
           "grid_row": 3,
           "grid_col": 15,
           "type": "normal",
@@ -455,6 +474,7 @@
         {
           "id": "0x4E",
           "name": "Bomb-Jump",
+          "floor": "F1",
           "grid_row": 4,
           "grid_col": 14,
           "type": "normal",
@@ -467,6 +487,7 @@
         {
           "id": "0x4F",
           "name": "Fairy",
+          "floor": "F1",
           "grid_row": 4,
           "grid_col": 15,
           "type": "normal",
@@ -479,6 +500,7 @@
         {
           "id": "0x5E",
           "name": "Lonely Firebar",
+          "floor": "F1",
           "grid_row": 5,
           "grid_col": 14,
           "type": "normal",
@@ -491,6 +513,7 @@
         {
           "id": "0x5F",
           "name": "Hidden Chest / Spike Floor",
+          "floor": "F1",
           "grid_row": 5,
           "grid_col": 15,
           "type": "normal",
@@ -503,6 +526,7 @@
         {
           "id": "0x6E",
           "name": "Pengators",
+          "floor": "F1",
           "grid_row": 6,
           "grid_col": 14,
           "type": "normal",
@@ -515,6 +539,7 @@
         {
           "id": "0x7E",
           "name": "Hidden Chest / Bombable Floor",
+          "floor": "F1",
           "grid_row": 7,
           "grid_col": 14,
           "type": "normal",
@@ -551,6 +576,7 @@
         {
           "id": "0xDE",
           "name": "Kholdstare (Boss)",
+          "floor": "F1",
           "grid_row": 13,
           "grid_col": 14,
           "type": "boss",
@@ -716,6 +742,7 @@
         {
           "id": "0x29",
           "name": "Mothula (Boss)",
+          "floor": "F1",
           "grid_row": 2,
           "grid_col": 9,
           "type": "boss",
@@ -728,6 +755,7 @@
         {
           "id": "0x39",
           "name": "Gibdo Key / Mothula Hole",
+          "floor": "F1",
           "grid_row": 3,
           "grid_col": 9,
           "type": "normal",
@@ -740,6 +768,7 @@
         {
           "id": "0x49",
           "name": "Gibdo Torch Puzzle",
+          "floor": "F1",
           "grid_row": 4,
           "grid_col": 9,
           "type": "normal",
@@ -752,6 +781,7 @@
         {
           "id": "0x56",
           "name": "Key Pot / Trap",
+          "floor": "F1",
           "grid_row": 5,
           "grid_col": 6,
           "type": "entrance",
@@ -764,6 +794,7 @@
         {
           "id": "0x57",
           "name": "Big Key",
+          "floor": "F1",
           "grid_row": 5,
           "grid_col": 7,
           "type": "normal",
@@ -776,6 +807,7 @@
         {
           "id": "0x58",
           "name": "Big Chest",
+          "floor": "F1",
           "grid_row": 5,
           "grid_col": 8,
           "type": "normal",
@@ -788,6 +820,7 @@
         {
           "id": "0x59",
           "name": "Final Section Entrance",
+          "floor": "F1",
           "grid_row": 5,
           "grid_col": 9,
           "type": "entrance",
@@ -800,6 +833,7 @@
         {
           "id": "0x67",
           "name": "Compass Chest",
+          "floor": "F1",
           "grid_row": 6,
           "grid_col": 7,
           "type": "normal",
@@ -812,6 +846,7 @@
         {
           "id": "0x68",
           "name": "Key Chest / Trap",
+          "floor": "F1",
           "grid_row": 6,
           "grid_col": 8,
           "type": "normal",
@@ -941,6 +976,7 @@
         {
           "id": "0x06",
           "name": "Arrghus Boss",
+          "floor": "F1",
           "grid_row": 0,
           "grid_col": 6,
           "type": "boss",
@@ -953,6 +989,7 @@
         {
           "id": "0x16",
           "name": "Swimming Treadmill",
+          "floor": "F1",
           "grid_row": 1,
           "grid_col": 6,
           "type": "normal",
@@ -965,6 +1002,7 @@
         {
           "id": "0x18",
           "name": "Cave / Stairwell",
+          "floor": "F1",
           "grid_row": 1,
           "grid_col": 8,
           "type": "normal",
@@ -977,6 +1015,7 @@
         {
           "id": "0x25",
           "name": "Water Grate Room",
+          "floor": "F1",
           "grid_row": 2,
           "grid_col": 5,
           "type": "normal",
@@ -989,6 +1028,7 @@
         {
           "id": "0x26",
           "name": "Statue Room",
+          "floor": "F1",
           "grid_row": 2,
           "grid_col": 6,
           "type": "normal",
@@ -1001,6 +1041,7 @@
         {
           "id": "0x27",
           "name": "Water Gate Room",
+          "floor": "F1",
           "grid_row": 2,
           "grid_col": 7,
           "type": "normal",
@@ -1013,6 +1054,7 @@
         {
           "id": "0x28",
           "name": "Entrance",
+          "floor": "F1",
           "grid_row": 2,
           "grid_col": 8,
           "type": "entrance",
@@ -1025,6 +1067,7 @@
         {
           "id": "0x34",
           "name": "Push Block / Pre-Big Key",
+          "floor": "F1",
           "grid_row": 3,
           "grid_col": 4,
           "type": "normal",
@@ -1037,6 +1080,7 @@
         {
           "id": "0x35",
           "name": "Big Key",
+          "floor": "F1",
           "grid_row": 3,
           "grid_col": 5,
           "type": "normal",
@@ -1049,6 +1093,7 @@
         {
           "id": "0x36",
           "name": "Big Chest Room",
+          "floor": "F1",
           "grid_row": 3,
           "grid_col": 6,
           "type": "normal",
@@ -1061,6 +1106,7 @@
         {
           "id": "0x37",
           "name": "Map Chest / Water Fill Hub",
+          "floor": "F1",
           "grid_row": 3,
           "grid_col": 7,
           "type": "normal",
@@ -1073,6 +1119,7 @@
         {
           "id": "0x38",
           "name": "Key Pot",
+          "floor": "F1",
           "grid_row": 3,
           "grid_col": 8,
           "type": "normal",
@@ -1085,6 +1132,7 @@
         {
           "id": "0x46",
           "name": "Compass Chest",
+          "floor": "F1",
           "grid_row": 4,
           "grid_col": 6,
           "type": "normal",
@@ -1109,6 +1157,7 @@
         {
           "id": "0x66",
           "name": "Hidden Chest / Hidden Door",
+          "floor": "F1",
           "grid_row": 6,
           "grid_col": 6,
           "type": "normal",
@@ -1311,6 +1360,7 @@
         {
           "id": "0x9E",
           "name": "Big Chest Key",
+          "floor": "F1",
           "grid_row": 9,
           "grid_col": 14,
           "type": "normal",
@@ -1323,6 +1373,7 @@
         {
           "id": "0x9F",
           "name": "Connector",
+          "floor": "F1",
           "grid_row": 9,
           "grid_col": 15,
           "type": "connector",
@@ -1335,6 +1386,7 @@
         {
           "id": "0xAC",
           "name": "Blind The Thief (Boss)",
+          "floor": "F1",
           "grid_row": 10,
           "grid_col": 12,
           "type": "boss",
@@ -1347,6 +1399,7 @@
         {
           "id": "0xAD",
           "name": "Room 0xAD",
+          "floor": "F1",
           "grid_row": 10,
           "grid_col": 13,
           "type": "normal",
@@ -1359,6 +1412,7 @@
         {
           "id": "0xAE",
           "name": "Room 0xAE",
+          "floor": "F1",
           "grid_row": 10,
           "grid_col": 14,
           "type": "normal",
@@ -1371,6 +1425,7 @@
         {
           "id": "0xAF",
           "name": "Room 0xAF",
+          "floor": "F1",
           "grid_row": 10,
           "grid_col": 15,
           "type": "normal",
@@ -1383,6 +1438,7 @@
         {
           "id": "0xBB",
           "name": "Hellway",
+          "floor": "F1",
           "grid_row": 11,
           "grid_col": 11,
           "type": "normal",
@@ -1395,6 +1451,7 @@
         {
           "id": "0xBC",
           "name": "Conveyor Toilet",
+          "floor": "F1",
           "grid_row": 11,
           "grid_col": 12,
           "type": "normal",
@@ -1407,6 +1464,7 @@
         {
           "id": "0xBD",
           "name": "Room 0xBD",
+          "floor": "F1",
           "grid_row": 11,
           "grid_col": 13,
           "type": "normal",
@@ -1419,6 +1477,7 @@
         {
           "id": "0xBE",
           "name": "Room 0xBE",
+          "floor": "F1",
           "grid_row": 11,
           "grid_col": 14,
           "type": "normal",
@@ -1431,6 +1490,7 @@
         {
           "id": "0xBF",
           "name": "Room 0xBF",
+          "floor": "F1",
           "grid_row": 11,
           "grid_col": 15,
           "type": "normal",
@@ -1443,6 +1503,7 @@
         {
           "id": "0xCB",
           "name": "North West Entrance",
+          "floor": "F1",
           "grid_row": 12,
           "grid_col": 11,
           "type": "entrance",
@@ -1455,6 +1516,7 @@
         {
           "id": "0xCC",
           "name": "North East Entrance",
+          "floor": "F1",
           "grid_row": 12,
           "grid_col": 12,
           "type": "entrance",
@@ -1467,6 +1529,7 @@
         {
           "id": "0xCD",
           "name": "Room 0xCD",
+          "floor": "F1",
           "grid_row": 12,
           "grid_col": 13,
           "type": "normal",
@@ -1479,6 +1542,7 @@
         {
           "id": "0xCE",
           "name": "Room 0xCE",
+          "floor": "F1",
           "grid_row": 12,
           "grid_col": 14,
           "type": "normal",
@@ -1491,6 +1555,7 @@
         {
           "id": "0xCF",
           "name": "Room 0xCF",
+          "floor": "F1",
           "grid_row": 12,
           "grid_col": 15,
           "type": "normal",
@@ -1503,6 +1568,7 @@
         {
           "id": "0xDB",
           "name": "Main (South West) Entrance",
+          "floor": "F1",
           "grid_row": 13,
           "grid_col": 11,
           "type": "entrance",
@@ -1515,6 +1581,7 @@
         {
           "id": "0xDC",
           "name": "South East Entrance",
+          "floor": "F1",
           "grid_row": 13,
           "grid_col": 12,
           "type": "entrance",
@@ -1527,6 +1594,7 @@
         {
           "id": "0xDD",
           "name": "Room 0xDD",
+          "floor": "F1",
           "grid_row": 13,
           "grid_col": 13,
           "type": "normal",
@@ -1737,6 +1805,7 @@
         {
           "id": "0x69",
           "name": "B1 Side",
+          "floor": "B1",
           "grid_row": 6,
           "grid_col": 9,
           "type": "normal",
@@ -1749,6 +1818,7 @@
         {
           "id": "0x77",
           "name": "Northwest Hall",
+          "floor": "F1",
           "grid_row": 7,
           "grid_col": 7,
           "type": "normal",
@@ -1761,6 +1831,7 @@
         {
           "id": "0x78",
           "name": "Lanmolas Mini-boss",
+          "floor": "F1",
           "grid_row": 7,
           "grid_col": 8,
           "type": "mini_boss",
@@ -1773,6 +1844,7 @@
         {
           "id": "0x79",
           "name": "Northeast Hall",
+          "floor": "F1",
           "grid_row": 7,
           "grid_col": 9,
           "type": "normal",
@@ -1785,6 +1857,7 @@
         {
           "id": "0x87",
           "name": "West Hall",
+          "floor": "F1",
           "grid_row": 8,
           "grid_col": 7,
           "type": "normal",
@@ -1797,6 +1870,7 @@
         {
           "id": "0x88",
           "name": "Hammer Chest",
+          "floor": "F1",
           "grid_row": 8,
           "grid_col": 8,
           "type": "normal",
@@ -1809,6 +1883,7 @@
         {
           "id": "0x89",
           "name": "East Hall",
+          "floor": "F1",
           "grid_row": 8,
           "grid_col": 9,
           "type": "normal",
@@ -1821,6 +1896,7 @@
         {
           "id": "0x97",
           "name": "Torch Puzzle / Moving Wall",
+          "floor": "F1",
           "grid_row": 9,
           "grid_col": 7,
           "type": "normal",
@@ -1833,6 +1909,7 @@
         {
           "id": "0x98",
           "name": "Main Entrance",
+          "floor": "F1",
           "grid_row": 9,
           "grid_col": 8,
           "type": "entrance",
@@ -1845,6 +1922,7 @@
         {
           "id": "0x99",
           "name": "Southeast Hall",
+          "floor": "F1",
           "grid_row": 9,
           "grid_col": 9,
           "type": "normal",
@@ -1857,6 +1935,7 @@
         {
           "id": "0xA8",
           "name": "Stalfos Spawn / Track Room",
+          "floor": "B1",
           "grid_row": 10,
           "grid_col": 8,
           "type": "normal",
@@ -1869,6 +1948,7 @@
         {
           "id": "0xA9",
           "name": "Upper Big Chest",
+          "floor": "B1",
           "grid_row": 10,
           "grid_col": 9,
           "type": "normal",
@@ -1881,6 +1961,7 @@
         {
           "id": "0xB8",
           "name": "Big Key / L-Shaped Rail",
+          "floor": "B1",
           "grid_row": 11,
           "grid_col": 8,
           "type": "normal",
@@ -1893,6 +1974,7 @@
         {
           "id": "0xB9",
           "name": "Lobby Cannonballs",
+          "floor": "B1",
           "grid_row": 11,
           "grid_col": 9,
           "type": "normal",
@@ -1905,6 +1987,7 @@
         {
           "id": "0xC8",
           "name": "Armos Knights (Boss)",
+          "floor": "B2",
           "grid_row": 12,
           "grid_col": 8,
           "type": "boss",
@@ -1917,6 +2000,7 @@
         {
           "id": "0xD7",
           "name": "Basement West",
+          "floor": "B2",
           "grid_row": 13,
           "grid_col": 7,
           "type": "normal",
@@ -1929,6 +2013,7 @@
         {
           "id": "0xD8",
           "name": "3-Network Rail / Pre-Armos Knights",
+          "floor": "B2",
           "grid_row": 13,
           "grid_col": 8,
           "type": "normal",
@@ -1941,6 +2026,7 @@
         {
           "id": "0xD9",
           "name": "Cannonball",
+          "floor": "B2",
           "grid_row": 13,
           "grid_col": 9,
           "type": "normal",
@@ -1953,6 +2039,7 @@
         {
           "id": "0xDA",
           "name": "U-Shape Rail Room",
+          "floor": "B2",
           "grid_row": 13,
           "grid_col": 10,
           "type": "normal",
@@ -2328,6 +2415,7 @@
         {
           "id": "0xB7",
           "name": "Map Chest / Key Chest / Roller",
+          "floor": "F1",
           "grid_row": 11,
           "grid_col": 7,
           "type": "normal",
@@ -2364,6 +2452,7 @@
         {
           "id": "0xC6",
           "name": "Connector",
+          "floor": "F1",
           "grid_row": 12,
           "grid_col": 6,
           "type": "connector",
@@ -2376,6 +2465,7 @@
         {
           "id": "0xC7",
           "name": "Torch Puzzle",
+          "floor": "F1",
           "grid_row": 12,
           "grid_col": 7,
           "type": "normal",
@@ -2388,6 +2478,7 @@
         {
           "id": "0xD5",
           "name": "Laser Key",
+          "floor": "F1",
           "grid_row": 13,
           "grid_col": 5,
           "type": "normal",
@@ -2400,6 +2491,7 @@
         {
           "id": "0xD6",
           "name": "Entrance",
+          "floor": "F1",
           "grid_row": 13,
           "grid_col": 6,
           "type": "entrance",
@@ -2644,6 +2736,7 @@
         {
           "id": "0x1D",
           "name": "Final Hallway",
+          "floor": "F1",
           "grid_row": 1,
           "grid_col": 13,
           "type": "normal",
@@ -2692,6 +2785,7 @@
         {
           "id": "0x5B",
           "name": "Spike Pit",
+          "floor": "F1",
           "grid_row": 5,
           "grid_col": 11,
           "type": "normal",
@@ -3501,6 +3595,7 @@
         {
           "id": "0x33",
           "name": "Trial Chamber",
+          "floor": "F1",
           "grid_row": 3,
           "grid_col": 3,
           "type": "normal",
@@ -3513,6 +3608,7 @@
         {
           "id": "0x43",
           "name": "Torch Puzzle / Moving Wall",
+          "floor": "F1",
           "grid_row": 4,
           "grid_col": 3,
           "type": "normal",
@@ -3525,6 +3621,7 @@
         {
           "id": "0x53",
           "name": "Popos 2 / Beamos Hellway",
+          "floor": "F1",
           "grid_row": 5,
           "grid_col": 3,
           "type": "normal",
@@ -3537,6 +3634,7 @@
         {
           "id": "0x63",
           "name": "Final Section Entrance",
+          "floor": "F1",
           "grid_row": 6,
           "grid_col": 3,
           "type": "entrance",
