@@ -1,11 +1,27 @@
 # Oracle of Secrets — Release Timeline 2026
 
-**Updated:** 2026-03-21
+**Updated:** 2026-06-11 (re-baselined after spring pause; RC/release targets unchanged)
 **Current state:** Playable start-to-credits, shipping beta patches to Discord testers
 **Target:** Public v1.0 patch (RHDN-quality release)
 **Target RC:** October 2026
 **Target Release:** November 2026
 **Estimated remaining work:** ~160-240 hours (polish + new content) at variable pace
+
+---
+
+## Re-baseline (2026-06-11)
+
+Work paused early May; phases 1-2 are partially done and Phase 3 has not
+started. Rather than slip the RC, the remaining Phase 1-2 work is compressed
+into a June **stabilization beta** and the dream sequences move to July.
+Already landed since the original plan:
+
+- D6 minecart room invariants fixed (carts on stop tiles in 0xA8/0xB8/0xD8/0xDA,
+  full 0xB8 track collision) — runtime validation still pending
+- Mesen2 socket harness + `dungeon_navigator.py` smoke-test tooling
+
+Cut-line rule: **Phase 4 (Sky Islands + East Kalyxo + Koroks) is the first
+thing to move to v1.1 if August slips.** Phases 5-7 dates are protected.
 
 ---
 
@@ -16,10 +32,9 @@ phase checkpoints from this document.
 
 | Date | Milestone |
 |------|-----------|
-| April 30, 2026 | Phase 1: Regression Confidence |
-| May 31, 2026 | Phase 2: D6 + Boss Polish |
-| June 30, 2026 | Phase 3: Dream Sequences |
-| August 31, 2026 | Phase 4: Sky Islands + East Kalyxo + Koroks |
+| June 30, 2026 | Phase 1+2 (compressed): Stabilization Beta — regression confidence, D6 minecart runtime validation, pendant fixes, critical-path dialogue, D7 Farore rescue, boss polish |
+| July 31, 2026 | Phase 3: Dream Sequences |
+| August 31, 2026 | Phase 4: Sky Islands + East Kalyxo + Koroks (cut-line content) |
 | September 30, 2026 | Phase 5: Dialogue & Narrative Polish |
 | October 31, 2026 | Phase 6: RC Build + Tester Feedback |
 | November 30, 2026 | Phase 7: Release |
@@ -27,7 +42,9 @@ phase checkpoints from this document.
 Notes:
 - One-off playtest sessions are useful calendar events, but they are not part
   of the numbered phase milestone list.
-- Phase 4 spans July-August, but the checkpoint date is August 31, 2026.
+- The June stabilization beta ships first (minecarts + progression validation +
+  pendant fixes + placeholder dialogue); D7 rescue and boss polish follow
+  within the same checkpoint window.
 
 ---
 
@@ -75,7 +92,7 @@ No weekly schedule. Instead:
 
 ---
 
-## Phase 1: Regression Confidence (April 2026)
+## Phase 1: Regression Confidence (re-baselined: June 2026)
 
 **Goal:** Verify every AI-generated commit. Know exactly what's broken vs what's fine.
 **Estimated hours:** 20-30
@@ -102,13 +119,13 @@ No weekly schedule. Instead:
 - [ ] Verify register-width safety fixes (d30fb96) — exercise all 8 modified hooks (2 hrs)
 - [ ] Enable each gated feature one at a time, test in isolation (3-4 hrs total)
 
-### Checkpoint (April 30)
+### Checkpoint (June 30, was April 30)
 - Do you have a confident "working" vs "broken" list for all 21 AI commits?
 - Is the regression suite green?
 
 ---
 
-## Phase 2: D6 + Boss Polish (May 2026)
+## Phase 2: D6 + Boss Polish (re-baselined: June 2026)
 
 **Goal:** Goron Mines feels like a real dungeon. Boss fights are fair and fun.
 **Estimated hours:** 25-40
@@ -134,13 +151,13 @@ No weekly schedule. Instead:
 - [ ] D6 room flow redesign in Yaze if needed (4-8 hrs)
 - [ ] Playtest D6 fresh after changes (1 hr)
 
-### Checkpoint (May 31)
+### Checkpoint (June 30, was May 31)
 - Would you be embarrassed if a stranger played D6?
 - Is every boss fight fair (clear telegraph before every attack)?
 
 ---
 
-## Phase 3: Dream Sequences (June 2026)
+## Phase 3: Dream Sequences (re-baselined: July 2026)
 
 **Goal:** Implement the 3 critical dreams + scaffold the 3 polish dreams.
 **Estimated hours:** 30-50
@@ -177,7 +194,7 @@ Dreams are the biggest new content block. The infrastructure (hooks, SRAM bitfie
   - [ ] Dream 5: The Giant's Message (post-D6)
   - [ ] Dream 6: Hyrule Castle Memory (polish)
 
-### Checkpoint (June 30)
+### Checkpoint (July 31, was June 30)
 - Do Dreams 1, 2, and 3 trigger at the right times and play through?
 - Does the dream SRAM bitfield track which dreams you've seen?
 
