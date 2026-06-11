@@ -12,7 +12,7 @@ This repo has accumulated scripts over time. The goal is to keep a small “gold
 - Build ROM directly: `Scripts/build_rom.sh`
 - Debug client (socket API): `Scripts/mesen2_client.py`
 - Launch isolated Mesen2 instance: `Scripts/mesen2_launch_instance.sh`
-- Run manifest-based tests: `Scripts/run_regression_tests.sh`
+- Run manifest-based tests: `Scripts/Validate/run_regression_tests.sh`
 - Verify ROM overlap: `Scripts/check_zscream_overlap.py`
 - Package a beta patch: `Scripts/beta_patch.sh`
 

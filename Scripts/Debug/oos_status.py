@@ -410,7 +410,7 @@ def build_finish_line(
             "title": "Transition Regressions",
             "detail": "Run the daily-driver transition subset before manual dungeon work.",
             "action": "transition-tests",
-            "command": "./Scripts/run_regression_tests.sh regression --tag transition -q --fail-fast",
+            "command": "./Scripts/Validate/run_regression_tests.sh regression --tag transition -q --fail-fast",
         },
         {
             "title": "Maku 0",
@@ -560,7 +560,7 @@ def build_snapshot() -> dict[str, Any]:
                 "d6cart": "./Scripts/oos-session.sh d6cart",
                 "menu": "./Scripts/oos-session.sh menu",
             },
-            "transition_tests": "./Scripts/run_regression_tests.sh regression --tag transition -q --fail-fast",
+            "transition_tests": "./Scripts/Validate/run_regression_tests.sh regression --tag transition -q --fail-fast",
         },
         "recommended_actions": recommended_actions(version, rom, handoff, workflow),
         "finish_line": finish_line,

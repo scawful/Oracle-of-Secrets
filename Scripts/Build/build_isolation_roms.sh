@@ -5,7 +5,7 @@ set -euo pipefail
 # Each ROM goes to Roms/isolation_test/oos168x_no-<module>.sfc
 # Skips tests and static analysis for speed.
 
-REPO="$(cd "$(dirname "$0")/.." && pwd)"
+REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$REPO"
 
 MODULES=(menu overworld patches sprites masks items dungeon music)

@@ -165,7 +165,7 @@ def _parse_ram_file(path: Path) -> list[tuple[int, str, str]]:
 
 def get_wram_symbols() -> list[tuple[int, str, str]]:
     """Get WRAM/SRAM symbol definitions (from ram.asm/sram.asm if available)."""
-    repo_root = Path(__file__).resolve().parents[1]
+    repo_root = Path(__file__).resolve().parents[2]
     ram_path = repo_root / "Core" / "ram.asm"
     sram_path = repo_root / "Core" / "sram.asm"
 
@@ -374,8 +374,8 @@ def main():
 
     args = parser.parse_args()
 
-    # Resolve paths relative to script directory
-    script_dir = Path(__file__).parent.parent
+    # Resolve paths relative to the repo root (script lives in Scripts/Generate/)
+    script_dir = Path(__file__).resolve().parents[2]
     input_path = script_dir / args.input
     output_path = script_dir / args.output
 

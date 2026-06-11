@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent.parent
-REPO_ROOT = SCRIPT_DIR.parent
+SCRIPT_DIR = Path(__file__).resolve().parents[1]  # Scripts/Mesen2
+REPO_ROOT = Path(__file__).resolve().parents[3]
 MANIFEST_PATH = REPO_ROOT / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
 LIBRARY_ROOT = REPO_ROOT / "Roms" / "SaveStates" / "library"
 

@@ -21,7 +21,7 @@ Examples:
 EOF
 }
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BUILD_SCRIPT="${ROOT_DIR}/Scripts/Build/build_rom.sh"
 OVERLAP_CHECK="${ROOT_DIR}/Scripts/Build/check_zscream_overlap.py"
 

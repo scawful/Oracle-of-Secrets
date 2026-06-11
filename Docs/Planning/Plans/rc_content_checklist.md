@@ -34,11 +34,11 @@
 
 | Shrine | Expected Pendant | Chest Room | Actual Item | Fix |
 |--------|-----------------|------------|-------------|-----|
-| S1 Wisdom | 0x39 (Wisdom) | 0x7A | 0x38 (Courage) | Swap in yaze dungeon editor |
-| S2 Power | 0x3A (Power) | 0x73 | 0x39 (Wisdom) | Swap in yaze dungeon editor |
+| S1 Wisdom | 0x39 (Wisdom) | 0x7A | ~~0x38~~ **FIXED 2026-06-11: 0x39** | Done (chest table patch, verified via z3ed) |
+| S2 Power | 0x3A (Power) | 0x73 | ~~0x39~~ **FIXED 2026-06-11: 0x3A** | Done (chest table patch, verified via z3ed) |
 | S3 Courage | 0x38 (Courage) | Vaati boss clear | Not implemented | Implement Vaati reward drop path |
 
-**Pendant of Power (0x3A) does not exist in any chest in the ROM.** Apply the chest data fix first, then runtime-verify reward flow.
+**2026-06-11: S1/S2 chest data fixed in base ROM** (0x7A big chest → 0x39, 0x73 big chest → 0x3A; verified with `z3ed dungeon-list-chests`). Runtime reward-flow verification still pending. S3 Vaati drop path remains unimplemented.
 
 ### Room Ownership Conflict: S2 vs S3 — RESOLVED 2026-02-13
 

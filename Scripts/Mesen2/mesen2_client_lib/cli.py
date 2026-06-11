@@ -31,11 +31,12 @@ try:
 except ImportError:
     AgentBrain = None
 
-SCRIPT_DIR = Path(__file__).resolve().parents[1]
+SCRIPT_DIR = Path(__file__).resolve().parents[1]  # Scripts/Mesen2
+_WATCH_DIR = Path(__file__).resolve().parents[2] / "Data"
 WATCH_PRESETS = {
-    "debug": SCRIPT_DIR / "oracle_debug.watch",
-    "story": SCRIPT_DIR / "oracle_story.watch",
-    "symbols": SCRIPT_DIR / "oracle_symbols.watch",
+    "debug": _WATCH_DIR / "oracle_debug.watch",
+    "story": _WATCH_DIR / "oracle_story.watch",
+    "symbols": _WATCH_DIR / "oracle_symbols.watch",
 }
 
 SAVE_STATE_LIBRARY_MARKER = f"{os.sep}Roms{os.sep}SaveStates{os.sep}library{os.sep}"

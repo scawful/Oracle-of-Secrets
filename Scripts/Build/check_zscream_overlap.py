@@ -60,7 +60,7 @@ def check_overlaps(symbols_path, zs_ranges):
     return overlaps
 
 def main():
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     map_file = root / "Core" / "ZS ROM MAP.txt"
     # Assuming the current active ROM symbols
     sym_file = root / "Roms" / "oos168x.symbols"

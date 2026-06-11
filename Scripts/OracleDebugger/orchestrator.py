@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Optional
 
 # Add parent directory for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "Mesen2"))
 
 from mesen2_client_lib.client import OracleDebugClient
 from mesen2_client_lib.constants import OracleRAM

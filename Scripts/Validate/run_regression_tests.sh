@@ -2,7 +2,7 @@
 # Thin wrapper: run test suites via test_runner.py.
 #
 # Usage:
-#   ./Scripts/run_regression_tests.sh [suite] [options]
+#   ./Scripts/Validate/run_regression_tests.sh [suite] [options]
 #
 # Suites: smoke (default) | regression | full
 # Options: --quick (=smoke) --full --tag TAG -q|--quiet -v|--verbose --fail-fast
@@ -12,7 +12,7 @@
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 MANIFEST="$REPO_ROOT/Tests/manifest.json"
 
 SUITE="smoke"
@@ -57,4 +57,4 @@ if [[ ! -f "$MANIFEST" ]]; then
   exit 1
 fi
 
-exec python3 Scripts/test_runner.py "${ARGS[@]}"
+exec python3 Scripts/Validate/test_runner.py "${ARGS[@]}"

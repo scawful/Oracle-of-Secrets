@@ -20,7 +20,7 @@ from pathlib import Path
 
 def find_project_root() -> Path:
     """Walk up from script dir to find the repo root (contains CLAUDE.md)."""
-    p = Path(__file__).resolve().parent.parent
+    p = Path(__file__).resolve().parents[2]
     if (p / "CLAUDE.md").exists():
         return p
     return Path.cwd()

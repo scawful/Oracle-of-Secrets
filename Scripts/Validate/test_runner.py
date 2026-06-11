@@ -8,9 +8,9 @@ Defaults to the Mesen2 fork socket API. Set `OOS_TEST_BACKEND=yaze` to force the
 YAZE gRPC backend; otherwise `auto` will use the socket backend when available.
 
 Usage:
-    ./Scripts/test_runner.py Tests/lr_swap_test.json
-    ./Scripts/test_runner.py Tests/*.json --verbose
-    ./Scripts/test_runner.py Tests/lr_swap_test.json --dry-run
+    ./Scripts/Validate/test_runner.py Tests/lr_swap_test.json
+    ./Scripts/Validate/test_runner.py Tests/*.json --verbose
+    ./Scripts/Validate/test_runner.py Tests/lr_swap_test.json --dry-run
 """
 
 import argparse
@@ -53,7 +53,7 @@ if Path(YAZE_MCP_ROOT).exists():
     except Exception:
         HAS_YAZE_BACKEND = False
 
-REPO_ROOT = Path(__file__).parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Colors for terminal output
 class Colors:
@@ -1048,7 +1048,7 @@ def run_test(test_path: Path, verbose: bool = False, quiet: bool = False, dry_ru
     # Load save state (optional)
     if not skip_load and test.get("saveState"):
         try:
-            repo_root = Path(__file__).parent.parent
+            repo_root = Path(__file__).resolve().parents[2]
             manifest_path = repo_root / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
             resolved = resolve_save_state(test.get("saveState"), repo_root, manifest_path)
         except Exception as exc:
@@ -1218,7 +1218,7 @@ def main():
                         help='One line per test; no bridge/precondition/step chatter')
     args = parser.parse_args()
 
-    repo_root = Path(__file__).parent.parent
+    repo_root = Path(__file__).resolve().parents[2]
 
     # Determine test files to run
     test_files = []

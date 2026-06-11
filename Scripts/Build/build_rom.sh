@@ -80,7 +80,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 rom_dir="$repo_root/Roms"
 feature_flags_path="$repo_root/Config/feature_flags.asm"
 
@@ -165,10 +165,15 @@ fi
 echo "Using base ROM: $base_rom"
 
 # Keep water-gate runtime tables synced with Yaze-authored room data.
-# Defaults to the ROM declared in Oracle-of-Secrets.yaze (rom_filename),
-# then falls back to the selected base ROM.
+# Prefers the previous build's patched ROM: water-fill marker tiles ($F5)
+# live in collision data contributed by ASM patches, so the base ROM lacks
+# them (rooms 0x25/0x27 regression, found 2026-06-11). Order:
+# OOS_WATER_TABLE_ROM > existing patched ROM > .yaze rom_filename > base.
 if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" || "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
   water_table_rom="${OOS_WATER_TABLE_ROM:-}"
+  if [[ -z "$water_table_rom" && -f "$patched_rom" ]]; then
+    water_table_rom="$patched_rom"
+  fi
   if [[ -z "$water_table_rom" ]]; then
     yaze_project="$repo_root/Oracle-of-Secrets.yaze"
     if [[ -f "$yaze_project" ]]; then

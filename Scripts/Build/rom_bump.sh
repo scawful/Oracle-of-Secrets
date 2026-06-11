@@ -26,7 +26,7 @@ else
   next_version=$((current_version + 1))
 fi
 
-repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 rom_dir="$repo_root/Roms"
 
 clean_rom="$rom_dir/oos${current_version}.sfc"

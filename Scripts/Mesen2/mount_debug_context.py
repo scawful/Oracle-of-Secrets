@@ -20,7 +20,7 @@ def main():
     client = OracleDebugClient()
     manifest = client.get_library_manifest()
     
-    output_path = Path(__file__).resolve().parents[1] / ".context" / "knowledge" / "debug_info.md"
+    output_path = Path(__file__).resolve().parents[2] / ".context" / "knowledge" / "debug_info.md"
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
     with open(output_path, "w") as f:
