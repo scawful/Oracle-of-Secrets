@@ -612,10 +612,10 @@ def scan_hooks(root: Path) -> list[HookEntry]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description='Generate hooks.json from ASM org directives')
-    parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[1],
+    parser.add_argument('--root', type=Path, default=Path(__file__).resolve().parents[2],
                         help='Oracle repo root (default: repo root)')
-    parser.add_argument('-o', '--output', type=Path, default=Path('hooks.json'),
-                        help='Output hooks.json path (default: hooks.json in repo root)')
+    parser.add_argument('-o', '--output', type=Path, default=Path('Roms/hooks.json'),
+                        help='Output hooks.json path (default: Roms/hooks.json)')
     parser.add_argument('--rom', type=Path, default=Path('Roms/oos168x.sfc'),
                         help='ROM path for metadata (optional)')
     args = parser.parse_args()

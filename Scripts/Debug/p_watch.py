@@ -296,8 +296,8 @@ Examples:
 """
     )
 
-    parser.add_argument('--hooks', type=Path, default=Path('hooks.json'),
-                       help='Hooks manifest JSON (default: hooks.json)')
+    parser.add_argument('--hooks', type=Path, default=Path('Roms/hooks.json'),
+                       help='Hooks manifest JSON (default: Roms/hooks.json)')
     parser.add_argument('--addresses', type=str,
                        help='Comma-separated addresses to monitor (hex)')
     parser.add_argument('--frames', type=int, default=600,

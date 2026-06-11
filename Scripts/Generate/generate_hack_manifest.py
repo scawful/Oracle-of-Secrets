@@ -738,14 +738,14 @@ def main() -> int:
     parser.add_argument(
         "--root",
         type=Path,
-        default=Path(__file__).resolve().parents[1],
+        default=Path(__file__).resolve().parents[2],
         help="Oracle repo root (default: repo root)",
     )
     parser.add_argument(
         "-o", "--output",
         type=Path,
-        default=Path("hack_manifest.json"),
-        help="Output path (default: hack_manifest.json in repo root)",
+        default=Path("Roms/hack_manifest.json"),
+        help="Output path (default: Roms/hack_manifest.json)",
     )
     parser.add_argument(
         "--rom",

@@ -281,8 +281,8 @@ Examples:
     )
 
     parser.add_argument('rom', type=Path, help='ROM file to analyze')
-    parser.add_argument('--hooks', type=Path, default=Path('hooks.json'),
-                       help='Hooks manifest JSON (default: hooks.json)')
+    parser.add_argument('--hooks', type=Path, default=Path('Roms/hooks.json'),
+                       help='Hooks manifest JSON (default: Roms/hooks.json)')
     parser.add_argument('--static-only', action='store_true',
                        help='Run only static analysis')
     parser.add_argument('--dynamic-only', action='store_true',

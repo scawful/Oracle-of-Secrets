@@ -13,6 +13,12 @@ Recommended:
 Scripts/Build/oos-quick.sh
 ```
 
+Safe z3dk smoke build (copies the base ROM into a temp workspace first and
+never overwrites `Roms/oos168x.sfc`):
+```bash
+Scripts/Build/z3dk_safe_smoke.sh
+```
+
 Heavier verification pass:
 ```bash
 Scripts/Build/oos-verify.sh

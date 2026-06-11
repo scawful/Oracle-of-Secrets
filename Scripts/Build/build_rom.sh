@@ -350,7 +350,7 @@ if [[ "${OOS_GENERATE_ANNOTATIONS:-0}" == "1" ]]; then
 fi
 
 # Run static analysis if hooks.json exists
-hooks_json="$repo_root/hooks.json"
+hooks_json="$repo_root/Roms/hooks.json"
 if [[ -f "$patched_rom" ]]; then
   regen_hooks=0
   if [[ ! -f "$hooks_json" || "${OOS_GENERATE_HOOKS:-0}" == "1" ]]; then

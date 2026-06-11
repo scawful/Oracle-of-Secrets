@@ -10,6 +10,7 @@ Build using [Asar](https://github.com/RPGHacker/asar). See `Docs/Debugging/Guide
 Scripts/Build/oos-quick.sh          # fast build + Mesen2 reload
 Scripts/Build/oos-verify.sh         # build + reload + full validation
 Scripts/Build/build_rom.sh 168      # direct build with options
+Scripts/Build/z3dk_safe_smoke.sh    # safe z3asm smoke build in a temp workspace
 ```
 
 ## Runbook (Start Here)
