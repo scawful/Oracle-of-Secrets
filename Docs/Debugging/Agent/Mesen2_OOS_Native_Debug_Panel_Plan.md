@@ -1,7 +1,7 @@
 # Mesen2-OOS Native Debug Panel Plan
 
-Status: Proposed  
-Owner: Oracle debugging workflow  
+Status: Proposed
+Owner: Oracle debugging workflow
 Target: `~/src/hobby/mesen2-oos` (Mesen2 fork), integrated in emulator window
 
 ---
