@@ -164,11 +164,11 @@ fi
 default_base="$rom_dir/oos${version}.sfc"
 legacy_base="$rom_dir/oos${version}_test2.sfc"
 if [[ -z "${OOS_BASE_ROM:-}" ]]; then
-  if [[ -f "$legacy_base" ]]; then
+  if [[ -f "$default_base" ]]; then
+    base_rom="$default_base"
+  elif [[ -f "$legacy_base" ]]; then
     base_rom="$legacy_base"
     echo "NOTE: Using legacy base ROM name $(basename "$legacy_base"). Rename to $(basename "$default_base") to adopt standard naming." >&2
-  elif [[ -f "$default_base" ]]; then
-    base_rom="$default_base"
   else
     echo "ERROR: Base ROM not found. Expected $default_base (or legacy $legacy_base)" >&2
     exit 1
@@ -182,8 +182,8 @@ symbols_path="$rom_dir/oos${version}x.sym"
 mlb_rel="Roms/oos${version}x.mlb"
 mlb_path="$rom_dir/oos${version}x.mlb"
 
-if [[ -f "$legacy_base" && "$base_rom" != "$legacy_base" ]]; then
-  echo "WARNING: $legacy_base exists but base ROM is $base_rom (OOS_BASE_ROM override?)" >&2
+if [[ -f "$legacy_base" && "$base_rom" == "$default_base" ]]; then
+  echo "NOTE: Ignoring legacy base ROM because canonical $(basename "$default_base") exists." >&2
 fi
 
 if [[ ! -f "$base_rom" ]]; then
