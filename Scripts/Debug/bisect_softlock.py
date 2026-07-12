@@ -4,7 +4,7 @@
 For use with git bisect run:
   cd ~/src/hobby/oracle-of-secrets
   git bisect start HEAD <last-known-good-commit>
-  git bisect run python3 Scripts/bisect_softlock.py
+  git bisect run python3 Scripts/Debug/bisect_softlock.py
 
 Requires Mesen2 running with ROM loaded and socket available (MESEN2_SOCKET_PATH or
 single /tmp/mesen2-*.sock). After each bisect step the script builds the ROM; you must
@@ -21,11 +21,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Add Scripts/ so we can import mesen2_client_lib
+# Add Scripts/Mesen2 so we can import mesen2_client_lib.
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+REPO_ROOT = SCRIPT_DIR.parents[1]
+MESEN2_SCRIPTS = REPO_ROOT / "Scripts" / "Mesen2"
+if str(MESEN2_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(MESEN2_SCRIPTS))
 
 # Game mode $7E0010; if 0 = reset/dead/black screen
 MODE_ADDR = 0x7E0010
@@ -49,7 +50,7 @@ def main() -> int:
         if args.verbose:
             print("Building ROM...")
         r = subprocess.run(
-            ["./Scripts/build_rom.sh", "168"],
+            ["./Scripts/Build/build_rom.sh", "168"],
             cwd=REPO_ROOT,
             capture_output=not args.verbose,
             timeout=120,
