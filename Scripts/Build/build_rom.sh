@@ -11,6 +11,10 @@ usage() {
   echo "  --disable <csv>   Comma-separated feature names to disable." >&2
   echo "  --profile <name>  Preset profile (defaults|all-on|all-off) applied before enable/disable lists." >&2
   echo "  --persist-flags   Keep the generated Config/feature_flags.asm (otherwise it is restored after build)." >&2
+  echo "" >&2
+  echo "Water table refresh (off by default):" >&2
+  echo "  OOS_REFRESH_WATER_TABLES=1 rebuilds both tracked water includes." >&2
+  echo "  OOS_WATER_FILL_TABLE_ROM=<path> selects the authoring ROM and implies refresh." >&2
   exit 1
 }
 
@@ -89,6 +93,10 @@ cd "$repo_root"
 flags_modified=0
 flags_backup=""
 water_tmp_dir=""
+water_restore_pending=0
+water_fill_backup=""
+water_runtime_backup=""
+water_patched_backup=""
 restore_flags() {
   if [[ "$flags_modified" != "1" ]]; then
     return 0
@@ -106,7 +114,19 @@ restore_flags() {
     echo "[*] Removed temporary feature flags: $feature_flags_path"
   fi
 }
+restore_water_transaction() {
+  if [[ "$water_restore_pending" != "1" ]]; then
+    return 0
+  fi
+  cp -f "$water_fill_backup" "$repo_root/Dungeons/generated/water_fill_table.asm"
+  cp -f "$water_runtime_backup" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
+  if [[ -n "$water_patched_backup" && -f "$water_patched_backup" ]]; then
+    cp -f "$water_patched_backup" "$patched_rom"
+  fi
+  echo "[*] Restored water includes after failed refresh." >&2
+}
 cleanup() {
+  restore_water_transaction
   restore_flags
   if [[ -n "$water_tmp_dir" && -d "$water_tmp_dir" ]]; then
     rm -rf "$water_tmp_dir"
@@ -310,67 +330,93 @@ generate_water_tables() {
   fi
 
   mkdir -p "$output_dir"
-  if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]]; then
-    echo "[*] Generating water-gate runtime tables from: $source_arg"
-    python3 "$repo_root/Scripts/Generate/generate_water_gate_runtime_tables.py" \
-      --rom "$source_arg" \
-      --out-asm "$output_dir/water_gate_runtime_tables.asm"
-  fi
-  if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
-    echo "[*] Generating water-fill table from custom collision markers: $source_arg"
-    python3 "$repo_root/Scripts/Generate/generate_water_fill_table.py" \
-      --rom "$source_arg" \
-      --out-asm "$output_dir/water_fill_table.asm" \
-      --require-rooms 0x25,0x27
-  fi
+  echo "[*] Generating water-gate runtime tables from: $source_arg"
+  python3 "$repo_root/Scripts/Generate/generate_water_gate_runtime_tables.py" \
+    --rom "$source_arg" \
+    --out-asm "$output_dir/water_gate_runtime_tables.asm"
+  echo "[*] Generating water-fill table from custom collision markers: $source_arg"
+  python3 "$repo_root/Scripts/Generate/generate_water_fill_table.py" \
+    --rom "$source_arg" \
+    --out-asm "$output_dir/water_fill_table.asm" \
+    --require-rooms 0x25,0x27
 }
 
-# First assemble from the tracked generated tables. Generating before assembly
-# can consume an incomplete project ROM or stale prior output and silently drop
-# rooms $25/$27 on a cold checkout.
+# The tracked water-fill table is release source. Normal builds never regenerate
+# it from a ROM, because canonical oos168.sfc does not carry every authoring
+# marker. Refreshes are explicit and update both generated includes atomically.
+for required_room in 25 27; do
+  if ! grep -Fq "  db \$$required_room," "$repo_root/Dungeons/generated/water_fill_table.asm"; then
+    echo "ERROR: Tracked water-fill table is missing required room \$$required_room." >&2
+    exit 1
+  fi
+done
 assemble_rom
 
-if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" || "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
-  water_table_rom="${OOS_WATER_TABLE_ROM:-$patched_rom}"
+water_refresh_requested="${OOS_REFRESH_WATER_TABLES:-0}"
+if [[ -n "${OOS_WATER_FILL_TABLE_ROM:-}" || -n "${OOS_WATER_TABLE_ROM:-}" ]]; then
+  water_refresh_requested=1
+fi
+if [[ "$water_refresh_requested" != "0" && "$water_refresh_requested" != "1" ]]; then
+  echo "ERROR: OOS_REFRESH_WATER_TABLES must be 0 or 1." >&2
+  exit 1
+fi
+if [[ -n "${OOS_WATER_FILL_TABLE_ROM:-}" && -n "${OOS_WATER_TABLE_ROM:-}" &&
+      "${OOS_WATER_FILL_TABLE_ROM:-}" != "${OOS_WATER_TABLE_ROM:-}" ]]; then
+  echo "ERROR: OOS_WATER_FILL_TABLE_ROM and OOS_WATER_TABLE_ROM disagree." >&2
+  exit 1
+fi
+
+if [[ "$water_refresh_requested" == "1" ]]; then
+  water_table_rom="${OOS_WATER_FILL_TABLE_ROM:-${OOS_WATER_TABLE_ROM:-$patched_rom}}"
   if [[ ! -f "$water_table_rom" ]]; then
-    echo "ERROR: Water-table source ROM not found: $water_table_rom" >&2
+    echo "ERROR: Water-table authoring ROM not found: $water_table_rom" >&2
     exit 1
   fi
 
   water_tmp_dir="$(mktemp -d "$rom_dir/.water_tables.XXXXXX")"
-  generated_dir="$water_tmp_dir/generated"
-  generate_water_tables "$water_table_rom" "$generated_dir"
+  candidate_dir="$water_tmp_dir/candidate"
+  generate_water_tables "$water_table_rom" "$candidate_dir"
 
   water_tables_changed=0
-  if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]] &&
-      ! cmp -s "$generated_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"; then
-    cp -f "$generated_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
+  if ! cmp -s "$candidate_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"; then
     water_tables_changed=1
   fi
-  if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]] &&
-      ! cmp -s "$generated_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"; then
-    cp -f "$generated_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"
+  if ! cmp -s "$candidate_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"; then
     water_tables_changed=1
   fi
 
   if [[ "$water_tables_changed" == "1" ]]; then
-    echo "[*] Water tables changed; rebuilding once from the base ROM..."
+    water_fill_backup="$water_tmp_dir/water_fill_table.original.asm"
+    water_runtime_backup="$water_tmp_dir/water_gate_runtime_tables.original.asm"
+    water_patched_backup="$water_tmp_dir/patched_rom.original.sfc"
+    cp -f "$repo_root/Dungeons/generated/water_fill_table.asm" "$water_fill_backup"
+    cp -f "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm" "$water_runtime_backup"
+    cp -f "$patched_rom" "$water_patched_backup"
+    water_restore_pending=1
+
+    cp -f "$candidate_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"
+    cp -f "$candidate_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
+    echo "[*] Water table candidates staged; rebuilding once from the base ROM..."
     assemble_rom
   fi
 
-  # A second generation must match the tracked includes. This blocks builds
-  # that would need an unbounded generate/rebuild loop.
+  # A second generation must match the staged pair. On any error the EXIT trap
+  # restores both tracked includes (and the initially assembled patched ROM).
   final_dir="$water_tmp_dir/final"
   generate_water_tables "$water_table_rom" "$final_dir"
-  if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]] &&
-      ! cmp -s "$final_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"; then
+  if ! cmp -s "$final_dir/water_gate_runtime_tables.asm" "$candidate_dir/water_gate_runtime_tables.asm"; then
     echo "ERROR: Water-gate runtime table is not stable after one rebuild." >&2
     exit 1
   fi
-  if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]] &&
-      ! cmp -s "$final_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"; then
+  if ! cmp -s "$final_dir/water_fill_table.asm" "$candidate_dir/water_fill_table.asm"; then
     echo "ERROR: Water-fill table is not stable after one rebuild." >&2
     exit 1
+  fi
+
+  if [[ "$water_tables_changed" == "1" ]]; then
+    echo "[*] Water table pair validated; promotion pending final build checks."
+  else
+    echo "[*] Water table pair already current."
   fi
 fi
 
@@ -529,4 +575,9 @@ if [[ $reload -eq 1 ]]; then
   else
     echo "[-] Warning: mesen2_client.py not found, skipping reload."
   fi
+fi
+
+if [[ "$water_restore_pending" == "1" ]]; then
+  water_restore_pending=0
+  echo "[*] Water table pair promoted."
 fi
