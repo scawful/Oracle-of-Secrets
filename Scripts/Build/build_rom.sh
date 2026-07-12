@@ -83,10 +83,12 @@ done
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 rom_dir="$repo_root/Roms"
 feature_flags_path="$repo_root/Config/feature_flags.asm"
+cd "$repo_root"
 
 # Optional: temporarily generate Config/feature_flags.asm for this build, then restore.
 flags_modified=0
 flags_backup=""
+water_tmp_dir=""
 restore_flags() {
   if [[ "$flags_modified" != "1" ]]; then
     return 0
@@ -104,7 +106,13 @@ restore_flags() {
     echo "[*] Removed temporary feature flags: $feature_flags_path"
   fi
 }
-trap restore_flags EXIT
+cleanup() {
+  restore_flags
+  if [[ -n "$water_tmp_dir" && -d "$water_tmp_dir" ]]; then
+    rm -rf "$water_tmp_dir"
+  fi
+}
+trap cleanup EXIT
 
 if [[ -n "$feat_enable" || -n "$feat_disable" || "$feat_profile" != "defaults" ]]; then
   if [[ -f "$feature_flags_path" ]]; then
@@ -163,48 +171,6 @@ if [[ ! -f "$base_rom" ]]; then
   exit 1
 fi
 echo "Using base ROM: $base_rom"
-
-# Keep water-gate runtime tables synced with Yaze-authored room data.
-# Prefers the previous build's patched ROM: water-fill marker tiles ($F5)
-# live in collision data contributed by ASM patches, so the base ROM lacks
-# them (rooms 0x25/0x27 regression, found 2026-06-11). Order:
-# OOS_WATER_TABLE_ROM > existing patched ROM > .yaze rom_filename > base.
-if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" || "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
-  water_table_rom="${OOS_WATER_TABLE_ROM:-}"
-  if [[ -z "$water_table_rom" && -f "$patched_rom" ]]; then
-    water_table_rom="$patched_rom"
-  fi
-  if [[ -z "$water_table_rom" ]]; then
-    yaze_project="$repo_root/Oracle-of-Secrets.yaze"
-    if [[ -f "$yaze_project" ]]; then
-      yaze_rom_rel="$(awk -F= '/^rom_filename=/{print $2; exit}' "$yaze_project" || true)"
-      if [[ -n "$yaze_rom_rel" ]]; then
-        if [[ "$yaze_rom_rel" = /* ]]; then
-          water_table_rom="$yaze_rom_rel"
-        else
-          water_table_rom="$repo_root/$yaze_rom_rel"
-        fi
-      fi
-    fi
-  fi
-  if [[ -z "$water_table_rom" || ! -f "$water_table_rom" ]]; then
-    water_table_rom="$base_rom"
-  fi
-  water_table_rom_arg="$water_table_rom"
-  if [[ "$water_table_rom_arg" == "$repo_root/"* ]]; then
-    water_table_rom_arg="${water_table_rom_arg#$repo_root/}"
-  fi
-fi
-
-if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]]; then
-  echo "[*] Generating water-gate runtime tables from: $water_table_rom_arg"
-  python3 "$repo_root/Scripts/Generate/generate_water_gate_runtime_tables.py" --rom "$water_table_rom_arg"
-fi
-
-if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
-  echo "[*] Generating water-fill table from custom collision markers: $water_table_rom_arg"
-  python3 "$repo_root/Scripts/Generate/generate_water_fill_table.py" --rom "$water_table_rom_arg"
-fi
 
 # Feature-flag guardrails (non-fatal by default).
 if ! python3 "$repo_root/Scripts/Build/verify_feature_flags.py" --root "$repo_root"; then
@@ -316,22 +282,96 @@ PY_GUARD
   fi
 fi
 
-cp -f "$base_rom" "$patched_rom"
-
 if ! command -v "$asar_bin" >/dev/null 2>&1; then
   echo "ERROR: assembler not found: $asar_bin" >&2
   exit 1
 fi
 
-if [[ $emit_symbols -eq 1 ]]; then
-  # Use z3asm features if available
-  if [[ "$asar_bin" == *"z3asm"* ]]; then
-    "$asar_bin" --symbols=wla --symbols-path="$symbols_path" --emit=sourcemap.json Oracle_main.asm "$patched_rom"
+assemble_rom() {
+  cp -f "$base_rom" "$patched_rom"
+  if [[ $emit_symbols -eq 1 ]]; then
+    # Use z3asm features if available
+    if [[ "$asar_bin" == *"z3asm"* ]]; then
+      "$asar_bin" --symbols=wla --symbols-path="$symbols_path" --emit=sourcemap.json Oracle_main.asm "$patched_rom"
+    else
+      "$asar_bin" --symbols=wla --symbols-path="$symbols_path" Oracle_main.asm "$patched_rom"
+    fi
   else
-    "$asar_bin" --symbols=wla --symbols-path="$symbols_path" Oracle_main.asm "$patched_rom"
+    "$asar_bin" Oracle_main.asm "$patched_rom"
   fi
-else
-  "$asar_bin" Oracle_main.asm "$patched_rom"
+}
+
+generate_water_tables() {
+  local source_rom="$1"
+  local output_dir="$2"
+  local source_arg="$source_rom"
+  if [[ "$source_arg" == "$repo_root/"* ]]; then
+    source_arg="${source_arg#"$repo_root"/}"
+  fi
+
+  mkdir -p "$output_dir"
+  if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]]; then
+    echo "[*] Generating water-gate runtime tables from: $source_arg"
+    python3 "$repo_root/Scripts/Generate/generate_water_gate_runtime_tables.py" \
+      --rom "$source_arg" \
+      --out-asm "$output_dir/water_gate_runtime_tables.asm"
+  fi
+  if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
+    echo "[*] Generating water-fill table from custom collision markers: $source_arg"
+    python3 "$repo_root/Scripts/Generate/generate_water_fill_table.py" \
+      --rom "$source_arg" \
+      --out-asm "$output_dir/water_fill_table.asm" \
+      --require-rooms 0x25,0x27
+  fi
+}
+
+# First assemble from the tracked generated tables. Generating before assembly
+# can consume an incomplete project ROM or stale prior output and silently drop
+# rooms $25/$27 on a cold checkout.
+assemble_rom
+
+if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" || "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
+  water_table_rom="${OOS_WATER_TABLE_ROM:-$patched_rom}"
+  if [[ ! -f "$water_table_rom" ]]; then
+    echo "ERROR: Water-table source ROM not found: $water_table_rom" >&2
+    exit 1
+  fi
+
+  water_tmp_dir="$(mktemp -d "$rom_dir/.water_tables.XXXXXX")"
+  generated_dir="$water_tmp_dir/generated"
+  generate_water_tables "$water_table_rom" "$generated_dir"
+
+  water_tables_changed=0
+  if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]] &&
+      ! cmp -s "$generated_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"; then
+    cp -f "$generated_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
+    water_tables_changed=1
+  fi
+  if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]] &&
+      ! cmp -s "$generated_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"; then
+    cp -f "$generated_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"
+    water_tables_changed=1
+  fi
+
+  if [[ "$water_tables_changed" == "1" ]]; then
+    echo "[*] Water tables changed; rebuilding once from the base ROM..."
+    assemble_rom
+  fi
+
+  # A second generation must match the tracked includes. This blocks builds
+  # that would need an unbounded generate/rebuild loop.
+  final_dir="$water_tmp_dir/final"
+  generate_water_tables "$water_table_rom" "$final_dir"
+  if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]] &&
+      ! cmp -s "$final_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"; then
+    echo "ERROR: Water-gate runtime table is not stable after one rebuild." >&2
+    exit 1
+  fi
+  if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]] &&
+      ! cmp -s "$final_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"; then
+    echo "ERROR: Water-fill table is not stable after one rebuild." >&2
+    exit 1
+  fi
 fi
 
 echo "Built patched ROM: $patched_rom"
