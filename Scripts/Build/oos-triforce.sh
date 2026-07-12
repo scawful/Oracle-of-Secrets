@@ -20,10 +20,10 @@ EOF
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 status_json() {
-  python3 "${ROOT_DIR}/Scripts/oos_status.py" "$@"
+  python3 "${ROOT_DIR}/Scripts/Debug/oos_status.py" "$@"
 }
 
 finish_field() {
@@ -38,7 +38,7 @@ expression = sys.argv[1]
 root = Path(sys.argv[2])
 payload = json.loads(
     subprocess.check_output(
-        ["python3", str(root / "scripts" / "oos_status.py")],
+        ["python3", str(root / "Scripts" / "Debug" / "oos_status.py")],
         cwd=root,
         text=True,
     )
@@ -92,11 +92,11 @@ run_focus_command() {
 }
 
 quick_patch() {
-  (cd "${ROOT_DIR}" && ./Scripts/oos-quick.sh)
+  (cd "${ROOT_DIR}" && ./Scripts/Build/oos-quick.sh)
 }
 
 verify_patch() {
-  (cd "${ROOT_DIR}" && ./Scripts/oos-verify.sh)
+  (cd "${ROOT_DIR}" && ./Scripts/Build/oos-verify.sh)
 }
 
 patch_and_play() {

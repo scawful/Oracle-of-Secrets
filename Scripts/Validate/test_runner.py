@@ -23,6 +23,11 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MESEN2_SCRIPTS = REPO_ROOT / "Scripts" / "Mesen2"
+if str(MESEN2_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(MESEN2_SCRIPTS))
+
 try:
     from mesen2_client_lib.client import OracleDebugClient
     HAS_SOCKET_BACKEND = True
@@ -30,7 +35,7 @@ except Exception:
     HAS_SOCKET_BACKEND = False
 
 try:
-    from scripts.mesen2_client_lib.state_library import (
+    from mesen2_client_lib.state_library import (
         disallowed_state_reason,
         is_disallowed_state_path,
     )
@@ -52,8 +57,6 @@ if Path(YAZE_MCP_ROOT).exists():
         HAS_YAZE_BACKEND = True
     except Exception:
         HAS_YAZE_BACKEND = False
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Colors for terminal output
 class Colors:
@@ -452,13 +455,13 @@ def get_tests_for_suite(manifest: dict, suite: str, repo_root: Path) -> list[Pat
     for pattern in test_patterns:
         if "*" in pattern:
             # Glob pattern
-            for f in glob_module.glob(str(repo_root / "tests" / pattern)):
+            for f in glob_module.glob(str(repo_root / "Tests" / pattern)):
                 path = Path(f)
                 if path.suffix == ".json" and path.is_file():
                     test_files.append(path)
         else:
             # Exact path
-            test_path = repo_root / "tests" / pattern
+            test_path = repo_root / "Tests" / pattern
             if test_path.exists() and test_path.suffix == ".json":
                 test_files.append(test_path)
 
@@ -479,7 +482,7 @@ def get_tests_by_tag(manifest: dict, tag: str, repo_root: Path) -> list[Path]:
         for pattern in suite_config.get("tests", []):
             for test_name in test_names:
                 if test_name in pattern or pattern.endswith(f"{test_name}.json"):
-                    test_path = repo_root / "tests" / pattern
+                    test_path = repo_root / "Tests" / pattern
                     if test_path.exists() and test_path not in test_files:
                         test_files.append(test_path)
 
@@ -1225,7 +1228,7 @@ def main():
 
     if args.suite or args.tag:
         # Load manifest
-        manifest_path = Path(args.manifest) if args.manifest else repo_root / "tests" / "manifest.json"
+        manifest_path = Path(args.manifest) if args.manifest else repo_root / "Tests" / "manifest.json"
         manifest = load_test_manifest(manifest_path)
 
         if not manifest:

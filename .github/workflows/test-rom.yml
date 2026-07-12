@@ -2,18 +2,18 @@ name: ROM Tests
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, develop]
     paths:
       - '**/*.asm'
       - '**/*.lua'
-      - 'scripts/**'
+      - 'Scripts/**'
       - '.github/workflows/test-rom.yml'
   pull_request:
-    branches: [main]
+    branches: [master]
     paths:
       - '**/*.asm'
       - '**/*.lua'
-      - 'scripts/**'
+      - 'Scripts/**'
   workflow_dispatch:
     inputs:
       run_emulator_tests:
@@ -48,14 +48,15 @@ jobs:
           # This only validates syntax, not actual assembly output
           dd if=/dev/zero of=test.sfc bs=1024 count=2048 2>/dev/null
 
-          # Run Asar in check mode (--no-title-check allows headerless)
-          ./asar/asar --no-title-check Oracle_main.asm test.sfc 2>&1 | tee asar_output.txt
+          # Seed the source bytes inspected by guarded patches and the message
+          # bank terminator scanned at assembly time.
+          printf '\x73\x80\x39' | dd of=test.sfc bs=1 seek=$((0xE9E6)) conv=notrunc 2>/dev/null
+          printf '\x7A\x80\x38' | dd of=test.sfc bs=1 seek=$((0xE9F5)) conv=notrunc 2>/dev/null
+          printf '\x7F' | dd of=test.sfc bs=1 seek=$((0x773FF)) conv=notrunc 2>/dev/null
 
-          # Check for errors
-          if grep -q "error" asar_output.txt; then
-            echo "::error::ASM syntax errors found"
-            exit 1
-          fi
+          # Run Asar against the synthetic headerless ROM.
+          set -o pipefail
+          ./asar/asar --no-title-check Oracle_main.asm test.sfc 2>&1 | tee asar_output.txt
 
           echo "ASM syntax check passed"
 
@@ -78,13 +79,13 @@ jobs:
         run: |
           # Check all Lua scripts for syntax errors
           errors=0
-          for file in scripts/*.lua; do
+          while IFS= read -r -d '' file; do
             echo "Checking $file..."
-            if ! lua5.4 -p "$file" 2>&1; then
+            if ! luac5.4 -p "$file" 2>&1; then
               echo "::error file=$file::Syntax error in $file"
               errors=$((errors + 1))
             fi
-          done
+          done < <(find Scripts/Lua -type f -name '*.lua' -print0)
 
           if [ $errors -gt 0 ]; then
             echo "::error::Found $errors Lua syntax errors"
@@ -103,7 +104,7 @@ jobs:
   emulator-tests:
     name: Emulator Tests
     runs-on: self-hosted
-    if: github.event.inputs.run_emulator_tests == 'true' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.run_emulator_tests
     needs: [asm-check, lua-check]
 
     steps:
@@ -114,10 +115,10 @@ jobs:
         id: check-rom
         run: |
           if [ -f ~/roms/alttp/oos168.sfc ]; then
-            echo "rom_available=true" >> $GITHUB_OUTPUT
+            echo "rom_available=true" >> "$GITHUB_OUTPUT"
             echo "Base ROM found"
           else
-            echo "rom_available=false" >> $GITHUB_OUTPUT
+            echo "rom_available=false" >> "$GITHUB_OUTPUT"
             echo "::warning::Base ROM not found at ~/roms/alttp/oos168.sfc"
           fi
 
@@ -128,30 +129,17 @@ jobs:
           cp ~/roms/alttp/oos168.sfc Roms/
 
           # Build patched ROM
-          ASAR_BIN="${ASAR_BIN:-asar}" ./scripts/build_rom.sh 168
+          ASAR_BIN="${ASAR_BIN:-asar}" ./Scripts/Build/build_rom.sh 168
 
       - name: Run Boot Test
         if: steps.check-rom.outputs.rom_available == 'true'
         run: |
           # Run boot verification test
           Mesen --testRunner --timeout=30 \
-            scripts/verify_boot.lua \
+            Scripts/Lua/verify_boot.lua \
             Roms/oos168x.sfc
 
           echo "Boot test passed"
-        continue-on-error: true
-
-      - name: Run Water Gate Test
-        if: steps.check-rom.outputs.rom_available == 'true'
-        run: |
-          # Run water gate persistence test
-          # Note: This test requires manual navigation to room 0x27
-          # In automated mode, it will timeout waiting for the room
-          Mesen --testRunner --timeout=120 \
-            scripts/verify_water_gate.lua \
-            Roms/oos168x.sfc
-
-          echo "Water gate test completed"
         continue-on-error: true
 
       - name: Upload Test Logs
@@ -176,20 +164,20 @@ jobs:
     steps:
       - name: Check Results
         run: |
-          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
 
           if [ "${{ needs.asm-check.result }}" == "success" ]; then
-            echo "- ASM Syntax: :white_check_mark: Passed" >> $GITHUB_STEP_SUMMARY
+            echo "- ASM Syntax: :white_check_mark: Passed" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "- ASM Syntax: :x: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- ASM Syntax: :x: Failed" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           if [ "${{ needs.lua-check.result }}" == "success" ]; then
-            echo "- Lua Syntax: :white_check_mark: Passed" >> $GITHUB_STEP_SUMMARY
+            echo "- Lua Syntax: :white_check_mark: Passed" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "- Lua Syntax: :x: Failed" >> $GITHUB_STEP_SUMMARY
+            echo "- Lua Syntax: :x: Failed" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "_Emulator tests require self-hosted runner with ROM._" >> $GITHUB_STEP_SUMMARY
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "_Emulator tests require self-hosted runner with ROM._" >> "$GITHUB_STEP_SUMMARY"

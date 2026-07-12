@@ -15,9 +15,9 @@ from pathlib import Path
 from typing import Any
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent
+REPO_ROOT = SCRIPT_DIR.parents[1]
 
-# Allow imports from Scripts/mesen2_client_lib
+# Allow imports from Scripts/Mesen2/mesen2_client_lib
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 

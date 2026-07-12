@@ -29,11 +29,10 @@ USAGE
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 FORK_INSTALL_CANDIDATES=(
   "${REPO_ROOT}/../mesen2-oos/tools/install_mesen2_oos.sh"
-  "${REPO_ROOT}/../../mesen2-oos/tools/install_mesen2_oos.sh"
   "/Users/scawful/src/hobby/mesen2-oos/tools/install_mesen2_oos.sh"
 )
 

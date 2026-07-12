@@ -240,7 +240,7 @@ def _registry_dir() -> Path:
     override = os.getenv("MESEN2_REGISTRY_DIR")
     if override:
         return Path(override).expanduser().resolve()
-    return (Path(__file__).resolve().parents[2] / ".context" / "scratchpad" / "mesen2" / "instances").resolve()
+    return (Path(__file__).resolve().parents[3] / ".context" / "scratchpad" / "mesen2" / "instances").resolve()
 
 
 def _resolve_instance_socket_path(instance: str) -> str | None:
