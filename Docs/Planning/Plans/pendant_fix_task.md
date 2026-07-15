@@ -64,8 +64,8 @@ Shrine pendant rewards are not aligned with Oracle design intent.
 ~/src/hobby/yaze/build/bin/z3ed chest-inventory --rom Roms/oos168x.sfc | grep -i pendant
 
 # Runtime checks
-python3 scripts/mesen2_client.py warp-entrance 0x33  # S1
-python3 scripts/mesen2_client.py warp-entrance 0x09  # S2
+python3 Scripts/Mesen2/mesen2_client.py warp-entrance 0x33  # S1
+python3 Scripts/Mesen2/mesen2_client.py warp-entrance 0x09  # S2
 # S3: run Vaati defeat path and verify Courage reward + SRAM progression
 ```
 

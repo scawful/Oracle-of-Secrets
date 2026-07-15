@@ -156,7 +156,7 @@ This was done for both D6 seeds below.
   - Guard adds 16-bit timeout counters to APUIO polling loops (`$2140`) and exits cleanly on timeout instead of spinning forever.
 - Verification with emergency bypass OFF:
   - `tests/regression/transition_zora_temple_roundtrip.json` passes (inside->outside->inside).
-  - `scripts/repro_blackout_transition.py` reports `result=ok` for both directions:
+  - `Scripts/Debug/repro_blackout_transition.py` reports `result=ok` for both directions:
     - `zora_inside_exit_apu_guard_report.json`
     - `zora_outside_entry_apu_guard_report.json`
   - No `$0088EC/$0088EF` spin signature observed in these guarded runs.

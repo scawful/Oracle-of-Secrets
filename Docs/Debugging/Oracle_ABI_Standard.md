@@ -19,7 +19,7 @@ Add a comment near the hook or label:
 - `; @abi m8x8` / `; @abi m16x8` / `; @abi m8x16` / `; @abi m16x16` → expected entry M/X
 - `; @no_return` → mark non-returning hook (skip ABI exit checks)
 
-These are parsed by `scripts/generate_hooks_json.py` and emitted into `hooks.json`
+These are parsed by `Scripts/Generate/generate_hooks_json.py` and emitted into `hooks.json`
 as `abi_class`, `expected_m`, `expected_x`, or `skip_abi`.
 
 ## Required prologue/epilogue

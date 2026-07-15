@@ -33,7 +33,7 @@ Goal: Convert "untested" into "tested + logged" for high-risk systems.
 ### Session A (60-90 min): Harness Bring-Up
 
 - Launch isolated Mesen2 instance and confirm socket diagnostics.
-- Run `scripts/run_regression_tests.sh regression` with emulator attached.
+- Run `Scripts/Validate/run_regression_tests.sh regression` with emulator attached.
 - Capture raw results in a status note under `Docs/Planning/Status/`.
 
 Definition of done:

@@ -16,7 +16,7 @@ Date: 2026-01-23
 
 ## Sheets Data
 - New CSVs in Docs/Technical/Sheets/ (timestamps Jan 23, 2026): Rooms/Entrances, Dungeons, Spritesets, Overworld GFX, Overworld Spr, Custom Sprites, Sheet8.
-- Room names, overworld areas, entrance info, and dungeon metadata are already embedded in scripts/mesen2_client_lib/constants.py and referenced in ~/.context/projects/oracle-of-secrets/knowledge/oracle_quick_reference.md.
+- Room names, overworld areas, entrance info, and dungeon metadata are already embedded in Scripts/Mesen2/mesen2_client_lib/constants.py and referenced in ~/.context/projects/oracle-of-secrets/knowledge/oracle_quick_reference.md.
 - No automated import pipeline found; remaining sheets (spritesets/overworld gfx & spr/custom sprites/sheet8) appear staged for future tooling/docs updates.
 
 ## Open Work

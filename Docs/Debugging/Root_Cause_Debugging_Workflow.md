@@ -7,15 +7,15 @@ If you only remember one place to start: `RUNBOOK.md` (repo root).
 ## 0) Setup (One-Time-ish)
 
 - Vanilla truth: `~/src/hobby/usdasm` (addresses + expected register width/caller context).
-- Runtime tooling: `python3 scripts/mesen2_client.py` (Mesen2 OOS fork socket API).
+- Runtime tooling: `python3 Scripts/Mesen2/mesen2_client.py` (Mesen2 OOS fork socket API).
 - Optional static analysis: `~/src/hobby/z3dk/scripts/oracle_analyzer.py`.
 
 ## 1) Preflight (Do This Before Any Investigation)
 
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py run-state
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py diagnostics
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-verify-all
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py run-state
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py diagnostics
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-verify-all
 ```
 
 If preflight fails, stop and fix connectivity/symbols before chasing a bug.
@@ -25,8 +25,8 @@ If preflight fails, stop and fix connectivity/symbols before chasing a bug.
 Prefer a **state library seed** rather than “walk there”:
 
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py library
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-load <state_id>
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py library
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-load <state_id>
 ```
 
 If you need a “fresh but progressed” file for navigation speed, use save-data profiles/snapshots:
@@ -40,10 +40,10 @@ If you need a “fresh but progressed” file for navigation speed, use save-dat
 Use the automated capture bundle:
 
 ```bash
-python3 scripts/capture_blackout.py arm --deep
+python3 Scripts/Debug/capture_blackout.py arm --deep
 # reproduce in-game (do NOT reset)
-python3 scripts/capture_blackout.py capture
-python3 scripts/capture_blackout.py summary
+python3 Scripts/Debug/capture_blackout.py capture
+python3 Scripts/Debug/capture_blackout.py summary
 ```
 
 ### Generic softlock / corruption
@@ -51,10 +51,10 @@ python3 scripts/capture_blackout.py summary
 At the moment of failure:
 
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py pause
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py cpu --json
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py stack-retaddr --json
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-save "failure snapshot" -t bug
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py pause
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py cpu --json
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py stack-retaddr --json
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-save "failure snapshot" -t bug
 ```
 
 ## 4) Instrument (Find The Writer / Faulting PC)
@@ -69,14 +69,14 @@ The most useful primitives:
 Example: screen blanking (INIDISPQ) and mode changes.
 
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py mem-watch add 0x7E0013 --depth 256   # INIDISPQ
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py mem-watch add 0x7E0010 --depth 256   # GameMode
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py mem-watch add 0x7E0013 --depth 256   # INIDISPQ
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py mem-watch add 0x7E0010 --depth 256   # GameMode
 ```
 
 After repro, ask blame:
 
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py mem-blame 0x7E0013 --json
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py mem-blame 0x7E0013 --json
 ```
 
 ## 5) Map PC -> Source
@@ -87,8 +87,8 @@ MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py mem-blame 0x7E0013 --json
 Useful commands:
 
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py disasm --count 40
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py symbols resolve --addr 0x01ABCD
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py disasm --count 40
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py symbols resolve --addr 0x01ABCD
 ```
 
 ## 6) Document

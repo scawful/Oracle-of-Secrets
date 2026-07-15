@@ -55,9 +55,9 @@ The analyzer is only as good as `hooks.json` and symbol alignment. Two practical
 2) **Non-assembled ASM trees**: directories like `Util/ZScreamNew/` should not contribute hooks unless they are included in the build.
 
 Guardrails implemented/planned on the Oracle side:
-- Feature flags standardized via `Config/feature_flags.asm` and `scripts/set_feature_flags.py`.
-- `scripts/generate_hooks_json.py` should respect module + feature flags when determining the first instruction after an `org`.
-- `scripts/build_rom.sh` regenerates `hooks.json` automatically when `Config/module_flags.asm` or `Config/feature_flags.asm` changes.
+- Feature flags standardized via `Config/feature_flags.asm` and `Scripts/Build/set_feature_flags.py`.
+- `Scripts/Generate/generate_hooks_json.py` should respect module + feature flags when determining the first instruction after an `org`.
+- `Scripts/Build/build_rom.sh` regenerates `hooks.json` automatically when `Config/module_flags.asm` or `Config/feature_flags.asm` changes.
 
 Recommended z3dk improvements (signal over noise):
 - **Diff mode**: implemented via `oracle_analyzer_delta.py` (baseline vs current JSON).

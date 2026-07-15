@@ -18,9 +18,9 @@ Applied data-driven fixes for active Zora Baby + water gate regressions:
   - Removed hardcoded water overlay blob.
   - Added table-driven selector `WaterGate_SelectOverlayPointer` and switched `org $01CBAC` to `JSL` selector + `JSR RoomTag_OperateWaterFlooring`.
   - Overlay data now comes from generated tables (`Dungeons/generated/water_gate_runtime_tables.asm`) instead of manual patch bytes.
-- `scripts/generate_water_gate_runtime_tables.py` (new)
+- `Scripts/Generate/generate_water_gate_runtime_tables.py` (new)
   - Extracts room overlay object streams (default object ids `0xC9,0xD9`) and Zora Baby switch targets from ROM room data.
-- `scripts/build_rom.sh`
+- `Scripts/Build/build_rom.sh`
   - Auto-runs table generation before assembly, preferring `Oracle-of-Secrets.yaze` `rom_filename` as source ROM.
 
 Runtime expectations to verify:
@@ -48,7 +48,7 @@ Use these room-data controls to drive runtime behavior without hand-editing ASM:
   - Build regenerates `Dungeons/generated/water_fill_table.asm` (ROM `$25:E000`) from those marker offsets.
   - At water fill completion, runtime writes deep-water collision (`0x08`) to those offsets.
   - Preset-driven CLI workflow (recommended):
-    - `python3 scripts/water_fill_author.py --rom Roms/oos168.sfc --preset zora_d4 --write`
+    - `python3 Scripts/Generate/water_fill_author.py --rom Roms/oos168.sfc --preset zora_d4 --write`
     - Presets:
       - `room25_lower_band` (lower-half drain band)
       - `room27_upside_t` (dam upside-T with right-side stair gap)
@@ -79,11 +79,11 @@ Use these room-data controls to drive runtime behavior without hand-editing ASM:
     - `incsrc "Dungeons/generated/water_gate_runtime_tables.asm"`
 - `Sprites/NPCs/followers.asm`
   - Zora Baby follower logic that pulls the relevant switch sprites.
-- `scripts/generate_water_gate_runtime_tables.py`
+- `Scripts/Generate/generate_water_gate_runtime_tables.py`
   - Generates room overlay + Zora Baby target tables from ROM dungeon data.
-- `scripts/generate_water_fill_table.py`
+- `Scripts/Generate/generate_water_fill_table.py`
   - Generates runtime water-fill table from `0xF5` markers in room custom collision data.
-- `scripts/water_fill_author.py`
+- `Scripts/Generate/water_fill_author.py`
   - Applies room presets for marker painting via `z3ed` with readback validation.
 
 ## Feature Flags
@@ -114,9 +114,9 @@ Room entry re-applies collision if the bit is set.
 
 ### 0) Build-time table generation
 
-- Script: `python3 scripts/generate_water_gate_runtime_tables.py --rom <rom>`
-- Script: `python3 scripts/generate_water_fill_table.py --rom <rom>`
-- Auto-run during build (`scripts/build_rom.sh`) unless `OOS_SKIP_WATER_TABLE_GEN=1`.
+- Script: `python3 Scripts/Generate/generate_water_gate_runtime_tables.py --rom <rom>`
+- Script: `python3 Scripts/Generate/generate_water_fill_table.py --rom <rom>`
+- Auto-run during build (`Scripts/Build/build_rom.sh`) unless `OOS_SKIP_WATER_TABLE_GEN=1`.
 - Outputs:
   - `WaterOverlayRoomTable` / `WaterOverlayData_*` (from object ids `0xC9,0xD9` by default)
   - `ZoraBabySwitchTargetTable` (marker priority default: `0x124,0x137,0x135`)

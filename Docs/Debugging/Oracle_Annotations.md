@@ -16,7 +16,7 @@ enable optional runtime checks.
 Attach these to `org $XXXXXX` lines (or within ~20 lines below) so tooling can generate
 an accurate `hooks.json`.
 
-Supported fields (parsed by `scripts/generate_hooks_json.py`):
+Supported fields (parsed by `Scripts/Generate/generate_hooks_json.py`):
 - `module`, `name`, `kind`, `target`
 - `expected_m`, `expected_x`
 - `expected_exit_m`, `expected_exit_x`
@@ -38,8 +38,8 @@ If hook code reads DP mirrors (e.g. `LDA.b $A0`) or uses DP scratch (`$00-$0F`),
 Do not install hooks inside "global hot loops" (e.g. the underworld torch draw loop) unless the hook is *provably* transparent and cannot run mid-transition.
 
 Helpers:
-- `python3 scripts/tag_org_hooks.py --root . --apply --normalize --module-from-path`
-- `python3 scripts/verify_hooks_json.py --root . --rom Roms/oos168x.sfc --hooks hooks.json`
+- `python3 Scripts/Generate/tag_org_hooks.py --root . --apply --normalize --module-from-path`
+- `python3 Scripts/Validate/verify_hooks_json.py --root . --rom Roms/oos168x.sfc --hooks hooks.json`
 
 ### Watch tags
 ```

@@ -4,7 +4,8 @@
 Goal: keep "current guidance" docs runnable and free of legacy/broken references.
 
 Scope (current docs):
-- Repo root docs: README.md, RUNBOOK.md, AGENTS.md, CLAUDE.md
+- Repo root docs: README.md, AGENTS.md, CLAUDE.md
+- Primary runbook: Docs/RUNBOOK.md
 - Docs/**/*.md excluding Docs/Archive/** and Docs/Debugging/Issues/archive/**
 """
 
@@ -21,9 +22,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 CURRENT_DOC_GLOBS: list[str] = [
     "README.md",
-    "RUNBOOK.md",
     "AGENTS.md",
     "CLAUDE.md",
+    "Docs/RUNBOOK.md",
     "Docs/**/*.md",
 ]
 
@@ -47,7 +48,6 @@ BANNED_SNIPPETS: tuple[str, ...] = (
     "yaze/Scripts/ai/",
     "Scripts/ai/",
     # Old/abandoned doc roots from previous reorganizations
-    "Docs/Dev/",
     "Docs/Game/",
     "Docs/Ref/",
     "Docs/Tooling/",
@@ -66,7 +66,7 @@ BANNED_SNIPPETS: tuple[str, ...] = (
 SCRIPT_REF_RE = re.compile(
     r"(?:^|[\s`(\"'])"
     r"(?:\./)?"
-    r"(Scripts/[A-Za-z0-9_./-]+\.(?:py|sh))"
+    r"((?:Scripts|scripts)/[A-Za-z0-9_./-]+\.(?:py|sh))"
     r"\b"
 )
 

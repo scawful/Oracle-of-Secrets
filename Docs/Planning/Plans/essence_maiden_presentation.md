@@ -72,7 +72,7 @@ The menu GFX sheet is fully allocated with custom item icons, masks, fonts, and 
 The yaze message editor expanded write path is functional as of commit `4b6a78ed` (2026-02-06). Both the GUI (Ctrl+S) and z3ed CLI (`message-write`) write directly to main ROM with capacity validation. Dialogue authoring is **unblocked**.
 
 **Workflow options:**
-1. Edit `Core/message.asm` hex directly and rebuild (`./scripts/build_rom.sh 168`)
+1. Edit `Core/message.asm` hex directly and rebuild (`Scripts/Build/build_rom.sh 168`)
 2. Use z3ed CLI: `z3ed message-write --rom <rom> --id <id> --text "<text>"`
 3. Use yaze GUI message editor (expanded bank save works)
 

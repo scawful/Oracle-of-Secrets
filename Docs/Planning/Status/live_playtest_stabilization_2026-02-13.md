@@ -28,7 +28,7 @@ Result:
   - `0xA8`, `0x89`, `0xDA`, `0xD8`: minecart sprites not on stop tiles.
 
 ## Test Plan
-- Build: `./scripts/build_rom.sh 168` → `check_zscream_overlap.py` → rom-load → `save-data profile-apply soaring_debug`
+- Build: `Scripts/Build/build_rom.sh 168` → `check_zscream_overlap.py` → rom-load → `save-data profile-apply soaring_debug`
 - Accept: Octorok visible in OW grass; no tint when flag off; Soaring works; minecart audit after room edits
 
 ## Next Work

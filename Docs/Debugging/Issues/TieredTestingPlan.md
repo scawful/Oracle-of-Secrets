@@ -27,7 +27,7 @@ Instead of treating testing as one monolithic operation requiring the unstable f
 **No emulator required**
 
 ```bash
-./scripts/build_rom.sh 168
+Scripts/Build/build_rom.sh 168
 # Success: ROM compiles, no errors
 # Output: Roms/oos168x.sfc
 ```
@@ -263,7 +263,7 @@ This is O(n × m) where n = changes, m = test locations.
 
 ### 2026-01-24 - Tier 2 Test Launcher Created (Iteration 61)
 
-**New Tool:** `scripts/campaign/tier2_test_launcher.py`
+**New Tool:** `Scripts/Campaign/tier2_test_launcher.py`
 
 **Usage:**
 ```bash

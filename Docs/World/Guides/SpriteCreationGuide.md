@@ -467,7 +467,7 @@ Your sprite is now ready to be placed in the game world using your level editor!
 
 ## 8. Testing Your Sprite
 
-1.  **Build the ROM:** Run `./scripts/build_rom.sh <version>` (macOS/Linux) or `build.bat` (Windows legacy)
+1.  **Build the ROM:** Run `Scripts/Build/build_rom.sh <version>` (macOS/Linux) or `build.bat` (Windows legacy)
 2.  **Place in Editor:** Use your level editor to place the sprite in a room
 3.  **Test Behavior:** Load the room and verify:
     *   Sprite spawns correctly
