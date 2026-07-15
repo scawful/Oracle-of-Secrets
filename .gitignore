@@ -162,6 +162,7 @@ build/yazeproj/
 .agent/
 .cache/
 __pycache__/
+*.py[cod]
 hooks.json
 nav_attach.sh
 checks.json
@@ -173,6 +174,7 @@ Docs/Issues/*.json
 Docs/Issues/diagrams/
 Docs/Debugging/Issues/*.json
 Docs/Debugging/Issues/diagrams/
+Docs/Analysis/skill_eval_review.html
 
 # Debug testing artifacts (machine-specific save profiles)
 Docs/Debugging/Testing/save_data_library.json
