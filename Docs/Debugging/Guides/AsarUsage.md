@@ -43,9 +43,12 @@ What it does:
 2. Copies `Roms/oos168.sfc` → `Roms/oos168x.sfc` (base ROM to patched output).
 3. Runs `asar Oracle_main.asm Roms/oos168x.sfc`.
 
-## Windows (Legacy)
+## Windows
 
-`build.bat` is still available but not maintained. Prefer the macOS/Linux scripts above for the current workflow.
+The obsolete `build.bat` wrapper has been removed. There is no maintained native
+Windows wrapper; use `Scripts/Build/build_rom.sh` from WSL with `asar` available
+in that environment, or follow the manual copy-and-Asar steps below in a
+compatible shell.
 
 ## Manual Build Process (macOS/Linux)
 

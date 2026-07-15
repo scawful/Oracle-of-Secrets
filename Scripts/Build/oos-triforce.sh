@@ -6,16 +6,16 @@ usage() {
 Oracle finish-line action runner.
 
 Usage:
-  Scripts/oos-triforce.sh status-json [--pretty]
-  Scripts/oos-triforce.sh continue-play
-  Scripts/oos-triforce.sh notify
-  Scripts/oos-triforce.sh quick-patch
-  Scripts/oos-triforce.sh verify-patch
-  Scripts/oos-triforce.sh patch-and-play
-  Scripts/oos-triforce.sh transition-tests
+  Scripts/Build/oos-triforce.sh status-json [--pretty]
+  Scripts/Build/oos-triforce.sh continue-play
+  Scripts/Build/oos-triforce.sh notify
+  Scripts/Build/oos-triforce.sh quick-patch
+  Scripts/Build/oos-triforce.sh verify-patch
+  Scripts/Build/oos-triforce.sh patch-and-play
+  Scripts/Build/oos-triforce.sh transition-tests
 
 The "continue-play" and "notify" actions follow the current finish-line focus
-from Scripts/oos_status.py.
+from Scripts/Debug/oos_status.py.
 EOF
 }
 

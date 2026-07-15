@@ -150,7 +150,7 @@ Shifted all collision data in `Dungeons/Collision/water_collision.asm` down by 3
 
 ## What exists today
 - Repo contains the Oracle-of-Secrets ASM source tree (see folders like `Core/`, `Dungeons/`, `Items/`).
-- `build.bat` exists for Windows builds; manual Asar usage is documented in `Docs/Debugging/Guides/AsarUsage.md`.
+- The canonical build entry point is `Scripts/Build/build_rom.sh`; Windows users can run it from WSL as documented in `Docs/Debugging/Guides/AsarUsage.md`.
 - `Docs/README.md` exists.
 
 ## What does NOT exist
@@ -166,7 +166,7 @@ Shifted all collision data in `Dungeons/Collision/water_collision.asm` down by 3
 
 To build the Oracle of Secrets ROM:
 1. Ensure `asar` is in your PATH.
-2. Provide a base ROM at `Roms/oos168x.sfc`.
+2. Provide an unpatched base ROM at `Roms/oos168.sfc`.
 3. Run the build script:
    ```bash
    ./Scripts/Build/build_rom.sh 168

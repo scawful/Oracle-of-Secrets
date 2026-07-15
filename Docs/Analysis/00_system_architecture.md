@@ -18,11 +18,9 @@ graph TB
 
     subgraph "Entry Points"
         MAIN["Oracle_main.asm"]
-        MEADOW["Meadow_main.asm"]
     end
 
     MAIN --> ASAR
-    MEADOW --> ASAR
 
     subgraph "Core Systems (Bank $00-$07)"
         HW["hardware.asm<br/>SNES hardware defs"]

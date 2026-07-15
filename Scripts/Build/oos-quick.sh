@@ -6,12 +6,12 @@ usage() {
 Fast Oracle build + reload wrapper.
 
 Usage:
-  Scripts/oos-quick.sh [version] [extra dev_loop args]
+  Scripts/Build/oos-quick.sh [version] [extra dev_loop args]
 
 Examples:
-  Scripts/oos-quick.sh
-  Scripts/oos-quick.sh 168 --z3asm
-  Scripts/oos-quick.sh --skip-tests
+  Scripts/Build/oos-quick.sh
+  Scripts/Build/oos-quick.sh 168 --z3asm
+  Scripts/Build/oos-quick.sh --skip-tests
 EOF
 }
 
