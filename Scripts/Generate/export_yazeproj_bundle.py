@@ -216,7 +216,7 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "[build]",
             # Build is typically run on macOS (or remote build host), not iOS.
             # Keep this deterministic and repo-local.
-            "build_script=OOS_BASE_ROM=rom OOS_BACKUP_ROOT=backups project/Scripts/Build/build_rom.sh 168",
+            "build_script=OOS_BASE_ROM=../rom OOS_BACKUP_ROOT=../backups project/Scripts/Build/build_rom.sh 168",
             "output_folder=project/Roms",
             "git_repository=project",
             "track_changes=false",
