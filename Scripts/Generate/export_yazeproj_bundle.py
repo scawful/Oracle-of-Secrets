@@ -99,6 +99,8 @@ def should_skip(rel: Path) -> bool:
         ".pytest_cache",
         ".vscode",
         "build",
+        "Evaluations",
+        "Scratchpad",
         "evaluations",
         "scratchpad",
     }:
@@ -109,7 +111,7 @@ def should_skip(rel: Path) -> bool:
         return True
 
     # Visual diffs/screenshots are large and not needed for editing.
-    if rel.parts and rel.parts[0] == "tests":
+    if rel.parts and rel.parts[0] in {"Tests", "tests"}:
         if len(rel.parts) >= 2 and rel.parts[1] in {
             "screenshots",
             "baselines",
