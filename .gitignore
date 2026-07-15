@@ -234,8 +234,9 @@ Masks/gfx/moosh.pal
 Dungeons/DungeonMaps.asm
 Data/Generated/
 
-# Generated hack manifest for yaze integration (do not commit).
+# Ignore ad-hoc manifests, but track the canonical yaze lifecycle manifest.
 hack_manifest.json
+!Roms/hack_manifest.json
 __pycache__/
 
 # Host-specific MCP server config (machine paths, do not commit).

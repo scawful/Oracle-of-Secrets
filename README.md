@@ -17,6 +17,10 @@ Scripts/Build/z3dk_safe_smoke.sh    # safe z3asm smoke build in a temp workspace
 - `Docs/RUNBOOK.md` (build, debug, test, save-data profiles, blackout capture)
 - `Docs/README.md` (documentation index)
 
+`Oracle-of-Secrets.yaze` requires the tracked `Roms/hack_manifest.json` for
+save-policy and build-target safety. Regenerate it after hook/manifest changes
+with `python3 Scripts/Generate/generate_hack_manifest.py --rom Roms/oos168.sfc`.
+
 ## Hook tagging (optional)
 Use `Scripts/Generate/tag_org_hooks.py` to tag org blocks with `@hook` comments and normalize metadata.
 
