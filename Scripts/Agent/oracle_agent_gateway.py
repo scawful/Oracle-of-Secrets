@@ -466,12 +466,17 @@ def action_yaze_gui_toggle(_: dict[str, Any]) -> dict[str, Any]:
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
     script = oos_root / "Scripts" / "yaze_service.sh"
-    rom = _resolve_default_rom(oos_root, skip_patched=True)
+    project = oos_root / "Oracle-of-Secrets.yaze"
+    editor_target = project if project.is_file() else _resolve_default_rom(
+        oos_root, skip_patched=True
+    )
     if not script.exists():
         return {"ok": False, "error": "yaze_service.sh not found"}
-    if not rom:
-        return {"ok": False, "error": "No ROM found in Roms/"}
-    return _spawn([str(script), "gui-toggle", "--rom", str(rom)], cwd=oos_root)
+    if not editor_target:
+        return {"ok": False, "error": "No safe yaze project or base ROM found"}
+    return _spawn(
+        [str(script), "gui-toggle", "--rom", str(editor_target)], cwd=oos_root
+    )
 
 
 def action_headless_workflow_start(_: dict[str, Any]) -> dict[str, Any]:

@@ -32,6 +32,7 @@ class OracleAgentGatewayTest(unittest.TestCase):
         service = self.touch("Scripts/yaze_service.sh")
         mesen = self.touch("Scripts/Mesen2/mesen2_client.py")
         base = self.touch("Roms/oos168.sfc")
+        project = self.touch("Oracle-of-Secrets.yaze")
 
         spawned: list[list[str]] = []
 
@@ -63,6 +64,11 @@ class OracleAgentGatewayTest(unittest.TestCase):
             gateway.action_yaze_start({})
             self.assertEqual(spawned[-1], [str(service), "start", "--rom", str(base)])
 
+            gateway.action_yaze_gui_toggle({})
+            self.assertEqual(
+                spawned[-1], [str(service), "gui-toggle", "--rom", str(project)]
+            )
+
         with (
             mock.patch.object(gateway, "_resolve_oos_root", return_value=self.root),
             mock.patch.object(gateway, "_run", return_value={"ok": True}) as run,
@@ -82,6 +88,7 @@ class OracleAgentGatewayTest(unittest.TestCase):
         self.assertEqual(gateway._resolve_default_rom(self.root, prefer="test"), patched)
 
     def test_editor_selection_fails_closed_without_known_base(self) -> None:
+        self.touch("Scripts/yaze_service.sh")
         for name in (
             "oos168x.sfc",
             "oos999x.sfc",
@@ -92,6 +99,16 @@ class OracleAgentGatewayTest(unittest.TestCase):
             self.touch(f"Roms/{name}")
 
         self.assertIsNone(gateway._resolve_default_rom(self.root, skip_patched=True))
+        with (
+            mock.patch.object(gateway, "_resolve_oos_root", return_value=self.root),
+            mock.patch.object(gateway, "_yaze_allowed", return_value=True),
+            mock.patch.object(gateway, "_spawn") as spawn,
+        ):
+            result = gateway.action_yaze_gui_toggle({})
+
+        self.assertFalse(result["ok"])
+        self.assertIn("No safe yaze project or base ROM", result["error"])
+        spawn.assert_not_called()
 
 
 class YazeServiceSafetyTest(unittest.TestCase):
