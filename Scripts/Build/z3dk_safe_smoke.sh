@@ -128,6 +128,7 @@ trap cleanup EXIT
 cp -f "$base_rom" "$temp_base"
 
 echo "[z3dk-smoke] Repo root: ${ROOT_DIR}"
+echo "[z3dk-smoke] Base ROM source: ${base_rom}"
 echo "[z3dk-smoke] Base ROM copy: ${temp_base}"
 echo "[z3dk-smoke] Patched ROM target: ${temp_patched}"
 echo "[z3dk-smoke] z3asm: $(command -v "$z3asm_bin")"
