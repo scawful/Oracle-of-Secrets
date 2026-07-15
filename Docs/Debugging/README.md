@@ -1,6 +1,6 @@
 # Debugging (Start Here Inside Docs/)
 
-Primary entry point is still `RUNBOOK.md` at the repo root, but if you are browsing inside `Docs/`, this folder contains the supported debugging/testing workflows.
+Primary entry point is `Docs/RUNBOOK.md`. This folder contains the supported debugging/testing workflows.
 
 ## Golden Path
 
