@@ -248,13 +248,14 @@ def tool_status(version: int) -> dict[str, Any]:
         if candidate.exists():
             z3ed = str(candidate)
     mesen_app = Path("/Applications/Mesen2 OOS.app")
+    build_script = ROOT / "Scripts" / "Build" / "build_rom.sh"
     return {
         "mesen2_oos_app": {"available": mesen_app.exists(), "path": str(mesen_app)},
         "yaze_nightly": {"available": shutil.which("yaze-nightly") is not None, "path": shutil.which("yaze-nightly")},
         "z3ed": {"available": z3ed is not None, "path": z3ed},
         "flips": {"available": shutil.which("flips") is not None, "path": shutil.which("flips")},
         "mesen_agent": {"available": shutil.which("mesen-agent") is not None, "path": shutil.which("mesen-agent")},
-        "build_wrapper": {"available": (ROOT / "build.sh").exists(), "path": str(ROOT / "build.sh")},
+        "build_wrapper": {"available": build_script.exists(), "path": str(build_script)},
         "quick_wrapper": {"available": (ROOT / "Scripts" / "Build" / "oos-quick.sh").exists(), "path": str(ROOT / "Scripts" / "Build" / "oos-quick.sh")},
         "verify_wrapper": {"available": (ROOT / "Scripts" / "Build" / "oos-verify.sh").exists(), "path": str(ROOT / "Scripts" / "Build" / "oos-verify.sh")},
         "session_wrapper": {"available": (ROOT / "Scripts" / "Build" / "oos-session.sh").exists(), "path": str(ROOT / "Scripts" / "Build" / "oos-session.sh")},
