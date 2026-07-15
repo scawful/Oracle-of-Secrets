@@ -224,7 +224,7 @@ status_gui() {
 }
 
 sync_nightly() {
-  local installer="$HOME/src/hobby/yaze/Scripts/install-nightly.sh"
+  local installer="$HOME/src/hobby/yaze/scripts/install-nightly.sh"
   if [[ ! -x "$installer" ]]; then
     echo "Nightly installer not found: $installer" >&2
     exit 1

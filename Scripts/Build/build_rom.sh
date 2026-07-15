@@ -206,7 +206,7 @@ fi
 if [[ "${OOS_SKIP_MENU_VALIDATE:-0}" != "1" ]]; then
   z3ed_cli="${OOS_Z3ED_BIN:-}"
   if [[ -z "$z3ed_cli" ]]; then
-    local_z3ed="$repo_root/../yaze/Scripts/z3ed"
+    local_z3ed="$repo_root/../yaze/scripts/z3ed"
     if [[ -x "$local_z3ed" ]]; then
       z3ed_cli="$local_z3ed"
     elif command -v z3ed >/dev/null 2>&1; then
@@ -491,8 +491,8 @@ fi
 
 if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
   echo "[*] Running static analysis..."
-  z3dk_analyzer="$repo_root/../z3dk/Scripts/static_analyzer.py"
-  oracle_analyzer="$repo_root/../z3dk/Scripts/oracle_analyzer.py"
+  z3dk_analyzer="$repo_root/../z3dk/scripts/static_analyzer.py"
+  oracle_analyzer="$repo_root/../z3dk/scripts/oracle_analyzer.py"
 
   # Prefer oracle-specific analyzer, fall back to generic
   if [[ -f "$oracle_analyzer" ]]; then

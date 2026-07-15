@@ -1661,7 +1661,7 @@ def main():
             ann_path = Path(args.annotations).expanduser()
             if not ann_path.exists():
                 print(f"Annotations not found: {ann_path}")
-                print("Hint: python3 z3dk/Scripts/generate_annotations.py "
+                print("Hint: python3 z3dk/scripts/generate_annotations.py "
                       f"--root {SCRIPT_DIR.parent} --out {ann_path}")
                 sys.exit(2)
             try:
