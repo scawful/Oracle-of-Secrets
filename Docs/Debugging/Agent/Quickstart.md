@@ -35,5 +35,5 @@ Use this before any other Oracle-of-Secrets doc. It is the shortest path to repr
 - Need deeper background? Check `Docs/STABILITY.md` and `Docs/Debugging/Guides/Troubleshooting.md` only after the quickstart.
 
 ## Where To Look
-- Build/debug/test runbook: `RUNBOOK.md`
+- Build/debug/test runbook: `Docs/RUNBOOK.md`
 - Docs index: `Docs/README.md`

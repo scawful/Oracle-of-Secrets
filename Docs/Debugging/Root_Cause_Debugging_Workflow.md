@@ -2,7 +2,7 @@
 
 This is the repeatable workflow for black screens, softlocks, transition hangs, and corruption in Oracle of Secrets.
 
-If you only remember one place to start: `RUNBOOK.md` (repo root).
+If you only remember one place to start: `Docs/RUNBOOK.md`.
 
 ## 0) Setup (One-Time-ish)
 
@@ -100,5 +100,4 @@ For any bug worth fixing, leave a short issue doc with:
 - Blame output (writer PC + instruction)
 - Mapping to file/routine + why it is wrong in `usdasm` terms
 
-Place it under `Docs/Debugging/Issues/` and keep it linkable from `RUNBOOK.md` if it becomes a common class of failure.
-
+Place it under `Docs/Debugging/Issues/` and keep it linkable from `Docs/RUNBOOK.md` if it becomes a common class of failure.

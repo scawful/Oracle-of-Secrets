@@ -15,7 +15,7 @@ Sources:
   - Core/ram.asm (song bank tables)            -> music
 
 Usage:
-  python3 Scripts/extract_resource_labels.py [--validate] [--output PATH]
+  python3 Scripts/Analysis/extract_resource_labels.py [--validate] [--output PATH]
 """
 
 import argparse
@@ -306,7 +306,7 @@ def build_resource_labels(root: Path) -> dict:
 
     labels = {
         "_meta": {
-            "generated_by": "Scripts/extract_resource_labels.py",
+            "generated_by": "Scripts/Analysis/extract_resource_labels.py",
             "description": "Unified Oracle of Secrets resource labels for yaze integration",
             "sources": [
                 "Docs/Dev/Planning/oracle_room_labels.json",

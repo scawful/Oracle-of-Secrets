@@ -284,7 +284,7 @@ def build_story_events(root: Path) -> dict:
 
     result = {
         "_meta": {
-            "generated_by": "Scripts/extract_story_events.py",
+            "generated_by": "Scripts/Analysis/extract_story_events.py",
             "description": "Oracle of Secrets story event graph for yaze integration",
             "source": "Docs/Planning/Story_Event_Graph.md",
             "event_count": len(events),

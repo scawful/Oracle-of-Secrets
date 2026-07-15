@@ -536,7 +536,7 @@ def build_overworld_registry(project_root):
     # Build output
     registry = {
         "_meta": {
-            "generated_by": "Scripts/extract_overworld_registry.py",
+            "generated_by": "Scripts/Analysis/extract_overworld_registry.py",
             "description": "Oracle of Secrets overworld area registry",
             "notes": [
                 "Primary source: Docs/Planning/world_map_diagram.md",

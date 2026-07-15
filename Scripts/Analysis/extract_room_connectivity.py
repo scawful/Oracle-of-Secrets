@@ -335,7 +335,7 @@ def main():
 
     result = {
         "_meta": {
-            "generated_by": "extract_room_connectivity.py",
+            "generated_by": "Scripts/Analysis/extract_room_connectivity.py",
             "rom": str(rom_path),
             "description": "Room connectivity data extracted from ROM headers",
         },
