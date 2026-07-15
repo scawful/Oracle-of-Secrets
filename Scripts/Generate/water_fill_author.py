@@ -20,6 +20,7 @@ from typing import Dict, Iterable, List, Sequence, Set, Tuple
 
 Coord = Tuple[int, int]
 REPO_ROOT = Path(__file__).resolve().parents[2]
+LOCAL_Z3ED = REPO_ROOT.parent / "yaze" / "scripts" / "z3ed"
 
 
 def default_z3ed_path() -> Path:
@@ -27,7 +28,7 @@ def default_z3ed_path() -> Path:
     if override:
         return Path(override).expanduser()
     candidates = (
-        REPO_ROOT.parent / "yaze" / "Scripts" / "z3ed",
+        LOCAL_Z3ED,
         REPO_ROOT.parent / "yaze" / "build" / "bin" / "z3ed",
     )
     for candidate in candidates:
@@ -37,6 +38,13 @@ def default_z3ed_path() -> Path:
     if on_path:
         return Path(on_path)
     return candidates[0]
+
+
+def is_patched_build_rom(path: Path) -> bool:
+    name = path.name.lower()
+    return name == "oos-patched.sfc" or (
+        path.suffix.lower() == ".sfc" and path.stem.lower().endswith("x")
+    )
 
 
 @dataclass(frozen=True)
@@ -237,7 +245,7 @@ def main() -> int:
         "--rom",
         type=Path,
         required=True,
-        help="ROM path to edit (typically Roms/oos168x.sfc).",
+        help="Trusted editable base ROM or scratch-copy path (never an oos*x.sfc build output).",
     )
     parser.add_argument(
         "--z3ed",
@@ -282,6 +290,11 @@ def main() -> int:
 
     if not args.rom.exists():
         raise SystemExit(f"ROM not found: {args.rom}")
+    if args.write and is_patched_build_rom(args.rom):
+        raise SystemExit(
+            f"Refusing to edit patched build output: {args.rom}. "
+            "Use the trusted base ROM or an explicit scratch copy."
+        )
     if not args.z3ed.exists():
         raise SystemExit(f"z3ed not found: {args.z3ed}")
     if not args.preset and not args.add_rect:

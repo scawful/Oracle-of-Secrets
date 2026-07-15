@@ -91,7 +91,7 @@ PURPOSE_COMMENT_RE = re.compile(r";\s*(.+)$")
 SKIP_DIRS = {
     ".git", ".context", ".claude", ".cursor",
     "Roms", "Docs", "docs",
-    "build", "bin", "obj", "Tools", "tools", "tests", "node_modules",
+    "build", "bin", "obj", "Tools", "tools", "Tests", "tests", "node_modules",
     "ZScreamNew",
 }
 

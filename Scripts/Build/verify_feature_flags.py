@@ -36,6 +36,7 @@ SKIP_DIRS = {
     "obj",
     "Tools",
     "tools",
+    "Tests",
     "tests",
     "node_modules",
 }
