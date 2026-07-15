@@ -46,14 +46,14 @@
       "type": "exec",
       "command": [
         "python3",
-        "../z3dk/scripts/oracle_analyzer.py",
-        "Roms/oos168x.sfc",
-        "--hooks",
-        "Roms/hooks.json",
-        "--check-sprite-tables"
+        "Scripts/Validate/validate_sprite_table_safety.py",
+        "--base",
+        "Roms/oos168.sfc",
+        "--patched",
+        "Roms/oos168x.sfc"
       ],
       "expectedExitCode": 0,
-      "description": "Sprite property tables should not overflow past ID $F2"
+      "description": "Sprite table boundaries should match the canonical ROM outside documented hooks"
     },
     {
       "type": "exec",
