@@ -85,8 +85,11 @@ fi
 default_base="${ROOT_DIR}/Roms/oos${version}.sfc"
 legacy_base="${ROOT_DIR}/Roms/oos${version}_test2.sfc"
 if [[ -z "${OOS_BASE_ROM:-}" ]]; then
-  if [[ -f "$legacy_base" ]]; then
+  if [[ -f "$default_base" ]]; then
+    base_rom="$default_base"
+  elif [[ -f "$legacy_base" ]]; then
     base_rom="$legacy_base"
+    echo "NOTE: Using legacy base ROM name $(basename "$legacy_base"). Rename to $(basename "$default_base") to adopt standard naming." >&2
   else
     base_rom="$default_base"
   fi
