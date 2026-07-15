@@ -1010,43 +1010,47 @@ def run_test(test_path: Path, verbose: bool = False, quiet: bool = False, dry_ru
             out(f"  {i}. {step['type']}: {step.get('description', step)}")
         return "passed", None
 
-    # Bring Mesen to front when tests start (optional)
-    if os.environ.get("MESEN_AUTO_FOCUS", "1") not in ("0", "false", "False"):
-        script_path = Path(__file__).parent / "yabai_mesen_window.sh"
-        if script_path.exists():
-            try:
-                subprocess.run([str(script_path), "show"], timeout=2, check=False)
-            except Exception:
-                pass
+    requires_emulator = test.get("requiresEmulator") is not False
+    if requires_emulator:
+        # Bring Mesen to front when tests start (optional)
+        if os.environ.get("MESEN_AUTO_FOCUS", "1") not in ("0", "false", "False"):
+            script_path = Path(__file__).parent / "yabai_mesen_window.sh"
+            if script_path.exists():
+                try:
+                    subprocess.run([str(script_path), "show"], timeout=2, check=False)
+                except Exception:
+                    pass
 
-    # Check bridge connection
-    out("\nChecking bridge connection...")
-    out(f"Using backend: {BACKEND.backend_name()} (mode={BACKEND.mode})")
-    success, output = mesen_cmd('ping')
-    if not success:
-        require_emulator = os.environ.get("OOS_TEST_REQUIRE_EMULATOR") == "1"
-        msg = (
-            f"Bridge not connected: {output}. "
-            "Start Mesen2-OOS with the socket API enabled (or set MESEN2_SOCKET_PATH) and re-run. "
-            "Set OOS_TEST_REQUIRE_EMULATOR=1 to make this a hard failure."
-        )
-        if require_emulator:
-            if quiet:
+        # Check bridge connection
+        out("\nChecking bridge connection...")
+        out(f"Using backend: {BACKEND.backend_name()} (mode={BACKEND.mode})")
+        success, output = mesen_cmd('ping')
+        if not success:
+            require_emulator = os.environ.get("OOS_TEST_REQUIRE_EMULATOR") == "1"
+            msg = (
+                f"Bridge not connected: {output}. "
+                "Start Mesen2-OOS with the socket API enabled (or set MESEN2_SOCKET_PATH) and re-run. "
+                "Set OOS_TEST_REQUIRE_EMULATOR=1 to make this a hard failure."
+            )
+            if require_emulator:
+                if quiet:
+                    return "failed", msg
+                log(f"{Colors.RED}{msg}{Colors.RESET}")
                 return "failed", msg
-            log(f"{Colors.RED}{msg}{Colors.RESET}")
-            return "failed", msg
 
-        # Default dev workflow: skip tests when no emulator backend is available.
-        if quiet:
+            # Default dev workflow: skip tests when no emulator backend is available.
+            if quiet:
+                return "skipped", msg
+            log(f"{Colors.YELLOW}{msg}{Colors.RESET}")
             return "skipped", msg
-        log(f"{Colors.YELLOW}{msg}{Colors.RESET}")
-        return "skipped", msg
-    out(f"{Colors.GREEN}Bridge connected{Colors.RESET}")
+        out(f"{Colors.GREEN}Bridge connected{Colors.RESET}")
 
-    # Subscribe to events and show OSD message
-    if BACKEND.backend_name() == "socket":
-        mesen_cmd("command", "SUBSCRIBE", "events=all")
-        mesen_cmd("command", "OSD", f"text=Running Test: {test['name']}")
+        # Subscribe to events and show OSD message
+        if BACKEND.backend_name() == "socket":
+            mesen_cmd("command", "SUBSCRIBE", "events=all")
+            mesen_cmd("command", "OSD", f"text=Running Test: {test['name']}")
+    else:
+        out("\nEmulator not required; skipping bridge connection")
 
     # Load save state (optional)
     if not skip_load and test.get("saveState"):
