@@ -5,10 +5,10 @@ Part of Campaign Goal C.3 (Automated regression suite).
 
 Usage:
     # With pytest
-    pytest Scripts/Campaign/Tests/test_boot.py -v
+    pytest Scripts/Campaign/tests/test_boot.py -v
 
     # Standalone (requires Mesen2 running)
-    python3 Scripts/Campaign/Tests/test_boot.py
+    python3 Scripts/Campaign/tests/test_boot.py
 """
 
 from __future__ import annotations
