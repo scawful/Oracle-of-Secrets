@@ -7,6 +7,13 @@ on:
       - '**/*.asm'
       - '**/*.lua'
       - 'Scripts/**'
+      - 'Tests/**'
+      - 'Docs/**'
+      - 'Data/**'
+      - 'Roms/hack_manifest.json'
+      - 'Oracle-of-Secrets.yaze'
+      - 'README.md'
+      - '.gitignore'
       - '.github/workflows/test-rom.yml'
   pull_request:
     branches: [master]
@@ -14,6 +21,14 @@ on:
       - '**/*.asm'
       - '**/*.lua'
       - 'Scripts/**'
+      - 'Tests/**'
+      - 'Docs/**'
+      - 'Data/**'
+      - 'Roms/hack_manifest.json'
+      - 'Oracle-of-Secrets.yaze'
+      - 'README.md'
+      - '.gitignore'
+      - '.github/workflows/test-rom.yml'
   workflow_dispatch:
     inputs:
       run_emulator_tests:
@@ -95,6 +110,32 @@ jobs:
           echo "All Lua scripts passed syntax check"
 
   # =============================================================================
+  # Python, Documentation, and Metadata Safety Checks
+  # =============================================================================
+  python-static-checks:
+    name: Python and Metadata Safety Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run focused unit tests
+        run: python3 -m unittest discover -s Tests/unit -v
+
+      - name: Run documentation and metadata checks
+        run: |
+          python3 Scripts/Analysis/lint_docs.py
+          python3 Scripts/Build/verify_feature_flags.py
+          python3 Scripts/Validate/validate_sprite_registry.py --strict
+          python3 -m json.tool Roms/hack_manifest.json >/dev/null
+
+  # =============================================================================
   # Emulator Tests (Self-Hosted Only)
   # =============================================================================
   # Runs actual ROM tests using Mesen2 testRunner
@@ -105,7 +146,7 @@ jobs:
     name: Emulator Tests
     runs-on: self-hosted
     if: github.event_name == 'workflow_dispatch' && inputs.run_emulator_tests
-    needs: [asm-check, lua-check]
+    needs: [asm-check, lua-check, python-static-checks]
 
     steps:
       - name: Checkout
@@ -158,7 +199,7 @@ jobs:
   summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [asm-check, lua-check]
+    needs: [asm-check, lua-check, python-static-checks]
     if: always()
 
     steps:
@@ -177,6 +218,12 @@ jobs:
             echo "- Lua Syntax: :white_check_mark: Passed" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "- Lua Syntax: :x: Failed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ "${{ needs.python-static-checks.result }}" == "success" ]; then
+            echo "- Python/Metadata Safety: :white_check_mark: Passed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Python/Metadata Safety: :x: Failed" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           echo "" >> "$GITHUB_STEP_SUMMARY"
