@@ -11,6 +11,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -70,41 +71,72 @@ def _resolve_scratchpad() -> Path:
     return _resolve_context_root() / "scratchpad"
 
 
+KNOWN_PATCHED_ROM_NAMES = {
+    "oos-patched.sfc",
+    "zelda_oracleofsecrets.sfc",
+}
+
+
+def _is_patched_rom(path: Path) -> bool:
+    name = path.name.lower()
+    return (
+        name.endswith("x.sfc")
+        or "patched" in name
+        or name in KNOWN_PATCHED_ROM_NAMES
+    )
+
+
+def _is_known_base_rom(path: Path) -> bool:
+    name = path.name.lower()
+    return bool(re.fullmatch(r"oos\d+\.sfc", name)) or bool(
+        re.fullmatch(r"oos\d+_test2\.sfc", name)
+    )
+
+
 def _resolve_default_rom(oos_root: Path, skip_patched: bool = False, prefer: str = "dev") -> Path | None:
     roms_dir = oos_root / "Roms"
     if not roms_dir.exists():
         return None
 
     if prefer == "test":
-        preferred = ["oos168x.sfc", "oos168_test2.sfc", "oos168_test.sfc", "oos168.sfc", "oos169.sfc"]
+        preferred = [
+            "oos168x.sfc",
+            "oos-patched.sfc",
+            "Zelda_OracleOfSecrets.sfc",
+            "oos168.sfc",
+            "oos168_test2.sfc",
+            "oos169.sfc",
+        ]
     else:
-        preferred = ["oos168_test2.sfc", "oos168_test.sfc", "oos168.sfc", "oos168x.sfc", "oos169.sfc"]
-
-    if not skip_patched:
-        preferred.append("oos-patched.sfc")
-        
-    preferred.append("Zelda_OracleOfSecrets.sfc")
+        preferred = [
+            "oos168.sfc",
+            "oos168_test2.sfc",
+            "oos169.sfc",
+            "oos168x.sfc",
+            "oos-patched.sfc",
+            "Zelda_OracleOfSecrets.sfc",
+        ]
     
     for name in preferred:
         candidate = roms_dir / name
-        if candidate.exists():
+        if not candidate.exists():
+            continue
+        if skip_patched and (_is_patched_rom(candidate) or not _is_known_base_rom(candidate)):
+            continue
+        if candidate.is_file():
             return candidate
 
     sfcs = sorted(roms_dir.glob("*.sfc"), key=lambda p: p.stat().st_mtime, reverse=True)
     if skip_patched:
-        sfcs = [p for p in sfcs if p.name != "oos-patched.sfc"]
+        # GUI/editor callers must fail closed rather than guessing that an
+        # arbitrary ROM is an unpatched edit target.
+        sfcs = [p for p in sfcs if _is_known_base_rom(p) and not _is_patched_rom(p)]
         
     return sfcs[0] if sfcs else None
 
 
 def _resolve_tests_dir(oos_root: Path) -> Path:
-    candidate = oos_root / "tests"
-    if candidate.exists():
-        return candidate
-    candidate = oos_root / "Tests"
-    if candidate.exists():
-        return candidate
-    return oos_root / "tests"
+    return oos_root / "Tests"
 
 
 # ---- Process helpers ----
@@ -261,24 +293,21 @@ def action_build_rom(args: dict[str, Any]) -> dict[str, Any]:
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
     version = str(args.get("version", "168")) if isinstance(args, dict) else "168"
-    script = oos_root / "scripts" / "build_rom.sh"
+    script = oos_root / "Scripts" / "Build" / "build_rom.sh"
     if script.exists():
         cmd = ["bash", str(script), version]
         asar_bin = args.get("asar") if isinstance(args, dict) else None
         if asar_bin:
             cmd.append(str(asar_bin))
         return _spawn(cmd, cwd=oos_root)
-    fallback = oos_root / "build.sh"
-    if fallback.exists():
-        return _spawn(["bash", str(fallback)], cwd=oos_root)
-    return {"ok": False, "error": "build_rom.sh or build.sh not found"}
+    return {"ok": False, "error": "Scripts/Build/build_rom.sh not found"}
 
 
 def action_export_symbols(args: dict[str, Any]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    script = oos_root / "scripts" / "export_symbols.py"
+    script = oos_root / "Scripts" / "Generate" / "export_symbols.py"
     if not script.exists():
         return {"ok": False, "error": "export_symbols.py not found"}
     cmd = [sys.executable, str(script)]
@@ -298,7 +327,7 @@ def action_run_smoke_tests(_: dict[str, Any]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    script = oos_root / "scripts" / "run_regression_tests.sh"
+    script = oos_root / "Scripts" / "Validate" / "run_regression_tests.sh"
     if not script.exists():
         return {"ok": False, "error": "Regression runner not found"}
     return _spawn(["bash", str(script), "smoke", "--fail-fast"], cwd=oos_root)
@@ -308,7 +337,7 @@ def action_run_test_suite(args: dict[str, Any]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    script = oos_root / "scripts" / "run_regression_tests.sh"
+    script = oos_root / "Scripts" / "Validate" / "run_regression_tests.sh"
     if not script.exists():
         return {"ok": False, "error": "Regression runner not found"}
     suite = "regression"
@@ -409,7 +438,7 @@ def action_yaze_start(_: dict[str, Any]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    script = oos_root / "scripts" / "yaze_service.sh"
+    script = oos_root / "Scripts" / "yaze_service.sh"
     rom = _resolve_default_rom(oos_root, skip_patched=True)
     if not script.exists():
         return {"ok": False, "error": "yaze_service.sh not found"}
@@ -424,7 +453,7 @@ def action_yaze_stop(_: dict[str, Any]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    script = oos_root / "scripts" / "yaze_service.sh"
+    script = oos_root / "Scripts" / "yaze_service.sh"
     if not script.exists():
         return {"ok": False, "error": "yaze_service.sh not found"}
     return _spawn([str(script), "stop"], cwd=oos_root)
@@ -436,7 +465,7 @@ def action_yaze_gui_toggle(_: dict[str, Any]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    script = oos_root / "scripts" / "yaze_service.sh"
+    script = oos_root / "Scripts" / "yaze_service.sh"
     rom = _resolve_default_rom(oos_root, skip_patched=True)
     if not script.exists():
         return {"ok": False, "error": "yaze_service.sh not found"}
@@ -451,7 +480,7 @@ def action_headless_workflow_start(_: dict[str, Any]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    script = oos_root / "scripts" / "yaze_service.sh"
+    script = oos_root / "Scripts" / "yaze_service.sh"
     rom = _resolve_default_rom(oos_root, prefer="test")
     if not script.exists():
         return {"ok": False, "error": "yaze_service.sh not found"}
@@ -467,7 +496,7 @@ def action_headless_workflow_stop(_: dict[str, Any]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    script = oos_root / "scripts" / "yaze_service.sh"
+    script = oos_root / "Scripts" / "yaze_service.sh"
     if not script.exists():
         return {"ok": False, "error": "yaze_service.sh not found"}
     return _spawn([str(script), "stop"], cwd=oos_root)
@@ -488,7 +517,7 @@ def _run_mesen2_cli(args: list[str]) -> dict[str, Any]:
     oos_root = _resolve_oos_root()
     if not oos_root:
         return {"ok": False, "error": "Oracle-of-Secrets root not found"}
-    script = oos_root / "scripts" / "mesen2_client.py"
+    script = oos_root / "Scripts" / "Mesen2" / "mesen2_client.py"
     if not script.exists():
         return {"ok": False, "error": "mesen2_client.py not found"}
     cmd = [sys.executable, str(script)] + args

@@ -7,7 +7,9 @@ shift || true
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-ROM_DEFAULT="${REPO_ROOT}/Roms/oos168x.sfc"
+SERVER_ROM_DEFAULT="${REPO_ROOT}/Roms/oos168x.sfc"
+GUI_PROJECT_DEFAULT="${REPO_ROOT}/Oracle-of-Secrets.yaze"
+GUI_ROM_DEFAULT="${REPO_ROOT}/Roms/oos168.sfc"
 API_PORT_DEFAULT="${YAZE_API_PORT:-8081}"
 GRPC_PORT_DEFAULT="${YAZE_GRPC_PORT:-50052}"
 GUI_API_PORT_DEFAULT="${YAZE_GUI_API_PORT:-8082}"
@@ -28,7 +30,10 @@ Actions:
   sync-nightly
 
 Options:
-  --rom PATH         ROM path (default: Roms/oos168x.sfc)
+  --rom PATH         ROM or project path (server default: Roms/oos168x.sfc;
+                     GUI default: Oracle-of-Secrets.yaze or Roms/oos168.sfc)
+  --allow-patched-gui-rom
+                     Explicitly allow a patched *x.sfc in the GUI editor
   --api-port PORT    HTTP API port (default: 8081)
   --grpc-port PORT   gRPC port (default: 50052)
   --gui-api PORT     GUI HTTP API port (default: 8082)
@@ -38,7 +43,8 @@ Options:
 
 Env overrides:
   YAZE_BIN, YAZE_GUI_BIN, YAZE_API_PORT, YAZE_GRPC_PORT,
-  YAZE_GUI_API_PORT, YAZE_GUI_GRPC_PORT, YAZE_PID_FILE, YAZE_GUI_PID_FILE
+  YAZE_GUI_API_PORT, YAZE_GUI_GRPC_PORT, YAZE_PID_FILE, YAZE_GUI_PID_FILE,
+  YAZE_ALLOW_PATCHED_GUI_ROM
 EOF
 }
 
@@ -69,7 +75,8 @@ resolve_bin() {
   echo ""
 }
 
-ROM_PATH="$ROM_DEFAULT"
+ROM_PATH=""
+ALLOW_PATCHED_GUI_ROM="${YAZE_ALLOW_PATCHED_GUI_ROM:-0}"
 API_PORT="$API_PORT_DEFAULT"
 GRPC_PORT="$GRPC_PORT_DEFAULT"
 GUI_API_PORT="$GUI_API_PORT_DEFAULT"
@@ -81,6 +88,8 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --rom)
       ROM_PATH="$2"; shift 2 ;;
+    --allow-patched-gui-rom)
+      ALLOW_PATCHED_GUI_ROM=1; shift ;;
     --api-port)
       API_PORT="$2"; shift 2 ;;
     --grpc-port)
@@ -116,14 +125,15 @@ ensure_pid_stopped() {
 }
 
 start_server() {
-  local bin
+  local bin rom_path
   bin="$(resolve_bin "${YAZE_BIN_PATH:-${YAZE_BIN:-}}")"
+  rom_path="${ROM_PATH:-${SERVER_ROM_DEFAULT}}"
   if [[ -z "$bin" ]]; then
     echo "yaze binary not found (set YAZE_BIN or install nightly)" >&2
     exit 1
   fi
-  if [[ ! -f "$ROM_PATH" ]]; then
-    echo "ROM not found: $ROM_PATH" >&2
+  if [[ ! -f "$rom_path" ]]; then
+    echo "ROM not found: $rom_path" >&2
     exit 1
   fi
   if ! ensure_pid_stopped "$PID_FILE"; then
@@ -131,8 +141,8 @@ start_server() {
     return
   fi
   : > "$LOG_FILE"
-  echo "[yaze-service] Starting: $bin --server --api_port $API_PORT --test_harness_port $GRPC_PORT --rom_file $ROM_PATH" | tee -a "$LOG_FILE"
-  "$bin" --server --api_port "$API_PORT" --test_harness_port "$GRPC_PORT" --rom_file "$ROM_PATH" >>"$LOG_FILE" 2>&1 &
+  echo "[yaze-service] Starting: $bin --server --api_port $API_PORT --test_harness_port $GRPC_PORT --rom_file $rom_path" | tee -a "$LOG_FILE"
+  "$bin" --server --api_port "$API_PORT" --test_harness_port "$GRPC_PORT" --rom_file "$rom_path" >>"$LOG_FILE" 2>&1 &
   echo $! > "$PID_FILE"
   echo "[yaze-service] PID $(cat "$PID_FILE")" | tee -a "$LOG_FILE"
 }
@@ -155,15 +165,42 @@ stop_server() {
   echo "[yaze-service] Stopped"
 }
 
+is_patched_rom_path() {
+  local name
+  name="$(basename "$1" | tr '[:upper:]' '[:lower:]')"
+  case "$name" in
+    *x.sfc|*patched*.sfc|zelda_oracleofsecrets.sfc)
+      return 0
+      ;;
+  esac
+  return 1
+}
+
+resolve_gui_target() {
+  if [[ -n "$ROM_PATH" ]]; then
+    printf '%s\n' "$ROM_PATH"
+  elif [[ -f "$GUI_PROJECT_DEFAULT" ]]; then
+    printf '%s\n' "$GUI_PROJECT_DEFAULT"
+  else
+    printf '%s\n' "$GUI_ROM_DEFAULT"
+  fi
+}
+
 start_gui() {
-  local bin
+  local bin rom_path
   bin="$(resolve_bin "${YAZE_GUI_BIN_PATH:-${YAZE_GUI_BIN:-}}")"
+  rom_path="$(resolve_gui_target)"
   if [[ -z "$bin" ]]; then
     echo "yaze GUI binary not found (set YAZE_GUI_BIN or install nightly)" >&2
     exit 1
   fi
-  if [[ ! -f "$ROM_PATH" ]]; then
-    echo "ROM not found: $ROM_PATH" >&2
+  if [[ ! -f "$rom_path" ]]; then
+    echo "ROM or project not found: $rom_path" >&2
+    exit 1
+  fi
+  if is_patched_rom_path "$rom_path" && [[ "$ALLOW_PATCHED_GUI_ROM" != "1" ]]; then
+    echo "Refusing patched GUI edit target: $rom_path" >&2
+    echo "Use the canonical base/project, or pass --allow-patched-gui-rom explicitly." >&2
     exit 1
   fi
   if ! ensure_pid_stopped "$GUI_PID_FILE"; then
@@ -171,9 +208,9 @@ start_gui() {
     return
   fi
   : > "$GUI_LOG_FILE"
-  echo "[yaze-gui] Starting: $bin --enable_api --enable_test_harness --api_port $GUI_API_PORT --test_harness_port $GUI_GRPC_PORT --rom_file $ROM_PATH" | tee -a "$GUI_LOG_FILE"
+  echo "[yaze-gui] Starting: $bin --enable_api --enable_test_harness --api_port $GUI_API_PORT --test_harness_port $GUI_GRPC_PORT --rom_file $rom_path" | tee -a "$GUI_LOG_FILE"
   "$bin" --enable_api --enable_test_harness --api_port "$GUI_API_PORT" --test_harness_port "$GUI_GRPC_PORT" \
-    --rom_file "$ROM_PATH" --startup_welcome hide --startup_dashboard hide --startup_sidebar hide >>"$GUI_LOG_FILE" 2>&1 &
+    --rom_file "$rom_path" --startup_welcome hide --startup_dashboard hide --startup_sidebar hide >>"$GUI_LOG_FILE" 2>&1 &
   echo $! > "$GUI_PID_FILE"
   echo "[yaze-gui] PID $(cat "$GUI_PID_FILE")" | tee -a "$GUI_LOG_FILE"
 }
