@@ -608,8 +608,8 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
         "dev_rom": "Roms/oos168.sfc",
         "patched_rom": "Roms/oos168x.sfc",
         "assembler": "asar",
-        "entry_point": "Meadow_main.asm",
-        "build_script": "Scripts/build_rom.sh",
+        "entry_point": "Oracle_main.asm",
+        "build_script": "Scripts/Build/build_rom.sh",
         "flow": [
             "1. Yaze edits dev ROM (room data, sprites, palettes, messages)",
             "2. asar reads dev ROM + ASM sources",
