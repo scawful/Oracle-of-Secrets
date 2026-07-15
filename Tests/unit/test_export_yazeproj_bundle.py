@@ -9,6 +9,7 @@ from pathlib import Path
 from Scripts.Generate.export_yazeproj_bundle import (
     copy_repo_snapshot,
     should_skip,
+    write_ios_manifest,
     write_portable_hack_manifest,
 )
 
@@ -129,6 +130,16 @@ class PortableHackManifestTest(unittest.TestCase):
             self.assertEqual(manifest["rom"]["sha1"], "abc123")
             self.assertEqual(manifest["rom"]["dev_rom_sha1"], "abc123")
             self.assertEqual(manifest["rom"]["size"], 2_097_152)
+
+    def test_ios_manifest_includes_z3ed_hash_alias(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp)
+
+            write_ios_manifest(bundle, "Oracle", "abc123")
+
+            manifest = json.loads((bundle / "manifest.json").read_text())
+            self.assertEqual(manifest["romChecksum"], "abc123")
+            self.assertEqual(manifest["rom_sha1"], "abc123")
 
 
 if __name__ == "__main__":

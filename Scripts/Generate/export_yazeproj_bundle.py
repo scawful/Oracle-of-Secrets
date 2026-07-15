@@ -280,6 +280,8 @@ def write_ios_manifest(bundle_root: Path, name: str, rom_sha1: str) -> None:
         "version": 2,
         "name": name,
         "romChecksum": rom_sha1,
+        # z3ed's project-bundle verifier uses this cross-platform alias.
+        "rom_sha1": rom_sha1,
         "createdAt": now,
         "lastModifiedAt": now,
         "deviceName": platform.node() or "export",
@@ -317,6 +319,10 @@ def verify_bundle(bundle_root: Path) -> None:
     if manifest.get("romChecksum") != rom_sha1:
         raise ValueError(
             f"manifest.json romChecksum mismatch: {manifest.get('romChecksum')} != {rom_sha1}"
+        )
+    if manifest.get("rom_sha1") != rom_sha1:
+        raise ValueError(
+            f"manifest.json rom_sha1 mismatch: {manifest.get('rom_sha1')} != {rom_sha1}"
         )
 
     hack_manifest = json.loads(
