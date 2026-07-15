@@ -32,7 +32,7 @@ from pathlib import Path
 
 
 def find_repo_root() -> Path:
-    p = Path(__file__).resolve().parent.parent
+    p = Path(__file__).resolve().parents[2]
     if (p / "CLAUDE.md").exists():
         return p
     return Path.cwd().resolve()
@@ -216,13 +216,13 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "[build]",
             # Build is typically run on macOS (or remote build host), not iOS.
             # Keep this deterministic and repo-local.
-            "build_script=OOS_BASE_ROM=rom OOS_BACKUP_ROOT=backups project/Scripts/build_rom.sh 168",
+            "build_script=OOS_BASE_ROM=rom OOS_BACKUP_ROOT=backups project/Scripts/Build/build_rom.sh 168",
             "output_folder=project/Roms",
             "git_repository=project",
             "track_changes=false",
             "build_configurations=",
             "build_target=project/Roms/oos168x.sfc",
-            "asm_entry_point=Oracle_main.asm",
+            "asm_entry_point=project/Oracle_main.asm",
             "asm_sources=",
             "last_build_hash=",
             "build_number=0",
@@ -285,9 +285,9 @@ def refresh_planning_outputs(repo_root: Path) -> None:
     # Keep these local and deterministic: yaze reads them from
     # Docs/Dev/Planning/ via HackManifest::LoadProjectRegistry().
     scripts = [
-        repo_root / "scripts" / "extract_overworld_registry.py",
-        repo_root / "scripts" / "extract_resource_labels.py",
-        repo_root / "scripts" / "extract_story_events.py",
+        repo_root / "Scripts" / "Analysis" / "extract_overworld_registry.py",
+        repo_root / "Scripts" / "Analysis" / "extract_resource_labels.py",
+        repo_root / "Scripts" / "Analysis" / "extract_story_events.py",
     ]
     for script in scripts:
         if not script.exists():
@@ -399,6 +399,9 @@ def main() -> int:
     # bundle (too large + machine-specific), but an empty directory keeps the
     # build pipeline functional when invoked with OOS_BASE_ROM=rom.
     (staging_bundle / "project" / "Roms").mkdir(parents=True, exist_ok=True)
+    manifest_src = repo_root / "Roms" / "hack_manifest.json"
+    if manifest_src.exists():
+        shutil.copy2(manifest_src, staging_bundle / "project" / "hack_manifest.json")
 
     # Write config + metadata.
     write_project_file(staging_bundle, args.name, rom_sha1)
