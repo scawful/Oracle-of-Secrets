@@ -52,7 +52,7 @@ class Z3dkSafeSmokeTest(unittest.TestCase):
                 textwrap.dedent(
                     """\
                     target="${@: -1}"
-                    printf '\\377' | dd of="$target" bs=1 seek=0 conv=notrunc status=none
+                    printf '\\377' >>"$target"
                     """
                 ),
             )
@@ -72,6 +72,19 @@ class Z3dkSafeSmokeTest(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("without changing the seeded ROM", result.stderr)
+
+    def test_rejects_truncated_output(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            stub = self.write_stub(
+                root,
+                'target="${@: -1}"\nprintf \'short\' >"$target"\n',
+            )
+
+            result = self.run_smoke(root, stub)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Patched ROM was truncated", result.stderr)
 
     def test_times_out_hung_assembler(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

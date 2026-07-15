@@ -207,8 +207,13 @@ fi
 
 base_size="$(wc -c <"$temp_base" | tr -d '[:space:]')"
 patched_size="$(wc -c <"$temp_patched" | tr -d '[:space:]')"
-if [[ "$base_size" != "$patched_size" ]]; then
-  echo "ERROR: Patched ROM size changed (${base_size} -> ${patched_size} bytes)" >&2
+max_lorom_size=$((4 * 1024 * 1024))
+if (( patched_size < base_size )); then
+  echo "ERROR: Patched ROM was truncated (${base_size} -> ${patched_size} bytes)" >&2
+  exit 1
+fi
+if (( patched_size > max_lorom_size )); then
+  echo "ERROR: Patched ROM exceeds the 4 MiB LoROM limit (${patched_size} bytes)" >&2
   exit 1
 fi
 
