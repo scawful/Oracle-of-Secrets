@@ -50,12 +50,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download Asar
+      - name: Build Asar
         run: |
-          # Download Asar assembler
-          wget -q https://github.com/RPGHacker/asar/releases/download/v1.91/asar191.zip
-          unzip -q asar191.zip -d asar
-          chmod +x asar/asar
+          # The v1.91 release archive contains only asar.exe, so build the
+          # Linux CLI from the exact v1.91 source commit.
+          ASAR_COMMIT=6a6dbdaed8cb773e583052ce4f66375bd896c3a1
+          wget -q "https://github.com/RPGHacker/asar/archive/${ASAR_COMMIT}.tar.gz" -O asar-src.tar.gz
+          mkdir asar-src
+          tar -xzf asar-src.tar.gz --strip-components=1 -C asar-src
+          cmake -S asar-src/src -B asar-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build asar-build --config Release --target asar-standalone --parallel 2
+          mkdir -p asar
+          install -m 755 asar-build/asar/bin/asar asar/asar
+          ./asar/asar --version
 
       - name: Check ASM Syntax
         run: |
