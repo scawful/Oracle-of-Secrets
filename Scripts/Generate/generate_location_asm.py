@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent
-PROJECT_ROOT = SCRIPT_DIR.parent
+PROJECT_ROOT = SCRIPT_DIR.parents[1]
 REGISTRY_PATH = PROJECT_ROOT / "Data" / "location_registry.json"
 OUTPUT_DIR = PROJECT_ROOT / "Data" / "Generated"
 

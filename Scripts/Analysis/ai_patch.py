@@ -29,7 +29,7 @@ from typing import NamedTuple
 
 # Paths
 SCRIPT_DIR = Path(__file__).parent
-PROJECT_DIR = SCRIPT_DIR.parent
+PROJECT_DIR = SCRIPT_DIR.parents[1]
 ORCHESTRATOR_PATH = Path.home() / "src" / "lab" / "afs" / "tools" / "moe_orchestrator.py"
 Z3ED_PATH = Path.home() / "src" / "hobby" / "yaze" / "build" / "bin" / "yaze"
 
