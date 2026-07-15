@@ -18,7 +18,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 AGENTS_PATH = ROOT / "AGENTS.md"
 HANDOFF_PATH = ROOT / ".context" / "scratchpad" / "agent_handoff.md"
-TRACKER_PATH = ROOT / "oracle.org"
+TRACKER_PATH = ROOT / "Docs" / "oracle.org"
 WORKFLOW_PATH = ROOT / "Docs" / "Planning" / "Plans" / "development_workflow_alignment_2026-03-28.md"
 RUNBOOK_PATH = ROOT / "Docs" / "RUNBOOK.md"
 
