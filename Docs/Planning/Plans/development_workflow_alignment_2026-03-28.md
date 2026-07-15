@@ -15,7 +15,7 @@ Oracle of Secrets is no longer blocked by lack of tooling. The repo already has:
 - A one-command loop in `Scripts/Build/dev_loop.sh`
 - A large Mesen2 socket client in `Scripts/Mesen2/mesen2_client.py`
 - Save-data profiles and save-state library manifests
-- JSON regression suites in `tests/`
+- JSON regression suites in `Tests/`
 - yaze service helpers and portable `.yazeproj` export
 
 The real bottlenecks now are:
@@ -180,7 +180,7 @@ before large new feature pushes.
 | ASM hooks / core logic | `Scripts/Build/build_rom.sh 168` + overlap + analyzer | smoke + targeted regression JSON + manual Mesen repro | Use strict analyzer for beta drops |
 | Dungeon room edits in yaze | `z3ed rom-compare` + `dungeon-doctor` + `rom-doctor` | rebuild + enter edited rooms + adjacent-room regression | Never edit `oos168x.sfc` |
 | Progression/dialogue | save-data profile apply + targeted talk/interact test | state-backed regression steps + manual text review | Prefer save-data over long navigation |
-| Overworld/dungeon transitions | smoke + transition JSON tests | isolated Mesen instance + trace / capture bundle | Promote failures into `tests/regression/` |
+| Overworld/dungeon transitions | smoke + transition JSON tests | isolated Mesen instance + trace / capture bundle | Promote failures into `Tests/regression/` |
 | Beta patch candidate | smoke + transition tests + analyzer | full regression + curated manual play session | Do not ship without notes + known issues |
 
 ---

@@ -32,7 +32,7 @@
 ## Evidence Locations
 
 - Scratchpad: `~/.context/projects/oracle-of-secrets/scratchpad/`
-- Screenshots: `tests/screenshots/` (if captured)
+- Screenshots: `Tests/screenshots/` (if captured)
 - Save states: `Roms/SaveStates/`
 
 ## Suggested Audit Order

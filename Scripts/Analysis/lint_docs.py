@@ -69,6 +69,13 @@ SCRIPT_REF_RE = re.compile(
     r"\b"
 )
 
+# The repository uses a capitalized Tests/ root. Case-insensitive filesystems
+# can hide stale lowercase references that fail on Linux and in portable bundles.
+LOWERCASE_TEST_ROOT_RE = re.compile(
+    r"(?:(?:^|[\s`(\"'])(?:\./)?|(?:oracle-of-secrets|Oracle-of-Secrets)/)"
+    r"(tests/)"
+)
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -116,6 +123,11 @@ def main() -> int:
                 target = REPO_ROOT / rel
                 if not target.exists():
                     findings.append(Finding(doc, i, f"Missing script reference: {rel}"))
+
+            if LOWERCASE_TEST_ROOT_RE.search(line):
+                findings.append(
+                    Finding(doc, i, "Case-mismatched test path: tests/ (use Tests/)")
+                )
 
     if not findings:
         print("docs-lint: OK")

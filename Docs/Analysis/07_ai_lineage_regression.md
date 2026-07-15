@@ -198,8 +198,8 @@ graph TB
 
 | Location | Content |
 |----------|---------|
-| `tests/smoke/` | Boot, basic transition, lint pass |
-| `tests/regression/` | Golden path, overworld, dungeon, stack corruption, Y overflow |
+| `Tests/smoke/` | Boot, basic transition, lint pass |
+| `Tests/regression/` | Golden path, overworld, dungeon, stack corruption, Y overflow |
 | `Roms/SaveStates/` | Saved game states for specific test scenarios |
 | `Roms/SaveData/` | SRAM dumps |
 

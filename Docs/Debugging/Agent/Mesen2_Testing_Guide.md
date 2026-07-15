@@ -342,13 +342,13 @@ Scripts/yabai_mesen_rules.sh apply float
 
 ```bash
 # Restore Mesen to previous space before tests (default on)
-MESEN_AUTO_UNSTASH=1 Scripts/Validate/test_runner.py tests/*.json
+MESEN_AUTO_UNSTASH=1 Scripts/Validate/test_runner.py Tests/*.json
 
 # Stash Mesen after tests (requires SCRATCH_SPACE for space-based stash)
-SCRATCH_SPACE=8 MESEN_AUTO_STASH=1 Scripts/Validate/test_runner.py tests/*.json
+SCRATCH_SPACE=8 MESEN_AUTO_STASH=1 Scripts/Validate/test_runner.py Tests/*.json
 
 # Stash only when failures occur
-SCRATCH_SPACE=8 MESEN_STASH_ON_FAIL=1 Scripts/Validate/test_runner.py tests/*.json
+SCRATCH_SPACE=8 MESEN_STASH_ON_FAIL=1 Scripts/Validate/test_runner.py Tests/*.json
 ```
 
 ## Bridge Requirements
