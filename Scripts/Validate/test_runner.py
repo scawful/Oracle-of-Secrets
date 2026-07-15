@@ -388,7 +388,7 @@ def mesen_cmd(cmd: str, *args, timeout: float = 2.0) -> tuple[bool, str]:
 
 
 def run_yabai(action: str, *args: str) -> None:
-    script_path = Path(__file__).parent / "yabai_mesen_window.sh"
+    script_path = REPO_ROOT / "Scripts" / "yabai_mesen_window.sh"
     if not script_path.exists():
         return
     cmd = [str(script_path), action, *[str(a) for a in args if a]]
@@ -1014,7 +1014,7 @@ def run_test(test_path: Path, verbose: bool = False, quiet: bool = False, dry_ru
     if requires_emulator:
         # Bring Mesen to front when tests start (optional)
         if os.environ.get("MESEN_AUTO_FOCUS", "1") not in ("0", "false", "False"):
-            script_path = Path(__file__).parent / "yabai_mesen_window.sh"
+            script_path = REPO_ROOT / "Scripts" / "yabai_mesen_window.sh"
             if script_path.exists():
                 try:
                     subprocess.run([str(script_path), "show"], timeout=2, check=False)
