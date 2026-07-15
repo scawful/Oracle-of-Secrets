@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 
-from Scripts.Generate.export_yazeproj_bundle import copy_repo_snapshot, should_skip
+from Scripts.Generate.export_yazeproj_bundle import (
+    copy_repo_snapshot,
+    should_skip,
+    write_portable_hack_manifest,
+)
 
 
 class ShouldSkipTest(unittest.TestCase):
@@ -76,6 +81,54 @@ class CopyRepoSnapshotTest(unittest.TestCase):
             for rel in (".mcp.json", ".env.local", "Scripts/__pycache__", "untracked.asm"):
                 with self.subTest(rel=rel):
                     self.assertFalse((destination / rel).exists())
+
+
+class PortableHackManifestTest(unittest.TestCase):
+    def test_rewrites_rom_lifecycle_and_build_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "source.json"
+            destination = root / "bundle" / "project" / "hack_manifest.json"
+            source.write_text(
+                json.dumps(
+                    {
+                        "build_pipeline": {
+                            "dev_rom": "Roms/oos168.sfc",
+                            "patched_rom": "Roms/oos168x.sfc",
+                            "entry_point": "Oracle_main.asm",
+                            "build_script": "Scripts/Build/build_rom.sh",
+                        },
+                        "rom": {
+                            "path": "Roms/oos168.sfc",
+                            "sha1": "old",
+                            "size": 1,
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            write_portable_hack_manifest(
+                source,
+                destination,
+                "abc123",
+                2_097_152,
+            )
+
+            manifest = json.loads(destination.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["build_pipeline"]["dev_rom"], "rom")
+            self.assertEqual(
+                manifest["build_pipeline"]["patched_rom"],
+                "project/Roms/oos168x.sfc",
+            )
+            self.assertEqual(
+                manifest["build_pipeline"]["entry_point"],
+                "project/Oracle_main.asm",
+            )
+            self.assertEqual(manifest["rom"]["path"], "rom")
+            self.assertEqual(manifest["rom"]["sha1"], "abc123")
+            self.assertEqual(manifest["rom"]["dev_rom_sha1"], "abc123")
+            self.assertEqual(manifest["rom"]["size"], 2_097_152)
 
 
 if __name__ == "__main__":

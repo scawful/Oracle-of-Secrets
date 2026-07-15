@@ -319,6 +319,70 @@ def verify_bundle(bundle_root: Path) -> None:
             f"manifest.json romChecksum mismatch: {manifest.get('romChecksum')} != {rom_sha1}"
         )
 
+    hack_manifest = json.loads(
+        (bundle_root / "project" / "hack_manifest.json").read_text(encoding="utf-8")
+    )
+    pipeline = hack_manifest.get("build_pipeline", {})
+    expected_pipeline = {
+        "dev_rom": "rom",
+        "patched_rom": "project/Roms/oos168x.sfc",
+    }
+    for key, expected in expected_pipeline.items():
+        if pipeline.get(key) != expected:
+            raise ValueError(
+                f"hack_manifest.json build_pipeline.{key} mismatch: "
+                f"{pipeline.get(key)!r} != {expected!r}"
+            )
+
+    rom_meta = hack_manifest.get("rom", {})
+    if rom_meta.get("path") != "rom":
+        raise ValueError("hack_manifest.json rom.path must resolve to bundle rom")
+    for key in ("sha1", "dev_rom_sha1"):
+        if rom_meta.get(key) != rom_sha1:
+            raise ValueError(
+                f"hack_manifest.json rom.{key} mismatch: "
+                f"{rom_meta.get(key)!r} != {rom_sha1!r}"
+            )
+
+
+def write_portable_hack_manifest(
+    source: Path,
+    destination: Path,
+    rom_sha1: str,
+    rom_size: int,
+) -> None:
+    """Rewrite repo-relative manifest paths for the bundle-root project."""
+    manifest = json.loads(source.read_text(encoding="utf-8"))
+    pipeline = manifest.setdefault("build_pipeline", {})
+    pipeline.update(
+        {
+            "dev_rom": "rom",
+            "patched_rom": "project/Roms/oos168x.sfc",
+            "entry_point": "project/Oracle_main.asm",
+            "build_script": (
+                "OOS_BASE_ROM=../rom OOS_BACKUP_ROOT=../backups "
+                "project/Scripts/Build/build_rom.sh 168"
+            ),
+        }
+    )
+
+    rom_meta = manifest.setdefault("rom", {})
+    rom_meta.update(
+        {
+            "path": "rom",
+            "sha1": rom_sha1,
+            "size": rom_size,
+            "dev_rom_sha1": rom_sha1,
+            "dev_rom_size": rom_size,
+        }
+    )
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
 
 def refresh_planning_outputs(repo_root: Path) -> None:
     # Keep these local and deterministic: yaze reads them from
@@ -440,7 +504,12 @@ def main() -> int:
     (staging_bundle / "project" / "Roms").mkdir(parents=True, exist_ok=True)
     manifest_src = repo_root / "Roms" / "hack_manifest.json"
     if manifest_src.exists():
-        shutil.copy2(manifest_src, staging_bundle / "project" / "hack_manifest.json")
+        write_portable_hack_manifest(
+            manifest_src,
+            staging_bundle / "project" / "hack_manifest.json",
+            rom_sha1,
+            rom_dst.stat().st_size,
+        )
 
     # Write config + metadata.
     write_project_file(staging_bundle, args.name, rom_sha1)
