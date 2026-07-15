@@ -308,17 +308,17 @@ Scripts/Mesen2/mesen2_launch_instance.sh --instance scratch-run --owner you --so
 SCRATCH_SPACE=8 Scripts/yabai_mesen_window.sh stash
 
 # Disable auto-focus at test start
-MESEN_AUTO_FOCUS=0 Scripts/Validate/test_runner.py tests/*.json
+MESEN_AUTO_FOCUS=0 Scripts/Validate/test_runner.py Tests/*.json
 ```
 
 Optional skhd bindings:
 
 ```bash
 # Toggle Mesen window layer
-alt - m : /Users/scawful/src/hobby/oracle-of-secrets/scripts/yabai_mesen_window.sh toggle
+alt - m : Scripts/yabai_mesen_window.sh toggle
 
 # Toggle Mesen between current space and scratch space 8
-alt - shift - m : SCRATCH_SPACE=8 /Users/scawful/src/hobby/oracle-of-secrets/scripts/yabai_mesen_window.sh toggle-space
+alt - shift - m : SCRATCH_SPACE=8 Scripts/yabai_mesen_window.sh toggle-space
 ```
 
 ### Yabai Rules Cleanup (stop tiling)

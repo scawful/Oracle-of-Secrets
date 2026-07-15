@@ -64,9 +64,8 @@ BANNED_SNIPPETS: tuple[str, ...] = (
 # to be either at start-of-line or preceded by whitespace / punctuation commonly
 # used in docs.
 SCRIPT_REF_RE = re.compile(
-    r"(?:^|[\s`(\"'])"
-    r"(?:\./)?"
-    r"((?:Scripts|scripts)/[A-Za-z0-9_./-]+\.(?:py|sh))"
+    r"(?:(?:^|[\s`(\"'])(?:\./)?|(?:oracle-of-secrets|Oracle-of-Secrets)/)"
+    r"((?:Scripts|scripts)/[A-Za-z0-9_./-]+\.(?:py|sh|watch))"
     r"\b"
 )
 

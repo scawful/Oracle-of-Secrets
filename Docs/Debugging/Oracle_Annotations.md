@@ -78,7 +78,7 @@ python3 ../z3dk/scripts/generate_annotations.py \
 ```
 Or use the local generator when z3dk isn't available:
 ```
-python3 oracle-of-secrets/scripts/generate_annotations.py \
+python3 oracle-of-secrets/Scripts/Generate/generate_annotations.py \
   --root oracle-of-secrets \
   --out oracle-of-secrets/.cache/annotations.json
 ```
@@ -88,21 +88,21 @@ python3 oracle-of-secrets/scripts/generate_annotations.py \
 python3 ../z3dk/scripts/generate_watch.py \
   --mlb oracle-of-secrets/Roms/oos168x.mlb \
   --annotations oracle-of-secrets/.cache/annotations.json \
-  --out oracle-of-secrets/scripts/oracle_symbols.watch --dedupe
+  --out oracle-of-secrets/Scripts/Data/oracle_symbols.watch --dedupe
 ```
 
 3) Load in Mesen2:
 ```
-python3 oracle-of-secrets/scripts/mesen2_client.py watch-load --preset symbols
+python3 oracle-of-secrets/Scripts/Mesen2/mesen2_client.py watch-load --preset symbols
 ```
 
 4) Evaluate @assert expressions (optional):
 ```
-python3 oracle-of-secrets/scripts/mesen2_client.py assert-run \
+python3 oracle-of-secrets/Scripts/Mesen2/mesen2_client.py assert-run \
   --annotations oracle-of-secrets/.cache/annotations.json
 ```
 
 5) Evaluate a single expression (optional):
 ```
-python3 oracle-of-secrets/scripts/mesen2_client.py expr-eval "MODE == $07 && SUBMODE == $00"
+python3 oracle-of-secrets/Scripts/Mesen2/mesen2_client.py expr-eval "MODE == $07 && SUBMODE == $00"
 ```
