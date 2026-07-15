@@ -47,8 +47,6 @@
       "command": [
         "python3",
         "Scripts/Validate/validate_sprite_table_safety.py",
-        "--base",
-        "Roms/oos168.sfc",
         "--patched",
         "Roms/oos168x.sfc"
       ],

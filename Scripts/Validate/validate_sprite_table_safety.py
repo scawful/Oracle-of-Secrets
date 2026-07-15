@@ -8,7 +8,9 @@ match the canonical edit ROM, apart from the documented Twinrova prep hook.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 
@@ -27,6 +29,40 @@ CANONICAL_SENTINEL = bytes.fromhex("22 71 B8 0D 5A 8B 4B AB")
 
 TWINROVA_HOOK = 0x068841
 TWINROVA_HOOK_SIZE = 5
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_BASE_ROM = Path("Roms/oos168.sfc")
+
+
+def resolve_base_rom_path(
+    explicit: Path | None,
+    *,
+    repo_root: Path = REPO_ROOT,
+    caller_cwd: Path | None = None,
+    environ: Mapping[str, str] | None = None,
+) -> Path:
+    """Resolve an explicit base ROM or the project default.
+
+    Explicit relative paths retain normal CLI semantics and resolve from the
+    caller's working directory. ``OOS_BASE_ROM`` is a project setting, so its
+    relative paths resolve from the repository root; this makes ``../rom``
+    select the ROM stored beside ``project/`` in a portable yaze bundle.
+    """
+    if explicit is not None:
+        base = explicit.expanduser()
+        if base.is_absolute():
+            return base
+        return ((caller_cwd or Path.cwd()) / base).resolve()
+
+    env = os.environ if environ is None else environ
+    configured = env.get("OOS_BASE_ROM", "").strip()
+    if configured:
+        base = Path(configured).expanduser()
+        if base.is_absolute():
+            return base
+        return (repo_root / base).resolve()
+
+    return (repo_root / DEFAULT_BASE_ROM).resolve()
 
 
 def snes_to_pc(address: int) -> int:
@@ -121,12 +157,20 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Validate Oracle sprite-table boundaries against a canonical base ROM"
     )
-    parser.add_argument("--base", type=Path, required=True, help="Canonical unpatched edit ROM")
+    parser.add_argument(
+        "--base",
+        type=Path,
+        help=(
+            "Canonical unpatched edit ROM (default: $OOS_BASE_ROM relative to the "
+            "repository root, then Roms/oos168.sfc)"
+        ),
+    )
     parser.add_argument("--patched", type=Path, required=True, help="Asar-patched test ROM")
     args = parser.parse_args(argv)
+    base_path = resolve_base_rom_path(args.base)
 
     try:
-        base = args.base.read_bytes()
+        base = base_path.read_bytes()
         patched = args.patched.read_bytes()
     except OSError as exc:
         print(f"Sprite table safety check failed: {exc}", file=sys.stderr)

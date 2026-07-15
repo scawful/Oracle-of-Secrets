@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from Scripts.Validate.validate_sprite_table_safety import (
     CANONICAL_SENTINEL,
@@ -8,12 +10,60 @@ from Scripts.Validate.validate_sprite_table_safety import (
     MAIN_OVERFLOW_START,
     PREP_OVERFLOW_START,
     TWINROVA_HOOK_SIZE,
+    resolve_base_rom_path,
     snes_to_pc,
     validate_sprite_table_safety,
 )
 
 
 class SpriteTableSafetyTest(unittest.TestCase):
+    def test_default_base_rom_resolves_from_repo_root(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo_root = Path(tmp) / "project"
+            base_rom = repo_root / "Roms/oos168.sfc"
+            base_rom.parent.mkdir(parents=True)
+            base_rom.write_bytes(b"default")
+
+            resolved = resolve_base_rom_path(None, repo_root=repo_root, environ={})
+
+            self.assertEqual(resolved, base_rom.resolve())
+            self.assertEqual(resolved.read_bytes(), b"default")
+
+    def test_portable_env_base_rom_resolves_from_repo_root(self) -> None:
+        with TemporaryDirectory() as tmp:
+            bundle_root = Path(tmp) / "Oracle.yazeproj"
+            repo_root = bundle_root / "project"
+            unrelated_cwd = Path(tmp) / "caller"
+            portable_rom = bundle_root / "rom"
+            fallback_rom = repo_root / "Roms/oos168.sfc"
+            fallback_rom.parent.mkdir(parents=True)
+            fallback_rom.write_bytes(b"fallback")
+            portable_rom.write_bytes(b"portable")
+
+            resolved = resolve_base_rom_path(
+                None,
+                repo_root=repo_root,
+                caller_cwd=unrelated_cwd,
+                environ={"OOS_BASE_ROM": "../rom"},
+            )
+
+            self.assertEqual(resolved, portable_rom.resolve())
+            self.assertEqual(resolved.read_bytes(), b"portable")
+
+    def test_explicit_relative_base_rom_keeps_caller_semantics(self) -> None:
+        with TemporaryDirectory() as tmp:
+            repo_root = Path(tmp) / "project"
+            caller_cwd = Path(tmp) / "caller"
+
+            resolved = resolve_base_rom_path(
+                Path("fixtures/base.sfc"),
+                repo_root=repo_root,
+                caller_cwd=caller_cwd,
+                environ={"OOS_BASE_ROM": "ignored.sfc"},
+            )
+
+            self.assertEqual(resolved, (caller_cwd / "fixtures/base.sfc").resolve())
+
     def make_roms(self) -> tuple[bytearray, bytearray]:
         size = snes_to_pc(LOAD_PROPERTIES_SENTINEL) + len(CANONICAL_SENTINEL)
         base = bytearray(size)
