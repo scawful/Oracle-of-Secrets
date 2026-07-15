@@ -4,7 +4,7 @@ Export a portable `.yazeproj` bundle for yaze (macOS + iOS).
 
 This is the "seamless Mac <-> iPad" file format:
   - A `.yazeproj` is a directory package that can live in iCloud Drive.
-  - It contains a ROM plus a filtered snapshot of the Oracle-of-Secrets repo.
+  - It contains a ROM plus a filtered snapshot of tracked Oracle source files.
   - yaze can open the bundle root directly.
 
 Bundle layout (compatible with yaze core + iOS document browser):
@@ -98,6 +98,7 @@ def should_skip(rel: Path) -> bool:
         ".gemini",
         ".pytest_cache",
         ".vscode",
+        "__pycache__",
         "build",
         "Evaluations",
         "Scratchpad",
@@ -108,6 +109,32 @@ def should_skip(rel: Path) -> bool:
 
     # ROM binaries and archives: bundle has its own `rom` file.
     if rel.parts and rel.parts[0] == "Roms":
+        return True
+
+    if rel.suffix.lower() in {
+        ".7z",
+        ".bps",
+        ".bst",
+        ".bz2",
+        ".gz",
+        ".mss",
+        ".pyc",
+        ".pyd",
+        ".pyo",
+        ".rar",
+        ".sav",
+        ".sfc",
+        ".smc",
+        ".srm",
+        ".state",
+        ".tar",
+        ".xz",
+        ".zip",
+    }:
+        return True
+
+    # Host integration and environment files can contain local paths or secrets.
+    if rel.name == ".mcp.json" or rel.name == ".env" or rel.name.startswith(".env."):
         return True
 
     # Visual diffs/screenshots are large and not needed for editing.
@@ -129,31 +156,41 @@ def should_skip(rel: Path) -> bool:
 
 
 def copy_repo_snapshot(src_root: Path, dst_root: Path) -> None:
+    """Copy tracked working-tree files into the portable project snapshot.
+
+    Tracked files are read from the working tree, so local edits to existing
+    source files are preserved. Untracked/ignored host state is deliberately
+    excluded; add new source files to Git before exporting them.
+    """
     dst_root.mkdir(parents=True, exist_ok=True)
 
-    for dirpath, dirnames, filenames in os.walk(src_root):
-        abs_dir = Path(dirpath)
-        rel_dir = abs_dir.relative_to(src_root)
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(src_root), "ls-files", "-z"],
+            check=True,
+            capture_output=True,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError("Could not enumerate tracked project files with Git") from exc
 
-        # Prune excluded directories early.
-        keep_dirnames: list[str] = []
-        for d in dirnames:
-            rel = rel_dir / d
-            if not should_skip(rel):
-                keep_dirnames.append(d)
-        dirnames[:] = keep_dirnames
+    for raw_path in result.stdout.split(b"\0"):
+        if not raw_path:
+            continue
+        rel = Path(os.fsdecode(raw_path))
+        if rel.is_absolute() or ".." in rel.parts:
+            raise ValueError(f"Unsafe tracked path: {rel}")
+        if should_skip(rel):
+            continue
 
-        # Ensure destination directory exists.
-        (dst_root / rel_dir).mkdir(parents=True, exist_ok=True)
+        src_file = src_root / rel
+        # Skip deleted tracked paths, submodules, and symlinks rather than
+        # following a link outside the repository into a portable bundle.
+        if not src_file.is_file() or src_file.is_symlink():
+            continue
 
-        for filename in filenames:
-            rel = rel_dir / filename
-            if should_skip(rel):
-                continue
-            src_file = abs_dir / filename
-            dst_file = dst_root / rel
-            dst_file.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src_file, dst_file)
+        dst_file = dst_root / rel
+        dst_file.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src_file, dst_file)
 
 
 def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
