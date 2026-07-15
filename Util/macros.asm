@@ -19,7 +19,7 @@
 
 ; --- Feature Toggle Flags ---
 ; Set to 1 to enable a feature, 0 to disable (isolation testing).
-; Override these via Config/feature_flags.asm (generate with scripts/set_feature_flags.py).
+; Override these via Config/feature_flags.asm (generate with Scripts/Build/set_feature_flags.py).
 !ENABLE_CUSTOM_ROOM_COLLISION         = 1
 !ENABLE_FOLLOWER_TRANSITION_HOOKS     = 1
 !ENABLE_GRAPHICS_TRANSFER_SCROLL_HOOK = 1

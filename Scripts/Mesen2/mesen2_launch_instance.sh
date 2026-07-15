@@ -6,7 +6,7 @@ usage() {
 Launch an isolated Mesen2 OOS instance (safe for multi-agent work).
 
 USAGE:
-  Scripts/mesen2_launch_instance.sh [options]
+  Scripts/Mesen2/mesen2_launch_instance.sh [options]
 
 OPTIONS:
   --instance NAME        Instance name (default: <source>-<owner>)

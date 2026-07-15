@@ -34,7 +34,7 @@ This repo has accumulated scripts over time. The goal is to keep a small “gold
 ## Automation (Experimental / WIP)
 - `Scripts/Campaign/` (agentic automation, autonomous debugging)
 
-If a doc references a script that does not exist (example: `mesen_cli.sh`), prefer the socket client (`Scripts/Mesen2/mesen2_client.py`) instead.
+If a doc references a removed legacy CLI, prefer the socket client (`Scripts/Mesen2/mesen2_client.py`) instead.
 
 ## Save-State Safety Defaults
 - `Scripts/Mesen2/mesen2_launch_instance.sh` does **not** seed project slot states by default.

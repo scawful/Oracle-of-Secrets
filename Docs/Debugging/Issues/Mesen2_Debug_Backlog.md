@@ -315,7 +315,7 @@ Wire `test_runner.py` to use socket API for automated testing. Implemented via `
 - No automated test suite defined
 
 **Steps:**
-1. Define test cases in `scripts/tests/`
+1. Define test cases in `Tests/`
 2. Add state library integration
 3. Add assertion framework
 4. Wire to CI workflow

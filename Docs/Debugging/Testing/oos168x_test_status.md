@@ -79,13 +79,13 @@ Files involved:
 
 | Script | Purpose | Location |
 |--------|---------|----------|
-| `debug_transitions.lua` | Module/room change tracking, stuck detection | `scripts/` |
-| `debug_crash_detector.lua` | Hook monitoring, invalid state detection | `scripts/` |
-| `debug_overworld.lua` | Overworld area transitions, edge detection | `scripts/` |
-| `mesen_water_debug.lua` | Water collision overlay (existing) | `scripts/` |
-| `verify_water_gate.lua` | Automated water gate test (existing) | `scripts/` |
+| `debug_transitions.lua` | Module/room change tracking, stuck detection | `Scripts/Lua/` |
+| `debug_crash_detector.lua` | Hook monitoring, invalid state detection | Legacy; not present in the current tree |
+| `debug_overworld.lua` | Overworld area transitions, edge detection | `Scripts/Lua/` |
+| `mesen_water_debug.lua` | Water collision overlay (existing) | `Scripts/Lua/` |
+| `verify_water_gate.lua` | Automated water gate test | Legacy; not present in the current tree |
 
-`verify_water_gate.lua` supports `MESEN_LOADSTATE=/path/to/state.mss` for deterministic headless runs.
+The historical `verify_water_gate.lua` accepted `MESEN_LOADSTATE=/path/to/state.mss`; use the current test runner for deterministic state-backed runs.
 
 ### Runtime Reload Hotkey (Save-State Safety)
 - **Combo:** `L + R + Select + Start`
@@ -127,7 +127,7 @@ open /Applications/Mesen2\ OOS.app \
 ```
 
 ### Load debug script:
-In Mesen2: Tools → Run Script → `scripts/debug_transitions.lua`
+In Mesen2: Tools → Run Script → `Scripts/Lua/debug_transitions.lua`
 
 ---
 

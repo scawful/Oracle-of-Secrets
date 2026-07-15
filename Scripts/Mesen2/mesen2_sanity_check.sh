@@ -18,7 +18,7 @@ usage() {
 Mesen2 sanity check
 
 USAGE:
-  Scripts/mesen2_sanity_check.sh [options]
+  Scripts/Mesen2/mesen2_sanity_check.sh [options]
 
 OPTIONS:
   --root <dir>       Oracle-of-Secrets repo root (default: script parent)

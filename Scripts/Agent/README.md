@@ -40,7 +40,7 @@ You can use the smart save feature directly from the command line:
 
 ```bash
 # Save to slot 1 ONLY if the state is considered safe
-./Scripts/mesen2_client.py smart-save 1
+python3 Scripts/Mesen2/mesen2_client.py smart-save 1
 ```
 
 ### Python API
@@ -73,7 +73,7 @@ agent.calibrate_b008()
 
 ## Methodology
 
-1.  **Bridge Extension**: We extended `mesen_live_bridge.lua` to dump the 4KB collision map to a binary file.
+1.  **Socket API**: The Mesen2 OOS socket exposes the 4KB collision map directly.
 2.  **Socket Transport**: The `OracleDebugClient` triggers this dump and reads the file.
 3.  **Local Processing**: The Python `Navigator` parses this binary map to build a navigation grid.
 4.  **Feedback Loop**: The agent ticks every frame/interval, updates its internal state model, and decides on actions (Input Injection) based on the plan.

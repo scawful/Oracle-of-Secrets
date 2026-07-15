@@ -248,7 +248,7 @@ Use these as the real supported path:
 
 Treat these as experimental until they prove consistent value:
 
-- `scripts/campaign/`
+- `Scripts/Campaign/`
 - autonomous debugger flows
 - higher-order agent gateway flows
 

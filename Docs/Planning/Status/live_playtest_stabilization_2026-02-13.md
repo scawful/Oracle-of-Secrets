@@ -12,7 +12,7 @@ Status: Active | Next Review: 2026-02-15
 
 1. **Octorok** (`Sprites/Enemies/octorok.asm`): Sprite flash `LDA.w SprFlash, X`; land Octorok `$2D/$6D` so they render above OW grass.
 2. **Ocarina tint** (`!ENABLE_OCARINA_SONG_TINT`): Default OFF; gates Healing/Soaring/Time tint; Storms unchanged.
-3. **Save persistence** (`scripts/mesen2_client_lib/`): Fixed slot decode (2/4/6 for slots 1/2/3). `save_data_transaction.py`; `profile-apply` does WRAM→SRAM flow with verify. Persistent/volatile classification.
+3. **Save persistence** (`Scripts/Mesen2/mesen2_client_lib/`): Fixed slot decode (2/4/6 for slots 1/2/3). `save_data_transaction.py`; `profile-apply` does WRAM→SRAM flow with verify. Persistent/volatile classification.
 4. **Save-state patch**: 28 `oos168x` states updated with `all_items_no_progress`; 28/28 verified.
 
 ## Minecart Accuracy Review

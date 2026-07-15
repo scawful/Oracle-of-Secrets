@@ -158,7 +158,7 @@ def launch_mesen(rom_path: Path, state_path: Optional[Path] = None) -> bool:
 
     if not rom_path.exists():
         print(f"ERROR: ROM not found: {rom_path}")
-        print("Run ./Scripts/build_rom.sh 168 to build it.")
+        print("Run ./Scripts/Build/build_rom.sh 168 to build it.")
         return False
 
     # Launch Mesen with ROM

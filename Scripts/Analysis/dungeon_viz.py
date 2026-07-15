@@ -4,11 +4,12 @@ Simple dungeon room ASCII visualizer.
 Cleans up z3ed dungeon-map output into readable room layouts.
 
 Usage:
-    python3 Scripts/dungeon_viz.py --rom Roms/oos168x.sfc --room 0x87
-    python3 Scripts/dungeon_viz.py --rom Roms/oos168x.sfc --d6
-    python3 Scripts/dungeon_viz.py --overview
+    python3 Scripts/Analysis/dungeon_viz.py --rom Roms/oos168x.sfc --room 0x87
+    python3 Scripts/Analysis/dungeon_viz.py --rom Roms/oos168x.sfc --d6
+    python3 Scripts/Analysis/dungeon_viz.py --overview
 """
-import argparse, json, os, subprocess, sys
+import argparse, json, subprocess, sys
+from pathlib import Path
 PLAIN = False
 SCALE = 3
 
@@ -23,10 +24,13 @@ NAMES = {
     0xC8:'Boss',0xD7:'B2 West',0xD8:'Pre-Boss',0xD9:'B2 Crumble',0xDA:'B2 Stage',
 }
 
+def local_z3ed_path():
+    repo_root = Path(__file__).resolve().parents[2]
+    return repo_root.parent / 'yaze' / 'scripts' / 'z3ed'
+
 def z3ed_path():
-    d = os.path.dirname(os.path.abspath(__file__))
-    p = os.path.join(d,'..','..','yaze','scripts','z3ed')
-    return os.path.abspath(p) if os.path.exists(p) else 'z3ed'
+    path = local_z3ed_path()
+    return str(path) if path.exists() else 'z3ed'
 
 def get_map(rom, room_id):
     try:

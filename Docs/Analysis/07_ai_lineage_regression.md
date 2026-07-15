@@ -238,4 +238,4 @@ For reference, these are the exact files that contain AI-generated code needing 
 | `Menu/menu.asm` | Claude Code (8b23049, 791ebaf, d01a4b8) | Stability fixes, navigation |
 | `Menu/menu_hud.asm` | Claude Code (1c19788) | FloorIndicator overflow fix |
 | `Overworld/time_system.asm` | Claude Code (841ef2d) | Song of Storms rain persistence |
-| `scripts/campaign/` | ai-infra-architect (1cf53b9) | Autonomous debugger (2135+ lines) |
+| `Scripts/Campaign/` | ai-infra-architect (1cf53b9) | Autonomous debugger (2135+ lines) |

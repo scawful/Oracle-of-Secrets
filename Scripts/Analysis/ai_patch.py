@@ -12,10 +12,10 @@ Workflow:
 4. User reviews and optionally applies via z3ed
 
 Usage:
-    ./Scripts/ai_patch.py analyze --context "L/R swap not working"
-    ./Scripts/ai_patch.py suggest --file equipment.asm --issue "toggle logic"
-    ./Scripts/ai_patch.py apply --patch patches/lr_fix.asm
-    ./Scripts/ai_patch.py interactive  # Interactive mode
+    ./Scripts/Analysis/ai_patch.py analyze --context "L/R swap not working"
+    ./Scripts/Analysis/ai_patch.py suggest --file equipment.asm --issue "toggle logic"
+    ./Scripts/Analysis/ai_patch.py apply --patch patches/lr_fix.asm
+    ./Scripts/Analysis/ai_patch.py interactive  # Interactive mode
 """
 
 import argparse

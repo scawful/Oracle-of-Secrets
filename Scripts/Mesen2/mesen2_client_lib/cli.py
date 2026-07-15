@@ -1446,7 +1446,7 @@ def main():
             print(f"Health: {'OK' if info.get('ok') else 'FAIL'} (Latency: {info.get('latency_ms')}ms)")
             if not rom_loaded:
                 print("ROM: not loaded (load screen)")
-                print("Hint: python3 Scripts/mesen2_client.py rom-load <path-to-rom>")
+                print("Hint: python3 Scripts/Mesen2/mesen2_client.py rom-load <path-to-rom>")
             else:
                 print(f"ROM: {rom_info.get('filename')} (crc32={rom_info.get('crc32')})")
                 print(f"Emulator: {'Paused' if run_state.get('paused') else 'Running'} (Frame: {run_state.get('frame')})")
@@ -1479,7 +1479,7 @@ def main():
                 print(f"Error: {info.get('error')}")
             if not rom_loaded:
                 print("ROM: not loaded (load screen)")
-                print("Hint: python3 Scripts/mesen2_client.py rom-load <path-to-rom>")
+                print("Hint: python3 Scripts/Mesen2/mesen2_client.py rom-load <path-to-rom>")
             else:
                 print(f"ROM: {rom_info.get('filename')} (crc32={rom_info.get('crc32')})")
         if not info.get("ok"):

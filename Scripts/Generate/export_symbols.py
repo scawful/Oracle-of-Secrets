@@ -9,10 +9,10 @@ Formats:
   MLB Output: "SnesPrgRom:2C86BA:label_name" or "PRG:86BA:label_name"
 
 Usage:
-    ./Scripts/export_symbols.py                    # Export current build
-    ./Scripts/export_symbols.py --sync             # Export and sync to Mesen2
-    ./Scripts/export_symbols.py --filter oracle    # Only Oracle_ prefixed labels
-    ./Scripts/export_symbols.py --format full      # Full SnesPrgRom: format
+    ./Scripts/Generate/export_symbols.py                    # Export current build
+    ./Scripts/Generate/export_symbols.py --sync             # Export and sync to Mesen2
+    ./Scripts/Generate/export_symbols.py --filter oracle    # Only Oracle_ prefixed labels
+    ./Scripts/Generate/export_symbols.py --format full      # Full SnesPrgRom: format
 """
 
 import argparse

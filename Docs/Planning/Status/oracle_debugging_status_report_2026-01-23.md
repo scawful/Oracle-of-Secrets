@@ -20,6 +20,6 @@ Date: 2026-01-23
 - No automated import pipeline found; remaining sheets (spritesets/overworld gfx & spr/custom sprites/sheet8) appear staged for future tooling/docs updates.
 
 ## Open Work
-- WaterGate persistence verification still pending (Room 0x27/0x25, re-entry + save/reload) using scripts/mesen_water_debug.lua; no results logged (scratchpad test_results.md does not exist yet).
+- WaterGate persistence verification still pending (Room 0x27/0x25, re-entry + save/reload) using Scripts/Lua/mesen_water_debug.lua; no results logged (scratchpad test_results.md does not exist yet).
 - Populate .mss state library referenced by Docs/Debugging/Testing/save_state_library.json and run Tests/*.json via updated test runner/gateway.
 - Cross-emulator verification (Mesen2 vs yaze) and follow-up on menu GFX regressions listed in Docs/Debugging/Testing/oos168x_test_status.md.

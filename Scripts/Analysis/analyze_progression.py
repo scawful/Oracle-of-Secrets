@@ -10,7 +10,7 @@ a progression analysis report showing:
 - Progression flow graph
 
 Usage:
-    python3 Scripts/analyze_progression.py [--format=text|md|json]
+    python3 Scripts/Analysis/analyze_progression.py [--format=text|md|json]
 """
 
 import json

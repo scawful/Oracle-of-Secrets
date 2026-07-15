@@ -97,7 +97,7 @@ python3 ../z3dk/scripts/oracle_analyzer_ci_delta.py \
   --current-rom  Roms/oos168x.sfc \
   --hooks hooks.json \
   --severity error \
-  --exclude-file scripts/oracle_analyzer_delta_excludes.txt
+  --exclude-file Scripts/Data/oracle_analyzer_delta_excludes.txt
 ```
 Notes:
 - This writes intermediate JSON under `/tmp` and does not create repo artifacts.
