@@ -35,7 +35,7 @@ Key Addresses:
 - $7E008A: Current area/screen ID
 
 Usage:
-    from scripts.campaign.collision_navigator import CollisionNavigator
+    from Scripts.Campaign.collision_navigator import CollisionNavigator
 
     nav = CollisionNavigator(bridge)
     result = nav.navigate_to(target_x, target_y)
@@ -1048,7 +1048,7 @@ class CollisionNavigator:
 def run_collision_test():
     """Run a collision navigation test against live Mesen2."""
     try:
-        from scripts.mesen2_client_lib.bridge import MesenBridge
+        from Scripts.Mesen2.mesen2_client_lib.bridge import MesenBridge
     except ImportError:
         print("ERROR: Could not import MesenBridge")
         return None

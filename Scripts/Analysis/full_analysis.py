@@ -7,10 +7,10 @@ optionally dynamic analysis (P register watch, memory blame) for comprehensive
 ROM debugging.
 
 Usage:
-    python3 full_analysis.py Roms/oos168x.sfc --hooks hooks.json
-    python3 full_analysis.py Roms/oos168x.sfc --static-only
-    python3 full_analysis.py Roms/oos168x.sfc --dynamic-only --frames 600
-    python3 full_analysis.py Roms/oos168x.sfc --call-graph call_graph.dot
+    python3 Scripts/Analysis/full_analysis.py Roms/oos168x.sfc --hooks hooks.json
+    python3 Scripts/Analysis/full_analysis.py Roms/oos168x.sfc --static-only
+    python3 Scripts/Analysis/full_analysis.py Roms/oos168x.sfc --dynamic-only --frames 600
+    python3 Scripts/Analysis/full_analysis.py Roms/oos168x.sfc --call-graph call_graph.dot
 """
 
 from __future__ import annotations
@@ -24,12 +24,14 @@ from typing import Optional, Dict, Any
 
 # Add paths for imports
 SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parents[1]
+DEBUG_SCRIPTS = REPO_ROOT / "Scripts" / "Debug"
+MESEN2_SCRIPTS = REPO_ROOT / "Scripts" / "Mesen2"
 Z3DK_SCRIPTS = Path.home() / "src" / "hobby" / "z3dk" / "scripts"
 
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
-if str(Z3DK_SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(Z3DK_SCRIPTS))
+for import_path in (SCRIPT_DIR, DEBUG_SCRIPTS, MESEN2_SCRIPTS, Z3DK_SCRIPTS):
+    if str(import_path) not in sys.path:
+        sys.path.insert(0, str(import_path))
 
 
 def run_static_analysis(rom_path: Path, hooks_path: Optional[Path],

@@ -24,15 +24,15 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignPhase, MilestoneStatus, CampaignMilestone,
     CampaignProgress, CampaignOrchestrator, create_campaign, quick_status
 )
-from scripts.campaign.emulator_abstraction import (
+from Scripts.Campaign.emulator_abstraction import (
     EmulatorInterface, GameStateSnapshot, EmulatorStatus, MemoryRead
 )
-from scripts.campaign.game_state import GamePhase, ParsedGameState
-from scripts.campaign.action_planner import PlanStatus, GoalType
+from Scripts.Campaign.game_state import GamePhase, ParsedGameState
+from Scripts.Campaign.action_planner import PlanStatus, GoalType
 
 
 # =============================================================================
@@ -791,26 +791,26 @@ class TestCreateCampaignFunction:
 
     def test_create_campaign_returns_orchestrator(self):
         """Test create_campaign returns CampaignOrchestrator."""
-        with patch('scripts.campaign.campaign_orchestrator.Mesen2Emulator'):
+        with patch('Scripts.Campaign.campaign_orchestrator.Mesen2Emulator'):
             orch = create_campaign()
             assert isinstance(orch, CampaignOrchestrator)
 
     def test_create_campaign_default_log_dir(self):
         """Test create_campaign uses default log directory."""
-        with patch('scripts.campaign.campaign_orchestrator.Mesen2Emulator'):
+        with patch('Scripts.Campaign.campaign_orchestrator.Mesen2Emulator'):
             orch = create_campaign()
             assert orch._log_dir == (Path(tempfile.gettempdir()) / "oos_campaign" / "logs")
 
     def test_create_campaign_custom_log_dir(self):
         """Test create_campaign accepts custom log directory."""
-        with patch('scripts.campaign.campaign_orchestrator.Mesen2Emulator'):
+        with patch('Scripts.Campaign.campaign_orchestrator.Mesen2Emulator'):
             custom_path = Path("/tmp/custom_logs")
             orch = create_campaign(log_dir=custom_path)
             assert orch._log_dir == custom_path
 
     def test_create_campaign_initializes_progress(self):
         """Test create_campaign initializes progress."""
-        with patch('scripts.campaign.campaign_orchestrator.Mesen2Emulator'):
+        with patch('Scripts.Campaign.campaign_orchestrator.Mesen2Emulator'):
             orch = create_campaign()
             assert orch._progress is not None
             assert isinstance(orch._progress, CampaignProgress)
@@ -825,7 +825,7 @@ class TestEdgeCases:
 
     def test_orchestrator_with_none_emulator(self):
         """Test orchestrator handles None emulator internally."""
-        with patch('scripts.campaign.campaign_orchestrator.Mesen2Emulator') as mock:
+        with patch('Scripts.Campaign.campaign_orchestrator.Mesen2Emulator') as mock:
             mock.return_value = Mock()
             orch = CampaignOrchestrator(emulator=None)
             # Should create Mesen2Emulator internally

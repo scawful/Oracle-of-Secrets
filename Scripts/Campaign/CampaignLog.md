@@ -1,7 +1,7 @@
 # Oracle of Secrets Campaign Log
 
 This file is a lightweight, human-authored log for the autonomous campaign
-tooling in `Scripts/campaign/`.
+tooling in `Scripts/Campaign/`.
 
 If you need detailed run artifacts (reports, traces, screenshots, savestates),
 write them to `/tmp` (or another scratch location) and avoid committing them.

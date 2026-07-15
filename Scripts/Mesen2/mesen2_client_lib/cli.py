@@ -1,5 +1,7 @@
 """CLI entrypoint for the Oracle Mesen2 debug client."""
 
+from __future__ import annotations
+
 import argparse
 import hashlib
 import json
@@ -25,9 +27,13 @@ from .save_data_profiles import (
 )
 from .save_data_transaction import apply_profile_transaction
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 # Try to import AgentBrain (might fail if run directly from lib)
 try:
-    from agent.brain import AgentBrain
+    from Scripts.Agent.brain import AgentBrain
 except ImportError:
     AgentBrain = None
 

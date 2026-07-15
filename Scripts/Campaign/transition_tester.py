@@ -355,7 +355,7 @@ class TransitionTester:
 def run_live_test():
     """Run transition tests against live Mesen2 instance."""
     try:
-        from scripts.mesen2_client_lib.bridge import MesenBridge
+        from Scripts.Mesen2.mesen2_client_lib.bridge import MesenBridge
     except ImportError:
         print("ERROR: Could not import MesenBridge. Are the oracle-of-secrets scripts available?")
         return None

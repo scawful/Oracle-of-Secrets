@@ -9,7 +9,7 @@ Campaign Goals Supported:
 - E.3: Progress flag tracking
 
 Usage:
-    from scripts.campaign.progress_validator import ProgressValidator
+    from Scripts.Campaign.progress_validator import ProgressValidator
 
     validator = ProgressValidator(emulator)
     report = validator.validate_progression()

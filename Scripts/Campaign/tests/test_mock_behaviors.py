@@ -11,28 +11,28 @@ import time
 from unittest.mock import MagicMock, Mock, patch, call, PropertyMock
 from typing import List, Optional
 
-from scripts.campaign.emulator_abstraction import (
+from Scripts.Campaign.emulator_abstraction import (
     EmulatorStatus,
     MemoryRead,
     GameStateSnapshot,
     EmulatorInterface,
 )
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.input_recorder import (
     Button,
     InputFrame,
     InputSequence,
 )
-from scripts.campaign.game_state import (
+from Scripts.Campaign.game_state import (
     GamePhase,
     LinkAction,
     GameStateParser,
 )
-from scripts.campaign.pathfinder import (
+from Scripts.Campaign.pathfinder import (
     TileType,
     CollisionMap,
     Pathfinder,
 )
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignPhase,
     MilestoneStatus,
     CampaignMilestone,

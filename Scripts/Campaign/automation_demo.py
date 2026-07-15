@@ -12,7 +12,7 @@ Campaign Goal A Evidence:
 - Verifies position changed
 
 Usage:
-    python3 Scripts/campaign/automation_demo.py
+    python3 Scripts/Campaign/automation_demo.py
 
 Requirements:
     - Mesen2 running with socket enabled
@@ -28,9 +28,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from scripts.campaign.emulator_abstraction import get_emulator, Mesen2Emulator
-from scripts.campaign.game_state import parse_state, GamePhase
-from scripts.campaign.input_recorder import create_walk_sequence, Button
+from Scripts.Campaign.emulator_abstraction import get_emulator, Mesen2Emulator
+from Scripts.Campaign.game_state import parse_state, GamePhase
+from Scripts.Campaign.input_recorder import create_walk_sequence, Button
 
 
 def print_header(msg: str):
@@ -126,7 +126,7 @@ def demo_boot_sequence(emu: Mesen2Emulator) -> bool:
     """
     print_header("Demo: Boot Sequence")
 
-    from scripts.campaign.input_recorder import create_boot_sequence, InputPlayer
+    from Scripts.Campaign.input_recorder import create_boot_sequence, InputPlayer
 
     # Get boot sequence
     boot_seq = create_boot_sequence()

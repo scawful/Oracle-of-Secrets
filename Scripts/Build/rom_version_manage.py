@@ -11,13 +11,13 @@ Manages a dense local ROM library in Roms/ (never committed). Supports:
 Run from repo root. Roms/ and Roms/versions.json are gitignored.
 
 Usage:
-  python3 Scripts/rom_version_manage.py list
-  python3 Scripts/rom_version_manage.py tag Roms/oos167x.sfc --label "Pre refactor" --pass
-  python3 Scripts/rom_version_manage.py select oos167x
-  python3 Scripts/rom_version_manage.py select --pass
-  python3 Scripts/rom_version_manage.py diff oos168x.sfc oos167x.sfc
-  python3 Scripts/rom_version_manage.py run-test oos167x.sfc -- python3 Scripts/bisect_softlock.py
-  python3 Scripts/rom_version_manage.py run-test --pass -- run_regression_tests.sh regression
+  python3 Scripts/Build/rom_version_manage.py list
+  python3 Scripts/Build/rom_version_manage.py tag Roms/oos167x.sfc --label "Pre refactor" --pass
+  python3 Scripts/Build/rom_version_manage.py select oos167x
+  python3 Scripts/Build/rom_version_manage.py select --pass
+  python3 Scripts/Build/rom_version_manage.py diff oos168x.sfc oos167x.sfc
+  python3 Scripts/Build/rom_version_manage.py run-test oos167x.sfc -- python3 Scripts/Debug/bisect_softlock.py
+  python3 Scripts/Build/rom_version_manage.py run-test --pass -- Scripts/Validate/run_regression_tests.sh regression
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent
+REPO_ROOT = SCRIPT_DIR.parents[1]
 ROMS_DIR = REPO_ROOT / "Roms"
 VERSIONS_JSON = ROMS_DIR / "versions.json"
 

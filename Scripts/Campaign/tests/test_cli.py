@@ -26,7 +26,7 @@ class TestCLIImport:
 
     def test_import_main_module(self):
         """Test __main__ module imports successfully."""
-        from scripts.campaign import __main__
+        from Scripts.Campaign import __main__
         assert hasattr(__main__, 'main')
         assert hasattr(__main__, 'cmd_status')
         assert hasattr(__main__, 'cmd_test')
@@ -41,7 +41,7 @@ class TestCommandsCommand:
 
     def test_cmd_commands_runs(self):
         """Test commands command executes without error."""
-        from scripts.campaign.__main__ import cmd_commands
+        from Scripts.Campaign.__main__ import cmd_commands
 
         args = Mock()
         args.json = False
@@ -52,7 +52,7 @@ class TestCommandsCommand:
 
     def test_commands_output_format(self, capsys):
         """Test commands output has expected sections."""
-        from scripts.campaign.__main__ import cmd_commands
+        from Scripts.Campaign.__main__ import cmd_commands
 
         args = Mock()
         args.json = False
@@ -69,7 +69,7 @@ class TestCommandsCommand:
 
     def test_commands_with_examples(self, capsys):
         """Test commands output includes examples when requested."""
-        from scripts.campaign.__main__ import cmd_commands
+        from Scripts.Campaign.__main__ import cmd_commands
 
         args = Mock()
         args.json = False
@@ -79,12 +79,12 @@ class TestCommandsCommand:
 
         captured = capsys.readouterr()
         assert 'EXAMPLES:' in captured.out
-        assert 'python -m scripts.campaign' in captured.out
+        assert 'python -m Scripts.Campaign' in captured.out
 
     def test_commands_json_output(self, capsys):
         """Test commands JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_commands
+        from Scripts.Campaign.__main__ import cmd_commands
 
         args = Mock()
         args.json = True
@@ -99,10 +99,10 @@ class TestCommandsCommand:
 
     def test_commands_arg_parsing(self):
         """Test commands argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'commands']):
-            with patch('scripts.campaign.__main__.cmd_commands') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_commands') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -113,7 +113,7 @@ class TestCommandsCommand:
     def test_commands_command_executable(self):
         """Test commands command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'commands'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'commands'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -128,7 +128,7 @@ class TestMilestoneCommand:
 
     def test_cmd_milestone_runs(self):
         """Test milestone command executes without error."""
-        from scripts.campaign.__main__ import cmd_milestone
+        from Scripts.Campaign.__main__ import cmd_milestone
 
         args = Mock()
         args.json = False
@@ -138,7 +138,7 @@ class TestMilestoneCommand:
 
     def test_milestone_output_format(self, capsys):
         """Test milestone output has expected sections."""
-        from scripts.campaign.__main__ import cmd_milestone
+        from Scripts.Campaign.__main__ import cmd_milestone
 
         args = Mock()
         args.json = False
@@ -152,7 +152,7 @@ class TestMilestoneCommand:
     def test_milestone_json_output(self, capsys):
         """Test milestone JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_milestone
+        from Scripts.Campaign.__main__ import cmd_milestone
 
         args = Mock()
         args.json = True
@@ -170,7 +170,7 @@ class TestMilestoneCommand:
     def test_milestone_json_structure(self, capsys):
         """Test milestone JSON has correct values."""
         import json
-        from scripts.campaign.__main__ import cmd_milestone
+        from Scripts.Campaign.__main__ import cmd_milestone
 
         args = Mock()
         args.json = True
@@ -186,10 +186,10 @@ class TestMilestoneCommand:
 
     def test_milestone_arg_parsing(self):
         """Test milestone argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'milestone']):
-            with patch('scripts.campaign.__main__.cmd_milestone') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_milestone') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -199,7 +199,7 @@ class TestMilestoneCommand:
     def test_milestone_command_executable(self):
         """Test milestone command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'milestone'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'milestone'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -215,7 +215,7 @@ class TestVersionCommand:
 
     def test_cmd_version_runs(self):
         """Test version command executes without error."""
-        from scripts.campaign.__main__ import cmd_version
+        from Scripts.Campaign.__main__ import cmd_version
 
         args = Mock()
         args.json = False
@@ -225,7 +225,7 @@ class TestVersionCommand:
 
     def test_version_output_format(self, capsys):
         """Test version output has expected info."""
-        from scripts.campaign.__main__ import cmd_version
+        from Scripts.Campaign.__main__ import cmd_version
 
         args = Mock()
         args.json = False
@@ -241,7 +241,7 @@ class TestVersionCommand:
     def test_version_json_output(self, capsys):
         """Test version JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_version
+        from Scripts.Campaign.__main__ import cmd_version
 
         args = Mock()
         args.json = True
@@ -258,10 +258,10 @@ class TestVersionCommand:
 
     def test_version_arg_parsing(self):
         """Test version argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'version']):
-            with patch('scripts.campaign.__main__.cmd_version') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_version') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -271,7 +271,7 @@ class TestVersionCommand:
     def test_version_command_executable(self):
         """Test version command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'version'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'version'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -286,7 +286,7 @@ class TestQuickstartCommand:
 
     def test_cmd_quickstart_runs(self):
         """Test quickstart command executes without error."""
-        from scripts.campaign.__main__ import cmd_quickstart
+        from Scripts.Campaign.__main__ import cmd_quickstart
 
         args = Mock()
 
@@ -295,7 +295,7 @@ class TestQuickstartCommand:
 
     def test_quickstart_output_format(self, capsys):
         """Test quickstart output has expected sections."""
-        from scripts.campaign.__main__ import cmd_quickstart
+        from Scripts.Campaign.__main__ import cmd_quickstart
 
         args = Mock()
 
@@ -311,10 +311,10 @@ class TestQuickstartCommand:
 
     def test_quickstart_arg_parsing(self):
         """Test quickstart argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'quickstart']):
-            with patch('scripts.campaign.__main__.cmd_quickstart') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_quickstart') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -323,7 +323,7 @@ class TestQuickstartCommand:
     def test_quickstart_command_executable(self):
         """Test quickstart command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'quickstart'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'quickstart'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -338,7 +338,7 @@ class TestAgentsCommand:
 
     def test_cmd_agents_runs(self):
         """Test agents command executes without error."""
-        from scripts.campaign.__main__ import cmd_agents
+        from Scripts.Campaign.__main__ import cmd_agents
 
         args = Mock()
         args.json = False
@@ -348,7 +348,7 @@ class TestAgentsCommand:
 
     def test_agents_output_format(self, capsys):
         """Test agents output has expected sections."""
-        from scripts.campaign.__main__ import cmd_agents
+        from Scripts.Campaign.__main__ import cmd_agents
 
         args = Mock()
         args.json = False
@@ -364,7 +364,7 @@ class TestAgentsCommand:
     def test_agents_json_output(self, capsys):
         """Test agents JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_agents
+        from Scripts.Campaign.__main__ import cmd_agents
 
         args = Mock()
         args.json = True
@@ -380,10 +380,10 @@ class TestAgentsCommand:
 
     def test_agents_arg_parsing(self):
         """Test agents argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'agents']):
-            with patch('scripts.campaign.__main__.cmd_agents') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_agents') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -392,7 +392,7 @@ class TestAgentsCommand:
     def test_agents_command_executable(self):
         """Test agents command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'agents'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'agents'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -407,7 +407,7 @@ class TestConfigCommand:
 
     def test_cmd_config_runs(self):
         """Test config command executes without error."""
-        from scripts.campaign.__main__ import cmd_config
+        from Scripts.Campaign.__main__ import cmd_config
 
         args = Mock()
         args.json = False
@@ -417,7 +417,7 @@ class TestConfigCommand:
 
     def test_config_output_format(self, capsys):
         """Test config output has expected sections."""
-        from scripts.campaign.__main__ import cmd_config
+        from Scripts.Campaign.__main__ import cmd_config
 
         args = Mock()
         args.json = False
@@ -433,7 +433,7 @@ class TestConfigCommand:
     def test_config_json_output(self, capsys):
         """Test config JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_config
+        from Scripts.Campaign.__main__ import cmd_config
 
         args = Mock()
         args.json = True
@@ -449,10 +449,10 @@ class TestConfigCommand:
 
     def test_config_arg_parsing(self):
         """Test config argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'config']):
-            with patch('scripts.campaign.__main__.cmd_config') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_config') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -461,7 +461,7 @@ class TestConfigCommand:
     def test_config_command_executable(self):
         """Test config command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'config'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'config'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -476,7 +476,7 @@ class TestHealthCommand:
 
     def test_cmd_health_runs(self):
         """Test health command executes without error."""
-        from scripts.campaign.__main__ import cmd_health
+        from Scripts.Campaign.__main__ import cmd_health
 
         args = Mock()
         args.json = False
@@ -486,7 +486,7 @@ class TestHealthCommand:
 
     def test_health_output_format(self, capsys):
         """Test health output has expected sections."""
-        from scripts.campaign.__main__ import cmd_health
+        from Scripts.Campaign.__main__ import cmd_health
 
         args = Mock()
         args.json = False
@@ -501,7 +501,7 @@ class TestHealthCommand:
     def test_health_json_output(self, capsys):
         """Test health JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_health
+        from Scripts.Campaign.__main__ import cmd_health
 
         args = Mock()
         args.json = True
@@ -516,10 +516,10 @@ class TestHealthCommand:
 
     def test_health_arg_parsing(self):
         """Test health argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'health']):
-            with patch('scripts.campaign.__main__.cmd_health') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_health') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -528,7 +528,7 @@ class TestHealthCommand:
     def test_health_command_executable(self):
         """Test health command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'health'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'health'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -543,7 +543,7 @@ class TestChangelogCommand:
 
     def test_cmd_changelog_runs(self):
         """Test changelog command executes without error."""
-        from scripts.campaign.__main__ import cmd_changelog
+        from Scripts.Campaign.__main__ import cmd_changelog
 
         args = Mock()
         args.json = False
@@ -554,7 +554,7 @@ class TestChangelogCommand:
 
     def test_changelog_output_format(self, capsys):
         """Test changelog output has expected sections."""
-        from scripts.campaign.__main__ import cmd_changelog
+        from Scripts.Campaign.__main__ import cmd_changelog
 
         args = Mock()
         args.json = False
@@ -570,7 +570,7 @@ class TestChangelogCommand:
     def test_changelog_json_output(self, capsys):
         """Test changelog JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_changelog
+        from Scripts.Campaign.__main__ import cmd_changelog
 
         args = Mock()
         args.json = True
@@ -586,7 +586,7 @@ class TestChangelogCommand:
 
     def test_changelog_limit(self, capsys):
         """Test changelog limit parameter."""
-        from scripts.campaign.__main__ import cmd_changelog
+        from Scripts.Campaign.__main__ import cmd_changelog
 
         args = Mock()
         args.json = False
@@ -600,7 +600,7 @@ class TestChangelogCommand:
     def test_changelog_command_executable(self):
         """Test changelog command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'changelog'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'changelog'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -615,7 +615,7 @@ class TestAboutCommand:
 
     def test_cmd_about_runs(self):
         """Test about command executes without error."""
-        from scripts.campaign.__main__ import cmd_about
+        from Scripts.Campaign.__main__ import cmd_about
 
         args = Mock()
         args.json = False
@@ -625,7 +625,7 @@ class TestAboutCommand:
 
     def test_about_output_format(self, capsys):
         """Test about output has expected sections."""
-        from scripts.campaign.__main__ import cmd_about
+        from Scripts.Campaign.__main__ import cmd_about
 
         args = Mock()
         args.json = False
@@ -640,7 +640,7 @@ class TestAboutCommand:
     def test_about_json_output(self, capsys):
         """Test about JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_about
+        from Scripts.Campaign.__main__ import cmd_about
 
         args = Mock()
         args.json = True
@@ -656,10 +656,10 @@ class TestAboutCommand:
 
     def test_about_arg_parsing(self):
         """Test about argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'about']):
-            with patch('scripts.campaign.__main__.cmd_about') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_about') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -668,7 +668,7 @@ class TestAboutCommand:
     def test_about_command_executable(self):
         """Test about command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'about'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'about'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -683,7 +683,7 @@ class TestCelebrateCommand:
 
     def test_cmd_celebrate_runs(self):
         """Test celebrate command executes without error."""
-        from scripts.campaign.__main__ import cmd_celebrate
+        from Scripts.Campaign.__main__ import cmd_celebrate
 
         args = Mock()
         args.json = False
@@ -693,7 +693,7 @@ class TestCelebrateCommand:
 
     def test_celebrate_output_format(self, capsys):
         """Test celebrate output has expected sections."""
-        from scripts.campaign.__main__ import cmd_celebrate
+        from Scripts.Campaign.__main__ import cmd_celebrate
 
         args = Mock()
         args.json = False
@@ -707,7 +707,7 @@ class TestCelebrateCommand:
     def test_celebrate_json_output(self, capsys):
         """Test celebrate JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_celebrate
+        from Scripts.Campaign.__main__ import cmd_celebrate
 
         args = Mock()
         args.json = True
@@ -722,10 +722,10 @@ class TestCelebrateCommand:
 
     def test_celebrate_arg_parsing(self):
         """Test celebrate argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'celebrate']):
-            with patch('scripts.campaign.__main__.cmd_celebrate') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_celebrate') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -734,7 +734,7 @@ class TestCelebrateCommand:
     def test_celebrate_command_executable(self):
         """Test celebrate command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'celebrate'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'celebrate'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -750,7 +750,7 @@ class TestStatusCommand:
 
     def test_cmd_status_runs(self):
         """Test status command executes without error."""
-        from scripts.campaign.__main__ import cmd_status
+        from Scripts.Campaign.__main__ import cmd_status
 
         # Create mock args
         args = Mock()
@@ -760,7 +760,7 @@ class TestStatusCommand:
 
     def test_status_output_contains_modules(self, capsys):
         """Test status output mentions key modules."""
-        from scripts.campaign.__main__ import cmd_status
+        from Scripts.Campaign.__main__ import cmd_status
 
         args = Mock()
         cmd_status(args)
@@ -778,7 +778,7 @@ class TestCheckCommand:
 
     def test_cmd_check_no_sockets(self):
         """Test check command when no sockets exist."""
-        from scripts.campaign.__main__ import cmd_check
+        from Scripts.Campaign.__main__ import cmd_check
 
         args = Mock()
 
@@ -790,7 +790,7 @@ class TestCheckCommand:
 
     def test_cmd_check_with_stale_socket(self):
         """Test check command with stale socket."""
-        from scripts.campaign.__main__ import cmd_check
+        from Scripts.Campaign.__main__ import cmd_check
         import socket
 
         args = Mock()
@@ -812,7 +812,7 @@ class TestReportCommand:
 
     def test_cmd_report_runs(self, capsys):
         """Test report command executes without error."""
-        from scripts.campaign.__main__ import cmd_report
+        from Scripts.Campaign.__main__ import cmd_report
 
         args = Mock()
         cmd_report(args)
@@ -825,7 +825,7 @@ class TestReportCommand:
 
     def test_report_shows_agents(self, capsys):
         """Test report shows agent information."""
-        from scripts.campaign.__main__ import cmd_report
+        from Scripts.Campaign.__main__ import cmd_report
 
         args = Mock()
         cmd_report(args)
@@ -842,7 +842,7 @@ class TestMainFunction:
 
     def test_main_no_args_shows_help(self):
         """Test main with no arguments shows help."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign']):
             result = main()
@@ -852,7 +852,7 @@ class TestMainFunction:
 
     def test_main_status_command(self):
         """Test main with status command."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'status']):
             result = main()
@@ -862,7 +862,7 @@ class TestMainFunction:
 
     def test_main_report_command(self):
         """Test main with report command."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'report']):
             result = main()
@@ -876,14 +876,14 @@ class TestRunCommand:
 
     def test_cmd_run_connection_failure(self):
         """Test run command handles connection failure."""
-        from scripts.campaign.__main__ import cmd_run
+        from Scripts.Campaign.__main__ import cmd_run
 
         args = Mock()
         args.timeout = 0.1
         args.iterations = 1
 
-        # Patch where create_campaign is imported (scripts.campaign module)
-        with patch('scripts.campaign.create_campaign') as mock_create:
+        # Patch where create_campaign is imported (Scripts.Campaign module)
+        with patch('Scripts.Campaign.create_campaign') as mock_create:
             mock_orchestrator = Mock()
             mock_orchestrator.connect.return_value = False
             mock_create.return_value = mock_orchestrator
@@ -899,12 +899,12 @@ class TestTestCommand:
 
     def test_cmd_test_exists(self):
         """Test test command function exists."""
-        from scripts.campaign.__main__ import cmd_test
+        from Scripts.Campaign.__main__ import cmd_test
         assert cmd_test is not None
 
     def test_test_command_args(self):
         """Test test command accepts expected arguments."""
-        from scripts.campaign.__main__ import cmd_test
+        from Scripts.Campaign.__main__ import cmd_test
 
         args = Mock()
         args.quick = False
@@ -926,7 +926,7 @@ class TestArgumentParsing:
     def test_parser_has_subcommands(self):
         """Test parser has expected subcommands."""
         import argparse
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         # The main function creates the parser internally
         # We just verify it handles known commands
@@ -935,7 +935,7 @@ class TestArgumentParsing:
         for cmd in commands:
             with patch('sys.argv', ['campaign', cmd]):
                 # Mock the actual execution to avoid side effects
-                with patch(f'scripts.campaign.__main__.cmd_{cmd}') as mock_cmd:
+                with patch(f'Scripts.Campaign.__main__.cmd_{cmd}') as mock_cmd:
                     mock_cmd.return_value = 0
                     try:
                         main()
@@ -944,10 +944,10 @@ class TestArgumentParsing:
 
     def test_run_command_has_iterations_arg(self):
         """Test run command accepts --iterations."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'run', '--iterations', '5']):
-            with patch('scripts.campaign.__main__.cmd_run') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_run') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -957,10 +957,10 @@ class TestArgumentParsing:
 
     def test_run_command_has_timeout_arg(self):
         """Test run command accepts --timeout."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'run', '--timeout', '10.0']):
-            with patch('scripts.campaign.__main__.cmd_run') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_run') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -970,10 +970,10 @@ class TestArgumentParsing:
 
     def test_test_command_has_quick_flag(self):
         """Test test command accepts --quick."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'test', '--quick']):
-            with patch('scripts.campaign.__main__.cmd_test') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_test') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -987,7 +987,7 @@ class TestModuleExecution:
     def test_module_executable(self):
         """Test module can be run with python -m."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'status'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'status'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -999,7 +999,7 @@ class TestModuleExecution:
     def test_module_help(self):
         """Test module shows help with -h."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', '-h'],
+            [sys.executable, '-m', 'Scripts.Campaign', '-h'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -1016,7 +1016,7 @@ class TestStatesCommand:
 
     def test_cmd_states_runs(self):
         """Test states command executes without error."""
-        from scripts.campaign.__main__ import cmd_states
+        from Scripts.Campaign.__main__ import cmd_states
 
         args = Mock()
         args.tag = None
@@ -1027,7 +1027,7 @@ class TestStatesCommand:
 
     def test_cmd_states_with_tag(self):
         """Test states command with tag filter."""
-        from scripts.campaign.__main__ import cmd_states
+        from Scripts.Campaign.__main__ import cmd_states
 
         args = Mock()
         args.tag = "dungeon"
@@ -1038,7 +1038,7 @@ class TestStatesCommand:
 
     def test_cmd_states_verbose(self):
         """Test states command with verbose flag."""
-        from scripts.campaign.__main__ import cmd_states
+        from Scripts.Campaign.__main__ import cmd_states
 
         args = Mock()
         args.tag = None
@@ -1049,10 +1049,10 @@ class TestStatesCommand:
 
     def test_states_command_arg_parsing(self):
         """Test states command argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'states', '--tag', 'overworld']):
-            with patch('scripts.campaign.__main__.cmd_states') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_states') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1061,7 +1061,7 @@ class TestStatesCommand:
 
     def test_states_output_contains_entries(self, capsys):
         """Test states command outputs entry information."""
-        from scripts.campaign.__main__ import cmd_states
+        from Scripts.Campaign.__main__ import cmd_states
 
         args = Mock()
         args.tag = None
@@ -1082,13 +1082,13 @@ class TestProgressCommand:
 
     def test_cmd_progress_requires_emulator(self):
         """Test progress command fails gracefully without emulator."""
-        from scripts.campaign.__main__ import cmd_progress
+        from Scripts.Campaign.__main__ import cmd_progress
 
         args = Mock()
         args.entry = None
 
         # Mock get_emulator at the module where it's imported from
-        with patch('scripts.campaign.get_emulator') as mock_get:
+        with patch('Scripts.Campaign.get_emulator') as mock_get:
             mock_emu = Mock()
             mock_emu.connect.return_value = False
             mock_get.return_value = mock_emu
@@ -1099,10 +1099,10 @@ class TestProgressCommand:
 
     def test_progress_command_arg_parsing(self):
         """Test progress command argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'progress', '--entry', 'baseline_1']):
-            with patch('scripts.campaign.__main__.cmd_progress') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_progress') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1112,10 +1112,10 @@ class TestProgressCommand:
     def test_progress_has_entry_flag(self):
         """Test progress command has --entry flag."""
         import argparse
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'progress', '-e', 'current_1']):
-            with patch('scripts.campaign.__main__.cmd_progress') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_progress') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1129,7 +1129,7 @@ class TestCLINewCommands:
     def test_help_lists_all_commands(self):
         """Test help shows all commands including new ones."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', '--help'],
+            [sys.executable, '-m', 'Scripts.Campaign', '--help'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -1145,7 +1145,7 @@ class TestCLINewCommands:
     def test_states_command_executable(self):
         """Test states command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'states'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'states'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -1161,7 +1161,7 @@ class TestCompareCommand:
 
     def test_cmd_compare_runs(self):
         """Test compare command executes with valid entries."""
-        from scripts.campaign.__main__ import cmd_compare
+        from Scripts.Campaign.__main__ import cmd_compare
 
         args = Mock()
         args.entry1 = "baseline_1"
@@ -1173,7 +1173,7 @@ class TestCompareCommand:
 
     def test_cmd_compare_detects_differences(self):
         """Test compare command detects differences."""
-        from scripts.campaign.__main__ import cmd_compare
+        from Scripts.Campaign.__main__ import cmd_compare
 
         args = Mock()
         args.entry1 = "baseline_1"  # overworld
@@ -1185,7 +1185,7 @@ class TestCompareCommand:
 
     def test_cmd_compare_invalid_entry(self, capsys):
         """Test compare command handles invalid entry."""
-        from scripts.campaign.__main__ import cmd_compare
+        from Scripts.Campaign.__main__ import cmd_compare
 
         args = Mock()
         args.entry1 = "nonexistent_entry"
@@ -1201,10 +1201,10 @@ class TestCompareCommand:
 
     def test_compare_command_arg_parsing(self):
         """Test compare command argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'compare', 'baseline_1', 'current_1']):
-            with patch('scripts.campaign.__main__.cmd_compare') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_compare') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1214,7 +1214,7 @@ class TestCompareCommand:
 
     def test_compare_output_format(self, capsys):
         """Test compare command output contains expected sections."""
-        from scripts.campaign.__main__ import cmd_compare
+        from Scripts.Campaign.__main__ import cmd_compare
 
         args = Mock()
         args.entry1 = "baseline_1"
@@ -1234,7 +1234,7 @@ class TestCompareCommand:
     def test_compare_command_executable(self):
         """Test compare command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'compare', 'baseline_1', 'current_1'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'compare', 'baseline_1', 'current_1'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -1249,7 +1249,7 @@ class TestRegressionCommand:
 
     def test_cmd_regression_runs(self):
         """Test regression command executes without error."""
-        from scripts.campaign.__main__ import cmd_regression
+        from Scripts.Campaign.__main__ import cmd_regression
 
         args = Mock()
         args.verbose = False
@@ -1264,7 +1264,7 @@ class TestRegressionCommand:
 
     def test_cmd_regression_verbose(self, capsys):
         """Test regression command with verbose flag."""
-        from scripts.campaign.__main__ import cmd_regression
+        from Scripts.Campaign.__main__ import cmd_regression
 
         args = Mock()
         args.verbose = True
@@ -1282,7 +1282,7 @@ class TestRegressionCommand:
 
     def test_cmd_regression_details(self, capsys):
         """Test regression command with details flag."""
-        from scripts.campaign.__main__ import cmd_regression
+        from Scripts.Campaign.__main__ import cmd_regression
 
         args = Mock()
         args.verbose = False
@@ -1298,7 +1298,7 @@ class TestRegressionCommand:
 
     def test_regression_finds_pairs(self, capsys):
         """Test regression command finds baseline/current pairs."""
-        from scripts.campaign.__main__ import cmd_regression
+        from Scripts.Campaign.__main__ import cmd_regression
 
         args = Mock()
         args.verbose = False
@@ -1316,7 +1316,7 @@ class TestRegressionCommand:
 
     def test_regression_output_format(self, capsys):
         """Test regression command output contains expected sections."""
-        from scripts.campaign.__main__ import cmd_regression
+        from Scripts.Campaign.__main__ import cmd_regression
 
         args = Mock()
         args.verbose = False
@@ -1336,10 +1336,10 @@ class TestRegressionCommand:
 
     def test_regression_command_arg_parsing(self):
         """Test regression command argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'regression', '--verbose']):
-            with patch('scripts.campaign.__main__.cmd_regression') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_regression') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1348,10 +1348,10 @@ class TestRegressionCommand:
 
     def test_regression_command_details_flag(self):
         """Test regression command with --details flag."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'regression', '-d']):
-            with patch('scripts.campaign.__main__.cmd_regression') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_regression') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1361,7 +1361,7 @@ class TestRegressionCommand:
     def test_regression_command_executable(self):
         """Test regression command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'regression'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'regression'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -1373,7 +1373,7 @@ class TestRegressionCommand:
 
     def test_regression_with_tag_filter(self, capsys):
         """Test regression command with --tag filter."""
-        from scripts.campaign.__main__ import cmd_regression
+        from Scripts.Campaign.__main__ import cmd_regression
 
         args = Mock()
         args.verbose = False
@@ -1391,7 +1391,7 @@ class TestRegressionCommand:
 
     def test_regression_with_pattern_filter(self, capsys):
         """Test regression command with --pattern filter."""
-        from scripts.campaign.__main__ import cmd_regression
+        from Scripts.Campaign.__main__ import cmd_regression
 
         args = Mock()
         args.verbose = False
@@ -1409,10 +1409,10 @@ class TestRegressionCommand:
 
     def test_regression_tag_filter_arg_parsing(self):
         """Test regression command --tag argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'regression', '--tag', 'dungeon']):
-            with patch('scripts.campaign.__main__.cmd_regression') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_regression') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1421,10 +1421,10 @@ class TestRegressionCommand:
 
     def test_regression_pattern_filter_arg_parsing(self):
         """Test regression command --pattern argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'regression', '-p', 'zora']):
-            with patch('scripts.campaign.__main__.cmd_regression') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_regression') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1433,7 +1433,7 @@ class TestRegressionCommand:
 
     def test_regression_no_matches_with_filter(self, capsys):
         """Test regression command with filter that matches nothing."""
-        from scripts.campaign.__main__ import cmd_regression
+        from Scripts.Campaign.__main__ import cmd_regression
 
         args = Mock()
         args.verbose = False
@@ -1451,10 +1451,10 @@ class TestRegressionCommand:
 
     def test_regression_combined_filters(self):
         """Test regression command with both --tag and --pattern."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'regression', '-t', 'dungeon', '-p', 'water']):
-            with patch('scripts.campaign.__main__.cmd_regression') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_regression') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1465,7 +1465,7 @@ class TestRegressionCommand:
     def test_regression_json_output(self, capsys):
         """Test regression command with --json output."""
         import json
-        from scripts.campaign.__main__ import cmd_regression
+        from Scripts.Campaign.__main__ import cmd_regression
 
         args = Mock()
         args.verbose = False
@@ -1488,7 +1488,7 @@ class TestRegressionCommand:
     def test_regression_json_with_filter(self, capsys):
         """Test regression JSON output includes filter info."""
         import json
-        from scripts.campaign.__main__ import cmd_regression
+        from Scripts.Campaign.__main__ import cmd_regression
 
         args = Mock()
         args.verbose = False
@@ -1506,7 +1506,7 @@ class TestRegressionCommand:
     def test_regression_json_result_structure(self, capsys):
         """Test regression JSON result entries have correct structure."""
         import json
-        from scripts.campaign.__main__ import cmd_regression
+        from Scripts.Campaign.__main__ import cmd_regression
 
         args = Mock()
         args.verbose = False
@@ -1530,10 +1530,10 @@ class TestRegressionCommand:
 
     def test_regression_json_arg_parsing(self):
         """Test regression command --json argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'regression', '--json']):
-            with patch('scripts.campaign.__main__.cmd_regression') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_regression') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1542,10 +1542,10 @@ class TestRegressionCommand:
 
     def test_regression_json_short_flag(self):
         """Test regression command -j short flag."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'regression', '-j']):
-            with patch('scripts.campaign.__main__.cmd_regression') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_regression') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1558,7 +1558,7 @@ class TestSummaryCommand:
 
     def test_cmd_summary_runs(self):
         """Test summary command executes without error."""
-        from scripts.campaign.__main__ import cmd_summary
+        from Scripts.Campaign.__main__ import cmd_summary
 
         args = Mock()
         args.json = False
@@ -1568,7 +1568,7 @@ class TestSummaryCommand:
 
     def test_summary_output_format(self, capsys):
         """Test summary command output contains expected sections."""
-        from scripts.campaign.__main__ import cmd_summary
+        from Scripts.Campaign.__main__ import cmd_summary
 
         args = Mock()
         args.json = False
@@ -1584,7 +1584,7 @@ class TestSummaryCommand:
     def test_summary_json_output(self, capsys):
         """Test summary command JSON output."""
         import json
-        from scripts.campaign.__main__ import cmd_summary
+        from Scripts.Campaign.__main__ import cmd_summary
 
         args = Mock()
         args.json = True
@@ -1601,7 +1601,7 @@ class TestSummaryCommand:
     def test_summary_json_iterations_structure(self, capsys):
         """Test summary JSON iterations has correct fields."""
         import json
-        from scripts.campaign.__main__ import cmd_summary
+        from Scripts.Campaign.__main__ import cmd_summary
 
         args = Mock()
         args.json = True
@@ -1618,7 +1618,7 @@ class TestSummaryCommand:
     def test_summary_json_save_states_structure(self, capsys):
         """Test summary JSON save_states has correct fields."""
         import json
-        from scripts.campaign.__main__ import cmd_summary
+        from Scripts.Campaign.__main__ import cmd_summary
 
         args = Mock()
         args.json = True
@@ -1634,10 +1634,10 @@ class TestSummaryCommand:
 
     def test_summary_arg_parsing(self):
         """Test summary command argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'summary']):
-            with patch('scripts.campaign.__main__.cmd_summary') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_summary') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1645,10 +1645,10 @@ class TestSummaryCommand:
 
     def test_summary_json_flag(self):
         """Test summary command --json flag."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'summary', '--json']):
-            with patch('scripts.campaign.__main__.cmd_summary') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_summary') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1658,7 +1658,7 @@ class TestSummaryCommand:
     def test_summary_command_executable(self):
         """Test summary command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'summary'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'summary'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -1673,7 +1673,7 @@ class TestWatchCommand:
 
     def test_cmd_watch_runs(self):
         """Test watch command executes without error (single iteration)."""
-        from scripts.campaign.__main__ import cmd_watch
+        from Scripts.Campaign.__main__ import cmd_watch
 
         args = Mock()
         args.interval = 1
@@ -1685,7 +1685,7 @@ class TestWatchCommand:
 
     def test_watch_output_format(self, capsys):
         """Test watch output has expected sections."""
-        from scripts.campaign.__main__ import cmd_watch
+        from Scripts.Campaign.__main__ import cmd_watch
 
         args = Mock()
         args.interval = 1
@@ -1703,7 +1703,7 @@ class TestWatchCommand:
 
     def test_watch_progress_bar(self, capsys):
         """Test watch shows progress bar."""
-        from scripts.campaign.__main__ import cmd_watch
+        from Scripts.Campaign.__main__ import cmd_watch
 
         args = Mock()
         args.interval = 1
@@ -1719,10 +1719,10 @@ class TestWatchCommand:
 
     def test_watch_arg_parsing(self):
         """Test watch argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'watch', '-c', '1', '--no-clear']):
-            with patch('scripts.campaign.__main__.cmd_watch') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_watch') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1733,10 +1733,10 @@ class TestWatchCommand:
 
     def test_watch_interval_flag(self):
         """Test watch --interval flag."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'watch', '-i', '10', '-c', '1']):
-            with patch('scripts.campaign.__main__.cmd_watch') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_watch') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1746,7 +1746,7 @@ class TestWatchCommand:
     def test_watch_command_executable(self):
         """Test watch command can be run (single iteration)."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'watch', '-c', '1', '--no-clear'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'watch', '-c', '1', '--no-clear'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -1761,7 +1761,7 @@ class TestHistoryCommand:
 
     def test_cmd_history_runs(self):
         """Test history command executes without error."""
-        from scripts.campaign.__main__ import cmd_history
+        from Scripts.Campaign.__main__ import cmd_history
 
         args = Mock()
         args.json = False
@@ -1772,7 +1772,7 @@ class TestHistoryCommand:
 
     def test_history_output_format(self, capsys):
         """Test history output has expected sections."""
-        from scripts.campaign.__main__ import cmd_history
+        from Scripts.Campaign.__main__ import cmd_history
 
         args = Mock()
         args.json = False
@@ -1789,7 +1789,7 @@ class TestHistoryCommand:
     def test_history_json_output(self, capsys):
         """Test history JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_history
+        from Scripts.Campaign.__main__ import cmd_history
 
         args = Mock()
         args.json = True
@@ -1807,7 +1807,7 @@ class TestHistoryCommand:
     def test_history_json_structure(self, capsys):
         """Test history JSON has correct agent breakdown."""
         import json
-        from scripts.campaign.__main__ import cmd_history
+        from Scripts.Campaign.__main__ import cmd_history
 
         args = Mock()
         args.json = True
@@ -1823,10 +1823,10 @@ class TestHistoryCommand:
 
     def test_history_arg_parsing(self):
         """Test history argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'history']):
-            with patch('scripts.campaign.__main__.cmd_history') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_history') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1836,10 +1836,10 @@ class TestHistoryCommand:
 
     def test_history_limit_flag(self):
         """Test history --limit flag."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'history', '-l', '5']):
-            with patch('scripts.campaign.__main__.cmd_history') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_history') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1849,7 +1849,7 @@ class TestHistoryCommand:
     def test_history_command_executable(self):
         """Test history command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'history'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'history'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -1864,7 +1864,7 @@ class TestGoalsCommand:
 
     def test_cmd_goals_runs(self):
         """Test goals command executes without error."""
-        from scripts.campaign.__main__ import cmd_goals
+        from Scripts.Campaign.__main__ import cmd_goals
 
         args = Mock()
         args.json = False
@@ -1875,7 +1875,7 @@ class TestGoalsCommand:
 
     def test_goals_output_format(self, capsys):
         """Test goals output has expected sections."""
-        from scripts.campaign.__main__ import cmd_goals
+        from Scripts.Campaign.__main__ import cmd_goals
 
         args = Mock()
         args.json = False
@@ -1894,7 +1894,7 @@ class TestGoalsCommand:
 
     def test_goals_verbose_output(self, capsys):
         """Test goals verbose shows milestones."""
-        from scripts.campaign.__main__ import cmd_goals
+        from Scripts.Campaign.__main__ import cmd_goals
 
         args = Mock()
         args.json = False
@@ -1909,7 +1909,7 @@ class TestGoalsCommand:
     def test_goals_json_output(self, capsys):
         """Test goals JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_goals
+        from Scripts.Campaign.__main__ import cmd_goals
 
         args = Mock()
         args.json = True
@@ -1926,7 +1926,7 @@ class TestGoalsCommand:
     def test_goals_json_structure(self, capsys):
         """Test goals JSON has correct structure."""
         import json
-        from scripts.campaign.__main__ import cmd_goals
+        from Scripts.Campaign.__main__ import cmd_goals
 
         args = Mock()
         args.json = True
@@ -1946,10 +1946,10 @@ class TestGoalsCommand:
 
     def test_goals_arg_parsing(self):
         """Test goals argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'goals']):
-            with patch('scripts.campaign.__main__.cmd_goals') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_goals') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1959,10 +1959,10 @@ class TestGoalsCommand:
 
     def test_goals_verbose_flag(self):
         """Test goals --verbose flag."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'goals', '-v']):
-            with patch('scripts.campaign.__main__.cmd_goals') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_goals') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -1972,7 +1972,7 @@ class TestGoalsCommand:
     def test_goals_command_executable(self):
         """Test goals command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'goals'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'goals'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -1987,7 +1987,7 @@ class TestDashboardCommand:
 
     def test_cmd_dashboard_runs(self):
         """Test dashboard command executes without error."""
-        from scripts.campaign.__main__ import cmd_dashboard
+        from Scripts.Campaign.__main__ import cmd_dashboard
 
         args = Mock()
         args.json = False
@@ -1997,7 +1997,7 @@ class TestDashboardCommand:
 
     def test_dashboard_output_format(self, capsys):
         """Test dashboard output has expected sections."""
-        from scripts.campaign.__main__ import cmd_dashboard
+        from Scripts.Campaign.__main__ import cmd_dashboard
 
         args = Mock()
         args.json = False
@@ -2014,7 +2014,7 @@ class TestDashboardCommand:
     def test_dashboard_json_output(self, capsys):
         """Test dashboard JSON output is valid."""
         import json
-        from scripts.campaign.__main__ import cmd_dashboard
+        from Scripts.Campaign.__main__ import cmd_dashboard
 
         args = Mock()
         args.json = True
@@ -2032,7 +2032,7 @@ class TestDashboardCommand:
     def test_dashboard_json_structure(self, capsys):
         """Test dashboard JSON has correct structure."""
         import json
-        from scripts.campaign.__main__ import cmd_dashboard
+        from Scripts.Campaign.__main__ import cmd_dashboard
 
         args = Mock()
         args.json = True
@@ -2049,10 +2049,10 @@ class TestDashboardCommand:
 
     def test_dashboard_arg_parsing(self):
         """Test dashboard argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'dashboard']):
-            with patch('scripts.campaign.__main__.cmd_dashboard') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_dashboard') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -2062,7 +2062,7 @@ class TestDashboardCommand:
     def test_dashboard_command_executable(self):
         """Test dashboard command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'dashboard'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'dashboard'],
             capture_output=True,
             text=True,
             cwd=str(project_root)
@@ -2077,7 +2077,7 @@ class TestValidateCommand:
 
     def test_cmd_validate_runs(self):
         """Test validate command executes without error."""
-        from scripts.campaign.__main__ import cmd_validate
+        from Scripts.Campaign.__main__ import cmd_validate
 
         args = Mock()
         args.json = False
@@ -2088,7 +2088,7 @@ class TestValidateCommand:
 
     def test_validate_output_format(self, capsys):
         """Test validate command output contains expected sections."""
-        from scripts.campaign.__main__ import cmd_validate
+        from Scripts.Campaign.__main__ import cmd_validate
 
         args = Mock()
         args.json = False
@@ -2102,7 +2102,7 @@ class TestValidateCommand:
     def test_validate_json_output(self, capsys):
         """Test validate command JSON output."""
         import json
-        from scripts.campaign.__main__ import cmd_validate
+        from Scripts.Campaign.__main__ import cmd_validate
 
         args = Mock()
         args.json = True
@@ -2119,7 +2119,7 @@ class TestValidateCommand:
     def test_validate_json_structure(self, capsys):
         """Test validate JSON has correct types."""
         import json
-        from scripts.campaign.__main__ import cmd_validate
+        from Scripts.Campaign.__main__ import cmd_validate
 
         args = Mock()
         args.json = True
@@ -2135,10 +2135,10 @@ class TestValidateCommand:
 
     def test_validate_arg_parsing(self):
         """Test validate command argument parsing."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'validate']):
-            with patch('scripts.campaign.__main__.cmd_validate') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_validate') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -2146,10 +2146,10 @@ class TestValidateCommand:
 
     def test_validate_json_flag(self):
         """Test validate command --json flag."""
-        from scripts.campaign.__main__ import main
+        from Scripts.Campaign.__main__ import main
 
         with patch('sys.argv', ['campaign', 'validate', '--json']):
-            with patch('scripts.campaign.__main__.cmd_validate') as mock_cmd:
+            with patch('Scripts.Campaign.__main__.cmd_validate') as mock_cmd:
                 mock_cmd.return_value = 0
                 main()
 
@@ -2159,7 +2159,7 @@ class TestValidateCommand:
     def test_validate_command_executable(self):
         """Test validate command can be run."""
         result = subprocess.run(
-            [sys.executable, '-m', 'scripts.campaign', 'validate'],
+            [sys.executable, '-m', 'Scripts.Campaign', 'validate'],
             capture_output=True,
             text=True,
             cwd=str(project_root)

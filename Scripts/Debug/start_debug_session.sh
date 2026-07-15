@@ -12,7 +12,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+MESEN2_CLIENT="$PROJECT_DIR/Scripts/Mesen2/mesen2_client.py"
 
 # Default ROM (patched)
 ROM_PATH="${1:-$PROJECT_DIR/Roms/oos168x.sfc}"
@@ -100,10 +101,10 @@ echo " SESSION READY"
 echo "==================================="
 echo ""
 echo "Mesen2-OoS Socket API is active."
-echo "Use 'python3 Scripts/mesen2_client.py' for interaction."
+echo "Use 'python3 Scripts/Mesen2/mesen2_client.py' for interaction."
 echo ""
 echo "Verify connection:"
-echo "   python3 $SCRIPT_DIR/mesen2_client.py health"
+echo "   python3 $MESEN2_CLIENT health"
 echo ""
 echo "==================================="
 echo ""
@@ -111,16 +112,16 @@ echo ""
 # Wait for bridge to be responsive
 echo "Waiting for socket connection..."
 for i in {1..30}; do
-    if python3 "$SCRIPT_DIR/mesen2_client.py" health 2>/dev/null | grep -q "UP"; then
+    if python3 "$MESEN2_CLIENT" health 2>/dev/null | grep -q "UP"; then
         echo "Socket connected!"
         if [[ "${WATCH_PRESET}" != "none" ]]; then
             echo "Loading watch preset: ${WATCH_PRESET}"
             if [[ "${WATCH_CLEAR}" == "1" ]]; then
-                if ! python3 "$SCRIPT_DIR/mesen2_client.py" watch-load --preset "${WATCH_PRESET}" --clear; then
+                if ! python3 "$MESEN2_CLIENT" watch-load --preset "${WATCH_PRESET}" --clear; then
                     echo "Watch preset load failed."
                 fi
             else
-                if ! python3 "$SCRIPT_DIR/mesen2_client.py" watch-load --preset "${WATCH_PRESET}"; then
+                if ! python3 "$MESEN2_CLIENT" watch-load --preset "${WATCH_PRESET}"; then
                     echo "Watch preset load failed."
                 fi
             fi

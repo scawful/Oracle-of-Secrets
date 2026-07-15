@@ -214,13 +214,13 @@ class SymbolTable:
 
 
 OOS_SYMBOL_PATHS = [
-    str(Path(__file__).resolve().parents[2] / "Core" / "symbols.asm"),
-    str(Path(__file__).resolve().parents[2] / "Core" / "ram.asm"),
-    str(Path(__file__).resolve().parents[2] / "Core" / "sram.asm"),
-    str(Path(__file__).resolve().parents[2] / "Core" / "structs.asm"),
+    str(Path(__file__).resolve().parents[3] / "Core" / "symbols.asm"),
+    str(Path(__file__).resolve().parents[3] / "Core" / "ram.asm"),
+    str(Path(__file__).resolve().parents[3] / "Core" / "sram.asm"),
+    str(Path(__file__).resolve().parents[3] / "Core" / "structs.asm"),
 ]
 
-OOS_JSON_PATH = str(Path(__file__).resolve().parents[1] / "state_symbols.json")
+OOS_JSON_PATH = str(Path(__file__).resolve().parents[2] / "Data" / "state_symbols.json")
 
 
 def load_oos_symbols() -> SymbolTable:

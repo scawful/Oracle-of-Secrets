@@ -37,9 +37,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "Mesen2"))
 from mesen2_client_lib.client import OracleDebugClient
 from mesen2_client_lib.constants import OracleRAM
 
-from oracle_debugger.session import DebugSession, Detection, TraceCapture, StateCapture, SessionState
-from oracle_debugger.moe_bridge import MoEBridge
-from oracle_debugger.reporters import MarkdownReporter, JSONReporter, RegressionTestGenerator
+if __name__ == "__main__" and __package__ is None:
+    repo_root = Path(__file__).resolve().parents[2]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    __package__ = "Scripts.OracleDebugger"
+
+from .session import DebugSession, Detection, TraceCapture, StateCapture, SessionState
+from .moe_bridge import MoEBridge
+from .reporters import MarkdownReporter, JSONReporter, RegressionTestGenerator
 
 logger = logging.getLogger(__name__)
 

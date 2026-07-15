@@ -12,7 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG = ROOT / "Docs" / "Debugging" / "Testing" / "trusted_state_seeds.json"
-MESEN = [sys.executable, str(ROOT / "scripts" / "mesen2_client.py")]
+MESEN = [sys.executable, str(ROOT / "Scripts" / "Mesen2" / "mesen2_client.py")]
 
 
 def run_json(cmd: list[str]) -> dict:

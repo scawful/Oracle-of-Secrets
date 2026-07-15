@@ -26,26 +26,26 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.emulator_abstraction import (
+from Scripts.Campaign.emulator_abstraction import (
     GameStateSnapshot, Mesen2Emulator, EmulatorStatus, MemoryRead
 )
-from scripts.campaign.game_state import (
+from Scripts.Campaign.game_state import (
     GamePhase, GameStateParser, ParsedGameState, LinkAction
 )
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.input_recorder import (
     Button, InputSequence, InputPlayer, InputFrame, InputRecorder
 )
-from scripts.campaign.action_planner import (
+from Scripts.Campaign.action_planner import (
     ActionPlanner, Goal, GoalType, Plan, PlanStatus, Action
 )
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignOrchestrator, CampaignPhase, MilestoneStatus, CampaignProgress
 )
-from scripts.campaign.visual_verifier import (
+from Scripts.Campaign.visual_verifier import (
     VisualVerifier, Screenshot, VerificationResult, VerificationReport
 )
-from scripts.campaign.pathfinder import Pathfinder, TileType
-from scripts.campaign.progress_validator import ProgressSnapshot, StoryFlag
+from Scripts.Campaign.pathfinder import Pathfinder, TileType
+from Scripts.Campaign.progress_validator import ProgressSnapshot, StoryFlag
 
 
 # =============================================================================
@@ -167,7 +167,7 @@ class TestTimeoutHandling:
         pathfinder = Pathfinder(mock_emu)
 
         # Very simple path from adjacent tiles - should succeed with empty collision
-        from scripts.campaign.pathfinder import NavigationResult
+        from Scripts.Campaign.pathfinder import NavigationResult
         result = pathfinder.find_path(
             start=(0, 0),
             goal=(1, 1),

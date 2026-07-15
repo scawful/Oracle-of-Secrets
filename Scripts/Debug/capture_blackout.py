@@ -30,9 +30,10 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuration
-MESEN2_CLIENT = Path(__file__).parent / "mesen2_client.py"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MESEN2_CLIENT = REPO_ROOT / "Scripts" / "Mesen2" / "mesen2_client.py"
 OUTPUT_DIR = Path("/tmp/oos_blackout")
-LAST_CAPTURE_MARKER = Path(__file__).resolve().parents[1] / "scratchpad" / "last_blackout_capture.json"
+LAST_CAPTURE_MARKER = REPO_ROOT / ".context" / "scratchpad" / "last_blackout_capture.json"
 REPRO_SLOT = 20
 CAPTURE_SLOT = 21
 

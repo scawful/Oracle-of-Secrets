@@ -82,7 +82,7 @@ def parse_wla_symbols(path: Path) -> Iterator[Symbol]:
 
 def _load_exclude_list() -> set[str]:
     """Load optional label exclude list (one label per line)."""
-    exclude_path = Path(__file__).resolve().parent / "symbols_filter_exclude.txt"
+    exclude_path = Path(__file__).resolve().parents[1] / "Data" / "symbols_filter_exclude.txt"
     if not exclude_path.exists():
         return set()
     entries = set()

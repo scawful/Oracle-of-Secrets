@@ -28,7 +28,7 @@ python scripts/run_benchmarks.py --model "my_model"
 open Evaluations/dashboard.html
 
 # Or with local server
-cd evaluations
+cd Evaluations
 python -m http.server 8000
 # Visit: http://localhost:8000/dashboard.html
 ```

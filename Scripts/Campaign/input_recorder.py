@@ -9,7 +9,7 @@ Campaign Goals Supported:
 - D.4: Input sequence recorder and playback
 
 Usage:
-    from scripts.campaign.input_recorder import InputRecorder, InputSequence
+    from Scripts.Campaign.input_recorder import InputRecorder, InputSequence
 
     # Record inputs
     recorder = InputRecorder()

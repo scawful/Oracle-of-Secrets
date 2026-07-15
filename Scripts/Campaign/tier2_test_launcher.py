@@ -9,16 +9,16 @@ Campaign Goal: B.2 (Verify black screen fix), C.1 (Test infrastructure)
 
 Usage:
     # List available test scenarios
-    python -m scripts.campaign.tier2_test_launcher --list
+    python -m Scripts.Campaign.tier2_test_launcher --list
 
     # Launch specific test
-    python -m scripts.campaign.tier2_test_launcher --test ow_to_cave
+    python -m Scripts.Campaign.tier2_test_launcher --test ow_to_cave
 
     # Launch with specific save state
-    python -m scripts.campaign.tier2_test_launcher --state current_4
+    python -m Scripts.Campaign.tier2_test_launcher --state current_4
 
     # Launch fresh (no save state)
-    python -m scripts.campaign.tier2_test_launcher --fresh
+    python -m Scripts.Campaign.tier2_test_launcher --fresh
 """
 
 from __future__ import annotations
@@ -201,7 +201,7 @@ def list_scenarios():
         print(f"  Expected: {scenario.expected_result}")
 
     print("\n" + "-" * 70)
-    print("Usage: python -m scripts.campaign.tier2_test_launcher --test <id>")
+    print("Usage: python -m Scripts.Campaign.tier2_test_launcher --test <id>")
     print("-" * 70)
 
 
@@ -229,7 +229,7 @@ def list_states():
             print(f"  {state_id}: {label}")
 
     print("\n" + "-" * 70)
-    print("Usage: python -m scripts.campaign.tier2_test_launcher --state <id>")
+    print("Usage: python -m Scripts.Campaign.tier2_test_launcher --state <id>")
     print("-" * 70)
 
 

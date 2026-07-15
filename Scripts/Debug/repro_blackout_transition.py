@@ -23,12 +23,12 @@ import time
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent
+REPO_ROOT = SCRIPT_DIR.parents[1]
+MESEN2_SCRIPTS = REPO_ROOT / "Scripts" / "Mesen2"
 
-# When running as `python3 Scripts/foo.py`, sys.path[0] is `Scripts/`, not the repo root,
-# so `import scripts.*` fails unless we explicitly add the repo root.
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+# The Mesen2 client library lives beside its categorized CLI entrypoint.
+if str(MESEN2_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(MESEN2_SCRIPTS))
 
 ADDR_MODE = 0x7E0010
 ADDR_SUBMODE = 0x7E0011
@@ -57,7 +57,7 @@ def _run(cmd: list[str], *, cwd: Path, timeout_s: int | None = None) -> int:
 
 def _launch_mesen2_instance(*, instance: str, rom_path: Path, home_dir: Path, headless: bool) -> int:
     cmd = [
-        str(REPO_ROOT / "scripts" / "mesen2_launch_instance.sh"),
+        str(REPO_ROOT / "Scripts" / "Mesen2" / "mesen2_launch_instance.sh"),
         "--instance",
         str(instance),
         "--source",
@@ -92,7 +92,7 @@ def _emit_report(path_arg: str | None, payload: dict) -> None:
 
 
 def build_rom(version: int, *, enable: str, disable: str, profile: str, persist_flags: bool) -> int:
-    cmd = ["./Scripts/build_rom.sh", str(version)]
+    cmd = ["./Scripts/Build/build_rom.sh", str(version)]
     if profile and profile != "defaults":
         cmd += ["--profile", profile]
     if enable:
@@ -178,7 +178,7 @@ def main() -> int:
     rom_path = (REPO_ROOT / "Roms" / f"oos{int(args.version)}x.sfc").resolve()
 
     try:
-        from scripts.mesen2_client_lib.client import OracleDebugClient
+        from mesen2_client_lib.client import OracleDebugClient
     except Exception as exc:
         print(f"Failed to import mesen2 client lib: {exc}", file=sys.stderr)
         return 2
@@ -245,7 +245,7 @@ def main() -> int:
 
     # Load seed state
     if args.arm:
-        arm_cmd = [sys.executable, "-m", "scripts.campaign.agentic_autodebug"]
+        arm_cmd = [sys.executable, "-m", "Scripts.Campaign.agentic_autodebug"]
         # Global args must appear before the subcommand for argparse.
         if os.environ.get("MESEN2_SOCKET_PATH"):
             arm_cmd += ["--socket", os.environ["MESEN2_SOCKET_PATH"]]
@@ -316,7 +316,7 @@ def main() -> int:
                     [
                         sys.executable,
                         "-m",
-                        "scripts.campaign.agentic_autodebug",
+                        "Scripts.Campaign.agentic_autodebug",
                         "capture",
                         "--kind",
                         str(args.capture_kind),
@@ -330,7 +330,7 @@ def main() -> int:
                     [
                         sys.executable,
                         "-m",
-                        "scripts.campaign.agentic_autodebug",
+                        "Scripts.Campaign.agentic_autodebug",
                         "triage",
                         "--latest",
                     ],
@@ -446,7 +446,7 @@ def main() -> int:
                     [
                         sys.executable,
                         "-m",
-                        "scripts.campaign.agentic_autodebug",
+                        "Scripts.Campaign.agentic_autodebug",
                         "capture",
                         "--kind",
                         str(args.capture_kind),
@@ -460,7 +460,7 @@ def main() -> int:
                     [
                         sys.executable,
                         "-m",
-                        "scripts.campaign.agentic_autodebug",
+                        "Scripts.Campaign.agentic_autodebug",
                         "triage",
                         "--latest",
                     ],

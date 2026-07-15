@@ -2,7 +2,7 @@
 """Navigate to Goron Mines minecart rooms and capture screenshots.
 
 Usage:
-    python3 Scripts/navigate_goron_mines.py \
+    python3 Scripts/Campaign/navigate_goron_mines.py \
         --instance smoke-test \
         --rom Roms/oos168x.sfc \
         [--save-state Roms/SaveStates/library/oos168x/inside_d6.mss] \
@@ -32,13 +32,15 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from scripts.mesen2_client_lib.client import OracleDebugClient
-from scripts.mesen2_client_lib.constants import OracleRAM
-from scripts.mesen2_client_lib.dungeon_navigator import DungeonNavigator
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
+from Scripts.Mesen2.mesen2_client_lib.constants import OracleRAM
+from Scripts.Mesen2.mesen2_client_lib.dungeon_navigator import DungeonNavigator
 
 
-REPO_ROOT = Path(__file__).parent.parent
 DEFAULT_ROM = str(REPO_ROOT / "Roms" / "oos168x.sfc")
 DEFAULT_SAVE_STATE = str(
     REPO_ROOT / "Roms" / "SaveStates" / "library" / "oos168x" / "inside_d6.mss"
@@ -138,7 +140,7 @@ def main() -> int:
     sock = f"/tmp/mesen2-{args.instance}.sock"
     if not Path(sock).exists():
         print(f"\n[SKIP] Mesen2 socket not found at {sock}.")
-        print("  Start Mesen2 with: bash Scripts/mesen2_launch_instance.sh ...")
+        print("  Start Mesen2 with: bash Scripts/Mesen2/mesen2_launch_instance.sh ...")
         return 0
 
     print(f"\n=== Live navigation via {sock} ===")

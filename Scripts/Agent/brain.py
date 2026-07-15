@@ -26,9 +26,9 @@ import time
 from typing import List, Tuple, Optional, Set, Union
 
 try:
-    from mesen2_client_lib.client import OracleDebugClient
+    from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
 except ImportError:
-    from scripts.mesen2_client_lib.client import OracleDebugClient
+    from mesen2_client_lib.client import OracleDebugClient
 
 # Constants
 TILE_SIZE = 8  # Collision tiles are 8x8 pixels

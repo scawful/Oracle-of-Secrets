@@ -13,7 +13,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.verification import (
+from Scripts.Campaign.verification import (
     VerificationLevel,
     MemoryCheck,
     VerificationResult,
@@ -24,7 +24,7 @@ from scripts.campaign.verification import (
     MOVEMENT_CHECKS,
     BLACK_SCREEN_CHECKS,
 )
-from scripts.campaign.emulator_abstraction import MemoryRead
+from Scripts.Campaign.emulator_abstraction import MemoryRead
 
 
 class TestVerificationLevel:

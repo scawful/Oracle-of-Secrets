@@ -99,7 +99,7 @@
     },
     {
       "type": "screenshot",
-      "path": "tests/screenshots/stack_corruption_post_transition.png"
+      "path": "Tests/screenshots/stack_corruption_post_transition.png"
     }
   ],
   "onFailure": {

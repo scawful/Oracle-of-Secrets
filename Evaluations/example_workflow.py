@@ -15,7 +15,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from evaluations.screenshot_eval import ScreenshotEvaluator
+from Evaluations.screenshot_eval import ScreenshotEvaluator
 from scripts.run_benchmarks import BenchmarkRunner
 
 

@@ -16,7 +16,7 @@ A comprehensive, production-ready evaluation system with visual validation, auto
 ### 1. Install Dependencies
 
 ```bash
-cd evaluations
+cd Evaluations
 pip install -r requirements.txt
 ```
 
@@ -101,7 +101,7 @@ scripts/
 Capture and compare visual outputs:
 
 ```python
-from evaluations.screenshot_eval import ScreenshotEvaluator
+from Evaluations.screenshot_eval import ScreenshotEvaluator
 
 evaluator = ScreenshotEvaluator()
 
@@ -303,7 +303,7 @@ Edit `advanced_eval.jsonl` and add a new line:
 For visual tests, you can generate reference screenshots:
 
 ```python
-from evaluations.screenshot_eval import ScreenshotEvaluator
+from Evaluations.screenshot_eval import ScreenshotEvaluator
 
 evaluator = ScreenshotEvaluator()
 

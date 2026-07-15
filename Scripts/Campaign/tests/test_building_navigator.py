@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any, Optional
 from unittest.mock import MagicMock, patch, call
 
-from scripts.campaign.building_navigator import (
+from Scripts.Campaign.building_navigator import (
     BuildingNavigator,
     BuildingInfo,
     BuildingType,
@@ -743,7 +743,7 @@ class TestRunBuildingTest:
 
     def test_run_building_test_import_error(self):
         """Should handle import error gracefully."""
-        with patch.dict('sys.modules', {'scripts.mesen2_client_lib.bridge': None}):
+        with patch.dict('sys.modules', {'Scripts.Mesen2.mesen2_client_lib.bridge': None}):
             # This tests the import handling
             pass  # Would need more complex mocking
 

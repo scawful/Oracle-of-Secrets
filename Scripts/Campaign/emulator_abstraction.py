@@ -9,7 +9,7 @@ Campaign Goals Supported:
 - D.4: Input sequence recorder and playback
 
 Usage:
-    from scripts.campaign.emulator_abstraction import Mesen2Emulator
+    from Scripts.Campaign.emulator_abstraction import Mesen2Emulator
 
     emu = Mesen2Emulator()
     if emu.connect():
@@ -21,6 +21,7 @@ Usage:
 from __future__ import annotations
 
 import os
+import sys
 import tempfile
 import time
 from abc import ABC, abstractmethod
@@ -28,6 +29,10 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 
 class EmulatorStatus(IntEnum):
@@ -307,7 +312,7 @@ class Mesen2Emulator(EmulatorInterface):
         """Lazy-load bridge to avoid import errors when not needed."""
         if self._bridge is None:
             try:
-                from scripts.mesen2_client_lib.bridge import MesenBridge
+                from Scripts.Mesen2.mesen2_client_lib.bridge import MesenBridge
                 self._bridge = MesenBridge(self._socket_path)
             except ImportError as e:
                 raise RuntimeError(
@@ -477,7 +482,7 @@ class Mesen2Emulator(EmulatorInterface):
             True if state loaded successfully
         """
         try:
-            from scripts.mesen2_client_lib.state_library import StateLibrary
+            from Scripts.Mesen2.mesen2_client_lib.state_library import StateLibrary
 
             library = StateLibrary()
             entry = library.find_entry(state_id)

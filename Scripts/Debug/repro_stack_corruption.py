@@ -15,9 +15,9 @@ On corruption detection: captures CPU, TRACE (500 instructions), STACK_RETADDR,
 P_LOG, and MEM_BLAME for full attribution.
 
 Usage:
-    python3 repro_stack_corruption.py [--output report.json] [--slot 1]
-                                      [--frames 600] [--strategy auto]
-                                      [--press-a] [--press-seq "down;a"]
+    python3 Scripts/Debug/repro_stack_corruption.py [--output report.json] [--slot 1]
+                                                    [--frames 600] [--strategy auto]
+                                                    [--press-a] [--press-seq "down;a"]
 """
 
 from __future__ import annotations
@@ -29,8 +29,11 @@ import sys
 import time
 from pathlib import Path
 
-# Add the client library to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add the categorized client library to the import path.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MESEN2_SCRIPTS = REPO_ROOT / "Scripts" / "Mesen2"
+if str(MESEN2_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(MESEN2_SCRIPTS))
 from mesen2_client_lib.bridge import MesenBridge
 
 

@@ -9,16 +9,16 @@ Modes:
     --investigate  Load a save state and dump forensics
 
 Dependencies (all existing):
-    - MesenBridge         (Scripts/mesen2_client_lib/bridge.py)
-    - Mesen2Emulator      (Scripts/campaign/emulator_abstraction.py)
-    - GameStateSnapshot   (Scripts/campaign/emulator_abstraction.py)
-    - GameStateParser     (Scripts/campaign/game_state.py)
-    - CampaignOrchestrator(Scripts/campaign/campaign_orchestrator.py)
+    - MesenBridge         (Scripts/Mesen2/mesen2_client_lib/bridge.py)
+    - Mesen2Emulator      (Scripts/Campaign/emulator_abstraction.py)
+    - GameStateSnapshot   (Scripts/Campaign/emulator_abstraction.py)
+    - GameStateParser     (Scripts/Campaign/game_state.py)
+    - CampaignOrchestrator(Scripts/Campaign/campaign_orchestrator.py)
 
 Usage:
-    python3 -m scripts.campaign.autonomous_debugger --monitor
-    python3 -m scripts.campaign.autonomous_debugger --campaign
-    python3 -m scripts.campaign.autonomous_debugger --investigate state.mss
+    python3 -m Scripts.Campaign.autonomous_debugger --monitor
+    python3 -m Scripts.Campaign.autonomous_debugger --campaign
+    python3 -m Scripts.Campaign.autonomous_debugger --investigate state.mss
 """
 
 from __future__ import annotations
@@ -43,12 +43,12 @@ DEFAULT_REPORT_DIR = _DEFAULT_ARTIFACT_ROOT / "reports"
 DEFAULT_STATE_DIR = _DEFAULT_ARTIFACT_ROOT / "states"
 
 # Allow running as either:
-# - `python3 -m scripts.campaign.autonomous_debugger ...` (recommended), or
-# - `python3 Scripts/campaign/autonomous_debugger.py ...`
+# - `python3 -m Scripts.Campaign.autonomous_debugger ...` (recommended), or
+# - `python3 Scripts/Campaign/autonomous_debugger.py ...`
 if __name__ == "__main__" and __package__ is None:
     if str(REPO_ROOT) not in sys.path:
         sys.path.insert(0, str(REPO_ROOT))
-    __package__ = "scripts.campaign"
+    __package__ = "Scripts.Campaign"
 
 from .emulator_abstraction import GameStateSnapshot, Mesen2Emulator
 from .game_state import GameStateParser
@@ -260,7 +260,7 @@ class DebugSession:
                 )
                 # Optional: richer forensics via the higher-level debug client.
                 try:
-                    from scripts.mesen2_client_lib.client import OracleDebugClient
+                    from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
 
                     socket_path = None
                     try:

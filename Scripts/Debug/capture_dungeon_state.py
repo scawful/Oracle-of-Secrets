@@ -2,7 +2,7 @@
 """Wait for Link to be in a specific dungeon room, then save and pin a state.
 
 Usage:
-    python3 Scripts/capture_dungeon_state.py \
+    python3 Scripts/Debug/capture_dungeon_state.py \
         --room 0x98 \
         --output Roms/SaveStates/library/oos168x/inside_d6.mss \
         [--instance smoke-test] \
@@ -30,11 +30,14 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from scripts.mesen2_client_lib.client import OracleDebugClient
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MESEN2_SCRIPTS = REPO_ROOT / "Scripts" / "Mesen2"
+if str(MESEN2_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(MESEN2_SCRIPTS))
+
+from mesen2_client_lib.client import OracleDebugClient
 
 
-REPO_ROOT = Path(__file__).parent.parent
 DEFAULT_ROM = str(REPO_ROOT / "Roms" / "oos168x.sfc")
 Z3ED = str(Path.home() / "src/hobby/yaze/build/bin/Debug/z3ed")
 STABLE_FRAMES = 8   # room must read the same value this many polls in a row

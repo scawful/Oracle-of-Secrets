@@ -6,16 +6,16 @@ for regression testing of area transitions, camera behavior, and more.
 
 Usage:
     # Check current position and suggest checkpoint name
-    ./Scripts/capture_overworld_states.py check
+    ./Scripts/Debug/capture_overworld_states.py check
 
     # Capture state at current position
-    ./Scripts/capture_overworld_states.py capture --name "lost_woods_entrance"
+    ./Scripts/Debug/capture_overworld_states.py capture --name "lost_woods_entrance"
 
     # List all required checkpoints
-    ./Scripts/capture_overworld_states.py list-required
+    ./Scripts/Debug/capture_overworld_states.py list-required
 
     # Interactive mode - guide through capturing all checkpoints
-    ./Scripts/capture_overworld_states.py interactive
+    ./Scripts/Debug/capture_overworld_states.py interactive
 """
 
 import argparse
@@ -25,6 +25,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MESEN2_SCRIPTS = REPO_ROOT / "Scripts" / "Mesen2"
+if str(MESEN2_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(MESEN2_SCRIPTS))
+
 # Try to import bridge
 try:
     from mesen2_client_lib.bridge import MesenBridge
@@ -32,10 +37,9 @@ try:
 except ImportError:
     HAS_BRIDGE = False
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
 SAVESTATE_DIR = REPO_ROOT / "Roms" / "SaveStates" / "oos168x" / "overworld"
 MANIFEST_PATH = REPO_ROOT / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
-MESEN2_CLIENT = REPO_ROOT / "scripts" / "mesen2_client.py"
+MESEN2_CLIENT = REPO_ROOT / "Scripts" / "Mesen2" / "mesen2_client.py"
 
 # Overworld area definitions
 AREA_NAMES = {
@@ -158,7 +162,7 @@ def get_bridge():
     if not bridge.is_connected():
         print("ERROR: Not connected to Mesen2")
         print("Start Mesen2 with socket server enabled:")
-        print("  ./Scripts/mesen2_launch_instance.sh --instance oos-overworld-capture --owner you --source manual")
+        print("  ./Scripts/Mesen2/mesen2_launch_instance.sh --instance oos-overworld-capture --owner you --source manual")
         print("  # optional shortcut if installed:")
         print("  mesen-agent launch oos")
         sys.exit(1)
@@ -267,7 +271,7 @@ def cmd_capture(args):
     print_state(state)
 
     if not MESEN2_CLIENT.exists():
-        print("ERROR: Scripts/mesen2_client.py not found")
+        print("ERROR: Scripts/Mesen2/mesen2_client.py not found")
         sys.exit(1)
 
     if getattr(args, "slot", None) is not None:
@@ -319,7 +323,7 @@ def cmd_capture(args):
     else:
         print("Saved (see library list for id).")
     print("\nNext:")
-    print("  MESEN2_AUTO_ATTACH=1 python3 Scripts/mesen2_client.py library")
+    print("  MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py library")
 
 
 def cmd_interactive(args):

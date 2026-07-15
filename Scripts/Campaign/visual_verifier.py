@@ -8,7 +8,7 @@ Campaign Goals Supported:
 - B.5: Visual regression for transition verification
 
 Usage:
-    from scripts.campaign.visual_verifier import VisualVerifier
+    from Scripts.Campaign.visual_verifier import VisualVerifier
 
     verifier = VisualVerifier()
     is_black = verifier.is_black_screen(screenshot)

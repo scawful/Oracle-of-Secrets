@@ -54,7 +54,7 @@ def mock_mesen_bridge():
 @pytest.fixture
 def sample_overworld_state():
     """Sample overworld state data for testing."""
-    from scripts.campaign.emulator_abstraction import GameStateSnapshot
+    from Scripts.Campaign.emulator_abstraction import GameStateSnapshot
 
     return GameStateSnapshot(
         timestamp=1000.0,
@@ -77,7 +77,7 @@ def sample_overworld_state():
 @pytest.fixture
 def sample_dungeon_state():
     """Sample dungeon state data for testing."""
-    from scripts.campaign.emulator_abstraction import GameStateSnapshot
+    from Scripts.Campaign.emulator_abstraction import GameStateSnapshot
 
     return GameStateSnapshot(
         timestamp=1001.0,
@@ -101,7 +101,7 @@ def sample_dungeon_state():
 @pytest.fixture
 def sample_black_screen_state():
     """Sample black screen state for testing."""
-    from scripts.campaign.emulator_abstraction import GameStateSnapshot
+    from Scripts.Campaign.emulator_abstraction import GameStateSnapshot
 
     return GameStateSnapshot(
         timestamp=1002.0,

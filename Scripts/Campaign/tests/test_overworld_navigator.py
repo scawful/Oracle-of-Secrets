@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
-from scripts.campaign.overworld_navigator import (
+from Scripts.Campaign.overworld_navigator import (
     OverworldNavigator,
     OverworldState,
     NavigationResult,
