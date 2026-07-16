@@ -34,15 +34,20 @@ Runtime expectations to verify:
 
 Use these room-data controls to drive runtime behavior without hand-editing ASM:
 
+Normal builds consume the tracked `Dungeons/generated/water_gate_runtime_tables.asm`
+and `Dungeons/generated/water_fill_table.asm` release sources. Only an explicit,
+transactional water-table refresh regenerates both includes from the selected
+authoring ROM.
+
 - Water drain/gate overlay segments:
   - Place water overlay objects in the room (`0x0C9` flood and/or `0x0D9` swim-mask forms).
-  - Build regenerates `WaterOverlayRoomTable` automatically.
+  - An explicit refresh regenerates `WaterOverlayRoomTable`.
 - Zora Baby post-switch walk target:
   - Place one marker object near the desired destination using ids in priority order:
     - `0x0124` (preferred)
     - `0x0137`
     - `0x0135`
-  - Build regenerates `ZoraBabySwitchTargetTable`; baby picks the nearest marker at runtime.
+  - An explicit refresh regenerates `ZoraBabySwitchTargetTable`; baby picks the nearest marker at runtime.
 - Water fill collision zones (switch-activated):
   - Paint custom collision tile `0xF5` in the room where water should become swimmable after switch activation.
   - `CustomRoomCollision` now treats `0xF5` as an authoring marker and does **not** apply it during normal room load.
