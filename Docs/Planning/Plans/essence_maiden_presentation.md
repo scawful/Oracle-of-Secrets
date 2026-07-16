@@ -2,7 +2,13 @@
 
 ## Summary
 
-Refine the crystal maiden dialogue and essence collection text to strengthen the game's Oracle identity while working within existing mechanical and graphical constraints.\n+\n+Dialogue authoring is **not blocked**: edit `Core/messages.org` (and any associated message tables) and rebuild the ROM. yaze GUI support is a convenience item, not a dependency.
+Refine the crystal maiden dialogue and essence collection text to strengthen
+the game's Oracle identity while working within existing mechanical and
+graphical constraints.
+
+Dialogue authoring is **not blocked**: use `Core/messages.org` for vanilla
+messages and `Core/message.asm` for expanded IDs, then rebuild the ROM. yaze
+GUI support is a convenience item, not a dependency.
 
 ## Current State
 
@@ -67,14 +73,17 @@ Complete the Maku Tree hint dispatch for all 7 dungeons. Currently D1, D3, D5 ar
 
 The menu GFX sheet is fully allocated with custom item icons, masks, fonts, and UI elements. Unique per-essence icons would require sacrificing existing graphics. The triforce triangle icons are compact and functional. **Decision: Keep triforce icons.**
 
-### Yaze Message Editor (AVAILABLE)
+### Expanded Message Workflow (AVAILABLE)
 
-The yaze message editor expanded write path is functional as of commit `4b6a78ed` (2026-02-06). Both the GUI (Ctrl+S) and z3ed CLI (`message-write`) write directly to main ROM with capacity validation. Dialogue authoring is **unblocked**.
+Expanded message IDs `$18D+` live in ASM-owned bank `$2F`. Direct editor or
+CLI writes to those IDs are not durable because the next ASM build replaces
+the bank. Dialogue authoring remains **unblocked** through the ASM source.
 
-**Workflow options:**
-1. Edit `Core/message.asm` hex directly and rebuild (`Scripts/Build/build_rom.sh 168`)
-2. Use z3ed CLI: `z3ed message-write --rom <rom> --id <id> --text "<text>"`
-3. Use yaze GUI message editor (expanded bank save works)
+**Expanded-message workflow:**
+1. Edit the matching entry in `Core/message.asm`.
+2. Rebuild with `Scripts/Build/build_rom.sh 168`.
+3. Reopen or reload `Roms/oos168x.sfc` for inspection and testing; do not edit
+   the patched ROM directly.
 
 **Ready to author:**
 - Essence collection text (items 1 above)
