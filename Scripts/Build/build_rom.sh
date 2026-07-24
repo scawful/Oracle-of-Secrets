@@ -97,6 +97,7 @@ water_restore_pending=0
 water_fill_backup=""
 water_runtime_backup=""
 water_patched_backup=""
+water_patched_existed=0
 restore_flags() {
   if [[ "$flags_modified" != "1" ]]; then
     return 0
@@ -120,10 +121,12 @@ restore_water_transaction() {
   fi
   cp -f "$water_fill_backup" "$repo_root/Dungeons/generated/water_fill_table.asm"
   cp -f "$water_runtime_backup" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
-  if [[ -n "$water_patched_backup" && -f "$water_patched_backup" ]]; then
+  if [[ "$water_patched_existed" == "1" ]]; then
     cp -f "$water_patched_backup" "$patched_rom"
+  else
+    rm -f "$patched_rom"
   fi
-  echo "[*] Restored water includes after failed refresh." >&2
+  echo "[*] Restored water includes and patched ROM after failed refresh." >&2
 }
 cleanup() {
   restore_water_transaction
@@ -350,7 +353,6 @@ for required_room in 25 27; do
     exit 1
   fi
 done
-assemble_rom
 
 water_refresh_requested="${OOS_REFRESH_WATER_TABLES:-0}"
 if [[ -n "${OOS_WATER_FILL_TABLE_ROM:-}" || -n "${OOS_WATER_TABLE_ROM:-}" ]]; then
@@ -373,7 +375,25 @@ if [[ "$water_refresh_requested" == "1" ]]; then
     exit 1
   fi
 
+  # Arm rollback before assemble_rom mutates the patched output. Every explicit
+  # refresh is one transaction spanning initial assembly, candidate generation,
+  # staged-table rebuild, and all later build checks.
   water_tmp_dir="$(mktemp -d "$rom_dir/.water_tables.XXXXXX")"
+  water_fill_backup="$water_tmp_dir/water_fill_table.original.asm"
+  water_runtime_backup="$water_tmp_dir/water_gate_runtime_tables.original.asm"
+  water_patched_backup="$water_tmp_dir/patched_rom.original.sfc"
+  cp -f "$repo_root/Dungeons/generated/water_fill_table.asm" "$water_fill_backup"
+  cp -f "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm" "$water_runtime_backup"
+  if [[ -f "$patched_rom" ]]; then
+    cp -f "$patched_rom" "$water_patched_backup"
+    water_patched_existed=1
+  fi
+  water_restore_pending=1
+fi
+
+assemble_rom
+
+if [[ "$water_refresh_requested" == "1" ]]; then
   candidate_dir="$water_tmp_dir/candidate"
   generate_water_tables "$water_table_rom" "$candidate_dir"
 
@@ -386,14 +406,6 @@ if [[ "$water_refresh_requested" == "1" ]]; then
   fi
 
   if [[ "$water_tables_changed" == "1" ]]; then
-    water_fill_backup="$water_tmp_dir/water_fill_table.original.asm"
-    water_runtime_backup="$water_tmp_dir/water_gate_runtime_tables.original.asm"
-    water_patched_backup="$water_tmp_dir/patched_rom.original.sfc"
-    cp -f "$repo_root/Dungeons/generated/water_fill_table.asm" "$water_fill_backup"
-    cp -f "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm" "$water_runtime_backup"
-    cp -f "$patched_rom" "$water_patched_backup"
-    water_restore_pending=1
-
     cp -f "$candidate_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"
     cp -f "$candidate_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
     echo "[*] Water table candidates staged; rebuilding once from the base ROM..."
