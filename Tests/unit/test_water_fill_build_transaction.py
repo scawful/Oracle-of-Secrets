@@ -59,6 +59,19 @@ class WaterFillBuildTransactionTest(unittest.TestCase):
         verifier = repo / "Scripts/Build/verify_feature_flags.py"
         verifier.write_text("print('Feature flags OK (transaction fixture).')\n")
 
+        manifest_generator = (
+            repo / "Scripts/Generate/generate_hack_manifest.py"
+        )
+        manifest_generator.write_text(
+            """\
+import sys
+from pathlib import Path
+
+output = Path(sys.argv[sys.argv.index("--output") + 1])
+output.write_text('{"fixture": "manifest"}\\n', encoding="utf-8")
+"""
+        )
+
         fake_asar = root / "fake-asar"
         fake_asar.write_text("#!/bin/sh\nexit 0\n")
         fake_asar.chmod(0o755)
@@ -368,6 +381,51 @@ print("hook generation fixture ran")
                 combined_output,
             )
             self.assertEqual(hooks_path.read_bytes(), hooks_before)
+
+    def test_failed_manifest_generation_preserves_manifest_and_rolls_back_water(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo, fake_asar = self.prepare_fixture(root)
+            authoring_rom = root / "authoring-complete.sfc"
+            make_authoring_rom(authoring_rom, (0x25, 0x27))
+
+            overlap_check = repo / "Scripts/Build/check_zscream_overlap.py"
+            overlap_check.write_text("print('overlap fixture passed')\n")
+
+            manifest_path = repo / "Roms/hack_manifest.json"
+            manifest_before = b'{"fixture": "preexisting"}\n'
+            manifest_path.write_bytes(manifest_before)
+            (repo / "Scripts/Generate/generate_hack_manifest.py").write_text(
+                "import sys\nprint('intentional manifest failure')\nsys.exit(37)\n"
+            )
+
+            patched_before = (repo / "Roms/oos168x.sfc").read_bytes()
+            fill_before = (
+                repo / "Dungeons/generated/water_fill_table.asm"
+            ).read_bytes()
+            runtime_before = (
+                repo / "Dungeons/generated/water_gate_runtime_tables.asm"
+            ).read_bytes()
+
+            result = self.run_refresh(root, repo, fake_asar, authoring_rom)
+
+            combined_output = result.stdout + result.stderr
+            self.assertNotEqual(result.returncode, 0, combined_output)
+            self.assertIn("intentional manifest failure", combined_output)
+            self.assertIn(
+                "ERROR: Required hack manifest generation failed.",
+                combined_output,
+            )
+            self.assertIn(
+                "Restored water includes and patched ROM after failed refresh",
+                combined_output,
+            )
+            self.assert_transaction_restored(
+                repo, patched_before, fill_before, runtime_before
+            )
+            self.assertEqual(manifest_path.read_bytes(), manifest_before)
 
 
 if __name__ == "__main__":

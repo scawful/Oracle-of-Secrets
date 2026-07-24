@@ -87,6 +87,7 @@ done
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 rom_dir="$repo_root/Roms"
 hooks_json="$rom_dir/hooks.json"
+hack_manifest="$rom_dir/hack_manifest.json"
 feature_flags_path="$repo_root/Config/feature_flags.asm"
 cd "$repo_root"
 
@@ -105,12 +106,19 @@ water_mlb_backup=""
 water_mlb_existed=0
 water_hooks_backup=""
 water_hooks_existed=0
+water_manifest_backup=""
+water_manifest_existed=0
 hooks_tmp=""
+manifest_tmp=""
 restore_flags() {
   if [[ "$flags_modified" != "1" ]]; then
     return 0
   fi
   if [[ "$persist_flags" == "1" ]]; then
+    if [[ -n "$flags_backup" && -f "$flags_backup" ]]; then
+      rm -f "$flags_backup"
+      flags_backup=""
+    fi
     echo "[*] Persisting feature flags: $feature_flags_path"
     return 0
   fi
@@ -143,6 +151,7 @@ restore_water_transaction() {
   restore_water_output "$water_symbols_existed" "$water_symbols_backup" "$symbols_path"
   restore_water_output "$water_mlb_existed" "$water_mlb_backup" "$mlb_path"
   restore_water_output "$water_hooks_existed" "$water_hooks_backup" "$hooks_json"
+  restore_water_output "$water_manifest_existed" "$water_manifest_backup" "$hack_manifest"
   echo "[*] Restored water includes and patched ROM after failed refresh." >&2
 }
 cleanup() {
@@ -150,6 +159,9 @@ cleanup() {
   restore_flags
   if [[ -n "$hooks_tmp" && -f "$hooks_tmp" ]]; then
     rm -f "$hooks_tmp"
+  fi
+  if [[ -n "$manifest_tmp" && -f "$manifest_tmp" ]]; then
+    rm -f "$manifest_tmp"
   fi
   if [[ -n "$water_tmp_dir" && -d "$water_tmp_dir" ]]; then
     rm -rf "$water_tmp_dir"
@@ -411,6 +423,7 @@ if [[ "$water_refresh_requested" == "1" ]]; then
   water_symbols_backup="$water_tmp_dir/symbols.original.sym"
   water_mlb_backup="$water_tmp_dir/symbols.original.mlb"
   water_hooks_backup="$water_tmp_dir/hooks.original.json"
+  water_manifest_backup="$water_tmp_dir/hack_manifest.original.json"
   cp -f "$repo_root/Dungeons/generated/water_fill_table.asm" "$water_fill_backup"
   cp -f "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm" "$water_runtime_backup"
   if [[ -f "$patched_rom" ]]; then
@@ -428,6 +441,10 @@ if [[ "$water_refresh_requested" == "1" ]]; then
   if [[ -f "$hooks_json" ]]; then
     cp -f "$hooks_json" "$water_hooks_backup"
     water_hooks_existed=1
+  fi
+  if [[ -f "$hack_manifest" ]]; then
+    cp -f "$hack_manifest" "$water_manifest_backup"
+    water_manifest_existed=1
   fi
   water_restore_pending=1
 fi
@@ -657,6 +674,50 @@ else
   echo "[*] Skipping smoke tests (runner not found)"
 fi
 
+# Refresh the tracked yaze save-policy manifest only when this build used the
+# canonical project ROM. Portable bundles and explicit OOS_BASE_ROM overrides
+# carry their own path-rewritten manifest and must not be replaced with an
+# absolute machine-local ROM path.
+base_rom_resolved="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$base_rom")"
+default_base_resolved="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$default_base")"
+manifest_refresh_reason=""
+if [[ "$version" != "168" ]]; then
+  manifest_refresh_reason="build version $version is not the project ROM version 168"
+elif [[ "$flags_modified" == "1" && "$persist_flags" != "1" ]]; then
+  manifest_refresh_reason="feature-flag overrides are temporary"
+elif [[ "$base_rom_resolved" != "$default_base_resolved" ]]; then
+  manifest_refresh_reason="the build used a non-canonical base ROM"
+fi
+
+if [[ -z "$manifest_refresh_reason" ]]; then
+  echo "[*] Generating yaze hack manifest..."
+  manifest_tmp="$(mktemp "$rom_dir/.hack_manifest.generated.XXXXXX")"
+  if ! python3 "$repo_root/Scripts/Generate/generate_hack_manifest.py" \
+    --root "$repo_root" \
+    --rom "$base_rom" \
+    --patched-rom "$patched_rom" \
+    --output "$manifest_tmp" \
+    --pretty; then
+    echo "ERROR: Required hack manifest generation failed." >&2
+    exit 1
+  fi
+  if [[ ! -s "$manifest_tmp" ]]; then
+    echo "ERROR: Required hack manifest generation produced no output." >&2
+    exit 1
+  fi
+  mv -f "$manifest_tmp" "$hack_manifest"
+  manifest_tmp=""
+else
+  echo "[*] Preserving existing hack manifest because $manifest_refresh_reason."
+fi
+
+# Commit disk outputs before the optional runtime reload. A reload failure must
+# not roll back a valid ROM/manifest after the emulator may have observed it.
+if [[ "$water_restore_pending" == "1" ]]; then
+  water_restore_pending=0
+  echo "[*] Water table pair promoted."
+fi
+
 if [[ $reload -eq 1 ]]; then
   echo "[*] Sending reload signal to Mesen2..."
   # Simple reload via socket if mesen2_client.py is available
@@ -665,9 +726,4 @@ if [[ $reload -eq 1 ]]; then
   else
     echo "[-] Warning: mesen2_client.py not found, skipping reload."
   fi
-fi
-
-if [[ "$water_restore_pending" == "1" ]]; then
-  water_restore_pending=0
-  echo "[*] Water table pair promoted."
 fi

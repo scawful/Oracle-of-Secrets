@@ -18,8 +18,13 @@ Scripts/Build/z3dk_safe_smoke.sh    # safe z3asm smoke build in a temp workspace
 - `Docs/README.md` (documentation index)
 
 `Oracle-of-Secrets.yaze` requires the tracked `Roms/hack_manifest.json` for
-save-policy and build-target safety. Regenerate it after hook/manifest changes
-with `python3 Scripts/Generate/generate_hack_manifest.py --rom Roms/oos168.sfc`.
+save-policy and build-target safety. A successful canonical version-168 build
+without temporary feature-flag overrides refreshes it atomically. To regenerate
+it directly, run
+`python3 Scripts/Generate/generate_hack_manifest.py --rom Roms/oos168.sfc`.
+The manifest derives object, sprite, pot-item, room-header, message-ID, and
+custom-collision bounds from the editable base ROM; the ASM-generated
+WaterFill tail remains blocked.
 
 ## Hook tagging (optional)
 Use `Scripts/Generate/tag_org_hooks.py` to tag org blocks with `@hook` comments and normalize metadata.
