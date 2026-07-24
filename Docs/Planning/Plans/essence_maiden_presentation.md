@@ -6,15 +6,19 @@ Refine the crystal maiden dialogue and essence collection text to strengthen
 the game's Oracle identity while working within existing mechanical and
 graphical constraints.
 
-Dialogue authoring is **not blocked**: use `Core/messages.org` for vanilla
-messages and `Core/message.asm` for expanded IDs, then rebuild the ROM. yaze
-GUI support is a convenience item, not a dependency.
+Dialogue authoring is **not blocked**. For vanilla IDs `$000-$18C`, preserve
+the change in a committed `Data/dialogue/*.json` bundle, import it into the
+editable base ROM (`Roms/oos168.sfc`) with yaze or z3ed, then close/reopen and
+read it back before rebuilding. The gitignored ROM edit alone is not durable.
+`Core/messages.org` is documentation only, not a build input. Expanded IDs
+`$18D+` remain ASM-owned in `Core/message.asm`.
 
 ## Current State
 
 ### What Works
 
-- **Crystal maidens deliver plot-critical lore** after each dungeon boss (D1-D7)
+- **Crystal maiden text exists for D1-D7**, but delivery is runtime-unverified
+  and the OFF-by-default D7 rescue scaffold does not complete the maiden flow
 - **Three-layer lore system** is well-designed: maidens (long-form) + Maku Tree (guidance) + Gossip Stones (deep lore)
 - **Maiden dialogue is already Oracle-specific** — covers Kalyxo history, Zora technology, Twinrova conspiracy, Goron alliance, endgame setup
 - **Triforce icons in quest menu** are functional and compact given the full GFX tile sheet
@@ -111,8 +115,10 @@ Ridoyie has offered to contribute maiden dialogue and world lore text. Tooling i
 
 | File | Change | Status |
 |---|---|---|
-| `Core/messages.org` | Essence receipt text, maiden dialogue rewrites | Ready to author |
-| `Core/message.asm` | Compiled from messages.org | Ready to author |
+| `Data/dialogue/*.json` | Committed source artifact for vanilla-message changes | Ready to author |
+| `Roms/oos168.sfc` | Import target for vanilla-message bundles; close/reopen/read back before rebuilding | Ready to author |
+| `Core/messages.org` | Documentation/reference only; keep annotations synchronized with verified ROM text | Not a build input |
+| `Core/message.asm` | ASM source for expanded message IDs `$18D+` | Ready to author |
 | `Sprites/NPCs/maku_tree.asm` | Threshold-based dialogue | Done (UNTESTED) |
 | `Core/symbols.asm` | Message IDs | Done |
 
