@@ -626,7 +626,9 @@ def main() -> int:
     hooks = scan_hooks(root)
 
     rom_meta = {}
-    rom_path = (root / args.rom).resolve() if not args.rom.is_absolute() else args.rom
+    rom_path = (
+        root / args.rom if not args.rom.is_absolute() else args.rom
+    ).resolve()
     if rom_path.exists():
         rom_meta['path'] = str(rom_path.relative_to(root))
         try:
