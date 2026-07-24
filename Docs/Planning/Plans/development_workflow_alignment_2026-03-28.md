@@ -36,7 +36,8 @@ before large new feature pushes.
 
 - `Scripts/Build/build_rom.sh` now does more than assembly:
   - menu validation
-  - water table generation
+  - tracked water-table consumption on normal builds; generation only during an
+    explicit opt-in refresh
   - `check_zscream_overlap.py`
   - hooks.json regeneration
   - optional sprite/hook validation

@@ -675,10 +675,10 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
     messages = scan_message_layout(root)
     if messages:
         manifest["messages"] = {
-            "description": "Expanded message system. Vanilla messages ($000-$18C) live in bank $0E of the dev ROM — yaze can edit these. Expanded messages ($18D+) live in bank $2F, owned by ASM. The hook at $0ED436 redirects message reads for expanded IDs. Yaze's message-write CLI can target expanded IDs if it knows the data region bounds.",
+            "description": "Expanded message system. Vanilla messages ($000-$18C) live in bank $0E of the dev ROM — yaze can edit these. Expanded messages ($18D+) live in bank $2F, owned by ASM. The hook at $0ED436 redirects message reads for expanded IDs. Direct editor or CLI writes to expanded IDs are not durable because the next ASM rebuild replaces bank $2F.",
             "editing_guidance": {
                 "vanilla_safe": "Message IDs $000-$18C can be edited in the dev ROM via yaze",
-                "expanded_asm_owned": "Message IDs $18D+ are in bank $2F; edit via Core/message.asm or z3ed message-write CLI",
+                "expanded_asm_owned": "Message IDs $18D+ are in ASM-owned bank $2F; edit Core/message.asm, rebuild with Scripts/Build/build_rom.sh 168, then reopen or reload Roms/oos168x.sfc for inspection. Do not edit the patched ROM directly.",
                 "hook_address": "$0ED436 (do not overwrite — asar patches this)",
             },
             **messages,

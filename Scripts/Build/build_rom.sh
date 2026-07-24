@@ -86,6 +86,7 @@ done
 
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 rom_dir="$repo_root/Roms"
+hooks_json="$rom_dir/hooks.json"
 feature_flags_path="$repo_root/Config/feature_flags.asm"
 cd "$repo_root"
 
@@ -97,6 +98,14 @@ water_restore_pending=0
 water_fill_backup=""
 water_runtime_backup=""
 water_patched_backup=""
+water_patched_existed=0
+water_symbols_backup=""
+water_symbols_existed=0
+water_mlb_backup=""
+water_mlb_existed=0
+water_hooks_backup=""
+water_hooks_existed=0
+hooks_tmp=""
 restore_flags() {
   if [[ "$flags_modified" != "1" ]]; then
     return 0
@@ -114,20 +123,34 @@ restore_flags() {
     echo "[*] Removed temporary feature flags: $feature_flags_path"
   fi
 }
+restore_water_output() {
+  local existed="$1"
+  local backup="$2"
+  local target="$3"
+  if [[ "$existed" == "1" ]]; then
+    cp -f "$backup" "$target"
+  else
+    rm -f "$target"
+  fi
+}
 restore_water_transaction() {
   if [[ "$water_restore_pending" != "1" ]]; then
     return 0
   fi
   cp -f "$water_fill_backup" "$repo_root/Dungeons/generated/water_fill_table.asm"
   cp -f "$water_runtime_backup" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
-  if [[ -n "$water_patched_backup" && -f "$water_patched_backup" ]]; then
-    cp -f "$water_patched_backup" "$patched_rom"
-  fi
-  echo "[*] Restored water includes after failed refresh." >&2
+  restore_water_output "$water_patched_existed" "$water_patched_backup" "$patched_rom"
+  restore_water_output "$water_symbols_existed" "$water_symbols_backup" "$symbols_path"
+  restore_water_output "$water_mlb_existed" "$water_mlb_backup" "$mlb_path"
+  restore_water_output "$water_hooks_existed" "$water_hooks_backup" "$hooks_json"
+  echo "[*] Restored water includes and patched ROM after failed refresh." >&2
 }
 cleanup() {
   restore_water_transaction
   restore_flags
+  if [[ -n "$hooks_tmp" && -f "$hooks_tmp" ]]; then
+    rm -f "$hooks_tmp"
+  fi
   if [[ -n "$water_tmp_dir" && -d "$water_tmp_dir" ]]; then
     rm -rf "$water_tmp_dir"
   fi
@@ -350,9 +373,10 @@ for required_room in 25 27; do
     exit 1
   fi
 done
-assemble_rom
 
 water_refresh_requested="${OOS_REFRESH_WATER_TABLES:-0}"
+water_table_rom=""
+water_table_rom_is_default=0
 if [[ -n "${OOS_WATER_FILL_TABLE_ROM:-}" || -n "${OOS_WATER_TABLE_ROM:-}" ]]; then
   water_refresh_requested=1
 fi
@@ -367,13 +391,54 @@ if [[ -n "${OOS_WATER_FILL_TABLE_ROM:-}" && -n "${OOS_WATER_TABLE_ROM:-}" &&
 fi
 
 if [[ "$water_refresh_requested" == "1" ]]; then
-  water_table_rom="${OOS_WATER_FILL_TABLE_ROM:-${OOS_WATER_TABLE_ROM:-$patched_rom}}"
-  if [[ ! -f "$water_table_rom" ]]; then
+  water_table_rom="${OOS_WATER_FILL_TABLE_ROM:-${OOS_WATER_TABLE_ROM:-}}"
+  if [[ -z "$water_table_rom" ]]; then
+    water_table_rom="$patched_rom"
+    water_table_rom_is_default=1
+  fi
+  if [[ "$water_table_rom_is_default" != "1" && ! -f "$water_table_rom" ]]; then
     echo "ERROR: Water-table authoring ROM not found: $water_table_rom" >&2
     exit 1
   fi
 
+  # Arm rollback before assemble_rom mutates the patched output. Every explicit
+  # refresh is one transaction spanning initial assembly, candidate generation,
+  # staged-table rebuild, and all later build checks.
   water_tmp_dir="$(mktemp -d "$rom_dir/.water_tables.XXXXXX")"
+  water_fill_backup="$water_tmp_dir/water_fill_table.original.asm"
+  water_runtime_backup="$water_tmp_dir/water_gate_runtime_tables.original.asm"
+  water_patched_backup="$water_tmp_dir/patched_rom.original.sfc"
+  water_symbols_backup="$water_tmp_dir/symbols.original.sym"
+  water_mlb_backup="$water_tmp_dir/symbols.original.mlb"
+  water_hooks_backup="$water_tmp_dir/hooks.original.json"
+  cp -f "$repo_root/Dungeons/generated/water_fill_table.asm" "$water_fill_backup"
+  cp -f "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm" "$water_runtime_backup"
+  if [[ -f "$patched_rom" ]]; then
+    cp -f "$patched_rom" "$water_patched_backup"
+    water_patched_existed=1
+  fi
+  if [[ -f "$symbols_path" ]]; then
+    cp -f "$symbols_path" "$water_symbols_backup"
+    water_symbols_existed=1
+  fi
+  if [[ -f "$mlb_path" ]]; then
+    cp -f "$mlb_path" "$water_mlb_backup"
+    water_mlb_existed=1
+  fi
+  if [[ -f "$hooks_json" ]]; then
+    cp -f "$hooks_json" "$water_hooks_backup"
+    water_hooks_existed=1
+  fi
+  water_restore_pending=1
+fi
+
+assemble_rom
+
+if [[ "$water_refresh_requested" == "1" ]]; then
+  if [[ ! -f "$water_table_rom" ]]; then
+    echo "ERROR: Water-table authoring ROM not found after initial assembly: $water_table_rom" >&2
+    exit 1
+  fi
   candidate_dir="$water_tmp_dir/candidate"
   generate_water_tables "$water_table_rom" "$candidate_dir"
 
@@ -386,14 +451,6 @@ if [[ "$water_refresh_requested" == "1" ]]; then
   fi
 
   if [[ "$water_tables_changed" == "1" ]]; then
-    water_fill_backup="$water_tmp_dir/water_fill_table.original.asm"
-    water_runtime_backup="$water_tmp_dir/water_gate_runtime_tables.original.asm"
-    water_patched_backup="$water_tmp_dir/patched_rom.original.sfc"
-    cp -f "$repo_root/Dungeons/generated/water_fill_table.asm" "$water_fill_backup"
-    cp -f "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm" "$water_runtime_backup"
-    cp -f "$patched_rom" "$water_patched_backup"
-    water_restore_pending=1
-
     cp -f "$candidate_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"
     cp -f "$candidate_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
     echo "[*] Water table candidates staged; rebuilding once from the base ROM..."
@@ -441,7 +498,10 @@ if [[ "${OOS_GENERATE_ANNOTATIONS:-0}" == "1" ]]; then
 fi
 
 # Run static analysis if hooks.json exists
-hooks_json="$repo_root/Roms/hooks.json"
+hooks_required=0
+if [[ "${OOS_GENERATE_HOOKS:-0}" == "1" || "${OOS_VALIDATE_HOOKS:-0}" == "1" ]]; then
+  hooks_required=1
+fi
 if [[ -f "$patched_rom" ]]; then
   regen_hooks=0
   if [[ ! -f "$hooks_json" || "${OOS_GENERATE_HOOKS:-0}" == "1" ]]; then
@@ -454,22 +514,52 @@ if [[ -f "$patched_rom" ]]; then
 
   if [[ "$regen_hooks" == "1" ]]; then
     echo "[*] Generating hooks.json..."
-    python3 "$repo_root/Scripts/Generate/generate_hooks_json.py" --root "$repo_root" --output "$hooks_json" --rom "$patched_rom" || true
+    hooks_tmp="$(mktemp "$rom_dir/.hooks.generated.XXXXXX")"
+    if ! python3 "$repo_root/Scripts/Generate/generate_hooks_json.py" \
+      --root "$repo_root" --output "$hooks_tmp" --rom "$patched_rom"; then
+      if [[ "$hooks_required" == "1" ]]; then
+        echo "ERROR: Required hooks.json generation failed." >&2
+        exit 1
+      fi
+      echo "[-] Warning: hooks.json generation failed; continuing without refreshed hook metadata." >&2
+    elif [[ ! -s "$hooks_tmp" ]]; then
+      if [[ "$hooks_required" == "1" ]]; then
+        echo "ERROR: Required hooks.json generation produced no output: $hooks_json" >&2
+        exit 1
+      fi
+      echo "[-] Warning: hooks.json generation produced no output; continuing without refreshed hook metadata." >&2
+    else
+      mv -f "$hooks_tmp" "$hooks_json"
+      hooks_tmp=""
+    fi
+    if [[ -n "$hooks_tmp" ]]; then
+      rm -f "$hooks_tmp"
+      hooks_tmp=""
+    fi
   fi
 fi
 
 # Optional validation: ensure hooks.json matches generator output
 # Set OOS_VALIDATE_ON_BUILD=1 to run hook + sprite checks non-fatally on every build.
 validate_on_build="${OOS_VALIDATE_ON_BUILD:-0}"
-if [[ "${OOS_VALIDATE_HOOKS:-0}" == "1" || "$validate_on_build" == "1" ]]; then
-  if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
-    if [[ "$validate_on_build" == "1" && "${OOS_VALIDATE_HOOKS:-0}" != "1" ]]; then
-      echo "[*] Validating hooks.json (non-fatal)..."
-    else
-      echo "[*] Validating hooks.json..."
+if [[ "${OOS_VALIDATE_HOOKS:-0}" == "1" ]]; then
+  if [[ ! -s "$hooks_json" || ! -f "$patched_rom" ]]; then
+    echo "ERROR: Required hooks.json validation inputs are missing or empty." >&2
+    exit 1
+  fi
+  echo "[*] Validating hooks.json..."
+  if ! python3 "$repo_root/Scripts/Validate/verify_hooks_json.py" \
+    --root "$repo_root" --rom "$patched_rom" --hooks "$hooks_json"; then
+    echo "ERROR: Required hooks.json validation failed." >&2
+    exit 1
+  fi
+elif [[ "$validate_on_build" == "1" ]]; then
+  if [[ -s "$hooks_json" && -f "$patched_rom" ]]; then
+    echo "[*] Validating hooks.json (non-fatal)..."
+    if ! python3 "$repo_root/Scripts/Validate/verify_hooks_json.py" \
+      --root "$repo_root" --rom "$patched_rom" --hooks "$hooks_json"; then
+      echo "[-] Warning: hooks.json validation failed; continuing because OOS_VALIDATE_ON_BUILD is non-fatal." >&2
     fi
-    python3 "$repo_root/Scripts/Validate/verify_hooks_json.py" \
-      --root "$repo_root" --rom "$patched_rom" --hooks "$hooks_json" || true
   else
     echo "[-] Warning: hooks.json or patched ROM missing; skipping hook validation."
   fi

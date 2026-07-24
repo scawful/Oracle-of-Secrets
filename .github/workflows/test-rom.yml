@@ -167,7 +167,8 @@ jobs:
             echo "Base ROM found"
           else
             echo "rom_available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Base ROM not found at ~/roms/alttp/oos168.sfc"
+            echo "::error::Base ROM not found at ~/roms/alttp/oos168.sfc"
+            exit 1
           fi
 
       - name: Build Patched ROM
@@ -177,7 +178,8 @@ jobs:
           cp ~/roms/alttp/oos168.sfc Roms/
 
           # Build patched ROM
-          ASAR_BIN="${ASAR_BIN:-asar}" ./Scripts/Build/build_rom.sh 168
+          OOS_GENERATE_HOOKS=1 OOS_VALIDATE_HOOKS=1 \
+            ASAR_BIN="${ASAR_BIN:-asar}" ./Scripts/Build/build_rom.sh 168
 
       - name: Run Boot Test
         if: steps.check-rom.outputs.rom_available == 'true'
@@ -188,7 +190,6 @@ jobs:
             Roms/oos168x.sfc
 
           echo "Boot test passed"
-        continue-on-error: true
 
       - name: Upload Test Logs
         if: always() && steps.check-rom.outputs.rom_available == 'true'
