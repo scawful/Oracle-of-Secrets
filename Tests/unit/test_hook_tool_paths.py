@@ -16,6 +16,15 @@ from Scripts.Validate.verify_hooks_json import _run_generator
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HOOK_GENERATOR = REPO_ROOT / "Scripts" / "Generate" / "generate_hooks_json.py"
 ROM_SIZE = 0x130000
+SUCCESSFUL_HOOK_GENERATOR = textwrap.dedent(
+    """\
+    import sys
+    from pathlib import Path
+
+    output = Path(sys.argv[sys.argv.index("--output") + 1])
+    output.write_text('{"hooks": []}\\n', encoding="utf-8")
+    """
+)
 
 
 def copy_repo_file(target_root: Path, relative: str) -> None:
@@ -41,7 +50,26 @@ class HookToolPathTest(unittest.TestCase):
         scripts = {
             "Scripts/Build/verify_feature_flags.py": "print('flags ok')\n",
             "Scripts/Build/check_zscream_overlap.py": "print('overlap ok')\n",
+            "Scripts/Build/set_feature_flags.py": textwrap.dedent(
+                """\
+                import sys
+                from pathlib import Path
+
+                output = Path(sys.argv[sys.argv.index("--output") + 1])
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_text("!ENABLE_FIXTURE = 1\\n", encoding="utf-8")
+                """
+            ),
             "Scripts/Generate/generate_hooks_json.py": generator_source,
+            "Scripts/Generate/generate_hack_manifest.py": textwrap.dedent(
+                """\
+                import sys
+                from pathlib import Path
+
+                output = Path(sys.argv[sys.argv.index("--output") + 1])
+                output.write_text('{"fixture": "manifest"}\\n', encoding="utf-8")
+                """
+            ),
             "Scripts/Validate/verify_hooks_json.py": verifier_source,
             "Scripts/Validate/validate_sprite_registry.py": "print('sprites ok')\n",
         }
@@ -60,7 +88,14 @@ class HookToolPathTest(unittest.TestCase):
         return repo, fake_asar
 
     def run_fixture_build(
-        self, root: Path, repo: Path, fake_asar: Path, **overrides: str
+        self,
+        root: Path,
+        repo: Path,
+        fake_asar: Path,
+        *,
+        version: str = "168",
+        extra_args: tuple[str, ...] = (),
+        **overrides: str,
     ) -> subprocess.CompletedProcess[str]:
         env = os.environ.copy()
         env.update(
@@ -74,8 +109,9 @@ class HookToolPathTest(unittest.TestCase):
         return subprocess.run(
             [
                 str(repo / "Scripts/Build/build_rom.sh"),
-                "168",
+                version,
                 str(fake_asar),
+                *extra_args,
                 "--no-symbols",
                 "--skip-tests",
             ],
@@ -247,6 +283,221 @@ class HookToolPathTest(unittest.TestCase):
                     self.assertIn(
                         "Warning: hooks.json validation failed", combined_output
                     )
+
+    def test_manifest_generation_failure_preserves_tracked_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo, fake_asar = self.prepare_build_fixture(
+                root,
+                generator_source=SUCCESSFUL_HOOK_GENERATOR,
+                verifier_source="print('hooks valid')\n",
+            )
+            manifest_path = repo / "Roms" / "hack_manifest.json"
+            original_manifest = '{"fixture": "preexisting"}\n'
+            manifest_path.write_text(original_manifest, encoding="utf-8")
+            (repo / "Scripts/Generate/generate_hack_manifest.py").write_text(
+                "import sys\nsys.exit(31)\n",
+                encoding="utf-8",
+            )
+            reload_marker = root / "reload-ran"
+            mesen_client = repo / "Scripts/Mesen2/mesen2_client.py"
+            mesen_client.parent.mkdir(parents=True, exist_ok=True)
+            mesen_client.write_text(
+                "from pathlib import Path\n"
+                f"Path({str(reload_marker)!r}).write_text('ran')\n",
+                encoding="utf-8",
+            )
+
+            result = self.run_fixture_build(
+                root,
+                repo,
+                fake_asar,
+                extra_args=("--reload",),
+            )
+
+            combined_output = result.stdout + result.stderr
+            self.assertNotEqual(result.returncode, 0, combined_output)
+            self.assertIn(
+                "ERROR: Required hack manifest generation failed.",
+                combined_output,
+            )
+            self.assertEqual(
+                manifest_path.read_text(encoding="utf-8"),
+                original_manifest,
+            )
+            self.assertFalse(reload_marker.exists())
+
+    def test_external_base_rom_preserves_portable_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo, fake_asar = self.prepare_build_fixture(
+                root,
+                generator_source=SUCCESSFUL_HOOK_GENERATOR,
+                verifier_source="print('hooks valid')\n",
+            )
+            external_base = root / "portable-bundle-rom.sfc"
+            external_base.write_bytes((repo / "Roms/oos168.sfc").read_bytes())
+            manifest_path = repo / "Roms/hack_manifest.json"
+            portable_manifest = '{"rom": {"path": "rom"}}\n'
+            manifest_path.write_text(portable_manifest, encoding="utf-8")
+
+            result = self.run_fixture_build(
+                root,
+                repo,
+                fake_asar,
+                OOS_BASE_ROM=str(external_base),
+            )
+
+            combined_output = result.stdout + result.stderr
+            self.assertEqual(result.returncode, 0, combined_output)
+            self.assertIn(
+                "Preserving existing hack manifest because the build used a "
+                "non-canonical base ROM.",
+                combined_output,
+            )
+            self.assertEqual(
+                manifest_path.read_text(encoding="utf-8"),
+                portable_manifest,
+            )
+
+    def test_temporary_feature_flags_do_not_replace_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo, fake_asar = self.prepare_build_fixture(
+                root,
+                generator_source=SUCCESSFUL_HOOK_GENERATOR,
+                verifier_source="print('hooks valid')\n",
+            )
+            manifest_path = repo / "Roms/hack_manifest.json"
+            original_manifest = '{"fixture": "default-flags"}\n'
+            manifest_path.write_text(original_manifest, encoding="utf-8")
+
+            result = self.run_fixture_build(
+                root,
+                repo,
+                fake_asar,
+                extra_args=("--enable", "fixture"),
+            )
+
+            combined_output = result.stdout + result.stderr
+            self.assertEqual(result.returncode, 0, combined_output)
+            self.assertIn(
+                "Preserving existing hack manifest because feature-flag "
+                "overrides are temporary.",
+                combined_output,
+            )
+            self.assertEqual(
+                manifest_path.read_text(encoding="utf-8"),
+                original_manifest,
+            )
+            self.assertFalse((repo / "Config/feature_flags.asm").exists())
+
+    def test_non_project_rom_version_does_not_replace_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo, fake_asar = self.prepare_build_fixture(
+                root,
+                generator_source=SUCCESSFUL_HOOK_GENERATOR,
+                verifier_source="print('hooks valid')\n",
+            )
+            (repo / "Roms/oos167.sfc").write_bytes(
+                (repo / "Roms/oos168.sfc").read_bytes()
+            )
+            manifest_path = repo / "Roms/hack_manifest.json"
+            original_manifest = '{"fixture": "version-168"}\n'
+            manifest_path.write_text(original_manifest, encoding="utf-8")
+
+            result = self.run_fixture_build(
+                root,
+                repo,
+                fake_asar,
+                version="167",
+            )
+
+            combined_output = result.stdout + result.stderr
+            self.assertEqual(result.returncode, 0, combined_output)
+            self.assertIn(
+                "Preserving existing hack manifest because build version 167 "
+                "is not the project ROM version 168.",
+                combined_output,
+            )
+            self.assertEqual(
+                manifest_path.read_text(encoding="utf-8"),
+                original_manifest,
+            )
+
+    def test_persisted_feature_flags_remove_temporary_backup(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo, fake_asar = self.prepare_build_fixture(
+                root,
+                generator_source=SUCCESSFUL_HOOK_GENERATOR,
+                verifier_source="print('hooks valid')\n",
+            )
+            feature_flags = repo / "Config/feature_flags.asm"
+            feature_flags.parent.mkdir(parents=True)
+            feature_flags.write_text("!ENABLE_FIXTURE = 0\n", encoding="utf-8")
+
+            result = self.run_fixture_build(
+                root,
+                repo,
+                fake_asar,
+                extra_args=("--enable", "fixture", "--persist-flags"),
+            )
+
+            combined_output = result.stdout + result.stderr
+            self.assertEqual(result.returncode, 0, combined_output)
+            self.assertEqual(
+                feature_flags.read_text(encoding="utf-8"),
+                "!ENABLE_FIXTURE = 1\n",
+            )
+            self.assertEqual(
+                list((repo / "Roms").glob(".feature_flags_backup.*")),
+                [],
+            )
+
+    def test_reload_failure_happens_after_manifest_commit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            repo, fake_asar = self.prepare_build_fixture(
+                root,
+                generator_source=SUCCESSFUL_HOOK_GENERATOR,
+                verifier_source="print('hooks valid')\n",
+            )
+            manifest_path = repo / "Roms/hack_manifest.json"
+            manifest_path.write_text(
+                '{"fixture": "preexisting"}\n',
+                encoding="utf-8",
+            )
+            mesen_client = repo / "Scripts/Mesen2/mesen2_client.py"
+            mesen_client.parent.mkdir(parents=True, exist_ok=True)
+            mesen_client.write_text(
+                "import sys\n"
+                "from pathlib import Path\n"
+                "root = Path(__file__).resolve().parents[2]\n"
+                "manifest = (root / 'Roms/hack_manifest.json').read_text()\n"
+                "print(f'reload observed: {manifest.strip()}')\n"
+                "sys.exit(44)\n",
+                encoding="utf-8",
+            )
+
+            result = self.run_fixture_build(
+                root,
+                repo,
+                fake_asar,
+                extra_args=("--reload",),
+            )
+
+            combined_output = result.stdout + result.stderr
+            self.assertEqual(result.returncode, 44, combined_output)
+            self.assertIn(
+                'reload observed: {"fixture": "manifest"}',
+                combined_output,
+            )
+            self.assertEqual(
+                manifest_path.read_text(encoding="utf-8"),
+                '{"fixture": "manifest"}\n',
+            )
 
 
 if __name__ == "__main__":

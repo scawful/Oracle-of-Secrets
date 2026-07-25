@@ -24,7 +24,7 @@ This repo has accumulated scripts over time. The goal is to keep a small “gold
 
 ## Generation / Validation
 - Hook metadata: `Scripts/Generate/generate_hooks_json.py`, `Scripts/Validate/verify_hooks_json.py`
-- Required tracked yaze manifest: `python3 Scripts/Generate/generate_hack_manifest.py --rom Roms/oos168.sfc`
+- Required tracked yaze manifest (also refreshed atomically by canonical builds): `python3 Scripts/Generate/generate_hack_manifest.py --rom Roms/oos168.sfc`
 - Yaze project registry outputs (iOS/Mac Oracle dashboards): `Scripts/Analysis/extract_resource_labels.py` → `Docs/Dev/Planning/oracle_resource_labels.json`
 - Yaze story events export (iOS/Mac Oracle dashboards): `Scripts/Analysis/extract_story_events.py` → `Docs/Dev/Planning/story_events.json`
 - Symbol export: `Scripts/Generate/export_symbols.py`

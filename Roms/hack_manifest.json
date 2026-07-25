@@ -1,5 +1,5 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "hack_name": "Oracle of Secrets",
   "hack_version": "dev",
   "generator": "generate_hack_manifest.py",
@@ -24,6 +24,101 @@
     "size": 2097152,
     "dev_rom_sha1": "eaf2ce3d28afa5375adf9c754534a7a98bf06822",
     "dev_rom_size": 2097152
+  },
+  "dungeon_stream_regions": {
+    "objects": {
+      "pointer_table": "0x1F8000",
+      "pointer_count": 296,
+      "pointer_encoding": "long24",
+      "strategy": "copy_on_write",
+      "data_regions": [
+        {
+          "start": "0x0A8000",
+          "end": "0x0AB730"
+        },
+        {
+          "start": "0x1F878A",
+          "end": "0x208000"
+        },
+        {
+          "start": "0x03EB90",
+          "end": "0x048000"
+        },
+        {
+          "start": "0x278000",
+          "end": "0x288000"
+        },
+        {
+          "start": "0x298000",
+          "end": "0x2A8000"
+        }
+      ],
+      "allocation_regions": [
+        {
+          "start": "0x298000",
+          "end": "0x2A8000"
+        }
+      ]
+    },
+    "sprites": {
+      "pointer_table": "0x09D2B2",
+      "pointer_count": 296,
+      "pointer_encoding": "bank16",
+      "pointer_bank": "0x09",
+      "strategy": "copy_on_write",
+      "data_regions": [
+        {
+          "start": "0x09D502",
+          "end": "0x09EC9F"
+        }
+      ],
+      "allocation_regions": [
+        {
+          "start": "0x09D502",
+          "end": "0x09EC9F"
+        }
+      ]
+    },
+    "pot_items": {
+      "pointer_table": "0x01DB69",
+      "pointer_count": 296,
+      "pointer_encoding": "bank16",
+      "pointer_bank": "0x01",
+      "strategy": "repack_all",
+      "data_regions": [
+        {
+          "start": "0x01DDE7",
+          "end": "0x01E6B2"
+        }
+      ],
+      "allocation_regions": [
+        {
+          "start": "0x01DDE7",
+          "end": "0x01E6B2"
+        }
+      ]
+    }
+  },
+  "editor_managed_regions": {
+    "description": "Exact yaze-owned dungeon metadata and custom-collision ranges. The WaterFill tail beginning at $25:E000 remains ASM-owned.",
+    "regions": [
+      {
+        "start": "0x07F61D",
+        "end": "0x07F86D"
+      },
+      {
+        "start": "0x228280",
+        "end": "0x2292B0"
+      },
+      {
+        "start": "0x258090",
+        "end": "0x258408"
+      },
+      {
+        "start": "0x258450",
+        "end": "0x25E000"
+      }
+    ]
   },
   "protected_regions": {
     "description": "Hook addresses within vanilla ROM banks ($00-$1D). Asar patches these on every build, so yaze edits at these addresses are silently overwritten. Yaze should either skip these during save or warn the user.",
@@ -2805,8 +2900,8 @@
         "module": "Masks"
       },
       {
-        "start": "0x1E7F21",
-        "end": "0x1E7F25",
+        "start": "0x1EFF21",
+        "end": "0x1EFF25",
         "size": 4,
         "hook_count": 1,
         "module": "Sprites"
