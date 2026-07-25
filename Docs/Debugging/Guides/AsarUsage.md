@@ -25,7 +25,7 @@ The `Roms/` directory is ignored by git, so you don't have to worry about commit
 Use the bump script to create the next clean ROM and copy save states/SRMs:
 
 ```sh
-./scripts/rom_bump.sh 168
+Scripts/Build/rom_bump.sh 168
 ```
 
 This creates `Roms/oos169.sfc` (read-only) and copies `oos168x.*` save files to `oos169x.*`.
@@ -35,7 +35,7 @@ This creates `Roms/oos169.sfc` (read-only) and copies `oos168x.*` save files to 
 Use the build script to archive the previous patched ROM and produce a fresh patched build:
 
 ```sh
-./scripts/build_rom.sh 168
+Scripts/Build/build_rom.sh 168
 ```
 
 What it does:
@@ -43,9 +43,12 @@ What it does:
 2. Copies `Roms/oos168.sfc` → `Roms/oos168x.sfc` (base ROM to patched output).
 3. Runs `asar Oracle_main.asm Roms/oos168x.sfc`.
 
-## Windows (Legacy)
+## Windows
 
-`build.bat` is still available but not maintained. Prefer the macOS/Linux scripts above for the current workflow.
+The obsolete `build.bat` wrapper has been removed. There is no maintained native
+Windows wrapper; use `Scripts/Build/build_rom.sh` from WSL with `asar` available
+in that environment, or follow the manual copy-and-Asar steps below in a
+compatible shell.
 
 ## Manual Build Process (macOS/Linux)
 

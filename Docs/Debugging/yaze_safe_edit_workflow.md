@@ -2,7 +2,10 @@
 
 A step-by-step workflow for safely editing dungeon room data (objects, sprites, collision) in yaze, with backup, diff, validation, and rollback at each stage.
 
-**Use this workflow any time you edit the *base ROM* that `scripts/build_rom.sh` patches** (default: `Roms/oos<ver>.sfc`; override with `OOS_BASE_ROM`). ASM-only changes (which go through `build_rom.sh`) don't need this.
+**Use this workflow any time you edit the *base ROM* that
+`Scripts/Build/build_rom.sh` patches** (default: `Roms/oos<ver>.sfc`;
+override with `OOS_BASE_ROM`). ASM-only changes that go through the build
+script do not need a separate yaze save.
 
 ---
 
@@ -14,12 +17,13 @@ Before opening yaze, create a snapshot of the current ROM state.
 # Copy the base ROM as a pre-edit baseline (example: 168)
 cp Roms/oos168.sfc Roms/oos168_pre_edit.sfc
 
-# Validate the baseline ROM
-../yaze/scripts/z3ed rom-doctor --rom Roms/oos168.sfc
+# Record and validate the baseline ROM
+shasum -a 256 Roms/oos168.sfc
+z3ed rom-doctor --rom Roms/oos168.sfc --format json
 
 # Optional: validate dungeon data for the rooms you plan to edit
-../yaze/scripts/z3ed dungeon-doctor --room 0xA8 --rom Roms/oos168.sfc
-../yaze/scripts/z3ed dungeon-doctor --room 0xB8 --rom Roms/oos168.sfc
+z3ed dungeon-doctor --room 0xA8 --rom Roms/oos168.sfc
+z3ed dungeon-doctor --room 0xB8 --rom Roms/oos168.sfc
 ```
 
 Keep validation output in `/tmp` (do not commit logs/dumps).
@@ -28,7 +32,9 @@ Keep validation output in `/tmp` (do not commit logs/dumps).
 
 ## 2. Making Edits in Yaze
 
-Open yaze, load the base ROM (example: `Roms/oos168.sfc`), and make your edits (room objects, sprites, collision tiles, etc.).
+Open `Oracle-of-Secrets.yaze` in yaze and confirm its editable ROM resolves to
+`Roms/oos168.sfc`. Never use `Roms/oos168x.sfc` as an edit target. Make only
+the intended room edits (objects, sprites, collision tiles, etc.).
 
 **Rules while editing:**
 
@@ -47,7 +53,7 @@ After saving in yaze, validate your changes before rebuilding.
 
 ```bash
 # Compare against the pre-edit baseline
-../yaze/scripts/z3ed rom-compare --rom Roms/oos168.sfc --baseline Roms/oos168_pre_edit.sfc
+z3ed rom-compare --rom Roms/oos168.sfc --baseline Roms/oos168_pre_edit.sfc
 ```
 
 **Check that:**
@@ -59,11 +65,11 @@ After saving in yaze, validate your changes before rebuilding.
 
 ```bash
 # Validate the rooms you edited
-../yaze/scripts/z3ed dungeon-doctor --room 0xA8 --rom Roms/oos168.sfc
-../yaze/scripts/z3ed dungeon-doctor --room 0xB8 --rom Roms/oos168.sfc
+z3ed dungeon-doctor --room 0xA8 --rom Roms/oos168.sfc
+z3ed dungeon-doctor --room 0xB8 --rom Roms/oos168.sfc
 
 # Full ROM integrity check
-../yaze/scripts/z3ed rom-doctor --rom Roms/oos168.sfc
+z3ed rom-doctor --rom Roms/oos168.sfc --format json
 ```
 
 **Check for:**
@@ -75,29 +81,38 @@ After saving in yaze, validate your changes before rebuilding.
 
 ```bash
 # If you changed tileset-related data
-../yaze/scripts/z3ed graphics-doctor --rom Roms/oos168.sfc
+z3ed graphics-doctor --rom Roms/oos168.sfc
 ```
 
 ---
 
 ## 4. Rebuild with ASM Patches
 
-`scripts/build_rom.sh` copies a base ROM to `Roms/oos<ver>x.sfc` and then applies ASM patches.
+`Scripts/Build/build_rom.sh` copies a base ROM to `Roms/oos<ver>x.sfc` and then applies ASM patches.
 
 Recommended workflow:
-- Keep `Roms/oos<ver>.sfc` as your clean baseline.
-- Use `Roms/oos<ver>.sfc` as your editable base (this is the default base ROM when present).
+- Keep `Roms/oos<ver>.sfc` as your trusted editable base.
+- Treat `Roms/oos<ver>x.sfc` as disposable build output for emulator testing only.
 
 Rebuild (example: 168):
 ```bash
-./scripts/build_rom.sh 168
+Scripts/Build/build_rom.sh 168
 ```
 
-If you *accidentally* edited `Roms/oos168x.sfc` (the build output) instead of the base ROM, you can persist the edits by copying them into the base and rebuilding:
+If you accidentally edited `Roms/oos168x.sfc`, do **not** copy it over the
+editable base. Restore the trusted base or pre-edit backup, reapply only the
+intended scoped edit through yaze (or a reviewed `z3ed` write command), then
+validate and rebuild:
+
 ```bash
-cp Roms/oos168x.sfc Roms/oos168.sfc
-./scripts/build_rom.sh 168
+cp Roms/oos168_pre_edit.sfc Roms/oos168.sfc
+# Reapply only the intended edit, then validate the affected room(s).
+z3ed dungeon-doctor --room 0xA8 --rom Roms/oos168.sfc
+Scripts/Build/build_rom.sh 168
 ```
+
+If no trusted base or backup exists, stop rather than trying to recover the
+editable ROM from the patched output.
 
 ---
 
@@ -106,12 +121,14 @@ cp Roms/oos168x.sfc Roms/oos168.sfc
 After rebuilding, test in the emulator:
 
 ```bash
-# Launch the ROM
-~/src/tools/emu-launch -m Roms/oos168x.sfc
+# Launch an isolated Mesen2 instance with the patched output
+Scripts/Mesen2/mesen2_launch_instance.sh \
+  --instance oos-yaze-verify --owner you --source manual \
+  --rom Roms/oos168x.sfc
 
-# Or via Mesen2 with debug overlays
-python3 scripts/mesen2_client.py ping
-python3 scripts/mesen2_client.py run-state
+# Verify the attached instance
+python3 Scripts/Mesen2/mesen2_client.py --instance oos-yaze-verify health
+python3 Scripts/Mesen2/mesen2_client.py --instance oos-yaze-verify run-state
 ```
 
 **Test checklist:**
@@ -133,7 +150,7 @@ If something went wrong:
 cp Roms/oos168_pre_edit.sfc Roms/oos168.sfc
 
 # Rebuild clean
-./scripts/build_rom.sh 168
+Scripts/Build/build_rom.sh 168
 ```
 
 ---
@@ -146,7 +163,7 @@ cp Roms/oos168_pre_edit.sfc Roms/oos168.sfc
 | Global table saves affect other rooms | Use `rom-compare` to verify diff is scoped to target rooms only. Prefer "save room" over "save all" in yaze. |
 | OOS relocated tables cause graphics glitches | Check yaze project config for graphics pointer overrides matching OOS's custom table locations. |
 | Collision editor doesn't show custom tile types | Stop tiles (B7-BA), switch corners (D0-D3) exist as collision data but may display as unknown in yaze's UI. Verify via z3ed or runtime testing. |
-| Tool accidentally writes to oos168x.sfc | All edits and writes must target `oos168.sfc` (the base ROM). The build script's GM-005 guard will detect and block builds when `oos168x.sfc` diverges from the base unexpectedly. |
+| Tool accidentally writes to oos168x.sfc | Restore a trusted base and reapply the scoped edit. GM-005 checks the custom-collision region, but it is not a general recovery mechanism for output-only edits. |
 
 ---
 
@@ -156,8 +173,8 @@ cp Roms/oos168_pre_edit.sfc Roms/oos168.sfc
 # Full safe-edit cycle (one-liner summary)
 cp Roms/oos168.sfc Roms/oos168_pre_edit.sfc          # 1. Backup
 # ... edit in yaze ...
-../yaze/scripts/z3ed rom-compare --rom Roms/oos168.sfc \
+z3ed rom-compare --rom Roms/oos168.sfc \
   --baseline Roms/oos168_pre_edit.sfc                   # 3. Diff
-../yaze/scripts/z3ed dungeon-doctor --room 0xA8 --rom Roms/oos168.sfc  # 3. Validate
-./scripts/build_rom.sh 168                                # 4. Rebuild
+z3ed dungeon-doctor --room 0xA8 --rom Roms/oos168.sfc  # 3. Validate
+Scripts/Build/build_rom.sh 168                          # 4. Rebuild
 ```

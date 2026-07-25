@@ -552,7 +552,7 @@ LoadOverworldSprites_Interupt:
    ```
 
 3. **Check Build Order:**
-   In `Oracle_main.asm` or `Meadow_main.asm`:
+   In `Oracle_main.asm`:
    ```asm
    incsrc "Core/symbols.asm"        ; Define symbols first
    incsrc "Overworld/ZSCustomOverworld.asm"  ; ZScream next

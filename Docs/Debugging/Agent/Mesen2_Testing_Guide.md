@@ -9,7 +9,7 @@
 
 This guide enables AI agents to interact with the Oracle of Secrets ROM running in the **Mesen2-OoS** fork via the **Unix Domain Socket API**.
 
-> **Note**: Legacy Lua/file-bridge stacks are deprecated. Use the Python `mesen2_client.py` or the `MesenBridge` in `scripts/mesen2_client_lib/bridge.py`.
+> **Note**: Legacy Lua/file-bridge stacks are deprecated. Use the Python `mesen2_client.py` or the `MesenBridge` in `Scripts/Mesen2/mesen2_client_lib/bridge.py`.
 
 ## Architecture
 
@@ -28,25 +28,25 @@ Mesen2-OoS runs a custom C++ `SocketServer` on a separate thread, listening on `
 
 ```bash
 # 1. Launch Mesen2 with a source-tagged window title
-./scripts/mesen2_launch_instance.sh --instance agent-demo --owner claude \
+Scripts/Mesen2/mesen2_launch_instance.sh --instance agent-demo --owner claude \
   --title "Claude" --source manual
 
 # Title shows ACTIVE + source tag for clarity.
 
 # 2. Interact via Python Client
-python3 scripts/mesen2_client.py state --json
-python3 scripts/mesen2_client.py press A
+python3 Scripts/Mesen2/mesen2_client.py state --json
+python3 Scripts/Mesen2/mesen2_client.py press A
 ```
 
 ### Socket API Quick Commands (Preferred)
 
 ```bash
-python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock state --json
-python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock diagnostics --json
-python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock press A --frames 5
-python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock load 2
-python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock save 2
-python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock breakpoint --add 0x0080C9:exec
+python3 Scripts/Mesen2/mesen2_client.py --socket /tmp/mesen2-<pid>.sock state --json
+python3 Scripts/Mesen2/mesen2_client.py --socket /tmp/mesen2-<pid>.sock diagnostics --json
+python3 Scripts/Mesen2/mesen2_client.py --socket /tmp/mesen2-<pid>.sock press A --frames 5
+python3 Scripts/Mesen2/mesen2_client.py --socket /tmp/mesen2-<pid>.sock load 2
+python3 Scripts/Mesen2/mesen2_client.py --socket /tmp/mesen2-<pid>.sock save 2
+python3 Scripts/Mesen2/mesen2_client.py --socket /tmp/mesen2-<pid>.sock breakpoint --add 0x0080C9:exec
 ```
 
 Direct memory reads/writes (raw bridge):
@@ -64,7 +64,7 @@ PY
 - **Source tag is mandatory**: use `--source <label>` or set `MESEN2_AGENT_SOURCE`.
 - **Active instances are highlighted**: window title is prefixed with `ACTIVE` and includes `[src:<label>]`.
 - **Close cleanly** (no force-kill):  
-  `./scripts/mesen2_client.py close --instance <name>`
+  `Scripts/Mesen2/mesen2_client.py close --instance <name>`
   - If marked active: add `--confirm`
   - `--force` only increases the graceful wait; it never sends kill signals.
 
@@ -72,10 +72,10 @@ PY
 
 ```bash
 # 1. Start a headless Mesen2 OOS instance
-./scripts/mesen2_launch_instance.sh --headless --instance agent-headless --source ci --owner agent
+Scripts/Mesen2/mesen2_launch_instance.sh --headless --instance agent-headless --source ci --owner agent
 
 # 2. Interact via socket
-python3 scripts/mesen2_client.py --instance agent-headless state --json
+python3 Scripts/Mesen2/mesen2_client.py --instance agent-headless state --json
 ```
 
 ## Key Memory Addresses
@@ -134,41 +134,41 @@ Else (0x00 or 0x01):
 ### L/R Swap Test
 ```bash
 # 1. Ensure both items are present
-python3 scripts/mesen2_client.py mem-read 0x7EF342 --len 1 --json   # Expect 0x02 in bytes
+python3 Scripts/Mesen2/mesen2_client.py mem-read 0x7EF342 --len 1 --json   # Expect 0x02 in bytes
 
 # 2. Verify toggle by polling the active item
 # First L/R press: 0x00 → 0x02 (goldstar)
 # Second press:    0x02 → 0x01 (hookshot)
 # Third press:     0x01 → 0x02 (goldstar)
-python3 scripts/mesen2_client.py mem-read 0x7E0739 --len 1 --json
-python3 scripts/mesen2_client.py press l --frames 5
-python3 scripts/mesen2_client.py mem-read 0x7E0739 --len 1 --json
-python3 scripts/mesen2_client.py press r --frames 5
-python3 scripts/mesen2_client.py mem-read 0x7E0739 --len 1 --json
+python3 Scripts/Mesen2/mesen2_client.py mem-read 0x7E0739 --len 1 --json
+python3 Scripts/Mesen2/mesen2_client.py press l --frames 5
+python3 Scripts/Mesen2/mesen2_client.py mem-read 0x7E0739 --len 1 --json
+python3 Scripts/Mesen2/mesen2_client.py press r --frames 5
+python3 Scripts/Mesen2/mesen2_client.py mem-read 0x7E0739 --len 1 --json
 ```
 
 ### Menu Navigation Test
 ```bash
 # Check menu cursor / state
-python3 scripts/mesen2_client.py mem-read 0x7E0202 --len 2 --json
+python3 Scripts/Mesen2/mesen2_client.py mem-read 0x7E0202 --len 2 --json
 ```
 
 ### Save State Workflow (Preferred)
 ```bash
 # Load a known state from the repo library (manifest-backed)
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-load baseline_1
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py state --json
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-load baseline_1
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py state --json
 ```
 
 ### Agent Brain (B008 Input Correction)
 ```bash
 # Calibrate input correction (prints on/off/unknown)
-python3 scripts/mesen2_client.py brain-calibrate
+python3 Scripts/Mesen2/mesen2_client.py brain-calibrate
 
 # Smart save with correction override
-python3 scripts/mesen2_client.py smart-save 3 --b008-mode auto
-python3 scripts/mesen2_client.py smart-save 3 --b008-mode on
-python3 scripts/mesen2_client.py smart-save 3 --b008-mode off
+python3 Scripts/Mesen2/mesen2_client.py smart-save 3 --b008-mode auto
+python3 Scripts/Mesen2/mesen2_client.py smart-save 3 --b008-mode on
+python3 Scripts/Mesen2/mesen2_client.py smart-save 3 --b008-mode off
 ```
 
 If calibration returns `unknown`, you are likely not in gameplay or no movement was detected.
@@ -176,39 +176,39 @@ If calibration returns `unknown`, you are likely not in gameplay or no movement 
 ### Runtime Reinit (Stale Cache Fixes)
 ```bash
 # Queue reinit targets (comma-separated)
-python3 scripts/mesen2_client.py lua "if DebugBridge and DebugBridge.reinit then DebugBridge.reinit('dialog,sprites,overlays') end"
+python3 Scripts/Mesen2/mesen2_client.py lua "if DebugBridge and DebugBridge.reinit then DebugBridge.reinit('dialog,sprites,overlays') end"
 ```
 
 ### Agent-Friendly CLI (JSON Output)
 
 ```bash
-./scripts/mesen2_client.py agent health
-./scripts/mesen2_client.py agent state --pretty
-./scripts/mesen2_client.py agent snapshot
+Scripts/Mesen2/mesen2_client.py agent health
+Scripts/Mesen2/mesen2_client.py agent state --pretty
+Scripts/Mesen2/mesen2_client.py agent snapshot
 ```
 
 ### Multi-Instance Bridges
 
 ```bash
 # Launch a named isolated instance (recommended)
-./scripts/mesen2_launch_instance.sh --instance crashlab --owner you --source manual
+Scripts/Mesen2/mesen2_launch_instance.sh --instance crashlab --owner you --source manual
 
 # Attach by instance name
-python3 scripts/mesen2_client.py --instance crashlab health
+python3 Scripts/Mesen2/mesen2_client.py --instance crashlab health
 ```
 
 ### Window Management (yabai)
 
 ```bash
 # Float Mesen windows + tool panes
-./scripts/yabai_mesen_rules.sh apply float
+Scripts/yabai_mesen_rules.sh apply float
 
 # Send Mesen behind or bring to front
-./scripts/yabai_mesen_window.sh toggle
+Scripts/yabai_mesen_window.sh toggle
 
 # Minimize/restore all Mesen windows
-./scripts/yabai_mesen_window.sh minimize
-./scripts/yabai_mesen_window.sh restore
+Scripts/yabai_mesen_window.sh minimize
+Scripts/yabai_mesen_window.sh restore
 ```
 
 ## Save States (Current)
@@ -216,17 +216,17 @@ python3 scripts/mesen2_client.py --instance crashlab health
 Some older docs refer to “slot packs”. The current supported path is the socket client + manifest-backed state library:
 
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py library
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-save "my repro seed" -t repro -t overworld
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-load <state_id>
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py library
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-save "my repro seed" -t repro -t overworld
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-load <state_id>
 ```
 
 Direct slot/file helpers (when you do not want to touch the library):
 
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py save 5
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py load 5
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py screenshot /tmp/oos.png
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py save 5
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py load 5
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py screenshot /tmp/oos.png
 ```
 
 ## Input Injection
@@ -235,15 +235,15 @@ The bridge supports automated button presses via the `press` command:
 
 ```bash
 # Single button press (default 5 frames ≈ 83ms)
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py press A
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py press A
 
 # Button press with custom frame count
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py press START 1      # Quick tap
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py press A 30         # Half second hold
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py press START 1      # Quick tap
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py press A 30         # Half second hold
 
 # Combined buttons
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py press UP+A 10      # Press Up and A together
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py press L+R+START 5  # Soft reset combo
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py press UP+A 10      # Press Up and A together
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py press L+R+START 5  # Soft reset combo
 ```
 
 **Available Buttons:**
@@ -271,17 +271,17 @@ yabai -m rule --add app="Mesen" manage=off grid=6:6:4:0:2:3
 
 ### Background/Foreground Toggle (yabai)
 
-Use `scripts/yabai_mesen_window.sh` to push Mesen behind other windows or bring it forward.
+Use `Scripts/yabai_mesen_window.sh` to push Mesen behind other windows or bring it forward.
 
 ```bash
 # Toggle Mesen between background (layer below) and normal
-./scripts/yabai_mesen_window.sh toggle
+Scripts/yabai_mesen_window.sh toggle
 
 # Force background
-./scripts/yabai_mesen_window.sh hide
+Scripts/yabai_mesen_window.sh hide
 
 # Bring to front
-./scripts/yabai_mesen_window.sh show
+Scripts/yabai_mesen_window.sh show
 ```
 
 ### Scratch Space Stash (yabai)
@@ -290,35 +290,35 @@ Send Mesen to a dedicated space for background runs, and bring it back later.
 
 ```bash
 # Stash to space 8 (set SCRATCH_SPACE to avoid typing)
-SCRATCH_SPACE=8 ./scripts/yabai_mesen_window.sh stash
+SCRATCH_SPACE=8 Scripts/yabai_mesen_window.sh stash
 
 # Toggle between scratch space and the previous space
-SCRATCH_SPACE=8 ./scripts/yabai_mesen_window.sh toggle-space
+SCRATCH_SPACE=8 Scripts/yabai_mesen_window.sh toggle-space
 ```
 
 ### Auto background on launch, foreground on test start
 
 ```bash
 # Launch Mesen in background layer
-./scripts/mesen2_launch_instance.sh --instance bg-run --owner you --source manual
-./scripts/yabai_mesen_window.sh hide
+Scripts/Mesen2/mesen2_launch_instance.sh --instance bg-run --owner you --source manual
+Scripts/yabai_mesen_window.sh hide
 
 # Launch and stash to a specific space
-./scripts/mesen2_launch_instance.sh --instance scratch-run --owner you --source manual
-SCRATCH_SPACE=8 ./scripts/yabai_mesen_window.sh stash
+Scripts/Mesen2/mesen2_launch_instance.sh --instance scratch-run --owner you --source manual
+SCRATCH_SPACE=8 Scripts/yabai_mesen_window.sh stash
 
 # Disable auto-focus at test start
-MESEN_AUTO_FOCUS=0 ./scripts/test_runner.py tests/*.json
+MESEN_AUTO_FOCUS=0 Scripts/Validate/test_runner.py Tests/*.json
 ```
 
 Optional skhd bindings:
 
 ```bash
 # Toggle Mesen window layer
-alt - m : /Users/scawful/src/hobby/oracle-of-secrets/scripts/yabai_mesen_window.sh toggle
+alt - m : Scripts/yabai_mesen_window.sh toggle
 
 # Toggle Mesen between current space and scratch space 8
-alt - shift - m : SCRATCH_SPACE=8 /Users/scawful/src/hobby/oracle-of-secrets/scripts/yabai_mesen_window.sh toggle-space
+alt - shift - m : SCRATCH_SPACE=8 Scripts/yabai_mesen_window.sh toggle-space
 ```
 
 ### Yabai Rules Cleanup (stop tiling)
@@ -326,8 +326,8 @@ alt - shift - m : SCRATCH_SPACE=8 /Users/scawful/src/hobby/oracle-of-secrets/scr
 If Mesen is still tiling, clean up conflicting rules and re-apply a single managed rule:
 
 ```bash
-./scripts/yabai_mesen_rules.sh apply background
-./scripts/yabai_mesen_rules.sh status
+Scripts/yabai_mesen_rules.sh apply background
+Scripts/yabai_mesen_rules.sh status
 ```
 
 ### Mesen Tool Windows (Script/Debugger/etc.)
@@ -335,28 +335,28 @@ If Mesen is still tiling, clean up conflicting rules and re-apply a single manag
 The rules helper also floats common tool windows so they don’t tile:
 
 ```bash
-./scripts/yabai_mesen_rules.sh apply float
+Scripts/yabai_mesen_rules.sh apply float
 ```
 
 ### Auto stash/restore during test runs
 
 ```bash
 # Restore Mesen to previous space before tests (default on)
-MESEN_AUTO_UNSTASH=1 ./scripts/test_runner.py tests/*.json
+MESEN_AUTO_UNSTASH=1 Scripts/Validate/test_runner.py Tests/*.json
 
 # Stash Mesen after tests (requires SCRATCH_SPACE for space-based stash)
-SCRATCH_SPACE=8 MESEN_AUTO_STASH=1 ./scripts/test_runner.py tests/*.json
+SCRATCH_SPACE=8 MESEN_AUTO_STASH=1 Scripts/Validate/test_runner.py Tests/*.json
 
 # Stash only when failures occur
-SCRATCH_SPACE=8 MESEN_STASH_ON_FAIL=1 ./scripts/test_runner.py tests/*.json
+SCRATCH_SPACE=8 MESEN_STASH_ON_FAIL=1 Scripts/Validate/test_runner.py Tests/*.json
 ```
 
 ## Bridge Requirements
 
 ### Fork Socket API (Recommended)
 - **Socket:** `/tmp/mesen2-<pid>.sock` (auto‑started by `/Applications/Mesen2 OOS.app`).
-- **Client:** `python3 scripts/mesen2_client.py --socket /tmp/mesen2-<pid>.sock ...`
-- **Automation:** `mesen2_client.py` or `MesenBridge` (`scripts/mesen2_client_lib/bridge.py`) for CPU/stack/breakpoint capture.
+- **Client:** `python3 Scripts/Mesen2/mesen2_client.py --socket /tmp/mesen2-<pid>.sock ...`
+- **Automation:** `mesen2_client.py` or `MesenBridge` (`Scripts/Mesen2/mesen2_client_lib/bridge.py`) for CPU/stack/breakpoint capture.
 
 ### Legacy Lua/File Bridges (Historical)
 
@@ -365,8 +365,8 @@ Older workflows used a Lua bridge + file polling. Those are no longer the suppor
 If the socket client cannot connect:
 
 ```bash
-python3 scripts/mesen2_client.py socket-cleanup
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py health
+python3 Scripts/Mesen2/mesen2_client.py socket-cleanup
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py health
 ```
 
 If that still fails, restart the Mesen2 OOS fork instance and re-run `diagnostics`.

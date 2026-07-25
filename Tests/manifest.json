@@ -49,7 +49,7 @@
   "defaults": {
     "rom": "Roms/oos168x.sfc",
     "state_library": "Roms/SaveStates/",
-    "screenshot_dir": "tests/screenshots/",
+    "screenshot_dir": "Tests/screenshots/",
     "timeout_per_test": 30
   },
   "tags": {

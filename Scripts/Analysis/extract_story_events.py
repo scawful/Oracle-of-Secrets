@@ -8,7 +8,7 @@ Sources:
   - Docs/Planning/Story_Event_Graph.md  -> event nodes + relationships
 
 Usage:
-  python3 Scripts/extract_story_events.py [--validate] [--output PATH]
+  python3 Scripts/Analysis/extract_story_events.py [--validate] [--output PATH]
 """
 
 import argparse
@@ -183,6 +183,18 @@ def extract_events(root: Path) -> list:
     with open(path, encoding="utf-8") as f:
         content = f.read()
 
+    # Only parse the canonical event registry. The document also contains
+    # tracing/status tables whose first column uses EV-XXX identifiers.
+    section_match = re.search(
+        r"^##\s+Event Index\b[^\n]*\n(.*?)(?=^##\s|\Z)",
+        content,
+        re.MULTILINE | re.DOTALL,
+    )
+    if not section_match:
+        print("  ERROR: Event Index section not found", file=sys.stderr)
+        return []
+
+    event_index = section_match.group(1)
     events = []
 
     # Match markdown table rows: | EV-XXX | Name | Flags | Locations | Scripts | Text IDs | Evidence | Date | Notes |
@@ -200,7 +212,7 @@ def extract_events(root: Path) -> list:
         re.MULTILINE
     )
 
-    for match in row_pattern.finditer(content):
+    for match in row_pattern.finditer(event_index):
         event_id = match.group(1).strip()
         name = match.group(2).strip()
         flags_raw = match.group(3).strip()
@@ -284,7 +296,7 @@ def build_story_events(root: Path) -> dict:
 
     result = {
         "_meta": {
-            "generated_by": "Scripts/extract_story_events.py",
+            "generated_by": "Scripts/Analysis/extract_story_events.py",
             "description": "Oracle of Secrets story event graph for yaze integration",
             "source": "Docs/Planning/Story_Event_Graph.md",
             "event_count": len(events),

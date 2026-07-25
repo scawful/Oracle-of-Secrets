@@ -10,7 +10,7 @@
       "type": "exec",
       "command": [
         "python3",
-        "scripts/verify_feature_flags.py",
+        "Scripts/Build/verify_feature_flags.py",
         "--root",
         "."
       ],
@@ -21,13 +21,13 @@
       "type": "exec",
       "command": [
         "python3",
-        "scripts/verify_hooks_json.py",
+        "Scripts/Validate/verify_hooks_json.py",
         "--root",
         ".",
         "--rom",
         "Roms/oos168x.sfc",
         "--hooks",
-        "hooks.json"
+        "Roms/hooks.json"
       ],
       "expectedExitCode": 0,
       "description": "hooks.json should match generator output"
@@ -36,7 +36,7 @@
       "type": "exec",
       "command": [
         "python3",
-        "scripts/validate_sprite_registry.py",
+        "Scripts/Validate/validate_sprite_registry.py",
         "--strict"
       ],
       "expectedExitCode": 0,
@@ -46,20 +46,18 @@
       "type": "exec",
       "command": [
         "python3",
-        "../z3dk/scripts/oracle_analyzer.py",
-        "Roms/oos168x.sfc",
-        "--hooks",
-        "hooks.json",
-        "--check-sprite-tables"
+        "Scripts/Validate/validate_sprite_table_safety.py",
+        "--patched",
+        "Roms/oos168x.sfc"
       ],
       "expectedExitCode": 0,
-      "description": "Sprite property tables should not overflow past ID $F2"
+      "description": "Sprite table boundaries should match the canonical ROM outside documented hooks"
     },
     {
       "type": "exec",
       "command": [
         "python3",
-        "scripts/check_zscream_overlap.py"
+        "Scripts/Build/check_zscream_overlap.py"
       ],
       "expectedExitCode": 0,
       "description": "No ZScream overlaps should be detected"

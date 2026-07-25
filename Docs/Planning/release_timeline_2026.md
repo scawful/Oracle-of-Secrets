@@ -1,15 +1,22 @@
 # Oracle of Secrets — Release Timeline 2026
 
-**Updated:** 2026-06-11 (re-baselined after spring pause; RC/release targets unchanged)
-**Current state:** Playable start-to-credits, shipping beta patches to Discord testers
+**Updated:** 2026-07-24 (truth reconciliation; runtime sweep pending)
+**Current state:** Substantial dungeon/content implementation exists, but no
+current-ROM start-to-credits verification is recorded. D1-D8 and S1-S3 require
+an evidence-logged runtime sweep.
 **Target:** Public v1.0 patch (RHDN-quality release)
-**Target RC:** October 2026
-**Target Release:** November 2026
-**Estimated remaining work:** ~160-240 hours (polish + new content) at variable pace
+**Target RC:** October 2026 (provisional; re-evaluate after the runtime sweep)
+**Target Release:** End of 2026 (scope-flexible; provisional)
+**Estimated remaining work:** ~160-240 hours is a planning range; re-estimate
+after the runtime sweep.
 
 ---
 
 ## Re-baseline (2026-06-11)
+
+> **2026-07-24 verification note:** The June checkpoint was not
+> runtime-verified. Calendar dates below are planning targets, not completion
+> evidence.
 
 Work paused early May; phases 1-2 are partially done and Phase 3 has not
 started. Rather than slip the RC, the remaining Phase 1-2 work is compressed
@@ -50,11 +57,14 @@ Notes:
 
 ## What v1.0 Includes
 
-The game is already playable start-to-credits. v1.0 adds polish and the remaining content that makes it the complete vision:
+The repository contains substantial dungeon and story implementation, but the
+current ROM has not been verified start-to-credits. v1.0 requires the runtime
+sweep, critical-path completion, and recorded release gates below.
 
 ### Polish (the game you have now, but better)
 1. **Regression confidence** — verify 21 AI-generated commits haven't broken anything
-2. **D6 Goron Mines quality** — dungeon works but needs to feel finished
+2. **D6 Goron Mines quality** — substantial room/minecart implementation
+   exists; runtime sweep and completion gaps remain
 3. **Boss fight polish** — Kydreeok AI, Octoboss camera, telegraphs/fairness
 4. **Dialogue & narrative** — NPC progression awareness, placeholder cleanup
 
@@ -111,7 +121,7 @@ No weekly schedule. Instead:
 - [ ] Test ice block push direction in all 4 directions (30 min)
 - [ ] Test Maku Tree hint cascade at 0, 1, 3, 5, 7 crystals (1 hr)
 - [ ] Test water gate: fill, exit room, re-enter, save/reload (1 hr)
-- [ ] Run full regression suite: `bash scripts/run_regression_tests.sh` (30 min + fix time)
+- [ ] Run full regression suite: `bash Scripts/Validate/run_regression_tests.sh` (30 min + fix time)
 
 🔴 **High Focus**
 - [ ] Verify stack integrity fix (orphaned PHX removal) — 20+ OW transitions (1 hr)
@@ -359,19 +369,11 @@ These are great reasons to keep working on the game after v1.0:
 
 ---
 
-## Progress Tracker
+## Progress Tracking
 
-```
-Phase 1: Regression Confidence   [___________] 0/14 tasks
-Phase 2: D6 + Boss Polish        [___________] 0/13 tasks
-Phase 3: Dream Sequences          [___________] 0/14 tasks
-Phase 4: Sky/Kalyxo/Koroks       [___________] 0/20 tasks
-Phase 5: Dialogue & Narrative     [___________] 0/11 tasks
-Phase 6: RC Build                 [___________] 0/8 tasks
-Phase 7: Release                  [___________] 0/5 tasks
-                                                -------
-                                                0/85 total
-```
+This phase menu is a planning reference, not the canonical task tracker. Track
+live TODO/ACTIVE/DONE state in `Docs/oracle.org`; do not infer completion from
+this document.
 
 ---
 
@@ -384,4 +386,5 @@ Beta patches have been shipping to Discord testers throughout development. Teste
 3. If it's a softlock: check SUBMODE ($7E0011) and SPC timeout ($B010)
 4. If it's "this feels bad": add to the relevant phase's task menu
 
-Tester feedback > this document. If testers say something is fine, trust them.
+Tester feedback is input, not completion evidence. Runtime/gameplay claims
+require a recorded commit, ROM hash, and emulator run.

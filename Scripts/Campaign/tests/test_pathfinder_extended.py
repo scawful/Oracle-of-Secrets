@@ -19,7 +19,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.pathfinder import (
+from Scripts.Campaign.pathfinder import (
     TileType, WALKABLE_TILES, SWIM_TILES, LEDGE_TILES,
     CollisionMap, PathNode, NavigationResult, Pathfinder,
     get_pathfinder, find_path
@@ -610,7 +610,7 @@ class TestGetPathfinderSingleton:
     def test_creates_pathfinder(self):
         """Test creates new pathfinder."""
         # Reset singleton for test
-        import scripts.campaign.pathfinder as pf_module
+        import Scripts.Campaign.pathfinder as pf_module
         pf_module._pathfinder = None
 
         pf = get_pathfinder()
@@ -619,7 +619,7 @@ class TestGetPathfinderSingleton:
 
     def test_returns_same_instance(self):
         """Test returns same instance on subsequent calls."""
-        import scripts.campaign.pathfinder as pf_module
+        import Scripts.Campaign.pathfinder as pf_module
         pf_module._pathfinder = None
 
         pf1 = get_pathfinder()
@@ -628,7 +628,7 @@ class TestGetPathfinderSingleton:
 
     def test_attaches_emulator(self):
         """Test attaches emulator to existing pathfinder."""
-        import scripts.campaign.pathfinder as pf_module
+        import Scripts.Campaign.pathfinder as pf_module
         pf_module._pathfinder = None
 
         pf1 = get_pathfinder()  # No emulator
@@ -645,7 +645,7 @@ class TestFindPathConvenience:
 
     def test_with_collision_data(self):
         """Test find_path with raw collision data."""
-        import scripts.campaign.pathfinder as pf_module
+        import Scripts.Campaign.pathfinder as pf_module
         pf_module._pathfinder = None
 
         data = bytes([TileType.WALKABLE] * (64 * 64))
@@ -654,7 +654,7 @@ class TestFindPathConvenience:
 
     def test_path_straight_line(self):
         """Test find_path for straight line."""
-        import scripts.campaign.pathfinder as pf_module
+        import Scripts.Campaign.pathfinder as pf_module
         pf_module._pathfinder = None
 
         data = bytes([TileType.WALKABLE] * (64 * 64))

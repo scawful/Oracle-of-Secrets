@@ -21,7 +21,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.input_recorder import (
     Button, InputFrame, InputSequence, InputRecorder, InputPlayer,
     create_walk_sequence, create_boot_sequence, create_attack_sequence,
     create_menu_open_sequence

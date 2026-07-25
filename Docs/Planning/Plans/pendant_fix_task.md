@@ -1,35 +1,40 @@
 # Pendant Reward Alignment — Task Description
 
 **Created:** 2026-02-13
-**Last Reviewed:** 2026-02-13
+**Last Reviewed:** 2026-07-24
 **Priority:** HIGH (blocks shrine progression integrity)
 **Owner:** User/Codex (data + runtime verification)
+**Status:** S1/S2 source-patched and statically read back; runtime pickup
+pending. S3 unimplemented.
 
 ---
 
 ## Problem
 
-Shrine pendant rewards are not aligned with Oracle design intent.
+S1/S2 source data is aligned by `Core/patches.asm`, but pickup/progression
+behavior has not been verified in the emulator. S3 Courage still lacks its
+Vaati boss-drop path.
 
-- S1 and S2 currently use wrong chest items.
-- S3 Courage reward should come from Vaati (Vitreous reskin) boss-drop flow, not a chest placement.
+- S1 and S2 need runtime pickup and pendant-state verification.
+- S3 Courage should come from Vaati's (Vitreous reskin) boss-drop flow, not a
+  chest placement.
 
 ## Current State
 
 | Shrine | Current Reward Path | Current Result | Target |
 |--------|---------------------|----------------|--------|
-| S1 Wisdom | Chest in room `0x7A` | `0x38` (Courage) | `0x39` (Wisdom) |
-| S2 Power | Chest in room `0x73` | `0x39` (Wisdom) | `0x3A` (Power) |
+| S1 Wisdom | Chest in room `0x7A` | `0x39` source-patched; z3ed readback confirmed; runtime pickup unverified | `0x39` (Wisdom) |
+| S2 Power | Chest in room `0x73` | `0x3A` source-patched; z3ed readback confirmed; runtime pickup unverified | `0x3A` (Power) |
 | S3 Courage | Boss-drop path (Vaati) not implemented | No Courage reward flow | Vaati awards Courage (`0x38`) |
 
-**Pendant of Power (`0x3A`) does not appear in any chest in the current ROM.**
+Current patched-ROM readback shows Pendant of Power (`0x3A`) in room `0x73`.
 
 ## Required Fixes
 
 | Shrine | Action | Type |
 |--------|--------|------|
-| S1 Wisdom | Change chest item in room `0x7A` from `0x38` -> `0x39` | Data (yaze dungeon editor) |
-| S2 Power | Change chest item in room `0x73` from `0x39` -> `0x3A` | Data (yaze dungeon editor) |
+| S1 Wisdom | Run runtime pickup and pendant SRAM/progression validation | Runtime |
+| S2 Power | Run runtime pickup and pendant SRAM/progression validation | Runtime |
 | S3 Courage | Implement Vaati victory reward path to grant Courage pendant (`0x38`) and set progression bits | ASM/runtime |
 
 ## Pendant Item IDs
@@ -42,13 +47,15 @@ Shrine pendant rewards are not aligned with Oracle design intent.
 
 ---
 
-## How to Fix (Now)
+## Source Fix (Implemented)
 
-### S1/S2 chest swaps (yaze)
-1. Open ROM in yaze.
-2. Room `0x7A`: set big chest item to `0x39`.
-3. Room `0x73`: set big chest item to `0x3A`.
-4. Save ROM.
+`Core/patches.asm` asserts the chest-record identities and writes:
+
+- `$01E9F7 = $39` for room `0x7A` (Wisdom)
+- `$01E9E8 = $3A` for room `0x73` (Power)
+
+Rebuild the patched ROM from the recorded base. Do not treat a direct edit to a
+gitignored ROM as the durable fix.
 
 ### S3 reward path (separate implementation)
 1. Confirm Vaati boss room + defeat flow entrypoint.
@@ -60,18 +67,25 @@ Shrine pendant rewards are not aligned with Oracle design intent.
 ## Verification
 
 ```bash
-# Chest sanity (S1/S2)
-~/src/hobby/yaze/build/bin/z3ed chest-inventory --rom Roms/oos168x.sfc | grep -i pendant
+# Static chest readback (S1/S2)
+../yaze/scripts/z3ed dungeon-list-chests \
+  --rom Roms/oos168x.sfc --room 0x7A --format json
+../yaze/scripts/z3ed dungeon-list-chests \
+  --rom Roms/oos168x.sfc --room 0x73 --format json
 
 # Runtime checks
-python3 scripts/mesen2_client.py warp-entrance 0x33  # S1
-python3 scripts/mesen2_client.py warp-entrance 0x09  # S2
+python3 Scripts/Mesen2/mesen2_client.py warp-entrance 0x33  # S1
+python3 Scripts/Mesen2/mesen2_client.py warp-entrance 0x09  # S2
 # S3: run Vaati defeat path and verify Courage reward + SRAM progression
 ```
 
-Expected outcome:
-- S1 chest grants Wisdom.
-- S2 chest grants Power.
+Static readback currently confirms:
+- S1 chest data is Wisdom (`0x39`).
+- S2 chest data is Power (`0x3A`).
+
+Runtime acceptance (pending):
+- S1 pickup grants Wisdom and updates the intended pendant/progression state.
+- S2 pickup grants Power and updates the intended pendant/progression state.
 - S3 Vaati clear grants Courage (no chest dependency).
 
 ---

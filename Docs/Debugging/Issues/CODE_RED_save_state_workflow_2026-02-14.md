@@ -23,9 +23,9 @@ This produced bad repro context and wasted debugging time.
 - `mesen2_client.py --instance <name>` now clears stale `MESEN2_SOCKET_PATH`, resolves the instance through registry/expected socket path, and fails fast if unresolved.
 - Mesen bridge instance->socket resolution is now lazy (runtime), not import-time, so CLI args/env are honored deterministically.
 - Added regression tests for instance resolution/preflight behavior.
-- `scripts/mesen2_launch_instance.sh` now seeds F-key slot states from `Roms/SaveStates/<rom-base>/` into each new isolated instance by default (opt-out: `--no-seed-project-states`).
+- `Scripts/Mesen2/mesen2_launch_instance.sh` now seeds F-key slot states from `Roms/SaveStates/<rom-base>/` into each new isolated instance by default (opt-out: `--no-seed-project-states`).
 - Updated `RUNBOOK.md` with CODE RED policy: default to `Roms/SaveStates/oos168x/*.mss`.
-- Updated `scripts/mesen2_launch_instance.sh` messages to recommend `load <path>` instead of `lib-load`.
+- Updated `Scripts/Mesen2/mesen2_launch_instance.sh` messages to recommend `load <path>` instead of `lib-load`.
 
 ## Mandatory Policy (Effective Immediately)
 - Default debug state source: `Roms/SaveStates/oos168x/*.mss`.

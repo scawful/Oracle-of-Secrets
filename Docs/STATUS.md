@@ -91,7 +91,7 @@ Assembled ROM (`Roms/oos168x.sfc`) confirmed to use correct opcodes:
 
 ### Verification Needed
 1. ✅ ROM built: `./Scripts/Build/build_rom.sh 168`
-2. Load in Mesen2 (optional: use `Scripts/debug_building_entry.lua`)
+2. Load in Mesen2 (optional: use `Scripts/Lua/debug_transitions.lua`)
 3. Test intra-room transitions (stairs, layer changes)
 4. Test inter-room transitions (doors between rooms)
 5. Test building entry (houses, shops, dungeons)
@@ -136,11 +136,11 @@ Shifted all collision data in `Dungeons/Collision/water_collision.asm` down by 3
 ## Mesen2 build + WaterGate verification plan
 ### Claude tasks
 - Find the latest macOS build steps for Mesen2 (deps, CMake flags, SDL2/Qt requirements).
-- Confirm if Mesen2 has a CLI flag to auto-load a ROM + Lua script (for `Scripts/mesen_water_debug.lua`).
+- Confirm if Mesen2 has a CLI flag to auto-load a ROM + Lua script (for `Scripts/Lua/mesen_water_debug.lua`).
 - Note the best place to install the built app and any codesigning quirks.
 
 ### Local tasks (Codex)
-- Build patched ROM and run `Scripts/mesen_water_debug.lua` during water gate testing.
+- Build patched ROM and run `Scripts/Lua/mesen_water_debug.lua` during water gate testing.
 - Verify persistence on room re-entry and after save/reload; log results here.
 - Archive oos91x saves/states alongside the ROMs for quick regression checks.
 
@@ -150,7 +150,7 @@ Shifted all collision data in `Dungeons/Collision/water_collision.asm` down by 3
 
 ## What exists today
 - Repo contains the Oracle-of-Secrets ASM source tree (see folders like `Core/`, `Dungeons/`, `Items/`).
-- `build.bat` exists for Windows builds; manual Asar usage is documented in `Docs/Debugging/Guides/AsarUsage.md`.
+- The canonical build entry point is `Scripts/Build/build_rom.sh`; Windows users can run it from WSL as documented in `Docs/Debugging/Guides/AsarUsage.md`.
 - `Docs/README.md` exists.
 
 ## What does NOT exist
@@ -166,7 +166,7 @@ Shifted all collision data in `Dungeons/Collision/water_collision.asm` down by 3
 
 To build the Oracle of Secrets ROM:
 1. Ensure `asar` is in your PATH.
-2. Provide a base ROM at `Roms/oos168x.sfc`.
+2. Provide an unpatched base ROM at `Roms/oos168.sfc`.
 3. Run the build script:
    ```bash
    ./Scripts/Build/build_rom.sh 168

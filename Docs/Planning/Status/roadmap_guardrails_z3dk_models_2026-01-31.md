@@ -19,7 +19,7 @@ This roadmap covers three lanes executed in parallel, with shared gating:
 - [x] Update softlock root-cause status (resolved, investigation artifacts archived).
 - [ ] Lock a known-good savestate (capture + manifest entry) for regression.
 - [x] Define DoD for lanes 1–3 (below) and link to scratchpad checklist.
-- [x] Ensure static analysis runs during build (`scripts/build_rom.sh` already calls `oracle_analyzer.py`).
+- [x] Ensure static analysis runs during build (`Scripts/Build/build_rom.sh` already calls `oracle_analyzer.py`).
 
 ## Tooling Sprint (168 Beta) — Added 2026-02-05
 - [x] Archive ~25 resolved Docs/Debugging/Issues/ files to `Docs/Debugging/Issues/archive/`
@@ -33,10 +33,10 @@ This roadmap covers three lanes executed in parallel, with shared gating:
 - [ ] Add lint-pass smoke test (Tier 1 static analysis without emulator)
 
 ## Lane 1 - Oracle Guardrails (Debugging + Regression)
-- [ ] Add pause detection + action logging in `scripts/mesen2_client_lib/client.py`.
+- [ ] Add pause detection + action logging in `Scripts/Mesen2/mesen2_client_lib/client.py`.
 - [ ] Add SP/DBR watchdog (debug flag) and optional HUD overlay.
 - [ ] Expand regression tests: transition matrix + Lost Woods + ZSCustomOverworld.
-- [ ] Wire black-screen detection via `scripts/campaign/transition_tester.py`.
+- [ ] Wire black-screen detection via `Scripts/Campaign/transition_tester.py`.
 - [ ] Update `Docs/Debugging/Issues/TieredTestingPlan.md` with new tests + state requirements.
 
 ## Lane 2 - z3dk Alignment

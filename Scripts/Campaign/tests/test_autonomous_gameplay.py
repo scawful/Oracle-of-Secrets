@@ -23,19 +23,19 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.emulator_abstraction import GameStateSnapshot, Mesen2Emulator
-from scripts.campaign.game_state import (
+from Scripts.Campaign.emulator_abstraction import GameStateSnapshot, Mesen2Emulator
+from Scripts.Campaign.game_state import (
     GamePhase, GameStateParser, ParsedGameState, LinkAction
 )
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.input_recorder import (
     Button, InputSequence, InputFrame, InputPlayer,
     create_boot_sequence, create_walk_sequence
 )
-from scripts.campaign.action_planner import (
+from Scripts.Campaign.action_planner import (
     ActionPlanner, Goal, GoalType, Plan, PlanStatus, Action
 )
-from scripts.campaign.pathfinder import Pathfinder, CollisionMap, TileType
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.pathfinder import Pathfinder, CollisionMap, TileType
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignOrchestrator, CampaignPhase, MilestoneStatus
 )
 

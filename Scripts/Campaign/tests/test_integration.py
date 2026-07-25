@@ -21,18 +21,18 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.emulator_abstraction import GameStateSnapshot, Mesen2Emulator
-from scripts.campaign.game_state import GamePhase, GameStateParser, ParsedGameState
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.emulator_abstraction import GameStateSnapshot, Mesen2Emulator
+from Scripts.Campaign.game_state import GamePhase, GameStateParser, ParsedGameState
+from Scripts.Campaign.input_recorder import (
     Button, InputSequence, InputPlayer, create_boot_sequence, create_walk_sequence
 )
-from scripts.campaign.action_planner import (
+from Scripts.Campaign.action_planner import (
     ActionPlanner, Goal, GoalType, Plan, PlanStatus
 )
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignOrchestrator, CampaignPhase, MilestoneStatus
 )
-from scripts.campaign.visual_verifier import (
+from Scripts.Campaign.visual_verifier import (
     VisualVerifier, Screenshot, VerificationResult
 )
 
@@ -280,7 +280,7 @@ class TestGoalToMilestoneIntegration:
         assert "reach_dungeon1" in orchestrator._progress.milestones
 
         # Verify goal parameters match expected areas
-        from scripts.campaign.action_planner import (
+        from Scripts.Campaign.action_planner import (
             goal_reach_village_center,
             goal_reach_dungeon1_entrance
         )
@@ -311,7 +311,7 @@ class TestEndToEndWorkflow:
 
     def test_campaign_infrastructure_loads(self):
         """Test all campaign modules can be imported together."""
-        from scripts.campaign import (
+        from Scripts.Campaign import (
             # Emulator
             EmulatorInterface, Mesen2Emulator, GameStateSnapshot,
             # Parsing
@@ -331,7 +331,7 @@ class TestEndToEndWorkflow:
 
     def test_quick_status_reports_all_modules(self):
         """Test quick_status shows all infrastructure."""
-        from scripts.campaign import quick_status
+        from Scripts.Campaign import quick_status
 
         status = quick_status()
 
@@ -343,7 +343,7 @@ class TestEndToEndWorkflow:
 
     def test_create_campaign_factory(self):
         """Test campaign factory creates functional orchestrator."""
-        from scripts.campaign import create_campaign
+        from Scripts.Campaign import create_campaign
 
         orchestrator = create_campaign()
 

@@ -84,7 +84,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 SRC_DIR="${REPO_ROOT}/Roms/SaveStates/${SOURCE_SET}"
 if [[ -n "${MESEN2_HOME:-}" ]]; then
   MESEN2_DIR="${MESEN2_HOME}"

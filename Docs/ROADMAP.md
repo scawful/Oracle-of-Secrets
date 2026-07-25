@@ -50,7 +50,7 @@ See `Docs/Debugging/Z3DK_Analyzer_Findings.md` and `Docs/Debugging/Z3ASM_Feature
 
 ### Debug + tests
 - Treat `Docs/STABILITY.md` as “stop-ship gotchas” (color math, SPC timeouts, input hygiene).
-- Grow the canon savestate library and keep transition tests deterministic (see `Docs/Debugging/Testing/SaveStateLibrary.md` and `RUNBOOK.md`).
+- Grow the canon savestate library and keep transition tests deterministic (see `Docs/Debugging/Testing/SaveStateLibrary.md` and `Docs/RUNBOOK.md`).
 
 ## Sources of Truth
 - Backlog + epics: `oracle.org`

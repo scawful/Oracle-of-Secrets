@@ -12,7 +12,7 @@ Welcome to the documentation for Oracle of Secrets. This directory is organized 
 
 ## Key Documents
 
--   **`../RUNBOOK.md`**: Primary “how do I work on this repo” doc (build → launch → preflight → capture).
+-   **`Docs/RUNBOOK.md`**: Primary “how do I work on this repo” doc (build → launch → preflight → capture).
 -   **`Debugging/README.md`**: Debugging/testing index inside Docs.
 -   **`Planning/README.md`**: Planning index (story/design, audits, inventories, status/handoffs).
 -   **`Debugging/Agent/Quickstart.md`**: One-page agent entry (build → preflight → capture → debug).
@@ -23,11 +23,11 @@ Welcome to the documentation for Oracle of Secrets. This directory is organized 
 ## Debugging & Testing Quick Start
 
 ```bash
-# Build + symbol sync + optional reset
-Scripts/Build/dev_loop.sh 168 --mesen-sync --reload
+# Fast build + Mesen2 reload
+Scripts/Build/oos-quick.sh
 
-# Or compatibility wrapper
-./build.sh 168
+# Heavier build + full validation
+Scripts/Build/oos-verify.sh
 
 # Run regression test suite
 ./Scripts/Validate/run_regression_tests.sh regression

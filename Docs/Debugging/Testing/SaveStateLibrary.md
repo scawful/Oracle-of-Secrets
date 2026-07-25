@@ -7,11 +7,11 @@ Purpose: keep a curated set of save states for fast repro and regression testing
 - **Binary `.mss` files (local only):** `Roms/SaveStates/library/` (gitignored)
 
 ## Golden Path (Socket API)
-All supported workflows go through `python3 scripts/mesen2_client.py`.
+All supported workflows go through `python3 Scripts/Mesen2/mesen2_client.py`.
 
 Popup workflow (macOS):
 ```bash
-python3 scripts/oos_state_popup.py --instance <mesen-instance> --theme dark --layout compact --font-size 18
+python3 Scripts/Debug/oos_state_popup.py --instance <mesen-instance> --theme dark --layout compact --font-size 18
 ```
 This gives you:
 - live metadata summary (mode/area/room/story flags/last loaded state)
@@ -43,7 +43,7 @@ This gives you:
 
 ## Trust Contract (New)
 - Launching an emulator instance no longer auto-seeds legacy slot files.
-- Named debug sessions (`scripts/oos-session.sh`) only load IDs from
+- Named debug sessions (`Scripts/Build/oos-session.sh`) only load IDs from
   `Docs/Debugging/Testing/trusted_state_seeds.json`.
 - Trusted task seeds must be:
   - `status: "canon"`
@@ -51,14 +51,14 @@ This gives you:
 
 ### List, Load, Inspect
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py library
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-info <state_id> --json
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-load <state_id>
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py library
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-info <state_id> --json
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-load <state_id>
 ```
 
 ### Start An Isolated Session (No Slot Seeding)
 ```bash
-scripts/mesen2_launch_instance.sh --instance oos-yourname-debug --owner yourname --source manual
+Scripts/Mesen2/mesen2_launch_instance.sh --instance oos-yourname-debug --owner yourname --source manual
 ```
 
 Use `--seed-project-states` only when you intentionally need legacy F-key slot
@@ -66,20 +66,20 @@ files.
 
 ### Capture A Repro Seed (Draft Entry)
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py smart-save 5
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-save "Zora Temple blackout repro" -t dungeon -t blackout -t repro
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py smart-save 5
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-save "Zora Temple blackout repro" -t dungeon -t blackout -t repro
 ```
 
 ### Promote To Canon + Regression Guardrail
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-verify <state_id> --by scawful
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-verify-all
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-verify <state_id> --by scawful
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-verify-all
 ```
 
 ### Mark A State As Human-Captured Canon
 ```bash
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-save "Maku base seed" --captured-by human -t progression -t maku
-MESEN2_AUTO_ATTACH=1 python3 scripts/mesen2_client.py lib-verify <state_id> --by scawful
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-save "Maku base seed" --captured-by human -t progression -t maku
+MESEN2_AUTO_ATTACH=1 python3 Scripts/Mesen2/mesen2_client.py lib-verify <state_id> --by scawful
 ```
 
 Then set the task mapping in:
@@ -89,9 +89,9 @@ Then set the task mapping in:
 Or use the helper:
 
 ```bash
-python3 scripts/set_trusted_state_seed.py maku <state_id>
+python3 Scripts/set_trusted_state_seed.py maku <state_id>
 ```
 
 ## Notes
 - If a state was captured on an older ROM build, use the in-game cache reload hotkey if needed: `L + R + Select + Start`.
-- Use `python3 scripts/mesen2_client.py` for all state library operations.
+- Use `python3 Scripts/Mesen2/mesen2_client.py` for all state library operations.

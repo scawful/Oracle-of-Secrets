@@ -7,9 +7,9 @@ expected states from hooks.json. Useful for detecting M/X flag mismatches
 that can cause soft locks and corrupted behavior.
 
 Usage:
-    python3 p_watch.py --hooks hooks.json --frames 600
-    python3 p_watch.py --addresses 0x028A5B,0x079CD9 --frames 300
-    python3 p_watch.py --hooks hooks.json --output p_watch_report.json
+    python3 Scripts/Debug/p_watch.py --hooks hooks.json --frames 600
+    python3 Scripts/Debug/p_watch.py --addresses 0x028A5B,0x079CD9 --frames 300
+    python3 Scripts/Debug/p_watch.py --hooks hooks.json --output p_watch_report.json
 """
 
 from __future__ import annotations
@@ -22,10 +22,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, List, Dict, Set
 
-# Add script directory to path for imports
-SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+# Add the categorized Mesen2 client directory to the import path.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MESEN2_SCRIPTS = REPO_ROOT / "Scripts" / "Mesen2"
+if str(MESEN2_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(MESEN2_SCRIPTS))
 
 from mesen2_client_lib.client import OracleDebugClient
 from mesen2_client_lib.bridge import MesenBridge

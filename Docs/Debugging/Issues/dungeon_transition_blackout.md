@@ -24,7 +24,7 @@ We **removed** the `$0188DF` global torch-loop hook entirely (restored vanilla b
 - `$0188DF` remains **vanilla** (no hook install).
 - Feature flag `!ENABLE_WATER_GATE_ROOMENTRY_RESTORE` now enables room-entry restore via `CustomRoomCollision` (`org $01B95B`) after collision streaming finishes.
 
-Validated via `scripts/repro_blackout_transition.py` on seed state `zora_temple_stairs_seed_20260207`:
+Validated via `Scripts/Debug/repro_blackout_transition.py` on seed state `zora_temple_stairs_seed_20260207`:
 - With `ENABLE_WATER_GATE_ROOMENTRY_RESTORE=1`: no `GameMode=0x35` corruption, no APU hang.
 - With `ENABLE_WATER_GATE_ROOMENTRY_RESTORE=0`: also clean (baseline).
 
@@ -171,13 +171,13 @@ Goal: capture enough ground truth at the moment of failure to answer:
 
 ```bash
 # Before reproducing:
-python3 scripts/capture_blackout.py arm --save-seed --assert-jtl
+python3 Scripts/Debug/capture_blackout.py arm --save-seed --assert-jtl
 
 # After blackout occurs (do NOT reset emulator):
-python3 scripts/capture_blackout.py capture
+python3 Scripts/Debug/capture_blackout.py capture
 
 # Review recent captures:
-python3 scripts/capture_blackout.py summary
+python3 Scripts/Debug/capture_blackout.py summary
 ```
 
 If you want a wider net (fade + stack + color math), add `--deep` to both `arm` and `capture`.
@@ -189,20 +189,20 @@ If you can get the bug to reproduce from a fixed “one action away” seed stat
 1. Create a library seed once (near the transition that blackouts):
 
 ```bash
-python3 scripts/mesen2_client.py lib-save "Zora Temple stairs repro seed" -t dungeon -t blackout -t repro
-python3 scripts/mesen2_client.py library --json | rg -n \"Zora Temple stairs\"  # grab the state_id
+python3 Scripts/Mesen2/mesen2_client.py lib-save "Zora Temple stairs repro seed" -t dungeon -t blackout -t repro
+python3 Scripts/Mesen2/mesen2_client.py library --json | rg -n \"Zora Temple stairs\"  # grab the state_id
 ```
 
 2. Deterministic repro (loads seed from library, presses DOWN, captures + triages on anomaly):
 
 ```bash
-python3 scripts/repro_blackout_transition.py --lib <state_id> --arm
+python3 Scripts/Debug/repro_blackout_transition.py --lib <state_id> --arm
 ```
 
 3. Feature-flag ddmin bisect (find the minimal disables that stop reproducing):
 
 ```bash
-python3 scripts/bisect_blackout_flags.py --lib <state_id> --runs 2 --no-capture --arm
+python3 Scripts/Debug/bisect_blackout_flags.py --lib <state_id> --runs 2 --no-capture --arm
 ```
 
 If Mesen2 isn’t already running, add `--launch --instance oos-blackout` to either command.
@@ -214,16 +214,16 @@ If multiple sockets exist, target explicitly:
 
 ```bash
 export MESEN2_SOCKET_PATH=/tmp/mesen2-<yours>.sock
-python3 scripts/mesen2_client.py health
-python3 scripts/mesen2_client.py diagnostics
+python3 Scripts/Mesen2/mesen2_client.py health
+python3 Scripts/Mesen2/mesen2_client.py diagnostics
 ```
 
 ### 1. Make a Repro Seed State (library)
 When you're in a dungeon near a doorway where this happens frequently:
 
 ```bash
-python3 scripts/mesen2_client.py smart-save 20
-python3 scripts/mesen2_client.py lib-save "Blackout repro seed" -t dungeon -t blackout -t repro
+python3 Scripts/Mesen2/mesen2_client.py smart-save 20
+python3 Scripts/Mesen2/mesen2_client.py lib-save "Blackout repro seed" -t dungeon -t blackout -t repro
 ```
 
 Keep the returned `state_id` so we can reload consistently (`lib-load <state_id>`).
@@ -232,54 +232,54 @@ Keep the returned `state_id` so we can reload consistently (`lib-load <state_id>
 Start these once per session:
 
 ```bash
-python3 scripts/mesen2_client.py p-watch start --depth 8000
-python3 scripts/mesen2_client.py trace --action start --clear
+python3 Scripts/Mesen2/mesen2_client.py p-watch start --depth 8000
+python3 Scripts/Mesen2/mesen2_client.py trace --action start --clear
 
 # JumpTableLocal ($008781) requires X/Y=8-bit on entry; 16-bit causes stack corruption and black screens.
-python3 scripts/mesen2_client.py p-assert 0x008781 0x10 --mask 0x10
+python3 Scripts/Mesen2/mesen2_client.py p-assert 0x008781 0x10 --mask 0x10
 
-python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E0013  # INIDISP queue (INIDISPQ)
-python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E001A  # Frame counter (FRAME)
-python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E0010  # GameMode
-python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E0011  # SubMode
-python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E00A0  # Underworld room layout index
-python3 scripts/mesen2_client.py mem-watch add --depth 4000 --size 2 0x7E00A4  # Room ID (16-bit)
+python3 Scripts/Mesen2/mesen2_client.py mem-watch add --depth 4000 0x7E0013  # INIDISP queue (INIDISPQ)
+python3 Scripts/Mesen2/mesen2_client.py mem-watch add --depth 4000 0x7E001A  # Frame counter (FRAME)
+python3 Scripts/Mesen2/mesen2_client.py mem-watch add --depth 4000 0x7E0010  # GameMode
+python3 Scripts/Mesen2/mesen2_client.py mem-watch add --depth 4000 0x7E0011  # SubMode
+python3 Scripts/Mesen2/mesen2_client.py mem-watch add --depth 4000 0x7E00A0  # Underworld room layout index
+python3 Scripts/Mesen2/mesen2_client.py mem-watch add --depth 4000 --size 2 0x7E00A4  # Room ID (16-bit)
 ```
 
 Optional (if it looks like a color-math/palette bug rather than forced blank):
 
 ```bash
-python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E009A
-python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E009C
-python3 scripts/mesen2_client.py mem-watch add --depth 4000 0x7E009D
+python3 Scripts/Mesen2/mesen2_client.py mem-watch add --depth 4000 0x7E009A
+python3 Scripts/Mesen2/mesen2_client.py mem-watch add --depth 4000 0x7E009C
+python3 Scripts/Mesen2/mesen2_client.py mem-watch add --depth 4000 0x7E009D
 ```
 
 ### 3. Reproduce Until the Screen Goes Black (do not reset)
 Once it happens, immediately capture:
 
 ```bash
-python3 scripts/mesen2_client.py smart-save 21
-python3 scripts/mesen2_client.py savestate-label set 21 --label blackout
+python3 Scripts/Mesen2/mesen2_client.py smart-save 21
+python3 Scripts/Mesen2/mesen2_client.py savestate-label set 21 --label blackout
 
-python3 scripts/mesen2_client.py capture --json > /tmp/oos_blackout_capture.json
-python3 scripts/mesen2_client.py cpu --json > /tmp/oos_blackout_cpu.json
-python3 scripts/mesen2_client.py stack-retaddr --count 12 --json > /tmp/oos_blackout_stack.json
+python3 Scripts/Mesen2/mesen2_client.py capture --json > /tmp/oos_blackout_capture.json
+python3 Scripts/Mesen2/mesen2_client.py cpu --json > /tmp/oos_blackout_cpu.json
+python3 Scripts/Mesen2/mesen2_client.py stack-retaddr --count 12 --json > /tmp/oos_blackout_stack.json
 
-python3 scripts/mesen2_client.py p-log --count 200 --json > /tmp/oos_blackout_p_log.json
+python3 Scripts/Mesen2/mesen2_client.py p-log --count 200 --json > /tmp/oos_blackout_p_log.json
 
-python3 scripts/mesen2_client.py mem-read --len 1 0x7E0013 --json > /tmp/oos_blackout_inidispq.json
-python3 scripts/mesen2_client.py mem-read --len 1 0x002100 --json > /tmp/oos_blackout_inidisp_ppu.json
-python3 scripts/mesen2_client.py mem-read --len 1 0x7E0010 --json > /tmp/oos_blackout_mode.json
-python3 scripts/mesen2_client.py mem-read --len 1 0x7E0011 --json > /tmp/oos_blackout_submode.json
-python3 scripts/mesen2_client.py mem-read --len 2 0x7E00A4 --json > /tmp/oos_blackout_room_id.json
+python3 Scripts/Mesen2/mesen2_client.py mem-read --len 1 0x7E0013 --json > /tmp/oos_blackout_inidispq.json
+python3 Scripts/Mesen2/mesen2_client.py mem-read --len 1 0x002100 --json > /tmp/oos_blackout_inidisp_ppu.json
+python3 Scripts/Mesen2/mesen2_client.py mem-read --len 1 0x7E0010 --json > /tmp/oos_blackout_mode.json
+python3 Scripts/Mesen2/mesen2_client.py mem-read --len 1 0x7E0011 --json > /tmp/oos_blackout_submode.json
+python3 Scripts/Mesen2/mesen2_client.py mem-read --len 2 0x7E00A4 --json > /tmp/oos_blackout_room_id.json
 
-python3 scripts/mesen2_client.py mem-blame --addr 0x7E0013 --json > /tmp/oos_blackout_inidispq_blame.json
-python3 scripts/mesen2_client.py mem-blame --addr 0x7E0010 --json > /tmp/oos_blackout_mode_blame.json
-python3 scripts/mesen2_client.py mem-blame --addr 0x7E0011 --json > /tmp/oos_blackout_submode_blame.json
-python3 scripts/mesen2_client.py mem-blame --addr 0x7E00A0 --json > /tmp/oos_blackout_room_blame.json
+python3 Scripts/Mesen2/mesen2_client.py mem-blame --addr 0x7E0013 --json > /tmp/oos_blackout_inidispq_blame.json
+python3 Scripts/Mesen2/mesen2_client.py mem-blame --addr 0x7E0010 --json > /tmp/oos_blackout_mode_blame.json
+python3 Scripts/Mesen2/mesen2_client.py mem-blame --addr 0x7E0011 --json > /tmp/oos_blackout_submode_blame.json
+python3 Scripts/Mesen2/mesen2_client.py mem-blame --addr 0x7E00A0 --json > /tmp/oos_blackout_room_blame.json
 
-python3 scripts/mesen2_client.py disasm --count 40 --json > /tmp/oos_blackout_disasm.json
-python3 scripts/mesen2_client.py trace --count 100 --json > /tmp/oos_blackout_trace.json
+python3 Scripts/Mesen2/mesen2_client.py disasm --count 40 --json > /tmp/oos_blackout_disasm.json
+python3 Scripts/Mesen2/mesen2_client.py trace --count 100 --json > /tmp/oos_blackout_trace.json
 ```
 
 ### 4. Interpret the Capture
@@ -319,5 +319,5 @@ If the blackout persists with those OFF, the root cause is elsewhere (widen the 
 | `Dungeons/dungeons.asm` | Hook site (org $0188DF) |
 | `Dungeons/Collision/water_collision.asm` | Hook implementation |
 | `Config/feature_flags.asm` | `!ENABLE_WATER_GATE_HOOKS` toggle |
-| `scripts/mesen2_client.py` | Mesen2 socket API client |
-| `scripts/capture_blackout.py` | Automated Phase 1 evidence capture |
+| `Scripts/Mesen2/mesen2_client.py` | Mesen2 socket API client |
+| `Scripts/Debug/capture_blackout.py` | Automated Phase 1 evidence capture |

@@ -4,7 +4,7 @@ Campaign Goals Supported:
 - C.3: Comprehensive test infrastructure
 - D: Clean module API
 
-These tests verify the public API exported from scripts.campaign,
+These tests verify the public API exported from Scripts.Campaign,
 ensuring factory functions and convenience wrappers work correctly.
 """
 
@@ -25,21 +25,21 @@ class TestEmulatorFactories:
 
     def test_get_emulator_mesen2(self):
         """Test get_emulator returns Mesen2Emulator."""
-        from scripts.campaign import get_emulator, Mesen2Emulator
+        from Scripts.Campaign import get_emulator, Mesen2Emulator
 
         emu = get_emulator("mesen2")
         assert isinstance(emu, Mesen2Emulator)
 
     def test_get_emulator_default(self):
         """Test get_emulator default is Mesen2."""
-        from scripts.campaign import get_emulator, Mesen2Emulator
+        from Scripts.Campaign import get_emulator, Mesen2Emulator
 
         emu = get_emulator()
         assert isinstance(emu, Mesen2Emulator)
 
     def test_get_emulator_invalid(self):
         """Test get_emulator raises for invalid type."""
-        from scripts.campaign import get_emulator
+        from Scripts.Campaign import get_emulator
 
         with pytest.raises((ValueError, KeyError)):
             get_emulator("invalid_emulator_type")
@@ -50,14 +50,14 @@ class TestParserFactories:
 
     def test_get_parser(self):
         """Test get_parser returns GameStateParser."""
-        from scripts.campaign import get_parser, GameStateParser
+        from Scripts.Campaign import get_parser, GameStateParser
 
         parser = get_parser()
         assert isinstance(parser, GameStateParser)
 
     def test_parse_state_convenience(self):
         """Test parse_state convenience function."""
-        from scripts.campaign import parse_state, GameStateSnapshot, ParsedGameState
+        from Scripts.Campaign import parse_state, GameStateSnapshot, ParsedGameState
 
         snapshot = GameStateSnapshot(
             timestamp=1.0, mode=0x09, submode=0x00,
@@ -77,15 +77,15 @@ class TestPathfinderFactories:
 
     def test_get_pathfinder(self):
         """Test get_pathfinder returns Pathfinder."""
-        from scripts.campaign import get_pathfinder, Pathfinder
+        from Scripts.Campaign import get_pathfinder, Pathfinder
 
         pathfinder = get_pathfinder()
         assert isinstance(pathfinder, Pathfinder)
 
     def test_find_path_convenience(self):
         """Test find_path convenience function."""
-        from scripts.campaign import find_path, NavigationResult
-        from scripts.campaign.pathfinder import TileType
+        from Scripts.Campaign import find_path, NavigationResult
+        from Scripts.Campaign.pathfinder import TileType
 
         # Create walkable collision data for test
         collision_data = bytes([TileType.WALKABLE] * 4096)
@@ -100,14 +100,14 @@ class TestCampaignFactories:
 
     def test_create_campaign(self):
         """Test create_campaign returns CampaignOrchestrator."""
-        from scripts.campaign import create_campaign, CampaignOrchestrator
+        from Scripts.Campaign import create_campaign, CampaignOrchestrator
 
         orchestrator = create_campaign()
         assert isinstance(orchestrator, CampaignOrchestrator)
 
     def test_quick_status(self):
         """Test quick_status returns string."""
-        from scripts.campaign import quick_status
+        from Scripts.Campaign import quick_status
 
         status = quick_status()
         assert isinstance(status, str)
@@ -119,7 +119,7 @@ class TestVerifierFactories:
 
     def test_create_verifier(self):
         """Test create_verifier returns VisualVerifier."""
-        from scripts.campaign import create_verifier, VisualVerifier
+        from Scripts.Campaign import create_verifier, VisualVerifier
 
         with tempfile.TemporaryDirectory() as tmpdir:
             baseline = Path(tmpdir) / "baseline"
@@ -130,7 +130,7 @@ class TestVerifierFactories:
 
     def test_quick_black_screen_check(self):
         """Test quick_black_screen_check function."""
-        from scripts.campaign import quick_black_screen_check
+        from Scripts.Campaign import quick_black_screen_check
 
         # Non-existent file returns False
         result = quick_black_screen_check(Path("/nonexistent/file.png"))
@@ -142,7 +142,7 @@ class TestInputFactories:
 
     def test_create_boot_sequence(self):
         """Test create_boot_sequence returns InputSequence."""
-        from scripts.campaign import create_boot_sequence, InputSequence
+        from Scripts.Campaign import create_boot_sequence, InputSequence
 
         seq = create_boot_sequence()
         assert isinstance(seq, InputSequence)
@@ -150,7 +150,7 @@ class TestInputFactories:
 
     def test_create_walk_sequence(self):
         """Test create_walk_sequence returns InputSequence."""
-        from scripts.campaign import create_walk_sequence, InputSequence
+        from Scripts.Campaign import create_walk_sequence, InputSequence
 
         seq = create_walk_sequence("UP", tiles=3)
         assert isinstance(seq, InputSequence)
@@ -158,14 +158,14 @@ class TestInputFactories:
 
     def test_create_menu_open_sequence(self):
         """Test create_menu_open_sequence returns InputSequence."""
-        from scripts.campaign import create_menu_open_sequence, InputSequence
+        from Scripts.Campaign import create_menu_open_sequence, InputSequence
 
         seq = create_menu_open_sequence()
         assert isinstance(seq, InputSequence)
 
     def test_create_attack_sequence(self):
         """Test create_attack_sequence returns InputSequence."""
-        from scripts.campaign import create_attack_sequence, InputSequence
+        from Scripts.Campaign import create_attack_sequence, InputSequence
 
         seq = create_attack_sequence()
         assert isinstance(seq, InputSequence)
@@ -176,7 +176,7 @@ class TestGoalFactories:
 
     def test_goal_reach_village_center(self):
         """Test goal_reach_village_center factory."""
-        from scripts.campaign import goal_reach_village_center, Goal
+        from Scripts.Campaign import goal_reach_village_center, Goal
 
         goal = goal_reach_village_center()
         assert isinstance(goal, Goal)
@@ -184,7 +184,7 @@ class TestGoalFactories:
 
     def test_goal_reach_dungeon1_entrance(self):
         """Test goal_reach_dungeon1_entrance factory."""
-        from scripts.campaign import goal_reach_dungeon1_entrance, Goal
+        from Scripts.Campaign import goal_reach_dungeon1_entrance, Goal
 
         goal = goal_reach_dungeon1_entrance()
         assert isinstance(goal, Goal)
@@ -192,7 +192,7 @@ class TestGoalFactories:
 
     def test_goal_complete_dungeon1(self):
         """Test goal_complete_dungeon1 factory."""
-        from scripts.campaign import goal_complete_dungeon1, Goal
+        from Scripts.Campaign import goal_complete_dungeon1, Goal
 
         goal = goal_complete_dungeon1()
         assert isinstance(goal, Goal)
@@ -203,7 +203,7 @@ class TestExportedClasses:
 
     def test_emulator_classes(self):
         """Test emulator classes are exported."""
-        from scripts.campaign import (
+        from Scripts.Campaign import (
             EmulatorInterface,
             EmulatorStatus,
             GameStateSnapshot,
@@ -218,7 +218,7 @@ class TestExportedClasses:
 
     def test_game_state_classes(self):
         """Test game state classes are exported."""
-        from scripts.campaign import (
+        from Scripts.Campaign import (
             GamePhase,
             GameStateParser,
             LinkAction,
@@ -231,7 +231,7 @@ class TestExportedClasses:
 
     def test_location_exports(self):
         """Test location data is exported."""
-        from scripts.campaign import (
+        from Scripts.Campaign import (
             DUNGEONS,
             ENTRANCE_NAMES,
             OVERWORLD_AREAS,
@@ -249,7 +249,7 @@ class TestExportedClasses:
 
     def test_pathfinder_classes(self):
         """Test pathfinder classes are exported."""
-        from scripts.campaign import (
+        from Scripts.Campaign import (
             TileType,
             CollisionMap,
             Pathfinder,
@@ -262,7 +262,7 @@ class TestExportedClasses:
 
     def test_input_classes(self):
         """Test input classes are exported."""
-        from scripts.campaign import (
+        from Scripts.Campaign import (
             Button,
             InputFrame,
             InputSequence,
@@ -277,7 +277,7 @@ class TestExportedClasses:
 
     def test_action_planner_classes(self):
         """Test action planner classes are exported."""
-        from scripts.campaign import (
+        from Scripts.Campaign import (
             GoalType,
             PlanStatus,
             Goal,
@@ -294,7 +294,7 @@ class TestExportedClasses:
 
     def test_orchestrator_classes(self):
         """Test orchestrator classes are exported."""
-        from scripts.campaign import (
+        from Scripts.Campaign import (
             CampaignPhase,
             MilestoneStatus,
             CampaignMilestone,
@@ -309,7 +309,7 @@ class TestExportedClasses:
 
     def test_verifier_classes(self):
         """Test verifier classes are exported."""
-        from scripts.campaign import (
+        from Scripts.Campaign import (
             VerificationResult,
             Screenshot,
             VerificationReport,
@@ -326,12 +326,12 @@ class TestModuleMetadata:
 
     def test_version_defined(self):
         """Test __version__ is defined."""
-        from scripts.campaign import __version__
+        from Scripts.Campaign import __version__
         assert __version__ is not None
         assert len(__version__) > 0
 
     def test_campaign_start_defined(self):
         """Test __campaign_start__ is defined."""
-        from scripts.campaign import __campaign_start__
+        from Scripts.Campaign import __campaign_start__
         assert __campaign_start__ is not None
         assert "2026" in __campaign_start__

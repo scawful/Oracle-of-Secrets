@@ -19,8 +19,8 @@ import sys
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-MESEN = [sys.executable, str(REPO_ROOT / "scripts" / "mesen2_client.py")]
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MESEN = [sys.executable, str(REPO_ROOT / "Scripts" / "Mesen2" / "mesen2_client.py")]
 DEFAULT_Z3ED = Path.home() / "src/hobby/yaze/build_ai/bin/Debug/z3ed"
 DEFAULT_ROM = REPO_ROOT / "Roms/oos168x.sfc"
 
@@ -98,4 +98,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

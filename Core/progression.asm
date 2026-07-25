@@ -232,13 +232,13 @@ SelectReactionMessage:
 ;
 ; Test 1: GetCrystalCount accuracy
 ;   Method: Use Mesen2 to write crystal values, call routine
-;   python3 scripts/mesen2_client.py write 0x7EF37A 0x00
+;   python3 Scripts/Mesen2/mesen2_client.py write 0x7EF37A 0x00
 ;   → expect A = 0
-;   python3 scripts/mesen2_client.py write 0x7EF37A 0x01
+;   python3 Scripts/Mesen2/mesen2_client.py write 0x7EF37A 0x01
 ;   → expect A = 1
-;   python3 scripts/mesen2_client.py write 0x7EF37A 0x7F
+;   python3 Scripts/Mesen2/mesen2_client.py write 0x7EF37A 0x7F
 ;   → expect A = 7
-;   python3 scripts/mesen2_client.py write 0x7EF37A 0x15
+;   python3 Scripts/Mesen2/mesen2_client.py write 0x7EF37A 0x15
 ;   → expect A = 3 (bits 0, 2, 4 = D1, D5, D2)
 ;   Verify: high byte of A is $00 for 16-bit callers
 ;

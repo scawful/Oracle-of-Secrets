@@ -102,4 +102,4 @@ Item 3 gives the switch tutorial. Everything else is polish.
 See also:
 - `Docs/Planning/Plans/goron_mines_minecart_design.md` — full design doc
 - `Sprites/Objects/data/minecart_tracks.asm` — track starting tables
-- `scripts/dungeon_viz.py` — ASCII room visualizer
+- `Scripts/Analysis/dungeon_viz.py` — ASCII room visualizer

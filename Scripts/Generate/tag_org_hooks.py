@@ -19,7 +19,7 @@ DIRECTIVE_PREFIXES = (
     'pushpc', 'pullpc', 'org', 'if', 'endif', 'else', 'macro',
     'db', 'dw', 'dl', 'dd', 'incbin', 'incsrc', 'fill', 'pad', 'assert',
 )
-SKIP_DIRS = {'.git', '.context', 'Roms', 'build', 'bin', 'obj', 'tools', 'tests', 'node_modules'}
+SKIP_DIRS = {'.git', '.context', 'Roms', 'build', 'bin', 'obj', 'tools', 'Tests', 'tests', 'node_modules'}
 
 
 def _should_skip(path: Path) -> bool:

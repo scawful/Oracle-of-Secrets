@@ -87,7 +87,7 @@
     },
     {
       "type": "screenshot",
-      "path": "tests/screenshots/b007_post_transition.png"
+      "path": "Tests/screenshots/b007_post_transition.png"
     }
   ],
   "onFailure": {

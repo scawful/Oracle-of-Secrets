@@ -1,0 +1,5278 @@
+{
+  "manifest_version": 3,
+  "hack_name": "Oracle of Secrets",
+  "hack_version": "dev",
+  "generator": "generate_hack_manifest.py",
+  "build_pipeline": {
+    "description": "Yaze edits the dev ROM; asar patches it to produce the patched ROM. They share the same base file.",
+    "dev_rom": "Roms/oos168.sfc",
+    "patched_rom": "Roms/oos168x.sfc",
+    "assembler": "asar",
+    "entry_point": "Oracle_main.asm",
+    "build_script": "Scripts/Build/build_rom.sh",
+    "flow": [
+      "1. Yaze edits dev ROM (room data, sprites, palettes, messages)",
+      "2. asar reads dev ROM + ASM sources",
+      "3. asar writes patched ROM with all org/freedata applied",
+      "4. Patched ROM is the playable output"
+    ],
+    "key_insight": "Hook addresses in the dev ROM are overwritten by asar on every build. Yaze edits to these addresses are silently lost. The manifest identifies which addresses belong to which layer."
+  },
+  "rom": {
+    "path": "Roms/oos168.sfc",
+    "sha1": "eaf2ce3d28afa5375adf9c754534a7a98bf06822",
+    "size": 2097152,
+    "dev_rom_sha1": "eaf2ce3d28afa5375adf9c754534a7a98bf06822",
+    "dev_rom_size": 2097152
+  },
+  "dungeon_stream_regions": {
+    "objects": {
+      "pointer_table": "0x1F8000",
+      "pointer_count": 296,
+      "pointer_encoding": "long24",
+      "strategy": "copy_on_write",
+      "data_regions": [
+        {
+          "start": "0x0A8000",
+          "end": "0x0AB730"
+        },
+        {
+          "start": "0x1F878A",
+          "end": "0x208000"
+        },
+        {
+          "start": "0x03EB90",
+          "end": "0x048000"
+        },
+        {
+          "start": "0x278000",
+          "end": "0x288000"
+        },
+        {
+          "start": "0x298000",
+          "end": "0x2A8000"
+        }
+      ],
+      "allocation_regions": [
+        {
+          "start": "0x298000",
+          "end": "0x2A8000"
+        }
+      ]
+    },
+    "sprites": {
+      "pointer_table": "0x09D2B2",
+      "pointer_count": 296,
+      "pointer_encoding": "bank16",
+      "pointer_bank": "0x09",
+      "strategy": "copy_on_write",
+      "data_regions": [
+        {
+          "start": "0x09D502",
+          "end": "0x09EC9F"
+        }
+      ],
+      "allocation_regions": [
+        {
+          "start": "0x09D502",
+          "end": "0x09EC9F"
+        }
+      ]
+    },
+    "pot_items": {
+      "pointer_table": "0x01DB69",
+      "pointer_count": 296,
+      "pointer_encoding": "bank16",
+      "pointer_bank": "0x01",
+      "strategy": "repack_all",
+      "data_regions": [
+        {
+          "start": "0x01DDE7",
+          "end": "0x01E6B2"
+        }
+      ],
+      "allocation_regions": [
+        {
+          "start": "0x01DDE7",
+          "end": "0x01E6B2"
+        }
+      ]
+    }
+  },
+  "editor_managed_regions": {
+    "description": "Exact yaze-owned dungeon metadata and custom-collision ranges. The WaterFill tail beginning at $25:E000 remains ASM-owned.",
+    "regions": [
+      {
+        "start": "0x07F61D",
+        "end": "0x07F86D"
+      },
+      {
+        "start": "0x228280",
+        "end": "0x2292B0"
+      },
+      {
+        "start": "0x258090",
+        "end": "0x258408"
+      },
+      {
+        "start": "0x258450",
+        "end": "0x25E000"
+      }
+    ]
+  },
+  "protected_regions": {
+    "description": "Hook addresses within vanilla ROM banks ($00-$1D). Asar patches these on every build, so yaze edits at these addresses are silently overwritten. Yaze should either skip these during save or warn the user.",
+    "count": 397,
+    "vanilla_hook_count": 452,
+    "expanded_hook_count": 99,
+    "total_hooks": 551,
+    "regions": [
+      {
+        "start": "0x008000",
+        "end": "0x008004",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0083F8",
+        "end": "0x0083FC",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x008542",
+        "end": "0x00854A",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x0085C4",
+        "end": "0x0085CC",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x008781",
+        "end": "0x008785",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x008827",
+        "end": "0x00882B",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x008919",
+        "end": "0x00891D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Music"
+      },
+      {
+        "start": "0x008A01",
+        "end": "0x008A05",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x008B2A",
+        "end": "0x008B2E",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x008C8A",
+        "end": "0x008C92",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x008E54",
+        "end": "0x008E58",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x008FF3",
+        "end": "0x008FF7",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0098AB",
+        "end": "0x0098B4",
+        "size": 9,
+        "hook_count": 2,
+        "module": "Menu"
+      },
+      {
+        "start": "0x009E1A",
+        "end": "0x009E22",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x009E3A",
+        "end": "0x009E42",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x00A6B8",
+        "end": "0x00A6C0",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x00A9AC",
+        "end": "0x00A9B4",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x00AFE6",
+        "end": "0x00AFEE",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x00C3B8",
+        "end": "0x00C3C0",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x00D585",
+        "end": "0x00D589",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00D673",
+        "end": "0x00D67F",
+        "size": 12,
+        "hook_count": 2,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00D8D5",
+        "end": "0x00D8D9",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00D904",
+        "end": "0x00D908",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00D97D",
+        "end": "0x00D981",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00D9BC",
+        "end": "0x00D9C0",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00DA2F",
+        "end": "0x00DA33",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00DA63",
+        "end": "0x00DA67",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00E221",
+        "end": "0x00E225",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00E399",
+        "end": "0x00E39D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00EEBB",
+        "end": "0x00EEBF",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00F877",
+        "end": "0x00F897",
+        "size": 32,
+        "hook_count": 3,
+        "module": "Menu"
+      },
+      {
+        "start": "0x00FC67",
+        "end": "0x00FC6B",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00FF7C",
+        "end": "0x00FF80",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x00FFD7",
+        "end": "0x00FFDF",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Music"
+      },
+      {
+        "start": "0x018262",
+        "end": "0x01826C",
+        "size": 10,
+        "hook_count": 2,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0182A8",
+        "end": "0x0182B0",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x018650",
+        "end": "0x018658",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0188DF",
+        "end": "0x0188E3",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x01B3E1",
+        "end": "0x01B3E5",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x01B53C",
+        "end": "0x01B540",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x01B95B",
+        "end": "0x01B95F",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x01C71B",
+        "end": "0x01C72B",
+        "size": 16,
+        "hook_count": 2,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x01C742",
+        "end": "0x01C746",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x01C769",
+        "end": "0x01C76D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x01CBAC",
+        "end": "0x01CBB0",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x01CC00",
+        "end": "0x01CC20",
+        "size": 32,
+        "hook_count": 5,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x01E9E8",
+        "end": "0x01E9FF",
+        "size": 23,
+        "hook_count": 2,
+        "module": "Core"
+      },
+      {
+        "start": "0x01EB8C",
+        "end": "0x01EB90",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x01EBC8",
+        "end": "0x01EBDE",
+        "size": 22,
+        "hook_count": 3,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x01EC1A",
+        "end": "0x01EC22",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x01F195",
+        "end": "0x01F199",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x01F1C9",
+        "end": "0x01F1CD",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x01F3D2",
+        "end": "0x01F3D6",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x028027",
+        "end": "0x02802A",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02811E",
+        "end": "0x028126",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x028192",
+        "end": "0x028196",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0281CD",
+        "end": "0x0281D1",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0281E2",
+        "end": "0x0281E6",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x028260",
+        "end": "0x028264",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x028364",
+        "end": "0x028368",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x02838C",
+        "end": "0x028390",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0283EE",
+        "end": "0x0283F2",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x028632",
+        "end": "0x028636",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0286DB",
+        "end": "0x0286DF",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0287A4",
+        "end": "0x0287A8",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x0288FF",
+        "end": "0x028903",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x028925",
+        "end": "0x028929",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x0289BF",
+        "end": "0x0289C3",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x028A5B",
+        "end": "0x028A5F",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x028BE7",
+        "end": "0x028BEB",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x029A37",
+        "end": "0x029A3B",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x029C0C",
+        "end": "0x029C0F",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x029D1E",
+        "end": "0x029D21",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x029E2E",
+        "end": "0x029E32",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x029E58",
+        "end": "0x029E5C",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x029F82",
+        "end": "0x029F85",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02A07A",
+        "end": "0x02A07D",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02A4CD",
+        "end": "0x02A4D1",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02A5D3",
+        "end": "0x02A5D7",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02A62C",
+        "end": "0x02A648",
+        "size": 28,
+        "hook_count": 4,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02A784",
+        "end": "0x02A788",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02A9C4",
+        "end": "0x02A9C8",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02AB0D",
+        "end": "0x02AB11",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02ABB4",
+        "end": "0x02ABC2",
+        "size": 14,
+        "hook_count": 3,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02ABDA",
+        "end": "0x02ABDE",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x02AC40",
+        "end": "0x02AC48",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02AC70",
+        "end": "0x02AC78",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02AE92",
+        "end": "0x02AE96",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02AF58",
+        "end": "0x02AF5C",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02B0FB",
+        "end": "0x02B0FF",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02B2D4",
+        "end": "0x02B2D7",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02B2FA",
+        "end": "0x02B302",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02B356",
+        "end": "0x02B35E",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02B391",
+        "end": "0x02B395",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02B490",
+        "end": "0x02B494",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02B4CD",
+        "end": "0x02B4D1",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02BC44",
+        "end": "0x02BC48",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02BC60",
+        "end": "0x02BC68",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02BE5E",
+        "end": "0x02BE62",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x02C02D",
+        "end": "0x02C031",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02C098",
+        "end": "0x02C09C",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02C0C3",
+        "end": "0x02C0C7",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02C692",
+        "end": "0x02C696",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02C769",
+        "end": "0x02C76D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x02D98B",
+        "end": "0x02D98F",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x02E598",
+        "end": "0x02E59C",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02E90C",
+        "end": "0x02E910",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02E931",
+        "end": "0x02E935",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02EAAB",
+        "end": "0x02EAAF",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02EADC",
+        "end": "0x02EAE0",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02ECE8",
+        "end": "0x02ECEC",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02ED39",
+        "end": "0x02ED41",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02ED6D",
+        "end": "0x02ED75",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02EDC0",
+        "end": "0x02EDC4",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x02EF44",
+        "end": "0x02EF48",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02EF64",
+        "end": "0x02EF68",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02F039",
+        "end": "0x02F041",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02F210",
+        "end": "0x02F214",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x02F2EF",
+        "end": "0x02F2F7",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02F323",
+        "end": "0x02F32B",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02F361",
+        "end": "0x02F369",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02F39B",
+        "end": "0x02F3A3",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02F88D",
+        "end": "0x02F891",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x02FF6E",
+        "end": "0x02FF83",
+        "size": 21,
+        "hook_count": 2,
+        "module": "Items"
+      },
+      {
+        "start": "0x0589AF",
+        "end": "0x0589B3",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x058EE6",
+        "end": "0x058EEA",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x05A377",
+        "end": "0x05A37B",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x05B60E",
+        "end": "0x05B616",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x05E9CD",
+        "end": "0x05E9D1",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x05EAC2",
+        "end": "0x05EAC6",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x05EBCF",
+        "end": "0x05EBD3",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x05ED10",
+        "end": "0x05ED14",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x05ED43",
+        "end": "0x05ED47",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x05ED63",
+        "end": "0x05ED67",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x05EE46",
+        "end": "0x05EE4A",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x05F274",
+        "end": "0x05F278",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x05FF7D",
+        "end": "0x05FF81",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x068361",
+        "end": "0x068369",
+        "size": 8,
+        "hook_count": 2,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x06865B",
+        "end": "0x068663",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x068841",
+        "end": "0x068845",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x06891B",
+        "end": "0x06891F",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x068963",
+        "end": "0x06896B",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x068BB2",
+        "end": "0x068BB6",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x068C9C",
+        "end": "0x068CA4",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x068D59",
+        "end": "0x068D5D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x068D7F",
+        "end": "0x068D83",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x068EB9",
+        "end": "0x068EBD",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x068F95",
+        "end": "0x068F99",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x0691D7",
+        "end": "0x0691DB",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x069283",
+        "end": "0x06928B",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x069365",
+        "end": "0x06936D",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x06A540",
+        "end": "0x06A544",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x06B962",
+        "end": "0x06B966",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x06B9C6",
+        "end": "0x06B9CA",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x06BCAC",
+        "end": "0x06BCAF",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x06BD9C",
+        "end": "0x06BDA4",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x06C0B2",
+        "end": "0x06C0B6",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x06D814",
+        "end": "0x06D818",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x06EB90",
+        "end": "0x06EB94",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x06EC8C",
+        "end": "0x06EC94",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x06ECBF",
+        "end": "0x06ECC3",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x06ECF2",
+        "end": "0x06ECF6",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x06ED6A",
+        "end": "0x06ED6E",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x06EDC0",
+        "end": "0x06EDC4",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x06EFFF",
+        "end": "0x06F007",
+        "size": 8,
+        "hook_count": 2,
+        "module": "Core"
+      },
+      {
+        "start": "0x06F2D6",
+        "end": "0x06F2DE",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x06F37D",
+        "end": "0x06F385",
+        "size": 8,
+        "hook_count": 2,
+        "module": "Core"
+      },
+      {
+        "start": "0x06F3C7",
+        "end": "0x06F3CA",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x06F400",
+        "end": "0x06F404",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x06F6C4",
+        "end": "0x06F6C8",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x06FA25",
+        "end": "0x06FA38",
+        "size": 19,
+        "hook_count": 2,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x06FFF8",
+        "end": "0x06FFFC",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x07810C",
+        "end": "0x078110",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x0781CD",
+        "end": "0x0781D1",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x0782D2",
+        "end": "0x0782D5",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x078427",
+        "end": "0x07842A",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07866D",
+        "end": "0x078671",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x07903F",
+        "end": "0x079043",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x079093",
+        "end": "0x079097",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x0794D9",
+        "end": "0x0794DD",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x079781",
+        "end": "0x079784",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x079C32",
+        "end": "0x079C36",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x079C77",
+        "end": "0x079C7B",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x079CD9",
+        "end": "0x079CDD",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x079E67",
+        "end": "0x079E6B",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07A15B",
+        "end": "0x07A15F",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07A313",
+        "end": "0x07A317",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07A3B2",
+        "end": "0x07A3B6",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07A3DB",
+        "end": "0x07A3DE",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07A484",
+        "end": "0x07A498",
+        "size": 20,
+        "hook_count": 2,
+        "module": "Items"
+      },
+      {
+        "start": "0x07A50F",
+        "end": "0x07A517",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07A569",
+        "end": "0x07A56D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07A5F7",
+        "end": "0x07A5FB",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x07A64B",
+        "end": "0x07A64F",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07A6BE",
+        "end": "0x07A6C6",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07A94F",
+        "end": "0x07A953",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07A9B1",
+        "end": "0x07A9B5",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07AB25",
+        "end": "0x07AB29",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07AB3A",
+        "end": "0x07AB3E",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07AB95",
+        "end": "0x07AB99",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07ABAF",
+        "end": "0x07ABB3",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07AD49",
+        "end": "0x07AD4D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07AF3E",
+        "end": "0x07AF42",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07AFF8",
+        "end": "0x07AFFC",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07B518",
+        "end": "0x07B51C",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x07BCEE",
+        "end": "0x07BCF2",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07C307",
+        "end": "0x07C30A",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07C729",
+        "end": "0x07C72D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07D242",
+        "end": "0x07D246",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07D8A0",
+        "end": "0x07D8A8",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07D938",
+        "end": "0x07D940",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x07DAF2",
+        "end": "0x07DAFA",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07DC9E",
+        "end": "0x07DCA2",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07DD1B",
+        "end": "0x07DD1F",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07E1BE",
+        "end": "0x07E1C2",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x07E330",
+        "end": "0x07E333",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07E38B",
+        "end": "0x07E38F",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07F452",
+        "end": "0x07F456",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07F89D",
+        "end": "0x07F8A1",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x07FA80",
+        "end": "0x07FA84",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x088399",
+        "end": "0x0883A1",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x088A5D",
+        "end": "0x088A61",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x088DC3",
+        "end": "0x088DC7",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x08BD64",
+        "end": "0x08BD68",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x08BD7F",
+        "end": "0x08BD83",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x08BDFD",
+        "end": "0x08BE01",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x08BF0C",
+        "end": "0x08BF31",
+        "size": 37,
+        "hook_count": 3,
+        "module": "Items"
+      },
+      {
+        "start": "0x08BF94",
+        "end": "0x08BF98",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x08BFB0",
+        "end": "0x08BFB4",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x08BFDA",
+        "end": "0x08BFDE",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x08C2E3",
+        "end": "0x08C2EB",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x08C5D4",
+        "end": "0x08C5DC",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x08F7DC",
+        "end": "0x08F7E0",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x08FA49",
+        "end": "0x08FA4D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x08FA81",
+        "end": "0x08FA85",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x08FFDA",
+        "end": "0x08FFDE",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x0987CA",
+        "end": "0x0987D2",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x098823",
+        "end": "0x098827",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x098BC1",
+        "end": "0x098BC5",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x099090",
+        "end": "0x099094",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Util"
+      },
+      {
+        "start": "0x099E90",
+        "end": "0x099E94",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x099FEB",
+        "end": "0x099FEF",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x09A19C",
+        "end": "0x09A1A0",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x09A1C6",
+        "end": "0x09A1CA",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x09A1E4",
+        "end": "0x09A1F0",
+        "size": 12,
+        "hook_count": 2,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x09A23A",
+        "end": "0x09A23E",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x09A41F",
+        "end": "0x09A423",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x09A4C8",
+        "end": "0x09A4D0",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x09A8CF",
+        "end": "0x09A8D3",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x09A902",
+        "end": "0x09A90A",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x09AA5E",
+        "end": "0x09AA62",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x09ACF3",
+        "end": "0x09ACF7",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x09B33F",
+        "end": "0x09B347",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x09B459",
+        "end": "0x09B461",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x09B5D6",
+        "end": "0x09B5E6",
+        "size": 16,
+        "hook_count": 2,
+        "module": "Core"
+      },
+      {
+        "start": "0x09B70C",
+        "end": "0x09B714",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x09B7AE",
+        "end": "0x09B7B6",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x09C4C7",
+        "end": "0x09C4CB",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x09C50D",
+        "end": "0x09C515",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x09F253",
+        "end": "0x09F257",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x09F347",
+        "end": "0x09F34B",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x09F520",
+        "end": "0x09F524",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x09F604",
+        "end": "0x09F60C",
+        "size": 8,
+        "hook_count": 2,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x09F7B5",
+        "end": "0x09F7B9",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x0AB8F5",
+        "end": "0x0AB8F9",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0ABC5A",
+        "end": "0x0ABC5E",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0ABC76",
+        "end": "0x0ABC7A",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0ABF90",
+        "end": "0x0ABF94",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0AC38A",
+        "end": "0x0AC38E",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0AC589",
+        "end": "0x0AC58D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0ADC27",
+        "end": "0x0ADC2B",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0AE152",
+        "end": "0x0AE156",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0AEFA6",
+        "end": "0x0AEFAA",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0AFCE0",
+        "end": "0x0AFD10",
+        "size": 48,
+        "hook_count": 3,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0BFE70",
+        "end": "0x0BFE74",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0BFEB6",
+        "end": "0x0BFEBA",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0CC120",
+        "end": "0x0CC124",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Music"
+      },
+      {
+        "start": "0x0CC265",
+        "end": "0x0CC269",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0CCA59",
+        "end": "0x0CCA5D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0CDC26",
+        "end": "0x0CDC2E",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0CEF4E",
+        "end": "0x0CEF52",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CEFE3",
+        "end": "0x0CEFE7",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF058",
+        "end": "0x0CF05C",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF0DC",
+        "end": "0x0CF0E0",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF1AE",
+        "end": "0x0CF1B2",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF1C8",
+        "end": "0x0CF1CC",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF260",
+        "end": "0x0CF264",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF27A",
+        "end": "0x0CF27E",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF319",
+        "end": "0x0CF31D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF365",
+        "end": "0x0CF37D",
+        "size": 24,
+        "hook_count": 2,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF401",
+        "end": "0x0CF405",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF57B",
+        "end": "0x0CF596",
+        "size": 27,
+        "hook_count": 3,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF5FB",
+        "end": "0x0CF5FF",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF675",
+        "end": "0x0CF68D",
+        "size": 24,
+        "hook_count": 2,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF6E2",
+        "end": "0x0CF6E6",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF700",
+        "end": "0x0CF704",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF8A7",
+        "end": "0x0CF8AB",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CF9E6",
+        "end": "0x0CF9EE",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0CFA27",
+        "end": "0x0CFA2B",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0DA3FD",
+        "end": "0x0DA401",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x0DA5EA",
+        "end": "0x0DA5EE",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x0DA6E3",
+        "end": "0x0DA6E7",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x0DA780",
+        "end": "0x0DA784",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x0DABA2",
+        "end": "0x0DABB8",
+        "size": 22,
+        "hook_count": 2,
+        "module": "Items"
+      },
+      {
+        "start": "0x0DB080",
+        "end": "0x0DB088",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0DB173",
+        "end": "0x0DB17B",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0DB1C6",
+        "end": "0x0DB1CE",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0DB266",
+        "end": "0x0DB26E",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0DB330",
+        "end": "0x0DB338",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0DB359",
+        "end": "0x0DB361",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0DB44C",
+        "end": "0x0DB454",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0DB53F",
+        "end": "0x0DB547",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0DB632",
+        "end": "0x0DB63A",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0DB725",
+        "end": "0x0DB72D",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0DC829",
+        "end": "0x0DC82D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x0DDB85",
+        "end": "0x0DDB89",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DDD21",
+        "end": "0x0DDD24",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DDEB0",
+        "end": "0x0DDEB4",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DE399",
+        "end": "0x0DE39D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DF14F",
+        "end": "0x0DF153",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DF629",
+        "end": "0x0DF631",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DF651",
+        "end": "0x0DF671",
+        "size": 32,
+        "hook_count": 2,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DF689",
+        "end": "0x0DF6B9",
+        "size": 48,
+        "hook_count": 3,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DF6D1",
+        "end": "0x0DF709",
+        "size": 56,
+        "hook_count": 4,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DF731",
+        "end": "0x0DF739",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DF751",
+        "end": "0x0DF759",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DF7A9",
+        "end": "0x0DF7D1",
+        "size": 40,
+        "hook_count": 3,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DF811",
+        "end": "0x0DF829",
+        "size": 24,
+        "hook_count": 2,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DF859",
+        "end": "0x0DF861",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DF8A9",
+        "end": "0x0DF8B1",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DFA68",
+        "end": "0x0DFA6C",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x0DFA93",
+        "end": "0x0DFA9B",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DFB91",
+        "end": "0x0DFB95",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DFC09",
+        "end": "0x0DFC0D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DFDAB",
+        "end": "0x0DFDAF",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DFE77",
+        "end": "0x0DFE7F",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Menu"
+      },
+      {
+        "start": "0x0DFF07",
+        "end": "0x0DFF0F",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0E942A",
+        "end": "0x0E942E",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Dungeons"
+      },
+      {
+        "start": "0x0E95DC",
+        "end": "0x0E95E0",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x0E9889",
+        "end": "0x0E988D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0ED436",
+        "end": "0x0ED43A",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0ED5E7",
+        "end": "0x0ED5FD",
+        "size": 22,
+        "hook_count": 2,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0ED627",
+        "end": "0x0ED62B",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0ED652",
+        "end": "0x0ED656",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0ED745",
+        "end": "0x0ED749",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0ED8AE",
+        "end": "0x0ED8B2",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0ED956",
+        "end": "0x0ED95A",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0EDE29",
+        "end": "0x0EDE31",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0EDE49",
+        "end": "0x0EDE4D",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0EEE75",
+        "end": "0x0EEE7D",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x0EF531",
+        "end": "0x0EF539",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0EF581",
+        "end": "0x0EF58B",
+        "size": 10,
+        "hook_count": 2,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x0EFBA0",
+        "end": "0x0EFBA4",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x0EFC80",
+        "end": "0x0EFC94",
+        "size": 20,
+        "hook_count": 2,
+        "module": "Items"
+      },
+      {
+        "start": "0x0EFD00",
+        "end": "0x0EFD04",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x0F85B8",
+        "end": "0x0F85BC",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x1A8C60",
+        "end": "0x1A8C68",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x1A91F0",
+        "end": "0x1A91F8",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x1A92F7",
+        "end": "0x1A92FF",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x1A9750",
+        "end": "0x1A9758",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Items"
+      },
+      {
+        "start": "0x1A9FF8",
+        "end": "0x1A9FFC",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Music"
+      },
+      {
+        "start": "0x1AA763",
+        "end": "0x1AA76B",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Music"
+      },
+      {
+        "start": "0x1AADDE",
+        "end": "0x1AADE6",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Music"
+      },
+      {
+        "start": "0x1AF5C3",
+        "end": "0x1AF5C7",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1AF981",
+        "end": "0x1AF985",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1AF9D6",
+        "end": "0x1AF9DA",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1AFBBF",
+        "end": "0x1AFBDF",
+        "size": 32,
+        "hook_count": 3,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1AFC52",
+        "end": "0x1AFC5A",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1AFC6D",
+        "end": "0x1AFC71",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1AFCA7",
+        "end": "0x1AFCAF",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1AFECF",
+        "end": "0x1AFED2",
+        "size": 3,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1B9C0F",
+        "end": "0x1B9C17",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Music"
+      },
+      {
+        "start": "0x1BA308",
+        "end": "0x1BA310",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Music"
+      },
+      {
+        "start": "0x1BB8BF",
+        "end": "0x1BB8C7",
+        "size": 8,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1BBBF4",
+        "end": "0x1BBBF8",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1BBD3C",
+        "end": "0x1BBD40",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1BC8B4",
+        "end": "0x1BC8B8",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1BCADE",
+        "end": "0x1BCAE2",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1BCBA6",
+        "end": "0x1BCBAA",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1BCCD4",
+        "end": "0x1BCCD8",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1BCE28",
+        "end": "0x1BCE2C",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1BCFD9",
+        "end": "0x1BCFDD",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1BD662",
+        "end": "0x1BD672",
+        "size": 16,
+        "hook_count": 2,
+        "module": "Menu"
+      },
+      {
+        "start": "0x1BEDF9",
+        "end": "0x1BEDFD",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x1BEE1B",
+        "end": "0x1BEE31",
+        "size": 22,
+        "hook_count": 2,
+        "module": "Masks"
+      },
+      {
+        "start": "0x1BEF3D",
+        "end": "0x1BEF41",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1BEF61",
+        "end": "0x1BEF65",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1BEF84",
+        "end": "0x1BEF88",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Overworld"
+      },
+      {
+        "start": "0x1DA03C",
+        "end": "0x1DA040",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1DA081",
+        "end": "0x1DA085",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1DA0B1",
+        "end": "0x1DA0B5",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1DB672",
+        "end": "0x1DB692",
+        "size": 32,
+        "hook_count": 4,
+        "module": "Menu"
+      },
+      {
+        "start": "0x1DCFCB",
+        "end": "0x1DCFCF",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1DE184",
+        "end": "0x1DE188",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Core"
+      },
+      {
+        "start": "0x1DF614",
+        "end": "0x1DF618",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      },
+      {
+        "start": "0x1DFD5E",
+        "end": "0x1DFD62",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Masks"
+      },
+      {
+        "start": "0x1EFF21",
+        "end": "0x1EFF25",
+        "size": 4,
+        "hook_count": 1,
+        "module": "Sprites"
+      }
+    ]
+  },
+  "owned_banks": {
+    "description": "Expanded ROM banks with ownership classification. 'asm_owned' banks are fully owned by ASM. 'shared' banks (e.g., $28 ZSCustomOverworld) contain data that yaze writes AND ASM patches on top \u2014 yaze can edit these but must rebuild after. 'asm_expansion' banks only exist in the patched ROM.",
+    "ownership_types": {
+      "asm_owned": "Fully owned by ASM hack \u2014 yaze should not write here",
+      "shared": "Both yaze and ASM write \u2014 yaze edits base data, ASM patches hooks on top. Must rebuild after yaze save.",
+      "asm_expansion": "ROM expansion bank \u2014 only exists in patched ROM, not in dev ROM",
+      "ram": "WRAM variable definitions (not ROM data)",
+      "mirror": "HiROM mirror \u2014 ASM patches vanilla bank via mirror address"
+    },
+    "banks": [
+      {
+        "bank": "0x1E",
+        "bank_start": "0x1E8000",
+        "bank_end": "0x1EFFFF",
+        "ownership": "asm_owned",
+        "ownership_note": "Fully owned by ASM hack",
+        "regions": [
+          {
+            "start": "0x1EEEE4",
+            "source": "Core/patches.asm:57",
+            "purpose": "Whirlpool"
+          },
+          {
+            "start": "0x1EF27D",
+            "source": "Core/patches.asm:101",
+            "purpose": "",
+            "end": "0x1EF2AB"
+          },
+          {
+            "start": "0x1EF42E",
+            "source": "Core/patches.asm:131",
+            "purpose": "SpriteDraw_ShopItem"
+          },
+          {
+            "start": "0x1E9A8F",
+            "source": "Core/patches.asm:148",
+            "purpose": "HauntedGroveRabbit_Idle"
+          },
+          {
+            "start": "0x1EE48E",
+            "source": "Core/patches.asm:168",
+            "purpose": ""
+          },
+          {
+            "start": "0x1EE630",
+            "source": "Core/patches.asm:171",
+            "purpose": "Kiki activate cutscene 3 (tail palace)"
+          },
+          {
+            "start": "0x1EE061",
+            "source": "Overworld/overlays.asm:10",
+            "purpose": "Trigger Zora Temple from Tablet"
+          },
+          {
+            "start": "0x1EBD0E",
+            "source": "Dungeons/spike_subtype.asm:16",
+            "purpose": ""
+          },
+          {
+            "start": "0x1EE9FF",
+            "source": "Sprites/NPCs/followers.asm:607",
+            "purpose": "Now the goldstar hookshot upgrade"
+          },
+          {
+            "start": "0x1EE8F1",
+            "source": "Sprites/NPCs/followers.asm:615",
+            "purpose": ""
+          },
+          {
+            "start": "0x1EE2E9",
+            "source": "Sprites/NPCs/followers.asm:740",
+            "purpose": "TODO: Update Kiki jump pos"
+          },
+          {
+            "start": "0x1EE576",
+            "source": "Sprites/NPCs/followers.asm:748",
+            "purpose": ""
+          },
+          {
+            "start": "0x1EE5E9",
+            "source": "Sprites/NPCs/followers.asm:760",
+            "purpose": ""
+          },
+          {
+            "start": "0x1EE05F",
+            "source": "Sprites/Objects/pedestal.asm:9",
+            "purpose": "Sprite_B3_PedestalPlaque"
+          },
+          {
+            "start": "0x1E9518",
+            "source": "Sprites/Bosses/octoboss.asm:6",
+            "purpose": "Sprite_A2_Kholdstare"
+          },
+          {
+            "start": "0x1ECD97",
+            "source": "Sprites/Bosses/kydrog_boss.asm:100",
+            "purpose": ""
+          },
+          {
+            "start": "0x1E7F21",
+            "source": "Sprites/Bosses/arrghus.asm:3",
+            "purpose": ""
+          },
+          {
+            "start": "0x1EB593",
+            "source": "Sprites/Bosses/arrghus.asm:7",
+            "purpose": "*$F3593-$F35C7 JUMP LOCATION"
+          },
+          {
+            "start": "0x1E87F5",
+            "source": "Sprites/Bosses/king_dodongo.asm:29",
+            "purpose": "Adjust leg position to remove gap"
+          },
+          {
+            "start": "0x1E8266",
+            "source": "Sprites/Bosses/king_dodongo.asm:39",
+            "purpose": ""
+          },
+          {
+            "start": "0x1E818C",
+            "source": "Sprites/Bosses/king_dodongo.asm:42",
+            "purpose": ""
+          },
+          {
+            "start": "0x1E811A",
+            "source": "Sprites/Bosses/king_dodongo.asm:48",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x20",
+        "bank_start": "0x208000",
+        "bank_end": "0x20FFFF",
+        "ownership": "shared",
+        "ownership_note": "Overworld map data (shared between yaze overworld editor and ASM)",
+        "regions": [
+          {
+            "start": "0x20AF20",
+            "source": "Masks/bunny_hood.asm:67",
+            "purpose": ""
+          },
+          {
+            "start": "0x20AF70",
+            "source": "Masks/bunny_hood.asm:84",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x25",
+        "bank_start": "0x258000",
+        "bank_end": "0x25FFFF",
+        "ownership": "asm_owned",
+        "ownership_note": "Fully owned by ASM hack",
+        "regions": [
+          {
+            "start": "0x25E000",
+            "source": "Dungeons/generated/water_fill_table.asm:11",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x28",
+        "bank_start": "0x288000",
+        "bank_end": "0x28FFFF",
+        "ownership": "shared",
+        "ownership_note": "ZSCustomOverworld (yaze writes overworld data, ASM patches hooks on top)",
+        "regions": [
+          {
+            "start": "0x288000",
+            "source": "Overworld/ZSCustomOverworld.asm:382",
+            "purpose": "saves this data as well and previous data will be lost or corrupted.",
+            "end": "0x288140"
+          },
+          {
+            "start": "0x288140",
+            "source": "Overworld/ZSCustomOverworld.asm:423",
+            "purpose": "Non $00 - Enabled",
+            "end": "0x288160"
+          },
+          {
+            "start": "0x288140",
+            "source": "Overworld/ZSCustomOverworld.asm:426",
+            "purpose": "",
+            "end": "0x288160"
+          },
+          {
+            "start": "0x288141",
+            "source": "Overworld/ZSCustomOverworld.asm:432",
+            "purpose": "",
+            "end": "0x288160"
+          },
+          {
+            "start": "0x288142",
+            "source": "Overworld/ZSCustomOverworld.asm:438",
+            "purpose": "",
+            "end": "0x288160"
+          },
+          {
+            "start": "0x288143",
+            "source": "Overworld/ZSCustomOverworld.asm:444",
+            "purpose": "transitions. Default is $FF.",
+            "end": "0x288160"
+          },
+          {
+            "start": "0x288144",
+            "source": "Overworld/ZSCustomOverworld.asm:452",
+            "purpose": "transitions. Default is $FF.",
+            "end": "0x288160"
+          },
+          {
+            "start": "0x288145",
+            "source": "Overworld/ZSCustomOverworld.asm:461",
+            "purpose": "values instead of using the default ones. The current version is 03.",
+            "end": "0x288160"
+          },
+          {
+            "start": "0x288146",
+            "source": "Overworld/ZSCustomOverworld.asm:467",
+            "purpose": "phase. Default is $FF. Disabled for Oracle of Secrets.",
+            "end": "0x288160"
+          },
+          {
+            "start": "0x288147",
+            "source": "Overworld/ZSCustomOverworld.asm:477",
+            "purpose": "area after the event is triggered. Default is $FF.",
+            "end": "0x288160"
+          },
+          {
+            "start": "0x288148",
+            "source": "Overworld/ZSCustomOverworld.asm:483",
+            "purpose": "transitions. Default is $FF.",
+            "end": "0x288160"
+          },
+          {
+            "start": "0x288149",
+            "source": "Overworld/ZSCustomOverworld.asm:493",
+            "purpose": "hard code it here for now. Default is $2669 which is the vanilla LW green.",
+            "end": "0x288160"
+          },
+          {
+            "start": "0x288160",
+            "source": "Overworld/ZSCustomOverworld.asm:514",
+            "purpose": "$05 is the title screen palette?",
+            "end": "0x288200"
+          },
+          {
+            "start": "0x288200",
+            "source": "Overworld/ZSCustomOverworld.asm:551",
+            "purpose": "r - Right",
+            "end": "0x2882A0"
+          },
+          {
+            "start": "0x2882A0",
+            "source": "Overworld/ZSCustomOverworld.asm:593",
+            "purpose": "frames and the regular water tiles.",
+            "end": "0x288340"
+          },
+          {
+            "start": "0x288340",
+            "source": "Overworld/ZSCustomOverworld.asm:638",
+            "purpose": "$009F is the rain overlay.",
+            "end": "0x288480"
+          },
+          {
+            "start": "0x288480",
+            "source": "Overworld/ZSCustomOverworld.asm:673",
+            "purpose": "sheet\" value. That way, we can actually use sheet 00 if we want.",
+            "end": "0x288980"
+          },
+          {
+            "start": "0x288480",
+            "source": "Overworld/ZSCustomOverworld.asm:677",
+            "purpose": "LW",
+            "end": "0x288980"
+          },
+          {
+            "start": "0x288481",
+            "source": "Overworld/ZSCustomOverworld.asm:683",
+            "purpose": "",
+            "end": "0x288980"
+          },
+          {
+            "start": "0x288482",
+            "source": "Overworld/ZSCustomOverworld.asm:689",
+            "purpose": "",
+            "end": "0x288980"
+          },
+          {
+            "start": "0x288483",
+            "source": "Overworld/ZSCustomOverworld.asm:695",
+            "purpose": "",
+            "end": "0x288980"
+          },
+          {
+            "start": "0x288484",
+            "source": "Overworld/ZSCustomOverworld.asm:701",
+            "purpose": "",
+            "end": "0x288980"
+          },
+          {
+            "start": "0x288485",
+            "source": "Overworld/ZSCustomOverworld.asm:707",
+            "purpose": "",
+            "end": "0x288980"
+          },
+          {
+            "start": "0x288486",
+            "source": "Overworld/ZSCustomOverworld.asm:713",
+            "purpose": "",
+            "end": "0x288980"
+          },
+          {
+            "start": "0x288487",
+            "source": "Overworld/ZSCustomOverworld.asm:719",
+            "purpose": "",
+            "end": "0x288980"
+          },
+          {
+            "start": "0x288980",
+            "source": "Overworld/ZSCustomOverworld.asm:908",
+            "purpose": "TODO: Add a way to edit these within ZS? Unsure.",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288980",
+            "source": "Overworld/ZSCustomOverworld.asm:912",
+            "purpose": "LW",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288981",
+            "source": "Overworld/ZSCustomOverworld.asm:916",
+            "purpose": "",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288982",
+            "source": "Overworld/ZSCustomOverworld.asm:920",
+            "purpose": "",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288983",
+            "source": "Overworld/ZSCustomOverworld.asm:924",
+            "purpose": "",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288984",
+            "source": "Overworld/ZSCustomOverworld.asm:928",
+            "purpose": "",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288985",
+            "source": "Overworld/ZSCustomOverworld.asm:932",
+            "purpose": "",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288986",
+            "source": "Overworld/ZSCustomOverworld.asm:936",
+            "purpose": "",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288987",
+            "source": "Overworld/ZSCustomOverworld.asm:940",
+            "purpose": "",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288998",
+            "source": "Overworld/ZSCustomOverworld.asm:956",
+            "purpose": "In vanilla, this table was shared for all 3 worlds.",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288A38",
+            "source": "Overworld/ZSCustomOverworld.asm:1031",
+            "purpose": "",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288B78",
+            "source": "Overworld/ZSCustomOverworld.asm:1061",
+            "purpose": "",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288CB8",
+            "source": "Overworld/ZSCustomOverworld.asm:1091",
+            "purpose": "",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288DF8",
+            "source": "Overworld/ZSCustomOverworld.asm:1121",
+            "purpose": "",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x288F38",
+            "source": "Overworld/ZSCustomOverworld.asm:1154",
+            "purpose": "here and the original 0x80 bytes are currently unused.",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x289078",
+            "source": "Overworld/ZSCustomOverworld.asm:1187",
+            "purpose": "here and the original 0x80 bytes are currently unused.",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x2891B8",
+            "source": "Overworld/ZSCustomOverworld.asm:1219",
+            "purpose": "The original 0x0080 bytes space is currently unused.",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x2892F8",
+            "source": "Overworld/ZSCustomOverworld.asm:1251",
+            "purpose": "The original 0x0080 bytes space is currently unused.",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x289438",
+            "source": "Overworld/ZSCustomOverworld.asm:1283",
+            "purpose": "$04C881. The original 0x0080 bytes space is currently unused.",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x289578",
+            "source": "Overworld/ZSCustomOverworld.asm:1312",
+            "purpose": "$04C901. The original 0x0120 bytes space is currently unused.",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x2896B8",
+            "source": "Overworld/ZSCustomOverworld.asm:1341",
+            "purpose": "$04CA21. The original 0x0120 bytes space is currently unused.",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x2897F8",
+            "source": "Overworld/ZSCustomOverworld.asm:1370",
+            "purpose": "$03F51D. The original 0x0120 bytes space is currently unused.",
+            "end": "0x289938"
+          },
+          {
+            "start": "0x289940",
+            "source": "Overworld/ZSCustomOverworld.asm:1403",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x2B",
+        "bank_start": "0x2B8000",
+        "bank_end": "0x2BFFFF",
+        "ownership": "asm_owned",
+        "ownership_note": "Fully owned by ASM hack",
+        "regions": [
+          {
+            "start": "0x2B8000",
+            "source": "Items/ocarina.asm:263",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x2C",
+        "bank_start": "0x2C8000",
+        "bank_end": "0x2CFFFF",
+        "ownership": "asm_owned",
+        "ownership_note": "Fully owned by ASM hack",
+        "regions": [
+          {
+            "start": "0x2CFF00",
+            "source": "Core/patches.asm:33",
+            "purpose": "(Bank $3C is used by ZS/ROM data in many builds.)"
+          },
+          {
+            "start": "0x2C8000",
+            "source": "Dungeons/Objects/object_handler.asm:44",
+            "purpose": ""
+          },
+          {
+            "start": "0x2CFE00",
+            "source": "Dungeons/Collision/custom_collision.asm:36",
+            "purpose": "Keep it below JumpTableLocal_Guard at $2C:FF00.",
+            "end": "0x2CFF00"
+          }
+        ]
+      },
+      {
+        "bank": "0x2D",
+        "bank_start": "0x2D8000",
+        "bank_end": "0x2DFFFF",
+        "ownership": "asm_owned",
+        "ownership_note": "Fully owned by ASM hack",
+        "regions": [
+          {
+            "start": "0x2D8000",
+            "source": "Menu/menu.asm:33",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x2E",
+        "bank_start": "0x2E8000",
+        "bank_end": "0x2EFFFF",
+        "ownership": "asm_owned",
+        "ownership_note": "Fully owned by ASM hack",
+        "regions": [
+          {
+            "start": "0x2E8000",
+            "source": "Menu/menu_hud.asm:36",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x2F",
+        "bank_start": "0x2F8000",
+        "bank_end": "0x2FFFFF",
+        "ownership": "asm_owned",
+        "ownership_note": "Fully owned by ASM hack",
+        "regions": [
+          {
+            "start": "0x2F8000",
+            "source": "Core/message.asm:27",
+            "purpose": "",
+            "end": "0x2FFFFF"
+          }
+        ]
+      },
+      {
+        "bank": "0x30",
+        "bank_start": "0x308000",
+        "bank_end": "0x30FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x308000",
+            "source": "Sprites/all_sprites.asm:8",
+            "purpose": "Bank $30"
+          }
+        ]
+      },
+      {
+        "bank": "0x31",
+        "bank_start": "0x318000",
+        "bank_end": "0x31FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x318000",
+            "source": "Sprites/all_sprites.asm:155",
+            "purpose": "Bank $31",
+            "end": "0x328000"
+          }
+        ]
+      },
+      {
+        "bank": "0x32",
+        "bank_start": "0x328000",
+        "bank_end": "0x32FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x328000",
+            "source": "Sprites/all_sprites.asm:244",
+            "purpose": "Bank $32"
+          }
+        ]
+      },
+      {
+        "bank": "0x33",
+        "bank_start": "0x338000",
+        "bank_end": "0x33FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x338000",
+            "source": "Masks/all_masks.asm:64",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x34",
+        "bank_start": "0x348000",
+        "bank_end": "0x34FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x348000",
+            "source": "Overworld/overworld.asm:42",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x35",
+        "bank_start": "0x358000",
+        "bank_end": "0x35FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x358000",
+            "source": "Masks/all_masks.asm:48",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x36",
+        "bank_start": "0x368000",
+        "bank_end": "0x36FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x368000",
+            "source": "Masks/all_masks.asm:52",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x37",
+        "bank_start": "0x378000",
+        "bank_end": "0x37FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x378000",
+            "source": "Masks/all_masks.asm:38",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x38",
+        "bank_start": "0x388000",
+        "bank_end": "0x38FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x388000",
+            "source": "Masks/all_masks.asm:56",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x39",
+        "bank_start": "0x398000",
+        "bank_end": "0x39FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x398000",
+            "source": "Masks/all_masks.asm:43",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x3A",
+        "bank_start": "0x3A8000",
+        "bank_end": "0x3AFFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x3A8000",
+            "source": "Masks/mask_routines.asm:35",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x3B",
+        "bank_start": "0x3B8000",
+        "bank_end": "0x3BFFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x3B8000",
+            "source": "Masks/all_masks.asm:60",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x3C",
+        "bank_start": "0x3C8000",
+        "bank_end": "0x3CFFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x3CA62A",
+            "source": "Util/item_cheat.asm:38",
+            "purpose": ""
+          },
+          {
+            "start": "0x3CB000",
+            "source": "Util/item_cheat.asm:154",
+            "purpose": ""
+          },
+          {
+            "start": "0x3CB200",
+            "source": "Util/item_cheat.asm:198",
+            "purpose": ""
+          },
+          {
+            "start": "0x3CB400",
+            "source": "Util/item_cheat.asm:358",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x3F",
+        "bank_start": "0x3F8000",
+        "bank_end": "0x3FFFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x3FFFFF",
+            "source": "Music/great_sea.asm:10",
+            "purpose": ""
+          },
+          {
+            "start": "0x3FFFFF",
+            "source": "Music/ww_ganondorf.asm:10",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x40",
+        "bank_start": "0x408000",
+        "bank_end": "0x40FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x408000",
+            "source": "Overworld/world_map.asm:423",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x41",
+        "bank_start": "0x418000",
+        "bank_end": "0x41FFFF",
+        "ownership": "asm_expansion",
+        "ownership_note": "ROM expansion bank \u2014 does not exist in dev ROM, created by asar",
+        "regions": [
+          {
+            "start": "0x418000",
+            "source": "Overworld/world_map.asm:430",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x7E",
+        "bank_start": "0x7E8000",
+        "bank_end": "0x7EFFFF",
+        "ownership": "ram",
+        "ownership_note": "WRAM definitions (not ROM data)",
+        "regions": [
+          {
+            "start": "0x7E2100",
+            "source": "Core/hardware.asm:35",
+            "purpose": ""
+          },
+          {
+            "start": "0x7E2100",
+            "source": "Overworld/HardwareRegisters.asm:35",
+            "purpose": ""
+          }
+        ]
+      },
+      {
+        "bank": "0x80",
+        "bank_start": "0x808000",
+        "bank_end": "0x80FFFF",
+        "ownership": "mirror",
+        "ownership_note": "HiROM mirror of vanilla bank",
+        "regions": [
+          {
+            "start": "0x808B6B",
+            "source": "Menu/menu.asm:24",
+            "purpose": "Stored to VMADDR"
+          }
+        ]
+      },
+      {
+        "bank": "0x86",
+        "bank_start": "0x868000",
+        "bank_end": "0x86FFFF",
+        "ownership": "mirror",
+        "ownership_note": "HiROM mirror of vanilla bank",
+        "regions": [
+          {
+            "start": "0x86F725",
+            "source": "Items/sword_collect.asm:2",
+            "purpose": "Collect items with sword"
+          }
+        ]
+      },
+      {
+        "bank": "0x8D",
+        "bank_start": "0x8D8000",
+        "bank_end": "0x8DFFFF",
+        "ownership": "mirror",
+        "ownership_note": "HiROM mirror of vanilla bank",
+        "regions": [
+          {
+            "start": "0x8DDFB2",
+            "source": "Menu/menu.asm:27",
+            "purpose": "UpdateEquippedItem"
+          }
+        ]
+      },
+      {
+        "bank": "0xA0",
+        "bank_start": "0xA08000",
+        "bank_end": "0xA0FFFF",
+        "ownership": "mirror",
+        "ownership_note": "HiROM mirror of vanilla bank",
+        "regions": [
+          {
+            "start": "0xA0F000",
+            "source": "Overworld/lost_woods.asm:27",
+            "purpose": "X contains the area you're moving to."
+          }
+        ]
+      }
+    ]
+  },
+  "messages": {
+    "description": "Expanded message system. Vanilla messages ($000-$18C) live in bank $0E of the dev ROM \u2014 yaze can edit these. Expanded messages ($18D+) live in bank $2F, owned by ASM. The hook at $0ED436 redirects message reads for expanded IDs. Direct editor or CLI writes to expanded IDs are not durable because the next ASM rebuild replaces bank $2F.",
+    "editing_guidance": {
+      "vanilla_safe": "Message IDs $000-$18C can be edited in the dev ROM via yaze",
+      "expanded_asm_owned": "Message IDs $18D+ are in ASM-owned bank $2F; edit Core/message.asm, rebuild with Scripts/Build/build_rom.sh 168, then reopen or reload Roms/oos168x.sfc for inspection. Do not edit the patched ROM directly.",
+      "hook_address": "$0ED436 (do not overwrite \u2014 asar patches this)"
+    },
+    "hook_address": "0x0ED436",
+    "data_bank": "0x2F",
+    "data_start": "0x2F8000",
+    "data_end": "0x2FFFFF",
+    "expanded_range": {
+      "first": "0x18D",
+      "last": "0x1F9",
+      "count": 109
+    },
+    "vanilla_count": 397,
+    "messages": [
+      {
+        "id": "0x18D",
+        "label": "Message_18D",
+        "purpose": "",
+        "line": 43
+      },
+      {
+        "id": "0x18E",
+        "label": "Message_18E",
+        "purpose": "",
+        "line": 45
+      },
+      {
+        "id": "0x18F",
+        "label": "Message_18F",
+        "purpose": "",
+        "line": 47
+      },
+      {
+        "id": "0x190",
+        "label": "Message_190",
+        "purpose": "",
+        "line": 49
+      },
+      {
+        "id": "0x191",
+        "label": "Message_191",
+        "purpose": "",
+        "line": 51
+      },
+      {
+        "id": "0x192",
+        "label": "Message_192",
+        "purpose": "",
+        "line": 53
+      },
+      {
+        "id": "0x193",
+        "label": "Message_193",
+        "purpose": "",
+        "line": 55
+      },
+      {
+        "id": "0x194",
+        "label": "Message_194",
+        "purpose": "",
+        "line": 57
+      },
+      {
+        "id": "0x195",
+        "label": "Message_195",
+        "purpose": "",
+        "line": 59
+      },
+      {
+        "id": "0x196",
+        "label": "Message_196",
+        "purpose": "",
+        "line": 61
+      },
+      {
+        "id": "0x197",
+        "label": "Message_197",
+        "purpose": "",
+        "line": 63
+      },
+      {
+        "id": "0x198",
+        "label": "Message_198",
+        "purpose": "",
+        "line": 65
+      },
+      {
+        "id": "0x199",
+        "label": "Message_199",
+        "purpose": "",
+        "line": 67
+      },
+      {
+        "id": "0x19A",
+        "label": "Message_19A",
+        "purpose": "",
+        "line": 69
+      },
+      {
+        "id": "0x19B",
+        "label": "Message_19B",
+        "purpose": "",
+        "line": 71
+      },
+      {
+        "id": "0x19C",
+        "label": "Message_19C",
+        "purpose": "",
+        "line": 73
+      },
+      {
+        "id": "0x19D",
+        "label": "Message_19D",
+        "purpose": "",
+        "line": 75
+      },
+      {
+        "id": "0x19E",
+        "label": "Message_19E",
+        "purpose": "",
+        "line": 77
+      },
+      {
+        "id": "0x19F",
+        "label": "Message_19F",
+        "purpose": "",
+        "line": 79
+      },
+      {
+        "id": "0x1A0",
+        "label": "Message_1A0",
+        "purpose": "",
+        "line": 81
+      },
+      {
+        "id": "0x1A1",
+        "label": "Message_1A1",
+        "purpose": "",
+        "line": 83
+      },
+      {
+        "id": "0x1A2",
+        "label": "Message_1A2",
+        "purpose": "",
+        "line": 85
+      },
+      {
+        "id": "0x1A3",
+        "label": "Message_1A3",
+        "purpose": "",
+        "line": 87
+      },
+      {
+        "id": "0x1A4",
+        "label": "Message_1A4",
+        "purpose": "",
+        "line": 89
+      },
+      {
+        "id": "0x1A5",
+        "label": "Message_1A5",
+        "purpose": "",
+        "line": 91
+      },
+      {
+        "id": "0x1A6",
+        "label": "Message_1A6",
+        "purpose": "",
+        "line": 93
+      },
+      {
+        "id": "0x1A7",
+        "label": "Message_1A7",
+        "purpose": "",
+        "line": 95
+      },
+      {
+        "id": "0x1A8",
+        "label": "Message_1A8",
+        "purpose": "",
+        "line": 97
+      },
+      {
+        "id": "0x1A9",
+        "label": "Message_1A9",
+        "purpose": "",
+        "line": 99
+      },
+      {
+        "id": "0x1AA",
+        "label": "Message_1AA",
+        "purpose": "",
+        "line": 101
+      },
+      {
+        "id": "0x1AB",
+        "label": "Message_1AB",
+        "purpose": "",
+        "line": 103
+      },
+      {
+        "id": "0x1AC",
+        "label": "Message_1AC",
+        "purpose": "",
+        "line": 105
+      },
+      {
+        "id": "0x1AD",
+        "label": "Message_1AD",
+        "purpose": "",
+        "line": 107
+      },
+      {
+        "id": "0x1AE",
+        "label": "Message_1AE",
+        "purpose": "",
+        "line": 109
+      },
+      {
+        "id": "0x1AF",
+        "label": "Message_1AF",
+        "purpose": "",
+        "line": 111
+      },
+      {
+        "id": "0x1B0",
+        "label": "Message_1B0",
+        "purpose": "",
+        "line": 113
+      },
+      {
+        "id": "0x1B1",
+        "label": "Message_1B1",
+        "purpose": "",
+        "line": 115
+      },
+      {
+        "id": "0x1B2",
+        "label": "Message_1B2",
+        "purpose": "",
+        "line": 117
+      },
+      {
+        "id": "0x1B3",
+        "label": "Message_1B3",
+        "purpose": "",
+        "line": 119
+      },
+      {
+        "id": "0x1B4",
+        "label": "Message_1B4",
+        "purpose": "",
+        "line": 121
+      },
+      {
+        "id": "0x1B5",
+        "label": "Message_1B5",
+        "purpose": "",
+        "line": 123
+      },
+      {
+        "id": "0x1B6",
+        "label": "Message_1B6",
+        "purpose": "",
+        "line": 125
+      },
+      {
+        "id": "0x1B7",
+        "label": "Message_1B7",
+        "purpose": "",
+        "line": 127
+      },
+      {
+        "id": "0x1B8",
+        "label": "Message_1B8",
+        "purpose": "",
+        "line": 129
+      },
+      {
+        "id": "0x1B9",
+        "label": "Message_1B9",
+        "purpose": "",
+        "line": 131
+      },
+      {
+        "id": "0x1BA",
+        "label": "Message_1BA",
+        "purpose": "",
+        "line": 133
+      },
+      {
+        "id": "0x1BB",
+        "label": "Message_1BB",
+        "purpose": "",
+        "line": 135
+      },
+      {
+        "id": "0x1BC",
+        "label": "Message_1BC",
+        "purpose": "",
+        "line": 143
+      },
+      {
+        "id": "0x1BD",
+        "label": "Message_1BD",
+        "purpose": "",
+        "line": 145
+      },
+      {
+        "id": "0x1BE",
+        "label": "Message_1BE",
+        "purpose": "",
+        "line": 147
+      },
+      {
+        "id": "0x1BF",
+        "label": "Message_1BF",
+        "purpose": "",
+        "line": 149
+      },
+      {
+        "id": "0x1C0",
+        "label": "Message_1C0",
+        "purpose": "",
+        "line": 151
+      },
+      {
+        "id": "0x1C1",
+        "label": "Message_1C1",
+        "purpose": "",
+        "line": 153
+      },
+      {
+        "id": "0x1C2",
+        "label": "Message_1C2",
+        "purpose": "",
+        "line": 155
+      },
+      {
+        "id": "0x1C3",
+        "label": "Message_1C3",
+        "purpose": "",
+        "line": 157
+      },
+      {
+        "id": "0x1C4",
+        "label": "Message_1C4",
+        "purpose": "",
+        "line": 159
+      },
+      {
+        "id": "0x1C5",
+        "label": "Message_1C5",
+        "purpose": "",
+        "line": 175
+      },
+      {
+        "id": "0x1C6",
+        "label": "Message_1C6",
+        "purpose": "",
+        "line": 194
+      },
+      {
+        "id": "0x1C7",
+        "label": "Message_1C7",
+        "purpose": "",
+        "line": 215
+      },
+      {
+        "id": "0x1C8",
+        "label": "Message_1C8",
+        "purpose": "RESERVED (available for dreams/NPCs)",
+        "line": 233
+      },
+      {
+        "id": "0x1C9",
+        "label": "Message_1C9",
+        "purpose": "RESERVED",
+        "line": 235
+      },
+      {
+        "id": "0x1CA",
+        "label": "Message_1CA",
+        "purpose": "",
+        "line": 244
+      },
+      {
+        "id": "0x1CB",
+        "label": "Message_1CB",
+        "purpose": "RESERVED",
+        "line": 265
+      },
+      {
+        "id": "0x1CC",
+        "label": "Message_1CC",
+        "purpose": "TODO(dialogue): Guard capture taunt",
+        "line": 270
+      },
+      {
+        "id": "0x1CD",
+        "label": "Message_1CD",
+        "purpose": "TODO(dialogue): Prison cell wake-up text",
+        "line": 272
+      },
+      {
+        "id": "0x1CE",
+        "label": "Message_1CE",
+        "purpose": "TODO(dialogue): Prison cell description",
+        "line": 274
+      },
+      {
+        "id": "0x1CF",
+        "label": "Message_1CF",
+        "purpose": "TODO(dialogue): Cellmate NPC line 1 (optional)",
+        "line": 276
+      },
+      {
+        "id": "0x1D0",
+        "label": "Message_1D0",
+        "purpose": "TODO(dialogue): Cellmate NPC line 2 / escape hint",
+        "line": 278
+      },
+      {
+        "id": "0x1D1",
+        "label": "Message_1D1",
+        "purpose": "TODO(dialogue): Post-escape flavor text",
+        "line": 280
+      },
+      {
+        "id": "0x1D2",
+        "label": "Message_1D2",
+        "purpose": "TODO(gossip): Gossip Stone 1 \u2014 author via message editor",
+        "line": 292
+      },
+      {
+        "id": "0x1D3",
+        "label": "Message_1D3",
+        "purpose": "TODO(gossip): Gossip Stone 2 \u2014 author via message editor",
+        "line": 295
+      },
+      {
+        "id": "0x1D4",
+        "label": "Message_1D4",
+        "purpose": "TODO(gossip): Gossip Stone 3 \u2014 author via message editor",
+        "line": 298
+      },
+      {
+        "id": "0x1D5",
+        "label": "Message_1D5",
+        "purpose": "",
+        "line": 302
+      },
+      {
+        "id": "0x1D6",
+        "label": "Message_1D6",
+        "purpose": "",
+        "line": 315
+      },
+      {
+        "id": "0x1D7",
+        "label": "Message_1D7",
+        "purpose": "",
+        "line": 331
+      },
+      {
+        "id": "0x1D8",
+        "label": "Message_1D8",
+        "purpose": "",
+        "line": 349
+      },
+      {
+        "id": "0x1D9",
+        "label": "Message_1D9",
+        "purpose": "RESERVED",
+        "line": 359
+      },
+      {
+        "id": "0x1DA",
+        "label": "Message_1DA",
+        "purpose": "RESERVED",
+        "line": 362
+      },
+      {
+        "id": "0x1DB",
+        "label": "Message_1DB",
+        "purpose": "RESERVED",
+        "line": 365
+      },
+      {
+        "id": "0x1DC",
+        "label": "Message_1DC",
+        "purpose": "RESERVED",
+        "line": 368
+      },
+      {
+        "id": "0x1DD",
+        "label": "Message_1DD",
+        "purpose": "RESERVED",
+        "line": 371
+      },
+      {
+        "id": "0x1DE",
+        "label": "Message_1DE",
+        "purpose": "RESERVED",
+        "line": 374
+      },
+      {
+        "id": "0x1DF",
+        "label": "Message_1DF",
+        "purpose": "RESERVED",
+        "line": 377
+      },
+      {
+        "id": "0x1E0",
+        "label": "Message_1E0",
+        "purpose": "",
+        "line": 381
+      },
+      {
+        "id": "0x1E1",
+        "label": "Message_1E1",
+        "purpose": "",
+        "line": 395
+      },
+      {
+        "id": "0x1E2",
+        "label": "Message_1E2",
+        "purpose": "",
+        "line": 407
+      },
+      {
+        "id": "0x1E3",
+        "label": "Message_1E3",
+        "purpose": "",
+        "line": 419
+      },
+      {
+        "id": "0x1E4",
+        "label": "Message_1E4",
+        "purpose": "",
+        "line": 437
+      },
+      {
+        "id": "0x1E5",
+        "label": "Message_1E5",
+        "purpose": "",
+        "line": 452
+      },
+      {
+        "id": "0x1E6",
+        "label": "Message_1E6",
+        "purpose": "",
+        "line": 465
+      },
+      {
+        "id": "0x1E7",
+        "label": "Message_1E7",
+        "purpose": "",
+        "line": 484
+      },
+      {
+        "id": "0x1E8",
+        "label": "Message_1E8",
+        "purpose": "",
+        "line": 498
+      },
+      {
+        "id": "0x1E9",
+        "label": "Message_1E9",
+        "purpose": "",
+        "line": 512
+      },
+      {
+        "id": "0x1EA",
+        "label": "Message_1EA",
+        "purpose": "",
+        "line": 520
+      },
+      {
+        "id": "0x1EB",
+        "label": "Message_1EB",
+        "purpose": "",
+        "line": 531
+      },
+      {
+        "id": "0x1EC",
+        "label": "Message_1EC",
+        "purpose": "",
+        "line": 550
+      },
+      {
+        "id": "0x1ED",
+        "label": "Message_1ED",
+        "purpose": "",
+        "line": 561
+      },
+      {
+        "id": "0x1EE",
+        "label": "Message_1EE",
+        "purpose": "",
+        "line": 574
+      },
+      {
+        "id": "0x1EF",
+        "label": "Message_1EF",
+        "purpose": "",
+        "line": 588
+      },
+      {
+        "id": "0x1F0",
+        "label": "Message_1F0",
+        "purpose": "",
+        "line": 607
+      },
+      {
+        "id": "0x1F1",
+        "label": "Message_1F1",
+        "purpose": "",
+        "line": 614
+      },
+      {
+        "id": "0x1F2",
+        "label": "Message_1F2",
+        "purpose": "",
+        "line": 621
+      },
+      {
+        "id": "0x1F3",
+        "label": "Message_1F3",
+        "purpose": "",
+        "line": 629
+      },
+      {
+        "id": "0x1F4",
+        "label": "Message_1F4",
+        "purpose": "",
+        "line": 637
+      },
+      {
+        "id": "0x1F5",
+        "label": "Message_1F5",
+        "purpose": "",
+        "line": 644
+      },
+      {
+        "id": "0x1F6",
+        "label": "Message_1F6",
+        "purpose": "",
+        "line": 652
+      },
+      {
+        "id": "0x1F7",
+        "label": "Message_1F7",
+        "purpose": "",
+        "line": 660
+      },
+      {
+        "id": "0x1F8",
+        "label": "Message_1F8",
+        "purpose": "",
+        "line": 668
+      },
+      {
+        "id": "0x1F9",
+        "label": "Message_1F9",
+        "purpose": "",
+        "line": 676
+      }
+    ]
+  },
+  "room_tags": {
+    "description": "Custom room tag dispatch table entries in bank $01. Asar patches 4-byte JML slots at these addresses. Yaze assigns tag IDs to rooms via room headers \u2014 this manifest provides labels and semantics so the editor can show meaningful names instead of raw tag numbers.",
+    "dispatch_table_start": "0x01CC00",
+    "dispatch_table_end": "0x01CC5A",
+    "return_address": "0x01CC5A",
+    "available_slots": [
+      "0x36"
+    ],
+    "tags": [
+      {
+        "tag_id": "0x33",
+        "address": "0x01CC00",
+        "name": "Tag_0x33",
+        "source": "Dungeons/floor_puzzle.asm:5",
+        "purpose": "holes_0 tag routine"
+      },
+      {
+        "tag_id": "0x34",
+        "address": "0x01CC04",
+        "name": "RoomTag_MinishSwitch",
+        "source": "Dungeons/custom_tag.asm:16",
+        "feature_flag": "!ENABLE_D3_PRISON_SEQUENCE",
+        "enabled": false
+      },
+      {
+        "tag_id": "0x35",
+        "address": "0x01CC08",
+        "name": "Tag_0x35",
+        "source": "Dungeons/crumblefloor_tag.asm:4",
+        "purpose": "holes_3 tag routine"
+      },
+      {
+        "tag_id": "0x37",
+        "address": "0x01CC10",
+        "name": "RoomTag_MinishShutterDoor",
+        "source": "Dungeons/custom_tag.asm:12",
+        "purpose": "RoomTag_Holes5"
+      },
+      {
+        "tag_id": "0x38",
+        "address": "0x01CC14",
+        "name": "RoomTag_ShutterDoorRequiresCart",
+        "source": "Sprites/Objects/minecart.asm:1455"
+      },
+      {
+        "tag_id": "0x39",
+        "address": "0x01CC18",
+        "name": "CustomTag",
+        "source": "Dungeons/custom_tag.asm:9",
+        "purpose": "override routine 0x39 \"Holes(7)\""
+      },
+      {
+        "tag_id": "0x3A",
+        "address": "0x01CC1C",
+        "name": "WarpTag",
+        "source": "Dungeons/together_warp_tag.asm:11"
+      }
+    ]
+  },
+  "feature_flags": {
+    "description": "Compile-time feature toggles in Config/feature_flags.asm. These control which ASM hooks are active. Yaze can display them in the project settings and optionally write updated flag values before triggering a rebuild.",
+    "config_file": "Config/feature_flags.asm",
+    "flags": [
+      {
+        "name": "!ENABLE_CUSTOM_ROOM_COLLISION",
+        "value": 1,
+        "enabled": true,
+        "source": "Config/feature_flags.asm:10"
+      },
+      {
+        "name": "!ENABLE_D3_PRISON_SEQUENCE",
+        "value": 0,
+        "enabled": false,
+        "source": "Config/feature_flags.asm:6"
+      },
+      {
+        "name": "!ENABLE_D7_FARORE_RESCUE_SEQUENCE",
+        "value": 0,
+        "enabled": false,
+        "source": "Config/feature_flags.asm:7"
+      },
+      {
+        "name": "!ENABLE_FOLLOWER_TRANSITION_HOOKS",
+        "value": 1,
+        "enabled": true,
+        "source": "Config/feature_flags.asm:11"
+      },
+      {
+        "name": "!ENABLE_GRAPHICS_TRANSFER_SCROLL_HOOK",
+        "value": 1,
+        "enabled": true,
+        "source": "Config/feature_flags.asm:12"
+      },
+      {
+        "name": "!ENABLE_JUMPTABLELOCAL_GUARD",
+        "value": 1,
+        "enabled": true,
+        "source": "Config/feature_flags.asm:9"
+      },
+      {
+        "name": "!ENABLE_MINECART_CART_SHUTTERS",
+        "value": 0,
+        "enabled": false,
+        "source": "Config/feature_flags.asm:13"
+      },
+      {
+        "name": "!ENABLE_MINECART_LIFT_TOSS",
+        "value": 0,
+        "enabled": false,
+        "source": "Config/feature_flags.asm:14"
+      },
+      {
+        "name": "!ENABLE_MINECART_PLANNED_TRACK_TABLE",
+        "value": 1,
+        "enabled": true,
+        "source": "Config/feature_flags.asm:15"
+      },
+      {
+        "name": "!ENABLE_OCARINA_SONG_TINT",
+        "value": 0,
+        "enabled": false,
+        "source": "Config/feature_flags.asm:8"
+      },
+      {
+        "name": "!ENABLE_WATER_GATE_HOOKS",
+        "value": 1,
+        "enabled": true,
+        "source": "Config/feature_flags.asm:16"
+      },
+      {
+        "name": "!ENABLE_WATER_GATE_OVERLAY_REDIRECT",
+        "value": 1,
+        "enabled": true,
+        "source": "Config/feature_flags.asm:18"
+      },
+      {
+        "name": "!ENABLE_WATER_GATE_ROOMENTRY_RESTORE",
+        "value": 0,
+        "enabled": false,
+        "source": "Config/feature_flags.asm:17"
+      }
+    ]
+  },
+  "sram": {
+    "description": "Custom SRAM variable definitions from Core/sram.asm. These extend the vanilla ALTTP save file layout. Yaze can display variable names in the RAM panel and save state inspector instead of raw hex addresses.",
+    "source_file": "Core/sram.asm",
+    "variable_count": 150,
+    "variables": [
+      {
+        "name": "KydrogFaroreRemoved",
+        "address": "0x7EF300"
+      },
+      {
+        "name": "DekuMaskQuestDone",
+        "address": "0x7EF301"
+      },
+      {
+        "name": "ZoraMaskQuestDone",
+        "address": "0x7EF302"
+      },
+      {
+        "name": "InCutSceneFlag",
+        "address": "0x7EF303"
+      },
+      {
+        "name": "ElderGuideStage",
+        "address": "0x7EF304"
+      },
+      {
+        "name": "ZoraWaterfallHint",
+        "address": "0x7EF305"
+      },
+      {
+        "name": "CastleAmbushFlags",
+        "address": "0x7EF306",
+        "bits": [
+          {
+            "name": "!CastleAmbush_HasBeenCaptured",
+            "value": "0x01",
+            "purpose": "bit 0 - Player captured (one-shot)"
+          },
+          {
+            "name": "!CastleAmbush_HasEscaped",
+            "value": "0x02",
+            "purpose": "bit 1 - Player escaped prison"
+          }
+        ]
+      },
+      {
+        "name": "FreeBlock_Story",
+        "address": "0x7EF307",
+        "purpose": "9 bytes ($7EF307-30F)"
+      },
+      {
+        "name": "FreeBlock_Items",
+        "address": "0x7EF310",
+        "purpose": "48 bytes ($7EF310-33F)"
+      },
+      {
+        "name": "Bow",
+        "address": "0x7EF340",
+        "purpose": "1=Bow, 2=+Arrows, 3=Silver, 4=Silver+Arrows"
+      },
+      {
+        "name": "Boomerang",
+        "address": "0x7EF341",
+        "purpose": "1=Blue, 2=Red"
+      },
+      {
+        "name": "Hookshot",
+        "address": "0x7EF342",
+        "purpose": "1=Hookshot, 2=Goldstar"
+      },
+      {
+        "name": "Bombs",
+        "address": "0x7EF343",
+        "purpose": "Count"
+      },
+      {
+        "name": "MagicPowder",
+        "address": "0x7EF344",
+        "purpose": "1=Mushroom, 2=Powder"
+      },
+      {
+        "name": "FireRod",
+        "address": "0x7EF345",
+        "purpose": "1=Have"
+      },
+      {
+        "name": "IceRod",
+        "address": "0x7EF346",
+        "purpose": "1=Have"
+      },
+      {
+        "name": "ZoraMask",
+        "address": "0x7EF347",
+        "purpose": "1=Have (inventory slot)"
+      },
+      {
+        "name": "BunnyHood",
+        "address": "0x7EF348",
+        "purpose": "1=Have"
+      },
+      {
+        "name": "DekuMask",
+        "address": "0x7EF349",
+        "purpose": "1=Have (inventory slot)"
+      },
+      {
+        "name": "Lamp",
+        "address": "0x7EF34A",
+        "purpose": "1=Have"
+      },
+      {
+        "name": "Hammer",
+        "address": "0x7EF34B",
+        "purpose": "1=Have"
+      },
+      {
+        "name": "Flute",
+        "address": "0x7EF34C",
+        "purpose": "1=Shovel, 2=Inactive, 3=Active (also Ocarina)"
+      },
+      {
+        "name": "RocsFeather",
+        "address": "0x7EF34D",
+        "purpose": "1=Have"
+      },
+      {
+        "name": "Book",
+        "address": "0x7EF34E",
+        "purpose": "1=Have (Book of Secrets)"
+      },
+      {
+        "name": "BottleIndex",
+        "address": "0x7EF34F",
+        "purpose": "Currently selected bottle (1-4)"
+      },
+      {
+        "name": "Somaria",
+        "address": "0x7EF350",
+        "purpose": "1=Have"
+      },
+      {
+        "name": "CustomRods",
+        "address": "0x7EF351",
+        "purpose": "1=Fishing Rod, 2=Portal Rod"
+      },
+      {
+        "name": "StoneMask",
+        "address": "0x7EF352",
+        "purpose": "1=Have"
+      },
+      {
+        "name": "Mirror",
+        "address": "0x7EF353",
+        "purpose": "1=Letter, 2=Mirror"
+      },
+      {
+        "name": "Gloves",
+        "address": "0x7EF354",
+        "purpose": "0=None, 1=Power Glove, 2=Titan's Mitt"
+      },
+      {
+        "name": "Boots",
+        "address": "0x7EF355",
+        "purpose": "1=Pegasus Boots (also needs Ability bit)"
+      },
+      {
+        "name": "Flippers",
+        "address": "0x7EF356",
+        "purpose": "1=Have"
+      },
+      {
+        "name": "MoonPearl",
+        "address": "0x7EF357",
+        "purpose": "1=Have"
+      },
+      {
+        "name": "WolfMask",
+        "address": "0x7EF358",
+        "purpose": "1=Have"
+      },
+      {
+        "name": "Sword",
+        "address": "0x7EF359",
+        "purpose": "1=Fighter, 2=Master, 3=Tempered, 4=Golden"
+      },
+      {
+        "name": "Shield",
+        "address": "0x7EF35A",
+        "purpose": "1=Fighter, 2=Fire, 3=Mirror"
+      },
+      {
+        "name": "Armor",
+        "address": "0x7EF35B",
+        "purpose": "0=Green, 1=Blue, 2=Red"
+      },
+      {
+        "name": "Bottle1",
+        "address": "0x7EF35C"
+      },
+      {
+        "name": "Bottle2",
+        "address": "0x7EF35D"
+      },
+      {
+        "name": "Bottle3",
+        "address": "0x7EF35E"
+      },
+      {
+        "name": "Bottle4",
+        "address": "0x7EF35F"
+      },
+      {
+        "name": "Rupees",
+        "address": "0x7EF360",
+        "purpose": "Actual count"
+      },
+      {
+        "name": "RupeesGoal",
+        "address": "0x7EF361",
+        "purpose": "Target (for drain/fill animation)"
+      },
+      {
+        "name": "RupeesDisplay",
+        "address": "0x7EF362",
+        "purpose": "HUD display value"
+      },
+      {
+        "name": "CompassSet1",
+        "address": "0x7EF364"
+      },
+      {
+        "name": "CompassSet2",
+        "address": "0x7EF365"
+      },
+      {
+        "name": "BigKeySet1",
+        "address": "0x7EF366"
+      },
+      {
+        "name": "BigKeySet2",
+        "address": "0x7EF367"
+      },
+      {
+        "name": "DungeonMapSet1",
+        "address": "0x7EF368"
+      },
+      {
+        "name": "DungeonMapSet2",
+        "address": "0x7EF369"
+      },
+      {
+        "name": "WishRupees",
+        "address": "0x7EF36A",
+        "purpose": "Rupees donated to fairies"
+      },
+      {
+        "name": "HeartPieces",
+        "address": "0x7EF36B",
+        "purpose": "Pieces toward next container (0-3)"
+      },
+      {
+        "name": "MaxHealth",
+        "address": "0x7EF36C",
+        "purpose": "Max HP (8 per heart container)"
+      },
+      {
+        "name": "CurrentHealth",
+        "address": "0x7EF36D",
+        "purpose": "Current HP (0 = death)"
+      },
+      {
+        "name": "MagicPower",
+        "address": "0x7EF36E",
+        "purpose": "Current magic (max 128)"
+      },
+      {
+        "name": "CurrentKeys",
+        "address": "0x7EF36F"
+      },
+      {
+        "name": "BombCapacity",
+        "address": "0x7EF370",
+        "purpose": "Bomb capacity upgrades"
+      },
+      {
+        "name": "ArrowCapacity",
+        "address": "0x7EF371",
+        "purpose": "Arrow capacity upgrades"
+      },
+      {
+        "name": "HeartRefill",
+        "address": "0x7EF372",
+        "purpose": "Pending HP refill (multiples of 8)"
+      },
+      {
+        "name": "MagicRefill",
+        "address": "0x7EF373",
+        "purpose": "Pending magic refill"
+      },
+      {
+        "name": "Pendants",
+        "address": "0x7EF374",
+        "purpose": "Use !Pendant_* bits"
+      },
+      {
+        "name": "BombRefill",
+        "address": "0x7EF375",
+        "purpose": "Pending bomb refill"
+      },
+      {
+        "name": "ArrowRefill",
+        "address": "0x7EF376",
+        "purpose": "Pending arrow refill"
+      },
+      {
+        "name": "Arrows",
+        "address": "0x7EF377",
+        "purpose": "Arrow count"
+      },
+      {
+        "name": "AbilityFlags",
+        "address": "0x7EF379"
+      },
+      {
+        "name": "Crystals",
+        "address": "0x7EF37A",
+        "purpose": "Use !Crystal_* bits"
+      },
+      {
+        "name": "MagicUsage",
+        "address": "0x7EF37B",
+        "purpose": "0=Normal, 1=Half, 2=Quarter"
+      },
+      {
+        "name": "KeysSewer",
+        "address": "0x7EF37C"
+      },
+      {
+        "name": "KeysHyruleCastle",
+        "address": "0x7EF37D"
+      },
+      {
+        "name": "KeysEastern",
+        "address": "0x7EF37E"
+      },
+      {
+        "name": "KeysDesert",
+        "address": "0x7EF37F"
+      },
+      {
+        "name": "KeysAgahnim",
+        "address": "0x7EF380"
+      },
+      {
+        "name": "KeysSwamp",
+        "address": "0x7EF381"
+      },
+      {
+        "name": "KeysPalaceOfDarkness",
+        "address": "0x7EF382"
+      },
+      {
+        "name": "KeysMiseryMire",
+        "address": "0x7EF383"
+      },
+      {
+        "name": "KeysSkullWoods",
+        "address": "0x7EF384"
+      },
+      {
+        "name": "KeysIcePalace",
+        "address": "0x7EF385"
+      },
+      {
+        "name": "KeysTowerOfHera",
+        "address": "0x7EF386"
+      },
+      {
+        "name": "KeysThievesTown",
+        "address": "0x7EF387"
+      },
+      {
+        "name": "KeysTurtleRock",
+        "address": "0x7EF388"
+      },
+      {
+        "name": "KeysGanonsTower",
+        "address": "0x7EF389"
+      },
+      {
+        "name": "FishingRod",
+        "address": "0x7EF38A"
+      },
+      {
+        "name": "Bananas",
+        "address": "0x7EF38B"
+      },
+      {
+        "name": "Pineapples",
+        "address": "0x7EF38D"
+      },
+      {
+        "name": "RockMeatCount",
+        "address": "0x7EF38F",
+        "purpose": "For Goron quest"
+      },
+      {
+        "name": "Seashells",
+        "address": "0x7EF391"
+      },
+      {
+        "name": "Honeycomb",
+        "address": "0x7EF393"
+      },
+      {
+        "name": "DekuSticks",
+        "address": "0x7EF395"
+      },
+      {
+        "name": "TingleMaps",
+        "address": "0x7EF396",
+        "purpose": "Bitfield of purchased maps"
+      },
+      {
+        "name": "TingleId",
+        "address": "0x7EF397",
+        "purpose": "Next map index (0-7)"
+      },
+      {
+        "name": "DungeonScrolls",
+        "address": "0x7EF398"
+      },
+      {
+        "name": "PreviousScroll",
+        "address": "0x7EF39A",
+        "purpose": "For re-reading hints"
+      },
+      {
+        "name": "MagicBeanProgress",
+        "address": "0x7EF39B"
+      },
+      {
+        "name": "JournalState",
+        "address": "0x7EF39C"
+      },
+      {
+        "name": "IntroState",
+        "address": "0x7EF39E",
+        "purpose": "Link's House intro sequence"
+      },
+      {
+        "name": "FreeBlock_Collect",
+        "address": "0x7EF39F",
+        "purpose": "2 bytes ($7EF39F-3A0)"
+      },
+      {
+        "name": "FreeBlock_Large",
+        "address": "0x7EF3A1",
+        "purpose": "36 bytes ($7EF3A1-3C4)"
+      },
+      {
+        "name": "GameState",
+        "address": "0x7EF3C5"
+      },
+      {
+        "name": "StoryProgress2",
+        "address": "0x7EF3C6"
+      },
+      {
+        "name": "MapIcon",
+        "address": "0x7EF3C7"
+      },
+      {
+        "name": "SpawnPoint",
+        "address": "0x7EF3C8"
+      },
+      {
+        "name": "MiscProgress",
+        "address": "0x7EF3C9"
+      },
+      {
+        "name": "SavedWorld",
+        "address": "0x7EF3CA"
+      },
+      {
+        "name": "ReservedSave",
+        "address": "0x7EF3CB"
+      },
+      {
+        "name": "FollowerId",
+        "address": "0x7EF3CC"
+      },
+      {
+        "name": "FollowerCoordYL",
+        "address": "0x7EF3CD"
+      },
+      {
+        "name": "FollowerCoordYH",
+        "address": "0x7EF3CE"
+      },
+      {
+        "name": "FollowerCoordXL",
+        "address": "0x7EF3CF"
+      },
+      {
+        "name": "FollowerCoordXH",
+        "address": "0x7EF3D0"
+      },
+      {
+        "name": "FollowerIndoors",
+        "address": "0x7EF3D1",
+        "purpose": "Copies INDOORS"
+      },
+      {
+        "name": "SavedFollowerLayer",
+        "address": "0x7EF3D2",
+        "purpose": "Copies LAYER (SRAM cache)"
+      },
+      {
+        "name": "FollowerActive",
+        "address": "0x7EF3D3",
+        "purpose": "0x00=Following, 0x80=Not following"
+      },
+      {
+        "name": "MakuTreeQuest",
+        "address": "0x7EF3D4"
+      },
+      {
+        "name": "ReservedStory",
+        "address": "0x7EF3D5"
+      },
+      {
+        "name": "StoryProgress",
+        "address": "0x7EF3D6"
+      },
+      {
+        "name": "SideQuestProgress",
+        "address": "0x7EF3D7"
+      },
+      {
+        "name": "SideQuestProgress2",
+        "address": "0x7EF3D8"
+      },
+      {
+        "name": "PlayerName1L",
+        "address": "0x7EF3D9"
+      },
+      {
+        "name": "PlayerName1H",
+        "address": "0x7EF3DA"
+      },
+      {
+        "name": "PlayerName2L",
+        "address": "0x7EF3DB"
+      },
+      {
+        "name": "PlayerName2H",
+        "address": "0x7EF3DC"
+      },
+      {
+        "name": "PlayerName3L",
+        "address": "0x7EF3DD"
+      },
+      {
+        "name": "PlayerName3H",
+        "address": "0x7EF3DE"
+      },
+      {
+        "name": "PlayerName4L",
+        "address": "0x7EF3DF"
+      },
+      {
+        "name": "PlayerName4H",
+        "address": "0x7EF3E0"
+      },
+      {
+        "name": "SaveChecksumL",
+        "address": "0x7EF3E1"
+      },
+      {
+        "name": "SaveChecksumH",
+        "address": "0x7EF3E2"
+      },
+      {
+        "name": "GamesSewer",
+        "address": "0x7EF3E3"
+      },
+      {
+        "name": "GamesHyruleCastle",
+        "address": "0x7EF3E5"
+      },
+      {
+        "name": "GamesEastern",
+        "address": "0x7EF3E7"
+      },
+      {
+        "name": "GamesDesert",
+        "address": "0x7EF3E9"
+      },
+      {
+        "name": "GamesAgahnim",
+        "address": "0x7EF3EB"
+      },
+      {
+        "name": "GamesSwamp",
+        "address": "0x7EF3ED"
+      },
+      {
+        "name": "GamesPalaceOfDarkness",
+        "address": "0x7EF3EF"
+      },
+      {
+        "name": "GamesMiseryMire",
+        "address": "0x7EF3F1"
+      },
+      {
+        "name": "GamesSkullWoods",
+        "address": "0x7EF3F3"
+      },
+      {
+        "name": "GamesIcePalace",
+        "address": "0x7EF3F5"
+      },
+      {
+        "name": "GamesTowerOfHera",
+        "address": "0x7EF3F7"
+      },
+      {
+        "name": "GamesThievesTown",
+        "address": "0x7EF3F9"
+      },
+      {
+        "name": "GamesTurtleRock",
+        "address": "0x7EF3FB"
+      },
+      {
+        "name": "GamesGanonsTower",
+        "address": "0x7EF3FD"
+      },
+      {
+        "name": "GamesCurrentSegment",
+        "address": "0x7EF3FF"
+      },
+      {
+        "name": "TotalGamesPlayed",
+        "address": "0x7EF401"
+      },
+      {
+        "name": "ReservedBlock",
+        "address": "0x7EF403"
+      },
+      {
+        "name": "DeathsMaxed",
+        "address": "0x7EF405"
+      },
+      {
+        "name": "Dreams",
+        "address": "0x7EF410"
+      },
+      {
+        "name": "WaterGateStates",
+        "address": "0x7EF411"
+      },
+      {
+        "name": "FreeBlock_Dreams",
+        "address": "0x7EF412",
+        "purpose": "~236 bytes ($7EF412-4FD)"
+      },
+      {
+        "name": "SaveInverseChecksumL",
+        "address": "0x7EF4FE"
+      },
+      {
+        "name": "SaveInverseChecksumH",
+        "address": "0x7EF4FF"
+      }
+    ]
+  },
+  "summary": {
+    "total_hooks": 551,
+    "protected_region_count": 397,
+    "owned_bank_count": 30,
+    "expanded_message_count": 109,
+    "room_tag_count": 7,
+    "feature_flag_count": 13,
+    "sram_variable_count": 150
+  }
+}

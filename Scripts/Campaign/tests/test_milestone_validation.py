@@ -24,12 +24,12 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.progress_validator import (
+from Scripts.Campaign.progress_validator import (
     StoryFlag, GameStateValue, ProgressAddresses,
     ProgressSnapshot, ValidationResult, ProgressReport,
     ProgressValidator, print_progress_report
 )
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignPhase, MilestoneStatus, CampaignMilestone,
     CampaignProgress, CampaignOrchestrator, create_campaign
 )

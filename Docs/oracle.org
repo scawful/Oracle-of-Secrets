@@ -55,7 +55,7 @@ This section tracks tasks focused on improving the existing codebase's structure
     :END:
     - *Goal:* Make risky hooks easy to toggle without desyncing analysis/tooling.
     - *Tasks:*
-      - [X] Standardize feature overrides: =Config/feature_flags.asm= + =scripts/set_feature_flags.py=
+      - [X] Standardize feature overrides: =Config/feature_flags.asm= + =Scripts/Build/set_feature_flags.py=
       - [X] Make =hooks.json= generation aware of module/feature flags and skip non-assembled trees
       - [ ] Add analyzer diff mode + module focus filters (z3dk)
       - [ ] Document the feature-gated `org` patch pattern (link from =ROADMAP.md=)

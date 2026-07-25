@@ -1,6 +1,8 @@
 # Release Candidate Content Checklist
 
 **Created:** 2026-02-12
+**Last assessed:** 2026-07-24 (code/static readback reconciliation; full runtime
+sweep pending)
 **Reference:** `release_2026_definition.md` (RC gate criteria)
 **Purpose:** Track what content is needed before declaring RC. This is the "what's missing" list.
 
@@ -14,8 +16,6 @@
 
 ## Dungeon Playability
 
-**Last assessed:** 2026-02-13 (D5, D7, S1-S3 completed)
-
 | Dungeon | Rooms | Boss | Item | Connectivity | Playable? | Top Blocker |
 |---------|-------|------|------|-------------|-----------|-------------|
 | D1 Mushroom Grotto | Assumed OK | Assumed OK | Assumed OK | Assumed OK | **Unverified** | Runtime test needed |
@@ -24,21 +24,24 @@
 | D4 Zora Temple | 16 assessed | Arrghus coded | Unknown | Partial | **No** | 3 unconverted rooms, water gate untested |
 | D5 Glacia Estate | 19 exist | Twinrova **coded** | Fire Rod **unverified** | **Unmapped** | **No** | Room connectivity unmapped; 5/19 stale labels |
 | D6 Goron Mines | 4 flagged | Unknown | Unknown | Unknown | **No** | Minecart track placement |
-| D7 Dragon Ship | 17 mapped | Kydrog **broken** | Somaria **unverified** | **Good** (20 doors, 6 stairs) | **No** | Boss spriteset wrong; death does nothing; no Farore rescue |
+| D7 Dragon Ship | 17 mapped | Kydrog combat code exists; runtime unverified | Somaria **unverified** | **Good** (20 doors, 6 stairs) | **No** | Rescue scaffold exists but defaults OFF and lacks maiden/warp/NPC/endgame flow |
 | D8 Fortress | Unknown | Dark Link mid-boss | Unknown | Unknown | **Unknown** | Needs full assessment |
-| S1 Shrine of Wisdom | 7 exist | None | Flippers | Partial | **No** | **Wrong pendant in chest** (0x38 not 0x39) |
-| S2 Shrine of Power | 7 rooms mapped in `dungeons.json` | **None (by design)** | Power Glove | Good (mapped set) | **No** | **Wrong pendant** (0x39 not 0x3A); lava collision bug |
+| S1 Shrine of Wisdom | 7 exist | None | Flippers | Partial | **No** | Source-patched/read back as 0x39; runtime pickup unverified |
+| S2 Shrine of Power | 7 rooms mapped in `dungeons.json` | **None (by design)** | Power Glove | Good (mapped set) | **No** | Source-patched/read back as 0x3A; runtime pickup and lava collision unverified |
 | S3 Shrine of Courage | 8 rooms (4 mapped in `dungeons.json`) | **No boss code** (Vaati designed, not implemented) | Mirror Shield | **Partial** | **No** | Remaining rooms not modeled (0x07/0x16/0x23/0x26); Vaati reward path not implemented; entrance shared with D8 |
 
-### Critical Cross-Dungeon Issue: Pendant Items All Wrong
+### Critical Cross-Dungeon Issue: Pendant Reward Alignment
 
-| Shrine | Expected Pendant | Chest Room | Actual Item | Fix |
-|--------|-----------------|------------|-------------|-----|
-| S1 Wisdom | 0x39 (Wisdom) | 0x7A | ~~0x38~~ **FIXED 2026-06-11: 0x39** | Done (chest table patch, verified via z3ed) |
-| S2 Power | 0x3A (Power) | 0x73 | ~~0x39~~ **FIXED 2026-06-11: 0x3A** | Done (chest table patch, verified via z3ed) |
-| S3 Courage | 0x38 (Courage) | Vaati boss clear | Not implemented | Implement Vaati reward drop path |
+| Shrine | Expected Pendant | Reward Source | Current Evidence | Remaining Gate |
+|--------|------------------|---------------|------------------|----------------|
+| S1 Wisdom | 0x39 (Wisdom) | Chest room 0x7A | Source patch + z3ed readback: 0x39 | Runtime pickup/progression |
+| S2 Power | 0x3A (Power) | Chest room 0x73 | Source patch + z3ed readback: 0x3A | Runtime pickup/progression |
+| S3 Courage | 0x38 (Courage) | Vaati boss clear | Not implemented | Implement and runtime-verify Vaati reward |
 
-**2026-06-11: S1/S2 chest data fixed in base ROM** (0x7A big chest → 0x39, 0x73 big chest → 0x3A; verified with `z3ed dungeon-list-chests`). Runtime reward-flow verification still pending. S3 Vaati drop path remains unimplemented.
+`Core/patches.asm` reproducibly patches room 0x7A to 0x39 and room 0x73
+to 0x3A. `z3ed dungeon-list-chests` readback confirms those values in the
+current patched ROM; runtime pickup/progression remains unverified. S3's Vaati
+reward remains unimplemented.
 
 ### Room Ownership Conflict: S2 vs S3 — RESOLVED 2026-02-13
 
@@ -57,12 +60,15 @@ Rooms 0x33, 0x43, 0x53, 0x63 belong to **Shrine of Courage (S3)** per ROM and us
 
 ### D7 Victory Pipeline (Biggest Narrative Gap)
 
-The entire post-D7 flow is unimplemented:
-1. KydrogBoss_Death has no crystal drop, no flag setter, no cutscene
-2. `GameState_FaroreRescued = $03` — setter does not exist anywhere
-3. Message 0x138 (Farore rescue dialogue) — exists in data, no runtime callsite
-4. Post-rescue Hall of Secrets Farore NPC — no states implemented (farore.asm TODO)
-5. Endgame unlock (Sky Islands, Fortress access) — no trigger
+A feature-gated partial scaffold exists, defaults OFF, and is incomplete:
+1. `KydrogBoss_Death` calls `KydrogBoss_Death_FaroreRescueScaffold` only
+   when `!ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1`.
+2. `KydrogBoss_ApplyFaroreRescueProgression` sets the D7 crystal bit and
+   `GameState_FaroreRescued` late in the death timer.
+3. The scaffold uses temporary message 0x138; the
+   crystal-maiden/cutscene/warp handoff is not implemented or runtime-verified.
+4. Post-rescue Hall of Secrets Farore states are not implemented.
+5. The endgame/credits transition is not wired or runtime-verified.
 
 ---
 
@@ -116,7 +122,7 @@ The entire post-D7 flow is unimplemented:
 
 | System | Status | Test Method |
 |--------|--------|-------------|
-| Crystal collection (7 dungeons) | Implemented | Mesen2 SRAM injection |
+| Crystal collection (7 dungeons) | Partial; D7 setter exists only in an OFF-by-default, unverified scaffold | Mesen2 SRAM injection |
 | GetCrystalCount | Complete, untested | Maku Tree test |
 | UpdateMapIcon | Complete, untested | Maku Tree test |
 | SelectReactionMessage | Complete, untested | Maku Tree test |
@@ -142,11 +148,11 @@ The entire post-D7 flow is unimplemented:
 ## Biggest Unknowns (Updated 2026-02-13)
 
 1. ~~D5, D7, S1-S3 have not been assessed~~ **DONE** — assessed 2026-02-13, results above
-2. **No dungeons have been played end-to-end** in the current ROM
+2. **No current-ROM end-to-end dungeon verification is recorded**
 3. **Progression helpers are untested** — the foundation of NPC dialogue gating
 4. **Final boss sequence** — Kydreeok → Temporal Pyramid → Ganondorf three-phase — implementation status unclear
 5. **Mask transformation mechanics** — designed but implementation status unknown
 6. **D7 Farore rescue pipeline** — scaffold exists but post-D7 sequence remains incomplete
-7. **Pendant reward paths are misaligned across S1-S3** — S1/S2 chest data fix + S3 Vaati reward implementation needed
+7. **Pendant reward validation is incomplete** — S1/S2 source patches and readback are correct, but runtime pickup is unverified; S3 Vaati reward path is missing
 8. **S3 Shrine of Courage** — no dungeons.json entry, no boss code, shares entrance with D8, room conflict with S2
 9. **D8 Fortress of Secrets** — still needs full assessment (rooms, boss, connectivity)

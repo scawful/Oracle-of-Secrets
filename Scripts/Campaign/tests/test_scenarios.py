@@ -21,18 +21,18 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.emulator_abstraction import GameStateSnapshot, EmulatorStatus
-from scripts.campaign.game_state import GamePhase, GameStateParser, ParsedGameState
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.emulator_abstraction import GameStateSnapshot, EmulatorStatus
+from Scripts.Campaign.game_state import GamePhase, GameStateParser, ParsedGameState
+from Scripts.Campaign.input_recorder import (
     Button, InputSequence, InputPlayer, InputRecorder,
     create_boot_sequence, create_walk_sequence
 )
-from scripts.campaign.action_planner import ActionPlanner, Goal, GoalType, Plan, PlanStatus
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.action_planner import ActionPlanner, Goal, GoalType, Plan, PlanStatus
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignOrchestrator, CampaignPhase, CampaignProgress,
     CampaignMilestone, MilestoneStatus
 )
-from scripts.campaign.visual_verifier import VisualVerifier, VerificationResult
+from Scripts.Campaign.visual_verifier import VisualVerifier, VerificationResult
 
 
 class TestBootToGameplayScenario:
@@ -524,7 +524,7 @@ class TestVisualVerificationScenario:
 
     def test_black_screen_check_on_missing_file(self):
         """Test black screen check handles missing files."""
-        from scripts.campaign import quick_black_screen_check
+        from Scripts.Campaign import quick_black_screen_check
 
         result = quick_black_screen_check(Path("/nonexistent/screenshot.png"))
         assert result is False  # Missing file is not a black screen

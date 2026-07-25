@@ -12,7 +12,7 @@ Status: Active | Next Review: 2026-02-15
 
 1. **Octorok** (`Sprites/Enemies/octorok.asm`): Sprite flash `LDA.w SprFlash, X`; land Octorok `$2D/$6D` so they render above OW grass.
 2. **Ocarina tint** (`!ENABLE_OCARINA_SONG_TINT`): Default OFF; gates Healing/Soaring/Time tint; Storms unchanged.
-3. **Save persistence** (`scripts/mesen2_client_lib/`): Fixed slot decode (2/4/6 for slots 1/2/3). `save_data_transaction.py`; `profile-apply` does WRAM→SRAM flow with verify. Persistent/volatile classification.
+3. **Save persistence** (`Scripts/Mesen2/mesen2_client_lib/`): Fixed slot decode (2/4/6 for slots 1/2/3). `save_data_transaction.py`; `profile-apply` does WRAM→SRAM flow with verify. Persistent/volatile classification.
 4. **Save-state patch**: 28 `oos168x` states updated with `all_items_no_progress`; 28/28 verified.
 
 ## Minecart Accuracy Review
@@ -28,7 +28,7 @@ Result:
   - `0xA8`, `0x89`, `0xDA`, `0xD8`: minecart sprites not on stop tiles.
 
 ## Test Plan
-- Build: `./scripts/build_rom.sh 168` → `check_zscream_overlap.py` → rom-load → `save-data profile-apply soaring_debug`
+- Build: `Scripts/Build/build_rom.sh 168` → `check_zscream_overlap.py` → rom-load → `save-data profile-apply soaring_debug`
 - Accept: Octorok visible in OW grass; no tint when flag off; Soaring works; minecart audit after room edits
 
 ## Next Work

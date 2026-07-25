@@ -147,7 +147,7 @@ Set a flag to `1` to exclude that module from assembly. The build output will pr
 ```bash
 # 1. Edit Util/macros.asm — set !DISABLE_MASKS = 1
 # 2. Rebuild
-./scripts/build_rom.sh 168
+Scripts/Build/build_rom.sh 168
 # 3. Test in emulator — does the bug reproduce?
 # 4. Repeat: re-enable, disable next module
 ```

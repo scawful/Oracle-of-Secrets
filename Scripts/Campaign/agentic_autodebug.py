@@ -29,6 +29,8 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 _DEFAULT_ARTIFACT_ROOT = Path(tempfile.gettempdir()) / "oos_autodebug" / "agentic"
 DEFAULT_CAPTURE_DIR = _DEFAULT_ARTIFACT_ROOT / "captures"
@@ -332,7 +334,7 @@ class AgenticAutodebugSession:
         except Exception:
             bridge_socket = self.socket_path
 
-        from scripts.mesen2_client_lib.client import OracleDebugClient
+        from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
 
         self.client = OracleDebugClient(socket_path=bridge_socket)
 
@@ -706,11 +708,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""\
 examples:
-  python3 -m scripts.campaign.agentic_autodebug arm          # includes JumpTableLocal p-assert by default
-  python3 -m scripts.campaign.agentic_autodebug monitor --duration 600 --poll-hz 4
-  python3 -m scripts.campaign.agentic_autodebug run --max-iterations 50
-  python3 -m scripts.campaign.agentic_autodebug capture --kind manual --desc "suspected blackout"
-  python3 -m scripts.campaign.agentic_autodebug triage --latest
+  python3 -m Scripts.Campaign.agentic_autodebug arm          # includes JumpTableLocal p-assert by default
+  python3 -m Scripts.Campaign.agentic_autodebug monitor --duration 600 --poll-hz 4
+  python3 -m Scripts.Campaign.agentic_autodebug run --max-iterations 50
+  python3 -m Scripts.Campaign.agentic_autodebug capture --kind manual --desc "suspected blackout"
+  python3 -m Scripts.Campaign.agentic_autodebug triage --latest
 """,
     )
     parser.add_argument("--socket", default=None, help="Target Mesen2 socket path (recommended)")

@@ -11,11 +11,11 @@ current state instead of older roadmap assumptions.
 
 Oracle of Secrets is no longer blocked by lack of tooling. The repo already has:
 
-- A guarded build pipeline in `scripts/build_rom.sh`
-- A one-command loop in `scripts/dev_loop.sh`
-- A large Mesen2 socket client in `scripts/mesen2_client.py`
+- A guarded build pipeline in `Scripts/Build/build_rom.sh`
+- A one-command loop in `Scripts/Build/dev_loop.sh`
+- A large Mesen2 socket client in `Scripts/Mesen2/mesen2_client.py`
 - Save-data profiles and save-state library manifests
-- JSON regression suites in `tests/`
+- JSON regression suites in `Tests/`
 - yaze service helpers and portable `.yazeproj` export
 
 The real bottlenecks now are:
@@ -34,18 +34,19 @@ before large new feature pushes.
 
 ### Working infrastructure already present
 
-- `scripts/build_rom.sh` now does more than assembly:
+- `Scripts/Build/build_rom.sh` now does more than assembly:
   - menu validation
-  - water table generation
+  - tracked water-table consumption on normal builds; generation only during an
+    explicit opt-in refresh
   - `check_zscream_overlap.py`
   - hooks.json regeneration
   - optional sprite/hook validation
   - static analysis
   - smoke-test invocation when an emulator backend exists
   - GM-005 guard against accidentally editing `oos168x.sfc`
-- `scripts/dev_loop.sh` wraps build, reload, symbol sync, validation, yaze
+- `Scripts/Build/dev_loop.sh` wraps build, reload, symbol sync, validation, yaze
   restart, and yaze sync.
-- `scripts/mesen2_client.py` already supports:
+- `Scripts/Mesen2/mesen2_client.py` already supports:
   - save/load
   - save-data profiles
   - save-data snapshot library
@@ -53,9 +54,9 @@ before large new feature pushes.
   - traces, breakpoints, mem-watch, mem-blame
   - assistant mode
   - labels/symbol sync
-- `scripts/mesen2_launch_instance.sh` supports isolated instances, seeded save
+- `Scripts/Mesen2/mesen2_launch_instance.sh` supports isolated instances, seeded save
   slots, registry-friendly instance naming, and safe profile separation.
-- `scripts/export_yazeproj_bundle.py` already supports portable macOS/iOS yaze
+- `Scripts/Generate/export_yazeproj_bundle.py` already supports portable macOS/iOS yaze
   bundles via `.yazeproj`.
 
 ### Concrete drift and friction points
@@ -64,15 +65,15 @@ before large new feature pushes.
 - `z3ed` is available at `~/src/hobby/yaze/build/bin/z3ed`.
 - `yaze-nightly` is available on `PATH`.
 - `/Applications/Mesen2 OOS.app` exists.
-- `scripts/yaze_service.sh status` shows yaze server and GUI are currently
+- `Scripts/yaze_service.sh status` shows yaze server and GUI are currently
   stopped.
 - `PROJECT.toml` now points to a root `./build.sh` compatibility wrapper, but
-  docs still need to keep `scripts/dev_loop.sh` as the primary path.
+  docs still need to keep `Scripts/Build/dev_loop.sh` as the primary path.
 - `PROJECT.toml` declares `flips`, but `flips` is not on `PATH`.
-- Distribution policy expects BPS patches, and `scripts/beta_patch.sh` now
+- Distribution policy expects BPS patches, and `Scripts/Build/beta_patch.sh` now
   provides the repo path for that, but it still depends on `flips` being
   installed locally.
-- `scripts/mesen2_registry.py list` shows heavy historical instance clutter,
+- `Scripts/Mesen2/mesen2_registry.py list` shows heavy historical instance clutter,
   which increases the chance of attaching to stale or ambiguous sessions.
 
 ---
@@ -177,36 +178,36 @@ before large new feature pushes.
 
 | Area | Minimum validation | Strong validation | Notes |
 |------|--------------------|-------------------|-------|
-| ASM hooks / core logic | `scripts/build_rom.sh 168` + overlap + analyzer | smoke + targeted regression JSON + manual Mesen repro | Use strict analyzer for beta drops |
+| ASM hooks / core logic | `Scripts/Build/build_rom.sh 168` + overlap + analyzer | smoke + targeted regression JSON + manual Mesen repro | Use strict analyzer for beta drops |
 | Dungeon room edits in yaze | `z3ed rom-compare` + `dungeon-doctor` + `rom-doctor` | rebuild + enter edited rooms + adjacent-room regression | Never edit `oos168x.sfc` |
 | Progression/dialogue | save-data profile apply + targeted talk/interact test | state-backed regression steps + manual text review | Prefer save-data over long navigation |
-| Overworld/dungeon transitions | smoke + transition JSON tests | isolated Mesen instance + trace / capture bundle | Promote failures into `tests/regression/` |
+| Overworld/dungeon transitions | smoke + transition JSON tests | isolated Mesen instance + trace / capture bundle | Promote failures into `Tests/regression/` |
 | Beta patch candidate | smoke + transition tests + analyzer | full regression + curated manual play session | Do not ship without notes + known issues |
 
 ---
 
 ## Workflow Improvements Worth Doing Soon
 
-### 1. Make `scripts/dev_loop.sh` the documented default
+### 1. Make `Scripts/Build/dev_loop.sh` the documented default
 
 Current docs still split attention between `mesen-agent`, `build_rom.sh`, and
 older workflow language. The practical default should be:
 
 ```bash
-scripts/dev_loop.sh 168 --mesen-sync --reload
+Scripts/Build/dev_loop.sh 168 --mesen-sync --reload
 ```
 
 And for heavier validation:
 
 ```bash
-scripts/dev_loop.sh 168 --mesen-sync --reload --validate
+Scripts/Build/dev_loop.sh 168 --mesen-sync --reload --validate
 ```
 
 ### 2. Pick one Mesen2 targeting rule and enforce it
 
 Preferred rule:
 
-- Launch with `scripts/mesen2_launch_instance.sh --instance <name>`
+- Launch with `Scripts/Mesen2/mesen2_launch_instance.sh --instance <name>`
 - Attach with `--instance <name>`
 - Avoid raw auto-attach whenever multiple sockets exist
 
@@ -216,7 +217,7 @@ This reduces accidental cross-session reuse and makes agent work safer.
 
 The registry is too noisy. Add a regular cleanup habit:
 
-- `python3 scripts/mesen2_registry.py prune --dry-run`
+- `python3 Scripts/Mesen2/mesen2_registry.py prune --dry-run`
 - then prune for real after confirming no live work depends on those entries
 
 Also keep instance naming short and task-specific:
@@ -238,17 +239,17 @@ will save more time than deeper campaign automation in the short term.
 
 Use these as the real supported path:
 
-- `scripts/build_rom.sh`
-- `scripts/dev_loop.sh`
-- `scripts/mesen2_launch_instance.sh`
-- `scripts/mesen2_client.py`
-- `scripts/run_regression_tests.sh`
-- `scripts/export_yazeproj_bundle.py`
-- `scripts/yaze_service.sh`
+- `Scripts/Build/build_rom.sh`
+- `Scripts/Build/dev_loop.sh`
+- `Scripts/Mesen2/mesen2_launch_instance.sh`
+- `Scripts/Mesen2/mesen2_client.py`
+- `Scripts/Validate/run_regression_tests.sh`
+- `Scripts/Generate/export_yazeproj_bundle.py`
+- `Scripts/yaze_service.sh`
 
 Treat these as experimental until they prove consistent value:
 
-- `scripts/campaign/`
+- `Scripts/Campaign/`
 - autonomous debugger flows
 - higher-order agent gateway flows
 
@@ -257,7 +258,7 @@ Treat these as experimental until they prove consistent value:
 The repo now has a BPS packaging path:
 
 ```bash
-scripts/beta_patch.sh 168
+Scripts/Build/beta_patch.sh 168
 ```
 
 Responsibilities:
@@ -273,7 +274,7 @@ Responsibilities:
 The repo already supports portable yaze bundles:
 
 ```bash
-python3 scripts/export_yazeproj_bundle.py --refresh-planning --force --out-icloud
+python3 Scripts/Generate/export_yazeproj_bundle.py --refresh-planning --force --out-icloud
 ```
 
 Use that for Mac/iPad room-data and planning sync. For portable emulator
@@ -329,32 +330,32 @@ testing debt is visible beside content work.
 ### Build + validate
 
 ```bash
-scripts/dev_loop.sh 168 --mesen-sync --reload --validate
+Scripts/Build/dev_loop.sh 168 --mesen-sync --reload --validate
 ```
 
 ### Launch isolated runtime session
 
 ```bash
-scripts/mesen2_launch_instance.sh --instance oos-scawful-debug --owner scawful --source manual
+Scripts/Mesen2/mesen2_launch_instance.sh --instance oos-scawful-debug --owner scawful --source manual
 ```
 
 ### Apply fast-travel state
 
 ```bash
-python3 scripts/mesen2_client.py --instance oos-scawful-debug save-data profile-apply zora_temple_debug
+python3 Scripts/Mesen2/mesen2_client.py --instance oos-scawful-debug save-data profile-apply zora_temple_debug
 ```
 
 ### Run daily regression subset
 
 ```bash
-./scripts/run_regression_tests.sh smoke --no-moe --fail-fast
-./scripts/run_regression_tests.sh regression --tag transition -q
+Scripts/Validate/run_regression_tests.sh smoke --no-moe --fail-fast
+Scripts/Validate/run_regression_tests.sh regression --tag transition -q
 ```
 
 ### Export portable yaze bundle
 
 ```bash
-python3 scripts/export_yazeproj_bundle.py --refresh-planning --force --out-icloud
+python3 Scripts/Generate/export_yazeproj_bundle.py --refresh-planning --force --out-icloud
 ```
 
 ---

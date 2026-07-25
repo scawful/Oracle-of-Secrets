@@ -11,6 +11,10 @@ usage() {
   echo "  --disable <csv>   Comma-separated feature names to disable." >&2
   echo "  --profile <name>  Preset profile (defaults|all-on|all-off) applied before enable/disable lists." >&2
   echo "  --persist-flags   Keep the generated Config/feature_flags.asm (otherwise it is restored after build)." >&2
+  echo "" >&2
+  echo "Water table refresh (off by default):" >&2
+  echo "  OOS_REFRESH_WATER_TABLES=1 rebuilds both tracked water includes." >&2
+  echo "  OOS_WATER_FILL_TABLE_ROM=<path> selects the authoring ROM and implies refresh." >&2
   exit 1
 }
 
@@ -82,16 +86,39 @@ done
 
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 rom_dir="$repo_root/Roms"
+hooks_json="$rom_dir/hooks.json"
+hack_manifest="$rom_dir/hack_manifest.json"
 feature_flags_path="$repo_root/Config/feature_flags.asm"
+cd "$repo_root"
 
 # Optional: temporarily generate Config/feature_flags.asm for this build, then restore.
 flags_modified=0
 flags_backup=""
+water_tmp_dir=""
+water_restore_pending=0
+water_fill_backup=""
+water_runtime_backup=""
+water_patched_backup=""
+water_patched_existed=0
+water_symbols_backup=""
+water_symbols_existed=0
+water_mlb_backup=""
+water_mlb_existed=0
+water_hooks_backup=""
+water_hooks_existed=0
+water_manifest_backup=""
+water_manifest_existed=0
+hooks_tmp=""
+manifest_tmp=""
 restore_flags() {
   if [[ "$flags_modified" != "1" ]]; then
     return 0
   fi
   if [[ "$persist_flags" == "1" ]]; then
+    if [[ -n "$flags_backup" && -f "$flags_backup" ]]; then
+      rm -f "$flags_backup"
+      flags_backup=""
+    fi
     echo "[*] Persisting feature flags: $feature_flags_path"
     return 0
   fi
@@ -104,7 +131,43 @@ restore_flags() {
     echo "[*] Removed temporary feature flags: $feature_flags_path"
   fi
 }
-trap restore_flags EXIT
+restore_water_output() {
+  local existed="$1"
+  local backup="$2"
+  local target="$3"
+  if [[ "$existed" == "1" ]]; then
+    cp -f "$backup" "$target"
+  else
+    rm -f "$target"
+  fi
+}
+restore_water_transaction() {
+  if [[ "$water_restore_pending" != "1" ]]; then
+    return 0
+  fi
+  cp -f "$water_fill_backup" "$repo_root/Dungeons/generated/water_fill_table.asm"
+  cp -f "$water_runtime_backup" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
+  restore_water_output "$water_patched_existed" "$water_patched_backup" "$patched_rom"
+  restore_water_output "$water_symbols_existed" "$water_symbols_backup" "$symbols_path"
+  restore_water_output "$water_mlb_existed" "$water_mlb_backup" "$mlb_path"
+  restore_water_output "$water_hooks_existed" "$water_hooks_backup" "$hooks_json"
+  restore_water_output "$water_manifest_existed" "$water_manifest_backup" "$hack_manifest"
+  echo "[*] Restored water includes and patched ROM after failed refresh." >&2
+}
+cleanup() {
+  restore_water_transaction
+  restore_flags
+  if [[ -n "$hooks_tmp" && -f "$hooks_tmp" ]]; then
+    rm -f "$hooks_tmp"
+  fi
+  if [[ -n "$manifest_tmp" && -f "$manifest_tmp" ]]; then
+    rm -f "$manifest_tmp"
+  fi
+  if [[ -n "$water_tmp_dir" && -d "$water_tmp_dir" ]]; then
+    rm -rf "$water_tmp_dir"
+  fi
+}
+trap cleanup EXIT
 
 if [[ -n "$feat_enable" || -n "$feat_disable" || "$feat_profile" != "defaults" ]]; then
   if [[ -f "$feature_flags_path" ]]; then
@@ -136,11 +199,11 @@ fi
 default_base="$rom_dir/oos${version}.sfc"
 legacy_base="$rom_dir/oos${version}_test2.sfc"
 if [[ -z "${OOS_BASE_ROM:-}" ]]; then
-  if [[ -f "$legacy_base" ]]; then
+  if [[ -f "$default_base" ]]; then
+    base_rom="$default_base"
+  elif [[ -f "$legacy_base" ]]; then
     base_rom="$legacy_base"
     echo "NOTE: Using legacy base ROM name $(basename "$legacy_base"). Rename to $(basename "$default_base") to adopt standard naming." >&2
-  elif [[ -f "$default_base" ]]; then
-    base_rom="$default_base"
   else
     echo "ERROR: Base ROM not found. Expected $default_base (or legacy $legacy_base)" >&2
     exit 1
@@ -154,8 +217,8 @@ symbols_path="$rom_dir/oos${version}x.sym"
 mlb_rel="Roms/oos${version}x.mlb"
 mlb_path="$rom_dir/oos${version}x.mlb"
 
-if [[ -f "$legacy_base" && "$base_rom" != "$legacy_base" ]]; then
-  echo "WARNING: $legacy_base exists but base ROM is $base_rom (OOS_BASE_ROM override?)" >&2
+if [[ -f "$legacy_base" && "$base_rom" == "$default_base" ]]; then
+  echo "NOTE: Ignoring legacy base ROM because canonical $(basename "$default_base") exists." >&2
 fi
 
 if [[ ! -f "$base_rom" ]]; then
@@ -163,48 +226,6 @@ if [[ ! -f "$base_rom" ]]; then
   exit 1
 fi
 echo "Using base ROM: $base_rom"
-
-# Keep water-gate runtime tables synced with Yaze-authored room data.
-# Prefers the previous build's patched ROM: water-fill marker tiles ($F5)
-# live in collision data contributed by ASM patches, so the base ROM lacks
-# them (rooms 0x25/0x27 regression, found 2026-06-11). Order:
-# OOS_WATER_TABLE_ROM > existing patched ROM > .yaze rom_filename > base.
-if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" || "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
-  water_table_rom="${OOS_WATER_TABLE_ROM:-}"
-  if [[ -z "$water_table_rom" && -f "$patched_rom" ]]; then
-    water_table_rom="$patched_rom"
-  fi
-  if [[ -z "$water_table_rom" ]]; then
-    yaze_project="$repo_root/Oracle-of-Secrets.yaze"
-    if [[ -f "$yaze_project" ]]; then
-      yaze_rom_rel="$(awk -F= '/^rom_filename=/{print $2; exit}' "$yaze_project" || true)"
-      if [[ -n "$yaze_rom_rel" ]]; then
-        if [[ "$yaze_rom_rel" = /* ]]; then
-          water_table_rom="$yaze_rom_rel"
-        else
-          water_table_rom="$repo_root/$yaze_rom_rel"
-        fi
-      fi
-    fi
-  fi
-  if [[ -z "$water_table_rom" || ! -f "$water_table_rom" ]]; then
-    water_table_rom="$base_rom"
-  fi
-  water_table_rom_arg="$water_table_rom"
-  if [[ "$water_table_rom_arg" == "$repo_root/"* ]]; then
-    water_table_rom_arg="${water_table_rom_arg#$repo_root/}"
-  fi
-fi
-
-if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]]; then
-  echo "[*] Generating water-gate runtime tables from: $water_table_rom_arg"
-  python3 "$repo_root/Scripts/Generate/generate_water_gate_runtime_tables.py" --rom "$water_table_rom_arg"
-fi
-
-if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
-  echo "[*] Generating water-fill table from custom collision markers: $water_table_rom_arg"
-  python3 "$repo_root/Scripts/Generate/generate_water_fill_table.py" --rom "$water_table_rom_arg"
-fi
 
 # Feature-flag guardrails (non-fatal by default).
 if ! python3 "$repo_root/Scripts/Build/verify_feature_flags.py" --root "$repo_root"; then
@@ -220,7 +241,7 @@ fi
 if [[ "${OOS_SKIP_MENU_VALIDATE:-0}" != "1" ]]; then
   z3ed_cli="${OOS_Z3ED_BIN:-}"
   if [[ -z "$z3ed_cli" ]]; then
-    local_z3ed="$repo_root/../yaze/Scripts/z3ed"
+    local_z3ed="$repo_root/../yaze/scripts/z3ed"
     if [[ -x "$local_z3ed" ]]; then
       z3ed_cli="$local_z3ed"
     elif command -v z3ed >/dev/null 2>&1; then
@@ -316,22 +337,161 @@ PY_GUARD
   fi
 fi
 
-cp -f "$base_rom" "$patched_rom"
-
 if ! command -v "$asar_bin" >/dev/null 2>&1; then
   echo "ERROR: assembler not found: $asar_bin" >&2
   exit 1
 fi
 
-if [[ $emit_symbols -eq 1 ]]; then
-  # Use z3asm features if available
-  if [[ "$asar_bin" == *"z3asm"* ]]; then
-    "$asar_bin" --symbols=wla --symbols-path="$symbols_path" --emit=sourcemap.json Oracle_main.asm "$patched_rom"
+assemble_rom() {
+  cp -f "$base_rom" "$patched_rom"
+  if [[ $emit_symbols -eq 1 ]]; then
+    # Use z3asm features if available
+    if [[ "$asar_bin" == *"z3asm"* ]]; then
+      "$asar_bin" --symbols=wla --symbols-path="$symbols_path" --emit=sourcemap.json Oracle_main.asm "$patched_rom"
+    else
+      "$asar_bin" --symbols=wla --symbols-path="$symbols_path" Oracle_main.asm "$patched_rom"
+    fi
   else
-    "$asar_bin" --symbols=wla --symbols-path="$symbols_path" Oracle_main.asm "$patched_rom"
+    "$asar_bin" Oracle_main.asm "$patched_rom"
   fi
-else
-  "$asar_bin" Oracle_main.asm "$patched_rom"
+}
+
+generate_water_tables() {
+  local source_rom="$1"
+  local output_dir="$2"
+  local source_arg="$source_rom"
+  if [[ "$source_arg" == "$repo_root/"* ]]; then
+    source_arg="${source_arg#"$repo_root"/}"
+  fi
+
+  mkdir -p "$output_dir"
+  echo "[*] Generating water-gate runtime tables from: $source_arg"
+  python3 "$repo_root/Scripts/Generate/generate_water_gate_runtime_tables.py" \
+    --rom "$source_arg" \
+    --out-asm "$output_dir/water_gate_runtime_tables.asm"
+  echo "[*] Generating water-fill table from custom collision markers: $source_arg"
+  python3 "$repo_root/Scripts/Generate/generate_water_fill_table.py" \
+    --rom "$source_arg" \
+    --out-asm "$output_dir/water_fill_table.asm" \
+    --require-rooms 0x25,0x27
+}
+
+# The tracked water-fill table is release source. Normal builds never regenerate
+# it from a ROM, because canonical oos168.sfc does not carry every authoring
+# marker. Refreshes are explicit and update both generated includes atomically.
+for required_room in 25 27; do
+  if ! grep -Fq "  db \$$required_room," "$repo_root/Dungeons/generated/water_fill_table.asm"; then
+    echo "ERROR: Tracked water-fill table is missing required room \$$required_room." >&2
+    exit 1
+  fi
+done
+
+water_refresh_requested="${OOS_REFRESH_WATER_TABLES:-0}"
+water_table_rom=""
+water_table_rom_is_default=0
+if [[ -n "${OOS_WATER_FILL_TABLE_ROM:-}" || -n "${OOS_WATER_TABLE_ROM:-}" ]]; then
+  water_refresh_requested=1
+fi
+if [[ "$water_refresh_requested" != "0" && "$water_refresh_requested" != "1" ]]; then
+  echo "ERROR: OOS_REFRESH_WATER_TABLES must be 0 or 1." >&2
+  exit 1
+fi
+if [[ -n "${OOS_WATER_FILL_TABLE_ROM:-}" && -n "${OOS_WATER_TABLE_ROM:-}" &&
+      "${OOS_WATER_FILL_TABLE_ROM:-}" != "${OOS_WATER_TABLE_ROM:-}" ]]; then
+  echo "ERROR: OOS_WATER_FILL_TABLE_ROM and OOS_WATER_TABLE_ROM disagree." >&2
+  exit 1
+fi
+
+if [[ "$water_refresh_requested" == "1" ]]; then
+  water_table_rom="${OOS_WATER_FILL_TABLE_ROM:-${OOS_WATER_TABLE_ROM:-}}"
+  if [[ -z "$water_table_rom" ]]; then
+    water_table_rom="$patched_rom"
+    water_table_rom_is_default=1
+  fi
+  if [[ "$water_table_rom_is_default" != "1" && ! -f "$water_table_rom" ]]; then
+    echo "ERROR: Water-table authoring ROM not found: $water_table_rom" >&2
+    exit 1
+  fi
+
+  # Arm rollback before assemble_rom mutates the patched output. Every explicit
+  # refresh is one transaction spanning initial assembly, candidate generation,
+  # staged-table rebuild, and all later build checks.
+  water_tmp_dir="$(mktemp -d "$rom_dir/.water_tables.XXXXXX")"
+  water_fill_backup="$water_tmp_dir/water_fill_table.original.asm"
+  water_runtime_backup="$water_tmp_dir/water_gate_runtime_tables.original.asm"
+  water_patched_backup="$water_tmp_dir/patched_rom.original.sfc"
+  water_symbols_backup="$water_tmp_dir/symbols.original.sym"
+  water_mlb_backup="$water_tmp_dir/symbols.original.mlb"
+  water_hooks_backup="$water_tmp_dir/hooks.original.json"
+  water_manifest_backup="$water_tmp_dir/hack_manifest.original.json"
+  cp -f "$repo_root/Dungeons/generated/water_fill_table.asm" "$water_fill_backup"
+  cp -f "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm" "$water_runtime_backup"
+  if [[ -f "$patched_rom" ]]; then
+    cp -f "$patched_rom" "$water_patched_backup"
+    water_patched_existed=1
+  fi
+  if [[ -f "$symbols_path" ]]; then
+    cp -f "$symbols_path" "$water_symbols_backup"
+    water_symbols_existed=1
+  fi
+  if [[ -f "$mlb_path" ]]; then
+    cp -f "$mlb_path" "$water_mlb_backup"
+    water_mlb_existed=1
+  fi
+  if [[ -f "$hooks_json" ]]; then
+    cp -f "$hooks_json" "$water_hooks_backup"
+    water_hooks_existed=1
+  fi
+  if [[ -f "$hack_manifest" ]]; then
+    cp -f "$hack_manifest" "$water_manifest_backup"
+    water_manifest_existed=1
+  fi
+  water_restore_pending=1
+fi
+
+assemble_rom
+
+if [[ "$water_refresh_requested" == "1" ]]; then
+  if [[ ! -f "$water_table_rom" ]]; then
+    echo "ERROR: Water-table authoring ROM not found after initial assembly: $water_table_rom" >&2
+    exit 1
+  fi
+  candidate_dir="$water_tmp_dir/candidate"
+  generate_water_tables "$water_table_rom" "$candidate_dir"
+
+  water_tables_changed=0
+  if ! cmp -s "$candidate_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"; then
+    water_tables_changed=1
+  fi
+  if ! cmp -s "$candidate_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"; then
+    water_tables_changed=1
+  fi
+
+  if [[ "$water_tables_changed" == "1" ]]; then
+    cp -f "$candidate_dir/water_fill_table.asm" "$repo_root/Dungeons/generated/water_fill_table.asm"
+    cp -f "$candidate_dir/water_gate_runtime_tables.asm" "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
+    echo "[*] Water table candidates staged; rebuilding once from the base ROM..."
+    assemble_rom
+  fi
+
+  # A second generation must match the staged pair. On any error the EXIT trap
+  # restores both tracked includes (and the initially assembled patched ROM).
+  final_dir="$water_tmp_dir/final"
+  generate_water_tables "$water_table_rom" "$final_dir"
+  if ! cmp -s "$final_dir/water_gate_runtime_tables.asm" "$candidate_dir/water_gate_runtime_tables.asm"; then
+    echo "ERROR: Water-gate runtime table is not stable after one rebuild." >&2
+    exit 1
+  fi
+  if ! cmp -s "$final_dir/water_fill_table.asm" "$candidate_dir/water_fill_table.asm"; then
+    echo "ERROR: Water-fill table is not stable after one rebuild." >&2
+    exit 1
+  fi
+
+  if [[ "$water_tables_changed" == "1" ]]; then
+    echo "[*] Water table pair validated; promotion pending final build checks."
+  else
+    echo "[*] Water table pair already current."
+  fi
 fi
 
 echo "Built patched ROM: $patched_rom"
@@ -355,7 +515,10 @@ if [[ "${OOS_GENERATE_ANNOTATIONS:-0}" == "1" ]]; then
 fi
 
 # Run static analysis if hooks.json exists
-hooks_json="$repo_root/Roms/hooks.json"
+hooks_required=0
+if [[ "${OOS_GENERATE_HOOKS:-0}" == "1" || "${OOS_VALIDATE_HOOKS:-0}" == "1" ]]; then
+  hooks_required=1
+fi
 if [[ -f "$patched_rom" ]]; then
   regen_hooks=0
   if [[ ! -f "$hooks_json" || "${OOS_GENERATE_HOOKS:-0}" == "1" ]]; then
@@ -368,22 +531,52 @@ if [[ -f "$patched_rom" ]]; then
 
   if [[ "$regen_hooks" == "1" ]]; then
     echo "[*] Generating hooks.json..."
-    python3 "$repo_root/Scripts/Generate/generate_hooks_json.py" --root "$repo_root" --output "$hooks_json" --rom "$patched_rom" || true
+    hooks_tmp="$(mktemp "$rom_dir/.hooks.generated.XXXXXX")"
+    if ! python3 "$repo_root/Scripts/Generate/generate_hooks_json.py" \
+      --root "$repo_root" --output "$hooks_tmp" --rom "$patched_rom"; then
+      if [[ "$hooks_required" == "1" ]]; then
+        echo "ERROR: Required hooks.json generation failed." >&2
+        exit 1
+      fi
+      echo "[-] Warning: hooks.json generation failed; continuing without refreshed hook metadata." >&2
+    elif [[ ! -s "$hooks_tmp" ]]; then
+      if [[ "$hooks_required" == "1" ]]; then
+        echo "ERROR: Required hooks.json generation produced no output: $hooks_json" >&2
+        exit 1
+      fi
+      echo "[-] Warning: hooks.json generation produced no output; continuing without refreshed hook metadata." >&2
+    else
+      mv -f "$hooks_tmp" "$hooks_json"
+      hooks_tmp=""
+    fi
+    if [[ -n "$hooks_tmp" ]]; then
+      rm -f "$hooks_tmp"
+      hooks_tmp=""
+    fi
   fi
 fi
 
 # Optional validation: ensure hooks.json matches generator output
 # Set OOS_VALIDATE_ON_BUILD=1 to run hook + sprite checks non-fatally on every build.
 validate_on_build="${OOS_VALIDATE_ON_BUILD:-0}"
-if [[ "${OOS_VALIDATE_HOOKS:-0}" == "1" || "$validate_on_build" == "1" ]]; then
-  if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
-    if [[ "$validate_on_build" == "1" && "${OOS_VALIDATE_HOOKS:-0}" != "1" ]]; then
-      echo "[*] Validating hooks.json (non-fatal)..."
-    else
-      echo "[*] Validating hooks.json..."
+if [[ "${OOS_VALIDATE_HOOKS:-0}" == "1" ]]; then
+  if [[ ! -s "$hooks_json" || ! -f "$patched_rom" ]]; then
+    echo "ERROR: Required hooks.json validation inputs are missing or empty." >&2
+    exit 1
+  fi
+  echo "[*] Validating hooks.json..."
+  if ! python3 "$repo_root/Scripts/Validate/verify_hooks_json.py" \
+    --root "$repo_root" --rom "$patched_rom" --hooks "$hooks_json"; then
+    echo "ERROR: Required hooks.json validation failed." >&2
+    exit 1
+  fi
+elif [[ "$validate_on_build" == "1" ]]; then
+  if [[ -s "$hooks_json" && -f "$patched_rom" ]]; then
+    echo "[*] Validating hooks.json (non-fatal)..."
+    if ! python3 "$repo_root/Scripts/Validate/verify_hooks_json.py" \
+      --root "$repo_root" --rom "$patched_rom" --hooks "$hooks_json"; then
+      echo "[-] Warning: hooks.json validation failed; continuing because OOS_VALIDATE_ON_BUILD is non-fatal." >&2
     fi
-    python3 "$repo_root/Scripts/Validate/verify_hooks_json.py" \
-      --root "$repo_root" --rom "$patched_rom" --hooks "$hooks_json" || true
   else
     echo "[-] Warning: hooks.json or patched ROM missing; skipping hook validation."
   fi
@@ -405,8 +598,8 @@ fi
 
 if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
   echo "[*] Running static analysis..."
-  z3dk_analyzer="$repo_root/../z3dk/Scripts/static_analyzer.py"
-  oracle_analyzer="$repo_root/../z3dk/Scripts/oracle_analyzer.py"
+  z3dk_analyzer="$repo_root/../z3dk/scripts/static_analyzer.py"
+  oracle_analyzer="$repo_root/../z3dk/scripts/oracle_analyzer.py"
 
   # Prefer oracle-specific analyzer, fall back to generic
   if [[ -f "$oracle_analyzer" ]]; then
@@ -479,6 +672,50 @@ elif [[ -f "$repo_root/Scripts/Validate/run_regression_tests.sh" ]]; then
   fi
 else
   echo "[*] Skipping smoke tests (runner not found)"
+fi
+
+# Refresh the tracked yaze save-policy manifest only when this build used the
+# canonical project ROM. Portable bundles and explicit OOS_BASE_ROM overrides
+# carry their own path-rewritten manifest and must not be replaced with an
+# absolute machine-local ROM path.
+base_rom_resolved="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$base_rom")"
+default_base_resolved="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$default_base")"
+manifest_refresh_reason=""
+if [[ "$version" != "168" ]]; then
+  manifest_refresh_reason="build version $version is not the project ROM version 168"
+elif [[ "$flags_modified" == "1" && "$persist_flags" != "1" ]]; then
+  manifest_refresh_reason="feature-flag overrides are temporary"
+elif [[ "$base_rom_resolved" != "$default_base_resolved" ]]; then
+  manifest_refresh_reason="the build used a non-canonical base ROM"
+fi
+
+if [[ -z "$manifest_refresh_reason" ]]; then
+  echo "[*] Generating yaze hack manifest..."
+  manifest_tmp="$(mktemp "$rom_dir/.hack_manifest.generated.XXXXXX")"
+  if ! python3 "$repo_root/Scripts/Generate/generate_hack_manifest.py" \
+    --root "$repo_root" \
+    --rom "$base_rom" \
+    --patched-rom "$patched_rom" \
+    --output "$manifest_tmp" \
+    --pretty; then
+    echo "ERROR: Required hack manifest generation failed." >&2
+    exit 1
+  fi
+  if [[ ! -s "$manifest_tmp" ]]; then
+    echo "ERROR: Required hack manifest generation produced no output." >&2
+    exit 1
+  fi
+  mv -f "$manifest_tmp" "$hack_manifest"
+  manifest_tmp=""
+else
+  echo "[*] Preserving existing hack manifest because $manifest_refresh_reason."
+fi
+
+# Commit disk outputs before the optional runtime reload. A reload failure must
+# not roll back a valid ROM/manifest after the emulator may have observed it.
+if [[ "$water_restore_pending" == "1" ]]; then
+  water_restore_pending=0
+  echo "[*] Water table pair promoted."
 fi
 
 if [[ $reload -eq 1 ]]; then

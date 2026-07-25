@@ -2,13 +2,15 @@
 """Author Oracle water-fill marker tiles via z3ed with reusable presets.
 
 This script writes marker tile 0xF5 into room custom collision data so
-`Scripts/generate_water_fill_table.py` can build runtime water-fill zones.
+`Scripts/Generate/generate_water_fill_table.py` can build runtime water-fill zones.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -17,6 +19,32 @@ from typing import Dict, Iterable, List, Sequence, Set, Tuple
 
 
 Coord = Tuple[int, int]
+REPO_ROOT = Path(__file__).resolve().parents[2]
+LOCAL_Z3ED = REPO_ROOT.parent / "yaze" / "scripts" / "z3ed"
+
+
+def default_z3ed_path() -> Path:
+    override = os.getenv("OOS_Z3ED_BIN")
+    if override:
+        return Path(override).expanduser()
+    candidates = (
+        LOCAL_Z3ED,
+        REPO_ROOT.parent / "yaze" / "build" / "bin" / "z3ed",
+    )
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    on_path = shutil.which("z3ed")
+    if on_path:
+        return Path(on_path)
+    return candidates[0]
+
+
+def is_patched_build_rom(path: Path) -> bool:
+    name = path.name.lower()
+    return name == "oos-patched.sfc" or (
+        path.suffix.lower() == ".sfc" and path.stem.lower().endswith("x")
+    )
 
 
 @dataclass(frozen=True)
@@ -217,13 +245,13 @@ def main() -> int:
         "--rom",
         type=Path,
         required=True,
-        help="ROM path to edit (typically Roms/oos168x.sfc).",
+        help="Trusted editable base ROM or scratch-copy path (never an oos*x.sfc build output).",
     )
     parser.add_argument(
         "--z3ed",
         type=Path,
-        default=Path("/Users/scawful/src/hobby/yaze/Scripts/z3ed"),
-        help="Path to z3ed launcher.",
+        default=default_z3ed_path(),
+        help="Path to z3ed launcher (default: OOS_Z3ED_BIN, sibling yaze, or PATH).",
     )
     parser.add_argument(
         "--preset",
@@ -262,6 +290,11 @@ def main() -> int:
 
     if not args.rom.exists():
         raise SystemExit(f"ROM not found: {args.rom}")
+    if args.write and is_patched_build_rom(args.rom):
+        raise SystemExit(
+            f"Refusing to edit patched build output: {args.rom}. "
+            "Use the trusted base ROM or an explicit scratch copy."
+        )
     if not args.z3ed.exists():
         raise SystemExit(f"z3ed not found: {args.z3ed}")
     if not args.preset and not args.add_rect:

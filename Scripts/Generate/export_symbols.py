@@ -9,10 +9,10 @@ Formats:
   MLB Output: "SnesPrgRom:2C86BA:label_name" or "PRG:86BA:label_name"
 
 Usage:
-    ./Scripts/export_symbols.py                    # Export current build
-    ./Scripts/export_symbols.py --sync             # Export and sync to Mesen2
-    ./Scripts/export_symbols.py --filter oracle    # Only Oracle_ prefixed labels
-    ./Scripts/export_symbols.py --format full      # Full SnesPrgRom: format
+    ./Scripts/Generate/export_symbols.py                    # Export current build
+    ./Scripts/Generate/export_symbols.py --sync             # Export and sync to Mesen2
+    ./Scripts/Generate/export_symbols.py --filter oracle    # Only Oracle_ prefixed labels
+    ./Scripts/Generate/export_symbols.py --format full      # Full SnesPrgRom: format
 """
 
 import argparse
@@ -82,7 +82,7 @@ def parse_wla_symbols(path: Path) -> Iterator[Symbol]:
 
 def _load_exclude_list() -> set[str]:
     """Load optional label exclude list (one label per line)."""
-    exclude_path = Path(__file__).resolve().parent / "symbols_filter_exclude.txt"
+    exclude_path = Path(__file__).resolve().parents[1] / "Data" / "symbols_filter_exclude.txt"
     if not exclude_path.exists():
         return set()
     entries = set()

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "generated": "2026-02-08",
-    "generated_by": "scripts/extract_room_connectivity.py",
+    "generated_by": "Scripts/Analysis/extract_room_connectivity.py",
     "rom": "Roms/oos168.sfc",
     "description": "Oracle of Secrets dungeon registry with full connectivity data",
     "notes": [

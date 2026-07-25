@@ -27,7 +27,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | GameState_Start | $7EF3C5 | $00 | HouseTag_WakeUpPlayer (custom_tag.asm) | TBD | Intro start | Dungeons/custom_tag.asm | 2026-01-23 (code) | Value 0 set in house intro |
 | GameState_LoomBeach | $7EF3C5 | $01 | TBD | TBD | Intro sequence begun | Core/sram.asm | 2026-01-23 (code) | Setter not located |
-| GameState_KydrogComplete | $7EF3C5 | $02 | FaroreFollowPlayer (Sprite_Farore); Meadow_main hook | TBD | Sent to Eon Abyss | Sprites/NPCs/farore.asm; Meadow_main.asm | 2026-01-23 (code) | Runtime snapshot shows GameState=2 |
+| GameState_KydrogComplete | $7EF3C5 | $02 | FaroreFollowPlayer (Sprite_Farore) | TBD | Sent to Eon Abyss | Sprites/NPCs/farore.asm | 2026-01-23 (code) | Runtime snapshot shows GameState=2 |
 | GameState_FaroreRescued | $7EF3C5 | $03 | KydrogBoss_ApplyFaroreRescueProgression (feature-gated) | TBD | D7 complete, endgame | Core/sram.asm; Sprites/Bosses/kydrog_boss.asm | 2026-02-13 (code) | Guarded by !ENABLE_D7_FARORE_RESCUE_SEQUENCE; staged in Kydrog death via SprMiscF (message first, commit second) |
 | Story_IntroComplete | $7EF3D6 | $01 | TBD | TBD | Met Maku Tree (per sram.asm) | Core/sram.asm | 2026-01-23 (code) | Setter not located; Maku Tree sets bit 1, not bit 0 |
 | Story_HallOfSecrets | $7EF3D6 | $02 | MakuTree_MeetLink (Sprite_MakuTree) | TBD | Hall of Secrets unlocked | Sprites/NPCs/maku_tree.asm | 2026-01-23 (code) | Bit 1 |

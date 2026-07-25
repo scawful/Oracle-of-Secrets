@@ -16,6 +16,7 @@ Options:
   --version N        ROM version (default: 168)
   --z3asm PATH       z3asm binary to use (default: z3asm from PATH)
   --temp-root DIR    Parent directory for temp workspace (default: TMPDIR or /tmp)
+  --timeout SECONDS  Stop z3asm after this many seconds (default: 600)
   --keep-temp        Keep temp workspace after a successful build
   --no-symbols       Skip WLA symbol output
   -h, --help         Show this message
@@ -35,6 +36,7 @@ z3asm_bin="${OOS_Z3ASM_BIN:-z3asm}"
 temp_root="${TMPDIR:-/tmp}"
 keep_temp=0
 emit_symbols=1
+timeout_seconds="${OOS_Z3ASM_TIMEOUT_SECONDS:-600}"
 
 if [[ $# -gt 0 && "${1}" != "-"* ]]; then
   version="$1"
@@ -53,6 +55,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --temp-root)
       temp_root="${2:-}"
+      shift 2
+      ;;
+    --timeout)
+      timeout_seconds="${2:-}"
       shift 2
       ;;
     --keep-temp)
@@ -82,11 +88,19 @@ if ! [[ "$version" =~ ^[0-9]+$ ]]; then
   exit 1
 fi
 
+if ! [[ "$timeout_seconds" =~ ^[1-9][0-9]*$ ]]; then
+  echo "ERROR: timeout must be a positive integer (got: $timeout_seconds)" >&2
+  exit 1
+fi
+
 default_base="${ROOT_DIR}/Roms/oos${version}.sfc"
 legacy_base="${ROOT_DIR}/Roms/oos${version}_test2.sfc"
 if [[ -z "${OOS_BASE_ROM:-}" ]]; then
-  if [[ -f "$legacy_base" ]]; then
+  if [[ -f "$default_base" ]]; then
+    base_rom="$default_base"
+  elif [[ -f "$legacy_base" ]]; then
     base_rom="$legacy_base"
+    echo "NOTE: Using legacy base ROM name $(basename "$legacy_base"). Rename to $(basename "$default_base") to adopt standard naming." >&2
   else
     base_rom="$default_base"
   fi
@@ -123,11 +137,14 @@ cleanup() {
 trap cleanup EXIT
 
 cp -f "$base_rom" "$temp_base"
+cp -f "$temp_base" "$temp_patched"
 
 echo "[z3dk-smoke] Repo root: ${ROOT_DIR}"
+echo "[z3dk-smoke] Base ROM source: ${base_rom}"
 echo "[z3dk-smoke] Base ROM copy: ${temp_base}"
 echo "[z3dk-smoke] Patched ROM target: ${temp_patched}"
 echo "[z3dk-smoke] z3asm: $(command -v "$z3asm_bin")"
+echo "[z3dk-smoke] Timeout: ${timeout_seconds}s"
 
 build_cmd=("$z3asm_bin")
 if [[ "$emit_symbols" == "1" ]]; then
@@ -135,10 +152,80 @@ if [[ "$emit_symbols" == "1" ]]; then
 fi
 build_cmd+=(Oracle_main.asm "$temp_patched")
 
-(
-  cd "$ROOT_DIR"
-  "${build_cmd[@]}"
-) >"$temp_stdout" 2>"$temp_stderr"
+timeout_marker="${temp_dir}/z3asm.timeout"
+set +e
+python3 - "$ROOT_DIR" "$timeout_seconds" "$temp_stdout" "$temp_stderr" "$timeout_marker" "${build_cmd[@]}" <<'PY'
+import os
+import signal
+import subprocess
+import sys
+from pathlib import Path
+
+root, timeout_raw, stdout_path, stderr_path, marker_path, *command = sys.argv[1:]
+with open(stdout_path, "wb") as stdout, open(stderr_path, "wb") as stderr:
+    process = subprocess.Popen(
+        command,
+        cwd=root,
+        stdout=stdout,
+        stderr=stderr,
+        start_new_session=True,
+    )
+    try:
+        build_status = process.wait(timeout=int(timeout_raw))
+    except subprocess.TimeoutExpired:
+        Path(marker_path).write_text(
+            f"z3asm exceeded {timeout_raw} seconds\n", encoding="utf-8"
+        )
+        os.killpg(process.pid, signal.SIGTERM)
+        try:
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            os.killpg(process.pid, signal.SIGKILL)
+            process.wait()
+        raise SystemExit(124)
+
+raise SystemExit(build_status if build_status >= 0 else 128 - build_status)
+PY
+build_status=$?
+set -e
+
+if [[ -f "$timeout_marker" ]]; then
+  echo "ERROR: z3asm timed out after ${timeout_seconds}s" >&2
+  exit 1
+fi
+
+if [[ "$build_status" != "0" ]]; then
+  echo "ERROR: z3asm failed with exit code ${build_status}" >&2
+  [[ ! -s "$temp_stderr" ]] || tail -n 40 "$temp_stderr" >&2
+  exit "$build_status"
+fi
+
+if [[ ! -f "$temp_patched" ]]; then
+  echo "ERROR: z3asm did not produce the patched ROM: ${temp_patched}" >&2
+  exit 1
+fi
+
+base_size="$(wc -c <"$temp_base" | tr -d '[:space:]')"
+patched_size="$(wc -c <"$temp_patched" | tr -d '[:space:]')"
+max_lorom_size=$((4 * 1024 * 1024))
+if (( patched_size < base_size )); then
+  echo "ERROR: Patched ROM was truncated (${base_size} -> ${patched_size} bytes)" >&2
+  exit 1
+fi
+if (( patched_size > max_lorom_size )); then
+  echo "ERROR: Patched ROM exceeds the 4 MiB LoROM limit (${patched_size} bytes)" >&2
+  exit 1
+fi
+
+if cmp -s "$temp_base" "$temp_patched"; then
+  echo "ERROR: z3asm completed without changing the seeded ROM" >&2
+  exit 1
+fi
+
+if ! cmp -s "$base_rom" "$temp_base"; then
+  echo "ERROR: Base ROM source changed during the smoke build: ${base_rom}" >&2
+  exit 1
+fi
 
 status=0
 echo "[z3dk-smoke] Build succeeded."

@@ -24,7 +24,7 @@
     },
     {
       "type": "screenshot",
-      "path": "tests/screenshots/boot_overworld.png",
+      "path": "Tests/screenshots/boot_overworld.png",
       "description": "Capture baseline overworld state"
     }
   ],

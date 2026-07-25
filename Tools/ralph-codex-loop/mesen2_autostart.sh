@@ -12,8 +12,8 @@ APP_PATH="${RALPH_MESEN2_APP:-}"
 HEADLESS="${RALPH_HEADLESS:-0}"
 CLEAN="${RALPH_CLEAN:-0}"
 
-REGISTRY="${ROOT_DIR}/scripts/mesen2_registry.py"
-LAUNCHER="${ROOT_DIR}/scripts/mesen2_launch_instance.sh"
+REGISTRY="${ROOT_DIR}/Scripts/Mesen2/mesen2_registry.py"
+LAUNCHER="${ROOT_DIR}/Scripts/Mesen2/mesen2_launch_instance.sh"
 
 if [[ "${CLEAN}" == "1" && -f "${REGISTRY}" ]]; then
   python3 "${REGISTRY}" close --instance "${INSTANCE}" --owner "${OWNER}" --force >/dev/null 2>&1 || true

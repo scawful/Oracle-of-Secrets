@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: Scripts/beta_patch.sh [version] [options]
+Usage: Scripts/Build/beta_patch.sh [version] [options]
 
 Build a beta-ready BPS patch plus metadata and notes stub.
 
@@ -14,10 +14,10 @@ Options:
   -h, --help        Show this help
 
 Examples:
-  Scripts/beta_patch.sh
-  Scripts/beta_patch.sh 168
-  Scripts/beta_patch.sh 168 --skip-build
-  Scripts/beta_patch.sh 168 --out-dir /tmp/oos-release
+  Scripts/Build/beta_patch.sh
+  Scripts/Build/beta_patch.sh 168
+  Scripts/Build/beta_patch.sh 168 --skip-build
+  Scripts/Build/beta_patch.sh 168 --out-dir /tmp/oos-release
 EOF
 }
 

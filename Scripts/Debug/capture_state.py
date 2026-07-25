@@ -5,22 +5,22 @@ Supports capturing states for all categories: overworld, dungeons, bosses, event
 
 Usage:
     # Check current position and suggest checkpoint
-    ./Scripts/capture_state.py check
+    ./Scripts/Debug/capture_state.py check
 
     # List all required checkpoints (all categories)
-    ./Scripts/capture_state.py list-required
+    ./Scripts/Debug/capture_state.py list-required
 
     # List required checkpoints for specific category
-    ./Scripts/capture_state.py list-required --category dungeons
+    ./Scripts/Debug/capture_state.py list-required --category dungeons
 
     # Capture state at current position
-    ./Scripts/capture_state.py capture --name "lost_woods_entrance"
+    ./Scripts/Debug/capture_state.py capture --name "lost_woods_entrance"
 
     # Capture with auto-detect category
-    ./Scripts/capture_state.py capture --auto
+    ./Scripts/Debug/capture_state.py capture --auto
 
     # Interactive mode - guide through capturing checkpoints
-    ./Scripts/capture_state.py interactive --category overworld
+    ./Scripts/Debug/capture_state.py interactive --category overworld
 """
 
 import argparse
@@ -29,6 +29,11 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MESEN2_SCRIPTS = REPO_ROOT / "Scripts" / "Mesen2"
+if str(MESEN2_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(MESEN2_SCRIPTS))
 
 # Try to import socket client + shared capture helpers
 try:
@@ -42,7 +47,6 @@ try:
 except ImportError:
     HAS_BRIDGE = False
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
 SAVESTATE_ROOT = REPO_ROOT / "Roms" / "SaveStates" / "oos168x"
 SAVESTATE_SHARED = REPO_ROOT / "Roms" / "SaveStates"  # Shared metadata location
 MANIFEST_PATH = REPO_ROOT / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
@@ -326,7 +330,7 @@ def cmd_capture(args):
     print(f"\nTo complete import:")
     print(f"  1. Find save state file from Mesen2 slot {slot}")
     print(f"  2. Copy to: {state_path}")
-    print(f"  3. Use: python3 Scripts/mesen2_client.py lib-save \\")
+    print(f"  3. Use: python3 Scripts/Mesen2/mesen2_client.py lib-save \\")
     print(f"       --id {state_id} \\")
     print(f"       --rom Roms/oos168x.sfc \\")
     print(f"       --slot {slot}")

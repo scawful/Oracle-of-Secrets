@@ -14,7 +14,7 @@ Modules:
 - visual_verifier: Screenshot comparison and verification
 
 Usage:
-    from scripts.campaign import emulator_abstraction
+    from Scripts.Campaign import emulator_abstraction
     emu = emulator_abstraction.get_emulator("mesen2")
     emu.connect()
     state = emu.read_game_state()
@@ -225,7 +225,7 @@ __all__ = [
 ]
 
 # Note: `autonomous_debugger` provides a standalone CLI entry point and is
-# typically executed via `python -m scripts.campaign.autonomous_debugger`.
+# typically executed via `python -m Scripts.Campaign.autonomous_debugger`.
 # Importing it eagerly from here triggers the standard runpy RuntimeWarning
 # (module found in sys.modules prior to execution). Keep these exports lazy.
 from typing import TYPE_CHECKING

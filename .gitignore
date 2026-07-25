@@ -162,17 +162,17 @@ build/yazeproj/
 .agent/
 .cache/
 __pycache__/
+*.py[cod]
 hooks.json
 nav_attach.sh
 checks.json
-scripts/oracle_symbols.watch
-scripts/symbols_filter_exclude.txt
 
 # Analysis artifacts (large JSON)
 Docs/Issues/*.json
 Docs/Issues/diagrams/
 Docs/Debugging/Issues/*.json
 Docs/Debugging/Issues/diagrams/
+Docs/Analysis/skill_eval_review.html
 
 # Debug testing artifacts (machine-specific save profiles)
 Docs/Debugging/Testing/save_data_library.json
@@ -182,12 +182,12 @@ Docs/Debugging/Testing/save_data_profiles/
 oracle-of-secrets.code-workspace
 run.sh
 z3dk.meadow.toml
-tests/screenshots/
-tests/baselines/
-tests/current/
-tests/diffs/
-tests/bridge_smoke_test.json
-tests/lr_swap_test.json
+Tests/screenshots/
+Tests/baselines/
+Tests/current/
+Tests/diffs/
+Tests/bridge_smoke_test.json
+Tests/lr_swap_test.json
 Docs/GEMINI.md.bak_*
 checks.json
 Util/ZScreamNew/ZS_Patches/Items/AST Boots.asm
@@ -234,8 +234,9 @@ Masks/gfx/moosh.pal
 Dungeons/DungeonMaps.asm
 Data/Generated/
 
-# Generated hack manifest for yaze integration (do not commit).
+# Ignore ad-hoc manifests, but track the canonical yaze lifecycle manifest.
 hack_manifest.json
+!Roms/hack_manifest.json
 __pycache__/
 
 # Host-specific MCP server config (machine paths, do not commit).

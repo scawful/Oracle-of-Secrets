@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_by": "scripts/extract_overworld_registry.py",
+    "generated_by": "Scripts/Analysis/extract_overworld_registry.py",
     "description": "Oracle of Secrets overworld area registry",
     "notes": [
       "Primary source: Docs/Planning/world_map_diagram.md",

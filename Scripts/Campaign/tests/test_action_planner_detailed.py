@@ -20,11 +20,11 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.action_planner import (
+from Scripts.Campaign.action_planner import (
     GoalType, PlanStatus, Goal, Action, Plan, ActionPlanner
 )
-from scripts.campaign.emulator_abstraction import GameStateSnapshot
-from scripts.campaign.input_recorder import InputSequence, Button
+from Scripts.Campaign.emulator_abstraction import GameStateSnapshot
+from Scripts.Campaign.input_recorder import InputSequence, Button
 
 
 class TestGoalType:

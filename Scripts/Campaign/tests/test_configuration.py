@@ -23,16 +23,16 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignPhase, CampaignProgress, CampaignOrchestrator, CampaignMilestone
 )
-from scripts.campaign.pathfinder import (
+from Scripts.Campaign.pathfinder import (
     Pathfinder, CollisionMap, TileType
 )
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.input_recorder import (
     InputRecorder, InputPlayer, InputSequence, InputFrame, Button
 )
-from scripts.campaign.action_planner import (
+from Scripts.Campaign.action_planner import (
     ActionPlanner, Goal, GoalType, Plan, PlanStatus
 )
 
@@ -501,7 +501,7 @@ class TestMilestoneConfiguration:
 
     def test_default_status_not_started(self):
         """Test default status is NOT_STARTED."""
-        from scripts.campaign.campaign_orchestrator import MilestoneStatus
+        from Scripts.Campaign.campaign_orchestrator import MilestoneStatus
         m = CampaignMilestone(id="test", description="Test", goal="A.1")
         assert m.status == MilestoneStatus.NOT_STARTED
 
@@ -571,19 +571,19 @@ class TestValidationConfiguration:
 
     def test_max_health_valid_range(self):
         """Test max health values are in valid range."""
-        from scripts.campaign.progress_validator import ProgressAddresses
+        from Scripts.Campaign.progress_validator import ProgressAddresses
         # Max health address should be in SRAM range
         assert 0x7EF000 <= ProgressAddresses.HEALTH_MAX <= 0x7EFFFF
 
     def test_rupee_addresses_valid(self):
         """Test rupee addresses are valid."""
-        from scripts.campaign.progress_validator import ProgressAddresses
+        from Scripts.Campaign.progress_validator import ProgressAddresses
         assert 0x7EF000 <= ProgressAddresses.RUPEES_LO <= 0x7EFFFF
         assert 0x7EF000 <= ProgressAddresses.RUPEES_HI <= 0x7EFFFF
 
     def test_game_state_address_valid(self):
         """Test game state address is valid."""
-        from scripts.campaign.progress_validator import ProgressAddresses
+        from Scripts.Campaign.progress_validator import ProgressAddresses
         assert ProgressAddresses.GAME_STATE == 0x7EF3C5
 
 

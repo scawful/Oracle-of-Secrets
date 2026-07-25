@@ -6,24 +6,24 @@ usage() {
 Oracle finish-line action runner.
 
 Usage:
-  Scripts/oos-triforce.sh status-json [--pretty]
-  Scripts/oos-triforce.sh continue-play
-  Scripts/oos-triforce.sh notify
-  Scripts/oos-triforce.sh quick-patch
-  Scripts/oos-triforce.sh verify-patch
-  Scripts/oos-triforce.sh patch-and-play
-  Scripts/oos-triforce.sh transition-tests
+  Scripts/Build/oos-triforce.sh status-json [--pretty]
+  Scripts/Build/oos-triforce.sh continue-play
+  Scripts/Build/oos-triforce.sh notify
+  Scripts/Build/oos-triforce.sh quick-patch
+  Scripts/Build/oos-triforce.sh verify-patch
+  Scripts/Build/oos-triforce.sh patch-and-play
+  Scripts/Build/oos-triforce.sh transition-tests
 
 The "continue-play" and "notify" actions follow the current finish-line focus
-from Scripts/oos_status.py.
+from Scripts/Debug/oos_status.py.
 EOF
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 status_json() {
-  python3 "${ROOT_DIR}/Scripts/oos_status.py" "$@"
+  python3 "${ROOT_DIR}/Scripts/Debug/oos_status.py" "$@"
 }
 
 finish_field() {
@@ -38,7 +38,7 @@ expression = sys.argv[1]
 root = Path(sys.argv[2])
 payload = json.loads(
     subprocess.check_output(
-        ["python3", str(root / "scripts" / "oos_status.py")],
+        ["python3", str(root / "Scripts" / "Debug" / "oos_status.py")],
         cwd=root,
         text=True,
     )
@@ -92,11 +92,11 @@ run_focus_command() {
 }
 
 quick_patch() {
-  (cd "${ROOT_DIR}" && ./Scripts/oos-quick.sh)
+  (cd "${ROOT_DIR}" && ./Scripts/Build/oos-quick.sh)
 }
 
 verify_patch() {
-  (cd "${ROOT_DIR}" && ./Scripts/oos-verify.sh)
+  (cd "${ROOT_DIR}" && ./Scripts/Build/oos-verify.sh)
 }
 
 patch_and_play() {

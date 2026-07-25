@@ -174,7 +174,7 @@ graph TB
 |---|------|-----------|-------------|---------------|
 | 4.1 | **Campaign harness** | 1cf53b9 | Run autonomous debugger in monitor mode | No errors, detects anomalies |
 | 4.2 | **Hooks.json generation** | d631b51 | Rebuild with feature flags on/off, compare hooks.json | Correct hooks reflected per flag state |
-| 4.3 | **Regression test runner** | 4f08f30, 145f20e | Run `bash scripts/run_regression_tests.sh smoke --no-moe --fail-fast` | Suite passes |
+| 4.3 | **Regression test runner** | 4f08f30, 145f20e | Run `bash Scripts/Validate/run_regression_tests.sh smoke --no-moe --fail-fast` | Suite passes |
 
 ---
 
@@ -184,22 +184,22 @@ graph TB
 
 | Tool | Command | Purpose |
 |------|---------|---------|
-| Build | `./scripts/build_rom.sh 168` | Assemble ROM |
-| Overlap check | `python3 scripts/check_zscream_overlap.py` | Detect address conflicts |
-| Smoke tests | `bash scripts/run_regression_tests.sh smoke --no-moe --fail-fast` | Quick regression |
-| Full regression | `bash scripts/run_regression_tests.sh` | Complete test suite |
+| Build | `Scripts/Build/build_rom.sh 168` | Assemble ROM |
+| Overlap check | `python3 Scripts/Build/check_zscream_overlap.py` | Detect address conflicts |
+| Smoke tests | `bash Scripts/Validate/run_regression_tests.sh smoke --no-moe --fail-fast` | Quick regression |
+| Full regression | `bash Scripts/Validate/run_regression_tests.sh` | Complete test suite |
 | Autonomous debugger | `python3 -m scripts.campaign.autonomous_debugger --monitor --fail-on-anomaly` | Runtime monitoring |
-| Mesen2 debug | `scripts/mesen2_client.py` | Emulator automation |
-| State capture | `python3 scripts/capture_state.py` | Save state snapshots |
-| Feature flags | `python3 scripts/set_feature_flags.py` | Toggle features |
-| Module isolation | `bash scripts/run_module_isolation.sh` | Disable modules for bisect |
+| Mesen2 debug | `Scripts/Mesen2/mesen2_client.py` | Emulator automation |
+| State capture | `python3 Scripts/Debug/capture_state.py` | Save state snapshots |
+| Feature flags | `python3 Scripts/Build/set_feature_flags.py` | Toggle features |
+| Module isolation | `bash Scripts/Validate/run_module_isolation.sh` | Disable modules for bisect |
 
 ### Test Data
 
 | Location | Content |
 |----------|---------|
-| `tests/smoke/` | Boot, basic transition, lint pass |
-| `tests/regression/` | Golden path, overworld, dungeon, stack corruption, Y overflow |
+| `Tests/smoke/` | Boot, basic transition, lint pass |
+| `Tests/regression/` | Golden path, overworld, dungeon, stack corruption, Y overflow |
 | `Roms/SaveStates/` | Saved game states for specific test scenarios |
 | `Roms/SaveData/` | SRAM dumps |
 
@@ -209,7 +209,7 @@ graph TB
 
 ```mermaid
 flowchart TD
-    BUILD["1. Build ROM<br/>./scripts/build_rom.sh 168"] --> SMOKE["2. Run smoke tests<br/>scripts/run_regression_tests.sh smoke"]
+    BUILD["1. Build ROM<br/>Scripts/Build/build_rom.sh 168"] --> SMOKE["2. Run smoke tests<br/>Scripts/Validate/run_regression_tests.sh smoke"]
     SMOKE --> P1["3. Priority 1: Critical tests<br/>(stack, gameplay, registers, followers)"]
     P1 --> P2["4. Priority 2: High tests<br/>(menu, songs, ice, L/R, water, maku, minecart)"]
     P2 --> GOLDEN["5. Full golden path playthrough<br/>D1 → D7 with all active features"]
@@ -238,4 +238,4 @@ For reference, these are the exact files that contain AI-generated code needing 
 | `Menu/menu.asm` | Claude Code (8b23049, 791ebaf, d01a4b8) | Stability fixes, navigation |
 | `Menu/menu_hud.asm` | Claude Code (1c19788) | FloorIndicator overflow fix |
 | `Overworld/time_system.asm` | Claude Code (841ef2d) | Song of Storms rain persistence |
-| `scripts/campaign/` | ai-infra-architect (1cf53b9) | Autonomous debugger (2135+ lines) |
+| `Scripts/Campaign/` | ai-infra-architect (1cf53b9) | Autonomous debugger (2135+ lines) |

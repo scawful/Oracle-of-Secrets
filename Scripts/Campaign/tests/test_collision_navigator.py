@@ -14,7 +14,7 @@ from unittest.mock import Mock, MagicMock, patch
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
-from scripts.campaign.collision_navigator import (
+from Scripts.Campaign.collision_navigator import (
     CollisionNavigator,
     CollisionMap,
     NavAttempt,

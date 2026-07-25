@@ -26,17 +26,20 @@ except ImportError:  # pragma: no cover
     yaml = None
 
 ROOT = Path(__file__).resolve().parents[2]  # oracle-of-secrets
+SCRIPTS_DIR = ROOT / "Scripts"
+MESEN2_SCRIPTS = SCRIPTS_DIR / "Mesen2"
 
-# Make scripts importable
-if str(ROOT / "scripts") not in sys.path:
-    sys.path.insert(0, str(ROOT / "scripts"))
+# Make the categorized script packages and Mesen2 client library importable.
+for script_path in (SCRIPTS_DIR, MESEN2_SCRIPTS):
+    if str(script_path) not in sys.path:
+        sys.path.insert(0, str(script_path))
 
 try:
     from mesen2_client_lib.client import OracleDebugClient  # type: ignore
 except Exception:
     OracleDebugClient = None  # pragma: no cover
 try:
-    from agent.brain import AgentBrain  # type: ignore
+    from Agent.brain import AgentBrain  # type: ignore
 except Exception:
     AgentBrain = None  # pragma: no cover
 try:
@@ -44,7 +47,7 @@ try:
 except Exception:
     capture_debug_snapshot = None  # pragma: no cover
 try:
-    from agent.brain import WALKABLE_TILES, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT  # type: ignore
+    from Agent.brain import WALKABLE_TILES, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT  # type: ignore
 except Exception:
     WALKABLE_TILES = None  # pragma: no cover
     TILE_SIZE = 8  # pragma: no cover
@@ -55,7 +58,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "root": str(ROOT),
     "rom": str(ROOT / "Roms/oos168x.sfc"),
     "mesen_socket": "/tmp/mesen2-*.sock",
-    "mesen_client": str(ROOT / "scripts/mesen2_client.py"),
+    "mesen_client": str(ROOT / "Scripts/Mesen2/mesen2_client.py"),
     "mesen_instance": "agent",
     "afs_cli": str(Path("~").expanduser() / "src/lab/afs/scripts/afs"),
     "contexts": {
@@ -336,7 +339,7 @@ def _autosave_state(client: OracleDebugClient, cfg: Dict[str, Any], label: str, 
 
 def get_client(cfg: Dict[str, Any]) -> OracleDebugClient:
     if OracleDebugClient is None:
-        raise RuntimeError("mesen2_client_lib not importable; ensure scripts/ is on PYTHONPATH")
+        raise RuntimeError("mesen2_client_lib not importable; ensure Scripts/Mesen2 is on PYTHONPATH")
     instance = os.getenv("MESEN2_INSTANCE") or cfg.get("mesen_instance")
     if instance:
         os.environ["MESEN2_INSTANCE"] = str(instance)

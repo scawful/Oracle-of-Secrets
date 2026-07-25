@@ -6,7 +6,7 @@ usage() {
 Launch or reuse an isolated Oracle debug instance and jump into a named task.
 
 Usage:
-  Scripts/oos-session.sh <task> [options]
+  Scripts/Build/oos-session.sh <task> [options]
 
 Tasks:
   free        Launch/reuse instance only
@@ -31,14 +31,14 @@ Options:
   -h, --help        Show help
 
 Examples:
-  Scripts/oos-session.sh maku --crystals 3
-  Scripts/oos-session.sh d6 --instance oos-scawful-debug
-  Scripts/oos-session.sh free
+  Scripts/Build/oos-session.sh maku --crystals 3
+  Scripts/Build/oos-session.sh d6 --instance oos-scawful-debug
+  Scripts/Build/oos-session.sh free
 EOF
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 TRUSTED_SEEDS="${ROOT_DIR}/Docs/Debugging/Testing/trusted_state_seeds.json"
 
 task="${1:-}"
@@ -135,12 +135,13 @@ PY
 
   local info_json
   info_json="$(client lib-info "${state_id}" --json)"
-  python3 - "${state_id}" <<'PY' <<<"${info_json}"
+  INFO_JSON="${info_json}" python3 - "${state_id}" <<'PY'
 import json
+import os
 import sys
 
 state_id = sys.argv[1]
-entry = json.load(sys.stdin)
+entry = json.loads(os.environ["INFO_JSON"])
 status = entry.get("status")
 captured_by = entry.get("captured_by")
 if status != "canon":
@@ -153,7 +154,7 @@ PY
 }
 
 launch_instance() {
-  "${ROOT_DIR}/Scripts/mesen2_launch_instance.sh" \
+  "${ROOT_DIR}/Scripts/Mesen2/mesen2_launch_instance.sh" \
     --reuse \
     --instance "${instance}" \
     --owner "${owner}" \

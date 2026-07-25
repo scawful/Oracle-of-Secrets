@@ -135,10 +135,10 @@ flowchart LR
 
 **Validation commands:**
 ```bash
-./scripts/build_rom.sh 168                    # Build
-python3 scripts/check_zscream_overlap.py      # Check for address conflicts
-python3 scripts/generate_hooks_json.py        # Regenerate hook manifest
-python3 scripts/verify_hooks_json.py          # Verify hook integrity
+Scripts/Build/build_rom.sh 168                    # Build
+python3 Scripts/Build/check_zscream_overlap.py      # Check for address conflicts
+python3 Scripts/Generate/generate_hooks_json.py        # Regenerate hook manifest
+python3 Scripts/Validate/verify_hooks_json.py          # Verify hook integrity
 ```
 
 ---

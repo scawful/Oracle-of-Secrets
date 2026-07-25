@@ -8,7 +8,7 @@ Campaign Goals Supported:
 - E.1: Dense knowledge graph
 
 Usage:
-    from scripts.campaign.locations import get_area_name, get_room_name
+    from Scripts.Campaign.locations import get_area_name, get_room_name
 
     area_name = get_area_name(0x29)  # "Village Center"
     room_name = get_room_name(0x27)  # "Zora Temple (Water Gate)"

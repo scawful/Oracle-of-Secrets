@@ -44,7 +44,7 @@ If X/Y are 16-bit on entry:
 - Prefer fixing the *single* width leak that changed X/Y, rather than sprinkling defensive width changes everywhere.
 - For runtime validation in Mesen2-OOS, you can set a conditional P breakpoint:
   - Break if X/Y are NOT 8-bit at `$008781`:
-    - `python3 scripts/mesen2_client.py p-assert 0x008781 0x10 --mask 0x10`
+    - `python3 Scripts/Mesen2/mesen2_client.py p-assert 0x008781 0x10 --mask 0x10`
 
 ### Mitigation / Safety Net (Feature-Flagged)
 Oracle includes an optional guard patch that makes `JumpTableLocal` self-healing by forcing `SEP #$10` on entry

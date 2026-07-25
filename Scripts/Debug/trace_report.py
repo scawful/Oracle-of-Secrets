@@ -11,9 +11,12 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-from symbols import SymbolResolver, parse_int
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SCRIPTS_DIR = REPO_ROOT / "Scripts"
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+from symbols import SymbolResolver, parse_int
 
 
 def load_trace(path: Path) -> list[dict]:

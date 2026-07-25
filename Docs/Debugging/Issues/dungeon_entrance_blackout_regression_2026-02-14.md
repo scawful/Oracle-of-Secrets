@@ -56,9 +56,9 @@ This was done for both D6 seeds below.
   - `Docs/Debugging/Issues/evidence/dungeon_entrance_blackout_2026-02-14/pre_d6_right120_diag.json`
 
 5. Regression test wiring is now active (no silent skip):
-- `tests/regression/transition_ow_d6.json` now uses `allowMissing: false` and **fails** reproducibly:
+- `Tests/regression/transition_ow_d6.json` now uses `allowMissing: false` and **fails** reproducibly:
   - Failure: expected dungeon mode `0x07`, got `0x09`.
-- `tests/regression/transition_d6_interroom.json` now uses `allowMissing: false` and **passes** on `inside_d6` after test-step fix.
+- `Tests/regression/transition_d6_interroom.json` now uses `allowMissing: false` and **passes** on `inside_d6` after test-step fix.
 
 6. Zora Temple entrance blackout from approved live state is reproducible and now instrumented:
 - Seed used: `Roms/SaveStates/oos168x/zora_temple_outside_entry_approved_2026-02-14.mss`
@@ -155,8 +155,8 @@ This was done for both D6 seeds below.
   - `Core/patches.asm` now hooks `LoadSongBank` at `$008888` to `LoadSongBank_WithTimeout` in bank `$2C`.
   - Guard adds 16-bit timeout counters to APUIO polling loops (`$2140`) and exits cleanly on timeout instead of spinning forever.
 - Verification with emergency bypass OFF:
-  - `tests/regression/transition_zora_temple_roundtrip.json` passes (inside->outside->inside).
-  - `scripts/repro_blackout_transition.py` reports `result=ok` for both directions:
+  - `Tests/regression/transition_zora_temple_roundtrip.json` passes (inside->outside->inside).
+  - `Scripts/Debug/repro_blackout_transition.py` reports `result=ok` for both directions:
     - `zora_inside_exit_apu_guard_report.json`
     - `zora_outside_entry_apu_guard_report.json`
   - No `$0088EC/$0088EF` spin signature observed in these guarded runs.

@@ -10,7 +10,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import Mock, MagicMock, patch, call
 
-from scripts.campaign.file_select_navigator import (
+from Scripts.Campaign.file_select_navigator import (
     FileSelectState,
     FileSlotStatus,
     SelectionResult,

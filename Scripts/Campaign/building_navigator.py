@@ -14,7 +14,7 @@ The module combines:
 - Transition testing (from transition_tester.py)
 
 Usage:
-    from scripts.campaign.building_navigator import BuildingNavigator
+    from Scripts.Campaign.building_navigator import BuildingNavigator
 
     navigator = BuildingNavigator(bridge)
     result = navigator.enter_nearest_building()
@@ -539,7 +539,7 @@ class BuildingNavigator:
 def run_building_test():
     """Run building entry/exit test against live Mesen2."""
     try:
-        from scripts.mesen2_client_lib.bridge import MesenBridge
+        from Scripts.Mesen2.mesen2_client_lib.bridge import MesenBridge
     except ImportError:
         print("ERROR: Could not import MesenBridge")
         return None

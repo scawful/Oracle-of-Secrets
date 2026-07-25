@@ -10,7 +10,7 @@ a progression analysis report showing:
 - Progression flow graph
 
 Usage:
-    python3 Scripts/analyze_progression.py [--format=text|md|json]
+    python3 Scripts/Analysis/analyze_progression.py [--format=text|md|json]
 """
 
 import json
@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Optional
 
 SCRIPT_DIR = Path(__file__).parent
-PROJECT_ROOT = SCRIPT_DIR.parent
+PROJECT_ROOT = SCRIPT_DIR.parents[1]
 REGISTRY_PATH = PROJECT_ROOT / "Data" / "location_registry.json"
 
 

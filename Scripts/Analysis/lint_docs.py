@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Lint documentation for stale/banned references.
+"""Lint current guidance and executable help for stale/banned references.
 
 Goal: keep "current guidance" docs runnable and free of legacy/broken references.
 
 Scope (current docs):
-- Repo root docs: README.md, RUNBOOK.md, AGENTS.md, CLAUDE.md
+- Repo root docs: README.md, AGENTS.md, CLAUDE.md
+- Primary runbook: Docs/RUNBOOK.md
 - Docs/**/*.md excluding Docs/Archive/** and Docs/Debugging/Issues/archive/**
+- Data/**/README.md and user-facing files under Scripts/
+- Config/Core/Util ASM comments that advertise repo commands
 """
 
 from __future__ import annotations
@@ -21,15 +24,23 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 CURRENT_DOC_GLOBS: list[str] = [
     "README.md",
-    "RUNBOOK.md",
     "AGENTS.md",
     "CLAUDE.md",
+    "Docs/RUNBOOK.md",
     "Docs/**/*.md",
+    "Data/**/README.md",
+    "Scripts/**/*.md",
+    "Scripts/**/*.py",
+    "Scripts/**/*.sh",
+    "Config/**/*.asm",
+    "Core/**/*.asm",
+    "Util/macros.asm",
 ]
 
 EXCLUDE_SUBSTRINGS: tuple[str, ...] = (
     "Docs/Archive/",
     "Docs/Debugging/Issues/archive/",
+    "Scripts/Analysis/lint_docs.py",
 )
 
 
@@ -47,7 +58,6 @@ BANNED_SNIPPETS: tuple[str, ...] = (
     "yaze/Scripts/ai/",
     "Scripts/ai/",
     # Old/abandoned doc roots from previous reorganizations
-    "Docs/Dev/",
     "Docs/Game/",
     "Docs/Ref/",
     "Docs/Tooling/",
@@ -64,10 +74,21 @@ BANNED_SNIPPETS: tuple[str, ...] = (
 # to be either at start-of-line or preceded by whitespace / punctuation commonly
 # used in docs.
 SCRIPT_REF_RE = re.compile(
-    r"(?:^|[\s`(\"'])"
-    r"(?:\./)?"
-    r"(Scripts/[A-Za-z0-9_./-]+\.(?:py|sh))"
+    r"(?:(?:^|[\s`(\"'=])(?:\./)?|(?:oracle-of-secrets|Oracle-of-Secrets)/)"
+    r"((?:Scripts|scripts)/[A-Za-z0-9_./-]+\.(?:asm|json|lua|py|sh|txt|watch))"
     r"\b"
+)
+
+# The repository uses a capitalized Tests/ root. Case-insensitive filesystems
+# can hide stale lowercase references that fail on Linux and in portable bundles.
+LOWERCASE_TEST_ROOT_RE = re.compile(
+    r"(?:(?:^|[\s`(\"'=])(?:\./)?|(?:oracle-of-secrets|Oracle-of-Secrets)/)"
+    r"(tests/)"
+)
+
+LOWERCASE_SCRIPT_ROOT_RE = re.compile(
+    r"(?:(?:^|[\s`(\"'=])(?:\./)?|(?:oracle-of-secrets|Oracle-of-Secrets)/)"
+    r"(scripts/)"
 )
 
 
@@ -117,6 +138,16 @@ def main() -> int:
                 target = REPO_ROOT / rel
                 if not target.exists():
                     findings.append(Finding(doc, i, f"Missing script reference: {rel}"))
+
+            if LOWERCASE_TEST_ROOT_RE.search(line):
+                findings.append(
+                    Finding(doc, i, "Case-mismatched test path: tests/ (use Tests/)")
+                )
+
+            if LOWERCASE_SCRIPT_ROOT_RE.search(line):
+                findings.append(
+                    Finding(doc, i, "Case-mismatched script path: scripts/ (use Scripts/)")
+                )
 
     if not findings:
         print("docs-lint: OK")

@@ -6,7 +6,7 @@
 ## Current Status Note
 
 This roadmap captures an earlier planning pass. Several items below are now
-implemented in the repo, including `scripts/mesen2_client.py`, save-data
+implemented in the repo, including `Scripts/Mesen2/mesen2_client.py`, save-data
 profiles, save-state library flows, and regression runner entry points.
 
 Use `Docs/Planning/Plans/development_workflow_alignment_2026-03-28.md` for the
@@ -45,7 +45,7 @@ Commands:
 ```
 
 ### Implementation Plan
-1. Use `python3 scripts/mesen2_client.py assistant` as the entry point (socket API).
+1. Use `python3 Scripts/Mesen2/mesen2_client.py assistant` as the entry point (socket API).
 2. Define watch profiles per area type:
    - Overworld: $8A, $20-$23, $E1-$E9
    - Dungeon: $A0, $048E, sprite slots
@@ -53,7 +53,7 @@ Commands:
 3. Add pattern detection for known issues:
    - Lost Woods: Scroll register drift
    - Water collision: $7F2000 collision map
-4. Integrate with CLI: `python3 scripts/mesen2_client.py assistant`
+4. Integrate with CLI: `python3 Scripts/Mesen2/mesen2_client.py assistant`
 
 ### Example Session
 ```
@@ -143,7 +143,7 @@ Use save states + Mesen2 socket to create reproducible tests.
 
 ### Implementation
 ```python
-# scripts/test_runner.py
+# Scripts/Validate/test_runner.py
 class OracleTestRunner:
     def __init__(self, socket_path):
         self.client = Mesen2Client(socket_path)
@@ -212,7 +212,7 @@ Add to files that have known dependencies:
 
 ## Quick Wins (Implement Now)
 
-1. **Socket client library**: Add `scripts/mesen2_client.py` with basic commands
+1. **Socket client library**: Add `Scripts/Mesen2/mesen2_client.py` with basic commands
 2. **Watch profile**: Create `oracle_debug.watch` for common addresses
 3. **Test state**: Create first save state at known-good location
 4. **Document one routine**: Fully document `Sprite_SpawnProbeAlways_long`
@@ -237,7 +237,7 @@ Relations:
 
 ## Next Steps
 
-1. [ ] Create `scripts/mesen2_client.py` with basic socket operations
+1. [ ] Create `Scripts/Mesen2/mesen2_client.py` with basic socket operations
 2. [ ] Create first save state at overworld start
 3. [ ] Document `Sprite_SpawnProbeAlways_long` fully with verification
 4. [ ] Test socket connectivity with running Mesen2 instance

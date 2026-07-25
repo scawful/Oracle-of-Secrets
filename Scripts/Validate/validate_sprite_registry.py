@@ -15,8 +15,9 @@ import sys
 import tempfile
 from pathlib import Path
 
-DEFAULT_REGISTRY = Path("Sprites/registry.csv")
-DEFAULT_IDS = Path("Sprites/sprite_registry_ids.asm")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_REGISTRY = REPO_ROOT / "Sprites" / "registry.csv"
+DEFAULT_IDS = REPO_ROOT / "Sprites" / "sprite_registry_ids.asm"
 
 
 def _parse_id(value: str) -> int | None:
@@ -89,7 +90,7 @@ def _check_ids(registry: list[dict], strict: bool) -> int:
 
 
 def _check_ids_file(registry_csv: Path, ids_path: Path) -> bool:
-    script = Path("Scripts/generate_sprite_registry.py")
+    script = REPO_ROOT / "Scripts" / "Generate" / "generate_sprite_registry.py"
     if not script.exists():
         print(f"[error] {script} not found")
         return False

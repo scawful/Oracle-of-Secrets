@@ -8,7 +8,7 @@
 
 1. **Sandbox** – Risky or comparative work (bisect, module isolation, trying fixes) happens in an isolated copy of the repo (git worktree). Main repo stays clean; you can discard the sandbox anytime.
 2. **ROMs stay local** – All ROM binaries in `Roms/` are gitignored. Keep a dense set of old ROMs (pass/fail versions, bisect candidates) there; none are committed.
-3. **Scripts are committed** – `scripts/rom_version_manage.py` and `scripts/sandbox_runner.sh` live in the repo and are the single way to manage ROM versions and sandbox lifecycle.
+3. **Scripts are committed** – `Scripts/Build/rom_version_manage.py` and `Scripts/Build/sandbox_runner.sh` live in the repo and are the single way to manage ROM versions and sandbox lifecycle.
 4. **Reproducible** – Same sandbox setup and same ROM selection produce the same test environment.
 
 ---
@@ -20,8 +20,8 @@
 | `Roms/*.sfc`, `Roms/*.bst`, etc. | **Ignored** | ROM binaries and build artifacts; never commit. |
 | `Roms/SaveStates/` | Partially ignored | Structure tracked; large `.mss`/`.srm` files ignored. |
 | `Roms/versions.json` | **Ignored** | Optional catalog of ROM metadata (tags, pass/fail); local only. |
-| `scripts/rom_version_manage.py` | **Committed** | ROM listing, tagging, selection, diff, run-test. |
-| `scripts/sandbox_runner.sh` | **Committed** | Sandbox create / run / destroy. |
+| `Scripts/Build/rom_version_manage.py` | **Committed** | ROM listing, tagging, selection, diff, run-test. |
+| `Scripts/Build/sandbox_runner.sh` | **Committed** | Sandbox create / run / destroy. |
 
 ---
 
@@ -48,21 +48,21 @@ Run from repo root. All paths are relative to `Roms/` or the repo.
 
 ```bash
 # List all ROMs in Roms/ (and catalog tags if present)
-python3 scripts/rom_version_manage.py list
+python3 Scripts/Build/rom_version_manage.py list
 
 # Tag a ROM (writes/updates Roms/versions.json)
-python3 scripts/rom_version_manage.py tag Roms/oos167x.sfc --label "Pre menu refactor" --pass
+python3 Scripts/Build/rom_version_manage.py tag Roms/oos167x.sfc --label "Pre menu refactor" --pass
 
 # Select a ROM for testing (prints path for use with OOS_BASE_ROM or run-test)
-python3 scripts/rom_version_manage.py select oos167x
-python3 scripts/rom_version_manage.py select --pass   # first ROM tagged pass=true
+python3 Scripts/Build/rom_version_manage.py select oos167x
+python3 Scripts/Build/rom_version_manage.py select --pass   # first ROM tagged pass=true
 
 # Diff two ROMs (by name or path)
-python3 scripts/rom_version_manage.py diff oos168x.sfc oos167x.sfc
+python3 Scripts/Build/rom_version_manage.py diff oos168x.sfc oos167x.sfc
 
 # Run a test against a specific ROM (build with that base, then run bisect or regression)
-python3 scripts/rom_version_manage.py run-test oos167x.sfc -- bisect
-python3 scripts/rom_version_manage.py run-test --pass -- run_regression_tests.sh regression
+python3 Scripts/Build/rom_version_manage.py run-test oos167x.sfc -- bisect
+python3 Scripts/Build/rom_version_manage.py run-test --pass -- run_regression_tests.sh regression
 ```
 
 **Environment:** `OOS_BASE_ROM` can override the base ROM used by `build_rom.sh`. `run-test` sets it for the child process so the chosen ROM is used as the base for that run.
@@ -81,29 +81,29 @@ python3 scripts/rom_version_manage.py run-test --pass -- run_regression_tests.sh
 ```bash
 # Create a sandbox (default: ../oracle-of-secrets-sandbox, or --name <name>)
 # Use --share-roms to symlink Roms/ to the main repo so both use the same ROM set
-./scripts/sandbox_runner.sh create [--name softlock-bisect] [--share-roms]
+Scripts/Build/sandbox_runner.sh create [--name softlock-bisect] [--share-roms]
 
 # Run a command inside the sandbox (from sandbox repo root)
-./scripts/sandbox_runner.sh run [--name <name>] -- ./scripts/build_rom.sh 168
-./scripts/sandbox_runner.sh run -- python3 scripts/bisect_softlock.py --frames 300
-./scripts/sandbox_runner.sh run -- python3 scripts/repro_stack_corruption.py --strategy polling
+Scripts/Build/sandbox_runner.sh run [--name <name>] -- Scripts/Build/build_rom.sh 168
+Scripts/Build/sandbox_runner.sh run -- python3 Scripts/Debug/bisect_softlock.py --frames 300
+Scripts/Build/sandbox_runner.sh run -- python3 Scripts/Debug/repro_stack_corruption.py --strategy polling
 
 # Destroy the sandbox (removes worktree; no effect on main repo or Roms/)
-./scripts/sandbox_runner.sh destroy [--name <name>]
+Scripts/Build/sandbox_runner.sh destroy [--name <name>]
 ```
 
 **Recommended flow:**
 
 1. `sandbox_runner.sh create --name softlock-bisect --share-roms`
 2. `sandbox_runner.sh run --name softlock-bisect -- git bisect start HEAD <good-commit>`
-3. `sandbox_runner.sh run --name softlock-bisect -- git bisect run python3 scripts/bisect_softlock.py`
+3. `sandbox_runner.sh run --name softlock-bisect -- git bisect run python3 Scripts/Debug/bisect_softlock.py`
 4. When done: `sandbox_runner.sh destroy --name softlock-bisect` (or leave it for more runs).
 
 ### 2.3 Reproducible sandbox for “pass” vs “fail” testing
 
 - **Pass version:** Tag a known-good ROM with `rom_version_manage.py tag ... --pass` and/or keep it as e.g. `oos168x_pass.sfc`.
-- **Sandbox + pass ROM:**  
-  `sandbox_runner.sh run -- bash -c 'OOS_BASE_ROM=Roms/oos168x_pass.sfc ./scripts/build_rom.sh 168 && python3 scripts/bisect_softlock.py'`  
+- **Sandbox + pass ROM:**
+  `sandbox_runner.sh run -- bash -c 'OOS_BASE_ROM=Roms/oos168x_pass.sfc Scripts/Build/build_rom.sh 168 && python3 Scripts/Debug/bisect_softlock.py'`
   Or use `rom_version_manage.py run-test --pass -- bisect` (or `run-test <fail_rom> -- run_regression_tests.sh regression`).
 - **Same steps in sandbox each time** – Same worktree path, same ROM selection, same commands → reproducible environment.
 
@@ -114,35 +114,35 @@ python3 scripts/rom_version_manage.py run-test --pass -- run_regression_tests.sh
 ### 3.1 Bisect in sandbox without touching main repo
 
 ```bash
-./scripts/sandbox_runner.sh create --name bisect-softlock
-./scripts/sandbox_runner.sh run -- git bisect start HEAD <known-good-commit>
-./scripts/sandbox_runner.sh run -- git bisect run python3 scripts/bisect_softlock.py
+Scripts/Build/sandbox_runner.sh create --name bisect-softlock
+Scripts/Build/sandbox_runner.sh run -- git bisect start HEAD <known-good-commit>
+Scripts/Build/sandbox_runner.sh run -- git bisect run python3 Scripts/Debug/bisect_softlock.py
 # Inspect result, then:
-./scripts/sandbox_runner.sh destroy
+Scripts/Build/sandbox_runner.sh destroy
 ```
 
 ### 3.2 Compare “pass” vs “fail” ROM with diff
 
 ```bash
-python3 scripts/rom_version_manage.py tag Roms/oos167x.sfc --pass --label "Pre refactor"
-python3 scripts/rom_version_manage.py diff oos168x.sfc oos167x.sfc
+python3 Scripts/Build/rom_version_manage.py tag Roms/oos167x.sfc --pass --label "Pre refactor"
+python3 Scripts/Build/rom_version_manage.py diff oos168x.sfc oos167x.sfc
 # Or: diff oos168x.sfc --pass
 ```
 
 ### 3.3 Run regression against an old “pass” ROM in sandbox
 
 ```bash
-./scripts/sandbox_runner.sh create --name test-pass
-./scripts/sandbox_runner.sh run -- python3 scripts/rom_version_manage.py run-test --pass -- run_regression_tests.sh regression
-./scripts/sandbox_runner.sh destroy
+Scripts/Build/sandbox_runner.sh create --name test-pass
+Scripts/Build/sandbox_runner.sh run -- python3 Scripts/Build/rom_version_manage.py run-test --pass -- run_regression_tests.sh regression
+Scripts/Build/sandbox_runner.sh destroy
 ```
 
 ### 3.4 Module isolation in sandbox
 
 ```bash
-./scripts/sandbox_runner.sh create --name module-isolation
-./scripts/sandbox_runner.sh run -- ./scripts/run_module_isolation.sh --auto
-./scripts/sandbox_runner.sh destroy
+Scripts/Build/sandbox_runner.sh create --name module-isolation
+Scripts/Build/sandbox_runner.sh run -- Scripts/Validate/run_module_isolation.sh --auto
+Scripts/Build/sandbox_runner.sh destroy
 ```
 
 ---

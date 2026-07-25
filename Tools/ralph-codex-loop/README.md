@@ -1,10 +1,10 @@
 # Ralph Codex Loop (Autonomous OOS Debugging Suite)
 
-Purpose: run an autonomous “ralph wiggum” loop that plays and debugs Oracle of Secrets using Codex GPT‑5.2‑xhigh, with strict awareness of emulator‑level controls vs in‑game state. Lives outside `oracle-of-secrets/scripts` to avoid further pollution; everything is referenced via config and AFS.
+Purpose: run an autonomous “ralph wiggum” loop that plays and debugs Oracle of Secrets using Codex GPT‑5.2‑xhigh, with strict awareness of emulator‑level controls vs in‑game state. Lives outside `Scripts/` to avoid further pollution; everything is referenced via config and AFS.
 
 Key design points
 - AFS-first: discovers `.context` roots for oracle-of-secrets, mesen2-oos, z3dk, yaze/z3ed; logs to `~/.context/projects/oracle-of-secrets/scratchpad/sessions/`.
-- Tool awareness: uses Mesen2 fork socket (`mesen2_client.py`), yaze/z3ed for headless, z3dk/usdasm knowledge mounts, AFS Triforce model registry + embeddings (paths configurable).
+- Tool awareness: uses Mesen2 fork socket (`Scripts/Mesen2/mesen2_client.py`), yaze/z3ed for headless, z3dk/usdasm knowledge mounts, AFS Triforce model registry + embeddings (paths configurable).
 - Emulator vs game control: separates run/pause/frame-step from in-game inputs; enforces run-state checks before navigation; detects black/blank screens and bad collision.
 - Input gate: blocks inputs when paused/cutscene/transition/black screen; use `--resume` to explicitly resume before running inputs.
 - Instance-aware: prefers a named Mesen2 instance (via `MESEN2_INSTANCE` / `mesen_instance`) to avoid crossing streams with your manual session.
@@ -45,13 +45,13 @@ Outputs
 - Diagnostic captures: `Docs/Planning/Status/ralph/diag_*.json` (created on demand)
 
 Next steps (recommended)
-- Wire real path planner to Collision/Overworld navigator (use nav_attach.sh).
+- Wire the real path planner to the Collision/Overworld navigator in `Scripts/Agent/brain.py`.
 - Add richer detectors (INIDISP already logged; add BG tilemap checksum) and auto smart-save on failure.
-- Integrate state library migration (`state_sync.py`) + >99 slot handling.
+- Integrate state library migration (`Tools/ralph-codex-loop/state_sync.py`) + >99 slot handling.
 - Add headless yaze/z3ed runner for parity checks and ASM consult hooks when needed.
 
 Utilities
 - `mesen2_autostart.sh`: launch a named Mesen2 instance (agent-safe) with ROM/Lua override.
-- `scripts/mesen2_launch_instance.sh`: standalone launcher that sets `MESEN2_HOME`, instance GUID, and registry claim.
-- `state_sync.py`: ingest legacy OOS91x `.mss` files (Roms/SaveStates/oos91x) into library/legacy and emit manifest.
+- `Scripts/Mesen2/mesen2_launch_instance.sh`: standalone launcher that sets `MESEN2_HOME`, instance GUID, and registry claim.
+- `Tools/ralph-codex-loop/state_sync.py`: ingest legacy OOS91x `.mss` files (Roms/SaveStates/oos91x) into library/legacy and emit manifest.
 - Secrets: `~/.secrets` is auto-read for API keys (OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, etc.) before consult calls.

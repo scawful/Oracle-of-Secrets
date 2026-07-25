@@ -4,7 +4,7 @@ Export a portable `.yazeproj` bundle for yaze (macOS + iOS).
 
 This is the "seamless Mac <-> iPad" file format:
   - A `.yazeproj` is a directory package that can live in iCloud Drive.
-  - It contains a ROM plus a filtered snapshot of the Oracle-of-Secrets repo.
+  - It contains a ROM plus a filtered snapshot of tracked Oracle source files.
   - yaze can open the bundle root directly.
 
 Bundle layout (compatible with yaze core + iOS document browser):
@@ -32,7 +32,7 @@ from pathlib import Path
 
 
 def find_repo_root() -> Path:
-    p = Path(__file__).resolve().parent.parent
+    p = Path(__file__).resolve().parents[2]
     if (p / "CLAUDE.md").exists():
         return p
     return Path.cwd().resolve()
@@ -98,7 +98,10 @@ def should_skip(rel: Path) -> bool:
         ".gemini",
         ".pytest_cache",
         ".vscode",
+        "__pycache__",
         "build",
+        "Evaluations",
+        "Scratchpad",
         "evaluations",
         "scratchpad",
     }:
@@ -108,8 +111,34 @@ def should_skip(rel: Path) -> bool:
     if rel.parts and rel.parts[0] == "Roms":
         return True
 
+    if rel.suffix.lower() in {
+        ".7z",
+        ".bps",
+        ".bst",
+        ".bz2",
+        ".gz",
+        ".mss",
+        ".pyc",
+        ".pyd",
+        ".pyo",
+        ".rar",
+        ".sav",
+        ".sfc",
+        ".smc",
+        ".srm",
+        ".state",
+        ".tar",
+        ".xz",
+        ".zip",
+    }:
+        return True
+
+    # Host integration and environment files can contain local paths or secrets.
+    if rel.name == ".mcp.json" or rel.name == ".env" or rel.name.startswith(".env."):
+        return True
+
     # Visual diffs/screenshots are large and not needed for editing.
-    if rel.parts and rel.parts[0] == "tests":
+    if rel.parts and rel.parts[0] in {"Tests", "tests"}:
         if len(rel.parts) >= 2 and rel.parts[1] in {
             "screenshots",
             "baselines",
@@ -127,31 +156,41 @@ def should_skip(rel: Path) -> bool:
 
 
 def copy_repo_snapshot(src_root: Path, dst_root: Path) -> None:
+    """Copy tracked working-tree files into the portable project snapshot.
+
+    Tracked files are read from the working tree, so local edits to existing
+    source files are preserved. Untracked/ignored host state is deliberately
+    excluded; add new source files to Git before exporting them.
+    """
     dst_root.mkdir(parents=True, exist_ok=True)
 
-    for dirpath, dirnames, filenames in os.walk(src_root):
-        abs_dir = Path(dirpath)
-        rel_dir = abs_dir.relative_to(src_root)
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(src_root), "ls-files", "-z"],
+            check=True,
+            capture_output=True,
+        )
+    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+        raise RuntimeError("Could not enumerate tracked project files with Git") from exc
 
-        # Prune excluded directories early.
-        keep_dirnames: list[str] = []
-        for d in dirnames:
-            rel = rel_dir / d
-            if not should_skip(rel):
-                keep_dirnames.append(d)
-        dirnames[:] = keep_dirnames
+    for raw_path in result.stdout.split(b"\0"):
+        if not raw_path:
+            continue
+        rel = Path(os.fsdecode(raw_path))
+        if rel.is_absolute() or ".." in rel.parts:
+            raise ValueError(f"Unsafe tracked path: {rel}")
+        if should_skip(rel):
+            continue
 
-        # Ensure destination directory exists.
-        (dst_root / rel_dir).mkdir(parents=True, exist_ok=True)
+        src_file = src_root / rel
+        # Skip deleted tracked paths, submodules, and symlinks rather than
+        # following a link outside the repository into a portable bundle.
+        if not src_file.is_file() or src_file.is_symlink():
+            continue
 
-        for filename in filenames:
-            rel = rel_dir / filename
-            if should_skip(rel):
-                continue
-            src_file = abs_dir / filename
-            dst_file = dst_root / rel
-            dst_file.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src_file, dst_file)
+        dst_file = dst_root / rel
+        dst_file.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src_file, dst_file)
 
 
 def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
@@ -216,13 +255,13 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "[build]",
             # Build is typically run on macOS (or remote build host), not iOS.
             # Keep this deterministic and repo-local.
-            "build_script=OOS_BASE_ROM=rom OOS_BACKUP_ROOT=backups project/Scripts/build_rom.sh 168",
+            "build_script=OOS_BASE_ROM=../rom OOS_BACKUP_ROOT=../backups project/Scripts/Build/build_rom.sh 168",
             "output_folder=project/Roms",
             "git_repository=project",
             "track_changes=false",
             "build_configurations=",
             "build_target=project/Roms/oos168x.sfc",
-            "asm_entry_point=Oracle_main.asm",
+            "asm_entry_point=project/Oracle_main.asm",
             "asm_sources=",
             "last_build_hash=",
             "build_number=0",
@@ -241,6 +280,8 @@ def write_ios_manifest(bundle_root: Path, name: str, rom_sha1: str) -> None:
         "version": 2,
         "name": name,
         "romChecksum": rom_sha1,
+        # z3ed's project-bundle verifier uses this cross-platform alias.
+        "rom_sha1": rom_sha1,
         "createdAt": now,
         "lastModifiedAt": now,
         "deviceName": platform.node() or "export",
@@ -279,15 +320,83 @@ def verify_bundle(bundle_root: Path) -> None:
         raise ValueError(
             f"manifest.json romChecksum mismatch: {manifest.get('romChecksum')} != {rom_sha1}"
         )
+    if manifest.get("rom_sha1") != rom_sha1:
+        raise ValueError(
+            f"manifest.json rom_sha1 mismatch: {manifest.get('rom_sha1')} != {rom_sha1}"
+        )
+
+    hack_manifest = json.loads(
+        (bundle_root / "project" / "hack_manifest.json").read_text(encoding="utf-8")
+    )
+    pipeline = hack_manifest.get("build_pipeline", {})
+    expected_pipeline = {
+        "dev_rom": "rom",
+        "patched_rom": "project/Roms/oos168x.sfc",
+    }
+    for key, expected in expected_pipeline.items():
+        if pipeline.get(key) != expected:
+            raise ValueError(
+                f"hack_manifest.json build_pipeline.{key} mismatch: "
+                f"{pipeline.get(key)!r} != {expected!r}"
+            )
+
+    rom_meta = hack_manifest.get("rom", {})
+    if rom_meta.get("path") != "rom":
+        raise ValueError("hack_manifest.json rom.path must resolve to bundle rom")
+    for key in ("sha1", "dev_rom_sha1"):
+        if rom_meta.get(key) != rom_sha1:
+            raise ValueError(
+                f"hack_manifest.json rom.{key} mismatch: "
+                f"{rom_meta.get(key)!r} != {rom_sha1!r}"
+            )
+
+
+def write_portable_hack_manifest(
+    source: Path,
+    destination: Path,
+    rom_sha1: str,
+    rom_size: int,
+) -> None:
+    """Rewrite repo-relative manifest paths for the bundle-root project."""
+    manifest = json.loads(source.read_text(encoding="utf-8"))
+    pipeline = manifest.setdefault("build_pipeline", {})
+    pipeline.update(
+        {
+            "dev_rom": "rom",
+            "patched_rom": "project/Roms/oos168x.sfc",
+            "entry_point": "project/Oracle_main.asm",
+            "build_script": (
+                "OOS_BASE_ROM=../rom OOS_BACKUP_ROOT=../backups "
+                "project/Scripts/Build/build_rom.sh 168"
+            ),
+        }
+    )
+
+    rom_meta = manifest.setdefault("rom", {})
+    rom_meta.update(
+        {
+            "path": "rom",
+            "sha1": rom_sha1,
+            "size": rom_size,
+            "dev_rom_sha1": rom_sha1,
+            "dev_rom_size": rom_size,
+        }
+    )
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
 
 
 def refresh_planning_outputs(repo_root: Path) -> None:
     # Keep these local and deterministic: yaze reads them from
     # Docs/Dev/Planning/ via HackManifest::LoadProjectRegistry().
     scripts = [
-        repo_root / "scripts" / "extract_overworld_registry.py",
-        repo_root / "scripts" / "extract_resource_labels.py",
-        repo_root / "scripts" / "extract_story_events.py",
+        repo_root / "Scripts" / "Analysis" / "extract_overworld_registry.py",
+        repo_root / "Scripts" / "Analysis" / "extract_resource_labels.py",
+        repo_root / "Scripts" / "Analysis" / "extract_story_events.py",
     ]
     for script in scripts:
         if not script.exists():
@@ -399,6 +508,14 @@ def main() -> int:
     # bundle (too large + machine-specific), but an empty directory keeps the
     # build pipeline functional when invoked with OOS_BASE_ROM=rom.
     (staging_bundle / "project" / "Roms").mkdir(parents=True, exist_ok=True)
+    manifest_src = repo_root / "Roms" / "hack_manifest.json"
+    if manifest_src.exists():
+        write_portable_hack_manifest(
+            manifest_src,
+            staging_bundle / "project" / "hack_manifest.json",
+            rom_sha1,
+            rom_dst.stat().st_size,
+        )
 
     # Write config + metadata.
     write_project_file(staging_bundle, args.name, rom_sha1)
