@@ -14,7 +14,7 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional
 
 ORG_RE = re.compile(r'^\s*org\s+\$([0-9A-Fa-f]{6})\b')
 LABEL_RE = re.compile(r'^\s*[A-Za-z0-9_\.\+\-]+:\s*$')
@@ -443,7 +443,11 @@ def _should_skip(path: Path) -> bool:
     return False
 
 
-def scan_hooks(root: Path) -> list[HookEntry]:
+def scan_hooks(
+    root: Path,
+    asm_paths: Optional[Iterable[Path]] = None,
+) -> list[HookEntry]:
+    root = root.resolve()
     hooks_by_addr: dict[int, HookEntry] = {}
 
     global_defines = _load_global_defines(root)
@@ -463,7 +467,8 @@ def scan_hooks(root: Path) -> list[HookEntry]:
     if global_defines.get("DISABLE_MENU") == 1:
         disabled_dirs.add("Menu")
 
-    for asm_path in root.rglob('*.asm'):
+    source_paths = root.rglob('*.asm') if asm_paths is None else asm_paths
+    for asm_path in source_paths:
         if _should_skip(asm_path):
             continue
         rel = asm_path.relative_to(root)
