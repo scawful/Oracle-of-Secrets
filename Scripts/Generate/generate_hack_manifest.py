@@ -9,7 +9,8 @@ Build pipeline context:
 
 Extends the hooks scanner to produce a comprehensive manifest that tells yaze:
   - Which ROM addresses are patched by asar (hooks/org directives)
-  - Which banks are fully owned by the ASM hack (expanded banks)
+  - Which reachable banks are fully owned by the ASM hack (expanded banks)
+  - Which live room-header/message ranges remain editor-managed
   - Expanded message layout and boundaries
   - Room tag mappings with semantics and feature flags
   - Feature flag state (compile-time toggles)
@@ -28,21 +29,32 @@ Address classification for yaze:
   - "hook_patched": Asar patches this address; yaze edits are overwritten on build
   - "asm_owned": Entire bank owned by hack; yaze should never write here
   - "shared": Both yaze and asar may reference (e.g., room headers ASM reads)
+
+ASM ownership follows the literal incsrc graph rooted at Oracle_main.asm.
+Ignored assets and archived experiments that are not assembled cannot claim
+ROM ownership.
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional
 
 # Import the existing hooks scanner infrastructure
 from generate_hooks_json import (
+    ELSE_DIRECTIVE_RE,
+    ENDIF_DIRECTIVE_RE,
+    IF_DIRECTIVE_RE,
+    _eval_condition,
+    filter_active_asm_sources,
     scan_hooks,
     _load_global_defines,
+    _parse_define_assignment,
     HookEntry,
 )
 
@@ -88,19 +100,194 @@ ASSERT_PC_RE = re.compile(r"assert\s+pc\(\)\s*<=\s*\$([0-9A-Fa-f]{6})")
 # Comment with purpose annotation
 PURPOSE_COMMENT_RE = re.compile(r";\s*(.+)$")
 
-SKIP_DIRS = {
-    ".git", ".context", ".claude", ".cursor",
-    "Roms", "Docs", "docs",
-    "build", "bin", "obj", "Tools", "tools", "tests", "node_modules",
-    "ZScreamNew",
-}
+# Literal Asar source include. Paths may be quoted or bare; comments are
+# stripped before matching so archived `; incsrc ...` lines stay unreachable.
+INCSRC_RE = re.compile(
+    r"^\s*incsrc\s+(?:\"([^\"]+)\"|'([^']+)'|([^\s;]+))",
+    re.IGNORECASE,
+)
+
+MANIFEST_ENTRY_POINT = Path("Oracle_main.asm")
+DUNGEON_ROOM_COUNT = 296
+ROOM_HEADER_POINTER_PC = 0xB5DD
+ROOM_HEADER_BANK_PC = 0xB5E7
+ROOM_HEADER_SIZE = 14
+DUNGEON_MESSAGE_IDS_PC = 0x3F61D
 
 
-def _should_skip(path: Path) -> bool:
-    for part in path.parts:
-        if part in SKIP_DIRS:
-            return True
-    return False
+class ManifestGenerationError(RuntimeError):
+    """Raised when source or ROM evidence cannot safely define ownership."""
+
+
+def _parse_incsrc(line: str) -> Optional[str]:
+    """Return a literal `incsrc` path from uncommented source text."""
+    source = line.split(";", 1)[0]
+    match = INCSRC_RE.match(source)
+    if not match:
+        return None
+    return next(value for value in match.groups() if value is not None)
+
+
+def _iter_active_incsrcs(
+    lines: list[str],
+    global_defines: dict[str, int],
+) -> Iterable[tuple[int, str]]:
+    """Yield literal includes whose enclosing Asar condition is active."""
+    defines = dict(global_defines)
+    active = True
+    stack: list[dict[str, object]] = []
+
+    for line_number, line in enumerate(lines, start=1):
+        directive = line.split(";", 1)[0].strip()
+        match = IF_DIRECTIVE_RE.match(directive)
+        if match:
+            kind = match.group(1).lower()
+            condition = _eval_condition(match.group(2).strip(), defines)
+            condition_active = (
+                bool(condition) if condition is not None else True
+            )
+            if kind == "if":
+                parent_active = active
+                branch_taken = parent_active and condition_active
+                active = branch_taken
+                stack.append({
+                    "parent_active": parent_active,
+                    "branch_taken": branch_taken,
+                })
+            elif stack:
+                frame = stack[-1]
+                parent_active = bool(frame["parent_active"])
+                branch_taken = bool(frame["branch_taken"])
+                active = (
+                    parent_active
+                    and not branch_taken
+                    and condition_active
+                )
+                frame["branch_taken"] = branch_taken or active
+            continue
+        if ELSE_DIRECTIVE_RE.match(directive):
+            if stack:
+                frame = stack[-1]
+                parent_active = bool(frame["parent_active"])
+                branch_taken = bool(frame["branch_taken"])
+                active = parent_active and not branch_taken
+                frame["branch_taken"] = True
+            continue
+        if ENDIF_DIRECTIVE_RE.match(directive):
+            if stack:
+                frame = stack.pop()
+                active = bool(frame["parent_active"])
+            continue
+        if not active:
+            continue
+
+        parsed_define = _parse_define_assignment(line)
+        if parsed_define is not None:
+            name, value = parsed_define
+            defines[name] = value
+
+        include_text = _parse_incsrc(line)
+        if include_text is not None:
+            yield line_number, include_text
+
+
+def _is_case_exact_file(candidate: Path, root: Path) -> bool:
+    """Return whether a candidate exists with repository-exact path casing."""
+    normalized = Path(os.path.normpath(candidate))
+    try:
+        relative = normalized.relative_to(root)
+    except ValueError:
+        # Preserve the caller's existing outside-root diagnostic.
+        return candidate.is_file()
+
+    current = root
+    for part in relative.parts:
+        try:
+            entries = {entry.name: entry for entry in current.iterdir()}
+        except OSError:
+            return False
+        if part not in entries:
+            return False
+        current = entries[part]
+    return current.is_file()
+
+
+def collect_reachable_asm_sources(
+    root: Path,
+    entry_point: Path = MANIFEST_ENTRY_POINT,
+    defines: Optional[dict[str, int]] = None,
+) -> list[Path]:
+    """Collect the transitive literal `incsrc` graph for the build entry.
+
+    Asar sources in this repository use both paths relative to the including
+    file and repo-root-relative paths. Follow only active conditional edges,
+    gate disabled module roots before traversal, and fail closed if an active
+    reachable include cannot be resolved.
+    """
+    resolved_root = root.resolve()
+    entry = entry_point if entry_point.is_absolute() else resolved_root / entry_point
+    entry = entry.resolve()
+    if not entry.is_file():
+        raise ManifestGenerationError(f"ASM entry point not found: {entry}")
+    if not entry.is_relative_to(resolved_root):
+        raise ManifestGenerationError(
+            f"ASM entry point is outside repo root: {entry}"
+        )
+
+    active_defines = (
+        _load_global_defines(resolved_root)
+        if defines is None
+        else dict(defines)
+    )
+    pending = [entry]
+    reachable: set[Path] = set()
+    while pending:
+        asm_path = pending.pop()
+        if asm_path in reachable:
+            continue
+        reachable.add(asm_path)
+
+        try:
+            lines = asm_path.read_text(
+                encoding="utf-8", errors="ignore"
+            ).splitlines()
+        except OSError as exc:
+            raise ManifestGenerationError(
+                f"Unable to read reachable ASM source {asm_path}: {exc}"
+            ) from exc
+
+        for line_number, include_text in _iter_active_incsrcs(
+            lines, active_defines
+        ):
+            include_path = Path(include_text)
+            candidates = (
+                asm_path.parent / include_path,
+                resolved_root / include_path,
+            )
+            included = next(
+                (candidate.resolve() for candidate in candidates
+                 if _is_case_exact_file(candidate, resolved_root)),
+                None,
+            )
+            if included is None:
+                rel = asm_path.relative_to(resolved_root)
+                raise ManifestGenerationError(
+                    f"{rel}:{line_number}: unresolved incsrc "
+                    f"{include_text!r}"
+                )
+            if not included.is_relative_to(resolved_root):
+                rel = asm_path.relative_to(resolved_root)
+                raise ManifestGenerationError(
+                    f"{rel}:{line_number}: incsrc escapes repo root: "
+                    f"{include_text!r}"
+                )
+            if not filter_active_asm_sources(
+                resolved_root, [included], active_defines
+            ):
+                continue
+            pending.append(included)
+
+    return sorted(reachable)
 
 
 # ---------------------------------------------------------------------------
@@ -116,26 +303,43 @@ class BankRegion:
     purpose: str = ""
 
 
-def scan_bank_ownership(root: Path) -> list[dict]:
-    """Detect which banks are owned by the hack via org directives."""
+def scan_bank_ownership(
+    root: Path,
+    asm_paths: Optional[Iterable[Path]] = None,
+) -> list[dict]:
+    """Detect owned banks from sources reachable by the build entry point."""
+    root = root.resolve()
     bank_sources: dict[int, list[dict]] = {}
 
-    for asm_path in root.rglob("*.asm"):
-        if _should_skip(asm_path):
-            continue
+    candidate_paths = (
+        collect_reachable_asm_sources(root)
+        if asm_paths is None
+        else asm_paths
+    )
+    source_paths = filter_active_asm_sources(root, candidate_paths)
+    for asm_path in source_paths:
+        asm_path = asm_path.resolve()
+        try:
+            rel = str(asm_path.relative_to(root))
+        except ValueError as exc:
+            raise ManifestGenerationError(
+                f"Reachable ASM source is outside repo root: {asm_path}"
+            ) from exc
         try:
             text = asm_path.read_text(encoding="utf-8", errors="ignore")
-        except Exception:
-            continue
+        except OSError as exc:
+            raise ManifestGenerationError(
+                f"Unable to read reachable ASM source {asm_path}: {exc}"
+            ) from exc
 
-        rel = str(asm_path.relative_to(root))
         lines = text.splitlines()
 
         for i, line in enumerate(lines):
             # Check for org $XX8000+ (expanded bank entry points)
             m = ORG_BANK_RE.match(line)
             if m:
-                addr = int(m.group(1), 16)
+                source_addr = int(m.group(1), 16)
+                addr = _physical_org_address(source_addr)
                 bank = (addr >> 16) & 0xFF
                 # Only track expanded banks (>= $1E, avoiding vanilla $00-$1D)
                 if bank >= 0x1E:
@@ -154,12 +358,16 @@ def scan_bank_ownership(root: Path) -> list[dict]:
                     for j in range(i + 1, min(i + 2000, len(lines))):
                         am = ASSERT_PC_RE.search(lines[j])
                         if am:
-                            end_addr = int(am.group(1), 16)
+                            end_addr = _physical_org_address(
+                                int(am.group(1), 16)
+                            )
                             break
                         # Stop at next org in a different bank
                         next_org = ORG_BANK_RE.match(lines[j])
                         if next_org:
-                            next_addr = int(next_org.group(1), 16)
+                            next_addr = _physical_org_address(
+                                int(next_org.group(1), 16)
+                            )
                             next_bank = (next_addr >> 16) & 0xFF
                             if next_bank != bank:
                                 break
@@ -177,7 +385,11 @@ def scan_bank_ownership(root: Path) -> list[dict]:
             # Check for freedata bank $XX
             fm = FREEDATA_BANK_RE.match(line)
             if fm:
-                bank = int(fm.group(1), 16)
+                source_bank = int(fm.group(1), 16)
+                if source_bank in (0x7E, 0x7F):
+                    bank = source_bank
+                else:
+                    bank = source_bank & 0x7F
                 if bank >= 0x1E:
                     entry = {
                         "start": f"0x{bank:02X}8000",
@@ -207,12 +419,9 @@ def scan_bank_ownership(root: Path) -> list[dict]:
         elif bank in EXPANSION_BANKS:
             ownership = "asm_expansion"
             ownership_note = "ROM expansion bank — does not exist in dev ROM, created by asar"
-        elif bank == 0x7E:
+        elif bank in (0x7E, 0x7F):
             ownership = "ram"
             ownership_note = "WRAM definitions (not ROM data)"
-        elif bank >= 0x80:
-            ownership = "mirror"
-            ownership_note = "HiROM mirror of vanilla bank"
         else:
             ownership = "asm_owned"
             ownership_note = "Fully owned by ASM hack"
@@ -319,19 +528,37 @@ def scan_message_layout(root: Path) -> dict:
 # Room tag extraction
 # ---------------------------------------------------------------------------
 
-def scan_room_tags(root: Path, defines: dict[str, int]) -> list[dict]:
+def scan_room_tags(
+    root: Path,
+    defines: dict[str, int],
+    asm_paths: Optional[Iterable[Path]] = None,
+) -> list[dict]:
     """Extract room tag mappings from org $01CCxx directives."""
+    root = root.resolve()
     tags: dict[int, dict] = {}
 
-    for asm_path in root.rglob("*.asm"):
-        if _should_skip(asm_path):
-            continue
+    candidate_paths = (
+        collect_reachable_asm_sources(root)
+        if asm_paths is None
+        else asm_paths
+    )
+    source_paths = filter_active_asm_sources(
+        root, candidate_paths, defines
+    )
+    for asm_path in source_paths:
+        asm_path = asm_path.resolve()
+        try:
+            rel = str(asm_path.relative_to(root))
+        except ValueError as exc:
+            raise ManifestGenerationError(
+                f"Reachable ASM source is outside repo root: {asm_path}"
+            ) from exc
         try:
             lines = asm_path.read_text(encoding="utf-8", errors="ignore").splitlines()
-        except Exception:
-            continue
-
-        rel = str(asm_path.relative_to(root))
+        except OSError as exc:
+            raise ManifestGenerationError(
+                f"Unable to read reachable ASM source {asm_path}: {exc}"
+            ) from exc
 
         # Track if/endif nesting for feature-gated tags
         in_gated_block = False
@@ -530,9 +757,6 @@ def compute_protected_regions(hooks: list[HookEntry]) -> list[dict]:
     if not hooks:
         return []
 
-    # Sort hooks by address
-    sorted_hooks = sorted(hooks, key=lambda h: h.address)
-
     # Estimate size of each hook (conservative: 4 bytes for JML/JSL, 1-8 for data/patch)
     SIZE_ESTIMATE = {
         "jsl": 4,
@@ -543,41 +767,230 @@ def compute_protected_regions(hooks: list[HookEntry]) -> list[dict]:
         "patch": 4,   # conservative
     }
 
+    # Group in PC space so legacy low-half mirrors and bank crossings produce
+    # canonical, increasing LoROM half-open ranges in manifest v3.
+    sorted_hooks = sorted(hooks, key=lambda hook: _snes_to_pc(hook.address))
     regions = []
-    current_start = sorted_hooks[0].address
+    current_start = _snes_to_pc(sorted_hooks[0].address)
     current_end = current_start + SIZE_ESTIMATE.get(sorted_hooks[0].kind, 4)
     current_hooks = [sorted_hooks[0]]
 
     for hook in sorted_hooks[1:]:
-        hook_end = hook.address + SIZE_ESTIMATE.get(hook.kind, 4)
+        hook_start = _snes_to_pc(hook.address)
+        hook_end = hook_start + SIZE_ESTIMATE.get(hook.kind, 4)
 
         # Merge if within 16 bytes of the previous region (likely related)
-        if hook.address <= current_end + 16:
+        if hook_start <= current_end + 16:
             current_end = max(current_end, hook_end)
             current_hooks.append(hook)
         else:
             # Emit previous region
             regions.append({
-                "start": f"0x{current_start:06X}",
-                "end": f"0x{current_end:06X}",
+                "start": f"0x{_pc_to_snes(current_start):06X}",
+                "end": f"0x{_pc_to_snes(current_end):06X}",
                 "size": current_end - current_start,
                 "hook_count": len(current_hooks),
                 "module": current_hooks[0].module,
             })
-            current_start = hook.address
+            current_start = hook_start
             current_end = hook_end
             current_hooks = [hook]
 
     # Emit last region
     regions.append({
-        "start": f"0x{current_start:06X}",
-        "end": f"0x{current_end:06X}",
+        "start": f"0x{_pc_to_snes(current_start):06X}",
+        "end": f"0x{_pc_to_snes(current_end):06X}",
         "size": current_end - current_start,
         "hook_count": len(current_hooks),
         "module": current_hooks[0].module,
     })
 
     return regions
+
+
+# ---------------------------------------------------------------------------
+# Exact editor-managed ROM ranges
+# ---------------------------------------------------------------------------
+
+def _canonical_lorom_address(address: int) -> int:
+    """Return the canonical mapped LoROM mirror for a 24-bit address."""
+    if not 0 <= address <= 0xFFFFFF:
+        raise ManifestGenerationError(
+            f"SNES address 0x{address:X} is outside 24-bit address space"
+        )
+    address &= 0x7FFFFF
+    if (address & 0xFFFF) < 0x8000:
+        address |= 0x8000
+    return address
+
+
+def _snes_to_pc(address: int) -> int:
+    """Convert a canonical LoROM address to an unheadered PC offset."""
+    address = _canonical_lorom_address(address)
+    return ((address & 0x7F0000) >> 1) | (address & 0x7FFF)
+
+
+def _physical_org_address(address: int) -> int:
+    """Map an Asar org to its physical LoROM bank/address.
+
+    Asar sources may use FastROM mirrors such as $A0F000. Ownership must
+    describe the underlying $20F000 bytes rather than claiming a second,
+    whole mirror bank. WRAM orgs remain RAM metadata and are not ROM-mapped.
+    """
+    bank = (address >> 16) & 0xFF
+    if bank in (0x7E, 0x7F):
+        return address
+    return _canonical_lorom_address(address)
+
+
+def _strict_lorom_to_pc(address: int, description: str) -> int:
+    """Convert a ROM-sourced pointer only when it is valid mapped LoROM."""
+    if not 0 <= address <= 0xFFFFFF:
+        raise ManifestGenerationError(
+            f"{description} 0x{address:X} is outside 24-bit address space"
+        )
+    bank = (address >> 16) & 0xFF
+    offset = address & 0xFFFF
+    if bank in (0x7E, 0x7F):
+        raise ManifestGenerationError(
+            f"{description} 0x{address:06X} points to WRAM"
+        )
+    if offset < 0x8000:
+        raise ManifestGenerationError(
+            f"{description} 0x{address:06X} is not a high-half LoROM pointer"
+        )
+    return ((bank & 0x7F) << 15) | (offset & 0x7FFF)
+
+
+def _pc_to_snes(address: int) -> int:
+    """Convert an unheadered PC offset to a canonical LoROM address."""
+    if not 0 <= address < 0x400000:
+        raise ManifestGenerationError(
+            f"PC address 0x{address:X} is outside canonical LoROM"
+        )
+    snes = (
+        ((address << 1) & 0x7F0000)
+        | (address & 0x7FFF)
+        | 0x8000
+    )
+    if _snes_to_pc(snes) != address:
+        raise ManifestGenerationError(
+            f"PC address 0x{address:X} does not round-trip through LoROM"
+        )
+    return snes
+
+
+def _require_rom_span(
+    data: bytes,
+    address: int,
+    size: int,
+    description: str,
+) -> None:
+    if address < 0 or size < 0 or address + size > len(data):
+        raise ManifestGenerationError(
+            f"{description} PC span [0x{address:X}, "
+            f"0x{address + size:X}) exceeds dev ROM size 0x{len(data):X}"
+        )
+
+
+def _read_u16(data: bytes, address: int, description: str) -> int:
+    _require_rom_span(data, address, 2, description)
+    return data[address] | (data[address + 1] << 8)
+
+
+def _read_u24(data: bytes, address: int, description: str) -> int:
+    _require_rom_span(data, address, 3, description)
+    return (
+        data[address]
+        | (data[address + 1] << 8)
+        | (data[address + 2] << 16)
+    )
+
+
+def _editor_range(start_pc: int, end_pc: int) -> dict[str, str]:
+    if start_pc >= end_pc:
+        raise ManifestGenerationError(
+            f"Invalid editor-managed PC range "
+            f"[0x{start_pc:X}, 0x{end_pc:X})"
+        )
+    return {
+        "start": f"0x{_pc_to_snes(start_pc):06X}",
+        "end": f"0x{_pc_to_snes(end_pc):06X}",
+    }
+
+
+def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
+    """Derive exact room-header and message-ID ranges from the dev ROM."""
+    try:
+        data = dev_rom_path.read_bytes()
+    except OSError as exc:
+        raise ManifestGenerationError(
+            f"Unable to read dev ROM {dev_rom_path}: {exc}"
+        ) from exc
+
+    header_table_snes = _read_u24(
+        data, ROOM_HEADER_POINTER_PC, "room-header pointer-table operand"
+    )
+    header_table_pc = _strict_lorom_to_pc(
+        header_table_snes, "Room-header pointer-table operand"
+    )
+    _require_rom_span(
+        data,
+        header_table_pc,
+        DUNGEON_ROOM_COUNT * 2,
+        "room-header pointer table",
+    )
+    _require_rom_span(
+        data, ROOM_HEADER_BANK_PC, 1, "room-header pointer bank"
+    )
+    header_bank = data[ROOM_HEADER_BANK_PC]
+
+    header_ranges: list[tuple[int, int]] = []
+    for room_id in range(DUNGEON_ROOM_COUNT):
+        pointer_pc = header_table_pc + room_id * 2
+        header_offset = _read_u16(
+            data,
+            pointer_pc,
+            f"room-header pointer for room 0x{room_id:03X}",
+        )
+        header_address = (header_bank << 16) | header_offset
+        header_pc = _strict_lorom_to_pc(
+            header_address,
+            f"Room-header pointer for room 0x{room_id:03X}",
+        )
+        _require_rom_span(
+            data,
+            header_pc,
+            ROOM_HEADER_SIZE,
+            f"room header 0x{room_id:03X}",
+        )
+        header_ranges.append((header_pc, header_pc + ROOM_HEADER_SIZE))
+
+    sorted_headers = sorted(header_ranges)
+    if len(set(sorted_headers)) != DUNGEON_ROOM_COUNT:
+        raise ManifestGenerationError(
+            "Room-header pointers are not unique across all 296 rooms"
+        )
+    for previous, current in zip(sorted_headers, sorted_headers[1:]):
+        if current[0] != previous[1]:
+            raise ManifestGenerationError(
+                "Room headers are not one contiguous 296-record range: "
+                f"[0x{previous[0]:X}, 0x{previous[1]:X}) is followed by "
+                f"[0x{current[0]:X}, 0x{current[1]:X})"
+            )
+
+    messages_end_pc = DUNGEON_MESSAGE_IDS_PC + DUNGEON_ROOM_COUNT * 2
+    _require_rom_span(
+        data,
+        DUNGEON_MESSAGE_IDS_PC,
+        DUNGEON_ROOM_COUNT * 2,
+        "dungeon room message IDs",
+    )
+
+    return [
+        _editor_range(sorted_headers[0][0], sorted_headers[-1][1]),
+        _editor_range(DUNGEON_MESSAGE_IDS_PC, messages_end_pc),
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -588,15 +1001,22 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
     """Generate the complete hack manifest."""
     import hashlib
 
+    root = root.resolve()
+    reachable_sources = collect_reachable_asm_sources(root)
+
     # Load defines for conditional compilation evaluation
     defines = _load_global_defines(root)
+    asm_sources = filter_active_asm_sources(
+        root, reachable_sources, defines
+    )
 
-    # Scan hooks (reuse existing infrastructure)
-    hooks = scan_hooks(root)
+    # Scan only the source graph assembled from Oracle_main.asm. Local ignored
+    # assets and archived experiments must not claim ROM ownership.
+    hooks = scan_hooks(root, asm_sources)
 
     # Build manifest sections
     manifest: dict = {
-        "manifest_version": 2,
+        "manifest_version": 3,
         "hack_name": "Oracle of Secrets",
         "hack_version": "dev",
         "generator": "generate_hack_manifest.py",
@@ -608,8 +1028,8 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
         "dev_rom": "Roms/oos168.sfc",
         "patched_rom": "Roms/oos168x.sfc",
         "assembler": "asar",
-        "entry_point": "Meadow_main.asm",
-        "build_script": "Scripts/build_rom.sh",
+        "entry_point": str(MANIFEST_ENTRY_POINT),
+        "build_script": "Scripts/Build/build_rom.sh",
         "flow": [
             "1. Yaze edits dev ROM (room data, sprites, palettes, messages)",
             "2. asar reads dev ROM + ASM sources",
@@ -640,11 +1060,29 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
             pass
     manifest["rom"] = rom_meta
 
+    if dev_rom_path.exists():
+        manifest["editor_managed_regions"] = {
+            "description": (
+                "Exact room-header and per-room message-ID ranges derived "
+                "from the editable dev ROM. Protected hooks still take "
+                "precedence."
+            ),
+            "regions": derive_editor_managed_regions(dev_rom_path),
+        }
+
     # Protected regions — these are hook addresses in VANILLA banks.
     # Asar overwrites these on build, so yaze edits here are lost.
     # Separate from owned_banks which are entirely ASM-owned.
-    vanilla_hooks = [h for h in hooks if h.address < 0x1E8000]
-    expanded_hooks = [h for h in hooks if h.address >= 0x1E8000]
+    vanilla_hooks = [
+        h
+        for h in hooks
+        if ((_physical_org_address(h.address) >> 16) & 0xFF) < 0x1E
+    ]
+    expanded_hooks = [
+        h
+        for h in hooks
+        if ((_physical_org_address(h.address) >> 16) & 0xFF) >= 0x1E
+    ]
     protected = compute_protected_regions(vanilla_hooks) if vanilla_hooks else []
     manifest["protected_regions"] = {
         "description": "Hook addresses within vanilla ROM banks ($00-$1D). Asar patches these on every build, so yaze edits at these addresses are silently overwritten. Yaze should either skip these during save or warn the user.",
@@ -656,7 +1094,7 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
     }
 
     # Bank ownership — expanded banks with ownership classification
-    banks = scan_bank_ownership(root)
+    banks = scan_bank_ownership(root, asm_sources)
     manifest["owned_banks"] = {
         "description": "Expanded ROM banks with ownership classification. 'asm_owned' banks are fully owned by ASM. 'shared' banks (e.g., $28 ZSCustomOverworld) contain data that yaze writes AND ASM patches on top — yaze can edit these but must rebuild after. 'asm_expansion' banks only exist in the patched ROM.",
         "ownership_types": {
@@ -664,7 +1102,6 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
             "shared": "Both yaze and ASM write — yaze edits base data, ASM patches hooks on top. Must rebuild after yaze save.",
             "asm_expansion": "ROM expansion bank — only exists in patched ROM, not in dev ROM",
             "ram": "WRAM variable definitions (not ROM data)",
-            "mirror": "HiROM mirror — ASM patches vanilla bank via mirror address",
         },
         "banks": banks,
     }
@@ -687,7 +1124,7 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
     # Room tags — the dispatch table at $01CC00-$01CC5A is in vanilla bank $01.
     # Asar patches specific 4-byte slots (JML instructions). Yaze's room editor
     # assigns tag IDs to rooms; this manifest tells yaze what each tag ID means.
-    room_tags = scan_room_tags(root, defines)
+    room_tags = scan_room_tags(root, defines, asm_sources)
     manifest["room_tags"] = {
         "description": "Custom room tag dispatch table entries in bank $01. Asar patches 4-byte JML slots at these addresses. Yaze assigns tag IDs to rooms via room headers — this manifest provides labels and semantics so the editor can show meaningful names instead of raw tag numbers.",
         "dispatch_table_start": "0x01CC00",
@@ -773,7 +1210,11 @@ def main() -> int:
     if not rom_path.exists():
         rom_path = None
 
-    manifest = generate_manifest(root, rom_path)
+    try:
+        manifest = generate_manifest(root, rom_path)
+    except ManifestGenerationError as exc:
+        print(f"error: cannot generate hack manifest: {exc}", file=sys.stderr)
+        return 1
 
     indent = None if args.compact else 2
     output.write_text(json.dumps(manifest, indent=indent) + "\n")
