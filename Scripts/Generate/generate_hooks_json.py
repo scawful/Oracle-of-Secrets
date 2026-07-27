@@ -449,6 +449,7 @@ def scan_hooks(
 ) -> list[HookEntry]:
     root = root.resolve()
     hooks_by_addr: dict[int, HookEntry] = {}
+    explicit_sources = asm_paths is not None
 
     global_defines = _load_global_defines(root)
     disabled_dirs: set[str] = set()
@@ -468,17 +469,27 @@ def scan_hooks(
         disabled_dirs.add("Menu")
 
     source_paths = root.rglob('*.asm') if asm_paths is None else asm_paths
-    for asm_path in source_paths:
-        if _should_skip(asm_path):
+    for source_path in source_paths:
+        asm_path = source_path.resolve()
+        if not explicit_sources and _should_skip(asm_path):
             continue
-        rel = asm_path.relative_to(root)
+        try:
+            rel = asm_path.relative_to(root)
+        except ValueError:
+            if explicit_sources:
+                raise ValueError(
+                    f"Explicit ASM source is outside repo root: {asm_path}"
+                )
+            continue
         if rel.parts and rel.parts[0] in disabled_dirs:
             continue
         if global_defines.get("DISABLE_PATCHES") == 1 and rel.as_posix() == "Core/patches.asm":
             continue
         try:
             lines = asm_path.read_text(encoding='utf-8', errors='ignore').splitlines()
-        except Exception:
+        except OSError:
+            if explicit_sources:
+                raise
             continue
 
         defines = dict(global_defines)

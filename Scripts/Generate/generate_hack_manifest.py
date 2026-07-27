@@ -100,13 +100,6 @@ INCSRC_RE = re.compile(
     re.IGNORECASE,
 )
 
-SKIP_DIRS = {
-    ".git", ".context", ".claude", ".cursor",
-    "Roms", "Docs", "docs",
-    "build", "bin", "obj", "Tools", "tools", "tests", "node_modules",
-    "ZScreamNew",
-}
-
 MANIFEST_ENTRY_POINT = Path("Oracle_main.asm")
 DUNGEON_ROOM_COUNT = 296
 ROOM_HEADER_POINTER_PC = 0xB5DD
@@ -117,13 +110,6 @@ DUNGEON_MESSAGE_IDS_PC = 0x3F61D
 
 class ManifestGenerationError(RuntimeError):
     """Raised when source or ROM evidence cannot safely define ownership."""
-
-
-def _should_skip(path: Path) -> bool:
-    for part in path.parts:
-        if part in SKIP_DIRS:
-            return True
-    return False
 
 
 def _parse_incsrc(line: str) -> Optional[str]:
@@ -231,21 +217,28 @@ def scan_bank_ownership(
         else asm_paths
     )
     for asm_path in source_paths:
-        if _should_skip(asm_path):
-            continue
+        asm_path = asm_path.resolve()
+        try:
+            rel = str(asm_path.relative_to(root))
+        except ValueError as exc:
+            raise ManifestGenerationError(
+                f"Reachable ASM source is outside repo root: {asm_path}"
+            ) from exc
         try:
             text = asm_path.read_text(encoding="utf-8", errors="ignore")
-        except Exception:
-            continue
+        except OSError as exc:
+            raise ManifestGenerationError(
+                f"Unable to read reachable ASM source {asm_path}: {exc}"
+            ) from exc
 
-        rel = str(asm_path.relative_to(root))
         lines = text.splitlines()
 
         for i, line in enumerate(lines):
             # Check for org $XX8000+ (expanded bank entry points)
             m = ORG_BANK_RE.match(line)
             if m:
-                addr = int(m.group(1), 16)
+                source_addr = int(m.group(1), 16)
+                addr = _physical_org_address(source_addr)
                 bank = (addr >> 16) & 0xFF
                 # Only track expanded banks (>= $1E, avoiding vanilla $00-$1D)
                 if bank >= 0x1E:
@@ -264,12 +257,16 @@ def scan_bank_ownership(
                     for j in range(i + 1, min(i + 2000, len(lines))):
                         am = ASSERT_PC_RE.search(lines[j])
                         if am:
-                            end_addr = int(am.group(1), 16)
+                            end_addr = _physical_org_address(
+                                int(am.group(1), 16)
+                            )
                             break
                         # Stop at next org in a different bank
                         next_org = ORG_BANK_RE.match(lines[j])
                         if next_org:
-                            next_addr = int(next_org.group(1), 16)
+                            next_addr = _physical_org_address(
+                                int(next_org.group(1), 16)
+                            )
                             next_bank = (next_addr >> 16) & 0xFF
                             if next_bank != bank:
                                 break
@@ -287,7 +284,11 @@ def scan_bank_ownership(
             # Check for freedata bank $XX
             fm = FREEDATA_BANK_RE.match(line)
             if fm:
-                bank = int(fm.group(1), 16)
+                source_bank = int(fm.group(1), 16)
+                if source_bank in (0x7E, 0x7F):
+                    bank = source_bank
+                else:
+                    bank = source_bank & 0x7F
                 if bank >= 0x1E:
                     entry = {
                         "start": f"0x{bank:02X}8000",
@@ -317,12 +318,9 @@ def scan_bank_ownership(
         elif bank in EXPANSION_BANKS:
             ownership = "asm_expansion"
             ownership_note = "ROM expansion bank — does not exist in dev ROM, created by asar"
-        elif bank == 0x7E:
+        elif bank in (0x7E, 0x7F):
             ownership = "ram"
             ownership_note = "WRAM definitions (not ROM data)"
-        elif bank >= 0x80:
-            ownership = "mirror"
-            ownership_note = "HiROM mirror of vanilla bank"
         else:
             ownership = "asm_owned"
             ownership_note = "Fully owned by ASM hack"
@@ -444,14 +442,19 @@ def scan_room_tags(
         else asm_paths
     )
     for asm_path in source_paths:
-        if _should_skip(asm_path):
-            continue
+        asm_path = asm_path.resolve()
+        try:
+            rel = str(asm_path.relative_to(root))
+        except ValueError as exc:
+            raise ManifestGenerationError(
+                f"Reachable ASM source is outside repo root: {asm_path}"
+            ) from exc
         try:
             lines = asm_path.read_text(encoding="utf-8", errors="ignore").splitlines()
-        except Exception:
-            continue
-
-        rel = str(asm_path.relative_to(root))
+        except OSError as exc:
+            raise ManifestGenerationError(
+                f"Unable to read reachable ASM source {asm_path}: {exc}"
+            ) from exc
 
         # Track if/endif nesting for feature-gated tags
         in_gated_block = False
@@ -723,6 +726,38 @@ def _snes_to_pc(address: int) -> int:
     return ((address & 0x7F0000) >> 1) | (address & 0x7FFF)
 
 
+def _physical_org_address(address: int) -> int:
+    """Map an Asar org to its physical LoROM bank/address.
+
+    Asar sources may use FastROM mirrors such as $A0F000. Ownership must
+    describe the underlying $20F000 bytes rather than claiming a second,
+    whole mirror bank. WRAM orgs remain RAM metadata and are not ROM-mapped.
+    """
+    bank = (address >> 16) & 0xFF
+    if bank in (0x7E, 0x7F):
+        return address
+    return _canonical_lorom_address(address)
+
+
+def _strict_lorom_to_pc(address: int, description: str) -> int:
+    """Convert a ROM-sourced pointer only when it is valid mapped LoROM."""
+    if not 0 <= address <= 0xFFFFFF:
+        raise ManifestGenerationError(
+            f"{description} 0x{address:X} is outside 24-bit address space"
+        )
+    bank = (address >> 16) & 0xFF
+    offset = address & 0xFFFF
+    if bank in (0x7E, 0x7F):
+        raise ManifestGenerationError(
+            f"{description} 0x{address:06X} points to WRAM"
+        )
+    if offset < 0x8000:
+        raise ManifestGenerationError(
+            f"{description} 0x{address:06X} is not a high-half LoROM pointer"
+        )
+    return ((bank & 0x7F) << 15) | (offset & 0x7FFF)
+
+
 def _pc_to_snes(address: int) -> int:
     """Convert an unheadered PC offset to a canonical LoROM address."""
     if not 0 <= address < 0x400000:
@@ -792,7 +827,9 @@ def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
     header_table_snes = _read_u24(
         data, ROOM_HEADER_POINTER_PC, "room-header pointer-table operand"
     )
-    header_table_pc = _snes_to_pc(header_table_snes)
+    header_table_pc = _strict_lorom_to_pc(
+        header_table_snes, "Room-header pointer-table operand"
+    )
     _require_rom_span(
         data,
         header_table_pc,
@@ -812,7 +849,11 @@ def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
             pointer_pc,
             f"room-header pointer for room 0x{room_id:03X}",
         )
-        header_pc = _snes_to_pc((header_bank << 16) | header_offset)
+        header_address = (header_bank << 16) | header_offset
+        header_pc = _strict_lorom_to_pc(
+            header_address,
+            f"Room-header pointer for room 0x{room_id:03X}",
+        )
         _require_rom_span(
             data,
             header_pc,
@@ -925,8 +966,16 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
     # Protected regions — these are hook addresses in VANILLA banks.
     # Asar overwrites these on build, so yaze edits here are lost.
     # Separate from owned_banks which are entirely ASM-owned.
-    vanilla_hooks = [h for h in hooks if h.address < 0x1E8000]
-    expanded_hooks = [h for h in hooks if h.address >= 0x1E8000]
+    vanilla_hooks = [
+        h
+        for h in hooks
+        if ((_physical_org_address(h.address) >> 16) & 0xFF) < 0x1E
+    ]
+    expanded_hooks = [
+        h
+        for h in hooks
+        if ((_physical_org_address(h.address) >> 16) & 0xFF) >= 0x1E
+    ]
     protected = compute_protected_regions(vanilla_hooks) if vanilla_hooks else []
     manifest["protected_regions"] = {
         "description": "Hook addresses within vanilla ROM banks ($00-$1D). Asar patches these on every build, so yaze edits at these addresses are silently overwritten. Yaze should either skip these during save or warn the user.",
@@ -946,7 +995,6 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
             "shared": "Both yaze and ASM write — yaze edits base data, ASM patches hooks on top. Must rebuild after yaze save.",
             "asm_expansion": "ROM expansion bank — only exists in patched ROM, not in dev ROM",
             "ram": "WRAM variable definitions (not ROM data)",
-            "mirror": "HiROM mirror — ASM patches vanilla bank via mirror address",
         },
         "banks": banks,
     }

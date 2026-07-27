@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 GENERATE_DIR = Path(__file__).resolve().parents[1]
+REPO_ROOT = GENERATE_DIR.parents[1]
 sys.path.insert(0, str(GENERATE_DIR))
 
 from generate_hack_manifest import (  # noqa: E402
@@ -66,6 +67,17 @@ class ManifestFixture:
         rom_path.parent.mkdir(parents=True, exist_ok=True)
         rom_path.write_bytes(data)
         return rom_path
+
+    @staticmethod
+    def write_rom_value(
+        rom_path: Path,
+        offset: int,
+        value: int,
+        size: int,
+    ) -> None:
+        data = bytearray(rom_path.read_bytes())
+        data[offset:offset + size] = value.to_bytes(size, "little")
+        rom_path.write_bytes(data)
 
     @staticmethod
     def assert_span_fits(data: bytes, start: int, end: int) -> None:
@@ -150,6 +162,91 @@ class ReachableSourceTest(unittest.TestCase):
         self.assertIn("0x2F", owned_banks)
         self.assertNotIn("0x22", owned_banks)
 
+    def test_reachable_tools_source_is_scanned_by_every_manifest_scanner(
+        self,
+    ) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm", 'incsrc "Tools/reachable.asm"\n'
+        )
+        self.fixture.write_text(
+            "Tools/reachable.asm",
+            "org $008100\n"
+            "JSL ReachableToolsHook\n"
+            "org $01CC18 : JML ReachableToolsTag ; @hook name=ToolsTag\n"
+            "org $2F8000\n"
+            "db $00\n",
+        )
+
+        manifest = generate_manifest(self.fixture.root)
+        owned_banks = {
+            entry["bank"] for entry in manifest["owned_banks"]["banks"]
+        }
+
+        self.assertEqual(manifest["summary"]["total_hooks"], 3)
+        self.assertIn("0x2F", owned_banks)
+        self.assertTrue(
+            any(
+                tag["name"] == "ToolsTag"
+                for tag in manifest["room_tags"]["tags"]
+            )
+        )
+
+    def test_fastrom_orgs_map_to_physical_spans_not_mirror_banks(self) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm", 'incsrc "Core/active.asm"\n'
+        )
+        self.fixture.write_text(
+            "Core/active.asm",
+            "org $808B6B : LDX.w #$6040\n"
+            "org $20AF20\n"
+            "db $00\n"
+            "org $A0F000\n"
+            "db $00\n",
+        )
+
+        manifest = generate_manifest(self.fixture.root)
+        protected = manifest["protected_regions"]["regions"]
+        banks = {
+            entry["bank"]: entry for entry in manifest["owned_banks"]["banks"]
+        }
+
+        self.assertEqual(protected[0]["start"], "0x008B6B")
+        self.assertNotIn("0x80", banks)
+        self.assertNotIn("0xA0", banks)
+        self.assertEqual(banks["0x20"]["ownership"], "shared")
+        self.assertEqual(
+            {
+                region["start"] for region in banks["0x20"]["regions"]
+            },
+            {"0x20AF20", "0x20F000"},
+        )
+
+
+class RepositorySourceRegressionTest(unittest.TestCase):
+    def test_real_fastrom_orgs_use_physical_manifest_ranges(self) -> None:
+        manifest = generate_manifest(REPO_ROOT)
+        protected_starts = {
+            region["start"]
+            for region in manifest["protected_regions"]["regions"]
+        }
+        banks = {
+            entry["bank"]: entry for entry in manifest["owned_banks"]["banks"]
+        }
+
+        self.assertIn("0x008B6B", protected_starts)
+        self.assertIn("0x06F725", protected_starts)
+        self.assertIn("0x0DDFB2", protected_starts)
+        self.assertFalse(
+            {"0x80", "0x86", "0x8D", "0xA0"} & banks.keys()
+        )
+        self.assertTrue(
+            any(
+                region["start"] == "0x20F000"
+                and region["source"] == "Overworld/lost_woods.asm:27"
+                for region in banks["0x20"]["regions"]
+            )
+        )
+
 
 class EditorManagedRegionsTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -195,6 +292,55 @@ class EditorManagedRegionsTest(unittest.TestCase):
         with self.assertRaisesRegex(
             ManifestGenerationError,
             "Room-header pointers are not unique",
+        ):
+            derive_editor_managed_regions(rom_path)
+
+    def test_low_half_header_table_pointer_fails_closed(self) -> None:
+        rom_path = self.fixture.write_dev_rom()
+        self.fixture.write_rom_value(
+            rom_path, ROOM_HEADER_POINTER_PC, 0x220000, 3
+        )
+
+        with self.assertRaisesRegex(
+            ManifestGenerationError,
+            "Room-header pointer-table operand "
+            "0x220000 is not a high-half LoROM pointer",
+        ):
+            derive_editor_managed_regions(rom_path)
+
+    def test_wram_header_table_pointer_fails_closed(self) -> None:
+        rom_path = self.fixture.write_dev_rom()
+        self.fixture.write_rom_value(
+            rom_path, ROOM_HEADER_POINTER_PC, 0x7E8000, 3
+        )
+
+        with self.assertRaisesRegex(
+            ManifestGenerationError,
+            "Room-header pointer-table operand 0x7E8000 points to WRAM",
+        ):
+            derive_editor_managed_regions(rom_path)
+
+    def test_low_half_room_header_pointer_fails_closed(self) -> None:
+        rom_path = self.fixture.write_dev_rom()
+        self.fixture.write_rom_value(rom_path, 0x110000, 0x0280, 2)
+
+        with self.assertRaisesRegex(
+            ManifestGenerationError,
+            "Room-header pointer for room 0x000 "
+            "0x220280 is not a high-half LoROM pointer",
+        ):
+            derive_editor_managed_regions(rom_path)
+
+    def test_wram_room_header_bank_fails_closed(self) -> None:
+        rom_path = self.fixture.write_dev_rom()
+        self.fixture.write_rom_value(
+            rom_path, ROOM_HEADER_BANK_PC, 0x7E, 1
+        )
+
+        with self.assertRaisesRegex(
+            ManifestGenerationError,
+            "Room-header pointer for room 0x000 "
+            "0x7E8280 points to WRAM",
         ):
             derive_editor_managed_regions(rom_path)
 
