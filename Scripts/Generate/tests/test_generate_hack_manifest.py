@@ -137,6 +137,18 @@ class ReachableSourceTest(unittest.TestCase):
         ):
             collect_reachable_asm_sources(self.fixture.root)
 
+    def test_case_mismatched_include_fails_closed(self) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm", 'incsrc "Core/Active.asm"\n'
+        )
+        self.fixture.write_text("Core/active.asm", "org $2E8000\n")
+
+        with self.assertRaisesRegex(
+            ManifestGenerationError,
+            r"Oracle_main\.asm:1: unresolved incsrc 'Core/Active\.asm'",
+        ):
+            collect_reachable_asm_sources(self.fixture.root)
+
     def test_disabled_sprite_edge_blocks_cross_root_descendants(
         self,
     ) -> None:

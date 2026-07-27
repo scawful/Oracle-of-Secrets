@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from dataclasses import dataclass, field
@@ -190,6 +191,27 @@ def _iter_active_incsrcs(
             yield line_number, include_text
 
 
+def _is_case_exact_file(candidate: Path, root: Path) -> bool:
+    """Return whether a candidate exists with repository-exact path casing."""
+    normalized = Path(os.path.normpath(candidate))
+    try:
+        relative = normalized.relative_to(root)
+    except ValueError:
+        # Preserve the caller's existing outside-root diagnostic.
+        return candidate.is_file()
+
+    current = root
+    for part in relative.parts:
+        try:
+            entries = {entry.name: entry for entry in current.iterdir()}
+        except OSError:
+            return False
+        if part not in entries:
+            return False
+        current = entries[part]
+    return current.is_file()
+
+
 def collect_reachable_asm_sources(
     root: Path,
     entry_point: Path = MANIFEST_ENTRY_POINT,
@@ -244,7 +266,7 @@ def collect_reachable_asm_sources(
             )
             included = next(
                 (candidate.resolve() for candidate in candidates
-                 if candidate.is_file()),
+                 if _is_case_exact_file(candidate, resolved_root)),
                 None,
             )
             if included is None:

@@ -291,7 +291,7 @@ incsrc "Sprites/Bosses/lanmola.asm"
 %log_end("lanmola", !LOG_DUNGEON)
 
 %log_start("lanmola_expanded", !LOG_DUNGEON)
-incsrc "Sprites/Bosses/lanmola_Expanded.asm"
+incsrc "Sprites/Bosses/lanmola_expanded.asm"
 %log_end("lanmola_expanded", !LOG_DUNGEON)
 
 %log_start("followers", !LOG_DUNGEON)
