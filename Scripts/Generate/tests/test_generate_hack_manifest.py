@@ -137,6 +137,90 @@ class ReachableSourceTest(unittest.TestCase):
         ):
             collect_reachable_asm_sources(self.fixture.root)
 
+    def test_disabled_sprite_edge_blocks_cross_root_descendants(
+        self,
+    ) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm",
+            'incsrc "Config/module_flags.asm"\n'
+            "if !DISABLE_SPRITES == 0\n"
+            '  incsrc "Sprites/disabled.asm"\n'
+            "endif\n"
+            'incsrc "Core/shared.asm"\n',
+        )
+        self.fixture.write_text(
+            "Config/module_flags.asm",
+            "!DISABLE_SPRITES = 1\n",
+        )
+        self.fixture.write_text(
+            "Sprites/disabled.asm",
+            'incsrc "../Core/sprite_only.asm"\n'
+            'incsrc "../Core/shared.asm"\n',
+        )
+        self.fixture.write_text(
+            "Core/sprite_only.asm",
+            "org $2F8000\n"
+            "db $00\n",
+        )
+        self.fixture.write_text(
+            "Core/shared.asm",
+            "org $2E8000\n"
+            "db $00\n",
+        )
+
+        sources = {
+            path.relative_to(self.fixture.root.resolve()).as_posix()
+            for path in collect_reachable_asm_sources(self.fixture.root)
+        }
+        manifest = generate_manifest(self.fixture.root)
+
+        self.assertEqual(
+            sources,
+            {
+                "Oracle_main.asm",
+                "Config/module_flags.asm",
+                "Core/shared.asm",
+            },
+        )
+        self.assertEqual(
+            {
+                entry["bank"]
+                for entry in manifest["owned_banks"]["banks"]
+            },
+            {"0x2E"},
+        )
+
+    def test_missing_include_in_inactive_module_condition_is_ignored(
+        self,
+    ) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm",
+            'incsrc "Config/module_flags.asm"\n'
+            "if !DISABLE_SPRITES == 0\n"
+            '  incsrc "Sprites/missing.asm"\n'
+            "endif\n"
+            'incsrc "Core/active.asm"\n',
+        )
+        self.fixture.write_text(
+            "Config/module_flags.asm",
+            "!DISABLE_SPRITES = 1\n",
+        )
+        self.fixture.write_text("Core/active.asm", "org $2E8000\n")
+
+        sources = {
+            path.relative_to(self.fixture.root.resolve()).as_posix()
+            for path in collect_reachable_asm_sources(self.fixture.root)
+        }
+
+        self.assertEqual(
+            sources,
+            {
+                "Oracle_main.asm",
+                "Config/module_flags.asm",
+                "Core/active.asm",
+            },
+        )
+
     def test_manifest_excludes_unreachable_bank_claims_and_hooks(self) -> None:
         self.fixture.write_text(
             "Oracle_main.asm", 'incsrc "Core/active.asm"\n'

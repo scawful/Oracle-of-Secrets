@@ -46,9 +46,14 @@ from typing import Iterable, Optional
 
 # Import the existing hooks scanner infrastructure
 from generate_hooks_json import (
+    ELSE_DIRECTIVE_RE,
+    ENDIF_DIRECTIVE_RE,
+    IF_DIRECTIVE_RE,
+    _eval_condition,
     filter_active_asm_sources,
     scan_hooks,
     _load_global_defines,
+    _parse_define_assignment,
     HookEntry,
 )
 
@@ -122,15 +127,80 @@ def _parse_incsrc(line: str) -> Optional[str]:
     return next(value for value in match.groups() if value is not None)
 
 
+def _iter_active_incsrcs(
+    lines: list[str],
+    global_defines: dict[str, int],
+) -> Iterable[tuple[int, str]]:
+    """Yield literal includes whose enclosing Asar condition is active."""
+    defines = dict(global_defines)
+    active = True
+    stack: list[dict[str, object]] = []
+
+    for line_number, line in enumerate(lines, start=1):
+        directive = line.split(";", 1)[0].strip()
+        match = IF_DIRECTIVE_RE.match(directive)
+        if match:
+            kind = match.group(1).lower()
+            condition = _eval_condition(match.group(2).strip(), defines)
+            condition_active = (
+                bool(condition) if condition is not None else True
+            )
+            if kind == "if":
+                parent_active = active
+                branch_taken = parent_active and condition_active
+                active = branch_taken
+                stack.append({
+                    "parent_active": parent_active,
+                    "branch_taken": branch_taken,
+                })
+            elif stack:
+                frame = stack[-1]
+                parent_active = bool(frame["parent_active"])
+                branch_taken = bool(frame["branch_taken"])
+                active = (
+                    parent_active
+                    and not branch_taken
+                    and condition_active
+                )
+                frame["branch_taken"] = branch_taken or active
+            continue
+        if ELSE_DIRECTIVE_RE.match(directive):
+            if stack:
+                frame = stack[-1]
+                parent_active = bool(frame["parent_active"])
+                branch_taken = bool(frame["branch_taken"])
+                active = parent_active and not branch_taken
+                frame["branch_taken"] = True
+            continue
+        if ENDIF_DIRECTIVE_RE.match(directive):
+            if stack:
+                frame = stack.pop()
+                active = bool(frame["parent_active"])
+            continue
+        if not active:
+            continue
+
+        parsed_define = _parse_define_assignment(line)
+        if parsed_define is not None:
+            name, value = parsed_define
+            defines[name] = value
+
+        include_text = _parse_incsrc(line)
+        if include_text is not None:
+            yield line_number, include_text
+
+
 def collect_reachable_asm_sources(
     root: Path,
     entry_point: Path = MANIFEST_ENTRY_POINT,
+    defines: Optional[dict[str, int]] = None,
 ) -> list[Path]:
     """Collect the transitive literal `incsrc` graph for the build entry.
 
     Asar sources in this repository use both paths relative to the including
-    file and repo-root-relative paths. Try those forms in that order and fail
-    closed if a reachable include cannot be resolved.
+    file and repo-root-relative paths. Follow only active conditional edges,
+    gate disabled module roots before traversal, and fail closed if an active
+    reachable include cannot be resolved.
     """
     resolved_root = root.resolve()
     entry = entry_point if entry_point.is_absolute() else resolved_root / entry_point
@@ -142,6 +212,11 @@ def collect_reachable_asm_sources(
             f"ASM entry point is outside repo root: {entry}"
         )
 
+    active_defines = (
+        _load_global_defines(resolved_root)
+        if defines is None
+        else dict(defines)
+    )
     pending = [entry]
     reachable: set[Path] = set()
     while pending:
@@ -159,11 +234,9 @@ def collect_reachable_asm_sources(
                 f"Unable to read reachable ASM source {asm_path}: {exc}"
             ) from exc
 
-        for line_number, line in enumerate(lines, start=1):
-            include_text = _parse_incsrc(line)
-            if include_text is None:
-                continue
-
+        for line_number, include_text in _iter_active_incsrcs(
+            lines, active_defines
+        ):
             include_path = Path(include_text)
             candidates = (
                 asm_path.parent / include_path,
@@ -186,6 +259,10 @@ def collect_reachable_asm_sources(
                     f"{rel}:{line_number}: incsrc escapes repo root: "
                     f"{include_text!r}"
                 )
+            if not filter_active_asm_sources(
+                resolved_root, [included], active_defines
+            ):
+                continue
             pending.append(included)
 
     return sorted(reachable)
