@@ -3,11 +3,13 @@ name: Manifest Generator Tests
 on:
   push:
     paths:
-      - 'Scripts/**'
+      - '**/*.asm'
+      - 'Scripts/Generate/**'
       - '.github/workflows/manifest-tests.yml'
   pull_request:
     paths:
-      - 'Scripts/**'
+      - '**/*.asm'
+      - 'Scripts/Generate/**'
       - '.github/workflows/manifest-tests.yml'
   workflow_dispatch:
 

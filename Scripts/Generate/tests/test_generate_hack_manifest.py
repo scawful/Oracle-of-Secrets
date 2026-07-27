@@ -221,6 +221,42 @@ class ReachableSourceTest(unittest.TestCase):
             {"0x20AF20", "0x20F000"},
         )
 
+    def test_disabled_overworld_incsrc_cannot_leak_manifest_state(
+        self,
+    ) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm",
+            'incsrc "Config/module_flags.asm"\n'
+            'incsrc "Core/active.asm"\n'
+            'incsrc "Overworld/disabled.asm"\n',
+        )
+        self.fixture.write_text(
+            "Config/module_flags.asm",
+            "!DISABLE_OVERWORLD = 1\n",
+        )
+        self.fixture.write_text(
+            "Core/active.asm",
+            "org $2E8000\n"
+            "db $00\n",
+        )
+        self.fixture.write_text(
+            "Overworld/disabled.asm",
+            "org $008200\n"
+            "JSL DisabledOverworldHook\n"
+            "org $01CC18 : JML DisabledTag ; @hook name=DisabledTag\n"
+            "org $408000\n"
+            "db $00\n",
+        )
+
+        manifest = generate_manifest(self.fixture.root)
+        owned_banks = {
+            entry["bank"] for entry in manifest["owned_banks"]["banks"]
+        }
+
+        self.assertEqual(manifest["summary"]["total_hooks"], 1)
+        self.assertEqual(owned_banks, {"0x2E"})
+        self.assertEqual(manifest["room_tags"]["tags"], [])
+
 
 class RepositorySourceRegressionTest(unittest.TestCase):
     def test_real_fastrom_orgs_use_physical_manifest_ranges(self) -> None:

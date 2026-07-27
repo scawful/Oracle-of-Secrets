@@ -46,6 +46,7 @@ from typing import Iterable, Optional
 
 # Import the existing hooks scanner infrastructure
 from generate_hooks_json import (
+    filter_active_asm_sources,
     scan_hooks,
     _load_global_defines,
     HookEntry,
@@ -211,11 +212,12 @@ def scan_bank_ownership(
     root = root.resolve()
     bank_sources: dict[int, list[dict]] = {}
 
-    source_paths = (
+    candidate_paths = (
         collect_reachable_asm_sources(root)
         if asm_paths is None
         else asm_paths
     )
+    source_paths = filter_active_asm_sources(root, candidate_paths)
     for asm_path in source_paths:
         asm_path = asm_path.resolve()
         try:
@@ -436,10 +438,13 @@ def scan_room_tags(
     root = root.resolve()
     tags: dict[int, dict] = {}
 
-    source_paths = (
+    candidate_paths = (
         collect_reachable_asm_sources(root)
         if asm_paths is None
         else asm_paths
+    )
+    source_paths = filter_active_asm_sources(
+        root, candidate_paths, defines
     )
     for asm_path in source_paths:
         asm_path = asm_path.resolve()
@@ -898,10 +903,13 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
     import hashlib
 
     root = root.resolve()
-    asm_sources = collect_reachable_asm_sources(root)
+    reachable_sources = collect_reachable_asm_sources(root)
 
     # Load defines for conditional compilation evaluation
     defines = _load_global_defines(root)
+    asm_sources = filter_active_asm_sources(
+        root, reachable_sources, defines
+    )
 
     # Scan only the source graph assembled from Oracle_main.asm. Local ignored
     # assets and archived experiments must not claim ROM ownership.

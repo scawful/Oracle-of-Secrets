@@ -54,6 +54,16 @@ SKIP_DIRS = {
     'ZScreamNew',
 }
 
+MODULE_DISABLE_FLAGS = {
+    "Music": "DISABLE_MUSIC",
+    "Overworld": "DISABLE_OVERWORLD",
+    "Dungeons": "DISABLE_DUNGEON",
+    "Sprites": "DISABLE_SPRITES",
+    "Masks": "DISABLE_MASKS",
+    "Items": "DISABLE_ITEMS",
+    "Menu": "DISABLE_MENU",
+}
+
 EXPECTED_MX = {
     0x008000: (8, 8),     # Reset
     0x0080C9: (8, 8),     # NMI
@@ -443,6 +453,40 @@ def _should_skip(path: Path) -> bool:
     return False
 
 
+def filter_active_asm_sources(
+    root: Path,
+    asm_paths: Iterable[Path],
+    defines: Optional[dict[str, int]] = None,
+) -> list[Path]:
+    """Remove top-level modules disabled by the current build flags."""
+    root = root.resolve()
+    active_defines = _load_global_defines(root) if defines is None else defines
+    disabled_roots = {
+        source_root
+        for source_root, flag in MODULE_DISABLE_FLAGS.items()
+        if active_defines.get(flag) == 1
+    }
+
+    active_sources: list[Path] = []
+    for source_path in asm_paths:
+        asm_path = source_path.resolve()
+        try:
+            rel = asm_path.relative_to(root)
+        except ValueError as exc:
+            raise ValueError(
+                f"ASM source is outside repo root: {asm_path}"
+            ) from exc
+        if rel.parts and rel.parts[0] in disabled_roots:
+            continue
+        if (
+            active_defines.get("DISABLE_PATCHES") == 1
+            and rel.as_posix() == "Core/patches.asm"
+        ):
+            continue
+        active_sources.append(asm_path)
+    return active_sources
+
+
 def scan_hooks(
     root: Path,
     asm_paths: Optional[Iterable[Path]] = None,
@@ -452,24 +496,11 @@ def scan_hooks(
     explicit_sources = asm_paths is not None
 
     global_defines = _load_global_defines(root)
-    disabled_dirs: set[str] = set()
-    if global_defines.get("DISABLE_MUSIC") == 1:
-        disabled_dirs.add("Music")
-    if global_defines.get("DISABLE_OVERWORLD") == 1:
-        disabled_dirs.add("Overworld")
-    if global_defines.get("DISABLE_DUNGEON") == 1:
-        disabled_dirs.add("Dungeons")
-    if global_defines.get("DISABLE_SPRITES") == 1:
-        disabled_dirs.add("Sprites")
-    if global_defines.get("DISABLE_MASKS") == 1:
-        disabled_dirs.add("Masks")
-    if global_defines.get("DISABLE_ITEMS") == 1:
-        disabled_dirs.add("Items")
-    if global_defines.get("DISABLE_MENU") == 1:
-        disabled_dirs.add("Menu")
-
     source_paths = root.rglob('*.asm') if asm_paths is None else asm_paths
-    for source_path in source_paths:
+    active_sources = filter_active_asm_sources(
+        root, source_paths, global_defines
+    )
+    for source_path in active_sources:
         asm_path = source_path.resolve()
         if not explicit_sources and _should_skip(asm_path):
             continue
@@ -480,10 +511,6 @@ def scan_hooks(
                 raise ValueError(
                     f"Explicit ASM source is outside repo root: {asm_path}"
                 )
-            continue
-        if rel.parts and rel.parts[0] in disabled_dirs:
-            continue
-        if global_defines.get("DISABLE_PATCHES") == 1 and rel.as_posix() == "Core/patches.asm":
             continue
         try:
             lines = asm_path.read_text(encoding='utf-8', errors='ignore').splitlines()
