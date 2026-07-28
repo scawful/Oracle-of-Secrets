@@ -4,12 +4,20 @@ on:
   push:
     paths:
       - '**/*.asm'
+      - 'Data/dialogue/expanded_messages.json'
+      - 'Scripts/Build/build_rom.sh'
       - 'Scripts/Generate/**'
+      - 'Oracle-of-Secrets.yaze'
+      - '.gitattributes'
       - '.github/workflows/manifest-tests.yml'
   pull_request:
     paths:
       - '**/*.asm'
+      - 'Data/dialogue/expanded_messages.json'
+      - 'Scripts/Build/build_rom.sh'
       - 'Scripts/Generate/**'
+      - 'Oracle-of-Secrets.yaze'
+      - '.gitattributes'
       - '.github/workflows/manifest-tests.yml'
   workflow_dispatch:
 
@@ -27,9 +35,9 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run manifest generator tests
+      - name: Run manifest and source contract tests
         run: >-
           python3 -m unittest discover
           -s Scripts/Generate/tests
-          -p 'test_generate_hack_manifest.py'
+          -p 'test_*.py'
           -v

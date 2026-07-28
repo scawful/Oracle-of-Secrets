@@ -108,6 +108,13 @@ INCSRC_RE = re.compile(
 )
 
 MANIFEST_ENTRY_POINT = Path("Oracle_main.asm")
+EXPANDED_MESSAGE_WRAPPER = Path("Core/message.asm")
+EXPANDED_MESSAGE_ASM_INCLUDE = Path(
+    "Core/Generated/expanded_messages.asm"
+)
+EXPANDED_MESSAGE_BUNDLE = Path("Data/dialogue/expanded_messages.json")
+EXPANDED_MESSAGE_DATA_START = 0x2F8026
+EXPANDED_MESSAGE_DATA_END = 0x2FFDFF
 DUNGEON_ROOM_COUNT = 296
 ROOM_HEADER_POINTER_PC = 0xB5DD
 ROOM_HEADER_BANK_PC = 0xB5E7
@@ -444,20 +451,21 @@ def scan_bank_ownership(
 
 def scan_message_layout(root: Path) -> dict:
     """Extract expanded message range and individual message IDs."""
-    msg_file = root / "Core" / "message.asm"
-    if not msg_file.exists():
+    wrapper_file = root / EXPANDED_MESSAGE_WRAPPER
+    include_file = root / EXPANDED_MESSAGE_ASM_INCLUDE
+    if not wrapper_file.exists() or not include_file.exists():
         return {}
 
-    text = msg_file.read_text(encoding="utf-8", errors="ignore")
-    lines = text.splitlines()
+    wrapper_text = wrapper_file.read_text(encoding="utf-8", errors="ignore")
+    wrapper_lines = wrapper_text.splitlines()
+    include_text = include_file.read_text(encoding="utf-8", errors="ignore")
+    include_lines = include_text.splitlines()
 
     messages: list[dict] = []
-    data_start = None
-    data_end = None
     hook_address = None
     last_org_addr = None
 
-    for i, line in enumerate(lines):
+    for line in wrapper_lines:
         # Track org directives so we can associate inline `JML MessageExpand`.
         m = ORG_BANK_RE.match(line)
         if m:
@@ -473,7 +481,9 @@ def scan_message_layout(root: Path) -> dict:
             if ((last_org_addr >> 16) & 0xFF) == 0x0E:
                 hook_address = f"0x{last_org_addr:06X}"
 
-        # Find message labels
+    for i, line in enumerate(include_lines):
+        # Message bodies live in the generated include so Yaze can replace
+        # them without touching the loader and hook wrapper.
         ml = MESSAGE_LABEL_RE.match(line)
         if ml:
             msg_id = int(ml.group(1), 16)
@@ -490,17 +500,6 @@ def scan_message_layout(root: Path) -> dict:
                 "line": i + 1,
             })
 
-        # Find data start (MessageExpandedData label)
-        if "MessageExpandedData:" in line:
-            # The data region starts at this label's PC,
-            # which is shortly after org $2F8000
-            data_start = "MessageExpandedData"
-
-        # Find assert at end of message bank
-        am = ASSERT_PC_RE.search(line)
-        if am:
-            data_end = f"0x{int(am.group(1), 16):06X}"
-
     if not messages:
         return {}
 
@@ -512,8 +511,8 @@ def scan_message_layout(root: Path) -> dict:
     return {
         "hook_address": hook_address,
         "data_bank": "0x2F",
-        "data_start": "0x2F8000",
-        "data_end": data_end,
+        "data_start": f"0x{EXPANDED_MESSAGE_DATA_START:06X}",
+        "data_end": f"0x{EXPANDED_MESSAGE_DATA_END:06X}",
         "expanded_range": {
             "first": f"0x{min(msg_ids):03X}",
             "last": f"0x{max(msg_ids):03X}",
@@ -1031,8 +1030,8 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
         "entry_point": str(MANIFEST_ENTRY_POINT),
         "build_script": "Scripts/Build/build_rom.sh",
         "flow": [
-            "1. Yaze edits dev ROM (room data, sprites, palettes, messages)",
-            "2. asar reads dev ROM + ASM sources",
+            "1. Yaze edits dev ROM data and tracked source artifacts, including the canonical expanded-message bundle and generated include",
+            "2. asar reads the dev ROM and tracked ASM sources",
             "3. asar writes patched ROM with all org/freedata applied",
             "4. Patched ROM is the playable output",
         ],
@@ -1112,11 +1111,19 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
     messages = scan_message_layout(root)
     if messages:
         manifest["messages"] = {
-            "description": "Expanded message system. Vanilla messages ($000-$18C) live in bank $0E of the dev ROM — yaze can edit these. Expanded messages ($18D+) live in bank $2F, owned by ASM. The hook at $0ED436 redirects message reads for expanded IDs. Yaze's message-write CLI can target expanded IDs if it knows the data region bounds.",
+            "description": "Expanded message system. Vanilla messages ($000-$18C) live in bank $0E of the dev ROM — yaze can edit these. Expanded messages ($18D+) live in ASM-owned bank $2F. Direct editor or CLI writes to expanded ROM data are not durable because the next ASM rebuild replaces bank $2F. Use the canonical source bundle and generated include instead.",
             "editing_guidance": {
                 "vanilla_safe": "Message IDs $000-$18C can be edited in the dev ROM via yaze",
-                "expanded_asm_owned": "Message IDs $18D+ are in bank $2F; edit via Core/message.asm or z3ed message-write CLI",
+                "expanded_asm_owned": "Message IDs $18D+ are in ASM-owned bank $2F. Update Data/dialogue/expanded_messages.json and regenerate Core/Generated/expanded_messages.asm through Yaze source sync, rebuild with Scripts/Build/build_rom.sh 168, then reopen or reload Roms/oos168x.sfc for inspection. Do not edit the patched ROM directly.",
                 "hook_address": "$0ED436 (do not overwrite — asar patches this)",
+            },
+            "source": {
+                "format": "yaze-message-bundle",
+                "version": 1,
+                "canonical_bundle_path": str(EXPANDED_MESSAGE_BUNDLE),
+                "generated_asm_include_path": str(
+                    EXPANDED_MESSAGE_ASM_INCLUDE
+                ),
             },
             **messages,
         }

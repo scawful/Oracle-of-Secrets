@@ -1,7 +1,7 @@
 # Oracle Agent Context Model
 
 **Status:** Active  
-**Last Reviewed:** 2026-02-22  
+**Last Reviewed:** 2026-07-27
 **Scope:** Oracle-of-Secrets agent workflows (Claude, Codex, Gemini, others)
 
 ## Purpose
@@ -56,7 +56,11 @@ When two sources disagree, resolve in this order:
   `z3ed message-import-bundle --file <bundle.json> --strict`
 
 Persistence rules:
-- `expanded` messages must be committed in `Core/message.asm` for durable rebuild behavior.
+- `expanded` messages must be committed in the canonical
+  `Data/dialogue/expanded_messages.json` bundle together with its regenerated
+  `Core/Generated/expanded_messages.asm` include.
 - `vanilla` messages can use `z3ed ... --apply` as part of the base-ROM workflow.
 
-`z3ed ... --apply` against patched output ROMs is non-durable across `build_rom.sh` runs unless source ASM is updated.
+`z3ed ... --apply` against patched output ROMs is non-durable across
+`build_rom.sh` runs unless the canonical bundle and generated include are
+updated together.

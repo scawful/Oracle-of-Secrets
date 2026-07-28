@@ -1,0 +1,555 @@
+{
+  "counts": {
+    "expanded": 109,
+    "vanilla": 0
+  },
+  "format": "yaze-message-bundle",
+  "messages": [
+    {
+      "bank": "expanded",
+      "id": 0,
+      "text": "T[D:2C]gle, T[D:2C]gle, Koo[D:33]-Limpah![2]Ah, [D:5B] th[D:1E]e![3]Do [D:5B] [D:48]ek [D:35]ps, my fri[D:1D]d?[K][V]T[D:2C]gle [D:26] [D:53]avel[D:1C]far [D:08][V][D:5A]de across Kalyxo [D:52] c[D:29]rt[V][D:50] un[D:30]n! F[D:40] a sm[D:06]fee,[K][V][D:3E] cour[D:48][...][V][D:00]> Wh[D:09][D:17] [D:5B] [D:25]?[V][D:00][D:01]I'm okay.[CH2I]"
+    },
+    {
+      "bank": "expanded",
+      "id": 1,
+      "text": "Ah, a w[D:2D]e choice![2]W[D:2E]h t[D:28]s [D:35]p, no [D:48]c[D:46]t[3][D:5A]ll [D:0F] [D:28]dd[D:18][D:21]m [D:5B]![K][V]Ju[D:4B] h[D:04]ov[D:19][D:50] r[D:54]ees[V][D:04]let [D:50] adv[D:1B]u[D:45][D:0F]g[D:2C]!"
+    },
+    {
+      "bank": "expanded",
+      "id": 2,
+      "text": "Oh d[D:1A]...[2]It [D:48]ems [D:5B]r po[D:14]ets [D:05]a[3]a b[D:2E] light. Co[D:36] [D:0E][D:14] [D:59][D:1D][K][V][D:5B]r [D:57]llet [D:2D] as full as m[D:2C]e![V]T[D:2C]gle [D:5A]ll [D:57][D:2E], [D:17]n't[V][D:5B] w[D:40]ry!"
+    },
+    {
+      "bank": "expanded",
+      "id": 3,
+      "text": "Ah, my [D:0F][D:4B] cu[D:4B]om[D:1E]![2][D:60] [D:05][D:0F][D:13][D:2B]qu[D:2E]e[3][D:50] collect[D:40] [D:3E] [D:35]ps![K][V]May[D:0F] [D:3F]e day T[D:2C]gle[V][D:5A]ll na[D:36] a p[D:32]ce aft[D:19][D:5B]!"
+    },
+    {
+      "bank": "expanded",
+      "id": 4,
+      "text": "T[D:2C]gle, T[D:2C]gle, Koo[D:33]-Limpah![2]Ah, [D:48]ek[D:2B][D:50] [D:48]c[D:46]ts [D:3E][3][D:50] Mu[D:49]room Grot[D:52], [D:05][D:5B]?[K][V][D:5E] Toad[D:4B]ool Woods [D:05]a[V][D:53]i[D:14]y p[D:32]ce[...] p[D:0C]hs [D:48]em [D:52][V]tw[D:2D]t [D:04]turn [D:20][D:1F][D:1E].[K][V]May[D:0F] [D:4A][D:36][D:3F]e [D:2C] [D:52]wn [D:26][V]figur[D:1C][D:3D]how [D:52] [D:4A]lve [D:2E]s[V]my[D:4B][D:1E]ies![K][V] How [D:17]es 50 r[D:54]ees s[D:3C]?[V][D:00]> S[D:3C]s [D:24]od[V][D:00][D:01]I'll take my ch[D:0B]ces[CH2I]"
+    },
+    {
+      "bank": "expanded",
+      "id": 5,
+      "text": "T[D:2C]gle, T[D:2C]gle, Koo[D:33]-Limpah![2]Ah, [D:50] Tail Pa[D:32]ce![3][K][V][D:5E] p[D:0C]h through [D:50] s[D:57]mps[V][D:2D] [D:4A][D:36]t[D:28]ng [D:3F][D:31]a Deku could[V]navig[D:0C]e [D:13][D:20]tably[...][K][V] How [D:17]es 75 r[D:54]ees s[D:3C]?[V][D:00]> S[D:3C]s [D:24]od[V][D:00][D:01]I'll take my ch[D:0B]ces[CH2I]"
+    },
+    {
+      "bank": "expanded",
+      "id": 6,
+      "text": "T[D:2C]gle, T[D:2C]gle, Koo[D:33]-Limpah![2][D:5E] gr[D:04]Kalyxo C[D:0A]le![3][K][V][D:5E]y say [D:50] K[D:2B][D:3E] Kalyxo[V][D:28]d a [D:43][D:1E]ful [D:58]ap[D:3F], deep[V]w[D:2E][D:28]n [D:50] c[D:0A]le [D:57]lls.[K][V] How [D:17]es 100 r[D:54]ees s[D:3C]?[V][D:00]> S[D:3C]s [D:24]od[V][D:00][D:01]I'll take my ch[D:0B]ces[CH2I]"
+    },
+    {
+      "bank": "expanded",
+      "id": 7,
+      "text": "T[D:2C]gle, T[D:2C]gle, Koo[D:33]-Limpah![2]Ah, [D:50] Z[D:40]a Tem[D:42]![3][K][V][D:5E] Z[D:40]a k[D:2C]g[D:17]m [D:2D] [D:2C][V]c[D:29]os... [D:50] riv[D:19][D:04][D:48]a[V]Z[D:40]as [D:25] [D:0F][D:18][D:09]odds.[K][V]P[D:1E][D:29]ps [D:2E][D:03]c[D:3F]nect[D:1C][D:52][V]a c[D:1E]t[D:07]... royal sc[D:08]al?[K][V] How [D:17]es 80 r[D:54]ees s[D:3C]?[V][D:00]> S[D:3C]s [D:24]od[V][D:00][D:01]I'll take my ch[D:0B]ces[CH2I]"
+    },
+    {
+      "bank": "expanded",
+      "id": 8,
+      "text": "T[D:2C]gle, T[D:2C]gle, Koo[D:33]-Limpah![2]Ah, [D:5B] w[D:2D]h [D:52] exp[D:33][D:46][3]G[D:32]cia E[D:4B][D:0C]e?[K][V]A p[D:32]ce [D:3F]ce fill[D:1C]w[D:2E]h [D:58]alth[V][D:04][D:43][D:1E]... but now? [D:5E]y[V]say spir[D:2E]s [D:57]lk [D:2E]s [D:29]lls[...][K][V]And th[D:09]th[D:1E]e[D:03][D:4A][D:36][D:3F]e[V][D:57][D:2E][D:2B][D:20] [D:5B]... a v[D:1E]y[V]c[D:28]ll[D:2B][D:58]l[D:13]e.[K][V] How [D:17]es 90 r[D:54]ees s[D:3C]?[V][D:00]> S[D:3C]s [D:24]od[V][D:00][D:01]I'll take my ch[D:0B]ces[CH2I]"
+    },
+    {
+      "bank": "expanded",
+      "id": 9,
+      "text": "T[D:2C]gle, T[D:2C]gle, Koo[D:33]-Limpah![2]Ah, [D:50] G[D:40][D:3F] M[D:2C]es?[3][K][V]I've h[D:1A]d [D:50] G[D:40][D:3F]s[V][D:05][D:46][D:4B]less... [D:4A][D:36]t[D:28]ng[V]a[D:10]ut m[D:2D]s[D:2B]ro[D:14] [D:36][D:0C]?[K][V][D:60]ll ne[D:1C]m[D:40]e th[D:0B][V][D:2F] [D:4B]r[D:1D]gth [D:52] cra[D:14][V]tho[D:48] m[D:2C]es op[D:1D]![K][V] How [D:17]es 60 r[D:54]ees s[D:3C]?[V][D:00]> S[D:3C]s [D:24]od[V][D:00][D:01]I'll take my ch[D:0B]ces[CH2I]"
+    },
+    {
+      "bank": "expanded",
+      "id": 10,
+      "text": "T[D:2C]gle, T[D:2C]gle, Koo[D:33]-Limpah![2]Ah, Kydrog[D:03]s[D:28]p![3][K][V]A f[D:1A][D:4A][D:36] ves[D:48]l, [D:50]y say[V][D:3F][D:31]tho[D:48] [D:59]o c[D:0B] [D:4A]ar[V][D:5A]ll [D:46]ach [D:2E]![K][V] How [D:17]es 120 r[D:54]ees s[D:3C]?[V][D:00]> S[D:3C]s [D:24]od[V][D:00][D:01]I'll take my ch[D:0B]ces[CH2I]"
+    },
+    {
+      "bank": "expanded",
+      "id": 11,
+      "text": "Ah, [D:58]ll th[D:0C][D:03][D:52]o [D:0E]d.[2]Co[D:36] [D:0E][D:14] if [D:5B]'[D:45][D:2C]t[D:1E]e[D:4B]ed[3][D:2C] T[D:2C]gle[D:03][D:35]ps![K][V]T[D:2C]gle, T[D:2C]gle! Koo[D:33]o-Limpah![V][...][D:5E][D:48] [D:05][D:50] [D:35]gic w[D:40]ds[V]th[D:09]T[D:2C]gle c[D:46][D:0C][D:1C][D:28]m[D:48]lf.[K][V]Do[D:38][D:4B]eal [D:50]m!"
+    },
+    {
+      "bank": "expanded",
+      "id": 12,
+      "text": "[D:5E] [D:37][D:49]room [D:2D] no m[D:1E]e[2]growth [D:3E] [D:50] [D:1A]th.[3]Steep[D:1C][D:2C] [D:0B]ci[D:1B] [D:35]gic, [D:2E][K][V]br[D:2C]gs [D:20]th [D:59][D:09][D:2D] [D:28]dd[D:1D].[V]In [D:2E]s [D:43]d[D:19]lies [D:50] [D:43][D:1E][V][D:52] r[D:1F]eal [D:53]ue [D:20]ms, [D:48]c[D:46]ts[K][V][D:33]ng c[D:3F]ceal[D:1C]by n[D:0C]u[D:46]."
+    },
+    {
+      "bank": "expanded",
+      "id": 13,
+      "text": "[D:5E] w[D:2C]ds [D:3F]ce carri[D:1C]tho[D:48][2][D:59]o [D:4A]ar[D:1C]w[D:2E]h fe[D:0C]h[D:19][D:08][3]leaf, un[D:28]nd[D:1E][D:1C]by [D:50] [D:1A]th.[K][V]But w[D:2E]h [D:50] r[D:2D]e [D:3E] darkness,[V][D:50] sky turn[D:1C]ag[D:07][D:4B] [D:50]m.[V]Now, [D:3F][D:31]tho[D:48] [D:59]o embrace[K][V][D:50] sky[D:03]gifts [D:35]y ride [D:50][V]curr[D:1B]s [D:3E] f[D:46]e[D:17]m."
+    },
+    {
+      "bank": "expanded",
+      "id": 14,
+      "text": "A b[D:32]de [D:10]rn [D:2C] s[D:29][D:17]w, [D:50][2]Mea[D:17]w B[D:32]de [D:3F]ce [D:49][D:3F]e [D:2C][3][D:50] h[D:08]s [D:3E] a h[D:1E]o.[K][V]But darkness clung [D:52] [D:2E]s[V]edge, [D:04][D:50] h[D:1E]o [D:57]s [D:33][D:4B].[V]Now, [D:50] b[D:32]de [D:57][D:2E]s, buried[K][V][D:0F]ne[D:0C]h [D:50] [D:58][D:2A][D:3E][V][D:20][D:24]tt[D:18]amb[D:2E]i[D:3F]s."
+    },
+    {
+      "bank": "expanded",
+      "id": 15,
+      "text": "From cry[D:4B]al [D:04]w[D:0C][D:1E], [D:50][2]Z[D:40]a craft[D:1C]w[D:3F]d[D:1E]s th[D:0C][3]pi[D:1E]c[D:1C][D:50] veil [D:3E] [D:46]alms.[K][V][D:5E]ir w[D:40]ks op[D:1D][D:1C]p[D:0C]hs [D:52][V]p[D:32]ces un[D:48][D:1D], but [D:09]g[D:46][D:0C][V]co[D:4B].[K][V]Wh[D:09]f[D:33]ws through [D:50] w[D:0C][D:1E][V][D:35]y lead [D:52] salv[D:0C]i[D:3F][...] [D:40][V]ru[D:2C]."
+    },
+    {
+      "bank": "expanded",
+      "id": 16,
+      "text": "[D:5E] [D:29]lls [D:3E] G[D:32]cia [D:3F]ce echoed[2]w[D:2E]h [D:57]rmth [D:04][D:58]alth, yet[3]ice fill[D:1C][D:50]ir h[D:1A]ts.[K][V]In [D:50]ir g[D:46]ed, [D:50]y w[D:1E]e drawn[V][D:52] [D:43][D:1E]s th[D:09][D:21]ze [D:50]m [D:21]m[V]w[D:2E][D:28]n.[K][V]Now, [D:50]ir legacy [D:2D] but cold[V][D:4B][D:3F]e, a pr[D:2D][D:3F] [D:20] tho[D:48][V][D:59]o [D:4A]ught [D:52]o [D:37]ch."
+    },
+    {
+      "bank": "expanded",
+      "id": 17,
+      "text": "[D:5E] [D:1A]th s[D:2C]gs [D:3E] [D:43][D:1E],[2]buri[D:1C]deep [D:2C] [D:2E]s ve[D:2C]s.[3]Cry[D:4B]als, [D:20]g[D:1C][D:2C] [D:50] [D:0B]ci[D:1B][K][V]fi[D:46]s, hold [D:50] keys [D:52] [D:46]alms[V][D:0F]y[D:3F]d. But [D:43][D:19][D:13]es [D:09]a[V]price, [D:20] [D:50] [D:24]d[D:15][D:48]s[K][V]sc[D:0C]t[D:1E][D:1C][D:50]ir gifts across[V][D:50] l[D:08], [D:28]dd[D:18][D:21]m m[D:40]tals."
+    },
+    {
+      "bank": "expanded",
+      "id": 18,
+      "text": "A h[D:1E]o [D:3F]ce sail[D:1C][D:50] [D:48]as,[2]but f[D:0C]e turn[D:1C][D:28]m [D:52] ru[D:2C],[3]deep [D:2C] [D:50] [D:36]a[D:17]ws[...][K][V]From no[D:0D] h[D:1A]t [D:52] cur[D:48]d[V]capt[D:07], Kydrog now ri[D:15][V][D:50] [D:57]ves [D:3E] [D:50] Abyss.[K][V]In [D:28]s que[D:4B] [D:52] defy [D:50] [D:24]ds,[V]he [D:48]eks [D:3A] g[D:33]ry, but a[V][D:46]turn [D:52] [D:59][D:09][D:57]s [D:33][D:4B]."
+    },
+    {
+      "bank": "expanded",
+      "id": 19,
+      "text": "Ah, [D:0B]oth[D:19][D:48]c[D:46]t scroll![2][D:5E][D:48] [D:0B]ci[D:1B] wr[D:2E][D:2C]gs hold[3]my[D:4B][D:1E]ies [D:33]ng [D:33][D:4B] [D:52] ti[D:36].[K][V]Sh[D:06]I [D:53][D:0B]sl[D:0C]e [D:2E]s [D:20][D:24]tt[D:1D][V]w[D:40]ds [D:20] [D:5B]?[V][K][V]> Tr[D:0B]sl[D:0C]e [D:50] scroll[V][D:01]Read pr[D:1F]ious scroll[V][D:01]Do[D:38][D:52]uch my [D:4B]uff[CH3]"
+    },
+    {
+      "bank": "expanded",
+      "id": 20,
+      "text": "V[D:1E]y [D:58]ll. Let us unveil [D:50][2][D:48]c[D:46]ts [D:28]dd[D:18]w[D:2E][D:28]n t[D:28]s[3][D:0B]ci[D:1B] text.[K][V]L[D:2D]t[D:18]c[D:33][D:48]ly, [D:20] [D:50][D:48][V]w[D:40]ds carry g[D:46][D:09][D:58]ight."
+    },
+    {
+      "bank": "expanded",
+      "id": 21,
+      "text": "[D:5E] scroll [D:26] [D:0F][D:18][D:53][D:0B]sl[D:0C]ed.[2]A[D:3A]h[D:19]piece [D:3E] Kalyxos[3][D:28][D:4B][D:40]y r[D:1F]ealed.[K][V][D:5E][D:48] w[D:40]ds [D:35]y s[D:1E]ve [D:5B][V][D:58]ll, if [D:5B] he[D:1C][D:50]m."
+    },
+    {
+      "bank": "expanded",
+      "id": 22,
+      "text": "It [D:48]ems [D:5B]'ve collect[D:1C]all[2][D:50] scrolls [D:2C] [D:50] l[D:04][D:3E][3]Kalyxo! [D:60] [D:53]u[D:31][D:05][D:50] h[D:1E]o."
+    },
+    {
+      "bank": "expanded",
+      "id": 23,
+      "text": "[D:5E] pr[D:2C]cess[...] tak[D:18][D:21]m us![2]We [D:49]ould [D:25] [D:48][D:18][D:2E] [D:13][D:2C]g.[3][D:5E] Riv[D:19]Z[D:40]as grow [D:10]ld[D:1E][K][V]each day. Now, [D:50]y've [D:4B]ol[D:1D][V]our mo[D:4B] p[D:46]cious t[D:46]asu[D:46]![V]Who [D:5A]ll [D:44]tect us now?"
+    },
+    {
+      "bank": "expanded",
+      "id": 24,
+      "text": "[D:60] c[D:0B]t s[D:5A]m, c[D:0B] [D:5B]? It's[2]no surpr[D:2D]e[...] [D:50] w[D:0C][D:1E]s h[D:1E]e[3][D:05]t[D:46]a[D:12]rous.[K][V]But I've h[D:1A]d w[D:28]sp[D:1E]s [D:3E] [D:50][V]Abyss[...] [D:2C] th[D:09]dark p[D:32]ce, [D:50][V]flipp[D:1E]s [D:05]said [D:52] [D:0F] [D:28]dd[D:1D].[K][V]If [D:5B] could f[D:2C]d [D:50]m, p[D:1E][D:29]ps[V][D:50] w[D:0C][D:1E]s would no [D:33]ng[D:1E][V]hold [D:5B] [D:0E][D:14]."
+    },
+    {
+      "bank": "expanded",
+      "id": 25,
+      "text": "[D:5E] pr[D:2C]cess [D:35]y [D:0F] [D:24]ne [D:21]m[2]t[D:28]s w[D:40]ld, but h[D:19]spir[D:2E] [D:26][3]f[D:3C] new life [D:2C] [D:5B].[K][V][D:5E] Z[D:40]a Mask carries h[D:1E][V]voice, h[D:19]w[D:2D][D:17]m[...] [D:04]a[V]piece [D:3E] our h[D:1A]ts.[K][V]Protect [D:2E] [D:58]ll, brave [D:3F]e."
+    },
+    {
+      "bank": "expanded",
+      "id": 26,
+      "text": "Hey, [D:53]avel[D:1E]! [D:5E][D:48] m[D:2C]es[2][D:05][D:48]al[D:1C]tight. W[D:2E]h[D:3D]Ro[D:14][3]Sir[D:33][D:2C]s, I [D:17]nt [D:25] [D:50][K][V][D:4B]r[D:1D]gth [D:52] b[D:46]ak through![V]We G[D:40][D:3F]s ne[D:1C]th[D:09]h[D:1A]ty[V][D:36][D:09][D:52] fuel us[...][K][V][D:3A][D:28]ng el[D:48] pa[D:14]s [D:50] punch![V]Br[D:2B][D:36] five, [D:04]I'll op[D:1D][V][D:50] [D:57]y [D:20] [D:5B]!"
+    },
+    {
+      "bank": "expanded",
+      "id": 27,
+      "text": "Hmm[...] t[D:28]s [D:2D] a [D:4B]art, but I[2]ne[D:1C]five Ro[D:14] Sir[D:33][D:2C]s [D:52][3][D:23] [D:50] job [D:17]ne![K][V]Keep s[D:1A]c[D:28]ng, fri[D:1D]d! Tho[D:48][V]ro[D:14]s ar[D:1D]'t [D:24][D:2B][D:52] budge[V][D:3F] [D:50]ir own!"
+    },
+    {
+      "bank": "expanded",
+      "id": 28,
+      "text": "Ah! Now th[D:0C][D:03][D:59][D:09]I'm talk[D:2C]'[2]a[D:10]ut! Five Ro[D:14] Sir[D:33][D:2C]s![3]T[D:28]s [D:2D] [D:46]al[D:31][D:2E]![K][V]W[D:2E]h t[D:28]s, I've [D:24]t [D:06][D:50][V][D:4B]r[D:1D]gth I ne[D:1C][D:52] cra[D:14] [D:50][D:48][V]m[D:2C]es op[D:1D]![K][V]St[D:04][D:0E][D:14], fri[D:1D]d[...][D:50][D:48][V][D:4B][D:3F]es [D:05]a[D:10]ut [D:52] feel [D:50][V]m[D:2A][D:3E] a [D:53]ue G[D:40][D:3F]!"
+    },
+    {
+      "bank": "expanded",
+      "id": 29,
+      "text": "Ah, [D:53]avel[D:19][D:21]m [D:0F]y[D:3F]d...[2][D:5B] [D:4B][D:04]n[D:1A] [D:50] Temp[D:40]al[3]Pyramid, a p[D:32]ce [D:3E] [D:0F]g[D:2C]n[D:2C]gs.[K][V][D:5E] Shr[D:2C]e [D:3E] Orig[D:2C]s lies [D:58][D:4B],[V]a p[D:32]ce [D:3E] [D:0B]ci[D:1B] [D:43][D:1E].[K][V]On[D:31][D:50] sm[D:06][D:35]y t[D:46]ad [D:2E]s[V]p[D:0C]hs, [D:20] [D:50] [D:48]c[D:46]ts w[D:2E][D:28]n[V][D:05][D:28]dd[D:18][D:21]m [D:50] unw[D:40]thy.[K][V]Leg[D:1D]ds say [D:2E] gr[D:0B]ts a [D:46]lic[V]th[D:09]holds [D:20]m [D:4B]eady [D:1F][D:18][D:2C][V]t[D:28]s un[D:4B]a[D:0D] [D:46]alm."
+    },
+    {
+      "bank": "expanded",
+      "id": 30,
+      "text": "[D:60]'ve [D:13]e far [D:52] t[D:28]s p[D:32]ce.[2][D:5E] Shr[D:2C]e [D:3E] Pow[D:19]lies w[D:2E][D:28]n[3][D:50] mount[D:07]s, [D:59][D:1E]e [D:50] l[D:08][K][V][D:2E][D:48]lf gro[D:0B]s und[D:19][D:2E]s [D:58]ight.[V]Th[D:1E]e, [D:5B] [D:5A]ll f[D:2C]d a t[D:46]asu[D:46][V]th[D:09]gr[D:0B]ts [D:50] [D:4B]r[D:1D]gth [D:52][K][V]move [D:1F][D:18][D:50] unmova[D:0D].[V]But [D:0F][D:57][D:46], such [D:43][D:19][D:2D][V]n[D:1F][D:19]giv[D:18]f[D:46]ely. On[D:31]tho[D:48][K][V]w[D:2E]h un[D:57]v[D:1E][D:2B][D:46][D:4A]lve [D:1D]du[D:46]."
+    },
+    {
+      "bank": "expanded",
+      "id": 31,
+      "text": "[D:5E] w[D:0C][D:1E]s [D:3E] t[D:28]s [D:46]alm a[D:46][2][D:3A] k[D:2C]d [D:52] outsid[D:1E]s like [D:5B].[3]Bey[D:3F]d t[D:28]s s[D:57]mp lies[K][V][D:50] Shr[D:2C]e [D:3E] W[D:2D][D:17]m, [D:59][D:1E]e[V][D:50] flipp[D:1E]s [D:46][D:4B].[V]W[D:2E]h [D:50]m, [D:3F]e [D:35]y s[D:5A]m [D:50][K][V]deepe[D:4B] curr[D:1B]s [D:04]uncov[D:1E][V][D:59][D:09][D:50] Abyss [D:28][D:15].[V]But [D:52] c[D:32]im [D:50]m, [D:5B] [D:37][D:4B][K][V]p[D:0C]h [D:50] [D:57]y [D:20][D:57]rd through[V][D:4A][D:36] oth[D:19][D:36][D:0B]s[...]"
+    },
+    {
+      "bank": "expanded",
+      "id": 32,
+      "text": "Kydrog [D:57]s [D:3F]ce a h[D:1E]o,[2]chos[D:18]by [D:50] Mea[D:17]w B[D:32]de[3][D:2C] [D:50] Mea[D:17]w [D:3E] S[D:29][D:17]ws.[K][V]But amb[D:2E]i[D:3F] c[D:33]ud[D:1C][D:28]s h[D:1A]t,[V][D:04]he fell [D:52] [D:50] [D:53]i[D:14]s [D:3E][V]G[D:0B][D:3F][D:17]rf, k[D:2B][D:3E] t[D:28][D:1F]es.[K][V]Wh[D:18]Kydrog[D:03]deeds turn[D:1C][D:52][V]darkness, [D:50] [D:24]d[D:15][D:48]s c[D:0A][V][D:28]m [D:2C][D:52] [D:50] Abyss[...][K][V]Yet [D:1F][D:18]h[D:1E]e, [D:28]s hung[D:19]g[D:46]w,[V][D:04]he ro[D:48] ag[D:07], no [D:33]ng[D:1E][V]a h[D:1E]o, but a k[D:2B][D:3E] pir[D:0C]es."
+    },
+    {
+      "bank": "expanded",
+      "id": 33,
+      "text": "Oh, [D:59][D:0C][D:03]t[D:28]s? A r[D:2C]g? I[2]f[D:3C] [D:2E] [D:57][D:49][D:1C][D:54] [D:3F] [D:50][3]Abyssal Sh[D:40]e.[K][V]It glimm[D:1E]s [D:4B]r[D:0B]gely, like [D:2E][V]holds [D:4A][D:36] [D:28]dd[D:18][D:43][D:1E]. I [D:25][V]no u[D:48] [D:20] [D:2E], but [D:5B] might.[K][V]Take [D:2E] [D:52] a je[D:58]l[D:1E], th[D:1E]e's[V][D:3F]e n[D:1A] [D:50] Vil[D:32]ge [D:3E] Echoes,[V][D:59]o appra[D:2D]es such t[D:46]asu[D:46]s."
+    },
+    {
+      "bank": "expanded",
+      "id": 34,
+      "text": "[D:5E] F[D:40]t[D:46]ss [D:3E] Sec[D:46]ts lies[2]deep w[D:2E][D:28]n [D:50] Abyss, [D:48]aled[3]by [D:0B]ci[D:1B] [D:43][D:1E].[K][V]To op[D:18][D:2E]s g[D:0C]es, [D:5B] [D:37][D:4B][V]un[D:2E]e [D:50] Ess[D:1D]ces [D:3E] [D:50][V]Tri[D:20]ce [D:21]m Kalyxo.[K][V]But [D:0F][D:57][D:46], [D:20] [D:0F]y[D:3F]d [D:50][V][D:20]t[D:46]ss lies Kydrog, [D:50][V]fall[D:18]h[D:1E]o, tw[D:2D]t[D:1C]by g[D:46]ed.[K][V][D:5E] M[D:0A][D:19]Sw[D:40]d [D:2D] [D:50] [D:3F]ly[V]b[D:32]de th[D:09]c[D:0B] b[D:46]ak [D:28]s cur[D:48],[V]yet [D:2E] [D:46][D:4B]s guard[D:1C]by [D:53]ials,[V][D:49]r[D:2C]es built by [D:50] [D:24]d[D:15][D:48]s.[K][V]To c[D:32]im [D:2E], [D:5B] [D:37][D:4B] c[D:3F]qu[D:1E][V]each c[D:29]ll[D:1D]ge [D:04]th[D:18][D:46]turn[V][D:52] [D:59][D:1E]e [D:2E] [D:06][D:0F]g[D:0B][...]"
+    },
+    {
+      "bank": "expanded",
+      "id": 35,
+      "text": "[D:5E] Shr[D:2C]e [D:3E] Pow[D:1E]? A [D:53]i[D:14]y[2]p[D:32]ce, th[D:09][D:3F]e. [D:5E] caves[3][D:05]full [D:3E] surpr[D:2D]es.[K][V][D:5E]y say [D:50] p[D:0C]h [D:20][D:57]rd [D:2D][V][D:28]dd[D:1D], [D:3F][D:31]r[D:1F]eal[D:1C][D:52] tho[D:48][V][D:5A]ll[D:2B][D:52] take a leap [D:3E] fa[D:2E]h.[K][V]It[D:03][D:3A] [D:20] [D:50] f[D:07]t [D:3E] h[D:1A]t.[V][D:60]'d [D:0F][D:4B] [D:53]u[D:4B] [D:5B]r[V][D:2C][D:4B][D:2C]cts, [D:53]avel[D:1E]."
+    },
+    {
+      "bank": "expanded",
+      "id": 36,
+      "text": "Mmm, [D:50] s[D:36]ll [D:3E] Ro[D:14] Sir[D:33][D:2C]s![2]Not[D:28]ng fuels a G[D:40][D:3F] like[3]tho[D:48] h[D:1A]ty chunks [D:3E] [D:4B][D:3F]e.[K][V][D:60]'ll f[D:2C]d [D:50]m sc[D:0C]t[D:1E]ed[V]ar[D:3C] h[D:1E]e, but lift[D:2B][D:50]m?[V]Th[D:0C][D:03][D:0B]oth[D:19]m[D:0C]t[D:1E].[K][V]On[D:31][D:4A][D:36][D:3F]e w[D:2E]h [D:46]al [D:43][D:1E][V]could move tho[D:48] [D:0F]auties. Got[V]a Pow[D:19]G[D:33]ve h[D:08]y?"
+    },
+    {
+      "bank": "expanded",
+      "id": 37,
+      "text": "[D:60] pl[D:0B]n[D:2B][D:52] head [D:2C][D:52] [D:50][2]Shr[D:2C]e [D:3E] Pow[D:1E]?[3]Heh, [D:24]od lu[D:14]![K][V][D:5E] f[D:33][D:40]s [D:17]nt al[D:57]ys [D:48]em...[V][D:46]al, if [D:5B] c[D:0C]ch my drift.[V]And tho[D:48] Ro[D:14] Sir[D:33][D:2C]s? [K][V]Heavy as [D:10]uld[D:1E]s. W[D:2E]h[D:3D][D:50][V]Pow[D:19]G[D:33]ve, [D:5B][D:45][D:3D][D:3E] lu[D:14]."
+    },
+    {
+      "bank": "expanded",
+      "id": 38,
+      "text": "Oho-ho! Well, [D:33]ok [D:59]o [D:4B]um[D:0D]d[2][D:2C][D:52] my D[D:46]am Hut! Che[D:14][D:2C]g[3][D:3D][D:50] E[D:3F] Abyss, [D:05][D:58]?[K][V]I'm Ma[D:42], yes, th[D:09]Ma[D:42]![V]We've cross[D:1C]p[D:0C]hs [D:0F][D:20]e [D:2C][V]Ho[D:33]drum[...] [D:40] [D:57]s [D:2E] Labrynna?[K][V]Heh, [D:5B] w[D:1E]e a b[D:2E] [D:3E] a pe[D:4B][V][D:3F] my broom route, but I [D:48]e[V][D:5B]ve [D:13]e a [D:33]ng [D:57]y![K][V]> L[D:3F]g ti[D:36] no [D:48]e, Ma[D:42]![V][D:01]Wh[D:09][D:2D] t[D:28]s p[D:32]ce?[V][D:01]I'll [D:13]e [D:0E][D:14] l[D:0C][D:1E].[CH3]"
+    },
+    {
+      "bank": "expanded",
+      "id": 39,
+      "text": "Ha! [D:60] [D:17] [D:46][D:36]m[D:0F]r [D:36]![2]Guess [D:06]th[D:09]c[D:26][D:2B]ar[D:3C][3]left [D:0B] imp[D:46]ssi[D:3F].[K][V]Now I've [D:48]t [D:54] [D:49]op h[D:1E]e,[V][D:16]v[D:2B][D:2C][D:52] d[D:46]ams [D:2C][D:4B]ead[V][D:3E] cras[D:28]ng brooms.[K][V]Feel f[D:46]e [D:52] let [D:36] poke[V]ar[D:3C] [D:2C] [D:5B]r m[D:2C]d[...][V][D:2E] could [D:0F] fun![K][V]> Su[D:46], [D:49]ow [D:36] a d[D:46]am.[V][D:01]How [D:17]es t[D:28]s w[D:40]k?[V][D:01]May[D:0F] [D:4A][D:36] oth[D:19]ti[D:36].[CH3]"
+    },
+    {
+      "bank": "expanded",
+      "id": 40,
+      "text": "T[D:28]s l[D:2E]tle [D:29]v[D:1D]? I c[D:06][D:2E] my[2]D[D:46]am Hut[...] [D:3A] s[D:54][D:19][D:40]ig[D:2C]al,[3]but [D:2E] [D:23]s [D:50] po[D:2C]t across.[K][V]H[D:1E]e, I tug [D:09][D:50] edges [D:3E][V][D:5B]r m[D:2C]d, sp[D:2C]n[D:2B]d[D:46]ams th[D:0C][V]m[D:2A]r[D:1F]eal [D:4A][D:36]t[D:28]ng u[D:48]ful.[K][V]Ju[D:4B] [D:0F][D:57][D:46]-[D:50] E[D:3F] Abyss[V]takes [D:2E]s [D:52]ll, [D:1F][D:18][D:2C] sleep.[V]Weird [D:4B]uff [D:29]pp[D:1D]s h[D:1E]e."
+    },
+    {
+      "bank": "expanded",
+      "id": 41,
+      "text": "Ooh, I c[D:0B] s[D:1D][D:48] [D:2E][...][2]th[D:09]p[D:1D]d[D:0B]t [D:5B] [D:25] th[D:1E]e.[3]P[D:1E]fect [D:20] d[D:46]am-[D:58]av[D:2C]g![K][V]C[D:33][D:48] tho[D:48] eyes, H[D:1E]o. Let's[V][D:48]e [D:59][D:09][D:48]c[D:46]ts [D:05]lurk[D:2B][D:2C][V]th[D:09]nogg[D:2C] [D:3E] [D:5B]rs."
+    },
+    {
+      "bank": "expanded",
+      "id": 42,
+      "text": "Huh, no spark [D:2C] sight.[2]No P[D:1D]d[D:0B]t, no d[D:46]am, s[D:40]ry![3]But hey, roam [D:50] Abyss a b[D:2E].[K][V]I'm su[D:45][D:5B]'ll scrounge [D:3F]e [D:54][V][D:1F][D:1B]ually[...] And [D:59][D:18][D:5B] [D:17],[V]I'll [D:0F] h[D:1E]e, [D:57][D:2E][D:2C]g."
+    },
+    {
+      "bank": "expanded",
+      "id": 43,
+      "text": "Oho! Curious a[D:10]ut my l[D:2E]tle[2]d[D:46]am-[D:58]av[D:2B]act, [D:05][D:58]?[3]L[D:2D]t[D:18]c[D:33][D:48], H[D:1E]o.[K][V]See, [D:2C] [D:50] E[D:3F] Abyss, th[D:1E]e[V][D:05]th[D:46]e p[D:1D]d[D:0B]ts, artifacts[V]left [D:0F][D:28]nd by [D:50] God[D:15][D:48]s.[K][V]Wh[D:18][D:5B] g[D:0C]h[D:19]each p[D:1D]d[D:0B]t,[V][D:50]y [D:46]s[D:3F][D:0C]e w[D:2E]h [D:5B]r spir[D:2E],[V][D:2C]vok[D:2B]d[D:46]ams [D:3E] [D:50] p[D:0A][...][K][V]Th[D:0C][D:03][D:59][D:1E]e I [D:13]e [D:2C], help[D:2C]g[V][D:52] navig[D:0C]e [D:50] d[D:46]ams [D:08][V]r[D:1F]eal [D:48]c[D:46]ts [D:3E] [D:50] p[D:0A].[K][V]But [D:50] gr[D:04]prize? Once[V][D:5B]'ve [D:44]v[D:18][D:5B]r[D:48]lf,[V][D:50] M[D:0A][D:19]Sw[D:40]d a[D:57][D:2E]s.[K][V]Th[D:09]b[D:32]de[D:03][D:28]dd[D:18]deep [D:2C] [D:50][V]Abyss, [D:04][D:3F][D:31][D:50] [D:3F]e w[D:2E]h[V][D:50] p[D:1D]d[D:0B]ts c[D:0B] a[D:57]k[D:18][D:2E].[K][V]So, t[D:28]nk [D:3E] [D:50][D:48] l[D:2E]tle d[D:46]ams[V]as [D:4B]epp[D:2B][D:4B][D:3F]es [D:52] [D:5B]r[V][D:15]t[D:2C]y!"
+    },
+    {
+      "bank": "expanded",
+      "id": 44,
+      "text": "My deepe[D:4B] gr[D:0C][D:2E]ude, h[D:1E]o.[2]Becau[D:48] [D:3E] [D:5B]r va[D:33]r,[3]Tail Pa[D:32]ce s[D:28]nes [D:3F]ce m[D:40]e.[K][V]We Deku o[D:58] [D:5B] a debtour[V]ho[D:36] [D:57]s [D:2C] turmoil aft[D:1E][V]Kydrog[D:03][D:36]ddl[D:2C]g.[K][V]But w[D:2E]h [D:50] Mol[D:17]rm cal[D:36]d,[V]peace [D:46]turns [D:52] our [D:29]lls,[V]th[D:0B]ks [D:52] [D:5B]!"
+    },
+    {
+      "bank": "expanded",
+      "id": 45,
+      "text": "Ah, [D:5B] pl[D:0B] [D:52] head [D:3F][D:57]rd,[2]yes? [D:5E] next th[D:46][D:09][D:33]oms[3][D:2C] Kalyxo C[D:0A]le.[K][V]I've tak[D:18][D:50] li[D:0F]rty [D:3E][V][D:35]rk[D:2B][D:50] c[D:0A]le [D:3F] [D:5B]r [D:35]p.[V]Be[D:57][D:46] [D:2E]s s[D:29][D:17]ws run deep.[K][V]Seek [D:50] Mea[D:17]w B[D:32]de th[D:1E]e,[V]leg[D:1D]ds say [D:2E] holds [D:43][D:19]f[D:2E][V][D:20] [D:5B]r que[D:4B]."
+    },
+    {
+      "bank": "expanded",
+      "id": 46,
+      "text": "Ahoy, m[D:0C]ey! [D:60]'[D:45][D:33]ok[D:2C]'[2][D:20] [D:50] Pir[D:0C]e K[D:2C]g, eh?[3]Well, I c[D:0B]'t help [D:5B] th[D:1E]e.[K][V]But I c[D:0B] tell [D:5B] t[D:28]s [D:50][V]Pir[D:0C]e K[D:2B][D:29]d [D:0B] old s[D:28]p,[V]h[D:1E]e [D:2C] [D:50] abyss [D:4A][D:36][D:59][D:1E]e.[K][V]If [D:5B]'[D:45][D:33]ok[D:2C]' [D:52] f[D:2C]d [D:28]m,[V]th[D:0C][D:03]a [D:24]od p[D:32]ce [D:52] [D:4B]art."
+    },
+    {
+      "bank": "expanded",
+      "id": 47,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 48,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 49,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 50,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 51,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 52,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 53,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 54,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 55,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 56,
+      "text": "Ah, [L][...][2]My roots stir with[3]new warmth.[K][V]You have freed a[2]light that was[3]long dimmed.[K][V]The island recalls[2]your courage.[3]Press on[...]"
+    },
+    {
+      "bank": "expanded",
+      "id": 57,
+      "text": "Ah, [L][...][2]Something shifts in[3]the deep soil.[K][V]With each light[2]restored, a shadow[3]retreats[...][K][V]But another stirs[2]in its place, older[3]than my roots know.[K][V]Be watchful, child."
+    },
+    {
+      "bank": "expanded",
+      "id": 58,
+      "text": "Ah, [L][...][2]The wind carries[3]a bitter scent.[K][V]Five lights burn,[2]yet the darkness[3]grows bolder.[K][V]I have watched this[2]island for ages,[3]never felt such[K][V]trembling beneath[2]the earth. Steel[3]yourself."
+    },
+    {
+      "bank": "expanded",
+      "id": 59,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 60,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 61,
+      "text": "Ah, [L][...][2]All seven lights[3]burn within me.[K][V]The seal weakens,[2]but your strength[3]has grown.[K][V]The ancient Shrines[2]hold the final[3]keys. Seek them out.[K][V]I have faith in[2]you, [L]. You carry[3]the hope of this[K][V]island upon your[2]shoulders[...]"
+    },
+    {
+      "bank": "expanded",
+      "id": 62,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 63,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 64,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 65,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 66,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 67,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 68,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 69,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 70,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 71,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 72,
+      "text": "[W:02][S:03]This windmill has been grinding[V]to a halt for ages.[K][2]It needs a song to get it[V]spinning right, but what's the[V]use talking to you?[K][3]You don't even have an[V]instrument![K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 73,
+      "text": "[W:02][S:03]That ocarina... a fine piece.[K][2]But the windmill's heart is[V]broken. It's full of rage.[V]It won't listen to a new song.[K][3]Perhaps if you knew a song of[V]healing... it might calm the[V]gears. Then I could teach you.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 74,
+      "text": "[W:02][S:03]You... you played the song![V]The angry spirit in the gears[V]is calm now... Thank you.[K][2]Now, listen well... for what[V]I will teach you is the song[V]that powers this windmill.[K][3]It is the Song of Storms! The[V]very melody that calls the[V]rain itself! Listen...[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 75,
+      "text": "[W:02][S:03]The windmill spins once more,[V]thanks to you, [L].[K][2]The storms answer your call now.[V]Use the song wisely.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 76,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 77,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 78,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 79,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 80,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 81,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 82,
+      "text": "..."
+    },
+    {
+      "bank": "expanded",
+      "id": 83,
+      "text": "[W:02][S:03]Our ways arenot for outsiders.[K][2]Unless they prove their respect[V]for the mountain itself.[K][3]Bring us offerings of Rock Meat,[V]and we shall see if you are[V]worthy of our trust.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 84,
+      "text": "[W:02][S:03]You bring offerings of stone...[K][2]Perhaps you do understand our[V]ways after all, little one.[K][3]Continue, and the heart of the[V]mountain may yet open to you.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 85,
+      "text": "[W:02][S:03]You have shown great respect.[K][2]The stone door answers to those[V]who honor the earth.[K][3]It is my honor to unseal the[V]path. The Goron Mines await.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 86,
+      "text": "[W:02][S:03][L], you have done it![V]You have saved our home and[V]earned the mountain's trust.[K][2]Please, take this tunic. It is[V]woven with the fire of the[V]earth itself. It will shield[K][3]you from even the most intense[V]heat. You are a brother to[V]the Gorons now.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 87,
+      "text": "[W:02][S:03]Welcome, brother [L].[K][2]Our people were once close with[V]the Zora of the river. But[V]when the Hylians came...[K][3]...trade was broken. Mistrust[V]grew. Perhaps it is time for[V]that to change.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 88,
+      "text": "[W:02][S:03]Hmph. An outsider.[K][2]You carry the Princess's words?[V]Her authority means little here.[K][3]The Hylians abandoned us long[V]ago. Show me proof that you[V]truly understand our pain.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 89,
+      "text": "[W:02][S:03]That mask... it cannot be...[K][2]All these years... we mourned...[V]we cursed our kin who we[V]thought had betrayed us.[K][3]And it was HIM. The Pirate[V]King, Kydrog... he used our[V]likeness to sow hatred.[K][3][L], you have lifted a[V]shadow from our hearts that is[V]centuries old.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 90,
+      "text": "[W:02][S:03]You gave us our names back,[V][L]. For that, we owe[V]you a great debt.[K][2]The river flows with a renewed[V]spirit. If you seek passage to[V]the hidden shoals, ask me.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 91,
+      "text": "[W:02][S:03]Hee hee! A customer! Welcome![K][2]I sell only the finest Magic[V]Beans! Plant one in soft soil,[V]and who knows what'll grow![K][3]Might be a ladder to the sky,[V]hee hee! Care to try one?[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 92,
+      "text": "[W:02][S:03]One Magic Bean for you! That'll[V]be 100 Rupees, please![K][2]Hee hee! Happy planting![K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 93,
+      "text": "[W:02][S:03]Ah, you know the old melody![K][2]My beans just love a good storm.[V]It makes their magic grow extra[V]strong, hee hee![K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 94,
+      "text": "[W:02][S:03]Ahoy there, young adventurer![V]Don't mind me, just mapping[V]this mysterious island.[K][2]The sea remembers what the land[V]forgets, you see! Kalyxo is[V]full of secrets lost to time.[K][3]Bring me Secret Shells, and I[V]will mark your map with the[V]forgotten paths I uncover![K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 95,
+      "text": "[W:02][S:03]Five shells! Splendid! These[V]whisper tales of a hidden[V]grotto near the coast.[K][2]Here, I'll mark it on your map.[V]Happy hunting![K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 96,
+      "text": "[W:02][S:03]Ten! Remarkable! These hold[V]memories of Old Kalyxo, from[V]before the great sinking.[K][2]They speak of a lonely peak[V]with a great treasure. Look,I[V]have added it to your chart.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 97,
+      "text": "[W:02][S:03]Twenty! By the stars, you're[V]a natural explorer! I feel a[V]kindred spirit in you![K][2]This is more than a hobby for[V]me. It is a promise I made...[V]Here, take this. For your heart.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 98,
+      "text": "[W:02][S:03]You've found them all...[K][2]Each one a life, a story, a[V]memory. To map the world is to[V]ensure no one is forgotten.[K][3]You are a true cartographer,[V][L]. Please, take this map[V]of the stars. It may help you[K][3]find your way in the darkest[V]of nights.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 99,
+      "text": "[W:02][S:03]Yahaha! You found me![K][2]The trees remember when pirates[V]wore scales...[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 100,
+      "text": "[W:02][S:03]Yahaha! You found me![K][2]Before the silence, this was[V]the Age of Secrets.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 101,
+      "text": "[W:02][S:03]Yahaha! You found me![K][2]The island of Kalyxo has seen[V]many masters. None last.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 102,
+      "text": "[W:02][S:03]Yahaha! You found me![K][2]The guardians of the shrines[V]were bound by Farore's will.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 103,
+      "text": "[W:02][S:03]Yahaha! You found me![K][2]The old king sleeps beneath the[V]mountain of fire...[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 104,
+      "text": "[W:02][S:03]Yahaha! You found me![K][2]The first hero did not banish[V]the evil, he only sealed it.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 105,
+      "text": "[W:02][S:03]Yahaha! You found me![K][2]The Eon Abyss... it sang a sad[V]song before the darkness came.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 106,
+      "text": "[W:02][S:03]Yahaha! You found me![K][2]The twin witches watch from the[V]shadows. Their magic is old.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 107,
+      "text": "[W:02][S:03]Yahaha! You found me![K][2]Farore's binding weakens. The[V]seals will not hold forever.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 108,
+      "text": "[W:02][S:03]Yahaha! You found me![K][2]We watched the hero fall. We[V]watched the knight rise. Same[V]soul, different shadow...[K]"
+    }
+  ],
+  "version": 1
+}

@@ -2,7 +2,15 @@
 
 ## Summary
 
-Refine the crystal maiden dialogue and essence collection text to strengthen the game's Oracle identity while working within existing mechanical and graphical constraints.\n+\n+Dialogue authoring is **not blocked**: edit `Core/messages.org` (and any associated message tables) and rebuild the ROM. yaze GUI support is a convenience item, not a dependency.
+Refine the crystal maiden dialogue and essence collection text to strengthen
+the game's Oracle identity while working within existing mechanical and
+graphical constraints.
+
+Dialogue authoring is **not blocked**: edit vanilla messages in the
+`Roms/oos168.sfc` development ROM through Yaze/z3ed, and use the tracked
+`Data/dialogue/expanded_messages.json` source bundle for expanded IDs. Then
+regenerate and rebuild. `Core/messages.org` is reference material, not a build
+input. Yaze GUI support is a convenience item, not a dependency.
 
 ## Current State
 
@@ -67,14 +75,19 @@ Complete the Maku Tree hint dispatch for all 7 dungeons. Currently D1, D3, D5 ar
 
 The menu GFX sheet is fully allocated with custom item icons, masks, fonts, and UI elements. Unique per-essence icons would require sacrificing existing graphics. The triforce triangle icons are compact and functional. **Decision: Keep triforce icons.**
 
-### Yaze Message Editor (AVAILABLE)
+### Expanded Message Workflow (AVAILABLE)
 
-The yaze message editor expanded write path is functional as of commit `4b6a78ed` (2026-02-06). Both the GUI (Ctrl+S) and z3ed CLI (`message-write`) write directly to main ROM with capacity validation. Dialogue authoring is **unblocked**.
+Expanded message IDs `$18D+` live in ASM-owned bank `$2F`. Direct editor or
+CLI writes to those ROM addresses are not durable because the next ASM build
+replaces the bank. Dialogue authoring remains **unblocked** through the
+tracked source bundle and generated include.
 
-**Workflow options:**
-1. Edit `Core/message.asm` hex directly and rebuild (`./scripts/build_rom.sh 168`)
-2. Use z3ed CLI: `z3ed message-write --rom <rom> --id <id> --text "<text>"`
-3. Use yaze GUI message editor (expanded bank save works)
+**Expanded-message workflow:**
+1. Update `Data/dialogue/expanded_messages.json` through Yaze source sync,
+   which also regenerates `Core/Generated/expanded_messages.asm`.
+2. Rebuild with `Scripts/Build/build_rom.sh 168`.
+3. Reopen or reload `Roms/oos168x.sfc` for inspection and testing; do not edit
+   the patched ROM directly.
 
 **Ready to author:**
 - Essence collection text (items 1 above)
@@ -102,8 +115,11 @@ Ridoyie has offered to contribute maiden dialogue and world lore text. Tooling i
 
 | File | Change | Status |
 |---|---|---|
-| `Core/messages.org` | Essence receipt text, maiden dialogue rewrites | Ready to author |
-| `Core/message.asm` | Compiled from messages.org | Ready to author |
+| `Roms/oos168.sfc` | ROM-owned vanilla message table | Ready to author through Yaze/z3ed |
+| `Core/messages.org` | Dialogue reference and annotations | Reference only; not a build input |
+| `Data/dialogue/expanded_messages.json` | Canonical expanded-message bundle | Ready to author |
+| `Core/Generated/expanded_messages.asm` | Generated expanded-message bytes | Regenerate; do not hand-edit |
+| `Core/message.asm` | Expanded loader, hook, and fixed source boundary | Stable wrapper |
 | `Sprites/NPCs/maku_tree.asm` | Threshold-based dialogue | Done (UNTESTED) |
 | `Core/symbols.asm` | Message IDs | Done |
 

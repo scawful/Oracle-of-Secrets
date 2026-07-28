@@ -164,6 +164,12 @@ if [[ ! -f "$base_rom" ]]; then
 fi
 echo "Using base ROM: $base_rom"
 
+# Expanded messages are source-owned. Fail before generating any build inputs
+# when the canonical bundle and tracked Asar include have drifted.
+echo "[*] Validating expanded message source contract..."
+python3 "$repo_root/Scripts/Generate/validate_expanded_message_source.py" \
+  --root "$repo_root"
+
 # Keep water-gate runtime tables synced with Yaze-authored room data.
 # Prefers the previous build's patched ROM: water-fill marker tiles ($F5)
 # live in collision data contributed by ASM patches, so the base ROM lacks
@@ -335,6 +341,15 @@ else
 fi
 
 echo "Built patched ROM: $patched_rom"
+
+# Refresh the ignored Yaze integration manifest from the exact source and ROM
+# that produced this build. Fail closed so source-sync never opens against a
+# missing or stale allocation contract.
+echo "[*] Generating Yaze hack manifest..."
+python3 "$repo_root/Scripts/Generate/generate_hack_manifest.py" \
+  --root "$repo_root" \
+  --output "$repo_root/Roms/hack_manifest.json" \
+  --rom "$patched_rom"
 
 # Export symbols for yaze + Mesen2.
 if [[ $emit_symbols -eq 1 && -f "$symbols_path" ]]; then

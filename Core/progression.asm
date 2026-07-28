@@ -16,7 +16,7 @@
 ;
 ; USAGE NOTES:
 ;   All routines are JSL targets — callable from any bank.
-;   No hooks or org patches — these are passive helpers.
+;   No hooks — these are passive helpers in a fixed bank $2F allocation.
 ;   First consumer: Maku Tree (maku_tree.asm). Next: Zora NPC.
 ;
 ; DESIGN DECISIONS:
@@ -37,6 +37,10 @@
 ;     Returns A/Y pre-loaded for Sprite_Show* JSL calls.
 ;
 ; =========================================================
+
+; Reserve a stable tail after the expanded-message source-sync allocation.
+; Message data may use $2F8026-$2FFDFF inclusive.
+org $2FFE00
 
 ; =========================================================
 ; GetCrystalCount
@@ -270,3 +274,5 @@ SelectReactionMessage:
 ; =========================================================
 
 print "Progression helpers assembled at     ", pc
+
+assert pc() <= $300000, "Progression helpers crossed bank $2F"

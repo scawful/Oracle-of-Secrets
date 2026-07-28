@@ -380,6 +380,62 @@ class RepositorySourceRegressionTest(unittest.TestCase):
         )
 
 
+class RepositoryMessageSourceTest(unittest.TestCase):
+    def test_manifest_exposes_durable_expanded_message_source(self) -> None:
+        messages = generate_manifest(REPO_ROOT)["messages"]
+
+        self.assertEqual(messages["data_start"], "0x2F8026")
+        self.assertEqual(messages["data_end"], "0x2FFDFF")
+        self.assertEqual(
+            messages["expanded_range"],
+            {"first": "0x18D", "last": "0x1F9", "count": 109},
+        )
+        self.assertEqual(
+            messages["source"],
+            {
+                "format": "yaze-message-bundle",
+                "version": 1,
+                "canonical_bundle_path": (
+                    "Data/dialogue/expanded_messages.json"
+                ),
+                "generated_asm_include_path": (
+                    "Core/Generated/expanded_messages.asm"
+                ),
+            },
+        )
+        policy_text = str(messages)
+        self.assertIn("ASM-owned bank $2F", policy_text)
+        self.assertIn("Scripts/Build/build_rom.sh 168", policy_text)
+        self.assertNotIn("message-write", policy_text)
+
+    def test_build_refreshes_the_configured_manifest_after_assembly(self) -> None:
+        project = (REPO_ROOT / "Oracle-of-Secrets.yaze").read_text(
+            encoding="utf-8"
+        )
+        build = (REPO_ROOT / "Scripts/Build/build_rom.sh").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn(
+            "hack_manifest_file=Roms/hack_manifest.json",
+            project.splitlines(),
+        )
+        generator_call = (
+            'python3 "$repo_root/Scripts/Generate/'
+            'generate_hack_manifest.py"'
+        )
+        self.assertEqual(build.count(generator_call), 1)
+        self.assertIn(
+            '--output "$repo_root/Roms/hack_manifest.json"',
+            build,
+        )
+        self.assertIn('--rom "$patched_rom"', build)
+        self.assertLess(
+            build.index('echo "Built patched ROM: $patched_rom"'),
+            build.index(generator_call),
+        )
+
+
 class EditorManagedRegionsTest(unittest.TestCase):
     def setUp(self) -> None:
         self.fixture = ManifestFixture()
