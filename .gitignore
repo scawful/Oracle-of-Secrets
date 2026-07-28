@@ -236,6 +236,7 @@ Data/Generated/
 
 # Generated hack manifest for yaze integration (do not commit).
 hack_manifest.json
+.yaze-message-source-sync.lock
 __pycache__/
 
 # Host-specific MCP server config (machine paths, do not commit).

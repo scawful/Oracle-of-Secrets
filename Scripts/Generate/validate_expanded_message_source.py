@@ -16,11 +16,15 @@ from typing import Any
 BUNDLE_PATH = Path("Data/dialogue/expanded_messages.json")
 ASM_INCLUDE_PATH = Path("Core/Generated/expanded_messages.asm")
 MESSAGE_WRAPPER_PATH = Path("Core/message.asm")
+PROGRESSION_PATH = Path("Core/progression.asm")
 
 FIRST_MESSAGE_ID = 0x18D
 LAST_MESSAGE_ID = 0x1F9
 MESSAGE_COUNT = LAST_MESSAGE_ID - FIRST_MESSAGE_ID + 1
 MESSAGE_DATA_START = 0x2F8026
+MESSAGE_DATA_END = 0x2FFDFF
+PROGRESSION_DATA_START = MESSAGE_DATA_END + 1
+PROGRESSION_DATA_END_EXCLUSIVE = 0x300000
 
 SOURCE_HASH_RE = re.compile(
     r"^; Source bundle SHA-256: ([0-9a-f]{64})$", re.MULTILINE
@@ -32,6 +36,75 @@ MESSAGE_LABEL_RE = re.compile(r"^\s*Message_([0-9A-Fa-f]{3}):\s*$")
 ORG_RE = re.compile(r"^\s*org\b", re.IGNORECASE)
 DB_RE = re.compile(r"^\s*db\s+(.+?)\s*$", re.IGNORECASE)
 BYTE_RE = re.compile(r"^\$([0-9A-Fa-f]{2})$")
+DICTIONARY_TOKEN_RE = re.compile(r"^D:([0-9A-F]{2})$")
+ARGUMENT_TOKEN_RE = re.compile(r"^([A-Z0-9]+):([0-9A-F]{1,2})$")
+
+CHARACTER_BYTES = {
+    **{chr(ord("A") + index): index for index in range(26)},
+    **{chr(ord("a") + index): 0x1A + index for index in range(26)},
+    **{str(index): 0x34 + index for index in range(10)},
+    "!": 0x3E,
+    "?": 0x3F,
+    "-": 0x40,
+    ".": 0x41,
+    ",": 0x42,
+    ">": 0x44,
+    "(": 0x45,
+    ")": 0x46,
+    '"': 0x4C,
+    "'": 0x51,
+    " ": 0x59,
+    "<": 0x5A,
+    "_": 0x66,
+}
+
+ARGUMENT_TOKEN_BYTES = {
+    "W": 0x6B,
+    "P": 0x6D,
+    "SPD": 0x6E,
+    "S": 0x7A,
+    "C": 0x77,
+    "WT": 0x78,
+    "N": 0x6C,
+    "SFX": 0x79,
+}
+
+TOKEN_BYTES = {
+    "L": 0x6A,
+    "1": 0x74,
+    "2": 0x75,
+    "3": 0x76,
+    "K": 0x7E,
+    "V": 0x73,
+    "CH3": 0x71,
+    "CH2": 0x72,
+    "CH2L": 0x6F,
+    "CH2I": 0x68,
+    "CHI": 0x69,
+    "IMG": 0x67,
+    "NONO": 0x70,
+    "...": 0x43,
+    "UP": 0x4D,
+    "DOWN": 0x4E,
+    "LEFT": 0x4F,
+    "RIGHT": 0x50,
+    "A": 0x5B,
+    "B": 0x5C,
+    "X": 0x5D,
+    "Y": 0x5E,
+    "HP1L": 0x52,
+    "HP1R": 0x53,
+    "HP2L": 0x54,
+    "HP3L": 0x55,
+    "HP3R": 0x56,
+    "HP4L": 0x57,
+    "HP4R": 0x58,
+    "HY0": 0x47,
+    "HY1": 0x48,
+    "HY2": 0x49,
+    "LFL": 0x4A,
+    "LFR": 0x4B,
+}
 
 
 class MessageSourceContractError(RuntimeError):
@@ -120,9 +193,9 @@ def _load_bundle(bundle_path: Path) -> tuple[dict[str, Any], bytes, str]:
                 "canonical bundle messages must be ordered with contiguous "
                 f"bank-local IDs 0..{MESSAGE_COUNT - 1}"
             )
-        if not isinstance(entry["text"], str) or not entry["text"]:
+        if not isinstance(entry["text"], str):
             raise MessageSourceContractError(
-                f"canonical bundle message {expected_id} text must be nonempty"
+                f"canonical bundle message {expected_id} text must be a string"
             )
         if "[D:$" in entry["text"]:
             raise MessageSourceContractError(
@@ -140,6 +213,85 @@ def _load_bundle(bundle_path: Path) -> tuple[dict[str, Any], bytes, str]:
         )
 
     return bundle, bundle_bytes, hashlib.sha256(bundle_bytes).hexdigest()
+
+
+def _encode_message_text(text: str, message_id: int) -> bytes:
+    """Encode canonical source text with the Yaze message byte contract."""
+    encoded = bytearray()
+    position = 0
+    while position < len(text):
+        character = text[position]
+        if character in "\r\n":
+            raise MessageSourceContractError(
+                f"canonical bundle message {message_id} contains a literal "
+                "newline; use a message command token"
+            )
+
+        if character != "[":
+            value = CHARACTER_BYTES.get(character)
+            if value is None:
+                raise MessageSourceContractError(
+                    f"canonical bundle message {message_id} has unsupported "
+                    f"character {character!r} at position {position}"
+                )
+            encoded.append(value)
+            position += 1
+            continue
+
+        close = text.find("]", position)
+        if close < 0:
+            raise MessageSourceContractError(
+                f"canonical bundle message {message_id} has an unclosed token "
+                f"at position {position}"
+            )
+        token = text[position + 1:close]
+
+        dictionary_match = DICTIONARY_TOKEN_RE.fullmatch(token)
+        if dictionary_match:
+            dictionary_index = int(dictionary_match.group(1), 16)
+            if dictionary_index > 0x60:
+                raise MessageSourceContractError(
+                    f"canonical bundle message {message_id} dictionary index "
+                    f"0x{dictionary_index:02X} is outside 0x00..0x60"
+                )
+            encoded.append(0x88 + dictionary_index)
+            position = close + 1
+            continue
+
+        value = TOKEN_BYTES.get(token)
+        if value is not None:
+            encoded.append(value)
+            position = close + 1
+            continue
+
+        argument_match = ARGUMENT_TOKEN_RE.fullmatch(token)
+        if (
+            argument_match
+            and argument_match.group(1) in ARGUMENT_TOKEN_BYTES
+        ):
+            name = argument_match.group(1)
+            argument = int(argument_match.group(2), 16)
+            encoded.extend((ARGUMENT_TOKEN_BYTES[name], argument))
+            position = close + 1
+            continue
+
+        raise MessageSourceContractError(
+            f"canonical bundle message {message_id} has unknown token "
+            f"[{token}] at position {position}"
+        )
+
+    encoded.append(0x7F)
+    return bytes(encoded)
+
+
+def _encode_bundle_messages(bundle: dict[str, Any]) -> list[tuple[int, bytes]]:
+    return [
+        (
+            FIRST_MESSAGE_ID + entry["id"],
+            _encode_message_text(entry["text"], entry["id"]),
+        )
+        for entry in bundle["messages"]
+    ]
 
 
 def _render_asm_body(messages: list[tuple[int, bytes]]) -> str:
@@ -171,13 +323,19 @@ def _render_asm_include(
 
 
 def _parse_asm_include(
-    include_path: Path, expected_bundle_hash: str
+    include_path: Path,
+    expected_bundle_hash: str,
+    expected_messages: list[tuple[int, bytes]],
 ) -> tuple[list[int], bytes]:
     try:
-        text = include_path.read_text(encoding="utf-8")
+        text = include_path.read_bytes().decode("utf-8")
     except OSError as exc:
         raise MessageSourceContractError(
             f"cannot read generated include {include_path}: {exc}"
+        ) from exc
+    except UnicodeDecodeError as exc:
+        raise MessageSourceContractError(
+            f"generated include is not valid UTF-8: {exc}"
         ) from exc
 
     hash_matches = SOURCE_HASH_RE.findall(text)
@@ -257,9 +415,9 @@ def _parse_asm_include(
         raise MessageSourceContractError(
             "generated include must not emit bytes before Message_18D"
         )
-    if not encoded or encoded[-1] != 0xFF or encoded.count(0xFF) != 1:
+    if not encoded or encoded[-1] != 0xFF:
         raise MessageSourceContractError(
-            "generated include must end with one bank terminator byte $FF"
+            "generated include must end with bank terminator byte $FF"
         )
 
     messages: list[tuple[int, bytes]] = []
@@ -270,11 +428,31 @@ def _parse_asm_include(
             raise MessageSourceContractError(
                 f"Message_{message_id:03X} must end with byte $7F"
             )
-        if 0x7F in message[:-1] or 0xFF in message:
-            raise MessageSourceContractError(
-                f"Message_{message_id:03X} has an early terminator"
-            )
         messages.append((message_id, message))
+
+    if messages != expected_messages:
+        mismatch_index = next(
+            (
+                index
+                for index, (actual, expected) in enumerate(
+                    zip(messages, expected_messages)
+                )
+                if actual != expected
+            ),
+            0,
+        )
+        message_id = FIRST_MESSAGE_ID + mismatch_index
+        raise MessageSourceContractError(
+            "generated include does not encode the canonical bundle at "
+            f"Message_{message_id:03X}"
+        )
+
+    capacity = MESSAGE_DATA_END - MESSAGE_DATA_START + 1
+    if len(encoded) > capacity:
+        raise MessageSourceContractError(
+            "generated expanded-message data exceeds fixed allocation: "
+            f"{len(encoded)} bytes > {capacity} bytes"
+        )
 
     expected_text = _render_asm_include(messages, expected_bundle_hash)
     if text != expected_text:
@@ -294,17 +472,25 @@ def _validate_wrapper(wrapper_path: Path) -> None:
             f"cannot read message wrapper {wrapper_path}: {exc}"
         ) from exc
 
+    message_start = f"{MESSAGE_DATA_START:06X}"
+    message_end = f"{MESSAGE_DATA_END:06X}"
+    progression_start = f"{PROGRESSION_DATA_START:06X}"
     boundary = (
-        'assert pc() <= $2F8026, '
-        '"MessageExpand loader crossed fixed data start $2F8026"'
+        f'assert pc() <= ${message_start}, '
+        f'"MessageExpand loader crossed fixed data start ${message_start}"'
     )
     include = 'incsrc "Core/Generated/expanded_messages.asm"'
+    capacity_boundary = (
+        f'assert pc() <= ${progression_start}, '
+        f'"Expanded messages crossed fixed allocation end ${message_end}"'
+    )
     if text.count(boundary) != 1:
         raise MessageSourceContractError(
             "Core/message.asm must assert that the loader does not cross "
             "$2F8026"
         )
-    if text.count("org $2F8026") != 1:
+    data_org = f"org ${message_start}"
+    if text.count(data_org) != 1:
         raise MessageSourceContractError(
             "Core/message.asm must fix MessageExpandedData at $2F8026"
         )
@@ -313,12 +499,12 @@ def _validate_wrapper(wrapper_path: Path) -> None:
             "Core/message.asm must define MessageExpandedData and include "
             "Core/Generated/expanded_messages.asm exactly once"
         )
-    if text.index(boundary) > text.index("org $2F8026"):
+    if text.index(boundary) > text.index(data_org):
         raise MessageSourceContractError(
             "loader boundary assert must precede the fixed data org"
         )
     if not (
-        text.index("org $2F8026")
+        text.index(data_org)
         < text.index("MessageExpandedData:")
         < text.index(include)
     ):
@@ -326,15 +512,51 @@ def _validate_wrapper(wrapper_path: Path) -> None:
             "fixed data org, MessageExpandedData, and generated include are "
             "out of order"
         )
+    if text.count(capacity_boundary) != 1:
+        raise MessageSourceContractError(
+            "Core/message.asm must stop expanded messages before the fixed "
+            "progression allocation at $2FFE00"
+        )
+    if text.index(capacity_boundary) < text.index(include):
+        raise MessageSourceContractError(
+            "expanded-message capacity assert must follow the generated include"
+        )
+
+
+def _validate_progression(progression_path: Path) -> None:
+    try:
+        text = progression_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise MessageSourceContractError(
+            f"cannot read progression source {progression_path}: {exc}"
+        ) from exc
+
+    progression_start = f"{PROGRESSION_DATA_START:06X}"
+    progression_end = f"{PROGRESSION_DATA_END_EXCLUSIVE:06X}"
+    start = f"org ${progression_start}"
+    boundary = (
+        f'assert pc() <= ${progression_end}, '
+        '"Progression helpers crossed bank $2F"'
+    )
+    if text.count(start) != 1:
+        raise MessageSourceContractError(
+            "Core/progression.asm must use fixed allocation start $2FFE00"
+        )
+    if text.count(boundary) != 1 or text.index(boundary) < text.index(start):
+        raise MessageSourceContractError(
+            "Core/progression.asm must stay within the reserved bank $2F tail"
+        )
 
 
 def validate_contract(root: Path) -> MessageSourceContract:
     root = root.resolve()
-    _, _, bundle_hash = _load_bundle(root / BUNDLE_PATH)
+    bundle, _, bundle_hash = _load_bundle(root / BUNDLE_PATH)
+    expected_messages = _encode_bundle_messages(bundle)
     labels, encoded = _parse_asm_include(
-        root / ASM_INCLUDE_PATH, bundle_hash
+        root / ASM_INCLUDE_PATH, bundle_hash, expected_messages
     )
     _validate_wrapper(root / MESSAGE_WRAPPER_PATH)
+    _validate_progression(root / PROGRESSION_PATH)
     return MessageSourceContract(
         message_count=len(labels),
         data_size=len(encoded),

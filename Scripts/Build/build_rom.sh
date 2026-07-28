@@ -342,6 +342,15 @@ fi
 
 echo "Built patched ROM: $patched_rom"
 
+# Refresh the ignored Yaze integration manifest from the exact source and ROM
+# that produced this build. Fail closed so source-sync never opens against a
+# missing or stale allocation contract.
+echo "[*] Generating Yaze hack manifest..."
+python3 "$repo_root/Scripts/Generate/generate_hack_manifest.py" \
+  --root "$repo_root" \
+  --output "$repo_root/Roms/hack_manifest.json" \
+  --rom "$patched_rom"
+
 # Export symbols for yaze + Mesen2.
 if [[ $emit_symbols -eq 1 && -f "$symbols_path" ]]; then
   export_args=("$symbols_rel" "-o" "$mlb_rel" "--rom-name" "oos${version}x" "--filter" "oracle")

@@ -58,4 +58,6 @@ MessageExpandedData:
 
 print "End of expanded dialogue          ", pc
 
-assert pc() <= $2FFFFF
+; Keep message source-sync inside its fixed allocation. Core/progression.asm
+; owns the reserved tail beginning at $2FFE00.
+assert pc() <= $2FFE00, "Expanded messages crossed fixed allocation end $2FFDFF"

@@ -114,6 +114,7 @@ EXPANDED_MESSAGE_ASM_INCLUDE = Path(
 )
 EXPANDED_MESSAGE_BUNDLE = Path("Data/dialogue/expanded_messages.json")
 EXPANDED_MESSAGE_DATA_START = 0x2F8026
+EXPANDED_MESSAGE_DATA_END = 0x2FFDFF
 DUNGEON_ROOM_COUNT = 296
 ROOM_HEADER_POINTER_PC = 0xB5DD
 ROOM_HEADER_BANK_PC = 0xB5E7
@@ -461,7 +462,6 @@ def scan_message_layout(root: Path) -> dict:
     include_lines = include_text.splitlines()
 
     messages: list[dict] = []
-    data_end = None
     hook_address = None
     last_org_addr = None
 
@@ -480,12 +480,6 @@ def scan_message_layout(root: Path) -> dict:
         if "JML MessageExpand" in line and last_org_addr is not None:
             if ((last_org_addr >> 16) & 0xFF) == 0x0E:
                 hook_address = f"0x{last_org_addr:06X}"
-
-        # Find assert at end of message bank. The final match is the bank
-        # capacity assertion, after the fixed loader-boundary assertion.
-        am = ASSERT_PC_RE.search(line)
-        if am:
-            data_end = f"0x{int(am.group(1), 16):06X}"
 
     for i, line in enumerate(include_lines):
         # Message bodies live in the generated include so Yaze can replace
@@ -518,7 +512,7 @@ def scan_message_layout(root: Path) -> dict:
         "hook_address": hook_address,
         "data_bank": "0x2F",
         "data_start": f"0x{EXPANDED_MESSAGE_DATA_START:06X}",
-        "data_end": data_end,
+        "data_end": f"0x{EXPANDED_MESSAGE_DATA_END:06X}",
         "expanded_range": {
             "first": f"0x{min(msg_ids):03X}",
             "last": f"0x{max(msg_ids):03X}",

@@ -28,7 +28,29 @@ yaze-message-bundle JSON files for NPC dialogue. Source for Gemini/Codex import 
    - `z3ed message-import-bundle --file Data/dialogue/<bundle>.json --strict`
 
 2. Persist according to bank:
-   - `expanded`: commit to `Core/message.asm` (durable source-of-truth for rebuilds)
+   - `expanded`: preview and publish through `z3ed message-source-sync`; commit
+     `Data/dialogue/expanded_messages.json` and
+     `Core/Generated/expanded_messages.asm` together
    - `vanilla`: use `z3ed ... --apply` against the base ROM workflow when desired
 
 `z3ed ... --apply` to patched outputs like `Roms/oos168x.sfc` is not durable across rebuilds by itself.
+
+Expanded source publication is dry-run-first and requires the previewed source
+SHA in write mode:
+
+```bash
+z3ed message-source-sync \
+  --project Oracle-of-Secrets.yaze \
+  --file Data/dialogue/<bundle>.json \
+  --format json
+
+z3ed message-source-sync \
+  --project Oracle-of-Secrets.yaze \
+  --file Data/dialogue/<bundle>.json \
+  --expected-source-sha256 <sha256-from-preview> \
+  --write --format json
+```
+
+Native write mode serializes publication with the project-local
+`.yaze-message-source-sync.lock`; the lock file is intentionally persistent
+and ignored by git.
