@@ -51,6 +51,6 @@ z3ed message-source-sync \
   --write --format json
 ```
 
-Native write mode serializes publication with the project-local
-`.yaze-message-source-sync.lock`; the lock file is intentionally persistent
-and ignored by git.
+Native write mode serializes publication with a persistent
+`.yaze-message-source-sync.lock` in each distinct source-artifact directory;
+the lock files are intentionally persistent and ignored by git.
