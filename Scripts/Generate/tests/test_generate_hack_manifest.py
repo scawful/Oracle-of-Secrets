@@ -380,6 +380,34 @@ class RepositorySourceRegressionTest(unittest.TestCase):
         )
 
 
+class RepositoryMessageSourceTest(unittest.TestCase):
+    def test_manifest_exposes_durable_expanded_message_source(self) -> None:
+        messages = generate_manifest(REPO_ROOT)["messages"]
+
+        self.assertEqual(messages["data_start"], "0x2F8026")
+        self.assertEqual(
+            messages["expanded_range"],
+            {"first": "0x18D", "last": "0x1F9", "count": 109},
+        )
+        self.assertEqual(
+            messages["source"],
+            {
+                "format": "yaze-message-bundle",
+                "version": 1,
+                "canonical_bundle_path": (
+                    "Data/dialogue/expanded_messages.json"
+                ),
+                "generated_asm_include_path": (
+                    "Core/Generated/expanded_messages.asm"
+                ),
+            },
+        )
+        policy_text = str(messages)
+        self.assertIn("ASM-owned bank $2F", policy_text)
+        self.assertIn("Scripts/Build/build_rom.sh 168", policy_text)
+        self.assertNotIn("message-write", policy_text)
+
+
 class EditorManagedRegionsTest(unittest.TestCase):
     def setUp(self) -> None:
         self.fixture = ManifestFixture()

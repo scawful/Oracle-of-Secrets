@@ -164,6 +164,12 @@ if [[ ! -f "$base_rom" ]]; then
 fi
 echo "Using base ROM: $base_rom"
 
+# Expanded messages are source-owned. Fail before generating any build inputs
+# when the canonical bundle and tracked Asar include have drifted.
+echo "[*] Validating expanded message source contract..."
+python3 "$repo_root/Scripts/Generate/validate_expanded_message_source.py" \
+  --root "$repo_root"
+
 # Keep water-gate runtime tables synced with Yaze-authored room data.
 # Prefers the previous build's patched ROM: water-fill marker tiles ($F5)
 # live in collision data contributed by ASM patches, so the base ROM lacks
