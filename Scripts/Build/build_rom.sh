@@ -167,6 +167,13 @@ if [[ -f "$legacy_base" && "$base_rom" != "$legacy_base" ]]; then
 fi
 echo "Using base ROM: $base_rom"
 
+# Custom collision is editor-authored but source-owned. Fail before generating
+# build inputs when the selected base ROM does not reproduce the tracked JSON.
+echo "[*] Validating custom collision source contract..."
+python3 "$repo_root/Scripts/Generate/validate_custom_collision_source.py" \
+  --root "$repo_root" \
+  --rom "$base_rom"
+
 # Expanded messages are source-owned. Fail before generating any build inputs
 # when the canonical bundle and tracked Asar include have drifted.
 echo "[*] Validating expanded message source contract..."
