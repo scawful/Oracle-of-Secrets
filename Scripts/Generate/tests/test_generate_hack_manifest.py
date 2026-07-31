@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -429,11 +432,152 @@ class RepositoryMessageSourceTest(unittest.TestCase):
             '--output "$repo_root/Roms/hack_manifest.json"',
             build,
         )
+        self.assertIn('if [[ "$base_rom" != /* ]]', build)
+        self.assertIn(
+            'base_rom="$(cd "$(dirname "$base_rom")" && pwd -P)/'
+            '$(basename "$base_rom")"',
+            build,
+        )
+        self.assertEqual(build.count('--dev-rom "$base_rom"'), 1)
         self.assertIn('--rom "$patched_rom"', build)
         self.assertLess(
             build.index('echo "Built patched ROM: $patched_rom"'),
             build.index(generator_call),
         )
+
+
+class DevRomProvenanceTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.fixture = ManifestFixture()
+        self.fixture.write_text("Oracle_main.asm", "")
+        self.canonical = self.fixture.write_dev_rom()
+
+    def tearDown(self) -> None:
+        self.fixture.close()
+
+    def write_distinct_rom(self, path: Path) -> Path:
+        data = bytearray(self.canonical.read_bytes())
+        data[-1] ^= 0xA5
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        return path
+
+    def test_selected_legacy_rom_drives_pipeline_hash_and_ranges(self) -> None:
+        legacy = self.write_distinct_rom(
+            self.fixture.root / "Roms" / "oos168_test2.sfc"
+        )
+        self.fixture.write_rom_value(
+            legacy, ROOM_HEADER_BANK_PC, 0x23, 1
+        )
+
+        manifest = generate_manifest(
+            self.fixture.root,
+            dev_rom_path=Path("Roms/oos168_test2.sfc"),
+        )
+
+        self.assertEqual(
+            manifest["build_pipeline"]["dev_rom"],
+            "Roms/oos168_test2.sfc",
+        )
+        self.assertEqual(
+            manifest["rom"]["dev_rom_sha1"],
+            hashlib.sha1(legacy.read_bytes()).hexdigest(),
+        )
+        self.assertNotEqual(
+            manifest["rom"]["dev_rom_sha1"],
+            hashlib.sha1(self.canonical.read_bytes()).hexdigest(),
+        )
+        self.assertEqual(
+            manifest["rom"]["dev_rom_size"], legacy.stat().st_size
+        )
+        self.assertEqual(
+            manifest["editor_managed_regions"]["regions"],
+            [
+                {"start": "0x238280", "end": "0x2392B0"},
+                {"start": "0x07F61D", "end": "0x07F86D"},
+            ],
+        )
+
+    def test_external_dev_rom_uses_absolute_manifest_path(self) -> None:
+        with tempfile.TemporaryDirectory() as external_dir:
+            external = self.write_distinct_rom(
+                Path(external_dir) / "override.sfc"
+            ).resolve()
+
+            manifest = generate_manifest(
+                self.fixture.root,
+                dev_rom_path=external,
+            )
+
+            self.assertEqual(
+                manifest["build_pipeline"]["dev_rom"], str(external)
+            )
+            self.assertEqual(
+                manifest["rom"]["dev_rom_sha1"],
+                hashlib.sha1(external.read_bytes()).hexdigest(),
+            )
+
+    def test_explicit_missing_dev_rom_fails_closed(self) -> None:
+        missing = Path("Roms/missing.sfc")
+
+        with self.assertRaisesRegex(
+            ManifestGenerationError,
+            "Editable dev ROM not found:.*Roms/missing.sfc",
+        ):
+            generate_manifest(
+                self.fixture.root,
+                dev_rom_path=missing,
+            )
+
+    def test_explicit_missing_patched_rom_fails_closed(self) -> None:
+        missing = Path("Roms/missing-patched.sfc")
+
+        with self.assertRaisesRegex(
+            ManifestGenerationError,
+            "Patched ROM not found:.*Roms/missing-patched.sfc",
+        ):
+            generate_manifest(
+                self.fixture.root,
+                rom_path=missing,
+            )
+
+    def test_cli_records_selected_dev_and_patched_rom_paths(self) -> None:
+        legacy = self.write_distinct_rom(
+            self.fixture.root / "Roms" / "oos168_test2.sfc"
+        )
+        patched = self.fixture.root / "Roms" / "oos169x.sfc"
+        patched.write_bytes(b"patched-rom")
+        output = self.fixture.root / "Roms" / "hack_manifest.json"
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(GENERATE_DIR / "generate_hack_manifest.py"),
+                "--root",
+                str(self.fixture.root),
+                "--output",
+                str(output),
+                "--dev-rom",
+                str(legacy),
+                "--rom",
+                str(patched),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        manifest = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(
+            manifest["build_pipeline"]["dev_rom"],
+            "Roms/oos168_test2.sfc",
+        )
+        self.assertEqual(
+            manifest["build_pipeline"]["patched_rom"],
+            "Roms/oos169x.sfc",
+        )
+        self.assertEqual(manifest["rom"]["path"], "Roms/oos169x.sfc")
 
 
 class EditorManagedRegionsTest(unittest.TestCase):

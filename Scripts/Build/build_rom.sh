@@ -154,13 +154,16 @@ symbols_path="$rom_dir/oos${version}x.sym"
 mlb_rel="Roms/oos${version}x.mlb"
 mlb_path="$rom_dir/oos${version}x.mlb"
 
-if [[ -f "$legacy_base" && "$base_rom" != "$legacy_base" ]]; then
-  echo "NOTE: Ignoring legacy base ROM $legacy_base; using $base_rom" >&2
-fi
-
 if [[ ! -f "$base_rom" ]]; then
   echo "ERROR: Base ROM not found: $base_rom" >&2
   exit 1
+fi
+if [[ "$base_rom" != /* ]]; then
+  base_rom="$(cd "$(dirname "$base_rom")" && pwd -P)/$(basename "$base_rom")"
+fi
+
+if [[ -f "$legacy_base" && "$base_rom" != "$legacy_base" ]]; then
+  echo "NOTE: Ignoring legacy base ROM $legacy_base; using $base_rom" >&2
 fi
 echo "Using base ROM: $base_rom"
 
@@ -349,6 +352,7 @@ echo "[*] Generating Yaze hack manifest..."
 python3 "$repo_root/Scripts/Generate/generate_hack_manifest.py" \
   --root "$repo_root" \
   --output "$repo_root/Roms/hack_manifest.json" \
+  --dev-rom "$base_rom" \
   --rom "$patched_rom"
 
 # Export symbols for yaze + Mesen2.

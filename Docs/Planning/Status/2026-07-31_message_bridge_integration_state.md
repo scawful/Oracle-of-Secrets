@@ -42,9 +42,15 @@ source contract). Written for the clean integration pass; verified against
 3. z3dk analyzer paths lowercased: `../z3dk/scripts/` (upstream has
    `../z3dk/Scripts/`, wrong on case-sensitive filesystems).
 
-Dropped delta: local manifest call passes `--dev-rom "$base_rom"` — upstream
-generator has no `--dev-rom` flag (accepts `--root`, `--output`, `--rom`,
-`--pretty`, `--compact`). Carrying it forward breaks the build.
+Dropped integration delta: the local manifest call passed
+`--dev-rom "$base_rom"`, but the upstream generator at integration time had no
+such flag. Carrying that call-only hunk forward would have broken the build.
+
+Follow-up resolution: the old call-only draft remains intentionally dropped.
+The manifest provenance follow-up implements `--dev-rom` as a validated
+generator option, passes the exact base selected by `build_rom.sh`, and covers
+canonical, legacy, external, and missing-ROM cases with tests. Only that paired
+generator + build-script contract is safe to use.
 
 ## Other verified upstream details
 
