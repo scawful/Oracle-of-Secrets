@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags]" >&2
   echo "Base ROM: Roms/oos<version>.sfc (unpatched edit target; override with OOS_BASE_ROM)." >&2
-  echo "  Backward compat: if Roms/oos<version>_test2.sfc exists it is used until renamed." >&2
+  echo "  Backward compat: Roms/oos<version>_test2.sfc is used only when the standard base is absent." >&2
   echo "" >&2
   echo "Feature flag overrides:" >&2
   echo "  --enable  <csv>   Comma-separated feature names to enable (e.g. water_gate_hooks, ENABLE_WATER_GATE_HOOKS)." >&2
@@ -136,11 +136,11 @@ fi
 default_base="$rom_dir/oos${version}.sfc"
 legacy_base="$rom_dir/oos${version}_test2.sfc"
 if [[ -z "${OOS_BASE_ROM:-}" ]]; then
-  if [[ -f "$legacy_base" ]]; then
+  if [[ -f "$default_base" ]]; then
+    base_rom="$default_base"
+  elif [[ -f "$legacy_base" ]]; then
     base_rom="$legacy_base"
     echo "NOTE: Using legacy base ROM name $(basename "$legacy_base"). Rename to $(basename "$default_base") to adopt standard naming." >&2
-  elif [[ -f "$default_base" ]]; then
-    base_rom="$default_base"
   else
     echo "ERROR: Base ROM not found. Expected $default_base (or legacy $legacy_base)" >&2
     exit 1
@@ -155,7 +155,7 @@ mlb_rel="Roms/oos${version}x.mlb"
 mlb_path="$rom_dir/oos${version}x.mlb"
 
 if [[ -f "$legacy_base" && "$base_rom" != "$legacy_base" ]]; then
-  echo "WARNING: $legacy_base exists but base ROM is $base_rom (OOS_BASE_ROM override?)" >&2
+  echo "NOTE: Ignoring legacy base ROM $legacy_base; using $base_rom" >&2
 fi
 
 if [[ ! -f "$base_rom" ]]; then
@@ -420,8 +420,8 @@ fi
 
 if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
   echo "[*] Running static analysis..."
-  z3dk_analyzer="$repo_root/../z3dk/Scripts/static_analyzer.py"
-  oracle_analyzer="$repo_root/../z3dk/Scripts/oracle_analyzer.py"
+  z3dk_analyzer="$repo_root/../z3dk/scripts/static_analyzer.py"
+  oracle_analyzer="$repo_root/../z3dk/scripts/oracle_analyzer.py"
 
   # Prefer oracle-specific analyzer, fall back to generic
   if [[ -f "$oracle_analyzer" ]]; then
