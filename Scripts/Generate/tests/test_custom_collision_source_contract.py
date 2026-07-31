@@ -302,6 +302,12 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
 
         self.assertEqual(build.count(validator_call), 1)
         self.assertEqual(build.count('--rom "$base_rom"'), 1)
+        self.assertIn(
+            'water_table_rom="${OOS_WATER_TABLE_ROM:-$base_rom}"',
+            build,
+        )
+        self.assertNotIn('water_table_rom="$patched_rom"', build)
+        self.assertNotIn('yaze_rom_rel=', build)
         self.assertLess(
             build.index(validator_call),
             build.index("generate_water_gate_runtime_tables.py"),

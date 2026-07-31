@@ -180,31 +180,18 @@ echo "[*] Validating expanded message source contract..."
 python3 "$repo_root/Scripts/Generate/validate_expanded_message_source.py" \
   --root "$repo_root"
 
-# Keep water-gate runtime tables synced with Yaze-authored room data.
-# Prefers the previous build's patched ROM: water-fill marker tiles ($F5)
-# live in collision data contributed by ASM patches, so the base ROM lacks
-# them (rooms 0x25/0x27 regression, found 2026-06-11). Order:
-# OOS_WATER_TABLE_ROM > existing patched ROM > .yaze rom_filename > base.
+# Keep water-gate runtime tables synced with the validated editor-authored base
+# ROM. The tracked custom-collision source contract guarantees that marker
+# tiles ($F5) are present there, so never implicitly reuse stale patched output.
+# OOS_WATER_TABLE_ROM remains an explicit diagnostic override.
 if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" || "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
-  water_table_rom="${OOS_WATER_TABLE_ROM:-}"
-  if [[ -z "$water_table_rom" && -f "$patched_rom" ]]; then
-    water_table_rom="$patched_rom"
+  water_table_rom="${OOS_WATER_TABLE_ROM:-$base_rom}"
+  if [[ "$water_table_rom" != /* ]]; then
+    water_table_rom="$repo_root/$water_table_rom"
   fi
-  if [[ -z "$water_table_rom" ]]; then
-    yaze_project="$repo_root/Oracle-of-Secrets.yaze"
-    if [[ -f "$yaze_project" ]]; then
-      yaze_rom_rel="$(awk -F= '/^rom_filename=/{print $2; exit}' "$yaze_project" || true)"
-      if [[ -n "$yaze_rom_rel" ]]; then
-        if [[ "$yaze_rom_rel" = /* ]]; then
-          water_table_rom="$yaze_rom_rel"
-        else
-          water_table_rom="$repo_root/$yaze_rom_rel"
-        fi
-      fi
-    fi
-  fi
-  if [[ -z "$water_table_rom" || ! -f "$water_table_rom" ]]; then
-    water_table_rom="$base_rom"
+  if [[ ! -f "$water_table_rom" ]]; then
+    echo "ERROR: Water-table source ROM not found: $water_table_rom" >&2
+    exit 1
   fi
   water_table_rom_arg="$water_table_rom"
   if [[ "$water_table_rom_arg" == "$repo_root/"* ]]; then
