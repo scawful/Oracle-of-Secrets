@@ -996,11 +996,46 @@ def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
 # Main manifest generation
 # ---------------------------------------------------------------------------
 
-def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
+def _resolve_repo_path(root: Path, path: Path) -> Path:
+    """Resolve a CLI/API path relative to the Oracle repository root."""
+    return (root / path).resolve() if not path.is_absolute() else path.resolve()
+
+
+def _manifest_path(root: Path, path: Path) -> str:
+    """Prefer portable repo-relative manifest paths when possible."""
+    return (
+        path.relative_to(root).as_posix()
+        if path.is_relative_to(root)
+        else str(path)
+    )
+
+
+def generate_manifest(
+    root: Path,
+    rom_path: Optional[Path] = None,
+    dev_rom_path: Optional[Path] = None,
+) -> dict:
     """Generate the complete hack manifest."""
     import hashlib
 
     root = root.resolve()
+    if rom_path is not None:
+        rom_path = _resolve_repo_path(root, rom_path)
+        if not rom_path.is_file():
+            raise ManifestGenerationError(
+                f"Patched ROM not found: {rom_path}"
+            )
+
+    explicit_dev_rom = dev_rom_path is not None
+    dev_rom_path = _resolve_repo_path(
+        root,
+        dev_rom_path or Path("Roms/oos168.sfc"),
+    )
+    if explicit_dev_rom and not dev_rom_path.is_file():
+        raise ManifestGenerationError(
+            f"Editable dev ROM not found: {dev_rom_path}"
+        )
+
     reachable_sources = collect_reachable_asm_sources(root)
 
     # Load defines for conditional compilation evaluation
@@ -1024,8 +1059,12 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
     # Build pipeline model
     manifest["build_pipeline"] = {
         "description": "Yaze edits the dev ROM; asar patches it to produce the patched ROM. They share the same base file.",
-        "dev_rom": "Roms/oos168.sfc",
-        "patched_rom": "Roms/oos168x.sfc",
+        "dev_rom": _manifest_path(root, dev_rom_path),
+        "patched_rom": (
+            _manifest_path(root, rom_path)
+            if rom_path is not None
+            else "Roms/oos168x.sfc"
+        ),
         "assembler": "asar",
         "entry_point": str(MANIFEST_ENTRY_POINT),
         "build_script": "Scripts/Build/build_rom.sh",
@@ -1041,22 +1080,26 @@ def generate_manifest(root: Path, rom_path: Optional[Path] = None) -> dict:
     # ROM metadata (patched ROM for verification, dev ROM for editing)
     rom_meta: dict = {}
     if rom_path and rom_path.exists():
-        rom_meta["path"] = str(rom_path.relative_to(root)) if rom_path.is_relative_to(root) else str(rom_path)
+        rom_meta["path"] = _manifest_path(root, rom_path)
         try:
             data = rom_path.read_bytes()
             rom_meta["sha1"] = hashlib.sha1(data).hexdigest()
             rom_meta["size"] = len(data)
-        except Exception:
-            pass
-    # Also hash the dev ROM if it exists
-    dev_rom_path = root / "Roms" / "oos168.sfc"
+        except OSError as exc:
+            raise ManifestGenerationError(
+                f"Unable to read patched ROM {rom_path}: {exc}"
+            ) from exc
+
+    # Also hash the exact editable ROM selected by the build, if it exists.
     if dev_rom_path.exists():
         try:
             dev_data = dev_rom_path.read_bytes()
             rom_meta["dev_rom_sha1"] = hashlib.sha1(dev_data).hexdigest()
             rom_meta["dev_rom_size"] = len(dev_data)
-        except Exception:
-            pass
+        except OSError as exc:
+            raise ManifestGenerationError(
+                f"Unable to read editable dev ROM {dev_rom_path}: {exc}"
+            ) from exc
     manifest["rom"] = rom_meta
 
     if dev_rom_path.exists():
@@ -1194,8 +1237,18 @@ def main() -> int:
     parser.add_argument(
         "--rom",
         type=Path,
-        default=Path("Roms/oos168x.sfc"),
-        help="ROM path for metadata (optional)",
+        help=(
+            "Patched ROM path for metadata "
+            "(default: Roms/oos168x.sfc when present)"
+        ),
+    )
+    parser.add_argument(
+        "--dev-rom",
+        type=Path,
+        help=(
+            "Editable base ROM selected by the build "
+            "(default: Roms/oos168.sfc)"
+        ),
     )
     parser.add_argument(
         "--pretty",
@@ -1213,12 +1266,13 @@ def main() -> int:
     root = args.root.resolve()
     output = (root / args.output).resolve() if not args.output.is_absolute() else args.output
 
-    rom_path = (root / args.rom).resolve() if not args.rom.is_absolute() else args.rom
-    if not rom_path.exists():
-        rom_path = None
+    rom_path = args.rom
+    if rom_path is None:
+        default_rom_path = root / "Roms" / "oos168x.sfc"
+        rom_path = default_rom_path if default_rom_path.is_file() else None
 
     try:
-        manifest = generate_manifest(root, rom_path)
+        manifest = generate_manifest(root, rom_path, args.dev_rom)
     except ManifestGenerationError as exc:
         print(f"error: cannot generate hack manifest: {exc}", file=sys.stderr)
         return 1
