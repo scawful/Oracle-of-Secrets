@@ -446,6 +446,21 @@ class RepositoryMessageSourceTest(unittest.TestCase):
         )
 
 
+class RepositoryMinecartTrackSourceTest(unittest.TestCase):
+    def test_manifest_exposes_durable_minecart_track_source(self) -> None:
+        manifest = generate_manifest(REPO_ROOT)
+
+        self.assertEqual(manifest["manifest_version"], 3)
+        self.assertEqual(
+            manifest["minecart_tracks"]["source"],
+            {
+                "format": "yaze-minecart-track-table",
+                "version": 1,
+                "path": "Sprites/Objects/data/minecart_tracks.asm",
+            },
+        )
+
+
 class DevRomProvenanceTest(unittest.TestCase):
     def setUp(self) -> None:
         self.fixture = ManifestFixture()
