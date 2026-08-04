@@ -20,7 +20,7 @@ def _registry_dir() -> Path:
     override = os.getenv("MESEN2_REGISTRY_DIR")
     if override:
         return Path(override).expanduser().resolve()
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = Path(__file__).resolve().parents[3]
     return (repo_root / ".context" / "scratchpad" / "mesen2" / "instances").resolve()
 
 
