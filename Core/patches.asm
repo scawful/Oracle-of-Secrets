@@ -1,6 +1,17 @@
 ; This file contains all direct patches to the original ROM.
 ; It is included from Oracle_main.asm.
 
+; Keep the Shrine pendant rewards reproducible from an unedited base ROM.
+; Guard both the chest record identity and the accepted old/already-fixed item
+; values so a changed chest table fails closed instead of patching a wrong byte.
+assert read2($01E9E6) == $8073, "Room $73 big-chest record moved"
+assert read1($01E9E8) == $39 || read1($01E9E8) == $3A, "Unexpected room $73 big-chest item"
+org $01E9E8 : db $3A ; Pendant of Power
+
+assert read2($01E9F5) == $807A, "Room $7A big-chest record moved"
+assert read1($01E9F7) == $38 || read1($01E9F7) == $39, "Unexpected room $7A big-chest item"
+org $01E9F7 : db $39 ; Pendant of Wisdom
+
 ; =========================================================
 ; JumpTableLocal Guard (Black-Screen Prevention)
 ;
