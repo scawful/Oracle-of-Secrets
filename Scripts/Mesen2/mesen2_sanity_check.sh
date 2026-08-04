@@ -18,10 +18,10 @@ usage() {
 Mesen2 sanity check
 
 USAGE:
-  Scripts/mesen2_sanity_check.sh [options]
+  Scripts/Mesen2/mesen2_sanity_check.sh [options]
 
 OPTIONS:
-  --root <dir>       Oracle-of-Secrets repo root (default: script parent)
+  --root <dir>       Oracle-of-Secrets repo root (default: repository root)
   --instance <name>  Registry instance name to resolve socket
   --owner <name>     Owner label (optional, for logging)
   --rom <path>       Expected ROM path (optional)
@@ -93,11 +93,11 @@ done
 
 if [[ -z "$ROOT_DIR" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+  ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 fi
 
 if [[ -z "$REGISTRY_SCRIPT" ]]; then
-  REGISTRY_SCRIPT="${ROOT_DIR}/Scripts/mesen2_registry.py"
+  REGISTRY_SCRIPT="${ROOT_DIR}/Scripts/Mesen2/mesen2_registry.py"
 fi
 
 if [[ $CHECK_REPO -eq 1 ]]; then
@@ -209,9 +209,9 @@ if [[ $rom_failed -ne 0 && $STRICT -eq 1 ]]; then
 fi
 
 log "State check..."
-python3 "$ROOT_DIR/Scripts/mesen2_client.py" state --json >/dev/null
+python3 "$ROOT_DIR/Scripts/Mesen2/mesen2_client.py" state --json >/dev/null
 
 log "Input check..."
-python3 "$ROOT_DIR/Scripts/mesen2_client.py" press RIGHT --frames 1 >/dev/null
+python3 "$ROOT_DIR/Scripts/Mesen2/mesen2_client.py" press RIGHT --frames 1 >/dev/null
 
 log "Sanity check OK."
