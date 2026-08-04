@@ -6,7 +6,7 @@ usage() {
 Launch an isolated Mesen2 OOS instance (safe for multi-agent work).
 
 USAGE:
-  Scripts/mesen2_launch_instance.sh [options]
+  Scripts/Mesen2/mesen2_launch_instance.sh [options]
 
 OPTIONS:
   --instance NAME        Instance name (default: <source>-<owner>)
@@ -42,7 +42,7 @@ EOF
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 INSTANCE=""
 INSTANCE_SET=0
@@ -487,7 +487,7 @@ if [[ "${REUSE}" -eq 0 ]]; then
 fi
 
 if [[ "${REGISTER}" -eq 1 ]]; then
-  registry="${ROOT_DIR}/Scripts/mesen2_registry.py"
+  registry="${ROOT_DIR}/Scripts/Mesen2/mesen2_registry.py"
   if [[ -f "${registry}" ]]; then
     # wait briefly for socket
     for _ in {1..40}; do
@@ -516,4 +516,4 @@ echo "  export MESEN2_INSTANCE=\"${MESEN2_INSTANCE}\""
 echo "  export MESEN2_INSTANCE_GUID=\"${MESEN2_INSTANCE_GUID}\""
 echo ""
 echo "Verify:"
-echo "  python3 ${ROOT_DIR}/Scripts/mesen2_client.py --socket \"${MESEN2_SOCKET_PATH}\" health"
+echo "  python3 ${ROOT_DIR}/Scripts/Mesen2/mesen2_client.py --socket \"${MESEN2_SOCKET_PATH}\" health"
