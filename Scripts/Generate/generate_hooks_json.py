@@ -16,7 +16,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
-ORG_RE = re.compile(r'^\s*org\s+\$([0-9A-Fa-f]{6})\b')
+ORG_RE = re.compile(r'^\s*org\s+\$([0-9A-Fa-f]{1,6})(?=\s*(?::|;|$))')
+ORG_DIRECTIVE_RE = re.compile(r"^\s*org\s+([^:;]+)", re.IGNORECASE)
+ORG_BANK_PROOF_RE = re.compile(
+    r"@manifest-org-bank\s*=\s*\$?([0-9A-Fa-f]{2})\b",
+    re.IGNORECASE,
+)
 LABEL_RE = re.compile(r'^\s*[A-Za-z0-9_\.\+\-]+:\s*$')
 INSTR_RE = re.compile(r'^\s*([A-Za-z]{2,5})\b\s*(.*)$')
 COMMENT_RE = re.compile(r'^\s*;')
@@ -39,13 +44,21 @@ HOOK_DIRECTIVE_RE = re.compile(r'@hook\b(.*)', re.IGNORECASE)
 HOOK_KV_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)=(\"[^\"]*\"|'[^']*'|\S+)")
 
 DEFINE_ASSIGN_RE = re.compile(
-    r"^\s*!([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(\$[0-9A-Fa-f]+|0x[0-9A-Fa-f]+|\d+)\b"
+    r"^\s*!([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$"
 )
 DEFINE_REF_RE = re.compile(r"!([A-Za-z_][A-Za-z0-9_]*)\b")
+DEFINE_ANY_ASSIGN_RE = re.compile(
+    r"^\s*!([A-Za-z_][A-Za-z0-9_]*)\s*(#=|=)\s*(.*?)\s*$"
+)
 HEX_LITERAL_RE = re.compile(r"\$([0-9A-Fa-f]+)\b")
 IF_DIRECTIVE_RE = re.compile(r"^\s*(if|elseif)\b(.*)$", re.IGNORECASE)
 ELSE_DIRECTIVE_RE = re.compile(r"^\s*else\b", re.IGNORECASE)
 ENDIF_DIRECTIVE_RE = re.compile(r"^\s*endif\b", re.IGNORECASE)
+MACRO_START_RE = re.compile(
+    r"^\s*macro\s+([A-Za-z_][A-Za-z0-9_]*)\b", re.IGNORECASE
+)
+MACRO_END_RE = re.compile(r"^\s*endmacro\b", re.IGNORECASE)
+MACRO_INVOKE_RE = re.compile(r"^\s*%([A-Za-z_][A-Za-z0-9_]*)\s*\(")
 
 SKIP_DIRS = {
     '.git', '.context', '.claude', '.cursor',
@@ -96,6 +109,14 @@ KIND_PRIORITY = {
     'patch': 2,
     'data': 1,
 }
+PROTECTED_SIZE_ESTIMATE = {
+    "jsl": 4,
+    "jml": 4,
+    "jsr": 3,
+    "jmp": 3,
+    "data": 8,
+    "patch": 4,
+}
 
 @dataclass
 class HookEntry:
@@ -112,6 +133,17 @@ class HookEntry:
     expected_x: Optional[int] = None
     expected_exit_m: Optional[int] = None
     expected_exit_x: Optional[int] = None
+    protected_size: Optional[int] = None
+
+
+@dataclass(frozen=True)
+class OrgDirective:
+    expression: str
+    address: Optional[int]
+    source: str
+    proof_bank: Optional[int] = None
+    macro_name: Optional[str] = None
+    anchor_banks: tuple[int, ...] = ()
 
 
 def _module_from_path(path: Path, root: Path) -> str:
@@ -153,7 +185,7 @@ def _scan_annotations(lines: list[str], start_idx: int) -> tuple[str, bool, Opti
 
     for j in range(start_idx, min(start_idx + 20, len(lines))):
         line = lines[j]
-        if ORG_RE.match(line) and j != start_idx:
+        if ORG_DIRECTIVE_RE.match(line) and j != start_idx:
             break
         if COMMENT_RE.match(line) or ';' in line:
             m = ABI_RE.search(line)
@@ -198,7 +230,7 @@ def _scan_hook_directive(lines: list[str], start_idx: int) -> dict:
     directive: dict[str, object] = {}
     for j in range(start_idx, min(start_idx + 20, len(lines))):
         line = lines[j]
-        if ORG_RE.match(line) and j != start_idx:
+        if ORG_DIRECTIVE_RE.match(line) and j != start_idx:
             break
         if ";" in line:
             comment = line.split(";", 1)[1]
@@ -215,12 +247,15 @@ def _scan_hook_directive(lines: list[str], start_idx: int) -> dict:
     return directive
 
 
-def _parse_define_assignment(line: str) -> tuple[str, int] | None:
-    m = DEFINE_ASSIGN_RE.match(line)
+def _parse_define_assignment(
+    line: str, defines: Optional[dict[str, int]] = None
+) -> tuple[str, int] | None:
+    source = line.split(";", 1)[0]
+    m = DEFINE_ASSIGN_RE.match(source)
     if not m:
         return None
     name = m.group(1).strip()
-    value = _parse_int(m.group(2))
+    value = _eval_numeric_expression(m.group(2), defines or {})
     if value is None:
         return None
     return name, value
@@ -234,7 +269,7 @@ def _load_global_defines(root: Path) -> dict[str, int]:
         if not path.exists():
             continue
         for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
-            parsed = _parse_define_assignment(line)
+            parsed = _parse_define_assignment(line, defines)
             if parsed is None:
                 continue
             name, value = parsed
@@ -337,6 +372,58 @@ def _eval_condition(expr: str, defines: dict[str, int]) -> Optional[bool]:
         return None
 
 
+def _eval_numeric_expression(
+    expr: str, defines: dict[str, int]
+) -> Optional[int]:
+    """Evaluate a simple numeric Asar expression, or return None."""
+    raw = expr.split(";", 1)[0].strip()
+    if not raw:
+        return None
+    unknown = False
+
+    def repl(m: re.Match) -> str:
+        nonlocal unknown
+        name = m.group(1)
+        if name not in defines:
+            unknown = True
+            return "0"
+        return str(defines[name])
+
+    cooked = DEFINE_REF_RE.sub(repl, raw)
+    if unknown:
+        return None
+    cooked = HEX_LITERAL_RE.sub(lambda m: f"0x{m.group(1)}", cooked)
+    try:
+        tree = ast.parse(cooked, mode="eval")
+        value = _eval_ast(tree)
+    except Exception:
+        return None
+    if isinstance(value, bool):
+        return int(value)
+    return int(value)
+
+
+def _expression_address_anchor_banks(
+    expr: str, defines: Optional[dict[str, int]] = None
+) -> tuple[int, ...]:
+    """Return physical LoROM banks named by literals or known defines."""
+    banks: set[int] = set()
+    for match in HEX_LITERAL_RE.finditer(expr):
+        value = int(match.group(1), 16)
+        if value <= 0xFFFFFF and (value & 0xFFFF) >= 0x8000:
+            banks.add((value >> 16) & 0x7F)
+    known_defines = defines or {}
+    for match in DEFINE_REF_RE.finditer(expr):
+        value = known_defines.get(match.group(1))
+        if (
+            value is not None
+            and 0 <= value <= 0xFFFFFF
+            and (value & 0xFFFF) >= 0x8000
+        ):
+            banks.add((value >> 16) & 0x7F)
+    return tuple(sorted(banks))
+
+
 def _inline_org_payload(line: str) -> tuple[str, Optional[str]] | None:
     """Return the opcode/target if the org payload is on the same line.
 
@@ -368,6 +455,7 @@ def _first_instruction(lines: list[str], start_idx: int, defines: dict[str, int]
     if inline is not None:
         return inline
 
+    defines = dict(defines)
     active = True
     stack: list[dict[str, object]] = []
 
@@ -386,6 +474,10 @@ def _first_instruction(lines: list[str], start_idx: int, defines: dict[str, int]
             expr = m_if.group(2).strip()
             parent_active = active
             cond = _eval_condition(expr, defines)
+            if cond is None:
+                # The payload could be any feasible branch. Use the largest
+                # protected-size classification rather than understate it.
+                return "data", None
             cond_val = bool(cond) if cond is not None else True
             if kind == "if":
                 branch_taken = parent_active and cond_val
@@ -420,6 +512,18 @@ def _first_instruction(lines: list[str], start_idx: int, defines: dict[str, int]
             continue
 
         if not active:
+            continue
+
+        parsed_define = _parse_define_assignment(raw_line, defines)
+        if parsed_define is not None:
+            name, value = parsed_define
+            defines[name] = value
+            continue
+        assignment = DEFINE_ANY_ASSIGN_RE.match(
+            raw_line.split(";", 1)[0]
+        )
+        if assignment:
+            defines.pop(assignment.group(1), None)
             continue
 
         if LABEL_RE.match(line):
@@ -487,6 +591,208 @@ def filter_active_asm_sources(
     return active_sources
 
 
+def _iter_active_lines(
+    lines: list[str], initial_defines: dict[str, int]
+) -> Iterable[tuple[int, str, dict[str, int]]]:
+    """Yield active source lines with the numeric define state at that line."""
+    defines = dict(initial_defines)
+    active = True
+    stack: list[dict[str, object]] = []
+    for idx, line in enumerate(lines):
+        directive = line.split(";", 1)[0].strip()
+        m_if = IF_DIRECTIVE_RE.match(directive)
+        if m_if:
+            kind = m_if.group(1).lower()
+            condition_defines = (
+                dict(stack[-1]["entry_defines"])
+                if kind == "elseif" and stack
+                else defines
+            )
+            cond = _eval_condition(
+                m_if.group(2).strip(), condition_defines
+            )
+            if kind == "if":
+                parent_active = active
+                active = parent_active and cond is not False
+                stack.append(
+                    {
+                        "parent_active": parent_active,
+                        "entry_defines": dict(defines),
+                        "branch_states": [],
+                        "current_branch_active": active,
+                        "fallthrough_possible": (
+                            parent_active and cond is not True
+                        ),
+                    }
+                )
+            elif stack:
+                frame = stack[-1]
+                if bool(frame["current_branch_active"]):
+                    frame["branch_states"].append(dict(defines))
+                defines = dict(frame["entry_defines"])
+                fallthrough = bool(frame["fallthrough_possible"])
+                active = fallthrough and cond is not False
+                frame["current_branch_active"] = active
+                frame["fallthrough_possible"] = (
+                    fallthrough and cond is not True
+                )
+            continue
+        if ELSE_DIRECTIVE_RE.match(directive):
+            if stack:
+                frame = stack[-1]
+                if bool(frame["current_branch_active"]):
+                    frame["branch_states"].append(dict(defines))
+                defines = dict(frame["entry_defines"])
+                active = bool(frame["fallthrough_possible"])
+                frame["current_branch_active"] = active
+                frame["fallthrough_possible"] = False
+            continue
+        if ENDIF_DIRECTIVE_RE.match(directive):
+            if stack:
+                frame = stack.pop()
+                branch_states = frame["branch_states"]
+                if bool(frame["current_branch_active"]):
+                    branch_states.append(dict(defines))
+                if bool(frame["fallthrough_possible"]):
+                    branch_states.append(dict(frame["entry_defines"]))
+                if branch_states:
+                    common_names = set(branch_states[0])
+                    for state in branch_states[1:]:
+                        common_names.intersection_update(state)
+                    defines = {
+                        name: branch_states[0][name]
+                        for name in common_names
+                        if all(
+                            state[name] == branch_states[0][name]
+                            for state in branch_states[1:]
+                        )
+                    }
+                else:
+                    defines = dict(frame["entry_defines"])
+                active = bool(frame["parent_active"])
+            continue
+        if not active:
+            continue
+
+        parsed = _parse_define_assignment(line, defines)
+        if parsed is not None:
+            name, value = parsed
+            defines[name] = value
+        else:
+            assigned = DEFINE_ANY_ASSIGN_RE.match(line.split(";", 1)[0])
+            if assigned:
+                defines.pop(assigned.group(1), None)
+        yield idx, line, dict(defines)
+
+
+def scan_org_directives(
+    root: Path,
+    asm_paths: Optional[Iterable[Path]] = None,
+) -> list[OrgDirective]:
+    """Scan active literal/computed org directives with explicit proofs.
+
+    Org directives inside macro definitions are considered active only when
+    that macro is reachable from a real invocation in active source. This
+    keeps unused macro templates from becoming false hooks while ensuring an
+    invoked unresolved template cannot silently bypass manifest validation.
+    """
+    root = root.resolve()
+    explicit_sources = asm_paths is not None
+    global_defines = _load_global_defines(root)
+    source_paths = list(root.rglob("*.asm") if asm_paths is None else asm_paths)
+    active_sources = (
+        list(source_paths)
+        if explicit_sources
+        else filter_active_asm_sources(root, source_paths, global_defines)
+    )
+    records_by_path: dict[
+        Path, list[tuple[int, str, dict[str, int]]]
+    ] = {}
+    for source_path in active_sources:
+        asm_path = source_path.resolve()
+        if not explicit_sources and _should_skip(asm_path):
+            continue
+        try:
+            lines = asm_path.read_text(
+                encoding="utf-8", errors="ignore"
+            ).splitlines()
+        except OSError:
+            if explicit_sources:
+                raise
+            continue
+        records_by_path[asm_path] = list(
+            _iter_active_lines(lines, global_defines)
+        )
+
+    root_invocations: set[str] = set()
+    macro_edges: dict[str, set[str]] = {}
+    for records in records_by_path.values():
+        macro_name: Optional[str] = None
+        for _, line, _ in records:
+            source = line.split(";", 1)[0]
+            macro_start = MACRO_START_RE.match(source)
+            if macro_start:
+                macro_name = macro_start.group(1).lower()
+                macro_edges.setdefault(macro_name, set())
+                continue
+            if MACRO_END_RE.match(source):
+                macro_name = None
+                continue
+            invocation = MACRO_INVOKE_RE.match(source)
+            if not invocation:
+                continue
+            invoked = invocation.group(1).lower()
+            if macro_name is None:
+                root_invocations.add(invoked)
+            else:
+                macro_edges.setdefault(macro_name, set()).add(invoked)
+
+    active_macros = set(root_invocations)
+    pending = list(root_invocations)
+    while pending:
+        macro_name = pending.pop()
+        for invoked in macro_edges.get(macro_name, set()):
+            if invoked not in active_macros:
+                active_macros.add(invoked)
+                pending.append(invoked)
+
+    directives: list[OrgDirective] = []
+    for asm_path, records in records_by_path.items():
+        macro_name = None
+        for idx, line, defines in records:
+            source_text = line.split(";", 1)[0]
+            macro_start = MACRO_START_RE.match(source_text)
+            if macro_start:
+                macro_name = macro_start.group(1).lower()
+                continue
+            if MACRO_END_RE.match(source_text):
+                macro_name = None
+                continue
+            match = ORG_DIRECTIVE_RE.match(source_text)
+            if not match or (
+                macro_name is not None and macro_name not in active_macros
+            ):
+                continue
+            expression = match.group(1).strip()
+            proof_match = ORG_BANK_PROOF_RE.search(line)
+            proof_bank = (
+                int(proof_match.group(1), 16) if proof_match else None
+            )
+            directives.append(
+                OrgDirective(
+                    expression=expression,
+                    address=_eval_numeric_expression(expression, defines),
+                    source=f"{asm_path.relative_to(root)}:{idx + 1}",
+                    proof_bank=proof_bank,
+                    macro_name=macro_name,
+                    anchor_banks=_expression_address_anchor_banks(
+                        expression, defines
+                    ),
+                )
+            )
+    return directives
+
+
 def scan_hooks(
     root: Path,
     asm_paths: Optional[Iterable[Path]] = None,
@@ -497,15 +803,22 @@ def scan_hooks(
 
     global_defines = _load_global_defines(root)
     source_paths = root.rglob('*.asm') if asm_paths is None else asm_paths
-    active_sources = filter_active_asm_sources(
-        root, source_paths, global_defines
+    active_sources = (
+        list(source_paths)
+        if explicit_sources
+        else filter_active_asm_sources(root, source_paths, global_defines)
     )
+    active_macros = {
+        directive.macro_name
+        for directive in scan_org_directives(root, active_sources)
+        if directive.macro_name is not None
+    }
     for source_path in active_sources:
         asm_path = source_path.resolve()
         if not explicit_sources and _should_skip(asm_path):
             continue
         try:
-            rel = asm_path.relative_to(root)
+            asm_path.relative_to(root)
         except ValueError:
             if explicit_sources:
                 raise ValueError(
@@ -519,63 +832,24 @@ def scan_hooks(
                 raise
             continue
 
-        defines = dict(global_defines)
-        active = True
-        stack: list[dict[str, object]] = []
-        for idx, line in enumerate(lines):
-            # Conditional compilation (best-effort) so hooks.json matches the
-            # ROM when feature/module flags toggle entire org blocks.
-            directive = line.split(";", 1)[0].strip()
-            m_if = IF_DIRECTIVE_RE.match(directive)
-            if m_if:
-                kind = m_if.group(1).lower()
-                expr = m_if.group(2).strip()
-                parent_active = active
-                cond = _eval_condition(expr, defines)
-                cond_val = bool(cond) if cond is not None else True
-                if kind == "if":
-                    branch_taken = parent_active and cond_val
-                    active = parent_active and cond_val
-                    stack.append({"parent_active": parent_active, "branch_taken": branch_taken})
-                else:  # elseif
-                    if not stack:
-                        continue
-                    frame = stack[-1]
-                    parent_active = bool(frame["parent_active"])
-                    already = bool(frame["branch_taken"])
-                    if not parent_active or already:
-                        active = False
-                    else:
-                        active = parent_active and cond_val
-                        frame["branch_taken"] = active
+        macro_name: Optional[str] = None
+        for idx, line, defines in _iter_active_lines(lines, global_defines):
+            source_text = line.split(";", 1)[0]
+            macro_start = MACRO_START_RE.match(source_text)
+            if macro_start:
+                macro_name = macro_start.group(1).lower()
                 continue
-            if ELSE_DIRECTIVE_RE.match(directive):
-                if not stack:
-                    continue
-                frame = stack[-1]
-                parent_active = bool(frame["parent_active"])
-                already = bool(frame["branch_taken"])
-                active = parent_active and not already
-                frame["branch_taken"] = True
+            if MACRO_END_RE.match(source_text):
+                macro_name = None
                 continue
-            if ENDIF_DIRECTIVE_RE.match(directive):
-                if not stack:
-                    continue
-                frame = stack.pop()
-                active = bool(frame["parent_active"])
+            m = ORG_DIRECTIVE_RE.match(source_text)
+            if not m or (
+                macro_name is not None and macro_name not in active_macros
+            ):
                 continue
-
-            if not active:
+            addr = _eval_numeric_expression(m.group(1), defines)
+            if addr is None:
                 continue
-
-            parsed = _parse_define_assignment(line)
-            if parsed is not None:
-                name, value = parsed
-                defines[name] = value
-            m = ORG_RE.match(line)
-            if not m:
-                continue
-            addr = int(m.group(1), 16)
             kind, target = _first_instruction(lines, idx, defines)
             abi_class_note, no_return, ann_m, ann_x = _scan_annotations(lines, idx)
             hook_directive = _scan_hook_directive(lines, idx)
@@ -644,9 +918,17 @@ def scan_hooks(
                 expected_x=ann_x,
                 expected_exit_m=ann_exit_m,
                 expected_exit_x=ann_exit_x,
+                protected_size=PROTECTED_SIZE_ESTIMATE.get(kind, 4),
             )
 
             existing = hooks_by_addr.get(addr)
+            if existing:
+                maximum_size = max(
+                    existing.protected_size or 4,
+                    entry.protected_size or 4,
+                )
+                existing.protected_size = maximum_size
+                entry.protected_size = maximum_size
             if not existing or _score_entry(entry) > _score_entry(existing):
                 hooks_by_addr[addr] = entry
 

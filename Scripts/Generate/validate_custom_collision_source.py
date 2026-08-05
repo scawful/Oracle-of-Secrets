@@ -16,7 +16,9 @@ from typing import Any
 SOURCE_PATH = Path("Data/dungeons/custom_collision.json")
 
 NUMBER_OF_ROOMS = 296
-COLLISION_MAP_TILES = 64 * 64
+COLLISION_MAP_WIDTH = 64
+COLLISION_MAP_HEIGHT = 64
+COLLISION_MAP_TILES = COLLISION_MAP_WIDTH * COLLISION_MAP_HEIGHT
 POINTER_TABLE_START = 0x128090
 COLLISION_DATA_START = 0x128450
 COLLISION_DATA_END_EXCLUSIVE = 0x12E000
@@ -169,10 +171,32 @@ def _load_source(source_path: Path) -> tuple[CollisionRooms, bytes, str]:
     return rooms, source_bytes, source_sha256
 
 
-def _snes_to_pc(address: int) -> int:
-    if address >= 0x808000:
-        address -= 0x808000
-    return (address & 0x7FFF) + ((address // 2) & 0xFF8000)
+def _strict_lorom_to_pc(address: int, room_id: int) -> int:
+    """Convert a raw ROM pointer only when it is mapped, ROM-backed LoROM."""
+    if not 0 <= address <= 0xFFFFFF:
+        raise CustomCollisionSourceContractError(
+            f"ROM room 0x{room_id:02X} collision pointer 0x{address:X} is "
+            "outside 24-bit address space"
+        )
+    bank = (address >> 16) & 0xFF
+    offset = address & 0xFFFF
+    if bank in (0x7E, 0x7F, 0xFE, 0xFF):
+        raise CustomCollisionSourceContractError(
+            f"ROM room 0x{room_id:02X} collision pointer 0x{address:06X} "
+            f"uses WRAM bank or mirror 0x{bank:02X}"
+        )
+    if offset < 0x8000:
+        raise CustomCollisionSourceContractError(
+            f"ROM room 0x{room_id:02X} collision pointer 0x{address:06X} "
+            "is a raw low-half LoROM address"
+        )
+    pc_address = ((bank & 0x7F) << 15) | (offset & 0x7FFF)
+    if pc_address >= 0x3F0000:
+        raise CustomCollisionSourceContractError(
+            f"ROM room 0x{room_id:02X} collision pointer 0x{address:06X} "
+            "maps into the WRAM-backed LoROM PC window"
+        )
+    return pc_address
 
 
 def _read_u16(data: bytes, offset: int) -> int:
@@ -180,7 +204,7 @@ def _read_u16(data: bytes, offset: int) -> int:
 
 
 def _decode_room(data: bytes, room_id: int, snes_pointer: int) -> dict[int, int]:
-    cursor = _snes_to_pc(snes_pointer)
+    cursor = _strict_lorom_to_pc(snes_pointer, room_id)
     if not COLLISION_DATA_START <= cursor < COLLISION_DATA_END_EXCLUSIVE:
         raise CustomCollisionSourceContractError(
             f"ROM room 0x{room_id:02X} collision pointer "
@@ -220,7 +244,10 @@ def _decode_room(data: bytes, room_id: int, snes_pointer: int) -> dict[int, int]
         height = data[cursor + 1]
         cursor += 2
         if width == 0 or height == 0:
-            continue
+            raise CustomCollisionSourceContractError(
+                f"ROM room 0x{room_id:02X} has zero-dimension collision "
+                f"rectangle {width}x{height}"
+            )
 
         byte_count = width * height
         if cursor + byte_count > COLLISION_DATA_END_EXCLUSIVE:
@@ -228,14 +255,18 @@ def _decode_room(data: bytes, room_id: int, snes_pointer: int) -> dict[int, int]
                 f"ROM room 0x{room_id:02X} rectangle crosses the collision "
                 "data boundary"
             )
-        last_offset = offset + ((height - 1) * 64) + (width - 1)
-        if offset >= COLLISION_MAP_TILES or last_offset >= COLLISION_MAP_TILES:
+        start_row, start_column = divmod(offset, COLLISION_MAP_WIDTH)
+        if (
+            offset >= COLLISION_MAP_TILES
+            or start_column + width > COLLISION_MAP_WIDTH
+            or start_row + height > COLLISION_MAP_HEIGHT
+        ):
             raise CustomCollisionSourceContractError(
                 f"ROM room 0x{room_id:02X} has an out-of-range collision "
-                "rectangle"
+                f"rectangle at offset {offset} with size {width}x{height}"
             )
         for row in range(height):
-            row_offset = offset + (row * 64)
+            row_offset = offset + (row * COLLISION_MAP_WIDTH)
             for column in range(width):
                 tiles[row_offset + column] = data[cursor]
                 cursor += 1
