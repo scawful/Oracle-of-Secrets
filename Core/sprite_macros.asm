@@ -4,40 +4,40 @@ macro Set_Sprite_Properties(SprPrep, SprMain)
   assert !SPRID <= $F2, "Sprite ID !SPRID exceeds vanilla table limit ($F2 max). Use an ID in range $00-$F2."
 
   pushpc ; Save writing Position for the sprite
-  org $0DB080+!SPRID ; Oam Harmless ($0E40)
+  org $0DB080+!SPRID ; Oam Harmless ($0E40) ; @manifest-org-bank=$0D
   db ((!Harmless<<7)|(!HVelocity<<6)|!NbrTiles)
 
-  org $0DB173+!SPRID ; Sprite HP ($0E50)
+  org $0DB173+!SPRID ; Sprite HP ($0E50) ; @manifest-org-bank=$0D
   db !Health
 
-  org $0DB266+!SPRID ; Sprite Damage ($0CD2)
+  org $0DB266+!SPRID ; Sprite Damage ($0CD2) ; @manifest-org-bank=$0D
   db !Damage
 
-  org $0DB359+!SPRID ; Sprite Data ($0E60 / $0F50)
+  org $0DB359+!SPRID ; Sprite Data ($0E60 / $0F50) ; @manifest-org-bank=$0D
   db ((!DeathAnimation<<7)|(!ImperviousAll<<6)|(!SmallShadow<<5)|(!Shadow<<4)|(!Palette<<1))
 
-  org $0DB44C+!SPRID ; Sprite Hitbox ($0F60)
+  org $0DB44C+!SPRID ; Sprite Hitbox ($0F60) ; @manifest-org-bank=$0D
   db ((!CollisionLayer<<7)|(!Statis<<6)|(!Persist<<5)|(!Hitbox))
 
-  org $0DB53F+!SPRID ; Sprite Fall ($0B6B)
+  org $0DB53F+!SPRID ; Sprite Fall ($0B6B) ; @manifest-org-bank=$0D
   db ((!DeflectArrow<<3)|(!Boss<<1)|!CanFall)
 
-  org $0DB632+!SPRID ; Sprite Prize ($0BE0)
+  org $0DB632+!SPRID ; Sprite Prize ($0BE0) ; @manifest-org-bank=$0D
   db ((!Interaction<<7)|(!WaterSprite<<6)|(!Blockable<<5)|(!Sound<<4)|!Prize)
 
-  org $0DB725+!SPRID ; Sprite ($0CAA)
+  org $0DB725+!SPRID ; Sprite ($0CAA) ; @manifest-org-bank=$0D
   db ($40|(!Statue<<5)|(!DeflectProjectiles<<4)|(!ImpervSwordHammer<<2)|(!ImperviousArrow<<1))
 
-  org $069283+(!SPRID*2) ; Vanilla Sprite Main Pointer
+  org $069283+(!SPRID*2) ; Vanilla Sprite Main Pointer ; @manifest-org-bank=$06
   dw NewMainSprFunction
 
-  org $06865B+(!SPRID*2) ; Vanilla Sprite Prep Pointer
+  org $06865B+(!SPRID*2) ; Vanilla Sprite Prep Pointer ; @manifest-org-bank=$06
   dw NewSprPrepFunction
 
-  org NewSprRoutinesLong+(!SPRID*3) ; New Long Sprite Pointer
+  org NewSprRoutinesLong+(!SPRID*3) : assert ((NewSprRoutinesLong+(!SPRID*3))>>16) == $30, "Sprite main pointer left bank $30" ; New Long Sprite Pointer ; @manifest-org-bank=$30
   dl <SprMain>
 
-  org NewSprPrepRoutinesLong+(!SPRID*3) ; New Long Sprite Pointer
+  org NewSprPrepRoutinesLong+(!SPRID*3) : assert ((NewSprPrepRoutinesLong+(!SPRID*3))>>16) == $30, "Sprite prep pointer left bank $30" ; New Long Sprite Pointer ; @manifest-org-bank=$30
   dl <SprPrep>
   pullpc ; Get back the writing position for the sprite
 }

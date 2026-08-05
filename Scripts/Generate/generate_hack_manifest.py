@@ -47,15 +47,13 @@ from typing import Iterable, Optional
 
 # Import the existing hooks scanner infrastructure
 from generate_hooks_json import (
-    ELSE_DIRECTIVE_RE,
-    ENDIF_DIRECTIVE_RE,
-    IF_DIRECTIVE_RE,
-    _eval_condition,
-    filter_active_asm_sources,
+    DEFINE_ANY_ASSIGN_RE,
+    scan_org_directives,
     scan_hooks,
     _load_global_defines,
-    _parse_define_assignment,
+    _iter_active_lines,
     HookEntry,
+    OrgDirective,
 )
 
 # ---------------------------------------------------------------------------
@@ -117,10 +115,58 @@ EXPANDED_MESSAGE_DATA_START = 0x2F8026
 EXPANDED_MESSAGE_DATA_END = 0x2FFDFF
 MINECART_TRACK_SOURCE = Path("Sprites/Objects/data/minecart_tracks.asm")
 DUNGEON_ROOM_COUNT = 296
+OBJECT_TABLE_POINTER_OPERAND_PC = 0x874C
+SPRITE_TABLE_POINTER_OPERAND_PC = 0x4C298
+POT_POINTER_TABLE_PC = 0xDB69
 ROOM_HEADER_POINTER_PC = 0xB5DD
 ROOM_HEADER_BANK_PC = 0xB5E7
 ROOM_HEADER_SIZE = 14
 DUNGEON_MESSAGE_IDS_PC = 0x3F61D
+SPRITE_DATA_END_PC = 0x4EC9F
+POT_DATA_START_PC = 0xDDE7
+POT_DATA_END_PC = 0xE6B2
+CUSTOM_COLLISION_POINTER_TABLE_PC = 0x128090
+CUSTOM_COLLISION_DATA_START_PC = 0x128450
+CUSTOM_COLLISION_DATA_END_PC = 0x12E000
+CUSTOM_COLLISION_MAP_WIDTH = 64
+CUSTOM_COLLISION_MAP_HEIGHT = 64
+CUSTOM_COLLISION_MAP_TILES = (
+    CUSTOM_COLLISION_MAP_WIDTH * CUSTOM_COLLISION_MAP_HEIGHT
+)
+
+OBJECT_DATA_REGIONS_PC = (
+    (0x50000, 0x53730),
+    (0xF878A, 0x100000),
+    (0x1EB90, 0x20000),
+    (0x138000, 0x140000),
+    (0x148000, 0x150000),
+)
+OBJECT_ALLOCATION_REGIONS_PC = ((0x148000, 0x150000),)
+CANONICAL_LOROM_ROM_END_PC = 0x3F0000
+
+AUDITED_UNRESOLVED_ORG_CONTRACTS = {
+    ("Core/message.asm", "!addr+1", 0x0E),
+    ("Core/sprite_macros.asm", "$0DB080+!SPRID", 0x0D),
+    ("Core/sprite_macros.asm", "$0DB173+!SPRID", 0x0D),
+    ("Core/sprite_macros.asm", "$0DB266+!SPRID", 0x0D),
+    ("Core/sprite_macros.asm", "$0DB359+!SPRID", 0x0D),
+    ("Core/sprite_macros.asm", "$0DB44C+!SPRID", 0x0D),
+    ("Core/sprite_macros.asm", "$0DB53F+!SPRID", 0x0D),
+    ("Core/sprite_macros.asm", "$0DB632+!SPRID", 0x0D),
+    ("Core/sprite_macros.asm", "$0DB725+!SPRID", 0x0D),
+    ("Core/sprite_macros.asm", "$069283+(!SPRID*2)", 0x06),
+    ("Core/sprite_macros.asm", "$06865B+(!SPRID*2)", 0x06),
+    (
+        "Core/sprite_macros.asm",
+        "NewSprRoutinesLong+(!SPRID*3)",
+        0x30,
+    ),
+    (
+        "Core/sprite_macros.asm",
+        "NewSprPrepRoutinesLong+(!SPRID*3)",
+        0x30,
+    ),
+}
 
 
 class ManifestGenerationError(RuntimeError):
@@ -141,62 +187,10 @@ def _iter_active_incsrcs(
     global_defines: dict[str, int],
 ) -> Iterable[tuple[int, str]]:
     """Yield literal includes whose enclosing Asar condition is active."""
-    defines = dict(global_defines)
-    active = True
-    stack: list[dict[str, object]] = []
-
-    for line_number, line in enumerate(lines, start=1):
-        directive = line.split(";", 1)[0].strip()
-        match = IF_DIRECTIVE_RE.match(directive)
-        if match:
-            kind = match.group(1).lower()
-            condition = _eval_condition(match.group(2).strip(), defines)
-            condition_active = (
-                bool(condition) if condition is not None else True
-            )
-            if kind == "if":
-                parent_active = active
-                branch_taken = parent_active and condition_active
-                active = branch_taken
-                stack.append({
-                    "parent_active": parent_active,
-                    "branch_taken": branch_taken,
-                })
-            elif stack:
-                frame = stack[-1]
-                parent_active = bool(frame["parent_active"])
-                branch_taken = bool(frame["branch_taken"])
-                active = (
-                    parent_active
-                    and not branch_taken
-                    and condition_active
-                )
-                frame["branch_taken"] = branch_taken or active
-            continue
-        if ELSE_DIRECTIVE_RE.match(directive):
-            if stack:
-                frame = stack[-1]
-                parent_active = bool(frame["parent_active"])
-                branch_taken = bool(frame["branch_taken"])
-                active = parent_active and not branch_taken
-                frame["branch_taken"] = True
-            continue
-        if ENDIF_DIRECTIVE_RE.match(directive):
-            if stack:
-                frame = stack.pop()
-                active = bool(frame["parent_active"])
-            continue
-        if not active:
-            continue
-
-        parsed_define = _parse_define_assignment(line)
-        if parsed_define is not None:
-            name, value = parsed_define
-            defines[name] = value
-
+    for line_index, line, _ in _iter_active_lines(lines, global_defines):
         include_text = _parse_incsrc(line)
         if include_text is not None:
-            yield line_number, include_text
+            yield line_index + 1, include_text
 
 
 def _is_case_exact_file(candidate: Path, root: Path) -> bool:
@@ -228,9 +222,10 @@ def collect_reachable_asm_sources(
     """Collect the transitive literal `incsrc` graph for the build entry.
 
     Asar sources in this repository use both paths relative to the including
-    file and repo-root-relative paths. Follow only active conditional edges,
-    gate disabled module roots before traversal, and fail closed if an active
-    reachable include cannot be resolved.
+    file and repo-root-relative paths. Follow every feasible conditional edge,
+    treat literal includes as authoritative regardless of directory name, and
+    fail closed when a reachable include or cross-file global-define state
+    cannot be resolved safely.
     """
     resolved_root = root.resolve()
     entry = entry_point if entry_point.is_absolute() else resolved_root / entry_point
@@ -289,11 +284,34 @@ def collect_reachable_asm_sources(
                     f"{rel}:{line_number}: incsrc escapes repo root: "
                     f"{include_text!r}"
                 )
-            if not filter_active_asm_sources(
-                resolved_root, [included], active_defines
-            ):
-                continue
             pending.append(included)
+
+    canonical_define_sources = {
+        "Util/macros.asm",
+        "Config/module_flags.asm",
+        "Config/feature_flags.asm",
+    }
+    for asm_path in sorted(reachable):
+        rel = asm_path.relative_to(resolved_root).as_posix()
+        if rel in canonical_define_sources:
+            continue
+        try:
+            lines = asm_path.read_text(
+                encoding="utf-8", errors="ignore"
+            ).splitlines()
+        except OSError as exc:
+            raise ManifestGenerationError(
+                f"Unable to validate reachable ASM source {asm_path}: {exc}"
+            ) from exc
+        for line_index, line, _ in _iter_active_lines(lines, active_defines):
+            assignment = DEFINE_ANY_ASSIGN_RE.match(line.split(";", 1)[0])
+            if assignment and assignment.group(1) in active_defines:
+                raise ManifestGenerationError(
+                    f"{rel}:{line_index + 1}: reachable source reassigns "
+                    f"preloaded global define !{assignment.group(1)} outside "
+                    "the canonical define files; include-order state cannot "
+                    "be resolved safely"
+                )
 
     return sorted(reachable)
 
@@ -324,7 +342,7 @@ def scan_bank_ownership(
         if asm_paths is None
         else asm_paths
     )
-    source_paths = filter_active_asm_sources(root, candidate_paths)
+    source_paths = list(candidate_paths)
     for asm_path in source_paths:
         asm_path = asm_path.resolve()
         try:
@@ -542,9 +560,7 @@ def scan_room_tags(
         if asm_paths is None
         else asm_paths
     )
-    source_paths = filter_active_asm_sources(
-        root, candidate_paths, defines
-    )
+    source_paths = list(candidate_paths)
     for asm_path in source_paths:
         asm_path = asm_path.resolve()
         try:
@@ -772,12 +788,17 @@ def compute_protected_regions(hooks: list[HookEntry]) -> list[dict]:
     sorted_hooks = sorted(hooks, key=lambda hook: _snes_to_pc(hook.address))
     regions = []
     current_start = _snes_to_pc(sorted_hooks[0].address)
-    current_end = current_start + SIZE_ESTIMATE.get(sorted_hooks[0].kind, 4)
+    current_end = current_start + (
+        sorted_hooks[0].protected_size
+        or SIZE_ESTIMATE.get(sorted_hooks[0].kind, 4)
+    )
     current_hooks = [sorted_hooks[0]]
 
     for hook in sorted_hooks[1:]:
         hook_start = _snes_to_pc(hook.address)
-        hook_end = hook_start + SIZE_ESTIMATE.get(hook.kind, 4)
+        hook_end = hook_start + (
+            hook.protected_size or SIZE_ESTIMATE.get(hook.kind, 4)
+        )
 
         # Merge if within 16 bytes of the previous region (likely related)
         if hook_start <= current_end + 16:
@@ -818,10 +839,15 @@ def _canonical_lorom_address(address: int) -> int:
         raise ManifestGenerationError(
             f"SNES address 0x{address:X} is outside 24-bit address space"
         )
-    address &= 0x7FFFFF
-    if (address & 0xFFFF) < 0x8000:
-        address |= 0x8000
-    return address
+    canonical = address & 0x7FFFFF
+    bank = (canonical >> 16) & 0x7F
+    if bank in (0x7E, 0x7F):
+        raise ManifestGenerationError(
+            f"SNES address 0x{address:06X} points to WRAM or its FastROM mirror"
+        )
+    if (canonical & 0xFFFF) < 0x8000:
+        canonical |= 0x8000
+    return canonical
 
 
 def _snes_to_pc(address: int) -> int:
@@ -851,22 +877,28 @@ def _strict_lorom_to_pc(address: int, description: str) -> int:
         )
     bank = (address >> 16) & 0xFF
     offset = address & 0xFFFF
-    if bank in (0x7E, 0x7F):
+    if bank in (0x7E, 0x7F, 0xFE, 0xFF):
         raise ManifestGenerationError(
-            f"{description} 0x{address:06X} points to WRAM"
+            f"{description} 0x{address:06X} points to WRAM or its FastROM mirror"
         )
     if offset < 0x8000:
         raise ManifestGenerationError(
             f"{description} 0x{address:06X} is not a high-half LoROM pointer"
         )
-    return ((bank & 0x7F) << 15) | (offset & 0x7FFF)
+    pc_address = ((bank & 0x7F) << 15) | (offset & 0x7FFF)
+    if pc_address >= CANONICAL_LOROM_ROM_END_PC:
+        raise ManifestGenerationError(
+            f"{description} 0x{address:06X} maps into the WRAM-backed "
+            "LoROM PC window"
+        )
+    return pc_address
 
 
 def _pc_to_snes(address: int) -> int:
     """Convert an unheadered PC offset to a canonical LoROM address."""
-    if not 0 <= address < 0x400000:
+    if not 0 <= address < CANONICAL_LOROM_ROM_END_PC:
         raise ManifestGenerationError(
-            f"PC address 0x{address:X} is outside canonical LoROM"
+            f"PC address 0x{address:X} is outside canonical ROM-backed LoROM"
         )
     snes = (
         ((address << 1) & 0x7F0000)
@@ -898,6 +930,11 @@ def _read_u16(data: bytes, address: int, description: str) -> int:
     return data[address] | (data[address + 1] << 8)
 
 
+def _read_u8(data: bytes, address: int, description: str) -> int:
+    _require_rom_span(data, address, 1, description)
+    return data[address]
+
+
 def _read_u24(data: bytes, address: int, description: str) -> int:
     _require_rom_span(data, address, 3, description)
     return (
@@ -919,8 +956,478 @@ def _editor_range(start_pc: int, end_pc: int) -> dict[str, str]:
     }
 
 
+def _range_contains(outer: tuple[int, int], inner: tuple[int, int]) -> bool:
+    return outer[0] <= inner[0] and inner[1] <= outer[1]
+
+
+def _validate_regions(
+    data: bytes,
+    stream_name: str,
+    data_regions: tuple[tuple[int, int], ...],
+    allocation_regions: tuple[tuple[int, int], ...],
+) -> None:
+    if not data_regions or not allocation_regions:
+        raise ManifestGenerationError(
+            f"{stream_name} data/allocation regions must be non-empty"
+        )
+
+    sorted_data = sorted(data_regions)
+    for index, (start, end) in enumerate(sorted_data):
+        if start >= end:
+            raise ManifestGenerationError(
+                f"{stream_name} data region {index} is empty or reversed"
+            )
+        _require_rom_span(
+            data, start, end - start, f"{stream_name} data region {index}"
+        )
+        _pc_to_snes(start)
+        _pc_to_snes(end)
+        if index and start < sorted_data[index - 1][1]:
+            raise ManifestGenerationError(
+                f"{stream_name} data regions overlap at PC 0x{start:X}"
+            )
+
+    sorted_allocations = sorted(allocation_regions)
+    for index, allocation in enumerate(sorted_allocations):
+        start, end = allocation
+        if start >= end:
+            raise ManifestGenerationError(
+                f"{stream_name} allocation region {index} is empty or reversed"
+            )
+        if not any(_range_contains(region, allocation) for region in data_regions):
+            raise ManifestGenerationError(
+                f"{stream_name} allocation [0x{start:X}, 0x{end:X}) is not "
+                "contained in a data region"
+            )
+        if index and start < sorted_allocations[index - 1][1]:
+            raise ManifestGenerationError(
+                f"{stream_name} allocation regions overlap at PC 0x{start:X}"
+            )
+
+
+def _pointer_pc_in_regions(
+    pointer_pc: int, regions: tuple[tuple[int, int], ...]
+) -> bool:
+    return any(start <= pointer_pc < end for start, end in regions)
+
+
+def _validate_disjoint_named_ranges(
+    ranges: list[tuple[str, int, int]], description: str
+) -> None:
+    sorted_ranges = sorted(ranges, key=lambda item: (item[1], item[2]))
+    for previous, current in zip(sorted_ranges, sorted_ranges[1:]):
+        if current[1] < previous[2]:
+            raise ManifestGenerationError(
+                f"{description} overlap: {previous[0]} "
+                f"[0x{previous[1]:X}, 0x{previous[2]:X}) conflicts with "
+                f"{current[0]} [0x{current[1]:X}, 0x{current[2]:X})"
+            )
+
+
+def _dungeon_stream_parse_limit(
+    pointer_pc: int,
+    regions: tuple[tuple[int, int], ...],
+) -> int:
+    containing_end = next(
+        (end for start, end in regions if start <= pointer_pc < end),
+        None,
+    )
+    if containing_end is None:
+        raise ManifestGenerationError(
+            f"dungeon stream pointer PC 0x{pointer_pc:X} is outside its "
+            "declared data regions"
+        )
+    bank_end = ((pointer_pc // 0x8000) + 1) * 0x8000
+    return min(containing_end, bank_end)
+
+
+def _find_dungeon_stream_end(
+    data: bytes,
+    stream_name: str,
+    room_id: int,
+    start_pc: int,
+    limit_pc: int,
+) -> int:
+    """Return a format-valid stream's exclusive logical end."""
+
+    def require(size: int, description: str) -> None:
+        if size < 0 or cursor + size > limit_pc:
+            raise ManifestGenerationError(
+                f"{stream_name} stream for room 0x{room_id:03X} {description} "
+                f"before parse limit PC 0x{limit_pc:X}"
+            )
+        _require_rom_span(data, cursor, size, description)
+
+    cursor = start_pc
+    if stream_name == "objects":
+        require(2, "is missing its two-byte header")
+        cursor += 2
+        for list_id in range(2):
+            while True:
+                require(2, f"list {list_id} has no 0xFFFF terminator")
+                if data[cursor : cursor + 2] == b"\xFF\xFF":
+                    cursor += 2
+                    break
+                require(3, f"list {list_id} has a truncated record")
+                cursor += 3
+
+        in_doors = False
+        while True:
+            require(
+                2,
+                (
+                    "door list has no 0xFFFF terminator"
+                    if in_doors
+                    else "list 2 has no door marker or terminator"
+                ),
+            )
+            marker = data[cursor : cursor + 2]
+            if marker == b"\xFF\xFF":
+                return cursor + 2
+            if not in_doors and marker == b"\xF0\xFF":
+                cursor += 2
+                in_doors = True
+                continue
+            if in_doors:
+                cursor += 2
+            else:
+                require(3, "list 2 has a truncated record")
+                cursor += 3
+
+    if stream_name == "sprites":
+        require(1, "is missing its sort byte")
+        cursor += 1
+        while True:
+            require(1, "has no 0xFF terminator")
+            if data[cursor] == 0xFF:
+                return cursor + 1
+            require(3, "has a truncated record")
+            cursor += 3
+
+    if stream_name == "pot_items":
+        while True:
+            require(2, "has no 0xFFFF terminator")
+            if data[cursor : cursor + 2] == b"\xFF\xFF":
+                return cursor + 2
+            require(3, "has a truncated record")
+            cursor += 3
+
+    raise ManifestGenerationError(f"unsupported dungeon stream {stream_name}")
+
+
+def _derive_dungeon_stream_regions(data: bytes) -> dict:
+    object_table_snes = _read_u24(
+        data,
+        OBJECT_TABLE_POINTER_OPERAND_PC,
+        "object pointer-table operand",
+    )
+    object_table_pc = _strict_lorom_to_pc(
+        object_table_snes, "Object pointer-table operand"
+    )
+    object_table_size = DUNGEON_ROOM_COUNT * 3
+    _require_rom_span(data, object_table_pc, object_table_size, "object pointer table")
+    _validate_regions(
+        data,
+        "objects",
+        OBJECT_DATA_REGIONS_PC,
+        OBJECT_ALLOCATION_REGIONS_PC,
+    )
+    for room_id in range(DUNGEON_ROOM_COUNT):
+        object_pointer = _read_u24(
+            data,
+            object_table_pc + room_id * 3,
+            f"object pointer for room 0x{room_id:03X}",
+        )
+        object_data_pc = _strict_lorom_to_pc(
+            object_pointer, f"Object pointer for room 0x{room_id:03X}"
+        )
+        if not _pointer_pc_in_regions(object_data_pc, OBJECT_DATA_REGIONS_PC):
+            raise ManifestGenerationError(
+                f"object pointer for room 0x{room_id:03X} resolves to PC "
+                f"0x{object_data_pc:X}, outside declared object data regions"
+            )
+        _find_dungeon_stream_end(
+            data,
+            "objects",
+            room_id,
+            object_data_pc,
+            _dungeon_stream_parse_limit(
+                object_data_pc, OBJECT_DATA_REGIONS_PC
+            ),
+        )
+
+    sprite_table_low = _read_u16(
+        data,
+        SPRITE_TABLE_POINTER_OPERAND_PC,
+        "sprite pointer-table operand",
+    )
+    sprite_table_snes = 0x090000 | sprite_table_low
+    sprite_table_pc = _strict_lorom_to_pc(
+        sprite_table_snes, "Sprite pointer-table operand"
+    )
+    sprite_table_size = DUNGEON_ROOM_COUNT * 2
+    _require_rom_span(data, sprite_table_pc, sprite_table_size, "sprite pointer table")
+    sprite_pointers_pc: list[int] = []
+    for room_id in range(DUNGEON_ROOM_COUNT):
+        pointer_low = _read_u16(
+            data,
+            sprite_table_pc + room_id * 2,
+            f"sprite pointer for room 0x{room_id:03X}",
+        )
+        sprite_pointers_pc.append(
+            _strict_lorom_to_pc(
+                0x090000 | pointer_low,
+                f"Sprite pointer for room 0x{room_id:03X}",
+            )
+        )
+    sprite_data_start_pc = sprite_table_pc + sprite_table_size
+    minimum_sprite_pointer_pc = min(sprite_pointers_pc)
+    if minimum_sprite_pointer_pc < sprite_data_start_pc:
+        raise ManifestGenerationError(
+            f"minimum sprite pointer PC 0x{minimum_sprite_pointer_pc:X} "
+            f"precedes pointer-table end PC 0x{sprite_data_start_pc:X}"
+        )
+    sprite_regions = ((sprite_data_start_pc, SPRITE_DATA_END_PC),)
+    _validate_regions(data, "sprites", sprite_regions, sprite_regions)
+    for room_id, pointer_pc in enumerate(sprite_pointers_pc):
+        if not _pointer_pc_in_regions(pointer_pc, sprite_regions):
+            raise ManifestGenerationError(
+                f"sprite pointer for room 0x{room_id:03X} resolves to PC "
+                f"0x{pointer_pc:X}, outside sprite data region"
+            )
+        _find_dungeon_stream_end(
+            data,
+            "sprites",
+            room_id,
+            pointer_pc,
+            _dungeon_stream_parse_limit(pointer_pc, sprite_regions),
+        )
+
+    pot_table_size = DUNGEON_ROOM_COUNT * 2
+    _require_rom_span(
+        data, POT_POINTER_TABLE_PC, pot_table_size, "pot-item pointer table"
+    )
+    pot_pointers_pc: list[int] = []
+    for room_id in range(DUNGEON_ROOM_COUNT):
+        pointer_low = _read_u16(
+            data,
+            POT_POINTER_TABLE_PC + room_id * 2,
+            f"pot-item pointer for room 0x{room_id:03X}",
+        )
+        if pointer_low < 0x8000:
+            raise ManifestGenerationError(
+                f"pot-item pointer for room 0x{room_id:03X} is unmapped "
+                f"bank-$01 value 0x{pointer_low:04X}"
+            )
+        pot_pointers_pc.append(
+            _strict_lorom_to_pc(
+                0x010000 | pointer_low,
+                f"Pot-item pointer for room 0x{room_id:03X}",
+            )
+        )
+    pot_regions = ((POT_DATA_START_PC, POT_DATA_END_PC),)
+    _validate_regions(data, "pot_items", pot_regions, pot_regions)
+    for room_id, pointer_pc in enumerate(pot_pointers_pc):
+        if not _pointer_pc_in_regions(pointer_pc, pot_regions):
+            raise ManifestGenerationError(
+                f"pot-item pointer for room 0x{room_id:03X} resolves to PC "
+                f"0x{pointer_pc:X}, outside pot-item data region"
+            )
+        _find_dungeon_stream_end(
+            data,
+            "pot_items",
+            room_id,
+            pointer_pc,
+            _dungeon_stream_parse_limit(pointer_pc, pot_regions),
+        )
+
+    stream_data_regions = {
+        "objects": OBJECT_DATA_REGIONS_PC,
+        "sprites": sprite_regions,
+        "pot_items": pot_regions,
+    }
+    pointer_tables = {
+        "objects": (object_table_pc, object_table_pc + object_table_size),
+        "sprites": (sprite_table_pc, sprite_table_pc + sprite_table_size),
+        "pot_items": (
+            POT_POINTER_TABLE_PC,
+            POT_POINTER_TABLE_PC + pot_table_size,
+        ),
+    }
+    occupied_ranges = [
+        (f"{name}.pointer_table", start, end)
+        for name, (start, end) in pointer_tables.items()
+    ]
+    occupied_ranges.extend(
+        (f"{name}.data_regions[{index}]", start, end)
+        for name, ranges in stream_data_regions.items()
+        for index, (start, end) in enumerate(ranges)
+    )
+    occupied_ranges.extend(
+        (
+            (
+                "objects.pointer_source",
+                OBJECT_TABLE_POINTER_OPERAND_PC,
+                OBJECT_TABLE_POINTER_OPERAND_PC + 3,
+            ),
+            (
+                "sprites.pointer_source",
+                SPRITE_TABLE_POINTER_OPERAND_PC,
+                SPRITE_TABLE_POINTER_OPERAND_PC + 2,
+            ),
+            (
+                "objects.door_pointer_table",
+                0xF83C0,
+                0xF83C0 + DUNGEON_ROOM_COUNT * 3,
+            ),
+        )
+    )
+    _validate_disjoint_named_ranges(
+        occupied_ranges, "dungeon stream pointer/data ranges"
+    )
+    _validate_disjoint_named_ranges(
+        [
+            (
+                "objects.allocation_regions[0]",
+                *OBJECT_ALLOCATION_REGIONS_PC[0],
+            ),
+            ("sprites.allocation_regions[0]", *sprite_regions[0]),
+            ("pot_items.allocation_regions[0]", *pot_regions[0]),
+        ],
+        "dungeon stream allocation ranges",
+    )
+
+    return {
+        "objects": {
+            "pointer_table": f"0x{_pc_to_snes(object_table_pc):06X}",
+            "pointer_count": DUNGEON_ROOM_COUNT,
+            "pointer_encoding": "long24",
+            "strategy": "copy_on_write",
+            "data_regions": [
+                _editor_range(start, end) for start, end in OBJECT_DATA_REGIONS_PC
+            ],
+            "allocation_regions": [
+                _editor_range(start, end) for start, end in OBJECT_ALLOCATION_REGIONS_PC
+            ],
+        },
+        "sprites": {
+            "pointer_table": f"0x{_pc_to_snes(sprite_table_pc):06X}",
+            "pointer_count": DUNGEON_ROOM_COUNT,
+            "pointer_encoding": "bank16",
+            "pointer_bank": "0x09",
+            "strategy": "copy_on_write",
+            "data_regions": [
+                _editor_range(start, end) for start, end in sprite_regions
+            ],
+            "allocation_regions": [
+                _editor_range(start, end) for start, end in sprite_regions
+            ],
+        },
+        "pot_items": {
+            "pointer_table": f"0x{_pc_to_snes(POT_POINTER_TABLE_PC):06X}",
+            "pointer_count": DUNGEON_ROOM_COUNT,
+            "pointer_encoding": "bank16",
+            "pointer_bank": "0x01",
+            "strategy": "repack_all",
+            "data_regions": [_editor_range(start, end) for start, end in pot_regions],
+            "allocation_regions": [
+                _editor_range(start, end) for start, end in pot_regions
+            ],
+        },
+    }
+
+
+def derive_dungeon_stream_regions(dev_rom_path: Path) -> dict:
+    """Derive guarded object, sprite, and pot-item layouts from a dev ROM."""
+    try:
+        data = dev_rom_path.read_bytes()
+    except OSError as exc:
+        raise ManifestGenerationError(
+            f"Unable to read dev ROM {dev_rom_path}: {exc}"
+        ) from exc
+    return _derive_dungeon_stream_regions(data)
+
+
+def _find_custom_collision_stream_end(data: bytes, room_id: int, start_pc: int) -> int:
+    """Return the exclusive end of one validated custom-collision stream."""
+
+    def require_stream_span(cursor: int, size: int, label: str) -> None:
+        if (
+            cursor < CUSTOM_COLLISION_DATA_START_PC
+            or size < 0
+            or cursor + size > CUSTOM_COLLISION_DATA_END_PC
+        ):
+            raise ManifestGenerationError(
+                f"{label} for room 0x{room_id:03X} crosses reserved "
+                f"WaterFill data at PC 0x{CUSTOM_COLLISION_DATA_END_PC:X}"
+            )
+        _require_rom_span(data, cursor, size, label)
+
+    cursor = start_pc
+    single_tile_mode = False
+    while cursor < CUSTOM_COLLISION_DATA_END_PC:
+        require_stream_span(cursor, 2, "custom collision stream word")
+        word = _read_u16(
+            data,
+            cursor,
+            f"custom collision stream for room 0x{room_id:03X}",
+        )
+        cursor += 2
+        if word == 0xFFFF:
+            return cursor
+        if word == 0xF0F0:
+            single_tile_mode = True
+            continue
+        if single_tile_mode:
+            if word >= CUSTOM_COLLISION_MAP_TILES:
+                raise ManifestGenerationError(
+                    f"custom collision single-tile offset 0x{word:04X} for "
+                    f"room 0x{room_id:03X} is outside the 64x64 map"
+                )
+            require_stream_span(cursor, 1, "custom collision tile")
+            cursor += 1
+            continue
+
+        require_stream_span(cursor, 2, "custom collision rectangle dimensions")
+        width = _read_u8(
+            data,
+            cursor,
+            f"custom collision width for room 0x{room_id:03X}",
+        )
+        height = _read_u8(
+            data,
+            cursor + 1,
+            f"custom collision height for room 0x{room_id:03X}",
+        )
+        cursor += 2
+        if width == 0 or height == 0:
+            raise ManifestGenerationError(
+                f"custom collision rectangle for room 0x{room_id:03X} has "
+                f"zero dimension {width}x{height}"
+            )
+        row, column = divmod(word, CUSTOM_COLLISION_MAP_WIDTH)
+        if (
+            word >= CUSTOM_COLLISION_MAP_TILES
+            or column + width > CUSTOM_COLLISION_MAP_WIDTH
+            or row + height > CUSTOM_COLLISION_MAP_HEIGHT
+        ):
+            raise ManifestGenerationError(
+                f"custom collision rectangle for room 0x{room_id:03X} at "
+                f"offset 0x{word:04X} with size {width}x{height} exceeds "
+                "the 64x64 map"
+            )
+        payload_size = width * height
+        require_stream_span(cursor, payload_size, "custom collision rectangle")
+        cursor += payload_size
+
+    raise ManifestGenerationError(
+        f"custom collision stream for room 0x{room_id:03X} is unterminated "
+        f"before reserved WaterFill data at PC 0x{CUSTOM_COLLISION_DATA_END_PC:X}"
+    )
+
+
 def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
-    """Derive exact room-header and message-ID ranges from the dev ROM."""
+    """Derive exact dungeon metadata and collision ranges from the dev ROM."""
     try:
         data = dev_rom_path.read_bytes()
     except OSError as exc:
@@ -940,9 +1447,7 @@ def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
         DUNGEON_ROOM_COUNT * 2,
         "room-header pointer table",
     )
-    _require_rom_span(
-        data, ROOM_HEADER_BANK_PC, 1, "room-header pointer bank"
-    )
+    _require_rom_span(data, ROOM_HEADER_BANK_PC, 1, "room-header pointer bank")
     header_bank = data[ROOM_HEADER_BANK_PC]
 
     header_ranges: list[tuple[int, int]] = []
@@ -987,10 +1492,178 @@ def derive_editor_managed_regions(dev_rom_path: Path) -> list[dict]:
         "dungeon room message IDs",
     )
 
-    return [
-        _editor_range(sorted_headers[0][0], sorted_headers[-1][1]),
-        _editor_range(DUNGEON_MESSAGE_IDS_PC, messages_end_pc),
+    collision_pointer_table_end = (
+        CUSTOM_COLLISION_POINTER_TABLE_PC + DUNGEON_ROOM_COUNT * 3
+    )
+    _require_rom_span(
+        data,
+        CUSTOM_COLLISION_POINTER_TABLE_PC,
+        collision_pointer_table_end - CUSTOM_COLLISION_POINTER_TABLE_PC,
+        "custom-collision pointer table",
+    )
+    _require_rom_span(
+        data,
+        CUSTOM_COLLISION_DATA_START_PC,
+        CUSTOM_COLLISION_DATA_END_PC - CUSTOM_COLLISION_DATA_START_PC,
+        "custom-collision data region",
+    )
+    for room_id in range(DUNGEON_ROOM_COUNT):
+        raw_pointer = _read_u24(
+            data,
+            CUSTOM_COLLISION_POINTER_TABLE_PC + room_id * 3,
+            f"custom-collision pointer for room 0x{room_id:03X}",
+        )
+        if raw_pointer == 0:
+            continue
+        collision_pc = _strict_lorom_to_pc(
+            raw_pointer,
+            f"Custom-collision pointer for room 0x{room_id:03X}",
+        )
+        if not (
+            CUSTOM_COLLISION_DATA_START_PC
+            <= collision_pc
+            < CUSTOM_COLLISION_DATA_END_PC
+        ):
+            raise ManifestGenerationError(
+                f"custom-collision pointer for room 0x{room_id:03X} resolves "
+                f"to PC 0x{collision_pc:X}, outside the editor-owned region"
+            )
+        _find_custom_collision_stream_end(data, room_id, collision_pc)
+
+    named_regions = [
+        ("dungeon_message_ids", DUNGEON_MESSAGE_IDS_PC, messages_end_pc),
+        ("room_headers", sorted_headers[0][0], sorted_headers[-1][1]),
+        (
+            "custom_collision_pointers",
+            CUSTOM_COLLISION_POINTER_TABLE_PC,
+            collision_pointer_table_end,
+        ),
+        (
+            "custom_collision_data",
+            CUSTOM_COLLISION_DATA_START_PC,
+            CUSTOM_COLLISION_DATA_END_PC,
+        ),
     ]
+    _validate_disjoint_named_ranges(named_regions, "editor-managed regions")
+
+    return [
+        _editor_range(start, end)
+        for _, start, end in sorted(named_regions, key=lambda item: item[1])
+    ]
+
+
+def _validate_expanded_hooks_disjoint_from_editor_regions(
+    hooks: list[HookEntry], editor_regions: list[dict]
+) -> None:
+    """Reject expanded hooks that may extend into editor-owned bytes.
+
+    HookEntry records only a start address, not an exact source-backed end.
+    Within one physical LoROM bank, a hook beginning before an editor range's
+    exclusive end is therefore unsafe even when it starts just before the
+    range. A hook at or after the exclusive end remains disjoint.
+    """
+    editor_pc_ranges = [
+        (
+            _strict_lorom_to_pc(int(region["start"], 16), "Editor range start"),
+            _strict_lorom_to_pc(int(region["end"], 16), "Editor range end"),
+            region,
+        )
+        for region in editor_regions
+    ]
+    for hook in hooks:
+        physical = _physical_org_address(hook.address)
+        bank = (physical >> 16) & 0xFF
+        if bank in (0x7E, 0x7F) or bank < 0x1E:
+            continue
+        hook_start = _strict_lorom_to_pc(
+            physical, f"Expanded hook {hook.source}"
+        )
+        for region_start, region_end, region in editor_pc_ranges:
+            hook_bank_start = (hook_start // 0x8000) * 0x8000
+            hook_bank_end = hook_bank_start + 0x8000
+            region_segment_start = max(region_start, hook_bank_start)
+            region_segment_end = min(region_end, hook_bank_end)
+            if (
+                region_segment_start < region_segment_end
+                and hook_start < region_segment_end
+            ):
+                raise ManifestGenerationError(
+                    f"expanded hook {hook.source} at 0x{physical:06X} "
+                    f"starts before editor-managed range {region['start']}-"
+                    f"{region['end']} ends in the same physical LoROM bank; "
+                    "its exact end is unknown, so protected hooks must take "
+                    "precedence"
+                )
+
+
+def _validate_unresolved_org_proofs(
+    directives: list[OrgDirective], editor_regions: list[dict]
+) -> None:
+    """Require source-local bank proof for every active unresolved org."""
+    editor_banks: set[int] = set()
+    for region in editor_regions:
+        start_pc = _strict_lorom_to_pc(
+            int(region["start"], 16), "Editor range start"
+        )
+        end_pc = _strict_lorom_to_pc(
+            int(region["end"], 16), "Editor range end"
+        )
+        for bank in range(start_pc // 0x8000, (end_pc - 1) // 0x8000 + 1):
+            editor_banks.add(bank)
+
+    for directive in directives:
+        if directive.address is not None:
+            continue
+        if directive.proof_bank is None:
+            raise ManifestGenerationError(
+                f"{directive.source}: unresolved active org expression "
+                f"{directive.expression!r} has no @manifest-org-bank proof"
+            )
+        if re.search(r"<[^>]+>", directive.expression):
+            raise ManifestGenerationError(
+                f"{directive.source}: unresolved active org expression "
+                f"{directive.expression!r} contains a macro placeholder; "
+                "a single @manifest-org-bank proof cannot cover every "
+                "invocation"
+            )
+        physical_bank = directive.proof_bank & 0x7F
+        if physical_bank in (0x7E, 0x7F):
+            raise ManifestGenerationError(
+                f"{directive.source}: unresolved active org expression "
+                f"{directive.expression!r} claims WRAM bank proof "
+                f"0x{directive.proof_bank:02X}"
+            )
+        if directive.anchor_banks and (
+            len(directive.anchor_banks) != 1
+            or physical_bank != directive.anchor_banks[0]
+        ):
+            anchors = ", ".join(
+                f"0x{bank:02X}" for bank in directive.anchor_banks
+            )
+            raise ManifestGenerationError(
+                f"{directive.source}: unresolved active org expression "
+                f"{directive.expression!r} has address-literal bank anchor(s) "
+                f"{anchors}, contradicting @manifest-org-bank proof "
+                f"0x{directive.proof_bank:02X}"
+            )
+        if physical_bank in editor_banks:
+            raise ManifestGenerationError(
+                f"{directive.source}: unresolved active org expression "
+                f"{directive.expression!r} may affect editor-managed physical "
+                f"LoROM bank 0x{physical_bank:02X}"
+            )
+        source_path = directive.source.rsplit(":", 1)[0]
+        contract = (
+            source_path,
+            directive.expression,
+            directive.proof_bank,
+        )
+        if contract not in AUDITED_UNRESOLVED_ORG_CONTRACTS:
+            raise ManifestGenerationError(
+                f"{directive.source}: unresolved active org expression "
+                f"{directive.expression!r} is not an audited source/expression/"
+                "bank contract"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -1041,9 +1714,7 @@ def generate_manifest(
 
     # Load defines for conditional compilation evaluation
     defines = _load_global_defines(root)
-    asm_sources = filter_active_asm_sources(
-        root, reachable_sources, defines
-    )
+    asm_sources = reachable_sources
 
     # Scan only the source graph assembled from Oracle_main.asm. Local ignored
     # assets and archived experiments must not claim ROM ownership.
@@ -1104,13 +1775,24 @@ def generate_manifest(
     manifest["rom"] = rom_meta
 
     if dev_rom_path.exists():
+        manifest["dungeon_stream_regions"] = derive_dungeon_stream_regions(
+            dev_rom_path
+        )
+        editor_regions = derive_editor_managed_regions(dev_rom_path)
+        _validate_expanded_hooks_disjoint_from_editor_regions(
+            hooks, editor_regions
+        )
+        _validate_unresolved_org_proofs(
+            scan_org_directives(root, asm_sources), editor_regions
+        )
         manifest["editor_managed_regions"] = {
             "description": (
-                "Exact room-header and per-room message-ID ranges derived "
-                "from the editable dev ROM. Protected hooks still take "
-                "precedence."
+                "Exact yaze-owned dungeon metadata and custom-collision "
+                "ranges derived from the editable dev ROM. The WaterFill "
+                "tail beginning at $25:E000 remains ASM-owned, and protected "
+                "hooks still take precedence."
             ),
-            "regions": derive_editor_managed_regions(dev_rom_path),
+            "regions": editor_regions,
         }
 
     # Protected regions — these are hook addresses in VANILLA banks.

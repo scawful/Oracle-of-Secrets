@@ -75,6 +75,21 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
         rom_path.write_bytes(data)
         return rom_path
 
+    def write_rom_with_raw_pointer(
+        self,
+        root: Path,
+        room_id: int,
+        snes_pointer: int,
+    ) -> Path:
+        rom_path = self.write_raw_rom(root, {})
+        data = bytearray(rom_path.read_bytes())
+        pointer_offset = POINTER_TABLE_START + (room_id * 3)
+        data[pointer_offset : pointer_offset + 3] = snes_pointer.to_bytes(
+            3, "little"
+        )
+        rom_path.write_bytes(data)
+        return rom_path
+
     def test_repository_source_is_complete(self) -> None:
         contract = validate_contract(REPO_ROOT)
 
@@ -161,6 +176,47 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
             self.assertEqual(contract.room_count, 1)
             self.assertEqual(contract.tile_count, 2)
             self.assertIsNotNone(contract.rom_sha256)
+
+    def test_rom_zero_dimension_rectangle_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_source(root, [])
+            stream = b"\x00\x00\x00\x01\xFF\xFF"
+            rom_path = self.write_raw_rom(root, {0x25: stream})
+
+            with self.assertRaisesRegex(
+                CustomCollisionSourceContractError,
+                "zero-dimension collision rectangle 0x1",
+            ):
+                validate_contract(root, rom_path)
+
+    def test_rom_single_tile_offset_0x1000_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_source(root, [])
+            stream = b"\xF0\xF0\x00\x10\x07\xFF\xFF"
+            rom_path = self.write_raw_rom(root, {0x25: stream})
+
+            with self.assertRaisesRegex(
+                CustomCollisionSourceContractError,
+                "out-of-range single-tile offset 4096",
+            ):
+                validate_contract(root, rom_path)
+
+    def test_rom_rectangle_footprint_crossing_map_edge_fails_closed(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_source(root, [])
+            stream = b"\xFF\x0F\x02\x01\x01\x02\xFF\xFF"
+            rom_path = self.write_raw_rom(root, {0x25: stream})
+
+            with self.assertRaisesRegex(
+                CustomCollisionSourceContractError,
+                "rectangle at offset 4095 with size 2x1",
+            ):
+                validate_contract(root, rom_path)
 
     def test_rom_rectangle_then_single_tile_overwrite_and_clear(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -279,6 +335,36 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
                 "maps outside collision data",
             ):
                 validate_contract(root, rom_path)
+
+    def test_rom_raw_low_half_pointer_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_source(root, [])
+            rom_path = self.write_rom_with_raw_pointer(
+                root, 0x25, 0x250450
+            )
+
+            with self.assertRaisesRegex(
+                CustomCollisionSourceContractError,
+                r"pointer 0x250450 is a raw low-half LoROM address",
+            ):
+                validate_contract(root, rom_path)
+
+    def test_rom_wram_banks_and_fastrom_mirrors_fail_closed(self) -> None:
+        for pointer in (0x7E8450, 0x7F8450, 0xFE8450, 0xFF8450):
+            with self.subTest(pointer=f"0x{pointer:06X}"):
+                with tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    self.write_source(root, [])
+                    rom_path = self.write_rom_with_raw_pointer(
+                        root, 0x25, pointer
+                    )
+
+                    with self.assertRaisesRegex(
+                        CustomCollisionSourceContractError,
+                        r"uses WRAM bank or mirror 0x(?:7E|7F|FE|FF)",
+                    ):
+                        validate_contract(root, rom_path)
 
     def test_rom_all_zero_pointer_is_omitted_like_z3ed_export(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

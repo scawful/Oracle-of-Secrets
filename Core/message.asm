@@ -18,7 +18,7 @@ endwhile
 ; So the end of the data bank is not as easily searchable.
 org $0EEE75 : db $80
 
-org !addr+1 : db $80
+org !addr+1 : assert ((!addr+1)>>16) == $0E, "Expanded message terminator left bank $0E" : db $80 ; @manifest-org-bank=$0E
 
 org $0ED436
   JML MessageExpand
