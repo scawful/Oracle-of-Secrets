@@ -9,7 +9,7 @@ Campaign Goals Supported:
 - D.5: Goal-oriented action planner
 
 Usage:
-    from scripts.campaign.action_planner import ActionPlanner, Goal
+    from Scripts.Campaign.action_planner import ActionPlanner, Goal
 
     planner = ActionPlanner(emulator)
     goal = Goal.reach_location(area_id=0x29, x=512, y=480)

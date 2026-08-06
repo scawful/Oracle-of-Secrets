@@ -23,14 +23,18 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 try:
-    from mesen2_client_lib.client import OracleDebugClient
+    from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
     HAS_SOCKET_BACKEND = True
 except Exception:
     HAS_SOCKET_BACKEND = False
 
 try:
-    from scripts.mesen2_client_lib.state_library import (
+    from Scripts.Mesen2.mesen2_client_lib.state_library import (
         disallowed_state_reason,
         is_disallowed_state_path,
     )
@@ -52,8 +56,6 @@ if Path(YAZE_MCP_ROOT).exists():
         HAS_YAZE_BACKEND = True
     except Exception:
         HAS_YAZE_BACKEND = False
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Colors for terminal output
 class Colors:
@@ -277,7 +279,7 @@ class YazeBackend:
 
             if command == "state":
                 try:
-                    from mesen2_client_lib.constants import OracleRAM
+                    from Scripts.Mesen2.mesen2_client_lib.constants import OracleRAM
                 except Exception:
                     OracleRAM = None
                 state = {}

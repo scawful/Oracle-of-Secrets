@@ -4,9 +4,9 @@ Simple dungeon room ASCII visualizer.
 Cleans up z3ed dungeon-map output into readable room layouts.
 
 Usage:
-    python3 Scripts/dungeon_viz.py --rom Roms/oos168x.sfc --room 0x87
-    python3 Scripts/dungeon_viz.py --rom Roms/oos168x.sfc --d6
-    python3 Scripts/dungeon_viz.py --overview
+    python3 Scripts/Analysis/dungeon_viz.py --rom Roms/oos168x.sfc --room 0x87
+    python3 Scripts/Analysis/dungeon_viz.py --rom Roms/oos168x.sfc --d6
+    python3 Scripts/Analysis/dungeon_viz.py --overview
 """
 import argparse, json, os, subprocess, sys
 PLAIN = False

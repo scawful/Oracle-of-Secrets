@@ -40,14 +40,14 @@ You can use the smart save feature directly from the command line:
 
 ```bash
 # Save to slot 1 ONLY if the state is considered safe
-./Scripts/mesen2_client.py smart-save 1
+./Scripts/Mesen2/mesen2_client.py smart-save 1
 ```
 
 ### Python API
 Import the agent brain in your own scripts:
 
 ```python
-from agent.brain import AgentBrain
+from Scripts.Agent.brain import AgentBrain
 
 agent = AgentBrain()  # B008 input correction auto-detects by default
 

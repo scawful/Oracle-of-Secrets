@@ -8,7 +8,7 @@ Campaign Goals Supported:
 - D.3: NPC/sprite awareness system (partial)
 
 Usage:
-    from scripts.campaign.game_state import GameStateParser
+    from Scripts.Campaign.game_state import GameStateParser
 
     parser = GameStateParser()
     state = parser.parse(raw_snapshot)

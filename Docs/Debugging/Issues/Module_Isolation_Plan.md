@@ -8,9 +8,9 @@ by toggling major modules and running targeted transition tests.
 - **Module disable flags**: `!DISABLE_*` in `Util/macros.asm`, used by `Oracle_main.asm`.
 - **Module override file**: `Config/module_flags.asm` (generated or edited for isolation).
 - **Debug warp system**: ROM code at `$3CB400` exposed via `OracleDebugClient.warp_to()`.
-- **Socket test runner**: `scripts/test_runner.py` (Mesen2 socket backend) can load
+- **Socket test runner**: `Scripts/Validate/test_runner.py` (Mesen2 socket backend) can load
   states, press inputs, and run scripted checks.
-- **P/stack tracing**: `scripts/repro_stack_corruption.py`, `scripts/p_watch.py`,
+- **P/stack tracing**: `Scripts/Debug/repro_stack_corruption.py`, `Scripts/Debug/p_watch.py`,
   and `mesen2_client_lib` watch/breakpoint helpers.
 
 ## How to Toggle Modules
@@ -18,17 +18,17 @@ by toggling major modules and running targeted transition tests.
 Preferred: use the generator script and rebuild.
 
 ```bash
-python3 scripts/set_module_flags.py --disable menu
-./scripts/build_rom.sh 168
+python3 Scripts/Build/set_module_flags.py --disable menu
+./Scripts/Build/build_rom.sh 168
 ```
 
-**Optional: cycle through modules in FixPlan order.**  
-- **Automated (recommended):** `./scripts/run_module_isolation.sh --auto` or `python3 scripts/run_module_isolation_auto.py` — disables each module, builds, reloads ROM in Mesen2, runs `bisect_softlock` (state 1, N frames), records pass/fail; requires Mesen2 with socket and save state 1.  
-- **Manual:** `./scripts/run_module_isolation.sh` to disable modules one at a time (Masks → … → Overworld), build after each, and be prompted to test. Use `--next N` for step N (1–8); `--next 9` to reset all.
+**Optional: cycle through modules in FixPlan order.**
+- **Automated (recommended):** `./Scripts/Validate/run_module_isolation.sh --auto` or `python3 Scripts/Validate/run_module_isolation_auto.py` — disables each module, builds, reloads ROM in Mesen2, runs `bisect_softlock` (state 1, N frames), records pass/fail; requires Mesen2 with socket and save state 1.
+- **Manual:** `./Scripts/Validate/run_module_isolation.sh` to disable modules one at a time (Masks → … → Overworld), build after each, and be prompted to test. Use `--next N` for step N (1–8); `--next 9` to reset all.
 
 Reset to defaults:
 ```bash
-python3 scripts/set_module_flags.py --profile all
+python3 Scripts/Build/set_module_flags.py --profile all
 ```
 
 ## Isolation Runbook (recommended order)
@@ -37,10 +37,10 @@ Run from repo root. After each build, load save state 1 (overworld) or 2 (file-l
 
 | Step | Command | If crash gone |
 |------|---------|----------------|
-| 1 | `python3 scripts/set_module_flags.py --disable menu` then `./scripts/build_rom.sh 168` | Focus on menu (and file-load path for State 2) |
-| 2 | `python3 scripts/set_module_flags.py --disable overworld` then build | Focus on time system and LoadOverworldSprites_Interupt |
-| 3 | `python3 scripts/set_module_flags.py --disable sprites,masks,items` then build | Focus on sprite/ancilla width imbalances and JumpTableLocal callers |
-| Reset | `python3 scripts/set_module_flags.py --profile all` then build | Restore all modules |
+| 1 | `python3 Scripts/Build/set_module_flags.py --disable menu` then `./Scripts/Build/build_rom.sh 168` | Focus on menu (and file-load path for State 2) |
+| 2 | `python3 Scripts/Build/set_module_flags.py --disable overworld` then build | Focus on time system and LoadOverworldSprites_Interupt |
+| 3 | `python3 Scripts/Build/set_module_flags.py --disable sprites,masks,items` then build | Focus on sprite/ancilla width imbalances and JumpTableLocal callers |
+| Reset | `python3 Scripts/Build/set_module_flags.py --profile all` then build | Restore all modules |
 
 ## Isolation Profiles (recommended order)
 
@@ -74,14 +74,14 @@ Use the debug warp system (ROM-side) to avoid manual travel:
 
 Suggested warp loop (socket backend):
 ```bash
-python3 scripts/mesen2_client.py warp --location "Kakariko Village" --wait 60
-python3 scripts/mesen2_client.py warp --location "Lost Woods" --wait 60
-python3 scripts/mesen2_client.py warp --location "Eastern Palace Entrance" --wait 60
+python3 Scripts/Mesen2/mesen2_client.py warp --location "Kakariko Village" --wait 60
+python3 Scripts/Mesen2/mesen2_client.py warp --location "Lost Woods" --wait 60
+python3 Scripts/Mesen2/mesen2_client.py warp --location "Eastern Palace Entrance" --wait 60
 ```
 
 Capture on failure:
 ```bash
-python3 scripts/repro_stack_corruption.py --strategy auto --output /tmp/blame_report.json
+python3 Scripts/Debug/repro_stack_corruption.py --strategy auto --output /tmp/blame_report.json
 ```
 
 ## Likely Modules to Isolate First

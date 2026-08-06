@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from typing import Dict, Any
 from unittest.mock import MagicMock
 
-from scripts.campaign.game_state import (
+from Scripts.Campaign.game_state import (
     GamePhase,
     LinkAction,
     MODE_TO_PHASE,
@@ -807,7 +807,7 @@ class TestUtilityFunctions:
 
     def test_get_parser_singleton(self):
         """get_parser returns singleton."""
-        import scripts.campaign.game_state as gs_module
+        import Scripts.Campaign.game_state as gs_module
         gs_module._default_parser = None  # Reset
 
         parser1 = get_parser()
@@ -817,7 +817,7 @@ class TestUtilityFunctions:
 
     def test_parse_state_convenience(self):
         """parse_state convenience function."""
-        import scripts.campaign.game_state as gs_module
+        import Scripts.Campaign.game_state as gs_module
         gs_module._default_parser = None  # Reset
 
         snapshot = _snapshot(mode=0x09, area=0x29)

@@ -4,7 +4,7 @@
 **Scope:** Oracle-of-Secrets emulator/debug/test infrastructure
 **Focus:** (1) Bridge spec + capability map + selftest harness, (3) runtime reinit hooks + RPC mapping
 
-> NOTE (2026-02-07): The supported client surface is `python3 scripts/mesen2_client.py` (socket API).
+> NOTE (2026-02-07): The supported client surface is `python3 Scripts/Mesen2/mesen2_client.py` (socket API).
 
 ---
 
@@ -172,7 +172,7 @@ See `Docs/Debugging/Agent/Reinit_Hooks_Spec.md` for gating rules and rationale.
 
 ### Phase C: RPC Mapping
 - Implement `reinit.queue` and `reinit.status` in bridge.
-- Add CLI helpers: `python3 scripts/mesen2_client.py reinit dialog,sprites`.
+- Add CLI helpers: `python3 Scripts/Mesen2/mesen2_client.py reinit dialog,sprites`.
 
 ### Phase D: Validation
 - Contract tests for `reinit.queue` and status transitions.

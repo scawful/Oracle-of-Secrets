@@ -4,7 +4,7 @@
 
 Comprehensive review of all 397 messages extracted from the Oracle of Secrets dev ROM (`oos168.sfc`) via z3ed CLI, plus 47 expanded bank messages from `Core/message.asm`. Each section analyzes dialogue by narrative function, grades current quality, and proposes specific improvements to align with Story Bible v2.0 and improve player progression clarity.
 
-All dialogue edits are **not blocked**. The yaze GUI improvements are a quality-of-life item, but dialogue can be authored today via:\n+\n+- Editing `Core/messages.org` and rebuilding (`./scripts/build_rom.sh 168`).\n+- If you need ROM-side patching without rebuilding, use tooling/CLI import-export workflows (e.g., yaze/z3ed CLI message write paths) as a temporary bridge.\n+\n+Treat “yaze message editor expanded bin support” as a UI/workflow accelerator, not a hard dependency.
+All dialogue edits are **not blocked**. The yaze GUI improvements are a quality-of-life item, but dialogue can be authored today via:\n+\n+- Editing `Core/messages.org` and rebuilding (`./Scripts/Build/build_rom.sh 168`).\n+- If you need ROM-side patching without rebuilding, use tooling/CLI import-export workflows (e.g., yaze/z3ed CLI message write paths) as a temporary bridge.\n+\n+Treat “yaze message editor expanded bin support” as a UI/workflow accelerator, not a hard dependency.
 
 ### z3ed Message Extraction (2026-02-05)
 

@@ -29,9 +29,10 @@ import sys
 import time
 from pathlib import Path
 
-# Add the client library to path
-sys.path.insert(0, str(Path(__file__).parent))
-from mesen2_client_lib.bridge import MesenBridge
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from Scripts.Mesen2.mesen2_client_lib.bridge import MesenBridge
 
 
 # Stack region where the corrupted JSL return address lands

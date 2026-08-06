@@ -17,7 +17,9 @@ Read these in order:
 
 ## Core References
 
-- Canonical story decisions: `narrative_design_master_plan.md`
+- Canonical story decisions: `story_canon_beat_sheet.md` (scawful-reviewed,
+  2026-07-25; overrides every other narrative doc)
+- Narrative background (superseded where it conflicts): `narrative_design_master_plan.md`
 - Story structure + arcs: `Plans/story_framework.md`
 - Event/flag traceability: `Story_Event_Graph.md`
 - Lore implementation tracker: `lore_implementation.md`

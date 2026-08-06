@@ -13,7 +13,7 @@ Key Addresses:
 - $7E0020-23: Link position (Y, X low/high bytes)
 
 Usage:
-    from scripts.campaign.pathfinder import Pathfinder, CollisionMap
+    from Scripts.Campaign.pathfinder import Pathfinder, CollisionMap
 
     pf = Pathfinder(emulator)
     path = pf.find_path((100, 100), (200, 200))

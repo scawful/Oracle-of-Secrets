@@ -13,7 +13,7 @@ Campaign Goals Supported:
 - D.1-D.5: Intelligent Agent Tooling
 
 Usage:
-    from scripts.campaign.campaign_orchestrator import CampaignOrchestrator
+    from Scripts.Campaign.campaign_orchestrator import CampaignOrchestrator
 
     orchestrator = CampaignOrchestrator()
     orchestrator.connect()

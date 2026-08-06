@@ -22,14 +22,14 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.emulator_abstraction import GameStateSnapshot
-from scripts.campaign.game_state import GamePhase, GameStateParser
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.emulator_abstraction import GameStateSnapshot
+from Scripts.Campaign.game_state import GamePhase, GameStateParser
+from Scripts.Campaign.input_recorder import (
     Button, InputSequence, InputPlayer, InputFrame, InputRecorder,
     create_boot_sequence, create_walk_sequence, create_attack_sequence
 )
-from scripts.campaign.action_planner import ActionPlanner, Goal, Plan, PlanStatus
-from scripts.campaign.campaign_orchestrator import CampaignOrchestrator, CampaignPhase
+from Scripts.Campaign.action_planner import ActionPlanner, Goal, Plan, PlanStatus
+from Scripts.Campaign.campaign_orchestrator import CampaignOrchestrator, CampaignPhase
 
 
 class TestInputTimingCalculations:
@@ -195,7 +195,7 @@ class TestProgressTimestamps:
 
     def test_milestone_completion_timestamp(self):
         """Test milestone records completion time."""
-        from scripts.campaign.campaign_orchestrator import CampaignMilestone, MilestoneStatus
+        from Scripts.Campaign.campaign_orchestrator import CampaignMilestone, MilestoneStatus
 
         milestone = CampaignMilestone(
             id="test",

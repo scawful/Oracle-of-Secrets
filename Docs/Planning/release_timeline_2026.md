@@ -111,7 +111,7 @@ No weekly schedule. Instead:
 - [ ] Test ice block push direction in all 4 directions (30 min)
 - [ ] Test Maku Tree hint cascade at 0, 1, 3, 5, 7 crystals (1 hr)
 - [ ] Test water gate: fill, exit room, re-enter, save/reload (1 hr)
-- [ ] Run full regression suite: `bash scripts/run_regression_tests.sh` (30 min + fix time)
+- [ ] Run full regression suite: `bash Scripts/Validate/run_regression_tests.sh` (30 min + fix time)
 
 🔴 **High Focus**
 - [ ] Verify stack integrity fix (orphaned PHX removal) — 20+ OW transitions (1 hr)

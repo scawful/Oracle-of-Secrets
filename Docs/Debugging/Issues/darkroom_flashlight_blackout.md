@@ -19,12 +19,12 @@ Do not guess. Capture first.
 1. Pause the emulator **one action away** from the doorway/stairs that enters the dark room.
 2. Arm instrumentation:
 ```bash
-python3 scripts/capture_blackout.py arm --save-seed --assert-jtl --deep
+python3 Scripts/Debug/capture_blackout.py arm --save-seed --assert-jtl --deep
 ```
 3. Reproduce the blackout (enter the room). Do **not** reset.
 4. Capture:
 ```bash
-python3 scripts/capture_blackout.py capture
+python3 Scripts/Debug/capture_blackout.py capture
 ```
 
 Artifacts will be under `/tmp/oos_blackout/<timestamp>/`.

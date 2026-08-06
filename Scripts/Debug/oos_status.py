@@ -15,12 +15,12 @@ from pathlib import Path
 from typing import Any
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 AGENTS_PATH = ROOT / "AGENTS.md"
 HANDOFF_PATH = ROOT / ".context" / "scratchpad" / "agent_handoff.md"
-TRACKER_PATH = ROOT / "oracle.org"
+TRACKER_PATH = ROOT / "Docs" / "oracle.org"
 WORKFLOW_PATH = ROOT / "Docs" / "Planning" / "Plans" / "development_workflow_alignment_2026-03-28.md"
-RUNBOOK_PATH = ROOT / "RUNBOOK.md"
+RUNBOOK_PATH = ROOT / "Docs" / "RUNBOOK.md"
 
 
 def run_command(args: list[str], *, cwd: Path | None = None, timeout: float = 2.0) -> tuple[bool, str, str]:
@@ -244,7 +244,7 @@ def tool_status(version: int) -> dict[str, Any]:
     home = Path.home()
     z3ed = shutil.which("z3ed")
     if not z3ed:
-        candidate = home / "src" / "hobby" / "yaze" / "build" / "bin" / "z3ed"
+        candidate = home / "src" / "hobby" / "yaze" / "scripts" / "z3ed"
         if candidate.exists():
             z3ed = str(candidate)
     mesen_app = Path("/Applications/Mesen2 OOS.app")
@@ -254,17 +254,17 @@ def tool_status(version: int) -> dict[str, Any]:
         "z3ed": {"available": z3ed is not None, "path": z3ed},
         "flips": {"available": shutil.which("flips") is not None, "path": shutil.which("flips")},
         "mesen_agent": {"available": shutil.which("mesen-agent") is not None, "path": shutil.which("mesen-agent")},
-        "build_wrapper": {"available": (ROOT / "build.sh").exists(), "path": str(ROOT / "build.sh")},
-        "quick_wrapper": {"available": (ROOT / "scripts" / "oos-quick.sh").exists(), "path": str(ROOT / "scripts" / "oos-quick.sh")},
-        "verify_wrapper": {"available": (ROOT / "scripts" / "oos-verify.sh").exists(), "path": str(ROOT / "scripts" / "oos-verify.sh")},
-        "session_wrapper": {"available": (ROOT / "scripts" / "oos-session.sh").exists(), "path": str(ROOT / "scripts" / "oos-session.sh")},
+        "build_wrapper": {"available": (ROOT / "Scripts" / "Build" / "build_rom.sh").exists(), "path": str(ROOT / "Scripts" / "Build" / "build_rom.sh")},
+        "quick_wrapper": {"available": (ROOT / "Scripts" / "Build" / "oos-quick.sh").exists(), "path": str(ROOT / "Scripts" / "Build" / "oos-quick.sh")},
+        "verify_wrapper": {"available": (ROOT / "Scripts" / "Build" / "oos-verify.sh").exists(), "path": str(ROOT / "Scripts" / "Build" / "oos-verify.sh")},
+        "session_wrapper": {"available": (ROOT / "Scripts" / "Build" / "oos-session.sh").exists(), "path": str(ROOT / "Scripts" / "Build" / "oos-session.sh")},
         "version": version,
     }
 
 
 def registry_summary(owner: str) -> dict[str, Any]:
     ok, stdout, stderr = run_command(
-        ["python3", str(ROOT / "scripts" / "mesen2_registry.py"), "list", "--json"],
+        ["python3", str(ROOT / "Scripts" / "Mesen2" / "mesen2_registry.py"), "list", "--json"],
         timeout=2.5,
     )
     if not ok:
@@ -333,7 +333,7 @@ def recommended_actions(version: int, rom: dict[str, Any], handoff: dict[str, An
                 "title": "Build the patched ROM",
                 "detail": f"Generate oos{version}x.sfc before trying to test or launch seeds.",
                 "action": "quick-build",
-                "command": f"./Scripts/oos-quick.sh {version}",
+                "command": f"./Scripts/Build/oos-quick.sh {version}",
             }
         )
     actions.append(
@@ -349,7 +349,7 @@ def recommended_actions(version: int, rom: dict[str, Any], handoff: dict[str, An
             "title": "Validate Maku progression helpers",
             "detail": "Use named Maku sessions for 0/1/3/5/7 crystals and verify message + map icon.",
             "action": "session-maku",
-            "command": f"./Scripts/oos-session.sh maku --crystals 3",
+            "command": f"./Scripts/Build/oos-session.sh maku --crystals 3",
         }
     )
     if handoff.get("next_tasks"):
@@ -382,7 +382,7 @@ def build_finish_line(
             "title": "Build the patched ROM",
             "detail": f"Create oos{version}x.sfc before trying to play targeted sessions.",
             "action": "quick-build",
-            "command": f"./Scripts/oos-quick.sh {version}",
+            "command": f"./Scripts/Build/oos-quick.sh {version}",
             "session": "free",
         }
         alerts_level = "error"
@@ -392,7 +392,7 @@ def build_finish_line(
             "title": "Play Maku Tree at 0 crystals",
             "detail": "Smallest high-value unknown: progression helpers and Maku hint dispatch are assembled but still untested.",
             "action": "continue-play",
-            "command": "./Scripts/oos-session.sh maku --crystals 0",
+            "command": "./Scripts/Build/oos-session.sh maku --crystals 0",
             "session": "maku",
         }
         compact_label = "M0"
@@ -404,7 +404,7 @@ def build_finish_line(
             "title": "Patch + Reload",
             "detail": "Rebuild the patched ROM and sync the emulator-facing target first.",
             "action": "verify-build",
-            "command": f"./Scripts/oos-verify.sh {version}",
+            "command": f"./Scripts/Build/oos-verify.sh {version}",
         },
         {
             "title": "Transition Regressions",
@@ -416,13 +416,13 @@ def build_finish_line(
             "title": "Maku 0",
             "detail": "Talk to the tree and verify the message shown and MapIcon state.",
             "action": "session-maku-0",
-            "command": "./Scripts/oos-session.sh maku --crystals 0",
+            "command": "./Scripts/Build/oos-session.sh maku --crystals 0",
         },
         {
             "title": "Maku 1",
             "detail": "Repeat with the 1-crystal state only if the 0-crystal run is stable.",
             "action": "session-maku-1",
-            "command": "./Scripts/oos-session.sh maku --crystals 1",
+            "command": "./Scripts/Build/oos-session.sh maku --crystals 1",
         },
     ]
 
@@ -431,7 +431,7 @@ def build_finish_line(
             "title": "Maku 3 / 5 / 7",
             "detail": "Finish the threshold sweep once the 0 and 1 crystal cases are proven.",
             "action": "session-maku-3",
-            "command": "./Scripts/oos-session.sh maku --crystals 3",
+            "command": "./Scripts/Build/oos-session.sh maku --crystals 3",
         },
         {
             "title": "Key NPC Spot-Check",
@@ -443,13 +443,13 @@ def build_finish_line(
             "title": "D6 Entrance Repro",
             "detail": "Move to the dedicated overworld entrance seed only after progression confidence improves.",
             "action": "session-d6",
-            "command": "./Scripts/oos-session.sh d6",
+            "command": "./Scripts/Build/oos-session.sh d6",
         },
         {
             "title": "D4 Waterfall Roundtrip",
             "detail": "Keep Zora Temple transition and water-gate validation behind Maku and D6 confidence work.",
             "action": "session-d4",
-            "command": "./Scripts/oos-session.sh d4",
+            "command": "./Scripts/Build/oos-session.sh d4",
         },
     ]
 
@@ -470,7 +470,7 @@ def build_finish_line(
                 "title": "D6 entrance failure",
                 "detail": next_tasks[5],
                 "action": "session-d6",
-                "command": "./Scripts/oos-session.sh d6",
+                "command": "./Scripts/Build/oos-session.sh d6",
             }
         )
     for item in handoff.get("blocked") or []:
@@ -546,19 +546,19 @@ def build_snapshot() -> dict[str, Any]:
             "runbook": str(RUNBOOK_PATH),
         },
         "commands": {
-            "quick": f"./Scripts/oos-quick.sh {version}",
-            "verify": f"./Scripts/oos-verify.sh {version}",
+            "quick": f"./Scripts/Build/oos-quick.sh {version}",
+            "verify": f"./Scripts/Build/oos-verify.sh {version}",
             "sessions": {
-                "maku": "./Scripts/oos-session.sh maku",
-                "maku0": "./Scripts/oos-session.sh maku --crystals 0",
-                "maku1": "./Scripts/oos-session.sh maku --crystals 1",
-                "maku3": "./Scripts/oos-session.sh maku --crystals 3",
-                "maku5": "./Scripts/oos-session.sh maku --crystals 5",
-                "maku7": "./Scripts/oos-session.sh maku --crystals 7",
-                "d4": "./Scripts/oos-session.sh d4",
-                "d6": "./Scripts/oos-session.sh d6",
-                "d6cart": "./Scripts/oos-session.sh d6cart",
-                "menu": "./Scripts/oos-session.sh menu",
+                "maku": "./Scripts/Build/oos-session.sh maku",
+                "maku0": "./Scripts/Build/oos-session.sh maku --crystals 0",
+                "maku1": "./Scripts/Build/oos-session.sh maku --crystals 1",
+                "maku3": "./Scripts/Build/oos-session.sh maku --crystals 3",
+                "maku5": "./Scripts/Build/oos-session.sh maku --crystals 5",
+                "maku7": "./Scripts/Build/oos-session.sh maku --crystals 7",
+                "d4": "./Scripts/Build/oos-session.sh d4",
+                "d6": "./Scripts/Build/oos-session.sh d6",
+                "d6cart": "./Scripts/Build/oos-session.sh d6cart",
+                "menu": "./Scripts/Build/oos-session.sh menu",
             },
             "transition_tests": "./Scripts/Validate/run_regression_tests.sh regression --tag transition -q --fail-fast",
         },

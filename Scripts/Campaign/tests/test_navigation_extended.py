@@ -10,7 +10,7 @@ tile type interactions, path optimization, blocked path scenarios.
 import pytest
 from unittest.mock import MagicMock, patch
 
-from scripts.campaign.pathfinder import (
+from Scripts.Campaign.pathfinder import (
     TileType,
     WALKABLE_TILES,
     SWIM_TILES,
@@ -819,7 +819,7 @@ class TestModuleFunctions:
 
     def test_get_pathfinder_singleton(self):
         """get_pathfinder returns singleton."""
-        import scripts.campaign.pathfinder as pf_module
+        import Scripts.Campaign.pathfinder as pf_module
         pf_module._pathfinder = None
 
         pf1 = get_pathfinder()
@@ -829,7 +829,7 @@ class TestModuleFunctions:
 
     def test_get_pathfinder_with_emulator(self):
         """get_pathfinder can set emulator."""
-        import scripts.campaign.pathfinder as pf_module
+        import Scripts.Campaign.pathfinder as pf_module
         pf_module._pathfinder = None
 
         mock_emu = MagicMock()

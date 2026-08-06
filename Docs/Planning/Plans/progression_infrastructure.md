@@ -257,7 +257,7 @@ Guardrails:
 
 Validation:
 ```bash
-./scripts/build_rom.sh 168
+./Scripts/Build/build_rom.sh 168
 python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc --hooks hooks.json --check-hooks --find-mx --find-width-imbalance --check-abi --check-phb-plb --check-jsl-targets --check-rtl-rts --strict
 ```
 

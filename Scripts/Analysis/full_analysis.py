@@ -24,8 +24,11 @@ from typing import Optional, Dict, Any
 
 # Add paths for imports
 SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent.parent
 Z3DK_SCRIPTS = Path.home() / "src" / "hobby" / "z3dk" / "scripts"
 
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 if str(Z3DK_SCRIPTS) not in sys.path:
@@ -116,7 +119,7 @@ def run_dynamic_analysis(hooks_path: Optional[Path], frames: int,
     # Import dynamic analysis modules
     from p_watch import PRegisterWatch
     from mem_blame import MemoryBlame
-    from mesen2_client_lib.client import OracleDebugClient
+    from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
 
     print("Running dynamic analysis...", file=sys.stderr)
 

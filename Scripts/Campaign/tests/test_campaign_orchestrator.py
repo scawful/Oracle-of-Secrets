@@ -19,7 +19,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignPhase,
     MilestoneStatus,
     CampaignMilestone,
@@ -28,8 +28,8 @@ from scripts.campaign.campaign_orchestrator import (
     create_campaign,
     quick_status,
 )
-from scripts.campaign.emulator_abstraction import GameStateSnapshot
-from scripts.campaign.game_state import GamePhase
+from Scripts.Campaign.emulator_abstraction import GameStateSnapshot
+from Scripts.Campaign.game_state import GamePhase
 
 
 class TestCampaignPhase:

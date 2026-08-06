@@ -31,15 +31,17 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-# Add parent directory for imports
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "Mesen2"))
+# Add the repository root for the Scripts namespace package.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-from mesen2_client_lib.client import OracleDebugClient
-from mesen2_client_lib.constants import OracleRAM
+from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
+from Scripts.Mesen2.mesen2_client_lib.constants import OracleRAM
 
-from oracle_debugger.session import DebugSession, Detection, TraceCapture, StateCapture, SessionState
-from oracle_debugger.moe_bridge import MoEBridge
-from oracle_debugger.reporters import MarkdownReporter, JSONReporter, RegressionTestGenerator
+from Scripts.OracleDebugger.session import DebugSession, Detection, TraceCapture, StateCapture, SessionState
+from Scripts.OracleDebugger.moe_bridge import MoEBridge
+from Scripts.OracleDebugger.reporters import MarkdownReporter, JSONReporter, RegressionTestGenerator
 
 logger = logging.getLogger(__name__)
 

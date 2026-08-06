@@ -3,7 +3,7 @@ Oracle of Secrets Agent Brain
 Implements intelligent state tracking, navigation, and save state management.
 
 Usage:
-    from agent.brain import AgentBrain
+    from Scripts.Agent.brain import AgentBrain
 
     # Initialize
     agent = AgentBrain()
@@ -22,13 +22,16 @@ Usage:
 
 import math
 import heapq
+import sys
 import time
+from pathlib import Path
 from typing import List, Tuple, Optional, Set, Union
 
-try:
-    from mesen2_client_lib.client import OracleDebugClient
-except ImportError:
-    from scripts.mesen2_client_lib.client import OracleDebugClient
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
 
 # Constants
 TILE_SIZE = 8  # Collision tiles are 8x8 pixels
@@ -296,7 +299,7 @@ class SaveManager:
         self.client = client
         self.nav = nav
         # Late import to avoid circular dependency if not careful
-        from mesen2_client_lib.state_library import StateLibrary
+        from Scripts.Mesen2.mesen2_client_lib.state_library import StateLibrary
         self.library = library or StateLibrary()
 
     def is_state_valid(self, state: GameState) -> Tuple[bool, str]:

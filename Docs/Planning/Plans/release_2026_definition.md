@@ -21,8 +21,8 @@ This doc defines what a **full content release in 2026** means for Oracle of Sec
 - No new hardlocks on the golden path used for testers.
 
 **Must pass (minimum):**
-- `python3 scripts/test_runner.py --suite smoke`
-- `python3 scripts/test_runner.py --tag transition` (if a transition system changed)
+- `python3 Scripts/Validate/test_runner.py --suite smoke`
+- `python3 Scripts/Validate/test_runner.py --tag transition` (if a transition system changed)
 - `python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc --hooks hooks.json --check-hooks --find-mx --find-width-imbalance --check-abi --check-phb-plb --check-jsl-targets --check-rtl-rts`
 
 **Strongly recommended (catch regressions early):**
@@ -79,14 +79,14 @@ This doc defines what a **full content release in 2026** means for Oracle of Sec
 
 ### 1.5) Feature isolation (hooks you can turn off)
 - Prefer feature-gating risky `org` hooks instead of commenting them out.
-- Canonical override: `Config/feature_flags.asm` (generate with `python3 scripts/set_feature_flags.py ...`).
-- Keep tooling aligned: `scripts/build_rom.sh` regenerates `hooks.json` when flag files change so analyzer output matches the built ROM.
+- Canonical override: `Config/feature_flags.asm` (generate with `python3 Scripts/Build/set_feature_flags.py ...`).
+- Keep tooling aligned: `Scripts/Build/build_rom.sh` regenerates `hooks.json` when flag files change so analyzer output matches the built ROM.
 
 ### 2) Mandatory guardrails for ASM edits
 - Run analyzer (strict if possible):
   - `python3 ../z3dk/scripts/oracle_analyzer.py Roms/oos168x.sfc --hooks hooks.json --check-hooks --find-mx --find-width-imbalance --check-abi --check-phb-plb --check-jsl-targets --check-rtl-rts --strict`
 - Run smoke tests when touching transitions or core hooks:
-  - `python3 scripts/test_runner.py --suite smoke`
+  - `python3 Scripts/Validate/test_runner.py --suite smoke`
 
 ### 3) Hooks and annotations discipline
 - Always add `@hook` + `@abi` tags for new entry points.

@@ -17,9 +17,9 @@
 ```
 MESEN_APP=/Users/scawful/src/hobby/mesen2-oos/bin/osx-arm64/Release/osx-arm64/publish/Mesen2\ OOS.app \
 MESEN2_SOCKET_PATH=/tmp/mesen2-test.sock \
-# python3 scripts/mesen2_client.py test-hypothesis --headless --slot 1 --frames 600
+# python3 Scripts/Mesen2/mesen2_client.py test-hypothesis --headless --slot 1 --frames 600
 # lightweight quick check
-# MESEN2_SOCKET_PATH=/tmp/mesen2-test.sock python3 scripts/mesen2_client.py smart-save 1
+# MESEN2_SOCKET_PATH=/tmp/mesen2-test.sock python3 Scripts/Mesen2/mesen2_client.py smart-save 1
 ```
 (Integrate this into mesen2-oos test suite once stable.)
 
@@ -36,8 +36,8 @@ cd ../z3dk
 
 4) **Overlay/tint check:**
 ```
-MESEN2_SOCKET_PATH=... python3 scripts/mesen2_client.py diagnostics --json \
-  && python3 scripts/mesen2_client.py watch --json
+MESEN2_SOCKET_PATH=... python3 Scripts/Mesen2/mesen2_client.py diagnostics --json \
+  && python3 Scripts/Mesen2/mesen2_client.py watch --json
 ```
 Verify $9A/$1D and overlay ID return to 0/FF when leaving the house/Spotlight.
 

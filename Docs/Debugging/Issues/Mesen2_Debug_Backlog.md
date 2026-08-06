@@ -134,7 +134,7 @@ State library manifest at `Docs/Debugging/Testing/save_state_library.json` has 2
 **How to Capture:**
 ```bash
 # With Mesen2 running
-python3 scripts/mesen2_client.py capture
+python3 Scripts/Mesen2/mesen2_client.py capture
 # Or via socket API
 echo '{"type":"SAVESTATE","slot":"1"}' | nc -U /tmp/mesen2-*.sock
 ```
@@ -167,11 +167,11 @@ Add preset breakpoint configurations for common debug scenarios.
 3. Test each profile with known scenarios
 
 **Files:**
-- `scripts/mesen2_client_lib/client.py`
-- `scripts/mesen2_client_lib/cli.py`
+- `Scripts/Mesen2/mesen2_client_lib/client.py`
+- `Scripts/Mesen2/mesen2_client_lib/cli.py`
 
 **Acceptance Criteria:**
-- `python3 scripts/mesen2_client.py breakpoint --profile transition` works
+- `python3 Scripts/Mesen2/mesen2_client.py breakpoint --profile transition` works
 - Breakpoints trigger at expected addresses
 - Can enable/disable profiles
 
@@ -214,8 +214,8 @@ Create a lightweight session log that records all CLI actions, run-state transit
 3. Optional helper to summarize the log for handoff docs.
 
 **Files:**
-- `scripts/mesen2_client_lib/cli.py`
-- `scripts/mesen2_client_lib/client.py`
+- `Scripts/Mesen2/mesen2_client_lib/cli.py`
+- `Scripts/Mesen2/mesen2_client_lib/client.py`
 
 **Acceptance Criteria:**
 - `--log` writes JSONL entries for each command.
@@ -232,8 +232,8 @@ Create a lightweight session log that records all CLI actions, run-state transit
 Extend diagnostics to include items, flags, sprites, and watch profile values for agent debugging insight.
 
 **Acceptance Criteria:**
-- `python3 scripts/mesen2_client.py diagnostics --deep --json` includes items, flags, sprites, watch profile, and watch values.
-- Agent command `python3 scripts/mesen2_client.py agent diagnostics --deep` returns same payload.
+- `python3 Scripts/Mesen2/mesen2_client.py diagnostics --deep --json` includes items, flags, sprites, watch profile, and watch values.
+- Agent command `python3 Scripts/Mesen2/mesen2_client.py agent diagnostics --deep` returns same payload.
 
 ---
 
@@ -242,7 +242,7 @@ Extend diagnostics to include items, flags, sprites, and watch profile values fo
 **Status:** Done (2026-01-27)
 
 **Description:**
-Detect black-screen conditions automatically during overworld traversal tests. Implemented via `sentinel.py` and `oracle_debugger` package.
+Detect black-screen conditions automatically during overworld traversal tests. Implemented via `sentinel.py` and `Scripts.OracleDebugger` package.
 
 **Implementation Ideas:**
 1. Add `detect_black_screen()` to compare screenshot histogram or INIDISP values.
@@ -250,10 +250,10 @@ Detect black-screen conditions automatically during overworld traversal tests. I
 3. Save a labeled state + screenshot when failure is detected.
 
 **Files:**
-- `scripts/mesen2_client_lib/client.py`
-- `scripts/mesen2_client_lib/cli.py`
-- `scripts/campaign/overworld_navigator.py`
-- `scripts/campaign/transition_tester.py`
+- `Scripts/Mesen2/mesen2_client_lib/client.py`
+- `Scripts/Mesen2/mesen2_client_lib/cli.py`
+- `Scripts/Campaign/overworld_navigator.py`
+- `Scripts/Campaign/transition_tester.py`
 
 **Acceptance Criteria:**
 - CLI command reports PASS/FAIL per area.
@@ -310,18 +310,18 @@ Apply camera fix based on bird travel research.
 Wire `test_runner.py` to use socket API for automated testing. Implemented via `test_runner.py` and `Regression_Test_Suite.md`.
 
 **Current State:**
-- `scripts/test_runner.py` exists
+- `Scripts/Validate/test_runner.py` exists
 - Socket API has all needed commands
 - No automated test suite defined
 
 **Steps:**
-1. Define test cases in `scripts/tests/`
+1. Define test cases in `Scripts/Campaign/tests/`
 2. Add state library integration
 3. Add assertion framework
 4. Wire to CI workflow
 
 **Acceptance Criteria:**
-- `python3 scripts/test_runner.py --suite regression` runs tests
+- `python3 Scripts/Validate/test_runner.py --suite regression` runs tests
 - Tests use save state library for setup
 - Results logged to `Docs/Debugging/Testing/results/`
 
@@ -375,7 +375,7 @@ Automatically reload `.sym` file when ROM is rebuilt.
 | P1.5 Breakpoint Profiles | 2026-01-27 | CLI command `breakpoint --profile` |
 | P2.7 Session Logging | 2026-01-27 | CLI arg `--log <file>` |
 | P2.8 Regression Tests | 2026-01-27 | `test_runner.py` + manifest |
-| P2.9 Sentinel/Crash Detector | 2026-01-27 | `sentinel.py` / `oracle_debugger` |
+| P2.9 Sentinel/Crash Detector | 2026-01-27 | `sentinel.py` / `Scripts.OracleDebugger` |
 | P_WATCH/P_LOG/P_ASSERT | 2026-01-24 | Commit f22c1c23 |
 | MEM_WATCH_WRITES/MEM_BLAME | 2026-01-24 | Commit f22c1c23 |
 | Frame-based INPUT injection | 2026-01-24 | Commit 73441358 |

@@ -21,7 +21,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.emulator_abstraction import (
+from Scripts.Campaign.emulator_abstraction import (
     EmulatorStatus, MemoryRead, GameStateSnapshot,
     EmulatorInterface, Mesen2Emulator, get_emulator
 )

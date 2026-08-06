@@ -213,14 +213,16 @@ class SymbolTable:
         return table
 
 
+SCRIPTS_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = SCRIPTS_ROOT.parent
 OOS_SYMBOL_PATHS = [
-    str(Path(__file__).resolve().parents[2] / "Core" / "symbols.asm"),
-    str(Path(__file__).resolve().parents[2] / "Core" / "ram.asm"),
-    str(Path(__file__).resolve().parents[2] / "Core" / "sram.asm"),
-    str(Path(__file__).resolve().parents[2] / "Core" / "structs.asm"),
+    str(REPO_ROOT / "Core" / "symbols.asm"),
+    str(REPO_ROOT / "Core" / "ram.asm"),
+    str(REPO_ROOT / "Core" / "sram.asm"),
+    str(REPO_ROOT / "Core" / "structs.asm"),
 ]
 
-OOS_JSON_PATH = str(Path(__file__).resolve().parents[1] / "state_symbols.json")
+OOS_JSON_PATH = str(SCRIPTS_ROOT / "Data" / "state_symbols.json")
 
 
 def load_oos_symbols() -> SymbolTable:

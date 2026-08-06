@@ -24,7 +24,7 @@ Key Memory Addresses:
 - $7E0021: Link Y position (high byte)
 
 Usage:
-    from scripts.campaign.overworld_navigator import OverworldNavigator
+    from Scripts.Campaign.overworld_navigator import OverworldNavigator
 
     navigator = OverworldNavigator(bridge)
     result = navigator.navigate_to_poi("village_center")

@@ -12,44 +12,44 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Generator
 from unittest.mock import MagicMock, patch
 
-from scripts.campaign.emulator_abstraction import (
+from Scripts.Campaign.emulator_abstraction import (
     EmulatorStatus,
     MemoryRead,
     GameStateSnapshot,
     EmulatorInterface,
 )
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.input_recorder import (
     Button,
     InputFrame,
     InputSequence,
     InputRecorder,
 )
-from scripts.campaign.game_state import (
+from Scripts.Campaign.game_state import (
     GamePhase,
     LinkAction,
     GameStateParser,
     ParsedGameState,
 )
-from scripts.campaign.pathfinder import (
+from Scripts.Campaign.pathfinder import (
     TileType,
     CollisionMap,
     Pathfinder,
     NavigationResult,
 )
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignPhase,
     MilestoneStatus,
     CampaignMilestone,
     CampaignProgress,
 )
-from scripts.campaign.action_planner import (
+from Scripts.Campaign.action_planner import (
     GoalType,
     PlanStatus,
     Goal,
     Plan,
     Action,
 )
-from scripts.campaign.progress_validator import (
+from Scripts.Campaign.progress_validator import (
     StoryFlag,
     GameStateValue,
     ProgressSnapshot,

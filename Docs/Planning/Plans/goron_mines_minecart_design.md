@@ -180,16 +180,16 @@ The detailed per-room writeups below focus on the originally investigated subset
 
 Feature isolation:
 ```bash
-python3 scripts/set_feature_flags.py --list
-python3 scripts/set_feature_flags.py --disable minecart_planned_track_table
-python3 scripts/set_feature_flags.py --enable minecart_planned_track_table
-python3 scripts/set_feature_flags.py --enable minecart_cart_shutters
-python3 scripts/set_feature_flags.py --disable minecart_cart_shutters
+python3 Scripts/Build/set_feature_flags.py --list
+python3 Scripts/Build/set_feature_flags.py --disable minecart_planned_track_table
+python3 Scripts/Build/set_feature_flags.py --enable minecart_planned_track_table
+python3 Scripts/Build/set_feature_flags.py --enable minecart_cart_shutters
+python3 Scripts/Build/set_feature_flags.py --disable minecart_cart_shutters
 ```
 
 Build:
 ```bash
-./scripts/build_rom.sh 168
+./Scripts/Build/build_rom.sh 168
 ```
 
 z3dk analyzer delta (baseline vs current):
@@ -789,7 +789,7 @@ B2 is the climax. **Enable the speed switch (`$36`)** and **hook `RoomTag_Shutte
 ### Enable: Cart-Required Shutters
 
 **Implementation:**
-- Enable `!ENABLE_MINECART_CART_SHUTTERS = 1` (via `Config/feature_flags.asm` or `scripts/set_feature_flags.py`)
+- Enable `!ENABLE_MINECART_CART_SHUTTERS = 1` (via `Config/feature_flags.asm` or `Scripts/Build/set_feature_flags.py`)
 - Apply Tag `0x38` (Holes6) to rooms where doors should only open while Link is riding
 - Runtime test: shutter stays closed without cart, opens when riding into tagged room, no regressions (Crumble Floor tag, Minish shutter tag)
 
@@ -1112,8 +1112,8 @@ Goal: make the existing rooms *actually runnable* so iteration isn’t fighting 
 
 ## See Also
 
-- [GoronMines_Map.md](GoronMines_Map.md) — Full room connectivity and current state
-- [GoronMines_Tracks.md](GoronMines_Tracks.md) — Existing track tile layouts per room
+- [GoronMines_Map.md](../../World/Dungeons/GoronMines_Map.md) — Full room connectivity and current state
+- [GoronMines_Tracks.md](../../World/Dungeons/GoronMines_Tracks.md) — Existing track tile layouts per room
 - `Sprites/Objects/minecart.asm` — Minecart sprite implementation
 - `Sprites/Objects/data/minecart_tracks.asm` — Track starting position tables
 - `Dungeons/Collision/custom_collision.asm` — Per-room collision overlay system

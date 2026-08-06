@@ -15,3 +15,6 @@
 1. Read `agent_handoff.md` first.
 2. Smallest working change. Touch only task-related files.
 3. Never claim verification not actually run.
+4. Story/lore/dialogue work: `Docs/Planning/story_canon_beat_sheet.md` is the
+   single source of truth (scawful's rulings). It overrides all other planning
+   docs. Do not introduce Ganondorf-origin or two-villain plotlines.

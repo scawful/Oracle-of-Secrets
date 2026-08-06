@@ -56,15 +56,13 @@ resolve_bin() {
       return
     fi
   done
-  local fallback1="$HOME/src/hobby/yaze/build_ai/bin/Debug/yaze.app/Contents/MacOS/yaze"
-  local fallback2="$HOME/src/hobby/yaze/build/bin/yaze"
-  if [[ -x "$fallback1" ]]; then
-    echo "$fallback1"
-    return
-  fi
-  if [[ -x "$fallback2" ]]; then
-    echo "$fallback2"
-    return
+  local wrapper="$HOME/src/hobby/yaze/scripts/yaze"
+  if [[ -x "$wrapper" ]]; then
+    resolved="$("$wrapper" --which 2>/dev/null || true)"
+    if [[ -n "$resolved" && -x "$resolved" ]]; then
+      echo "$resolved"
+      return
+    fi
   fi
   echo ""
 }
@@ -224,7 +222,7 @@ status_gui() {
 }
 
 sync_nightly() {
-  local installer="$HOME/src/hobby/yaze/Scripts/install-nightly.sh"
+  local installer="$HOME/src/hobby/yaze/scripts/install-nightly.sh"
   if [[ ! -x "$installer" ]]; then
     echo "Nightly installer not found: $installer" >&2
     exit 1

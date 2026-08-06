@@ -35,7 +35,7 @@ STZ.b $9D ; COLDATA H mirror
 - Active work is root-cause debugging of song-bank handshake failures and transition flow.
 
 **Diagnostics:**
-Use `scripts/repro_blackout_transition.py --report-out <path>` to capture the final
+Use `Scripts/Debug/repro_blackout_transition.py --report-out <path>` to capture the final
 transition/APUIO snapshot for each repro run. No persistent WRAM logging is enabled by
 default in this path.
 

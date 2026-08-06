@@ -19,7 +19,7 @@ Memory Layout (from vanilla ALTTP):
 - $7E0202: File select sub-state
 
 Usage:
-    from scripts.campaign.file_select_navigator import FileSelectNavigator
+    from Scripts.Campaign.file_select_navigator import FileSelectNavigator
 
     navigator = FileSelectNavigator(bridge)
     result = navigator.select_file(slot=1)

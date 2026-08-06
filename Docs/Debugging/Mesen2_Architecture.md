@@ -117,7 +117,7 @@ Returns active ALTTP sprites.
 ## 4. Integration Guide
 
 ### For AI Agents
-Use the Python `MesenBridge` (`scripts/mesen2_client_lib/bridge.py`) or the CLI `scripts/mesen2_client.py`.
+Use the Python `MesenBridge` (`Scripts/Mesen2/mesen2_client_lib/bridge.py`) or the CLI `Scripts/Mesen2/mesen2_client.py`.
 
 ```python
 from mesen2_client_lib.bridge import MesenBridge

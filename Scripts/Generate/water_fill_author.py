@@ -2,7 +2,7 @@
 """Author Oracle water-fill marker tiles via z3ed with reusable presets.
 
 This script writes marker tile 0xF5 into room custom collision data so
-`Scripts/generate_water_fill_table.py` can build runtime water-fill zones.
+`Scripts/Generate/generate_water_fill_table.py` can build runtime water-fill zones.
 """
 
 from __future__ import annotations

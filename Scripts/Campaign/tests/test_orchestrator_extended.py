@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, patch, PropertyMock
 
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignPhase,
     MilestoneStatus,
     CampaignMilestone,
@@ -24,8 +24,8 @@ from scripts.campaign.campaign_orchestrator import (
     create_campaign,
     quick_status,
 )
-from scripts.campaign.action_planner import GoalType, PlanStatus, Goal, Plan
-from scripts.campaign.game_state import GamePhase
+from Scripts.Campaign.action_planner import GoalType, PlanStatus, Goal, Plan
+from Scripts.Campaign.game_state import GamePhase
 
 
 # =============================================================================
@@ -394,7 +394,7 @@ class TestCampaignOrchestratorInit:
 
     def test_init_with_defaults(self):
         """Initialize with defaults."""
-        with patch('scripts.campaign.campaign_orchestrator.Mesen2Emulator') as mock_emu:
+        with patch('Scripts.Campaign.campaign_orchestrator.Mesen2Emulator') as mock_emu:
             mock_emu.return_value = MagicMock()
             orch = CampaignOrchestrator()
 
@@ -663,7 +663,7 @@ class TestUtilityFunctions:
 
     def test_create_campaign_returns_orchestrator(self):
         """create_campaign returns orchestrator."""
-        with patch('scripts.campaign.campaign_orchestrator.Mesen2Emulator') as mock_emu:
+        with patch('Scripts.Campaign.campaign_orchestrator.Mesen2Emulator') as mock_emu:
             mock_emu.return_value = MagicMock()
             orch = create_campaign()
 
@@ -671,7 +671,7 @@ class TestUtilityFunctions:
 
     def test_create_campaign_with_log_dir(self):
         """create_campaign with custom log dir."""
-        with patch('scripts.campaign.campaign_orchestrator.Mesen2Emulator') as mock_emu:
+        with patch('Scripts.Campaign.campaign_orchestrator.Mesen2Emulator') as mock_emu:
             mock_emu.return_value = MagicMock()
             log_dir = Path("/tmp/custom_logs")
             orch = create_campaign(log_dir=log_dir)

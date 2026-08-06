@@ -11,7 +11,7 @@ import pytest
 import time
 from unittest.mock import MagicMock, patch, call
 
-from scripts.campaign.action_planner import (
+from Scripts.Campaign.action_planner import (
     GoalType,
     PlanStatus,
     Goal,
@@ -22,7 +22,7 @@ from scripts.campaign.action_planner import (
     goal_reach_dungeon1_entrance,
     goal_complete_dungeon1,
 )
-from scripts.campaign.game_state import GamePhase
+from Scripts.Campaign.game_state import GamePhase
 
 
 # =============================================================================

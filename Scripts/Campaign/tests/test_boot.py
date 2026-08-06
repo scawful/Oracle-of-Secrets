@@ -5,10 +5,10 @@ Part of Campaign Goal C.3 (Automated regression suite).
 
 Usage:
     # With pytest
-    pytest Scripts/campaign/Tests/test_boot.py -v
+    pytest Scripts/Campaign/Tests/test_boot.py -v
 
     # Standalone (requires Mesen2 running)
-    python3 Scripts/campaign/Tests/test_boot.py
+    python3 Scripts/Campaign/Tests/test_boot.py
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ import pytest
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from scripts.campaign import (
+from Scripts.Campaign import (
     GamePhase,
     GameStateParser,
     Mesen2Emulator,

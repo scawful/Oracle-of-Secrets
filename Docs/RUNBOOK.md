@@ -35,13 +35,9 @@ pre-build guard. Controls:
 - `OOS_MENU_VALIDATE_STRICT=1` fails on warnings in addition to errors.
 - `OOS_MENU_VALIDATE_FATAL=0` keeps failures non-fatal (not recommended).
 
-Legacy:
+Direct build:
 ```bash
-./build.sh 168
-python3 Scripts/Build/check_zscream_overlap.py
-
-# direct build script
-./Scripts/Build/build_rom.sh 168
+Scripts/Build/build_rom.sh 168
 python3 Scripts/Build/check_zscream_overlap.py
 ```
 
@@ -148,26 +144,26 @@ python3 Scripts/Mesen2/mesen2_client.py --instance oos-you-debug save-data sync-
 ## Blackout / Softlock Evidence Capture
 Transition/dark-room blackouts:
 ```bash
-python3 Scripts/capture_blackout.py arm --deep
+python3 Scripts/Debug/capture_blackout.py arm --deep
 # reproduce in-game (do not reset)
-python3 Scripts/capture_blackout.py capture
-python3 Scripts/capture_blackout.py summary
+python3 Scripts/Debug/capture_blackout.py capture
+python3 Scripts/Debug/capture_blackout.py summary
 ```
 
 ## Static Analysis (z3dk)
 ```bash
-python3 ../z3dk/Scripts/oracle_analyzer.py --check-hooks --find-mx --check-sprite-tables \
+python3 ../z3dk/scripts/oracle_analyzer.py --check-hooks --find-mx --check-sprite-tables \
   --rom Roms/oos168x.sfc --hooks hooks.json
 ```
 
 ## Docs Lint (Keep Guidance Runnable)
 ```bash
-python3 Scripts/lint_docs.py
+python3 Scripts/Analysis/lint_docs.py
 ```
 
 ## Beta Patch Packaging
 ```bash
-Scripts/beta_patch.sh 168
+Scripts/Build/beta_patch.sh 168
 ```
 
 If `flips` is not installed, the script exits with a clear error instead of

@@ -74,10 +74,10 @@ Using isolated instance (`oos-codex-darkroom-20260214`):
 
 ```bash
 cd /Users/scawful/src/hobby/oracle-of-secrets
-MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 scripts/mesen2_client.py load "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-top-20260214/SaveStates/oos168x_2.mss"
-MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 scripts/mesen2_client.py press UP --frames 60
-MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 scripts/mesen2_client.py run --frames 300
-MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 scripts/mesen2_client.py diagnostics --json
+MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 Scripts/Mesen2/mesen2_client.py load "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-top-20260214/SaveStates/oos168x_2.mss"
+MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 Scripts/Mesen2/mesen2_client.py press UP --frames 60
+MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 Scripts/Mesen2/mesen2_client.py run --frames 300
+MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 Scripts/Mesen2/mesen2_client.py diagnostics --json
 ```
 
 Observed result:
@@ -91,10 +91,10 @@ Threshold behavior:
 - If `0x7E0136` is pre-set to `0x01` before entering, transition succeeds into dungeon:
 
 ```bash
-MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 scripts/mesen2_client.py load "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-top-20260214/SaveStates/oos168x_2.mss"
-MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 scripts/mesen2_client.py mem-write 0x7E0136 0x01
-MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 scripts/mesen2_client.py press UP --frames 60
-MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 scripts/mesen2_client.py run --frames 300
+MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 Scripts/Mesen2/mesen2_client.py load "/Users/scawful/Library/Application Support/Mesen2-instances/oos-codex-top-20260214/SaveStates/oos168x_2.mss"
+MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 Scripts/Mesen2/mesen2_client.py mem-write 0x7E0136 0x01
+MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 Scripts/Mesen2/mesen2_client.py press UP --frames 60
+MESEN2_INSTANCE=oos-codex-darkroom-20260214 python3 Scripts/Mesen2/mesen2_client.py run --frames 300
 ```
 
 Observed result:
@@ -117,7 +117,7 @@ Interpretation:
 ## Mesen2-OOS Workflow (Agent Quickstart)
 1. Pick a single instance and stick to it.
 ```bash
-python3 scripts/mesen2_registry.py status --refresh
+python3 Scripts/Mesen2/mesen2_registry.py status --refresh
 ```
 2. Set explicit target.
 ```bash
@@ -125,30 +125,30 @@ export MESEN2_INSTANCE=oos-codex-darkroom-20260214
 ```
 3. Health + baseline.
 ```bash
-python3 scripts/mesen2_client.py health --json
-python3 scripts/mesen2_client.py diagnostics --json
+python3 Scripts/Mesen2/mesen2_client.py health --json
+python3 Scripts/Mesen2/mesen2_client.py diagnostics --json
 ```
 4. Load seed by absolute path (do not rely on library aliases).
 ```bash
-python3 scripts/mesen2_client.py load "<absolute .mss path>"
+python3 Scripts/Mesen2/mesen2_client.py load "<absolute .mss path>"
 ```
 5. Capture proof each run:
 ```bash
-python3 scripts/mesen2_client.py screenshot --out /tmp/<name>.png
-python3 scripts/mesen2_client.py diagnostics --json > /tmp/<name>.json
+python3 Scripts/Mesen2/mesen2_client.py screenshot --out /tmp/<name>.png
+python3 Scripts/Mesen2/mesen2_client.py diagnostics --json > /tmp/<name>.json
 ```
 6. Memory instrumentation:
 ```bash
-python3 scripts/mesen2_client.py mem-watch clear
-python3 scripts/mesen2_client.py mem-watch add --depth 8000 0x7E0010
-python3 scripts/mesen2_client.py mem-blame --addr 0x7E0010 --json
+python3 Scripts/Mesen2/mesen2_client.py mem-watch clear
+python3 Scripts/Mesen2/mesen2_client.py mem-watch add --depth 8000 0x7E0010
+python3 Scripts/Mesen2/mesen2_client.py mem-blame --addr 0x7E0010 --json
 ```
 
 ## Suggested Next Investigation (Without LoadSongBank Patches)
 1. Break on `MODE` write and capture call path right before corruption (`0x7E0010` write to `0x80` / `0x49` phases).
 2. Capture stack return chain right before invalid-mode write:
 ```bash
-python3 scripts/mesen2_client.py stack-retaddr
+python3 Scripts/Mesen2/mesen2_client.py stack-retaddr
 ```
 3. Compare execution with and without forced `$0136=01` to isolate first divergent PC.
 4. Keep this seed as canonical; do not switch to legacy or ambiguous library states.

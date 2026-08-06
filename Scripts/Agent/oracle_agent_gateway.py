@@ -21,6 +21,10 @@ from pathlib import Path
 from typing import Any
 from urllib import error, request
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 DEFAULT_PORT = int(os.getenv("OOS_AGENT_GATEWAY_PORT", "8765"))
 
 
@@ -175,8 +179,8 @@ def _open_url(url: str) -> dict[str, Any]:
 
 def action_capture_state(args: dict[str, Any]) -> dict[str, Any]:
     try:
-        from mesen2_client_lib.client import OracleDebugClient
-        from mesen2_client_lib.capture import capture_debug_snapshot
+        from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
+        from Scripts.Mesen2.mesen2_client_lib.capture import capture_debug_snapshot
     except Exception as exc:
         return {"ok": False, "error": f"Import failed: {exc}"}
 
@@ -325,7 +329,7 @@ def action_health(_: dict[str, Any]) -> dict[str, Any]:
     status["mesen2_sockets"] = sockets
 
     try:
-        from mesen2_client_lib.client import OracleDebugClient
+        from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
         client = OracleDebugClient()
         status["mesen2_connected"] = client.is_connected()
         rom_info = client.get_rom_info()
@@ -365,7 +369,7 @@ def action_load_rom(args: dict[str, Any]) -> dict[str, Any]:
     if not rom_path:
         return {"ok": False, "error": "Missing ROM path"}
     try:
-        from mesen2_client_lib.client import OracleDebugClient
+        from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
         client = OracleDebugClient()
         ok = client.load_rom(rom_path, patch=patch_path)
         if ok:
@@ -534,7 +538,7 @@ def _parse_int(value: Any, label: str) -> tuple[int | None, str | None]:
 
 def _get_socket_client() -> tuple[Any | None, dict[str, Any] | None]:
     try:
-        from mesen2_client_lib.client import OracleDebugClient
+        from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
     except Exception as exc:
         return None, {"ok": False, "error": f"Import failed: {exc}"}
 

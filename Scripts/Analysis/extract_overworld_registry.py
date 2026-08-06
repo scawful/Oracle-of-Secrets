@@ -21,7 +21,7 @@ from collections import defaultdict
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent
+PROJECT_ROOT = SCRIPT_DIR.parent.parent
 
 
 def parse_named_locations_table(lines, start_line, world):
@@ -536,7 +536,7 @@ def build_overworld_registry(project_root):
     # Build output
     registry = {
         "_meta": {
-            "generated_by": "Scripts/extract_overworld_registry.py",
+            "generated_by": "Scripts/Analysis/extract_overworld_registry.py",
             "description": "Oracle of Secrets overworld area registry",
             "notes": [
                 "Primary source: Docs/Planning/world_map_diagram.md",

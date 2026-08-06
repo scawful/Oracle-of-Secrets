@@ -16,7 +16,7 @@ enable optional runtime checks.
 Attach these to `org $XXXXXX` lines (or within ~20 lines below) so tooling can generate
 an accurate `hooks.json`.
 
-Supported fields (parsed by `scripts/generate_hooks_json.py`):
+Supported fields (parsed by `Scripts/Generate/generate_hooks_json.py`):
 - `module`, `name`, `kind`, `target`
 - `expected_m`, `expected_x`
 - `expected_exit_m`, `expected_exit_x`
@@ -38,8 +38,8 @@ If hook code reads DP mirrors (e.g. `LDA.b $A0`) or uses DP scratch (`$00-$0F`),
 Do not install hooks inside "global hot loops" (e.g. the underworld torch draw loop) unless the hook is *provably* transparent and cannot run mid-transition.
 
 Helpers:
-- `python3 scripts/tag_org_hooks.py --root . --apply --normalize --module-from-path`
-- `python3 scripts/verify_hooks_json.py --root . --rom Roms/oos168x.sfc --hooks hooks.json`
+- `python3 Scripts/Generate/tag_org_hooks.py --root . --apply --normalize --module-from-path`
+- `python3 Scripts/Validate/verify_hooks_json.py --root . --rom Roms/oos168x.sfc --hooks hooks.json`
 
 ### Watch tags
 ```
@@ -72,13 +72,13 @@ These are already parsed into `hooks.json` for analysis and disassembly.
 ## Tooling pipeline
 1) Generate annotations:
 ```
-python3 ../z3dk/scripts/generate_annotations.py \
+python3 ../z3dk/Scripts/Generate/generate_annotations.py \
   --root oracle-of-secrets \
   --out oracle-of-secrets/.cache/annotations.json
 ```
 Or use the local generator when z3dk isn't available:
 ```
-python3 oracle-of-secrets/scripts/generate_annotations.py \
+python3 oracle-of-secrets/Scripts/Generate/generate_annotations.py \
   --root oracle-of-secrets \
   --out oracle-of-secrets/.cache/annotations.json
 ```
@@ -88,21 +88,21 @@ python3 oracle-of-secrets/scripts/generate_annotations.py \
 python3 ../z3dk/scripts/generate_watch.py \
   --mlb oracle-of-secrets/Roms/oos168x.mlb \
   --annotations oracle-of-secrets/.cache/annotations.json \
-  --out oracle-of-secrets/scripts/oracle_symbols.watch --dedupe
+  --out oracle-of-secrets/Scripts/Data/oracle_symbols.watch --dedupe
 ```
 
 3) Load in Mesen2:
 ```
-python3 oracle-of-secrets/scripts/mesen2_client.py watch-load --preset symbols
+python3 oracle-of-secrets/Scripts/Mesen2/mesen2_client.py watch-load --preset symbols
 ```
 
 4) Evaluate @assert expressions (optional):
 ```
-python3 oracle-of-secrets/scripts/mesen2_client.py assert-run \
+python3 oracle-of-secrets/Scripts/Mesen2/mesen2_client.py assert-run \
   --annotations oracle-of-secrets/.cache/annotations.json
 ```
 
 5) Evaluate a single expression (optional):
 ```
-python3 oracle-of-secrets/scripts/mesen2_client.py expr-eval "MODE == $07 && SUBMODE == $00"
+python3 oracle-of-secrets/Scripts/Mesen2/mesen2_client.py expr-eval "MODE == $07 && SUBMODE == $00"
 ```

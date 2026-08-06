@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Lint documentation for stale/banned references.
+"""Lint current documentation and scripts for stale path references.
 
 Goal: keep "current guidance" docs runnable and free of legacy/broken references.
 
 Scope (current docs):
 - Repo root docs: README.md, RUNBOOK.md, AGENTS.md, CLAUDE.md
 - Docs/**/*.md excluding Docs/Archive/** and Docs/Debugging/Issues/archive/**
+- Scripts/**/*.{py,sh,lua,md}
 """
 
 from __future__ import annotations
@@ -27,9 +28,17 @@ CURRENT_DOC_GLOBS: list[str] = [
     "Docs/**/*.md",
 ]
 
+CURRENT_SCRIPT_GLOBS: list[str] = [
+    "Scripts/**/*.py",
+    "Scripts/**/*.sh",
+    "Scripts/**/*.lua",
+    "Scripts/**/*.md",
+]
+
 EXCLUDE_SUBSTRINGS: tuple[str, ...] = (
     "Docs/Archive/",
     "Docs/Debugging/Issues/archive/",
+    "Docs/.context/",
 )
 
 
@@ -66,7 +75,7 @@ BANNED_SNIPPETS: tuple[str, ...] = (
 SCRIPT_REF_RE = re.compile(
     r"(?:^|[\s`(\"'])"
     r"(?:\./)?"
-    r"(Scripts/[A-Za-z0-9_./-]+\.(?:py|sh))"
+    r"([Ss]cripts/[A-Za-z0-9_./-]+\.(?:py|sh|lua))"
     r"\b"
 )
 
@@ -91,11 +100,19 @@ def iter_current_docs() -> list[Path]:
     return sorted(set(docs), key=lambda x: x.as_posix())
 
 
+def iter_current_scripts() -> list[Path]:
+    scripts: list[Path] = []
+    for glob in CURRENT_SCRIPT_GLOBS:
+        scripts.extend(p for p in REPO_ROOT.glob(glob) if p.is_file())
+    return sorted(set(scripts), key=lambda x: x.as_posix())
+
+
 def main() -> int:
     findings: list[Finding] = []
     docs = iter_current_docs()
+    scripts = iter_current_scripts()
 
-    for doc in docs:
+    for doc in [*docs, *scripts]:
         try:
             text = doc.read_text(errors="replace")
         except Exception as exc:
@@ -104,16 +121,20 @@ def main() -> int:
 
         lines = text.splitlines()
 
-        # Banned substrings
-        for i, line in enumerate(lines, start=1):
-            for banned in BANNED_SNIPPETS:
-                if banned in line:
-                    findings.append(Finding(doc, i, f"Banned reference: {banned}"))
+        # Banned prose applies to current documentation, not source code.
+        if doc in docs:
+            for i, line in enumerate(lines, start=1):
+                for banned in BANNED_SNIPPETS:
+                    if banned in line:
+                        findings.append(Finding(doc, i, f"Banned reference: {banned}"))
 
         # Missing script references
         for i, line in enumerate(lines, start=1):
             for m in SCRIPT_REF_RE.finditer(line):
                 rel = m.group(1)
+                if rel.startswith("scripts/"):
+                    findings.append(Finding(doc, i, f"Non-canonical Scripts casing: {rel}"))
+                    continue
                 target = REPO_ROOT / rel
                 if not target.exists():
                     findings.append(Finding(doc, i, f"Missing script reference: {rel}"))

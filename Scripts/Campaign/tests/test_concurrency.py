@@ -23,20 +23,20 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignPhase, CampaignProgress, CampaignOrchestrator, CampaignMilestone,
     MilestoneStatus
 )
-from scripts.campaign.pathfinder import (
+from Scripts.Campaign.pathfinder import (
     Pathfinder, CollisionMap, TileType, NavigationResult
 )
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.input_recorder import (
     InputRecorder, InputPlayer, InputSequence, InputFrame, Button
 )
-from scripts.campaign.action_planner import (
+from Scripts.Campaign.action_planner import (
     ActionPlanner, Goal, GoalType, Plan, PlanStatus
 )
-from scripts.campaign.progress_validator import (
+from Scripts.Campaign.progress_validator import (
     ProgressSnapshot
 )
 

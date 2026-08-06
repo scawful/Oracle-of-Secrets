@@ -1,4 +1,4 @@
-"""Unit tests for scripts.campaign.autonomous_debugger.
+"""Unit tests for Scripts.Campaign.autonomous_debugger.
 
 These tests validate the pure detection logic (SoftLockDetector) without
 requiring a live Mesen2 instance.
@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from scripts.campaign.autonomous_debugger import SoftLockDetector
+from Scripts.Campaign.autonomous_debugger import SoftLockDetector
 
 
 class TestSoftLockDetector:

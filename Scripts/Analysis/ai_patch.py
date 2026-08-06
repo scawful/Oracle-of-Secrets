@@ -12,10 +12,10 @@ Workflow:
 4. User reviews and optionally applies via z3ed
 
 Usage:
-    ./Scripts/ai_patch.py analyze --context "L/R swap not working"
-    ./Scripts/ai_patch.py suggest --file equipment.asm --issue "toggle logic"
-    ./Scripts/ai_patch.py apply --patch patches/lr_fix.asm
-    ./Scripts/ai_patch.py interactive  # Interactive mode
+    ./Scripts/Analysis/ai_patch.py analyze --context "L/R swap not working"
+    ./Scripts/Analysis/ai_patch.py suggest --file equipment.asm --issue "toggle logic"
+    ./Scripts/Analysis/ai_patch.py apply --patch patches/lr_fix.asm
+    ./Scripts/Analysis/ai_patch.py interactive  # Interactive mode
 """
 
 import argparse
@@ -29,9 +29,9 @@ from typing import NamedTuple
 
 # Paths
 SCRIPT_DIR = Path(__file__).parent
-PROJECT_DIR = SCRIPT_DIR.parent
+PROJECT_DIR = SCRIPT_DIR.parent.parent
 ORCHESTRATOR_PATH = Path.home() / "src" / "lab" / "afs" / "tools" / "moe_orchestrator.py"
-Z3ED_PATH = Path.home() / "src" / "hobby" / "yaze" / "build" / "bin" / "yaze"
+Z3ED_PATH = Path.home() / "src" / "hobby" / "yaze" / "scripts" / "z3ed"
 
 # Expert routing for different failure types
 EXPERT_ROUTING = {

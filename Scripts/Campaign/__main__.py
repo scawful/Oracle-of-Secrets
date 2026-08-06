@@ -4,20 +4,20 @@ This module provides a command-line interface for running campaign
 operations and checking infrastructure status.
 
 Usage:
-    python -m scripts.campaign status     # Check infrastructure status
-    python -m scripts.campaign summary    # Quick campaign metrics
-    python -m scripts.campaign watch      # Watch metrics continuously
-    python -m scripts.campaign history    # Show iteration history/trends
-    python -m scripts.campaign goals      # Show grand goals progress
-    python -m scripts.campaign dashboard  # Comprehensive metrics dashboard
-    python -m scripts.campaign test       # Run campaign test suite
-    python -m scripts.campaign run        # Run campaign (requires Mesen2)
-    python -m scripts.campaign check      # Check emulator connectivity
-    python -m scripts.campaign progress   # Validate player progress (requires Mesen2)
-    python -m scripts.campaign states     # List save states in library
-    python -m scripts.campaign validate   # Validate save state library
-    python -m scripts.campaign compare    # Compare two save state entries
-    python -m scripts.campaign regression # Compare baseline vs current sets
+    python -m Scripts.Campaign status     # Check infrastructure status
+    python -m Scripts.Campaign summary    # Quick campaign metrics
+    python -m Scripts.Campaign watch      # Watch metrics continuously
+    python -m Scripts.Campaign history    # Show iteration history/trends
+    python -m Scripts.Campaign goals      # Show grand goals progress
+    python -m Scripts.Campaign dashboard  # Comprehensive metrics dashboard
+    python -m Scripts.Campaign test       # Run campaign test suite
+    python -m Scripts.Campaign run        # Run campaign (requires Mesen2)
+    python -m Scripts.Campaign check      # Check emulator connectivity
+    python -m Scripts.Campaign progress   # Validate player progress (requires Mesen2)
+    python -m Scripts.Campaign states     # List save states in library
+    python -m Scripts.Campaign validate   # Validate save state library
+    python -m Scripts.Campaign compare    # Compare two save state entries
+    python -m Scripts.Campaign regression # Compare baseline vs current sets
 """
 
 import argparse
@@ -44,122 +44,122 @@ def cmd_commands(args):
         {
             'name': 'status',
             'desc': 'Show infrastructure status and module summary',
-            'example': 'python -m scripts.campaign status'
+            'example': 'python -m Scripts.Campaign status'
         },
         {
             'name': 'summary',
             'desc': 'Quick campaign metrics (iterations, states, tests)',
-            'example': 'python -m scripts.campaign summary --json'
+            'example': 'python -m Scripts.Campaign summary --json'
         },
         {
             'name': 'watch',
             'desc': 'Watch campaign metrics with live updates',
-            'example': 'python -m scripts.campaign watch -i 10'
+            'example': 'python -m Scripts.Campaign watch -i 10'
         },
         {
             'name': 'history',
             'desc': 'Show iteration history and daily trends',
-            'example': 'python -m scripts.campaign history -l 20'
+            'example': 'python -m Scripts.Campaign history -l 20'
         },
         {
             'name': 'goals',
             'desc': 'Show progress toward grand campaign goals',
-            'example': 'python -m scripts.campaign goals -v'
+            'example': 'python -m Scripts.Campaign goals -v'
         },
         {
             'name': 'dashboard',
             'desc': 'Comprehensive metrics dashboard',
-            'example': 'python -m scripts.campaign dashboard'
+            'example': 'python -m Scripts.Campaign dashboard'
         },
         {
             'name': 'test',
             'desc': 'Run the campaign test suite',
-            'example': 'python -m scripts.campaign test -q'
+            'example': 'python -m Scripts.Campaign test -q'
         },
         {
             'name': 'check',
             'desc': 'Check Mesen2 emulator connectivity',
-            'example': 'python -m scripts.campaign check'
+            'example': 'python -m Scripts.Campaign check'
         },
         {
             'name': 'run',
             'desc': 'Run the autonomous campaign (requires Mesen2)',
-            'example': 'python -m scripts.campaign run -i 50'
+            'example': 'python -m Scripts.Campaign run -i 50'
         },
         {
             'name': 'progress',
             'desc': 'Validate player progress state (requires Mesen2)',
-            'example': 'python -m scripts.campaign progress'
+            'example': 'python -m Scripts.Campaign progress'
         },
         {
             'name': 'states',
             'desc': 'List save states in the library',
-            'example': 'python -m scripts.campaign states --set baseline'
+            'example': 'python -m Scripts.Campaign states --set baseline'
         },
         {
             'name': 'validate',
             'desc': 'Validate save state library integrity',
-            'example': 'python -m scripts.campaign validate --json'
+            'example': 'python -m Scripts.Campaign validate --json'
         },
         {
             'name': 'compare',
             'desc': 'Compare two save state entries',
-            'example': 'python -m scripts.campaign compare baseline_01 current_01'
+            'example': 'python -m Scripts.Campaign compare baseline_01 current_01'
         },
         {
             'name': 'regression',
             'desc': 'Compare all baseline vs current pairs',
-            'example': 'python -m scripts.campaign regression --tag dungeon'
+            'example': 'python -m Scripts.Campaign regression --tag dungeon'
         },
         {
             'name': 'commands',
             'desc': 'Show this command list',
-            'example': 'python -m scripts.campaign commands'
+            'example': 'python -m Scripts.Campaign commands'
         },
         {
             'name': 'milestone',
             'desc': 'Show 100 iteration milestone progress',
-            'example': 'python -m scripts.campaign milestone'
+            'example': 'python -m Scripts.Campaign milestone'
         },
         {
             'name': 'version',
             'desc': 'Show CLI version and build info',
-            'example': 'python -m scripts.campaign version'
+            'example': 'python -m Scripts.Campaign version'
         },
         {
             'name': 'quickstart',
             'desc': 'Show quickstart guide',
-            'example': 'python -m scripts.campaign quickstart'
+            'example': 'python -m Scripts.Campaign quickstart'
         },
         {
             'name': 'agents',
             'desc': 'Show campaign agent information',
-            'example': 'python -m scripts.campaign agents --json'
+            'example': 'python -m Scripts.Campaign agents --json'
         },
         {
             'name': 'config',
             'desc': 'Show configuration and file paths',
-            'example': 'python -m scripts.campaign config --json'
+            'example': 'python -m Scripts.Campaign config --json'
         },
         {
             'name': 'health',
             'desc': 'Quick health check of infrastructure',
-            'example': 'python -m scripts.campaign health --json'
+            'example': 'python -m Scripts.Campaign health --json'
         },
         {
             'name': 'changelog',
             'desc': 'Show changelog of recent updates',
-            'example': 'python -m scripts.campaign changelog -l 5'
+            'example': 'python -m Scripts.Campaign changelog -l 5'
         },
         {
             'name': 'about',
             'desc': 'Show campaign information',
-            'example': 'python -m scripts.campaign about'
+            'example': 'python -m Scripts.Campaign about'
         },
         {
             'name': 'celebrate',
             'desc': 'Celebrate the 100 iteration milestone',
-            'example': 'python -m scripts.campaign celebrate'
+            'example': 'python -m Scripts.Campaign celebrate'
         }
     ]
 
@@ -199,7 +199,7 @@ def cmd_commands(args):
 
         print("=" * 60)
         print("Use --help with any command for detailed options")
-        print("  python -m scripts.campaign <command> --help")
+        print("  python -m Scripts.Campaign <command> --help")
 
     return 0
 
@@ -331,36 +331,36 @@ def cmd_quickstart(args):
     print("=" * 60)
     print()
     print("1. CHECK STATUS")
-    print("   python -m scripts.campaign dashboard")
+    print("   python -m Scripts.Campaign dashboard")
     print("   Shows current iteration count, goals, and infrastructure.")
     print()
     print("2. VIEW MILESTONE PROGRESS")
-    print("   python -m scripts.campaign milestone")
+    print("   python -m Scripts.Campaign milestone")
     print("   Track progress toward 100 iteration goal.")
     print()
     print("3. CHECK ITERATION HISTORY")
-    print("   python -m scripts.campaign history")
+    print("   python -m Scripts.Campaign history")
     print("   See recent iterations and daily activity.")
     print()
     print("4. VIEW GRAND GOALS")
-    print("   python -m scripts.campaign goals -v")
+    print("   python -m Scripts.Campaign goals -v")
     print("   See progress on all 5 campaign goals.")
     print()
     print("5. RUN TESTS")
-    print("   python -m scripts.campaign test")
+    print("   python -m Scripts.Campaign test")
     print("   Run the full campaign test suite.")
     print()
     print("6. MANAGE SAVE STATES")
-    print("   python -m scripts.campaign states")
+    print("   python -m Scripts.Campaign states")
     print("   List all save states in the library.")
     print()
     print("7. LIST ALL COMMANDS")
-    print("   python -m scripts.campaign commands -e")
+    print("   python -m Scripts.Campaign commands -e")
     print("   See all available commands with examples.")
     print()
     print("=" * 60)
     print("For detailed help on any command:")
-    print("   python -m scripts.campaign <command> --help")
+    print("   python -m Scripts.Campaign <command> --help")
     print()
 
     return 0

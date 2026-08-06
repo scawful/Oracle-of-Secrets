@@ -21,13 +21,13 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignPhase, MilestoneStatus, CampaignMilestone,
     CampaignProgress, CampaignOrchestrator,
     create_campaign, quick_status
 )
-from scripts.campaign.emulator_abstraction import GameStateSnapshot
-from scripts.campaign.game_state import GamePhase
+from Scripts.Campaign.emulator_abstraction import GameStateSnapshot
+from Scripts.Campaign.game_state import GamePhase
 
 
 class TestCampaignPhase:
@@ -618,13 +618,13 @@ class TestUtilityFunctions:
 
     def test_create_campaign(self):
         """Test create_campaign creates orchestrator."""
-        with patch('scripts.campaign.campaign_orchestrator.Mesen2Emulator'):
+        with patch('Scripts.Campaign.campaign_orchestrator.Mesen2Emulator'):
             orch = create_campaign()
             assert isinstance(orch, CampaignOrchestrator)
 
     def test_create_campaign_with_log_dir(self):
         """Test create_campaign accepts log_dir."""
-        with patch('scripts.campaign.campaign_orchestrator.Mesen2Emulator'):
+        with patch('Scripts.Campaign.campaign_orchestrator.Mesen2Emulator'):
             custom_path = Path("/tmp/test")
             orch = create_campaign(log_dir=custom_path)
             assert orch._log_dir == custom_path

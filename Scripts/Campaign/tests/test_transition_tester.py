@@ -8,7 +8,7 @@ import pytest
 from datetime import datetime
 from unittest.mock import Mock, MagicMock, patch
 
-from scripts.campaign.transition_tester import (
+from Scripts.Campaign.transition_tester import (
     TransitionType,
     TransitionState,
     TransitionResult,

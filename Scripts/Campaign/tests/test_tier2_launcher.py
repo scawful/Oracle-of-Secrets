@@ -16,7 +16,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 import pytest
 
-from scripts.campaign.tier2_test_launcher import (
+from Scripts.Campaign.tier2_test_launcher import (
     TestScenario,
     TIER2_SCENARIOS,
     find_mesen,
@@ -127,14 +127,14 @@ class TestTier2Scenarios:
 class TestFindMesen:
     """Tests for the find_mesen function."""
 
-    @patch("scripts.campaign.tier2_test_launcher.Path.exists")
+    @patch("Scripts.Campaign.tier2_test_launcher.Path.exists")
     def test_find_mesen_not_found(self, mock_exists):
         """Test when Mesen is not found."""
         mock_exists.return_value = False
         result = find_mesen()
         assert result is None
 
-    @patch("scripts.campaign.tier2_test_launcher.Path")
+    @patch("Scripts.Campaign.tier2_test_launcher.Path")
     def test_find_mesen_found_first(self, mock_path_class):
         """Test finding Mesen at first location."""
         mock_path = MagicMock()
@@ -163,12 +163,12 @@ class TestLoadStateLibrary:
         result = load_state_library()
         assert isinstance(result["entries"], list)
 
-    @patch("scripts.campaign.tier2_test_launcher.STATE_LIBRARY_PATH")
+    @patch("Scripts.Campaign.tier2_test_launcher.STATE_LIBRARY_PATH")
     def test_load_missing_library(self, mock_path):
         """Test loading when library file doesn't exist."""
         mock_path.exists.return_value = False
         # Function should return empty entries without crashing
-        with patch("scripts.campaign.tier2_test_launcher.STATE_LIBRARY_PATH.exists", return_value=False):
+        with patch("Scripts.Campaign.tier2_test_launcher.STATE_LIBRARY_PATH.exists", return_value=False):
             result = load_state_library()
             # May return actual library or empty depending on implementation
             assert isinstance(result, dict)
@@ -234,8 +234,8 @@ class TestProjectRoot:
         assert (PROJECT_ROOT / "Roms").exists()
 
     def test_project_root_contains_scripts(self):
-        """Test that project root contains scripts directory."""
-        assert (PROJECT_ROOT / "scripts").exists()
+        """Test that project root contains Scripts directory."""
+        assert (PROJECT_ROOT / "Scripts").exists()
 
 
 class TestScenarioLookup:

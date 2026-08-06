@@ -22,13 +22,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, List, Dict, Set
 
-# Add script directory to path for imports
-SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+# Add the repository root for the Scripts namespace package.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-from mesen2_client_lib.client import OracleDebugClient
-from mesen2_client_lib.bridge import MesenBridge
+from Scripts.Mesen2.mesen2_client_lib.client import OracleDebugClient
+from Scripts.Mesen2.mesen2_client_lib.bridge import MesenBridge
 
 
 @dataclass

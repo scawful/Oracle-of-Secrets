@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Sandbox runner: create a git worktree for safe bisect / module isolation / testing.
 #
-# Create:  ./Scripts/sandbox_runner.sh create [--name <name>]
-# Run:    ./Scripts/sandbox_runner.sh run [--name <name>] -- <command> [args...]
-# Destroy: ./Scripts/sandbox_runner.sh destroy [--name <name>]
+# Create:  ./Scripts/Build/sandbox_runner.sh create [--name <name>]
+# Run:    ./Scripts/Build/sandbox_runner.sh run [--name <name>] -- <command> [args...]
+# Destroy: ./Scripts/Build/sandbox_runner.sh destroy [--name <name>]
 #
 # Default name is "sandbox" (worktree at ../oracle-of-secrets-sandbox).
 # With --name foo, worktree is at ../oracle-of-secrets-foo.

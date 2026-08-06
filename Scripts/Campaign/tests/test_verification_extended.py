@@ -20,7 +20,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.verification import (
+from Scripts.Campaign.verification import (
     VerificationLevel, MemoryCheck, RegisterState, VerificationResult,
     VerificationReport, CriticalAddresses, StrictVerifier,
     PLAYABLE_STATE_CHECKS, MOVEMENT_CHECKS, TRANSITION_CHECKS,

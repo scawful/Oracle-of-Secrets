@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bisect dungeon blackout root cause across feature flags.
 
-This is a helper around Scripts/repro_blackout_transition.py that tries to find
+This is a helper around Scripts/Debug/repro_blackout_transition.py that tries to find
 the *smallest* set of feature flags that, when disabled, makes the blackout stop
 reproducing from a known seed savestate (slot/path).
 
@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _csv(items: list[str]) -> str:
@@ -61,7 +61,7 @@ class TestConfig:
 def run_repro(cfg: TestConfig) -> int:
     cmd = [
         sys.executable,
-        "Scripts/repro_blackout_transition.py",
+        "Scripts/Debug/repro_blackout_transition.py",
         "--build",
         "--version",
         str(cfg.version),
@@ -289,7 +289,7 @@ def main() -> int:
         print(f"  - {f}")
     print("")
     print("Next action:")
-    print(f"  python3 Scripts/repro_blackout_transition.py --build --profile {base_cfg.profile} --disable {','.join(minimal)}")
+    print(f"  python3 Scripts/Debug/repro_blackout_transition.py --build --profile {base_cfg.profile} --disable {','.join(minimal)}")
     print("")
     _write_log(args.out, log)
     return 0

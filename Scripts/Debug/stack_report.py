@@ -7,12 +7,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 from typing import Any, Tuple
 
-from symbols import SymbolResolver, parse_int
+SCRIPTS_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = SCRIPTS_ROOT.parent
+if str(SCRIPTS_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_ROOT))
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+from symbols import SymbolResolver, parse_int
 
 
 def _read_input(value: str | None) -> str:

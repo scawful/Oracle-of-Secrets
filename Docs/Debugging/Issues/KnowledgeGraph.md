@@ -229,7 +229,7 @@ mcp__memory__open_nodes(["OracleOfSecrets", "OracleKnownIssues"])
 ```
 1. Edit Oracle ASM
    │
-   ▼ ./scripts/build_rom.sh 168
+   ▼ ./Scripts/Build/build_rom.sh 168
    │
 2. Static Verification (Tier 1)
    │

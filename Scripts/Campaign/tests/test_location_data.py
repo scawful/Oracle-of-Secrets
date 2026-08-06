@@ -18,7 +18,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.locations import (
+from Scripts.Campaign.locations import (
     DUNGEONS,
     ENTRANCE_NAMES,
     OVERWORLD_AREAS,
@@ -30,7 +30,7 @@ from scripts.campaign.locations import (
     get_location_description,
     get_room_name
 )
-from scripts.campaign.emulator_abstraction import GameStateSnapshot
+from Scripts.Campaign.emulator_abstraction import GameStateSnapshot
 
 
 class TestOverworldAreas:

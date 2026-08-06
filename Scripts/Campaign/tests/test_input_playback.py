@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.input_recorder import (
     Button,
     InputFrame,
     InputSequence,

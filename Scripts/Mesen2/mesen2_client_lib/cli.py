@@ -11,6 +11,10 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from .client import OracleDebugClient
 from .capture import capture_debug_snapshot
 from .constants import ITEMS, STORY_FLAGS, WATCH_PROFILES, BREAKPOINT_PROFILES, OracleRAM
@@ -27,7 +31,7 @@ from .save_data_transaction import apply_profile_transaction
 
 # Try to import AgentBrain (might fail if run directly from lib)
 try:
-    from agent.brain import AgentBrain
+    from Scripts.Agent.brain import AgentBrain
 except ImportError:
     AgentBrain = None
 
@@ -1440,7 +1444,7 @@ def main():
             print(f"Health: {'OK' if info.get('ok') else 'FAIL'} (Latency: {info.get('latency_ms')}ms)")
             if not rom_loaded:
                 print("ROM: not loaded (load screen)")
-                print("Hint: python3 Scripts/mesen2_client.py rom-load <path-to-rom>")
+                print("Hint: python3 Scripts/Mesen2/mesen2_client.py rom-load <path-to-rom>")
             else:
                 print(f"ROM: {rom_info.get('filename')} (crc32={rom_info.get('crc32')})")
                 print(f"Emulator: {'Paused' if run_state.get('paused') else 'Running'} (Frame: {run_state.get('frame')})")
@@ -1473,7 +1477,7 @@ def main():
                 print(f"Error: {info.get('error')}")
             if not rom_loaded:
                 print("ROM: not loaded (load screen)")
-                print("Hint: python3 Scripts/mesen2_client.py rom-load <path-to-rom>")
+                print("Hint: python3 Scripts/Mesen2/mesen2_client.py rom-load <path-to-rom>")
             else:
                 print(f"ROM: {rom_info.get('filename')} (crc32={rom_info.get('crc32')})")
         if not info.get("ok"):
@@ -1655,7 +1659,7 @@ def main():
             ann_path = Path(args.annotations).expanduser()
             if not ann_path.exists():
                 print(f"Annotations not found: {ann_path}")
-                print("Hint: python3 z3dk/Scripts/generate_annotations.py "
+                print("Hint: python3 z3dk/Scripts/Generate/generate_annotations.py "
                       f"--root {SCRIPT_DIR.parent} --out {ann_path}")
                 sys.exit(2)
             try:

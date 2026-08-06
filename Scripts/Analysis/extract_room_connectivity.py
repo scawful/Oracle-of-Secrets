@@ -5,8 +5,8 @@ Reads room headers to extract stair destinations and holewarp targets,
 then cross-references with dungeon room lists to build connectivity graph.
 
 Usage:
-    python3 Scripts/extract_room_connectivity.py --rom Roms/oos168.sfc
-    python3 Scripts/extract_room_connectivity.py --rom Roms/oos168.sfc --format json
+    python3 Scripts/Analysis/extract_room_connectivity.py --rom Roms/oos168.sfc
+    python3 Scripts/Analysis/extract_room_connectivity.py --rom Roms/oos168.sfc --format json
 """
 
 import argparse

@@ -147,10 +147,10 @@ After `GameState = $03`:
 ## Test Plan (Step 2)
 
 ### Build/Static Checks
-1. `python3 scripts/verify_feature_flags.py --root .`
-2. `./scripts/build_rom.sh 168` with default flags (rescue OFF).
-3. `python3 scripts/check_zscream_overlap.py`
-4. `python3 scripts/set_feature_flags.py --enable d7_farore_rescue_sequence` then `./scripts/build_rom.sh 168` (rescue ON compile gate).
+1. `python3 Scripts/Build/verify_feature_flags.py --root .`
+2. `./Scripts/Build/build_rom.sh 168` with default flags (rescue OFF).
+3. `python3 Scripts/Build/check_zscream_overlap.py`
+4. `python3 Scripts/Build/set_feature_flags.py --enable d7_farore_rescue_sequence` then `./Scripts/Build/build_rom.sh 168` (rescue ON compile gate).
 
 ### Runtime Checks (Mesen2)
 1. Start from a pre-D7-clear state and defeat Kydrog with flag ON.
@@ -167,10 +167,10 @@ After `GameState = $03`:
 - Step 2 now enforces message-first/progression-second ordering, but still uses a temporary dialogue slot and does **not** yet provide full D7 rescue UX (true crystal-maiden handoff + Farore post-rescue NPC states).
 
 ### Validation Log (2026-02-13)
-- `python3 scripts/verify_feature_flags.py --root /Users/scawful/src/hobby/oracle-of-secrets` passed before and after ON/OFF toggles.
-- Flag OFF path: `./scripts/build_rom.sh 168` succeeded; `python3 scripts/check_zscream_overlap.py` succeeded.
-- Flag ON path: `python3 scripts/set_feature_flags.py --enable d7_farore_rescue_sequence` then `./scripts/build_rom.sh 168` succeeded; `python3 scripts/check_zscream_overlap.py` succeeded.
-- Flag restored to default OFF with `python3 scripts/set_feature_flags.py --disable d7_farore_rescue_sequence`.
+- `python3 Scripts/Build/verify_feature_flags.py --root /Users/scawful/src/hobby/oracle-of-secrets` passed before and after ON/OFF toggles.
+- Flag OFF path: `./Scripts/Build/build_rom.sh 168` succeeded; `python3 Scripts/Build/check_zscream_overlap.py` succeeded.
+- Flag ON path: `python3 Scripts/Build/set_feature_flags.py --enable d7_farore_rescue_sequence` then `./Scripts/Build/build_rom.sh 168` succeeded; `python3 Scripts/Build/check_zscream_overlap.py` succeeded.
+- Flag restored to default OFF with `python3 Scripts/Build/set_feature_flags.py --disable d7_farore_rescue_sequence`.
 - Static analysis reports remain non-fatal/high-volume existing debt; smoke tests were skipped because no Mesen2 backend was available.
 
 ---

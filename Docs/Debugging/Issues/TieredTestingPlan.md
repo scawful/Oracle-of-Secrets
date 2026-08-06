@@ -27,7 +27,7 @@ Instead of treating testing as one monolithic operation requiring the unstable f
 **No emulator required**
 
 ```bash
-./scripts/build_rom.sh 168
+./Scripts/Build/build_rom.sh 168
 # Success: ROM compiles, no errors
 # Output: Roms/oos168x.sfc
 ```
@@ -95,17 +95,14 @@ Visual pass/fail only - no automation needed.
 ### Tier 3: Automated State Capture 🤖
 **Requires stable Mesen2 fork**
 
-When the fork is working:
+Use a named Mesen2-OOS instance and the supported socket client:
 
 ```bash
-# Launch with socket server
-python3 ~/.claude/skills/oracle-debugger/scripts/debugger.py session
-
-# Commands:
-# regression - run all tests
-# reproduce "black screen" - try to reproduce
-# states load <name> - load save state
+python3 Scripts/Mesen2/mesen2_client.py --instance oos-you-debug diagnostics
+python3 Scripts/Mesen2/mesen2_client.py --instance oos-you-debug library
 ```
+
+See `Docs/RUNBOOK.md` for launch, repro, and regression commands.
 
 ### Tier 4: Deep Debugging 🔬
 **Requires Mesen2 fork with all hooks**
@@ -263,21 +260,21 @@ This is O(n × m) where n = changes, m = test locations.
 
 ### 2026-01-24 - Tier 2 Test Launcher Created (Iteration 61)
 
-**New Tool:** `scripts/campaign/tier2_test_launcher.py`
+**New Tool:** `Scripts/Campaign/tier2_test_launcher.py`
 
 **Usage:**
 ```bash
 # List all test scenarios
-python -m scripts.campaign.tier2_test_launcher --list
+python -m Scripts.Campaign.tier2_test_launcher --list
 
 # Run a specific scenario (launches Mesen with state)
-python -m scripts.campaign.tier2_test_launcher --test ow_to_cave
+python -m Scripts.Campaign.tier2_test_launcher --test ow_to_cave
 
 # List all available save states
-python -m scripts.campaign.tier2_test_launcher --list-states
+python -m Scripts.Campaign.tier2_test_launcher --list-states
 
 # Launch with specific state
-python -m scripts.campaign.tier2_test_launcher --state current_4
+python -m Scripts.Campaign.tier2_test_launcher --state current_4
 ```
 
 **Available Test Scenarios:**

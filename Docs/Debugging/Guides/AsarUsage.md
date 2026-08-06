@@ -25,7 +25,7 @@ The `Roms/` directory is ignored by git, so you don't have to worry about commit
 Use the bump script to create the next clean ROM and copy save states/SRMs:
 
 ```sh
-./scripts/rom_bump.sh 168
+./Scripts/Build/rom_bump.sh 168
 ```
 
 This creates `Roms/oos169.sfc` (read-only) and copies `oos168x.*` save files to `oos169x.*`.
@@ -35,7 +35,7 @@ This creates `Roms/oos169.sfc` (read-only) and copies `oos168x.*` save files to 
 Use the build script to archive the previous patched ROM and produce a fresh patched build:
 
 ```sh
-./scripts/build_rom.sh 168
+./Scripts/Build/build_rom.sh 168
 ```
 
 What it does:

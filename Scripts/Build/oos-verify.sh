@@ -6,17 +6,17 @@ usage() {
 Fast Oracle build + reload + validate wrapper.
 
 Usage:
-  Scripts/oos-verify.sh [version] [extra dev_loop args]
+  Scripts/Build/oos-verify.sh [version] [extra dev_loop args]
 
 Examples:
-  Scripts/oos-verify.sh
-  Scripts/oos-verify.sh 168 --z3asm
-  Scripts/oos-verify.sh --skip-tests
+  Scripts/Build/oos-verify.sh
+  Scripts/Build/oos-verify.sh 168 --z3asm
+  Scripts/Build/oos-verify.sh --skip-tests
 EOF
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 version="168"
 

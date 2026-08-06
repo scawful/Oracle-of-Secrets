@@ -22,7 +22,7 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.visual_verifier import (
+from Scripts.Campaign.visual_verifier import (
     VerificationResult, Screenshot, VerificationReport,
     VisualVerifier, create_verifier, quick_black_screen_check
 )

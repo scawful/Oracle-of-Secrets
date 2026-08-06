@@ -15,7 +15,7 @@ languages = ["asm-65816"]
 build_system = "asar"
 
 [build]
-command = "./build.sh"
+command = "Scripts/Build/build_rom.sh 168"
 
 [dependencies]
 # Build dependencies

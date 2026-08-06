@@ -22,22 +22,22 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.emulator_abstraction import (
+from Scripts.Campaign.emulator_abstraction import (
     GameStateSnapshot, Mesen2Emulator, EmulatorStatus
 )
-from scripts.campaign.game_state import (
+from Scripts.Campaign.game_state import (
     GamePhase, GameStateParser, ParsedGameState
 )
-from scripts.campaign.input_recorder import (
+from Scripts.Campaign.input_recorder import (
     Button, InputSequence, InputPlayer, InputFrame
 )
-from scripts.campaign.action_planner import (
+from Scripts.Campaign.action_planner import (
     ActionPlanner, Goal, GoalType, Plan, PlanStatus
 )
-from scripts.campaign.campaign_orchestrator import (
+from Scripts.Campaign.campaign_orchestrator import (
     CampaignOrchestrator, CampaignPhase, MilestoneStatus
 )
-from scripts.campaign.visual_verifier import (
+from Scripts.Campaign.visual_verifier import (
     VisualVerifier, Screenshot, VerificationResult
 )
 
@@ -259,7 +259,7 @@ class TestOrchestratorEdgeCases:
 
     def test_progress_percentage_empty_milestones(self):
         """Test progress percentage with no milestones."""
-        from scripts.campaign.campaign_orchestrator import CampaignProgress
+        from Scripts.Campaign.campaign_orchestrator import CampaignProgress
 
         progress = CampaignProgress()
         progress.milestones.clear()
@@ -429,7 +429,7 @@ class TestDataSerialization:
 
     def test_progress_to_dict_with_none_times(self):
         """Test progress serialization with None timestamps."""
-        from scripts.campaign.campaign_orchestrator import CampaignProgress
+        from Scripts.Campaign.campaign_orchestrator import CampaignProgress
 
         progress = CampaignProgress()
         # start_time and last_update are None by default
@@ -440,7 +440,7 @@ class TestDataSerialization:
 
     def test_milestone_to_dict_incomplete(self):
         """Test milestone serialization when not completed."""
-        from scripts.campaign.campaign_orchestrator import CampaignMilestone
+        from Scripts.Campaign.campaign_orchestrator import CampaignMilestone
 
         milestone = CampaignMilestone(
             id="test",

@@ -4,42 +4,42 @@ This guide details the consolidated debugging infrastructure for Oracle of Secre
 
 ## 1. Core Tools
 
-The primary entry point for debugging is `scripts/mesen2_client.py`. It communicates with Mesen2 via a Unix Domain Socket for high-speed, reliable control.
+The primary entry point for debugging is `Scripts/Mesen2/mesen2_client.py`. It communicates with Mesen2 via a Unix Domain Socket for high-speed, reliable control.
 
 ### Consolidated Status & Discovery
-- `python3 scripts/mesen2_client.py debug-status`: High-level summary of emulator health, game mode, location, and available canon states.
-- `python3 scripts/mesen2_client.py debug-context`: Comprehensive discovery of all debugging assets (watch profiles, warps, items, flags).
+- `python3 Scripts/Mesen2/mesen2_client.py debug-status`: High-level summary of emulator health, game mode, location, and available canon states.
+- `python3 Scripts/Mesen2/mesen2_client.py debug-context`: Comprehensive discovery of all debugging assets (watch profiles, warps, items, flags).
 Note: `mesen2_client.py` requires an explicit `--socket` or `--instance` (or set `MESEN2_AUTO_ATTACH=1` to auto-select the newest socket).
 If `debug-status` or `health` reports **ROM not loaded (load screen)**, run:
-`python3 scripts/mesen2_client.py rom-load /path/to/Roms/oos168x.sfc`
+`python3 Scripts/Mesen2/mesen2_client.py rom-load /path/to/Roms/oos168x.sfc`
 
 ## 2. Symbolic Debugging (USDASM Integration)
 
 We integrate the vanilla "Link to the Past" (USDASM) disassembly to provide context for both vanilla and custom routines.
 
-- `python3 scripts/mesen2_client.py labels-sync`: Uploads 7600+ vanilla labels to Mesen2 so the GUI and CLI show symbolic names.
-- `python3 scripts/mesen2_client.py symbols <query>`: Resolve a name to an address or vice-versa.
-- `python3 scripts/mesen2_client.py disasm <address|label>`: Disassemble code with symbolic resolution.
+- `python3 Scripts/Mesen2/mesen2_client.py labels-sync`: Uploads 7600+ vanilla labels to Mesen2 so the GUI and CLI show symbolic names.
+- `python3 Scripts/Mesen2/mesen2_client.py symbols <query>`: Resolve a name to an address or vice-versa.
+- `python3 Scripts/Mesen2/mesen2_client.py disasm <address|label>`: Disassemble code with symbolic resolution.
 
 Notes:
 - `labels-sync` filters non-ROM addresses; if you still see RAM labels at `$00:00xx`, clear labels and resync.
-- For Oracle labels, prefer the `oos168x.mlb` produced by `scripts/export_symbols.py --sync` (uses `MESEN2_HOME` when set).
+- For Oracle labels, prefer the `oos168x.mlb` produced by `Scripts/Generate/export_symbols.py --sync` (uses `MESEN2_HOME` when set).
 
 ## 3. Save State Management
 
 We maintain a library of "Canon States" which are verified, stable points in the game.
 
-- `python3 scripts/mesen2_client.py library`: List all states in the manifest.
-- `python3 scripts/mesen2_client.py lib-verify-all`: Automatically verify all canon states by loading them and checking for crashes or stalls.
-- `python3 scripts/mesen2_client.py lib-save "<label>"`: Capture the current state as a "draft" in the library.
-- `python3 scripts/mesen2_client.py lib-verify <state_id>`: Promote a draft state to canon status.
+- `python3 Scripts/Mesen2/mesen2_client.py library`: List all states in the manifest.
+- `python3 Scripts/Mesen2/mesen2_client.py lib-verify-all`: Automatically verify all canon states by loading them and checking for crashes or stalls.
+- `python3 Scripts/Mesen2/mesen2_client.py lib-save "<label>"`: Capture the current state as a "draft" in the library.
+- `python3 Scripts/Mesen2/mesen2_client.py lib-verify <state_id>`: Promote a draft state to canon status.
 
 ## 4. Bug Reproduction Workflow
 
 1. **Find a canon state** near the issue using `debug-status` or `library`.
 2. **Reproduce**:
    ```bash
-   python3 scripts/mesen2_client.py repro <state_id> --trace --watch overworld
+   python3 Scripts/Mesen2/mesen2_client.py repro <state_id> --trace --watch overworld
    ```
    This command loads the state, sets the watch profile, and starts an execution trace (legacy DebugBridge). For socket-side trace control, use `TRACE` start/stop/status/clear (see `Docs/Debugging/Mesen2_Architecture.md`).
 3. **Analyze**: Use `disasm` and `symbols` to investigate the code around the crash or bug.
@@ -50,10 +50,10 @@ When another agent (or a human) is already using Mesen2, launch an isolated inst
 
 ```bash
 # Safe default: isolated profile + title + state library applied
-./scripts/mesen2_launch_instance.sh
+./Scripts/Mesen2/mesen2_launch_instance.sh
 
 # Explicit instance name/title (recommended when multiple agents run)
-./scripts/mesen2_launch_instance.sh \
+./Scripts/Mesen2/mesen2_launch_instance.sh \
   --instance codex-scawful \
   --owner codex-scawful \
   --title codex-scawful \
@@ -75,7 +75,7 @@ Notes:
 For autonomous movement and intelligent state tracking, use the `AgentBrain` class:
 
 ```python
-from agent.brain import AgentBrain
+from Scripts.Agent.brain import AgentBrain
 agent = AgentBrain()
 agent.goto(target_tx, target_ty)  # Screen-relative tile movement
 agent.validate_and_save(slot=1)   # Safe save with collision checking
@@ -87,5 +87,5 @@ agent.validate_and_save(slot=1)   # Safe save with collision checking
 |----------|------|
 | State Library | `Docs/Debugging/Testing/save_state_library.json` |
 | USDASM Labels | `z3dk/.context/knowledge/label_index_usdasm.csv` |
-| Watch Profiles | `scripts/mesen2_client_lib/constants.py` |
-| Game Constants | `scripts/mesen2_client_lib/constants.py` |
+| Watch Profiles | `Scripts/Mesen2/mesen2_client_lib/constants.py` |
+| Game Constants | `Scripts/Mesen2/mesen2_client_lib/constants.py` |

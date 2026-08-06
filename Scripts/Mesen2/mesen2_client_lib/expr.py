@@ -1,6 +1,6 @@
 """Mini expression parser/evaluator for Oracle tooling.
 
-Keep in sync with z3dk/Scripts/expr.py.
+Keep in sync with z3dk/Scripts/Mesen2/mesen2_client_lib/expr.py.
 """
 from __future__ import annotations
 

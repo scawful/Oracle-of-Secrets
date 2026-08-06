@@ -19,12 +19,12 @@ project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from scripts.campaign.game_state import (
+from Scripts.Campaign.game_state import (
     GamePhase, LinkAction, ParsedGameState, GameStateParser,
     MODE_TO_PHASE, LINK_STATE_TO_ACTION, DIRECTION_NAMES,
     OVERWORLD_AREAS, DUNGEON_ROOMS, get_parser, parse_state
 )
-from scripts.campaign.emulator_abstraction import GameStateSnapshot
+from Scripts.Campaign.emulator_abstraction import GameStateSnapshot
 
 
 class TestGamePhaseEnum:
