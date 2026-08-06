@@ -61,6 +61,12 @@ The checked-in Oracle project and exported bundles are expected to open the
 editable base ROM (`oos168.sfc` / bundle `rom`). Builds still produce and test
 the patched output ROM (`oos168x.sfc`).
 
+Use Yaze 0.8.0 or newer for Oracle projects. The `yaze_version=0.8.0` metadata
+records that requirement but is advisory, not an enforcement gate. Older Yaze
+builds ignore `save_dungeon_water_fill_zones=false` and default WaterFill saves
+to enabled, so do not open and save Oracle projects or portable bundles with an
+older build.
+
 ## Launch + Attach
 ADHD-friendly session wrappers:
 ```bash

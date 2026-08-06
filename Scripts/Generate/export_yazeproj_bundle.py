@@ -31,6 +31,10 @@ import sys
 from pathlib import Path
 
 
+REQUIRED_YAZE_VERSION = "0.8.0"
+WATER_FILL_SAVE_FLAG = "save_dungeon_water_fill_zones"
+
+
 def find_repo_root() -> Path:
     p = Path(__file__).resolve().parent.parent
     if (p / "CLAUDE.md").exists():
@@ -77,6 +81,61 @@ def slugify_project_id(name: str) -> str:
             prev_underscore = True
     s = "".join(out).strip("_")
     return s or "yaze_project"
+
+
+def validate_oracle_project_contract(content: str) -> None:
+    """Validate the save-scope fields using yaze's INI parsing rules.
+
+    Yaze trims spaces and tabs around keys and values, tracks the current
+    section in file order, and lets later assignments replace earlier ones.
+    The Oracle contract is intentionally stricter: each safety-critical field
+    and its containing section must occur exactly once.
+    """
+    current_section = ""
+    sections: list[str] = []
+    assignments: list[tuple[str, str, str]] = []
+
+    # Match std::getline(stream, line): split only on LF and preserve CR.
+    for line in content.split("\n"):
+        if not line or line[0] == "#":
+            continue
+        if line[0] == "[" and line[-1] == "]":
+            current_section = line[1:-1]
+            sections.append(current_section)
+            continue
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip(" \t")
+        value = value.strip(" \t")
+        if key:
+            assignments.append((current_section, key, value))
+
+    for section in ("project", "feature_flags"):
+        if sections.count(section) != 1:
+            raise ValueError(
+                f"project.yaze must contain exactly one [{section}] section"
+            )
+
+    required = (
+        ("project", "yaze_version", REQUIRED_YAZE_VERSION),
+        ("feature_flags", WATER_FILL_SAVE_FLAG, "false"),
+    )
+    for expected_section, key, expected_value in required:
+        matches = [entry for entry in assignments if entry[1] == key]
+        if len(matches) != 1:
+            raise ValueError(
+                f"project.yaze must contain exactly one {key} assignment"
+            )
+        section, _, value = matches[0]
+        if section != expected_section:
+            raise ValueError(
+                f"project.yaze {key} must be in [{expected_section}]"
+            )
+        if value != expected_value:
+            raise ValueError(
+                f"project.yaze {key} must equal {expected_value}"
+            )
 
 
 def should_skip(rel: Path) -> bool:
@@ -154,6 +213,57 @@ def copy_repo_snapshot(src_root: Path, dst_root: Path) -> None:
             shutil.copy2(src_file, dst_file)
 
 
+def copy_hack_manifest(
+    repo_root: Path,
+    bundled_project_root: Path,
+    expected_dev_rom_sha1: str,
+    expected_dev_rom_size: int,
+) -> None:
+    """Validate and copy the generated manifest for the selected dev ROM."""
+    source = repo_root / "Roms" / "hack_manifest.json"
+    raw_manifest = source.read_bytes()
+    try:
+        manifest = json.loads(raw_manifest.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Invalid hack manifest JSON: {source}") from exc
+
+    rom = manifest.get("rom") if isinstance(manifest, dict) else None
+    dev_rom_sha1 = rom.get("dev_rom_sha1") if isinstance(rom, dict) else None
+    if (
+        not isinstance(dev_rom_sha1, str)
+        or len(dev_rom_sha1) != 40
+        or any(char not in "0123456789abcdefABCDEF" for char in dev_rom_sha1)
+    ):
+        raise ValueError(
+            "hack_manifest.json rom.dev_rom_sha1 must be a 40-character SHA-1"
+        )
+    if dev_rom_sha1.lower() != expected_dev_rom_sha1.lower():
+        raise ValueError(
+            "hack_manifest.json rom.dev_rom_sha1 does not match selected ROM: "
+            f"{dev_rom_sha1} != {expected_dev_rom_sha1}"
+        )
+    dev_rom_size = rom.get("dev_rom_size")
+    if (
+        not isinstance(dev_rom_size, int)
+        or isinstance(dev_rom_size, bool)
+        or dev_rom_size <= 0
+    ):
+        raise ValueError(
+            "hack_manifest.json rom.dev_rom_size must be a positive integer"
+        )
+    if dev_rom_size != expected_dev_rom_size:
+        raise ValueError(
+            "hack_manifest.json rom.dev_rom_size does not match selected ROM: "
+            f"{dev_rom_size} != {expected_dev_rom_size}"
+        )
+
+    # Keep manifest paths unchanged: they describe canonical source/build
+    # outputs, while project.yaze separately routes the portable editable ROM
+    # to the bundle-root `rom`. Write the exact bytes that were validated,
+    # rather than reopening the source after validation.
+    (bundled_project_root / "hack_manifest.json").write_bytes(raw_manifest)
+
+
 def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
     """
     Write `project.yaze` at bundle root with paths relative to bundle root.
@@ -181,7 +291,7 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "version=2.0",
             f"created_date={now}",
             f"last_modified={now}",
-            "yaze_version=",
+            f"yaze_version={REQUIRED_YAZE_VERSION}",
             "created_by=export_yazeproj_bundle.py",
             f"project_id={project_id}",
             "tags=",
@@ -205,6 +315,7 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "load_custom_overworld=true",
             "apply_zs_custom_overworld_asm=true",
             "save_dungeon_maps=true",
+            f"{WATER_FILL_SAVE_FLAG}=false",
             "save_graphics_sheet=true",
             "enable_custom_objects=true",
             "",
@@ -231,7 +342,9 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "",
         ]
     )
-    (bundle_root / "project.yaze").write_text(content, encoding="utf-8")
+    # write_bytes preserves the LF-only format required by yaze's parser on
+    # every host, including Windows.
+    (bundle_root / "project.yaze").write_bytes(content.encode("utf-8"))
 
 
 def write_ios_manifest(bundle_root: Path, name: str, rom_sha1: str) -> None:
@@ -279,6 +392,10 @@ def verify_bundle(bundle_root: Path) -> None:
         raise ValueError(
             f"manifest.json romChecksum mismatch: {manifest.get('romChecksum')} != {rom_sha1}"
         )
+
+    validate_oracle_project_contract(
+        (bundle_root / "project.yaze").read_bytes().decode("utf-8")
+    )
 
 
 def refresh_planning_outputs(repo_root: Path) -> None:
@@ -394,6 +511,12 @@ def main() -> int:
 
     # Copy repo snapshot to bundle/project/.
     copy_repo_snapshot(repo_root, staging_bundle / "project")
+    copy_hack_manifest(
+        repo_root,
+        staging_bundle / "project",
+        rom_sha1,
+        rom_dst.stat().st_size,
+    )
     # Build scripts expect a writable Roms/ folder inside the code snapshot.
     # We intentionally do not copy the repo's real Roms/ directory into the
     # bundle (too large + machine-specific), but an empty directory keeps the
