@@ -1007,13 +1007,37 @@ class RepositorySourceRegressionTest(unittest.TestCase):
 
 class RepositoryProjectSafetyTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.project = (REPO_ROOT / "Oracle-of-Secrets.yaze").read_text(
-            encoding="utf-8"
+        self.project = (REPO_ROOT / "Oracle-of-Secrets.yaze").read_bytes().decode(
+            "utf-8"
         )
 
     def assert_contract_rejected(self, content: str, message: str) -> None:
         with self.assertRaisesRegex(ValueError, message):
             validate_oracle_project_contract(content)
+
+    def assert_manifest_copy_rejected(
+        self,
+        manifest: object,
+        message: str,
+    ) -> None:
+        raw_manifest = (
+            manifest
+            if isinstance(manifest, bytes)
+            else json.dumps(manifest).encode("utf-8")
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "repo" / "Roms" / "hack_manifest.json"
+            source.parent.mkdir(parents=True)
+            source.write_bytes(raw_manifest)
+            bundled_project = root / "bundle" / "project"
+            bundled_project.mkdir(parents=True)
+
+            with self.assertRaisesRegex(ValueError, message):
+                copy_hack_manifest(
+                    root / "repo", bundled_project, "a" * 40, 123
+                )
+            self.assertFalse((bundled_project / "hack_manifest.json").exists())
 
     def test_repository_project_satisfies_oracle_contract(self) -> None:
         validate_oracle_project_contract(self.project)
@@ -1065,6 +1089,14 @@ class RepositoryProjectSafetyTest(unittest.TestCase):
             mutated, r"exactly one \[feature_flags\] section"
         )
 
+    def test_non_lf_line_endings_are_rejected_like_yaze(self) -> None:
+        for name, line_ending in (("crlf", "\r\n"), ("cr", "\r")):
+            with self.subTest(line_ending=name):
+                mutated = self.project.replace("\n", line_ending)
+                self.assert_contract_rejected(
+                    mutated, r"exactly one \[project\] section"
+                )
+
     def test_missing_yaze_version_is_rejected(self) -> None:
         mutated = self.project.replace("yaze_version=0.8.0\n", "", 1)
         self.assert_contract_rejected(mutated, "exactly one yaze_version")
@@ -1098,6 +1130,7 @@ class RepositoryProjectSafetyTest(unittest.TestCase):
             portable_project = (bundle_root / "project.yaze").read_text(
                 encoding="utf-8"
             )
+            self.assertNotIn(b"\r", (bundle_root / "project.yaze").read_bytes())
 
         validate_oracle_project_contract(portable_project)
 
@@ -1106,16 +1139,81 @@ class RepositoryProjectSafetyTest(unittest.TestCase):
             root = Path(temp_dir)
             source = root / "repo" / "Roms" / "hack_manifest.json"
             source.parent.mkdir(parents=True)
-            source.write_bytes(b'{"version": 1}\n')
+            dev_rom_sha1 = "a" * 40
+            dev_rom_size = 123
+            source.write_text(
+                json.dumps(
+                    {
+                        "rom": {
+                            "dev_rom_sha1": dev_rom_sha1,
+                            "dev_rom_size": dev_rom_size,
+                        }
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
             bundled_project = root / "bundle" / "project"
             bundled_project.mkdir(parents=True)
 
-            copy_hack_manifest(root / "repo", bundled_project)
+            copy_hack_manifest(
+                root / "repo",
+                bundled_project,
+                dev_rom_sha1,
+                dev_rom_size,
+            )
 
             self.assertEqual(
                 (bundled_project / "hack_manifest.json").read_bytes(),
                 source.read_bytes(),
             )
+
+    def test_portable_project_rejects_missing_or_malformed_dev_hash(self) -> None:
+        invalid_manifests = (
+            {},
+            {"rom": []},
+            {"rom": {}},
+            {"rom": {"dev_rom_sha1": None}},
+            {"rom": {"dev_rom_sha1": "abc"}},
+            {"rom": {"dev_rom_sha1": "g" * 40}},
+        )
+        for manifest in invalid_manifests:
+            with self.subTest(manifest=manifest):
+                self.assert_manifest_copy_rejected(
+                    manifest, "40-character SHA-1"
+                )
+
+    def test_portable_project_rejects_mismatched_dev_hash(self) -> None:
+        self.assert_manifest_copy_rejected(
+            {"rom": {"dev_rom_sha1": "b" * 40, "dev_rom_size": 123}},
+            "does not match selected ROM",
+        )
+
+    def test_portable_project_rejects_missing_or_malformed_dev_size(self) -> None:
+        invalid_rom_entries = (
+            {"dev_rom_sha1": "a" * 40},
+            {"dev_rom_sha1": "a" * 40, "dev_rom_size": None},
+            {"dev_rom_sha1": "a" * 40, "dev_rom_size": False},
+            {"dev_rom_sha1": "a" * 40, "dev_rom_size": "123"},
+            {"dev_rom_sha1": "a" * 40, "dev_rom_size": 0},
+            {"dev_rom_sha1": "a" * 40, "dev_rom_size": -1},
+        )
+        for rom_entry in invalid_rom_entries:
+            with self.subTest(rom_entry=rom_entry):
+                self.assert_manifest_copy_rejected(
+                    {"rom": rom_entry}, "positive integer"
+                )
+
+    def test_portable_project_rejects_mismatched_dev_size(self) -> None:
+        self.assert_manifest_copy_rejected(
+            {"rom": {"dev_rom_sha1": "a" * 40, "dev_rom_size": 122}},
+            "does not match selected ROM",
+        )
+
+    def test_portable_project_rejects_malformed_manifest_json(self) -> None:
+        self.assert_manifest_copy_rejected(
+            b"{not-json", "Invalid hack manifest JSON"
+        )
 
 
 class RepositoryMessageSourceTest(unittest.TestCase):

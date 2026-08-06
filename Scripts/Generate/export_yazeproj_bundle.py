@@ -95,7 +95,8 @@ def validate_oracle_project_contract(content: str) -> None:
     sections: list[str] = []
     assignments: list[tuple[str, str, str]] = []
 
-    for line in content.splitlines():
+    # Match std::getline(stream, line): split only on LF and preserve CR.
+    for line in content.split("\n"):
         if not line or line[0] == "#":
             continue
         if line[0] == "[" and line[-1] == "]":
@@ -212,12 +213,55 @@ def copy_repo_snapshot(src_root: Path, dst_root: Path) -> None:
             shutil.copy2(src_file, dst_file)
 
 
-def copy_hack_manifest(repo_root: Path, bundled_project_root: Path) -> None:
-    """Copy the generated manifest excluded with the machine-local Roms tree."""
-    shutil.copy2(
-        repo_root / "Roms" / "hack_manifest.json",
-        bundled_project_root / "hack_manifest.json",
-    )
+def copy_hack_manifest(
+    repo_root: Path,
+    bundled_project_root: Path,
+    expected_dev_rom_sha1: str,
+    expected_dev_rom_size: int,
+) -> None:
+    """Validate and copy the generated manifest for the selected dev ROM."""
+    source = repo_root / "Roms" / "hack_manifest.json"
+    raw_manifest = source.read_bytes()
+    try:
+        manifest = json.loads(raw_manifest.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Invalid hack manifest JSON: {source}") from exc
+
+    rom = manifest.get("rom") if isinstance(manifest, dict) else None
+    dev_rom_sha1 = rom.get("dev_rom_sha1") if isinstance(rom, dict) else None
+    if (
+        not isinstance(dev_rom_sha1, str)
+        or len(dev_rom_sha1) != 40
+        or any(char not in "0123456789abcdefABCDEF" for char in dev_rom_sha1)
+    ):
+        raise ValueError(
+            "hack_manifest.json rom.dev_rom_sha1 must be a 40-character SHA-1"
+        )
+    if dev_rom_sha1.lower() != expected_dev_rom_sha1.lower():
+        raise ValueError(
+            "hack_manifest.json rom.dev_rom_sha1 does not match selected ROM: "
+            f"{dev_rom_sha1} != {expected_dev_rom_sha1}"
+        )
+    dev_rom_size = rom.get("dev_rom_size")
+    if (
+        not isinstance(dev_rom_size, int)
+        or isinstance(dev_rom_size, bool)
+        or dev_rom_size <= 0
+    ):
+        raise ValueError(
+            "hack_manifest.json rom.dev_rom_size must be a positive integer"
+        )
+    if dev_rom_size != expected_dev_rom_size:
+        raise ValueError(
+            "hack_manifest.json rom.dev_rom_size does not match selected ROM: "
+            f"{dev_rom_size} != {expected_dev_rom_size}"
+        )
+
+    # Keep manifest paths unchanged: they describe canonical source/build
+    # outputs, while project.yaze separately routes the portable editable ROM
+    # to the bundle-root `rom`. Write the exact bytes that were validated,
+    # rather than reopening the source after validation.
+    (bundled_project_root / "hack_manifest.json").write_bytes(raw_manifest)
 
 
 def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
@@ -298,7 +342,9 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "",
         ]
     )
-    (bundle_root / "project.yaze").write_text(content, encoding="utf-8")
+    # write_bytes preserves the LF-only format required by yaze's parser on
+    # every host, including Windows.
+    (bundle_root / "project.yaze").write_bytes(content.encode("utf-8"))
 
 
 def write_ios_manifest(bundle_root: Path, name: str, rom_sha1: str) -> None:
@@ -348,7 +394,7 @@ def verify_bundle(bundle_root: Path) -> None:
         )
 
     validate_oracle_project_contract(
-        (bundle_root / "project.yaze").read_text(encoding="utf-8")
+        (bundle_root / "project.yaze").read_bytes().decode("utf-8")
     )
 
 
@@ -465,7 +511,12 @@ def main() -> int:
 
     # Copy repo snapshot to bundle/project/.
     copy_repo_snapshot(repo_root, staging_bundle / "project")
-    copy_hack_manifest(repo_root, staging_bundle / "project")
+    copy_hack_manifest(
+        repo_root,
+        staging_bundle / "project",
+        rom_sha1,
+        rom_dst.stat().st_size,
+    )
     # Build scripts expect a writable Roms/ folder inside the code snapshot.
     # We intentionally do not copy the repo's real Roms/ directory into the
     # bundle (too large + machine-specific), but an empty directory keeps the
