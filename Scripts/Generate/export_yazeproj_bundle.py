@@ -31,6 +31,10 @@ import sys
 from pathlib import Path
 
 
+REQUIRED_YAZE_VERSION = "0.8.0"
+WATER_FILL_SAVE_FLAG = "save_dungeon_water_fill_zones"
+
+
 def find_repo_root() -> Path:
     p = Path(__file__).resolve().parent.parent
     if (p / "CLAUDE.md").exists():
@@ -77,6 +81,60 @@ def slugify_project_id(name: str) -> str:
             prev_underscore = True
     s = "".join(out).strip("_")
     return s or "yaze_project"
+
+
+def validate_oracle_project_contract(content: str) -> None:
+    """Validate the save-scope fields using yaze's INI parsing rules.
+
+    Yaze trims spaces and tabs around keys and values, tracks the current
+    section in file order, and lets later assignments replace earlier ones.
+    The Oracle contract is intentionally stricter: each safety-critical field
+    and its containing section must occur exactly once.
+    """
+    current_section = ""
+    sections: list[str] = []
+    assignments: list[tuple[str, str, str]] = []
+
+    for line in content.splitlines():
+        if not line or line[0] == "#":
+            continue
+        if line[0] == "[" and line[-1] == "]":
+            current_section = line[1:-1]
+            sections.append(current_section)
+            continue
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip(" \t")
+        value = value.strip(" \t")
+        if key:
+            assignments.append((current_section, key, value))
+
+    for section in ("project", "feature_flags"):
+        if sections.count(section) != 1:
+            raise ValueError(
+                f"project.yaze must contain exactly one [{section}] section"
+            )
+
+    required = (
+        ("project", "yaze_version", REQUIRED_YAZE_VERSION),
+        ("feature_flags", WATER_FILL_SAVE_FLAG, "false"),
+    )
+    for expected_section, key, expected_value in required:
+        matches = [entry for entry in assignments if entry[1] == key]
+        if len(matches) != 1:
+            raise ValueError(
+                f"project.yaze must contain exactly one {key} assignment"
+            )
+        section, _, value = matches[0]
+        if section != expected_section:
+            raise ValueError(
+                f"project.yaze {key} must be in [{expected_section}]"
+            )
+        if value != expected_value:
+            raise ValueError(
+                f"project.yaze {key} must equal {expected_value}"
+            )
 
 
 def should_skip(rel: Path) -> bool:
@@ -154,6 +212,14 @@ def copy_repo_snapshot(src_root: Path, dst_root: Path) -> None:
             shutil.copy2(src_file, dst_file)
 
 
+def copy_hack_manifest(repo_root: Path, bundled_project_root: Path) -> None:
+    """Copy the generated manifest excluded with the machine-local Roms tree."""
+    shutil.copy2(
+        repo_root / "Roms" / "hack_manifest.json",
+        bundled_project_root / "hack_manifest.json",
+    )
+
+
 def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
     """
     Write `project.yaze` at bundle root with paths relative to bundle root.
@@ -181,7 +247,7 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "version=2.0",
             f"created_date={now}",
             f"last_modified={now}",
-            "yaze_version=",
+            f"yaze_version={REQUIRED_YAZE_VERSION}",
             "created_by=export_yazeproj_bundle.py",
             f"project_id={project_id}",
             "tags=",
@@ -205,6 +271,7 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "load_custom_overworld=true",
             "apply_zs_custom_overworld_asm=true",
             "save_dungeon_maps=true",
+            f"{WATER_FILL_SAVE_FLAG}=false",
             "save_graphics_sheet=true",
             "enable_custom_objects=true",
             "",
@@ -279,6 +346,10 @@ def verify_bundle(bundle_root: Path) -> None:
         raise ValueError(
             f"manifest.json romChecksum mismatch: {manifest.get('romChecksum')} != {rom_sha1}"
         )
+
+    validate_oracle_project_contract(
+        (bundle_root / "project.yaze").read_text(encoding="utf-8")
+    )
 
 
 def refresh_planning_outputs(repo_root: Path) -> None:
@@ -394,6 +465,7 @@ def main() -> int:
 
     # Copy repo snapshot to bundle/project/.
     copy_repo_snapshot(repo_root, staging_bundle / "project")
+    copy_hack_manifest(repo_root, staging_bundle / "project")
     # Build scripts expect a writable Roms/ folder inside the code snapshot.
     # We intentionally do not copy the repo's real Roms/ directory into the
     # bundle (too large + machine-specific), but an empty directory keeps the

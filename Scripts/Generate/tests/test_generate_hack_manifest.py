@@ -38,6 +38,11 @@ from generate_hack_manifest import (  # noqa: E402
     generate_manifest,
 )
 from generate_hooks_json import HookEntry, scan_hooks  # noqa: E402
+from export_yazeproj_bundle import (  # noqa: E402
+    copy_hack_manifest,
+    validate_oracle_project_contract,
+    write_project_file,
+)
 
 
 class ManifestFixture:
@@ -1001,19 +1006,116 @@ class RepositorySourceRegressionTest(unittest.TestCase):
 
 
 class RepositoryProjectSafetyTest(unittest.TestCase):
-    def test_water_fill_save_scope_is_disabled_exactly_once(self) -> None:
-        project_lines = (REPO_ROOT / "Oracle-of-Secrets.yaze").read_text(
+    def setUp(self) -> None:
+        self.project = (REPO_ROOT / "Oracle-of-Secrets.yaze").read_text(
             encoding="utf-8"
-        ).splitlines()
-
-        self.assertEqual(
-            [
-                line
-                for line in project_lines
-                if line.startswith("save_dungeon_water_fill_zones=")
-            ],
-            ["save_dungeon_water_fill_zones=false"],
         )
+
+    def assert_contract_rejected(self, content: str, message: str) -> None:
+        with self.assertRaisesRegex(ValueError, message):
+            validate_oracle_project_contract(content)
+
+    def test_repository_project_satisfies_oracle_contract(self) -> None:
+        validate_oracle_project_contract(self.project)
+
+    def test_missing_water_fill_lock_is_rejected(self) -> None:
+        mutated = self.project.replace(
+            "save_dungeon_water_fill_zones=false\n", "", 1
+        )
+        self.assert_contract_rejected(mutated, "exactly one save_dungeon")
+
+    def test_water_fill_lock_in_wrong_section_is_rejected(self) -> None:
+        mutated = self.project.replace(
+            "save_dungeon_water_fill_zones=false\n", "", 1
+        ).replace(
+            "[rom]\n",
+            "[rom]\nsave_dungeon_water_fill_zones=false\n",
+            1,
+        )
+        self.assert_contract_rejected(mutated, r"must be in \[feature_flags\]")
+
+    def test_later_enabled_water_fill_override_is_rejected(self) -> None:
+        for enabled_value in ("true", "1", "yes"):
+            with self.subTest(enabled_value=enabled_value):
+                mutated = self.project.replace(
+                    "[workspace]\n",
+                    (
+                        "  save_dungeon_water_fill_zones = "
+                        f"{enabled_value}\n[workspace]\n"
+                    ),
+                    1,
+                )
+                self.assert_contract_rejected(
+                    mutated, "exactly one save_dungeon"
+                )
+
+    def test_duplicate_false_water_fill_lock_is_rejected(self) -> None:
+        mutated = self.project.replace(
+            "[workspace]\n",
+            "save_dungeon_water_fill_zones=false\n[workspace]\n",
+            1,
+        )
+        self.assert_contract_rejected(mutated, "exactly one save_dungeon")
+
+    def test_repeated_feature_flags_section_is_rejected(self) -> None:
+        mutated = self.project.replace(
+            "[workspace]\n", "[feature_flags]\n[workspace]\n", 1
+        )
+        self.assert_contract_rejected(
+            mutated, r"exactly one \[feature_flags\] section"
+        )
+
+    def test_missing_yaze_version_is_rejected(self) -> None:
+        mutated = self.project.replace("yaze_version=0.8.0\n", "", 1)
+        self.assert_contract_rejected(mutated, "exactly one yaze_version")
+
+    def test_yaze_version_in_wrong_section_is_rejected(self) -> None:
+        mutated = self.project.replace(
+            "yaze_version=0.8.0\n", "", 1
+        ).replace(
+            "[files]\n", "[files]\nyaze_version=0.8.0\n", 1
+        )
+        self.assert_contract_rejected(mutated, r"must be in \[project\]")
+
+    def test_later_yaze_version_override_is_rejected(self) -> None:
+        mutated = self.project.replace(
+            "[files]\n", "  yaze_version = 0.7.2\n[files]\n", 1
+        )
+        self.assert_contract_rejected(mutated, "exactly one yaze_version")
+
+    def test_malformed_yaze_version_is_rejected(self) -> None:
+        for version in ("", "0.8", "v0.8.0"):
+            with self.subTest(version=version):
+                mutated = self.project.replace(
+                    "yaze_version=0.8.0", f"yaze_version={version}", 1
+                )
+                self.assert_contract_rejected(mutated, "must equal 0.8.0")
+
+    def test_portable_project_satisfies_same_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            bundle_root = Path(temp_dir)
+            write_project_file(bundle_root, "Oracle-of-Secrets", "abc123")
+            portable_project = (bundle_root / "project.yaze").read_text(
+                encoding="utf-8"
+            )
+
+        validate_oracle_project_contract(portable_project)
+
+    def test_portable_project_copies_generated_hack_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "repo" / "Roms" / "hack_manifest.json"
+            source.parent.mkdir(parents=True)
+            source.write_bytes(b'{"version": 1}\n')
+            bundled_project = root / "bundle" / "project"
+            bundled_project.mkdir(parents=True)
+
+            copy_hack_manifest(root / "repo", bundled_project)
+
+            self.assertEqual(
+                (bundled_project / "hack_manifest.json").read_bytes(),
+                source.read_bytes(),
+            )
 
 
 class RepositoryMessageSourceTest(unittest.TestCase):
