@@ -1000,6 +1000,22 @@ class RepositorySourceRegressionTest(unittest.TestCase):
         )
 
 
+class RepositoryProjectSafetyTest(unittest.TestCase):
+    def test_water_fill_save_scope_is_disabled_exactly_once(self) -> None:
+        project_lines = (REPO_ROOT / "Oracle-of-Secrets.yaze").read_text(
+            encoding="utf-8"
+        ).splitlines()
+
+        self.assertEqual(
+            [
+                line
+                for line in project_lines
+                if line.startswith("save_dungeon_water_fill_zones=")
+            ],
+            ["save_dungeon_water_fill_zones=false"],
+        )
+
+
 class RepositoryMessageSourceTest(unittest.TestCase):
     def test_manifest_exposes_durable_expanded_message_source(self) -> None:
         messages = generate_manifest(REPO_ROOT)["messages"]
