@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -38,6 +39,10 @@ from generate_hack_manifest import (  # noqa: E402
     generate_manifest,
 )
 from generate_hooks_json import HookEntry, scan_hooks  # noqa: E402
+from export_yazeproj_bundle import (  # noqa: E402
+    verify_bundle,
+    write_bundle_hack_manifest,
+)
 
 
 class ManifestFixture:
@@ -362,6 +367,43 @@ class ReachableSourceTest(unittest.TestCase):
 
         self.assertEqual(hooks[0].kind, "data")
         self.assertEqual(regions[0]["size"], 8)
+
+    def test_hook_directive_preserves_explicit_protected_size(self) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm", 'incsrc "Core/active.asm"\n'
+        )
+        self.fixture.write_text(
+            "Core/active.asm",
+            "org $0D9000 ; @hook kind=data protected_size=$20\n"
+            "  dw $0000\n",
+        )
+
+        hooks = scan_hooks(
+            self.fixture.root,
+            collect_reachable_asm_sources(self.fixture.root),
+        )
+        regions = compute_protected_regions(hooks)
+
+        self.assertEqual(hooks[0].protected_size, 32)
+        self.assertEqual(regions[0]["start"], "0x0D9000")
+        self.assertEqual(regions[0]["end"], "0x0D9020")
+        self.assertEqual(regions[0]["size"], 32)
+
+    def test_hook_directive_rejects_invalid_protected_size(self) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm", 'incsrc "Core/active.asm"\n'
+        )
+        active = self.fixture.write_text(
+            "Core/active.asm",
+            "org $0D9000 ; @hook kind=data protected_size=0\n"
+            "  dw $0000\n",
+        )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"Core/active\.asm:1: @hook protected_size must be a positive",
+        ):
+            scan_hooks(self.fixture.root, [active])
 
     def test_reachable_global_flag_override_fails_closed(self) -> None:
         self.fixture.write_text("Config/module_flags.asm", "!FLAG = 0\n")
@@ -998,6 +1040,96 @@ class RepositorySourceRegressionTest(unittest.TestCase):
                 for region in banks["0x20"]["regions"]
             )
         )
+
+    def test_house_wall_tables_publish_complete_protected_spans(self) -> None:
+        manifest = generate_manifest(REPO_ROOT)
+        protected = manifest["protected_regions"]["regions"]
+
+        for start, size in (
+            (0x009E1A, 32),
+            (0x009E3A, 32),
+            (0x00A6B8, 128),
+        ):
+            with self.subTest(start=f"0x{start:06X}", size=size):
+                matches = [
+                    region
+                    for region in protected
+                    if int(region["start"], 16) <= start
+                    and int(region["end"], 16) >= start + size
+                ]
+                self.assertEqual(len(matches), 1)
+
+
+class PortableBundleManifestTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.fixture = ManifestFixture()
+        self.fixture.write_text("Oracle_main.asm", "")
+        self.fixture.write_text(
+            "Sprites/Objects/data/minecart_tracks.asm",
+            "; fixture track source\n",
+        )
+        self.rom_path = self.fixture.write_dev_rom()
+        self.bundle_root = self.fixture.root / "Oracle.yazeproj"
+        self.project_root = self.bundle_root / "project"
+        self.project_root.mkdir(parents=True)
+
+    def tearDown(self) -> None:
+        self.fixture.close()
+
+    def test_writes_manifest_from_selected_editable_rom(self) -> None:
+        destination = write_bundle_hack_manifest(
+            self.fixture.root,
+            self.project_root,
+            self.rom_path,
+        )
+        manifest = json.loads(destination.read_text(encoding="utf-8"))
+
+        self.assertEqual(
+            manifest["rom"]["dev_rom_sha1"],
+            hashlib.sha1(self.rom_path.read_bytes()).hexdigest(),
+        )
+        self.assertEqual(
+            manifest["minecart_tracks"]["source"],
+            {
+                "format": "yaze-minecart-track-table",
+                "version": 1,
+                "path": "Sprites/Objects/data/minecart_tracks.asm",
+            },
+        )
+
+    def test_generated_manifest_passes_portable_bundle_verification(self) -> None:
+        shutil.copy2(self.rom_path, self.bundle_root / "rom")
+        rom_sha1 = hashlib.sha1(self.rom_path.read_bytes()).hexdigest()
+        (self.bundle_root / "project.yaze").write_text(
+            "# fixture\n", encoding="utf-8"
+        )
+        (self.bundle_root / "manifest.json").write_text(
+            json.dumps({"romChecksum": rom_sha1}) + "\n",
+            encoding="utf-8",
+        )
+        planning_root = self.project_root / "Docs/Dev/Planning"
+        planning_root.mkdir(parents=True)
+        for filename in (
+            "oracle_resource_labels.json",
+            "story_events.json",
+            "overworld.json",
+        ):
+            (planning_root / filename).write_text("{}\n", encoding="utf-8")
+        bundled_track = (
+            self.project_root / "Sprites/Objects/data/minecart_tracks.asm"
+        )
+        bundled_track.parent.mkdir(parents=True)
+        shutil.copy2(
+            self.fixture.root / "Sprites/Objects/data/minecart_tracks.asm",
+            bundled_track,
+        )
+        write_bundle_hack_manifest(
+            self.fixture.root,
+            self.project_root,
+            self.rom_path,
+        )
+
+        verify_bundle(self.bundle_root)
 
 
 class RepositoryProjectSafetyTest(unittest.TestCase):

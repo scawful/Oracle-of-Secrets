@@ -114,6 +114,11 @@ EXPANDED_MESSAGE_BUNDLE = Path("Data/dialogue/expanded_messages.json")
 EXPANDED_MESSAGE_DATA_START = 0x2F8026
 EXPANDED_MESSAGE_DATA_END = 0x2FFDFF
 MINECART_TRACK_SOURCE = Path("Sprites/Objects/data/minecart_tracks.asm")
+MINECART_TRACK_SOURCE_CONTRACT = {
+    "format": "yaze-minecart-track-table",
+    "version": 1,
+    "path": MINECART_TRACK_SOURCE.as_posix(),
+}
 DUNGEON_ROOM_COUNT = 296
 OBJECT_TABLE_POINTER_OPERAND_PC = 0x874C
 SPRITE_TABLE_POINTER_OPERAND_PC = 0x4C298
@@ -1855,11 +1860,7 @@ def generate_manifest(
         }
 
     manifest["minecart_tracks"] = {
-        "source": {
-            "format": "yaze-minecart-track-table",
-            "version": 1,
-            "path": MINECART_TRACK_SOURCE.as_posix(),
-        },
+        "source": dict(MINECART_TRACK_SOURCE_CONTRACT),
     }
 
     # Room tags — the dispatch table at $01CC00-$01CC5A is in vanilla bank $01.

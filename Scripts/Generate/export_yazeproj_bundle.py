@@ -30,6 +30,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+from generate_hack_manifest import (
+    MINECART_TRACK_SOURCE_CONTRACT,
+    generate_manifest,
+)
+
 
 def find_repo_root() -> Path:
     p = Path(__file__).resolve().parent.parent
@@ -152,6 +157,24 @@ def copy_repo_snapshot(src_root: Path, dst_root: Path) -> None:
             dst_file = dst_root / rel
             dst_file.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src_file, dst_file)
+
+
+def write_bundle_hack_manifest(
+    repo_root: Path,
+    bundled_project_root: Path,
+    dev_rom_path: Path,
+) -> Path:
+    """Generate the bundled hack manifest from the selected editable ROM."""
+    destination = bundled_project_root / "hack_manifest.json"
+    manifest = generate_manifest(
+        repo_root,
+        dev_rom_path=dev_rom_path,
+    )
+    destination.write_text(
+        json.dumps(manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return destination
 
 
 def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
@@ -280,6 +303,51 @@ def verify_bundle(bundle_root: Path) -> None:
             f"manifest.json romChecksum mismatch: {manifest.get('romChecksum')} != {rom_sha1}"
         )
 
+    hack_manifest_path = bundle_root / "project" / "hack_manifest.json"
+    try:
+        hack_manifest = json.loads(hack_manifest_path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(
+            f"Invalid hack manifest JSON: {hack_manifest_path}"
+        ) from exc
+    if not isinstance(hack_manifest, dict):
+        raise ValueError("hack_manifest.json root must be an object")
+
+    rom_metadata = hack_manifest.get("rom")
+    if not isinstance(rom_metadata, dict):
+        raise ValueError("hack_manifest.json must contain object field rom")
+    if rom_metadata.get("dev_rom_sha1") != rom_sha1:
+        raise ValueError(
+            "hack_manifest.json rom.dev_rom_sha1 does not match bundled ROM: "
+            f"{rom_metadata.get('dev_rom_sha1')} != {rom_sha1}"
+        )
+    rom_size = (bundle_root / "rom").stat().st_size
+    if rom_metadata.get("dev_rom_size") != rom_size:
+        raise ValueError(
+            "hack_manifest.json rom.dev_rom_size does not match bundled ROM: "
+            f"{rom_metadata.get('dev_rom_size')} != {rom_size}"
+        )
+
+    expected_track_source = MINECART_TRACK_SOURCE_CONTRACT
+    minecart_tracks = hack_manifest.get("minecart_tracks")
+    track_source = (
+        minecart_tracks.get("source")
+        if isinstance(minecart_tracks, dict)
+        else None
+    )
+    if track_source != expected_track_source:
+        raise ValueError(
+            "hack_manifest.json minecart_tracks.source does not match the "
+            "portable source contract"
+        )
+    bundled_track_source = (
+        bundle_root / "project" / expected_track_source["path"]
+    )
+    if not bundled_track_source.is_file():
+        raise FileNotFoundError(
+            f"Bundle is missing minecart track source: {bundled_track_source}"
+        )
+
 
 def refresh_planning_outputs(repo_root: Path) -> None:
     # Keep these local and deterministic: yaze reads them from
@@ -394,6 +462,11 @@ def main() -> int:
 
     # Copy repo snapshot to bundle/project/.
     copy_repo_snapshot(repo_root, staging_bundle / "project")
+    write_bundle_hack_manifest(
+        repo_root,
+        staging_bundle / "project",
+        rom_path,
+    )
     # Build scripts expect a writable Roms/ folder inside the code snapshot.
     # We intentionally do not copy the repo's real Roms/ directory into the
     # bundle (too large + machine-specific), but an empty directory keeps the

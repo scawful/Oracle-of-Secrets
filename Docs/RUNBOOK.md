@@ -57,6 +57,10 @@ Export an iCloud-friendly `.yazeproj` bundle (openable on macOS and iOS yaze):
 python3 Scripts/Generate/export_yazeproj_bundle.py --rom Roms/oos168.sfc --refresh-planning --force --out-icloud
 ```
 
+The exporter generates `project/hack_manifest.json` from the selected editable
+ROM during staging, verifies its ROM identity and minecart source contract, and
+only then publishes the portable bundle.
+
 The checked-in Oracle project and exported bundles are expected to open the
 editable base ROM (`oos168.sfc` / bundle `rom`). Builds still produce and test
 the patched output ROM (`oos168x.sfc`).
