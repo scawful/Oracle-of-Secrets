@@ -894,6 +894,15 @@ def scan_hooks(
                 ann_m = directive_expected_m
             if directive_expected_x is not None:
                 ann_x = directive_expected_x
+            protected_size = PROTECTED_SIZE_ESTIMATE.get(kind, 4)
+            directive_protected_size = hook_directive.get("protected_size")
+            if directive_protected_size is not None:
+                protected_size = _parse_int(str(directive_protected_size))
+                if protected_size is None or protected_size <= 0:
+                    raise ValueError(
+                        f"{source}: @hook protected_size must be a positive "
+                        "integer"
+                    )
             # Explicit exit expectations from @hook directive
             ann_exit_m = _parse_int(str(hook_directive.get("expected_exit_m"))) if hook_directive.get("expected_exit_m") is not None else None
             ann_exit_x = _parse_int(str(hook_directive.get("expected_exit_x"))) if hook_directive.get("expected_exit_x") is not None else None
@@ -918,7 +927,7 @@ def scan_hooks(
                 expected_x=ann_x,
                 expected_exit_m=ann_exit_m,
                 expected_exit_x=ann_exit_x,
-                protected_size=PROTECTED_SIZE_ESTIMATE.get(kind, 4),
+                protected_size=protected_size,
             )
 
             existing = hooks_by_addr.get(addr)
@@ -951,7 +960,11 @@ def main() -> int:
     hooks = scan_hooks(root)
 
     rom_meta = {}
-    rom_path = (root / args.rom).resolve() if not args.rom.is_absolute() else args.rom
+    rom_path = (
+        (root / args.rom).resolve()
+        if not args.rom.is_absolute()
+        else args.rom.resolve()
+    )
     if rom_path.exists():
         rom_meta['path'] = str(rom_path.relative_to(root))
         try:

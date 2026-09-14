@@ -5,7 +5,7 @@
 
 ; Top Left Corner Layer 1
 #obj0B66:
-org $00A6B8
+org $00A6B8 ; @hook kind=data protected_size=$80 note="House wall corners"
   dw $C89E, $489E, $0894, $0892
   dw $889E, $089E, $08B6, $0899
   dw $4893, $08B5, $08A6, $08B7
@@ -31,24 +31,27 @@ org $00A6B8
   dw $C8B7, $C8A6, $C8B5, $8893
   dw $4898, $C8B6, $C89E, $489E
   dw $4892, $C894, $889E, $089E
+assert pc() == $00A738, "House wall corner table size changed"
 
 ; Top Wall Layer 1
 #obj02E8:
-org $009E3A
+org $009E3A ; @hook kind=data protected_size=$20 note="House top walls"
   dw $0890, $0896, $08A2, $0CAC
   dw $4890, $0897, $08A3, $4CAC
 
 #obj02F8:
   dw $8CAC, $88A2, $8896, $C890
   dw $CCAC, $88A3, $8897, $8890
+assert pc() == $009E5A, "House top wall table size changed"
 
 ; Left Wall Layer 1
 
 #obj02C8:
-org $009E1A
+org $009E1A ; @hook kind=data protected_size=$20 note="House left walls"
   dw $0892, $0898, $08A4, $0CAD
   dw $0892, $0899, $08A5, $8CAD
 
 #obj02D8:
   dw $4CAD, $48A4, $4898, $4892
   dw $CCAD, $48A5, $4899, $4892
+assert pc() == $009E3A, "House left wall table size changed"

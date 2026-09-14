@@ -201,12 +201,22 @@ fi
 
 if [[ "${OOS_SKIP_WATER_TABLE_GEN:-0}" != "1" ]]; then
   echo "[*] Generating water-gate runtime tables from: $water_table_rom_arg"
-  python3 "$repo_root/Scripts/Generate/generate_water_gate_runtime_tables.py" --rom "$water_table_rom_arg"
+  (
+    cd "$repo_root"
+    python3 "$repo_root/Scripts/Generate/generate_water_gate_runtime_tables.py" \
+      --rom "$water_table_rom_arg" \
+      --out-asm "$repo_root/Dungeons/generated/water_gate_runtime_tables.asm"
+  )
 fi
 
 if [[ "${OOS_SKIP_WATER_FILL_TABLE_GEN:-0}" != "1" ]]; then
   echo "[*] Generating water-fill table from custom collision markers: $water_table_rom_arg"
-  python3 "$repo_root/Scripts/Generate/generate_water_fill_table.py" --rom "$water_table_rom_arg"
+  (
+    cd "$repo_root"
+    python3 "$repo_root/Scripts/Generate/generate_water_fill_table.py" \
+      --rom "$water_table_rom_arg" \
+      --out-asm "$repo_root/Dungeons/generated/water_fill_table.asm"
+  )
 fi
 
 # Feature-flag guardrails (non-fatal by default).
@@ -321,20 +331,33 @@ fi
 
 cp -f "$base_rom" "$patched_rom"
 
-if ! command -v "$asar_bin" >/dev/null 2>&1; then
+if ! resolved_asar_bin="$(command -v "$asar_bin")"; then
   echo "ERROR: assembler not found: $asar_bin" >&2
   exit 1
 fi
+if [[ "$resolved_asar_bin" != /* ]]; then
+  resolved_asar_bin="$(cd "$(dirname "$resolved_asar_bin")" && pwd -P)/$(basename "$resolved_asar_bin")"
+fi
+asar_bin="$resolved_asar_bin"
 
 if [[ $emit_symbols -eq 1 ]]; then
   # Use z3asm features if available
   if [[ "$asar_bin" == *"z3asm"* ]]; then
-    "$asar_bin" --symbols=wla --symbols-path="$symbols_path" --emit=sourcemap.json Oracle_main.asm "$patched_rom"
+    (
+      cd "$repo_root"
+      "$asar_bin" --symbols=wla --symbols-path="$symbols_path" --emit=sourcemap.json Oracle_main.asm "$patched_rom"
+    )
   else
-    "$asar_bin" --symbols=wla --symbols-path="$symbols_path" Oracle_main.asm "$patched_rom"
+    (
+      cd "$repo_root"
+      "$asar_bin" --symbols=wla --symbols-path="$symbols_path" Oracle_main.asm "$patched_rom"
+    )
   fi
 else
-  "$asar_bin" Oracle_main.asm "$patched_rom"
+  (
+    cd "$repo_root"
+    "$asar_bin" Oracle_main.asm "$patched_rom"
+  )
 fi
 
 echo "Built patched ROM: $patched_rom"
@@ -343,11 +366,21 @@ echo "Built patched ROM: $patched_rom"
 # that produced this build. Fail closed so source-sync never opens against a
 # missing or stale allocation contract.
 echo "[*] Generating Yaze hack manifest..."
-python3 "$repo_root/Scripts/Generate/generate_hack_manifest.py" \
-  --root "$repo_root" \
-  --output "$repo_root/Roms/hack_manifest.json" \
-  --dev-rom "$base_rom" \
+manifest_args=(
+  --root "$repo_root"
+  --output "$repo_root/Roms/hack_manifest.json"
+  --dev-rom "$base_rom"
   --rom "$patched_rom"
+)
+if [[ -n "${OOS_MANIFEST_ROOT:-}" ]]; then
+  manifest_root="$OOS_MANIFEST_ROOT"
+  if [[ "$manifest_root" != /* ]]; then
+    manifest_root="$(cd "$manifest_root" && pwd -P)"
+  fi
+  manifest_args+=(--manifest-root "$manifest_root")
+fi
+python3 "$repo_root/Scripts/Generate/generate_hack_manifest.py" \
+  "${manifest_args[@]}"
 
 # Export symbols for yaze + Mesen2.
 if [[ $emit_symbols -eq 1 && -f "$symbols_path" ]]; then
