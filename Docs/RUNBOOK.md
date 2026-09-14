@@ -57,6 +57,20 @@ Export an iCloud-friendly `.yazeproj` bundle (openable on macOS and iOS yaze):
 python3 Scripts/Generate/export_yazeproj_bundle.py --rom Roms/oos168.sfc --refresh-planning --force --out-icloud
 ```
 
+The exporter writes an LF-only, fail-closed project descriptor: aggregate
+dungeon-map, graphics-sheet, WaterFill, and autosave writes are disabled, while
+backup-on-save remains enabled. It generates the active manifest at
+`project/Roms/hack_manifest.json` from the staged editable ROM and source tree,
+then reproduces that generation during verification so stale source contracts
+cannot be published.
+
+Every portable manifest path is relative to the bundle root. Yaze edits `rom`,
+message source resolves under `project/Data/`, and minecart-track source resolves
+under `project/Sprites/`. The configured build invokes
+`project/Scripts/Build/build_rom.sh`; that same build refreshes
+`project/Roms/hack_manifest.json` and produces the playable
+`project/Roms/oos168x.sfc`.
+
 The checked-in Oracle project and exported bundles are expected to open the
 editable base ROM (`oos168.sfc` / bundle `rom`). Builds still produce and test
 the patched output ROM (`oos168x.sfc`).

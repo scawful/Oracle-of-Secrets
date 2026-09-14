@@ -114,6 +114,11 @@ EXPANDED_MESSAGE_BUNDLE = Path("Data/dialogue/expanded_messages.json")
 EXPANDED_MESSAGE_DATA_START = 0x2F8026
 EXPANDED_MESSAGE_DATA_END = 0x2FFDFF
 MINECART_TRACK_SOURCE = Path("Sprites/Objects/data/minecart_tracks.asm")
+MINECART_TRACK_SOURCE_CONTRACT = {
+    "format": "yaze-minecart-track-table",
+    "version": 1,
+    "path": MINECART_TRACK_SOURCE.as_posix(),
+}
 DUNGEON_ROOM_COUNT = 296
 OBJECT_TABLE_POINTER_OPERAND_PC = 0x874C
 SPRITE_TABLE_POINTER_OPERAND_PC = 0x4C298
@@ -1675,24 +1680,80 @@ def _resolve_repo_path(root: Path, path: Path) -> Path:
     return (root / path).resolve() if not path.is_absolute() else path.resolve()
 
 
-def _manifest_path(root: Path, path: Path) -> str:
-    """Prefer portable repo-relative manifest paths when possible."""
-    return (
-        path.relative_to(root).as_posix()
-        if path.is_relative_to(root)
-        else str(path)
+def _manifest_path(
+    manifest_root: Path,
+    path: Path,
+    *,
+    require_relative: bool = False,
+) -> str:
+    """Express a filesystem path in the manifest's declared namespace."""
+    resolved_root = manifest_root.resolve()
+    resolved_path = path.resolve()
+    if resolved_path.is_relative_to(resolved_root):
+        return resolved_path.relative_to(resolved_root).as_posix()
+    if require_relative:
+        raise ManifestGenerationError(
+            f"Manifest path escapes declared root {resolved_root}: "
+            f"{resolved_path}"
+        )
+    return str(resolved_path)
+
+
+def _source_manifest_path(
+    root: Path,
+    manifest_root: Path,
+    path: Path,
+    *,
+    require_relative: bool,
+) -> str:
+    """Map a repository-relative source into the manifest namespace."""
+    return _manifest_path(
+        manifest_root,
+        root / path,
+        require_relative=require_relative,
     )
+
+
+def _rebase_source_locations(value: object, source_prefix: Path) -> None:
+    """Rebase `path:line` provenance strings beneath a bundle source prefix."""
+    if source_prefix == Path("."):
+        return
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == "source" and isinstance(child, str):
+                source_path, separator, line = child.rpartition(":")
+                if separator and line.isdigit():
+                    value[key] = (
+                        f"{(source_prefix / source_path).as_posix()}:{line}"
+                    )
+                    continue
+            _rebase_source_locations(child, source_prefix)
+    elif isinstance(value, list):
+        for child in value:
+            _rebase_source_locations(child, source_prefix)
 
 
 def generate_manifest(
     root: Path,
     rom_path: Optional[Path] = None,
     dev_rom_path: Optional[Path] = None,
+    manifest_root: Optional[Path] = None,
 ) -> dict:
     """Generate the complete hack manifest."""
     import hashlib
 
     root = root.resolve()
+    explicit_manifest_root = manifest_root is not None
+    manifest_root = _resolve_repo_path(
+        root,
+        manifest_root or root,
+    )
+    if explicit_manifest_root and not root.is_relative_to(manifest_root):
+        raise ManifestGenerationError(
+            f"Repository root {root} is outside manifest root "
+            f"{manifest_root}"
+        )
+    source_prefix = root.relative_to(manifest_root)
     if rom_path is not None:
         rom_path = _resolve_repo_path(root, rom_path)
         if not rom_path.is_file():
@@ -1731,15 +1792,38 @@ def generate_manifest(
     # Build pipeline model
     manifest["build_pipeline"] = {
         "description": "Yaze edits the dev ROM; asar patches it to produce the patched ROM. They share the same base file.",
-        "dev_rom": _manifest_path(root, dev_rom_path),
+        "dev_rom": _manifest_path(
+            manifest_root,
+            dev_rom_path,
+            require_relative=explicit_manifest_root,
+        ),
         "patched_rom": (
-            _manifest_path(root, rom_path)
+            _manifest_path(
+                manifest_root,
+                rom_path,
+                require_relative=explicit_manifest_root,
+            )
             if rom_path is not None
-            else "Roms/oos168x.sfc"
+            else _source_manifest_path(
+                root,
+                manifest_root,
+                Path("Roms/oos168x.sfc"),
+                require_relative=explicit_manifest_root,
+            )
         ),
         "assembler": "asar",
-        "entry_point": str(MANIFEST_ENTRY_POINT),
-        "build_script": "Scripts/Build/build_rom.sh",
+        "entry_point": _source_manifest_path(
+            root,
+            manifest_root,
+            MANIFEST_ENTRY_POINT,
+            require_relative=explicit_manifest_root,
+        ),
+        "build_script": _source_manifest_path(
+            root,
+            manifest_root,
+            Path("Scripts/Build/build_rom.sh"),
+            require_relative=explicit_manifest_root,
+        ),
         "flow": [
             "1. Yaze edits dev ROM data and tracked source artifacts, including the canonical expanded-message bundle and generated include",
             "2. asar reads the dev ROM and tracked ASM sources",
@@ -1752,7 +1836,11 @@ def generate_manifest(
     # ROM metadata (patched ROM for verification, dev ROM for editing)
     rom_meta: dict = {}
     if rom_path and rom_path.exists():
-        rom_meta["path"] = _manifest_path(root, rom_path)
+        rom_meta["path"] = _manifest_path(
+            manifest_root,
+            rom_path,
+            require_relative=explicit_manifest_root,
+        )
         try:
             data = rom_path.read_bytes()
             rom_meta["sha1"] = hashlib.sha1(data).hexdigest()
@@ -1846,9 +1934,17 @@ def generate_manifest(
             "source": {
                 "format": "yaze-message-bundle",
                 "version": 1,
-                "canonical_bundle_path": str(EXPANDED_MESSAGE_BUNDLE),
-                "generated_asm_include_path": str(
-                    EXPANDED_MESSAGE_ASM_INCLUDE
+                "canonical_bundle_path": _source_manifest_path(
+                    root,
+                    manifest_root,
+                    EXPANDED_MESSAGE_BUNDLE,
+                    require_relative=explicit_manifest_root,
+                ),
+                "generated_asm_include_path": _source_manifest_path(
+                    root,
+                    manifest_root,
+                    EXPANDED_MESSAGE_ASM_INCLUDE,
+                    require_relative=explicit_manifest_root,
                 ),
             },
             **messages,
@@ -1856,9 +1952,13 @@ def generate_manifest(
 
     manifest["minecart_tracks"] = {
         "source": {
-            "format": "yaze-minecart-track-table",
-            "version": 1,
-            "path": MINECART_TRACK_SOURCE.as_posix(),
+            **MINECART_TRACK_SOURCE_CONTRACT,
+            "path": _source_manifest_path(
+                root,
+                manifest_root,
+                MINECART_TRACK_SOURCE,
+                require_relative=explicit_manifest_root,
+            ),
         },
     }
 
@@ -1881,7 +1981,12 @@ def generate_manifest(
     flags = scan_feature_flags(root)
     manifest["feature_flags"] = {
         "description": "Compile-time feature toggles in Config/feature_flags.asm. These control which ASM hooks are active. Yaze can display them in the project settings and optionally write updated flag values before triggering a rebuild.",
-        "config_file": "Config/feature_flags.asm",
+        "config_file": _source_manifest_path(
+            root,
+            manifest_root,
+            Path("Config/feature_flags.asm"),
+            require_relative=explicit_manifest_root,
+        ),
         "flags": flags,
     }
 
@@ -1890,7 +1995,12 @@ def generate_manifest(
     sram = scan_sram_layout(root)
     manifest["sram"] = {
         "description": "Custom SRAM variable definitions from Core/sram.asm. These extend the vanilla ALTTP save file layout. Yaze can display variable names in the RAM panel and save state inspector instead of raw hex addresses.",
-        "source_file": "Core/sram.asm",
+        "source_file": _source_manifest_path(
+            root,
+            manifest_root,
+            Path("Core/sram.asm"),
+            require_relative=explicit_manifest_root,
+        ),
         "variable_count": len(sram),
         "variables": sram,
     }
@@ -1906,6 +2016,7 @@ def generate_manifest(
         "sram_variable_count": len(sram),
     }
 
+    _rebase_source_locations(manifest, source_prefix)
     return manifest
 
 
@@ -1942,6 +2053,14 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--manifest-root",
+        type=Path,
+        help=(
+            "Filesystem root used for every path in the manifest. When set, "
+            "all ROM and source paths must remain beneath this root."
+        ),
+    )
+    parser.add_argument(
         "--pretty",
         action="store_true",
         default=True,
@@ -1963,7 +2082,12 @@ def main() -> int:
         rom_path = default_rom_path if default_rom_path.is_file() else None
 
     try:
-        manifest = generate_manifest(root, rom_path, args.dev_rom)
+        manifest = generate_manifest(
+            root,
+            rom_path,
+            args.dev_rom,
+            args.manifest_root,
+        )
     except ManifestGenerationError as exc:
         print(f"error: cannot generate hack manifest: {exc}", file=sys.stderr)
         return 1
