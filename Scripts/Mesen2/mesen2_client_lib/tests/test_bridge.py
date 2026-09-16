@@ -3,13 +3,165 @@ Unit tests for the Mesen2 socket bridge module.
 """
 
 import json
+import os
+import socket
 
 import pytest
 
-from mesen2_client_lib.bridge import MesenBridge
+from mesen2_client_lib.bridge import (
+    MesenBridge,
+    apply_handheld_env,
+    is_tcp_endpoint,
+    parse_tcp_endpoint,
+    tcp_endpoint_from_env,
+)
+
+
+class TestTcpEndpoints:
+    def test_parse_tcp_endpoint(self):
+        assert is_tcp_endpoint("tcp://127.0.0.1:27015")
+        assert parse_tcp_endpoint("tcp://127.0.0.1:27015") == ("127.0.0.1", 27015)
+        assert parse_tcp_endpoint("tcp://:27015") == ("127.0.0.1", 27015)
+
+    def test_tcp_endpoint_from_env(self, monkeypatch):
+        monkeypatch.delenv("MESEN2_TCP_PORT", raising=False)
+        monkeypatch.delenv("MESEN2_TCP_HOST", raising=False)
+        assert tcp_endpoint_from_env() is None
+        monkeypatch.setenv("MESEN2_TCP_PORT", "27015")
+        assert tcp_endpoint_from_env() == "tcp://127.0.0.1:27015"
+        monkeypatch.setenv("MESEN2_TCP_HOST", "10.0.0.2")
+        assert tcp_endpoint_from_env() == "tcp://10.0.0.2:27015"
+
+    def test_send_command_uses_inet_for_tcp(self, monkeypatch):
+        from unittest.mock import Mock
+
+        target = "tcp://127.0.0.1:27015"
+        created = []
+        connection = Mock()
+        connection.recv.return_value = b'{"success":true,"data":"PONG"}\n'
+
+        def factory(*args, **kwargs):
+            created.append(args)
+            return connection
+
+        monkeypatch.setattr("mesen2_client_lib.bridge.socket.socket", factory)
+        monkeypatch.delenv("MESEN2_SOCKET_PATH", raising=False)
+        monkeypatch.delenv("MESEN2_SOCKET", raising=False)
+        monkeypatch.delenv("MESEN2_TCP_PORT", raising=False)
+
+        bridge = MesenBridge(socket_path=target, max_retries=0)
+        result = bridge.send_command("PING")
+
+        assert result["success"] is True
+        assert created[0][0] == socket.AF_INET
+        connection.connect.assert_called_once_with(("127.0.0.1", 27015))
+
+    def test_env_tcp_port_without_socket_path(self, monkeypatch):
+        from unittest.mock import Mock
+
+        connection = Mock()
+        connection.recv.return_value = b'{"success":true,"data":"PONG"}\n'
+        monkeypatch.setattr("mesen2_client_lib.bridge.socket.socket", lambda *args, **kwargs: connection)
+        monkeypatch.delenv("MESEN2_SOCKET_PATH", raising=False)
+        monkeypatch.delenv("MESEN2_SOCKET", raising=False)
+        monkeypatch.setenv("MESEN2_TCP_PORT", "27015")
+        monkeypatch.setenv("MESEN2_TCP_HOST", "127.0.0.1")
+
+        bridge = MesenBridge(max_retries=0)
+        assert bridge.socket_path == "tcp://127.0.0.1:27015"
+        assert bridge.send_command("PING")["success"] is True
+        connection.connect.assert_called_with(("127.0.0.1", 27015))
+
+
+class TestHandheldEnv:
+    def test_apply_handheld_env_fills_socket(self, monkeypatch, tmp_path):
+        env_file = tmp_path / "handheld.env"
+        env_file.write_text("export MESEN2_SOCKET_PATH=tcp://127.0.0.1:27015\n")
+        monkeypatch.delenv("MESEN2_SOCKET_PATH", raising=False)
+        monkeypatch.delenv("MESEN2_SOCKET", raising=False)
+        monkeypatch.setenv("MESEN2_HANDHELD", "1")
+        monkeypatch.setenv("MESEN2_HANDHELD_ENV", str(env_file))
+        apply_handheld_env()
+        assert os.environ["MESEN2_SOCKET_PATH"] == "tcp://127.0.0.1:27015"
+
+    def test_apply_handheld_env_skips_without_flag(self, monkeypatch, tmp_path):
+        env_file = tmp_path / "handheld.env"
+        env_file.write_text("export MESEN2_SOCKET_PATH=tcp://10.0.0.9:27015\n")
+        monkeypatch.delenv("MESEN2_SOCKET_PATH", raising=False)
+        monkeypatch.delenv("MESEN2_HANDHELD", raising=False)
+        monkeypatch.setenv("MESEN2_HANDHELD_ENV", str(env_file))
+        apply_handheld_env()
+        assert "MESEN2_SOCKET_PATH" not in os.environ
+
+    def test_handheld_mode_does_not_fall_back_to_desktop_socket(self, monkeypatch, tmp_path):
+        from unittest.mock import Mock
+
+        monkeypatch.delenv("MESEN2_SOCKET_PATH", raising=False)
+        monkeypatch.delenv("MESEN2_SOCKET", raising=False)
+        monkeypatch.delenv("MESEN2_TCP_PORT", raising=False)
+        monkeypatch.setenv("MESEN2_HANDHELD", "1")
+        monkeypatch.setenv("MESEN2_HANDHELD_ENV", str(tmp_path / "missing.env"))
+        bridge = MesenBridge(max_retries=0)
+        discovery = Mock(return_value="/tmp/mesen2-stale.sock")
+        monkeypatch.setattr(bridge, "_discover_socket_path", discovery)
+
+        assert bridge.socket_path is None
+        with pytest.raises(ConnectionError, match="explicit tcp:// endpoint"):
+            bridge.send_command("PING")
+        discovery.assert_not_called()
+
+    def test_handheld_mode_rejects_unix_socket_env(self, monkeypatch):
+        monkeypatch.setenv("MESEN2_HANDHELD", "1")
+        monkeypatch.setenv("MESEN2_SOCKET_PATH", "/tmp/mesen2-stale.sock")
+        monkeypatch.delenv("MESEN2_SOCKET", raising=False)
+
+        assert MesenBridge(max_retries=0).socket_path is None
 
 
 class TestBridgeConnection:
+    def test_explicit_socket_survives_failed_command_retries(self, monkeypatch):
+        from unittest.mock import Mock
+
+        target = "/tmp/requested-mesen.sock"
+        bridge = MesenBridge(socket_path=target, max_retries=1, retry_delay=0)
+        connection = Mock()
+        connection.connect.side_effect = ConnectionRefusedError("starting")
+        monkeypatch.setattr("mesen2_client_lib.bridge.socket.socket", lambda *args: connection)
+        discovery = Mock(return_value="/tmp/other-mesen.sock")
+        monkeypatch.setattr(bridge, "_discover_socket_path", discovery)
+        monkeypatch.delenv("MESEN2_SOCKET_PATH", raising=False)
+        monkeypatch.delenv("MESEN2_SOCKET", raising=False)
+        monkeypatch.delenv("MESEN2_INSTANCE", raising=False)
+
+        with pytest.raises(ConnectionError):
+            bridge.send_command("STATE")
+
+        assert bridge.socket_path == target
+        discovery.assert_not_called()
+        assert [call.args[0] for call in connection.connect.call_args_list] == [target, target]
+
+        connection.connect.side_effect = None
+        connection.recv.return_value = b'{"success":true,"data":"PONG"}\n'
+        assert bridge.send_command("PING")["success"]
+        assert connection.connect.call_args.args == (target,)
+
+    def test_explicit_socket_survives_connection_health_retry(self, monkeypatch):
+        target = "/tmp/requested-mesen.sock"
+        bridge = MesenBridge(socket_path=target, max_retries=1, retry_delay=0)
+        paths = []
+
+        def connected():
+            paths.append(bridge.socket_path)
+            return {"ok": len(paths) == 2}
+
+        monkeypatch.setattr(bridge, "check_health", connected)
+        monkeypatch.setattr(bridge, "_discover_socket_path", lambda: "/tmp/other-mesen.sock")
+        monkeypatch.delenv("MESEN2_SOCKET_PATH", raising=False)
+        monkeypatch.delenv("MESEN2_SOCKET", raising=False)
+        monkeypatch.delenv("MESEN2_INSTANCE", raising=False)
+        assert bridge.ensure_connected(retries=2, delay=0)
+        assert paths == [target, target]
+
     def test_socket_path_discovery(self, mock_socket_path, mock_server):
         bridge = MesenBridge(socket_path=mock_socket_path)
         assert bridge.socket_path == mock_socket_path

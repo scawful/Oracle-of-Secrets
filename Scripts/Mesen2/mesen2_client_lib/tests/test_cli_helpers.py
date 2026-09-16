@@ -132,6 +132,43 @@ def test_preflight_socket_instance_missing_fails_fast(monkeypatch):
     assert exc.value.code == 2
 
 
+def test_preflight_handheld_refuses_desktop_auto_attach(monkeypatch, tmp_path, capsys):
+    from unittest.mock import Mock
+
+    for key in (
+        "MESEN2_SOCKET_PATH",
+        "MESEN2_SOCKET",
+        "MESEN2_TCP_PORT",
+        "MESEN2_INSTANCE",
+        "MESEN2_REGISTRY_INSTANCE",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("MESEN2_HANDHELD", "1")
+    monkeypatch.setenv("MESEN2_AUTO_ATTACH", "1")
+    monkeypatch.setenv("MESEN2_HANDHELD_ENV", str(tmp_path / "missing.env"))
+    candidates = Mock(return_value=["/tmp/mesen2-stale.sock"])
+    monkeypatch.setattr(cli, "_find_socket_candidates", candidates)
+
+    with pytest.raises(SystemExit) as exc:
+        cli._preflight_socket(argparse.Namespace(socket=None, instance=None))
+
+    assert exc.value.code == 2
+    assert "requires an explicit tcp:// endpoint" in capsys.readouterr().err
+    candidates.assert_not_called()
+
+
+def test_preflight_handheld_rejects_explicit_unix_socket(monkeypatch, capsys):
+    monkeypatch.setenv("MESEN2_HANDHELD", "1")
+
+    with pytest.raises(SystemExit) as exc:
+        cli._preflight_socket(
+            argparse.Namespace(socket="/tmp/mesen2-stale.sock", instance=None)
+        )
+
+    assert exc.value.code == 2
+    assert "requires an explicit tcp:// endpoint" in capsys.readouterr().err
+
+
 def test_validate_state_freshness_rejects_missing_meta_for_library(tmp_path):
     state_path = tmp_path / "Roms" / "SaveStates" / "library" / "oos168x" / "state.mss"
     state_path.parent.mkdir(parents=True, exist_ok=True)

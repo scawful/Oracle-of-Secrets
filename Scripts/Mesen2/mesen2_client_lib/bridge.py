@@ -24,8 +24,55 @@ def _registry_dir() -> Path:
     return (repo_root / ".context" / "scratchpad" / "mesen2" / "instances").resolve()
 
 
+def _handheld_env_path() -> Path:
+    override = os.getenv("MESEN2_HANDHELD_ENV")
+    if override:
+        return Path(override).expanduser()
+    repo_root = Path(__file__).resolve().parents[3]
+    return repo_root / ".context" / "scratchpad" / "mesen2" / "handheld.env"
+
+
+def handheld_mode_requested() -> bool:
+    return os.getenv("MESEN2_HANDHELD", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def apply_handheld_env() -> None:
+    """Load handheld.env when MESEN2_HANDHELD is set and no socket is chosen yet."""
+    if os.getenv("MESEN2_SOCKET_PATH") or os.getenv("MESEN2_SOCKET"):
+        return
+    if not handheld_mode_requested():
+        return
+    path = _handheld_env_path()
+    if not path.is_file():
+        return
+    try:
+        lines = path.read_text().splitlines()
+    except OSError:
+        return
+    for raw in lines:
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[7:].strip()
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("'").strip('"')
+        if key and key not in os.environ:
+            os.environ[key] = value
+    _resolve_instance_socket()
+
+
 def _resolve_instance_socket() -> None:
-    if os.getenv("MESEN2_SOCKET_PATH"):
+    """Fill MESEN2_SOCKET_PATH from the instance registry when only the name is set."""
+    if os.getenv("MESEN2_SOCKET_PATH") or os.getenv("MESEN2_SOCKET"):
         return
     instance = os.getenv("MESEN2_INSTANCE") or os.getenv("MESEN2_REGISTRY_INSTANCE")
     if not instance:
@@ -67,6 +114,60 @@ def _env_float(name: str, default: float) -> float:
         return float(raw)
     except ValueError:
         return default
+
+
+def is_tcp_endpoint(path: str | None) -> bool:
+    """True for tcp://host:port or tcp:host:port endpoints."""
+    if not path:
+        return False
+    return path.startswith("tcp://") or path.startswith("tcp:")
+
+
+def parse_tcp_endpoint(path: str) -> tuple[str, int]:
+    """Parse a tcp://host:port endpoint into (host, port)."""
+    raw = path
+    if raw.startswith("tcp://"):
+        raw = raw[6:]
+    elif raw.startswith("tcp:"):
+        raw = raw[4:]
+    else:
+        raise ValueError(f"invalid TCP endpoint: {path}")
+    if ":" not in raw:
+        raise ValueError(f"invalid TCP endpoint: {path}")
+    host, port_s = raw.rsplit(":", 1)
+    if host.startswith("[") and host.endswith("]"):
+        host = host[1:-1]
+    if not host:
+        host = "127.0.0.1"
+    try:
+        port = int(port_s)
+    except ValueError as exc:
+        raise ValueError(f"invalid TCP endpoint: {path}") from exc
+    if port <= 0 or port > 65535:
+        raise ValueError(f"invalid TCP port in endpoint: {path}")
+    return host, port
+
+
+def tcp_endpoint_from_env() -> str | None:
+    """Build a TCP endpoint from MESEN2_TCP_HOST / MESEN2_TCP_PORT if set."""
+    port = os.getenv("MESEN2_TCP_PORT")
+    if not port:
+        return None
+    host = os.getenv("MESEN2_TCP_HOST") or "127.0.0.1"
+    return f"tcp://{host}:{port}"
+
+
+def _connect_socket(path: str, timeout: float) -> socket.socket:
+    if is_tcp_endpoint(path):
+        host, port = parse_tcp_endpoint(path)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        sock.connect((host, port))
+        return sock
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    sock.settimeout(timeout)
+    sock.connect(path)
+    return sock
 
 
 def cleanup_stale_sockets(verbose: bool = False) -> list[str]:
@@ -131,7 +232,7 @@ def _coerce_param_key(command_type: str, value: Any) -> dict[str, Any]:
 
 
 class MesenBridge:
-    """Communicate with Mesen2 via Unix socket server."""
+    """Communicate with Mesen2 via Unix or TCP socket server."""
 
     def __init__(
         self,
@@ -142,6 +243,7 @@ class MesenBridge:
         retry_delay: float | None = None,
         ping_timeout: float | None = None,
     ) -> None:
+        self._explicit_socket_path = socket_path
         self._socket_path = socket_path
         self._socket: socket.socket | None = None
         self._auto_reconnect = _env_bool("MESEN2_AUTO_RECONNECT", True) if auto_reconnect is None else auto_reconnect
@@ -155,9 +257,10 @@ class MesenBridge:
 
         Canonical order:
           1) explicit path (constructor arg)
-          2) MESEN2_SOCKET_PATH / MESEN2_SOCKET env vars
-          3) status files (mesen2-*.status, socketPath) by mtime
-          4) glob /tmp/mesen2-*.sock by mtime
+          2) MESEN2_SOCKET_PATH / MESEN2_SOCKET env vars (unix path or tcp://host:port)
+          3) MESEN2_TCP_HOST + MESEN2_TCP_PORT
+          4) status files (mesen2-*.status, socketPath) by mtime
+          5) glob /tmp/mesen2-*.sock by mtime
 
         Important: if an explicit socket path is provided, return it as-is.
         Callers can use `is_connected()`/`check_health()` to validate.
@@ -166,21 +269,39 @@ class MesenBridge:
         stale sockets, and to keep unit tests deterministic (no surprise
         discovery of a real emulator socket).
         """
+        handheld_mode = handheld_mode_requested()
+
         # Explicit path: do not probe (tests + deterministic callers).
         if self._socket_path:
+            if handheld_mode and not is_tcp_endpoint(self._socket_path):
+                return None
             return self._socket_path
 
         # Resolve instance->socket lazily so CLI/env can set MESEN2_INSTANCE
         # after module import (e.g., via --instance).
         _resolve_instance_socket()
+        apply_handheld_env()
 
         # Env (prefer MESEN2_SOCKET_PATH, then deprecated MESEN2_SOCKET).
         # Do not probe; send_command() will fail clearly if it's wrong.
+        # TCP endpoints are valid even though they are not filesystem paths.
         for env_var in ("MESEN2_SOCKET_PATH", "MESEN2_SOCKET"):
             env_socket = os.getenv(env_var)
             if env_socket:
+                if handheld_mode and not is_tcp_endpoint(env_socket):
+                    return None
                 self._socket_path = env_socket
                 return self._socket_path
+
+        tcp_endpoint = tcp_endpoint_from_env()
+        if tcp_endpoint:
+            self._socket_path = tcp_endpoint
+            return self._socket_path
+
+        # A handheld request must never fall through to a plausible but
+        # unrelated desktop Mesen socket.
+        if handheld_mode:
+            return None
 
         discovered = self._discover_socket_path()
         if discovered:
@@ -198,6 +319,8 @@ class MesenBridge:
                         data = json.load(f)
                     sp = data.get("socketPath")
                     if sp and isinstance(sp, str):
+                        if not is_tcp_endpoint(sp) and not os.path.exists(sp):
+                            continue
                         candidates.append((os.path.getmtime(sf), sp))
                 except (OSError, json.JSONDecodeError, KeyError):
                     continue
@@ -224,9 +347,7 @@ class MesenBridge:
     def _probe_socket(path: str) -> bool:
         """Check whether a socket responds to PING."""
         try:
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            sock.settimeout(0.5)
-            sock.connect(path)
+            sock = _connect_socket(path, 0.5)
             cmd = json.dumps({"type": "PING"}) + "\n"
             sock.sendall(cmd.encode())
 
@@ -249,7 +370,9 @@ class MesenBridge:
 
     def _reset_socket(self) -> None:
         try:
-            self._socket_path = None
+            # Reconnect only to the requested instance; discovery is for callers
+            # that did not specify a socket in the first place.
+            self._socket_path = self._explicit_socket_path
         except Exception:
             pass
 
@@ -328,6 +451,11 @@ class MesenBridge:
         # Do not require stat()-ability; some environments may hide socket
         # paths even though connect() works.
         if not path:
+            if handheld_mode_requested():
+                raise ConnectionError(
+                    "Handheld mode requires an explicit tcp:// endpoint. "
+                    "Run Scripts/Device/oos_rg353p.sh mesen-env first."
+                )
             raise ConnectionError("Mesen2 socket not found. Is Mesen2 running?")
 
         payload: dict[str, Any] = {}
@@ -344,9 +472,7 @@ class MesenBridge:
         attempts = self._max_retries if self._auto_reconnect else 0
         for attempt in range(attempts + 1):
             try:
-                sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                sock.settimeout(timeout)
-                sock.connect(path)
+                sock = _connect_socket(path, timeout)
 
                 cmd_json = json.dumps(cmd) + "\n"
                 sock.sendall(cmd_json.encode())

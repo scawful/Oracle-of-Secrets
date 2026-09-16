@@ -18,7 +18,13 @@ from .expr import ExprEvaluator, EvalContext, ExprError
 from .paths import MANIFEST_PATH, SAVE_DATA_MANIFEST_PATH, SAVE_DATA_PROFILE_DIR
 from .state_diff import StateDiffer
 from .state_symbols import load_oos_symbols
-from .bridge import cleanup_stale_sockets, MesenBridge
+from .bridge import (
+    MesenBridge,
+    apply_handheld_env,
+    cleanup_stale_sockets,
+    handheld_mode_requested,
+    is_tcp_endpoint,
+)
 from .save_data_profiles import (
     list_profiles as list_save_profiles,
     load_profile as load_save_profile,
@@ -262,7 +268,19 @@ def _resolve_instance_socket_path(instance: str) -> str | None:
 
 
 def _preflight_socket(args: argparse.Namespace) -> None:
+    handheld_mode = handheld_mode_requested()
+
+    def require_handheld_tcp(socket_path: str) -> None:
+        if handheld_mode and not is_tcp_endpoint(socket_path):
+            print(
+                "Error: MESEN2_HANDHELD=1 requires an explicit tcp:// endpoint. "
+                "Run Scripts/Device/oos_rg353p.sh mesen-env first.",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+
     if args.socket:
+        require_handheld_tcp(args.socket)
         os.environ["MESEN2_SOCKET_PATH"] = args.socket
         return
     if args.instance:
@@ -278,8 +296,24 @@ def _preflight_socket(args: argparse.Namespace) -> None:
                 file=sys.stderr,
             )
             sys.exit(2)
+        require_handheld_tcp(socket_path)
         os.environ["MESEN2_SOCKET_PATH"] = socket_path
         return
+
+    if handheld_mode:
+        apply_handheld_env()
+        target = MesenBridge().socket_path
+        if target:
+            require_handheld_tcp(target)
+            os.environ["MESEN2_SOCKET_PATH"] = target
+            return
+        print(
+            "Error: MESEN2_HANDHELD=1 requires an explicit tcp:// endpoint. "
+            "Run Scripts/Device/oos_rg353p.sh mesen-env first.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
     if os.getenv("MESEN2_SOCKET_PATH") or os.getenv("MESEN2_INSTANCE") or os.getenv("MESEN2_REGISTRY_INSTANCE"):
         return
 
