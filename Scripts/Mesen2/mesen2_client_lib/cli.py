@@ -862,6 +862,10 @@ def main():
     subparsers.add_parser("pause", help="Pause emulation")
     subparsers.add_parser("resume", help="Resume emulation")
     subparsers.add_parser("reset", help="Reset game")
+    subparsers.add_parser(
+        "stop-debugger",
+        help="Detach debugger left on by GAMESTATE/SPRITES (recovers handheld FPS)",
+    )
 
     # Disassembly command
     disasm_parser = subparsers.add_parser("disasm", help="Disassemble code")
@@ -3029,6 +3033,22 @@ def main():
             print("Reset")
         else:
             print("Reset failed")
+
+    elif args.command == "stop-debugger":
+        result = client.bridge.stop_debugger()
+        if result.get("success"):
+            data = result.get("data") or {}
+            if isinstance(data, str):
+                try:
+                    data = json.loads(data)
+                except json.JSONDecodeError:
+                    data = {}
+            print(
+                "Debugger "
+                + ("was attached; detached" if data.get("wasDebugging") else "was not attached")
+            )
+        else:
+            print("STOP_DEBUGGER failed:", result.get("error", "unknown"))
 
     elif args.command == "frame":
         if client.run_frames(args.count):

@@ -55,18 +55,18 @@ class OracleRAM:
     # Dungeon
     ROOM_ID = 0x7E048E  # Dungeon room ID (when in dungeon)
 
-    # Sprite Slots (base addresses, indexed by X)
-    SPR_X = 0x7E0D00  # Sprite X position low
-    SPR_Y = 0x7E0D10  # Sprite Y position low
-    SPR_X_HI = 0x7E0D20  # Sprite X position high
-    SPR_Y_HI = 0x7E0D30  # Sprite Y position high
-    SPR_STATE = 0x7E0D80  # Sprite state (vanilla probe sets this!)
+    # Sprite Slots (16-entry vanilla arrays, from Core/symbols.asm)
+    SPR_X = 0x7E0D10  # Sprite X position low
+    SPR_Y = 0x7E0D00  # Sprite Y position low
+    SPR_X_HI = 0x7E0D30  # Sprite X position high
+    SPR_Y_HI = 0x7E0D20  # Sprite Y position high
+    SPR_STATE = 0x7E0DD0  # Lifecycle state (0=inactive, 9=active)
     SPR_PARENT = 0x7E0DB0  # Probe parent (slot + 1)
-    SPR_HEALTH = 0x7E0DC0  # Health counter
-    SPR_TYPE = 0x7E0DD0  # Sprite type ID
-    SPR_ACTION = 0x7E0DF0  # State machine index
-    SPR_TIMER_A = 0x7E0E00  # Cooldown timer
-    SPR_TIMER_B = 0x7E0E10  # Alt timer
+    SPR_HEALTH = 0x7E0E50  # Health counter
+    SPR_TYPE = 0x7E0E20  # Sprite type ID
+    SPR_ACTION = 0x7E0D80  # Per-sprite action index (also set by probes)
+    SPR_TIMER_A = 0x7E0DF0  # Action timer
+    SPR_TIMER_B = 0x7E0E00  # Animation timer
     SPR_TIMER_D = 0x7E0EE0  # General timer (NOT probe!)
 
     # SRAM - Story Progress

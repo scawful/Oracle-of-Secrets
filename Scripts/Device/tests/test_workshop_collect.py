@@ -19,7 +19,7 @@ class Device:
         self.directory = subject.REMOTE + "/" + group + "/20260915-test-123"
         self.files = {self.directory + "/state.mss": b"MSS-state-data",
                       self.directory + "/screenshot.png": b"PNG-test-data"}
-        self.manifest = {"schema": subject.SCHEMA, "id": "20260915-test-123",
+        self.manifest = {"schema": subject.ARTIFACT_SCHEMA, "id": "20260915-test-123",
                          "status": status, "kind": kind,
                          "files": [{"name": Path(p).name, "size": len(b), "sha256": subject.sha256(b)}
                                    for p, b in self.files.items()]}

@@ -30,10 +30,12 @@ PNG = b"\x89PNG\r\n\x1a\n"
 NAMED_ROM = re.compile(r"oos-(\d+)-(\d{8})-([a-z0-9]+(?:-[a-z0-9]+)*)-([a-f0-9]{8})$")
 LABELS = {
     "part00-weather-2026-09-14": "Outdoor color/rain fix (September 14)",
+    "part00-weather-2026-09-14-treefix": "Weather + tree tile fix (September 19)",
     "minecart-junction-2026-09-15": "Minecart junction fix (September 15)",
     "minecarts-2026-09-14": "Earlier minecart fixes (September 14)",
     "room25-2026-09-14": "Water-room fix (September 14)",
 }
+MAIN_ROM_LABEL = "Main build with tree fix (September 19)"
 
 
 def now():
@@ -157,6 +159,13 @@ class Session:
 
 def catalog(root=ROOT):
     result = []
+    # Today's editable/play target lives outside TestBuilds.
+    main = root / "Roms/oos168x.sfc"
+    if main.exists():
+        data = main.read_bytes()
+        result.append({"label": MAIN_ROM_LABEL, "id": "main",
+                       "path": str(main), "sha1": hashlib.sha1(data).hexdigest(),
+                       "sha256": sha256(data)})
     for rom in sorted((root / "Roms/TestBuilds").glob("*/oos168x.sfc")):
         data = rom.read_bytes()
         result.append({"label": LABELS.get(rom.parent.name, rom.parent.name),
@@ -238,6 +247,8 @@ def status_text(result):
              f"Running build: {label}",
              f"Game: {'paused' if state.get('paused') else 'running' if state else 'unavailable'}; frame {state.get('frame', '?')}",
              f"Loaded SHA1: {(result.get('rom') or {}).get('sha1', 'unavailable')}"]
+    if state.get("debugging") is True:
+        lines.append("Warning: debugger is attached (use STOP_DEBUGGER); FPS will be low until detached")
     copies = result.get("copies", [])
     if copies and result.get("rom"):
         matches = sum(r["matches_loaded_build"] is True for r in copies)

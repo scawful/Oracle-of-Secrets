@@ -233,6 +233,22 @@ class HandheldTests(unittest.TestCase):
         self.assert_read_only(known)
         self.assert_read_only(unknown)
 
+    def test_status_warns_when_debugger_is_attached(self):
+        result = {
+            "model": "RG353P",
+            "transport": "USB",
+            "build": self.build,
+            "rom": {"filename": "oos168x.sfc", "sha1": self.build["sha1"]},
+            "run_state": {"paused": False, "frame": 10, "debugging": True},
+            "copies": [],
+            "errors": {},
+        }
+        text = handheld.status_text(result)
+        self.assertIn("debugger is attached", text)
+        self.assertIn("STOP_DEBUGGER", text)
+        result["run_state"]["debugging"] = False
+        self.assertNotIn("debugger is attached", handheld.status_text(result))
+
     def test_identity_accepts_uppercase_sha1_but_not_an_empty_identity(self):
         self.assertEqual(handheld.identify({"sha1": self.build["sha1"].upper()}, [self.build]), self.build)
         self.assertIsNone(handheld.identify({}, [self.build]))
@@ -483,11 +499,31 @@ class HandheldTests(unittest.TestCase):
     def test_catalog_rejects_a_prepared_package_after_its_rom_bytes_change(self):
         result = self.prepare()
         records = REAL_CATALOG(self.root)
-        self.assertEqual(len(records), 1)
-        self.assertEqual(records[0]["sha256"], result["build"]["sha256"])
+        prepared_id = result["build"]["id"]
+        prepared = [r for r in records if r.get("id") == prepared_id]
+        main = [r for r in records if r.get("id") == "main"]
+        self.assertEqual(len(prepared), 1)
+        self.assertEqual(prepared[0]["sha256"], result["build"]["sha256"])
+        self.assertEqual(len(main), 1)
+        self.assertEqual(main[0]["label"], handheld.MAIN_ROM_LABEL)
         rom = Path(result["folder"]) / result["build"]["rom_file"]
         rom.write_bytes(b"different bytes under the old trusted name")
-        self.assertEqual(REAL_CATALOG(self.root), [])
+        after = REAL_CATALOG(self.root)
+        self.assertEqual([r for r in after if r.get("id") == prepared_id], [])
+        self.assertEqual([r.get("id") for r in after], ["main"])
+
+    def test_catalog_includes_main_rom_outside_testbuilds(self):
+        main = self.root / "Roms/oos168x.sfc"
+        main.write_bytes(b"todays main play build")
+        treefix = self.root / "Roms/TestBuilds/part00-weather-2026-09-14-treefix"
+        treefix.mkdir(parents=True)
+        (treefix / "oos168x.sfc").write_bytes(b"treefix candidate")
+        records = REAL_CATALOG(self.root)
+        by_id = {r.get("id") or r["path"]: r for r in records}
+        self.assertEqual(by_id["main"]["sha1"], hashlib.sha1(b"todays main play build").hexdigest())
+        self.assertEqual(by_id["main"]["label"], handheld.MAIN_ROM_LABEL)
+        treefix_row = next(r for r in records if r["path"].endswith("part00-weather-2026-09-14-treefix/oos168x.sfc"))
+        self.assertEqual(treefix_row["label"], handheld.LABELS["part00-weather-2026-09-14-treefix"])
 
     def test_status_expected_sha256_fails_for_a_different_loaded_rom(self):
         for expected, code in ((self.build["sha256"].upper(), 0), ("e" * 64, 2)):

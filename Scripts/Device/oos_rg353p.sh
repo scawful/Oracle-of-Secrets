@@ -26,6 +26,7 @@ Usage:
   Scripts/Device/oos_rg353p.sh mesen-launch [--rom-on-device PATH] [--keep-hud] [--fill-screen]
   Scripts/Device/oos_rg353p.sh mesen-forward [--port 27015]
   Scripts/Device/oos_rg353p.sh mesen-health [--port 27015]
+  Scripts/Device/oos_rg353p.sh mesen-stop-debugger [--port 27015]
   Scripts/Device/oos_rg353p.sh mesen-discover [--port 27015]
   Scripts/Device/oos_rg353p.sh mesen-env [--port 27015] [--adb]
   Scripts/Device/oos_rg353p.sh mesen-workshop [--port 27015]
@@ -355,6 +356,8 @@ cmd_mesen_launch() {
   internal_hash="$(remote_sha256_as_app "${internal}")" || die "could not hash internal ROM: ${internal}"
   [[ "${source_hash}" == "${internal_hash}" ]] || die "sha256 mismatch for internal ROM: ${internal}"
   echo "verified: source=${remote} staged=${staged} internal=${internal} sha256=${source_hash}"
+  adb_dev shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1 || true
+  adb_dev shell wm dismiss-keyguard >/dev/null 2>&1 || true
   adb_dev shell cmd statusbar collapse >/dev/null 2>&1 || true
   adb_dev shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1 || true
   echo "launch: ${MESEN_PACKAGE} rom=${staged}"
@@ -373,6 +376,9 @@ cmd_mesen_launch() {
     -c android.intent.category.LAUNCHER \
     --activity-brought-to-front \
     "${extras[@]}"
+  sleep 1
+  adb_dev shell wm dismiss-keyguard >/dev/null 2>&1 || true
+  adb_dev shell cmd statusbar collapse >/dev/null 2>&1 || true
 }
 
 cmd_mesen_forward() {
@@ -400,6 +406,20 @@ cmd_mesen_health() {
   cmd_mesen_forward --port "${port}"
   echo "health: MESEN2_SOCKET_PATH=tcp://127.0.0.1:${port}"
   MESEN2_SOCKET_PATH="tcp://127.0.0.1:${port}" python3 "${ROOT_DIR}/Scripts/Mesen2/mesen2_client.py" health
+}
+
+cmd_mesen_stop_debugger() {
+  local port="${MESEN_TCP_PORT_DEFAULT}"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --port) port="$2"; shift 2 ;;
+      -h|--help) usage; exit 0 ;;
+      *) die "unknown mesen-stop-debugger arg: $1" ;;
+    esac
+  done
+  cmd_mesen_forward --port "${port}"
+  MESEN2_SOCKET_PATH="tcp://127.0.0.1:${port}" \
+    python3 "${ROOT_DIR}/Scripts/Mesen2/mesen2_client.py" stop-debugger
 }
 
 cmd_mesen_pull_workshop() {
@@ -526,6 +546,7 @@ main() {
     mesen-launch) cmd_mesen_launch "$@" ;;
     mesen-forward) cmd_mesen_forward "$@" ;;
     mesen-health) cmd_mesen_health "$@" ;;
+    mesen-stop-debugger) cmd_mesen_stop_debugger "$@" ;;
     mesen-discover) cmd_mesen_discover "$@" ;;
     mesen-env) cmd_mesen_env "$@" ;;
     mesen-workshop) cmd_mesen_workshop "$@" ;;

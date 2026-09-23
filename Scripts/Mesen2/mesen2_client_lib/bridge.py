@@ -11,6 +11,7 @@ import json
 import os
 import errno
 import socket
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -596,13 +597,27 @@ class MesenBridge:
         result = self.send_command("WRITEBLOCK", params)
         return result.get("success", False)
 
-    def press_button(self, buttons: str, frames: int = 5, player: int = 0) -> bool:
+    def press_button(self, buttons: str, frames: int = 5, player: int = 0,
+                     detach_debugger: bool = True) -> bool:
         result = self.send_command("INPUT", {
             "buttons": buttons,
             "player": str(player),
             "frames": str(frames),
         })
-        return result.get("success", False)
+        ok = result.get("success", False)
+        # INPUT uses GetDebugger(true); leave finite presses from sticky-attaching.
+        if ok and detach_debugger and frames > 0:
+            delay = max(frames, 1) / 60.0 + 0.08
+
+            def _detach():
+                time.sleep(delay)
+                try:
+                    self.stop_debugger()
+                except Exception:
+                    pass
+
+            threading.Thread(target=_detach, daemon=True).start()
+        return ok
 
     def pause(self) -> bool:
         result = self.send_command("PAUSE")
@@ -615,6 +630,10 @@ class MesenBridge:
     def reset(self) -> bool:
         result = self.send_command("RESET")
         return result.get("success", False)
+
+    def stop_debugger(self) -> dict:
+        """Detach the debugger if GAMESTATE/SPRITES/etc. left it attached."""
+        return self.send_command("STOP_DEBUGGER")
 
     def save_state(self, slot: int | None = None, path: str | None = None, allow_external: bool = True) -> bool:
         import os

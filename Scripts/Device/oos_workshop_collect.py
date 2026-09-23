@@ -13,8 +13,10 @@ import tempfile
 from oos_handheld import Device, INTERNAL, PACKAGE, ROOT, now, sha256
 
 REMOTE = INTERNAL + "/Workshop"
-SCHEMA = "oos-workshop-artifact-v1"
+ARTIFACT_SCHEMA = "oos-workshop-artifact-v1"
+VOICE_SCHEMA = "oos-workshop-voice-v1"
 MAX_FILE_SIZE = 32 * 1024 * 1024
+GROUPS = ("checkpoints", "issues", "voice-notes")
 
 
 class AppFilesDevice:
@@ -83,7 +85,7 @@ def collect(device, parent):
             result["items"].append(item)
             try:
                 rel = PurePosixPath(path).relative_to(REMOTE)
-                if len(rel.parts) != 2 or rel.parts[0] not in ("checkpoints", "issues"):
+                if len(rel.parts) != 2 or rel.parts[0] not in GROUPS:
                     raise ValueError("Unexpected Workshop item directory")
                 group, identifier = rel.parts
                 leaf(identifier)
@@ -91,8 +93,13 @@ def collect(device, parent):
                 manifest = json.loads(raw)
                 if not isinstance(manifest, dict) or not isinstance(manifest.get("files"), list):
                     raise ValueError("Workshop manifest must contain a file list")
-                kind = "checkpoint" if group == "checkpoints" else "issue"
-                if (manifest.get("schema") != SCHEMA or manifest.get("id") != identifier
+                if group == "voice-notes":
+                    kind = "voice"
+                    expected_schema = VOICE_SCHEMA
+                else:
+                    kind = "checkpoint" if group == "checkpoints" else "issue"
+                    expected_schema = ARTIFACT_SCHEMA
+                if (manifest.get("schema") != expected_schema or manifest.get("id") != identifier
                         or manifest.get("kind") != kind):
                     raise ValueError("Workshop manifest identity does not match its directory")
                 target = folder / group / identifier
@@ -102,6 +109,10 @@ def collect(device, parent):
                             device_status=manifest.get("status"),
                             title=manifest.get("title") if isinstance(manifest.get("title"), str) else None,
                             note=manifest.get("note") if isinstance(manifest.get("note"), str) else None,
+                            frame=manifest.get("frame") if isinstance(manifest.get("frame"), int) else None,
+                            sha1=manifest.get("sha1") if isinstance(manifest.get("sha1"), str) else None,
+                            duration_ms=manifest.get("duration_ms")
+                            if isinstance(manifest.get("duration_ms"), int) else None,
                             game_state=manifest.get("game_state")
                             if isinstance(manifest.get("game_state"), dict) else None,
                             sprites=manifest.get("sprites")
@@ -136,10 +147,14 @@ def collect(device, parent):
                     raise ValueError("; ".join(item["file_errors"]))
                 if manifest.get("status") != "complete":
                     raise ValueError("Device artifact is incomplete; available evidence was retained")
-                if not any(n.endswith(".png") for n in names):
-                    raise ValueError("Completed artifact has no game screenshot")
-                if not any(n.endswith(".mss") for n in names):
-                    raise ValueError("Completed artifact has no emulator state")
+                if kind == "voice":
+                    if "note.m4a" not in names:
+                        raise ValueError("Completed voice note has no audio")
+                else:
+                    if not any(n.endswith(".png") for n in names):
+                        raise ValueError("Completed artifact has no game screenshot")
+                    if not any(n.endswith(".mss") for n in names):
+                        raise ValueError("Completed artifact has no emulator state")
                 item["status"] = "complete"
             except (OSError, RuntimeError, ValueError, KeyError, TypeError,
                     subprocess.TimeoutExpired) as exc:
