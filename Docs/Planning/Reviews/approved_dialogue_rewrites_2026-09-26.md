@@ -45,3 +45,42 @@ Supersedes the id 311 entry in `Data/dialogue/maiden_upgrades_dialogue.json`
 (agent-written "trade liaison between Goron and Zora ... before the mistrust";
 conflicts with the style rule and with D6's place in the dungeon order). Do not
 import that entry.
+
+## Attract narration $1C0-$1C3 (expanded bank)
+
+Approved by scawful 2026-09-26 ("approve text for now"; may be tweaked later).
+Middle ground between scawful's original 0x112-0x115 and the 2026-09-24 agent
+draft. These are expanded messages: edit `Data/dialogue/expanded_messages.json`
+(entries 51-54, id = message - 0x18D), then `z3ed message-source-sync`
+(dry-run, then `--write`), then build. Check line widths with
+`z3ed message-doctor`. Card 5 is longer than the old dungeon-card budget
+(about 3 lines + 1 scroll line in ~9 s): extend its `$64` timer in
+`Dungeons/attract_scenes.asm` and verify in an emulator.
+
+Scene context (decisions.org "Attract scene direction"): 1-2 storybook,
+3 great hall full with Farore beside the Hylian commander, 4 soldiers arrest a
+villager, 5 same hall empty with one knight, then the map zoom onto Tail Pond.
+
+$1C0 (storybook, cards 1-2):
+
+```
+[SPD:00][C:07][S:03][W:02][IMG]Not long ago, the kingdom of[2]Hyrule was aided by a mythical[3]hero to protect the Triforce[...][WT:09][V]Far away, the island of[V]Kalyxo, home of Farore,[V]lived by its own ways.[WT:09][IMG][IMG][V]Its miners and river scholars[V]built a mirror to another[V]realm, the Eon Abyss.[WT:09][V]Its strange beauty drew[V]explorers in. Many never[V]came back[...][WT:09]
+```
+
+$1C1 (card 3, great hall):
+
+```
+[W:02][C:07][S:03][1]Word reached Hyrule of a[2]Golden Power beyond the[3]mirror. Its king sent[WT:05][V]soldiers to guard it.[WT:05]
+```
+
+$1C2 (card 4, escort):
+
+```
+[W:02][C:07][S:03][1]Roads and forts came with[2]them, and new laws. They[3]claimed it was to protect[WT:05][V]the island. Many called[V]it an invasion.[WT:05]
+```
+
+$1C3 (card 5, empty hall):
+
+```
+[W:02][C:07][S:03][1]But as years passed, the zeal[2]to protect waned into neglect.[3]The guardians grew complacent[...][WT:05][V]One knight kept watch alone.[WT:05][V]Now dark forces stir in the[V]Abyss, and the destiny of the[V]Oracle of Secrets draws near.[WT:05]
+```

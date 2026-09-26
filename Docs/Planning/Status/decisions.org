@@ -16,7 +16,7 @@ the linked doc holds the detail.
   Bug: a Deku Scrub "peacetime" line sets MapIcon ($7EF3C7) to 2 before D1, so
   the map shows D2-D7 and never D1. The doc proposes a reveal table (per
   dungeon: which story event shows its icon) and two flagged fixes.
-  Answer:
+  Answer: Audit all the NPCs that set MapIcon or progression flags which affect maps to create a better timeline of events for the map icons to follow
 
 * OPEN Impa's arc and how she escapes Kydrog's ambush
   :PROPERTIES:
@@ -34,7 +34,7 @@ the linked doc holds the detail.
   :DOC:      [[file:../Plans/impa_role_brainstorm_2026-09-26.md]]
   :END:
   The brainstorm recommends Pearl first, then Minish.
-  Answer:
+  Answer: If we don't give the player the moon pearl or do the minish puzzle, we are just giving them the moon pearl for free in which case the shrine of origins needs some traversal based puzzle or switch puzzle or something.
 
 * OPEN Dialogue audit: which fixes to apply
   :PROPERTIES:
@@ -57,7 +57,7 @@ the linked doc holds the detail.
   2. Windows > Cutscene Camera on area 2D: drag the view (stops at edges), place Link, Copy JSON.
   Answer:
 
-* OPEN yaze: merge the finished claude/* branches?
+* DECIDED yaze: merge the finished claude/* branches?
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff
   :END:
@@ -69,7 +69,8 @@ the linked doc holds the detail.
   - claude/vanilla-message-import (79c60ad10): done; dictionary encoding, minimal write range; used for the $25/$36/$83/$C7 base-ROM writes; 143/143 message tests.
   - claude/eager-kirch-2752fa (2f89c6e30 + e5e2d103c): emulator maps ROM by max(header $7FD7, file size), fixes Oracle banks $20+/$40-$41 mirroring; SRAM $F0 write fix; 75/75 emulator tests.
   - claude/emulator-integration (c931f9dd1): graphics session's integration branch that already merges the sizing fix.
-  Answer: merge which, into what (master or an integration branch), and who pushes.
+  Answer: scawful asked the yaze graphics session directly (2026-09-26) to review and
+  merge everything done into claude/integration-2026-09-26; push/master merge still his call.
 
 * DECIDED Dual Swords PvP: knockback only, or also cost a heart?
   :PROPERTIES:
@@ -205,3 +206,27 @@ the linked doc holds the detail.
   temple's makers; the Ranch Girl owning one is fine.
   Answer: "approve. and yeah it's fine, ocarina made by the zora but some girl
   has one nbd" (scawful, 2026-09-26).
+
+* DECIDED Attract scene direction (rooms, zoom, art)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Plans/intro_plan_2026-09-24.md]]
+  :END:
+  1. The map zoom lands on Tail Pond ($2D), where the new-game experiment
+     scene opens.
+  2. Cards are not bound to vanilla throne/prison/altar. Vanilla Hyrule Castle
+     rooms may be restyled as Kalyxo Castle (e.g. the throne room with the pan
+     up, filled with guards, Zora, villagers, Farore), and new rooms may be
+     designed for the attract.
+  3. Wanted: edit the storybook drawings and the background animation
+     graphics with the yaze graphics/screen editor (tool support unverified).
+  Answer: "yes i like the tail pond map zoom in and other than real rooms we
+  could also use the rooms from OG hyrule castle as well in the kalyxo castle
+  style ... we could design rooms for this stuff too. also editing the graphics
+  of the intro background animation and even the actual drawings with yaze
+  graphics editor/screen editor would be nice to have" (scawful, 2026-09-26).
+  Follow-up (scawful, 2026-09-26): card 3 great hall shows Farore beside the
+  Hylian commander ("sure, can tweak later if needed"); card 4 escort shows
+  soldiers arresting a Kalyxo villager ("yes").
+  Narration $1C0-$1C3 approved "for now" (scawful, 2026-09-26); exact text in
+  Reviews/approved_dialogue_rewrites_2026-09-26.md.
