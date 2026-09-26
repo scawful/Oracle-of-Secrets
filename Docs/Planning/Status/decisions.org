@@ -472,3 +472,20 @@ the linked doc holds the detail.
   the gap where waters flow." The Shrine of Wisdom gate is Flippers. Leftover,
   or an optional second route? Settle when the swamp chunk is designed.
   Answer:
+
+* DECIDED Yesterwind: the realm's true name and its central village
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  "Eon Abyss" stays as the outsiders' term (scholars, Hylians; all existing
+  text keeps it). "Yesterwind" is what the people living there call the realm,
+  and the central village is the Village of Yesterwind. Answers beat sheet
+  open question 6 (the Abyss's true name). Replaces "Village of Outcasts"
+  (0x0AF, area sign of $58/$5B; $58 now gets the Forest of Dreams sign) and
+  "Village of Echoes" (0x1AE, Eon Zora ring hint: Vasu's appraiser lives in
+  the village - rewrap lines after the rename).
+  Optional ending touch (beat 30): the final line says "Yesterwind" instead
+  of "Abyss". Draft lines pending approval: 0x0AF sign; one villager reveal
+  line.
+  Answer: "yesterwind is great ... if not then yeah def the village/central
+  region name"; then "both" (scawful, 2026-09-26).
