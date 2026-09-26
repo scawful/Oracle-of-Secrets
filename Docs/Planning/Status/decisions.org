@@ -526,6 +526,14 @@ the linked doc holds the detail.
      near the special overworld. Base = the East Kalyxo Hylian garrison/port
      idea; same overworld, no warp.
   3. Story slot: after the Master Sword (beat 25), before D8.
+  5. Access: the tower is the ONLY way into the Sky. The current foot bridge
+     from Korok Cove to the Sky clouds is a test connection; remove it.
+     Korok Cove = special large area $81 ($81/$82/$89/$8A), reached from the
+     graveyard east of the Hall of Secrets, connecting to East Kalyxo. Sky
+     maps: special $84-$87/$8C-$8F (rough drafts in ROM, viewed in yaze
+     2026-09-26: green pillared stairs through white clouds = tower exit;
+     stepped temple with a pale-blue center pane = Observatory candidate;
+     ice temple; walled stone yard with rubble; floating rocks).
   4. D8 Fortress of Secrets is in the Abyss: the mirrored map of the large
      Zora River map to the east (exact map ID to confirm).
   Answer: "the watchtower pitch is great especially since oracle doesn't have
@@ -534,3 +542,51 @@ the linked doc holds the detail.
   special overworld"; "The fortress of secrets is in the dark world, the
   mirrored map to the zora river large map to the east" (scawful,
   2026-09-26).
+
+* DECIDED yaze graphics saves: turn on the three Oracle project settings?
+  :PROPERTIES:
+  :ASKED_BY: Yaze graphics editor session (G2, 2026-09-26)
+  :DOC:      [[file:~/src/hobby/yaze-practice/graphics-evidence/2026-09-26/g2/README.md]]
+  :END:
+  G2 ran the full flow on a copy (yaze claude/gfx-png-app ac70834e3): imported a
+  placeholder Abyss Stalfos into sheet 0x8A block 13; save relocated the sheet to
+  bank $23 (3 pointer bytes + the stream changed, readback identical); set
+  spriteset 0x0B slot 3 = 0x17 (1 byte); reopened; Oracle build exit 0; headless
+  Mesen showed the tiles in VRAM. Proposed Oracle-of-Secrets.yaze changes:
+  save_graphics_sheet=true, save_gfx_groups=true (new line),
+  save_dungeon_pot_items=false (stops a pot-item prompt on every save).
+  Recommendation (Claude): all three.
+  Answer: "yes all of the above i think. whatever u think" (scawful, 2026-09-26).
+  Applied to Oracle-of-Secrets.yaze by the integrator.
+
+* DECIDED Abyss fixes follow-ups: $5B sign, signposts, dream return
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff (Abyss fixes agent)
+  :DOC:      [[file:../../../Data/rom_patches/abyss_area_signs_2026-09-26.json]]
+  :END:
+  Applied to the base ROM (ac544166 -> 517f43a9, backup
+  Roms/oos168.pre-abyss-fixes-2026-09-26.sfc): LW $31 warp corners (char $1E2 tile
+  type $4B -> $02; tile16 $BA8 snout quadrant -> ocean water), $63/$64/$6B/$6C area
+  message -> $AF, the five Abyss area signs -> $1FB-$1FF, and $AF text "This is the
+  Village of / Yesterwind...".
+  1. $5B sign: give it its own line (it currently reads $AF too). Text: TO-DRAFT.
+  2. Signposts for $40/$50/$58/$5D/$6A: scawful places them in yaze (tile16 $17D)
+     while reworking those maps.
+  3. Dream return: (c) now: a normal reload through entrance $68 (Link at the Dream
+     Hut door) so a dream can't strand the player; (a) scripted wake-in-bed later.
+  Answer: "yes all of the above i think. whatever u think" (scawful, 2026-09-26),
+  to Claude's recommendations (own line, scawful places signposts, c now / a later).
+
+* DECIDED Dialogue batch vanilla write + Korok night list
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :END:
+  1. Write the 9 vanilla messages of the approved dialogue audit batch (0x00E, 0x020,
+     0x056, 0x059, 0x099, 0x105, 0x132, 0x147, 0x15A; bundle
+     scratchpad/patches/dialogue_batch/vanilla_bundle.json).
+  2. Koroks at night and after D7: map $81's phase-2 sprite pointer shares the
+     phase-1 list (PC $1417BA 81 C8 -> B7 CE).
+  Applied: base SHA-1 517f43a9 -> a5de4a36 (backup
+  Roms/oos168.pre-dialogue-batch-korok-night-2026-09-26.sfc); readback = bundle, only
+  those 9 messages changed; outside the text regions only the 2 pointer bytes.
+  Answer: "1. Yes 2. Yes" (scawful, 2026-09-26).
