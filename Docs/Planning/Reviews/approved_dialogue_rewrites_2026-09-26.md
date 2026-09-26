@@ -5,7 +5,11 @@ Approved by scawful in the Claude story/design discussion session, 2026-09-26
 people of Kalyxo first, race second".
 
 These are vanilla-bank messages: they need a base-ROM write (`Roms/oos168.sfc`)
-in the dialogue-audit write pass. Nothing has been written yet. Validate byte
+in the dialogue-audit write pass. Written 2026-09-26 (scawful: "yes"): $36, $E6,
+0x135 and 0x137 via `z3ed message-import-bundle --range=vanilla --apply` (yaze
+importer 79c60ad10); readback equals this file; no other message changed.
+Base ROM SHA-1 4728809b -> 80165df5 (backup `Roms/oos168.pre-abyss-maiden-text-2026-09-26.sfc`).
+Not written: the new Owl line (expanded bank) and the attract narration $1C0-$1C3. Validate byte
 length against the bank with z3ed before writing; both drafts are shorter than
 the current text.
 
@@ -122,4 +126,22 @@ sentence with a direction. Rest unchanged.
 
 ```
 Hoo hoo! We meet again,[2][L].[K][V]This realm is a mirror,[V]a reflection of forgotten[V]dreams and shadowed paths.[K][V]Though you hold the Moon[V]Pearl, beware, for not all[V]is as it seems in the Abyss.[K][V]Deep in the Forest of Dreams,[V]just south of here, a sword[V]awaits you, a blade to cut[K][V]through the veil of deception.[V]But remember, young one,[V]even the sharpest blade[K][V]cannot sever all bonds.[V]Hoo hoo![K]
+```
+
+## $35 Impa telepathy (vanilla bank, base-ROM write)
+
+Approved by scawful 2026-09-26 ("yes impa spared as messenger"). Kydrog spares
+Impa as a messenger to Zelda. Quote marks from the chat draft were removed
+because the font's quote glyph is unverified.
+
+Current:
+
+```
+[W:02][S:03][L], it's Impa.[2]I'm speaking to you [3]telepathically from the[K][V]Hall of Secrets. Farore has[V]been taken by Kydrog and [V]I had to flee. I'm safe now[...]
+```
+
+Approved:
+
+```
+[W:02][S:03][L], it's Impa. I'm[2]speaking to you from the[3]Hall of Secrets.[K][V]Kydrog took Farore.[V]He let me go, to tell[V]Zelda that Hyrule is[K][V]too late. I could not[V]stop him. I'm safe now[...]
 ```

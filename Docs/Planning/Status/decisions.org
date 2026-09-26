@@ -8,7 +8,7 @@ decision, options inside, a link to the full doc). scawful answers under
 answer from here and move the result into =Docs/oracle.org=. Keep entries short;
 the linked doc holds the detail.
 
-* OPEN World map dungeon icons: when does each icon appear?
+* DECIDED World map dungeon icons: when does each icon appear?
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff
   :DOC:      [[file:../../Debugging/Issues/world_map_icons_2026-09-26.md]]
@@ -17,8 +17,25 @@ the linked doc holds the detail.
   the map shows D2-D7 and never D1. The doc proposes a reveal table (per
   dungeon: which story event shows its icon) and two flagged fixes.
   Answer: Audit all the NPCs that set MapIcon or progression flags which affect maps to create a better timeline of events for the map icons to follow
+  Proposed timeline: (audit and screenshots: doc section 5; built behind
+  !ENABLE_MAP_ICON_TIMELINE, default off, map only, no NPC changes)
+  - D1: Maku Tree meeting until D1 is done.
+  - D2: Ranch Girl gives the Ocarina (beat 10) until D2 is done.
+  - D3: after D2. Pyramid: after D3.
+  - D4, D5, D6 and D7: all appear after D3; each hides when done.
+    (Or D7 only after the Song of Soaring?)
+  - Hall of Secrets: Maku Tree until Impa is met there (the Elder no longer
+    hides it).
+  Also found: the likely pre-D1 writer is the Ranch Boy, not the Deku Scrub.
+  And D1's crystal bit is $02 and D6's is $01; Core/sram.asm has them swapped.
+  Answer (scawful, 2026-09-26), to the four follow-ups:
+  1. D7 timing: "after song of soaring only since it's more of a late game thing ?"
+     -> D7 appears only after the Song of Soaring; D4-D6 after D3 as proposed.
+  2. Fix the swapped D1/D6 bit names (sram.asm, Flag_Ledger, Elder hint): "sure yes fix it".
+  3. Stop the Ranch Boy / Deku MapIcon writes (flagged): "yes".
+  4. Dark World pendant, Master Sword, Fortress icons stay unchanged for now: "sounds good".
 
-* OPEN Impa's arc and how she escapes Kydrog's ambush
+* DECIDED Impa's arc and how she escapes Kydrog's ambush
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff
   :DOC:      [[file:../Plans/impa_role_brainstorm_2026-09-26.md]]
@@ -26,15 +43,26 @@ the linked doc holds the detail.
   Four options (protector who fails and redeems; messenger to Zelda;
   OoA-style possession twist, two-villain risk; quiet guardian of the Hall).
   Decides whether msg $35 changes.
-  Answer:
+  Answer: new option, not in the brainstorm: Kydrog spares Impa on purpose as
+  a messenger to Zelda (a bitter message from the Hyrule knight the crown
+  abandoned; first hint of the man inside Kydrog). She stays in the Hall of
+  Secrets as guide and link to Zelda. $35 changes; approved text in
+  Reviews/approved_dialogue_rewrites_2026-09-26.md. scawful, 2026-09-26: "yes
+  impa spared as messenger".
 
-* OPEN Abyss order: Moon Pearl first, Minish first, or both in one beat? (beat sheet OPEN #2)
+* DECIDED Abyss order: Moon Pearl first, Minish first, or both in one beat? (beat sheet OPEN #2)
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff
   :DOC:      [[file:../Plans/impa_role_brainstorm_2026-09-26.md]]
   :END:
   The brainstorm recommends Pearl first, then Minish.
-  Answer: If we don't give the player the moon pearl or do the minish puzzle, we are just giving them the moon pearl for free in which case the shrine of origins needs some traversal based puzzle or switch puzzle or something.
+  Answer: Minish first, Pearl as the Shrine of Origins reward (as built:
+  $15B stumps, $38 pot sign, Minish shutter). Overrides the brainstorm's
+  Pearl-first recommendation. Minish stumps also work without the Pearl;
+  scawful notes the segment is "a bit confusing" - revisit after the timed
+  Abyss playtest. scawful, 2026-09-26: "yes, that's how it was designed. even
+  without the pearl the player can use minish stumps though it's all a bit
+  confusing i know".
 
 * OPEN Dialogue audit: which fixes to apply
   :PROPERTIES:
