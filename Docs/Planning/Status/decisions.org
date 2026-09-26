@@ -64,7 +64,7 @@ the linked doc holds the detail.
   without the pearl the player can use minish stumps though it's all a bit
   confusing i know".
 
-* OPEN Dialogue audit: which fixes to apply
+* DECIDED Dialogue audit: which fixes to apply
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff
   :DOC:      [[file:../Reviews/dialogue_audit_2026-09-26.md]]
@@ -72,7 +72,22 @@ the linked doc holds the detail.
   136 messages flagged; 63 need a base-ROM write (after the yaze importer fix).
   The report opens with a "fix first" list. Answer "fix-first list", "all
   typos", or list IDs.
-  Answer:
+  Answer (scawful, 2026-09-26, reviewed against the day's rulings):
+  A. Approve mechanical fixes: 0x020 box split, 0x15A "soothe", 0x083
+     "newfound"/"legendary", D8 Windmill control codes, D11 Magic Powder, and
+     the Maku control-code fix 0x1C5-0x1CA (render-check one message first).
+  B. Approve story drafts D1 (cut "Kydrog wants them all": Twinrova hunts the
+     essences), D2, D3 (+ move the MapIcon_TailPond write to the Ocarina
+     receipt), D4, D6, D7, D10.
+  C. Hold: D5 0x173 ending (written for the superseded "residue" idea;
+     redraft for Ganon's defeat); D9 0x137 (superseded by the approved 0x137
+     rewrite); D9 0x133 (check "The Deku" against the style rule).
+  D. Names: "Toto Ranch" (not Loom Ranch); "Rock Meat" (not Rock Sirloin);
+     "Pegasus Shoes" (not Running Boots); keep Silver Arrows (finale may reuse
+     vanilla Ganon). Abyss village name: OPEN, scawful asked for alternatives
+     to "Village of Outcasts"/"Village of Echoes".
+  Quotes: "A yes B yes C hold D 1. Toto Ranch 2. Rock Meat 3. alternative
+  name pls 4. yes 5. we can keep them idk".
 
 * OPEN yaze hand-check: paired collision save + cutscene camera
   :PROPERTIES:
