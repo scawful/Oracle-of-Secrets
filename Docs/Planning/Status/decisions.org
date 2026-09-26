@@ -421,3 +421,39 @@ the linked doc holds the detail.
   (finale). Exact gates and map membership pending a scan of existing warp
   tiles and crossings.
   Answer: "yes chunks / rings" (scawful, 2026-09-26).
+
+* DECIDED Abyss return: the portal you came in on
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../../../Sprites/Objects/deku_leaf.asm]]
+  :END:
+  Intended way back from any Abyss chunk: a return portal at the spot where
+  Link arrived. Code gap (warp scan 2026-09-26, code/ROM reading, not
+  runtime-tested): vanilla spawns portal sprite $6C only in the Light World
+  after an Abyss -> Kalyxo crossing (Sprite_ReinitWarpVortex); Kalyxo -> Abyss
+  pads leave no portal, and the only Abyss pad is DW $6A. RC task: spawn a
+  return portal at the Abyss arrival point after a Kalyxo pad crossing;
+  verify in Mesen.
+  Answer: "prob the portal they came in on as intended way back is my
+  thought" (scawful, 2026-09-26); "record it".
+
+* DECIDED Shrine of Wisdom chunk entry (inferred, verify in play)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../../World/LocationRegistry.md]]
+  :END:
+  Shrine of Wisdom = entrance $33 on DW $63 (large: $63/$64/$6B/$6C), the
+  parallel of Wayward Village $23; leads to room $C9, pendant room $7A.
+  Inferred entry: Kalyxo pad on LW $25 (east of the village) -> DW $65 ->
+  walk west into $63. The village east road (blocked in the intro, Impa hint
+  $1C4) is the unlock. Not played; confirm the $25 pad is reachable pre-D4.
+  Answer: "record it" (scawful, 2026-09-26).
+
+* OPEN $63 sign $C1: Ice Rod riddle vs. Flippers gate
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  $63's area sign reads "A chilling spell from the rod must flow, to bridge
+  the gap where waters flow." The Shrine of Wisdom gate is Flippers. Leftover,
+  or an optional second route? Settle when the swamp chunk is designed.
+  Answer:
