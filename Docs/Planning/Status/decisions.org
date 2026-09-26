@@ -484,6 +484,9 @@ the linked doc holds the detail.
   (0x0AF, area sign of $58/$5B; $58 now gets the Forest of Dreams sign) and
   "Village of Echoes" (0x1AE, Eon Zora ring hint: Vasu's appraiser lives in
   the village - rewrap lines after the rename).
+  Village map: DW $63 (confirmed by scawful, 2026-09-26: "yes it's 0x63"),
+  the Wayward Village ($23) parallel; scawful will rework the swamp into a
+  village on stilts. Repoint $63's area message from $C1 to 0x0AF.
   Optional ending touch (beat 30): the final line says "Yesterwind" instead
   of "Abyss". Draft lines pending approval: 0x0AF sign; one villager reveal
   line.
