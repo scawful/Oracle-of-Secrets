@@ -377,3 +377,47 @@ the linked doc holds the detail.
   6. $41 plaque text unlocked: "Here the blade waits / for the hand that /
      carries the key."
   Answer: "yes split that works for me" (scawful, 2026-09-26).
+
+* DECIDED Dream structure: one dream per pendant, wake in the hut
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Plans/dream1_sealing_war_storyboard_2026-09-26.md]]
+  :END:
+  Maple's pendant check (Sprites/NPCs/maple.asm) selects the dream:
+  Wisdom -> Dream 1 "The Sealing War" (Kydrog's fall);
+  Power -> Dream 2 "The Oracle's Choice" (Farore goes to Hyrule's king and
+  discloses the prison; her private role);
+  Courage -> Dream 3 "The Healing Revelation".
+  After each dream Link wakes in the Dream Hut bed and Maple says a light,
+  funny line. Maple: cheerful dream-reader witch.
+  Known code gaps (inventory, not runtime-checked): hut door $68 on $5D loads
+  empty room $11A (Maple is in $0F); dream warps go to placeholder rooms; no
+  return from a dream; $1B8 promises the Master Sword through pendants
+  (contradicts canon). Hut location: stays on $5D for now; a move depends on
+  GFX sheet distribution and the Abyss-return plan (open).
+  Answer: "yes that works, plays into the power theme i think"; wake in hut:
+  "yes" (scawful, 2026-09-26).
+
+* DECIDED Intro Abyss exit: the sword cuts Link home
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Replace the DW $6A warp-tile exit (long walk; vanilla spawns a stray return
+  portal after a DW warp) with a scripted warp: picking up the sword in the
+  Forest of Dreams plays a short flash/slash scene and warps Link to the Maku
+  Tree area ($2A). Pays off $E6 "a blade to cut through the veil". Feasibility
+  of a scripted warp without the portal needs checking first.
+  Answer: "if we can do that sort of warp then yes, the sword would be
+  awesome" (scawful, 2026-09-26).
+
+* DECIDED The Abyss opens in chunks across the game
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Each return trip opens one more chunk, gated by a newly gained item. Working
+  draft: intro chunk (pyramid + Forest of Dreams; Dream Hut visible but out of
+  reach); Flippers chunk (Shrine of Wisdom + Dream Hut, Dream 1); whirlpool
+  chunk (Song of Storms, post-D4; Eon Gorons / Shrine of Power); volcano chunk
+  (finale). Exact gates and map membership pending a scan of existing warp
+  tiles and crossings.
+  Answer: "yes chunks / rings" (scawful, 2026-09-26).
