@@ -512,3 +512,25 @@ the linked doc holds the detail.
   Answer: "i like this inclusion but we can drop the decades line it could
   show up in lore later on"; "$21 can be adjusted but leave the joke"
   (scawful, 2026-09-26).
+
+* DECIDED Sky Islands role: Hyrule's abandoned watchtower (a tall tower dungeon)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  1. Decades ago the garrison built a watch over the seal; Hyrule recalled
+     the watchers and abandoned it. Up top: watch logs that stop mid-entry
+     (proof of Hyrule's neglect), a view of the volcano stirring after the
+     Master Sword pull; optional islanders who left for the clouds.
+  2. A tall tower dungeon (Oracle has none yet) climbs from the ground to the
+     Sky Islands. Location: east of Korok Cove, north of the Sea Zora area,
+     near the special overworld. Base = the East Kalyxo Hylian garrison/port
+     idea; same overworld, no warp.
+  3. Story slot: after the Master Sword (beat 25), before D8.
+  4. D8 Fortress of Secrets is in the Abyss: the mirrored map of the large
+     Zora River map to the east (exact map ID to confirm).
+  Answer: "the watchtower pitch is great especially since oracle doesn't have
+  a tall tower dungeon like other rom hacks this is perfect to add one to the
+  east of korok cove and north of the sea zora area and has us nearby for the
+  special overworld"; "The fortress of secrets is in the dark world, the
+  mirrored map to the zora river large map to the east" (scawful,
+  2026-09-26).
