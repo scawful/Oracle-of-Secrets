@@ -230,3 +230,85 @@ the linked doc holds the detail.
   soldiers arresting a Kalyxo villager ("yes").
   Narration $1C0-$1C3 approved "for now" (scawful, 2026-09-26); exact text in
   Reviews/approved_dialogue_rewrites_2026-09-26.md.
+
+* DECIDED Arrival: add a rescue voice on black between the fall and the bed
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Plans/intro_plan_2026-09-24.md]]
+  :END:
+  After the fall, show 1 message over black (someone finds Link and carries
+  him in), then the existing bed wake-up; add one wake-up line from a villager
+  in the house pointing to the beach. Draft text and speaker (rec: Impa's
+  voice) still need approval. Later upgrade: a real Loom Beach landing shot,
+  sharing the overworld-cutscene work with the experiment scene. The
+  experiment scene exists but currently shows no sprites (scawful).
+  Rejected for now: waking on the beach with no bed (respawn and new-game
+  spawn problems).
+  Answer: "yeah we can start with the dialogue and black, though the
+  experiment scene does exist it just needs work as there's no sprites showing
+  during it currently" (scawful, 2026-09-26).
+
+* DECIDED Abyss respawn lock lasts until Link escapes the Abyss
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../../../Overworld/overworld.asm]]
+  :END:
+  Current code (read, not runtime-tested): LoadDarkWorldIntro
+  (Overworld/overworld.asm:94-115) forces Dark World $40 on outdoor loads while
+  GameState == 2 and OOSPROG < 2 (label .has_pearl), so the lock may end at the
+  Pearl, before the sword and return. It also runs only when $1B == 0
+  (outdoor load). Required: death/continue anywhere in the Abyss before the
+  escape respawns in the Abyss. Verify in Mesen first (die after Pearl, before
+  sword); fix or reimplement if it fails.
+  Answer: "yes if that's bugged / wrong let's fix or reimplement" (scawful,
+  2026-09-26).
+
+* DECIDED Part00 checkpoint after the village hole
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  After Link passes through the village-hole underground route, death/continue
+  respawns there (an interior spawn along the route), not back at the house
+  before the village chase. Exact spawn room and trigger: RC leader to propose.
+  Answer: "yes since that area has keese and rats and shit u could die"
+  (scawful, 2026-09-26).
+
+* DECIDED Impa is the rescue voice on black
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Impa finds Link after the fall and has him carried into a villager's house;
+  the house is not Impa's, so she is free to leave for the Hall of Secrets
+  later. Draft lines pending approval (see the next discussion turn).
+  Answer: "yeah prob impa, that way we arent tied to her living in this house
+  when she goes to the hall of secrets but she's there in the begin" (scawful,
+  2026-09-26).
+
+* DECIDED Arrival lines A/B/C approved, with a repeat line for B
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  A (Impa, on black): "...Hey! Can you hear me? ‖ ...Out cold. You there! /
+  Help me carry him inside."
+  B (villager, wake-up, first time): "Oh, you're awake! You / fell out of the
+  sky in / last night's storm. ‖ The woman who carried / you in went back down
+  / to the beach."
+  B2 (villager, after a death): "Back again? The beach, / remember. She's
+  waiting."
+  C ($25 opening): "You're awake. Good. / I am Impa. Princess / Zelda sent me
+  here. ‖ ..." then the 2026-09-25 draft continues.
+  Answer: scawful, 2026-09-26: "go" (after asking for Claude's pick).
+
+* DECIDED Abyss segment: fix direction before cutting content
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  1. Rewrite $36 to name a landmark (Shrine of Origins west of the pyramid).
+  2. Owl appears twice: new early line on the arrival area pointing to the
+     shrine; $E6 after the Pearl points to the sword.
+  3. Do not extend Origins (overrides the beat-sheet "modestly extend Origins"
+     note). Keep the Minish puzzle; add no rooms.
+  4. Respawn lock until escape (separate entry).
+  5. Then one timed playtest (minutes per step); cut content only if a step
+     is still long.
+  Answer: scawful, 2026-09-26: "go".
