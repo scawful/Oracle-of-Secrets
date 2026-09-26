@@ -3,12 +3,12 @@
 ;
 ; NARRATIVE ROLE: Central dispatcher for all Zora NPC variants. Routes
 ;   to the appropriate draw/main routines based on location and world.
-;   The Zora race is divided by the Schism - Sea Zoras in Kalyxo,
-;   Eon Zoras in the Abyss, and the Princess in D4 (Zora Temple).
+;   Variants: Kalyxo Zora NPCs, Abyss residents, and the Zora
+;   Princess in D4 (Zora Temple).
 ;
 ; TERMINOLOGY: "Zora" = Zora (dispatcher)
-;   - "Sea Zora" - Kalyxo NPCs (friendly after reconciliation)
-;   - "Eon Zora" - Abyss NPCs (temporally displaced, friendly)
+;   - "Sea Zora" - Kalyxo NPCs
+;   - "Eon Zora" - Abyss NPCs
 ;   - "Zora Princess" - D4 boss room, gives Zora Mask
 ;   - "Eon Zora Elder" - Subtype 1, Sea Shrine guide
 ;
@@ -41,11 +41,10 @@
 ;   SprSubtype - Elder variant detection
 ;
 ; RELATED:
-;   - zora_princess.asm (D4 revelation, Zora Mask)
+;   - zora_princess.asm (D4 Song of Healing, Zora Mask)
 ;   - eon_zora.asm (Abyss variant logic)
 ;   - eon_zora_elder.asm (Sea Shrine guide)
-;   - sram_flag_analysis.md (Zora reconciliation flags)
-;   - jiggly-spinning-newt.md (Zora conflict resolution plan)
+;   - Docs/Technical/sram_flag_analysis.md
 ; =========================================================
 
 Sprite_Zora_Long:

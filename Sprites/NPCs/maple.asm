@@ -208,9 +208,9 @@ Link_FallIntoDungeon:
   RTS
 
   .entrance
-  db $78 ; 0x00 - Deku Dream
-  db $79 ; 0x01 - Castle Dream
-  db $7A ; 0x02 -
+  db $78 ; 0x00 - Wisdom: Dream 1 "The Sealing War" (placeholder room)
+  db $79 ; 0x01 - Power: Dream 2 "The Oracle's Choice" (placeholder room)
+  db $7A ; 0x02 - Courage: Dream 3 "The Healing Revelation" (placeholder)
   db $81 ; 0x03
 }
 

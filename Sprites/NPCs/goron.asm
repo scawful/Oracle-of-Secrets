@@ -3,13 +3,12 @@
 ;
 ; NARRATIVE ROLE: Dual-world Goron NPCs. In Kalyxo (Light World), Gorons
 ;   guard the mines and require Rock Meat trade to open access. In the
-;   Eon Abyss (Dark World), Gorons provide lore and hints about the
-;   ancient world before Kydrog's corruption.
+;   Eon Abyss (Dark World), the Eon Gorons give Shrine of Power hints
+;   (beat 19; decisions.org "Beat sheet crux 5").
 ;
 ; TERMINOLOGY: "Goron" = Goron
 ;   - "Kalyxo Goron" - Light World variant, mine guards
-;   - "Eon Goron" - Dark World variant, temporal echoes
-;   - Rock Meat quest parallels Zora reconciliation arc
+;   - "Eon Goron" - Dark World variant (Shrine of Power hints)
 ;
 ; CONTEXT-DEPENDENT BEHAVIOR:
 ;   - WORLDFLAG = 0 (Kalyxo): Uses KalyxoGoron_Draw, Rock Meat quest
@@ -43,9 +42,9 @@
 ;   $04C6 = 4 - Triggers mine opening sequence
 ;
 ; RELATED:
-;   - rock_meat.asm (trade item)
+;   - Sprites/Objects/collectible.asm (Rock Meat pickup)
 ;   - goron_mines (D6 dungeon)
-;   - narrative_lockdown.md (Goron arc parallels Zora arc)
+;   - Docs/Planning/Status/decisions.org (story rulings)
 ; =========================================================
 
 !SPRID              = $F2

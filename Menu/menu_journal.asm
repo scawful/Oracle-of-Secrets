@@ -248,7 +248,7 @@ Journal_DrawEntry:
 ; Format: Address(3), Mask(1), TextPtr(2) = 6 bytes
 Journal_MasterList:
   ; === Chapter 0: A Hero is Born ===
-  dl $7EF3C5 : db $02 : dw Entry_TheCall        ; GameState = $02 (Farore intro)
+  dl $7EF3C5 : db $02 : dw Entry_TheCall        ; GameState bit 1 (sent to the Abyss)
   dl $7EF3C6 : db $04 : dw Entry_CastAway       ; OOSPROG2 bit 2 (Kydrog intro)
 
   ; === Chapter 1: The Maku Tree ===

@@ -1,13 +1,13 @@
 ; =========================================================
 ; Ranch Girl (Chicken Lady / Ocarina Quest)
 ;
-; NARRATIVE ROLE: Side quest NPC who gives Link the Ocarina.
-;   The "Chicken Easter Egg" refers to the Cucco
-;   attack sequence that triggers her appearance. This is the prerequisite
-;   for the Mask Salesman's Song of Healing quest.
+; NARRATIVE ROLE: Toto Ranch girl, cursed into a Cucco by Twinrova.
+;   Magic Powder reveals her briefly; she gives the Ocarina and names the
+;   Mask Salesman (beat 10). The curse lifts when Twinrova falls (D5).
+;   Canon: decisions.org ("Beat sheet crux 7").
 ;
 ; TERMINOLOGY: "Ranch Girl" = RanchGirl / ChickenLady
-;   - Appears after Cucco attack sequence
+;   - Appears when Magic Powder hits the cursed Cucco
 ;   - Gives Ocarina (item 0x14)
 ;   - $7EF34C = 1 after receiving Ocarina (no songs yet)
 ;
@@ -21,11 +21,11 @@
 ;   4. Subsequent visits: Show message 0x10E
 ;
 ; MESSAGES:
-;   0x17D - First meeting (curse broken, gives Ocarina)
+;   0x17D - First meeting (powder reveal, gives Ocarina)
 ;   0x10E - Already has Ocarina
 ;
 ; FLAGS WRITTEN:
-;   SideQuestProg2 |= 0x01 - Ranch Girl transformed back
+;   SideQuestProg2 |= 0x01 - Ranch Girl revealed (Ocarina given)
 ;   $7EF34C = 1 - Ocarina obtained (Lv1)
 ;
 ; FLAGS READ:
@@ -36,7 +36,7 @@
 ;
 ; RELATED:
 ;   - mask_salesman.asm (requires Ocarina to proceed)
-;   - cucco.asm (triggers her appearance)
+;   - vanilla ChickenLady ($1AFECF), Magic Powder trigger
 ;
 ; ROM HOOKS:
 ;   $1AFECF - ChickenLady main hook
@@ -50,7 +50,7 @@ Sprite_CheckIfActive_Bank1A = $1AF954
 RanchGirl_Message:
 {
   LDA $7EF34C : CMP.b #$01 : BCS .has_ocarina
-    ; Set journal flag: Ranch Girl transformed back (curse broken)
+    ; Set journal flag: Ranch Girl revealed (curse lifts at D5)
     LDA.l SideQuestProg2 : ORA.b #$01 : STA.l SideQuestProg2
     %ShowUnconditionalMessage($017D)
     LDA #$01 : STA.w SprMiscD, X

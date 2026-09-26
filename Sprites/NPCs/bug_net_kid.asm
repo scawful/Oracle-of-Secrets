@@ -1,5 +1,5 @@
 ; Sick Kid - Bug Net Kid
-; Gives the Boots if the player plays the Song of Healing
+; Gives the Pegasus Shoes if the player plays the Song of Healing
 
 SickKid_CheckForSongOfHealing:
 {
@@ -47,7 +47,7 @@ BugNetKid_Resting:
 org $06B9C6
 BugNetKid_GrantBugNet:
 {
-  ; Give Link the Boots
+  ; Give Link the Pegasus Shoes
   LDY.b #$4B
   STZ $02E9
   PHX

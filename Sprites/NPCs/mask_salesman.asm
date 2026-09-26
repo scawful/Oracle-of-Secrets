@@ -3,7 +3,8 @@
 ;
 ; NARRATIVE ROLE: Mysterious merchant who teaches Link the Song of Healing
 ;   and sells transformation masks. Key NPC in the mask/transformation
-;   quest chain. Appears after Link obtains the Ocarina from Ranch Girl.
+;   quest chain. Asks for an Ocarina; after the Ranch Girl's Ocarina
+;   (beat 10) he teaches the Song of Healing.
 ;
 ; TERMINOLOGY: "Mask Salesman" = MaskSalesman
 ;   - Teaches Song of Healing (required for Deku/Zora mask quests)

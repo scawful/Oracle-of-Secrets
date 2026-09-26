@@ -2,15 +2,14 @@
 ; Korok NPCs (Forest Spirits)
 ;
 ; NARRATIVE ROLE: Friendly forest spirits who inhabit Korok Cove and
-;   East Kalyxo regions. They provide hints, side content, and connect
-;   the game to Wind Waker-era Zelda lore. Multiple visual variants
+;   East Kalyxo regions. They provide hints and side content. Multiple
+;   visual variants
 ;   add personality to the forest areas.
 ;
 ; TERMINOLOGY: "Korok" = Korok
 ;   - "Makar" - Subtype 0, musician Korok (Wind Waker reference)
 ;   - "Hollo" - Subtype 1, potion-making Korok
 ;   - "Rown" - Subtype 2, gardener Korok
-;   - Forest guardians, evolved from Kokiri
 ;
 ; VARIANTS (via SprSubtype, randomly assigned in Prep):
 ;   0x00: Makar - Uses Sprite_Korok_DrawMakar
@@ -40,7 +39,7 @@
 ; RELATED:
 ;   - East Kalyxo region (planned Korok minigame)
 ;   - Korok Cove (maps 0x81-8A)
-;   - jiggly-spinning-newt.md (10 Korok hide-and-seek plan)
+;   - Korok minigame: single special map (beat sheet, 2026-02-12 ruling)
 ;
 ; TODO:
 ;   - Implement Korok minigame tracking

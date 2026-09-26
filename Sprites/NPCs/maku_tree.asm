@@ -2,14 +2,13 @@
 ; Maku Tree
 ;
 ; NARRATIVE ROLE: Central quest hub NPC who guides Link through the main
-;   story. The Maku Tree is the guardian of Kalyxo Island and provides
-;   dungeon guidance after the intro sequence. Serves as the "oracle"
-;   figure who points Link toward the next objective.
+;   story. Gives dungeon guidance after Link returns from the Abyss
+;   (beat 8).
 ;
 ; TERMINOLOGY: "Maku Tree" = MakuTree
-;   - Guardian spirit of Kalyxo Island
+;   - Kalyxo's great tree
 ;   - Provides dungeon map hints (MapIcon system)
-;   - First major NPC after Kydrog encounter
+;   - First NPC after the Abyss escape (sword warp to LW 0x2A)
 ;
 ; TRIGGER: Spawns at Maku Tree area (LW 0x2A) after intro sequence
 ;   - Plays Maku Song on entry if OOSPROG2 bit 2 is set
@@ -26,9 +25,8 @@
 ;   0x1C5 - 1+ crystals: calm encouragement
 ;   0x1C6 - 3+ crystals: senses deeper threat
 ;   0x1C7 - 5+ crystals: urgency rising
-;   0x1CA - 7 crystals: endgame, seek Shrines
-;   0x1C8 - RESERVED
-;   0x1C9 - RESERVED
+;   0x1CA - 7 crystals: endgame (retarget to Shrine of Courage; TO-BUILD)
+;   0x1C8/0x1C9 - used by impa_hints.asm (not Maku)
 ;   0x1CB - RESERVED
 ;
 ; FLAGS WRITTEN:
@@ -46,7 +44,7 @@
 ; RELATED:
 ;   - farore.asm (leads Link to Maku area)
 ;   - kydrog.asm (sets OOSPROG2 bit 2)
-;   - narrative_lockdown.md (story structure)
+;   - Docs/Planning/Status/decisions.org (story rulings)
 ;
 ; ITEMS GIVEN:
 ;   0x3E - Heart Container (first meeting only)
