@@ -133,6 +133,9 @@ Hoo hoo! We meet again,[2][L].[K][V]This realm is a mirror,[V]a reflection of fo
 Approved by scawful 2026-09-26 ("yes impa spared as messenger"). Kydrog spares
 Impa as a messenger to Zelda. Quote marks from the chat draft were removed
 because the font's quote glyph is unverified.
+Written 2026-09-26 (scawful: "yes"): readback equals the Approved block; only
+$35 changed (397/397 compared). Base ROM SHA-1 80165df5 -> fe3e6dd8 (backup
+`Roms/oos168.pre-impa35-text-2026-09-26.sfc`).
 
 Current:
 
@@ -145,3 +148,27 @@ Approved:
 ```
 [W:02][S:03][L], it's Impa. I'm[2]speaking to you from the[3]Hall of Secrets.[K][V]Kydrog took Farore.[V]He let me go, to tell[V]Zelda that Hyrule is[K][V]too late. I could not[V]stop him. I'm safe now[...]
 ```
+
+## Abyss area signs (new messages + area-table repoint)
+
+Approved by scawful 2026-09-26 ("approved for now, can always come back to make
+adjustments"). 30 of 40 Abyss parent areas use area message $A7, which Oracle
+reused for Vasu's Ring Shop ($A7-$AD). Do NOT edit $A7: allocate new expanded
+messages and repoint each area's message ID. Only areas with a signpost tile
+show the text; confirm tiles with a render first. Box layout below is plain
+text (<=28 chars/line); format with the house sign style.
+
+| Area | Current | Approved text |
+|---|---|---|
+| $40 Temporal Pyramid | $A7 | Temporal Pyramid / Tread softly. / Time sleeps here. |
+| $50 Owl area | $A7 | Hollow of Echoes / Did someone call? / ...Only you. |
+| $58 Forest of Dreams | $AF "Village Of Outcasts" | Forest of Dreams / Sleep here, and you / may wake elsewhere. |
+| $5D Dream Hut area | $A7 | Dreamer's Rest / Maple's hut. Knock / before you nap. |
+| $6A return map | $A7 | The Rift Shore / The way back is / not always the way in. |
+
+Pending: $41 Master Sword plaque ($B3) "Here the blade waits / for the hand that /
+carries the key." depends on the seal-site ruling. Later cleanup: $4A ($A8 Cape
+heart-piece line), $57 ($B1 Swordsmith's House), $63 ($C1 ice-rod riddle).
+Existing correct sign: $51 crossroads $C2 (Temporal Pyramid / Forest of Dreams /
+Lupo Mountain). Lupo Mountain = the large Abyss map mirroring Kalyxo Castle's
+map (scawful, 2026-09-26), not the volcano.
