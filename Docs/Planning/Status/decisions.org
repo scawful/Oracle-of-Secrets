@@ -312,3 +312,5 @@ the linked doc holds the detail.
   5. Then one timed playtest (minutes per step); cut content only if a step
      is still long.
   Answer: scawful, 2026-09-26: "go".
+  Text for 1-2 and $E6 approved ("yes approve sounds good", 2026-09-26);
+  exact text in Reviews/approved_dialogue_rewrites_2026-09-26.md.

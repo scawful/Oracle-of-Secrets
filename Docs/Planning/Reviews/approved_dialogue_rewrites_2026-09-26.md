@@ -84,3 +84,42 @@ $1C3 (card 5, empty hall):
 ```
 [W:02][C:07][S:03][1]But as years passed, the zeal[2]to protect waned into neglect.[3]The guardians grew complacent[...][WT:05][V]One knight kept watch alone.[WT:05][V]Now dark forces stir in the[V]Abyss, and the destiny of the[V]Oracle of Secrets draws near.[WT:05]
 ```
+
+## Abyss guidance: $36, new early Owl line, $E6
+
+Approved by scawful 2026-09-26 ("yes approve sounds good"). Plan context:
+decisions.org "Abyss segment: fix direction before cutting content".
+Directions come from map data (Origins entrance $76 on parent $40; sword area
+$58 is one row south of Owl map $50); confirm "west" and "just south" in game.
+
+### $36 (vanilla bank, base-ROM write)
+
+Current:
+
+```
+[W:02][S:03]I sense your despair[...][2]Kydrog has cast you into the[3]Eon Abyss, a place where time[K][V]stands still. You must find the [V]Moon Pearl. It will protect you[V]against the dark magic here.[K][V]Without it, you will be unable[V]to defend yourself. Once you[V]have returned to Kalyxo, seek[K][V]out the Great Maku Tree.[V]He will know what to do next.[V]Good luck, [L][...]
+```
+
+Approved:
+
+```
+[W:02][S:03]I sense your despair[...][2]Kydrog has cast you into the[3]Eon Abyss, a place where time[K][V]stands still. You must find the [V]Moon Pearl. It will protect you[V]against the dark magic here.[K][V]It rests in the Shrine of[V]Origins, west of the great[V]pyramid. Once you have[K][V]returned to Kalyxo, seek out[V]the Great Maku Tree.[V]Good luck, [L][...]
+```
+
+### New: Owl first appearance (expanded bank; allocate an ID via message_registry.json)
+
+Shown by the Eon Owl on the Abyss arrival area before the Pearl (placement to
+be chosen by the RC leader; $E6 stays the post-Pearl line).
+
+```
+Hoo hoo! A stranger in[2]the Abyss? Your shape is[3]not your own here.[K][V]The Shrine of Origins[V]lies west of the pyramid.[V]Hoo hoo! Off you go![K]
+```
+
+### $E6 (vanilla bank, base-ROM write)
+
+Changes: second-meeting opener; the "Forest of Dreams" fragment becomes a
+sentence with a direction. Rest unchanged.
+
+```
+Hoo hoo! We meet again,[2][L].[K][V]This realm is a mirror,[V]a reflection of forgotten[V]dreams and shadowed paths.[K][V]Though you hold the Moon[V]Pearl, beware, for not all[V]is as it seems in the Abyss.[K][V]Deep in the Forest of Dreams,[V]just south of here, a sword[V]awaits you, a blade to cut[K][V]through the veil of deception.[V]But remember, young one,[V]even the sharpest blade[K][V]cannot sever all bonds.[V]Hoo hoo![K]
+```
