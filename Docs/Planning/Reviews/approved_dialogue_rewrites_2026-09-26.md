@@ -166,8 +166,8 @@ text (<=28 chars/line); format with the house sign style.
 | $5D Dream Hut area | $A7 | Dreamer's Rest / Maple's hut. Knock / before you nap. |
 | $6A return map | $A7 | The Rift Shore / The way back is / not always the way in. |
 
-Pending: $41 Master Sword plaque ($B3) "Here the blade waits / for the hand that /
-carries the key." depends on the seal-site ruling. Later cleanup: $4A ($A8 Cape
+Approved: $41 Master Sword plaque ($B3) "Here the blade waits / for the hand that /
+carries the key." (seal ruling decided 2026-09-26). Later cleanup: $4A ($A8 Cape
 heart-piece line), $57 ($B1 Swordsmith's House), $63 ($C1 ice-rod riddle).
 Existing correct sign: $51 crossroads $C2 (Temporal Pyramid / Forest of Dreams /
 Lupo Mountain). Lupo Mountain = the large Abyss map mirroring Kalyxo Castle's

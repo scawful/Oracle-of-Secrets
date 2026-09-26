@@ -83,6 +83,11 @@ the linked doc holds the detail.
   (branch claude/oracle-editor-features). On a COPY of the project:
   1. Edit collision in a dungeon room, File > Save: custom_collision.json updates.
   2. Windows > Cutscene Camera on area 2D: drag the view (stops at edges), place Link, Copy JSON.
+  Graphics (branch claude/gfx-png-app, 98659837a/6b9455ebe/830915bbb; build the app from that
+  worktree first):
+  3. Sheet Browser: export a sheet to PNG, change a pixel, import (preview), save, reopen.
+  4. Copy a sheet selection, paste into another app; copy a PNG from another app, paste (mapping preview).
+  5. Tool keys B/E/G/I/M/H, Cmd+Z/Shift+Cmd+Z, grids, status line; "Check save plan" list.
   Answer:
 
 * DECIDED yaze: merge the finished claude/* branches?
@@ -342,3 +347,33 @@ the linked doc holds the detail.
   Answer: scawful, 2026-09-26: "go".
   Text for 1-2 and $E6 approved ("yes approve sounds good", 2026-09-26);
   exact text in Reviews/approved_dialogue_rewrites_2026-09-26.md.
+
+* DECIDED Eon Owl: place the arrival Owl; talk only when Link is near
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff (storm/owl agent findings)
+  :END:
+  1. Place the arrival Owl on Abyss map $40 near where Link lands (base-ROM
+     sprite placement, applied by the integrator after it works on a copy;
+     new message $1FA with the approved text; EonOwlFlags bit 0).
+  2. The $E6 Owl talked the moment Link entered map $50 (248 px away). Make both
+     Owls wait until Link is about 5 tiles (80 px) away. Flagged; tune by feel.
+  Answer: "sure, we can see how it feels" (scawful, 2026-09-26).
+
+* DECIDED Seal geography: pyramid = lock, volcano = prison mouth
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Plans/dream1_sealing_war_storyboard_2026-09-26.md]]
+  :END:
+  1. Temporal Pyramid (DW $40 parent) is the monument over the seal. The
+     Master Sword pedestal there ($62 in the $41 grove) is the lock; the
+     Meadow Blade was the key the guardian knight carried.
+  2. The volcano is the prison's mouth. The existing hole in the volcano world
+     stays and leads to Ganon's final chamber.
+  3. The 09-23 Pearl "mountain shake" is the volcano: the prison reacting.
+  4. Beat 25: pulling the Master Sword weakens the lock; the volcano erupts and
+     the beast breaks out. ALttP echo kept as the moment (Ganon breaks free,
+     Link drops through a hole), not the building.
+  5. Dream 1 seal scene: the knight guards the pedestal at the pyramid.
+  6. $41 plaque text unlocked: "Here the blade waits / for the hand that /
+     carries the key."
+  Answer: "yes split that works for me" (scawful, 2026-09-26).
