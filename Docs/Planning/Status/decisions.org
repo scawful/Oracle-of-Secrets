@@ -1,0 +1,207 @@
+#+TITLE: Decisions waiting on scawful
+#+TODO: OPEN | DECIDED
+#+STARTUP: overview
+
+Agents add an OPEN heading when they need a decision (one heading per
+decision, options inside, a link to the full doc). scawful answers under
+"Answer:" and switches the heading to DECIDED (=C-c C-t=). Agents read the
+answer from here and move the result into =Docs/oracle.org=. Keep entries short;
+the linked doc holds the detail.
+
+* OPEN World map dungeon icons: when does each icon appear?
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :DOC:      [[file:../../Debugging/Issues/world_map_icons_2026-09-26.md]]
+  :END:
+  Bug: a Deku Scrub "peacetime" line sets MapIcon ($7EF3C7) to 2 before D1, so
+  the map shows D2-D7 and never D1. The doc proposes a reveal table (per
+  dungeon: which story event shows its icon) and two flagged fixes.
+  Answer:
+
+* OPEN Impa's arc and how she escapes Kydrog's ambush
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :DOC:      [[file:../Plans/impa_role_brainstorm_2026-09-26.md]]
+  :END:
+  Four options (protector who fails and redeems; messenger to Zelda;
+  OoA-style possession twist, two-villain risk; quiet guardian of the Hall).
+  Decides whether msg $35 changes.
+  Answer:
+
+* OPEN Abyss order: Moon Pearl first, Minish first, or both in one beat? (beat sheet OPEN #2)
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :DOC:      [[file:../Plans/impa_role_brainstorm_2026-09-26.md]]
+  :END:
+  The brainstorm recommends Pearl first, then Minish.
+  Answer:
+
+* OPEN Dialogue audit: which fixes to apply
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :DOC:      [[file:../Reviews/dialogue_audit_2026-09-26.md]]
+  :END:
+  136 messages flagged; 63 need a base-ROM write (after the yaze importer fix).
+  The report opens with a "fix first" list. Answer "fix-first list", "all
+  typos", or list IDs.
+  Answer:
+
+* OPEN yaze hand-check: paired collision save + cutscene camera
+  :PROPERTIES:
+  :ASKED_BY: Consolidate dungeon tester preview and rendering fixes
+  :DOC:      [[file:~/src/hobby/yaze-worktrees/collision-pair-save/docs/internal/agents/claude-oracle-requests-handoff-2026-09-26.md]]
+  :END:
+  App: =~/src/hobby/yaze-worktrees/collision-pair-save/build/presets/mac-ai/bin/Debug/yaze.app=
+  (branch claude/oracle-editor-features). On a COPY of the project:
+  1. Edit collision in a dungeon room, File > Save: custom_collision.json updates.
+  2. Windows > Cutscene Camera on area 2D: drag the view (stops at edges), place Link, Copy JSON.
+  Answer:
+
+* OPEN yaze: merge the finished claude/* branches?
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :END:
+  All unmerged, not pushed; each tested by its session:
+  - claude/emu-io-fixes (d29389036): 8-bit ORA zero flag + WRIO latch; 71/71 emulator tests, negative control.
+  - claude/idle-cpu (9d0e68f66): idle CPU 9-16 % -> ~1 % of a core; emulator 59.9 fps median.
+  - claude/graphics-sheet-tooling (0af9db317): sheet write-back, inventory, spritesets, sprite preview, PNG + room export/import.
+  - claude/oracle-editor-features (fa315b817): paired collision save + cutscene camera (hand-check above first).
+  - claude/vanilla-message-import (79c60ad10): done; dictionary encoding, minimal write range; used for the $25/$36/$83/$C7 base-ROM writes; 143/143 message tests.
+  - claude/eager-kirch-2752fa (2f89c6e30 + e5e2d103c): emulator maps ROM by max(header $7FD7, file size), fixes Oracle banks $20+/$40-$41 mirroring; SRAM $F0 write fix; 75/75 emulator tests.
+  - claude/emulator-integration (c931f9dd1): graphics session's integration branch that already merges the sizing fix.
+  Answer: merge which, into what (master or an integration branch), and who pushes.
+
+* DECIDED Dual Swords PvP: knockback only, or also cost a heart?
+  :PROPERTIES:
+  :ASKED_BY: Oracle of Secrets dual swords
+  :DOC:      [[file:../../../Roms/TestBuilds/native-2p-poc-2026-09-25/DESIGN.md]]
+  :END:
+  Hearts are shared, so a PvP heart loss only hurts the team; stray swings in co-op
+  would drain it. A hit already makes the other player throw what they carry.
+  Answer: keep knockback only (scawful, in the dual-swords session, 2026-09-26).
+
+* OPEN ROM expansion to 4 MB?
+  :PROPERTIES:
+  :ASKED_BY: Yaze graphics editor prompts (via Oracle RC Leader)
+  :DOC:      [[file:~/src/hobby/yaze-practice/graphics-evidence/2026-09-26/rom-expansion-4mb-plan.md]]
+  :END:
+  Pad the dev base to 0x400000 (4 MB LoROM, the plain-LoROM maximum), set
+  header $7FD7 = $0C (today $0A = 1 MB for a 2.05 MB file). Mesen2, asar and
+  ZScream size from the file; yaze's emulator is fixed on
+  claude/emulator-integration; snes9x uses the byte for its SRAM window; the
+  SNES Classic stock emulator is unknown (test on device). Bank $23 (32 KB)
+  already covers near-term graphics growth, so this is not urgent.
+  Answer: go now / later / no.
+
+* DECIDED Beat sheet crux 5: shrines gate dungeons (verified by scawful)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion (rule-provenance audit)
+  :DOC:      [[file:../story_canon_beat_sheet.md]]
+  :END:
+  Shrine of Wisdom + Flippers -> D4; Shrine of Power (Eon Gorons) -> D6;
+  Shrine of Courage needs Somaria Rod -> post-D7.
+  Answer: "yeah this is right, though there are other non-pendant shrines aka
+  mini dungeons which dont gate major dungeon progression i have planned like
+  in the underwater area" (scawful, 2026-09-26).
+
+* DECIDED Beat sheet crux 7: Ranch Girl ruling (verified by scawful)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion (rule-provenance audit)
+  :DOC:      [[file:../story_canon_beat_sheet.md]]
+  :END:
+  Post-D1 guaranteed message -> Loom Ranch; Magic Powder reveals the Cucco;
+  Ocarina; she names the Mask Salesman; D5 Twinrova defeat lifts the curse
+  automatically, no return quest.
+  Answer: "ranch girl looks good" (scawful, 2026-09-26).
+
+* DECIDED Villain chain: prison, Farore, Kydrog, Twinrova, Ganon
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion (rule-provenance audit)
+  :DOC:      [[file:../story_canon_beat_sheet.md]]
+  :END:
+  Replaces beat-sheet crux 2's "Ganon residue"/garrison reading, the crux 4
+  wordless-beast coda, and AGENTS.md rule 4 ("no Ganondorf-origin or
+  two-villain plotlines"), which was agent-written with no scawful source.
+  1. Farore warns the island's scholars, then turns to Hyrule; Hyrule sends a garrison "to
+     guard the Golden Power" (islanders see an invasion; msg 0x112 stands).
+  2. Farore makes Kydrog, a garrison knight, the prison's guardian and binds
+     her power into his sword as the seal's key. She knew him personally.
+  3. The prison corrupts him; he dies, rises as the Stalfos Pirate King; his
+     dead men are his crew. He abandons the sword (the Meadow Blade).
+  4. The prison holds the half-revived beast Ganon from the Oracle games'
+     failed revival (msg 0x136). Twinrova hunt essences to finish it and die
+     in D5; Kydrog carries the revival on and kidnaps Farore's body to force
+     the key.
+  5. Kydrog's motive is tragic: the prison promises the Golden Power can bring
+     his men back. His pirate-skeleton humor is a coping mechanism for his
+     death and his men's deaths.
+  6. Finale: Kydreeok = the prison's corruption of him, not his heart. Song of
+     Healing frees the knight (post-healing form: human). Then Ganon breaks
+     out and alternates between Ganondorf (energy-ball volleys) and the beast,
+     per msg 0x15B "reshapes you to your heart". Vanilla Ganon parts may be
+     reused.
+  Answer: scawful, 2026-09-26: "twinrova dies, hence the need for kydrog to do
+  bad stuff"; "given this guardian angle perhaps she should know more about
+  him now"; "yeah i like the tragedy angle, lends to his pirate skeleton humor
+  being a coping mechanism for his death and his mens death"; final boss: "a
+  ganonDORF fight with the demons volley could be cool too. perhaps switch
+  between dorf and pig".
+
+* DECIDED Kydrog-was-the-guardian reveal is a dream
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Plans/dream_sequences.md]]
+  :END:
+  Not critical-path info, so it is shown in a dream, not D3 lore or sword
+  callouts. Fits beat 14 "Dream 1: The Sealing War" (after Shrine of Wisdom).
+  Answer: "since it's not essential info it should be a dream" (scawful,
+  2026-09-26).
+
+* DECIDED Dreams are in RC scope
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../RC_MASTER_PLAN.md]]
+  :END:
+  Any "dreams out of RC scope" line comes from the old RC definition and is
+  stale for the new RC series.
+  Answer: "i think dreams should be in RC scope, that's outdated from our old
+  RC definition not the new RC series" (scawful, 2026-09-26).
+
+* OPEN When did the garrison arrive: decades or centuries ago?
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../story_canon_beat_sheet.md]]
+  :END:
+  Kydrog must be dead long enough to be a Stalfos; the Sep 23 ruling says the
+  Mirror breakthrough triggered Hyrule's interest (not centuries-long).
+  Answer:
+
+* DECIDED Dialogue style: people of Kalyxo first, race second
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/dialogue_audit_2026-09-26.md]]
+  :END:
+  1. Race names stay in proper nouns: places (Zora Temple, Goron Mines),
+     items (Zora Mask), named characters (Zora Princess).
+  2. History, lore and NPC talk use "the people of Kalyxo", "islanders", or
+     roles ("scholars", "miners"); name a race only when it matters to the scene.
+  3. Apply during the dialogue-audit rewrite pass so messages are touched once.
+     First targets: 0x135 (D4 maiden), 0x137 (D6 maiden), 0x194 (Tingle), the
+     "Zora elders" attract/lore text, "Zora scholars" lore line.
+  4. The villain-chain entry's "Farore warns the Zora" reads as "warns the
+     island's scholars".
+  Answer: "we gotta work on the dialogue and generally not over-focus on the
+  zora and goron races by name specifically. they are all people of kalyxo
+  afterall lol" (scawful, 2026-09-26).
+
+* DECIDED Approved rewrites for 0x135 and 0x137 (D4, D6 maidens)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/approved_dialogue_rewrites_2026-09-26.md]]
+  :END:
+  Exact approved text is in the linked doc; apply in the dialogue-audit
+  base-ROM write pass. Supersedes the id 311 entry in
+  Data/dialogue/maiden_upgrades_dialogue.json. Ocarina lore: made by the Zora
+  temple's makers; the Ranch Girl owning one is fine.
+  Answer: "approve. and yeah it's fine, ocarina made by the zora but some girl
+  has one nbd" (scawful, 2026-09-26).
