@@ -210,3 +210,18 @@ Well, well, what a surprise![2]Look who walked into me trap,[3]and with Farore, 
 ```
 
 "Decades too late" was cut; the decades timing may appear in later lore.
+
+## Impa follower hints $1BF/$1C4/$1C8/$1C9 (expanded bank)
+
+Approved by scawful 2026-09-26 ("approve"). Code is built and Mesen-verified
+with placeholder text (`Sprites/NPCs/impa_hints.asm`,
+`!ENABLE_IMPA_FOLLOWER_HINTS`; see `Plans/impa_follower_hints_2026-09-25.md`
+§1 for trigger areas). Edit `Data/dialogue/expanded_messages.json`, then
+`z3ed message-source-sync`. Lines <=26 chars, 3 per box, `‖` = next box.
+
+- $1BF (village from the beach): "Stalfos, here? They came / ashore with last night's / storm. Stay out of sight."
+- $1C4 (east road blockade): "They've closed the east / road. We can't fight / our way through. ‖ There must be another / way. Look around the / village, [L]."
+- $1C8 (village hole): "A hole... It may run / under the village. / Go on. I'm behind you."
+- $1C9 (western forest), CHANGED from the 09-25 draft: "The villagers say the / Oracle keeps to these / woods. She can't be far."
+  Reason (scawful): Zelda cannot know where Farore is; the incident happened
+  last night. Impa learns it locally.
