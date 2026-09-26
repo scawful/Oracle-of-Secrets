@@ -216,14 +216,14 @@ the linked doc holds the detail.
   Answer: "i think dreams should be in RC scope, that's outdated from our old
   RC definition not the new RC series" (scawful, 2026-09-26).
 
-* OPEN When did the garrison arrive: decades or centuries ago?
+* DECIDED When did the garrison arrive: decades or centuries ago?
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
   :DOC:      [[file:../story_canon_beat_sheet.md]]
   :END:
   Kydrog must be dead long enough to be a Stalfos; the Sep 23 ruling says the
   Mirror breakthrough triggered Hyrule's interest (not centuries-long).
-  Answer:
+  Answer: "decades" (scawful, 2026-09-26).
 
 * DECIDED Dialogue style: people of Kalyxo first, race second
   :PROPERTIES:
