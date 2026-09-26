@@ -525,7 +525,8 @@ the linked doc holds the detail.
      Sky Islands. Location: east of Korok Cove, north of the Sea Zora area,
      near the special overworld. Base = the East Kalyxo Hylian garrison/port
      idea; same overworld, no warp.
-  3. Story slot: after the Master Sword (beat 25), before D8.
+  3. Story slot: SUPERSEDED - see "Sky Islands timing and the Watchers"
+     (opens after D6, optional).
   5. Access: the tower is the ONLY way into the Sky. The current foot bridge
      from Korok Cove to the Sky clouds is a test connection; remove it.
      Korok Cove = special large area $81 ($81/$82/$89/$8A), reached from the
@@ -590,3 +591,27 @@ the linked doc holds the detail.
   Roms/oos168.pre-dialogue-batch-korok-night-2026-09-26.sfc); readback = bundle, only
   those 9 messages changed; outside the text regions only the 2 pointer bytes.
   Answer: "1. Yes 2. Yes" (scawful, 2026-09-26).
+
+* DECIDED Sky Islands timing and the Watchers
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Supersedes the story slot in "Sky Islands role" (was: after the Master
+  Sword, before D8).
+  1. Timing: the Sky opens after D6, when East Kalyxo opens (Hammer, beat 21),
+     and stays optional through the endgame. Purpose: extra lore content and
+     items (e.g. heart pieces, upgrades).
+  2. Reveal order: Dream 1 (Kydrog, pre-D4) -> Dream 2 (Farore, pre-D6) ->
+     Sky Islands (what the Abyss is, post-D6) -> Dream 3 (the cure, post-D7).
+  3. The Watchers: an ancient race who harnessed the power to shape the
+     Abyss realm. Their stepped architecture marks their work: the Temporal
+     Pyramid, the tower, and the sky temple. Farore later used their realm as
+     the prison for the half-revived Ganon. Keep their motives and fate vague.
+  4. Layers of the tower: Watchers built it; Hyrule's garrison reused it as a
+     watch post decades ago and abandoned it.
+  5. The islanders' Mirror breakthrough rediscovered a scrap of Watcher
+     knowledge (consistent with the Sep 23 "no long portal industry" ruling).
+  Answer: "the watchers seems smart. an ancient race which harnessed the
+  power to create the realm more or less ? sky islands serve an extra content
+  lore purpose and potentially could add items"; then "yes both" (scawful,
+  2026-09-26).
