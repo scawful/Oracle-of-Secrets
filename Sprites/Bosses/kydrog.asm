@@ -3,13 +3,18 @@
 ;
 ; NARRATIVE ROLE: The Pirate King who kidnaps Farore and banishes Link
 ;   to the Eon Abyss. This is the NPC/cutscene version - not the boss.
-;   Kydrog is a fallen knight corrupted by Ganondorf over centuries.
+;   Kydrog was a Hylian garrison knight, Farore's chosen guardian of the
+;   Abyss prison; the prison corrupted him decades ago. He spares Impa as a
+;   messenger to Zelda in $21. Canon: Docs/Planning/Status/decisions.org
+;   ("Villain chain").
 ;
 ; TERMINOLOGY: "Kydrog" = KydrogNPC (NPC form)
 ;   - "Pirate King" - his self-styled title
-;   - "Fallen Knight" - his true origin (revealed late-game)
+;   - "Fallen Knight" - his true origin (revealed in Dream 1, after the
+;     Shrine of Wisdom)
 ;   - See kydrog_boss.asm for D7 boss fight
-;   - See kydreeok.asm for final boss (dragon form)
+;   - See kydreeok.asm for his Abyss form (the prison's corruption of him,
+;     fought in D8); Ganon is the final fight after it
 ;
 ; TRIGGER: Spawns at Maku Tree area (LW 0x2A) during intro
 ;   - Despawns permanently after encounter ($7EF300 = 1)
@@ -37,7 +42,7 @@
 ;   - farore.asm (captured by Kydrog, uses $B6 story state)
 ;   - impa.asm (follower removed during warp)
 ;   - maku_tree.asm (same area, appears after Kydrog gone)
-;   - narrative_lockdown.md (backstory, death scene plans)
+;   - Docs/Planning/Status/decisions.org (story rulings)
 ;
 ; LORE HOOK: Message 0x21 contains "cast away to the Eon Abyss,
 ;   just as I was" - hints at his fallen hero origin.

@@ -1,6 +1,6 @@
 ; =========================================================
 ; Collectible Sprites 
-; (Pineapple, Seashell, Sword/Shield, Rock Sirloin)
+; (Pineapple, Seashell, Sword/Shield, Rock Meat)
 
 !SPRID              = $52
 !NbrTiles           = 03  ; Number of tiles used in a frame
