@@ -188,3 +188,25 @@ map (scawful, 2026-09-26), not the volcano.
   of Wisdom). Repoint
   $63's area message to 0x0AF (today $63 uses $C1, the Ice Rod riddle; see the
   OPEN $C1 entry in decisions.org).
+
+## $21 Kydrog ambush: spares Impa (vanilla bank, base-ROM write)
+
+Approved by scawful 2026-09-26: the Impa line ("i like this inclusion but we can
+drop the decades line"); $21 may be adjusted but the joke stays ("$21 can be
+adjusted but leave the joke"). Insert one box before "Oh, and before I
+forget", so no new message ID or trigger code is needed. Pairs with the
+approved $35 ("He let me go, to tell Zelda that Hyrule is too late").
+
+Current:
+
+```
+Well, well, what a surprise![2]Look who walked into me trap,[3]and with Farore, no less.[K][V]The lass I've been seekin'.[V][V]I'm Kydrog, the Pirate King,[K][V]and I've been waitin' for ye[V]to show up. Hehehe![K][V]Prepare yourself, lad! Ye're[V]about to be cast away to the[V]Eon Abyss, just as I was.[K][V]A fitting end for a pesky hero,[V]don't ye think? Hehehe![V][...][K][V]Oh, and before I forget, let me[V]leave ye with a joke. Why did[V]the hero cross the abyss?[K][V]To meet his doom [K][V]on the other side! Hehehe!
+```
+
+Approved:
+
+```
+Well, well, what a surprise![2]Look who walked into me trap,[3]and with Farore, no less.[K][V]The lass I've been seekin'.[V][V]I'm Kydrog, the Pirate King,[K][V]and I've been waitin' for ye[V]to show up. Hehehe![K][V]Prepare yourself, lad! Ye're[V]about to be cast away to the[V]Eon Abyss, just as I was.[K][V]A fitting end for a pesky hero,[V]don't ye think? Hehehe![V][...][K][V]And you, Sheikah[...][V]Run home. Tell your[V]princess Hyrule is too late.[K][V]Oh, and before I forget, let me[V]leave ye with a joke. Why did[V]the hero cross the abyss?[K][V]To meet his doom [K][V]on the other side! Hehehe!
+```
+
+"Decades too late" was cut; the decades timing may appear in later lore.

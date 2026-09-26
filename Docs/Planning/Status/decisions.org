@@ -373,6 +373,12 @@ the linked doc holds the detail.
   2. The $E6 Owl talked the moment Link entered map $50 (248 px away). Make both
      Owls wait until Link is about 5 tiles (80 px) away. Flagged; tune by feel.
   Answer: "sure, we can see how it feels" (scawful, 2026-09-26).
+  Applied 2026-09-26 (integrator): arrival Owl at DW $40 tile (43,39), phase 1,
+  replacing duplicate entry 11 ($B8 at (36,53)); 3 bytes at PC $04CC32 35 24 B8 ->
+  27 2B 0A (z3ed overworld-add-sprite, yaze fe691620e). Link lands at (744,536),
+  tile (46,33). Base SHA-1 fe3e6dd8 -> ac544166 (backup
+  Roms/oos168.pre-arrival-owl-2026-09-26.sfc). Night list (phase 2) has no owl
+  and no free slot, same as the $50 owl. Talk distance: !EonOwl_TalkDistance = 80.
 
 * DECIDED Seal geography: pyramid = lock, volcano = prison mouth
   :PROPERTIES:
@@ -492,3 +498,17 @@ the linked doc holds the detail.
   line.
   Answer: "yesterwind is great ... if not then yeah def the village/central
   region name"; then "both" (scawful, 2026-09-26).
+
+* DECIDED Kydrog $21: editable except the joke; spares Impa on screen
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/approved_dialogue_rewrites_2026-09-26.md]]
+  :END:
+  $21 is no longer on the "don't touch" list, but the hero-crosses-the-abyss
+  joke must stay. New box inserted before the joke: Kydrog tells Impa to run
+  home and tell her princess Hyrule is too late (pairs with $35). The rest of
+  the agent-written "don't touch" list (Mask Salesman chain, Deku
+  0x140/0x141, Librarian 0x199-0x19F, Maku cascade) is still unconfirmed.
+  Answer: "i like this inclusion but we can drop the decades line it could
+  show up in lore later on"; "$21 can be adjusted but leave the joke"
+  (scawful, 2026-09-26).
