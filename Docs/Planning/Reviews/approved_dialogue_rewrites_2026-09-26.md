@@ -172,3 +172,18 @@ heart-piece line), $57 ($B1 Swordsmith's House), $63 ($C1 ice-rod riddle).
 Existing correct sign: $51 crossroads $C2 (Temporal Pyramid / Forest of Dreams /
 Lupo Mountain). Lupo Mountain = the large Abyss map mirroring Kalyxo Castle's
 map (scawful, 2026-09-26), not the volcano.
+
+## Yesterwind names (approved 2026-09-26, "approve both")
+
+- 0x0AF (area sign, vanilla bank): "This is the Village of / Yesterwind. Rest a while, /
+  traveler. We all did." Encoded: `This is the Village of[2]Yesterwind. Rest a while,[3]traveler. We all did.`
+- New villager reveal line (expanded bank, allocate an ID; first talk with a
+  Yesterwind villager): "You call it the Abyss? / Hah. To us, it's / Yesterwind."
+  Encoded: `You call it the Abyss?[2]Hah. To us, it's[3]Yesterwind.`
+- $1AE (expanded, dictionary-compressed in the JSON): replace "Village of Echoes"
+  with "Village of Yesterwind" and rewrap; edit decompressed text and let
+  `z3ed message-source-sync` recompress. Do not hand-edit [D:xx] tokens.
+- Village location: scawful will rework the swamp map into a village (likely DW
+  $63, the Wayward Village parallel with the Shrine of Wisdom). If so, repoint
+  $63's area message to 0x0AF (today $63 uses $C1, the Ice Rod riddle; see the
+  OPEN $C1 entry in decisions.org).
