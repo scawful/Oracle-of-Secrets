@@ -108,3 +108,31 @@ Ask for these one at a time:
 - Dream 1 storyboard: `Docs/Planning/Plans/dream1_sealing_war_storyboard_2026-09-26.md`
 - Audits and scans: `Docs/Planning/Reviews/audit_2026-09-26/`
 - Rooms and capacity: `Docs/Planning/Reviews/room_census_2026-09-26/`
+
+## Day 2 (2026-09-27)
+
+Decided (all in `decisions.org`):
+- Room budget: Sky tower gets the adjacent free block (10 rooms, own key slot);
+  underwater Abyss shrine = medium, 5 scattered rooms, keyless; Watchers' sky
+  temple = a 1-2 room building. D7/D8 not trimmed.
+- Sky tower theme: Hylian garrison floors below, Watchers' stonework above.
+- Menu: Masks & Rings page (feasible, no new VRAM); tunic color separate from
+  armor; P2 color choice. Prototype built flag-off, byte-identical:
+  `~/.context/projects/oracle-of-secrets/scratchpad/patches/menu_page3/`.
+- Abyss chunk layout + warp pads (6 chunks; one finale pad; enforcement list).
+- OPEN: Glove/Mitt swap (Glove early, Shrine of Power gives the Mitt).
+
+Found (static reads, sent to the RC leader): D7 big-key soft-lock, D8 big key
+in a big chest, unobtainable Titan's Mitt, second Ocarina chest, ungated Abyss
+via pad 25->65, 4 pads into the volcano region.
+
+New reference files (`Docs/Planning/Reviews/audit_2026-09-26/`):
+`overworld_grid.png` (map IDs, regions, gates, edges; redraw with
+`render_overworld_grid.py`), `overworld_regions.csv/.md`,
+`item_progression.md`, `menu_page3_feasibility.md`; rooms:
+`room_census_2026-09-26/room_matrix.png`.
+
+Handed off: yaze tools spec
+(`Docs/Planning/Plans/yaze_design_tools_spec_2026-09-27.md`) given to the
+Cursor/ChatGPT yaze review agent. Held until the RC is stable: enforcing the
+chunks, the Glove/Mitt swap, the menu page beyond the prototype.
