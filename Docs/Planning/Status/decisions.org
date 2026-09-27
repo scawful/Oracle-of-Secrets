@@ -686,3 +686,16 @@ the linked doc holds the detail.
   Sky Islands. The floor-to-floor change in graphics/palette tells the history
   (each floor further back in time; Hyrule only used what it understood).
   Answer: "A yes this sounds cool" (scawful, 2026-09-27).
+
+* OPEN Glove/Mitt swap: Power Glove early, Shrine of Power gives the Titan's Mitt
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion (idea by scawful, 2026-09-27)
+  :END:
+  scawful's idea: "give power glove earlier then turn goron segment into the
+  titans mitt". Changes if adopted: (1) a new early source for the Power
+  Glove; (2) review light vs heavy rocks (late-gated light rocks become heavy
+  rocks; heavy boulders in front of the Goron Mines); (3) re-aim the Shrine of
+  Power's lifting puzzles at the Mitt. Dungeon order and the S2 -> D6 gate stay.
+  Waiting on the item-progression and overworld-region analyses before
+  choosing the Glove's source (scawful: "C").
+  Answer:
