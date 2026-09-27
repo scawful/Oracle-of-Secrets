@@ -675,3 +675,14 @@ the linked doc holds the detail.
   $00 stays free.
   Answer: "yeah 1-2 rooms max, it doesnt even have an entrance placed
   currently anyway" (scawful, 2026-09-27).
+
+* DECIDED Sky tower theme: from familiar to strange
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Lower floors: the abandoned Hylian garrison (barracks, supply rooms, watch
+  posts). Upper floors: the garrison's additions stop and the Watchers'
+  original stepped stonework and mechanisms take over. The top exits onto the
+  Sky Islands. The floor-to-floor change in graphics/palette tells the history
+  (each floor further back in time; Hyrule only used what it understood).
+  Answer: "A yes this sounds cool" (scawful, 2026-09-27).
