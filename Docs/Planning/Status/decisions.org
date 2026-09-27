@@ -645,3 +645,16 @@ the linked doc holds the detail.
   never small keys there). D7/D8 are not trimmed: spare rooms (~21) cover the
   new ideas (~19) without cuts.
   Answer: "A" (scawful, 2026-09-27).
+
+* DECIDED Room budget step 2: underwater Abyss shrine is medium (5 rooms)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/room_census_2026-09-26/room_census.md]]
+  :END:
+  Medium keyless mini-dungeon: short route + mini-boss; puzzles gate with
+  switches, items, Minish (no small keys; dungeon ID $1C).
+  Proposed rooms (Claude pick; free, no known vanilla room-ID special cases):
+  $1F, $AB, $E9, $F7, $106. Avoided: $02 (rain sound case), $20 (Agahnim
+  case); $A7 kept as tower reserve (next to $A6). Scattered, so rooms link by
+  stairs/warps.
+  Answer: "medium" (scawful, 2026-09-27).
