@@ -658,3 +658,20 @@ the linked doc holds the detail.
   case); $A7 kept as tower reserve (next to $A6). Scattered, so rooms link by
   stairs/warps.
   Answer: "medium" (scawful, 2026-09-27).
+
+* DECIDED Room budget step 3: Watchers' sky temple is a building (1-2 rooms)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  The stepped temple on the Sky maps is an explorable building, not a
+  dungeon: lore + an item, 1-2 rooms, no dungeon ID needed. It has no
+  entrance placed yet (scawful); needs one overworld entrance (plenty free).
+  Proposed rooms (verify at build time): $127 (vanilla leftover) and $4C
+  (unreachable D8 room; clear its header warp to $1D first). Avoid $01/$10:
+  other rooms' headers still point at them.
+  Room budget total: tower 10 + underwater shrine 5 + temple 2 = 17 of ~21
+  spare. Left in reserve: $A7 (next to the tower), $C0 (empty D7 room, one
+  door to remove), $01, $10, $30, and caveat rooms $02/$20. Keyed dungeon ID
+  $00 stays free.
+  Answer: "yeah 1-2 rooms max, it doesnt even have an entrance placed
+  currently anyway" (scawful, 2026-09-27).
