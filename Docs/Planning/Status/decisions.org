@@ -711,7 +711,12 @@ the linked doc holds the detail.
   item page. Stretch ideas: a button that opens the journal; an equipment
   section to switch owned tunics/armor and shields.
   Rejected: one mask slot with L/R cycling (masks use several buttons and the
-  R transformation overlay). Also noted: Fishing Rod / Portal Rod sharing a
+  R transformation overlay). Equipment follow-up (scawful, 2026-09-27):
+  decouple tunic COLOR from armor VALUE (color = cosmetic choice, armor =
+  damage reduction); in dual-swords / 2-player mode each player can pick or
+  swap tunic colors ("decoupling color and armor value would be good ... for
+  dual swords mode being able to swap colors or change to others would be
+  cool"). Also noted: Fishing Rod / Portal Rod sharing a
   slot is confusing (unrelated tools); split them once slots free up.
   Answer: "yeah i think this would be my preferred outcome. declutter item
   menu, add mask/ring menu maybe even a journal opening button or something.
