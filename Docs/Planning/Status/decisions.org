@@ -442,6 +442,8 @@ the linked doc holds the detail.
   (finale). Exact gates and map membership pending a scan of existing warp
   tiles and crossings.
   Answer: "yes chunks / rings" (scawful, 2026-09-26).
+  UPDATED 2026-09-27: see "Abyss chunk layout and warp pads" (supersedes the
+  working draft above).
 
 * DECIDED Abyss return: the portal you came in on
   :PROPERTIES:
@@ -728,3 +730,38 @@ the linked doc holds the detail.
   menu, add mask/ring menu maybe even a journal opening button or something.
   potentially allow link to change clothes/shields even" (scawful,
   2026-09-27).
+
+* DECIDED Abyss chunk layout and warp pads (to be enforced)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/audit_2026-09-26/overworld_grid.png]]
+  :END:
+  Finding (static tile analysis 2026-09-27): pad $25->$65 needs no item and
+  opens most of the Abyss; 4 pads land in the volcano region.
+  Chunks (map IDs from the overworld grid):
+  1. Intro: Temporal Pyramid + Forest of Dreams ($40-$41, $48-$51, $58-$61,
+     $68-$6A). Forced by Kydrog; later re-entry via pad $11->$51.
+  2. Yesterwind: village hub, Shrine of Wisdom, Dream Hut ($5A-$5D, $62-$65,
+     $6B-$6D). Opens when the village east road opens after the intro; pad
+     $25->$65.
+  3. Lupo Mountain + NW ridge: Eon Gorons, Shrine of Power ($42, $4A-$4D,
+     $52-$54). Glove rocks (already on $4D); pad $02->$42 or north from
+     Yesterwind.
+  4. Desert beach (optional): $76/$77/$7E/$7F. Hammer pegs on LW $37; pad
+     $37->$77.
+  5. Fortress of Secrets (D8): $5E/$5F/$66/$67/$6E/$6F. Story gate: a barrier
+     the Master Sword cuts (ALttP Agahnim-tower echo).
+  6. Volcano / Lava Lands (finale, prison mouth): $43-$47, $4E/$4F, $55-$57.
+     Opens after the Master Sword pull (eruption).
+  Underwater ($70-$7D): whirlpool on $3D, already locked (post-D4).
+  Warp pads: keep $25->$65, $11->$51, $02->$42, $37->$77; keep $17->$57 as the
+  single finale entry (rock ring stays sealed until the eruption); remove
+  $03->$43 and both $07->$47 pads or make them return-only; $6A->$2A (old intro
+  exit, replaced by the sword warp) becomes the intro chunk's return point.
+  Enforcement work (build side, after the stable RC point): block walking
+  routes between chunks (Yesterwind -> Fortress, Yesterwind -> volcano,
+  Yesterwind -> Lupo via Glove rocks); Fortress barrier + Master Sword check;
+  volcano seal + eruption state; pad removals/changes; the intro Glove-rock seal
+  stays as a later shortcut. Mitt freed for optional content.
+  Answer: "yes this is basically how i imagine it, just needs to be enforced"
+  (scawful, 2026-09-27).
