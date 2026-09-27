@@ -1,0 +1,297 @@
+room_hex,cluster,category,used,evidence,blockset,palette,spriteset,object_count,sprite_count
+0x00,Final boss room,cutscene/special (vanilla-unchanged),Y,entrance 0x7B (?) hole@OW57; ASM room warp maple.asm Link_WarpToRoom dream Power; asm[Core/patches.asm:26:cmt;Dungeons/Collision/water_collision.asm:435:cmt]; vanilla-obj-sim=0.96; diff=header+objects+sprites,19,33,23,24,1
+0x01,vanilla Hyrule Castle leftover,vanilla leftover,N,vanilla HC north corridor; out[0x00:doorW? 0x02:doorE?]; vanilla-obj-sim=0.98; diff=header+objects+sprites; hdr-ref-by[0x0A.stair2 0x0F.holewarp 0x10.holewarp 0x10.stair1],0,12,42,41,1
+0x02,unassigned (vanilla Sanctuary-switch slot),empty/placeholder,N,no objects; asm[Menu/menu_hud.asm:612:cmp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites; hdr-ref-by[0x03.holewarp 0x1F.stair4 0x2F.holewarp 0x6D.stair3],3,17,6,0,0
+0x03,entrance 0x82,interior (house/shop/cave),Y,entrance 0x82 (?) ent@OW00; exit-door x1; vanilla-obj-sim=0.28; diff=header+objects,6,1,25,13,0
+0x04,Master Sword Cave / Final Boss Route,cutscene/special (vanilla-unchanged),Y,in[0x14:doorN]; out[0x14:doorS]; vanilla-obj-sim=0.98; diff=objects+doors,13,24,38,42,16
+0x05,Shrine of Origins,dungeon room,Y,entrance 0x76 (?) ent@OW40; exit-door x2; asm[Dungeons/custom_tag.asm:175:cmt;Dungeons/custom_tag.asm:179:cmp]; vanilla-obj-sim=0.00; diff=header+objects+doors+chests+custom_collision,1,5,20,54,0
+0x06,D4 Zora Temple,dungeon room,Y,in[0x16:doorN 0x10B:hole]; out[0x16:doorS]; vanilla-obj-sim=0.10; diff=header+objects,1,9,20,108,14
+0x07,S3 Shrine of Courage,dungeon room,Y,in[0x17:doorN]; out[0x17:doorS 0x63:warp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,22,345,1
+0x08,Healing Fairy Cave (Exit) / entrance 0x7F,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x38 (Healing Fairy Cave (Exit)) ent@OW11; entrance 0x7F (?) hole@OW11; exit-door x1; vanilla-obj-sim=1.00; diff=header+doors,6,3,7,57,1
+0x09,D1 Mushroom Grotto,dungeon room,Y,in[0x3A:warptag]; out[0x4A:warptag 0x4A:warptag 0x5B:warptag]; vanilla-obj-sim=0.00; diff=header+objects+sprites,7,15,8,103,6
+0x0A,D1 Mushroom Grotto,dungeon room,Y,in[0x0B:doorW 0x1A:doorN]; out[0x0B:doorE 0x1A:doorS]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,19,84,11
+0x0B,D1 Mushroom Grotto,dungeon room,Y,in[0x0A:doorE]; out[0x0A:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,8,96,8
+0x0C,D8 Fortress of Secrets,dungeon room,Y,entrance 0x37 (Fortress of Secrets) ent@OW5E; in[0x1C:stair 0x7C:warp 0x9D:hole(mask)]; out[0x9D:stair 0x1C:stair 0x0D:warp]; exit-door x1; vanilla-obj-sim=0.12; diff=header+objects+sprites,14,3,19,55,11
+0x0D,D8 Fortress of Secrets,dungeon room,Y,in[0x0C:warp 0x1D:doorN]; out[0x1D:doorS]; vanilla-obj-sim=0.16; diff=header+objects+sprites,14,3,23,20,1
+0x0E,D2 Tail Palace,dungeon room,Y,in[0x1E:doorN 0x6E:stair]; out[0x1E:doorS 0x6E:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,5,6,19,92,8
+0x0F,Maple's Dream Hut,cutscene/special,?,INFERRED: maple.asm !DreamReturn_HutRoom=$0F; decisions.org says Maple is in $0F and door $68 loads $11A; out[0x1F:doorS?]; asm[Sprites/NPCs/maple.asm:234:cmt;Sprites/NPCs/maple.asm:243:cmt]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites; hdr-ref-by[0x0A.stair3 0x17.stair4 0x4A.stair4 0xBE.stair4],3,22,13,37,2
+0x10,vanilla Ganon evacuation leftover,vanilla leftover,N,byte-identical to vanilla; out[0x01:hole(mask)]; exit-door x1; vanilla-obj-sim=1.00; diff=none(identical to vanilla); hdr-ref-by[0x00.holewarp 0x109.stair1],19,33,34,71,0
+0x11,Hall of Secrets,cutscene/special,Y,entrance 0x12 (Hall of Secrets Pyramid Route) ent@OW02; in[0x21:doorN 0x40:stair]; out[0x21:doorS 0x40:stair]; vanilla-obj-sim=0.02; diff=header+objects+doors+sprites,3,17,19,71,0
+0x12,Hall of Secrets,cutscene/special,Y,entrance 0x02 (Hall of Secrets) ent@OW0E; spawn point 1; in[0x22:stair 0x40:stair]; out[0x22:doorS? 0x40:stair 0x22:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,3,17,5,90,1
+0x13,Master Sword Cave / Final Boss Route,cutscene/special,Y,in[0x24:hole]; out[0x24:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,13,24,38,20,3
+0x14,Master Sword Cave / Final Boss Route,cutscene/special,Y,entrance 0x2D (Master Sword Cave) ent@OW40; in[0x04:doorS 0x15:doorW 0x24:doorN]; out[0x24:doorS 0x15:doorE 0x04:doorN 0x0D:hole]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,13,24,38,35,5
+0x15,Master Sword Cave / Final Boss Route,cutscene/special,Y,entrance 0x24 (Final Boss Route) ent@OW57; in[0x14:doorE]; out[0x14:doorW]; exit-door x1; vanilla-obj-sim=0.00; diff=objects+doors+sprites,13,24,38,30,4
+0x16,D4 Zora Temple,dungeon room,Y,in[0x06:doorS 0x18:stair]; out[0x06:doorN 0x18:stair]; vanilla-obj-sim=0.01; diff=header+objects+doors+sprites+chests,1,9,30,67,7
+0x17,S3 Shrine of Courage,dungeon room,Y,in[0x07:doorS 0x43:stair]; out[0x07:doorN 0x43:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,29,301,11
+0x18,D4 Zora Temple,dungeon room,Y,in[0x16:stair 0x28:doorN 0x45:stair]; out[0x28:doorS 0x16:stair 0x45:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,1,9,17,141,7
+0x19,D1 Mushroom Grotto,dungeon room,Y,in[0x1A:doorW 0x11D:stair]; out[0x1A:doorE 0x07:hole(tag)]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,31,110,8
+0x1A,D1 Mushroom Grotto,dungeon room,Y,in[0x0A:doorS 0x19:doorE 0x1B:doorW 0x3B:stair]; out[0x0A:doorN 0x19:doorW 0x1B:doorE 0x3B:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,43,131,6
+0x1B,D1 Mushroom Grotto,dungeon room,Y,in[0x1A:doorE]; out[0x1A:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,43,84,6
+0x1C,D8 Fortress of Secrets,dungeon room,Y,in[0x0C:stair 0x6D:stair 0x8C:hole]; out[0x0C:stair 0x6D:stair]; vanilla-obj-sim=0.25; diff=header+objects+doors+sprites+chests,14,3,9,48,12
+0x1D,D8 Fortress of Secrets,dungeon room,Y,in[0x0D:doorS 0x2D:doorN 0x4C:warp 0x119:stair]; out[0x0D:doorN 0x2D:doorS 0x2D:stair]; vanilla-obj-sim=0.28; diff=header+objects+doors+sprites+chests,14,3,23,66,3
+0x1E,D2 Tail Palace,dungeon room,Y,in[0x0E:doorS 0x2E:doorN]; out[0x2E:doorS 0x0E:doorN 0x8F:hole(mask)]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,5,6,19,77,5
+0x1F,D2 Tail Palace grid (unassigned),empty/placeholder,N,"INFERRED: grid neighbor of D2 0x0F..0x2F, bs5; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests",5,3,41,0,1
+0x20,unassigned (vanilla Agahnim slot),empty/placeholder,N,no objects; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites; hdr-ref-by[0x1F.stair2 0x30.stair2 0x37.stair2 0x38.stair2],2,17,18,0,0
+0x21,Hall of Secrets,cutscene/special,Y,in[0x11:doorS]; out[0x11:doorN]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,3,17,1,24,0
+0x22,Hall of Secrets,cutscene/special,Y,in[0x12:stair]; out[0x12:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,3,17,1,18,2
+0x23,Master Sword Cave / Final Boss Route,cutscene/special,Y,entrance 0x18 (Master Sword Cave) ent@OW40; in[0x24:doorW]; out[0x24:doorE]; exit-door x1; vanilla-obj-sim=0.04; diff=header+objects+doors+sprites,13,24,38,37,2
+0x24,Master Sword Cave / Final Boss Route,cutscene/special,Y,entrance 0x19 (Master Sword Cave) ent@OW46; in[0x13:stair 0x14:doorS 0x23:doorE]; out[0x14:doorN 0x23:doorW 0x13:stair 0x13:hole]; exit-door x1; vanilla-obj-sim=0.40; diff=header+objects+doors+sprites+chests,13,24,38,72,4
+0x25,D4 Zora Temple,dungeon room,Y,in[0x26:doorW 0x34:stair]; out[0x26:doorE 0x34:stair]; asm[Dungeons/Collision/water_collision.asm:127:cmt;Dungeons/Collision/water_collision.asm:138:cmp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+custom_collision,1,9,17,53,2
+0x26,D4 Zora Temple,dungeon room,Y,in[0x25:doorE 0x27:doorW]; out[0x25:doorW 0x27:doorE]; asm[Dungeons/Collision/water_collision.asm:443:cmt]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,1,9,17,119,0
+0x27,D4 Zora Temple,dungeon room,Y,in[0x26:doorE]; out[0x26:doorW]; asm[Dungeons/Collision/water_collision.asm:340:cmp;Dungeons/Collision/water_collision.asm:407:cmp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests+custom_collision,1,9,8,77,2
+0x28,D4 Zora Temple,dungeon room,Y,entrance 0x25 (Zora Temple) ent@OW1E; in[0x18:doorS 0x38:stair]; out[0x18:doorN 0x38:stair]; exit-door x1; vanilla-obj-sim=0.01; diff=header+objects+doors+sprites+chests,1,9,17,134,0
+0x29,D3 Kalyxo Castle,dungeon room,Y,in[0x39:doorN]; out[0x39:doorS]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,2,12,9,17,7
+0x2A,D1 Mushroom Grotto,dungeon room,Y,in[0x2B:doorW 0x3A:doorN]; out[0x3A:doorS 0x2B:doorE]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,8,100,7
+0x2B,D1 Mushroom Grotto,dungeon room,Y,in[0x2A:doorE 0x3B:doorN]; out[0x3B:doorS 0x2A:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,43,78,6
+0x2C,Deluxe Fairy Fountain Pond / Deluxe Fairy Fountain Start / Deluxe Fairy Fountain East,interior (house/shop/cave),Y,entrance 0x3B (Deluxe Fairy Fountain South) ent@OW0E; in[0x3C:doorN 0xE8:stair]; out[0x3C:doorS 0xE8:stair]; exit-door x1; vanilla-obj-sim=0.58; diff=header+objects+doors,6,24,7,87,4
+0x2D,D8 Fortress of Secrets,dungeon room,Y,in[0x1D:stair 0x3D:stair]; out[0x1D:doorN 0x3D:stair 0x3D:hole(mask)]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,14,3,31,63,1
+0x2E,D2 Tail Palace,dungeon room,Y,in[0x1E:doorS]; out[0x1E:doorN 0xDE:hole]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,5,6,19,69,8
+0x2F,entrance 0x39,interior (house/shop/cave),Y,entrance 0x39 (?) ent@OW33; exit-door x1; vanilla-obj-sim=0.10; diff=header+objects+doors+sprites+chests,6,24,25,61,5
+0x30,vanilla Agahnim Tower leftover (edited),vanilla leftover,?,partly vanilla; out[0x20:doorN? 0x40:stair]; vanilla-obj-sim=0.38; diff=objects+doors,2,12,18,26,1
+0x31,Dream 3 placeholder,empty/placeholder (reserved by ASM warp),Y,ASM room warp maple.asm Link_WarpToRoom dream Courage; asm[Sprites/NPCs/maple.asm:237:cmt]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,7,15,26,0,0
+0x32,S3 Shrine of Courage,dungeon room,Y,in[0x33:stair]; out[0x33:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,29,312,10
+0x33,S3 Shrine of Courage,dungeon room,Y,in[0x32:stair 0x43:stair]; out[0x43:stair 0x43:stair 0x32:stair]; asm[Core/early_game_balance.asm:186:cmt]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,7,15,30,463,15
+0x34,D4 Zora Temple,dungeon room,Y,in[0x25:stair 0x35:doorW]; out[0x35:doorE 0x25:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,1,9,17,110,12
+0x35,D4 Zora Temple,dungeon room,Y,in[0x34:doorE 0x36:doorW 0x44:warp]; out[0x34:doorW 0x36:doorE 0x44:hole]; vanilla-obj-sim=0.16; diff=header+objects+doors+sprites+chests,1,9,17,167,11
+0x36,D4 Zora Temple,dungeon room,Y,in[0x35:doorE 0x37:doorW]; out[0x37:doorE 0x35:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,1,9,17,116,7
+0x37,D4 Zora Temple,dungeon room,Y,in[0x36:doorE 0x38:doorW]; out[0x38:doorE 0x36:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,1,9,17,227,6
+0x38,D4 Zora Temple,dungeon room,Y,in[0x28:stair 0x37:doorE]; out[0x37:doorW 0x28:stair]; vanilla-obj-sim=0.01; diff=header+objects+doors+sprites,1,9,17,134,6
+0x39,D3 Kalyxo Castle,dungeon room,Y,in[0x29:doorS 0x49:doorN]; out[0x49:doorS 0x29:doorN]; vanilla-obj-sim=0.04; diff=header+objects+doors+sprites,2,12,9,60,3
+0x3A,D1 Mushroom Grotto,dungeon room,Y,in[0x2A:doorS 0x3B:doorW 0x4A:doorN 0x5B:warp]; out[0x4A:doorS 0x3B:doorE 0x2A:doorN 0x09:warptag 0x6A:warptag 0x09:warptag]; vanilla-obj-sim=0.13; diff=header+objects+doors+sprites+chests,7,15,43,190,2
+0x3B,D1 Mushroom Grotto,dungeon room,Y,in[0x1A:stair 0x2B:doorS 0x3A:doorE 0x4B:doorN]; out[0x4B:doorS 0x3A:doorW 0x2B:doorN 0x1A:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,7,15,26,77,8
+0x3C,Deluxe Fairy Fountain Pond / Deluxe Fairy Fountain Start / Deluxe Fairy Fountain East,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x3A (Deluxe Fairy Fountain East) ent@OW1D; in[0x2C:doorS]; out[0x2C:doorN 0x0E:hole]; exit-door x1; vanilla-obj-sim=0.94; diff=header+objects,6,24,19,60,3
+0x3D,D8 Fortress of Secrets,dungeon room,Y,in[0x2D:hole(mask) 0x4D:doorN]; out[0x4D:doorS 0x2D:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,14,3,36,32,10
+0x3E,D2 Tail Palace,dungeon room,Y,in[0x3F:doorW 0x5E:warp]; out[0x3F:doorE 0x5E:warp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,5,6,19,61,7
+0x3F,D2 Tail Palace,dungeon room,Y,in[0x3E:doorE 0x4F:doorN 0x6F:stair]; out[0x3E:doorW 0x4F:doorS 0x6F:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,5,6,19,46,9
+0x40,Hall of Secrets,cutscene/special,Y,in[0x11:stair 0x12:stair 0x30:stair 0x41:doorW]; out[0x41:doorE 0x11:stair 0x12:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,3,17,2,79,2
+0x41,Hall of Secrets,cutscene/special,Y,in[0x40:doorE 0x42:doorW]; out[0x40:doorW 0x42:doorE]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,3,17,2,67,3
+0x42,Hall of Secrets,cutscene/special,Y,in[0x41:doorE]; out[0x41:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,3,17,1,66,4
+0x43,S3 Shrine of Courage,dungeon room,Y,in[0x17:stair 0x33:stair 0x53:doorN]; out[0x53:doorS 0x17:stair 0x33:stair 0x33:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,7,15,29,335,10
+0x44,D4 Zora Temple,dungeon room,Y,in[0x35:hole]; out[0x35:warp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,1,9,17,152,8
+0x45,D4 Zora Temple,dungeon room,Y,in[0x18:stair 0x46:doorW]; out[0x46:doorE 0x18:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,1,9,30,124,8
+0x46,D4 Zora Temple,dungeon room,Y,in[0x45:doorE]; out[0x45:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,1,9,27,112,6
+0x47,D3 Kalyxo Castle,dungeon room,Y,in[0x48:doorW 0x68:stair]; out[0x48:doorE 0x68:stair 0x07:hole]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,2,12,10,92,1
+0x48,D3 Kalyxo Castle,dungeon room,Y,in[0x47:doorE 0x49:doorW]; out[0x47:doorW 0x49:doorE 0x59:warp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,2,12,33,112,5
+0x49,D3 Kalyxo Castle,dungeon room,Y,in[0x39:doorS 0x48:doorE 0x59:warp]; out[0x39:doorN 0x48:doorW 0x07:hole]; vanilla-obj-sim=0.05; diff=header+objects+doors+sprites,2,12,33,77,9
+0x4A,D1 Mushroom Grotto,dungeon room,Y,entrance 0x26 (Mushroom Grotto) ent@OW10; in[0x09:warptag 0x3A:doorS 0x4B:doorW 0x6A:warp]; out[0x3A:doorN 0x4B:doorE]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,43,135,6
+0x4B,D1 Mushroom Grotto,dungeon room,Y,in[0x3B:doorS 0x4A:doorE]; out[0x3B:doorN 0x4A:doorW 0x5B:hole]; vanilla-obj-sim=0.02; diff=header+objects+doors+sprites,7,15,8,119,4
+0x4C,D8 Fortress of Secrets,dungeon room (unreached),?,out[0x1D:warp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites; hdr-ref-by[0x0D.holewarp],14,3,12,19,0
+0x4D,D8 Fortress of Secrets,dungeon room,Y,in[0x3D:doorS 0x9C:stair]; out[0x3D:doorN 0x9C:stair 0x9C:hole]; vanilla-obj-sim=0.53; diff=header+objects+doors+chests,14,3,12,112,1
+0x4E,D2 Tail Palace,dungeon room,Y,in[0x4F:doorW 0x7E:stair]; out[0x4F:doorE 0x7E:stair 0x7E:hole]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,5,6,19,68,9
+0x4F,D2 Tail Palace,dungeon room,Y,in[0x3F:doorS 0x4E:doorE 0x5F:doorN]; out[0x5F:doorS 0x3F:doorN 0x4E:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,5,6,19,64,9
+0x50,Hyrule Castle dream set (Dream 1),cutscene/special (vanilla-unchanged),Y,in[0x60:doorN]; out[0x51:doorE? 0x60:doorS]; vanilla-obj-sim=1.00; diff=header+sprites,0,12,4,55,0
+0x51,Hyrule Castle dream set (Dream 1),cutscene/special,Y,spawn point 4; in[0x61:stair]; out[0x61:stair]; asm[Sprites/NPCs/hyrule_dream.asm:3:cmp]; vanilla-obj-sim=0.86; diff=header+objects+doors+sprites,2,12,42,89,1
+0x52,Hyrule Castle dream set (Dream 1),cutscene/special,Y,in[0x62:doorN]; out[0x51:doorW? 0x62:doorS]; vanilla-obj-sim=0.70; diff=header+objects+sprites,0,12,4,64,0
+0x53,S3 Shrine of Courage,dungeon room,Y,entrance 0x0C (Shrine of Courage) ent@OW50; in[0x43:doorS]; out[0x43:doorN]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,29,342,9
+0x54,D3 Kalyxo Castle,dungeon room,Y,in[0x55:doorW 0x64:doorN]; out[0x55:doorE 0x64:doorS]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,1,1,33,58,6
+0x55,D3 Kalyxo Castle,dungeon room,Y,entrance 0x32 (Kalyxo Castle Prison Entrance) ent@OW0B; entrance 0x32 via ASM custom_guard.asm Oracle_CaptureAndWarp (LDA #$32); spawn point 3; in[0x54:doorE 0x80:warp]; out[0x65:doorS? 0x54:doorW 0x80:warp]; vanilla-obj-sim=0.07; diff=header+objects+doors+sprites+chests,1,1,33,54,3
+0x56,D3 Kalyxo Castle,dungeon room,Y,entrance 0x28 (Kalyxo Castle West Entrance) ent@OW0B; in[0x57:doorW]; out[0x57:doorE]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,2,12,33,101,4
+0x57,D3 Kalyxo Castle,dungeon room,Y,in[0x56:doorE 0x58:doorW]; out[0x58:doorE 0x56:doorW]; exit-door x1; vanilla-obj-sim=0.02; diff=header+objects+doors+sprites+chests,2,12,33,68,13
+0x58,D3 Kalyxo Castle,dungeon room,Y,entrance 0x2A (Kalyxo Castle Basement Route) ent@OW0B; in[0x57:doorE 0x59:doorW 0x66:stair 0x72:stair]; out[0x59:doorE 0x57:doorW 0x66:stair 0x72:stair]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,2,12,33,73,9
+0x59,D3 Kalyxo Castle,dungeon room,Y,entrance 0x2B (Kalyxo Castle Main Entrance) ent@OW0B; in[0x48:warp 0x58:doorE 0x67:stair]; out[0x58:doorW 0x67:stair 0x49:warp]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,2,12,33,106,5
+0x5A,D1 Mushroom Grotto,dungeon room,Y,in[0x6A:doorN]; out[0x6A:doorS]; asm[Sprites/all_sprites.asm:142:cmp]; vanilla-obj-sim=0.00; diff=header+objects+sprites,7,16,26,10,1
+0x5B,D1 Mushroom Grotto,dungeon room,Y,in[0x09:warptag 0x4B:hole]; out[0x3A:warp]; vanilla-obj-sim=0.03; diff=header+objects+doors+sprites+chests,7,15,8,57,10
+0x5C,D8 Fortress of Secrets,dungeon room,Y,in[0x6C:doorN]; out[0x6C:doorS]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,14,3,10,70,7
+0x5D,D8 Fortress of Secrets,dungeon room,Y,in[0x6D:doorN 0x7C:stair]; out[0x6D:doorS 0x7C:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,14,3,26,67,1
+0x5E,D2 Tail Palace,dungeon room,Y,in[0x3E:warp]; out[0x3E:warp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,5,6,25,31,2
+0x5F,D2 Tail Palace,dungeon room,Y,entrance 0x15 (Tail Palace) ent@OW2F; in[0x4F:doorS]; out[0x4F:doorN]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,5,6,31,77,10
+0x60,Hyrule Castle dream set (Dream 1),cutscene/special (vanilla-unchanged),Y,entrance 0x29 (Available) ent@OW7A; in[0x50:doorS 0x61:doorW]; out[0x50:doorN 0x61:doorE 0x70:doorS?]; asm[Sprites/NPCs/hyrule_dream.asm:3:cmp]; vanilla-obj-sim=0.99; diff=header+objects+sprites,0,12,4,66,0
+0x61,Hyrule Castle dream set (Dream 1),cutscene/special (vanilla-unchanged),Y,ASM room warp maple.asm Link_WarpToRoom dream Wisdom; in[0x51:stair 0x60:doorE 0x62:doorW]; out[0x60:doorW 0x62:doorE 0x51:stair]; vanilla-obj-sim=0.91; diff=header+objects+doors+sprites,0,12,42,105,1
+0x62,Hyrule Castle dream set (Dream 1),cutscene/special (vanilla-unchanged),Y,in[0x52:doorS 0x61:doorE]; out[0x61:doorW 0x52:doorN]; vanilla-obj-sim=0.99; diff=header+objects+doors+sprites,0,12,4,88,0
+0x63,S3 Shrine of Courage,dungeon room,Y,in[0x07:warp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,7,15,29,339,6
+0x64,D3 Kalyxo Castle,dungeon room,Y,in[0x54:doorS 0x65:doorW]; out[0x54:doorN 0x65:doorE]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,1,1,33,6,2
+0x65,D3 Kalyxo Castle,empty/placeholder (reachable shell: doors only),Y,in[0x64:doorE]; out[0x64:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,1,1,17,0,0
+0x66,D3 Kalyxo Castle,dungeon room,Y,in[0x58:stair 0x67:doorW]; out[0x67:doorE 0x58:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,2,12,33,85,4
+0x67,D3 Kalyxo Castle,dungeon room,Y,in[0x59:stair 0x66:doorE 0x68:doorW]; out[0x68:doorE 0x66:doorW 0x59:stair 0x05:hole]; vanilla-obj-sim=0.01; diff=header+objects+doors+sprites+chests,2,12,33,98,5
+0x68,D3 Kalyxo Castle,dungeon room,Y,entrance 0x0A (Kalyxo Castle Secret Courtyard) ent@OW0B; in[0x47:stair 0x67:doorE]; out[0x67:doorW 0x78:doorS? 0x47:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,2,12,33,80,3
+0x69,D6 Goron Mines,dungeon room,Y,in[0x79:stair]; out[0x79:stair]; vanilla-obj-sim=0.00; diff=header+objects+sprites+chests+custom_collision,4,7,8,65,3
+0x6A,D1 Mushroom Grotto,dungeon room,Y,in[0x3A:warptag 0x5A:doorS]; out[0x5A:doorN 0x4A:warp]; vanilla-obj-sim=0.02; diff=header+objects+doors+sprites+chests,7,15,43,76,8
+0x6B,D8 Fortress of Secrets,dungeon room,Y,in[0x7B:doorN 0x8B:hole]; out[0x7B:doorS 0x8B:stair 0x8B:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,14,3,10,58,4
+0x6C,D8 Fortress of Secrets,dungeon room,Y,in[0x5C:doorS 0x6D:doorW]; out[0x6D:doorE 0x5C:doorN]; vanilla-obj-sim=0.22; diff=header+objects+doors+chests,14,3,11,50,5
+0x6D,D8 Fortress of Secrets,dungeon room,Y,in[0x1C:stair 0x5D:doorS 0x6C:doorE]; out[0x5D:doorN 0x6C:doorW 0x1C:stair]; vanilla-obj-sim=0.12; diff=header+objects+doors+sprites,14,3,35,81,16
+0x6E,D2 Tail Palace,dungeon room,Y,in[0x0E:stair 0x6F:doorW]; out[0x6F:doorE 0x0E:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,5,6,25,88,13
+0x6F,D2 Tail Palace,dungeon room,Y,in[0x3F:stair 0x6E:doorE 0x7F:doorN]; out[0x6E:doorW 0x7F:doorS 0x3F:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,5,6,25,64,9
+0x70,D3 Kalyxo Castle,dungeon room,Y,in[0x71:stair 0x80:doorN]; out[0x80:doorS 0x71:stair]; vanilla-obj-sim=0.03; diff=header+objects+doors+sprites,1,1,1,91,15
+0x71,D3 Kalyxo Castle,dungeon room,Y,in[0x70:stair 0x81:stair]; out[0x81:stair 0x70:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,3,14,33,105,15
+0x72,D3 Kalyxo Castle,dungeon room,Y,in[0x58:stair 0x82:stair]; out[0x58:stair 0x82:stair 0x82:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,3,2,33,80,8
+0x73,S2 Shrine of Power,dungeon room,Y,in[0x83:doorN 0x84:hole]; out[0x83:doorS 0x84:stair 0x84:hole(mask)]; asm[Core/patches.asm:7:cmt;Core/patches.asm:8:cmt]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,13,24,30,194,10
+0x74,S2 Shrine of Power,dungeon room,Y,in[0x75:hole(mask) 0x84:doorN 0x86:hole]; out[0x84:doorS 0x75:stair 0x75:hole(mask)]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,13,24,30,241,7
+0x75,S2 Shrine of Power,dungeon room,Y,in[0x74:hole(mask) 0x76:doorW 0x85:doorN]; out[0x85:doorS 0x76:doorE 0x74:stair 0x74:hole(mask)]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,13,24,30,425,11
+0x76,S2 Shrine of Power,dungeon room,Y,entrance 0x03 (Shrine of Power) ent@OW4B; in[0x75:doorE]; out[0x75:doorW 0x03:hole(mask)]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,13,24,30,363,11
+0x77,D6 Goron Mines,dungeon room,Y,in[0x87:doorN 0xA8:stair]; out[0x87:doorS 0xA8:stair]; asm[Sprites/Objects/switch_track.asm:64:cmt]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests+custom_collision,4,7,10,137,10
+0x78,D6 Goron Mines,dungeon room,Y,in[0x88:doorN]; out[0x88:doorS]; asm[Sprites/Objects/data/minecart_tracks.asm:21:cmt]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,4,7,11,155,5
+0x79,D6 Goron Mines,dungeon room,Y,in[0x69:stair 0x89:doorN]; out[0x89:doorS 0x69:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,4,7,10,91,10
+0x7A,S1 Shrine of Wisdom,dungeon room,Y,in[0x8A:doorN]; out[0x8A:doorS 0xC9:warp]; asm[Core/patches.asm:11:cmt;Core/patches.asm:12:cmt]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,8,13,44,205,7
+0x7B,D8 Fortress of Secrets,dungeon room,Y,in[0x6B:doorS 0x7C:doorW 0x7D:warp]; out[0x7C:doorE 0x6B:doorN 0x7D:warp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,14,3,19,91,6
+0x7C,D8 Fortress of Secrets,dungeon room,Y,in[0x5D:stair 0x7B:doorE 0x8C:doorN]; out[0x6C:doorN? 0x7B:doorW 0x8C:doorS 0x5D:stair 0x0C:warp]; vanilla-obj-sim=0.12; diff=header+objects+doors+sprites+chests,14,3,19,34,5
+0x7D,D8 Fortress of Secrets,dungeon room,Y,in[0x7B:warp 0x8D:doorN]; out[0x8D:doorS 0x7B:warp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,14,3,19,93,4
+0x7E,D2 Tail Palace,dungeon room,Y,in[0x4E:hole 0x7F:doorW 0x8E:doorN]; out[0x8E:doorS 0x7F:doorE 0x4E:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,5,6,25,88,14
+0x7F,D2 Tail Palace,dungeon room,Y,in[0x6F:doorS 0x7E:doorE]; out[0x6F:doorN 0x7E:doorW 0x8F:hole]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,5,6,25,104,6
+0x80,D3 Kalyxo Castle,dungeon room,Y,spawn point 2; in[0x55:warp 0x70:doorS]; out[0x70:doorN 0x55:warp]; vanilla-obj-sim=0.11; diff=header+objects+doors+sprites+chests,1,1,33,115,6
+0x81,D3 Kalyxo Castle,dungeon room,Y,in[0x71:stair 0x82:doorW]; out[0x82:doorE 0x71:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,3,14,33,90,13
+0x82,D3 Kalyxo Castle,dungeon room,Y,in[0x72:stair 0x81:doorE]; out[0x81:doorW 0x72:stair 0x72:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,3,14,33,83,10
+0x83,S2 Shrine of Power,dungeon room,Y,entrance 0x0B (Shrine of Power) ent@OW4B; in[0x73:doorS 0x85:hole]; out[0x73:doorN 0x85:stair 0x85:hole(mask)]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,13,24,30,205,14
+0x84,S2 Shrine of Power,dungeon room,Y,entrance 0x09 (Shrine of Power) ent@OW4B; in[0x73:hole(mask) 0x74:doorS]; out[0x74:doorN 0x86:stair 0x73:stair 0x73:hole]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,13,24,30,123,8
+0x85,S2 Shrine of Power,dungeon room,Y,in[0x75:doorS 0x83:hole(mask)]; out[0x75:doorN 0x83:stair 0x83:hole]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,13,24,30,153,9
+0x86,S2 Shrine of Power,dungeon room,Y,entrance 0x05 (Shrine of Power) ent@OW4B; in[0x84:stair]; out[0x74:stair 0x74:hole]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,13,24,30,296,12
+0x87,D6 Goron Mines,dungeon room,Y,in[0x77:doorS 0x88:doorW]; out[0x77:doorN 0x88:doorE]; asm[Sprites/Objects/data/minecart_tracks.asm:18:cmt]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests+custom_collision,4,7,8,214,8
+0x88,D6 Goron Mines,dungeon room,Y,in[0x78:doorS 0x87:doorE 0x89:doorW 0x98:doorN]; out[0x98:doorS 0x78:doorN 0x87:doorW 0x89:doorE]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests+custom_collision,4,7,26,126,3
+0x89,D6 Goron Mines,dungeon room,Y,in[0x79:doorS 0x88:doorE 0x99:doorN]; out[0x88:doorW 0x99:doorS 0x79:doorN 0xD7:hole(mask)]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+custom_collision,4,7,10,126,5
+0x8A,S1 Shrine of Wisdom,dungeon room,Y,in[0x7A:doorS 0xAA:stair]; out[0x7A:doorN 0xAA:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,8,13,44,240,13
+0x8B,D8 Fortress of Secrets,dungeon room,Y,in[0x6B:stair 0x9B:doorN]; out[0x9B:doorS 0x6B:stair 0x6B:stair 0x6B:hole]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,14,3,19,16,0
+0x8C,D8 Fortress of Secrets,dungeon room,Y,in[0x7C:doorS 0x8D:doorW]; out[0x8D:doorE 0x7C:doorN 0x1C:hole]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,14,3,26,90,2
+0x8D,D8 Fortress of Secrets,dungeon room,Y,in[0x7D:doorS 0x8C:doorE]; out[0x8C:doorW 0x7D:doorN]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,14,3,19,42,5
+0x8E,D2 Tail Palace,dungeon room,Y,in[0x7E:doorS 0x8F:warp]; out[0x7E:doorN 0x8F:warp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,5,6,25,85,6
+0x8F,D2 Tail Palace,dungeon room,Y,in[0x1E:hole(mask) 0x7F:hole 0x8E:warp]; out[0x8E:warp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,5,6,25,72,5
+0x90,Orphan mini-dungeon 0x90-0x92,dungeon room (unreached),?,in[0x91:stair]; out[0x91:stair]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites; hdr-ref-by[0x15.stair2 0x91.stair1],1,5,22,9,2
+0x91,Orphan mini-dungeon 0x90-0x92,dungeon room (unreached),?,in[0x90:stair 0x92:stair]; out[0x90:stair 0x92:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites; hdr-ref-by[0x90.stair1 0x92.stair1 0xA0.stair1],1,5,10,18,4
+0x92,Orphan mini-dungeon 0x90-0x92,dungeon room (unreached),?,in[0x91:stair]; out[0x91:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests; hdr-ref-by[0x91.stair2],1,5,10,27,2
+0x93,unassigned,empty/placeholder,N,no objects; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites; hdr-ref-by[0xA2.stair1 0xA3.stair1],4,5,28,0,0
+0x94,vanilla empty clone,empty/placeholder,N,vanilla empty room; vanilla-obj-sim=1.00; diff=header,14,37,36,0,0
+0x95,D8 FoS header (unassigned),empty/placeholder,N,"INFERRED: FoS blockset 14 pal 3, no objects; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites",14,3,36,0,0
+0x96,D8 FoS header (unassigned),empty/placeholder,N,"INFERRED: FoS blockset 14 pal 3, no objects; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites",14,3,36,0,0
+0x97,D6 Goron Mines,dungeon room,Y,in[0x98:doorW 0xB8:stair]; out[0x98:doorE 0xB8:stair 0xB8:hole(mask)]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+custom_collision,4,7,11,89,8
+0x98,D6 Goron Mines,dungeon room,Y,entrance 0x27 (Goron Mines) ent@OW36; in[0x88:doorS 0x97:doorE 0x99:doorW]; out[0x97:doorW 0x99:doorE 0x88:doorN 0xB9:hole(mask)]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+custom_collision,4,7,10,86,7
+0x99,D6 Goron Mines,dungeon room,Y,in[0x89:doorS 0x98:doorE 0xDA:stair]; out[0x89:doorN 0x98:doorW]; vanilla-obj-sim=0.02; diff=header+objects+doors+sprites+chests,4,7,8,88,6
+0x9A,S1 Shrine of Wisdom,dungeon room,Y,in[0xAA:stair]; out[0xAA:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,8,13,44,298,11
+0x9B,D8 Fortress of Secrets,dungeon room,Y,in[0x8B:doorS 0x9C:doorW]; out[0x8B:doorN 0x9C:doorE]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,14,3,19,14,0
+0x9C,D8 Fortress of Secrets,dungeon room,Y,in[0x4D:hole 0x9B:doorE 0x9D:doorW]; out[0x9D:doorE 0x9B:doorW 0x4D:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,14,3,10,56,12
+0x9D,D8 Fortress of Secrets,dungeon room,Y,in[0x0C:stair 0x9C:doorE]; out[0x9C:doorW 0x0C:stair 0x0C:hole(mask)]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,14,3,19,93,0
+0x9E,D5 Glacia Estate,dungeon room,Y,in[0xAE:doorN]; out[0xAE:doorS]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,11,19,28,55,8
+0x9F,D5 Glacia Estate,dungeon room,Y,in[0xAF:doorN]; out[0xAF:doorS]; vanilla-obj-sim=0.08; diff=header+objects+doors+sprites,11,19,28,61,10
+0xA0,Orphan pair 0xA0/0xB0 (D7 grid),empty/placeholder,N,in[0xB0:doorN]; out[0xA1:doorE? 0xB0:doorS]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,9,30,29,1,0
+0xA1,D7 Dragon Ship,dungeon room,Y,in[0xA2:doorW 0xB1:doorN 0xB6:stair]; out[0xA2:doorE 0xB1:doorS 0xB6:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,9,30,19,62,9
+0xA2,D7 Dragon Ship,dungeon room,Y,in[0xA1:doorE 0xB2:doorN]; out[0xA1:doorW 0xB2:doorS]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,9,30,38,49,12
+0xA3,D7 Dragon Ship,dungeon room,Y,in[0xB3:doorN]; out[0xB3:doorS]; vanilla-obj-sim=0.01; diff=header+objects+doors+sprites,3,5,29,57,9
+0xA4,D7 Dragon Ship,dungeon room,Y,in[0xB4:doorN]; out[0xB4:doorS]; vanilla-obj-sim=0.34; diff=header+objects+sprites,3,5,24,28,1
+0xA5,D7 Dragon Ship,dungeon room,Y,in[0xB5:doorN]; out[0xB5:doorS 0xB7:warp]; vanilla-obj-sim=0.30; diff=header+objects+doors+sprites,3,5,36,80,11
+0xA6,D8 FoS header (unassigned),empty/placeholder,N,"INFERRED: FoS blockset 14 pal 3, no objects; vanilla-obj-sim=0.00; diff=header+objects+sprites",14,3,36,0,0
+0xA7,vanilla Hera fairy leftover,vanilla leftover,N,byte-identical to vanilla; out[0x17:warp]; vanilla-obj-sim=1.00; diff=none(identical to vanilla),5,6,25,18,2
+0xA8,D6 Goron Mines,dungeon room,Y,in[0x77:stair]; out[0xB8:doorS? 0x77:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests+custom_collision,4,7,10,83,12
+0xA9,D6 Goron Mines,dungeon room,Y,in[0xB9:doorN]; out[0xB9:doorS 0xDA:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,4,7,27,99,15
+0xAA,S1 Shrine of Wisdom,dungeon room,Y,in[0x8A:stair 0x9A:stair 0xBA:doorN]; out[0xBA:doorS 0x8A:stair 0x9A:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,8,13,44,261,6
+0xAB,unassigned,empty/placeholder,N,no objects; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,5,13,27,0,0
+0xAC,D5 Glacia Estate,dungeon room,Y,INFERRED: boss room; header holewarp refs from 0xAD/0xBC; twinrova.asm checks room $AC; asm[Sprites/Bosses/twinrova.asm:853:cmt;Sprites/Bosses/twinrova.asm:855:cmp]; vanilla-obj-sim=0.01; diff=header+objects+doors; hdr-ref-by[0xAD.holewarp 0xBC.holewarp],11,19,28,90,1
+0xAD,D5 Glacia Estate,dungeon room,Y,in[0xBD:doorN]; out[0xBD:doorS]; asm[Sprites/Bosses/twinrova.asm:1006:cmp]; vanilla-obj-sim=0.00; diff=header+objects+doors,11,19,28,4,0
+0xAE,D5 Glacia Estate,dungeon room,Y,in[0x9E:doorS 0xAF:doorW 0xCD:hole]; out[0x9E:doorN 0xAF:doorE 0xCD:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,11,19,41,58,5
+0xAF,D5 Glacia Estate,dungeon room,Y,in[0x9F:doorS 0xAE:doorE 0xCE:hole]; out[0xAE:doorW 0x9F:doorN 0xCE:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,11,19,41,100,4
+0xB0,Orphan pair 0xA0/0xB0 (D7 grid),empty/placeholder,N,in[0xA0:doorS]; out[0xA0:doorN]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,9,30,33,0,0
+0xB1,D7 Dragon Ship,dungeon room,Y,in[0xA1:doorS 0xB2:doorW 0xC1:doorN]; out[0xC1:doorS 0xB2:doorE 0xA1:doorN]; vanilla-obj-sim=0.01; diff=header+objects+doors+sprites,9,30,36,76,13
+0xB2,D7 Dragon Ship,dungeon room,Y,in[0xA2:doorS 0xB1:doorE 0xB6:stair 0xC2:doorN]; out[0xB1:doorW 0xC2:doorS 0xA2:doorN 0xB6:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,9,30,30,48,9
+0xB3,D7 Dragon Ship,dungeon room,Y,in[0xA3:doorS 0xC3:doorN]; out[0xC3:doorS 0xA3:doorN]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,3,5,29,70,9
+0xB4,D7 Dragon Ship,dungeon room,Y,in[0xA4:doorS 0xC4:doorN]; out[0xA4:doorN 0xC4:doorS]; vanilla-obj-sim=0.45; diff=header+objects+doors,3,5,37,60,0
+0xB5,D7 Dragon Ship,dungeon room,Y,in[0xA5:doorS 0xB6:doorW 0xC5:doorN]; out[0xB6:doorE 0xC5:doorS 0xA5:doorN]; vanilla-obj-sim=0.16; diff=header+objects+doors+sprites,3,5,37,124,10
+0xB6,D7 Dragon Ship,dungeon room,Y,in[0xA1:stair 0xB2:stair 0xB5:doorE 0xB7:doorW 0xC6:doorN]; out[0xC6:doorS 0xB5:doorW 0xB7:doorE 0xB2:stair 0xA1:stair]; vanilla-obj-sim=0.01; diff=header+objects+doors+sprites+chests,3,5,30,67,8
+0xB7,D7 Dragon Ship,dungeon room,Y,in[0xB6:doorE 0xC7:doorN]; out[0xC7:doorS 0xB6:doorW 0xA5:warp]; vanilla-obj-sim=0.04; diff=header+objects+doors+sprites+chests,9,5,30,40,6
+0xB8,D6 Goron Mines,dungeon room,Y,in[0x97:hole(mask)]; out[0x97:stair]; asm[Core/patches.asm:26:cmt]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests+custom_collision,4,7,10,132,7
+0xB9,D6 Goron Mines,dungeon room,Y,in[0x98:hole(mask) 0xA9:doorS]; out[0xA9:doorN 0x05:hole(mask)]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests+custom_collision,4,7,10,153,3
+0xBA,S1 Shrine of Wisdom,dungeon room,Y,in[0xAA:doorS 0xCA:doorN]; out[0xAA:doorN 0xCA:doorS]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,8,13,44,286,10
+0xBB,D5 Glacia Estate,dungeon room,Y,in[0xBC:doorW 0xCB:doorN]; out[0xCB:doorS 0xBC:doorE]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,11,19,41,88,5
+0xBC,D5 Glacia Estate,dungeon room,Y,in[0xBB:doorE 0xBD:doorW]; out[0xBD:doorE 0xBB:doorW]; vanilla-obj-sim=0.01; diff=header+objects+doors+sprites,11,19,28,97,11
+0xBD,D5 Glacia Estate,dungeon room,Y,in[0xAD:doorS 0xBC:doorE]; out[0xBC:doorW 0xAD:doorN]; asm[Sprites/Bosses/twinrova.asm:1102:cmp]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,11,19,3,60,1
+0xBE,D5 Glacia Estate,dungeon room,Y,in[0xBF:doorW 0xCE:doorN]; out[0xCE:doorS 0xBF:doorE]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,11,19,41,55,6
+0xBF,D5 Glacia Estate,dungeon room,Y,in[0xBE:doorE 0xCF:doorN]; out[0xBE:doorW 0xCF:doorS]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,11,19,41,59,7
+0xC0,D7 Dragon Ship,empty/placeholder (reachable shell: doors only),Y,in[0xC1:doorW]; out[0xC1:doorE]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,9,30,33,0,0
+0xC1,D7 Dragon Ship,dungeon room,Y,in[0xB1:doorS 0xC0:doorE 0xC2:doorW]; out[0xB1:doorN 0xC2:doorE 0xC0:doorW]; vanilla-obj-sim=0.01; diff=header+objects+doors+sprites+chests,9,30,19,69,13
+0xC2,D7 Dragon Ship,dungeon room,Y,in[0xB2:doorS 0xC1:doorE]; out[0xB2:doorN 0xC1:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,9,30,29,69,8
+0xC3,D7 Dragon Ship,dungeon room,Y,in[0xB3:doorS 0xC4:doorW]; out[0xC4:doorE 0xB3:doorN]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,3,5,29,64,11
+0xC4,D7 Dragon Ship,dungeon room,Y,in[0xB4:doorS 0xC3:doorE 0xC5:doorW]; out[0xC3:doorW 0xB4:doorN 0xC5:doorE]; vanilla-obj-sim=0.60; diff=header+objects+doors+sprites,3,5,36,100,7
+0xC5,D7 Dragon Ship,dungeon room,Y,in[0xB5:doorS 0xC4:doorE 0xC6:doorW 0xD5:stair]; out[0xC6:doorE 0xC4:doorW 0xB5:doorN 0xD5:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,3,5,36,72,9
+0xC6,D7 Dragon Ship,dungeon room,Y,in[0xB6:doorS 0xC5:doorE 0xC7:doorW 0xD6:doorN]; out[0xB6:doorN 0xC7:doorE 0xC5:doorW 0xD6:doorS]; vanilla-obj-sim=0.55; diff=header+objects+doors,9,5,30,146,7
+0xC7,D7 Dragon Ship,dungeon room,Y,in[0xB7:doorS 0xC6:doorE]; out[0xB7:doorN 0xC6:doorW]; vanilla-obj-sim=0.19; diff=header+objects+doors+sprites,9,5,30,111,6
+0xC8,D6 Goron Mines,dungeon room,Y,in[0xD8:doorN]; out[0xD8:doorS]; asm[Sprites/Bosses/king_dodongo.asm:16:cmt]; vanilla-obj-sim=0.00; diff=header+objects+sprites,4,32,21,13,1
+0xC9,S1 Shrine of Wisdom,dungeon room,Y,entrance 0x33 (Shrine of Wisdom) ent@OW63; in[0x7A:warp 0xCA:stair]; out[0xCA:stair]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,8,13,44,323,12
+0xCA,S1 Shrine of Wisdom,dungeon room,Y,in[0xBA:doorS 0xC9:stair]; out[0xBA:doorN 0xC9:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,8,13,44,134,10
+0xCB,D5 Glacia Estate,dungeon room,Y,in[0xBB:doorS 0xCC:doorW 0xDB:doorN]; out[0xDB:doorS 0xCC:doorE 0xBB:doorN 0x0B:hole]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,11,19,28,95,12
+0xCC,D5 Glacia Estate,dungeon room,Y,in[0xCB:doorE 0xDC:stair]; out[0xCB:doorW 0xDC:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,11,19,28,81,11
+0xCD,D5 Glacia Estate,dungeon room,Y,in[0xAE:stair 0xCE:doorW 0xDD:doorN]; out[0xDD:doorS 0xCE:doorE 0xAE:stair 0xAE:hole]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,11,19,41,72,8
+0xCE,D5 Glacia Estate,dungeon room,Y,in[0xAF:stair 0xBE:doorS 0xCD:doorE 0xCF:doorW]; out[0xBE:doorN 0xCF:doorE 0xCD:doorW 0xAF:stair 0xAF:hole]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,11,19,41,93,5
+0xCF,D5 Glacia Estate,dungeon room,Y,in[0xBF:doorS 0xCE:doorE]; out[0xCE:doorW 0xBF:doorN]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,11,19,41,68,10
+0xD0,Lava Cave Start / Lava Cave End,interior (house/shop/cave),Y,entrance 0x4F (Lava Cave Start) ent@OW43; in[0xD1:doorW]; out[0xD1:doorE]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,6,25,1,45,7
+0xD1,Lava Cave Start / Lava Cave End,interior (house/shop/cave),Y,entrance 0x52 (Lava Cave End) ent@OW44; in[0xD0:doorE 0xD2:doorW]; out[0xD2:doorE 0xD0:doorW]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,6,25,29,51,6
+0xD2,Lava Cave Start / Lava Cave End,empty/placeholder (reachable shell: doors only),Y,in[0xD1:doorE]; out[0xD1:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,6,25,29,0,8
+0xD3,Snow Mountain East Peak To West Peak / Snow Mountain West Peak To East Peak,interior (house/shop/cave),Y,in[0xD4:doorW]; out[0xD4:doorE]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,20,19,8,47,7
+0xD4,Snow Mountain East Peak To West Peak / Snow Mountain West Peak To East Peak,interior (house/shop/cave),Y,entrance 0x31 (Snow Mountain West Peak To East Peak) ent@OW05; in[0xD3:doorE 0xE5:stair]; out[0xD3:doorW 0xE5:stair]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,20,19,1,43,14
+0xD5,D7 Dragon Ship,dungeon room,Y,in[0xC5:stair 0xD6:doorW]; out[0xD6:doorE 0xC5:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,9,5,36,70,5
+0xD6,D7 Dragon Ship,dungeon room,Y,entrance 0x35 (Dragon Ship) ent@OW30; in[0xC6:doorS 0xD5:doorE]; out[0xD5:doorW 0xC6:doorN 0xB4:hole]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,9,5,36,75,12
+0xD7,D6 Goron Mines,dungeon room,Y,in[0x89:hole(mask) 0xD8:doorW]; out[0xD8:doorE 0x05:hole(mask)]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+custom_collision,4,7,11,154,5
+0xD8,D6 Goron Mines,dungeon room,Y,in[0xC8:doorS 0xD7:doorE 0xD9:doorW]; out[0xD9:doorE 0xC8:doorN 0xD7:doorW 0x05:hole(mask)]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests+custom_collision,4,7,11,156,7
+0xD9,D6 Goron Mines,dungeon room,Y,in[0xD8:doorE 0xDA:doorW]; out[0xD8:doorW 0xDA:doorE]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests+custom_collision,4,7,8,97,10
+0xDA,D6 Goron Mines,dungeon room,Y,in[0xA9:stair 0xD9:doorE]; out[0xD9:doorW 0x99:stair]; vanilla-obj-sim=0.04; diff=header+objects+doors+sprites+custom_collision,4,7,8,100,11
+0xDB,D5 Glacia Estate,dungeon room,Y,entrance 0x34 (Glacia Estate) ent@OW06; in[0xCB:doorS]; out[0xCB:doorN]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,11,19,28,85,8
+0xDC,D5 Glacia Estate,dungeon room,Y,in[0xCC:stair 0xDD:doorW]; out[0xDD:doorE 0xCC:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,11,19,41,113,9
+0xDD,D5 Glacia Estate,dungeon room,Y,in[0xCD:doorS 0xDC:doorE]; out[0xDC:doorW 0xCD:doorN]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,11,19,41,74,7
+0xDE,D2 Tail Palace,dungeon room,Y,in[0x2E:hole]; out[0x06:hole(mask)]; vanilla-obj-sim=0.00; diff=header+objects+sprites,5,6,12,21,1
+0xDF,Snow Mountain Cave Start / Snow Mountain Cave Portal / Snow Mountain Cave End,interior (house/shop/cave),Y,entrance 0x20 (Snow Mountain Cave End) ent@OW04; in[0xEF:stair]; out[0xEF:stair]; exit-door x1; vanilla-obj-sim=0.55; diff=header+objects+doors+sprites,6,19,19,64,4
+0xE0,Mountain to Witch Shop Cave Start / Mountain to Witch Shop Cave End,interior (house/shop/cave),Y,in[0xF0:doorN]; out[0xF0:doorS]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,6,24,33,100,6
+0xE1,Toadstool Woods Log Cave,interior (house/shop/cave),Y,entrance 0x2C (Toadstool Woods Log Cave) ent@OW18; in[0xE2:doorW]; out[0xE2:doorE]; exit-door x1; vanilla-obj-sim=0.80; diff=header+objects+doors+sprites,6,24,40,76,2
+0xE2,Toadstool Woods Log Cave,interior (house/shop/cave),Y,in[0xE1:doorE]; out[0xE1:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,6,24,19,57,3
+0xE3,1/2 Magic Cave,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x11 (1/2 Magic Cave) ent@OW0B; exit-door x1; vanilla-obj-sim=0.97; diff=header+objects+doors,6,32,9,73,1
+0xE4,Snow Mountain East Peak To West Peak / Snow Mountain West Peak To East Peak,interior (house/shop/cave),Y,entrance 0x30 (Snow Mountain East Peak To West Peak) ent@OW05; spawn point 6; in[0xE5:doorW]; out[0xE5:doorE]; exit-door x1; asm[Sprites/NPCs/followers.asm:595:cmp]; vanilla-obj-sim=0.45; diff=header+objects+sprites,20,19,1,65,4
+0xE5,Snow Mountain East Peak To West Peak / Snow Mountain West Peak To East Peak,interior (house/shop/cave) (vanilla-unchanged),Y,in[0xD4:stair 0xE4:doorE]; out[0xE4:doorW 0xD4:stair]; vanilla-obj-sim=0.96; diff=header+objects+doors+sprites,20,19,1,84,9
+0xE6,Tail Palace Cave Route Start / Tail Palace Cave Route End,interior (house/shop/cave),Y,entrance 0x2E (Tail Palace Cave Route Start) ent@OW2D; in[0xE7:doorW]; out[0xE7:doorE]; exit-door x1; asm[Core/Cutscene/experiment.asm:11:cmt;Core/Cutscene/experiment.asm:27:cmt]; vanilla-obj-sim=0.65; diff=header+objects+sprites,6,1,2,76,6
+0xE7,Tail Palace Cave Route Start / Tail Palace Cave Route End,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x2F (Tail Palace Cave Route End) ent@OW2E; in[0xE6:doorE]; out[0xE6:doorW]; exit-door x1; vanilla-obj-sim=0.94; diff=header+objects+sprites,6,1,2,66,7
+0xE8,Deluxe Fairy Fountain Pond / Deluxe Fairy Fountain Start / Deluxe Fairy Fountain East,interior (house/shop/cave),Y,entrance 0x7D (?) hole@OW0F; entrance 0x14 (Deluxe Fairy Fountain Start) ent@OW16; in[0x2C:stair 0xF8:stair]; out[0x2C:stair 0xF8:stair 0xF8:stair 0xF8:stair 0xF8:hole]; exit-door x1; vanilla-obj-sim=0.29; diff=header+objects+sprites+chests,6,24,19,76,0
+0xE9,vanilla empty clone,empty/placeholder,N,no objects; vanilla-obj-sim=1.00; diff=sprites,6,32,19,0,1
+0xEA,Kalyxo Field Cave River / Kalyxo Field Cave End,interior (house/shop/cave),Y,entrance 0x23 (Kalyxo Field Cave End) ent@OW25; in[0xFA:stair]; out[0xFA:stair]; exit-door x1; vanilla-obj-sim=0.29; diff=header+objects+sprites,6,24,19,44,3
+0xEB,Snow Mountain Cave East Peak / Snow Mountain Cave to the East Peak,interior (house/shop/cave),Y,entrance 0x17 (Snow Mountain Cave to the East Peak) ent@OW05; in[0xFB:stair]; out[0xFB:stair]; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,6,19,25,36,8
+0xEC,Snow Mountain Cave Start / Snow Mountain Cave Portal / Snow Mountain Cave End,interior (house/shop/cave),Y,in[0xEE:stair]; out[0xEE:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,6,19,19,49,8
+0xED,Beach Cave Route / Beach Cave End,interior (house/shop/cave),Y,entrance 0x1B (Beach Cave End) ent@OW36; in[0xFD:stair]; out[0xFD:stair 0xFD:hole]; exit-door x1; vanilla-obj-sim=0.56; diff=header+objects+sprites,6,24,1,71,11
+0xEE,Snow Mountain Cave Start / Snow Mountain Cave Portal / Snow Mountain Cave End,interior (house/shop/cave),Y,in[0xEC:stair 0xEF:doorW]; out[0xEF:doorE 0xEC:stair]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites,6,19,19,51,9
+0xEF,Snow Mountain Cave Start / Snow Mountain Cave Portal / Snow Mountain Cave End,interior (house/shop/cave),Y,entrance 0x1F (Snow Mountain Cave Portal) ent@OW04; in[0xDF:stair 0xEE:doorE 0xFF:stair]; out[0xEE:doorW 0xDF:stair 0xFF:stair]; exit-door x1; vanilla-obj-sim=0.51; diff=header+objects+doors+sprites+chests,6,19,19,42,7
+0xF0,Mountain to Witch Shop Cave Start / Mountain to Witch Shop Cave End,interior (house/shop/cave),Y,entrance 0x06 (Mountain to Witch Shop Cave Start) ent@OW15; spawn point 5; in[0xE0:doorS 0xF1:doorW]; out[0xF1:doorE 0xE0:doorN]; exit-door x1; vanilla-obj-sim=0.40; diff=header+objects+doors+sprites,6,24,1,110,9
+0xF1,Mountain to Witch Shop Cave Start / Mountain to Witch Shop Cave End,interior (house/shop/cave),Y,entrance 0x07 (Mountain to Witch Shop Cave End) ent@OW0D; in[0xF0:doorE]; out[0xF0:doorW]; exit-door x1; vanilla-obj-sim=0.17; diff=header+objects+doors+sprites,6,24,1,90,11
+0xF2,Mushroom House / Old Woman House / Village Tavern,interior (house/shop/cave),Y,entrance 0x0D (Mushroom House) ent@OW18; in[0xF3:doorW]; out[0xF3:doorE 0x102:doorS?]; vanilla-obj-sim=0.14; diff=header+objects,3,2,5,21,0
+0xF3,Mushroom House / Old Woman House / Village Tavern,interior (house/shop/cave),Y,entrance 0x0E (Old Woman House) ent@OW18; in[0xF2:doorE 0x103:doorN]; out[0xF2:doorW 0x103:doorS]; vanilla-obj-sim=0.21; diff=header+objects,3,2,5,13,1
+0xF4,entrance 0x0F / entrance 0x10,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x0F (?) ent@OW56; in[0xF5:doorW]; out[0xF5:doorE 0x104:doorS?]; vanilla-obj-sim=1.00; diff=header,3,2,15,14,1
+0xF5,entrance 0x0F / entrance 0x10,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x10 (?) ent@OW56; in[0xF4:doorE]; out[0xF4:doorW 0x105:doorS?]; vanilla-obj-sim=1.00; diff=header,3,2,15,16,1
+0xF6,entrance 0x1D,interior (house/shop/cave),Y,entrance 0x1D (?) ent@OW70; exit-door x1; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,6,1,19,62,5
+0xF7,vanilla empty clone,empty/placeholder,N,no objects; vanilla-obj-sim=1.00; diff=sprites,6,7,19,0,1
+0xF8,Deluxe Fairy Fountain Pond / Deluxe Fairy Fountain Start / Deluxe Fairy Fountain East,interior (house/shop/cave),Y,entrance 0x13 (Deluxe Fairy Fountain Pond) ent@OW15; in[0xE8:hole]; out[0xE8:stair 0xE8:stair 0xE8:stair]; exit-door x1; vanilla-obj-sim=0.42; diff=header+objects+sprites+chests,6,24,19,82,2
+0xF9,Kalyxo Field Cave Start,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x21 (Kalyxo Field Cave Start) ent@OW25; exit-door x1; vanilla-obj-sim=1.00; diff=header,6,24,19,31,4
+0xFA,Kalyxo Field Cave River / Kalyxo Field Cave End,interior (house/shop/cave),Y,entrance 0x22 (Kalyxo Field Cave River) ent@OW25; in[0xEA:stair]; out[0xEA:stair]; exit-door x1; vanilla-obj-sim=0.71; diff=header+objects,6,24,19,84,3
+0xFB,Snow Mountain Cave East Peak / Snow Mountain Cave to the East Peak,interior (house/shop/cave),Y,entrance 0x16 (Snow Mountain Cave East Peak) ent@OW07; in[0xEB:stair 0xFC:doorW]; out[0xFC:doorE 0xEB:stair]; exit-door x1; vanilla-obj-sim=0.21; diff=header+objects+doors+sprites,6,19,25,51,3
+0xFC,Snow Mountain Cave East Peak / Snow Mountain Cave to the East Peak,interior (house/shop/cave),Y,in[0xFB:doorE]; out[0xFB:doorW]; vanilla-obj-sim=0.00; diff=header+objects+doors+sprites+chests,6,19,19,17,8
+0xFD,Beach Cave Route / Beach Cave End,interior (house/shop/cave),Y,entrance 0x1A (Beach Cave Route) ent@OW32; in[0xED:hole]; out[0xED:stair]; exit-door x1; vanilla-obj-sim=0.04; diff=header+objects+doors+sprites,6,24,1,70,5
+0xFE,Beach Cave Intro / entrance 0x80,interior (house/shop/cave),Y,entrance 0x1C (Beach Cave Intro) ent@OW23; entrance 0x80 (?) hole@OW23; exit-door x1; asm[Sprites/Enemies/stalfos_patrol.asm:101:cmt;Sprites/Enemies/stalfos_patrol.asm:98:cmt]; vanilla-obj-sim=0.06; diff=header+objects+doors+sprites+chests,6,24,1,79,6
+0xFF,Snow Mountain Cave Start / Snow Mountain Cave Portal / Snow Mountain Cave End,interior (house/shop/cave),Y,entrance 0x1E (Snow Mountain Cave Start) ent@OW0D; in[0xEF:stair]; out[0xEF:stair]; exit-door x1; vanilla-obj-sim=0.89; diff=header+objects+chests,6,24,5,52,1
+0x100,entrance 0x3C,interior (house/shop/cave) (vanilla-unchanged),Y,"entrance 0x3C (?) ent@OW5B,ent@OW70; out[0x110:doorS?]; vanilla-obj-sim=1.00; diff=header",3,5,40,21,1
+0x101,Ranch Shed / Ocarina Girls House,interior (house/shop/cave),Y,entrance 0x3E (Ranch Shed) ent@OW00; entrance 0x3F (Ocarina Girls House) ent@OW00; out[0x111:doorS?]; vanilla-obj-sim=0.02; diff=header+objects+doors+sprites,3,22,15,94,1
+0x102,Sick Boys House / entrance 0x7C,interior (house/shop/cave),Y,entrance 0x40 (Sick Boys House) ent@OW23; entrance 0x7C (?) ent@OW5C; out[0x112:doorS?]; vanilla-obj-sim=0.39; diff=header+objects+doors+sprites,3,21,13,37,3
+0x103,Mushroom House / Old Woman House / Village Tavern,interior (house/shop/cave),Y,entrance 0x43 (?) ent@OW23; entrance 0x42 (Village Tavern) ent@OW23; entrance 0x44 (Village House) ent@OW23; in[0xF3:doorS]; out[0x113:doorS? 0xF3:doorN]; vanilla-obj-sim=0.10; diff=header+objects+doors+sprites+chests,3,5,15,108,3
+0x104,Link's House,interior (house/shop/cave),Y,entrance 0x01 (Link's House) ent@OW33; spawn point 0; out[0x114:doorS? 0x0F:hole(tag)]; asm[Core/Cutscene/experiment.asm:16:cmt;Core/Cutscene/opening.asm:85:cmt]; vanilla-obj-sim=0.01; diff=header+objects+doors+sprites,3,21,13,61,1
+0x105,Zora Princess House,interior (house/shop/cave),Y,entrance 0x45 (Zora Princess House) ent@OW1E; out[0x115:doorS?]; asm[Sprites/NPCs/zora.asm:17:cmt;Sprites/NPCs/zora.asm:22:cmt]; vanilla-obj-sim=0.12; diff=header+objects+doors+sprites+chests,1,9,16,94,1
+0x106,vanilla chest-game house leftover,vanilla leftover,N,vanilla objects 0.98; out[0x116:doorS?]; vanilla-obj-sim=0.98; diff=objects+chests,3,31,15,56,1
+0x107,Village Library / entrance 0x4A,interior (house/shop/cave),Y,"entrance 0x49 (Village Library) ent@OW23; entrance 0x4A (?) ent@OW23,ent@OW4F,ent@OW58; out[0x117:doorS?]; vanilla-obj-sim=0.41; diff=header+objects+doors+sprites",3,2,6,87,4
+0x108,Chicken House,interior (house/shop/cave),Y,entrance 0x4B (Chicken House) ent@OW00; out[0x118:doorS?]; vanilla-obj-sim=0.62; diff=header+objects+chests,3,22,15,58,4
+0x109,Witch Shop,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x4C (Witch Shop) ent@OW0D; out[0x119:doorS?]; vanilla-obj-sim=1.00; diff=header,3,5,5,28,1
+0x10A,entrance 0x4D,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x4D (?) ent@OW0A; exit-door x1; vanilla-obj-sim=1.00; diff=header+chests,6,24,16,68,1
+0x10B,D4 Zora Temple,dungeon room,Y,entrance 0x4E (Zora Temple Waterfall) ent@OW1E; out[0x11B:doorS? 0x06:hole]; vanilla-obj-sim=0.30; diff=header+objects+sprites+chests,1,9,17,79,0
+0x10C,Cave of Secrets,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x50 (Cave of Secrets) ent@OW1D; exit-door x2; vanilla-obj-sim=0.99; diff=header+objects+sprites+chests,6,24,8,83,8
+0x10D,Mines Shed,interior (house/shop/cave),Y,entrance 0x5F (Mines Shed) ent@OW36; out[0x11D:doorS?]; vanilla-obj-sim=0.35; diff=header+objects+doors+sprites+chests,13,25,22,82,9
+0x10E,entrance 0x69 / entrance 0x6A,interior (house/shop/cave),Y,"entrance 0x6A (?) ent@OW0F,ent@OW45; entrance 0x69 (?) ent@OW15,ent@OW40; exit-door x2; vanilla-obj-sim=0.48; diff=header+objects",20,7,5,93,2
+0x10F,West Hotel,interior (house/shop/cave),Y,entrance 0x60 (West Hotel) ent@OW0A; out[0x11F:doorS?]; vanilla-obj-sim=0.04; diff=header+objects+sprites,3,31,5,93,1
+0x110,entrance 0x57,interior (house/shop/cave),Y,entrance 0x57 (?) ent@OW5B; out[0x120:doorS?]; vanilla-obj-sim=0.73; diff=objects,3,31,5,23,1
+0x111,Archery Minigame,interior (house/shop/cave) (vanilla-unchanged),Y,"entrance 0x59 (Archery Minigame) ent@OW6F,ent@OW70; out[0x121:doorS?]; vanilla-obj-sim=1.00; diff=header",17,30,5,17,1
+0x112,entrance 0x58 / entrance 0x5A,interior (house/shop/cave),Y,"entrance 0x58 (?) ent@OW46,ent@OW5B; entrance 0x5A (?) ent@OW4B; exit-door x2; vanilla-obj-sim=0.40; diff=header+objects+sprites",20,7,5,42,2
+0x113,Hidden Grave,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x5B (Hidden Grave) ent@OW0F; out[0x123:doorS?]; vanilla-obj-sim=1.00; diff=header+chests,16,3,8,34,0
+0x114,Graveyard Waterfall / entrance 0x62,interior (house/shop/cave),Y,"entrance 0x5C (Graveyard Waterfall) ent@OW1E; entrance 0x62 (?) ent@OW58,ent@OW5E,ent@OW70; exit-door x2; vanilla-obj-sim=0.61; diff=header+objects+doors+sprites",6,10,7,71,2
+0x115,entrance 0x5E,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x5E (?) ent@OW36; exit-door x2; vanilla-obj-sim=1.00; diff=header,6,1,7,80,6
+0x116,entrance 0x63,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x63 (?) ent@OW40; exit-door x1; vanilla-obj-sim=1.00; diff=header,18,34,7,18,1
+0x117,entrance 0x41,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x41 (?) ent@OW76; exit-door x1; vanilla-obj-sim=1.00; diff=header+chests,20,1,5,104,0
+0x118,Chest Minigame,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x67 (Chest Minigame) ent@OW18; vanilla-obj-sim=1.00; diff=header,3,5,15,25,1
+0x119,Village Mayors House,interior (house/shop/cave),Y,entrance 0x61 (Village Mayors House) ent@OW23; out[0x1D:stair]; vanilla-obj-sim=0.05; diff=header+objects+doors+sprites,3,2,32,56,4
+0x11A,Bonzai House,interior (house/shop/cave),Y,entrance 0x68 (Bonzai House) ent@OW5D; entrance 0x68 via ASM maple.asm !DreamReturn_Entrance (flag ENABLE_DREAM_RETURN=0); vanilla-obj-sim=0.25; diff=header+objects+doors+sprites,3,22,13,35,0
+0x11B,Rock Heart Piece Cave,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x51 (Rock Heart Piece Cave) ent@OW15; exit-door x2; vanilla-obj-sim=1.00; diff=header,6,1,8,71,2
+0x11C,entrance 0x53 / entrance 0x54,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x54 (?) ent@OW70; entrance 0x53 (?) ent@OW76; vanilla-obj-sim=0.98; diff=objects+chests,3,31,5,48,1
+0x11D,"C-House (secret, stair to D1 0x19)",interior (house/shop/cave),?,INFERRED; out[0x19:stair]; vanilla-obj-sim=0.22; diff=header+objects+chests,3,2,15,45,0
+0x11E,entrance 0x3D / entrance 0x55,interior (house/shop/cave),Y,entrance 0x55 (?) ent@OW15; entrance 0x3D (?) ent@OW75; exit-door x2; vanilla-obj-sim=0.55; diff=header+objects+chests,6,1,42,41,5
+0x11F,Village Shop / Happy Mask Salesman Shop,interior (house/shop/cave),Y,entrance 0x46 (Village Shop) ent@OW23; entrance 0x6B (Happy Mask Salesman Shop) ent@OW2D; vanilla-obj-sim=0.56; diff=header+objects+sprites,3,5,14,49,2
+0x120,entrance 0x56 / entrance 0x84,interior (house/shop/cave),Y,entrance 0x84 (?) ent@OW03; entrance 0x56 (?) ent@OW07; exit-door x2; vanilla-obj-sim=0.30; diff=header+objects+doors+sprites+chests,6,19,34,16,4
+0x121,Smiths House,interior (house/shop/cave),Y,entrance 0x64 (Smiths House) ent@OW22; vanilla-obj-sim=0.00; diff=header+objects+sprites,17,30,5,17,1
+0x122,entrance 0x65 / entrance 0x66,interior (house/shop/cave) (vanilla-unchanged),Y,"entrance 0x65 (?) ent@OW16; entrance 0x66 (?) ent@OW4B,ent@OW4E,ent@OW58; vanilla-obj-sim=1.00; diff=header",17,30,5,34,2
+0x123,entrance 0x6C,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x6C (?) ent@OW45; out[0x06:hole]; exit-door x1; vanilla-obj-sim=1.00; diff=header+chests,6,7,40,25,5
+0x124,entrance 0x6D / entrance 0x6E,interior (house/shop/cave),Y,"entrance 0x6D (?) ent@OW33; entrance 0x6E (?) ent@OW4D,ent@OW73; exit-door x2; vanilla-obj-sim=0.27; diff=header+objects+chests",6,24,40,12,1
+0x125,entrance 0x6F,interior (house/shop/cave) (vanilla-unchanged),Y,entrance 0x6F (?) ent@OW5E; exit-door x2; vanilla-obj-sim=0.96; diff=header+objects+doors,6,24,40,22,1
+0x126,entrance 0x71,interior (house/shop/cave),Y,"entrance 0x71 (?) ent@OW0A,ent@OW33; exit-door x2; vanilla-obj-sim=0.79; diff=header+objects+sprites",6,24,40,30,4
+0x127,vanilla cave leftover,vanilla leftover,N,vanilla objects 1.0; exit-door x2; vanilla-obj-sim=1.00; diff=header,6,32,42,23,1
