@@ -112,6 +112,7 @@ for m,r in R.items():
         (c1,r1),(c2,r2)=pos(m),pos(tgt)
         if abs(abs(c1-c2)+abs(r1-r2)-1)>1e-6: continue
         if int(R[m]['parent'],16)==int(R[tgt]['parent'],16): continue
+        if (m in OVL and m!=0x93) or (tgt in OVL and tgt!=0x93): continue   # overlay slots are not maps
         x1,y1=xy(c1,r1); col=EC.get(st,EC['special'])
         if c2!=c1:
             gx=x1+CW+G/2 if c2>c1 else x1-G/2; gy=y1+CH/2
