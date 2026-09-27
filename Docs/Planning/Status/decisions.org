@@ -716,7 +716,13 @@ the linked doc holds the detail.
   damage reduction); in dual-swords / 2-player mode each player can pick or
   swap tunic colors ("decoupling color and armor value would be good ... for
   dual swords mode being able to swap colors or change to others would be
-  cool"). Also noted: Fishing Rod / Portal Rod sharing a
+  cool"). Feasibility (2026-09-27, read-only): feasible with work, no new
+  VRAM (BG3 has 4 tilemap screens; all menu icons share one boot-loaded tile
+  set); layout Masks&Rings <- Items -> Quest; biggest risk: $0202 item-ID
+  tables if masks get new IDs. Report:
+  Reviews/audit_2026-09-26/menu_page3_feasibility.md. Timing: LATER - after
+  the stable RC point (RC leader plan 2026-09-27; test page not started).
+  Also noted: Fishing Rod / Portal Rod sharing a
   slot is confusing (unrelated tools); split them once slots free up.
   Answer: "yeah i think this would be my preferred outcome. declutter item
   menu, add mask/ring menu maybe even a journal opening button or something.
