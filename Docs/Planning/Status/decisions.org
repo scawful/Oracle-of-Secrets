@@ -699,3 +699,21 @@ the linked doc holds the detail.
   Waiting on the item-progression and overworld-region analyses before
   choosing the Glove's source (scawful: "C").
   Answer:
+
+* DECIDED Menu direction: declutter the item grid, add a Masks & Rings page
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Preferred outcome (feasibility check running, read-only): a third menu page
+  "Masks & Rings" in a carousel with Items and Quest (repaint the off-screen
+  half of the wrapping menu layer before each scroll). Masks leave the item
+  grid (frees 5 slots); rings leave their submenu. Keep the 4 bottles on the
+  item page. Stretch ideas: a button that opens the journal; an equipment
+  section to switch owned tunics/armor and shields.
+  Rejected: one mask slot with L/R cycling (masks use several buttons and the
+  R transformation overlay). Also noted: Fishing Rod / Portal Rod sharing a
+  slot is confusing (unrelated tools); split them once slots free up.
+  Answer: "yeah i think this would be my preferred outcome. declutter item
+  menu, add mask/ring menu maybe even a journal opening button or something.
+  potentially allow link to change clothes/shields even" (scawful,
+  2026-09-27).
