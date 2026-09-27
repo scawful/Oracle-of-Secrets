@@ -615,3 +615,33 @@ the linked doc holds the detail.
   power to create the realm more or less ? sky islands serve an extra content
   lore purpose and potentially could add items"; then "yes both" (scawful,
   2026-09-26).
+
+* OPEN Room census follow-ups (runtime-checked on b28, 2026-09-26)
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff (room census agent)
+  :DOC:      [[file:/private/tmp/claude-501/-Users-scawful-src-hobby-oracle-of-secrets/00b31eba-5650-499f-aa68-7c789f12b2aa/scratchpad/patches/room_census_fixes_README.md]]
+  :END:
+  Refuted: the 7 cross-dungeon pits are pit-damage rooms (fall = 1 heart, respawn in
+  the room); Mayor's House $119 stairs go to $11D (not Fortress $1D; z3ed dropped the
+  high byte). Found: D3 room $81's pit ring drops into Origins $05, walled off from
+  walking (optional one-line fix: add $81 to the pit-damage table).
+  Confirmed: S3 (entrance $0C) uses dungeon ID $09 -> shares small keys with $08
+  (Final Boss Route, entrance $24) and D7's compass/big key/map bits.
+  1. Give S3 and the Master Sword Cave / Final Boss Route rooms their own even
+     dungeon IDs? (Rec: yes; keyed IDs free: $00, $04 -- $04 is proposed for the tower.)
+  2. Should the $11D basement (2 heart pieces) be reachable from the Mayor's House?
+  3. Take the $81 pit-damage hunk? (Rec: yes, it only prevents a fall into Origins.)
+  Answer:
+
+* DECIDED Room budget step 1: the Sky tower gets the adjacent free block
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/room_census_2026-09-26/room_census.md]]
+  :END:
+  Sky tower: rooms $90-$96 + $A0, $A6, $B0 (10 rooms, adjacent on the room
+  grid; includes the underwater-shrine block-out at $90-$92, which gets
+  redecorated for the tower). Keyed dungeon ID $04.
+  The underwater Abyss shrine moves to scattered free rooms (keyless, ID $1C;
+  never small keys there). D7/D8 are not trimmed: spare rooms (~21) cover the
+  new ideas (~19) without cuts.
+  Answer: "A" (scawful, 2026-09-27).
