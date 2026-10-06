@@ -42,13 +42,23 @@ PORTABLE_BUILD_COMMAND = (
     "OOS_BASE_ROM=rom OOS_BACKUP_ROOT=backups OOS_MANIFEST_ROOT=. "
     f"{PORTABLE_BUILD_SCRIPT} 168"
 )
-ORACLE_SAVE_CONTRACT = (
+# Fail-closed save settings shared by every Oracle project descriptor.
+ORACLE_BASE_SAVE_CONTRACT = (
     ("feature_flags", "save_dungeon_maps", "false"),
     ("feature_flags", "save_dungeon_water_fill_zones", "false"),
-    ("feature_flags", "save_graphics_sheet", "false"),
     ("workspace", "autosave_enabled", "false"),
     ("workspace", "backup_on_save", "true"),
 )
+# Portable (iOS/bundle) projects: graphics sheet saving stays off (not qualified there).
+ORACLE_SAVE_CONTRACT = ORACLE_BASE_SAVE_CONTRACT + (
+    ("feature_flags", "save_graphics_sheet", "false"),
+)
+# Desktop (repo Oracle-of-Secrets.yaze): graphics sheet saving is the approved Mac editing
+# workflow (2026-09-27), allowed only while the compression-reserved sheets stay protected.
+ORACLE_DESKTOP_SAVE_CONTRACT = ORACLE_BASE_SAVE_CONTRACT + (
+    ("feature_flags", "save_graphics_sheet", "true"),
+)
+DESKTOP_RESERVED_GRAPHICS_SHEETS = {"0x7B", "0x7C"}
 PORTABLE_PROJECT_CONTRACT = (
     ("files", "rom_filename", "rom"),
     ("files", "rom_backup_folder", "backups"),
@@ -169,16 +179,43 @@ def _require_project_assignment(
         )
 
 
-def validate_oracle_project_contract(content: str) -> None:
-    """Require Oracle's fail-closed save and workspace settings exactly once."""
+def validate_oracle_project_contract(
+    content: str, contract: tuple = ORACLE_SAVE_CONTRACT
+) -> None:
+    """Require Oracle's fail-closed save and workspace settings exactly once.
+
+    The default is the portable/bundle contract. The desktop repo descriptor uses
+    validate_desktop_project_contract().
+    """
     sections, assignments = _parse_project_contract(content)
     for section in ("feature_flags", "workspace"):
         if sections.count(section) != 1:
             raise ValueError(
                 f"project.yaze must contain exactly one [{section}] section"
             )
-    for section, key, value in ORACLE_SAVE_CONTRACT:
+    for section, key, value in contract:
         _require_project_assignment(assignments, section, key, value)
+
+
+def validate_desktop_project_contract(content: str) -> None:
+    """Desktop repo descriptor: shared fail-closed settings, graphics saving on, reserved sheets kept."""
+    validate_oracle_project_contract(content, ORACLE_DESKTOP_SAVE_CONTRACT)
+    _, assignments = _parse_project_contract(content)
+    reserved = [
+        value
+        for section, key, value in assignments
+        if section == "graphics_sheets" and key == "reserved_sheets"
+    ]
+    if len(reserved) != 1:
+        raise ValueError(
+            "desktop project.yaze must declare [graphics_sheets] reserved_sheets exactly once"
+        )
+    listed = {item.strip().upper().replace("0X", "0x") for item in reserved[0].split(",") if item.strip()}
+    missing = DESKTOP_RESERVED_GRAPHICS_SHEETS - listed
+    if missing:
+        raise ValueError(
+            "desktop project.yaze reserved_sheets must include " + ",".join(sorted(missing))
+        )
 
 
 def validate_portable_project_contract(

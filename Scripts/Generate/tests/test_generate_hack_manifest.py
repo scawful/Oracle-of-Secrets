@@ -44,6 +44,7 @@ from generate_hooks_json import HookEntry, scan_hooks  # noqa: E402
 from export_yazeproj_bundle import (  # noqa: E402
     PORTABLE_BUILD_COMMAND,
     PORTABLE_HACK_MANIFEST,
+    validate_desktop_project_contract,
     validate_oracle_project_contract,
     verify_bundle,
     write_bundle_hack_manifest,
@@ -1321,9 +1322,35 @@ class RepositoryProjectSafetyTest(unittest.TestCase):
         )
 
     def test_repository_descriptor_satisfies_full_save_contract(self) -> None:
+        # The repo descriptor is the desktop (Mac) project: graphics sheet saving is the
+        # approved editing workflow; the portable/iOS contract keeps it off.
         project = (REPO_ROOT / "Oracle-of-Secrets.yaze").read_bytes()
         self.assertNotIn(b"\r", project)
-        validate_oracle_project_contract(project.decode("utf-8"))
+        validate_desktop_project_contract(project.decode("utf-8"))
+
+    def test_desktop_and_portable_contracts_stay_separate(self) -> None:
+        desktop = (REPO_ROOT / "Oracle-of-Secrets.yaze").read_text(encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "save_graphics_sheet must equal false"):
+            validate_oracle_project_contract(desktop)
+        with self.assertRaisesRegex(ValueError, "save_graphics_sheet must equal true"):
+            validate_desktop_project_contract(
+                desktop.replace("save_graphics_sheet=true", "save_graphics_sheet=false", 1)
+            )
+        with self.assertRaisesRegex(ValueError, "reserved_sheets must include"):
+            validate_desktop_project_contract(
+                desktop.replace("reserved_sheets=0x7B,0x7C", "reserved_sheets=0x7B", 1)
+            )
+        unsafe = (
+            ("save_dungeon_maps=false", "save_dungeon_maps=true"),
+            ("save_dungeon_water_fill_zones=false", "save_dungeon_water_fill_zones=true"),
+            ("autosave_enabled=false", "autosave_enabled=true"),
+            ("backup_on_save=true", "backup_on_save=false"),
+        )
+        for safe, bad in unsafe:
+            with self.subTest(desktop_field=safe):
+                self.assertIn(safe, desktop)
+                with self.assertRaises(ValueError):
+                    validate_desktop_project_contract(desktop.replace(safe, bad, 1))
 
     def test_build_regenerates_the_same_portable_manifest_path(self) -> None:
         build = (REPO_ROOT / "Scripts/Build/build_rom.sh").read_text(
@@ -1341,9 +1368,19 @@ class RepositoryProjectSafetyTest(unittest.TestCase):
         self.assertNotIn(
             'manifest_root="${OOS_MANIFEST_ROOT:-$repo_root}"', build
         )
-        # 2026-10-06 merge: the z3asm/asar assembler branches share one emit array, so
-        # the assembler runs in two `cd "$repo_root"` subshells (was three).
-        self.assertEqual(build.count('cd "$repo_root"'), 4)
+        # Every assembler invocation runs from the repo root (relative includes and
+        # portable bundles depend on it), whatever the number of branches.
+        lines = build.splitlines()
+        invocations = [
+            i for i, line in enumerate(lines)
+            if line.strip().startswith('"$asar_bin"') and "Oracle_main.asm" in line
+        ]
+        self.assertGreaterEqual(len(invocations), 2)
+        for i in invocations:
+            previous = next(
+                lines[j].strip() for j in range(i - 1, -1, -1) if lines[j].strip()
+            )
+            self.assertEqual(previous, 'cd "$repo_root"', lines[i])
         self.assertIn(
             '--out-asm "$repo_root/Dungeons/generated/'
             'water_gate_runtime_tables.asm"',

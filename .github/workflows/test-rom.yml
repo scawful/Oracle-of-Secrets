@@ -62,6 +62,19 @@ jobs:
           printf '\x7A\x80\x38' | dd of=test.sfc bs=1 seek=$((0xE9F5)) conv=notrunc 2>/dev/null
           printf '\x7F' | dd of=test.sfc bs=1 seek=$((0x773FF)) conv=notrunc 2>/dev/null
 
+          # Minimal coherent data for ROM-reading guards (source assertions unchanged):
+          # a one-entry D7 room $A2 sprite list with the big-key drop, and vanilla bytes for
+          # tile types $055/$07C, the pit-damage table tail, the item-receipt operand and
+          # King Dodongo health. Not real ROM content; real-ROM checks run in build_rom.sh.
+          printf '\x00\xC8' | dd of=test.sfc bs=1 seek=$((0x4C298)) conv=notrunc 2>/dev/null  # $09C298 RoomData_SpritePointers operand -> fixture table $09:C800
+          printf '\x00\xCA' | dd of=test.sfc bs=1 seek=$((0x4C944)) conv=notrunc 2>/dev/null  # $09C944 room $A2 sprite list -> $09:CA00
+          printf '\x00\xFD\x00\xE4\xFF' | dd of=test.sfc bs=1 seek=$((0x4CA00)) conv=notrunc 2>/dev/null  # $09CA00 header, big-key drop $FD,$00,$E4, end $FF
+          printf '\x02' | dd of=test.sfc bs=1 seek=$((0x716AE)) conv=notrunc 2>/dev/null  # $0E96AE tile $055 type (vanilla $02)
+          printf '\x00' | dd of=test.sfc bs=1 seek=$((0x716D5)) conv=notrunc 2>/dev/null  # $0E96D5 tile $07C type (vanilla $00)
+          printf '\x23\x01' | dd of=test.sfc bs=1 seek=$((0x197C)) conv=notrunc 2>/dev/null  # $00997C pit-damage table filler $0123 (vanilla)
+          printf '\x30\x02' | dd of=test.sfc bs=1 seek=$((0x4863E)) conv=notrunc 2>/dev/null  # $09863E AncillaAdd_ItemReceipt operand $0230 (vanilla)
+          printf '\x28' | dd of=test.sfc bs=1 seek=$((0x6B205)) conv=notrunc 2>/dev/null  # $0DB205 King Dodongo health (vanilla $28)
+
           # Run Asar against the synthetic headerless ROM.
           set -o pipefail
           ./asar/asar --no-title-check Oracle_main.asm test.sfc 2>&1 | tee asar_output.txt
