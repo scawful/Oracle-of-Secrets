@@ -1311,6 +1311,108 @@ class PortableBundleManifestTest(unittest.TestCase):
             validate_oracle_project_contract(descriptor.replace("\n", "\r\n"))
 
 
+class PortableAllocationLedgerCliTest(unittest.TestCase):
+    def test_refresh_export_keeps_ledger_and_rejects_asm_source_escape(self) -> None:
+        """Exercise the real CLI with the integrated ledger in a disposable repo."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            repo = root / "repo"
+            tracked = subprocess.run(
+                ["git", "ls-files", "-z"],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                check=True,
+            ).stdout.split(b"\0")
+            for raw_path in tracked:
+                if not raw_path:
+                    continue
+                relative = Path(raw_path.decode())
+                source = REPO_ROOT / relative
+                if source.is_file():
+                    destination = repo / relative
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(source, destination)
+
+            fixture = ManifestFixture()
+            try:
+                rom = repo / "Roms" / "oos168.sfc"
+                rom.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(fixture.write_dev_rom(), rom)
+                bundle = root / "Oracle.yazeproj"
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(repo / "Scripts/Generate/export_yazeproj_bundle.py"),
+                        "--rom", str(rom),
+                        "--out", str(bundle),
+                        "--refresh-planning",
+                    ],
+                    cwd=repo,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            finally:
+                fixture.close()
+
+            verify_bundle(bundle)
+            manifest_path = bundle / PORTABLE_HACK_MANIFEST
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            allocation = manifest["allocation_contracts"]
+            canonical = json.loads(
+                (repo / "Config/allocation_ownership.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(allocation["ledger"], canonical)
+            self.assertEqual(
+                allocation["ledger_sha256"],
+                hashlib.sha256(
+                    (repo / "Config/allocation_ownership.json").read_bytes()
+                ).hexdigest(),
+            )
+            self.assertFalse(allocation["allocation_available"])
+            self.assertEqual(
+                allocation["evidence_status"],
+                "requires_validate_allocation_contracts",
+            )
+
+            # Path:line provenance is still strict even though ledger source
+            # IDs use a different, namespaced schema.
+            region = next(
+                region
+                for bank in manifest["owned_banks"]["banks"]
+                for region in bank["regions"]
+                if isinstance(region.get("source"), str)
+            )
+            region["source"] = "../escape.asm:1"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ValueError, "Manifest source locations must resolve"
+            ):
+                verify_bundle(bundle)
+            region["source"] = None
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ValueError, "source must be a path:line string"
+            ):
+                verify_bundle(bundle)
+
+            ledger_path = (
+                bundle / "project/Config/allocation_ownership.json"
+            )
+            invalid_ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+            invalid_ledger["claims"][0]["provenance"].append("missing:source")
+            ledger_path.write_text(
+                json.dumps(invalid_ledger), encoding="utf-8"
+            )
+            with self.assertRaisesRegex(
+                ManifestGenerationError, "missing provenance"
+            ):
+                write_bundle_hack_manifest(bundle)
+
+
 class RepositoryProjectSafetyTest(unittest.TestCase):
     def test_water_fill_save_scope_is_disabled_exactly_once(self) -> None:
         project_lines = (REPO_ROOT / "Oracle-of-Secrets.yaze").read_text(

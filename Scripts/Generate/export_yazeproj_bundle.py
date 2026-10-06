@@ -268,15 +268,40 @@ def _resolve_bundle_member(
     return resolved
 
 
-def _iter_manifest_source_locations(value: object):
-    if isinstance(value, dict):
-        for key, child in value.items():
-            if key == "source" and isinstance(child, str):
-                yield child
-            yield from _iter_manifest_source_locations(child)
-    elif isinstance(value, list):
-        for child in value:
-            yield from _iter_manifest_source_locations(child)
+def _iter_manifest_source_locations(manifest: dict):
+    """Yield ASM path:line provenance from the manifest's typed sections.
+
+    Other `source` fields have different schemas. In particular, allocation
+    ledger claim bindings contain source-set IDs such as
+    `shared:Sprites/Objects/minecart.asm`, which are not bundle paths.
+    """
+    def records(section: str, key: str):
+        metadata = manifest.get(section)
+        items = metadata.get(key) if isinstance(metadata, dict) else None
+        if not isinstance(items, list):
+            raise ValueError(f"hack_manifest.json {section}.{key} must be a list")
+        return items
+
+    def source(record: object, description: str) -> str:
+        value = record.get("source") if isinstance(record, dict) else None
+        if not isinstance(value, str):
+            raise ValueError(
+                f"hack_manifest.json {description}.source must be a path:line string"
+            )
+        return value
+
+    for bank in records("owned_banks", "banks"):
+        regions = bank.get("regions") if isinstance(bank, dict) else None
+        if not isinstance(regions, list):
+            raise ValueError(
+                "hack_manifest.json owned_banks.banks[].regions must be a list"
+            )
+        for region in regions:
+            yield source(region, "owned_banks.banks[].regions[]")
+    for tag in records("room_tags", "tags"):
+        yield source(tag, "room_tags.tags[]")
+    for flag in records("feature_flags", "flags"):
+        yield source(flag, "feature_flags.flags[]")
 
 
 def validate_portable_manifest_contract(
