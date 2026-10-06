@@ -34,7 +34,7 @@ except ImportError:
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SAVESTATE_DIR = REPO_ROOT / "Roms" / "SaveStates" / "oos168x" / "overworld"
-MANIFEST_PATH = REPO_ROOT / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
+MANIFEST_PATH = REPO_ROOT / "Data" / "debug" / "save_state_library.json"
 MESEN2_CLIENT = REPO_ROOT / "Scripts" / "Mesen2" / "mesen2_client.py"
 
 # Overworld area definitions

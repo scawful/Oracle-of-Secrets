@@ -47,7 +47,7 @@ except ImportError:
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SAVESTATE_ROOT = REPO_ROOT / "Roms" / "SaveStates" / "oos168x"
 SAVESTATE_SHARED = REPO_ROOT / "Roms" / "SaveStates"  # Shared metadata location
-MANIFEST_PATH = REPO_ROOT / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
+MANIFEST_PATH = REPO_ROOT / "Data" / "debug" / "save_state_library.json"
 
 CATEGORIES = ["overworld", "dungeons", "bosses", "events", "items"]
 

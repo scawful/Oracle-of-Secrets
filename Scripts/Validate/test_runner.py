@@ -1053,7 +1053,7 @@ def run_test(test_path: Path, verbose: bool = False, quiet: bool = False, dry_ru
     if not skip_load and test.get("saveState"):
         try:
             repo_root = Path(__file__).resolve().parents[2]
-            manifest_path = repo_root / "Docs" / "Debugging" / "Testing" / "save_state_library.json"
+            manifest_path = repo_root / "Data" / "debug" / "save_state_library.json"
             resolved = resolve_save_state(test.get("saveState"), repo_root, manifest_path)
         except Exception as exc:
             if not quiet:
