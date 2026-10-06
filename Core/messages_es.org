@@ -1,4 +1,10 @@
 * Oracle of Secrets - Mensajes en Español
+
+> REVIEW SNAPSHOT ONLY: This partial translation is not a build input.
+> Vanilla truth is `Roms/oos168.sfc`; expanded truth is
+> `Data/dialogue/expanded_messages.json`. See
+> `Docs/Analysis/dialogue_inventory.md` for the generated comparison.
+
 ** 0F
 Presiona L o R en tu menú para
 [2]ver el estado de tu misión

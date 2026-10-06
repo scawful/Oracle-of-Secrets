@@ -1,6 +1,24 @@
-# Dialogue bundles
+# Dialogue sources and bundles
 
-yaze-message-bundle JSON files for NPC dialogue. Source for Gemini/Codex import into ROM.
+This directory contains the durable expanded source, generated audit data, the
+human-owned ID registry, and staging bundles. A staging bundle is not proof
+that its text was published.
+
+| Path | Role |
+|---|---|
+| `expanded_messages.json` | Canonical expanded-bank source used by the build |
+| `message_registry.json` | Human-owned ID allocation and reservation policy |
+| `message_inventory.json` | Generated evidence across ROM, source, bundles, ASM, and plans |
+| `*_dialogue.json` | Staging/import bundles; compare with the inventory before use |
+
+Regenerate or verify the inventory from the repository root:
+
+```bash
+python3 Scripts/Analysis/analyze_dialogue_inventory.py --root . --write
+python3 Scripts/Analysis/analyze_dialogue_inventory.py --root . --check
+```
+
+## Staging bundles
 
 | File | NPC |
 |------|-----|
@@ -22,7 +40,7 @@ yaze-message-bundle JSON files for NPC dialogue. Source for Gemini/Codex import 
 ### Safe workflow
 
 0. Normalize/validate bundle IDs:
-   - `python3 Scripts/normalize_dialogue_bundles.py --glob 'Data/dialogue/*.json' --strict`
+   - `python3 Scripts/Generate/normalize_dialogue_bundles.py --glob 'Data/dialogue/*_dialogue.json' --strict`
 
 1. Validate bundle format/encoding:
    - `z3ed message-import-bundle --file Data/dialogue/<bundle>.json --strict`

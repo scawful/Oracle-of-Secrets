@@ -1,6 +1,6 @@
 {
   "counts": {
-    "expanded": 109,
+    "expanded": 119,
     "vanilla": 0
   },
   "format": "yaze-message-bundle",
@@ -53,7 +53,7 @@
     {
       "bank": "expanded",
       "id": 9,
-      "text": "T[D:2C]gle, T[D:2C]gle, Koo[D:33]-Limpah![2]Ah, [D:50] G[D:40][D:3F] M[D:2C]es?[3][K][V]I've h[D:1A]d [D:50] G[D:40][D:3F]s[V][D:05][D:46][D:4B]less... [D:4A][D:36]t[D:28]ng[V]a[D:10]ut m[D:2D]s[D:2B]ro[D:14] [D:36][D:0C]?[K][V][D:60]ll ne[D:1C]m[D:40]e th[D:0B][V][D:2F] [D:4B]r[D:1D]gth [D:52] cra[D:14][V]tho[D:48] m[D:2C]es op[D:1D]![K][V] How [D:17]es 60 r[D:54]ees s[D:3C]?[V][D:00]> S[D:3C]s [D:24]od[V][D:00][D:01]I'll take my ch[D:0B]ces[CH2I]"
+      "text": "Tingle, Tingle, Koolo-Limpah![2]Ah, the Goron Mines?[3][K][V]I've heard the Gorons[V]are restless... something[V]about missing Rock Meat?[K][V]Youll need more than[V]just strength to crack[V]those mines open![K][V] How does 60 rupees sound?[V]    > Sounds good[V]       I'll take my chances[CH2I]"
     },
     {
       "bank": "expanded",
@@ -138,17 +138,17 @@
     {
       "bank": "expanded",
       "id": 26,
-      "text": "Hey, [D:53]avel[D:1E]! [D:5E][D:48] m[D:2C]es[2][D:05][D:48]al[D:1C]tight. W[D:2E]h[D:3D]Ro[D:14][3]Sir[D:33][D:2C]s, I [D:17]nt [D:25] [D:50][K][V][D:4B]r[D:1D]gth [D:52] b[D:46]ak through![V]We G[D:40][D:3F]s ne[D:1C]th[D:09]h[D:1A]ty[V][D:36][D:09][D:52] fuel us[...][K][V][D:3A][D:28]ng el[D:48] pa[D:14]s [D:50] punch![V]Br[D:2B][D:36] five, [D:04]I'll op[D:1D][V][D:50] [D:57]y [D:20] [D:5B]!"
+      "text": "Hey, traveler! These mines[2]are sealed tight. Without[3]Rock Meat, I dont have the[K][V]strength to break through![V]We Gorons need that hearty[V]meat to fuel us[...][K][V]nothing else packs the punch![V]Bring me five, and I'll open[V]the way for you!"
     },
     {
       "bank": "expanded",
       "id": 27,
-      "text": "Hmm[...] t[D:28]s [D:2D] a [D:4B]art, but I[2]ne[D:1C]five Ro[D:14] Sir[D:33][D:2C]s [D:52][3][D:23] [D:50] job [D:17]ne![K][V]Keep s[D:1A]c[D:28]ng, fri[D:1D]d! Tho[D:48][V]ro[D:14]s ar[D:1D]'t [D:24][D:2B][D:52] budge[V][D:3F] [D:50]ir own!"
+      "text": "Hmm[...] this is a start, but I[2]need five Rock Meat to[3]get the job done![K][V]Keep searching, friend! Those[V]rocks aren't going to budge[V]on their own!"
     },
     {
       "bank": "expanded",
       "id": 28,
-      "text": "Ah! Now th[D:0C][D:03][D:59][D:09]I'm talk[D:2C]'[2]a[D:10]ut! Five Ro[D:14] Sir[D:33][D:2C]s![3]T[D:28]s [D:2D] [D:46]al[D:31][D:2E]![K][V]W[D:2E]h t[D:28]s, I've [D:24]t [D:06][D:50][V][D:4B]r[D:1D]gth I ne[D:1C][D:52] cra[D:14] [D:50][D:48][V]m[D:2C]es op[D:1D]![K][V]St[D:04][D:0E][D:14], fri[D:1D]d[...][D:50][D:48][V][D:4B][D:3F]es [D:05]a[D:10]ut [D:52] feel [D:50][V]m[D:2A][D:3E] a [D:53]ue G[D:40][D:3F]!"
+      "text": "Ah! Now that's what I'm talkin'[2]about! Five Rock Meat![3]This is really it![K][V]With this, I've got all the[V]strength I need to crack these[V]mines open![K][V]Stand back, friend[...]these[V]stones are about to feel the[V]might of a true Goron!"
     },
     {
       "bank": "expanded",
@@ -173,7 +173,7 @@
     {
       "bank": "expanded",
       "id": 33,
-      "text": "Oh, [D:59][D:0C][D:03]t[D:28]s? A r[D:2C]g? I[2]f[D:3C] [D:2E] [D:57][D:49][D:1C][D:54] [D:3F] [D:50][3]Abyssal Sh[D:40]e.[K][V]It glimm[D:1E]s [D:4B]r[D:0B]gely, like [D:2E][V]holds [D:4A][D:36] [D:28]dd[D:18][D:43][D:1E]. I [D:25][V]no u[D:48] [D:20] [D:2E], but [D:5B] might.[K][V]Take [D:2E] [D:52] a je[D:58]l[D:1E], th[D:1E]e's[V][D:3F]e n[D:1A] [D:50] Vil[D:32]ge [D:3E] Echoes,[V][D:59]o appra[D:2D]es such t[D:46]asu[D:46]s."
+      "text": "Oh, what's this? A ring? I[2]found it washed up on the[3]Abyssal Shore.[K][V]It glimmers strangely, like it[V]holds some hidden power. I have[V]no use for it, but you might.[K][V]Take it to a jeweler, there's[V]one near the Village of[V]Yesterwind, who appraises[K][V]such treasures."
     },
     {
       "bank": "expanded",
@@ -188,12 +188,12 @@
     {
       "bank": "expanded",
       "id": 36,
-      "text": "Mmm, [D:50] s[D:36]ll [D:3E] Ro[D:14] Sir[D:33][D:2C]s![2]Not[D:28]ng fuels a G[D:40][D:3F] like[3]tho[D:48] h[D:1A]ty chunks [D:3E] [D:4B][D:3F]e.[K][V][D:60]'ll f[D:2C]d [D:50]m sc[D:0C]t[D:1E]ed[V]ar[D:3C] h[D:1E]e, but lift[D:2B][D:50]m?[V]Th[D:0C][D:03][D:0B]oth[D:19]m[D:0C]t[D:1E].[K][V]On[D:31][D:4A][D:36][D:3F]e w[D:2E]h [D:46]al [D:43][D:1E][V]could move tho[D:48] [D:0F]auties. Got[V]a Pow[D:19]G[D:33]ve h[D:08]y?"
+      "text": "Mmm, the smell of Rock Meat![2]Nothing fuels a Goron like[3]those hearty chunks of stone.[K][V]You'll find them scattered[V]around here, but lifting them?[V]That's another matter.[K][V]Only someone with real power[V]could move those beauties. Got[V]a Power Glove handy?"
     },
     {
       "bank": "expanded",
       "id": 37,
-      "text": "[D:60] pl[D:0B]n[D:2B][D:52] head [D:2C][D:52] [D:50][2]Shr[D:2C]e [D:3E] Pow[D:1E]?[3]Heh, [D:24]od lu[D:14]![K][V][D:5E] f[D:33][D:40]s [D:17]nt al[D:57]ys [D:48]em...[V][D:46]al, if [D:5B] c[D:0C]ch my drift.[V]And tho[D:48] Ro[D:14] Sir[D:33][D:2C]s? [K][V]Heavy as [D:10]uld[D:1E]s. W[D:2E]h[D:3D][D:50][V]Pow[D:19]G[D:33]ve, [D:5B][D:45][D:3D][D:3E] lu[D:14]."
+      "text": "You planning to head into the[2]Shrine of Power?[3]Heh, good luck![K][V]The floors dont always seem...[V]real, if you catch my drift.[V]And that Rock Meat? [K][V]Heavy as boulders. Without the[V]Power Glove, youre out of luck."
     },
     {
       "bank": "expanded",
@@ -253,72 +253,72 @@
     {
       "bank": "expanded",
       "id": 49,
-      "text": "..."
+      "text": "Cluck cluck[...]  What?![2]I'm finally back to normal![3]Thank you so much![K][V]An evil witch came asking about[V]'essences' and then used her [V]magic to transform me into a[K][V]Cucco when I didn't have any[V]answers for her[...][V]Since you went to the trouble[K][V]of changing me back, I'd[V]like to give you this Ocarina[V]as a token of my thanks![K][V]The Mask Salesman at Tail[V]Pond knows the old songs.[V]Show him this Ocarina![K][V]I'll even teach you the song[V]I use to water my plants![V]Here, let me play it for you![K]"
     },
     {
       "bank": "expanded",
       "id": 50,
-      "text": "..."
+      "text": "[W:02][S:03]Stalfos, here? They came[2]ashore with last night's[3]storm. Stay out of sight.[K]"
     },
     {
       "bank": "expanded",
       "id": 51,
-      "text": "..."
+      "text": "[SPD:00][C:07][S:03][W:02][IMG]Not long ago, the kingdom of[2]Hyrule was aided by a mythical[3]hero to protect the Triforce[...][WT:09][V]Far away, the island of[V]Kalyxo, home of Farore,[V]lived by its own ways.[WT:09][IMG][IMG][V]Its miners and river scholars[V]built a mirror to another[V]realm, the Eon Abyss.[WT:09][V]Its strange beauty drew[V]explorers in. Many never[V]came back[...][WT:09]"
     },
     {
       "bank": "expanded",
       "id": 52,
-      "text": "..."
+      "text": "[W:02][C:07][S:03][1]Word reached Hyrule of a[2]Golden Power beyond the[3]mirror. Its king sent[WT:05][V]soldiers to guard it.[WT:05]"
     },
     {
       "bank": "expanded",
       "id": 53,
-      "text": "..."
+      "text": "[W:02][C:07][S:03][1]Roads and forts came with[2]them, and new laws. They[3]claimed it was to protect[WT:05][V]the island. Many called[V]it an invasion.[WT:05]"
     },
     {
       "bank": "expanded",
       "id": 54,
-      "text": "..."
+      "text": "[W:02][C:07][S:03][1]But as years passed, the zeal[2]to protect waned into neglect.[3]The guardians grew complacent[...][WT:05][V]One knight kept watch alone.[WT:05][V]Now dark forces stir in the[V]Abyss, and the destiny of the[V]Oracle of Secrets draws near.[WT:05]"
     },
     {
       "bank": "expanded",
       "id": 55,
-      "text": "..."
+      "text": "[W:02][S:03]They've closed the east[2]road. We can't fight[3]our way through.[K][V]There must be another[V]way. Look around the[V]village, [L].[K]"
     },
     {
       "bank": "expanded",
       "id": 56,
-      "text": "Ah, [L][...][2]My roots stir with[3]new warmth.[K][V]You have freed a[2]light that was[3]long dimmed.[K][V]The island recalls[2]your courage.[3]Press on[...]"
+      "text": "Ah, [L][...][2]My roots stir with[3]new warmth.[K][V]You have freed a[V]light that was[V]long dimmed.[K][V]The island recalls[V]your courage.[V]Press on[...]"
     },
     {
       "bank": "expanded",
       "id": 57,
-      "text": "Ah, [L][...][2]Something shifts in[3]the deep soil.[K][V]With each light[2]restored, a shadow[3]retreats[...][K][V]But another stirs[2]in its place, older[3]than my roots know.[K][V]Be watchful, child."
+      "text": "Ah, [L][...][2]Something shifts in[3]the deep soil.[K][V]With each light[V]restored, a shadow[V]retreats[...][K][V]But another stirs[V]in its place, older[V]than my roots know.[K][V]Be watchful, child."
     },
     {
       "bank": "expanded",
       "id": 58,
-      "text": "Ah, [L][...][2]The wind carries[3]a bitter scent.[K][V]Five lights burn,[2]yet the darkness[3]grows bolder.[K][V]I have watched this[2]island for ages,[3]never felt such[K][V]trembling beneath[2]the earth. Steel[3]yourself."
+      "text": "Ah, [L][...][2]The wind carries[3]a bitter scent.[K][V]Five lights burn,[V]yet the darkness[V]grows bolder.[K][V]I have watched this[V]island for ages,[V]never felt such[K][V]trembling beneath[V]the earth. Steel[V]yourself."
     },
     {
       "bank": "expanded",
       "id": 59,
-      "text": "..."
+      "text": "[W:02][S:03]A hole... It may run[2]under the village.[3]Go on. I'm behind you.[K]"
     },
     {
       "bank": "expanded",
       "id": 60,
-      "text": "..."
+      "text": "[W:02][S:03]The villagers say the[2]Oracle keeps to these[3]woods. She can't be far.[K]"
     },
     {
       "bank": "expanded",
       "id": 61,
-      "text": "Ah, [L][...][2]All seven lights[3]burn within me.[K][V]The seal weakens,[2]but your strength[3]has grown.[K][V]The ancient Shrines[2]hold the final[3]keys. Seek them out.[K][V]I have faith in[2]you, [L]. You carry[3]the hope of this[K][V]island upon your[2]shoulders[...]"
+      "text": "Ah, [L][...][2]All seven lights[3]burn within me.[K][V]The seal weakens,[V]but your strength[V]has grown.[K][V]The ancient Shrines[V]hold the final[V]keys. Seek them out.[K][V]I have faith in[V]you, [L]. You carry[V]the hope of this[K][V]island upon your[V]shoulders[...]"
     },
     {
       "bank": "expanded",
       "id": 62,
-      "text": "..."
+      "text": "Have you heard? The girl[2]from Toto Ranch is missing.[3]Nobody knows where she went.[K][V]Folks saw a witch near the[V]ranch that night. Would you[V]look into it, [L]?"
     },
     {
       "bank": "expanded",
@@ -368,57 +368,57 @@
     {
       "bank": "expanded",
       "id": 72,
-      "text": "[W:02][S:03]This windmill has been grinding[V]to a halt for ages.[K][2]It needs a song to get it[V]spinning right, but what's the[V]use talking to you?[K][3]You don't even have an[V]instrument![K]"
+      "text": "[W:02][S:03]This windmill has been grinding[2]to a halt for ages.[K][V]It needs a song to get it[V]spinning right, but what's the[V]use talking to you?[K][V]You don't even have an[V]instrument![K]"
     },
     {
       "bank": "expanded",
       "id": 73,
-      "text": "[W:02][S:03]That ocarina... a fine piece.[K][2]But the windmill's heart is[V]broken. It's full of rage.[V]It won't listen to a new song.[K][3]Perhaps if you knew a song of[V]healing... it might calm the[V]gears. Then I could teach you.[K]"
+      "text": "[W:02][S:03]That ocarina... a fine piece.[K][V]But the windmill's heart is[V]broken. It's full of rage.[V]It won't listen to a new song.[K][V]Perhaps if you knew a song of[V]healing... it might calm the[V]gears. Then I could teach you.[K]"
     },
     {
       "bank": "expanded",
       "id": 74,
-      "text": "[W:02][S:03]You... you played the song![V]The angry spirit in the gears[V]is calm now... Thank you.[K][2]Now, listen well... for what[V]I will teach you is the song[V]that powers this windmill.[K][3]It is the Song of Storms! The[V]very melody that calls the[V]rain itself! Listen...[K]"
+      "text": "[W:02][S:03]You... you played the song![2]The angry spirit in the gears[3]is calm now... Thank you.[K][V]Now, listen well... for what[V]I will teach you is the song[V]that powers this windmill.[K][V]It is the Song of Storms! The[V]very melody that calls the[V]rain itself! Listen...[K]"
     },
     {
       "bank": "expanded",
       "id": 75,
-      "text": "[W:02][S:03]The windmill spins once more,[V]thanks to you, [L].[K][2]The storms answer your call now.[V]Use the song wisely.[K]"
+      "text": "[W:02][S:03]The windmill spins once more,[2]thanks to you, [L].[K][V]The storms answer your call now.[V]Use the song wisely.[K]"
     },
     {
       "bank": "expanded",
       "id": 76,
-      "text": "..."
+      "text": "[W:02][S:03]Crystal resonance[2]is holding. Mirror[3]alignment... nominal.[K]"
     },
     {
       "bank": "expanded",
       "id": 77,
-      "text": "..."
+      "text": "[W:02][S:03]Quick look, then back.[2]I am NOT writing[3]another incident report.[K]"
     },
     {
       "bank": "expanded",
       "id": 78,
-      "text": "..."
+      "text": "[W:02][S:03]The pond's gone[2]completely still.[3]...Is that normal?[K]"
     },
     {
       "bank": "expanded",
       "id": 79,
-      "text": "..."
+      "text": "[W:02][S:03]...So quiet. It feels[2]like a place I've[3]been before.[K]"
     },
     {
       "bank": "expanded",
       "id": 80,
-      "text": "..."
+      "text": "[W:02][S:03]You're back! Thank the[2]Goddesses. ...Wait.[3]Behind you![K]"
     },
     {
       "bank": "expanded",
       "id": 81,
-      "text": "..."
+      "text": "[W:02][S:03]It won't close![2]The resonance is[3]still climbing![K]"
     },
     {
       "bank": "expanded",
       "id": 82,
-      "text": "..."
+      "text": "[W:02][S:03]Goddesses, hear me![2]Send us someone who[3]can stand against-"
     },
     {
       "bank": "expanded",
@@ -549,6 +549,56 @@
       "bank": "expanded",
       "id": 108,
       "text": "[W:02][S:03]Yahaha! You found me![K][2]We watched the hero fall. We[V]watched the knight rise. Same[V]soul, different shadow...[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 109,
+      "text": "Hoo hoo! A stranger in[2]the Abyss? Your shape is[3]not your own here.[K][V]The Shrine of Origins[V]lies west of the pyramid.[V]Hoo hoo! Off you go![K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 110,
+      "text": "Temporal Pyramid[2]Tread softly.[3]Time sleeps here."
+    },
+    {
+      "bank": "expanded",
+      "id": 111,
+      "text": "Hollow of Echoes[2]Did someone call?[3]...Only you."
+    },
+    {
+      "bank": "expanded",
+      "id": 112,
+      "text": "Forest of Dreams[2]Sleep here, and you[3]may wake elsewhere."
+    },
+    {
+      "bank": "expanded",
+      "id": 113,
+      "text": "Dreamer's Rest[2]Maple's hut. Knock[3]before you nap."
+    },
+    {
+      "bank": "expanded",
+      "id": 114,
+      "text": "The Rift Shore[2]The way back is[3]not always the way in."
+    },
+    {
+      "bank": "expanded",
+      "id": 115,
+      "text": "You call it the Abyss?[2]Hah. To us, it's[3]Yesterwind."
+    },
+    {
+      "bank": "expanded",
+      "id": 116,
+      "text": "[W:02][S:03]...Hey! Can you hear me?[K][V]...Out cold. You there![V]Help me carry him inside.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 117,
+      "text": "Oh, you're awake! You[2]fell out of the sky in[3]last night's storm.[K][V]The woman who carried[V]you in went back down[V]to the beach.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 118,
+      "text": "Back again? The beach,[2]remember. She's waiting.[K]"
     }
   ],
   "version": 1
