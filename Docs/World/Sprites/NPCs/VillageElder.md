@@ -1,7 +1,11 @@
 # Village Elder
 
 ## Overview
-The `village_elder.asm` file defines the behavior for the "Village Elder" NPC. This NPC provides early guidance and now delivers a post-D1 hint about the Mask Salesman, which also sets a Tail Pond map marker. Dialogue is conditional based on story flags and progression bits.
+The `village_elder.asm` file defines the behavior for the "Village Elder" NPC.
+Its current untested post-D1 branch points to the Mask Salesman and sets a Tail
+Pond marker. The 2026-09-02 canon ruling supersedes that order: this branch must
+reinforce the missing Ranch Girl / strange Cucco clue, and Tail Pond must not be
+marked until the Ranch Girl awards the Ocarina.
 
 ## Main Logic (`Sprite_VillageElder_Main`)
 This routine manages the Village Elder's interactions and dialogue flow:
@@ -10,7 +14,8 @@ This routine manages the Village Elder's interactions and dialogue flow:
 *   **Player Collision**: Prevents Link from passing through the elder (`JSL Sprite_PlayerCantPassThrough`).
 *   **Progression Check (`OOSPROG`)**: It checks the `OOSPROG` (Oracle of Secrets Progression) flag. Specifically, it checks if bit `$10` is set, which indicates that Link has already met the elder.
     *   **First Meeting**: If Link has not yet met the elder, it displays a solicited message (`%ShowSolicitedMessage($143)`). Upon dismissal of this message, it sets bit `$10` in `OOSPROG` to mark that Link has now met the elder.
-    *   **Post-D1 Hint** (untested): If D1 is complete and D2 is not, it displays the Mask Shop hint (`$177`), sets `MapIcon` to Tail Pond, and sets `ElderGuideStage` low nibble to `1`.
+    *   **Post-D1 Hint** (current, untested, `[TO-CHANGE]`): If D1 is complete and D2 is not, it displays the Mask Shop hint (`$177`), sets `MapIcon` to Tail Pond, and sets `ElderGuideStage` low nibble to `1`.
+    *   **Required replacement:** Message `$177` should reinforce that the Ranch Girl vanished when a strange Cucco appeared. Remove the early Tail Pond marker write; the Ocarina award should set that objective later.
     *   **Subsequent Meetings**: Otherwise, a different solicited message (`%ShowSolicitedMessage($019)`) is displayed.
 
 ```asm

@@ -1,5 +1,10 @@
 # Narrative Plan: Technical Feasibility Assessment
 
+> FEASIBILITY SNAPSHOT: Dialogue IDs and implementation states in this document
+> are planning evidence, not current ROM evidence. Use
+> `Docs/Analysis/dialogue_inventory.md` and
+> `Docs/Planning/dialogue_registry_and_workflow.md` for current dialogue state.
+
 **Status:** Active Analysis
 **Date:** 2026-01-22
 **Related:** `~/.claude/plans/oracle-narrative-lockdown.md`, `~/.claude/plans/jiggly-spinning-newt.md`

@@ -4,14 +4,14 @@ Approved by scawful in the Claude story/design discussion session, 2026-09-26
 ("approve"). Style rule: `Docs/Planning/Status/decisions.org`, "Dialogue style:
 people of Kalyxo first, race second".
 
-These are vanilla-bank messages: they need a base-ROM write (`Roms/oos168.sfc`)
-in the dialogue-audit write pass. Written 2026-09-26 (scawful: "yes"): $36, $E6,
-0x135 and 0x137 via `z3ed message-import-bundle --range=vanilla --apply` (yaze
-importer 79c60ad10); readback equals this file; no other message changed.
-Base ROM SHA-1 4728809b -> 80165df5 (backup `Roms/oos168.pre-abyss-maiden-text-2026-09-26.sfc`).
-Not written: the new Owl line (expanded bank) and the attract narration $1C0-$1C3. Validate byte
-length against the bank with z3ed before writing; both drafts are shorter than
-the current text.
+Written to the base ROM on 2026-09-26: `$36`, `$E6`, `0x135`, and `0x137`,
+using `z3ed message-import-bundle --range=vanilla --apply` (yaze importer
+79c60ad10). Readback matched this file and no other message changed. Base ROM
+SHA-1 4728809b -> 80165df5 (backup
+`Roms/oos168.pre-abyss-maiden-text-2026-09-26.sfc`).
+
+Still pending in the expanded bank: the new Owl line and attract narration
+`$1C0-$1C3`. Validate line width and encoding before integration.
 
 ## 0x135 (309) - D4 Zora Temple maiden
 
@@ -46,15 +46,15 @@ Approved text:
 ```
 
 Supersedes the id 311 entry in `Data/dialogue/maiden_upgrades_dialogue.json`
-(agent-written "trade liaison between Goron and Zora ... before the mistrust";
+(the older "trade liaison between Goron and Zora ... before the mistrust" draft;
 conflicts with the style rule and with D6's place in the dungeon order). Do not
 import that entry.
 
 ## Attract narration $1C0-$1C3 (expanded bank)
 
 Approved by scawful 2026-09-26 ("approve text for now"; may be tweaked later).
-Middle ground between scawful's original 0x112-0x115 and the 2026-09-24 agent
-draft. These are expanded messages: edit `Data/dialogue/expanded_messages.json`
+Middle ground between scawful's original 0x112-0x115 and the 2026-09-24
+revision. These are expanded messages: edit `Data/dialogue/expanded_messages.json`
 (entries 51-54, id = message - 0x18D), then `z3ed message-source-sync`
 (dry-run, then `--write`), then build. Check line widths with
 `z3ed message-doctor`. Card 5 is longer than the old dungeon-card budget
@@ -210,6 +210,16 @@ Well, well, what a surprise![2]Look who walked into me trap,[3]and with Farore, 
 ```
 
 "Decades too late" was cut; the decades timing may appear in later lore.
+
+Final wording (scawful, 2026-09-26, option "1" after noticing "your princess Hyrule"
+reads as a name): the inserted box is
+
+```
+And you, Sheikah[...][V]Run home to yer princess.[V]Tell her Hyrule is too late.
+```
+
+Written 2026-09-26: readback equals this wording; only $21 changed (397/397). Base
+SHA-1 a5de4a36 -> b143612a (backup `Roms/oos168.pre-kydrog21-2026-09-26.sfc`).
 
 ## Impa follower hints $1BF/$1C4/$1C8/$1C9 (expanded bank)
 

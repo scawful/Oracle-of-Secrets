@@ -1,6 +1,6 @@
 # Oracle of Secrets - Dream Sequences
 
-**Last Updated:** 2026-01-23
+**Last Updated:** 2026-09-02
 **Status:** Proposed (Implementation TBD)
 
 This document details the planned dream sequences—playable narrative interludes that bridge major story arcs and reveal lore without exposition dumps.
@@ -164,130 +164,28 @@ Do not share his fate."
 
 ---
 
-## Dream 2: The Ranch Girl's Secret
+## Dream 2: The Ranch Girl's Secret — CUT
 
-**Trigger:** After completing D5 (Glacia Estate) and camping
-**Duration:** 2-3 minutes of gameplay
-**Tone:** Surreal, unsettling, revelatory
+**Canon status:** `[CUT 2026-09-02]`. Do not implement this dream, a sleep
+trigger, or a Song-of-Healing return quest.
 
-### Narrative Purpose
+The old proposal duplicated the already-dense D1-to-D2 Ocarina chain, relied on
+an unexplained return to Loom Ranch after D5, and described the Ranch Girl as
+silent even though implemented message `0x17D` has her speak before giving Link
+the Ocarina.
 
-This dream reveals the truth about the Ranch Girl's connection to Twinrova. The exact nature is determined here:
-- **Option A:** She is their transformed victim (cursed into silence)
-- **Option B:** She is their unwitting agent (mind-controlled)
-- **Option C:** She is their daughter, sent to spy (conflicted loyalty)
+Canonical replacement:
 
-**Recommendation:** Option A (transformed victim) creates the most sympathy and ties directly to the Lost Voice quest.
+- The required early quest explains that Twinrova transformed a witness and
+  gives Link a real reason to investigate Loom Ranch.
+- Magic Powder reveals the Ranch Girl temporarily so she can give Link the
+  Ocarina and direct him to the Mask Salesman.
+- Defeating Twinrova in D5 breaks the curse permanently and automatically.
+- A short post-D5 reaction may appear if the player revisits naturally, but no
+  objective, reward, song, or dream sends the player back.
 
-### Dream Flow (Option A: Transformed Victim)
-
-#### Scene 1: The Ranch at Night (Playable)
-
-**Setting:** The Ranch, but everything is wrong—colors inverted, geometry twisted
-**Sprite:** Link as himself, but movements feel sluggish
-
-```
-[Screen fades in with a distortion effect]
-
-[No voice, only ambient sounds]
-[Ranch Girl stands in the center of the yard]
-```
-
-**Gameplay:**
-- Walk toward the Ranch Girl
-- The environment shifts as Link moves (walls appear, paths close)
-- Enemies are absent, but the atmosphere is threatening
-
-#### Scene 2: The Transformation (Cutscene)
-
-**Setting:** The Ranch Girl is surrounded by fire and ice
-
-```
-[As Link approaches, two shadows appear behind her]
-[Twinrova's silhouettes]
-
-KOUME (cackling):
-"She saw too much, sister."
-
-KOTAKE:
-"Then she will say nothing, sister."
-
-[Fire and ice swirl around the Ranch Girl]
-[She screams silently—her voice is torn away]
-[She collapses]
-
-KOUME:
-"Now she serves our purpose."
-
-KOTAKE:
-"A voiceless witness. A perfect tool."
-
-[They vanish]
-```
-
-#### Scene 3: The Aftermath (Playable)
-
-**Setting:** The Ranch, now in grayscale
-**Objective:** Reach the Ranch Girl
-
-```
-[Player regains control]
-[Walk to the collapsed girl]
-[Interact]
-
-VOICE (internal):
-"She saw Twinrova arrive on the island.
-She tried to warn the village.
-They silenced her."
-
-VOICE:
-"The Song of Healing can undo curses.
-But only if the source is destroyed."
-```
-
-#### Wake Up
-
-```
-[Link awakens at a campfire near Glacia Estate]
-
-[No voice—just Link looking toward the Ranch in the distance]
-[Player understands without being told]
-```
-
-### Narrative Implications
-
-After this dream:
-- Link understands Ranch Girl's silence
-- The Lost Voice quest gains emotional weight
-- Defeating Twinrova (just completed in D5) should have broken the curse
-- Playing Song of Healing for Ranch Girl now restores her voice AND provides backstory
-
-### Post-Dream Quest Update
-
-**If Lost Voice quest was incomplete:**
-- Return to Ranch Girl
-- Play Song of Healing
-- She speaks for the first time, confirming the dream's truth:
-
-```
-"You saw it too, didn't you?
-What they did to me.
-I tried to warn everyone...
-but they took my voice before I could speak."
-
-"Thank you for freeing me.
-And for ending them."
-```
-
-### Technical Requirements
-
-| Element | Requirement | Notes |
-|---------|-------------|-------|
-| Tileset | Distorted Ranch | Color inversion, geometry glitches |
-| Music | Surreal/creepy track | Unsettling ambient |
-| NPCs | Twinrova silhouettes | Shadow sprites |
-| Effects | Fire/ice swirl | HDMA or mode 7 effect |
-| SRAM flag | Dream 2 complete | `Dreams` bitfield at $7EF410 |
+The fire-and-ice witness imagery may be reused in concise D5 dialogue. It does
+not require a separate scene or progression flag.
 
 ---
 
@@ -393,7 +291,7 @@ After this vision:
 | Bit | Flag | Dream |
 |-----|------|-------|
 | 0 | `d1` | Dream 1: The Sealing War |
-| 1 | `d2` | Dream 2: Ranch Girl's Secret |
+| 1 | — | Reserved; former Ranch Girl dream was cut 2026-09-02 |
 | 2 | `d3` | Dream 3: Observatory Vision |
 | 3-7 | — | Reserved for future dreams |
 
@@ -404,10 +302,10 @@ After this vision:
 | Dream | Priority | Complexity | Story Impact |
 |-------|----------|------------|--------------|
 | Dream 1 | High | High (sprite swap, custom tileset) | Major (establishes Kydrog's origin) |
-| Dream 2 | Medium | Medium (distortion effects) | Medium (explains side quest) |
+| Ranch Girl dream | Cut | None | Replaced by early quest clues and automatic D5 resolution |
 | Dream 3 | High | Low (static images, text) | Major (reveals true enemy) |
 
-**Recommendation:** Implement Dream 3 first (lowest complexity, highest impact), then Dream 1, then Dream 2.
+**Recommendation:** Implement Dream 3 first (lowest complexity, highest impact), then Dream 1. Do not implement the cut Ranch Girl dream.
 
 ---
 
@@ -415,16 +313,12 @@ After this vision:
 
 1. **Sprite swap for Dream 1:** Use existing sprite with palette swap, or create new Ancient Soldier sprite?
 
-2. **Dream 2 timing:** Should it trigger immediately after D5, or should there be a delay/player choice?
+2. **Dream skip option:** Should players be able to skip dreams on repeat playthroughs?
 
-3. **Dream skip option:** Should players be able to skip dreams on repeat playthroughs?
+3. **Observatory access:** When exactly do Sky Islands unlock? (Currently documented as post-D7)
 
-4. **Observatory access:** When exactly do Sky Islands unlock? (Currently documented as post-D7)
-
-5. **Ranch Girl connection:** Which option (A/B/C) best fits the story?
-   - A: Transformed victim (most sympathetic)
-   - B: Mind-controlled agent (creepier)
-   - C: Twinrova's daughter (morally complex)
+The Ranch Girl connection is resolved: she is Twinrova's transformed witness,
+and the curse ends automatically when Twinrova is defeated.
 
 ---
 

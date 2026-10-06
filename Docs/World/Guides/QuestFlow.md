@@ -50,7 +50,10 @@ This document outlines the progression of the main story and major side-quests. 
 1.  **Trigger:** After completing D1 and obtaining the Mushroom.
 2.  **Player Actions:**
     *   Trade the Mushroom to the witches east of the castle to obtain **Magic Powder** / collectible bag.
-    *   Talk to the Village Elder post-D1 to learn about the Mask Salesman (sets Tail Pond map marker).
+    *   Follow the post-D1 report that the Ranch Girl vanished after a witch questioned her about the essences.
+    *   Learn that Magic Powder reveals creatures hidden by transformation magic, and that a strange Cucco appeared at **Loom Ranch (OW 0x00)** when the girl vanished.
+    *   Use the Magic Powder on that Cucco. The Ranch Girl appears temporarily and gives Link the **Ocarina**.
+    *   Follow the Ranch Girl's direction to the Mask Salesman; this is when the Tail Pond map marker should be set.
     *   Visit **Tail Pond (OW 0x2D)** and speak with the Happy Mask Salesman.
     *   Learn the **Song of Healing** and use it on the withered Deku Scrub outside the shop.
 3.  **Reward:** **Deku Mask** (progression item).
@@ -66,7 +69,7 @@ This document outlines the progression of the main story and major side-quests. 
 
 1.  **Trigger:** This is a multi-part quest chain required to access Kalyxo Castle.
 2.  **Player Actions:**
-    *   **Ocarina:** Complete the "Lost Ranch Girl" side-quest to obtain the Ocarina.
+    *   **Ocarina:** Complete the required Ranch Girl/Ocarina quest at Loom Ranch.
     *   **Song of Healing:** Learn the Song of Healing from the Happy Mask Salesman (Tail Pond).
     *   **Running Boots:** Play the Song of Healing for the sick child in Wayward Village to receive the Running Boots.
     *   **Book of Secrets:** Use the Running Boots to get the Book of Secrets from the village library.
@@ -141,9 +144,17 @@ This document outlines the progression of the main story and major side-quests. 
 
 ### The Lost Ranch Girl (Ocarina Quest)
 
-1.  **Mushroom:** Get a Mushroom from the old woman's house in the Mushroom Grotto area.
-2.  **Magic Powder:** Trade the Mushroom to the Potion Shop owner. Leave the area and return later to receive the Magic Powder.
-3.  **Ocarina:** Use the Magic Powder on the sleeping Cucco in the Ranch House. This wakes it up and it gives you the Ocarina.
+This is required main-path progression, not an optional Easter egg.
+
+1.  **Reason:** After D1, Link learns that the Ranch Girl disappeared after Twinrova questioned her about the essences. He is asked to investigate Loom Ranch.
+2.  **Mushroom:** Take the Mushroom from the Mushroom Grotto path to the Potion Shop owner.
+3.  **Magic Powder:** Trade the Mushroom for Magic Powder. The item guidance explains that the powder reveals creatures transformed by magic.
+4.  **Ranch clue:** Link learns that a strange Cucco appeared when the Ranch Girl vanished.
+5.  **Ocarina:** Use Magic Powder on that Cucco. The Ranch Girl appears temporarily and gives Link the Ocarina.
+6.  **Next destination:** Ranch Girl directs Link to the Happy Mask Salesman at Tail Pond. Set the Tail Pond objective here.
+
+Defeating Twinrova in D5 later breaks the Cucco curse permanently. This happens
+automatically and does not create a return quest.
 
 ### The Mask Salesman
 

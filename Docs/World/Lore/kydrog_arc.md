@@ -240,7 +240,7 @@ These don't need to be long - just acknowledgments that Farore is aware of Link'
 
 Existing plan from Narrative_Improvements.md:
 - Dream 1: Post-D2 - "The Sealing War" flashback
-- Dream 2: Post-D5 - "The Ranch Girl's Secret"
+- Ranch Girl Dream 2: `[CUT 2026-09-02]`; the early guided Ocarina quest carries the Twinrova clue, and D5 breaks her curse automatically
 
 **Additional option:**
 - Dream 3: Post-D7 - Farore speaks directly to Link in a dream, revealing the full truth about Kydrog and the Master Sword's necessity

@@ -63,6 +63,8 @@ Row 4:          0x44    0x45    0x46
 
 Data source: `z3ed dungeon-list-objects` + `dungeon-doctor` (ROM: meadow_alpha.sfc, 2026-02-07)
 
+Room25 below was refreshed against `oos168.sfc` on 2026-09-14. Other room assessments retain their stated February source unless noted.
+
 ### Row 0: Top Floor
 
 #### Room 0x06 — Boss Arena (Water)
@@ -102,12 +104,12 @@ Data source: `z3ed dungeon-list-objects` + `dungeon-doctor` (ROM: meadow_alpha.s
 #### Room 0x25 — Water Grate Chamber
 | Metric | Value |
 |--------|-------|
-| Objects | **0** |
-| Sprites | **0** |
-| Doors | None in object data (connectivity via room transitions) |
-| Water | Collision-only (ASM-defined, not object-placed) |
+| Objects | **53** (current base ROM) |
+| Sprites | **2** — water lever21 and Zora Baby39 |
+| Doors | East normal door to0x26, at tile(58,15) |
+| Water | Four authored D9 water-floor segments; no D8 water-window initializer |
 | WaterGateStates | **Bit 1** — 168 collision tiles, 3-row swim mask |
-| **Role** | **Water grate room.** Zora Baby switch #2. Room geometry defined entirely by ASM collision system, not by standard room objects. Connects east to 0x26. |
+| **Role** | **Water grate room.** Zora Baby switch #2 activates168 swim tiles/layer. The 2026-09-14 candidate preserves authored graphics and restores collision on local re-entry; ordinary game-save persistence and normal player placement remain unverified. [Runtime evidence](../../Planning/Status/room25_swim_gate_verification_2026-09-14.md). |
 
 #### Room 0x26 — Central Hub
 | Metric | Value |

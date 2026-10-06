@@ -142,14 +142,22 @@ Tail Palace is an ancient observatory built by the Kalyxians to study the stars 
 #### Pre-Dungeon: Ocarina Quest Chain (D1 → D2)
 The path to D2 requires a multi-step quest chain — the longest in the game:
 
-1. **Mushroom** (D1 area, Toadstool Woods) → taken to witch/elder for **Magic Powder**
-2. **Magic Powder** → used on Ranch Chicken at Toto Ranch → frees **Ranch Girl** from Twinrova's Cucco curse
-3. **Ranch Girl** gives Link the **Ocarina** (message 0x17D: "An evil witch came asking about 'essences' and then used her magic to transform me into a Cucoo")
-4. **Ocarina** → brought to **Mask Salesman** (east of village) → teaches **Song of Healing** (sets $7EF34C = 2)
-5. **Song of Healing** → used on **Withered Deku Scrub** (Tail Pond, OW 0x2D) → gives **Deku Mask** (flower floating ability)
-6. **Deku Flower** → float across gap to reach **Tail Cave** entrance → D2
+1. A guaranteed post-D1 message asks Link to investigate the missing **Ranch Girl**, who may have witnessed Twinrova searching for essences
+2. **Mushroom** (D1 area, Toadstool Woods) → taken to the witch for **Magic Powder**, which is explained as revealing creatures hidden by transformation magic
+3. At Loom Ranch, a clue connects the girl's disappearance to a strange Cucco; **Magic Powder** temporarily reveals the **Ranch Girl**
+4. **Ranch Girl** gives Link the **Ocarina** and directs him to the Mask Salesman at Tail Pond (message 0x17D currently gives the item but needs the destination added)
+5. **Ocarina** → brought to **Mask Salesman** (east of village) → teaches **Song of Healing** (sets $7EF34C = 2)
+6. **Song of Healing** → used on **Withered Deku Scrub** (Tail Pond, OW 0x2D) → gives **Deku Mask** (flower floating ability)
+7. **Deku Flower** → float across gap to reach **Tail Cave** entrance → D2
 
-**Note:** This chain is structurally similar to Oracle-series trading sequences, but at 6 steps it's the densest quest chain in the game. Each step introduces a different NPC and location, building the player's mental map of Kalyxo. The Ranch Girl's curse connects to Twinrova (payoff in D5).
+**Guidance rule:** The ALTTP Magic-Powder-on-a-Cucco Easter egg is flavor, not
+the solution source. The game supplies the motive, the powder's property, and
+the Cucco clue. Set the Tail Pond objective after the Ocarina, so the route is
+D1 → witch → Loom Ranch → Tail Pond rather than Tail Pond → ranch → Tail Pond.
+
+**Note:** This is the densest required chain in the game. Each stop must advance
+the current objective. The Ranch Girl's curse connects to Twinrova; defeating
+Twinrova in D5 breaks it permanently without a return quest.
 
 #### Key NPCs
 - **Deku Butler** (subtype 0x01, inside Tail Cave pre-D2): Afraid to enter the palace, provides context
@@ -175,7 +183,7 @@ The palace interior currently has no environmental storytelling about the Kalyxi
 #### Post-Dungeon Event
 - **Dream Sequence 1: The Sealing War** triggers after completing D2
 - Link camps and dreams of the ancient conflict
-- **Village Elder** (message 0x177) provides post-D1 guidance toward Tail Pond if player hasn't found the path yet
+- Required post-D1 guidance sends Link to investigate the Ranch Girl first; Village Elder message `0x177` should reinforce the strange-Cucco clue rather than point to Tail Pond early
 
 ---
 
@@ -338,7 +346,8 @@ See what awaits...
 #### Post-Dungeon Event
 - **Portal Discovery:** Exit east to Map 0x07, find the Lava Lands portal
 - Link can see Ganondorf's prison but cannot defeat him without Master Sword
-- **Dream Sequence 2: Ranch Girl's Secret** triggers after camping
+- Twinrova's defeat permanently breaks the Ranch Girl's Cucco curse as an automatic world-state consequence
+- No dream, Song of Healing, reward, or objective sends Link back to Loom Ranch; optional reactive dialogue is allowed if the player returns naturally
 
 #### Gossip Stone Reference
 > "The twin flames serve another master. Ice and fire are merely tools. Beware what they prepare for." (GS19)

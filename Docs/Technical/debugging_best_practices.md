@@ -36,7 +36,7 @@ Before implementing changes to sprite behavior or overworld systems:
    - Deep capture (items/flags/sprites/watch): `python3 scripts/mesen2_client.py diagnostics --deep --json`
    - Note mode/submode, time phase, and camera offsets.
 3. **Create a labeled save state at the exact repro point**
-   - `python3 scripts/mesen2_client.py smart-save 1` (slots 1-99 or configured)
+   - `python3 Scripts/Mesen2/mesen2_client.py save 1` (slots 1-99 or configured)
    - `python3 scripts/mesen2_client.py savestate-label set 1 --label "Dark World south crash"`
    - `python3 scripts/mesen2_client.py lib-save "Dark World south crash"`
 4. **Log actions explicitly**
@@ -68,7 +68,7 @@ After ANY change to overworld or coordinate code:
    - Watch RAM addresses during transition: `$20-$23`, `$E1-$E9`
    - Use sprite viewer to verify probe spawning/despawning
    - Set breakpoints on `OverworldHandleTransitions`
-   - Run `python3 scripts/campaign/transition_tester.py` for transition coverage + black-screen detection
+   - Run `python3 Scripts/Debug/repro_blackout_transition.py` for black-screen detection on a transition
 
 ### Sprite Systems
 After changes to sprite detection/AI:
