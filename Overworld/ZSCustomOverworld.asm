@@ -1557,9 +1557,17 @@ ActivateSubScreen:
     ; Check if Song of Storms rain is active
     LDA.l $7EE00E : AND.w #$00FF : BNE .turnOn
 
-    ; Check if we are in the beginning phase, if not, no rain.
-    ; If $7EF3C5 >= 0x02.
+    ; Early story phases only need a rain subscreen when beginning rain is
+    ; enabled. Keep this in sync with Overworld_ReloadSubscreenOverlay.
+if !ENABLE_PART0_STORM == 1
+    ; Part 0 storm: the saved storm bit (StoryProgress2 bit 7), light world
+    ; only, replaces Pool_EnableBeginningRain + GameState < 2
+    ; (Overworld/storm.asm). Keeps M/X and X; clobbers A.
+    JSL Oracle_Part0Storm_CarryClearIfStorm : BCS .noRain
+else
+    LDA.w Pool_EnableBeginningRain : AND.w #$00FF : BEQ .noRain
     LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCS .noRain
+endif
         BRA .turnOn
         
     .noRain
@@ -2225,7 +2233,7 @@ Overworld_ReloadSubscreenOverlay_Interupt:
 
                     .loadOverlayShortcut
 
-                    JMP.w .loadSubScreenOverlay
+                    JMP.w .checkNoOverlay
 
                 .masterSwordRecieved
 
@@ -2249,11 +2257,22 @@ Overworld_ReloadSubscreenOverlay_Interupt:
                 ; Triforce room.
                 CMP.w #$0189 : BEQ .loadOverlayShortcut
                     .noSubscreenOverlay
-                        
+
+                    ; Preserve the no-overlay sentinel for later fixed-color
+                    ; updates; never send it to the overlay decompressor.
+                    LDA.w #$00FF : STA.b $8C
+
+                    ; $1C = OBJ, BG2 and BG3 on the main screen (same as the
+                    ; overlay path) and $1D = 0 (no subscreen; TSQ is written
+                    ; in NMI), in one 16-bit store. Without the $1C write, $1C
+                    ; kept the previous screen's value (file select $15,
+                    ; dungeon rooms $17): the map (BG2) could be off and BG1
+                    ; junk showed instead (grid on OW $40, dw-warp-pyramid-gfx).
+                    ; One store instead of two: this block ends exactly at
+                    ; $02B0D2 with !ENABLE_PART0_STORM = 0.
+                    LDA.w #$0016 : STA.b $1C
                     SEP #$30 ; Set A, X, and Y in 8bit mode.
-                        
-                    ; Clear TSQ PPU Register, to be handled in NMI.
-                    STZ.b $1D
+                    STZ.b $9A ; No overlay means no backdrop color addition.
 
                     ; Submodule 0x18 (Module09_18:) of Module 0x0B
                     ; (Overworld Mode (special overworld))
@@ -2298,10 +2317,22 @@ Overworld_ReloadSubscreenOverlay_Interupt:
         
     .notMire
 
+if !ENABLE_PART0_STORM == 1
+    ; Part 0 storm: rain overlay and rain sound follow the saved storm bit
+    ; (StoryProgress2 bit 7, Overworld/storm.asm) instead of GameState < 2.
+    ; Light world only; keeps M/X and X (the overlay ID); clobbers A.
+    JSL Oracle_Part0Storm_CarryClearIfStorm : BCS .noRain
+        LDX.w #$009F
+
+        SEP #$20 ; Set A in 8bit mode.
+        LDA.b #$01 : STA.w $012D ; SFX1.01 rain
+        REP #$20 ; Set A in 16bit mode.
+else
     ; Check if we are in the beginning phase, if not, no rain.
     LDA.l Pool_EnableBeginningRain : AND.w #$00FF : BEQ .noRain
         LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCS .noRain
             LDX.w #$009F
+endif
 
     .noRain
 
@@ -2310,11 +2341,12 @@ Overworld_ReloadSubscreenOverlay_Interupt:
         LDX.w #$009F
     .noSongOfStorms
 
-    ; If the value is 0xFF that means we didn't set any overlay so load the
-    ; pyramid one by default.
+    ; $FF means no overlay. Loading the pyramid here would turn on backdrop
+    ; addition even though the area's palette already has the correct color.
+    ; Weather overrides above still load their real overlay IDs normally.
+    .checkNoOverlay
     CPX.w #$00FF : BNE .notFF
-        ; The pyramid background.
-        LDX.w #$0096
+        JMP.w .noSubscreenOverlay
 
     .notFF
     
@@ -2363,16 +2395,11 @@ Overworld_ReloadSubscreenOverlay_Interupt:
         CPX.b #$9C : BEQ .loadOverlay ; Lava
         CPX.b #$96 : BEQ .loadOverlay ; Pyramid BG
         
-        ; Check for NO OVERLAY ($FF)
-        CPX.b #$FF : BNE .checkScroll
-            LDA.b #$00 ; Disable Color Math
-            BRA .loadOverlay
-
-        .checkScroll
-            ; TODO: Investigate what these checks are for.
-            LDX.b $11 : CPX.b #$23 : BEQ .loadOverlay
-                        CPX.b #$2C : BEQ .loadOverlay
-                STZ.b $1D
+        ; $FF has already returned before decompression. Keep the remaining
+        ; scroll handling for other overlay IDs.
+        LDX.b $11 : CPX.b #$23 : BEQ .loadOverlay
+                    CPX.b #$2C : BEQ .loadOverlay
+            STZ.b $1D
     
     .loadOverlay
     
@@ -2476,6 +2503,9 @@ Func02B2D4:
     ; In vanilla a check for the overlay is done here but we don't need
     ; it at all. It is handled in Func02B391 later on.
     ;JSL.l EnableSubScreenCheckForPyramid
+
+    ; No overlay: give the overlay uploads that follow a safe VRAM table.
+    JSL.l MirrorWarp_NoOverlayUploadTable
 
     RTL
 }
@@ -3978,9 +4008,14 @@ InitColorLoad2:
 
     .storeColor
 
-    ; Set transparent color.
+    ; Set transparent color. Only the buffer ($7EC300/$7EC340), as in upstream
+    ; ZS: the cache-only entry ($0ED61D: mirror warp, special area in/out)
+    ; fades in with PaletteFilter, which adds the target to $7EC500. Writing
+    ; $7EC500 here doubled the color (Maku area $19C6 -> $338C; after leaving
+    ; it, $2669 -> $4CD2 magenta). The main-buffer entry ($0ED618) still
+    ; writes $7EC500 afterwards through ColorBgFix.
     STA.l TimeState.SubColor ; Set temp color for tinting
-    JSL Oracle_BackgroundFix ; Apply tint and write to buffers
+    JSL Oracle_MosaicFix ; Apply tint, write the buffer only
 
     INC.b $15
 
@@ -5776,6 +5811,36 @@ Link_Read_Interupt:
     LDA.w Pool_Overworld_SignText_New, Y
 
     PLB
+
+    RTL
+}
+
+; Mirror warp (AnimateMirrorWarp steps 5-6: TriggerOverlayA_2 sets $17 = $0C,
+; TriggerOverlayB $0D) uploads $7F2000-$7F3FFF through the VRAM address table
+; at $7F4000-$7F407F (NMI_HandleArbitraryTilemap). Only a real overlay load
+; builds that table; with no overlay ($8C = $FF, e.g. the Abyss pyramid $40)
+; it still holds the graphics decompressed in steps 2-4, so the two uploads
+; wrote 8 KB to random VRAM: BG3 tilemap rows (the garbled row and edge tiles
+; after the Kydrog warp) and BG/OBJ characters. Point all 64 entries at the
+; BG1 tilemap ($1000-$1FFF words, not on screen without an overlay) instead.
+; Steps 7-9 rebuild the table for the destination screen as before.
+MirrorWarp_NoOverlayUploadTable:
+{
+    PHP
+    SEP #$20 ; Set A in 8bit mode.
+    LDA.b $8C : CMP.b #$FF : BNE .overlay
+        REP #$30 ; Set A, X, and Y in 16bit mode.
+        LDX.w #$007E
+        LDA.w #$1FC0
+
+        .next_entry
+            STA.l $7F4000, X
+            SEC : SBC.w #$0040
+        DEX : DEX : BPL .next_entry
+
+    .overlay
+
+    PLP
 
     RTL
 }

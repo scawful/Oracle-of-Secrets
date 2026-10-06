@@ -58,6 +58,16 @@ WaterGate_FillComplete_Hook:
   STZ.b $1F
   JSL IrisSpotlight_ResetTable
 
+  JSR WaterGate_CompleteRoom
+
+  ; Return to the instruction after the replaced code (RTL at $01F3DA)
+  JML $01F3DA
+}
+
+; Shared by the animated fill and room $25's lever-operated swim band.
+; Clobbers A/X/Y and DP scratch $00-$05; returns M8/X8, preserving D/DB.
+WaterGate_CompleteRoom:
+{
   ; Apply collision updates for water-filled area
   ;
   ; CRITICAL: do not assume Direct Page (D) is $0000 here. Several callers in
@@ -111,8 +121,51 @@ WaterGate_FillComplete_Hook:
   PLB
   PLD
 
-  ; Return to the instruction after the replaced code (RTL at $01F3DA)
-  JML $01F3DA
+  RTS
+}
+
+; Room $25 has D9 water flooring, not the D8 window object required by the
+; vanilla WaterOff tag. Its lever opens a swim band; draining here would use
+; uninitialized HDMA coordinates and then erase the entire BG2 tilemap.
+;
+; Entry: tag dispatcher, M8/X8, $0E = active tag slot (0=$AE, 1=$AF).
+; The lever handles its own animation/SFX. Restore this room's collision on
+; its first tag tick after re-entry, without enabling the global load hook.
+WaterGate_Room25Tag_Hook:
+{
+  PHP
+  REP #$20
+  LDA.l $7E00A0 : CMP.w #$0025 : BNE .vanilla
+  SEP #$30
+
+  LDA.l WaterGateStates : AND.b #$02 : BNE .open
+  LDA.l $7E0642 : BEQ .exit
+
+  .open
+  PHD
+  REP #$20
+  LDA.w #$0000 : TCD
+  SEP #$20
+
+  ; CompleteRoom preserves $0E, D and DB. Only clear the dispatched tag;
+  ; room $25 authors WaterOff in slot 0, unlike vanilla's hardcoded $AF.
+  JSR WaterGate_CompleteRoom
+  LDA.l $7E0403 : ORA.b #$08 : STA.l $7E0403
+  LDA.b #$00 : STA.l $7E0642
+  LDX.b $0E
+  STZ.b $AE, X
+  PLD
+
+  .exit
+  PLP
+  JML $01CA93 ; original tag RTS
+
+  .vanilla
+  PLP
+  LDA.w $0642 : BEQ .vanilla_exit
+  JML $01CA99
+  .vanilla_exit
+  JML $01CA93
 }
 
 ; =========================================================

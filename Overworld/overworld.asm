@@ -5,8 +5,23 @@ org $1AFBBF : db $0B ; Heart Index
 org $1AFBC7 : db $0B ; Heart Index
 org $1AFBD7 : db $00
 
-; Remove rain sound effects from beginning
+; Remove beginning rain inside rooms (UnderworldAdjustRainSFX).
+; Also with !ENABLE_PART0_STORM: interiors stay silent (scawful, 2026-09-25).
 org $02838C : LDA.l GameState : CMP.b #$00
+
+; Phase-00 outdoor ambience still comes from LightWorldAmbiance, independently
+; of Pool_EnableBeginningRain. Its high nibble is SFX1; preserve the base ROM's
+; low music nibble and replace rain ($1) with explicit silence ($5), not $0.
+; @source usdasm/bank_02.asm:LightWorldAmbiance, AdjustOverworldAmbiance
+; Only the intro table changes; later phases, Mire, and Song of Storms remain.
+org $02C316 : db (read1($02C316)&$0F)|$50 ; Area $13: Kalyxo Castle ; @hook module=Overworld kind=data name=IntroAmbience02C316
+org $02C317 : db (read1($02C317)&$0F)|$50 ; Area $14: Kalyxo Castle ; @hook module=Overworld kind=data name=IntroAmbience02C317
+org $02C31E : db (read1($02C31E)&$0F)|$50 ; Area $1B: Kalyxo Castle ; @hook module=Overworld kind=data name=IntroAmbience02C31E
+org $02C31F : db (read1($02C31F)&$0F)|$50 ; Area $1C: Kalyxo Road ; @hook module=Overworld kind=data name=IntroAmbience02C31F
+org $02C326 : db (read1($02C326)&$0F)|$50 ; Area $23: Wayward Village ; @hook module=Overworld kind=data name=IntroAmbience02C326
+org $02C327 : db (read1($02C327)&$0F)|$50 ; Area $24: Wayward Village ; @hook module=Overworld kind=data name=IntroAmbience02C327
+org $02C32E : db (read1($02C32E)&$0F)|$50 ; Area $2B: Wayward Village ; @hook module=Overworld kind=data name=IntroAmbience02C32E
+org $02C32F : db (read1($02C32F)&$0F)|$50 ; Area $2C: Wayward Village ; @hook module=Overworld kind=data name=IntroAmbience02C32F
 
 ; RoomTag_GanonDoor
 ; Replace SprState == 04 -> .exit
@@ -84,6 +99,20 @@ LoadDarkWorldIntro:
     LDA.b #$40 : STA.l $7EF3CA
     RTL
   .not_dw_spawn
+  ; Dungeon/cave death continues must rebuild the current underworld room.
+  ; Apply story-specific overworld routing only to outdoor loads.
+  LDA.b $1B : BNE .indoors
+if !ENABLE_ABYSS_RESPAWN_UNTIL_ESCAPE == 1
+  ; Abyss respawn lock (decisions.org, scawful 2026-09-26): from Kydrog's
+  ; banishment until the escape, outdoor deaths and continues load the Abyss.
+  ; The saved world is the lock: Kydrog_WarpPlayerAway sets $7EF3CA = $40 with
+  ; Story2_KydrogEncounter; the first light world arrival after that sets it
+  ; to $00 (today the DW $6A warp tile, $02B236; later the sword warp home,
+  ; decisions.org). The same condition ends the Part 0 storm (storm.asm).
+  ; GameOver keeps $7EF3CA while GameState >= 2 ($09F520 patch below). The
+  ; old OOSPROG < 2 force is not used: it ended at the Maku Tree and sent a
+  ; death or continue after the escape back to the Abyss.
+else
   LDA.l GameState : CMP.b #$02 : BNE .intro_sequence
     ; Check for maku tree progress flag
     LDA.l OOSPROG : CMP.b #$02 : BCS .has_pearl
@@ -91,10 +120,9 @@ LoadDarkWorldIntro:
       LDA.b #$40 : STA.l $7EF3CA
       RTL
     .has_pearl
+endif
   .intro_sequence
-  ; Check if the player was in a dungeon when they saved
-  LDA.b $1B : BNE .indoors
-    LDA.l $7EF3CA
+  LDA.l $7EF3CA
   .indoors
   RTL
 }
@@ -114,6 +142,10 @@ org $0281CD : LDA.l $7EF3D6 : CMP.b #$04
 org $09F520 : LDA.l GameState : CMP.b #$02
 
 pullpc
+if !ENABLE_PART0_STORM == 1
+  incsrc "Overworld/storm.asm"
+endif
+
 LoadOverworldPitAreas:
 {
   LDA $8A : CMP.b #$0F : BEQ .allow_transition

@@ -26,7 +26,10 @@ HUD_ClockDisplay:
   JSL SongTintTick ; Per-frame song tint decay (safe for any M/X width)
   JSR RunClock
   JSR DrawClockToHud
-  REP #$30 ; Ensure 16-bit A/X/Y for vanilla garnish routine
+  ; Vanilla calls Garnish_ExecuteUpperSlots_long from Sprite_Main with 8-bit
+  ; A/X/Y (LDX.b #$1D / CPX.b #$0E). With 16-bit X the upper slots ($0F-$1D)
+  ; never ran: thrown pot/bush debris (garnish $16) froze invisibly (2026-09-26).
+  SEP #$30
   JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
   PLP
   RTL
@@ -256,6 +259,13 @@ CheckIfNight:
     RTL
   +
   LDA.l GameState : CMP.b #$02 : BCC .day_time
+if !ENABLE_PART00_NIGHT_FIX == 1
+    ; Farore met (GameState 2) but Kydrog's ambush not played yet: keep the
+    ; day list. Only it holds Farore and Kydrog in the Forest Glade ($80);
+    ; the night list has neither, so at night Link auto-walked into the Maku
+    ; Tree's $20 with InCutScene still 1 (input locked): softlock.
+    LDA.l KydrogFaroreRemoved : BEQ .day_time
+endif
     LDA TimeState.Hours : CMP.b #$12 : BCS .night_time
       LDA TimeState.Hours : CMP.b #$06 : BCC .night_time
       .day_time
