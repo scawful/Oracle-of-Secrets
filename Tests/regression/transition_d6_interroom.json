@@ -1,7 +1,7 @@
 {
   "name": "Dungeon 6 Inter-Room Transition",
   "description": "Verify D6 room-to-room transitions work without state corruption",
-  "version": "1.0",
+  "version": "1.1",
   "tags": ["regression", "transition", "dungeon", "d6", "interroom"],
   "timeout_seconds": 30,
   "saveState": {
@@ -53,11 +53,12 @@
       "description": "Room ID should change after moving north"
     },
     {
-      "type": "assert",
-      "address": "$7E2100",
-      "condition": "not_equals",
-      "value": 0,
-      "description": "INIDISP not 0 (no black screen)"
+      "type": "wait_addr",
+      "address": "$7E0013",
+      "equals": 15,
+      "timeout": 5.0,
+      "interval": 0.1,
+      "description": "INIDISP queue settles at full brightness with forced blank clear"
     },
     {
       "type": "assert",

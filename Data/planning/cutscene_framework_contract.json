@@ -1,0 +1,374 @@
+{
+  "schema_version": 1,
+  "document_kind": "design_fixture_not_runtime_input",
+  "status": "proposed",
+  "runtime_enabled": false,
+  "ram_base": null,
+  "rom_base": null,
+  "hook_address": null,
+  "controller_bytes": 32,
+  "actor_bytes": 24,
+  "max_actors": 8,
+  "immediate_command_budget": 8,
+  "lifecycle": [
+    "idle",
+    "setup",
+    "load",
+    "fade_in",
+    "play",
+    "fade_out",
+    "teardown",
+    "complete",
+    "fault"
+  ],
+  "commands": [
+    {
+      "opcode": 0,
+      "name": "END",
+      "fields": [],
+      "payload_bytes": 0
+    },
+    {
+      "opcode": 1,
+      "name": "WAIT_FRAMES",
+      "fields": [
+        [
+          "frames",
+          "u16"
+        ]
+      ],
+      "payload_bytes": 2
+    },
+    {
+      "opcode": 2,
+      "name": "ACTOR_SHOW",
+      "fields": [
+        [
+          "actor",
+          "u8"
+        ],
+        [
+          "asset",
+          "u16"
+        ],
+        [
+          "x",
+          "s16"
+        ],
+        [
+          "y",
+          "s16"
+        ],
+        [
+          "facing",
+          "u8"
+        ]
+      ],
+      "payload_bytes": 8
+    },
+    {
+      "opcode": 3,
+      "name": "ACTOR_HIDE",
+      "fields": [
+        [
+          "actor",
+          "u8"
+        ]
+      ],
+      "payload_bytes": 1
+    },
+    {
+      "opcode": 4,
+      "name": "ACTOR_MOVE",
+      "fields": [
+        [
+          "actor",
+          "u8"
+        ],
+        [
+          "target_x",
+          "s16"
+        ],
+        [
+          "target_y",
+          "s16"
+        ],
+        [
+          "profile",
+          "u8"
+        ]
+      ],
+      "payload_bytes": 6
+    },
+    {
+      "opcode": 5,
+      "name": "WAIT_ACTOR",
+      "fields": [
+        [
+          "actor",
+          "u8"
+        ]
+      ],
+      "payload_bytes": 1
+    },
+    {
+      "opcode": 6,
+      "name": "ACTOR_ANIMATE",
+      "fields": [
+        [
+          "actor",
+          "u8"
+        ],
+        [
+          "animation",
+          "u8"
+        ]
+      ],
+      "payload_bytes": 2
+    },
+    {
+      "opcode": 7,
+      "name": "MESSAGE",
+      "fields": [
+        [
+          "message_id",
+          "u16"
+        ]
+      ],
+      "payload_bytes": 2
+    },
+    {
+      "opcode": 8,
+      "name": "MUSIC",
+      "fields": [
+        [
+          "cue_id",
+          "u16"
+        ]
+      ],
+      "payload_bytes": 2
+    },
+    {
+      "opcode": 9,
+      "name": "SFX",
+      "fields": [
+        [
+          "cue_id",
+          "u16"
+        ]
+      ],
+      "payload_bytes": 2
+    },
+    {
+      "opcode": 10,
+      "name": "CALLBACK",
+      "fields": [
+        [
+          "callback_id",
+          "u16"
+        ],
+        [
+          "argument",
+          "u16"
+        ]
+      ],
+      "payload_bytes": 4
+    }
+  ],
+  "hosts": [
+    {
+      "id": "attract",
+      "completion": "attract_only_file_select_adapter",
+      "status": "first_slice"
+    },
+    {
+      "id": "arrival",
+      "completion": "bed_wake_handoff",
+      "status": "deferred_until_attract_proof"
+    },
+    {
+      "id": "gameplay",
+      "completion": "explicit_world_resume",
+      "status": "future"
+    }
+  ],
+  "fixtures": [
+    {
+      "id": "attract_throne_parity",
+      "host": "attract",
+      "entrance_id": 116,
+      "message_id": 275,
+      "asset_binding": null,
+      "script": null,
+      "status": "requires_actor_asset_and_timing_extraction"
+    },
+    {
+      "id": "interpreter_semantics_only",
+      "host": null,
+      "renderable": false,
+      "script": [
+        {
+          "op": "WAIT_FRAMES",
+          "frames": 0
+        },
+        {
+          "op": "WAIT_FRAMES",
+          "frames": 2
+        },
+        {
+          "op": "END"
+        }
+      ],
+      "status": "abstract_validation_fixture_not_a_story_scene"
+    }
+  ],
+  "experiment_gates": {
+    "status": "planned_not_registered",
+    "default": 0,
+    "flags": [
+      "ENABLE_CUTSCENE_FRAMEWORK",
+      "ENABLE_CUSTOM_ATTRACT_SEQUENCE",
+      "ENABLE_ORACLE_ARRIVAL_SEQUENCE",
+      "ENABLE_INTRO_STEALTH_PATROL"
+    ],
+    "requires": {
+      "ENABLE_CUSTOM_ATTRACT_SEQUENCE": [
+        "ENABLE_CUTSCENE_FRAMEWORK"
+      ],
+      "ENABLE_ORACLE_ARRIVAL_SEQUENCE": [
+        "ENABLE_CUTSCENE_FRAMEWORK"
+      ]
+    },
+    "validation_plan": "Docs/Planning/Plans/intro_experiment_validation.md",
+    "matrix": [
+      {
+        "framework": 0,
+        "attract": 0,
+        "arrival": 0,
+        "patrol": 0,
+        "valid": true
+      },
+      {
+        "framework": 0,
+        "attract": 0,
+        "arrival": 0,
+        "patrol": 1,
+        "valid": true
+      },
+      {
+        "framework": 0,
+        "attract": 0,
+        "arrival": 1,
+        "patrol": 0,
+        "valid": false
+      },
+      {
+        "framework": 0,
+        "attract": 0,
+        "arrival": 1,
+        "patrol": 1,
+        "valid": false
+      },
+      {
+        "framework": 0,
+        "attract": 1,
+        "arrival": 0,
+        "patrol": 0,
+        "valid": false
+      },
+      {
+        "framework": 0,
+        "attract": 1,
+        "arrival": 0,
+        "patrol": 1,
+        "valid": false
+      },
+      {
+        "framework": 0,
+        "attract": 1,
+        "arrival": 1,
+        "patrol": 0,
+        "valid": false
+      },
+      {
+        "framework": 0,
+        "attract": 1,
+        "arrival": 1,
+        "patrol": 1,
+        "valid": false
+      },
+      {
+        "framework": 1,
+        "attract": 0,
+        "arrival": 0,
+        "patrol": 0,
+        "valid": true
+      },
+      {
+        "framework": 1,
+        "attract": 0,
+        "arrival": 0,
+        "patrol": 1,
+        "valid": true
+      },
+      {
+        "framework": 1,
+        "attract": 0,
+        "arrival": 1,
+        "patrol": 0,
+        "valid": true
+      },
+      {
+        "framework": 1,
+        "attract": 0,
+        "arrival": 1,
+        "patrol": 1,
+        "valid": true
+      },
+      {
+        "framework": 1,
+        "attract": 1,
+        "arrival": 0,
+        "patrol": 0,
+        "valid": true
+      },
+      {
+        "framework": 1,
+        "attract": 1,
+        "arrival": 0,
+        "patrol": 1,
+        "valid": true
+      },
+      {
+        "framework": 1,
+        "attract": 1,
+        "arrival": 1,
+        "patrol": 0,
+        "valid": true
+      },
+      {
+        "framework": 1,
+        "attract": 1,
+        "arrival": 1,
+        "patrol": 1,
+        "valid": true
+      }
+    ]
+  },
+  "host_audit": {
+    "report": "Docs/Planning/Reviews/cutscene_host_audit_2026-09-23.md",
+    "entry_strategy": "module14_pointer_table_redirect",
+    "entry_pointer_addresses": [
+      "008075",
+      "008091",
+      "0080AD"
+    ],
+    "expected_existing_target": "0CEDAD",
+    "candidate_ram_range": [
+      "7FF200",
+      "7FF2FF"
+    ],
+    "ram_status": "candidate_only_not_reserved; indirect_write_and_runtime_audit_required",
+    "existing_rom_source_freshness": "not_established"
+  }
+}

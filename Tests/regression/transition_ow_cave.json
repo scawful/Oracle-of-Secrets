@@ -1,7 +1,7 @@
 {
   "name": "Overworld to Cave Transition",
   "description": "Verify OW→Cave transition completes without black screen or softlock",
-  "version": "1.0",
+  "version": "1.1",
   "tags": ["regression", "transition", "overworld", "cave"],
   "timeout_seconds": 30,
   "saveState": {
@@ -47,11 +47,12 @@
       "description": "Game mode must not be 0 (reset/crash)"
     },
     {
-      "type": "assert",
-      "address": "$7E2100",
-      "condition": "not_equals",
-      "value": 0,
-      "description": "INIDISP should not be 0 (forced blank = black screen)"
+      "type": "wait_addr",
+      "address": "$7E0013",
+      "equals": 15,
+      "timeout": 5.0,
+      "interval": 0.1,
+      "description": "INIDISP queue settles at full brightness with forced blank clear"
     },
     {
       "type": "assert",

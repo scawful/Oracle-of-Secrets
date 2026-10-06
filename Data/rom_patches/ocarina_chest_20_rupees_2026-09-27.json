@@ -1,0 +1,15 @@
+{
+  "base_sha1": "b143612a92d3e51ace4d640919b709f4e33e8592",
+  "task": "Room $11E second Ocarina chest -> 20 rupees (scawful 2026-09-27: 'just make it rupees dont let it reset the songs').",
+  "note": "Receipt $14 writes $7EF34C = 3 ($09:8594). Opened early it skips the Ranch Girl / Mask Salesman chain (gives Healing + Storms); opened after Kaepora it drops the Song of Soaring (4 -> 3). The Ranch Girl gives $14 and then writes 1 herself (Sprites/NPCs/ranch_girl.asm), so no path needs the chest. Receipt value $09:8594 = $03 is left as is.",
+  "edits": [
+    {
+      "id": "room-11E-ocarina-to-20-rupees",
+      "pc": "0x0EA8E",
+      "snes": "$01EA8E",
+      "before": "1E 01 14",
+      "after": "1E 01 36",
+      "why": "RoomData_ChestItems entry 96: room $011E small chest, item $14 (Ocarina) -> $36 (20 rupees); keeps the heart-piece total unchanged"
+    }
+  ]
+}

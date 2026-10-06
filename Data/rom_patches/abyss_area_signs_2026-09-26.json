@@ -1,0 +1,95 @@
+{
+  "base_sha1": "ac544166",
+  "task": "Abyss area signs: repoint areas $40/$50/$58/$5D/$6A to new expanded messages $1FB-$1FF (abyss_fixes.diff adds the text)",
+  "note": "ZS area message table Pool_Overworld_SignText_New ($2897F8 + area*2; read by Link_Read_Interupt at $07B518 with the parent area's $8A). None of these five areas has a signpost tile16 today (sign tiles = tile16 $101/$17D/$9D3/$BC3/$BC5/$BCF; tile type $54), so this is display-neutral until scawful places signs. Large areas: all four quadrant entries written (what yaze saves).",
+  "edits": [
+    {
+      "id": "abyss-sign-area40",
+      "pc": "0x141878",
+      "snes": "$289878",
+      "before": "A7 00",
+      "after": "FB 01",
+      "why": "area $40 -> $1FB Temporal Pyramid"
+    },
+    {
+      "id": "abyss-sign-area41",
+      "pc": "0x14187A",
+      "snes": "$28987A",
+      "before": "A7 00",
+      "after": "FB 01",
+      "why": "area $41 -> $1FB Temporal Pyramid"
+    },
+    {
+      "id": "abyss-sign-area48",
+      "pc": "0x141888",
+      "snes": "$289888",
+      "before": "A7 00",
+      "after": "FB 01",
+      "why": "area $48 -> $1FB Temporal Pyramid"
+    },
+    {
+      "id": "abyss-sign-area49",
+      "pc": "0x14188A",
+      "snes": "$28988A",
+      "before": "A7 00",
+      "after": "FB 01",
+      "why": "area $49 -> $1FB Temporal Pyramid"
+    },
+    {
+      "id": "abyss-sign-area50",
+      "pc": "0x141898",
+      "snes": "$289898",
+      "before": "A7 00",
+      "after": "FC 01",
+      "why": "area $50 -> $1FC Hollow of Echoes"
+    },
+    {
+      "id": "abyss-sign-area58",
+      "pc": "0x1418A8",
+      "snes": "$2898A8",
+      "before": "AF 00",
+      "after": "FD 01",
+      "why": "area $58 -> $1FD Forest of Dreams"
+    },
+    {
+      "id": "abyss-sign-area59",
+      "pc": "0x1418AA",
+      "snes": "$2898AA",
+      "before": "AF 00",
+      "after": "FD 01",
+      "why": "area $59 -> $1FD Forest of Dreams"
+    },
+    {
+      "id": "abyss-sign-area60",
+      "pc": "0x1418B8",
+      "snes": "$2898B8",
+      "before": "AF 00",
+      "after": "FD 01",
+      "why": "area $60 -> $1FD Forest of Dreams"
+    },
+    {
+      "id": "abyss-sign-area61",
+      "pc": "0x1418BA",
+      "snes": "$2898BA",
+      "before": "AF 00",
+      "after": "FD 01",
+      "why": "area $61 -> $1FD Forest of Dreams"
+    },
+    {
+      "id": "abyss-sign-area5D",
+      "pc": "0x1418B2",
+      "snes": "$2898B2",
+      "before": "A7 00",
+      "after": "FE 01",
+      "why": "area $5D -> $1FE Dreamer's Rest"
+    },
+    {
+      "id": "abyss-sign-area6A",
+      "pc": "0x1418CC",
+      "snes": "$2898CC",
+      "before": "A7 00",
+      "after": "FF 01",
+      "why": "area $6A -> $1FF The Rift Shore"
+    }
+  ]
+}

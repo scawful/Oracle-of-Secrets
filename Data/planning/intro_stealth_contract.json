@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "document_kind": "design_scaffold",
+  "status": "proposed_not_runtime_input",
+  "id": "oracle.intro_stealth",
+  "runtime_enabled": false,
+  "catalog_alignment": {
+    "plan": "docs/internal/plans/sprite-catalog-migration-2026-09-23.md",
+    "plan_root": "configured_yaze_source_root",
+    "coordination": "peer_review_confirmed_in_yaze_plan_section_9_2026-09-23",
+    "ownership": "Oracle owns behavior and encounter requirements; Yaze owns catalog and placement serialization"
+  },
+  "actor": {
+    "logical_id": "oracle.stalfos_patrol",
+    "family_id": null,
+    "main_sprite_id": null,
+    "variant_selector": null,
+    "registration_owner": null,
+    "draw_asset": null,
+    "overworld_encoding": null,
+    "allocation_policy": "prefer audited existing-family variant; never infer availability from absent registry rows",
+    "placement_export_enabled": false,
+    "states": [
+      "patrol",
+      "notice",
+      "chase",
+      "search",
+      "return"
+    ],
+    "initial_state": "patrol",
+    "transitions": [
+      {
+        "from": "patrol",
+        "event": "visible_player",
+        "to": "notice"
+      },
+      {
+        "from": "notice",
+        "event": "sight_lost_before_commit",
+        "to": "patrol"
+      },
+      {
+        "from": "notice",
+        "event": "notice_elapsed_with_sight",
+        "to": "chase"
+      },
+      {
+        "from": "chase",
+        "event": "sight_lost_after_grace",
+        "to": "search"
+      },
+      {
+        "from": "search",
+        "event": "visible_player",
+        "to": "notice"
+      },
+      {
+        "from": "search",
+        "event": "search_expired",
+        "to": "return"
+      },
+      {
+        "from": "return",
+        "event": "visible_player",
+        "to": "notice"
+      },
+      {
+        "from": "return",
+        "event": "home_reached",
+        "to": "patrol"
+      }
+    ],
+    "required_properties": [
+      "facing_limited_detection",
+      "obstacle_occlusion",
+      "readable_notice",
+      "bounded_search",
+      "collision_aware_return",
+      "dialogue_freeze",
+      "transition_cleanup"
+    ],
+    "unresolved": [
+      "selector_transport_before_prep",
+      "ram_ownership",
+      "graphics_residency",
+      "occlusion_probe_semantics",
+      "caught_behavior",
+      "offscreen_policy"
+    ]
+  },
+  "encounter": {
+    "id": "oracle.wayward_intro_patrol",
+    "parent_map_id": 35,
+    "phase": "intro_only; runtime predicate pending loader trace",
+    "profile_id": "oracle.patrol.intro_gentle",
+    "patrol_route": [],
+    "spawn_position": null,
+    "activation_region": null,
+    "safe_conversation_regions": [],
+    "notice_frames": null,
+    "chase_speed": null,
+    "search_frames": null,
+    "preserve_blocker_sprite_id": 63,
+    "escape_entrance_id": 128,
+    "first_prototype_actor_count": 1,
+    "rules": [
+      "player_retains_control",
+      "detection_is_not_instant_failure",
+      "npc_conversation_does_not_allow_guard_damage",
+      "no_new_persistent_flag_by_default",
+      "route_parameters_are_not_variant_identity",
+      "no_coordinate_bit_repurposing"
+    ]
+  },
+  "arrival": {
+    "id": "oracle.arrival_summons",
+    "runtime_enabled": false,
+    "gameplay_sprite_ids_required": 0,
+    "sequence": [
+      "new_game_gate",
+      "black_falling_link",
+      "summons_message",
+      "fade_to_bed",
+      "existing_wake_handoff",
+      "player_control"
+    ],
+    "existing_message_id": 31,
+    "voice_identity": "unresolved_canon",
+    "hook_address": null,
+    "scratch_ram": null,
+    "renderer": "presentation_OAM; exact_adapter_unresolved",
+    "skip_policy": "proposed: complete through same wake handoff without duplicate summons",
+    "replay_policy": "new_game_only; continue and existing saves preserve current behavior"
+  },
+  "acceptance": [
+    "no_numeric_slot_reserved",
+    "unknown_placement_bits_preserved",
+    "existing_family_registration_unchanged",
+    "normal_input_stealth_and_escape",
+    "occlusion_blocks_detection",
+    "search_and_return_recover",
+    "dialogue_and_pause_freeze_encounter",
+    "fresh_game_arrival_once",
+    "continue_skips_arrival",
+    "skip_and_normal_arrival_share_wake_result",
+    "no_duplicate_summons",
+    "rom_and_save_changes_only_in_isolated_candidate"
+  ]
+}

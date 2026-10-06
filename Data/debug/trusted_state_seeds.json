@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "policy": {
+    "required_status": "canon",
+    "required_captured_by": "human"
+  },
+  "tasks": {
+    "maku": null,
+    "d4": null,
+    "d6": null,
+    "d6inside": null,
+    "d6cart": null,
+    "menu": null
+  }
+}
