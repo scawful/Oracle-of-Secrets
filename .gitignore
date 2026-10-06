@@ -241,3 +241,28 @@ __pycache__/
 
 # Host-specific MCP server config (machine paths, do not commit).
 .mcp.json
+
+# Local build/test caches (source assets and test definitions remain visible).
+/build/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+
+# Generated emulator-run evidence. Keep the adjacent Markdown reports tracked.
+# These directories may contain screenshots, memory dumps and copied script snapshots.
+/Docs/Planning/Status/runtime_*/
+
+# Agent plans, reviews, sketches, and debug evidence live in AFS
+# (~/.context/projects/oracle-of-secrets). Canon stays tracked:
+# story_canon_beat_sheet.md, Status/decisions.org, oracle.org,
+# Reviews/approved_dialogue_rewrites_*.md.
+/Docs/Planning/Plans/
+/Docs/Planning/Sketches/
+/Docs/Planning/Reviews/**
+!/Docs/Planning/Reviews/approved_dialogue_rewrites_*.md
+/Docs/Debugging/Issues/evidence/
+
+# Local tool scratch (2026-10-06 repo cleanup)
+/Scratchpad/
+.playwright-mcp/
+*_scratch.txt

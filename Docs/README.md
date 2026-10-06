@@ -1,38 +1,17 @@
-# Oracle of Secrets Documentation
+# Oracle of Secrets docs
 
-Welcome to the documentation for Oracle of Secrets. This directory is organized to help you find information about the project's architecture, systems, and content.
+Only docs a person edits or the code depends on stay in git. Everything else (agent plans, reviews,
+evidence, debugging guides, status reports) lives in the private AFS context
+`~/.context/projects/oracle-of-secrets/`. Docs removed on 2026-10-06 keep their old paths under
+`scratchpad/archive/repo-slim-2026-10-06/repo/`.
 
-## Directory Structure
-
--   `./Debugging/`: Emulator/debugging workflows, testing infrastructure, state libraries, and agent-oriented guides.
--   `./Planning/`: Roadmaps, audits, inventories, and design/planning docs (includes status/handoffs).
--   `./Technical/`: Source-of-truth-ish references (memory maps, architecture notes, technical reference, sheets).
--   `./World/`: Game/content docs (world layout, dungeons/overworld, lore, sprites, features, guides, design).
--   `./Archive/`: Historical docs (not current guidance).
-
-## Key Documents
-
--   **`../RUNBOOK.md`**: Primary “how do I work on this repo” doc (build → launch → preflight → capture).
--   **`Debugging/README.md`**: Debugging/testing index inside Docs.
--   **`Planning/README.md`**: Planning index (story/design, audits, inventories, status/handoffs).
--   **`Debugging/Agent/Quickstart.md`**: One-page agent entry (build → preflight → capture → debug).
--   **`Technical/MemoryMap.md`**: Comprehensive WRAM/SRAM map.
--   **`World/Guides/QuestFlow.md`**: A walkthrough of the main story and side-quest progression.
--   **`World/Overworld/ZSCustomOverworld.md`**: Overworld engine deep dive.
-
-## Debugging & Testing Quick Start
-
-```bash
-# Build + symbol sync + optional reset
-Scripts/Build/dev_loop.sh 168 --mesen-sync --reload
-
-# Or compatibility wrapper
-./build.sh 168
-
-# Run regression test suite
-./Scripts/Validate/run_regression_tests.sh regression
-
-# Launch isolated Mesen2 + attach by instance
-./Scripts/Mesen2/mesen2_launch_instance.sh --instance oos-you-debug --owner you --source manual
-python3 Scripts/Mesen2/mesen2_client.py --instance oos-you-debug diagnostics
-```
+| Path | What it is |
+|---|---|
+| `oracle.org` | Task tracker |
+| `Planning/Status/decisions.org` | scawful's design and story rulings (DECIDED / OPEN) |
+| `Planning/story_canon_beat_sheet.md` | Story canon |
+| `Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md` | Approved dialogue text |
+| `Technical/` | Contracts the code depends on: memory map, flag ledger, table formats, inventories |
+| `World/` | Dungeon, overworld, lore, NPC and quest references |
+| `Dev/Planning/*.json` | yaze project registry data (labels, rooms, story events) |
+| `schemas/` | JSON schema for dungeon annotations |

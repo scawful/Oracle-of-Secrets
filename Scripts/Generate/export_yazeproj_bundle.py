@@ -285,9 +285,9 @@ def refresh_planning_outputs(repo_root: Path) -> None:
     # Keep these local and deterministic: yaze reads them from
     # Docs/Dev/Planning/ via HackManifest::LoadProjectRegistry().
     scripts = [
-        repo_root / "scripts" / "extract_overworld_registry.py",
-        repo_root / "scripts" / "extract_resource_labels.py",
-        repo_root / "scripts" / "extract_story_events.py",
+        repo_root / "Scripts" / "Generate" / "extract_overworld_registry.py",
+        repo_root / "Scripts" / "Generate" / "extract_resource_labels.py",
+        repo_root / "Scripts" / "Generate" / "extract_story_events.py",
     ]
     for script in scripts:
         if not script.exists():
