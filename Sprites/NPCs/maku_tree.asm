@@ -27,7 +27,7 @@
 ;   0x1C7 - 5+ crystals: urgency rising
 ;   0x1CA - 7 crystals: endgame (retarget to Shrine of Courage; TO-BUILD)
 ;   0x1C8/0x1C9 - used by impa_hints.asm (not Maku)
-;   0x1CB - RESERVED
+;   0x1CB - Village Elder post-D1 ranch hint (not Maku)
 ;
 ; FLAGS WRITTEN:
 ;   MakuTreeQuest = 1 - Met Maku Tree

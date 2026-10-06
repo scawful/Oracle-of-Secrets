@@ -31,6 +31,11 @@
 
 %Set_Sprite_Properties(Sprite_EonOwl_Prep, Sprite_EonOwl_Long)
 
+; Eon Owl talk distance (!ENABLE_EON_OWL_NEAR_TRIGGER): the Owl talks when
+; Link is within this many pixels on both axes (16-bit positions).
+; scawful 2026-09-26: about 5 tiles. Tune by feel.
+!EonOwl_TalkDistance = 80
+
 Sprite_EonOwl_Long:
 {
   PHB : PHK : PLB
@@ -44,6 +49,18 @@ Sprite_EonOwl_Long:
           JSR Sprite_KaeporaGaebora_Draw
           JMP .HandleSprite
   .NotGaebora
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+  ; Arrival map $40: its spriteset ($18) has no Eon Owl sheet (0x42 in
+  ; slot 3), but slot 2 holds sheet 0x37 with the Kaepora Gaebora tiles.
+  ; Draw the one-frame Kaepora Owl there.
+  LDA.w AreaIndex : CMP.b #$40 : BNE .eon_owl_draw
+    LDA.w SprFrame, X : PHA
+    STZ.w SprFrame, X
+    JSR Sprite_KaeporaGaebora_Draw
+    PLA : STA.w SprFrame, X
+    BRA .HandleSprite
+  .eon_owl_draw
+endif
   JSR Sprite_EonOwl_Draw
   .HandleSprite
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -74,7 +91,25 @@ Sprite_EonOwl_Prep:
     LDA.l Sword : CMP.b #$01 : BCC .continue
        STZ.w SprState, X
     .continue
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+    ; Second Abyss appearance ($E6): once per save, no respawn after the
+    ; talk and fly-away (EonOwlFlags, Core/sram.asm).
+    LDA.l EonOwlFlags : AND.b #!EonOwl_SwordTalked : BEQ .not_talked
+      STZ.w SprState, X
+    .not_talked
+endif
   .not_intro
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+  ; First Abyss appearance: arrival map $40 (sprite $0A placed in the base
+  ; ROM; decisions.org "Abyss segment: fix direction"). Before the Pearl
+  ; only, and once per save (EonOwl_ArrivalTalked).
+  LDA.w AreaIndex : CMP.b #$40 : BNE .not_arrival
+    LDA.l MoonPearl : BNE .no_arrival_owl
+    LDA.l EonOwlFlags : AND.b #!EonOwl_ArrivalTalked : BEQ .not_arrival
+    .no_arrival_owl
+      STZ.w SprState, X
+  .not_arrival
+endif
   PLB
   RTL
 }
@@ -97,7 +132,11 @@ Sprite_EonOwl_Main:
   EonOwl_Idle:
   {
     %PlayAnimation(0,1,16)
+if !ENABLE_EON_OWL_NEAR_TRIGGER == 1
+    JSR EonOwl_CarrySetIfLinkNear : BCC .not_too_close
+else
     JSL GetDistance8bit_Long : CMP #$28 : BCS .not_too_close
+endif
       %GotoAction(1)
     .not_too_close
     RTS
@@ -106,7 +145,24 @@ Sprite_EonOwl_Main:
   EonOwl_IntroDialogue:
   {
     %PlayAnimation(0,1,16)
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+    ; First appearance (arrival map $40): message $1FA points to the Shrine
+    ; of Origins. Marked done now, so the Owl does not come back.
+    LDA.w AreaIndex : CMP.b #$40 : BNE .not_arrival_owl
+      LDA.l EonOwlFlags : ORA.b #!EonOwl_ArrivalTalked : STA.l EonOwlFlags
+      %ShowUnconditionalMessage($01FA)
+      BRA .message_shown
+    .not_arrival_owl
+    ; Mark the map $50 appearance as done now, so leaving during the
+    ; fly-away does not bring the Owl back.
+    LDA.w AreaIndex : CMP.b #$50 : BNE .not_sword_owl
+      LDA.l EonOwlFlags : ORA.b #!EonOwl_SwordTalked : STA.l EonOwlFlags
+    .not_sword_owl
+endif
     %ShowUnconditionalMessage($00E6)
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+    .message_shown
+endif
     LDA.b #$C0 : STA.w SprTimerA, X
     %GotoAction(2)
     RTS
@@ -165,6 +221,36 @@ Sprite_EonOwl_Main:
   }
 }
 
+if !ENABLE_EON_OWL_NEAR_TRIGGER == 1
+; Carry set when Link is within !EonOwl_TalkDistance px of the Owl on both
+; axes. GetDistance8bit_Long uses only the low position bytes, so it fired
+; from 248 px away (playtest: the Owl talked on area entry).
+; M=8, X=8 (sprite index), keeps X. Uses $00-$03.
+EonOwl_CarrySetIfLinkNear:
+{
+  LDA.w SprX, X : STA.b $00
+  LDA.w SprXH, X : STA.b $01
+  LDA.w SprY, X : STA.b $02
+  LDA.w SprYH, X : STA.b $03
+  REP #$20
+  LDA.b $22 : SEC : SBC.b $00 : BPL +
+    EOR.w #$FFFF : INC A
+  +
+  CMP.w #!EonOwl_TalkDistance : BCS .far
+  LDA.b $20 : SEC : SBC.b $02 : BPL +
+    EOR.w #$FFFF : INC A
+  +
+  CMP.w #!EonOwl_TalkDistance : BCS .far
+    SEP #$20
+    SEC
+    RTS
+  .far
+  SEP #$20
+  CLC
+  RTS
+}
+
+endif
 ; =========================================================
 
 Sprite_EonOwl_Draw:

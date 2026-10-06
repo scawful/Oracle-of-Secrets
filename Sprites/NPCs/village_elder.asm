@@ -2,12 +2,11 @@
 ; Village Elder
 ;
 ; NARRATIVE ROLE: Town authority figure who provides initial guidance
-;   and sets a major story progression flag. Meeting the Elder is a
-;   prerequisite for later content (possibly Master Sword related).
+;   and sets OOSPROG bit 4 (no reader found). Gives the post-D1 hint.
 ;
 ; TERMINOLOGY: "Village Elder" = VillageElder
 ;   - Sets OOSPROG bit 4 on first meeting
-;   - OOSPROG bit 4 purpose unclear (Master Sword prerequisite?)
+;   - OOSPROG bit 4: no reader in ASM (2026-09-26)
 ;
 ; STATES:
 ;   Single state with branch on OOSPROG bit 4
@@ -15,27 +14,28 @@
 ; MESSAGES:
 ;   0x143 - First meeting
 ;   0x19 - Already met
-;   0x177 - Mask Shop Hint (post-D1 Tail Pond guidance)
+;   0x1CB - Post-D1 ranch hint (the missing Ranch Girl); replaces vanilla
+;           0x177, whose longer text does not fit vanilla text region 2
 ;
 ; FLAGS READ:
 ;   OOSPROG ($7EF3D6) bit 4 - Check if already met
-;   $7EF37A bit 0 - Crystal_D1 (Mushroom Grotto complete)
+;   $7EF37A bit 1 - Crystal_D1 (Mushroom Grotto complete)
 ;   $7EF37A bit 4 - Crystal_D2 (Tail Palace complete)
 ;   ElderGuideStage low nibble - guidance stage
 ;   MapIcon ($7EF3C7) - guidance marker
 ;
 ; FLAGS WRITTEN:
 ;   OOSPROG |= 0x10 - Elder met flag (bit 4)
-;   ElderGuideStage low nibble = 1 (Tail Pond hint delivered)
-;   MapIcon = !MapIcon_TailPond (post-D1 guidance)
+;   ElderGuideStage low nibble = 1 (ranch hint delivered)
+;   (MapIcon = !MapIcon_TailPond moved to the Ocarina receipt in
+;   ranch_girl.asm; beat 10, dialogue audit D3)
 ;
-; NOTE: The purpose of OOSPROG bit 4 is unclear from the code.
-;   It may be a Master Sword prerequisite or general story gate.
-;   See sram_flag_analysis.md for investigation notes.
+; NOTE: OOSPROG bit 4 has no reader. Not the Master Sword gate (pedestal,
+;   beat 25). See Docs/Technical/sram_flag_analysis.md.
 ;
 ; RELATED:
 ;   - sram.asm (OOSPROG definition)
-;   - sram_flag_analysis.md (flag investigation)
+;   - Docs/Technical/sram_flag_analysis.md (flag investigation)
 ; =========================================================
 
 Sprite_VillageElder_Main:
@@ -52,14 +52,15 @@ Sprite_VillageElder_Main:
     RTS
 
   .already_met
-  ; UNTESTED: post-D1 hint to Tail Pond after Mask Shop dialogue
-  LDA.l $7EF37A : AND.b #$01 : BEQ .default_dialog
-  LDA.l $7EF37A : AND.b #$10 : BNE .default_dialog
+  ; Post-D1 hint: look into the missing Ranch Girl (beat 10). Skipped once
+  ; Link owns the Ocarina (the girl is already found).
+  LDA.l $7EF37A : AND.b #!Crystal_D1_MushroomGrotto : BEQ .default_dialog
+  LDA.l $7EF37A : AND.b #!Crystal_D2_TailPalace : BNE .default_dialog
+  LDA.l Flute : BNE .default_dialog
   LDA.l ElderGuideStage : AND.b #$0F : CMP.b #$01 : BCS .default_dialog
-    %ShowSolicitedMessage($177) : BCC .no_tailpond_hint
-      LDA.b #!MapIcon_TailPond : STA.l MapIcon
+    %ShowSolicitedMessage($1CB) : BCC .no_ranch_hint
       LDA.l ElderGuideStage : AND.b #$F0 : ORA.b #$01 : STA.l ElderGuideStage
-    .no_tailpond_hint
+    .no_ranch_hint
     RTS
 
   .default_dialog

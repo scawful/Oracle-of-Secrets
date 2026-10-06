@@ -35,8 +35,12 @@
 Sprite_Booki_Long:
 {
   PHB : PHK : PLB
-  JSR Sprite_Booki_Draw
-  JSL Sprite_DrawShadow
+  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
+  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
+    JSR Sprite_Booki_Draw
+    JSL Sprite_DrawShadow
+  .dying
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_Booki_Main
   .SpriteIsNotActive

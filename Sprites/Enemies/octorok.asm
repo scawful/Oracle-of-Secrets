@@ -35,7 +35,20 @@
 Sprite_Octorok_Long:
 {
   PHB : PHK : PLB
-  JSR Sprite_Octorok_Draw
+  ; Bug fix (2026-09-26 playtest): the vanilla dying dispatch (SpriteModule_Die,
+  ; usdasm bank_06 $06F8A2) draws the death poof (SpriteDeath_DrawPoof) in this
+  ; sprite's normal OAM slots, then, while SprTimerA >= $0A, calls back into
+  ; this Long routine to draw the corpse in the slots after it. Our draw calls
+  ; Sprite_OAM_AllocateDeferToPlayer, which moves the body into the low-index
+  ; OAM regions B/C whenever the sprite is within ~16px of Link (sword kills
+  ; from above or below). The SNES orders overlapping sprites by OAM index
+  ; (lower index in front); priority bits only order sprites against BG layers.
+  ; Mesen2 capture: body idx 0 vs poof idx 15, both priority 2. Stop drawing
+  ; the Octorok itself while it is in the vanilla dying state ($0DD0,X == 6)
+  ; so the poof reads clearly.
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
+    JSR Sprite_Octorok_Draw
+  .dying
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     LDA.w SprSubtype, X : BEQ +
       JSL Sprite_DrawWaterRipple

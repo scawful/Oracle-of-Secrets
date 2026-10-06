@@ -32,10 +32,21 @@
 
 %Set_Sprite_Properties(Sprite_Collectible_Prep, Sprite_Collectible_Long)
 
+if !ENABLE_SWORD_WARP_HOME == 1
+; Sword warp home (Forest of Dreams sword, DW $58 -> LW $2A).
+SwordWarp_VictorySpinLong       = $07A7B0 ; Link_AnimateVictorySpin_long
+SwordWarp_TerminateInteractives = $09AC6B ; Ancilla_TerminateSelectInteractives
+!SwordWarp_CacheRoom = $0150              ; any room $0128-$017F (not an entrance)
+endif
+
 Sprite_Collectible_Long:
 {
   PHB : PHK : PLB
 
+if !ENABLE_SWORD_WARP_HOME == 1
+  ; The sword is taken: the scene actions (4+) draw nothing.
+  LDA.w SprAction, X : CMP.b #$04 : BCS .skip_draw
+endif
   LDA.b $8A : CMP.b #$58 : BNE .not_intro_sword
     JSR Sprite_SwordShield_Draw
     BRA +
@@ -47,6 +58,9 @@ Sprite_Collectible_Long:
   JSR Sprite_Pineapple_Draw
   +
   JSL Sprite_DrawShadow
+if !ENABLE_SWORD_WARP_HOME == 1
+  .skip_draw
+endif
   JSL Sprite_CheckActive
   BCC .SpriteIsNotActive
 
@@ -85,6 +99,13 @@ Sprite_Collectible_Main:
   dw Seashell
   dw SwordShield
   dw RockSirloin
+if !ENABLE_SWORD_WARP_HOME == 1
+  dw SwordWarp_Spin       ; 4
+  dw SwordWarp_SwordUp    ; 5
+  dw SwordWarp_Hold       ; 6
+  dw SwordWarp_Flash      ; 7
+  dw SwordWarp_Go         ; 8
+endif
 
   Pineapple:
   {
@@ -113,10 +134,136 @@ Sprite_Collectible_Main:
     JSL Sprite_CheckDamageToPlayer : BCC +
       LDY.b #$00 : STZ $02E9
       JSL Link_ReceiveItem
+if !ENABLE_SWORD_WARP_HOME == 1
+      ; Keep the slot: the sword-warp scene runs once the receipt ends
+      ; (Sprite_CheckActive skips this sprite while SprFreeze is set).
+      LDA.b #$04 : STA.w SprAction, X
+else
       STZ.w SprState, X
+endif
     +
     RTS
   }
+
+if !ENABLE_SWORD_WARP_HOME == 1
+  ; -------------------------------------------------------
+  ; Sword warp home (decisions.org "Intro Abyss exit: the sword cuts Link
+  ; home"): spin, sword up, white flash, then an overworld reload onto the
+  ; Maku Tree area ($2A) through the house-exit cache path. No vanilla bytes.
+
+  ; 4: Link spins the new sword (Underworld_StartVictorySpin $029C93,
+  ; without its module).
+  SwordWarp_Spin:
+  {
+    LDA.b $10 : CMP.b #$09 : BNE .wait
+    LDA.b $5D : ORA.b $4D : BNE .wait ; default state, no recoil
+      LDA.b #$01 : STA.w $0FFC        ; no menu during the scene
+      STZ.w $02E4
+      LDA.b #$02 : STA.b $2F          ; face the camera
+      PHX
+      JSL SwordWarp_VictorySpinLong
+      JSL SwordWarp_TerminateInteractives
+      JSL AncillaAdd_VictorySpin
+      PLX
+      INC.w SprAction, X
+    .wait
+    RTS
+  }
+
+  ; 5: spin over: hold the sword up (Underworld_RunVictorySpin $029CAD).
+  SwordWarp_SwordUp:
+  {
+    LDA.b $5D : BNE .wait
+      LDA.b #$01 : STA.w $02E4        ; Link stays put from here
+      STA.w $03EF                     ; sword-up pose
+      STA.w $037B                     ; no damage while he cannot move
+      LDA.b #$2C : STA.w $012E        ; SFX2 sword up
+      LDA.b #$20 : STA.w SprTimerA, X
+      INC.w SprAction, X
+    .wait
+    RTS
+  }
+
+  ; 6: hold, then the slash and the flash start.
+  SwordWarp_Hold:
+  {
+    LDA.w SprTimerA, X : BNE .wait
+      LDA.b $9A : STA.w SprMiscA, X   ; color math to restore before the load
+      LDA.b #$01 : STA.w $012E        ; SFX2 slash
+      LDA.b #$20 : STA.w SprTimerA, X
+      INC.w SprAction, X
+    .wait
+    RTS
+  }
+
+  ; 7: white ramp: add fixed color 0 -> 31 to every layer and the backdrop.
+  SwordWarp_Flash:
+  {
+    LDA.b #$20 : SEC : SBC.w SprTimerA, X : CMP.b #$20 : BCC +
+      LDA.b #$1F
+    +
+    STA.b $00
+    LDA.b #$3F : STA.b $9A
+    LDA.b $00 : ORA.b #$20 : STA.b $9C
+    LDA.b $00 : ORA.b #$40 : STA.b $9D
+    LDA.b $00 : ORA.b #$80 : STA.b $9E
+    LDA.w SprTimerA, X : BNE .wait
+      LDA.b #$08 : STA.w SprTimerA, X ; hold the white a moment
+      INC.w SprAction, X
+    .wait
+    RTS
+  }
+
+  ; 8: warp. Module $08 with a cache room ($0128-$017F, no entrance uses
+  ; them) runs LoadCachedEntranceProperties, which reads the overworld
+  ; position from $7EC140-$7EC171 (every house exit uses this path).
+  SwordWarp_Go:
+  {
+    LDA.w SprTimerA, X : BEQ .go
+      RTS
+    .go
+    PHX
+    REP #$20
+    LDX.b #$30
+    .copy
+      LDA.l SwordWarp_Cache, X : STA.l $7EC140, X
+    DEX #2 : BPL .copy
+    STZ.w $0696                       ; no door tile, arrival faces down
+    STZ.w $0698
+    LDA.w #!SwordWarp_CacheRoom : STA.b $A0
+    SEP #$20
+    PLX
+
+    ; Back on Kalyxo: SavedWorld = $00 is the escape that the respawn lock
+    ; (LoadDarkWorldIntro, Overworld/overworld.asm) and the Part 0 storm
+    ; (Part0Storm_EndIfBackOnKalyxo, Overworld/storm.asm) key on.
+    LDA.b #$00 : STA.l SavedWorld
+    STZ.w $0FFF                       ; world flag (sprites and GBC hooks)
+    LDA.w $02B2 : CMP.b #$06 : BNE .not_gbc
+      LDA.b #$10 : STA.b $BC          ; normal Link graphics (gbc_form.asm)
+      STZ.w $02B2
+    .not_gbc
+
+    STZ.w $03EF
+    STZ.w $02E4
+    STZ.w $037B
+    STZ.w $0FFC
+    LDA.w SprMiscA, X : STA.b $9A
+    LDA.b #$20 : STA.b $9C
+    LDA.b #$40 : STA.b $9D
+    LDA.b #$80 : STA.b $9E
+
+    STZ.w $010A                       ; not a continue
+    STZ.w $04AA                       ; not a respawn
+    LDA.b #$80 : STA.b $13            ; forced blank for the load
+    STZ.b $9B                         ; HDMA off
+    STZ.b $11
+    STZ.b $B0
+    LDA.b #$08 : STA.b $10            ; Module $08: overworld load
+    STZ.w SprState, X
+    RTS
+  }
+endif
 
   RockSirloin:
   {
@@ -132,6 +279,27 @@ Sprite_Collectible_Main:
   }
 
 }
+
+if !ENABLE_SWORD_WARP_HOME == 1
+; Overworld cache image ($7EC140-$7EC171, LoadCachedEntranceProperties
+; $02E5D4) for the arrival on LW $2A: Link at X $0530, Y $0AB0 (the old DW
+; $6A pad spot); the house-exit walk then steps him ~19 px down the path.
+; Scroll/trigger/VRAM words follow the ZScream exit formula
+; (scroll = pos - 120/80, trigger = pos + 7/31); camera bounds and $0AA0-3
+; as read in play on $2A (b29 flags, 2026-09-27). Recapture if $2A's size,
+; graphics or palette change.
+SwordWarp_Cache:
+  dw $002A, $0016               ; $040A area, $1C main screen
+  dw $0A60, $04B8               ; $E8/$E6 Y scroll, $E2/$E0 X scroll
+  dw $0AB0, $0530               ; $20 Y, $22 X
+  dw $002A, $0316               ; $8A area, $84 tilemap position
+  dw $0ACF, $0537               ; $0618 / $061C camera triggers
+  dw $0A00, $0B1E, $0400, $0500 ; $0600-$0606 camera bounds
+  dw $0920, $0C00, $0300, $0600 ; $0610-$0616
+  dw $2000, $0A3F               ; $0AA0-$0AA3 graphics bytes
+  dw $0000                      ; $7EC168 (unused)
+  dw $0000, $0000, $0000, $0000 ; $0624-$062A scroll offsets
+endif
 
 Sprite_Pineapple_Draw:
 {

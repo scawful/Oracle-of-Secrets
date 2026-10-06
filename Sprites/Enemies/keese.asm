@@ -37,6 +37,10 @@
 Sprite_Keese_Long:
 {
   PHB : PHK : PLB
+  ; Skip the Keese / Vampire Bat body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
+  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
+  ; Sprite_CheckActive fails while dying anyway, so jumping to the end is safe.
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
   LDA.w SprSubtype, X : CMP.b #$02 : BEQ +
     JSR Sprite_Keese_Draw
     JSL Sprite_DrawShadow
@@ -50,6 +54,7 @@ Sprite_Keese_Long:
   JSL Sprite_CheckActive : BCC ++
     JSR Sprite_VampireBat_Main
   ++
+  .dying
   PLB
   RTL
 }

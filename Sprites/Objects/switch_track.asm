@@ -59,7 +59,16 @@ Sprite_RotatingTrack_Prep:
   ; Fetch tile attributes based on current coordinates
   LDA.b #$00 : JSL Sprite_GetTileAttr
 
-  LDA.w SPRTILE : SEC : SBC.b #$D0 : STA.w SprAction, X
+  LDA.w SPRTILE : SEC : SBC.b #$D0
+  ; Only switch tiles $D0-$D3 are valid. A sprite placed over any other tile
+  ; would index past the 4-entry jump table in Main (room $77 crashed here),
+  ; so remove it instead.
+  CMP.b #$04 : BCC .valid_tile
+    STZ.w SprState, X
+    PLB
+    RTL
+  .valid_tile
+  STA.w SprAction, X
 
   PLB
   RTL

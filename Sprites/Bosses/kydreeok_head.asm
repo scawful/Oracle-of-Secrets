@@ -36,6 +36,9 @@
 Sprite_KydreeokHead_Long:
 {
   PHB : PHK : PLB
+  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
+  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
+  LDA.w SprState, X : CMP.b #$06 : BEQ .no_head
   LDA.w SprAction, X : CMP #$05 : BEQ .no_head
     JSR Sprite_KydreeokHead_Draw
   .no_head

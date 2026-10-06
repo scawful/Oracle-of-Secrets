@@ -117,6 +117,9 @@ Right = $03
 ; is based of the X value used to index sprite arrays.
 !MinecartCurrent = $07EA
 
+; One chosen turn per B6 crossing; cleared when leaving its collision cell.
+!MinecartJunctionLatch = SprMiscF
+
 ; =========================================================
 ; Collision setup:
 
@@ -211,6 +214,7 @@ Sprite_Minecart_Prep:
   .active1
 
   STZ.w SprMiscG, X ; Clear the active tossing flag
+  STZ.w !MinecartJunctionLatch, X
 
   LDA.b #$04 : STA.w SprNbrOAM, X   ; Nbr Oam Entries
   LDA.b #$40 : STA.w SprGfxProps, X ; Impervious props
@@ -230,6 +234,12 @@ Sprite_Minecart_Prep:
     ; Go directly to the direction action we are facing. We add 2 to
     ; skip the Minecart_WaitHoriz and Minecart_WaitVert actions.
     CLC : ADC.b #$02 : STA.w SprAction, X
+
+    ; A follower transition may allocate a different sprite slot. Claim
+    ; the ride here so a release before the next turn still owns Link.
+    REP #$20
+    TXA : AND.w #$00FF : STA.w !MinecartCurrent
+    SEP #$20
 
     BRA .active2
   .notActive
@@ -331,7 +341,7 @@ Sprite_Minecart_Main:
 
     LDA.w LinkCarryOrToss : AND #$03 : BNE .lifting
       LDA.w SprTimerA, X : BNE .not_ready
-        JSR CheckIfPlayerIsOn : BCC .not_ready
+        JSR CheckIfPlayerCanBoard : BCC .not_ready
           ; Check for B button
           LDA $F4 : AND.b #$80 : BEQ .not_ready
 
@@ -370,7 +380,7 @@ Sprite_Minecart_Main:
 
     LDA.w LinkCarryOrToss : AND #$03 : BNE .lifting
       LDA.w SprTimerA, X : BNE .not_ready
-        JSR CheckIfPlayerIsOn : BCC .not_ready
+        JSR CheckIfPlayerCanBoard : BCC .not_ready
           ; Check for B button
           LDA $F4 : AND.b #$80 : BEQ .not_ready
 
@@ -516,8 +526,8 @@ Sprite_Minecart_Main:
     JSR StopCart
     LDA.w SprTimerD, X : BNE .not_ready
       LDA #$40 : STA.w SprTimerA, X
-      LDA.w !SpriteDirection, X : CMP.b #$00 : BEQ .vert
-        CMP.b #$02 : BEQ .vert
+      LDA.w !SpriteDirection, X : CMP.b #Up : BEQ .vert
+        CMP.b #Down : BEQ .vert
         JMP .horiz
       .vert
       %GotoAction(1) ; Minecart_WaitVert
@@ -547,11 +557,29 @@ HandlePlayerCameraAndMoveCart:
 
 StopCart:
 {
+  ; A releasing cart can overlap another parked cart. Only clear the
+  ; shared riding state if Link is unmounted or this slot owns the ride.
+  LDA.b !LinkInCart : BEQ .release_player
+    TXA : CMP.w !MinecartCurrent : BNE .stop_sprite
+  .release_player
   STZ.w LinkSomaria
+  STZ.b !LinkInCart
+
+  ; Transition hooks can read this slot index with X=16; clear both bytes.
+  REP #$20
+  STZ.w !MinecartCurrent
+  SEP #$20
+
+  .stop_sprite
+  STZ.w !MinecartJunctionLatch, X
   STZ.w SprYSpeed, X
   STZ.w SprXSpeed, X
-  STZ.w !LinkInCart
 
+  ; RoundCoords expects world Y/X in $00/$02. A generic release arrives
+  ; after drawing, which leaves camera-relative X/Y in that shared scratch.
+  ; Use this cart's tile coordinates before rounding and caching its stop.
+  LDA.w SprY, X : AND.b #$F8 : STA.b $00
+  LDA.w SprX, X : AND.b #$F8 : STA.b $02
   JSR RoundCoords
 
   LDA.w SprSubtype, X : ASL : TAY
@@ -560,13 +588,6 @@ StopCart:
   LDA.w SprCachedX : STA.w !MinecartTrackX, Y
   LDA.w SprCachedY : STA.w !MinecartTrackY, Y
   LDA.w $A0 : STA.w !MinecartTrackRoom, Y
-  SEP #$20
-
-  ; !MinecartCurrent is an 8-bit sprite slot index, but it can be read with
-  ; X=16-bit in transition hooks. Always keep the high byte cleared to avoid
-  ; out-of-range indexing corruption if X width leaks.
-  REP #$20
-  STZ.w !MinecartCurrent
   SEP #$20
 
   RTS
@@ -674,9 +695,10 @@ HandleTileDirections:
   ; Fetch tile attributes based on current coordinates
   LDA.b #$00 : JSL Sprite_GetTileAttr
 
-  ; Debug: put the tile type into the rupee SRM.
-  STA.l $7EF362 : STA.l $7EF360
-  LDA.b #$00 : STA.l $7EF363 : STA.l $7EF361
+  ; Keep a chosen B6 turn until the cart leaves the crossing.
+  LDA.w SPRTILE : CMP.b #$B6 : BEQ .same_intersection
+    STZ.w !MinecartJunctionLatch, X
+  .same_intersection
 
   JSR CheckForOutOfBounds : BCC .notOutOfBounds
     JSR RoundCoords
@@ -691,6 +713,10 @@ HandleTileDirections:
   .noStop
 
   JSR CheckForPlayerInput : BCC .noInput
+    ; A neighboring T-junction must not preselect this crossing's turn.
+    LDA.w SPRTILE : CMP.b #$B6 : BNE .round_input
+      LDA.b #$01 : STA.w !MinecartJunctionLatch, X
+    .round_input
     JSR RoundCoords
 
     BRA .done
@@ -819,8 +845,16 @@ CheckForStopTiles:
 CheckForPlayerInput:
 {
   ; Load the tile index
-  LDA.w SPRTILE : CMP.b #$B6 : BEQ .can_input ; Intersection
-                  CMP.b #$BB : BEQ .can_input ; North T
+  LDA.w SPRTILE : CMP.b #$B6 : BNE .other_input_tiles
+    ; A diagonal hold must not choose another turn before leaving B6.
+    LDA.w !MinecartJunctionLatch, X : BEQ .first_intersection_input
+      CLC
+      RTS
+    .first_intersection_input
+    LDA.b #$B6
+    BRA .can_input
+  .other_input_tiles
+  CMP.b #$BB : BEQ .can_input ; North T
                   CMP.b #$BC : BEQ .can_input ; South T
                   CMP.b #$BD : BEQ .can_input ; East T
                   CMP.b #$BE : BEQ .can_input ; West T
@@ -899,7 +933,7 @@ CheckForPlayerInput:
     ; udlr
     ; up, down, left, right
     db $0F, $0F, $0F, $0F ; Nothing
-    db $0B, $07, $0E, $0D ; $B6 Intersection
+    db $03, $03, $0C, $0C ; $B6: perpendicular turns only
     db $03, $03, $04, $04 ; $BB North T
     db $03, $03, $08, $08 ; $BC South T
     db $02, $02, $0C, $0C ; $BD East T
@@ -1105,6 +1139,17 @@ CheckTrackSpritePresence:
   RTS
 }
 
+; A single B press must not board multiple overlapping carts.
+; SEC if Link is unmounted and overlapping this cart.
+CheckIfPlayerCanBoard:
+{
+  LDA.b !LinkInCart : BEQ .unmounted
+    CLC
+    RTS
+  .unmounted
+  JMP CheckIfPlayerIsOn
+}
+
 ; SEC if player is overlapping the sprite
 ; CLC if player is outside the bounds
 CheckIfPlayerIsOn:
@@ -1143,7 +1188,7 @@ ResetTrackVars:
   JSL.l RebuildHUD_Keys
 
   LDA.b #$00 : STA.w !MinecartTrackCache
-  LDX.b #$41
+  LDX.b #$40
   .loop
   DEX
     STA.w !MinecartTrackRoom, X

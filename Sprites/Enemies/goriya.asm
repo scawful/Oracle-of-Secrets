@@ -35,6 +35,9 @@
 Sprite_Goriya_Long:
 {
   PHB : PHK : PLB
+  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
+  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
   LDA.w SprSubtype, X : BEQ +
     JSR Sprite_Boomerang_Draw
     JMP ++
@@ -42,6 +45,7 @@ Sprite_Goriya_Long:
   JSR Sprite_Goriya_Draw
   JSL Sprite_DrawShadow
   ++
+  .dying
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_Goriya_Main
   .SpriteIsNotActive

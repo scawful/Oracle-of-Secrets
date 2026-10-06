@@ -36,6 +36,9 @@
 Sprite_ThunderGhost_Long:
 {
   PHB : PHK : PLB
+  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
+  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
+  LDA.w SprState, X : CMP.b #$06 : BEQ +
   JSR Sprite_ThunderGhost_Draw
   LDA.w SprAction, X : CMP.b #$03 : BCS +
     JSL Sprite_DrawShadow
