@@ -46,7 +46,7 @@ endmacro
 macro sta(...)
   !a #= 0
   while !a < sizeof(...)
-    STA <...>
+    STA <...[!a]>
     !a #= !a+1
   endwhile
 endmacro

@@ -39,6 +39,14 @@
 incsrc    "Util/macros.asm"
 incsrc    "Config/module_flags.asm"
 incsrc    "Config/feature_flags.asm"
+assert !ENABLE_ORACLE_ARRIVAL_SEQUENCE <= !ENABLE_CUTSCENE_FRAMEWORK, "ENABLE_ORACLE_ARRIVAL_SEQUENCE requires ENABLE_CUTSCENE_FRAMEWORK"
+assert !ENABLE_EXPERIMENT_SCENE <= !ENABLE_ORACLE_ARRIVAL_SEQUENCE, "ENABLE_EXPERIMENT_SCENE requires ENABLE_ORACLE_ARRIVAL_SEQUENCE"
+assert !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY <= !ENABLE_RING_SRAM_RELOCATE, "Ring/Journal unlock gating requires relocated ring SRAM"
+assert !ENABLE_ONE_RING <= !ENABLE_RING_SRAM_RELOCATE, "ENABLE_ONE_RING requires ENABLE_RING_SRAM_RELOCATE"
+assert !ENABLE_MENU_PAGE3_LAYOUT_A <= !ENABLE_MENU_PAGE3, "ENABLE_MENU_PAGE3_LAYOUT_A requires ENABLE_MENU_PAGE3"
+assert !ENABLE_MENU_PAGE3_LAYOUT_A <= !ENABLE_ONE_RING, "ENABLE_MENU_PAGE3_LAYOUT_A requires ENABLE_ONE_RING"
+assert !ENABLE_MENU_PAGE_LOOP <= !ENABLE_MENU_PAGE3, "ENABLE_MENU_PAGE_LOOP requires ENABLE_MENU_PAGE3"
+assert !ENABLE_PORTAL_ROD_CELL <= !ENABLE_MENU_PAGE3, "ENABLE_PORTAL_ROD_CELL requires ENABLE_MENU_PAGE3"
 incsrc    "Core/structs.asm"
 
 ; Vanilla WRAM and SRAM
@@ -112,6 +120,21 @@ namespace Oracle
     incsrc "Menu/menu.asm"
   else
     print "*** MENU DISABLED ***"
+  endif
+
+  ; Opening experiments (default off; see Util/macros.asm)
+  if !ENABLE_CUTSCENE_FRAMEWORK == 1
+    incsrc "Core/Cutscene/opening.asm"
+  endif
+
+  ; Native 2-player PoC (default off; see Util/macros.asm)
+  if !ENABLE_NATIVE_2P_POC == 1
+    incsrc "Sprites/Players/player2.asm"
+  endif
+
+  ; Part00 villager lines and checkpoint (default off; see Util/macros.asm)
+  if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1
+    incsrc "Core/part00.asm"
   endif
 
   ; incsrc "Util/item_cheat.asm"  ; DISABLED FOR TESTING
