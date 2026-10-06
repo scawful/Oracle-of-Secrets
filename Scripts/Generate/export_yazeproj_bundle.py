@@ -28,7 +28,48 @@ import platform
 import shutil
 import subprocess
 import sys
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
+
+from generate_hack_manifest import (
+    MINECART_TRACK_SOURCE_CONTRACT,
+    generate_manifest,
+)
+
+
+PORTABLE_BUILD_SCRIPT = "project/Scripts/Build/build_rom.sh"
+PORTABLE_HACK_MANIFEST = "project/Roms/hack_manifest.json"
+PORTABLE_BUILD_COMMAND = (
+    "OOS_BASE_ROM=rom OOS_BACKUP_ROOT=backups OOS_MANIFEST_ROOT=. "
+    f"{PORTABLE_BUILD_SCRIPT} 168"
+)
+ORACLE_SAVE_CONTRACT = (
+    ("feature_flags", "save_dungeon_maps", "false"),
+    ("feature_flags", "save_dungeon_water_fill_zones", "false"),
+    ("feature_flags", "save_graphics_sheet", "false"),
+    ("workspace", "autosave_enabled", "false"),
+    ("workspace", "backup_on_save", "true"),
+)
+PORTABLE_PROJECT_CONTRACT = (
+    ("files", "rom_filename", "rom"),
+    ("files", "rom_backup_folder", "backups"),
+    ("files", "code_folder", "project"),
+    ("files", "assets_folder", "project"),
+    ("files", "patches_folder", "project"),
+    ("files", "output_folder", "project/Roms"),
+    (
+        "files",
+        "custom_objects_folder",
+        "project/Dungeons/Objects/Data",
+    ),
+    ("files", "hack_manifest_file", PORTABLE_HACK_MANIFEST),
+    ("rom", "role", "dev"),
+    ("rom", "write_policy", "block"),
+    ("build", "build_script", PORTABLE_BUILD_COMMAND),
+    ("build", "output_folder", "project/Roms"),
+    ("build", "git_repository", "project"),
+    ("build", "build_target", "project/Roms/oos168x.sfc"),
+    ("build", "asm_entry_point", "project/Oracle_main.asm"),
+)
 
 
 def find_repo_root() -> Path:
@@ -77,6 +118,248 @@ def slugify_project_id(name: str) -> str:
             prev_underscore = True
     s = "".join(out).strip("_")
     return s or "yaze_project"
+
+
+def _parse_project_contract(
+    content: str,
+) -> tuple[list[str], list[tuple[str, str, str]]]:
+    """Parse only the section/key/value behavior relevant to Yaze safety."""
+    if "\r" in content:
+        raise ValueError("project.yaze must use LF-only line endings")
+
+    current_section = ""
+    sections: list[str] = []
+    assignments: list[tuple[str, str, str]] = []
+    for line in content.split("\n"):
+        if not line or line[0] == "#":
+            continue
+        if line[0] == "[" and line[-1] == "]":
+            current_section = line[1:-1]
+            sections.append(current_section)
+            continue
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip(" \t")
+        value = value.strip(" \t")
+        if key:
+            assignments.append((current_section, key, value))
+    return sections, assignments
+
+
+def _require_project_assignment(
+    assignments: list[tuple[str, str, str]],
+    expected_section: str,
+    key: str,
+    expected_value: str,
+) -> None:
+    matches = [
+        entry
+        for entry in assignments
+        if entry[0] == expected_section and entry[1] == key
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            f"project.yaze must contain exactly one {key} assignment"
+        )
+    _, _, value = matches[0]
+    if value != expected_value:
+        raise ValueError(
+            f"project.yaze {key} must equal {expected_value}"
+        )
+
+
+def validate_oracle_project_contract(content: str) -> None:
+    """Require Oracle's fail-closed save and workspace settings exactly once."""
+    sections, assignments = _parse_project_contract(content)
+    for section in ("feature_flags", "workspace"):
+        if sections.count(section) != 1:
+            raise ValueError(
+                f"project.yaze must contain exactly one [{section}] section"
+            )
+    for section, key, value in ORACLE_SAVE_CONTRACT:
+        _require_project_assignment(assignments, section, key, value)
+
+
+def validate_portable_project_contract(
+    content: str,
+    expected_rom_sha1: str,
+) -> None:
+    """Require the portable descriptor's paths and build contract."""
+    validate_oracle_project_contract(content)
+    sections, assignments = _parse_project_contract(content)
+    for section in ("project", "files", "rom", "build"):
+        if sections.count(section) != 1:
+            raise ValueError(
+                f"project.yaze must contain exactly one [{section}] section"
+            )
+    for section, key, value in PORTABLE_PROJECT_CONTRACT:
+        _require_project_assignment(assignments, section, key, value)
+    _require_project_assignment(
+        assignments,
+        "rom",
+        "expected_hash",
+        expected_rom_sha1,
+    )
+
+
+def _resolve_bundle_member(
+    bundle_root: Path,
+    raw_path: str,
+    description: str,
+    *,
+    must_exist: bool,
+) -> Path:
+    """Resolve a path inside the bundle on POSIX or Windows hosts."""
+    if (
+        not raw_path
+        or Path(raw_path).is_absolute()
+        or PureWindowsPath(raw_path).is_absolute()
+        or raw_path.startswith("\\\\")
+    ):
+        raise ValueError(
+            f"{description} must be a relative bundle-root path: {raw_path}"
+        )
+    resolved_root = bundle_root.resolve()
+    resolved = (resolved_root / raw_path).resolve()
+    if resolved == resolved_root or not resolved.is_relative_to(resolved_root):
+        raise ValueError(
+            f"{description} escapes the portable bundle: {raw_path}"
+        )
+    if must_exist and not resolved.is_file():
+        raise FileNotFoundError(f"Bundle is missing {description}: {resolved}")
+    return resolved
+
+
+def _iter_manifest_source_locations(value: object):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == "source" and isinstance(child, str):
+                yield child
+            yield from _iter_manifest_source_locations(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _iter_manifest_source_locations(child)
+
+
+def validate_portable_manifest_contract(
+    bundle_root: Path,
+    manifest: dict,
+) -> None:
+    """Validate path-bearing manifest fields against one bundle-root namespace."""
+    pipeline = manifest.get("build_pipeline")
+    if not isinstance(pipeline, dict):
+        raise ValueError("hack_manifest.json must contain build_pipeline")
+    expected_pipeline = {
+        "dev_rom": "rom",
+        "patched_rom": "project/Roms/oos168x.sfc",
+        "entry_point": "project/Oracle_main.asm",
+        "build_script": PORTABLE_BUILD_SCRIPT,
+    }
+    for key, expected in expected_pipeline.items():
+        if pipeline.get(key) != expected:
+            raise ValueError(
+                f"hack_manifest.json build_pipeline.{key} must equal "
+                f"{expected}"
+            )
+        _resolve_bundle_member(
+            bundle_root,
+            expected,
+            f"build_pipeline.{key}",
+            must_exist=key != "patched_rom",
+        )
+
+    rom = manifest.get("rom")
+    if not isinstance(rom, dict):
+        raise ValueError("hack_manifest.json must contain object field rom")
+    if "path" in rom and rom["path"] != expected_pipeline["patched_rom"]:
+        raise ValueError(
+            "hack_manifest.json rom.path must match build_pipeline.patched_rom"
+        )
+
+    messages = manifest.get("messages")
+    message_source = (
+        messages.get("source") if isinstance(messages, dict) else None
+    )
+    expected_messages = {
+        "canonical_bundle_path": (
+            "project/Data/dialogue/expanded_messages.json"
+        ),
+        "generated_asm_include_path": (
+            "project/Core/Generated/expanded_messages.asm"
+        ),
+    }
+    if not isinstance(message_source, dict):
+        raise ValueError("hack_manifest.json must contain messages.source")
+    for key, expected in expected_messages.items():
+        if message_source.get(key) != expected:
+            raise ValueError(
+                f"hack_manifest.json messages.source.{key} must equal "
+                f"{expected}"
+            )
+        _resolve_bundle_member(
+            bundle_root,
+            expected,
+            f"messages.source.{key}",
+            must_exist=True,
+        )
+
+    expected_source_files = (
+        ("feature_flags", "config_file", "project/Config/feature_flags.asm"),
+        ("sram", "source_file", "project/Core/sram.asm"),
+    )
+    for section, key, expected in expected_source_files:
+        metadata = manifest.get(section)
+        if not isinstance(metadata, dict) or metadata.get(key) != expected:
+            raise ValueError(
+                f"hack_manifest.json {section}.{key} must equal {expected}"
+            )
+        _resolve_bundle_member(
+            bundle_root,
+            expected,
+            f"{section}.{key}",
+            must_exist=True,
+        )
+
+    minecart_tracks = manifest.get("minecart_tracks")
+    minecart_source = (
+        minecart_tracks.get("source")
+        if isinstance(minecart_tracks, dict)
+        else None
+    )
+    expected_minecart = {
+        **MINECART_TRACK_SOURCE_CONTRACT,
+        "path": "project/Sprites/Objects/data/minecart_tracks.asm",
+    }
+    if minecart_source != expected_minecart:
+        raise ValueError(
+            "hack_manifest.json minecart_tracks.source does not match the "
+            "portable source contract"
+        )
+    _resolve_bundle_member(
+        bundle_root,
+        expected_minecart["path"],
+        "minecart_tracks.source.path",
+        must_exist=True,
+    )
+
+    for source_location in _iter_manifest_source_locations(manifest):
+        source_path, separator, line = source_location.rpartition(":")
+        if not separator or not line.isdigit():
+            raise ValueError(
+                f"Invalid manifest source location: {source_location}"
+            )
+        if not source_path.startswith("project/"):
+            raise ValueError(
+                "Manifest source locations must resolve from the bundle root: "
+                f"{source_location}"
+            )
+        _resolve_bundle_member(
+            bundle_root,
+            source_path,
+            "manifest source location",
+            must_exist=True,
+        )
 
 
 def should_skip(rel: Path) -> bool:
@@ -154,6 +437,29 @@ def copy_repo_snapshot(src_root: Path, dst_root: Path) -> None:
             shutil.copy2(src_file, dst_file)
 
 
+def _generate_bundle_hack_manifest(bundle_root: Path) -> dict:
+    project_root = bundle_root / "project"
+    patched_rom = project_root / "Roms" / "oos168x.sfc"
+    return generate_manifest(
+        project_root,
+        rom_path=patched_rom if patched_rom.is_file() else None,
+        dev_rom_path=bundle_root / "rom",
+        manifest_root=bundle_root,
+    )
+
+
+def write_bundle_hack_manifest(bundle_root: Path) -> Path:
+    """Generate the active manifest from staged source and editable ROM."""
+    destination = bundle_root / PORTABLE_HACK_MANIFEST
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    manifest = _generate_bundle_hack_manifest(bundle_root)
+    destination.write_text(
+        json.dumps(manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return destination
+
+
 def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
     """
     Write `project.yaze` at bundle root with paths relative to bundle root.
@@ -196,7 +502,7 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "symbols_filename=",
             "output_folder=project/Roms",
             "custom_objects_folder=project/Dungeons/Objects/Data",
-            "hack_manifest_file=project/hack_manifest.json",
+            f"hack_manifest_file={PORTABLE_HACK_MANIFEST}",
             "additional_roms=",
             "",
             "[feature_flags]",
@@ -204,8 +510,9 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             # support; make the portable bundle open with the right defaults.
             "load_custom_overworld=true",
             "apply_zs_custom_overworld_asm=true",
-            "save_dungeon_maps=true",
-            "save_graphics_sheet=true",
+            "save_dungeon_maps=false",
+            "save_dungeon_water_fill_zones=false",
+            "save_graphics_sheet=false",
             "enable_custom_objects=true",
             "",
             "[rom]",
@@ -213,16 +520,24 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             f"expected_hash={rom_sha1}",
             "write_policy=block",
             "",
+            "[workspace]",
+            "autosave_enabled=false",
+            "autosave_interval_secs=300",
+            "backup_on_save=true",
+            "backup_retention_count=20",
+            "backup_keep_daily=true",
+            "backup_keep_daily_days=14",
+            "",
             "[build]",
             # Build is typically run on macOS (or remote build host), not iOS.
             # Keep this deterministic and repo-local.
-            "build_script=OOS_BASE_ROM=rom OOS_BACKUP_ROOT=backups project/Scripts/build_rom.sh 168",
+            f"build_script={PORTABLE_BUILD_COMMAND}",
             "output_folder=project/Roms",
             "git_repository=project",
             "track_changes=false",
             "build_configurations=",
             "build_target=project/Roms/oos168x.sfc",
-            "asm_entry_point=Oracle_main.asm",
+            "asm_entry_point=project/Oracle_main.asm",
             "asm_sources=",
             "last_build_hash=",
             "build_number=0",
@@ -231,7 +546,7 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "",
         ]
     )
-    (bundle_root / "project.yaze").write_text(content, encoding="utf-8")
+    (bundle_root / "project.yaze").write_bytes(content.encode("utf-8"))
 
 
 def write_ios_manifest(bundle_root: Path, name: str, rom_sha1: str) -> None:
@@ -255,7 +570,7 @@ def verify_bundle(bundle_root: Path) -> None:
         bundle_root / "project.yaze",
         bundle_root / "manifest.json",
         bundle_root / "rom",
-        bundle_root / "project" / "hack_manifest.json",
+        bundle_root / PORTABLE_HACK_MANIFEST,
         bundle_root
         / "project"
         / "Docs"
@@ -278,6 +593,29 @@ def verify_bundle(bundle_root: Path) -> None:
     if manifest.get("romChecksum") != rom_sha1:
         raise ValueError(
             f"manifest.json romChecksum mismatch: {manifest.get('romChecksum')} != {rom_sha1}"
+        )
+
+    project_content = (bundle_root / "project.yaze").read_bytes().decode(
+        "utf-8"
+    )
+    validate_portable_project_contract(project_content, rom_sha1)
+
+    hack_manifest_path = bundle_root / PORTABLE_HACK_MANIFEST
+    try:
+        hack_manifest = json.loads(hack_manifest_path.read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(
+            f"Invalid hack manifest JSON: {hack_manifest_path}"
+        ) from exc
+    if not isinstance(hack_manifest, dict):
+        raise ValueError("hack_manifest.json root must be an object")
+    validate_portable_manifest_contract(bundle_root, hack_manifest)
+
+    expected_manifest = _generate_bundle_hack_manifest(bundle_root)
+    if hack_manifest != expected_manifest:
+        raise ValueError(
+            "hack_manifest.json is stale relative to the bundled ROM or "
+            "project source"
         )
 
 
@@ -399,6 +737,10 @@ def main() -> int:
     # bundle (too large + machine-specific), but an empty directory keeps the
     # build pipeline functional when invoked with OOS_BASE_ROM=rom.
     (staging_bundle / "project" / "Roms").mkdir(parents=True, exist_ok=True)
+
+    # Generate the active manifest from the staged snapshot. The build script
+    # regenerates this exact path after assembling the playable ROM.
+    write_bundle_hack_manifest(staging_bundle)
 
     # Write config + metadata.
     write_project_file(staging_bundle, args.name, rom_sha1)
