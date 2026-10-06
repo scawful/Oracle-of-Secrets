@@ -28,6 +28,10 @@ assert pc() <= $07D248
 ; =========================================================
 
 pullpc
+; Horizontal/vertical jump speed. $08 moved Link about 17 px per jump (about
+; one tile), too short to cross most lava gaps. Tune in the emulator.
+!FeatherJumpSpeed = $10
+
 LinkItem_JumpFeather:
 {
   JSL Link_ResetSwimmingState
@@ -44,23 +48,26 @@ LinkItem_JumpFeather:
     ; Set Links direction to right(?)
     LDA #$08 : STA $0340 : STA $67
 
-    ; Reset Link movement offsets
+    ; Reset Link movement offsets and leftover recoil speed
     STZ $31 : STZ $30
+    STZ $27 : STZ $28
 
-    LDA $F4 : AND #$08 : BEQ .no_up
-      LDA #-8
+    ; Read held directions ($F0), not only new presses ($F4). With $F4,
+    ; holding a direction and then pressing Y gave a hop in place.
+    LDA $F0 : AND #$08 : BEQ .no_up
+      LDA.b #-!FeatherJumpSpeed
       STA $27 ; Vertical recoil
     .no_up
-    LDA $F4 : AND #$04 : BEQ .no_down
-      LDA #8
+    LDA $F0 : AND #$04 : BEQ .no_down
+      LDA.b #!FeatherJumpSpeed
       STA $27
     .no_down
-    LDA $F4 : AND #$02 : BEQ .no_left
-      LDA #-8
+    LDA $F0 : AND #$02 : BEQ .no_left
+      LDA.b #-!FeatherJumpSpeed
       STA $28 ; Horizontal recoil
     .no_left
-    LDA $F4 : AND #$01 : BEQ .no_right
-      LDA #8
+    LDA $F0 : AND #$01 : BEQ .no_right
+      LDA.b #!FeatherJumpSpeed
       STA $28
     .no_right
   .cant_use_it

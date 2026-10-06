@@ -139,6 +139,17 @@ LinkItem_NewFlute:
   ; Check for Switch Swong
   JSR UpdateFluteSong
   JSR Link_CheckNewY_ButtonPress : BCC ReturnFromFluteHook
+if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
+    ; No song learned ($7EF34C < 2): error beep only, no song, SongFlag
+    ; unchanged. Same as vanilla's unusable Mushroom in LinkItem_Powder:
+    ; $07A2A8 LDA #$3C : JSR PlaySFX_Set2 ($078028), then $07A30C clears
+    ; $3A bit 6 (set by CheckYButtonPress $07B073) so the next Y press works.
+    LDA.l $7EF34C : CMP.b #$02 : BCS .has_song
+      LDA.b #$3C : JSR Player_DoSfx2
+      LDA.b $3A : AND.b #$BF : STA.b $3A
+      RTS
+    .has_song
+endif
     ; Success... play the flute.
     LDA.b #$80 : STA.w $03F0
 

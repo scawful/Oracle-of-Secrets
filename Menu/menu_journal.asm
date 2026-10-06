@@ -571,7 +571,7 @@ Entry_GoronQuest:
   dw "GORON_QUEST_____"
   dw "________________"
   dw "THE_GORON_NEEDS_"
-  dw "5_ROCK_SIRLOINS_"
+  dw "5_ROCK_MEAT_____"
   dw "TO_OPEN_THE_____"
   dw "MINES._I_SHOULD_"
   dw "SEARCH_THE______"
@@ -585,6 +585,13 @@ Entry_GoronQuest:
 Menu_DrawJournal:
 {
   PHB : PHK : PLB
+if !ENABLE_MENU_AUDIT_FIXES == 1
+  ; $0207 is also the page cursor's blink counter; left over, Journal_Handler
+  ; treats it as a page-turn delay (up to ~3 s from Quest or page 3). Every
+  ; open calls this; a page turn sets its $0A delay after the call.
+  SEP #$20
+  STZ.w $0207
+endif
   REP #$30
 
   ; Page selection logic:

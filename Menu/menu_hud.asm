@@ -287,7 +287,11 @@ HUD_UpdateItemBox:
     .bottle_not_equipped
 
     CPX.w #$000D : BNE .flute_not_equipped
+if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
+      JSR HUD_OcarinaIconIndex ; same size as LDA $030F (branch range)
+else
       LDA $030F
+endif
 
     .flute_not_equipped
 
@@ -297,8 +301,20 @@ HUD_UpdateItemBox:
     .hookshot_not_equipped
 
     CPX.w #$0010 : BNE .custom_rod_not_equipped
+if !ENABLE_PORTAL_ROD_CELL == 1
+      LDA.w #$0000                ; Fishing Rod cell: Fishing Rod icon only
+else
       LDA.w FishingOrPortalRod
+endif
     .custom_rod_not_equipped
+
+if !ENABLE_PORTAL_ROD_CELL == 1
+    ; Portal Rod cell ($19): the rod entry of HudItems, Portal Rod icon.
+    CPX.w #$0019 : BNE .portal_rod_not_equipped
+      LDX.w #$0010
+      LDA.w #$0001
+    .portal_rod_not_equipped
+endif
 
     JSR HUD_DrawItem
 
@@ -322,6 +338,23 @@ HUD_DrawItem:
 
   RTS
 }
+
+if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
+; menu-ocarina-blank-slot. 16-bit A/X/Y. Out: A = Ocarina entry in the
+; $0DF859 HUD table: 0 = grey (owned, no song learned, $7EF34C < 2),
+; else the selected song (1-4); song 0 falls back to 1 (blue).
+HUD_OcarinaIconIndex:
+{
+  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_song
+    LDA.w $030F : AND.w #$00FF : BNE .done
+      LDA.w #$0001
+      RTS
+  .no_song
+  LDA.w #$0000
+  .done
+  RTS
+}
+endif
 
 ; =========================================================
 
@@ -469,7 +502,11 @@ org $0DF7C9
 
 ; Ocarina
 org $0DF859
+if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
+  dw $30D4, $30D5, $30E4, $30E5 ; Grey: owned, no song learned
+else
   dw $2CD4, $2CD5, $2CE4, $2CE5
+endif
   dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
   dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
   dw $24D4, $24D5, $24E4, $24E5 ; Red

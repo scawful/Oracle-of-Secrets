@@ -12,6 +12,11 @@ Menu_ItemIndex:
   db $08,     $0C,       $12,      $0D,        $07,        $0B
   ;  Deku,    Zora,      Wolf,     Bunny Hood, Stone Mask, Bottle4
   db $11,     $0F,       $08,      $10,        $13,        $0B
+if !ENABLE_PORTAL_ROD_CELL == 1
+  ;  $19: Portal Rod cell (row 4, first cell), same routine as the Fishing
+  ;  Rod ($0D, LinkItem_FishingRodAndPortalRod picks the rod by $0202)
+  db $0D
+endif
 
 ; =========================================================
 ; Decides which graphics is drawn
@@ -43,6 +48,9 @@ Menu_AddressIndex:
   db $7EF348 ; Bunny Hood
   db $7EF352 ; Stone Mask
   db $7EF35F ; Bottle #4
+if !ENABLE_PORTAL_ROD_CELL == 1
+  db PortalRodOwned&$FF ; $19 Portal Rod ($7EF3A6)
+endif
 
 ; =========================================================
 
@@ -78,6 +86,12 @@ Menu_ItemCursorPositions:
   dw menu_offset(15,12) ; bunny hood
   dw menu_offset(15,15) ; stone mask
   dw menu_offset(15,18) ; bottle4
+if !ENABLE_PORTAL_ROD_CELL == 1
+  ; $19 Portal Rod: the Deku mask cell, menu_offset(15,2), on purpose. Written
+  ; as arithmetic so the menu registry (z3ed oracle-menu-validate, yaze menu
+  ; editor) keeps one editable entry per cell.
+  dw (15*64)+(2*2)
+endif
 
 ; =========================================================
 
@@ -94,6 +108,9 @@ Menu_FindNextItem:
     TAX : DEX                ; X = position - 1 (for table index)
     LDA.l Menu_AddressLong, X : TAX  ; Load offset from table
     LDA.l $7EF300, X         ; Load item value
+if !ENABLE_MENU_PAGE3 == 1
+    JSR Menu_Page3_GridFilter ; masks count as empty cells
+endif
     BNE .found               ; Item exists, done
     DEY : BNE .loop          ; Keep searching
   .found
@@ -114,6 +131,9 @@ Menu_FindPrevItem:
     TAX : DEX                ; X = position - 1 (for table index)
     LDA.l Menu_AddressLong, X : TAX  ; Load offset from table
     LDA.l $7EF300, X         ; Load item value
+if !ENABLE_MENU_PAGE3 == 1
+    JSR Menu_Page3_GridFilter ; masks count as empty cells
+endif
     BNE .found               ; Item exists, done
     DEY : BNE .loop          ; Keep searching
   .found
@@ -133,7 +153,14 @@ Menu_FindNextDownItem:
   TAX : DEX                       ; X = position - 1
   LDA.l Menu_AddressLong, X : TAX ; Load offset from table
   LDA.l $7EF300, X
+if !ENABLE_MENU_PAGE3 == 1
+  JSR Menu_Page3_GridFilter       ; masks count as empty cells
+  BNE +
+    JMP Menu_FindNextItem         ; If empty, scan horizontally
+  +
+else
   BEQ Menu_FindNextItem           ; If empty, scan horizontally
+endif
   RTS
 }
 
@@ -152,7 +179,14 @@ Menu_FindNextUpItem:
   TAX : DEX                       ; X = position - 1
   LDA.l Menu_AddressLong, X : TAX ; Load offset from table
   LDA.l $7EF300, X
+if !ENABLE_MENU_PAGE3 == 1
+  JSR Menu_Page3_GridFilter       ; masks count as empty cells
+  BNE +
+    JMP Menu_FindNextItem         ; If empty, scan horizontally
+  +
+else
   BEQ Menu_FindNextItem           ; If empty, scan horizontally
+endif
   RTS
 }
 
@@ -251,6 +285,9 @@ Menu_AddressLong:
   db $48 ; Bunny Hood
   db $52 ; Stone Mask
   db $5F ; Bottle 4
+if !ENABLE_PORTAL_ROD_CELL == 1
+  db PortalRodOwned&$FF ; $19 Portal Rod ($7EF3A6)
+endif
 
 GotoNextItem_Local:
 {
@@ -287,6 +324,9 @@ SearchForEquippedItem_Override:
 {
   PHB : PHK : PLB
   SEP   #$30
+if !ENABLE_ONE_RING == 1
+  JSR OneRing_MigrateSlots ; file load (Module05) and RefreshIcon
+endif
 
   LDY.b #$18
   .next_check
@@ -321,6 +361,25 @@ SearchForEquippedItem_Override:
   PLB
   RTL
 }
+
+if !ENABLE_ONE_RING == 1
+; One ring (decisions.org 2026-09-28): saves from before the rule can hold
+; rings in RingSlot2/3. Keep one worn ring: an empty slot 1 takes slot 2's
+; ring, else slot 3's; then clear slots 2-3. Nothing else writes slots 2-3
+; with the flag on, so after the first run (file load) this changes nothing.
+; 8-bit A. Keeps X, Y.
+OneRing_MigrateSlots:
+{
+  LDA.l RingSlot1 : BNE .clear
+    LDA.l RingSlot2 : BNE .move
+    LDA.l RingSlot3 : BEQ .clear
+    .move
+    STA.l RingSlot1
+  .clear
+  LDA.b #$00 : STA.l RingSlot2 : STA.l RingSlot3
+  RTS
+}
+endif
 
 pushpc
 

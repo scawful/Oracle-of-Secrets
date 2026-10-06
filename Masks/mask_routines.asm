@@ -252,6 +252,11 @@ pullpc
 LinkState_ResetMaskAnimated:
 {
   STZ.b $55
+if !ENABLE_MASK_Y_TRANSFORM == 1
+  ; Menu exit. MaskControl_CheckYItem (Link_HandleYItem hook) changes Link back
+  ; once play resumes, and only when the Y item is no longer the worn mask.
+  RTL
+else
   LDA.w !CurrentMask : BEQ .no_transform
     CMP.b #$01 : BEQ .check_item_slot
     CMP.b #$02 : BEQ .no_transform
@@ -272,6 +277,7 @@ LinkState_ResetMaskAnimated:
   .no_transform
   .moosh_form
   RTL
+endif
 }
 
 ; =========================================================
@@ -299,6 +305,116 @@ LinkItem_CheckForSwordSwing_Masks:
 ; A = Mask ID
 ; Carry clear = no transform press/cant use mask
 
+if !ENABLE_MASK_Y_TRANSFORM == 1
+; Called every frame by the Y item handler of a mask (Deku, Zora, Wolf, Bunny)
+; with A = that mask's form ID (1-4). The handler runs the form's own Y ability
+; before this call; this routine only puts the mask on or takes it off.
+; - Link (form 0, or GBC form 6 in the Dark World): Y or R puts the mask on.
+; - Wearing this mask: R changes back. Y is left to the form's ability.
+; - Minish (5) or Moosh (7): Y or R plays the error sound; masks do not work.
+; - Does nothing unless this mask is the Y item ($0202 = ID + $12), so a stale
+;   $0303 cannot put on a mask the HUD does not show.
+Link_TransformMask:
+{
+  PHB : PHK : PLB
+  PHA                                    ; $01,S = mask ID
+  CLC : ADC.b #$12 : CMP.w $0202 : BNE .ignore
+  LDA.b $6C : BNE .ignore                ; in a doorway
+  LDA.w $0FFC : BNE .ignore              ; menu locked (cutscene)
+
+  LDA.w !CurrentMask : CMP $01,S : BEQ .worn
+  CMP.b #$00 : BEQ .as_link
+  CMP.b #$06 : BEQ .as_link              ; GBC Link is Link in the Dark World
+  CMP.b #$05 : BEQ .blocked              ; Minish
+  CMP.b #$07 : BEQ .blocked              ; Moosh
+  BRA .ignore                            ; another mask: MaskControl_CheckYItem changes it back
+
+  .as_link
+  JSR MaskInput_NewR : BCS .put_on
+  JSR MaskInput_NewY : BCC .ignore
+  .put_on
+    JSL PlayerTransform
+    PLA : STA.w !CurrentMask : TAX
+    LDA.w .mask_gfx, X : STA.b $BC       ; set the mask gfx
+    JSL Palette_ArmorAndGloves           ; set the palette
+    PLB : CLC : RTL
+
+  .worn
+  JSR MaskInput_NewR : BCC .ignore
+    JSL PlayerTransform
+    STZ.b $5D
+    STZ.w $02F5
+    JSL ResetToLinkGraphics
+    BRA .ignore
+
+  .blocked
+  JSR MaskInput_NewR : BCS .beep
+  JSR MaskInput_NewY : BCC .ignore
+  .beep
+    %ErrorBeep()
+
+  .ignore
+  PLA : PLB : CLC : RTL
+
+  .mask_gfx
+    db $00, $35, $36, $38, $37, $39, $3A, $3B
+}
+
+; Carry set on a new R press this frame (no $1A filter, unlike CheckNewRButtonPress).
+MaskInput_NewR:
+{
+  LDA.b $F6 : AND.b #$10 : BEQ .no
+    SEC : RTS
+  .no
+  CLC : RTS
+}
+
+; Carry set on a new Y press this frame. Same test as vanilla CheckYButtonPress
+; ($07B073): Y not already in use ($3A bit 6) and no damage timer ($46).
+; It does not claim Y ($3A), because the press only changes the form.
+MaskInput_NewY:
+{
+  BIT.b $3A : BVS .no
+  LDA.b $46 : BNE .no
+  LDA.b $F4 : AND.b #$40 : BEQ .no
+    SEC : RTS
+  .no
+  CLC : RTS
+}
+
+; Link_HandleYItem entry hook ($079B0E), every frame in LinkState_Default.
+; When Link wears a mask form (1-4) and the Y item ($0202) is no longer that
+; mask, change back to Link. Waits while Link is in a doorway, the menu is
+; locked, or Zora Link is diving. Minish, GBC and Moosh are not Y items and are
+; left alone. Returns the vanilla A for the next CMP #$09 : BCC: $3C, or $09
+; when $3C = 0 (vanilla branched past that test when $3C = 0).
+MaskControl_CheckYItem:
+{
+  LDA.w !CurrentMask : BEQ .done
+  CMP.b #$05 : BCS .done
+  CLC : ADC.b #$12 : CMP.w $0202 : BEQ .done
+  LDA.b $6C : BNE .done
+  LDA.w $0FFC : BNE .done
+  LDA.w !ZoraDiving : BNE .done
+    ; No $5D/$02F5 writes here (the R path keeps the old unequip code):
+    ; Link_HandleAPress may already have set a new state this frame.
+    JSL PlayerTransform
+    JSL ResetToLinkGraphics
+  .done
+  LDA.b $3C : BNE .sword
+    LDA.b #$09
+  .sword
+  RTL
+}
+
+pushpc
+; Link_HandleYItem: LDA $3C : BEQ .sword_not_out (4 bytes)
+org $079B0E ; @hook module=Masks name=MaskControl_CheckYItem kind=jsl target=MaskControl_CheckYItem
+  JSL MaskControl_CheckYItem
+assert pc() == $079B12
+pullpc
+
+else
 Link_TransformMask:
 {
   PHB : PHK : PLB
@@ -332,6 +448,7 @@ Link_TransformMask:
   .mask_gfx
     db $00, $35, $36, $38, $37, $39, $3A, $3B
 }
+endif
 
 Link_TransformMoosh:
 {
@@ -1372,6 +1489,82 @@ CheckNewRButtonPress:
   CLC
   RTL
 }
+
+if !ENABLE_MINISH_AUTO_PORTAL == 1
+; =========================================================
+; Minish portal, automatic (decisions.org "Masks stay Y items; Y transforms,
+; R toggles; Minish is automatic", point 5).
+; Called from LinkState_CheckForMinishForm (tile $64 handler, 8-bit A/X/Y).
+; The tile handler can run several times in one frame (one call per touching
+; detection point), so the charge advances once per frame ($1A).
+; Standing still = no D-pad; the charge pauses while LinkState is not 0 or the
+; sword is out. After !MinishPortalFrames still frames the form toggles: Link
+; (or GBC Link) shrinks, Minish grows. The "toggled" latch ($FF) then holds
+; until a D-pad press, so standing on the portal never toggles back and forth
+; (the transform poof can skip a frame of tile detection). Masked Link or
+; Moosh: nothing happens.
+!MinishPortalFrames = 60
+
+MinishPortal_Tick:
+{
+  LDA.l GameState : BEQ .exit
+  LDA.b $1A : CMP.w MinishPortalFrame : BEQ .exit
+  DEC A : CMP.w MinishPortalFrame : BEQ .same_visit
+    LDA.w MinishPortalTimer : INC A : BEQ .same_visit  ; keep the "toggled" latch
+    STZ.w MinishPortalTimer              ; a partial charge from an earlier visit
+  .same_visit
+  LDA.b $1A : STA.w MinishPortalFrame
+
+  LDA.b $F0 : AND.b #$0F : BNE .rearm    ; D-pad held: start over
+  LDA.b $5D : BNE .exit                  ; not in the default state: pause
+  LDA.b $3C : BNE .exit                  ; sword out or charging: pause
+  LDA.w !CurrentMask : BEQ .charge
+  CMP.b #$05 : BEQ .charge               ; Minish: grow
+  CMP.b #$06 : BEQ .charge               ; GBC Link: shrink
+  BRA .rearm                             ; mask or Moosh: must be Link to shrink
+
+  .charge
+  LDA.w MinishPortalTimer : CMP.b #$FF : BEQ .exit   ; already toggled this visit
+  INC A : STA.w MinishPortalTimer
+  AND.b #$03 : CMP.b #$01 : BNE .no_sparkle
+    JSL $0FF979                          ; AncillaSpawn_SwordChargeSparkle
+  .no_sparkle
+  LDA.w MinishPortalTimer : CMP.b #!MinishPortalFrames : BCC .exit
+  LDA.b #$FF : STA.w MinishPortalTimer
+  JSR MinishPortal_Toggle
+  RTL
+
+  .rearm
+  STZ.w MinishPortalTimer
+  .exit
+  RTL
+}
+
+; Shrink (Link or GBC Link) or grow (Minish) with the transform poof.
+; Keeps $00-$0F: the tile detection that called us still uses them for the
+; next detection points, and the palette loader writes $00-$02.
+MinishPortal_Toggle:
+{
+  LDX.b #$0F
+  .save
+    LDA.b $00, X : PHA
+  DEX : BPL .save
+  JSL PlayerTransform
+  LDA.w !CurrentMask : CMP.b #$05 : BEQ .grow
+    LDA.b #$05 : STA.w !CurrentMask
+    JSL Palette_ArmorAndGloves           ; $BC = $39, Link's own palette
+    BRA .restore
+  .grow
+  JSL ResetToLinkGraphics                ; Link, or GBC Link in the Dark World
+  .restore
+  SEP #$30
+  LDX.b #$00
+  .load
+    PLA : STA.b $00, X
+  INX : CPX.b #$10 : BNE .load
+  RTS
+}
+endif
 
 CheckNewLButtonPress:
 {

@@ -25,6 +25,13 @@ DekuFloating   = $70
 ; Unset, will shoot deku bubble instead
 DekuHover      = $71
 
+if !ENABLE_MINISH_AUTO_PORTAL == 1
+; Minish portal charge (MinishPortal_Tick). MAP16OVERFLOW free WRAM, next to
+; the minecart tables at $0768.
+MinishPortalTimer = $7E0766 ; 0 = idle, 1-59 charging, $FF = toggled, wait for movement
+MinishPortalFrame = $7E0767 ; $1A of the last frame the portal was handled
+endif
+
 AddTransformationCloud = $09912C
 Link_CheckNewY_ButtonPress = $07B073
 LinkItem_EvaluateMagicCost = $07B0AB

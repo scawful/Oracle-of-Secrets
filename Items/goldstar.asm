@@ -1029,7 +1029,28 @@ Goldstar_GetDragged:
   RTL
 }
 
+; Item receipt $0A (D4 Hookshot chest) writes Hookshot = 1. After the Old
+; Man's Goldstar (receipt $13, Hookshot = 2) that deleted the Goldstar.
+; Keep the higher level. Called from AncillaAdd_ItemReceipt in place of
+; `BMI .dont_write : STA.b [$00]`; A (M=8) = .sram_value from the LDA just
+; before, so N is still its sign. Y = item ID, [$00] = SRAM target.
+ItemReceipt_KeepGoldstar:
+{
+  BMI .done
+  CPY.b #$0A : BNE .write
+    CMP.b [$00] : BCC .done
+  .write
+  STA.b [$00]
+  .done
+  RTL
+}
+
 pushpc
+
+; AncillaAdd_ItemReceipt: BMI .dont_write : STA.b [$00]
+assert read2($09863E) == $0230 || read1($09863E) == $22, "AncillaAdd_ItemReceipt write moved"
+org $09863E ; @hook module=Items name=ItemReceipt_KeepGoldstar kind=jsl target=ItemReceipt_KeepGoldstar
+  JSL ItemReceipt_KeepGoldstar
 
 ; =========================================================
 ; Main Hookshot/Goldstar hooks

@@ -57,6 +57,9 @@ OcarinaGFX:
   dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
   dw $24D4, $24D5, $24E4, $24E5 ; Red
   dw $34D4, $34D5, $34E4, $34E5 ; Gold
+if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
+  dw $30D4, $30D5, $30E4, $30E5 ; Grey (value 5): owned, no song learned
+endif
 
 BigKeyGFX:
   dw $34D6, $74D6, $34E6, $34E7
@@ -218,9 +221,11 @@ ButtonPromptTXT:
   dw $2568, $256B, $2561, $2558  ; Y:RI
   dw $255D, $2556, $2562, $2417  ; NGS (space)
 
-; Ring box prompts: "A:EQUIP  Y:BACK "
+; Ring box prompts: "A:EQUIP  Y:BACK " (Ring Box state $09 only)
+if !MENU_DROP_RING_BOX == 0
 RingBoxPromptTXT:
   dw $2550, $256B, $2554, $2560  ; A:EQ
   dw $2564, $2558, $255F, $2417  ; UIP (space)
   dw $2568, $256B, $2551, $2550  ; Y:BA
   dw $2552, $255A, $2417, $2417  ; CK  (spaces)
+endif

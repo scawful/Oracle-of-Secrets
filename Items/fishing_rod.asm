@@ -21,6 +21,16 @@ org $06C0B2 ; @hook module=Items
 org $07AF3E ; Cane of Byrna
 LinkItem_FishingRodAndPortalRod:
 {
+if !ENABLE_PORTAL_ROD_CELL == 1
+  ; The Portal Rod has its own Items cell ($0202 = $19, Menu_ItemIndex $0D
+  ; like the Fishing Rod cell $10). The cell picks the rod; no L/R switch.
+  LDA.w $0202 : CMP.b #$19 : BEQ .own_cell_portal_rod
+    JSL LinkItem_FishingRod
+    RTS
+  .own_cell_portal_rod
+  JSR LinkItem_PortalRod
+  RTS
+else
   ; If the sram slot is 02, we can swap between the fishing rod and the portal rod
   LDA.l $7EF351 : CMP.b #$02 : BEQ +
     JSL LinkItem_FishingRod
@@ -48,6 +58,7 @@ LinkItem_FishingRodAndPortalRod:
   LDA.w FishingOrPortalRod : CMP #$01 : BEQ .left
   LDA.b #$01 : STA.w FishingOrPortalRod
   RTS
+endif
 }
 
 assert pc() <= $07AFB4
