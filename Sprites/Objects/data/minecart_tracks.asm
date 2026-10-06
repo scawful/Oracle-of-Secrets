@@ -76,6 +76,9 @@
   ;    15    0x97  ( 8,44)         ( 8, 44)   B7 STOP_S
   ;    16    0xD8  (14,14)         (14, 14)   B9 STOP_E
   ;
+  .TrackStartingRoomsEnd
+  assert .TrackStartingRoomsEnd-.TrackStartingRooms == $20*2, "Minecart Rooms table must contain 32 words"
+
   .TrackStartingX
   dw $1190, $0E40, $0F70, $1160  ; Tracks 0-3  (T1/T2 preserve placed carts)
   if !ENABLE_MINECART_PLANNED_TRACK_TABLE == 1
@@ -96,6 +99,9 @@
     dw $0000, $0000, $0000, $0000  ; Tracks 28-31 disabled
   endif
 
+  .TrackStartingXEnd
+  assert .TrackStartingXEnd-.TrackStartingX == $20*2, "Minecart X table must contain 32 words"
+
   .TrackStartingY
   dw $1380, $1360, $1180, $10D0  ; Tracks 0-3  (T1/T2 preserve placed carts)
   if !ENABLE_MINECART_PLANNED_TRACK_TABLE == 1
@@ -115,3 +121,6 @@
     dw $0000, $0000, $0000, $0000  ; Tracks 24-27 disabled
     dw $0000, $0000, $0000, $0000  ; Tracks 28-31 disabled
   endif
+
+  .TrackStartingYEnd
+  assert .TrackStartingYEnd-.TrackStartingY == $20*2, "Minecart Y table must contain 32 words"

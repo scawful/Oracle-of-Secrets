@@ -135,7 +135,11 @@ HUD_Update:
   LDA #$A00C : STA $7EC7B2
 
   ; Check if the user has bombs equipped
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+  JSR HUD_ItemBoxItem : LDA $7EF33F, X : AND.w #$00FF
+else
   LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
+endif
   CPX.w #$0004 : BNE .not_bombs
     ; Number of bombs Link has.
     LDA $7EF343 : AND.w #$00FF
@@ -151,7 +155,11 @@ HUD_Update:
   .not_bombs
 
   ; Check if the user has arrows equipped
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+  JSR HUD_ItemBoxItem : LDA $7EF33F, X : AND.w #$00FF
+else
   LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
+endif
   CPX.w #$0001 : BNE .not_arrows
 
     ; Number of Arrows Link has.
@@ -250,7 +258,11 @@ HUD_UpdateItemBox:
   .no_bow
 
   REP #$30
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+  JSR HUD_ItemBoxItem : BEQ .no_equipped_item
+else
   LDX $0202 : BEQ .no_equipped_item
+endif
     TXY
     LDA.l Menu_AddressIndex-1, X
     AND.w #$00FF : TAX
@@ -296,8 +308,12 @@ endif
     .flute_not_equipped
 
     CPX.w #$0003 : BNE .hookshot_not_equipped
+if !ENABLE_GOLDSTAR_CELL == 1
+      LDA.w #$0000
+else
       LDA.w GoldstarOrHookshot : BEQ .hookshot_not_equipped
         SEC : SBC.w #$0001
+endif
     .hookshot_not_equipped
 
     CPX.w #$0010 : BNE .custom_rod_not_equipped
@@ -316,12 +332,69 @@ if !ENABLE_PORTAL_ROD_CELL == 1
     .portal_rod_not_equipped
 endif
 
+if !ENABLE_GOLDSTAR_CELL == 1
+    CPX.w #$001A : BNE .not_goldstar_cell
+    LDX.w #$0003 : LDA.w #$0001
+    .not_goldstar_cell
+endif
     JSR HUD_DrawItem
+if !ENABLE_MASK_R_BINDING == 1
+    RTS
+endif
 
   .no_equipped_item
-
+if !ENABLE_MASK_R_BINDING == 1
+  ; Restore the four empty item-box tiles from hud.tilemap after unmasking
+  ; when there is no normal item selected (for example, an old mask-only save).
+  LDA.w #$20AA
+  STA.l $7EC776 : STA.l $7EC778 : STA.l $7EC7B6 : STA.l $7EC7B8
+endif
   RTS
 }
+
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+; The item the Y button uses now. While Link wears a mask form (1-4) the Y
+; button runs that form, even after the Y item ($0202) changed: the change
+; back waits while Zora Link is in water, in a doorway or while the menu is
+; locked (MaskControl_CheckYItem). The HUD keeps that mask until the form ends.
+; In: 16-bit A/X/Y. Out: X = item ID to draw (Z from X). A is not kept.
+HUD_ItemBoxItem:
+{
+if !ENABLE_MASK_R_BINDING == 1
+  ; Stone uses the cape flag, not CurrentMask (Zora also uses $55).
+  LDA.w !CurrentMask : AND.w #$00FF : BEQ .stone_check
+  CMP.w #$0006 : BNE .form_check
+  .stone_check
+  LDA.b $55 : AND.w #$00FF : BEQ .form_check
+    LDX.w #$0017 : RTS
+  .form_check
+endif
+  LDA.w !CurrentMask : AND.w #$00FF : BEQ .y_item
+  CMP.w #$0005 : BCS .y_item
+    CLC : ADC.w #$0012 : TAX             ; Deku $13, Zora $14, Wolf $15, Bunny $16
+    RTS
+  .y_item
+  LDX.w $0202
+  RTS
+}
+
+; Redraw the HUD buffer and upload it on the next NMI, without the template
+; copy of RebuildHUD_long (that one also blanks the clock). Called when a
+; mask form ends during play. Any register widths; keeps X, Y and DBR.
+HUD_RefreshLong:
+{
+  PHP : PHB
+  REP #$30 : PHX : PHY
+  SEP #$20
+  LDA.b #$0D : PHA : PLB                 ; HUD_DrawItem reads $0DFA93 with DBR
+  JSL HUD_Update
+  SEP #$20
+  LDA.b #$01 : STA.b $16                 ; NMI uploads $7EC700 (HUD)
+  REP #$30 : PLY : PLX
+  PLB : PLP
+  RTL
+}
+endif
 
 HUD_DrawItem:
 {

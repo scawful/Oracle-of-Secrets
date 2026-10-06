@@ -35,6 +35,7 @@
 ; Link is within this many pixels on both axes (16-bit positions).
 ; scawful 2026-09-26: about 5 tiles. Tune by feel.
 !EonOwl_TalkDistance = 80
+!EonOwl_ArrivalTalkDistance = $20 ; two tiles; let Link take in the landing
 
 Sprite_EonOwl_Long:
 {
@@ -49,18 +50,6 @@ Sprite_EonOwl_Long:
           JSR Sprite_KaeporaGaebora_Draw
           JMP .HandleSprite
   .NotGaebora
-if !ENABLE_EON_OWL_ONE_SHOT == 1
-  ; Arrival map $40: its spriteset ($18) has no Eon Owl sheet (0x42 in
-  ; slot 3), but slot 2 holds sheet 0x37 with the Kaepora Gaebora tiles.
-  ; Draw the one-frame Kaepora Owl there.
-  LDA.w AreaIndex : CMP.b #$40 : BNE .eon_owl_draw
-    LDA.w SprFrame, X : PHA
-    STZ.w SprFrame, X
-    JSR Sprite_KaeporaGaebora_Draw
-    PLA : STA.w SprFrame, X
-    BRA .HandleSprite
-  .eon_owl_draw
-endif
   JSR Sprite_EonOwl_Draw
   .HandleSprite
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
@@ -73,6 +62,46 @@ endif
   PLB
   RTL
 }
+
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+; Arrival graphics: preserve the Zora/Master Sword sheets in slots 1-3.
+; Area $40 places no Eon Scrub, so replace only slot 0's sheet $16 with the
+; existing Eon Owl sheet $42. Area $7A shares spriteset $18 and is untouched.
+; All vanilla sprite load paths reach this decompressor, including room exits
+; and mosaic transitions. Do not write VRAM from the per-frame sprite draw.
+pushpc
+org $00E772 ; @hook module=Sprites name=EonOwl_ArrivalSheet kind=jml target=EonOwl_ArrivalSheet expected_m=8
+  JML EonOwl_ArrivalSheet
+  NOP
+assert pc() == $00E777
+pullpc
+
+; Original entry: M=8, Y=sheet, DB=$00, DP destination=$00-$02.
+; X and DB are preserved. Decompress resets Y before consuming its stream.
+; Displaced: LDA.w $CFF3,Y : STA.b $CA. Return to the original high/low
+; pointer loads, retaining the bank-$00 JSR/RTS return path.
+EonOwl_ArrivalSheet:
+{
+  TYA : CMP.b #$16 : BNE .original
+  LDA.w $0AA3 : CMP.b #$18 : BNE .original
+  LDA.b $8A : CMP.b #$40 : BNE .original
+  LDA.b $00 : BNE .original
+  LDA.b $02 : CMP.b #$7E : BEQ .area_buffer
+  CMP.b #$7F : BNE .original
+  ; Mirror warp converts its temporary $7F4000 buffer directly into VRAM.
+  LDA.b $01 : CMP.b #$40 : BNE .original
+  BRA .replace
+  .area_buffer
+  ; Ordinary loads and the post-warp cache reload use $7E7800.
+  LDA.b $01 : CMP.b #$78 : BNE .original
+  .replace
+    LDY.b #$42
+    LDA.b #$42 : STA.l $7EC2FC
+  .original
+  LDA.w $CFF3,Y : STA.b $CA
+  JML $00E777
+}
+endif
 
 ; =========================================================
 
@@ -233,14 +262,18 @@ EonOwl_CarrySetIfLinkNear:
   LDA.w SprY, X : STA.b $02
   LDA.w SprYH, X : STA.b $03
   REP #$20
+  LDA.w #!EonOwl_TalkDistance : STA.b $04
+  LDA.b $8A : AND.w #$00FF : CMP.w #$0040 : BNE .distance_ready
+    LDA.w #!EonOwl_ArrivalTalkDistance : STA.b $04
+  .distance_ready
   LDA.b $22 : SEC : SBC.b $00 : BPL +
     EOR.w #$FFFF : INC A
   +
-  CMP.w #!EonOwl_TalkDistance : BCS .far
+  CMP.b $04 : BCS .far
   LDA.b $20 : SEC : SBC.b $02 : BPL +
     EOR.w #$FFFF : INC A
   +
-  CMP.w #!EonOwl_TalkDistance : BCS .far
+  CMP.b $04 : BCS .far
     SEP #$20
     SEC
     RTS
@@ -289,7 +322,18 @@ Sprite_EonOwl_Draw:
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
-  LDA .chr, X : STA ($90), Y
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+  LDA.w AreaIndex : CMP.b #$40 : BNE .usual_sheet
+  LDA.w $0AA3 : CMP.b #$18 : BNE .usual_sheet
+    LDA .chr, X : AND.b #$3F ; arrival sheet $42 is in slot 0, not slot 3
+    BRA .store_chr
+  .usual_sheet
+endif
+  LDA .chr, X
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+  .store_chr
+endif
+  STA ($90), Y
   INY
   LDA .properties, X : STA ($90), Y
 

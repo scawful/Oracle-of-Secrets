@@ -1760,7 +1760,7 @@ PreOverworld_LoadProperties_Interupt:
         .setNormalSong
 
         LDX.b $8A
-        LDA.l $7F5B00, X : AND.b #$0F : TAX
+        LDA.l !OverworldMusicCache, X : AND.b #$0F : TAX
         
     .setToFull
     
@@ -1772,7 +1772,7 @@ PreOverworld_LoadProperties_Interupt:
     ; Doing so creates a slight pause and causes the ambient sound to stop and
     ; start playing again rather than just continuing to play.
     ;LDX.b $8A
-    ;LDA.l $7F5B00, X : LSR #4 : STA.w $012D
+    ;LDA.l !OverworldMusicCache, X : LSR #4 : STA.w $012D
     
     ; The decompression function increases it by 1 so subtract 1 here.
     JSL.l ReadAnimatedTable : DEC : TAY
@@ -2468,7 +2468,7 @@ db $38, $E9, $10, $00, $29, $3E, $00, $4A
 db $85, $86, $9C, $18, $04, $9C, $10, $04
 db $9C, $16, $04, $E2, $30, $A9, $82, $85
 db $99, $A9, $16, $85, $1C, $A9, $01, $85
-db $1D, $DA, $A6, $8A, $BF, $00, $5B, $7F
+db $1D, $DA, $A6, $8A, $BF : dl !OverworldMusicCache
 db $4A, $4A, $4A, $4A, $8D, $2D, $01, $FA
 db $A9, $72, $E0, $97, $F0, $39, $E0, $94
 db $F0, $35, $E0, $93, $F0, $31, $E0, $9D
@@ -3215,15 +3215,8 @@ CheckForChangeGraphicsTransitionLoad:
                 LDA.w Pool_EnableBGColor : BEQ .dontUpdateBGColor1
                     REP #$30 ; Set A, X, and Y in 16bit mode.
 
-                    ; Get area code and times it by 2.
-                    LDA.b $8A : ASL : TAX
-
-                    ; Where ZS saves the array of palettes
-                    LDA.w Pool_BGColorTable, X
-                    STA.l TimeState.SubColor
+                    JSL Oracle_ReadOverworldBackdropColor
                     JSL Oracle_BackgroundFix
-                    ; STA.l $7EC300 : STA.l $7EC500
-                    ; STA.l $7EC540 : STA.l $7EC340
 
                     SEP #$30 ; Set A, X, and Y in 8bit mode.
 
@@ -3263,28 +3256,9 @@ CheckForChangeGraphicsTransitionLoad:
 
     REP #$30 ; Set A, X, and Y in 16bit mode.
 
-    ; $0181 is the exit room number used for getting into the under the bridge
-    ; area.
-    LDA.b $A0 : CMP.w #$0181 : BNE .notBridge
-        LDA.w Pool_BGColorTable_Bridge
-
-        BRA .storeColor
-
-    .notBridge
-
-    ; Get area code and times it by 2.
-    LDA.b $8A : ASL : TAX
-
-    ; Where ZS saves the array of palettes.
-    LDA.w Pool_BGColorTable, X
-
-    .storeColor
-
-    ; Set transparent color. only set the buffer so it fades in right
-    ; during mosaic transition.
-    STA.l TimeState.SubColor
+    ; Tint only the fade targets; main CGRAM is advanced by PaletteFilter.
+    JSL Oracle_ReadOverworldBackdropColor
     JSL Oracle_MosaicFix
-    ;STA.l $7EC300 : STA.l $7EC340
 
     ; Write the fixed color.
     LDX.w #$4020 : STX.b $9C
@@ -3397,7 +3371,9 @@ Palette_MultiLoad_NonBuffer:
             LDA.b [$00] 
             STA.l TimeState.SubColor
             BEQ + 
+            PHX ; ColorSubEffect uses X for the hour table.
             JSL Oracle_ColorSubEffect
+            PLX
             +
             STA.l $7EC300, X
             STA.l $7EC500, X 
@@ -3624,7 +3600,7 @@ BirdTravel_LoadTargetArea_Interupt:
         
     ; If it's a different music track than was playing where we came from,
     ; simply change to it (as opposed to setting volume back to full).
-    LDA.l $7F5B00, X : AND.b #$0F : TAX : CPX.w $0130 : BNE .different_music
+    LDA.l !OverworldMusicCache, X : AND.b #$0F : TAX : CPX.w $0130 : BNE .different_music
         ; Otherwise, just set the volume back to full.
         LDX.b #$F3
     
@@ -3648,9 +3624,8 @@ db $F0, $02, $A0, $5A, $22, $94, $D3, $00
 db $22, $70, $FE, $0B, $9C, $A9, $0A, $9C
 db $B2, $0A, $22, $9B, $E1, $00, $EE, $00
 db $02, $64, $B2, $22, $F4, $B1, $02, $A9
-db $10, $8D, $2F, $01, $A6, $8A, $BF, $00
-db $5B, $7F, $4A, $4A, $4A, $4A, $8D, $2D
-db $01, $BF, $00, $5B, $7F, $29, $0F, $AA
+db $10, $8D, $2F, $01, $A6, $8A, $BF : dl !OverworldMusicCache : db $4A, $4A, $4A, $4A, $8D, $2D
+db $01, $BF : dl !OverworldMusicCache : db $29, $0F, $AA
 db $EC, $30, $01, $D0, $02, $A2, $F3, $8E
 db $2C, $01, $6B
 
@@ -3661,6 +3636,10 @@ LoadAmbientSound:
 {
     PHB : PHK : PLB
 
+    ; Both return paths supply the area index to bird-travel music. Graphics
+    ; loading can leave X=$C0; the Song of Storms shortcut must not keep it.
+    LDX.b $8A
+
     ; Check if Song of Storms rain is active
     LDA.l $7EE00E : BEQ .noSongOfStorms
         LDA.b #$01 : STA.w $012D  ; Rain SFX
@@ -3668,8 +3647,7 @@ LoadAmbientSound:
     .noSongOfStorms
 
     ; Reset the ambient sound effect to what it was.
-    LDX.b $8A
-    LDA.l $7F5B00, X : LSR #4 : STA.w $012D
+    LDA.l !OverworldMusicCache, X : LSR #4 : STA.w $012D
 
     ; Check if we need to stop the rain sound in the misery mire.
     LDA.w Pool_EnableRainMireEvent : BEQ .disableRainSound
@@ -3721,7 +3699,7 @@ Overworld_LoadBGColorAndSubscreenOverlay:
         
     .notMire
 
-    LDA.b $8C ; Use current active overlay instead of reading from static table
+    LDA.b $8C : AND.w #$00FF ; $8D is footstep animation, not overlay ID
     ; JSL.l ReadOverlayArray
 
     ; Check for misery mire.
@@ -3782,7 +3760,7 @@ Overworld_LoadBGColorAndSubscreenOverlay:
         LDA.b $E2 : STA.b $E0
             
         ; Just because I need a bit more space.
-        LDA.b $8C ; JSL.l ReadOverlayArray
+        LDA.b $8C : AND.w #$00FF ; Active overlay byte
             
         ; Are we at Hyrule Castle or Pyramid of Power?
         CMP.w #$0096 : BNE .subscreenOnAndReturn
@@ -3793,7 +3771,7 @@ Overworld_LoadBGColorAndSubscreenOverlay:
     .BRANCH_11
     
     ; Check for the pyramid BG.
-    LDA.b $8C ; JSL.l ReadOverlayArray 
+    LDA.b $8C : AND.w #$00FF ; Active overlay byte 
     CMP.w #$0096 : BNE .subscreenOnAndReturn
         ; Synchronize Y scrolls on BG0 and BG1. Same for X scrolls.
         LDA.b $E8 : STA.b $E6
@@ -3865,61 +3843,18 @@ pullpc
 ReplaceBGColor:
 {
     PHB : PHK : PLB
+    SEP #$20
+    LDA.w Pool_EnableBGColor : BEQ .disabled
 
-    SEP #$20 ; Set A in 8bit mode.
-
-    LDA.w Pool_EnableBGColor : BNE .custom
-        REP #$20 ; Set A in 16bit mode.
-
-        PLB
-
-        RTL
-
-    .custom
-
-    REP #$20 ; Set A in 16bit mode.
-
-    ; Get area code and times it by 2. Get the color.
-    LDA.b $8A : ASL : TAX
-    LDA.w Pool_BGColorTable, X : PHA
-    
-    SEP #$20 ; Set A in 8bit mode.
-
-    ; TODO: Pretty sure this is needed. Just keep an eye out for it.
-    ; Set the buffer color when exiting to the OW to prevent a bug when using 
-    ; the map in an area with a subscreen overlay.
-    LDA.b $10 : CMP.b #$08 : BEQ .setBuffer
-                CMP.b #$0A : BEQ .setBuffer
-        ; Set the buffer color during warps.
-        LDA.b $11 : CMP.b #$23 : BNE .notWarp
-            .setBuffer
-
-            REP #$20 ; Set A in 16bit mode.
-
-            ; Set the BG color buffer.
-            PLA
-            STA.l TimeState.SubColor
-            JSL Oracle_BackgroundFix ; $3482DD ; Background Fix
-            ; STA.l $7EC300 : STA.l $7EC340 ; Set the BG color.
-            ; STA.l $7EC500 : STA.l $7EC540
-
-            BRA .skipActualColor
-
-    .notWarp
-
-    REP #$20 ; Set A in 16bit mode.
-
-    ; Set the BG color.
-    PLA
-    STA.l TimeState.SubColor
+    REP #$30
+    JSL Oracle_ReadOverworldBackdropColor
     JSL Oracle_BackgroundFix
-    ; STA.l $7EC500
-    ; STA.l $7EC540
-
-    .skipActualColor
-
     PLB
+    RTL
 
+    .disabled
+    REP #$20
+    PLB
     RTL
 }
 
@@ -3991,31 +3926,11 @@ InitColorLoad2:
 {
     PHB : PHK : PLB
 
-    ; $0181 is the exit room number used for getting into the under the bridge
-    ; area.
-    LDA.b $A0 : CMP.w #$0181 : BNE .notBridge
-        LDA.w Pool_BGColorTable_Bridge
-
-        BRA .storeColor
-
-    .notBridge
-
-    ; Get area code and times it by 2.
-    LDA.b $8A : ASL : TAX
-
-    ; Get the color.
-    LDA.w Pool_BGColorTable, X
-
-    .storeColor
-
-    ; Set transparent color. Only the buffer ($7EC300/$7EC340), as in upstream
-    ; ZS: the cache-only entry ($0ED61D: mirror warp, special area in/out)
-    ; fades in with PaletteFilter, which adds the target to $7EC500. Writing
-    ; $7EC500 here doubled the color (Maku area $19C6 -> $338C; after leaving
-    ; it, $2669 -> $4CD2 magenta). The main-buffer entry ($0ED618) still
-    ; writes $7EC500 afterwards through ColorBgFix.
-    STA.l TimeState.SubColor ; Set temp color for tinting
-    JSL Oracle_MosaicFix ; Apply tint, write the buffer only
+    ; Both vanilla entries use this raw selector. Cache-only $0ED61D must
+    ; leave the main buffer alone for PaletteFilter; $0ED618 copies the
+    ; once-tinted result to main afterwards through ColorBgFix.
+    JSL Oracle_ReadOverworldBackdropColor
+    JSL Oracle_MosaicFix
 
     INC.b $15
 
@@ -4820,12 +4735,12 @@ OverworldHandleTransitions:
         .lightWorld
 
         ; Extract the ambient sound from this array.
-        LDA.l $7F5B00, X : LSR #4 : BNE .ambientSound
+        LDA.l !OverworldMusicCache, X : LSR #4 : BNE .ambientSound
             LDA.b #$05 : STA.w $012D ; No ambient sound.
 
         .ambientSound
 
-        LDA.l $7F5B00, X : AND.b #$0F : CMP.w $0130 : BEQ .noMusicChange
+        LDA.l !OverworldMusicCache, X : AND.b #$0F : CMP.w $0130 : BEQ .noMusicChange
             LDA.b #$F1 : STA.w $012C
 
         .noMusicChange
@@ -4968,9 +4883,9 @@ db $C9, $2A, $D0, $05, $A9, $80, $8D, $2D
 db $01, $BF, $EC, $A5, $02, $0F, $CA, $F3
 db $7E, $85, $8A, $8D, $0A, $04, $AA, $AF
 db $CA, $F3, $7E, $F0, $06, $AF, $57, $F3
-db $7E, $F0, $1F, $BF, $00, $5B, $7F, $4A
+db $7E, $F0, $1F, $BF : dl !OverworldMusicCache : db $4A
 db $4A, $4A, $4A, $D0, $05, $A9, $05, $8D
-db $2D, $01, $BF, $00, $5B, $7F, $29, $0F
+db $2D, $01, $BF : dl !OverworldMusicCache : db $29, $0F
 db $CD, $30, $01, $F0, $05, $A9, $F1, $8D
 db $2C, $01, $20, $08, $AB, $A9, $01, $85
 db $11, $A5, $00, $8D, $10, $04, $8D, $16

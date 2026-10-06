@@ -31,6 +31,8 @@ from asm_source import (  # noqa: E402,F401
     _iter_active_lines,
     _load_global_defines,
     _parse_define_assignment,
+    SourceGraphError,
+    collect_reachable_asm_sources,
 )
 
 
@@ -454,6 +456,8 @@ def scan_org_directives(
     invoked unresolved template cannot silently bypass manifest validation.
     """
     root = root.resolve()
+    if asm_paths is None and (root / "Oracle_main.asm").is_file():
+        asm_paths = collect_reachable_asm_sources(root)
     explicit_sources = asm_paths is not None
     global_defines = _load_global_defines(root)
     source_paths = list(root.rglob("*.asm") if asm_paths is None else asm_paths)
@@ -467,7 +471,7 @@ def scan_org_directives(
     ] = {}
     for source_path in active_sources:
         asm_path = source_path.resolve()
-        if not explicit_sources and _should_skip(asm_path):
+        if not explicit_sources and _should_skip(asm_path.relative_to(root)):
             continue
         try:
             lines = asm_path.read_text(
@@ -555,6 +559,8 @@ def scan_hooks(
     asm_paths: Optional[Iterable[Path]] = None,
 ) -> list[HookEntry]:
     root = root.resolve()
+    if asm_paths is None and (root / "Oracle_main.asm").is_file():
+        asm_paths = collect_reachable_asm_sources(root)
     hooks_by_addr: dict[int, HookEntry] = {}
     explicit_sources = asm_paths is not None
 
@@ -572,7 +578,7 @@ def scan_hooks(
     }
     for source_path in active_sources:
         asm_path = source_path.resolve()
-        if not explicit_sources and _should_skip(asm_path):
+        if not explicit_sources and _should_skip(asm_path.relative_to(root)):
             continue
         try:
             asm_path.relative_to(root)
@@ -708,27 +714,29 @@ def main() -> int:
     parser.add_argument('-o', '--output', type=Path, default=Path('Roms/hooks.json'),
                         help='Output hooks.json path (default: Roms/hooks.json)')
     parser.add_argument('--rom', type=Path, default=Path('Roms/oos168x.sfc'),
-                        help='ROM path for metadata (optional)')
+                        help='Current ROM path for required identity metadata')
     args = parser.parse_args()
 
     root = args.root.resolve()
     output = (root / args.output).resolve() if not args.output.is_absolute() else args.output
 
-    hooks = scan_hooks(root)
-
-    rom_meta = {}
-    rom_path = (
-        (root / args.rom).resolve()
-        if not args.rom.is_absolute()
-        else args.rom.resolve()
-    )
-    if rom_path.exists():
-        rom_meta['path'] = str(rom_path.relative_to(root))
-        try:
-            sha1 = hashlib.sha1(rom_path.read_bytes()).hexdigest()
-            rom_meta['sha1'] = sha1
-        except Exception:
-            pass
+    rom_path = (root / args.rom).resolve()
+    try:
+        hooks = scan_hooks(root, asm_paths=collect_reachable_asm_sources(root))
+        if not hooks:
+            raise ValueError("No hooks found in reachable Oracle ASM sources")
+        rom_bytes = rom_path.read_bytes()
+        if not rom_bytes:
+            raise ValueError(f"ROM must not be empty: {rom_path}")
+    except (OSError, ValueError, SourceGraphError) as exc:
+        print(f"Hook generation failed: {exc}", file=sys.stderr)
+        return 1
+    rom_meta = {
+        'path': str(rom_path.relative_to(root)) if rom_path.is_relative_to(root) else str(rom_path),
+        'sha1': hashlib.sha1(rom_bytes).hexdigest(),
+        'sha256': hashlib.sha256(rom_bytes).hexdigest(),
+        'size': len(rom_bytes),
+    }
 
     data = {
         'version': 1,

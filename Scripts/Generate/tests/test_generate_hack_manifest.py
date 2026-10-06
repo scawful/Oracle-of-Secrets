@@ -414,7 +414,12 @@ class ReachableSourceTest(unittest.TestCase):
             scan_hooks(self.fixture.root, [active])
 
     def test_hooks_cli_normalizes_absolute_rom_symlink_path(self) -> None:
-        self.fixture.write_text("Oracle_main.asm", "")
+        self.fixture.write_text(
+            "Oracle_main.asm", 'incsrc "Core/active.asm"\n'
+        )
+        self.fixture.write_text(
+            "Core/active.asm", "org $008000\n  JSL $128000\n"
+        )
         rom = self.fixture.write_text("Roms/patched.sfc", "fixture")
         alias = self.fixture.root.parent / f"{self.fixture.root.name}-alias"
         alias.symlink_to(self.fixture.root, target_is_directory=True)
@@ -1428,7 +1433,7 @@ class RepositoryMessageSourceTest(unittest.TestCase):
         self.assertIn("Scripts/Build/build_rom.sh 168", policy_text)
         self.assertNotIn("message-write", policy_text)
 
-    def test_build_refreshes_the_configured_manifest_after_assembly(self) -> None:
+    def test_build_exposes_manifest_generation_with_explicit_roms(self) -> None:
         project = (REPO_ROOT / "Oracle-of-Secrets.yaze").read_text(
             encoding="utf-8"
         )
@@ -1440,26 +1445,21 @@ class RepositoryMessageSourceTest(unittest.TestCase):
             "hack_manifest_file=Roms/hack_manifest.json",
             project.splitlines(),
         )
-        generator_call = (
-            'python3 "$repo_root/Scripts/Generate/'
-            'generate_hack_manifest.py"'
-        )
-        self.assertEqual(build.count(generator_call), 1)
-        self.assertIn(
-            '--output "$repo_root/Roms/hack_manifest.json"',
-            build,
-        )
-        self.assertIn('if [[ "$base_rom" != /* ]]', build)
-        self.assertIn(
-            'base_rom="$(cd "$(dirname "$base_rom")" && pwd -P)/'
-            '$(basename "$base_rom")"',
-            build,
-        )
-        self.assertEqual(build.count('--dev-rom "$base_rom"'), 1)
+        self.assertIn("Scripts/Generate/generate_hack_manifest.py", build)
+        self.assertIn('--output "$repo_root/Roms/hack_manifest.json"', build)
+        self.assertIn('--dev-rom "$base_rom"', build)
         self.assertIn('--rom "$patched_rom"', build)
         self.assertLess(
-            build.index('echo "Built patched ROM: $patched_rom"'),
-            build.index(generator_call),
+            build.index("run_check collision_source"),
+            build.index("run_check assembly"),
+        )
+        self.assertLess(
+            build.index("run_check message_source"),
+            build.index("run_check assembly"),
+        )
+        self.assertLess(
+            build.index("run_check assembly"),
+            build.index("run_check manifest"),
         )
 
 

@@ -51,6 +51,14 @@ org $00F878 : db TextShade_Messaging>>0  ; @hook module=Core name=TextShade_Poin
 org $00F884 : db TextShade_Messaging>>8  ; @hook module=Core name=TextShade_PointerMid kind=data
 org $00F890 : db TextShade_Messaging>>16 ; @hook module=Core name=TextShade_PointerBank kind=data
 
+; Keep the vanilla frame in ordinary scenes. Blended scene layers use the
+; same full-width band as TextShade_BuildTable, with transparent frame tiles.
+; Displaced instructions: REP #$30 : LDA.w $1CD0 (5 bytes).
+org $0ED2AB ; @hook module=Core name=TextShade_OverlayBorderRow kind=jml target=TextShade_BorderRow
+  JML TextShade_BorderRow
+  NOP
+assert pc() == $0ED2B0
+
 org $3AEA00
 ; Bank $3A: Impa hints end below $3AEA00; early-game balance starts at $3AEC00.
 
@@ -156,6 +164,32 @@ TextShade_BuildTable:
   LDA.b $9A : STA.l TextShade_Table+2, X
   INX #3
   RTS
+}
+
+; Same entry/return contract as vanilla RenderText_DrawBorderRow:
+; caller DB=$0E, direct page=$0000; result M/X=16, X advances 52 bytes,
+; Y advances 4, $1CD0 advances one tile row, and $0E ends at zero.
+; Return through the original bank-$0E RTS so the caller's JSR stays valid.
+TextShade_BorderRow:
+{
+  REP #$30
+  LDA.b $9A : AND.w #$001F : BNE .overlay
+    LDA.w $1CD0
+    JML $0ED2B0                         ; displaced LDA, then vanilla body
+  .overlay
+  LDA.w $1CD0 : XBA : STA.w $1002, X
+  INX #2
+  XBA : CLC : ADC.w #$0020 : STA.w $1CD0
+  LDA.w #$2F00 : STA.w $1002, X         ; same 24-tile stripe header
+  INX #2
+  LDA.w #$0018 : STA.b $0E
+  LDA.w #$387F                        ; the renderer's transparent fill tile
+  .fill
+    STA.w $1002, X
+    INX #2
+    DEC.b $0E : BNE .fill
+  INY #4
+  JML $0ED2EB                         ; original RTS
 }
 
 print "End of text box shade             ", pc

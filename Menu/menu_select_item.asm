@@ -19,6 +19,11 @@ if !ENABLE_PORTAL_ROD_CELL == 1
 endif
 
 ; =========================================================
+if !ENABLE_GOLDSTAR_CELL == 1
+  db $0E ; $1A Goldstar uses the existing hookshot/chain handler
+endif
+Menu_ItemIndex_End:
+
 ; Decides which graphics is drawn
 Menu_AddressIndex:
   db $7EF340 ; Bow
@@ -50,6 +55,9 @@ Menu_AddressIndex:
   db $7EF35F ; Bottle #4
 if !ENABLE_PORTAL_ROD_CELL == 1
   db PortalRodOwned&$FF ; $19 Portal Rod ($7EF3A6)
+endif
+if !ENABLE_GOLDSTAR_CELL == 1
+  db GoldstarOwned&$FF ; $1A
 endif
 
 ; =========================================================
@@ -91,6 +99,9 @@ if !ENABLE_PORTAL_ROD_CELL == 1
   ; as arithmetic so the menu registry (z3ed oracle-menu-validate, yaze menu
   ; editor) keeps one editable entry per cell.
   dw (15*64)+(2*2)
+endif
+if !ENABLE_GOLDSTAR_CELL == 1
+  dw (15*64)+(5*2) ; $1A, row 4 second cell
 endif
 
 ; =========================================================
@@ -213,6 +224,12 @@ Menu_DeleteCursor_AltEntry:
 
 Menu_InitItemScreen:
 {
+if !ENABLE_GOLDSTAR_CELL == 1
+  JSR Menu_SplitValidateSelection
+  STZ.w $0207
+  LDA.b #$04 : STA.w $0200
+  RTS
+endif
   SEP   #$30
   LDY.w $0202 : BNE .all_good
     ; Loop through the SRM of each item to see if we have
@@ -288,6 +305,9 @@ Menu_AddressLong:
 if !ENABLE_PORTAL_ROD_CELL == 1
   db PortalRodOwned&$FF ; $19 Portal Rod ($7EF3A6)
 endif
+if !ENABLE_GOLDSTAR_CELL == 1
+  db GoldstarOwned&$FF ; $1A
+endif
 
 GotoNextItem_Local:
 {
@@ -327,7 +347,20 @@ SearchForEquippedItem_Override:
 if !ENABLE_ONE_RING == 1
   JSR OneRing_MigrateSlots ; file load (Module05) and RefreshIcon
 endif
+if !ENABLE_EQUIPMENT_MENU == 1
+  ; $030F is volatile WRAM and survives a warm file switch (Save and Quit ->
+  ; another file). Clear it so the loaded file's SavedOcarinaSong decides;
+  ; otherwise the previous file's song would be written into this file.
+  ; Harmless on RefreshIcon: the saved byte is kept in sync with $030F.
+  STZ.w CurrentSong
+  JSL UpdateFluteSong_Long ; restore/validate the saved song on file load
+endif
 
+if !ENABLE_GOLDSTAR_CELL == 1
+  JSL GoldstarInventory_Migrate
+  JSR Menu_SplitValidateSelection
+  REP #$30 : PLB : RTL
+endif
   LDY.b #$18
   .next_check
   LDX.w Menu_AddressLong-1, Y
@@ -400,3 +433,34 @@ assert pc() <= $0DE3C7
 
 pullpc
 
+
+if !ENABLE_GOLDSTAR_CELL == 1
+; Validate logical IDs, not physical cells. Used after old-save migration,
+; file load and menu initialization, including Goldstar-only inventories.
+Menu_SplitValidateSelection:
+{
+  SEP #$30
+  LDA.w $0202 : JSR .owned : BCS .done
+  LDY.b #$01
+  .scan
+  TYA : JSR .owned : BCS .found
+  INY : CPY.b #$1B : BCC .scan
+  LDY.b #$00
+  .found
+  STY.w $0202
+  .done
+  RTS
+  .owned
+  CMP.b #$01 : BCC .no
+  CMP.b #$1B : BCS .no
+  CMP.b #$13 : BCC .check
+  CMP.b #$18 : BCC .no
+  .check
+  TAX : DEX
+  LDA.l Menu_AddressLong, X : TAX
+  LDA.l $7EF300, X : BEQ .no
+  SEC : RTS
+  .no
+  CLC : RTS
+}
+endif

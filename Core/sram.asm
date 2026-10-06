@@ -295,7 +295,7 @@ SideQuestProgress2      = $7EF3D8
 
 Bow                     = $7EF340   ; 1=Bow, 2=+Arrows, 3=Silver, 4=Silver+Arrows
 Boomerang               = $7EF341   ; 1=Blue, 2=Red
-Hookshot                = $7EF342   ; 1=Hookshot, 2=Goldstar
+Hookshot                = $7EF342   ; legacy 1=Hookshot, 2=both; split flag: 0/1 Hookshot only
 Bombs                   = $7EF343   ; Count
 MagicPowder             = $7EF344   ; 1=Mushroom, 2=Powder
 FireRod                 = $7EF345   ; 1=Have
@@ -754,7 +754,7 @@ FreeBlock_Items    = $7EF310  ; 48 bytes ($7EF310-33F)
 FreeBlock_Collect  = $7EF39F  ; 2 bytes ($7EF39F-3A0)
 
 ; ---------------------------------------------------------
-; Reserved Block ($7EF3A8-3C4) - 29 bytes
+; Reserved Block ($7EF3AB-3C4) - 26 bytes
 ; ---------------------------------------------------------
 ; Purpose: Large block for complex features
 ; Suggested uses:
@@ -763,8 +763,29 @@ FreeBlock_Collect  = $7EF39F  ; 2 bytes ($7EF39F-3A0)
 ;   - NPC relationship tracking
 ; Allocated: $7EF3A1-3A6 = RingSaveBlock (magic rings)
 ;            $7EF3A7     = EonOwlFlags (Eon Owl appearances)
+;            $7EF3A8     = BoundMask (independent R binding)
+;            $7EF3A9-AA  = Goldstar ownership / migration version
 ;
-FreeBlock_Large    = $7EF3A8  ; 29 bytes ($7EF3A8-3C4)
+; Independent mask selection, saved with the vanilla $500-byte save block.
+; Proposed allocation for integrator: $7EF3A8; 0 none, 1-4 forms, 5 Stone.
+; Validate range AND ownership before use; old saves may contain garbage.
+BoundMask = $7EF3A8
+; Proposed allocations: reconcile with integrator before applying.
+GoldstarOwned = $7EF3A9       ; 0/1, independent of Hookshot $7EF342
+GoldstarInventoryVersion = $7EF3AA ; $A5 = legacy upgrade migrated
+
+; Saved Ocarina song ($7EF3AB). Allocated 2026-09-29 by the RC integrator.
+; Read/written only when !ENABLE_EQUIPMENT_MENU = 1 (Items/ocarina.asm
+; UpdateFluteSong_Long, Menu/menu_equipment.asm). 0 = unset, 1-4 = song.
+; CurrentSong ($030F) is volatile WRAM; this byte keeps the Equipment
+; choice across save/reload. Validated against learned songs ($7EF34C) on
+; every use; out-of-range or garbage values become song 1.
+; Free before: no reader/writer in the full candidate chain or main; no
+; indexed $7EF3xx,X write reaches it (only bottles $7EF35C,X); none of the
+; 76 item-receipt destinations ($0984E8) is in $7EF3A0-3C4; vanilla new-file
+; init clears it ($0CC315-$0CC325); 00 in every stored save checked.
+SavedOcarinaSong   = $7EF3AB
+FreeBlock_Large    = $7EF3AC  ; 25 bytes ($7EF3AC-3C4)
 
 ; ---------------------------------------------------------
 ; Dreams Extension ($7EF411-4FD) - 237 bytes
@@ -782,10 +803,10 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF307  | $7EF30E  | 8     | Story extension    |
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
-; | $7EF3A8  | $7EF3C4  | 29    | Large reserved     |
+; | $7EF3AB  | $7EF3C4  | 26    | Large reserved     |
 ; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
 ; |----------|----------|-------|--------------------|
-; | TOTAL AVAILABLE:    | 323   | bytes              |
+; | TOTAL AVAILABLE:    | 320   | bytes              |
 ; ---------------------------------------------------------
 
 ; =========================================================

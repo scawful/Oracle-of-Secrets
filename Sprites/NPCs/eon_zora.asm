@@ -103,7 +103,11 @@ EonZora_HandleDialogue:
     JMP ++
   .not_portal
   %ShowSolicitedMessage($01AE) : BCC .no_talk
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+    JSL MagicRing_GrantUnfound
+else
     JSL GetRandomInt : AND.b #$06 : STA.l FOUNDRINGS
+endif
   .no_talk
   ++
   RTS

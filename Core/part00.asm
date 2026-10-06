@@ -15,8 +15,8 @@
 ;   1. A villager (sprite $07 subtype 2, Sprite_BeanVendor_Long dispatch) is
 ;      staged into room $104 (the house Link wakes in) with the room's
 ;      sprites, while GameState = 0 and Impa is not following. Art: the
-;      16x16 blue-haired woman in the house sheet (spriteset $4D slot 1,
-;      chars $4C front / $48 side, OAM palette 4).
+;      ALTTP sweeping woman, two 16x16 parts (spriteset $4D slot 1
+;      substitutes local sheet $4A only in room $104; OAM palette 3).
 ;   2. On the first wake (IntroState = 2) she says B ($202) once. After a
 ;      death respawn in the house she says B2 ($203) once. Talking to her
 ;      gives B on the first visit and B2 on any later visit.
@@ -67,6 +67,15 @@ assert pc() == $09F5D8
 endif
 
 if !ENABLE_PART00_ARRIVAL_LINES == 1
+; Initial load and transition reload, slot 1 cache assignment. M=8; preserve
+; X/Y widths and registers. Keep the shared spriteset table unchanged.
+org $00E1CF ; @hook module=Sprites name=HouseVillager_InitialSheet kind=jsl target=HouseVillager_LoadSheet expected_m=8
+  JSL HouseVillager_LoadSheet
+assert pc() == $00E1D3
+org $00D739 ; @hook module=Sprites name=HouseVillager_TransitionSheet kind=jsl target=HouseVillager_LoadSheet expected_m=8
+  JSL HouseVillager_LoadSheet
+assert pc() == $00D73D
+
 ; Zelda_ApproachHero (Impa on the beach): LDA #$1C : LDY #$00 : JSL Sprite_ShowMessageUnconditional
 org $05ED02 ; @hook module=Sprites name=Part00_ImpaGreeting kind=jsl target=Part00_ImpaGreeting expected_m=8 expected_x=8
   JSL Part00_ImpaGreeting
@@ -186,7 +195,6 @@ HouseVillager_Stage:
 HouseVillager_Main:
 {
   PHB : PHK : PLB
-  JSR HouseVillager_Face
   JSR HouseVillager_Draw
   JSL Sprite_CheckActive : BCC .inactive
     JSL Sprite_PlayerCantPassThrough
@@ -196,60 +204,45 @@ HouseVillager_Main:
   RTL
 }
 
-; SprMiscC: 0 = front, 1 = side facing left, 2 = side facing right.
-HouseVillager_Face:
+; Override only the house slot, preserving the shared spriteset table.
+HouseVillager_LoadSheet:
 {
-  LDA.w SprX, X : STA.b $04
-  LDA.w SprXH, X : STA.b $05
-  LDA.w SprY, X : STA.b $06
-  LDA.w SprYH, X : STA.b $07
-  REP #$20
-  LDA.b $22 : SEC : SBC.b $04 : STA.b $08 ; dx = Link - villager
-  BPL + : EOR.w #$FFFF : INC A : +
-  STA.b $0A                               ; |dx|
-  LDA.b $20 : SEC : SBC.b $06
-  BPL + : EOR.w #$FFFF : INC A : +
-  CMP.b $0A : BCS .front                  ; |dy| >= |dx|
-  LDA.b $08 : BMI .left
-    SEP #$20 : LDA.b #$02 : STA.w SprMiscC, X : RTS
-  .left
-    SEP #$20 : LDA.b #$01 : STA.w SprMiscC, X : RTS
-  .front
-  SEP #$20
-  STZ.w SprMiscC, X
-  RTS
+  CMP.b #$4D : BNE .store
+  PHA
+  LDA.w $0AA3 : CMP.b #$4D : BNE .unchanged
+  LDA.b $1B : BEQ .unchanged
+  LDA.b $A0 : CMP.b #$04 : BNE .unchanged
+  LDA.b $A1 : CMP.b #$01 : BNE .unchanged
+  PLA
+  LDA.b #$4A
+  .store
+  STA.l $7EC2FD
+  RTL
+  .unchanged
+  PLA
+  BRA .store
 }
 
 HouseVillager_Draw:
 {
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
-  LDY.b #$00
-  REP #$20
-  LDA.b $00 : STA.b ($90), Y
-  AND.w #$0100 : STA.b $0E
-  INY
-  LDA.b $02 : STA.b ($90), Y
-  CLC : ADC.w #$0010 : CMP.w #$0100 : BCC .on_screen
-    LDA.w #$00F0 : STA.b ($90), Y
-  .on_screen
-  SEP #$20
-  PHX
-  LDA.w SprMiscC, X : TAX
-  LDA.l .chr, X : INY : STA.b ($90), Y
-  LDA.l .props, X : INY : STA.b ($90), Y
-  PLX
-  LDY.b #$00
-  LDA.b #$02 : ORA.b $0F : STA.b ($92), Y ; 16x16
+  ; Reuse the vanilla sweeping woman's two poses, remapped from slot 2
+  ; to slot 1. The original art has no side-facing pose.
+  LDA.b #$07 : STA.w $0F50, X ; N=1, sprite palette 3, no flip
+  LDA.b #$02 : STA.b $06
+  STZ.b $07
+  LDA.b $1A : LSR #4 : AND.b #$01
+  ASL #4
+  CLC : ADC.b #.oam_groups : STA.b $08
+  LDA.b #.oam_groups>>8 : ADC.b #$00 : STA.b $09
+  JSL $05DF75 ; SpriteDraw_Tabulated_player_deferred (table in caller DB)
   JSL Sprite_DrawShadow
   RTS
 
-  ; front, side (faces left), side flipped (faces right). Table 2 (N=1),
-  ; palette 4, priority 3.
-  .chr
-  db $4C, $48, $48
-  .props
-  db $39, $39, $79
+  .oam_groups
+  dw 0, -7 : db $4E, $00, $00, $02
+  dw 0,  5 : db $4A, $00, $00, $02
+  dw 0, -8 : db $4E, $00, $00, $02
+  dw 0,  4 : db $4C, $00, $00, $02
 }
 
 HouseVillager_Talk:

@@ -48,6 +48,12 @@ GameboyLinkRedMail:
 
 LinkState_GameboyInDungeonEntrance:
 {
+if !ENABLE_MASK_R_BINDING == 1
+  ; Cosmetic GBC transitions must not replace an active mask form.
+  LDA.w !CurrentMask : BEQ +
+  CMP.b #$05 : BCC .return
+  +
+endif
   print pc
   ; if link is in the dark world, change his sprite to the gbc one
   LDA $0FFF : CMP #$00 : BEQ .return
@@ -62,6 +68,12 @@ LinkState_GameboyInDungeonEntrance:
 ; Retain GBC sprite when exiting DW dungeons
 LoadOverworld_CheckForGbcLink:
 {
+if !ENABLE_MASK_R_BINDING == 1
+  ; Cosmetic GBC transitions must not replace an active mask form.
+  LDA.w !CurrentMask : BEQ +
+  CMP.b #$05 : BCC .return
+  +
+endif
   LDA $0FFF : BEQ .return_lw
     LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
         LDA.b #$06 : STA $02B2
@@ -79,6 +91,12 @@ LoadOverworld_CheckForGbcLink:
 
 OverworldTransition_CheckForGbcLink:
 {
+if !ENABLE_MASK_R_BINDING == 1
+  ; Cosmetic GBC transitions must not replace an active mask form.
+  LDA.w !CurrentMask : BEQ +
+  CMP.b #$05 : BCC .return
+  +
+endif
   LDA $0FFF : BEQ .return
     LDA.w !CurrentMask : CMP.b #$05 : BEQ .return
       LDA #$3B : STA $BC   ; change link's sprite

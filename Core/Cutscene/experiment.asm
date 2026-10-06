@@ -44,7 +44,7 @@ Exp_Bank00_RTL           = $00E33A ; RTL (end of InitializeTilesets)
 ; Actor sheets, spriteset slots 0-3 (VRAM $5000-$5FFF, OAM chars $100-$1FF).
 ; Each sheet sits in the slot its own sprite uses, so the chars below match
 ; the sprites' draw code.
-!ExpSheet0 = $48 ; slot 0: village spriteset $11 slot 0 (no actor uses it yet)
+!ExpSheet0 = $48 ; slot 0: pirate equipment; $02/$03/$12/$13 hold Mirror during scene
 !ExpSheet1 = $0D ; slot 1: pirate Stalfos (village spriteset $11)
 !ExpSheet2 = $55 ; slot 2: Farore (Sprites/NPCs/farore.asm, spriteset $09)
 !ExpSheet3 = $56 ; slot 3: Sea Zora (Sprites/NPCs/zora.asm, spriteset $1F)
@@ -206,25 +206,25 @@ endmacro
 ; paved island (x 96-160, y 112-168); banks left (x < 64) and right
 ; (x > 192). The text box is at the top (glyph rows y 80-127), so the actors
 ; stand below it. The Abyss ($6D) is the same camera on the mirror screen.
-!ExpX_ZoraA  = 124
+!ExpX_ZoraA  = 136
 !ExpY_ZoraA  = 146
 !ExpX_ZoraB  = 100
-!ExpY_ZoraB  = 138
+!ExpY_ZoraB  = 146
 !ExpX_Farore = 206
 !ExpY_Farore = 142
-!ExpX_Behind = 146 ; the Stalfos that follows Zora A home
+!ExpX_Behind = 158 ; the Stalfos that follows Zora A home
 !ExpY_Behind = 128
 
 ; ---------------------------------------------------------
 ; The scene.
 Experiment_Script:
 {
-  ; Shot 1: Tail Pond. Zora A at the water, Zora B with a slate, Farore apart.
+  ; Shot 1: Tail Pond. Researchers face the Mirror held by Zora A; Farore apart.
   %exp_area(0)
   %exp_sfx1($05)                        ; no rain ambience from the load
   %exp_song($F1)                        ; fade out the load's music
   %exp_look(ExpLook_Kalyxo)
-  %exp_actor(!ExpA_ZoraA, !ExpP_ZoraFront, !ExpX_ZoraA, !ExpY_ZoraA)
+  %exp_actor(!ExpA_ZoraA, !ExpP_ZoraLeft, !ExpX_ZoraA, !ExpY_ZoraA)
   %exp_actor(!ExpA_ZoraB, !ExpP_ZoraRight, !ExpX_ZoraB, !ExpY_ZoraB)
   %exp_actor(!ExpA_Farore, !ExpP_FaroreFront, !ExpX_Farore, !ExpY_Farore)
   %exp_fade($0F)
@@ -274,7 +274,7 @@ Experiment_Script:
   %exp_actor(!ExpA_Stal0, !ExpP_Hide, 0, 0)
   %exp_actor(!ExpA_Stal1, !ExpP_Hide, 0, 0)
   %exp_actor(!ExpA_Stal2, !ExpP_Hide, 0, 0)
-  %exp_actor(!ExpA_ZoraA, !ExpP_ZoraFront, !ExpX_ZoraA, !ExpY_ZoraA)
+  %exp_actor(!ExpA_ZoraA, !ExpP_ZoraLeft, !ExpX_ZoraA, !ExpY_ZoraA)
   %exp_actor(!ExpA_ZoraB, !ExpP_ZoraRight, !ExpX_ZoraB, !ExpY_ZoraB)
   %exp_actor(!ExpA_Farore, !ExpP_FaroreFront, !ExpX_Farore, !ExpY_Farore)
   %exp_area(0)
@@ -368,29 +368,35 @@ Exp_Poses:
   .hide
   db 0
   .zora_front
-  db 2
+  db 3
   db 0, 0, $EE, $35, $02
   db 0, -8, $DE, $35, $02
-  .zora_right                             ; side frame as drawn (faces right)
-  db 2
-  db 0, 0, $EC, $35, $02
-  db 0, -8, $DC, $35, $02
-  .zora_left                              ; side frame, mirrored
-  db 2
+  db 0, 10, $6C, $38, $02               ; common sprite shadow, N=0
+  .zora_right                            ; source side art faces left: flip to right
+  db 3
   db 0, 0, $EC, $75, $02
   db 0, -8, $DC, $75, $02
+  db 0, 10, $6C, $38, $02
+  .zora_left
+  db 3
+  db 0, 0, $EC, $35, $02
+  db 0, -8, $DC, $35, $02
+  db 0, 10, $6C, $38, $02
   .farore_front
-  db 2
+  db 3
   db 0, 0, $AA, $3B, $02
   db 0, -12, $A8, $3B, $02
+  db 0, 10, $6C, $38, $02
   .farore_step
-  db 2
+  db 3
   db 0, 0, $88, $7B, $02
   db 0, -12, $A8, $3B, $02
+  db 0, 10, $6C, $38, $02
   .farore_back
-  db 2
+  db 3
   db 0, 0, $8C, $3B, $02
   db 0, -12, $8A, $3B, $02
+  db 0, 10, $6C, $38, $02
   .stal_low                               ; skull only, at the ground line
   db 1
   db 0, 2, $40, $3D, $02
@@ -874,10 +880,57 @@ Exp_LoadSheets:
     PLX
     INX : CPX.b #$04 : BCC .next
   PLB
+  JSR Exp_LoadMirrorTiles
   RTS
 
   .sheets
   db !ExpSheet0, !ExpSheet1, !ExpSheet2, !ExpSheet3
+}
+
+; Reuse the existing item-receipt Mirror, including its upper palette half.
+; Decode sheet $5B in the existing $7E7800 sprite buffer, then convert
+; only its Mirror tiles into $7EBD40. Do not use item receipt $00D4ED:
+; it overwrites $7F4000, which this scene still needs for its map. Slot 0's tile
+; positions $02/$03/$12/$13 are not referenced by any Exp_Poses actor.
+; Called only during forced blank, after all four actor sheets are uploaded.
+Exp_LoadMirrorTiles:
+{
+  PHB
+  LDA.b #$00 : PHA : PLB
+  STZ.b $00
+  LDA.b #$78 : STA.b $01
+  LDA.b #$7E : STA.b $02 : STA.b $05
+  LDY.b #$5B ; item sheet, Mirror local tiles $02/$03/$12/$13
+  PHK : PEA.w .decoded-1
+  PEA.w Exp_Bank00_RTL-1
+  JML $00E772 ; Decompress_sprite_arbitrary, RTS
+  .decoded
+  REP #$31
+  LDA.w #$7830 : LDX.w #$2D40 : LDY.w #$0002
+  PHK : PEA.w .converted_top-1
+  PEA.w Exp_Bank00_RTL-1
+  JML $00D61C ; Do3bppToWRAM4bpp_RightPal_arbitrary, RTS
+  .converted_top
+  LDA.w #$79B0 : LDY.w #$0002
+  PHK : PEA.w .converted_bottom-1
+  PEA.w Exp_Bank00_RTL-1
+  JML $00D61C
+  .converted_bottom
+  SEP #$30
+  PLB
+  LDA.b #$80 : STA.w $2115
+  REP #$30
+  LDA.w #$5020 : STA.w $2116
+  LDX.w #$0000
+  .top
+    LDA.l $7EBD40, X : STA.w $2118
+    INX : INX : CPX.w #$0040 : BCC .top
+  LDA.w #$5120 : STA.w $2116
+  .bottom
+    LDA.l $7EBD40, X : STA.w $2118
+    INX : INX : CPX.w #$0080 : BCC .bottom
+  SEP #$30
+  RTS
 }
 
 ; Same writes as the vanilla entrance cache ($02D8C5), from the $2D screen
@@ -1126,6 +1179,7 @@ Exp_DrawActors:
   STZ.b $00
   STZ.b $02
   STZ.b $03
+  JSR Exp_DrawMirror
   LDA.l Exp_ShakeX : STA.b $0C
   STZ.b $0D
   BPL + : DEC.b $0D : +
@@ -1200,6 +1254,24 @@ Exp_DrawActors:
     INC.b $00
     LDA.b $00 : CMP.b #!ExpActors : BCS .done
     JMP .actor
+  .done
+  RTS
+}
+
+; One object attached to Zora A, in front of the hand. The scene's existing
+; flash/load/black/white gates hide it with the actors. Current scripted X/Y
+; remain inside the viewport (X >= 100, Y <= 154), including the shake.
+Exp_DrawMirror:
+{
+  LDA.l Exp_ActPose+!ExpA_ZoraA : BEQ .done
+  LDA.l Exp_ActX+!ExpA_ZoraA : SEC : SBC.b #14
+  SEC : SBC.l Exp_ShakeX : STA.w $0800
+  LDA.l Exp_ActY+!ExpA_ZoraA : STA.w $0801
+  LDA.b #$02 : STA.w $0802 ; slot 0 tile $02, four tiles uploaded above
+  LDA.b #$35 : STA.w $0803 ; N=1, palette 2 (item uses indices 8-15)
+  LDA.b #$02 : STA.w $0A20
+  LDA.b #$04 : STA.b $02
+  INC.b $03
   .done
   RTS
 }

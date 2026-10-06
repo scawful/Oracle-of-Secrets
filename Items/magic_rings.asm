@@ -72,6 +72,59 @@ endif
 }
 endif
 
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+; Ring grant (Eon Zora message $1AE, Error message $121). Marks one ring as
+; found (FOUNDRINGS), picked at random among the rings that are neither found
+; nor owned (MAGICRINGS). Grants nothing while a found ring still waits for
+; Vasu's appraisal (one ring per appraisal, as Vasu's price is per ring), or
+; when every ring is found or owned. Replaces GetRandomInt AND #$06 STA
+; FOUNDRINGS, which could only give Blast ($02) and/or Light ($04), or none,
+; and overwrote a ring that was not appraised yet.
+; In: 8-bit A/X/Y. Out: C set = a ring was granted. Keeps X, Y.
+MagicRing_GrantUnfound:
+{
+  PHX : PHY
+  ; A found ring still waits for appraisal: grant nothing.
+  LDA.l MAGICRINGS : EOR.b #$FF : AND.l FOUNDRINGS : AND.b #$3F : BNE .none
+  ; Candidates: neither found nor owned.
+  LDA.l FOUNDRINGS : ORA.l MAGICRINGS : EOR.b #$FF : AND.b #$3F : BEQ .none
+  PHA                                    ; $01,S = candidate bits
+  LDX.b #$00                             ; X = number of candidates
+  .count
+    LSR A : BCC .count_next
+      INX
+    .count_next
+  CMP.b #$00 : BNE .count
+  PHX                                    ; $01,S = count, $02,S = candidates
+  JSL GetRandomInt
+  .mod
+    CMP $01,S : BCC .have_index
+    SBC $01,S
+    BRA .mod
+  .have_index
+  TAY                                    ; Y = pick (0 to count-1)
+  PLX                                    ; drop the count
+  LDX.b #$01                             ; X = ring bit
+  .scan
+    TXA : AND $01,S : BEQ .scan_next
+      DEY : BMI .grant
+    .scan_next
+    TXA : ASL A : TAX
+    BRA .scan
+  .grant
+  PLA                                    ; drop the candidates
+  TXA : ORA.l FOUNDRINGS : STA.l FOUNDRINGS
+  PLY : PLX
+  SEC
+  RTL
+
+  .none
+  PLY : PLX
+  CLC
+  RTL
+}
+endif
+
 pushpc
 ; Sprite_ApplyCalculatedDamage
 org $06EDC0 ; @hook module=Items

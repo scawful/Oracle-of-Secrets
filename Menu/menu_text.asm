@@ -166,12 +166,26 @@ Menu_RingNames:
   dw "___STEADFAST__  "
 
 Menu_RingDescriptions:
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+  ; Power and Armor have no penalty in code (Items/magic_rings.asm
+  ; MagicRing_CheckForPower / MagicRing_CheckForArmor), so none is shown.
+  dw "_____ATK_UP_____"
+  dw "_____DEF_UP_____"
+  dw "SLOW_HEART_REGEN"
+  dw "SWD_BEAM_2_HRTS_"
+  ; Blast gives bombs the Bombos damage class ($0D): most foes burn, but some
+  ; (Moldorm, Armos Knights, Puffstool, ...) take no bomb damage, so "damage
+  ; up" is not true for every foe (m3 truth README, damage matrix).
+  dw "___FIRE_BOMBS___"
+  dw "__NO_KNOCKBACK__"
+else
   dw "ATK_UP__DEF_DOWN"
   dw "ATK_DOWN__DEF_UP"
   dw "SLOW_HEART_REGEN"
   dw "SWD_BEAM_2_HRTS_"
   dw "_BOMB_DAMAGE_UP_"
   dw "__NO_KNOCKBACK__"
+endif
 
 Menu_RingsFound:
   dw "NEW_RING_FOUND__"
@@ -189,7 +203,15 @@ Menu_DrawItemName:
     RTS
   .haveItem
 
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.w $0202 : CMP.b #$1A : BNE .not_goldstar_cell
+  JSR DrawGoldstarName
+  RTS
+  .not_goldstar_cell
+  LDA.w $0202
+else
   LDA.w $0202 : CMP.b #$03 : BEQ .goldstar
+endif
                 CMP.b #$05 : BEQ .mushroom
                 CMP.b #$0D : BEQ .ocarina
                 CMP.b #$10 : BEQ .custom_rods

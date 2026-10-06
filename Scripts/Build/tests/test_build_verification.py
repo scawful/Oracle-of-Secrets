@@ -145,6 +145,9 @@ class BuildOverlapDispatchTest(unittest.TestCase):
             'symbols_path="/fixture repo/Roms/oos999x.sym"\n'
             f'emit_symbols={emit_symbols}\n'
             'python3() { printf "ARG:%s\\n" "$@"; }\n'
+            'run_check() { shift 2; "$@"; }\n'
+            'check_required() { printf "%s" "$2"; }\n'
+            'omit_check() { echo "Skipping ZScream overlap check: $4"; }\n'
             + block
         )
         return subprocess.run(["bash", "-c", script], capture_output=True, text=True)

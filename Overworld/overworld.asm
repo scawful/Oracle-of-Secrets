@@ -1,5 +1,7 @@
 ; Overworld.asm
 
+incsrc "Overworld/music_cache.asm"
+
 ; Random chance of hearts from bush instead of guards
 org $1AFBBF : db $0B ; Heart Index
 org $1AFBC7 : db $0B ; Heart Index

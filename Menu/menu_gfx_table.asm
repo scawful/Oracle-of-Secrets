@@ -65,7 +65,15 @@ BigKeyGFX:
   dw $34D6, $74D6, $34E6, $34E7
 
 BigChestKeyGFX:
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+  ; Chest key (the compass bit opens big chests, Dungeons/keyblock.asm): the
+  ; treasure chest's lid (TreasureChestGFX top tiles $14B/$14C) in the key
+  ; gold, on the big key's shaft ($E6/$E7). The old top ($BF) looked like the
+  ; big key. Existing tiles only.
+  dw $354B, $354C, $34E6, $34E7
+else
   dw $34BF, $74BF, $34E6, $34E7
+endif
 
 MapGFX:
   dw $2936, $2937, $2946, $2947

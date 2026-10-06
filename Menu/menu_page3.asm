@@ -1,3 +1,5 @@
+; ENABLE_MASK_R_BINDING overrides the legacy Y-item selection below:
+; page 3 selects BoundMask; the live form drives the effective action/HUD.
 ; =========================================================
 ; Menu page 3 "Masks & Rings" (!ENABLE_MENU_PAGE3)
 ;
@@ -108,6 +110,12 @@ if !ENABLE_PORTAL_ROD_CELL == 1
     .grid_move
     ; From the Portal Rod ($19) search from its cell ($13), so the move
     ; follows the grid; Menu_ItemScreen turns a $13 result back into $19.
+if !ENABLE_GOLDSTAR_CELL == 1
+    LDA.w $0202 : CMP.b #$1A : BNE .not_goldstar_move
+    LDA.b #$14 : STA.w $0202
+    BRA .items
+    .not_goldstar_move
+endif
     LDA.w $0202 : CMP.b #$19 : BNE .items
       LDA.b #$13 : STA.w $0202
 endif
@@ -295,6 +303,13 @@ if !ENABLE_PORTAL_ROD_CELL == 1
     RTS
   .not_portal_cell
 endif
+if !ENABLE_GOLDSTAR_CELL == 1
+  CMP.b #$14 : BNE .not_goldstar_cell
+  PLA
+  LDA.l GoldstarOwned
+  RTS
+  .not_goldstar_cell
+endif
   JSR Menu_Page3_IsMaskItem
   PLA
   BCC .keep
@@ -311,6 +326,9 @@ Menu_Page3_GridHasItem:
   PHX : PHY
 if !ENABLE_PORTAL_ROD_CELL == 1
   LDA.l PortalRodOwned : BNE .found
+endif
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.l GoldstarOwned : BNE .found
 endif
   LDY.b #$17                   ; table index (item ID - 1)
   .loop
@@ -335,11 +353,19 @@ endif
 ; Cursor slot when page 3 opens. Out: $020B, $0207 = 0, SEP #$30.
 Menu_Page3_InitCursor:
 {
+if !ENABLE_EQUIPMENT_MENU == 1
+  JMP Menu_Equipment_Init
+endif
   SEP #$30
   STZ.w $0207
   LDA.w MenuScrollLevelH : LSR : BCS .rings  ; opened with Y
 
-  LDA.w $0202 : JSR Menu_Page3_IsMaskItem : BCC .first_mask
+if !ENABLE_MASK_R_BINDING == 1
+  JSL MaskBinding_SelectedItem
+else
+  LDA.w $0202
+endif
+  JSR Menu_Page3_IsMaskItem : BCC .first_mask
     SEC : SBC.b #$13-!P3_FirstMaskSlot
     STA.w $020B
     RTS
@@ -372,6 +398,9 @@ Menu_Page3_InitCursor:
 ; D-pad: move the cursor with Menu_Page3_Nav. 8-bit A/X/Y.
 Menu_Page3_Move:
 {
+if !ENABLE_EQUIPMENT_MENU == 1
+  JMP Menu_Equipment_Move
+endif
   LDA.b $F4 : AND.b #$0F : BEQ .done
   LDX.b #$00
   LSR : BCS .go                ; right
@@ -396,6 +425,9 @@ Menu_Page3_Move:
 ; 8-bit A/X/Y.
 Menu_Page3_Select:
 {
+if !ENABLE_EQUIPMENT_MENU == 1
+  JMP Menu_Equipment_Select
+endif
   BIT.b $F6 : BMI .pressed               ; A
   LDA.b $F4 : BIT.b #$40 : BEQ .done     ; Y
   .pressed
@@ -410,8 +442,13 @@ Menu_Page3_Select:
   SEC : SBC.b #!P3_FirstMaskSlot : TAX
   LDA.l Menu_AddressLong+$12, X : TAX
   LDA.l $7EF300, X : BEQ .error
+if !ENABLE_MASK_R_BINDING == 1
+    LDA.w $020B : SEC : SBC.b #!P3_FirstMaskSlot-1
+    STA.l BoundMask
+else
     LDA.w $020B : CLC : ADC.b #$13-!P3_FirstMaskSlot
     STA.w $0202                          ; the Y item, as in the grid
+endif
     LDA.b #$20 : STA.w $0207             ; show the new marker first
     LDA.b #$22 : STA.w $012F             ; equip sound (Ring Box)
     RTS
@@ -476,6 +513,9 @@ endif
 if !ENABLE_MENU_PAGE3_LAYOUT_A == 1
 Menu_Page3_Draw:
 {
+if !ENABLE_EQUIPMENT_MENU == 1
+  JMP Menu_Equipment_Draw
+endif
   JSR Menu_DrawBackground                ; menu_frame (single border, tabs)
   SEP #$30
   LDA.b #$7E : STA.b $0A                 ; bank of DrawMenuItem's [$08]
@@ -539,7 +579,12 @@ Menu_Page3_Draw:
 
   ; Red brackets: the worn mask (the Y item), then the worn ring.
   SEP #$30
-  LDA.w $0202 : JSR Menu_Page3_IsMaskItem : BCC .no_mask
+if !ENABLE_MASK_R_BINDING == 1
+  JSL MaskBinding_SelectedItem
+else
+  LDA.w $0202
+endif
+  JSR Menu_Page3_IsMaskItem : BCC .no_mask
     SEC : SBC.b #$13-!P3_FirstMaskSlot
     JSR .marker
   .no_mask
@@ -590,6 +635,9 @@ else
 ; Out: SEP #$30.
 Menu_Page3_Draw:
 {
+if !ENABLE_EQUIPMENT_MENU == 1
+  JMP Menu_Equipment_Draw
+endif
   JSR Menu_DrawRingBox                   ; ring_box.tilemap
   JSR Menu_DrawMagicRingsInBox           ; sets $0A = $7E for DrawMenuItem
 
@@ -661,7 +709,12 @@ if !ENABLE_ONE_RING == 0
   LDA.l RingSlot2 : JSR .ring_marker
   LDA.l RingSlot3 : JSR .ring_marker
 endif
-  LDA.w $0202 : JSR Menu_Page3_IsMaskItem : BCC .no_mask
+if !ENABLE_MASK_R_BINDING == 1
+  JSL MaskBinding_SelectedItem
+else
+  LDA.w $0202
+endif
+  JSR Menu_Page3_IsMaskItem : BCC .no_mask
     SEC : SBC.b #$13-!P3_FirstMaskSlot
     JSR .equipped_marker
   .no_mask
@@ -867,11 +920,21 @@ Menu_PortalRod_SyncOwned:
 ; so $0202 = $13 there means the Portal Rod ($19). 8-bit A.
 Menu_PortalRod_CellToItem:
 {
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.w $0202 : CMP.b #$14 : BNE .not_goldstar
+  LDA.b #$1A : STA.w $0202
+  RTS
+  .not_goldstar
+endif
   LDA.w $0202 : CMP.b #$13 : BNE .done
     LDA.b #$19 : STA.w $0202
   .done
   RTS
 }
+endif
+
+if !ENABLE_EQUIPMENT_MENU == 1
+  incsrc "menu_equipment.asm"
 endif
 
 assert pc() <= $2E8000, "Menu/menu_page3.asm overflows bank $2D"

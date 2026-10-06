@@ -443,6 +443,33 @@ ResetOcarinaFlag:
 ; 05 - 4 songs (Healing, Storms, Soaring, Time)
 UpdateFluteSong_Long:
 {
+if !ENABLE_EQUIPMENT_MENU == 1
+  ; Equipment chooses the song. L/R must not also change it in the world.
+  ; CurrentSong ($030F) is volatile; SavedOcarinaSong ($7EF3AB) keeps the
+  ; choice across save/reload. Restore from it when $030F is 0, validate
+  ; against the learned count (garbage or unlearned -> song 1), then sync.
+  LDA.l $7EF34C : CMP.b #$02 : BCC .equipment_none
+  CMP.b #$06 : BCC .equipment_count
+  LDA.b #$05
+.equipment_count
+  DEC : PHA
+  LDA.w CurrentSong : BNE .equipment_check
+  LDA.l SavedOcarinaSong : STA.w CurrentSong
+.equipment_check
+  LDA.w CurrentSong : BEQ .equipment_first
+  CMP.b $01,S : BCC .equipment_valid
+  BEQ .equipment_valid
+.equipment_first
+  LDA.b #$01 : STA.w CurrentSong
+.equipment_valid
+  PLA
+  LDA.w CurrentSong : STA.l SavedOcarinaSong
+  RTL
+.equipment_none
+  STZ.w CurrentSong
+  LDA.b #$00 : STA.l SavedOcarinaSong
+  RTL
+else
   LDA $7EF34C : CMP.b #$02 : BCS +
     JMP .no_songs
   +
@@ -511,6 +538,7 @@ UpdateFluteSong_Long:
   .no_songs
   STZ $030F
   RTL
+endif
 }
 %log_end("Items/ocarina.asm", !LOG_ITEMS)
 

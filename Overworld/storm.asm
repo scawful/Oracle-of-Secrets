@@ -69,23 +69,23 @@ Part0Storm_CarryClearIfStorm:
 
 ; ---------------------------------------------------------
 ; AdjustOverworldAmbiance tail ($02C4B6, M=8 X=16).
-; Replaced code: LDA.b $00 : STA.l $7F5B80.
+; Replaced code: LDA.b $00 : STA.l !OverworldMusicCache+!OverworldMusicSpecialIndex.
 ; While the storm is active, SFX1 nibble of light world areas $00-$3F = $1
 ; (rain). X/Y are free here (vanilla reloads them after the call).
 ; On the portal home this runs in MirrorWarp_FinalizeAndLoadDestination
-; ($02B297) before the destination's SFX1 is read from $7F5B00, so the storm
+; ($02B297) before the destination's SFX1 is read from !OverworldMusicCache, so the storm
 ; is over (here at the latest) and Link arrives without rain.
 Part0Storm_AdjustAmbience:
 {
   PHP
   SEP #$20
   REP #$10
-  LDA.b $00 : STA.l $7F5B80
+  LDA.b $00 : STA.l !OverworldMusicCache+!OverworldMusicSpecialIndex
   JSR Part0Storm_EndIfBackOnKalyxo
   LDA.l StoryProgress2 : AND.b #!Story2_Part0Storm : BEQ .done
-    LDX.w #$003F
+    LDX.w #!OverworldMusicLightCount-1
     .next_area
-      LDA.l $7F5B00, X : AND.b #$0F : ORA.b #$10 : STA.l $7F5B00, X
+      LDA.l !OverworldMusicCache, X : AND.b #$0F : ORA.b #$10 : STA.l !OverworldMusicCache, X
     DEX : BPL .next_area
   .done
   PLP
@@ -103,10 +103,10 @@ Part0Storm_EndIfBackOnKalyxo:
   LDA.l StoryProgress2 : AND.b #!Story2_KydrogEncounter : BEQ .done
   LDA.l SavedWorld : BNE .done ; $40 while Link is in the Abyss
     LDA.l StoryProgress2 : AND.b #$FF^!Story2_Part0Storm : STA.l StoryProgress2
-    LDX.w #$003F
+    LDX.w #!OverworldMusicLightCount-1
     .next_area
-      LDA.l $7F5B00, X : AND.b #$F0 : CMP.b #$10 : BNE .keep_area
-        LDA.l $7F5B00, X : AND.b #$0F : STA.l $7F5B00, X
+      LDA.l !OverworldMusicCache, X : AND.b #$F0 : CMP.b #$10 : BNE .keep_area
+        LDA.l !OverworldMusicCache, X : AND.b #$0F : STA.l !OverworldMusicCache, X
       .keep_area
     DEX : BPL .next_area
   .done
@@ -115,7 +115,7 @@ Part0Storm_EndIfBackOnKalyxo:
 
 pushpc
 
-; AdjustOverworldAmbiance: LDA.b $00 : STA.l $7F5B80 (6 bytes).
+; AdjustOverworldAmbiance: LDA.b $00 : STA.l !OverworldMusicCache+!OverworldMusicSpecialIndex (6 bytes).
 org $02C4B6 ; @hook module=Overworld name=Part0Storm_AdjustAmbience kind=jsl target=Part0Storm_AdjustAmbience expected_m=8 expected_x=16
   JSL Part0Storm_AdjustAmbience : NOP #2
 assert pc() == $02C4BC

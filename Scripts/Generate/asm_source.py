@@ -3,11 +3,12 @@
 
 Evaluates `!define` assignments and `if`/`elseif`/`else`/`endif` blocks so
 tools can walk only the active source lines. Used by generate_hooks_json.py
-and generate_hack_manifest.py. Moved unchanged from generate_hooks_json.py.
+and generate_hack_manifest.py. Also owns their shared reachable include graph.
 """
 from __future__ import annotations
 
 import ast
+import os
 import re
 from pathlib import Path
 from typing import Iterable, Optional
@@ -273,3 +274,158 @@ def _iter_active_lines(
             if assigned:
                 defines.pop(assigned.group(1), None)
         yield idx, line, dict(defines)
+
+
+class SourceGraphError(RuntimeError):
+    """Raised when reachable ASM source cannot be resolved safely."""
+
+
+# Literal Asar source include. Paths may be quoted or bare; comments are
+# stripped before matching so archived `; incsrc ...` lines stay unreachable.
+INCSRC_RE = re.compile(
+    r"^\s*incsrc\s+(?:\"([^\"]+)\"|'([^']+)'|([^\s;]+))",
+    re.IGNORECASE,
+)
+
+
+def _parse_incsrc(line: str) -> Optional[str]:
+    """Return a literal `incsrc` path from uncommented source text."""
+    source = line.split(";", 1)[0]
+    match = INCSRC_RE.match(source)
+    if not match:
+        return None
+    return next(value for value in match.groups() if value is not None)
+
+
+def _iter_active_incsrcs(
+    lines: list[str],
+    global_defines: dict[str, int],
+) -> Iterable[tuple[int, str]]:
+    """Yield literal includes whose enclosing Asar condition is active."""
+    for line_index, line, _ in _iter_active_lines(lines, global_defines):
+        include_text = _parse_incsrc(line)
+        if include_text is not None:
+            yield line_index + 1, include_text
+
+
+def _is_case_exact_file(candidate: Path, root: Path) -> bool:
+    """Return whether a candidate exists with repository-exact path casing."""
+    normalized = Path(os.path.normpath(candidate))
+    try:
+        relative = normalized.relative_to(root)
+    except ValueError:
+        # Preserve the caller's existing outside-root diagnostic.
+        return candidate.is_file()
+
+    current = root
+    for part in relative.parts:
+        try:
+            entries = {entry.name: entry for entry in current.iterdir()}
+        except OSError:
+            return False
+        if part not in entries:
+            return False
+        current = entries[part]
+    return current.is_file()
+
+
+def collect_reachable_asm_sources(
+    root: Path,
+    entry_point: Path = Path("Oracle_main.asm"),
+    defines: Optional[dict[str, int]] = None,
+) -> list[Path]:
+    """Collect the transitive literal `incsrc` graph for the build entry.
+
+    Asar sources in this repository use both paths relative to the including
+    file and repo-root-relative paths. Follow every feasible conditional edge,
+    treat literal includes as authoritative regardless of directory name, and
+    fail closed when a reachable include or cross-file global-define state
+    cannot be resolved safely.
+    """
+    resolved_root = root.resolve()
+    entry = entry_point if entry_point.is_absolute() else resolved_root / entry_point
+    entry = entry.resolve()
+    if not entry.is_file():
+        raise SourceGraphError(f"ASM entry point not found: {entry}")
+    if not entry.is_relative_to(resolved_root):
+        raise SourceGraphError(
+            f"ASM entry point is outside repo root: {entry}"
+        )
+
+    active_defines = (
+        _load_global_defines(resolved_root)
+        if defines is None
+        else dict(defines)
+    )
+    pending = [entry]
+    reachable: set[Path] = set()
+    while pending:
+        asm_path = pending.pop()
+        if asm_path in reachable:
+            continue
+        reachable.add(asm_path)
+
+        try:
+            lines = asm_path.read_text(
+                encoding="utf-8", errors="ignore"
+            ).splitlines()
+        except OSError as exc:
+            raise SourceGraphError(
+                f"Unable to read reachable ASM source {asm_path}: {exc}"
+            ) from exc
+
+        for line_number, include_text in _iter_active_incsrcs(
+            lines, active_defines
+        ):
+            include_path = Path(include_text)
+            candidates = (
+                asm_path.parent / include_path,
+                resolved_root / include_path,
+            )
+            included = next(
+                (candidate.resolve() for candidate in candidates
+                 if _is_case_exact_file(candidate, resolved_root)),
+                None,
+            )
+            if included is None:
+                rel = asm_path.relative_to(resolved_root)
+                raise SourceGraphError(
+                    f"{rel}:{line_number}: unresolved incsrc "
+                    f"{include_text!r}"
+                )
+            if not included.is_relative_to(resolved_root):
+                rel = asm_path.relative_to(resolved_root)
+                raise SourceGraphError(
+                    f"{rel}:{line_number}: incsrc escapes repo root: "
+                    f"{include_text!r}"
+                )
+            pending.append(included)
+
+    canonical_define_sources = {
+        "Util/macros.asm",
+        "Config/module_flags.asm",
+        "Config/feature_flags.asm",
+    }
+    for asm_path in sorted(reachable):
+        rel = asm_path.relative_to(resolved_root).as_posix()
+        if rel in canonical_define_sources:
+            continue
+        try:
+            lines = asm_path.read_text(
+                encoding="utf-8", errors="ignore"
+            ).splitlines()
+        except OSError as exc:
+            raise SourceGraphError(
+                f"Unable to validate reachable ASM source {asm_path}: {exc}"
+            ) from exc
+        for line_index, line, _ in _iter_active_lines(lines, active_defines):
+            assignment = DEFINE_ANY_ASSIGN_RE.match(line.split(";", 1)[0])
+            if assignment and assignment.group(1) in active_defines:
+                raise SourceGraphError(
+                    f"{rel}:{line_index + 1}: reachable source reassigns "
+                    f"preloaded global define !{assignment.group(1)} outside "
+                    "the canonical define files; include-order state cannot "
+                    "be resolved safely"
+                )
+
+    return sorted(reachable)

@@ -39,6 +39,12 @@
 incsrc    "Util/macros.asm"
 incsrc    "Config/module_flags.asm"
 incsrc    "Config/feature_flags.asm"
+if !ENABLE_MASK_R_BINDING == 1
+  assert !ENABLE_MASK_Y_TRANSFORM == 1, "Mask R binding requires mask_y_transform"
+  assert !ENABLE_TRUTHFUL_CONTROLS == 1, "Mask R binding requires truthful_controls"
+  assert !ENABLE_MENU_PAGE3 == 1, "Mask R binding requires menu_page3"
+  assert !ENABLE_MINISH_AUTO_PORTAL == 1, "Mask R binding reserves R; enable minish_auto_portal"
+endif
 assert !ENABLE_ORACLE_ARRIVAL_SEQUENCE <= !ENABLE_CUTSCENE_FRAMEWORK, "ENABLE_ORACLE_ARRIVAL_SEQUENCE requires ENABLE_CUTSCENE_FRAMEWORK"
 assert !ENABLE_EXPERIMENT_SCENE <= !ENABLE_ORACLE_ARRIVAL_SEQUENCE, "ENABLE_EXPERIMENT_SCENE requires ENABLE_ORACLE_ARRIVAL_SEQUENCE"
 assert !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY <= !ENABLE_RING_SRAM_RELOCATE, "Ring/Journal unlock gating requires relocated ring SRAM"
@@ -47,6 +53,16 @@ assert !ENABLE_MENU_PAGE3_LAYOUT_A <= !ENABLE_MENU_PAGE3, "ENABLE_MENU_PAGE3_LAY
 assert !ENABLE_MENU_PAGE3_LAYOUT_A <= !ENABLE_ONE_RING, "ENABLE_MENU_PAGE3_LAYOUT_A requires ENABLE_ONE_RING"
 assert !ENABLE_MENU_PAGE_LOOP <= !ENABLE_MENU_PAGE3, "ENABLE_MENU_PAGE_LOOP requires ENABLE_MENU_PAGE3"
 assert !ENABLE_PORTAL_ROD_CELL <= !ENABLE_MENU_PAGE3, "ENABLE_PORTAL_ROD_CELL requires ENABLE_MENU_PAGE3"
+assert !ENABLE_TRUTHFUL_CONTROLS <= !ENABLE_MASK_Y_TRANSFORM, "ENABLE_TRUTHFUL_CONTROLS requires ENABLE_MASK_Y_TRANSFORM"
+assert !ENABLE_TRUTHFUL_CONTROLS <= !ENABLE_RING_SRAM_RELOCATE, "ENABLE_TRUTHFUL_CONTROLS requires ENABLE_RING_SRAM_RELOCATE"
+assert !ENABLE_GOLDSTAR_CELL <= !ENABLE_MASK_R_BINDING, "Goldstar cell requires independent mask binding"
+assert !ENABLE_GOLDSTAR_CELL <= !ENABLE_PORTAL_ROD_CELL, "Goldstar cell uses ID $1A after Portal Rod"
+assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_MENU_PAGE3_LAYOUT_A, "Equipment requires Layout A"
+assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_MASK_R_BINDING, "Equipment requires independent mask binding"
+assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_ONE_RING, "Equipment requires one ring"
+assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_GOLDSTAR_CELL, "Equipment requires Goldstar split"
+assert !ENABLE_EQUIPMENT_MENU <= !ENABLE_JOURNAL_DEFERRED, "Equipment requires journal deferral"
+assert !ENABLE_JOURNAL_DEFERRED <= !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY, "Journal deferral requires shared availability checks"
 incsrc    "Core/structs.asm"
 
 ; Vanilla WRAM and SRAM
@@ -122,17 +138,17 @@ namespace Oracle
     print "*** MENU DISABLED ***"
   endif
 
-  ; Opening experiments (default off; see Util/macros.asm)
+  ; RC opening sequence (default on; see Util/macros.asm)
   if !ENABLE_CUTSCENE_FRAMEWORK == 1
     incsrc "Core/Cutscene/opening.asm"
   endif
 
-  ; Native 2-player PoC (default off; see Util/macros.asm)
+  ; Native 2-player feature (RC profile enabled; see Util/macros.asm)
   if !ENABLE_NATIVE_2P_POC == 1
     incsrc "Sprites/Players/player2.asm"
   endif
 
-  ; Part00 villager lines and checkpoint (default off; see Util/macros.asm)
+  ; Part00 villager lines and checkpoint (default on; see Util/macros.asm)
   if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1
     incsrc "Core/part00.asm"
   endif

@@ -697,81 +697,83 @@ class SramVariable:
     bits: list = field(default_factory=list)
 
 
+# Explicit associations, independent of declaration order and address order.
+# Enum prefixes (GameState_, MapIcon_, Spawn_) intentionally are not bitfields.
+SRAM_BIT_OWNERS = {
+    "Story_": "StoryProgress", "Story2_": "StoryProgress2",
+    "Crystal_": "Crystals", "SideQuest_": "SideQuestProgress",
+    "SideQuest2_": "SideQuestProgress2", "Pendant_": "Pendants",
+    "Dream_": "Dreams", "Bean_": "MagicBeanProgress",
+    "Scroll_": "DungeonScrolls", "CastleAmbush_": "CastleAmbushFlags",
+    "Part00_": "Part00Flags", "EonOwl_": "EonOwlFlags",
+}
+SRAM_ALIAS_RE = re.compile(r"^\s*([A-Za-z_]\w*)\s*=\s*([A-Za-z_]\w*)\s*(?:;.*)?$")
+
+
 def scan_sram_layout(root: Path) -> list[dict]:
-    """Extract custom SRAM variable definitions from Core/sram.asm."""
+    """Extract names and explicit bit owners, retaining aliases and subfields.
+
+    Literal fields remain separate even when contained in a larger block.
+    Same-address names are serialized as aliases, never silently overwritten.
+    Symbol aliases are resolved after all definitions (including forward refs).
+    This is metadata extraction, not proof that every declaration is allocated.
+    """
     sram_file = root / "Core" / "sram.asm"
     if not sram_file.exists():
         return []
+    variables: dict[str, SramVariable] = {}
+    aliases: dict[str, tuple[str, str]] = {}
+    bits = []
+    for line in sram_file.read_text(encoding="utf-8").splitlines():
+        comment = PURPOSE_COMMENT_RE.search(line)
+        purpose = comment.group(1).strip() if comment else ""
+        match = SRAM_VAR_RE.match(line)
+        if match:
+            name, address = match.groups()
+            if name in variables:
+                raise ManifestGenerationError(f"Duplicate SRAM definition: {name}")
+            variables[name] = SramVariable(name, int(address, 16), purpose)
+        elif match := SRAM_ALIAS_RE.match(line):
+            aliases[match[1]] = (match[2], purpose)
+        elif match := SRAM_BIT_RE.match(line):
+            bits.append((match[1], int(match[2], 16), purpose))
 
-    lines = sram_file.read_text(encoding="utf-8", errors="ignore").splitlines()
-    variables: dict[int, SramVariable] = {}
-    current_section = ""
+    def resolve(name: str, trail: tuple[str, ...] = ()) -> Optional[SramVariable]:
+        if name in variables:
+            return variables[name]
+        if name in trail:
+            raise ManifestGenerationError(f"Cyclic SRAM alias: {' -> '.join((*trail, name))}")
+        if name in aliases:
+            return resolve(aliases[name][0], (*trail, name))
+        return None
 
-    for i, line in enumerate(lines):
-        # Track section headers
-        if line.strip().startswith("; ---"):
-            # Next non-empty, non-separator line is the section name
-            for j in range(i + 1, min(i + 3, len(lines))):
-                sec_line = lines[j].strip()
-                if sec_line.startswith(";") and not sec_line.startswith("; ---"):
-                    current_section = sec_line.lstrip("; ").strip()
-                    break
+    for name, value, purpose in bits:
+        owner_name = SRAM_BIT_OWNERS.get(name.split("_", 1)[0] + "_")
+        if owner_name is None:
+            continue
+        owner = resolve(owner_name)
+        if owner is None:
+            raise ManifestGenerationError(f"Bit !{name} has missing SRAM owner {owner_name}")
+        owner.bits.append({"name": f"!{name}", "value": f"0x{value:02X}", "purpose": purpose})
 
-        # Match SRAM variable definitions
-        m = SRAM_VAR_RE.match(line)
-        if m:
-            name = m.group(1)
-            addr = int(m.group(2), 16)
-            # Extract inline comment for purpose
-            purpose = ""
-            cm = PURPOSE_COMMENT_RE.search(line)
-            if cm:
-                purpose = cm.group(1).strip()
-
-            variables[addr] = SramVariable(
-                name=name,
-                address=addr,
-                purpose=purpose,
-            )
-
-        # Match bit constants and attach to the most recent section's variable
-        bm = SRAM_BIT_RE.match(line)
-        if bm:
-            bit_name = bm.group(1)
-            bit_value = int(bm.group(2), 16)
-            purpose = ""
-            cm = PURPOSE_COMMENT_RE.search(line)
-            if cm:
-                purpose = cm.group(1).strip()
-
-            # Find the variable this bit belongs to by section context
-            # Heuristic: bits defined after a variable belong to the nearest
-            # preceding variable in the same section
-            # We'll attach to the last-defined variable
-            if variables:
-                last_var = max(variables.values(), key=lambda v: v.address)
-                # Only attach if this looks like it belongs (same naming prefix)
-                last_var.bits.append({
-                    "name": f"!{bit_name}",
-                    "value": f"0x{bit_value:02X}",
-                    "purpose": purpose,
-                })
-
-    # Convert to output format, sorted by address
-    result = []
-    for addr in sorted(variables):
-        var = variables[addr]
-        entry: dict = {
-            "name": var.name,
-            "address": f"0x{var.address:06X}",
-        }
+    by_address: dict[int, dict] = {}
+    for var in variables.values():
+        if var.address in by_address:
+            entry = by_address[var.address]
+            entry.setdefault("aliases", []).append({"name": var.name, "purpose": var.purpose})
+            entry.setdefault("bits", []).extend(var.bits)
+            continue
+        entry = {"name": var.name, "address": f"0x{var.address:06X}"}
         if var.purpose:
             entry["purpose"] = var.purpose
         if var.bits:
-            entry["bits"] = var.bits
-        result.append(entry)
-
-    return result
+            entry["bits"] = list(var.bits)
+        by_address[var.address] = entry
+    for name, (_, purpose) in aliases.items():
+        var = resolve(name)
+        if var is not None:
+            by_address[var.address].setdefault("aliases", []).append({"name": name, "purpose": purpose})
+    return [by_address[address] for address in sorted(by_address)]
 
 
 # ---------------------------------------------------------------------------
@@ -2320,6 +2322,28 @@ def generate_manifest(
         "variable_count": len(sram),
         "variables": sram,
     }
+
+    # Ownership evidence is additive metadata, never an editor-write grant.
+    ledger_path = root / "Config/allocation_ownership.json"
+    if ledger_path.is_file():
+        from allocation_contracts import AllocationError, read_ledger, validate_draft
+        try:
+            ledger = read_ledger(ledger_path)
+            draft_path = root / "Config/overworld_layout_192.draft.json"
+            draft = json.loads(draft_path.read_text())
+            draft_status = validate_draft(draft, current_tables=ledger['tables'])
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise ManifestGenerationError(f"Allocation metadata invalid: {exc}") from exc
+        manifest["allocation_contracts"] = {
+            "schema_version": 1,
+            "evidence_status": "requires_validate_allocation_contracts",
+            "allocation_available": False,
+            "ledger_sha256": hashlib.sha256(ledger_path.read_bytes()).hexdigest(),
+            "ledger": ledger,
+            "draft_sha256": hashlib.sha256(draft_path.read_bytes()).hexdigest(),
+            "draft": draft,
+            "draft_validation": draft_status,
+        }
 
     # Summary statistics
     manifest["summary"] = {

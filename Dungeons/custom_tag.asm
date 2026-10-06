@@ -177,6 +177,11 @@ if !ENABLE_ORIGINS_MINISH_PUZZLE == 1
     ; the player sees it open. Other rooms keep the old behavior.
     LDA.b $A1 : BNE .quadrant_ok
     LDA.b $A0 : CMP.b #$05 : BNE .quadrant_ok
+if !ENABLE_ORIGINS_PEARL_RETURN_FIX == 1
+      ; The shutter closes again in the NW chest chamber. Once the Pearl
+      ; is earned, Minish Link must also be able to reopen it from there.
+      LDA.l MoonPearl : BNE .quadrant_ok
+endif
       LDA.b $A9 : BEQ .no_minish
       LDA.b $AA : BNE .no_minish
     .quadrant_ok

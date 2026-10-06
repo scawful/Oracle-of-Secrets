@@ -18,8 +18,8 @@ org $0182A8 ; Object ID 0x54 ; @hook module=Dungeons
 org $018650 ; Object ID 230 ; @hook module=Dungeons
   dw HeavyPot
 
-; Heavy rock object draw code
-DrawBigGraySegment_hook = $01B350
+; Full vanilla entry owns PHX/PLX, buffer allocation, and layer/underlay capture.
+DrawBigGraySegment = $01B33A
 
 ; Bank01 Free Space
 org $01B53C ; @hook module=Dungeons
@@ -36,28 +36,17 @@ org $01B53C ; @hook module=Dungeons
     RTS
 
   HeavyPot:
-    JSL InitHeavyPot
-    JMP DrawBigGraySegment_hook
+    ; Object dispatcher: M/X=16, X=graphics offset, Y=tilemap byte offset.
+    ; Tail entry preserves X/DBR/D and widths, advances Y by 4, returns via RTS.
+    ; Preserve Oracle's $1111 pot attribute; graphics still use object $230.
+    LDA.w #$1111
+    JMP.w DrawBigGraySegment
 
 assert pc() <= $01B560
 
-org $2C8000
-; TODO: Fix the graphics used for the heavy pot in game
-InitHeavyPot:
-{
-  LDA.w #$1010
-  PHX
-  LDX.w $042C ; MANIPINDEX
-  LDA.w #$1111 : STA $0500, X ; M16BUFF500
-
-  ; Store this object's position in the object buffer to $0520, X
-  LDA $BA : STA $0520, X
-
-  ; Store it's tilemap position.
-  TYA : STA $0540, X
-  RTL
-}
-
+; The removed InitHeavyPot occupied $2C8000-$2C8016. Keep all following
+; custom object routines/data at their existing addresses.
+org $2C8017
 CustomObjectHandler:
 {
   PHB : PHK : PLB

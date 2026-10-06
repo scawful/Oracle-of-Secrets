@@ -6,7 +6,7 @@
 #
 # Suites: smoke (default) | regression | full
 # Options: --quick (=smoke) --full --tag TAG -q|--quiet -v|--verbose --fail-fast
-#          --moe | --no-moe --junit | --json
+#          --moe | --no-moe --junit | --json --skip-load
 #
 # Env: MESEN2_SOCKET_PATH, OOS_TEST_BACKEND, OOS_MOE_ENABLED
 
@@ -32,8 +32,9 @@ while [[ $# -gt 0 ]]; do
     --json)  ARGS+=(--output-format json); shift ;;
     --tag)   ARGS+=("--tag" "$2"); shift 2 ;;
     --fail-fast) ARGS+=(--fail-fast); shift ;;
+    --skip-load) ARGS+=(--skip-load); shift ;;
     --help|-h)
-      echo "Usage: $0 [smoke|regression|full] [--tag TAG] [-q|--quiet] [-v|--verbose] [--fail-fast] [--moe|--no-moe] [--junit|--json]"
+      echo "Usage: $0 [smoke|regression|full] [--tag TAG] [-q|--quiet] [-v|--verbose] [--fail-fast] [--moe|--no-moe] [--junit|--json] [--skip-load]"
       exit 0
       ;;
     *) echo "Unknown option: $1"; exit 1 ;;

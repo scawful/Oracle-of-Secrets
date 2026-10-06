@@ -118,6 +118,12 @@ endif
 
 Menu_InitGraphics:
 {
+if !ENABLE_GOLDSTAR_CELL == 1
+  JSL GoldstarInventory_Migrate
+endif
+if !ENABLE_MASK_R_BINDING == 1
+  JSL MaskBinding_MigrateSelection
+endif
   LDA.w $0780 : STA.w $00
 if !ENABLE_PORTAL_ROD_CELL == 1
   JSR Menu_PortalRod_SyncOwned
@@ -249,6 +255,7 @@ Menu_CheckForSpecialMenus:
         JSR Menu_DeleteCursor ; Ensure cursor is deleted
         SEC : RTS             ; Return Carry Set
     +
+if !ENABLE_EQUIPMENT_MENU == 0
     LDA.w $0202 : CMP.b #!MENU_STATE_SONG_MENU : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
         LDA.b #!MENU_STATE_SONG_MENU : STA.w $0200
@@ -258,6 +265,7 @@ Menu_CheckForSpecialMenus:
           SEP #$30
           SEC : RTS ; Return Carry Set
     ++
+endif
     LDA.w $0202 : CMP.b #!MENU_STATE_JOURNAL : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
 if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
@@ -1192,6 +1200,11 @@ Menu_CheckRingsUnlocked:
 ; Out: C set = unlocked.
 Menu_CheckJournalUnlocked:
 {
+if !ENABLE_JOURNAL_DEFERRED == 1
+  ; Journal deferred by scawful, 2026-09-29. All prompts and entry routes
+  ; share this check. Keep Book gameplay and existing journal data intact.
+  CLC : RTS
+endif
   PHP
   SEP #$20
   PHA
