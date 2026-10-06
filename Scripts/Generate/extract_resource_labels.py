@@ -306,7 +306,7 @@ def build_resource_labels(root: Path) -> dict:
 
     labels = {
         "_meta": {
-            "generated_by": "Scripts/extract_resource_labels.py",
+            "generated_by": "Scripts/Generate/extract_resource_labels.py",
             "description": "Unified Oracle of Secrets resource labels for yaze integration",
             "sources": [
                 "Docs/Dev/Planning/oracle_room_labels.json",

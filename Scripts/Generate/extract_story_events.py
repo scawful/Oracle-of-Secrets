@@ -5,7 +5,7 @@ Extract Oracle story events from Story_Event_Graph.md into machine-readable JSON
 Generates story_events.json with node/edge data for yaze's StoryEventGraphPanel.
 
 Sources:
-  - Docs/Planning/Story_Event_Graph.md  -> event nodes + relationships
+  - Data/planning/Story_Event_Graph.md  -> event nodes + relationships
 
 Usage:
   python3 Scripts/extract_story_events.py [--validate] [--output PATH]
@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -173,12 +174,18 @@ def parse_scripts(scripts_str: str) -> list:
     return scripts
 
 
+STORY_GRAPH_SOURCE = Path("Data") / "planning" / "Story_Event_Graph.md"
+
+
+class StoryEventInputError(RuntimeError):
+    """A required generator input is missing; nothing may be published."""
+
+
 def extract_events(root: Path) -> list:
     """Parse Story_Event_Graph.md into structured event list."""
-    path = root / "Docs" / "Planning" / "Story_Event_Graph.md"
-    if not path.exists():
-        print(f"  ERROR: {path} not found", file=sys.stderr)
-        return []
+    path = root / STORY_GRAPH_SOURCE
+    if not path.is_file():
+        raise StoryEventInputError(f"required input not found: {path}")
 
     with open(path, encoding="utf-8") as f:
         content = f.read()
@@ -187,16 +194,18 @@ def extract_events(root: Path) -> list:
 
     # Match markdown table rows: | EV-XXX | Name | Flags | Locations | Scripts | Text IDs | Evidence | Date | Notes |
     # The table has 9 columns
+    # One table row per line: [ \t]* (not \s*) so short rows in other tables cannot
+    # absorb following lines and pose as 9-column event rows.
     row_pattern = re.compile(
-        r"^\|\s*(EV-\d+)\s*\|"     # Event ID
-        r"\s*(.*?)\s*\|"            # Event Name
-        r"\s*(.*?)\s*\|"            # Flags Set/Cleared
-        r"\s*(.*?)\s*\|"            # Locations/Rooms
-        r"\s*(.*?)\s*\|"            # Scripts/Routines
-        r"\s*(.*?)\s*\|"            # Text IDs
-        r"\s*(.*?)\s*\|"            # Evidence
-        r"\s*(.*?)\s*\|"            # Last Verified
-        r"\s*(.*?)\s*\|",           # Notes
+        r"^\|[ \t]*(EV-\d+)[ \t]*\|"     # Event ID
+        r"[ \t]*(.*?)[ \t]*\|"            # Event Name
+        r"[ \t]*(.*?)[ \t]*\|"            # Flags Set/Cleared
+        r"[ \t]*(.*?)[ \t]*\|"            # Locations/Rooms
+        r"[ \t]*(.*?)[ \t]*\|"            # Scripts/Routines
+        r"[ \t]*(.*?)[ \t]*\|"            # Text IDs
+        r"[ \t]*(.*?)[ \t]*\|"            # Evidence
+        r"[ \t]*(.*?)[ \t]*\|"            # Last Verified
+        r"[ \t]*(.*?)[ \t]*\|",           # Notes
         re.MULTILINE
     )
 
@@ -284,9 +293,9 @@ def build_story_events(root: Path) -> dict:
 
     result = {
         "_meta": {
-            "generated_by": "Scripts/extract_story_events.py",
+            "generated_by": "Scripts/Generate/extract_story_events.py",
             "description": "Oracle of Secrets story event graph for yaze integration",
-            "source": "Docs/Planning/Story_Event_Graph.md",
+            "source": str(STORY_GRAPH_SOURCE),
             "event_count": len(events),
             "edge_count": len(edges),
         },
@@ -313,6 +322,9 @@ def validate_story_events(data: dict) -> bool:
         return False
 
     events = data["events"]
+    if not events:
+        print("  ERROR: No events extracted", file=sys.stderr)
+        return False
     if len(events) < 10:
         print(
             f"  WARN: Only {len(events)} events (expected >= 10)",
@@ -338,14 +350,16 @@ def validate_story_events(data: dict) -> bool:
     for edge in data["edges"]:
         if edge["from"] not in event_ids:
             print(
-                f"  WARN: Edge references unknown source: {edge['from']}",
+                f"  ERROR: Edge references unknown source: {edge['from']}",
                 file=sys.stderr,
             )
+            ok = False
         if edge["to"] not in event_ids:
             print(
-                f"  WARN: Edge references unknown target: {edge['to']}",
+                f"  ERROR: Edge references unknown target: {edge['to']}",
                 file=sys.stderr,
             )
+            ok = False
 
     # Check for cycles (simple DFS)
     adj = {}
@@ -411,18 +425,23 @@ def main():
             sys.exit(1)
         return
 
-    data = build_story_events(root)
-    ok = validate_story_events(data)
+    try:
+        data = build_story_events(root)
+    except StoryEventInputError as error:
+        print(f"ERROR: {error}; {output_path} left unchanged", file=sys.stderr)
+        sys.exit(1)
+    if not validate_story_events(data):
+        print(f"Validation FAILED; {output_path} left unchanged", file=sys.stderr)
+        sys.exit(1)
 
+    # Publish only a validated result, atomically (no partial or empty file).
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w") as f:
+    tmp_path = output_path.with_name(output_path.name + ".tmp")
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
         f.write("\n")
-
+    os.replace(tmp_path, output_path)
     print(f"\nWrote {output_path}")
-    if not ok:
-        print("WARNING: Validation issues detected (see above)", file=sys.stderr)
-        sys.exit(1)
 
 
 if __name__ == "__main__":

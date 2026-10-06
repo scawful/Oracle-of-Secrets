@@ -2,10 +2,10 @@
 """Extract overworld area registry from Oracle of Secrets data sources.
 
 Consolidates data from:
-  - Docs/Planning/world_map_diagram.md (area names, grid coords, features)
+  - Data/planning/world_map_diagram.md (area names, grid coords, features)
   - Docs/Technical/Sheets/...Overworld GFX.csv (GFX ID per area)
   - Docs/Technical/Sheets/...Overworld Spr.csv (sprite set per area)
-  - Docs/Planning/overworld_item_inventory.json (items per area)
+  - Data/planning/overworld_item_inventory.json (items per area)
   - Docs/Dev/Planning/dungeons.json (dungeon→overworld screen links)
 
 Output: Docs/Dev/Planning/overworld.json
@@ -21,7 +21,7 @@ from collections import defaultdict
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent
+PROJECT_ROOT = SCRIPT_DIR.parents[1]  # repo root (this file is Scripts/Generate/<name>.py)
 
 
 def parse_named_locations_table(lines, start_line, world):
@@ -407,10 +407,29 @@ def parse_npc_locations(lines):
     return npc_map
 
 
+class OverworldInputError(RuntimeError):
+    """A required generator input is missing; nothing may be published."""
+
+
+def required_inputs(project_root):
+    """Every input the registry needs. All must exist before anything is written."""
+    sheets = project_root / "Docs" / "Technical" / "Sheets"
+    return [
+        project_root / "Data" / "planning" / "world_map_diagram.md",
+        project_root / "Data" / "planning" / "overworld_item_inventory.json",
+        sheets / "Oracle of Secrets Data Sheet - Overworld GFX.csv",
+        sheets / "Oracle of Secrets Data Sheet - Overworld Spr.csv",
+        project_root / "Docs" / "Dev" / "Planning" / "dungeons.json",
+    ]
+
+
 def build_overworld_registry(project_root):
     """Build the complete overworld registry from all sources."""
+    missing = [str(p) for p in required_inputs(project_root) if not p.is_file()]
+    if missing:
+        raise OverworldInputError("required input(s) not found: " + ", ".join(missing))
     docs = project_root / "Docs"
-    planning = docs / "Planning"
+    planning = project_root / "Data" / "planning"
     sheets = docs / "Technical" / "Sheets"
     dev_planning = docs / "Dev" / "Planning"
 
@@ -536,10 +555,10 @@ def build_overworld_registry(project_root):
     # Build output
     registry = {
         "_meta": {
-            "generated_by": "Scripts/extract_overworld_registry.py",
+            "generated_by": "Scripts/Generate/extract_overworld_registry.py",
             "description": "Oracle of Secrets overworld area registry",
             "notes": [
-                "Primary source: Docs/Planning/world_map_diagram.md",
+                "Primary source: Data/planning/world_map_diagram.md",
                 "GFX/Sprite data from CSV sheets",
                 "Items from overworld_item_inventory.json",
                 "Dungeon entrances from dungeons.json",
@@ -580,7 +599,15 @@ def main():
     args = parser.parse_args()
 
     root = Path(args.project_root)
-    registry = build_overworld_registry(root)
+    output_path = Path(args.output)
+    try:
+        registry = build_overworld_registry(root)
+    except OverworldInputError as error:
+        print(f"ERROR: {error}; {output_path} left unchanged", file=sys.stderr)
+        sys.exit(1)
+    if not registry.get("areas"):
+        print(f"ERROR: no areas extracted; {output_path} left unchanged", file=sys.stderr)
+        sys.exit(1)
 
     # Stats
     lw_count = sum(1 for a in registry["areas"] if a["world"] == "LW")
@@ -588,12 +615,13 @@ def main():
     sw_count = sum(1 for a in registry["areas"] if a["world"] == "SW")
     with_entrances = sum(1 for a in registry["areas"] if "entrances" in a)
 
-    output_path = Path(args.output)
+    # Publish atomically: a failed run never leaves a partial or empty file.
     output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(output_path, "w") as f:
+    tmp_path = output_path.with_name(output_path.name + ".tmp")
+    with open(tmp_path, "w") as f:
         json.dump(registry, f, indent=2)
         f.write("\n")
+    os.replace(tmp_path, output_path)
 
     print(f"Wrote {output_path}")
     print(
