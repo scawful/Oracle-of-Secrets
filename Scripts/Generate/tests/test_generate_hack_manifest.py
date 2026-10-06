@@ -13,6 +13,8 @@ REPO_ROOT = GENERATE_DIR.parents[1]
 sys.path.insert(0, str(GENERATE_DIR))
 
 from generate_hack_manifest import (  # noqa: E402
+    ExactSpan,
+    compute_exact_protected_regions,
     CUSTOM_COLLISION_DATA_END_PC,
     CUSTOM_COLLISION_DATA_START_PC,
     CUSTOM_COLLISION_POINTER_TABLE_PC,
@@ -1024,7 +1026,7 @@ class RepositoryMessageSourceTest(unittest.TestCase):
         self.assertEqual(messages["data_end"], "0x2FFDFF")
         self.assertEqual(
             messages["expanded_range"],
-            {"first": "0x18D", "last": "0x1F9", "count": 109},
+            {"first": "0x18D", "last": "0x203", "count": 119},
         )
         self.assertEqual(
             messages["source"],
@@ -1211,6 +1213,8 @@ class DevRomProvenanceTest(unittest.TestCase):
                 str(legacy),
                 "--rom",
                 str(patched),
+                "--hook-source",
+                "python-scan",
             ],
             check=False,
             capture_output=True,
@@ -1219,6 +1223,9 @@ class DevRomProvenanceTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         manifest = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(manifest["hook_source"]["mode"], "python-scan")
+        self.assertFalse(manifest["protected_regions"]["exact"])
+        self.assertEqual(manifest["build_pipeline"]["assembler"], "asar")
         self.assertEqual(
             manifest["build_pipeline"]["dev_rom"],
             "Roms/oos168_test2.sfc",
@@ -1535,6 +1542,248 @@ class EditorManagedRegionsTest(unittest.TestCase):
 
         self.assertEqual(regions[0]["start"], "0x1EFF21")
         self.assertEqual(regions[0]["end"], "0x1EFF25")
+
+
+class ExactHookSourceTest(unittest.TestCase):
+    """z3asm hooks.json mode: exact spans, hash-gated, fail closed."""
+
+    def setUp(self) -> None:
+        self.fixture = ManifestFixture()
+        self.fixture.write_text("Oracle_main.asm", "")
+        self.dev_rom = self.fixture.write_dev_rom()
+        self.patched = self.fixture.root / "Roms" / "oos168x.sfc"
+        self.patched.write_bytes(self.dev_rom.read_bytes())
+        self.hooks_path = self.fixture.root / "Roms" / "hooks.json"
+        self.output = self.fixture.root / "Roms" / "hack_manifest.json"
+
+    def tearDown(self) -> None:
+        self.fixture.close()
+
+    def write_hooks(self, hooks: list[dict], **rom_overrides: object) -> None:
+        data = self.patched.read_bytes()
+        rom = {
+            "path": "Roms/oos168x.sfc",
+            "sha256": hashlib.sha256(data).hexdigest(),
+            "size": len(data),
+        }
+        rom.update(rom_overrides)
+        for key in [key for key, value in rom.items() if value is None]:
+            del rom[key]
+        self.hooks_path.write_text(
+            json.dumps({"version": 1, "rom": rom, "hooks": hooks}),
+            encoding="utf-8",
+        )
+
+    @staticmethod
+    def hook(address: int, size: int, kind: str = "patch", **extra) -> dict:
+        return {"address": f"0x{address:06X}", "size": size, "kind": kind,
+                "name": f"hook_{address:06X}", "module": "Core", **extra}
+
+    def build(self) -> dict:
+        return generate_manifest(
+            self.fixture.root, self.patched, self.dev_rom, self.hooks_path
+        )
+
+    def run_cli(self, *hook_args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [sys.executable, str(GENERATE_DIR / "generate_hack_manifest.py"),
+             "--root", str(self.fixture.root), "--output", str(self.output),
+             "--dev-rom", str(self.dev_rom), "--rom", str(self.patched),
+             *hook_args],
+            check=False, capture_output=True, text=True,
+        )
+
+    def regions(self, manifest: dict) -> list[tuple[str, str]]:
+        return [(r["start"], r["end"]) for r in manifest["protected_regions"]["regions"]]
+
+    # --- provenance gate -------------------------------------------------
+
+    def test_valid_hooks_record_exact_provenance(self) -> None:
+        self.write_hooks([self.hook(0x008000, 4, "jsl")])
+        manifest = self.build()
+        source = manifest["hook_source"]
+        self.assertEqual(source["mode"], "z3asm-hooks")
+        self.assertTrue(source["exact"])
+        self.assertEqual(source["path"], "Roms/hooks.json")
+        self.assertEqual(
+            source["patched_rom_sha256"],
+            hashlib.sha256(self.patched.read_bytes()).hexdigest(),
+        )
+        self.assertEqual(
+            source["sha256"], hashlib.sha256(self.hooks_path.read_bytes()).hexdigest()
+        )
+        self.assertEqual(manifest["build_pipeline"]["assembler"], "z3asm")
+        self.assertTrue(manifest["protected_regions"]["exact"])
+
+    def test_missing_hash_fails_closed(self) -> None:
+        self.write_hooks([self.hook(0x008000, 4)], sha256=None)
+        with self.assertRaisesRegex(ManifestGenerationError, "no valid rom.sha256"):
+            self.build()
+
+    def test_hash_of_other_rom_fails_closed(self) -> None:
+        self.write_hooks([self.hook(0x008000, 4)])
+        self.fixture.write_rom_value(self.patched, 0x100, 0xAB, 1)
+        with self.assertRaisesRegex(ManifestGenerationError, "different ROM"):
+            self.build()
+
+    def test_hash_of_editable_base_is_not_accepted_for_patched(self) -> None:
+        self.fixture.write_rom_value(self.patched, 0x100, 0xAB, 1)
+        base = self.dev_rom.read_bytes()
+        self.write_hooks([self.hook(0x008000, 4)],
+                         sha256=hashlib.sha256(base).hexdigest(), size=len(base))
+        with self.assertRaisesRegex(ManifestGenerationError, "different ROM"):
+            self.build()
+
+    def test_size_mismatch_fails_closed(self) -> None:
+        self.write_hooks([self.hook(0x008000, 4)], size=123)
+        with self.assertRaisesRegex(ManifestGenerationError, "different ROM"):
+            self.build()
+
+    def test_unsupported_version_fails_closed(self) -> None:
+        self.write_hooks([self.hook(0x008000, 4)])
+        data = json.loads(self.hooks_path.read_text())
+        data["version"] = 2
+        self.hooks_path.write_text(json.dumps(data))
+        with self.assertRaisesRegex(ManifestGenerationError, "unsupported version"):
+            self.build()
+
+    def test_invalid_entries_fail_closed(self) -> None:
+        cases = [
+            (self.hook(0x008000, 0), "invalid size"),
+            (self.hook(0x008000, -4), "invalid size"),
+            (self.hook(0x008000, True), "invalid size"),
+            (self.hook(0x008000, 4, "mystery"), "invalid kind"),
+            ({"size": 4, "kind": "patch"}, "invalid address"),
+            (self.hook(0x7E2100, 4), "WRAM"),
+            (self.hook(0x008000, 4) | {"address": "0x000100"}, "high-half"),
+            (self.hook(0x408000, 4), "past the patched ROM"),
+            (self.hook(0x3FFFFE, 4), "past the patched ROM"),
+        ]
+        for entry, pattern in cases:
+            with self.subTest(entry=entry):
+                self.write_hooks([entry])
+                with self.assertRaisesRegex(ManifestGenerationError, pattern):
+                    self.build()
+
+    def test_missing_hooks_file_fails_closed(self) -> None:
+        with self.assertRaisesRegex(ManifestGenerationError, "Hook file not found"):
+            self.build()
+
+    def test_exact_mode_requires_patched_rom(self) -> None:
+        self.write_hooks([self.hook(0x008000, 4)])
+        with self.assertRaisesRegex(ManifestGenerationError, "requires the patched ROM"):
+            generate_manifest(self.fixture.root, None, self.dev_rom, self.hooks_path)
+
+    # --- CLI modes ---------------------------------------------------------
+
+    def test_cli_requires_exactly_one_hook_source(self) -> None:
+        self.write_hooks([self.hook(0x008000, 4)])
+        neither = self.run_cli()
+        self.assertNotEqual(neither.returncode, 0)
+        self.assertIn("one of the arguments --hooks --hook-source is required", neither.stderr)
+        both = self.run_cli("--hooks", str(self.hooks_path), "--hook-source", "python-scan")
+        self.assertNotEqual(both.returncode, 0)
+        self.assertIn("not allowed with argument", both.stderr)
+        self.assertFalse(self.output.exists())
+
+    def test_cli_rejection_keeps_previous_manifest(self) -> None:
+        self.write_hooks([self.hook(0x008000, 4)])
+        ok = self.run_cli("--hooks", str(self.hooks_path))
+        self.assertEqual(ok.returncode, 0, ok.stderr)
+        previous = self.output.read_bytes()
+
+        self.fixture.write_rom_value(self.patched, 0x100, 0xAB, 1)  # stale hooks
+        rejected = self.run_cli("--hooks", str(self.hooks_path))
+        self.assertEqual(rejected.returncode, 1)
+        self.assertIn("different ROM", rejected.stderr)
+        self.assertEqual(self.output.read_bytes(), previous)
+        self.assertEqual(
+            [p.name for p in self.output.parent.iterdir() if p.name.endswith(".tmp")], []
+        )
+
+    # --- exact spans -------------------------------------------------------
+
+    def test_touching_spans_merge_and_one_byte_gap_stays_editable(self) -> None:
+        self.write_hooks([
+            self.hook(0x0DB080, 2, "data"),
+            self.hook(0x0DB082, 2, "data"),   # touches: merged
+            self.hook(0x0DB085, 1, "data"),   # one-byte gap at $0DB084
+            self.hook(0x0DB090, 4, "data"),
+            self.hook(0x0DB091, 1, "data"),   # overlaps: merged
+        ])
+        self.assertEqual(
+            self.regions(self.build()),
+            [("0x0DB080", "0x0DB084"), ("0x0DB085", "0x0DB086"),
+             ("0x0DB090", "0x0DB094")],
+        )
+
+    def test_exact_union_does_not_pad_gaps_like_estimates(self) -> None:
+        # Two neighbouring sprite-property writes 8 bytes apart.
+        spans = [
+            ExactSpan(_snes_to_pc(0x0DB080), _snes_to_pc(0x0DB080) + 1,
+                      HookEntry(0x0DB080, "a", "data", None, "", module="Core")),
+            ExactSpan(_snes_to_pc(0x0DB088), _snes_to_pc(0x0DB088) + 1,
+                      HookEntry(0x0DB088, "b", "data", None, "", module="Core")),
+        ]
+        exact = compute_exact_protected_regions(spans)
+        self.assertEqual(sum(r["size"] for r in exact), 2)
+        estimated = compute_protected_regions([s.hook for s in spans])
+        self.assertGreater(sum(r["size"] for r in estimated), 2)
+
+    def test_span_crossing_lorom_bank_is_one_canonical_range(self) -> None:
+        self.write_hooks([self.hook(0x02FFFE, 4, "data")])
+        self.assertEqual(self.regions(self.build()), [("0x02FFFE", "0x038002")])
+
+    def test_shared_bank_write_is_protected_and_neighbor_stays_editable(self) -> None:
+        # Bank $28 with an org but no incsrc ownership claim: shared/unclassified.
+        self.write_hooks([self.hook(0x288149, 2, "data")])
+        manifest = self.build()
+        self.assertEqual(self.regions(manifest), [("0x288149", "0x28814B")])
+
+    def test_owned_bank_spans_are_left_to_owned_banks(self) -> None:
+        self.fixture.write_text(
+            "Oracle_main.asm", "org $308000\nOwned:\n  RTL\n"
+        )
+        self.write_hooks([self.hook(0x308000, 1, "patch"), self.hook(0x008000, 4, "jsl")])
+        manifest = self.build()
+        owned = {b["bank"]: b["ownership"] for b in manifest["owned_banks"]["banks"]}
+        self.assertIn(owned.get("0x30"), ("asm_owned", "asm_expansion"))
+        self.assertEqual(self.regions(manifest), [("0x008000", "0x008004")])
+
+    def test_write_into_editor_managed_range_fails_closed(self) -> None:
+        # $07F61D-$07F86D is editor-managed in the fixture dev ROM.
+        self.write_hooks([self.hook(0x07F860, 0x20, "data")])
+        with self.assertRaisesRegex(ManifestGenerationError, "editor_managed_regions"):
+            self.build()
+
+    def test_expanded_write_crossing_into_other_bank_editor_range_fails(self) -> None:
+        # Starts in bank $21, crosses into the $22:8280 room-header range.
+        self.write_hooks([self.hook(0x21FFF0, 0x300, "data")])
+        with self.assertRaisesRegex(ManifestGenerationError, "editor_managed_regions"):
+            self.build()
+
+    def test_write_ending_at_editor_range_start_is_allowed(self) -> None:
+        self.write_hooks([self.hook(0x07F619, 4, "data")])  # ends at $07F61D
+        self.assertEqual(self.regions(self.build()), [("0x07F619", "0x07F61D")])
+
+    def test_writes_into_stream_pointer_tables_and_data_fail_closed(self) -> None:
+        cases = [
+            (0x1F8000, "objects.pointer_table"),   # object pointer table
+            (0x09D2B2, "sprites.pointer_table"),
+            (0x01DB69, "pot_items.pointer_table"),
+            (0x09D502, "sprites.data_regions"),
+        ]
+        for address, pattern in cases:
+            with self.subTest(address=f"{address:06X}"):
+                self.write_hooks([self.hook(address, 1, "data")])
+                with self.assertRaisesRegex(ManifestGenerationError, pattern):
+                    self.build()
+
+    def test_python_scan_mode_is_unchanged_and_labeled(self) -> None:
+        manifest = generate_manifest(self.fixture.root, self.patched, self.dev_rom)
+        self.assertEqual(manifest["hook_source"]["mode"], "python-scan")
+        self.assertFalse(manifest["protected_regions"]["exact"])
+        self.assertEqual(manifest["build_pipeline"]["assembler"], "asar")
 
 
 if __name__ == "__main__":

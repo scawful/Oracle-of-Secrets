@@ -22,8 +22,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, List, Dict, Set
 
-# Add script directory to path for imports
-SCRIPT_DIR = Path(__file__).resolve().parent
+# Add Scripts/Mesen2 to path for mesen2_client_lib
+SCRIPT_DIR = Path(__file__).resolve().parents[1] / "Mesen2"
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 

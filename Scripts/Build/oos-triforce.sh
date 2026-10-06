@@ -6,24 +6,30 @@ usage() {
 Oracle finish-line action runner.
 
 Usage:
-  Scripts/oos-triforce.sh status-json [--pretty]
-  Scripts/oos-triforce.sh continue-play
-  Scripts/oos-triforce.sh notify
-  Scripts/oos-triforce.sh quick-patch
-  Scripts/oos-triforce.sh verify-patch
-  Scripts/oos-triforce.sh patch-and-play
-  Scripts/oos-triforce.sh transition-tests
+  Scripts/Build/oos-triforce.sh status-json [--pretty]
+  Scripts/Build/oos-triforce.sh continue-play
+  Scripts/Build/oos-triforce.sh notify
+  Scripts/Build/oos-triforce.sh quick-patch
+  Scripts/Build/oos-triforce.sh verify-patch
+  Scripts/Build/oos-triforce.sh patch-and-play
+  Scripts/Build/oos-triforce.sh transition-tests
+  Scripts/Build/oos-triforce.sh launch [stable|test]
 
 The "continue-play" and "notify" actions follow the current finish-line focus
-from Scripts/oos_status.py.
+from Scripts/Debug/oos_status.py.
+
+"launch stable" opens the highest Roms/oosNNNx.sfc in the Mesen2 instance
+oos-<user>-debug. "launch test" opens the newest Roms/TestBuilds/*/oosNNNx.sfc
+in the instance oos-<user>-test, which keeps its own saves. If the instance is
+already running, it loads the ROM instead.
 EOF
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 status_json() {
-  python3 "${ROOT_DIR}/Scripts/oos_status.py" "$@"
+  python3 "${ROOT_DIR}/Scripts/Debug/oos_status.py" "$@"
 }
 
 finish_field() {
@@ -38,7 +44,7 @@ expression = sys.argv[1]
 root = Path(sys.argv[2])
 payload = json.loads(
     subprocess.check_output(
-        ["python3", str(root / "scripts" / "oos_status.py")],
+        ["python3", str(root / "Scripts" / "Debug" / "oos_status.py")],
         cwd=root,
         text=True,
     )
@@ -92,11 +98,11 @@ run_focus_command() {
 }
 
 quick_patch() {
-  (cd "${ROOT_DIR}" && ./Scripts/oos-quick.sh)
+  (cd "${ROOT_DIR}" && ./Scripts/Build/oos-quick.sh)
 }
 
 verify_patch() {
-  (cd "${ROOT_DIR}" && ./Scripts/oos-verify.sh)
+  (cd "${ROOT_DIR}" && ./Scripts/Build/oos-verify.sh)
 }
 
 patch_and_play() {
@@ -106,6 +112,90 @@ patch_and_play() {
 
 transition_tests() {
   (cd "${ROOT_DIR}" && ./Scripts/Validate/run_regression_tests.sh regression --tag transition -q --fail-fast)
+}
+
+stable_rom() {
+  local best="" best_version=-1 path name version
+  for path in "${ROOT_DIR}"/Roms/oos*x.sfc; do
+    [[ -f "${path}" ]] || continue
+    name="${path##*/}"
+    version="${name#oos}"
+    version="${version%x.sfc}"
+    [[ "${version}" =~ ^[0-9]+$ ]] || continue
+    if (( version > best_version )); then
+      best_version="${version}"
+      best="${path}"
+    fi
+  done
+  printf '%s' "${best}"
+}
+
+newest_test_rom() {
+  local newest="" path
+  for path in "${ROOT_DIR}"/Roms/TestBuilds/*/oos*x.sfc; do
+    [[ -f "${path}" ]] || continue
+    if [[ -z "${newest}" || "${path}" -nt "${newest}" ]]; then
+      newest="${path}"
+    fi
+  done
+  printf '%s' "${newest}"
+}
+
+socket_live() {
+  [[ -S "$1" ]] || return 1
+  python3 - "$1" <<'PY'
+import socket
+import sys
+
+client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+client.settimeout(0.5)
+try:
+    client.connect(sys.argv[1])
+except OSError:
+    sys.exit(1)
+finally:
+    client.close()
+PY
+}
+
+launch_rom() {
+  local channel="${1:-stable}"
+  local owner="${USER:-scawful}"
+  local rom instance socket force=""
+  case "${channel}" in
+    stable)
+      rom="$(stable_rom)"
+      instance="oos-${owner}-debug"
+      ;;
+    test)
+      rom="$(newest_test_rom)"
+      instance="oos-${owner}-test"
+      ;;
+    *)
+      echo "Unknown launch channel: ${channel} (use stable or test)" >&2
+      exit 1
+      ;;
+  esac
+  if [[ -z "${rom}" ]]; then
+    echo "No ${channel} ROM found under ${ROOT_DIR}/Roms." >&2
+    exit 1
+  fi
+
+  socket="/tmp/mesen2-${instance}.sock"
+  if socket_live "${socket}"; then
+    python3 "${ROOT_DIR}/Scripts/Mesen2/mesen2_client.py" --instance "${instance}" rom-load "${rom}"
+    return
+  fi
+  if [[ -S "${socket}" ]]; then
+    # Stale socket from a closed instance: reuse the same name and saves.
+    force="--socket-force"
+  fi
+  "${ROOT_DIR}/Scripts/Mesen2/mesen2_launch_instance.sh" \
+    --instance "${instance}" \
+    --owner "${owner}" \
+    --source manual \
+    --rom "${rom}" \
+    ${force:+"${force}"}
 }
 
 action="${1:-status-json}"
@@ -135,6 +225,9 @@ case "${action}" in
     ;;
   transition-tests)
     transition_tests
+    ;;
+  launch)
+    launch_rom "$@"
     ;;
   *)
     echo "Unknown action: ${action}" >&2

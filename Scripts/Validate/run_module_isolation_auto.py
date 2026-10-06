@@ -145,7 +145,7 @@ def main() -> int:
             rc, _, _ = run_cmd(
                 [
                     sys.executable,
-                    str(SCRIPT_DIR / "mesen2_client.py"),
+                    str(SCRIPT_DIR.parent / "Mesen2" / "mesen2_client.py"),
                     "rom-load",
                     str(rom_path),
                 ],

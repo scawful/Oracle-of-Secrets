@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags]" >&2
+  echo "Usage: $(basename "$0") <version> [asar_binary] [--reload] [--no-symbols] [--mesen-sync] [--skip-tests] [--asar=<path>] [--enable <csv>] [--disable <csv>] [--profile <defaults|all-on|all-off>] [--persist-flags] [--help]" >&2
   echo "Base ROM: Roms/oos<version>.sfc (unpatched edit target; override with OOS_BASE_ROM)." >&2
   echo "  Backward compat: Roms/oos<version>_test2.sfc is used only when the standard base is absent." >&2
   echo "" >&2
@@ -11,8 +11,12 @@ usage() {
   echo "  --disable <csv>   Comma-separated feature names to disable." >&2
   echo "  --profile <name>  Preset profile (defaults|all-on|all-off) applied before enable/disable lists." >&2
   echo "  --persist-flags   Keep the generated Config/feature_flags.asm (otherwise it is restored after build)." >&2
-  exit 1
+  exit "${1:-1}"
 }
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage 0
+fi
 
 if [[ $# -lt 1 ]]; then
   usage
@@ -37,6 +41,9 @@ persist_flags=0
 
 while [[ $# -gt 0 ]]; do
   case $1 in
+    -h|--help)
+      usage 0
+      ;;
     --reload)
       reload=1
       shift
@@ -326,15 +333,24 @@ if ! command -v "$asar_bin" >/dev/null 2>&1; then
   exit 1
 fi
 
+# Stamp Config/version.json into the in-game version line (message $C7) before
+# assembly. z3asm records the final output ROM hash in hooks.json, so post-build
+# stamping would invalidate the exact-span provenance used by the manifest.
+if [[ "${OOS_SKIP_VERSION_STAMP:-0}" != "1" ]]; then
+  python3 "$repo_root/Scripts/Build/version_stamp.py" --rom "$patched_rom"
+fi
+
+# z3asm writes hooks.json from the bytes it assembles (see z3dk docs/Z3DK_HOOKS.md).
+hooks_json="$repo_root/Roms/hooks.json"
+assembler_emits=()
+if [[ "$asar_bin" == *"z3asm"* ]]; then
+  assembler_emits+=("--emit=sourcemap:$repo_root/Roms/sourcemap.json" "--emit=hooks:$hooks_json")
+fi
+
 if [[ $emit_symbols -eq 1 ]]; then
-  # Use z3asm features if available
-  if [[ "$asar_bin" == *"z3asm"* ]]; then
-    "$asar_bin" --symbols=wla --symbols-path="$symbols_path" --emit=sourcemap.json Oracle_main.asm "$patched_rom"
-  else
-    "$asar_bin" --symbols=wla --symbols-path="$symbols_path" Oracle_main.asm "$patched_rom"
-  fi
+  "$asar_bin" --symbols=wla --symbols-path="$symbols_path" ${assembler_emits[@]+"${assembler_emits[@]}"} Oracle_main.asm "$patched_rom"
 else
-  "$asar_bin" Oracle_main.asm "$patched_rom"
+  "$asar_bin" ${assembler_emits[@]+"${assembler_emits[@]}"} Oracle_main.asm "$patched_rom"
 fi
 
 echo "Built patched ROM: $patched_rom"
@@ -343,11 +359,28 @@ echo "Built patched ROM: $patched_rom"
 # that produced this build. Fail closed so source-sync never opens against a
 # missing or stale allocation contract.
 echo "[*] Generating Yaze hack manifest..."
+# z3asm: exact spans from the hooks.json this build just emitted; the
+# generator rejects it unless its recorded ROM hash matches $patched_rom.
+# asar: explicit source-scan fallback with estimated sizes.
+# Older deployed z3asm builds emit exact spans but not output-ROM hash
+# metadata. Use exact spans only when provenance is present; a present but
+# mismatched hash still fails closed inside generate_hack_manifest.py.
+if [[ "$asar_bin" == *"z3asm"* ]] &&
+  python3 -c 'import json,re,sys; value=json.load(open(sys.argv[1])).get("rom",{}).get("sha256"); sys.exit(0 if isinstance(value,str) and re.fullmatch(r"[0-9a-f]{64}",value) else 1)' "$hooks_json"
+then
+  manifest_hook_args=(--hooks "$hooks_json")
+else
+  if [[ "$asar_bin" == *"z3asm"* ]]; then
+    echo "[-] z3asm hooks.json has no ROM hash; using source-scan manifest fallback." >&2
+  fi
+  manifest_hook_args=(--hook-source python-scan)
+fi
 python3 "$repo_root/Scripts/Generate/generate_hack_manifest.py" \
   --root "$repo_root" \
   --output "$repo_root/Roms/hack_manifest.json" \
   --dev-rom "$base_rom" \
-  --rom "$patched_rom"
+  --rom "$patched_rom" \
+  "${manifest_hook_args[@]}"
 
 # Export symbols for yaze + Mesen2.
 if [[ $emit_symbols -eq 1 && -f "$symbols_path" ]]; then
@@ -359,7 +392,11 @@ if [[ $emit_symbols -eq 1 && -f "$symbols_path" ]]; then
 fi
 
 # Run ZScream overlap check
-python3 "$repo_root/Scripts/Build/check_zscream_overlap.py"
+if [[ $emit_symbols -eq 1 ]]; then
+  python3 "$repo_root/Scripts/Build/check_zscream_overlap.py" --symbols "$symbols_path"
+else
+  echo "[-] Skipping ZScream overlap check: --no-symbols requested; no symbols emitted for this build."
+fi
 
 # Generate annotations.json if requested (ASM @watch/@assert tags)
 if [[ "${OOS_GENERATE_ANNOTATIONS:-0}" == "1" ]]; then
@@ -367,9 +404,9 @@ if [[ "${OOS_GENERATE_ANNOTATIONS:-0}" == "1" ]]; then
   python3 "$repo_root/Scripts/Generate/generate_annotations.py" --root "$repo_root" --out "$annotations_out" || true
 fi
 
-# Run static analysis if hooks.json exists
-hooks_json="$repo_root/Roms/hooks.json"
-if [[ -f "$patched_rom" ]]; then
+# Run static analysis if hooks.json exists.
+# asar cannot emit hooks.json; fall back to the legacy Python scanner.
+if [[ "$asar_bin" != *"z3asm"* && -f "$patched_rom" ]]; then
   regen_hooks=0
   if [[ ! -f "$hooks_json" || "${OOS_GENERATE_HOOKS:-0}" == "1" ]]; then
     regen_hooks=1
@@ -388,7 +425,9 @@ fi
 # Optional validation: ensure hooks.json matches generator output
 # Set OOS_VALIDATE_ON_BUILD=1 to run hook + sprite checks non-fatally on every build.
 validate_on_build="${OOS_VALIDATE_ON_BUILD:-0}"
-if [[ "${OOS_VALIDATE_HOOKS:-0}" == "1" || "$validate_on_build" == "1" ]]; then
+if [[ "$asar_bin" == *"z3asm"* ]]; then
+  : # hooks.json comes from the assembler; nothing to compare against.
+elif [[ "${OOS_VALIDATE_HOOKS:-0}" == "1" || "$validate_on_build" == "1" ]]; then
   if [[ -f "$hooks_json" && -f "$patched_rom" ]]; then
     if [[ "$validate_on_build" == "1" && "${OOS_VALIDATE_HOOKS:-0}" != "1" ]]; then
       echo "[*] Validating hooks.json (non-fatal)..."

@@ -30,6 +30,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "Mesen2"))
+
 # Try to import socket client + shared capture helpers
 try:
     from mesen2_client_lib.client import OracleDebugClient
@@ -42,7 +44,7 @@ try:
 except ImportError:
     HAS_BRIDGE = False
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 SAVESTATE_ROOT = REPO_ROOT / "Roms" / "SaveStates" / "oos168x"
 SAVESTATE_SHARED = REPO_ROOT / "Roms" / "SaveStates"  # Shared metadata location
 MANIFEST_PATH = REPO_ROOT / "Docs" / "Debugging" / "Testing" / "save_state_library.json"

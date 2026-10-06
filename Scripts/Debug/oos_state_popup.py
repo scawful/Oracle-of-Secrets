@@ -24,9 +24,9 @@ except ModuleNotFoundError:
     raise
 
 
-ROOT = Path(__file__).resolve().parents[1]
-MESEN = [sys.executable, str(ROOT / "scripts" / "mesen2_client.py")]
-SET_TRUSTED = [sys.executable, str(ROOT / "scripts" / "set_trusted_state_seed.py")]
+ROOT = Path(__file__).resolve().parents[2]
+MESEN = [sys.executable, str(ROOT / "Scripts" / "Mesen2" / "mesen2_client.py")]
+SET_TRUSTED = [sys.executable, str(ROOT / "Scripts" / "set_trusted_state_seed.py")]
 SESSION_FILE = ROOT / ".context" / "scratchpad" / "oos_state_popup_session.json"
 MACROS_FILE = ROOT / "Docs" / "Debugging" / "Testing" / "oos_ui_macros.json"
 TASKS = ["maku", "d4", "d6", "d6inside", "d6cart", "menu"]

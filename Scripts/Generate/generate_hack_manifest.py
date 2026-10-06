@@ -37,6 +37,7 @@ ROM ownership.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -45,13 +46,17 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable, Optional
 
-# Import the existing hooks scanner infrastructure
-from generate_hooks_json import (
+# Shared source parsing (define evaluation, active-line filtering)
+from asm_source import (
     DEFINE_ANY_ASSIGN_RE,
-    scan_org_directives,
-    scan_hooks,
     _load_global_defines,
     _iter_active_lines,
+)
+
+# Hook scanner (Python source scan; see generate_hooks_json.py)
+from generate_hooks_json import (
+    scan_org_directives,
+    scan_hooks,
     HookEntry,
     OrgDirective,
 )
@@ -1667,6 +1672,234 @@ def _validate_unresolved_org_proofs(
 
 
 # ---------------------------------------------------------------------------
+# Exact hook source (z3asm hooks.json)
+# ---------------------------------------------------------------------------
+
+HOOK_FILE_VERSION = 1
+EXACT_HOOK_KINDS = frozenset({"jsl", "jml", "jsr", "jmp", "data", "patch"})
+HOOK_ADDRESS_RE = re.compile(r"^0x[0-9A-Fa-f]{1,6}$")
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+# Banks whose every byte is already ASM-owned through owned_banks. Exact spans
+# in any other bank (vanilla, shared, unclassified) go into protected_regions.
+OWNED_BANK_TYPES = ("asm_owned", "asm_expansion")
+
+
+@dataclass(frozen=True)
+class ExactSpan:
+    """One assembler write: half-open PC range plus its hook record."""
+
+    start_pc: int
+    end_pc: int
+    hook: HookEntry
+
+
+def _is_strict_int(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def load_exact_hooks(
+    hooks_path: Path, patched_rom_path: Path
+) -> tuple[list[ExactSpan], dict]:
+    """Load z3asm hooks.json and prove it belongs to the patched ROM.
+
+    Rejects the file unless its recorded output-ROM SHA-256 and size match
+    `patched_rom_path` exactly, and every entry is a mapped, in-ROM,
+    positive-size span with a supported kind.
+    """
+    if not hooks_path.is_file():
+        raise ManifestGenerationError(f"Hook file not found: {hooks_path}")
+    raw = hooks_path.read_bytes()
+    try:
+        data = json.loads(raw)
+    except ValueError as exc:
+        raise ManifestGenerationError(
+            f"Hook file {hooks_path} is not valid JSON: {exc}"
+        ) from exc
+    if not isinstance(data, dict):
+        raise ManifestGenerationError(f"Hook file {hooks_path} is not an object")
+    version = data.get("version")
+    if not _is_strict_int(version) or version != HOOK_FILE_VERSION:
+        raise ManifestGenerationError(
+            f"Hook file {hooks_path} has unsupported version {version!r}; "
+            f"expected {HOOK_FILE_VERSION}"
+        )
+
+    rom_meta = data.get("rom")
+    recorded_sha = rom_meta.get("sha256") if isinstance(rom_meta, dict) else None
+    recorded_size = rom_meta.get("size") if isinstance(rom_meta, dict) else None
+    if not isinstance(recorded_sha, str) or not SHA256_RE.match(recorded_sha):
+        raise ManifestGenerationError(
+            f"Hook file {hooks_path} has no valid rom.sha256; rebuild z3asm "
+            "with output-hash emission and reassemble"
+        )
+    if not _is_strict_int(recorded_size):
+        raise ManifestGenerationError(
+            f"Hook file {hooks_path} has no valid rom.size"
+        )
+    rom_bytes = patched_rom_path.read_bytes()
+    actual_sha = hashlib.sha256(rom_bytes).hexdigest()
+    if recorded_sha != actual_sha or recorded_size != len(rom_bytes):
+        raise ManifestGenerationError(
+            f"Hook file {hooks_path} belongs to a different ROM: it records "
+            f"sha256 {recorded_sha[:16]} size {recorded_size}, but patched "
+            f"ROM {patched_rom_path} has sha256 {actual_sha[:16]} size "
+            f"{len(rom_bytes)}"
+        )
+
+    entries = data.get("hooks")
+    if not isinstance(entries, list):
+        raise ManifestGenerationError(f"Hook file {hooks_path} has no hooks list")
+    rom_end = min(len(rom_bytes), CANONICAL_LOROM_ROM_END_PC)
+    spans: list[ExactSpan] = []
+    for index, entry in enumerate(entries):
+        where = f"Hook file {hooks_path} entry {index}"
+        if not isinstance(entry, dict):
+            raise ManifestGenerationError(f"{where} is not an object")
+        address_text = entry.get("address")
+        if not isinstance(address_text, str) or not HOOK_ADDRESS_RE.match(
+            address_text
+        ):
+            raise ManifestGenerationError(
+                f"{where} has invalid address {address_text!r}"
+            )
+        address = int(address_text, 16)
+        size = entry.get("size")
+        if not _is_strict_int(size) or size <= 0:
+            raise ManifestGenerationError(f"{where} has invalid size {size!r}")
+        kind = entry.get("kind")
+        if kind not in EXACT_HOOK_KINDS:
+            raise ManifestGenerationError(f"{where} has invalid kind {kind!r}")
+        start_pc = _strict_lorom_to_pc(address, f"{where} address")
+        end_pc = start_pc + size
+        if end_pc > rom_end:
+            raise ManifestGenerationError(
+                f"{where} span [0x{start_pc:X}, 0x{end_pc:X}) ends past the "
+                f"patched ROM (0x{rom_end:X})"
+            )
+        hook = HookEntry(
+            address=address,
+            name=str(entry.get("name", f"hook_{address:06X}")),
+            kind=kind,
+            target=entry.get("target"),
+            source=str(entry.get("source", "")),
+            note=str(entry.get("note", "")),
+            module=str(entry.get("module", "")),
+            skip_abi=bool(entry.get("skip_abi", False)),
+            abi_class=str(entry.get("abi_class", "")),
+            expected_m=entry.get("expected_m"),
+            expected_x=entry.get("expected_x"),
+            expected_exit_m=entry.get("expected_exit_m"),
+            expected_exit_x=entry.get("expected_exit_x"),
+            protected_size=size,
+        )
+        spans.append(ExactSpan(start_pc, end_pc, hook))
+
+    provenance = {
+        "hooks_sha256": hashlib.sha256(raw).hexdigest(),
+        "patched_rom_sha256": actual_sha,
+        "patched_rom_size": len(rom_bytes),
+    }
+    return spans, provenance
+
+
+def compute_exact_protected_regions(spans: list[ExactSpan]) -> list[dict]:
+    """Union exact spans; merge only spans that overlap or touch.
+
+    A one-byte gap between two writes stays unprotected (editable).
+    """
+    regions: list[dict] = []
+    for span in sorted(spans, key=lambda item: (item.start_pc, item.end_pc)):
+        if regions and span.start_pc <= regions[-1]["_end_pc"]:
+            current = regions[-1]
+            current["_end_pc"] = max(current["_end_pc"], span.end_pc)
+            current["hook_count"] += 1
+            continue
+        regions.append(
+            {
+                "_start_pc": span.start_pc,
+                "_end_pc": span.end_pc,
+                "hook_count": 1,
+                "module": span.hook.module,
+            }
+        )
+    return [
+        {
+            "start": f"0x{_pc_to_snes(region['_start_pc']):06X}",
+            "end": f"0x{_pc_to_snes(region['_end_pc']):06X}",
+            "size": region["_end_pc"] - region["_start_pc"],
+            "hook_count": region["hook_count"],
+            "module": region["module"],
+        }
+        for region in regions
+    ]
+
+
+def _span_banks(start_pc: int, end_pc: int) -> set[int]:
+    return set(range(start_pc // 0x8000, (end_pc - 1) // 0x8000 + 1))
+
+
+def _yaze_editable_pc_ranges(
+    editor_regions: list[dict], stream_regions: dict
+) -> list[tuple[str, int, int]]:
+    """PC ranges Yaze may write: editor-managed data, stream data/allocation
+    regions, and the three stream pointer tables."""
+    ranges: list[tuple[str, int, int]] = []
+    for region in editor_regions:
+        ranges.append(
+            (
+                "editor_managed_regions",
+                _strict_lorom_to_pc(int(region["start"], 16), "Editor range start"),
+                _strict_lorom_to_pc(int(region["end"], 16), "Editor range end"),
+            )
+        )
+    for stream_name, stream in stream_regions.items():
+        for key in ("data_regions", "allocation_regions"):
+            for region in stream.get(key, []):
+                ranges.append(
+                    (
+                        f"dungeon_stream_regions.{stream_name}.{key}",
+                        _strict_lorom_to_pc(
+                            int(region["start"], 16), f"{stream_name} {key} start"
+                        ),
+                        _strict_lorom_to_pc(
+                            int(region["end"], 16), f"{stream_name} {key} end"
+                        ),
+                    )
+                )
+        table = stream.get("pointer_table")
+        if table is not None:
+            entry_size = 3 if stream.get("pointer_encoding") == "long24" else 2
+            table_pc = _strict_lorom_to_pc(
+                int(table, 16), f"{stream_name} pointer table"
+            )
+            ranges.append(
+                (
+                    f"dungeon_stream_regions.{stream_name}.pointer_table",
+                    table_pc,
+                    table_pc + int(stream["pointer_count"]) * entry_size,
+                )
+            )
+    return ranges
+
+
+def _validate_exact_spans_disjoint_from_editable(
+    spans: list[ExactSpan], editable: list[tuple[str, int, int]]
+) -> None:
+    """Reject any assembler write that touches a range Yaze edits.
+
+    Uses exact byte spans in every bank, including spans that cross banks.
+    """
+    for span in spans:
+        for name, start, end in editable:
+            if span.start_pc < end and start < span.end_pc:
+                raise ManifestGenerationError(
+                    f"assembler write {span.hook.source or span.hook.name} at "
+                    f"PC [0x{span.start_pc:X}, 0x{span.end_pc:X}) overlaps "
+                    f"Yaze-editable {name} [0x{start:X}, 0x{end:X})"
+                )
+
+
+# ---------------------------------------------------------------------------
 # Main manifest generation
 # ---------------------------------------------------------------------------
 
@@ -1688,11 +1921,23 @@ def generate_manifest(
     root: Path,
     rom_path: Optional[Path] = None,
     dev_rom_path: Optional[Path] = None,
+    hooks_path: Optional[Path] = None,
 ) -> dict:
-    """Generate the complete hack manifest."""
-    import hashlib
+    """Generate the complete hack manifest.
 
+    Hook source:
+    - `hooks_path` set: exact mode. Load z3asm hooks.json, require its
+      recorded output hash to match `rom_path`, and protect exact spans.
+    - `hooks_path` None: python-scan mode (asar compatibility). Scan reachable
+      sources and protect estimated spans, as before.
+    """
     root = root.resolve()
+    exact_mode = hooks_path is not None
+    if exact_mode and rom_path is None:
+        raise ManifestGenerationError(
+            "Exact hook mode requires the patched ROM (--rom) that the hooks "
+            "were emitted for"
+        )
     if rom_path is not None:
         rom_path = _resolve_repo_path(root, rom_path)
         if not rom_path.is_file():
@@ -1709,6 +1954,10 @@ def generate_manifest(
         raise ManifestGenerationError(
             f"Editable dev ROM not found: {dev_rom_path}"
         )
+    if exact_mode and not dev_rom_path.is_file():
+        raise ManifestGenerationError(
+            f"Exact hook mode requires the editable dev ROM: {dev_rom_path}"
+        )
 
     reachable_sources = collect_reachable_asm_sources(root)
 
@@ -1716,9 +1965,30 @@ def generate_manifest(
     defines = _load_global_defines(root)
     asm_sources = reachable_sources
 
-    # Scan only the source graph assembled from Oracle_main.asm. Local ignored
-    # assets and archived experiments must not claim ROM ownership.
-    hooks = scan_hooks(root, asm_sources)
+    exact_spans: list[ExactSpan] = []
+    if exact_mode:
+        hooks_path = _resolve_repo_path(root, hooks_path)
+        exact_spans, exact_provenance = load_exact_hooks(hooks_path, rom_path)
+        hooks = [span.hook for span in exact_spans]
+        hook_source = {
+            "mode": "z3asm-hooks",
+            "exact": True,
+            "path": _manifest_path(root, hooks_path),
+            "sha256": exact_provenance["hooks_sha256"],
+            "patched_rom_sha256": exact_provenance["patched_rom_sha256"],
+            "patched_rom_size": exact_provenance["patched_rom_size"],
+            "note": "Producer-verified: hooks.json records the SHA-256 of the patched ROM it was emitted with. Yaze does not read or enforce this block.",
+        }
+    else:
+        # Scan only the source graph assembled from Oracle_main.asm. Local
+        # ignored assets and archived experiments must not claim ROM ownership.
+        hooks = scan_hooks(root, asm_sources)
+        hook_source = {
+            "mode": "python-scan",
+            "exact": False,
+            "generator": "generate_hooks_json.scan_hooks",
+            "note": "Source scan with estimated hook sizes (asar compatibility). Protected regions are approximate.",
+        }
 
     # Build manifest sections
     manifest: dict = {
@@ -1737,7 +2007,7 @@ def generate_manifest(
             if rom_path is not None
             else "Roms/oos168x.sfc"
         ),
-        "assembler": "asar",
+        "assembler": "z3asm" if exact_mode else "asar",
         "entry_point": str(MANIFEST_ENTRY_POINT),
         "build_script": "Scripts/Build/build_rom.sh",
         "flow": [
@@ -1773,15 +2043,27 @@ def generate_manifest(
                 f"Unable to read editable dev ROM {dev_rom_path}: {exc}"
             ) from exc
     manifest["rom"] = rom_meta
+    manifest["hook_source"] = hook_source
 
     if dev_rom_path.exists():
         manifest["dungeon_stream_regions"] = derive_dungeon_stream_regions(
             dev_rom_path
         )
         editor_regions = derive_editor_managed_regions(dev_rom_path)
-        _validate_expanded_hooks_disjoint_from_editor_regions(
-            hooks, editor_regions
-        )
+        if exact_mode:
+            # Exact spans: check every byte, in every bank, against every
+            # range Yaze writes.
+            _validate_exact_spans_disjoint_from_editable(
+                exact_spans,
+                _yaze_editable_pc_ranges(
+                    editor_regions, manifest["dungeon_stream_regions"]
+                ),
+            )
+        else:
+            # Estimated spans: start-address rule for expanded hooks.
+            _validate_expanded_hooks_disjoint_from_editor_regions(
+                hooks, editor_regions
+            )
         _validate_unresolved_org_proofs(
             scan_org_directives(root, asm_sources), editor_regions
         )
@@ -1808,9 +2090,45 @@ def generate_manifest(
         for h in hooks
         if ((_physical_org_address(h.address) >> 16) & 0xFF) >= 0x1E
     ]
-    protected = compute_protected_regions(vanilla_hooks) if vanilla_hooks else []
+    # Bank ownership — expanded banks with ownership classification
+    banks = scan_bank_ownership(root, asm_sources)
+    if exact_mode:
+        owned_bank_numbers = {
+            int(bank["bank"], 16)
+            for bank in banks
+            if bank.get("ownership") in OWNED_BANK_TYPES
+        }
+        protected_spans = [
+            span
+            for span in exact_spans
+            if not _span_banks(span.start_pc, span.end_pc) <= owned_bank_numbers
+        ]
+        protected = compute_exact_protected_regions(protected_spans)
+        protected_description = (
+            "Exact byte spans the assembler writes on every build, in vanilla "
+            "banks ($00-$1D) and in shared or unclassified expanded banks. "
+            "Spans merge only when they overlap or touch; unwritten gaps stay "
+            "editable. Banks marked asm_owned/asm_expansion are covered by "
+            "owned_banks instead."
+        )
+    else:
+        protected = (
+            compute_protected_regions(vanilla_hooks) if vanilla_hooks else []
+        )
+        protected_description = "Hook addresses within vanilla ROM banks ($00-$1D). Asar patches these on every build, so yaze edits at these addresses are silently overwritten. Yaze should either skip these during save or warn the user."
+    # Graphics-only free space for yaze sheet relocation (scawful approved
+    # 2026-09-26). Bank $23 (PC 0x118000-0x11FFFF, 32 KB of 0x00) is not owned,
+    # not protected, and asar writes nothing there. yaze allows only these three
+    # keys; "end" is exclusive; it must stay disjoint from dungeon_stream_regions.
+    manifest["graphics_sheet_regions"] = {
+        "description": "Graphics-only free space: bank $23 (PC 0x118000-0x11FFFF), 32 KB of 0x00, not owned or protected; asar writes nothing there.",
+        "allocation_regions": [{"start": "0x238000", "end": "0x248000"}],
+        "reserved_sheets": ["0x7B", "0x7C"],
+    }
+
     manifest["protected_regions"] = {
-        "description": "Hook addresses within vanilla ROM banks ($00-$1D). Asar patches these on every build, so yaze edits at these addresses are silently overwritten. Yaze should either skip these during save or warn the user.",
+        "description": protected_description,
+        "exact": exact_mode,
         "count": len(protected),
         "vanilla_hook_count": len(vanilla_hooks),
         "expanded_hook_count": len(expanded_hooks),
@@ -1818,8 +2136,6 @@ def generate_manifest(
         "regions": protected,
     }
 
-    # Bank ownership — expanded banks with ownership classification
-    banks = scan_bank_ownership(root, asm_sources)
     manifest["owned_banks"] = {
         "description": "Expanded ROM banks with ownership classification. 'asm_owned' banks are fully owned by ASM. 'shared' banks (e.g., $28 ZSCustomOverworld) contain data that yaze writes AND ASM patches on top — yaze can edit these but must rebuild after. 'asm_expansion' banks only exist in the patched ROM.",
         "ownership_types": {
@@ -1952,24 +2268,53 @@ def main() -> int:
         action="store_true",
         help="Compact JSON output (no indentation)",
     )
+    # Hook source: exactly one is required; no implicit hooks.json reuse.
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument(
+        "--hooks",
+        type=Path,
+        help=(
+            "z3asm hooks.json emitted with the patched ROM. Exact mode: its "
+            "rom.sha256 must match --rom, which is then required."
+        ),
+    )
+    source.add_argument(
+        "--hook-source",
+        choices=("python-scan",),
+        help="Scan sources for hooks with estimated sizes (asar builds).",
+    )
     args = parser.parse_args()
 
     root = args.root.resolve()
     output = (root / args.output).resolve() if not args.output.is_absolute() else args.output
 
     rom_path = args.rom
+    if args.hooks is not None and rom_path is None:
+        print(
+            "error: --hooks requires --rom (the patched ROM the hooks were "
+            "emitted with)",
+            file=sys.stderr,
+        )
+        return 2
     if rom_path is None:
         default_rom_path = root / "Roms" / "oos168x.sfc"
         rom_path = default_rom_path if default_rom_path.is_file() else None
 
     try:
-        manifest = generate_manifest(root, rom_path, args.dev_rom)
+        manifest = generate_manifest(root, rom_path, args.dev_rom, args.hooks)
     except ManifestGenerationError as exc:
         print(f"error: cannot generate hack manifest: {exc}", file=sys.stderr)
         return 1
 
+    # Write atomically: a failed or interrupted run keeps the previous file.
     indent = None if args.compact else 2
-    output.write_text(json.dumps(manifest, indent=indent) + "\n")
+    temp_output = output.with_name(f".{output.name}.{os.getpid()}.tmp")
+    try:
+        temp_output.write_text(json.dumps(manifest, indent=indent) + "\n")
+        os.replace(temp_output, output)
+    finally:
+        if temp_output.exists():
+            temp_output.unlink()
 
     summary = manifest["summary"]
     print(f"Hack manifest written to {output}")

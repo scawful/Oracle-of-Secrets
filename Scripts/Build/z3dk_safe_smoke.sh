@@ -123,6 +123,7 @@ cleanup() {
 trap cleanup EXIT
 
 cp -f "$base_rom" "$temp_base"
+cp -f "$temp_base" "$temp_patched"
 
 echo "[z3dk-smoke] Repo root: ${ROOT_DIR}"
 echo "[z3dk-smoke] Base ROM copy: ${temp_base}"

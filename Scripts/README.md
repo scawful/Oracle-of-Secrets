@@ -10,14 +10,12 @@ This repo has accumulated scripts over time. The goal is to keep a small “gold
 - Build loop: `Scripts/Build/dev_loop.sh`
 - Build ROM directly: `Scripts/Build/build_rom.sh`
 - Overlap check after ASM: `python3 Scripts/Build/check_zscream_overlap.py`
-- Debug client (socket API): `Scripts/Mesen2/mesen2_client.py`
+- Debug client (socket API): `Scripts/Mesen2/mesen2_client.py` (shim; the client lives in `../mesen2-oos/tools/oos_client`, override with `MESEN2_OOS_ROOT`)
 - Launch isolated Mesen2 instance: `Scripts/Mesen2/mesen2_launch_instance.sh`
 - Run manifest-based tests: `Scripts/Validate/run_regression_tests.sh regression`
 - Test runner (socket backend): `Scripts/Validate/test_runner.py`
 - Package a beta patch: `Scripts/Build/beta_patch.sh`
-- Handheld testing: `Scripts/Device/oos_rg353p.sh status` / `capture --note "bug description"` / `backup --profile handheld`
-- Named handheld builds: `Scripts/Device/oos_rg353p.sh prepare --name <change-name>`; use the printed `push --rom <prepared-path> --mesen` command when intentionally updating.
-- [Handheld testing and save naming guide](/Users/scawful/src/hobby/oracle-of-secrets/Docs/Debugging/Handheld_Testing.md)
+- Handheld (RG353P) testing: moved to the sibling repo `~/src/hobby/oos-rg353p`.
 
 Archived docs may still say `./build.sh` or flat `scripts/…` paths. Prefer this Golden Path and `Docs/RUNBOOK.md`.
 
@@ -37,15 +35,17 @@ Archived docs may still say `./build.sh` or flat `scripts/…` paths. Prefer thi
 - Docs lint: `Scripts/Analysis/lint_docs.py`
 - Portable iOS/Mac project bundle: `Scripts/Generate/export_yazeproj_bundle.py --out-icloud`
 
-## Automation (Experimental / WIP)
-- `Scripts/campaign/` (agentic automation, autonomous debugging)
+## Scope
+Keep scripts here only when they build, validate, or debug the game.
+Agent frameworks, autonomous gameplay, and device tooling live outside this repo.
+The Campaign, Agent, OracleDebugger, Evaluations, and ralph-codex-loop tools were removed on 2026-09-23; recover them from git history if needed.
 
 If a doc references a script that does not exist (example: `mesen_cli.sh`), prefer the socket client (`Scripts/Mesen2/mesen2_client.py`) instead.
 
 ## Save-State Safety Defaults
 - `mesen2_launch_instance.sh` does **not** seed project slot states by default (`SEED_PROJECT_STATES=0`).
 - Opt-in legacy seeding only with `--seed-project-states`.
-- `oos-session.sh` loads task seeds from `Docs/Debugging/Testing/trusted_state_seeds.json` and requires `canon + human-captured` states.
+- `oos-session.sh` loads task seeds from `Data/debug/trusted_state_seeds.json` and requires `canon + human-captured` states.
 - Use `Scripts/set_trusted_state_seed.py <task> <state_id>` to map trusted library states to session tasks.
 - Use `Scripts/Debug/oos_state_popup.py --instance <name> [--font-size 18] [--theme dark] [--layout compact]` for integrated metadata capture, macros, shortcuts, and custom test actions.
 - Macro buttons/shortcuts are loaded from `Docs/Debugging/Testing/oos_ui_macros.json` so workflows can be edited without Python changes.

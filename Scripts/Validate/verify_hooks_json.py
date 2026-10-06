@@ -66,7 +66,7 @@ def _collect(path: Path, keys: tuple[str, ...]) -> list[tuple]:
 
 
 def _run_generator(root: Path, rom: Path, out_path: Path) -> None:
-    script = root / "scripts" / "generate_hooks_json.py"
+    script = root / "Scripts" / "Generate" / "generate_hooks_json.py"
     if not script.exists():
         raise FileNotFoundError(f"generate_hooks_json.py not found at {script}")
     cmd = [sys.executable, str(script), "--root", str(root), "--output", str(out_path), "--rom", str(rom)]

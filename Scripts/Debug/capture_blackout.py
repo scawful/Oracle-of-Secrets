@@ -30,7 +30,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuration
-MESEN2_CLIENT = Path(__file__).parent / "mesen2_client.py"
+MESEN2_CLIENT = Path(__file__).resolve().parents[1] / "Mesen2" / "mesen2_client.py"
 OUTPUT_DIR = Path("/tmp/oos_blackout")
 LAST_CAPTURE_MARKER = Path(__file__).resolve().parents[1] / "scratchpad" / "last_blackout_capture.json"
 REPRO_SLOT = 20
@@ -222,7 +222,7 @@ def cmd_arm(args):
     # Create repro seed state
     if args.save_seed:
         print(f"6. Saving repro seed state (slot {REPRO_SLOT})...")
-        run_mesen_cmd("smart-save", str(REPRO_SLOT))
+        run_mesen_cmd("save", str(REPRO_SLOT))
         run_mesen_cmd("lib-save", "Blackout repro seed", "-t", "dungeon", "-t", "blackout", "-t", "repro")
         print("   OK")
     else:
@@ -264,7 +264,7 @@ def cmd_capture(args):
 
     # Save failure state
     print(f"1. Saving failure state (slot {CAPTURE_SLOT})...")
-    run_mesen_cmd("smart-save", str(CAPTURE_SLOT))
+    run_mesen_cmd("save", str(CAPTURE_SLOT))
     run_mesen_cmd("savestate-label", "set", str(CAPTURE_SLOT), "--label", "blackout")
     print("   OK")
     print()

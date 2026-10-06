@@ -23,12 +23,13 @@ import time
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent
+REPO_ROOT = SCRIPT_DIR.parents[1]
+MESEN2_DIR = REPO_ROOT / "Scripts" / "Mesen2"
 
 # When running as `python3 Scripts/foo.py`, sys.path[0] is `Scripts/`, not the repo root,
 # so `import scripts.*` fails unless we explicitly add the repo root.
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+if str(MESEN2_DIR) not in sys.path:
+    sys.path.insert(0, str(MESEN2_DIR))
 
 ADDR_MODE = 0x7E0010
 ADDR_SUBMODE = 0x7E0011
@@ -50,6 +51,16 @@ INVALID_MODE_MIN = 0x30
 APU_SPIN_FULL_PC = 0x0088EC  # CMP $2140 ; BNE $0088EC (common hang signature)
 
 
+def _capture_cmd(args: argparse.Namespace, action: str) -> list[str]:
+    """Build a capture_blackout.py command; global args go before the subcommand."""
+    cmd = [sys.executable, str(SCRIPT_DIR / "capture_blackout.py")]
+    if os.environ.get("MESEN2_SOCKET_PATH"):
+        cmd += ["--socket", os.environ["MESEN2_SOCKET_PATH"]]
+    elif args.instance:
+        cmd += ["--instance", str(args.instance)]
+    return cmd + [action]
+
+
 def _run(cmd: list[str], *, cwd: Path, timeout_s: int | None = None) -> int:
     r = subprocess.run(cmd, cwd=cwd, timeout=timeout_s)
     return int(r.returncode)
@@ -57,7 +68,7 @@ def _run(cmd: list[str], *, cwd: Path, timeout_s: int | None = None) -> int:
 
 def _launch_mesen2_instance(*, instance: str, rom_path: Path, home_dir: Path, headless: bool) -> int:
     cmd = [
-        str(REPO_ROOT / "scripts" / "mesen2_launch_instance.sh"),
+        str(MESEN2_DIR / "mesen2_launch_instance.sh"),
         "--instance",
         str(instance),
         "--source",
@@ -122,7 +133,7 @@ def main() -> int:
     ap.add_argument("--instance", default="", help="Mesen2 instance name (registry-backed)")
     ap.add_argument("--launch", action="store_true", help="Auto-launch an isolated Mesen2 instance if not connected")
     ap.add_argument("--launch-ui", action="store_true", help="Launch Mesen2 with UI (default is --headless)")
-    ap.add_argument("--arm", action="store_true", help="Run agentic_autodebug arm before repro (p-watch/mem-watch)")
+    ap.add_argument("--arm", action="store_true", help="Run capture_blackout.py arm before repro (p-watch/mem-watch)")
 
     seed = ap.add_mutually_exclusive_group(required=False)
     seed.add_argument("--lib", type=str, help="Seed state ID from the local state library manifest")
@@ -138,17 +149,17 @@ def main() -> int:
     ap.add_argument(
         "--capture-kind",
         default="repro",
-        help="Capture kind label (passed to agentic_autodebug capture)",
+        help="Capture kind label (recorded in the report)",
     )
     ap.add_argument(
         "--capture-desc",
         default="transition blackout repro harness",
-        help="Capture description (passed to agentic_autodebug capture)",
+        help="Capture description (recorded in the report)",
     )
     ap.add_argument(
         "--no-capture",
         action="store_true",
-        help="Do not trigger agentic_autodebug capture when an anomaly is detected (still exits 1).",
+        help="Do not run capture_blackout.py capture when an anomaly is detected (still exits 1).",
     )
     ap.add_argument(
         "--report-out",
@@ -178,7 +189,7 @@ def main() -> int:
     rom_path = (REPO_ROOT / "Roms" / f"oos{int(args.version)}x.sfc").resolve()
 
     try:
-        from scripts.mesen2_client_lib.client import OracleDebugClient
+        from mesen2_client_lib.client import OracleDebugClient
     except Exception as exc:
         print(f"Failed to import mesen2 client lib: {exc}", file=sys.stderr)
         return 2
@@ -240,19 +251,14 @@ def main() -> int:
         "settle_frames": int(args.settle_frames),
         "max_frames": int(args.max_frames),
         "poll_every": int(args.poll_every),
+        "capture_kind": str(args.capture_kind),
+        "capture_desc": str(args.capture_desc),
         "rom_path": str(rom_path),
     }
 
     # Load seed state
     if args.arm:
-        arm_cmd = [sys.executable, "-m", "scripts.campaign.agentic_autodebug"]
-        # Global args must appear before the subcommand for argparse.
-        if os.environ.get("MESEN2_SOCKET_PATH"):
-            arm_cmd += ["--socket", os.environ["MESEN2_SOCKET_PATH"]]
-        elif args.instance:
-            arm_cmd += ["--instance", str(args.instance)]
-        arm_cmd += ["arm"]
-        _run(arm_cmd, cwd=REPO_ROOT, timeout_s=30)
+        _run(_capture_cmd(args, "arm"), cwd=REPO_ROOT, timeout_s=30)
 
     if args.lib:
         ok = client.load_library_state(str(args.lib))
@@ -312,31 +318,7 @@ def main() -> int:
             report["reason"] = "run_frames_failed"
             report["snapshot"] = snapshot
             if not args.no_capture:
-                _run(
-                    [
-                        sys.executable,
-                        "-m",
-                        "scripts.campaign.agentic_autodebug",
-                        "capture",
-                        "--kind",
-                        str(args.capture_kind),
-                        "--desc",
-                        str(args.capture_desc),
-                    ],
-                    cwd=REPO_ROOT,
-                    timeout_s=60,
-                )
-                _run(
-                    [
-                        sys.executable,
-                        "-m",
-                        "scripts.campaign.agentic_autodebug",
-                        "triage",
-                        "--latest",
-                    ],
-                    cwd=REPO_ROOT,
-                    timeout_s=30,
-                )
+                _run(_capture_cmd(args, "capture"), cwd=REPO_ROOT, timeout_s=60)
             _emit_report(args.report_out, report)
             return 1
 
@@ -442,31 +424,7 @@ def main() -> int:
             print("Anomaly detected; triggering capture...")
             if not args.no_capture:
                 # Use the shared capture tool (more complete forensics).
-                _run(
-                    [
-                        sys.executable,
-                        "-m",
-                        "scripts.campaign.agentic_autodebug",
-                        "capture",
-                        "--kind",
-                        str(args.capture_kind),
-                        "--desc",
-                        str(args.capture_desc),
-                    ],
-                    cwd=REPO_ROOT,
-                    timeout_s=60,
-                )
-                _run(
-                    [
-                        sys.executable,
-                        "-m",
-                        "scripts.campaign.agentic_autodebug",
-                        "triage",
-                        "--latest",
-                    ],
-                    cwd=REPO_ROOT,
-                    timeout_s=30,
-                )
+                _run(_capture_cmd(args, "capture"), cwd=REPO_ROOT, timeout_s=60)
             _emit_report(args.report_out, report)
             return 1
 
