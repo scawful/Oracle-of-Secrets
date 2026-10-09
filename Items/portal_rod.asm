@@ -45,31 +45,38 @@ pullpc
 Ancilla_HandlePortalCollision:
 {
   LDA.w $0E20, Y : CMP.b #$03 : BNE .not_portal_arrow
-    ; Check if Y is the orange or blue portal
-    LDA.w SprSubtype, Y : CMP.b #$02 : BEQ .blue_portal
-                          CMP.b #$01 : BEQ .orange_portal
-    .orange_portal
     PHY
-      LDY.w $0632 ; Blue Sprite ID
+    ; Entering orange (subtype 1) exits 16 px right of blue ($0632); entering
+    ; blue (subtype 2) exits 16 px below orange ($0633). Those indices keep the
+    ; last slot after a portal is dismissed, rejected or never placed, so only
+    ; move the arrow when the counterpart is a live portal of the other color.
+    LDA.w SprSubtype, Y : CMP.b #$01 : BEQ .from_orange
+                          CMP.b #$02 : BNE .done
+      LDY.w $0633 : LDA.b #$01 : BRA .check_counterpart
+    .from_orange
+      LDY.w $0632 : LDA.b #$02
+    .check_counterpart
+    CPY.b #$10 : BCS .done
+    CMP.w SprSubtype, Y : BNE .done
+    LDA.w $0E20, Y : CMP.b #$03 : BNE .done
+    LDA.w SprState, Y : CMP.b #$09 : BCC .done
+    LDA.w SprSubtype, Y : CMP.b #$02 : BNE .exit_at_orange
       LDA.w SprX, Y : CLC : ADC.b #$10 : STA.w ANC0XL, X
+      LDA.w SprXH, Y : ADC.b #$00 : STA.w ANC0XH, X
       LDA.w SprY, Y : STA.w ANC0YL, X
-      LDA.w SprXH, Y : STA.w ANC0XH, X
       LDA.w SprYH, Y : STA.w ANC0YH, X
-    PLY
-    JMP .continue
-
-    .blue_portal
-    PHY
-      LDY.w $0633 ; Orange Sprite ID
+      BRA .done
+    .exit_at_orange
       LDA.w SprX, Y : STA.w ANC0XL, X
-      LDA.w SprY, Y : CLC : ADC.b #$10 : STA.w ANC0YL, X
       LDA.w SprXH, Y : STA.w ANC0XH, X
-      LDA.w SprYH, Y : STA.w ANC0YH, X
+      LDA.w SprY, Y : CLC : ADC.b #$10 : STA.w ANC0YL, X
+      LDA.w SprYH, Y : ADC.b #$00 : STA.w ANC0YH, X
+    .done
     PLY
-    .continue
     ; Z set: skip the deflection branch at $088DC8. The portal's bulletproof
-    ; byte ($0BA0 = $FF) then makes vanilla report no collision, so the moved
-    ; arrow keeps flying instead of bouncing off (Discord 2025-01-10).
+    ; byte ($0BA0 = $FF) then makes vanilla report no collision: the arrow
+    ; keeps flying, moved when a valid counterpart exists and unchanged
+    ; otherwise (Discord 2025-01-10).
     LDA.b #$00
     RTL
   .not_portal_arrow
@@ -128,6 +135,10 @@ LinkItem_FirePortal:
   .finish
   TYX
   STZ.w SprYRound, X : STZ.w SprXRound, X
+  ; Sprite_SpawnDynamically does not run Sprite_Portal_Prep, so set its
+  ; bulletproof byte here: ancillae then pass over the portal instead of
+  ; hitting it (runtime: $0BA0 was $00 on Portal Rod portals).
+  LDA.b #$FF : STA.w SprBulletproof, X
   PLX
 
   .return
