@@ -1,7 +1,7 @@
 ; Crumble Floor Room Tag
 
 pushpc
-org $01CC08 ; holes_3 tag routine ; @hook module=Dungeons
+org $01CC08 ; Holes3 / tag $34 ; @hook module=Dungeons name=CrumbleFloor
 JSL CrumbleFloorTag_Main
 RTS
 pullpc
@@ -151,4 +151,3 @@ replace_tile_pit:
 
   JMP replace_tile_continue
 }
-

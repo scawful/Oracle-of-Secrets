@@ -39,6 +39,7 @@ from generate_hack_manifest import (  # noqa: E402
     derive_dungeon_stream_regions,
     derive_editor_managed_regions,
     generate_manifest,
+    scan_room_tags,
 )
 from generate_hooks_json import HookEntry, scan_hooks  # noqa: E402
 from export_yazeproj_bundle import (  # noqa: E402
@@ -145,6 +146,111 @@ class ManifestFixture:
             raise AssertionError(
                 f"Fixture span [0x{start:X}, 0x{end:X}) does not fit"
             )
+
+
+
+class RoomTagMappingTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.fixture = ManifestFixture()
+        self.fixture.write_text("Oracle_main.asm", 'incsrc "Dungeons/tags.asm"\n')
+
+    def tearDown(self) -> None:
+        self.fixture.close()
+
+    def tags(self, source: str, defines=None, rom_data=None):
+        self.fixture.write_text("Dungeons/tags.asm", source)
+        options = {} if rom_data is None else {"rom_data": rom_data}
+        return scan_room_tags(self.fixture.root, defines or {}, **options)
+
+    def test_source_only_mapping_matches_us_dispatch_not_routine_spacing(self):
+        tags = self.tags("".join(
+            f"org $01CC{offset:02X} : JML Hook\n" for offset in range(0, 32, 4)
+        ))
+        self.assertEqual(
+            [(tag["tag_id"], tag["address"]) for tag in tags],
+            [("0x21", "0x01CC00"), ("0x23", "0x01CC04"),
+             ("0x34", "0x01CC08"), ("0x35", "0x01CC0C"),
+             ("0x36", "0x01CC10"), ("0x37", "0x01CC14"),
+             ("0x39", "0x01CC18"), ("0x3A", "0x01CC1C")],
+        )
+
+    def test_bare_disabled_flag_is_not_advertised_as_active(self):
+        tags = self.tags(
+            "if !ENABLE_CART\norg $01CC14 : JML Cart ; @hook name=Cart\nendif\n",
+            {"ENABLE_CART": 0},
+        )
+        self.assertEqual(tags[0]["tag_id"], "0x37")
+        self.assertEqual(tags[0]["feature_flag"], "!ENABLE_CART")
+        self.assertFalse(tags[0]["enabled"])
+
+    def test_nested_endif_preserves_outer_disable(self):
+        tags = self.tags(
+            "if !ENABLE_OUTER == 1\nif !ENABLE_INNER\n"
+            "db $00\nendif\norg $01CC08 : JML Crumble\nendif\n",
+            {"ENABLE_OUTER": 0, "ENABLE_INNER": 1},
+        )
+        self.assertFalse(tags[0]["enabled"])
+        self.assertEqual(tags[0]["feature_flag"], "!ENABLE_OUTER")
+
+    def test_else_active_hook_wins_over_more_detailed_inactive_branch(self):
+        tags = self.tags(
+            "if !ENABLE_FIRST\n"
+            "; A detailed inactive purpose\n"
+            "org $01CC08 : JML First ; @hook name=First\n"
+            "elseif !ENABLE_SECOND\n"
+            "org $01CC08 : JML Second ; @hook name=Second\n"
+            "else\norg $01CC08 : JML Last ; @hook name=Last\nendif\n",
+            {"ENABLE_FIRST": 0, "ENABLE_SECOND": 1},
+        )
+        self.assertEqual(len(tags), 1)
+        self.assertTrue(tags[0]["enabled"])
+        self.assertEqual(tags[0]["name"], "Second")
+
+    def test_rom_vectors_override_reference_and_preserve_aliases(self):
+        data = bytearray(0xC2FD)
+        for tag_id in (0x20, 0x22):
+            pc = 0xC27D + tag_id * 2
+            data[pc:pc + 2] = bytes.fromhex("08cc")
+        tags = self.tags("org $01CC08 : JML Crumble\n", rom_data=bytes(data))
+        self.assertEqual([tag["tag_id"] for tag in tags], ["0x20", "0x22"])
+
+    def test_unmapped_rom_hook_does_not_fall_back_to_reference(self):
+        self.assertEqual(self.tags("org $01CC08 : JML Crumble\n",
+                                   rom_data=bytes(0xC2FD)), [])
+
+    def test_truncated_vectors_are_rejected(self):
+        with self.assertRaisesRegex(ManifestGenerationError,
+                                    "room tag dispatch table PC span"):
+            self.tags("org $01CC08 : JML Crumble\n", rom_data=bytes(0xC2FC))
+
+    def test_source_only_does_not_invent_tags_for_routine_body_or_return(self):
+        self.assertEqual(self.tags("org $01CC09\norg $01CC5A\n"), [])
+
+    def test_manifest_separates_vectors_routines_and_unproven_free_slots(self):
+        self.fixture.write_text("Dungeons/tags.asm", "org $01CC08 : JML Crumble\n")
+        tags = generate_manifest(self.fixture.root)["room_tags"]
+        self.assertEqual(tags["dispatch_table_start"], "0x01C27D")
+        self.assertEqual(tags["dispatch_table_end"], "0x01C2FD")
+        self.assertEqual(tags["dispatch_source"], "vanilla_us_reference")
+        self.assertEqual(tags["routine_hooks_end"], "0x01CC20")
+        self.assertEqual(tags["available_slots"], [])
+        self.assertEqual(tags["tags"][0]["tag_id"], "0x34")
+
+    def test_manifest_uses_selected_dev_rom_and_prefers_patched_vectors(self):
+        self.fixture.write_text("Dungeons/tags.asm", "org $01CC08 : JML Crumble\n")
+        dev = self.fixture.write_dev_rom()
+        self.fixture.write_rom_value(dev, 0xC27D + 0x34 * 2, 0xCC08, 2)
+        manifest = generate_manifest(self.fixture.root, dev_rom_path=dev)
+        self.assertEqual(manifest["room_tags"]["dispatch_source"], "dev_rom")
+        self.assertEqual(manifest["room_tags"]["tags"][0]["tag_id"], "0x34")
+        patched = self.fixture.root / "Roms/patched.sfc"
+        patched.write_bytes(dev.read_bytes())
+        self.fixture.write_rom_value(patched, 0xC27D + 0x34 * 2, 0, 2)
+        self.fixture.write_rom_value(patched, 0xC27D + 0x20 * 2, 0xCC08, 2)
+        manifest = generate_manifest(self.fixture.root, rom_path=patched,
+                                     dev_rom_path=dev)
+        self.assertEqual(manifest["room_tags"]["dispatch_source"], "patched_rom")
+        self.assertEqual(manifest["room_tags"]["tags"][0]["tag_id"], "0x20")
 
 
 class LoRomConversionTest(unittest.TestCase):

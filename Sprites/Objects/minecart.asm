@@ -1485,14 +1485,14 @@ Sprite_Minecart_DrawBottom:
 ;   - Confirm no regression on Crumble Floor (tag 0x34) or other Holes tags
 ;   - Confirm JML $01CC5A return path is correct for tag 0x37 context
 ;
-; Hook: Tag 0x38 at $01CC14 (vanilla Holes6 routine).
-; The old hook at $01CC08 (Holes3/tag 0x35) conflicts with
+; Hook: Tag 0x37 at $01CC14 (vanilla Holes6 routine).
+; The old hook at $01CC08 (Holes3/tag 0x34) conflicts with
 ; Dungeons/crumblefloor_tag.asm — do NOT use that address.
-; Note: Tag 0x37 (Holes5) is already repurposed for Minish shutter doors
+; Note: Tag 0x36 (Holes5) is already repurposed for Minish shutter doors
 ; (see Dungeons/custom_tag.asm: RoomTag_MinishShutterDoor).
 ;
 ; To enable: set !ENABLE_MINECART_CART_SHUTTERS = 1 in
-; Config/feature_flags.asm, then assign tag 0x38 to the
+; Config/feature_flags.asm, then assign tag 0x37 to the
 ; target room(s) in the yaze room header editor.
 
 if !ENABLE_MINECART_CART_SHUTTERS

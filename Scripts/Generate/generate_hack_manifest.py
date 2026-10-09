@@ -86,6 +86,21 @@ SRAM_BIT_RE = re.compile(
 # Room tag org pattern: org $01CCxx
 ROOM_TAG_RE = re.compile(r"^\s*org\s+\$01CC([0-9A-Fa-f]{2})\b")
 
+# USDASM Underworld_HandleRoomTags.vectors ($01C27D..$01C2FC).
+# Holes0/1 occur earlier than Holes3..8; routine spacing is not tag-ID order.
+ROOM_TAG_VECTOR_PC = 0xC27D
+ROOM_TAG_COUNT = 0x40
+VANILLA_HOLE_TAG_IDS = {
+    0x01CC00: (0x21,),
+    0x01CC04: (0x23,),
+    0x01CC08: (0x34,),
+    0x01CC0C: (0x35,),
+    0x01CC10: (0x36,),
+    0x01CC14: (0x37,),
+    0x01CC18: (0x39,),
+    0x01CC1C: (0x3A,),
+}
+
 # Feature flag pattern: !ENABLE_xxx = N
 FEATURE_FLAG_RE = re.compile(
     r"^\s*!(ENABLE_\w+)\s*=\s*(\d+)\b"
@@ -560,8 +575,15 @@ def scan_room_tags(
     root: Path,
     defines: dict[str, int],
     asm_paths: Optional[Iterable[Path]] = None,
+    *,
+    rom_data: Optional[bytes] = None,
 ) -> list[dict]:
-    """Extract room tag mappings from org $01CCxx directives."""
+    """Map hole-routine hooks to IDs through the game's dispatch vectors.
+
+    Source-only inspection uses the documented US mapping. Supplied ROM bytes
+    are headerless and authoritative: an unmapped hook gets no invented ID.
+    All IDs that alias a hooked entrypoint are retained.
+    """
     root = root.resolve()
     tags: dict[int, dict] = {}
 
@@ -586,22 +608,24 @@ def scan_room_tags(
                 f"Unable to read reachable ASM source {asm_path}: {exc}"
             ) from exc
 
-        # Track if/endif nesting for feature-gated tags
-        in_gated_block = False
-        gate_flag = None
+        active_lines = {
+            index for index, _, _ in _iter_active_lines(lines, defines)
+        }
+        # Metadata only; actual branch selection comes from the shared parser.
+        # Include enclosing/elseif guards so a nested endif cannot lose them.
+        gate_stack: list[set[str]] = []
 
         for i, line in enumerate(lines):
-            stripped = line.strip()
-
-            # Track feature flag guards
-            if stripped.startswith("if "):
-                fm = re.search(r"!(ENABLE_\w+)\s*==\s*1", stripped)
-                if fm:
-                    in_gated_block = True
-                    gate_flag = fm.group(1)
-            elif stripped.startswith("endif"):
-                in_gated_block = False
-                gate_flag = None
+            stripped = line.split(";", 1)[0].strip()
+            condition = re.match(r"(if|elseif)\b(.*)", stripped, re.IGNORECASE)
+            if condition:
+                flags = set(re.findall(r"!(ENABLE_\w+)\b", condition.group(2)))
+                if condition.group(1).lower() == "if":
+                    gate_stack.append(flags)
+                elif gate_stack:
+                    gate_stack[-1].update(flags)
+            elif re.match(r"endif\b", stripped, re.IGNORECASE) and gate_stack:
+                gate_stack.pop()
 
             m = ROOM_TAG_RE.match(line)
             if not m:
@@ -609,14 +633,23 @@ def scan_room_tags(
 
             offset = int(m.group(1), 16)
             addr = 0x01CC00 + offset
-            # Tag ID = offset / 4 + 0x33
-            tag_id = offset // 4 + 0x33
+            if rom_data is None:
+                tag_ids = VANILLA_HOLE_TAG_IDS.get(addr, ())
+            else:
+                _require_rom_span(
+                    rom_data, ROOM_TAG_VECTOR_PC, ROOM_TAG_COUNT * 2,
+                    "room tag dispatch table",
+                )
+                tag_ids = tuple(
+                    tag_id for tag_id in range(ROOM_TAG_COUNT)
+                    if _read_u16(rom_data, ROOM_TAG_VECTOR_PC + tag_id * 2,
+                                 "room tag vector") == (addr & 0xFFFF)
+                )
+            if not tag_ids:
+                continue
 
             # Extract hook name from @hook annotation
-            name = f"Tag_0x{tag_id:02X}"
             nm = HOOK_NAME_RE.search(line)
-            if nm:
-                name = nm.group(1)
 
             # Extract purpose from comment
             purpose = ""
@@ -635,22 +668,28 @@ def scan_room_tags(
                         purpose = text
                         break
 
-            entry = {
-                "tag_id": f"0x{tag_id:02X}",
-                "address": f"0x{addr:06X}",
-                "name": name,
-                "source": f"{rel}:{i + 1}",
-            }
-            if purpose:
-                entry["purpose"] = purpose
-            if in_gated_block and gate_flag:
-                flag_value = defines.get(gate_flag, 0)
-                entry["feature_flag"] = f"!{gate_flag}"
-                entry["enabled"] = flag_value == 1
+            for tag_id in tag_ids:
+                entry = {
+                    "tag_id": f"0x{tag_id:02X}",
+                    "address": f"0x{addr:06X}",
+                    "name": nm.group(1) if nm else f"Tag_0x{tag_id:02X}",
+                    "source": f"{rel}:{i + 1}",
+                    "enabled": i in active_lines,
+                }
+                if purpose:
+                    entry["purpose"] = purpose
+                gate_flags = sorted(set().union(*gate_stack))
+                if len(gate_flags) == 1:
+                    entry["feature_flag"] = f"!{gate_flags[0]}"
+                elif gate_flags:
+                    entry["feature_flags"] = [f"!{flag}" for flag in gate_flags]
 
-            # Keep highest-detail entry per tag
-            if tag_id not in tags or len(entry) > len(tags[tag_id]):
-                tags[tag_id] = entry
+                # Prefer the active branch over a more detailed inactive one.
+                old = tags.get(tag_id)
+                if old is None or (entry["enabled"], len(entry)) > (
+                    old["enabled"], len(old)
+                ):
+                    tags[tag_id] = entry
 
     return [tags[k] for k in sorted(tags)]
 
@@ -2107,6 +2146,8 @@ def generate_manifest(
 
     # ROM metadata (patched ROM for verification, dev ROM for editing)
     rom_meta: dict = {}
+    dispatch_rom_data = None
+    dispatch_source = "vanilla_us_reference"
     if rom_path and rom_path.exists():
         rom_meta["path"] = _manifest_path(
             manifest_root,
@@ -2115,6 +2156,8 @@ def generate_manifest(
         )
         try:
             data = rom_path.read_bytes()
+            dispatch_rom_data = data
+            dispatch_source = "patched_rom"
             rom_meta["sha1"] = hashlib.sha1(data).hexdigest()
             rom_meta["size"] = len(data)
         except OSError as exc:
@@ -2126,6 +2169,9 @@ def generate_manifest(
     if dev_rom_path.exists():
         try:
             dev_data = dev_rom_path.read_bytes()
+            if dispatch_rom_data is None:
+                dispatch_rom_data = dev_data
+                dispatch_source = "dev_rom"
             rom_meta["dev_rom_sha1"] = hashlib.sha1(dev_data).hexdigest()
             rom_meta["dev_rom_size"] = len(dev_data)
         except OSError as exc:
@@ -2280,16 +2326,20 @@ def generate_manifest(
         },
     }
 
-    # Room tags — the dispatch table at $01CC00-$01CC5A is in vanilla bank $01.
-    # Asar patches specific 4-byte slots (JML instructions). Yaze's room editor
-    # assigns tag IDs to rooms; this manifest tells yaze what each tag ID means.
-    room_tags = scan_room_tags(root, defines, asm_sources)
+    # The 64-word dispatch table and the hooked routines are distinct regions.
+    # Some hooks use JSL/RTS instead of JML; routine spacing does not encode IDs.
+    room_tags = scan_room_tags(
+        root, defines, asm_sources, rom_data=dispatch_rom_data
+    )
     manifest["room_tags"] = {
-        "description": "Custom room tag dispatch table entries in bank $01. Asar patches 4-byte JML slots at these addresses. Yaze assigns tag IDs to rooms via room headers — this manifest provides labels and semantics so the editor can show meaningful names instead of raw tag numbers.",
-        "dispatch_table_start": "0x01CC00",
-        "dispatch_table_end": "0x01CC5A",
+        "description": "Custom hole-routine hooks in bank $01, mapped to room-header tag IDs through the 64-word dispatch table. ROM vectors are authoritative when supplied; source-only inspection uses the documented ALTTP US mapping. End addresses are exclusive. No hook slot is declared free without a usage audit.",
+        "dispatch_table_start": "0x01C27D",
+        "dispatch_table_end": "0x01C2FD",
+        "dispatch_source": dispatch_source,
+        "routine_hooks_start": "0x01CC00",
+        "routine_hooks_end": "0x01CC20",
         "return_address": "0x01CC5A",
-        "available_slots": ["0x36"],
+        "available_slots": [],
         "tags": room_tags,
     }
 

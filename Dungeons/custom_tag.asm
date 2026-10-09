@@ -200,7 +200,7 @@ endif
 }
 
 ; =========================================================
-; Minish Switch — Tiny Pressure Plate (Tag 0x34 / Holes1)
+; Minish Switch — Tiny Pressure Plate (Tag 0x23 / Holes1)
 ;
 ; Toggles crystal switches ($0468) only when Link is in
 ; Minish form. Normal Link walks over it with no effect.
