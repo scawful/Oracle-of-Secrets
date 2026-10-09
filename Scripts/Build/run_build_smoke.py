@@ -10,9 +10,10 @@ scenario. This helper never discovers, launches, loads, resets, or resumes an
 emulator. --skip-load keeps the existing suite's scenario preconditions; this is
 not proof of boot or complete-route acceptance. The suite still sends gameplay
 input and captures screenshots on the selected instance.
-The smoke manifest must list existing definitions. Literal ROM arguments in
-those definitions must select --rom; the current oos168x lint inputs therefore
-refuse qualification of another build until the definitions are parameterized.
+The smoke manifest must list existing definitions. Exec steps take the ROM
+through the {rom} placeholder (with {sym}/{hooks} beside it), which this helper
+binds to --rom; OOS_TEST_REQUIRE_ARTIFACTS=1 makes a missing build output fail
+instead of skip. Any literal ROM argument must still select --rom.
 
 --verify-only performs the same protected-instance and ROM-identity preflight
 without starting the suite. Its receipt has scope identity_only; it does not
@@ -273,10 +274,11 @@ def run_smoke(rom: Path, endpoint: str, *, root: Path = ROOT,
             receipt["status"] = "passed"
             return 0, receipt
         command = ["bash", str(root / "Scripts/Validate/run_regression_tests.sh"),
-                   "smoke", "--no-moe", "--fail-fast", "--skip-load"]
+                   "smoke", "--no-moe", "--fail-fast", "--skip-load", "--rom", str(rom)]
         env = dict(os.environ if environ is None else environ)
         env.update(MESEN2_SOCKET_PATH=endpoint, OOS_TEST_BACKEND="socket",
-                   OOS_TEST_REQUIRE_EMULATOR="1", MESEN_AUTO_FOCUS="0",
+                   OOS_TEST_REQUIRE_EMULATOR="1", OOS_TEST_REQUIRE_ARTIFACTS="1",
+                   MESEN_AUTO_FOCUS="0",
                    MESEN_AUTO_UNSTASH="0", MESEN_AUTO_STASH="0", MESEN_STASH_ON_FAIL="0",
                    MESEN2_HANDHELD="0")
         receipt["command"] = command
