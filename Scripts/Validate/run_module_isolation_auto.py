@@ -7,9 +7,9 @@ bisect_softlock test (load state 1, run N frames, check mode/PC). Records pass/f
 writes a summary + optional JSON report.
 
 Usage:
-  python3 Scripts/run_module_isolation_auto.py [--no-reload] [--json results.json] [--frames 600]
-  python3 Scripts/run_module_isolation_auto.py --module menu   # Single module only
-  python3 Scripts/run_module_isolation_auto.py --dry-run      # Print steps, no build/test
+  python3 Scripts/Validate/run_module_isolation_auto.py [--no-reload] [--json results.json] [--frames 600]
+  python3 Scripts/Validate/run_module_isolation_auto.py --module menu   # Single module only
+  python3 Scripts/Validate/run_module_isolation_auto.py --dry-run      # Print steps, no build/test
 
 Requires: Mesen2 running with socket; save state 1 (overworld repro) present.
 After each build, ROM is reloaded via mesen2_client.py rom-load unless --no-reload.
@@ -25,7 +25,11 @@ from datetime import datetime
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent
+REPO_ROOT = SCRIPT_DIR.parents[1]
+SET_MODULE_FLAGS = REPO_ROOT / "Scripts" / "Build" / "set_module_flags.py"
+BUILD_ROM = REPO_ROOT / "Scripts" / "Build" / "build_rom.sh"
+MESEN2_CLIENT = REPO_ROOT / "Scripts" / "Mesen2" / "mesen2_client.py"
+BISECT_SOFTLOCK = REPO_ROOT / "Scripts" / "Debug" / "bisect_softlock.py"
 
 # FixPlan Phase 1B order (safest first)
 MODULES_ORDER = [
@@ -117,7 +121,7 @@ def main() -> int:
 
         # 1. Set disable flag
         rc, _, err = run_cmd(
-            [sys.executable, str(SCRIPT_DIR / "set_module_flags.py"), "--disable", module],
+            [sys.executable, str(SET_MODULE_FLAGS), "--disable", module],
             cwd=REPO_ROOT,
         )
         if rc != 0:
@@ -129,7 +133,7 @@ def main() -> int:
 
         # 2. Build
         rc, _, err = run_cmd(
-            ["./Scripts/build_rom.sh", "168"],
+            [str(BUILD_ROM), "168"],
             cwd=REPO_ROOT,
             capture=not args.verbose,
         )
@@ -145,7 +149,7 @@ def main() -> int:
             rc, _, _ = run_cmd(
                 [
                     sys.executable,
-                    str(SCRIPT_DIR.parent / "Mesen2" / "mesen2_client.py"),
+                    str(MESEN2_CLIENT),
                     "rom-load",
                     str(rom_path),
                 ],
@@ -159,7 +163,7 @@ def main() -> int:
         rc, _, err = run_cmd(
             [
                 sys.executable,
-                str(SCRIPT_DIR / "bisect_softlock.py"),
+                str(BISECT_SOFTLOCK),
                 "--no-build",
                 "--slot",
                 str(args.slot),
@@ -192,10 +196,10 @@ def main() -> int:
         print("")
         print("Resetting: all modules enabled, build...")
         run_cmd(
-            [sys.executable, str(SCRIPT_DIR / "set_module_flags.py"), "--profile", "all"],
+            [sys.executable, str(SET_MODULE_FLAGS), "--profile", "all"],
             cwd=REPO_ROOT,
         )
-        run_cmd(["./Scripts/build_rom.sh", "168"], cwd=REPO_ROOT, capture=not args.verbose)
+        run_cmd([str(BUILD_ROM), "168"], cwd=REPO_ROOT, capture=not args.verbose)
 
     # Summary
     print("")
