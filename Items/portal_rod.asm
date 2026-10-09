@@ -67,7 +67,10 @@ Ancilla_HandlePortalCollision:
       LDA.w SprYH, Y : STA.w ANC0YH, X
     PLY
     .continue
-    LDA.b #$08
+    ; Z set: skip the deflection branch at $088DC8. The portal's bulletproof
+    ; byte ($0BA0 = $FF) then makes vanilla report no collision, so the moved
+    ; arrow keeps flying instead of bouncing off (Discord 2025-01-10).
+    LDA.b #$00
     RTL
   .not_portal_arrow
   ; Restore arrow deflection sprite code from $088DC3

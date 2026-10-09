@@ -109,7 +109,9 @@ Sprite_ZoraPrincess_Main:
   CheckForSongOfHealing:
   {
     %PlayAnimation(0, 1, 10)
-    LDA.b SongFlag : BEQ .ninguna_cancion
+    ; Only the Song of Healing ($01) frees her. Clearing any other song here
+    ; ended the Song of Time early and left time running fast.
+    LDA.b SongFlag : CMP.b #$01 : BNE .ninguna_cancion
       STZ.b SongFlag
       LDA.b #$C0 : STA.w SprTimerD, X
       %GotoAction(2)

@@ -93,7 +93,13 @@ Sprite_DekuLeaf_Main:
       STZ $0AAB  ; Reset underwater flag
       STZ $0351  ; Reset ripple flag
       STZ $037B  ; Reset invincibility flag
-      STZ $02B2  ; Reset mask flag
+      ; Reset the mask with its sprite bank and palette. STZ $02B2 alone left
+      ; the Zora Mask palette on Link's sprite (Discord 2025-01-01).
+      LDA.w $02B2 : BEQ +
+        PHX ; palette loaders clobber X (sprite slot)
+        JSL ResetToLinkGraphics
+        PLX
+      +
 
       LDA.b $10 : CMP.b #$0B : BEQ .exit
         LDA.b $8A : AND.b #$40 : STA.b $7B : BEQ .no_mirror_portal
