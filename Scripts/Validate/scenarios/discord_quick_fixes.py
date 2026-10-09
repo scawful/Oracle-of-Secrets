@@ -41,12 +41,14 @@ LINK_Y, LINK_X, FACING = 0x7E0020, 0x7E0022, 0x7E002F
 SONG_FLAG, TIME_SPEED, STORM = 0x7E00FE, 0x7EE002, 0x7EE00E
 Y_SLOT, Y_ITEM, CUR_SONG, SAVED_SONG, SONGS = 0x7E0202, 0x7E0303, 0x7E030F, 0x7EF3AB, 0x7EF34C
 BEAN, MAGIC, BOW, ARROWS, PORTAL_OWNED = 0x7EF39B, 0x7EF36E, 0x7EF340, 0x7EF377, 0x7EF3A6
+MASK, LINK_GFX, UNDERWATER, ZORA_MASK, BOUND_MASK = 0x7E02B2, 0x7E00BC, 0x7E0AAB, 0x7EF347, 0x7EF3A8
+LINK_PALETTE = 0x7EC6E0  # WRAM CGRAM mirror, sprite palette 7 ($7EC500 + $1E0)
 
 SPR_STATE, SPR_ID, SPR_SUB = 0x7E0DD0, 0x7E0E20, 0x7E0E30
 SPR_XL, SPR_XH, SPR_YL, SPR_YH = 0x7E0D10, 0x7E0D30, 0x7E0D00, 0x7E0D20
 ANC_TYPE, ANC_XL, ANC_XH, ANC_YL, ANC_YH = 0x7E0C4A, 0x7E0C04, 0x7E0C18, 0x7E0BFA, 0x7E0C0E
 
-BEAN_VENDOR, PORTAL, DEFLECTED_ARROW = 0x07, 0x03, 0x1B
+BEAN_VENDOR, PORTAL, DEFLECTED_ARROW, WHIRLPOOL = 0x07, 0x03, 0x1B, 0x77
 
 
 def sha(path: Path) -> str:
@@ -57,6 +59,72 @@ def identity(pid: int) -> str:
     out = subprocess.run(['ps', '-o', 'lstart=,command=', '-p', str(pid)], text=True,
                          capture_output=True, check=False).stdout.strip()
     return out
+
+
+class OverworldTiles:
+    """Tile attribute of any pixel in the loaded overworld area: WRAM map16 ($7E2000) ->
+    ROM map16 -> tile table -> attribute. Ported from the AFS route harness (p00nav.OWGrid)."""
+
+    def __init__(self, run, rom: Path):
+        self.r = run
+        data = rom.read_bytes()
+
+        def pc(snes):
+            return ((snes >> 16) & 0x7F) * 0x8000 + (snes & 0x7FFF)
+
+        def long_at(snes):
+            o = pc(snes)
+            return data[o + 1] | data[o + 2] << 8 | data[o + 3] << 16
+        self.data, self.pc = data, pc
+        self.map16, self.tiles = pc(long_at(0x008864)), pc(long_at(0x00886E))
+        self.v0708, self.v070A = run.r16(0x7E0708), run.r16(0x7E070A)
+        self.v070C, self.v070E = run.r16(0x7E070C), run.r16(0x7E070E)
+        self.buf = run.b.read_block(0x7E2000, 0x2000)
+
+    def attr(self, px, py):
+        x8 = px >> 3
+        off = ((((py - self.v0708) & self.v070A) << 3) | ((x8 - self.v070C) & self.v070E)) & 0x1FFF
+        m = self.buf[off] | self.buf[off + 1] << 8
+        o = self.map16 + ((m << 2) | ((py & 8) >> 2) | (x8 & 1)) * 2
+        if o + 1 >= len(self.data):
+            return 0x01
+        return self.data[self.tiles + ((self.data[o] | self.data[o + 1] << 8) & 0x1FF)]
+
+    def route(self, start, goal, bounds, walk=(0x00, 0x48), nearest=False, blocked=()):
+        """4 px BFS for Link's body (x+1..14, y+9..22) on walkable tiles; simplified waypoints.
+        nearest=True: path to the reachable cell closest to goal instead of goal itself."""
+        import collections
+        x0, y0, x1, y1 = bounds
+
+        def ok(x, y):
+            if any(bx0 <= x + 14 and x + 1 <= bx1 and by0 <= y + 22 and y + 9 <= by1
+                   for bx0, by0, bx1, by1 in blocked):
+                return False
+            return all(self.attr(x + dx, y + dy) in walk for dx in (1, 14) for dy in (9, 22))
+        start = (start[0] // 4 * 4, start[1] // 4 * 4)
+        goal = (goal[0] // 4 * 4, goal[1] // 4 * 4)
+        prev, queue, best = {start: None}, collections.deque([start]), start
+
+        def path_to(c):
+            path = []
+            while c:
+                path.append(c)
+                c = prev[c]
+            path.reverse()
+            return [p for i, p in enumerate(path) if i in (0, len(path) - 1) or
+                    not (path[i - 1][0] == p[0] == path[i + 1][0] or path[i - 1][1] == p[1] == path[i + 1][1])]
+        while queue:
+            c = queue.popleft()
+            if abs(c[0] - goal[0]) + abs(c[1] - goal[1]) < abs(best[0] - goal[0]) + abs(best[1] - goal[1]):
+                best = c
+            if c == goal:
+                return path_to(c)
+            for dx, dy in ((4, 0), (-4, 0), (0, 4), (0, -4)):
+                n = (c[0] + dx, c[1] + dy)
+                if n not in prev and x0 <= n[0] <= x1 and y0 <= n[1] <= y1 and ok(*n):
+                    prev[n] = c
+                    queue.append(n)
+        return path_to(best) if nearest and best != start else None
 
 
 class Run:
@@ -436,6 +504,174 @@ class Run:
         self.check('valid pair: arrow still flying ($09) 40 px past the exit',
                    bool(exit_jump) and self.flying_beyond(t['track'], exit_jump['to'][1] + 40, exit_jump['frame']),
                    {'candidate': True, 'control': False, 'previous': False})
+
+    # -- Zora Princess --------------------------------------------------------
+    def check_princess(self):
+        """Only the Song of Healing frees the Zora Princess; the Song of Time keeps running."""
+        self.w(0x7EF302, 0, 'Zora Mask quest not done, so the princess loads')
+        res = OracleCheats(self.b).warp_entrance(0x45)
+        self.fixture('warp_entrance 0x45 (Zora Princess House, room $105)')
+        self.event('warp entrance', response=res)
+        self.wait_play(10)
+        time.sleep(1.0)
+        found = [i for i in range(16) if self.r(SPR_STATE + i) >= 9 and self.r(0x7E0ED0 + i) == 1]
+        if not found:
+            raise RuntimeError(f'no Zora Princess (SprMiscG=1) in room $105: {self.sprites()}')
+        i = found[0]
+        px, py = self.r(SPR_XL + i) | self.r(SPR_XH + i) << 8, self.r(SPR_YL + i) | self.r(SPR_YH + i) << 8
+        action = lambda: self.r(0x7E0D80 + i)
+        self.event('princess', slot=i, x=px, y=py, action=action(),
+                   link=[self.r16(LINK_X), self.r16(LINK_Y)], camera_y=self.r16(0x7E00E8))
+        # Room $105 places her at local (96,64), behind the north door (local y 288); from the
+        # entrance Link cannot reach her to talk. Her song check has no distance test, so set
+        # the post-talk state directly. The control run shows whether her code runs off-screen.
+        self.w(0x7E0D80 + i, 1, 'princess action 1 (waiting for a song): unreachable from the entrance')
+        # Off-screen sprites do not run (first control run stayed [2,1]); move her onto the
+        # empty throne in view so CheckForSongOfHealing executes.
+        tx, ty = self.r16(0x7E00E2) + 128, self.r16(0x7E00E8) + 96
+        self.w(SPR_XL + i, tx & 0xFF, f'princess moved onto the throne in view ({tx},{ty})')
+        self.w(SPR_XH + i, tx >> 8)
+        self.w(SPR_YL + i, ty & 0xFF)
+        self.w(SPR_YH + i, ty >> 8)
+        time.sleep(0.5)
+        self.shot('princess_on_throne')
+        self.w(SONGS, 5, 'all four songs learned')
+        self.equip(13, 0x08, 'Ocarina')
+        self.select_song(4)
+        time.sleep(0.2)
+        self.press('y', 4)
+        time.sleep(2.6)  # flute animation ($03F0 = $80 frames) must end before the next song
+        self.shot('princess_song_of_time')
+        self.check('Song of Time beside the princess: [SongFlag, princess action]', [self.r(SONG_FLAG), action()],
+                   {'candidate': [2, 1], 'control': [0, 2], 'previous': [2, 1]})
+        self.select_song(1)
+        time.sleep(0.2)
+        self.press('y', 4)
+        time.sleep(2.6)
+        self.shot('princess_song_of_healing')
+        self.check('Song of Healing frees her (action >= 2)', action() >= 2,
+                   {'candidate': True, 'control': 'record-only', 'previous': True})
+        self.check('time speed back to $3F after the Healing song', self.r(TIME_SPEED),
+                   {'candidate': 0x3F, 'control': 'record-only', 'previous': 0x3F})
+
+    # -- Zora Mask whirlpool ($3D) --------------------------------------------
+    def travel(self, goal, bounds, nearest=False):
+        """Plan on tile attributes and walk with controller input. Sprites (NPCs, signs)
+        are not in the tile map: on a stall, block 24 px ahead and re-plan (up to 4 times)."""
+        blocked = []
+        for _ in range(5):
+            tiles = OverworldTiles(self, self.rom)
+            here = (self.r16(LINK_X), self.r16(LINK_Y))
+            path = tiles.route(here, goal, bounds, nearest=nearest, blocked=blocked)
+            if not path:
+                raise RuntimeError(f'no route from {here} to {goal} (blocked {blocked})')
+            self.event('route', goal=list(goal), waypoints=path, blocked=[list(b) for b in blocked])
+            for x, y in path[1:]:
+                self.b.write_memory(0x7E037B, 1)
+                at = self.walk_to(x, y)
+                if abs(at[0] - x) > 6 or abs(at[1] - y) > 6:
+                    dx, dy = (x > at[0]) - (x < at[0]), (y > at[1]) - (y < at[1])
+                    cx, cy = at[0] + 8 + dx * 20, at[1] + 16 + dy * 20
+                    blocked.append((cx - 12, cy - 12, cx + 12, cy + 12))
+                    self.event('walk stalled; re-planning', at=at, heading=[x, y])
+                    break
+            else:
+                return path[-1]
+        raise RuntimeError(f'walk to {goal} kept stalling: {blocked}')
+
+    def clear_text(self):
+        for _ in range(12):
+            if self.r(MODULE) != 0x0E:
+                return
+            self.press('a', 4)
+            time.sleep(0.4)
+        self.wait_play(5)
+
+    def check_whirlpool(self):
+        """Zora Mask through the $3D whirlpool: Link's sprite bank and palette are reset."""
+        self.fixture('$7E037B=1 (no damage) refreshed before each walking leg')
+        self.warp(0x33)  # Loom Beach; $3D has no warp-table entry
+        self.travel((2528, 3752), (0x0600, 0x0C00, 0x09F0, 0x0FE8))
+        self.press('right', 48)
+        self.wait_play(12)
+        if self.r(AREA) != 0x3D:
+            raise RuntimeError(f'expected area 0x3D after crossing, in 0x{self.r(AREA):02X}')
+        self.event('crossed into 3D (controller)', x=self.r16(LINK_X), y=self.r16(LINK_Y))
+        normal_palette = self.b.read_block(LINK_PALETTE, 32).hex()
+        pool_x, pool_y = 0x0A00 + 386, 0x0E00 + 290
+        try:
+            self.travel((pool_x, pool_y), (0x0A00, 0x0E00, 0x0BF0, 0x0FE8), nearest=True)
+        except RuntimeError as exc:  # the water edge stops Link short of the pool
+            dist = abs(self.r16(LINK_X) - pool_x) + abs(self.r16(LINK_Y) - pool_y)
+            if dist > 64:
+                raise
+            self.event('stopped at the water edge near the whirlpool', distance=dist, detail=str(exc)[:120])
+        time.sleep(0.5)
+        pools = [s for s in self.sprites() if s['id'] == WHIRLPOOL]
+        self.event('area 3D sprites', sprites=self.sprites(), link_palette=normal_palette)
+        self.shot('near_whirlpool')
+        if not pools:
+            raise RuntimeError('no whirlpool sprite active near Link')
+        # The dock NPC ($F0) talks on contact; page its text away and step back first.
+        self.clear_text()
+        self.walk_to(self.r16(LINK_X) - 24, self.r16(LINK_Y) - 8)
+        self.clear_text()
+        self.w(ZORA_MASK, 1, 'Zora Mask owned')
+        self.w(BOUND_MASK, 2, 'Zora Mask bound to R (mask_binding.asm, 2 = Zora)')
+        self.press('r', 4)
+        time.sleep(2.0)
+        self.clear_text()
+        self.check('Zora Mask worn before the whirlpool [mask, gfx]', [self.r(MASK), self.r(LINK_GFX)],
+                   {'candidate': [2, 0x36], 'control': [2, 0x36], 'previous': [2, 0x36]})
+        pool = pools[0]
+        # Controller only from here: step off the dock into the water (Link swims, $5D=$04),
+        # swim onto the whirlpool, press Y to dive (zora_mask.asm sets $0AAB).
+        for _ in range(12):
+            if self.r(0x7E005D) == 0x04:
+                break
+            self.press('right' if self.r16(LINK_X) < pool['x'] else 'down', 8)
+            time.sleep(0.3)
+        self.event('swimming', state_5D=self.r(0x7E005D), at=[self.r16(LINK_X), self.r16(LINK_Y)])
+        self.walk_to(pool['x'], pool['y'])
+        # Step the dive and warp frame by frame: mask, sprite bank and palette per frame,
+        # a screenshot every 8 frames, to catch a transient wrong ("white") Link.
+        self.b.pause()
+        warp_frames = []
+        try:
+            self.b.press_button('y', frames=4)
+            for f in range(160):
+                self.b.run_frames(1)
+                pal = self.b.read_block(LINK_PALETTE, 32).hex()
+                warp_frames.append({'f': f, 'mod': self.r(MODULE), 'sub': self.r(SUBMODULE), 'area': self.r(AREA),
+                                    'mask': self.r(MASK), 'gfx': self.r(LINK_GFX), 'pal': pal[:24]})
+                if f % 8 == 0:
+                    png = self.b.screenshot()
+                    if png:
+                        (self.out / f'warp_f{f:03d}.png').write_bytes(png)
+        finally:
+            self.b.resume()
+        self.result['warp_frames'] = [x for i, x in enumerate(warp_frames) if i == 0 or
+                                      {k: v for k, v in x.items() if k != 'f'} !=
+                                      {k: v for k, v in warp_frames[i - 1].items() if k != 'f'}]
+        self.persist()
+        self.event('whirlpool trigger', module=self.r(MODULE), sub=self.r(SUBMODULE))
+        time.sleep(4.0)
+        self.wait_play(12)
+        self.shot('after_whirlpool')
+        after = self.b.read_block(LINK_PALETTE, 32).hex()
+        self.event('after whirlpool', area=f'{self.r(AREA):02X}', world=self.r(0x7E0FFF), mask=self.r(MASK),
+                   gfx=self.r(LINK_GFX), link_palette=after, x=self.r16(LINK_X), y=self.r16(LINK_Y))
+        self.check('whirlpool warp happened (area changed or Link moved)', self.r(AREA) != 0x3D or
+                   abs(self.r16(LINK_X) - pool['x']) + abs(self.r16(LINK_Y) - pool['y']) > 32,
+                   {'candidate': True, 'control': True, 'previous': True})
+        mismatch = [x['f'] for x in warp_frames if x['mask'] == 0 and x['gfx'] == 0x36]
+        self.event('warp frames with mask 0 but the Zora sprite bank $36', count=len(mismatch),
+                   first=mismatch[:1], last=mismatch[-1:])
+        self.check('whirlpool warp: Link drawn with the Zora bank after the mask flag is cleared', bool(mismatch),
+                   {'candidate': False, 'control': True, 'previous': False})
+        self.check('after the whirlpool [area, mask, gfx] (Dark World GBC form)',
+                   [self.r(AREA), self.r(MASK), self.r(LINK_GFX)],
+                   {'candidate': [0x7D, 6, 0x3B], 'control': [0x7D, 6, 0x3B], 'previous': [0x7D, 6, 0x3B]})
 
     def run(self):
         try:
