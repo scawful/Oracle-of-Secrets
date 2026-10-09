@@ -61,39 +61,18 @@ def identity(pid: int) -> str:
     return out
 
 
-class OverworldTiles:
-    """Tile attribute of any pixel in the loaded overworld area: WRAM map16 ($7E2000) ->
-    ROM map16 -> tile table -> attribute. Ported from the AFS route harness (p00nav.OWGrid)."""
-
-    def __init__(self, run, rom: Path):
-        self.r = run
-        data = rom.read_bytes()
-
-        def pc(snes):
-            return ((snes >> 16) & 0x7F) * 0x8000 + (snes & 0x7FFF)
-
-        def long_at(snes):
-            o = pc(snes)
-            return data[o + 1] | data[o + 2] << 8 | data[o + 3] << 16
-        self.data, self.pc = data, pc
-        self.map16, self.tiles = pc(long_at(0x008864)), pc(long_at(0x00886E))
-        self.v0708, self.v070A = run.r16(0x7E0708), run.r16(0x7E070A)
-        self.v070C, self.v070E = run.r16(0x7E070C), run.r16(0x7E070E)
-        self.buf = run.b.read_block(0x7E2000, 0x2000)
+class TileRoute:
+    """4 px BFS route for Link's body over a tile-attribute grid (subclasses define attr)."""
+    WALK = (0x00, 0x48)
 
     def attr(self, px, py):
-        x8 = px >> 3
-        off = ((((py - self.v0708) & self.v070A) << 3) | ((x8 - self.v070C) & self.v070E)) & 0x1FFF
-        m = self.buf[off] | self.buf[off + 1] << 8
-        o = self.map16 + ((m << 2) | ((py & 8) >> 2) | (x8 & 1)) * 2
-        if o + 1 >= len(self.data):
-            return 0x01
-        return self.data[self.tiles + ((self.data[o] | self.data[o + 1] << 8) & 0x1FF)]
+        raise NotImplementedError
 
-    def route(self, start, goal, bounds, walk=(0x00, 0x48), nearest=False, blocked=()):
+    def route(self, start, goal, bounds, walk=None, nearest=False, blocked=()):
         """4 px BFS for Link's body (x+1..14, y+9..22) on walkable tiles; simplified waypoints.
         nearest=True: path to the reachable cell closest to goal instead of goal itself."""
         import collections
+        walk = walk or self.WALK
         x0, y0, x1, y1 = bounds
 
         def ok(x, y):
@@ -125,6 +104,49 @@ class OverworldTiles:
                     prev[n] = c
                     queue.append(n)
         return path_to(best) if nearest and best != start else None
+
+
+class OverworldTiles(TileRoute):
+    """Tile attribute of any pixel in the loaded overworld area: WRAM map16 ($7E2000) ->
+    ROM map16 -> tile table -> attribute. Ported from the AFS route harness (p00nav.OWGrid)."""
+
+    def __init__(self, run, rom: Path):
+        self.r = run
+        data = rom.read_bytes()
+
+        def pc(snes):
+            return ((snes >> 16) & 0x7F) * 0x8000 + (snes & 0x7FFF)
+
+        def long_at(snes):
+            o = pc(snes)
+            return data[o + 1] | data[o + 2] << 8 | data[o + 3] << 16
+        self.data, self.pc = data, pc
+        self.map16, self.tiles = pc(long_at(0x008864)), pc(long_at(0x00886E))
+        self.v0708, self.v070A = run.r16(0x7E0708), run.r16(0x7E070A)
+        self.v070C, self.v070E = run.r16(0x7E070C), run.r16(0x7E070E)
+        self.buf = run.b.read_block(0x7E2000, 0x2000)
+
+    def attr(self, px, py):
+        x8 = px >> 3
+        off = ((((py - self.v0708) & self.v070A) << 3) | ((x8 - self.v070C) & self.v070E)) & 0x1FFF
+        m = self.buf[off] | self.buf[off + 1] << 8
+        o = self.map16 + ((m << 2) | ((py & 8) >> 2) | (x8 & 1)) * 2
+        if o + 1 >= len(self.data):
+            return 0x01
+        return self.data[self.tiles + ((self.data[o] | self.data[o + 1] << 8) & 0x1FF)]
+
+
+class DungeonTiles(TileRoute):
+    """Underworld collision for the current room: $7F2000 (layer 1) or $7F3000 (layer 2,
+    when $EE is set), 64x64 tiles of 8 px. Ported from the AFS route harness (p00nav.UWGrid)."""
+    WALK = tuple([0x00, 0x09, 0x1D, 0x22, 0x3D, 0x3E, 0x3F, 0x48, 0x4B] +
+                 list(range(0x80, 0x90)) + list(range(0xA0, 0xB0)))
+
+    def __init__(self, run):
+        self.buf = run.b.read_block(0x7F3000 if run.r(0x7E00EE) else 0x7F2000, 0x1000)
+
+    def attr(self, px, py):
+        return self.buf[((py & 0x1FF) >> 3) * 64 + ((px & 0x1FF) >> 3)]
 
 
 class Run:
@@ -555,12 +577,12 @@ class Run:
                    {'candidate': 0x3F, 'control': 'record-only', 'previous': 0x3F})
 
     # -- Zora Mask whirlpool ($3D) --------------------------------------------
-    def travel(self, goal, bounds, nearest=False):
+    def travel(self, goal, bounds, nearest=False, grid=None):
         """Plan on tile attributes and walk with controller input. Sprites (NPCs, signs)
         are not in the tile map: on a stall, block 24 px ahead and re-plan (up to 4 times)."""
         blocked = []
         for _ in range(5):
-            tiles = OverworldTiles(self, self.rom)
+            tiles = grid() if grid else OverworldTiles(self, self.rom)
             here = (self.r16(LINK_X), self.r16(LINK_Y))
             path = tiles.route(here, goal, bounds, nearest=nearest, blocked=blocked)
             if not path:
@@ -672,6 +694,131 @@ class Run:
         self.check('after the whirlpool [area, mask, gfx] (Dark World GBC form)',
                    [self.r(AREA), self.r(MASK), self.r(LINK_GFX)],
                    {'candidate': [0x7D, 6, 0x3B], 'control': [0x7D, 6, 0x3B], 'previous': [0x7D, 6, 0x3B]})
+
+    # -- Zora Princess, natural path (Codex follow-up 2026-10-09) ----------------
+    def gate_step(self, category, name, ok, **observed):
+        """Record one natural-path step; the caller stops at the first failure."""
+        self.result.setdefault('gate_steps', []).append({'category': category, 'step': name, 'ok': bool(ok), **observed})
+        self.persist()
+        print(('ok   ' if ok else 'STOP ') + f'[{category}] {name}', observed, flush=True)
+        if not ok:
+            self.shot('gate_stop_' + ''.join(c if c.isalnum() else '_' for c in name)[:40])
+        return bool(ok)
+
+    def page_text(self, rounds=16):
+        for _ in range(rounds):
+            if self.r(MODULE) != 0x0E:
+                return
+            self.press('a', 4)
+            time.sleep(0.45)
+
+    def princess_natural_path(self):
+        """Returns the first failed step name, or None. No princess action or position writes."""
+        before = {'quest_302': self.r(0x7EF302), 'zora_mask_347': self.r(ZORA_MASK),
+                  'bigkey_366': self.r(0x7EF366), 'bigkey_367': self.r(0x7EF367)}
+        self.event('file 2 state before fixtures', **before)
+        self.w(0x7EF302, 0, 'pre-quest: Zora Mask quest not done (file 2 has finished it)')
+        self.w(ZORA_MASK, 0, 'pre-quest: Zora Mask not owned')
+        if not before['bigkey_366'] & 0x10:
+            self.w(0x7EF366, before['bigkey_366'] | 0x10, 'Big Key for dungeon $16 ($7EF366 bit $10, DungeonMask $0010)')
+        else:
+            self.event('Big Key bit for dungeon $16 already owned by file 2')
+        res = OracleCheats(self.b).warp_entrance(0x45)
+        self.fixture('warp_entrance 0x45 (Zora Princess House, room $105)')
+        self.event('warp entrance', ok=res.get('ok'), dungeon=self.r(0x7E040C))
+        self.wait_play(10)
+        time.sleep(1.0)
+        found = [i for i in range(16) if self.r(SPR_STATE + i) >= 9 and self.r(SPR_ID + i) == 0xB8]
+        pos = lambda i: (self.r(SPR_XL + i) | self.r(SPR_XH + i) << 8, self.r(SPR_YL + i) | self.r(SPR_YH + i) << 8)
+        if not self.gate_step('gate/progression', 'princess loaded at her authored position (2656,8256)',
+                              bool(found) and pos(found[0]) == (2656, 8256),
+                              found=[(i, pos(i), self.r(0x7E0D80 + i)) for i in found], dungeon=self.r(0x7E040C)):
+            return 'princess loaded at her authored position (2656,8256)'
+        i = found[0]
+        action = lambda: self.r(0x7E0D80 + i)
+        dungeon = lambda: DungeonTiles(self)
+        # Lower compartment (entrance) -> north Big Key door at tile (14,36), local (112,288).
+        try:
+            at = self.travel((2672, 8484), (2576, 8480, 2800, 8688), nearest=True, grid=dungeon)
+        except RuntimeError as exc:
+            self.gate_step('room navigation', 'walk to the north door', False, error=str(exc)[:160])
+            return 'walk to the north door'
+        self.gate_step('room navigation', 'walk to the north door', True, at=[self.r16(LINK_X), self.r16(LINK_Y)])
+        y0 = self.r16(LINK_Y)
+        for _ in range(8):
+            self.press('up', 24)
+            time.sleep(0.3)
+            if self.r(MODULE) == 0x0E:
+                break
+            self.wait_play(6)
+            if self.r16(LINK_Y) < 8192 + 280:
+                break
+        if self.r(MODULE) == 0x0E:
+            msg = self.r16(0x7E1CF0)
+            self.gate_step('gate/progression', 'Big Key door opens', False, message=hex(msg))
+            return 'Big Key door opens'
+        self.wait_play(8)
+        if not self.gate_step('gate/progression', 'through the Big Key door into the upper compartment',
+                              self.r16(LINK_Y) < 8192 + 280, y_before=y0, y_after=self.r16(LINK_Y)):
+            return 'through the Big Key door into the upper compartment'
+        try:
+            self.travel((2656, 8280), (2584, 8224, 2740, 8432), nearest=True, grid=dungeon)
+        except RuntimeError as exc:
+            self.event('stopped short of the princess', detail=str(exc)[:160])
+        lx, ly = self.r16(LINK_X), self.r16(LINK_Y)
+        px, py = pos(i)
+        if not self.gate_step('room navigation', 'reach the princess (within 24 px)',
+                              abs(lx - px) <= 24 and abs(ly - py) <= 32, link=[lx, ly], princess=[px, py]):
+            return 'reach the princess (within 24 px)'
+        attempts = []
+        for hold in (10, 16, 24):  # close the gap (she blocks Link), then A
+            self.press('up' if ly > py else 'down', hold)
+            time.sleep(0.2)
+            self.press('a', 4)
+            time.sleep(0.8)
+            talked = self.r(MODULE) == 0x0E or action() == 1
+            attempts.append({'hold_frames': hold, 'link': [self.r16(LINK_X), self.r16(LINK_Y)], 'facing': self.r(FACING),
+                             'module': self.r(MODULE), 'message': hex(self.r16(0x7E1CF0)), 'action': action()})
+            self.page_text()
+            self.wait_play(6)
+            if talked or action() == 1:
+                break
+        if not self.gate_step('interaction', 'talking reaches action 1 (waiting for a song)', action() == 1,
+                              action=action(), attempts=attempts):
+            return 'talking reaches action 1 (waiting for a song)'
+        self.w(SONGS, 5, 'all four songs learned (file 2 knows two)')
+        self.equip(13, 0x08, 'Ocarina')
+        self.select_song(4)
+        time.sleep(0.2)
+        self.press('y', 4)
+        time.sleep(2.6)
+        if not self.gate_step('interaction', 'Song of Time leaves her waiting', action() == 1 and self.r(SONG_FLAG) == 2,
+                              action=action(), song_flag=self.r(SONG_FLAG)):
+            return 'Song of Time leaves her waiting'
+        self.select_song(1)
+        time.sleep(0.2)
+        self.press('y', 4)
+        time.sleep(1.0)
+        if not self.gate_step('interaction', 'Song of Healing frees her (action >= 2)', action() >= 2 or
+                              self.r(0x7EF302) == 1, action=action()):
+            return 'Song of Healing frees her (action >= 2)'
+        for _ in range(30):  # thanks message $C6, then the item receipt
+            self.page_text(4)
+            if self.r(ZORA_MASK) and self.r(0x7EF302) == 1:
+                break
+            time.sleep(0.5)
+        self.page_text()
+        self.shot('princess_mask_granted')
+        if not self.gate_step('grant', 'Zora Mask granted ($7EF347 owned, $7EF302 = 1)',
+                              self.r(ZORA_MASK) != 0 and self.r(0x7EF302) == 1,
+                              mask_347=self.r(ZORA_MASK), quest_302=self.r(0x7EF302), princess_state=self.r(SPR_STATE + i)):
+            return 'Zora Mask granted ($7EF347 owned, $7EF302 = 1)'
+        return None
+
+    def check_princess_gate(self):
+        first_fail = self.princess_natural_path()
+        self.check('princess natural path: first failed step', first_fail,
+                   {'candidate': None, 'control': 'Song of Time leaves her waiting', 'previous': None})
 
     def run(self):
         try:
