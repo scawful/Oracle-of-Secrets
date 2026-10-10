@@ -206,7 +206,14 @@ TimeSystem_UpdatePalettes:
 CheckForSongOfTime:
 {
   ; Check if Song of Time was activated
-  LDA.b SongFlag : CMP.b #$02 : BNE +
+  LDA.b SongFlag : CMP.b #$02 : BEQ .song_of_time
+    ; Speed 0 is only valid while the song is active. A song listener or
+    ; Save & Quit can clear SongFlag before 6am/6pm; without this, time
+    ; stays fast for the rest of the session (Discord 2024-08-25).
+    LDA.l TimeState.Speed : BNE +
+      LDA.b #$3F : STA.l TimeState.Speed
+    BRA +
+  .song_of_time
     ; Speed up the time
     LDA.b #$00 : STA.l TimeState.Speed
 

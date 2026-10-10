@@ -373,19 +373,22 @@ OcarinaEffect_SummonStorms:
   RTL
 
   .check_for_magic_bean
-  LDA.b #Sprite_BeanVendor : LDX.b #$00
-  JSL Sprite_CheckForPresence : BCC .not_active
-    ; Check that it's the magic bean planted
-    LDA.l MagicBeanProg : AND.b #$01 : BEQ +
-                          AND.b #$04 : BNE +
+  ; Sprite_CheckForPresence reads the sprite ID from $00, not A, and skips
+  ; the slot in X; the ocarina is not a sprite, so pass X = $FF. Before this,
+  ; the result depended on leftover $00, so the song could do nothing in $00.
+  LDA.b #Sprite_BeanVendor : STA.b $00
+  LDX.b #$FF
+  JSL Sprite_CheckForPresence : BCC .storms_after_bean
+    ; Water a planted bean once. Bit $04 = watered, as in bean_vendor.asm
+    ; (Core/sram.asm has the $02/$04 names swapped).
+    LDA.l MagicBeanProg : AND.b #$01 : BEQ .storms_after_bean
+    LDA.l MagicBeanProg : AND.b #$04 : BNE .storms_after_bean
       LDA.l MagicBeanProg
       ORA.b #$04
       STA.l MagicBeanProg
       LDA.b #$2D : STA.w $012F
-    +
-    JMP .summon_storms
-  .not_active
-  RTL
+  .storms_after_bean
+  JMP .summon_storms
 }
 
 PlayThunderAndRain:

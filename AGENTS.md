@@ -14,6 +14,18 @@
   match the same candidate built with its explicit RC flags before integration.
 - This supersedes earlier blanket default-off guidance for active RC work.
 
+## ASM Changes (2026-10-08)
+- Agents may change Oracle ASM for bug fixes, small features and tests. Build
+  receipts, CI, headless Mesen2 and routine fixtures now catch what the old
+  patch-only rule protected against.
+- Work in your own git worktree on a `claude/*` or `codex/*` branch, never in the
+  shared checkout. Merge by PR after CI passes.
+- Each PR states the build receipt result (`Roms/oos168x.build.json` required
+  checks) and, for gameplay changes, a headless Mesen2 scenario or routine test.
+  Commit the test under `Tests/` when practical.
+- Still need scawful's OK: base-ROM writes, playtest staging, Discord posts.
+- Lanes and load rules: `~/.context/projects/oracle-of-secrets/scratchpad/agent_board.md`.
+
 ## Playtest Builds (2026-09-26)
 - Version: `Config/version.json` (`v0.9.0-b<N>`); `build_rom.sh` stamps it into
   message `$C7` ("Oracle of Secrets Preview / v0.9.0-bN") via `Scripts/Build/version_stamp.py`

@@ -162,8 +162,8 @@ endmacro
 ; MagicBeanProgress Bits ($7EF39B)
 ; ---------------------------------------------------------
 !Bean_Planted              = $01  ; bit 0
-!Bean_Watered              = $02  ; bit 1
-!Bean_Pollinated           = $04  ; bit 2
+!Bean_Pollinated           = $02  ; bit 1 - bee at the ranch flower (bean_vendor.asm)
+!Bean_Watered              = $04  ; bit 2 - Song of Storms (Items/ocarina.asm)
 !Bean_Day1                 = $08  ; bit 3
 !Bean_Day2                 = $10  ; bit 4
 !Bean_Day3                 = $20  ; bit 5
