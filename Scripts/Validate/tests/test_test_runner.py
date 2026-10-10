@@ -197,6 +197,33 @@ class DryRunValidationTest(RunnerFixture):
         self.assertEqual(status, "failed")
         self.assertIn("unknown type 'mem_watch'", message)
 
+    def test_unknown_placeholder_in_extra_args_is_an_error(self):
+        status, message = self.dry_run(requiresEmulator=False, steps=[
+            {"type": "exec", "command": [sys.executable, "-c", "pass"],
+             "args": ["{missing_argument}"]}])
+        self.assertEqual(status, "failed")
+        self.assertIn("unknown placeholder {missing_argument}", message)
+
+    def test_unknown_placeholder_in_environment_is_an_error(self):
+        status, message = self.dry_run(requiresEmulator=False, steps=[
+            {"type": "exec", "command": [sys.executable, "-c", "pass"],
+             "env": {"ARTIFACT": "{missing_environment}"}}])
+        self.assertEqual(status, "failed")
+        self.assertIn("unknown placeholder {missing_environment}", message)
+
+    def test_valid_placeholders_in_extra_args_and_environment_pass(self):
+        status, message = self.dry_run(requiresEmulator=False, steps=[
+            {"type": "exec", "command": [sys.executable, "-c", "pass"],
+             "args": ["{rom}"], "env": {"ARTIFACT": "{hooks}"}}])
+        self.assertEqual((status, message), ("passed", None))
+
+    def test_non_list_extra_args_match_live_rejection(self):
+        status, message = self.dry_run(requiresEmulator=False, steps=[
+            {"type": "exec", "command": [sys.executable, "-c", "pass"],
+             "args": "{rom}"}])
+        self.assertEqual(status, "failed")
+        self.assertIn("exec args must be a list", message)
+
     def test_emulator_steps_in_a_host_only_test_are_errors(self):
         status, message = self.dry_run(requiresEmulator=False, saveState={"id": "pre_d6_entrance"},
                                        steps=[{"type": "assert", "address": "$7E0010", "equals": 9}])

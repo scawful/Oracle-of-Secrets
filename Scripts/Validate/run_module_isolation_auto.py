@@ -45,14 +45,26 @@ MODULES_ORDER = [
 
 
 def run_cmd(cmd: list[str], cwd: Path, timeout: int = 120, capture: bool = True) -> tuple[int, str, str]:
-    r = subprocess.run(
-        cmd,
-        cwd=cwd,
-        capture_output=capture,
-        text=True,
-        timeout=timeout,
-    )
+    try:
+        r = subprocess.run(
+            cmd,
+            cwd=cwd,
+            capture_output=capture,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        return 124, "", f"Command timed out after {exc.timeout}s: {cmd[0]}"
+    except OSError as exc:
+        return 127, "", str(exc)
     return r.returncode, r.stdout or "", r.stderr or ""
+
+
+def has_rom_output(path: Path) -> bool:
+    try:
+        return path.is_file() and path.stat().st_size > 0
+    except OSError:
+        return False
 
 
 def main() -> int:
@@ -103,6 +115,8 @@ def main() -> int:
     rom_path = REPO_ROOT / "Roms" / "oos168x.sfc"
     results: list[dict] = []
     guilty_candidates: list[str] = []
+    infrastructure_failed = False
+    restoration = {"status": "not_requested", "note": ""}
 
     print("Module isolation (automated)")
     print("Order:", ", ".join(modules_to_run))
@@ -129,7 +143,8 @@ def main() -> int:
             step["note"] = f"set_module_flags failed: {err.strip()}"
             print("  ERROR:", step["note"])
             results.append(step)
-            continue
+            infrastructure_failed = True
+            break
 
         # 2. Build
         rc, _, err = run_cmd(
@@ -142,11 +157,20 @@ def main() -> int:
             step["note"] = err.strip() or "Build failed"
             print("  BUILD FAILED")
             results.append(step)
-            continue
+            infrastructure_failed = True
+            break
+
+        if not has_rom_output(rom_path):
+            step["result"] = "error"
+            step["note"] = f"Build reported success but ROM output is missing or empty: {rom_path}"
+            print("  ERROR:", step["note"])
+            results.append(step)
+            infrastructure_failed = True
+            break
 
         # 3. Reload ROM in Mesen2 (so new build is used)
-        if not args.no_reload and rom_path.exists():
-            rc, _, _ = run_cmd(
+        if not args.no_reload:
+            rc, _, err = run_cmd(
                 [
                     sys.executable,
                     str(MESEN2_CLIENT),
@@ -156,8 +180,13 @@ def main() -> int:
                 cwd=REPO_ROOT,
                 timeout=10,
             )
-            if rc != 0 and args.verbose:
-                print("  (rom-load failed; continuing anyway)")
+            if rc != 0:
+                step["result"] = "error"
+                step["note"] = f"rom-load failed: {err.strip() or f'exit {rc}'}"
+                print("  ERROR:", step["note"])
+                results.append(step)
+                infrastructure_failed = True
+                break
 
         # 4. Run softlock test (no build)
         rc, _, err = run_cmd(
@@ -179,27 +208,48 @@ def main() -> int:
             step["note"] = "Mesen2 not connected or load/run failed"
             print("  SKIP (Mesen2/state)")
             results.append(step)
-            continue
+            infrastructure_failed = True
+            break
         if rc == 0:
             step["result"] = "pass"
             step["note"] = "No softlock in test window"
             print("  PASS (no crash) <- guilty candidate?")
             guilty_candidates.append(module)
-        else:
+        elif rc == 1:
             step["result"] = "fail"
             step["note"] = "Softlock or corruption detected"
             print("  FAIL (crash)")
+        else:
+            step["result"] = "error"
+            step["note"] = f"softlock test could not produce a gameplay result: {err.strip() or f'exit {rc}'}"
+            print("  ERROR:", step["note"])
+            infrastructure_failed = True
         results.append(step)
+        if infrastructure_failed:
+            break
 
     # Reset to all enabled (unless single-module run)
     if not args.module and not args.dry_run:
         print("")
         print("Resetting: all modules enabled, build...")
-        run_cmd(
+        rc, _, err = run_cmd(
             [sys.executable, str(SET_MODULE_FLAGS), "--profile", "all"],
             cwd=REPO_ROOT,
         )
-        run_cmd([str(BUILD_ROM), "168"], cwd=REPO_ROOT, capture=not args.verbose)
+        if rc != 0:
+            restoration = {"status": "failed", "note": f"flag reset failed: {err.strip() or f'exit {rc}'}"}
+        else:
+            rc, _, err = run_cmd([str(BUILD_ROM), "168"], cwd=REPO_ROOT,
+                                 capture=not args.verbose)
+            if rc != 0:
+                restoration = {"status": "failed", "note": f"reset build failed: {err.strip() or f'exit {rc}'}"}
+            elif not has_rom_output(rom_path):
+                restoration = {"status": "failed", "note": f"reset ROM output missing or empty: {rom_path}"}
+            else:
+                restoration = {"status": "passed", "note": "All modules enabled and ROM rebuilt"}
+        if restoration["status"] == "failed":
+            infrastructure_failed = True
+            print("  RESTORE FAILED:", restoration["note"])
 
     # Summary
     print("")
@@ -210,6 +260,8 @@ def main() -> int:
         print("")
         print("Guilty candidates (crash GONE when disabled):", ", ".join(guilty_candidates))
         print("  -> Bisect inside that module next (comment out incsrc in its all_*.asm).")
+    if restoration["status"] != "not_requested":
+        print("Restoration:", restoration["status"], restoration["note"])
 
     if args.json:
         out_path = Path(args.json)
@@ -221,12 +273,13 @@ def main() -> int:
             "frames": args.frames,
             "results": results,
             "guilty_candidates": guilty_candidates,
+            "restoration": restoration,
         }
         out_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
         print("")
         print("Wrote:", out_path)
 
-    return 0
+    return 1 if infrastructure_failed else 0
 
 
 if __name__ == "__main__":

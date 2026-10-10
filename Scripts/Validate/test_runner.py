@@ -736,7 +736,16 @@ def _check_exec_step(step: dict, repo_root: Path, placeholders: dict[str, str]) 
         return ["exec step has no command"], []
     try:
         raw = command if isinstance(command, list) else shlex.split(str(command))
+        extra_args = step.get("args")
+        if extra_args:
+            if not isinstance(extra_args, list):
+                return ["exec args must be a list"], []
+            raw = [*raw, *extra_args]
         args = [expand_placeholders(arg, placeholders) for arg in raw]
+        step_env = step.get("env")
+        if isinstance(step_env, dict):
+            for value in step_env.values():
+                expand_placeholders(value, placeholders)
         cwd = _resolve_path(expand_placeholders(step.get("cwd") or repo_root, placeholders), repo_root)
         missing = step_missing_files(step, placeholders, repo_root)
         optional = {_resolve_path(expand_placeholders(entry, placeholders), repo_root)
