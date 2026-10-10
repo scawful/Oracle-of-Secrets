@@ -2,18 +2,20 @@
 # Run module isolation in FixPlan Phase 1B order: disable one module, build, prompt to test.
 #
 # Usage:
-#   ./Scripts/run_module_isolation.sh [--next N]   # Manual: one step, then prompt
-#   ./Scripts/run_module_isolation.sh --auto       # Automated: build + bisect_softlock per module
+#   Scripts/Validate/run_module_isolation.sh [--next N]       # Manual: one step, then prompt
+#   Scripts/Validate/run_module_isolation.sh --auto [ARGS]    # Automated: build + bisect_softlock per module
 #
 # Manual: With no args runs full cycle (disables masks, builds, prompts; ...; then resets).
 # With --next N: step N only (1=masks .. 8=overworld, 9=reset).
-# Automated: --auto runs python3 Scripts/run_module_isolation_auto.py (Mesen2 socket + state 1 required).
+# Automated: --auto runs Scripts/Validate/run_module_isolation_auto.py with the remaining
+# ARGS (e.g. --auto --dry-run); it needs a Mesen2 socket + save state 1.
 #
 # After each build: load save state 1 (overworld) and state 2 (dungeon) in Mesen2 and test.
 # If crash disappears, the disabled module is implicated; then bisect inside that module.
 #
 # Order (safest first): Masks, Music, Menu, Items, Patches, Sprites, Dungeon, Overworld.
-# See Docs/Debugging/Issues/OverworldSoftlock_FixPlan.md Phase 1B and Module_Isolation_Plan.md.
+# Plans (moved out of the repo 2026-10-06): AFS scratchpad/archive/repo-slim-2026-10-06/repo/
+# Docs/Debugging/Issues/archive/OverworldSoftlock_FixPlan.md (Phase 1B) and Module_Isolation_Plan.md.
 
 set -e
 
@@ -25,8 +27,8 @@ MODULES=(masks music menu items patches sprites dungeon overworld)
 
 reset_all() {
     cd "$PROJECT_ROOT"
-    python3 Scripts/set_module_flags.py --profile all
-    ./Scripts/build_rom.sh 168
+    python3 Scripts/Build/set_module_flags.py --profile all
+    ./Scripts/Build/build_rom.sh 168
     echo ""
     echo "All modules re-enabled and ROM built."
 }
@@ -38,18 +40,19 @@ run_step() {
     echo "=========================================="
     echo "Step $idx: Disable $module"
     echo "=========================================="
-    python3 Scripts/set_module_flags.py --disable "$module"
-    ./Scripts/build_rom.sh 168
+    python3 Scripts/Build/set_module_flags.py --disable "$module"
+    ./Scripts/Build/build_rom.sh 168
     echo ""
     echo "  Load save state 1 (overworld) and state 2 (dungeon) in Mesen2 and test."
     echo "  If crash is GONE, guilty module = $module. Then bisect inside that module."
-    echo "  To run next step: ./Scripts/run_module_isolation.sh --next $((idx + 1))"
-    echo "  To reset all:     ./Scripts/run_module_isolation.sh --next 9"
+    echo "  To run next step: Scripts/Validate/run_module_isolation.sh --next $((idx + 1))"
+    echo "  To reset all:     Scripts/Validate/run_module_isolation.sh --next 9"
     echo ""
 }
 
 NEXT=""
 AUTO=""
+AUTO_ARGS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --next)
@@ -59,9 +62,11 @@ while [[ $# -gt 0 ]]; do
         --auto)
             AUTO=1
             shift
+            AUTO_ARGS=("$@")
+            break
             ;;
         --help|-h)
-            head -28 "$0" | tail -25
+            sed -n '2,/^$/s/^# \{0,1\}//p' "$0"
             exit 0
             ;;
         *)
@@ -74,7 +79,7 @@ done
 cd "$PROJECT_ROOT"
 
 if [[ -n "$AUTO" ]]; then
-    exec python3 Scripts/run_module_isolation_auto.py "$@"
+    exec python3 Scripts/Validate/run_module_isolation_auto.py "${AUTO_ARGS[@]}"
 fi
 
 if [[ -n "$NEXT" ]]; then

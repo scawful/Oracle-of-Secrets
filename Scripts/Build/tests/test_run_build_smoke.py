@@ -81,10 +81,12 @@ class SmokePreflightTest(unittest.TestCase):
         self.assertEqual(self.client.commands, ["STATE", "ROMINFO", "STATE", "ROMINFO"])
         args, kwargs = self.runner.call_args
         self.assertEqual(args[0], ["bash", str(self.root / "Scripts/Validate/run_regression_tests.sh"),
-                                   "smoke", "--no-moe", "--fail-fast", "--skip-load"])
+                                   "smoke", "--no-moe", "--fail-fast", "--skip-load",
+                                   "--rom", str(self.rom)])
         self.assertEqual(kwargs["env"]["MESEN2_SOCKET_PATH"], self.endpoint)
         self.assertEqual(kwargs["env"]["OOS_TEST_BACKEND"], "socket")
         self.assertEqual(kwargs["env"]["OOS_TEST_REQUIRE_EMULATOR"], "1")
+        self.assertEqual(kwargs["env"]["OOS_TEST_REQUIRE_ARTIFACTS"], "1")
         self.assertEqual(kwargs["env"]["MESEN_AUTO_FOCUS"], "0")
         self.assertEqual(kwargs["env"]["MESEN_AUTO_UNSTASH"], "0")
         self.assertEqual(kwargs["env"]["MESEN_AUTO_STASH"], "0")
@@ -129,12 +131,13 @@ class SmokePreflightTest(unittest.TestCase):
         self.assertEqual(receipt["suite_definition"]["literal_rom_inputs"], [str(self.rom)])
         self.assertEqual(receipt["suite_definition"]["definitions"], [str(self.definition)])
 
-    def test_current_manifest_passes_definition_gate_for_168_and_refuses_other_rom(self):
-        details = smoke.check_smoke_definitions(ROOT, ROOT / "Roms/oos168x.sfc")
-        self.assertEqual(len(details["definitions"]), 3)
-        self.assertEqual(details["literal_rom_inputs"], [str((ROOT / "Roms/oos168x.sfc").resolve())])
-        with self.assertRaisesRegex(smoke.SmokeError, "parameterize"):
-            smoke.check_smoke_definitions(ROOT, ROOT / "Roms/oos999x.sfc")
+    def test_current_manifest_binds_rom_by_placeholder_for_any_build(self):
+        for rom in ("Roms/oos168x.sfc", "Roms/oos999x.sfc"):
+            details = smoke.check_smoke_definitions(ROOT, ROOT / rom)
+            self.assertEqual(len(details["definitions"]), 3)
+            self.assertEqual(details["literal_rom_inputs"], [])
+        lint = json.loads((ROOT / "Tests/smoke/lint_pass.json").read_text())
+        self.assertTrue(any("{rom}" in step.get("command", []) for step in lint["steps"]))
 
     def test_verify_only_does_not_require_smoke_definitions(self):
         self.manifest.unlink()
