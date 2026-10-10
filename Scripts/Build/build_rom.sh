@@ -201,6 +201,9 @@ echo "[*] Validating expanded message source contract..."
 run_check message_source 1 python3 "$repo_root/Scripts/Generate/validate_expanded_message_source.py" \
   --root "$repo_root"
 
+current_stage="output_snapshot"
+snapshot_build_outputs
+
 # Keep water-gate runtime tables synced with the validated editor-authored base
 # ROM. The tracked custom-collision source contract guarantees that marker
 # tiles ($F5) are present there, so never implicitly reuse stale patched output.

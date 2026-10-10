@@ -239,7 +239,8 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.env['OOS_REQUIRE_CHECKS'] = 'analysis'
         self.assertNotEqual(self.build('--no-symbols').returncode, 0)
         self.assertEqual(self.check('analysis')['status'], 'unavailable')
-        self.assertFalse((self.root / 'Roms/oos999x.sym').exists())
+        # It was unavailable to this build; failure restores the previous set.
+        self.assertEqual((self.root / 'Roms/oos999x.sym').read_text(), 'stale symbols')
 
     def test_assembler_success_without_symbols_fails(self):
         self.write('Roms/oos999x.sym', 'stale symbols')
