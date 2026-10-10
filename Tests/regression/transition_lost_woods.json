@@ -1,7 +1,7 @@
 {
   "name": "Lost Woods Entry and Exit",
   "description": "Verify Lost Woods entry/exit transitions don't cause camera desync or softlock",
-  "version": "1.0",
+  "version": "1.1",
   "tags": ["regression", "transition", "overworld", "lost_woods"],
   "timeout_seconds": 45,
   "saveState": {
@@ -40,11 +40,12 @@
       "description": "Should be in overworld (9) or special area (14)"
     },
     {
-      "type": "assert",
-      "address": "$7E2100",
-      "condition": "not_equals",
-      "value": 0,
-      "description": "INIDISP not 0 (no black screen)"
+      "type": "wait_addr",
+      "address": "$7E0013",
+      "equals": 15,
+      "timeout": 5.0,
+      "interval": 0.1,
+      "description": "INIDISP queue settles at full brightness with forced blank clear"
     },
     {
       "type": "assert",

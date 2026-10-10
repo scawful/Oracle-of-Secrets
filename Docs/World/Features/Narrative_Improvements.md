@@ -20,8 +20,8 @@ The current progression is linear (Dungeon $\to$ Item $\to$ Dungeon). To improve
     *   **Status:** Todo in `oracle.org`.
 
 *   **Dream 2: The Ranch Girl's Secret (Post-D5 / Glacia Estate)**
-    *   **Concept:** A surreal dream involving the Ranch Girl and Twinrova.
-    *   **Lore Reveal:** Foreshadows the twist regarding the Ranch Girl's lineage or connection to the witches/Gerudo.
+    *   **Status:** `[CUT 2026-09-02]`. Do not implement.
+    *   **Replacement:** Required early quest clues establish her as Twinrova's transformed witness. Defeating Twinrova automatically breaks the curse; no dream or return quest is used.
 
 ### 1.2. Gossip Stone Network
 **Goal:** Guide players through the mid-game lull (Chapter 4: Path to the Castle) and deepen lore.

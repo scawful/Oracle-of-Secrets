@@ -1,0 +1,948 @@
+{
+  "schema": "oracle-debug-checkpoints/1",
+  "description": "Story checkpoints for the Mesen2-OOS Cheats & Warps panel and mesen2_client.py checkpoint. Order follows Docs/Planning/story_canon_beat_sheet.md. See Data/debug/README.md.",
+  "rom_tested": {
+    "path": "Roms/Playtest/oos-v0.9.0-b17.sfc",
+    "sha256": "a0fdd4220d4da24b9c8cd087f5cb68a9758b85fbf733655f7888d0fa844b008c"
+  },
+  "apply": "Resolve the 'after' chain (oldest first) and apply every write in order to WRAM $7EF000-$7EF4FF. 'value' stores the byte, 'set_bits' ORs, 'clear_bits' ANDs out. Then copy $7EF000-$7EF4FF to the active SRAM slot (main + mirror, new inverse checksum at +$4FE); other slots are untouched. Then warp to 'location' (an entrance id, or an overworld area from warps.json).",
+  "evidence_legend": "Each write cites file:line (with the symbol for Core/sram.asm) or a beat-sheet row. Line numbers were read on 2026-09-26 from the working tree. inferred=true: the docs are silent or disagree, and the value is a best guess; 'why' says what it rests on.",
+  "checkpoints": [
+    {
+      "id": "intro-bed",
+      "label": "New file: Link's house before the plea",
+      "beat": 3,
+      "location": {
+        "entrance": "0x01"
+      },
+      "expect": {
+        "modules": [
+          "0x07",
+          "0x0C",
+          "0x0D"
+        ],
+        "room": "0x0104"
+      },
+      "notes": "Warping into room $104 with GameState 0 and OOSPROG2 bit $10 clear re-runs the bed block (Docs/Planning/Plans/intro_plan_2026-09-24.md:33); with IntroState 0 the arrival gate then starts the new-game scenes (Core/Cutscene/opening.asm:84-96). On b17 (arrival + experiment flags on) the scene waits for text input; Start skips it (Core/Cutscene/experiment.asm:18).",
+      "writes": [
+        {
+          "addr": "0x7EF3C5",
+          "value": "0x00",
+          "name": "GameState",
+          "evidence": "Core/sram.asm:72 (!GameState_Start); Dungeons/custom_tag.asm:99"
+        },
+        {
+          "addr": "0x7EF39E",
+          "value": "0x00",
+          "name": "IntroState",
+          "evidence": "Core/sram.asm:467 (IntroState); Core/Cutscene/opening.asm:87 (plea not delivered)"
+        },
+        {
+          "addr": "0x7EF3D6",
+          "value": "0x00",
+          "name": "OOSPROG",
+          "evidence": "Core/sram.asm:259 (StoryProgress)"
+        },
+        {
+          "addr": "0x7EF3C6",
+          "value": "0x00",
+          "name": "OOSPROG2",
+          "evidence": "Core/sram.asm:262 (StoryProgress2); intro_plan_2026-09-24.md:33 (bed block needs bit $10 clear)"
+        },
+        {
+          "addr": "0x7EF3D4",
+          "value": "0x00",
+          "name": "MakuTreeQuest",
+          "evidence": "Core/sram.asm:266 (MakuTreeQuest)"
+        },
+        {
+          "addr": "0x7EF3C7",
+          "value": "0x00",
+          "name": "MapIcon",
+          "evidence": "Core/sram.asm:186 (!MapIcon_MakuTree)"
+        },
+        {
+          "addr": "0x7EF37A",
+          "value": "0x00",
+          "name": "Crystals",
+          "evidence": "Core/sram.asm:373 (Crystals)"
+        },
+        {
+          "addr": "0x7EF374",
+          "value": "0x00",
+          "name": "Pendants",
+          "evidence": "Core/sram.asm:372 (Pendants)"
+        },
+        {
+          "addr": "0x7EF3D7",
+          "value": "0x00",
+          "name": "SideQuestProgress",
+          "evidence": "Core/sram.asm:284 (SideQuestProgress)"
+        },
+        {
+          "addr": "0x7EF3D8",
+          "value": "0x00",
+          "name": "SideQuestProgress2",
+          "evidence": "Core/sram.asm:285 (SideQuestProgress2)"
+        },
+        {
+          "addr": "0x7EF300",
+          "value": "0x00",
+          "name": "KydrogFaroreRemoved",
+          "evidence": "Core/sram.asm:219 (KydrogFaroreRemoved)"
+        },
+        {
+          "addr": "0x7EF301",
+          "value": "0x00",
+          "name": "DekuMaskQuestDone",
+          "evidence": "Core/sram.asm:223 (DekuMaskQuestDone)"
+        },
+        {
+          "addr": "0x7EF302",
+          "value": "0x00",
+          "name": "ZoraMaskQuestDone",
+          "evidence": "Core/sram.asm:227 (ZoraMaskQuestDone)"
+        },
+        {
+          "addr": "0x7EF3A7",
+          "value": "0x00",
+          "name": "EonOwlFlags",
+          "evidence": "Core/sram.asm:499 (EonOwlFlags) (zero on new files)"
+        },
+        {
+          "addr": "0x7EF3CC",
+          "value": "0x00",
+          "name": "FollowerId",
+          "evidence": "Core/sram.asm:585 (FollowerId); Dungeons/custom_tag.asm:100"
+        },
+        {
+          "addr": "0x7EF3CA",
+          "value": "0x00",
+          "name": "SavedWorld",
+          "evidence": "Core/sram.asm:523 (SavedWorld) (bit 6 = Abyss)"
+        },
+        {
+          "addr": "0x7EF359",
+          "value": "0x00",
+          "name": "Sword",
+          "evidence": "Core/sram.asm:325 (Sword); Docs/Planning/story_canon_beat_sheet.md line 43 (sword comes from the Abyss tutorial)"
+        },
+        {
+          "addr": "0x7EF35A",
+          "value": "0x00",
+          "name": "Shield",
+          "evidence": "Core/sram.asm:326 (Shield); Docs/Planning/story_canon_beat_sheet.md line 43"
+        },
+        {
+          "addr": "0x7EF357",
+          "value": "0x00",
+          "name": "MoonPearl",
+          "evidence": "Core/sram.asm:323 (MoonPearl); Docs/Planning/story_canon_beat_sheet.md row 7"
+        },
+        {
+          "addr": "0x7EF356",
+          "value": "0x00",
+          "name": "Flippers",
+          "evidence": "Core/sram.asm:322 (Flippers)"
+        },
+        {
+          "addr": "0x7EF340",
+          "value": "0x00",
+          "name": "Bow",
+          "evidence": "Core/sram.asm:296 (Bow)"
+        },
+        {
+          "addr": "0x7EF344",
+          "value": "0x00",
+          "name": "MagicPowder",
+          "evidence": "Core/sram.asm:300 (MagicPowder)"
+        },
+        {
+          "addr": "0x7EF34C",
+          "value": "0x00",
+          "name": "Ocarina",
+          "evidence": "Items/ocarina.asm:437-443 (0 = no Ocarina)"
+        },
+        {
+          "addr": "0x7EF349",
+          "value": "0x00",
+          "name": "DekuMask",
+          "evidence": "Core/sram.asm:305 (DekuMask)"
+        },
+        {
+          "addr": "0x7EF347",
+          "value": "0x00",
+          "name": "ZoraMask",
+          "evidence": "Core/sram.asm:303 (ZoraMask)"
+        },
+        {
+          "addr": "0x7EF34E",
+          "value": "0x00",
+          "name": "Book",
+          "evidence": "Core/sram.asm:310 (Book)"
+        },
+        {
+          "addr": "0x7EF355",
+          "value": "0x00",
+          "name": "Boots",
+          "evidence": "Core/sram.asm:321 (Boots)"
+        },
+        {
+          "addr": "0x7EF34B",
+          "value": "0x00",
+          "name": "Hammer",
+          "evidence": "Core/sram.asm:307 (Hammer)"
+        },
+        {
+          "addr": "0x7EF354",
+          "value": "0x00",
+          "name": "Gloves",
+          "evidence": "Core/sram.asm:320 (Gloves)"
+        },
+        {
+          "addr": "0x7EF350",
+          "value": "0x00",
+          "name": "Somaria",
+          "evidence": "Core/sram.asm:312 (Somaria)"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x18",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "3 hearts: the runtime save (Roms/device-saves/snesclassic/20260926T111512Z-CLV-H-OOSRA slot 1) has $20 after the Maku Tree's heart container (Sprites/NPCs/maku_tree.asm:147)"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x18",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        }
+      ]
+    },
+    {
+      "id": "loom-beach",
+      "label": "Awake: Loom Beach, Impa waiting",
+      "beat": 4,
+      "after": "intro-bed",
+      "location": {
+        "area": "0x33"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x33"
+      },
+      "notes": "Lands outside Link's house (exit room $0104). Impa is on Loom Beach (msg $25, beat sheet row 4).",
+      "writes": [
+        {
+          "addr": "0x7EF39E",
+          "value": "0x02",
+          "name": "IntroState",
+          "evidence": "Dungeons/custom_tag.asm:63 (plea, then wake-up each add 1)"
+        },
+        {
+          "addr": "0x7EF3C6",
+          "value": "0x90",
+          "name": "OOSPROG2",
+          "evidence": "Dungeons/custom_tag.asm:89 (bit $10 legacy house flag); Dungeons/custom_tag.asm:95 (bit $80 Part 0 storm, read only when !ENABLE_PART0_STORM = 1)"
+        },
+        {
+          "addr": "0x7EF30F",
+          "set_bits": "0x01",
+          "name": "Part00Flags",
+          "evidence": "Core/part00.asm HouseVillager_Talk: with IntroState 2 and bit $01 clear the house villager opens $202 (B) on the next frame, and the checkpoint's reload through room $0104 then refuses (module $0E). Bit $01 = B already said (awake and out of the house)."
+        },
+        {
+          "addr": "0x7E005D",
+          "value": "0x00",
+          "name": "LinkState",
+          "evidence": "intro-bed leaves Link in LinkState_Sleeping ($16, $037C = 0). IntroState 2 skips HouseTag_WakeUpPlayer (Dungeons/custom_tag.asm), so nothing resets it and Link_SnoringInBed ($079A62) keeps spawning ancilla $21 (Z) at the landing spot."
+        }
+      ]
+    },
+    {
+      "id": "village-impa",
+      "label": "Impa following: Wayward Village (hole here, Farore one screen west)",
+      "beat": 5,
+      "after": "loom-beach",
+      "location": {
+        "area": "0x23"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x23"
+      },
+      "notes": "Lands at the exit of cave room $00FE, next to the village hole (entrance $80, Docs/Planning/Plans/impa_follower_hints_2026-09-25.md:23); Impa's hint $1C8 may open (module $0E). This is also the Farore-meeting state (beat 6): Farore's sprite stands on area $2A, one screen west (impa_follower_hints_2026-09-25.md:24). $2A has no exit-table room, and the beat sheet's special area $80 cannot be warp-loaded (Data/debug/README.md, Limits). Kydrog and Farore spawn while KydrogFaroreRemoved = 0 (Sprites/Bosses/kydrog.asm:95).",
+      "writes": [
+        {
+          "addr": "0x7EF3CC",
+          "value": "0x01",
+          "name": "FollowerId",
+          "evidence": "Docs/Planning/Plans/impa_follower_hints_2026-09-25.md:16 (Impa = follower $01)"
+        }
+      ]
+    },
+    {
+      "id": "abyss-arrival",
+      "label": "Abyss arrival after Kydrog's ambush",
+      "beat": 7,
+      "after": "village-impa",
+      "location": {
+        "area": "0x40"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x40"
+      },
+      "notes": "Same exit the banish uses (Kydrog_WarpPlayerAway loads room $20's exit, Sprites/Bosses/kydrog.asm:166). With GameState 2 and OOSPROG < 2 a continue also starts in the Abyss (Overworld/overworld.asm:105-109). The storm bit stays set in the Abyss and ends back on Kalyxo (Overworld/storm.asm:10-18); b17 and older cleared it at the Farore beat instead. The first Eon Owl (EonOwlFlags bit 0) is not placed yet.",
+      "writes": [
+        {
+          "addr": "0x7EF3C5",
+          "value": "0x02",
+          "name": "GameState",
+          "evidence": "Sprites/NPCs/farore.asm:221; Core/sram.asm:74 (!GameState_KydrogComplete)"
+        },
+        {
+          "addr": "0x7EF3C6",
+          "value": "0x94",
+          "name": "OOSPROG2",
+          "evidence": "bit $04 Sprites/Bosses/kydrog.asm:181; bits $10 and $80 kept (storm lasts through the Abyss, Overworld/storm.asm:10-18, Core/sram.asm:107 (!Story2_Part0Storm))"
+        },
+        {
+          "addr": "0x7EF300",
+          "value": "0x01",
+          "name": "KydrogFaroreRemoved",
+          "evidence": "Sprites/Bosses/kydrog.asm:178"
+        },
+        {
+          "addr": "0x7EF3CC",
+          "value": "0x00",
+          "name": "FollowerId",
+          "evidence": "Sprites/Bosses/kydrog.asm:175 (Impa removed)"
+        },
+        {
+          "addr": "0x7EF3CA",
+          "value": "0x40",
+          "name": "SavedWorld",
+          "evidence": "Sprites/Bosses/kydrog.asm:153; Overworld/overworld.asm:109"
+        }
+      ]
+    },
+    {
+      "id": "origins",
+      "label": "Shrine of Origins (Abyss tutorial)",
+      "beat": 7,
+      "after": "abyss-arrival",
+      "location": {
+        "entrance": "0x76"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0005"
+      },
+      "notes": "Entrance $76 -> room $05 (Roms/TestBuilds/rc-intro-origins-goron-2026-09-25/playtest.md). The Moon Pearl is obtained inside Origins (beat sheet line 47), so it is still 0 here.",
+      "writes": []
+    },
+    {
+      "id": "abyss-owl",
+      "label": "Moon Pearl found: Eon Owl on area $50 points to the sword",
+      "beat": 7,
+      "after": "origins",
+      "location": {
+        "area": "0x50"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x50"
+      },
+      "notes": "The second Owl appearance (msg $E6) is on map $50 and only spawns while Sword = 0 (Sprites/NPCs/eon_owl.asm:73-76); decisions.org 'Abyss segment', item 2. The area warp lands outside the Shrine of Courage door (room $53).",
+      "writes": [
+        {
+          "addr": "0x7EF357",
+          "value": "0x01",
+          "name": "MoonPearl",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 7; Docs/Planning/story_canon_beat_sheet.md line 47 (Pearl from Origins)"
+        },
+        {
+          "addr": "0x7EF3A7",
+          "set_bits": "0x01",
+          "name": "EonOwlFlags",
+          "evidence": "Core/sram.asm:500 (!EonOwl_ArrivalTalked) (first Owl comes before the Pearl; the flag is read only when !ENABLE_EON_OWL_ONE_SHOT = 1)"
+        }
+      ]
+    },
+    {
+      "id": "kalyxo-return",
+      "label": "Back on Kalyxo: outside the Hall of Secrets, before the Maku Tree briefing",
+      "beat": 8,
+      "after": "abyss-owl",
+      "location": {
+        "area": "0x0E"
+      },
+      "expect": {
+        "modules": [
+          "0x09",
+          "0x0E"
+        ],
+        "area": "0x0E"
+      },
+      "notes": "Abyss tutorial done: sword and shield (beat sheet line 43 'Abyss -> Origins -> Owl -> sword/shield -> return'). Beat sheet row 8 pairs the Maku Tree briefing with the Hall of Secrets; the Maku Tree sprite is in special area $80 (Docs/World/SpecialAreas/index.md:84), which a warp cannot load. OOSPROG is still 0, so a continue returns to the Abyss until the Maku Tree is met (Overworld/overworld.asm:105-109).",
+      "writes": [
+        {
+          "addr": "0x7EF359",
+          "value": "0x01",
+          "name": "Sword",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md line 43; runtime save slot 1 = 1"
+        },
+        {
+          "addr": "0x7EF35A",
+          "value": "0x01",
+          "name": "Shield",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md line 43; runtime save slot 1 = 1"
+        },
+        {
+          "addr": "0x7EF3A7",
+          "set_bits": "0x02",
+          "name": "EonOwlFlags",
+          "evidence": "Core/sram.asm:501 (!EonOwl_SwordTalked) ($E6 Owl done)"
+        },
+        {
+          "addr": "0x7EF3C6",
+          "clear_bits": "0x80",
+          "name": "OOSPROG2",
+          "evidence": "storm ends back on Kalyxo (Overworld/storm.asm:10-18, Part0Storm_EndIfBackOnKalyxo); runtime save slot 1 = $14"
+        },
+        {
+          "addr": "0x7EF3CA",
+          "value": "0x00",
+          "name": "SavedWorld",
+          "evidence": "Core/sram.asm:523 (SavedWorld) (back on Kalyxo)"
+        }
+      ]
+    },
+    {
+      "id": "d1-entrance",
+      "label": "D1 Mushroom Grotto entrance (after the Maku Tree briefing)",
+      "beat": 9,
+      "after": "kalyxo-return",
+      "location": {
+        "entrance": "0x26"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x004A"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF3D4",
+          "value": "0x01",
+          "name": "MakuTreeQuest",
+          "evidence": "Sprites/NPCs/maku_tree.asm:136"
+        },
+        {
+          "addr": "0x7EF3C7",
+          "value": "0x01",
+          "name": "MapIcon",
+          "evidence": "Sprites/NPCs/maku_tree.asm:137 (Mushroom Grotto)"
+        },
+        {
+          "addr": "0x7EF3D6",
+          "value": "0x02",
+          "name": "OOSPROG",
+          "evidence": "Sprites/NPCs/maku_tree.asm:138 (bit $02 Hall of Secrets); runtime save slot 1 = $02"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x20",
+          "name": "MaxHealth",
+          "evidence": "Sprites/NPCs/maku_tree.asm:147 (heart container); runtime save slot 1 = $20"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x20",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        }
+      ]
+    },
+    {
+      "id": "d2-entrance",
+      "label": "D2 Tail Palace entrance (D1 done, Ocarina chain done)",
+      "beat": 11,
+      "after": "d1-entrance",
+      "location": {
+        "entrance": "0x15"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x005F"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "value": "0x02",
+          "name": "Crystals",
+          "evidence": "Core/sram.asm:118 (!Crystal_D1_MushroomGrotto); Docs/Debugging/Issues/world_map_icons_2026-09-26.md section 5.0 (ROM: entrance $26 = dungeon $0C -> bit $02, entrance $27 = dungeon $0E -> bit $01)"
+        },
+        {
+          "addr": "0x7EF3C7",
+          "value": "0x02",
+          "name": "MapIcon",
+          "evidence": "Core/progression.asm:28 (MapIcon = crystal count + 1, set by the Maku Tree)"
+        },
+        {
+          "addr": "0x7EF340",
+          "value": "0x01",
+          "name": "Bow",
+          "evidence": "Docs/Planning/item_flow_balance_check.md:13 (D1 yields Bow + Mushroom)"
+        },
+        {
+          "addr": "0x7EF344",
+          "value": "0x02",
+          "name": "MagicPowder",
+          "evidence": "Docs/Planning/item_flow_balance_check.md:13 (Mushroom -> Witches -> Magic Powder); Core/sram.asm:300 (MagicPowder) (2 = Powder); Docs/Planning/story_canon_beat_sheet.md row 10"
+        },
+        {
+          "addr": "0x7EF34C",
+          "value": "0x02",
+          "name": "Ocarina",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 10 (Ocarina, Song of Healing); Items/ocarina.asm:440 (2 = Healing)"
+        },
+        {
+          "addr": "0x7EF349",
+          "value": "0x01",
+          "name": "DekuMask",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 10"
+        },
+        {
+          "addr": "0x7EF301",
+          "value": "0x01",
+          "name": "DekuMaskQuestDone",
+          "evidence": "Core/sram.asm:223 (DekuMaskQuestDone) (set by deku_scrub.asm)"
+        },
+        {
+          "addr": "0x7EF3D7",
+          "set_bits": "0x05",
+          "name": "SideQuestProgress",
+          "evidence": "Docs/Technical/Flag_Ledger.md SideQuest_MetMaskSalesman ($01), SideQuest_DekuScrubFound ($04)"
+        },
+        {
+          "addr": "0x7EF3D8",
+          "set_bits": "0x14",
+          "name": "SideQuestProgress2",
+          "evidence": "Docs/Technical/Flag_Ledger.md SideQuest2_SongOfHealing ($04), SideQuest2_DekuSoulFreed ($10)"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x28",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "one heart container per boss, as in vanilla; no Oracle doc lists boss heart containers"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x28",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        }
+      ]
+    },
+    {
+      "id": "d3-entrance",
+      "label": "D3 Kalyxo Castle entrance (D2 done, Book of Secrets)",
+      "beat": 13,
+      "after": "d2-entrance",
+      "location": {
+        "entrance": "0x2B"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0059"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "value": "0x12",
+          "name": "Crystals",
+          "evidence": "Core/sram.asm:121 (!Crystal_D2_TailPalace)"
+        },
+        {
+          "addr": "0x7EF3C7",
+          "value": "0x03",
+          "name": "MapIcon",
+          "evidence": "Core/progression.asm:28"
+        },
+        {
+          "addr": "0x7EF34E",
+          "value": "0x01",
+          "name": "Book",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 12 (Book of Secrets before D3)"
+        },
+        {
+          "addr": "0x7EF355",
+          "value": "0x01",
+          "name": "Boots",
+          "evidence": "Docs/Planning/item_flow_balance_check.md:88 (sick child -> boots -> Book of Secrets -> D3)"
+        },
+        {
+          "addr": "0x7EF379",
+          "set_bits": "0x04",
+          "name": "AbilityFlags",
+          "evidence": "Core/sram.asm:321 (Boots) (Boots also need the Ability bit); Core/sram.asm:381 (AbilityFlags) ('lrtu pbsh', b = Run = $04)"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x30",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "one heart container per boss, as in vanilla; no Oracle doc lists boss heart containers"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x30",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        }
+      ]
+    },
+    {
+      "id": "d4-entrance",
+      "label": "D4 Zora Temple entrance (D3 done, Shrine of Wisdom done)",
+      "beat": 15,
+      "after": "d3-entrance",
+      "location": {
+        "entrance": "0x25"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0028"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "value": "0x52",
+          "name": "Crystals",
+          "evidence": "Core/sram.asm:123 (!Crystal_D3_KalyxoCastle)"
+        },
+        {
+          "addr": "0x7EF3C7",
+          "value": "0x04",
+          "name": "MapIcon",
+          "evidence": "Core/progression.asm:28"
+        },
+        {
+          "addr": "0x7EF359",
+          "value": "0x02",
+          "name": "Sword",
+          "inferred": true,
+          "why": "Meadow Blade from D3 (Docs/Planning/story_canon_beat_sheet.md row 13); level 2 from Overworld/overworld.asm:76 'Get Lv2 Sword from chest'. The beat sheet says the blade caps at L3; how it reaches L3 is not documented"
+        },
+        {
+          "addr": "0x7EF356",
+          "value": "0x01",
+          "name": "Flippers",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 14; Docs/Planning/item_flow_balance_check.md:17"
+        },
+        {
+          "addr": "0x7EF374",
+          "value": "0x01",
+          "name": "Pendants",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 14; Core/sram.asm:150 (!Pendant_Wisdom)"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x38",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "one heart container per boss, as in vanilla; no Oracle doc lists boss heart containers"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x38",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        }
+      ]
+    },
+    {
+      "id": "d5-entrance",
+      "label": "D5 Glacia Estate entrance (D4 done, Song of Storms)",
+      "beat": 17,
+      "after": "d4-entrance",
+      "location": {
+        "entrance": "0x34"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x00DB"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "value": "0x72",
+          "name": "Crystals",
+          "evidence": "Core/sram.asm:122 (!Crystal_D4_ZoraTemple)"
+        },
+        {
+          "addr": "0x7EF3C7",
+          "value": "0x05",
+          "name": "MapIcon",
+          "evidence": "Core/progression.asm:28"
+        },
+        {
+          "addr": "0x7EF347",
+          "value": "0x01",
+          "name": "ZoraMask",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 15"
+        },
+        {
+          "addr": "0x7EF302",
+          "value": "0x01",
+          "name": "ZoraMaskQuestDone",
+          "evidence": "Core/sram.asm:227 (ZoraMaskQuestDone) (set by zora_princess.asm)"
+        },
+        {
+          "addr": "0x7EF34C",
+          "value": "0x03",
+          "name": "Ocarina",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 16 (Song of Storms post-D4); Items/ocarina.asm:441 (3 = Healing, Storms)"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x40",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "one heart container per boss, as in vanilla; no Oracle doc lists boss heart containers"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x40",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        }
+      ]
+    },
+    {
+      "id": "d6-entrance",
+      "label": "D6 Goron Mines entrance (D5 done, Shrine of Power done)",
+      "beat": 20,
+      "after": "d5-entrance",
+      "location": {
+        "entrance": "0x27"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x0098"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "value": "0x76",
+          "name": "Crystals",
+          "evidence": "Core/sram.asm:119 (!Crystal_D5_GlaciaEstate)"
+        },
+        {
+          "addr": "0x7EF3C7",
+          "value": "0x06",
+          "name": "MapIcon",
+          "evidence": "Core/progression.asm:28"
+        },
+        {
+          "addr": "0x7EF374",
+          "value": "0x03",
+          "name": "Pendants",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 19; Core/sram.asm:151 (!Pendant_Power)"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x48",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "one heart container per boss, as in vanilla; no Oracle doc lists boss heart containers"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x48",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        }
+      ]
+    },
+    {
+      "id": "d7-entrance",
+      "label": "D7 Dragon Ship entrance (D6 done, Song of Soaring)",
+      "beat": 23,
+      "after": "d6-entrance",
+      "location": {
+        "entrance": "0x35"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x00D6"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "value": "0x77",
+          "name": "Crystals",
+          "evidence": "Core/sram.asm:117 (!Crystal_D6_GoronMines); Docs/Debugging/Issues/world_map_icons_2026-09-26.md section 5.0 (ROM: entrance $26 = dungeon $0C -> bit $02, entrance $27 = dungeon $0E -> bit $01)"
+        },
+        {
+          "addr": "0x7EF3C7",
+          "value": "0x07",
+          "name": "MapIcon",
+          "evidence": "Core/progression.asm:28"
+        },
+        {
+          "addr": "0x7EF34B",
+          "value": "0x01",
+          "name": "Hammer",
+          "evidence": "Docs/Planning/item_flow_balance_check.md:18 (D6 reward is Hammer)"
+        },
+        {
+          "addr": "0x7EF354",
+          "value": "0x02",
+          "name": "Gloves",
+          "evidence": "Docs/Planning/item_flow_balance_check.md:93 (Titan's Mitt is the immediate post-D6 reward); Core/sram.asm:320 (Gloves) (2 = Titan's Mitt)"
+        },
+        {
+          "addr": "0x7EF34C",
+          "value": "0x04",
+          "name": "Ocarina",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 22 (Song of Soaring before the Dragon Ship); Items/ocarina.asm:442"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x50",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "one heart container per boss, as in vanilla; no Oracle doc lists boss heart containers"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x50",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        }
+      ]
+    },
+    {
+      "id": "d8-entrance",
+      "label": "D8 Fortress of Secrets entrance (D7, Shrine of Courage, Master Sword)",
+      "beat": 27,
+      "after": "d7-entrance",
+      "location": {
+        "entrance": "0x37"
+      },
+      "expect": {
+        "modules": [
+          "0x07"
+        ],
+        "room": "0x000C"
+      },
+      "writes": [
+        {
+          "addr": "0x7EF37A",
+          "value": "0x7F",
+          "name": "Crystals",
+          "evidence": "Core/sram.asm:120 (!Crystal_D7_DragonShip)"
+        },
+        {
+          "addr": "0x7EF3C7",
+          "value": "0x08",
+          "name": "MapIcon",
+          "evidence": "Core/sram.asm:194 (!MapIcon_Fortress); Core/progression.asm:28"
+        },
+        {
+          "addr": "0x7EF3C5",
+          "value": "0x03",
+          "name": "GameState",
+          "inferred": true,
+          "why": "Core/sram.asm:75 (!GameState_FaroreRescued) defines 3 = D7 complete; the in-game setter is feature-gated off (!ENABLE_D7_FARORE_RESCUE_SEQUENCE = 0, Sprites/Bosses/kydrog_boss.asm:377; beat sheet row 23 [TO-BUILD])"
+        },
+        {
+          "addr": "0x7EF350",
+          "value": "0x01",
+          "name": "Somaria",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 23 (D7 gives the Somaria Rod)"
+        },
+        {
+          "addr": "0x7EF374",
+          "value": "0x07",
+          "name": "Pendants",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 24; Core/sram.asm:152 (!Pendant_Courage)"
+        },
+        {
+          "addr": "0x7EF359",
+          "value": "0x04",
+          "name": "Sword",
+          "evidence": "Docs/Planning/story_canon_beat_sheet.md row 25 (the pedestal pull grants L4)"
+        },
+        {
+          "addr": "0x7EF3CA",
+          "value": "0x40",
+          "name": "SavedWorld",
+          "evidence": "Fortress door is on Abyss area $5E (Data/debug/warps.json entrance 0x37)"
+        },
+        {
+          "addr": "0x7EF36C",
+          "value": "0x58",
+          "name": "MaxHealth",
+          "inferred": true,
+          "why": "one heart container per boss, as in vanilla; no Oracle doc lists boss heart containers"
+        },
+        {
+          "addr": "0x7EF36D",
+          "value": "0x58",
+          "name": "CurrentHealth",
+          "inferred": true,
+          "why": "full health"
+        }
+      ]
+    }
+  ],
+  "todo": [
+    {
+      "id": "abyss-owl-arrival",
+      "label": "Eon Owl, first appearance on the Abyss arrival area (points to the Shrine of Origins)",
+      "beat": 7,
+      "reason": "Decided 2026-09-26 (Docs/Planning/Status/decisions.org 'Abyss segment', item 2). The flag exists (Core/sram.asm:500 (!EonOwl_ArrivalTalked)) but the Owl is not placed yet; add the checkpoint when it is."
+    }
+  ]
+}

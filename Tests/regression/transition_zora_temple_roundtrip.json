@@ -1,7 +1,7 @@
 {
   "name": "Zora Temple Entrance Roundtrip",
   "description": "Verify Zora Temple stairs transition works in both directions without black screen or APU spin lock.",
-  "version": "1.0",
+  "version": "1.1",
   "tags": ["regression", "transition", "zora", "dungeon", "overworld", "roundtrip"],
   "timeout_seconds": 45,
   "saveState": {
@@ -13,6 +13,10 @@
     "$7E0010": {
       "equals": 7,
       "desc": "Seed should start inside dungeon mode (0x07)"
+    },
+    "$7E0011": {
+      "equals": 0,
+      "desc": "Seed should start with idle submode (0x00)"
     },
     "$7E00A0": {
       "equals": 40,
@@ -43,11 +47,20 @@
       "description": "Overworld submode should settle to idle (0x00)"
     },
     {
-      "type": "assert",
-      "address": "$7E2100",
-      "condition": "not_equals",
-      "value": 0,
-      "description": "INIDISP should not be 0 (no persistent black frame)"
+      "type": "wait_state",
+      "key": "area",
+      "equals": 30,
+      "timeout": 10.0,
+      "interval": 0.2,
+      "description": "Should return to Zora Temple overworld area (0x1E)"
+    },
+    {
+      "type": "wait_addr",
+      "address": "$7E0013",
+      "equals": 15,
+      "timeout": 5.0,
+      "interval": 0.1,
+      "description": "INIDISP queue settles at full brightness with forced blank clear"
     },
     {
       "type": "press",
@@ -72,11 +85,20 @@
       "description": "Dungeon submode should settle to idle (0x00)"
     },
     {
-      "type": "assert",
-      "address": "$7E2100",
-      "condition": "not_equals",
-      "value": 0,
-      "description": "INIDISP should not be 0 after re-entry"
+      "type": "wait_state",
+      "key": "dungeon_room",
+      "equals": 40,
+      "timeout": 10.0,
+      "interval": 0.2,
+      "description": "Should re-enter Zora Temple entrance room (0x28)"
+    },
+    {
+      "type": "wait_addr",
+      "address": "$7E0013",
+      "equals": 15,
+      "timeout": 5.0,
+      "interval": 0.1,
+      "description": "INIDISP queue settles at full brightness with forced blank clear"
     }
   ],
   "onFailure": {

@@ -11,6 +11,12 @@ KingDodongo_NewHealthSystem:
   LSR A
   LSR A
   TAY
+  ; The table has 10 entries (HP 0-39). Clamp higher HP to the last entry;
+  ; reading past the table picked negative phases, and the boss deleted
+  ; itself as mask debris (softlock in room $C8).
+  CPY.b #$0A : BCC .in_table
+    LDY.b #$09
+  .in_table
 
   LDA.w .phase_table,Y
   STA.w SprMiscB,X
@@ -24,6 +30,12 @@ KingDodongo_NewHealthSystem:
 }
 
 pushpc
+
+; Sprite health table entry for King Dodongo (sprite $92). The ROM held 96;
+; 40 matches the phase table above (see header note).
+assert read1($0DB173+$92) == $28 || read1($0DB173+$92) == $60, "Unexpected King Dodongo health"
+org $0DB173+$92 ; @hook module=Sprites kind=data
+db $28
 
 ; Adjust leg position to remove gap
 org $1E87F5

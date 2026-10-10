@@ -35,7 +35,11 @@
 Sprite_Poltergeist_Long:
 {
   PHB : PHK : PLB
-  JSR Sprite_Poltergeist_Draw
+  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
+  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
+    JSR Sprite_Poltergeist_Draw
+  .dying
 
   ; LDA $E0 : CMP #$F0 : BNE .onscreen
   ;   LDA.w SprMiscA, X : BEQ .SpriteIsNotActive

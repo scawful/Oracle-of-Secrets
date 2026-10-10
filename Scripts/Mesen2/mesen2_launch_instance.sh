@@ -330,6 +330,23 @@ PY
 
 INSTANCE_GUID="$(resolve_or_generate_instance_guid)"
 
+if [[ "${COPY_SETTINGS}" -eq 0 && ! -f "${HOME_DIR}/settings.json" ]]; then
+  # A fresh MESEN2_HOME without settings.json made Mesen fall back to the
+  # default profile (~/Documents/Mesen2): agent saves, states, recent-game and
+  # CDL files landed in scawful's own profile (2026-09-26). Seed a settings file
+  # even with --no-copy-settings; the source profile is only read.
+  for candidate in \
+    "${HOME}/Documents/Mesen2" \
+    "${HOME}/Library/Application Support/Mesen2" \
+    "${HOME}/.config/Mesen2"; do
+    if [[ -f "${candidate}/settings.json" ]]; then
+      cp "${candidate}/settings.json" "${HOME_DIR}/settings.json"
+      echo "Seeded settings.json from ${candidate} so Mesen stays in ${HOME_DIR} (--no-copy-settings)"
+      break
+    fi
+  done
+fi
+
 if [[ "${COPY_SETTINGS}" -eq 1 ]]; then
   SETTINGS_NEEDS_SEED=1
   if [[ -f "${HOME_DIR}/settings.json" ]]; then

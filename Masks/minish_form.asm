@@ -18,6 +18,16 @@ org $07D8A0
 org $078427 : JSR $9BAA ; Link_HandleAPress ; @hook module=Masks name=$9BAA kind=jsr target=$9BAA
 
 pullpc
+if !ENABLE_MINISH_AUTO_PORTAL == 1
+; Stand still on the portal to shrink or grow (MinishPortal_Tick, bank $3A).
+LinkState_CheckForMinishForm:
+{
+  SEP #$30
+  JSL MinishPortal_Tick
+  REP #$30
+  RTS
+}
+else
 LinkState_CheckForMinishForm:
 {
   SEP #$30
@@ -58,6 +68,7 @@ LinkState_CheckForMinishForm:
   REP #$30
   RTS
 }
+endif
 
 ; =========================================================
 

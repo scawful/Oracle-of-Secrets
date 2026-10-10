@@ -3,12 +3,14 @@
 ;
 ; NARRATIVE ROLE: Replaces Zelda's ALTTP role as the intro guide who
 ;   leads Link through the early game. In Oracle of Secrets, Impa serves
-;   as the Sheikah guide who introduces Link to the island and is removed
-;   as a follower during the Kydrog encounter.
+;   as the Sheikah guide who introduces Link to the island. At the Kydrog
+;   ambush Farore is kidnapped and Kydrog spares Impa as a messenger to
+;   Zelda (msg $35); she stops following ($7EF3CC = 0) and stays at the Hall
+;   of Secrets as guide (decisions.org, 2026-09-26).
 ;
 ; TERMINOLOGY: "Impa" = Zelda (code) / Impa (narrative)
 ;   - Uses vanilla ALTTP Zelda sprite code with hooks
-;   - Follower system (removed by Kydrog at $7EF3CC = 0)
+;   - Follower system (follower cleared by Kydrog at $7EF3CC = 0)
 ;   - SPAWNPT tracks player spawn location
 ;
 ; SPAWN POINT VALUES:
@@ -35,9 +37,9 @@
 ;   $7EF2A3 |= 0x20 - Overlay flag
 ;
 ; RELATED:
-;   - kydrog.asm (removes Impa follower)
+;   - kydrog.asm (clears the Impa follower)
 ;   - followers.asm (follower system)
-;   - farore.asm (takes over guide role after Impa)
+;   - farore.asm (kidnapped in the same scene; Impa stays the guide)
 ;
 ; NOTE: The code repurposes vanilla ALTTP Zelda behavior.
 ;   Comments like "Zelda_AtSanctuary" refer to original ALTTP labels.
@@ -87,3 +89,8 @@ Zelda_ApproachHero:
   NOP #5
 
 pullpc
+
+; Position-triggered follower hints (default off; see Util/macros.asm).
+if !ENABLE_IMPA_FOLLOWER_HINTS == 1
+  incsrc "impa_hints.asm"
+endif

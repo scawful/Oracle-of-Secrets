@@ -35,6 +35,14 @@
 Sprite_BeanVendor_Long:
 {
   PHB : PHK : PLB
+  if !ENABLE_PART00_ARRIVAL_LINES == 1
+    ; Subtype 2: Part00 house villager (Core/part00.asm).
+    LDA.w SprSubtype, X : CMP.b #$02 : BNE +
+      JSL HouseVillager_Main
+      PLB
+      RTL
+    +
+  endif
   LDA.w SprMiscD, X : BNE +
     JSR Sprite_BeanVendor_Draw
     JSL Sprite_DrawShadow

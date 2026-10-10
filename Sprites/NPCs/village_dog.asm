@@ -87,6 +87,28 @@ LiftOrTalk:
 
 Sprite_VillageDog_Main:
 {
+  if !ENABLE_VILLAGE_DOG_POLISH == 1
+  ; Bug fix (2026-09-26 playtest, flagged): vanilla CarriedSprite_CheckForThrow
+  ; (usdasm bank_06 $06DF6D) restores SprState to 9, sets SprTimerF ($0F80,X,
+  ; Z velocity) to +4 and SprXSpeed/SprYSpeed to a pot-throw speed, and
+  ; SpriteModule_Carried then runs this Main on the same frame. SprHeight is
+  ; still the carry height (16), not 0. The old dog resumed whatever action it
+  ; was lifted in; the wag/look actions never call Sprite_Move, so the dog
+  ; dropped straight down with no travel (Mesen2 trace, 2026-09-26).
+  ; SprTimerF is 0 on every grounded frame (ThrownSprite_TileAndSpriteInteraction
+  ; zeroes it on landing), so nonzero outside Dog_Tossed means a fresh throw.
+  LDA.w SprTimerF, X : BEQ .not_fresh_toss
+    LDA.w SprAction, X : CMP.b #$09 : BEQ .not_fresh_toss
+      ; Halve the vanilla pot-throw speed (signed, sign-preserving shift) --
+      ; a dog toss should travel a dog-sized hop, not a rock-shatter distance.
+      LDA.w SprXSpeed, X : CMP.b #$80 : ROR A : STA.w SprXSpeed, X
+      LDA.w SprYSpeed, X : CMP.b #$80 : ROR A : STA.w SprYSpeed, X
+      ; Upward hop from the carry height (replaces the vanilla +4).
+      LDA.b #$20 : STA.w SprTimerF, X
+      LDA.b #$09 : STA.w SprAction, X ; -> Dog_Tossed
+  .not_fresh_toss
+  endif
+
   LDA.w SprAction, X
   JSL   JumpTableLocal
 
@@ -100,6 +122,9 @@ Sprite_VillageDog_Main:
 
   dw EonDog_Handler           ; 07
   dw EonDog_Right             ; 08
+  if !ENABLE_VILLAGE_DOG_POLISH == 1
+  dw Dog_Tossed                ; 09
+  endif
 
   ; 0
   Dog_Handler:
@@ -238,6 +263,32 @@ Sprite_VillageDog_Main:
     JSR EonDog_Walk
     RTS
   }
+
+  if !ENABLE_VILLAGE_DOG_POLISH == 1
+  ; 09 - airborne after a real toss (see the fresh-toss detection above).
+  ; Same order as vanilla ThrowableScenery_InteractWithSpritesAndTiles
+  ; ($06E164): move XY, tile collision, then ThrownSprite_TileAndSpriteInteraction,
+  ; which owns Z (SprHeight += SprTimerF, gravity -2/frame, bounce, XY friction,
+  ; wall ricochet, pit/water) and can re-lift. Do not integrate Z here too: the
+  ; vanilla routine clamps SprHeight to 0 on landing, so a second integrator
+  ; never sees a negative height and the dog bounced forever. Settled means
+  ; SprHeight == 0 and no bounce velocity left; then an "excited" tail wag
+  ; (report D: reactive behavior, "excited after being put down").
+  Dog_Tossed:
+  {
+    %PlayAnimation(8,8,8) ; reuse the sitting frame while airborne
+    JSL Sprite_Move
+    JSL Sprite_CheckTileCollision
+    JSL ThrownSprite_TileAndSpriteInteraction_long
+    LDA.w SprHeight, X : ORA.w SprTimerF, X : BNE .aloft
+      STZ.w SprXSpeed, X
+      STZ.w SprYSpeed, X
+      LDA.b #$40 : STA.w SprTimerD, X ; happy wag duration on landing
+      %GotoAction(5)
+    .aloft
+    RTS
+  }
+  endif
 }
 
 EonDog_Walk:
@@ -386,20 +437,32 @@ Sprite_VillageDog_Draw:
     db $2E
     db $10, $20, $22, $32
     db $10, $20, $02, $12
+  ; Bug fix (2026-09-26 playtest): "dog needs to render above Link". Priority
+  ; was 2 ($27/$67) while Link's own OAM priority is layer-dependent
+  ; (LinkOAM_ObjectPriority, usdasm bank_0D $0DA126: $20/$10/$30/$30 -> 2/1/3/3
+  ; by BG layer), so on layers where Link is priority 3 he always won over the
+  ; dog regardless of the Region B/C OAM ordering from
+  ; Sprite_OAM_AllocateDeferToPlayer above. Bumped to priority 3 ($37/$77),
+  ; matching Sprite_EonDog_Draw's .properties below (already $3B/$7B, priority
+  ; 3) and nearly every other Oracle NPC (bean_vendor, deku_scrub, eon_owl,
+  ; farore, goron, korok, mermaid, zora, etc. all default to priority 3) --
+  ; the village dog was the inconsistent one. Same table size, so this is a
+  ; free (zero added ROM bytes) fix. It was written when Bank $31 had 10 bytes
+  ; free; the build log now prints "Bank31 Free Space" (see all_sprites.asm).
   .properties
-    db $27, $27, $27, $27
-    db $27, $27, $27, $27
-    db $27, $27, $27, $27
-    db $27, $27, $27, $27
-    db $27, $27, $27
-    db $67, $67, $67, $67
-    db $67, $67, $67, $67
-    db $67, $67, $67, $67
-    db $27
-    db $67
-    db $27
-    db $67, $67, $67, $67
-    db $67, $67, $67, $67
+    db $37, $37, $37, $37
+    db $37, $37, $37, $37
+    db $37, $37, $37, $37
+    db $37, $37, $37, $37
+    db $37, $37, $37
+    db $77, $77, $77, $77
+    db $77, $77, $77, $77
+    db $77, $77, $77, $77
+    db $37
+    db $77
+    db $37
+    db $77, $77, $77, $77
+    db $77, $77, $77, $77
   .sizes
     db $02, $02, $00, $00
     db $02, $02, $00, $00

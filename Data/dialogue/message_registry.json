@@ -1,0 +1,202 @@
+{
+  "format": "oos-message-registry",
+  "version": 1,
+  "expanded_base": "0x18D",
+  "current_expanded_end": "0x203",
+  "next_append_id": "0x204",
+  "renumber_policy": "freeze-published-ids",
+  "ranges": [
+    {
+      "start": "0x18D",
+      "end": "0x1BB",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "legacy-expanded",
+      "purpose": "Tingle, Librarian, Sea Zora, Goron, Maple, Deku, and Piratian dialogue"
+    },
+    {
+      "start": "0x1BC",
+      "end": "0x1BD",
+      "status": "placeholder-pool",
+      "expected_content": "placeholder",
+      "owner": "unallocated",
+      "purpose": "Available contiguous slots; draft documents make non-binding claims here"
+    },
+    {
+      "start": "0x1BE",
+      "end": "0x1BE",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "ranch-girl",
+      "purpose": "Ranch Girl powder reveal / Ocarina gift (Sprites/NPCs/ranch_girl.asm); dialogue-audit draft D4 approved by scawful 2026-09-26; replaces vanilla 0x17D at runtime because vanilla text region 2 is length-pinned (Docs/Planning/Reviews/dialogue_audit_2026-09-26.md)"
+    },
+    {
+      "start": "0x1BF",
+      "end": "0x1BF",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "impa-follower",
+      "purpose": "Impa follower hint: village arrival (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
+    },
+    {
+      "start": "0x1C0",
+      "end": "0x1C3",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "attract-history",
+      "purpose": "Title/attract island-history narration (storybook, throne, soldiers, altar); used only with ENABLE_CUSTOM_ATTRACT_SEQUENCE; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md, Attract narration)"
+    },
+    {
+      "start": "0x1C4",
+      "end": "0x1C4",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "impa-follower",
+      "purpose": "Impa follower hint: east exit blockade (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
+    },
+    {
+      "start": "0x1C5",
+      "end": "0x1C7",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "maku-tree",
+      "purpose": "One, three, and five crystal reaction messages"
+    },
+    {
+      "start": "0x1C8",
+      "end": "0x1C8",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "impa-follower",
+      "purpose": "Impa follower hint: village hole (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
+    },
+    {
+      "start": "0x1C9",
+      "end": "0x1C9",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "impa-follower",
+      "purpose": "Impa follower hint: western forest ($2A) (Sprites/NPCs/impa_hints.asm, !ENABLE_IMPA_FOLLOWER_HINTS); text approved by scawful 2026-09-25 (Docs/Planning/Plans/impa_follower_hints_2026-09-25.md)"
+    },
+    {
+      "start": "0x1CA",
+      "end": "0x1CA",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "maku-tree",
+      "purpose": "Seven crystal reaction message"
+    },
+    {
+      "start": "0x1CB",
+      "end": "0x1CB",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "village-elder",
+      "purpose": "Village Elder post-D1 ranch hint (Sprites/NPCs/village_elder.asm); dialogue-audit draft D3 approved by scawful 2026-09-26; replaces vanilla 0x177 at runtime because vanilla text region 2 is length-pinned"
+    },
+    {
+      "start": "0x1CC",
+      "end": "0x1D1",
+      "status": "reserved-placeholder",
+      "expected_content": "placeholder",
+      "owner": "d3-prison",
+      "purpose": "D3 prison sequence; symbolic names exist but text is not authored"
+    },
+    {
+      "start": "0x1D2",
+      "end": "0x1D4",
+      "status": "reservation-disputed",
+      "expected_content": "placeholder",
+      "owner": "gossip-stones-legacy",
+      "purpose": "Old Gossip Stone reservation; active draft proposes relocation, so do not reuse yet"
+    },
+    {
+      "start": "0x1D5",
+      "end": "0x1D8",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "windmill-guy",
+      "purpose": "Song of Storms quest dialogue"
+    },
+    {
+      "start": "0x1D9",
+      "end": "0x1DF",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "experiment-scene",
+      "purpose": "New-game Mirror experiment scene (Zora A/B, Farore): M1a, M1b, M2, M3, M4, M6, M5 cut off; used only with ENABLE_EXPERIMENT_SCENE; text approved by scawful 2026-09-25 (Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md); displaces the non-binding critical-path draft claims"
+    },
+    {
+      "start": "0x1E0",
+      "end": "0x1E4",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "goron-elder",
+      "purpose": "Goron Elder progression dialogue"
+    },
+    {
+      "start": "0x1E5",
+      "end": "0x1E7",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "river-zora-elder",
+      "purpose": "River Zora reconciliation dialogue"
+    },
+    {
+      "start": "0x1E8",
+      "end": "0x1EA",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "bean-vendor",
+      "purpose": "Magic Bean vendor dialogue"
+    },
+    {
+      "start": "0x1EB",
+      "end": "0x1EF",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "cartographer",
+      "purpose": "Secret Shell cartographer dialogue"
+    },
+    {
+      "start": "0x1F0",
+      "end": "0x1F9",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "koroks",
+      "purpose": "Ten Korok lore messages"
+    },
+    {
+      "start": "0x1FA",
+      "end": "0x1FA",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "eon-owl",
+      "purpose": "Eon Owl first Abyss appearance, arrival map $40, before the Pearl (Sprites/NPCs/eon_owl.asm, !ENABLE_EON_OWL_ONE_SHOT); text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)"
+    },
+    {
+      "start": "0x1FB",
+      "end": "0x1FF",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "abyss-area-signs",
+      "purpose": "Abyss area signs, one per area: $1FB $40 Temporal Pyramid, $1FC $50 Hollow of Echoes, $1FD $58 Forest of Dreams, $1FE $5D Dreamer's Rest, $1FF $6A The Rift Shore; shown through the ZS area message table ($2897F8) once each area has a signpost tile; text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md)"
+    },
+    {
+      "start": "0x200",
+      "end": "0x200",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "yesterwind-villager",
+      "purpose": "Yesterwind villager reveal line (first talk with a Yesterwind villager); text approved by scawful 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md, Yesterwind names); not wired to an NPC yet"
+    },
+    {
+      "start": "0x201",
+      "end": "0x203",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "part00-arrival",
+      "purpose": "Part00 arrival lines approved by scawful 2026-09-26 (Docs/Planning/Status/decisions.org, 'Arrival lines A/B/C approved, with a repeat line for B'): $201 A (Impa's voice on black after the fall; Core/Cutscene/opening.asm, !ENABLE_ORACLE_ARRIVAL_SEQUENCE), $202 B (villager, first wake) and $203 B2 (villager, after a death; Sprites/NPCs/house_villager.asm, !ENABLE_PART00_VILLAGER_LINES)"
+    }
+  ]
+}

@@ -1,0 +1,1291 @@
+#+TITLE: Decisions waiting on scawful
+#+TODO: OPEN | DECIDED
+#+STARTUP: overview
+
+Agents add one OPEN heading per decision, with options and a link to the full
+doc. scawful answers under "Answer:" and switches it to DECIDED (=C-c C-t=).
+DECIDED entries stay here as provenance. Fold story rulings into
+=Docs/Planning/story_canon_beat_sheet.md= and implementation work into
+=Docs/oracle.org=. A newer DECIDED story entry overrides stale beat-sheet text
+until the next canon revision. Keep entries short; linked docs hold the detail.
+
+* DECIDED World map dungeon icons: when does each icon appear?
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :DOC:      [[file:../../Debugging/Issues/world_map_icons_2026-09-26.md]]
+  :END:
+  Bug: a Deku Scrub "peacetime" line sets MapIcon ($7EF3C7) to 2 before D1, so
+  the map shows D2-D7 and never D1. The doc proposes a reveal table (per
+  dungeon: which story event shows its icon) and two flagged fixes.
+  Answer: Audit all the NPCs that set MapIcon or progression flags which affect maps to create a better timeline of events for the map icons to follow
+  Proposed timeline: (audit and screenshots: doc section 5; built behind
+  !ENABLE_MAP_ICON_TIMELINE, default off, map only, no NPC changes)
+  - D1: Maku Tree meeting until D1 is done.
+  - D2: Ranch Girl gives the Ocarina (beat 10) until D2 is done.
+  - D3: after D2. Pyramid: after D3.
+  - D4, D5, D6 and D7: all appear after D3; each hides when done.
+    (Or D7 only after the Song of Soaring?)
+  - Hall of Secrets: Maku Tree until Impa is met there (the Elder no longer
+    hides it).
+  Also found: the likely pre-D1 writer is the Ranch Boy, not the Deku Scrub.
+  And D1's crystal bit is $02 and D6's is $01; Core/sram.asm has them swapped.
+  Answer (scawful, 2026-09-26), to the four follow-ups:
+  1. D7 timing: "after song of soaring only since it's more of a late game thing ?"
+     -> D7 appears only after the Song of Soaring; D4-D6 after D3 as proposed.
+  2. Fix the swapped D1/D6 bit names (sram.asm, Flag_Ledger, Elder hint): "sure yes fix it".
+  3. Stop the Ranch Boy / Deku MapIcon writes (flagged): "yes".
+  4. Dark World pendant, Master Sword, Fortress icons stay unchanged for now: "sounds good".
+
+* DECIDED Impa's arc and how she escapes Kydrog's ambush
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :DOC:      [[file:../Plans/impa_role_brainstorm_2026-09-26.md]]
+  :END:
+  Four options (protector who fails and redeems; messenger to Zelda;
+  OoA-style possession twist, two-villain risk; quiet guardian of the Hall).
+  Decides whether msg $35 changes.
+  Answer: new option, not in the brainstorm: Kydrog spares Impa on purpose as
+  a messenger to Zelda (a bitter message from the Hyrule knight the crown
+  abandoned; first hint of the man inside Kydrog). She stays in the Hall of
+  Secrets as guide and link to Zelda. $35 changes; approved text in
+  Reviews/approved_dialogue_rewrites_2026-09-26.md. scawful, 2026-09-26: "yes
+  impa spared as messenger".
+
+* DECIDED Abyss order: Moon Pearl first, Minish first, or both in one beat? (beat sheet OPEN #2)
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :DOC:      [[file:../Plans/impa_role_brainstorm_2026-09-26.md]]
+  :END:
+  The brainstorm recommends Pearl first, then Minish.
+  Answer: Minish first, Pearl as the Shrine of Origins reward (as built:
+  $15B stumps, $38 pot sign, Minish shutter). Overrides the brainstorm's
+  Pearl-first recommendation. Minish stumps also work without the Pearl;
+  scawful notes the segment is "a bit confusing" - revisit after the timed
+  Abyss playtest. scawful, 2026-09-26: "yes, that's how it was designed. even
+  without the pearl the player can use minish stumps though it's all a bit
+  confusing i know".
+
+* DECIDED Dialogue audit: which fixes to apply
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :DOC:      [[file:../Reviews/dialogue_audit_2026-09-26.md]]
+  :END:
+  136 messages flagged; 63 need a base-ROM write (after the yaze importer fix).
+  The report opens with a "fix first" list. Answer "fix-first list", "all
+  typos", or list IDs.
+  Answer (scawful, 2026-09-26, reviewed against the day's rulings):
+  A. Approve mechanical fixes: 0x020 box split, 0x15A "soothe", 0x083
+     "newfound"/"legendary", D8 Windmill control codes, D11 Magic Powder, and
+     the Maku control-code fix 0x1C5-0x1CA (render-check one message first).
+  B. Approve story drafts D1 (cut "Kydrog wants them all": Twinrova hunts the
+     essences), D2, D3 (+ move the MapIcon_TailPond write to the Ocarina
+     receipt), D4, D6, D7, D10.
+  C. Hold: D5 0x173 ending (written for the superseded "residue" idea;
+     redraft for Ganon's defeat); D9 0x137 (superseded by the approved 0x137
+     rewrite); D9 0x133 (check "The Deku" against the style rule).
+  D. Names: "Toto Ranch" (not Loom Ranch); "Rock Meat" (not Rock Sirloin);
+     "Pegasus Shoes" (not Running Boots); keep Silver Arrows (finale may reuse
+     vanilla Ganon). Abyss village name: OPEN, scawful asked for alternatives
+     to "Village of Outcasts"/"Village of Echoes".
+  Quotes: "A yes B yes C hold D 1. Toto Ranch 2. Rock Meat 3. alternative
+  name pls 4. yes 5. we can keep them idk".
+
+* OPEN yaze hand-check: paired collision save + cutscene camera
+  :PROPERTIES:
+  :ASKED_BY: Consolidate dungeon tester preview and rendering fixes
+  :DOC:      [[file:~/src/hobby/yaze-worktrees/collision-pair-save/docs/internal/agents/claude-oracle-requests-handoff-2026-09-26.md]]
+  :END:
+  App: =~/src/hobby/yaze-worktrees/collision-pair-save/build/presets/mac-ai/bin/Debug/yaze.app=
+  (branch claude/oracle-editor-features). On a COPY of the project:
+  1. Edit collision in a dungeon room, File > Save: custom_collision.json updates.
+  2. Windows > Cutscene Camera on area 2D: drag the view (stops at edges), place Link, Copy JSON.
+  Graphics (branch claude/gfx-png-app, 98659837a/6b9455ebe/830915bbb; build the app from that
+  worktree first):
+  3. Sheet Browser: export a sheet to PNG, change a pixel, import (preview), save, reopen.
+  4. Copy a sheet selection, paste into another app; copy a PNG from another app, paste (mapping preview).
+  5. Tool keys B/E/G/I/M/H, Cmd+Z/Shift+Cmd+Z, grids, status line; "Check save plan" list.
+  Answer:
+
+* DECIDED yaze: merge the finished claude/* branches?
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :END:
+  All unmerged, not pushed; each tested by its session:
+  - claude/emu-io-fixes (d29389036): 8-bit ORA zero flag + WRIO latch; 71/71 emulator tests, negative control.
+  - claude/idle-cpu (9d0e68f66): idle CPU 9-16 % -> ~1 % of a core; emulator 59.9 fps median.
+  - claude/graphics-sheet-tooling (0af9db317): sheet write-back, inventory, spritesets, sprite preview, PNG + room export/import.
+  - claude/oracle-editor-features (fa315b817): paired collision save + cutscene camera (hand-check above first).
+  - claude/vanilla-message-import (79c60ad10): done; dictionary encoding, minimal write range; used for the $25/$36/$83/$C7 base-ROM writes; 143/143 message tests.
+  - claude/eager-kirch-2752fa (2f89c6e30 + e5e2d103c): emulator maps ROM by max(header $7FD7, file size), fixes Oracle banks $20+/$40-$41 mirroring; SRAM $F0 write fix; 75/75 emulator tests.
+  - claude/emulator-integration (c931f9dd1): graphics session's integration branch that already merges the sizing fix.
+  Answer: scawful asked the yaze graphics session directly (2026-09-26) to review and
+  merge everything done into claude/integration-2026-09-26; push/master merge still his call.
+
+* DECIDED Dual Swords PvP: knockback only, or also cost a heart?
+  :PROPERTIES:
+  :ASKED_BY: Oracle of Secrets dual swords
+  :DOC:      [[file:../../../Roms/TestBuilds/native-2p-poc-2026-09-25/DESIGN.md]]
+  :END:
+  Hearts are shared, so a PvP heart loss only hurts the team; stray swings in co-op
+  would drain it. A hit already makes the other player throw what they carry.
+  Answer: keep knockback only (scawful, in the dual-swords session, 2026-09-26).
+
+* OPEN ROM expansion to 4 MB?
+  :PROPERTIES:
+  :ASKED_BY: Yaze graphics editor prompts (via Oracle RC Leader)
+  :DOC:      [[file:~/src/hobby/yaze-practice/graphics-evidence/2026-09-26/rom-expansion-4mb-plan.md]]
+  :END:
+  Pad the dev base to 0x400000 (4 MB LoROM, the plain-LoROM maximum), set
+  header $7FD7 = $0C (today $0A = 1 MB for a 2.05 MB file). Mesen2, asar and
+  ZScream size from the file; yaze's emulator is fixed on
+  claude/emulator-integration; snes9x uses the byte for its SRAM window; the
+  SNES Classic stock emulator is unknown (test on device). Bank $23 (32 KB)
+  already covers near-term graphics growth, so this is not urgent.
+  Answer: go now / later / no.
+
+* DECIDED Beat sheet crux 5: shrines gate dungeons (verified by scawful)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion (rule-provenance audit)
+  :DOC:      [[file:../story_canon_beat_sheet.md]]
+  :END:
+  Shrine of Wisdom + Flippers -> D4; Shrine of Power (Eon Gorons) -> D6;
+  Shrine of Courage needs Somaria Rod -> post-D7.
+  Answer: "yeah this is right, though there are other non-pendant shrines aka
+  mini dungeons which dont gate major dungeon progression i have planned like
+  in the underwater area" (scawful, 2026-09-26).
+
+* DECIDED Beat sheet crux 7: Ranch Girl ruling (verified by scawful)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion (rule-provenance audit)
+  :DOC:      [[file:../story_canon_beat_sheet.md]]
+  :END:
+  Post-D1 guaranteed message -> Toto Ranch; Magic Powder reveals the Cucco;
+  Ocarina; she names the Mask Salesman; D5 Twinrova defeat lifts the curse
+  automatically, no return quest.
+  Answer: "ranch girl looks good" (scawful, 2026-09-26).
+
+* DECIDED Villain chain: prison, Farore, Kydrog, Twinrova, Ganon
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion (rule-provenance audit)
+  :DOC:      [[file:../story_canon_beat_sheet.md]]
+  :END:
+  Replaces beat-sheet crux 2's "Ganon residue"/garrison reading, the crux 4
+  wordless-beast coda, and AGENTS.md rule 4 ("no Ganondorf-origin or
+  two-villain plotlines"), which was agent-written with no scawful source.
+  1. Farore warns the island's scholars, then turns to Hyrule; Hyrule sends a garrison "to
+     guard the Golden Power" (islanders see an invasion; msg 0x112 stands).
+  2. Farore makes Kydrog, a garrison knight, the prison's guardian and binds
+     her power into his sword as the seal's key. She knew him personally.
+  3. The prison corrupts him; he dies, rises as the Stalfos Pirate King; his
+     dead men are his crew. He abandons the sword (the Meadow Blade).
+  4. The prison holds the half-revived beast Ganon from the Oracle games'
+     failed revival (msg 0x136). Twinrova hunt essences to finish it and die
+     in D5; Kydrog carries the revival on and kidnaps Farore's body to force
+     the key.
+  5. Kydrog's motive is tragic: the prison promises the Golden Power can bring
+     his men back. His pirate-skeleton humor is a coping mechanism for his
+     death and his men's deaths.
+  6. Finale: Kydreeok = the prison's corruption of him, not his heart. Song of
+     Healing frees the knight (post-healing form: human). Then Ganon breaks
+     out and alternates between Ganondorf (energy-ball volleys) and the beast,
+     per msg 0x15B "reshapes you to your heart". Vanilla Ganon parts may be
+     reused.
+  Answer: scawful, 2026-09-26: "twinrova dies, hence the need for kydrog to do
+  bad stuff"; "given this guardian angle perhaps she should know more about
+  him now"; "yeah i like the tragedy angle, lends to his pirate skeleton humor
+  being a coping mechanism for his death and his mens death"; final boss: "a
+  ganonDORF fight with the demons volley could be cool too. perhaps switch
+  between dorf and pig".
+
+* DECIDED Kydrog-was-the-guardian reveal is a dream
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Plans/dream_sequences.md]]
+  :END:
+  Not critical-path info, so it is shown in a dream, not D3 lore or sword
+  callouts. Fits beat 14 "Dream 1: The Sealing War" (after Shrine of Wisdom).
+  Answer: "since it's not essential info it should be a dream" (scawful,
+  2026-09-26).
+
+* DECIDED Dreams are in RC scope
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../RC_MASTER_PLAN.md]]
+  :END:
+  Any "dreams out of RC scope" line comes from the old RC definition and is
+  stale for the new RC series.
+  Answer: "i think dreams should be in RC scope, that's outdated from our old
+  RC definition not the new RC series" (scawful, 2026-09-26).
+
+* DECIDED When did the garrison arrive: decades or centuries ago?
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../story_canon_beat_sheet.md]]
+  :END:
+  Kydrog must be dead long enough to be a Stalfos; the Sep 23 ruling says the
+  Mirror breakthrough triggered Hyrule's interest (not centuries-long).
+  Answer: "decades" (scawful, 2026-09-26).
+
+* DECIDED Dialogue style: people of Kalyxo first, race second
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/dialogue_audit_2026-09-26.md]]
+  :END:
+  1. Race names stay in proper nouns: places (Zora Temple, Goron Mines),
+     items (Zora Mask), named characters (Zora Princess).
+  2. History, lore and NPC talk use "the people of Kalyxo", "islanders", or
+     roles ("scholars", "miners"); name a race only when it matters to the scene.
+  3. Apply during the dialogue-audit rewrite pass so messages are touched once.
+     First targets: 0x135 (D4 maiden), 0x137 (D6 maiden), 0x194 (Tingle), the
+     "Zora elders" attract/lore text, "Zora scholars" lore line.
+  4. The villain-chain entry's "Farore warns the Zora" reads as "warns the
+     island's scholars".
+  Answer: "we gotta work on the dialogue and generally not over-focus on the
+  zora and goron races by name specifically. they are all people of kalyxo
+  afterall lol" (scawful, 2026-09-26).
+
+* DECIDED Approved rewrites for 0x135 and 0x137 (D4, D6 maidens)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/approved_dialogue_rewrites_2026-09-26.md]]
+  :END:
+  Exact approved text is in the linked doc; apply in the dialogue-audit
+  base-ROM write pass. Supersedes the id 311 entry in
+  Data/dialogue/maiden_upgrades_dialogue.json. Ocarina lore: made by the Zora
+  temple's makers; the Ranch Girl owning one is fine.
+  Answer: "approve. and yeah it's fine, ocarina made by the zora but some girl
+  has one nbd" (scawful, 2026-09-26).
+
+* DECIDED Attract scene direction (rooms, zoom, art)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Plans/intro_plan_2026-09-24.md]]
+  :END:
+  1. The map zoom lands on Tail Pond ($2D), where the new-game experiment
+     scene opens.
+  2. Cards are not bound to vanilla throne/prison/altar. Vanilla Hyrule Castle
+     rooms may be restyled as Kalyxo Castle (e.g. the throne room with the pan
+     up, filled with guards, Zora, villagers, Farore), and new rooms may be
+     designed for the attract.
+  3. Wanted: edit the storybook drawings and the background animation
+     graphics with the yaze graphics/screen editor (tool support unverified).
+  Answer: "yes i like the tail pond map zoom in and other than real rooms we
+  could also use the rooms from OG hyrule castle as well in the kalyxo castle
+  style ... we could design rooms for this stuff too. also editing the graphics
+  of the intro background animation and even the actual drawings with yaze
+  graphics editor/screen editor would be nice to have" (scawful, 2026-09-26).
+  Follow-up (scawful, 2026-09-26): card 3 great hall shows Farore beside the
+  Hylian commander ("sure, can tweak later if needed"); card 4 escort shows
+  soldiers arresting a Kalyxo villager ("yes").
+  Narration $1C0-$1C3 approved "for now" (scawful, 2026-09-26); exact text in
+  Reviews/approved_dialogue_rewrites_2026-09-26.md.
+
+* DECIDED Arrival: add a rescue voice on black between the fall and the bed
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Plans/intro_plan_2026-09-24.md]]
+  :END:
+  After the fall, show 1 message over black (someone finds Link and carries
+  him in), then the existing bed wake-up; add one wake-up line from a villager
+  in the house pointing to the beach. Draft text and speaker (rec: Impa's
+  voice) still need approval. Later upgrade: a real Loom Beach landing shot,
+  sharing the overworld-cutscene work with the experiment scene. The
+  experiment scene exists but currently shows no sprites (scawful).
+  Rejected for now: waking on the beach with no bed (respawn and new-game
+  spawn problems).
+  Answer: "yeah we can start with the dialogue and black, though the
+  experiment scene does exist it just needs work as there's no sprites showing
+  during it currently" (scawful, 2026-09-26).
+
+* DECIDED Abyss respawn lock lasts until Link escapes the Abyss
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../../../Overworld/overworld.asm]]
+  :END:
+  Current code (read, not runtime-tested): LoadDarkWorldIntro
+  (Overworld/overworld.asm:94-115) forces Dark World $40 on outdoor loads while
+  GameState == 2 and OOSPROG < 2 (label .has_pearl), so the lock may end at the
+  Pearl, before the sword and return. It also runs only when $1B == 0
+  (outdoor load). Required: death/continue anywhere in the Abyss before the
+  escape respawns in the Abyss. Verify in Mesen first (die after Pearl, before
+  sword); fix or reimplement if it fails.
+  Answer: "yes if that's bugged / wrong let's fix or reimplement" (scawful,
+  2026-09-26).
+
+* DECIDED Part00 checkpoint after the village hole
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  After Link passes through the village-hole underground route, death/continue
+  respawns there (an interior spawn along the route), not back at the house
+  before the village chase. Exact spawn room and trigger: RC leader to propose.
+  Answer: "yes since that area has keese and rats and shit u could die"
+  (scawful, 2026-09-26).
+
+* DECIDED Impa is the rescue voice on black
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Impa finds Link after the fall and has him carried into a villager's house;
+  the house is not Impa's, so she is free to leave for the Hall of Secrets
+  later. Draft lines pending approval (see the next discussion turn).
+  Answer: "yeah prob impa, that way we arent tied to her living in this house
+  when she goes to the hall of secrets but she's there in the begin" (scawful,
+  2026-09-26).
+
+* DECIDED Arrival lines A/B/C approved, with a repeat line for B
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  A (Impa, on black): "...Hey! Can you hear me? ‖ ...Out cold. You there! /
+  Help me carry him inside."
+  B (villager, wake-up, first time): "Oh, you're awake! You / fell out of the
+  sky in / last night's storm. ‖ The woman who carried / you in went back down
+  / to the beach."
+  B2 (villager, after a death): "Back again? The beach, / remember. She's
+  waiting."
+  C ($25 opening): "You're awake. Good. / I am Impa. Princess / Zelda sent me
+  here. ‖ ..." then the 2026-09-25 draft continues.
+  Answer: scawful, 2026-09-26: "go" (after asking for Claude's pick).
+
+* DECIDED Abyss segment: fix direction before cutting content
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  1. Rewrite $36 to name a landmark (Shrine of Origins west of the pyramid).
+  2. Owl appears twice: new early line on the arrival area pointing to the
+     shrine; $E6 after the Pearl points to the sword.
+  3. Do not extend Origins (overrides the beat-sheet "modestly extend Origins"
+     note). Keep the Minish puzzle; add no rooms.
+  4. Respawn lock until escape (separate entry).
+  5. Then one timed playtest (minutes per step); cut content only if a step
+     is still long.
+  Answer: scawful, 2026-09-26: "go".
+  Text for 1-2 and $E6 approved ("yes approve sounds good", 2026-09-26);
+  exact text in Reviews/approved_dialogue_rewrites_2026-09-26.md.
+
+* DECIDED Eon Owl: place the arrival Owl; talk only when Link is near
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff (storm/owl agent findings)
+  :END:
+  1. Place the arrival Owl on Abyss map $40 near where Link lands (base-ROM
+     sprite placement, applied by the integrator after it works on a copy;
+     new message $1FA with the approved text; EonOwlFlags bit 0).
+  2. The $E6 Owl talked the moment Link entered map $50 (248 px away). Make both
+     Owls wait until Link is about 5 tiles (80 px) away. Flagged; tune by feel.
+  Answer: "sure, we can see how it feels" (scawful, 2026-09-26).
+  Applied 2026-09-26 (integrator): arrival Owl at DW $40 tile (43,39), phase 1,
+  replacing duplicate entry 11 ($B8 at (36,53)); 3 bytes at PC $04CC32 35 24 B8 ->
+  27 2B 0A (z3ed overworld-add-sprite, yaze fe691620e). Link lands at (744,536),
+  tile (46,33). Base SHA-1 fe3e6dd8 -> ac544166 (backup
+  Roms/oos168.pre-arrival-owl-2026-09-26.sfc). Night list (phase 2) has no owl
+  and no free slot, same as the $50 owl. Talk distance: !EonOwl_TalkDistance = 80.
+
+* DECIDED Seal geography: pyramid = lock, volcano = prison mouth
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Plans/dream1_sealing_war_storyboard_2026-09-26.md]]
+  :END:
+  1. Temporal Pyramid (DW $40 parent) is the monument over the seal. The
+     Master Sword pedestal there ($62 in the $41 grove) is the lock; the
+     Meadow Blade was the key the guardian knight carried.
+  2. The volcano is the prison's mouth. The existing hole in the volcano world
+     stays and leads to Ganon's final chamber.
+  3. The 09-23 Pearl "mountain shake" is the volcano: the prison reacting.
+  4. Beat 25: pulling the Master Sword weakens the lock; the volcano erupts and
+     the beast breaks out. ALttP echo kept as the moment (Ganon breaks free,
+     Link drops through a hole), not the building.
+  5. Dream 1 seal scene: the knight guards the pedestal at the pyramid.
+  6. $41 plaque text unlocked: "Here the blade waits / for the hand that /
+     carries the key."
+  Answer: "yes split that works for me" (scawful, 2026-09-26).
+
+* DECIDED Dream structure: one dream per pendant, wake in the hut
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Plans/dream1_sealing_war_storyboard_2026-09-26.md]]
+  :END:
+  Maple's pendant check (Sprites/NPCs/maple.asm) selects the dream:
+  Wisdom -> Dream 1 "The Sealing War" (Kydrog's fall);
+  Power -> Dream 2 "The Oracle's Choice" (Farore goes to Hyrule's king and
+  discloses the prison; her private role);
+  Courage -> Dream 3 "The Healing Revelation".
+  After each dream Link wakes in the Dream Hut bed and Maple says a light,
+  funny line. Maple: cheerful dream-reader witch.
+  Known code gaps (inventory, not runtime-checked): [corrected 2026-09-28: hut door $68
+  on $5D does load Maple's $0F; runtime-checked 2026-09-28 on b31; the old "$11A" reading used the vanilla $02 entrance table, but the game uses ZScream's bank $0F table]; dream warps go to placeholder rooms; no
+  return from a dream; $1B8 promises the Master Sword through pendants
+  (contradicts canon). Hut location: stays on $5D for now; a move depends on
+  GFX sheet distribution and the Abyss-return plan (open).
+  Answer: "yes that works, plays into the power theme i think"; wake in hut:
+  "yes" (scawful, 2026-09-26).
+
+* DECIDED Intro Abyss exit: the sword cuts Link home
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Replace the DW $6A warp-tile exit (long walk; vanilla spawns a stray return
+  portal after a DW warp) with a scripted warp: picking up the sword in the
+  Forest of Dreams plays a short flash/slash scene and warps Link to the Maku
+  Tree area ($2A). Pays off $E6 "a blade to cut through the veil". Feasibility
+  of a scripted warp without the portal needs checking first.
+  Answer: "if we can do that sort of warp then yes, the sword would be
+  awesome" (scawful, 2026-09-26).
+
+* DECIDED The Abyss opens in chunks across the game
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Each return trip opens one more chunk, gated by a newly gained item. Working
+  draft: intro chunk (pyramid + Forest of Dreams; Dream Hut visible but out of
+  reach); Flippers chunk (Shrine of Wisdom + Dream Hut, Dream 1); whirlpool
+  chunk (Song of Storms, post-D4; Eon Gorons / Shrine of Power); volcano chunk
+  (finale). Exact gates and map membership pending a scan of existing warp
+  tiles and crossings.
+  Answer: "yes chunks / rings" (scawful, 2026-09-26).
+  UPDATED 2026-09-27: see "Abyss chunk layout and warp pads" (supersedes the
+  working draft above).
+
+* DECIDED Abyss return: the portal you came in on
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../../../Sprites/Objects/deku_leaf.asm]]
+  :END:
+  Intended way back from any Abyss chunk: a return portal at the spot where
+  Link arrived. Code gap (warp scan 2026-09-26, code/ROM reading, not
+  runtime-tested): vanilla spawns portal sprite $6C only in the Light World
+  after an Abyss -> Kalyxo crossing (Sprite_ReinitWarpVortex); Kalyxo -> Abyss
+  pads leave no portal, and the only Abyss pad is DW $6A. RC task: spawn a
+  return portal at the Abyss arrival point after a Kalyxo pad crossing;
+  verify in Mesen.
+  Answer: "prob the portal they came in on as intended way back is my
+  thought" (scawful, 2026-09-26); "record it".
+
+* DECIDED Shrine of Wisdom chunk entry (inferred, verify in play)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../../World/LocationRegistry.md]]
+  :END:
+  Shrine of Wisdom = entrance $33 on DW $63 (large: $63/$64/$6B/$6C), the
+  parallel of Wayward Village $23; leads to room $C9, pendant room $7A.
+  Inferred entry: Kalyxo pad on LW $25 (east of the village) -> DW $65 ->
+  walk west into $63. The village east road (blocked in the intro, Impa hint
+  $1C4) is the unlock. Not played; confirm the $25 pad is reachable pre-D4.
+  Answer: "record it" (scawful, 2026-09-26).
+
+* OPEN $63 sign $C1: Ice Rod riddle vs. Flippers gate
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  $63's area sign reads "A chilling spell from the rod must flow, to bridge
+  the gap where waters flow." The Shrine of Wisdom gate is Flippers. Leftover,
+  or an optional second route? Settle when the swamp chunk is designed.
+  Answer:
+
+* DECIDED Yesterwind: the realm's true name and its central village
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  "Eon Abyss" stays as the outsiders' term (scholars, Hylians; all existing
+  text keeps it). "Yesterwind" is what the people living there call the realm,
+  and the central village is the Village of Yesterwind. Answers beat sheet
+  open question 6 (the Abyss's true name). Replaces "Village of Outcasts"
+  (0x0AF, area sign of $58/$5B; $58 now gets the Forest of Dreams sign) and
+  "Village of Echoes" (0x1AE, Eon Zora ring hint: Vasu's appraiser lives in
+  the village - rewrap lines after the rename).
+  Village map: DW $63 (confirmed by scawful, 2026-09-26: "yes it's 0x63"),
+  the Wayward Village ($23) parallel; scawful will rework the swamp into a
+  village on stilts. Repoint $63's area message from $C1 to 0x0AF.
+  Optional ending touch (beat 30): the final line says "Yesterwind" instead
+  of "Abyss". Draft lines pending approval: 0x0AF sign; one villager reveal
+  line.
+  Answer: "yesterwind is great ... if not then yeah def the village/central
+  region name"; then "both" (scawful, 2026-09-26).
+
+* DECIDED Kydrog $21: editable except the joke; spares Impa on screen
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/approved_dialogue_rewrites_2026-09-26.md]]
+  :END:
+  $21 is no longer on the "don't touch" list, but the hero-crosses-the-abyss
+  joke must stay. New box inserted before the joke: Kydrog tells Impa to run
+  home and tell her princess Hyrule is too late (pairs with $35). The rest of
+  the agent-written "don't touch" list (Mask Salesman chain, Deku
+  0x140/0x141, Librarian 0x199-0x19F, Maku cascade) is still unconfirmed.
+  Answer: "i like this inclusion but we can drop the decades line it could
+  show up in lore later on"; "$21 can be adjusted but leave the joke"
+  (scawful, 2026-09-26).
+
+* DECIDED Sky Islands role: Hyrule's abandoned watchtower (a tall tower dungeon)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  1. Decades ago Hyrule's garrison reused the ancient tower as a watch over
+     the seal; Hyrule later recalled the garrison and abandoned it. Up top:
+     watch logs that stop mid-entry
+     (proof of Hyrule's neglect), a view of the volcano stirring after the
+     Master Sword pull; optional islanders who left for the clouds.
+  2. A tall tower dungeon (Oracle has none yet) climbs from the ground to the
+     Sky Islands. Location: east of Korok Cove, north of the Sea Zora area,
+     near the special overworld. Base = the East Kalyxo Hylian garrison/port
+     idea; same overworld, no warp.
+  3. Story slot: SUPERSEDED - see "Sky Islands timing and the Watchers"
+     (opens after D6, optional).
+  4. Access: the tower is the ONLY way into the Sky. The current foot bridge
+     from Korok Cove to the Sky clouds is a test connection; remove it.
+     Korok Cove = special large area $81 ($81/$82/$89/$8A), reached from the
+     graveyard east of the Hall of Secrets, connecting to East Kalyxo. Sky
+     maps: special $84-$87/$8C-$8F (rough drafts in ROM, viewed in yaze
+     2026-09-26: green pillared stairs through white clouds = tower exit;
+     stepped temple with a pale-blue center pane = Watchers temple;
+     ice temple; walled stone yard with rubble; floating rocks).
+  5. D8 Fortress of Secrets is in the Abyss: the mirrored map of the large
+     Zora River map to the east (exact map ID to confirm).
+  Answer: "the watchtower pitch is great especially since oracle doesn't have
+  a tall tower dungeon like other rom hacks this is perfect to add one to the
+  east of korok cove and north of the sea zora area and has us nearby for the
+  special overworld"; "The fortress of secrets is in the dark world, the
+  mirrored map to the zora river large map to the east" (scawful,
+  2026-09-26).
+  Correction: "Observatory" was an agent label, not scawful's design. Drop it;
+  the small building is the Watchers temple.
+
+* DECIDED yaze graphics saves: turn on the three Oracle project settings?
+  :PROPERTIES:
+  :ASKED_BY: Yaze graphics editor session (G2, 2026-09-26)
+  :DOC:      [[file:~/src/hobby/yaze-practice/graphics-evidence/2026-09-26/g2/README.md]]
+  :END:
+  G2 ran the full flow on a copy (yaze claude/gfx-png-app ac70834e3): imported a
+  placeholder Abyss Stalfos into sheet 0x8A block 13; save relocated the sheet to
+  bank $23 (3 pointer bytes + the stream changed, readback identical); set
+  spriteset 0x0B slot 3 = 0x17 (1 byte); reopened; Oracle build exit 0; headless
+  Mesen showed the tiles in VRAM. Proposed Oracle-of-Secrets.yaze changes:
+  save_graphics_sheet=true, save_gfx_groups=true (new line),
+  save_dungeon_pot_items=false (stops a pot-item prompt on every save).
+  Recommendation (Claude): all three.
+  Answer: "yes all of the above i think. whatever u think" (scawful, 2026-09-26).
+  Applied to Oracle-of-Secrets.yaze by the integrator.
+
+* DECIDED Abyss fixes follow-ups: $5B sign, signposts, dream return
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff (Abyss fixes agent)
+  :DOC:      [[file:../../../Data/rom_patches/abyss_area_signs_2026-09-26.json]]
+  :END:
+  Applied to the base ROM (ac544166 -> 517f43a9, backup
+  Roms/oos168.pre-abyss-fixes-2026-09-26.sfc): LW $31 warp corners (char $1E2 tile
+  type $4B -> $02; tile16 $BA8 snout quadrant -> ocean water), $63/$64/$6B/$6C area
+  message -> $AF, the five Abyss area signs -> $1FB-$1FF, and $AF text "This is the
+  Village of / Yesterwind...".
+  1. $5B sign: give it its own line (it currently reads $AF too). Text: TO-DRAFT.
+  2. Signposts for $40/$50/$58/$5D/$6A: scawful places them in yaze (tile16 $17D)
+     while reworking those maps.
+  3. Dream return: (c) now: a normal reload through entrance $68 (Link at the Dream
+     Hut door) so a dream can't strand the player; (a) scripted wake-in-bed later.
+  Answer: "yes all of the above i think. whatever u think" (scawful, 2026-09-26),
+  to Claude's recommendations (own line, scawful places signposts, c now / a later).
+
+* DECIDED Dialogue batch vanilla write + Korok night list
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff
+  :END:
+  1. Write the 9 vanilla messages of the approved dialogue audit batch (0x00E, 0x020,
+     0x056, 0x059, 0x099, 0x105, 0x132, 0x147, 0x15A; bundle
+     scratchpad/patches/dialogue_batch/vanilla_bundle.json).
+  2. Koroks at night and after D7: map $81's phase-2 sprite pointer shares the
+     phase-1 list (PC $1417BA 81 C8 -> B7 CE).
+  Applied: base SHA-1 517f43a9 -> a5de4a36 (backup
+  Roms/oos168.pre-dialogue-batch-korok-night-2026-09-26.sfc); readback = bundle, only
+  those 9 messages changed; outside the text regions only the 2 pointer bytes.
+  Answer: "1. Yes 2. Yes" (scawful, 2026-09-26).
+
+* DECIDED Sky Islands timing and the Watchers
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Supersedes the story slot in "Sky Islands role" (was: after the Master
+  Sword, before D8).
+  1. Timing: the Sky opens after D6, when East Kalyxo opens (Hammer, beat 21),
+     and stays optional through the endgame. Purpose: extra lore content and
+     items (e.g. heart pieces, upgrades).
+  2. Reveal order: Dream 1 (Kydrog, pre-D4) -> Dream 2 (Farore, pre-D6) ->
+     Sky Islands (what the Abyss is, post-D6) -> Dream 3 (the cure, post-D7).
+  3. The Watchers: an ancient race who harnessed the power to shape the
+     Abyss realm. Their stepped architecture marks their work: the Temporal
+     Pyramid, the tower, and the sky temple. Farore later used their realm as
+     the prison for the half-revived Ganon. Keep their motives and fate vague.
+  4. Layers of the tower: Watchers built it; Hyrule's garrison reused it as a
+     watch post decades ago and abandoned it.
+  5. The islanders' Mirror breakthrough rediscovered a scrap of Watcher
+     knowledge (consistent with the Sep 23 "no long portal industry" ruling).
+  Answer: "the watchers seems smart. an ancient race which harnessed the
+  power to create the realm more or less ? sky islands serve an extra content
+  lore purpose and potentially could add items"; then "yes both" (scawful,
+  2026-09-26).
+
+* DECIDED Room census follow-ups (runtime-checked on b28, 2026-09-26)
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff (room census agent)
+  :DOC:      [[file:/private/tmp/claude-501/-Users-scawful-src-hobby-oracle-of-secrets/00b31eba-5650-499f-aa68-7c789f12b2aa/scratchpad/patches/room_census_fixes_README.md]]
+  :END:
+  Refuted: the 7 cross-dungeon pits are pit-damage rooms (fall = 1 heart, respawn in
+  the room); Mayor's House $119 stairs go to $11D (not Fortress $1D; z3ed dropped the
+  high byte). Found: D3 room $81's pit ring drops into Origins $05, walled off from
+  walking (optional one-line fix: add $81 to the pit-damage table).
+  Confirmed: S3 (entrance $0C) uses dungeon ID $09 -> shares small keys with $08
+  (Final Boss Route, entrance $24) and D7's compass/big key/map bits.
+  1. Give S3 and the Master Sword Cave / Final Boss Route rooms their own even
+     dungeon IDs? (Rec: yes; keyed IDs free: $00, $04 -- $04 is proposed for the tower.)
+  2. Should the $11D basement (2 heart pieces) be reachable from the Mayor's House?
+  3. Take the $81 pit-damage hunk? (Rec: yes, it only prevents a fall into Origins.)
+  Answer:
+
+* DECIDED Room budget step 1: the Sky tower gets the adjacent free block
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/room_census_2026-09-26/room_census.md]]
+  :END:
+  Sky tower: rooms $90-$96 + $A0, $A6, $B0 (10 rooms, adjacent on the room
+  grid; includes the underwater-shrine block-out at $90-$92, which gets
+  redecorated for the tower). Keyed dungeon ID $04.
+  The underwater Abyss shrine moves to scattered free rooms and stays keyless.
+  Dungeon ID remains TBD: $1C is unsafe because vanilla key load/save indexes
+  it into item SRAM. D7/D8 are not trimmed: spare rooms (~21) cover the new
+  ideas (~19) without cuts.
+  Answer: "A" (scawful, 2026-09-27).
+
+* DECIDED Room budget step 2: underwater Abyss shrine is medium (5 rooms)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/room_census_2026-09-26/room_census.md]]
+  :END:
+  Medium keyless mini-dungeon: short route + mini-boss; puzzles gate with
+  switches, items, Minish. It has no small keys; dungeon ID is still TBD.
+  Initial candidate rooms (not approved):
+  $1F, $AB, $E9, $F7, $106. Avoided: $02 (rain sound case), $20 (Agahnim
+  case); $A7 kept as tower reserve (next to $A6). Scattered, so rooms link by
+  stairs/warps.
+  Audit correction (2026-09-27): "medium, 5 rooms" is the ruling; the exact
+  IDs remain provisional. $106 has vanilla chest-game handling, and the other
+  candidates also carry caveats in the room census.
+  Answer: "medium" (scawful, 2026-09-27).
+
+* DECIDED Room budget step 3: Watchers' sky temple is a building (1-2 rooms)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  The stepped temple on the Sky maps is an explorable building, not a
+  dungeon: lore + an item, 1-2 rooms, no dungeon ID needed. It has no
+  entrance placed yet (scawful); needs one overworld entrance (plenty free).
+  Proposed rooms (verify at build time): $127 (vanilla leftover) and $4C
+  (unreachable D8 room; clear its header warp to $1D first). Avoid $01/$10:
+  other rooms' headers still point at them.
+  Audit correction (2026-09-27): "1-2 rooms" is the ruling; $127/$4C are
+  provisional. $127 has vanilla hammer-peg-cave handling and $4C still belongs
+  to D8's header graph until its warp is deliberately removed.
+  Room budget total: tower 10 + underwater shrine 5 + temple 2 = 17 of ~21
+  spare. Left in reserve: $A7 (next to the tower), $C0 (empty D7 room, one
+  door to remove), $01, $10, $30, and caveat rooms $02/$20. Keyed dungeon ID
+  $00 stays free.
+  Answer: "yeah 1-2 rooms max, it doesnt even have an entrance placed
+  currently anyway" (scawful, 2026-09-27).
+
+* DECIDED Sky tower theme: from familiar to strange
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Lower floors: the abandoned Hylian garrison (barracks, supply rooms, watch
+  posts). Upper floors: the garrison's additions stop and the Watchers'
+  original stepped stonework and mechanisms take over. The top exits onto the
+  Sky Islands. The floor-to-floor change in graphics/palette tells the history
+  (each floor further back in time; Hyrule only used what it understood).
+  Answer: "A yes this sounds cool" (scawful, 2026-09-27).
+
+* OPEN Glove/Mitt swap: Power Glove early, Shrine of Power gives the Titan's Mitt
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion (idea by scawful, 2026-09-27)
+  :END:
+  scawful's idea: "give power glove earlier then turn goron segment into the
+  titans mitt". Changes if adopted: (1) a new early source for the Power
+  Glove; (2) review light vs heavy rocks (late-gated light rocks become heavy
+  rocks; heavy boulders in front of the Goron Mines); (3) re-aim the Shrine of
+  Power's lifting puzzles at the Mitt. Dungeon order and the S2 -> D6 gate stay.
+  Waiting on the item-progression and overworld-region analyses before
+  choosing the Glove's source (scawful: "C").
+  Answer:
+
+* DECIDED Menu direction: declutter the item grid, add a Masks & Rings page
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :END:
+  Preferred outcome (feasibility confirmed; prototype remains flag-off): a third menu page
+  "Masks & Rings" in a carousel with Items and Quest (repaint the off-screen
+  half of the wrapping menu layer before each scroll). Masks leave the item
+  grid (frees 5 slots); rings leave their submenu. Keep the 4 bottles on the
+  item page. Stretch ideas: a button that opens the journal; an equipment
+  section to switch owned tunics/armor and shields.
+  Rejected: one mask slot with L/R cycling (masks use several buttons and the
+  R transformation overlay). Equipment follow-up (scawful, 2026-09-27):
+  decouple tunic COLOR from armor VALUE (color = cosmetic choice, armor =
+  damage reduction); in dual-swords / 2-player mode each player can pick or
+  swap tunic colors ("decoupling color and armor value would be good ... for
+  dual swords mode being able to swap colors or change to others would be
+  cool"). Feasibility (2026-09-27, read-only): feasible with work, no new
+  VRAM (BG3 has 4 tilemap screens; all menu icons share one boot-loaded tile
+  set); layout Masks&Rings <- Items -> Quest; biggest risk: $0202 item-ID
+  tables if masks get new IDs. Report:
+  Reviews/audit_2026-09-26/menu_page3_feasibility.md. Timing: LATER - after
+  the stable RC point. A scratch prototype now exists, is byte-identical with
+  the flag off, and is queued into b29 with the flag still off.
+  Also noted: Fishing Rod / Portal Rod sharing a
+  slot is confusing (unrelated tools); split them once slots free up.
+  Answer: "yeah i think this would be my preferred outcome. declutter item
+  menu, add mask/ring menu maybe even a journal opening button or something.
+  potentially allow link to change clothes/shields even" (scawful,
+  2026-09-27).
+
+* DECIDED Abyss chunk layout and warp pads (to be enforced)
+  :PROPERTIES:
+  :ASKED_BY: Claude story/design discussion
+  :DOC:      [[file:../Reviews/audit_2026-09-26/overworld_grid.png]]
+  :END:
+  Finding (static tile analysis 2026-09-27): pad $25->$65 needs no item and
+  opens most of the Abyss; 4 pads land in the volcano region.
+  Chunks (map IDs from the overworld grid):
+  1. Intro: Temporal Pyramid + Forest of Dreams ($40-$41, $48-$51, $58-$61,
+     $68-$6A). Forced by Kydrog; later re-entry via pad $11->$51.
+  2. Yesterwind: village hub, Shrine of Wisdom, Dream Hut ($5A-$5D, $62-$65,
+     $6B-$6D). Opens when the village east road opens after the intro; pad
+     $25->$65.
+  3. Lupo Mountain + NW ridge: Eon Gorons, Shrine of Power ($42, $4A-$4D,
+     $52-$54). Glove rocks (already on $4D); pad $02->$42 or north from
+     Yesterwind.
+  4. Desert beach (optional): $76/$77/$7E/$7F. Hammer pegs on LW $37; pad
+     $37->$77.
+  5. Fortress of Secrets (D8): $5E/$5F/$66/$67/$6E/$6F. Story gate: a barrier
+     the Master Sword cuts (ALttP Agahnim-tower echo).
+  6. Volcano / Lava Lands (finale, prison mouth): $43-$47, $4E/$4F, $55-$57.
+     Opens after the Master Sword pull (eruption).
+  Underwater ($70-$7D): whirlpool on $3D, already locked (post-D4).
+  Warp pads: keep $25->$65, $11->$51, $02->$42, $37->$77; keep $17->$57 as the
+  single finale entry (rock ring stays sealed until the eruption); remove
+  $03->$43 and both $07->$47 pads or make them return-only; $6A->$2A (old intro
+  exit, replaced by the sword warp) becomes the intro chunk's return point.
+  Enforcement work (build side, after the stable RC point): block walking
+  routes between chunks (Yesterwind -> Fortress, Yesterwind -> volcano,
+  Yesterwind -> Lupo via Glove rocks); Fortress barrier + Master Sword check;
+  volcano seal + eruption state; pad removals/changes; the intro Glove-rock seal
+  stays as a later shortcut. Mitt freed for optional content.
+  Answer: "yes this is basically how i imagine it, just needs to be enforced"
+  (scawful, 2026-09-27).
+
+* DECIDED D7 big key, S3 dungeon ID, D4 room $027 chest
+  :PROPERTIES:
+  :ASKED_BY: Claude RC test handoff (D7 / dungeon tables agent)
+  :DOC:      [[file:../../Technical/Dungeon_Tables_Expansion.md]]
+  :END:
+  D7 already has a Big Key: the Stalfos Knight in room $A2 drops it (runtime-checked;
+  earlier audits read only the chest table). Build check in Core/patches.asm guards it.
+  1. Keep the knight drop as D7's Big Key: "yes".
+  2. S3 entrance $0C dungeon ID $09 -> $00 (own keys/compass/big key): "yes".
+  3. D4 room $027 itemless chest -> 20 rupees (dead chest record): "sure".
+  Table rule (scawful 2026-09-27): research expanding a table before trading content;
+  document why if impossible. Study: Docs/Technical/Dungeon_Tables_Expansion.md.
+  Answer: "1. yes 2. yes 3. sure" (scawful, 2026-09-27).
+
+* DECIDED Masks & Rings page after the M1 playtest: layout A, one ring
+  :PROPERTIES:
+  :ASKED_BY: Oracle RC Leader (M1 playtest follow-up)
+  :END:
+  scawful played M1 (b31). Page 3 problems: it is only reachable by scrolling
+  left from Items, and it shows the "A:EQUIP  X:LOG" prompt as text on the
+  tilemap.
+  1. One ring worn at a time (was 3). Every effect check reads one slot.
+  2. Layout A: masks and rings use the Items page's 6 columns. Row 1 = 5 masks +
+     1 spare cell. Row 3 = the 6 rings. Worn items get red brackets. No worn-socket
+     row.
+  3. No button-prompt text on the page ("A: equip").
+  4. Page loop (Claude's proposal, not objected to): L and R always move one page,
+     Masks&Rings <- Items -> Quest, wrapping at both ends. The scroll direction
+     follows the button.
+  5. A 6th bonus mask for the spare cell, "sort of like the fierce deity mask".
+     How it is earned and what it does: not designed yet.
+  Answer: "Yeah 1 ring at a time so it's not broken and I think 1st layout makes
+  sense and we could have a 6th bonus mask too sort of like the fierce deity
+  mask"; "By no text I mean the 'A: equip' thing" (scawful, 2026-09-28).
+
+* SUPERSEDED Masks become a worn slot on R (replaced 2026-09-28: "Masks stay Y items; Y transforms, R toggles" below)
+  :PROPERTIES:
+  :ASKED_BY: Oracle RC Leader (M1 playtest follow-up)
+  :END:
+  Page 3 equips one worn mask, the same way it equips the one ring. The mask is no
+  longer a Y item.
+  1. R transforms into the worn mask's form and changes back, whatever the Y item is.
+  2. While transformed, Y runs the form's ability (the existing per-mask
+     abilities). Link's items are unavailable until R changes back.
+  3. While transformed, the HUD item box shows the mask. It shows the Y item again
+     after the change back. A Y item picked in the menu while transformed is kept.
+  4. Save: the worn mask uses the ring slot freed by the one-ring rule ($7EF3A4),
+     so no new SRAM.
+  5. Follow-up: assess the freed Items-grid cells to split shared slots, for
+     example the Fishing Rod and Portal Rod.
+  Answer: "Yes and then let's assess the item slots on the item screen this frees
+  up to decouple stuff like fishing and portal rod" (scawful, 2026-09-28), after
+  "could you still have a dedicated Y button ability in the mask mode ? Would we
+  like change the item icon slot to the mask when form enabled ?"
+
+* DECIDED Masks stay Y items; Y transforms, R toggles; Minish is automatic
+  :PROPERTIES:
+  :ASKED_BY: Oracle RC Leader (M1 playtest follow-up)
+  :END:
+  Replaces "Masks become a worn slot on R". Reason: the HUD has one item box, and
+  its minimal design leaves no room for a separate mask badge. A visible mask is a
+  mask in the Y box.
+  1. A mask is picked as the Y item (on page 3; the HUD item box shows it).
+  2. As Link, Y puts the mask on (transform). R also transforms.
+  3. As the form, Y runs the form's ability and R changes back to Link.
+  4. Switching the Y item away from the mask changes Link back, so R is never
+     required. R is for switching back and forth.
+  5. Minish: stand still on the portal tile to shrink or grow (no R). Masks do
+     not work while Minish.
+  6. Beta testers were confused by R before, when it only worked while a mask
+     was the Y item or on a Minish portal.
+  7. Consequence: as Link, R no longer does anything, so the Hookshot/Gold Star
+     L/R switch can keep sharing a cell. The Portal Rod still gets its own cell,
+     which leaves 4 spare Items cells (ideas, not decided: standalone Switch Hook,
+     Bombchus, Goddess Magic, Seed Shooter).
+  Answer: "yeah and also switching off the mask item should de-transform you so
+  the R isnt explicitly required but is good for switching back n forth"
+  (scawful, 2026-09-28), after "HUD R badge may not work bc its very simplistic
+  ... should we just consider it an item-like entity" and "Definitely separate
+  portal rod".
+
+* DECIDED Quest page: remove the rings; layout still open
+  :PROPERTIES:
+  :ASKED_BY: Oracle RC Leader (menu audit follow-up)
+  :END:
+  The ring icons (R1-R3) come off the Quest page. The worn ring shows only on
+  page 3. Crystal triangles are drawn in D1-D7 order (bug fix from the audit).
+  Do not simplify further yet (the name, location and clock stay for now).
+  Layout options Q1/Q2/Q3: https://claude.ai/artifact/7KjRxqyp4FBBRAZrkJ1m8h
+  Answer: "maybe not that far in terms of simplifying but def removing the rings
+  from the quest menu and let's look at the whole layout in grid mode so i can
+  visualize alternatives" (scawful, 2026-09-28).
+
+* DECIDED Quest page: dungeon essences in a ring of 7, pendants kept
+  :PROPERTIES:
+  :ASKED_BY: Oracle RC Leader (menu grids)
+  :END:
+  The 7 dungeon essences are drawn as a ring (Oracle-games essence circle), not
+  the 3-over-4 pyramid. The same 2bpp tile is used for all 7 (the sheet is full);
+  per-dungeon color through the tilemap palette bits is still an option. The 3
+  pendant icons stay on the Quest page (draft: in the center of the ring).
+  Open: move the gear (sword, shield, tunic, glove, boots, flippers, Moon Pearl)
+  to page 3, which becomes an Equipment page. Draft Q4 and the Equipment page:
+  https://claude.ai/artifact/7KjRxqyp4FBBRAZrkJ1m8h
+  Answer: "ring of 7 seems most appealing but might mean some equipment moving
+  to the new masks/rings screen to become the equipment screen / also dont
+  forget the pendant icons" (scawful, 2026-09-28).
+
+* DECIDED Kydreeok healing: the player chooses and performs the song
+  :PROPERTIES:
+  :ASKED_BY: Codex continuation architecture discussion
+  :END:
+  After the Kydreeok fight, combat stops and Kydreeok remains visibly wounded.
+  The player retains control and chooses to play the Song of Healing through
+  the existing Ocarina interaction. A clear cue, supported by the earlier
+  dream, helps the player recognize the opportunity.
+  This selects option A over a contextual action prompt or an automatic
+  scripted performance. The song restores the knight, consistent with the
+  already-decided finale. Exact cue, timing, recovery behavior and handling
+  of unavailable song/equipment remain to be designed and verified.
+  Answer: "Yeah A seems smart" (scawful, 2026-09-28).
+
+* DECIDED Direction: East Kalyxo, sky and a 32-cell contiguous sea (scope open)
+  :PROPERTIES:
+  :ASKED_BY: Codex RC planning thread (recorded by Claude RC Leader from the sync brief)
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/lyra_revival_2026-09-29/ (contiguous-sea-direction.md, coast-v5-review.md, transit-feasibility.md); ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/sync_codex_claude_2026-09-29.md
+  :END:
+  Shape agreed in the Codex thread 2026-09-28/29. Planning coordinates, not ROM IDs.
+  1. Style: ALTTP art style and map dimensions ("this is way too final fantasy for
+     me to take serious").
+  2. East Kalyxo, 3 x 4:
+     - Cove: large 2x2 (existing $81/$82/$89/$8A), with no big tree.
+     - Sea Zora: past the cliff, to the right of the River Zora sanctuary.
+     - Tower: right of the cove, with the port south of it.
+     - The special overworld is half as tall as the main island.
+     - There is no dock for the Dragon Ship.
+  3. Sky: the 4+2+1+1 layout from the existing $84-$87/$8C-$8F ("makes the sky feel
+     expansive to the east and to the west").
+  4. Sea: "the 32 maps connected to east kalyxo to the south are the sea and are
+     contiguous". Wind Waker-like ocean and islands, south and southeast, away from
+     the overlay section.
+  5. Kalyxo's map structure mostly stays: "open up parts of the goron mines to the
+     east with titan mitts gate"; the Goron link is in the bottom-left rows 3-4.
+     Canon seed: "crystals got to the sea zora from the gorons via the minecarts
+     along the cliffside".
+  6. Transit is the theme ("trains and boats"). The boat is a new invention. The
+     minecart gets an overworld mode. Rough currents are patches that need a boat,
+     not whole maps.
+  7. This also fulfills the original goal of an expanded overworld to the east, and
+     it is a reason to audit cave placements on main Kalyxo.
+  Open: RC scope vs post-RC; which Goron cliff openings; the Mitts gate vs the OPEN
+  Glove/Mitt swap; ferry vs steerable boat. Beat sheet line 33 (port position) is
+  not updated yet.
+  Answer: "Excellent yeah this seems right… you've got the shape that I've got in my
+  head" (scawful, 2026-09-29 08:34, Codex thread 01a0d06d), plus the quotes above
+  (09-28 18:17-23:51, 09-29 00:05-00:37).
+
+* DECIDED Menu direction: Q4 Quest page, some gear bottom right, every Items cell filled
+  :PROPERTIES:
+  :ASKED_BY: Oracle RC Leader (menu grids)
+  :END:
+  1. Quest page: Q4 (the essence ring with the pendants in the center). Some
+     equipment goes in the bottom-right corner, not top left right under the
+     location text. Draft Q4b puts sword, shield, tunic and Moon Pearl bottom
+     right, and the dungeon items bottom left.
+  2. Items page: every cell filled. Today 16 items + 4 bottles use 20 of 24 cells.
+     The 4 row-4 cells get new items. Candidates: Switch Hook, Bombchus, Goddess
+     Magic, Seed Shooter, plus the items discussed with Codex. Final list pending.
+  3. Equipment page (page 3): fill it out more where possible.
+  Drafts: https://claude.ai/artifact/7KjRxqyp4FBBRAZrkJ1m8h
+  Answer: "i do kind of like Q4 quest status update idea, though we could put some
+  of the equipment on the bottom right instead of top left beneath the text
+  dirrectly and also for the items menu i def want all 16 slots filled, i think we
+  discussed some of it with codex and prob fill out more in the equipment menu
+  where possible" (scawful, 2026-09-29).
+
+* DECIDED Song selection moves to Equipment and equips the Ocarina
+  :PROPERTIES:
+  :ASKED_BY: Codex design discussion
+  :END:
+  Equipment displays unlocked songs. Selecting a song selects it and equips
+  the Ocarina; it does not perform the song. Close the menu and press Y to
+  perform it in the world. The Ocarina retains its Items cell and remembers
+  the selected song; selecting that cell does not open a song submenu.
+  This is approved direction, not an implemented or runtime-verified change.
+  Answer: "yes agreed, it just equips the ocarina."
+  (scawful, 2026-09-29).
+  Separate discussion: a mask binding independent of the Y item is being
+  reconsidered; no replacement of the current mask-control ruling is yet
+  approved by this song decision.
+
+* DECIDED Hookshot and Goldstar use separate Items cells
+  :PROPERTIES:
+  :ASKED_BY: Codex mask implementation
+  :END:
+  Supersedes the older shared Hookshot/Goldstar cell and L/R-switch direction.
+  Preserve Goldstar combat, graphics, dragging and in-flight behavior while
+  separating selection. The additional cell leaves three, not four, spare
+  tool cells after Portal Rod. New-item candidates remain proposals.
+  Answer: "i thought we are making goldstar and hookshot separate ? we'll
+  need to be careful when toying with the goldstar code" (scawful, 2026-09-29).
+
+* DECIDED Implement independent mask binding prototype
+  :PROPERTIES:
+  :ASKED_BY: Codex design discussion
+  :END:
+  R toggles a separately selected mask. The normal Y item remains selected.
+  While transformed, the form owns the Y action and HUD icon; returning to
+  Link restores access to the normal item. Equipment mask selection prepares
+  the binding without transforming in the menu. Supersedes coupling the
+  selected mask to $0202. Minish/Moosh and transition guards require tests.
+  Answer: "let's work on the code for it." (scawful, 2026-09-29), following
+  the Bow + separately R-bound Zora Mask example. Implementation in an
+  isolated copy; integration and player-build qualification remain separate.
+
+* DECIDED Lyra coast art direction: tropical north and elemental south
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/east_kalyxo_planning_2026-09-29/biome-art-direction.md
+  :END:
+  Fishing village: lush, sheltered tropical bay. The northern half favors
+  tropical vegetation. Moving south, the terrain becomes more elemental
+  and harsh: lava and rock to the west, glacier in the eastern ocean.
+  Use graphics similar to Kalyxo and reuse suitable existing Lyra graphics
+  and ideas. Some new graphics are welcome; exact assets, sheets, palettes
+  and allocations are not selected yet. A usable, reliable graphics editor
+  remains a dependency for authoring these changes.
+  This is visual direction, not a new progression rule, climate explanation,
+  camera partition, ROM ID assignment or approval to overwrite shared art.
+  Answer: "yes i think the more lush sheltered tropical bay"; "the northern
+  half is a bit more tropical vegetation and as you go south it gets more
+  elemental harsh, like lava and rocks to the west and the glacier to the
+  east in the ocean"; "uses similar graphics to kalyxo and reuses some of
+  the ideas in lyra islands ... maybe some new ones would be fun to add too
+  but need graphics editor to be up to snuff" (scawful, 2026-09-29).
+
+* DECIDED Lyra fishing village architecture: plaster and timber
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/east_kalyxo_planning_2026-09-29/biome-art-direction.md
+  :END:
+  Use plaster-and-timber homes with shaded porches as the fishing village's
+  basic architecture. Concentrate raised wooden structures at the waterfront.
+  This supports the desired distinct Lyra Sea visual culture within the lush,
+  sheltered tropical bay. Exact roof designs, colors, house dimensions,
+  graphics sheets, interior entrances and cultural lore remain open.
+  Answer: "yes agree with ur pref" (scawful, 2026-09-29), accepting
+  "plaster-and-timber homes with shaded porches" and "raised wooden
+  structures concentrated at the water's edge".
+
+* DECIDED Defer journal and remove X:LOG from the menu
+  :PROPERTIES:
+  :ASKED_BY: Codex design and menu
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/patches/journal_defer_2026-09-29/README.md
+  :END:
+  Remove X:LOG and suspend journal menu entry points for now. Retain the
+  existing code/data for possible redesign; do not spend this phase auditing
+  or expanding journal entries. Preserve the Book's gameplay function.
+  Focus on menu clarity, item stability, Equipment and Quest status,
+  Ocarina songs and rings. No replacement journal access is selected.
+  Graphical Equipment organizers versus empty unowned icons remains a
+  design discussion, not approval to change art or the page layout.
+  Answer: "yes please do ... the journal may not be needed ... we can ice
+  it for now and focus on other menu stuff, item stability, equipment and
+  quest status, ocarina songs, rings, etc." (scawful, 2026-09-29).
+
+* DECIDED First Discord delivery is an RC-series testing preview
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/rc_consolidated_2026-09-29/00_START_HERE.md
+  :END:
+  Prioritize a clearly labeled RC-series testing preview with the improved
+  opening, Goron Mines and stable menus, before waiting for verification of
+  the complete main route including the approved dreams and finale.
+  This sequences deliveries; it does not cancel dreams/finale, change canon,
+  require content lock, or establish start-to-credits completion evidence.
+  Exact inclusion of unfinished optional items, world expansion and editor
+  features remains governed by their existing decisions and review status.
+  Answer: "RC-series testing preview first" (scawful, 2026-09-29), selecting
+  it over "Wait for full main-route RC" in the delivery-priority question.
+
+* DECIDED Equipment page uses labeled groups and blank unowned slots
+  :PROPERTIES:
+  :ASKED_BY: Codex design and menu
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/patches/equipment_preview_2026-09-29/README.md
+  :END:
+  Use the grouped Equipment layout direction: Masks, Rings, Songs and Gear,
+  with small labels and blank unowned slots rather than grey ring outlines.
+  Scawful likes the idea but flagged overflow in the preview. Correct the
+  preview footer/frame before using it as a layout reference. This approves
+  the direction, not every pixel, item allocation, or unfinished interaction.
+  Song and mask behavior remain governed by their separate decisions.
+  Supersedes the earlier journal-deferral entry's pending layout discussion.
+  Answer: "yeah this has some overflow i think from your proposal preview
+  stuff but i like this idea" (scawful, 2026-09-29).
+
+* DECIDED Stable Yaze authoring precedes sky and Lyra Sea construction
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/rc_consolidated_2026-09-29/00_START_HERE.md
+  :END:
+  Establish reliable, usable Yaze map/graphics/dungeon authoring first.
+  Scawful then authors the sky islands and contiguous 32-map Lyra Sea layouts
+  and prepares them for agents to polish afterward. These expansions do not
+  delay the first RC-series Discord testing preview. This is sequencing,
+  not cancellation or a change to the approved world geography.
+  Answer: "sky islands and 32-map sea should come after yaze has gotten to
+  that stability point where i can hyperfocus on map making and setting up
+  everything for agents to polish after" (scawful, 2026-09-29).
+
+* DECIDED Preview: how do testers reach Goron Mines?
+  :PROPERTIES:
+  :ASKED_BY: Claude RC leader (route qualification)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/claude_rc_checkpoint_2026-09-29.md
+  :END:
+  The preview promises the opening and Goron Mines. Goron Mines is beat 20
+  and needs the Shrine of Power (beat 19), after D1-D5, so a new file
+  reaches it only after hours of play. Options:
+  A. (Recommended) Ship two save files: file 1 is a new game; file 2 starts
+     outside the Goron Mines with the Shrine of Power done. Qualification
+     plays the mines from file 2 with controller input only.
+  B. New file only. Testers reach the mines by playing D1-D5.
+  C. A start-point menu on the file screen.
+  Answer: A. "A yes ship save files" (scawful, 2026-09-29).
+
+* DECIDED Active RC features are enabled by default; flags are diagnostic opt-outs
+  :PROPERTIES:
+  :ASKED_BY: Codex RC continuation
+  :END:
+  Normal builds include the intended RC behavior without a long opt-in list.
+  Keep individual feature switches so a broken feature can be disabled for
+  debugging, isolation, and matched comparisons. Do not treat default-off
+  experiments as the standing policy for active RC work. Previously inactive
+  prototypes are not automatically included by this decision.
+  Align Util/macros.asm and generated Config/feature_flags.asm defaults with
+  the integrated RC feature set; verify an ordinary build against the same
+  candidate built with explicit flags. This does not itself stage a new ROM.
+  Answer: "we gotta just enable shit by default, flags are for disabling shit
+  when it's broken to debug and isolate not this" (scawful, 2026-09-29).
+
+* OPEN How does a beat-19 player fetch Rock Meat and return to the desert Goron?
+  :PROPERTIES:
+  :ASKED_BY: Claude RC leader (preview save file)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/patches/preview_saves_2026-09-29/README.md
+  :END:
+  The Goron (Garo Desert $36) needs five Rock Meat from Lupo Mountain
+  (Abyss $4B). The only mid-game crossing found is the one-way Kalyxo $3D
+  whirlpool to Abyss $7D, far from $4B, with no return whirlpool. The
+  intended Kalyxo -> $4B -> Kalyxo route is not established.
+  Testing only: qualify the mines from a save with the mines already open
+  (scawful: "for testing u can start with it open"). This does not decide
+  what the shipped file 2 contains.
+  Answer:
+
+* DECIDED Cave corner join beside the post is the intended correction
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/cave_corner_join_rc_2026-10-05/README.md
+  :END:
+  The neighboring horizontal beam join shown in the six-word corner-table
+  proposal is the tile scawful meant. Retain that correction as the direction
+  for the art candidate. This confirms the seam identification; it does not
+  approve the beam colors shown in the same screenshot.
+  Follow-up: improve the beam palette and selected outlines toward ALTTP's
+  visual style. Compare changing the beam top-face colors with a restrained
+  stronger-outline treatment. Keep the cooler stone and material roles clear.
+  Answer: "yep that was the tile thanks for inferring my intent, but that
+  screenshot is a good example of the palette not working well with the beams
+  imo it needs some more changes to make it match the relative ALTTP style
+  and make the lines a bit bolder in some spots, or just swap the colors of
+  the top of the beams" (scawful, 2026-10-05).
+
+* DECIDED Cave frame contrast must connect to the wall palette
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/cave_beam_palette_2026-10-05/README.md
+  :END:
+  The stronger-outline study is closer, but treating the whole pale rim as
+  brown timber breaks the connection to the wall colors. Preserve the
+  relationship between the frame highlights and the stone palette. The
+  follow-up stone-transition treatment is a proposal, not approved art.
+  Answer: "darker outline is close but it needs to transition into whatever
+  colors the wall tiles will be cause this is tarting to look ridiculous,
+  the contrast of the lighter outline is typically meant to match the walls
+  and whatnot, but like here the beam is actually purple/blue made of the rock
+  shading so not sure what different we should do here lol"
+  (scawful, 2026-10-05).
+
+* DECIDED Connected cave stone is the direction; define the wood next
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/cave_wood_definition_2026-10-05/README.md
+  :END:
+  Continue the connected stone backing beneath the trim and add shading and
+  definition to the wooden portions. Keep the trim connected to the wall
+  palette. This accepts the visual direction, not a globally applied wall
+  table or final approval of the subsequent wood-shading pixels.
+  Answer: "okay good yes this is more the direciton i want i think. please
+  continue and add more shading/definition to the wooden portions"
+  (scawful, 2026-10-05).
+
+* DECIDED Wall cleanup includes the reused ALTTP/Minish Cap construction
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/wall_family_scope_2026-10-05/README.md
+  :END:
+  Scawful reused this wall style outside caves. Evaluate the shared wall
+  construction and its material variants before deciding the implementation
+  scope. The prior cave-only recommendation is superseded. Recorded failures
+  in other wallsets remain compatibility issues to solve, not grounds for
+  excluding those wallsets from the art cleanup.
+  This does not approve a global tile replacement or identical materials in
+  every dungeon. Compare tile roles and loaded sheets before changing them.
+  Answer: "i think the wall tiles apply to others too, since i used this
+  ALTTP/Minish cap style in others as well" (scawful, 2026-10-05).
+
+* DECIDED Preserve each wall family's trim intent, starting with Mushroom Grotto
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/wall_trim_preservation_2026-10-05/README.md
+  :END:
+  Some wall families need vanilla trim or graphics adapted to their trim.
+  Do not apply the cave's proposed straight-wall pairing to every family.
+  Mushroom Grotto is the first preservation case: the decorative trim is
+  intentionally mirrored every two tiles. Preserve that repeating motif;
+  mirroring alone is not an art defect. The exact treatment of other wall
+  families remains subject to their loaded graphics and intended pattern.
+  This ruling does not approve all corners, palettes, or the global table
+  proposal. Native room comparisons are editor evidence, not gameplay proof.
+  Answers: "oh yeah some of them the trim does need to be vanilla or the
+  graphics edited for it to work as well, and then yeah continue pls";
+  "mushroom grotto is a good first example, trim is meant to be mirrored
+  for a decoarate effect every 2 tiles" (scawful, 2026-10-05).
+  Identification correction: "that's not the right decorative tile
+  unfortunately, the mushroom grotto one" (scawful, 2026-10-05).
+  Codex's association with the top-cap $090/H090 pair is withdrawn.
+  Follow-up: "it's only on the left snd right walls in screenshots".
+  The intended mirrored decoration is on the vertical side walls. Preserve
+  that decorative rhythm rather than imposing the cave's treatment there.
+  Do not attribute an individual tile ID or hardware-tile period to the user.
+  The earlier unchanged-room comparisons do not confirm the identity or
+  correctness of the horizontal decoration Codex originally selected.
+
+* DECIDED Mirror the Mushroom Grotto decoration and audit its shared structure
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/rc_authoring_reset_2026-10-05/README.md
+  :END:
+  The side-wall decorative elements should mirror each other and have a
+  corresponding treatment on the north wall. Audit graphics sheeting,
+  tile order, flips, palettes and room usage before choosing the correction.
+  Preserve the intended decorative rhythm, not every existing pixel: an
+  original sheeting mistake is possible. No particular tile IDs, choice of
+  source half, or final pixel proposal is approved by this design ruling.
+  The work must support the RC candidate and usable Yaze dungeon editing,
+  rather than continue as disconnected graphical tweaks. Review Claude's
+  work and give it a bounded follow-up assignment.
+  Answer: "yes those should be mirrored to each other and on the north
+  wall. it might be a mistake i made in the sheeting"; "we need to be
+  focused on our larger goal of the RC candidate and usable yaze for
+  dungeon edits and review claudes work and give it a new prompt"
+  (scawful, 2026-10-05).
+
+* DECIDED Pause D6 testing while the revised dungeon layout is designed
+  :PROPERTIES:
+  :ASKED_BY: Claude RC Leader
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/monday_reliability_2026-10-05/claude/d6_b8/README.md
+  :END:
+  Retain the private Option 1 visible landing and south-egress study as a
+  starting point. It is not a completed or runtime-qualified room repair.
+  D6 combines falling holes between floors, status resets or punishments,
+  secrets, cracked-floor puzzles and minecarts. Wait for a more coherent
+  revised layout before further D6 tests. General RC/editor work continues.
+  Answer in Claude's conversation at 2026-10-05T17:29:27Z:
+  "let's wait to do tests and conserve our tokens/thinking until we have
+  a more coherent new layout considering this shift in direction and
+  it'll be a combo of pits to other floors being status resets/punishments
+  or secrets and the cracked floor puzzles and other type of stuff
+  alongside the minecarts".
+
+* DECIDED Goron Mines Hammer remains a midway payoff
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/user_feedback_tp7_2026-10-09/goron-plan/README.md
+  :END:
+  Retain the Hammer as a midway dungeon payoff rather than moving it early.
+  Develop a floor-separated grid sketch with rudimentary room design ideas.
+  Exact shortcut geometry, gates, rail routes, and room edits remain proposals.
+  The existing pause on D6 runtime tests remains in force during design.
+  Answer: "yeah midway payoff. could you build like a grid map with some
+  rudimentary representations of ideas ? with the different floors
+  distinctly displayed from one another" (scawful, 2026-10-09).
+
+* DECIDED Yaze readiness means a complete routine dungeon authoring session
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/yaze_authoring_readiness_2026-10-06/README.md
+  :END:
+  Scawful needs to do most routine dungeon design work without stopping to
+  report basic editor failures and wait for agent repairs. A narrowly tested
+  edit or a passing feature test suite is not enough to recommend a serious
+  creative session. Treat interruptions to ordinary editing, preview,
+  Undo/Redo, source publication, persistence and build handoff as readiness
+  issues. Explain material exclusions before the session, not after edits.
+  The combined Goron Mines rehearsal is a first qualification step, not proof
+  that every dungeon authoring workflow is complete. This does not require
+  every future expansion feature or promise a bug-free editor.
+  Answer: "yeah cause if i get into it i want to be able to do mostly
+  everything, otherwise it will really mess with my motivation/creativity
+  if the tool is not working and then i have to come back to you to report
+  and wait for a fix" (scawful, 2026-10-06).

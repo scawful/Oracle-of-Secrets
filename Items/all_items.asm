@@ -32,9 +32,14 @@ MagicBeanSwapDynamicGfx:
 
 Link_ConsumeMagicBagItem:
 {
+  ; Menu caller supplies M/X=8 and keeps its count pointer in $00-$03.
+  ; A local JSR preserves that pointer and matches the handlers' RTS exits.
   LDA.w $020B
-  JSL JumpTableLocal
+  ASL A : TAX
+  JSR (.handlers, X)
+  RTL
 
+  .handlers
   dw Link_Banana
   dw Link_Pineapple
   dw Link_RockMeat
@@ -45,7 +50,11 @@ Link_ConsumeMagicBagItem:
   Link_Banana:
   {
     LDA.l CURHP : CMP.w MAXHP : BCS .full
-      LDA.l CURHP : CLC : ADC.b #$10 : STA.l CURHP
+      LDA.l CURHP : CLC : ADC.b #$10
+      CMP.w MAXHP : BCC .store
+        LDA.l MAXHP
+      .store
+      STA.l CURHP
       SEC : RTS
     .full
     CLC : RTS
@@ -73,7 +82,11 @@ Link_ConsumeMagicBagItem:
   Link_Honeycombs:
   {
     LDA.l CURHP : CMP.w MAXHP : BCS .full
-      LDA.l CURHP : CLC : ADC.b #$10 : STA.l CURHP
+      LDA.l CURHP : CLC : ADC.b #$10
+      CMP.w MAXHP : BCC .store
+        LDA.l MAXHP
+      .store
+      STA.l CURHP
       SEC : RTS
     .full
     CLC : RTS

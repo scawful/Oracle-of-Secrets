@@ -1,0 +1,39 @@
+{
+  "base_sha1": "ac544166",
+  "task": "Yesterwind (DW $63) sign: repoint $63 from $C1 (Ice Rod riddle) to $AF; $AF text is rewritten separately (approved_dialogue_rewrites_2026-09-26.md, Yesterwind names)",
+  "note": "ZS area message table Pool_Overworld_SignText_New ($2897F8 + area*2; read by Link_Read_Interupt at $07B518 with the parent area's $8A). $63 is a large area ($63/$64/$6B/$6C); its signpost is tile16 $17D on $6B (30,7). All four quadrant entries are written (what yaze saves; only the parent entry is read).",
+  "edits": [
+    {
+      "id": "yesterwind-area63",
+      "pc": "0x1418BE",
+      "snes": "$2898BE",
+      "before": "C1 00",
+      "after": "AF 00",
+      "why": "area $63 (large $63 quadrant) -> $AF"
+    },
+    {
+      "id": "yesterwind-area64",
+      "pc": "0x1418C0",
+      "snes": "$2898C0",
+      "before": "A7 00",
+      "after": "AF 00",
+      "why": "area $64 (large $63 quadrant) -> $AF"
+    },
+    {
+      "id": "yesterwind-area6B",
+      "pc": "0x1418CE",
+      "snes": "$2898CE",
+      "before": "A7 00",
+      "after": "AF 00",
+      "why": "area $6B (large $63 quadrant) -> $AF"
+    },
+    {
+      "id": "yesterwind-area6C",
+      "pc": "0x1418D0",
+      "snes": "$2898D0",
+      "before": "A7 00",
+      "after": "AF 00",
+      "why": "area $6C (large $63 quadrant) -> $AF"
+    }
+  ]
+}

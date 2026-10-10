@@ -1,7 +1,7 @@
 {
   "name": "Static Analysis Lint Pass",
-  "description": "Tier 1 lint: ensure metadata and hard-safety checks are in sync (no emulator required)",
-  "version": "1.0",
+  "description": "Tier 1 lint: ensure metadata and hard-safety checks are in sync (no emulator required). Steps that read build outputs ({rom}, {sym}, {hooks}) skip when those files are absent; pass --rom to lint a specific build.",
+  "version": "1.1",
   "tags": ["smoke", "lint", "static-analysis", "tier1"],
   "timeout_seconds": 60,
   "requiresEmulator": false,
@@ -10,9 +10,9 @@
       "type": "exec",
       "command": [
         "python3",
-        "scripts/verify_feature_flags.py",
+        "Scripts/Build/verify_feature_flags.py",
         "--root",
-        "."
+        "{repo}"
       ],
       "expectedExitCode": 0,
       "description": "Feature flags should be consistent"
@@ -21,14 +21,15 @@
       "type": "exec",
       "command": [
         "python3",
-        "scripts/verify_hooks_json.py",
+        "Scripts/Validate/verify_hooks_json.py",
         "--root",
-        ".",
+        "{repo}",
         "--rom",
-        "Roms/oos168x.sfc",
+        "{rom}",
         "--hooks",
-        "hooks.json"
+        "{hooks}"
       ],
+      "skipIfMissing": ["{rom}", "{hooks}"],
       "expectedExitCode": 0,
       "description": "hooks.json should match generator output"
     },
@@ -36,7 +37,7 @@
       "type": "exec",
       "command": [
         "python3",
-        "scripts/validate_sprite_registry.py",
+        "Scripts/Validate/validate_sprite_registry.py",
         "--strict"
       ],
       "expectedExitCode": 0,
@@ -46,12 +47,15 @@
       "type": "exec",
       "command": [
         "python3",
-        "../z3dk/scripts/oracle_analyzer.py",
-        "Roms/oos168x.sfc",
+        "{analyzer}",
+        "{rom}",
+        "--sym",
+        "{sym}",
         "--hooks",
-        "hooks.json",
+        "{hooks}",
         "--check-sprite-tables"
       ],
+      "skipIfMissing": ["{analyzer}", "{rom}", "{sym}", "{hooks}"],
       "expectedExitCode": 0,
       "description": "Sprite property tables should not overflow past ID $F2"
     },
@@ -59,8 +63,11 @@
       "type": "exec",
       "command": [
         "python3",
-        "scripts/check_zscream_overlap.py"
+        "Scripts/Build/check_zscream_overlap.py",
+        "--symbols",
+        "{sym}"
       ],
+      "skipIfMissing": ["{sym}"],
       "expectedExitCode": 0,
       "description": "No ZScream overlaps should be detected"
     }

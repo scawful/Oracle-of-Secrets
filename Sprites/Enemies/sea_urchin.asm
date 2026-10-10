@@ -8,6 +8,12 @@
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 06  ; Number of Health the sprite have
 !Damage             = 04  ; (08 is a whole heart), 04 is half heart
+if !ENABLE_EARLY_GAME_BALANCE == 1
+  ; Core/early_game_balance.asm: 4 HP, damage class 1 (half heart on any
+  ; mail; class 4 above is 1 heart on any mail).
+  !Health           = 04
+  !Damage           = 01
+endif
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
@@ -35,8 +41,12 @@
 Sprite_SeaUrchin_Long:
 {
   PHB : PHK : PLB
-  JSR Sprite_SeaUrchin_Draw
-  JSL Sprite_DrawShadow
+  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
+  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
+  LDA.w SprState, X : CMP.b #$06 : BEQ .dying
+    JSR Sprite_SeaUrchin_Draw
+    JSL Sprite_DrawShadow
+  .dying
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_SeaUrchin_Main
   .SpriteIsNotActive

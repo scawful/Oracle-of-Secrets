@@ -1,0 +1,22 @@
+{
+  "base_sha1": "ac544166",
+  "task": "Docs/oracle.org abyss-structure-2026-09-26: accidental warp corners on LW $31 -> DW $71",
+  "edits": [
+    {
+      "id": "tiletype-char-1E2",
+      "pc": "0x7163B",
+      "snes": "$0E963B",
+      "before": "4B",
+      "after": "02",
+      "why": "OverworldTileTypes ($0E9459) entry for tile8 char $1E2: $4B (warp) -> $02 (solid, the vanilla value). Only tile16 $BB6 uses char $1E2 (the dragon figurehead's horn, LW $31 local 17,23); graphics unchanged."
+    },
+    {
+      "id": "tile16-BA8-bottom-right",
+      "pc": "0x1EDD46",
+      "snes": "$3DDD46",
+      "before": "DF 0F",
+      "after": "D1 1D",
+      "why": "Tile16 $BA8 (only placement: LW $31 local 20,24, the figurehead's snout tip) quadrant 3: char $1DF pal 3 (the real warp-pad char, type $4B) -> char $1D1 pal 7 (ocean water, type $08, same word the neighbour tile16s $BA9/$BAF use). Char $1DF keeps type $4B, so the real pads (tile16 $212, $94B/$9A5/$9BB/$9BE) still warp."
+    }
+  ]
+}

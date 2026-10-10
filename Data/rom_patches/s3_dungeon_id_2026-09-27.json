@@ -1,0 +1,31 @@
+{
+  "base_sha1": "1866b2977c2f7cb5389691cab36fa8bcce0f3152",
+  "task": "S3 Shrine of Courage gets its own dungeon ID: entrance $0C dungeon ID $09 -> $00. Apply alone: D7 keeps its own Big Key (room $A2 Stalfos Knight drop, sprite entry $FD,$00,$E4 at $09:E0C6), so no D7 change is needed (Docs/Technical/Dungeon_Tables_Expansion.md).",
+  "note": "Odd ID $09 made S3 use small-key slot 4 (= ID $08, Final Boss Route entrance $24) and DungeonMask read at byte offset 9 = $0008 (D7's compass/big key/map bits). $00: key slot $7EF37C (KeysSewer), mask $8000. Vanilla special case for $00: none; ID $02 aliases its keys to $00 (bank_02 $028254/$029B2E/$02A1CE, bank_09 $09F578). ID $02 is used by unplaced entrance $04 and by spawn points 2 (Prison, room $80) and 4 (Throne); the Prison spawn is only set by the D3 prison sequence (!ENABLE_D3_PRISON_SEQUENCE = 0). decisions.org 2026-09-27: '$04 = Sky tower; keyed dungeon ID $00 stays free'. The S3 entrance big-key door (room $53 north) stays open by the vanilla partner-door rule (room $43's south door is a normal door), so S3 is entered without a key; its own compass ($17) and big key ($32) now serve only S3 ($8000). Before this patch S3's big key wrote D7's bit $0008; D7's real big key is the $A2 knight drop. The game reads ZScream's bank-$0F entrance tables ($02:DA96 LDA $9800,X); the old table at $02:D48B is dead data that yaze still reads and writes (room_entrance.h), so it is updated too, to keep yaze/z3ed showing the live value.",
+  "edits": [
+    {
+      "id": "s3-entrance-0C-room-guard",
+      "pc": "0x78018",
+      "snes": "$0F8018",
+      "before": "53 00",
+      "after": "53 00",
+      "why": "guard only: ZScream entrance room table ($0F:8000 + 2*$0C) must still say room $0053"
+    },
+    {
+      "id": "s3-entrance-0C-dungeon-id",
+      "pc": "0x7980C",
+      "snes": "$0F980C",
+      "before": "09",
+      "after": "00",
+      "why": "ZScream entrance dungeon-ID table ($0F:9800 + $0C): $09 (odd) -> $00"
+    },
+    {
+      "id": "s3-entrance-0C-dungeon-id-yaze-mirror",
+      "pc": "0x15497",
+      "snes": "$02D497",
+      "before": "09",
+      "after": "00",
+      "why": "old entrance dungeon-ID table ($02:D48B + $0C), not read by the game (bank $0F table is live); yaze/z3ed read and write this one"
+    }
+  ]
+}

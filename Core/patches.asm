@@ -6,11 +6,47 @@
 ; values so a changed chest table fails closed instead of patching a wrong byte.
 assert read2($01E9E6) == $8073, "Room $73 big-chest record moved"
 assert read1($01E9E8) == $39 || read1($01E9E8) == $3A, "Unexpected room $73 big-chest item"
-org $01E9E8 : db $3A ; Pendant of Power
+org $01E9E8 : db $39 ; Pendant of Power: receipt handler sets $7EF374 bit $02
 
 assert read2($01E9F5) == $807A, "Room $7A big-chest record moved"
 assert read1($01E9F7) == $38 || read1($01E9F7) == $39, "Unexpected room $7A big-chest item"
-org $01E9F7 : db $39 ; Pendant of Wisdom
+org $01E9F7 : db $38 ; Pendant of Wisdom: receipt handler sets $7EF374 bit $01
+
+; D7 (Dragon Ship) has no big-key chest: the Stalfos Knight in room $A2 (NE
+; alcove, behind the interior small-key door) drops the Big Key. The drop is a
+; sprite-list entry $FD,xx,$E4 after the knight (Underworld_LoadSingleSprite
+; $09:C327 -> SprDrop 2 -> sprite $E5 -> item $32). It is the only big-key drop
+; in the ROM and chest-table audits do not see it. Fail the build if a sprite
+; edit in yaze/ZScream loses it (D7's boss door $C4 would have no key).
+; Emits no bytes. Docs/Technical/Dungeon_Tables_Expansion.md section 6.
+!D7BK_ptrs #= $090000|read2($09C298)             ; RoomData_SpritePointers (LDA.w operand at $09:C297)
+!D7BK_p #= ($090000|read2(!D7BK_ptrs+($A2*2)))+1 ; first entry of room $A2's sprite list
+!D7BK_found = 0
+while read1(!D7BK_p) != $FF
+  if read1(!D7BK_p) == $FD && read1(!D7BK_p+2) == $E4
+    !D7BK_found = 1
+  endif
+  !D7BK_p #= !D7BK_p+3
+endwhile
+assert !D7BK_found == 1, "D7 room $A2 lost its big-key drop (sprite entry $FD,xx,$E4); D7's boss door $C4 needs it"
+
+; Pit inner-corner objects ($FA2-$FA5) place tile $055 (type $02, solid) and
+; tile $07C (type $00, floor) one cell inside the pit or lava. With the Roc's
+; Feather these specks stop a jump in mid-air or let Link stand on lava.
+; The 2026-09-24 yaze audit found both tiles only inside pits in all 296
+; rooms, so both become pit tiles. UnderworldTileTypes is shared by every
+; blockset (LoadDefaultTileTypes, #_0E97D9).
+assert read1($0E9659+$055) == $02 || read1($0E9659+$055) == $20, "Unexpected tile type for tile $055"
+org $0E9659+$055 : db $20
+assert read1($0E9659+$07C) == $00 || read1($0E9659+$07C) == $20, "Unexpected tile type for tile $07C"
+org $0E9659+$07C : db $20
+
+; D6 room $B8 has pits but holewarp $00, so a fall loaded room $00 (the
+; Kydreeok room). List $B8 as a damage-pit room instead: a fall costs one
+; heart and respawns Link. Uses the last of five $0123 filler entries in
+; RoomsWithPitDamage ($00:990C, 57 words).
+assert read2($00997C) == $0123 || read2($00997C) == $00B8, "Unexpected pit-damage table tail"
+org $00997C : dw $00B8
 
 ; =========================================================
 ; JumpTableLocal Guard (Black-Screen Prevention)
@@ -98,6 +134,10 @@ assert pc() <= $00841E
 
 ; =========================================================
 
+; With !ENABLE_EARLY_GAME_BALANCE the vanilla Heart item returns at $1EF27D
+; (base ROM bytes) and Bananas move to shop item type $0E
+; (Core/early_game_balance.asm).
+if !ENABLE_EARLY_GAME_BALANCE == 0
 org $1EF27D ; @hook module=Core
 ShopItem_Banana:
 {
@@ -134,6 +174,7 @@ org $1EF42E
   dw   4,  16 : db $30, $02, $00, $00 ; 0
   dw   0,   0 : db $E5, $03, $00, $02 ; item
   dw   4,  11 : db $38, $03, $00, $00 ; shadow
+endif
 
 ; =========================================================
 
@@ -173,6 +214,13 @@ org $1EE630 : LDA.b #$03 : STA.w $04C6
 ; Kid at ranch checks for flute
 org $05FF7D : LDA.l $7EF34C : CMP.b #$01
 
+; Kid at ranch: vanilla msg $147 path writes MapIcon ($7EF3C7) = 2 at
+; $05FF8F, reachable before D1. The map icon timeline drops that write
+; (Docs/Debugging/Issues/world_map_icons_2026-09-26.md).
+if !ENABLE_MAP_ICON_TIMELINE == 1
+  org $05FF8F : NOP #6
+endif
+
 ; Raven Damage (LW/DW)
 org $068963 : db $81, $84
 
@@ -208,3 +256,8 @@ SpriteDraw_RunningBoy:
 org $06891B : NOP #12
 
 ; (SPC upload timeout hook removed – revert to vanilla handshake)
+
+; Early-game balance (default off; see Util/macros.asm).
+if !ENABLE_EARLY_GAME_BALANCE == 1
+  incsrc "Core/early_game_balance.asm"
+endif

@@ -26,7 +26,10 @@ HUD_ClockDisplay:
   JSL SongTintTick ; Per-frame song tint decay (safe for any M/X width)
   JSR RunClock
   JSR DrawClockToHud
-  REP #$30 ; Ensure 16-bit A/X/Y for vanilla garnish routine
+  ; Vanilla calls Garnish_ExecuteUpperSlots_long from Sprite_Main with 8-bit
+  ; A/X/Y (LDX.b #$1D / CPX.b #$0E). With 16-bit X the upper slots ($0F-$1D)
+  ; never ran: thrown pot/bush debris (garnish $16) froze invisibly (2026-09-26).
+  SEP #$30
   JSL $09B06E ; Restore Garnish_ExecuteUpperSlots_long
   PLP
   RTL
@@ -192,22 +195,25 @@ TimeSystem_UpdatePalettes:
     JSL RomToPaletteBuffer	; update buffer palette
     JSL PaletteBufferToEffective	; update effective palette
 
-    ; rain layer ?
-    LDA $8C : CMP #$9F : BEQ .skip_bg_updt
-      LDA $8C : CMP #$9E : BEQ .skip_bg_updt	; canopy layer ?
-        CMP #$97 : BEQ .skip_bg_updt	; fog layer?
-        JSL Overworld_SetFixedColAndScroll ; update background color
-        RTS
-
-    .skip_bg_updt ; prevent the sub layer from disappearing ($1D zeroed)
-    JSL Overworld_SetFixedColAndScroll_AltEntry
+    ; Refresh explicitly even in diagnostic builds with Masks disabled.
+    ; An hourly tint change does not change overlays: keep $1C/$1D, $99/$9A,
+    ; fixed color and BG scroll exactly as the active overlay configured them.
+    JSL RefreshOverworldBackdrop
+    INC.b $15
     RTS
 }
 
 CheckForSongOfTime:
 {
   ; Check if Song of Time was activated
-  LDA.b SongFlag : CMP.b #$02 : BNE +
+  LDA.b SongFlag : CMP.b #$02 : BEQ .song_of_time
+    ; Speed 0 is only valid while the song is active. A song listener or
+    ; Save & Quit can clear SongFlag before 6am/6pm; without this, time
+    ; stays fast for the rest of the session (Discord 2024-08-25).
+    LDA.l TimeState.Speed : BNE +
+      LDA.b #$3F : STA.l TimeState.Speed
+    BRA +
+  .song_of_time
     ; Speed up the time
     LDA.b #$00 : STA.l TimeState.Speed
 
@@ -256,6 +262,13 @@ CheckIfNight:
     RTL
   +
   LDA.l GameState : CMP.b #$02 : BCC .day_time
+if !ENABLE_PART00_NIGHT_FIX == 1
+    ; Farore met (GameState 2) but Kydrog's ambush not played yet: keep the
+    ; day list. Only it holds Farore and Kydrog in the Forest Glade ($80);
+    ; the night list has neither, so at night Link auto-walked into the Maku
+    ; Tree's $20 with InCutScene still 1 (input locked): softlock.
+    LDA.l KydrogFaroreRemoved : BEQ .day_time
+endif
     LDA TimeState.Hours : CMP.b #$12 : BCS .night_time
       LDA TimeState.Hours : CMP.b #$06 : BCC .night_time
       .day_time
@@ -459,11 +472,59 @@ ColorSubEffect:
     dw $0004, $0006, $0008, $0008
 }
 
+; Contract: any M/X width; caller has established outdoors. Preserve P/X/Y/DBR.
+; A and TimeState color scratch are clobbered. Upload scheduling stays with caller.
+RefreshOverworldBackdrop:
+{
+  PHP
+  REP #$30
+  PHX
+  JSL ReadOverworldBackdropColor
+  JSL BackgroundFix
+  PLX
+  PLP
+  RTL
+}
+
+; Contract: M=16, X=16. Returns raw BGR555 in A, clobbers X.
+; ZS has 160 word entries; $80-$9F require offsets $0100-$013E.
+; The bridge shares area $80 and is distinguished by fake exit room $0181.
+ReadOverworldBackdropColor:
+{
+  LDA.b $8A : AND.w #$00FF
+  CMP.w #$00A0 : BCS .invalid_area
+  CMP.w #$0080 : BNE .area_color
+    LDA.b $A0 : CMP.w #$0181 : BNE .reload_area
+      LDA.l $288149 ; Pool_BGColorTable_Bridge
+      RTL
+  .reload_area
+  LDA.b $8A : AND.w #$00FF
+  .area_color
+  ASL : TAX
+  LDA.l $288000, X ; Pool_BGColorTable
+  RTL
+  .invalid_area
+  LDA.w #$0000
+  RTL
+}
+
+; Contract: M=16, any X width. Raw color in A; tinted color out.
+; Preserve X for palette loaders. Zero is black, not a request to retain
+; the previous area's color. Seed SubColor here, never inherit old scratch.
+TintBackdropColor:
+{
+  STA.l TimeState.SubColor
+  CMP.w #$0000 : BEQ .black
+    PHX
+    JSL ColorSubEffect
+    PLX
+  .black
+  RTL
+}
+
 BackgroundFix:
 {
-  BEQ .no_effect		;BRAnch if A=#$0000 (transparent bg)
-    JSL ColorSubEffect
-  .no_effect:
+  JSL TintBackdropColor
   STA.l PalCgram500_HUD
   STA.l PalBuf300_HUD
   STA.l PalCgram540_BG
@@ -473,9 +534,8 @@ BackgroundFix:
 
 MosaicFix:
 {
-  BEQ +
-    JSL ColorSubEffect
-  +
+  ; Fade targets only: writing the main buffer here doubles PaletteFilter.
+  JSL TintBackdropColor
   STA.l PalBuf300_HUD
   STA.l PalBuf340_BG
   RTL
@@ -516,31 +576,12 @@ GlovesFix:
 
 ColorBgFix:
 {
-  ; [2026-01-30] Defensive width-match fix: force M=16 before PHA so it
-  ; always pushes 2 bytes, matching the PLA after REP #$30 on both exits.
-  ; TESTED: Did NOT fix State 1 (OW softlock) or State 2 (dungeon freeze).
-  ; Kept as a correctness hardening — all observed callers already have
-  ; M=16 at entry, so this is a no-op in practice.
-  PHP
-  REP #$20        ; force M=16 so PHA pushes 2 bytes (width-match fix)
-  PHA
-  SEP #$30
-  ; Check for save and quit
-  LDA.b $10 : CMP.b #$17 : BEQ .vanilla
-    REP #$30
-    PLA
-    STA.l TimeState.SubColor
-    JSL ColorSubEffect
-    STA.l PalCgram500_HUD
-    STA.l PalCgram540_BG
-    PLP
-    RTL
-.vanilla
-    REP #$30
-    PLA
-    STA.l PalCgram500_HUD
-    PLP
-    RTL
+  ; $0ED618 already tinted A through InitColorLoad2/MosaicFix. The other
+  ; active entry, $0ED5F4, supplies literal black. Replay the displaced store
+  ; without tinting again; vanilla $0ED5FD-$0ED605 writes the other buffers.
+  ; Contract: M=16. Preserve A, X, Y, P and DBR.
+  STA.l PalCgram500_HUD
+  RTL
 }
 
 ; Contract: Does NOT modify P explicitly. Return P = entry P. Stack: no push/pull; JSR-safe.
@@ -616,6 +657,7 @@ pushpc
 
 ; SetBGColorMainBuffer
 org $0ED5F9 : JSL ColorBgFix ; @hook module=Overworld name=ColorBgFix kind=jsl target=ColorBgFix
+assert pc() <= $0ED5FD ; The remaining vanilla stores must stay intact.
 
 ; OverworldMosaicTransition_HandleScreensAndLoadShroom
 org $02AE92 : NOP #6

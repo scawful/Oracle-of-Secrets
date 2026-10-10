@@ -6,9 +6,13 @@
 #
 # Suites: smoke (default) | regression | full
 # Options: --quick (=smoke) --full --tag TAG -q|--quiet -v|--verbose --fail-fast
-#          --moe | --no-moe --junit | --json
+#          --moe | --no-moe --junit | --json --skip-load --rom PATH --dry-run
 #
-# Env: MESEN2_SOCKET_PATH, OOS_TEST_BACKEND, OOS_MOE_ENABLED
+# --rom binds {rom} (and the .sym/hooks.json beside it) in exec steps such as
+# Tests/smoke/lint_pass.json. --dry-run validates definitions without running.
+#
+# Env: MESEN2_SOCKET_PATH, OOS_TEST_BACKEND, OOS_MOE_ENABLED, OOS_TEST_ROM,
+#      OOS_TEST_REQUIRE_EMULATOR, OOS_TEST_REQUIRE_ARTIFACTS
 
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -32,8 +36,14 @@ while [[ $# -gt 0 ]]; do
     --json)  ARGS+=(--output-format json); shift ;;
     --tag)   ARGS+=("--tag" "$2"); shift 2 ;;
     --fail-fast) ARGS+=(--fail-fast); shift ;;
+    --skip-load) ARGS+=(--skip-load); shift ;;
+    --dry-run) ARGS+=(--dry-run); shift ;;
+    --rom)
+      # Resolve now: the runner starts from the repo root, not the caller's cwd.
+      if [[ "$2" == /* ]]; then ARGS+=(--rom "$2"); else ARGS+=(--rom "$PWD/$2"); fi
+      shift 2 ;;
     --help|-h)
-      echo "Usage: $0 [smoke|regression|full] [--tag TAG] [-q|--quiet] [-v|--verbose] [--fail-fast] [--moe|--no-moe] [--junit|--json]"
+      echo "Usage: $0 [smoke|regression|full] [--tag TAG] [-q|--quiet] [-v|--verbose] [--fail-fast] [--moe|--no-moe] [--junit|--json] [--skip-load] [--rom PATH] [--dry-run]"
       exit 0
       ;;
     *) echo "Unknown option: $1"; exit 1 ;;

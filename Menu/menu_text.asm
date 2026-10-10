@@ -151,8 +151,9 @@ Menu_PortalRodItems:
   dw "__PORTAL_ROD__  "
 
 Menu_SongNames:
-  dw "SONG:_STORMS__  "
+  ; CurrentSong order (Items/ocarina.asm, Menu_DrawMusicNotes): 1 = Healing, 2 = Storms.
   dw "SONG:_HEALING_  "
+  dw "SONG:_STORMS__  "
   dw "SONG:_SOARING_  "
   dw "SONG:_TIME____  "
 
@@ -165,12 +166,26 @@ Menu_RingNames:
   dw "___STEADFAST__  "
 
 Menu_RingDescriptions:
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+  ; Power and Armor have no penalty in code (Items/magic_rings.asm
+  ; MagicRing_CheckForPower / MagicRing_CheckForArmor), so none is shown.
+  dw "_____ATK_UP_____"
+  dw "_____DEF_UP_____"
+  dw "SLOW_HEART_REGEN"
+  dw "SWD_BEAM_2_HRTS_"
+  ; Blast gives bombs the Bombos damage class ($0D): most foes burn, but some
+  ; (Moldorm, Armos Knights, Puffstool, ...) take no bomb damage, so "damage
+  ; up" is not true for every foe (m3 truth README, damage matrix).
+  dw "___FIRE_BOMBS___"
+  dw "__NO_KNOCKBACK__"
+else
   dw "ATK_UP__DEF_DOWN"
   dw "ATK_DOWN__DEF_UP"
   dw "SLOW_HEART_REGEN"
   dw "SWD_BEAM_2_HRTS_"
   dw "_BOMB_DAMAGE_UP_"
   dw "__NO_KNOCKBACK__"
+endif
 
 Menu_RingsFound:
   dw "NEW_RING_FOUND__"
@@ -188,10 +203,21 @@ Menu_DrawItemName:
     RTS
   .haveItem
 
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.w $0202 : CMP.b #$1A : BNE .not_goldstar_cell
+  JSR DrawGoldstarName
+  RTS
+  .not_goldstar_cell
+  LDA.w $0202
+else
   LDA.w $0202 : CMP.b #$03 : BEQ .goldstar
+endif
                 CMP.b #$05 : BEQ .mushroom
                 CMP.b #$0D : BEQ .ocarina
                 CMP.b #$10 : BEQ .custom_rods
+if !ENABLE_PORTAL_ROD_CELL == 1
+                CMP.b #$19 : BEQ .portal_rod_cell
+endif
   ; Check if it's a bottle
                 CMP.b #$06 : BEQ .bottle_1
                 CMP.b #$0C : BEQ .bottle_2
@@ -226,7 +252,12 @@ Menu_DrawItemName:
         RTS
 
       .custom_rods
+if !ENABLE_PORTAL_ROD_CELL == 1
+      JMP .draw_item                ; the $10 cell is only the Fishing Rod
+      .portal_rod_cell
+else
       LDA.w FishingOrPortalRod : CMP.b #$01 : BNE .draw_item
+endif
         JSR DrawPortalRodName
         RTS
 
@@ -245,7 +276,11 @@ Menu_DrawItemName:
 
     ; Check the timer and see if we should draw the item name
     LDA $1A : AND.w #$00FF : CMP #$0080 : BCC .draw_item
+if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
+  LDA $030F : AND.w #$00FF : BEQ .draw_item ; no song: "OCARINA" only
+else
   LDA $030F : BEQ .draw_item
+endif
   LDA $030F : AND.w #$00FF : DEC : ASL #5 : TAX
   LDY.w #$0000
 
@@ -281,6 +316,7 @@ DrawBottleNames:
   RTS
 }
 
+if !MENU_DROP_RING_BOX == 0
 DrawMagicRingNames:
 {
   REP #$30
@@ -311,6 +347,8 @@ DrawMagicRingNames:
   SEP #$30
   RTS
 }
+
+endif
 
 Menu_CollectibleNames:
   dw "BANANAS:________"
@@ -582,16 +620,43 @@ Menu_DrawCharacterName:
 Menu_DrawButtonPrompt:
 {
   REP #$30
+  ; With !ENABLE_MENU_PAGE_LOOP the "Y:RINGS" half is not drawn: L/R reach
+  ; the rings on page 3, and Y no longer opens them.
+if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
+  ; Draw each half only when its submenu is unlocked. A hidden half keeps
+  ; the frame tiles that Menu_DrawBackground just wrote.
+  JSR Menu_CheckJournalUnlocked : BCC .no_log
+    LDX.w #$0E           ; "X:LOG   " = 8 tiles
+    .log_loop
+    LDA.w ButtonPromptTXT, X : STA.w $1254, X
+    DEX : DEX : BPL .log_loop
+  .no_log
+
+if !ENABLE_MENU_PAGE_LOOP == 0
+  JSR Menu_CheckRingsUnlocked : BCC .no_rings
+    LDX.w #$0E           ; "Y:RINGS " = 8 tiles
+    .rings_loop
+    LDA.w ButtonPromptTXT+$10, X : STA.w $1264, X
+    DEX : DEX : BPL .rings_loop
+  .no_rings
+endif
+else
+if !ENABLE_MENU_PAGE_LOOP == 1
+  LDX.w #$0E             ; "X:LOG   " only, 8 tiles
+else
   LDX.w #$1E             ; 16 tiles (32 bytes - 2 = $1E)
+endif
 
   .loop
   LDA.w ButtonPromptTXT, X : STA.w $1254, X
   DEX : DEX : BPL .loop
+endif
 
   SEP #$30               ; Restore 8-bit mode before return
   RTS
 }
 
+if !MENU_DROP_RING_BOX == 0
 Menu_DrawRingBoxPrompt:
 {
   REP #$30
@@ -604,3 +669,4 @@ Menu_DrawRingBoxPrompt:
   SEP #$30
   RTS
 }
+endif

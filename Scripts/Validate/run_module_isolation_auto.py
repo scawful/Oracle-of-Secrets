@@ -7,9 +7,9 @@ bisect_softlock test (load state 1, run N frames, check mode/PC). Records pass/f
 writes a summary + optional JSON report.
 
 Usage:
-  python3 Scripts/run_module_isolation_auto.py [--no-reload] [--json results.json] [--frames 600]
-  python3 Scripts/run_module_isolation_auto.py --module menu   # Single module only
-  python3 Scripts/run_module_isolation_auto.py --dry-run      # Print steps, no build/test
+  python3 Scripts/Validate/run_module_isolation_auto.py [--no-reload] [--json results.json] [--frames 600]
+  python3 Scripts/Validate/run_module_isolation_auto.py --module menu   # Single module only
+  python3 Scripts/Validate/run_module_isolation_auto.py --dry-run      # Print steps, no build/test
 
 Requires: Mesen2 running with socket; save state 1 (overworld repro) present.
 After each build, ROM is reloaded via mesen2_client.py rom-load unless --no-reload.
@@ -25,7 +25,11 @@ from datetime import datetime
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent
+REPO_ROOT = SCRIPT_DIR.parents[1]
+SET_MODULE_FLAGS = REPO_ROOT / "Scripts" / "Build" / "set_module_flags.py"
+BUILD_ROM = REPO_ROOT / "Scripts" / "Build" / "build_rom.sh"
+MESEN2_CLIENT = REPO_ROOT / "Scripts" / "Mesen2" / "mesen2_client.py"
+BISECT_SOFTLOCK = REPO_ROOT / "Scripts" / "Debug" / "bisect_softlock.py"
 
 # FixPlan Phase 1B order (safest first)
 MODULES_ORDER = [
@@ -41,14 +45,26 @@ MODULES_ORDER = [
 
 
 def run_cmd(cmd: list[str], cwd: Path, timeout: int = 120, capture: bool = True) -> tuple[int, str, str]:
-    r = subprocess.run(
-        cmd,
-        cwd=cwd,
-        capture_output=capture,
-        text=True,
-        timeout=timeout,
-    )
+    try:
+        r = subprocess.run(
+            cmd,
+            cwd=cwd,
+            capture_output=capture,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        return 124, "", f"Command timed out after {exc.timeout}s: {cmd[0]}"
+    except OSError as exc:
+        return 127, "", str(exc)
     return r.returncode, r.stdout or "", r.stderr or ""
+
+
+def has_rom_output(path: Path) -> bool:
+    try:
+        return path.is_file() and path.stat().st_size > 0
+    except OSError:
+        return False
 
 
 def main() -> int:
@@ -99,6 +115,8 @@ def main() -> int:
     rom_path = REPO_ROOT / "Roms" / "oos168x.sfc"
     results: list[dict] = []
     guilty_candidates: list[str] = []
+    infrastructure_failed = False
+    restoration = {"status": "not_requested", "note": ""}
 
     print("Module isolation (automated)")
     print("Order:", ", ".join(modules_to_run))
@@ -117,7 +135,7 @@ def main() -> int:
 
         # 1. Set disable flag
         rc, _, err = run_cmd(
-            [sys.executable, str(SCRIPT_DIR / "set_module_flags.py"), "--disable", module],
+            [sys.executable, str(SET_MODULE_FLAGS), "--disable", module],
             cwd=REPO_ROOT,
         )
         if rc != 0:
@@ -125,11 +143,12 @@ def main() -> int:
             step["note"] = f"set_module_flags failed: {err.strip()}"
             print("  ERROR:", step["note"])
             results.append(step)
-            continue
+            infrastructure_failed = True
+            break
 
         # 2. Build
         rc, _, err = run_cmd(
-            ["./Scripts/build_rom.sh", "168"],
+            [str(BUILD_ROM), "168"],
             cwd=REPO_ROOT,
             capture=not args.verbose,
         )
@@ -138,28 +157,42 @@ def main() -> int:
             step["note"] = err.strip() or "Build failed"
             print("  BUILD FAILED")
             results.append(step)
-            continue
+            infrastructure_failed = True
+            break
+
+        if not has_rom_output(rom_path):
+            step["result"] = "error"
+            step["note"] = f"Build reported success but ROM output is missing or empty: {rom_path}"
+            print("  ERROR:", step["note"])
+            results.append(step)
+            infrastructure_failed = True
+            break
 
         # 3. Reload ROM in Mesen2 (so new build is used)
-        if not args.no_reload and rom_path.exists():
-            rc, _, _ = run_cmd(
+        if not args.no_reload:
+            rc, _, err = run_cmd(
                 [
                     sys.executable,
-                    str(SCRIPT_DIR / "mesen2_client.py"),
+                    str(MESEN2_CLIENT),
                     "rom-load",
                     str(rom_path),
                 ],
                 cwd=REPO_ROOT,
                 timeout=10,
             )
-            if rc != 0 and args.verbose:
-                print("  (rom-load failed; continuing anyway)")
+            if rc != 0:
+                step["result"] = "error"
+                step["note"] = f"rom-load failed: {err.strip() or f'exit {rc}'}"
+                print("  ERROR:", step["note"])
+                results.append(step)
+                infrastructure_failed = True
+                break
 
         # 4. Run softlock test (no build)
         rc, _, err = run_cmd(
             [
                 sys.executable,
-                str(SCRIPT_DIR / "bisect_softlock.py"),
+                str(BISECT_SOFTLOCK),
                 "--no-build",
                 "--slot",
                 str(args.slot),
@@ -175,27 +208,48 @@ def main() -> int:
             step["note"] = "Mesen2 not connected or load/run failed"
             print("  SKIP (Mesen2/state)")
             results.append(step)
-            continue
+            infrastructure_failed = True
+            break
         if rc == 0:
             step["result"] = "pass"
             step["note"] = "No softlock in test window"
             print("  PASS (no crash) <- guilty candidate?")
             guilty_candidates.append(module)
-        else:
+        elif rc == 1:
             step["result"] = "fail"
             step["note"] = "Softlock or corruption detected"
             print("  FAIL (crash)")
+        else:
+            step["result"] = "error"
+            step["note"] = f"softlock test could not produce a gameplay result: {err.strip() or f'exit {rc}'}"
+            print("  ERROR:", step["note"])
+            infrastructure_failed = True
         results.append(step)
+        if infrastructure_failed:
+            break
 
     # Reset to all enabled (unless single-module run)
     if not args.module and not args.dry_run:
         print("")
         print("Resetting: all modules enabled, build...")
-        run_cmd(
-            [sys.executable, str(SCRIPT_DIR / "set_module_flags.py"), "--profile", "all"],
+        rc, _, err = run_cmd(
+            [sys.executable, str(SET_MODULE_FLAGS), "--profile", "all"],
             cwd=REPO_ROOT,
         )
-        run_cmd(["./Scripts/build_rom.sh", "168"], cwd=REPO_ROOT, capture=not args.verbose)
+        if rc != 0:
+            restoration = {"status": "failed", "note": f"flag reset failed: {err.strip() or f'exit {rc}'}"}
+        else:
+            rc, _, err = run_cmd([str(BUILD_ROM), "168"], cwd=REPO_ROOT,
+                                 capture=not args.verbose)
+            if rc != 0:
+                restoration = {"status": "failed", "note": f"reset build failed: {err.strip() or f'exit {rc}'}"}
+            elif not has_rom_output(rom_path):
+                restoration = {"status": "failed", "note": f"reset ROM output missing or empty: {rom_path}"}
+            else:
+                restoration = {"status": "passed", "note": "All modules enabled and ROM rebuilt"}
+        if restoration["status"] == "failed":
+            infrastructure_failed = True
+            print("  RESTORE FAILED:", restoration["note"])
 
     # Summary
     print("")
@@ -206,6 +260,8 @@ def main() -> int:
         print("")
         print("Guilty candidates (crash GONE when disabled):", ", ".join(guilty_candidates))
         print("  -> Bisect inside that module next (comment out incsrc in its all_*.asm).")
+    if restoration["status"] != "not_requested":
+        print("Restoration:", restoration["status"], restoration["note"])
 
     if args.json:
         out_path = Path(args.json)
@@ -217,12 +273,13 @@ def main() -> int:
             "frames": args.frames,
             "results": results,
             "guilty_candidates": guilty_candidates,
+            "restoration": restoration,
         }
         out_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
         print("")
         print("Wrote:", out_path)
 
-    return 0
+    return 1 if infrastructure_failed else 0
 
 
 if __name__ == "__main__":

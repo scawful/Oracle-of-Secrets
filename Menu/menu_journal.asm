@@ -248,7 +248,7 @@ Journal_DrawEntry:
 ; Format: Address(3), Mask(1), TextPtr(2) = 6 bytes
 Journal_MasterList:
   ; === Chapter 0: A Hero is Born ===
-  dl $7EF3C5 : db $02 : dw Entry_TheCall        ; GameState = $02 (Farore intro)
+  dl $7EF3C5 : db $02 : dw Entry_TheCall        ; GameState bit 1 (sent to the Abyss)
   dl $7EF3C6 : db $04 : dw Entry_CastAway       ; OOSPROG2 bit 2 (Kydrog intro)
 
   ; === Chapter 1: The Maku Tree ===
@@ -571,7 +571,7 @@ Entry_GoronQuest:
   dw "GORON_QUEST_____"
   dw "________________"
   dw "THE_GORON_NEEDS_"
-  dw "5_ROCK_SIRLOINS_"
+  dw "5_ROCK_MEAT_____"
   dw "TO_OPEN_THE_____"
   dw "MINES._I_SHOULD_"
   dw "SEARCH_THE______"
@@ -585,6 +585,13 @@ Entry_GoronQuest:
 Menu_DrawJournal:
 {
   PHB : PHK : PLB
+if !ENABLE_MENU_AUDIT_FIXES == 1
+  ; $0207 is also the page cursor's blink counter; left over, Journal_Handler
+  ; treats it as a page-turn delay (up to ~3 s from Quest or page 3). Every
+  ; open calls this; a page turn sets its $0A delay after the call.
+  SEP #$20
+  STZ.w $0207
+endif
   REP #$30
 
   ; Page selection logic:

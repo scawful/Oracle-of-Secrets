@@ -25,6 +25,26 @@ DekuFloating   = $70
 ; Unset, will shoot deku bubble instead
 DekuHover      = $71
 
+if !ENABLE_MINISH_AUTO_PORTAL == 1
+; Volatile portal state after the cart arrays/cache and its 16-bit slot word.
+; Boot clears this pair at $0087CE. MinishPortal_Tick owns visit cleanup;
+; ResetTrackVars must not clear it. All portal accesses remain 8-bit absolute.
+MinishPortalTimer = $7E07EC ; 0 = idle, 1-59 charging, $FF = toggled, wait for movement
+MinishPortalFrame = $7E07ED ; $1A of the last frame the portal was handled
+assert MinishPortalFrame == MinishPortalTimer+1
+assert MinishPortalTimer >= $7E0718
+assert MinishPortalFrame < $7E0800 ; OAM buffer begins here
+if !DISABLE_SPRITES == 0
+  assert MinishPortalTimer >= $7E0000+!MinecartTrackRoom+$40
+  assert MinishPortalTimer >= $7E0000+!MinecartTrackX+$40
+  assert MinishPortalTimer >= $7E0000+!MinecartTrackY+$40
+  assert MinishPortalTimer > $7E0000+!MinecartTrackCache
+  assert MinishPortalTimer > $7E0000+!MinecartDirectionCache
+  ; Mount/release/transition paths access MinecartCurrent with M=16.
+  assert MinishPortalTimer >= $7E0000+!MinecartCurrent+$02
+endif
+endif
+
 AddTransformationCloud = $09912C
 Link_CheckNewY_ButtonPress = $07B073
 LinkItem_EvaluateMagicCost = $07B0AB

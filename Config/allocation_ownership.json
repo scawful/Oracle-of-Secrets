@@ -1,0 +1,1470 @@
+{
+  "schema_version": 1,
+  "description": "Bounded ownership evidence, not a free-space allocator. Half-open extents; save_buffer is physically WRAM.",
+  "source_sets": {
+    "shared": "Isolated weekend RC integration: Origins 47-feature continuation plus Minish/cart, music cache, HeavyPot/palette repairs. This source-set name does not refer to the shared checkout.",
+    "pending_rc": "Separate origins continuation source; bind explicitly",
+    "vanilla": "Local usdasm reference; bind explicitly"
+  },
+  "sources": {
+    "shared:Sprites/Objects/minecart.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Objects/minecart.asm",
+      "sha256": "bfd3a9f0c867ef03f3bbd6d4858a2bfb91a29ae1458bd0af738d540023b0ee7d"
+    },
+    "shared:Masks/all_masks.asm": {
+      "source_set": "shared",
+      "path": "Masks/all_masks.asm",
+      "sha256": "daaeb1ba36d5808d66301d712db12bc742befb68fee239fe74268e462a8b5332"
+    },
+    "shared:Masks/mask_routines.asm": {
+      "source_set": "shared",
+      "path": "Masks/mask_routines.asm",
+      "sha256": "e658a2fba812260d38a714d3f83dcef07c2c24d7aec99b855ef6e18c2869730f"
+    },
+    "vanilla:bank_02.asm": {
+      "source_set": "vanilla",
+      "path": "bank_02.asm",
+      "sha256": "b97f64236cc51c5c1c977ae39cbfdeb4be578d5a28b5eafd4203c3be81436b9c"
+    },
+    "shared:Items/fishing_rod.asm": {
+      "source_set": "shared",
+      "path": "Items/fishing_rod.asm",
+      "sha256": "b59ebea81e37a536a4c08b7282a0210f347e3b19caff13a1e007126d8026085b"
+    },
+    "shared:Core/ram.asm": {
+      "source_set": "shared",
+      "path": "Core/ram.asm",
+      "sha256": "a0d5f72ddbf9b2937b94a10bbb08b1d7575b28cf3f794c80a19af75c5d2f59f3"
+    },
+    "shared:Overworld/overlays.asm": {
+      "source_set": "shared",
+      "path": "Overworld/overlays.asm",
+      "sha256": "105e8d2ac8f85c63c487193a23dcf86a8c630736f62779df857913e1fb1f1cd4"
+    },
+    "shared:Core/sram.asm": {
+      "source_set": "shared",
+      "path": "Core/sram.asm",
+      "sha256": "14bb6d7fcd3b10c15a22f373052ed4391f4ba35a8c8ed820b1dc7eb0baac3cbf"
+    },
+    "shared:Items/magic_rings.asm": {
+      "source_set": "shared",
+      "path": "Items/magic_rings.asm",
+      "sha256": "5d84e67928ff344671f1e91db4ede8bd7fb1fdfb7484d23cc7158ef4731e1224"
+    },
+    "pending_rc:Core/sram.asm": {
+      "source_set": "pending_rc",
+      "path": "Core/sram.asm",
+      "sha256": "14bb6d7fcd3b10c15a22f373052ed4391f4ba35a8c8ed820b1dc7eb0baac3cbf"
+    },
+    "pending_rc:Masks/mask_binding.asm": {
+      "source_set": "pending_rc",
+      "path": "Masks/mask_binding.asm",
+      "sha256": "ff6cd79e3a1174c19320cb84dd50d6862c8242aada4d28aa07e169e4770cbfaa"
+    },
+    "pending_rc:Items/goldstar.asm": {
+      "source_set": "pending_rc",
+      "path": "Items/goldstar.asm",
+      "sha256": "69c617df245b786febde3ac9a512c91089f38dda851c56c5bb23726cc5a89f98"
+    },
+    "pending_rc:Items/ocarina.asm": {
+      "source_set": "pending_rc",
+      "path": "Items/ocarina.asm",
+      "sha256": "c0099ff6d43c98c692416439cd798dfe3cd24db2e5ea1a289bf6a65d03bd65da"
+    },
+    "shared:Overworld/ZSCustomOverworld.asm": {
+      "source_set": "shared",
+      "path": "Overworld/ZSCustomOverworld.asm",
+      "sha256": "94d7d7704faf916236b019ced369b49a8e7899fcf9ff73b8c78b6f29c54e91eb"
+    },
+    "shared:Sprites/Objects/data/minecart_tracks.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Objects/data/minecart_tracks.asm",
+      "sha256": "d988514d5060217d00ecc98d9c3a394826c08a91022327c800c1d290ad14fd6c"
+    },
+    "shared:Util/macros.asm": {
+      "source_set": "shared",
+      "path": "Util/macros.asm",
+      "sha256": "18dc5895f8d970af82adfa5bff074d9ad9200fa469d42689e939a3518377cb97"
+    },
+    "shared:Config/feature_flags.asm": {
+      "source_set": "shared",
+      "path": "Config/feature_flags.asm",
+      "sha256": "b8d00e97a5f2b9bc53fa317ccf6a077c93aabc0e0be02c78bfe09f47d5c7c772"
+    },
+    "shared:Config/module_flags.asm": {
+      "source_set": "shared",
+      "path": "Config/module_flags.asm",
+      "sha256": "0dfc5ada77bbf92e30b8f7bf30b034ced9ef3d1dd03591fc1f00a835a747586a"
+    },
+    "pending_rc:Util/macros.asm": {
+      "source_set": "pending_rc",
+      "path": "Util/macros.asm",
+      "sha256": "18dc5895f8d970af82adfa5bff074d9ad9200fa469d42689e939a3518377cb97"
+    },
+    "pending_rc:Config/feature_flags.asm": {
+      "source_set": "pending_rc",
+      "path": "Config/feature_flags.asm",
+      "sha256": "b8d00e97a5f2b9bc53fa317ccf6a077c93aabc0e0be02c78bfe09f47d5c7c772"
+    },
+    "pending_rc:Config/module_flags.asm": {
+      "source_set": "pending_rc",
+      "path": "Config/module_flags.asm",
+      "sha256": "0dfc5ada77bbf92e30b8f7bf30b034ced9ef3d1dd03591fc1f00a835a747586a"
+    },
+    "shared:Overworld/music_cache.asm": {
+      "source_set": "shared",
+      "path": "Overworld/music_cache.asm",
+      "sha256": "675fb2f040234591dba29f15ae26d7ceb4567b3ce357526eb88beea25c3e3de4"
+    },
+    "shared:Overworld/storm.asm": {
+      "source_set": "shared",
+      "path": "Overworld/storm.asm",
+      "sha256": "717b0efc91f74456525b9c4bc983ae84c0f8109d9d0dc1fb9bc075e420cb9343"
+    },
+    "shared:Overworld/overworld.asm": {
+      "source_set": "shared",
+      "path": "Overworld/overworld.asm",
+      "sha256": "7383609a52da4913b80cf4bc6e90d7a9eecd21db885e14fd914e83ccc6e902d5"
+    },
+    "shared:Menu/menu_hud.asm": {
+      "source_set": "shared",
+      "path": "Menu/menu_hud.asm",
+      "sha256": "ca3bed3f7a5cbfae980b74dac38fbf8e3a15328b24948fcfbe1d75c2350b1544"
+    },
+    "shared:Core/Cutscene/experiment.asm": {
+      "source_set": "shared",
+      "path": "Core/Cutscene/experiment.asm",
+      "sha256": "fec6e73a6dbb50f4527c251ec8454411ee88504ab89be34aefa309249282094d"
+    },
+    "shared:Sprites/Players/player2.asm": {
+      "source_set": "shared",
+      "path": "Sprites/Players/player2.asm",
+      "sha256": "e2d8ac3338c9a2412db6a2d025bf1d75cc953d3eb611c74ded70b2ea6e299d0a"
+    },
+    "shared:Items/ice_rod.asm": {
+      "source_set": "shared",
+      "path": "Items/ice_rod.asm",
+      "sha256": "8bcd1f79e44e182728726c49bccd99ff2067d56d63df6552376d1244abd87cd5"
+    },
+    "vanilla:bank_00.asm": {
+      "source_set": "vanilla",
+      "path": "bank_00.asm",
+      "sha256": "64f3c51fdef1363288570173921e8c3b5187564d6291718914a68fee740e9386"
+    },
+    "vanilla:bank_01.asm": {
+      "source_set": "vanilla",
+      "path": "bank_01.asm",
+      "sha256": "18fdd57a300718819b3ec613b1782ad113921999c5e353aef629afaa897c98f8"
+    },
+    "vanilla:bank_0C.asm": {
+      "source_set": "vanilla",
+      "path": "bank_0C.asm",
+      "sha256": "79c87d4ceba2be3613c790c984f21fa4adbacf89f32712c330315f030e0fdd54"
+    }
+  },
+  "claims": [
+    {
+      "id": "cart_room",
+      "owner": "Minecart track room",
+      "space": "wram",
+      "base": 8259368,
+      "size": 64,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Parked cart position across room transitions until ResetTrackVars.",
+      "reset": "ResetTrackVars uses #$40: 64 byte stores per array; pre-existing verified shared repair.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Sprites/Objects/minecart.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Sprites/Objects/minecart.asm",
+        "symbol": "!MinecartTrackRoom",
+        "bank00_mirror": true
+      },
+      "count": 32,
+      "stride": 2
+    },
+    {
+      "id": "cart_x",
+      "owner": "Minecart track x",
+      "space": "wram",
+      "base": 8259432,
+      "size": 64,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Parked cart position across room transitions until ResetTrackVars.",
+      "reset": "ResetTrackVars uses #$40: 64 byte stores per array; pre-existing verified shared repair.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Sprites/Objects/minecart.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Sprites/Objects/minecart.asm",
+        "symbol": "!MinecartTrackX",
+        "bank00_mirror": true
+      },
+      "count": 32,
+      "stride": 2
+    },
+    {
+      "id": "cart_y",
+      "owner": "Minecart track y",
+      "space": "wram",
+      "base": 8259496,
+      "size": 64,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Parked cart position across room transitions until ResetTrackVars.",
+      "reset": "ResetTrackVars uses #$40: 64 byte stores per array; pre-existing verified shared repair.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Sprites/Objects/minecart.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Sprites/Objects/minecart.asm",
+        "symbol": "!MinecartTrackY",
+        "bank00_mirror": true
+      },
+      "count": 32,
+      "stride": 2
+    },
+    {
+      "id": "cart_track_cache",
+      "owner": "!MinecartTrackCache",
+      "space": "wram",
+      "base": 8259560,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Single current cart / room-transition handoff.",
+      "reset": "ResetTrackVars clears cache; direction/current are not in its declared reset.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Sprites/Objects/minecart.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Sprites/Objects/minecart.asm",
+        "symbol": "!MinecartTrackCache",
+        "bank00_mirror": true
+      }
+    },
+    {
+      "id": "cart_direction",
+      "owner": "!MinecartDirectionCache",
+      "space": "wram",
+      "base": 8259561,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Single current cart / room-transition handoff.",
+      "reset": "ResetTrackVars clears cache; direction/current are not in its declared reset.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Sprites/Objects/minecart.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Sprites/Objects/minecart.asm",
+        "symbol": "!MinecartDirectionCache",
+        "bank00_mirror": true
+      }
+    },
+    {
+      "id": "cart_current",
+      "owner": "!MinecartCurrent",
+      "space": "wram",
+      "base": 8259562,
+      "size": 2,
+      "status": "shared",
+      "condition": {
+        "DISABLE_SPRITES": 0
+      },
+      "lifetime": "Current cart slot; 16-bit mount/transition writes own $07EA and $07EB.",
+      "reset": "ResetTrackVars clears cache; direction/current are not in its declared reset.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Sprites/Objects/minecart.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "REP #$20",
+        "STA.w !MinecartCurrent",
+        "STZ.w !MinecartCurrent"
+      ],
+      "binding": {
+        "source": "shared:Sprites/Objects/minecart.asm",
+        "symbol": "!MinecartCurrent",
+        "bank00_mirror": true
+      }
+    },
+    {
+      "id": "MinishPortalTimer",
+      "owner": "MinishPortalTimer",
+      "space": "wram",
+      "base": 8259564,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "ENABLE_MINISH_AUTO_PORTAL": 1,
+        "DISABLE_MASKS": 0
+      },
+      "lifetime": "Volatile Minish portal visit/charge; never saved. Preserved independently of parked-cart/reset state.",
+      "reset": "Boot InitializeMemoryAndSRAM clears this word. MinishPortal_Tick clears charge on movement, incompatible form or a nonconsecutive visit; preserves toggled latch until movement. Cart reset does not own this state after relocation.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Masks/all_masks.asm",
+        "shared:Masks/mask_routines.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Masks/all_masks.asm",
+        "symbol": "MinishPortalTimer",
+        "bank00_mirror": true
+      }
+    },
+    {
+      "id": "MinishPortalFrame",
+      "owner": "MinishPortalFrame",
+      "space": "wram",
+      "base": 8259565,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "ENABLE_MINISH_AUTO_PORTAL": 1,
+        "DISABLE_MASKS": 0
+      },
+      "lifetime": "Volatile Minish portal visit/charge; never saved. Preserved independently of parked-cart/reset state.",
+      "reset": "Boot InitializeMemoryAndSRAM clears this word. MinishPortal_Tick clears charge on movement, incompatible form or a nonconsecutive visit; preserves toggled latch until movement. Cart reset does not own this state after relocation.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Masks/all_masks.asm",
+        "shared:Masks/mask_routines.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Masks/all_masks.asm",
+        "symbol": "MinishPortalFrame",
+        "bank00_mirror": true
+      }
+    },
+    {
+      "id": "music_cache_reservation",
+      "owner": "Audited music/ambience volatile reservation",
+      "space": "wram",
+      "base": 8308992,
+      "size": 192,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Valid after AdjustOverworldAmbiance through gameplay/menu/transition/module restoration; invalid before initial fill or after full reset.",
+      "reset": "Intro high-WRAM clear; AdjustOverworldAmbiance fills160 active bytes and overrides index80; storm edits first64. Tail32 reserved and untouched by gameplay initialization.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Overworld/music_cache.asm",
+        "shared:Overworld/storm.asm",
+        "shared:Overworld/ZSCustomOverworld.asm",
+        "vanilla:bank_02.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "!OverworldMusicCapacity = $00C0"
+      ],
+      "count": 192,
+      "stride": 1,
+      "binding": {
+        "source": "shared:Overworld/music_cache.asm",
+        "symbol": "!OverworldMusicCache",
+        "bank00_mirror": false
+      },
+      "container": true
+    },
+    {
+      "id": "music_cache",
+      "owner": "Overworld music and ambience",
+      "space": "wram",
+      "base": 8308992,
+      "size": 160,
+      "status": "shared",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Valid after AdjustOverworldAmbiance through gameplay/menu/transition/module restoration; invalid before initial fill or after full reset.",
+      "reset": "Intro high-WRAM clear; AdjustOverworldAmbiance fills160 active bytes and overrides index80; storm edits first64. Tail32 reserved and untouched by gameplay initialization.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Overworld/music_cache.asm",
+        "shared:Overworld/storm.asm",
+        "shared:Overworld/ZSCustomOverworld.asm",
+        "vanilla:bank_02.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "!OverworldMusicActiveCount = $00A0",
+        "STA.l !OverworldMusicCache,X"
+      ],
+      "count": 160,
+      "stride": 1,
+      "contained_by": "music_cache_reservation",
+      "binding": {
+        "source": "shared:Overworld/music_cache.asm",
+        "symbol": "!OverworldMusicCache",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "fishing_power",
+      "owner": "Fishing rod",
+      "space": "wram",
+      "base": 8346528,
+      "size": 2,
+      "status": "shared",
+      "condition": {
+        "DISABLE_ITEMS": 0
+      },
+      "lifetime": "Fishing action; can coexist with overworld music.",
+      "reset": "EndFishing clears mode; spawn sets mode/floater index. Power extent is a documented reservation, not an observed writer.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Items/fishing_rod.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "$7F5BA0"
+      ],
+      "evidence_kind": "documented_reservation"
+    },
+    {
+      "id": "fishing_mode",
+      "owner": "Fishing rod",
+      "space": "wram",
+      "base": 8346530,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "DISABLE_ITEMS": 0
+      },
+      "lifetime": "Fishing action; can coexist with overworld music.",
+      "reset": "EndFishing clears mode; spawn sets mode/floater index. Power extent is a documented reservation, not an observed writer.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Items/fishing_rod.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "$7F5BA2"
+      ],
+      "evidence_kind": "active_reader_writer"
+    },
+    {
+      "id": "fishing_floater",
+      "owner": "Fishing rod",
+      "space": "wram",
+      "base": 8346531,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "DISABLE_ITEMS": 0
+      },
+      "lifetime": "Fishing action; can coexist with overworld music.",
+      "reset": "EndFishing clears mode; spawn sets mode/floater index. Power extent is a documented reservation, not an observed writer.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Items/fishing_rod.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "$7F5BA3"
+      ],
+      "evidence_kind": "active_reader_writer"
+    },
+    {
+      "id": "text_decomp_reference",
+      "owner": "Vanilla TEXTDECOMP reference",
+      "space": "wram",
+      "base": 8346368,
+      "size": null,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Historical text-decompression label; phase and extent unresolved.",
+      "reset": "Unresolved: no text writer/lifetime proof established in this slice.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Core/ram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "alias_review": "Do not permit an allocation on this name alone. No automatic lifetime exemption.",
+      "binding": {
+        "source": "shared:Core/ram.asm",
+        "symbol": "TEXTDECOMP",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "normal_events",
+      "owner": "Normal overworld events",
+      "space": "save_buffer",
+      "base": 8319616,
+      "size": 128,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization; persistent event updates.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Overworld/overlays.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "$7EF280"
+      ],
+      "count": 128,
+      "stride": 1
+    },
+    {
+      "id": "oracle_story",
+      "owner": "Oracle story field container",
+      "space": "save_buffer",
+      "base": 8319744,
+      "size": 16,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization; field-specific writers.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "KydrogFaroreRemoved",
+        "Part00Flags"
+      ],
+      "container": true
+    },
+    {
+      "id": "KydrogFaroreRemoved",
+      "owner": "KydrogFaroreRemoved",
+      "space": "save_buffer",
+      "base": 8319744,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "KydrogFaroreRemoved",
+        "bank00_mirror": false
+      },
+      "contained_by": "oracle_story"
+    },
+    {
+      "id": "DekuMaskQuestDone",
+      "owner": "DekuMaskQuestDone",
+      "space": "save_buffer",
+      "base": 8319745,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "DekuMaskQuestDone",
+        "bank00_mirror": false
+      },
+      "contained_by": "oracle_story"
+    },
+    {
+      "id": "ZoraMaskQuestDone",
+      "owner": "ZoraMaskQuestDone",
+      "space": "save_buffer",
+      "base": 8319746,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ZoraMaskQuestDone",
+        "bank00_mirror": false
+      },
+      "contained_by": "oracle_story"
+    },
+    {
+      "id": "InCutSceneFlag",
+      "owner": "InCutSceneFlag",
+      "space": "save_buffer",
+      "base": 8319747,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "InCutSceneFlag",
+        "bank00_mirror": false
+      },
+      "contained_by": "oracle_story"
+    },
+    {
+      "id": "ElderGuideStage",
+      "owner": "ElderGuideStage",
+      "space": "save_buffer",
+      "base": 8319748,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ElderGuideStage",
+        "bank00_mirror": false
+      },
+      "contained_by": "oracle_story"
+    },
+    {
+      "id": "ZoraWaterfallHint",
+      "owner": "ZoraWaterfallHint",
+      "space": "save_buffer",
+      "base": 8319749,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "ZoraWaterfallHint",
+        "bank00_mirror": false
+      },
+      "contained_by": "oracle_story"
+    },
+    {
+      "id": "CastleAmbushFlags",
+      "owner": "CastleAmbushFlags",
+      "space": "save_buffer",
+      "base": 8319750,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "CastleAmbushFlags",
+        "bank00_mirror": false
+      },
+      "contained_by": "oracle_story"
+    },
+    {
+      "id": "Part00Flags",
+      "owner": "Part00Flags",
+      "space": "save_buffer",
+      "base": 8319759,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "Part00Flags",
+        "bank00_mirror": false
+      },
+      "contained_by": "oracle_story"
+    },
+    {
+      "id": "StoryProgress",
+      "owner": "StoryProgress",
+      "space": "save_buffer",
+      "base": 8319958,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [
+        "OOSPROG"
+      ],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "StoryProgress",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "StoryProgress2",
+      "owner": "StoryProgress2",
+      "space": "save_buffer",
+      "base": 8319942,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [
+        "OOSPROG2"
+      ],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "StoryProgress2",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "SideQuestProgress",
+      "owner": "SideQuestProgress",
+      "space": "save_buffer",
+      "base": 8319959,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [
+        "SideQuestProg"
+      ],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "SideQuestProgress",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "SideQuestProgress2",
+      "owner": "SideQuestProgress2",
+      "space": "save_buffer",
+      "base": 8319960,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [
+        "SideQuestProg2"
+      ],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "SideQuestProgress2",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "Dreams",
+      "owner": "Dreams",
+      "space": "save_buffer",
+      "base": 8320016,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "Dreams",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "EonOwlFlags",
+      "owner": "EonOwlFlags",
+      "space": "save_buffer",
+      "base": 8319911,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "EonOwlFlags",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "RingSaveBlock",
+      "owner": "RingSaveBlock",
+      "space": "save_buffer",
+      "base": 8319905,
+      "size": 6,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "RingSaveBlock",
+        "bank00_mirror": false
+      },
+      "container": true
+    },
+    {
+      "id": "PortalRodOwned",
+      "owner": "PortalRodOwned",
+      "space": "save_buffer",
+      "base": 8319910,
+      "size": 1,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Save file",
+      "reset": "New-file initialization plus owner-specific updates; do not infer free bytes from zero saves.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/sram.asm",
+        "symbol": "PortalRodOwned",
+        "bank00_mirror": false
+      },
+      "contained_by": "RingSaveBlock"
+    },
+    {
+      "id": "legacy_found_rings",
+      "owner": "FOUNDRINGS",
+      "space": "save_buffer",
+      "base": 8319959,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "ENABLE_RING_SRAM_RELOCATE": 0
+      },
+      "lifetime": "Save file; independent ring owner, not a legitimate side-quest alias.",
+      "reset": "Legacy new-file and ring-menu updates.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Items/magic_rings.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "FOUNDRINGS"
+      ]
+    },
+    {
+      "id": "legacy_magic_rings",
+      "owner": "MAGICRINGS",
+      "space": "save_buffer",
+      "base": 8319960,
+      "size": 1,
+      "status": "shared",
+      "condition": {
+        "ENABLE_RING_SRAM_RELOCATE": 0
+      },
+      "lifetime": "Save file; independent ring owner, not a legitimate side-quest alias.",
+      "reset": "Legacy new-file and ring-menu updates.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "shared:Items/magic_rings.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "MAGICRINGS"
+      ]
+    },
+    {
+      "id": "special_event_access",
+      "owner": "Existing direct indexed special-area event access",
+      "space": "save_buffer",
+      "base": 8319744,
+      "size": 32,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Path-dependent indexed access for IDs $80-$9F; not an allocation grant.",
+      "reset": "Not independent storage; aliases Oracle story.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "vanilla:bank_02.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "LDA.l $7EF280,X"
+      ],
+      "claim_kind": "access_window",
+      "activation": "path_dependent"
+    },
+    {
+      "id": "BoundMask",
+      "owner": "BoundMask",
+      "space": "save_buffer",
+      "base": 8319912,
+      "size": 1,
+      "status": "pending",
+      "condition": {
+        "ENABLE_MASK_R_BINDING": 1
+      },
+      "lifetime": "Save file in separate RC candidate; not merged into shared source.",
+      "reset": "MaskBinding_Get validates 0/1-5 and ownership; selection migration handles old mask item.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "pending_rc:Core/sram.asm",
+        "pending_rc:Masks/mask_binding.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "pending_rc:Core/sram.asm",
+        "symbol": "BoundMask",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "GoldstarOwned",
+      "owner": "GoldstarOwned",
+      "space": "save_buffer",
+      "base": 8319913,
+      "size": 1,
+      "status": "pending",
+      "condition": {
+        "ENABLE_GOLDSTAR_CELL": 1
+      },
+      "lifetime": "Save file in separate RC candidate; not merged into shared source.",
+      "reset": "GoldstarInventory_Migrate reads legacy Hookshot=2 once.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "pending_rc:Core/sram.asm",
+        "pending_rc:Items/goldstar.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "pending_rc:Core/sram.asm",
+        "symbol": "GoldstarOwned",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "GoldstarInventoryVersion",
+      "owner": "GoldstarInventoryVersion",
+      "space": "save_buffer",
+      "base": 8319914,
+      "size": 1,
+      "status": "pending",
+      "condition": {
+        "ENABLE_GOLDSTAR_CELL": 1
+      },
+      "lifetime": "Save file in separate RC candidate; not merged into shared source.",
+      "reset": "Migration marker $A5; not a general save-format version.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "pending_rc:Core/sram.asm",
+        "pending_rc:Items/goldstar.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "pending_rc:Core/sram.asm",
+        "symbol": "GoldstarInventoryVersion",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "SavedOcarinaSong",
+      "owner": "SavedOcarinaSong",
+      "space": "save_buffer",
+      "base": 8319915,
+      "size": 1,
+      "status": "pending",
+      "condition": {
+        "ENABLE_EQUIPMENT_MENU": 1
+      },
+      "lifetime": "Save file in separate RC candidate; not merged into shared source.",
+      "reset": "UpdateFluteSong_Long validates learned song; invalid becomes 1, no Ocarina clears.",
+      "save": "Inside vanilla $7EF000-$7EF4FF save buffer; physical slot/checksum mapping is separate. No save migration in this slice.",
+      "provenance": [
+        "pending_rc:Core/sram.asm",
+        "pending_rc:Items/ocarina.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "pending_rc:Core/sram.asm",
+        "symbol": "SavedOcarinaSong",
+        "bank00_mirror": false
+      }
+    },
+    {
+      "id": "music_cache_192",
+      "owner": "Future active192 cache inside reserved storage",
+      "space": "wram",
+      "base": 8308992,
+      "size": 192,
+      "status": "proposed",
+      "condition": {
+        "DISABLE_OVERWORLD": 0
+      },
+      "lifetime": "Reserved capacity exists; gameplay activation and ROM source tables are separate unresolved work.",
+      "reset": "Future active192 initialization requires new ROM source tables; current code intentionally fills160 only.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Overworld/music_cache.asm",
+        "vanilla:bank_02.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "!OverworldMusicCapacity = $00C0"
+      ],
+      "count": 192,
+      "stride": 1,
+      "replaces": "music_cache",
+      "contained_by": "music_cache_reservation"
+    },
+    {
+      "id": "special_events_64",
+      "owner": "Proposed separate special-world events",
+      "space": "wram",
+      "base": null,
+      "size": 64,
+      "status": "proposed",
+      "condition": {},
+      "lifetime": "Proposed persistent events for $80-$BF; address unresolved.",
+      "reset": "New-file initialization and old-save migration unresolved.",
+      "save": "Save/checksum coverage and migration unresolved.",
+      "provenance": [
+        "shared:Core/sram.asm"
+      ],
+      "aliases": [],
+      "anchors": [
+        "Part00Flags"
+      ],
+      "count": 64,
+      "stride": 1
+    }
+  ],
+  "lifetime_aliases": [],
+  "tables": [
+    {
+      "id": "bg_color",
+      "symbol": "Pool_BGColorTable",
+      "address": 2654208,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2654528,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "main_palette",
+      "symbol": "Pool_MainPaletteTable",
+      "address": 2654560,
+      "count": 160,
+      "stride": 1,
+      "boundary": 2654720,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "mosaic",
+      "symbol": "Pool_MosaicTable",
+      "address": 2654720,
+      "count": 160,
+      "stride": 1,
+      "boundary": 2654880,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "animated",
+      "symbol": "Pool_AnimatedTable",
+      "address": 2654880,
+      "count": 160,
+      "stride": 1,
+      "boundary": 2655040,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "overlay",
+      "symbol": "Pool_OverlayTable",
+      "address": 2655040,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2655360,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "gfx",
+      "symbol": "Pool_OWGFXGroupTable",
+      "address": 2655360,
+      "count": 160,
+      "stride": 8,
+      "boundary": 2656640,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "parent",
+      "symbol": "Pool_Overworld_ActualScreenID_New",
+      "address": 2656664,
+      "count": 160,
+      "stride": 1,
+      "boundary": 2656824,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "ByScreen1",
+      "symbol": "Pool_ByScreen1_New",
+      "address": 2656824,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2657144,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "ByScreen2",
+      "symbol": "Pool_ByScreen2_New",
+      "address": 2657144,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2657464,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "ByScreen3",
+      "symbol": "Pool_ByScreen3_New",
+      "address": 2657464,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2657784,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "ByScreen4",
+      "symbol": "Pool_ByScreen4_New",
+      "address": 2657784,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2658104,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "transition_y",
+      "symbol": "Pool_OverworldTransitionPositionY_New",
+      "address": 2658104,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2658424,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "transition_x",
+      "symbol": "Pool_OverworldTransitionPositionX_New",
+      "address": 2658424,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2658744,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "scroll_north",
+      "symbol": "Pool_trans_target_north_new",
+      "address": 2658744,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2659064,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "scroll_west",
+      "symbol": "Pool_trans_target_west_new",
+      "address": 2659064,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2659384,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "sprite_phase0",
+      "symbol": "Pool_Overworld_SpritePointers_state_0_New",
+      "address": 2659384,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2659704,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "sprite_phase1",
+      "symbol": "Pool_Overworld_SpritePointers_state_1_New",
+      "address": 2659704,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2660024,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "sprite_phase2",
+      "symbol": "Pool_Overworld_SpritePointers_state_2_New",
+      "address": 2660024,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2660344,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "sign_text",
+      "symbol": "Pool_Overworld_SignText_New",
+      "address": 2660344,
+      "count": 160,
+      "stride": 2,
+      "boundary": 2660664,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_28_or_long",
+      "stored_in_base": true
+    },
+    {
+      "id": "map32_high",
+      "symbol": null,
+      "address": 194893,
+      "count": 160,
+      "stride": 3,
+      "boundary": 195373,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "long_pointer",
+      "stored_in_base": true
+    },
+    {
+      "id": "map32_low",
+      "symbol": null,
+      "address": 195373,
+      "count": 160,
+      "stride": 3,
+      "boundary": 195853,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "long_pointer",
+      "stored_in_base": true
+    },
+    {
+      "id": "bomb_doors",
+      "symbol": null,
+      "address": 173636,
+      "count": 160,
+      "stride": 2,
+      "boundary": 173956,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_02",
+      "stored_in_base": true
+    },
+    {
+      "id": "hidden_items",
+      "symbol": null,
+      "address": 173956,
+      "count": 160,
+      "stride": 2,
+      "boundary": 174276,
+      "space": "snes_rom",
+      "source": "Overworld/ZSCustomOverworld.asm",
+      "payload": "data",
+      "addressing": "bank_relative_02",
+      "stored_in_base": true
+    }
+  ],
+  "cart": {
+    "count": 32,
+    "stride": 2,
+    "source": "Sprites/Objects/data/minecart_tracks.asm",
+    "symbols_prefix": "Oracle_Sprite_Minecart_Prep_TrackStarting",
+    "reset_symbol": "Oracle_ResetTrackVars"
+  },
+  "unresolved": [
+    {
+      "id": "text_decomp_extent_lifetime",
+      "reason": "Historical TEXTDECOMP label has no verified extent or mutually exclusive lifetime. No exemption granted."
+    },
+    {
+      "id": "free_list_reconciliation",
+      "reason": "Shared FreeBlock_Large starts F3A8; pending F3A8-AB owners exist. Other free-list bytes are not audited availability."
+    }
+  ],
+  "allocation_available": false
+}

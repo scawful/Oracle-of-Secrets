@@ -31,6 +31,12 @@
 
 %Set_Sprite_Properties(Sprite_EonOwl_Prep, Sprite_EonOwl_Long)
 
+; Eon Owl talk distance (!ENABLE_EON_OWL_NEAR_TRIGGER): the Owl talks when
+; Link is within this many pixels on both axes (16-bit positions).
+; scawful 2026-09-26: about 5 tiles. Tune by feel.
+!EonOwl_TalkDistance = 80
+!EonOwl_ArrivalTalkDistance = $20 ; two tiles; let Link take in the landing
+
 Sprite_EonOwl_Long:
 {
   PHB : PHK : PLB
@@ -57,6 +63,46 @@ Sprite_EonOwl_Long:
   RTL
 }
 
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+; Arrival graphics: preserve the Zora/Master Sword sheets in slots 1-3.
+; Area $40 places no Eon Scrub, so replace only slot 0's sheet $16 with the
+; existing Eon Owl sheet $42. Area $7A shares spriteset $18 and is untouched.
+; All vanilla sprite load paths reach this decompressor, including room exits
+; and mosaic transitions. Do not write VRAM from the per-frame sprite draw.
+pushpc
+org $00E772 ; @hook module=Sprites name=EonOwl_ArrivalSheet kind=jml target=EonOwl_ArrivalSheet expected_m=8
+  JML EonOwl_ArrivalSheet
+  NOP
+assert pc() == $00E777
+pullpc
+
+; Original entry: M=8, Y=sheet, DB=$00, DP destination=$00-$02.
+; X and DB are preserved. Decompress resets Y before consuming its stream.
+; Displaced: LDA.w $CFF3,Y : STA.b $CA. Return to the original high/low
+; pointer loads, retaining the bank-$00 JSR/RTS return path.
+EonOwl_ArrivalSheet:
+{
+  TYA : CMP.b #$16 : BNE .original
+  LDA.w $0AA3 : CMP.b #$18 : BNE .original
+  LDA.b $8A : CMP.b #$40 : BNE .original
+  LDA.b $00 : BNE .original
+  LDA.b $02 : CMP.b #$7E : BEQ .area_buffer
+  CMP.b #$7F : BNE .original
+  ; Mirror warp converts its temporary $7F4000 buffer directly into VRAM.
+  LDA.b $01 : CMP.b #$40 : BNE .original
+  BRA .replace
+  .area_buffer
+  ; Ordinary loads and the post-warp cache reload use $7E7800.
+  LDA.b $01 : CMP.b #$78 : BNE .original
+  .replace
+    LDY.b #$42
+    LDA.b #$42 : STA.l $7EC2FC
+  .original
+  LDA.w $CFF3,Y : STA.b $CA
+  JML $00E777
+}
+endif
+
 ; =========================================================
 
 Sprite_EonOwl_Prep:
@@ -74,7 +120,25 @@ Sprite_EonOwl_Prep:
     LDA.l Sword : CMP.b #$01 : BCC .continue
        STZ.w SprState, X
     .continue
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+    ; Second Abyss appearance ($E6): once per save, no respawn after the
+    ; talk and fly-away (EonOwlFlags, Core/sram.asm).
+    LDA.l EonOwlFlags : AND.b #!EonOwl_SwordTalked : BEQ .not_talked
+      STZ.w SprState, X
+    .not_talked
+endif
   .not_intro
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+  ; First Abyss appearance: arrival map $40 (sprite $0A placed in the base
+  ; ROM; decisions.org "Abyss segment: fix direction"). Before the Pearl
+  ; only, and once per save (EonOwl_ArrivalTalked).
+  LDA.w AreaIndex : CMP.b #$40 : BNE .not_arrival
+    LDA.l MoonPearl : BNE .no_arrival_owl
+    LDA.l EonOwlFlags : AND.b #!EonOwl_ArrivalTalked : BEQ .not_arrival
+    .no_arrival_owl
+      STZ.w SprState, X
+  .not_arrival
+endif
   PLB
   RTL
 }
@@ -97,7 +161,11 @@ Sprite_EonOwl_Main:
   EonOwl_Idle:
   {
     %PlayAnimation(0,1,16)
+if !ENABLE_EON_OWL_NEAR_TRIGGER == 1
+    JSR EonOwl_CarrySetIfLinkNear : BCC .not_too_close
+else
     JSL GetDistance8bit_Long : CMP #$28 : BCS .not_too_close
+endif
       %GotoAction(1)
     .not_too_close
     RTS
@@ -106,7 +174,24 @@ Sprite_EonOwl_Main:
   EonOwl_IntroDialogue:
   {
     %PlayAnimation(0,1,16)
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+    ; First appearance (arrival map $40): message $1FA points to the Shrine
+    ; of Origins. Marked done now, so the Owl does not come back.
+    LDA.w AreaIndex : CMP.b #$40 : BNE .not_arrival_owl
+      LDA.l EonOwlFlags : ORA.b #!EonOwl_ArrivalTalked : STA.l EonOwlFlags
+      %ShowUnconditionalMessage($01FA)
+      BRA .message_shown
+    .not_arrival_owl
+    ; Mark the map $50 appearance as done now, so leaving during the
+    ; fly-away does not bring the Owl back.
+    LDA.w AreaIndex : CMP.b #$50 : BNE .not_sword_owl
+      LDA.l EonOwlFlags : ORA.b #!EonOwl_SwordTalked : STA.l EonOwlFlags
+    .not_sword_owl
+endif
     %ShowUnconditionalMessage($00E6)
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+    .message_shown
+endif
     LDA.b #$C0 : STA.w SprTimerA, X
     %GotoAction(2)
     RTS
@@ -165,6 +250,40 @@ Sprite_EonOwl_Main:
   }
 }
 
+if !ENABLE_EON_OWL_NEAR_TRIGGER == 1
+; Carry set when Link is within !EonOwl_TalkDistance px of the Owl on both
+; axes. GetDistance8bit_Long uses only the low position bytes, so it fired
+; from 248 px away (playtest: the Owl talked on area entry).
+; M=8, X=8 (sprite index), keeps X. Uses $00-$03.
+EonOwl_CarrySetIfLinkNear:
+{
+  LDA.w SprX, X : STA.b $00
+  LDA.w SprXH, X : STA.b $01
+  LDA.w SprY, X : STA.b $02
+  LDA.w SprYH, X : STA.b $03
+  REP #$20
+  LDA.w #!EonOwl_TalkDistance : STA.b $04
+  LDA.b $8A : AND.w #$00FF : CMP.w #$0040 : BNE .distance_ready
+    LDA.w #!EonOwl_ArrivalTalkDistance : STA.b $04
+  .distance_ready
+  LDA.b $22 : SEC : SBC.b $00 : BPL +
+    EOR.w #$FFFF : INC A
+  +
+  CMP.b $04 : BCS .far
+  LDA.b $20 : SEC : SBC.b $02 : BPL +
+    EOR.w #$FFFF : INC A
+  +
+  CMP.b $04 : BCS .far
+    SEP #$20
+    SEC
+    RTS
+  .far
+  SEP #$20
+  CLC
+  RTS
+}
+
+endif
 ; =========================================================
 
 Sprite_EonOwl_Draw:
@@ -203,7 +322,18 @@ Sprite_EonOwl_Draw:
 
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
-  LDA .chr, X : STA ($90), Y
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+  LDA.w AreaIndex : CMP.b #$40 : BNE .usual_sheet
+  LDA.w $0AA3 : CMP.b #$18 : BNE .usual_sheet
+    LDA .chr, X : AND.b #$3F ; arrival sheet $42 is in slot 0, not slot 3
+    BRA .store_chr
+  .usual_sheet
+endif
+  LDA .chr, X
+if !ENABLE_EON_OWL_ONE_SHOT == 1
+  .store_chr
+endif
+  STA ($90), Y
   INY
   LDA .properties, X : STA ($90), Y
 

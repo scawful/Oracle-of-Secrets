@@ -20,7 +20,7 @@ Tasks:
   list        Show task names
 
 Seed source:
-  Non-free tasks load from Docs/Debugging/Testing/trusted_state_seeds.json.
+  Non-free tasks load from Data/debug/trusted_state_seeds.json.
   Each mapped ID must be canon + captured_by=human.
 
 Options:
@@ -39,7 +39,7 @@ EOF
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-TRUSTED_SEEDS="${ROOT_DIR}/Docs/Debugging/Testing/trusted_state_seeds.json"
+TRUSTED_SEEDS="${ROOT_DIR}/Data/debug/trusted_state_seeds.json"
 
 task="${1:-}"
 if [[ -z "${task}" || "${task}" == "-h" || "${task}" == "--help" ]]; then

@@ -34,6 +34,9 @@
 Sprite_BusinessScrub_Long:
 {
   PHB : PHK : PLB
+  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
+  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
+  LDA.w SprState, X : CMP.b #$06 : BEQ .normal_scrub
   LDA.w WORLDFLAG : BNE .draw_eon
     JSR Sprite_BusinessScrub_Draw
     JMP +

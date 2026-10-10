@@ -54,6 +54,15 @@ MessageExpandedData:
   ; $1E0-$1E4: Goron Elder; $1E5-$1E7: River Zora Elder
   ; $1E8-$1EA: Magic Bean Vendor; $1EB-$1EF: Cartographer
   ; $1F0-$1F9: Korok lore
+  ; $1FA: Eon Owl arrival line (Abyss map $40, before the Pearl)
+  ; $1FB-$1FF: Abyss area signs ($40, $50, $58, $5D, $6A; ZS area message table)
+  ; $200: Yesterwind villager reveal line (not wired to an NPC yet)
+  ; $201-$203: Part00 arrival lines: $201 Impa's voice on black (A), $202/$203
+  ;   house villager on first wake (B) and after a death (B2)
+  ; $1BE: Ranch Girl Ocarina gift (replaces vanilla $17D)
+  ; $1CB: Village Elder post-D1 ranch hint (replaces vanilla $177)
+  ; Vanilla text region 2 ($0E:DF40, $167-$18C) is length-pinned by the
+  ; $0EEE75 chain byte, so longer rewrites there move to this bank.
   incsrc "Core/Generated/expanded_messages.asm"
 
 print "End of expanded dialogue          ", pc
@@ -61,3 +70,8 @@ print "End of expanded dialogue          ", pc
 ; Keep message source-sync inside its fixed allocation. Core/progression.asm
 ; owns the reserved tail beginning at $2FFE00.
 assert pc() <= $2FFE00, "Expanded messages crossed fixed allocation end $2FFDFF"
+
+; Translucent dark band behind the text window (default off; see Util/macros.asm).
+if !ENABLE_TEXT_BOX_SHADE == 1
+  incsrc "Core/text_shade.asm"
+endif

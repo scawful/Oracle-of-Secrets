@@ -10,7 +10,7 @@
 ;   - "Withering Deku" - Cursed scrub who needs Song of Healing
 ;   - "Deku Butler" - Subtype 1, palace servant
 ;   - "Deku Princess" - Subtype 2, Tail Palace royalty
-;   - Quest parallels Zora Princess revelation in D4
+;   - Same Song of Healing -> mask pattern as the Zora Princess (D4)
 ;
 ; VARIANTS (via SprSubtype):
 ;   0x00: Default - Cursed/Withering Deku Scrub
@@ -49,7 +49,7 @@
 ;   SideQuestProg |= 0x04 - Found withering Deku Scrub
 ;   SideQuestProg2 |= 0x10 - Deku Scrub soul freed
 ;   $7EF301 = 1 - Deku Mask obtained
-;   MapIcon = 2 - Set after peacetime dialogue
+;   MapIcon = 2 - Set after peacetime dialogue (not with !ENABLE_MAP_ICON_TIMELINE)
 ;
 ; ITEMS GIVEN:
 ;   0x11 - Deku Mask
@@ -227,7 +227,9 @@ Sprite_DekuScrub_Main:
     %PlayAnimation(3, 3, 10)
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($1B9) : BCC +
+      if !ENABLE_MAP_ICON_TIMELINE == 0
       LDA.b #$02 : STA.l MapIcon
+      endif
     +
     RTS
   }
@@ -238,7 +240,9 @@ Sprite_DekuScrub_Main:
     %PlayAnimation(4, 4, 10)
     JSL Sprite_PlayerCantPassThrough
     %ShowSolicitedMessage($1BA) : BCC +
+      if !ENABLE_MAP_ICON_TIMELINE == 0
       LDA.b #$02 : STA.l MapIcon
+      endif
     +
     RTS
   }

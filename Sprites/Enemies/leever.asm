@@ -25,6 +25,9 @@ pullpc
 Sprite_Leever_Long:
 {
   PHB : PHK : PLB
+  ; Skip the body while in the vanilla dying state (SpriteModule_Die, $0DD0 == 6)
+  ; so it cannot cover the death poof; see Sprite_Octorok_Long for details.
+  LDA.w SprState, X : CMP.b #$06 : BEQ +
   LDA.w SprAction, X : BEQ +
     JSR Sprite_Leever_Draw
   +

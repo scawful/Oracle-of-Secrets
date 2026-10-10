@@ -75,6 +75,11 @@ incsrc "Sprites/Enemies/darknut.asm"
 incsrc "Sprites/Enemies/custom_guard.asm"
 %log_end("custom_guard", !LOG_SPRITES)
 
+; Intro village Stalfos patrol: own org in bank $3A, no bank $30 bytes.
+if !ENABLE_INTRO_STALFOS_PATROL == 1
+  incsrc "Sprites/Enemies/stalfos_patrol.asm"
+endif
+
 %log_start("sea_urchin", !LOG_SPRITES)
 incsrc "Sprites/Enemies/sea_urchin.asm"
 %log_end("sea_urchin", !LOG_SPRITES)
@@ -147,6 +152,15 @@ Graphics_Transfer:
   LDA.b $11 : CMP.b #$02
   RTL
 }
+
+%log_start("ice_block", !LOG_SPRITES)
+; TODO: Change from digging game guy?
+incsrc "Sprites/Objects/ice_block.asm"
+%log_end("ice_block", !LOG_SPRITES)
+
+assert pc() <= $318000, "Bank $30 sprite region overflow"
+assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
+print "Bank30 Free Space: ", dec($310000-pc()), " bytes"
 
 %log_end("Bank 30", !LOG_SPRITES)
 
@@ -230,12 +244,12 @@ incsrc "Sprites/Enemies/pols_voice.asm"
 incsrc "Sprites/Bosses/wolfos.asm"
 %log_end("wolfos", !LOG_SPRITES)
 
-%log_start("ice_block", !LOG_SPRITES)
-; TODO: Change from digging game guy?
-incsrc "Sprites/Objects/ice_block.asm"
-%log_end("ice_block", !LOG_SPRITES)
+; ice_block moved to the end of Bank $30 (2026-09-26): Bank $31 had 10 bytes
+; free and Bank $30 had ~4.4 KB. Append new sprites to Bank $30 or $32 first.
 
-assert pc() <= $328000
+assert pc() <= $328000, "Bank $31 sprite region overflow"
+assert pc() >= $318000, "Bank $31 sprite code left its bank (org without pushpc/pullpc?)"
+print "Bank31 Free Space: ", dec($320000-pc()), " bytes"
 
 %log_end("Bank 31", !LOG_SPRITES)
 
@@ -279,6 +293,13 @@ incsrc "Sprites/NPCs/ranch_girl.asm"
 %log_start("cloud_bridge", !LOG_SPRITES)
 incsrc "Sprites/Objects/cloud_bridge.asm"
 %log_end("cloud_bridge", !LOG_SPRITES)
+
+; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
+; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
+; vanilla fortune teller at $0DC92E until 2026-09-26).
+assert pc() >= $328000, "Bank $32 sprite code left its bank (org without pushpc/pullpc?)"
+assert pc() <= $330000, "Bank $32 sprite region overflow"
+print "Bank32 Free Space: ", dec($330000-pc()), " bytes"
 
 %log_end("Bank 32", !LOG_SPRITES)
 

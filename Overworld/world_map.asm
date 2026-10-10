@@ -160,6 +160,68 @@ DrawEonEscapeIcon:
   RTL
 }
 
+; ---------------------------------------------------------
+; Map icon timeline (!ENABLE_MAP_ICON_TIMELINE)
+; Light World dungeon markers follow story flags instead of the MapIcon
+; counter ($7EF3C7), which several NPCs overwrite out of story order.
+; Timeline: Docs/Debugging/Issues/world_map_icons_2026-09-26.md.
+;
+; Crystal bits: Core/sram.asm !Crystal_* (D1 = $02, D6 = $01, fixed
+; 2026-09-26). The "Crystal N" draw blocks below use the same bits.
+; ---------------------------------------------------------
+!MapTimeline_D1 = !Crystal_D1_MushroomGrotto
+!MapTimeline_D2 = !Crystal_D2_TailPalace
+!MapTimeline_D3 = !Crystal_D3_KalyxoCastle
+!MapTimeline_D4 = !Crystal_D4_ZoraTemple
+!MapTimeline_D5 = !Crystal_D5_GlaciaEstate
+!MapTimeline_D6 = !Crystal_D6_GoronMines
+!MapTimeline_D7 = !Crystal_D7_DragonShip
+
+if !ENABLE_MAP_ICON_TIMELINE == 1
+; Entry: A (8-bit) = dungeon number 1-7. Any M/X.
+; Exit:  C set = draw the marker, C clear = hide it.
+;        A clobbered; X, Y, M/X preserved.
+; Rule:  hidden once that dungeon's crystal is set; otherwise shown when
+;        its reveal crystal is set. D1 shows once the Maku Tree is met
+;        (MapIconDraw checks OOSPROG bit 1 first); D2 shows once Link
+;        owns the Ocarina ($7EF34C >= 1, beat 10); D7 shows once Link knows
+;        the Song of Soaring ($7EF34C >= 4, beat 22; scawful 2026-09-26).
+MapTimeline_ShouldDrawDungeon:
+{
+  PHP
+  REP #$10 : PHX
+  SEP #$30
+  TAX
+  LDA.l Crystals : AND.l .crystal_bit-1, X : BNE .hide
+  LDA.l .reveal_after-1, X : BEQ .special
+    AND.l Crystals : BNE .show
+    BRA .hide
+  .special
+  CPX.b #$01 : BEQ .show
+  LDA.l Flute
+  CPX.b #$07 : BEQ .soaring
+    CMP.b #$01 : BCS .show   ; D2: Ocarina owned
+    BRA .hide
+  .soaring
+    CMP.b #$04 : BCS .show   ; D7: Song of Soaring learned
+  .hide
+  REP #$10 : PLX
+  PLP : CLC
+  RTL
+  .show
+  REP #$10 : PLX
+  PLP : SEC
+  RTL
+
+  .crystal_bit
+  db !MapTimeline_D1, !MapTimeline_D2, !MapTimeline_D3, !MapTimeline_D4
+  db !MapTimeline_D5, !MapTimeline_D6, !MapTimeline_D7
+  .reveal_after ; $00 = special case above
+  db $00, $00, !MapTimeline_D2, !MapTimeline_D3
+  db !MapTimeline_D3, !MapTimeline_D3, $00
+}
+endif
+
 pushpc
 
 ; Removed mirror portal draw and pyramid open code
@@ -206,24 +268,43 @@ MapIconDraw:
       JMP restore_coords_and_exit
   .lwprizes
 
-  LDA.l OOSPROG : CMP.b #$02 : BNE +
+  if !ENABLE_MAP_ICON_TIMELINE == 1
+    ; Hall of Secrets: Maku Tree met (bit 1) until Impa is met there (bit 2).
+    LDA.l OOSPROG : AND.b #$06 : CMP.b #$02 : BNE +
+  else
+    LDA.l OOSPROG : CMP.b #$02 : BNE +
+  endif
     JSL DrawHallOfSecretsIcon
     JSR HandleMapDrawIcon
   +
-  LDA.l OOSPROG : AND.b #$10 : BEQ .main_quest
+  if !ENABLE_MAP_ICON_TIMELINE == 1
+    ; Pyramid: after D3 Kalyxo Castle.
+    LDA.l Crystals : AND.b #!MapTimeline_D3 : BEQ .main_quest
+  else
+    LDA.l OOSPROG : AND.b #$10 : BEQ .main_quest
+  endif
     JSL DrawPyramidIcon
     JSR HandleMapDrawIcon_noflash
   .main_quest
 
+  if !ENABLE_MAP_ICON_TIMELINE == 1
+    ; Before the Maku Tree meeting only the pre-Maku marker shows.
+    LDA.l OOSPROG : AND.b #$02 : BNE .draw_crystal_1
+  else
   LDA.l MapIcon : CMP.b #$01 : BEQ .draw_crystal_1
                   CMP.b #$02 : BCS .draw_crystals
+  endif
                     JSL DrawEonEscapeIcon
                     JSR HandleMapDrawIcon
                     JMP restore_coords_and_exit
 
   .draw_crystal_1
   ; Draw Crystal 1
+  if !ENABLE_MAP_ICON_TIMELINE == 1
+    LDA.b #$01 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_0
+  else
   LDA.l $7EF37A : AND #$02 : BNE .skip_draw_0
+  endif
     ; X position
     LDA.b #$00 : STA.l $7EC10B
     LDA.b #$87 : STA.l $7EC10A
@@ -238,11 +319,17 @@ MapIconDraw:
     LDA.b #$0E : STA.l $7EC025 ; OAM Slot used
     JSR HandleMapDrawIcon
   .skip_draw_0
+  if !ENABLE_MAP_ICON_TIMELINE == 0
   JMP restore_coords_and_exit
+  endif
 
   .draw_crystals
   ; Draw Crystal 2
+  if !ENABLE_MAP_ICON_TIMELINE == 1
+    LDA.b #$02 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_1
+  else
   LDA.l $7EF37A : AND #$10 : BNE .skip_draw_1
+  endif
     ; X position (2)
     LDA.b #$1E : STA.l $7EC10B
     LDA.b #$A0 : STA.l $7EC10A
@@ -260,7 +347,11 @@ MapIconDraw:
   .skip_draw_1
 
   ; Draw Crystal 3
+  if !ENABLE_MAP_ICON_TIMELINE == 1
+    LDA.b #$03 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_2
+  else
   LDA.l $7EF37A : AND #$40 : BNE .skip_draw_2
+  endif
     ; X position
     LDA.b #$08 : STA.l $7EC10B
     LDA.b #$10 : STA.l $7EC10A
@@ -278,7 +369,11 @@ MapIconDraw:
   .skip_draw_2
 
   ; Draw Crystal 4
+  if !ENABLE_MAP_ICON_TIMELINE == 1
+    LDA.b #$04 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_3
+  else
   LDA.l $7EF37A : AND #$20 : BNE .skip_draw_3
+  endif
     ; X position
     LDA.b #$0E : STA.l $7EC10B
     LDA.b #$5E : STA.l $7EC10A
@@ -296,7 +391,11 @@ MapIconDraw:
   .skip_draw_3
 
   ; Draw Crystal 5
+  if !ENABLE_MAP_ICON_TIMELINE == 1
+    LDA.b #$05 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_4
+  else
   LDA.l $7EF37A : AND #$04 : BNE .skip_draw_4
+  endif
     ; X position
     LDA.b #$0C : STA.l $7EC10B
     LDA.b #$34 : STA.l $7EC10A
@@ -314,7 +413,11 @@ MapIconDraw:
   .skip_draw_4
 
   ; Draw Crystal 6
+  if !ENABLE_MAP_ICON_TIMELINE == 1
+    LDA.b #$06 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_5
+  else
   LDA.l $7EF37A : AND #$01 : BNE .skip_draw_5
+  endif
     ; X position (6)
     LDA.b #$0D : STA.l $7EC10B
     LDA.b #$05 : STA.l $7EC10A
@@ -332,7 +435,11 @@ MapIconDraw:
   .skip_draw_5
 
   ; Draw Crystal 7
+  if !ENABLE_MAP_ICON_TIMELINE == 1
+    LDA.b #$07 : JSL MapTimeline_ShouldDrawDungeon : BCC .skip_draw_6
+  else
   LDA.l $7EF37A : AND #$08 : BNE .skip_draw_6
+  endif
     ; X position
     LDA.b #$00 : STA.l $7EC10B
     LDA.b #$F4 : STA.l $7EC10A
@@ -371,6 +478,13 @@ HandleMapDrawIcon:
 
 FixMaskPaletteOnExit:
 {
+  if !ENABLE_KOROK_POLISH == 1
+    ; InitializeTilesets just reloaded the area sprite sheets over the Korok
+    ; sheets; clear the loaded flag so a Korok reloads them (korok.asm).
+    PHP : SEP #$20 : PHA
+    LDA.b #$00 : STA.l $7E0AA5
+    PLA : PLP
+  endif
   JSL Palette_ArmorAndGloves
   LDA.l $7EC229
   RTL

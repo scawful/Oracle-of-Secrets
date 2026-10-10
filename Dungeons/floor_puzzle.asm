@@ -2,7 +2,7 @@
 ; ================================================
 ; use holes_0 tag routine
 
-org $01CC00 ; holes_0 tag routine ; @hook module=Dungeons
+org $01CC00 ; Holes0 / tag $21 ; @hook module=Dungeons name=StarFloorPuzzle
 JSL NewTagRoutine
 RTS
 
@@ -297,4 +297,3 @@ SearchToRedStar:
   PLX
   BRA --
 }
-

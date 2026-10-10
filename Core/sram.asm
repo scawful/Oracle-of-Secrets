@@ -14,7 +14,7 @@
 ;   7. Collectibles ($7EF38A-39F)
 ;   8. Save File Metadata ($7EF3C8-E2, $7EF3E3-4FF)
 ;   9. Follower System ($7EF3CC-D3)
-;  10. Free Blocks Reference (334 bytes available)
+;  10. Free Blocks Reference (327 bytes available)
 ; =========================================================
 
 ; =========================================================
@@ -81,14 +81,14 @@ endmacro
 !Story_IntroComplete       = $01  ; bit 0 - Met Maku Tree
 !Story_HallOfSecrets       = $02  ; bit 1 - Hall of Secrets flag
 !Story_PendantQuest        = $04  ; bit 2 - Shrine access
-!Story_VillageElderMet     = $10  ; bit 4 - Elder met (Master Sword?)
-!Story_MasterSword         = $10  ; bit 4 - (alias, same as above)
+!Story_VillageElderMet     = $10  ; bit 4 - Elder met (no reader)
+!Story_MasterSword         = $10  ; bit 4 - alias; not a Master Sword gate
 !Story_FortressComplete    = $80  ; bit 7 - Final dungeon done
 
 ; ---------------------------------------------------------
 ; StoryProgress2 Bits (OOSPROG2 @ $7EF3C6)
 ; ---------------------------------------------------------
-; Bitfield: .fbh .zsu (repurposed from ALTTP)
+; Bitfield: sfbh .zsu (repurposed from ALTTP)
 !Story2_ImpaIntro          = $01  ; bit 0 - Impa intro complete
 !Story2_SanctuaryVisit     = $02  ; bit 1 - Sanctuary post-kidnap
 !Story2_KydrogEncounter    = $04  ; bit 2 - Kydrog encounter done
@@ -96,13 +96,26 @@ endmacro
 !Story2_LegacyHouseFlag    = $10  ; bit 4 - Legacy vanilla flag reused for intro house state
 !Story2_BookOfSecrets      = $20  ; bit 5 - Book obtained
 !Story2_FortuneTellerFlip  = $40  ; bit 6 - Fortune set toggle
+; bit 7 - Part 0 storm active (rain overlay, rain sound, dim world map).
+;   Unused by vanilla and by Oracle before 2026-09-25. Only read/written
+;   when !ENABLE_PART0_STORM = 1 (Overworld/storm.asm).
+;   Set: HouseTag_WakeUpPlayer (Dungeons/custom_tag.asm), same frame as
+;        Story2_LegacyHouseFlag, so CustomTag's "$7EF3C6 != 0" check is unchanged.
+;   Clear: Part0Storm_EndIfBackOnKalyxo (Overworld/storm.asm): back on Kalyxo
+;          after the Abyss (Story2_KydrogEncounter set and SavedWorld = $00).
+;   Do not read StoryProgress2 as a whole value; use AND with a bit mask.
+!Story2_Part0Storm         = $80  ; bit 7 - Part 0 storm active
 
 ; ---------------------------------------------------------
 ; Crystals Bits - Dungeon Completion ($7EF37A)
 ; ---------------------------------------------------------
-; Uses ALTTP bit positions for compatibility
-!Crystal_D1_MushroomGrotto = $01  ; bit 0 - Palace of Darkness slot
-!Crystal_D6_GoronMines     = $02  ; bit 1 - Misery Mire slot
+; Uses ALTTP bit positions for compatibility. The bit comes from the dungeon
+; ID: crystal award $08CC3B ORs RoomTagPrizeChecks[$040C/2] ($02A1A4).
+; D1 = dungeon $0C (PoD slot, bit 1); D6 = dungeon $0E (Mire slot, bit 0).
+; Fixed 2026-09-26: D1 and D6 were swapped here
+; (Docs/Debugging/Issues/world_map_icons_2026-09-26.md section 5.0).
+!Crystal_D6_GoronMines     = $01  ; bit 0 - Misery Mire slot
+!Crystal_D1_MushroomGrotto = $02  ; bit 1 - Palace of Darkness slot
 !Crystal_D5_GlaciaEstate   = $04  ; bit 2 - Ice Palace slot
 !Crystal_D7_DragonShip     = $08  ; bit 3 - Turtle Rock slot
 !Crystal_D2_TailPalace     = $10  ; bit 4 - Swamp Palace slot
@@ -124,7 +137,7 @@ endmacro
 ; SideQuestProgress2 Bits ($7EF3D8)
 ; ---------------------------------------------------------
 ; Bitfield: .bts fsmr
-!SideQuest2_RanchGirl      = $01  ; bit 0 - Transformed back
+!SideQuest2_RanchGirl      = $01  ; bit 0 - Revealed by powder, Ocarina given
 !SideQuest2_SongOfHealing  = $04  ; bit 2 - Mask Salesman taught
 !SideQuest2_FortuneTeller  = $08  ; bit 3 - Any fortune shown
 !SideQuest2_DekuSoulFreed  = $10  ; bit 4 - Before mask given
@@ -141,16 +154,16 @@ endmacro
 ; ---------------------------------------------------------
 ; Dreams Bits ($7EF410)
 ; ---------------------------------------------------------
-!Dream_Wisdom              = $01  ; bit 0
-!Dream_Power               = $02  ; bit 1
-!Dream_Courage             = $04  ; bit 2
+!Dream_Wisdom              = $01  ; bit 0 - Dream 1 "The Sealing War"
+!Dream_Power               = $02  ; bit 1 - Dream 2 "The Oracle's Choice"
+!Dream_Courage             = $04  ; bit 2 - Dream 3 "The Healing Revelation"
 
 ; ---------------------------------------------------------
 ; MagicBeanProgress Bits ($7EF39B)
 ; ---------------------------------------------------------
 !Bean_Planted              = $01  ; bit 0
-!Bean_Watered              = $02  ; bit 1
-!Bean_Pollinated           = $04  ; bit 2
+!Bean_Pollinated           = $02  ; bit 1 - bee at the ranch flower (bean_vendor.asm)
+!Bean_Watered              = $04  ; bit 2 - Song of Storms (Items/ocarina.asm)
 !Bean_Day1                 = $08  ; bit 3
 !Bean_Day2                 = $10  ; bit 4
 !Bean_Day3                 = $20  ; bit 5
@@ -266,6 +279,8 @@ MapIcon                 = $7EF3C7
 ; Side Quest Progress ($7EF3D7-D8)
 ; ---------------------------------------------------------
 ; Use !SideQuest_* and !SideQuest2_* bit constants
+; Legacy bug: with !ENABLE_RING_SRAM_RELOCATE = 0, FOUNDRINGS/MAGICRINGS
+; (Items/magic_rings.asm) alias these two bytes. See RingSaveBlock.
 SideQuestProgress       = $7EF3D7
 SideQuestProgress2      = $7EF3D8
 
@@ -280,7 +295,7 @@ SideQuestProgress2      = $7EF3D8
 
 Bow                     = $7EF340   ; 1=Bow, 2=+Arrows, 3=Silver, 4=Silver+Arrows
 Boomerang               = $7EF341   ; 1=Blue, 2=Red
-Hookshot                = $7EF342   ; 1=Hookshot, 2=Goldstar
+Hookshot                = $7EF342   ; legacy 1=Hookshot, 2=both; split flag: 0/1 Hookshot only
 Bombs                   = $7EF343   ; Count
 MagicPowder             = $7EF344   ; 1=Mushroom, 2=Powder
 FireRod                 = $7EF345   ; 1=Have
@@ -303,7 +318,7 @@ Mirror                  = $7EF353   ; 1=Letter, 2=Mirror
 ; Equipment ($7EF354-35B)
 ; ---------------------------------------------------------
 Gloves                  = $7EF354   ; 0=None, 1=Power Glove, 2=Titan's Mitt
-Boots                   = $7EF355   ; 1=Pegasus Boots (also needs Ability bit)
+Boots                   = $7EF355   ; 1=Pegasus Shoes (also needs Ability bit)
 Flippers                = $7EF356   ; 1=Have
 MoonPearl               = $7EF357   ; 1=Have
 WolfMask                = $7EF358   ; 1=Have
@@ -418,8 +433,9 @@ DungeonMapSet2          = $7EF369
 ; ---------------------------------------------------------
 FishingRod              = $7EF38A
 Bananas                 = $7EF38B
-Pineapples              = $7EF38D
-RockMeatCount           = $7EF38F   ; For Goron quest
+; $7EF38C/$7EF38E: legacy RingSlot1/RingSlot3 (flag off); keep unallocated.
+Pineapples              = $7EF38D   ; Pineapple count (legacy RingSlot2 alias, flag off)
+RockMeatCount           = $7EF38F   ; For Goron quest (legacy RingSlotsNum alias, flag off)
 Seashells               = $7EF391
 Honeycomb               = $7EF393
 DekuSticks              = $7EF395
@@ -449,6 +465,68 @@ MagicBeanProgress       = $7EF39B
 JournalState            = $7EF39C
 ; Reserved              = $7EF39D
 IntroState              = $7EF39E   ; Link's House intro sequence
+
+; ---------------------------------------------------------
+; Part00 flags ($7EF30F)
+; ---------------------------------------------------------
+; Allocated 2026-09-27 from FreeBlock_Story (its last byte). Read/written only
+; when !ENABLE_PART00_ARRIVAL_LINES or !ENABLE_PART00_CHECKPOINT = 1
+; (Core/part00.asm), and only while GameState = 0. Vanilla unused; zero on
+; new files. Read with AND masks.
+Part00Flags             = $7EF30F
+!Part00_VillagerB          = $01  ; villager line B ($202) shown (first wake)
+!Part00_Checkpoint         = $02  ; Link went down the village hole (route checkpoint)
+!Part00_DeathPending       = $04  ; respawned in the house after a death: say B2 ($203)
+!Part00_Revisit            = $08  ; house entered again after B: talking gives B2
+
+; ---------------------------------------------------------
+; Magic Ring Save Block ($7EF3A1-3A6)
+; ---------------------------------------------------------
+; Reserved 2026-09-25 (ring-sram-overlap). Vanilla unused block, inside the
+; saved and checksummed range. Read/written only when
+; !ENABLE_RING_SRAM_RELOCATE = 1; symbols live in Items/magic_rings.asm:
+;   +0 $7EF3A1 FOUNDRINGS   rings found, not appraised (..pa hlbs)
+;   +1 $7EF3A2 MAGICRINGS   rings owned (..pa hlbs, bit order of the ring menu)
+;   +2 $7EF3A3 RingSlot1    equipped ring ID (0 = empty; 2 Power, 3 Armor,
+;                            4 Heart, 5 Light, 6 Blast, 7 Steadfast)
+;   +3 $7EF3A4 RingSlot2    (0 with !ENABLE_ONE_RING: file load clears it)
+;   +4 $7EF3A5 RingSlot3    (0 with !ENABLE_ONE_RING: file load clears it)
+;   +5 $7EF3A6 PortalRodOwned (below). Was RingSlotsNum, a ring slot count
+;                            that nothing read or wrote; the one-ring rule
+;                            (decisions.org 2026-09-28) retired it.
+; With the flag at 0 the ring symbols use the legacy addresses $7EF3D7/D8
+; (= SideQuestProgress/2) and $7EF38C-38F (RingSlot2 = Pineapples,
+; RingSlotsNum = RockMeatCount). Do not allocate $7EF38C or $7EF38E:
+; saves made with the flag at 0 can hold ring IDs there.
+RingSaveBlock           = $7EF3A1   ; 6 bytes ($7EF3A1-3A6)
+
+; ---------------------------------------------------------
+; Portal Rod ownership ($7EF3A6)
+; ---------------------------------------------------------
+; Allocated 2026-09-28 (M2 pause menu). Read/written only when
+; !ENABLE_PORTAL_ROD_CELL = 1: it is the Items-grid ownership byte of the
+; Portal Rod cell ($0202 = $19, Menu_AddressLong). Menu open sets it to 1
+; when CustomRods $7EF351 >= 2 (Maple's upgrade), so older saves show the
+; cell too. Free before: no reader or writer in the repo, its git history or
+; usdasm; not indexed by any $7EF3xx,X write; zero on the SNES Classic saves
+; checked 2026-09-26 (Docs/oracle.org). Inside the saved, checksummed range.
+PortalRodOwned          = $7EF3A6   ; 0 = no, 1 = owned
+
+; ---------------------------------------------------------
+; Eon Owl appearances ($7EF3A7)
+; ---------------------------------------------------------
+; Allocated 2026-09-26 from FreeBlock_Large. Read/written only when
+; !ENABLE_EON_OWL_ONE_SHOT = 1 (Sprites/NPCs/eon_owl.asm). The Owl appears
+; twice in the Abyss (decisions.org "Abyss segment: fix direction"); each
+; appearance happens once, then that Owl does not respawn.
+;   bit 0: arrival Owl talked (map $40, message $1FA, before the Pearl;
+;          needs the base-ROM placement, see Sprites/NPCs/eon_owl.asm)
+;   bit 1: sword Owl talked (map $50, message $E6, after the Pearl)
+; Vanilla unused; zero on the SNES Classic saves checked 2026-09-26. Read
+; with AND masks.
+EonOwlFlags             = $7EF3A7
+!EonOwl_ArrivalTalked      = $01  ; bit 0 - first Abyss appearance done
+!EonOwl_SwordTalked        = $02  ; bit 1 - second Abyss appearance ($E6) done
 
 ; ---------------------------------------------------------
 ; Water Gate States ($7EF411)
@@ -652,8 +730,9 @@ SideQuestProg2          = SideQuestProgress2
 ; Allocated: $7EF304 = ElderGuideStage
 ;            $7EF305 = ZoraWaterfallHint
 ;            $7EF306 = CastleAmbushFlags
+;            $7EF30F = Part00Flags (2026-09-27)
 ;
-FreeBlock_Story    = $7EF307  ; 9 bytes ($7EF307-30F)
+FreeBlock_Story    = $7EF307  ; 8 bytes ($7EF307-30E)
 
 ; ---------------------------------------------------------
 ; Item Extension Block ($7EF310-33F) - 48 bytes
@@ -675,15 +754,38 @@ FreeBlock_Items    = $7EF310  ; 48 bytes ($7EF310-33F)
 FreeBlock_Collect  = $7EF39F  ; 2 bytes ($7EF39F-3A0)
 
 ; ---------------------------------------------------------
-; Reserved Block ($7EF3A1-3C4) - 36 bytes
+; Reserved Block ($7EF3AB-3C4) - 26 bytes
 ; ---------------------------------------------------------
 ; Purpose: Large block for complex features
 ; Suggested uses:
 ;   - Achievement system
 ;   - Extended map data
 ;   - NPC relationship tracking
+; Allocated: $7EF3A1-3A6 = RingSaveBlock (magic rings)
+;            $7EF3A7     = EonOwlFlags (Eon Owl appearances)
+;            $7EF3A8     = BoundMask (independent R binding)
+;            $7EF3A9-AA  = Goldstar ownership / migration version
 ;
-FreeBlock_Large    = $7EF3A1  ; 36 bytes ($7EF3A1-3C4)
+; Independent mask selection, saved with the vanilla $500-byte save block.
+; Proposed allocation for integrator: $7EF3A8; 0 none, 1-4 forms, 5 Stone.
+; Validate range AND ownership before use; old saves may contain garbage.
+BoundMask = $7EF3A8
+; Proposed allocations: reconcile with integrator before applying.
+GoldstarOwned = $7EF3A9       ; 0/1, independent of Hookshot $7EF342
+GoldstarInventoryVersion = $7EF3AA ; $A5 = legacy upgrade migrated
+
+; Saved Ocarina song ($7EF3AB). Allocated 2026-09-29 by the RC integrator.
+; Read/written only when !ENABLE_EQUIPMENT_MENU = 1 (Items/ocarina.asm
+; UpdateFluteSong_Long, Menu/menu_equipment.asm). 0 = unset, 1-4 = song.
+; CurrentSong ($030F) is volatile WRAM; this byte keeps the Equipment
+; choice across save/reload. Validated against learned songs ($7EF34C) on
+; every use; out-of-range or garbage values become song 1.
+; Free before: no reader/writer in the full candidate chain or main; no
+; indexed $7EF3xx,X write reaches it (only bottles $7EF35C,X); none of the
+; 76 item-receipt destinations ($0984E8) is in $7EF3A0-3C4; vanilla new-file
+; init clears it ($0CC315-$0CC325); 00 in every stored save checked.
+SavedOcarinaSong   = $7EF3AB
+FreeBlock_Large    = $7EF3AC  ; 25 bytes ($7EF3AC-3C4)
 
 ; ---------------------------------------------------------
 ; Dreams Extension ($7EF411-4FD) - 237 bytes
@@ -698,13 +800,13 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; ---------------------------------------------------------
 ; | Start    | End      | Size  | Purpose            |
 ; |----------|----------|-------|--------------------|
-; | $7EF304  | $7EF30F  | 12    | Story extension    |
+; | $7EF307  | $7EF30E  | 8     | Story extension    |
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
-; | $7EF3A1  | $7EF3C4  | 36    | Large reserved     |
+; | $7EF3AB  | $7EF3C4  | 26    | Large reserved     |
 ; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
 ; |----------|----------|-------|--------------------|
-; | TOTAL AVAILABLE:    | 334   | bytes              |
+; | TOTAL AVAILABLE:    | 320   | bytes              |
 ; ---------------------------------------------------------
 
 ; =========================================================

@@ -88,6 +88,13 @@ HouseTag_Main:
     ; Legacy vanilla house flag (no uncle NPC in OOS).
     LDA $7EF3C6 : ORA.b #!Story2_LegacyHouseFlag : STA $7EF3C6
 
+if !ENABLE_PART0_STORM == 1
+    ; Part 0 storm starts with the new game (Overworld/storm.asm). Runs in
+    ; both the arrival and the flags-off intro; cleared when Link is back on
+    ; Kalyxo after the Abyss.
+    LDA.l StoryProgress2 : ORA.b #!Story2_Part0Storm : STA.l StoryProgress2
+endif
+
     ; Set the game mode (legacy mapping; see Core/sram.asm for current values)
     LDA #$00 : STA GameState
     LDA #$00 : STA $7EF3CC   ; disable telepathic message
@@ -164,6 +171,21 @@ if !ENABLE_D3_PRISON_SEQUENCE == 1
 endif
 
   LDA.w $02B2 : CMP.b #$05 : BNE .no_minish
+if !ENABLE_ORIGINS_MINISH_PUZZLE == 1
+    ; Shrine of Origins (room $05): open the west shutter only once Minish
+    ; Link reaches the NE chamber (QUADH $A9 = right, QUADV $AA = top), so
+    ; the player sees it open. Other rooms keep the old behavior.
+    LDA.b $A1 : BNE .quadrant_ok
+    LDA.b $A0 : CMP.b #$05 : BNE .quadrant_ok
+if !ENABLE_ORIGINS_PEARL_RETURN_FIX == 1
+      ; The shutter closes again in the NW chest chamber. Once the Pearl
+      ; is earned, Minish Link must also be able to reopen it from there.
+      LDA.l MoonPearl : BNE .quadrant_ok
+endif
+      LDA.b $A9 : BEQ .no_minish
+      LDA.b $AA : BNE .no_minish
+    .quadrant_ok
+endif
     REP #$30
     LDX.w #$0000 : CPX.w $0468 : BEQ .exit
       STZ.w $0468
@@ -178,7 +200,7 @@ endif
 }
 
 ; =========================================================
-; Minish Switch — Tiny Pressure Plate (Tag 0x34 / Holes1)
+; Minish Switch — Tiny Pressure Plate (Tag 0x23 / Holes1)
 ;
 ; Toggles crystal switches ($0468) only when Link is in
 ; Minish form. Normal Link walks over it with no effect.

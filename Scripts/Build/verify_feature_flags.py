@@ -154,7 +154,7 @@ def main() -> int:
     # Ensure no other .asm assigns !ENABLE_* (to keep flags centralized).
     allowed = {macros_path.resolve(), overrides_path.resolve()}
     for asm_path in root.rglob("*.asm"):
-        if _should_skip(asm_path):
+        if _should_skip(asm_path.relative_to(root)):
             continue
         resolved = asm_path.resolve()
         if resolved in allowed:

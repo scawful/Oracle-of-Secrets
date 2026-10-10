@@ -49,7 +49,12 @@ org $07A313
 LinkItem_ShovelAndFlute:
 {
   ; Play flute or use the Wolf Mask
+if !ENABLE_MASK_R_BINDING == 1
+  JSL MaskBinding_IsOcarina : NOP
+  BNE .use_wolf_mask
+else
   LDA $0202 : CMP.b #$0D : BNE .use_wolf_mask
+endif
     BRL LinkItem_Flute
   .use_wolf_mask
   JMP LinkItem_WolfMask

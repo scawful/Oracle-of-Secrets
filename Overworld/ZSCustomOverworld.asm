@@ -1557,9 +1557,17 @@ ActivateSubScreen:
     ; Check if Song of Storms rain is active
     LDA.l $7EE00E : AND.w #$00FF : BNE .turnOn
 
-    ; Check if we are in the beginning phase, if not, no rain.
-    ; If $7EF3C5 >= 0x02.
+    ; Early story phases only need a rain subscreen when beginning rain is
+    ; enabled. Keep this in sync with Overworld_ReloadSubscreenOverlay.
+if !ENABLE_PART0_STORM == 1
+    ; Part 0 storm: the saved storm bit (StoryProgress2 bit 7), light world
+    ; only, replaces Pool_EnableBeginningRain + GameState < 2
+    ; (Overworld/storm.asm). Keeps M/X and X; clobbers A.
+    JSL Oracle_Part0Storm_CarryClearIfStorm : BCS .noRain
+else
+    LDA.w Pool_EnableBeginningRain : AND.w #$00FF : BEQ .noRain
     LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCS .noRain
+endif
         BRA .turnOn
         
     .noRain
@@ -1752,7 +1760,7 @@ PreOverworld_LoadProperties_Interupt:
         .setNormalSong
 
         LDX.b $8A
-        LDA.l $7F5B00, X : AND.b #$0F : TAX
+        LDA.l !OverworldMusicCache, X : AND.b #$0F : TAX
         
     .setToFull
     
@@ -1764,7 +1772,7 @@ PreOverworld_LoadProperties_Interupt:
     ; Doing so creates a slight pause and causes the ambient sound to stop and
     ; start playing again rather than just continuing to play.
     ;LDX.b $8A
-    ;LDA.l $7F5B00, X : LSR #4 : STA.w $012D
+    ;LDA.l !OverworldMusicCache, X : LSR #4 : STA.w $012D
     
     ; The decompression function increases it by 1 so subtract 1 here.
     JSL.l ReadAnimatedTable : DEC : TAY
@@ -2225,7 +2233,7 @@ Overworld_ReloadSubscreenOverlay_Interupt:
 
                     .loadOverlayShortcut
 
-                    JMP.w .loadSubScreenOverlay
+                    JMP.w .checkNoOverlay
 
                 .masterSwordRecieved
 
@@ -2249,11 +2257,22 @@ Overworld_ReloadSubscreenOverlay_Interupt:
                 ; Triforce room.
                 CMP.w #$0189 : BEQ .loadOverlayShortcut
                     .noSubscreenOverlay
-                        
+
+                    ; Preserve the no-overlay sentinel for later fixed-color
+                    ; updates; never send it to the overlay decompressor.
+                    LDA.w #$00FF : STA.b $8C
+
+                    ; $1C = OBJ, BG2 and BG3 on the main screen (same as the
+                    ; overlay path) and $1D = 0 (no subscreen; TSQ is written
+                    ; in NMI), in one 16-bit store. Without the $1C write, $1C
+                    ; kept the previous screen's value (file select $15,
+                    ; dungeon rooms $17): the map (BG2) could be off and BG1
+                    ; junk showed instead (grid on OW $40, dw-warp-pyramid-gfx).
+                    ; One store instead of two: this block ends exactly at
+                    ; $02B0D2 with !ENABLE_PART0_STORM = 0.
+                    LDA.w #$0016 : STA.b $1C
                     SEP #$30 ; Set A, X, and Y in 8bit mode.
-                        
-                    ; Clear TSQ PPU Register, to be handled in NMI.
-                    STZ.b $1D
+                    STZ.b $9A ; No overlay means no backdrop color addition.
 
                     ; Submodule 0x18 (Module09_18:) of Module 0x0B
                     ; (Overworld Mode (special overworld))
@@ -2298,10 +2317,22 @@ Overworld_ReloadSubscreenOverlay_Interupt:
         
     .notMire
 
+if !ENABLE_PART0_STORM == 1
+    ; Part 0 storm: rain overlay and rain sound follow the saved storm bit
+    ; (StoryProgress2 bit 7, Overworld/storm.asm) instead of GameState < 2.
+    ; Light world only; keeps M/X and X (the overlay ID); clobbers A.
+    JSL Oracle_Part0Storm_CarryClearIfStorm : BCS .noRain
+        LDX.w #$009F
+
+        SEP #$20 ; Set A in 8bit mode.
+        LDA.b #$01 : STA.w $012D ; SFX1.01 rain
+        REP #$20 ; Set A in 16bit mode.
+else
     ; Check if we are in the beginning phase, if not, no rain.
     LDA.l Pool_EnableBeginningRain : AND.w #$00FF : BEQ .noRain
         LDA.l $7EF3C5 : AND.w #$00FF : CMP.w #$0002 : BCS .noRain
             LDX.w #$009F
+endif
 
     .noRain
 
@@ -2310,11 +2341,12 @@ Overworld_ReloadSubscreenOverlay_Interupt:
         LDX.w #$009F
     .noSongOfStorms
 
-    ; If the value is 0xFF that means we didn't set any overlay so load the
-    ; pyramid one by default.
+    ; $FF means no overlay. Loading the pyramid here would turn on backdrop
+    ; addition even though the area's palette already has the correct color.
+    ; Weather overrides above still load their real overlay IDs normally.
+    .checkNoOverlay
     CPX.w #$00FF : BNE .notFF
-        ; The pyramid background.
-        LDX.w #$0096
+        JMP.w .noSubscreenOverlay
 
     .notFF
     
@@ -2363,16 +2395,11 @@ Overworld_ReloadSubscreenOverlay_Interupt:
         CPX.b #$9C : BEQ .loadOverlay ; Lava
         CPX.b #$96 : BEQ .loadOverlay ; Pyramid BG
         
-        ; Check for NO OVERLAY ($FF)
-        CPX.b #$FF : BNE .checkScroll
-            LDA.b #$00 ; Disable Color Math
-            BRA .loadOverlay
-
-        .checkScroll
-            ; TODO: Investigate what these checks are for.
-            LDX.b $11 : CPX.b #$23 : BEQ .loadOverlay
-                        CPX.b #$2C : BEQ .loadOverlay
-                STZ.b $1D
+        ; $FF has already returned before decompression. Keep the remaining
+        ; scroll handling for other overlay IDs.
+        LDX.b $11 : CPX.b #$23 : BEQ .loadOverlay
+                    CPX.b #$2C : BEQ .loadOverlay
+            STZ.b $1D
     
     .loadOverlay
     
@@ -2441,7 +2468,7 @@ db $38, $E9, $10, $00, $29, $3E, $00, $4A
 db $85, $86, $9C, $18, $04, $9C, $10, $04
 db $9C, $16, $04, $E2, $30, $A9, $82, $85
 db $99, $A9, $16, $85, $1C, $A9, $01, $85
-db $1D, $DA, $A6, $8A, $BF, $00, $5B, $7F
+db $1D, $DA, $A6, $8A, $BF : dl !OverworldMusicCache
 db $4A, $4A, $4A, $4A, $8D, $2D, $01, $FA
 db $A9, $72, $E0, $97, $F0, $39, $E0, $94
 db $F0, $35, $E0, $93, $F0, $31, $E0, $9D
@@ -2476,6 +2503,9 @@ Func02B2D4:
     ; In vanilla a check for the overlay is done here but we don't need
     ; it at all. It is handled in Func02B391 later on.
     ;JSL.l EnableSubScreenCheckForPyramid
+
+    ; No overlay: give the overlay uploads that follow a safe VRAM table.
+    JSL.l MirrorWarp_NoOverlayUploadTable
 
     RTL
 }
@@ -3185,15 +3215,8 @@ CheckForChangeGraphicsTransitionLoad:
                 LDA.w Pool_EnableBGColor : BEQ .dontUpdateBGColor1
                     REP #$30 ; Set A, X, and Y in 16bit mode.
 
-                    ; Get area code and times it by 2.
-                    LDA.b $8A : ASL : TAX
-
-                    ; Where ZS saves the array of palettes
-                    LDA.w Pool_BGColorTable, X
-                    STA.l TimeState.SubColor
+                    JSL Oracle_ReadOverworldBackdropColor
                     JSL Oracle_BackgroundFix
-                    ; STA.l $7EC300 : STA.l $7EC500
-                    ; STA.l $7EC540 : STA.l $7EC340
 
                     SEP #$30 ; Set A, X, and Y in 8bit mode.
 
@@ -3233,28 +3256,9 @@ CheckForChangeGraphicsTransitionLoad:
 
     REP #$30 ; Set A, X, and Y in 16bit mode.
 
-    ; $0181 is the exit room number used for getting into the under the bridge
-    ; area.
-    LDA.b $A0 : CMP.w #$0181 : BNE .notBridge
-        LDA.w Pool_BGColorTable_Bridge
-
-        BRA .storeColor
-
-    .notBridge
-
-    ; Get area code and times it by 2.
-    LDA.b $8A : ASL : TAX
-
-    ; Where ZS saves the array of palettes.
-    LDA.w Pool_BGColorTable, X
-
-    .storeColor
-
-    ; Set transparent color. only set the buffer so it fades in right
-    ; during mosaic transition.
-    STA.l TimeState.SubColor
+    ; Tint only the fade targets; main CGRAM is advanced by PaletteFilter.
+    JSL Oracle_ReadOverworldBackdropColor
     JSL Oracle_MosaicFix
-    ;STA.l $7EC300 : STA.l $7EC340
 
     ; Write the fixed color.
     LDX.w #$4020 : STX.b $9C
@@ -3367,7 +3371,9 @@ Palette_MultiLoad_NonBuffer:
             LDA.b [$00] 
             STA.l TimeState.SubColor
             BEQ + 
+            PHX ; ColorSubEffect uses X for the hour table.
             JSL Oracle_ColorSubEffect
+            PLX
             +
             STA.l $7EC300, X
             STA.l $7EC500, X 
@@ -3594,7 +3600,7 @@ BirdTravel_LoadTargetArea_Interupt:
         
     ; If it's a different music track than was playing where we came from,
     ; simply change to it (as opposed to setting volume back to full).
-    LDA.l $7F5B00, X : AND.b #$0F : TAX : CPX.w $0130 : BNE .different_music
+    LDA.l !OverworldMusicCache, X : AND.b #$0F : TAX : CPX.w $0130 : BNE .different_music
         ; Otherwise, just set the volume back to full.
         LDX.b #$F3
     
@@ -3618,9 +3624,8 @@ db $F0, $02, $A0, $5A, $22, $94, $D3, $00
 db $22, $70, $FE, $0B, $9C, $A9, $0A, $9C
 db $B2, $0A, $22, $9B, $E1, $00, $EE, $00
 db $02, $64, $B2, $22, $F4, $B1, $02, $A9
-db $10, $8D, $2F, $01, $A6, $8A, $BF, $00
-db $5B, $7F, $4A, $4A, $4A, $4A, $8D, $2D
-db $01, $BF, $00, $5B, $7F, $29, $0F, $AA
+db $10, $8D, $2F, $01, $A6, $8A, $BF : dl !OverworldMusicCache : db $4A, $4A, $4A, $4A, $8D, $2D
+db $01, $BF : dl !OverworldMusicCache : db $29, $0F, $AA
 db $EC, $30, $01, $D0, $02, $A2, $F3, $8E
 db $2C, $01, $6B
 
@@ -3631,6 +3636,10 @@ LoadAmbientSound:
 {
     PHB : PHK : PLB
 
+    ; Both return paths supply the area index to bird-travel music. Graphics
+    ; loading can leave X=$C0; the Song of Storms shortcut must not keep it.
+    LDX.b $8A
+
     ; Check if Song of Storms rain is active
     LDA.l $7EE00E : BEQ .noSongOfStorms
         LDA.b #$01 : STA.w $012D  ; Rain SFX
@@ -3638,8 +3647,7 @@ LoadAmbientSound:
     .noSongOfStorms
 
     ; Reset the ambient sound effect to what it was.
-    LDX.b $8A
-    LDA.l $7F5B00, X : LSR #4 : STA.w $012D
+    LDA.l !OverworldMusicCache, X : LSR #4 : STA.w $012D
 
     ; Check if we need to stop the rain sound in the misery mire.
     LDA.w Pool_EnableRainMireEvent : BEQ .disableRainSound
@@ -3691,7 +3699,7 @@ Overworld_LoadBGColorAndSubscreenOverlay:
         
     .notMire
 
-    LDA.b $8C ; Use current active overlay instead of reading from static table
+    LDA.b $8C : AND.w #$00FF ; $8D is footstep animation, not overlay ID
     ; JSL.l ReadOverlayArray
 
     ; Check for misery mire.
@@ -3752,7 +3760,7 @@ Overworld_LoadBGColorAndSubscreenOverlay:
         LDA.b $E2 : STA.b $E0
             
         ; Just because I need a bit more space.
-        LDA.b $8C ; JSL.l ReadOverlayArray
+        LDA.b $8C : AND.w #$00FF ; Active overlay byte
             
         ; Are we at Hyrule Castle or Pyramid of Power?
         CMP.w #$0096 : BNE .subscreenOnAndReturn
@@ -3763,7 +3771,7 @@ Overworld_LoadBGColorAndSubscreenOverlay:
     .BRANCH_11
     
     ; Check for the pyramid BG.
-    LDA.b $8C ; JSL.l ReadOverlayArray 
+    LDA.b $8C : AND.w #$00FF ; Active overlay byte 
     CMP.w #$0096 : BNE .subscreenOnAndReturn
         ; Synchronize Y scrolls on BG0 and BG1. Same for X scrolls.
         LDA.b $E8 : STA.b $E6
@@ -3835,61 +3843,18 @@ pullpc
 ReplaceBGColor:
 {
     PHB : PHK : PLB
+    SEP #$20
+    LDA.w Pool_EnableBGColor : BEQ .disabled
 
-    SEP #$20 ; Set A in 8bit mode.
-
-    LDA.w Pool_EnableBGColor : BNE .custom
-        REP #$20 ; Set A in 16bit mode.
-
-        PLB
-
-        RTL
-
-    .custom
-
-    REP #$20 ; Set A in 16bit mode.
-
-    ; Get area code and times it by 2. Get the color.
-    LDA.b $8A : ASL : TAX
-    LDA.w Pool_BGColorTable, X : PHA
-    
-    SEP #$20 ; Set A in 8bit mode.
-
-    ; TODO: Pretty sure this is needed. Just keep an eye out for it.
-    ; Set the buffer color when exiting to the OW to prevent a bug when using 
-    ; the map in an area with a subscreen overlay.
-    LDA.b $10 : CMP.b #$08 : BEQ .setBuffer
-                CMP.b #$0A : BEQ .setBuffer
-        ; Set the buffer color during warps.
-        LDA.b $11 : CMP.b #$23 : BNE .notWarp
-            .setBuffer
-
-            REP #$20 ; Set A in 16bit mode.
-
-            ; Set the BG color buffer.
-            PLA
-            STA.l TimeState.SubColor
-            JSL Oracle_BackgroundFix ; $3482DD ; Background Fix
-            ; STA.l $7EC300 : STA.l $7EC340 ; Set the BG color.
-            ; STA.l $7EC500 : STA.l $7EC540
-
-            BRA .skipActualColor
-
-    .notWarp
-
-    REP #$20 ; Set A in 16bit mode.
-
-    ; Set the BG color.
-    PLA
-    STA.l TimeState.SubColor
+    REP #$30
+    JSL Oracle_ReadOverworldBackdropColor
     JSL Oracle_BackgroundFix
-    ; STA.l $7EC500
-    ; STA.l $7EC540
-
-    .skipActualColor
-
     PLB
+    RTL
 
+    .disabled
+    REP #$20
+    PLB
     RTL
 }
 
@@ -3961,26 +3926,11 @@ InitColorLoad2:
 {
     PHB : PHK : PLB
 
-    ; $0181 is the exit room number used for getting into the under the bridge
-    ; area.
-    LDA.b $A0 : CMP.w #$0181 : BNE .notBridge
-        LDA.w Pool_BGColorTable_Bridge
-
-        BRA .storeColor
-
-    .notBridge
-
-    ; Get area code and times it by 2.
-    LDA.b $8A : ASL : TAX
-
-    ; Get the color.
-    LDA.w Pool_BGColorTable, X
-
-    .storeColor
-
-    ; Set transparent color.
-    STA.l TimeState.SubColor ; Set temp color for tinting
-    JSL Oracle_BackgroundFix ; Apply tint and write to buffers
+    ; Both vanilla entries use this raw selector. Cache-only $0ED61D must
+    ; leave the main buffer alone for PaletteFilter; $0ED618 copies the
+    ; once-tinted result to main afterwards through ColorBgFix.
+    JSL Oracle_ReadOverworldBackdropColor
+    JSL Oracle_MosaicFix
 
     INC.b $15
 
@@ -4785,12 +4735,12 @@ OverworldHandleTransitions:
         .lightWorld
 
         ; Extract the ambient sound from this array.
-        LDA.l $7F5B00, X : LSR #4 : BNE .ambientSound
+        LDA.l !OverworldMusicCache, X : LSR #4 : BNE .ambientSound
             LDA.b #$05 : STA.w $012D ; No ambient sound.
 
         .ambientSound
 
-        LDA.l $7F5B00, X : AND.b #$0F : CMP.w $0130 : BEQ .noMusicChange
+        LDA.l !OverworldMusicCache, X : AND.b #$0F : CMP.w $0130 : BEQ .noMusicChange
             LDA.b #$F1 : STA.w $012C
 
         .noMusicChange
@@ -4933,9 +4883,9 @@ db $C9, $2A, $D0, $05, $A9, $80, $8D, $2D
 db $01, $BF, $EC, $A5, $02, $0F, $CA, $F3
 db $7E, $85, $8A, $8D, $0A, $04, $AA, $AF
 db $CA, $F3, $7E, $F0, $06, $AF, $57, $F3
-db $7E, $F0, $1F, $BF, $00, $5B, $7F, $4A
+db $7E, $F0, $1F, $BF : dl !OverworldMusicCache : db $4A
 db $4A, $4A, $4A, $D0, $05, $A9, $05, $8D
-db $2D, $01, $BF, $00, $5B, $7F, $29, $0F
+db $2D, $01, $BF : dl !OverworldMusicCache : db $29, $0F
 db $CD, $30, $01, $F0, $05, $A9, $F1, $8D
 db $2C, $01, $20, $08, $AB, $A9, $01, $85
 db $11, $A5, $00, $8D, $10, $04, $8D, $16
@@ -5776,6 +5726,36 @@ Link_Read_Interupt:
     LDA.w Pool_Overworld_SignText_New, Y
 
     PLB
+
+    RTL
+}
+
+; Mirror warp (AnimateMirrorWarp steps 5-6: TriggerOverlayA_2 sets $17 = $0C,
+; TriggerOverlayB $0D) uploads $7F2000-$7F3FFF through the VRAM address table
+; at $7F4000-$7F407F (NMI_HandleArbitraryTilemap). Only a real overlay load
+; builds that table; with no overlay ($8C = $FF, e.g. the Abyss pyramid $40)
+; it still holds the graphics decompressed in steps 2-4, so the two uploads
+; wrote 8 KB to random VRAM: BG3 tilemap rows (the garbled row and edge tiles
+; after the Kydrog warp) and BG/OBJ characters. Point all 64 entries at the
+; BG1 tilemap ($1000-$1FFF words, not on screen without an overlay) instead.
+; Steps 7-9 rebuild the table for the destination screen as before.
+MirrorWarp_NoOverlayUploadTable:
+{
+    PHP
+    SEP #$20 ; Set A in 8bit mode.
+    LDA.b $8C : CMP.b #$FF : BNE .overlay
+        REP #$30 ; Set A, X, and Y in 16bit mode.
+        LDX.w #$007E
+        LDA.w #$1FC0
+
+        .next_entry
+            STA.l $7F4000, X
+            SEC : SBC.w #$0040
+        DEX : DEX : BPL .next_entry
+
+    .overlay
+
+    PLP
 
     RTL
 }

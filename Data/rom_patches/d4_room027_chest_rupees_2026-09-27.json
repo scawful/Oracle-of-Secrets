@@ -1,0 +1,15 @@
+{
+  "base_sha1": "418332cc010bde5d8707060d6304a90a6aa786ef",
+  "task": "D4 room $027 (Water Gate Room): its chest object (tile 53,25) has no chest-table record, so it could not open. Give it 20 rupees ($36) by reusing dead record 167 (scawful 2026-09-27: 'sure').",
+  "note": "Apply after s3_dungeon_id_2026-09-27.json. SHA-1 chain: 1866b2977c2f7cb5389691cab36fa8bcce0f3152 -> (s3_dungeon_id) 418332cc010bde5d8707060d6304a90a6aa786ef -> (this) 9150cc3dbffa08bdb11059fb68fe0879b262ece9. The bytes do not overlap, so it also applies alone (1866b297 -> eaaae0171262db3ff1cc38dfadd8206106857b5a). Record 167 (last in the table) belonged to room $011, which has no chest object ($0496 = 0 at runtime), so it was never read. Room $027 had no record, so this one becomes its 1st match (OpenItemChest $01:EBF2 scans room words in table order; the chest is slot 0 in $06E0). Table size/pointer unchanged (168 records, $01:EBF6 = $01F8). yaze (room.cc LoadChests) and ZScream (Room.cs) both read all 168 records by room ID in table order and pair them with the room's chest objects, so both show it; a later editor save keeps it because room $027 has the chest object. Docs/Technical/Dungeon_Tables_Expansion.md section 1.",
+  "edits": [
+    {
+      "id": "room-027-chest-20-rupees",
+      "pc": "0x0EB63",
+      "snes": "$01EB63",
+      "before": "11 00 44",
+      "after": "27 00 36",
+      "why": "RoomData_ChestItems record 167: dead record for room $0011 (item $44) -> room $0027 small chest, item $36 (20 rupees)"
+    }
+  ]
+}

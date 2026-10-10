@@ -1,6 +1,6 @@
 # Oracle of Secrets - Side Quest Bible
 
-**Last Updated:** 2026-01-23
+**Last Updated:** 2026-09-02
 **Status:** Active Development
 
 This document catalogs all side quests, their narrative purpose, and implementation details.
@@ -20,13 +20,16 @@ Side quests are generally **not required** for main progression but enrich the e
 
 ## Quest Chains
 
-### The Lost Voice (Ranch Girl Quest)
+### The Cursed Ranch Girl (Required Ocarina Quest)
 
-**Gossip Stone Hint (GS02):**
-> "A girl lost her voice at the ranch. Seek the forest's gift, the witch's craft, and the spark that wakes the silent."
+This is required main-path progression. Optional hints may reinforce it, but a
+Gossip Stone or knowledge of ALTTP's Cucco Easter egg cannot be the only clue.
 
 #### Narrative Purpose
-The Ranch Girl has lost her voice—a curse or trauma connected to Twinrova (revealed in Dream Sequence 2). Helping her restore her voice foreshadows the deeper connection and builds investment before the revelation.
+Twinrova transformed the Ranch Girl after she witnessed them searching Kalyxo
+for the essences. Investigating her disappearance gives Link a motivated reason
+to visit Loom Ranch, introduces Twinrova before D5, and awards the Ocarina needed
+for D2 progression.
 
 #### Quest Flow
 
@@ -34,21 +37,23 @@ The Ranch Girl has lost her voice—a curse or trauma connected to Twinrova (rev
 |------|----------|------------|---------------|-------|
 | 1 | Mushroom Grotto (exterior) | — | Mushroom | Found near withered toadstool |
 | 2 | Witch's Hut | Mushroom | Magic Powder | Syrup brews it for you |
-| 3 | Ranch | Magic Powder | ??? | Use on silent Ranch Girl |
-| 4 | Ranch (cont.) | ??? | Ocarina | She thanks you with song |
+| 3 | Post-D1 guidance | — | Ranch investigation | Ranch Girl vanished after Twinrova questioned her |
+| 4 | Loom Ranch | Magic Powder | Ranch Girl temporarily revealed | Strange Cucco appeared when she vanished; powder reveals transformed creatures |
+| 5 | Loom Ranch | — | Ocarina | Ranch Girl points Link to the Mask Salesman at Tail Pond |
 
 #### Trigger Conditions
 - **Available after:** D1 (Mushroom Grotto cleared)
-- **Completed by:** Playing Song of Healing with Ocarina (optional finale)
+- **Completed by:** Receiving the Ocarina and the Tail Pond destination
+- **Permanent resolution:** Defeating Twinrova in D5 automatically breaks the curse
 
 #### Story Significance
-- Ranch Girl's silence hints at Twinrova's influence
-- Dream Sequence 2 reveals the full truth
+- Ranch Girl's transformation provides early evidence of Twinrova's search for the essences
 - Ocarina becomes key item for other quests
+- The D5 victory pays off the early curse without a mandatory return trip
 
 #### Rewards
 - **Ocarina:** Required for Song of Storms, Song of Healing usage
-- **Heart Piece:** Given after playing Song of Healing for her (optional)
+- **No post-D5 reward:** The permanent cure is a world-state consequence, not another quest
 
 #### Related Files
 - `Sprites/NPCs/ranch_girl.asm`
@@ -403,7 +408,7 @@ You have given us our names back.
 
 | Quest | Giver | Reward | Priority |
 |-------|-------|--------|----------|
-| Lost Voice | Ranch Girl | Ocarina | High |
+| Cursed Ranch Girl (required path) | Ranch Girl | Ocarina | High |
 | Lonely Cartographer | Cartographer | Map markers | Medium |
 | Goron Rock Meat | Goron Elder | D6 access | High |
 | Korok Hide and Seek | Koroks | Heart pieces | Medium |
@@ -419,7 +424,7 @@ You have given us our names back.
 ## Implementation Checklist
 
 ### Dialogue Needed
-- [ ] Ranch Girl (silent state, restored state)
+- [ ] Ranch Girl (temporary reveal, Ocarina handoff, optional post-D5 reaction)
 - [ ] Cartographer (shell trades)
 - [ ] Goron Elder (5 stages of trust)
 - [ ] Koroks (10 unique fragments)

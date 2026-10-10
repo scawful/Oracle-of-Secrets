@@ -236,7 +236,8 @@ ValidDoorTypesExpanded_low:
  dw $01C6, $015E, $0167, $0128 ; 08: Waterfall, ???, ???, ???
  dw $0131, $0112, $016D, $0163 ; 09:
  dw $0173, $00FE, $0113, $0177 ; 10:
- dw $00EA, $013B               ; 11: Lava Land Large, Lava Land Small
+ dw $00EA, $013B, $0174, $FFFF ; 11: Lava Land Large, Lava Land Small, Goron Mines, unused
+ dw $FFFF                       ; 12: unused; fills the 49-entry scan contract
 
 ValidDoorTypesExpanded_high:
  dw $014A, $00C4, $014F, $0115 ; ???, House Door, ???, ???
@@ -250,7 +251,12 @@ ValidDoorTypesExpanded_high:
  dw $01C6, $0131, $0051, $014E ; Waterfall, ???, ???, ???
  dw $0131, $0112, $017A, $0163 ; 09:
  dw $0172, $01BD, $0152, $0167 ; 10:
- dw $00EB, $013A
+ dw $00EB, $013A, $0174, $FFFF
+ dw $FFFF
+ValidDoorTypesExpanded_end:
+
+assert ValidDoorTypesExpanded_high-ValidDoorTypesExpanded_low == $62
+assert ValidDoorTypesExpanded_end-ValidDoorTypesExpanded_high == $62
 
 pushpc
 

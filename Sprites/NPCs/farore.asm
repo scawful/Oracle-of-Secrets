@@ -1,16 +1,18 @@
 ; =========================================================
 ; Farore, Oracle of Secrets
 ;
-; NARRATIVE ROLE: Central story character - the Oracle of Secrets and
-;   keeper of hidden knowledge. Kidnapped by Kydrog in the intro, she
-;   serves as his "anchor" to the Light World until rescued in D7.
-;   Post-rescue, she reveals the truth about Ganondorf and guides Link
-;   to forge the Master Sword.
+; NARRATIVE ROLE: Central story character - the Oracle of Secrets. She
+;   sealed the Abyss prison and bound her power into her guardian knight's
+;   sword (the Meadow Blade, the seal's key). Kydrog, that fallen knight,
+;   kidnaps her body in the intro to force the key open; Link frees her in
+;   D7. At the Master Sword pedestal (beat 25) she releases her power from
+;   the Meadow Blade into the Master Sword as Link pulls it.
+;   Canon: Docs/Planning/Status/decisions.org ("Villain chain",
+;   "Seal geography").
 ;
 ; TERMINOLOGY: "Farore" = Farore (Oracle of Secrets)
 ;   - NOT the Goddess Farore (though named after her)
-;   - Last of the Oracle bloodline (connected to seal guardians)
-;   - Bound within the Meadow Blade (fragment of her spirit)
+;   - Her power is bound into the Meadow Blade (msg 0x70)
 ;
 ; CONTEXT-DEPENDENT BEHAVIOR:
 ;   - INDOORS: Uses HyruleDream draw/main (dream sequences)
@@ -40,12 +42,11 @@
 ;   - kydrog.asm (captures her in intro, anchor mechanic)
 ;   - maku_tree.asm (her sanctuary)
 ;   - hyrule_dream.asm (indoor dream variant)
-;   - narrative_lockdown.md (post-D7 exposition plans)
+;   - Docs/Planning/Status/decisions.org (story rulings)
 ;
 ; TODO:
 ;   - Add post-rescue states (8+) for Hall of Secrets NPC ($B6 = 3)
-;   - Implement Ganondorf exposition dialogue
-;   - Add Master Sword guidance sequence
+;   - Master Sword pedestal transfer scene (beat 25)
 ;   - IDEA: Branching dialogue if Link possesses the "Oracle Secrets" item.
 ; =========================================================
 ; Farore
@@ -190,7 +191,7 @@ Sprite_Farore_Main:
     LDA.w SprTimerA, X : BNE +
       STZ $2F
       LDA #$00 : STA InCutScene
-      ; "I am Farore, the Oracle of Secrets."
+      ; Farore's greeting (msg $0E)
       %ShowUnconditionalMessage($0E)
       %GotoAction(4)
     +
@@ -219,7 +220,12 @@ Sprite_Farore_Main:
     JSL Sprite_MoveVert
 
     LDA #$02 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
+if !ENABLE_PART0_STORM == 1
+    ; Part 0 storm: rain and rain sound continue through this beat and the
+    ; Abyss; the storm ends when Link is back on Kalyxo (Overworld/storm.asm).
+else
     LDA #$05 : STA $012D ; turn off rain sound
+endif
     LDA #$01 : STA $B6 ; Set Story State
     JSL Sprite_LoadGfxProperties
 

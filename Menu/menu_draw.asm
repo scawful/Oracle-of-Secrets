@@ -91,6 +91,47 @@ Menu_DrawTriforceIcons:
   LDX.w #$3534
   LDY.w #$3544
 
+if !ENABLE_MENU_AUDIT_FIXES == 1
+  ; Crystals in D1-D7 order (menu audit 2026-09-28). The award ORs
+  ; RoomTagPrizeChecks[$040C/2] ($02A1A4, vanilla bytes in oos168.sfc), so
+  ; the bits are D6 D1 D5 D7 D2 D4 D3 (Core/sram.asm !Crystal_*). Slots:
+  ; top row $1366/$136A/$136E = D1-D3, bottom row $13E4/$13E8/$13EC/$13F0
+  ; = D4-D7 (left to right); each triangle's lower half is +$40.
+  LSR : BCC +   ; bit 0 $01 D6 -> bottom row, 3rd
+    STX.w $13EC : INX : STX.w $13EE : DEX
+    STY.w $142C : INY : STY.w $142E : DEY
+  +
+
+  LSR : BCC +   ; bit 1 $02 D1 -> top row, 1st
+    STX.w $1366 : INX : STX.w $1368 : DEX
+    STY.w $13A6 : INY : STY.w $13A8 : DEY
+  +
+
+  LSR : BCC +   ; bit 2 $04 D5 -> bottom row, 2nd
+    STX.w $13E8 : INX : STX.w $13EA : DEX
+    STY.w $1428 : INY : STY.w $142A : DEY
+  +
+
+  LSR : BCC +   ; bit 3 $08 D7 -> bottom row, 4th
+    STX.w $13F0 : INX : STX.w $13F2 : DEX
+    STY.w $1430 : INY : STY.w $1432 : DEY
+  +
+
+  LSR : BCC +   ; bit 4 $10 D2 -> top row, 2nd
+    STX.w $136A : INX : STX.w $136C : DEX
+    STY.w $13AA : INY : STY.w $13AC : DEY
+  +
+
+  LSR : BCC +   ; bit 5 $20 D4 -> bottom row, 1st
+    STX.w $13E4 : INX : STX.w $13E6 : DEX
+    STY.w $1424 : INY : STY.w $1426 : DEY
+  +
+
+  LSR : BCC +   ; bit 6 $40 D3 -> top row, 3rd
+    STX.w $136E : INX : STX.w $1370 : DEX
+    STY.w $13AE : INY : STY.w $13B0 : DEY
+  +
+else
   LSR : BCC +
     STX.w $1366 : INX : STX.w $1368 : DEX
     STY.w $13A6 : INY : STY.w $13A8 : DEY
@@ -125,6 +166,7 @@ Menu_DrawTriforceIcons:
     STX.w $13F0 : INX : STX.w $13F2 : DEX
     STY.w $1430 : INY : STY.w $1432 : DEY
   +
+endif
 
   RTS
 }
@@ -266,9 +308,13 @@ DrawYItems:
   JSR DrawMenuItem
 
   LDA.l $7EF342 : AND.w #$00FF : CMP.w #$0000 : BEQ .no_hookshot
+if !ENABLE_GOLDSTAR_CELL == 1
+    LDA.w #$0001
+else
     LDA.w GoldstarOrHookshot : BNE .spoof_hookshot
       LDA #$0001 ; No goldstar, but hookshot
     .spoof_hookshot
+endif
 
     STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
     LDX.w #menu_offset(7,9)
@@ -331,7 +377,15 @@ DrawYItems:
   ; Row 3 -------------------------------------------------
 
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
+if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
+    ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 5).
+    CMP.w #$0002 : BCS .ocarina_has_songs
+      LDA.w #$0005 : BRA .spoof_ocarina
+    .ocarina_has_songs
+    LDA.w $030F : AND.w #$00FF : BNE .spoof_ocarina
+else
     LDA.w $030F : BNE .spoof_ocarina
+endif
       LDA #$0001 ; Multi-songs not unlocked yet
     .spoof_ocarina
 
@@ -355,8 +409,12 @@ DrawYItems:
 
   ; LDA.w #$7EF351
   LDA.l $7EF351 : AND.w #$00FF : CMP.w #$00 : BEQ .no_rods
+if !ENABLE_PORTAL_ROD_CELL == 1
+    LDA.w #$0001 ; this cell is only the Fishing Rod
+else
     LDA.w FishingOrPortalRod
     INC A
+endif
     STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
     LDX.w #menu_offset(13,13)
     LDY.w #FishingRodGFX
@@ -375,6 +433,8 @@ DrawYItems:
 
   ; Row 4 -------------------------------------------------
 
+if !ENABLE_MENU_PAGE3 == 0
+  ; Masks. With !ENABLE_MENU_PAGE3 they are on page 3 (menu_page3.asm).
   LDA.w #$7EF349
   LDX.w #menu_offset(16,3)
   LDY.w #DekuMaskGFX
@@ -399,6 +459,22 @@ DrawYItems:
   LDX.w #menu_offset(16,16)
   LDY.w #StoneMaskGFX
   JSR DrawMenuItem
+endif
+
+if !ENABLE_PORTAL_ROD_CELL == 1
+  ; Portal Rod: row 4, first cell (the Deku cell; $0202 = $19).
+  LDA.w #PortalRodOwned&$FFFF
+  LDX.w #menu_offset(16,3)
+  LDY.w #PortalRodGFX
+  JSR DrawMenuItem
+endif
+
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.w #GoldstarOwned&$FFFF
+  LDX.w #menu_offset(16,6)
+  LDY.w #HookGFX+8
+  JSR DrawMenuItem
+endif
 
   LDA.w #$7EF35F
   LDX.w #menu_offset(16,19)
@@ -469,7 +545,11 @@ Menu_DrawBigKey:
     .locateBigKeyFlag
 
     ASL A : DEX : BPL .locateBigKeyFlag : BCC .dontHaveBigKey
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+      JSR Menu_OracleTreasureOwned : LDA $02 : BEQ .noTreasureYet
+else
       JSR CheckPalaceItemPossession : LDA $02 : BEQ .noTreasureYet
+endif
         SEP #$30
         LDA.b #$7E : STA.b $0A
         REP #$30
@@ -520,6 +600,53 @@ Menu_DrawBigKey:
 }
 
 ; =========================================================
+
+if !ENABLE_TRUTHFUL_CONTROLS == 1
+; Quest page treasure icon: is this dungeon's treasure owned?
+; Replaces the vanilla palace table below (Eastern = Bow, Desert = Glove, ...),
+; which does not match Oracle's dungeons. Treasure = the dungeon's big-chest item
+; in RoomData_ChestItems ($01:E96E); S2's Power Glove is in a small chest (its
+; big chest holds the pendant). Owned = the receipt's SRAM byte
+; ($09:84E8/$09:8580) reaches the receipt value. Dungeon IDs: bank $0F entrance
+; table (Docs/Technical/Dungeon_Tables_Expansion.md section 4).
+; Out: $02 = 1 when owned, else 0; $03 = 0. Exits with SEP #$30, as the vanilla
+; routine. Keeps DBR.
+Menu_OracleTreasureOwned:
+{
+  PHB : PHK : PLB
+  SEP #$30
+  STZ.b $02 : STZ.b $03
+  LDA.w $040C : LSR A : CMP.b #(.value-.sram) : BCS .done
+  TAY
+  LDA.w .value, Y : BEQ .done            ; no treasure for this ID
+  LDX.w .sram, Y
+  LDA.l $7EF300, X : CMP.w .value, Y : BCC .done
+    INC.b $02
+  .done
+  PLB
+  RTS
+
+  ; Index = $040C / 2. Low byte of the $7EF3xx SRAM address.
+  .sram
+  db $5A ; $00 S3 Shrine of Courage: Mirror Shield, room $053 (item $06)
+  db $00 ; $02 none (spawn points)
+  db $00 ; $04 none (reserved: Sky tower)
+  db $54 ; $06 S2 Shrine of Power: Power Glove, room $074 (item $1B)
+  db $00 ; $08 none (Final Boss Route)
+  db $4D ; $0A D2 Tail Palace: Roc's Feather, room $07F (item $21)
+  db $40 ; $0C D1 Mushroom Grotto: Bow, room $02A (item $0B)
+  db $4B ; $0E D6 Goron Mines: Hammer, room $088 (item $09)
+  db $59 ; $10 D3 Kalyxo Castle: sword level 2, room $056 (item $01)
+  db $45 ; $12 D5 Glacia Estate: Fire Rod, room $0CC (item $07)
+  db $56 ; $14 S1 Shrine of Wisdom: Flippers, room $09A (item $1E)
+  db $42 ; $16 D4 Zora Temple: Hookshot, room $036 (item $0A)
+  db $50 ; $18 D7 Dragon Ship: Cane of Somaria, room $0B3 (item $15)
+  db $5B ; $1A D8 Fortress of Secrets: Red Mail, room $05C (item $23)
+  ; Owned when the SRAM byte is at least this value (0 = no treasure).
+  .value
+  db $03, $00, $00, $01, $00, $01, $01, $01, $02, $01, $01, $01, $01, $02
+}
+endif
 
 ; $06EEB6-$06EEDB LOCAL
 CheckPalaceItemPossession:
@@ -704,6 +831,8 @@ Menu_DrawMagicBag:
     incbin "tilemaps/magic_bag.tilemap"
 }
 
+; Used by the Ring Box (state $09) and the M1 page 3 layout only.
+if !MENU_DROP_RING_BOX == 0 || !ENABLE_MENU_PAGE3_LAYOUT_A == 0
 Menu_DrawRingBox:
 {
   REP #$30
@@ -735,9 +864,21 @@ Menu_DrawRingBox:
   .ring_box_tilemap
     incbin "tilemaps/ring_box.tilemap"
 }
+endif
 
 Menu_DrawMagicRings:
 {
+if !ENABLE_ONE_RING == 1
+  ; One ring (scawful 2026-09-28): the Quest page shows no rings. The worn
+  ; ring is the red bracket on page 3; r21-22 c17-26 keep the frame tiles.
+  RTS
+else
+if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
+  ; No ring owned: leave the three equipped-ring slots as frame background.
+  JSR Menu_CheckRingsUnlocked : BCS .rings_unlocked
+    RTS
+  .rings_unlocked
+endif
   LDA.l RingSlot1 : AND.w #$00FF : CMP.w #$0001 : BCC .no_attack
     BRA .draw_storms
   .no_attack
@@ -769,8 +910,10 @@ Menu_DrawMagicRings:
   JSR DrawMenuItem
 
   RTS
+endif
 }
 
+if !MENU_DROP_RING_BOX == 0 || !ENABLE_MENU_PAGE3_LAYOUT_A == 0
 Menu_DrawMagicRingsInBox:
 {
   SEP #$30
@@ -841,6 +984,7 @@ Menu_DrawMagicRingsInBox:
 
   RTS
 }
+endif
 
 Menu_DrawMagicItems:
 {
@@ -940,11 +1084,21 @@ Menu_CheckItemHasSubmenu:
 {
   LDA.w $0202  ; Current cursor position/item index
   CMP.b #$05 : BEQ .has_submenu  ; Magic Powder (mushroom/powder)
+if !ENABLE_EQUIPMENT_MENU == 0
   CMP.b #$0D : BEQ .has_submenu  ; Ocarina (song selection)
+endif
+if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
+  CMP.b #$0E : BEQ .book         ; Book (Journal): only once unlocked
+else
   CMP.b #$0E : BEQ .has_submenu  ; Book (Journal)
+endif
   CLC
   RTS
   .has_submenu
   SEC
   RTS
+if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
+  .book
+  JMP Menu_CheckJournalUnlocked  ; C = journal unlocked
+endif
 }

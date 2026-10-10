@@ -1,7 +1,14 @@
 # Oracle of Secrets Release Roadmap
 
+> **HISTORICAL (2026-09-14).** Do not use this Dec 2025 roadmap as current work.
+> Calendar + content gates: `Docs/Planning/release_timeline_2026.md`,
+> `Docs/Planning/Plans/release_2026_definition.md`,
+> `Docs/Planning/Plans/rc_content_checklist.md`.
+> Story rulings: `Docs/Planning/story_canon_beat_sheet.md`.
+> Current work: `.context/scratchpad/agent_handoff.md`.
+
 **Created**: December 2025
-**Status**: Active Development
+**Status**: Historical
 **Target**: Full Release with complete narrative content
 
 ---
@@ -105,7 +112,7 @@
 | Dream | Trigger | Purpose | Status |
 |-------|---------|---------|--------|
 | Deku Business Scrub | Post-pendant | Deku lore | [ ] |
-| Twinrova Ranch Girl | Post-D5 Glacia | Ranch Girl lineage reveal | [ ] |
+| Ranch Girl curse resolution | Post-D5 Glacia | Automatic permanent human state; optional reaction only | [ ] |
 | Hyrule Castle | Song of Time | Historical context | [ ] |
 | River Zora King | Zora progression | Zora conflict backstory | [ ] |
 | Kydrog Sealing | Major milestone | Antagonist origin | [ ] |

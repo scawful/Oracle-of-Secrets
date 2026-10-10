@@ -1,4 +1,10 @@
 * Oracle of Secrets English Dialogue
+
+> REVIEW SNAPSHOT ONLY: This file is incomplete and is not a build input.
+> Vanilla truth is `Roms/oos168.sfc`; expanded truth is
+> `Data/dialogue/expanded_messages.json`. See
+> `Docs/Analysis/dialogue_inventory.md` for the generated comparison.
+
 ** 0F - Skeleton Guard
 Press L or R in your menu to
 [2]see the status of your quest

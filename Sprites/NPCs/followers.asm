@@ -630,7 +630,11 @@ SpritePrep_OldMan:
   LDA.l $7EF3CC : CMP.b #$00 : BNE .dont_spawn
 
     ; Check for lv2 hookshot instead of mirror
+if !ENABLE_GOLDSTAR_CELL == 1
+    LDA.l GoldstarOwned : CMP.b #$01 : BNE .spawn
+else
     LDA.l $7EF342 : CMP.b #$02 : BNE .spawn
+endif
       STZ.w SprState, X
     .spawn
     ; FOLLOWER 04

@@ -2,6 +2,12 @@
 FortuneTeller_PrepareNextMessage = $0DC953
 FortuneTeller_DisplayMessage = $0DC92F
 
+; This file patches vanilla bank $0D in place. pushpc/pullpc returns to the
+; caller's sprite bank so the next incsrc in Sprites/all_sprites.asm does not
+; assemble over the vanilla fortune teller routines at $0DC92F-$0DCB00
+; (DisplayMessage, PrepareNextMessage, payment states, Dark World states,
+; SpriteDraw_FortuneTeller OAM data), which this NPC still uses.
+pushpc
 org $0DC829
 FortuneTellerMessage:
 .low
@@ -186,5 +192,10 @@ JMP.w FortuneTeller_DisplayMessage
 
 #_0DC92A: LDA.b #$0F
 #_0DC92C: JSR FortuneTeller_PrepareNextMessage
+; This routine is 1 byte shorter than vanilla. The NOP makes the last path
+; fall through into vanilla FortuneTeller_DisplayMessage ($0DC92F) instead of
+; mid-instruction at $0DC92E (which stored A=$0F into $7EF3C6).
+NOP
 
-assert pc() <= $0DC92F
+assert pc() == FortuneTeller_DisplayMessage, "fortune_teller.asm must end exactly at vanilla FortuneTeller_DisplayMessage ($0DC92F)"
+pullpc

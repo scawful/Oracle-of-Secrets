@@ -35,6 +35,11 @@ function menu_offset(y,x) = (y*64)+(x*2)
 ; Current Dream ID (0x00-0x03)
 CurrentDream   = $0426
 
+; Dream return timer (!ENABLE_DREAM_RETURN, Sprites/NPCs/maple.asm).
+; 0 = no dream in progress; else ticks (4 frames each) until Link is
+; reloaded through the Dream Hut entrance. Vanilla-unused byte (Core/ram.asm).
+DreamReturnTimer = $0427
+
 ; Current Song
 CurrentSong    = $030F
 

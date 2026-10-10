@@ -1,0 +1,349 @@
+{
+  "schema_version": 1,
+  "status": "draft_unallocated",
+  "runtime_supported": false,
+  "area_count": 192,
+  "reject_from": 192,
+  "preserve_ids": [
+    0,
+    159
+  ],
+  "sea_ids": [
+    160,
+    191
+  ],
+  "worlds": [
+    {
+      "id": "light",
+      "base": 0,
+      "count": 64
+    },
+    {
+      "id": "dark",
+      "base": 64,
+      "count": 64
+    },
+    {
+      "id": "special",
+      "base": 128,
+      "count": 64
+    }
+  ],
+  "signature": {
+    "proposed_magic": "OOSOW192",
+    "revision": 1,
+    "address": null
+  },
+  "roles": {
+    "preserve_existing": true,
+    "overlay_storage_preserve": [
+      147,
+      159
+    ],
+    "roles_are_explicit_not_inferred_from_id": true
+  },
+  "tables": [
+    {
+      "id": "bg_color",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2654208,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "main_palette",
+      "count": 192,
+      "stride": 1,
+      "legacy_address": 2654560,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "mosaic",
+      "count": 192,
+      "stride": 1,
+      "legacy_address": 2654720,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "animated",
+      "count": 192,
+      "stride": 1,
+      "legacy_address": 2654880,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "overlay",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2655040,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "gfx",
+      "count": 192,
+      "stride": 8,
+      "legacy_address": 2655360,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "parent",
+      "count": 192,
+      "stride": 1,
+      "legacy_address": 2656664,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "ByScreen1",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2656824,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "ByScreen2",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2657144,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "ByScreen3",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2657464,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "ByScreen4",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2657784,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "transition_y",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2658104,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "transition_x",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2658424,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "scroll_north",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2658744,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "scroll_west",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2659064,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "sprite_phase0",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2659384,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "sprite_phase1",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2659704,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "sprite_phase2",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2660024,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "sign_text",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 2660344,
+      "address": null,
+      "addressing": "bank_relative_28_or_long"
+    },
+    {
+      "id": "map32_high",
+      "count": 192,
+      "stride": 3,
+      "legacy_address": 194893,
+      "address": null,
+      "addressing": "long_pointer"
+    },
+    {
+      "id": "map32_low",
+      "count": 192,
+      "stride": 3,
+      "legacy_address": 195373,
+      "address": null,
+      "addressing": "long_pointer"
+    },
+    {
+      "id": "bomb_doors",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 173636,
+      "address": null,
+      "addressing": "bank_relative_02"
+    },
+    {
+      "id": "hidden_items",
+      "count": 192,
+      "stride": 2,
+      "legacy_address": 173956,
+      "address": null,
+      "addressing": "bank_relative_02"
+    }
+  ],
+  "sprite_phases": 3,
+  "sprite_phase_stride": 384,
+  "special_sprite_gfx": {
+    "count": 64,
+    "stride": 1,
+    "address": null
+  },
+  "special_sprite_palettes": {
+    "count": 64,
+    "stride": 1,
+    "address": null
+  },
+  "area_size": {
+    "count": 192,
+    "stride": 1,
+    "legacy_address": 194701,
+    "address": null
+  },
+  "palette_set": {
+    "count": 192,
+    "stride": 1,
+    "legacy_address": 640565,
+    "address": null
+  },
+  "events": {
+    "normal_base": 8319616,
+    "normal_count": 128,
+    "special_count": 64,
+    "special_base": null,
+    "forbid_direct_special_indexing": true,
+    "migration": null
+  },
+  "music": {
+    "count": 192,
+    "stride": 1,
+    "cache_base": null,
+    "forbidden_in_place": [
+      8346528,
+      8346532
+    ]
+  },
+  "sprites": {
+    "pointer_width": 2,
+    "bank": 9,
+    "list_region": null,
+    "legacy_region": [
+      313473,
+      316082
+    ],
+    "capacity_unresolved": true,
+    "death_state": "Per-loaded-area buffers, not durable per-map events."
+  },
+  "map_streams": {
+    "pointer_width": 3,
+    "streams_per_cell": 2,
+    "decoded_bytes_per_stream": 256,
+    "regions": null,
+    "terminator": 255
+  },
+  "tile_definitions": {
+    "tile16_capacity": null,
+    "tile32_capacity": null,
+    "unresolved": true
+  },
+  "menu_names": {
+    "count": 192,
+    "pointer_table": null,
+    "encoding": null
+  },
+  "world_map": {
+    "special_world_projection": null,
+    "unresolved": true
+  },
+  "legacy_detection": {
+    "zs_version_address": 2654533,
+    "zs_version": 3,
+    "absent_expanded_signature": "legacy_160_only",
+    "unknown_or_malformed_expanded_signature": "reject_writes",
+    "never_fallback_on_invalid_expanded": true
+  },
+  "writer_requirements": [
+    "matching ROM hash and source/build receipt",
+    "supported signature revision and complete descriptor",
+    "all counts/strides/ranges resolved and non-overlapping",
+    "assembled bank-relative operands and DBR compatible",
+    "all 160 legacy maps/properties/overlays preserved",
+    "valid compressed streams and allocated sprite capacity",
+    "event save/checksum coverage and migration",
+    "atomic paired descriptor/data save with rollback",
+    "refuse $C0 and every unresolved allocation"
+  ],
+  "unresolved_allocations": [
+    "signature",
+    "relocated_pool_and_external_tables",
+    "special_events",
+    "music_cache",
+    "sprite_lists",
+    "compressed_stream_regions",
+    "tile16_tile32_capacity",
+    "menu_names",
+    "world_map"
+  ],
+  "four_cell_proof": {
+    "ids": [
+      160,
+      161,
+      162,
+      163
+    ],
+    "north_ids": [
+      152,
+      153,
+      154,
+      155
+    ],
+    "requires_role_audit": true,
+    "activation_allowed": false
+  }
+}

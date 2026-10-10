@@ -28,6 +28,17 @@ org $8DDFB2 : LDA.l Menu_ItemIndex, X
 pullpc
 
 ; =========================================================
+; Menu audit fix (a) (!ENABLE_MENU_AUDIT_FIXES), or the page loop: with page 3
+; the old Ring Box (state $09) is reachable only through A+Y on Items (the Y
+; block below overrides A's close). Drop the Y block and the Ring Box code.
+!MENU_DROP_RING_BOX = 0
+if !ENABLE_MENU_PAGE3 == 1
+  if !ENABLE_MENU_AUDIT_FIXES == 1 || !ENABLE_MENU_PAGE_LOOP == 1
+    !MENU_DROP_RING_BOX = 1
+  endif
+endif
+
+; =========================================================
 ; Menu Bank
 
 org $2D8000
@@ -73,12 +84,27 @@ Menu_Entry:
     dw Menu_UploadRight        ; 01
     dw Menu_UploadLeft         ; 02
     dw Menu_ScrollDown         ; 03
+if !ENABLE_MENU_PAGE3 == 1
+    ; Page 3 wrappers (Menu/menu_page3.asm): same slots, same size.
+    dw Menu_Page3_ItemScreen   ; 04
+    dw Menu_Page3_ScrollTo     ; 05
+    dw Menu_Page3_StatsScreen  ; 06
+else
     dw Menu_ItemScreen         ; 04
     dw Menu_ScrollTo           ; 05
     dw Menu_StatsScreen        ; 06
+endif
+if !ENABLE_MENU_PAGE_LOOP == 1
+    dw Menu_Page3_ScrollFrom   ; 07 (redraws Items first)
+else
     dw Menu_ScrollFrom         ; 07
+endif
     dw Menu_ScrollUp           ; 08
+if !MENU_DROP_RING_BOX == 1
+    dw Menu_SubmenuReturn      ; 09 (Ring Box removed; never set)
+else
     dw Menu_RingBox            ; 09
+endif
     dw Menu_Exit               ; 0A
     dw Menu_InitiateScrollDown ; 0B
     dw Menu_MagicBag           ; 0C
@@ -92,7 +118,16 @@ Menu_Entry:
 
 Menu_InitGraphics:
 {
+if !ENABLE_GOLDSTAR_CELL == 1
+  JSL GoldstarInventory_Migrate
+endif
+if !ENABLE_MASK_R_BINDING == 1
+  JSL MaskBinding_MigrateSelection
+endif
   LDA.w $0780 : STA.w $00
+if !ENABLE_PORTAL_ROD_CELL == 1
+  JSR Menu_PortalRod_SyncOwned
+endif
   LDA.w $0202
   CMP.b #$10 : BNE .not_fishing
     JSL DismissRodFromMenu
@@ -220,6 +255,7 @@ Menu_CheckForSpecialMenus:
         JSR Menu_DeleteCursor ; Ensure cursor is deleted
         SEC : RTS             ; Return Carry Set
     +
+if !ENABLE_EQUIPMENT_MENU == 0
     LDA.w $0202 : CMP.b #!MENU_STATE_SONG_MENU : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
         LDA.b #!MENU_STATE_SONG_MENU : STA.w $0200
@@ -229,8 +265,12 @@ Menu_CheckForSpecialMenus:
           SEP #$30
           SEC : RTS ; Return Carry Set
     ++
+endif
     LDA.w $0202 : CMP.b #!MENU_STATE_JOURNAL : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
+if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
+        JSR Menu_CheckJournalUnlocked : BCC ++
+endif
         LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
         JSR Menu_DeleteCursor
         REP #$20
@@ -242,6 +282,9 @@ Menu_CheckForSpecialMenus:
 
     ; X Button: Open Journal from anywhere
     LDA.b $F6 : BIT.b #$40 : BEQ .no_x_journal
+if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
+      JSR Menu_CheckJournalUnlocked : BCC .no_x_journal
+endif
       LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
       JSR Menu_DeleteCursor
       REP #$20
@@ -251,14 +294,19 @@ Menu_CheckForSpecialMenus:
       SEC : RTS ; Return Carry Set
     .no_x_journal
 
+if !MENU_DROP_RING_BOX == 0
     ; Y Button: Open Ring Box from anywhere
     LDA.b $F4 : BIT.b #$40 : BEQ .no_y_rings
+if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
+      JSR Menu_CheckRingsUnlocked : BCC .no_y_rings
+endif
       JSR Menu_DeleteCursor
       JSR Menu_DrawRingBox
       STZ.w $020B
       LDA.b #!MENU_STATE_RING_BOX : STA.w $0200 ; Ring Box
       SEC : RTS ; Return Carry Set
     .no_y_rings
+endif
 
   CLC : RTS ; Return Carry Clear
 }
@@ -302,14 +350,25 @@ Menu_ItemScreen:
   BRA .draw_cursor
 
   .draw_cursor
+if !ENABLE_PORTAL_ROD_CELL == 1
+  JSR Menu_PortalRod_CellToItem ; a move that ends on cell $13 = Portal Rod
+endif
   LDA.b #$20 : STA.w $012F ; cursor move sound effect
 
   .no_inputs
   SEP #$30
+if !ENABLE_MENU_PAGE3 == 1
+  ; Masks are on page 3, not in the grid: no grid cursor while one is the
+  ; Y item. The name bar still shows it.
+  LDA.w $0202 : JSR Menu_Page3_IsMaskItem : BCS .no_grid_cursor
+endif
   LDA.w $0202 : ASL : TAY
   REP #$10
   LDX.w Menu_ItemCursorPositions-2, Y
   JSR Menu_DrawCursor
+if !ENABLE_MENU_PAGE3 == 1
+  .no_grid_cursor
+endif
 
   JSR Menu_DrawItemName
   SEP #$20
@@ -344,6 +403,9 @@ Menu_StatsScreen:
 
   ; X Button: Open Journal
   LDA.b $F6 : BIT.b #$40 : BEQ .no_journal
+if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
+    JSR Menu_CheckJournalUnlocked : BCC .no_journal
+endif
     LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
     REP #$20
     LDA.w #$0000 : STA.l JournalState  ; Reset to first page
@@ -725,11 +787,89 @@ MagicBag_ConsumeItem:
 ; =========================================================
 ; 0D MENU SONG MENU
 
+if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
+; menu-ocarina-blank-slot. Same navigation as the flag-off routine
+; (Right/Up = next song, wraps to 1; Left/Down = previous, stops at 1),
+; but with an 8-bit A, so the song count check really runs. The flag-off
+; routine reads $7EF34C with a 16-bit A and `CMP.b #$02` consumes the
+; next opcode byte, so its no-song branch is dead code and `ASL $9C`
+; runs every frame instead.
+; No song learned ($7EF34C = 1): CurrentSong = 0, four grey notes, no
+; cursor, D-pad ignored, item name "OCARINA" only; A returns, Start closes.
+Menu_SongMenu:
+{
+  REP #$30
+  JSR Menu_DrawMusicNotes
+  SEP #$30
+
+  LDA.l $7EF34C : CMP.b #$02 : BCS .songs_available
+    STZ.w CurrentSong
+    JSR Menu_DrawItemName
+    SEP #$30
+    BRA .input_done
+  .songs_available
+
+  ; $00 = highest learned song (1-4) = $7EF34C - 1.
+  CMP.b #$06 : BCC .count_ok
+    LDA.b #$05
+  .count_ok
+  DEC : STA.b $00
+
+  ; Keep CurrentSong in 1..$00.
+  LDA.w CurrentSong : BEQ .reset_song
+  CMP.b $00 : BCC .song_ok : BEQ .song_ok
+  .reset_song
+    LDA.b #$01 : STA.w CurrentSong
+  .song_ok
+
+  LDA.b $F4 : AND.b #$0F : BEQ .draw
+    PHA
+    LDA.w CurrentSong : ASL : TAY
+    REP #$30
+    LDX.w Menu_SongIconCursorPositions-2, Y
+    JSR Menu_DeleteCursor_AltEntry ; returns with SEP #$30
+    PLA
+    LSR : BCS .next ; Right
+    LSR : BCS .prev ; Left
+    LSR : BCS .prev ; Down
+    ; Up
+    .next
+    LDA.w CurrentSong : CMP.b $00 : BCC .inc_song
+      LDA.b #$00 ; wrap to song 1
+    .inc_song
+    INC : STA.w CurrentSong
+    BRA .draw
+    .prev
+    LDA.w CurrentSong : CMP.b #$02 : BCC .draw
+      DEC : STA.w CurrentSong
+
+  .draw
+  JSR Menu_DrawItemName
+  SEP #$30
+  LDA.w CurrentSong : ASL : TAY
+  REP #$10
+  LDX.w Menu_SongIconCursorPositions-2, Y
+  JSR Menu_DrawCursor
+
+  .input_done
+  SEP #$20
+  JSR Submenu_Return
+  SEP #$20
+
+  LDA.b #$22 : STA.w $0116
+  LDA.b #$01 : STA.b $17
+
+  RTS
+}
+else
 Menu_SongMenu:
 {
   REP #$30
   JSR Menu_DrawMusicNotes
 
+  ; Menu_DrawMusicNotes leaves A 16-bit. The ownership check is byte-sized;
+  ; narrow A before CMP.b or its operand consumes the following opcode byte.
+  SEP #$20
   LDA $7EF34C : CMP.b #$02 : BCS .songs_available
     STZ.w CurrentSong
     JMP .continue
@@ -826,6 +966,7 @@ Menu_SongMenu:
 
   RTS
 }
+endif
 
 Menu_SongIconCursorPositions:
   dw menu_offset(8,4)
@@ -836,6 +977,7 @@ Menu_SongIconCursorPositions:
 ; =========================================================
 ; 09 MENU RING BOX
 
+if !MENU_DROP_RING_BOX == 0
 Menu_RingBox:
 {
   JSR Menu_DrawRingBox
@@ -870,9 +1012,15 @@ Menu_RingIconCursorPositions:
   dw menu_offset(12,6)
   dw menu_offset(12,10)
   dw menu_offset(12,14)
+endif
 
 RingMenu_StoreRingToSlotStack:
 {
+if !ENABLE_ONE_RING == 1
+  ; One ring (decisions.org 2026-09-28): the new ring replaces the worn one.
+  STA.l RingSlot1
+  RTS
+else
   ; TODO: Check how many ring slots we currently have
 
   ; Check if the ring is already in a slot
@@ -903,8 +1051,10 @@ RingMenu_StoreRingToSlotStack:
   .slot2_available
   PLA : STA.l RingSlot2
   RTS
+endif
 }
 
+if !MENU_DROP_RING_BOX == 0
 RingMenu_Controls:
 {
   ; Load the current ring selected (0-5) into A
@@ -933,6 +1083,9 @@ RingMenu_Controls:
 
   ; X button: Open Journal from ring menu
   LDA.b $F6 : BIT.b #$40 : BEQ .no_x
+if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
+    JSR Menu_CheckJournalUnlocked : BCC .no_x
+endif
     LDA.b #!MENU_STATE_JOURNAL : STA.w $0200
     REP #$20
     LDA.w #$0000 : STA.l JournalState
@@ -950,6 +1103,7 @@ RingMenu_Controls:
   .rings
     db $20, $10, $08, $04, $02, $01
 }
+endif
 
 Menu_Journal:
 {
@@ -975,7 +1129,11 @@ Menu_Journal:
       BRA .continue
     .return_to_quest
       ; Return to quest screen (right side)
+if !ENABLE_MENU_PAGE3 == 1
+      JSR Menu_Page3_JournalReturn ; page 3 or the quest screen
+else
       JSR Menu_RefreshQuestScreen
+endif
       LDA.b #!MENU_STATE_STATS_SCREEN : STA.w $0200
 
   .continue
@@ -1016,9 +1174,55 @@ Submenu_Return:
   RTS
 }
 
+if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1
+; =========================================================
+; LOCKED SUBMENU CHECKS (menu-hide-rings-journal-early)
+; Both preserve A, X, Y and the M/X widths. Result in carry.
+
+; Ring Box: unlocked once any ring is owned (appraised).
+; Out: C set = unlocked. Reads MAGICRINGS ($7EF3D8) bits 0-5.
+Menu_CheckRingsUnlocked:
+{
+  PHP
+  SEP #$20
+  PHA
+  LDA.l MAGICRINGS : AND.b #$3F : CMP.b #$01 ; C = any ring bit set
+  PLA                                         ; keeps C
+  BCS .unlocked
+    PLP : CLC : RTS
+  .unlocked
+  PLP : SEC : RTS
+}
+
+; Journal (X:LOG): unlocked once Link owns the Book of Secrets (story beat 12).
+; Book = $7EF34E (Core/sram.asm); vanilla ITEMGET $1D writes $01 there
+; (library dash knockdown, BookOfMudora_GrantLiterature $05FD3A).
+; Out: C set = unlocked.
+Menu_CheckJournalUnlocked:
+{
+if !ENABLE_JOURNAL_DEFERRED == 1
+  ; Journal deferred by scawful, 2026-09-29. All prompts and entry routes
+  ; share this check. Keep Book gameplay and existing journal data intact.
+  CLC : RTS
+endif
+  PHP
+  SEP #$20
+  PHA
+  LDA.l $7EF34E : CMP.b #$01                  ; C = Book owned
+  PLA                                         ; keeps C
+  BCS .unlocked
+    PLP : CLC : RTS
+  .unlocked
+  PLP : SEC : RTS
+}
+endif
+
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
 quest_icons: incbin "tilemaps/quest_icons.tilemap"
 incsrc "menu_map_names.asm"
+if !ENABLE_MENU_PAGE3 == 1
+  incsrc "menu_page3.asm" ; end of bank $2D, after the map names
+endif
 %log_end("Menu/menu.asm", !LOG_MENU)
 incsrc "menu_hud.asm"
 %log_end("Menu/menu_hud.asm", !LOG_MENU)

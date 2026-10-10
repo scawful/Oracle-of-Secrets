@@ -1,0 +1,15 @@
+{
+  "base_sha1": "9150cc3dbffa08bdb11059fb68fe0879b262ece9",
+  "task": "Impa $25 opening = approved line C (decisions.org 'Arrival lines A/B/C approved, with a repeat line for B'): first box 'You're awake. Good. / I am Impa. Princess / Zelda sent me here.', then the 2026-09-25 draft continues unchanged.",
+  "note": "SHA-1 9150cc3dbffa08bdb11059fb68fe0879b262ece9 -> e4f5e30cd21395eb8e521cf08174821fd4c4daf5. Only the first text box of vanilla message $25 changes (52 bytes at PC 0x0E09A0, message start; the message stays 205 bytes + $7F, so no later message moves). Encoded by hand with the vanilla dictionary: z3ed message-import-bundle compressed it to 202 bytes and then repacked the whole region (27948 changed bytes); here [D:1B] 'ent' and [D:36] 'me' are spelled out to keep the length. Verified: z3ed message-read $25 on the patched copy = approved text; message-export-bundle --range=vanilla before/after differ only in message 37 ($25).",
+  "edits": [
+    {
+      "id": "impa-25-line-c",
+      "pc": "0xE09A0",
+      "snes": "$1C89A0",
+      "before": "08 59 1A 26 59 08 26 29 1A 41 59 0F 2B B4 1C 1E 2C 2C 75 19 1E 25 1D 1A 59 2C A3 59 BE 59 DA 59 1F B4 1D 76 D8 59 0E 2B 1A 1C 25 1E 59 05 1A 2B 28 CE 41 7E",
+      "after": "E8 51 CD 1A DF 24 1E 41 59 06 28 28 1D 41 75 08 59 1A 26 59 08 26 29 1A 41 59 0F 2B B4 1C 1E 2C 2C 76 19 1E 25 1D 1A 59 2C 1E 27 2D 59 26 1E 59 AF 1E 41 7E",
+      "why": "message $25 box 1: 'I am Impa. Princess / Zelda sent me to find / the Oracle Farore.' -> 'You're awake. Good. / I am Impa. Princess / Zelda sent me here.'"
+    }
+  ]
+}

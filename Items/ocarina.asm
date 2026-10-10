@@ -139,6 +139,17 @@ LinkItem_NewFlute:
   ; Check for Switch Swong
   JSR UpdateFluteSong
   JSR Link_CheckNewY_ButtonPress : BCC ReturnFromFluteHook
+if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
+    ; No song learned ($7EF34C < 2): error beep only, no song, SongFlag
+    ; unchanged. Same as vanilla's unusable Mushroom in LinkItem_Powder:
+    ; $07A2A8 LDA #$3C : JSR PlaySFX_Set2 ($078028), then $07A30C clears
+    ; $3A bit 6 (set by CheckYButtonPress $07B073) so the next Y press works.
+    LDA.l $7EF34C : CMP.b #$02 : BCS .has_song
+      LDA.b #$3C : JSR Player_DoSfx2
+      LDA.b $3A : AND.b #$BF : STA.b $3A
+      RTS
+    .has_song
+endif
     ; Success... play the flute.
     LDA.b #$80 : STA.w $03F0
 
@@ -362,19 +373,22 @@ OcarinaEffect_SummonStorms:
   RTL
 
   .check_for_magic_bean
-  LDA.b #Sprite_BeanVendor : LDX.b #$00
-  JSL Sprite_CheckForPresence : BCC .not_active
-    ; Check that it's the magic bean planted
-    LDA.l MagicBeanProg : AND.b #$01 : BEQ +
-                          AND.b #$04 : BNE +
+  ; Sprite_CheckForPresence reads the sprite ID from $00, not A, and skips
+  ; the slot in X; the ocarina is not a sprite, so pass X = $FF. Before this,
+  ; the result depended on leftover $00, so the song could do nothing in $00.
+  LDA.b #Sprite_BeanVendor : STA.b $00
+  LDX.b #$FF
+  JSL Sprite_CheckForPresence : BCC .storms_after_bean
+    ; Water a planted bean once. Bit $04 = watered, as in bean_vendor.asm
+    ; (Core/sram.asm has the $02/$04 names swapped).
+    LDA.l MagicBeanProg : AND.b #$01 : BEQ .storms_after_bean
+    LDA.l MagicBeanProg : AND.b #$04 : BNE .storms_after_bean
       LDA.l MagicBeanProg
       ORA.b #$04
       STA.l MagicBeanProg
       LDA.b #$2D : STA.w $012F
-    +
-    JMP .summon_storms
-  .not_active
-  RTL
+  .storms_after_bean
+  JMP .summon_storms
 }
 
 PlayThunderAndRain:
@@ -432,6 +446,33 @@ ResetOcarinaFlag:
 ; 05 - 4 songs (Healing, Storms, Soaring, Time)
 UpdateFluteSong_Long:
 {
+if !ENABLE_EQUIPMENT_MENU == 1
+  ; Equipment chooses the song. L/R must not also change it in the world.
+  ; CurrentSong ($030F) is volatile; SavedOcarinaSong ($7EF3AB) keeps the
+  ; choice across save/reload. Restore from it when $030F is 0, validate
+  ; against the learned count (garbage or unlearned -> song 1), then sync.
+  LDA.l $7EF34C : CMP.b #$02 : BCC .equipment_none
+  CMP.b #$06 : BCC .equipment_count
+  LDA.b #$05
+.equipment_count
+  DEC : PHA
+  LDA.w CurrentSong : BNE .equipment_check
+  LDA.l SavedOcarinaSong : STA.w CurrentSong
+.equipment_check
+  LDA.w CurrentSong : BEQ .equipment_first
+  CMP.b $01,S : BCC .equipment_valid
+  BEQ .equipment_valid
+.equipment_first
+  LDA.b #$01 : STA.w CurrentSong
+.equipment_valid
+  PLA
+  LDA.w CurrentSong : STA.l SavedOcarinaSong
+  RTL
+.equipment_none
+  STZ.w CurrentSong
+  LDA.b #$00 : STA.l SavedOcarinaSong
+  RTL
+else
   LDA $7EF34C : CMP.b #$02 : BCS +
     JMP .no_songs
   +
@@ -500,6 +541,7 @@ UpdateFluteSong_Long:
   .no_songs
   STZ $030F
   RTL
+endif
 }
 %log_end("Items/ocarina.asm", !LOG_ITEMS)
 

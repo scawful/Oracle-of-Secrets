@@ -10,12 +10,17 @@ mismatch fails closed with the affected room.
 
 ## Current provenance
 
-The source was recovered and read back on 2026-07-31 from the existing local
-ROM state:
+The tracked source was synchronized with the editable base ROM after the
+reviewed September dungeon updates:
 
-- source: 18 rooms, 2,491 nonzero tiles
+- source: 17 rooms, 2,698 nonzero tiles
 - source SHA-256:
-  `af221afd9226b4d321155135899a5208cc86badac58f7f1af195a725495e49bc`
+  `04f5370953be0d299bc8d2fb589e9253eb811994596665d818936cbf46eebf99`
+- matching base ROM SHA-256:
+  `41fa52b81d63b7e6d0405a8df5a80882e1d9eb26bda4e038148ddc27dee3a096`
+
+The original 2026-07-31 recovery evidence is retained for history:
+
 - pre-recovery base ROM SHA-256:
   `d289b2408c3ccc312abeadf274f04f475106034fcab8ebff3f307fd229db4799`
 - recovered patched ROM SHA-256:

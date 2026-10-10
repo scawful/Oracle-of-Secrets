@@ -1,15 +1,11 @@
 ; =========================================================
 ; Zora Princess
 ;
-; NARRATIVE ROLE: D4 (Zora Temple) quest NPC. The imprisoned princess
-;   reveals the truth about Kydrog's manipulation of the Zora conflict
-;   when Link plays the Song of Healing. Her dying words expose that
-;   the River Zoras were framed by Kydrog's pirates wearing stolen scales.
+; NARRATIVE ROLE: D4 (Zora Temple) quest NPC. Song of Healing frees
+;   her spirit; she gives the Zora Mask. A Kydrog "conspiracy" line is
+;   planned (beat 15) but not written or decided.
 ;
 ; TERMINOLOGY: "Zora Princess" = ZoraPrincess
-;   - Part of the Sea Zora faction
-;   - Sister conflict: Sea Zoras vs River Zoras (The Schism)
-;   - Resolution: Princess's revelation starts reconciliation arc
 ;
 ; STATES:
 ;   0: WaitForLink - Shows initial dialogue (0xC5)
@@ -19,7 +15,7 @@
 ;
 ; MESSAGES:
 ;   0xC5 - Initial plea for help
-;   0xC6 - Death/revelation dialogue (enhance for Kydrog conspiracy)
+;   0xC6 - Thanks after healing (story line not decided)
 ;
 ; FLAGS:
 ;   $7EF302 - Zora Mask obtained (sprite despawns if set)
@@ -28,7 +24,6 @@
 ; RELATED:
 ;   - followers.asm (Zora Baby follower type 0x09 = princess's attendant)
 ;   - zora.asm (main Zora handler dispatches to this)
-;   - East Kalyxo reconciliation scene (post-D4)
 ;
 ; TODO:
 ;   - Enhance 0xC6 dialogue with conspiracy revelation
@@ -114,7 +109,9 @@ Sprite_ZoraPrincess_Main:
   CheckForSongOfHealing:
   {
     %PlayAnimation(0, 1, 10)
-    LDA.b SongFlag : BEQ .ninguna_cancion
+    ; Only the Song of Healing ($01) frees her. Clearing any other song here
+    ; ended the Song of Time early and left time running fast.
+    LDA.b SongFlag : CMP.b #$01 : BNE .ninguna_cancion
       STZ.b SongFlag
       LDA.b #$C0 : STA.w SprTimerD, X
       %GotoAction(2)

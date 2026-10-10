@@ -27,6 +27,37 @@ Attract_DrawKidnappedMaiden = $0CFA30
 HandleScreenFlash = $1DE9B6
 FadeMusicAndResetSRAMMirror = $0CC2F0
 
+; Island-history experiment (!ENABLE_CUSTOM_ATTRACT_SEQUENCE, default off).
+; The storybook and the three room scenes show the history narration in
+; expanded messages $1C0-$1C3 instead of $112-$115. Text approved by scawful
+; 2026-09-26 (Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md).
+if !ENABLE_CUSTOM_ATTRACT_SEQUENCE == 1
+  !AttractMsg_Throne   = $C1 ; message $01C1
+  !AttractMsg_Prison   = $C2 ; message $01C2
+  !AttractMsg_Altar    = $C3 ; message $01C3
+  ; Scene lengths hold each last page about 3 seconds after its final line
+  ; appears. The message then waits at its end; the scene timer ends the
+  ; scene. (Measured in the yaze emulator with the ORA flag fix.)
+  !AttractFrames_Throne = $01E0
+  !AttractFrames_Prison = $0240
+  ; Card 5 ($1C3, approved 2026-09-26) is 3 lines + 4 scroll lines; its
+  ; last line appears ~1020 frames after the timer starts (headless Mesen2,
+  ; 2026-09-26), so hold about 3 s after it.
+  !AttractFrames_Altar  = $04B0
+  pushpc
+  ; Attract_Initialize (vanilla code, not reassembled here).
+  org $0CEE58 : dw $01C0 ; @hook module=Dungeons name=AttractStorybookMessage kind=data
+  org $0CEE62 : dw $08A8 ; @hook module=Dungeons name=AttractStorybookFrames kind=data
+  pullpc
+else
+  !AttractMsg_Throne    = $13
+  !AttractMsg_Prison    = $14
+  !AttractMsg_Altar     = $15
+  !AttractFrames_Throne = $0210
+  !AttractFrames_Prison = $0240
+  !AttractFrames_Altar  = $00C0
+endif
+
 org $0CF9E6
   db $3D
   db $3D
@@ -116,7 +147,7 @@ AttractScene_ThroneRoom:
 
   #_0CEFA2: STZ.w $1CD8
 
-  #_0CEFA5: LDA.b #$13 ; MESSAGE 0113
+  #_0CEFA5: LDA.b #!AttractMsg_Throne ; MESSAGE 0113 (01C1 with the history flag)
   #_0CEFA7: STA.w $1CF0
 
   #_0CEFAA: LDA.b #$01
@@ -130,7 +161,7 @@ AttractScene_ThroneRoom:
 
   #_0CEFB7: REP #$20
 
-  #_0CEFB9: LDA.w #$0210
+  #_0CEFB9: LDA.w #!AttractFrames_Throne
   #_0CEFBC: STA.b $64
 
   #_0CEFBE: SEP #$20
@@ -193,7 +224,7 @@ AttractScene_Prison:
 
   #_0CF027: STZ.w $1CD8
 
-  #_0CF02A: LDA.b #$14 ; MESSAGE 0114
+  #_0CF02A: LDA.b #!AttractMsg_Prison ; MESSAGE 0114 (01C2 with the history flag)
   #_0CF02C: STA.w $1CF0
 
   #_0CF02F: LDA.b #$01
@@ -218,7 +249,7 @@ AttractScene_Prison:
 
   #_0CF04C: REP #$20
 
-  #_0CF04E: LDA.w #$0240
+  #_0CF04E: LDA.w #!AttractFrames_Prison
   #_0CF051: STA.b $64
 
   #_0CF053: SEP #$20
@@ -282,7 +313,7 @@ AttractScene_AgahnimAltar:
 
   #_0CF0A5: STZ.w $1CD8
 
-  #_0CF0A8: LDA.b #$15 ; MESSAGE 0115
+  #_0CF0A8: LDA.b #!AttractMsg_Altar ; MESSAGE 0115 (01C3 with the history flag)
   #_0CF0AA: STA.w $1CF0
 
   #_0CF0AD: LDA.b #$01
@@ -311,7 +342,7 @@ AttractScene_AgahnimAltar:
 
   #_0CF0D0: REP #$20
 
-  #_0CF0D2: LDA.w #$00C0
+  #_0CF0D2: LDA.w #!AttractFrames_Altar
   #_0CF0D5: STA.b $64
 
   #_0CF0D7: SEP #$20
