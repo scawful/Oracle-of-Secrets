@@ -75,6 +75,21 @@ jobs:
           printf '\x30\x02' | dd of=test.sfc bs=1 seek=$((0x4863E)) conv=notrunc 2>/dev/null  # $09863E AncillaAdd_ItemReceipt operand $0230 (vanilla)
           printf '\x28' | dd of=test.sfc bs=1 seek=$((0x6B205)) conv=notrunc 2>/dev/null  # $0DB205 King Dodongo health (vanilla $28)
 
+          # Original instructions guarded by Overworld/music_cache.asm. These
+          # are explicit headerless LoROM PC offsets, not relocated cache bytes.
+          # LDA.l $7F5B00,X at SNES $00F401, $02AE73, $02B117, $02B126,
+          # $02B2A1, $02B2AA, $02B4FE, $02C27D, $02C28F and $0ABC80.
+          for music_cache_pc in 0x07401 0x12E73 0x13117 0x13126 0x132A1 0x132AA 0x134FE 0x1427D 0x1428F 0x53C80; do
+            printf '\xBF\x00\x5B\x7F' | dd of=test.sfc bs=1 seek=$((music_cache_pc)) conv=notrunc 2>/dev/null
+          done
+          # STA.l $7F5B00,X at SNES $02C49A and $02C4AB.
+          for music_cache_pc in 0x1449A 0x144AB; do
+            printf '\x9F\x00\x5B\x7F' | dd of=test.sfc bs=1 seek=$((music_cache_pc)) conv=notrunc 2>/dev/null
+          done
+          printf '\xE0\x40\x00' | dd of=test.sfc bs=1 seek=$((0x144A0)) conv=notrunc 2>/dev/null  # $02C4A0 CPX.w #$0040
+          printf '\xC0\x60\x00' | dd of=test.sfc bs=1 seek=$((0x144B1)) conv=notrunc 2>/dev/null  # $02C4B1 CPY.w #$0060
+          printf '\x8F\x80\x5B\x7F' | dd of=test.sfc bs=1 seek=$((0x144B8)) conv=notrunc 2>/dev/null  # $02C4B8 STA.l $7F5B80 (storm opt-out guard)
+
           # Run Asar against the synthetic headerless ROM.
           set -o pipefail
           ./asar/asar --no-title-check Oracle_main.asm test.sfc 2>&1 | tee asar_output.txt

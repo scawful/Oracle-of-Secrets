@@ -1258,6 +1258,19 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   or secrets and the cracked floor puzzles and other type of stuff
   alongside the minecarts".
 
+* DECIDED Goron Mines Hammer remains a midway payoff
+  :PROPERTIES:
+  :ASKED_BY: Codex RC Planning
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/user_feedback_tp7_2026-10-09/goron-plan/README.md
+  :END:
+  Retain the Hammer as a midway dungeon payoff rather than moving it early.
+  Develop a floor-separated grid sketch with rudimentary room design ideas.
+  Exact shortcut geometry, gates, rail routes, and room edits remain proposals.
+  The existing pause on D6 runtime tests remains in force during design.
+  Answer: "yeah midway payoff. could you build like a grid map with some
+  rudimentary representations of ideas ? with the different floors
+  distinctly displayed from one another" (scawful, 2026-10-09).
+
 * DECIDED Yaze readiness means a complete routine dungeon authoring session
   :PROPERTIES:
   :ASKED_BY: Codex RC Planning
