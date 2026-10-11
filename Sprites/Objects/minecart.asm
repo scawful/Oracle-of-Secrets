@@ -120,6 +120,9 @@ Right = $03
 ; One chosen turn per B6 crossing; cleared when leaving its collision cell.
 !MinecartJunctionLatch = SprMiscF
 
+; Set by Prep for a placed cart; Main reads the stop tile again once.
+!MinecartStopTilePending = SprMiscA
+
 ; =========================================================
 ; Collision setup:
 
@@ -215,6 +218,7 @@ Sprite_Minecart_Prep:
 
   STZ.w SprMiscG, X ; Clear the active tossing flag
   STZ.w !MinecartJunctionLatch, X
+  STZ.w !MinecartStopTilePending, X
 
   LDA.b #$04 : STA.w SprNbrOAM, X   ; Nbr Oam Entries
   LDA.b #$40 : STA.w SprGfxProps, X ; Impervious props
@@ -222,9 +226,6 @@ Sprite_Minecart_Prep:
   STZ.w SprDefl, X                  ; Sprite persist in dungeon
   STZ.w SprBump, X                  ; No bump damage
   STZ.w SprTileDie, X               ; Set interactive hitbox
-
-  STZ.w !MinecartDirection, X
-  STZ.w !SpriteDirection, X
 
   ; If the SprMiscB is > 4, then it's an active cart. This should only
   ; be the case when transitioning from a follower.
@@ -243,41 +244,72 @@ Sprite_Minecart_Prep:
 
     BRA .active2
   .notActive
-    ; Setup Minecart position to look for tile IDs
-    ; We use AND #$F8 to clamp to a 8x8 grid.
-    LDA.w SprY, X : AND #$F8 : STA.b $00
-    LDA.w SprYH, X           : STA.b $01
+    JSR Minecart_SetStartFromStopTile
 
-    LDA.w SprX, X : AND #$F8 : STA.b $02
-    LDA.w SprXH, X           : STA.b $03
-
-    ; Fetch tile attributes based on current coordinates
-    LDA.b #$00 : JSL Sprite_GetTileAttr
-
-    ; Set our starting direction based on the stop tile we are on.
-    ; This means minecarts should always be placed on top of a stop tile.
-    LDA.w SPRTILE
-    CMP.b #$B7 : BEQ .goSouth
-    CMP.b #$B8 : BEQ .goNorth
-    CMP.b #$B9 : BEQ .goEast
-    CMP.b #$BA : BEQ .goWest
-    .goNorth
-      LDA.b #North : STA.w SprMiscB, X
-      %GotoAction(1) ; Minecart_WaitVert
-      JMP .done2
-    .goEast
-      LDA.b #East : STA.w SprMiscB, X
-      %GotoAction(0) ; Minecart_WaitHoriz
-      JMP .done2
-    .goSouth
-      LDA.b #South : STA.w SprMiscB, X
-      %GotoAction(1) ; Minecart_WaitVert
-      JMP .done2
-    .goWest
-      LDA.b #West : STA.w SprMiscB, X
-      %GotoAction(0) ; Minecart_WaitHoriz
-    .done2
+    ; A staircase entry (module 07/0E) runs Prep before the room's
+    ; collision table ($7F2000) is built, so the read above can see the
+    ; previous room's tiles. Main reads the stop tile again on the
+    ; cart's first active frame, after the room has finished loading.
+    INC.w !MinecartStopTilePending, X
   .active2
+
+  JSR Minecart_SetFacingFromMiscB
+
+  PLB
+  RTL
+
+  incsrc "data/minecart_tracks.asm"
+}
+
+; =========================================================
+; Set SprMiscB and the matching Wait action from the stop tile
+; under the cart. Any other tile leaves the cart facing North.
+
+Minecart_SetStartFromStopTile:
+{
+  ; Setup Minecart position to look for tile IDs
+  ; We use AND #$F8 to clamp to a 8x8 grid.
+  LDA.w SprY, X : AND #$F8 : STA.b $00
+  LDA.w SprYH, X           : STA.b $01
+
+  LDA.w SprX, X : AND #$F8 : STA.b $02
+  LDA.w SprXH, X           : STA.b $03
+
+  ; Fetch tile attributes based on current coordinates
+  LDA.b #$00 : JSL Sprite_GetTileAttr
+
+  ; Set our starting direction based on the stop tile we are on.
+  ; This means minecarts should always be placed on top of a stop tile.
+  LDA.w SPRTILE
+  CMP.b #$B7 : BEQ .goSouth
+  CMP.b #$B8 : BEQ .goNorth
+  CMP.b #$B9 : BEQ .goEast
+  CMP.b #$BA : BEQ .goWest
+  .goNorth
+    LDA.b #North : STA.w SprMiscB, X
+    %GotoAction(1) ; Minecart_WaitVert
+    RTS
+  .goEast
+    LDA.b #East : STA.w SprMiscB, X
+    %GotoAction(0) ; Minecart_WaitHoriz
+    RTS
+  .goSouth
+    LDA.b #South : STA.w SprMiscB, X
+    %GotoAction(1) ; Minecart_WaitVert
+    RTS
+  .goWest
+    LDA.b #West : STA.w SprMiscB, X
+    %GotoAction(0) ; Minecart_WaitHoriz
+    RTS
+}
+
+; =========================================================
+; Face the cart along SprMiscB and start its animation.
+
+Minecart_SetFacingFromMiscB:
+{
+  STZ.w !MinecartDirection, X
+  STZ.w !SpriteDirection, X
 
   STZ.w SprTimerB, X
   LDA.w SprMiscB, X : CMP.b #$00 : BEQ .north
@@ -285,7 +317,7 @@ Sprite_Minecart_Prep:
                       CMP.b #$02 : BEQ .south
                       CMP.b #$03 : BEQ .west
   .north
-    ; Both !MinecartDirection and !SpriteDirection set to 0 earlier.
+    ; Both !MinecartDirection and !SpriteDirection set to 0 above.
     BRA .vert
 
   .south
@@ -312,16 +344,25 @@ Sprite_Minecart_Prep:
     LDA.b #$00 : STA.w $0D90, X
 
   .done
-  PLB
-  RTL
-
-  incsrc "data/minecart_tracks.asm"
+  RTS
 }
 
 ; =========================================================
 
 Sprite_Minecart_Main:
 {
+  ; First active frame of a placed cart: the room's collision is loaded
+  ; now, so read the stop tile again (see Prep). Only a changed start
+  ; direction is applied, so carts Prep already read correctly keep
+  ; their state.
+  LDA.w !MinecartStopTilePending, X : BEQ .startKnown
+    STZ.w !MinecartStopTilePending, X
+    LDA.w SprMiscB, X : PHA
+    JSR Minecart_SetStartFromStopTile
+    PLA : CMP.w SprMiscB, X : BEQ .startKnown
+      JSR Minecart_SetFacingFromMiscB
+  .startKnown
+
   LDA.w SprAction, X
   JSL UseImplicitRegIndexedLocalJumpTable
 
