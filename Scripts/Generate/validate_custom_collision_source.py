@@ -119,7 +119,7 @@ def _load_source(source_path: Path) -> tuple[CollisionRooms, bytes, str]:
         tile_entries = room_entry["tiles"]
         if not isinstance(tile_entries, list) or not tile_entries:
             raise CustomCollisionSourceContractError(
-                f"canonical source room {room_text} must contain nonzero tiles"
+                f"canonical source room {room_text} must contain explicit tiles"
             )
 
         tiles: dict[int, int] = {}
@@ -136,10 +136,10 @@ def _load_source(source_path: Path) -> tuple[CollisionRooms, bytes, str]:
                     f"canonical source room {room_text} tile {tile_index} "
                     f"offset must be integer 0..{COLLISION_MAP_TILES - 1}"
                 )
-            if not _is_integer(value) or not 1 <= value <= 0xFF:
+            if not _is_integer(value) or not 0 <= value <= 0xFF:
                 raise CustomCollisionSourceContractError(
                     f"canonical source room {room_text} tile {tile_index} "
-                    "value must be integer 1..255"
+                    "value must be integer 0..255"
                 )
             if offset <= previous_offset:
                 raise CustomCollisionSourceContractError(
@@ -276,7 +276,8 @@ def _decode_room(data: bytes, room_id: int, snes_pointer: int) -> dict[int, int]
             f"ROM room 0x{room_id:02X} collision data is unterminated before "
             "the reserved water-fill region"
         )
-    return {offset: value for offset, value in tiles.items() if value != 0}
+    # An encoded zero is an explicit floor override, not an absent record.
+    return tiles
 
 
 def _decode_rom(rom_path: Path) -> tuple[CollisionRooms, str]:
@@ -303,9 +304,8 @@ def _decode_rom(rom_path: Path) -> tuple[CollisionRooms, str]:
         if snes_pointer == 0:
             continue
         tiles = _decode_room(data, room_id, snes_pointer)
-        # A legacy room may own a valid all-zero map. z3ed deliberately omits
-        # it from the compact canonical export, so compare effective nonzero
-        # maps rather than pointer presence.
+        # Keep all-zero maps: their encoded cells replace the room's collision
+        # with floor. A terminator-only stream still has no explicit records.
         if tiles:
             rooms[room_id] = tiles
 
@@ -343,7 +343,7 @@ def _validate_rom_matches(
         differing_offsets = sorted(
             offset
             for offset in set(expected) | set(actual)
-            if expected.get(offset, 0) != actual.get(offset, 0)
+            if expected.get(offset) != actual.get(offset)
         )
         preview = ", ".join(str(offset) for offset in differing_offsets[:8])
         suffix = "..." if len(differing_offsets) > 8 else ""
@@ -402,7 +402,7 @@ def main() -> int:
     result = (
         "Custom collision source contract valid: "
         f"{contract.room_count} rooms, "
-        f"{contract.tile_count} nonzero tiles, "
+        f"{contract.tile_count} explicit tiles, "
         f"source SHA-256 {contract.source_sha256}"
     )
     if contract.rom_sha256 is not None:

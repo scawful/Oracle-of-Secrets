@@ -1343,6 +1343,20 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   on, no fixtures). Balance stays unchanged.
   Answer: "sure yes" (scawful, 2026-10-12).
 
+* DECIDED Restore the original Shrine of Power custom collision in $83 and $84
+  :PROPERTIES:
+  :ASKED_BY: Claude (Discord fixes lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/shrine_of_power_beta_2026-10-12/CUSTOM_COLLISION_LOSS.md
+  :END:
+  $83's invisible floor path to the Big Key door (74 explicit $00 floor
+  cells plus 12 $FF cells) and $84's two cells were lost around 2026-09-25:
+  z3ed collision writes and the JSON export treat $00 as "no override", and
+  the room pointers were later zeroed. The original streams are still in the
+  ROM at $A5:8502 / $A5:857F; re-point the two rooms to them (6 bytes at PC
+  0x128219-0x12821E). No plank walkway. custom_collision.json must keep the
+  explicit $00 floor cells so the next ROM/JSON pairing does not drop them.
+  Answer: "yes pls" (scawful, 2026-10-12).
+
 * DECIDED Yaze readiness means a complete routine dungeon authoring session
   :PROPERTIES:
   :ASKED_BY: Codex RC Planning

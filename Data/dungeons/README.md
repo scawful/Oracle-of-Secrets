@@ -4,14 +4,28 @@
 editor-authored dungeon custom collision. The unpatched base ROM remains the
 edit target; `oos168x.sfc` is disposable build output and must never be edited.
 
-The build validates both the JSON format and the effective nonzero collision
-maps in the selected base ROM before generating tables or invoking Asar. A
-mismatch fails closed with the affected room.
+The build validates both the JSON format and every explicit collision record
+in the selected base ROM before generating tables or invoking Asar. An encoded
+`$00` is a floor override, distinct from an absent record. A mismatch fails
+closed with the affected room. The build does not import or regenerate this
+JSON. Collision editing/export tools must preserve explicit floor records;
+older nonzero-only tools do not satisfy this contract.
 
 ## Current provenance
 
-The tracked source was synchronized with the editable base ROM after the
-reviewed September dungeon updates:
+The 2026-10-12 approved Shrine of Power restore retains all prior room entries
+and restores rooms `$83` and `$84` from their surviving original streams.
+Room `$83` has 74 explicit floor cells and 12 `$FF` cells; room `$84` has two
+`$08` cells. Room `$74`'s 22 floor cells were already present in the ROM and
+are now represented in the source without changing that room's ROM data.
+
+- source: 20 rooms, 2,808 explicit tiles (2,712 nonzero and 96 floor tiles)
+- source SHA-256:
+  `a7715d48f4bc86664bfa2145f78c18bd019c6d499121a2416db231e4d72ed7e8`
+- matching restored beta edit-base SHA-256:
+  `6f2d0a42af02388d8d3d5f0f9cf20fc83c3eb3a541732b8da482da1fb09497ec`
+
+The prior nonzero-only September synchronization is retained as history:
 
 - source: 17 rooms, 2,698 nonzero tiles
 - source SHA-256:

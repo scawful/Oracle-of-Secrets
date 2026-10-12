@@ -93,11 +93,11 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
     def test_repository_source_is_complete(self) -> None:
         contract = validate_contract(REPO_ROOT)
 
-        self.assertEqual(contract.room_count, 17)
-        self.assertEqual(contract.tile_count, 2698)
+        self.assertEqual(contract.room_count, 20)
+        self.assertEqual(contract.tile_count, 2808)
         self.assertEqual(
             contract.source_sha256,
-            "04f5370953be0d299bc8d2fb589e9253eb811994596665d818936cbf46eebf99",
+            "a7715d48f4bc86664bfa2145f78c18bd019c6d499121a2416db231e4d72ed7e8",
         )
 
     def test_repository_source_forces_exact_export_bytes(self) -> None:
@@ -116,9 +116,9 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
             encoding="utf-8"
         )
 
-        self.assertIn("source: 17 rooms, 2,698 nonzero tiles", readme)
+        self.assertIn("source: 20 rooms, 2,808 explicit tiles", readme)
         self.assertIn(
-            "04f5370953be0d299bc8d2fb589e9253eb811994596665d818936cbf46eebf99",
+            "a7715d48f4bc86664bfa2145f78c18bd019c6d499121a2416db231e4d72ed7e8",
             readme,
         )
 
@@ -177,6 +177,101 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
             self.assertEqual(contract.tile_count, 2)
             self.assertIsNotNone(contract.rom_sha256)
 
+    def test_source_explicit_zero_floor_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_source(
+                root,
+                [{"room_id": "0x83", "tiles": [[5, 0]]}],
+            )
+
+            contract = validate_contract(root)
+
+            self.assertEqual(contract.room_count, 1)
+            self.assertEqual(contract.tile_count, 1)
+
+    def test_source_invalid_tile_values_fail_closed(self) -> None:
+        for value in (-1, 256, True, False, 0.5, "0", None):
+            with self.subTest(value=value):
+                with tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    self.write_source(
+                        root,
+                        [{"room_id": "0x83", "tiles": [[5, value]]}],
+                    )
+
+                    with self.assertRaisesRegex(
+                        CustomCollisionSourceContractError,
+                        "value must be integer 0..255",
+                    ):
+                        validate_contract(root)
+
+    def test_rom_all_zero_map_matches_explicit_source(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_source(
+                root,
+                [{"room_id": "0x74", "tiles": [[5, 0]]}],
+            )
+            rom_path = self.write_rom(root, {0x74: [(5, 0)]})
+
+            contract = validate_contract(root, rom_path)
+
+            self.assertEqual(contract.room_count, 1)
+            self.assertEqual(contract.tile_count, 1)
+
+    def test_rom_floor_rectangle_matches_explicit_source(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_source(
+                root,
+                [
+                    {
+                        "room_id": "0x74",
+                        "tiles": [[65, 0], [66, 0], [129, 0], [130, 0]],
+                    }
+                ],
+            )
+            stream = (65).to_bytes(2, "little") + bytes(
+                (2, 2, 0, 0, 0, 0, 0xFF, 0xFF)
+            )
+            rom_path = self.write_raw_rom(root, {0x74: stream})
+
+            contract = validate_contract(root, rom_path)
+
+            self.assertEqual(contract.room_count, 1)
+            self.assertEqual(contract.tile_count, 4)
+
+    def test_rom_missing_floor_fails_canonical_pairing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_source(
+                root,
+                [{"room_id": "0x83", "tiles": [[5, 0], [6, 255]]}],
+            )
+            rom_path = self.write_rom(root, {0x83: [(6, 255)]})
+
+            with self.assertRaisesRegex(
+                CustomCollisionSourceContractError,
+                r"room 0x83 differs.*1 tile\(s\): 5",
+            ):
+                validate_contract(root, rom_path)
+
+    def test_rom_untracked_floor_fails_canonical_pairing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_source(
+                root,
+                [{"room_id": "0x83", "tiles": [[6, 255]]}],
+            )
+            rom_path = self.write_rom(root, {0x83: [(5, 0), (6, 255)]})
+
+            with self.assertRaisesRegex(
+                CustomCollisionSourceContractError,
+                r"room 0x83 differs.*1 tile\(s\): 5",
+            ):
+                validate_contract(root, rom_path)
+
     def test_rom_zero_dimension_rectangle_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -226,7 +321,7 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
                 [
                     {
                         "room_id": "0x25",
-                        "tiles": [[65, 1], [66, 9], [130, 4]],
+                        "tiles": [[65, 1], [66, 9], [129, 0], [130, 4]],
                     }
                 ],
             )
@@ -243,7 +338,7 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
 
             contract = validate_contract(root, rom_path)
 
-            self.assertEqual(contract.tile_count, 3)
+            self.assertEqual(contract.tile_count, 4)
 
     def test_rom_tile_drift_fails_with_room_and_count(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -366,16 +461,17 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
                     ):
                         validate_contract(root, rom_path)
 
-    def test_rom_all_zero_pointer_is_omitted_like_z3ed_export(self) -> None:
+    def test_rom_all_zero_map_omitted_by_legacy_export_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             self.write_source(root, [])
             rom_path = self.write_rom(root, {0x74: [(5, 0)]})
 
-            contract = validate_contract(root, rom_path)
-
-            self.assertEqual(contract.room_count, 0)
-            self.assertEqual(contract.tile_count, 0)
+            with self.assertRaisesRegex(
+                CustomCollisionSourceContractError,
+                "untracked custom-collision rooms: 0x74",
+            ):
+                validate_contract(root, rom_path)
 
     def test_build_validates_selected_base_before_generators(self) -> None:
         build = (REPO_ROOT / "Scripts/Build/build_rom.sh").read_text(
