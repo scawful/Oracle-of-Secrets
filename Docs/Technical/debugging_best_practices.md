@@ -28,17 +28,19 @@ Before implementing changes to sprite behavior or overworld systems:
 
 ## Agent Preflight (Before Live Debugging)
 
+Requires the sibling mesen2-oos checkout or `MESEN2_OOS_ROOT` (`Scripts/Mesen2/mesen2_client.py`).
+
 1. **Confirm emulator run state**
-   - `python3 scripts/mesen2_client.py run-state`
+   - `python3 Scripts/Mesen2/mesen2_client.py run-state`
    - If paused, resume or use `--allow-paused` for intentional step testing.
 2. **Capture baseline diagnostics**
-   - `python3 scripts/mesen2_client.py diagnostics --json`
-   - Deep capture (items/flags/sprites/watch): `python3 scripts/mesen2_client.py diagnostics --deep --json`
+   - `python3 Scripts/Mesen2/mesen2_client.py diagnostics --json`
+   - Deep capture (items/flags/sprites/watch): `python3 Scripts/Mesen2/mesen2_client.py diagnostics --deep --json`
    - Note mode/submode, time phase, and camera offsets.
 3. **Create a labeled save state at the exact repro point**
    - `python3 Scripts/Mesen2/mesen2_client.py save 1` (slots 1-99 or configured)
-   - `python3 scripts/mesen2_client.py savestate-label set 1 --label "Dark World south crash"`
-   - `python3 scripts/mesen2_client.py lib-save "Dark World south crash"`
+   - `python3 Scripts/Mesen2/mesen2_client.py savestate-label set 1 --label "Dark World south crash"`
+   - `python3 Scripts/Mesen2/mesen2_client.py lib-save "Dark World south crash"`
 4. **Log actions explicitly**
    - Record whether inputs are agent-driven or user-driven in scratchpad.
 
@@ -85,13 +87,14 @@ After changes to sprite detection/AI:
 ### Sprite Addresses (indexed by X)
 | Address | Name | Notes |
 |---------|------|-------|
-| `$0D80,X` | SprState | **Set by vanilla probe on Link contact** |
-| `$0DB0,X` | ProbeParent | Stores (parent_slot + 1) |
-| `$0DD0,X` | SprType | Sprite type/ID |
-| `$0EE0,X` | SprTimerD | General timer - **NOT probe-specific** |
-| `$0E00,X` | SprTimerA | Cooldown timer |
-| `$0E10,X` | SprTimerB | Alt cooldown timer |
-| `$0DF0,X` | SprAction | State machine index |
+| `$0D80,X` | SprAction | State machine index. **Vanilla probe writes 3 here on Link contact** |
+| `$0DB0,X` | SprMiscB | Prober parent sprite ID (parent_slot + 1) |
+| `$0DD0,X` | SprState | Sprite state |
+| `$0E20,X` | SprType | Sprite type/ID |
+| `$0DF0,X` | SprTimerA | Action timer. Vanilla probe sets $10 |
+| `$0E00,X` | SprTimerB | Animation timer |
+| `$0E10,X` | SprTimerC | Timer |
+| `$0EE0,X` | SprTimerD | General timer - **NOT set by probe** |
 
 ### Link/Overworld Addresses
 | Address | Purpose |
@@ -122,14 +125,14 @@ After changes to sprite detection/AI:
 ### Response Steps
 
 1. **Major:** Revert changes immediately, document what broke
-2. **Minor:** Keep stable version, create issue doc in `Docs/Debugging/Issues/`
+2. **Minor:** Keep stable version, create issue doc in an issue note under the AFS scratchpad (~/.context/projects/oracle-of-secrets/scratchpad/, AGENTS.md rule 5)
 3. **Always:** Add NOTE comment explaining disabled code
 
 ### Comment Template for Disabled Code
 ```asm
 ; NOTE: [Feature] was causing [problem description]
 ; The [specific mechanism] interfered with [other system].
-; Disabled pending investigation. See Docs/Debugging/Issues/[issue_file].md
+; Disabled pending investigation. See the issue note [issue_file].md in the AFS scratchpad (~/.context/projects/oracle-of-secrets/scratchpad/).
 ; JSL DisabledRoutine
 ```
 
@@ -150,12 +153,13 @@ After changes to sprite detection/AI:
 ### VanillaProbeSystem Assumptions
 **Common Mistake:** Assuming probe sets `SprTimerD`
 
-**Reality:** Vanilla probe sets parent's STATE (`$0D80,X`), not timers
+**Reality (per usdasm bank_05.asm:12080-12104; static reading, runtime unverified):** the vanilla probe sets the parent's SprAction (`$0D80,X`) = 3 and SprTimerA (`$0DF0,X`) = $10, unless the parent's SprAction is already 3 or its type (`$0E20,X`) is $CE.
 
 **Correct Usage:**
 ```asm
-; Check if probe detected Link
-LDA.w SprState, X : CMP.b #$XX : BEQ .detected
+; Check if probe detected Link. Valid only for sprites whose action 3 means alerted;
+; otherwise the probe hijacks their state machine.
+LDA.w SprAction, X : CMP.b #$03 : BEQ .detected
 ```
 
 ---
@@ -164,7 +168,7 @@ LDA.w SprState, X : CMP.b #$XX : BEQ .detected
 
 ```
 ; Watch sprite state for slot 0
-watch $0D80
+watch $0D80 ; SprAction, slot 0
 
 ; Watch Link's position
 watch $20 w  ; Y position (16-bit)
@@ -178,11 +182,11 @@ watch $E7
 bp $02A5EC  ; Overworld_ActualScreenID
 
 ; Run-state / diagnostics
-python3 scripts/mesen2_client.py run-state
-python3 scripts/mesen2_client.py time
-python3 scripts/mesen2_client.py diagnostics --json
-python3 scripts/mesen2_client.py savestate-label set 1 --label "Dark World south crash"
-python3 scripts/mesen2_client.py lib-save "Dark World south crash"
+python3 Scripts/Mesen2/mesen2_client.py run-state
+python3 Scripts/Mesen2/mesen2_client.py time
+python3 Scripts/Mesen2/mesen2_client.py diagnostics --json
+python3 Scripts/Mesen2/mesen2_client.py savestate-label set 1 --label "Dark World south crash"
+python3 Scripts/Mesen2/mesen2_client.py lib-save "Dark World south crash"
 ```
 
 ---

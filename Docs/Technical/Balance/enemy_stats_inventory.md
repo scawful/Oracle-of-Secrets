@@ -3,7 +3,7 @@
 Status: analysis only. No `.asm`/ROM/save file was edited to produce this document.
 
 Source of truth: `Docs/Technical/Balance/enemy_stats_inventory.json`, produced
-deterministically by `Scripts/Analysis/enemy_balance_inventory.py` from:
+deterministically by `Scripts/Analysis/enemy_balance_inventory.py` (generator archived in AFS, not in git: AFS archive/repo-slim-2026-10-06/repo/Scripts/Analysis/enemy_balance_inventory.py; the JSON is a frozen 2026-09-26 snapshot) from:
 
 - ROM property tables read directly from the current playtest build
   `Roms/TestBuilds/rc-playtest-2026-09-25/oos168x.sfc` (HP/damage/prize/boss
@@ -20,7 +20,7 @@ deterministically by `Scripts/Analysis/enemy_balance_inventory.py` from:
 
 Every number below is **VERIFIED** (read from ROM bytes or usdasm/source) unless
 marked **INFERRED**. Re-run the script any time the playtest ROM or base ROM
-changes: `python3 Scripts/Analysis/enemy_balance_inventory.py` (deterministic;
+changes: `python3 Scripts/Analysis/enemy_balance_inventory.py` (script not in git; archived in AFS; deterministic;
 two consecutive runs produced byte-identical JSON).
 
 ## How to read "damage" and "HP" here

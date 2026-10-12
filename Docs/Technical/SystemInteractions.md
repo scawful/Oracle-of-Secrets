@@ -16,8 +16,8 @@
 
 **Cross-References:**
 - `Docs/World/Overworld/ZSCustomOverworldAdvanced.md` - ZScream technical details
-- `Docs/Debugging/Guides/Troubleshooting.md` - System conflict debugging
-- `Docs/Technical/Core/MemoryMap.md` - Shared memory regions
+- AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Guides/Troubleshooting.md - System conflict debugging
+- `Docs/Technical/MemoryMap.md` - Shared memory regions
 
 NOTE: Vanilla disassembly is external. In this workspace, JP gigaleak disassembly lives under `../alttp-gigaleak/DISASM/jpdasm/`. If you generate a US `usdasm` export for address parity, it lives under `../alttp-gigaleak/DISASM/usdasm/`. Adjust paths if your setup differs.
 
@@ -115,7 +115,6 @@ Each section includes:
 | `$7E008C` | ZSO, Storms | Overlay register | Write conflict ✓ Resolved |
 | `$7EE000` | Time, Sprites | Current hour | Read-only |
 | `$7EF3C5` | Sprites, Time | Game state | Read/Write |
-| `$7EF39D` | Storms, ZSO | Storm active flag | Coordination |
 
 ---
 
@@ -430,6 +429,8 @@ LostWoodsSolution:
 ---
 
 ## 5. ZSCustomOverworld × Song of Storms
+
+> Design proposal only: this SRAM_StormsActive/HandleStormsOverlay design was not implemented; see Overworld.md section 4.
 
 **Systems:**
 - `Overworld/ZSCustomOverworld.asm`
@@ -988,11 +989,11 @@ When mask is removed or expires:
 
 **Mask State Variables (WRAM):**
 ```
-$7E0730: Mask_CurrentForm     ; 0=Normal, 1=Deku, 2=Zora, etc.
-$7E0731: Mask_TransformTimer  ; Countdown for timed masks
-$7E0732: Mask_AbilityFlags    ; Bitfield for active abilities
-$7E0733: Mask_BackupSpeed     ; Original Link speed
-$7E0734: Mask_BackupJump      ; Original jump power
+!CurrentMask = $02B2 ; 0 Human, 1 Deku, 2 Zora, 3 Wolf, 4 Bunny Hood, 5 Minish, 6 GBC, 7 Moosh (Masks/all_masks.asm:3-13)
+!LinkGraphics = $BC  ; Masks/all_masks.asm:16
+!ZoraDiving = $0AAB  ; Masks/all_masks.asm:19
+DekuFloating = $70   ; Masks/all_masks.asm:22
+DekuHover = $71      ; Masks/all_masks.asm:26
 ```
 
 **Equipment Slots (SRAM):**
@@ -1000,9 +1001,11 @@ $7E0734: Mask_BackupJump      ; Original jump power
 $7EF347: ZoraMask       ; Owned: 0=No, 1=Yes
 $7EF348: BunnyHood
 $7EF349: DekuMask
-$7EF34A: WolfMask
-$7EF34B: MinishMask
+$7EF352: StoneMask
+$7EF358: WolfMask
 ```
+
+No SRAM ownership byte exists for Minish/GBC/Moosh forms (grep, 2026-10-12).
 
 ### 7.6. Known Issues & Solutions
 
@@ -1300,7 +1303,7 @@ When multiple systems need to modify the same resource:
 - Use bridge function pattern (see Section 6.2)
 - Verify calling syntax with prefix
 
-See `Docs/Debugging/Guides/Troubleshooting.md` for comprehensive debugging guide.
+See AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Guides/Troubleshooting.md for comprehensive debugging guide.
 
 ---
 
@@ -1308,9 +1311,9 @@ See `Docs/Debugging/Guides/Troubleshooting.md` for comprehensive debugging guide
 
 **Core Documentation:**
 - `Docs/World/Overworld/ZSCustomOverworldAdvanced.md` - ZScream internals
-- `Docs/Debugging/Guides/Troubleshooting.md` - Problem-solving guide
-- `Docs/Debugging/Guides/DevelopmentGuidelines.md` - Best practices
-- `Docs/Technical/Core/MemoryMap.md` - Memory layout
+- AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Guides/Troubleshooting.md - Problem-solving guide
+- AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Guides/DevelopmentGuidelines.md - Best practices
+- `Docs/Technical/MemoryMap.md` - Memory layout
 
 **System-Specific:**
 - `Overworld/ZSCustomOverworld.asm` - Custom overworld engine

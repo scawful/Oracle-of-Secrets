@@ -51,7 +51,7 @@ This document outlines the progression of the main story and major side-quests. 
 2.  **Player Actions:**
     *   Trade the Mushroom to the witches east of the castle to obtain **Magic Powder** / collectible bag.
     *   Follow the post-D1 report that the Ranch Girl vanished after a witch questioned her about the essences.
-    *   Learn that Magic Powder reveals creatures hidden by transformation magic, and that a strange Cucco appeared at **Loom Ranch (OW 0x00)** when the girl vanished.
+    *   Learn that Magic Powder reveals creatures hidden by transformation magic, and that a strange Cucco appeared at **Toto Ranch (OW 0x00)** when the girl vanished.
     *   Use the Magic Powder on that Cucco. The Ranch Girl appears temporarily and gives Link the **Ocarina**.
     *   Follow the Ranch Girl's direction to the Mask Salesman; this is when the Tail Pond map marker should be set.
     *   Visit **Tail Pond (OW 0x2D)** and speak with the Happy Mask Salesman.
@@ -69,10 +69,10 @@ This document outlines the progression of the main story and major side-quests. 
 
 1.  **Trigger:** This is a multi-part quest chain required to access Kalyxo Castle.
 2.  **Player Actions:**
-    *   **Ocarina:** Complete the required Ranch Girl/Ocarina quest at Loom Ranch.
+    *   **Ocarina:** Complete the required Ranch Girl/Ocarina quest at Toto Ranch.
     *   **Song of Healing:** Learn the Song of Healing from the Happy Mask Salesman (Tail Pond).
-    *   **Running Boots:** Play the Song of Healing for the sick child in Wayward Village to receive the Running Boots.
-    *   **Book of Secrets:** Use the Running Boots to get the Book of Secrets from the village library.
+    *   **Pegasus Shoes:** Play the Song of Healing for the sick child in Wayward Village to receive the Pegasus Shoes.
+    *   **Book of Secrets:** Use the Pegasus Shoes to get the Book of Secrets from the village library.
 3.  **Consequence:** The Book of Secrets is required to open the gates to Kalyxo Castle.
 
 ### Chapter 5: Kalyxo Castle (D3)
@@ -146,7 +146,7 @@ This document outlines the progression of the main story and major side-quests. 
 
 This is required main-path progression, not an optional Easter egg.
 
-1.  **Reason:** After D1, Link learns that the Ranch Girl disappeared after Twinrova questioned her about the essences. He is asked to investigate Loom Ranch.
+1.  **Reason:** After D1, Link learns that the Ranch Girl disappeared after Twinrova questioned her about the essences. He is asked to investigate Toto Ranch.
 2.  **Mushroom:** Take the Mushroom from the Mushroom Grotto path to the Potion Shop owner.
 3.  **Magic Powder:** Trade the Mushroom for Magic Powder. The item guidance explains that the powder reveals creatures transformed by magic.
 4.  **Ranch clue:** Link learns that a strange Cucco appeared when the Ranch Girl vanished.

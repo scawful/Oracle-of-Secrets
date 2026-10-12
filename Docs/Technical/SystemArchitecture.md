@@ -87,11 +87,23 @@ incsrc "Overworld/ZSCustomOverworld.asm"
 | Bank Range | Purpose | Notes |
 |------------|---------|-------|
 | $00-$1F | Vanilla ALTTP + small patches | Limited free space |
-| $20-$29 | ZScream Overworld Data | ~1.5MB reserved |
-| $30 | Sprite prep/initialization | Oracle sprites start here |
-| $31 | Main sprite logic | Enemy/NPC behavior |
-| $32 | Boss logic | Complex sprite code |
-| $33-$3F | Free space | Available for expansion |
+| $20 | Expanded music (`Music/all_music.asm`) | |
+| $21-$27, $29-$2A | ZS reserved | |
+| $28 | ZSCustomOverworld (`Overworld/ZSCustomOverworld.asm`) | |
+| $2B | Items (`Items/all_items.asm`) | |
+| $2C | Underworld / dungeons (`Dungeons/dungeons.asm`) | |
+| $2D | Menu (`Menu/menu.asm`) | |
+| $2E | HUD (`Menu/menu_hud.asm`) | |
+| $2F | Expanded message bank (`Core/message.asm`) | |
+| $30-$32 | Sprites (`Sprites/all_sprites.asm`) | |
+| $33, $35-$39, $3B | Mask gfx and palettes (`Masks/all_masks.asm`) | |
+| $34 | Time System, custom overworld overlays, gfx (`Masks/all_masks.asm`) | |
+| $3A | Mask routines, custom ancillae; also opening, part00, P2 and Impa hints | `Masks/all_masks.asm`, `Core/Cutscene/opening.asm`, `Core/part00.asm`, `Sprites/Players/player2.asm`, `Sprites/NPCs/impa_hints.asm` |
+| $3C | Unused | |
+| $3D-$3F | ZS Tile16 / Tile32 tables | |
+| $40-$41 | World map (LW / DW) (`Overworld/overworld.asm`) | |
+
+Source of truth: `Oracle_main.asm:5-35` (header bank map). This table is a summary; check the source before relying on a bank.
 
 ### 3.2 RAM Regions
 
@@ -108,32 +120,33 @@ incsrc "Overworld/ZSCustomOverworld.asm"
 ### 3.3 Key SRAM Variables
 
 ```asm
-; GameState ($7EF3C5) - Overall progression
-;   0x00 = Very start
-;   0x01 = Uncle reached
-;   0x02 = Zelda rescued / Farore intro
-;   0x03 = Agahnim defeated
+; GameState ($7EF3C5) - values from Core/sram.asm:72-75
+;   0x00 = !GameState_Start (cannot save yet)
+;   0x01 = !GameState_LoomBeach (intro sequence begun)
+;   0x02 = !GameState_KydrogComplete (set at Farore's meeting, Sprites/NPCs/farore.asm:222; constant name is misleading)
+;   0x03 = !GameState_FaroreRescued (set in Sprites/Bosses/kydrog_boss.asm:377; D7 complete, endgame)
 
-; OOSPROG ($7EF3D6) - Oracle progression bitfield
-; .fmp h.i.
-;   i = Intro complete, Maku Tree met
-;   h = Hall of Secrets visited
-;   p = Pendant quest progress
-;   m = Master Sword acquired
-;   f = Fortress of Secrets
+; OOSPROG ($7EF3D6) - values from Core/sram.asm:81-86
+;   $01 Story_IntroComplete (met Maku Tree)
+;   $02 Story_HallOfSecrets
+;   $04 Story_PendantQuest (shrine access)
+;   $10 Story_VillageElderMet (elder met; no reader). Story_MasterSword is an alias, not a Master Sword gate
+;   $80 Story_FortressComplete (final dungeon done)
 
-; OOSPROG2 ($7EF3C6) - Secondary progression
-; .fbh .zsu
-;   u = Uncle visited
-;   s = Priest visited in sanctuary
-;   z = Zelda brought to sanctuary
-;   h = Uncle left house
-;   b = Book of Mudora obtained
-;   f = Fortune teller flag
+; OOSPROG2 ($7EF3C6) - values from Core/sram.asm:93-107
+;   $01 Story2_ImpaIntro (Impa intro complete)
+;   $02 Story2_SanctuaryVisit
+;   $04 Story2_KydrogEncounter
+;   $08 Story2_ImpaLeftHouse
+;   $10 Story2_LegacyHouseFlag (legacy vanilla flag reused for intro house state)
+;   $20 Story2_BookOfSecrets
+;   $40 Story2_FortuneTellerFlip
+;   $80 Story2_Part0Storm (Overworld/storm.asm; gated by ENABLE_PART0_STORM)
 
-; Dreams ($7EF410) - Dream sequence tracking
-; .dts fwpb
-;   (Individual dream completion flags)
+; Dreams ($7EF410) - values from Core/sram.asm:157-159
+;   $01 Dream_Wisdom
+;   $02 Dream_Power
+;   $04 Dream_Courage
 
 ; WaterGateStates ($7EF411) - Zora Temple water gate persistence
 ;   bit 0 = room 0x27
@@ -225,7 +238,7 @@ SprAction (per-sprite state variable)
 | $0D00 | SprY | Y position (low byte) |
 | $0D10 | SprX | X position (low byte) |
 | $0D80 | SprAction | Current state |
-| $0DA0 | SprHealth | Hit points remaining |
+| $0E50 | SprHealth | Hit points remaining |
 | $0E40 | SprNbrOAM | OAM slot count |
 
 ### 4.4 Menu System
@@ -345,23 +358,23 @@ Every hook should document:
 ### 6.1 Build Order (Critical)
 
 ```
-1. Core/symbols.asm      - Memory declarations
-2. Core/sram.asm         - SRAM layout
-3. Core/link.asm         - Player modifications
-4. Music/all_music.asm   - SPC700 data
-5. Sprites/all_sprites.asm - All sprite code
-6. Items/all_items.asm   - Item handlers
-7. Menu/menu.asm         - Menu system
-8. Dungeons/             - Dungeon-specific code
-9. Core/patches.asm      - Vanilla patches (LAST)
-10. Overworld/ZSCustomOverworld.asm - ZSOW (OUTSIDE namespace)
+1. Util/macros.asm, Config/module_flags.asm, Config/feature_flags.asm   (Oracle_main.asm:39-41)
+2. Core/structs.asm, Core/ram.asm                                          (Oracle_main.asm:66-69)
+3. Inside `namespace Oracle` (Oracle_main.asm:71-169): Core/link.asm, Core/sram.asm,
+   Core/symbols.asm, Core/message.asm, Core/progression.asm, then the gated modules
+   (Music, Overworld/overworld.asm, Dungeons, Sprites, Masks, Items, Menu,
+   Core/Cutscene/opening.asm, Sprites/Players/player2.asm, Core/part00.asm,
+   Core/patches.asm)                                                       (Oracle_main.asm:73-159)
+4. Overworld/ZSCustomOverworld.asm, OUTSIDE the namespace                  (Oracle_main.asm:171-173)
+
+Source of truth: the include order in `Oracle_main.asm`. Do not copy it from here.
 ```
 
 ### 6.2 Build Commands
 
 ```bash
 # Fast build
-./run.sh
+./Scripts/Build/build_rom.sh 168
 
 # MCP tools
 mcp__book-of-mudora__dev_ops(action="build")  # Build ROM

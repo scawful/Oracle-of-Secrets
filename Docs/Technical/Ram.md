@@ -47,11 +47,11 @@ Once a room is loaded, its specific behavior is governed by tags and flags.
 
 -   **`TAG1`/`TAG2` (`$7E00AE`/`$AF`):** These are "Room Effect" tags loaded from the room's header. They trigger special behaviors like kill rooms, shutter doors, or custom events defined in `Dungeons/custom_tag.asm`. For example, a kill room tag will cause the `Underworld_HandleRoomTags` routine to check if all sprites in the room (`$7E0E20+`) have been defeated.
 
--   **`UWDEATH` (`$7FDF80`) and `OWDEATH` (`$7FEF80`):** These are large bitfields in SRAM that track the state of every overworld screen and underworld room. When a kill room is cleared or a key is taken from a chest, a bit is set in this array. This ensures that the state persists permanently in the save file, preventing enemies from respawning or chests from reappearing.
+-   **`UWDEATH` (`$7FDF80`) and `OWDEATH` (`$7FEF80`):** WRAM bank `$7F` tables (not SRAM). `UWDEATH` flags sprite deaths per underworld room (indexed by 2 x room ID); `OWDEATH` marks which overworld sprites have already spawned/died (`Core/ram.asm:6545-6554`). They are not part of the save block; do not describe them as kill-room or chest persistence.
 
 ## 4. The Player and Entities
 
--   **Link:** The player's state is managed by its own state machine in `bank_07.asm`, with the current state held in `LINKDO` (`$7E005D`). This is covered in detail in `Docs/Link.md`.
+-   **Link:** The player's state is managed by its own state machine in `bank_07.asm`, with the current state held in `LINKDO` (`$7E005D`). This is covered in detail in `Docs/Technical/Link.md`.
 
 -   **Sprites and Ancillae:** The WRAM regions from `$7E0D00` onwards are large arrays that hold the state of all active entities in the game (16 sprites, ~40 ancillae). These are defined as `structs` in `Core/structs.asm`. While there are dozens of variables for each sprite, the most important for general game logic are:
     -   `SprState` (`$7E0DD0,X`): The sprite's main state (e.g., `0x09` for active, `0x0B` for stunned).

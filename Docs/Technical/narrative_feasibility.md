@@ -35,7 +35,9 @@ The Oracle of Secrets codebase has a **robust, modular system** for NPCs, dialog
 
 ### Message ID Allocation
 
-**Current highest ID:** `0x1BB` (Piratian Friendly Hint)
+**Current highest ID:** `0x203` (Core/message.asm:46-61, Core/Generated/expanded_messages.asm)
+
+SUPERSEDED: `0x1C0-0x1FF` is in use or reserved and `0x200-0x203` is in use (see Core/message.asm:46-61; `$1D9-$1DF` is reserved for future use). Only 0x204+ is unallocated. Ranges below are the original plan.
 
 **Available ranges for new content:**
 | Range | Suggested Use |
@@ -181,7 +183,7 @@ The plan calls for clouds that solidify/vaporize based on weather. This requires
 | Element | Status | Implementation |
 |---------|--------|----------------|
 | Eon Zora Elder sprite | ✅ Exists | `eon_zora_elder.asm` - 3 states |
-| Elder dialogue | ⚪ New | Messages `0x1F0+` |
+| Elder dialogue | ⚪ New | Messages: range TBD (0x1F0-0x1FF taken, Core/message.asm:56-58; next unallocated is $204) |
 | Sea Shrine location | 🔶 Map exists | Map 0x79 referenced |
 | Vision sequence | 🟡 Use dreams | Mirror dream system |
 

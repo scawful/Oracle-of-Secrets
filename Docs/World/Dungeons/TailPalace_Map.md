@@ -36,9 +36,3 @@
 | 0x8F | 72 | - | Room 0x8F |
 | 0xA7 | 18 | - | Room 0xA7 |
 | 0xDE | 21 | - | Room 0xDE |
-
----
-
-## See Also
-
-- [TailPalace_Tracks.md](TailPalace_Tracks.md) - Detailed track layouts (if applicable)

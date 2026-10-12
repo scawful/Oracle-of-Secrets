@@ -3,7 +3,7 @@
 **Type:** Shrine
 **Entrance ID(s):** 0x03, 0x05, 0x09, 0x0B (from OW 0x4B)
 **Overworld Location:** OW 0x4B (Lupo Mountain)
-**Reward:** Pendant of Power (item 0x3A)
+**Reward:** Pendant of Power (item 0x39)
 **Boss:** None (intentional shrine design)
 **Dungeon Item:** Power Glove
 
@@ -13,7 +13,7 @@
 
 Volcanic themed shrine in the Eon Abyss. Awards the Pendant of Power, one of three pendants needed to forge the Master Sword.
 
-**Status:** Beta — rooms exist and connectivity is good, but pendant item data is still incorrect.
+**Status:** Beta — rooms exist and connectivity is good, and room 0x73 big chest holds Pendant of Power (0x39), set by Core/patches.asm:9.
 
 ## Rooms (8 per all sources)
 
@@ -30,12 +30,10 @@ Volcanic themed shrine in the Eon Abyss. Awards the Pendant of Power, one of thr
 
 All rooms share blockset 13 / palette 24 (volcanic). Grid layout: 2x4 block at rows 7-8, cols 3-6.
 
-## Known Issues (2026-02-13)
+## Known Issues (rechecked 2026-10-12)
 
-1. **Wrong pendant in chest** — Room 0x73 big chest contains Pendant of Wisdom (0x39) instead of Pendant of Power (0x3A). Needs yaze editor fix.
-2. **Pendant of Power (0x3A) not in any chest** — chest data currently has no 0x3A placement anywhere in the ROM.
-3. **Lava pit corner tile collision** — known collision issue per Release Roadmap.
-4. **Room 0x76 ownership** — also listed as "Zora Temple (Water Drain)" in some data sources. Needs clarification.
+1. **Lava pit corner tile collision** — known collision issue per Release Roadmap.
+2. **Room 0x76 ownership** — also listed as "Zora Temple (Water Drain)" in some data sources. Needs clarification.
 
 ---
 

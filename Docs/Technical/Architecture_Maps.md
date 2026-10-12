@@ -65,21 +65,21 @@ This document contains conceptual diagrams of the project architecture and the `
    |  - Namespaces       |                                |
    |                     |                  +-------------+-------------+
    +----------+----------+                  |                           |
-              ^                             |   Modules/Masks/          |
+              ^                             |   Masks/                  |
               | include                     |   (Banks $33-$3B)         |
               |                             |                           |
    +----------+----------+                  +-------------+-------------+
    |                     |                                |
    |  ZSCustomOverworld  |                  +-------------+-------------+
    |  (Global Namespace) |                  |                           |
-   |                     |                  |   Modules/Dungeons/       |
+   |                     |                  |   Dungeons/               |
    | - World Layout      |                  |   (Level Data)            |
    | - Map Logic         |                  |                           |
    +---------------------+                  +-------------+-------------+
                                                           |
                                             +-------------+-------------+
                                             |                           |
-                                            |   Modules/Music/          |
+                                            |   Music/                  |
                                             |   (MSU-1 & SPC)           |
                                             |                           |
                                             +---------------------------+
@@ -103,12 +103,14 @@ This document contains conceptual diagrams of the project architecture and the `
   |  $28: ZSCustomOverworld (The Tables)    | <--- HUGE TABLE LOOKUPS
   |  $2B: Items (New Hookshots, etc.)       |
   |  $2C: Dungeons (Level Data)             |
-  |  $2D: Menu & HUD                        |
+  |  $2D: Menu                              |
+  |  $2E: HUD                               |
   |  $2F: Expanded Dialog (Messages)        |
   +-----------------------------------------+
   | BANK $30 - $3F (Graphics & Forms)       |
   |  $30-$32: Sprite Data                   |
   |  $33: Moosh Form                        |
+  |  $34: Time System / Overlays            |
   |  $35: Deku Form                         |
   |  $36: Zora Form                         |
   |  $37: Bunny Form                        |
@@ -116,9 +118,11 @@ This document contains conceptual diagrams of the project architecture and the `
   |  $39: Minish Form                       |
   |  $3A: Mask Logic (State Machine)        | <--- THE BRAIN
   |  $3B: GBC Form                          |
+  |  $3C: Unused                            |
+  |  $3D-$3F: ZS tile tables                |
   +-----------------------------------------+
   | BANK $40+ (Overworld Maps)              |
-  |  $40: Light World Tilemaps              |
+  |  $40: LW World Map                      |
   |  $41: Dark World Tilemaps               |
   +-----------------------------------------+
 ```

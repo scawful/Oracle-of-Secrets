@@ -38,7 +38,7 @@
 | **Sea Zora** (Kalyxo) | `Zora`, `SeaZora` | `zora.asm` | 0x1A4-0x1AF | Friendly NPCs |
 | **Zora Princess** | `ZoraPrincess` | `zora_princess.asm` | 0xC5, 0xC6 | D4, grants Zora Mask |
 | **Eon Zora** (Abyss) | `EonZora` | `eon_zora.asm` | 0x1AA-0x1AF | Friendly Abyss dwellers |
-| **Eon Zora Elder** | `EonZoraElder` | `eon_zora_elder.asm` | 0x1F0+ | Sea Shrine guide |
+| **Eon Zora Elder** | `EonZoraElder` | `eon_zora_elder.asm` | range TBD (0x1F0-0x1FF taken, Core/message.asm:56-58; next unallocated is $204) | Sea Shrine guide |
 | **River Zora** (Kalyxo) | `RiverZora` | TBD | 0x1C0+ | East Kalyxo, wrongly blamed |
 | **River Zora** (Abyss) | `EonRiverZora` | Enemy variant | N/A | Corrupted, hostile |
 | **River Zora Elder** | `RiverZoraElder` | TBD | 0x1D0+ | Reconciliation scene |
@@ -293,7 +293,7 @@ All sprite files should include a header comment block:
 ;   1: Surprised - Reaction animation
 ;   2: WithRod - Holding ceremonial staff
 ;
-; MESSAGES: 0x1F0-0x1FF (planned)
+; MESSAGES: range TBD (0x1F0-0x1FF taken, Core/message.asm:56-58; next unallocated is $204)
 ; FLAGS: None currently
 ; RELATED: eon_zora.asm, Sea Shrine maps
 ; =========================================================

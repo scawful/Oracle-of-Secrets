@@ -8,8 +8,8 @@ Oracle of Secrets contains 6 shrines - smaller dungeon-like areas that grant Pen
 
 | Shrine | Entrance ID(s) | OW Screen | Reward | Boss |
 |--------|----------------|-----------|--------|------|
-| [Shrine of Power](ShrineofPower.md) | 0x03, 0x05, 0x09, 0x0B | 0x4B | Pendant of Power | Lanmolas |
-| [Shrine of Courage](ShrineofCourage.md) | 0x0C | 0x50 | Pendant of Courage | None |
+| [Shrine of Power](ShrineofPower.md) | 0x03, 0x05, 0x09, 0x0B | 0x4B | Pendant of Power | None (by design) |
+| [Shrine of Courage](ShrineofCourage.md) | 0x0C | 0x50 | Pendant of Courage | Vaati (planned, not implemented) |
 | [Shrine of Wisdom](ShrineofWisdom.md) | 0x33 | 0x63 | Pendant of Wisdom | None |
 | [Shrine of Origins](ShrineofOrigins.md) | TBD | TBD | TBD | TBD |
 | [Shrine of Sky](ShrineofSky.md) | TBD | TBD | TBD | TBD |
@@ -34,12 +34,13 @@ The three Pendant Shrines must be completed to obtain the Master Sword:
 
 ### Shrine of Power
 - **Multiple Entrances:** Has 4 entrance points from OW 0x4B
-- **Boss:** Lanmolas (also appears as Goron Mines miniboss)
+- **Boss:** None (intentional shrine design)
 - **Reward:** Pendant of Power
 
 ### Shrine of Courage
 - **Single Entrance:** OW 0x50
 - **Challenge:** Puzzle-based
+- **Boss:** Vaati (planned, not implemented)
 - **Reward:** Pendant of Courage
 
 ### Shrine of Wisdom

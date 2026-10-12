@@ -22,11 +22,11 @@ Oracle of Secrets contains **7 dungeons** plus the Fortress of Secrets (final du
 
 | # | Shrine | Status | Notes |
 |---|--------|--------|-------|
-| S1 | Shrine of Wisdom | **Beta** | 7 rooms exist; pendant item mismatch (chest has 0x38 not 0x39); 4/7 rooms undocumented in dungeons.json |
-| S2 | Shrine of Power | **Beta** | 7 rooms mapped in `dungeons.json` (0x73-0x86); no boss by design; pendant mismatch (0x39 not 0x3A); lava collision issue |
-| S3 | Shrine of Courage | **Stub** | Partial `dungeons.json` entry (0x33/0x43/0x53/0x63) now split from S2; remaining rooms (0x07/0x16/0x23/0x26), entrance conflict, and pendant placement still pending |
+| S1 | Shrine of Wisdom | **Beta** | 7 rooms in dungeons.json (0x7A-0xCA); pendant chest item 0x38 = Pendant of Wisdom (correct, Core/patches.asm:13) |
+| S2 | Shrine of Power | **Beta** | 8 rooms in `dungeons.json` (0x73-0x76, 0x83-0x86); no boss by design; pendant chest item 0x39 = Pendant of Power (correct, Core/patches.asm:9); lava collision issue |
+| S3 | Shrine of Courage | **Stub** | 7 rooms in `dungeons.json` (0x07/0x17/0x32/0x33/0x43/0x53/0x63, census 2026-09-26); no Vaati boss or reward path; odd dungeon ID 0x09 (see ShrineofCourage.md) |
 
-> **Note (2026-02-13):** Previous "Complete" statuses were incorrect. Assessment revealed pendant items are wrong in all three shrines, S3 is still incomplete, and shrine ownership data needed cleanup across docs/JSON.
+> **Note (2026-02-13):** Previous "Complete" statuses were incorrect. Assessment revealed pendant items are wrong in all three shrines, S3 is still incomplete, and shrine ownership data needed cleanup across docs/JSON. Update 2026-10: Core/patches.asm now sets the Power (0x39) and Wisdom (0x38) pendant chests; S3 Courage is chest item 0x37 in room 0x07.
 
 **Template:** [DUNGEON_TEMPLATE.md](DUNGEON_TEMPLATE.md) - Use this template when documenting new dungeons.
 
@@ -71,14 +71,14 @@ Room "tags" are a vanilla mechanic that allows a room to have special properties
 
 ### Floor Puzzle (`floor_puzzle.asm`)
 
--   **Hook:** Replaces Tag `0x33` (`holes_0`).
+-   **Hook:** Replaces Tag `0x21` (`Holes0`, `$01CC00`).
 -   **Functionality:** Implements a "light all the tiles" puzzle. When Link steps on a special "off" tile (`$0DED`), it transforms into an "on" tile (`$0DEE`) and plays a sound. The system then checks if any "off" tiles remain.
     -   If all tiles are on, it opens the room's shutter doors (`$0468`) and plays the secret sound.
     -   If the player steps on a tile that is already "on", it can trigger a kill room effect (`STZ.b $AE`).
 
 ### Crumble Floor (`crumblefloor_tag.asm`)
 
--   **Hook:** Replaces Tag `0x35` (`holes_3`).
+-   **Hook:** Replaces Tag `0x34` (`Holes3`, `$01CC08`).
 -   **Functionality:** Creates floors that crumble away after being walked on.
     -   It tracks the tile Link is currently standing on.
     -   If he steps on a specific "crumble" tile (`$0C62` or `$0C63`), the code replaces it with a cracked tile and then a pit tile, spawning a falling tile visual effect (`Garnish 03`).
@@ -91,7 +91,7 @@ Room "tags" are a vanilla mechanic that allows a room to have special properties
 
 ### Minish Shutter Door (`custom_tag.asm`)
 
--   **Hook:** Replaces Tag `0x37` (`Holes5`).
+-   **Hook:** Replaces Tag `0x36` (`Holes5`, `$01CC10`).
 -   **Functionality:** Creates a shutter door that only opens if the player is in Minish Form (`!CurrentMask == 0x05`). If the condition is met, it opens the door and plays the corresponding sound effect.
 
 ### Intro Cutscene (`custom_tag.asm`)

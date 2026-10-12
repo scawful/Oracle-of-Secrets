@@ -80,5 +80,8 @@ Several items from the original game have been altered.
 -   **File:** `all_items.asm`
 -   **Functionality:** The Magic Bag is a sub-menu that holds new consumable items. The `Link_ConsumeMagicBagItem` routine is a jump table that executes the effect for the selected item.
 -   **Consumables:**
-    -   **Banana:** Implemented. Restores a small amount of health (`#$10`).
-    -   **Pineapple, Rock Meat, Seashells, Honeycombs, Deku Sticks:** Placeholder entries exist in the jump table, but their effects are not yet implemented (the routines just contain `RTS`).
+    -   **Banana:** restores `$10` HP.
+    -   **Pineapple:** refills magic to full (`$80`) if below.
+    -   **Honeycombs:** restores `$10` HP.
+    -   **Seashells, Deku Sticks:** placeholder entries (`CLC : RTS`, no effect yet).
+    -   **Rock Meat:** no use-effect in the bag (`CLC : RTS`); it is counted in `RockMeatCount` (`$7EF38F`) for the Goron quest.

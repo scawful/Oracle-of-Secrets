@@ -85,9 +85,9 @@ Integrating ZSOW with existing custom systems is an ongoing effort. The status o
 
 *   **Day/Night Sprites:** **Resolved.** The conflict where ZSOW's sprite loader bypassed the old day/night logic has been fixed. A `JSL CheckIfNight` call is now integrated directly into ZSOW's `LoadOverworldSprites_Interupt`. This allows ZSOW's sprite tables to correctly load different sprite sets for day and night by using adjacent game states (e.g., state 2 for day, state 3 for night).
 
-*   **Lost Woods Puzzle:** **Direct Conflict.** The Lost Woods puzzle's transition override is currently incompatible with ZSOW's more complex transition handler. The `lost_woods.asm` code needs to be refactored into a subroutine that can be called from within `OverworldHandleTransitions` in `ZSCustomOverworld.asm`.
+*   **Lost Woods Puzzle:** **Integrated.** ZSOW calls `Oracle_LostWoods` from its transition handler (`ZSCustomOverworld.asm:4725`). Open: a camera drift/desync fix attempt was reverted (see comment at `ZSCustomOverworld.asm:83-84`); runtime unverified.
 
-*   **Song of Storms (Overlays):** **Resolved.** The conflict where ZSOW would overwrite the rain overlay on screen transitions has been fixed. A new SRAM flag (`SRAM_StormsActive`) tracks the storm state, and a new routine, `HandleStormsOverlay`, is called every frame to enforce the rain overlay if the flag is active, ensuring it persists across transitions.
+*   **Song of Storms (Overlays):** **Code present, runtime unverified.** The Ocarina sets WRAM flag `$7EE00E` (`Items/ocarina.asm:362`); `ActivateSubScreen` (`ZSCustomOverworld.asm:1558`) and the subscreen reload keep the rain overlay while it is set. Separate from this, the Part 0 storm is the saved bit `!Story2_Part0Storm` in StoryProgress2 (`Core/sram.asm:107`, `Overworld/storm.asm`, flag `ENABLE_PART0_STORM=1`).
 
 ## 5. File Index
 

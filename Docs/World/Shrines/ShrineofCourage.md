@@ -3,7 +3,7 @@
 **Type:** Shrine
 **Entrance ID(s):** 0x0C -> room 0x53, dungeon ID 0x09 (ZScream entrance table, bank $0F; checked 2026-09-26). Not shared: Fortress of Secrets is entrance 0x37 -> room 0x0C.
 **Overworld Location:** OW 0x50
-**Reward:** Pendant of Courage (item 0x38)
+**Reward:** Pendant of Courage (item 0x37)
 **Boss:** Vaati (designed as Vitreous reskin — NOT IMPLEMENTED)
 **Dungeon Item:** Mirror Shield
 
@@ -40,7 +40,7 @@ All seven rooms use blockset 7, palette 15 (same as D1). Rooms 0x16/0x26 are Zor
    Needs a dungeon ID decision (not assigned here). The old note "entrance 0x0C shared with Fortress of Secrets" was a room/entrance mix-up: room 0x0C is the Fortress entrance room, entered by entrance 0x37.
 2. **No Vaati boss implementation** — design docs describe Vitreous reskin but no ASM exists.
 3. **Lanmolas in room 0x33 is a vanilla leftover** — not the intended S3 boss.
-4. **Vaati reward path not implemented** — S3 Courage reward should come from Vaati boss clear, not a chest; Courage (0x38) is currently misassigned to S1 room 0x7A.
+4. **Vaati reward path not implemented** — S3 Courage reward should come from Vaati boss clear, not a chest; Courage (item 0x37, receipt sets $7EF374 bit $04) is currently an ordinary big chest in room 0x07; room 0x7A (S1) correctly holds 0x38 = Pendant of Wisdom (Core/patches.asm:13).
 5. **dungeons.json SOC entry** — lists 0x07/0x17/0x32/0x33/0x43/0x53/0x63 with regenerated stairs/doors (2026-09-26).
 6. **Room labels still carry vanilla names** — rooms 0x07, 0x17, 0x32 need Oracle-appropriate names.
 

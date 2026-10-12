@@ -8,7 +8,7 @@
 **Essence:** Luminous Mirage (Reflection, truth beneath surfaces)
 **Blockset:** 1 (water-themed) | **Palette:** 9
 **Floors:** F1 (single floor, 15 rooms)
-**Boss:** TBD
+**Boss:** Arrghus (advanced variant; Sprites/Bosses/arrghus.asm)
 **Dungeon Item:** Zora Mask (mid-dungeon, from Zora Princess)
 
 ---
@@ -93,7 +93,7 @@ Room25 below was refreshed against `oos168.sfc` on 2026-09-14. Other room assess
 | Metric | Value |
 |--------|-------|
 | Objects | 44 |
-| Sprites | **0** (only room with zero sprites besides 0x25) |
+| Sprites | **0** (only room with zero sprites) |
 | Doors | 6 total: 2x N, plus locked doors (0x010A, 0x0108, 0x010B) |
 | Water | 3x deep (0xC8) + 4x shallow (0xC0) |
 | Key Objects | Walls forming narrow passages, water channels |
@@ -109,13 +109,13 @@ Room25 below was refreshed against `oos168.sfc` on 2026-09-14. Other room assess
 | Doors | East normal door to0x26, at tile(58,15) |
 | Water | Four authored D9 water-floor segments; no D8 water-window initializer |
 | WaterGateStates | **Bit 1** — 168 collision tiles, 3-row swim mask |
-| **Role** | **Water grate room.** Zora Baby switch #2 activates168 swim tiles/layer. The 2026-09-14 candidate preserves authored graphics and restores collision on local re-entry; ordinary game-save persistence and normal player placement remain unverified. [Runtime evidence](../../Planning/Status/room25_swim_gate_verification_2026-09-14.md). |
+| **Role** | **Water grate room.** Zora Baby switch #2 activates168 swim tiles/layer. The 2026-09-14 candidate preserves authored graphics and restores collision on local re-entry; ordinary game-save persistence and normal player placement remain unverified. Runtime evidence: AFS archive/repo-slim-2026-10-06/repo/Docs/Planning/Status/room25_swim_gate_verification_2026-09-14.md. |
 
 #### Room 0x26 — Central Hub
 | Metric | Value |
 |--------|-------|
 | Objects | 80 |
-| Sprites | 12 (second highest in Row 2) |
+| Sprites | 12 (highest in Row 2) |
 | Doors | **23 total** — N, S, E, W exits. Extremely high door count. |
 | Water | 4x deep (0xC8) + 9x shallow (0xC0) = 13 total water objects |
 | Key Objects | Floor tiles (0x06×3), walls, room borders (0xFAF×5) |
@@ -226,7 +226,7 @@ Room25 below was refreshed against `oos168.sfc` on 2026-09-14. Other room assess
 #### Room 0x46 — Lower Maze
 | Metric | Value |
 |--------|-------|
-| Objects | **108** (third highest) |
+| Objects | **108** (second highest, after 0x36 at 159) |
 | Sprites | 5 |
 | Doors | **32** (second highest!) — N, S + extensive internal locked doors |
 | Stairs | 3 (2x 0x0077 holes + 1x 0x005E) |
@@ -386,7 +386,7 @@ Total: 168 tiles → collision type $08
 
 ### Known Bug: Room-Entry Persistence Disabled
 
-`ENABLE_WATER_GATE_ROOMENTRY_RESTORE` is OFF because the old torch-loop hook at `$0188DF` corrupted WRAM during dungeon transitions (GameMode → 0x35 pattern). The fix moved persistence to `CustomRoomCollision` at `$01B95B`, but this needs runtime validation before re-enabling. See `Docs/Debugging/Issues/dungeon_transition_blackout.md`.
+`ENABLE_WATER_GATE_ROOMENTRY_RESTORE` is OFF because the old torch-loop hook at `$0188DF` corrupted WRAM during dungeon transitions (GameMode → 0x35 pattern). The fix moved persistence to `CustomRoomCollision` at `$01B95B`, but this needs runtime validation before re-enabling. See AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Issues/dungeon_transition_blackout.md.
 
 **Impact:** Water state is NOT preserved when re-entering rooms 0x25/0x27. Player must re-trigger the switch each visit until persistence is enabled and validated.
 
@@ -529,7 +529,7 @@ The Zora Princess (dispatched via `zora.asm` when ROOM = 0x105) has a 4-state ma
 
 ### Zora Mask Origin Plan
 
-`Docs/Planning/Plans/zora_mask_origin.md` describes an alternative Zora Mask origin involving a River Zora ghost named Lura. This conflicts with the current Princess-gives-mask flow. **Decision needed:** Which origin story is canonical?
+AFS archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/zora_mask_origin.md describes an alternative Zora Mask origin involving a River Zora ghost named Lura. This conflicts with the current Princess-gives-mask flow. **Decision needed:** Which origin story is canonical?
 
 ---
 
@@ -593,11 +593,13 @@ Re-enable `!ENABLE_WATER_GATE_ROOMENTRY_RESTORE` and validate:
 
 ## Related Documents
 
-- `Docs/Planning/Plans/zora_mask_origin.md` — Alternative Zora Mask origin story (River Zora ghost)
-- `Docs/Debugging/Issues/dungeon_transition_blackout.md` — Blackout bug root cause and fix
-- `Docs/Debugging/Issues/WaterCollision_Handoff.md` — Water collision technical spec
+Archived planning/debug notes live in AFS: ~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/.
+
+- AFS archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/zora_mask_origin.md — Alternative Zora Mask origin story (River Zora ghost)
+- AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Issues/dungeon_transition_blackout.md — Blackout bug root cause and fix
+- AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Issues/WaterCollision_Handoff.md — Water collision technical spec
 - `Docs/World/Lore/dungeon_narratives.md` — D4 narrative design
-- `Docs/Debugging/Testing/save_data_profiles/zora_temple_debug.json` — Debug loadout
+- AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Testing/save_data_profiles/zora_temple_debug.json — Debug loadout
 
 ## Open Questions (Updated)
 
