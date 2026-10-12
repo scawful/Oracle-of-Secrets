@@ -1271,6 +1271,78 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   rudimentary representations of ideas ? with the different floors
   distinctly displayed from one another" (scawful, 2026-10-09).
 
+* DECIDED Lift the D6 test pause; beta mixes current-layout fixes and redesign pieces
+  :PROPERTIES:
+  :ASKED_BY: Claude (Discord fixes lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_automation_2026-10-10/DISCORD_TRIAGE.md
+  :END:
+  Supersedes the 2026-10-05 pause above. Agents run the 11 Goron Mines route
+  checks headless (one emulator per session, controller input, fixtures
+  declared). For the Discord beta, fix the current layout and pull in redesign
+  pieces that also fix reported issues (098 fall landing, visible 087 switch,
+  B9 -> A9 -> DA descent); the rest of the redesign follows the beta. Start the
+  key-block crash fix (Dungeons/keyblock.asm, $01EB8C) now.
+  Answers: "i feel like some mixture of a and b, the layout of the current one
+  is technically fully playable though it has some issues" and "yeah lift the
+  pause, start the key block fix too" (scawful, 2026-10-10).
+
+* DECIDED Beta ships a separate file 2 with Goron Mines already open
+  :PROPERTIES:
+  :ASKED_BY: Claude (Discord fixes lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_routes_2026-10-10/README.md
+  :END:
+  Route check R1 found no walking route from file 2 to the desert Goron and no
+  return from the Abyss Rock Meat area with file 2's items. For the Discord
+  beta, ship a separate file 2 with the mines already open (the existing
+  test-goron-mines-open save: OW $36 flag $20, Rock Meat 5). The Rock Meat
+  route stays OPEN. The save needs its own qualification on the exact
+  shipping ROM before it ships; Claude owns that runtime.
+  Answer (scawful's reply, relaying Codex): "Recommend a separate beta file 2
+  with Goron Mines already open. That gives testers access while the Rock
+  Meat route remains unresolved." (2026-10-10).
+
+* DECIDED Approve the B9 landing pad and the 4th B9 torch for the beta
+  :PROPERTIES:
+  :ASKED_BY: Claude (Discord fixes lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_routes_2026-10-10/README.md
+  :END:
+  Room 0B9: the black 098-fall island becomes a visible floor pad with a west
+  wall and a south opening to the lower floor (D6-09). A 4th torch at (40,12)
+  next to the chest so the 4-torch chest tag works (D6-27). The 098 key-door
+  slot change is NOT shipped (order-dependent key softlock); that door stays
+  free. Also start the Goron $36 flag fix (heart-piece bit $40).
+  Answer: "yeah approve both, start the goron fix too. i'll let codex know"
+  (scawful, 2026-10-10).
+
+* DECIDED Goron Mines beta: D8 walkway to the T16 cart, rails stay walkable
+  :PROPERTIES:
+  :ASKED_BY: Claude (Discord fixes lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_routes_2026-10-10/CODEX_INTEGRATION.md
+  :END:
+  Restore the A8 (T5) and D8 (T16) carts and add the D8 walkway from the D9
+  arrival to the T16 boarding area. Rails over pits stay walkable on foot for
+  the beta (rails-as-pits is post-beta). Room 089 stays a damage-and-respawn
+  room; the 089 -> D7 drop test is evidence only. The DA cart is left out.
+  Include the A8 stair-entry cart fix (PR #138). Final check: cold file-select
+  load through boss, reward, exit, normal save and cold reload on the
+  integrated ROM, damage on, fixtures marked.
+  Answer: "Yes, approve the D8 walkway for the beta. Leave rails walkable for
+  now, keep 089 as damage-and-respawn, and leave the DA cart out."
+  (scawful, 2026-10-11).
+
+* DECIDED Room 097 becomes a damage-pit room for the beta
+  :PROPERTIES:
+  :ASKED_BY: Claude (Discord fixes lane)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_routes_2026-10-10/README.md
+  :END:
+  Falls from 097's upper-pit west edge (beside the first-key Debirando)
+  dropped into B8's pit band or a walled ledge: a forced death. Add $0097 to
+  RoomsWithPitDamage (slot $00:997A, Core/patches.asm, same pattern as $B8):
+  every 097 fall costs a heart and respawns Link in 097. The lower-pit
+  shortcut into B8 is given up. Tested on isolated candidate c0c9a4ee (damage
+  on, no fixtures). Balance stays unchanged.
+  Answer: "sure yes" (scawful, 2026-10-12).
+
 * DECIDED Yaze readiness means a complete routine dungeon authoring session
   :PROPERTIES:
   :ASKED_BY: Codex RC Planning
