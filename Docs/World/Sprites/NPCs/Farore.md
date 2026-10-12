@@ -55,7 +55,7 @@ Sprite_Farore_Long:
 ```
 
 ## Initialization (`Sprite_Farore_Prep`)
-This routine initializes Farore upon spawning. It sets `SprDefl, X` to `$80` to prevent despawning off-screen. It also includes conditional initialization based on `INDOORS` and a check for `$7EF300` (likely a flag for Farore's presence) to potentially despawn the sprite.
+This routine initializes Farore upon spawning. It sets `SprDefl, X` to `$80` to prevent despawning off-screen. It also includes conditional initialization based on `INDOORS` and a check for `$7EF300` (`KydrogFaroreRemoved`, set by `kydrog.asm`; Farore despawns outdoors when set) to potentially despawn the sprite.
 
 ```asm
 Sprite_Farore_Prep:
@@ -188,7 +188,7 @@ Sprite_Farore_Main:
     JSL Sprite_ApplySpeedTowardsPlayer
     JSL Sprite_MoveVert
 
-    LDA #$02 : STA $7EF3C5   ; (0 - intro, 1 - pendants, 2 - crystals)
+    LDA #$02 : STA $7EF3C5   ; GameState = 2 (KydrogComplete)
     LDA #$05 : STA $012D ; turn off rain sound
     LDA #$01 : STA $B6 ; Set Story State
     JSL Sprite_LoadGfxProperties

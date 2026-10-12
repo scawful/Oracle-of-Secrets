@@ -113,7 +113,14 @@ Manages the Librarian's behavior, primarily focused on a map and scroll translat
 | `0x01A0` | Offer translation | Present |
 | `0x01A1` | Translation start | Present |
 | `0x01A2` | Translation complete | Present |
-| `0x01A3` | All scrolls collected | Present |
+| `0x01A3` | Shown when `Librarian_CheckForAllMaps` is true (intended meaning: all 7 scrolls translated; pending SF-03) | Present |
+| `0x0199` | Scroll translation, index 0 (D1 Mushroom Grotto) | Referenced in `.scroll_messages` |
+| `0x019A` | Scroll translation, index 1 (D2 Tail Palace) | Referenced in `.scroll_messages` |
+| `0x019B` | Scroll translation, index 2 (D3 Kalyxo Castle) | Referenced in `.scroll_messages` |
+| `0x019C` | Scroll translation, index 3 (D4 Zora Temple) | Referenced in `.scroll_messages` |
+| `0x019D` | Scroll translation, index 4 (D5 Ice Palace) | Referenced in `.scroll_messages` |
+| `0x019E` | Scroll translation, index 5 (D6 Goron Mines) | Referenced in `.scroll_messages` |
+| `0x019F` | Scroll translation, index 6 (D7 Dragon Ship) | Referenced in `.scroll_messages` |
 
 **Message 0x012E (current):**
 ```

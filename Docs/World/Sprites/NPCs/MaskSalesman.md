@@ -60,9 +60,9 @@ The Mask Salesman's core behavior is managed by a complex state machine that fac
 *   **`InquiryHandler`**: Plays an animation, checks Link's Ocarina status (`$7EF34C`), and displays a solicited message asking if Link wants to buy a mask. Based on Link's response (`$1CE8`) and inventory, it transitions to various states like `NoOcarina`, `HasOcarina`, `OfferBunnyHood`, `OfferStoneMask`, or `PlayerSaidNoToMask`.
 *   **`NoOcarina`**: Displays a message instructing Link to get the Ocarina first, then returns to `InquiryHandler`.
 *   **`HasOcarina`**: Displays a message acknowledging Link has the Ocarina, then transitions to `TeachLinkSong`.
-*   **`TeachLinkSong`**: Increments Link's learned songs count (`$7EF34C`), plays a song learned sound, and returns to `InquiryHandler`.
+*   **`TeachLinkSong`**: Sets `$7EF34C` = `2` (Song of Healing; reached only from the level-1 Ocarina state), sets SideQuestProg2 bit `$04` (journal), plays the learned-song sound, and returns to `InquiryHandler`.
 *   **`OfferBunnyHood`**: Displays a message offering the Bunny Hood for 100 rupees, then transitions to `BoughtBunnyHood`.
-*   **`OfferStoneMask`**: Displays a message offering the Stone Mask for 650 rupees, then transitions to `BoughtStoneMask`.
+*   **`OfferStoneMask`**: Displays a message offering the Stone Mask for 850 rupees, then transitions to `BoughtStoneMask`.
 *   **`PlayerSaidNoToMask`**: Displays a message and returns to `InquiryHandler`.
 *   **`PlayerHasAllMasks`**: Displays a message indicating Link has all masks, then returns to `InquiryHandler`.
 *   **`BoughtBunnyHood`**: Processes Link's decision to buy the Bunny Hood. Checks rupee count, grants the item (`LDY #$10`, `JSL Link_ReceiveItem`), deducts rupees, displays a confirmation message, and returns to `InquiryHandler`. If rupees are insufficient, it transitions to `NotEnoughMoney`.
@@ -173,7 +173,7 @@ Sprite_MaskSalesman_Main:
   OfferStoneMask:
   {
     %PlayAnimation(0, 1, 16)
-    %ShowUnconditionalMessage($082) ; Stone Mask for 650 rupees?
+    %ShowUnconditionalMessage($082) ; Stone Mask for 850 rupees?
     %GotoAction(9)
     RTS
   }

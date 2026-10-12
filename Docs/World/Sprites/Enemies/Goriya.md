@@ -11,7 +11,7 @@ The following `!SPRID` constants define Goriya's fundamental characteristics:
 !NbrTiles           = 03  ; Number of tiles used in a frame
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
-!Health             = 00  ; Number of Health the sprite have (dynamically set in _Prep)
+!Health             = 00  ; Number of Health the sprite have (header value 00; `_Prep` sets SprHealth to a fixed $08 and does not set damage)
 !Damage             = 00  ; (08 is a whole heart), 04 is half heart
 !DeathAnimation     = 00  ; 00 = normal death, 01 = no death animation
 !ImperviousAll      = 00  ; 00 = Can be attack, 01 = attack will clink on it
@@ -35,7 +35,7 @@ The following `!SPRID` constants define Goriya's fundamental characteristics:
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 00  ; 00 = normal sprite, 01 = sprite is a boss
 ```
-**Note:** `!Health` and `!Damage` are initially set to `00` but are dynamically determined during initialization.
+**Note:** `!Health` and `!Damage` header values are `00`; `_Prep` sets `SprHealth` to a fixed `$08` and does not set damage.
 
 ## 2. Core Routines
 
@@ -145,7 +145,7 @@ Sprite_Goriya_Main:
     +
 
     JSL Sprite_CheckTileCollision   ; Check for tile collision
-    LDA.w SprCollision, X : BEQ +   ; If no collision
+    LDA.w SprCollision, X : BEQ +   ; Skip when no collision (BEQ); on collision the next line clears SprState (boomerang despawns)
       STZ.w SprState, X             ; Clear sprite state (despawn?)
     +
 
@@ -459,7 +459,7 @@ Sprite_Boomerang_Draw:
 
 *   **Dual Role (Goriya and Boomerang):** The `Sprite_Goriya_Long` routine uses `SprSubtype, X` to determine if the current sprite instance is the main Goriya or a boomerang it has thrown. This allows a single sprite ID to manage two distinct entities.
 *   **Boomerang Attack:** Goriya actively throws a boomerang (`Goriya_BoomerangAttack`) at Link, which then becomes an independent sprite with its own drawing and movement logic (`BoomerangAttack` state in `Sprite_Goriya_Main` and `Sprite_Boomerang_Draw`).
-*   **Dynamic Health:** Goriya's health is set to a fixed value of `08` (one heart) during initialization.
+*   **Fixed Health:** Goriya's health is set to a fixed value of `08` (one heart) during initialization.
 *   **State Management:** Goriya uses `SprAction, X` and `JumpTableLocal` to manage its walking states (`Goriya_WalkingUp`, `Goriya_WalkingDown`, `Goriya_WalkingLeft`, `Goriya_WalkingRight`) and its `BoomerangAttack` state.
 *   **Movement Patterns:** Goriya moves in random directions, with `Goriya_HandleTileCollision` triggering a new random direction upon hitting a tile. It also has a `Goriya_Wait` state.
 *   **Custom OAM Drawing:** Both the Goriya and its boomerang utilize custom OAM drawing routines (`Sprite_Goriya_Draw` and `Sprite_Boomerang_Draw`) for precise control over their multi-tile graphics and animation. The use of `REP`/`SEP` for 16-bit coordinate calculations is present in both.

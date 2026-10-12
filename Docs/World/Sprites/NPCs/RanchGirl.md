@@ -4,19 +4,21 @@
 The `ranch_girl.asm` file defines the behavior for the "Ranch Girl" NPC, who is involved in a "Chicken Easter Egg" quest. This character grants Link the Ocarina. Her behavior is implemented as a vanilla override, modifying the existing `ChickenLady` routine.
 
 ## Vanilla Overrides
-This file directly modifies the vanilla `ChickenLady` routine at `org $01AFECF` to inject custom logic for the Ranch Girl's interactions.
+This file directly modifies the vanilla `ChickenLady` routine at `org $1AFECF` to inject custom logic for the Ranch Girl's interactions.
 
 ## `RanchGirl_Message`
 This routine handles the dialogue displayed by the Ranch Girl. It checks Link's Ocarina status (`$7EF34C`).
 
 *   If Link already possesses the Ocarina, it displays message `$010E`.
-*   Otherwise, it displays message `$017D` and sets `SprMiscD, X` to `$01`, indicating the start of the Ocarina quest.
+*   Otherwise, it displays message `$01BE` (replaces vanilla `$017D`) and sets `SprMiscD, X` to `$01`, indicating the start of the Ocarina quest.
+*   `RanchGirl_Message` runs only when `SprTimerA == 1` (gate in `ChickenLady`, below). Before the message it sets `SideQuestProg2` bit `$01` (`ranch_girl.asm:58`).
+*   The Ocarina receipt (`RanchGirl_TeachSong`, `ranch_girl.asm:80-84`) also sets `MapIcon` to `!MapIcon_TailPond` (`ranch_girl.asm:83`).
 
 ```asm
 RanchGirl_Message:
 {
   LDA $7EF34C : CMP.b #$01 : BCS .has_ocarina
-    %ShowUnconditionalMessage($017D)
+    %ShowUnconditionalMessage($01BE)
     LDA #$01 : STA.w SprMiscD, X
     RTL
   .has_ocarina
@@ -60,7 +62,7 @@ RanchGirl_TeachSong:
 This is the main entry point for the Ranch Girl's custom behavior, overriding the vanilla `ChickenLady` routine. It sets `SprMiscC, X` to `$01`, calls vanilla drawing and activity check routines, and then executes `RanchGirl_Message` and `RanchGirl_TeachSong`.
 
 ```asm
-org $01AFECF
+org $1AFECF
 ChickenLady:
 {
   JSR .main

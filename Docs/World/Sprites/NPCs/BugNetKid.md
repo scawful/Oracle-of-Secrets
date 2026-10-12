@@ -11,7 +11,7 @@ This sprite extensively uses `pushpc`/`pullpc` blocks and `org` directives to in
 *   **`org $06B9C6`**: Overrides a routine responsible for granting the item (`BugNetKid_GrantBugNet`).
 
 ## `SickKid_CheckForSongOfHealing`
-This routine is a core component of the Bug Net Kid's logic. It checks if the "Song of Healing" has been played by examining a `SongFlag` (likely a WRAM address like `$7E001F`). If the song has been played, it updates internal sprite state variables (`$0D80, X`, `$02E4`) and clears the `SongFlag`.
+This routine is a core component of the Bug Net Kid's logic. It checks if the "Song of Healing" has been played by examining a `SongFlag` (direct-page `$FE`, Core/symbols.asm:49; `1` = Song of Healing). If the song has been played, it updates internal sprite state variables (`$0D80, X`, `$02E4`) and clears the `SongFlag`.
 
 ```asm
 SickKid_CheckForSongOfHealing:

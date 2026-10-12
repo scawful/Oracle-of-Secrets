@@ -181,7 +181,7 @@ This routine is the central logic for the custom Fortune Teller. It dynamically 
     *   `$7EF354` (Glove)
     *   `$7EF358` (Wolf Mask)
     *   `$7EF3C9` (Smithy Rescued flag)
-    *   `$7EF352` (Cape)
+    *   `$7EF352` (StoneMask; code label .have_cape is a vanilla leftover)
     *   `$7EF354` (Titans Mitt)
     *   `$7EF359` (Sword level)
 *   **Message Display**: Based on these checks, it calls `FortuneTeller_PrepareNextMessage` with the appropriate message index and then `FortuneTeller_DisplayMessage` to show the message to the player.

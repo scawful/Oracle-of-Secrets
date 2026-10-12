@@ -32,7 +32,7 @@ The boss's behavior is divided into several phases:
 *   Sets the boss theme music.
 
 ## Death and Respawn Logic (`Sprite_Kydreeok_CheckIfDead`, `MaybeRespawnHead`):
-*   **`Sprite_Kydreeok_CheckIfDead`:** This crucial routine checks the state of its child heads (`Offspring1_Id`, `Offspring2_Id`). If both heads are defeated, it triggers a "dead" phase, changes its graphics, respawns both heads, and then transitions to the `Kydreeok_Dead` state. This indicates a multi-phase boss where heads can be temporarily defeated.
+*   **`Sprite_Kydreeok_CheckIfDead`:** The first time both heads are dead (`SprMiscD` != 2) the body enters phase 2: `SprMiscD`=2, `$36`=`$0A`, `ApplyKydreeokGraphics(Y=1)`, and both heads are respawned. The second time both heads are dead it sets `SprAction`=5 (`Kydreeok_Dead`), `SprTimerA`=`$60` and music `$13`; `Kydreeok_Dead` flickers BG2 and spawns explosions until the timer ends, then clears `SprState`.
 *   **`MaybeRespawnHead`:** Randomly respawns a head if its corresponding child sprite is dead, adding a dynamic challenge to the fight.
 
 ## Head Spawning (`SpawnLeftHead`, `SpawnRightHead`):

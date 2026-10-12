@@ -79,7 +79,7 @@ This routine determines whether Link can lift the dog or engage in dialogue. It 
 ## Main Logic & State Machine (`Sprite_VillageDog_Main`)
 This routine manages the various states and behaviors of both Village Dogs and Eon Dogs.
 
-*   **`Dog_Handler`**: Plays a sitting animation, calls `HandleTossedDog`, and if Link is nearby, sets a timer and transitions to `Dog_LookLeftAtLink` or `Dog_LookRightAtLink`. It also calls `LiftOrTalk`.
+*   **`Dog_Handler`**: Plays a sitting animation, calls `HandleTossedDog`, and whenever Link is not lifting or carrying anything (`CARRY` `$0309` bits 0-1 clear), it sets `SprTimerD` to `$20` and transitions to `Dog_LookLeftAtLink` (action 1) or `Dog_LookRightAtLink` (action 2), chosen by `Sprite_IsToRightOfPlayer`. It also calls `LiftOrTalk`.
 *   **`Dog_LookLeftAtLink` / `Dog_LookRightAtLink`**: Plays an animation of the dog looking towards Link. After a timer, it transitions to `Dog_MoveLeftTowardsLink` or `Dog_MoveRightTowardsLink`.
 *   **`Dog_MoveLeftTowardsLink` / `Dog_MoveRightTowardsLink`**: Plays a walking animation, calls `HandleTossedDog`, and if Link is nearby, transitions to `Dog_WagTailLeft` or `Dog_WagTailRight`. It handles tile collisions, applies speed towards Link, and calls `LiftOrTalk`. After a timer, it returns to `Dog_Handler`.
 *   **`Dog_WagTailLeft` / `Dog_WagTailRight`**: Plays a wagging tail animation, calls `LiftOrTalk` and `HandleTossedDog`. After a timer, it returns to `Dog_Handler`.

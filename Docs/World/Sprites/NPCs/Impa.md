@@ -15,7 +15,7 @@ The file defines a WRAM address `SPAWNPT = $7EF3C8` for a spawn point flag, alon
 *   `0x06` - Old man home
 
 ## `Impa_SetSpawnPointFlag`
-This routine is responsible for setting a specific spawn point flag. It stores a value into `$7EF372` (likely the actual spawn point ID) and then sets bit `$04` in `$7EF3D6` (a custom progression flag), indicating that a particular event has occurred.
+This routine keeps the vanilla Sanctuary heal and then sets an OOSPROG bit. It stores A into `$7EF372` (HeartRefill; the vanilla Sanctuary code loads A = `$A0` before the `STA` that the hook replaces, per code, runtime unverified), then sets bit `$04` in `$7EF3D6` (OOSPROG bit 2, intro progress). The spawn point is intentionally not set here: `Zelda_BecomeFollower` at `$05ED43` forces `$7EF3C8` (SPAWNPT) to 0 (`impa.asm:80-82`). Do not change `impa.asm:61` to write `$7EF3C8`; that would drop the heal.
 
 ```asm
 Impa_SetSpawnPointFlag:
@@ -38,6 +38,6 @@ This file extensively uses `pushpc`/`pullpc` blocks and `org` directives to inje
 
 ## Design Patterns
 *   **Vanilla Override**: This file is a prime example of how to extensively override vanilla code to integrate custom NPC behaviors and progression systems into an existing game.
-*   **Quest Progression Tracking**: Utilizes custom progression flags (`$7EF3D6`) and spawn point flags (`$7EF372`, `$7EF3C8`) to meticulously track key events and the player's progress through the game's narrative.
+*   **Quest Progression Tracking**: Sets OOSPROG bit `$04` (`$7EF3D6`) and writes HeartRefill (`$7EF372`, the vanilla Sanctuary heal). `Zelda_BecomeFollower` clears the spawn point `$7EF3C8`; this routine does not set it.
 *   **Game State Manipulation**: Directly modifies WRAM addresses to control various aspects of the game, such as visual overlays and audio, providing fine-grained control over the player's experience.
 *   **Modular Code Injection**: The use of `org` directives allows for precise injection of custom routines into specific points of the vanilla codebase, enabling targeted modifications without disrupting unrelated functionality.

@@ -13,7 +13,7 @@ The Keese sprite (`!SPRID = $11`) is a versatile enemy that encompasses multiple
 *   **`!NbrTiles`**: `08`
 *   **`!Harmless`**: `00`
 *   **`!HVelocity`**: `00`
-*   **`!Health`**: `00` (Dynamically set in `_Prep` based on subtype)
+*   **`!Health`**: `00` (header value; `_Prep` only overrides it for subtype 2 Vampire Bat = `$20`, so Keese/Ice/Fire Keese die in one hit)
 *   **`!Damage`**: `00` (Damage is handled by projectiles or specific attack logic)
 *   **`!DeathAnimation`**: `00`
 *   **`!ImperviousAll`**: `00`
@@ -28,7 +28,7 @@ The Keese sprite (`!SPRID = $11`) is a versatile enemy that encompasses multiple
 *   **`!DeflectArrow`**: `00`
 *   **`!WaterSprite`**: `00`
 *   **`!Blockable`**: `00`
-*   **`!Prize`**: `00` (Dynamically set in `_Prep` based on subtype)
+*   **`!Prize`**: `00` (header value; `_Prep` sets `SprPrize` = 3 for non-bat subtypes only)
 *   **`!Sound`**: `00`
 *   **`!Interaction`**: `00`
 *   **`!Statue`**: `00`
@@ -88,6 +88,7 @@ The Keese's behavior is managed by a state machine with `Keese_Idle` and `Keese_
 
 *   **`Keese_Idle`**: The sprite remains stationary until Link is within a certain distance, then transitions to `Keese_FlyAround`.
 *   **`Keese_FlyAround`**: The Keese flies around, plays an animation, checks for collisions with Link and tiles, and can initiate an attack. It uses `GetRandomInt` for varied movement and `Sprite_ProjectSpeedTowardsPlayer` to move towards Link.
+*   **Damage and prize (per code, runtime unverified)**: On any damaging hit from Link it calls `ForcePrizeDrop_long` (`$06FA54`), which skips the prize-rarity roll and converts the sprite into its prize pickup (prize pack 3 is set in `_Prep` for non-bat subtypes). For non-bat subtypes the header health is `00`, so the first hit kills it and the drop is guaranteed.
 
 ```asm
 Sprite_Keese_Main:
@@ -211,7 +212,7 @@ Sprite_Keese_Draw:
   PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
   INY
 
-  ; If SprMiscA != 0, then use 4th sheet
+  ; If SprMiscB != 0, then use 4th sheet
   LDA.b $09 : BEQ +
     LDA .chr_2, X : STA ($90), Y
     JMP ++
@@ -286,7 +287,7 @@ Sprite_Keese_Draw:
 
 ## Design Patterns
 *   **Subtype-based Behavior**: The sprite uses `SprSubtype` to implement distinct behaviors and appearances for Ice Keese, Fire Keese, and Vampire Bat, all under a single `!SPRID`.
-*   **Dynamic Property Initialization**: Health and prize values are set dynamically during the `_Prep` routine based on the sprite's subtype.
+*   **Property Initialization**: `_Prep` sets only the Vampire Bat health (`$20`) and, for non-bat subtypes, `SprNbrOAM` = 3 and `SprPrize` = 3.
 *   **Conditional Drawing and Palette**: The drawing routine adjusts the sprite's palette and potentially its graphics based on its subtype, allowing for visual differentiation.
 *   **Randomized Movement**: Utilizes `GetRandomInt` to introduce variability in movement patterns, making the enemy less predictable.
 *   **Projectile Attacks**: Implements different projectile attacks based on subtype, showcasing varied offensive capabilities.

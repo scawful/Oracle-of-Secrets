@@ -323,8 +323,8 @@ Sprite_WaterOctorok_Attack:
        INC.w SprMiscG, X
        %SetTimerA($20)
        JSL Sprite_DirectionToFacePlayer
-       ; LDA.w SprMiscC, X : AND.b #$03 : TAY
-       ; LDA.w Sprite_Octorok_Move_direction, Y : STA.w SprAction, X
+       ; LDA.w SprMiscC, X : AND.b #$03 : TAY  ; (commented out in source)
+       ; LDA.w Sprite_Octorok_Move_direction, Y : STA.w SprAction, X  ; (commented out in source)
      +
      RTS
    }
@@ -465,7 +465,7 @@ Sprite_Octorok_Draw:
 
   LDA.w SprFrame, X : TAY ;Animation Frame
   LDA .start_index, Y : STA $06
-  LDA.w SprFlash : STA $08
+  LDA.w SprFlash, X : STA $08
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1

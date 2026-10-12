@@ -86,7 +86,7 @@ This routine defines the behavior for a generic Sea Zora NPC.
 *   **Head Tracking**: Calls `Zora_TrackHeadToPlayer` to make the Zora face Link.
 *   **Player Collision**: Prevents Link from passing through the Zora (`JSL Sprite_PlayerCantPassThrough`).
 *   **Dialogue**: Calls `Zora_HandleDialogue` for context-sensitive dialogue interactions.
-*   **Animation**: Uses a jump table for animation states: `Zora_Forward`, `Zora_Right`, `Zora_Left`, each playing a specific animation.
+*   **Animation**: Uses a jump table for animation states: `Zora_Forward` (action 0), `Zora_Right` (action 1), `Zora_Left` (action 2). `Zora_Left` is never selected (see `Zora_TrackHeadToPlayer`); it plays the same animation as `Zora_Right`.
 
 ```asm
 Sprite_Zora_Main:
@@ -124,10 +124,10 @@ Sprite_Zora_Main:
 ```
 
 ## `Zora_TrackHeadToPlayer`
-This routine makes the Zora face Link by setting `SprAction, X` to `0` (forward) or `1` (right/left) based on Link's horizontal position relative to the Zora.
+This routine makes the Zora face Link by setting `SprAction, X` to `0` (forward) or `1` (right/left) based on Link's horizontal position relative to the Zora. It writes only actions 0 and 1 (`zora.asm:146`, `:149`), so `Zora_Left` is unreachable.
 
 ## `Zora_HandleDialogue`
-This routine handles context-sensitive dialogue for the generic Sea Zora. It checks the `Crystals` SRAM flag (specifically bit `$20`) to determine if a certain crystal has been collected. Based on this and the Zora's `SprAction, X`, it displays different solicited messages (`$01A6`, `$01A5`, or `$01A4`).
+This routine handles context-sensitive dialogue for the generic Sea Zora. It checks the `Crystals` SRAM flag (specifically bit `$20`) to determine if a certain crystal has been collected. Based on this and the Zora's `SprAction, X`, it displays different solicited messages (`$01A6`, `$01A5`, or `$01A4`). Per code (`zora.asm:154-166`): `$01A6` if `Crystals` bit `$20` is set; otherwise `$01A4` when `SprAction, X` is 0 and `$01A5` when it is nonzero. Because `SprAction` follows the side Link stands on, the message depends on Link's side. This may be an accidental selection; flagged for scawful, not changed.
 
 ## Drawing (`Sprite_Zora_Draw`)
 This routine handles OAM allocation and animation for the generic Sea Zora. It explicitly uses `REP #$20` and `SEP #$20` for 16-bit coordinate calculations, ensuring accurate sprite rendering.
