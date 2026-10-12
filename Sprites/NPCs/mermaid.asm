@@ -160,7 +160,7 @@ Sprite_Mermaid_Main:
         RTS
       +
 
-      ; If the player has all the maps
+      ; If all 7 scrolls are translated
       JSR Librarian_CheckForAllMaps : BCC ++
         %ShowSolicitedMessage($01A3)
         RTS
@@ -308,12 +308,10 @@ Sprite_Mermaid_Main:
 
 Librarian_CheckForAllMaps:
 {
-  LDA.l DNGMAP1 : CMP.b #$FC : BNE .not_all_maps
-  LDA.l DNGMAP2 : CMP.b #$FF : BEQ .all_maps
-  .not_all_maps
+  LDA.l Scrolls : CMP.b #$7F : BEQ .all_scrolls
   CLC
   RTS
-  .all_maps
+  .all_scrolls
   SEC
   RTS
 }
