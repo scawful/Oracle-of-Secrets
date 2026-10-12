@@ -48,6 +48,14 @@ org $0E9659+$07C : db $20
 assert read2($00997C) == $0123 || read2($00997C) == $00B8, "Unexpected pit-damage table tail"
 org $00997C : dw $00B8
 
+; D6 room $97 drops into $B8 at the same x/y. Falls from the upper pit's west
+; edge (beside the first-key Debirando) land on B8's pit band or a walled
+; ledge: a damage loop or a wedge the wall cannon finishes (2026-10-11 runtime,
+; beta bc7e0778). List $97 as a damage-pit room instead: a fall costs one heart
+; and respawns Link in $97. Uses the fourth of five $0123 filler entries.
+assert read2($00997A) == $0123 || read2($00997A) == $0097, "Unexpected pit-damage table slot"
+org $00997A : dw $0097
+
 ; =========================================================
 ; JumpTableLocal Guard (Black-Screen Prevention)
 ;
