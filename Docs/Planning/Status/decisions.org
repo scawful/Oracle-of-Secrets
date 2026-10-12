@@ -1118,10 +1118,10 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Answer: "we gotta just enable shit by default, flags are for disabling shit
   when it's broken to debug and isolate not this" (scawful, 2026-09-29).
 
-* OPEN How does a beat-19 player fetch Rock Meat and return to the desert Goron?
+* DECIDED Rock Meat route: LW $02 pad to the Shrine of Power front door (Option B), return portal included
   :PROPERTIES:
-  :ASKED_BY: Claude RC leader (preview save file)
-  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/patches/preview_saves_2026-09-29/README.md
+  :ASKED_BY: Claude RC leader (preview save file); Option B from the Lupo analysis
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/lupo_mountain_2026-10-12/README.md
   :END:
   The Goron (Garo Desert $36) needs five Rock Meat from Lupo Mountain
   (Abyss $4B). The only mid-game crossing found is the one-way Kalyxo $3D
@@ -1130,7 +1130,21 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Testing only: qualify the mines from a save with the mines already open
   (scawful: "for testing u can start with it open"). This does not decide
   what the shipped file 2 contains.
-  Answer:
+  Option B: the no-item way in is the LW $02 pad to $42, then a new opening
+  in the 32 px wall on the $4A/$4B seam (B1) up to S2 door 0x09 ($84).
+  Glove rocks seal the Yesterwind $5B gap (B2) and the $52 ladder foot (B3),
+  so Yesterwind becomes a shortcut after the shrine. The DECIDED return
+  portal at the $42 pad arrival brings Link back to Kalyxo. Keep the beat-20
+  "Rock Meat trust" framing for the Goron text. Map edits follow the
+  post-RC enforcement schedule; text needs separate approval.
+  Open follow-up (not decided): B1 plus the Hall of Secrets -> $02 pad route
+  could open chunk 3 at beat 8, while the plan places it at beat 19. Claude
+  tests the gate and the sprite obstructions (Eon Scrub $14 in the $5B gap,
+  Gorons and Armos on the route) on scratch copies before any edit.
+  Answer: "yes B" (scawful, 2026-10-12). Follow-up: "For Lupo, Option B is
+  my recommendation, with the return portal included. ... Keep the beat-20
+  trust framing and have Claude test the gate and sprite obstructions on
+  scratch copies." (scawful's message, 2026-10-12).
 
 * DECIDED Cave corner join beside the post is the intended correction
   :PROPERTIES:
