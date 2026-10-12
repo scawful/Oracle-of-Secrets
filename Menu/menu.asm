@@ -137,6 +137,7 @@ endif
   CMP.b #$12 : BEQ .bottle
   CMP.b #$18 : BEQ .bottle
   CMP.b #$15 : BEQ .wolf_shovel
+  CMP.b #$07 : BEQ .wolf_shovel ; Hammer cell: clear swing flags $3A bit 6 / $50 bit 0
   BRA +
   .bottle
     LDA $3A : AND.b #$80 : STA $3A
