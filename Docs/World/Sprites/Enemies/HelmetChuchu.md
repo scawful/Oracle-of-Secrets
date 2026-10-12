@@ -234,7 +234,6 @@ Sprite_Chuchu_Move:
     JSL Sprite_ProjectSpeedTowardsEntityLong
 
     LDA.w SprTimerB, X : BNE .not_done
-    JSR HelmetChuchu_SpawnHookshotDrag ; Spawn detached helmet/mask
       STZ.w SprMiscB, X ; Switch back to BounceTowardPlayer
     .not_done
 
@@ -242,6 +241,8 @@ Sprite_Chuchu_Move:
   }
 }
 ```
+
+`RecoilFromPlayer` only moves the Chuchu away from Link; when `SprTimerB` runs out it returns to `BounceTowardPlayer`. It does not spawn the detached helmet/mask: recoil starts after any damage from Link or contact damage to Link, so a spawn here would duplicate the helmet/mask. The detached helmet/mask is spawned once, from `GreenChuchu_NoHelmet` / `RedChuchu_NoMask`, gated by `SprMiscD`.
 
 ### 2.5. `HelmetChuchu_SpawnHookshotDrag`
 
@@ -429,5 +430,5 @@ Sprite_HelmetChuchu_Draw:
 *   **Movement Patterns:** The Chuchu moves by bouncing towards (`BounceTowardPlayer`) and recoiling from (`RecoilFromPlayer`) the player, with randomness introduced in speed and height. This creates a distinct and challenging movement pattern.
 *   **Custom OAM Drawing:** The `Sprite_HelmetChuchu_Draw` routine is a complex example of custom OAM manipulation. It dynamically selects tiles and properties based on the Chuchu's current state, allowing for seamless transitions between helmeted, masked, and vulnerable forms.
 *   **`SprMiscB` Usage:** This variable controls the Chuchu's movement sub-states (`BounceTowardPlayer` and `RecoilFromPlayer`). It also plays a role in the detached helmet/mask sprites.
-*   **`SprMiscD` Usage:** This variable acts as a flag to ensure that the `HelmetChuchu_SpawnHookshotDrag` routine is called only once when the helmet/mask is detached.
+*   **`SprMiscD` Usage:** This variable acts as a flag to ensure that the `HelmetChuchu_SpawnHookshotDrag` routine is called only once when the helmet/mask is detached (from `GreenChuchu_NoHelmet` / `RedChuchu_NoMask`). `RecoilFromPlayer` does not call it.
 *   **`SprTimerB` Usage:** Used to control the duration of the recoil state.

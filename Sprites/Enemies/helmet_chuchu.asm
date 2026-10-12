@@ -272,7 +272,6 @@ Sprite_Chuchu_Move:
     JSL Sprite_ProjectSpeedTowardsEntityLong
 
     LDA.w SprTimerB, X : BNE .not_done
-    JSR HelmetChuchu_SpawnHookshotDrag
       STZ.w SprMiscB, X
     .not_done
 
