@@ -173,6 +173,13 @@
 ; pick a real unfound ring and Vasu's appraisal clears the found ring.
 ; Needs MASK_Y_TRANSFORM and RING_SRAM_RELOCATE.
 !ENABLE_TRUTHFUL_CONTROLS           = 1
+; Lupo pad gate (scawful 2026-10-12: "Sure pad the gate, so long as you can
+; access the portal to yesterwind/swamp area for shrine of wisdom"): the
+; Hall of Secrets courtyard warp pad (LW $02 -> Abyss $42, Lupo Mountain)
+; refuses with an error beep until the D5 crystal (Crystals bit $04) is set.
+; Every other pad, including LW $25 -> $65 (Yesterwind), is unchanged
+; (Overworld/lupo_pad_gate.asm).
+!ENABLE_LUPO_PAD_GATE               = 1
 
 ; --- Section-specific Log Flags ---
 ; Set these to 1 to see detailed logs for that section, or 0 to hide them.
