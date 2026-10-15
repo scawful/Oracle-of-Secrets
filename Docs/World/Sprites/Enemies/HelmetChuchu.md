@@ -242,7 +242,7 @@ Sprite_Chuchu_Move:
 }
 ```
 
-`RecoilFromPlayer` only moves the Chuchu away from Link; when `SprTimerB` runs out it returns to `BounceTowardPlayer`. It does not spawn the detached helmet/mask: recoil starts after any damage from Link or contact damage to Link, so a spawn here would duplicate the helmet/mask. The detached helmet/mask is spawned once, from `GreenChuchu_NoHelmet` / `RedChuchu_NoMask`, gated by `SprMiscD`.
+`RecoilFromPlayer` moves the Chuchu away from Link and is meant to return to `BounceTowardPlayer` when `SprTimerB` reaches 0. Known bug (runtime, 2026-10-12): every action also runs `%PlayAnimation(..., 16)`, which uses the same `SprTimerB` and reloads it to `$10` when it reaches 0, so `RecoilFromPlayer` never sees 0. After its first recoil the Chuchu stays in `RecoilFromPlayer` and never hops toward Link again. The recoil path does not spawn the detached helmet/mask; it is spawned once, from `GreenChuchu_NoHelmet` / `RedChuchu_NoMask`, gated by `SprMiscD`.
 
 ### 2.5. `HelmetChuchu_SpawnHookshotDrag`
 
@@ -431,4 +431,4 @@ Sprite_HelmetChuchu_Draw:
 *   **Custom OAM Drawing:** The `Sprite_HelmetChuchu_Draw` routine is a complex example of custom OAM manipulation. It dynamically selects tiles and properties based on the Chuchu's current state, allowing for seamless transitions between helmeted, masked, and vulnerable forms.
 *   **`SprMiscB` Usage:** This variable controls the Chuchu's movement sub-states (`BounceTowardPlayer` and `RecoilFromPlayer`). It also plays a role in the detached helmet/mask sprites.
 *   **`SprMiscD` Usage:** This variable acts as a flag to ensure that the `HelmetChuchu_SpawnHookshotDrag` routine is called only once when the helmet/mask is detached (from `GreenChuchu_NoHelmet` / `RedChuchu_NoMask`). `RecoilFromPlayer` does not call it.
-*   **`SprTimerB` Usage:** Used to control the duration of the recoil state.
+*   **`SprTimerB` Usage:** Set to `$20` to time the recoil state, but `%PlayAnimation` shares it and reloads it to `$10`, so the recoil never ends (known bug, see section 2.4).
