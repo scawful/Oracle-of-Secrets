@@ -310,7 +310,8 @@ RandomlyAttack:
 {
   JSL Sprite_DamageFlash_Long
 
-  LDA.w SprTimerB, X : BNE .cooldown
+  ; Attack cooldown uses SprTimerE: %PlayAnimation owns SprTimerB, UpdateTracking owns SprTimerC.
+  LDA.w SprTimerE, X : BNE .cooldown
     JSL GetRandomInt : AND #$1F : BNE .no_attack
       LDY.w Kydreeok_Id
       LDA.w SprMiscD, Y : STA $0F
@@ -319,15 +320,15 @@ RandomlyAttack:
 
       LDA.b $0F : CMP.b #$02 : BCC .targeted
       JSL GetRandomInt : AND #$01 : BNE .targeted
-        LDA.b #$40 : STA.w SprTimerB, X
+        LDA.b #$40 : STA.w SprTimerE, X
         JSR KydreeokHead_SpawnFireballSpread
         RTS
     .targeted
-      LDA.b #$30 : STA.w SprTimerB, X
+      LDA.b #$30 : STA.w SprTimerE, X
       JSR KydreeokHead_SpawnFireballTargeted
       RTS
     .breath
-      LDA.b #$50 : STA.w SprTimerB, X
+      LDA.b #$50 : STA.w SprTimerE, X
       JSR KydreeokHead_SpawnBreath
       RTS
   .no_attack
