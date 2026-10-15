@@ -147,6 +147,9 @@ pullpc
 if !ENABLE_PART0_STORM == 1
   incsrc "Overworld/storm.asm"
 endif
+if !ENABLE_LUPO_PAD_GATE == 1
+  incsrc "Overworld/lupo_pad_gate.asm"
+endif
 
 LoadOverworldPitAreas:
 {
