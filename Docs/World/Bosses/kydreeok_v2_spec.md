@@ -25,6 +25,8 @@ We need shared RAM for the body to communicate anchor positions to the heads, an
 | `SprMiscC` (Head) | **Parent Slot Index** (Index 0-15 of the Body sprite) | `Head` |
 | `SprMiscD` (Head) | **Lunge State** (0=Idle, 1=Prep, 2=Dash, 3=Retract) | `Head` |
 
+**Ownership note:** `$19EA-$19F5` are used by Kydreeok v1 today; v2 may reuse them only if v2 fully replaces `kydreeok.asm`/`kydreeok_head.asm` (never both); otherwise allocate elsewhere. v1 head uses `SprMiscC` as an X coordinate temp, so the parent-index use in section 1.2 is a v2 design, not v1 behavior.
+
 ### 1.3. Parent Tracking Pattern (From GuardianBoss/Poltergeist)
 -   **Spawning:** The Body (Parent) spawns the Heads (Children).
 -   **Linking:** During spawn, the Body stores its own Sprite Index (`X`) into the Child's `SprMiscC` variable.

@@ -181,7 +181,7 @@ The following WRAM addresses are available for sprite-specific data (all indexed
 *   `SprHealth` ($0E50) - Current health
 *   `SprNbrOAM` ($0E40) - Number of OAM slots + flags
 *   `SprFloor` ($0F20) - Layer (0=top, 1=bottom)
-*   `SprHeight` ($0F80) - Z-position for altitude/jumping
+*   `SprHeight` ($0F70) - Z-position for altitude/jumping
 
 ### Common Initialization Patterns
 
@@ -502,8 +502,6 @@ Your sprite is now ready to be placed in the game world using your level editor!
 *   Optimize drawing routine (avoid redundant calculations)
 *   Use simpler collision detection where possible
 *   Consider using `!Persist = 00` for non-critical sprites
-
-## 10. Advanced Sprite Design Patterns
 
 ## 10. Advanced Sprite Design Patterns
 

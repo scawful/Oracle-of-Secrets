@@ -1,6 +1,6 @@
 # Houses
 
-Oracle of Secrets contains 17+ enterable houses organized by region.
+Oracle of Secrets contains 17 enterable houses organized by region.
 
 ---
 

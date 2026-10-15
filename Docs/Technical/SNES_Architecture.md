@@ -65,7 +65,7 @@ MyFunction:
     RTL
 ```
 
-See `Docs/Debugging/Guides/Troubleshooting.md` Section 3 for comprehensive processor state troubleshooting.
+See AFS archive/repo-slim-2026-10-06/repo/Docs/Debugging/Guides/Troubleshooting.md Section 3 for comprehensive processor state troubleshooting.
 
 ## 4. Memory Mapping
 

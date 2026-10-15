@@ -1,6 +1,6 @@
 # Caves & Grottos
 
-Oracle of Secrets contains 25+ caves organized by region. Most are passage caves connecting overworld areas, while some contain treasures, upgrades, or special encounters.
+Oracle of Secrets contains 33 caves organized by region. Most are passage caves connecting overworld areas, while some contain treasures, upgrades, or special encounters.
 
 ---
 

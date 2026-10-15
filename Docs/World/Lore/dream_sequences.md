@@ -177,7 +177,7 @@ the Ocarina.
 Canonical replacement:
 
 - The required early quest explains that Twinrova transformed a witness and
-  gives Link a real reason to investigate Loom Ranch.
+  gives Link a real reason to investigate Toto Ranch.
 - Magic Powder reveals the Ranch Girl temporarily so she can give Link the
   Ocarina and direct him to the Mask Salesman.
 - Defeating Twinrova in D5 breaks the curse permanently and automatically.

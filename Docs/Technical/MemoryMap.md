@@ -10,7 +10,7 @@
 | Document | Needs audit | UNKNOWN | Added verification framework |
 
 
-This document provides a detailed map of the WRAM and SRAM memory regions, serv| `$7EF358` | `WolfMask`        | Flag indicating if the player has obtained the Wolf Mask.               |
+This document provides a detailed map of the WRAM and SRAM memory regions, serving as a central reference for understanding the game's state.
 
 ### Repurposed Vanilla SRAM Blocks
 
@@ -35,7 +35,7 @@ The following blocks were marked "unused" in vanilla ALTTP but are now utilized 
 | `$7EF39A` | `PrevScroll`        | Tracks the previous scroll for re-reading old hints.                     | ✓        |
 | `$7EF39B` | `MagicBeanProg`     | Multi-day growth cycle tracking for magic bean side-quest (`.dts fwpb`). | ✓        |
 | `$7EF39C` | `JournalState`      | Current state of the player's journal.                                   | ✓        |
-| `$7EF39D` | `SRAM_StormsActive` | Flag indicating if the Song of Storms effect is active.                  | ✓        |
+| `$7EF39D` | `Reserved` | Unused (Core/sram.asm:466). | |
 | `$7EF39E` | `StoryState`        | State machine for Link's House intro sequence (0-2).                     | ✓        |
 
 #### **Block $7EF403-$7EF4FD** - Partially Repurposed
@@ -62,8 +62,6 @@ The following addresses appear with both active label definitions and `UNUSED_` 
 - `$7EF38A` - Both `FishingRod` and `UNUSED_7EF38A` (✓ **In Use**)
 
 These contradictions appear to be legacy comments from the vanilla ALTTP disassembly that were not removed when OOS repurposed these addresses.
-
- as a central reference for understanding the game's state.
 
 ## 1. WRAM (Work RAM) - `$7E0000`
 
@@ -119,6 +117,7 @@ This section details the layout of the game's volatile memory.
 | `$7E0752` | `DBG_WARP_STATUS`      | Debug warp status (0=idle, 0x5A=armed, 2=in_progress, 3=complete).        |
 | `$7E0753` | `DBG_WARP_ERROR`       | Debug warp error code.                                                   |
 | `$7E0754` | `DBG_WARP_GFX_PENDING` | Debug warp pending GFX reload flag.                                      |
+| `$7EE00E` | `(no symbol)` | Song of Storms rain flag set by the Ocarina (Items/ocarina.asm:362). WRAM only, not saved. |
 
 ---
 
@@ -153,6 +152,7 @@ This section details the layout of the save file memory.
 |----------|-------------------|--------------------------------------------------------------------------|
 | `$7EF3D6` | `OOSPROG`         | A primary bitfield for major quest milestones unique to Oracle of Secrets. |
 | `$7EF3C6` | `OOSPROG2`        | A secondary bitfield for less critical progression flags.                |
+| `$7EF3C6` bit 7 (`$80`) | `Story2_Part0Storm` | Part 0 storm active (Core/sram.asm:107). |
 | `$7EF3D4` | `MakuTreeQuest`   | A flag indicating if the Maku Tree has met Link.                         |
 | `$7EF3C7` | `MapIcon`         | Controls the position of the guiding 'X' on the world map.               |
 | `$7EF351` | `CustomRods`      | A flag to differentiate between the Fishing Rod (1) and Portal Rod (2).    |
@@ -162,7 +162,6 @@ This section details the layout of the save file memory.
 | `$7EF398` | `Scrolls`         | A bitfield tracking which of the lore scrolls have been found.           |
 | `$7EF39B` | `MagicBeanProg`   | Tracks the multi-day growth cycle of the magic bean side-quest.          |
 | `$7EF39C` | `JournalState`    | The current state of the player's journal.                              |
-| `$7EF39D` | `SRAM_StormsActive`| A flag indicating if the Song of Storms effect is active.                |
 | `$7EF39E` | `StoryState`      | State machine for Link's House intro sequence (0=Telepathy, 1=WakeUp, 2=End). |
 | `$7EF410` | `Dreams`          | A bitfield tracking the collection of the three "Dreams" (Courage, Power, Wisdom). |
 | `$7EF411` | `WaterGateStates` | Bitfield for Zora Temple water gate persistence (bit0=room 0x27, bit1=room 0x25). |

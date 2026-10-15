@@ -14,6 +14,9 @@ noise, not from today's flags).
 ## P0 — Bugs live in this exact build
 
 **P0-1. Magic ring inventory aliases unrelated collectible counters.**
+
+**Status 2026-10-12:** RESOLVED on master: `!ENABLE_RING_SRAM_RELOCATE = 1` (`Config/feature_flags.asm:51`).
+
 CONFIRMED (read in code). `ring_sram_relocate` is off in this build. With the
 flag off, `Items/magic_rings.asm:35-41` defines `RingSlot2 = $7EF38D` — which
 `Core/sram.asm:432` documents as `Pineapples` — and `RingSlotsNum = $7EF38F`
@@ -38,6 +41,9 @@ trade/side quests: flip `ENABLE_RING_SRAM_RELOCATE`, or gate
 alias ring IDs.**
 
 **P0-2. `NewOverworld_SetCameraBounds` has no M-width guard; analyzer found a live 8-bit-A caller.**
+
+**Status 2026-10-12:** NOT A BUG per static read of the vanilla callers (usdasm `bank_02.asm:11954`, `17531`); M/X state at `11954` not fully traced. Runtime unverified.
+
 CONFIRMED contract gap in code; call-site reachability not independently
 traced live. `Overworld/ZSCustomOverworld.asm:5001-5072`:
 `Overworld_SetCameraBounds_Interupt` (`$02:C0C3`, hook-annotated
@@ -58,6 +64,9 @@ work (P1-2). **Fix: add `REP #$20`/`SEP #$20` inside
 ## P1 — Risk
 
 **P1-1. `hooks.json` in this test-build folder does not match the ROM it ships with.**
+
+**Status 2026-10-12:** PARTLY RESOLVED: the generator walks the reachable incsrc graph (`Scripts/Generate/asm_source.py:332`) in sorted order; same-address collisions are still silent.
+
 CONFIRMED. `hooks.json` reports `$06:8365` as `Util/item_cheat.asm:30`'s
 `JSL $3CA62A` (`skip_abi: true`). The actual ROM at `$06:8365` (PC
 `0x030365`) is `22 00 F0 3A` = `JSL $3AF000` = `Oracle_P2_Tick` per
@@ -85,6 +94,9 @@ directory-flag filter, and make same-address collisions a hard error unless
 one side is provably dead code.**
 
 **P1-2. Zero-slack code block has no build-time size guard.**
+
+**Status 2026-10-12:** RESOLVED: assert at `Overworld/ZSCustomOverworld.asm:2437`.
+
 CONFIRMED. `Overworld/ZSCustomOverworld.asm:2258-2280`
 (`Overworld_ReloadSubscreenOverlay_Interupt.noSubscreenOverlay`, the
 `part0_storm`/pyramid-fix code) carries its own comment: "this block ends
@@ -97,6 +109,9 @@ storm/overworld. **Fix: add `assert pc() <= $02B0D2` after the `RTS` at
 line 2280.**
 
 **P1-3. Two independent "in a cutscene" signals for pad-2, not unified.**
+
+**Status 2026-10-12:** NOT A BUG today (module gates); setting InCutScene would also clamp P1 input.
+
 CONFIRMED. `Core/patches.asm:102` (`InCutScene = $7EF303`) and
 `Sprites/Players/player2.asm:136` (`P2_ReadPad`) both gate on `InCutScene`,
 but the only writer of that flag is `Sprites/NPCs/farore.asm:137/192/212`.
@@ -112,6 +127,9 @@ P2 (dual-swords session). **Fix: have `Arrival_Init`/`Exp_Init` set
 `farore.asm`'s pattern, for defense in depth.**
 
 **P1-4. Analyzer ownership-check false positive on Cutscene hooks.**
+
+**Status 2026-10-12:** OPEN in the z3dk repo (outside this repo).
+
 CONFIRMED. The lone `--check-hooks` **ERROR** at `$02932D` ("target
 'Arrival_SpotlightGate' resolves outside module 'Cutscene' (owners: Core)")
 is a false alarm: `check_hook_target_ownership` in `oracle_analyzer.py:363`

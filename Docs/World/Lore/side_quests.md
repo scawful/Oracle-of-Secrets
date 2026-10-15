@@ -28,7 +28,7 @@ Gossip Stone or knowledge of ALTTP's Cucco Easter egg cannot be the only clue.
 #### Narrative Purpose
 Twinrova transformed the Ranch Girl after she witnessed them searching Kalyxo
 for the essences. Investigating her disappearance gives Link a motivated reason
-to visit Loom Ranch, introduces Twinrova before D5, and awards the Ocarina needed
+to visit Toto Ranch, introduces Twinrova before D5, and awards the Ocarina needed
 for D2 progression.
 
 #### Quest Flow
@@ -38,8 +38,8 @@ for D2 progression.
 | 1 | Mushroom Grotto (exterior) | — | Mushroom | Found near withered toadstool |
 | 2 | Witch's Hut | Mushroom | Magic Powder | Syrup brews it for you |
 | 3 | Post-D1 guidance | — | Ranch investigation | Ranch Girl vanished after Twinrova questioned her |
-| 4 | Loom Ranch | Magic Powder | Ranch Girl temporarily revealed | Strange Cucco appeared when she vanished; powder reveals transformed creatures |
-| 5 | Loom Ranch | — | Ocarina | Ranch Girl points Link to the Mask Salesman at Tail Pond |
+| 4 | Toto Ranch | Magic Powder | Ranch Girl temporarily revealed | Strange Cucco appeared when she vanished; powder reveals transformed creatures |
+| 5 | Toto Ranch | — | Ocarina | Ranch Girl points Link to the Mask Salesman at Tail Pond |
 
 #### Trigger Conditions
 - **Available after:** D1 (Mushroom Grotto cleared)

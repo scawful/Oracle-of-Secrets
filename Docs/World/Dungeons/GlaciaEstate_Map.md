@@ -3,7 +3,7 @@
 **Dungeon ID:** D5
 **Entrance IDs:** 0x34
 **OW Screen:** 0x06
-**Boss:** TBD
+**Boss:** Twinrova (Sprites/Bosses/twinrova.asm)
 **Dungeon Item:** TBD
 **Entrance Room:** 0xDB
 
@@ -38,9 +38,3 @@
 | 0xDB | 85 | - | Room 0xDB |
 | 0xDC | 113 | - | Room 0xDC |
 | 0xDD | 74 | - | Room 0xDD |
-
----
-
-## See Also
-
-- [GlaciaEstate_Tracks.md](GlaciaEstate_Tracks.md) - Detailed track layouts (if applicable)

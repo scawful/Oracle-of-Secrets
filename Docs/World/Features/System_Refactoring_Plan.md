@@ -19,6 +19,8 @@ Instead of reloading from ROM, the time system should modify the *existing* pale
 
 ## 2. Ocarina Rain State Consistency
 
+Status: implemented (`Overworld/ZSCustomOverworld.asm:1558`); runtime unverified.
+
 ### The Bug
 The `ActivateSubScreen` routine in `Overworld/ZSCustomOverworld.asm` determines if the rain overlay should be active when the menu is opened/closed. It currently checks for:
 1.  Misery Mire Event
@@ -55,6 +57,8 @@ ActivateSubScreen:
 
 ## 3. Nighttime Sprite Hook Placement
 
+Status: implemented in `LoadOverworldSprites_Interupt` (`Overworld/ZSCustomOverworld.asm:5222`) via `Oracle_CheckIfNight`; `Oracle_CheckIfNight16Bit` unused.
+
 ### The Goal
 Enable different sprite sets (peacetime vs. enemies) based on the time of day. The hooks in `time_system.asm` were commented out because `ZSCustomOverworld.asm` completely replaces the routine that contained the original hooks.
 
@@ -63,7 +67,7 @@ Inject the check into the custom loading routine in `Overworld/ZSCustomOverworld
 
 ### Target Location
 *   **File:** `Overworld/ZSCustomOverworld.asm`
-*   **Routine:** `PreOverworld_LoadProperties_Interupt`
+*   **Routine:** ~~`PreOverworld_LoadProperties_Interupt`~~ (not used; see status above)
 
 ### Implementation
 ```asm
@@ -79,7 +83,7 @@ Inject the check into the custom loading routine in `Overworld/ZSCustomOverworld
 
     ; [NEW] Inject Nighttime Check Here
     ; This modifies GameState/Spriteset before reload
-    JSL Oracle_CheckIfNight16Bit 
+    ; struck (unused): JSL Oracle_CheckIfNight16Bit
 
     JSL.l Sprite_OverworldReloadAll
     
@@ -124,8 +128,8 @@ ZoraEntrance_Script:
 ## Summary of Required Actions
 
 1.  **Modify** `Overworld/ZSCustomOverworld.asm`:
-    *   Patch `ActivateSubScreen` to include `$7EE00E` check.
-    *   Patch `PreOverworld_LoadProperties_Interupt` to call `Oracle_CheckIfNight16Bit`.
+    *   ~~Patch `ActivateSubScreen` to include `$7EE00E` check.~~ DONE (`ZSCustomOverworld.asm:1558`).
+    *   ~~Patch `PreOverworld_LoadProperties_Interupt` to call `Oracle_CheckIfNight16Bit`.~~ DONE via `LoadOverworldSprites_Interupt` (`ZSCustomOverworld.asm:5222`, `Oracle_CheckIfNight`).
 2.  **Modify** `Overworld/time_system.asm`:
     *   Rewrite `RunClock` to use the new `ApplyTimeTintToBuffer` method instead of `RomToPaletteBuffer`.
 3.  **Refactor** `Overworld/overlays.asm`:

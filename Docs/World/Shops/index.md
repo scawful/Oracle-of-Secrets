@@ -46,7 +46,7 @@ The Happy Mask Shop sells transformation masks used throughout the game.
 |------|-------|--------|
 | TBD | TBD | Various transformations |
 
-*See [Masks Documentation](../../Items/) for mask details*
+*See [Masks Documentation](../Features/Masks/Masks.md) for mask details*
 
 ### Fortune Teller (0x65/0x66)
 

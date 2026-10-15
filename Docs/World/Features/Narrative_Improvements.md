@@ -79,9 +79,9 @@ The current progression is linear (Dungeon $\to$ Item $\to$ Dungeon). To improve
 ## 5. Technical "Quick Wins"
 
 ### 5.1. Journal System
-**Priority:** High
+**Priority:** Deferred (see status below)
 **Reasoning:** The game features complex trading sequences (Mushroom $\to$ Powder $\to$ Ocarina). A quest log is essential for modern UX.
-**Action:** Prioritize `Menu/menu_journal.asm` implementation.
+**Status (2026-10):** implemented (26 entries, `Menu/menu_journal.asm`) and deferred by decision (`Docs/Planning/Status/decisions.org:1031`, `ENABLE_JOURNAL_DEFERRED=1`). Do not prioritize.
 
 ### 5.2. Dynamic Map Markers
 **Priority:** Medium

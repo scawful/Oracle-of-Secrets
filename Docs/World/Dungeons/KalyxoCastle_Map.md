@@ -33,9 +33,3 @@
 | 0x66 | 85 | - | Room 0x66 |
 | 0x67 | 98 | - | Room 0x67 |
 | 0x68 | 80 | - | Room 0x68 |
-
----
-
-## See Also
-
-- [KalyxoCastle_Tracks.md](KalyxoCastle_Tracks.md) - Detailed track layouts (if applicable)

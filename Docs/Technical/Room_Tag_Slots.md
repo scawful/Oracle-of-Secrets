@@ -7,70 +7,35 @@ Each tag slot is 4 bytes apart (JSL instruction space).
 
 ## "Holes" Tag Series ($01CC00-$01CC5A)
 
-These tags are commonly called "Holes(N)" in the vanilla disassembly.
+These tags are commonly called "Holes(N)" in the vanilla disassembly. Tag IDs and slot addresses are per usdasm bank_01.asm:12275-12300 (tag table) and bank_01.asm:14179-14221 (vanilla handlers), and per the hook files in this repo. Runtime unverified.
+
+Each vanilla Holes slot is 4 bytes: `LDA.b #n` then `BRA RoomTag_TriggerHoles` (Holes8 at $01CC1C falls through instead).
 
 ### Currently Used in Oracle of Secrets
 
 | Address  | Tag ID | Name      | Purpose                     | File                     |
 |----------|--------|-----------|----------------------------|--------------------------|
-| $01CC00  | 0x33   | Holes(0)  | Floor Puzzle               | floor_puzzle.asm         |
-| $01CC08  | 0x35   | Holes(3)  | Crumble Floor              | crumblefloor_tag.asm     |
-| $01CC10  | 0x37   | Holes(5)  | Minish Shutter Door        | custom_tag.asm           |
-| $01CC14  | 0x38   | Holes(6)  | Cart-Required Shutters     | minecart.asm (gated)     |
-| $01CC18  | 0x39   | Holes(7)  | CustomTag (Intro House)    | custom_tag.asm           |
-| $01CC1C  | 0x3A   | Holes(8)  | Together Warp Tag          | together_warp_tag.asm    |
+| $01CC00  | 0x21   | Holes(0)  | Floor Puzzle               | floor_puzzle.asm:5       |
+| $01CC04  | 0x23   | Holes(1)  | Minish Switch (only if !ENABLE_D3_PRISON_SEQUENCE=1, default 0) | custom_tag.asm:16 |
+| $01CC08  | 0x34   | Holes(3)  | Crumble Floor              | crumblefloor_tag.asm:4   |
+| $01CC10  | 0x36   | Holes(5)  | Minish Shutter Door        | custom_tag.asm:12        |
+| $01CC14  | 0x37   | Holes(6)  | Cart-Required Shutters (gated by !ENABLE_MINECART_CART_SHUTTERS, default 0) | minecart.asm:1541 |
+| $01CC18  | 0x39   | Holes(7)  | CustomTag (Intro House)    | custom_tag.asm:9         |
+| $01CC1C  | 0x3A   | Holes(8)  | Together Warp Tag          | together_warp_tag.asm:11 |
+
+Tag 0x38 is vanilla Agahnim (`RoomTag_Agahnim`, bank_01.asm tag table). Do not use it for a Holes hook.
 
 ### Available Slots (Confirmed)
 
 | Address  | Tag ID | Name      | Status    |
 |----------|--------|-----------|-----------|
-| $01CC04  | 0x34   | Holes(1)  | AVAILABLE |
-| $01CC0C  | 0x36   | Holes(4)  | AVAILABLE |
+| $01CC0C  | 0x35   | Holes(4)  | AVAILABLE in code (no hook at $01CC0C); room headers not checked |
 
-### Potentially Available Slots (After 0x3A)
+The table continues until $01CC5A, which is the return address all tag handlers JML to. $01CC20 onward is the shared `RoomTag_TriggerHoles` body, not Holes(9) or Holes(10).
 
-| Address  | Tag ID | Name      | Status      |
-|----------|--------|-----------|-------------|
-| $01CC20  | 0x3B   | Holes(9)  | LIKELY FREE |
-| $01CC24  | 0x3C   | Holes(10) | LIKELY FREE |
-| ...      | ...    | ...       | ...         |
+## Next Free Slot
 
-The table continues until $01CC5A, which is the return address all tag handlers JML to.
-
-## Recommendation for Prison Escape Tag
-
-**Use Tag 0x34 (Holes1) at $01CC04**
-
-Reasons:
-1. Confirmed unused in Oracle codebase (no grep hits)
-2. First available slot chronologically
-3. Clean gap between Floor Puzzle (0x33) and Crumble Floor (0x35)
-4. No conflicts with any existing tags
-
-### Implementation Pattern
-
-```asm
-; Dungeons/prison_escape_tag.asm
-
-pushpc
-org $01CC04 ; holes_1 tag routine ; @hook module=Dungeons
-  JML PrisonEscapeTag
-  RTS
-pullpc
-
-PrisonEscapeTag_Return = $01CC5A
-
-PrisonEscapeTag:
-{
-  ; Your prison escape logic here
-  ; ...
-  JML PrisonEscapeTag_Return
-}
-```
-
-### Alternative: Tag 0x36 (Holes4) at $01CC0C
-
-If Tag 0x34 is needed for something else, Tag 0x36 is also confirmed available.
+Next free slot: $01CC0C (tag 0x35). Prison escape logic already lives in RoomTag_MinishSwitch (custom_tag.asm:135,170); do not reuse $01CC04.
 
 ## Notes
 
@@ -78,6 +43,8 @@ If Tag 0x34 is needed for something else, Tag 0x36 is also confirmed available.
 - Tags are processed during room initialization
 - Tag IDs are set in room headers via yaze editor
 - Feature-gated tags (like Cart-Required Shutters) use compile-time flags
+- Each slot is 4 bytes (`LDA.b #n` : `BRA`). A JSL+RTS patch spills its RTS into the next slot (floor_puzzle.asm:6-7 into $01CC04; crumblefloor_tag.asm:5-6 into $01CC0C). The JML at $01CC1C overwrites the shared RoomTag_TriggerHoles entry at $01CC1E, so do not put an unhooked Holes tag in a room header. Static reading of asar write order; runtime unverified.
+- Tag 0x35 ($01CC0C) is free in code only. Vanilla room headers live in ROM and were not checked; run yaze `dungeon_room_header` on candidate rooms before assigning.
 
 ## Additional Available Slots
 

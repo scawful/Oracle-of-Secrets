@@ -13,8 +13,8 @@ Master index of all indoor locations with entrance IDs.
 |----------|-------|---------------|
 | **Dungeons** | 7 | [Dungeons/](Dungeons/) |
 | **Shrines** | 6 | [Shrines/](Shrines/) |
-| **Caves/Grottos** | 25+ | [Caves/](Caves/) |
-| **Houses** | 10+ | [Houses/](Houses/) |
+| **Caves/Grottos** | 33 | [Caves/](Caves/) |
+| **Houses** | 17 | [Houses/](Houses/) |
 | **Shops** | 4 | [Shops/](Shops/) |
 | **Special Areas** | 5+ | [SpecialAreas/](SpecialAreas/) |
 
@@ -43,12 +43,12 @@ Master index of all indoor locations with entrance IDs.
 
 | ID | Name | OW Screen | Reward | Documentation |
 |----|------|-----------|--------|---------------|
-| 0x03, 0x05, 0x09, 0x0B | Shrine of Power | 0x4B | Pendant of Power | [Map](Shrines/ShrineOfPower.md) |
-| 0x0C | Shrine of Courage | 0x50 | Pendant of Courage | [Map](Shrines/ShrineOfCourage.md) |
-| 0x33 | Shrine of Wisdom | 0x63 | Pendant of Wisdom | [Map](Shrines/ShrineOfWisdom.md) |
-| TBD | Shrine of Origins | TBD | TBD | [Map](Shrines/ShrineOfOrigins.md) |
-| TBD | Shrine of Sky | TBD | TBD | [Map](Shrines/ShrineOfSky.md) |
-| TBD | Shrine of Sea | TBD | TBD | [Map](Shrines/ShrineOfSea.md) |
+| 0x03, 0x05, 0x09, 0x0B | Shrine of Power | 0x4B | Pendant of Power | [Map](Shrines/ShrineofPower.md) |
+| 0x0C | Shrine of Courage | 0x50 | Pendant of Courage | [Map](Shrines/ShrineofCourage.md) |
+| 0x33 | Shrine of Wisdom | 0x63 | Pendant of Wisdom | [Map](Shrines/ShrineofWisdom.md) |
+| TBD | Shrine of Origins | TBD | TBD | [Map](Shrines/ShrineofOrigins.md) |
+| TBD | Shrine of Sky | TBD | TBD | [Map](Shrines/ShrineofSky.md) |
+| TBD | Shrine of Sea | TBD | TBD | [Map](Shrines/ShrineofSea.md) |
 
 ---
 

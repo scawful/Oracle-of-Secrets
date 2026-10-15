@@ -144,7 +144,7 @@ The path to D2 requires a multi-step quest chain — the longest in the game:
 
 1. A guaranteed post-D1 message asks Link to investigate the missing **Ranch Girl**, who may have witnessed Twinrova searching for essences
 2. **Mushroom** (D1 area, Toadstool Woods) → taken to the witch for **Magic Powder**, which is explained as revealing creatures hidden by transformation magic
-3. At Loom Ranch, a clue connects the girl's disappearance to a strange Cucco; **Magic Powder** temporarily reveals the **Ranch Girl**
+3. At Toto Ranch, a clue connects the girl's disappearance to a strange Cucco; **Magic Powder** temporarily reveals the **Ranch Girl**
 4. **Ranch Girl** gives Link the **Ocarina** and directs him to the Mask Salesman at Tail Pond (message 0x17D currently gives the item but needs the destination added)
 5. **Ocarina** → brought to **Mask Salesman** (east of village) → teaches **Song of Healing** (sets $7EF34C = 2)
 6. **Song of Healing** → used on **Withered Deku Scrub** (Tail Pond, OW 0x2D) → gives **Deku Mask** (flower floating ability)
@@ -153,7 +153,7 @@ The path to D2 requires a multi-step quest chain — the longest in the game:
 **Guidance rule:** The ALTTP Magic-Powder-on-a-Cucco Easter egg is flavor, not
 the solution source. The game supplies the motive, the powder's property, and
 the Cucco clue. Set the Tail Pond objective after the Ocarina, so the route is
-D1 → witch → Loom Ranch → Tail Pond rather than Tail Pond → ranch → Tail Pond.
+D1 → witch → Toto Ranch → Tail Pond rather than Tail Pond → ranch → Tail Pond.
 
 **Note:** This is the densest required chain in the game. Each stop must advance
 the current objective. The Ranch Girl's curse connects to Twinrova; defeating
@@ -347,7 +347,7 @@ See what awaits...
 - **Portal Discovery:** Exit east to Map 0x07, find the Lava Lands portal
 - Link can see Ganondorf's prison but cannot defeat him without Master Sword
 - Twinrova's defeat permanently breaks the Ranch Girl's Cucco curse as an automatic world-state consequence
-- No dream, Song of Healing, reward, or objective sends Link back to Loom Ranch; optional reactive dialogue is allowed if the player returns naturally
+- No dream, Song of Healing, reward, or objective sends Link back to Toto Ranch; optional reactive dialogue is allowed if the player returns naturally
 
 #### Gossip Stone Reference
 > "The twin flames serve another master. Ice and fire are merely tools. Beware what they prepare for." (GS19)

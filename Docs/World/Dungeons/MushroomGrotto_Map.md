@@ -4,6 +4,7 @@
 **Entrance IDs:** 0x26
 **OW Screen:** 0x10
 **Boss:** TBD
+**Miniboss:** Vampire Bat (Sprites/Bosses/vampire_bat.asm)
 **Dungeon Item:** TBD
 **Entrance Room:** 0x4A
 
@@ -40,9 +41,3 @@
 | 0x5B | 57 | - | Room 0x5B |
 | 0x63 | 339 | - | Room 0x63 |
 | 0x6A | 76 | 4 | Room 0x6A |
-
----
-
-## See Also
-
-- [MushroomGrotto_Tracks.md](MushroomGrotto_Tracks.md) - Detailed track layouts (if applicable)

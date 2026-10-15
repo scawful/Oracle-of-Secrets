@@ -124,7 +124,7 @@ Working examples exist:
 | **Zora (Dispatcher)** | ✅ Done | Various | Custom | Routes to 4 variants via ROOM/WORLDFLAG/SprSubtype |
 | **Sea Zora** | ✅ Done | Kalyxo waters | Default variant | Head tracks player, 3 dialogue states |
 | **Eon Zora** | ✅ Done | Eon Abyss | WORLDFLAG=1 variant | Location-based dialogue, random ring drops |
-| **Eon Zora Elder** | ⚠️ Incomplete | S1 (Sea Shrine) | SprSubtype=1 | TODO: dialogue handler (messages 0x1F0+) |
+| **Eon Zora Elder** | ⚠️ Incomplete | S1 (Sea Shrine) | SprSubtype=1 | TODO: dialogue handler (messages: range TBD (0x1F0-0x1FF taken, Core/message.asm:56-58; next unallocated is $204)) |
 
 ### Vendor/Service NPCs
 
@@ -201,7 +201,7 @@ Several NPCs use a dispatcher pattern that routes to different behaviors:
 
 | Sprite | Status | Location | Purpose | Notes |
 |--------|--------|----------|---------|-------|
-| **Collectible** | ✅ Done | Various | Multi-item: Pineapple, Seashell, Sword/Shield, Rock Sirloin | AreaIndex routing (0x58=sword, 0x4B=sirloin) |
+| **Collectible** | ✅ Done | Various | Multi-item: Pineapple, Seashell, Sword/Shield, Rock Meat | AreaIndex routing (0x58=sword, 0x4B=sirloin) |
 | **Deku Leaf** | ✅ Done | Forest, Water | Platform + Whirlpool portal | Two modes: leaf ride (cape flag) + whirlpool warp |
 | **Mine Switch** | ✅ Done | D6 (Goron Mines) | Lever toggle + Speed switch | SwitchRam array tracks on/off state |
 | **Pedestal** | ✅ Done | Temples | Song of Zora + Book interaction | Zora Temple (0x1E), Goron Desert (0x36), Fortress (0x5E) |
@@ -237,7 +237,7 @@ Single sprite handles 4 different collectibles via AreaIndex:
 - Default: Pineapple (increments Pineapples counter)
 - Default: Seashell (increments Seashells counter)
 - Area 0x58: Sword/Shield (intro sequence, checks $7EF359)
-- Area 0x4B: Rock Sirloin (requires power gloves, increments RockMeat)
+- Area 0x4B: Rock Meat (requires power gloves, increments RockMeat)
 
 ---
 
@@ -251,18 +251,18 @@ Single sprite handles 4 different collectibles via AreaIndex:
 
 The vanilla probe system does NOT set `SprTimerD` on the parent sprite. Initial implementation was based on incorrect assumptions.
 
-#### Vanilla System (Research Needed)
+#### Vanilla System (resolved for `$0D80,X` and `$0DB0,X` per usdasm bank_05.asm:12080-12104; runtime unverified)
 
 The vanilla guard detection uses `Sprite_SpawnProbeAlways_long` at `$05C66E`:
 - Spawns invisible sprite ID `$41` as probe
 - Probe checks `CheckTileSolidity` as it travels toward Link
 - Wall hit → despawn without alert
-- Link contact → **sets parent's STATE**, not a timer
+- Link contact → **sets parent's SprAction (`$0D80,X`) = 3 and SprTimerA (`$0DF0,X`) = $10**, not SprTimerD
 
-**Key Variables (need verification):**
+**Key Variables:** (`$0F60,X` not re-checked)
 - `$0DB0,X` - Probe parent sprite ID (parent slot + 1)
 - `$0F60,X` - Probe lifetime timer (starts at `$40`)
-- `$0D80,X` - Guard STATE (3 = chase) - this is what probe sets, NOT `SprTimerD`
+- `$0D80,X` - SprAction (3 = chase/alerted; the probe sets it, NOT `SprTimerD`)
 
 #### Current State
 

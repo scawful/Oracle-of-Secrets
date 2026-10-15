@@ -169,7 +169,7 @@ The `sram.asm` comments reference vanilla ALTTP storyline:
 
 | Flag | Location | Observation |
 |------|----------|-------------|
-| `$7EF3C5` | `farore.asm:220` | Set to 2 during FaroreFollowPlayer (GameState = crystals?) |
+| `$7EF3C5` | `farore.asm:222` | GameState = 2 at Farore's meeting |
 | `$04C6` | `goron.asm:112` | Non-SRAM flag for mine opening trigger |
 | `$0AA5` | `korok.asm:86` | Non-SRAM flag for Korok sprite sheets loaded |
 | `$B6` | `farore.asm:138,222` | Scratch RAM for Farore story state (not SRAM) |
@@ -180,14 +180,12 @@ The `sram.asm` comments reference vanilla ALTTP storyline:
 
 ## Questions for Clarification
 
-### 1. GameState Values
-**Current understanding:**
-- `0x00` = Start (can't save)
-- `0x01` = After intro sequence
-- `0x02` = After Kydrog encounter
-- `0x03` = After D7?
-
-**Question:** What are the actual Oracle of Secrets GameState milestones? The comments reference ALTTP values.
+### 1. GameState Values (answered)
+**Answer (Core/sram.asm:72-75):**
+- `0x00` = `!GameState_Start` (cannot save yet)
+- `0x01` = `!GameState_LoomBeach` (intro sequence begun)
+- `0x02` = `!GameState_KydrogComplete` (set at Farore's meeting, Sprites/NPCs/farore.asm:222; the constant name is misleading)
+- `0x03` = `!GameState_FaroreRescued` (D7 complete, endgame; set in Sprites/Bosses/kydrog_boss.asm:377)
 
 ### 2. OOSPROG2 Bit 2 (`z`)
 The ALTTP meaning is "Zelda brought to sanctuary."

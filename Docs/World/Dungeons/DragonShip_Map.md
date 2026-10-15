@@ -3,7 +3,7 @@
 **Dungeon ID:** D7
 **Entrance IDs:** 0x35
 **OW Screen:** 0x30
-**Boss:** TBD
+**Boss:** Kydrog, pirate form (Sprites/Bosses/kydrog_boss.asm; fight to-build per beat 23)
 **Dungeon Item:** TBD
 **Entrance Room:** 0xD6
 
@@ -24,9 +24,3 @@
 | 0xC7 | 111 | - | Room 0xC7 |
 | 0xD5 | 70 | - | Room 0xD5 |
 | 0xD6 | 75 | - | Room 0xD6 |
-
----
-
-## See Also
-
-- [DragonShip_Tracks.md](DragonShip_Tracks.md) - Detailed track layouts (if applicable)
