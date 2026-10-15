@@ -53,7 +53,10 @@ Sprite_Puffstool_Long:
 Sprite_Puffstool_Prep:
 {
   PHB : PHK : PLB
-  LDA.l $7EF359 : TAY
+  LDA.l Sword : BEQ +
+    DEC A
+  +
+  TAY
   LDA.w .health, Y : STA.w SprHealth, X
   LDA.b #$80 : STA.w SprDefl, X
   PLB

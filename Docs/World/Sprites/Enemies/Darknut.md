@@ -65,7 +65,10 @@ This routine is executed once when Darknut is first spawned. It dynamically sets
 Sprite_Darknut_Prep:
 {
   PHB : PHK : PLB
-  LDA.l $7EF359 : TAY           ; Get Link's sword level (0-3), adjust to 0-indexed
+  LDA.l Sword : BEQ +           ; Sword is 1-4 (0 = none); keep index 0 for 0
+    DEC A                       ; Make the sword level a 0-based table index
+  +
+  TAY
   LDA.w .health, Y : STA.w SprHealth, X ; Set health based on sword level
   LDA.b #$80 : STA.w SprDefl, X ; Initialize deflection timer
   LDA.b #%01100000 : STA.w SprTileDie, X ; Set tile for death animation

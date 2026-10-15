@@ -51,7 +51,10 @@ Sprite_Darknut_Long:
 Sprite_Darknut_Prep:
 {
   PHB : PHK : PLB
-  LDA.l $7EF359 : TAY
+  LDA.l Sword : BEQ +
+    DEC A
+  +
+  TAY
   LDA.w .health, Y : STA.w SprHealth, X
   LDA.b #$80 : STA.w SprDefl, X
   LDA.b #%01100000 : STA.w SprTileDie, X

@@ -56,7 +56,10 @@ This routine initializes the Piratian upon spawning. Its health (`SprHealth, X`)
 Sprite_Piratian_Prep:
 {
   PHB : PHK : PLB
-  LDA.l $7EF359 : TAY
+  LDA.l Sword : BEQ +
+    DEC A
+  +
+  TAY
   LDA.w .health, Y : STA.w SprHealth, X
   STZ.w SprMiscA, X
   LDA.w SprNbrOAM, X : ORA.b #$80 : STA.w SprNbrOAM, X
