@@ -71,8 +71,8 @@ Sprite_DekuLeaf_Prep:
 ## Main Logic & State Machine (`Sprite_DekuLeaf_Main`)
 This routine manages the behavior of both the Deku Leaf and the Whirlpool through a jump table based on `SprAction, X`:
 
-*   **`WaitForPlayer` (Deku Leaf)**: Plays an idle animation. It checks if Link is on the leaf (`JSR CheckIfPlayerIsOn`). If so, it sets a flag (`$71`) and, if Link is in Minish form, spawns a poof garnish. Otherwise, it clears the flag.
-*   **`Whirlpool_Main`**: Plays an animation. If Link is on the whirlpool and the underwater flag (`$0AAB`) is set, it resets various Link state flags (`$55`, `$0AAB`, `$0351`, `$037B`, `$02B2`). If Link's state is not `$0B` (Mirror), it saves Link's coordinates and sets `GameMode` to `$23` to initiate a warp, similar to the Mirror effect.
+*   **`WaitForPlayer` (Deku Leaf)**: Plays an idle animation. It checks if Link is on the leaf (`JSR CheckIfPlayerIsOn`). If so, it sets a flag (`$71`) and, if Link is in Deku form (`$02B2` == `$01`), spawns a poof garnish. Otherwise, it clears the flag.
+*   **`Whirlpool_Main`**: Plays an animation. If Link is on the whirlpool and the underwater flag (`$0AAB`) is set, it resets various Link state flags (`$55`, `$0AAB`, `$0351`, `$037B`, `$02B2`). If Link's state is not `$0B` (Mirror), it saves Link's coordinates (`$1ADF`/`$1AEF`/`$1ABF`/`$1ACF`) only when `$8A & $40` is set (mirror-portal world, `deku_leaf.asm:105`) and sets `GameMode` to `$23` to initiate a warp, similar to the Mirror effect. The whirlpool also calls `ResetToLinkGraphics` when a mask form is active (`$02B2` != 0, `deku_leaf.asm:98-101`).
 
 ```asm
 Sprite_DekuLeaf_Main:

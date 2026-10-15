@@ -1,7 +1,7 @@
-# Collectible Sprites (Pineapple, Seashell, Sword/Shield, Rock Sirloin)
+# Collectible Sprites (Pineapple, Seashell, Sword/Shield, Rock Meat)
 
 ## Overview
-The Collectible sprite (`!SPRID = $52`) is a versatile implementation designed to represent various collectible items within the game, including Pineapples, Seashells, the starting Sword/Shield, and Rock Sirloin. Its specific appearance and behavior are dynamically determined by the `SprAction, X` state and the current `AreaIndex`, allowing for context-sensitive item placement and interaction.
+The Collectible sprite (`!SPRID = $52`) is a versatile implementation designed to represent various collectible items within the game, including Pineapples, Seashells, the starting Sword/Shield, and Rock Meat. Its specific appearance and behavior are dynamically determined by the `SprAction, X` state and the current `AreaIndex`, allowing for context-sensitive item placement and interaction.
 
 ## Sprite Properties
 *   **`!SPRID`**: `$52` (Vanilla sprite ID, likely for a generic collectible)
@@ -71,7 +71,7 @@ Sprite_Collectible_Long:
 This routine initializes the collectible sprite upon spawning, with conditional logic based on the `AreaIndex`:
 
 *   **Intro Sword**: If `AreaIndex` is `$58`, it checks Link's Sword flag (`$7EF359`). If Link already has the Sword, the sprite despawns. It also sets `SprAction, X` to `$02` (SwordShield).
-*   **Rock Sirloin**: If `AreaIndex` is `$4B`, it sets `SprAction, X` to `$03` (RockSirloin).
+*   **Rock Meat**: If `AreaIndex` is `$4B`, it sets `SprAction, X` to `$03` (RockSirloin).
 
 ```asm
 Sprite_Collectible_Prep:
@@ -168,5 +168,5 @@ Each collectible type has its own dedicated drawing routine. These routines hand
 *   **Multi-Item Collectible**: A single sprite definition (`!SPRID = $52`) is used to represent multiple distinct collectible items, with their specific appearance and behavior determined by `SprAction, X` and `AreaIndex`. This allows for efficient reuse of sprite slots for various in-game items.
 *   **Context-Sensitive Spawning/Drawing**: The sprite's initial appearance and drawing routine are dynamically selected based on the `AreaIndex`, enabling specific items to appear in designated locations within the game world.
 *   **Item Granting**: Collectibles grant items to Link upon contact, directly influencing his inventory and progression.
-*   **Quest Progression Integration**: The Sword/Shield collectible despawns if Link already possesses the Sword, and the Rock Sirloin requires Link to have the Glove to interact with it, integrating these items into the game's quest and progression systems.
+*   **Quest Progression Integration**: The Sword/Shield collectible despawns if Link already possesses the Sword, and the Rock Meat requires Link to have the Glove to interact with it, integrating these items into the game's quest and progression systems.
 *   **16-bit OAM Calculations**: Demonstrates explicit use of `REP #$20` and `SEP #$20` for precise 16-bit OAM coordinate calculations, crucial for accurate sprite rendering.

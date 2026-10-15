@@ -150,7 +150,7 @@ Sprite_PolsVoice_Main:
 
 ### 2.4. `PolsVoice_CheckForFluteSong`
 
-This routine checks if the player is currently playing the flute (`SongFlag`). If the flute is being played, Pols Voice despawns (`STZ.w SprState, X`) and forces a prize drop.
+This routine checks if the player is currently playing the flute (`SongFlag`). If the flute is being played, Pols Voice sets SprState to $03 (despawn) and forces a prize drop.
 
 ```asm
 PolsVoice_CheckForFluteSong:

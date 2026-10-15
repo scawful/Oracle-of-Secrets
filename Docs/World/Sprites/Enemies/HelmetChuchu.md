@@ -67,7 +67,7 @@ Sprite_HelmetChuchu_Prep:
   PHB : PHK : PLB
   LDA.l Sword : DEC A : TAY
   LDA.w .health, Y : STA.w SprHealth, X ; Set health based on sword level
-  JSL GetRandomInt : AND.b #$02 : STA.w SprAction, X ; Randomly set initial action (0, 1, or 2)
+  JSL GetRandomInt : AND.b #$02 : STA.w SprAction, X ; Randomly set initial action (0 = Green helmeted or 2 = Red masked; 1 and 3 are never initial states)
   STZ.w SprMiscB, X
   STZ.w SprMiscD, X
   LDA.w SprAction, X : BNE +
@@ -105,7 +105,7 @@ Sprite_HelmetChuchu_Main:
     %PlayAnimation(4, 5, 16)
     JSR Sprite_CheckForHookshot : BCC +
       LDA.w SprFlash, X : BEQ +
-        %GotoAction(1) ; Transition to GreenChuchu_NoHelmet if hookshot hit and not flashing
+        %GotoAction(1) ; Transition to GreenChuchu_NoHelmet if hookshot is active and the Chuchu is flashing (just hit)
     +
     JSL Sprite_CheckDamageFromPlayer
     JSR Sprite_Chuchu_Move
@@ -131,7 +131,7 @@ Sprite_HelmetChuchu_Main:
     %PlayAnimation(2, 3, 16)
     JSR Sprite_CheckForHookshot : BCC +
       LDA.w SprFlash, X : BEQ +
-        %GotoAction(3) ; Transition to RedChuchu_NoMask if hookshot hit and not flashing
+        %GotoAction(3) ; Transition to RedChuchu_NoMask if hookshot is active and the Chuchu is flashing (just hit)
     +
     JSL Sprite_CheckDamageFromPlayer
     JSR Sprite_Chuchu_Move
@@ -370,8 +370,8 @@ Sprite_HelmetChuchu_Draw:
 
   ; =======================================================
   ;         chr     prop
-  ; Mask    $04     $37
-  ; Helmet  $08     $3B
+  ; Mask    $04     $27
+  ; Helmet  $08     $29
 
   .start_index
   db $00, $02, $03, $06, $08, $0A, $0C, $0E, $0F, $10

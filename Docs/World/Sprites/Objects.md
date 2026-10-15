@@ -6,7 +6,7 @@ This document provides an analysis of the object sprites found in the `Sprites/O
 
 | Filename | Sprite ID(s) | Description |
 |---|---|---|
-| `collectible.asm` | `$52` | A generic collectible sprite that can represent a Pineapple, Seashell, Sword/Shield, or Rock Sirloin. |
+| `collectible.asm` | `$52` | A generic collectible sprite that can represent a Pineapple, Seashell, Sword/Shield, or Rock Meat. |
 | `deku_leaf.asm` | `Sprite_DekuLeaf` | A Deku Leaf platform that Link can stand on. Also used for whirlpools. |
 | `ice_block.asm` | `$D5` | A pushable ice block used in puzzles. |
 | `minecart.asm` | `Sprite_Minecart` (`$A3`) | A rideable minecart used for transportation puzzles in dungeons. |

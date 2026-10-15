@@ -81,7 +81,7 @@ Sprite_ThunderGhost_Prep:
 
 ### 2.3. `Sprite_ThunderGhost_Main` (Behavioral State Machine)
 
-This routine manages Thunder Ghost's AI through a state machine, using `SprAction, X` to determine its current behavior. It includes states for facing forward, left, and right, as well as states for casting thunder in different directions.
+This routine manages Thunder Ghost's AI through a state machine, using `SprAction, X` to determine its current behavior. It includes states for facing forward, left, and right, as well as states for casting thunder in different directions. Per code (runtime unverified): `CastThunderLeft` and `CastThunderRight` (SprAction 3 and 4) run only on the lightning child spawned by `SpawnLightningAttack`, which uses the same sprite id `$CD` (`sprite_registry_ids.asm:26`); the original ghost never enters those states.
 
 ```asm
 Sprite_ThunderGhost_Main:
@@ -193,13 +193,13 @@ Sprite_ThunderGhost_Move:
 
 ### 2.5. `SpawnLightningAttack`
 
-This routine is responsible for spawning the lightning attack sprite. It sets up the lightning's initial properties, including its `SprSubtype`, action, position, and speed, based on Thunder Ghost's position relative to Link.
+This routine is responsible for spawning the lightning attack sprite. It sets up the lightning's initial properties, including its `SprSubtype`, action, position, and speed, based on Thunder Ghost's position relative to Link. Children copy the parent's X/Y position and X/Y speed, set `SprTimerA` and `SprTimerB` to `$30`, and their cast state clears `SprState` when `SprTimerA` reaches 0 (`thunder_ghost.asm:119-121`).
 
 ```asm
 SpawnLightningAttack:
 {
   PHX
-  LDA.b #$CD ; Sprite ID for lightning (assuming $CD is the lightning sprite ID)
+  LDA.b #$CD ; Sprite ID $CD = Thunder Ghost itself (the lightning is a second ghost instance)
   JSL Sprite_SpawnDynamically : BMI .no_space
     ; Use SprXSpeed, SprYSpeed, SprXRound, SprYRound
     ; SprX, SprY, SprXH, SprY, to cast the lightning spell
@@ -304,7 +304,7 @@ Sprite_ThunderGhost_Draw:
 ## 3. Key Behaviors and Implementation Details
 
 *   **Dynamic Health:** Thunder Ghost's health is determined at spawn time based on Link's current sword level, allowing for dynamic difficulty scaling.
-*   **Conditional Shadow Drawing:** The shadow is not drawn when Thunder Ghost is in its `CastThunderLeft` or `CastThunderRight` states, suggesting a visual distinction during its attack.
+*   **Conditional Shadow Drawing:** The shadow is skipped when `SprAction >= 3` (`thunder_ghost.asm:43`). Those actions belong to the lightning child instances, so this check applies to the children.
 *   **Lightning Attack:** Thunder Ghost has a random chance to spawn a lightning attack (`SpawnLightningAttack`) at regular intervals, which then becomes an independent sprite with its own movement and interaction logic.
 *   **State Management:** Thunder Ghost uses `SprAction, X` and `%SpriteJumpTable` to manage its facing direction (forward, left, right) and its thunder-casting states.
 *   **Movement Patterns:** Thunder Ghost moves randomly and applies speed towards the player, while also bouncing from tile collisions and being unable to be passed through by Link.

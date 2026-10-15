@@ -27,7 +27,7 @@ The Wolfos's behavior is governed by a state machine:
 *   **`Wolfos_Dismiss` (0x08):** Stops moving, kills the sprite, and clears Link's `BRANDISH` flag.
 
 ## Initialization (`Sprite_Wolfos_Prep`):
-*   Checks if Link is outdoors (`$1B`). If so, it further checks if the Wolfos has already been defeated (`$7EF303 = $01`). If defeated, the sprite is killed to prevent respawning.
+*   Checks if Link is outdoors (`$1B`). If so, it further checks `InCutSceneFlag` (`$7EF303`, the cutscene input-lock flag, `Core/sram.asm:231`). If it equals 1, the sprite is killed (`SprState` cleared) and not spawned. Nothing in `wolfos.asm` sets that flag on defeat, so it is not a persistent defeat flag.
 *   Sets initial timers (`SprTimerA = $40`, `SprTimerC = $40`).
 *   Configures deflection properties (`SprDefl = $82`, making it impervious to arrows).
 *   Sets `SprNbrOAM = $08` and initializes `SprMiscG, X` and `SprMiscE, X` to `0`.

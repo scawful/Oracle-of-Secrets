@@ -55,7 +55,7 @@ Sprite_Vasu_Long:
 ```
 
 ## Initialization (`Sprite_Vasu_Prep`)
-This routine initializes the sprite upon spawning. It sets `SprDefl, X` to `$80`. If the sprite is Vasu (`SprSubtype, X = 0`), it sets `SprAction, X` to `$04`.
+This routine initializes the sprite upon spawning. It sets `SprDefl, X` to `$80`. If `SprSubtype, X` is nonzero (the Error sprite), it sets `SprAction, X` to `$04` (Error_Idle); Vasu (subtype 0) keeps action 0.
 
 ```asm
 Sprite_Vasu_Prep:

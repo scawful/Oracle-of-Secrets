@@ -1,11 +1,7 @@
 # Village Elder
 
 ## Overview
-The `village_elder.asm` file defines the behavior for the "Village Elder" NPC.
-Its current untested post-D1 branch points to the Mask Salesman and sets a Tail
-Pond marker. The 2026-09-02 canon ruling supersedes that order: this branch must
-reinforce the missing Ranch Girl / strange Cucco clue, and Tail Pond must not be
-marked until the Ranch Girl awards the Ocarina.
+The `village_elder.asm` file defines the Village Elder NPC. Per code (runtime unverified), its post-D1 branch shows message `$1CB` (the Ranch Girl hint) and does not write `MapIcon`. The Tail Pond marker is set by the Ranch Girl Ocarina receipt (`ranch_girl.asm:83`). Whether `$1CB` matches the 2026-09-02 canon ruling is not checked here (scawful's call).
 
 ## Main Logic (`Sprite_VillageElder_Main`)
 This routine manages the Village Elder's interactions and dialogue flow:
@@ -14,8 +10,7 @@ This routine manages the Village Elder's interactions and dialogue flow:
 *   **Player Collision**: Prevents Link from passing through the elder (`JSL Sprite_PlayerCantPassThrough`).
 *   **Progression Check (`OOSPROG`)**: It checks the `OOSPROG` (Oracle of Secrets Progression) flag. Specifically, it checks if bit `$10` is set, which indicates that Link has already met the elder.
     *   **First Meeting**: If Link has not yet met the elder, it displays a solicited message (`%ShowSolicitedMessage($143)`). Upon dismissal of this message, it sets bit `$10` in `OOSPROG` to mark that Link has now met the elder.
-    *   **Post-D1 Hint** (current, untested, `[TO-CHANGE]`): If D1 is complete and D2 is not, it displays the Mask Shop hint (`$177`), sets `MapIcon` to Tail Pond, and sets `ElderGuideStage` low nibble to `1`.
-    *   **Required replacement:** Message `$177` should reinforce that the Ranch Girl vanished when a strange Cucco appeared. Remove the early Tail Pond marker write; the Ocarina award should set that objective later.
+    *   **Post-D1 Hint** (per code, runtime unverified): If the D1 crystal is set, the D2 crystal is clear, `Flute` is 0, and the `ElderGuideStage` low nibble is less than 1, it shows message `$1CB` as a solicited message. When that message completes, it sets the `ElderGuideStage` low nibble to `1`. Otherwise it shows `$019`. It does not write `MapIcon`.
     *   **Subsequent Meetings**: Otherwise, a different solicited message (`%ShowSolicitedMessage($019)`) is displayed.
 
 ```asm
@@ -43,7 +38,7 @@ Sprite_VillageElder_Main:
 | Message ID | Usage | Status | Text Source |
 | --- | --- | --- | --- |
 | `0x143` | First meeting | Present | `Core/messages.org` |
-| `0x177` | Mask Shop hint (post-D1) | Present | `Core/messages.org` |
+| `0x1CB` | Ranch Girl hint (post-D1) | Present | `Data/dialogue/expanded_messages.json` (id 62) |
 | `0x019` | Already met | Present | `Core/messages.org` |
 
 **Message 0x143 (current):**

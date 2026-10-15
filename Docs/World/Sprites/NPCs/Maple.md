@@ -7,7 +7,7 @@ The `maple.asm` file defines the behavior for the NPC "Maple," a significant cha
 This routine orchestrates Maple's complex interactions with Link, managing dialogue, quest progression, and the initiation of dream sequences.
 
 *   **Player Collision**: Prevents Link from passing through Maple (`JSL Sprite_PlayerCantPassThrough`).
-*   **`Maple_Idle`**: Displays a solicited message (`%ShowSolicitedMessage($01B3)`). Upon dismissal, it transitions to `Maple_HandleFirstResponse`. It also includes logic to set a flag (`$7EF351`) and a timer (`$012F`) for a specific event.
+*   **`Maple_Idle`**: Displays a solicited message (`%ShowSolicitedMessage($01B3)`). Upon dismissal, it transitions to `Maple_HandleFirstResponse`. It also includes a one-time rod upgrade: if `CustomRods` (`$7EF351`) is 1 (Fishing Rod), it sets it to 2 (Portal Rod) and queues SFX `$1B` in `SFX3` (`$012F`).
 *   **`Maple_HandleFirstResponse`**: Processes Link's initial dialogue response (`$1CE8`), leading to different branches: `Maple_Idle`, `Maple_ExplainHut`, or `Maple_DreamOrExplain`.
 *   **`Maple_DreamOrExplain`**: Displays an unconditional message (`%ShowUnconditionalMessage($01B4)`) and, based on Link's response, transitions to `Maple_ExplainPendants`, `Maple_CheckForPendant`, or back to `Maple_Idle`.
 *   **`Maple_ExplainHut`**: Displays an unconditional message (`%ShowUnconditionalMessage($01B5)`) and returns to `Maple_Idle`.

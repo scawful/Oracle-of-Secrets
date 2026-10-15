@@ -70,7 +70,7 @@ The Maku Tree's core behavior is managed by a state machine that guides its inte
 *   **`MakuTree_Handler`**: Checks the `MakuTreeQuest` flag to determine if Link has already met the Maku Tree, transitioning to `MakuTree_MeetLink` or `MakuTree_HasMetLink` accordingly.
 *   **`MakuTree_MeetLink`**: When Link is close enough, the Maku Tree displays an unconditional message (`%ShowUnconditionalMessage($20)`), updates quest flags (`MakuTreeQuest`, `MapIcon`, `$7EF3D6`), and transitions to `MakuTree_SpawnHeartContainer`.
 *   **`MakuTree_SpawnHeartContainer`**: Grants Link a Heart Container (`LDY #$3E : JSL Link_ReceiveItem`) and then transitions to `MakuTree_HasMetLink`.
-*   **`MakuTree_HasMetLink`**: Displays a solicited message (`%ShowSolicitedMessage($22)`) and updates a progression flag (`$7EF3D6`) upon message dismissal.
+*   **`MakuTree_HasMetLink`**: Picks the message from `MakuTreeReactionTable` (descending crystal-count thresholds) with `SelectReactionMessage` (`Core/progression.asm:191`), shows it as a solicited message, and on talk calls `UpdateMapIcon` (`Core/progression.asm:130`; sets `MapIcon` = crystal count + 1), then sets `OOSPROG` bit `$02` (`$7EF3D6`). `$1CB` is the Village Elder hint, not a Maku message (`maku_tree.asm:30`).
 
 ```asm
 Sprite_MakuTree_Main:
@@ -118,11 +118,26 @@ Sprite_MakuTree_Main:
 
   MakuTree_HasMetLink:
   {
-    %ShowSolicitedMessage($22) : BCC .no_talk
-      LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
+    REP #$20
+    LDA.w #MakuTreeReactionTable : STA $00
+    SEP #$20
+    LDA.b #MakuTreeReactionTable>>16 : STA $02
+    JSL SelectReactionMessage                  ; A/Y = message id
+    JSL Sprite_ShowSolicitedMessageIfPlayerFacing
+    BCC .no_talk
+    JSL UpdateMapIcon
+    LDA.l $7EF3D6 : ORA.b #$02 : STA.l $7EF3D6
     .no_talk
     RTS
   }
+
+  ; Descending thresholds, sentinel-terminated (maku_tree.asm:182-187)
+  MakuTreeReactionTable:
+    db $07 : dw $01CA  ; 7 crystals
+    db $05 : dw $01C7  ; 5+
+    db $03 : dw $01C6  ; 3+
+    db $01 : dw $01C5  ; 1+
+    db $00 : dw $0022  ; 0
 }
 ```
 

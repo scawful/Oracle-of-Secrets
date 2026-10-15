@@ -37,7 +37,7 @@ JSL GetDistance8bit_Long : CMP.b #$80 : BCS .no_probe
 When spawned, probes are configured with special properties:
 
 ```asm
-; From Sprites/experimental/probe.asm (reference)
+; vanilla Sprite_SpawnProbeAlways (usdasm bank_05, entry Sprite_SpawnProbeAlways_long = $05C66E, Core/symbols.asm:489); the code block is an illustrative sketch, not repo source
 Sprite_SpawnProbeAlways:
 {
   LDA.b #$41                     ; Use guard sprite ID
@@ -393,7 +393,7 @@ Use WRAM viewer in Mesen-S:
 
 ## Reference Implementation
 
-See `Sprites/experimental/probe.asm` for the complete vanilla probe system implementation. Key enemies using probes:
+See vanilla Sprite_SpawnProbeAlways (usdasm bank_05, entry Sprite_SpawnProbeAlways_long = $05C66E, Core/symbols.asm:489) for the vanilla probe system; the code block above is an illustrative sketch, not repo source. Key enemies using probes:
 
 - **Blue/Green/Red Guards** (`Sprite_41`, `Sprite_42`, `Sprite_43`) - Full probe system
 - **Darknut** (`Sprites/Enemies/darknut.asm`) - Simplified probe detection
@@ -420,13 +420,13 @@ Probes will be used in the upcoming castle ambush feature:
 - Multiple guards share alert state
 - Capture sequence activates on detection
 
-See: `Core/capture.asm` and `Sprites/Enemies/custom_guard.asm` (experimental)
+See: `Sprites/Enemies/custom_guard.asm` (`Oracle_CaptureAndWarp`, :21; experimental)
 
 ---
 
 ## See Also
 
 - `Docs/World/Sprites/Enemies/Darknut.md` - Darknut implementation with probes
-- `Docs/World/Guides/SpriteCreationGuide.md` Section 10.9 - Advanced AI Patterns
-- `Core/sprite_functions.asm` - `Sprite_SpawnProbeAlways_long` function
+- `Docs/World/Guides/SpriteCreationGuide.md` Section 10.9 - Player State Manipulation
+- callers at `Core/sprite_functions.asm:219` and `:266`; address in `Core/symbols.asm:489`
 - `Core/symbols.asm` - Probe-related function addresses

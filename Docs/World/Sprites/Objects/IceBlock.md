@@ -1,7 +1,7 @@
 # Ice Block (Pushable)
 
 ## Overview
-The Ice Block sprite (`!SPRID = $D5`) is an interactive object designed as a puzzle element that Link can push. It features complex logic for detecting Link's push, applying movement with momentum, and interacting with switch tiles. This sprite is impervious to most attacks and behaves like a solid statue.
+The Ice Block sprite (`!SPRID = $D5`) is an interactive object designed as a puzzle element that Link can push. It features complex logic for detecting Link's push, applying movement with momentum, and interacting with switch tiles. This sprite is impervious to all attacks and behaves like a solid statue.
 
 ## Sprite Properties
 *   **`!SPRID`**: `$D5` (Vanilla sprite ID, likely for a pushable block)
@@ -75,7 +75,7 @@ Sprite_IceBlock_Long:
 ```
 
 ## Initialization (`Sprite_IceBlock_Prep`)
-This routine initializes the Ice Block upon spawning. It caches the sprite's initial position in `SprMiscD, X` through `SprMiscG, X`. It sets `SprDefl, X` to `$04` (designating it as a pushable statue) and initializes `SprMiscB, X` to `0` (movement state).
+This routine initializes the Ice Block upon spawning. It caches the sprite's initial position in `SprMiscD, X` through `SprMiscG, X`. It clears `SprDefl, X` with `STZ` (`ice_block.asm:95`).
 
 ```asm
 Sprite_IceBlock_Prep:
@@ -87,11 +87,9 @@ Sprite_IceBlock_Prep:
   LDA.w SprXH, X : STA.w SprMiscF, X
   LDA.w SprYH, X : STA.w SprMiscG, X
 
-  LDA.b #$04 : STA.w SprDefl, X ; Set as pushable statue
+  STZ.w SprDefl, X ; Clear SprDefl (ice_block.asm:95)
 
   LDA.w SprHitbox, X : ORA.b #$09 : STA.w SprHitbox, X
-  ; Initialize movement state tracking
-  STZ.w SprMiscB, X ; Clear movement state
   PLB
   RTL
 }
@@ -101,7 +99,7 @@ Sprite_IceBlock_Prep:
 This routine manages the Ice Block's behavior, including push detection, movement, and interaction with switches.
 
 *   **Animation**: Plays a static animation (`%PlayAnimation(0, 0, 1)`).
-*   **Sprite-to-Sprite Collision**: Calls `IceBlock_HandleSpriteToSpriteCollision` to manage interactions with other sprites.
+*   **Sprite-to-Sprite Collision**: Calls `Statue_BlockSprites` (`ice_block.asm:317`) to manage interactions with other sprites.
 *   **Damage Reaction**: If the block takes damage, its position, speed, and movement state are reset.
 *   **Switch Detection**: Calls `Sprite_IceBlock_CheckForSwitch`. If the block is on a switch, it stops movement, sets `!WRAM_FLAG_0642` to `01`, and resets its movement state.
 *   **Push Logic**: This is a core part of the routine. If the block is not moving, it checks if Link is in contact and correctly aligned (`IceBlock_CheckLinkPushAlignment`). If so, a push timer (`SprTimerA, X`) is initiated. If the timer expires while Link is still pushing, the block snaps to the grid, applies push speed (`Sprite_ApplyPush`), and begins moving. If the block is already moving, it continues to move (`JSL Sprite_Move`) and checks for tile collisions, stopping if an obstacle is encountered.
@@ -111,15 +109,14 @@ Sprite_IceBlock_Main:
 {
   %PlayAnimation(0, 0, 1)
 
-  JSR IceBlock_HandleSpriteToSpriteCollision ; Renamed from Statue_BlockSprites
+  JSR Statue_BlockSprites
   JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
     LDA.w SprMiscD, X : STA.w SprX, X
-    LDA.w SprY, X : STA.w SprY, X
-    LDA.w SprXH, X : STA.w SprXH, X
-    LDA.w SprYH, X : STA.w SprYH, X
+    LDA.w SprMiscE, X : STA.w SprY, X
+    LDA.w SprMiscF, X : STA.w SprXH, X
+    LDA.w SprMiscG, X : STA.w SprYH, X
     STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
     STZ.w SprTimerA, X : STZ.w SprMiscA, X
-    STZ.w SprMiscB, X ; Reset movement state when hit
   .no_damage
 
   STZ.w !WRAM_FLAG_0642
@@ -193,8 +190,8 @@ This routine is currently unused but was intended to check if the tile beneath t
 ## `Sprite_IceBlock_CheckForSwitch`
 This routine checks if any of the four corners of the Ice Block are currently positioned on a switch tile (identified by `!SWITCH_TILE_ID_1` to `!SWITCH_TILE_ID_4`). It returns with the carry flag set if any corner is on a switch tile.
 
-## `IceBlock_HandleSpriteToSpriteCollision`
-This routine (renamed from `Statue_BlockSprites`) manages collisions between the Ice Block and other active sprites. It iterates through other sprites, checks for collision, and applies recoil or other effects to them.
+## `Statue_BlockSprites`
+This routine (`Statue_BlockSprites`, `ice_block.asm:317`) manages collisions between the Ice Block and other active sprites. It iterates through other sprites, checks for collision, and applies recoil or other effects to them.
 
 ## Drawing (`Sprite_IceBlock_Draw`)
 This routine handles OAM allocation and animation for the Ice Block. It explicitly uses `REP #$20` and `SEP #$20` for 16-bit coordinate calculations, ensuring accurate sprite rendering.

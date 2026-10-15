@@ -1,225 +1,51 @@
 # Bottle Vendor
 
 ## Overview
-The Bottle Vendor is an NPC (Non-Player Character) sprite designed for player interaction, primarily through dialogue. It features a simple state machine to manage its idle and talking behaviors, very similar in structure to the Bean Vendor.
+`Sprites/NPCs/bottle_vendor.asm` is not a standalone sprite. It hooks the vanilla sprite routine at `$05EAC2` (`org $05EAC2 : JSL BottleVendor_MilkHandler`, lines 2-5) and sells milk for an empty bottle. The file has no `!SPRID`, `!NbrTiles`, property block, `_Long` routine, or `_Prep` routine. Its labels are `BottleVendor_*`.
 
-## Sprite Properties
-*   **`!SPRID`**: `$00` (Vanilla sprite ID, likely overridden)
-*   **`!NbrTiles`**: `08`
-*   **`!Harmless`**: `01` (Indicates the sprite is harmless to Link)
-*   **`!HVelocity`**: `00`
-*   **`!Health`**: `00`
-*   **`!Damage`**: `00`
-*   **`!DeathAnimation`**: `00`
-*   **`!ImperviousAll`**: `01` (Indicates the sprite is impervious to all attacks)
-*   **`!SmallShadow`**: `00`
-*   **`!Shadow`**: `01`
-*   **`!Palette`**: `00`
-*   **`!Hitbox`**: `00`
-*   **`!Persist`**: `00`
-*   **`!Statis`**: `00`
-*   **`!CollisionLayer`**: `00`
-*   **`!CanFall`**: `00`
-*   **`!DeflectArrow`**: `00`
-*   **`!WaterSprite`**: `00`
-*   **`!Blockable`**: `00`
-*   **`!Prize`**: `00`
-*   **`!Sound`**: `00`
-*   **`!Interaction`**: `00`
-*   **`!Statue`**: `00`
-*   **`!DeflectProjectiles`**: `00`
-*   **`!ImperviousArrow`**: `00`
-*   **`!ImpervSwordHammer`**: `00`
-*   **`!Boss`**: `00`
-
-## Main Structure (`Sprite_BottleVendor_Long`)
-This routine is the main entry point for the Bottle Vendor, executed every frame. It handles drawing, shadow rendering, and dispatches to the main logic if the sprite is active.
+## Hook Entry (`BottleVendor_MilkHandler`)
+Source: `bottle_vendor.asm:7-16`.
 
 ```asm
-Sprite_BottleVendor_Long:
+BottleVendor_MilkHandler:
 {
-  PHB : PHK : PLB
-  JSR Sprite_BottleVendor_Draw
-  JSL Sprite_DrawShadow
-
-  JSL Sprite_CheckActive : BCC .SpriteIsNotActive
-    JSR Sprite_BottleVendor_Main
-  .SpriteIsNotActive
-
-  PLB
-  RTL
-}
-```
-
-## Initialization (`Sprite_BottleVendor_Prep`)
-This routine runs once when the Bottle Vendor is spawned. It initializes `SprDefl, X`, `SprTimerC, X`, `SprNbrOAM, X`, and `SprPrize, X`.
-
-```asm
-Sprite_BottleVendor_Prep:
-{
-  PHB : PHK : PLB
-  LDA.b #$80 : STA.w SprDefl, X
-  LDA.b #$30 : STA.w SprTimerC, X
-  LDA.b #$03 : STA.w SprNbrOAM, X
-  LDA.b #$03 : STA.w SprPrize, X
-  PLB
-  RTL
-}
-```
-
-## Main Logic & State Machine (`Sprite_BottleVendor_Main`)
-The Bottle Vendor's core behavior is managed by a state machine with `BottleVendor_Idle` and `BottleVendor_Talk` states.
-
-*   **`BottleVendor_Idle`**: The vendor plays an idle animation. When Link is nearby (`GetDistance8bit_Long`), it transitions to the `BottleVendor_Talk` state.
-*   **`BottleVendor_Talk`**: The vendor plays a talking animation and displays a message using `JSL Interface_PrepAndDisplayMessage`. Once the message is dismissed, it transitions back to the `BottleVendor_Idle` state.
-
-```asm
-Sprite_BottleVendor_Main:
-{
-  LDA.w SprAction, X
-  JSL JumpTableLocal
-
-  dw BottleVendor_Idle
-  dw BottleVendor_Talk
-
-  BottleVendor_Idle:
-  {
-    %PlayAnimation(0,1,15)
-    JSL GetDistance8bit_Long : CMP.b #$20 : BCS +
-      INC.w SprAction, X
-    +
-    RTS
-  }
-
-  BottleVendor_Talk:
-  {
-    %PlayAnimation(2,3,8)
-    JSL Interface_PrepAndDisplayMessage : BCC +
-      STZ.w SprAction, X
-    +
-    RTS
-  }
-}
-```
-
-## Drawing (`Sprite_BottleVendor_Draw`)
-The drawing routine handles OAM allocation and animation. It explicitly uses `REP #$20` and `SEP #$20` for 16-bit coordinate calculations.
-
-```asm
-Sprite_BottleVendor_Draw:
-{
-  JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
-
-  LDA.w SprFrame, X : TAY ;Animation Frame
-  LDA .start_index, Y : STA $06
-  LDA.w SprFlash, X : STA $08
-  LDA.w SprMiscB, X : STA $09
-
-  PHX
-  LDX .nbr_of_tiles, Y ;amount of tiles -1
-  LDY.b #$00
-  .nextTile
-
-  PHX ; Save current Tile Index?
-
-  TXA : CLC : ADC $06 ; Add Animation Index Offset
-
-  PHA ; Keep the value with animation index offset?
-
-  ASL A : TAX
-
-  REP #$20
-
-  LDA $00 : CLC : ADC .x_offsets, X : STA ($90), Y
-  AND.w #$0100 : STA $0E
-  INY
-  LDA $02 : CLC : ADC .y_offsets, X : STA ($90), Y
-  CLC : ADC #$0010 : CMP.w #$0100
-  SEP #$20
-  BCC .on_screen_y
-
-  LDA.b #$F0 : STA ($90), Y ;Put the sprite out of the way
-  STA $0E
-  .on_screen_y
-
-  PLX ; Pullback Animation Index Offset (without the *2 not 16bit anymore)
-  INY
-
-  ; If SprMiscA != 0, then use 4th sheet
-  LDA.b $09 : BEQ +
-    LDA .chr_2, X : STA ($90), Y
-    JMP ++
+  LDA.l $7EF34C : BNE +
+    LDA.b #$D4
+    JSL Sprite_ShowSolicitedMessage
+    RTL
   +
-  LDA .chr, X : STA ($90), Y
-  ++
-  INY
-  LDA .properties, X : ORA $08 : STA ($90), Y
-
-  PHY
-
-  TYA : LSR #2 : TAY
-
-  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
-
-  PLY : INY
-
-  PLX : DEX : BPL .nextTile
-
-  PLX
-
-  RTS
-
-  .start_index
-  db $00, $01, $03, $04, $06, $08
-  .nbr_of_tiles
-  db 0, 1, 0, 1, 1, 0
-  .x_offsets
-  dw 0
-  dw -4, 4
-  dw 0
-  dw -4, 4
-  dw -4, 4
-  dw 0
-  .y_offsets
-  dw 0
-  dw 0, 0
-  dw 0
-  dw 0, 0
-  dw 0, 0
-  dw 0
-  .chr
-  db $80
-  db $A2, $A2
-  db $82
-  db $84, $84
-  db $A4, $A4
-  db $A0
-  .chr_2
-  db $C0
-  db $E2, $E2
-  db $C2
-  db $C4, $C4
-  db $E4, $E4
-  db $E0
-  .properties
-  db $35
-  db $35, $75
-  db $35
-  db $35, $75
-  db $35, $75
-  db $35
-  .sizes
-  db $02
-  db $02, $02
-  db $02
-  db $02, $02
-  db $02, $02
-  db $02
+  JSR BottleVendor_SellMilk
+  RTL
 }
 ```
 
-## Design Patterns
-*   **NPC Interaction**: The sprite is designed to engage with the player through dialogue, triggered by proximity.
-*   **State Machine**: Employs a simple state machine to manage its `Idle` and `Talk` behaviors, ensuring appropriate animations and actions based on player interaction.
-*   **16-bit OAM Calculations**: Demonstrates explicit use of `REP #$20` and `SEP #$20` for precise 16-bit OAM coordinate calculations, crucial for accurate sprite rendering.
+*   If the Ocarina byte `$7EF34C` is zero, the hook shows solicited message `$D4` and returns.
+*   Otherwise it calls `BottleVendor_SellMilk`.
+
+## State Machine (`BottleVendor_SellMilk`)
+The state is `SprMiscA, X`, dispatched by `JumpTableLocal` (`bottle_vendor.asm:20-28`). Per code, runtime unverified.
+
+| SprMiscA | Routine | Behaviour (`bottle_vendor.asm`) |
+| --- | --- | --- |
+| 0 | `BottleVendor_Idle` (`:30-39`) | Plays animation `(0,1,16)`, blocks passage, and shows solicited `$0187` (the offer). If Link talks, sets SprMiscA to 3. |
+| 1 | `BottleVendor_BoughtMilkBottle` (`:41-76`) | If rupees `$7EF360` are at least 30 (`CMP.w #$1E`, `:44`): finds the first bottle slot `$7EF35C`-`$7EF35F` that holds `2` and sets it to `$0A` (`:48-62`), subtracts 30 rupees (`:64-68`), shows `$0188` (`:70`), and sets SprMiscA to 0. If no slot holds `2`, sets SprMiscA to 5 (`:52`). If rupees are short, sets SprMiscA to 2 (`:73-75`). |
+| 2 | `BottleVendor_NotEnoughRupees` (`:78-83`) | Shows `$0189`; sets SprMiscA to 0. |
+| 3 | `BottleVendor_HandlePlayerResponse` (`:85-93`) | Player response `$1CE8` = 0 (yes) sets SprMiscA to 1. Any other value sets SprMiscA to 4. |
+| 4 | `BottleVendor_ComeBackAgain` (`:95-100`) | Shows `$018B`; sets SprMiscA to 0. |
+| 5 | `BottleVendor_NoAvailableBottles` (`:102-108`) | Shows `$033`; sets SprMiscA to 0; sets carry. |
+
+## Messages
+
+| ID | Use |
+| --- | --- |
+| `$D4` | Hook message when `$7EF34C` is zero (no Ocarina yet) |
+| `$0187` | Offer (Idle) |
+| `$0188` | Bottle of milk sold (BoughtMilkBottle) |
+| `$0189` | Not enough rupees |
+| `$018B` | Come back again |
+| `$033` | No empty bottle slot available |
+
+## Notes
+*   Price: 30 rupees (`bottle_vendor.asm:44`, `:66`).
+*   Bottle slots: `$7EF35C`-`$7EF35F`. A slot holding `2` is empty and is filled with `$0A`.
+*   Response byte: `$1CE8` (0 = yes).

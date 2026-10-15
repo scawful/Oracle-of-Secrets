@@ -26,7 +26,7 @@ The Zora Baby follower is a key NPC involved in specific puzzles and interaction
 *   **`CheckForZoraBabyTransitionToSprite`**: Checks if the Zora Baby is currently a follower (`$7EF3CC = $09`). If Link is standing on a star tile (`$0114 = $3B`), it calls `ZoraBaby_RevertToSprite` to transition the follower back into a regular sprite. If Link is outdoors, it clears the follower flag.
 *   **`CheckForZoraBabyFollower`**: A utility routine to check if the Zora Baby is currently a follower.
 *   **`UploadZoraBabyGraphicsPrep`**: Prepares the graphics for the Zora Baby, setting `$7EF3CC` to `$09` and calling `LoadFollowerGraphics`.
-*   **`ZoraBaby_CheckForWaterSwitchSprite`**: Checks for the presence of a `Sprite 0x21` (Water Gate Switch) and determines if the Zora Baby is positioned on top of it.
+*   **`ZoraBaby_CheckForWaterSwitchSprite`**: Checks for the presence of a `Sprite 0x21` (generic pull switch used elsewhere) and determines if the Zora Baby is positioned on top of it.
 *   **`ZoraBaby_CheckForWaterGateSwitch`**: Checks for a `Sprite 0x04` (Water Gate Switch) and performs a precise coordinate check to see if the Zora Baby is on top of it.
 *   **`ZoraBaby_GlobalBehavior`**: This is the main behavior routine for the Zora Baby. It makes the Zora Baby act as a barrier (`Sprite_BehaveAsBarrier`), makes it watch Link (`Follower_WatchLink`), and handles interactions like being lifted (`Sprite_CheckIfLifted`) and thrown (`ThrownSprite_TileAndSpriteInteraction_long`). Crucially, it detects if the Zora Baby is on a water switch and triggers the `ZoraBaby_PullSwitch` state.
 

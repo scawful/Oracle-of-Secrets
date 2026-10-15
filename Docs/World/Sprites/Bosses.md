@@ -40,7 +40,7 @@ This document provides an analysis of the boss sprites found in the `Sprites/Bos
     - **`Kydreeok_Prep`:** Spawns two `KydreeokHead` sprites (`SpawnLeftHead`, `SpawnRightHead`).
     - **`Kydreeok_Main`:** The body moves around the arena, and the heads follow its position, controlled via shared RAM addresses (`LeftNeck1_X`, etc.).
     - **`KydreeokHead_Main`:** The heads have their own AI. They move in a rotational pattern and randomly shoot fireballs at the player.
-    - **Damage:** Only the head sprites can be damaged. When both heads are defeated, the main body sprite is killed.
+    - **Damage:** Only the head sprites can be damaged. Two rounds: first both-heads-dead starts phase 2 with respawned heads, second kills the body.
 
 ### `manhandla.asm`
 - **Sprite ID:** `Sprite_Manhandla` (`$88`)
@@ -74,4 +74,4 @@ This document provides an analysis of the boss sprites found in the `Sprites/Bos
     - The Wolfos attacks Link with lunges and swipes.
     - When its health is depleted, `Sprite_Wolfos_CheckIfDefeated` transitions it to the `Wolfos_Subdued` action instead of killing it.
     - In the subdued state, it waits for the player to play the Song of Healing (`SongFlag`).
-    - Once the song is played, it grants the Wolf Mask (`ITEMGET` ID `$10F`) and then despawns.
+    - Once the song is played, it shows message `$10F`, sets `BRANDISH` and writes `WolfMask` (`$7EF358`) directly (no `ITEMGET`) and then despawns.

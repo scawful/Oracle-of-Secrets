@@ -186,7 +186,7 @@ Sprite_Booki_Move:
     JSL Sprite_DirectionToFacePlayer  ; Update facing direction
     ; Check if far enough from player
     LDA.b $0E : CMP.b #$1B : BCC .NotTooClose
-    LDA.b #$1B : CMP.b $0F : BCC .NotTooClose ; Corrected comparison for $0F
+    LDA.b $0F : CMP.b #$1B : BCC .NotTooClose
       LDA.b #$00 : STA.w SprMiscB, X   ; If far enough, switch to SlowFloat
       %GotoAction(0)                  ; Transition to StalkPlayer state
     .NotTooClose
