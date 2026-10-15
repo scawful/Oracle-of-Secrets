@@ -82,21 +82,19 @@ MapleHandler:
 
   Maple_CheckForPendant:
   {
-    ; Check for pendant
-    LDA.l Pendants : AND.b #$04 : BNE .courage
-    LDA.l Pendants : AND.b #$02 : BNE .power
-    LDA.l Pendants : AND.b #$01 : BNE .wisdom
-                     JMP .none
-    .courage
-    LDA.l Dreams : AND.b #$04 : BNE .power
-      LDA.b #$02 : STA.w CurrentDream : BRA +
-    .power
-    LDA.l Dreams : AND.b #$02 : BNE .wisdom
-      LDA.b #$01 : STA.w CurrentDream : BRA +
-    .wisdom
-    LDA.l Dreams : AND.b #$01 : BNE .none
+    ; Offer the first pendant dream that is owned and not yet dreamed (Courage, Power, Wisdom)
+    LDA.l Pendants : AND.b #$04 : BEQ .no_courage
+    LDA.l Dreams   : AND.b #$04 : BNE .no_courage
+      LDA.b #$02 : STA.w CurrentDream : BRA .offer
+    .no_courage
+    LDA.l Pendants : AND.b #$02 : BEQ .no_power
+    LDA.l Dreams   : AND.b #$02 : BNE .no_power
+      LDA.b #$01 : STA.w CurrentDream : BRA .offer
+    .no_power
+    LDA.l Pendants : AND.b #$01 : BEQ .none
+    LDA.l Dreams   : AND.b #$01 : BNE .none
       STZ.w CurrentDream
-    +
+    .offer
     %ShowUnconditionalMessage($01B6)
     LDA.b #$07 : STA.w SprAction, X
     LDA.b #$40 : STA.w SprTimerA, X
