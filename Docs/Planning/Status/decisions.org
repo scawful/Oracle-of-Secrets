@@ -1146,6 +1146,22 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   trust framing and have Claude test the gate and sprite obstructions on
   scratch copies." (scawful's message, 2026-10-12).
 
+* DECIDED Gate chunk 3 at the LW $02 pad until D5; the Yesterwind/swamp pad stays open
+  :PROPERTIES:
+  :ASKED_BY: Claude RC leader (Lupo gate tests)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/lupo_gate_tests_2026-10-12/README.md
+  :END:
+  Runtime tests on copies of 32ea3732 showed a beat-8 player reaching the
+  Shrine of Power doors (pad $02 -> $42, then the $5B gap; with B1, door 0x09).
+  The Hall of Secrets $02 -> $42 pad refuses to warp until the D5 crystal is
+  set (GATE-1). The pad to Yesterwind and the swamp area, needed for the
+  Shrine of Wisdom (beat 14), must keep working before D5. Yesterwind -> Lupo
+  through the $5B gap still needs the B2 Glove-rock seal; the tests found
+  that B2 placed next to the live Eon Scrub breaks lifting, so B2 moves off
+  the scrub's cell or the scrub moves. B3 uses column 74.
+  Answer: "Sure pad the gate, so long as you can access the portal to
+  yesterwind/swamp area for shrine of wisdom" (scawful, 2026-10-12).
+
 * DECIDED Cave corner join beside the post is the intended correction
   :PROPERTIES:
   :ASKED_BY: Codex RC Planning
