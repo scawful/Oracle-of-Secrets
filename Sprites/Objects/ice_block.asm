@@ -13,9 +13,10 @@
 ; - Switch Detection: Checks center point of block against switch tiles
 ;   ($23, $24, $25, $3B) to stop and activate switches.
 ; - Grid Stop: When the block hits a wall ahead of it, it snaps onto the
-;   8px grid away from the wall and stops (IceBlock_StopAtWall). Tile
-;   collision uses probe set 2 (SprTileDie $2x), which matches the 16x16
-;   graphic, so a stopped block sits flush against the wall.
+;   8px grid against the wall and stops (IceBlock_StopAtWall). Tile
+;   collision uses probe set 9 (SprTileDie $9x): one pixel outside each edge
+;   of the 16x16 graphic, so the wall is found when the block becomes flush
+;   and the block is never drawn inside the wall.
 ;
 ; Sprite RAM Usage:
 ;   SprMiscA - Locked push direction ($01=R, $02=L, $04=D, $08=U)
@@ -97,9 +98,9 @@ Sprite_IceBlock_Prep:
   LDA.w SprYH, X : STA.w SprMiscG, X
   STZ.w SprDefl, X
   LDA.w SprHitbox, X : ORA.b #$09 : STA.w SprHitbox, X
-  ; Tile probe set 2 (like the vanilla statue): probes at the edges of the
-  ; 16x16 graphic, so wall stops line up with what the player sees.
-  LDA.w SprTileDie, X : AND.b #$0F : ORA.b #$20 : STA.w SprTileDie, X
+  ; Tile probe set 9: probes 1px outside the 16x16 graphic (x-1/x+16,
+  ; y-1/y+16), so wall stops line up with what the player sees.
+  LDA.w SprTileDie, X : AND.b #$0F : ORA.b #$90 : STA.w SprTileDie, X
   PLB
   RTL
 }
@@ -176,33 +177,34 @@ Sprite_IceBlock_Main:
 ; =========================================================
 ; Stop At Wall - called when tile collision reports a wall
 ; =========================================================
-; Stops only for a wall ahead in the direction of travel. Rounds the moving
-; axis onto the 8px grid away from the wall (down when moving right/down,
-; up when moving left/up), then clears speed and subpixel remainders so the
-; block rests flush instead of pressing into the wall every frame.
+; Stops only for a wall ahead in the direction of travel. With probe set 9
+; the engine finds the wall when the block is flush and pushes it back 1px,
+; so this rounds the moving axis onto the 8px grid toward the wall (up when
+; moving right/down, down when moving left/up), then clears speed and
+; subpixel remainders so the block rests flush.
 IceBlock_StopAtWall:
 {
   LDA.w SprXSpeed, X : BEQ .vertical
   BMI .left
     LDA.b #$01 : AND.w SprCollision, X : BEQ .done
-      LDA.w SprX, X : AND.b #$F8 : STA.w SprX, X
+      LDA.w SprX, X : CLC : ADC.b #$07 : AND.b #$F8 : STA.w SprX, X
+      LDA.w SprXH, X : ADC.b #$00 : STA.w SprXH, X
       BRA .stop
   .left
     LDA.b #$02 : AND.w SprCollision, X : BEQ .done
-      LDA.w SprX, X : CLC : ADC.b #$07 : AND.b #$F8 : STA.w SprX, X
-      LDA.w SprXH, X : ADC.b #$00 : STA.w SprXH, X
+      LDA.w SprX, X : AND.b #$F8 : STA.w SprX, X
       BRA .stop
 
   .vertical
   LDA.w SprYSpeed, X : BEQ .done
   BMI .up
     LDA.b #$04 : AND.w SprCollision, X : BEQ .done
-      LDA.w SprY, X : AND.b #$F8 : STA.w SprY, X
+      LDA.w SprY, X : CLC : ADC.b #$07 : AND.b #$F8 : STA.w SprY, X
+      LDA.w SprYH, X : ADC.b #$00 : STA.w SprYH, X
       BRA .stop
   .up
     LDA.b #$08 : AND.w SprCollision, X : BEQ .done
-      LDA.w SprY, X : CLC : ADC.b #$07 : AND.b #$F8 : STA.w SprY, X
-      LDA.w SprYH, X : ADC.b #$00 : STA.w SprYH, X
+      LDA.w SprY, X : AND.b #$F8 : STA.w SprY, X
 
   .stop
   STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
