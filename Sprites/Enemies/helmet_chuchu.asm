@@ -248,14 +248,15 @@ Sprite_Chuchu_Move:
       JSL Sprite_Move
     .dontmove
 
+    ; Recoil waits on SprTimerC: %PlayAnimation reloads SprTimerB every time it hits 0.
     JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
       INC.w SprMiscB, X
-      LDA.b #$20 : STA.w SprTimerB, X
+      LDA.b #$20 : STA.w SprTimerC, X
     .no_damage
 
     JSL Sprite_CheckDamageToPlayer : BCC .no_attack
       INC.w SprMiscB, X
-      LDA.b #$20 : STA.w SprTimerB, X
+      LDA.b #$20 : STA.w SprTimerC, X
     .no_attack
 
     RTS
@@ -271,7 +272,7 @@ Sprite_Chuchu_Move:
     LDA $09 : STA $00 : STA $01
     JSL Sprite_ProjectSpeedTowardsEntityLong
 
-    LDA.w SprTimerB, X : BNE .not_done
+    LDA.w SprTimerC, X : BNE .not_done
       STZ.w SprMiscB, X
     .not_done
 
