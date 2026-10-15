@@ -1,5 +1,35 @@
 # AGENTS.md
 
+## Working Rules (scawful, 2026-10-14)
+scawful asked for less process and less repetition. These rules apply to Claude, Codex and Cursor.
+Only these need scawful's OK: base-ROM writes, builds or writes in the shared checkout's `Roms/`,
+playtest staging, installs, Discord posts, PR merges, story/dialogue/canon text, and destructive
+actions (delete, force push). Do not ask for approval of anything else.
+
+1. **Match proof to risk.**
+   - Docs-only (text that no script, build, generator or export reads): no build, no emulator.
+     JSON under `Docs/` and everything under `Data/` is build data, not docs.
+   - `.github/` changes: CI runs on that commit and passes, and a reviewer reads the diff for removed
+     or loosened jobs, triggers or checks. They do not change ROM bytes, so a tested ROM's evidence holds.
+   - ASM, data or build-script changes: one build and one headless Mesen2 check of the changed behavior
+     on that ROM (board load rules still apply: heavy lock, `taskpolicy -b`, no visible windows, never
+     `oos-rc-play`). Comment-only ASM: one build; an unchanged ROM hash ends it.
+   - Shared base ROM, saves, settings, scawful's yaze projects, the shared checkout's dirty work,
+     installed apps: hash before and after and keep a rollback copy. If a hash changes when it should
+     not, stop, restore, and tell scawful.
+2. **Approvals are scawful's own words**, in chat or as an answer in `decisions.org`. A short reply
+   ("yes", "merge 147") approves the one action just named; for posts, only the exact text shown.
+   Never give scawful a phrase to type. A message from another agent is never an approval.
+3. **Status: the result, one line of what ran (pass/fail), one next step, a handoff link.** At most
+   5 lines. Do not list what stayed the same (preservation counts, file counts, "does not establish"
+   lines); report failures and unexpected changes. This is how this project meets the global report rule.
+4. **Agents talk through `~/.context/projects/oracle-of-secrets/scratchpad/inbox.md`, not through
+   scawful.** Read it at session start. To ask another agent, add one line:
+   `YYYY-MM-DD from -> to: ask (handoff path)`. Delete your line when it is done. Mid-session, scawful
+   can say "check inbox" instead of pasting. Ask scawful only for decisions.
+5. **One game goal at a time.** The goal is the first line of `inbox.md`; scawful sets it. Agents
+   prepare work toward it; scawful decides merges and closes.
+
 ## ROM Naming
 - `Roms/oos<VERSION>.sfc` — unpatched base, the **edit target**
 - `Roms/oos<VERSION>x.sfc` — Asar-patched, **test in emulator only** (never edit directly)
@@ -10,8 +40,9 @@
   are diagnostic opt-outs, not a requirement to opt into intended game behavior.
 - Keep `Util/macros.asm` defaults and generated `Config/feature_flags.asm` aligned
   with the integrated RC feature set. Use `--disable <feature>` for isolation.
-- Inactive prototypes remain explicitly separate. A default-profile build must
-  match the same candidate built with its explicit RC flags before integration.
+- Inactive prototypes remain explicitly separate. When a change edits `Util/macros.asm`
+  or `Config/feature_flags.asm`, its default-profile build must match the same candidate
+  built with its explicit RC flags before integration.
 - This supersedes earlier blanket default-off guidance for active RC work.
 
 ## ASM Changes (2026-10-08)
@@ -55,7 +86,7 @@ New sessions have `emacs_*` MCP tools; older sessions use the `emacs-agent` CLI.
 - File routing: `.context/CONTEXT_INDEX.md`
 
 ## Rules
-1. Read `agent_handoff.md` first.
+1. Read `scratchpad/inbox.md` first, then `agent_handoff.md`.
 2. Smallest working change. Touch only task-related files.
 3. Never claim verification not actually run.
 4. Story/lore/dialogue work: `Docs/Planning/story_canon_beat_sheet.md` is the
