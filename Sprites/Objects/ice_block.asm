@@ -12,14 +12,17 @@
 ;   determine Link's relative position and validates against $26 (facing).
 ; - Switch Detection: Checks center point of block against switch tiles
 ;   ($23, $24, $25, $3B) to stop and activate switches.
-; - Grid Snapping: Block position is snapped to 8px grid when pushed.
+; - Grid Stop: When the block hits a wall ahead of it, it snaps onto the
+;   8px grid away from the wall and stops (IceBlock_StopAtWall). Tile
+;   collision uses probe set 2 (SprTileDie $2x), which matches the 16x16
+;   graphic, so a stopped block sits flush against the wall.
 ;
 ; Sprite RAM Usage:
 ;   SprMiscA - Locked push direction ($01=R, $02=L, $04=D, $08=U)
 ;   SprMiscC - Push state flag (set while being actively pushed)
 ;   SprMiscD-G - Cached initial position for damage reset
 ;   SprTimerA - Push momentum timer (keeps push active for 7 frames)
-;   SprTimerB - Delay timer for hookshot cancellation
+;   SprTimerB - %PlayAnimation frame timer
 ; =========================================================
 
 !SPRID              = $D5
@@ -94,6 +97,9 @@ Sprite_IceBlock_Prep:
   LDA.w SprYH, X : STA.w SprMiscG, X
   STZ.w SprDefl, X
   LDA.w SprHitbox, X : ORA.b #$09 : STA.w SprHitbox, X
+  ; Tile probe set 2 (like the vanilla statue): probes at the edges of the
+  ; 16x16 graphic, so wall stops line up with what the player sees.
+  LDA.w SprTileDie, X : AND.b #$0F : ORA.b #$20 : STA.w SprTileDie, X
   PLB
   RTL
 }
@@ -126,6 +132,7 @@ Sprite_IceBlock_Main:
   JSL Sprite_CheckTileCollision
   ; ----udlr , u = up, d = down, l = left, r = right
   LDA.w SprCollision, X : AND.b #$0F : BEQ +
+    JSR IceBlock_StopAtWall
     ; Hit a wall - clear direction only if we actually stop
     STZ.w SprMiscA, X
   +
@@ -149,11 +156,6 @@ Sprite_IceBlock_Main:
     LDA.b #$07 : STA.w SprTimerA, X
     STZ.b $5E
     JSL Sprite_RepelDash
-    LDA.w SprTimerB, X : BNE .CancelHookshot
-      LDA.w SprX, X : AND #$F8 : STA.w SprX, X
-      LDA.w SprY, X : AND #$F8 : STA.w SprY, X
-      RTS
-    .CancelHookshot:
     JSL Sprite_CancelHookshot
     RTS
 
@@ -168,10 +170,44 @@ Sprite_IceBlock_Main:
   LDA.w SprXSpeed, X : ORA.w SprYSpeed, X : BNE .still_moving
     STZ.w SprMiscA, X  ; Block stopped, allow new direction
   .still_moving
+  RTS
+}
 
-  LDA.w SprTimerA, X : BNE .delay_timer
-    LDA.b #$0D : STA.w SprTimerB, X
-  .delay_timer
+; =========================================================
+; Stop At Wall - called when tile collision reports a wall
+; =========================================================
+; Stops only for a wall ahead in the direction of travel. Rounds the moving
+; axis onto the 8px grid away from the wall (down when moving right/down,
+; up when moving left/up), then clears speed and subpixel remainders so the
+; block rests flush instead of pressing into the wall every frame.
+IceBlock_StopAtWall:
+{
+  LDA.w SprXSpeed, X : BEQ .vertical
+  BMI .left
+    LDA.b #$01 : AND.w SprCollision, X : BEQ .done
+      LDA.w SprX, X : AND.b #$F8 : STA.w SprX, X
+      BRA .stop
+  .left
+    LDA.b #$02 : AND.w SprCollision, X : BEQ .done
+      LDA.w SprX, X : CLC : ADC.b #$07 : AND.b #$F8 : STA.w SprX, X
+      LDA.w SprXH, X : ADC.b #$00 : STA.w SprXH, X
+      BRA .stop
+
+  .vertical
+  LDA.w SprYSpeed, X : BEQ .done
+  BMI .up
+    LDA.b #$04 : AND.w SprCollision, X : BEQ .done
+      LDA.w SprY, X : AND.b #$F8 : STA.w SprY, X
+      BRA .stop
+  .up
+    LDA.b #$08 : AND.w SprCollision, X : BEQ .done
+      LDA.w SprY, X : CLC : ADC.b #$07 : AND.b #$F8 : STA.w SprY, X
+      LDA.w SprYH, X : ADC.b #$00 : STA.w SprYH, X
+
+  .stop
+  STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+  STZ.w SprXRound, X : STZ.w SprYRound, X
+  .done
   RTS
 }
 
