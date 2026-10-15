@@ -37,7 +37,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 09  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 01  ; 01 = not counted as an enemy (the block cannot die)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
