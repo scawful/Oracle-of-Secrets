@@ -212,12 +212,12 @@ Sprite_Chuchu_Move:
 
     JSL Sprite_CheckDamageFromPlayer : BCC .no_damage
       INC.w SprMiscB, X ; Switch to RecoilFromPlayer
-      LDA.b #$20 : STA.w SprTimerB, X
+      LDA.b #$20 : STA.w SprTimerC, X
     .no_damage
 
     JSL Sprite_CheckDamageToPlayer : BCC .no_attack
       INC.w SprMiscB, X ; Switch to RecoilFromPlayer
-      LDA.b #$20 : STA.w SprTimerB, X
+      LDA.b #$20 : STA.w SprTimerC, X
     .no_attack
 
     RTS
@@ -233,7 +233,7 @@ Sprite_Chuchu_Move:
     LDA $09 : STA $00 : STA $01
     JSL Sprite_ProjectSpeedTowardsEntityLong
 
-    LDA.w SprTimerB, X : BNE .not_done
+    LDA.w SprTimerC, X : BNE .not_done
       STZ.w SprMiscB, X ; Switch back to BounceTowardPlayer
     .not_done
 
@@ -242,7 +242,7 @@ Sprite_Chuchu_Move:
 }
 ```
 
-`RecoilFromPlayer` moves the Chuchu away from Link and is meant to return to `BounceTowardPlayer` when `SprTimerB` reaches 0. Known bug (runtime, 2026-10-12): every action also runs `%PlayAnimation(..., 16)`, which uses the same `SprTimerB` and reloads it to `$10` when it reaches 0, so `RecoilFromPlayer` never sees 0. After its first recoil the Chuchu stays in `RecoilFromPlayer` and never hops toward Link again. The recoil path does not spawn the detached helmet/mask; it is spawned once, from `GreenChuchu_NoHelmet` / `RedChuchu_NoMask`, gated by `SprMiscD`.
+`RecoilFromPlayer` moves the Chuchu away from Link and returns to `BounceTowardPlayer` when `SprTimerC` reaches 0 (32 frames). The recoil wait uses `SprTimerC` because every action also runs `%PlayAnimation(..., 16)`, which owns `SprTimerB` and reloads it to `$10` whenever it reaches 0. Before 2026-10-15 the wait used `SprTimerB`, so it never ended and the Chuchu stopped chasing Link after its first recoil. The recoil path does not spawn the detached helmet/mask; it is spawned once, from `GreenChuchu_NoHelmet` / `RedChuchu_NoMask`, gated by `SprMiscD`.
 
 ### 2.5. `HelmetChuchu_SpawnHookshotDrag`
 
@@ -431,4 +431,4 @@ Sprite_HelmetChuchu_Draw:
 *   **Custom OAM Drawing:** The `Sprite_HelmetChuchu_Draw` routine is a complex example of custom OAM manipulation. It dynamically selects tiles and properties based on the Chuchu's current state, allowing for seamless transitions between helmeted, masked, and vulnerable forms.
 *   **`SprMiscB` Usage:** This variable controls the Chuchu's movement sub-states (`BounceTowardPlayer` and `RecoilFromPlayer`). It also plays a role in the detached helmet/mask sprites.
 *   **`SprMiscD` Usage:** This variable acts as a flag to ensure that the `HelmetChuchu_SpawnHookshotDrag` routine is called only once when the helmet/mask is detached (from `GreenChuchu_NoHelmet` / `RedChuchu_NoMask`). `RecoilFromPlayer` does not call it.
-*   **`SprTimerB` Usage:** Set to `$20` to time the recoil state, but `%PlayAnimation` shares it and reloads it to `$10`, so the recoil never ends (known bug, see section 2.4).
+*   **Timers:** `SprTimerB` drives `%PlayAnimation`. `SprTimerC` is set to `$20` to time the recoil state (see section 2.4).
