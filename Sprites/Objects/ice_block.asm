@@ -27,7 +27,7 @@
 ; =========================================================
 
 !SPRID              = $D5
-!NbrTiles           = 02
+!NbrTiles           = 03  ; OAM slots - 1: the draw writes 4 tiles
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -39,7 +39,7 @@
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
 !Hitbox             = 09  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
-!Statis             = 00  ; 00 = is sprite is alive?, (kill all enemies room)
+!Statis             = 01  ; 01 = not counted as an enemy (the block cannot die)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
 !CanFall            = 00  ; 01 sprite can fall in hole, 01 = can't fall
 !DeflectArrow       = 00  ; 01 = deflect arrows
