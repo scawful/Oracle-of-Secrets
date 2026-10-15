@@ -1,5 +1,5 @@
 #+TITLE: Decisions waiting on scawful
-#+TODO: OPEN | DECIDED
+#+TODO: OPEN | DECIDED SUPERSEDED
 #+STARTUP: overview
 
 Agents add one OPEN heading per decision, with options and a link to the full
@@ -12,7 +12,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED World map dungeon icons: when does each icon appear?
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff
-  :DOC:      [[file:../../Debugging/Issues/world_map_icons_2026-09-26.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Debugging/Issues/world_map_icons_2026-09-26.md]]
   :END:
   Bug: a Deku Scrub "peacetime" line sets MapIcon ($7EF3C7) to 2 before D1, so
   the map shows D2-D7 and never D1. The doc proposes a reveal table (per
@@ -39,7 +39,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Impa's arc and how she escapes Kydrog's ambush
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff
-  :DOC:      [[file:../Plans/impa_role_brainstorm_2026-09-26.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_role_brainstorm_2026-09-26.md]]
   :END:
   Four options (protector who fails and redeems; messenger to Zelda;
   OoA-style possession twist, two-villain risk; quiet guardian of the Hall).
@@ -54,7 +54,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Abyss order: Moon Pearl first, Minish first, or both in one beat? (beat sheet OPEN #2)
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff
-  :DOC:      [[file:../Plans/impa_role_brainstorm_2026-09-26.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_role_brainstorm_2026-09-26.md]]
   :END:
   The brainstorm recommends Pearl first, then Minish.
   Answer: Minish first, Pearl as the Shrine of Origins reward (as built:
@@ -68,7 +68,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Dialogue audit: which fixes to apply
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff
-  :DOC:      [[file:../Reviews/dialogue_audit_2026-09-26.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/dialogue_audit_2026-09-26.md]]
   :END:
   136 messages flagged; 63 need a base-ROM write (after the yaze importer fix).
   The report opens with a "fix first" list. Answer "fix-first list", "all
@@ -200,7 +200,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Kydrog-was-the-guardian reveal is a dream
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
-  :DOC:      [[file:../Plans/dream_sequences.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/dream_sequences.md]]
   :END:
   Not critical-path info, so it is shown in a dream, not D3 lore or sword
   callouts. Fits beat 14 "Dream 1: The Sealing War" (after Shrine of Wisdom).
@@ -210,7 +210,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Dreams are in RC scope
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
-  :DOC:      [[file:../RC_MASTER_PLAN.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/RC_MASTER_PLAN.md]]
   :END:
   Any "dreams out of RC scope" line comes from the old RC definition and is
   stale for the new RC series.
@@ -229,7 +229,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Dialogue style: people of Kalyxo first, race second
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
-  :DOC:      [[file:../Reviews/dialogue_audit_2026-09-26.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/dialogue_audit_2026-09-26.md]]
   :END:
   1. Race names stay in proper nouns: places (Zora Temple, Goron Mines),
      items (Zora Mask), named characters (Zora Princess).
@@ -259,7 +259,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Attract scene direction (rooms, zoom, art)
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
-  :DOC:      [[file:../Plans/intro_plan_2026-09-24.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/intro_plan_2026-09-24.md]]
   :END:
   1. The map zoom lands on Tail Pond ($2D), where the new-game experiment
      scene opens.
@@ -283,7 +283,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Arrival: add a rescue voice on black between the fall and the bed
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
-  :DOC:      [[file:../Plans/intro_plan_2026-09-24.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/intro_plan_2026-09-24.md]]
   :END:
   After the fall, show 1 message over black (someone finds Link and carries
   him in), then the existing bed wake-up; add one wake-up line from a villager
@@ -384,7 +384,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Seal geography: pyramid = lock, volcano = prison mouth
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
-  :DOC:      [[file:../Plans/dream1_sealing_war_storyboard_2026-09-26.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/dream1_sealing_war_storyboard_2026-09-26.md]]
   :END:
   1. Temporal Pyramid (DW $40 parent) is the monument over the seal. The
      Master Sword pedestal there ($62 in the $41 grove) is the lock; the
@@ -403,7 +403,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Dream structure: one dream per pendant, wake in the hut
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
-  :DOC:      [[file:../Plans/dream1_sealing_war_storyboard_2026-09-26.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/dream1_sealing_war_storyboard_2026-09-26.md]]
   :END:
   Maple's pendant check (Sprites/NPCs/maple.asm) selects the dream:
   Wisdom -> Dream 1 "The Sealing War" (Kydrog's fall);
@@ -622,10 +622,10 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   lore purpose and potentially could add items"; then "yes both" (scawful,
   2026-09-26).
 
-* DECIDED Room census follow-ups (runtime-checked on b28, 2026-09-26)
+* OPEN Room census follow-ups (runtime-checked on b28, 2026-09-26)
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff (room census agent)
-  :DOC:      [[file:/private/tmp/claude-501/-Users-scawful-src-hobby-oracle-of-secrets/00b31eba-5650-499f-aa68-7c789f12b2aa/scratchpad/patches/room_census_fixes_README.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/room_census_2026-09-26/room_census.md]]
   :END:
   Refuted: the 7 cross-dungeon pits are pit-damage rooms (fall = 1 heart, respawn in
   the room); Mayor's House $119 stairs go to $11D (not Fortress $1D; z3ed dropped the
@@ -642,7 +642,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Room budget step 1: the Sky tower gets the adjacent free block
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
-  :DOC:      [[file:../Reviews/room_census_2026-09-26/room_census.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/room_census_2026-09-26/room_census.md]]
   :END:
   Sky tower: rooms $90-$96 + $A0, $A6, $B0 (10 rooms, adjacent on the room
   grid; includes the underwater-shrine block-out at $90-$92, which gets
@@ -656,7 +656,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Room budget step 2: underwater Abyss shrine is medium (5 rooms)
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
-  :DOC:      [[file:../Reviews/room_census_2026-09-26/room_census.md]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/room_census_2026-09-26/room_census.md]]
   :END:
   Medium keyless mini-dungeon: short route + mini-boss; puzzles gate with
   switches, items, Minish. It has no small keys; dungeon ID is still TBD.
@@ -746,7 +746,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
 * DECIDED Abyss chunk layout and warp pads (to be enforced)
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
-  :DOC:      [[file:../Reviews/audit_2026-09-26/overworld_grid.png]]
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/audit_2026-09-26/overworld_grid.png]]
   :END:
   Finding (static tile analysis 2026-09-27): pad $25->$65 needs no item and
   opens most of the Abyss; 4 pads land in the volcano region.

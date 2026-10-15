@@ -4,6 +4,10 @@
 #+options: H:5 tags:t
 #+startup: content
 
+Flag defaults: since 2026-09-29 RC features default to 1 in Util/macros.asm; "(default 0)" and "(repo still 0)" notes below are historic.
+
+Docs/Planning/Plans, Docs/Planning/Status (except decisions.org), Docs/Debugging and several audits were removed from git on 2026-10-06; find them at ~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/<same path>.
+
 * Project Dashboard & Epics
 
 This section provides a high-level overview of the major development efforts (Epics). Each epic groups together numerous smaller tasks from the sections below.
@@ -30,7 +34,7 @@ This section provides a high-level overview of the major development efforts (Ep
 
 ** Handoff Notes
 *** Latest Handoff (Lore + Infra Planning)
-    - See: =Docs/Planning/Status/handoff_lore_infra_planning_2026-01-24.md=
+    - See: =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Status/handoff_lore_infra_planning_2026-01-24.md=
 
 * Technical Debt & Refactoring
   :PROPERTIES:
@@ -81,10 +85,10 @@ This section tracks tasks focused on improving the existing codebase's structure
     :END:
     - *Goal:* Make risky hooks easy to toggle without desyncing analysis/tooling.
     - *Tasks:*
-      - [X] Standardize feature overrides: =Config/feature_flags.asm= + =scripts/set_feature_flags.py=
+      - [X] Standardize feature overrides: =Config/feature_flags.asm= + =Scripts/Build/set_feature_flags.py=
       - [X] Make =hooks.json= generation aware of module/feature flags and skip non-assembled trees
       - [ ] Add analyzer diff mode + module focus filters (z3dk)
-      - [ ] Document the feature-gated `org` patch pattern (link from =ROADMAP.md=)
+      - [X] Document the feature-gated `org` patch pattern (=Docs/Technical/StyleGuide.md= section 5)
 
 *** TODO [#C] Leverage ~struct~ for Complex Data Structures
     :PROPERTIES:
@@ -97,15 +101,15 @@ This section tracks tasks focused on improving the existing codebase's structure
       - [ ] Sprite State (Generic sprite properties)
       - [ ] SRAM Layout (Quest flags, item data)
 
-*** TODO [#C] Convert Manual Jump Tables to Use ~table~
+*** TODO [#C] Review hand-written jump tables
     :PROPERTIES:
     :ID: infra-tables
     :END:
     - *Analysis:* Jump tables are often created manually with `dw` directives.
-    - *Task:* Convert these tables to use asar's `table` directive for simplicity and safety.
+    - *Task:* asar `table` is a text charset directive and does not apply. Optional: keep `dw` lists, add a label per entry and a size assert (e.g. assert pc()-.handlers == 2*count).
     - *Candidates:*
       - [ ] =Items/all_items.asm= (=Link_ConsumeMagicBagItem=)
-      - [ ] =Menu/menu.asm= (=Menu_Entry.vectors=)
+      - [ ] =Menu/menu.asm= (=Menu_Entry vector list (Menu/menu.asm)=)
 
 *** TODO [#C] Document the Dialogue System
     :PROPERTIES:
@@ -185,7 +189,7 @@ CLOSED: [2025-12-09 Mon]
     - [X] Gate the Ring Box entry on owning a ring (or the ring box item).
     - [X] Gate the Journal entry on its first story use. (Superseded: journal deferred, decisions.org "Defer journal"; the unlock check always returns locked.)
     - [ ] Check cursor navigation skips hidden entries.
-    - Built behind =!ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY= (default 0), Mesen2-verified: =Roms/TestBuilds/menu-hide-rings-journal-early-2026-09-25/NOTES.md=. Gates: rings = =MAGICRINGS $7EF3D8 & $3F=; journal = =Journal_CountUnlocked >= 1=.
+    - Built behind =!ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY= (default 1 since the 2026-09-29 policy), Mesen2-verified: =Roms/TestBuilds/menu-hide-rings-journal-early-2026-09-25/NOTES.md=. Gates: rings = =MAGICRINGS= ($7EF3A2 with !ENABLE_RING_SRAM_RELOCATE = 1; $7EF3D8 only with the flag off) & $3F; journal = =Journal_CountUnlocked >= 1=.
     - *Ruling (scawful, 2026-09-25):* keep the Journal unlock at the Farore beat (GameState bit $02, =Menu/menu_journal.asm:265=). No code change.
     - [X] *Canon conflict (found 2026-09-25):* beat 12 of =Docs/Planning/story_canon_beat_sheet.md= (=[DECIDED]=) has the Book of Secrets (after D2) unlock the Journal.
     - *Ruling (scawful, 2026-09-25, supersedes the Farore-beat ruling):* the Journal unlocks when Link obtains the Book of Secrets. Agent changing =Menu_CheckJournalUnlocked= (inside the flag) and, if needed, wiring =!Story2_BookOfSecrets= (=$7EF3C6= bit 5, never set today) on pickup; owns =Menu/*.asm= + =Items/book_of_secrets.asm=.
@@ -203,8 +207,7 @@ CLOSED: [2025-12-09 Mon]
     - [X] Bug: ring effects never trigger. =MagicRing_CheckFor*= test bit masks ($20/$10...) in all three slots, but slots hold ring IDs 2-7 (=Items/magic_rings.asm:50-56=).
       - [X] Fixed under =!ENABLE_RING_SRAM_RELOCATE=: all 6 rings fire from any slot, each Mesen2-verified (Power 4->20 dmg, Armor 2->1, Heart +8/512 frames, Light beam at low HP, Blast kills an Octorok, Steadfast 0 px knockback). Also under the flag: the Armor hook at =$06F400= left 2 stray bytes after its JSL (ran as =ADC ($03,S),Y=); still present with the flag off. Ring bit comment corrected (Heart/Steadfast were swapped).
       - Design questions for scawful: Power skips the gold sword and +$10 is large; Blast is Bombos class (0 dmg vs 18 sprite types); Armor turns 1-HP hits into 0; Power "DEF DOWN" / Armor "ATK DOWN" not implemented.
-    - [X] Not applied (unowned): =Sprites/NPCs/eon_zora.asm:108= and =Sprites/NPCs/vasu.asm:170= should OR into FOUNDRINGS; FOUNDRINGS is never cleared, so Vasu charges every visit.
-    - [X] Bug: Eon Zora / Error NPC overwrite FOUNDRINGS with a random value (can be 0) instead of OR-ing a bit; never cleared after appraisal.
+    - [X] Fixed under =!ENABLE_TRUTHFUL_CONTROLS= (= 1): =eon_zora.asm:106-110= and =vasu.asm:196-200= call =MagicRing_GrantUnfound=; Vasu ORs found rings into owned and clears FOUNDRINGS (=vasu.asm:106-131=). Not run on the RC ROM.
     - [ ] Check: =Core/sram.asm= name and $55AA save-marker entries look wrong vs real saves (name =$7EF3D9-$7EF3E4=, marker at =$7EF3E5=).
     - *RC status (2026-10-06, Claude):* in RC =2f1582e2= with =!ENABLE_RING_SRAM_RELOCATE= = 1 and =!ENABLE_ONE_RING= = 1 (repo still 0). Effects test ring IDs (=Items/magic_rings.asm:47-155=); one ring slot per decisions.org "Masks & Rings page … one ring", so "fire from any slot" above is now slot 1 only. Eon Zora (=Sprites/NPCs/eon_zora.asm:106-110=) and the Error NPC (=vasu.asm:196-200=) call =MagicRing_GrantUnfound= (=magic_rings.asm:84-125=, adds one unfound ring); Vasu ORs found rings into owned and clears FOUNDRINGS (=vasu.asm:106-131=). Runtime: effects on the ring test build; Error NPC in the 09-29 consolidation packet; not run on the RC ROM; the real Eon Zora talk is still unverified (box above). Power/Blast design questions have no decisions.org entry. Report: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/tracker_reconciliation_2026-10-06/=.
 ** Music System (=Music/=)
@@ -227,7 +230,7 @@ CLOSED: [2025-12-09 Mon]
     - [X] Mayor's House $119 stairs: go to $11D (z3ed dropped the high byte), round trip works. Reachability of $11D's 2 heart pieces: decisions.org OPEN.
     - [X] S3 entrance $0C dungeon ID $09: CONFIRMED shares keys with $08 (Final Boss Route) and D7's compass/big key/map bits. New IDs: decisions.org OPEN.
       - Fixed (2026-10-06 check, Claude): decided in decisions.org; patch =Data/rom_patches/s3_dungeon_id_2026-09-27.json= ($09 -> $00) is in the RC base ROM; =z3ed entrance-info= on RC =2f1582e2= gives entrance $0C dungeon ID $00. Runtime: b29-era build.
-    - Still open (2026-10-06): the $11D heart-piece reachability and the optional $81 pit hunk. Their decisions.org heading is marked DECIDED but its =Answer:= line is blank.
+    - Still open (2026-10-06): the $11D heart-piece reachability and the optional $81 pit hunk. Their decisions.org heading is now OPEN (its =Answer:= line is blank).
     - [X] Stale docs fixed (dungeons.json ownership/entrances, ShrineofCourage.md), census agent diff, applied 2026-09-26.
     - Capacity: 13 free rooms + 6 reclaimable; clean dungeon IDs free 0x00/0x04. IDs 0x1C/0x1E are unsafe even for keyless rooms without a full key-table hook (unconditional load/save aliases FishingRod/Bananas SRAM).
   :PROPERTIES:
@@ -299,7 +302,7 @@ CLOSED: [2025-12-09 Mon]
     - *Analysis:* The `lost_woods.asm` puzzle logic was executing prematurely on entry, corrupting coordinates.
     - *Fix:* Added a check to ensure puzzle logic only runs when *inside* Area 0x29. Added `LostWoods_ResetCoordinates` to snap Link's position and clear scroll drifts on exit.
     - *Status:* Main "skipping" bug resolved.
-    - *Regression:* Minor camera/coordinate desync when returning West (0x28). Documented in [[file:Docs/Debugging/Issues/LostWoods_Transition_Desync.md][LostWoods_Transition_Desync.md]]. Low priority.
+    - *Regression:* Minor camera/coordinate desync when returning West (0x28). Documented in LostWoods_Transition_Desync.md. Low priority.
 
 *** DONE [#A] ZSOW vs. Day/Night Sprites
     :PROPERTIES:
@@ -378,7 +381,7 @@ CLOSED: [2025-12-08 Mon 22:34]
     :PROPERTIES:
     :ID: origins-room-revert-layering
     :END:
-    - *Report (scawful, 2026-09-25, RC playtest):* object collision/layering bug in the Shrine of Origins. The pot added in the bottom-right quadrant and the Minish-only tiles (puzzle option A, =Docs/Planning/Plans/origins_plan_2026-09-24.md=) were not needed.
+    - *Report (scawful, 2026-09-25, RC playtest):* object collision/layering bug in the Shrine of Origins. The pot added in the bottom-right quadrant and the Minish-only tiles (puzzle option A, =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/origins_plan_2026-09-24.md=) were not needed.
     - [X] Remove the new pot (=$11C= @39,51) and the 4 custom-collision =$65= tiles from the room; keep or drop =!ENABLE_ORIGINS_MINISH_PUZZLE= per scawful.
     - [X] Find the layering/collision fault (object layer vs. BG2/BG1 priority) with a Mesen2 capture. (Cause: fence =$F97= collision only in COLMAPB; see below.)
     - Exiting the shrine makes =dw-warp-pyramid-gfx= worse: the Dark World background turns into repeating parallax tiles.
@@ -409,7 +412,7 @@ CLOSED: [2025-12-08 Mon 22:34]
       - Not reproduced in Mesen2 on v6: simulated Kydrog warp (=$A0=$20=, =$10=$15=) and the Shrine of Origins exit both end with =00 21 61 18 0B=. Need the exact path (death/continue? another building? the real Forest Glade $80 start?).
       - scawful: garbage never disappears in the Abyss; after returning to Kalyxo the BG3 (HUD layer) bugs persist but change. Console state decoded (RetroArch RZIP -> snes9x2010 blocks, =VRA=/=RAM=): BG3 tilemap (VRAM word =$6000=) has non-blank entries in rows 0-9, 16-18, 26-31 (window/frame-like tiles, e.g. =3004 3005 ... 303B 303C 7015=); BG3 CHR (=$7000-$7FFF=) differs from Mesen in ~1.6 KB; =$6800-$6FFF= almost entirely different. Corrupted tiles are not raw ROM data nor OBJ copies.
       - Mesen2 (same ROM) stays clean: GS2 pyramid spawn with and without P2, and P2 + 3 pause-menu open/close cycles. So far console-only (RetroArch =km_snes9x_xtreme=). Leads: (1) Oracle's world-map DMA code/data in banks $40-$41 (beyond 2 MB; header size byte says 1 MB), which an older snes9x may map differently; (2) VRAM writes outside vblank that hardware/Mesen drop but snes9x2010 applies. Next: ask whether the world map was opened; test the same spot on the Canoe entry and in Mesen with the console route.
-    - *scawful (2026-09-26):* the world map was NOT opened; the garbage appears immediately upon the warp. Lead (1) is ruled out by code reading too: the bank $40-$41 code (=Overworld/world_map.asm=) only runs from the world-map NMI jobs (=$17= = $07/$15) and =TransferMode7Characters= (=$0ABA39=). Earlier Mesen2 checks only simulated the warp (=$A0=$20=, =$10=$15=); the real Kydrog warp from a GameState 1 save is being replayed in Mesen2 on v8 (background agent, report =Docs/Debugging/Issues/kydrog_warp_replay_2026-09-26.md=).
+    - *scawful (2026-09-26):* the world map was NOT opened; the garbage appears immediately upon the warp. Lead (1) is ruled out by code reading too: the bank $40-$41 code (=Overworld/world_map.asm=) only runs from the world-map NMI jobs (=$17= = $07/$15) and =TransferMode7Characters= (=$0ABA39=). Earlier Mesen2 checks only simulated the warp (=$A0=$20=, =$10=$15=); the real Kydrog warp from a GameState 1 save is being replayed in Mesen2 on v8 (background agent, report =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Debugging/Issues/kydrog_warp_replay_2026-09-26.md=).
     - Repro lead (origins-room-revert agent): leaving the Shrine of Origins by the south door shows the repeating grid on area $40 in both the current and the candidate build; capture + state in =Roms/TestBuilds/origins-room-revert-2026-09-25/captures/= (not a clean repro yet).
     - Overlay code is also being changed by task =part0-storm-bit= (ZSCustomOverworld overlay gates); check whether the bug predates that work.
     - [ ] Capture: build hash, save state before the warp, screenshot of the broken area.
@@ -493,12 +496,16 @@ CLOSED: [2025-12-08 Mon 22:34]
     :END:
     - [ ] Intro exit = sword warp: picking up the sword in the Forest of Dreams plays a short flash/slash and warps Link to $2A; remove reliance on the DW $6A warp tile and its stray return portal. Feasibility first (scripted warp without the portal; kydrog.asm:147-172 banishment path may be reusable). Storm clear + respawn-lock end must key on "back in the Light World", not on the $6A tile.
     - [ ] Return portal: spawn portal sprite $6C at the Abyss arrival spot after a Kalyxo -> Abyss pad crossing (vanilla only spawns it in the LW, Sprite_ReinitWarpVortex). Verify in Mesen.
-    - [ ] Abyss area signs: new expanded messages + repoint area message IDs for $40/$50/$58/$5D/$6A (approved text in Reviews/approved_dialogue_rewrites_2026-09-26.md; do NOT edit $A7, it is Vasu's shop). Only areas with a sign tile show it; render first. $41 plaque ($B3) pending.
-    - [ ] Bug: accidental warp corners on LW $31 (tile16 0xBA8/0xBB6) -> DW $71 with no return portal: soft-lock risk, fix before RC.
-    - [ ] Bug: dream warps have no return. (Door $68 does load Maple's $0F: runtime-checked 2026-09-28 on b31; the old "$11A" reading used the vanilla $02 entrance table, but the game uses ZScream's bank $0F table.)
-    - [ ] Yesterwind (DW $63 village, decisions.org 77c6e8e8..89d8513c): $AF sign text (base ROM, integrator), $63 area message $C1 -> $AF (signs agent), villager reveal line (new expanded ID after $1FA/$1FB+), $1AE "Village of Echoes" -> "Village of Yesterwind" (dialogue agent). scawful reworks the swamp map into the village.
-    - [ ] Dialogue audit batch (DECIDED A/B/D; hold C): dialogue agent prepares a vanilla bundle (integrator applies to base ROM) + expanded diff incl. D3 MapIcon_TailPond move and names Toto Ranch / Rock Meat / Pegasus Shoes.
-    - [ ] AFTER stable RC (b29): Abyss chunk layout + warp pads DECIDED (decisions.org "Abyss chunk layout and warp pads", 5d2c75bf; grid Docs/Planning/Reviews/audit_2026-09-26/overworld_grid.png): block Yesterwind -> Fortress / volcano / Lupo Mountain walking routes (Glove rocks); Fortress barrier with a Master Sword check; seal the volcano until the eruption; remove extra volcano pads, keep the graveyard pad as the finale entry. Bundle with the Glove/Mitt swap (same overworld rocks). Tools: z3ed overworld-render/get-tile/set-tile/sprite edits (dry-run default).
+    - [X] Abyss area signs: five area-sign messages $1FB-$1FF applied to the base ROM (repoint of $40/$50/$58/$5D/$6A; approved text in Reviews/approved_dialogue_rewrites_2026-09-26.md; do NOT edit $A7, it is Vasu's shop).
+    - [ ] Abyss area signs still open: signpost tiles scawful places (render first); $41 plaque ($B3).
+    - [X] LW $31 warp corners: patch applied to the base ROM (Data/rom_patches/abyss_warp_corners_2026-09-26.json; tile8 char $1E2 type $4B -> $02).
+    - [ ] Runtime check that no soft-lock remains (accidental warp corners on LW $31 -> DW $71 with no return portal).
+    - [ ] Dream return: code is on (!ENABLE_DREAM_RETURN = 1; Sprites/NPCs/maple.asm:195,228-278 arms and runs the timed return); runtime check of the timed return from each dream room is open. (Door $68 does load Maple's $0F: runtime-checked 2026-09-28 on b31; the old "$11A" reading used the vanilla $02 entrance table, but the game uses ZScream's bank $0F table.)
+    - [X] Yesterwind (DW $63 village): $AF sign text, $63/$64/$6B/$6C area message -> $AF, $1AE rename (build source)
+    - [ ] Villager reveal line $200: wire to a Yesterwind villager (registered, not wired to an NPC yet). Source: decisions.org 77c6e8e8..89d8513c; scawful reworks the swamp map into the village.
+    - [X] Dialogue audit batch, vanilla write: 9 messages applied 2026-09-26 (decisions.org "Dialogue batch vanilla write"; base SHA-1 517f43a9 -> a5de4a36).
+    - [ ] Dialogue audit batch A/B/D, rest (hold C): confirm the expanded diff and the names Toto Ranch / Rock Meat / Pegasus Shoes in the ROM text (Toto Ranch is in Data/dialogue/expanded_messages.json; Pegasus Shoes is not).
+    - [ ] AFTER stable RC (b29): Abyss chunk layout + warp pads DECIDED (decisions.org "Abyss chunk layout and warp pads", 5d2c75bf; grid ~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/audit_2026-09-26/overworld_grid.png): block Yesterwind -> Fortress / volcano / Lupo Mountain walking routes (Glove rocks); Fortress barrier with a Master Sword check; seal the volcano until the eruption; remove extra volcano pads, keep the graveyard pad as the finale entry. Bundle with the Glove/Mitt swap (same overworld rocks). Tools: z3ed overworld-render/get-tile/set-tile/sprite edits (dry-run default).
     - [ ] Chunks: Abyss opens one chunk per return trip (intro; Flippers/Wisdom via LW $25 pad -> $65 -> $63, verify; whirlpool; volcano). Scan warp tiles/crossings before gating.
 *** TODO [#B] Attract/title history: rewrite text and fix scenes :cutscene:story:
     :PROPERTIES:
@@ -512,23 +519,23 @@ CLOSED: [2025-12-08 Mon 22:34]
     :PROPERTIES:
     :ID: experiment-scene
     :END:
-    - Storyboard approved (rev 2): =Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md=.
+    - Storyboard approved (rev 2): =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/experiment_scene_storyboard_2026-09-25.md=.
     - [X] Arrival polish: black hold before the iris, black outside the iris (build =rc-arrival-polish-2026-09-25=).
     - [X] Arrival: no HUD during "Accept our quest" (scawful 2026-09-25); HUD rebuilt at wake-up.
     - [X] Phase 1: module $0D script host, text/sound/backdrop tint, Start skip; msgs $1D9-$1DF (build =experiment-scene-phase1-2026-09-25=, Mesen2-verified; audio not checked).
     - [X] Phase 2: real Tail Pond ($2D) via vanilla =Module08_OverworldLoad= with =$A0 = $0E6= (exit $12), Abyss = same spot with subtractive color math, full reload into the arrival (build =experiment-scene-phase2-2026-09-25=, Mesen2-verified; audio not checked).
-    - [ ] Optional: real Abyss load ($6D; no exit leads there, needs a mirror-style load), text readability over the map, camera tuning.
+    - [X] Real Abyss load (OW $6D) for shots 3-4: Core/Cutscene/experiment.asm:40,768-791; b31-verified (see the warp sound fx item below).
+    - [ ] Optional: text readability over the map, camera tuning.
       - Text box lead (2026-09-25): messages opened via =Interface_PrepAndDisplayMessage= (=$0FFDAA=, module $0E) draw the bordered box (Impa hints show it); the scene and the arrival call =RenderText= directly and get no box.
     - *Playtest (scawful, SNES Classic, 2026-09-25):* dialogue timing and the flashes work. Needs: a better camera position on Tail Pond; sprites; the Abyss does not read as the Abyss at all (the color-math tint is not enough).
     - [ ] Camera: pick the framing with scawful (current = exit $12 default view, pond + cave).
-    - [ ] Real Abyss load for shots 3-4 (OW $6D; no exit leads there, needs a mirror-style load).
     - [ ] Phase 3: actors (Zora A/B, Farore, rising Stalfos).
     - [ ] GBC-style Abyss Stalfos art (needs sheet space; see =Docs/Technical/Sheets/gfx_sheet_inventory.md=).
 *** TODO [#A] Playtest v6 findings (scawful + Chris, 2026-09-25) :playtest:
     :PROPERTIES:
     :ID: playtest-v6-findings
     :END:
-    - [X] "the warp sound fx works but the map doesnt change" (which warp: the experiment scene's Abyss shot, or the Kydrog warp? ask). Answered 2026-09-25: the experiment scene's Abyss shot (=Docs/Planning/Status/review_2026-09-26.md=). The scene now loads the real Abyss (=Core/Cutscene/experiment.asm:786-793=, flag on in RC); b31 verified.
+    - [X] "the warp sound fx works but the map doesnt change" (which warp: the experiment scene's Abyss shot, or the Kydrog warp? ask). Answered 2026-09-25: the experiment scene's Abyss shot (=~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Status/review_2026-09-26.md=). The scene now loads the real Abyss (=Core/Cutscene/experiment.asm:786-793=, flag on in RC); b31 verified.
     - [X] "rain dismisses when we meet farore": storm now ends back on Kalyxo after the Abyss (see =part0-storm-bit=; Mesen2-verified 2026-09-26, =Roms/TestBuilds/storm-owl-oneshot-2026-09-26/=).
     - [ ] "grass color in the maku area is wrong" (new; palette/area check).
     - [X] "eon owl respawns after first encounter" (missing one-shot). Built behind =!ENABLE_EON_OWL_ONE_SHOT= (default 0): new byte =EonOwlFlags= =$7EF3A7= (bit 1 = map $50 Owl talked, set in =EonOwl_IntroDialogue=; Prep despawns when set). Bit 0 reserved for the new arrival Owl (decisions.org "Owl appears twice").
@@ -541,8 +548,8 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [ ] "improve sword to bush impact hitboxes, they are a bit finicky" (sword vs. tile interaction).
     - [X] "bush effects seem to be missing" + scawful 2026-09-26 "when pots hit the ground i dont see the animated ancillae breaking effect" (no P2 joined). Root cause (Mesen2, v9): =Overworld/time_system.asm= =HUD_ClockDisplay= (hook =$068361=) did =REP #$30= before =JSL $09B06E= (=Garnish_ExecuteUpperSlots_long=, 8-bit =LDX.b #$1D=); with 16-bit X the upper garnish slots =$0F-$1D= never ran, so debris garnish =$16= (spawned by =ThrowableScenery_ScatterIntoSmallerDebris= =$06ACA1=) froze at timer =$1F= (8 frozen slots in scawful's WRAM). Since =f8db63b5= (2026-01-30). Fix: =SEP #$30= (unflagged). Verified in Mesen2 on v10: injected debris counts down, clears, 4 tile-=$59= pieces in OAM. Not a P2 bug. =Roms/TestBuilds/rc-playtest-2026-09-25/staged_v10/=.
     - [ ] "dog sprite needs to render above link too" (OAM priority/order).
-    - [X] "the bird enemy is a bit fast / enemies hit for a lot of damage earlier game seems to be a pain point for chris": enemy balance analysis running (inventory script + =Docs/Planning/Plans/enemy_balance_proposal_2026-09-26.md=); changes go behind a default-off flag after scawful picks numbers.
-      - Done (2026-09-26): =Scripts/Analysis/enemy_balance_inventory.py= (deterministic), =Docs/Technical/Balance/enemy_stats_inventory.{md,json}= (116 placed sprite IDs), proposal =Docs/Planning/Plans/enemy_balance_proposal_2026-09-26.md= (flag =!ENABLE_EARLY_GAME_DAMAGE_REBALANCE=, not built).
+    - [X] "the bird enemy is a bit fast / enemies hit for a lot of damage earlier game seems to be a pain point for chris": enemy balance analysis running (inventory script + =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/enemy_balance_proposal_2026-09-26.md=); changes go behind a default-off flag after scawful picks numbers.
+      - Done (2026-09-26): =Scripts/Analysis/enemy_balance_inventory.py= (deterministic), =Docs/Technical/Balance/enemy_stats_inventory.{md,json}= (116 placed sprite IDs), proposal =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/enemy_balance_proposal_2026-09-26.md= (flag =!ENABLE_EARLY_GAME_DAMAGE_REBALANCE=, not built).
       - Findings: the fast bird is the vanilla Raven ($00; LW 4 HP / half heart, dive speed #$20, the fastest Act I enemy, by design). Outliers: Lynel $D0 on screen $05 (4 hearts on green mail; location INFERRED), Wizzrobe $9B and Sluggula $20 in D1 (4-heart class), Sea Urchin $AE (1 heart, 39 placements, pre-sword), Stalfos Knight $91 (64 HP) in D1/D2, Octorok $08 has 0 HP / 0 prize (possible bug, trace first).
       - Economy: bush/pot drops are fixed per screen/room (no odds to tune); =Core/patches.asm:119-143= replaced the 10-rupee heart refill (=ShopItem_Heart= =$1EF27D=) with Bananas in every standard shop -> no cheap healing. Most Act I enemy prize packs give no rupees.
       - Decisions for scawful: $05 stage; Stalfos Knight HP; approve the damage-class batch; Octorok trace first; restore the heart refill in a new shop slot (keep Bananas for the Kiki quest).
@@ -551,18 +558,19 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [X] "color behind the dialogue box": text boxes have no background or frame. Cause (Mesen2, v6): the text engine is vanilla and draws into char tiles =$180-$1FD= (BG3 palette 6 = transparent, navy =(0,0,112)=, white, red); Oracle's glyphs use color 1 only as an outline and color 0 (transparent) for the background (buffer =$7F0000=). No frame tiles appear in the BG3 tilemap. Options: translucent dark band via color window + HDMA, solid navy fill (glyph blit change), or darker outline only.
       - scawful chose "translucent dark" (2026-09-26). Built behind =!ENABLE_TEXT_BOX_SHADE= (=Core/text_shade.asm=, =$3AEA00=; RunInterface pointer =$00F878/$00F884/$00F890=; HDMA ch 6 on CGWSEL/CGADSUB, color window 2). Mesen2-verified: bottom and top window positions, band removed on close with scene =$98/$9B= restored, pyramid interior; flag off byte-identical to v6. =Roms/TestBuilds/text-box-shade-2026-09-26/=; deployed to the SNES Classic as playtest v7 (2026-09-26, both entries, saves preserved). On the console, v7: scawful "text looks better" (2026-09-26). Underworld verified in Mesen2 on v8 (Chris's save, room =$0104=: band drawn, =$98-$9B= restored on close). Untested: cutscene text (arrival/experiment call RenderText directly and get no band).
     - Lead (2026-09-25): sea urchin death, bush debris, recolored pots/bushes/bed/NPCs and dog layering are all sprite drawing and all seen with P2 joined (P2 allocates OAM and borrows OBJ palette row 6). Quick split test: same actions with P2 left (pad 2 Select+Start). Also: sea urchin =Death= starts the death timer at =$0A= (=sea_urchin.asm:81=); =SpriteModule_Die= (=$06F8A2=) draws the poof while the timer runs and =$0E60,X= bit 7 is clear.
-    - [X] World map dungeon icons (scawful 2026-09-26): a new file that has not beaten D1 shows the D2-D7 icons and not D1. scawful wants to design when each icon activates. Investigation running (report =Docs/Debugging/Issues/world_map_icons_2026-09-26.md=).
-    - [ ] Shield interactions, Oracle series / Four Swords style: plan =Docs/Planning/Plans/shield_interactions_plan_2026-09-25.md= (4 decisions for scawful).
+    - [X] World map dungeon icons (scawful 2026-09-26): a new file that has not beaten D1 shows the D2-D7 icons and not D1. scawful wants to design when each icon activates. Investigation running (report =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Debugging/Issues/world_map_icons_2026-09-26.md=).
+    - [ ] Shield interactions, Oracle series / Four Swords style: plan =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/shield_interactions_plan_2026-09-25.md= (4 decisions for scawful).
     - *RC status (2026-10-06, Claude):* ticked items are in RC =2f1582e2= with their flags on (=!ENABLE_EON_OWL_ONE_SHOT=, =!ENABLE_EON_OWL_NEAR_TRIGGER=, =!ENABLE_NATIVE_2P_POC=, =!ENABLE_TEXT_BOX_SHADE=, =!ENABLE_EARLY_GAME_BALANCE=, =!ENABLE_MAP_ICON_TIMELINE= = 1; the repo still has 0, so "default 0" above is the repo value). Runtime: Owl on the v4 art build (25/25) and the 10f9966e opening (28 Owl checks); P2 sword on v14; text band on its 09-26 test build; map icons states A-I (D7 gate code only); balance on v11. Not run on the RC ROM itself. Still open: Maku grass color (no cause found in source; does it still happen?), sea urchin poof (fix in =Sprites/Enemies/sea_urchin.asm:43-49=, code only), sword-to-bush hitboxes (no code, unowned), dog above Link (priority raised in =village_dog.asm:441-465= but still =DeferToPlayer= at =:341=), shield decisions. Cutscene text still has no band. Report: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/tracker_reconciliation_2026-10-06/=.
-    - Research done (2026-09-26): companion engine =Docs/Planning/Plans/companion_mode_engine_research_2026-09-26.md= (OAM regions, palette row 6 vs. lifted-object overlay, carry proxy, PvP hitboxes, pad-2 R deletes items in =ItemMenu_YItemSelection=); custom code audit =Docs/Technical/Audits/custom_code_interaction_audit_2026-09-26.md= (P0: ring aliasing with =ring_sram_relocate= off; =NewOverworld_SetCameraBounds= called with 8-bit A from =$02C09C=).
+    - Research done (2026-09-26): companion engine =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/companion_mode_engine_research_2026-09-26.md= (OAM regions, palette row 6 vs. lifted-object overlay, carry proxy, PvP hitboxes, pad-2 R deletes items in =ItemMenu_YItemSelection=); custom code audit =Docs/Technical/Audits/custom_code_interaction_audit_2026-09-26.md= (P0: ring aliasing with =ring_sram_relocate= off; =NewOverworld_SetCameraBounds= called with 8-bit A from =$02C09C=).
 *** TODO [#A] Village Stalfos patrol/chase guards (Act I) :sprites:gameplay:
     :PROPERTIES:
     :ID: village-patrol-guards
     :END:
-    - *Playtest (scawful, 2026-09-25):* "we still need the actual moving stalfos guards". Today the village guards ($3F at (1552,2784), (1552,2816), (2528,2752) in OW $23) stand still.
-    - Plan: =Docs/Planning/Plans/opening_and_rc_development_2026-09-23.md= item 3 (guards approach from the left, east exit stays blocked, player escapes toward the village hole). Canon ruling (beat sheet, 2026-09-23): half-heart contact damage, normal knockback/invulnerability, brief guard recovery pause; no capture, forced restart or scripted shove into the hole.
+    - *Playtest (scawful, 2026-09-25):* "we still need the actual moving stalfos guards".
+    - Plan: =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/opening_and_rc_development_2026-09-23.md= item 3 (guards approach from the left, east exit stays blocked, player escapes toward the village hole). Canon ruling (beat sheet, 2026-09-23): half-heart contact damage, normal knockback/invulnerability, brief guard recovery pause; no capture, forced restart or scripted shove into the hole.
     - [X] Research: what $3F is in Oracle today, its AI, and the probe/sight helpers (=probe_ref.asm=).
-    - [ ] Build patrol + chase behind a default-off flag; verify walls/pit knockback in Mesen2.
+    - [X] Build patrol + chase (Sprites/Enemies/stalfos_patrol.asm; !ENABLE_INTRO_STALFOS_PATROL = 1).
+    - [ ] Verify contact damage and wall/pit knockback in Mesen2.
     - *RC status (2026-10-06, Claude):* built and on in RC =2f1582e2= (=Sprites/Enemies/stalfos_patrol.asm=, =!ENABLE_INTRO_STALFOS_PATROL= = 1): $42 guards, half-heart hits, recovery pause, chase speed, limited sight, home box. b31 M1 passed, but walked with no damage, so contact damage and wall/pit knockback are still unchecked (box above stays open). "Today the village guards … stand still" is out of date. Report: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/tracker_reconciliation_2026-10-06/=.
 *** TODO [#B] Impa dialogue update + follower hints :dialogue:story:
     :PROPERTIES:
@@ -574,7 +582,7 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [X] Hint code behind =!ENABLE_IMPA_FOLLOWER_HINTS= (=Sprites/NPCs/impa_hints.asm=, =$3AE800=; hook =$09A59E=), msgs =$1BF/$1C4/$1C8/$1C9= (registry owner =impa-follower=, placeholder text). Mesen2-verified: each fires once, none without Impa; flag off byte-identical. =Roms/TestBuilds/impa-follower-hints-2026-09-25/=.
     - [X] Hint lines approved and published (scawful, 2026-09-25): msgs =$1BF/$1C4/$1C8/$1C9= via =z3ed message-source-sync= (source =b0b239a8...=); in =rc-playtest-2026-09-25= v3.
     - [X] Playtest (scawful): hint positions good, but the hole line fired as Link jumped. Box widened to x 2304-2512, y 2768-2960 (fires entering the yard); in playtest v6 (on the SNES Classic); Mesen2: fires on leaving the cave beside the yard.
-    - [ ] scawful: "unchanged vanilla Impa dialogue boxes need editing" -> the $25/$35/$36 drafts in =Docs/Planning/Plans/impa_follower_hints_2026-09-25.md= need approval + an OK to write =Roms/oos168.sfc=.
+    - [ ] scawful: "unchanged vanilla Impa dialogue boxes need editing" -> the $25/$35/$36 drafts in =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Plans/impa_follower_hints_2026-09-25.md= need approval + an OK to write =Roms/oos168.sfc=.
     - *RC status (2026-10-06, Claude):* $35 and $36 are written (=Docs/Planning/Reviews/approved_dialogue_rewrites_2026-09-26.md=). The approved $25 line C (decisions.org "Arrival lines A/B/C approved") is *not* in the RC base ROM: =Data/rom_patches/impa25_line_c_2026-09-27.json= is ready (52 bytes at PC =0x0E09A0=), but RC =Roms/oos168.sfc= still holds its "before" bytes. Needs scawful's OK to write the base ROM. Report: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/tracker_reconciliation_2026-10-06/=.
     - [ ] Check the leftover vanilla Zelda triggers for follower $01 in =Follower_HandleTriggerData= (=Sprites/NPCs/followers.asm=): rooms $FE/$FD use msgs $21 (Kydrog), $22, $23, $2A (Express Portal) and room $22 uses $29 (shop funds). Positions look unreachable for $FE/$FD; room $22 at Y $05AC X $04FC may be reachable with Impa.
 *** TODO [#B] Story Canon QA Pass (Mask/Deku + Intro House) :docs:story:
@@ -600,11 +608,12 @@ CLOSED: [2025-12-08 Mon 22:34]
     :ID: item-flow-balance
     :END:
     - *Goal:* Sanity-check item progression and hint coverage before canonicalizing new flow.
-    - *Reference:* =Docs/Planning/item_flow_balance_check.md=
+    - *Reference:* =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/item_flow_balance_check.md=
     - [ ] Confirm Ocarina song chain placement (Ranch Girl -> Mask Salesman -> Windmill -> Owl).
     - [ ] Align Song of Storms access with Zora Temple + Magic Bean gating.
     - [ ] Implement Impa grant for Mirror of Time in Hall of Secrets (design locked; untested).
-    - [ ] Move the Tail Pond MapIcon setter to the Ocarina award; post-D1 guidance must send Link to Loom Ranch first.
+    - [X] Move the Tail Pond MapIcon setter to the Ocarina award (Sprites/NPCs/ranch_girl.asm:83).
+    - [ ] post-D1 guidance must send Link to Toto Ranch first (elder guidance is $1CB, Sprites/NPCs/village_elder.asm:61; play-through unchecked).
     - [ ] Tune Tail Pond map marker coordinates (manual visual pass).
     - [ ] Decide how and when to set MapIcon + ElderGuideStage + ImpaGuideStage (incl. pyramid icon timing).
 
@@ -614,13 +623,13 @@ CLOSED: [2025-12-08 Mon 22:34]
     :END:
     - [X] Initial overworld sprite lists captured (0x2D, 0x23, 0x0E).
     - [X] Document Fortune Teller + Librarian scroll message text.
-    - [X] Generate room metadata audit (room IDs -> blockset/spriteset/palette) via z3ed; see `Docs/Planning/room_metadata_audit.csv`.
+    - [X] Generate room metadata audit (room IDs -> blockset/spriteset/palette) via z3ed; see `~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/room_metadata_audit.csv`.
     - [X] Port ROM-only messages (`0x143`, `0x012E`) into `Core/messages.org`.
     - [ ] Identify reused ALTTP NPCs and map them to Oracle story roles.
     - [X] Rebuild z3ed to enable `dungeon-list-sprites` and updated `dungeon-describe-room` data.
     - [X] Add `z3ed dungeon-get-entrance` for entrance->room metadata (interior audits).
-    - [X] Audit interiors (Village Elder house, Librarian, Fortune Teller, Hall of Secrets) using `z3ed dungeon-list-sprites` (see `Docs/Planning/npc_home_dialogue_audit.md`).
-    - [X] Add vanilla sprite ID mapping table to `Docs/Planning/npc_home_dialogue_audit.md`.
+    - [X] Audit interiors (Village Elder house, Librarian, Fortune Teller, Hall of Secrets) using `z3ed dungeon-list-sprites` (see `~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/npc_home_dialogue_audit.md`).
+    - [X] Add vanilla sprite ID mapping table to `~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/npc_home_dialogue_audit.md`.
     - [ ] Document NPC homes/locations + dialogue context in docs.
     - [ ] Confirm Village Elder subtype mapping (0x3A / subtype=27) and update docs.
     - [ ] Discuss Village Elder progress-based dialogue triggers (needs design input).

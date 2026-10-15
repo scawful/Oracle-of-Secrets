@@ -351,6 +351,14 @@ Routines called from multiple contexts (e.g. Oracle_CheckIfNight from ZSCustomOv
 
 ---
 
+### 5.5 Feature-Gated Patches
+
+1. Wrap the `org` hunk in `if !ENABLE_X == 1` ... `endif` (for example `if !ENABLE_MAP_ICON_TIMELINE == 1` in `Core/patches.asm`).
+2. Guard the bytes it overwrites: `assert read2(addr) == before || read2(addr) == after, "msg"` (see `Core/patches.asm:56-57`).
+3. Define the flag default in `Util/macros.asm`.
+4. Regenerate `Config/feature_flags.asm` with `Scripts/Build/set_feature_flags.py`.
+5. Test that the flag-off build is byte-identical to the baseline.
+
 ## 6. Comments and Documentation
 
 ### 6.1 Section Dividers
