@@ -1405,3 +1405,21 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   everything, otherwise it will really mess with my motivation/creativity
   if the tool is not working and then i have to come back to you to report
   and wait for a fix" (scawful, 2026-10-06).
+
+* DECIDED D7 rescue commits on the D7 crystal pickup; GameState 3 changes nothing in the overworld yet
+  :PROPERTIES:
+  :ASKED_BY: Claude (D7 rescue qualification)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d7_rescue_2026-10-16/README.md
+  :END:
+  The scaffold's commit could never run, and a commit before the heart
+  container pickup strands Link in $A4. The commit now rides the vanilla
+  crystal store ($08:CC48): the D7 crystal pickup raises GameState to 3
+  (Farore rescued), never lowers it (PR #154, flag-gated). Until the ending
+  needs them, GameState 3 behaves like 2 for its readers: Light World sprite
+  sets and palettes ($00:FC79), ambience ($02:C476), the daytime overworld
+  sprite phase (CheckIfNight), the castle door $0169, and the old man at home
+  ($1E:EACB), who keeps his $9E/$9F lines instead of the Hall of Secrets
+  line $A0. The D7 flag stays off in the RC until the rescue scene exists.
+  Answers: "Fix the commit", "Nothing yet" (GameState 3 changes nothing in
+  the overworld until the ending), "Cap it for now" (old man $A0)
+  (scawful, 2026-10-16).

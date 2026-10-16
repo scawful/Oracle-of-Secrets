@@ -95,7 +95,8 @@ Overworld_UseEntrance:
 
   .left_side_castle_door
   STZ.w $0692 : AND.w #$03FF : CMP.w #$0169 : BNE .open_this_castle_door
-    LDA.l $7EF3C5 : AND.w #$000F : CMP.w #$0003 : BCS .check_door_type
+    ; With the D7 rescue flag, GameState 3 behaves like 2 here (decisions.org).
+    LDA.l $7EF3C5 : AND.w #$000F : CMP.w #$0003+!ENABLE_D7_FARORE_RESCUE_SEQUENCE : BCS .check_door_type
       LDA.w #$0018 : STA.w $0692
   .open_this_castle_door
   TYA : SEC : SBC.w #$0080 : STA.w $0698
