@@ -2,6 +2,10 @@
 !DreamReturn_Entrance = $0068 ; Dream Hut door on DW $5D; lands in room $0F
 !DreamReturn_HutRoom  = $000F ; the hut room itself
 !DreamReturn_Ticks    = 120   ; x4 frames = 8 s of player control in the dream
+; Wisdom dream (!ENABLE_DREAM_WISDOM_SCENE): D1.01 in the hut, D1.02 in the
+; great hall (Sprites/NPCs/dream_wisdom.asm).
+!DreamMsg_WisdomNarration = $0204
+!DreamMsg_WisdomFarore    = $0205
 
 MapleHandler:
 {
@@ -19,6 +23,9 @@ MapleHandler:
   dw Maple_NoNewPendant
   dw Maple_PutLinkToSleep
   dw Maple_HandleDreams
+  if !ENABLE_DREAM_WISDOM_SCENE == 1
+    dw Maple_DreamNarrationDone ; 08
+  endif
 
 
   Maple_Idle:
@@ -106,10 +113,27 @@ MapleHandler:
   Maple_HandleDreams:
   {
     LDA.w SprTimerA, X : BNE +
+      if !ENABLE_DREAM_WISDOM_SCENE == 1
+        ; D1.01 over the sleeping Link, before the Wisdom dream only.
+        LDA.w CurrentDream : BNE .warp
+          %ShowUnconditionalMessage(!DreamMsg_WisdomNarration)
+          %GotoAction(8)
+          RTS
+        .warp
+      endif
       JSR Link_HandleDreams
     +
     RTS
   }
+
+  if !ENABLE_DREAM_WISDOM_SCENE == 1
+    ; First frame after D1.01 closes.
+    Maple_DreamNarrationDone:
+    {
+      JSR Link_HandleDreams
+      RTS
+    }
+  endif
 }
 
 Sprite_PutLinkToSleep:
@@ -142,6 +166,11 @@ Link_HandleDreams:
   ; The dream's Dreams bit is set when it ends (DreamReturn_Begin).
   Dream_Wisdom:
   {
+    if !ENABLE_DREAM_WISDOM_SCENE == 1
+      ; Farore's sheet for the great hall. Group $6A keeps slot 3 (entry 0),
+      ; so LoadTransAuxGFX decodes LASTSPRSET3 there ($00D77B).
+      LDA.b #$55 : STA.l LASTSPRSET3
+    endif
     LDX.b #$00
     JSR Link_WarpToRoom
     RTS
@@ -184,7 +213,11 @@ Link_WarpToRoom:
   RTS
 
   .room  ; Wisdom, Power, Courage
-  db $61, $00, $31
+  if !ENABLE_DREAM_WISDOM_SCENE == 1
+    db $51, $00, $31 ; Wisdom: the great hall (attract card 3, entrance $74)
+  else
+    db $61, $00, $31
+  endif
   .x     ; in-room X low byte, SE quadrant
   db $38, $48, $78
   .y     ; in-room Y low byte, SE quadrant
@@ -276,6 +309,9 @@ DreamReturn_PlayerControl:
 ; edge transitions), so nothing else can change the submodule.
 DreamReturn_Begin:
 {
+  if !ENABLE_DREAM_WISDOM_SCENE == 1
+    JSR DreamWisdom_Release ; scene locks end with every dream return
+  endif
   ; The dream counts as seen only now (decisions.org: pendant dreams):
   ; dying or quitting mid-dream leaves it offerable again.
   LDX.w CurrentDream

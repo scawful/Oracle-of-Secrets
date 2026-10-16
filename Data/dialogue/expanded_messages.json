@@ -1,6 +1,6 @@
 {
   "counts": {
-    "expanded": 119,
+    "expanded": 121,
     "vanilla": 0
   },
   "format": "yaze-message-bundle",
@@ -599,6 +599,16 @@
       "bank": "expanded",
       "id": 118,
       "text": "Back again? The beach,[2]remember. She's waiting.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 119,
+      "text": "[W:02][S:03]...a dream of long[2]ago...[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 120,
+      "text": "[W:02][S:03]Keep the seal,[2]Captain. This blade[3]is its key.[K]"
     }
   ],
   "version": 1
