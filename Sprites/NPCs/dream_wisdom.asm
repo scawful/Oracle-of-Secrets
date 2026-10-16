@@ -199,7 +199,8 @@ DreamWisdom_Main:
     LDA.b #!DreamReturn_Ticks : STA.w DreamReturnTimer
   .watchdog_out
   SEP #$20
-  JSR DreamWisdom_BlankHUD                ; the clock redraws every frame
+  LDA.b #$01 : STA.w $037B                ; Ancilla_TerminateSelectInteractives
+                                          ; clears it after Stage
 
   LDA.w SprAction, X
   JSL JumpTableLocal
@@ -278,6 +279,21 @@ DreamWisdom_Main:
     .wait
     RTS
   }
+}
+
+; JSL from HUD_Update (menu_hud.asm) and HUD_ClockDisplay (time_system.asm):
+; carry set while the scene owns Link, so they leave the blanked HUD alone.
+; HUD_Update runs every frame after Sprite_Main (RefillLogic, $028856).
+; A, X, Y and P (except carry) are preserved.
+DreamWisdom_HUDHidden:
+{
+  PHP : REP #$20 : PHA
+  LDA.l DreamWisdom_Marker : CMP.w #!DW_Live : BEQ .hidden
+    PLA : PLP : CLC
+    RTL
+  .hidden
+  PLA : PLP : SEC
+  RTL
 }
 
 ; ---------------------------------------------------------
