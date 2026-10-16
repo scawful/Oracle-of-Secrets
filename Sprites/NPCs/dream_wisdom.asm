@@ -13,8 +13,8 @@
 ;      to the great hall, room $51.
 ;   2. Room load (Core/part00.asm, Part00_RoomSprites end of list):
 ;      DreamWisdom_Stage adds the Captain ($D1) and Farore ($D2) as $73
-;      actors, sets the camera, hides and freezes Link, hides any follower
-;      and blanks the HUD, all before the fade-in.
+;      actors, sets the camera, hides and freezes Link, hides any follower,
+;      blanks the HUD and loads the hall's BG sheets, all before the fade-in.
 ;   3. Farore (the director) holds, walks to the Captain, a white flash,
 ;      D1.02, then DreamReturn_Begin from DreamWisdom_End (the single exit;
 ;      shot 3 hooks in there later).
@@ -55,6 +55,7 @@ assert !ENABLE_DREAM_RETURN == 1, "ENABLE_DREAM_WISDOM_SCENE requires ENABLE_DRE
 !DW_FlashFrames     = $0A
 !DW_LineDelay       = $08     ; flash off -> D1.02
 !DW_EndFrames       = $30     ; D1.02 closed -> dream return
+!DW_InitTilesets    = $00E19B ; InitializeTilesets (vanilla, JSL/RTL)
 
 ; ---------------------------------------------------------
 ; JSL from Part00_RoomSprites .end_of_list, every underworld room load.
@@ -118,6 +119,19 @@ DreamWisdom_Stage:
   LDA.b #$00 : STA.l SongTintTimer        ; a running tint rewrites $9A
   STA.l DreamWisdom_Flash
   JSR DreamWisdom_BlankHUD
+  ; Module07_15 never uploads room BG sheets, so room $51 would keep the
+  ; hut's (entrance $68: 61 01 13 07 0E 23 1C 0F; slot 5 $23 draws the
+  ; thrones as stoves). Load the header blockset as the main set, as the
+  ; editors preview it (today $02 = entrance $74: 00 01 10 06 0E 1F 18 0F),
+  ; in step 3: palettes already black, before the tilemap uploads and the
+  ; fade-in. $13 first: lag NMIs write INIDISP from $13. The hut return
+  ; (Module06, entrance $68) reloads its own $0AA1 and sheets.
+  LDA.b $13 : PHA
+  LDA.b #$80 : STA.b $13 : STA.w $2100
+  LDA.w $0AA2 : STA.w $0AA1
+  JSL !DW_InitTilesets
+  SEP #$30
+  PLA : STA.b $13
   PLB
   RTL
 

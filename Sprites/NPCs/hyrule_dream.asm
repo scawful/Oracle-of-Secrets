@@ -106,7 +106,8 @@ Sprite_HyruleDream_Draw:
 
   ; Frames 0 Zelda, 1 King, 2 Soldier (room actors). Wisdom scene
   ; (dream_wisdom.asm): 3 Captain stand-in (the soldier, head lowered),
-  ; 4 Farore turned, 5 her step (sheet $55 in slot 3: her chars +$40).
+  ; 4 Farore standing, 5 her step, head facing left toward the Captain
+  ; (sheet $55 in slot 3: her chars +$40; poses: wisdom_scene farore_poses).
   .start_index
   db $00, $03, $07
   if !ENABLE_DREAM_WISDOM_SCENE == 1
@@ -123,8 +124,8 @@ Sprite_HyruleDream_Draw:
   dw -4, 4, 0
   if !ENABLE_DREAM_WISDOM_SCENE == 1
     dw -4, 4, 0
-    dw 0, -1
-    dw 0, -1
+    dw 0, 1
+    dw 0, 1
   endif
   .y_offsets
   dw -4, -4, -14
@@ -150,8 +151,8 @@ Sprite_HyruleDream_Draw:
   db $39, $79, $39
   if !ENABLE_DREAM_WISDOM_SCENE == 1
     db $39, $79, $39
-    db $3B, $7B
-    db $7B, $7B
+    db $3B, $3B
+    db $7B, $3B
   endif
   .sizes
   db $02, $02, $02
