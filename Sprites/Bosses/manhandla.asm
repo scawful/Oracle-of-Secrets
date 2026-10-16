@@ -56,6 +56,13 @@ pullpc
 
 Sprite_Manhandla_Prep:
 {
+  ; Boss already defeated in this room: remove it and hide the BG body,
+  ; the state Flower_Flicker leaves after the fight.
+  LDA.w $0403 : BPL .alive
+    STZ.w SprState, X
+    LDA $1C : AND.b #$FE : STA $1C
+    RTL
+  .alive
   PHB : PHK : PLB
   LDA.b #$04 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
@@ -361,6 +368,13 @@ Sprite_Manhandla_Main:
     STA.w $0BC0, X
     LDA.b #$04 : STA.w SprState, X
     STZ.w SprHealth, X
+    ; Die like a vanilla boss so Explode_VerifyPrizing drops the heart
+    ; container; its pickup sets the defeated bit and starts the crystal.
+    ; Refight rooms (tag2 $3F) keep the explosion without a prize.
+    LDA.b $AF : CMP.b #$3F : BEQ .no_prize
+      JSL Sprite_KillFriends
+      STZ.w SprFrame, X
+    .no_prize
     RTS
   }
 

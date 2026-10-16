@@ -74,6 +74,7 @@ Sprite_Twinrova_CheckIfDead:
 
 Sprite_Twinrova_Prep:
 {
+  %BossPrep_ExitIfDefeated()
   PHB : PHK : PLB
   ; Kill the sprite if the Maiden is present
   LDA.l $7EF3CC : CMP.b #$06 : BNE .prep_twinrova

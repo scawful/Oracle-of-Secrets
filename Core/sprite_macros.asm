@@ -224,6 +224,22 @@ macro SetRoomFlag(value)
   endif
 endmacro
 
+; Boss Prep guard. Vanilla SpritePrep_Boss ($068F1C) deletes a room-list boss
+; when the room's boss-defeated bit ($0403 bit 7, loaded from the room save
+; word) is set. Custom boss Preps replace that prep, so they must check it
+; themselves. Use as the first lines of a Prep, before PHB (8-bit A/X).
+macro BossPrep_ExitIfDefeated()
+  LDA.w $0403 : BPL +
+    STZ.w SprState, X
+    RTL
+  +
+endmacro
+
+; Mark the room's boss defeated without clearing its chest/key bits.
+macro SetBossDefeated()
+  LDA.w $0403 : ORA.b #$80 : STA.w $0403
+endmacro
+
 ; Will prevent the player from moving or opening his menu
 macro PreventPlayerMovement()
   LDA #$01 : STA $02E4

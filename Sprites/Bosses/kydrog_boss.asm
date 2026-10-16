@@ -74,6 +74,7 @@ Sprite_KydrogBoss_CheckIfDead:
 
 Sprite_KydrogBoss_Prep:
 {
+  %BossPrep_ExitIfDefeated()
   PHB : PHK : PLB
   LDA #$00 : STA !KydrogPhase
   STZ.w !KydrogRescueStage, X
