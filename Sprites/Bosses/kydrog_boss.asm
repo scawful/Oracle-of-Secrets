@@ -35,7 +35,7 @@
 !ConsecutiveHits    = $AC ; 0x01
 !KydrogPhase        = $7A ; 0x01
 !WalkSpeed          = 10  ; 0x01
-!KydrogRescueStage  = SprMiscF ; 0x00 message pending, 0x01 commit pending, 0x02 committed
+!KydrogRescueStage  = SprMiscF ; 0x00 message pending, 0x01 message shown (commit: KydrogBoss_D7CrystalCommit)
 !KydrogRescueMsg    = $0138    ; Temporary rescue text until dedicated Kydrog defeat slot lands
 
 Sprite_KydrogBoss_Long:
@@ -348,39 +348,37 @@ Sprite_KydrogBoss_Main:
   if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
   KydrogBoss_Death_FaroreRescueScaffold:
   {
-    ; Stage 0: show the rescue dialogue once.
-    LDA.w !KydrogRescueStage, X : BNE .wait_for_commit
+    ; Show the temporary rescue dialogue once. Progression is not set here:
+    ; Kydrog enters SpriteModule_Explode this frame and never runs again.
+    LDA.w !KydrogRescueStage, X : BNE .return
       %ShowUnconditionalMessage(!KydrogRescueMsg)
       LDA.b #$01 : STA.w !KydrogRescueStage, X
-      RTS
-
-    ; Stage 1: commit progression late in the death window.
-    .wait_for_commit
-    CMP.b #$01 : BNE .return
-    LDA.w SprTimerA, X : CMP.b #$20 : BCS .return
-      JSR KydrogBoss_ApplyFaroreRescueProgression
-      LDA.b #$02 : STA.w !KydrogRescueStage, X
     .return
     RTS
   }
 
-  KydrogBoss_ApplyFaroreRescueProgression:
+  ; Replaces the crystal store in Ancilla3E_RisingCrystal ($08CC48), which
+  ; runs on the single frame the crystal is collected: after the heart
+  ; container pickup, before Module07_18 and any save. For the D7 crystal it
+  ; also raises GameState to FaroreRescued (never lowers it).
+  ; Entry/exit: M=8, X=8 (X = $040C>>1, untouched), A = Crystals | prize mask.
+  KydrogBoss_D7CrystalCommit:
   {
-    PHP
-    SEP #$20
-
-    ; Ensure D7 crystal progress is set once Kydrog is defeated.
-    LDA.l Crystals
-    ORA.b #!Crystal_D7_DragonShip
     STA.l Crystals
-
-    ; Promote story state to post-D7 once the rescue path is active.
-    LDA.b #!GameState_FaroreRescued
-    STA.l GameState
-
-    PLP
-    RTS
+    PHA
+    LDA.l $7E040C : CMP.b #$18 : BNE .done ; D7 dungeon slot
+    LDA.l Crystals : AND.b #!Crystal_D7_DragonShip : BEQ .done
+    LDA.l GameState : CMP.b #!GameState_FaroreRescued : BCS .done
+      LDA.b #!GameState_FaroreRescued : STA.l GameState
+    .done
+    PLA
+    RTL
   }
+
+  pushpc
+  org $08CC48 ; Ancilla3E_RisingCrystal crystal store (STA.l $7EF37A)
+    JSL KydrogBoss_D7CrystalCommit
+  pullpc
   endif
 
   KydrogBoss_Ascend: ; 0x0A
