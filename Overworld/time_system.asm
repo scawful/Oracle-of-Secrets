@@ -273,6 +273,13 @@ endif
       LDA TimeState.Hours : CMP.b #$06 : BCC .night_time
       .day_time
       LDA.l GameState
+if !ENABLE_D7_FARORE_RESCUE_SEQUENCE == 1
+      ; GameState 3 uses the GameState-2 day list until the ending
+      ; (decisions.org: GameState 3 changes nothing in the overworld yet).
+      CMP.b #!GameState_FaroreRescued : BCC +
+        LDA.b #!GameState_KydrogComplete
+      +
+endif
       RTL
   .night_time
   LDA.b #$03
