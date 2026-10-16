@@ -106,15 +106,19 @@ org $058EE6 : JSL PutRollerBeneathLink ; @hook module=Core name=PutRollerBeneath
 ; =========================================================
 
 ; Sprite Recoil and Death
-; TODO: Sprite_AttemptKillingOfKin
-; Kydreeok Head die like Sidenexx
-org $06F003 : CMP.b #$CF
-
-; Remove sidenexx death from booki
-org $06EFFF : NOP #4
-
-; Make Dark Link die like sidenexx
-org $06F003 : CMP.b #$C1
+; Sprite_AttemptKillingOfKin: vanilla sends $CC ($06EFFF) and $CD ($06F003),
+; the Trinexx side heads (Oracle: Booki, Thunder Ghost), to
+; Sidenexx_ScreamAndDie ($06F0AC, sets SprAction=$80). Here only Dark Link
+; ($C1) goes there; $CC/$CD and Kydreeok heads ($CF) take the generic death
+; (SprState 06 -> 00), which Sprite_Kydreeok_CheckIfDead reads. The head has
+; no SprAction bit7 handler, so routing $CF here would crash in JumpTableLocal
+; (2bcf274f removed that route). Kydrog ($CB) still takes the vanilla
+; TrinexxRock_ScreamAndDie at $06EFF8. One org per byte here: a second org on
+; $06F003 silently replaced the first.
+org $06EFFF ; @hook module=Core name=SpriteDeath_SidenexxKin kind=patch protected_size=6
+  NOP #4                  ; was CMP #$CC : BEQ $06F007 (Booki)
+  CMP.b #$C1              ; was CMP #$CD (Dark Link); the vanilla BNE stays
+assert pc() == $06F005, "Sidenexx death dispatch must end at the vanilla BNE"
 
 ; Make Helmet ChuChu recoil link
 org $06F37D : CMP.b #$05

@@ -1442,3 +1442,17 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
      is removed so $1B8 can never show. No message text changes.
   Answers: "On return", "Keep $00, quiet it", "Yes, per dream",
   "Drop $1B8 path" (scawful, 2026-10-16).
+
+* DECIDED Kydreeok heads: 200 HP and a 4-heart touch
+  :PROPERTIES:
+  :ASKED_BY: Claude (Kydreeok fight fixes)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/kydreeok_fight_2026-10-16/design_digest.txt
+  :END:
+  The heads are spawned with Sprite_SpawnDynamically, so their Prep never ran:
+  they had the table's 200 HP and touch class 0 (1/4 heart), while the Prep
+  said 255 HP and class 9 (8 hearts). The spawners now call the Prep, and the
+  Prep sets 200 HP and touch class 7 (4/3/2 hearts by mail, like vanilla
+  Trinexx heads). Heads keep the generic death; the scream-and-explode death
+  would be new fight behavior. Bigger fight work (head recoil, more animation)
+  is separate.
+  Answer: "200 HP, 4-heart touch (Recommended)" (scawful, 2026-10-16).

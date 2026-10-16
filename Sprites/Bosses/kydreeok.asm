@@ -116,6 +116,8 @@ Sprite_Kydreeok_CheckIfDead:
 ; Head may respawn if the other isn't killed in time
 MaybeRespawnHead:
 {
+  ; No new heads once the body is dying (Kydreeok_Dead, action 5).
+  LDA.w SprAction, X : CMP.b #$05 : BEQ .done
   LDA.w Offspring1_Id : TAY
   LDA.w SprState, Y : BNE .offspring1_alive
       JSL GetRandomInt : AND.b #$7F : BNE .offspring1_alive
@@ -126,6 +128,7 @@ MaybeRespawnHead:
       JSL GetRandomInt : AND.b #$7F : BNE .offspring2_alive
         JSR SpawnRightHead
     .offspring2_alive
+  .done
   RTS
 }
 
@@ -376,6 +379,7 @@ SpawnLeftHead:
     LDA.w SprY, Y : STA.w $19EB : STA.w $19ED : STA.w $19EF : STA.w SprY, Y
     STA.w SprMiscB, Y
     TYX
+    JSL Sprite_KydreeokHead_Prep ; Sprite_SpawnDynamically skips Prep: HP, SprBump
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX
@@ -434,6 +438,7 @@ SpawnRightHead:
     LDA.w SprY, Y : STA.w $19F1 : STA.w $19F3 : STA.w $19F5 : STA.w SprY, Y
     STA.w SprMiscB, Y
     TYX
+    JSL Sprite_KydreeokHead_Prep ; Sprite_SpawnDynamically skips Prep: HP, SprBump
     STZ.w SprYRound, X
     STZ.w SprXRound, X
     PLX
