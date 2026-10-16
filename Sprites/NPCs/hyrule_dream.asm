@@ -106,17 +106,20 @@ Sprite_HyruleDream_Draw:
 
   ; Frames 0 Zelda, 1 King, 2 Soldier (room actors). Wisdom scene
   ; (dream_wisdom.asm): 3 Captain stand-in (the soldier, head lowered),
-  ; 4 Farore standing, 5 her step, head facing left toward the Captain
-  ; (sheet $55 in slot 3: her chars +$40; poses: wisdom_scene farore_poses).
+  ; 4 Farore standing, 5 her step, head facing left toward the Captain,
+  ; 6 her hand on the Captain's shoulder: new body $CE + hand $F1
+  ; (DreamWisdom_LoadReachGfx), head bowed 1 px; 3 pieces = the $73 OAM
+  ; budget (sheet $55 in slot 3: her chars +$40; poses: wisdom_scene
+  ; farore_poses, pose B).
   .start_index
   db $00, $03, $07
   if !ENABLE_DREAM_WISDOM_SCENE == 1
-    db $0A, $0D, $0F
+    db $0A, $0D, $0F, $11
   endif
   .nbr_of_tiles
   db 2, 3, 2
   if !ENABLE_DREAM_WISDOM_SCENE == 1
-    db 2, 1, 1
+    db 2, 1, 1, 2
   endif
   .x_offsets
   dw -8, 8, 0
@@ -126,6 +129,7 @@ Sprite_HyruleDream_Draw:
     dw -4, 4, 0
     dw 0, 1
     dw 0, 1
+    dw 0, -8, 0
   endif
   .y_offsets
   dw -4, -4, -14
@@ -135,6 +139,7 @@ Sprite_HyruleDream_Draw:
     dw -2, -2, -10
     dw 4, -7
     dw 4, -7
+    dw 4, 6, -6
   endif
   .chr
   db $A8, $A8, $84
@@ -144,6 +149,7 @@ Sprite_HyruleDream_Draw:
     db $A4, $A4, $A6
     db $EA, $C6
     db $C8, $C6
+    db $CE, $F1, $C6
   endif
   .properties
   db $39, $79, $39
@@ -153,6 +159,7 @@ Sprite_HyruleDream_Draw:
     db $39, $79, $39
     db $3B, $3B
     db $7B, $3B
+    db $3B, $3B, $3B
   endif
   .sizes
   db $02, $02, $02
@@ -162,5 +169,6 @@ Sprite_HyruleDream_Draw:
     db $02, $02, $02
     db $02, $02
     db $02, $02
+    db $02, $00, $02
   endif
 }

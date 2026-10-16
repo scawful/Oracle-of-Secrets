@@ -48,6 +48,8 @@ assert !ENABLE_DREAM_RETURN == 1, "ENABLE_DREAM_WISDOM_SCENE requires ENABLE_DRE
 !DW_FrameCaptain    = $03     ; Sprite_HyruleDream_Draw frames
 !DW_FrameFarore     = $04
 !DW_FrameFaroreStep = $05
+!DW_FrameFaroreReach = $06   ; new tiles at dream $CE and $F1 (LoadReachGfx)
+!DW_SprBufSlot3     = $7F1800 ; upload buffer, slot 3 = OBJ chars $1C0-$1FF
 !DW_FaroreAux1      = $03     ; OBJ5 1-7: Farore's overworld colors (OW $2A/$80)
 !DW_HoldFrames      = $28     ; 40 frames before Farore walks
 !DW_WalkFrames      = $18     ; 24 frames x 0.5 px = 12 px west
@@ -119,6 +121,7 @@ DreamWisdom_Stage:
   LDA.b #$00 : STA.l SongTintTimer        ; a running tint rewrites $9A
   STA.l DreamWisdom_Flash
   JSR DreamWisdom_BlankHUD
+  JSR DreamWisdom_LoadReachGfx
   ; Module07_15 never uploads room BG sheets, so room $51 would keep the
   ; hut's (entrance $68: 61 01 13 07 0E 23 1C 0F; slot 5 $23 draws the
   ; thrones as stoves). Load the header blockset as the main set, as the
@@ -146,6 +149,42 @@ DreamWisdom_Stage:
   .y_hi
   db !DW_CaptainY>>8, !DW_FaroreY>>8
 }
+
+; Farore's reach pose (frame !DW_FrameFaroreReach) uses sheet $55's empty
+; cells: dream chars $CE,$CF,$DE,$DF (16x16 body) and $F1 (8x8 arm).
+; Module07_15 step 3 ran LoadNewSpriteGFXSet earlier in this frame: it fills
+; the upload buffer $7F0000-$7F1FFF (sheet $55 in slot 3: low 3bpp->4bpp,
+; plane 3 = 0). Graphics_IncrementalVRAMUpload then sends one $200-byte
+; chunk per frame ($0412 = 0-15) to VRAM words $5000-$5FFF; slot 3 is
+; chunks 12-15, during the fade-in. So the tiles go into the buffer, not
+; VRAM: a direct VRAM write would be overwritten by those chunks. Nothing in
+; the scene reloads sprite sheets; the hut reload rebuilds the buffer.
+; M = 8, X = 8 on entry and exit. A, X clobbered (InitializeTilesets follows).
+DreamWisdom_LoadReachGfx:
+{
+  LDA.l LASTSPRSET3 : CMP.b #$55 : BNE .done ; only over Farore's sheet
+  REP #$30
+  LDX.w #$003E
+  .row
+    ; asar math is left to right: keep the parentheses
+    LDA.l DreamWisdom_ReachGfx+$00, X : STA.l !DW_SprBufSlot3+($0E*$20), X ; $CE,$CF
+    LDA.l DreamWisdom_ReachGfx+$40, X : STA.l !DW_SprBufSlot3+($1E*$20), X ; $DE,$DF
+    CPX.w #$0020 : BCS .next
+      LDA.l DreamWisdom_ReachGfx+$80, X : STA.l !DW_SprBufSlot3+($31*$20), X ; $F1
+    .next
+    DEX : DEX : BPL .row
+  SEP #$30
+  .done
+  RTS
+}
+
+; 4bpp, plane 3 = 0. Built from gfx/farore_reach.txt by
+; Scripts/Generate/pixels_to_4bpp.py (run it with --check in tests).
+; Order: $CE,$CF | $DE,$DF | $F1.
+DreamWisdom_ReachGfx:
+  incbin "gfx/farore_reach.bin"
+.end
+assert DreamWisdom_ReachGfx_end-DreamWisdom_ReachGfx == $A0, "farore_reach.bin: $CE/$CF, $DE/$DF, $F1 = 160 bytes"
 
 ; Any room load the scene does not stage: give Link back after the scene.
 ; This is also the seam for D1.05's "just woke" marker.
@@ -248,7 +287,7 @@ DreamWisdom_Main:
     JSL Sprite_MoveHoriz
     DEC.w SprMiscA, X : BNE .walk
       STZ.w SprXSpeed, X
-      LDA.b #!DW_FrameFarore : STA.w SprFrame, X
+      LDA.b #!DW_FrameFaroreReach : STA.w SprFrame, X ; hand on his shoulder
       JSR DreamWisdom_FlashOn
       LDA.b #!DW_FlashFrames : STA.w SprTimerA, X
       INC.w SprAction, X
