@@ -7,7 +7,7 @@ The `kydreeok_head` sprite (ID: `Sprite_KydreeokHead`, which is `$CF`) is a chil
 *   **Sprite ID:** `Sprite_KydreeokHead` (`$CF`)
 *   **Description:** Child sprite of the Kydreeok boss, responsible for individual head behavior.
 *   **Number of Tiles:** 7
-*   **Health:** `$C8` (200 decimal) - This high health value indicates it's a significant component of the boss fight.
+*   **Health:** `$C8` (200 decimal), set by `Sprite_KydreeokHead_Prep` on every spawn (scawful, 2026-10-16).
 *   **Damage:** `00` (Damage is likely applied through its spawned attacks.)
 *   **Special Properties:**
     *   `!Boss = 00` (Not marked as a boss itself, as it's a component of a larger boss.)
@@ -29,8 +29,8 @@ The head's behavior is governed by a state machine:
 *   **`KydreeokHead_SummonFire` (0x05):** Moves towards Link, checks damage, and utilizes `JSL Sprite_Twinrova_FireAttack` to deal damage. The head sprite is then killed after a timer.
 
 ## Initialization (`Sprite_KydreeokHead_Prep`):
-*   Sets initial health to `$FF` (255 decimal), though the `!Health` property is `$C8`. This discrepancy might be overridden by the parent `Kydreeok` sprite or is a temporary value.
-*   Sets `SprBump = $09` (bump damage type).
+*   Sets health to `$C8` (200). `Kydreeok`'s `SpawnLeftHead`/`SpawnRightHead` call this Prep with `JSL`, because `Sprite_SpawnDynamically` skips Prep.
+*   Sets `SprBump = $07` (touch damage class 7: 4/3/2 hearts by mail, like vanilla Trinexx heads).
 *   Initializes `SprMiscE, X` to `0`.
 
 ## Drawing (`Sprite_KydreeokHead_Draw`):
@@ -62,7 +62,7 @@ This is a sophisticated system for managing the multi-segmented neck:
 *   `JSR GetDistance8bit`
 
 ## Discrepancies/Notes:
-*   The `!Health` property is `$C8`, but `Sprite_KydreeokHead_Prep` sets `SprHealth, X` to `$FF`. This needs clarification.
+*   The breath clone (`KydreeokHead_SpawnBreath`) does not run the Prep and keeps the table values (`$C8`, touch class 0).
 *   The reuse of `JSL Sprite_Twinrova_FireAttack` for Kydreeok's head is an example of code reuse, but it's important to ensure it fits the thematic design of Kydreeok.
 *   The neck control system is quite intricate, highlighting advanced sprite design.
 *   Several hardcoded addresses for `JSL` calls could be replaced with named labels for better maintainability.
