@@ -103,7 +103,7 @@ LinkItem_FirePortal:
 {
   LDA.b #$03
   JSL   Sprite_SpawnDynamically : BPL .continue
-    RTS
+    RTL
   .continue
 
   PHX
