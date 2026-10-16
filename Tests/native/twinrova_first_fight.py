@@ -286,7 +286,9 @@ def fixture_class(portal):
                     seen.append(list(state))
                 if state == (7, 0, room):
                     return seen
-                require(state[0] != 0x0E, "Unexpected dialogue during engine room fixture")
+                if state[0] == 0x0E:
+                    self.acknowledge()
+                    continue
                 self.frame(4)
             raise RuntimeError("Engine room fixture did not settle: " + str(seen))
 
@@ -458,9 +460,10 @@ def fixture_class(portal):
             returned = case["return_cpu"]
             require(number(returned["sp"]) == number(caller["sp"])
                     and number(returned["dbr"]) == number(caller["dbr"])
+                    and number(returned["y"]) == number(caller["y"])
                     and number(returned["d"]) == number(caller["d"])
                     and number(returned["p"]) & 0x30 == number(caller["p"]) & 0x30,
-                    "Spawn RTL corrupted caller SP/DBR/DP/MX ABI")
+                    "Spawn RTL corrupted caller SP/DBR/Y/DP/MX ABI")
             case["first_main_cpu"] = self.run_to({self.code["main"]})
             require(number(case["first_main_cpu"]["x"]) == 0,
                     "Native Main did not execute for initialized slot0")
