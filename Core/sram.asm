@@ -204,6 +204,7 @@ endmacro
 !Spawn_Throne              = $04
 !Spawn_OldManCave          = $05
 !Spawn_OldManHome          = $06
+!Spawn_GoronCheckpoint     = $07  ; Pending factory start; consumed to House before native tables
 
 ; =========================================================
 ; 3. STORY PROGRESSION FLAGS
