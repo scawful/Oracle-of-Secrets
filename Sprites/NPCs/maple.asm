@@ -315,11 +315,14 @@ DreamReturn_IsDreaming:
   RTL
 }
 
+RoomTag_GanonDoor_Exit = $01C7A1 ; vanilla .exit (RTS)
+
 pushpc
 ; RoomTag_GanonDoor (room $00 tag $3D): LDA.b $5D : CMP.b #$01 : BEQ .exit
 org $01C77F ; @hook module=Sprites name=DreamReturn_GanonDoorGate kind=jsl target=DreamReturn_GanonDoorGate expected_m=8 expected_x=8
   JSL DreamReturn_GanonDoorGate
-  BCS $01C7A1 ; RoomTag_GanonDoor .exit (RTS)
+  BCS RoomTag_GanonDoor_Exit
+  assert pc() == $01C785
 pullpc
 
 ; Carry set: do not open the Triforce door this frame (Link is falling, as
