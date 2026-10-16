@@ -53,7 +53,10 @@ Sprite_ThunderGhost_Long:
 Sprite_ThunderGhost_Prep:
 {
   PHB : PHK : PLB
-  LDA.l Sword : DEC A : TAY
+  LDA.l Sword : BEQ +
+    DEC A
+  +
+  TAY
   LDA.w .health, Y : STA.w SprHealth, X
   LDA.b #$08 : STA.w SprTimerB, X
   LDA.b #$08 : STA.w SprTimerA, X
