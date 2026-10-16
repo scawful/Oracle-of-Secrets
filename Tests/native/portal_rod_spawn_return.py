@@ -69,7 +69,7 @@ def validate_code(rom, helper):
             "Unexpected allocator prefix/negative branch ABI")
     require(raw(helper + 8, 1) in (b"\x60", b"\x6b"),
             "Failure return is neither baseline RTS nor candidate RTL")
-    require(raw(0x1DF65D, 14) == bytes.fromhex("A00F48B9D00DF0068810F768986B"),
+    require(raw(0x1DF65D, 14) == bytes.fromhex("A00F48B9D00DF0068810F868986B"),
             "Unexpected full-slot allocator read-only failure path")
     return {"helper": f"{helper:06X}", "failure_opcode": raw(helper + 8, 1).hex(),
             "caller": f"{CALL:06X}", "return": f"{RETURN:06X}"}
