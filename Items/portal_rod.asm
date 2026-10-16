@@ -135,6 +135,8 @@ LinkItem_FirePortal:
   .finish
   TYX
   STZ.w SprYRound, X : STZ.w SprXRound, X
+  ; Dynamic spawning skips Prep; keep this portal active off camera too.
+  LDA.w SprDefl, X : ORA.b #$80 : STA.w SprDefl, X
   ; Sprite_SpawnDynamically does not run Sprite_Portal_Prep, so set its
   ; bulletproof byte here: ancillae then pass over the portal instead of
   ; hitting it (runtime: $0BA0 was $00 on Portal Rod portals).

@@ -45,8 +45,8 @@ Sprite_Portal_Long:
 Sprite_Portal_Prep:
 {
   PHB : PHK : PLB
-  ; Persist outside of camera
-  LDA #$00 : STA.w SprDefl, X
+  ; Bit 7 keeps the portal active off camera.
+  LDA.b #$80 : STA.w SprDefl, X
   LDA.w SprHitbox, X : AND.b #$C0 : STA.w SprHitbox, X
   STZ.w SprTileDie, X
   LDA.b #$FF : STA.w SprBulletproof, X
