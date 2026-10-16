@@ -37,7 +37,7 @@
 !SmallShadow        = 00  ; 01 = small shadow, 00 = no shadow
 !Shadow             = 00  ; 00 = don't draw shadow, 01 = draw a shadow
 !Palette            = 00  ; Unused in this template (can be 0 to 7)
-!Hitbox             = 09  ; 00 to 31, can be viewed in sprite draw tool
+!Hitbox             = 03  ; 00 to 31, can be viewed in sprite draw tool
 !Persist            = 00  ; 01 = your sprite continue to live offscreen
 !Statis             = 01  ; 01 = not counted as an enemy (the block cannot die)
 !CollisionLayer     = 00  ; 01 = will check both layer for collision
@@ -96,8 +96,10 @@ Sprite_IceBlock_Prep:
   LDA.w SprY, X : STA.w SprMiscE, X
   LDA.w SprXH, X : STA.w SprMiscF, X
   LDA.w SprYH, X : STA.w SprMiscG, X
-  STZ.w SprDefl, X
-  LDA.w SprHitbox, X : ORA.b #$09 : STA.w SprHitbox, X
+  ; SprDefl must be written here: the property macro always sets bit 6,
+  ; which deletes a sprite 64px off camera. Bit 7 keeps the block active
+  ; off camera, so a slide continues out of view instead of freezing.
+  LDA.b #$80 : STA.w SprDefl, X
   ; Tile probe set 9: probes 1px outside the 16x16 graphic (x-1/x+16,
   ; y-1/y+16), so wall stops line up with what the player sees.
   LDA.w SprTileDie, X : AND.b #$0F : ORA.b #$90 : STA.w SprTileDie, X
