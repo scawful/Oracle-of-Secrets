@@ -33,6 +33,7 @@
 
 Sprite_Manhandla_Long:
 {
+  %BossLong_DefeatedRemnant()
   PHB : PHK : PLB
   JSR Sprite_Manhandla_CheckForNextPhaseOrDeath
   LDA.w SprMiscD, X : CMP.b #$02 : BCC .phase1
@@ -56,6 +57,7 @@ pullpc
 
 Sprite_Manhandla_Prep:
 {
+  %BossPrep_DefeatedRemnant()
   PHB : PHK : PLB
   LDA.b #$04 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
@@ -361,6 +363,13 @@ Sprite_Manhandla_Main:
     STA.w $0BC0, X
     LDA.b #$04 : STA.w SprState, X
     STZ.w SprHealth, X
+    ; Die like a vanilla boss so Explode_VerifyPrizing drops the heart
+    ; container; its pickup sets the defeated bit and starts the crystal.
+    ; Refight rooms (tag2 $3F) keep the explosion without a prize.
+    LDA.b $AF : CMP.b #$3F : BEQ .no_prize
+      JSL Sprite_KillFriends
+      STZ.w SprFrame, X
+    .no_prize
     RTS
   }
 

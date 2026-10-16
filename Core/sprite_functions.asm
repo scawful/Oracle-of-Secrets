@@ -1221,3 +1221,30 @@ MovieEffect:
   db $00      ;end the HDMA
 }
 
+; =========================================================
+; Defeated boss remnant (see BossPrep_DefeatedRemnant in sprite_macros.asm).
+; Runs each frame from the boss Long, before PHB (8-bit A/X, DBR $30).
+; Once the room load and entry shutter are done ($10 = $07, $11 = 0), it
+; reopens the shutters like vanilla RoomTag_PrizeTriggerDoorDoor ($01C529)
+; and removes itself. Manhandla's BG1 body is hidden every frame, because
+; the room load turns BG1 back on after Prep.
+BossDefeated_Remnant:
+{
+  LDA.w SprType, X : CMP.b #$88 : BNE .no_bg_body
+    LDA.b $1C : AND.b #$FE : STA.b $1C
+  .no_bg_body
+  LDA.b $10 : CMP.b #$07 : BNE .wait
+  LDA.b $11 : BNE .wait
+  REP #$20
+  LDA.w $0468 : BEQ .shutters_open
+    STZ.w $0468
+    STZ.w $068E
+    STZ.w $0690
+    SEP #$20
+    LDA.b #$05 : STA.b $11
+  .shutters_open
+  SEP #$20
+  STZ.w SprState, X
+  .wait
+  RTL
+}

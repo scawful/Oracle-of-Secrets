@@ -34,6 +34,7 @@
 
 Sprite_DarkLink_Long:
 {
+  %BossLong_DefeatedRemnant()
   PHB : PHK : PLB
 
   ; ADD GANON CODE if subtype == 05
@@ -90,6 +91,7 @@ Sprite_DarkLink_Long:
 
 Sprite_DarkLink_Prep:
 {
+  %BossPrep_DefeatedRemnant()
   PHB : PHK : PLB
 
   ; REP #$20 ; P is still on stack, so we don't even need to fix this
@@ -963,8 +965,8 @@ Sprite_DarkLink_Main:
   {
     INC.w SprMiscF, X
     ; handled by the room tag
-    LDA #$04 : STZ.w SprState, X
-    LDA.b #$80 : STA $0403
+    STZ.w SprState, X
+    %SetBossDefeated()
 
     ; Set Fortress of Secrets completion flag
     LDA.l OOSPROG : ORA.b #!Story_FortressComplete : STA.l OOSPROG

@@ -224,6 +224,42 @@ macro SetRoomFlag(value)
   endif
 endmacro
 
+; Boss Prep guard. Vanilla SpritePrep_Boss ($068F1C) deletes a room-list boss
+; when the room's boss-defeated bit ($0403 bit 7, loaded from the room save
+; word) is set. Custom boss Preps replace that prep, so they must check it
+; themselves. Use as the first lines of a Prep, before PHB (8-bit A/X).
+macro BossPrep_ExitIfDefeated()
+  LDA.w $0403 : BPL +
+    STZ.w SprState, X
+    RTL
+  +
+endmacro
+
+; Bosses whose room has shutters ($5A, $A4, $0D) use this instead: the
+; defeated boss stays as an invisible remnant until the room load and the
+; entry shutter are done, then BossDefeated_Remnant reopens the shutters and
+; removes it. The statis bit keeps it out of the boss-music room-clear check.
+!BossDefeatedRemnant = $FF
+macro BossPrep_DefeatedRemnant()
+  LDA.w $0403 : BPL +
+    LDA.b #!BossDefeatedRemnant : STA.w SprAction, X
+    LDA.w SprHitbox, X : ORA.b #$40 : STA.w SprHitbox, X
+    RTL
+  +
+endmacro
+
+; First lines of the Long of a boss that uses BossPrep_DefeatedRemnant.
+macro BossLong_DefeatedRemnant()
+  LDA.w SprAction, X : CMP.b #!BossDefeatedRemnant : BNE +
+    JML BossDefeated_Remnant
+  +
+endmacro
+
+; Mark the room's boss defeated without clearing its chest/key bits.
+macro SetBossDefeated()
+  LDA.w $0403 : ORA.b #$80 : STA.w $0403
+endmacro
+
 ; Will prevent the player from moving or opening his menu
 macro PreventPlayerMovement()
   LDA #$01 : STA $02E4
