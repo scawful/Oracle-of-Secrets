@@ -308,7 +308,11 @@ def fixture_class(portal):
                 self.write(address, value, "exact entrance34 engine reload fixture")
             self.result["entrance34_sequence"] = self.settle_room(0xDB)
             self.frame(60)
-            require(self.b.read_memory16(0x7E00A0) == 0xDB, "Entrance34 did not load native roomDB")
+            self.acknowledge()
+            self.result["before_fall"] = self.capture("before-fall")
+            require((self.result["before_fall"]["module"], self.result["before_fall"]["submodule"],
+                     self.result["before_fall"]["room"]) == (7, 0, 0xDB),
+                    "Entrance34 must finish dialogue in native roomDB before fall inputs")
             for address, value in ((0x7E00A2, 0xDB), (0x7E00A3, 0), (0x7E00A0, 0xAC),
                                    (0x7E00A1, 0), (0x7E00B0, 0), (0x7EF159, 0),
                                    (0x7FE0D8, 0), (0x7FE0D9, 0)):
@@ -318,7 +322,11 @@ def fixture_class(portal):
             self.write(0x7E0011, 7, "enter native indoor fall reload submodule")
             self.result["fall_sequence"] = self.settle_room(0xAC)
             self.frame(60)
+            self.acknowledge()
             self.result["arrival"] = self.capture("arrival")
+            require((self.result["arrival"]["module"], self.result["arrival"]["submodule"],
+                     self.result["arrival"]["room"]) == (7, 0, 0xAC),
+                    "Native roomAC must finish dialogue before initialization cases")
             require(self.b.read_memory(0x7E0E20) == 0xCE and self.b.read_memory(0x7E0DD0) == 0,
                     "Native AC room-list CE did not suppress itself with maiden present")
             require(self.b.read_memory(0x7E0403) & 0x80 == 0, "AC defeated flag unexpectedly set")
