@@ -40,6 +40,7 @@
 
 Sprite_KydrogBoss_Long:
 {
+  %BossLong_DefeatedRemnant()
   PHB : PHK : PLB
   JSR Sprite_KydrogBoss_Draw ; Call the draw code
   JSR Sprite_CheckIfFrozen
@@ -74,7 +75,7 @@ Sprite_KydrogBoss_CheckIfDead:
 
 Sprite_KydrogBoss_Prep:
 {
-  %BossPrep_ExitIfDefeated()
+  %BossPrep_DefeatedRemnant()
   PHB : PHK : PLB
   LDA #$00 : STA !KydrogPhase
   STZ.w !KydrogRescueStage, X

@@ -33,6 +33,7 @@
 
 Sprite_Manhandla_Long:
 {
+  %BossLong_DefeatedRemnant()
   PHB : PHK : PLB
   JSR Sprite_Manhandla_CheckForNextPhaseOrDeath
   LDA.w SprMiscD, X : CMP.b #$02 : BCC .phase1
@@ -56,13 +57,7 @@ pullpc
 
 Sprite_Manhandla_Prep:
 {
-  ; Boss already defeated in this room: remove it and hide the BG body,
-  ; the state Flower_Flicker leaves after the fight.
-  LDA.w $0403 : BPL .alive
-    STZ.w SprState, X
-    LDA $1C : AND.b #$FE : STA $1C
-    RTL
-  .alive
+  %BossPrep_DefeatedRemnant()
   PHB : PHK : PLB
   LDA.b #$04 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
