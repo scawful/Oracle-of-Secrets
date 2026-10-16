@@ -113,7 +113,17 @@ def fixture_class(portal):
             ident=number(data(self.b.mem_watch_add(address,1,64))["watch_id"])
             self.watches.add(ident); return ident
         def remove_watch(self,ident):
-            data(self.b.mem_watch_remove(ident)); self.watches.remove(ident)
+            reply=self.b.mem_watch_remove(ident)
+            require(reply.get("success"),"Native watch removal rejected: "+str(reply))
+            self.watches.remove(ident)
+        def ensure_paused(self):
+            if self.paused(): return
+            require(self.b.pause(),"Owned pause rejected")
+            until=time.monotonic()+3
+            while time.monotonic()<until:
+                if self.paused(): return
+                time.sleep(0.01)
+            raise RuntimeError("Owned pause did not settle before cleanup")
         def case(self,spec,sword):
             self.check_owner()
             require(self.paused(),"CPU must be paused before fixture")
@@ -250,12 +260,12 @@ def main():
         fixture.result["error"]=repr(error)
         if owned:
             try:
-                bridge.pause(); fixture.result["failure_cpu"]=fixture.cpu()
+                fixture.ensure_paused(); fixture.result["failure_cpu"]=fixture.cpu()
                 (args.output/"failure-sprites.bin").write_bytes(fixture.block(SPRITES,SIZE))
             except BaseException as capture: fixture.result["failure_capture_error"]=repr(capture)
     finally:
         if owned:
-            for action in (lambda:fixture.input(""),bridge.pause):
+            for action in (lambda:fixture.input(""),fixture.ensure_paused):
                 try: require(action() is not False,"Owned pause/release rejected")
                 except BaseException as error: fixture.result["cleanup_errors"].append(repr(error))
             for ident in list(fixture.breakpoints):
@@ -265,6 +275,7 @@ def main():
                 try: fixture.remove_watch(ident)
                 except BaseException as error: fixture.result["cleanup_errors"].append(repr(error))
             try:
+                fixture.ensure_paused()
                 for slot in range(16): fixture.write(0x7E0DD0+slot,0,"fixture cleanup before caller disposes process")
                 if original_sword is not None: fixture.write(0x7EF359,original_sword,"restore original Sword; no save")
                 after=fixture.block(0x7EF000,0x500)
