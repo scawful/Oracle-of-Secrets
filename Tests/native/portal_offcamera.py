@@ -55,6 +55,25 @@ def outcome(expect, path, offscreen, gate=None, already_dead=False):
     return dict(state=9, main=not gate and not (offscreen and expect == "baseline"))
 
 
+def verify_oam_region_b(before, after, trace):
+    """Only the observed native Region-B two-byte allocation is admissible."""
+    require(len(before) == len(after) == SIZE, "Incomplete OAM counter capture")
+    offset = 0xFE2 - 0xB00
+    old = int.from_bytes(before[offset:offset + 2], "little")
+    new = int.from_bytes(after[offset:offset + 2], "little")
+    writes = trace["writes"]
+    if not writes:
+        require(old == new, "OAM Region-B counter changed without a native writer")
+    else:
+        require(len(writes) == 1, "Unexpected extra OAM Region-B writer")
+        write = writes[0]
+        require(number(write["pc"]) == 0x0DBB41 and number(write["addr"]) == 0x7E0FE2
+                and number(write["size"]) == 2 and number(write["value"]) == new
+                and before[0xE40 - 0xB00] & 0x1F == 1 and new == old + 8 and new < 0x0201,
+                "Unexpected OAM Region-B writer/value/size/allocation delta")
+    return dict(before=old, after=new, native_allocations=len(writes))
+
+
 def describe(image: bytes, text: str, expect: str) -> dict:
     """Strict ACTUAL producer/gate guards precede one-copy Prep normalization."""
     require(expect in ("baseline", "candidate"), "Unknown expected profile")
@@ -78,6 +97,9 @@ def describe(image: bytes, text: str, expect: str) -> dict:
             and raw(image, 0x09F1F8, 14) == bytes.fromhex("BDAA0C2940D004A51BD0479ED00D"), "Native OAM culling/kill guard differs")
     require(raw(image, 0x1DF6A1, 6) == bytes.fromhex("DABB2218B80D")
             and raw(image, 0x1DF6CD, 2) == bytes.fromhex("986B"), "Actual dynamic property load/allocator return differs")
+    require(raw(image, 0x0DBB41, 3) == bytes.fromhex("99E00F")
+            and raw(image, 0x0DBA84, 4) == bytes.fromhex("A002800E")
+            and raw(image, 0x0DBAA0, 2) == bytes.fromhex("0102"), "Native Region-B OAM writer/selector/limit differs")
     # cp.describe hard-binds the old Prep immediate. Validate the entire actual
     # replacement above, then normalize ONLY that owned immediate in a copy to
     # reuse its unchanged dispatch/Long/Main/counterpart byte guards. The ROM,
@@ -225,6 +247,8 @@ def fixture_class(portal):
             before = self.block(SPRITES, SIZE)
             record["input"] = self.capture(name + "-before")
             state_watch = self.watch(0x7E0DD0)
+            oam_watch = number(data(self.b.mem_watch_add(0x7E0FE2, 2, 128))["watch_id"])
+            self.watches.add(oam_watch)
             record["active_call_cpu"] = self.run_to({self.code["active_call"]})
             caller = record["active_call_cpu"]
             if gate:
@@ -261,14 +285,18 @@ def fixture_class(portal):
             allowed = {0x7E0BC0, 0x7E0DD0, 0x7E0D90, 0x7E0E00, 0x7E0F00, 0x7E0FA8, 0x7E0FA9}
             changes = [SPRITES + i for i, (a, b) in enumerate(zip(before, after)) if a != b]
             record["changed_sprite_addresses"] = [f"{a:06X}" for a in changes]
-            require(set(changes) <= allowed, "Portal trial changed another actor or unexpected sprite/global byte")
             record["state_write_provenance"] = data(self.b.mem_blame(watch_id=state_watch))
+            record["oam_region_b_write_provenance"] = data(self.b.mem_blame(watch_id=oam_watch))
+            record["oam_region_b"] = verify_oam_region_b(before, after, record["oam_region_b_write_provenance"])
+            require(set(changes) - {0x7E0FE2, 0x7E0FE3} <= allowed,
+                    "Portal trial changed another actor or unexpected sprite/global byte")
             writes = record["state_write_provenance"]["writes"]
             if wanted["state"] == 0:
                 require(len(writes) == 1 and number(writes[0]["pc"]) == 0x09F203
                         and number(writes[0]["value"]) == 0, "Missing actual native offcamera kill writer")
             else: require(not writes, "Live Portal unexpectedly had a state writer")
             self.remove_watch(state_watch)
+            self.remove_watch(oam_watch)
             if offscreen:
                 require(record["after"]["source"]["pause"] != 0, "Off-camera fixture did not exercise native culling")
                 self.neutral_frames(60)
