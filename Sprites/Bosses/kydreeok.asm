@@ -51,6 +51,15 @@ Sprite_Kydreeok_Long:
 Sprite_Kydreeok_Prep:
 {
   PHB : PHK : PLB
+  if !ENABLE_DREAM_RETURN == 1
+    ; Power dream stage (maple.asm): no boss, heads or final-boss music while
+    ; a pendant dream runs.
+    JSL DreamReturn_IsDreaming : BCC .not_dreaming
+      STZ.w SprState, X
+      PLB
+      RTL
+    .not_dreaming
+  endif
   LDA.b #$40 : STA.w SprTimerA, X
   LDA.b #$08 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move

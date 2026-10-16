@@ -15,7 +15,6 @@ MapleHandler:
   dw Maple_HandleFirstResponse
   dw Maple_DreamOrExplain
   dw Maple_ExplainHut
-  dw Maple_ExplainPendants
   dw Maple_CheckForPendant
   dw Maple_NoNewPendant
   dw Maple_PutLinkToSleep
@@ -52,30 +51,16 @@ MapleHandler:
 
   Maple_DreamOrExplain:
   {
+    ; Every $1B4 answer goes to the pendant check (decisions.org: pendant
+    ; dreams). The removed $1CE8 test read the $1B3 answer, always 0 here.
     %ShowUnconditionalMessage($01B4)
-    LDA.w $1CE8 : BEQ .check_for_pendant
-                  CMP.b #$01 : BNE .another_time
-      LDA.b #$04 : STA.w SprAction, X
-      RTS
-    .check_for_pendant
-    LDA.b #$05 : STA.w SprAction, X
-    RTS
-
-    .another_time
-    STZ.w SprAction, X
+    LDA.b #$04 : STA.w SprAction, X
     RTS
   }
 
   Maple_ExplainHut:
   {
     %ShowUnconditionalMessage($01B5)
-    STZ.w SprAction, X
-    RTS
-  }
-
-  Maple_ExplainPendants:
-  {
-    %ShowUnconditionalMessage($01B8)
     STZ.w SprAction, X
     RTS
   }
@@ -96,7 +81,7 @@ MapleHandler:
       STZ.w CurrentDream
     .offer
     %ShowUnconditionalMessage($01B6)
-    LDA.b #$07 : STA.w SprAction, X
+    LDA.b #$06 : STA.w SprAction, X
     LDA.b #$40 : STA.w SprTimerA, X
     RTS
     .none
@@ -154,18 +139,16 @@ Link_HandleDreams:
   dw Dream_Power
   dw Dream_Courage
 
+  ; The dream's Dreams bit is set when it ends (DreamReturn_Begin).
   Dream_Wisdom:
   {
-    LDA.l Dreams : ORA.b #%00000001 : STA.l Dreams
     LDX.b #$00
     JSR Link_WarpToRoom
-    LDA.b #$01 : STA.b $EE
     RTS
   }
 
   Dream_Power:
   {
-    LDA.l Dreams : ORA.b #%00000010 : STA.l Dreams
     LDX.b #$01
     JSR Link_WarpToRoom
     RTS
@@ -173,7 +156,6 @@ Link_HandleDreams:
 
   Dream_Courage:
   {
-    LDA.l Dreams : ORA.b #%00000100 : STA.l Dreams
     LDX.b #$02
     JSR Link_WarpToRoom
     RTS
@@ -189,17 +171,26 @@ Link_WarpToRoom:
   LDA.b $A0  : STA.b $A2
   STZ.b $A1
   LDA.w .room, X : STA.b $A0
-  ; STA.l $7EC000
+  ; Fixed landing spot and layer per dream (decisions.org: pendant dreams).
+  ; Module07_15 adds the room delta to Link and the camera, so only the
+  ; in-room offset inside the hut's SE quadrant (+$100,+$100) is set here.
+  LDA.w .x, X : STA.b $22
+  LDA.w .y, X : STA.b $20
+  LDA.w .layer, X : STA.b $EE
   if !ENABLE_DREAM_RETURN == 1
     ; Arm the wake-up timer; it only counts in Module07_00 after the warp lands.
     LDA.b #!DreamReturn_Ticks : STA.w DreamReturnTimer
   endif
   RTS
 
-  .room
-  db $61
-  db $00
-  db $31
+  .room  ; Wisdom, Power, Courage
+  db $61, $00, $31
+  .x     ; in-room X low byte, SE quadrant
+  db $38, $48, $78
+  .y     ; in-room Y low byte, SE quadrant
+  db $70, $44, $70
+  .layer ; $EE: lower layer in all three rooms
+  db $00, $00, $00
 }
 
 ; Takes X as argument for the entrance ID
@@ -285,6 +276,13 @@ DreamReturn_PlayerControl:
 ; edge transitions), so nothing else can change the submodule.
 DreamReturn_Begin:
 {
+  ; The dream counts as seen only now (decisions.org: pendant dreams):
+  ; dying or quitting mid-dream leaves it offerable again.
+  LDX.w CurrentDream
+  LDA.l Dreams : ORA.l .bit, X : STA.l Dreams
+  ; Disarm the dream room's tags: room $00's Ganon-door tag would otherwise
+  ; fire on the last fade frame, once DreamReturn_IsDreaming no longer gates it.
+  STZ.b $AE : STZ.b $AF
   REP #$20
   LDA.w #!DreamReturn_Entrance : STA.w $010E
   SEP #$20
@@ -297,6 +295,47 @@ DreamReturn_Begin:
   STZ.b $B0
   LDA.b #$33 : STA.w $012E ; SFX2.33, the vanilla warp sound
   RTS
+
+  .bit ; by CurrentDream: Wisdom, Power, Courage
+  db !Dream_Wisdom, !Dream_Power, !Dream_Courage
+}
+
+; Carry set while a pendant dream runs: the wake-up timer is armed and the
+; current entrance is still the Dream Hut's. Room $00 is reached in that
+; state only by the Power dream. 8-bit A; X/Y untouched.
+DreamReturn_IsDreaming:
+{
+  LDA.w DreamReturnTimer : BEQ .no
+  LDA.w $010F : BNE .no
+  LDA.w $010E : CMP.b #!DreamReturn_Entrance&$FF : BNE .no
+    SEC
+    RTL
+  .no
+  CLC
+  RTL
+}
+
+RoomTag_GanonDoor_Exit = $01C7A1 ; vanilla .exit (RTS)
+
+pushpc
+; RoomTag_GanonDoor (room $00 tag $3D): LDA.b $5D : CMP.b #$01 : BEQ .exit
+org $01C77F ; @hook module=Sprites name=DreamReturn_GanonDoorGate kind=jsl target=DreamReturn_GanonDoorGate expected_m=8 expected_x=8
+  JSL DreamReturn_GanonDoorGate
+  BCS RoomTag_GanonDoor_Exit
+  assert pc() == $01C785
+pullpc
+
+; Carry set: do not open the Triforce door this frame (Link is falling, as
+; vanilla checks, or the Power dream is running in room $00).
+DreamReturn_GanonDoorGate:
+{
+  JSL DreamReturn_IsDreaming : BCS .skip
+  LDA.b $5D : CMP.b #$01 : BEQ .skip
+    CLC
+    RTL
+  .skip
+  SEC
+  RTL
 }
 endif
 

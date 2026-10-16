@@ -1423,3 +1423,22 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Answers: "Fix the commit", "Nothing yet" (GameState 3 changes nothing in
   the overworld until the ending), "Cap it for now" (old man $A0)
   (scawful, 2026-10-16).
+
+* DECIDED Pendant dreams: bit on return, quiet room $00, fixed landing, no $1B8
+  :PROPERTIES:
+  :ASKED_BY: Claude (dream qualification)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dreams_2026-10-16/README.md
+  :END:
+  The dream machinery worked (Maple gating, dispatch, 8 s return, save/reload)
+  but the dream contents did not: room $00 freezes on the Ganon-door tag and
+  Kydreeok despawns, Wisdom $61 hides Link, and the Dreams bit was set when the
+  dream started. Rulings:
+  1. A dream counts as seen when it ends (Link wakes), so dying or quitting
+     mid-dream lets Maple offer it again.
+  2. The Power dream stays in room $00 for 1.0; Kydreeok and the Ganon-door
+     tag are suppressed while a dream runs (code only).
+  3. Each dream places Link at a fixed spot and layer.
+  4. Maple always goes to the pendant check after $1B4; the dead $1B4 branch
+     is removed so $1B8 can never show. No message text changes.
+  Answers: "On return", "Keep $00, quiet it", "Yes, per dream",
+  "Drop $1B8 path" (scawful, 2026-10-16).
