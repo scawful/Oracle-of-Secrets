@@ -65,13 +65,17 @@ def verify_oam_region_b(before, after, trace):
     if not writes:
         require(old == new, "OAM Region-B counter changed without a native writer")
     else:
-        require(len(writes) == 1, "Unexpected extra OAM Region-B writer")
-        write = writes[0]
-        require(number(write["pc"]) == 0x0DBB41 and number(write["addr"]) == 0x7E0FE2
-                and number(write["size"]) == 2 and number(write["value"]) == new
+        require(len(writes) == 2, "Native OAM word store requires exactly two byte bus events")
+        low, high = writes
+        require(all(number(write["pc"]) == 0x0DBB41 and number(write["size"]) == 1
+                    and number(write["opcode"]) == 0x99 for write in writes)
+                and number(low["addr"]) == 0x7E0FE2 and number(high["addr"]) == 0x7E0FE3
+                and number(low["value"]) == new & 255 and number(high["value"]) == new >> 8
+                and number(low["sp"]) == number(high["sp"])
+                and number(high["cycle"]) == number(low["cycle"]) + 1
                 and before[0xE40 - 0xB00] & 0x1F == 1 and new == old + 8 and new < 0x0201,
                 "Unexpected OAM Region-B writer/value/size/allocation delta")
-    return dict(before=old, after=new, native_allocations=len(writes))
+    return dict(before=old, after=new, native_allocations=len(writes) // 2)
 
 
 def describe(image: bytes, text: str, expect: str) -> dict:
