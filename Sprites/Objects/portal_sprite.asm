@@ -119,6 +119,7 @@ Sprite_Portal_Main:
     CLC
 
     LDA.w SprTimerD, X : BNE .NoOverlap
+    JSR Portal_CheckCounterpart : BCC .NoOverlap
       JSL Link_SetupHitBox
       JSL $0683EA          ; Sprite_SetupHitbox_long
       JSL CheckIfHitBoxesOverlap : BCC .NoOverlap
@@ -142,6 +143,7 @@ Sprite_Portal_Main:
     .not_warped_yet
     CLC
     LDA.w SprTimerD, X : BNE .NoOverlap
+    JSR Portal_CheckCounterpart : BCC .NoOverlap
     JSL Link_SetupHitBox
     JSL $0683EA          ; Sprite_SetupHitbox_long
 
@@ -161,6 +163,11 @@ Sprite_Portal_Main:
 
   BluePortal_WarpDungeon:
   {
+    JSR Portal_CheckCounterpart : BCS .valid_counterpart
+      %GotoAction(1)
+      RTS
+    .valid_counterpart
+
     LDA $7EC184 : STA $20
     LDA $7EC186 : STA $22
 
@@ -185,6 +192,11 @@ Sprite_Portal_Main:
 
   OrangePortal_WarpDungeon:
   {
+    JSR Portal_CheckCounterpart : BCS .valid_counterpart
+      %GotoAction(2)
+      RTS
+    .valid_counterpart
+
     LDA $7EC184 : STA $20
     LDA $7EC186 : STA $22
 
@@ -210,6 +222,11 @@ Sprite_Portal_Main:
 
   BluePortal_WarpOverworld:
   {
+    JSR Portal_CheckCounterpart : BCS .valid_counterpart
+      %GotoAction(1)
+      RTS
+    .valid_counterpart
+
     LDA.w OrangePortal_X : STA $20
     LDA.w OrangePortal_Y : STA $22
     LDA $7EC190 : STA $0610
@@ -232,6 +249,11 @@ Sprite_Portal_Main:
 
   OrangePortal_WarpOverworld:
   {
+    JSR Portal_CheckCounterpart : BCS .valid_counterpart
+      %GotoAction(2)
+      RTS
+    .valid_counterpart
+
     LDA.w BluePortal_X : STA $20
     LDA.w BluePortal_Y : STA $22
     LDA $7EC190 : STA $0610
@@ -252,6 +274,30 @@ Sprite_Portal_Main:
     %GotoAction(2) ; Return to BluePortal
     RTS
   }
+}
+
+; Carry set only for a live portal of the opposite color in slot Y.
+; The overlap and queued warp both check: a slot can disappear between frames.
+Portal_CheckCounterpart:
+{
+  LDA.w SprSubtype, X : CMP.b #$02 : BEQ .from_blue
+    CMP.b #$01 : BNE .invalid
+    LDY.w BlueSpriteIndex
+    LDA.b #$02
+    BRA .check_slot
+  .from_blue
+    LDY.w OrangeSpriteIndex
+    LDA.b #$01
+  .check_slot
+  CPY.b #$10 : BCS .invalid
+  CMP.w SprSubtype, Y : BNE .invalid
+  LDA.w SprType, Y : CMP.b #Sprite_Portal : BNE .invalid
+  LDA.w SprState, Y : CMP.b #$09 : BNE .invalid
+    SEC
+    RTS
+  .invalid
+  CLC
+  RTS
 }
 
 CheckForDismissPortal:
