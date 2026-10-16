@@ -72,6 +72,11 @@ Sprite_Manhandla_Prep:
 ; Then we transition to the chuchu phase.
 Sprite_Manhandla_CheckForNextPhaseOrDeath:
 {
+  ; Only the body owns phase transitions; flowers and blasts share this routine.
+  LDA.w SprSubtype, X : BNE .not_dead
+  ; Later phases no longer own the old head slots; retain their speed setup.
+  LDA.w SprMiscD, X : BNE .offspring3_dead
+
   ; All three heads need to be dead before we become big chuchu
   LDA.w Offspring1_Id : TAY
   LDA.w SprState, Y : BEQ .offspring1_dead
