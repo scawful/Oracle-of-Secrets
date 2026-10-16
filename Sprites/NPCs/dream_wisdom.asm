@@ -48,6 +48,7 @@ assert !ENABLE_DREAM_RETURN == 1, "ENABLE_DREAM_WISDOM_SCENE requires ENABLE_DRE
 !DW_FrameCaptain    = $03     ; Sprite_HyruleDream_Draw frames
 !DW_FrameFarore     = $04
 !DW_FrameFaroreStep = $05
+!DW_FaroreAux1      = $03     ; OBJ5 1-7: Farore's overworld colors (OW $2A/$80)
 !DW_HoldFrames      = $28     ; 40 frames before Farore walks
 !DW_WalkFrames      = $18     ; 24 frames x 0.5 px = 12 px west
 !DW_WalkSpeed       = $F8
@@ -110,6 +111,10 @@ DreamWisdom_Stage:
   STA.w $037B                             ; no damage
   STA.w $02F9                             ; follower not drawn
   STZ.w $04A0                             ; no floor indicator
+  ; Room $51's header loads aux1 $0E (magenta hair, olive dress).
+  ; Palettes_Load_SpriteAux1 reads $0AAD later in this Module07_15 step
+  ; ($02A276), so OBJ5 fades in with her colors; the hut header resets it.
+  LDA.b #!DW_FaroreAux1 : STA.w $0AAD
   LDA.b #$00 : STA.l SongTintTimer        ; a running tint rewrites $9A
   STA.l DreamWisdom_Flash
   JSR DreamWisdom_BlankHUD
