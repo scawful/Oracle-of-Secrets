@@ -305,16 +305,32 @@ CheckForDismissPortal:
   LDA $06FE : CMP.b #$02 : BCC .return
     LDA $7E0FA6 : BEQ .DespawnOrange ; Check what portal is spawning next
       PHX
-        LDA.w BlueSpriteIndex : TAX
+        LDA.w BlueSpriteIndex
+        CMP.b #$10 : BCS .keep_blue_slot
+        CMP $01,S : BEQ .keep_blue_slot ; Saved source X
+        TAX
+        LDA.w SprType, X : CMP.b #Sprite_Portal : BNE .keep_blue_slot
+        LDA.w SprSubtype, X : CMP.b #$02 : BNE .keep_blue_slot
+        LDA.w SprState, X : CMP.b #$09 : BNE .keep_blue_slot
         STZ.w SprState, X
+        .keep_blue_slot
         DEC.w $06FE
       PLX
     .DespawnOrange
     PHX
-      LDA.w OrangeSpriteIndex : TAX
+      LDA.w OrangeSpriteIndex
+      CMP.b #$10 : BCS .keep_orange_slot
+      CMP $01,S : BEQ .keep_orange_slot ; Saved source X
+      TAX
+      LDA.w SprType, X : CMP.b #Sprite_Portal : BNE .keep_orange_slot
+      LDA.w SprSubtype, X : CMP.b #$01 : BNE .keep_orange_slot
+      LDA.w SprState, X : CMP.b #$09 : BNE .keep_orange_slot
       STZ.w SprState, X
+      .keep_orange_slot
       DEC.w $06FE
+      LDA.w OrangeSpriteIndex ; Preserve the original high-count return value.
     PLX
+  SEC ; The original count >= 2 comparison returned carry set.
   RTS
 
   .return
