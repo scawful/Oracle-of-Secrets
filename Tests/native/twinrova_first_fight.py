@@ -6,7 +6,9 @@ reservation and positive process cleanup. This test discloses an entrance34
 reload, a DB->AC engine fall, native state08 actor inputs and follower history
 fixtures. It never sets CPU registers/PC, directly calls game code, loads a
 state, writes Link health/reward grants, or saves. Saved room-flag/follower inputs
-are logged and restored. Dirty dead-slot properties
+are logged and restored. Each independent case supplies TimerD=0 because the
+native loader retains that AI timer; arbitrary stale AI timers are not tested.
+Dirty dead-slot properties
 are diagnostic inputs, not a claim that an ordinary route creates those bytes.
 
 Six cases: ordinary Prep, maiden suppression, healthy follower spawn, dirty CE
@@ -202,7 +204,7 @@ def fixture_class(portal):
             fixed = {a for a, _ in ENTRANCE_WRITES} | {
                 0x7E00A0, 0x7E00A1, 0x7E00A2, 0x7E00A3, 0x7E0020, 0x7E0021,
                 0x7E0022, 0x7E0023, 0x7EF159, 0x7EF3CC, 0x7E0403,
-                0x7FE0D8, 0x7FE0D9}
+                0x7FE0D8, 0x7FE0D9, 0x7E0EE0}
             tables = set(FIELDS.values()) | {0x0DD0, 0x0E20, 0x0D00, 0x0D10,
                                              0x0D20, 0x0D30, 0x0F20}
             allowed = address in fixed or 0x7E1A00 <= address < 0x7E1A64 or any(
@@ -243,6 +245,7 @@ def fixture_class(portal):
                         room_flags=self.b.read_memory(0x7E0403), properties=properties(sprites),
                         state=self.b.read_memory(0x7E0DD0), kind=self.b.read_memory(0x7E0E20),
                         action=self.b.read_memory(0x7E0D80), timer_c=self.b.read_memory(0x7E0E10),
+                        timer_d=self.b.read_memory(0x7E0EE0),
                         x=self.b.read_memory16(0x7E0022), y=self.b.read_memory16(0x7E0020),
                         sprite_x=self.b.read_memory(0x7E0D10) + 256 * self.b.read_memory(0x7E0D30),
                         sprite_y=self.b.read_memory(0x7E0D00) + 256 * self.b.read_memory(0x7E0D20),
@@ -338,6 +341,7 @@ def fixture_class(portal):
                 self.write(0x7E0DD0 + i, 0, "disable other actors before native initialization fixture")
             self.write(0x7EF3CC, follower, "native Prep follower input")
             self.write(0x7E0403, 0x80 if defeated else 0, "native Prep defeated-bit control")
+            self.write(0x7E0EE0, 0, "independent-case TimerD input; native loader retains this AI timer")
             self.write(0x7E0E20, 0xCE, "native state08 CE input")
             for table, value in ((0x0D10, 0x78), (0x0D30, 0x19), (0x0D00, 0x3C),
                                  (0x0D20, 0x15), (0x0F20, 0)):
@@ -354,6 +358,7 @@ def fixture_class(portal):
                     and number(trace["return_cpu"]["dbr"]) == number(entry["dbr"]),
                     "Prep long return corrupted stack or DBR")
             trace["snapshot"] = self.capture(name + "-prep-return")
+            require(trace["snapshot"]["timer_d"] == 0, "Independent-case TimerD input changed before Prep return")
             expect = dict(EXPECTED)
             if defeated:
                 expect.update(hp=0, bump=0, deflection=0x40)
