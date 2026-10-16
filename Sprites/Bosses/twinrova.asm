@@ -81,6 +81,14 @@ Sprite_Twinrova_Prep:
     STZ.w SprState, X
   .prep_twinrova
 
+  JSR Twinrova_Initialize
+  PLB
+  RTL
+}
+
+; Shared startup after native property loading; caller supplies our data bank.
+Twinrova_Initialize:
+{
   LDA.b #$5A : STA.w SprHealth, X ; Health
   LDA.b #$80 : STA.w SprDefl, X
   LDA.b #$04 : STA.w SprBump, X ; Bump damage type (4 hearts, green tunic)
@@ -100,8 +108,22 @@ Sprite_Twinrova_Prep:
   LDA.b #$07 : STA.w SprGfx, X
   STZ.w $0B69
 
+  RTS
+}
+
+; The maiden spawn bypasses state08 and its native property loader.
+; Keep its fixed-size hook and follower position cache ($00-$03) intact.
+Twinrova_FirstFightPrep: ; @abi m8x8
+{
+  PHB : PHK : PLB
+  PHX
+  LDX.b #$00
+  LDA.b #Sprite_Twinrova : STA.w SprType, X
+  JSL SpritePrep_LoadProperties
+  JSR Twinrova_Initialize
+  PLX
   PLB
-  RTL
+  JML ApplyTwinrovaGraphics
 }
 
 ; =========================================================
@@ -937,7 +959,7 @@ Follower_CheckBlindTrigger:
 org $1DA03C ; @hook module=Sprites
 Blind_SpawnFromMaiden:
 {
-  JSL ApplyTwinrovaGraphics
+  JSL Twinrova_FirstFightPrep
 
   LDX.b #$00 ; Load the boss into sprite index 0
 
@@ -953,8 +975,7 @@ Blind_SpawnFromMaiden:
   LDA.b $02 : SEC : SBC.b #$10 : STA.w SprY, X
   LDA.b $03 : STA.w SprYH, X
 
-  ; Removed because it was causing the sprite to disappear
-  ; JSL SpritePrep_LoadProperties
+  ; Properties and shared startup were loaded before the graphics transfer.
 
   ; Set SprTimerC
   LDA.b #$C0 : STA.w SprTimerC, X
