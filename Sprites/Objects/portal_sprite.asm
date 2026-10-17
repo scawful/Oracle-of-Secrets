@@ -87,8 +87,10 @@ Sprite_Portal_Main:
 
   StateHandler:
   {
-    JSR CheckForDismissPortal
+    ; Reject before changing the live pair or publishing the new portal.
     JSR RejectOnTileCollision
+    LDA.w SprState, X : BEQ .rejected
+    JSR CheckForDismissPortal
 
     LDA $7E0FA6 : BNE .BluePortal
       LDA #$01 : STA $0307
@@ -105,6 +107,7 @@ Sprite_Portal_Main:
     LDA.w SprX, X : STA.w BluePortal_Y
     LDA.b #$02 : STA.w SprSubtype, X
     %GotoAction(1)
+    .rejected
     RTS
   }
 
@@ -119,6 +122,7 @@ Sprite_Portal_Main:
     CLC
 
     LDA.w SprTimerD, X : BNE .NoOverlap
+    JSR Portal_CheckCounterpart : BCC .NoOverlap
       JSL Link_SetupHitBox
       JSL $0683EA          ; Sprite_SetupHitbox_long
       JSL CheckIfHitBoxesOverlap : BCC .NoOverlap
@@ -142,6 +146,7 @@ Sprite_Portal_Main:
     .not_warped_yet
     CLC
     LDA.w SprTimerD, X : BNE .NoOverlap
+    JSR Portal_CheckCounterpart : BCC .NoOverlap
     JSL Link_SetupHitBox
     JSL $0683EA          ; Sprite_SetupHitbox_long
 
@@ -161,6 +166,11 @@ Sprite_Portal_Main:
 
   BluePortal_WarpDungeon:
   {
+    JSR Portal_CheckCounterpart : BCS .valid_counterpart
+      %GotoAction(1)
+      RTS
+    .valid_counterpart
+
     LDA $7EC184 : STA $20
     LDA $7EC186 : STA $22
 
@@ -185,6 +195,11 @@ Sprite_Portal_Main:
 
   OrangePortal_WarpDungeon:
   {
+    JSR Portal_CheckCounterpart : BCS .valid_counterpart
+      %GotoAction(2)
+      RTS
+    .valid_counterpart
+
     LDA $7EC184 : STA $20
     LDA $7EC186 : STA $22
 
@@ -210,6 +225,11 @@ Sprite_Portal_Main:
 
   BluePortal_WarpOverworld:
   {
+    JSR Portal_CheckCounterpart : BCS .valid_counterpart
+      %GotoAction(1)
+      RTS
+    .valid_counterpart
+
     LDA.w OrangePortal_X : STA $20
     LDA.w OrangePortal_Y : STA $22
     LDA $7EC190 : STA $0610
@@ -232,6 +252,11 @@ Sprite_Portal_Main:
 
   OrangePortal_WarpOverworld:
   {
+    JSR Portal_CheckCounterpart : BCS .valid_counterpart
+      %GotoAction(2)
+      RTS
+    .valid_counterpart
+
     LDA.w BluePortal_X : STA $20
     LDA.w BluePortal_Y : STA $22
     LDA $7EC190 : STA $0610
@@ -254,21 +279,61 @@ Sprite_Portal_Main:
   }
 }
 
+; Carry set only for a live portal of the opposite color in slot Y.
+; The overlap and queued warp both check: a slot can disappear between frames.
+Portal_CheckCounterpart:
+{
+  LDA.w SprSubtype, X : CMP.b #$02 : BEQ .from_blue
+    CMP.b #$01 : BNE .invalid
+    LDY.w BlueSpriteIndex
+    LDA.b #$02
+    BRA .check_slot
+  .from_blue
+    LDY.w OrangeSpriteIndex
+    LDA.b #$01
+  .check_slot
+  CPY.b #$10 : BCS .invalid
+  CMP.w SprSubtype, Y : BNE .invalid
+  LDA.w SprType, Y : CMP.b #Sprite_Portal : BNE .invalid
+  LDA.w SprState, Y : CMP.b #$09 : BNE .invalid
+    SEC
+    RTS
+  .invalid
+  CLC
+  RTS
+}
+
 CheckForDismissPortal:
 {
   LDA $06FE : CMP.b #$02 : BCC .return
     LDA $7E0FA6 : BEQ .DespawnOrange ; Check what portal is spawning next
       PHX
-        LDA.w BlueSpriteIndex : TAX
+        LDA.w BlueSpriteIndex
+        CMP.b #$10 : BCS .keep_blue_slot
+        CMP $01,S : BEQ .keep_blue_slot ; Saved source X
+        TAX
+        LDA.w SprType, X : CMP.b #Sprite_Portal : BNE .keep_blue_slot
+        LDA.w SprSubtype, X : CMP.b #$02 : BNE .keep_blue_slot
+        LDA.w SprState, X : CMP.b #$09 : BNE .keep_blue_slot
         STZ.w SprState, X
+        .keep_blue_slot
         DEC.w $06FE
       PLX
     .DespawnOrange
     PHX
-      LDA.w OrangeSpriteIndex : TAX
+      LDA.w OrangeSpriteIndex
+      CMP.b #$10 : BCS .keep_orange_slot
+      CMP $01,S : BEQ .keep_orange_slot ; Saved source X
+      TAX
+      LDA.w SprType, X : CMP.b #Sprite_Portal : BNE .keep_orange_slot
+      LDA.w SprSubtype, X : CMP.b #$01 : BNE .keep_orange_slot
+      LDA.w SprState, X : CMP.b #$09 : BNE .keep_orange_slot
       STZ.w SprState, X
+      .keep_orange_slot
       DEC.w $06FE
+      LDA.w OrangeSpriteIndex ; Preserve the original high-count return value.
     PLX
+  SEC ; The original count >= 2 comparison returned carry set.
   RTS
 
   .return
@@ -293,7 +358,6 @@ RejectOnTileCollision:
     STA $012E ; Queue sound effect
 
     LDA #$00 : STA.w SprState, X
-    DEC $06FE
 
   .not_out_of_bounds
   RTS

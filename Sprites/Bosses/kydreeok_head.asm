@@ -53,8 +53,9 @@ Sprite_KydreeokHead_Long:
 Sprite_KydreeokHead_Prep:
 {
   PHB : PHK : PLB
-  LDA.b #$FF : STA.w SprHealth, X
-  LDA.b #$09 : STA.w SprBump,   X ; bump damage type
+  ; scawful 2026-10-16: 200 HP, touch class 7 (4/3/2 hearts by mail).
+  LDA.b #$C8 : STA.w SprHealth, X
+  LDA.b #$07 : STA.w SprBump,   X ; bump damage class
   STZ.w SprMiscE, X
   STZ.w SprMiscF, X
   STZ.w SprTimerC, X
