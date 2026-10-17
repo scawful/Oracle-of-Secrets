@@ -35,8 +35,14 @@ actions (delete, force push). Do not ask for approval of anything else.
    lines); report failures and unexpected changes. This is how this project meets the global report rule.
 4. **Agents talk through `~/.context/projects/oracle-of-secrets/scratchpad/inbox.md`, not through
    scawful.** Read it at session start. To ask another agent, add one line:
-   `YYYY-MM-DD from -> to: ask (handoff path)`. Delete your line when it is done. Mid-session, scawful
-   can say "check inbox" instead of pasting. Ask scawful only for decisions.
+   `YYYY-MM-DD HH:MMZ from -> to: ask (handoff path)` (<=240 chars; asks, claims and releases only).
+   When it is done, delete your line or prefix it `DONE `. Mid-session, scawful can say "check inbox"
+   instead of pasting. Ask scawful only for decisions.
+   - Status goes in your section of `agent_board.md`, not the inbox: `## <Owner> — YYYY-MM-DD HH:MMZ`
+     plus `Result:`, `Ran:`, `Next:`, `Holds:`, `Handoff:` lines (<=160 chars each). Overwrite only
+     your own section. Load rules: `scratchpad/board_rules.md`. `agent_handoff.md` is a short index.
+   - `python3 Scripts/Agents/coord_compact.py` prints the compaction plan; `--apply` moves DONE,
+     >7-day and non-format blocks verbatim to `scratchpad/archive/coordination/<date>/`. Nothing is deleted.
 5. **One game goal at a time.** The goal is the first line of `inbox.md`; scawful sets it. Agents
    prepare work toward it; scawful decides merges and closes.
 
