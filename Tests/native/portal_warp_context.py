@@ -415,7 +415,7 @@ def main():
     p.add_argument("--execute-fixtures", action="store_true")
     a = p.parse_args(); require(a.execute_fixtures and a.pid > 0, "Explicit private fixture authorization required")
     image, symbols = a.owned_rom.read_bytes(), a.symbols.read_bytes()
-    require(sha(image) == a.rom_sha256 and hashlib.sha1(image).hexdigest() == a.rom_sha1
+    require(sha(image) == a.rom_sha256 and hashlib.sha1(image).hexdigest() == a.rom_sha1.lower()
             and sha(symbols) == a.symbols_sha256, "ROM/symbol identities differ")
     code = describe(image, symbols.decode(), a.expect); portal = util.load_support(a.support_file)
     a.output.mkdir(parents=True, exist_ok=False); sys.path.insert(0, str(a.client_root.resolve()))

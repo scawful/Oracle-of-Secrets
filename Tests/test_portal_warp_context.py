@@ -1,8 +1,11 @@
 """Pure safety controls for the attach-only Portal context fixture; no native calls."""
 import importlib.util
+import hashlib
 from pathlib import Path
 import sys
+import tempfile
 import unittest
+from unittest import mock
 
 PATH = Path(__file__).parent / "native" / "portal_warp_context.py"
 SPEC = importlib.util.spec_from_file_location("portal_context_control", PATH)
@@ -11,6 +14,48 @@ SPEC.loader.exec_module(warp)
 
 
 class PortalWarpFixtureControls(unittest.TestCase):
+    def assert_cli_identity_admission(self, correct_sha1):
+        # Exercise actual argparse/main admission with synthetic bytes. Stop at
+        # describe(), before output creation or any native bridge import/call.
+        class AdmissionReached(Exception):
+            pass
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            image, symbols = b"synthetic CLI identity fixture", b"synthetic symbols\n"
+            rom, sym, output = root / "test.sfc", root / "test.sym", root / "output"
+            rom.write_bytes(image)
+            sym.write_bytes(symbols)
+            sha1 = hashlib.sha1(image).hexdigest().upper() if correct_sha1 else "0" * 40
+            arguments = [str(PATH), "--socket", str(root / "unused.sock"),
+                         "--status-file", str(root / "unused.status"), "--pid", "123",
+                         "--owned-rom", str(rom), "--rom-sha256", hashlib.sha256(image).hexdigest(),
+                         "--rom-sha1", sha1, "--symbols", str(sym),
+                         "--symbols-sha256", hashlib.sha256(symbols).hexdigest(),
+                         "--client-root", str(root), "--owner", "pure-cli-control",
+                         "--owner-file", str(root / "unused-owner.json"), "--output", str(output),
+                         "--support-file", str(root / "unused-support.py"), "--world", "dungeon",
+                         "--color", "blue", "--expect", "baseline", "--execute-fixtures"]
+            with mock.patch.object(sys, "argv", arguments), \
+                    mock.patch.object(warp, "describe", side_effect=AdmissionReached) as describe:
+                if correct_sha1:
+                    with self.assertRaises(AdmissionReached):
+                        warp.main()
+                    describe.assert_called_once_with(image, symbols.decode(), "baseline")
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "ROM/symbol identities differ"):
+                        warp.main()
+                    describe.assert_not_called()
+            self.assertFalse(output.exists())
+            self.assertEqual(rom.read_bytes(), image)
+            self.assertEqual(sym.read_bytes(), symbols)
+
+    def test_actual_cli_accepts_uppercase_matching_sha1_before_native_admission(self):
+        self.assert_cli_identity_admission(True)
+
+    def test_actual_cli_refuses_wrong_sha1_before_native_admission(self):
+        self.assert_cli_identity_admission(False)
+
     def test_actual_jsr_return_requires_two_popped_stack_bytes(self):
         entry = dict(sp=0x1E8, x=0, y=14, dbr=0x31, d=0, p=0x32)
         returned = dict(entry, sp=0x1EA, p=0x33)
