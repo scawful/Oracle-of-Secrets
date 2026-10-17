@@ -87,8 +87,10 @@ Sprite_Portal_Main:
 
   StateHandler:
   {
-    JSR CheckForDismissPortal
+    ; Reject before changing the live pair or publishing the new portal.
     JSR RejectOnTileCollision
+    LDA.w SprState, X : BEQ .rejected
+    JSR CheckForDismissPortal
 
     LDA $7E0FA6 : BNE .BluePortal
       LDA #$01 : STA $0307
@@ -105,6 +107,7 @@ Sprite_Portal_Main:
     LDA.w SprX, X : STA.w BluePortal_Y
     LDA.b #$02 : STA.w SprSubtype, X
     %GotoAction(1)
+    .rejected
     RTS
   }
 
@@ -355,7 +358,6 @@ RejectOnTileCollision:
     STA $012E ; Queue sound effect
 
     LDA #$00 : STA.w SprState, X
-    DEC $06FE
 
   .not_out_of_bounds
   RTS
