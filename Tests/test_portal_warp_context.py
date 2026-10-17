@@ -30,6 +30,10 @@ class PortalWarpFixtureControls(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "No read-only verified"):
             warp.floor_probe([(0x978, 0x2178)], lambda x, y: 1 if (x, y) == (0x980, 0x2180) else 0)
 
+    def test_floor_probe_includes_native_feet_below_the_visible16px_box(self):
+        with self.assertRaisesRegex(RuntimeError, "No read-only verified"):
+            warp.floor_probe([(0x978, 0x2178)], lambda x, y: 1 if y == 0x2188 else 0)
+
     def test_floor_probe_chooses_only_a_read_only_walkable_corridor(self):
         p = warp.floor_probe([(0x978, 0x2178)], lambda x, y: 0)
         self.assertEqual((p["x"], p["y"], p["buttons"]), (0x978, 0x2178, "RIGHT"))

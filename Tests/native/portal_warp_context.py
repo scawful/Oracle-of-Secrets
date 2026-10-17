@@ -65,11 +65,12 @@ def floor_probe(targets, attr, camera=None):
             endx, endy = x + dx * 8, y + dy * 8
             if not (0 <= endx <= 65535 and 0 <= endy <= 65535 and endx >> 8 == x >> 8 and endy >> 8 == y >> 8):
                 continue
-            if camera is not None and not (0 <= endx - camera[0] <= 0xF0 and 0 <= endy - camera[1] <= 0xD0):
+            if camera is not None and not (0 <= endx - camera[0] <= 0xEF and 0 <= endy - camera[1] <= 0xC7):
                 continue
-            # Conservative entire16x16 body, plus up to8px walking clearance.
-            left, right = x + min(0, dx * 8), x + 15 + max(0, dx * 8)
-            top, bottom = y + min(0, dy * 8), y + 15 + max(0, dy * 8)
+            # Native07CD7B down-leading point isY+24; horizontal feetY+23.
+            # Include the entire body/leading edge plus up to8px walking.
+            left, right = x + min(0, dx * 8), x + 16 + max(0, dx * 8)
+            top, bottom = y + min(0, dy * 8), y + 24 + max(0, dy * 8)
             cells = [(a, b) for b in range(top & ~7, (bottom & ~7) + 1, 8)
                      for a in range(left & ~7, (right & ~7) + 1, 8)]
             samples = [(a, b, attr(a, b)) for a, b in cells]
