@@ -114,7 +114,7 @@
       "index": 1,
       "world": "dark_world",
       "use": "environment",
-      "description": "Most map colors are replaced from dw_palette.bin during the build. This is source metadata; it does not grant a write permission or replace the hack manifest.",
+      "description": "All 128 map colors are replaced from dw_palette.bin during the build. This is source metadata; it does not grant a write permission or replace the hack manifest.",
       "provenance": "Yaze PaletteMetadata::kOverworldMiniMap, PC $055C27; Oracle Overworld/world_map.asm org $0ADC27 and incbin dw_palette.bin. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
       "ownership": "asm",
       "usages": []

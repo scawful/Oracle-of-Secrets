@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import sys
@@ -57,9 +58,111 @@ class PaletteCatalogBundleTest(unittest.TestCase):
         self.assertEqual(hashlib.sha256(reopened_path.read_bytes()).hexdigest(), before)
         catalog = json.loads(reopened_path.read_text())
         self.assertEqual(catalog["schema_version"], 1)
-        self.assertEqual(len(catalog["entries"]), 8)
+        self.assertTrue(catalog["entries"])
         self.assertEqual(hashlib.sha256(data.read_bytes()).hexdigest(), before)
         self.assertNotIn(str(self.source), content)
+
+    def test_invalid_catalog_refuses_before_replacing_project_file(self):
+        self.stage("Data/graphics/palette_catalog.json")
+        catalog_path = self.bundle / "project/Data/graphics/palette_catalog.json"
+        original = json.loads(catalog_path.read_text())
+        mutations = [
+            ((), "schema_version", 2), ((), "schema_version", True),
+            ((), "unknown", "field"), ((), "game_id", ""),
+            ((), "entries", {}), ((), "entries", [{}] * 4097),
+            (("entries", 0), "group", "unknown"),
+            (("entries", 0), "index", 2),
+            (("entries", 0), "index", -1),
+            (("entries", 0), "index", 0.0),
+            (("entries", 0), "index", True),
+            (("entries", 0), "world", "overworld"),
+            (("entries", 0), "use", "invalid"),
+            (("entries", 0), "ownership", "mixed"),
+            (("entries", 0), "name", "\0"),
+            (("entries", 0), "name", "é" * 2049),
+            (("entries", 0), "name", "\ud800"),
+            (("entries", 0), "usages", {}),
+            (("entries", 0), "usages", [{}] * 257),
+            (("entries", 1), "key", original["entries"][0]["key"]),
+            (("entries", 1), "index", 0),
+            (("entries", 0, "usages", 0), "unknown", "field"),
+            (("entries", 0, "usages", 0), "context", ""),
+            (("entries", 0, "usages", 0), "use", "invalid"),
+            (("entries", 0, "usages", 0), "obj_row", 8),
+            (("entries", 0, "usages", 0), "obj_row", True),
+            (("entries", 0, "usages", 0), "sprite_sheets", [108]),
+            (("entries", 0, "usages", 0), "sprite_sheets", [-1]),
+            (("entries", 0, "usages", 0), "sprite_sheets", [True]),
+            (("entries", 0, "usages", 0), "sprite_sheets", [0] * 9),
+        ]
+        invalid = []
+        for path, key, value in mutations:
+            catalog = copy.deepcopy(original)
+            target = catalog
+            for component in path:
+                target = target[component]
+            target[key] = value
+            invalid.append((str((path, key)), json.dumps(catalog).encode()))
+        for path, key in [((), "schema_version"), (("entries", 0), "name"),
+                          (("entries", 0, "usages", 0), "source")]:
+            catalog = copy.deepcopy(original)
+            target = catalog
+            for component in path:
+                target = target[component]
+            del target[key]
+            invalid.append((f"missing {key}", json.dumps(catalog).encode()))
+        invalid += [("syntax", b"{"), ("encoding", b"\xff"),
+                    ("too large", b" " * (1024 * 1024 + 1)),
+                    ("nonfinite", b'{"schema_version":NaN}'),
+                    ("root array", b"[]")]
+        for label, data in invalid:
+            with self.subTest(label=label):
+                catalog_path.write_bytes(data)
+                output = self.bundle / "project.yaze"
+                output.write_text("prior descriptor\n")
+                with self.assertRaises(ValueError):
+                    write_project_file(self.bundle, "Oracle", "a" * 40)
+                self.assertEqual(output.read_text(), "prior descriptor\n")
+
+    def test_valid_catalog_can_grow_and_use_consumer_boundaries(self):
+        self.stage("Data/graphics/palette_catalog.json")
+        path = self.bundle / "project/Data/graphics/palette_catalog.json"
+        catalog = json.loads(path.read_text())
+        entry = copy.deepcopy(catalog["entries"][0])
+        entry.update(key="additional.palette", group="sprites_aux3", index=23,
+                     name="é" * 2048, world="special", use="effects")
+        usage = copy.deepcopy(entry["usages"][0])
+        usage.update(obj_row=7, sprite_sheets=[0, 107] * 4, use="effects")
+        entry["usages"] = [usage] * 256
+        catalog["entries"].append(entry)
+        path.write_text(json.dumps(catalog))
+        write_project_file(self.bundle, "Oracle", "a" * 40)
+        self.assertIn("palette_catalog_file=project/Data/graphics/palette_catalog.json",
+                      (self.bundle / "project.yaze").read_text())
+
+    def test_all_consumer_palette_group_limits(self):
+        # Yaze dec9ba7d palette_constants.h; do not import the validator's table.
+        groups = {"ow_main": 6, "ow_aux": 20, "ow_animated": 14, "hud": 2,
+                  "global_sprites": 2, "armors": 5, "swords": 4, "shields": 3,
+                  "sprites_aux1": 12, "sprites_aux2": 11, "sprites_aux3": 24,
+                  "dungeon_main": 20, "grass": 3, "3d_object": 2,
+                  "ow_mini_map": 2}
+        self.stage("Data/graphics/palette_catalog.json")
+        path = self.bundle / "project/Data/graphics/palette_catalog.json"
+        catalog = json.loads(path.read_text())
+        catalog["entries"] = catalog["entries"][:1]
+        for group, count in groups.items():
+            with self.subTest(group=group):
+                catalog["entries"][0].update(group=group, index=count - 1)
+                path.write_text(json.dumps(catalog))
+                write_project_file(self.bundle, "Oracle", "a" * 40)
+                output = self.bundle / "project.yaze"
+                before = output.read_bytes()
+                catalog["entries"][0]["index"] = count
+                path.write_text(json.dumps(catalog))
+                with self.assertRaises(ValueError):
+                    write_project_file(self.bundle, "Oracle", "a" * 40)
+                self.assertEqual(output.read_bytes(), before)
 
     def test_unconfigured_and_empty_projects_keep_optional_key_absent(self):
         for value in (None, ""):

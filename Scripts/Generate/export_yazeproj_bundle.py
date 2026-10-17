@@ -34,6 +34,7 @@ from generate_hack_manifest import (
     MINECART_TRACK_SOURCE_CONTRACT,
     generate_manifest,
 )
+from palette_catalog_contract import validate_palette_catalog
 
 
 PORTABLE_BUILD_SCRIPT = "project/Scripts/Build/build_rom.sh"
@@ -544,6 +545,7 @@ def _portable_palette_catalog(bundle_root: Path) -> str | None:
         bundle_root, rebased, "palette_catalog_file", must_exist=True)
     if not resolved.is_relative_to((bundle_root / "project").resolve()):
         raise ValueError("palette_catalog_file escapes the source snapshot")
+    validate_palette_catalog(resolved)
     return rebased
 
 
