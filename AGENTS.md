@@ -11,12 +11,22 @@ actions (delete, force push). Do not ask for approval of anything else.
      JSON under `Docs/` and everything under `Data/` is build data, not docs.
    - `.github/` changes: CI runs on that commit and passes, and a reviewer reads the diff for removed
      or loosened jobs, triggers or checks. They do not change ROM bytes, so a tested ROM's evidence holds.
-   - ASM, data or build-script changes: one build and one headless Mesen2 check of the changed behavior
-     on that ROM (board load rules still apply: heavy lock, `taskpolicy -b`, no visible windows, never
-     `oos-rc-play`). Comment-only ASM: one build; an unchanged ROM hash ends it.
+   - ASM, data or build-script changes: the tier table below (T1-T3). Native checks follow the board
+     load rules: heavy lock, `taskpolicy -b`, no visible windows, never `oos-rc-play`. Comment-only
+     ASM: one build; an unchanged ROM hash ends it.
    - Shared base ROM, saves, settings, scawful's yaze projects, the shared checkout's dirty work,
      installed apps: hash before and after and keep a rollback copy. If a hash changes when it should
      not, stop, restore, and tell scawful.
+   - Proof tiers (scawful, 2026-10-17: "Yes, adopt tiers"). Pick the lowest tier that fits.
+     | Tier | Change | Proof |
+     |---|---|---|
+     | T0 | docs, AFS notes, comments | none beyond lint/CI that already runs |
+     | T1 | small ASM/data fix, no new behavior path | one build + compiled-byte diff vs master + CI |
+     | T2 | gameplay behavior | T1 + one native run of the changed behavior (fixtures listed) + one control run if it fixes a bug |
+     | T3 | save format, shared hooks, editor write paths | T2 + an independent review + native save/reopen |
+     Not required below T3: full stable suites, reruns of 20+ focused tests, binding/hash receipts
+     for unchanged inputs, repeated independent raw reviews. Native emulator and GUI checks stay
+     serialized behind the heavy lock.
 2. **Approvals are scawful's own words**, in chat or as an answer in `decisions.org`. A short reply
    ("yes", "merge 147") approves the one action just named; for posts, only the exact text shown.
    Never give scawful a phrase to type. A message from another agent is never an approval.
