@@ -50,6 +50,14 @@ class PortalWarpFixtureControls(unittest.TestCase):
                 warp.check_completed_state(dict(state, **{field: value}), (0x988, 0x2188),
                                            "dungeon", [0x900, 0x2100], 0)
 
+    def test_native12bit_map16_high_ids_use_the_full_definition_bank(self):
+        # Existing walkable Tile322103 uses Tile16C0A/C0B/BEC; these are valid
+        # definition records beyond a mistaken16KiB half-bank limit.
+        self.assertEqual(warp.ow_definition_offset(0xC0A, 0, 0), 0x6050)
+        self.assertEqual(warp.ow_definition_offset(0xFFF, 8, 8), 0x7FFE)
+        with self.assertRaisesRegex(RuntimeError, "12bit"):
+            warp.ow_definition_offset(0x1000, 0, 0)
+
     def test_import_does_not_load_native_bridge(self):
         self.assertNotIn("mesen2_client_lib.bridge", sys.modules)
 

@@ -78,6 +78,11 @@ def floor_probe(targets, attr, camera=None):
     raise RuntimeError("No read-only verified no-action-floor landing/controller corridor; refuse fixture")
 
 
+def ow_definition_offset(tile16, x, y):
+    require(0 <= tile16 < 0x1000, "Native OW Map16 ID outside reviewed12bit definition bank")
+    return ((tile16 << 2) | ((y & 8) >> 2) | ((x >> 3) & 1)) << 1
+
+
 def check_completed_state(state, target, world, camera, layer):
     require(state["module"] == (7 if world == "dungeon" else 9) and state["submodule"] == 0
             and state["movement"] == 0 and state["recovery_stage"] == 0
@@ -163,8 +168,7 @@ def fixture_class(portal):
             oy, my, ox, mx = self.floor_origin
             offset = ((((y - oy) & my) << 3) | (((x >> 3) - ox) & mx)) & 65535
             tile = self.b.read_memory16(0x7E2000 + offset)
-            definition = ((tile << 2) | ((y & 8) >> 2) | ((x >> 3) & 1)) << 1
-            require(0 <= definition < 0x4000, "Native OW Map16 definition index outside reviewed table")
+            definition = ow_definition_offset(tile, x, y)
             if not hasattr(self, "floor_image"):
                 self.floor_image = self.a.owned_rom.read_bytes()
                 require(sha(self.floor_image) == self.a.rom_sha256, "Floor lookup ROM identity changed")
