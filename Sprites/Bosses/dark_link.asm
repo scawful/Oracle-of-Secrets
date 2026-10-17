@@ -987,7 +987,7 @@ Sprite_DarkLink_Main:
   {
     PHX
     REP #$20 ; P is still on stack, so we don't even need to fix this
-        LDX #$20
+        LDX #$0E ; colors 7..1 of OBJ palette 0; color 0 kept
         --
         LDA dlinkPalRed, X : STA $7EC600, X
         DEX : DEX : BNE --
@@ -1008,6 +1008,7 @@ Sprite_DarkLink_Main:
 
   dlinkPalRed:
   dw $7FFF, $14A5, $2108, $294A, $1CF5, $7E4E, $001D, $6FF4
+  assert pc()-dlinkPalRed == $10, "Enraging copies offsets $0E..$02 of dlinkPalRed"
 }
 
 ; =========================================================
