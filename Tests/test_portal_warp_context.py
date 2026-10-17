@@ -56,6 +56,71 @@ class PortalWarpFixtureControls(unittest.TestCase):
     def test_actual_cli_refuses_wrong_sha1_before_native_admission(self):
         self.assert_cli_identity_admission(False)
 
+    def test_search_preserves_original_order_and_bounds_new_candidates(self):
+        targets = warp.near_targets(0x7B8, 0xD8B, 0x740, 0xD2B)
+        self.assertEqual(targets[:8], [(0x7C8, 0xD9B), (0x7A8, 0xD9B),
+                                      (0x7C8, 0xD7B), (0x7A8, 0xD7B),
+                                      (0x7C8, 0xD8B), (0x7A8, 0xD8B),
+                                      (0x7B8, 0xD9B), (0x7B8, 0xD7B)])
+        self.assertLessEqual(len(targets), 1024)
+        self.assertEqual(len(set(targets)), len(targets))
+        self.assertNotIn((0x7B8, 0xD8B), targets)
+        for x, y in targets[8:]:
+            self.assertEqual((x >> 8, y >> 8), (7, 13))
+            self.assertEqual((x & 7, y & 7), (0, 0))
+            self.assertTrue(0 <= x - 0x740 <= 0xEF and 0 <= y - 0xD2B <= 0xC7)
+        keys = [(abs(x - 0x7B8) + abs(y - 0xD8B), y, x) for x, y in targets[8:]]
+        self.assertEqual(keys, sorted(keys))
+
+    def test_broader_search_keeps_the_first_original_success(self):
+        probe = warp.floor_probe(warp.near_targets(0x7B8, 0xD8B, 0x740, 0xD2B),
+                                 lambda x, y: 0, (0x740, 0xD2B))
+        self.assertEqual((probe["x"], probe["y"], probe["buttons"]), (0x7C8, 0xD9B, "RIGHT"))
+
+    def test_broader_search_finds_a_separate_verified_floor_island(self):
+        # A controlled independent island, outside all original +/-16 choices.
+        def attr(x, y):
+            return 0 if 0x748 <= x <= 0x760 and 0xD80 <= y <= 0xD98 else 1
+
+        targets = warp.near_targets(0x7B8, 0xD8B, 0x740, 0xD2B)
+        with self.assertRaisesRegex(RuntimeError, "No read-only verified"):
+            warp.floor_probe(targets[:8], attr, (0x740, 0xD2B))
+        probe = warp.floor_probe(targets, attr, (0x740, 0xD2B))
+        self.assertEqual((probe["x"], probe["y"], probe["buttons"]), (0x750, 0xD80, "LEFT"))
+        self.assertTrue(all(value == 0 for _, _, value in probe["samples"]))
+
+    def test_safe_floor_outside_actual_page_or_view_does_not_admit_a_target(self):
+        targets = warp.near_targets(0x7B8, 0xD8B, 0x740, 0xD2B)
+        for attr in (lambda x, y: 0 if x >= 0x800 else 1,
+                     lambda x, y: 0 if x < 0x740 else 1,
+                     lambda x, y: 0x48):
+            with self.assertRaisesRegex(RuntimeError, "No read-only verified"):
+                warp.floor_probe(targets, attr, (0x740, 0xD2B))
+
+    def test_failed_selection_retains_attempts_and_reads_each_cell_only_once(self):
+        calls, trace = {}, {}
+
+        def attr(x, y):
+            calls[x, y] = calls.get((x, y), 0) + 1
+            return 2
+
+        with self.assertRaisesRegex(RuntimeError, "No read-only verified"):
+            warp.floor_probe([(0x7A0, 0xD80), (0x7A8, 0xD80)], attr, (0x740, 0xD2B), trace)
+        self.assertEqual(trace["outcome"], "no-safe-corridor")
+        self.assertEqual(len(trace["attempts"]), 8)
+        self.assertTrue(all(row["outcome"] == "unsafe-floor" and row["samples"]
+                            for row in trace["attempts"]))
+        self.assertTrue(all(count == 1 for count in calls.values()))
+        self.assertEqual(len(trace["unique_reads"]), len(calls))
+        self.assertGreater(trace["cache_hits"], 0)
+        with self.assertRaisesRegex(RuntimeError, "finite bound"):
+            warp.floor_probe([(0x7A0, 0xD80)] * 1025, attr)
+
+    def test_floor_read_cache_does_not_cross_selections(self):
+        warp.floor_probe([(0x7A0, 0xD80)], lambda x, y: 0)
+        with self.assertRaisesRegex(RuntimeError, "No read-only verified"):
+            warp.floor_probe([(0x7A0, 0xD80)], lambda x, y: 1)
+
     def test_actual_jsr_return_requires_two_popped_stack_bytes(self):
         entry = dict(sp=0x1E8, x=0, y=14, dbr=0x31, d=0, p=0x32)
         returned = dict(entry, sp=0x1EA, p=0x33)

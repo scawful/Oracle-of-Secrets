@@ -48,24 +48,52 @@ FIXTURE_SPRITES = {0x7E0000 + table + slot for table in
 OW_LOOKUP = bytes.fromhex("c230a50038ed08072d0a070a0a0a8506a50238ed0c072d0e070506aabf00207e0a0a8506a5002908004a4a0406a50229010005060aaabf0080bd850629ff01aabf59940ee230c910900fc91cb00b8506a50729400a2a2a05066b")
 SAFE_FLOOR = {0x00}  # Conservative no-action floor; no collision writes/fallback.
 PROBE_DIRECTIONS = (("RIGHT", 1, 0), ("LEFT", -1, 0), ("DOWN", 0, 1), ("UP", 0, -1))
+MAX_NEAR_CANDIDATES = 1024
 
 
 def near_targets(x, y, sx, sy):
     offsets = ((16, 16), (-16, 16), (16, -16), (-16, -16), (16, 0), (-16, 0), (0, 16), (0, -16))
-    return [(x + dx, y + dy) for dx, dy in offsets
-            if 0 <= x + dx <= 65535 and 0 <= y + dy <= 65535
-            and (x + dx) >> 8 == x >> 8 and (y + dy) >> 8 == y >> 8
-            and ((x + dx - sx) & 65535) <= 0xF0 and ((y + dy - sy) & 65535) <= 0xD0]
+    original = [(x + dx, y + dy) for dx, dy in offsets
+                if 0 <= x + dx <= 65535 and 0 <= y + dy <= 65535
+                and (x + dx) >> 8 == x >> 8 and (y + dy) >> 8 == y >> 8
+                and ((x + dx - sx) & 65535) <= 0xF0 and ((y + dy - sy) & 65535) <= 0xD0]
+    seen = set(original) | {(x, y)}
+    # Preserve the original ordered choices. Only then search an interior8px
+    # grid in the actual Link page/current view; no world/camera/terrain writes.
+    grid = [(tx, ty) for ty in range(y & 0xFF00, (y & 0xFF00) + 256, 8)
+            for tx in range(x & 0xFF00, (x & 0xFF00) + 256, 8)
+            if (tx, ty) not in seen and 0 <= tx - sx <= 0xEF and 0 <= ty - sy <= 0xC7]
+    grid.sort(key=lambda point: (abs(point[0] - x) + abs(point[1] - y), point[1], point[0]))
+    return original + grid[:MAX_NEAR_CANDIDATES - len(original)]
 
 
-def floor_probe(targets, attr, camera=None):
+def floor_probe(targets, attr, camera=None, trace=None):
     """Require every sampled8px tile under landing and a short walk to be floor."""
+    targets = list(targets)
+    require(len(targets) <= MAX_NEAR_CANDIDATES, "Floor candidate search exceeds finite bound")
+    trace = {} if trace is None else trace
+    trace.update(candidates=targets, attempts=[], unique_reads=[], cache_hits=0, outcome="searching")
+    cache = {}  # This paused selection only; never reused across native frames.
+
+    def lookup(x, y):
+        key = (x, y)
+        if key not in cache:
+            cache[key] = attr(x, y)
+            trace["unique_reads"].append(dict(x=x, y=y, attr=cache[key]))
+        else:
+            trace["cache_hits"] += 1
+        return cache[key]
+
     for x, y in targets:
         for name, dx, dy in PROBE_DIRECTIONS:
+            attempt = dict(target=[x, y], buttons=name, samples=[])
+            trace["attempts"].append(attempt)
             endx, endy = x + dx * 8, y + dy * 8
             if not (0 <= endx <= 65535 and 0 <= endy <= 65535 and endx >> 8 == x >> 8 and endy >> 8 == y >> 8):
+                attempt["outcome"] = "controller-page-boundary"
                 continue
             if camera is not None and not (0 <= endx - camera[0] <= 0xEF and 0 <= endy - camera[1] <= 0xC7):
+                attempt["outcome"] = "controller-view-boundary"
                 continue
             # Native07CD7B down-leading point isY+24; horizontal feetY+23.
             # Include the entire body/leading edge plus up to8px walking.
@@ -73,9 +101,13 @@ def floor_probe(targets, attr, camera=None):
             top, bottom = y + min(0, dy * 8), y + 24 + max(0, dy * 8)
             cells = [(a, b) for b in range(top & ~7, (bottom & ~7) + 1, 8)
                      for a in range(left & ~7, (right & ~7) + 1, 8)]
-            samples = [(a, b, attr(a, b)) for a, b in cells]
+            samples = [(a, b, lookup(a, b)) for a, b in cells]
+            attempt["samples"] = samples
             if all(v in SAFE_FLOOR for _, _, v in samples):
+                attempt["outcome"] = trace["outcome"] = "selected"
                 return dict(x=x, y=y, buttons=name, dx=dx, dy=dy, samples=samples)
+            attempt["outcome"] = "unsafe-floor"
+    trace["outcome"] = "no-safe-corridor"
     raise RuntimeError("No read-only verified no-action-floor landing/controller corridor; refuse fixture")
 
 
@@ -297,7 +329,21 @@ def fixture_class(portal):
             sx, sy = self.b.read_memory16(0x7E00E2), self.b.read_memory16(0x7E00E8)
             if name == "near":
                 self.floor_reads = []
-                probe = floor_probe(near_targets(x, y, sx, sy), self.tile_attr, (sx, sy))
+                if hasattr(self, "floor_origin"): del self.floor_origin
+                selection = dict(home=[x, y, layer], camera=[sx, sy], floor_lookup_reads=self.floor_reads,
+                                 frame_before=number(self.b.get_rom_info()["frameCount"]))
+                self.result.setdefault("floor_selections", []).append(selection)
+                require(self.paused(), "Floor selection requires a paused native boundary")
+                try:
+                    probe = floor_probe(near_targets(x, y, sx, sy), self.tile_attr, (sx, sy), selection)
+                except BaseException as error:
+                    selection["error"] = repr(error)
+                    raise
+                finally:
+                    selection["origin"] = list(self.floor_origin) if hasattr(self, "floor_origin") else None
+                    selection["frame_after"] = number(self.b.get_rom_info()["frameCount"])
+                    require(self.paused() and selection["frame_after"] == selection["frame_before"],
+                            "Floor selection escaped its paused single-frame boundary")
                 tx, ty, tl = probe["x"], probe["y"], layer
             else: tx, ty, tl = target_case(name, x, y, sx, sy, layer)
             for slot, subtype in ((0, 2 if idle == 1 else 1), (14, 1 if idle == 1 else 2)):
