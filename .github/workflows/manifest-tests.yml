@@ -12,8 +12,10 @@ on:
     types: [opened, synchronize, reopened, edited]
   workflow_dispatch:
 
+# Only PR runs share a group (one per PR); push and workflow_dispatch runs get
+# a unique group (run_id), so a master push never cancels or replaces a run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
