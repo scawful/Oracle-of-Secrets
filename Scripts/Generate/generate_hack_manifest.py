@@ -2261,6 +2261,22 @@ def generate_manifest(
         "allocation_regions": [{"start": "0x238000", "end": "0x248000"}],
         "reserved_sheets": ["0x7B", "0x7C"],
     }
+    source_sheet_spec = root / "Data/graphics/source_sprite_sheets.json"
+    if source_sheet_spec.is_file():
+        from sheet_overrides import source_metadata
+        try:
+            source_sheets = source_metadata(root)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            raise ManifestGenerationError(f"Source sprite sheet metadata invalid: {exc}") from exc
+        for field in ("spec", "generated_include"):
+            source_sheets[field] = _source_manifest_path(
+                root, manifest_root, Path(source_sheets[field]),
+                require_relative=explicit_manifest_root,
+            )
+        # Yaze's reservations use global sheet IDs (sprite $64 + $73 = $D7).
+        # Keep extra metadata outside graphics_sheet_regions: its schema is strict.
+        manifest["graphics_sheet_regions"]["reserved_sheets"].extend(source_sheets["global_sheet_ids"])
+        manifest["source_sprite_sheets"] = source_sheets
 
     manifest["protected_regions"] = {
         "description": protected_description,
