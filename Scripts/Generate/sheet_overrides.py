@@ -127,9 +127,12 @@ def asm_text(items):
     for item in items:
         global_id, address = item['g'], item['snes'] | 0x800000
         lines += [f'; Sprite ${item["s"]:02X}, global ${global_id:02X}: {item["why"]}',
-                  f'org ${TBL_BANK+global_id:06X} : db ${address>>16:02X}',
-                  f'org ${TBL_HIGH+global_id:06X} : db ${(address>>8)&255:02X}',
-                  f'org ${TBL_LOW+global_id:06X} : db ${address&255:02X}']
+                  f'org ${TBL_BANK+global_id:06X} ; @hook module=Core kind=data protected_size=1',
+                  f'  db ${address>>16:02X}',
+                  f'org ${TBL_HIGH+global_id:06X} ; @hook module=Core kind=data protected_size=1',
+                  f'  db ${(address>>8)&255:02X}',
+                  f'org ${TBL_LOW+global_id:06X} ; @hook module=Core kind=data protected_size=1',
+                  f'  db ${address&255:02X}']
     return '\n'.join(lines+['pullpc', ''])
 
 
