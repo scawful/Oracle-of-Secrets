@@ -108,6 +108,10 @@
 ; the Captain and Farore and D1.02 ($205) before the dream return
 ; (Sprites/NPCs/dream_wisdom.asm). Needs DREAM_RETURN. Diagnostic opt-out.
 !ENABLE_DREAM_WISDOM_SCENE          = 1
+; Dream rooms load their own BG sheets: Power (room $00) and Courage ($31)
+; after Link_WarpToRoom; Wisdom does it in its scene (Sprites/NPCs/
+; dream_rooms.asm). Needs DREAM_RETURN. Diagnostic opt-out.
+!ENABLE_DREAM_ROOM_SHEETS           = 1
 ; Sword warp home (decisions.org "Intro Abyss exit: the sword cuts Link
 ; home"): taking the Forest of Dreams sword (DW $58) plays a spin, sword-up
 ; and white flash, then reloads Link onto the Maku Tree area ($2A) with
