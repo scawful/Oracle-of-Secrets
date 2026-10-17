@@ -175,3 +175,8 @@ if !DISABLE_OVERWORLD == 0
 else
   print "*** ZSCustomOverworld DISABLED ***"
 endif
+
+; Source-owned compressed sheets patch only their streams and pointer bytes.
+if !ENABLE_SOURCE_SPRITE_SHEETS == 1
+  incsrc "Core/Generated/source_sprite_sheets/sheet_overrides.asm"
+endif

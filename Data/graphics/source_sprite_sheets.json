@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "start": "0x40D000",
+  "capacity": 12288,
+  "encoding": "lz2",
+  "sheets": [
+    {
+      "sprite_sheet": "0x64",
+      "source": "spr64.png",
+      "base_sha256": "82e96ef7c766cdaba10516effb28ddfc1c5beb74817cdaadf421168cf74b42fa",
+      "identity": true,
+      "why": "Identity override: Impa follower sheet; no pixel or palette change."
+    }
+  ]
+}
