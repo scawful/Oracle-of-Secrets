@@ -134,6 +134,7 @@ DreamWisdom_Stage:
   LDA.w $0AA2 : STA.w $0AA1
   JSL !DW_InitTilesets
   SEP #$30
+  JSR DreamWisdom_ClearPPU
   PLA : STA.b $13
   PLB
   RTL
@@ -332,6 +333,39 @@ DreamWisdom_Main:
     .wait
     RTS
   }
+}
+
+; Lag NMIs in the next Module07_15 steps turn the display back on without
+; uploading anything (they skip NMI_DoUpdates), so the PPU would show the
+; hut's HUD and Link for a few frames. Upload the blank HUD and a hidden OAM
+; now, under forced blank, as NMI_DoUpdates does ($008B67, $008BB0).
+; M = 8, X = 8 on entry and exit; X preserved.
+DreamWisdom_ClearPPU:
+{
+  PHX
+  REP #$10
+  LDA.b #$F0
+  LDX.w #$01FC
+  .oam
+    STA.w $0801, X                        ; every OAM entry's Y offscreen
+    DEX : DEX : DEX : DEX
+    BPL .oam
+  LDA.b #$80 : STA.w $2115                ; VMAIN: word increment
+  LDX.w $0219 : STX.w $2116               ; HUD tilemap address
+  LDX.w #$1801 : STX.w $4300              ; DMA0: words to $2118
+  LDX.w #$C700 : STX.w $4302
+  LDA.b #$7E : STA.w $4304
+  LDX.w #$014A : STX.w $4305
+  LDA.b #$01 : STA.w $420B
+  STZ.w $2102 : STZ.w $2103               ; OAMADDR 0
+  LDX.w #$0400 : STX.w $4300              ; DMA0: bytes to $2104
+  LDX.w #$0800 : STX.w $4302
+  STZ.w $4304
+  LDX.w #$0220 : STX.w $4305
+  LDA.b #$01 : STA.w $420B
+  SEP #$10
+  PLX
+  RTS
 }
 
 ; JSL from HUD_Update (menu_hud.asm) and HUD_ClockDisplay (time_system.asm):
