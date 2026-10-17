@@ -59,6 +59,8 @@ MessageExpandedData:
   ; $200: Yesterwind villager reveal line (not wired to an NPC yet)
   ; $201-$203: Part00 arrival lines: $201 Impa's voice on black (A), $202/$203
   ;   house villager on first wake (B) and after a death (B2)
+  ; $204-$205: Wisdom pendant dream (D1): $204 D1.01 narration in the hut,
+  ;   $205 D1.02 Farore in the great hall
   ; $1BE: Ranch Girl Ocarina gift (replaces vanilla $17D)
   ; $1CB: Village Elder post-D1 ranch hint (replaces vanilla $177)
   ; Vanilla text region 2 ($0E:DF40, $167-$18C) is length-pinned by the

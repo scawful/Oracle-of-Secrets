@@ -25,7 +25,13 @@ HUD_ClockDisplay:
   PHP ; Preserve caller M/X flags
   JSL SongTintTick ; Per-frame song tint decay (safe for any M/X width)
   JSR RunClock
+  if !ENABLE_DREAM_WISDOM_SCENE == 1
+    JSL DreamWisdom_HUDHidden : BCS .no_clock ; Wisdom scene: HUD blank
+  endif
   JSR DrawClockToHud
+  if !ENABLE_DREAM_WISDOM_SCENE == 1
+    .no_clock
+  endif
   ; Vanilla calls Garnish_ExecuteUpperSlots_long from Sprite_Main with 8-bit
   ; A/X/Y (LDX.b #$1D / CPX.b #$0E). With 16-bit X the upper slots ($0F-$1D)
   ; never ran: thrown pot/bush debris (garnish $16) froze invisibly (2026-09-26).

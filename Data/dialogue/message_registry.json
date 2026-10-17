@@ -2,8 +2,8 @@
   "format": "oos-message-registry",
   "version": 1,
   "expanded_base": "0x18D",
-  "current_expanded_end": "0x203",
-  "next_append_id": "0x204",
+  "current_expanded_end": "0x205",
+  "next_append_id": "0x206",
   "renumber_policy": "freeze-published-ids",
   "ranges": [
     {
@@ -197,6 +197,14 @@
       "expected_content": "authored",
       "owner": "part00-arrival",
       "purpose": "Part00 arrival lines approved by scawful 2026-09-26 (Docs/Planning/Status/decisions.org, 'Arrival lines A/B/C approved, with a repeat line for B'): $201 A (Impa's voice on black after the fall; Core/Cutscene/opening.asm, !ENABLE_ORACLE_ARRIVAL_SEQUENCE), $202 B (villager, first wake) and $203 B2 (villager, after a death; Sprites/NPCs/house_villager.asm, !ENABLE_PART00_VILLAGER_LINES)"
+    },
+    {
+      "start": "0x204",
+      "end": "0x205",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "dream-wisdom",
+      "purpose": "Wisdom pendant dream (D1, The Sealing War), shot 2 slice: $204 D1.01 narration '...a dream of long ago...', $205 D1.02 Farore 'Keep the seal, Captain. This blade is its key.'; exact words approved by scawful 2026-10-15 (AFS handoffs/lyra_one_map_2026-10-15/DREAM_APPROVALS.json, draft DIALOGUE.json sha256 975448ab...); D1.03-D1.05 are approved too and append next as $206+"
     }
   ]
 }
