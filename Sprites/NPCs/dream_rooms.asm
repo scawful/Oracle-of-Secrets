@@ -18,8 +18,9 @@
 ;
 ; !ENABLE_DREAM_ROOM_SHEETS (needs !ENABLE_DREAM_RETURN): DreamRoom_Stage
 ; for Power and Courage. The shared loader also assembles for
-; !ENABLE_DREAM_WISDOM_SCENE. Art, objects, landing spots and the dream
-; return are unchanged.
+; !ENABLE_DREAM_WISDOM_SCENE. Power uses entrance $7B's north-east arena
+; landing and camera. Courage keeps its current blank room and landing;
+; art, objects and the dream return are unchanged.
 ; =========================================================
 
 if !ENABLE_DREAM_ROOM_SHEETS == 1
@@ -27,7 +28,8 @@ assert !ENABLE_DREAM_RETURN == 1, "ENABLE_DREAM_ROOM_SHEETS requires ENABLE_DREA
 
 ; ---------------------------------------------------------
 ; JSL from Part00_RoomSprites .end_of_list, every underworld room load.
-; M = 8, X = 8, DB = $09. Keeps $00/$02 (list pointer, next free slot).
+; M = 8, X = 8, DB = $09. The list has ended; its $00/$02 scratch is no
+; longer live. The shared graphics loaders clobber $00-$0F and A/X/Y.
 DreamRoom_Stage:
 {
   LDA.b $10 : CMP.b #$07 : BNE .done
@@ -37,15 +39,51 @@ DreamRoom_Stage:
   CPX.b #$03 : BCS .done
   LDA.w $048F : BNE .done                 ; room being loaded
   LDA.w $048E : CMP.l Link_WarpToRoom_room, X : BNE .done
+  CPX.b #$01 : BNE .load_sheets
+  JSR DreamRoom_PowerLanding
+  .load_sheets
   JSL DreamRoom_LoadSheets
   .done
   RTL
+}
+
+; ---------------------------------------------------------
+; Module07_15 step 2 already applied the hut-to-room delta. Replace the
+; inherited south-east position with the complete entrance $7B camera
+; contract, not another low-byte offset. Room $00 has absolute base $0000.
+; Values come from Oracle's relocated entrance tables ($0F:8200-$9C00),
+; decoded as Underworld_LoadEntrance ($02D9A3-$02DAD0) does. Step 4 syncs
+; BG1 from $E2/$E8 and recalculates $A6-$A8 from the new quadrant/layout.
+; M = 8, X = 8, DB = $09 on entry and exit. No scratch RAM is used.
+DreamRoom_PowerLanding:
+{
+  REP #$20
+  LDA.w #$017F : STA.b $22                ; Link X
+  LDA.w #$0089 : STA.b $20                ; Link Y
+  LDA.w #$0100 : STA.b $E2                ; camera X
+  LDA.w #$0010 : STA.b $E8                ; camera Y
+  LDA.w #$0000 : STA.w $0600 : STA.w $0602
+  LDA.w #$0010 : STA.w $0604
+  LDA.w #$0110 : STA.w $0606
+  LDA.w #$0100 : STA.w $0608 : STA.w $060C : STA.w $060E
+  LDA.w #$0000 : STA.w $060A
+  LDA.w #$0088 : STA.w $0618              ; camera Y trigger pair
+  LDA.w #$008A : STA.w $061A
+  LDA.w #$017F : STA.w $061C              ; camera X trigger pair
+  LDA.w #$0181 : STA.w $061E
+  SEP #$20
+  LDA.b #$01 : STA.b $A9                 ; east quadrant
+  STZ.b $AA                             ; north quadrant
+  STZ.b $EE : STZ.w $0476                ; upper layer, no layer transition
+  RTS
 }
 endif
 
 if !ENABLE_DREAM_ROOM_SHEETS == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1
 
 !DR_InitTilesets = $00E19B ; InitializeTilesets (vanilla, JSL/RTL)
+!DR_AnimatedSheets = $02811E ; AnimatedTileSheets, indexed by main GFX set
+!DR_LoadAnimated = $00D337 ; DecompressAnimatedUnderworldTiles (JSL/RTL)
 
 ; ---------------------------------------------------------
 ; Room-sprite load in Module07_15 step 3: palettes already black, before the
@@ -60,6 +98,11 @@ DreamRoom_LoadSheets:
   LDA.w $0AA2 : STA.w $0AA1
   JSL !DR_InitTilesets
   SEP #$30
+  if !ENABLE_DREAM_ROOM_SHEETS == 1
+  LDX.w $0AA1
+  LDA.l !DR_AnimatedSheets, X : TAY
+  JSL !DR_LoadAnimated                   ; replace hut animation under blank
+  endif
   JSR DreamRoom_ClearPPU
   PLA : STA.b $13
   PLB
