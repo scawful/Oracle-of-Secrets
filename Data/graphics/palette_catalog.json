@@ -20,7 +20,7 @@
           "sprite_sheets": [
             100
           ],
-          "source": "Native LoadFollowerGraphics $00:D423 selects $64 for follower $01; Follower_Draw.palette $09:A8FA selects OBJ4. Oracle Sprites/NPCs/impa.asm documents the Zelda replacement. Art source: base ROM sprite sheet $64.",
+          "source": "Native LoadFollowerGraphics $00:D423 selects $64 for follower $01; Follower_Draw.palette $09:A8FA selects OBJ4. Oracle Sprites/NPCs/impa.asm documents the Zelda replacement. Pixel source: Data/graphics/spr64.png via Data/graphics/source_sprite_sheets.json (sprite $64 / Yaze gfx $D7); the current identity override requires the original base-ROM pixels.",
           "use": "npcs"
         },
         {
