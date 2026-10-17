@@ -2,26 +2,18 @@ name: ROM Tests
 
 on:
   push:
-    branches: [master, develop]
-    paths:
-      - '**/*.asm'
-      - '**/*.lua'
-      - 'Scripts/**'
-      - '.github/workflows/test-rom.yml'
-  pull_request:
     branches: [master]
-    paths:
-      - '**/*.asm'
-      - '**/*.lua'
-      - 'Scripts/**'
-      - '.github/workflows/test-rom.yml'
+  pull_request:
+    # Any base branch (stacked PRs). `edited` covers base retargets.
+    # No path filter: the jobs take ~25 s, and a filtered workflow cannot be
+    # a required check. Do not add an `edited`-only job guard: a skipped
+    # check counts as passing.
+    types: [opened, synchronize, reopened, edited]
   workflow_dispatch:
-    inputs:
-      run_emulator_tests:
-        description: 'Run emulator tests (requires self-hosted runner with ROM)'
-        required: false
-        default: false
-        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # =============================================================================
@@ -132,64 +124,6 @@ jobs:
           echo "All Lua scripts passed syntax check"
 
   # =============================================================================
-  # Emulator Tests (Self-Hosted Only)
-  # =============================================================================
-  # Runs actual ROM tests using Mesen2 testRunner
-  # Requires self-hosted runner with:
-  # - Mesen2 installed
-  # - Base ROM at ~/roms/alttp/oos168.sfc
-  emulator-tests:
-    name: Emulator Tests
-    runs-on: self-hosted
-    if: github.event_name == 'workflow_dispatch' && inputs.run_emulator_tests
-    needs: [asm-check, lua-check]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check for Base ROM
-        id: check-rom
-        run: |
-          if [ -f ~/roms/alttp/oos168.sfc ]; then
-            echo "rom_available=true" >> "$GITHUB_OUTPUT"
-            echo "Base ROM found"
-          else
-            echo "rom_available=false" >> "$GITHUB_OUTPUT"
-            echo "::error::Base ROM not found at ~/roms/alttp/oos168.sfc"
-            exit 1
-          fi
-
-      - name: Build Patched ROM
-        if: steps.check-rom.outputs.rom_available == 'true'
-        run: |
-          # Copy base ROM to Roms directory
-          cp ~/roms/alttp/oos168.sfc Roms/
-
-          # Build patched ROM
-          ASAR_BIN="${ASAR_BIN:-asar}" ./Scripts/Build/build_rom.sh 168
-
-      - name: Run Boot Test
-        if: steps.check-rom.outputs.rom_available == 'true'
-        run: |
-          # Run boot verification test
-          Mesen --testRunner --timeout=30 \
-            Scripts/Lua/verify_boot.lua \
-            Roms/oos168x.sfc
-
-          echo "Boot test passed"
-
-      - name: Upload Test Logs
-        if: always() && steps.check-rom.outputs.rom_available == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-logs
-          path: |
-            *.log
-            asar_output.txt
-          retention-days: 7
-
-  # =============================================================================
   # Test Summary
   # =============================================================================
   summary:
@@ -216,5 +150,6 @@ jobs:
             echo "- Lua Syntax: :x: Failed" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "_Emulator tests require self-hosted runner with ROM._" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ needs.asm-check.result }}" != "success" ] || [ "${{ needs.lua-check.result }}" != "success" ]; then
+            exit 1
+          fi
