@@ -1457,6 +1457,22 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Answers: "On return", "Keep $00, quiet it", "Yes, per dream",
   "Drop $1B8 path" (scawful, 2026-10-16).
 
+* DECIDED Pendant dream arrivals: Power in room $00's NE arena; Courage stays blank in $31
+  :PROPERTIES:
+  :ASKED_BY: Claude (review of the Power/Courage dream arrivals)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dream_room_bg_2026-10-16/rooms/contact_sheet.png
+  :END:
+  scawful (2026-10-17): the dream warp "looks a bit broken, not the best room
+  to spawn into but the fading stuff kinda works". Cause: Link_WarpToRoom set
+  only the low bytes of Link's position, so every dream kept the hut's
+  south-east quadrant. Room $00's south-east quadrant is a sealed strip.
+  Rulings (amend "Pendant dreams ... fixed landing" above; room $00 is kept):
+  1. Power lands in room $00's north-east arena with entrance $7B's position,
+     camera and bounds.
+  2. Courage keeps room $31 as a blank room until its composition is decided.
+  Answers: "$00 NE arena (Recommended)", "Keep $31 blank for now
+  (Recommended)" (scawful, 2026-10-17). Code: PR #171.
+
 * DECIDED Kydreeok heads: 200 HP and a 4-heart touch
   :PROPERTIES:
   :ASKED_BY: Claude (Kydreeok fight fixes)
