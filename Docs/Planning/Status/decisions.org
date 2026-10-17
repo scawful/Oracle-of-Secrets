@@ -1456,3 +1456,20 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   would be new fight behavior. Bigger fight work (head recoil, more animation)
   is separate.
   Answer: "200 HP, 4-heart touch (Recommended)" (scawful, 2026-10-16).
+
+* DECIDED Wisdom dream shots 1-2: great hall, soldier stand-in, Farore's hand on his shoulder
+  :PROPERTIES:
+  :ASKED_BY: Claude (Wisdom dream scene)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/wisdom_scene_2026-10-16/design.md
+  :END:
+  Uses the approved Wisdom words (DREAM_APPROVALS.json): D1.01 plays in the
+  hut over the sleeping Link, D1.02 in the great hall (room $51, attract
+  card 3) after Farore walks to the kneeling Captain, lays her hand on his
+  shoulder and a short white flash plays. The Captain is the HyruleDream
+  soldier for now; Kydrog's pirate sheet gets more animation later. The hall
+  loads its own BG sheets, Farore keeps her overworld colors, and her reach
+  pose is new source art (Sprites/NPCs/gfx/farore_reach.txt).
+  Answers: "soldier stand in is good for now, but we should work on improving
+  kydrogs pirate spritesheet at some point", "the thrones look like stoves
+  right now though, need to fix the object set", "add a pose that'd be
+  great", "B: hand on shoulder (Recommended)" (scawful, 2026-10-16).
