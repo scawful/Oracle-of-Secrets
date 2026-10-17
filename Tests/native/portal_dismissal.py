@@ -19,7 +19,7 @@ from pathlib import Path
 import sys
 
 sys.dont_write_bytecode = True
-COUNTERPART_SHA = "e744f35c34b00ee8f725c0f792c801564b7172fbc11b699a1ac80e45558c6513"
+COUNTERPART_SHA = "d523cde1519e9c888edb8c35bd74b0af5bbdb97047a07dc03e3fda6b557458c2"
 COUNTERPART_PATH = Path(__file__).with_name("portal_counterpart.py")
 if hashlib.sha256(COUNTERPART_PATH.read_bytes()).hexdigest() != COUNTERPART_SHA:
     raise RuntimeError("Qualified Portal counterpart utilities differ")
@@ -92,9 +92,16 @@ def describe(image: bytes, text: str, expect: str) -> dict:
     orange = symbol(text, "CheckForDismissPortal_DespawnOrange")
     low = symbol(text, "CheckForDismissPortal_return")
     handler = symbol(text, "StateHandler")
-    require(raw(image, handler, 6) == b"\x20" + (start & 65535).to_bytes(2, "little")
-            + b"\x20" + (symbol(text, "RejectOnTileCollision") & 65535).to_bytes(2, "little"),
-            "StateHandler does not call exact dismissal then Reject code")
+    reject = symbol(text, "RejectOnTileCollision")
+    old_order = b"\x20" + (start & 65535).to_bytes(2, "little") + b"\x20" + (reject & 65535).to_bytes(2, "little")
+    new_order = b"\x20" + (reject & 65535).to_bytes(2, "little") + bytes.fromhex("BDD00DF0")
+    new_order += bytes([plan["blue"] - 1 - (handler + 8)]) + b"\x20" + (start & 65535).to_bytes(2, "little")
+    if raw(image, handler, len(old_order)) == old_order:
+        dismissal_call = handler
+    else:
+        require(raw(image, handler, len(new_order)) == new_order,
+                "StateHandler must use exact legacy or reject-first dismissal order")
+        dismissal_call = handler + 8
     prefix = bytes.fromhex("ADFE06C902") + bytes([0x90, low - (start + 7)]) + bytes.fromhex("AFA60F7E")
     prefix += bytes([0xF0, orange - (start + len(prefix) + 2)])
     code = bytearray(prefix)
@@ -127,7 +134,7 @@ def describe(image: bytes, text: str, expect: str) -> dict:
     require(start + len(code) == low, "Low-count branch entry differs")
     code += bytes.fromhex("EEFE0660")
     require(raw(image, start, len(code)) == code, "Dismissal guard, state/counter writers or legacy A/C return bytes differ")
-    plan.update(expect=expect, dismissal=start, dismissal_call=handler, dismissal_return=handler + 3,
+    plan.update(expect=expect, dismissal=start, dismissal_call=dismissal_call, dismissal_return=dismissal_call + 3,
                 state_writers=states, counter_writers=counters, increment_writer=low, dismissal_bytes=code.hex(), case_count=20)
     return plan
 
