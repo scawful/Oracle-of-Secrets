@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "game_id": "oracle",
+  "entries": [
+    {
+      "key": "oracle.sprites.light_world",
+      "name": "Light World sprites",
+      "group": "global_sprites",
+      "index": 0,
+      "world": "light_world",
+      "use": "mixed",
+      "description": "Four shared OBJ rows (1-4). Actor rows below apply only to the stated context; changing a color affects other users of that row.",
+      "provenance": "Native Palettes_Load_SpriteMain $1B:EC9E selects world with $8A bit $40; Yaze global_sprites[0], PC $0DD218. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
+      "ownership": "rom",
+      "usages": [
+        {
+          "name": "Impa follower",
+          "context": "Follower $01, Light World. Primary art sheet; the follower loader also stages shared sheet $65.",
+          "obj_row": 4,
+          "sprite_sheets": [
+            100
+          ],
+          "source": "Native LoadFollowerGraphics $00:D423 selects $64 for follower $01; Follower_Draw.palette $09:A8FA selects OBJ4. Oracle Sprites/NPCs/impa.asm documents the Zelda replacement. Art source: base ROM sprite sheet $64.",
+          "use": "npcs"
+        },
+        {
+          "name": "Zora Baby follower",
+          "context": "Follower $09, Light World. Primary art sheet; the follower loader also stages shared sheet $65.",
+          "obj_row": 2,
+          "sprite_sheets": [
+            89
+          ],
+          "source": "Native LoadFollowerGraphics $00:D43A selects $59 for followers $09-$0B. Oracle Sprites/NPCs/followers.asm org $09A902 overrides the follower palette to $02. Art source: base ROM sprite sheet $59.",
+          "use": "npcs"
+        }
+      ]
+    },
+    {
+      "key": "oracle.sprites.dark_world",
+      "name": "Dark World sprites",
+      "group": "global_sprites",
+      "index": 1,
+      "world": "dark_world",
+      "use": "mixed",
+      "description": "Four shared OBJ rows (1-4), selected by world state. Light World actor bindings are not automatically valid here.",
+      "provenance": "Native Palettes_Load_SpriteMain $1B:ECA2-$1B:ECB2 selects the alternate bank with $8A bit $40; Yaze global_sprites[1], PC $0DD290. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
+      "ownership": "rom",
+      "usages": []
+    },
+    {
+      "key": "oracle.actors.aux3.03",
+      "name": "Actor half-row 03",
+      "group": "sprites_aux3",
+      "index": 3,
+      "world": "shared",
+      "use": "mixed",
+      "description": "Seven colors for OBJ5 or OBJ6, selected by context. The disassembly names aux1 and aux2 both refer to this Yaze group; this is not sprites_aux1.",
+      "provenance": "Native Palettes_Load_SpriteAux1 $1B:ECC5 reads $0AAD; Palettes_Load_SpriteAux2 $1B:ECE4 reads $0AAE. Both use PaletteData_spriteaux_00 at PC $0DD4E0 + index * 14. Yaze room.cc BuildDungeonSpriteRenderPalette maps paletteset bytes 2 and 3 to sprites_aux3. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
+      "ownership": "rom",
+      "usages": []
+    },
+    {
+      "key": "oracle.actors.aux3.05",
+      "name": "Actor half-row 05",
+      "group": "sprites_aux3",
+      "index": 5,
+      "world": "shared",
+      "use": "mixed",
+      "description": "Seven colors for OBJ5 or OBJ6. This entry names the data bank; the room or area chooses its actual use.",
+      "provenance": "Native Palettes_Load_SpriteAux1 $1B:ECC5 and Palettes_Load_SpriteAux2 $1B:ECE4; Yaze sprites_aux3[5], PC $0DD4E0 + 5 * 14. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
+      "ownership": "rom",
+      "usages": []
+    },
+    {
+      "key": "oracle.link.green_mail",
+      "name": "Link green mail",
+      "group": "armors",
+      "index": 0,
+      "world": "shared",
+      "use": "link_items",
+      "description": "Link OBJ7 colors for green mail. Transformations and effects can replace colors at runtime.",
+      "provenance": "Yaze PaletteMetadata::kArmor, PC $0DD308; native Link armor palette loader. Oracle Masks/mask_routines.asm Palette_ArmorAndGloves and mask form routines can replace OBJ7. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
+      "ownership": "rom",
+      "usages": []
+    },
+    {
+      "key": "oracle.underworld.main.00",
+      "name": "Underworld main 00",
+      "group": "dungeon_main",
+      "index": 0,
+      "world": "underworld",
+      "use": "environment",
+      "description": "The first underworld main palette set. The room paletteset selects its use; no dungeon-name binding is inferred.",
+      "provenance": "Yaze PaletteMetadata::kDungeonMain, PC $0DD734, 90 colors per set; Oracle Core/tables.asm UnderworldPaletteSets. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
+      "ownership": "rom",
+      "usages": []
+    },
+    {
+      "key": "oracle.hud.main",
+      "name": "HUD main",
+      "group": "hud",
+      "index": 0,
+      "world": "shared",
+      "use": "hud",
+      "description": "The main HUD palette. Some colors are supplied by ASM: Menu/menu_palette.asm writes $1BD662 and $1BD66A. Other colors remain in the edit ROM.",
+      "provenance": "Yaze PaletteMetadata::kHud, PC $0DD660; Oracle Menu/menu_palette.asm org $1BD662 and org $1BD66A. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
+      "ownership": "asm",
+      "usages": []
+    },
+    {
+      "key": "oracle.map.dark_world",
+      "name": "Dark World map",
+      "group": "ow_mini_map",
+      "index": 1,
+      "world": "dark_world",
+      "use": "environment",
+      "description": "Most map colors are replaced from dw_palette.bin during the build. This is source metadata; it does not grant a write permission or replace the hack manifest.",
+      "provenance": "Yaze PaletteMetadata::kOverworldMiniMap, PC $055C27; Oracle Overworld/world_map.asm org $0ADC27 and incbin dw_palette.bin. Oracle source e0748350; Yaze palette_constants.h at 9aa6b639; source review 2026-10-16.",
+      "ownership": "asm",
+      "usages": []
+    }
+  ]
+}
