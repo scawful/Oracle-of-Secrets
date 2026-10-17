@@ -11,9 +11,9 @@ actions (delete, force push). Do not ask for approval of anything else.
      JSON under `Docs/` and everything under `Data/` is build data, not docs.
    - `.github/` changes: CI runs on that commit and passes, and a reviewer reads the diff for removed
      or loosened jobs, triggers or checks. They do not change ROM bytes, so a tested ROM's evidence holds.
-   - ASM, data or build-script changes: the tier table below (T1-T3). Native checks follow the board
-     load rules: heavy lock, `taskpolicy -b`, no visible windows, never `oos-rc-play`. Comment-only
-     ASM: one build; an unchanged ROM hash ends it.
+   - ASM, data or build-script changes: the tier table below (T1-T3). Native checks follow
+     the load rules (`scratchpad/board_rules.md`): heavy lock, `taskpolicy -b`, no visible windows,
+     never `oos-rc-play`. Comment-only ASM: one build; an unchanged ROM hash ends it.
    - Shared base ROM, saves, settings, scawful's yaze projects, the shared checkout's dirty work,
      installed apps: hash before and after and keep a rollback copy. If a hash changes when it should
      not, stop, restore, and tell scawful.
@@ -35,8 +35,17 @@ actions (delete, force push). Do not ask for approval of anything else.
    lines); report failures and unexpected changes. This is how this project meets the global report rule.
 4. **Agents talk through `~/.context/projects/oracle-of-secrets/scratchpad/inbox.md`, not through
    scawful.** Read it at session start. To ask another agent, add one line:
-   `YYYY-MM-DD from -> to: ask (handoff path)`. Delete your line when it is done. Mid-session, scawful
-   can say "check inbox" instead of pasting. Ask scawful only for decisions.
+   `YYYY-MM-DD HH:MMZ from -> to: ask (handoff path)` (<=240 chars; asks, claims and releases only).
+   When it is done, delete your line or prefix it `DONE `. Mid-session, scawful can say "check inbox"
+   instead of pasting. Ask scawful only for decisions.
+   - Status goes in your section of `agent_board.md`, not the inbox: `## <Owner> — YYYY-MM-DD HH:MMZ`
+     plus `Result:`, `Ran:`, `Next:`, `Holds:`, `Handoff:` lines (<=160 chars each). Overwrite only
+     your own section. `agent_handoff.md` is a short index.
+   - Load rules: `scratchpad/board_rules.md` (the board title points there; until coord_compact.py first
+     applies, they are the `## Rules` section of `agent_board.md`).
+   - `python3 Scripts/Agents/coord_compact.py` prints the compaction plan; `--apply` moves DONE,
+     >7-day and non-format blocks verbatim to `scratchpad/archive/coordination/<date>/`. Nothing is deleted.
+     `--migrate` (one time) archives all current content verbatim and seeds the new format.
 5. **One game goal at a time.** The goal is the first line of `inbox.md`; scawful sets it. Agents
    prepare work toward it; scawful decides merges and closes.
 
@@ -65,7 +74,8 @@ actions (delete, force push). Do not ask for approval of anything else.
   checks) and, for gameplay changes, a headless Mesen2 scenario or routine test.
   Commit the test under `Tests/` when practical.
 - Still need scawful's OK: base-ROM writes, playtest staging, Discord posts.
-- Lanes and load rules: `~/.context/projects/oracle-of-secrets/scratchpad/agent_board.md`.
+- Lanes: `~/.context/projects/oracle-of-secrets/scratchpad/agent_board.md` (one section per owner).
+- Load rules: `~/.context/projects/oracle-of-secrets/scratchpad/board_rules.md`.
 
 ## Playtest Builds (2026-09-26)
 - Version: `Config/version.json` (`v0.9.0-b<N>`); `build_rom.sh` stamps it into
@@ -77,7 +87,8 @@ actions (delete, force push). Do not ask for approval of anything else.
 - scawful's play window: `oos-play` (`Scripts/Mesen2/oos_play.py`) opens Mesen instance
   `oos-rc-play` on `Roms/Playtest/oos-play.sfc`, or offers a newer build to the open window;
   `stage` offers automatically. Agents never launch or stop `oos-rc-play` themselves.
-- Agent load rules and session board: `~/.context/projects/oracle-of-secrets/scratchpad/agent_board.md`.
+- Agent load rules: `~/.context/projects/oracle-of-secrets/scratchpad/board_rules.md`; session board:
+  `~/.context/projects/oracle-of-secrets/scratchpad/agent_board.md`.
 
 ## Emacs Review (2026-09-26)
 scawful reviews .org/.md in Emacs through agent-bridge (`~/src/tools/agent-bridge/README.md`).
