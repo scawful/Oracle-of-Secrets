@@ -8,9 +8,10 @@
 ; after the village hole". Line A lives in the arrival (opening.asm).
 ;
 ; Included from Oracle_main.asm when either flag is 1, or when
-; !ENABLE_DREAM_WISDOM_SCENE is 1: the room-sprites end-of-list hook
-; ($09C2C3) is shared and first runs DreamWisdom_Stage
-; (Sprites/NPCs/dream_wisdom.asm) at any GameState. Everything else here runs
+; !ENABLE_DREAM_WISDOM_SCENE or !ENABLE_DREAM_ROOM_SHEETS is 1: the
+; room-sprites end-of-list hook ($09C2C3) is shared and first runs
+; DreamWisdom_Stage (Sprites/NPCs/dream_wisdom.asm) and DreamRoom_Stage
+; (Sprites/NPCs/dream_rooms.asm) at any GameState. Everything else here runs
 ; only while GameState ($7EF3C5) = 0, i.e. before Kydrog's ambush.
 ; State: Part00Flags ($7EF30F, Core/sram.asm).
 ;
@@ -100,6 +101,9 @@ Part00_RoomSprites:
   .end_of_list
   if !ENABLE_DREAM_WISDOM_SCENE == 1 && !DISABLE_SPRITES == 0
     JSL DreamWisdom_Stage                 ; Wisdom dream; any GameState
+  endif
+  if !ENABLE_DREAM_ROOM_SHEETS == 1 && !DISABLE_SPRITES == 0
+    JSL DreamRoom_Stage                   ; Power/Courage BG sheets
   endif
   LDA.l GameState : BNE .done             ; Part00 only
   if !ENABLE_PART00_CHECKPOINT == 1

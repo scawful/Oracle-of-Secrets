@@ -14,7 +14,8 @@
 ;   2. Room load (Core/part00.asm, Part00_RoomSprites end of list):
 ;      DreamWisdom_Stage adds the Captain ($D1) and Farore ($D2) as $73
 ;      actors, sets the camera, hides and freezes Link, hides any follower,
-;      blanks the HUD and loads the hall's BG sheets, all before the fade-in.
+;      blanks the HUD and loads the hall's BG sheets (DreamRoom_LoadSheets,
+;      dream_rooms.asm), all before the fade-in.
 ;   3. Farore (the director) holds, walks to the Captain, a white flash,
 ;      D1.02, then DreamReturn_Begin from DreamWisdom_End (the single exit;
 ;      shot 3 hooks in there later).
@@ -57,7 +58,6 @@ assert !ENABLE_DREAM_RETURN == 1, "ENABLE_DREAM_WISDOM_SCENE requires ENABLE_DRE
 !DW_FlashFrames     = $0A
 !DW_LineDelay       = $08     ; flash off -> D1.02
 !DW_EndFrames       = $30     ; D1.02 closed -> dream return
-!DW_InitTilesets    = $00E19B ; InitializeTilesets (vanilla, JSL/RTL)
 
 ; ---------------------------------------------------------
 ; JSL from Part00_RoomSprites .end_of_list, every underworld room load.
@@ -122,20 +122,10 @@ DreamWisdom_Stage:
   STA.l DreamWisdom_Flash
   JSR DreamWisdom_BlankHUD
   JSR DreamWisdom_LoadReachGfx
-  ; Module07_15 never uploads room BG sheets, so room $51 would keep the
-  ; hut's (entrance $68: 61 01 13 07 0E 23 1C 0F; slot 5 $23 draws the
-  ; thrones as stoves). Load the header blockset as the main set, as the
-  ; editors preview it (today $02 = entrance $74: 00 01 10 06 0E 1F 18 0F),
-  ; in step 3: palettes already black, before the tilemap uploads and the
-  ; fade-in. $13 first: lag NMIs write INIDISP from $13. The hut return
-  ; (Module06, entrance $68) reloads its own $0AA1 and sheets.
-  LDA.b $13 : PHA
-  LDA.b #$80 : STA.b $13 : STA.w $2100
-  LDA.w $0AA2 : STA.w $0AA1
-  JSL !DW_InitTilesets
-  SEP #$30
-  JSR DreamWisdom_ClearPPU
-  PLA : STA.b $13
+  ; Room $51 would keep the hut's BG sheets (slot 5 $23 draws the thrones
+  ; as stoves). Today $0AA2 = $02 = entrance $74: 00 01 10 06 0E 1F 18 0F.
+  ; The blank HUD above is what DreamRoom_ClearPPU uploads.
+  JSL DreamRoom_LoadSheets                ; dream_rooms.asm
   PLB
   RTL
 
@@ -333,39 +323,6 @@ DreamWisdom_Main:
     .wait
     RTS
   }
-}
-
-; Lag NMIs in the next Module07_15 steps turn the display back on without
-; uploading anything (they skip NMI_DoUpdates), so the PPU would show the
-; hut's HUD and Link for a few frames. Upload the blank HUD and a hidden OAM
-; now, under forced blank, as NMI_DoUpdates does ($008B67, $008BB0).
-; M = 8, X = 8 on entry and exit; X preserved.
-DreamWisdom_ClearPPU:
-{
-  PHX
-  REP #$10
-  LDA.b #$F0
-  LDX.w #$01FC
-  .oam
-    STA.w $0801, X                        ; every OAM entry's Y offscreen
-    DEX : DEX : DEX : DEX
-    BPL .oam
-  LDA.b #$80 : STA.w $2115                ; VMAIN: word increment
-  LDX.w $0219 : STX.w $2116               ; HUD tilemap address
-  LDX.w #$1801 : STX.w $4300              ; DMA0: words to $2118
-  LDX.w #$C700 : STX.w $4302
-  LDA.b #$7E : STA.w $4304
-  LDX.w #$014A : STX.w $4305
-  LDA.b #$01 : STA.w $420B
-  STZ.w $2102 : STZ.w $2103               ; OAMADDR 0
-  LDX.w #$0400 : STX.w $4300              ; DMA0: bytes to $2104
-  LDX.w #$0800 : STX.w $4302
-  STZ.w $4304
-  LDX.w #$0220 : STX.w $4305
-  LDA.b #$01 : STA.w $420B
-  SEP #$10
-  PLX
-  RTS
 }
 
 ; JSL from HUD_Update (menu_hud.asm) and HUD_ClockDisplay (time_system.asm):

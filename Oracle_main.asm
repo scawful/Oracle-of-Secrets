@@ -150,7 +150,7 @@ namespace Oracle
 
   ; Part00 villager lines and checkpoint (default on; see Util/macros.asm).
   ; The Wisdom dream scene shares its room-sprites hook ($09C2C3).
-  if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1
+  if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1 || !ENABLE_DREAM_ROOM_SHEETS == 1
     incsrc "Core/part00.asm"
   endif
 
