@@ -1424,6 +1424,20 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   the overworld until the ending), "Cap it for now" (old man $A0)
   (scawful, 2026-10-16).
 
+* DECIDED Sprite art lands as source-built sheets (indexed PNG -> compressed sheet)
+  :PROPERTIES:
+  :ASKED_BY: Claude (sprite art audit)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/sprite_art_audit_2026-10-16/README.md
+  :END:
+  Improved sprite art is kept as indexed PNG sources plus a spec in the repo.
+  The build compresses each source into a sheet and repoints the sheet's
+  GFXSheetPointers entry (global id = sprite sheet + $73), instead of editing
+  sheets inside the base ROM or adding per-sprite incbin uploads. The
+  pipeline landed in PR #168 (identity override of sheet $64, the Impa
+  follower; !ENABLE_SOURCE_SPRITE_SHEETS). First real art: the Impa repaint
+  (open question: keep Zelda's palette row or give Impa her own).
+  Answer: "Source-built sheets (Recommended)" (scawful, 2026-10-16).
+
 * DECIDED Pendant dreams: bit on return, quiet room $00, fixed landing, no $1B8
   :PROPERTIES:
   :ASKED_BY: Claude (dream qualification)

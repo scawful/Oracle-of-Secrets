@@ -695,6 +695,7 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [ ] Kydrog Sealing Dream
     - [ ] Mine Collapse Dream
     - *RC status (2026-10-06, Claude):* this list is out of date. The RC has three pendant dreams instead (decisions.org dream entries): =Dream_Wisdom=, =Dream_Power=, =Dream_Courage= in Maple's dispatch (=Sprites/NPCs/maple.asm:155-176=). They warp to placeholder rooms ($61/$00/$31) with the timed return on (=!ENABLE_DREAM_RETURN=). No dream scenes yet; the Ranch Girl curse lifting after D5 is only a comment (=ranch_girl.asm:6=). Needs a rewrite of this list by scawful. Report: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/tracker_reconciliation_2026-10-06/=.
+    - *RC status (2026-10-17, Claude):* Wisdom shots 1-2 are staged in the great hall (room $51, PR #167, open); shots 3-6 are not built. Power ($00) and Courage ($31) still land in empty rooms; draft PR #171 loads their own BG sheets. scawful (2026-10-17): "not the best room to spawn into but the fading stuff kinda works". Room choice for Power and Courage is open (the 2026-10-16 ruling kept $00 for 1.0); Courage composition and D7 Farore dialogue need scawful.
 
 *** TODO [#B] Implement Journal Feature :menu:
     :PROPERTIES:
@@ -760,6 +761,22 @@ CLOSED: [2025-12-08 Mon 22:34]
       - [ ] Create a pre-fight transformation cutscene showing Kydrog turning into Kydreeok.
       - [ ] Improve head/neck rotation visuals.
     - *RC status (2026-10-06, Claude):* the first task has code (targeted and spread fireballs, =Sprites/Bosses/kydreeok_head.asm:309-330=); code only, not ticked. Phase-2 graphics and head regrowth exist. The Song of Healing finish (decisions.org) is not wired: nothing in =kydreeok*.asm= reads =SongFlag=. Report: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/tracker_reconciliation_2026-10-06/=.
+
+*** TODO [#B] Kydrog pirate sprite sheet: more animation and interaction :sprite:art:
+    :PROPERTIES:
+    :ID: sprite-kydrog-pirate-sheet
+    :END:
+    - *Goal:* scawful (2026-10-16): "we should work on improving kydrogs pirate spritesheet at some point so it can be more animated and interactive". The soldier stand-in stays in the Wisdom dream for now.
+    - *How:* through the source-built sheet pipeline (decisions.org "Sprite art lands as source-built sheets", PR #168).
+
+*** TODO [#B] Sprite art from source-built sheets (audit top 10) :sprite:art:
+    :PROPERTIES:
+    :ID: sprite-art-source-sheets
+    :END:
+    - [ ] Impa follower repaint (first real art PR; open: Zelda's palette row or her own).
+    - [ ] Big Chuchu and Twinrova (tracked .bin sources, no pipeline needed).
+    - [ ] Rest of the audit's top 10 (Business Scrub, Sea Urchin, Sea Zora, Leever, Kaepora, blind maiden, Eon Scrub). Confirm each problem in an emulator screenshot first: some "solid black" findings may be a wrong palette row.
+    - *Ranking:* =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/sprite_art_audit_2026-10-16/README.md=.
 
 *** TODO [#B] Enhance Shrine of Courage Boss (Vaati) AI
     :PROPERTIES:
