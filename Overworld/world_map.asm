@@ -540,6 +540,7 @@ org $408000 ; @hook module=Overworld
 
   LWWorldMap_Gfx:
     incbin world_map/LwMapGfx.bin
+  assert pc() <= $40D000, "LW map overlaps source sprite sheet allocation"
 
 org $418000 ; @hook module=Overworld
   DWWorldMap_Tiles:

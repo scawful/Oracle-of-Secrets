@@ -50,6 +50,7 @@
 !ENABLE_PART0_STORM                   = 1
 !ENABLE_PORTAL_ROD_CELL               = 1
 !ENABLE_RING_SRAM_RELOCATE            = 1
+!ENABLE_SOURCE_SPRITE_SHEETS          = 1
 !ENABLE_SWORD_WARP_HOME               = 1
 !ENABLE_TEXT_BOX_SHADE                = 1
 !ENABLE_TRUTHFUL_CONTROLS             = 1

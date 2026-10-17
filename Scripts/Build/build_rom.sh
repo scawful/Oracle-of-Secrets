@@ -188,6 +188,11 @@ if [[ -n "$feat_enable" || -n "$feat_disable" || "$feat_profile" != "defaults" ]
 fi
 
 
+# Source sheets must match the selected editable base and tracked generated
+# streams. Refuse a changed base sheet before replacing any prior build output.
+run_check source_sprite_sheets 1 python3 "$repo_root/Scripts/Generate/sheet_overrides.py" \
+  --root "$repo_root" --base-rom "$base_rom" --check --respect-flags
+
 # Custom collision is editor-authored but source-owned. Fail before generating
 # build inputs when the selected base ROM does not reproduce the tracked JSON.
 echo "[*] Validating custom collision source contract..."
