@@ -26,6 +26,30 @@ class PortalWarpFixtureControls(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "short-return"):
                 warp.check_context_return(entry, dict(returned, **{field: value}), False)
 
+    def test_floor_probe_refuses_hazard_under_the_landing(self):
+        with self.assertRaisesRegex(RuntimeError, "No read-only verified"):
+            warp.floor_probe([(0x978, 0x2178)], lambda x, y: 1 if (x, y) == (0x980, 0x2180) else 0)
+
+    def test_floor_probe_chooses_only_a_read_only_walkable_corridor(self):
+        p = warp.floor_probe([(0x978, 0x2178)], lambda x, y: 0)
+        self.assertEqual((p["x"], p["y"], p["buttons"]), (0x978, 0x2178, "RIGHT"))
+        self.assertTrue(p["samples"])
+        self.assertEqual({v for _, _, v in p["samples"]}, {0})
+
+    def test_short_probe_cannot_cross_the_admitted_page(self):
+        p = warp.floor_probe([(0x9F8, 0x2178)], lambda x, y: 0, (0x980, 0x2100))
+        self.assertEqual(p["buttons"], "LEFT")
+
+    def test_completion_requires_exact_target_camera_layer_and_normal_control(self):
+        state = dict(module=7, submodule=0, movement=0, recovery_stage=0,
+                     xy=[0x988, 0x2188], primary_camera=[0x900, 0x2100], layer=0)
+        warp.check_completed_state(state, (0x988, 0x2188), "dungeon", [0x900, 0x2100], 0)
+        for field, value in (("module", 9), ("submodule", 0x14), ("movement", 1),
+                             ("xy", [0x978, 0x2178]), ("primary_camera", [0x900, 0x2000]), ("layer", 1)):
+            with self.assertRaisesRegex(RuntimeError, "exact target"):
+                warp.check_completed_state(dict(state, **{field: value}), (0x988, 0x2188),
+                                           "dungeon", [0x900, 0x2100], 0)
+
     def test_import_does_not_load_native_bridge(self):
         self.assertNotIn("mesen2_client_lib.bridge", sys.modules)
 

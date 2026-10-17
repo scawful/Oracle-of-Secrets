@@ -5,10 +5,11 @@ Use a paused normal House0104 or ordinary overworld reached by controller.
 Explicit sprite/cache fixtures never write Link, live camera, module, CPU, ROM,
 SRAM, health or invulnerability. Draw probes use the real native Long/Draw and
 PrepOamCoord; queued probes use the actual Long/Main/handler JSR/RTS. Candidate
-refusals must have zero protected writes. The final accepted candidate stops at
-Main RTS after full coordinate/cache writes; native recovery/hop completion and
-ordinary placement/route/save acceptance remain separate. Baseline stops before
-its first unsafe warp write and never resumes. No fixture launches/stops Mesen.
+refusals must have zero protected writes. After its accepted Main boundary the
+fixture clears only its declared actors, then observes native UW recovery / OW state1 recovery, neutral stability and a
+short controller walk on read-only verified floor. It does not qualify an
+ordinary cast or live-pair behavior throughout recovery/route/save. Baseline
+stops before its first unsafe warp write and never resumes. No fixture launches/stops Mesen.
 """
 from __future__ import annotations
 import argparse
@@ -17,6 +18,7 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import time
 sys.dont_write_bytecode = True
 CP_SHA = "d523cde1519e9c888edb8c35bd74b0af5bbdb97047a07dc03e3fda6b557458c2"
 CP_PATH = Path(__file__).with_name("portal_counterpart.py")
@@ -43,6 +45,45 @@ FIXTURE_SPRITES = {0x7E0000 + table + slot for table in
                    (0xDD0, 0xE20, 0xE30, 0xD80, 0xD90, 0xE00, 0xEE0, 0xD10, 0xD30, 0xD00, 0xD20, 0xF20)
                    for slot in (0, 14)} | {0x7E0DD0 + slot for slot in range(16)}
 
+OW_LOOKUP = bytes.fromhex("c230a50038ed08072d0a070a0a0a8506a50238ed0c072d0e070506aabf00207e0a0a8506a5002908004a4a0406a50229010005060aaabf0080bd850629ff01aabf59940ee230c910900fc91cb00b8506a50729400a2a2a05066b")
+SAFE_FLOOR = {0x00}  # Conservative no-action floor; no collision writes/fallback.
+PROBE_DIRECTIONS = (("RIGHT", 1, 0), ("LEFT", -1, 0), ("DOWN", 0, 1), ("UP", 0, -1))
+
+
+def near_targets(x, y, sx, sy):
+    offsets = ((16, 16), (-16, 16), (16, -16), (-16, -16), (16, 0), (-16, 0), (0, 16), (0, -16))
+    return [(x + dx, y + dy) for dx, dy in offsets
+            if 0 <= x + dx <= 65535 and 0 <= y + dy <= 65535
+            and (x + dx) >> 8 == x >> 8 and (y + dy) >> 8 == y >> 8
+            and ((x + dx - sx) & 65535) <= 0xF0 and ((y + dy - sy) & 65535) <= 0xD0]
+
+
+def floor_probe(targets, attr, camera=None):
+    """Require every sampled8px tile under landing and a short walk to be floor."""
+    for x, y in targets:
+        for name, dx, dy in PROBE_DIRECTIONS:
+            endx, endy = x + dx * 8, y + dy * 8
+            if not (0 <= endx <= 65535 and 0 <= endy <= 65535 and endx >> 8 == x >> 8 and endy >> 8 == y >> 8):
+                continue
+            if camera is not None and not (0 <= endx - camera[0] <= 0xF0 and 0 <= endy - camera[1] <= 0xD0):
+                continue
+            # Conservative entire16x16 body, plus up to8px walking clearance.
+            left, right = x + min(0, dx * 8), x + 15 + max(0, dx * 8)
+            top, bottom = y + min(0, dy * 8), y + 15 + max(0, dy * 8)
+            cells = [(a, b) for b in range(top & ~7, (bottom & ~7) + 1, 8)
+                     for a in range(left & ~7, (right & ~7) + 1, 8)]
+            samples = [(a, b, attr(a, b)) for a, b in cells]
+            if all(v in SAFE_FLOOR for _, _, v in samples):
+                return dict(x=x, y=y, buttons=name, dx=dx, dy=dy, samples=samples)
+    raise RuntimeError("No read-only verified no-action-floor landing/controller corridor; refuse fixture")
+
+
+def check_completed_state(state, target, world, camera, layer):
+    require(state["module"] == (7 if world == "dungeon" else 9) and state["submodule"] == 0
+            and state["movement"] == 0 and state["recovery_stage"] == 0
+            and state["xy"] == list(target) and state["primary_camera"] == camera
+            and state["layer"] == layer, "Native warp recovery did not reach exact target/current camera/layer normal state")
+
 
 def allowed_write(address):
     return address in FIXTURE_SPRITES or address in FIXTURE_CACHE or address in (0x7E0632, 0x7E0633)
@@ -60,10 +101,7 @@ def target_case(name, x, y, sx, sy, layer):
         return x, min(candidates, key=lambda v: abs(v - y)), layer
     if name == "other-layer": return x, y, layer ^ 1
     require(name == "near", "Unknown context fixture")
-    candidates = [(x + dx, y + dy) for dx, dy in ((16, 16), (-16, 16), (16, -16), (-16, -16))]
-    candidates = [(a, b) for a, b in candidates if 0 <= a <= 65535 and 0 <= b <= 65535
-                  and a >> 8 == x >> 8 and b >> 8 == y >> 8
-                  and ((a - sx) & 65535) <= 0xF0 and ((b - sy) & 65535) <= 0xD0]
+    candidates = near_targets(x, y, sx, sy)
     require(candidates, "No nonzero near target fits admitted current camera/page")
     return *candidates[0], layer
 
@@ -81,8 +119,11 @@ def describe(image, text, expect):
     require((p["transport_guard"] is not None) == (expect == "candidate"), "Wrong warp-context code profile")
     require(raw(image, 0x01FF28, len(CACHE_CODE)) == CACHE_CODE, "Native complete current-cache capture differs")
     require(raw(image, p["draw"], 4) == bytes.fromhex("2216E406"), "Draw does not call real PrepOamCoord")
+    require(raw(image, 0x00882E, len(OW_LOOKUP)) == OW_LOOKUP, "Read-only OW floor lookup algorithm/table pointers differ")
+    require(raw(image, 0x079311, 42) == bytes.fromhex("a0042077d0a5592901d03fad7203f0038262fc645e209591a53a2980d006a55029fe8550645ba000ade0"),
+            "Native state1 floor recovery differs")
     p.update(expect=expect, draw_return=p["long"] + 6, prep_oam_return=p["draw"] + 4,
-             allocator=0x06F864, native_cache=0x01FF28)
+             allocator=0x06F864, native_cache=0x01FF28, case_count=8 if expect == "candidate" else 3)
     return p
 
 
@@ -109,11 +150,106 @@ def fixture_class(portal):
                                  (0xD20, y >> 8), (0xF20, layer)):
                 self.write(0x7E0000 + table + slot, value, "disclosed split-coordinate/layer sprite input")
 
+        def tile_attr(self, x, y):
+            if self.a.world == "dungeon":
+                cell = 0x7F2000 + (0x1000 if self.home[2] else 0) + ((y & 0x1F8) << 3) + ((x >> 3) & 0x3F)
+                value = self.b.read_memory(cell)
+                self.floor_reads.append(dict(x=x, y=y, cell=f"{cell:06X}", attr=value))
+                return value
+            # Native00882E: input00=Ypixels,02=X/8; one Map16 buffer and four
+            # definition quadrants, then the01FF graphics attribute index.
+            if not hasattr(self, "floor_origin"):
+                self.floor_origin = tuple(self.b.read_memory16(0x7E0000 + a) for a in (0x708, 0x70A, 0x70C, 0x70E))
+            oy, my, ox, mx = self.floor_origin
+            offset = ((((y - oy) & my) << 3) | (((x >> 3) - ox) & mx)) & 65535
+            tile = self.b.read_memory16(0x7E2000 + offset)
+            definition = ((tile << 2) | ((y & 8) >> 2) | ((x >> 3) & 1)) << 1
+            require(0 <= definition < 0x4000, "Native OW Map16 definition index outside reviewed table")
+            if not hasattr(self, "floor_image"):
+                self.floor_image = self.a.owned_rom.read_bytes()
+                require(sha(self.floor_image) == self.a.rom_sha256, "Floor lookup ROM identity changed")
+            word = int.from_bytes(raw(self.floor_image, 0xBD8000 + definition, 2), "little")
+            value = raw(self.floor_image, 0x0E9459 + (word & 0x1FF), 1)[0]
+            self.floor_reads.append(dict(x=x, y=y, origin=list(self.floor_origin), cell=f"{0x7E2000+offset:06X}",
+                                         tile16=tile, definition_cpu=f"{0xBD8000+definition:06X}", definition_word=word,
+                                         attr_cpu=f"{0x0E9459+(word&0x1FF):06X}", attr=value))
+            return value
+
+        def live_state(self):
+            return dict(module=self.b.read_memory(0x7E0010), submodule=self.b.read_memory(0x7E0011),
+                        movement=self.b.read_memory(0x7E005D), recovery_stage=self.b.read_memory(0x7E00B0),
+                        xy=[self.b.read_memory16(0x7E0022), self.b.read_memory16(0x7E0020)],
+                        primary_camera=[self.b.read_memory16(0x7E00E2), self.b.read_memory16(0x7E00E8)],
+                        layer=self.b.read_memory(0x7E00EE), hp=self.b.read_memory(0x7EF36D))
+
+        def advance(self, count, buttons=""):
+            self.check_owner(); require(not self.terminal and self.paused() and not self.breakpoints and not self.watches,
+                                        "Native frames require paused nonterminal boundary without probes")
+            self.input(buttons); before = number(self.b.get_rom_info()["frameCount"])
+            require(self.b.send_command("FRAME", {"count": str(count)}).get("success"), "Owned FRAME rejected")
+            until = min(self.deadline, time.monotonic() + 5)
+            while time.monotonic() < until:
+                after = number(self.b.get_rom_info()["frameCount"])
+                if after >= before + count and self.paused():
+                    require(after <= before + count + 1, "Unexpected native frame overshoot")
+                    row = dict(buttons=buttons, requested=count, before=before, after=after, state=self.live_state())
+                    self.result["frame_advances"].append(row); return row
+                time.sleep(.01)
+            raise RuntimeError("Owned native FRAME did not finish")
+
+        def complete_near(self, row, tx, ty):
+            # This boundary test owns only these two actors. Remove them while
+            # paused after accepted Main, so target placement/autoreentry cannot
+            # confound native recovery. The live-pair lifecycle is unqualified.
+            for slot in (0, 14): self.write(0x7E0DD0 + slot, 0, "clear declared fixture actor after accepted Main; isolate native recovery")
+            original = row["input"]["protected"]
+            camera = [int.from_bytes(bytes.fromhex(original["scroll"])[2:4], "little"),
+                      int.from_bytes(bytes.fromhex(original["scroll"])[8:10], "little")]
+            completion = dict(actor_cleanup="source0/target14 cleared after accepted Main capture; no live-pair recovery claim",
+                              pre_recovery=self.live_state(), neutral_polls=[])
+            expected_module = 7 if self.a.world == "dungeon" else 9
+            for _ in range(32):
+                step = self.advance(1); completion["neutral_polls"].append(step)
+                st = step["state"]
+                if (st["module"], st["submodule"], st["movement"], st["recovery_stage"]) == (expected_module, 0, 0, 0): break
+            else: raise RuntimeError("Native recovery exceeded32neutral frames")
+            check_completed_state(st, (tx, ty), self.a.world, camera, self.home[2])
+            require(st["hp"] == row["input"]["hp"], "Recovery changed native player health")
+            completion["settled"] = self.capture("near-settled")
+            self.advance(12)
+            check_completed_state(self.live_state(), (tx, ty), self.a.world, camera, self.home[2])
+            completion["stable12"] = self.capture("near-stable12")
+            stable = completion["stable12"]["protected"]
+            for key in ("camera", "camera_more", "indices", "counter", "selector", "portal_xy", "layer", "quadrant"):
+                require(stable[key] == original[key], "Recovery changed current bounds/quarter/layer/pair: " + key)
+            probe = row["floor_probe"]
+            completion["movement"] = self.advance(4, probe["buttons"])
+            self.input("")
+            moved = completion["movement"]["state"]
+            dx, dy = moved["xy"][0] - tx, moved["xy"][1] - ty
+            along = dx * probe["dx"] + dy * probe["dy"]
+            across = dy if probe["dx"] else dx
+            require(1 <= along <= 8 and abs(across) <= 1 and moved["layer"] == self.home[2]
+                    and moved["module"] == expected_module and moved["submodule"] == 0 and moved["hp"] == st["hp"],
+                    "Short controller movement on verified floor failed")
+            require(all(abs(a-b) <= 8 for a,b in zip(moved["primary_camera"], camera)), "Short walk caused unbounded camera movement")
+            self.advance(4)
+            released = self.live_state()
+            require(released["module"] == expected_module and released["submodule"] == 0 and released["movement"] == 0
+                    and released["layer"] == self.home[2] and released["hp"] == st["hp"]
+                    and all(abs(a-b) <= 1 for a,b in zip(released["xy"], moved["xy"])), "Released normal control did not stabilize")
+            completion["released"] = self.capture("near-controller-released")
+            self.terminal = True
+            return completion
+
         def initialize(self):
             expected = 7 if self.a.world == "dungeon" else 9
             require((self.b.read_memory(0x7E0010), self.b.read_memory(0x7E0011)) == (expected, 0)
                     and self.b.read_memory(0x7E001B) == (self.a.world == "dungeon"), "Caller must provide actual normal world context")
-            if self.a.world == "dungeon": require(self.b.read_memory16(0x7E00A0) == 0x104, "Dungeon fixture is cold House0104 only")
+            if self.a.world == "dungeon":
+                require(self.b.read_memory16(0x7E00A0) == 0x104, "Dungeon fixture is cold House0104 only")
+                require(all(self.b.read_memory16(0x7E0000 + a + 2) == (self.b.read_memory16(0x7E0000 + a) + 2) & 65535
+                            for a in (0x618, 0x61C)), "Current dungeon camera bound pairs do not match native recovery convention")
             require(self.b.read_memory(0x7E00B0) == 0, "Recovery stage must be neutral before fixtures")
             self.home = (self.b.read_memory16(0x7E0022), self.b.read_memory16(0x7E0020), self.b.read_memory(0x7E00EE))
             for slot in range(16): self.write(0x7E0DD0 + slot, 0, "disable actors before native Portal Prep")
@@ -153,7 +289,12 @@ def fixture_class(portal):
             action = (3 if self.a.color == "blue" else 4) + (2 if self.a.world == "overworld" else 0)
             idle = 1 if self.a.color == "blue" else 2
             x, y, layer = self.home
-            tx, ty, tl = target_case(name, x, y, self.b.read_memory16(0x7E00E2), self.b.read_memory16(0x7E00E8), layer)
+            sx, sy = self.b.read_memory16(0x7E00E2), self.b.read_memory16(0x7E00E8)
+            if name == "near":
+                self.floor_reads = []
+                probe = floor_probe(near_targets(x, y, sx, sy), self.tile_attr, (sx, sy))
+                tx, ty, tl = probe["x"], probe["y"], layer
+            else: tx, ty, tl = target_case(name, x, y, sx, sy, layer)
             for slot, subtype in ((0, 2 if idle == 1 else 1), (14, 1 if idle == 1 else 2)):
                 for table, value in ((0xE20, 3), (0xE30, subtype), (0xDD0, 9)):
                     self.write(0x7E0000 + table + slot, value, "live opposite-color queued-warp identity input")
@@ -171,6 +312,7 @@ def fixture_class(portal):
             before = self.block(SPRITES, SIZE)
             row = dict(name=name, passed=False, color=self.a.color, world=self.a.world, target=[tx, ty, tl],
                        caller_cpu=caller, entry_cpu=entry, input=self.capture(name + "-before"))
+            if name == "near": row.update(floor_probe=probe, floor_lookup_reads=self.floor_reads)
             self.result["cases"].append(row)
             expected_cache = bytearray.fromhex(row["input"]["protected"]["cached_player_camera"])
             for source, offset in CACHE_WORDS: expected_cache[offset - 0x180:offset - 0x180 + 2] = self.block(0x7E0000 + source, 2)
@@ -216,7 +358,6 @@ def fixture_class(portal):
                     else:
                         wanted["player_xy"] = (ty.to_bytes(2, "little") + tx.to_bytes(2, "little")).hex()
                         wanted["movement"] = "01"
-                    self.terminal = True  # No native recovery/hop frames in this boundary test.
                 require(row["after"]["protected"] == wanted and self.block(SPRITES, SIZE) == expected_sprite,
                         "Queued warp changed unexpected context/sprite bytes or failed full-coordinate writes")
             row["protected_write_provenance"] = {k: data(self.b.mem_blame(watch_id=w)) for k, w in watches.items()}
@@ -252,6 +393,7 @@ def fixture_class(portal):
                                          for i, v in enumerate(ty.to_bytes(2, "little") + tx.to_bytes(2, "little"))])
                     exact("movement", [(0x7E005D, effect + 27, 1)])
             for watch in watches.values(): self.remove_watch(watch)
+            if name == "near": row["completion"] = self.complete_near(row, tx, ty)
             row["passed"] = True
     return WarpFixture
 
@@ -276,7 +418,7 @@ def main():
     f = fixture_class(portal)(a, MesenBridge(a.socket, auto_reconnect=False, max_retries=0), code)
     f.result.update(schema="portal-warp-context-boundary-v1", inputs=vars(a), code=code,
                     driver_sha256=sha(Path(__file__).read_bytes()), counterpart_sha256=CP_SHA,
-                    claim="Explicit sprite/cache fixtures: Draw carry and queued near-warp boundary; no completed warp, placement, route or save acceptance")
+                    claim="Explicit sprite/cache fixtures: Draw carry, queued refusals, full near-target/current-context writes and native recovery/control with declared actors cleared; no ordinary cast/live-pair/route/save acceptance")
     owned = False; saved = sram = None
     try:
         f.check_owner(); require(f.paused(), "Caller must pause owned CPU")
@@ -288,7 +430,7 @@ def main():
         f.initialize(); f.draw_case(False); f.draw_case(True)
         for name in (("cross-x",) if a.expect == "baseline" else ("cross-x", "cross-y", "offscreen-x", "offscreen-y", "other-layer", "near")):
             f.case(name)
-        require(f.terminal and all(row["passed"] for row in f.result["cases"]), "Incomplete terminal matrix")
+        require(f.terminal and len(f.result["cases"]) == code["case_count"] and all(row["passed"] for row in f.result["cases"]), "Incomplete terminal matrix")
         f.result["runtime_checks_passed"] = True
     except BaseException as error:
         f.result["error"] = repr(error)
