@@ -77,7 +77,7 @@ Menu_Quest_Draw:
 
   JSR Menu_DrawHeartPieces
   LDA.l $7EF36B : AND.w #$00FF
-  LDX.w #menu_offset(11,24)
+  LDX.w #menu_offset(23,22)
   JSR Menu_Quest_Number3
   JSR Menu_Quest_Progress
   JSR Menu_Quest_Gear
@@ -96,10 +96,6 @@ Menu_Quest_Gear:
 .gear_label
   LDA.w .gear,X : STA.w $1000+menu_offset(12,19),X
   DEX #2 : BPL .gear_label
-  LDX.w #$0008
-.pearl_label
-  LDA.w .pearl,X : STA.w $1000+menu_offset(20,20),X
-  DEX #2 : BPL .pearl_label
   SEP #$30
   LDA.b #$7E : STA.b $0A
   LDY.b #$00
@@ -123,15 +119,13 @@ Menu_Quest_Gear:
   STA.w MenuItemValueSpoof
   REP #$30
   LDA.w #MenuItemValueSpoof
-  LDX.w #menu_offset(17,17) ; absolute (21,21)
+  LDX.w #menu_offset(17,15) ; absolute (19,21), beside heart pieces
   LDY.w #MoonPearlGFX
   JSR DrawMenuItem
   REP #$30
   RTS
 .gear
   dw "GEAR"
-.pearl
-  dw "PEARL"
 .pos
   dw menu_offset(9,14),menu_offset(9,17),menu_offset(9,20)
   dw menu_offset(13,14),menu_offset(13,17),menu_offset(13,20)
@@ -259,8 +253,8 @@ Menu_Quest_Progress:
   db !Crystal_D1_MushroomGrotto,!Crystal_D2_TailPalace,!Crystal_D3_KalyxoCastle
   db !Crystal_D4_ZoraTemple,!Crystal_D5_GlaciaEstate,!Crystal_D6_GoronMines,!Crystal_D7_DragonShip
 .crystal_pos
-  dw menu_offset(12,10),menu_offset(13,14),menu_offset(16,15),menu_offset(19,12)
-  dw menu_offset(19,8),menu_offset(16,5),menu_offset(13,6)
+  dw menu_offset(12,10),menu_offset(13,14),menu_offset(16,15),menu_offset(20,12)
+  dw menu_offset(20,8),menu_offset(16,5),menu_offset(13,6)
 .pendant_bits
   db !Pendant_Wisdom,!Pendant_Power,!Pendant_Courage
 .pendant_pos

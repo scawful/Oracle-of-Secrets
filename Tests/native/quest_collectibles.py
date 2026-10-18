@@ -225,9 +225,20 @@ class QuestFlow(native.Fixture):
                 ("Flippers", 24, 13, "FlippersGFX", 1), ("Sword", 18, 17, "SwordGFX", 4),
                 ("Shield", 21, 17, "ShieldGFX", 3), ("Green Tunic", 24, 17, "TunicGFX", 1)):
             self.icon(name, x, y, table, variant)
-        self.icon("Moon Pearl", 21, 21, "MoonPearlGFX")
+        self.icon("Moon Pearl", 19, 21, "MoonPearlGFX")
         self.check("Quest GEAR label", self.text(19, 12, 4), "GEAR")
-        self.check("Quest PEARL label", self.text(20, 20, 5), "PEARL")
+        self.check("Old PEARL label area is blank", self.text(20, 20, 5), "     ")
+        hearts = self.r(0x7EF36B)
+        heart_tiles = [0x24AD if hearts else 0x2484, 0x64AD if hearts == 3 else 0x6484,
+                       0x24AE if hearts >= 2 else 0x2485, 0x6485]
+        self.check("Heart icon beside Pearl", self.words(23, 21, 2) + self.words(23, 22, 2), heart_tiles)
+        self.check("Heart count below pair", self.text(22, 23, 3), f"{hearts:3d}")
+        self.check("Old heart icon area is blank", self.text(24, 9, 2) + self.text(24, 10, 2), "    ")
+        self.check("Old heart count area is blank", self.text(24, 11, 3), "   ")
+        for x, bit in ((8, 0x04), (12, 0x20)):
+            tile = 0x3534 if self.r(0x7EF37A) & bit else 0x3134
+            self.check(f"Bottom essence at ({x},20)", self.words(x, 20, 2) + self.words(x, 21, 2),
+                       [tile, tile + 1, tile + 0x10, tile + 0x11])
         native.require(self.text(6, 9, 8) != "LOCATION", "Quest still has redundant LOCATION label")
         for x in (6, 8):
             native.require(self.text(x, 21, 7) != "DUNGEON", "Quest still has redundant DUNGEON label")

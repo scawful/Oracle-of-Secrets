@@ -211,7 +211,7 @@ Menu_DrawPendantIcons:
 Menu_DrawHeartPieces:
 {
 if !ENABLE_EQUIPMENT_MENU == 1
-  !QuestHeart = $1000+menu_offset(9,24)
+  !QuestHeart = $1000+menu_offset(21,23)
 else
   !QuestHeart = $149E
 endif
