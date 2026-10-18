@@ -26,7 +26,8 @@ import quest_collectibles as menu
 native = menu.native
 NEW_OWNERSHIP = (0x7EF3AC, 0x7EF3AD, 0x7EF3AE, 0x7EF3AF)
 BOMBS, HOOK, SWORD = 0x7EF343, 0x7EF342, 0x7EF359
-ALLOWED = set(NEW_OWNERSHIP) | {BOMBS, HOOK, SWORD, menu.MAGIC}
+BOMBCHU_AMMO = 0x7EF3B0
+ALLOWED = set(NEW_OWNERSHIP) | {BOMBS, BOMBCHU_AMMO, HOOK, SWORD, menu.MAGIC}
 PROTECTED = (0x7EF3A3, 0x7EF3A4, 0x7EF3A5, 0x7EF3C5, 0x7EF3C6,
              0x7EF3D6, 0x7EF3D7, 0x7EF3D8, 0x7EF374, 0x7EF37A, 0x7EF410)
 BOTTOM = (0x1A, 0x10, 0x1D, 0x1C, 0x19, 0x18)
@@ -41,8 +42,8 @@ def describe():
                 menu_bottom_order=[f"{item:02X}" for item in BOTTOM],
                 checks=["Owned bottom-row order, new item labels/icons/HUD",
                         "Equipment sixth mask: bind, R transform, Y guard, R remove",
-                        "Bombchu: Y cast, forward movement, one ammo debit, explosion",
-                        "Normal bomb control: one ammo debit and ordinary bomb lifetime",
+                        "Bombchu: Y cast, forward movement, one separate-supply debit, explosion",
+                        "Normal bomb control: one ordinary-bomb debit, unchanged Bombchu supply and lifetime",
                         "Switch Hook miss: visible chain, retract, no drag, released controls"],
                 followups=["Garo timed enemy-contact parry and counter damage",
                            "Switch Hook accepted/rejected D5 world fixture and ordinary pull control"])
@@ -60,6 +61,8 @@ class NewItemsFlow(menu.QuestFlow):
                        "Fixture outside paused inventory/magic contract")
         if address in NEW_OWNERSHIP:
             native.require(value == 1, "New-item fixture only grants exact ownership value 1")
+        if address == BOMBCHU_AMMO:
+            native.require(0 <= value <= 20, "Bombchu supply fixture must be between 0 and 20")
         entry = dict(address=f"{address:06X}", before=self.r(address), value=value, reason=reason)
         self.result["writes"].append(entry)
         native.require(self.b.write_memory(address, value), "Fixture write rejected")
@@ -136,7 +139,8 @@ class NewItemsFlow(menu.QuestFlow):
         self.shot("new-items-menu")
         for item, (name, table) in NAMES.items():
             self.pick(item)
-            self.check(name + " footer", self.text(9, 26, 14).strip(), name)
+            footer = f"{name}  {self.r(BOMBCHU_AMMO):02d}" if item == 0x1C else name
+            self.check(name + " footer", self.text(9, 26, 14).strip(), footer)
             self.tap("Start"); self.wait_screen("gameplay")
             self.hud(name + " HUD", table)
             self.tap("Start"); self.wait_screen("items")
@@ -187,23 +191,26 @@ class NewItemsFlow(menu.QuestFlow):
         self.equip(0x1C)
         self.tap(self.a.launch_direction, 2)
         self.ready()
-        before = self.r(BOMBS)
+        before = self.r(BOMBCHU_AMMO)
+        ordinary_before = self.r(BOMBS)
         self.tap("Y", 1)
         self.until(lambda: self.r(0x7E07F1) != 0, "Bombchu did not allocate a native bomb", 24)
         slot = self.r(0x7E07F1) - 1
         native.require(slot in (0, 1), "Bombchu used a non-bomb ancilla slot")
-        self.check("Bombchu debits one bomb", self.r(BOMBS), before - 1)
+        self.check("Bombchu debits one from its supply", self.r(BOMBCHU_AMMO), before - 1)
+        self.check("Bombchu cast preserves ordinary bombs", self.r(BOMBS), ordinary_before)
         self.check("Bombchu uses native bomb", self.r(0x7E0C4A + slot), 7)
         self.check("Bombchu signature", self.r(0x7E03EA + slot), 0xBC)
         origin = self.position(slot)
         direction = self.r(0x7E07F2)
         trace, explosion, moved = [], False, False
         self.shot("bombchu-flight")
-        for _ in range(100):
+        for _ in range(160):
             kind, phase = self.r(0x7E0C4A + slot), self.r(0x7E0C5E + slot)
             point = self.position(slot)
             trace.append(dict(kind=kind, phase=phase, position=point,
-                              active=self.r(0x7E07F1), ammo=self.r(BOMBS)))
+                              active=self.r(0x7E07F1), ammo=self.r(BOMBCHU_AMMO),
+                              ordinary_bombs=self.r(BOMBS)))
             if kind != 7:
                 break
             explosion |= phase > 0
@@ -218,11 +225,13 @@ class NewItemsFlow(menu.QuestFlow):
         self.check("Bombchu enters native explosion", explosion, True)
         self.check("Bombchu finishes native lifetime", self.r(0x7E0C4A + slot), 0)
         self.check("Bombchu clears ownership latch", self.r(0x7E07F1), 0)
-        self.check("Bombchu lifetime costs one bomb", self.r(BOMBS), before - 1)
+        self.check("Bombchu lifetime costs one from its supply", self.r(BOMBCHU_AMMO), before - 1)
+        self.check("Bombchu lifetime preserves ordinary bombs", self.r(BOMBS), ordinary_before)
 
     def normal_bomb_control(self):
         self.equip(0x04)
         before = self.r(BOMBS)
+        bombchu_before = self.r(BOMBCHU_AMMO)
         self.tap("Y", 1)
         self.until(lambda: bool(self.ancilla(7)), "Normal bomb did not spawn", 24)
         self.check("Normal bomb debits one bomb", self.r(BOMBS), before - 1)
@@ -234,6 +243,7 @@ class NewItemsFlow(menu.QuestFlow):
         self.advance("", 2)
         self.until(lambda: not self.ancilla(7), "Normal bomb did not finish", 240)
         self.check("Normal bomb lifetime costs one bomb", self.r(BOMBS), before - 1)
+        self.check("Normal bomb preserves Bombchu supply", self.r(BOMBCHU_AMMO), bombchu_before)
         self.ready()
 
     def switch_miss(self):
@@ -272,7 +282,8 @@ class NewItemsFlow(menu.QuestFlow):
         protected = {str(address): self.r(address) for address in PROTECTED}
         for address in NEW_OWNERSHIP:
             self.write(address, 1, "Explicit prototype ownership fixture")
-        self.write(BOMBS, 9, "Shared ordinary bomb ammunition fixture")
+        self.write(BOMBS, 9, "Ordinary bomb ammunition fixture")
+        self.write(BOMBCHU_AMMO, 20, "Separate Bombchu supply fixture")
         self.write(HOOK, 1, "Ordinary Hookshot control ownership")
         if not 1 <= self.r(SWORD) <= 4:
             self.write(SWORD, 1, "Ordinary sword needed by Garo counter prototype")

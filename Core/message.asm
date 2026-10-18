@@ -67,6 +67,10 @@ MessageExpandedData:
   ; $0EEE75 chain byte, so longer rewrites there move to this bank.
   incsrc "Core/Generated/expanded_messages.asm"
 
+; These three vanilla IDs remain stable while their source-owned tutorials
+; replace base-ROM text after the pointer walker reaches the generated $FF.
+incsrc "Core/minish_tutorials.asm"
+
 print "End of expanded dialogue          ", pc
 
 ; Keep message source-sync inside its fixed allocation. Core/progression.asm

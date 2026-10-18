@@ -15,6 +15,7 @@ incsrc "Items/fishing_rod.asm"
 incsrc "Items/magic_rings.asm"
 incsrc "Items/fist_damage.asm"
 incsrc "Items/bombchu.asm"
+incsrc "Items/bombchu_pickup.asm"
 %log_end("Items/fist_damage.asm", !LOG_ITEMS)
 
 MagicBeanGfx:

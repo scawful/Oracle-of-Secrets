@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Attach-only Bombchu world-art check; caller owns launch and cleanup.
 
-Only Bombchu ownership ($7EF3AD=1) and bomb ammunition ($7EF343=30) are
-fixture writes. Four directional casts, menu selection, movement and the
+Only Bombchu ownership ($7EF3AD=1), its separate supply ($7EF3B0=0..20), and
+ordinary bomb ammunition ($7EF343=30) are fixture writes. This scenario grants
+20 Bombchus. Four directional casts, menu selection, movement and the
 ordinary-bomb control use controllers. Caller supplies open floor with enough
 space for at least 16 travel frames in all four directions. No position, CPU,
 actor, story, SRAM, save-state or ROM writes; no save/reopen qualification.
@@ -25,19 +26,22 @@ PROTECTED_TILES = (*range(0x2A, 0x2E), *range(0x3A, 0x3E), 0x6E, 0x6F, 0x7E, 0x7
 
 
 def describe():
-    return dict(native_executed=False, fixture_writes={"7EF3AD": 1, "7EF343": 30},
+    return dict(native_executed=False, fixture_writes={"7EF3AD": 1, "7EF3B0": 20, "7EF343": 30},
                 checks=["Four controller casts: tile2E/page0, large OAM, palette2 before native fuse flash, directional flips",
                         "Both crawl frames match ROM bytes uploaded to VRAM85C0/87C0",
-                        "Forward travel, one ammo debit, native explosion and lifetime",
-                        "Bombchu and ordinary bomb coexist as tile2E/tile6E; arrow/bomb tiles remain unchanged"],
+                        "Forward travel, one separate-supply debit, native explosion and lifetime",
+                        "Bombchu and ordinary bomb coexist as tile2E/tile6E with one debit from each supply; arrow/bomb tiles remain unchanged"],
                 prerequisite="Paused owned headless gameplay, ordinary Link, open floor in all directions",
                 limitations="Open-floor fixture only; acquisition, route and save/reopen are not tested")
 
 
 class BombchuArtFlow(prototype.NewItemsFlow):
     def write(self, address, value, reason):
-        native.require({0x7EF3AD: 1, prototype.BOMBS: 30}.get(address) == value,
-                       "Write outside Bombchu ownership/ammunition fixture")
+        if address == prototype.BOMBCHU_AMMO:
+            native.require(0 <= value <= 20, "Bombchu supply fixture must be between 0 and 20")
+        else:
+            native.require({0x7EF3AD: 1, prototype.BOMBS: 30}.get(address) == value,
+                           "Write outside Bombchu ownership/ammunition fixture")
         super().write(address, value, reason)
 
     def memory(self, address, size, kind):
@@ -61,7 +65,8 @@ class BombchuArtFlow(prototype.NewItemsFlow):
     def cast(self, direction):
         name = DIRECTIONS[direction]
         self.tap(name, 2); self.ready()
-        before = self.r(prototype.BOMBS)
+        before = self.r(prototype.BOMBCHU_AMMO)
+        ordinary_before = self.r(prototype.BOMBS)
         self.tap("Y", 1)
         self.until(lambda: self.r(0x7E07F1) != 0, name + " did not allocate Bombchu", 24)
         slot = self.r(0x7E07F1) - 1
@@ -70,23 +75,26 @@ class BombchuArtFlow(prototype.NewItemsFlow):
         self.check(name + " signature", self.r(0x7E03EA + slot), 0xBC)
         origin, seen, trace, moved, exploded = self.position(slot), set(), [], False, False
         self.result.setdefault("casts", {})[name] = trace
-        for _ in range(64):
+        for _ in range(96):
             kind, phase = self.r(0x7E0C4A + slot), self.r(0x7E0C5E + slot)
             if kind != 7:
                 break
             point = self.position(slot)
-            row = dict(kind=kind, phase=phase, position=point, fuse=self.r(0x7E039F + slot))
+            current_direction = self.r(0x7E07F2)
+            row = dict(kind=kind, phase=phase, position=point,
+                       direction=current_direction, fuse=self.r(0x7E039F + slot))
             trace.append(row)
             if phase == 0:
+                native.require(current_direction in range(4), f"{name}: invalid crawl direction")
                 objects = self.oam(0x2E)
                 native.require(len(objects) == 1, f"{name}: expected one visible Bombchu, got {objects}")
                 obj = objects[0]
-                native.require(obj["large"] and obj["props"] & 0xC1 == (0, 0x80, 0x40, 0)[direction],
+                native.require(obj["large"] and obj["props"] & 0xC1 == (0, 0x80, 0x40, 0)[current_direction],
                                f"{name}: wrong OAM size, page or flips: {obj}")
                 if row["fuse"] >= 32:
                     native.require(obj["props"] & 0x0E == 4, f"{name}: wrong pre-flash palette: {obj}")
                 pixels = self.tile_bytes((0x2E, 0x2F, 0x3E, 0x3F))
-                family = self.frames[:2] if direction < 2 else self.frames[2:]
+                family = self.frames[:2] if current_direction < 2 else self.frames[2:]
                 native.require(pixels in family, f"{name}: VRAM does not match either directional ROM frame")
                 frame = family.index(pixels)
                 if frame not in seen:
@@ -105,13 +113,15 @@ class BombchuArtFlow(prototype.NewItemsFlow):
         self.check(name + " native explosion", exploded, True)
         self.check(name + " native lifetime complete", self.r(0x7E0C4A + slot), 0)
         self.check(name + " owner cleared", self.r(0x7E07F1), 0)
-        self.check(name + " one ammunition debit", self.r(prototype.BOMBS), before - 1)
+        self.check(name + " one Bombchu supply debit", self.r(prototype.BOMBCHU_AMMO), before - 1)
+        self.check(name + " preserves ordinary bombs", self.r(prototype.BOMBS), ordinary_before)
         self.check(name + " protected arrow/bomb tiles", native.digest(self.tile_bytes(PROTECTED_TILES)), self.protected)
         self.ready()
 
     def coexistence(self):
         self.tap("Right", 2); self.ready()
         before = self.r(prototype.BOMBS)
+        bombchu_before = self.r(prototype.BOMBCHU_AMMO)
         self.tap("Y", 1)
         self.until(lambda: self.r(0x7E07F1) != 0, "Coexistence Bombchu did not spawn", 24)
         chu = self.r(0x7E07F1) - 1
@@ -123,13 +133,15 @@ class BombchuArtFlow(prototype.NewItemsFlow):
         self.check("Coexistence keeps Bombchu travelling", self.r(0x7E0C5E + chu), 0)
         native.require(self.r(0x7E03EA + other) != 0xBC, "Ordinary bomb adopted Bombchu signature")
         self.check("Coexistence draws both world sprites", [bool(self.oam(0x2E)), bool(self.oam(0x6E))], [True, True])
-        self.check("Coexistence debits two bombs", self.r(prototype.BOMBS), before - 2)
+        self.check("Coexistence debits one ordinary bomb", self.r(prototype.BOMBS), before - 1)
+        self.check("Coexistence debits one Bombchu", self.r(prototype.BOMBCHU_AMMO), bombchu_before - 1)
         self.check("Coexistence preserves arrow/bomb tiles", native.digest(self.tile_bytes(PROTECTED_TILES)), self.protected)
         self.shot("bombchu-and-ordinary-bomb")
         self.advance("Left", 18); self.advance("", 2)
         self.until(lambda: not self.ancilla(7), "Coexisting bombs did not finish", 300)
         self.check("Coexistence clears Bombchu ownership", self.r(0x7E07F1), 0)
-        self.check("Coexistence lifetime costs two bombs", self.r(prototype.BOMBS), before - 2)
+        self.check("Coexistence lifetime costs one ordinary bomb", self.r(prototype.BOMBS), before - 1)
+        self.check("Coexistence lifetime costs one Bombchu", self.r(prototype.BOMBCHU_AMMO), bombchu_before - 1)
         self.ready()
 
     def run(self):
@@ -144,7 +156,8 @@ class BombchuArtFlow(prototype.NewItemsFlow):
         native.require(all(len(f) == 128 and any(f) for f in self.frames)
                        and len(set(self.frames)) == 4, "Need four distinct nonblank world frames")
         self.write(0x7EF3AD, 1, "Declared Bombchu ownership")
-        self.write(prototype.BOMBS, 30, "Declared shared bomb ammunition")
+        self.write(prototype.BOMBS, 30, "Declared ordinary bomb ammunition")
+        self.write(prototype.BOMBCHU_AMMO, 20, "Declared separate Bombchu supply")
         self.equip(0x1C)
         self.protected = native.digest(self.tile_bytes(PROTECTED_TILES))
         for direction in range(4):
@@ -152,6 +165,7 @@ class BombchuArtFlow(prototype.NewItemsFlow):
         self.coexistence()
         self.equip(0x04)
         before = self.r(prototype.BOMBS)
+        bombchu_before = self.r(prototype.BOMBCHU_AMMO)
         self.tap("Y", 1)
         self.until(lambda: bool(self.ancilla(7)), "Ordinary bomb did not spawn", 24)
         self.check("Ordinary bomb has no Bombchu owner", self.r(0x7E07F1), 0)
@@ -163,6 +177,7 @@ class BombchuArtFlow(prototype.NewItemsFlow):
         self.advance("Left", 18); self.advance("", 2)
         self.until(lambda: not self.ancilla(7), "Ordinary bomb did not finish", 260)
         self.check("Ordinary bomb one ammunition debit", self.r(prototype.BOMBS), before - 1)
+        self.check("Ordinary bomb preserves Bombchu supply", self.r(prototype.BOMBCHU_AMMO), bombchu_before)
         self.check("Final protected arrow/bomb tiles", native.digest(self.tile_bytes(PROTECTED_TILES)), self.protected)
         self.result["runtime_checks_passed"] = True
 

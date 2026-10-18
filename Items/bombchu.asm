@@ -1,5 +1,5 @@
 ; =========================================================
-; Bombchu prototype: one travelling bomb, standard bomb ammo.
+; Bombchu: one travelling crawler with its own collectible ammunition.
 ; Native bomb damage, destructible checks and explosion remain shared.
 ; @source usdasm/bank_07.asm:LinkItem_Bombs
 ; @source usdasm/bank_08.asm:Ancilla07_Bomb
@@ -15,6 +15,7 @@ BombchuAreaHigh   = $7E07F5
 BombchuSignature  = $7E07F6
 BombchuFloor      = $7E07F7
 BombchuFollowing  = $7E07FD ; zero until the first wall; then keep it on the right
+BombchuAllocating = $7E07FE ; nonzero only inside the native bomb allocator
 !BOMBCHU_SIGNATURE = $BC
 
 pushpc
@@ -24,6 +25,19 @@ org $07A153
 ; Replaces JSL AncillaAdd_Bomb. Ordinary bombs use the original routine.
   JSL Bombchu_AddBomb
 assert pc() <= $07A157
+
+; Keep the native allocator and setup, selecting only its ammunition source.
+; The synchronous latch distinguishes our caller from every ordinary bomb.
+org $098127
+assert read4($098127) == $7EF343AF, "Native bomb ammo load moved"
+; @hook Bombchu_AmmoLoad kind=jsl target=Bombchu_AmmoLoad
+; @assumption M=8, X=8; replaces LDA.l $7EF343, including its N/Z flags.
+  JSL Bombchu_AmmoLoad
+org $098133
+assert read4($098133) == $7EF3438F, "Native bomb ammo store moved"
+; @hook Bombchu_AmmoStore kind=jsl target=Bombchu_AmmoStore
+; @assumption M=8, X=8; A is decremented stock, N/Z feed the next BNE.
+  JSL Bombchu_AmmoStore
 
 org $08955A
 ; @hook Bombchu_BombDispatch kind=jml target=Bombchu_BombEntry
@@ -58,17 +72,21 @@ Bombchu_AddBomb:
     JML $09811F ; original AncillaAdd_Bomb, returns to our caller
 
   .bombchu
-  LDA.l BombchuOwned : CMP.b #$01 : BNE .exit
+  LDA.l BombchuOwned : CMP.b #$01 : BEQ .owned
+    BRL .exit
+  .owned
   JSL Bombchu_Tick
   LDA.l BombchuSlot : BNE .exit ; one travelling Bombchu at a time
-  LDA.l $7EF343 : BEQ .exit
+  LDA.l BombchuAmmo : BEQ .exit
 
-  ; Only the native spawner debits ammunition. A changed count proves it
-  ; allocated a slot; on failure X may be $FF and must never be indexed.
+  ; The allocator's two ammunition hooks debit BombchuAmmo only while this
+  ; latch is set. A changed count proves allocation; failure may leave X=$FF.
   PHA
+  LDA.b #$01 : STA.l BombchuAllocating
   LDY.b #$01 : LDA.b #$07
   JSL $09811F
-  PLA : CMP.l $7EF343 : BEQ .exit
+  LDA.b #$00 : STA.l BombchuAllocating
+  PLA : CMP.l BombchuAmmo : BEQ .exit
 
   TXA : INC A : STA.l BombchuSlot
   LDA.b $2F : LSR A : AND.b #$03 : STA.l BombchuDirection
@@ -87,11 +105,30 @@ Bombchu_AddBomb:
   STA.l BombchuSignature
   STA.w $03EA,X ; native non-liftable field, also protects against slot reuse
   LDA.b #$00 : STA.l BombchuFollowing
-  LDA.b #$C0 : STA.w $039F,X ; 192 one-pixel active frames, same maximum range
+  LDA.b #$F0 : STA.w $039F,X ; 240 active frames (~4s); up to 360px of crawl
   STZ.w $0C22,X : STZ.w $0C2C,X
   STZ.w $029E,X ; never airborne
   .exit
   RTL
+}
+
+; AmmoLoad reproduces LDA flags. AmmoStore preserves incoming A/P because
+; native BNE uses the decrement's zero result, not the allocation latch.
+Bombchu_AmmoLoad:
+{
+  LDA.l BombchuAllocating : BEQ .ordinary
+  LDA.l BombchuAmmo : RTL
+  .ordinary
+  LDA.l $7EF343 : RTL
+}
+
+Bombchu_AmmoStore:
+{
+  PHP : PHA
+  LDA.l BombchuAllocating : BEQ .ordinary
+  PLA : STA.l BombchuAmmo : PLP : RTL
+  .ordinary
+  PLA : STA.l $7EF343 : PLP : RTL
 }
 
 ; Called by the common prototype tick and immediately before use/dispatch.
@@ -162,6 +199,12 @@ Bombchu_BombEntry:
 
   PHB : PHK : PLB
   JSR Bombchu_Crawl
+  ; Alternate two/one pixels per active frame using the unspent fuse parity.
+  ; Each pixel probes/turns independently. Trapping sets fuse=1, suppressing
+  ; the second substep; native state still decrements the fuse only once.
+  LDA.w $039F,X : AND.b #$01 : BNE .crawled
+  JSR Bombchu_Crawl
+  .crawled
   LDA.l BombchuDirection : STA.w $0C72,X
   PLB
   ; Skip lifting, then retain native terrain, pits, water and bomb state.
@@ -179,7 +222,7 @@ Bombchu_BombEntry:
 }
 
 ; Initially move forward. The first obstruction turns left, placing the wall
-; on the right. Subsequent frames prefer right, forward, left, then reverse.
+; on the right. Subsequent substeps prefer right, forward, left, then reverse.
 ; Each failed candidate rotates left; four failures prove the Bombchu trapped.
 ; X=ancilla slot, M/X=8, DBR=our bank; X preserved, Y/$00-$0F scratch.
 Bombchu_Crawl:
@@ -296,28 +339,38 @@ Bombchu_NmiUpload:
   CMP.b #$09 : BEQ .gameplay
   CMP.b #$0E : BNE .skip
   .gameplay
-  LDA.l BombchuSignature : CMP.b #!BOMBCHU_SIGNATURE : BNE .skip
-  LDA.l BombchuSlot : BEQ .skip
-  CMP.b #$03 : BCS .skip
+  LDA.l BombchuSignature : CMP.b #!BOMBCHU_SIGNATURE : BNE .pickups
+  LDA.l BombchuSlot : BEQ .pickups
+  CMP.b #$03 : BCS .pickups
   DEC A : TAX
-  LDA.w $0C4A,X : CMP.b #$07 : BNE .skip
-  LDA.w $03EA,X : CMP.b #!BOMBCHU_SIGNATURE : BNE .skip
-  LDA.w $0C5E,X : BNE .skip
-
-  BRA .upload
-  .skip
-  BRL .done
-  .upload
-  ; Frame order: up A/B, right A/B. The native fuse also stops animation
-  ; during menus/freezes. Down/left use hardware flips in the draw path.
+  LDA.w $0C4A,X : CMP.b #$07 : BNE .pickups
+  LDA.w $03EA,X : CMP.b #!BOMBCHU_SIGNATURE : BNE .pickups
+  LDA.w $0C5E,X : BNE .pickups
+  ; Active crawl frame takes priority when a refill is visible too.
   LDA.l BombchuDirection : AND.b #$02 : PHA
   LDA.w $039F,X : AND.b #$08 : LSR #3
-  ORA $01,S
+  ORA $01,S : STA $01,S
+  PLA
+  BRA .frame_ready
+  .pickups
+  LDA.l BombchuOwned : CMP.b #$01 : BNE .skip
+  LDX.b #$0F
+  .find_pack
+  LDA.w $0DD0,X : CMP.b #$09 : BNE .next_pack
+  LDA.w $0E20,X : CMP.b #$DD : BEQ .idle_frame
+  .next_pack
+  DEX : BPL .find_pack
+  .skip
+  BRL .done
+  .idle_frame
+  LDA.b #$00
+  .frame_ready
+  ; Up A/B and right A/B are 128-byte frames. With no travelling Bombchu,
+  ; a live collectible uses frame zero from this same dedicated OBJ cell.
   REP #$30
   AND.w #$00FF : ASL #7
   CLC : ADC.w #BombchuWorldGfx : TAY
   SEP #$20
-  PLA
   LDA.b #BombchuWorldGfx>>16 : STA.w $4304
   REP #$20
   TYA : STA.w $4302
