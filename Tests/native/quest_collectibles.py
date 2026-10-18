@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One attach-only Quest controller flow; caller owns headless launch and cleanup.
+"""One attach-only Equipment/Quest flow; caller owns headless launch and cleanup.
 
 Inventory/HP/magic are declared private-session fixtures. No cursor, module,
 position, CPU, story, SRAM, save-state or ROM writes. Reuses the existing native
@@ -21,9 +21,9 @@ import portal_rod_spawn_return as native
 
 COUNTS = (0x7EF38B, 0x7EF38D, 0x7EF38F, 0x7EF391, 0x7EF393, 0x7EF395)
 BOUNDARIES = (0, 59, 60, 99, 100, 255)
-COUNT_CELLS = ((18, 14), (23, 14), (18, 18), (23, 18), (18, 22), (23, 22))
+SUPPLY_NAMES = ("BANANA", "PINEAPPLE", "ROCK MEAT", "SEASHELL", "HONEYCOMB", "DEKU STICK")
 HP, MAXHP, MAGIC = 0x7EF36D, 0x7EF36C, 0x7EF36E
-CURSOR, MENU, PAGE = 0x7E020C, 0x7E0200, 0x7E0731
+CURSOR, MENU, PAGE = 0x7E020B, 0x7E0200, 0x7E0731
 PROTECTED = (0x7E0202, 0x7E0303, 0x7E0304, 0x7EF3A3, 0x7EF3A4, 0x7EF3A5,
              0x7EF3A8, 0x7EF3AB, 0x7EF3C5, 0x7EF3D6, 0x7EF3C6, 0x7EF3D7,
              0x7EF3D8, 0x7EF37A, 0x7EF374, 0x7EF410, 0x7E04C6)
@@ -34,13 +34,13 @@ ALLOWED = set(COUNTS) | {HP, MAXHP, MAGIC, 0x7EF340, 0x7EF344, 0x7EF34E,
 
 def describe():
     return {
-        "flow": ["Start, R: Quest without Powder; six count boundaries in one screen",
-                 "D-pad visits all six cells and wraps both axes; empty cells selectable",
-                 "Banana/Pineapple/Honeycomb success; full/empty/three no-op refusals",
-                 "X honors Journal build policy; R/R/R and L/L/L loop all pages",
-                 "Moved gear, green Tunic=0, held Sword=FF; Start closes; selections retained"],
+        "flow": ["Start, L: Equipment without Powder; all six supply slots including zero selectable",
+                 "Full singular names and counts 0/59/60/99/100/255 in the 14-character footer; contextual A:USE",
+                 "Y cannot consume; A food success, last-item retention, full/empty/three no-op refusals",
+                 "R/L loop Items/Quest/Equipment; Quest gear, green Tunic=0, held Sword=FF and Pearl",
+                 "Equipment Start and informational Quest A close; Y/mask/ring selections retained"],
         "fixtures": "Only ALLOWED inventory/HP/magic bytes, recorded with readback; caller supplies existing Y/mask/ring selections.",
-        "counts": list(BOUNDARIES), "cursor": "7E020C", "native_executed": False,
+        "counts": list(BOUNDARIES), "cursor": "7E020B, supply slots15..20", "native_executed": False,
     }
 
 
@@ -133,50 +133,81 @@ class QuestFlow(native.Fixture):
         expected = [int.from_bytes(self.rom[i:i + 2], "little") for i in range(pos, pos + 8, 2)]
         self.check(name, self.words(x, y, 2) + self.words(x, y + 1, 2), expected)
 
+    def text(self, x, y, count):
+        # Existing menu glyphs; underscore and interior-fill tiles are spaces.
+        chars = {0x2550 + i: chr(65 + i) for i in range(26)}
+        chars.update({0x2570 + i: str(i) for i in range(10)})
+        chars.update({0x256A: ".", 0x256B: ":", 0x20F5: " ", 0x2417: " ", 0x3417: " "})
+        return "".join(chars.get(word, "?") for word in self.words(x, y, count))
+
+    def supply_footer(self, slot):
+        count = self.r(COUNTS[slot])
+        self.check("full supply name/count footer", self.text(9, 26, 14),
+                   f"{SUPPLY_NAMES[slot]:<10}{count:3d} ")
+        cue = "A:USE" if slot in (0, 1, 4) and count > 0 else "     "
+        self.check("contextual supply action", self.text(20, 21, 5), cue)
+
     def select(self, slot):
-        native.require(self.screen() == "quest" and self.r(CURSOR) < 6, "Invalid Quest cursor")
-        for _ in range(3):
-            if self.r(CURSOR) // 2 == slot // 2:
+        native.require(self.screen() == "equipment" and 0 <= slot < 6, "Need Equipment supply slot")
+        # Reach the supply row by ordinary vertical navigation; do not test or
+        # change the existing mask/ring/song actions on the way.
+        for _ in range(4):
+            if 15 <= self.r(CURSOR) <= 20:
                 break
-            self.tap("Down")
-        if self.r(CURSOR) % 2 != slot % 2:
+            self.tap("Up")
+        native.require(15 <= self.r(CURSOR) <= 20, "Supply row was not reachable")
+        for _ in range(6):
+            if self.r(CURSOR) == slot + 15:
+                break
             self.tap("Right")
-        self.check("selected slot", self.r(CURSOR), slot)
+        self.check("selected supply slot", self.r(CURSOR), slot + 15)
 
     def use(self, label, slot, count, hp, magic, result_count, result_hp, result_magic):
         self.select(slot)
         for address, value in ((COUNTS[slot], count), (HP, hp), (MAGIC, magic)):
             self.write(address, value, label)
         counts = [self.r(a) for a in COUNTS]
+        self.advance("", 2)
+        self.supply_footer(slot)
         self.tap("A")
-        self.check(label + " stays on Quest", self.screen(), "quest")
+        self.check(label + " stays on Equipment", self.screen(), "equipment")
+        self.check(label + " restores supply cursor", self.r(CURSOR), slot + 15)
         counts[slot] = result_count
         self.check(label + " counts", [self.r(a) for a in COUNTS], counts)
         self.check(label + " HP/magic", [self.r(HP), self.r(MAGIC)], [result_hp, result_magic])
+        self.supply_footer(slot)
 
     def run(self):
         self.check("start in gameplay", self.screen(), "gameplay")
         native.require(self.r(0x7E0010) in (7, 9) and self.r(0x7E0011) == 0, "Need stable gameplay, not title/transition")
-        for address, value in {0x7EF340: 1, 0x7EF344: 0, 0x7EF34E: 1, MAXHP: 80,
+        for address, value in {0x7EF340: 1, 0x7EF344: 0, 0x7EF34E: 1, MAXHP: 80, HP: 40, MAGIC: 64,
                                0x7EF354: 2, 0x7EF355: 1, 0x7EF356: 1,
                                0x7EF357: 1, 0x7EF359: 4, 0x7EF35A: 3, 0x7EF35B: 0}.items():
-            self.write(address, value, "Declared inventory: no Powder, Book, moved gear, green tunic")
+            self.write(address, value, "Declared inventory: no Powder, Book, Quest gear, green tunic")
         for address, value in zip(COUNTS, BOUNDARIES):
-            self.write(address, value, "Six count-domain boundaries in one Quest screen")
+            self.write(address, value, "Six count-domain boundaries, selected in Equipment footer")
         self.tap("Start"); self.wait_screen("items")
         protected = {str(a): self.r(a) for a in PROTECTED}
         self.result["protected_before"] = protected
-        self.tap("R"); self.wait_screen("quest")
+        self.tap("L"); self.wait_screen("equipment")
         self.check("Powder absent", self.r(0x7EF344), 0)
-        self.check("Quest entry cursor", self.r(CURSOR), 0)
-        self.shot("quest-count-boundaries")
-        for value, (x, y) in zip(BOUNDARIES, COUNT_CELLS):
-            expected = [0x2417 if c == " " else 0x2570 + int(c) for c in f"{value:3d}"]
-            self.check(f"decimal {value}", self.words(x, y, 3), expected)
-        for button, slot in [("Right", 1), ("Down", 3), ("Down", 5), ("Left", 4),
-                             ("Up", 2), ("Up", 0), ("Up", 4), ("Down", 0), ("Left", 1), ("Right", 0)]:
-            self.tap(button); self.check("grid " + button, self.r(CURSOR), slot)
-        self.use("Banana heal", 0, 2, 40, 64, 1, 56, 64)
+        for slot in range(6):
+            self.select(slot)
+            self.supply_footer(slot)
+        self.tap("Right"); self.check("Supply row wraps through empty Banana", self.r(CURSOR), 15)
+        self.icon("Empty Banana remains visible", 7, 22, "BananaGFX")
+        self.tap("Left"); self.check("Supply row wraps left", self.r(CURSOR), 20)
+        self.select(1)
+        self.shot("equipment-pineapple-name-count-action")
+
+        self.select(0)
+        self.write(COUNTS[0], 1, "One Banana makes Y-versus-A and last-item behavior observable")
+        self.advance("", 2)
+        before_y = [self.r(a) for a in (*COUNTS, HP, MAGIC, CURSOR)]
+        self.tap("Y")
+        self.check("Y does not consume or move supply cursor", [self.r(a) for a in (*COUNTS, HP, MAGIC, CURSOR)], before_y)
+        self.check("Y preserves equipped selections", {str(a): self.r(a) for a in PROTECTED}, protected)
+        self.use("Last Banana heal", 0, 1, 40, 64, 0, 56, 64)
         self.use("Pineapple refill", 1, 2, 56, 64, 1, 56, 128)
         self.use("Honeycomb cap", 4, 2, 76, 128, 1, 80, 128)
         self.use("Full health", 0, 2, 80, 128, 2, 80, 128)
@@ -184,33 +215,51 @@ class QuestFlow(native.Fixture):
         self.use("Empty Banana", 0, 0, 40, 64, 0, 40, 64)
         for slot, label in ((2, "Rock Meat info"), (3, "Seashell info"), (5, "Deku Stick info")):
             self.use(label, slot, 5, 40, 64, 5, 40, 64)
-        cursor = self.r(CURSOR)
         counts = [self.r(a) for a in COUNTS]
+        self.check("Supply actions preserve equipped selections", {str(a): self.r(a) for a in PROTECTED}, protected)
+
+        self.tap("R"); self.wait_screen("items")
+        self.tap("R"); self.wait_screen("quest")
+        for name, x, y, table, variant in (
+                ("Glove", 18, 13, "PowerGloveGFX", 2), ("Boots", 21, 13, "PegasusBootsGFX", 1),
+                ("Flippers", 24, 13, "FlippersGFX", 1), ("Sword", 18, 17, "SwordGFX", 4),
+                ("Shield", 21, 17, "ShieldGFX", 3), ("Green Tunic", 24, 17, "TunicGFX", 1)):
+            self.icon(name, x, y, table, variant)
+        self.icon("Moon Pearl", 21, 21, "MoonPearlGFX")
+        self.check("Quest GEAR label", self.text(19, 12, 4), "GEAR")
+        self.check("Quest PEARL label", self.text(20, 20, 5), "PEARL")
+        native.require(self.text(6, 9, 8) != "LOCATION", "Quest still has redundant LOCATION label")
+        for x in (6, 8):
+            native.require(self.text(x, 21, 7) != "DUNGEON", "Quest still has redundant DUNGEON label")
+        footer = self.text(9, 26, 14)
+        native.require(footer[:7].strip() and footer[7:9] == "  " and re.fullmatch(r"[0-9]{2}:[0-9]{2}", footer[9:]),
+                       "Quest footer must contain seven name cells, two blanks and HH:MM")
+        self.result["quest_name_clock_footer"] = footer
+        self.shot("quest-gear-green-tunic-name-clock")
+
+        self.write(0x7EF359, 255, "Smith-held sword sentinel, display must be bounded")
+        # Quest is informational; leave and re-enter to invoke its real redraw.
+        self.tap("R"); self.wait_screen("equipment")
+        self.tap("L"); self.wait_screen("quest")
+        self.icon("Held sword is unavailable", 18, 17, "NothingGFX")
         self.tap("X")
         if self.a.journal == "deferred":
             self.check("Journal remains deferred", self.screen(), "quest")
         else:
             self.wait_screen("menu-0E")
             self.tap("A"); self.wait_screen("quest")
-        self.check("Journal retains cursor", self.r(CURSOR), cursor)
         self.check("Journal retains counts", [self.r(a) for a in COUNTS], counts)
-        self.tap("R"); self.wait_screen("equipment")
-        for name, x, table, variant in (("Sword", 17, "SwordGFX", 4), ("Shield", 20, "ShieldGFX", 3),
-                                        ("Green Tunic", 23, "TunicGFX", 1)):
-            self.icon(name, x, 22, table, variant)
-        self.icon("Moon Pearl", 23, 18, "MoonPearlGFX")
-        self.shot("equipment-moved-gear-green-tunic")
-        self.write(0x7EF359, 255, "Smith-held sword sentinel, display must be bounded")
-        self.advance("", 3)
-        self.icon("Held sword is unavailable", 17, 22, "NothingGFX")
-        self.shot("equipment-held-sword")
-        for button, target in [("R", "items"), ("R", "quest"), ("L", "items"),
-                               ("L", "equipment"), ("L", "quest")]:
-            self.tap(button); self.wait_screen(target)
-        self.check("Page changes retain counts", [self.r(a) for a in COUNTS], counts)
-        self.check("Selections/story after menu navigation", {str(a): self.r(a) for a in PROTECTED}, protected)
+        self.tap("L"); self.wait_screen("items")
+        self.tap("L"); self.wait_screen("equipment")
+        self.check("Page cycle retains counts", [self.r(a) for a in COUNTS], counts)
+        self.check("Page cycle retains selections/story", {str(a): self.r(a) for a in PROTECTED}, protected)
         self.tap("Start"); self.wait_screen("gameplay")
-        self.check("Selections/story after Start", {str(a): self.r(a) for a in PROTECTED}, protected)
+        self.check("Equipment Start retains selections/story", {str(a): self.r(a) for a in PROTECTED}, protected)
+        self.tap("Start"); self.wait_screen("items")
+        self.tap("R"); self.wait_screen("quest")
+        self.tap("A"); self.wait_screen("gameplay")
+        self.check("Informational Quest A retains counts", [self.r(a) for a in COUNTS], counts)
+        self.check("Informational Quest A retains selections/story", {str(a): self.r(a) for a in PROTECTED}, protected)
         self.result["runtime_checks_passed"] = True
 
 

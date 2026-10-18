@@ -1,9 +1,8 @@
-; Quest supplies use their own cursor ($020C), independent of the Y item and
-; Equipment's $020B. No ownership or save-format changes. DBR = $2D.
+; Quest displays progression and passive gear. Supplies live on Equipment.
+; No ownership or save-format changes. DBR = $2D.
 Menu_Quest_Init:
 {
   SEP #$30
-  STZ.w $020C
   STZ.w $0207
   RTS
 }
@@ -11,15 +10,14 @@ Menu_Quest_Init:
 Menu_QuestScreen:
 {
   SEP #$30
-  LDA.w $020C : CMP.b #$06 : BCC .valid
-  STZ.w $020C
-.valid
+  LDA.b $F6 : BIT.b #$80 : BNE .close
   LDA.b $F4 : BIT.b #$10 : BEQ .no_start
+.close
     LDA.b #!MENU_STATE_INIT_SCROLL_DOWN : STA.w $0200
     RTS
 .no_start
   ; Page-loop R is handled by Menu_Page3_StatsScreen. Other L/R routes
-  ; return through the existing scroll-from state; A is reserved for Use.
+  ; return through the existing scroll-from state; A closes this passive page.
   LDA.b $F6 : AND.b #$30 : BEQ .no_lr
     BIT.b #$20 : BEQ .right
     REP #$20
@@ -46,14 +44,6 @@ endif
     LDA.b #$11 : STA.w $012F
     BRA .upload
 .no_journal
-  JSR Menu_Quest_Move
-  ; The established food handlers dispatch on $020B. Restore Equipment's
-  ; cursor afterward; the Quest page never changes the equipped Y item.
-  LDA.w $020B : PHA
-  LDA.w $020C : STA.w $020B
-  JSR MagicBag_ConsumeItem
-  PLA : STA.w $020B
-  INC.w $0207
   JSR Menu_Quest_Draw
 .upload
   LDA.b #$23 : STA.w $0116
@@ -61,132 +51,127 @@ endif
   RTS
 }
 
-Menu_Quest_Move:
-{
-  LDA.b $F4 : AND.b #$0F : BEQ .done
-  BIT.b #$03 : BNE .horizontal
-  BIT.b #$04 : BEQ .up
-  LDA.w $020C : CLC : ADC.b #$02 : CMP.b #$06 : BCC .store
-  SEC : SBC.b #$06 : BRA .store
-.up
-  LDA.w $020C : CMP.b #$02 : BCS .subtract
-  CLC : ADC.b #$06
-.subtract
-  SEC : SBC.b #$02 : BRA .store
-.horizontal
-  LDA.w $020C : EOR.b #$01
-.store
-  STA.w $020C
-  LDA.b #$20 : STA.w $012F
-.done
-  RTS
-}
-
 Menu_Quest_Draw:
 {
   JSR Menu_DrawBackground
   JSR Menu_DrawQuestStatus
-  ; Reuse the existing location/name encoders, then move their output into
-  ; the three-row header before drawing the essence ring over the old cells.
+  ; Reuse the location/name encoders. The location stands alone above the
+  ; progression ring; the footer holds seven name cells and the five-cell clock.
   JSR DrawLocationName
   LDX.w #$001E
 .location
-  LDA.w $12CC,X : STA.w $1000+menu_offset(10,6),X
+  LDA.w $12CC,X : STA.w $1000+menu_offset(9,6),X
   LDA.w #$3417 : STA.w $12CC,X
   DEX #2 : BPL .location
+  JSR Menu_DrawPlaytimeLabel
+  LDX.w #$0010
+.clear_label
+  LDA.w #$2417 : STA.w $1692,X
+  DEX #2 : BPL .clear_label
   JSR Menu_DrawCharacterName
   LDX.w #$000C
 .name
-  LDA.w $134C,X : STA.w $1000+menu_offset(11,6),X
+  LDA.w $134C,X : STA.w $1692,X
   LDA.w #$3417 : STA.w $134C,X
   DEX #2 : BPL .name
-  JSR Menu_DrawPlaytimeLabel
-  LDX.w #$0008
-.clock
-  LDA.w $16A4,X : STA.w $1000+menu_offset(11,14),X
-  DEX #2 : BPL .clock
-  LDX.w #$000E
-.label
-  LDA.w .location_label,X : STA.w $1000+menu_offset(9,6),X
-  DEX #2 : BPL .label
 
   JSR Menu_DrawHeartPieces
   LDA.l $7EF36B : AND.w #$00FF
   LDX.w #menu_offset(11,24)
   JSR Menu_Quest_Number3
   JSR Menu_Quest_Progress
+  JSR Menu_Quest_Gear
   REP #$30
   JSR Menu_DrawBigKey
   REP #$30
   JSR Menu_DrawBigChestKey
+  SEP #$30
+  RTS
+}
+
+Menu_Quest_Gear:
+{
   REP #$30
-  LDA.w $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .no_dungeon
-  LDX.w #$000C
-.dungeon
-  LDA.w .dungeon_label,X : STA.w $1000+menu_offset(21,6),X
-  DEX #2 : BPL .dungeon
-.no_dungeon
+  LDX.w #$0006
+.gear_label
+  LDA.w .gear,X : STA.w $1000+menu_offset(12,19),X
+  DEX #2 : BPL .gear_label
+  LDX.w #$0008
+.pearl_label
+  LDA.w .pearl,X : STA.w $1000+menu_offset(20,20),X
+  DEX #2 : BPL .pearl_label
   SEP #$30
   LDA.b #$7E : STA.b $0A
   LDY.b #$00
-.supplies
+.icons
   PHY
+  TYA : CLC : ADC.b #$0F : JSR Menu_Quest_GearVariant
+  STA.w MenuItemValueSpoof
   REP #$30
   TYA : AND.w #$00FF : ASL : TAX
-  LDA.w Menu_Quest_Gfx,X : TAY
-  LDA.w Menu_Quest_Pos,X : TAX
-  LDA.w #$0001 : STA.w MenuItemValueSpoof
+  LDA.w .gfx,X : TAY
+  LDA.w .pos,X : TAX
   LDA.w #MenuItemValueSpoof
   JSR DrawMenuItem
   SEP #$30
-  PLY : PHY
-  LDA.w Menu_Quest_CountLow,Y : TAX
-  LDA.l $7EF300,X
-  REP #$30
-  AND.w #$00FF : PHA
-  TYA : AND.w #$00FF : ASL : TAX
-  LDA.w Menu_Quest_CountPos,X : TAX
-  PLA : JSR Menu_Quest_Number3
-  SEP #$30
   PLY
-  INY : CPY.b #$06 : BCC .supplies
+  INY : CPY.b #$06 : BCC .icons
 
-  LDA.w $020C : CMP.b #$06 : BCC .cursor_valid
-  STZ.w $020C
-.cursor_valid
-  LDA.w $0207 : AND.b #$20 : BNE .no_cursor
-  LDA.w $020C : ASL : TAX
+  LDA.l $7EF357 : BEQ .pearl_variant
+  LDA.b #$01
+.pearl_variant
+  STA.w MenuItemValueSpoof
   REP #$30
-  LDA.w Menu_Quest_Pos,X : TAX
-  LDA.w #$3060 : JSR Menu_Equipment_Bracket
-.no_cursor
+  LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(17,17) ; absolute (21,21)
+  LDY.w #MoonPearlGFX
+  JSR DrawMenuItem
   REP #$30
-  LDA.w $020C : AND.w #$00FF : ASL : TAX
-  LDA.w .names,X : TAX
-  LDY.w #$0000
-.footer
-  LDA.w $0000,X : STA.w $1692,Y
-  INX #2 : INY #2 : CPY.w #$001C : BCC .footer
-  SEP #$30
   RTS
-.location_label
-  dw "LOCATION"
-.dungeon_label
-  dw "DUNGEON"
-.names
-  dw .banana,.pineapple,.meat,.shell,.honey,.stick
-.banana
-  dw "A:_BANANAS____"
-.pineapple
-  dw "A:_PINEAPPLES_"
-.meat
-  dw "GORON:_5_MEAT_"
-.shell
-  dw "__SEASHELLS___"
-.honey
-  dw "A:_HONEYCOMBS_"
-.stick
-  dw "_DEKU_STICKS__"
+.gear
+  dw "GEAR"
+.pearl
+  dw "PEARL"
+.pos
+  dw menu_offset(9,14),menu_offset(9,17),menu_offset(9,20)
+  dw menu_offset(13,14),menu_offset(13,17),menu_offset(13,20)
+.gfx
+  dw PowerGloveGFX,PegasusBootsGFX,FlippersGFX,SwordGFX,ShieldGFX,TunicGFX
+}
+
+; A = valid gear slot 15-20, 8-bit A/X/Y; clobbers X, preserves Y.
+; Explicit SRAM offsets avoid treating Pearl/Wolf Mask as sword/shield.
+Menu_Quest_GearVariant:
+{
+  SEC : SBC.b #$0F : TAX
+  PHX
+  LDA.w .address,X : TAX
+  LDA.l $7EF300,X
+  PLX
+  CPX.b #$05 : BEQ .tunic
+  CPX.b #$03 : BEQ .sword
+  CPX.b #$04 : BEQ .shield
+  CMP.b #$00 : BEQ .done
+  CPX.b #$00 : BNE .boolean
+  CMP.b #$03 : BCC .done
+  LDA.b #$02 : BRA .done             ; preserve the glove's two variants
+.boolean
+  LDA.b #$01 : BRA .done
+.sword
+  CMP.b #$05 : BCC .done             ; 0 absent; 1-4 owned; $FF at smiths
+  BRA .none
+.shield
+  CMP.b #$04 : BCC .done             ; 0 absent; 1-3 owned
+  BRA .none
+.tunic
+  CMP.b #$03 : BCS .none
+  INC : BRA .done                    ; SRAM 0-2 -> green/blue/red variants 1-3
+.none
+  LDA.b #$00
+.done
+  RTS
+.address
+  db $54,$55,$56,$59,$5A,$5B          ; glove, boots, flippers, sword, shield, tunic
 }
 
 ; A=0..255, X=absolute tilemap offset, M/X=16. Three digits with leading
@@ -285,14 +270,3 @@ Menu_Quest_Progress:
   dw $253B,$253C,$A53B,$A53C, $3D3D,$3D3E,$BD3D,$BD3E
   dw $2521,$2522,$A521,$A522, $2D23,$2D24,$AD23,$AD24
 }
-
-Menu_Quest_Pos:
-  dw menu_offset(8,15),menu_offset(8,20),menu_offset(12,15)
-  dw menu_offset(12,20),menu_offset(16,15),menu_offset(16,20)
-Menu_Quest_CountPos:
-  dw menu_offset(14,18),menu_offset(14,23),menu_offset(18,18)
-  dw menu_offset(18,23),menu_offset(22,18),menu_offset(22,23)
-Menu_Quest_CountLow:
-  db $8B,$8D,$8F,$91,$93,$95
-Menu_Quest_Gfx:
-  dw BananaGFX,PineappleGFX,RockMeatGFX,SeashellGFX,HoneycombGFX,DekuStickGFX
