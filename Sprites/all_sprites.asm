@@ -173,10 +173,6 @@ Graphics_Transfer:
 incsrc "Sprites/Objects/ice_block.asm"
 %log_end("ice_block", !LOG_SPRITES)
 
-%log_start("garo", !LOG_SPRITES)
-incsrc "Sprites/NPCs/garo.asm"
-%log_end("garo", !LOG_SPRITES)
-
 assert pc() <= $318000, "Bank $30 sprite region overflow"
 assert pc() >= $308000, "Bank $30 sprite code left its bank (org without pushpc/pullpc?)"
 print "Bank30 Free Space: ", dec($310000-pc()), " bytes"
@@ -312,6 +308,10 @@ incsrc "Sprites/NPCs/ranch_girl.asm"
 %log_start("cloud_bridge", !LOG_SPRITES)
 incsrc "Sprites/Objects/cloud_bridge.asm"
 %log_end("cloud_bridge", !LOG_SPRITES)
+
+%log_start("garo", !LOG_SPRITES)
+incsrc "Sprites/NPCs/garo.asm"
+%log_end("garo", !LOG_SPRITES)
 
 ; A file that orgs into a vanilla bank must pushpc/pullpc, or the next incsrc
 ; lands on vanilla code (fortune_teller.asm put ranch_girl/cloud_bridge on the
