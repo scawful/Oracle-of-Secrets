@@ -123,7 +123,7 @@ Menu_Quest_Draw:
   LDA.w $040C : AND.w #$00FF : CMP.w #$00FF : BEQ .no_dungeon
   LDX.w #$000C
 .dungeon
-  LDA.w .dungeon_label,X : STA.w $1000+menu_offset(21,8),X
+  LDA.w .dungeon_label,X : STA.w $1000+menu_offset(21,6),X
   DEX #2 : BPL .dungeon
 .no_dungeon
   SEP #$30
@@ -274,12 +274,12 @@ Menu_Quest_Progress:
   db !Crystal_D1_MushroomGrotto,!Crystal_D2_TailPalace,!Crystal_D3_KalyxoCastle
   db !Crystal_D4_ZoraTemple,!Crystal_D5_GlaciaEstate,!Crystal_D6_GoronMines,!Crystal_D7_DragonShip
 .crystal_pos
-  dw menu_offset(12,12),menu_offset(13,16),menu_offset(16,17),menu_offset(19,14)
-  dw menu_offset(19,9),menu_offset(16,6),menu_offset(13,7)
+  dw menu_offset(12,10),menu_offset(13,14),menu_offset(16,15),menu_offset(19,12)
+  dw menu_offset(19,8),menu_offset(16,5),menu_offset(13,6)
 .pendant_bits
   db !Pendant_Wisdom,!Pendant_Power,!Pendant_Courage
 .pendant_pos
-  dw menu_offset(15,12),menu_offset(17,10),menu_offset(17,14)
+  dw menu_offset(15,10),menu_offset(17,8),menu_offset(17,12)
 .pendant_tiles
   dw $2504,$2505,$2514,$2515, $2502,$2503,$2512,$2513
   dw $253B,$253C,$A53B,$A53C, $3D3D,$3D3E,$BD3D,$BD3E
@@ -287,11 +287,11 @@ Menu_Quest_Progress:
 }
 
 Menu_Quest_Pos:
-  dw menu_offset(8,16),menu_offset(8,20),menu_offset(11,16)
-  dw menu_offset(11,20),menu_offset(14,16),menu_offset(14,20)
+  dw menu_offset(8,15),menu_offset(8,20),menu_offset(12,15)
+  dw menu_offset(12,20),menu_offset(16,15),menu_offset(16,20)
 Menu_Quest_CountPos:
-  dw menu_offset(14,20),menu_offset(14,24),menu_offset(17,20)
-  dw menu_offset(17,24),menu_offset(20,20),menu_offset(20,24)
+  dw menu_offset(14,18),menu_offset(14,23),menu_offset(18,18)
+  dw menu_offset(18,23),menu_offset(22,18),menu_offset(22,23)
 Menu_Quest_CountLow:
   db $8B,$8D,$8F,$91,$93,$95
 Menu_Quest_Gfx:

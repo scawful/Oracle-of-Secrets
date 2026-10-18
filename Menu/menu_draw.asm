@@ -563,7 +563,7 @@ endif
         STA.w ShortSpoof
         LDA.w #ShortSpoof
 if !ENABLE_EQUIPMENT_MENU == 1
-        LDX.w #menu_offset(18,12)
+        LDX.w #menu_offset(18,8)
 else
         LDX.w #menu_offset(11,8)
 endif
@@ -581,7 +581,7 @@ endif
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(18,4)
+      LDX.w #menu_offset(18,2)
 else
       LDX.w #menu_offset(11,2)
 endif
@@ -604,7 +604,7 @@ endif
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(18,16)
+      LDX.w #menu_offset(18,11)
 else
       LDX.w #menu_offset(11,11)
 endif
@@ -778,7 +778,7 @@ Menu_DrawBigChestKey:
       STA.w ShortSpoof
       LDA.w #ShortSpoof
 if !ENABLE_EQUIPMENT_MENU == 1
-      LDX.w #menu_offset(18,8)
+      LDX.w #menu_offset(18,5)
 else
       LDX.w #menu_offset(11, 5)
 endif
