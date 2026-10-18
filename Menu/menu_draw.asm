@@ -88,8 +88,8 @@ Menu_DrawQuestIcons:
 Menu_DrawTriforceIcons:
 {
   LDA.l $7EF37A
-  LDX.w #$2934
-  LDY.w #$2944
+  LDX.w #$3534
+  LDY.w #$3544
 
 if !ENABLE_MENU_AUDIT_FIXES == 1
   ; Crystals in D1-D7 order (menu audit 2026-09-28). The award ORs
@@ -892,14 +892,6 @@ Menu_DrawRingBox:
 
     DEX : DEX
   BPL .loop
-  ; Static ring-box art predates the shared warm-gold palette. Preserve it
-  ; when diagnostic profiles retain this menu; frame palette6 is untouched.
-  LDX.w #$07FE
-.remap_gold
-  LDA.w $1000,X : AND.w #$1C00 : CMP.w #$1400 : BNE .next_cell
-  LDA.w $1000,X : AND.w #$E3FF : ORA.w #$0800 : STA.w $1000,X
-.next_cell
-  DEX #2 : BPL .remap_gold
   SEP #$30
   RTS
 

@@ -476,12 +476,13 @@ HUD_OcarinaIconIndex:
 
 HUD_OcarinaIcons:
   dw $30D4,$30D5,$30E4,$30E5 ; Unlearned: grey
-  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Healing: blue
-  dw $3CD4,$3CD5,$3CE4,$3CE5 ; Storms: green
-  dw $24D4,$24D5,$24E4,$24E5 ; Soaring: red
-  dw $38D4,$38D5,$38E4,$38E5 ; Time: purple
-  dw $34D4,$34D5,$34E4,$34E5 ; Secrets: gold
-  dw $20D4,$20D5,$20E4,$20E5 ; Stone: bronze
+  ; The instrument stays blue; only the song notes use individual colors.
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Healing selected
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Storms selected
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Soaring selected
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Time selected
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Secrets selected
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Stone selected
 assert pc()-HUD_OcarinaIcons == 7*8, "Ocarina HUD requires grey plus six songs"
 
 ; =========================================================
@@ -636,9 +637,9 @@ else
   dw $2CD4, $2CD5, $2CE4, $2CE5
 endif
   dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
-  dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
-  dw $24D4, $24D5, $24E4, $24E5 ; Red
-  dw $34D4, $34D5, $34E4, $34E5 ; Gold
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
 
 ; Roc's Feather (Net)
 org $0DF731

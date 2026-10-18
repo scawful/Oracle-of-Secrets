@@ -10,7 +10,6 @@ org $1BD672 : dw hexto555($d0a050), hexto555($f9f9f9)
 org $1BD67A : dw hexto555($5987e0), hexto555($f9f9f9)
 org $1BD682 : dw hexto555($7b7b83), hexto555($bbbbbb)
 org $1BD68A : dw hexto555($a58100), hexto555($dfb93f)
-org $1BD692 : dw hexto555($ac70dc), hexto555($e6c8ff), $0000 ; HUD Time, black background
 pullpc
 
 Menu_Palette:
@@ -34,9 +33,9 @@ Menu_Palette:
   dw hexto555($bbbbbb)
   dw hexto555($000000)
   dw hexto555($000000) ; transparent
-  ; Purple Time shares palette5; old gold icons now use warm gold palette2.
-  dw hexto555($ac70dc)
-  dw hexto555($e6c8ff)
+  ; Existing gold artwork keeps its original palette5 colors.
+  dw hexto555($a58100)
+  dw hexto555($dfb93f)
   dw hexto555($000000)
   dw hexto555($000000) ; transparent
   ; Frame palette6 is preserved exactly (brown outline, dark blue fill).

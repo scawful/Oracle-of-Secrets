@@ -213,7 +213,7 @@ Menu_Quest_Progress:
   LDA.w .crystal_bits,Y : AND.l Crystals
   REP #$30
   AND.w #$00FF : BEQ .empty
-  LDA.w #$2934 : BRA .triangle
+  LDA.w #$3534 : BRA .triangle
 .empty
   LDA.w #$3134
 .triangle
