@@ -97,7 +97,7 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
         self.assertEqual(contract.tile_count, 2878)
         self.assertEqual(
             contract.source_sha256,
-            "6930077bce74c7ad9d692d5c18850c4591f5f603eeb384cdbe911d3a93a30cf8",
+            "f8692c1f7fb7ccd31b79394685030fa896d57c485599647f5733c25a0c50799e",
         )
 
     def test_repository_source_forces_exact_export_bytes(self) -> None:
@@ -118,7 +118,7 @@ class CustomCollisionSourceContractTest(unittest.TestCase):
 
         self.assertIn("source: 20 rooms, 2,878 explicit tiles", readme)
         self.assertIn(
-            "6930077bce74c7ad9d692d5c18850c4591f5f603eeb384cdbe911d3a93a30cf8",
+            "f8692c1f7fb7ccd31b79394685030fa896d57c485599647f5733c25a0c50799e",
             readme,
         )
 

@@ -1164,8 +1164,10 @@ CheckTrackSpritePresence:
       LDA.w SprYH, X : CMP.w SprYH, Y : BNE .not_b0
       LDA.w SprXH, X : CMP.w SprXH, Y : BNE .not_b0
         ; Check if the low bytes match but round the cart's coordinates.
-        ; Offset the Y by 8 so that we match the cart
-        LDA.w SprY, X : CLC : ADC.b #$04 : AND.b #$F8 : CLC : ADC.b #$08
+        ; The $B0 sprite sits on the same 8-px row as its switch tile
+        ; (switch_track.asm Prep reads the tile at the sprite's own row).
+        ; The zero operand keeps the routine's size (it was #$08).
+        LDA.w SprY, X : CLC : ADC.b #$04 : AND.b #$F8 : CLC : ADC.b #$00
         CMP.w SprY, Y : BNE .not_b0
         LDA.w SprX, X : CLC : ADC.b #$04 : AND.b #$F8
         CMP.w SprX, Y : BNE .not_b0

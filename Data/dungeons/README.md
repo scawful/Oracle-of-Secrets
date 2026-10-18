@@ -13,18 +13,19 @@ older nonzero-only tools do not satisfy this contract.
 
 ## Current provenance
 
-The 2026-10-18 Goron Mines cart change (scawful: "You steer (Recommended)")
-lets the cart ride from room `$87` north into room `$77`. Room `$87`'s (44,6)
-stop becomes a `$B1` rail. Room `$77` gains a `$BB` T-junction at (44,38) and
-69 straight-rail cells on the cart's paths. The same change adds the junction
-rail object to room `$77` in the base ROM (AFS recipe
-`handoffs/cart_087_077_2026-10-18/recipe/apply_cart_087_077.py`).
+The 2026-10-18 Goron Mines `$87`/`$77` redesign (scawful's picks: "2. Lever steers
+(Recommended)", "A. Wall + main deck chest (Recommended)", "Piece of Heart (Recommended)")
+lets the cart ride from room `$87` north into room `$77`. Room `$87`'s (44,6) stop becomes a
+`$B1` rail. Room `$77` gains the switch tile `$D0` at (44,38), under its lever-set switch track,
+and 69 straight-rail cells on the cart's paths. The same change edits `$77`'s objects, sprites
+and chest record and two other small-key sources in the base ROM (AFS recipe
+`handoffs/cart_087_077_2026-10-18/recipe_v2/apply_087_077_v2.py`).
 
 - source: 20 rooms, 2,878 explicit tiles (2,782 nonzero and 96 floor tiles)
 - source SHA-256:
-  `6930077bce74c7ad9d692d5c18850c4591f5f603eeb384cdbe911d3a93a30cf8`
-- matching edit base SHA-256 (base `4505fe0a` plus the recipe):
-  `e615fa8d79a2ba67e60cfb2ccee0a4d3e4d2504697e369588738e6827aeedd1c`
+  `f8692c1f7fb7ccd31b79394685030fa896d57c485599647f5733c25a0c50799e`
+- matching edit base SHA-256 (base `4505fe0a` plus the v2 recipe):
+  `aea93a2823d982eeff366c4e8c00d5a16254880e272200075872e8af1ba565f8`
 
 The 2026-10-12 approved Shrine of Power restore is retained as history. It kept
 all prior room entries and restored rooms `$83` and `$84` from their surviving
