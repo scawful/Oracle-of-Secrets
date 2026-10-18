@@ -21,7 +21,7 @@ BYRNA, RODS, PORTAL, GOLDSTAR = 0x7EF3AC, 0x7EF351, 0x7EF3A6, 0x7EF3A9
 INVENTORY = tuple(0x7EF300 + value for value in
                   (0x40, 0x41, 0x42, 0x43, 0x44, 0x5C, 0x4B, 0x4A, 0x45,
                    0x46, 0x53, 0x5D, 0x4C, 0x4E, 0x50, 0x51, 0x4D, 0x5E,
-                   0x5F, 0xA6, 0xA9, 0xAC))
+                   0x5F, 0xA6, 0xA9, 0xAC, 0xAD, 0xAE))
 ALLOWED = set(INVENTORY) | {menu.MAGIC, 0x7EF349, 0x7EF3A8}
 PROTECTED = (0x7EF3A3, 0x7EF3A8, 0x7EF3C5, 0x7EF3C6, 0x7EF3D6,
              0x7EF3D7, 0x7EF3D8, 0x7EF374, 0x7EF37A, 0x7EF410)
@@ -31,7 +31,7 @@ CASES = (
     ("byrna-only", {BYRNA: 1}, (0x1B,)),
     ("invalid-byrna", {BYRNA: 255}, ()),
     ("custom-row", {BYRNA: 1, RODS: 2, GOLDSTAR: 1, 0x7EF350: 1,
-                     0x7EF35F: 3}, (0x0F, 0x1B, 0x19, 0x10, 0x1A, 0x18)),
+                     0x7EF35F: 3}, (0x0F, 0x1B, 0x1A, 0x10, 0x19, 0x18)),
 )
 
 
@@ -40,7 +40,8 @@ def describe():
                             selectable=list(items)) for n, writes, items in CASES],
                 native_executed=False, acquisition_tested=False,
                 behavior=["Physical D-pad routing with stable item IDs",
-                          "Byrna beside Somaria; Portal/Fishing/Goldstar bottom row",
+                          "Byrna beside Somaria; Goldstar/Fishing first two bottom cells, Portal fifth",
+                          "Declared empty inventory also clears Bombchu/Switch Hook ownership",
                           "Byrna HUD, no-magic refusal, spark activation and magic drain",
                           "Second Y and switching to each rod terminate the shield",
                           "Declared Deku ownership/binding: R transform stops shield without changing Y selection",
@@ -114,17 +115,17 @@ class ByrnaFlow(menu.QuestFlow):
                 self.check(name + " wraps", self.r(0x7E0202), selectable[0])
             if name == "custom-row":
                 self.icon("Byrna beside Somaria", 17, 17, "ByrnaGFX")
-                self.icon("Portal bottom first", 7, 20, "PortalRodGFX")
+                self.icon("Portal bottom fifth", 20, 20, "PortalRodGFX")
                 self.icon("Fishing bottom second", 10, 20, "FishingRodGFX")
-                self.icon("Goldstar bottom third", 13, 20, "HookGFX", 2)
+                self.icon("Goldstar bottom first", 7, 20, "HookGFX", 2)
                 self.pick(0x0F); self.tap("Down")
-                self.check("Somaria down to Goldstar", self.r(0x7E0202), 0x1A)
+                self.check("Somaria downward fallback skips unowned new items to Portal", self.r(0x7E0202), 0x19)
                 self.tap("Up")
-                self.check("Goldstar up to Somaria", self.r(0x7E0202), 0x0F)
+                self.check("Portal upward fallback skips empty Feather/Bottle3 to Goldstar", self.r(0x7E0202), 0x1A)
                 self.pick(0x1B); self.tap("Down")
-                self.check("Empty-cell downward fallback reaches Bottle4", self.r(0x7E0202), 0x18)
+                self.check("Byrna downward fallback skips unowned Bombchu to Portal", self.r(0x7E0202), 0x19)
                 self.tap("Left")
-                self.check("Left skips bottom spares", self.r(0x7E0202), 0x1A)
+                self.check("Left skips unowned Bombchu/Switch Hook to Fishing", self.r(0x7E0202), 0x10)
                 self.pick(0x1B)
                 self.check("Byrna label", self.text(9, 26, 14).strip(), "BYRNA")
                 self.shot("custom-row")

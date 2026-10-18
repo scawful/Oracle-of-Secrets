@@ -9,10 +9,12 @@ incsrc "Items/jump_feather.asm"
 incsrc "Items/book_of_secrets.asm"
 incsrc "Items/sword_collect.asm"
 incsrc "Items/goldstar.asm"
+incsrc "Items/switch_hook.asm"
 incsrc "Items/portal_rod.asm"
 incsrc "Items/fishing_rod.asm"
 incsrc "Items/magic_rings.asm"
 incsrc "Items/fist_damage.asm"
+incsrc "Items/bombchu.asm"
 %log_end("Items/fist_damage.asm", !LOG_ITEMS)
 
 MagicBeanGfx:

@@ -45,6 +45,7 @@ org $2D8000
 incsrc "menu_gfx_table.asm"
 incsrc "menu_text.asm"
 incsrc "menu_palette.asm"
+incsrc "Core/Generated/menu_icons/menu_icon_overrides.asm"
 
 ; =========================================================
 ; CONSTANTS

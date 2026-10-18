@@ -40,6 +40,13 @@ StartupMasks:
 
   ; set links sprite bank
   LDA #$10 : STA $BC
+  ; Volatile state shared by the Garo/Bombchu/Switch Hook prototypes.
+  PHX
+  LDX.b #$11
+  .clear_prototypes
+  STZ.w $07EE, X
+  DEX : BPL .clear_prototypes
+  PLX
   RTL
 }
 
@@ -56,6 +63,7 @@ PlayerTransform:
 
 ResetToLinkGraphics:
 {
+  JSL GaroMask_Clear
   LDA $0FFF : BNE +
     STZ !CurrentMask
     LDA.b #$10 : STA.w !LinkGraphics
@@ -103,6 +111,7 @@ Palette_ArmorAndGloves:
                      CMP.b #$05 : BEQ .minish_form
                      CMP.b #$06 : BEQ .gbc_form
                      CMP.b #$07 : BEQ .moosh_form
+                     CMP.b #$08 : BEQ .garo_form
                         JMP   .original_sprite
 
   .deku_mask
@@ -134,6 +143,11 @@ Palette_ArmorAndGloves:
 
   .moosh_form
   JSL UpdateMooshPalette
+  RTL
+
+  .garo_form
+  LDA.b #$42 : STA.b $BC
+  JSL UpdateGaroPalette
   RTL
 
   .original_sprite
@@ -298,6 +312,10 @@ pullpc
 
 LinkItem_CheckForSwordSwing_Masks:
 {
+  LDA.w !CurrentMask : CMP.b #$08 : BNE +
+    JSL GaroMask_CounterInput
+    BRA .return
+  +
   LDA !CurrentMask : BEQ .return
     CMP.b #$02 : BEQ .return  ; zora mask can use sword
       CMP.b #$06 : BEQ .return ; gbc link can use sword
