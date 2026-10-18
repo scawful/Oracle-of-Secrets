@@ -224,7 +224,24 @@ Sprite_PutLinkToSleep:
   ; field with no clamp. Full fields wrapped: the bed's $7F51 became green
   ; $0371 and white $7FFF became $0420 until the warp reset the filter
   ; (DREAM-PAL, 2026-10-18).
+  JSR Blanket_UseBedColors
   PLX
+  RTS
+}
+
+; The blanket ancilla always draws with OBJ palette 6 ($08C052: ORA #$0D).
+; In Maple's hut, row E colours 6-7 are green ($036F/$026B), so the blanket
+; covered the white bed in lime green (DREAM-PAL, 2026-10-18). Only the
+; blanket uses palette 6 there: set those two colours to the bed sheet's
+; greys (BG $739C/$56B5) in both buffers. The next room load restores them.
+; Also called by DreamWake_TuckIntoBed (dream_power.asm).
+Blanket_UseBedColors:
+{
+  REP #$20
+  LDA.w #$739C : STA.l PAL_SPR6A+$0C : STA.l PALB_SPR6A+$0C
+  LDA.w #$56B5 : STA.l PAL_SPR6A+$0E : STA.l PALB_SPR6A+$0E
+  SEP #$20
+  INC.b UpdPalFlag
   RTS
 }
 
