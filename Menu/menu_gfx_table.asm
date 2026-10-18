@@ -143,7 +143,7 @@ QuarterNoteGFX:
   dw $2CAA, $2C6B, $2C7A, $2C6A ; Healing: blue
   dw $3CAA, $3C6B, $3C7A, $3C6A ; Storms: green
   dw $24AA, $246B, $247A, $246A ; Soaring: red
-  dw $38AA, $386B, $387A, $386A ; Time marker: menu-only purple overlay
+  dw $34AA, $346B, $347A, $346A ; Time: stable gold (shared with Secrets)
   dw $34AA, $346B, $347A, $346A ; Secrets: gold
   dw $20AA, $206B, $207A, $206A ; Stone: bronze
 

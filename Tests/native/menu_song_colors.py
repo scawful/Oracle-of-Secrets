@@ -9,7 +9,6 @@ SRAM file, CPU, position, cursor, story or save-state writes are performed.
 from __future__ import annotations
 
 import argparse
-import io
 import json
 from pathlib import Path
 import subprocess
@@ -46,9 +45,9 @@ def describe():
                 restored_bytes=[f"{a:06X}" for a in sorted(ALLOWED)],
                 checks=["All 31 original BG3 palette words and five legacy icons",
                         "Six controller-selected songs retain blue Items/HUD ocarina",
-                        "Time note uses four BG3 hole glyphs and purple OBJ pixels",
+                        "Time note uses ordinary gold BG3 tiles without an OBJ lease",
                         "Per-frame page-scroll/close palette trace and final blue HUD"],
-                limits="Private fixture only; no acquisition, audio, save/reopen or crowded-room lease proof")
+                limits="Private fixture only; no acquisition, audio or save/reopen proof")
 
 
 class SongColors(items.NewItemsFlow):
@@ -107,45 +106,19 @@ class SongColors(items.NewItemsFlow):
                  "SONG: SECRETS", "ELEGY: STONE")
         self.check("Selected song footer", self.text(9, 26, 14).strip(), names[song - 1])
 
-    def purple_note(self):
-        # FRAME can pause during NMI itself, between restoring a lease and
-        # uploading this frame's note. Execute to the native post-update point
-        # without modifying CPU state, then sample completed hardware uploads.
+    def time_note(self):
+        # Sample completed native uploads; FRAME can pause during NMI.
         self.check_owner()
         self.input("")
         before = native.number(self.b.get_rom_info()["frameCount"])
         cpu = self.run_to({0x008144})
         after = native.number(self.b.get_rom_info()["frameCount"])
         self.result.setdefault("display_boundaries", []).append(dict(before_frame=before, after_frame=after, cpu=cpu))
-        # Mutable tracker/lease fields remain diagnostic only.
-        self.result.setdefault("tracker_snapshots", []).append(self.block(0x7F5700, 64).hex())
         address = (0x6C00 + 0x4A2 // 2) * 2
-        self.check("Hardware Time note hole glyphs",
+        self.check("Hardware Time note uses stable gold BG3 tiles",
                    [self.word(a, "VRAM") for a in (address, address + 2, address + 64, address + 66)],
-                   [0x2D80, 0x2D81, 0x2D82, 0x2D83])
-        oam = self.b.read_block(0, 544, "OAM")
-        native.require(len(oam) == 544, "Short hardware OAM read")
-        x, y = oam[0] | ((oam[512] & 1) << 8), oam[1] + 1
-        self.check("Displayed Time note position and16x16 size", [x, y, oam[512] & 2], [136, 126, 2])
-        self.check("Displayed Time note OBJ priority", oam[3] & 0x30, 0x30)
-        chosen = (oam[3] >> 1) & 7
-        purple = self.word((0x88 + chosen * 16) * 2, "CGRAM")
-        self.check("Leased OBJ foreground is Time purple", purple, 0x6DD5)
-        raw = self.b.screenshot()
-        native.require(bool(raw), "Missing Time note screenshot")
-        path = self.a.output / "time-purple-note.png"
-        path.write_bytes(raw)
-        self.result["screenshots"].append(str(path))
-        from PIL import Image
-        picture = Image.open(io.BytesIO(raw)).convert("RGB")
-        self.check("Unfiltered screenshot dimensions", list(picture.size), [256, 224])
-        # Mesen color conversion can expand five bits by replication or shift.
-        expected = tuple(((purple >> shift) & 31) * 8 for shift in (0, 5, 10))
-        hits = sum(all(abs(channel - target) <= 7 for channel, target in zip(pixel, expected))
-                   for pixel in picture.crop((x, y, x + 16, y + 16)).getdata())
-        self.check("All 40 note foreground pixels are purple", hits, 40)
-        self.result["purple_lease"] = dict(palette=chosen, cgram_word=purple, x=x, y=y,
-                                          tile=oam[2] | ((oam[3] & 1) << 8), pixels=hits)
+                   [0x34AA, 0x346B, 0x347A, 0x346A])
+        self.shot("time-gold-note")
 
     def trace_transition(self, button, destination, label):
         # One FRAME at a time so a temporary palette stomp cannot hide between
@@ -156,8 +129,7 @@ class SongColors(items.NewItemsFlow):
         for step in range(180):
             self.advance(button if step < 2 else "", 1)
             sample = dict(frame=step, screen=self.screen(), module=self.r(0x7E0010),
-                          state=self.r(menu.MENU), palette=self.palette(),
-                          active=[self.word(0x7F5712), self.word(0x7F5714)])
+                          state=self.r(menu.MENU), palette=self.palette())
             trace.append(sample)
             if step == 12:
                 self.shot(label.lower().replace(" ", "-") + "-frame12")
@@ -190,11 +162,11 @@ class SongColors(items.NewItemsFlow):
             if song == 4:
                 for name in ("Bunny Hood", "Garo", "Banana", "Pineapple"):
                     self.legacy_icon(name)
-                self.purple_note()
+                self.time_note()
                 self.trace_transition("R", "items", "Equipment to Items")
                 self.blue_items()
                 self.trace_transition("L", "equipment", "Items to Equipment")
-                self.purple_note()
+                self.time_note()
                 self.trace_transition("Start", "gameplay", "Time Equipment close")
             else:
                 self.tap("Start"); self.wait_screen("gameplay")
