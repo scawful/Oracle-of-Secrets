@@ -11,7 +11,8 @@
 ; $07F9-$07FA : launch dungeon room
 ; $07FB       : launch layer
 ; $07FC       : launch module
-; $07FD-$07FF : reserved (unused)
+; $07FD       : Bombchu wall-following state (owned by Items/bombchu.asm)
+; $07FE-$07FF : reserved (unused)
 ; The latch is shot-owned, never inferred from the current menu icon.
 ; =========================================================
 
