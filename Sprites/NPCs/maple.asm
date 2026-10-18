@@ -9,6 +9,14 @@
 ; Power dream (!ENABLE_DREAM_POWER_SCENE): D2.06, Maple once Link is back in
 ; the hut after the scene (Sprites/NPCs/dream_power.asm).
 !DreamMsg_PowerWake       = $020B
+; Wisdom fall (!ENABLE_DREAM_WISDOM_FALL): D1.05, Maple after shots 3-5.
+!DreamMsg_WisdomWake      = $020E
+if !ENABLE_DREAM_WISDOM_FALL == 1
+  assert !ENABLE_DREAM_POWER_SCENE == 1, "ENABLE_DREAM_WISDOM_FALL runs on the Power scene's script engine (ENABLE_DREAM_POWER_SCENE)"
+endif
+if !ENABLE_DREAM_BED_WAKE == 1
+  assert !ENABLE_DREAM_POWER_SCENE == 1, "ENABLE_DREAM_BED_WAKE needs the wake word (ENABLE_DREAM_POWER_SCENE)"
+endif
 
 MapleHandler:
 {
@@ -29,20 +37,28 @@ MapleHandler:
   if !ENABLE_DREAM_WISDOM_SCENE == 1
     dw Maple_DreamNarrationDone ; 08
   endif
+  if !ENABLE_DREAM_BED_WAKE == 1
+    dw Maple_WakeLink           ; 09
+  endif
 
 
   Maple_Idle:
   {
     if !ENABLE_DREAM_POWER_SCENE == 1
-      ; D2.06 once, on the first frame Link is back in the hut after a
-      ; finished Power scene (DreamPower_Main sets the word at its exit).
+      ; A finished dream scene left the wake word (DreamPower_OpEnd). With
+      ; the bed wake-up Link snores a moment first (action 9); otherwise
+      ; Maple says the dream's line now, at the hut door.
       REP #$20
       LDA.l DreamPower_WakeLine : CMP.w #!DreamPower_WakeLive
       SEP #$20                            ; SEP keeps Z
       BNE .no_wake_line
-        LDA.b #$00 : STA.l DreamPower_WakeLine : STA.l DreamPower_WakeLine+1
-        %ShowUnconditionalMessage(!DreamMsg_PowerWake)
+      if !ENABLE_DREAM_BED_WAKE == 1
+        LDA.b #$40 : STA.w SprTimerA, X
+        %GotoAction(9)
         RTS
+      else
+        JMP Maple_SayWakeLine
+      endif
       .no_wake_line
     endif
     %ShowSolicitedMessage($01B3) : BCC +
@@ -149,6 +165,46 @@ MapleHandler:
       RTS
     }
   endif
+
+  if !ENABLE_DREAM_BED_WAKE == 1
+    ; Link was tucked into the bed on the hut reload (DreamWake_TuckIntoBed)
+    ; and snores. Then he sits up, as Uncle_AwakenLink wakes him in the
+    ; vanilla intro ($05DE86), and Maple says the line; a button press gets
+    ; him out of bed (Link_SittingUpInBed).
+    Maple_WakeLink:
+    {
+      LDA.w SprTimerA, X : BNE .wait
+        INC.w $037D : INC.w $037C
+        STZ.w SprAction, X
+        JMP Maple_SayWakeLine
+      .wait
+      RTS
+    }
+  endif
+
+  if !ENABLE_DREAM_POWER_SCENE == 1
+    ; Clears the wake word and shows the line of the dream that just ended.
+    Maple_SayWakeLine:
+    {
+      LDA.b #$00 : STA.l DreamPower_WakeLine : STA.l DreamPower_WakeLine+1
+      LDY.w CurrentDream
+      LDA.w .lo, Y : BEQ .none            ; no line for this dream
+        PHA : LDA.w .hi, Y : TAY : PLA
+        JSL Sprite_ShowMessageUnconditional
+      .none
+      RTS
+
+      .lo ; by CurrentDream: Wisdom, Power, Courage
+      if !ENABLE_DREAM_WISDOM_FALL == 1
+        db !DreamMsg_WisdomWake&$FF
+      else
+        db $00
+      endif
+      db !DreamMsg_PowerWake&$FF, $00
+      .hi
+      db !DreamMsg_WisdomWake>>8, !DreamMsg_PowerWake>>8, $00
+    }
+  endif
 }
 
 Sprite_PutLinkToSleep:
@@ -185,6 +241,11 @@ Link_HandleDreams:
       ; Farore's sheet for the great hall. Group $6A keeps slot 3 (entry 0),
       ; so LoadTransAuxGFX decodes LASTSPRSET3 there ($00D77B).
       LDA.b #$55 : STA.l LASTSPRSET3
+    endif
+    if !ENABLE_DREAM_WISDOM_FALL == 1
+      ; Kydrog's own sheet (kydrog.asm: chars $CC-$EE in slot 3 of overworld
+      ; set $0C) for his silhouette in shot 5. Group $6A keeps slot 1 too.
+      LDA.b #$42 : STA.l LASTSPRSET1
     endif
     LDX.b #$00
     JSR Link_WarpToRoom

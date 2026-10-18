@@ -59,6 +59,10 @@ if !ENABLE_DREAM_POWER_SCENE == 1
 !DreamPower_SubKing   = $D3
 !DreamPower_SubFarore = $D4
 !DreamPower_WakeLive = $D2A6
+; Wisdom fall (!ENABLE_DREAM_WISDOM_FALL): the Captain's men ($D5-$D7, one
+; subtype each: sprite init clears SprMiscA) and Kydrog's silhouette ($D8).
+!DreamPower_SubMan0       = $D5
+!DreamPower_SubSilhouette = $D8
 DreamPower_WakeLine  = $7FF37A ; word: !DreamPower_WakeLive = Maple says D2.06 in the hut
 endif
 
