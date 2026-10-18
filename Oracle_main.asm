@@ -150,8 +150,14 @@ namespace Oracle
 
   ; Part00 villager lines and checkpoint (default on; see Util/macros.asm).
   ; The Wisdom dream scene shares its room-sprites hook ($09C2C3).
-  if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1 || !ENABLE_DREAM_ROOM_SHEETS == 1
+  if !ENABLE_PART00_ARRIVAL_LINES == 1 || !ENABLE_PART00_CHECKPOINT == 1 || !ENABLE_DREAM_WISDOM_SCENE == 1 || !ENABLE_DREAM_ROOM_SHEETS == 1 || !ENABLE_DREAM_ENTRY_FX == 1
     incsrc "Core/part00.asm"
+  endif
+
+  ; Dream entry effect in Maple's hut (default on; see Util/macros.asm).
+  ; Own region $2BF000; Part00_RoomSprites restores its colour math.
+  if !ENABLE_DREAM_ENTRY_FX == 1 && !DISABLE_SPRITES == 0
+    incsrc "Sprites/NPCs/dream_entry_fx.asm"
   endif
 
   ; incsrc "Util/item_cheat.asm"  ; DISABLED FOR TESTING

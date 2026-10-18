@@ -106,6 +106,9 @@ Part00_RoomSprites:
       STZ.b $4B
     +
   endif
+  if !ENABLE_DREAM_ENTRY_FX == 1 && !DISABLE_SPRITES == 0
+    JSL DreamFX_RoomLoaded                ; colour math back after the white
+  endif
   if !ENABLE_DREAM_WISDOM_SCENE == 1 && !DISABLE_SPRITES == 0
     JSL DreamWisdom_Stage                 ; Wisdom dream; any GameState
   endif

@@ -152,19 +152,31 @@ MapleHandler:
           RTS
         .warp
       endif
-      JSR Link_HandleDreams
+      JSR Maple_DreamEntry
     +
     RTS
   }
 
   if !ENABLE_DREAM_WISDOM_SCENE == 1
-    ; First frame after D1.01 closes.
+    ; Every frame after D1.01 closes.
     Maple_DreamNarrationDone:
     {
-      JSR Link_HandleDreams
+      JSR Maple_DreamEntry
       RTS
     }
   endif
+
+  ; Every frame until the entry effect is done (dream_entry_fx.asm), then
+  ; the warp.
+  Maple_DreamEntry:
+  {
+    if !ENABLE_DREAM_ENTRY_FX == 1
+      JSL DreamFX_Run : BCC .wait
+    endif
+    JSR Link_HandleDreams
+    .wait
+    RTS
+  }
 
   if !ENABLE_DREAM_BED_WAKE == 1
     ; Link was tucked into the bed on the hut reload (DreamWake_TuckIntoBed)
