@@ -10,6 +10,27 @@
       "base_sha256": "82e96ef7c766cdaba10516effb28ddfc1c5beb74817cdaadf421168cf74b42fa",
       "identity": true,
       "why": "Identity override: Impa follower sheet; no pixel or palette change."
+    },
+    {
+      "sprite_sheet": "0x40",
+      "source": "spr40.txt",
+      "base_sha256": "3cd29a81d938ef9841460724c1dc4d05627544436924b52404303b28e8fddb08",
+      "identity": false,
+      "why": "Kydrog pirate boss (option B, scawful 2026-10-18): fallen knight under the coat; room $A4 only."
+    },
+    {
+      "sprite_sheet": "0x43",
+      "source": "spr43.txt",
+      "base_sha256": "3c23d176e898473ea140ca182636fe189ca1b1c9015fecb64a30c6c070649f05",
+      "identity": false,
+      "why": "Kydrog pirate boss and intro idle (option B, scawful 2026-10-18); tile $39 kept (not Kydrog)."
+    },
+    {
+      "sprite_sheet": "0x47",
+      "source": "spr47.txt",
+      "base_sha256": "5f4c7db15b9d3d1ee094d812724ef91eb86fa4d27e6f13fab3fcfaf778b946e7",
+      "identity": false,
+      "why": "Kydrog pirate boss (option B, scawful 2026-10-18): fallen knight under the coat; room $A4 only."
     }
   ]
 }
