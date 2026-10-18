@@ -490,8 +490,26 @@ endif
 
 if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w #GoldstarOwned&$FFFF
-  LDX.w #menu_offset(16,9)
+  LDX.w #menu_offset(16,16)
   LDY.w #HookGFX+8
+  JSR DrawMenuItem
+
+  LDA.l SwitchHookOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .switchhookowned_value
+    LDA.w #$0000
+  .switchhookowned_value
+  STA.w MenuItemValueSpoof
+  LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(16,9)
+  LDY.w #SwitchHookGFX
+  JSR DrawMenuItem
+
+  LDA.l BombchuOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .bombchuowned_value
+    LDA.w #$0000
+  .bombchuowned_value
+  STA.w MenuItemValueSpoof
+  LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(16,13)
+  LDY.w #BombchuGFX
   JSR DrawMenuItem
 endif
 

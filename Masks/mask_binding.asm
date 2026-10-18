@@ -3,17 +3,22 @@
 ; Link_HandleYItem, and $0304 retains vanilla in-flight action bookkeeping.
 ; All entry points use 8-bit A/X/Y unless documented otherwise.
 
-; Return a validated binding (1-5), or 0. Keep X/Y. No unowned activation.
+; Return a validated binding (1-6), or 0. Keep X/Y. No unowned activation.
 MaskBinding_Get:
 {
   PHX
   LDA.l BoundMask : BEQ .none
-  CMP.b #$06 : BCS .none
+  CMP.b #$06 : BEQ .garo
+  BCS .none
   DEC : TAX
   LDA.l .ownership, X : TAX
   LDA.l $7EF300, X : BEQ .none
   LDA.l BoundMask
   PLX : CMP.b #$00 : RTL
+  .garo
+  ; This is a new save byte: only the defined owned value enables the form.
+  LDA.l GaroMaskOwned : CMP.b #$01 : BNE .none
+  LDA.b #$06 : PLX : CMP.b #$00 : RTL
   .none
   LDA.b #$00 : PLX : CMP.b #$00 : RTL
   .ownership
@@ -24,6 +29,9 @@ MaskBinding_Get:
 MaskBinding_SelectedItem:
 {
   JSL MaskBinding_Get : BEQ .done
+  CMP.b #$06 : BNE +
+  LDA.b #$1E : RTL
+  +
   CLC : ADC.b #$12
   .done
   RTL
@@ -34,6 +42,10 @@ MaskBinding_SelectedItem:
 MaskBinding_MigrateSelection:
 {
   PHX : PHY
+  LDA.w $0202 : CMP.b #$1E : BNE +
+  LDA.b #$06 : STA.l BoundMask
+  BRA .choose
+  +
   LDA.w $0202 : CMP.b #$13 : BCC .done
   CMP.b #Menu_ItemIndex_End-Menu_ItemIndex : BCS .choose
   CMP.b #$18 : BCS .done
@@ -41,6 +53,7 @@ MaskBinding_MigrateSelection:
   .choose
   LDX.b #$01
   .scan
+  CPX.b #$1E : BEQ .next
   CPX.b #$13 : BCC .check
   CPX.b #$18 : BCC .next
   .check
@@ -49,7 +62,14 @@ MaskBinding_MigrateSelection:
   INX
   PHX : TYX
   LDA.l $7EF300, X
-  PLX : CMP.b #$00 : BNE .found
+  PLX
+  ; New independent ownership bytes may contain garbage in old saves.
+  ; Match the menu/use checks: only exact 1 owns Byrna/Bombchu/Switch Hook.
+  CPX.b #$1B : BCC .ordinary
+  CMP.b #$01 : BEQ .found
+  BRA .next
+  .ordinary
+  CMP.b #$00 : BNE .found
   .next
   INX : CPX.b #Menu_ItemIndex_End-Menu_ItemIndex : BCC .scan
   LDX.b #$00
@@ -72,6 +92,12 @@ MaskBinding_IsOcarina:
 MaskBinding_Tick:
 {
   PHX : PHY
+if !DISABLE_ITEMS == 0
+  ; Shared gameplay tick; each tool owns its context/ownership guards.
+  JSL Bombchu_Tick
+  JSL SwitchHook_Tick
+endif
+  JSL GaroMask_Tick
   JSL MaskBinding_MigrateSelection
   ; Consume R centrally so no item handler sees the same transform press.
   ; Hookshot/Goldstar slot separation is a separate integration prerequisite.
@@ -106,8 +132,10 @@ MaskBinding_Tick:
   +
   LDA.w !CurrentMask : BEQ .as_link
   CMP.b #$06 : BEQ .as_link
+  CMP.b #$08 : BEQ .take_off
   CMP.b #$05 : BCS .blocked            ; Minish / Moosh
   ; An active form comes off first, regardless of the newly selected binding.
+  .take_off
   JSL PlayerTransform
   JSL ResetToLinkGraphics
   BRA .consume_y
@@ -120,6 +148,12 @@ MaskBinding_Tick:
   .put_on
   JSL MaskBinding_Get : BEQ .route
   CMP.b #$05 : BEQ .stone
+  CMP.b #$06 : BNE +
+  JSL PlayerTransform
+  LDA.b #$08 : STA.w !CurrentMask
+  JSL Palette_ArmorAndGloves
+  BRA .consume_y
+  +
   PHA
   JSL PlayerTransform
   PLA : STA.w !CurrentMask : TAX
@@ -151,6 +185,7 @@ MaskBinding_Tick:
   .route
   LDA.w !CurrentMask : BEQ .base_form
   CMP.b #$06 : BEQ .base_form
+  CMP.b #$08 : BEQ .no_item            ; Garo's Y ability is handled above
   CMP.b #$05 : BCS .regular            ; preserve automatic Minish / Moosh
   TAX
   LDA.l .actions-1, X : BRA .set_action

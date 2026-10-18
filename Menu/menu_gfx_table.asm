@@ -237,3 +237,11 @@ RingBoxPromptTXT:
   dw $2568, $256B, $2551, $2550  ; Y:BA
   dw $2552, $255A, $2417, $2417  ; CK  (spaces)
 endif
+
+; New prototype icons use only the audited spare 2bpp tiles; $07F stays blank.
+BombchuGFX:
+  dw $2C7B,$2C8F,$2CAC,$2CAF
+SwitchHookGFX:
+  dw $24F2,$2530,$257E,$257F
+GaroMaskGFX:
+  dw $340D,$340E,$340F,$3425

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "start": "0x438000",
+  "capacity": 8192,
+  "canonical_blank_tile": "0x07F",
+  "sheets": [
+    {"sprite_sheet": "0x69", "base_sha256": "41e06e3fd6c96961825cf5fd0696383c0183d1986de2cd610be939a79a2f65c1"},
+    {"sprite_sheet": "0x6A", "base_sha256": "db98e83d87c1dcbaac87c9b11a0b46603146a9408f19e9fd129cd3dc155d45c6"},
+    {"sprite_sheet": "0x6B", "base_sha256": "a6f1d7bb754f7493eb2eec27d8ac437db3a4aa09d282d7aaba369ac61ce8d188"}
+  ],
+  "icons": [
+    {"name": "garo_mask", "source": "items/garo_mask.2bpp", "tiles": ["0x00D", "0x00E", "0x00F", "0x025"], "palette": 5},
+    {"name": "bombchu", "source": "items/bombchu.2bpp", "tiles": ["0x07B", "0x08F", "0x0AC", "0x0AF"], "palette": 3},
+    {"name": "switch_hook", "source": "items/switch_hook.2bpp", "tiles": ["0x0F2", "0x130", "0x17E", "0x17F"], "palette": 1}
+  ]
+}

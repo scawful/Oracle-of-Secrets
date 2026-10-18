@@ -22,6 +22,9 @@ endif
 if !ENABLE_GOLDSTAR_CELL == 1
   db $0E ; $1A Goldstar uses the existing hookshot/chain handler
   db $0D ; $1B Byrna shares the rod action, with separate ownership
+  db $01 ; $1C Bombchu: native bomb action
+  db $0E ; $1D Switch Hook: native chain action
+  db $00 ; $1E Garo: Equipment binding only
 endif
 Menu_ItemIndex_End:
 
@@ -60,6 +63,9 @@ endif
 if !ENABLE_GOLDSTAR_CELL == 1
   db GoldstarOwned&$FF ; $1A
   db ByrnaOwned&$FF    ; $1B
+  db BombchuOwned&$FF  ; $1C
+  db SwitchHookOwned&$FF ; $1D
+  db GaroMaskOwned&$FF ; $1E
 endif
 
 ; =========================================================
@@ -107,8 +113,11 @@ if !ENABLE_PORTAL_ROD_CELL == 1
   dw (15*64)+(2*2)
 endif
 if !ENABLE_GOLDSTAR_CELL == 1
-  dw (15*64)+(8*2)  ; $1A Goldstar, bottom row third cell
+  dw (15*64)+(15*2) ; $1A Goldstar, bottom row fifth cell
   dw (12*64)+(12*2) ; $1B Byrna, beside Somaria
+  dw (15*64)+(12*2) ; $1C Bombchu, directly below Bombs
+  dw (15*64)+(8*2)  ; $1D Switch Hook, directly below Hookshot
+  dw (15*64)+(18*2) ; $1E unused normal cursor; Garo lives on Equipment
 endif
 
 ; =========================================================
@@ -335,6 +344,9 @@ endif
 if !ENABLE_GOLDSTAR_CELL == 1
   db GoldstarOwned&$FF ; $1A
   db ByrnaOwned&$FF    ; $1B
+  db BombchuOwned&$FF  ; $1C
+  db SwitchHookOwned&$FF ; $1D
+  db GaroMaskOwned&$FF ; $1E
 endif
 
 GotoNextItem_Local:
@@ -472,7 +484,7 @@ Menu_SplitValidateSelection:
   LDY.b #$01
   .scan
   TYA : JSR .owned : BCS .found
-  INY : CPY.b #$1C : BCC .scan
+  INY : CPY.b #$1E : BCC .scan
   LDY.b #$00
   .found
   STY.w $0202
@@ -480,12 +492,14 @@ Menu_SplitValidateSelection:
   RTS
   .owned
   CMP.b #$01 : BCC .no
-  CMP.b #$1C : BCS .no
+  CMP.b #$1E : BCS .no
   CMP.b #$13 : BCC .check
   CMP.b #$18 : BCC .no
   .check
-  CMP.b #$1B : BNE .ordinary
-    LDA.l ByrnaOwned : CMP.b #$01 : BNE .no
+  CMP.b #$1B : BCC .ordinary
+    TAX : DEX
+    LDA.l Menu_AddressLong,X : TAX
+    LDA.l $7EF300,X : CMP.b #$01 : BNE .no
     SEC : RTS
   .ordinary
   TAX : DEX
@@ -504,7 +518,7 @@ Menu_CustomGridItems:
   db $01,$02,$03,$04,$05,$06
   db $07,$08,$09,$0A,$0B,$0C
   db $0D,$0E,$0F,$1B,$11,$12
-  db $19,$10,$1A,$00,$00,$18
+  db $19,$10,$1D,$1C,$1A,$18
 
 ; X = zero-based physical cell; C set and A = its owned logical ID.
 ; Keeps X/Y, uses $01. Invalid Byrna values are not ownership.
@@ -513,8 +527,10 @@ Menu_CustomGridOwned:
   PHX
   LDA.w Menu_CustomGridItems,X : BEQ .no
   STA.b $01
-  CMP.b #$1B : BNE .ordinary
-    LDA.l ByrnaOwned : CMP.b #$01 : BNE .no
+  CMP.b #$1B : BCC .ordinary
+    TAX : DEX
+    LDA.w Menu_AddressLong,X : TAX
+    LDA.l $7EF300,X : CMP.b #$01 : BNE .no
     BRA .yes
   .ordinary
   TAX : DEX

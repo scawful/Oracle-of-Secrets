@@ -376,6 +376,9 @@ if !ENABLE_MASK_R_BINDING == 1
   .form_check
 endif
   LDA.w !CurrentMask : AND.w #$00FF : BEQ .y_item
+  CMP.w #$0008 : BNE +
+    LDX.w #$001E : RTS
+  +
   CMP.w #$0005 : BCS .y_item
     CLC : ADC.w #$0012 : TAX             ; Deku $13, Zora $14, Wolf $15, Bunny $16
     RTS
@@ -405,13 +408,20 @@ endif
 HUD_DrawItem:
 {
 if !ENABLE_GOLDSTAR_CELL == 1
-  ; The new logical ID is beyond vanilla's 24-entry pointer table.
-  CPX.w #$001B : BNE .ordinary
-  LDA.w #$2CDC : STA.l $7EC776
-  LDA.w #$2CDD : STA.l $7EC778
-  LDA.w #$2CEC : STA.l $7EC7B6
-  LDA.w #$2CED : STA.l $7EC7B8
+  ; Logical prototype items are beyond vanilla's 24-entry pointer table.
+  CPX.w #$001B : BCC .ordinary
+  CPX.w #$001F : BCS .ordinary
+  TXA : SEC : SBC.w #$001B : ASL #3 : TAX
+  LDA.l .new_icons,X : STA.l $7EC776
+  LDA.l .new_icons+2,X : STA.l $7EC778
+  LDA.l .new_icons+4,X : STA.l $7EC7B6
+  LDA.l .new_icons+6,X : STA.l $7EC7B8
   RTS
+  .new_icons
+  dw $2CDC,$2CDD,$2CEC,$2CED ; Byrna
+  dw $2C7B,$2C8F,$2CAC,$2CAF ; Bombchu
+  dw $24F2,$2530,$257E,$257F ; Switch Hook
+  dw $340D,$340E,$340F,$3425 ; Garo
   .ordinary
 endif
   STA $02

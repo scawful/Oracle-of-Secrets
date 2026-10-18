@@ -792,7 +792,11 @@ SavedOcarinaSong   = $7EF3AB
 ; New-file initialization clears this saved/checksummed byte. Only 1 is owned;
 ; no migration or grant is inferred from rods. Acquisition placement is pending.
 ByrnaOwned        = $7EF3AC   ; 0 = no, 1 = owned
-FreeBlock_Large    = $7EF3AD  ; 24 bytes ($7EF3AD-3C4)
+; Prototype ownership: exact 1 only; independently saved/checksummed.
+BombchuOwned      = $7EF3AD
+SwitchHookOwned   = $7EF3AE
+GaroMaskOwned     = $7EF3AF
+FreeBlock_Large    = $7EF3B0  ; 21 bytes ($7EF3B0-3C4)
 
 ; ---------------------------------------------------------
 ; Dreams Extension ($7EF411-4FD) - 237 bytes
@@ -810,10 +814,10 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF307  | $7EF30E  | 8     | Story extension    |
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
-; | $7EF3AD  | $7EF3C4  | 24    | Large reserved     |
+; | $7EF3B0  | $7EF3C4  | 21    | Large reserved     |
 ; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
 ; |----------|----------|-------|--------------------|
-; | TOTAL AVAILABLE:    | 320   | bytes              |
+; | TOTAL AVAILABLE:    | 317   | bytes              |
 ; ---------------------------------------------------------
 
 ; =========================================================
