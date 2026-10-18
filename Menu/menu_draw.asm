@@ -210,11 +210,16 @@ Menu_DrawPendantIcons:
 
 Menu_DrawHeartPieces:
 {
-  ; Empty heart containter
-  LDX.w #$2484 : STX.w $149E ; top left
-  LDX.w #$6484 : STX.w $14A0 ; top right
-  LDX.w #$2485 : STX.w $14DE ; bottom left
-  LDX.w #$6485 : STX.w $14E0 ; bottom right
+if !ENABLE_EQUIPMENT_MENU == 1
+  !QuestHeart = $1000+menu_offset(9,24)
+else
+  !QuestHeart = $149E
+endif
+  ; Empty heart container
+  LDX.w #$2484 : STX.w !QuestHeart ; top left
+  LDX.w #$6484 : STX.w !QuestHeart+2 ; top right
+  LDX.w #$2485 : STX.w !QuestHeart+$40 ; bottom left
+  LDX.w #$6485 : STX.w !QuestHeart+$42 ; bottom right
 
   LDA.l $7EF36B
   AND.w #$00FF
@@ -224,13 +229,13 @@ Menu_DrawHeartPieces:
         RTS
 
   .top_right
-  LDX.w #$64AD : STX.w $14A0
+  LDX.w #$64AD : STX.w !QuestHeart+2
 
   .bottom_left
-  LDX.w #$24AE : STX.w $14DE
+  LDX.w #$24AE : STX.w !QuestHeart+$40
 
   .top_left
-  LDX.w #$24AD : STX.w $149E
+  LDX.w #$24AD : STX.w !QuestHeart
   RTS
 }
 
@@ -557,7 +562,11 @@ endif
         LDA.w #$01
         STA.w ShortSpoof
         LDA.w #ShortSpoof
+if !ENABLE_EQUIPMENT_MENU == 1
+        LDX.w #menu_offset(18,12)
+else
         LDX.w #menu_offset(11,8)
+endif
         LDY.w #TreasureChestGFX
         JSR DrawMenuItem
 
@@ -571,7 +580,11 @@ endif
       STA.w ShortSpoof
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
+if !ENABLE_EQUIPMENT_MENU == 1
+      LDX.w #menu_offset(18,4)
+else
       LDX.w #menu_offset(11,2)
+endif
       LDY.w #BigKeyGFX
       JSR DrawMenuItem
 
@@ -590,7 +603,11 @@ endif
       STA.w ShortSpoof
       LDA.w #ShortSpoof
       ; Draw the big key (or big key with chest if we've gotten the treasure) icon
+if !ENABLE_EQUIPMENT_MENU == 1
+      LDX.w #menu_offset(18,16)
+else
       LDX.w #menu_offset(11,11)
+endif
       LDY.w #MapGFX
       JSR DrawMenuItem
 
@@ -760,7 +777,11 @@ Menu_DrawBigChestKey:
       LDA.w #$01
       STA.w ShortSpoof
       LDA.w #ShortSpoof
+if !ENABLE_EQUIPMENT_MENU == 1
+      LDX.w #menu_offset(18,8)
+else
       LDX.w #menu_offset(11, 5)
+endif
       LDY.w #BigChestKeyGFX
       JSR DrawMenuItem
     .dontHaveCompass
@@ -1083,8 +1104,8 @@ Menu_DrawCursor:
 Menu_CheckItemHasSubmenu:
 {
   LDA.w $0202  ; Current cursor position/item index
-  CMP.b #$05 : BEQ .has_submenu  ; Magic Powder (mushroom/powder)
 if !ENABLE_EQUIPMENT_MENU == 0
+  CMP.b #$05 : BEQ .has_submenu  ; Legacy Magic Bag
   CMP.b #$0D : BEQ .has_submenu  ; Ocarina (song selection)
 endif
 if !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY == 1

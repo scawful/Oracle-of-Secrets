@@ -1,4 +1,4 @@
-; Functional Equipment: slots 0-4 masks, 5-10 rings, 11-14 songs, 15-17 gear.
+; Functional Equipment: slots 0-4 masks, 5-10 rings, 11-14 songs, 15-20 gear.
 ; $020B is only the cursor; BoundMask, RingSlot1 and CurrentSong are selections.
 ; No preview fixture or ownership spoof controls availability. DBR = $2D.
 Menu_Equipment_Init:
@@ -14,8 +14,8 @@ Menu_Equipment_Init:
 .scan
   STA.w $020B
   JSR Menu_Equipment_Owned : BNE .done
-  LDA.w $020B : INC : CMP.b #$12 : BCC .scan
-  LDA.b #$FF : STA.w $020B             ; empty inventory has no cursor
+  LDA.w $020B : INC : CMP.b #$15 : BCC .scan
+  LDA.b #$FF : STA.w $020B             ; no valid owned entry has no cursor
 .done
   RTS
 }
@@ -41,14 +41,9 @@ Menu_Equipment_Owned:
   CMP.l $7EF34C : BCS .none
   INC : BRA .done                    ; colored note variants 2-5
 .gear
-  CMP.b #$12 : BCS .none
-  SEC : SBC.b #$0F : TAX
-  LDA.l $7EF354,X : BEQ .done         ; glove, shoes, flippers
-  CPX.b #$00 : BNE .boolean
-  CMP.b #$03 : BCC .done
-  LDA.b #$02 : BRA .done
-.boolean
-  LDA.b #$01 : BRA .done
+  CMP.b #$15 : BCS .none
+  JSR Menu_Equipment_GearVariant
+  BRA .done
 .none
   LDA.b #$00
 .done
@@ -59,12 +54,47 @@ Menu_Equipment_Owned:
   db $49,$47,$58,$48,$52
 }
 
+; A = valid gear slot 15-20, 8-bit A/X/Y; clobbers X, preserves Y.
+; Explicit SRAM offsets avoid treating Pearl/Wolf Mask as sword/shield.
+Menu_Equipment_GearVariant:
+{
+  SEC : SBC.b #$0F : TAX
+  PHX
+  LDA.w .address,X : TAX
+  LDA.l $7EF300,X
+  PLX
+  CPX.b #$05 : BEQ .tunic
+  CPX.b #$03 : BEQ .sword
+  CPX.b #$04 : BEQ .shield
+  CMP.b #$00 : BEQ .done
+  CPX.b #$00 : BNE .boolean
+  CMP.b #$03 : BCC .done
+  LDA.b #$02 : BRA .done             ; preserve the glove's two variants
+.boolean
+  LDA.b #$01 : BRA .done
+.sword
+  CMP.b #$05 : BCC .done             ; 0 absent; 1-4 owned; $FF at smiths
+  BRA .none
+.shield
+  CMP.b #$04 : BCC .done             ; 0 absent; 1-3 owned
+  BRA .none
+.tunic
+  CMP.b #$03 : BCS .none
+  INC : BRA .done                    ; SRAM 0-2 -> green/blue/red variants 1-3
+.none
+  LDA.b #$00
+.done
+  RTS
+.address
+  db $54,$55,$56,$59,$5A,$5B          ; glove, boots, flippers, sword, shield, tunic
+}
+
 ; Horizontal movement wraps within the row and skips unowned entries.
 ; Vertical movement finds the nearest owned column in the next nonempty row.
 Menu_Equipment_Move:
 {
   SEP #$30
-  LDA.w $020B : CMP.b #$12 : BCC .valid
+  LDA.w $020B : CMP.b #$15 : BCC .valid
   JMP Menu_Equipment_Init
 .valid
   LDA.b $F4 : AND.b #$0F : BNE +
@@ -119,18 +149,18 @@ Menu_Equipment_Move:
 .done
   RTS
 .next
-  db 1,2,3,4,0, 6,7,8,9,10,5, 12,13,14,11, 16,17,15
+  db 1,2,3,4,0, 6,7,8,9,10,5, 12,13,14,11, 16,17,18,19,20,15
 .prev
-  db 4,0,1,2,3, 10,5,6,7,8,9, 14,11,12,13, 17,15,16
+  db 4,0,1,2,3, 10,5,6,7,8,9, 14,11,12,13, 20,15,16,17,18,19
 .starts
   db 0,5,11,15
 .ends
-  db 5,11,15,18
+  db 5,11,15,21
 }
 Menu_Equipment_Rows:
-  db 0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2, 3,3,3
+  db 0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2, 3,3,3,3,3,3
 Menu_Equipment_Columns:
-  db 7,10,13,17,20, 7,10,13,17,20,23, 7,10,13,17, 7,10,13
+  db 7,10,13,17,20, 7,10,13,17,20,23, 7,10,13,17, 7,10,13,17,20,23
 
 Menu_Equipment_Select:
 {
@@ -174,6 +204,7 @@ Menu_Equipment_Draw:
   LDA.w .rings,X : STA.w $1000+menu_offset(13,6),X
   LDA.w .songs,X : STA.w $1000+menu_offset(17,6),X
   LDA.w .gear,X  : STA.w $1000+menu_offset(21,6),X
+  LDA.w .pearl,X : STA.w $1000+menu_offset(17,21),X
   DEX #2 : BPL .labels
   SEP #$30
   LDA.b #$7E : STA.b $0A
@@ -190,7 +221,18 @@ Menu_Equipment_Draw:
   JSR DrawMenuItem
   SEP #$30
   PLY
-  INY : CPY.b #$12 : BCC .icons
+  INY : CPY.b #$15 : BCC .icons
+
+  LDA.l $7EF357 : BEQ .pearl_variant
+  LDA.b #$01                         ; passive badge has one owned variant
+.pearl_variant
+  STA.w MenuItemValueSpoof
+  REP #$30
+  LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(14,19)           ; absolute column 23, row 18
+  LDY.w #MoonPearlGFX
+  JSR DrawMenuItem
+  SEP #$30
 
   LDA.l BoundMask : DEC : CMP.b #$05 : BCS .no_mask
   JSR .marker
@@ -232,6 +274,8 @@ Menu_Equipment_Draw:
   dw "SONGS"
 .gear
   dw "GEAR_"
+.pearl
+  dw "PEARL"
 }
 
 ; Two-row brackets use existing corner tiles beside the icon, leaving the
@@ -273,6 +317,9 @@ Menu_Equipment_GearNames:
   dw "_POWER_GLOVE__"
   dw "PEGASUS_SHOES_"
   dw "___FLIPPERS___"
+  dw "____SWORD_____"
+  dw "____SHIELD____"
+  dw "____TUNIC_____"
 Menu_Equipment_Names:
   dw Menu_ItemNames+(18*32),Menu_ItemNames+(19*32),Menu_ItemNames+(20*32) ; asar math is left to right: keep the parentheses
   dw Menu_ItemNames+(21*32),Menu_ItemNames+(22*32)
@@ -280,13 +327,16 @@ Menu_Equipment_Names:
   dw Menu_RingNames+96,Menu_RingNames+128,Menu_RingNames+160
   dw Menu_SongNames,Menu_SongNames+32,Menu_SongNames+64,Menu_SongNames+96
   dw Menu_Equipment_GearNames,Menu_Equipment_GearNames+28,Menu_Equipment_GearNames+56
+  dw Menu_Equipment_GearNames+84,Menu_Equipment_GearNames+112,Menu_Equipment_GearNames+140
 Menu_Equipment_Gfx:
   dw DekuMaskGFX,ZoraMaskGFX,WolfMaskGFX,BunnyHoodGFX,StoneMaskGFX
   dw RingGFX,RingGFX,RingGFX,RingGFX,RingGFX,RingGFX
   dw QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX
   dw PowerGloveGFX,PegasusBootsGFX,FlippersGFX
+  dw SwordGFX,ShieldGFX,TunicGFX
 Menu_Equipment_Pos:
   dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,9),menu_offset(6,13),menu_offset(6,16)
   dw menu_offset(10,3),menu_offset(10,6),menu_offset(10,9),menu_offset(10,13),menu_offset(10,16),menu_offset(10,19)
   dw menu_offset(14,3),menu_offset(14,6),menu_offset(14,9),menu_offset(14,13)
   dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9)
+  dw menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
