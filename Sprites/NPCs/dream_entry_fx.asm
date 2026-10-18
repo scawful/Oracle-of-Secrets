@@ -232,15 +232,15 @@ DreamFX_DrawPendant:
   LDA.b $22 : SEC : SBC.b $E2 : STA.b $04 ; Link on screen
   LDA.b $20 : SEC : SBC.b $E8 : STA.b $06
   SEP #$20
-  ; Rise 3/8 px a frame, 24 px at most, with a 0-3 px bob.
+  ; Rise from Link's chest 1/4 px a frame, 16 px at most (the bed is just
+  ; under the HUD), with a 0-3 px bob.
   LDA.l DreamFX_Timer : CMP.b #64 : BCC +
     LDA.b #64
   +
-  LSR A : STA.b $08 : LSR #2 : STA.b $09
-  LDA.b $08 : SEC : SBC.b $09 : STA.b $08
+  LSR #2 : STA.b $08
   LDA.l DreamFX_Timer : ASL A : AND.b #$3E : TAX
   LDA.w DreamFX_Sine, X : CLC : ADC.b #$80 : LSR #6 : STA.b $09
-  LDA.b $06 : SEC : SBC.b #12 : SEC : SBC.b $08 : CLC : ADC.b $09 : STA.b $0A
+  LDA.b $06 : CLC : ADC.b #2 : SEC : SBC.b $08 : CLC : ADC.b $09 : STA.b $0A
 
   LDX.w CurrentDream : LDA.w .prop, X : STA.b $0B
   LDA.l DreamFX_Timer : CMP.b #!DreamFX_Flash : BCC +
@@ -256,9 +256,9 @@ DreamFX_DrawPendant:
   LDA.b $0B : STA.b ($90), Y : INY
   LDA.b $05 : AND.b #$01 : ORA.b #$02 : STA.b ($92) ; 16x16
 
-  ; Sparkles: radius 14 px, a quarter turn apart, one turn per 32 frames.
+  ; Sparkles: radius 12 px, a quarter turn apart, one turn per 32 frames.
   LDA.b $0B : AND.b #$BF : STA.b $0B
-  LDA.b #28 : STA.b $0F
+  LDA.b #24 : STA.b $0F
   .sparkle
     TYA : ASL #2 : STA.b $0C
     LDA.l DreamFX_Timer : ASL A : CLC : ADC.b $0C : AND.b #$3E : STA.b $0C
@@ -277,8 +277,8 @@ DreamFX_DrawPendant:
     CPY.b #$14 : BCC .sparkle
   RTS
 
-  .prop ; by CurrentDream, item receipt props $02/$01/$04 as attr
-  db $34, $32, $38
+  .prop ; by CurrentDream: the hut's OBJ palettes 1 red, 2 blue, 4 green
+  db $32, $34, $38
 }
 
 ; Part00_RoomSprites, end of every room's sprite list (before the fade-in).
