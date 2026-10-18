@@ -188,6 +188,16 @@ DreamWisdom_ReleaseLink:
     STZ.b $4B
     STZ.w $02E4 : STZ.w $0FFC : STZ.w $037B : STZ.w $02F9
     LDA.b #$00 : STA.l DreamWisdom_Marker : STA.l DreamWisdom_Marker+1
+    ; Sprite_CancelHookshot (message boxes, barrier sprites) puts Link back
+    ; at $0FC2/$0FC4. They still hold the dream spot until Link_Main runs
+    ; again, so Maple's first-frame wake line put him there, outside the
+    ; hut (Mesen2 write trace on $20-$23, 2026-10-18; same fix as
+    ; HouseVillager_Say, Core/part00.asm). The entrance load has already
+    ; set $20/$22 to the hut door.
+    REP #$20
+    LDA.b $22 : STA.w $0FC2
+    LDA.b $20 : STA.w $0FC4
+    SEP #$20
   .done
   RTS
 }
