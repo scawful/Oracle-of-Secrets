@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_Portal
-!NbrTiles           = 01  ; Number of tiles used in a frame
+!NbrTiles           = 00  ; Native allocation uses tiles minus one: one 16x16 tile
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -315,39 +315,33 @@ Portal_CheckWarpContext:
 
 CheckForDismissPortal:
 {
-  LDA $06FE : CMP.b #$02 : BCC .return
-    LDA $7E0FA6 : BEQ .DespawnOrange ; Check what portal is spawning next
-      PHX
-        LDA.w BlueSpriteIndex
-        CMP.b #$10 : BCS .keep_blue_slot
-        CMP $01,S : BEQ .keep_blue_slot ; Saved source X
-        TAX
-        LDA.w SprType, X : CMP.b #Sprite_Portal : BNE .keep_blue_slot
-        LDA.w SprSubtype, X : CMP.b #$02 : BNE .keep_blue_slot
-        LDA.w SprState, X : CMP.b #$09 : BNE .keep_blue_slot
-        STZ.w SprState, X
-        .keep_blue_slot
-        DEC.w $06FE
-      PLX
-    .DespawnOrange
-    PHX
-      LDA.w OrangeSpriteIndex
-      CMP.b #$10 : BCS .keep_orange_slot
-      CMP $01,S : BEQ .keep_orange_slot ; Saved source X
-      TAX
-      LDA.w SprType, X : CMP.b #Sprite_Portal : BNE .keep_orange_slot
-      LDA.w SprSubtype, X : CMP.b #$01 : BNE .keep_orange_slot
-      LDA.w SprState, X : CMP.b #$09 : BNE .keep_orange_slot
+  ; Blue starts a fresh pair; orange replaces orange and retains one blue.
+  ; Derive ownership from live actors, never the cached count/slot handles.
+  ; The old decrement-only path forgot the new blue and leaked every fifth cast.
+  PHX
+  PHY
+  TXA : PHA ; Exclude this accepted source from the bounded identity scan.
+  LDA.b #$FF : STA.w BlueSpriteIndex : STA.w OrangeSpriteIndex
+  LDA.b #$01 : STA.w $06FE ; Count the accepted source before retained partners.
+  LDX.b #$0F
+  .next_slot
+    TXA : CMP $01,S : BEQ .skip
+    LDA.w SprState, X : CMP.b #$09 : BNE .skip
+    LDA.w SprType, X : CMP.b #Sprite_Portal : BNE .skip
+    LDA.w SprSubtype, X : CMP.b #$01 : BEQ .dismiss
+                          CMP.b #$02 : BNE .skip
+    LDA $7E0FA6 : BNE .dismiss ; A blue cast clears both previous colors.
+    LDA.w BlueSpriteIndex : CMP.b #$FF : BNE .dismiss
+      TXA : STA.w BlueSpriteIndex
+      INC.w $06FE
+      BRA .skip
+    .dismiss
       STZ.w SprState, X
-      .keep_orange_slot
-      DEC.w $06FE
-      LDA.w OrangeSpriteIndex ; Preserve the original high-count return value.
-    PLX
-  SEC ; The original count >= 2 comparison returned carry set.
-  RTS
-
-  .return
-  INC $06FE ; This ticker needs to be reset when transitioning rooms and maps.
+    .skip
+    DEX : BPL .next_slot
+  PLA
+  PLY
+  PLX
   RTS
 }
 
@@ -375,9 +369,23 @@ RejectOnTileCollision:
 
 Sprite_Portal_Draw:
 {
-  JSL Sprite_PrepOamCoord : BCC .draw_on_screen
+  ; Pending/rejected placements own no visible tile yet.
+  LDA.w SprAction, X : BNE .accepted
+    RTS
+  .accepted
+  JSL Sprite_PrepOamCoord : BCC .check_viewport
+    RTS
+  .check_viewport
+  ; Native Prep allows a wide margin for large sprites. This is one 16x16
+  ; tile: do not consume a defer-to-Link slot when all of it is offscreen.
+  REP #$20
+  LDA $00 : CLC : ADC.w #$000F : CMP.w #$010F : BCS .clipped
+  LDA $02 : CLC : ADC.w #$000F : CMP.w #$00EF : BCC .draw_on_screen
+  .clipped
+    SEP #$20
     RTS
   .draw_on_screen
+  SEP #$20
   JSL Sprite_OAM_AllocateDeferToPlayer
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
