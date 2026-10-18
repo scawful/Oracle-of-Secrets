@@ -13,9 +13,23 @@ older nonzero-only tools do not satisfy this contract.
 
 ## Current provenance
 
-The 2026-10-18 Goron Mines `$87`/`$77` redesign (scawful's picks: "2. Lever steers
-(Recommended)", "A. Wall + main deck chest (Recommended)", "Piece of Heart (Recommended)")
-lets the cart ride from room `$87` north into room `$77`. Room `$87`'s (44,6) stop becomes a
+The 2026-10-18 Goron Mines safe-rails fix (scawful: "Safe rails first: fix the 313 derail
+tiles in the 7 rooms, no layout change.") gives every lane tile of a plain straight rail
+piece in rooms `$77`, `$89`, `$97`, `$98`, `$B9`, `$D7` and `$D8` an explicit straight:
+`$B0` on horizontal pieces and `$B1` on vertical ones (313 cells). There the drawn rail's
+default `$BB`/`$BC` T-junction collision could turn a cart off the rail. Existing cells,
+objects and sprites are unchanged (AFS recipe
+`handoffs/goron_mines_redesign_2026-10-18/safe_rails/recipe/apply_safe_rails.py`).
+
+- source: 20 rooms, 3,191 explicit tiles (3,095 nonzero and 96 floor tiles)
+- source SHA-256:
+  `13342cd4fc8f719e6c502ada53225dd55df8dcd73f299db02fd42b1288c85514`
+- matching edit base SHA-256 (base `aea93a28` plus the safe-rails recipe):
+  `c602022261d4d93e7d18f9abbd1f80f3ab2705b55a35dd57e7f2bdc6f7aeea6c`
+
+The 2026-10-18 Goron Mines `$87`/`$77` redesign is retained as history (scawful's picks:
+"2. Lever steers (Recommended)", "A. Wall + main deck chest (Recommended)", "Piece of
+Heart (Recommended)"). It lets the cart ride from room `$87` north into room `$77`. Room `$87`'s (44,6) stop becomes a
 `$B1` rail. Room `$77` gains the switch tile `$D0` at (44,38), under its lever-set switch track,
 and 69 straight-rail cells on the cart's paths. The same change edits `$77`'s objects, sprites
 and chest record and two other small-key sources in the base ROM (AFS recipe
