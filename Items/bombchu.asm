@@ -14,6 +14,7 @@ BombchuAreaLow    = $7E07F4 ; room indoors, overworld area outdoors
 BombchuAreaHigh   = $7E07F5
 BombchuSignature  = $7E07F6
 BombchuFloor      = $7E07F7
+BombchuFollowing  = $7E07FD ; zero until the first wall; then keep it on the right
 !BOMBCHU_SIGNATURE = $BC
 
 pushpc
@@ -85,7 +86,8 @@ Bombchu_AddBomb:
   LDA.b #!BOMBCHU_SIGNATURE
   STA.l BombchuSignature
   STA.w $03EA,X ; native non-liftable field, also protects against slot reuse
-  LDA.b #$60 : STA.w $039F,X ; 96 active frames of ground travel
+  LDA.b #$00 : STA.l BombchuFollowing
+  LDA.b #$C0 : STA.w $039F,X ; 192 one-pixel active frames, same maximum range
   STZ.w $0C22,X : STZ.w $0C2C,X
   STZ.w $029E,X ; never airborne
   .exit
@@ -139,7 +141,8 @@ Bombchu_Tick:
   ; A freshly allocated ordinary bomb resets $03EA and is never deleted.
   STZ.w $0C4A,X
   .clear
-  LDA.b #$00 : STA.l BombchuSlot : STA.l BombchuSignature
+  LDA.b #$00
+  STA.l BombchuSlot : STA.l BombchuSignature : STA.l BombchuFollowing
   .done
   %m16()
   PLY : PLX : PLA
@@ -158,21 +161,7 @@ Bombchu_BombEntry:
   LDA.w $0FC1 : BNE .paused ; sprite/cutscene freeze also freezes the fuse
 
   PHB : PHK : PLB
-  LDA.l BombchuDirection : STA.w $0C72,X
-  JSR Bombchu_Move
-  ; Class 2 reports no collision when its probe is outside the viewport.
-  ; Stop there rather than letting an unseen Bombchu pass through walls.
-  JSR Bombchu_CheckViewport
-  BCS .blocked
-  ; Class 2 is the native bomb's wall/collision probe. It preserves X.
-  JSL $089243
-  BCC .clear_path
-  .blocked
-    ; Move back out of the wall, then let the ordinary fuse start its blast.
-    LDA.l BombchuDirection : EOR.b #$01
-    JSR Bombchu_Move
-    LDA.b #$01 : STA.w $039F,X
-  .clear_path
+  JSR Bombchu_Crawl
   LDA.l BombchuDirection : STA.w $0C72,X
   PLB
   ; Skip lifting, then retain native terrain, pits, water and bomb state.
@@ -189,33 +178,89 @@ Bombchu_BombEntry:
   JML $0897B5 ; native RTS: Tick removed our object during a transition
 }
 
-; Called immediately after Bombchu_Move: $00/$02 hold the moved Y/X.
-; C=1 if the native direction-specific probe would leave the viewport.
-; The offsets and limits match $088BBF-$088BCB and $088C68-$088C82.
-; Preserves X; returns M=8, with Y and $00-$03 scratch.
-Bombchu_CheckViewport:
+; Initially move forward. The first obstruction turns left, placing the wall
+; on the right. Subsequent frames prefer right, forward, left, then reverse.
+; Each failed candidate rotates left; four failures prove the Bombchu trapped.
+; X=ancilla slot, M/X=8, DBR=our bank; X preserved, Y/$00-$0F scratch.
+Bombchu_Crawl:
 {
-  LDA.l BombchuDirection : ASL A : TAY
+  LDA.l BombchuDirection : AND.b #$03 : STA.b $0E
+  LDA.l BombchuFollowing : BEQ .first_candidate
+    LDY.b $0E
+    LDA.w .right,Y : STA.b $0E
+  .first_candidate
+  LDA.b #$04 : STA.b $0F
+  .try_direction
+  LDA.b $0E
+  JSR Bombchu_ProbeStep : BCC .move
+  LDA.b #$01 : STA.l BombchuFollowing
+  DEC.b $0F : BEQ .trapped
+  LDY.b $0E
+  LDA.w .left,Y : STA.b $0E
+  BRA .try_direction
+  .move
+  LDA.b $0E : STA.l BombchuDirection
+  JSR Bombchu_Move
+  RTS
+  .trapped
+  LDA.b #$01 : STA.w $039F,X ; native bomb state starts its explosion
+  RTS
+  .right
+  db $03, $02, $00, $01
+  .left
+  db $02, $03, $01, $00
+}
+
+; A=prospective direction. Probe its leading edge before changing position.
+; A one-pixel step with a 15x15 body has its new leading edge at old center
+; +/-8. Samples at perpendicular -7,0,+7 cover all touched 8px collision cells.
+; Sprite_GetTileAttr clobbers $00-$07, so each point is rebuilt from $0A/$0C.
+; The live tile map includes opened doors and broken bushes/pots. Whole slope
+; tiles are conservatively blocked; actor collision is still native bomb logic.
+; X=ancilla slot preserved; returns M/X=8, C=1 blocked. $08-$0D/Y scratch.
+Bombchu_ProbeStep:
+{
+  STA.b $08
+  STZ.b $09
+  LDA.w $0BFA,X : STA.b $0A
+  LDA.w $0C0E,X : STA.b $0B
+  LDA.w $0C04,X : STA.b $0C
+  LDA.w $0C18,X : STA.b $0D
+  .point
+  LDA.b $08 : ASL A : CLC : ADC.b $08 : ASL A
+  CLC : ADC.b $09 : TAY ; direction*6 + point*2
   %a16()
-  LDA.b $00 : CLC : ADC.w .probe_y,Y
+  LDA.b $0A : CLC : ADC.w .probe_y,Y : STA.b $00
   SEC : SBC.b $E8 : CMP.w #$00E0 : BCS .outside
-  LDA.b $02 : CLC : ADC.w .probe_x,Y
+  LDA.b $0C : CLC : ADC.w .probe_x,Y : STA.b $02
   SEC : SBC.b $E2 : CMP.w #$0100 : BCS .outside
   %a8()
+  LDA.l BombchuFloor
+  JSL Sprite_GetTileAttr ; raw type in A; X preserved, M/X=8
+  CMP.b #$08 : BEQ .blocked ; deep water is zero in the sprite ground table
+  CMP.b #$09 : BEQ .pass    ; shallow water
+  CMP.b #$22 : BEQ .pass    ; outdoor stairs
+  PHX : TAX
+  LDA.l $1DF6CF,X
+  PLX
+  CMP.b #$00 : BNE .blocked ; PLX changes N/Z, not the tile classification
+  .pass
+  INC.b $09 : INC.b $09
+  LDA.b $09 : CMP.b #$06 : BNE .point
   CLC
   RTS
   .outside
   %a8()
+  .blocked
   SEC
   RTS
-
   .probe_y
-  dw -8, 8, 0, 0
+  dw -8,-8,-8, 8,8,8, -7,0,7, -7,0,7
   .probe_x
-  dw 0, 0, -8, 8
+  dw -7,0,7, -7,0,7, -8,-8,-8, 8,8,8
 }
 
-; A=direction, X=ancilla slot, DBR=our bank. Moves two pixels with full
+; A=direction, X=ancilla slot, DBR=our bank. Moves one pixel with full
 ; 16-bit coordinates, including across $xxFF/$xx00 boundaries.
 Bombchu_Move:
 {
@@ -235,9 +280,9 @@ Bombchu_Move:
   RTS
 
   .delta_y
-  dw -2, 2, 0, 0
+  dw -1, 1, 0, 0
   .delta_x
-  dw 0, 0, -2, 2
+  dw 0, 0, -1, 1
 }
 
 ; Called inside the existing VBlank upload, after Link/P2/water graphics.
