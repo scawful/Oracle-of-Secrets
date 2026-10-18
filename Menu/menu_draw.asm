@@ -481,16 +481,20 @@ if !ENABLE_MENU_PAGE3 == 0
 endif
 
 if !ENABLE_PORTAL_ROD_CELL == 1
-  ; Portal Rod: row 4, first cell (the Deku cell; $0202 = $19).
+  ; Portal Rod: row 4, fifth cell with the custom grid; logical ID stays $19.
   LDA.w #PortalRodOwned&$FFFF
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDX.w #menu_offset(16,16)
+else
   LDX.w #menu_offset(16,3)
+endif
   LDY.w #PortalRodGFX
   JSR DrawMenuItem
 endif
 
 if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w #GoldstarOwned&$FFFF
-  LDX.w #menu_offset(16,16)
+  LDX.w #menu_offset(16,3)
   LDY.w #HookGFX+8
   JSR DrawMenuItem
 

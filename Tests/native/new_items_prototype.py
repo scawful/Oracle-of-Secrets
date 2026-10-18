@@ -29,7 +29,7 @@ BOMBS, HOOK, SWORD = 0x7EF343, 0x7EF342, 0x7EF359
 ALLOWED = set(NEW_OWNERSHIP) | {BOMBS, HOOK, SWORD, menu.MAGIC}
 PROTECTED = (0x7EF3A3, 0x7EF3A4, 0x7EF3A5, 0x7EF3C5, 0x7EF3C6,
              0x7EF3D6, 0x7EF3D7, 0x7EF3D8, 0x7EF374, 0x7EF37A, 0x7EF410)
-BOTTOM = (0x19, 0x10, 0x1D, 0x1C, 0x1A, 0x18)
+BOTTOM = (0x1A, 0x10, 0x1D, 0x1C, 0x19, 0x18)
 NAMES = {0x1B: ("BYRNA", "ByrnaGFX"),
          0x1C: ("BOMBCHU", "BombchuGFX"),
          0x1D: ("SWITCH HOOK", "SwitchHookGFX")}
@@ -130,7 +130,9 @@ class NewItemsFlow(menu.QuestFlow):
         self.icon("Bombchu directly below Bombs", 17, 20, "BombchuGFX")
         self.icon("Byrna beside Somaria", 17, 17, "ByrnaGFX")
         if 0x1A in seen:
-            self.icon("Goldstar fifth bottom cell", 20, 20, "HookGFX", 2)
+            self.icon("Goldstar first bottom cell", 7, 20, "HookGFX", 2)
+        if 0x19 in seen:
+            self.icon("Portal fifth bottom cell", 20, 20, "PortalRodGFX")
         self.shot("new-items-menu")
         for item, (name, table) in NAMES.items():
             self.pick(item)

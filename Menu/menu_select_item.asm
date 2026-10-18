@@ -13,7 +13,7 @@ Menu_ItemIndex:
   ;  Deku,    Zora,      Wolf,     Bunny Hood, Stone Mask, Bottle4
   db $11,     $0F,       $08,      $10,        $13,        $0B
 if !ENABLE_PORTAL_ROD_CELL == 1
-  ;  $19: Portal Rod cell (row 4, first cell), same routine as the Fishing
+  ;  $19: Portal Rod cell, same routine as the Fishing
   ;  Rod ($0D, LinkItem_FishingRodAndPortalRod picks the rod by $0202)
   db $0D
 endif
@@ -107,13 +107,16 @@ endif
   dw menu_offset(15,15) ; stone mask
   dw menu_offset(15,18) ; bottle4
 if !ENABLE_PORTAL_ROD_CELL == 1
-  ; $19 Portal Rod: the Deku mask cell, menu_offset(15,2), on purpose. Written
-  ; as arithmetic so the menu registry (z3ed oracle-menu-validate, yaze menu
-  ; editor) keeps one editable entry per cell.
+  ; $19 Portal Rod: fifth custom-grid cell, first cell in the legacy layout.
+  ; Arithmetic keeps the menu registry's editable entries distinct.
+if !ENABLE_GOLDSTAR_CELL == 1
+  dw (15*64)+(15*2)
+else
   dw (15*64)+(2*2)
 endif
+endif
 if !ENABLE_GOLDSTAR_CELL == 1
-  dw (15*64)+(15*2) ; $1A Goldstar, bottom row fifth cell
+  dw (15*64)+(2*2)  ; $1A Goldstar, bottom row first cell
   dw (12*64)+(12*2) ; $1B Byrna, beside Somaria
   dw (15*64)+(12*2) ; $1C Bombchu, directly below Bombs
   dw (15*64)+(8*2)  ; $1D Switch Hook, directly below Hookshot
@@ -518,7 +521,7 @@ Menu_CustomGridItems:
   db $01,$02,$03,$04,$05,$06
   db $07,$08,$09,$0A,$0B,$0C
   db $0D,$0E,$0F,$1B,$11,$12
-  db $19,$10,$1D,$1C,$1A,$18
+  db $1A,$10,$1D,$1C,$19,$18
 
 ; X = zero-based physical cell; C set and A = its owned logical ID.
 ; Keeps X/Y, uses $01. Invalid Byrna values are not ownership.

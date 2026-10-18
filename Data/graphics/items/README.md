@@ -1,7 +1,9 @@
 # New item prototype graphics
 
 Each menu icon is a 16×16 indexed PNG plus a 64-byte SNES 2bpp asset in
-TL/TR/BL/BR order. Index 0 is transparent. The existing menu palettes are used:
+TL/TR/BL/BR order. Icon backgrounds use opaque black (index 3), matching the
+existing menu icons. Indices 1 and 2 retain the colored artwork; reserved blank
+tile `$07F` remains transparent (index 0). The existing menu palettes are used:
 Garo 5, Bombchu 3, Switch Hook 1. No palette slots were added.
 
 The icons were generated for this project and converted with nearest-neighbor

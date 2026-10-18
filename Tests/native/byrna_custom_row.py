@@ -31,7 +31,7 @@ CASES = (
     ("byrna-only", {BYRNA: 1}, (0x1B,)),
     ("invalid-byrna", {BYRNA: 255}, ()),
     ("custom-row", {BYRNA: 1, RODS: 2, GOLDSTAR: 1, 0x7EF350: 1,
-                     0x7EF35F: 3}, (0x0F, 0x1B, 0x19, 0x10, 0x1A, 0x18)),
+                     0x7EF35F: 3}, (0x0F, 0x1B, 0x1A, 0x10, 0x19, 0x18)),
 )
 
 
@@ -40,7 +40,7 @@ def describe():
                             selectable=list(items)) for n, writes, items in CASES],
                 native_executed=False, acquisition_tested=False,
                 behavior=["Physical D-pad routing with stable item IDs",
-                          "Byrna beside Somaria; Portal/Fishing first two bottom cells, Goldstar fifth",
+                          "Byrna beside Somaria; Goldstar/Fishing first two bottom cells, Portal fifth",
                           "Declared empty inventory also clears Bombchu/Switch Hook ownership",
                           "Byrna HUD, no-magic refusal, spark activation and magic drain",
                           "Second Y and switching to each rod terminate the shield",
@@ -115,15 +115,15 @@ class ByrnaFlow(menu.QuestFlow):
                 self.check(name + " wraps", self.r(0x7E0202), selectable[0])
             if name == "custom-row":
                 self.icon("Byrna beside Somaria", 17, 17, "ByrnaGFX")
-                self.icon("Portal bottom first", 7, 20, "PortalRodGFX")
+                self.icon("Portal bottom fifth", 20, 20, "PortalRodGFX")
                 self.icon("Fishing bottom second", 10, 20, "FishingRodGFX")
-                self.icon("Goldstar bottom fifth", 20, 20, "HookGFX", 2)
+                self.icon("Goldstar bottom first", 7, 20, "HookGFX", 2)
                 self.pick(0x0F); self.tap("Down")
-                self.check("Somaria downward fallback skips unowned new items to Goldstar", self.r(0x7E0202), 0x1A)
+                self.check("Somaria downward fallback skips unowned new items to Portal", self.r(0x7E0202), 0x19)
                 self.tap("Up")
-                self.check("Goldstar upward fallback skips empty Feather/Bottle3 to Portal", self.r(0x7E0202), 0x19)
+                self.check("Portal upward fallback skips empty Feather/Bottle3 to Goldstar", self.r(0x7E0202), 0x1A)
                 self.pick(0x1B); self.tap("Down")
-                self.check("Byrna downward fallback skips unowned Bombchu to Goldstar", self.r(0x7E0202), 0x1A)
+                self.check("Byrna downward fallback skips unowned Bombchu to Portal", self.r(0x7E0202), 0x19)
                 self.tap("Left")
                 self.check("Left skips unowned Bombchu/Switch Hook to Fishing", self.r(0x7E0202), 0x10)
                 self.pick(0x1B)
