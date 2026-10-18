@@ -54,7 +54,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_KydrogNPC
-!NbrTiles           = 20   ; Number of tiles used in a frame
+!NbrTiles           = 19  ; Most OAM pieces in a frame, minus one (reserves 20)
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 0   ; Number of Health the sprite have
@@ -193,7 +193,9 @@ Sprite_Kydrog_Main:
 Sprite_Kydrog_Draw:
 {
   JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  ; No Sprite_OAM_AllocateDeferToPlayer: its near-Link regions B/C hold 12
+  ; entries and this draw needs more. Sprite_TimersAndOAM ($0683F2) already
+  ; reserved !NbrTiles+1 entries in region A/D (Codex review, PR 192).
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06

@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_KydrogBoss
-!NbrTiles           = 23  ; Number of tiles used in a frame
+!NbrTiles           = 22  ; Most OAM pieces in a frame, minus one (reserves 23)
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -633,7 +633,9 @@ GetNumberSpawnStalfos:
 Sprite_KydrogBoss_Draw:
 {
     JSL Sprite_PrepOamCoord
-    JSL Sprite_OAM_AllocateDeferToPlayer
+    ; No Sprite_OAM_AllocateDeferToPlayer: its near-Link regions B/C hold 12
+    ; entries and this draw needs more. Sprite_TimersAndOAM ($0683F2) already
+    ; reserved !NbrTiles+1 entries in region A/D (Codex review, PR 192).
     ; JSL OAM_AllocateFromRegionE
 
     LDA $0DC0, X : CLC : ADC $0D90, X : ASL : TAY ; Animation Frame
