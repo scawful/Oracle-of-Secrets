@@ -28,6 +28,10 @@ GaroMask_FrameTick:
   PHA : PHX : PHY : PHB
   %m8()
   ; DBR remains $07 so absolute WRAM accesses stay valid in bank $42 code.
+if !ENABLE_MINISH_AUTO_PORTAL == 1
+  ; This always-included Link_Main hook also covers GBC and non-Y-item states.
+  JSL MinishPortal_Maintain
+endif
   JSL GaroMask_CanAct : BCS .active
   JSL GaroMask_Clear
   BRA .restore

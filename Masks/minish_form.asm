@@ -19,7 +19,8 @@ org $078427 : JSR $9BAA ; Link_HandleAPress ; @hook module=Masks name=$9BAA kind
 
 pullpc
 if !ENABLE_MINISH_AUTO_PORTAL == 1
-; Stand still on the portal to shrink or grow (MinishPortal_Tick, bank $3A).
+; Walk onto the portal to shrink or grow (MinishPortal_Tick, bank $3A).
+; Leave it before another transformation; no Y, R or D-pad release is required.
 LinkState_CheckForMinishForm:
 {
   SEP #$30

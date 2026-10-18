@@ -28,9 +28,10 @@ DekuHover      = $71
 
 if !ENABLE_MINISH_AUTO_PORTAL == 1
 ; Volatile portal state after the cart arrays/cache and its 16-bit slot word.
-; Boot clears this pair at $0087CE. MinishPortal_Tick owns visit cleanup;
+; Boot clears this pair at $0087CE. The always-included Link_Main frame hook
+; calls MinishPortal_Maintain; collision $64 refreshes contact in Tick.
 ; ResetTrackVars must not clear it. All portal accesses remain 8-bit absolute.
-MinishPortalTimer = $7E07EC ; 0 = idle, 1-59 charging, $FF = toggled, wait for movement
+MinishPortalTimer = $7E07EC ; 0 = armed; $80 = contact, $81-$83 = missing samples
 MinishPortalFrame = $7E07ED ; $1A of the last frame the portal was handled
 assert MinishPortalFrame == MinishPortalTimer+1
 assert MinishPortalTimer >= $7E0718
