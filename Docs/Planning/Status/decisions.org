@@ -1503,3 +1503,22 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   kydrogs pirate spritesheet at some point", "the thrones look like stoves
   right now though, need to fix the object set", "add a pose that'd be
   great", "B: hand on shoulder (Recommended)" (scawful, 2026-10-16).
+
+* DECIDED Goron Mines $87/$77: the $77 lever steers the cart; key block becomes a block; Piece of Heart chest; three spare keys go
+  :PROPERTIES:
+  :ASKED_BY: Claude (D6 playtest fix and $87/$77 redesign)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_mines_design_2026-10-18/README.md
+  :END:
+  The playtest cart stopped at the top of $87's north rail (the 2026-09-24 R4
+  placeholder). The ride now continues into $77, where the junction is a
+  switch track set by $77's lever (behind $87's statue-switch shutter): off
+  sends the cart to the main deck, on to the stair corner and the $A8 map.
+  The key block between them becomes a stone block, a new main-deck chest
+  holds a Piece of Heart, and the spare small keys from $77's crab, $99's
+  chest and $79's pot go ($B9's torch-chest key stays as the one spare).
+  The 2026-09-25 walk-in plan (W) for this spot is superseded.
+  Answers: "if its in the data we need to update it. though i prob should
+  just redesign the room i want to make sure it's not a bug", "2. Lever
+  steers (Recommended)", "A. Wall + main deck chest (Recommended)", "Piece
+  of Heart (Recommended)" and "$077 crab drop (Recommended),$099 chest key
+  (Recommended),$079 pot key (Recommended)" (scawful, 2026-10-18).
