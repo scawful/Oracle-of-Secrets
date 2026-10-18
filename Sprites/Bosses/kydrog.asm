@@ -54,7 +54,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_KydrogNPC
-!NbrTiles           = 6   ; Number of tiles used in a frame
+!NbrTiles           = 20   ; Number of tiles used in a frame
 !Harmless           = 01  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 0   ; Number of Health the sprite have
@@ -106,6 +106,7 @@ Sprite_Kydrog_Prep:
 
 Sprite_Kydrog_Main:
 {
+  %PlayAnimation(0, 1, 32) ; idle: hook down / hook raised (frames 0-1)
   LDA.w SprAction, X
   JSL JumpTableLocal
 
@@ -229,7 +230,7 @@ Sprite_Kydrog_Draw:
 
   PHY
   TYA : LSR #2 : TAY
-  LDA.b #$02 : ORA $0F : STA ($92), Y ; store size in oam buffer
+  LDA .sizes, X : ORA $0F : STA ($92), Y ; store size in oam buffer
   PLY : INY
   PLX : DEX : BPL .nextTile
 
@@ -238,15 +239,22 @@ Sprite_Kydrog_Draw:
   RTS
 
   .start_index
-    db $00
+    db $00, $0B
   .nbr_of_tiles
-    db 5
+    db 10, 19
   .x_offsets
-    dw -8, 8, 8, -8, -8, 8
+    dw -6, -6, -6, 10, 10, -14, 10, 18, 10, 18, 10 ; intro_1
+    dw -14, -14, -6, 2, 10, 18, 2, 10, 18, 2, 10, 2, 10, 18, 2, 10, 18, -6, 2, 10 ; intro_2
   .y_offsets
-    dw -12, -12, 4, 4, 20, 20
+    dw -26, -10, 6, -26, -10, -2, -2, -2, 6, 6, 14 ; intro_1
+    dw -18, -2, -26, -26, -26, -26, -18, -18, -18, -10, -10, -2, -2, -2, 6, 6, 6, 14, 14, 14 ; intro_2
   .chr
-    db $CC, $CE, $EE, $EC, $E8, $EA
+    db $40, $42, $44, $46, $48, $49, $4A, $4B, $4C, $4D, $4E ; intro_1
+    db $60, $62, $40, $41, $46, $47, $51, $56, $57, $43, $48, $53, $4A, $4B, $45, $4C, $4D, $4F, $55, $4E ; intro_2
   .properties
-    db $39, $39, $39, $39, $39, $39
+    db $39, $39, $39, $39, $39, $39, $39, $39, $39, $39, $39 ; intro_1
+    db $39, $39, $39, $39, $39, $39, $39, $39, $39, $39, $39, $39, $39, $39, $39, $39, $39, $39, $39, $39 ; intro_2
+  .sizes
+    db $02, $02, $02, $02, $00, $00, $00, $00, $00, $00, $00 ; intro_1
+    db $02, $02, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; intro_2
 }
