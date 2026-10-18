@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Attach-only grounded Bombchu crawl test; caller owns launch and cleanup.
 
-Grants only Bombchu ownership and 30 bombs, then replaces a bounded hut104
+Grants Bombchu ownership, 20 Bombchus and 30 bombs, then replaces a bounded hut104
 collision patch with floor and a 2x2 obstacle. Each solid type uses the same
 geometry. Collision cells restore in finally; inventory fixtures are not saved.
 Controller casts exercise 1px/frame movement, wall/corner following, explosions
@@ -25,7 +25,7 @@ native, prototype = art.native, art.prototype
 
 def describe():
     return dict(native_executed=False, footprint="15x15: ancilla center±7",
-                fixtures="Restored 20x14 collision patch; ownership $7EF3AD=1 and ammo $7EF343=30; no saved writes",
+                fixtures="Restored 20x14 collision patch; $7EF3AD=1, $7EF3B0=20 and $7EF343=30; no saved writes",
                 checks=["One pixel per active frame", "Right→Up→Right→Down around the same compact obstacle",
                         "No footprint intersection with solid cells; native explosion and one ammo debit",
                         "Directional Bombchu OAM and ordinary bomb control"],
@@ -73,7 +73,7 @@ class CrawlFlow(art.BombchuArtFlow):
         native.require(self.rom[table + tile] != 0, f"Tile {tile:02X} is not solid in ROM ground table")
         native.require(self.r(0x7E002F) == 6, "Fixture requires Link still facing Right before each cast")
         self.paint(tile)
-        before = self.r(prototype.BOMBS)
+        before, bombs = self.r(prototype.BOMBCHU_AMMO), self.r(prototype.BOMBS)
         self.tap("Y", 1)
         self.until(lambda: self.r(0x7E07F1) != 0, "Bombchu did not spawn", 24)
         slot = self.r(0x7E07F1) - 1
@@ -112,20 +112,23 @@ class CrawlFlow(art.BombchuArtFlow):
         self.check(f"{tile:02X} native explosion", exploded, True)
         self.check(f"{tile:02X} native lifetime completes", self.r(0x7E0C4A + slot), 0)
         self.check(f"{tile:02X} ownership clears", self.r(0x7E07F1), 0)
-        self.check(f"{tile:02X} one ammo debit", self.r(prototype.BOMBS), before - 1)
+        self.check(f"{tile:02X} one Bombchu debit", self.r(prototype.BOMBCHU_AMMO), before - 1)
+        self.check(f"{tile:02X} regular bombs unchanged", self.r(prototype.BOMBS), bombs)
         self.ready()
 
     def run(self):
         self.result["scope"] = describe(); self.result["scope"]["native_executed"] = True
         self.ready()
         native.require(self.r(0x7E02B2) == 0 and self.r(prototype.menu.HP) >= 24 and not self.ancilla(7), "Need human Link, three hearts and no bombs")
-        self.write(0x7EF3AD, 1, "Declared Bombchu ownership"); self.write(prototype.BOMBS, 30, "Declared ammunition")
+        self.write(0x7EF3AD, 1, "Declared Bombchu ownership")
+        self.write(prototype.BOMBCHU_AMMO, 20, "Declared separate Bombchu supply")
+        self.write(prototype.BOMBS, 30, "Declared regular bombs")
         self.equip(0x1C)
         if self.r(0x7E002F) != 6: self.tap("Right", 1)
         self.ready(); self.fixture()
         for tile in self.a.solid_tiles: self.crawl(tile)
         self.equip(4)
-        before = self.r(prototype.BOMBS)
+        before, chus = self.r(prototype.BOMBS), self.r(prototype.BOMBCHU_AMMO)
         self.tap("Y", 1); self.until(lambda: bool(self.ancilla(7)), "Ordinary bomb did not spawn", 24)
         self.check("Ordinary bomb has no crawl owner", self.r(0x7E07F1), 0)
         native.require(all(self.r(0x7E03EA + s) != 0xBC for s in self.ancilla(7)), "Ordinary bomb adopted Bombchu signature")
@@ -134,6 +137,7 @@ class CrawlFlow(art.BombchuArtFlow):
         self.advance("Left", 18); self.advance("", 2)
         self.until(lambda: not self.ancilla(7), "Ordinary bomb did not finish", 300)
         self.check("Ordinary bomb costs one ammo", self.r(prototype.BOMBS), before - 1)
+        self.check("Ordinary bomb leaves Bombchus unchanged", self.r(prototype.BOMBCHU_AMMO), chus)
         self.result["runtime_checks_passed"] = True
 
     def restore(self):

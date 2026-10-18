@@ -42,6 +42,13 @@ MaskBinding_SelectedItem:
 MaskBinding_MigrateSelection:
 {
   PHX : PHY
+if !DISABLE_ITEMS == 0
+  ; The separate supply is an old-save byte. Keep valid counts, including
+  ; empty, and discard invalid data without granting ammunition or ownership.
+  LDA.l BombchuAmmo : CMP.b #!BOMBCHU_AMMO_MAX+1 : BCC .ammo_valid
+  LDA.b #$00 : STA.l BombchuAmmo
+  .ammo_valid
+endif
   LDA.w $0202 : CMP.b #$1E : BNE +
   LDA.b #$06 : STA.l BoundMask
   BRA .choose

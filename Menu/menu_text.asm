@@ -223,6 +223,17 @@ if !ENABLE_GOLDSTAR_CELL == 1
   .new_name
   LDA.w $0000,X : STA.w $1692,Y
   INX #2 : INY #2 : CPY.w #$001C : BCC .new_name
+  ; Bombchu ownership keeps the cell selectable at zero. Its separate supply
+  ; uses the footer's last two cells, after the existing seven-letter label.
+  LDA.w $0202 : AND.w #$00FF : CMP.w #$001C : BNE .new_name_done
+  LDA.l BombchuAmmo : AND.w #$00FF
+  CMP.w #!BOMBCHU_AMMO_MAX+1 : BCC .new_name_count
+    LDA.w #$0000
+  .new_name_count
+  ASL #2 : TAX
+  LDA.w TimeLabels,X : STA.w $16AA
+  LDA.w TimeLabels+2,X : STA.w $16AC
+  .new_name_done
   RTS
   .new_names
   dw Menu_ByrnaLabel,Menu_BombchuLabel,Menu_SwitchHookLabel

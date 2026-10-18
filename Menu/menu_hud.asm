@@ -146,9 +146,19 @@ if !ENABLE_TRUTHFUL_CONTROLS == 1
 else
   LDX   $0202 : LDA $7EF33F, X : AND.w #$00FF
 endif
-  CPX.w #$0004 : BNE .not_bombs
+  CPX.w #$0004 : BEQ .bomb_count
+if !ENABLE_GOLDSTAR_CELL == 1
+  CPX.w #$001C : BNE .not_bombs
+    LDA.l BombchuAmmo : AND.w #$00FF
+    CMP.w #!BOMBCHU_AMMO_MAX+1 : BCC .draw_bomb_count
+    LDA.w #$0000
+    BRA .draw_bomb_count
+endif
+  BRA .not_bombs
+  .bomb_count
     ; Number of bombs Link has.
     LDA $7EF343 : AND.w #$00FF
+  .draw_bomb_count
     JSR HexToDecimal
     REP #$30
 
