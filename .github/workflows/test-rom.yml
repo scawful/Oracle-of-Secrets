@@ -70,6 +70,10 @@ jobs:
           printf '\x30\x02' | dd of=test.sfc bs=1 seek=$((0x4863E)) conv=notrunc 2>/dev/null  # $09863E AncillaAdd_ItemReceipt operand $0230 (vanilla)
           printf '\x28' | dd of=test.sfc bs=1 seek=$((0x6B205)) conv=notrunc 2>/dev/null  # $0DB205 King Dodongo health (vanilla $28)
 
+          # Original desert-statue contact/prep instructions inspected by Garo's guards.
+          printf '\x22\x29\xF1\x06' | dd of=test.sfc bs=1 seek=$((0x29573)) conv=notrunc 2>/dev/null  # $059573 JSL $06F129
+          printf '\xAD\x6A\x0B\x9D\x90\x0D' | dd of=test.sfc bs=1 seek=$((0x30F4D)) conv=notrunc 2>/dev/null  # $068F4D LDA $0B6A : STA $0D90,X
+
           # Original Hookshot instructions inspected by Switch Hook's guards.
           printf '\xA5\x11' | dd of=test.sfc bs=1 seek=$((0x43D74)) conv=notrunc 2>/dev/null  # $08BD74 LDA $11
           printf '\x20\x68\x8D' | dd of=test.sfc bs=1 seek=$((0x43DD7)) conv=notrunc 2>/dev/null  # $08BDD7 JSR $8D68

@@ -44,6 +44,6 @@ org $00D13D ; @hook module=Menu kind=data protected_size=1
 assert pc() == $00D13E
 assert read1($00D21C) == $F8, "HUD sheet base pointer changed"
 org $00D21C ; @hook module=Menu kind=data protected_size=1
-  db $A8
+  db $AC
 assert pc() == $00D21D
 pullpc
