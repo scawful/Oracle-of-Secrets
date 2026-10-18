@@ -786,7 +786,13 @@ GoldstarInventoryVersion = $7EF3AA ; $A5 = legacy upgrade migrated
 ; 76 item-receipt destinations ($0984E8) is in $7EF3A0-3C4; vanilla new-file
 ; init clears it ($0CC315-$0CC325); 00 in every stored save checked.
 SavedOcarinaSong   = $7EF3AB
-FreeBlock_Large    = $7EF3AC  ; 25 bytes ($7EF3AC-3C4)
+; Independent Cane of Byrna ownership. $7EF351 remains Fishing/Portal level.
+; Allocated 2026-10-18 from FreeBlock_Large: unused in Oracle/usdasm, absent
+; from all 76 receipt destinations, zero in 12 initialized retained save slots.
+; New-file initialization clears this saved/checksummed byte. Only 1 is owned;
+; no migration or grant is inferred from rods. Acquisition placement is pending.
+ByrnaOwned        = $7EF3AC   ; 0 = no, 1 = owned
+FreeBlock_Large    = $7EF3AD  ; 24 bytes ($7EF3AD-3C4)
 
 ; ---------------------------------------------------------
 ; Dreams Extension ($7EF411-4FD) - 237 bytes
@@ -804,7 +810,7 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF307  | $7EF30E  | 8     | Story extension    |
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
-; | $7EF3AB  | $7EF3C4  | 26    | Large reserved     |
+; | $7EF3AD  | $7EF3C4  | 24    | Large reserved     |
 ; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
 ; |----------|----------|-------|--------------------|
 ; | TOTAL AVAILABLE:    | 320   | bytes              |

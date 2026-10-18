@@ -404,6 +404,16 @@ endif
 
 HUD_DrawItem:
 {
+if !ENABLE_GOLDSTAR_CELL == 1
+  ; The new logical ID is beyond vanilla's 24-entry pointer table.
+  CPX.w #$001B : BNE .ordinary
+  LDA.w #$2CDC : STA.l $7EC776
+  LDA.w #$2CDD : STA.l $7EC778
+  LDA.w #$2CEC : STA.l $7EC7B6
+  LDA.w #$2CED : STA.l $7EC7B8
+  RTS
+  .ordinary
+endif
   STA $02
   TXA : DEC A : ASL A : TAX
   LDA $FA93, X : STA $04

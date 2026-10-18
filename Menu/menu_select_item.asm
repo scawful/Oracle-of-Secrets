@@ -8,7 +8,7 @@ Menu_ItemIndex:
   db $03,     $02,       $0E,      $01,        $0A,        $0B
   ;  Hammer,  Lamp,      Fire Rod, Ice Rod,    Mirror,     Bottle 2
   db $04,     $09,       $05,      $06,        $14,        $0B
-  ;  Ocarina, Book,      Somaria,  Byrna,      Feather,    Bottle3
+  ;  Ocarina, Book,      Somaria,  Fishing,      Feather,    Bottle3
   db $08,     $0C,       $12,      $0D,        $07,        $0B
   ;  Deku,    Zora,      Wolf,     Bunny Hood, Stone Mask, Bottle4
   db $11,     $0F,       $08,      $10,        $13,        $0B
@@ -21,6 +21,7 @@ endif
 ; =========================================================
 if !ENABLE_GOLDSTAR_CELL == 1
   db $0E ; $1A Goldstar uses the existing hookshot/chain handler
+  db $0D ; $1B Byrna shares the rod action, with separate ownership
 endif
 Menu_ItemIndex_End:
 
@@ -42,7 +43,7 @@ Menu_AddressIndex:
 
   db $7EF34C ; Ocarina ; shovel 7EF34F
   db $7EF34E ; Book of Secrets
-  db $7EF350 ; Cane of Somaria / Cane of Byrna
+  db $7EF350 ; Cane of Somaria
   db $7EF351 ; Fishing Rod / Portal Rod
   db $7EF34D ; Roc's Feather
   db $7EF35E ; Bottle 3
@@ -58,6 +59,7 @@ if !ENABLE_PORTAL_ROD_CELL == 1
 endif
 if !ENABLE_GOLDSTAR_CELL == 1
   db GoldstarOwned&$FF ; $1A
+  db ByrnaOwned&$FF    ; $1B
 endif
 
 ; =========================================================
@@ -83,7 +85,11 @@ Menu_ItemCursorPositions:
   dw menu_offset(12,2)  ; ocarina
   dw menu_offset(12,5)  ; book
   dw menu_offset(12,8)  ; somaria
-  dw menu_offset(12,12) ; fishing
+if !ENABLE_GOLDSTAR_CELL == 1
+  dw (15*64)+(5*2)      ; $10 Fishing, bottom row second cell
+else
+  dw menu_offset(12,12) ; Fishing (legacy position)
+endif
   dw menu_offset(12,15) ; feather
   dw menu_offset(12,18) ; bottle3
 
@@ -101,13 +107,18 @@ if !ENABLE_PORTAL_ROD_CELL == 1
   dw (15*64)+(2*2)
 endif
 if !ENABLE_GOLDSTAR_CELL == 1
-  dw (15*64)+(5*2) ; $1A, row 4 second cell
+  dw (15*64)+(8*2)  ; $1A Goldstar, bottom row third cell
+  dw (12*64)+(12*2) ; $1B Byrna, beside Somaria
 endif
 
 ; =========================================================
 
 Menu_FindNextItem:
 {
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.b #$01
+  JMP Menu_CustomGridMove
+else
   SEP #$30                   ; Ensure 8-bit A, X, Y
   LDY.b #$18                 ; Max 24 items to check (use Y as counter)
   .loop
@@ -126,12 +137,17 @@ endif
     DEY : BNE .loop          ; Keep searching
   .found
   RTS
+endif
 }
 
 ; =========================================================
 
 Menu_FindPrevItem:
 {
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.b #$FF
+  JMP Menu_CustomGridMove
+else
   SEP #$30                   ; Ensure 8-bit A, X, Y
   LDY.b #$18                 ; Max 24 items to check (use Y as counter)
   .loop
@@ -149,12 +165,17 @@ endif
     DEY : BNE .loop          ; Keep searching
   .found
   RTS
+endif
 }
 
 ; =========================================================
 
 Menu_FindNextDownItem:
 {
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.b #$06
+  JMP Menu_CustomGridMove
+else
   SEP #$30                        ; Ensure 8-bit mode
   LDA.w $0202 : CLC : ADC.b #$06
   CMP.b #$19 : BCC .no_reset
@@ -173,12 +194,17 @@ else
   BEQ Menu_FindNextItem           ; If empty, scan horizontally
 endif
   RTS
+endif
 }
 
 ; =========================================================
 
 Menu_FindNextUpItem:
 {
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.b #$FA
+  JMP Menu_CustomGridMove
+else
   SEP #$30                        ; Ensure 8-bit mode
   LDA.w $0202 : SEC : SBC.b #$06
   BEQ .wrap                       ; If zero, wrap
@@ -199,6 +225,7 @@ else
   BEQ Menu_FindNextItem           ; If empty, scan horizontally
 endif
   RTS
+endif
 }
 
 
@@ -291,7 +318,7 @@ Menu_AddressLong:
 
   db $4C ; Ocarina (formerly shovel 4F)
   db $4E ; Book
-  db $50 ; Cane of Somaria / Cane of Byrna
+  db $50 ; Cane of Somaria
   db $51 ; Fishing Rod
   db $4D ; Roc's Feather
   db $5E ; Bottle 3
@@ -307,6 +334,7 @@ if !ENABLE_PORTAL_ROD_CELL == 1
 endif
 if !ENABLE_GOLDSTAR_CELL == 1
   db GoldstarOwned&$FF ; $1A
+  db ByrnaOwned&$FF    ; $1B
 endif
 
 GotoNextItem_Local:
@@ -444,7 +472,7 @@ Menu_SplitValidateSelection:
   LDY.b #$01
   .scan
   TYA : JSR .owned : BCS .found
-  INY : CPY.b #$1B : BCC .scan
+  INY : CPY.b #$1C : BCC .scan
   LDY.b #$00
   .found
   STY.w $0202
@@ -452,15 +480,87 @@ Menu_SplitValidateSelection:
   RTS
   .owned
   CMP.b #$01 : BCC .no
-  CMP.b #$1B : BCS .no
+  CMP.b #$1C : BCS .no
   CMP.b #$13 : BCC .check
   CMP.b #$18 : BCC .no
   .check
+  CMP.b #$1B : BNE .ordinary
+    LDA.l ByrnaOwned : CMP.b #$01 : BNE .no
+    SEC : RTS
+  .ordinary
   TAX : DEX
   LDA.l Menu_AddressLong, X : TAX
   LDA.l $7EF300, X : BEQ .no
   SEC : RTS
   .no
   CLC : RTS
+}
+endif
+
+if !ENABLE_GOLDSTAR_CELL == 1
+; Physical cells are independent of saved logical IDs. Keep $0202 logical
+; even while deleting the old bracket; masks retain IDs $13-$17 elsewhere.
+Menu_CustomGridItems:
+  db $01,$02,$03,$04,$05,$06
+  db $07,$08,$09,$0A,$0B,$0C
+  db $0D,$0E,$0F,$1B,$11,$12
+  db $19,$10,$1A,$00,$00,$18
+
+; X = zero-based physical cell; C set and A = its owned logical ID.
+; Keeps X/Y, uses $01. Invalid Byrna values are not ownership.
+Menu_CustomGridOwned:
+{
+  PHX
+  LDA.w Menu_CustomGridItems,X : BEQ .no
+  STA.b $01
+  CMP.b #$1B : BNE .ordinary
+    LDA.l ByrnaOwned : CMP.b #$01 : BNE .no
+    BRA .yes
+  .ordinary
+  TAX : DEX
+  LDA.w Menu_AddressLong,X : TAX
+  LDA.l $7EF300,X : BEQ .no
+  .yes
+  LDA.b $01
+  PLX : SEC : RTS
+  .no
+  PLX : CLC : RTS
+}
+
+; A = +1/-1/+6/-6. The vertical empty-cell fallback remains a forward scan.
+; Search is bounded to 24 cells; an empty inventory leaves selection intact.
+; Uses $00-$01, destroys X/Y; entry and exit M/X=8 like the old helpers.
+Menu_CustomGridMove:
+{
+  SEP #$30
+  STA.b $00
+  LDX.b #$00
+  .locate
+  LDA.w Menu_CustomGridItems,X : CMP.w $0202 : BEQ .located
+  INX : CPX.b #$18 : BCC .locate
+  LDX.b #$17
+  LDA.b #$01 : STA.b $00
+  .located
+  LDY.b #$18
+  .scan
+  TXA : CLC : ADC.b $00 : BMI .wrap_low
+  CMP.b #$18 : BCC .candidate
+  SBC.b #$18
+  BRA .candidate
+  .wrap_low
+  CLC : ADC.b #$18
+  .candidate
+  TAX
+  JSR Menu_CustomGridOwned : BCS .found
+  LDA.b $00 : CMP.b #$06 : BEQ .horizontal
+  CMP.b #$FA : BNE .again
+  .horizontal
+  LDA.b #$01 : STA.b $00
+  .again
+  DEY : BNE .scan
+  RTS
+  .found
+  STA.w $0202
+  RTS
 }
 endif

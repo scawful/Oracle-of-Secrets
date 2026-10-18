@@ -144,6 +144,9 @@ Menu_BottleItems:
   dw "_MAGIC_BEAN___  "
   dw "_MILK_BOTTLE__  "
 
+Menu_ByrnaLabel:
+  dw "____BYRNA_____"
+
 Menu_GoldstarLabel:
   dw "__GOLD_STAR___  "
 
@@ -204,6 +207,14 @@ Menu_DrawItemName:
   .haveItem
 
 if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.w $0202 : CMP.b #$1B : BNE .not_byrna
+  REP #$30
+  LDX.w #$0000
+  .byrna_name
+  LDA.w Menu_ByrnaLabel,X : STA.w $1692,X
+  INX #2 : CPX.w #$001C : BCC .byrna_name
+  RTS
+  .not_byrna
   LDA.w $0202 : CMP.b #$1A : BNE .not_goldstar_cell
   JSR DrawGoldstarName
   RTS

@@ -421,10 +421,24 @@ else
     INC A
 endif
     STA.w MenuItemValueSpoof : LDA.w #MenuItemValueSpoof
+if !ENABLE_GOLDSTAR_CELL == 1
+    LDX.w #menu_offset(16,6)
+else
     LDX.w #menu_offset(13,13)
+endif
     LDY.w #FishingRodGFX
     JSR DrawMenuItem
   .no_rods
+if !ENABLE_GOLDSTAR_CELL == 1
+  LDA.l ByrnaOwned : AND.w #$00FF : CMP.w #$0001 : BEQ .byrna_value
+    LDA.w #$0000
+  .byrna_value
+  STA.w MenuItemValueSpoof
+  LDA.w #MenuItemValueSpoof
+  LDX.w #menu_offset(13,13)
+  LDY.w #ByrnaGFX
+  JSR DrawMenuItem
+endif
 
   LDA.w #$7EF34D
   LDX.w #menu_offset(13,16)
@@ -476,7 +490,7 @@ endif
 
 if !ENABLE_GOLDSTAR_CELL == 1
   LDA.w #GoldstarOwned&$FFFF
-  LDX.w #menu_offset(16,6)
+  LDX.w #menu_offset(16,9)
   LDY.w #HookGFX+8
   JSR DrawMenuItem
 endif

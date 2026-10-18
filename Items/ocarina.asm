@@ -269,6 +269,8 @@ Link_HandleCardinalCollision_Long:
   RTL
 }
 
+; The restored cane uses vanilla bank-$07 JSR helpers and the shared rod action.
+incsrc "Items/byrna.asm"
 print "Bank07 Free Space: ", pc
 
 org $2B8000

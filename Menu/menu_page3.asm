@@ -108,16 +108,14 @@ endif
 if !ENABLE_PORTAL_ROD_CELL == 1
       BRA .items
     .grid_move
+if !ENABLE_GOLDSTAR_CELL == 1
+    BRA .items                  ; custom grid keeps $0202 a logical item ID
+else
     ; From the Portal Rod ($19) search from its cell ($13), so the move
     ; follows the grid; Menu_ItemScreen turns a $13 result back into $19.
-if !ENABLE_GOLDSTAR_CELL == 1
-    LDA.w $0202 : CMP.b #$1A : BNE .not_goldstar_move
-    LDA.b #$14 : STA.w $0202
-    BRA .items
-    .not_goldstar_move
-endif
     LDA.w $0202 : CMP.b #$19 : BNE .items
       LDA.b #$13 : STA.w $0202
+endif
 endif
   .items
   JMP Menu_ItemScreen
@@ -326,12 +324,19 @@ endif
 ; 8-bit A/X/Y. Keeps X, Y.
 Menu_Page3_GridHasItem:
 {
+if !ENABLE_GOLDSTAR_CELL == 1
+  PHX : PHY
+  LDX.b #$00
+  .custom_scan
+  JSR Menu_CustomGridOwned : BCS .custom_found
+  INX : CPX.b #$18 : BCC .custom_scan
+  PLY : PLX : CLC : RTS
+  .custom_found
+  PLY : PLX : SEC : RTS
+else
   PHX : PHY
 if !ENABLE_PORTAL_ROD_CELL == 1
   LDA.l PortalRodOwned : BNE .found
-endif
-if !ENABLE_GOLDSTAR_CELL == 1
-  LDA.l GoldstarOwned : BNE .found
 endif
   LDY.b #$17                   ; table index (item ID - 1)
   .loop
@@ -350,6 +355,7 @@ endif
   PLY : PLX
   SEC
   RTS
+endif
 }
 
 ; ---------------------------------------------------------
@@ -924,15 +930,13 @@ Menu_PortalRod_SyncOwned:
 Menu_PortalRod_CellToItem:
 {
 if !ENABLE_GOLDSTAR_CELL == 1
-  LDA.w $0202 : CMP.b #$14 : BNE .not_goldstar
-  LDA.b #$1A : STA.w $0202
-  RTS
-  .not_goldstar
-endif
+  RTS                          ; custom navigation already returns logical IDs
+else
   LDA.w $0202 : CMP.b #$13 : BNE .done
     LDA.b #$19 : STA.w $0202
   .done
   RTS
+endif
 }
 endif
 
