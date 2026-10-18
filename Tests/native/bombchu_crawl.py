@@ -4,7 +4,7 @@
 Grants Bombchu ownership, 20 Bombchus and 30 bombs, then replaces a bounded hut104
 collision patch with floor and a 2x2 obstacle. Each solid type uses the same
 geometry. Collision cells restore in finally; inventory fixtures are not saved.
-Controller casts exercise 1px/frame movement, wall/corner following, explosions
+Controller casts exercise alternating 2/1px active frames, wall/corner following, explosions
 and ordinary bomb control. No XY, CPU, actor, story, SRAM or ROM writes.
 This covers collision-map objects, not NPC/sprite obstruction or acquisition.
 """
@@ -21,12 +21,23 @@ sys.dont_write_bytecode = True
 import bombchu_world_sprite as art
 
 native, prototype = art.native, art.prototype
+FUSE_FRAMES = 240
+SPAWN_WAIT_FRAMES = 24
+
+
+def expected_pixels(before_fuse, after_fuse):
+    """Every active frame spends one fuse tick; an even entering tick moves twice."""
+    native.require(0 <= after_fuse <= before_fuse <= FUSE_FRAMES, "Invalid crawl fuse interval")
+    return before_fuse - after_fuse + before_fuse // 2 - after_fuse // 2
 
 
 def describe():
     return dict(native_executed=False, footprint="15x15: ancilla center±7",
                 fixtures="Restored 20x14 collision patch; $7EF3AD=1, $7EF3B0=20 and $7EF343=30; no saved writes",
-                checks=["One pixel per active frame", "Right→Up→Right→Down around the same compact obstacle",
+                movement=dict(fuse_active_frames=FUSE_FRAMES, pixels_per_two_active_frames=3,
+                              maximum_unobstructed_pixels=expected_pixels(FUSE_FRAMES, 0)),
+                checks=["Alternating two/one collision-tested pixels per active frame; 240-frame fuse",
+                        "Right→Up→Right→Down around the same compact obstacle",
                         "No footprint intersection with solid cells; native explosion and one ammo debit",
                         "Directional Bombchu OAM and ordinary bomb control"],
                 limitations="Hut collision-map fixture only; no NPC/sprite obstruction, acquisition or persistence claim")
@@ -75,25 +86,50 @@ class CrawlFlow(art.BombchuArtFlow):
         self.paint(tile)
         before, bombs = self.r(prototype.BOMBCHU_AMMO), self.r(prototype.BOMBS)
         self.tap("Y", 1)
-        self.until(lambda: self.r(0x7E07F1) != 0, "Bombchu did not spawn", 24)
+        self.until(lambda: self.r(0x7E07F1) != 0, "Bombchu did not spawn", SPAWN_WAIT_FRAMES)
         slot = self.r(0x7E07F1) - 1
         native.require(slot in (0, 1), "Invalid Bombchu slot")
-        rows, segments, exploded, previous, travel_frames = [], [], False, None, 0
-        self.result.setdefault("cases", []).append(dict(tile=f"{tile:02X}", ground_table_value=self.rom[table + tile], trace=rows, segments=segments))
+        rows, segments, exploded, previous, travel_frames, travel_pixels = [], [], False, None, 0, 0
+        far_corner_shot = False
+        case = dict(tile=f"{tile:02X}", ground_table_value=self.rom[table + tile], trace=rows, segments=segments)
+        self.result.setdefault("cases", []).append(case)
         for _ in range(400):
             row = self.sample(slot); rows.append(row)
             if row["kind"] != 7: break
             if row["phase"] == 0:
                 self.footprint_clear(row["xy"])
+                if previous is None:
+                    native.require(FUSE_FRAMES - SPAWN_WAIT_FRAMES <= row["fuse"] <= FUSE_FRAMES,
+                                   f"Expected fresh {FUSE_FRAMES}-frame fuse, got {row['fuse']}")
                 if previous and previous["phase"] == 0:
                     dx, dy = (row["xy"][i] - previous["xy"][i] for i in (0, 1))
                     elapsed = row["frame"] - previous["frame"]
-                    native.require(abs(dx) + abs(dy) == elapsed, f"Expected 1px/frame: delta {dx,dy} across {elapsed} frames")
+                    active_frames = previous["fuse"] - row["fuse"]
+                    native.require(active_frames == elapsed, f"Fuse must spend one tick per active frame: {active_frames} over {elapsed}")
+                    distance = abs(dx) + abs(dy)
+                    expected = expected_pixels(previous["fuse"], row["fuse"])
+                    native.require(distance == expected,
+                                   f"Expected alternating 2/1px: delta {dx,dy}, fuse {previous['fuse']}→{row['fuse']}, expected {expected}px")
                     travel_frames += elapsed
-                    direction = 3 if dx > 0 else 2 if dx < 0 else 1 if dy > 0 else 0
-                    if not segments or segments[-1]["direction"] != direction:
-                        segments.append(dict(direction=direction, pixels=0, at=row["xy"]))
-                    segments[-1]["pixels"] += abs(dx) + abs(dy)
+                    travel_pixels += distance
+                    parts = ([(3 if dx > 0 else 2, abs(dx))] if dx else [])
+                    parts += [(1 if dy > 0 else 0, abs(dy))] if dy else []
+                    if len(parts) == 2:
+                        # A two-pixel frame can cross one corner. Keep both
+                        # ordered legs instead of treating it as a diagonal.
+                        native.require({d for d, _ in parts} == {previous["direction"], row["direction"]},
+                                       f"Mixed-axis corner disagrees with facing: {previous}, {row}")
+                        parts.sort(key=lambda part: part[0] == row["direction"])
+                    point = list(previous["xy"])
+                    for direction, pixels in parts:
+                        for _ in range(pixels):
+                            point[0] += (0, 0, -1, 1)[direction]
+                            point[1] += (-1, 1, 0, 0)[direction]
+                            self.footprint_clear(point)
+                            if not segments or segments[-1]["direction"] != direction:
+                                segments.append(dict(direction=direction, pixels=0, at=list(point)))
+                            segments[-1]["pixels"] += 1
+                    native.require(point == row["xy"], "Substep reconstruction lost position")
                 if len(rows) == 1 or len(rows) % 16 == 0:
                     objects = self.oam(0x2E)
                     native.require(len(objects) == 1 and objects[0]["large"], "Missing 16x16 Bombchu world sprite")
@@ -101,14 +137,19 @@ class CrawlFlow(art.BombchuArtFlow):
                     if previous: allowed.add((0, 0x80, 0x40, 0)[previous["direction"]])
                     native.require(objects[0]["props"] & 0xC1 in allowed, "World sprite flip disagrees with crawl direction")
                     row["oam"] = objects[0]
-                if len(segments) == 4 and segments[-1]["pixels"] == 1:
+                if len(segments) >= 4 and not far_corner_shot:
                     self.shot(f"crawl-{tile:02X}-far-corner")
+                    far_corner_shot = True
             else:
                 exploded = True
             previous = row
             self.advance("", 1 if row["phase"] == 0 else 4)
         self.check(f"{tile:02X} wall and convex turns", [s["direction"] for s in segments[:4]], [3, 0, 3, 1])
-        native.require(all(s["pixels"] >= 4 for s in segments[:4]) and travel_frames >= 80, "Insufficient physical corner-following path")
+        minimum_frames = FUSE_FRAMES - SPAWN_WAIT_FRAMES - 1
+        minimum_pixels = expected_pixels(FUSE_FRAMES - SPAWN_WAIT_FRAMES, 1)
+        native.require(all(s["pixels"] >= 4 for s in segments[:4]) and travel_frames >= minimum_frames
+                       and travel_pixels >= minimum_pixels, "Insufficient four-second corner-following path")
+        case.update(travel_active_frames=travel_frames, travel_pixels=travel_pixels)
         self.check(f"{tile:02X} native explosion", exploded, True)
         self.check(f"{tile:02X} native lifetime completes", self.r(0x7E0C4A + slot), 0)
         self.check(f"{tile:02X} ownership clears", self.r(0x7E07F1), 0)

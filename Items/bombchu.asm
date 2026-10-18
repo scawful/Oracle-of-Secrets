@@ -105,7 +105,7 @@ Bombchu_AddBomb:
   STA.l BombchuSignature
   STA.w $03EA,X ; native non-liftable field, also protects against slot reuse
   LDA.b #$00 : STA.l BombchuFollowing
-  LDA.b #$C0 : STA.w $039F,X ; 192 one-pixel active frames, same maximum range
+  LDA.b #$F0 : STA.w $039F,X ; 240 active frames (~4s); up to 360px of crawl
   STZ.w $0C22,X : STZ.w $0C2C,X
   STZ.w $029E,X ; never airborne
   .exit
@@ -199,6 +199,12 @@ Bombchu_BombEntry:
 
   PHB : PHK : PLB
   JSR Bombchu_Crawl
+  ; Alternate two/one pixels per active frame using the unspent fuse parity.
+  ; Each pixel probes/turns independently. Trapping sets fuse=1, suppressing
+  ; the second substep; native state still decrements the fuse only once.
+  LDA.w $039F,X : AND.b #$01 : BNE .crawled
+  JSR Bombchu_Crawl
+  .crawled
   LDA.l BombchuDirection : STA.w $0C72,X
   PLB
   ; Skip lifting, then retain native terrain, pits, water and bomb state.
@@ -216,7 +222,7 @@ Bombchu_BombEntry:
 }
 
 ; Initially move forward. The first obstruction turns left, placing the wall
-; on the right. Subsequent frames prefer right, forward, left, then reverse.
+; on the right. Subsequent substeps prefer right, forward, left, then reverse.
 ; Each failed candidate rotates left; four failures prove the Bombchu trapped.
 ; X=ancilla slot, M/X=8, DBR=our bank; X preserved, Y/$00-$0F scratch.
 Bombchu_Crawl:
