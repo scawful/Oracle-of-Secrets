@@ -222,6 +222,27 @@ class SourceSheets(unittest.TestCase):
         self.assertIn('0xD7',graphics['reserved_sheets']);self.assertNotIn('0x64',graphics['reserved_sheets'])
         self.assertEqual(manifest['source_sprite_sheets']['spec'],fixture.root.name+'/Data/graphics/source_sprite_sheets.json')
 
+    def test_generated_pointer_manifest_leaves_neighbor_sheets_editable(self):
+        from test_generate_hack_manifest import ManifestFixture
+        from generate_hack_manifest import generate_manifest
+        fixture=ManifestFixture();self.addCleanup(fixture.close)
+        include='Core/Generated/source_sprite_sheets/sheet_overrides.asm'
+        fixture.write_text('Oracle_main.asm',f'incsrc "{include}"\n')
+        _,items=sheets.build(self.spec_path,self.base)
+        fixture.write_text(include,sheets.asm_text(items))
+        manifest=generate_manifest(fixture.root,dev_rom_path=fixture.write_dev_rom())
+        self.assertFalse(manifest['protected_regions']['exact'])
+        regions=manifest['protected_regions']['regions']
+        for table in (TBL_BANK,TBL_HIGH,TBL_LOW):
+            pointer=table+0xD7
+            covering=[r for r in regions if int(r['start'],16)<=pointer<int(r['end'],16)]
+            self.assertEqual(len(covering),1)
+            self.assertEqual((int(covering[0]['start'],16),int(covering[0]['end'],16)),
+                             (pointer,pointer+1))
+            for neighbor in (0xD8,0xD9):
+                self.assertFalse(any(int(r['start'],16)<=table+neighbor<int(r['end'],16)
+                                     for r in regions),f'Follower sheet ${neighbor:02X} pointer is protected')
+
     def test_actual_build_guard_refuses_wrong_or_truncated_base_before_output(self):
         # Real build wrapper/receipt/guard in a portable disposable repository.
         for directory in ('Scripts/Build','Scripts/Generate','Config','Util','Data/graphics','Roms'):

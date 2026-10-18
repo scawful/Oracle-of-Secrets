@@ -93,6 +93,8 @@ org $0589AF : LDY.b #$03 ; ITEMGET 03
 org $029E58 : NOP #6
 
 pullpc
+incsrc "Overworld/goron_checkpoint.asm"
+
 LoadDarkWorldIntro:
 {
   ; If we have the old man, set us indoors and dark world
@@ -131,7 +133,8 @@ endif
 pushpc
 
 ; Module05_LoadFile
-org $028192 : JSL LoadDarkWorldIntro ; @hook module=Overworld name=LoadDarkWorldIntro kind=jsl target=LoadDarkWorldIntro
+org $028192 : JML LoadCheckpointOrWorld ; @hook module=Overworld name=LoadCheckpointOrWorld kind=jml target=LoadCheckpointOrWorld expected_m=8 expected_x=8
+assert pc() == $028196
 
 ; Module05_LoadFile
 ; Check for goldstar instead of mirror for mountain spawn option

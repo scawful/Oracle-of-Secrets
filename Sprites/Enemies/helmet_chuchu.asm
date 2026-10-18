@@ -55,7 +55,10 @@ Sprite_HelmetChuchu_Long:
 Sprite_HelmetChuchu_Prep:
 {
   PHB : PHK : PLB
-  LDA.l Sword : DEC A : TAY
+  LDA.l Sword : BEQ +
+    DEC A
+  +
+  TAY
   LDA.w .health, Y : STA.w SprHealth, X
   JSL GetRandomInt : AND.b #$02 : STA.w SprAction, X
   STZ.w SprMiscB, X

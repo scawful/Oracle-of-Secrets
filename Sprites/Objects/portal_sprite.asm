@@ -45,8 +45,8 @@ Sprite_Portal_Long:
 Sprite_Portal_Prep:
 {
   PHB : PHK : PLB
-  ; Persist outside of camera
-  LDA #$00 : STA.w SprDefl, X
+  ; Bit 7 keeps the portal active off camera.
+  LDA.b #$80 : STA.w SprDefl, X
   LDA.w SprHitbox, X : AND.b #$C0 : STA.w SprHitbox, X
   STZ.w SprTileDie, X
   LDA.b #$FF : STA.w SprBulletproof, X
@@ -170,26 +170,22 @@ Sprite_Portal_Main:
       %GotoAction(1)
       RTS
     .valid_counterpart
+    JSR Portal_CheckWarpContext : BCS .valid_context
+      %GotoAction(1)
+      RTS
+    .valid_context
 
-    LDA $7EC184 : STA $20
-    LDA $7EC186 : STA $22
-
-    LDA $7EC188 : STA $0600
-    LDA $7EC18A : STA $0604
-    LDA $7EC18C : STA $0608
-    LDA $7EC18E : STA $060C
-
-    PHX
-    LDA.w OrangeSpriteIndex : TAX
-    LDA #$40 : STA.w SprTimerD, X
-    LDA.w SprY,                X : STA $7EC184
-    STA.w BluePortal_Y
-    LDA.w SprX,                X : STA $7EC186
-    STA.w BluePortal_X
-    PLX
-
-    LDA #$14 : STA $11
-    %GotoAction(1) ; Return to BluePortal
+    ; Recover in the current quarter/layer, never the room-entry quarter.
+    ; Native cache capture preserves X/Y/DB and returns with M=8.
+    JSL $01FF28 ; CacheCameraProperties
+    LDA.w SprY,  Y : STA $7EC184
+    LDA.w SprYH, Y : STA $7EC185
+    LDA.w SprX,  Y : STA $7EC186
+    LDA.w SprXH, Y : STA $7EC187
+    LDA.b #$40 : STA.w SprTimerD, Y
+    STZ.b $B0 ; Begin native Module07_14 at its camera-recovery stage.
+    LDA.b #$14 : STA.b $11
+    %GotoAction(1)
     RTS
   }
 
@@ -199,27 +195,22 @@ Sprite_Portal_Main:
       %GotoAction(2)
       RTS
     .valid_counterpart
+    JSR Portal_CheckWarpContext : BCS .valid_context
+      %GotoAction(2)
+      RTS
+    .valid_context
 
-    LDA $7EC184 : STA $20
-    LDA $7EC186 : STA $22
-
-    ; Camera Scroll Boundaries
-    LDA $7EC188 : STA $0600 ; Small Room North
-    LDA $7EC18A : STA $0604 ; Small Room South
-    LDA $7EC18C : STA $0608 ; Small Room West
-    LDA $7EC18E : STA $060C ; Small Room South
-
-    PHX
-    LDA.w BlueSpriteIndex : TAX
-    LDA #$40 : STA.w SprTimerD, X
-    LDA.w SprY,                X : STA $7EC184
-    STA.w OrangePortal_Y
-    LDA.w SprX,                X : STA $7EC186
-    STA.w OrangePortal_X
-    PLX
-
-    LDA #$14 : STA $11
-    %GotoAction(2) ; Return to OrangePortal
+    ; Recover in the current quarter/layer, never the room-entry quarter.
+    ; Native cache capture preserves X/Y/DB and returns with M=8.
+    JSL $01FF28 ; CacheCameraProperties
+    LDA.w SprY,  Y : STA $7EC184
+    LDA.w SprYH, Y : STA $7EC185
+    LDA.w SprX,  Y : STA $7EC186
+    LDA.w SprXH, Y : STA $7EC187
+    LDA.b #$40 : STA.w SprTimerD, Y
+    STZ.b $B0 ; Begin native Module07_14 at its camera-recovery stage.
+    LDA.b #$14 : STA.b $11
+    %GotoAction(2)
     RTS
   }
 
@@ -229,24 +220,20 @@ Sprite_Portal_Main:
       %GotoAction(1)
       RTS
     .valid_counterpart
+    JSR Portal_CheckWarpContext : BCS .valid_context
+      %GotoAction(1)
+      RTS
+    .valid_context
 
-    LDA.w OrangePortal_X : STA $20
-    LDA.w OrangePortal_Y : STA $22
-    LDA $7EC190 : STA $0610
-    LDA $7EC192 : STA $0612
-    LDA $7EC194 : STA $0614
-    LDA $7EC196 : STA $0616
-
-    JSL ApplyLinksMovementToCamera
-
-    PHX ; Infinite loop prevention protocol
-    LDA.w OrangeSpriteIndex : TAX
-    LDA #$40 : STA.w SprTimerD, X
-
-    PLX
-    LDA #$01 : STA $5D
-    ;LDA #$2A : STA $11
-    %GotoAction(1) ; Return to BluePortal
+    ; The validated target is visible in the current camera context.
+    ; Copy both bytes and retain the current overworld bounds and camera.
+    LDA.w SprY,  Y : STA.b $20
+    LDA.w SprYH, Y : STA.b $21
+    LDA.w SprX,  Y : STA.b $22
+    LDA.w SprXH, Y : STA.b $23
+    LDA.b #$40 : STA.w SprTimerD, Y
+    LDA.b #$01 : STA.b $5D
+    %GotoAction(1)
     RTS
   }
 
@@ -256,25 +243,20 @@ Sprite_Portal_Main:
       %GotoAction(2)
       RTS
     .valid_counterpart
+    JSR Portal_CheckWarpContext : BCS .valid_context
+      %GotoAction(2)
+      RTS
+    .valid_context
 
-    LDA.w BluePortal_X : STA $20
-    LDA.w BluePortal_Y : STA $22
-    LDA $7EC190 : STA $0610
-    LDA $7EC192 : STA $0612
-    LDA $7EC194 : STA $0614
-    LDA $7EC196 : STA $0616
-
-    JSL ApplyLinksMovementToCamera
-
-    PHX
-    LDA.w BlueSpriteIndex : TAX
-    LDA #$40 : STA.w SprTimerD, X
-    PLX
-
-    LDA #$01 : STA $5D
-    ;LDA #$2A : STA $11
-
-    %GotoAction(2) ; Return to BluePortal
+    ; The validated target is visible in the current camera context.
+    ; Copy both bytes and retain the current overworld bounds and camera.
+    LDA.w SprY,  Y : STA.b $20
+    LDA.w SprYH, Y : STA.b $21
+    LDA.w SprX,  Y : STA.b $22
+    LDA.w SprXH, Y : STA.b $23
+    LDA.b #$40 : STA.w SprTimerD, Y
+    LDA.b #$01 : STA.b $5D
+    %GotoAction(2)
     RTS
   }
 }
@@ -299,6 +281,34 @@ Portal_CheckCounterpart:
     SEC
     RTS
   .invalid
+  CLC
+  RTS
+}
+
+; Interim RC transport boundary: both full target coordinates must stay on
+; Link's current 256px pages and inside the current 256x224 viewport. A full
+; 16px landing must fit. Far/offscreen targets remain paired but cannot warp.
+; Entry M=8/X=8, X=source, Y=validated counterpart. X/Y/DB/DP and all P except
+; returned carry are preserved. A is scratch; this helper makes no RAM writes.
+Portal_CheckWarpContext:
+{
+  PHP
+  LDA.w SprXH, Y : CMP.b $23 : BNE .invalid
+  LDA.w SprYH, Y : CMP.b $21 : BNE .invalid
+  LDA.w SprFloor, Y : CMP.b $EE : BNE .invalid
+
+  LDA.w SprYH, Y : XBA : LDA.w SprY, Y
+  REP #$20
+  SEC : SBC.b $E8 : CMP.w #$00D1 : BCS .invalid
+  SEP #$20
+  LDA.w SprXH, Y : XBA : LDA.w SprX, Y
+  REP #$20
+  SEC : SBC.b $E2 : CMP.w #$00F1 : BCS .invalid
+  PLP
+  SEC
+  RTS
+  .invalid
+  PLP
   CLC
   RTS
 }
@@ -365,7 +375,9 @@ RejectOnTileCollision:
 
 Sprite_Portal_Draw:
 {
-  JSL Sprite_PrepOamCoord
+  JSL Sprite_PrepOamCoord : BCC .draw_on_screen
+    RTS
+  .draw_on_screen
   JSL Sprite_OAM_AllocateDeferToPlayer
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame

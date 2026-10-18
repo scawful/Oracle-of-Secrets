@@ -16,7 +16,7 @@ import json
 from pathlib import Path
 import sys
 sys.dont_write_bytecode = True
-CP_SHA = "e744f35c34b00ee8f725c0f792c801564b7172fbc11b699a1ac80e45558c6513"
+CP_SHA = "d523cde1519e9c888edb8c35bd74b0af5bbdb97047a07dc03e3fda6b557458c2"
 CP_PATH = Path(__file__).with_name("portal_counterpart.py")
 if hashlib.sha256(CP_PATH.read_bytes()).hexdigest() != CP_SHA:
     raise RuntimeError("Qualified Portal counterpart source differs")

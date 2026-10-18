@@ -37,6 +37,12 @@ org $2E8000
 HUD_Update:
 {
   PHP ; Save caller's P register
+  if !ENABLE_DREAM_WISDOM_SCENE == 1
+    JSL DreamWisdom_HUDHidden : BCC .draw  ; the Wisdom scene keeps it blank
+      PLP
+      RTL
+    .draw
+  endif
   JSR HUD_UpdateItemBox
 
   SEP #$30

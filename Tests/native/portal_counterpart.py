@@ -4,7 +4,8 @@
 Caller owns launch, cold boot and positive process cleanup. Explicit sprite and
 cached-index fixtures exercise native state08 Prep, Long JSR/Main/RTS, twelve
 overlaps and (candidate only) four cancelled queued entries. The final case
-stops BEFORE the original first player-position STA and NEVER resumes. This
+stops BEFORE the first warp effect (legacy STA or guarded native cache call)
+and NEVER resumes. This
 qualifies counterpart admission/cancellation, not a completed warp, portal
 lifetime, natural placement, route, prize or save. No CPU/register/PC writes,
 direct calls, savestates, module, player-health or invulnerability writes.
@@ -33,7 +34,7 @@ STATUSES = ("valid", "default-index0", "dead", "reused-type", "wrong-color", "ou
 FIELDS = {"state": 0xDD0, "kind": 0xE20, "subtype": 0xE30, "action": 0xD80,
           "frame": 0xD90, "timer_b": 0xE00, "timer_d": 0xEE0}
 SOURCE_TABLES = {0xE20, 0xE30, 0xD80, 0xD90, 0xE00, 0xD00, 0xD10, 0xD20, 0xD30, 0xF20, 0xEE0}
-TARGET_TABLES = {0xE20, 0xE30}
+TARGET_TABLES = {0xE20, 0xE30, 0xD00, 0xD10, 0xD20, 0xD30, 0xF20}
 PROTECTED = {"player_xy": (0x7E0020, 4), "module": (0x7E0010, 2),
              "movement": (0x7E005D, 1), "camera": (0x7E0600, 24),
              "cached_player_camera": (0x7EC180, 24), "portal_xy": (0x7E06F8, 4),
@@ -96,8 +97,29 @@ def describe(image: bytes, text: str, expect: str) -> dict:
                   + bytes.fromhex("22008031900320") + (plan["main"] & 65535).to_bytes(2, "little") + bytes.fromhex("AB6B"))
     require(raw(image, plan["long"], len(long_bytes)) == long_bytes
             and plan["return_pc"] == plan["long"] + 15, "Native Long/Main short-call ABI differs")
-    require(raw(image, plan["prep"], 26) == bytes.fromhex("8B4BABA9009DAA0CBD600F29C09D600F9E6B0BA9FF9DA00BAB6B"),
-            "Native Portal Prep properties differ")
+    prep_bytes = raw(image, plan["prep"], 26)
+    require(prep_bytes[:4] == bytes.fromhex("8B4BABA9") and prep_bytes[4] in (0, 0x80)
+            and prep_bytes[5:] == bytes.fromhex("9DAA0CBD600F29C09D600F9E6B0BA9FF9DA00BAB6B"),
+            "Native Portal Prep must have exact legacy00 or persistent80 properties")
+    transport = "Portal_CheckWarpContext" in text
+    context = symbol(text, "Portal_CheckWarpContext") if transport else None
+    if transport:
+        # Exact no-RAM-write guard. P is restored before returned C; X/Y/DB/DP
+        # remain untouched. High bytes compare actual Link, not the other sprite.
+        guard = bytearray.fromhex("08")
+        branches = []
+        def branch(op):
+            branches.append(len(guard)); guard.extend(bytes([op, 0]))
+        for code in ("B9300DC523", "B9200DC521", "B9200FC5EE"):
+            guard.extend(bytes.fromhex(code)); branch(0xD0)
+        guard.extend(bytes.fromhex("B9200DEBB9000DC22038E5E8C9D100")); branch(0xB0)
+        guard.extend(bytes.fromhex("E220B9300DEBB9100DC22038E5E2C9F100")); branch(0xB0)
+        guard.extend(bytes.fromhex("283860"))
+        invalid = len(guard); guard.extend(bytes.fromhex("281860"))
+        for at in branches: guard[at + 1] = invalid - (at + 2)
+        require(raw(image, context, len(guard)) == guard, "Exact bounded full-coordinate warp guard differs")
+        require(raw(image, plan["draw"], 11) == bytes.fromhex("2216E4069001602264F806"),
+                "Portal draw must return on native PrepOamCoord carry before allocation")
     helper = symbol(text, "Portal_CheckCounterpart") if expect == "candidate" else None
     if helper is not None:
         require(raw(image, helper, 50) == bytes.fromhex(
@@ -115,11 +137,33 @@ def describe(image: bytes, text: str, expect: str) -> dict:
                     and symbol(text, name + "_valid_counterpart") == entry + 11,
                     "Queued counterpart guard or idle cancellation differs")
         original = entry + len(prefix)
-        load = bytes.fromhex("AF84C17E") if action < 5 else bytes.fromhex("ADFA06" if action == 5 else "ADF806")
-        require(raw(image, original, len(load) + 2) == load + bytes.fromhex("8520"),
-                "First original warp effect differs")
+        if transport:
+            require(helper is not None, "Context guard requires identity admission first")
+            context_prefix = b"\x20" + (context & 65535).to_bytes(2, "little")
+            context_prefix += bytes([0xB0, 6, 0xA9, idle]) + bytes.fromhex("9D800D60")
+            require(raw(image, original, len(context_prefix)) == context_prefix
+                    and symbol(text, name + "_valid_context") == original + len(context_prefix),
+                    "Queued context guard or idle cancellation differs")
+            original += len(context_prefix)
+            if action < 5:
+                effects = bytes.fromhex("2228FF01B9000D8F84C17EB9200D8F85C17EB9100D8F86C17EB9300D8F87C17EA94099E00E64B0A9148511")
+            else:
+                effects = bytes.fromhex("B9000D8520B9200D8521B9100D8522B9300D8523A94099E00EA901855D")
+            effects += bytes([0xA9, idle]) + bytes.fromhex("9D800D60")
+            require(raw(image, original, len(effects)) == effects,
+                    "Exact full-coordinate/current-context warp effects differ")
+            first_effect = original if action < 5 else original + 3
+            effect_guard = bytes.fromhex("2228FF01") if action < 5 else bytes.fromhex("8520")
+        else:
+            load = bytes.fromhex("AF84C17E") if action < 5 else bytes.fromhex("ADFA06" if action == 5 else "ADF806")
+            require(raw(image, original, len(load) + 2) == load + bytes.fromhex("8520"),
+                    "First original warp effect differs")
+            first_effect, effect_guard = original + len(load), bytes.fromhex("8520")
         queued[action] = dict(entry=entry, helper_return=entry + 3 if helper else None,
-                              idle_writer=entry + 7 if helper else None, first_effect=original + len(load))
+                              idle_writer=entry + 7 if helper else None, first_effect=first_effect,
+                              effect_guard=effect_guard.hex(), context_entry=context,
+                              context_return=entry + 14 if transport else None,
+                              context_idle_writer=entry + 18 if transport else None)
     dispatch = (bytes.fromhex("BD800D22818700") + b"".join(
         (address & 65535).to_bytes(2, "little") for address in
         (symbol(text, "StateHandler"), plan["blue"], plan["orange"], *(queued[a]["entry"] for a in (3, 4, 5, 6)))))
@@ -142,7 +186,8 @@ def describe(image: bytes, text: str, expect: str) -> dict:
         require(raw(image, start, len(prefix + suffix)) == prefix + suffix, "Overlap animation/timer/guard/hitbox/action bytes differ")
         overlaps[color] = dict(entry=start, helper_return=helper_return, action_writer=no_overlap - 3)
     plan.update(expect=expect, helper=helper, call=plan["long"] + 12, prep_return=wrapper + 7,
-                overlaps=overlaps, queued=queued, case_count=len(matrix(expect)))
+                overlaps=overlaps, queued=queued, transport_guard=context, prep_caa=prep_bytes[4],
+                case_count=len(matrix(expect)))
     return plan
 
 
@@ -226,6 +271,14 @@ def fixture_class(portal):
                 self.write(0x7E000E + table, value, "explicit target14 identity fixture; target cannot run before this Main returns")
             self.write(0x7E0632, target["index"] if color == "orange" else 0, "explicit blue cached index")
             self.write(0x7E0633, target["index"] if color == "blue" else 0, "explicit orange cached index")
+            if mode == "terminal" and self.code["transport_guard"] is not None:
+                # A valid same-context target is required to reach the first
+                # effect, which is now the native cache capture (not a write).
+                x, y = self.b.read_memory16(0x7E0022), self.b.read_memory16(0x7E0020)
+                for table, value in ((0xD10, x & 255), (0xD30, x >> 8),
+                                     (0xD00, y & 255), (0xD20, y >> 8),
+                                     (0xF20, self.b.read_memory(0x7E00EE))):
+                    self.write(0x7E000E + table, value, "terminal target14 uses actual Link full coordinates/current layer")
             before = self.block(SPRITES, SIZE)
             case = dict(name=name, mode=mode, color=color, status=status, passed=False,
                         caller_cpu=caller, entry_cpu=entry, short_return_stack=stack.hex(),
@@ -244,8 +297,9 @@ def fixture_class(portal):
             if mode == "terminal":
                 case["effect_cpu"] = self.run_to({path["first_effect"]})
                 self.terminal = True
-                require(raw(self.a.owned_rom.read_bytes(), number(case["effect_cpu"]["pc"]), 2) == bytes.fromhex("8520"),
-                        "Terminal stop is not before original STA $20")
+                effect_guard = bytes.fromhex(path["effect_guard"])
+                require(raw(self.a.owned_rom.read_bytes(), number(case["effect_cpu"]["pc"]), len(effect_guard)) == effect_guard,
+                        "Terminal stop is not before the first guarded warp effect")
                 case["original_effect_executed"] = False
             else:
                 case["return_cpu"] = self.run_to({self.code["return_pc"]})

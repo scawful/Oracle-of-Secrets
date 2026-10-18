@@ -53,7 +53,10 @@ Sprite_AntiKirby_Prep:
   STZ.w SprDefl, X
   STZ.w SprTileDie, X
   STZ.w SprMiscB, X
-  LDA.l Sword : DEC : TAY
+  LDA.l Sword : BEQ +
+    DEC A
+  +
+  TAY
   LDA .bump_damage, Y : STA.w SprBump, X
   LDA .health, Y : STA.w SprHealth, X
   LDA .prize_pack, Y : STA.w SprPrize, X

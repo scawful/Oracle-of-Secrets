@@ -136,6 +136,9 @@ Menu_Page3_ScrollTo:
       JSR Menu_Page3_Draw
       BRA .upload
     .quest
+if !ENABLE_EQUIPMENT_MENU == 1
+    JSR Menu_Quest_Init
+endif
     JSR Menu_RefreshQuestScreen
     .upload
     SEP #$30
@@ -189,7 +192,7 @@ Menu_Page3_StatsScreen:
   SEP #$30
   LDA.w MenuScrollLevelH : BNE .page3
 if !ENABLE_MENU_PAGE_LOOP == 1
-    ; Quest. R goes on to page 3; Start, L and A as before (same order as
+    ; Quest. R goes on to page 3; Start and L retain their priority (same order as
     ; Menu_CheckHScroll: Start, L, R).
     LDA.b $F4 : BIT.b #$10 : BNE .quest
     LDA.b $F6 : BIT.b #$20 : BNE .quest

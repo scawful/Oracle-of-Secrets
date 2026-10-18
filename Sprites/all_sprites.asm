@@ -51,6 +51,16 @@ incsrc "Sprites/NPCs/mermaid.asm"
 incsrc "Sprites/NPCs/maple.asm"
 %log_end("maple", !LOG_SPRITES)
 
+; Wisdom dream scene: whole file under !ENABLE_DREAM_WISDOM_SCENE.
+%log_start("dream_wisdom", !LOG_SPRITES)
+incsrc "Sprites/NPCs/dream_wisdom.asm"
+%log_end("dream_wisdom", !LOG_SPRITES)
+
+; Dream room BG sheets: !ENABLE_DREAM_ROOM_SHEETS and the Wisdom scene.
+%log_start("dream_rooms", !LOG_SPRITES)
+incsrc "Sprites/NPCs/dream_rooms.asm"
+%log_end("dream_rooms", !LOG_SPRITES)
+
 %log_start("manhandla", !LOG_SPRITES)
 incsrc "Sprites/Bosses/manhandla.asm"
 %log_end("manhandla", !LOG_SPRITES)

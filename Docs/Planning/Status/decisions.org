@@ -1424,6 +1424,20 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   the overworld until the ending), "Cap it for now" (old man $A0)
   (scawful, 2026-10-16).
 
+* DECIDED Sprite art lands as source-built sheets (indexed PNG -> compressed sheet)
+  :PROPERTIES:
+  :ASKED_BY: Claude (sprite art audit)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/sprite_art_audit_2026-10-16/README.md
+  :END:
+  Improved sprite art is kept as indexed PNG sources plus a spec in the repo.
+  The build compresses each source into a sheet and repoints the sheet's
+  GFXSheetPointers entry (global id = sprite sheet + $73), instead of editing
+  sheets inside the base ROM or adding per-sprite incbin uploads. The
+  pipeline landed in PR #168 (identity override of sheet $64, the Impa
+  follower; !ENABLE_SOURCE_SPRITE_SHEETS). First real art: the Impa repaint
+  (open question: keep Zelda's palette row or give Impa her own).
+  Answer: "Source-built sheets (Recommended)" (scawful, 2026-10-16).
+
 * DECIDED Pendant dreams: bit on return, quiet room $00, fixed landing, no $1B8
   :PROPERTIES:
   :ASKED_BY: Claude (dream qualification)
@@ -1443,6 +1457,22 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Answers: "On return", "Keep $00, quiet it", "Yes, per dream",
   "Drop $1B8 path" (scawful, 2026-10-16).
 
+* DECIDED Pendant dream arrivals: Power in room $00's NE arena; Courage stays blank in $31
+  :PROPERTIES:
+  :ASKED_BY: Claude (review of the Power/Courage dream arrivals)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dream_room_bg_2026-10-16/rooms/contact_sheet.png
+  :END:
+  scawful (2026-10-17): the dream warp "looks a bit broken, not the best room
+  to spawn into but the fading stuff kinda works". Cause: Link_WarpToRoom set
+  only the low bytes of Link's position, so every dream kept the hut's
+  south-east quadrant. Room $00's south-east quadrant is a sealed strip.
+  Rulings (amend "Pendant dreams ... fixed landing" above; room $00 is kept):
+  1. Power lands in room $00's north-east arena with entrance $7B's position,
+     camera and bounds.
+  2. Courage keeps room $31 as a blank room until its composition is decided.
+  Answers: "$00 NE arena (Recommended)", "Keep $31 blank for now
+  (Recommended)" (scawful, 2026-10-17). Code: PR #171.
+
 * DECIDED Kydreeok heads: 200 HP and a 4-heart touch
   :PROPERTIES:
   :ASKED_BY: Claude (Kydreeok fight fixes)
@@ -1456,3 +1486,20 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   would be new fight behavior. Bigger fight work (head recoil, more animation)
   is separate.
   Answer: "200 HP, 4-heart touch (Recommended)" (scawful, 2026-10-16).
+
+* DECIDED Wisdom dream shots 1-2: great hall, soldier stand-in, Farore's hand on his shoulder
+  :PROPERTIES:
+  :ASKED_BY: Claude (Wisdom dream scene)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/wisdom_scene_2026-10-16/design.md
+  :END:
+  Uses the approved Wisdom words (DREAM_APPROVALS.json): D1.01 plays in the
+  hut over the sleeping Link, D1.02 in the great hall (room $51, attract
+  card 3) after Farore walks to the kneeling Captain, lays her hand on his
+  shoulder and a short white flash plays. The Captain is the HyruleDream
+  soldier for now; Kydrog's pirate sheet gets more animation later. The hall
+  loads its own BG sheets, Farore keeps her overworld colors, and her reach
+  pose is new source art (Sprites/NPCs/gfx/farore_reach.txt).
+  Answers: "soldier stand in is good for now, but we should work on improving
+  kydrogs pirate spritesheet at some point", "the thrones look like stoves
+  right now though, need to fix the object set", "add a pose that'd be
+  great", "B: hand on shoulder (Recommended)" (scawful, 2026-10-16).
