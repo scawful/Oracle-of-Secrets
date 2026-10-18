@@ -219,8 +219,11 @@ Sprite_PutLinkToSleep:
   LDA.b $21 : STA.w $0C0E,X
   LDA.b $22 : SEC : SBC.b #$08 : STA.w $0C04,X
   LDA.b $23 : STA.w $0C18,X
-  JSL PaletteFilter_StartBlindingWhite
-  JSL ApplyPaletteFilter
+  ; No palette filter here: one PaletteFilter_BlindingWhite step runs
+  ; RestoreAdditive with a stale $7EC009 = 2, which adds +1 to each colour
+  ; field with no clamp. Full fields wrapped: the bed's $7F51 became green
+  ; $0371 and white $7FFF became $0420 until the warp reset the filter
+  ; (DREAM-PAL, 2026-10-18).
   PLX
   RTS
 }
@@ -290,6 +293,10 @@ Link_WarpToRoom:
   if !ENABLE_DREAM_RETURN == 1
     ; Arm the wake-up timer; it only counts in Module07_00 after the warp lands.
     LDA.b #!DreamReturn_Ticks : STA.w DreamReturnTimer
+    ; Hide Link for the fade-out: LinkOAM_Main draws him every Module07_15
+    ; frame, at the landing offset above against the hut camera (DREAM-LINK,
+    ; 2026-10-18). Part00_RoomSprites shows him again when the room loads.
+    LDA.b #$0C : STA.b $4B
   endif
   RTS
 
