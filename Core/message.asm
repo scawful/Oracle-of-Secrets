@@ -61,6 +61,8 @@ MessageExpandedData:
   ;   house villager on first wake (B) and after a death (B2)
   ; $204-$205: Wisdom pendant dream (D1): $204 D1.01 narration in the hut,
   ;   $205 D1.02 Farore in the great hall
+  ; $206-$20B: Power pendant dream (D2): $206-$209 D2.01-D2.04 Farore and
+  ;   the king, $20A D2.05 Farore's remembered voice, $20B D2.06 Maple in the hut
   ; $1BE: Ranch Girl Ocarina gift (replaces vanilla $17D)
   ; $1CB: Village Elder post-D1 ranch hint (replaces vanilla $177)
   ; Vanilla text region 2 ($0E:DF40, $167-$18C) is length-pinned by the

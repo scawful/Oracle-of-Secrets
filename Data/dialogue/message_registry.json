@@ -2,8 +2,8 @@
   "format": "oos-message-registry",
   "version": 1,
   "expanded_base": "0x18D",
-  "current_expanded_end": "0x205",
-  "next_append_id": "0x206",
+  "current_expanded_end": "0x20B",
+  "next_append_id": "0x20C",
   "renumber_policy": "freeze-published-ids",
   "ranges": [
     {
@@ -204,7 +204,15 @@
       "status": "occupied",
       "expected_content": "authored",
       "owner": "dream-wisdom",
-      "purpose": "Wisdom pendant dream (D1, The Sealing War), shot 2 slice: $204 D1.01 narration '...a dream of long ago...', $205 D1.02 Farore 'Keep the seal, Captain. This blade is its key.'; exact words approved by scawful 2026-10-15 (AFS handoffs/lyra_one_map_2026-10-15/DREAM_APPROVALS.json, draft DIALOGUE.json sha256 975448ab...); D1.03-D1.05 are approved too and append next as $206+"
+      "purpose": "Wisdom pendant dream (D1, The Sealing War), shot 2 slice: $204 D1.01 narration '...a dream of long ago...', $205 D1.02 Farore 'Keep the seal, Captain. This blade is its key.'; exact words approved by scawful 2026-10-15 (AFS handoffs/lyra_one_map_2026-10-15/DREAM_APPROVALS.json, draft DIALOGUE.json sha256 975448ab...); D1.03-D1.05 are approved too and append after $20B"
+    },
+    {
+      "start": "0x206",
+      "end": "0x20B",
+      "status": "occupied",
+      "expected_content": "authored",
+      "owner": "dream-power",
+      "purpose": "Power pendant dream (D2, The Oracle's Choice): $206-$209 D2.01-D2.04 Farore and Hyrule's king in room $00's north-east arena, $20A D2.05 Farore's remembered voice, $20B D2.06 Maple when Link is back in the hut (Sprites/NPCs/dream_power.asm, maple.asm); exact words approved by scawful 2026-10-15 (AFS handoffs/lyra_one_map_2026-10-15/DREAM_APPROVALS.json, draft DIALOGUE.json sha256 975448ab...)"
     }
   ]
 }

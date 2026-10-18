@@ -112,6 +112,12 @@
 ; after Link_WarpToRoom; Wisdom does it in its scene (Sprites/NPCs/
 ; dream_rooms.asm). Needs DREAM_RETURN. Diagnostic opt-out.
 !ENABLE_DREAM_ROOM_SHEETS           = 1
+; Power dream scene (decisions.org pendant dreams; words approved 2026-10-15):
+; Farore and Hyrule's king in room $00's north-east arena play D2.01-D2.05
+; ($206-$20A), then the dream return; Maple says D2.06 ($20B) in the hut
+; (Sprites/NPCs/dream_power.asm). Needs DREAM_ROOM_SHEETS and the Wisdom
+; scene's locks (DREAM_WISDOM_SCENE). Diagnostic opt-out.
+!ENABLE_DREAM_POWER_SCENE           = 1
 ; Sword warp home (decisions.org "Intro Abyss exit: the sword cuts Link
 ; home"): taking the Forest of Dreams sword (DW $58) plays a spin, sword-up
 ; and white flash, then reloads Link onto the Maku Tree area ($2A) with
