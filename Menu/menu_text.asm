@@ -166,6 +166,8 @@ Menu_SongNames:
   dw "SONG:_STORMS__  "
   dw "SONG:_SOARING_  "
   dw "SONG:_TIME____  "
+  dw "SONG:_SECRETS_  "
+  dw "ELEGY:_STONE__  "
 
 Menu_RingNames:
   dw "____POWER_____  "

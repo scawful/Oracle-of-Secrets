@@ -306,7 +306,7 @@ BunnyHood               = $7EF348   ; 1=Have
 DekuMask                = $7EF349   ; 1=Have (inventory slot)
 Lamp                    = $7EF34A   ; 1=Have
 Hammer                  = $7EF34B   ; 1=Have
-Flute                   = $7EF34C   ; 1=Shovel, 2=Inactive, 3=Active (also Ocarina)
+Flute                   = $7EF34C   ; 0=none, 1=ocarina, 2..7=Healing..Stone count
 RocsFeather             = $7EF34D   ; 1=Have
 Book                    = $7EF34E   ; 1=Have (Book of Secrets)
 BottleIndex             = $7EF34F   ; Currently selected bottle (1-4)
@@ -777,7 +777,7 @@ GoldstarInventoryVersion = $7EF3AA ; $A5 = legacy upgrade migrated
 
 ; Saved Ocarina song ($7EF3AB). Allocated 2026-09-29 by the RC integrator.
 ; Read/written only when !ENABLE_EQUIPMENT_MENU = 1 (Items/ocarina.asm
-; UpdateFluteSong_Long, Menu/menu_equipment.asm). 0 = unset, 1-4 = song.
+; UpdateFluteSong_Long, Menu/menu_equipment.asm). 0 = unset, 1-6 = song (Healing, Storms, Soaring, Time, Secrets, Stone).
 ; CurrentSong ($030F) is volatile WRAM; this byte keeps the Equipment
 ; choice across save/reload. Validated against learned songs ($7EF34C) on
 ; every use; out-of-range or garbage values become song 1.

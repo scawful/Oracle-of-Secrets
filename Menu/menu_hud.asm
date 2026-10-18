@@ -315,11 +315,7 @@ endif
     .bottle_not_equipped
 
     CPX.w #$000D : BNE .flute_not_equipped
-if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-      JSR HUD_OcarinaIconIndex ; same size as LDA $030F (branch range)
-else
-      LDA $030F
-endif
+      JSR HUD_OcarinaIconIndex
 
     .flute_not_equipped
 
@@ -417,6 +413,17 @@ endif
 
 HUD_DrawItem:
 {
+  ; Seven entries cannot fit the vanilla five-entry $0DF859 allocation.
+  ; Bypass its 16-bit pointer table and read the extended bank-$2E table long.
+  CPX.w #$000D : BNE .not_ocarina
+  JSR HUD_OcarinaIconIndex
+  ASL #3 : TAX
+  LDA.l HUD_OcarinaIcons,X : STA.l $7EC776
+  LDA.l HUD_OcarinaIcons+2,X : STA.l $7EC778
+  LDA.l HUD_OcarinaIcons+4,X : STA.l $7EC7B6
+  LDA.l HUD_OcarinaIcons+6,X : STA.l $7EC7B8
+  RTS
+.not_ocarina
 if !ENABLE_GOLDSTAR_CELL == 1
   ; Logical prototype items are beyond vanilla's 24-entry pointer table.
   CPX.w #$001B : BCC .ordinary
@@ -448,22 +455,34 @@ endif
   RTS
 }
 
-if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-; menu-ocarina-blank-slot. 16-bit A/X/Y. Out: A = Ocarina entry in the
-; $0DF859 HUD table: 0 = grey (owned, no song learned, $7EF34C < 2),
-; else the selected song (1-4); song 0 falls back to 1 (blue).
+; 16-bit A/X/Y. Returns 0 for an unlearned ocarina, otherwise song 1-6.
+; The caller may run before the file-load validator, so bound both values here.
 HUD_OcarinaIconIndex:
 {
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_song
-    LDA.w $030F : AND.w #$00FF : BNE .done
-      LDA.w #$0001
-      RTS
-  .no_song
+  CMP.w #$0008 : BCC .count_ok
+  LDA.w #$0007
+.count_ok
+  DEC : STA.b $02
+  LDA.w CurrentSong : AND.w #$00FF : BEQ .first
+  CMP.b $02 : BCC .done : BEQ .done
+.first
+  LDA.w #$0001 : RTS
+.no_song
   LDA.w #$0000
-  .done
+.done
   RTS
 }
-endif
+
+HUD_OcarinaIcons:
+  dw $30D4,$30D5,$30E4,$30E5 ; Unlearned: grey
+  dw $2CD4,$2CD5,$2CE4,$2CE5 ; Healing: blue
+  dw $3CD4,$3CD5,$3CE4,$3CE5 ; Storms: green
+  dw $24D4,$24D5,$24E4,$24E5 ; Soaring: red
+  dw $38D4,$38D5,$38E4,$38E5 ; Time: purple
+  dw $34D4,$34D5,$34E4,$34E5 ; Secrets: gold
+  dw $20D4,$20D5,$20E4,$20E5 ; Stone: bronze
+assert pc()-HUD_OcarinaIcons == 7*8, "Ocarina HUD requires grey plus six songs"
 
 ; =========================================================
 

@@ -20,7 +20,7 @@ BoomsGFX:
 
 HookGFX:
 	dw $24F5, $24F6, $24C0, $24F5 ; Hookshot
-  dw $2C17, $3531, $2D40, $3541 ; Ball & Chain
+  dw $2C17, $2931, $2D40, $2941 ; Ball & Chain
 
 BombsGFX:
 	dw $2CB2, $2CB3, $2CC2, $6CC2 ; Bombs
@@ -41,7 +41,7 @@ DekuMaskGFX:
 
 ; formerly Ether
 BunnyHoodGFX:
-  dw $3469, $7469, $3479, $7479
+  dw $2869, $6869, $2879, $6879
 
 LampGFX:
 	dw $24BC, $24BD, $24CC, $64CC
@@ -53,16 +53,16 @@ ShovelGFX:
 	dw $30D0, $20D1, $30E0, $30E1
 
 OcarinaGFX:
-  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Blue
-  dw $3CD4, $3CD5, $3CE4, $3CE5 ; Green
-  dw $24D4, $24D5, $24E4, $24E5 ; Red
-  dw $34D4, $34D5, $34E4, $34E5 ; Gold
-if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-  dw $30D4, $30D5, $30E4, $30E5 ; Grey (value 5): owned, no song learned
-endif
+  dw $2CD4, $2CD5, $2CE4, $2CE5 ; Healing: blue
+  dw $3CD4, $3CD5, $3CE4, $3CE5 ; Storms: green
+  dw $24D4, $24D5, $24E4, $24E5 ; Soaring: red
+  dw $34D4, $34D5, $34E4, $34E5 ; Time: purple
+  dw $28D4, $28D5, $28E4, $28E5 ; Secrets: warm gold
+  dw $20D4, $20D5, $20E4, $20E5 ; Stone: bronze
+  dw $30D4, $30D5, $30E4, $30E5 ; Grey (value7): no song learned
 
 BigKeyGFX:
-  dw $34D6, $74D6, $34E6, $34E7
+  dw $28D6, $68D6, $28E6, $28E7
 
 BigChestKeyGFX:
 if !ENABLE_TRUTHFUL_CONTROLS == 1
@@ -70,9 +70,9 @@ if !ENABLE_TRUTHFUL_CONTROLS == 1
   ; treasure chest's lid (TreasureChestGFX top tiles $14B/$14C) in the key
   ; gold, on the big key's shaft ($E6/$E7). The old top ($BF) looked like the
   ; big key. Existing tiles only.
-  dw $354B, $354C, $34E6, $34E7
+  dw $294B, $294C, $28E6, $28E7
 else
-  dw $34BF, $74BF, $34E6, $34E7
+  dw $28BF, $68BF, $28E6, $28E7
 endif
 
 MapGFX:
@@ -138,14 +138,16 @@ MirrorGFX:
 ; vhopppcc cccccccc
 
 QuarterNoteGFX:
-  dw $30AA, $306B, $307A, $306A ; Gray Note
-  dw $2CAA, $2C6B, $2C7A, $2C6A ; Blue Note
-  dw $3CAA, $3C6B, $3C7A, $3C6A ; Green Note
-  dw $24AA, $246B, $247A, $246A ; Red Note
-  dw $34AA, $346B, $347A, $346A ; Gold Note
+  dw $30AA, $306B, $307A, $306A ; Grey: not learned
+  dw $2CAA, $2C6B, $2C7A, $2C6A ; Healing: blue
+  dw $3CAA, $3C6B, $3C7A, $3C6A ; Storms: green
+  dw $24AA, $246B, $247A, $246A ; Soaring: red
+  dw $34AA, $346B, $347A, $346A ; Time: purple
+  dw $28AA, $286B, $287A, $286A ; Secrets: warm gold
+  dw $20AA, $206B, $207A, $206A ; Stone: bronze
 
 BananaGFX:
-  dw $341E, $341F, $342E, $342F ; Banana
+  dw $281E, $281F, $282E, $282F ; Banana
 
 RingGFX:
   dw $3049, $304A, $B049, $B04A ; Gray Ring
@@ -153,11 +155,11 @@ RingGFX:
   dw $2C49, $2C4A, $AC49, $AC4A ; Blue Ring
   dw $3C49, $3C4A, $BC49, $BC4A ; Green Ring
   dw $2849, $284A, $A849, $A84A ; Gold Ring
-  dw $3449, $344A, $B449, $B44A ; Silver Ring
+  dw $2849, $284A, $A849, $A84A ; Silver Ring
   dw $2049, $204A, $A049, $A04A ; Black Ring
 
 PineappleGFX:
-  dw $3D7C, $3D7D, $356C, $756C ; Pineapple
+  dw $3D7C, $3D7D, $296C, $696C ; Pineapple
 
 RockMeatGFX:
   dw $20D0, $20D1, $20E0, $20E1 ; Rock Meat
@@ -244,4 +246,4 @@ BombchuGFX:
 SwitchHookGFX:
   dw $24F2,$2530,$257E,$257F
 GaroMaskGFX:
-  dw $340D,$340E,$340F,$3425
+  dw $280D,$280E,$280F,$2825

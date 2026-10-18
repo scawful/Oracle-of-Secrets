@@ -88,8 +88,8 @@ Menu_DrawQuestIcons:
 Menu_DrawTriforceIcons:
 {
   LDA.l $7EF37A
-  LDX.w #$3534
-  LDY.w #$3544
+  LDX.w #$2934
+  LDY.w #$2944
 
 if !ENABLE_MENU_AUDIT_FIXES == 1
   ; Crystals in D1-D7 order (menu audit 2026-09-28). The award ORs
@@ -244,54 +244,30 @@ endif
 Menu_DrawMusicNotes:
 {
   SEP #$30
-  LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
+  LDA.b #$7E : STA.b $0A
+  JSL UpdateFluteSong_Long
+  LDY.b #$00
+.notes
+  PHY
+  TYA : INC #2 : CMP.l $7EF34C : BCC .learned : BEQ .learned
+  LDA.b #$01 : BRA .variant
+.learned
+  TYA : INC #2
+.variant
+  STA.w MusicNoteValue
   REP #$30
-
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_healing
-    LDA.w #$0002 : BRA .draw_healing
-  .no_healing
-  LDA.w #$0001
-  .draw_healing
-  STA.w MusicNoteValue
+  TYA : AND.w #$00FF : ASL : TAX
+  LDA.w .positions,X : TAX
   LDA.w #MusicNoteValue
-  LDX.w #menu_offset(9,5)
   LDY.w #QuarterNoteGFX
   JSR DrawMenuItem
-
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0003 : BCC .no_storms
-    LDA.w #$03 : BRA .draw_storms
-  .no_storms
-  LDA.w #$01
-  .draw_storms
-  STA.w MusicNoteValue
-  LDA.w #MusicNoteValue
-  LDX.w #menu_offset(9,9)
-  LDY.w #QuarterNoteGFX
-  JSR DrawMenuItem
-
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0004 : BCC .no_soaring
-    LDA.w #$04 : BRA .draw_soaring
-  .no_soaring
-  LDA.w #$01
-  .draw_soaring
-  STA.w MusicNoteValue
-  LDA.w #MusicNoteValue
-  LDX.w #menu_offset(9,13)
-  LDY.w #QuarterNoteGFX
-  JSR DrawMenuItem
-
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0005 : BCC .no_songs
-    LDA.w #$05 : BRA .draw_songs
-  .no_songs
-  LDA.w #$01
-  .draw_songs
-  STA.w MusicNoteValue
-  LDA.w #MusicNoteValue
-  LDX.w #menu_offset(9,17)
-  LDY.w #QuarterNoteGFX
-  JSR DrawMenuItem
-
+  SEP #$30
+  PLY : INY : CPY.b #$06 : BCC .notes
+  REP #$30
   RTS
+.positions
+  dw menu_offset(9,3),menu_offset(9,6),menu_offset(9,9)
+  dw menu_offset(9,13),menu_offset(9,16),menu_offset(9,19)
 }
 
 ; =========================================================
@@ -299,6 +275,7 @@ Menu_DrawMusicNotes:
 DrawYItems:
 {
   SEP #$30
+  JSL UpdateFluteSong_Long
   LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
   REP #$30
 
@@ -383,9 +360,9 @@ endif
 
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
 if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-    ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 5).
+    ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 7).
     CMP.w #$0002 : BCS .ocarina_has_songs
-      LDA.w #$0005 : BRA .spoof_ocarina
+      LDA.w #$0007 : BRA .spoof_ocarina
     .ocarina_has_songs
     LDA.w $030F : AND.w #$00FF : BNE .spoof_ocarina
 else
@@ -915,6 +892,14 @@ Menu_DrawRingBox:
 
     DEX : DEX
   BPL .loop
+  ; Static ring-box art predates the shared warm-gold palette. Preserve it
+  ; when diagnostic profiles retain this menu; frame palette6 is untouched.
+  LDX.w #$07FE
+.remap_gold
+  LDA.w $1000,X : AND.w #$1C00 : CMP.w #$1400 : BNE .next_cell
+  LDA.w $1000,X : AND.w #$E3FF : ORA.w #$0800 : STA.w $1000,X
+.next_cell
+  DEX #2 : BPL .remap_gold
   SEP #$30
   RTS
 

@@ -1,4 +1,4 @@
-; Functional Equipment: slots 0-5 masks, 6-11 rings, 12-15 songs, 16-21 supplies.
+; Functional Equipment: slots 0-5 masks, 6-11 rings, 12-17 songs, 18-23 supplies.
 ; $020B is only the cursor; BoundMask, RingSlot1 and CurrentSong are selections.
 ; No preview fixture or ownership spoof controls availability. DBR = $2D.
 Menu_Equipment_Init:
@@ -14,7 +14,7 @@ Menu_Equipment_Init:
 .scan
   STA.w $020B
   JSR Menu_Equipment_Owned : BNE .done
-  LDA.w $020B : INC : CMP.b #$16 : BCC .scan
+  LDA.w $020B : INC : CMP.b #$18 : BCC .scan
   LDA.b #$FF : STA.w $020B             ; no valid owned entry has no cursor
 .done
   RTS
@@ -40,12 +40,12 @@ Menu_Equipment_Owned:
   LDA.w Menu_Page3_RingBits,X : AND.l MAGICRINGS : BEQ .done
   TXA : INC #2 : BRA .done
 .song
-  CMP.b #$10 : BCS .supplies
-  SEC : SBC.b #$0B                    ; song 1-4 < Ocarina progression
+  CMP.b #$12 : BCS .supplies
+  SEC : SBC.b #$0B                    ; song 1-6 < Ocarina progression
   CMP.l $7EF34C : BCS .none
-  INC : BRA .done                    ; colored note variants 2-5
+  INC : BRA .done                    ; colored note variants 2-7
 .supplies
-  CMP.b #$16 : BCS .none
+  CMP.b #$18 : BCS .none
   LDA.b #$01 : BRA .done             ; count never indexes the one-variant icon
 .none
   LDA.b #$00
@@ -57,11 +57,11 @@ Menu_Equipment_Owned:
   db $49,$47,$58,$48,$52,$AF
 }
 
-; A = valid supply slot 16-21; returns its byte quantity. Keeps X/Y, M/X=8.
+; A = valid supply slot 18-23; returns its byte quantity. Keeps X/Y, M/X=8.
 Menu_Equipment_SupplyCount:
 {
   PHX
-  SEC : SBC.b #$10 : TAX
+  SEC : SBC.b #$12 : TAX
   LDA.w Menu_Equipment_CountLow,X : TAX
   LDA.l $7EF300,X
   PLX
@@ -74,7 +74,7 @@ Menu_Equipment_SupplyCount:
 Menu_Equipment_Move:
 {
   SEP #$30
-  LDA.w $020B : CMP.b #$16 : BCC .valid
+  LDA.w $020B : CMP.b #$18 : BCC .valid
   JMP Menu_Equipment_Init
 .valid
   LDA.b $F4 : AND.b #$0F : BNE +
@@ -129,18 +129,18 @@ Menu_Equipment_Move:
 .done
   RTS
 .next
-  db 1,2,3,4,5,0, 7,8,9,10,11,6, 13,14,15,12, 17,18,19,20,21,16
+  db 1,2,3,4,5,0, 7,8,9,10,11,6, 13,14,15,16,17,12, 19,20,21,22,23,18
 .prev
-  db 5,0,1,2,3,4, 11,6,7,8,9,10, 15,12,13,14, 21,16,17,18,19,20
+  db 5,0,1,2,3,4, 11,6,7,8,9,10, 17,12,13,14,15,16, 23,18,19,20,21,22
 .starts
-  db 0,6,12,16
+  db 0,6,12,18
 .ends
-  db 6,12,16,22
+  db 6,12,18,24
 }
 Menu_Equipment_Rows:
-  db 0,0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2, 3,3,3,3,3,3
+  db 0,0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2,2,2, 3,3,3,3,3,3
 Menu_Equipment_Columns:
-  db 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17, 7,10,13,17,20,23
+  db 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23, 7,10,13,17,20,23
 
 Menu_Equipment_Select:
 {
@@ -156,7 +156,7 @@ Menu_Equipment_Select:
   SEC : SBC.b #$04                    ; slots 6-11 -> ring IDs 2-7
   JMP Menu_Page3_ToggleRing
 .song
-  CMP.b #$10 : BCS .supplies
+  CMP.b #$12 : BCS .supplies
   SEC : SBC.b #$0B : STA.w CurrentSong
   STA.l SavedOcarinaSong              ; survives save/reload ($030F does not)
   LDA.b #$0D : STA.w $0202            ; normal Y item, independent of mask
@@ -168,7 +168,7 @@ Menu_Equipment_Select:
 .supplies
   LDA.b $F6 : BIT.b #$80 : BEQ .done ; Y may select above, but never consumes
   LDA.w $020B : PHA
-  SEC : SBC.b #$10 : STA.w $020B     ; existing handlers use indices 0-5
+  SEC : SBC.b #$12 : STA.w $020B     ; existing handlers use indices 0-5
   JSR MagicBag_ConsumeItem
   SEP #$30
   PLA : STA.w $020B                  ; restore Equipment's cursor after use
@@ -211,7 +211,7 @@ Menu_Equipment_Draw:
   JSR DrawMenuItem
   SEP #$30
   PLY
-  INY : CPY.b #$16 : BCC .icons
+  INY : CPY.b #$18 : BCC .icons
 
   JSR Menu_Equipment_UsePrompt
 
@@ -261,7 +261,7 @@ Menu_Equipment_Draw:
 ; Menu_DrawBackground clears the prompt when another cell is selected.
 Menu_Equipment_UsePrompt:
 {
-  LDA.w $020B : SEC : SBC.b #$10 : CMP.b #$06 : BCS .done
+  LDA.w $020B : SEC : SBC.b #$12 : CMP.b #$06 : BCS .done
   CMP.b #$02 : BCC .count
   CMP.b #$04 : BNE .done
 .count
@@ -301,7 +301,7 @@ Menu_Equipment_Name:
   LDA.w $0000,X : STA.w $1692,Y
   INX #2 : INY #2 : CPY.w #$001C : BCC .loop
   SEP #$30
-  LDA.w $020B : CMP.b #$10 : BCC .done
+  LDA.w $020B : CMP.b #$12 : BCC .done
   JSR Menu_Equipment_SupplyCount
   REP #$30
   AND.w #$00FF
@@ -327,16 +327,17 @@ Menu_Equipment_Names:
   dw Menu_RingNames,Menu_RingNames+32,Menu_RingNames+64
   dw Menu_RingNames+96,Menu_RingNames+128,Menu_RingNames+160
   dw Menu_SongNames,Menu_SongNames+32,Menu_SongNames+64,Menu_SongNames+96
+  dw Menu_SongNames+128,Menu_SongNames+160
   dw Menu_Equipment_SupplyNames,Menu_Equipment_SupplyNames+28,Menu_Equipment_SupplyNames+56
   dw Menu_Equipment_SupplyNames+84,Menu_Equipment_SupplyNames+112,Menu_Equipment_SupplyNames+140
 Menu_Equipment_Gfx:
   dw DekuMaskGFX,ZoraMaskGFX,WolfMaskGFX,BunnyHoodGFX,StoneMaskGFX,GaroMaskGFX
   dw RingGFX,RingGFX,RingGFX,RingGFX,RingGFX,RingGFX
-  dw QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX
+  dw QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX
   dw BananaGFX,PineappleGFX,RockMeatGFX,SeashellGFX,HoneycombGFX,DekuStickGFX
 Menu_Equipment_Pos:
   dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,9),menu_offset(6,13),menu_offset(6,16),menu_offset(6,19)
   dw menu_offset(10,3),menu_offset(10,6),menu_offset(10,9),menu_offset(10,13),menu_offset(10,16),menu_offset(10,19)
-  dw menu_offset(14,3),menu_offset(14,6),menu_offset(14,9),menu_offset(14,13)
+  dw menu_offset(14,3),menu_offset(14,6),menu_offset(14,9),menu_offset(14,13),menu_offset(14,16),menu_offset(14,19)
   dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9)
   dw menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)
