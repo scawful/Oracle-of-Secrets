@@ -17,8 +17,10 @@
 ;      blanks the HUD and loads the hall's BG sheets (DreamRoom_LoadSheets,
 ;      dream_rooms.asm), all before the fade-in.
 ;   3. Farore (the director) holds, walks to the Captain, a white flash,
-;      D1.02, then DreamReturn_Begin from DreamWisdom_End (the single exit;
-;      shot 3 hooks in there later).
+;      D1.02, then DreamWisdom_End. With !ENABLE_DREAM_WISDOM_FALL she
+;      becomes the script director for shots 3-5 (dream_power.asm,
+;      DreamPower_Script_wisdom: his men fade, D1.03/D1.04, Kydrog's
+;      silhouette), which ends the dream; else DreamReturn_Begin here.
 ;   4. DreamReturn_Begin calls DreamWisdom_Release (input back, flash off).
 ;      Link stays hidden through the mirror fade; DreamWisdom_ReleaseLink
 ;      shows him again when the hut room loads.
@@ -198,6 +200,14 @@ DreamWisdom_ReleaseLink:
     LDA.b $22 : STA.w $0FC2
     LDA.b $20 : STA.w $0FC4
     SEP #$20
+    if !ENABLE_DREAM_BED_WAKE == 1
+      ; A finished scene left the wake word: Link wakes in Maple's bed.
+      REP #$20
+      LDA.l DreamPower_WakeLine : CMP.w #!DreamPower_WakeLive
+      SEP #$20                            ; SEP keeps Z
+      BNE .done
+        JSR DreamWake_TuckIntoBed         ; dream_power.asm
+    endif
   .done
   RTS
 }
@@ -213,6 +223,7 @@ DreamWisdom_Release:
   BNE .done
     STZ.w $02E4 : STZ.w $0FFC : STZ.w $037B
     JSR DreamWisdom_FlashOff
+    LDA.b #$0F : STA.b $13                ; full brightness, in case a fade ran
   .done
   RTS
 }
@@ -327,9 +338,17 @@ DreamWisdom_Main:
   DreamWisdom_End:
   {
     LDA.w SprTimerA, X : BNE .wait
+    if !ENABLE_DREAM_WISDOM_FALL == 1
+      ; Shots 3-5: Farore becomes the script director (dream_power.asm),
+      ; which ends the dream through DreamPower_OpEnd.
+      LDA.b #!DreamPower_SubFarore : STA.w SprSubtype, X
+      LDA.b #DreamPower_Script_wisdom-DreamPower_Script : STA.w SprAction, X
+      STZ.w SprMiscB, X
+    else
       STZ.w SprAction, X
       STZ.w DreamReturnTimer              ; as when the timer fires
       PHX : JSR DreamReturn_Begin : PLX   ; Begin clobbers X
+    endif
     .wait
     RTS
   }

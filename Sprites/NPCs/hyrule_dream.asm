@@ -125,6 +125,9 @@ Sprite_HyruleDream_Draw:
   ; Power scene (dream_power.asm): the king is frame 1 (sheet $35 in slot 2);
   ; Farore 7 back to the camera, 8/9 her walk up, 10 facing the camera
   ; (farore.asm frames 5, 3, 4 and 0 with sheet $55 in slot 3: chars +$40).
+  ; Wisdom fall (dream_power.asm): 11 empty (one piece pushed off screen:
+  ; Farore gone, a man blinking out), 12 Kydrog's silhouette (his pirate
+  ; frame, kydrog.asm, with sheet $42 in slot 1: chars -$80; OBJ palette 6).
   .start_index
   db $00, $03, $07
   if !ENABLE_DREAM_WISDOM_SCENE == 1
@@ -133,6 +136,9 @@ Sprite_HyruleDream_Draw:
   if !ENABLE_DREAM_POWER_SCENE == 1
     db $14, $16, $18, $1A
   endif
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    db $1C, $1D
+  endif
   .nbr_of_tiles
   db 2, 3, 2
   if !ENABLE_DREAM_WISDOM_SCENE == 1
@@ -140,6 +146,9 @@ Sprite_HyruleDream_Draw:
   endif
   if !ENABLE_DREAM_POWER_SCENE == 1
     db 1, 1, 1, 1
+  endif
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    db 0, 5
   endif
   .x_offsets
   dw -8, 8, 0
@@ -157,6 +166,10 @@ Sprite_HyruleDream_Draw:
     dw 0, 0
     dw 0, 0
   endif
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    dw 0
+    dw -8, 8, 8, -8, -8, 8
+  endif
   .y_offsets
   dw -4, -4, -14
   dw -16, -16, 0, 0
@@ -172,6 +185,10 @@ Sprite_HyruleDream_Draw:
     dw -8, 4
     dw 4, -7
     dw -8, 4
+  endif
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    dw 240
+    dw -12, -12, 4, 4, 20, 20
   endif
   .chr
   db $A8, $A8, $84
@@ -189,6 +206,10 @@ Sprite_HyruleDream_Draw:
     db $CC, $CA
     db $E8, $EA
   endif
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    db $00
+    db $4C, $4E, $6E, $6C, $68, $6A
+  endif
   .properties
   db $39, $79, $39
   db $39, $79, $39, $79
@@ -205,6 +226,10 @@ Sprite_HyruleDream_Draw:
     db $7B, $3B
     db $3B, $3B
   endif
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    db $3B
+    db $3D, $3D, $3D, $3D, $3D, $3D
+  endif
   .sizes
   db $02, $02, $02
   db $02, $02, $02, $02
@@ -220,5 +245,9 @@ Sprite_HyruleDream_Draw:
     db $02, $02
     db $02, $02
     db $02, $02
+  endif
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    db $00
+    db $02, $02, $02, $02, $02, $02
   endif
 }

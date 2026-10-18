@@ -1,6 +1,6 @@
 {
   "counts": {
-    "expanded": 127,
+    "expanded": 130,
     "vanilla": 0
   },
   "format": "yaze-message-bundle",
@@ -639,6 +639,21 @@
       "bank": "expanded",
       "id": 126,
       "text": "A king? Tell him[2]naps cost extra.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 127,
+      "text": "[W:02][S:03]Your king forgot you.[2]We have not.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 128,
+      "text": "[W:02][S:03]The Golden Power can[2]bring your men back.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 129,
+      "text": "Bad dream? You were[2]talking in your sleep...[3]about a sword.[K]"
     }
   ],
   "version": 1

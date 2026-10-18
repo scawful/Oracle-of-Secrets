@@ -27,6 +27,17 @@
 ; (the landing and the 8 s return as before). A stalled director stops
 ; holding the dream timer after !DP_Watchdog frames, so the 8 s return still
 ; fires; that return has no wake line.
+;
+; The script engine (DreamPower_Main) also runs the Wisdom fall
+; (!ENABLE_DREAM_WISDOM_FALL, shots 3-5 in the great hall; decisions.org
+; "Wisdom dream shots 3-5 stay in the great hall"): at the end of shot 2
+; DreamWisdom_End turns Farore into this director ($D4) at
+; DreamPower_Script_wisdom. Its actors: the Captain's men ($D5-$D7) and
+; Kydrog's black silhouette ($D8, his own sheet $42 in slot 1).
+;
+; !ENABLE_DREAM_BED_WAKE: the script's end leaves the wake word, and the hut
+; reload tucks Link into Maple's bed (DreamWake_TuckIntoBed); Maple sits him
+; up and says the dream's line (maple.asm). Off, the line plays at the door.
 ; =========================================================
 
 if !ENABLE_DREAM_POWER_SCENE == 1
@@ -57,6 +68,35 @@ assert !ENABLE_DREAM_WISDOM_SCENE == 1, "ENABLE_DREAM_POWER_SCENE requires ENABL
 !DP_OpLine          = $02     ; show !DreamMsg_PowerFirst + argument
 !DP_OpFrame         = $03     ; set the frame, then the next op at once
 !DP_OpEnd           = $04     ; the single exit: dream return
+if !ENABLE_DREAM_WISDOM_FALL == 1
+assert !ENABLE_DREAM_WISDOM_SCENE == 1, "ENABLE_DREAM_WISDOM_FALL requires ENABLE_DREAM_WISDOM_SCENE"
+!DP_OpFadeOut       = $05     ; brightness ($13) to 0 over argument frames
+!DP_OpFadeIn        = $06     ; brightness back to $0F over argument frames
+!DP_OpSpawnMen      = $07     ; the Captain's three men appear
+!DP_OpVanish        = $08     ; man <argument> blinks out
+!DP_OpSfx           = $09     ; sound <argument> on SFX2 ($012E)
+!DP_OpFlash         = $0A     ; white flash on (1) or off (0)
+!DP_OpFall          = $0B     ; the Captain becomes Kydrog's silhouette
+
+!DP_FrameEmpty      = $0B     ; Sprite_HyruleDream_Draw frames (hyrule_dream.asm)
+!DP_FrameSilhouette = $0C
+!DP_FrameMan        = $02     ; the HyruleDream soldier, standing
+!DP_VanishFrames    = $18     ; 24 frames of blinking, then gone
+!DP_SilhouettePal   = $7EC6C2 ; OBJ palette 6 colors 1-15 (current; target at -$200)
+; In-room spots of his men (room $51, around the Captain at $F0,$9C)
+!DP_ManX0           = $00D0   ; left of him
+!DP_ManY0           = $00A8
+!DP_ManX1           = $0110   ; right of him (Farore's spot in shot 2)
+!DP_ManY1           = $00A8
+!DP_ManX2           = $00F0   ; in front of him
+!DP_ManY2           = $00C4
+endif
+if !ENABLE_DREAM_BED_WAKE == 1
+; Maple's bed in the hut (room $0F, base $1E00,$0000): Sprite_PutLinkToSleep
+; puts Link 24 px right of where he stands to talk to Maple.
+!DreamWake_BedX     = $1F78
+!DreamWake_BedY     = $0140
+endif
 
 ; Text pauses sprites, so each op after a line runs on the first frame
 ; after its box closes.
@@ -77,7 +117,37 @@ DreamPower_Script:
   db !DP_OpLine, $04                      ; D2.05 her own thought
   db !DP_OpWait, $30
   db !DP_OpEnd, $00
+if !ENABLE_DREAM_WISDOM_FALL == 1
+; Wisdom shots 3-5 in the great hall. DreamWisdom_End starts it after D1.02
+; (and its 48-frame hold). Lines: !DreamMsg_PowerFirst + 6 = $20C, + 7 = $20D.
+.wisdom
+  db !DP_OpWait, $10
+  db !DP_OpFadeOut, $20                   ; years pass: to black
+  db !DP_OpFrame, !DP_FrameEmpty          ; Farore leaves (the director stays)
+  db !DP_OpSpawnMen, $00                  ; his men stand with him
+  db !DP_OpWait, $04                      ; their Prep runs while it is black
+  db !DP_OpFadeIn, $20
+  db !DP_OpWait, $30
+  db !DP_OpVanish, $01                    ; the men fade one by one
+  db !DP_OpWait, $28
+  db !DP_OpVanish, $00
+  db !DP_OpWait, $28
+  db !DP_OpVanish, $02
+  db !DP_OpWait, $30                      ; the Captain alone
+  db !DP_OpLine, $06                      ; D1.03 the prison
+  db !DP_OpWait, $10
+  db !DP_OpLine, $07                      ; D1.04 the prison
+  db !DP_OpWait, $20
+  db !DP_OpSfx, $05                       ; his sword hits the floor
+  db !DP_OpFlash, $01
+  db !DP_OpFall, $00                      ; Kydrog's silhouette in his place
+  db !DP_OpWait, $0A
+  db !DP_OpFlash, $00
+  db !DP_OpWait, $40
+  db !DP_OpEnd, $00
+endif
 .end
+assert DreamPower_Script_end-DreamPower_Script < $FF, "dream scripts must fit an 8-bit index"
 
 ; ---------------------------------------------------------
 ; JSL from DreamRoom_Stage (dream_rooms.asm), Power only, after
@@ -150,12 +220,18 @@ DreamPower_Stage:
 
 ; ---------------------------------------------------------
 ; JMP from Sprite_HyruleDream_Prep (subtype >= $D3). X = slot, DB = $30.
+; Sprite init (SpritePrep_ResetProperties) has cleared the timers, SprAction,
+; SprMiscA/B/D and SprFrame; only the subtype tells the actors apart.
 DreamPower_Prep:
 {
   STZ.w SprTimerB, X
   STZ.w SprAction, X                      ; script position
-  STZ.w SprMiscB, X                       ; walk frames left
+  STZ.w SprMiscB, X                       ; continuous-op frames left
   LDA.w SprSubtype, X : CMP.b #!DreamPower_SubFarore : BEQ .farore
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    CMP.b #!DreamPower_SubSilhouette : BEQ .silhouette
+    CMP.b #!DreamPower_SubMan0 : BCS .man
+  endif
     LDA.b #!DP_FrameKing : STA.w SprFrame, X
     ; Frame 1 is four 16x16 pieces; $73 reserves ($0E40 & $1F) + 1 = 3.
     LDA.w $0E40, X : AND.b #$E0 : ORA.b #$03 : STA.w $0E40, X
@@ -163,6 +239,15 @@ DreamPower_Prep:
   .farore
   LDA.b #!DP_FrameBack : STA.w SprFrame, X
   RTS
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    .man
+    LDA.b #!DP_FrameMan : STA.w SprFrame, X
+    RTS
+    .silhouette
+    LDA.b #!DP_FrameSilhouette : STA.w SprFrame, X
+    LDA.w $0E40, X : AND.b #$E0 : ORA.b #$05 : STA.w $0E40, X ; 6 pieces
+    RTS
+  endif
 }
 
 ; JMP from Sprite_HyruleDream_Main (subtype >= $D3); active frames only.
@@ -173,7 +258,30 @@ DreamPower_Main:
     RTS
   .dreaming
   LDA.w SprSubtype, X : CMP.b #!DreamPower_SubFarore : BEQ .director
-    RTS                                   ; the king: drawn only
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    CMP.b #!DreamPower_SubSilhouette : BCS .drawn_only
+    CMP.b #!DreamPower_SubMan0 : BCS .man
+  endif
+  .drawn_only
+  RTS                                     ; the king, the silhouette
+
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    ; One of the Captain's men. DreamPower_OpVanish sets SprMiscB: blink
+    ; (2 frames on, 2 off), then gone.
+    .man
+    LDA.w SprMiscB, X : BEQ .drawn_only
+      DEC.w SprMiscB, X : BEQ .gone
+      LDA.w SprMiscB, X : AND.b #$02 : BEQ .hide
+        LDA.b #!DP_FrameMan : STA.w SprFrame, X
+        RTS
+      .hide
+      LDA.b #!DP_FrameEmpty : STA.w SprFrame, X
+      RTS
+    .gone
+    STZ.w SprState, X
+    RTS
+  endif
+
   .director
   ; Hold the 8 s dream timer, for the first !DP_Watchdog frames only.
   REP #$20
@@ -186,7 +294,25 @@ DreamPower_Main:
   LDA.b #$01 : STA.w $037B                ; Ancilla_TerminateSelectInteractives
                                           ; clears it after Stage
 
+  ; Continuous ops run for SprMiscB frames: walk up (SprMiscD 0) or, in the
+  ; Wisdom fall, a brightness fade out (1) or in (2), one step per 2 frames.
   LDA.w SprMiscB, X : BEQ .script
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    LDA.w SprMiscD, X : BEQ .walk
+    CMP.b #$01 : BEQ .fade_out
+      LDA.w SprMiscB, X : LSR A : BCS .tick
+      LDA.b $13 : CMP.b #$0F : BCS .tick
+      INC.b $13
+      BRA .tick
+    .fade_out
+      LDA.w SprMiscB, X : LSR A : BCS .tick
+      LDA.b $13 : BEQ .tick
+      DEC.b $13
+    .tick
+    DEC.w SprMiscB, X
+    RTS
+    .walk
+  endif
     %PlayAnimation(!DP_FrameBackStepA, !DP_FrameBackStepB, 8)
     LDA.b #!DP_WalkSpeed : STA.w SprYSpeed, X
     JSL Sprite_MoveVert
@@ -201,37 +327,182 @@ DreamPower_Main:
   LDY.w SprAction, X
   CPY.b #DreamPower_Script_end-DreamPower_Script : BCS .done ; after the end
   INC.w SprAction, X : INC.w SprAction, X
-  LDA.w DreamPower_Script, Y : STA.b $00  ; op
-  LDA.w DreamPower_Script+1, Y            ; argument
-  LDY.b $00
-  CPY.b #!DP_OpWait : BNE +
-    STA.w SprTimerA, X
-    RTS
-  +
-  CPY.b #!DP_OpWalk : BNE +
-    STA.w SprMiscB, X
-    RTS
-  +
-  CPY.b #!DP_OpLine : BNE +
-    CLC : ADC.b #!DreamMsg_PowerFirst&$FF
-    LDY.b #!DreamMsg_PowerFirst>>8
-    JSL Sprite_ShowMessageUnconditional
-    RTS
-  +
-  CPY.b #!DP_OpFrame : BNE .end
-    STA.w SprFrame, X
-    BRA .next_op
+  LDA.w DreamPower_Script+1, Y : STA.b $05 ; argument (JumpTableLocal uses $00-$03)
+  LDA.w DreamPower_Script, Y              ; op
+  JSL JumpTableLocal
 
-  ; The single exit. $10 = $07 and $11 = 0 here, as DreamReturn_Begin needs.
-  .end
+  dw DreamPower_OpWait                    ; 0
+  dw DreamPower_OpWalk                    ; 1
+  dw DreamPower_OpLine                    ; 2
+  dw DreamPower_OpFrame                   ; 3
+  dw DreamPower_OpEnd                     ; 4
+  if !ENABLE_DREAM_WISDOM_FALL == 1
+    dw DreamPower_OpFadeOut               ; 5
+    dw DreamPower_OpFadeIn                ; 6
+    dw DreamPower_OpSpawnMen              ; 7
+    dw DreamPower_OpVanish                ; 8
+    dw DreamPower_OpSfx                   ; 9
+    dw DreamPower_OpFlash                 ; A
+    dw DreamPower_OpFall                  ; B
+  endif
+
+  .done
+  RTS
+}
+
+; Script ops: X = director slot, $05 = argument, M = 8, X = 8, DB = $30.
+DreamPower_OpWait:
+{
+  LDA.b $05 : STA.w SprTimerA, X
+  RTS
+}
+
+DreamPower_OpWalk:
+{
+  LDA.b $05 : STA.w SprMiscB, X
+  STZ.w SprMiscD, X
+  RTS
+}
+
+; The next op runs on the first frame after the box closes (text pauses sprites).
+DreamPower_OpLine:
+{
+  LDA.b $05 : CLC : ADC.b #!DreamMsg_PowerFirst&$FF
+  LDY.b #!DreamMsg_PowerFirst>>8
+  JSL Sprite_ShowMessageUnconditional
+  RTS
+}
+
+DreamPower_OpFrame:
+{
+  LDA.b $05 : STA.w SprFrame, X
+  JMP DreamPower_Main_next_op
+}
+
+; The single exit. $10 = $07 and $11 = 0 here, as DreamReturn_Begin needs.
+DreamPower_OpEnd:
+{
+  LDA.b #$FF : STA.w SprAction, X         ; past every script
   STZ.w DreamReturnTimer                  ; as when the timer fires
   REP #$20
   LDA.w #!DreamPower_WakeLive : STA.l DreamPower_WakeLine
   SEP #$20
   PHX : JSR DreamReturn_Begin : PLX       ; Begin clobbers X
-  .done
   RTS
 }
+
+if !ENABLE_DREAM_WISDOM_FALL == 1
+DreamPower_OpFadeOut:
+{
+  LDA.b $05 : STA.w SprMiscB, X
+  LDA.b #$01 : STA.w SprMiscD, X
+  RTS
+}
+
+DreamPower_OpFadeIn:
+{
+  LDA.b $05 : STA.w SprMiscB, X
+  LDA.b #$02 : STA.w SprMiscD, X
+  RTS
+}
+
+; The three men in free slots (Prep runs in the next Sprite_Main).
+DreamPower_OpSpawnMen:
+{
+  PHX
+  LDY.b #$00                              ; man
+  LDX.b #$00                              ; slot
+  .find
+    LDA.w SprState, X : BNE .busy
+      LDA.b #$08 : STA.w SprState, X
+      LDA.b #Sprite_Farore : STA.w SprType, X
+      TYA : CLC : ADC.b #!DreamPower_SubMan0 : STA.w SprSubtype, X
+      STZ.w SprFloor, X
+      LDA.w .x_lo, Y : STA.w SprX, X
+      LDA.w .x_hi, Y : CLC : ADC.w $0FB0 : STA.w SprXH, X
+      LDA.w .y_lo, Y : STA.w SprY, X
+      LDA.w .y_hi, Y : CLC : ADC.w $0FB1 : STA.w SprYH, X
+      LDA.b #$FF : STA.w $0BC0, X         ; no room death bit
+      STZ.w $0CBA, X                      ; no key drop
+      INY : CPY.b #$03 : BCS .out
+    .busy
+    INX : CPX.b #$10 : BCC .find
+  .out
+  PLX
+  RTS
+
+  .x_lo
+  db !DP_ManX0&$FF, !DP_ManX1&$FF, !DP_ManX2&$FF
+  .x_hi
+  db !DP_ManX0>>8, !DP_ManX1>>8, !DP_ManX2>>8
+  .y_lo
+  db !DP_ManY0&$FF, !DP_ManY1&$FF, !DP_ManY2&$FF
+  .y_hi
+  db !DP_ManY0>>8, !DP_ManY1>>8, !DP_ManY2>>8
+}
+
+DreamPower_OpVanish:
+{
+  LDA.b $05 : CLC : ADC.b #!DreamPower_SubMan0 : STA.b $06
+  LDY.b #$0F
+  .find
+    LDA.w SprState, Y : BEQ .next
+    LDA.w SprType, Y : CMP.b #Sprite_Farore : BNE .next
+    LDA.w SprSubtype, Y : CMP.b $06 : BNE .next
+      LDA.b #!DP_VanishFrames : STA.w SprMiscB, Y
+      RTS
+    .next
+    DEY : BPL .find
+  RTS
+}
+
+DreamPower_OpSfx:
+{
+  LDA.b $05 : STA.w $012E
+  RTS
+}
+
+DreamPower_OpFlash:
+{
+  LDA.b $05 : BEQ .off
+    JSR DreamWisdom_FlashOn
+    RTS
+  .off
+  JSR DreamWisdom_FlashOff
+  RTS
+}
+
+; The Captain ($D1) becomes Kydrog's silhouette: his pirate frame from sheet
+; $42 (slot 1, Dream_Wisdom) drawn in OBJ palette 6, set to black here. The
+; hut reload loads every palette again.
+DreamPower_OpFall:
+{
+  LDY.b #$0F
+  .find
+    LDA.w SprState, Y : BEQ .next
+    LDA.w SprType, Y : CMP.b #Sprite_Farore : BNE .next
+    LDA.w SprSubtype, Y : CMP.b #!DreamWisdom_SubCaptain : BNE .next
+      LDA.b #!DreamPower_SubSilhouette : STA.w SprSubtype, Y
+      LDA.b #!DP_FrameSilhouette : STA.w SprFrame, Y
+      LDA.w $0E40, Y : AND.b #$E0 : ORA.b #$05 : STA.w $0E40, Y ; 6 pieces
+      BRA .palette
+    .next
+    DEY : BPL .find
+  .palette
+  PHX
+  REP #$20
+  LDX.b #$1C
+  LDA.w #$0000
+  .black
+    STA.l !DP_SilhouettePal, X
+    STA.l !DP_SilhouettePal-$200, X       ; fade target ($7EC300 copy)
+    DEX : DEX : BPL .black
+  SEP #$20
+  PLX
+  LDA.b #$01 : STA.b $15                  ; upload the palettes in NMI
+  RTS
+}
+endif
 
 ; ---------------------------------------------------------
 ; The king's sheet in sprite slot 2. Group $57 (room $00) loads $27 there,
@@ -267,4 +538,34 @@ DreamPower_KingSheet:
   STA.l $7EC2FE
   RTL
 }
+
+if !ENABLE_DREAM_BED_WAKE == 1
+; ---------------------------------------------------------
+; JSR from DreamWisdom_ReleaseLink: the hut reload after a finished scene,
+; at the end of the room's sprite list (Underworld_ResetSprites), where the
+; vanilla intro calls Link_TuckIntoBed ($07:9A2C, after $02834C). Same state
+; at the hut's bed: sleeping ($5D = $16), snoring ($037C = 0), the blanket.
+; Maple sits him up later (maple.asm, Maple_WakeLink). M = 8, X = 8, DB = $30.
+DreamWake_TuckIntoBed:
+{
+  REP #$20
+  LDA.w #!DreamWake_BedY : STA.b $20 : STA.w $0FC4
+  LDA.w #!DreamWake_BedX : STA.b $22 : STA.w $0FC2
+  SEP #$20
+  LDA.b #$16 : STA.b LinkState            ; asleep in bed
+  STZ.w $037C : STZ.w $037D
+  LDA.b #$03 : STA.w $0374
+  LDA.b #$20 : JSL AncillaAdd_Blanket     ; ancilla slot 0, at the vanilla bed
+  ; Move it onto Link, as Sprite_PutLinkToSleep (maple.asm) does.
+  REP #$20
+  LDA.b $20 : CLC : ADC.w #$0004
+  SEP #$20
+  STA.w $0BFA : XBA : STA.w $0C0E
+  REP #$20
+  LDA.b $22 : SEC : SBC.w #$0008
+  SEP #$20
+  STA.w $0C04 : XBA : STA.w $0C18
+  RTS
+}
+endif
 endif
