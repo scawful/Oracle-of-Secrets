@@ -1569,3 +1569,19 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   as a spec", "i dont think we need ideas for where to place these" and
   "Option A: Secrets gold, Time's note becomes purple to match its tint,
   Stone bronze." (scawful, 2026-10-18).
+
+* DECIDED Goron Mines safe rails: straight collision on the 313 drawn-rail tiles in seven rooms; no layout change
+  :PROPERTIES:
+  :ASKED_BY: Claude (D6 redesign, first scope)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_mines_redesign_2026-10-18/safe_rails/WORK.md
+  :END:
+  In $77, $89, $97, $98, $B9, $D7 and $D8, the lane tiles of plain straight
+  rail pieces that had no custom-collision cell read the drawn rail's default
+  T junction ($BB/$BC), where a held direction (and, on $BC, a southbound
+  cart with no input) turns the cart off the rail. Those 313 tiles now hold
+  $B0 (horizontal) or $B1 (vertical). Stops, corners, junctions, the $77
+  switch, objects and sprites stay as they are; rails stay walkable. Today's
+  carts ride beside these tiles; they matter for the planned tracks T8 ($B9),
+  T13 ($D7) and T16 ($D8).
+  Answer: "Safe rails first: fix the 313 derail tiles in the 7 rooms, no
+  layout change." (scawful, 2026-10-18).
