@@ -34,6 +34,7 @@ from generate_hack_manifest import (
     MINECART_TRACK_SOURCE_CONTRACT,
     generate_manifest,
 )
+from palette_catalog_contract import validate_palette_catalog
 
 
 PORTABLE_BUILD_SCRIPT = "project/Scripts/Build/build_rom.sh"
@@ -522,6 +523,32 @@ def write_bundle_hack_manifest(bundle_root: Path) -> Path:
     return destination
 
 
+def _portable_palette_catalog(bundle_root: Path) -> str | None:
+    """Rebase optional metadata from the staged desktop descriptor."""
+    descriptor = bundle_root / "project" / "Oracle-of-Secrets.yaze"
+    if not descriptor.is_file():
+        return None
+    _, assignments = _parse_project_contract(descriptor.read_text(encoding="utf-8"))
+    values = [value for section, key, value in assignments
+              if section == "files" and key == "palette_catalog_file"]
+    if len(values) > 1:
+        raise ValueError("Duplicate palette_catalog_file in desktop project")
+    if not values or not values[0]:
+        return None
+    relative = Path(values[0])
+    if (relative.is_absolute() or PureWindowsPath(values[0]).root
+            or any(part == ".." for part in relative.parts)
+            or "\\" in values[0] or ":" in values[0] or "\0" in values[0]):
+        raise ValueError("palette_catalog_file must be project-relative")
+    rebased = "project/" + relative.as_posix()
+    resolved = _resolve_bundle_member(
+        bundle_root, rebased, "palette_catalog_file", must_exist=True)
+    if not resolved.is_relative_to((bundle_root / "project").resolve()):
+        raise ValueError("palette_catalog_file escapes the source snapshot")
+    validate_palette_catalog(resolved)
+    return rebased
+
+
 def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
     """
     Write `project.yaze` at bundle root with paths relative to bundle root.
@@ -531,6 +558,7 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
     """
     now = _dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     project_id = slugify_project_id(name)
+    palette_catalog = _portable_palette_catalog(bundle_root)
 
     # Keep this file intentionally minimal and portable. yaze will add more
     # settings as users customize the project.
@@ -565,6 +593,7 @@ def write_project_file(bundle_root: Path, name: str, rom_sha1: str) -> None:
             "output_folder=project/Roms",
             "custom_objects_folder=project/Dungeons/Objects/Data",
             f"hack_manifest_file={PORTABLE_HACK_MANIFEST}",
+            *([f"palette_catalog_file={palette_catalog}"] if palette_catalog else []),
             "additional_roms=",
             "",
             "[feature_flags]",
@@ -661,6 +690,12 @@ def verify_bundle(bundle_root: Path) -> None:
         "utf-8"
     )
     validate_portable_project_contract(project_content, rom_sha1)
+    palette_catalog = _portable_palette_catalog(bundle_root)
+    _, assignments = _parse_project_contract(project_content)
+    values = [value for section, key, value in assignments
+              if section == "files" and key == "palette_catalog_file"]
+    if values != ([palette_catalog] if palette_catalog else []):
+        raise ValueError("Bundle palette_catalog_file differs from source descriptor")
 
     hack_manifest_path = bundle_root / PORTABLE_HACK_MANIFEST
     try:
