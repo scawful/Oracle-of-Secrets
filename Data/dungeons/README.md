@@ -13,8 +13,22 @@ older nonzero-only tools do not satisfy this contract.
 
 ## Current provenance
 
-The 2026-10-12 approved Shrine of Power restore retains all prior room entries
-and restores rooms `$83` and `$84` from their surviving original streams.
+The 2026-10-18 Goron Mines cart change (scawful: "You steer (Recommended)")
+lets the cart ride from room `$87` north into room `$77`. Room `$87`'s (44,6)
+stop becomes a `$B1` rail. Room `$77` gains a `$BB` T-junction at (44,38) and
+69 straight-rail cells on the cart's paths. The same change adds the junction
+rail object to room `$77` in the base ROM (AFS recipe
+`handoffs/cart_087_077_2026-10-18/recipe/apply_cart_087_077.py`).
+
+- source: 20 rooms, 2,878 explicit tiles (2,782 nonzero and 96 floor tiles)
+- source SHA-256:
+  `6930077bce74c7ad9d692d5c18850c4591f5f603eeb384cdbe911d3a93a30cf8`
+- matching edit base SHA-256 (base `4505fe0a` plus the recipe):
+  `e615fa8d79a2ba67e60cfb2ccee0a4d3e4d2504697e369588738e6827aeedd1c`
+
+The 2026-10-12 approved Shrine of Power restore is retained as history. It kept
+all prior room entries and restored rooms `$83` and `$84` from their surviving
+original streams.
 Room `$83` has 74 explicit floor cells and 12 `$FF` cells; room `$84` has two
 `$08` cells. Room `$74`'s 22 floor cells were already present in the ROM and
 are now represented in the source without changing that room's ROM data.

@@ -1503,3 +1503,19 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   kydrogs pirate spritesheet at some point", "the thrones look like stoves
   right now though, need to fix the object set", "add a pose that'd be
   great", "B: hand on shoulder (Recommended)" (scawful, 2026-10-16).
+
+* DECIDED Goron Mines cart rides from $87 into $77; the player steers at the junction
+  :PROPERTIES:
+  :ASKED_BY: Claude (D6 playtest fix)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/cart_087_077_2026-10-18/README.md
+  :END:
+  The playtest cart stopped at the top of $87's north rail. That stop was the
+  2026-09-24 R4 placeholder: $77's end of the rail was never finished (its rail
+  gap is where the unbuilt lever switch of Option C would go). The stop becomes
+  rail, and $77 gets a T junction where its rails meet: hold Left for the west
+  stop, Right or nothing for the east stop, and Down there to ride back to $87.
+  $77's lever stays unused. The 2026-09-25 walk-in plan (W) for this spot was
+  never built; the room redesign can revisit it.
+  Answers: "if its in the data we need to update it. though i prob should just
+  redesign the room i want to make sure it's not a bug" and "You steer
+  (Recommended)" (scawful, 2026-10-18).
