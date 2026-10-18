@@ -77,6 +77,19 @@ Menu_Entry:
   JSR (.vectors,X)
 
   SEP #$20
+  ; Held pages need the full map, not another copy of frozen-world graphics.
+  ; Pair the skip flag with transfer 1: NMI_UploadTilemap clears $0710 after
+  ; its DMA. OAM, palettes and HUD still upload; transitions use their old path.
+  LDA.w $0200 : CMP.b #!MENU_STATE_ITEM_SCREEN : BEQ .held_page
+  CMP.b #!MENU_STATE_STATS_SCREEN : BNE .dma_ready
+.held_page
+  LDA.b $17 : CMP.b #$01 : BNE .dma_ready
+  LDA.w $0116 : CMP.b #$22 : BEQ .full_menu_map
+  CMP.b #$23 : BNE .dma_ready
+.full_menu_map
+  LDA.w $0710 : BNE .dma_ready
+  LDA.b #$01 : STA.w $0710
+.dma_ready
   PLB
   RTL
 
