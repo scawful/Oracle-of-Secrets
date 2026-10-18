@@ -1,4 +1,4 @@
-; Functional Equipment: slots 0-4 masks, 5-10 rings, 11-14 songs, 15-17 gear.
+; Functional Equipment: slots 0-4 masks, 5-10 rings, 11-14 songs, 15-20 supplies.
 ; $020B is only the cursor; BoundMask, RingSlot1 and CurrentSong are selections.
 ; No preview fixture or ownership spoof controls availability. DBR = $2D.
 Menu_Equipment_Init:
@@ -14,14 +14,14 @@ Menu_Equipment_Init:
 .scan
   STA.w $020B
   JSR Menu_Equipment_Owned : BNE .done
-  LDA.w $020B : INC : CMP.b #$12 : BCC .scan
-  LDA.b #$FF : STA.w $020B             ; empty inventory has no cursor
+  LDA.w $020B : INC : CMP.b #$15 : BCC .scan
+  LDA.b #$FF : STA.w $020B             ; no valid owned entry has no cursor
 .done
   RTS
 }
 
 ; A = slot; returns the bounded icon variant, zero when unavailable.
-; Keeps X/Y, 8-bit A/X/Y. Rings are available only after appraisal.
+; Keeps X/Y, 8-bit A/X/Y. Rings require appraisal; supplies remain selectable at 0.
 Menu_Equipment_Owned:
 {
   PHX
@@ -36,19 +36,13 @@ Menu_Equipment_Owned:
   LDA.w Menu_Page3_RingBits,X : AND.l MAGICRINGS : BEQ .done
   TXA : INC #2 : BRA .done
 .song
-  CMP.b #$0F : BCS .gear
+  CMP.b #$0F : BCS .supplies
   SEC : SBC.b #$0A                    ; song 1-4 < Ocarina progression
   CMP.l $7EF34C : BCS .none
   INC : BRA .done                    ; colored note variants 2-5
-.gear
-  CMP.b #$12 : BCS .none
-  SEC : SBC.b #$0F : TAX
-  LDA.l $7EF354,X : BEQ .done         ; glove, shoes, flippers
-  CPX.b #$00 : BNE .boolean
-  CMP.b #$03 : BCC .done
-  LDA.b #$02 : BRA .done
-.boolean
-  LDA.b #$01 : BRA .done
+.supplies
+  CMP.b #$15 : BCS .none
+  LDA.b #$01 : BRA .done             ; count never indexes the one-variant icon
 .none
   LDA.b #$00
 .done
@@ -59,12 +53,24 @@ Menu_Equipment_Owned:
   db $49,$47,$58,$48,$52
 }
 
+; A = valid supply slot 15-20; returns its byte quantity. Keeps X/Y, M/X=8.
+Menu_Equipment_SupplyCount:
+{
+  PHX
+  SEC : SBC.b #$0F : TAX
+  LDA.w Menu_Equipment_CountLow,X : TAX
+  LDA.l $7EF300,X
+  PLX
+  ORA.b #$00                         ; report count's Z, not restored X's Z
+  RTS
+}
+
 ; Horizontal movement wraps within the row and skips unowned entries.
 ; Vertical movement finds the nearest owned column in the next nonempty row.
 Menu_Equipment_Move:
 {
   SEP #$30
-  LDA.w $020B : CMP.b #$12 : BCC .valid
+  LDA.w $020B : CMP.b #$15 : BCC .valid
   JMP Menu_Equipment_Init
 .valid
   LDA.b $F4 : AND.b #$0F : BNE +
@@ -119,18 +125,18 @@ Menu_Equipment_Move:
 .done
   RTS
 .next
-  db 1,2,3,4,0, 6,7,8,9,10,5, 12,13,14,11, 16,17,15
+  db 1,2,3,4,0, 6,7,8,9,10,5, 12,13,14,11, 16,17,18,19,20,15
 .prev
-  db 4,0,1,2,3, 10,5,6,7,8,9, 14,11,12,13, 17,15,16
+  db 4,0,1,2,3, 10,5,6,7,8,9, 14,11,12,13, 20,15,16,17,18,19
 .starts
   db 0,5,11,15
 .ends
-  db 5,11,15,18
+  db 5,11,15,21
 }
 Menu_Equipment_Rows:
-  db 0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2, 3,3,3
+  db 0,0,0,0,0, 1,1,1,1,1,1, 2,2,2,2, 3,3,3,3,3,3
 Menu_Equipment_Columns:
-  db 7,10,13,17,20, 7,10,13,17,20,23, 7,10,13,17, 7,10,13
+  db 7,10,13,17,20, 7,10,13,17,20,23, 7,10,13,17, 7,10,13,17,20,23
 
 Menu_Equipment_Select:
 {
@@ -146,7 +152,7 @@ Menu_Equipment_Select:
   SEC : SBC.b #$03                    ; slots 5-10 -> ring IDs 2-7
   JMP Menu_Page3_ToggleRing
 .song
-  CMP.b #$0F : BCS .done              ; gear is informational
+  CMP.b #$0F : BCS .supplies
   SEC : SBC.b #$0A : STA.w CurrentSong
   STA.l SavedOcarinaSong              ; survives save/reload ($030F does not)
   LDA.b #$0D : STA.w $0202            ; normal Y item, independent of mask
@@ -154,6 +160,14 @@ Menu_Equipment_Select:
   LDA.b #$22 : STA.w $012F
   LDA.b #$20 : STA.w $0207
 .done
+  RTS
+.supplies
+  LDA.b $F6 : BIT.b #$80 : BEQ .done ; Y may select above, but never consumes
+  LDA.w $020B : PHA
+  SEC : SBC.b #$0F : STA.w $020B     ; existing handlers use indices 0-5
+  JSR MagicBag_ConsumeItem
+  SEP #$30
+  PLA : STA.w $020B                  ; restore Equipment's cursor after use
   RTS
 .error
   LDA.b #$3C : STA.w $012E
@@ -173,8 +187,11 @@ Menu_Equipment_Draw:
   LDA.w .masks,X : STA.w $1000+menu_offset(9,6),X
   LDA.w .rings,X : STA.w $1000+menu_offset(13,6),X
   LDA.w .songs,X : STA.w $1000+menu_offset(17,6),X
-  LDA.w .gear,X  : STA.w $1000+menu_offset(21,6),X
   DEX #2 : BPL .labels
+  LDX.w #$000E
+.supplies_label
+  LDA.w .supplies,X : STA.w $1000+menu_offset(21,6),X
+  DEX #2 : BPL .supplies_label
   SEP #$30
   LDA.b #$7E : STA.b $0A
   LDY.b #$00
@@ -190,7 +207,9 @@ Menu_Equipment_Draw:
   JSR DrawMenuItem
   SEP #$30
   PLY
-  INY : CPY.b #$12 : BCC .icons
+  INY : CPY.b #$15 : BCC .icons
+
+  JSR Menu_Equipment_UsePrompt
 
   LDA.l BoundMask : DEC : CMP.b #$05 : BCS .no_mask
   JSR .marker
@@ -230,8 +249,29 @@ Menu_Equipment_Draw:
   dw "RINGS"
 .songs
   dw "SONGS"
-.gear
-  dw "GEAR_"
+.supplies
+  dw "SUPPLIES"
+}
+
+; Only the three implemented foods advertise Use, and only with stock.
+; Menu_DrawBackground clears the prompt when another cell is selected.
+Menu_Equipment_UsePrompt:
+{
+  LDA.w $020B : SEC : SBC.b #$0F : CMP.b #$06 : BCS .done
+  CMP.b #$02 : BCC .count
+  CMP.b #$04 : BNE .done
+.count
+  LDA.w $020B : JSR Menu_Equipment_SupplyCount : BEQ .done
+  REP #$30
+  LDX.w #$0008
+.text
+  LDA.w .prompt,X : STA.w $1000+menu_offset(21,20),X
+  DEX #2 : BPL .text
+  SEP #$30
+.done
+  RTS
+.prompt
+  dw "A:USE"
 }
 
 ; Two-row brackets use existing corner tiles beside the icon, leaving the
@@ -249,44 +289,50 @@ Menu_Equipment_Bracket:
 Menu_Equipment_Name:
 {
   LDA.w $020B : JSR Menu_Equipment_Owned : BEQ .done
-  LDA.w $020B : CMP.b #$0F : BCC .table
-  CMP.b #$0F : BNE .table
-  LDA.l $7EF354 : CMP.b #$02 : BCC .table
-  REP #$30
-  LDX.w #.mitt : BRA .copy
-.table
   LDA.w $020B : ASL : TAX
   REP #$30
   LDA.w Menu_Equipment_Names,X : TAX
-.copy
   LDY.w #$0000
 .loop
   LDA.w $0000,X : STA.w $1692,Y
   INX #2 : INY #2 : CPY.w #$001C : BCC .loop
+  SEP #$30
+  LDA.w $020B : CMP.b #$0F : BCC .done
+  JSR Menu_Equipment_SupplyCount
+  REP #$30
+  AND.w #$00FF
+  LDX.w #$06A6                       ; $1692 + 10 name cells, relative to $1000
+  JSR Menu_Quest_Number3
 .done
   SEP #$30
   RTS
-.mitt
-  dw "_TITANS_MITT__"
 }
-Menu_Equipment_GearNames:
-  dw "_POWER_GLOVE__"
-  dw "PEGASUS_SHOES_"
-  dw "___FLIPPERS___"
+; Ten name cells, three quantity cells (drawn above), one final blank.
+Menu_Equipment_SupplyNames:
+  dw "BANANA________"
+  dw "PINEAPPLE_____"
+  dw "ROCK_MEAT_____"
+  dw "SEASHELL______"
+  dw "HONEYCOMB_____"
+  dw "DEKU_STICK____"
+Menu_Equipment_CountLow:
+  db $8B,$8D,$8F,$91,$93,$95
 Menu_Equipment_Names:
   dw Menu_ItemNames+(18*32),Menu_ItemNames+(19*32),Menu_ItemNames+(20*32) ; asar math is left to right: keep the parentheses
   dw Menu_ItemNames+(21*32),Menu_ItemNames+(22*32)
   dw Menu_RingNames,Menu_RingNames+32,Menu_RingNames+64
   dw Menu_RingNames+96,Menu_RingNames+128,Menu_RingNames+160
   dw Menu_SongNames,Menu_SongNames+32,Menu_SongNames+64,Menu_SongNames+96
-  dw Menu_Equipment_GearNames,Menu_Equipment_GearNames+28,Menu_Equipment_GearNames+56
+  dw Menu_Equipment_SupplyNames,Menu_Equipment_SupplyNames+28,Menu_Equipment_SupplyNames+56
+  dw Menu_Equipment_SupplyNames+84,Menu_Equipment_SupplyNames+112,Menu_Equipment_SupplyNames+140
 Menu_Equipment_Gfx:
   dw DekuMaskGFX,ZoraMaskGFX,WolfMaskGFX,BunnyHoodGFX,StoneMaskGFX
   dw RingGFX,RingGFX,RingGFX,RingGFX,RingGFX,RingGFX
   dw QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX,QuarterNoteGFX
-  dw PowerGloveGFX,PegasusBootsGFX,FlippersGFX
+  dw BananaGFX,PineappleGFX,RockMeatGFX,SeashellGFX,HoneycombGFX,DekuStickGFX
 Menu_Equipment_Pos:
   dw menu_offset(6,3),menu_offset(6,6),menu_offset(6,9),menu_offset(6,13),menu_offset(6,16)
   dw menu_offset(10,3),menu_offset(10,6),menu_offset(10,9),menu_offset(10,13),menu_offset(10,16),menu_offset(10,19)
   dw menu_offset(14,3),menu_offset(14,6),menu_offset(14,9),menu_offset(14,13)
   dw menu_offset(18,3),menu_offset(18,6),menu_offset(18,9)
+  dw menu_offset(18,13),menu_offset(18,16),menu_offset(18,19)

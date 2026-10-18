@@ -163,6 +163,9 @@ incsrc "menu_draw.asm"
 
 Menu_UploadRight:
 {
+if !ENABLE_EQUIPMENT_MENU == 1
+  JSR Menu_Quest_Draw
+else
   JSR Menu_DrawBackground
   JSR Menu_DrawQuestItems
   JSR Menu_DrawCharacterName
@@ -179,6 +182,7 @@ Menu_UploadRight:
   JSR Menu_DrawQuestStatus
   JSR Menu_DrawAreaNameTXT
   JSR DrawLocationName
+endif
 
   SEP #$30
   LDA.b #$23 : STA.w $0116
@@ -249,6 +253,7 @@ incsrc "menu_select_item.asm"
 
 Menu_CheckForSpecialMenus:
 {
+if !ENABLE_EQUIPMENT_MENU == 0
     LDA.w $0202 : CMP.b #!MENU_STATE_SCROLL_TO : BNE +
       LDA.b $F6 : BIT.b #$80 : BEQ +
         STZ.w $020B
@@ -256,7 +261,6 @@ Menu_CheckForSpecialMenus:
         JSR Menu_DeleteCursor ; Ensure cursor is deleted
         SEC : RTS             ; Return Carry Set
     +
-if !ENABLE_EQUIPMENT_MENU == 0
     LDA.w $0202 : CMP.b #!MENU_STATE_SONG_MENU : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
         LDA.b #!MENU_STATE_SONG_MENU : STA.w $0200
@@ -387,6 +391,9 @@ Menu_ScrollTo:
 {
   SEP #$20
   JSR Menu_ScrollHorizontal : BCC .not_done
+if !ENABLE_EQUIPMENT_MENU == 1
+    JSR Menu_Quest_Init
+endif
     JSR Menu_RefreshQuestScreen
     INC.w $0200
   .not_done
@@ -400,6 +407,9 @@ incsrc "menu_scroll.asm"
 
 Menu_StatsScreen:
 {
+if !ENABLE_EQUIPMENT_MENU == 1
+  JMP Menu_QuestScreen
+else
   JSR Menu_CheckHScroll
 
   ; X Button: Open Journal
@@ -425,6 +435,7 @@ endif
 
   ; JSR Menu_StatsScreen_Input ; Selection disabled per user request
   RTS
+endif
 }
 
 ; =========================================================
@@ -532,6 +543,9 @@ Menu_Exit:
 
 Menu_RefreshQuestScreen:
 {
+if !ENABLE_EQUIPMENT_MENU == 1
+  JMP Menu_Quest_Draw
+else
   JSR Menu_DrawBackground
   JSR Menu_DrawQuestItems
   JSR Menu_DrawCharacterName
@@ -550,6 +564,7 @@ Menu_RefreshQuestScreen:
   JSR DrawLocationName
   SEP #$30               ; Restore 8-bit mode before return
   RTS
+endif
 }
 
 Menu_RefreshInventoryScreen:
@@ -745,7 +760,8 @@ MagicBag_ConsumeItem:
 
     REP #$30
     ; Calculate SRAM address for current item (4 bytes per entry)
-    LDA.w $020B : ASL #2 : TAX
+    LDA.w $020B : AND.w #$00FF : CMP.w #$0006 : BCS .invalid_cursor
+    ASL #2 : TAX
     LDA.l .sram_addresses, X : STA $00
     LDA.l .sram_addresses+2, X : STA $02
     SEP #$30
@@ -769,6 +785,10 @@ MagicBag_ConsumeItem:
 .failed_use_dbr
 .error_dbr
     PLB                        ; Restore data bank (was pushed at line 597)
+    BRA .error
+.invalid_cursor
+    SEP #$30
+.error
     ; Error Sound
     LDA.b #$3C : STA.w $012E
     BRA .exit
@@ -1221,6 +1241,9 @@ endif
 menu_frame: incbin "tilemaps/menu_frame.tilemap"
 quest_icons: incbin "tilemaps/quest_icons.tilemap"
 incsrc "menu_map_names.asm"
+if !ENABLE_EQUIPMENT_MENU == 1
+  incsrc "menu_quest.asm"
+endif
 if !ENABLE_MENU_PAGE3 == 1
   incsrc "menu_page3.asm" ; end of bank $2D, after the map names
 endif
