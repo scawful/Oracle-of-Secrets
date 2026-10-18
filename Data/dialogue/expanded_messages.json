@@ -1,6 +1,6 @@
 {
   "counts": {
-    "expanded": 121,
+    "expanded": 130,
     "vanilla": 0
   },
   "format": "yaze-message-bundle",
@@ -609,6 +609,51 @@
       "bank": "expanded",
       "id": 120,
       "text": "[W:02][S:03]Keep the seal,[2]Captain. This blade[3]is its key.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 121,
+      "text": "[W:02][S:03]My king... I warned[2]our scholars. They[3]would not turn back.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 122,
+      "text": "[W:02][S:03]Beyond their Mirror lies[2]a prison. Will Hyrule[3]help us keep it sealed?[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 123,
+      "text": "[W:02][S:03]We will send a garrison.[2]The Golden Power must[3]be protected.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 124,
+      "text": "[W:02][S:03]Then send guards,[2]my king. Keep it[3]sealed.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 125,
+      "text": "[W:02][S:03]I thought I could[2]keep Kalyxo safe.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 126,
+      "text": "A king? Tell him[2]naps cost extra.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 127,
+      "text": "[W:02][S:03]Your king forgot you.[2]We have not.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 128,
+      "text": "[W:02][S:03]The Golden Power can[2]bring your men back.[K]"
+    },
+    {
+      "bank": "expanded",
+      "id": 129,
+      "text": "Bad dream? You were[2]talking in your sleep...[3]about a sword.[K]"
     }
   ],
   "version": 1

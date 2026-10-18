@@ -41,6 +41,10 @@ DreamRoom_Stage:
   LDA.w $048E : CMP.l Link_WarpToRoom_room, X : BNE .done
   CPX.b #$01 : BNE .load_sheets
   JSR DreamRoom_PowerLanding
+  if !ENABLE_DREAM_POWER_SCENE == 1
+    ; The scene before the sheets: ClearPPU then uploads its blank HUD.
+    JSL DreamPower_Stage                  ; dream_power.asm
+  endif
   .load_sheets
   JSL DreamRoom_LoadSheets
   .done
