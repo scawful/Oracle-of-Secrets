@@ -147,6 +147,8 @@ LinkItem_FirePortal:
 
   .finish
   TYX
+  ; This is Link's cast, not a child of the allocator's source sprite slot.
+  LDA.b $EE : STA.w SprFloor, X
   STZ.w SprYRound, X : STZ.w SprXRound, X
   ; Dynamic spawning skips Prep; keep this portal active off camera too.
   LDA.w SprDefl, X : ORA.b #$80 : STA.w SprDefl, X
