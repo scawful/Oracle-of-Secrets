@@ -75,8 +75,6 @@ Menu_Entry:
   PHB : PHK : PLB
   LDA.w $0200 : ASL : TAX
   JSR (.vectors,X)
-  JSL MenuTimeNote_TrackLong
-  JSL MenuTimeNote_Prepare
 
   SEP #$20
   PLB
@@ -1142,8 +1140,3 @@ incsrc "menu_hud.asm"
 %log_end("Menu/menu_hud.asm", !LOG_MENU)
 incsrc "menu_journal.asm"
 %log_end("Menu/menu_journal.asm", !LOG_MENU)
-
-; Time uses a guarded OBJ color; the eight original BG3 palettes stay intact.
-incsrc "menu_time_note_tracking.asm"
-incsrc "menu_time_note.asm"
-incsrc "menu_time_note_hooks.asm"
