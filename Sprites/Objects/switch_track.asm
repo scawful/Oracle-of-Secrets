@@ -49,8 +49,12 @@ Sprite_RotatingTrack_Prep:
 
   ; Setup Minecart position to look for tile IDs
   ; We use AND #$F8 to clamp to a 8x8 grid.
-  ; Subtract 8 from the Y position to get the tile right above instead.
-  LDA.w SprY, X : AND #$F8 : SEC : SBC.b #$08 : STA.b $00
+  ; The switch tile sits under the sprite's own top-left 8x8 cell: room
+  ; sprites land on 16-px rows, and the rails a cart turns onto run on the
+  ; same row (room $77 junction at (44,38)). CheckTrackSpritePresence in
+  ; minecart.asm matches the sprite on that row. The zero operand keeps the
+  ; routine's size (it was #$08, the cell above the sprite).
+  LDA.w SprY, X : AND #$F8 : SEC : SBC.b #$00 : STA.b $00
   LDA.w SprYH, X : STA.b $01
 
   LDA.w SprX, X : AND #$F8 : STA.b $02
