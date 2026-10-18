@@ -1503,3 +1503,18 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   kydrogs pirate spritesheet at some point", "the thrones look like stoves
   right now though, need to fix the object set", "add a pose that'd be
   great", "B: hand on shoulder (Recommended)" (scawful, 2026-10-16).
+
+* DECIDED Wisdom dream shots 3-5 stay in the great hall
+  :PROPERTIES:
+  :ASKED_BY: Claude (Wisdom dream shots 3-6)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/wisdom_shots3_6_2026-10-18/mock/wisdom_shots3_5_location.png
+  :END:
+  Shots 3-5 of the Sealing War storyboard (his men fade, the prison speaks
+  D1.03/D1.04, he falls and Kydrog's silhouette stands in his place) play in
+  the great hall from shot 2 for 1.0, not at the real Master Sword grove (DW
+  $40, screen $41). This amends "Seal geography" item 5 for 1.0; the grove
+  can come in 1.1 with the expanded dream cinematography. Shot 6 wakes Link
+  in Maple's bed ("Abyss fixes follow-ups" item 3, the later step).
+  Question: "Where should Wisdom shots 3-5 play (his men fade away, the
+  prison speaks, he falls)?"
+  Answer: "Great hall (Recommended)" (scawful, 2026-10-18).
