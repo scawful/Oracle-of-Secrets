@@ -6,6 +6,9 @@
 ; great hall (Sprites/NPCs/dream_wisdom.asm).
 !DreamMsg_WisdomNarration = $0204
 !DreamMsg_WisdomFarore    = $0205
+; Power dream (!ENABLE_DREAM_POWER_SCENE): D2.06, Maple once Link is back in
+; the hut after the scene (Sprites/NPCs/dream_power.asm).
+!DreamMsg_PowerWake       = $020B
 
 MapleHandler:
 {
@@ -30,6 +33,18 @@ MapleHandler:
 
   Maple_Idle:
   {
+    if !ENABLE_DREAM_POWER_SCENE == 1
+      ; D2.06 once, on the first frame Link is back in the hut after a
+      ; finished Power scene (DreamPower_Main sets the word at its exit).
+      REP #$20
+      LDA.l DreamPower_WakeLine : CMP.w #!DreamPower_WakeLive
+      SEP #$20                            ; SEP keeps Z
+      BNE .no_wake_line
+        LDA.b #$00 : STA.l DreamPower_WakeLine : STA.l DreamPower_WakeLine+1
+        %ShowUnconditionalMessage(!DreamMsg_PowerWake)
+        RTS
+      .no_wake_line
+    endif
     %ShowSolicitedMessage($01B3) : BCC +
       INC.w SprAction, X
     +
@@ -178,6 +193,11 @@ Link_HandleDreams:
 
   Dream_Power:
   {
+    if !ENABLE_DREAM_POWER_SCENE == 1
+      ; Farore's sheet for room $00, as Dream_Wisdom: group $57 keeps slot 3.
+      ; The king's sheet comes in through DreamPower_KingSheet (slot 2).
+      LDA.b #$55 : STA.l LASTSPRSET3
+    endif
     LDX.b #$01
     JSR Link_WarpToRoom
     RTS
