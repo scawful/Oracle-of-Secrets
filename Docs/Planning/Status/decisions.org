@@ -1523,6 +1523,38 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   of Heart (Recommended)" and "$077 crab drop (Recommended),$099 chest key
   (Recommended),$079 pot key (Recommended)" (scawful, 2026-10-18).
 
+* DECIDED Wisdom dream shots 3-5 stay in the great hall
+  :PROPERTIES:
+  :ASKED_BY: Claude (Wisdom dream shots 3-6)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/wisdom_shots3_6_2026-10-18/mock/wisdom_shots3_5_location.png
+  :END:
+  Shots 3-5 of the Sealing War storyboard (his men fade, the prison speaks
+  D1.03/D1.04, he falls and Kydrog's silhouette stands in his place) play in
+  the great hall from shot 2 for 1.0, not at the real Master Sword grove (DW
+  $40, screen $41). This amends "Seal geography" item 5 for 1.0; the grove
+  can come in 1.1 with the expanded dream cinematography. Shot 6 wakes Link
+  in Maple's bed ("Abyss fixes follow-ups" item 3, the later step).
+  Question: "Where should Wisdom shots 3-5 play (his men fade away, the
+  prison speaks, he falls)?"
+  Answer: "Great hall (Recommended)" (scawful, 2026-10-18).
+
+* DECIDED Two new ocarina songs: Song of Secrets (gold) and Elegy of Stone (bronze); Time's note turns purple
+  :PROPERTIES:
+  :ASKED_BY: Claude (equipment screen songs)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/songs_secrets_stone_2026-10-18/SPEC.md
+  :END:
+  Six songs even out the new equipment screen. Song of Secrets reveals the
+  hidden thing where it is played (hidden chest, secret passage, invisible
+  floor, hint statue). Elegy of Stone leaves one stone Link that holds floor
+  switches and blocks paths. Menu notes: Secrets takes gold, Time's note
+  turns purple to match its purple play tint, Stone is bronze (the menu's
+  brown palette). Sun's Song was dropped (Time already skips to 6am/6pm);
+  Goron Lullaby was judged a one-off. Where they are taught is not decided.
+  Answers: "Write up Song of Secrets (gold) and Elegy of Stone (red-orange)
+  as a spec", "i dont think we need ideas for where to place these" and
+  "Option A: Secrets gold, Time's note becomes purple to match its tint,
+  Stone bronze." (scawful, 2026-10-18).
+
 * DECIDED Goron Mines safe rails: straight collision on the 313 drawn-rail tiles in seven rooms; no layout change
   :PROPERTIES:
   :ASKED_BY: Claude (D6 redesign, first scope)
