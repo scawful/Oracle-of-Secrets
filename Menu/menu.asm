@@ -809,15 +809,9 @@ MagicBag_ConsumeItem:
 ; =========================================================
 ; 0D MENU SONG MENU
 
-if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-; menu-ocarina-blank-slot. Same navigation as the flag-off routine
-; (Right/Up = next song, wraps to 1; Left/Down = previous, stops at 1),
-; but with an 8-bit A, so the song count check really runs. The flag-off
-; routine reads $7EF34C with a 16-bit A and `CMP.b #$02` consumes the
-; next opcode byte, so its no-song branch is dead code and `ASL $9C`
-; runs every frame instead.
-; No song learned ($7EF34C = 1): CurrentSong = 0, four grey notes, no
-; cursor, D-pad ignored, item name "OCARINA" only; A returns, Start closes.
+; Six-song navigation uses the same bounded count in every diagnostic profile.
+; Right/Up advances and wraps; Left/Down stops at the first learned song.
+; An unlearned ocarina has no cursor and ignores direction input.
 Menu_SongMenu:
 {
   REP #$30
@@ -831,9 +825,9 @@ Menu_SongMenu:
     BRA .input_done
   .songs_available
 
-  ; $00 = highest learned song (1-4) = $7EF34C - 1.
-  CMP.b #$06 : BCC .count_ok
-    LDA.b #$05
+  ; $00 = highest learned song (1-6) = $7EF34C - 1.
+  CMP.b #$08 : BCC .count_ok
+    LDA.b #$07
   .count_ok
   DEC : STA.b $00
 
@@ -874,112 +868,9 @@ Menu_SongMenu:
   JSR Menu_DrawCursor
 
   .input_done
-  SEP #$20
-  JSR Submenu_Return
-  SEP #$20
-
-  LDA.b #$22 : STA.w $0116
-  LDA.b #$01 : STA.b $17
-
-  RTS
-}
-else
-Menu_SongMenu:
-{
-  REP #$30
-  JSR Menu_DrawMusicNotes
-
-  ; Menu_DrawMusicNotes leaves A 16-bit. The ownership check is byte-sized;
-  ; narrow A before CMP.b or its operand consumes the following opcode byte.
-  SEP #$20
-  LDA $7EF34C : CMP.b #$02 : BCS .songs_available
-    STZ.w CurrentSong
-    JMP .continue
-  .songs_available
-
-  INC $0207
-  LDA.w CurrentSong : BEQ +
-  ASL : TAY
-  LDA.b $F4
-  LSR : BCC ++ : JMP .move_right : ++
-  LSR : BCC ++ : JMP .move_left : ++
-  LSR : BCC ++ : JMP .move_down : ++
-  LSR : BCS .move_up
-  +
-  JMP .continue
-
-  .move_right
-  .move_up
-    REP   #$30
-    LDX.w Menu_SongIconCursorPositions-2, Y
-    JSR Menu_DeleteCursor_AltEntry
-    LDA.w CurrentSong : CMP.b #$04 : BNE ++ : JMP .reset : ++
-      INC.w CurrentSong
-      LDA.w CurrentSong
-      PHA
-      LDA $7EF34C : CMP.b #$02 : BEQ .max_1
-                    CMP.b #$03 : BEQ .max_2
-                    CMP.b #$04 : BEQ .max_3
-                    CMP.b #$05 : BEQ .max_4
-        PLA
-        CMP.b #$05 : BCS .wrap_to_min
-        JMP .continue
-      .max_1
-      PLA : CMP.b #$02 : BCS .wrap_to_min
-      JMP .continue
-      .max_2
-      PLA : CMP.b #$03 : BCS .wrap_to_min
-      JMP .continue
-      .max_3
-      PLA : CMP.b #$04 : BCS .wrap_to_min
-      JMP .continue
-      .max_4
-      PLA : CMP.b #$05 : BCS .wrap_to_min
-      JMP .continue
-      .wrap_to_max
-      LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_1
-                    CMP.b #$03 : BEQ .set_max_to_2
-                    CMP.b #$04 : BEQ .set_max_to_3
-                    CMP.b #$05 : BEQ .set_max_to_4
-      LDA #$04 : STA.w CurrentSong : JMP .continue
-
-      .set_max_to_3
-      LDA #$03 : STA.w CurrentSong : JMP .continue
-
-      .set_max_to_2
-      LDA #$02 : STA.w CurrentSong : JMP .continue
-
-      .set_max_to_1
-      LDA #$01 : STA.w CurrentSong : JMP .continue
-
-      .set_max_to_4
-      LDA #$04 : STA.w CurrentSong : JMP .continue
-
-      .wrap_to_min
-      LDA #$01 : STA.w CurrentSong
-      BRA .continue
-
-  .move_left
-  .move_down
-    REP   #$30
-    LDX.w Menu_SongIconCursorPositions-2, Y
-    JSR Menu_DeleteCursor_AltEntry
-    LDA.w CurrentSong : CMP.b #$01 : BEQ .reset
-      DEC.w CurrentSong
-      LDA.w CurrentSong
-      CMP #$00 : BEQ .wrap_to_max
-      BRA .continue
-    .reset
-    LDA #$01 : STA.w CurrentSong
-
-  .continue
-
-  JSR Menu_DrawItemName
   SEP #$30
-  LDA.w CurrentSong : ASL : TAY
-  REP #$10
-  LDX.w Menu_SongIconCursorPositions-2, Y
-  JSR Menu_DrawCursor
+  JSL UpdateFluteSong_Long ; save the bounded selection in this file
+  SEP #$20
   JSR Submenu_Return
   SEP #$20
 
@@ -988,13 +879,9 @@ Menu_SongMenu:
 
   RTS
 }
-endif
-
 Menu_SongIconCursorPositions:
-  dw menu_offset(8,4)
-  dw menu_offset(8,8)
-  dw menu_offset(8,12)
-  dw menu_offset(8,16)
+  dw menu_offset(8,2),menu_offset(8,5),menu_offset(8,8)
+  dw menu_offset(8,12),menu_offset(8,15),menu_offset(8,18)
 
 ; =========================================================
 ; 09 MENU RING BOX
