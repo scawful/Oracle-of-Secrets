@@ -88,6 +88,18 @@ jobs:
           # Original message-pointer epilogue guarded by the Minish tutorials.
           printf '\xE2\x30\xAB\x6B' | dd of=test.sfc bs=1 seek=$((0x75447)) conv=notrunc 2>/dev/null  # $0ED447 SEP #$30 : PLB : RTL
 
+          # Original room-tag, hidden-chest and statue instructions guarded by
+          # Song of Secrets / Elegy of Stone; headerless LoROM PC offsets.
+          printf '\xA9\x08\x80\x0E' | dd of=test.sfc bs=1 seek=$((0xCC0C)) conv=notrunc 2>/dev/null  # $01CC0C tag $35 hole handler
+          for secrets_tag_a_pc in 0x9905 0x996D 0xBCC2; do
+            printf '\xA5\xAE\x29\xFF\x00' | dd of=test.sfc bs=1 seek=$((secrets_tag_a_pc)) conv=notrunc 2>/dev/null  # LDA $AE : AND #$00FF
+          done
+          for secrets_tag_b_pc in 0x9923 0x998B 0xBCE0; do
+            printf '\xA5\xAF\x29\xFF\x00' | dd of=test.sfc bs=1 seek=$((secrets_tag_b_pc)) conv=notrunc 2>/dev/null  # LDA $AF : AND #$00FF
+          done
+          printf '\xBD\xE0\x0D\xF0\x07' | dd of=test.sfc bs=1 seek=$((0x340E8)) conv=notrunc 2>/dev/null  # $06C0E8 native statue dispatch
+          printf '\xAD\x42\x06\x29\xFF\x00' | dd of=test.sfc bs=1 seek=$((0xC568)) conv=notrunc 2>/dev/null  # $01C568 held-switch flag
+
           # Original Hookshot instructions inspected by Switch Hook's guards.
           printf '\xA5\x11' | dd of=test.sfc bs=1 seek=$((0x43D74)) conv=notrunc 2>/dev/null  # $08BD74 LDA $11
           printf '\x20\x68\x8D' | dd of=test.sfc bs=1 seek=$((0x43DD7)) conv=notrunc 2>/dev/null  # $08BDD7 JSR $8D68
