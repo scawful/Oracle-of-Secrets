@@ -324,6 +324,69 @@ class LegacyHeadingTests(unittest.TestCase):
         self.assertTrue(any("not carried forward" in f for f in board.flags))
 
 
+class SubOwnerTests(unittest.TestCase):
+    """'## Claude-Kydrog — ...' is a side session's own section, not an older Claude section
+    (live board 2026-10-18: the default run archived it as superseded by '## Claude')."""
+
+    def texts(self, kydrog_stamp="2026-10-17 18:59Z", claude_stamp="2026-10-17 19:32Z", kydrog=None):
+        kydrog = kydrog or owner_section("Claude-Kydrog", kydrog_stamp, result="kydrog art",
+                                         handoff="handoffs/kydrog/WORK.md")
+        board = "\n\n".join([
+            "\n".join([cc.BOARD_TITLE, cc.LOCK_SEED, GOAL]),
+            owner_section("Codex", "2026-10-17 19:00Z", handoff="handoffs/codex/WORK.md"),
+            owner_section("Claude", claude_stamp, result="leader", handoff="handoffs/leader/HANDOFF.md"),
+            cc.idle_stub("Cursor"),
+            kydrog,
+        ]) + "\n"
+        return {cc.BOARD: board, cc.HANDOFF: "", cc.INBOX: GOAL + "\n"}
+
+    def test_sub_owner_section_is_kept_as_its_own_owner_and_indexed(self):
+        for claude_stamp in ("2026-10-17 19:32Z", "2026-10-17 18:00Z"):  # Claude newer, then older
+            with self.subTest(claude_stamp=claude_stamp):
+                texts = self.texts(claude_stamp=claude_stamp)
+                plan = plan_for(texts)
+                self.assertEqual(plan.errors, [])
+                got = reasons(plan.files[cc.BOARD])
+                self.assertEqual(got[f"## Claude — {claude_stamp}"], ("keep", "owner"))
+                self.assertEqual(got["## Claude-Kydrog — 2026-10-17 18:59Z"], ("keep", "owner"))
+                # Every block stays and the board is already in form: nothing to rewrite.
+                self.assertEqual(plan.files[cc.BOARD].after, texts[cc.BOARD])
+                index = plan.files[cc.HANDOFF].after.splitlines()
+                self.assertIn("Claude: handoffs/leader/HANDOFF.md", index)
+                self.assertIn("Claude-Kydrog: handoffs/kydrog/WORK.md", index)
+                self.assertEqual(index.index("Claude-Kydrog: handoffs/kydrog/WORK.md"),
+                                 index.index("Cursor: -") + 1)
+                self.assertTrue(any("Claude-Kydrog" in n for n in plan.notes))
+                again = cc.build_plan({n: plan.files[n].after for n in cc.TARGETS}, NOW)
+                self.assertFalse(again.changes)
+
+    def test_stale_sub_owner_is_archived_with_no_idle_stub(self):
+        plan = plan_for(self.texts(kydrog_stamp="2026-10-12 10:00Z"))
+        self.assertEqual(reasons(plan.files[cc.BOARD])["## Claude-Kydrog — 2026-10-12 10:00Z"],
+                         ("archive", "stale-owner"))
+        self.assertNotIn("Claude-Kydrog", plan.files[cc.BOARD].after)
+        self.assertNotIn("Claude-Kydrog", plan.files[cc.HANDOFF].after)
+        self.assertIn("Claude: handoffs/leader/HANDOFF.md", plan.files[cc.HANDOFF].after)
+
+    def test_idle_sub_owner_stub_is_archived(self):
+        plan = plan_for(self.texts(kydrog=cc.idle_stub("Claude-Kydrog")))
+        self.assertEqual(reasons(plan.files[cc.BOARD])["## Claude-Kydrog — idle"],
+                         ("archive", "sub-owner-idle"))
+        self.assertNotIn("Claude-Kydrog", plan.files[cc.BOARD].after)
+
+    def test_sub_owner_named_in_owners_keeps_an_idle_stub(self):
+        owners = cc.DEFAULT_OWNERS + ("Claude-Kydrog",)
+        plan = plan_for(self.texts(kydrog_stamp="2026-10-12 10:00Z"), owners=owners)
+        self.assertIn(cc.idle_stub("Claude-Kydrog"), plan.files[cc.BOARD].after)
+        self.assertIn("Claude-Kydrog: -", plan.files[cc.HANDOFF].after.splitlines())
+
+    def test_first_word_match_does_not_take_a_hyphenated_name(self):
+        first_word = cc.owner_first_word_re(cc.DEFAULT_OWNERS)
+        self.assertIsNone(first_word.match("## Claude-Kydrog — 2026-10-17 18:59Z"))
+        self.assertEqual(first_word.match("## Claude review notes — October 17")["owner"], "Claude")
+        self.assertEqual(first_word.match("## Claude: notes — October 17")["owner"], "Claude")
+
+
 class PartitionTests(unittest.TestCase):
     def test_every_block_has_exactly_one_destination(self):
         plan = plan_for()
@@ -467,7 +530,7 @@ class ApplyTests(unittest.TestCase):
         self.assertIn(concurrent.strip(), (self.root / cc.INBOX).read_text(encoding="utf-8"))
 
     def test_write_into_the_displaced_file_during_the_swap_is_saved_and_reported(self):
-        plan, stamps = self.plan_from_disk()
+        plan, _ = self.plan_from_disk()
         original_replace = cc._replace
         late = "2026-10-17 codex -> claude: landed during the swap (handoffs/s.md)\n"
 
@@ -481,14 +544,68 @@ class ApplyTests(unittest.TestCase):
 
         cc._replace = replace_with_late_writer
         try:
-            run = cc.apply_plan(plan, self.root, stamps)
+            code, out = self.run_cli("--apply")
         finally:
             cc._replace = original_replace
-        self.assertEqual(run["status"], "partial")
-        self.assertIn("saved to", run["skipped"][cc.INBOX])
+        self.assertEqual(code, 1, out)  # a hand merge is still needed
+        run = self.receipt()["runs"][-1]
+        self.assertEqual(run["status"], "rescued")
+        # The file WAS rewritten; only the concurrent write went to the rescue file.
+        self.assertIn(cc.INBOX, run["replaced"])
+        self.assertNotIn(cc.INBOX, run["skipped"])
+        self.assertIn("saved to", run["rescued"][cc.INBOX])
+        self.assertEqual((self.root / cc.INBOX).read_text(encoding="utf-8"), plan.files[cc.INBOX].after)
         rescued = list(self.archive.glob(f"{cc.INBOX}.displaced-*"))
         self.assertEqual(len(rescued), 1)
         self.assertEqual(rescued[0].read_text(encoding="utf-8"), LEGACY_INBOX + late)
+        self.assertIn("Applied: rescued", out)
+        self.assertIn(f"REWRITTEN; CONCURRENT WRITE SAVED: {cc.INBOX}: ", out)
+        self.assertNotIn("NOT REWRITTEN", out)
+
+    def test_board_rules_is_created_only_when_missing_and_never_overwritten(self):
+        plan, _ = self.plan_from_disk()
+        self.assertEqual(self.run_cli("--apply")[0], 0)
+        rules = self.root / cc.RULES
+        self.assertEqual(rules.read_text(encoding="utf-8"), plan.rules_new)
+        self.assertTrue(self.receipt()["runs"][-1]["rules_created"])
+        # Someone edits board_rules.md and the Rules section reappears on the board.
+        rules.write_text("# hand-edited rules\nkeep me\n", encoding="utf-8")
+        edited = (rules.read_bytes(), rules.stat().st_mtime_ns)
+        (self.root / cc.BOARD).write_text(LEGACY_BOARD, encoding="utf-8")
+        code, out = self.run_cli("--apply")
+        self.assertEqual(code, 0, out)
+        self.assertEqual((rules.read_bytes(), rules.stat().st_mtime_ns), edited)
+        run = self.receipt()["runs"][-1]
+        self.assertFalse(run["rules_created"])
+        self.assertIn(cc.BOARD, run["replaced"])
+        self.assertIn(("archive", "rules-copy"), [(m["dest"], m["reason"]) for m in run["moved"][cc.BOARD]])
+        self.assertIn("## Rules (scawful, 2026-09-26: fans)", (self.archive / cc.BOARD).read_text(encoding="utf-8"))
+
+    def test_board_rules_created_by_someone_else_after_planning_is_left_alone(self):
+        plan, stamps = self.plan_from_disk()
+        self.assertIsNotNone(plan.rules_new)
+        original_write_temp = cc.write_temp
+        theirs = "# board rules written by another agent mid-run\n"
+
+        def write_temp_then_create_rules(path, data, mode=None):
+            tmp = original_write_temp(path, data, mode)
+            if path.name == cc.RULES:
+                (self.root / cc.RULES).write_text(theirs, encoding="utf-8")
+            return tmp
+
+        cc.write_temp = write_temp_then_create_rules
+        try:
+            run = cc.apply_plan(plan, self.root, stamps)
+        finally:
+            cc.write_temp = original_write_temp
+        self.assertEqual(run["status"], "partial")
+        self.assertFalse(run["rules_created"])
+        self.assertIn("created by someone else", run["skipped"][cc.RULES])
+        self.assertEqual((self.root / cc.RULES).read_text(encoding="utf-8"), theirs)
+        # Without board_rules.md the Rules section must stay on the board.
+        self.assertIn(cc.RULES, run["skipped"][cc.BOARD])
+        self.assertEqual((self.root / cc.BOARD).read_text(encoding="utf-8"), LEGACY_BOARD)
+        self.assertEqual(list(self.root.glob(".*.tmp")), [])
 
     def test_failure_after_first_archive_append_is_recorded_so_rerun_does_not_duplicate(self):
         plan, stamps = self.plan_from_disk()
