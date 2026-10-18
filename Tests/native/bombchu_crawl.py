@@ -39,7 +39,7 @@ class CrawlFlow(art.BombchuArtFlow):
         x, y = (int.from_bytes(self.block(a, 2), "little") for a in (0x7E0022, 0x7E0020))
         c, r = (x & 511) // 8, (y & 511) // 8
         native.require(3 <= c <= 47 and 5 <= r <= 55, "Hut position does not fit bounded crawl fixture")
-        self.c0, self.r0, self.c, self.r = c - 3, r - 5, c, r
+        self.c0, self.r0 = c - 3, r - 5
         self.saved_rows = {0x7F2000 + ty * 64 + self.c0: self.block(0x7F2000 + ty * 64 + self.c0, 20)
                            for ty in range(self.r0, self.r0 + 14)}
         self.solids = {(tx, ty) for tx in (c + 8, c + 9) for ty in (r + 1, r + 2)}
