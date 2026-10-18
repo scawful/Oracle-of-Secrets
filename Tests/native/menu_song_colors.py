@@ -45,7 +45,7 @@ def describe():
                 restored_bytes=[f"{a:06X}" for a in sorted(ALLOWED)],
                 checks=["All 31 original BG3 palette words and five legacy icons",
                         "Six controller-selected songs retain blue Items/HUD ocarina",
-                        "Time note uses ordinary gold BG3 tiles without an OBJ lease",
+                        "Time note uses ordinary ivory/tan BG3 tiles without an OBJ lease",
                         "Per-frame page-scroll/close palette trace and final blue HUD"],
                 limits="Private fixture only; no acquisition, audio or save/reopen proof")
 
@@ -115,10 +115,10 @@ class SongColors(items.NewItemsFlow):
         after = native.number(self.b.get_rom_info()["frameCount"])
         self.result.setdefault("display_boundaries", []).append(dict(before_frame=before, after_frame=after, cpu=cpu))
         address = (0x6C00 + 0x4A2 // 2) * 2
-        self.check("Hardware Time note uses stable gold BG3 tiles",
+        self.check("Hardware Time note uses existing ivory/tan BG3 tiles",
                    [self.word(a, "VRAM") for a in (address, address + 2, address + 64, address + 66)],
-                   [0x34AA, 0x346B, 0x347A, 0x346A])
-        self.shot("time-gold-note")
+                   [0x28AA, 0x286B, 0x287A, 0x286A])
+        self.shot("time-ivory-note")
 
     def trace_transition(self, button, destination, label):
         # One FRAME at a time so a temporary palette stomp cannot hide between
