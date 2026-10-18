@@ -4,7 +4,7 @@
 ; @source usdasm/bank_07.asm:LinkItem_Bombs
 ; @source usdasm/bank_08.asm:Ancilla07_Bomb
 ; @source usdasm/bank_09.asm:AncillaAdd_Bomb
-; Runtime art deliberately uses the native bomb for this first prototype.
+; Dedicated page-0 OBJ cell $2E/$2F/$3E/$3F; native bomb $6E is untouched.
 ; =========================================================
 
 BombchuSlot       = $7E07F1 ; slot + 1, zero means no travelling Bombchu
@@ -30,6 +30,24 @@ org $08955A
 ; Replaces LDA $11 / BEQ $08958E; both vanilla branches are preserved.
   JML Bombchu_BombEntry
 assert pc() <= $08955E
+
+org $008B56
+assert read3($008B56) == $0134AE, "Bombchu NMI VRAM load moved"
+assert read3($008B59) == $21168E, "Bombchu NMI VRAM store moved"
+; @hook Bombchu_WorldUpload kind=jsl target=Bombchu_NmiUpload
+; @assumption M=8, X=16, DBR=$00; DMA0 mode=$1801, VMAIN=$80.
+; Follows P2_NmiUpload rather than replacing its hook at $008B50.
+  JSL Bombchu_NmiUpload : NOP #2
+assert pc() == $008B5C
+
+org $08A7D7
+assert read3($08A7D7) == $9D10BD, "Bombchu draw tile load moved"
+assert read3($08A7DD) == $9D11BD, "Bombchu draw property load moved"
+; @hook Bombchu_WorldDraw kind=jsl target=Bombchu_DrawTile
+; @assumption M=8, X=8, DBR=$08; X=draw-table offset, $0FA0=ancilla slot.
+; Replay the native tile/property writes for every other bomb/explosion.
+  JSL Bombchu_DrawTile : NOP #13
+assert pc() == $08A7E8
 pullpc
 
 Bombchu_AddBomb:
@@ -221,3 +239,96 @@ Bombchu_Move:
   .delta_x
   dw 0, 0, -2, 2
 }
+
+; Called inside the existing VBlank upload, after Link/P2/water graphics.
+; The dedicated cell avoids arrows ($2A-$2D/$3A-$3D), P2 ($0E/$20/$24),
+; and all ordinary bomb/explosion tiles. No shared WRAM art is replaced.
+Bombchu_NmiUpload:
+{
+  PHP : PHA : PHX : PHY
+  SEP #$10
+  LDA.b $10 : CMP.b #$07 : BEQ .gameplay
+  CMP.b #$09 : BEQ .gameplay
+  CMP.b #$0E : BNE .skip
+  .gameplay
+  LDA.l BombchuSignature : CMP.b #!BOMBCHU_SIGNATURE : BNE .skip
+  LDA.l BombchuSlot : BEQ .skip
+  CMP.b #$03 : BCS .skip
+  DEC A : TAX
+  LDA.w $0C4A,X : CMP.b #$07 : BNE .skip
+  LDA.w $03EA,X : CMP.b #!BOMBCHU_SIGNATURE : BNE .skip
+  LDA.w $0C5E,X : BNE .skip
+
+  BRA .upload
+  .skip
+  BRL .done
+  .upload
+  ; Frame order: up A/B, right A/B. The native fuse also stops animation
+  ; during menus/freezes. Down/left use hardware flips in the draw path.
+  LDA.l BombchuDirection : AND.b #$02 : PHA
+  LDA.w $039F,X : AND.b #$08 : LSR #3
+  ORA $01,S
+  REP #$30
+  AND.w #$00FF : ASL #7
+  CLC : ADC.w #BombchuWorldGfx : TAY
+  SEP #$20
+  PLA
+  LDA.b #BombchuWorldGfx>>16 : STA.w $4304
+  REP #$20
+  TYA : STA.w $4302
+  LDA.w #$42E0 : STA.w $2116
+  JSR .row
+  TYA : CLC : ADC.w #$0040 : STA.w $4302
+  LDA.w #$43E0 : STA.w $2116
+  JSR .row
+  SEP #$20
+  LDA.b #$7E : STA.w $4304
+  REP #$20
+  LDA.w $0ADC : STA.w $4302 ; next DMA is the animated background
+  SEP #$20
+  .done
+  REP #$10
+  PLY : PLX : PLA : PLP
+  LDX.w $0134 : STX.w $2116 ; displaced instructions
+  RTL
+
+  .row
+  LDA.w #$0040 : STA.w $4305
+  SEP #$20
+  LDA.b #$01 : STA.w $420B
+  REP #$20
+  RTS
+}
+
+Bombchu_DrawTile:
+{
+  PHX
+  CPX.b #$00 : BNE .vanilla ; unexpanded bomb body only
+  LDA.l BombchuSignature : CMP.b #!BOMBCHU_SIGNATURE : BNE .vanilla
+  LDA.l BombchuSlot : BEQ .vanilla
+  CMP.b #$03 : BCS .vanilla
+  DEC A : CMP.w $0FA0 : BNE .vanilla
+  TAX
+  LDA.w $0C4A,X : CMP.b #$07 : BNE .vanilla
+  LDA.w $03EA,X : CMP.b #!BOMBCHU_SIGNATURE : BNE .vanilla
+  LDA.w $0C5E,X : BNE .vanilla
+  LDA.b #$2E : STA.b ($90),Y : INY
+  LDA.l BombchuDirection : AND.b #$03 : TAX
+  LDA.l .flips,X
+  ORA.b $65 : ORA.b $0B : STA.b ($90),Y
+  PLX : RTL
+  .vanilla
+  PLX
+  LDA.w $9D10,X : STA.b ($90),Y : INY
+  LDA.w $9D11,X : AND.b #$C1
+  ORA.b $65 : ORA.b $0B : STA.b ($90),Y
+  RTL
+  .flips
+  db $00, $80, $40, $00
+}
+
+BombchuWorldGfx:
+  incbin "Data/graphics/items/bombchu_world.4bpp"
+BombchuWorldGfxEnd:
+assert BombchuWorldGfxEnd-BombchuWorldGfx == $0200, "Bombchu needs four 16x16 frames"
+assert (BombchuWorldGfx>>16) == ((BombchuWorldGfxEnd-1)>>16), "Bombchu DMA source crosses bank"

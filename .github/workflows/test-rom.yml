@@ -74,6 +74,11 @@ jobs:
           printf '\x22\x29\xF1\x06' | dd of=test.sfc bs=1 seek=$((0x29573)) conv=notrunc 2>/dev/null  # $059573 JSL $06F129
           printf '\xAD\x6A\x0B\x9D\x90\x0D' | dd of=test.sfc bs=1 seek=$((0x30F4D)) conv=notrunc 2>/dev/null  # $068F4D LDA $0B6A : STA $0D90,X
 
+          # Original NMI and bomb draw instructions inspected by Bombchu's guards.
+          printf '\xAE\x34\x01\x8E\x16\x21' | dd of=test.sfc bs=1 seek=$((0xB56)) conv=notrunc 2>/dev/null
+          printf '\xBD\x10\x9D' | dd of=test.sfc bs=1 seek=$((0x427D7)) conv=notrunc 2>/dev/null
+          printf '\xBD\x11\x9D' | dd of=test.sfc bs=1 seek=$((0x427DD)) conv=notrunc 2>/dev/null
+
           # Original Hookshot instructions inspected by Switch Hook's guards.
           printf '\xA5\x11' | dd of=test.sfc bs=1 seek=$((0x43D74)) conv=notrunc 2>/dev/null  # $08BD74 LDA $11
           printf '\x20\x68\x8D' | dd of=test.sfc bs=1 seek=$((0x43DD7)) conv=notrunc 2>/dev/null  # $08BDD7 JSR $8D68
