@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "note": "Graphics Overworld/custom_gfx.asm DMAs at runtime, for yaze's editor canvas and z3ed overworld-render. Numbers are decimal: parent_map 48 = $30, base 8192 = VRAM word $2000, 11264 = $2C00, 20480 = $5000. Keep parent_map equal to the CMP.b in CheckForChangeGraphicsNormalLoadBoat (the area's parent ID in $8A).",
+  "areas": [
+    {
+      "note": "D7 Dragon Ship. boat.bin replaces BG sheet slots 3-6 (characters $0C0-$1BF); boat2.bin replaces OBJ sheets 4-7 (yaze characters $300-$3FF).",
+      "parent_map": 48,
+      "bg_character_base_word": 8192,
+      "transfers": [
+        {
+          "path": "../../Overworld/gfx/boat.bin",
+          "format": "snes4bpp",
+          "byte_count": 8192,
+          "vram_word_address": 11264
+        },
+        {
+          "path": "../../Overworld/gfx/boat2.bin",
+          "format": "snes4bpp",
+          "byte_count": 8192,
+          "vram_word_address": 20480
+        }
+      ]
+    }
+  ]
+}
