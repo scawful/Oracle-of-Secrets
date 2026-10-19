@@ -2068,3 +2068,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   while captured returns Link to the cell; Minish portal in a cell-wall crack, grow back in
   $54; a guard who sees Link sends him to the cell; every sword is taken; stealth ends at the
   blade table; the thief slips away and does not return; the thief is the vanilla sprite.
+
+* DECIDED Prison escape: the crawl room is the sneak; its soldiers can spot small Link (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: guard patrols)
+  :END:
+  The two Blue Soldiers already placed in the crawl room ($64) walk a patrol and can spot Link
+  while he is Minish-sized. Being spotted sends him back to the cell (2026-10-19 sight rule).
+  The crawl through $64 is the main sneak of the escape.
+  Rejected: small Link is too small to notice and the sneak happens only in $54.
+  Answer: "Yes: the two soldiers in the crawl room patrol and can spot small Link; the crawl is
+  the sneak." (scawful, 2026-10-19)
