@@ -164,6 +164,12 @@
           "evidence": "Items/ocarina.asm:437-443 (0 = no Ocarina)"
         },
         {
+          "addr": "0x7EF3B1",
+          "value": "0x00",
+          "name": "SongBits",
+          "evidence": "Core/sram.asm SongBits (one bit per song; none learned)"
+        },
+        {
           "addr": "0x7EF349",
           "value": "0x00",
           "name": "DekuMask",
@@ -529,6 +535,12 @@
           "evidence": "Docs/Planning/story_canon_beat_sheet.md row 10 (Ocarina, Song of Healing); Items/ocarina.asm:440 (2 = Healing)"
         },
         {
+          "addr": "0x7EF3B1",
+          "value": "0x01",
+          "name": "SongBits",
+          "evidence": "Core/sram.asm SongBits (one bit per song; Healing)"
+        },
+        {
           "addr": "0x7EF349",
           "value": "0x01",
           "name": "DekuMask",
@@ -737,6 +749,12 @@
           "evidence": "Docs/Planning/story_canon_beat_sheet.md row 16 (Song of Storms post-D4); Items/ocarina.asm:441 (3 = Healing, Storms)"
         },
         {
+          "addr": "0x7EF3B1",
+          "value": "0x03",
+          "name": "SongBits",
+          "evidence": "Core/sram.asm SongBits (one bit per song; Healing, Storms)"
+        },
+        {
           "addr": "0x7EF36C",
           "value": "0x40",
           "name": "MaxHealth",
@@ -845,6 +863,12 @@
           "value": "0x04",
           "name": "Ocarina",
           "evidence": "Docs/Planning/story_canon_beat_sheet.md row 22 (Song of Soaring before the Dragon Ship); Items/ocarina.asm:442"
+        },
+        {
+          "addr": "0x7EF3B1",
+          "value": "0x07",
+          "name": "SongBits",
+          "evidence": "Core/sram.asm SongBits (one bit per song; Healing, Storms, Soaring)"
         },
         {
           "addr": "0x7EF36C",

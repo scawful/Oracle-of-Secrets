@@ -245,11 +245,12 @@ Menu_DrawMusicNotes:
 {
   SEP #$30
   LDA.b #$7E : STA.b $0A
-  JSL UpdateFluteSong_Long
+  JSL Ocarina_ValidateSong_Long
   LDY.b #$00
 .notes
   PHY
-  TYA : INC #2 : CMP.l $7EF34C : BCC .learned : BEQ .learned
+  TYX                               ; Y = song - 1
+  LDA.l Ocarina_SongMask+1, X : AND.l SongBits : BNE .learned
   LDA.b #$01 : BRA .variant
 .learned
   TYA : INC #2
@@ -275,7 +276,7 @@ Menu_DrawMusicNotes:
 DrawYItems:
 {
   SEP #$30
-  JSL UpdateFluteSong_Long
+  JSL Ocarina_ValidateSong_Long
   LDA.b #$7E : STA.b $0A ; Set up the bank of our indirect address
   REP #$30
 
@@ -360,8 +361,8 @@ endif
 
   LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0000 : BEQ .no_ocarina
 if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-    ; Ocarina owned, no song learned ($7EF34C = 1): grey icon (entry 7).
-    CMP.w #$0002 : BCS .ocarina_has_songs
+    ; Ocarina owned, no song learned (SongBits = 0): grey icon (entry 7).
+    LDA.l SongBits : AND.w #!Song_All : BNE .ocarina_has_songs
       LDA.w #$0007 : BRA .spoof_ocarina
     .ocarina_has_songs
     LDA.w $030F : AND.w #$00FF : BNE .spoof_ocarina

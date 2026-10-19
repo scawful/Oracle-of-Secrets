@@ -455,22 +455,14 @@ endif
   RTS
 }
 
-; 16-bit A/X/Y. Returns 0 for an unlearned ocarina, otherwise song 1-6.
-; The caller may run before the file-load validator, so bound both values here.
+; 16-bit A/X/Y. Returns 0 when no song is learned, otherwise the selected
+; song 1-6 if learned, else the lowest learned song (SongBits). The caller may
+; run before the file-load validator, so resolve here without writing.
 HUD_OcarinaIconIndex:
 {
-  LDA.l $7EF34C : AND.w #$00FF : CMP.w #$0002 : BCC .no_song
-  CMP.w #$0008 : BCC .count_ok
-  LDA.w #$0007
-.count_ok
-  DEC : STA.b $02
-  LDA.w CurrentSong : AND.w #$00FF : BEQ .first
-  CMP.b $02 : BCC .done : BEQ .done
-.first
-  LDA.w #$0001 : RTS
-.no_song
-  LDA.w #$0000
-.done
+  LDA.w CurrentSong
+  JSL Ocarina_ResolveSong_Long
+  AND.w #$00FF
   RTS
 }
 

@@ -157,11 +157,11 @@ LinkItem_NewFlute:
   JSR UpdateFluteSong
   JSR Link_CheckNewY_ButtonPress : BCC ReturnFromFluteHook
 if !ENABLE_MENU_OCARINA_BLANK_SLOT == 1
-    ; No song learned ($7EF34C < 2): error beep only, no song, SongFlag
+    ; No song learned (SongBits = 0): error beep only, no song, SongFlag
     ; unchanged. Same as vanilla's unusable Mushroom in LinkItem_Powder:
     ; $07A2A8 LDA #$3C : JSR PlaySFX_Set2 ($078028), then $07A30C clears
     ; $3A bit 6 (set by CheckYButtonPress $07B073) so the next Y press works.
-    LDA.l $7EF34C : CMP.b #$02 : BCS .has_song
+    LDA.l SongBits : AND.b #!Song_All : BNE .has_song
       LDA.b #$3C : JSR Player_DoSfx2
       LDA.b $3A : AND.b #$BF : STA.b $3A
       RTS
@@ -241,8 +241,11 @@ endif
   ; If there isn't one, keep checking.
   DEX : BPL .next_ancillary_slot
 
-  ; Paul's weathervane stuff Do we have a normal flute (without bird)?
-  LDA $7EF34C : CMP.b #$02 : BNE .travel_bird_already_released
+  ; Paul's weathervane stuff. Vanilla took it when $7EF34C = 2 (flute without
+  ; bird). Under the old song count, 2 meant Healing only, so Soaring never
+  ; reached it. Learned songs are bits now and old saves keep their count,
+  ; so always call the travel bird; the weathervane path stays unreachable.
+  BRA .travel_bird_already_released
     REP #$20
     ; check the area, is it #$18 = 30?
     LDA $8A : CMP.w #$0018 : BNE .not_weathervane_trigger
@@ -464,72 +467,162 @@ ResetOcarinaFlag:
   RTL
 }
 
-; Values at $7EF34C determine Ocarina/song progression
-; 00 - No Ocarina
-; 01 - Ocarina (no songs)
-; 02 - 1 song (Healing)
-; 03 - 2 songs (Healing, Storms)
-; 04 - 3 songs (Healing, Storms, Soaring)
-; 05 - 4 songs (Healing, Storms, Soaring, Time)
-; 06 - 5 songs (+ Secrets)
-; 07 - 6 songs (+ Stone)
+; Learned songs are one bit each in SongBits ($7EF3B1, Core/sram.asm), so
+; they can be learned in any order. $7EF34C (Flute) only says the Ocarina is
+; owned (>= 1). Old saves stored a learned count in $7EF34C instead:
+; 01 Ocarina, 02 +Healing, 03 +Storms, 04 +Soaring, 05 +Time, 06 +Secrets,
+; 07 +Stone. Ocarina_ValidateSong_Long converts that count once.
+
+; Song 0-6 -> its SongBits mask (song 0 = none).
+Ocarina_SongMask:
+  db $00, !Song_Healing, !Song_Storms, !Song_Soaring
+  db !Song_Time, !Song_Secrets, !Song_Stone
+
+; Old learned count 2-7 -> bits for songs 1..count-1.
+Ocarina_CountToBits:
+  db $01, $03, $07, $0F, $1F, $3F
+
+; A low byte = candidate song. Returns A low byte = that song when it is 1-6
+; and learned, else the lowest learned song, else 0. Any M/X; keeps X/Y.
+; A 16-bit caller keeps its high byte and must AND #$00FF.
+Ocarina_ResolveSong_Long:
+{
+  PHX : PHP
+  SEP #$30
+  CMP.b #$07 : BCS .lowest
+  TAX
+  LDA.l Ocarina_SongMask, X : AND.l SongBits : BEQ .lowest
+  TXA
+  BRA .done
+.lowest
+  LDA.l SongBits : AND.b #!Song_All : BEQ .done
+  LDX.b #$00
+.scan
+  INX : LSR : BCC .scan
+  TXA
+.done
+  PLP : PLX
+  RTL
+}
+
+; A low byte = current song; C set = next, C clear = previous. Returns A low
+; byte = the next or previous learned song, wrapping (the current song when
+; it is the only one), or 0 when none is learned. Any M/X; keeps X/Y.
+Ocarina_StepSong_Long:
+{
+  PHX : PHP
+  SEP #$30
+  TAX
+  LDA.l SongBits : AND.b #!Song_All : BEQ .done ; LDA/AND keep C
+  BCC .previous
+.next
+  CPX.b #$06 : BCC .next_ok
+    LDX.b #$00
+  .next_ok
+  INX
+  LDA.l Ocarina_SongMask, X : AND.l SongBits : BEQ .next
+  BRA .found
+.previous
+  CPX.b #$02 : BCC .previous_wrap
+  CPX.b #$07 : BCC .previous_ok
+  .previous_wrap
+    LDX.b #$07
+  .previous_ok
+  DEX
+  LDA.l Ocarina_SongMask, X : AND.l SongBits : BEQ .previous
+.found
+  TXA
+.done
+  PLP : PLX
+  RTL
+}
+
+; Converts an old learned count once (SongBits = 0 and Flute >= 2: songs
+; 1..Flute-1, capped at six), then bounds CurrentSong to a learned song, or 0
+; when none is learned. Equipment builds restore an empty CurrentSong from
+; SavedOcarinaSong and keep the two in sync. Runs on file load
+; (SearchForEquippedItem_Override) and before every song draw or use, so a
+; count written by an old save, cheat or fixture converts before first use.
+; Running it again changes nothing. Any M/X; keeps X/Y; A is clobbered.
+Ocarina_ValidateSong_Long:
+{
+  PHX : PHP
+  SEP #$30
+  LDA.l SongBits : BNE .converted
+  LDA.l Flute : CMP.b #$02 : BCC .converted
+  CMP.b #$08 : BCC .count_ok
+    LDA.b #$07
+  .count_ok
+  TAX
+  LDA.l Ocarina_CountToBits-2, X : STA.l SongBits
+.converted
+if !ENABLE_EQUIPMENT_MENU == 1
+  LDA.w CurrentSong : BNE .resolve
+  LDA.l SavedOcarinaSong
+.resolve
+  JSL Ocarina_ResolveSong_Long
+  STA.w CurrentSong : STA.l SavedOcarinaSong
+else
+  LDA.w CurrentSong
+  JSL Ocarina_ResolveSong_Long
+  STA.w CurrentSong
+endif
+  PLP : PLX
+  RTL
+}
+
+; Teacher checks (bank $30 has no room to inline bit tests). Returns the old
+; $7EF34C-style value: 0 without the ocarina, else 1 + songs learned in order
+; from Healing, stopping at the first gap (1 = no Healing, 2 = Healing,
+; 3 = Healing + Storms ... 7 = all six). Callers keep their CMP chains.
+; Any M/X; keeps X/Y; returns A low byte.
+Ocarina_SongsInOrder_Long:
+{
+  JSL Ocarina_ValidateSong_Long
+  PHX : PHP
+  SEP #$30
+  LDA.l Flute : BEQ .done
+  LDA.l SongBits : LDX.b #$01
+  .count
+    LSR : BCC .gap
+    INX : CPX.b #$07 : BCC .count
+  .gap
+  TXA
+.done
+  PLP : PLX
+  RTL
+}
+
+; Teachers: A = one !Song_* bit (8-bit A); SongBits |= A. Keeps X/Y.
+Ocarina_LearnSong_Long:
+{
+  PHP
+  SEP #$20
+  ORA.l SongBits : STA.l SongBits
+  PLP
+  RTL
+}
+
+; Called every frame while the Ocarina is the Y item (LinkItem_NewFlute).
+; Equipment chooses the song; L/R must not also change it in the world.
 UpdateFluteSong_Long:
 {
-if !ENABLE_EQUIPMENT_MENU == 1
-  ; Equipment chooses the song. L/R must not also change it in the world.
-  ; CurrentSong ($030F) is volatile; SavedOcarinaSong ($7EF3AB) keeps the
-  ; choice across save/reload. Restore from it when $030F is 0, validate
-  ; against the learned count (garbage or unlearned -> song 1), then sync.
-  LDA.l $7EF34C : CMP.b #$02 : BCC .equipment_none
-  CMP.b #$08 : BCC .equipment_count
-  LDA.b #$07
-.equipment_count
-  DEC : PHA
-  LDA.w CurrentSong : BNE .equipment_check
-  LDA.l SavedOcarinaSong : STA.w CurrentSong
-.equipment_check
-  LDA.w CurrentSong : BEQ .equipment_first
-  CMP.b $01,S : BCC .equipment_valid
-  BEQ .equipment_valid
-.equipment_first
-  LDA.b #$01 : STA.w CurrentSong
-.equipment_valid
-  PLA
-  LDA.w CurrentSong : STA.l SavedOcarinaSong
-  RTL
-.equipment_none
-  STZ.w CurrentSong
-  LDA.b #$00 : STA.l SavedOcarinaSong
-  RTL
-else
-  ; Highest song = min(Flute - 1, 6); keeps the diagnostic legacy selector
-  ; compatible with the same saved learned-count contract as Equipment.
-  LDA.l $7EF34C : CMP.b #$02 : BCC .no_songs
-  CMP.b #$08 : BCC +
-    LDA.b #$07
-  +
-  DEC : STA.b $00
-  LDA.w CurrentSong : BEQ .first_song
-  CMP.b $00 : BCC .input
-  BEQ .input
-.first_song
-  LDA.b #$01 : STA.w CurrentSong
-.input
+  JSL Ocarina_ValidateSong_Long
+if !ENABLE_EQUIPMENT_MENU == 0
+  ; Diagnostic legacy selector: L/R step through learned songs only.
+  LDA.w CurrentSong : BEQ .done
   LDA.b $F6 : BIT.b #$20 : BNE .left
   BIT.b #$10 : BEQ .done
-  INC.w CurrentSong
-  LDA.b $00 : CMP.w CurrentSong : BCS .done
-  LDA.b #$01 : STA.w CurrentSong
-  RTL
+  LDA.w CurrentSong : SEC
+  BRA .step
 .left
-  DEC.w CurrentSong : BNE .done
-  LDA.b $00 : STA.w CurrentSong
+  LDA.w CurrentSong : CLC
+.step
+  JSL Ocarina_StepSong_Long
+  STA.w CurrentSong
 .done
-  RTL
-.no_songs
-  STZ.w CurrentSong
-  RTL
 endif
+  RTL
 }
 incsrc "Items/song_secrets_stone.asm"
 %log_end("Items/ocarina.asm", !LOG_ITEMS)

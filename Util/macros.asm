@@ -54,7 +54,7 @@
 ; until the Book of Secrets ($7EF34E) / a ring is owned (Menu/*.asm).
 !ENABLE_MENU_HIDE_RINGS_JOURNAL_EARLY = 1
 ; Pause menu + HUD: grey Ocarina icon and a no-song Song Menu state while the
-; Ocarina is owned with no song learned ($7EF34C = 1) (Menu/*.asm).
+; Ocarina is owned with no song learned (SongBits = 0) (Menu/*.asm).
 !ENABLE_MENU_OCARINA_BLANK_SLOT      = 1
 ; Pause menu page 3 "Masks & Rings" (Menu/menu_page3.asm): L (or Y) on Items
 ; scrolls to a page with the five masks and six rings; the cursor equips masks

@@ -306,7 +306,7 @@ BunnyHood               = $7EF348   ; 1=Have
 DekuMask                = $7EF349   ; 1=Have (inventory slot)
 Lamp                    = $7EF34A   ; 1=Have
 Hammer                  = $7EF34B   ; 1=Have
-Flute                   = $7EF34C   ; 0=none, 1=ocarina, 2..7=Healing..Stone count
+Flute                   = $7EF34C   ; 0=none, >=1 ocarina; songs in SongBits ($7EF3B1)
 RocsFeather             = $7EF34D   ; 1=Have
 Book                    = $7EF34E   ; 1=Have (Book of Secrets)
 BottleIndex             = $7EF34F   ; Currently selected bottle (1-4)
@@ -779,8 +779,9 @@ GoldstarInventoryVersion = $7EF3AA ; $A5 = legacy upgrade migrated
 ; Read/written only when !ENABLE_EQUIPMENT_MENU = 1 (Items/ocarina.asm
 ; UpdateFluteSong_Long, Menu/menu_equipment.asm). 0 = unset, 1-6 = song (Healing, Storms, Soaring, Time, Secrets, Stone).
 ; CurrentSong ($030F) is volatile WRAM; this byte keeps the Equipment
-; choice across save/reload. Validated against learned songs ($7EF34C) on
-; every use; out-of-range or garbage values become song 1.
+; choice across save/reload. Validated against learned songs (SongBits) on
+; every use; out-of-range, unlearned or garbage values become the lowest
+; learned song.
 ; Free before: no reader/writer in the full candidate chain or main; no
 ; indexed $7EF3xx,X write reaches it (only bottles $7EF35C,X); none of the
 ; 76 item-receipt destinations ($0984E8) is in $7EF3A0-3C4; vanilla new-file
@@ -801,7 +802,24 @@ GaroMaskOwned     = $7EF3AF
 ; above the cap are invalid old-save data and become zero, never a refill.
 BombchuAmmo       = $7EF3B0   ; 0..20; independent of Bombs ($7EF343)
 !BOMBCHU_AMMO_MAX  = 20
-FreeBlock_Large    = $7EF3B1  ; 20 bytes ($7EF3B1-3C4)
+; Learned ocarina songs, one bit each (scawful 2026-10-19: "Switch to one save
+; bit per song so songs can be learned in any order; convert old saves on
+; load."). Saved/checksummed; new files start at 0. $7EF34C (Flute) keeps
+; meaning "owns the Ocarina" (>= 1); old saves keep their count value there.
+; Ocarina_ValidateSong_Long converts an old count once: SongBits = 0 and
+; Flute >= 2 sets songs 1..(Flute-1), capped at six. Bits 6-7 are unused.
+; Free before: no reader/writer in Oracle, usdasm or git history (only the
+; FreeBlock_Large move); not a receipt destination; zero in every slot of
+; the six retained Mesen saves checked 2026-10-19.
+SongBits          = $7EF3B1
+!Song_Healing     = $01
+!Song_Storms      = $02
+!Song_Soaring     = $04
+!Song_Time        = $08
+!Song_Secrets     = $10
+!Song_Stone       = $20
+!Song_All         = $3F
+FreeBlock_Large    = $7EF3B2  ; 19 bytes ($7EF3B2-3C4)
 
 ; ---------------------------------------------------------
 ; Dreams Extension ($7EF411-4FD) - 237 bytes
@@ -819,10 +837,10 @@ FreeBlock_Dreams   = $7EF412  ; ~236 bytes ($7EF412-4FD)
 ; | $7EF307  | $7EF30E  | 8     | Story extension    |
 ; | $7EF310  | $7EF33F  | 48    | Item extension     |
 ; | $7EF39F  | $7EF3A0  | 2     | Collectibles ext   |
-; | $7EF3B1  | $7EF3C4  | 20    | Large reserved     |
+; | $7EF3B2  | $7EF3C4  | 19    | Large reserved     |
 ; | $7EF412  | $7EF4FD  | 236   | Dreams extension   |
 ; |----------|----------|-------|--------------------|
-; | TOTAL AVAILABLE:    | 316   | bytes              |
+; | TOTAL AVAILABLE:    | 315   | bytes              |
 ; ---------------------------------------------------------
 
 ; =========================================================
