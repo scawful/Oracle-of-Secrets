@@ -89,6 +89,15 @@ actions (delete, force push). Do not ask for approval of anything else.
   `stage` offers automatically. Agents never launch or stop `oos-rc-play` themselves.
 - Agent load rules: `~/.context/projects/oracle-of-secrets/scratchpad/board_rules.md`; session board:
   `~/.context/projects/oracle-of-secrets/scratchpad/agent_board.md`.
+- Dev builds for scawful (not a playtest stage): `Roms/TestBuilds/<topic>-<date>/oos168x.sfc`
+  plus `.mlb`, `.sym` and a `README.txt` with test steps. The SketchyBar Zelda menu row
+  "Dev <topic>" opens the newest one in `/Applications/Mesen2 OOS.app` (instance
+  `oos-scawful-test`, via `oos-triforce.sh launch test`).
+- Zelda menu stays in sync (rule): whoever changes `oos_play.py`, `oos-triforce.sh`,
+  `mesen2_launch_instance.sh`, the Mesen app path or the ROM folders also updates
+  `~/.config/sketchybar/modules/integrations/oracle.lua` and `plugins/oracle_triforce.sh`,
+  then runs `lua tests/run_tests.lua tests/test_oracle_integration.lua` and
+  `bash tests/test_oracle_triforce.sh` there.
 
 ## Emacs Review (2026-09-26)
 scawful reviews .org/.md in Emacs through agent-bridge (`~/src/tools/agent-bridge/README.md`).

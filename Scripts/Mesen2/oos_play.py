@@ -184,19 +184,24 @@ def refresh_recent_games(rom: Path | None = None) -> None:
     play_rgd = PROFILE / "RecentGames" / "oos-play.rgd"
     for home in homes:
         folder = home / "RecentGames"
-        folder.mkdir(parents=True, exist_ok=True)
         retargeted = []
-        for rgd in folder.glob("*.rgd"):
-            try:
-                if _retarget_missing_rgd(rgd, rom):
-                    retargeted.append(rgd.name)
-            except (zipfile.BadZipFile, OSError) as exc:
-                print(f"recent games: skipped {rgd.name} ({exc})")
-        if home != PROFILE and play_rgd.is_file():
-            dest = folder / "oos-play.rgd"
-            shutil.copy2(play_rgd, dest)
-            os.utime(dest, None)
-        _put_play_rom_first(home / "settings.json", rom)
+        # ~/Documents is synced by iCloud; a busy file there raises OSError
+        # (Errno 11) and must not stop the play window from opening.
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+            for rgd in folder.glob("*.rgd"):
+                try:
+                    if _retarget_missing_rgd(rgd, rom):
+                        retargeted.append(rgd.name)
+                except (zipfile.BadZipFile, OSError) as exc:
+                    print(f"recent games: skipped {rgd.name} ({exc})")
+            if home != PROFILE and play_rgd.is_file():
+                dest = folder / "oos-play.rgd"
+                shutil.copy2(play_rgd, dest)
+                os.utime(dest, None)
+            _put_play_rom_first(home / "settings.json", rom)
+        except (OSError, ValueError) as exc:
+            print(f"recent games: skipped {home} ({exc})")
         if retargeted:
             print(f"recent games: {home.name} now opens {rom.name} ({', '.join(retargeted)})")
 
@@ -386,13 +391,14 @@ def main() -> int:
     args = parser.parse_args()
     if args.instance != INSTANCE:
         use_instance(args.instance)
-    refresh_recent_games(args.rom if args.rom.is_file() else None)
 
+    # Status and place are read-only: barista calls --status on every popup.
     if args.status:
         return status_json() if args.json else status()
     if args.place:
         bring_to_current_space(place=True)
         return 0
+    refresh_recent_games(args.rom if args.rom.is_file() else None)
     rom = args.rom.resolve()
     if not rom.is_file():
         raise SystemExit(f"oos-play: {rom} not found (stage a build first)")
