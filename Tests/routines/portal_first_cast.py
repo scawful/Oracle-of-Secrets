@@ -60,7 +60,7 @@ def physical(address):
 
 def cases():
     # Each expected color is a behavior contract, not a Python copy of the scan.
-    return [
+    base_cases = [
         ('empty-stale-one', 1, [], 1, 0, 1),
         ('empty-default-zero', 0, [], 1, 2, 1),
         ('pending-only', 1, [(4, 9, 3, 0)], 1, 4, 1),
@@ -74,16 +74,22 @@ def cases():
         ('full-failure-zero', 0, [(s, 9, 4, 0) for s in range(16)], 0, 0, 1),
         ('full-failure-one', 1, [(s, 9, 4, 0) for s in range(16)], 1, 0, 1),
     ]
+    # Opposite source-slot floors expose native sprite-parent inheritance.
+    return [case + (0, 1) for case in base_cases] + [
+        ('upper-floor-cast', 1, [], 1, 0, 1, 1, 0),
+        ('upper-floor-existing-pair', 1, [(0, 9, 3, 2)], 0, 2, 1, 1, 0),
+    ]
 
 
 def fixture(case, entry):
-    name, selector, sprites, expected, direction, indoors = case
+    name, selector, sprites, expected, direction, indoors, floor, donor_floor = case
     ram = bytearray((n * 37 + 11) & 255 for n in range(0x20000))
     ram[0x0DD0:0x0DE0] = bytes(16)
     # Deliberately stale handles/count and dormant slots' nonzero subtypes.
     ram[0x0632:0x0634] = bytes((0xFF, 0x10))
     ram[0x06FE], ram[0x0FA6] = 2, selector
     ram[0x1B], ram[0x2F] = indoors, direction
+    ram[0xEE], ram[0xF20 + 5] = floor, donor_floor  # Caller X=5 below.
     ram[0x20:0x24] = bytes.fromhex('08230812')  # Link Y=$2308, X=$1208.
     ram[0x0E30:0x0E40] = bytes([2] * 16)
     for slot, state, kind, subtype in sprites:
@@ -100,7 +106,7 @@ def fixture(case, entry):
 
 
 def verify(case, before, slot, result, timer):
-    name, selector, sprites, expected, direction, indoors = case
+    name, selector, sprites, expected, direction, indoors, floor, donor_floor = case
     require(result.get('returned'), f'{name}: CPU did not return: {result.get("error")}')
     require(not result.get('stub_calls') and not result.get('mmio_writes'),
             f'{name}: unexpected simulated engine/device path')
@@ -123,6 +129,8 @@ def verify(case, before, slot, result, timer):
             allowed.add(WRAM + 0xBC1 + index)
         require(after[0xDD0 + slot] == 9 and after[0xE20 + slot] == 3
                 and after[0xE30 + slot] == 0, f'{name}: pending allocation identity wrong')
+        require(after[0xF20 + slot] == floor,
+                f'{name}: portal floor {after[0xF20 + slot]}, expected Link floor {floor}')
         dx, dy = {0: (0, -20), 2: (0, 31), 4: (-20, 0), 6: (20, 0)}[direction]
         x = after[0xD10 + slot] | after[0xD30 + slot] << 8
         y = after[0xD00 + slot] | after[0xD20 + slot] << 8
