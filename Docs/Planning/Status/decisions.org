@@ -2188,3 +2188,16 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: "A distant rumble shakes the / castle. Somewhere inside, a / gate has opened."
   Answer: "Use the named-gate wording: The lightning gate upstairs has gone dark. The way past it
   is open now." (scawful, 2026-10-19)
+
+* DECIDED Courage dream speaker: the Captain, the knight trapped inside (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (review of OPEN "Approve Courage dream scene")
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/DRAFT.md
+  :END:
+  In Dream 3 "The Healing Revelation" the lines come from the Captain himself, the knight
+  trapped inside Kydreeok, not from Farore. The draft's three Farore lines get rewritten in his
+  voice. Maple's wake line is unchanged. "OPEN Approve Courage dream scene" stays OPEN until
+  scawful approves the rewritten text.
+  Rejected: Farore as the dream speaker (the 2026-10-15 draft).
+  Answer: "The Captain himself, the knight trapped inside, speaks in the Courage dream."
+  (scawful, 2026-10-19)
