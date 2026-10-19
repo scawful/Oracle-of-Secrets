@@ -278,7 +278,8 @@ if !ENABLE_EQUIPMENT_MENU == 0
     LDA.w $0202 : CMP.b #!MENU_STATE_SONG_MENU : BNE ++
       LDA.b $F6 : BIT.b #$80 : BEQ ++
         LDA.b #!MENU_STATE_SONG_MENU : STA.w $0200
-        LDA.b #$01 : STA.w CurrentSong ; Initialize song selection
+        STZ.w CurrentSong                ; start on the lowest learned song
+        JSL Ocarina_ValidateSong_Long
           JSR Menu_DeleteCursor
           JSR Menu_DrawSongMenu
           SEP #$30
@@ -822,34 +823,21 @@ MagicBag_ConsumeItem:
 ; =========================================================
 ; 0D MENU SONG MENU
 
-; Six-song navigation uses the same bounded count in every diagnostic profile.
-; Right/Up advances and wraps; Left/Down stops at the first learned song.
-; An unlearned ocarina has no cursor and ignores direction input.
+; The cursor visits learned songs only (SongBits, one bit per song), in every
+; diagnostic profile. Right/Up advances and wraps; Left/Down stops at the
+; lowest learned song. With no song learned there is no cursor and direction
+; input is ignored.
 Menu_SongMenu:
 {
   REP #$30
-  JSR Menu_DrawMusicNotes
+  JSR Menu_DrawMusicNotes          ; validates CurrentSong first
   SEP #$30
 
-  LDA.l $7EF34C : CMP.b #$02 : BCS .songs_available
-    STZ.w CurrentSong
+  LDA.w CurrentSong : BNE .songs_available
     JSR Menu_DrawItemName
     SEP #$30
     BRA .input_done
   .songs_available
-
-  ; $00 = highest learned song (1-6) = $7EF34C - 1.
-  CMP.b #$08 : BCC .count_ok
-    LDA.b #$07
-  .count_ok
-  DEC : STA.b $00
-
-  ; Keep CurrentSong in 1..$00.
-  LDA.w CurrentSong : BEQ .reset_song
-  CMP.b $00 : BCC .song_ok : BEQ .song_ok
-  .reset_song
-    LDA.b #$01 : STA.w CurrentSong
-  .song_ok
 
   LDA.b $F4 : AND.b #$0F : BEQ .draw
     PHA
@@ -863,14 +851,13 @@ Menu_SongMenu:
     LSR : BCS .prev ; Down
     ; Up
     .next
-    LDA.w CurrentSong : CMP.b $00 : BCC .inc_song
-      LDA.b #$00 ; wrap to song 1
-    .inc_song
-    INC : STA.w CurrentSong
+    LDA.w CurrentSong : SEC : JSL Ocarina_StepSong_Long
+    STA.w CurrentSong
     BRA .draw
     .prev
-    LDA.w CurrentSong : CMP.b #$02 : BCC .draw
-      DEC : STA.w CurrentSong
+    LDA.w CurrentSong : CLC : JSL Ocarina_StepSong_Long
+    CMP.w CurrentSong : BCS .draw  ; wrapped past the lowest: stay
+      STA.w CurrentSong
 
   .draw
   JSR Menu_DrawItemName
@@ -882,7 +869,7 @@ Menu_SongMenu:
 
   .input_done
   SEP #$30
-  JSL UpdateFluteSong_Long ; save the bounded selection in this file
+  JSL Ocarina_ValidateSong_Long ; save the bounded selection; no L/R read
   SEP #$20
   JSR Submenu_Return
   SEP #$20

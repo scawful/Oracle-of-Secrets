@@ -4,7 +4,7 @@
 Menu_Equipment_Init:
 {
   SEP #$30
-  JSL UpdateFluteSong_Long
+  JSL Ocarina_ValidateSong_Long
   STZ.w $0207
   LDA.l BoundMask : DEC : CMP.b #$06 : BCS .first
   STA.w $020B
@@ -41,9 +41,9 @@ Menu_Equipment_Owned:
   TXA : INC #2 : BRA .done
 .song
   CMP.b #$12 : BCS .supplies
-  SEC : SBC.b #$0B                    ; song 1-6 < Ocarina progression
-  CMP.l $7EF34C : BCS .none
-  INC : BRA .done                    ; colored note variants 2-7
+  SEC : SBC.b #$0B : TAX             ; song 1-6
+  LDA.l Ocarina_SongMask, X : AND.l SongBits : BEQ .none
+  TXA : INC : BRA .done              ; colored note variants 2-7
 .supplies
   CMP.b #$18 : BCS .none
   LDA.b #$01 : BRA .done             ; count never indexes the one-variant icon
@@ -221,7 +221,7 @@ Menu_Equipment_Draw:
   LDA.l RingSlot1 : SEC : SBC.b #$02 : CMP.b #$06 : BCS .no_ring
   CLC : ADC.b #$06 : JSR .marker
 .no_ring
-  JSL UpdateFluteSong_Long
+  JSL Ocarina_ValidateSong_Long
   LDA.w CurrentSong : BEQ .no_song
   CLC : ADC.b #$0B : JSR .marker
 .no_song

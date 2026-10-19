@@ -31,7 +31,7 @@ native, menu = prototype.native, prototype.menu
 OWNED, BOUND = 0x7EF3AF, 0x7EF3A8
 NPC_X, NPC_Y = 0xEF8, 0xEE8  # stream $09CBCC entry2, native prep adds 8
 SETUP = {0x7EF3C5: 2, 0x7EE000: 8, 0x7EE001: 0,
-         0x7EF34C: 3, OWNED: 0, BOUND: 0}
+         0x7EF34C: 3, 0x7EF3B1: 0x03, OWNED: 0, BOUND: 0}  # SongBits: Healing, Storms
 WARP_BYTES = {0x7E010E, 0x7E010F, 0x7E010A, 0x7E04AA, 0x7E001B,
               0x7E0011, 0x7E00B0, 0x7E0010, 0x7E00A0, 0x7E00A1,
               0x7E0013, 0x7E009B}

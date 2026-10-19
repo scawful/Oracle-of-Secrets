@@ -185,7 +185,8 @@ if !ENABLE_MAP_ICON_TIMELINE == 1
 ;        its reveal crystal is set. D1 shows once the Maku Tree is met
 ;        (MapIconDraw checks OOSPROG bit 1 first); D2 shows once Link
 ;        owns the Ocarina ($7EF34C >= 1, beat 10); D7 shows once Link knows
-;        the Song of Soaring ($7EF34C >= 4, beat 22; scawful 2026-09-26).
+;        the Song of Soaring (SongBits !Song_Soaring, beat 22; scawful
+;        2026-09-26).
 MapTimeline_ShouldDrawDungeon:
 {
   PHP
@@ -198,12 +199,11 @@ MapTimeline_ShouldDrawDungeon:
     BRA .hide
   .special
   CPX.b #$01 : BEQ .show
-  LDA.l Flute
   CPX.b #$07 : BEQ .soaring
-    CMP.b #$01 : BCS .show   ; D2: Ocarina owned
+    LDA.l Flute : CMP.b #$01 : BCS .show   ; D2: Ocarina owned
     BRA .hide
   .soaring
-    CMP.b #$04 : BCS .show   ; D7: Song of Soaring learned
+    LDA.l SongBits : AND.b #!Song_Soaring : BNE .show ; D7: Soaring learned
   .hide
   REP #$10 : PLX
   PLP : CLC

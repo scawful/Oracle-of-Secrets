@@ -19,8 +19,8 @@ sys.dont_write_bytecode = True
 import new_items_prototype as items
 
 native, menu = items.native, items.menu
-FLUTE, SAVED = 0x7EF34C, 0x7EF3AB
-FIXTURES = {FLUTE: 7, 0x7EF3A9: 1, 0x7EF348: 1, 0x7EF3AF: 1,
+FLUTE, SAVED, SONG_BITS = 0x7EF34C, 0x7EF3AB, 0x7EF3B1
+FIXTURES = {FLUTE: 7, SONG_BITS: 0x3F, 0x7EF3A9: 1, 0x7EF348: 1, 0x7EF3AF: 1,
             0x7EF38B: 3, 0x7EF38D: 4}
 ALLOWED = set(FIXTURES) | {SAVED}
 BLUE = [0x2CD4, 0x2CD5, 0x2CE4, 0x2CE5]

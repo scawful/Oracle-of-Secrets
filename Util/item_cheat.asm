@@ -115,6 +115,7 @@ if !BetaRelease == 0
 
 endif
   LDA #$04 : STA Flute
+  LDA SongBits : ORA #!Song_Healing|!Song_Storms|!Song_Soaring : STA SongBits
   LDA #$01 : STA RocsFeather
   LDA #$03 : STA Bow
   LDA #$02 : STA Boomerang
