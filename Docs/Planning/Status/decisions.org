@@ -2302,6 +2302,11 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Dungeon_Tables_Expansion.md section 5) when a new pit room needs a slot.
   Answer: "ok no dont put the pit in there, you cant even fall in that's just decoration"
   (scawful, 2026-10-19)
+  Tool check 2026-10-19 (new yaze command z3ed dungeon-tile-types, branch
+  claude/dungeon-tile-types, matches a runtime $7F2000 capture): $81 has a 2-tile ring of 128 pit
+  cells ($20) around the black area; the black interior is $1C. No walkable floor touches any pit
+  cell (neighbours are walls $01/$02/$04 and $1C), which fits "you cant even fall in". Static, not
+  a walk test.
 
 * DECIDED The Song of Healing wakes the Sick Kid for the Pegasus Boots (2026-10-19)
   :PROPERTIES:
