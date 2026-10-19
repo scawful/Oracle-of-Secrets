@@ -115,6 +115,13 @@ jobs:
           printf '\xA9\xAF\xB3' | dd of=test.sfc bs=1 seek=$((0x513B)) conv=notrunc 2>/dev/null  # $00D13B-$00D13D high bytes
           printf '\x67\x1A\xF8' | dd of=test.sfc bs=1 seek=$((0x521A)) conv=notrunc 2>/dev/null  # $00D21A-$00D21C low bytes
 
+          # Portal Rod receipt and chest guards inspect these records before
+          # patching them. Seed only their expected values; keep all assertions.
+          printf '\x4C\xF3' | dd of=test.sfc bs=1 seek=$((0x4857C)) conv=notrunc 2>/dev/null  # receipt $4A destination $7EF34C
+          printf '\x03' | dd of=test.sfc bs=1 seek=$((0x485CA)) conv=notrunc 2>/dev/null  # receipt $4A original value
+          printf '\x5C\x80\x23' | dd of=test.sfc bs=1 seek=$((0xE9D1)) conv=notrunc 2>/dev/null  # room $5C big chest: Red Mail
+          printf '\x1D\x00\x24' | dd of=test.sfc bs=1 seek=$((0xE98C)) conv=notrunc 2>/dev/null  # room $1D chest: small key
+
           # Original instructions guarded by Overworld/music_cache.asm. These
           # are explicit headerless LoROM PC offsets, not relocated cache bytes.
           # LDA.l $7F5B00,X at SNES $00F401, $02AE73, $02B117, $02B126,
