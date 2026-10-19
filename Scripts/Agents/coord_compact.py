@@ -5,11 +5,14 @@ The default run is a dry run: it prints the plan and writes nothing. --apply
 appends every removed block, verbatim and in original order, to
 archive/coordination/<UTC date>/<file> first, reads the archive back, and only
 then rewrites the live files. Nothing is deleted. Each live file is written to a
-temp file, re-checked against the plan (sha256, size, mtime) right before
-os.replace, and skipped if it changed since planning; the archive appends stay
-recorded in receipt.json, so a re-run does not archive them twice. A write that
-lands in the old file during the swap is saved next to the archive and reported
-as REWRITTEN; CONCURRENT WRITE SAVED (merge it back by hand).
+temp file and checked against the plan (sha256, size, mtime). Existing files are
+atomically exchanged with a retained recovery pathname on supported macOS/Linux
+filesystems; unsupported exchanges leave the live file alone. Both the planned
+inode and actual displaced object remain in the recorded recovery directory,
+including writes through old handles after this command returns. Unexpected
+content or types are reported as a concurrent-write rescue requiring a hand
+merge. This is not an atomic compare-and-swap or a lock on other writers.
+Archive appends stay recorded in receipt.json so retries do not duplicate them.
 
 --migrate is the one-time switch to the new format (design section 6.3): every
 current byte of the three files is archived verbatim, then the files are seeded
@@ -47,12 +50,16 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import ctypes
+import errno
 import datetime as dt
 import hashlib
 import json
 import os
 import re
 import sys
+import stat
+import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -853,52 +860,120 @@ def atomic_write(path: Path, data: bytes, mode: int | None = None) -> None:
     fsync_dir(path.parent)
 
 
+def _exchange(src: Path, dst: Path) -> None:
+    """Preserve both pathnames atomically; never fall back to a lossy replace."""
+    libc = ctypes.CDLL(None, use_errno=True)
+    if sys.platform == "darwin":
+        exchange = getattr(libc, "renamex_np", None)
+        args = (os.fsencode(src), os.fsencode(dst), 2)  # RENAME_SWAP
+        types = (ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint)
+    elif sys.platform.startswith("linux"):
+        exchange = getattr(libc, "renameat2", None)
+        args = (-100, os.fsencode(src), -100, os.fsencode(dst), 2)  # AT_FDCWD, RENAME_EXCHANGE
+        types = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
+    else:
+        exchange = None
+    if exchange is None:
+        raise OSError(errno.ENOTSUP, "atomic exchange is unavailable on this platform")
+    exchange.argtypes, exchange.restype = types, ctypes.c_int
+    if exchange(*args) != 0:
+        code = ctypes.get_errno()
+        raise OSError(code, os.strerror(code), str(dst))
+
+
+@dataclass(frozen=True)
+class WriteResult:
+    written: bool
+    note: str | None = None
+    recovery: str | None = None
+
+
+def _open_regular(path: Path):
+    """Do not follow a racing symlink or block reading a FIFO/device."""
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise Refused(f"{path} is not a regular file")
+        return os.fdopen(fd, "rb")
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def _held_stamp(handle) -> Stamp:
+    handle.seek(0)
+    data = handle.read()
+    st = os.fstat(handle.fileno())
+    return Stamp(True, hashlib.sha256(data).hexdigest(), st.st_size, st.st_mtime_ns)
+
+
 def replace_if_unchanged(path: Path, data: bytes, stamp: Stamp, mode: int, rescue_dir: Path,
-                         now: dt.datetime) -> tuple[bool, str | None]:
-    """Compare-and-swap one live file. The temp file is written first; the target is
-    re-checked against the plan (sha256, size, mtime) immediately before os.replace,
-    through a handle that must still be the file at the path (same inode). A file
-    that did not exist at planning is created only if still absent (os.link), never
-    overwritten. Returns (written, note):
-      (True, None)   rewritten;
-      (False, why)   left alone;
-      (True, note)   rewritten, but a write that landed in the displaced file during
-                     the swap was saved to rescue_dir; note names that file."""
+                         now: dt.datetime) -> WriteResult:
+    """Check the plan, then exchange while retaining every inode we displace.
+
+    The planned inode gets a hard link before exchange; the actual displaced
+    pathname is kept too. Neither is deleted, even on an apparently clean swap:
+    another writer may still hold an open handle. A conflict needs a hand merge,
+    not a blind rollback that could overwrite a third writer's update.
+    """
     tmp = write_temp(path, data, mode)
     try:
         if not stamp.exists:
             try:
                 os.link(tmp, path)  # create only if still absent
             except FileExistsError:
-                return False, "created by someone else after planning; left alone"
-            return True, None
+                return WriteResult(False, "created by someone else after planning; left alone")
+            return WriteResult(True)
+        if sys.platform != "darwin" and not sys.platform.startswith("linux"):
+            return WriteResult(False, "atomic exchange unavailable on this platform; left alone")
         try:
-            held = open(path, "rb")
-        except FileNotFoundError:
-            return False, "removed after planning; left alone"
+            held = _open_regular(path)
+        except (OSError, Refused) as exc:
+            return WriteResult(False, f"changed after planning; left alone ({exc})")
         with held:
+            original = os.fstat(held.fileno())
             try:
-                current = stamp_of(path)
-                same_inode = os.fstat(held.fileno()).st_ino == os.stat(path).st_ino
-            except (FileNotFoundError, Refused):
-                return False, "changed after planning; left alone"
-            if current != stamp or not same_inode:
-                return False, "changed after planning (sha256/size/mtime); left alone, re-run"
-            _replace(tmp, path)
-            st = os.fstat(held.fileno())
-            if (st.st_size, st.st_mtime_ns) != (stamp.size, stamp.mtime_ns):
-                held.seek(0)
-                rescue = rescue_dir / f"{path.name}.displaced-{now.strftime('%H%M%SZ')}-{os.getpid()}"
-                with open(rescue, "xb") as out:
-                    out.write(held.read())
-                    out.flush()
-                    os.fsync(out.fileno())
-                return True, (f"the version written during the swap was saved to {rescue}; "
-                              "merge it back by hand")
-        return True, None
+                current = _held_stamp(held)
+                st = path.lstat()
+            except OSError:
+                return WriteResult(False, "changed after planning; left alone")
+            if current != stamp or (original.st_dev, original.st_ino) != (st.st_dev, st.st_ino):
+                return WriteResult(False, "changed after planning (sha256/size/mtime/inode); left alone, re-run")
+            recovery = Path(tempfile.mkdtemp(
+                prefix=f"{path.name}.displaced-{now.strftime('%H%M%SZ')}-{os.getpid()}-", dir=rescue_dir))
+            planned, displaced = recovery / "planned", recovery / "displaced"
+            try:
+                os.link(path, planned, follow_symlinks=False)
+                linked = planned.lstat()
+                if (linked.st_dev, linked.st_ino) != (original.st_dev, original.st_ino):
+                    return WriteResult(False, "changed while retaining planned inode; left alone", str(recovery))
+                # Move into retained recovery storage before exchange, so temp
+                # cleanup cannot delete the actual displaced object. Sync both
+                # directory levels best-effort; this is not a power-loss guarantee.
+                os.replace(tmp, displaced)
+                fsync_dir(recovery)
+                fsync_dir(rescue_dir)
+                _exchange(displaced, path)
+            except OSError as exc:
+                return WriteResult(False, f"exchange unavailable or failed; left alone ({exc})", str(recovery))
+            finally:
+                fsync_dir(recovery)
+                fsync_dir(rescue_dir)
+            try:
+                with _open_regular(displaced) as previous:
+                    st = os.fstat(previous.fileno())
+                    unchanged = (_held_stamp(previous) == stamp and
+                                 (st.st_dev, st.st_ino) == (original.st_dev, original.st_ino) and
+                                 _held_stamp(held) == stamp)
+            except (OSError, Refused):
+                unchanged = False  # Preserve unexpected symlinks/directories without following them.
+            if not unchanged:
+                return WriteResult(True, f"concurrent content or type saved to {recovery}; "
+                                   "merge it back by hand; no automatic rollback", str(recovery))
+        return WriteResult(True, recovery=str(recovery))
     finally:
         if tmp.exists():
-            tmp.unlink()
+            tmp.unlink()  # Only our unexchanged proposed bytes can remain here.
         fsync_dir(path.parent)
 
 
@@ -1005,7 +1080,7 @@ def apply_plan(plan: Plan, root: Path, stamps: dict[str, Stamp]) -> dict:
         run = {
             "time": iso(plan.now), "version": VERSION, "mode": "migrate" if plan.migrate else "compact",
             "status": "archiving", "files": {}, "archived": {}, "moved": {}, "rules_created": False,
-            "replaced": [], "skipped": {}, "rescued": {},
+            "replaced": [], "skipped": {}, "rescued": {}, "recovery": {},
         }
         receipt["runs"].append(run)
 
@@ -1045,17 +1120,23 @@ def apply_plan(plan: Plan, root: Path, stamps: dict[str, Stamp]) -> dict:
 
         rules_failed = False
         if plan.rules_new:
-            written, note = replace_if_unchanged(root / RULES, plan.rules_new.encode("utf-8"), stamps[RULES],
-                                                 0o644, out_dir, plan.now)
-            if written:
+            result = replace_if_unchanged(root / RULES, plan.rules_new.encode("utf-8"), stamps[RULES],
+                                          0o644, out_dir, plan.now)
+            if result.recovery:
+                run["recovery"][RULES] = result.recovery
+            if result.written:
                 run["rules_created"] = True
             else:
                 rules_failed = True
-                run["skipped"][RULES] = note
+                run["skipped"][RULES] = result.note
             save()
         for name in TARGETS:
             fp = plan.files[name]
             if not fp.changed:
+                continue
+            if run["rescued"]:
+                run["skipped"][name] = "stopped after a concurrent-write rescue; review recovery files first"
+                save()
                 continue
             if name == BOARD and rules_failed:
                 run["skipped"][name] = f"{RULES} was not created, so the Rules section stays on the board"
@@ -1063,14 +1144,16 @@ def apply_plan(plan: Plan, root: Path, stamps: dict[str, Stamp]) -> dict:
                 continue
             path = root / name
             mode = path.stat().st_mode & 0o777 if path.exists() else 0o644
-            written, note = replace_if_unchanged(path, fp.after.encode("utf-8"), stamps[name], mode, out_dir,
-                                                 plan.now)
-            if not written:
-                run["skipped"][name] = note
+            result = replace_if_unchanged(path, fp.after.encode("utf-8"), stamps[name], mode, out_dir,
+                                          plan.now)
+            if result.recovery:
+                run["recovery"][name] = result.recovery
+            if not result.written:
+                run["skipped"][name] = result.note
             else:
                 run["replaced"].append(name)
-                if note:
-                    run["rescued"][name] = note
+                if result.note:
+                    run["rescued"][name] = result.note
             save()
         run["status"] = "partial" if run["skipped"] else "rescued" if run["rescued"] else "applied"
         save()
@@ -1214,6 +1297,8 @@ def render_markdown(report: dict, list_moved: bool) -> str:
                    + (f"; archive {applied['archive_dir']}" if applied.get("archive_dir") else ""))
         for name, why in (applied.get("skipped") or {}).items():
             out.append(f"NOT REWRITTEN: {name}: {why}")
+        for name, recovery in (applied.get("recovery") or {}).items():
+            out.append(f"RECOVERY RETAINED: {name}: {recovery}")
         for name, note in (applied.get("rescued") or {}).items():
             out.append(f"REWRITTEN; CONCURRENT WRITE SAVED: {name}: {note}")
     return "\n".join(out) + "\n"

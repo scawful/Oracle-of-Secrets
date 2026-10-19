@@ -6,6 +6,7 @@ directory as the scratchpad root; nothing touches the real AFS files.
 from __future__ import annotations
 
 import contextlib
+import errno
 import importlib.util
 import io
 import json
@@ -14,6 +15,7 @@ import re
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
@@ -531,36 +533,181 @@ class ApplyTests(unittest.TestCase):
 
     def test_write_into_the_displaced_file_during_the_swap_is_saved_and_reported(self):
         plan, _ = self.plan_from_disk()
-        original_replace = cc._replace
+        original_exchange = cc._exchange
         late = "2026-10-17 codex -> claude: landed during the swap (handoffs/s.md)\n"
 
-        def replace_with_late_writer(src, dst):
+        def exchange_with_late_writer(src, dst):
             if Path(dst).name == cc.INBOX:
                 with open(dst, "a", encoding="utf-8") as writer:  # opened before the swap
-                    original_replace(src, dst)
+                    original_exchange(src, dst)
                     writer.write(late)
             else:
-                original_replace(src, dst)
+                original_exchange(src, dst)
 
-        cc._replace = replace_with_late_writer
-        try:
+        with mock.patch.object(cc, "_exchange", side_effect=exchange_with_late_writer):
             code, out = self.run_cli("--apply")
-        finally:
-            cc._replace = original_replace
         self.assertEqual(code, 1, out)  # a hand merge is still needed
         run = self.receipt()["runs"][-1]
         self.assertEqual(run["status"], "rescued")
-        # The file WAS rewritten; only the concurrent write went to the rescue file.
         self.assertIn(cc.INBOX, run["replaced"])
         self.assertNotIn(cc.INBOX, run["skipped"])
         self.assertIn("saved to", run["rescued"][cc.INBOX])
         self.assertEqual((self.root / cc.INBOX).read_text(encoding="utf-8"), plan.files[cc.INBOX].after)
-        rescued = list(self.archive.glob(f"{cc.INBOX}.displaced-*"))
-        self.assertEqual(len(rescued), 1)
-        self.assertEqual(rescued[0].read_text(encoding="utf-8"), LEGACY_INBOX + late)
+        recovery = Path(run["recovery"][cc.INBOX])
+        self.assertEqual(recovery.parent, self.archive)
+        for name in ("planned", "displaced"):
+            self.assertEqual((recovery / name).read_text(encoding="utf-8"), LEGACY_INBOX + late)
         self.assertIn("Applied: rescued", out)
         self.assertIn(f"REWRITTEN; CONCURRENT WRITE SAVED: {cc.INBOX}: ", out)
         self.assertNotIn("NOT REWRITTEN", out)
+
+    def test_atomic_editor_save_is_retained_and_stops_remaining_rewrites(self):
+        plan, _ = self.plan_from_disk()
+        original_exchange = cc._exchange
+        concurrent = LEGACY_BOARD + "\nA new concurrent owner must survive.\n"
+
+        def exchange_after_editor_save(src, dst):
+            self.assertEqual(Path(dst).name, cc.BOARD)  # first target only
+            editor = self.root / "editor-save.tmp"
+            editor.write_text(concurrent, encoding="utf-8")
+            os.replace(editor, dst)
+            original_exchange(src, dst)
+
+        with mock.patch.object(cc, "_exchange", side_effect=exchange_after_editor_save) as exchange:
+            code, out = self.run_cli("--apply")
+        self.assertEqual(code, 1, out)
+        self.assertEqual(exchange.call_count, 1)
+        run = self.receipt()["runs"][-1]
+        self.assertEqual(run["status"], "partial")
+        self.assertEqual(run["replaced"], [cc.BOARD])
+        self.assertEqual(set(run["rescued"]), {cc.BOARD})
+        self.assertNotIn(cc.BOARD, run["skipped"])
+        recovery = Path(run["recovery"][cc.BOARD])
+        self.assertEqual((recovery / "planned").read_text(encoding="utf-8"), LEGACY_BOARD)
+        self.assertEqual((recovery / "displaced").read_text(encoding="utf-8"), concurrent)
+        self.assertEqual((self.root / cc.BOARD).read_text(encoding="utf-8"), plan.files[cc.BOARD].after)
+        for name in (cc.HANDOFF, cc.INBOX):
+            self.assertIn("stopped after", run["skipped"][name])
+            self.assertEqual((self.root / name).read_text(encoding="utf-8"), TEXTS[name])
+        self.assertIn(f"REWRITTEN; CONCURRENT WRITE SAVED: {cc.BOARD}: ", out)
+        self.assertIn(str(recovery), out)
+        self.assertFalse((self.root / cc.LOCK_DIR).exists())
+
+    def test_open_writer_after_return_still_has_named_recovery_inode(self):
+        path = self.root / "late-writer.md"
+        before, proposed, late = b"original\n", b"compacted\n", b"after return\n"
+        path.write_bytes(before)
+        stamp = cc.stamp_of(path)
+        original_inode = path.stat().st_ino
+        self.archive.mkdir(parents=True)
+        with path.open("ab") as writer:
+            result = cc.replace_if_unchanged(path, proposed, stamp, 0o644, self.archive, NOW)
+            self.assertTrue(result.written)
+            self.assertIsNone(result.note)
+            recovery = Path(result.recovery)
+            for name in ("planned", "displaced"):
+                self.assertEqual((recovery / name).stat().st_ino, original_inode)
+                self.assertEqual((recovery / name).read_bytes(), before)
+            writer.write(late)
+            writer.flush()
+        self.assertEqual(path.read_bytes(), proposed)
+        for name in ("planned", "displaced"):
+            self.assertEqual((recovery / name).read_bytes(), before + late)
+        self.assertEqual(list(self.root.glob(".*.tmp")), [])
+
+    def test_recovery_directories_synced_before_exchange(self):
+        path = self.root / cc.INBOX
+        stamp = cc.stamp_of(path)
+        self.archive.mkdir(parents=True)
+        events = []
+        original_sync, original_exchange = cc.fsync_dir, cc._exchange
+
+        def sync_and_record(directory):
+            original_sync(directory)
+            events.append(("sync", Path(directory)))
+
+        def exchange_and_record(src, dst):
+            events.append(("exchange", Path(src)))
+            original_exchange(src, dst)
+
+        with mock.patch.object(cc, "fsync_dir", side_effect=sync_and_record), \
+                mock.patch.object(cc, "_exchange", side_effect=exchange_and_record):
+            result = cc.replace_if_unchanged(path, b"proposal\n", stamp, 0o644, self.archive, NOW)
+        self.assertTrue(result.written)
+        self.assertIsNone(result.note)
+        recovery = Path(result.recovery)
+        exchange_index = events.index(("exchange", recovery / "displaced"))
+        before_exchange = events[:exchange_index]
+        child_index = before_exchange.index(("sync", recovery))
+        parent_index = before_exchange.index(("sync", self.archive))
+        self.assertLess(child_index, parent_index)
+        self.assertEqual(path.read_bytes(), b"proposal\n")
+
+    def test_unsupported_exchange_keeps_live_inode_and_bytes(self):
+        path = self.root / cc.INBOX
+        stamp, before = cc.stamp_of(path), path.read_bytes()
+        inode = path.stat().st_ino
+        self.archive.mkdir(parents=True)
+        with mock.patch.object(cc, "_exchange", side_effect=OSError(errno.ENOTSUP, "unsupported")):
+            result = cc.replace_if_unchanged(path, b"proposal\n", stamp, 0o644, self.archive, NOW)
+        self.assertFalse(result.written)
+        self.assertIn("exchange unavailable or failed", result.note)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(path.stat().st_ino, inode)
+        self.assertEqual((Path(result.recovery) / "planned").read_bytes(), before)
+        self.assertEqual((Path(result.recovery) / "displaced").read_bytes(), b"proposal\n")
+
+    def test_unsupported_platform_never_attempts_exchange(self):
+        path = self.root / cc.INBOX
+        stamp, before = cc.stamp_of(path), tree_state(self.root)
+        with mock.patch.object(cc.sys, "platform", "unsupported-platform"), \
+                mock.patch.object(cc, "_exchange") as exchange:
+            result = cc.replace_if_unchanged(path, b"proposal\n", stamp, 0o644, self.archive, NOW)
+        self.assertFalse(result.written)
+        self.assertIn("unavailable", result.note)
+        self.assertIsNone(result.recovery)
+        exchange.assert_not_called()
+        self.assertEqual(tree_state(self.root), before)
+
+    def test_racing_symlink_or_directory_is_retained_without_following(self):
+        self.archive.mkdir(parents=True)
+        original_exchange = cc._exchange
+        with tempfile.TemporaryDirectory() as outside:
+            sentinel = Path(outside) / "outside.md"
+            sentinel.write_bytes(b"outside content must stay untouched\n")
+            outside_before = (sentinel.read_bytes(), sentinel.stat().st_ino, sentinel.stat().st_mtime_ns)
+            for kind in ("symlink", "directory"):
+                with self.subTest(kind=kind):
+                    path = self.root / f"race-{kind}.md"
+                    path.write_bytes(b"planned original\n")
+                    stamp = cc.stamp_of(path)
+
+                    def exchange_after_type_change(src, dst):
+                        Path(dst).unlink()
+                        if kind == "symlink":
+                            Path(dst).symlink_to(sentinel)
+                        else:
+                            Path(dst).mkdir()
+                            (Path(dst) / "child.md").write_bytes(b"concurrent directory content\n")
+                        original_exchange(src, dst)
+
+                    with mock.patch.object(cc, "_exchange", side_effect=exchange_after_type_change):
+                        result = cc.replace_if_unchanged(path, b"proposal\n", stamp, 0o644, self.archive, NOW)
+                    self.assertTrue(result.written)
+                    self.assertIn("concurrent content or type", result.note)
+                    self.assertIn("no automatic rollback", result.note)
+                    recovery = Path(result.recovery)
+                    self.assertEqual((recovery / "planned").read_bytes(), b"planned original\n")
+                    displaced = recovery / "displaced"
+                    if kind == "symlink":
+                        self.assertTrue(displaced.is_symlink())
+                        self.assertEqual(os.readlink(displaced), str(sentinel))
+                    else:
+                        self.assertTrue(displaced.is_dir())
+                        self.assertEqual((displaced / "child.md").read_bytes(), b"concurrent directory content\n")
+                    self.assertEqual(path.read_bytes(), b"proposal\n")
+                    self.assertEqual((sentinel.read_bytes(), sentinel.stat().st_ino,
+                                      sentinel.stat().st_mtime_ns), outside_before)
 
     def test_board_rules_is_created_only_when_missing_and_never_overwritten(self):
         plan, _ = self.plan_from_disk()
