@@ -90,7 +90,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Quotes: "A yes B yes C hold D 1. Toto Ranch 2. Rock Meat 3. alternative
   name pls 4. yes 5. we can keep them idk".
 
-* OPEN yaze hand-check: paired collision save + cutscene camera
+* DECIDED yaze hand-check: paired collision save + cutscene camera (closed)
   :PROPERTIES:
   :ASKED_BY: Consolidate dungeon tester preview and rendering fixes
   :DOC:      [[file:~/src/hobby/yaze-worktrees/collision-pair-save/docs/internal/agents/claude-oracle-requests-handoff-2026-09-26.md]]
@@ -104,7 +104,10 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   3. Sheet Browser: export a sheet to PNG, change a pixel, import (preview), save, reopen.
   4. Copy a sheet selection, paste into another app; copy a PNG from another app, paste (mapping preview).
   5. Tool keys B/E/G/I/M/H, Cmd+Z/Shift+Cmd+Z, grids, status line; "Check save plan" list.
-  Answer:
+  Answer: closed. "Close it: the branches landed in yaze master; editor bugs
+  from normal use get their own entries." (scawful, 2026-10-19). Both branches
+  (claude/oracle-editor-features, claude/gfx-png-app) are ancestors of yaze
+  origin/master.
 
 * DECIDED yaze: merge the finished claude/* branches?
   :PROPERTIES:
