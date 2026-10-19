@@ -131,7 +131,7 @@ Sprite_Keese_Attack:
 {
   LDA.w SprTimerC, X : BEQ +
     LDA.w SprSubtype, X : BEQ ++
-      JSL Sprite_Twinrova_FireAttack
+      LDA.b #$03 : JSL BossKit_FireTrail
       JMP +
     ++
     JSL Sprite_SpawnSparkleGarnish

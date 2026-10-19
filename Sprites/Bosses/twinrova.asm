@@ -324,7 +324,7 @@ Sprite_Twinrova_Main:
     %Twinrova_Ready()
     
     JSR Twinrova_RestoreFloorTile
-    JSL Sprite_Twinrova_FireAttack
+    LDA.b #$08 : JSL BossKit_FireTrail ; at most 8 live flames
 
     ; Random chance to release fireball
     JSL GetRandomInt : AND.b #$3F : BNE ++
@@ -343,7 +343,7 @@ Sprite_Twinrova_Main:
     %StartOnFrame(4)
     %Twinrova_Ready()
 
-    JSL Sprite_Twinrova_IceAttack
+    LDA.b #$08 : JSL BossKit_IceTrail ; at most 8 live ice clouds
 
     LDA.w SprTimerD, X : BNE +
       %GotoAction(1)

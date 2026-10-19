@@ -70,7 +70,7 @@ Sprite_VampireBat_Main:
     JSL Sprite_Move
 
     JSL GetRandomInt : AND.b #$0F : BNE +
-      JSL Sprite_Twinrova_FireAttack
+      LDA.b #$04 : JSL BossKit_FireTrail
     +
 
     LDA.w SprTimerC, X : BNE +

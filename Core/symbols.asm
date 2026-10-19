@@ -66,6 +66,9 @@ if !ENABLE_DREAM_POWER_SCENE == 1
 DreamPower_WakeLine  = $7FF37A ; word: !DreamPower_WakeLive = Maple says D2.06 in the hut
 endif
 
+; BossKit (Sprites/Bosses/boss_kit.asm) uses WRAM $7FF380-$7FF384 in the same
+; vanilla-free UNUSED_7FF180 block: the boss frame load meter and earthquake.
+
 ; Current Song
 CurrentSong    = $030F
 

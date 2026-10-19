@@ -1,9 +1,23 @@
 ; =========================================================
-; Sprite Properties
+; Kydreeok: final boss body ($7A), the fight director.
+;
+; The body is BG2 (moved through $0422/$0424 by MoveBody); the wings and
+; legs are 8 OAM entries in region E; a ground shadow uses 3 region A
+; entries while it flies. Two heads ($CF, kydreeok_head.asm) ride on
+; necks from its shoulders.
+;
+; Frame budget: the body runs after the heads and calls BossKit_FrameEnd
+; last (Sprites/Bosses/boss_kit.asm). Take-offs, head respawns and head
+; attacks ask BossKit_CanSpend first.
+;
+; Flight: crouch -> take off to !Kydreeok_CruiseAltitude -> glide after
+; the player -> dive and land with an earthquake. SprHeight is the
+; altitude; Kydreeok_SetAltitude raises the BG2 body with it, and
+; Sprite_PrepOamCoord raises the wings, legs and head anchors.
 ; =========================================================
 
 !SPRID              = Sprite_Kydreeok
-!NbrTiles           = 08  ; Number of tiles used in a frame
+!NbrTiles           = 02  ; Region A entries - 1: the 3-tile ground shadow
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -30,6 +44,8 @@
 !ImpervSwordHammer  = 00  ; 01 = Impervious to sword and hammer attacks
 !Boss               = 01  ; 00 = normal sprite, 01 = sprite is a boss
 
+!Kydreeok_CruiseAltitude = 32
+
 %Set_Sprite_Properties(Sprite_Kydreeok_Prep, Sprite_Kydreeok_Long)
 
 Sprite_Kydreeok_Long:
@@ -40,6 +56,8 @@ Sprite_Kydreeok_Long:
     JSR Sprite_Kydreeok_Main
     JSR Sprite_Kydreeok_CheckIfDead
     JSR MaybeRespawnHead
+    ; Last boss work this frame: sample the load, run the earthquake.
+    JSL BossKit_FrameEnd
   .SpriteIsNotActive
   LDA.w SprState, X : BNE .not_inactive
     JSR ApplyEndPalette
@@ -60,22 +78,24 @@ Sprite_Kydreeok_Prep:
       RTL
     .not_dreaming
   endif
+  JSL BossKit_Reset
+  ; The heads read the body from their first frame.
+  TXA : STA.w Kydreeok_Id
   LDA.b #$40 : STA.w SprTimerA, X
   LDA.b #$08 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
   LDA.b #$09 : STA.w SprBump,   X ; bump damage type
+  STZ.w SprHeight, X
 
   ; Cache the origin position of the sprite.
   LDA.w SprX, X : STA.w SprMiscA, X
   LDA.w SprY, X : STA.w SprMiscB, X
 
-  JSR SpawnLeftHead
-  ; JSR SpawnCenterHead
-  JSR SpawnRightHead
-
-  STZ.w Neck1_OffsetX : STZ.w Neck1_OffsetY
-  STZ.w Neck2_OffsetX : STZ.w Neck2_OffsetY
-  ; STZ.w Neck3_OffsetX : STZ.w Neck3_OffsetY
+  ; Intro: the room shakes while both heads grow out of the shoulders.
+  LDA.b #$20 : STA.l BossKit_Quake
+  LDA.b #$35 : JSL Sound_SetSfx2PanLong
+  LDA.b #$00 : JSR Kydreeok_SpawnHead
+  LDA.b #$01 : JSR Kydreeok_SpawnHead
 
   JSR ApplyPalette
 
@@ -86,27 +106,69 @@ Sprite_Kydreeok_Prep:
   RTL
 }
 
+; Y = a head slot. Carry set while it holds a live Kydreeok head. A dead
+; head's slot can be reused by a fireball or an explosion.
+Kydreeok_HeadAlive:
+{
+  LDA.w SprState, Y : BEQ .no
+  LDA.w SprType, Y : CMP.b #Sprite_KydreeokHead : BNE .no
+    SEC
+    RTS
+  .no
+  CLC
+  RTS
+}
+
+; A = subtype (0 = left, 1 = right). Spawns a head on its shoulder;
+; its Prep starts the rise.
+Kydreeok_SpawnHead:
+{
+  PHA
+  LDA.b #Sprite_KydreeokHead
+  JSL Sprite_SpawnDynamically : BPL .spawned
+    PLA
+    RTS
+  .spawned
+  PLA : STA.w SprSubtype, Y : BNE .right
+    TYA : STA.w Offspring1_Id
+    BRA .place
+  .right
+    TYA : STA.w Offspring2_Id
+  .place
+  PHX
+  TYX
+  JSR KydreeokHead_Anchor
+  LDA.b $04 : STA.w SprX, X
+  LDA.b $05 : STA.w SprXH, X
+  LDA.b $06 : STA.w SprY, X
+  LDA.b $07 : STA.w SprYH, X
+  STZ.w SprYRound, X
+  STZ.w SprXRound, X
+  JSL Sprite_KydreeokHead_Prep ; Sprite_SpawnDynamically skips Prep: HP, SprBump
+  PLX
+  RTS
+}
+
 Sprite_Kydreeok_CheckIfDead:
 {
-  LDA.w Offspring1_Id : TAY
-  LDA.w SprState, Y : BEQ .offspring1_dead
-    JMP .not_dead
-  .offspring1_dead
-
-  LDA.w Offspring2_Id : TAY
-  LDA.w SprState, Y : BEQ .offspring2_dead
-    JMP .not_dead
-  .offspring2_dead
+  ; Already dying: Kydreeok_Dead owns SprTimerA.
+  LDA.w SprAction, X : CMP.b #$05 : BEQ .not_dead
+  LDY.w Offspring1_Id : JSR Kydreeok_HeadAlive : BCS .not_dead
+  LDY.w Offspring2_Id : JSR Kydreeok_HeadAlive : BCS .not_dead
 
   LDA.w SprMiscD, X : CMP.b #$02 : BEQ .dead
+    ; Phase two: new graphics, a faster body, both heads grow back.
     LDA.b #$02 : STA.w SprMiscD, X
     LDA.b #$0A : STA $36
     LDY.b #$01 : JSR ApplyKydreeokGraphics
-    JSR SpawnLeftHead
-    JSR SpawnRightHead
+    LDA.b #$20 : STA.l BossKit_Quake
+    LDA.b #$35 : JSL Sound_SetSfx2PanLong
+    LDA.b #$00 : JSR Kydreeok_SpawnHead
+    LDA.b #$01 : JSR Kydreeok_SpawnHead
     RTS
   .dead
     LDA.b #$60 : STA.w SprTimerA, X
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
     LDA.b #$05 : STA.w SprAction, X
     LDA.b #$13 : STA $012C
   .not_dead
@@ -118,17 +180,30 @@ MaybeRespawnHead:
 {
   ; No new heads once the body is dying (Kydreeok_Dead, action 5).
   LDA.w SprAction, X : CMP.b #$05 : BEQ .done
-  LDA.w Offspring1_Id : TAY
-  LDA.w SprState, Y : BNE .offspring1_alive
-      JSL GetRandomInt : AND.b #$7F : BNE .offspring1_alive
-        JSR SpawnLeftHead
-  .offspring1_alive
-  LDA.w Offspring2_Id : TAY
-  LDA.w SprState, Y : BNE .offspring2_alive
-      JSL GetRandomInt : AND.b #$7F : BNE .offspring2_alive
-        JSR SpawnRightHead
-    .offspring2_alive
+  JSL BossKit_CanSpend : BCC .done
+  LDY.w Offspring1_Id : JSR Kydreeok_HeadAlive : BCS .left_alive
+    JSL GetRandomInt : AND.b #$7F : BNE .left_alive
+      LDA.b #$00 : JSR Kydreeok_SpawnHead
+  .left_alive
+  LDY.w Offspring2_Id : JSR Kydreeok_HeadAlive : BCS .done
+    JSL GetRandomInt : AND.b #$7F : BNE .done
+      LDA.b #$01 : JSR Kydreeok_SpawnHead
   .done
+  RTS
+}
+
+; A = new altitude. Raises or lowers the BG2 body by the change; the OAM
+; parts and the head anchors follow SprHeight.
+; Out: A = altitude, Z set on the ground.
+Kydreeok_SetAltitude:
+{
+  STA.b $00
+  SEC : SBC.w SprHeight, X
+  REP #$20
+  %BossKit_Sext16()
+  CLC : ADC.w $0424 : STA.w $0424
+  SEP #$20
+  LDA.b $00 : STA.w SprHeight, X
   RTS
 }
 
@@ -140,7 +215,10 @@ Sprite_Kydreeok_Main:
                   Kydreeok_MoveXorY,
                   Kydreeok_KeepWalking,
                   Kydreeok_Dead,
-                  Kydreeok_Flying)
+                  Kydreeok_Crouch,
+                  Kydreeok_TakeOff,
+                  Kydreeok_Glide,
+                  Kydreeok_Dive)
 
   ; -------------------------------------------------------
   ; 0x00
@@ -159,7 +237,6 @@ Sprite_Kydreeok_Main:
     JSL Sprite_PlayerCantPassThrough
 
     LDA.w SprTimerA,            X : BNE .continue
-      TXA : STA.w Kydreeok_Id
       LDA #$40 : STA.w SprTimerA, X
       %GotoAction(1)
     .continue
@@ -168,13 +245,13 @@ Sprite_Kydreeok_Main:
   }
 
   ; -------------------------------------------------------
-  ; 0x01
+  ; 0x01 - stand still (after the intro and after each landing)
   Kydreeok_StageControl:
   {
     %StartOnFrame(0)
     %PlayAnimation(0, 2, 10)
 
-    STZ.w SprYSpeed : STZ.w SprXSpeed ;set velocitys to 0
+    STZ.w SprYSpeed, X : STZ.w SprXSpeed, X
     JSL MoveBody
     JSR StopIfOutOfBounds
 
@@ -233,12 +310,13 @@ Sprite_Kydreeok_Main:
 
     LDA.w SprMiscD, X : CMP.b #$02 : BEQ .phase_two
       JSL GetRandomInt : AND.b #$7F : BNE .dont_fly
-        LDA.b #$40 : STA.w SprTimerA, X
-        %GotoAction(6)
-        RTS
+      BRA .take_off
     .phase_two
       JSL GetRandomInt : AND.b #$3F : BNE .dont_fly
-        LDA.b #$50 : STA.w SprTimerA, X
+    .take_off
+      JSL BossKit_CanSpend : BCC .dont_fly
+        STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+        LDA.b #$0A : STA.w SprTimerA, X
         %GotoAction(6)
         RTS
     .dont_fly
@@ -278,6 +356,8 @@ Sprite_Kydreeok_Main:
     RTS
   }
 
+  ; -------------------------------------------------------
+  ; 0x05
   Kydreeok_Dead:
   {
     LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
@@ -286,168 +366,149 @@ Sprite_Kydreeok_Main:
       LDA $1C : AND.b #$FE : STA $1C ;turn off BG2 (Body)
     .flicker
 
-    ; Spawn the explosion
+    ; Killed in the air: sink back to the ground.
+    LDA.w SprHeight, X : BEQ .grounded
+      SEC : SBC.b #$02 : BPL .sinking
+        LDA.b #$00
+      .sinking
+      JSR Kydreeok_SetAltitude
+    .grounded
+
+    ; One explosion every 8 frames somewhere on the body.
+    LDA.w SprTimerA, X : AND.b #$07 : BNE .no_space
     LDA.b #$00
     JSL Sprite_SpawnDynamically : BMI .no_space
       LDA.b #$0B : STA.w $0AAA
       LDA.b #$04 : STA.w SprState,Y
       LDA.b #$03 : STA.w SprNbrOAM,Y
       LDA.b #$0C : STA.w SprProps,Y
-      LDA.w SprCachedX : STA.w SprX,Y
-      LDA.w $0FD9 : STA.w SprXH,Y
-      LDA.w SprCachedY : STA.w SprY,Y
-      LDA.w $0FDB : STA.w SprYH,Y
+      JSL GetRandomInt : AND.b #$3F : SEC : SBC.b #$20 : STA.b $00
+      JSL GetRandomInt : AND.b #$1F : SEC : SBC.b #$28 : STA.b $01
+      LDA.b $00
+      REP #$20
+      %BossKit_Sext16()
+      CLC : ADC.w SprCachedX
+      SEP #$20
+      STA.w SprX,Y : XBA : STA.w SprXH,Y
+      LDA.b $01
+      REP #$20
+      %BossKit_Sext16()
+      CLC : ADC.w SprCachedY
+      SEP #$20
+      STA.w SprY,Y : XBA : STA.w SprYH,Y
       LDA.b #$1F : STA.w SprTimerA,Y : STA.w $0D90,Y
       LDA.b #$02 : STA.w $0F20,Y
+      LDA.b #$0C : JSL Sound_SetSfx2PanLong
     .no_space
     LDA.w SprTimerA, X : BNE .continue
       STZ.w $0422
       STZ.w $0424
       LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
+      LDA.b #$00 : STA.l BossKit_Quake
+      REP #$20
+      STZ.w $011A : STZ.w $011C
+      SEP #$20
       STZ.w SprState, X ; GG
     .continue
     RTS
   }
 
-  Kydreeok_Flying:
+  ; -------------------------------------------------------
+  ; 0x06 - crouch with the wings down before take-off
+  Kydreeok_Crouch:
   {
-    %StartOnFrame(0)
-    %PlayAnimation(0, 2, 05)
-
-    LDA $36 : CLC : ADC.b #$02
-    JSL Sprite_ApplySpeedTowardsPlayer
-    JSR StopIfOutOfBounds
+    LDA.b #$02 : STA.w SprFrame, X
     JSL MoveBody
-
-    LDA.b #$04 : STA.w SprHeight, X
 
     JSL Sprite_CheckDamageFromPlayer
     JSL Sprite_CheckDamageToPlayer
 
-    LDA.w SprTimerA, X : BNE .continue
-      STZ.w SprHeight, X
-      %GotoAction(2)
-    .continue
+    LDA.w SprTimerA, X : BNE .crouching
+      %GotoAction(7)
+    .crouching
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x07 - beat the wings and climb 2 px a frame
+  Kydreeok_TakeOff:
+  {
+    %StartOnFrame(0)
+    %PlayAnimation(0, 2, 04)
+    JSL MoveBody
+
+    LDA.w SprHeight, X : CLC : ADC.b #$02
+    JSR Kydreeok_SetAltitude
+    CMP.b #!Kydreeok_CruiseAltitude : BCC .climbing
+      LDA.b #$60
+      LDY.w SprMiscD, X : CPY.b #$02 : BNE .glide_time
+        LDA.b #$80
+      .glide_time
+      STA.w SprTimerA, X
+      LDA $36 : CLC : ADC.b #$04
+      JSL Sprite_ApplySpeedTowardsPlayer
+      %GotoAction(8)
+    .climbing
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x08 - glide after the player, re-aiming every 32 frames.
+  ; No body contact in the air; the heads keep attacking.
+  Kydreeok_Glide:
+  {
+    %StartOnFrame(0)
+    %PlayAnimation(0, 2, 08)
+
+    LDA.b $1A : AND.b #$1F : BNE .no_aim
+      LDA $36 : CLC : ADC.b #$04
+      JSL Sprite_ApplySpeedTowardsPlayer
+    .no_aim
+    JSR StopIfOutOfBounds
+    JSL MoveBody
+
+    ; Bob 2 px around the cruise altitude.
+    LDA.b $1A : LSR A : LSR A : LSR A : AND.b #$07 : TAY
+    LDA.w .bob, Y : CLC : ADC.b #!Kydreeok_CruiseAltitude
+    JSR Kydreeok_SetAltitude
+
+    LDA.w SprTimerA, X : BNE .gliding
+      %GotoAction(9)
+    .gliding
+    RTS
+
+    .bob
+      db 0, 1, 2, 1, 0, -1, -2, -1
+  }
+
+  ; -------------------------------------------------------
+  ; 0x09 - fold the wings and drop 4 px a frame; the landing shakes
+  ; the room, then the body stands still for a moment.
+  Kydreeok_Dive:
+  {
+    LDA.b #$02 : STA.w SprFrame, X
+    JSR StopIfOutOfBounds
+    JSL MoveBody
+
+    LDA.w SprHeight, X : SEC : SBC.b #$04 : BPL .falling
+      LDA.b #$00
+    .falling
+    JSR Kydreeok_SetAltitude : BNE .airborne
+      STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
+      LDA.b #$18 : STA.l BossKit_Quake
+      LDA.b #$0C : JSL Sound_SetSfx2PanLong
+      JSL Sprite_CheckDamageToPlayer
+      LDA.b #$18 : STA.w SprTimerA, X
+      %GotoAction(1)
+    .airborne
     RTS
   }
 
 }
 
 ; =========================================================
-
-LeftNeck1_X = $19EA
-LeftNeck2_X = $19EC
-LeftNeck3_X = $19EE
-
-LeftNeck1_Y = $19EB
-LeftNeck2_Y = $19ED
-LeftNeck3_Y = $19EF
-
-RightNeck1_X = $19F0
-RightNeck2_X = $19F2
-RightNeck3_X = $19F4
-
-RightNeck1_Y = $19F1
-RightNeck2_Y = $19F3
-RightNeck3_Y = $19F5
-
-Offspring3_Neck1_X = $1A78
-Offspring3_Neck2_X = $1A7A
-Offspring3_Neck3_X = $1A7C
-
-Offspring3_Neck1_Y = $1A79
-Offspring3_Neck2_Y = $1A7B
-Offspring3_Neck3_Y = $1A7D
-
-SpawnLeftHead:
-{
-  LDA #$CF
-  JSL   Sprite_SpawnDynamically : BMI .return
-    TYA   : STA.w Offspring1_Id
-    LDA.b #$00 : STA $0E30, Y
-    PHX
-    REP #$20
-    LDA.w SprCachedX : SEC : SBC.w #$0010
-    SEP #$20
-    STA.w SprX, Y : XBA : STA.w SprXH, Y
-    REP #$20
-    LDA.w SprCachedY : SEC : SBC.w #$000F
-    SEP #$20
-    STA.w SprY, Y : XBA : STA.w SprYH, Y
-    LDA.w SprX,     Y
-    STA.w SprMiscA, Y : STA.w $19EA : STA.w $19EC : STA.w $19EE
-    LDA.w SprY, Y : STA.w $19EB : STA.w $19ED : STA.w $19EF : STA.w SprY, Y
-    STA.w SprMiscB, Y
-    TYX
-    JSL Sprite_KydreeokHead_Prep ; Sprite_SpawnDynamically skips Prep: HP, SprBump
-    STZ.w SprYRound, X
-    STZ.w SprXRound, X
-    PLX
-  .return
-  RTS
-}
-
-; =========================================================
-; SpawnCenterHead:
-; {
-;   LDA #$CF
-;   JSL Sprite_SpawnDynamically : BMI .return
-;     TYA : STA.w Offspring3_Id
-;     ;store the sub-type
-;     LDA.b #$02 : STA $0E30, Y
-;     PHX
-;     ; code that controls where to spawn the offspring.
-;     REP #$20
-;     LDA.w SprCachedX : CLC : ADC.w #$0004
-;     SEP #$20
-;     STA.w SprX, Y : XBA : STA.w SprXH, Y
-;     REP #$20
-;     LDA.w SprCachedY : SEC : SBC.w #$000F
-;     SEP #$20
-;     STA.w SprY, Y : XBA : STA.w SprYH, Y
-;     LDA.w SprX, Y : STA.w SprX, Y
-;     STA.w SprMiscA, Y : STA.w $1A78 : STA.w $1A7A : STA.w $1A7C
-;     LDA.w SprY, Y : STA.w $1A79 : STA.w $1A7B : STA.w $1A7D : STA.w SprY, Y
-;     STA.w SprMiscB, Y
-;     TYX
-;     STZ.w SprYRound, X
-;     STZ.w SprXRound, X
-;     PLX
-;   .return
-;   RTS
-; }
-; =========================================================
-
-SpawnRightHead:
-{
-  LDA #$CF
-  JSL Sprite_SpawnDynamically : BMI .return
-    TYA : STA.w Offspring2_Id
-    LDA.b #$01 : STA $0E30, Y
-    PHX
-    REP #$20
-    LDA.w SprCachedX : CLC : ADC.w #$000D
-    SEP #$20
-    STA.w SprX, Y : XBA : STA.w SprXH, Y
-    REP #$20
-    LDA.w SprCachedY : SEC : SBC.w #$000F
-    SEP #$20
-    STA.w SprY, Y : XBA : STA.w SprYH, Y
-    LDA.w SprX, Y : STA.w SprX, Y
-    STA.w SprMiscA, Y : STA.w $19F0 : STA.w $19F2 : STA.w $19F4
-    LDA.w SprY, Y : STA.w $19F1 : STA.w $19F3 : STA.w $19F5 : STA.w SprY, Y
-    STA.w SprMiscB, Y
-    TYX
-    JSL Sprite_KydreeokHead_Prep ; Sprite_SpawnDynamically skips Prep: HP, SprBump
-    STZ.w SprYRound, X
-    STZ.w SprXRound, X
-    PLX
-  .return
-  RTS
-}
-
-; =========================================================
 ; Originally from Trinexx_MoveBody $1DB2E5
+; Also used by Manhandla (manhandla.asm).
 
 MoveBody:
 {
@@ -507,73 +568,42 @@ MoveBody:
 
 ; =========================================================
 
+; Keep the body inside the arena: drop the speed that would carry it past
+; an edge; at the bottom edge turn it back up.
 StopIfOutOfBounds:
 {
-  ; Set A to 00 if outside of certain bounds
   REP #$20
-  LDA.w SprCachedX : CMP.w #$0118 : BCS .not_out_of_bounds_Left
-    SEP #$20
-    LDA.w SprXSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Left
-      LDA.b #-10 : STA.w SprXSpeed : STA.w SprXRound
-      LDA $19EA : SEC : SBC #$04 : STA $19EA
-      LDA $19EC : SEC : SBC #$04 : STA $19EC
-      LDA $19EE : SEC : SBC #$04 : STA $19EE
-
-      LDA $19F0 : SEC : SBC #$04 : STA $19F0
-      LDA $19F2 : SEC : SBC #$04 : STA $19F2
-      LDA $19F4 : SEC : SBC #$04 : STA $19F4
-
-  .not_out_of_bounds_Left
+  LDA.w SprCachedX : CMP.w #$0118
   SEP #$20
+  BCS .not_left
+    LDA.w SprXSpeed, X : BPL .not_left
+      STZ.w SprXSpeed, X : STZ.w SprXRound, X
+  .not_left
 
   REP #$20
-  LDA.w SprCachedX : CMP.w #$01D8 : BCC .not_out_of_bounds_Right
-    SEP #$20
-    LDA.w SprXSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Right
-      LDA.b #$00 : STA.w SprXSpeed : STA.w SprXRound
-      LDA $19EA : CLC : ADC #$04 : STA $19EA
-      LDA $19EC : CLC : ADC #$04 : STA $19EC
-      LDA $19EE : CLC : ADC #$04 : STA $19EE
-
-      LDA $19F0 : CLC : ADC #$04 : STA $19F0
-      LDA $19F2 : CLC : ADC #$04 : STA $19F2
-      LDA $19F4 : CLC : ADC #$04 : STA $19F4
-
-  .not_out_of_bounds_Right
+  LDA.w SprCachedX : CMP.w #$01D8
   SEP #$20
+  BCC .not_right
+    LDA.w SprXSpeed, X : BMI .not_right
+      STZ.w SprXSpeed, X : STZ.w SprXRound, X
+  .not_right
 
-  ; Upper bound
   REP #$20
-  LDA.w SprCachedY : CMP.w #$0020 : BCS .not_out_of_bounds_Up
-    SEP #$20
-    LDA.w SprYSpeed : CMP.b #$7F : BCC .not_out_of_bounds_Up
-      LDA.b #$00 : STA.w SprYSpeed : STA.w SprYRound
-      LDA $19EA : SEC : SBC #$04 : STA $19EA
-      LDA $19EC : SEC : SBC #$04 : STA $19EC
-      LDA $19EE : SEC : SBC #$04 : STA $19EE
-
-  .not_out_of_bounds_Up
+  LDA.w SprCachedY : CMP.w #$0060 ; the raised heads stay on screen
   SEP #$20
+  BCS .not_up
+    LDA.w SprYSpeed, X : BPL .not_up
+      STZ.w SprYSpeed, X : STZ.w SprYRound, X
+  .not_up
 
-  REP   #$20
-  LDA.w SprCachedY : CMP.w #$00D0 : BCC .not_out_of_bounds_Down
-    SEP #$20
-    LDA.w SprYSpeed : CMP.b #$80 : BCS .not_out_of_bounds_Down
-      LDA.b #-10 : STA.w SprYSpeed : STA.w SprYRound ; Reverse the direction
-
-      ; Modify the neck position
-      ; Makes them move away from each other a bit
-      LDA $19EA : SEC : SBC #$04 : STA $19EA
-      LDA $19EC : SEC : SBC #$04 : STA $19EC
-      LDA $19EE : SEC : SBC #$04 : STA $19EE
-
-      LDA $19F0 : CLC : ADC #$04 : STA $19F0
-      LDA $19F2 : CLC : ADC #$04 : STA $19F2
-      LDA $19F4 : CLC : ADC #$04 : STA $19F4
-
-  .not_out_of_bounds_Down
+  REP #$20
+  LDA.w SprCachedY : CMP.w #$00D0
   SEP #$20
-
+  BCC .not_down
+    LDA.w SprYSpeed, X : BMI .not_down
+      LDA.b #-10 : STA.w SprYSpeed, X
+      STZ.w SprYRound, X
+  .not_down
   RTS
 }
 
@@ -634,8 +664,10 @@ ApplyEndPalette:
 Sprite_Kydreeok_Draw:
 {
   JSL Sprite_PrepOamCoord
-  ; JSL Sprite_OAM_AllocateDeferToPlayer
-  LDA.b #$08
+  JSR Kydreeok_DrawShadow
+
+  ; Wings and legs: 8 entries (32 bytes) in region E, under the heads.
+  LDA.b #$20
   JSL OAM_AllocateFromRegionE
 
   LDA $0DC0, X : CLC : ADC $0D90, X : TAY;Animation Frame
@@ -703,6 +735,52 @@ Sprite_Kydreeok_Draw:
     db $39, $39, $79, $79, $39, $39, $79, $79
     db $39, $39, $79, $79, $39, $39, $79, $79
     db $39, $39, $79, $79, $39, $39, $79, $79
+}
+
+; Ground shadow while airborne: 3 overlapping vanilla big-shadow tiles
+; ($6C, as SpriteDraw_BigShadow) in the body's region A entries.
+; In: $00/$02 from Sprite_PrepOamCoord (raised by the altitude). Keeps them.
+Kydreeok_DrawShadow:
+{
+  LDA.w SprHeight, X : BNE .airborne
+    LDA.b #$F0
+    LDY.b #$01 : STA ($90), Y
+    LDY.b #$05 : STA ($90), Y
+    LDY.b #$09 : STA ($90), Y
+    RTS
+  .airborne
+  REP #$20
+  AND.w #$00FF : CLC : ADC.b $02 : CLC : ADC.w #$000C : STA.b $0C
+  SEP #$20
+
+  PHX
+  LDX.b #$02
+  LDY.b #$00
+  .tile
+    LDA.w .offset_x, X
+    REP #$20
+    %BossKit_Sext16()
+    CLC : ADC.b $00 : STA ($90), Y
+    AND.w #$0100 : STA.b $0E
+    INY
+    LDA.b $0C : STA ($90), Y
+    CLC : ADC.w #$0010 : CMP.w #$0100
+    SEP #$20
+    BCC .on_screen
+      LDA.b #$F0 : STA ($90), Y
+    .on_screen
+    INY : LDA.b #$6C : STA ($90), Y
+    INY : LDA.b #$28 : STA ($90), Y
+    PHY
+    TYA : LSR A : LSR A : TAY
+    LDA.b $0F : ORA.b #$02 : STA ($92), Y
+    PLY : INY
+  DEX : BPL .tile
+  PLX
+  RTS
+
+  .offset_x
+    db -12, 0, 12
 }
 
 ApplyKydreeokGraphics:
