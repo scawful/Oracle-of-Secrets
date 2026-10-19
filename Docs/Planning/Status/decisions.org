@@ -2278,3 +2278,8 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: keeping the drop into $05 and opening a way out later.
   Answer: "Yes, add $81 to the pit-damage table: a fall costs one heart and respawns Link in $81."
   (scawful, 2026-10-19)
+  Table space: RoomsWithPitDamage ($00:990C) has 57 slots; $B8 and $97 already took two of the
+  five $0123 fillers (Core/patches.asm), so $81 leaves two. scawful: "i think we are running low
+  on pit damage so might need to expand that table" (2026-10-19). Expand it with the cheap option
+  in Docs/Technical/Dungeon_Tables_Expansion.md section 5: after the vanilla loop misses, a JSL at
+  $07:94B2 checks an Oracle-owned room list (about 15 bytes; yaze and ZScream keep working).
