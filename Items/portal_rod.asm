@@ -252,6 +252,53 @@ ScrollToPortal:
   RTL
 }
 
+if !ENABLE_PORTAL_ROD_CELL == 1
+; =========================================================
+; Portal Rod acquisition: the D8 room $5C big chest (decisions.org, "D8
+; Portal Rod rooms", 2026-10-18). It sets PortalRodOwned $7EF3A6 = 1 only;
+; CustomRods $7EF351 (Fishing Rod) is not touched. Maple no longer
+; upgrades the Fishing Rod (Sprites/NPCs/maple.asm); Menu_PortalRod_SyncOwned
+; still imports CustomRods >= 2 from older saves.
+;
+; Receipt $4A (vanilla FLUTE ACTIVATED) is reused. Nothing gives it: no
+; RoomData_ChestItems record, no Link_ReceiveItem caller in Oracle or usdasm,
+; no shop. AncillaAdd_ItemReceipt and Ancilla22_ItemReceipt have no case for
+; it, so its table rows decide everything. The native write at $09863E
+; (ItemReceipt_KeepGoldstar, Items/goldstar.asm) stores .sram_value to
+; $7E:.sram_write, which is now PortalRodOwned. No new hook.
+; Its Link_PerformOpenChest overflow entry ($07B572) stays $FF: a save that
+; already owns the rod gets it again (still 1).
+!PortalRod_Receipt = $4A
+
+pushpc
+assert read2($0984E8+(!PortalRod_Receipt*2)) == $F34C || read2($0984E8+(!PortalRod_Receipt*2)) == PortalRodOwned&$FFFF, "Receipt $4A target changed"
+assert read1($098580+!PortalRod_Receipt) == $03 || read1($098580+!PortalRod_Receipt) == $01, "Receipt $4A value changed"
+org $09836C+!PortalRod_Receipt : db -5   ; .offset_y, as the Fire/Ice Rod
+org $0983B8+!PortalRod_Receipt : db 4    ; .offset_x
+org $098404+!PortalRod_Receipt : db $09  ; .item_gfx_index: the rod graphic
+org $098450+!PortalRod_Receipt : db $00  ; .width: one 8 px column
+org $09849C+!PortalRod_Receipt : db $04  ; .prop: palette 4 (Fire Rod 1, Ice Rod 2)
+org $0984E8+(!PortalRod_Receipt*2) : dw PortalRodOwned&$FFFF ; .sram_write
+org $098580+!PortalRod_Receipt : db $01  ; .sram_value: owned
+; Receipt text is not approved yet: no message box ($FFFF, as the Fighter's
+; Shield). Put the approved message ID here.
+org $08C2DD+(!PortalRod_Receipt*2) : dw $FFFF ; Ancilla22 .message
+
+; RoomData_ChestItems ($01E96E, 3-byte records), checked as Core/patches.asm
+; does so a changed chest table fails the build instead of patching a wrong byte.
+; Record 33: room $5C big chest. Before: $23 Red Mail.
+assert read2($01E9D1) == $805C, "Room $5C big-chest record moved"
+assert read1($01E9D3) == $23 || read1($01E9D3) == !PortalRod_Receipt, "Unexpected room $5C big-chest item"
+org $01E9D3 : db !PortalRod_Receipt
+; Record 10: room $1D south shrine chest. Before: $24 small key, the spare
+; one (D8 has two key chests, 7B and 1D, and one small-key door, 7D north).
+; The same ruling moves the Red Mail here.
+assert read2($01E98C) == $001D, "Room $1D chest record moved"
+assert read1($01E98E) == $24 || read1($01E98E) == $23, "Unexpected room $1D chest item"
+org $01E98E : db $23
+pullpc
+endif
+
 %log_end("Items/portal_rod.asm", !LOG_ITEMS)
 pushpc
 

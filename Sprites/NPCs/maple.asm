@@ -64,12 +64,15 @@ MapleHandler:
     %ShowSolicitedMessage($01B3) : BCC +
       INC.w SprAction, X
     +
-    ; Fishing Rod (1) -> Portal Rod (2), once. It used to queue SFX $1B on
-    ; every idle frame while Link had either rod.
-    LDA.l $7EF351 : CMP.b #$01 : BNE +
-      LDA.b #$02 : STA.l $7EF351
-      LDA.b #$1B : STA.w $012F
-    +
+    if !ENABLE_PORTAL_ROD_CELL == 0
+      ; Shared-rod profile only: Fishing Rod (1) -> Portal Rod (2), once.
+      ; With the Portal Rod cell the rod is the D8 room $5C chest item
+      ; (Items/portal_rod.asm) and Maple leaves CustomRods alone.
+      LDA.l $7EF351 : CMP.b #$01 : BNE +
+        LDA.b #$02 : STA.l $7EF351
+        LDA.b #$1B : STA.w $012F
+      +
+    endif
     RTS
   }
 
