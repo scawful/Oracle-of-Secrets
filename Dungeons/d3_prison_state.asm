@@ -7,12 +7,11 @@
 
 if !ENABLE_D3_PRISON_SEQUENCE == 1
 
-; Ancilla22_ItemReceipt .not_in_water, native M8/X8, X=item ancilla slot.
-; @source usdasm/bank_08.asm:$08C42C-$08C430
+; Ancilla22_ItemReceipt .check_if_hp, native M8/X8, X=item ancilla slot.
+; Chest receipts bypass .not_in_water; this common completion runs after text.
+; @source usdasm/bank_08.asm:$08C43B-$08C440
 Oracle_PrisonSequence_PostMeadowBlade:
 {
-  STY.b $5D
-  STZ.w $02D8
   PHP
   SEP #$20
   JSR D3Prison_InDungeon : BCC .done
@@ -26,6 +25,8 @@ Oracle_PrisonSequence_PostMeadowBlade:
   STA.l CastleAmbushFlags
   .done
   PLP
+  STZ.w $02E9
+  LDA.w $0C5E, X ; replay native A/N/Z after restoring the caller status
   RTL
 }
 
@@ -152,10 +153,10 @@ D3Prison_InDungeon:
 }
 
 pushpc
-org $08C42C ; @hook module=Dungeons name=Oracle_PrisonSequence_PostMeadowBlade kind=jsl target=Oracle_PrisonSequence_PostMeadowBlade expected_m=8 expected_x=8
+org $08C43B ; @hook module=Dungeons name=Oracle_PrisonSequence_PostMeadowBlade kind=jsl target=Oracle_PrisonSequence_PostMeadowBlade expected_m=8 expected_x=8
   JSL Oracle_PrisonSequence_PostMeadowBlade
-  NOP
-assert pc() == $08C431
+  NOP #2
+assert pc() == $08C441
 pullpc
 
 endif

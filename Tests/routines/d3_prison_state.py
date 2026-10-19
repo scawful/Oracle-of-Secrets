@@ -200,8 +200,12 @@ def verify(case, low, save, request, result):
     for key in ("x", "y", "db", "d", "sp"):
         require(regs[key] == request["registers"][key], f"{label}: ABI changed {key}")
     require(regs["e"] == 0, f"{label}: left native CPU mode")
+    expected_p = case.p
+    if case.helper == ARM:
+        expected_p = (case.p & ~0x82) | (0x02 if case.item == 0 else case.item & 0x80)
+        require(regs["a"] == 0xBE00 | case.item, f"{label}: native item A not replayed")
     status_mask = 0xFF if case.carry is None else 0xFE
-    require(regs["p"] & status_mask == case.p & status_mask,
+    require(regs["p"] & status_mask == expected_p & status_mask,
             f"{label}: caller status/width changed")
     if case.carry is not None:
         require(regs["p"] & 1 == case.carry, f"{label}: wrong transaction Carry")
@@ -212,8 +216,8 @@ def verify(case, low, save, request, result):
     allowed = set(range(WRAM + SP - 0x20, WRAM + SP + 1))
     allowed.update(range(0x7F8000, 0x7F8004))  # Runner's real JSL trampoline.
     if case.helper == ARM:
-        expected_low[0x5D], expected_low[0x2D8] = case.y, 0
-        allowed.update((WRAM + 0x5D, WRAM + 0x2D8))
+        expected_low[0x2E9] = 0
+        allowed.add(WRAM + 0x2E9)
         # An idempotent arm may write its unchanged pending value.
         if case.expected_flags & 4 and not case.flags & 0x0B and case.item == 1:
             allowed.add(FLAGS)
@@ -255,8 +259,8 @@ def main():
     require(0 < len(rom) <= 0x400000 and len(rom) % 0x8000 != 0x200,
             "Expected headerless LoROM <=4 MiB")
     entries = {name: symbol(sym.decode(), name) for name in (ARM, CAPTURE, RECLAIM, ESCAPE)}
-    hook = (0x08 * 0x8000) + (0xC42C & 0x7FFF)
-    require(rom[hook:hook + 5] == bytes([0x22]) + entries[ARM].to_bytes(3, "little") + b"\xEA",
+    hook = (0x08 * 0x8000) + (0xC43B & 0x7FFF)
+    require(rom[hook:hook + 6] == bytes([0x22]) + entries[ARM].to_bytes(3, "little") + b"\xEA\xEA",
             "Native receipt hook does not dispatch to the tested arm routine")
     default_identity = None
     if args.default_rom:
