@@ -99,6 +99,16 @@ Part00_RoomSprites:
   RTL                                     ; next record, $09C2C7
 
   .end_of_list
+  if !ENABLE_DREAM_RETURN == 1 && !DISABLE_SPRITES == 0
+    ; Link_WarpToRoom hid Link for the fade-out; the dream room shows him.
+    ; The Wisdom and Power scenes below hide him again.
+    JSL DreamReturn_IsDreaming : BCC +
+      STZ.b $4B
+    +
+  endif
+  if !ENABLE_DREAM_ENTRY_FX == 1 && !DISABLE_SPRITES == 0
+    JSL DreamFX_RoomLoaded                ; colour math back after the white
+  endif
   if !ENABLE_DREAM_WISDOM_SCENE == 1 && !DISABLE_SPRITES == 0
     JSL DreamWisdom_Stage                 ; Wisdom dream; any GameState
   endif

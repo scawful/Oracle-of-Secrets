@@ -350,8 +350,8 @@ RejectOnTileCollision:
   LDA.w SprY, X : AND #$F8 : STA.b $00 : LDA.w SprYH, X : STA.b $01
   LDA.w SprX, X : AND #$F8 : STA.b $02 : LDA.w SprXH, X : STA.b $03
 
-  ; Fetch tile attributes based on current coordinates
-  LDA.b #$00 : JSL Sprite_GetTileAttr
+  ; Probe the portal's collision plane; overworld lookup ignores this argument.
+  LDA.w SprFloor, X : JSL Sprite_GetTileAttr
 
   ; Load the tile index
   LDA $0FA5 : CLC : CMP.b #$00 : BEQ .not_out_of_bounds

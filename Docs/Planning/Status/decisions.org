@@ -90,7 +90,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Quotes: "A yes B yes C hold D 1. Toto Ranch 2. Rock Meat 3. alternative
   name pls 4. yes 5. we can keep them idk".
 
-* OPEN yaze hand-check: paired collision save + cutscene camera
+* DECIDED yaze hand-check: paired collision save + cutscene camera (closed)
   :PROPERTIES:
   :ASKED_BY: Consolidate dungeon tester preview and rendering fixes
   :DOC:      [[file:~/src/hobby/yaze-worktrees/collision-pair-save/docs/internal/agents/claude-oracle-requests-handoff-2026-09-26.md]]
@@ -104,7 +104,10 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   3. Sheet Browser: export a sheet to PNG, change a pixel, import (preview), save, reopen.
   4. Copy a sheet selection, paste into another app; copy a PNG from another app, paste (mapping preview).
   5. Tool keys B/E/G/I/M/H, Cmd+Z/Shift+Cmd+Z, grids, status line; "Check save plan" list.
-  Answer:
+  Answer: closed. "Close it: the branches landed in yaze master; editor bugs
+  from normal use get their own entries." (scawful, 2026-10-19). Both branches
+  (claude/oracle-editor-features, claude/gfx-png-app) are ancestors of yaze
+  origin/master.
 
 * DECIDED yaze: merge the finished claude/* branches?
   :PROPERTIES:
@@ -130,7 +133,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   would drain it. A hit already makes the other player throw what they carry.
   Answer: keep knockback only (scawful, in the dual-swords session, 2026-09-26).
 
-* OPEN ROM expansion to 4 MB?
+* DECIDED ROM expansion to 4 MB: later
   :PROPERTIES:
   :ASKED_BY: Yaze graphics editor prompts (via Oracle RC Leader)
   :DOC:      [[file:~/src/hobby/yaze-practice/graphics-evidence/2026-09-26/rom-expansion-4mb-plan.md]]
@@ -141,7 +144,9 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   claude/emulator-integration; snes9x uses the byte for its SRAM window; the
   SNES Classic stock emulator is unknown (test on device). Bank $23 (32 KB)
   already covers near-term graphics growth, so this is not urgent.
-  Answer: go now / later / no.
+  Answer: later. "Later: bank $23 covers near-term growth; test the SNES
+  Classic first." (scawful, 2026-10-19). Keep the 2.05 MB file for now; run a
+  4 MB test file on the SNES Classic before any expansion.
 
 * DECIDED Beat sheet crux 5: shrines gate dungeons (verified by scawful)
   :PROPERTIES:
@@ -473,14 +478,20 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   $1C4) is the unlock. Not played; confirm the $25 pad is reachable pre-D4.
   Answer: "record it" (scawful, 2026-09-26).
 
-* OPEN $63 sign $C1: Ice Rod riddle vs. Flippers gate
+* DECIDED $63 sign $C1: keep the Ice Rod riddle for an optional stilt-village shortcut (2026-10-19)
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
   :END:
   $63's area sign reads "A chilling spell from the rod must flow, to bridge
   the gap where waters flow." The Shrine of Wisdom gate is Flippers. Leftover,
   or an optional second route? Settle when the swamp chunk is designed.
-  Answer:
+  Ruling: the Flippers stay the Shrine of Wisdom gate. The $C1 riddle is kept for an optional
+  Ice Rod shortcut in the stilt village, placed when scawful reworks the swamp. $63's own area
+  sign still moves to 0x0AF (Village of Yesterwind, 2026-09-26), so $C1 needs a new sign spot
+  then.
+  Rejected: dropping the riddle.
+  Answer: "Keep the Ice Rod riddle for an optional shortcut in the stilt village, placed when
+  the swamp is reworked." (scawful, 2026-10-19)
 
 * DECIDED Yesterwind: the realm's true name and its central village
   :PROPERTIES:
@@ -622,7 +633,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   lore purpose and potentially could add items"; then "yes both" (scawful,
   2026-09-26).
 
-* OPEN Room census follow-ups (runtime-checked on b28, 2026-09-26)
+* DECIDED Room census follow-ups (runtime-checked on b28, 2026-09-26; ruled 2026-10-19)
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff (room census agent)
   :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/room_census_2026-09-26/room_census.md]]
@@ -635,9 +646,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   (Final Boss Route, entrance $24) and D7's compass/big key/map bits.
   1. Give S3 and the Master Sword Cave / Final Boss Route rooms their own even
      dungeon IDs? (Rec: yes; keyed IDs free: $00, $04 -- $04 is proposed for the tower.)
+     -> DECIDED 2026-10-19: yes for S3, which gets $00; the Final Boss Route keeps $08. See the
+        entry below.
   2. Should the $11D basement (2 heart pieces) be reachable from the Mayor's House?
+     -> DECIDED 2026-10-19: yes, one heart piece (only one chest is placed); see the entry below.
   3. Take the $81 pit-damage hunk? (Rec: yes, it only prevents a fall into Origins.)
-  Answer:
+     -> DECIDED 2026-10-19: no; the $81 pit is decoration and Link cannot fall in (see below).
+  Answer: all three ruled 2026-10-19 in separate entries at the end of this file (S3 gets $00;
+  the $11D basement keeps one heart piece; $81 stays out: its pit is decoration).
 
 * DECIDED Room budget step 1: the Sky tower gets the adjacent free block
   :PROPERTIES:
@@ -700,7 +716,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   (each floor further back in time; Hyrule only used what it understood).
   Answer: "A yes this sounds cool" (scawful, 2026-09-27).
 
-* OPEN Glove/Mitt swap: Power Glove early, Shrine of Power gives the Titan's Mitt
+* DECIDED Glove/Mitt swap: Power Glove early, Shrine of Power gives the Titan's Mitt
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion (idea by scawful, 2026-09-27)
   :END:
@@ -711,7 +727,8 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Power's lifting puzzles at the Mitt. Dungeon order and the S2 -> D6 gate stay.
   Waiting on the item-progression and overworld-region analyses before
   choosing the Glove's source (scawful: "C").
-  Answer:
+  Answer: "A yeah power glove earlier" (scawful, 2026-10-18). Adopted; see "DECIDED Glove/Mitt
+  swap: adopt (2026-10-18)" and the Power Glove entries below.
 
 * DECIDED Menu direction: declutter the item grid, add a Masks & Rings page
   :PROPERTIES:
@@ -1537,3 +1554,946 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   steers (Recommended)", "A. Wall + main deck chest (Recommended)", "Piece
   of Heart (Recommended)" and "$077 crab drop (Recommended),$099 chest key
   (Recommended),$079 pot key (Recommended)" (scawful, 2026-10-18).
+
+* DECIDED Wisdom dream shots 3-5 stay in the great hall
+  :PROPERTIES:
+  :ASKED_BY: Claude (Wisdom dream shots 3-6)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/wisdom_shots3_6_2026-10-18/mock/wisdom_shots3_5_location.png
+  :END:
+  Shots 3-5 of the Sealing War storyboard (his men fade, the prison speaks
+  D1.03/D1.04, he falls and Kydrog's silhouette stands in his place) play in
+  the great hall from shot 2 for 1.0, not at the real Master Sword grove (DW
+  $40, screen $41). This amends "Seal geography" item 5 for 1.0; the grove
+  can come in 1.1 with the expanded dream cinematography. Shot 6 wakes Link
+  in Maple's bed ("Abyss fixes follow-ups" item 3, the later step).
+  Question: "Where should Wisdom shots 3-5 play (his men fade away, the
+  prison speaks, he falls)?"
+  Answer: "Great hall (Recommended)" (scawful, 2026-10-18).
+
+* DECIDED Two new ocarina songs: Song of Secrets (gold) and Elegy of Stone (bronze); Time's note turns purple
+  :PROPERTIES:
+  :ASKED_BY: Claude (equipment screen songs)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/songs_secrets_stone_2026-10-18/SPEC.md
+  :END:
+  Six songs even out the new equipment screen. Song of Secrets reveals the
+  hidden thing where it is played (hidden chest, secret passage, invisible
+  floor, hint statue). Elegy of Stone leaves one stone Link that holds floor
+  switches and blocks paths. Menu notes: Secrets takes gold, Time's note
+  turns purple to match its purple play tint, Stone is bronze (the menu's
+  brown palette). Sun's Song was dropped (Time already skips to 6am/6pm);
+  Goron Lullaby was judged a one-off. Where they are taught is not decided.
+  Answers: "Write up Song of Secrets (gold) and Elegy of Stone (red-orange)
+  as a spec", "i dont think we need ideas for where to place these" and
+  "Option A: Secrets gold, Time's note becomes purple to match its tint,
+  Stone bronze." (scawful, 2026-10-18).
+
+* DECIDED Goron Mines safe rails: straight collision on the 313 drawn-rail tiles in seven rooms; no layout change
+  :PROPERTIES:
+  :ASKED_BY: Claude (D6 redesign, first scope)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/goron_mines_redesign_2026-10-18/safe_rails/WORK.md
+  :END:
+  In $77, $89, $97, $98, $B9, $D7 and $D8, the lane tiles of plain straight
+  rail pieces that had no custom-collision cell read the drawn rail's default
+  T junction ($BB/$BC), where a held direction (and, on $BC, a southbound
+  cart with no input) turns the cart off the rail. Those 313 tiles now hold
+  $B0 (horizontal) or $B1 (vertical). Stops, corners, junctions, the $77
+  switch, objects and sprites stay as they are; rails stay walkable. Today's
+  carts ride beside these tiles; they matter for the planned tracks T8 ($B9),
+  T13 ($D7) and T16 ($D8).
+  Answer: "Safe rails first: fix the 313 derail tiles in the 7 rooms, no
+  layout change." (scawful, 2026-10-18).
+
+* DECIDED D8 Portal Rod rooms: 5C is the only required rod gate; optional rooms hold the Map, two heart pieces and the Red Mail
+  :PROPERTIES:
+  :ASKED_BY: Claude (D8 Fortress design review)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_fortress_design_2026-10-18/README.md
+  :END:
+  1. P1, room 5C (NW treasure room): the big chest holds the Portal Rod. The
+     south shutter stays closed until Link uses the rod to reach its floor
+     switch; magic pots sit nearby. This is D8's only required rod gate.
+  2. P5, room 1D south shrine: optional; the path to Dark Link does not need
+     it. Its chest holds the Red Mail in place of the spare small key.
+  3. P2, room 9B = D8 Map. P3, room 8B SW = heart piece. P4, room 8B SE =
+     heart piece.
+  4. The Mad Batter (room $E3) stays the Half Magic source. This replaces
+     the first P2 answer (Half Magic in the 9B chest).
+  Puzzle layouts, barrier widths, receipts and build order stay proposals in
+  the doc (README sections 3-4, REWARDS_inventory.md).
+  Answers: "Yes: the 5C shutter stays closed until you use the Portal Rod to
+  reach its floor switch, with magic pots nearby."; "P5 is optional: the
+  shrine holds a reward, and the path to Dark Link does not need it."; "Red
+  Mail goes in the P5 shrine chest in 1D south, replacing the spare small
+  key. The optional shrine is the Red Mail reward."; "Keep the Mad Batter as
+  the Half Magic source; P2 gets a different reward, chosen from the data.";
+  "Yes: P2 = D8 Map, P3 = heart piece, P4 = heart piece." (scawful,
+  2026-10-18).
+
+* DECIDED D8 room 0D is the Dark Link fight only; Kydrog becomes Kydreeok at the volcano before room 00
+  :PROPERTIES:
+  :ASKED_BY: Claude (D8 Fortress design review)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_fortress_design_2026-10-18/BRIDGE_fortress_to_volcano.md
+  :END:
+  1. Room 0D stays the Dark Link boss room only. D8 ends with Dark Link.
+  2. Kydrog's transformation into Kydreeok happens at the volcano, right
+     before the room 00 Kydreeok fight. It is not in D8.
+  3. This supersedes beat 27's wording "at the heart Kydrog assumes his Abyss
+     form — Kydreeok" (story_canon_beat_sheet.md); the Abyss form scene moves
+     out of D8.
+  The transformation room (its own room or room 00's entry), who sends Link
+  north, and all lines and staging stay PROPOSED.
+  Answers: "no this is just meant to be the dark link boss fight room,
+  kydreeok reveal likely will need to happen in another room where the
+  player is warped if we want to do it in the fortress, though then we need
+  a story beat for how the prison and the volcanic region to the north is
+  even relevant"; "The transformation happens at the volcano, right before
+  the room 00 fight. D8 ends with Dark Link. Draft a story beat that sends
+  Link from the Fortress to the volcano." (scawful, 2026-10-18).
+
+* DECIDED Maku Seed ending: Farore's seal is built from the essences; D8 holds a secret 8th; Link plants the seed after Ganon
+  :PROPERTIES:
+  :ASKED_BY: Claude (D8 Fortress design review)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_fortress_design_2026-10-18/MAKU_SEED_ending.md
+  :END:
+  1. The essences are older than the seal: they were hidden on Kalyxo long
+     ago. Farore built the prison seal from them and kept a secret 8th
+     essence inside the prison.
+  2. D8's prize is that 8th essence.
+  3. After D8, Link returns to the Maku Tree with all 8 essences and receives
+     the Maku Seed there, as in the Oracle games.
+  4. The seed opens the volcano crater (the prison's mouth); the transformation
+     and the room 00 fight follow (previous entry). This is Option 2 in
+     ENDING_alternatives.md as chosen: the crater opens from the seed, not
+     directly when Dark Link falls.
+  5. After Ganon, Link plants the seed in a scripted item-raise moment; the
+     credits show a sapling growing in the Abyss.
+  Builds on "Villain chain" and "Seal geography". Adds the 8th essence to
+  beat 27 and gives beat 30 ("seal restored; the Abyss begins to heal") its
+  cause. Flags, the SRAM bit, menu display and all dialogue (including a
+  rewrite of message 0x138) stay PROPOSED in the doc.
+  Answers: "oh good point about the maku tree, we should prob go in the maku
+  seed direction to keep consistent with oracle and maybe even figure out
+  how to make the essences story relevant rather than focusing on dark link
+  and kydrog"; "Yes: the Fortress holds a secret 8th essence that Farore
+  kept inside the prison, and with all 8 the Maku Tree grows the seed."; "The
+  essences are older: they were hidden on Kalyxo long ago, and Farore built
+  the prison seal from them, keeping the 8th inside the prison."; "Yes: after
+  D8 Link returns to the Maku Tree with all 8 essences and receives the seed
+  there, as in the Oracle games."; "Link plants the seed in a scripted moment
+  after Ganon (item-raise pose); the credits show a sapling growing in the
+  Abyss." (scawful, 2026-10-18).
+
+* DECIDED Glove/Mitt swap: adopt (2026-10-18)
+  # Closes decisions.org "OPEN Glove/Mitt swap: Power Glove early, Shrine of Power gives the Titan's Mitt".
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/design_review_2026-10-18/REVIEW.md
+  :END:
+  Open since 2026-09-27. It now touches the D6 redesign, Shrine of Power puzzles, the
+  East Kalyxo Mitts gate and the Lyra Goron cliff route, all active lanes.
+  A. Adopt: Power Glove from a place already on the required route before D4; the
+     Shrine of Power gives the Titan's Mitt; light rocks before D4 become heavy rocks.
+  B. Drop: keep the Glove at the Shrine of Power; the Mitt stays where it is.
+  Ruled A. The Glove's early source is still to choose.
+  Answer: "A yeah power glove earlier" (scawful, 2026-10-18).
+
+* DECIDED New items in playtest builds: include them, gate few puzzles on them (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :END:
+  A new item, mask or song ships in a 1.0 playtest only with one signature room and one
+  overworld secret that need it; otherwise it is labeled v1.1. Applies retroactively to
+  Bombchu, Switch Hook, Garo, Byrna, Secrets and Stone.
+  Ruled differently: new items go into playtest builds, but only a few puzzles gate on a
+  new item until it has been tested in the wild. Too many puzzles gated on untested items
+  can break an RC beta test.
+  Answer: "not sure i get this but yes i like to include new items in the playtest but not
+  overuse them til theyve gotten some testing in the wild otherwise gating too many puzzles
+  with them can break an RC beta test" (scawful, 2026-10-18).
+
+* DECIDED The 1.0 route stays non-linear (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :END:
+  Crystal bits stay in their non-linear order as data, but hints, MapIcon and maiden text
+  may assume D1 -> D7 order for 1.0. Non-linear play is a v1.1 question.
+  Ruled the other way: non-linear is better. Hints, MapIcon and maiden text stay
+  order-agnostic (no "next dungeon" assumptions beyond the decided gates).
+  Answer: "I think non-linear is better" (scawful, 2026-10-18).
+
+* DECIDED Maiden text: ship as is, collect playtest feedback, rewrite later (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18 (corrected same day)
+  :END:
+  The attract flag is already on and $1C0-$1C3 are canon; $132, $135 and $137 carry
+  their approved rewrites in the base ROM. Remaining debt: one reviewed batch that
+  rewrites $133 (D2) and $134 (D3) to one fact + one feeling + one pointer in at most
+  three boxes, fixes the $136 tense, applies the approved $137 opener, and writes the
+  approved beat 10 Ranch chain drafts ($147, $177, $17D). Drafts come to Emacs via
+  emacs-agent diff before any ROM write.
+  Ruled: no rewrite batch now. The current maiden text ships in playtest builds as is;
+  rewrites come later, informed by playtest feedback.
+  Answer: "idk i guess we can look back over maiden text or approve what we got and get
+  feedback actually sure"; then, asked whether to ship as is or rewrite first: "ship the current maiden text as is and collect playtest feedback, rewrite later"
+  (scawful, 2026-10-18).
+
+* DECIDED Item homes: Byrna, Switch Hook, Garo (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/design_review_2026-10-18/DIRECTION.md
+  :END:
+  1. Cane of Byrna is the reward of the Eon Abyss underwater shrine. It is not an early
+     item; the D4 waterfall room already exists and holds the Blue Mail.
+  2. The Switch Hook belongs to the Sea Zora temple (Lyra Sea), not the main D4.
+  3. The Garo mask comes from the Garo NPC in the Garo desert, not from Goron Mines.
+  Answer: "that room currently exists and has the blue mail, cane of byrna that early is
+  broken it should prob be reward of eon abyss underwater shrine"; "switch hook would prob
+  be better in sea zora temple rather than the main D4"; "there is a garo outside in the
+  garo desert so it's going to be that instead" (scawful, 2026-10-18).
+
+* DECIDED Lost Woods bypass: Deku hover gap into Mushroom Grotto (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :END:
+  A Deku Mask hover gap from the fairy pond screen ($11) into the grotto screen ($10) lets
+  a revisit skip the N, W, S, W combo. The combo stays the first-time route.
+  Answer: "deku hover bypass is smart" (scawful, 2026-10-18).
+
+* DECIDED Dragon Ship stays offshore on its own map; Kalyxo Docks beside it (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :END:
+  The LW $30 large map splits into Kalyxo Docks (wide, $30/$31) and the Dragon Ship (wide,
+  $38/$39). The ship is never drawn at the docks; its proximity carries the story.
+  Answer: "the ship has to stay offshore bc it's a large complex graphical marvel hence why it
+  needs a solo map but the proximity to the ports gives the story the umph it needs yes"
+  (scawful, 2026-10-18).
+
+* DECIDED Stone Mask is a weaker Magic Cape (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude prison break session 2026-10-18
+  :END:
+  The Stone Mask occupies the Magic Cape's slot and becomes a slightly less powerful
+  version of it: enemies still ignore Link, but it does not phase through barriers such
+  as the laser beam gate. Phasing is reserved for the Cane of Byrna and late-game items.
+  Answer: "yeah good idea we should make the stone mask a slightly less powerful version of the magic cape it's inhabiting so no phasing through the laser beam thing, prob better that stuff is only for the cane of byrna and late game bs" (scawful, 2026-10-18).
+
+* DECIDED Approve Wisdom dream scene: Captain, seal key and promise to restore his men
+  :PROPERTIES:
+  :ASKED_BY: Codex Christmas RC content (2026-10-15)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/REVIEW.md
+  :END:
+  Draft words; no production source, IDs, flags or ROM changes.
+  Narration: "...a dream of long ago..."
+  Farore: "Keep the seal, Captain. This blade is its key."
+  The prison — unidentified voice: "Your king forgot you. We have not."
+  The prison — unidentified voice: "The Golden Power can bring your men back."
+  Maple, after waking: "Bad dream? You were talking in your sleep... about a sword."
+  Approve the complete Wisdom script and minimal staging, including the new line about bringing his men back? Captain, dream purpose and light Maple tone are already decided.
+  Answer: "I've seen power and wisdom and they're good but prob need to review courage
+  again" (scawful, 2026-10-18).
+  Closed by "DECIDED Wisdom and Power dream scripts approved" (2026-10-18).
+
+* DECIDED Approve Power dream scene: Farore's appeal and the king's garrison reply
+  :PROPERTIES:
+  :ASKED_BY: Codex Christmas RC content (2026-10-15)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/REVIEW.md
+  :END:
+  Draft words; no production source, IDs, flags or ROM changes.
+  Farore: "My king... I warned our scholars. They would not turn back."
+  Farore: "Beyond their Mirror lies a prison. Will Hyrule help us keep it sealed?"
+  Hyrule's king: "We will send a garrison. The Golden Power must be protected."
+  Farore: "Then send guards, my king. Keep it sealed."
+  Farore's remembered voice: "I thought I could keep Kalyxo safe."
+  Maple, after waking: "A king? Tell him naps cost extra."
+  Approve the complete Power script and minimal staging, including Farore's regret and the king's reply? Her disclosure and the resulting garrison are already decided.
+  Answer: "I've seen power and wisdom and they're good but prob need to review courage
+  again" (scawful, 2026-10-18).
+  Closed by "DECIDED Wisdom and Power dream scripts approved" (2026-10-18).
+
+* SUPERSEDED Approve Courage dream scene: Farore's image and the player-performed Healing cue
+  :PROPERTIES:
+  :ASKED_BY: Codex Christmas RC content (2026-10-15)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/REVIEW.md
+  :END:
+  Draft words; no production source, IDs, flags or ROM changes.
+  Farore's dream image — proposed speaker: "Look closely. The prison changed his shape. The knight is still within."
+  Farore's dream image — proposed speaker: "Bring down the heads together. When he can fight no more, lower your sword."
+  Farore's dream image — proposed speaker: "Play the Song of Healing. Let him hear it."
+  Maple, after waking: "You were humming! Better than snoring. That's a start."
+  Approve the complete Courage script and minimal staging, using Farore's dream image as speaker and an explicit heads-together/Song of Healing cue? The player retains the actual finale song action.
+  Superseded by "DECIDED Courage dream speaker: the Captain" and "DECIDED Courage
+  dream text approved" (2026-10-19): the Captain speaks, not Farore.
+
+* DECIDED Wisdom and Power dream scripts approved; Courage needs another review (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18 (board Decisions tab, item 2)
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/REVIEW.md
+  :END:
+  Closes decisions.org "OPEN Approve Wisdom dream scene" and "OPEN Approve Power dream
+  scene" (approved as drafted there). "OPEN Approve Courage dream scene" stays OPEN for
+  another review.
+  Answer: "I've seen power and wisdom and they're good but prob need to review courage
+  again" (scawful, 2026-10-18).
+
+* DECIDED Act I and Act II beat changes (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: scawful, reviewing the Story Board route meter
+  :END:
+  Changes the canon beat sheet (rev 4) once applied:
+  1. Beat 2 (falling arrival, Impa's voice, bed wake-up) is largely built; it needs refinement.
+  2. The Kalyxo Docks and stalfos content joins the beat 5 village sneak segment, or the beat 6
+     Forest Glade sequence.
+  3. New beat before D5: through the Mount Snowpeak portal into the Abyss volcanic area, escort
+     the old man, get the Goldstar, Mirror back to Mount Snowpeak. Glacia Estate is tied to it.
+     Mount Snowpeak needs work. Existing parts: old man follower, Goldstar, message $54, and
+     "Old Man Mountain Quest" in Docs/World/Guides/QuestFlow.md.
+  4. New beat after D5: a segue to the Abyss Lupo Mountain, the Gorons, the Garo desert and the
+     mines, before East Kalyxo, Sea Zora, the Sky tower and the Lyra Sea. Not designed yet.
+  CONFLICT (open): "Abyss chunk layout and warp pads" (2026-09-27) keeps the volcano chunk
+  sealed until the Master Sword pull and removes the Snowpeak pads $03->$43 and $07->$47.
+  Item 3 needs one corner of it open before D5. RESOLVED 2026-10-18: the Snowpeak portal opens
+  only the old man's corner of the Lava Lands before D5; the prison mouth stays sealed until
+  the eruption. This amends the 09-27 pad list (one Snowpeak pad stays live into that corner).
+  Answer (scawful picked this option, 2026-10-18): "Yes: the Snowpeak portal opens only the old
+  man's corner of the Lava Lands before D5; the prison mouth stays sealed until the eruption."
+  Geography (scawful, 2026-10-18): "yeah there's a strip of maps horizontally mirroring the
+  snowpeak areas which is distinct from the main open areas mirroring the
+  mountains/cliffs/graveyard/hall of secrets where the prison is". Board map
+  segue_maps/abyss_north.png marks the strip as $43-$47 and the prison mouth as
+  $4E/$4F/$55-$57 (Claude's reading of the map; confirm the exact edge when building).
+  Timing (scawful, 2026-10-18): "it's pre D5 as Link ascends the mountain there is a portal on
+  snowpeak". Art (same message): "both these maps could use some improvements to the actual
+  tilesets and the overlay and animations and stuff so it feels like a cooler volcano/ice
+  mountain ya know".
+  Answer: "beat 2 is largely built just needs refinement, the docks and stalfos stuff needs to
+  be added to the village sneak segment beat imo, or like farore at forest glade and all that.
+  the glacia estate should be tied to a story beat with the old man and the gold star in the
+  volcanic areas of eon abysss, mirror to the mount snowpeak which also needs some work. then
+  we need some way to segue from that to the eon abyss lupo mountain goron and the desert and
+  mines before the east kalyxo, sea zora, sky tower, lyra sea, etc" (scawful, 2026-10-18).
+
+* DECIDED After D5, a path opens from the Snowpeak strip into Lupo Mountain (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (new beat 18a)
+  :END:
+  After Glacia Estate (D5), Link walks from the Abyss Snowpeak strip ($43-$45) down into Lupo
+  Mountain ($4B-$4D), then on to the Eon Gorons, the Garo desert and the mines. No new portal.
+  The gate that opens after D5 is still to choose. Amends the 09-27 "Abyss chunk layout and
+  warp pads" entry (chunk 3 also opens from the strip).
+  Answer (scawful picked this option, 2026-10-18): "A: after D5 a path opens from the Snowpeak
+  strip down into Lupo Mountain."
+  Gate (leaning, 2026-10-18): Twinrova's fall crusts the lava into an ice path; the nearby warp
+  stays a fallback. The mountain maps need a redesign. Answer: "i think there is a warp nearby
+  but ice crust could work but we have to redesign the map of the mountains forsure i think"
+  (scawful, 2026-10-18).
+
+* DECIDED Item homes: Bombchu in D6, Portal Rod in D8 (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (HANDOFF section 6 item 2)
+  :END:
+  1. Bombchu is introduced early in the Goron Mines, as part of the D6 redesign.
+  2. The Portal Rod is the D8 item. D8 today is mostly Ganon's Tower rooms plus connective
+     tissue, with a few experimental puzzles; it is the most open dungeon for new rooms and
+     puzzles, and agents can help design them.
+  Answer: "bombchu can prob be introduced earlier in the mines during this redesign im thinking
+  and then portal rod is the D8 item yes there's a few experimental puzzles but largely D8 is
+  just ganons tower rooms and some connective tissue but it's the most open for new room and
+  puzzle designs which i think agents can help with" (scawful, 2026-10-18).
+
+* DECIDED The Lyra Sea tells Twinrova's origin (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (Lyra Sea story job)
+  :END:
+  The Lyra Sea's story job is Twinrova's origin: lava in the west for Koume, the glacier in the
+  east for Kotake. This matches the 09-29 art ruling. The Sea stays v1.1 and optional. Replaces
+  the rejected proposal "the garrison's recent past".
+  Answer (scawful picked this option, 2026-10-18): "The Lyra Sea tells Twinrova's origin: lava in
+  the west for Koume, the glacier in the east for Kotake."
+
+* DECIDED Cut the Kydrog Mask (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (beat 31)
+  :END:
+  Beat 31 is cut. The Kydrog Mask does not ship; the Garo mask takes its place, and the post-game
+  gets no new mask. Overrides beat sheet beat 31 ("Post-game: Kydrog Mask in the save",
+  [DECIDED], parting gift). Row 31 edited 2026-10-19 with scawful's OK: "Yes: change row 31
+  to \"Cut; the Garo mask from the Garo desert replaces it\" and push to master."
+  Answer (scawful picked this option, 2026-10-18): "Cut the Kydrog Mask; the Garo mask takes its
+  place and the post-game gets no new mask."
+
+* DECIDED Docks and the stalfos patrol join the village sneak (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (beat 5)
+  :END:
+  Beat 5 is one sneak segment in this order: Loom Beach, Kalyxo Docks (with the stalfos patrol),
+  then Wayward Village. A checkpoint sits before the village hole. Settles the 10-18 "village
+  sneak or Forest Glade" choice; beat 6 (Farore at the Forest Glade) is unchanged.
+  Answer (scawful picked this option, 2026-10-18): "The docks and stalfos patrol go inside the
+  village sneak (beat 5): beach, docks, then Wayward Village, with a checkpoint before the
+  village hole."
+
+* DECIDED Power Glove's early source: the swordsmith's forge gloves (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (Glove/Mitt follow-up)
+  :END:
+  Not a ruling yet. scawful's two ideas: a Deku reward after Tail Palace (D2), or a step of the
+  quest that leads into the Book of Secrets, D3 and the castle bridge.
+  Facts: the Book of Secrets lowers the castle bridge on OW $1B (Items/book_of_secrets.asm sets
+  overlay $04C6 = 02); the Book comes from the library dash knockdown (beat 12). The Deku Butler
+  ($2E) and Princess ($2F) already have post-D2 peacetime states (Sprites/NPCs/deku_scrub.asm
+  states 7 and 8), but their messages $1B9/$1BA are not in the base ROM yet.
+  Proposal: the Deku Princess gives the Glove as D2 thanks, and a light rock on the way to the
+  library needs it, so the Glove leads into the Book, the bridge and D3.
+  Dropped 10-18: the library is in the village, across the moat from the drawbridge, so there
+  is no road for a rock gate. New subquest ideas: handoffs/design_review_2026-10-18/glove_maps/README.md
+  scawful: "the library is literally in the village so not sure how well this would work exactly"
+  Answer: "maybe a reward from the deku after tail palace ? or some sort of other aspect of the
+  quest that leads into the book and D3 and the castle bridge i guess" (scawful, 2026-10-18).
+  Ruled 10-18 (idea 1 of glove_maps/README.md): after D2 the Deku Princess gives Link an ember
+  seed; Link relights the swordsmith's cold forge; the smith gives his old forge gloves (the
+  Power Glove). Design: glove_maps/forge_gloves_subquest.md.
+  Answer (scawful picked this option, 2026-10-18): "Develop idea 1: the Deku Princess gives an
+  ember seed after D2, Link relights the swordsmith's cold forge, and the smith gives his old
+  forge gloves (Power Glove)."
+
+* DECIDED The Power Glove gates the inner garden path in D3 (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (forge gloves follow-up)
+  :END:
+  Gray rocks in Kalyxo Castle's walled inner garden ($0B, top) guard a D3 door (the Secret
+  Courtyard, entrance $0A), so the Glove from the swordsmith is required to reach D3. The garden
+  needs a map edit to give it a way in. Gray rocks in the Abyss that must stay late become black
+  rocks (Mitt).
+  Answer (scawful picked this option, 2026-10-18): "Yes: gray rocks in the castle's walled inner
+  garden guard a D3 door, so the Glove is required to reach D3."
+  Correction (scawful, 2026-10-18): the inner garden is not an outside way in. It is a path in the
+  middle of D3 that leads to a heart piece today, and it could be made more important. So the
+  Glove gates a mid-dungeon path, not the entrance. Open: what the garden path leads to.
+  Answer: "the inner garden isnt the only way, it's actually really just a path in the middle of
+  the dungeon to get to a heart piece right now, though it could be made more important".
+
+* DECIDED Abyss rock tiers after the early Glove (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (forge gloves follow-up)
+  :END:
+  1. Gray rocks (Glove) can open the Shrine of Wisdom side of the Abyss: the intro chunk exits
+     ($51, $61) toward Yesterwind and S1 (Flippers still needed for S1 itself). Fits the order
+     D3 -> S1 (beat 14).
+  2. Rock paths on the Goron / Rock Meat side are upgraded to black rocks (Titan's Mitt).
+  Constraint (Claude, not a ruling): the Mitt comes from S2, at the end of the Rock Meat route
+  (Option B: pad -> B1 -> S2 front door; Glove rocks B2 at the $5B gap and B3 at the $52 ladder).
+  Rocks on the way to S2's front door must stay Glove rocks or the route softlocks. Mitt rocks
+  fit paths after S2: Lupo heights ($4D), the Shrine of Courage door ($50, beat 24), the
+  smith partner's mine rubble. The 18a ruling (path from the Snowpeak strip after D5) already
+  times the Lupo side.
+  Answer: "yes we can always upgrade rock paths in the abyss for titans mitt with the goron meat
+  paths, whereas the lv1 rocks can now give access to shrine of wisdom stuff ?" (scawful, 2026-10-18).
+
+* DECIDED The D3 inner garden path leads to a step D3 needs (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (forge gloves follow-up)
+  :END:
+  The Glove's gray rocks in the inner garden open a path to a required D3 step (the Big Key or
+  the way to the blade shrine), so the Glove is required to finish D3. Which step: open.
+  Answer (scawful picked this option, 2026-10-18): "Yes: the inner garden path leads to a step D3
+  needs, such as the Big Key or the way to the blade shrine, so the Glove is required to finish D3."
+
+* DECIDED D3 garden holds the Compass; Big Key stays in the basement; prison wing shut until the escape (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (D3 and prison analysis)
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/design_review_2026-10-18/d3_analysis/README.md
+  :END:
+  Settles "Which step: open" in "The D3 inner garden path leads to a step D3 needs".
+  1. The Big Key stays in the basement cell ($80). The basement route (stairs, Boots dash wall,
+     library, tavern, two key doors) keeps its purpose.
+  2. The garden behind the gray rocks holds the Compass, so the Glove is required for the big
+     chest (Meadow Blade). The $66 Compass chest gets another item.
+  3. The prison wing ($55) stays shut until the escape: the $80 <-> $55 warp tile is off and the
+     $55 overworld door is closed from outside until then.
+  Order: Big Key (basement, Boots) -> Compass (garden, Glove) -> blade -> capture.
+  Rejected: moving the Big Key to the garden (scawful: "wouldnt that defeat the purpose of the
+  basement route ?").
+  Answer: "Yes: keep the Big Key in the basement, put the Compass in the garden, and keep the
+  prison wing shut until the escape." (scawful, 2026-10-19)
+
+* DECIDED Death or continue while captured: Link wakes in the cell (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item 1)
+  :END:
+  If Link dies, or the player continues, between the capture and the end of the escape, Link
+  wakes back in the prison cell ($65) and the escape restarts. The Meadow Blade stays taken.
+  Same rule as save and quit, which also cannot skip the capture.
+  Rejected: waking at a D3 entrance without the blade.
+  Answer: "Back in the cell: the escape restarts." (scawful, 2026-10-19)
+
+* DECIDED Prison escape: Minish portal in a cell-wall crack, grow back in the next hall (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  A crack in the wall of the prison cell ($65) holds a Minish portal. Link shrinks there,
+  crawls through $64, and grows back at a second Minish portal in the next hall ($54). Uses the
+  existing Minish portals.
+  Rejected: staying small until the prison door ($55).
+  Answer: "A crack in the cell wall holds a Minish portal; Link grows back at a second portal in
+  the next hall." (scawful, 2026-10-19)
+
+* DECIDED Prison escape: a guard who sees Link sends him back to the cell (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  During the escape, if a patrolling guard sees Link, the screen fades and Link is back in the
+  prison cell ($65). No chase. Same reset as death or continue while captured.
+  Rejected: a chase where the guard attacks and Link fights or runs.
+  Answer: "Caught: the screen fades and Link is back in the cell." (scawful, 2026-10-19)
+
+* DECIDED Captured Link loses every sword until he takes the Meadow Blade back (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan)
+  :END:
+  At the capture the guards take every sword, not only the Meadow Blade. Link escapes unarmed
+  through the cell, the crawl and the next hall, and is armed again only when he takes the
+  Meadow Blade back from the table in $54. Fits the no-chase guard rule.
+  Rejected: Link keeps his first sword and only the Meadow Blade is taken.
+  Answer: "No: the guards take every sword; Link escapes unarmed until he takes the Meadow Blade
+  back from the table." (scawful, 2026-10-19)
+
+* DECIDED Prison escape: stealth ends at the blade table (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan)
+  :END:
+  The caught-means-cell rule lasts only until Link takes the Meadow Blade back from the table in
+  $54. After that, guards fight normally and Link fights his way out through the prison door
+  ($55), as planned on 2026-10-18.
+  Rejected: stealth lasting until Link leaves through the $55 door.
+  Answer: "No: stealth ends at the blade table; Link fights his way out through the prison door."
+  (scawful, 2026-10-19)
+
+* DECIDED Prison escape: the thief cellmate slips away and does not return (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  The thief in the next cell shows Link the way out, slips away during the escape and is not
+  seen again. No return visit at the thieves' cave and no reward.
+  Rejected: a return visit at the thieves' cave on the way to Mushroom Grotto.
+  Answer: "No: the thief slips away during the escape and is not seen again." (scawful, 2026-10-19)
+
+* DECIDED Prison thief uses the vanilla thief sprite as a still NPC (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  The thief cellmate is the vanilla thief sprite, standing still as an NPC in the cell next to
+  Link's ($65). No new art.
+  Rejected: new art for a named character.
+  Answer: "The vanilla thief sprite, standing still as an NPC in the next cell." (scawful, 2026-10-19)
+
+* DECIDED Kalyxo Castle prison break (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude prison break session 2026-10-18
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/design_review_2026-10-18/WORK.md
+  :END:
+  1. Capture spot: the entry hall of the Meadow Blade room, on the way back from the
+     chest. Guards run in from the east door (the throne hall side). The south door of
+     that hall is one of Kalyxo Castle's alternate entrances, not an exit. Save and quit,
+     the Magic Mirror and other warps must not let the player skip the capture.
+     Fallback idea: guards run in as Link lifts the blade from the chest.
+     Answer: "B is probably good since the guards can come from the right door in that
+     room, but we'd have to prevent the player from save and exit or warping out if they
+     have the mirror, stuff like that. otherwise i was just gonna have the guards run into
+     the room as link pulls it from the chest. this isnt so much of an exit as it is one of
+     the alternate entrances into kalyxo castle and its multi-entrance dungeon system"
+     (scawful, 2026-10-18).
+  2. The castle is held by the Hylian garrison; its soldiers make the arrest. Kydrog's
+     pirates are at war with the thieves and the Hylian guards, have taken little ground,
+     and cause mischief across the island, driving people away (the reason for the low
+     NPC count).
+     Answer: "i think hylian garrison guards, since a lot of the enemies are like soldiers
+     in the kalyxo castle. kydrogs pirates are at war with the thieves as well as hylian
+     guards so i dont think they've taken much ground, just cause a lot of mischief across
+     the island more or less and driving people away hence the lower NPC count in canon"
+     (scawful, 2026-10-18).
+  3. Rooms: the prison sequence uses rooms $54, $55, $64 and $65 (already allocated by
+     scawful; the block directly west of the blade room $56).
+     Answer: "i think i already allocated some rooms for this sequence"; "54, 55, 64, 65"
+     (scawful, 2026-10-18).
+  4. Route: Link's cell is built in $65. The Minish route leads from the cell into $64,
+     up into $54, and $55 is the exit to the Kalyxo Castle overworld map.
+     Answer: "yeah $65 is where we can build his cell and the minish route can feed into 64 and up into 54 where 55 is the exit to the kalyxo castle map" (scawful, 2026-10-18).
+  5. SUPERSEDED 2026-10-19 by "Captured Link loses every sword until he takes the Meadow
+     Blade back": the guards take every sword. Original ruling: the guards confiscate only the Meadow Blade. It lies on a table along the escape
+     route, drawn as the sword sprite, and Link takes it back there. (scawful's first
+     idea was to take all items and make the cell the new-game start point until the
+     puzzle is solved; set aside because the escape is only a few rooms.)
+     Answer: "my thought was originally C, where it becomes a new game start point until you figure out the puzzle but considering it's not many rooms it's prob best to do B and then you get the blade back and it'd be cool to see the sword sprite out on the table" (scawful, 2026-10-18).
+  6. The blade table is in $54, in the chamber with the block. Link takes the blade back
+     midway, then fights out through $55 with it.
+     Answer: "A" (scawful, 2026-10-18, choosing "$54, the chamber with the block" over
+     "$55, the upper walkway by the exit").
+  7. A thief is locked in the next cell and shows Link the Minish way out. The thieves
+     already have a cave on the way to Mushroom Grotto; this thief is a member of that
+     faction.
+     Answer: "the thieves are established in a cave on the way to mushroom grotto already, but yeah a thief in the next cell would be a fun addition here" (scawful, 2026-10-18).
+  8. Farore's first callout stays at the chest: the vanilla Master Sword telepathy fires
+     when the blade comes out of the D3 chest, and Farore uses the Zelda sprite slot, so
+     the voice is hers. Taking the blade back from the table is silent (item-get pose, no
+     dialogue). Context: the Lv2 blade had no natural home among 7 dungeons and 3 shrines,
+     which is why the prison sequence exists.
+     Answer: "she being farore but farore took the zelda sprite slot btw"; "and yes that's fine at the chest can stay"
+     (scawful, 2026-10-18).
+  9. The Meadow Blade is required. The gate before the D3 boss opens only after the
+     escape, so the Stone Mask cannot skip the blade, the capture or the prison.
+     Answer: "yeah good idea" (scawful, 2026-10-18, to: make the blade required so the
+     Stone Mask cannot skip it).
+  Later rulings (2026-10-19, separate entries): D3 garden holds the Compass; death or continue
+  while captured returns Link to the cell; Minish portal in a cell-wall crack, grow back in
+  $54; a guard who sees Link sends him to the cell; every sword is taken; stealth ends at the
+  blade table; the thief slips away and does not return; the thief is the vanilla sprite.
+
+* DECIDED Prison escape: the crawl room is the sneak; its soldiers can spot small Link (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: guard patrols)
+  :END:
+  The two Blue Soldiers already placed in the crawl room ($64) walk a patrol and can spot Link
+  while he is Minish-sized. Being spotted sends him back to the cell (2026-10-19 sight rule).
+  The crawl through $64 is the main sneak of the escape.
+  Rejected: small Link is too small to notice and the sneak happens only in $54.
+  Answer: "Yes: the two soldiers in the crawl room patrol and can spot small Link; the crawl is
+  the sneak." (scawful, 2026-10-19)
+
+* DECIDED Prison escape: the blade-table hall has no guard (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: guard patrols)
+  :END:
+  The hall with the blade table ($54) gets no guard. It keeps only the rats, ropes and keese
+  already placed there. After the crawl, Link grows back at the second portal and crosses the
+  hall as a breather on the way to the table.
+  Rejected: one guard in the hall, facing away from the portal.
+  Answer: "No guard: the hall keeps only its rats, ropes and keese, a breather after the crawl."
+  (scawful, 2026-10-19)
+
+* DECIDED Prison escape: crawl-room soldiers walk fixed back-and-forth routes (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: guard patrols)
+  :END:
+  The two Blue Soldiers in the crawl room ($64) walk fixed back-and-forth routes that cross the
+  crawl path. Link watches their timing and slips through the gap. Every attempt plays the same,
+  so a retry after being sent back to the cell is fair.
+  Rejected: vanilla soldier walking (turning at walls and corners, varying per attempt).
+  Answer: "Fixed back-and-forth routes that cross the crawl path; Link times the gap and every
+  attempt plays the same." (scawful, 2026-10-19)
+
+* DECIDED Prison thief says one short message pointing at the crack (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: thief's lines)
+  :END:
+  The thief cellmate has one short message. It points Link at the crack in his cell wall
+  (the Minish portal). No longer exchange. The text goes in one of the prison stubs $1CC-$1D1
+  after scawful approves the wording.
+  Rejected: a two-part exchange (who caught them both, then the crack).
+  Answer: "One short message that points Link at the crack in the cell wall." (scawful, 2026-10-19)
+
+* DECIDED Prison thief message text, approved for $1CF (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: thief's lines)
+  :END:
+  Approved text for message $1CF (!Msg_CellmateHint1), three lines, 32-character box:
+  #+begin_example
+  Psst, kid. That crack in your
+  wall? Little folk use cracks
+  like that. Bet you would fit.
+  #+end_example
+  $1D0 (!Msg_CellmateHint2) is not used by the thief.
+  Rejected: "The guards never check walls. / See the crack in your cell? / Get small and slip through."
+  Answer: "Use the hint wording: Psst, kid. That crack in your wall? Little folk use cracks like
+  that. Bet you would fit." (scawful, 2026-10-19)
+
+* DECIDED Prison capture: one guard taunt line in $1CC before the fade (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison message stubs)
+  :END:
+  When the garrison guards catch Link in the $56 entry hall, one taunt line shows in message $1CC
+  (!Msg_GuardCaptureTaunt), then the screen fades to the cell. Wording is drafted separately for
+  scawful's approval.
+  Rejected: a silent capture with the thief's line as the only prison text.
+  Answer: "One taunt line at the capture, in $1CC, before the fade to the cell." (scawful, 2026-10-19)
+
+* DECIDED Prison guard taunt text, approved for $1CC (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison message stubs)
+  :END:
+  Approved text for message $1CC (!Msg_GuardCaptureTaunt), three lines, 32-character box:
+  #+begin_example
+  Another thief in the castle?
+  Throw him in the cells with
+  the other one!
+  #+end_example
+  Rejected: "Halt! Drop that blade, boy. / You will cool your heels in / the cells for this."
+  Answer: "Use the thief wording: Another thief in the castle? Throw him in the cells with the
+  other one!" (scawful, 2026-10-19)
+
+* DECIDED Prison cell: no text on waking; $1CD and $1CE unused (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison message stubs)
+  :END:
+  No text shows when Link wakes up in the cell, on the first capture or after being caught
+  during the sneak. The fade ends in the cell and the player looks around. Messages $1CD
+  (!Msg_PrisonWakeUp) and $1CE (!Msg_PrisonCellDesc) stay unused.
+  Rejected: a short wake-up line in $1CD as the fade ends.
+  Answer: "No text on waking: the fade ends in the cell; $1CD and $1CE stay unused."
+  (scawful, 2026-10-19)
+
+* DECIDED Prison exit: one line in $1D1 points back to the open gate (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison message stubs)
+  :END:
+  As Link exits the prison through $55, one short line shows in message $1D1
+  (!Msg_PostEscapeFlavor). It points him back to the gate before the D3 boss, which the escape
+  has opened. Wording is drafted separately for scawful's approval.
+  Rejected: no exit text, leaving the player to find the open gate alone.
+  Answer: "One short line in $1D1 as Link exits through $55, pointing him back to the now-open gate
+  before the boss." (scawful, 2026-10-19)
+
+* DECIDED Prison exit text, approved for $1D1 (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison message stubs)
+  :END:
+  Approved text for message $1D1 (!Msg_PostEscapeFlavor), three lines, 32-character box:
+  #+begin_example
+  The lightning gate upstairs
+  has gone dark. The way past
+  it is open now.
+  #+end_example
+  "Upstairs" assumes the $39 lightning gate (3F) is above the $55 exit; recheck when the text is
+  written into the game.
+  Rejected: "A distant rumble shakes the / castle. Somewhere inside, a / gate has opened."
+  Answer: "Use the named-gate wording: The lightning gate upstairs has gone dark. The way past it
+  is open now." (scawful, 2026-10-19)
+
+* DECIDED Courage dream speaker: the Captain, the knight trapped inside (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (review of OPEN "Approve Courage dream scene")
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/DRAFT.md
+  :END:
+  In Dream 3 "The Healing Revelation" the lines come from the Captain himself, the knight
+  trapped inside Kydreeok, not from Farore. The draft's three Farore lines get rewritten in his
+  voice. Maple's wake line is unchanged. "OPEN Approve Courage dream scene" stays OPEN until
+  scawful approves the rewritten text.
+  Rejected: Farore as the dream speaker (the 2026-10-15 draft).
+  Answer: "The Captain himself, the knight trapped inside, speaks in the Courage dream."
+  (scawful, 2026-10-19)
+
+* DECIDED Courage dream text approved: the Captain's three plain lines (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (review of "Approve Courage dream scene")
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/DRAFT.md
+  :END:
+  Approved text for Dream 3 "The Healing Revelation", spoken by the Captain (the knight trapped
+  inside Kydreeok). Each line fits the dialogue box; message IDs are assigned at implementation.
+  #+begin_example
+  C1  I am still in here. The / prison only wears my shape.
+  C2  Bring both heads down at once. / When I stop fighting, lower / your sword.
+  C3  Then play the Song of Healing. / Let me hear it.
+  Maple, after waking (unchanged from the 2026-10-15 draft):
+      You were humming! Better than snoring. That's a start.
+  #+end_example
+  Staging stays as drafted (DRAFT.md D3): the Captain's outline behind Kydreeok, the heads fall,
+  Link lowers his blade, a still Ocarina image; no auto-played song, no boss event, no item.
+  This closes "Approve Courage dream scene" (the 2026-10-18 entry kept it open). All three dream
+  scripts are now approved.
+  Rejected: hinted wording ("I remember a song that heals...").
+  Answer: "Use the plain wording for the Captain's three lines." (scawful, 2026-10-19)
+
+* DECIDED Sprite QA: check all custom sprites; not a build gate (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (queue item: sprite QA bar before a playtest build)
+  :END:
+  Before a playtest build, agents run the sprite QA checks (hit flash, death poof, OAM while
+  carried, reload after opening the map, wall collision) on all custom sprites, not only the
+  ones changed since the last build. A failed check is reported with the build; it does not
+  block staging the build.
+  Rejected: only sprites changed since the last staged build; a hard must-pass gate.
+  Answer: "it's a not a must, but we should do checks on all custom sprites" (scawful, 2026-10-19)
+
+* DECIDED Mayor's House basement ($11D) keeps one heart piece (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (OPEN "Room census follow-ups", question 2)
+  :END:
+  The basement under the Mayor's House ($119 stairs -> $11D) stays reachable and gives one
+  heart piece. Checked 2026-10-19 on the base ROM (yaze-editor, read only): $11D has one placed
+  chest object (0xF99 at 32,8), so the game hands out only the first chest-table entry (Piece of
+  Heart). The table still lists 6 entries for $11D (2 Piece of Heart, 4 x 20 Rupees, left over
+  from vanilla Blind's hideout); the census counted the table, not the placed chests. Optional
+  cleanup: trim the 5 unused $11D table entries so item counts stop showing a second heart piece.
+  Answer: "it has two heart pieces ? it should only have 1" (scawful, 2026-10-19)
+
+* DECIDED S3 gets its own dungeon ID $00 (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (OPEN "Room census follow-ups", question 1)
+  :END:
+  S3 (entrance $0C) moves from dungeon ID $09 to the free ID $00, so it stops sharing small keys
+  with the Final Boss Route ($08, entrance $24) and the compass, big key and map bits with D7.
+  $04 stays reserved for the tower. Code-lane work: change entrance $0C's dungeon ID and check
+  S3's key doors and chests at runtime afterward.
+  Rejected: leaving S3 on the shared ID $09.
+  Answer: "Yes, give S3 its own dungeon ID $00 so keys and maps stop leaking." (scawful, 2026-10-19)
+
+* SUPERSEDED D3 room $81 joins the pit-damage table (2026-10-19)
+  SUPERSEDED the same day: the $81 pit is decoration; see "D3 room $81 stays out" below.
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (OPEN "Room census follow-ups", question 3)
+  :END:
+  Add D3 room $81 to the pit-damage table. A fall into its pit ring costs one heart and respawns
+  Link in $81, like the other pit-damage rooms, instead of dropping him into the walled-off
+  Origins room $05. Code-lane work: the one-line table addition from the census.
+  Rejected: keeping the drop into $05 and opening a way out later.
+  Answer: "Yes, add $81 to the pit-damage table: a fall costs one heart and respawns Link in $81."
+  (scawful, 2026-10-19)
+  Table space: RoomsWithPitDamage ($00:990C) has 57 slots; $B8 and $97 already took two of the
+  five $0123 fillers (Core/patches.asm), so $81 leaves two. scawful: "i think we are running low
+  on pit damage so might need to expand that table" (2026-10-19). Expand it with the cheap option
+  in Docs/Technical/Dungeon_Tables_Expansion.md section 5: after the vanilla loop misses, a JSL at
+  $07:94B2 checks an Oracle-owned room list (about 15 bytes; yaze and ZScream keep working).
+
+* DECIDED D3 room $81 stays out of the pit-damage table: its pit is decoration (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (follow-up to the $81 pit-damage entry)
+  :END:
+  Supersedes "D3 room $81 joins the pit-damage table" (same day). The black pit area around the
+  platform in $81 is decoration: Link cannot fall into it, so there is no fall into Origins $05 to
+  fix and $81 is not added. The census finding came from static data (holewarp + pit art), not a
+  fall in game. The pit-damage table still has only two spare slots; expand it (JSL extension list,
+  Dungeon_Tables_Expansion.md section 5) when a new pit room needs a slot.
+  Answer: "ok no dont put the pit in there, you cant even fall in that's just decoration"
+  (scawful, 2026-10-19)
+  Tool check 2026-10-19 (new yaze command z3ed dungeon-tile-types, branch
+  claude/dungeon-tile-types, matches a runtime $7F2000 capture): $81 has a 2-tile ring of 128 pit
+  cells ($20) around the black area; the black interior is $1C. No walkable floor touches any pit
+  cell (neighbours are walls $01/$02/$04 and $1C), which fits "you cant even fall in". Static, not
+  a walk test.
+
+* DECIDED The Song of Healing wakes the Sick Kid for the Pegasus Boots (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (Sick Kid trigger check)
+  :END:
+  Link plays the Song of Healing at the Sick Kid's bed in the village (room $102, beat 12) and
+  gets the Pegasus Boots. This is what Sprites/NPCs/bug_net_kid.asm already does, so no code
+  change. Replaces an older review note that said the Magic Powder wakes him.
+  Answer: "Song of Healing: keep the code as it is." (scawful, 2026-10-19)
+
+* DECIDED Picking up Rock Meat needs the Titan's Mitt (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (forge gloves risk 3)
+  :END:
+  The Power Glove now comes after D2, so the old any-Glove check let Link carry Rock Meat long
+  before the Shrine of Power. The Rock Meat pickup (Sprites/Objects/collectible.asm, RockSirloin,
+  reads Gloves $7EF354) changes to need the Titan's Mitt (value 2). This holds the order even before
+  the black-rock map work on the Goron / Rock Meat paths lands. ASM change goes to a code lane.
+  Answer: "Require the Mitt: change the Rock Meat pickup check from any Glove to the Titan's Mitt."
+  (scawful, 2026-10-19)
+
+* DECIDED Forge-gloves text: the ember seed and the smith's lines (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (forge gloves draft lines)
+  :END:
+  Approved wording; line breaks for the 30-character box are the code lane's job.
+  1. Deku Princess, after D2 (added to message $1BA, which already marks the castle on the map):
+     "Take this ember seed. A Deku fire never goes out. The smith west of the village has had a
+     cold forge since the soldiers took his coal."
+  2. Swordsmith, when Link relights the forge (new text on his partner-missing branch, near $DF),
+     then he gives the Power Glove:
+     "My forge, burning again! My partner went to the mines and never came back, so I cannot
+     temper anything yet. Take my old forge gloves. They lift what your hands cannot."
+  Answer: "Use both forge-gloves lines as written." (scawful, 2026-10-19)
+
+* DECIDED The ember seed stays: the smith's reason to give the gloves (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (provenance check on the forge-gloves entry)
+  :END:
+  The ember seed was Claude's invention (idea 1 of glove_maps/README.md); the 10-18 "answer"
+  on the forge-gloves entry is a button Claude wrote. scawful confirmed it in their own words
+  after it was explained. Menu placement is still open (Quest screen icon space is tight).
+  Answer: "oh ember seed is for the swordsmith to give you the gloves ? i think that's fine i
+  just dont know where in the menu it would go, maybe we add a new quest item to the quest
+  status screen but we are running low on 2bpp icons" (scawful, 2026-10-19)
+
+* DECIDED The ember seed shows in the Quest screen's Glove slot (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (ember seed menu placement)
+  :END:
+  The Quest screen GEAR row's Power Glove slot (Menu/menu_quest.asm) is empty until Link has a
+  Glove. While the ember seed flag is set and Gloves = 0, that slot shows the seed; when the smith
+  takes it, the Power Glove replaces it. No new menu slot. Icon: one 16x16 (four 2bpp tiles), or a
+  recolor of existing art if no tiles are free.
+  Answer: "Glove slot: the seed shows in the empty Glove slot until the smith swaps it for the
+  gloves." (scawful, 2026-10-19)
+
+* DECIDED The smith's partner waits behind Mitt rubble near the Goron Mines, an optional trip (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (smith visit 2 placement)
+  :END:
+  Smith visit 2 (scawful, 2026-10-18): Link rescues the missing partner in the Eon Abyss and the
+  smiths temper the Meadow Blade (L3). Placement: outside D6, behind rubble that needs the Titan's
+  Mitt, near the mines. Optional; open any time after the Shrine of Power (which gives the Mitt).
+  Exact spot to be picked from map images.
+  Answer: "Outside D6: behind Mitt rubble near the mines, an optional side trip after the Shrine
+  of Power." (scawful, 2026-10-19)
+
+* DECIDED The smith's partner is on the Abyss desert beach; the trip opens after the Hammer (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: scawful's idea, confirmed in the story board session (smith visit 2 spot)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/design_review_2026-10-18/partner_maps/beach_partner.png
+  :END:
+  Refines the entry above. The partner is on the Abyss desert beach (the Abyss side of the Garo
+  Desert, $76-$7F), behind rubble that needs the Titan's Mitt. The beach is already an optional
+  chunk reached by the LW $37 pad behind Hammer pegs; the Hammer is D6's midway item, so the trip
+  opens after the Hammer, and the tempered Meadow Blade (L3) lands between D6 and D7. Once freed,
+  the partner walks home on his own. The Fortress Master Sword barrier stays; the rubble can also
+  block the beach's paths up toward the Fortress side. Which spot on the beach: open.
+  scawful: "right now i was thinking the smith partner would be on the eon abyss beach, parallel to
+  the garo desert map wdyt of that ? is it a bad spot bc it's far from the village and close to
+  the fortress ?"
+  Answer: "Yes: the partner is on the Abyss desert beach behind Mitt rubble, and the trip opens
+  after the Hammer from D6." (scawful, 2026-10-19)
+
+* OPEN Apply the Shrine of Courage pause-map patch to the base ROM? (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, S3 pause-map side session (PR 208)
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/s3_pause_map_2026-10-19/WORK.md]]
+  :END:
+  Now that S3 uses dungeon ID $00, its pause map still shows the old Sewers rooms, and the
+  "you are here" box sits in an empty square. The drafted patch gives S3 its own three-floor
+  map (1F, B1, B2) with its seven rooms. A test run on a copy showed the right floors, and the
+  marker followed Link down the stairs. Picture: s3_pause_map_before_after.png in the doc folder.
+  It is three small data edits in bank $0A, same size, in place.
+  Yes: apply Data/rom_patches/s3_pause_map_2026-10-19.json to the shared base (hash and
+  rollback copy kept). No: S3 keeps the Sewers map for now.
+  Answer:
+
+* OPEN Finale: Kydreeok and Ganon in one room or two? (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Kydreeok dragon session (scawful's voice note about the recovery room)
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/kydreeok_dragon_2026-10-19/finale_rooms/FINALE_ROOMS.md]]
+  :END:
+  Both options start the same way: the volcano hole drops Link into the vanilla
+  Ganon "recovery room" as the lead-up (Kydrog can transform there), and a new
+  way up leads to the fights. Picture: finale_rooms.png in the doc folder.
+  Two rooms (recommended): Kydreeok in his own room, then walk on to Ganon in
+  the current arena with the Triforce door behind him. The ending exit works
+  as is. Needs a new Kydreeok arena room.
+  One room: Kydreeok, then Ganon rises in the same arena. Least room work;
+  both fights share one arena.
+  Answer:
+
+* DECIDED Kalyxo Docks: wide $30/$31 for the docks and intro, Dragon Ship moves to wide $38/$39 (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Kalyxo docks session (Parallel Worlds docks as reference)
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/kalyxo_docks_2026-10-19/README.md]]
+  :END:
+  The large area $30 ($30/$31/$38/$39, south of Toadstool Woods, west of Loom Beach) splits
+  into two wide maps. Top, $30/$31: new Kalyxo Docks plus the intro scene. Bottom, $38/$39:
+  the D7 Dragon Ship, moved south. Parallel Worlds' docks (its LW $30) and gigaleak art are
+  references for the dock art. Pictures: mock_A_wide.png and mock_B_two_small.png in the doc
+  folder. The East Kalyxo ruling "There is no dock for the Dragon Ship" still holds: these
+  are the island's docks, not a berth for the ship.
+  Answer: "Go with Option A: one wide map at $30/$31 for the Kalyxo Docks and intro, Dragon
+  Ship on a wide map at $38/$39. it'd be cool to show off the wide map early on so let's do
+  wide style" (scawful, 2026-10-19)

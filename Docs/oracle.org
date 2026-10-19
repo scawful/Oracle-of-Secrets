@@ -273,6 +273,33 @@ This section tracks known conflicts between systems and outstanding bugs.
     - Pulled save: slot 1 main copy checksum valid, mirror (+$F00) invalid. May be normal for a new file; compare with Mesen.
     - *Explained (static, 2026-09-25):* vanilla name entry writes only the main slot + checksum (usdasm =$0CDBEA-$0CDC5F=); the mirror is written only by =SaveGameFile= (=$00895D=, main and mirror together). The console file has never been saved since creation, so its mirror is empty. Console SRAM maps the full 8 KB (data at =$1E00-$1FFF=), so no aliasing.
     - [ ] Confirm: save & quit once on the console, =oos-snesclassic.sh pull=, expect =mirror_valid: true=; then close.
+*** TODO [#B] Dream start: green blanket covers the bed (DREAM-PAL) :dream:palette:bug:
+    :PROPERTIES:
+    :ID: dream-pal-2026-10-18
+    :END:
+    - Playtest (scawful, 2026-10-18, ROM =07b5652c=): "weird green color came in when starting which changed the sprite palette of the bed sprite". Power too ("the little dream entrance visual errors").
+    - Cause (headless capture, Wisdom and Power): =Sprite_PutLinkToSleep= (=Sprites/NPCs/maple.asm=) ran one =PaletteFilter_BlindingWhite= step. With the stale =$7EC009= = 2 that step is =RestoreAdditive=: +1 per colour field with no clamp, so full fields wrap. OBJ colour 1 of rows 9-E went $7FFF -> $0420 (the blanket's white became near-black inside its green trim) and the bed area's $7F51 -> $0371. The colours stayed wrong from the sleep until the warp reset the filter (Wisdom: through all of D1.01). This wrap depends on the stale =$7EC009= and did not show on every run.
+    - Second cause, the green itself: the blanket ancilla always draws with OBJ palette 6 (=$08C052=: =ORA #$0D=). In Maple's hut, row E colours 6-7 are green (=$036F=/=$026B=), so the blanket covered the white bed in lime green at the sleep and at the bed wake.
+    - Fix (branch =claude/dream-bugs-pal-link=): remove the two filter calls. One step of a multi-frame filter never made a white flash, so nothing else changes. =Blanket_UseBedColors= (=maple.asm=, called at the sleep and from =DreamWake_TuckIntoBed=) sets row E colours 6-7 to the bed sheet's greys (=$739C=/=$56B5=) in both palette buffers. Only the blanket uses palette 6 in the hut; the next room load restores the row.
+    - T2 (headless, 2026-10-18): OBJ colours changed between sleep and warp: control =07b5652c= 53 (Wisdom and Power), fix =1d475f7c= 0. Full Wisdom and Power flows to the wake line still pass. Blanket colours (Wisdom, sleep and bed wake): control =a63e6321= (master =c5f317ff=) green =$036F=/=$026B=, fix =03a76fb8= =$739C=/=$56B5=, the bed's greys. Evidence: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dream_bugs_2026-10-18/WORK.md=.
+    - [ ] scawful: confirm in a playtest build.
+*** TODO [#B] Dream warp: Link floats at the left of the hut while the screen fades (DREAM-LINK) :dream:bug:
+    :PROPERTIES:
+    :ID: dream-link-2026-10-18
+    :END:
+    - Playtest (scawful, 2026-10-18, ROM =07b5652c=): "link randomly appeared floating in mid air in the bottom left of the screen".
+    - Cause (headless capture): =Link_WarpToRoom= sets the landing offset and the pit state, then Module07_15 draws Link every frame (=LinkOAM_Main=) until the dream room loads. Link showed in the falling pose at the landing offset against the hut camera: Wisdom at screen (56,112) for ~90 frames, Power at (72,68), visible through the mosaic fade to black. Nothing Link-shaped shows inside the dream shots or at the bed wake.
+    - Fix (branch =claude/dream-bugs-pal-link=): =Link_WarpToRoom= hides Link (=$4B= = $0C); =Part00_RoomSprites= shows him again on the dream room load (=DreamReturn_IsDreaming=); the Wisdom and Power scenes hide him again as before.
+    - T2 (headless, 2026-10-18): samples with Link on screen from the warp to the room load: control =07b5652c= Wisdom 88/88, Power 87/87, Courage 92/93; fix =1d475f7c= 0 in all three. Courage (pendant poke, no checkpoint) still shows Link in the fade-in and in play, as before. Evidence: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dream_bugs_2026-10-18/WORK.md=.
+    - [ ] scawful: confirm in a playtest build.
+*** TODO [#C] Dream entry effect before the warp (DREAM-FX) :dream:fx:
+    :PROPERTIES:
+    :ID: dream-fx-2026-10-18
+    :END:
+    - Ask (scawful, 2026-10-18): "generally it could use a more trippy undertale vibe ... maybe showing off the pendant that triggered it and some like medallion style fx". Mock approved ("Good job continue").
+    - Built (branch =claude/dream-entry-fx=, stacked on =claude/dream-bugs-pal-link=): =Sprites/NPCs/dream_entry_fx.asm=, flag =!ENABLE_DREAM_ENTRY_FX=. For 189 frames before =Link_HandleDreams=: the dream's pendant rises from Link with four sparkles, three flashes in its colour play with the Ether sound, HDMA sways BG1/BG2, the colours cycle, mosaic grows, and the screen goes white. The warp then fades to black as before. =Part00_RoomSprites= restores the hut's colour math before the dream scenes stage.
+    - T2 (headless, 2026-10-18, Wisdom and Power vs PR 195 head =03a76fb8=): FX ROM =00b18510= (=7043d3a5=) runs the effect for 189 frames in both, with the menu locked. The pendant is drawn in 104/107 (Wisdom, red gem) and 108/112 (Power, blue gem) samples. Flash =$9C-$9E= peaks: Wisdom =3C 47 87= (red), Power =25 45 96= (blue). HDMA channels 5/6 are on during the effect and off for the warp. Link stays hidden in the warp, as in PR 195. After each dream room loads, =$99/$9A/$9C-$9E= match the control (Wisdom =02/20/20 40 80=, Power =02/70/20 40 80=), and the Wisdom scene's own two white flashes still happen. Both flows reach the wake line with the same messages as the control. Evidence: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dream_entry_fx_2026-10-18/WORK.md=.
+    - [ ] scawful: watch it in a playtest build (look, sound, length).
 
 *** DONE [#A] Fix Ice Block Collision and Push Mechanics
 CLOSED: [2025-12-09 Mon]

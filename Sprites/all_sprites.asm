@@ -61,6 +61,11 @@ incsrc "Sprites/NPCs/dream_wisdom.asm"
 incsrc "Sprites/NPCs/dream_rooms.asm"
 %log_end("dream_rooms", !LOG_SPRITES)
 
+; Power dream scene: whole file under !ENABLE_DREAM_POWER_SCENE.
+%log_start("dream_power", !LOG_SPRITES)
+incsrc "Sprites/NPCs/dream_power.asm"
+%log_end("dream_power", !LOG_SPRITES)
+
 %log_start("manhandla", !LOG_SPRITES)
 incsrc "Sprites/Bosses/manhandla.asm"
 %log_end("manhandla", !LOG_SPRITES)

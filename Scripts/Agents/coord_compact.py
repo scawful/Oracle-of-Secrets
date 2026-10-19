@@ -5,9 +5,14 @@ The default run is a dry run: it prints the plan and writes nothing. --apply
 appends every removed block, verbatim and in original order, to
 archive/coordination/<UTC date>/<file> first, reads the archive back, and only
 then rewrites the live files. Nothing is deleted. Each live file is written to a
-temp file, re-checked (sha256, size, mtime, inode) right before os.replace, and
-skipped if it changed since planning; the archive appends stay recorded in
-receipt.json, so a re-run does not archive them twice.
+temp file and checked against the plan (sha256, size, mtime). Existing files are
+atomically exchanged with a retained recovery pathname on supported macOS/Linux
+filesystems; unsupported exchanges leave the live file alone. Both the planned
+inode and actual displaced object remain in the recorded recovery directory,
+including writes through old handles after this command returns. Unexpected
+content or types are reported as a concurrent-write rescue requiring a hand
+merge. This is not an atomic compare-and-swap or a lock on other writers.
+Archive appends stay recorded in receipt.json so retries do not duplicate them.
 
 --migrate is the one-time switch to the new format (design section 6.3): every
 current byte of the three files is archived verbatim, then the files are seeded
@@ -25,7 +30,10 @@ Format (design: AFS handoffs/reset_audit_2026-10-17/afs_format.md, section 3):
                     "## <Owner> — YYYY-MM-DD HH:MMZ" and five lines
                     Result/Ran/Next/Holds/Handoff (<=160 chars each).
                     "## <Owner> <anything> — <date>" counts as that owner's
-                    section (flagged). A recent section that names no owner is
+                    section (flagged). "## <Owner>-<Suffix> — ..." (a side
+                    session, e.g. Claude-Kydrog) is its own owner: kept while
+                    fresh, listed in the handoff index, archived with no idle
+                    stub once stale. A recent section that names no owner is
                     flagged and stays on the board until it ages out.
   agent_handoff.md  start-here index: goal pointer, board, decisions, one
                     handoff path per owner (taken from the board).
@@ -42,12 +50,16 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import ctypes
+import errno
 import datetime as dt
 import hashlib
 import json
 import os
 import re
 import sys
+import stat
+import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -154,10 +166,12 @@ class Move:
 
 
 def sha256_text(text: str) -> str:
+    """Hex sha256 of text encoded as UTF-8."""
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
 def split_lines(text: str) -> list[str]:
+    """Lines of text without newlines; a final newline adds no empty line."""
     lines = text.split("\n")
     if lines and lines[-1] == "":
         lines.pop()
@@ -165,6 +179,7 @@ def split_lines(text: str) -> list[str]:
 
 
 def nonblank(lines: list[str]) -> list[str]:
+    """lines without the blank and whitespace-only ones."""
     return [line for line in lines if line.strip()]
 
 
@@ -279,6 +294,8 @@ class Plan:
 
 
 def parse_now(value: str | None) -> dt.datetime:
+    """--now as an aware UTC datetime, or the current UTC second when value is
+    empty. A value with no zone is taken as UTC."""
     if not value:
         return dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
     parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
@@ -288,10 +305,13 @@ def parse_now(value: str | None) -> dt.datetime:
 
 
 def iso(moment: dt.datetime) -> str:
+    """moment in UTC as 'YYYY-MM-DDTHH:MM:SSZ'."""
     return moment.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def message_time(match: re.Match) -> dt.datetime | None:
+    """UTC time of an inbox line matched by MSG_RE (midnight when it has no
+    time), or None for an impossible date."""
     try:
         day = dt.datetime.strptime(match.group("date"), "%Y-%m-%d")
         if match.group("hh") is not None:
@@ -336,11 +356,14 @@ def _at(day: dt.datetime, hh: str, mi: str, tz: str | None) -> dt.datetime:
 
 
 def is_fresh(stamp: dt.datetime, has_time: bool, now: dt.datetime, max_age: dt.timedelta) -> bool:
+    """True if stamp is no older than max_age at now."""
     end = stamp if has_time else stamp + dt.timedelta(days=1)  # a bare date counts until its day ends
     return now - end <= max_age
 
 
 def owner_heading_re(owners: tuple[str, ...]) -> re.Pattern:
+    """A canonical owner heading: '## <Owner> — YYYY-MM-DD HH:MMZ' (group stamp)
+    or '## <Owner> — idle' (group idle)."""
     names = "|".join(re.escape(o) for o in owners)
     return re.compile(
         rf"^## (?P<owner>{names})\s+[—–-]{{1,2}}\s+"
@@ -350,11 +373,29 @@ def owner_heading_re(owners: tuple[str, ...]) -> re.Pattern:
 
 
 def owner_first_word_re(owners: tuple[str, ...]) -> re.Pattern:
+    """A heading whose first word is an owner name. A hyphen continues the name, so
+    '## Claude-Kydrog ...' is not Claude's heading."""
     names = "|".join(re.escape(o) for o in owners)
-    return re.compile(rf"^#{{1,3}}\s+(?P<owner>{names})\b", re.IGNORECASE)
+    return re.compile(rf"^#{{1,3}}\s+(?P<owner>{names})(?![\w-])", re.IGNORECASE)
+
+
+def sub_owners(blocks: list[Block], owners: tuple[str, ...]) -> tuple[str, ...]:
+    """'<Owner>-<Suffix>' names (side sessions, e.g. Claude-Kydrog) that head a board
+    section, in board order, skipping names already in owners."""
+    names = "|".join(re.escape(o) for o in owners)
+    sub_re = re.compile(rf"^#{{1,3}}\s+(?P<owner>(?:{names})-[A-Za-z0-9][\w-]*)", re.IGNORECASE)
+    seen = {o.lower() for o in owners}
+    found: list[str] = []
+    for block in blocks:
+        match = sub_re.match(block.first)
+        if match and match.group("owner").lower() not in seen:
+            seen.add(match.group("owner").lower())
+            found.append(match.group("owner"))
+    return tuple(found)
 
 
 def idle_stub(owner: str) -> str:
+    """The placeholder section for an owner with no current section."""
     return "\n".join([f"## {owner} — idle"] + [f"{label}: -" for label in OWNER_LABELS])
 
 
@@ -441,17 +482,23 @@ class Candidate:
 def plan_board(text: str, now: dt.datetime, owners: tuple[str, ...], max_age_hours: float,
                goal_line: str | None, rules_exists: bool,
                strict: bool = False) -> tuple[FilePlan, dict[str, str], Block | None]:
-    """strict (--migrate): only canonical owner sections are carried forward."""
+    """Decide where each board block goes. Returns the board plan, the kept section
+    per owner (board order: owners, then sub-owners that are still current) and the
+    Rules block to move to board_rules.md. A sub-owner ('<Owner>-<Suffix>') gets no
+    idle stub: once it has no fresh section, its blocks are archived and its slot
+    goes away. strict (--migrate): only canonical owner sections are carried forward."""
     blocks = split_sections(text)
-    canon_re = owner_heading_re(owners)
-    first_word_re = owner_first_word_re(owners)
-    canonical_name = {o.lower(): o for o in owners}
+    subs = sub_owners(blocks, owners)
+    all_owners = owners + subs
+    canon_re = owner_heading_re(all_owners)
+    first_word_re = owner_first_word_re(all_owners)
+    canonical_name = {o.lower(): o for o in all_owners}
     max_age = dt.timedelta(hours=max_age_hours)
     decided: dict[int, Move] = {}
     header: Block | None = None
     lock_line: str | None = None
     rules_block: Block | None = None
-    candidates: dict[str, list[Candidate]] = {o: [] for o in owners}
+    candidates: dict[str, list[Candidate]] = {o: [] for o in all_owners}
     unattributed: list[Block] = []
     flags: list[str] = []
 
@@ -500,7 +547,8 @@ def plan_board(text: str, now: dt.datetime, owners: tuple[str, ...], max_age_hou
 
     kept_sections: dict[str, str] = {}
     not_carried: list[int] = []
-    for owner in owners:
+    for owner in all_owners:
+        is_sub = owner in subs
         cands = candidates[owner]
         dated = [c for c in cands if c.stamp is not None and (c.canonical or not strict)]
         fresh = [c for c in dated if is_fresh(c.stamp, c.has_time, now, max_age)]
@@ -508,7 +556,7 @@ def plan_board(text: str, now: dt.datetime, owners: tuple[str, ...], max_age_hou
         best: Candidate | None = None
         if fresh:
             best = max(fresh, key=lambda c: (c.stamp, c.has_time, c.canonical, -c.block.start))
-        elif idle:
+        elif idle and not is_sub:
             best = idle[0]
         for cand in cands:
             block = cand.block
@@ -520,8 +568,12 @@ def plan_board(text: str, now: dt.datetime, owners: tuple[str, ...], max_age_hou
                     not_carried.append(block.start + 1)
             elif cand.stamp is not None and not is_fresh(cand.stamp, cand.has_time, now, max_age):
                 decided[block.start] = Move(block, "archive", "stale-owner")
+            elif cand.stamp is None and is_sub and best is None:
+                decided[block.start] = Move(block, "archive", "sub-owner-idle")
             else:
                 decided[block.start] = Move(block, "archive", "superseded")
+        if best is None and is_sub:
+            continue
         if best is None:
             kept_sections[owner] = idle_stub(owner)
         else:
@@ -560,12 +612,14 @@ def plan_board(text: str, now: dt.datetime, owners: tuple[str, ...], max_age_hou
     moves = [decided[b.start] for b in blocks]
     after = None
     if goal_line:
-        parts = [header_text] + [kept_sections[o] for o in owners] + [b.text for b in unattributed]
+        parts = [header_text] + list(kept_sections.values()) + [b.text for b in unattributed]
         after = "\n\n".join(parts) + "\n"
     return FilePlan(BOARD, text, blocks, moves, after, flags), kept_sections, rules_block
 
 
 def owner_section_flags(owner: str, block: Block) -> list[str]:
+    """Report-only flags for a kept owner section: over the body-line, byte or
+    line-length cap, or missing one of the five labels."""
     flags = []
     body = nonblank(block.lines[1:])
     size = len(block.text.encode("utf-8"))
@@ -585,6 +639,7 @@ def owner_section_flags(owner: str, block: Block) -> list[str]:
 
 
 def handoff_path_of(section: str) -> str:
+    """The value of a section's 'Handoff:' line, or '-' when it is missing or empty."""
     for line in section.split("\n"):
         if line.startswith("Handoff:"):
             value = line[len("Handoff:"):].strip()
@@ -593,6 +648,8 @@ def handoff_path_of(section: str) -> str:
 
 
 def handoff_index_lines(owners: tuple[str, ...], kept_sections: dict[str, str]) -> list[str]:
+    """The agent_handoff.md start-here index: fixed pointers, then one
+    '<Owner>: <handoff path>' line per owner in owners order."""
     return [
         HANDOFF_TITLE,
         "Goal: inbox.md line 1 (scawful sets it).",
@@ -604,6 +661,9 @@ def handoff_index_lines(owners: tuple[str, ...], kept_sections: dict[str, str]) 
 
 
 def plan_handoff(text: str, index_lines: list[str] | None) -> FilePlan:
+    """agent_handoff.md becomes the index. A first index block that already
+    matches index_lines is kept byte for byte; every other block is archived.
+    index_lines None (no goal): nothing is rewritten."""
     blocks = split_sections(text)
     moves = []
     seen_index = False
@@ -655,6 +715,9 @@ def check_partition(fp: FilePlan) -> list[str]:
 def build_plan(texts: dict[str, str], now: dt.datetime, *, owners: tuple[str, ...] = DEFAULT_OWNERS,
                inbox_max_age_days: float = 7, board_max_age_hours: float = 72,
                rules_exists: bool = False, migrate: bool = False) -> Plan:
+    """Plan all three files from their texts (a missing file counts as empty).
+    Writes nothing. Refusals go in Plan.errors: no goal on inbox line 1, or a
+    failed partition check."""
     texts = {name: texts.get(name) or "" for name in TARGETS}
     errors: list[str] = []
     notes: list[str] = []
@@ -668,7 +731,11 @@ def build_plan(texts: dict[str, str], now: dt.datetime, *, owners: tuple[str, ..
                       f"Nothing will be written.{hint}")
     board_plan, kept_sections, rules_block = plan_board(
         texts[BOARD], now, owners, board_max_age_hours, goal_line, rules_exists, strict=migrate)
-    index_lines = handoff_index_lines(owners, kept_sections) if goal else None
+    kept_subs = [o for o in kept_sections if o not in owners]
+    if kept_subs:
+        notes.append(f"sub-owner sections kept as their own owner (no idle stub; archived when stale): "
+                     f"{', '.join(kept_subs)}")
+    index_lines = handoff_index_lines(tuple(kept_sections), kept_sections) if goal else None
     handoff_plan = plan_handoff(texts[HANDOFF], index_lines)
     files = {BOARD: board_plan, HANDOFF: handoff_plan, INBOX: inbox.plan}
     for fp in files.values():
@@ -700,6 +767,7 @@ class Stamp:
 
 
 def stamp_of(path: Path) -> Stamp:
+    """path's Stamp: missing, or its sha256, size and mtime. Refuses a symlink."""
     if path.is_symlink():
         raise Refused(f"{path} is a symlink; refusing to replace it")
     if not path.exists():
@@ -710,6 +778,8 @@ def stamp_of(path: Path) -> Stamp:
 
 
 def read_targets(root: Path) -> tuple[dict[str, str], dict[str, Stamp]]:
+    """Read the three live files and stamp them and board_rules.md. Refuses a
+    file that changed between stamp and read, or that is not UTF-8."""
     texts: dict[str, str] = {}
     stamps: dict[str, Stamp] = {}
     for name in TARGETS + (RULES,):
@@ -728,18 +798,22 @@ def read_targets(root: Path) -> tuple[dict[str, str], dict[str, Stamp]]:
 
 
 def check_unchanged(path: Path, stamp: Stamp) -> None:
+    """Refuse if path no longer matches the stamp taken when it was read."""
     if stamp_of(path) != stamp:
         raise Refused(f"{path.name} changed after it was read (sha256/size/mtime); "
                       "nothing was written. Re-run to plan against the new content.")
 
 
 def ensure_inside(root: Path, path: Path) -> None:
+    """Refuse if path resolves outside root (for example, through a symlink)."""
     resolved = path.resolve()
     if resolved != root and root not in resolved.parents:
         raise Refused(f"{path} resolves outside {root}")
 
 
 def archive_dir(root: Path, now: dt.datetime) -> Path:
+    """root/archive/coordination/<UTC date of now>. Each part that exists must
+    resolve inside root. Creates nothing."""
     path = root
     for part in ARCHIVE_SUBDIR + (now.strftime("%Y-%m-%d"),):
         path = path / part
@@ -749,6 +823,7 @@ def archive_dir(root: Path, now: dt.datetime) -> Path:
 
 
 def fsync_dir(path: Path) -> None:
+    """Best-effort fsync of a directory, so a rename or link in it is durable."""
     with contextlib.suppress(OSError):
         fd = os.open(path, os.O_RDONLY)
         try:
@@ -758,6 +833,8 @@ def fsync_dir(path: Path) -> None:
 
 
 def write_temp(path: Path, data: bytes, mode: int | None = None) -> Path:
+    """Write data to a new hidden temp file beside path (exclusive create),
+    fsync it, apply mode if given, and return the temp file's path."""
     tmp = path.with_name(f".{path.name}.coord_compact.{os.getpid()}.tmp")
     with open(tmp, "xb") as handle:
         handle.write(data)
@@ -783,51 +860,126 @@ def atomic_write(path: Path, data: bytes, mode: int | None = None) -> None:
     fsync_dir(path.parent)
 
 
+def _exchange(src: Path, dst: Path) -> None:
+    """Preserve both pathnames atomically; never fall back to a lossy replace."""
+    libc = ctypes.CDLL(None, use_errno=True)
+    if sys.platform == "darwin":
+        exchange = getattr(libc, "renamex_np", None)
+        args = (os.fsencode(src), os.fsencode(dst), 2)  # RENAME_SWAP
+        types = (ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint)
+    elif sys.platform.startswith("linux"):
+        exchange = getattr(libc, "renameat2", None)
+        args = (-100, os.fsencode(src), -100, os.fsencode(dst), 2)  # AT_FDCWD, RENAME_EXCHANGE
+        types = (ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint)
+    else:
+        exchange = None
+    if exchange is None:
+        raise OSError(errno.ENOTSUP, "atomic exchange is unavailable on this platform")
+    exchange.argtypes, exchange.restype = types, ctypes.c_int
+    if exchange(*args) != 0:
+        code = ctypes.get_errno()
+        raise OSError(code, os.strerror(code), str(dst))
+
+
+@dataclass(frozen=True)
+class WriteResult:
+    written: bool
+    note: str | None = None
+    recovery: str | None = None
+
+
+def _open_regular(path: Path):
+    """Do not follow a racing symlink or block reading a FIFO/device."""
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise Refused(f"{path} is not a regular file")
+        return os.fdopen(fd, "rb")
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def _held_stamp(handle) -> Stamp:
+    handle.seek(0)
+    data = handle.read()
+    st = os.fstat(handle.fileno())
+    return Stamp(True, hashlib.sha256(data).hexdigest(), st.st_size, st.st_mtime_ns)
+
+
 def replace_if_unchanged(path: Path, data: bytes, stamp: Stamp, mode: int, rescue_dir: Path,
-                         now: dt.datetime) -> str | None:
-    """Compare-and-swap one live file. The temp file is written first; the target is
-    re-checked (sha256, size, mtime, inode) immediately before os.replace. Returns
-    None on success, or why the file was left alone. A write that lands in the
-    displaced inode during the swap is saved to rescue_dir and reported."""
+                         now: dt.datetime) -> WriteResult:
+    """Check the plan, then exchange while retaining every inode we displace.
+
+    The planned inode gets a hard link before exchange; the actual displaced
+    pathname is kept too. Neither is deleted, even on an apparently clean swap:
+    another writer may still hold an open handle. A conflict needs a hand merge,
+    not a blind rollback that could overwrite a third writer's update.
+    """
     tmp = write_temp(path, data, mode)
     try:
         if not stamp.exists:
             try:
                 os.link(tmp, path)  # create only if still absent
             except FileExistsError:
-                return "created by someone else after planning; left alone"
-            return None
+                return WriteResult(False, "created by someone else after planning; left alone")
+            return WriteResult(True)
+        if sys.platform != "darwin" and not sys.platform.startswith("linux"):
+            return WriteResult(False, "atomic exchange unavailable on this platform; left alone")
         try:
-            held = open(path, "rb")
-        except FileNotFoundError:
-            return "removed after planning; left alone"
+            held = _open_regular(path)
+        except (OSError, Refused) as exc:
+            return WriteResult(False, f"changed after planning; left alone ({exc})")
         with held:
+            original = os.fstat(held.fileno())
             try:
-                current = stamp_of(path)
-                same_inode = os.fstat(held.fileno()).st_ino == os.stat(path).st_ino
-            except (FileNotFoundError, Refused):
-                return "changed after planning; left alone"
-            if current != stamp or not same_inode:
-                return "changed after planning (sha256/size/mtime); left alone, re-run"
-            _replace(tmp, path)
-            st = os.fstat(held.fileno())
-            if (st.st_size, st.st_mtime_ns) != (stamp.size, stamp.mtime_ns):
-                held.seek(0)
-                rescue = rescue_dir / f"{path.name}.displaced-{now.strftime('%H%M%SZ')}-{os.getpid()}"
-                with open(rescue, "xb") as out:
-                    out.write(held.read())
-                    out.flush()
-                    os.fsync(out.fileno())
-                return (f"written during the swap; that version was saved to {rescue} — "
-                        "merge it back by hand")
-        return None
+                current = _held_stamp(held)
+                st = path.lstat()
+            except OSError:
+                return WriteResult(False, "changed after planning; left alone")
+            if current != stamp or (original.st_dev, original.st_ino) != (st.st_dev, st.st_ino):
+                return WriteResult(False, "changed after planning (sha256/size/mtime/inode); left alone, re-run")
+            recovery = Path(tempfile.mkdtemp(
+                prefix=f"{path.name}.displaced-{now.strftime('%H%M%SZ')}-{os.getpid()}-", dir=rescue_dir))
+            planned, displaced = recovery / "planned", recovery / "displaced"
+            try:
+                os.link(path, planned, follow_symlinks=False)
+                linked = planned.lstat()
+                if (linked.st_dev, linked.st_ino) != (original.st_dev, original.st_ino):
+                    return WriteResult(False, "changed while retaining planned inode; left alone", str(recovery))
+                # Move into retained recovery storage before exchange, so temp
+                # cleanup cannot delete the actual displaced object. Sync both
+                # directory levels best-effort; this is not a power-loss guarantee.
+                os.replace(tmp, displaced)
+                fsync_dir(recovery)
+                fsync_dir(rescue_dir)
+                _exchange(displaced, path)
+            except OSError as exc:
+                return WriteResult(False, f"exchange unavailable or failed; left alone ({exc})", str(recovery))
+            finally:
+                fsync_dir(recovery)
+                fsync_dir(rescue_dir)
+            try:
+                with _open_regular(displaced) as previous:
+                    st = os.fstat(previous.fileno())
+                    unchanged = (_held_stamp(previous) == stamp and
+                                 (st.st_dev, st.st_ino) == (original.st_dev, original.st_ino) and
+                                 _held_stamp(held) == stamp)
+            except (OSError, Refused):
+                unchanged = False  # Preserve unexpected symlinks/directories without following them.
+            if not unchanged:
+                return WriteResult(True, f"concurrent content or type saved to {recovery}; "
+                                   "merge it back by hand; no automatic rollback", str(recovery))
+        return WriteResult(True, recovery=str(recovery))
     finally:
         if tmp.exists():
-            tmp.unlink()
+            tmp.unlink()  # Only our unexchanged proposed bytes can remain here.
         fsync_dir(path.parent)
 
 
 def append_verified(path: Path, chunk: str, blocks: list[str]) -> None:
+    """Append chunk to the archive file at path, then read it back. Refuses
+    unless the file is the old bytes plus chunk and holds every text in blocks."""
     before = path.read_bytes() if path.exists() else b""
     if before and not before.endswith(b"\n"):
         chunk = "\n" + chunk
@@ -842,6 +994,8 @@ def append_verified(path: Path, chunk: str, blocks: list[str]) -> None:
 
 
 def archive_chunk(name: str, fp: FilePlan, now: dt.datetime, texts: list[str], what: str) -> str:
+    """One archive append: a header comment (version, time, source sha256,
+    what) followed by the texts, blank-line separated."""
     header = (f"<!-- coord_compact v{VERSION} | {iso(now)} | from {name} sha256 "
               f"{sha256_text(fp.before)} | {what} -->")
     body = "\n\n".join(texts)
@@ -852,6 +1006,8 @@ def archive_chunk(name: str, fp: FilePlan, now: dt.datetime, texts: list[str], w
 
 @contextlib.contextmanager
 def compaction_lock(root: Path, now: dt.datetime):
+    """Hold the root/.coord_compact.lock directory for one apply. A lock older
+    than LOCK_STALE_SECONDS is taken over; a newer one refuses."""
     path = root / LOCK_DIR
     try:
         os.mkdir(path)
@@ -869,6 +1025,7 @@ def compaction_lock(root: Path, now: dt.datetime):
 
 
 def release_lock(path: Path) -> None:
+    """Remove the lock directory and its owner file; already gone is fine."""
     with contextlib.suppress(FileNotFoundError):
         (path / "owner").unlink()
     with contextlib.suppress(FileNotFoundError):
@@ -876,6 +1033,8 @@ def release_lock(path: Path) -> None:
 
 
 def load_receipt(path: Path) -> dict:
+    """receipt.json as {'runs': [...]}, or a new one when it is missing.
+    Refuses an unreadable receipt."""
     try:
         receipt = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"runs": []}
         if not isinstance(receipt.get("runs"), list):
@@ -886,12 +1045,14 @@ def load_receipt(path: Path) -> dict:
 
 
 def earlier_migrations(root: Path) -> list[str]:
+    """'<date dir> <time>' for each applied, partial or rescued --migrate run
+    recorded in any receipt under root/archive/coordination/."""
     base = root.joinpath(*ARCHIVE_SUBDIR)
     found = []
     for receipt_path in sorted(base.glob("*/" + RECEIPT)) if base.is_dir() else []:
         with contextlib.suppress(ValueError, OSError, AttributeError):
             for run in json.loads(receipt_path.read_text(encoding="utf-8")).get("runs", []):
-                if run.get("mode") == "migrate" and run.get("status") in ("applied", "partial"):
+                if run.get("mode") == "migrate" and run.get("status") in ("applied", "partial", "rescued"):
                     found.append(f"{receipt_path.parent.name} {run.get('time')}")
     return found
 
@@ -899,7 +1060,9 @@ def earlier_migrations(root: Path) -> list[str]:
 def apply_plan(plan: Plan, root: Path, stamps: dict[str, Stamp]) -> dict:
     """Archive first, then rewrite. The receipt is saved after every step, so a
     failure part-way never makes a re-run archive the same block twice. Returns
-    the receipt run record; status "partial" when a live file was left alone."""
+    the receipt run record; status "partial" when a live file was left alone,
+    "rescued" when every file was rewritten but a write that landed during a swap
+    was saved aside (run["rescued"]) for a hand merge."""
     if plan.errors:
         raise Refused("; ".join(plan.errors))
     if not plan.changes:
@@ -917,7 +1080,7 @@ def apply_plan(plan: Plan, root: Path, stamps: dict[str, Stamp]) -> dict:
         run = {
             "time": iso(plan.now), "version": VERSION, "mode": "migrate" if plan.migrate else "compact",
             "status": "archiving", "files": {}, "archived": {}, "moved": {}, "rules_created": False,
-            "replaced": [], "skipped": {},
+            "replaced": [], "skipped": {}, "rescued": {}, "recovery": {},
         }
         receipt["runs"].append(run)
 
@@ -957,17 +1120,23 @@ def apply_plan(plan: Plan, root: Path, stamps: dict[str, Stamp]) -> dict:
 
         rules_failed = False
         if plan.rules_new:
-            why = replace_if_unchanged(root / RULES, plan.rules_new.encode("utf-8"), stamps[RULES], 0o644,
-                                       out_dir, plan.now)
-            if why:
-                rules_failed = True
-                run["skipped"][RULES] = why
-            else:
+            result = replace_if_unchanged(root / RULES, plan.rules_new.encode("utf-8"), stamps[RULES],
+                                          0o644, out_dir, plan.now)
+            if result.recovery:
+                run["recovery"][RULES] = result.recovery
+            if result.written:
                 run["rules_created"] = True
+            else:
+                rules_failed = True
+                run["skipped"][RULES] = result.note
             save()
         for name in TARGETS:
             fp = plan.files[name]
             if not fp.changed:
+                continue
+            if run["rescued"]:
+                run["skipped"][name] = "stopped after a concurrent-write rescue; review recovery files first"
+                save()
                 continue
             if name == BOARD and rules_failed:
                 run["skipped"][name] = f"{RULES} was not created, so the Rules section stays on the board"
@@ -975,13 +1144,18 @@ def apply_plan(plan: Plan, root: Path, stamps: dict[str, Stamp]) -> dict:
                 continue
             path = root / name
             mode = path.stat().st_mode & 0o777 if path.exists() else 0o644
-            why = replace_if_unchanged(path, fp.after.encode("utf-8"), stamps[name], mode, out_dir, plan.now)
-            if why:
-                run["skipped"][name] = why
+            result = replace_if_unchanged(path, fp.after.encode("utf-8"), stamps[name], mode, out_dir,
+                                          plan.now)
+            if result.recovery:
+                run["recovery"][name] = result.recovery
+            if not result.written:
+                run["skipped"][name] = result.note
             else:
                 run["replaced"].append(name)
+                if result.note:
+                    run["rescued"][name] = result.note
             save()
-        run["status"] = "partial" if run["skipped"] else "applied"
+        run["status"] = "partial" if run["skipped"] else "rescued" if run["rescued"] else "applied"
         save()
         run["archive_dir"] = str(out_dir)
         return run
@@ -1003,6 +1177,8 @@ def _tok(size: int) -> int:
 
 
 def report_dict(plan: Plan, root: Path, applied: dict | None = None) -> dict:
+    """The report as JSON-ready data: per-file sizes, kept and moved counts,
+    moves by reason, flags, and the apply run record when there is one."""
     files = {}
     for name in TARGETS:
         fp = plan.files[name]
@@ -1041,6 +1217,8 @@ INBOX_NOT_ASK_REASONS = ("not-an-ask", "extra-goal", "format-refresh", "old-form
 
 
 def render_markdown(report: dict, list_moved: bool) -> str:
+    """The report as markdown: size table, moves by reason, flags, archived
+    inbox lines to re-post, notes, and the apply outcome."""
     out = []
     mode = "dry run — nothing written; add --apply to write" if report["mode"] == "dry-run" else "apply"
     if report.get("migrate"):
@@ -1119,12 +1297,18 @@ def render_markdown(report: dict, list_moved: bool) -> str:
                    + (f"; archive {applied['archive_dir']}" if applied.get("archive_dir") else ""))
         for name, why in (applied.get("skipped") or {}).items():
             out.append(f"NOT REWRITTEN: {name}: {why}")
+        for name, recovery in (applied.get("recovery") or {}).items():
+            out.append(f"RECOVERY RETAINED: {name}: {recovery}")
+        for name, note in (applied.get("rescued") or {}).items():
+            out.append(f"REWRITTEN; CONCURRENT WRITE SAVED: {name}: {note}")
     return "\n".join(out) + "\n"
 
 
 # --------------------------------------------------------------------------- main
 
 def main(argv: list[str] | None = None) -> int:
+    """CLI entry point. Exit 1 on a refusal, or when an apply leaves a file
+    alone or saves a concurrent write aside; 0 otherwise."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--root", default=str(DEFAULT_ROOT),
                         help="scratchpad directory holding the three files (default: AFS scratchpad)")
@@ -1167,7 +1351,7 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(report, indent=1))
     else:
         sys.stdout.write(render_markdown(report, args.list_moved))
-    return 1 if plan.errors or (applied and applied.get("status") == "partial") else 0
+    return 1 if plan.errors or (applied and applied.get("status") in ("partial", "rescued")) else 0
 
 
 if __name__ == "__main__":

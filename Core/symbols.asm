@@ -53,6 +53,19 @@ DreamWisdom_Save99   = $7FF374 ; $99,$9A,$9C,$9D,$9E during the flash
 DreamWisdom_Flash    = $7FF379 ; nonzero while the flash is on
 endif
 
+; Power dream scene (!ENABLE_DREAM_POWER_SCENE, Sprites/NPCs/dream_power.asm).
+; Two more staged $73 actors; the scene uses the Wisdom marker and locks.
+if !ENABLE_DREAM_POWER_SCENE == 1
+!DreamPower_SubKing   = $D3
+!DreamPower_SubFarore = $D4
+!DreamPower_WakeLive = $D2A6
+; Wisdom fall (!ENABLE_DREAM_WISDOM_FALL): the Captain's men ($D5-$D7, one
+; subtype each: sprite init clears SprMiscA) and Kydrog's silhouette ($D8).
+!DreamPower_SubMan0       = $D5
+!DreamPower_SubSilhouette = $D8
+DreamPower_WakeLine  = $7FF37A ; word: !DreamPower_WakeLive = Maple says D2.06 in the hut
+endif
+
 ; Current Song
 CurrentSong    = $030F
 

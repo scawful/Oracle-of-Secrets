@@ -6,6 +6,17 @@
 ; great hall (Sprites/NPCs/dream_wisdom.asm).
 !DreamMsg_WisdomNarration = $0204
 !DreamMsg_WisdomFarore    = $0205
+; Power dream (!ENABLE_DREAM_POWER_SCENE): D2.06, Maple once Link is back in
+; the hut after the scene (Sprites/NPCs/dream_power.asm).
+!DreamMsg_PowerWake       = $020B
+; Wisdom fall (!ENABLE_DREAM_WISDOM_FALL): D1.05, Maple after shots 3-5.
+!DreamMsg_WisdomWake      = $020E
+if !ENABLE_DREAM_WISDOM_FALL == 1
+  assert !ENABLE_DREAM_POWER_SCENE == 1, "ENABLE_DREAM_WISDOM_FALL runs on the Power scene's script engine (ENABLE_DREAM_POWER_SCENE)"
+endif
+if !ENABLE_DREAM_BED_WAKE == 1
+  assert !ENABLE_DREAM_POWER_SCENE == 1, "ENABLE_DREAM_BED_WAKE needs the wake word (ENABLE_DREAM_POWER_SCENE)"
+endif
 
 MapleHandler:
 {
@@ -26,10 +37,30 @@ MapleHandler:
   if !ENABLE_DREAM_WISDOM_SCENE == 1
     dw Maple_DreamNarrationDone ; 08
   endif
+  if !ENABLE_DREAM_BED_WAKE == 1
+    dw Maple_WakeLink           ; 09
+  endif
 
 
   Maple_Idle:
   {
+    if !ENABLE_DREAM_POWER_SCENE == 1
+      ; A finished dream scene left the wake word (DreamPower_OpEnd). With
+      ; the bed wake-up Link snores a moment first (action 9); otherwise
+      ; Maple says the dream's line now, at the hut door.
+      REP #$20
+      LDA.l DreamPower_WakeLine : CMP.w #!DreamPower_WakeLive
+      SEP #$20                            ; SEP keeps Z
+      BNE .no_wake_line
+      if !ENABLE_DREAM_BED_WAKE == 1
+        LDA.b #$40 : STA.w SprTimerA, X
+        %GotoAction(9)
+        RTS
+      else
+        JMP Maple_SayWakeLine
+      endif
+      .no_wake_line
+    endif
     %ShowSolicitedMessage($01B3) : BCC +
       INC.w SprAction, X
     +
@@ -121,17 +152,69 @@ MapleHandler:
           RTS
         .warp
       endif
-      JSR Link_HandleDreams
+      JSR Maple_DreamEntry
     +
     RTS
   }
 
   if !ENABLE_DREAM_WISDOM_SCENE == 1
-    ; First frame after D1.01 closes.
+    ; Every frame after D1.01 closes.
     Maple_DreamNarrationDone:
     {
-      JSR Link_HandleDreams
+      JSR Maple_DreamEntry
       RTS
+    }
+  endif
+
+  ; Every frame until the entry effect is done (dream_entry_fx.asm), then
+  ; the warp.
+  Maple_DreamEntry:
+  {
+    if !ENABLE_DREAM_ENTRY_FX == 1
+      JSL DreamFX_Run : BCC .wait
+    endif
+    JSR Link_HandleDreams
+    .wait
+    RTS
+  }
+
+  if !ENABLE_DREAM_BED_WAKE == 1
+    ; Link was tucked into the bed on the hut reload (DreamWake_TuckIntoBed)
+    ; and snores. Then he sits up, as Uncle_AwakenLink wakes him in the
+    ; vanilla intro ($05DE86), and Maple says the line; a button press gets
+    ; him out of bed (Link_SittingUpInBed).
+    Maple_WakeLink:
+    {
+      LDA.w SprTimerA, X : BNE .wait
+        INC.w $037D : INC.w $037C
+        STZ.w SprAction, X
+        JMP Maple_SayWakeLine
+      .wait
+      RTS
+    }
+  endif
+
+  if !ENABLE_DREAM_POWER_SCENE == 1
+    ; Clears the wake word and shows the line of the dream that just ended.
+    Maple_SayWakeLine:
+    {
+      LDA.b #$00 : STA.l DreamPower_WakeLine : STA.l DreamPower_WakeLine+1
+      LDY.w CurrentDream
+      LDA.w .lo, Y : BEQ .none            ; no line for this dream
+        PHA : LDA.w .hi, Y : TAY : PLA
+        JSL Sprite_ShowMessageUnconditional
+      .none
+      RTS
+
+      .lo ; by CurrentDream: Wisdom, Power, Courage
+      if !ENABLE_DREAM_WISDOM_FALL == 1
+        db !DreamMsg_WisdomWake&$FF
+      else
+        db $00
+      endif
+      db !DreamMsg_PowerWake&$FF, $00
+      .hi
+      db !DreamMsg_WisdomWake>>8, !DreamMsg_PowerWake>>8, $00
     }
   endif
 }
@@ -148,9 +231,29 @@ Sprite_PutLinkToSleep:
   LDA.b $21 : STA.w $0C0E,X
   LDA.b $22 : SEC : SBC.b #$08 : STA.w $0C04,X
   LDA.b $23 : STA.w $0C18,X
-  JSL PaletteFilter_StartBlindingWhite
-  JSL ApplyPaletteFilter
+  ; No palette filter here: one PaletteFilter_BlindingWhite step runs
+  ; RestoreAdditive with a stale $7EC009 = 2, which adds +1 to each colour
+  ; field with no clamp. Full fields wrapped: the bed's $7F51 became green
+  ; $0371 and white $7FFF became $0420 until the warp reset the filter
+  ; (DREAM-PAL, 2026-10-18).
+  JSR Blanket_UseBedColors
   PLX
+  RTS
+}
+
+; The blanket ancilla always draws with OBJ palette 6 ($08C052: ORA #$0D).
+; In Maple's hut, row E colours 6-7 are green ($036F/$026B), so the blanket
+; covered the white bed in lime green (DREAM-PAL, 2026-10-18). Only the
+; blanket uses palette 6 there: set those two colours to the bed sheet's
+; greys (BG $739C/$56B5) in both buffers. The next room load restores them.
+; Also called by DreamWake_TuckIntoBed (dream_power.asm).
+Blanket_UseBedColors:
+{
+  REP #$20
+  LDA.w #$739C : STA.l PAL_SPR6A+$0C : STA.l PALB_SPR6A+$0C
+  LDA.w #$56B5 : STA.l PAL_SPR6A+$0E : STA.l PALB_SPR6A+$0E
+  SEP #$20
+  INC.b UpdPalFlag
   RTS
 }
 
@@ -171,6 +274,11 @@ Link_HandleDreams:
       ; so LoadTransAuxGFX decodes LASTSPRSET3 there ($00D77B).
       LDA.b #$55 : STA.l LASTSPRSET3
     endif
+    if !ENABLE_DREAM_WISDOM_FALL == 1
+      ; Kydrog's own sheet (kydrog.asm: chars $CC-$EE in slot 3 of overworld
+      ; set $0C) for his silhouette in shot 5. Group $6A keeps slot 1 too.
+      LDA.b #$42 : STA.l LASTSPRSET1
+    endif
     LDX.b #$00
     JSR Link_WarpToRoom
     RTS
@@ -178,6 +286,11 @@ Link_HandleDreams:
 
   Dream_Power:
   {
+    if !ENABLE_DREAM_POWER_SCENE == 1
+      ; Farore's sheet for room $00, as Dream_Wisdom: group $57 keeps slot 3.
+      ; The king's sheet comes in through DreamPower_KingSheet (slot 2).
+      LDA.b #$55 : STA.l LASTSPRSET3
+    endif
     LDX.b #$01
     JSR Link_WarpToRoom
     RTS
@@ -209,6 +322,10 @@ Link_WarpToRoom:
   if !ENABLE_DREAM_RETURN == 1
     ; Arm the wake-up timer; it only counts in Module07_00 after the warp lands.
     LDA.b #!DreamReturn_Ticks : STA.w DreamReturnTimer
+    ; Hide Link for the fade-out: LinkOAM_Main draws him every Module07_15
+    ; frame, at the landing offset above against the hut camera (DREAM-LINK,
+    ; 2026-10-18). Part00_RoomSprites shows him again when the room loads.
+    LDA.b #$0C : STA.b $4B
   endif
   RTS
 

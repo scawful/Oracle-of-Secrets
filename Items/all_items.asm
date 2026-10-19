@@ -103,6 +103,9 @@ Link_ConsumeMagicBagItem:
 }
 
 
+; Sprites/NPCs/dream_entry_fx.asm owns $2BF000-$2BFFFF.
+assert pc() <= $2BF000, "Items bank $2B reached the dream entry FX region ($2BF000)"
+
 pushpc
 ; League of its own
 incsrc "Items/ice_rod.asm"
