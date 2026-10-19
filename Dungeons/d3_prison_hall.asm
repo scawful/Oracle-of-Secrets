@@ -45,6 +45,8 @@ D3Prison_PlayerControl:
   JSR D3Prison_InPlayerControl : BCS +
     JMP .done
   +
+  ; An indoor load cancels any abandoned outdoor-message queue.
+  LDA.b #$00 : STA.l D3Prison_ExitMessage : STA.l D3Prison_ExitMessage+1
   LDA.b $A0 : CMP.b #$56 : BEQ +
     JMP .done
   +
@@ -76,14 +78,18 @@ D3Prison_PlayerControl:
   .tick
   ; The pair owns these locks only after both slots have been acquired.
   LDA.b #$01 : STA.w $02E4 : STA.w $0FFC : STA.w $0FC1
+  LDA.w SprTimerF, X : CMP.b #$C1 : BCS .capture
   INC.w SprTimerF, X
-  LDA.w SprTimerF, X : CMP.b #$C0 : BCS .capture
+  LDA.w SprTimerF, X : CMP.b #$C0 : BCS .taunt
   PHY
   JSR D3Prison_MoveGuard
   PLY
   LDA.w SprTimerF, X : STA.w SprTimerF, Y
   TYX
   JSR D3Prison_MoveGuard
+  BRA .done
+  .taunt
+  JSL D3Prison_ShowCaptureTaunt
   BRA .done
   .capture
   JSL D3Prison_Capture : BCC .release
@@ -263,8 +269,15 @@ D3Prison_MirrorGate:
 D3Prison_RecordExit:
 {
   PHP
+  REP #$20
   PHA
-  JSL D3Prison_CompleteEscape
+  LDA.w #$0000 : STA.l D3Prison_ExitMessage
+  SEP #$20
+  JSL D3Prison_CompleteEscape : BCC .native
+  REP #$20
+  LDA.w #!D3Prison_ExitMessageLive : STA.l D3Prison_ExitMessage
+  .native
+  REP #$20
   PLA
   PLP
   STZ.b $1B : STZ.w $0458

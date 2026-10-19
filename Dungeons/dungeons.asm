@@ -168,6 +168,7 @@ WaterGate_SelectOverlayPointer:
 incsrc "Dungeons/d3_prison_state.asm"
 incsrc "Dungeons/d3_prison_checkpoint.asm"
 incsrc "Dungeons/d3_prison_blade.asm"
+incsrc "Dungeons/d3_prison_dialogue.asm"
 incsrc "Dungeons/d3_prison_hall.asm"
 incsrc "Dungeons/d3_prison_pending_exit.asm"
 incsrc "Dungeons/d3_prison_wing.asm"

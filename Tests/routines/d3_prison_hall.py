@@ -21,7 +21,9 @@ GAP = "D3Prison_IsTinyPrisonGap"
 EXIT = "D3Prison_RecordExit"
 PLAYER = "D3Prison_PlayerControl"
 PENDING = "D3Prison_PendingExitGate"
-REGIONS = ((0x7E0000, 0x2000), (0x7EF000, 0x400))
+EXIT_MESSAGE_PENDING = 0x7FF368
+EXIT_MESSAGE_MARKER = 0xD355
+REGIONS = ((0x7E0000, 0x2000), (0x7EF000, 0x400), (0x7FF360, 0x20))
 
 
 @dataclass(frozen=True)
@@ -49,6 +51,8 @@ def cases():
         Case("escaped-gap-unchanged", GAP, flags=0xAB, room=0x65),
         Case("room55-exit-commits", EXIT, flags=0xA9, room=0x55, module=8),
         Case("other-room-exit-replays-only", EXIT, flags=0xA9, room=0x54, module=8),
+        Case("already-escaped-exit-clears-stale-message", EXIT, flags=0xAB,
+             room=0x55, module=8),
         Case("ordinary-player-callback-noop", PLAYER, flags=0, room=0x54),
         Case("one-orphan-releases-only-owned-locks", PLAYER, flags=0, orphan=True, p=0x65),
         Case("pending-exit-saves-and-reloads-hall", PENDING, module=8),
@@ -73,6 +77,7 @@ def fixture(case, entry):
         (0x7E00A6,0,2),(0x7E00A9,0,2),
         (0x7E0400,0xA000,2),(0x7E0402,0x00B0,2),(0x7E0408,0x0100,2),
         (0x7EF36F,3,1),
+        (EXIT_MESSAGE_PENDING,EXIT_MESSAGE_MARKER,2),
     ):
         put(before,address,value,width)
     # Empty slot arrays avoid accidental ownership from canaries. One ordinary
@@ -118,11 +123,15 @@ def verify(case,before,request,result):
     elif case.helper==EXIT:
         require(regs["a"]==request["registers"]["a"],f"{label}: exit lost A")
         change(0x7E001B,0); change(0x7E0458,0)
-        if case.room==0x55:
+        change(EXIT_MESSAGE_PENDING,0,2)
+        if case.room==0x55 and case.flags==0xA9:
             change(FLAGS,0xAB)
-    elif case.helper==PLAYER and case.orphan:
-        change(0x7E0DD5,0); change(0x7E0E35,0)
-        for address in (0x7E02E4,0x7E0FFC,0x7E0FC1): change(address,0)
+            change(EXIT_MESSAGE_PENDING,EXIT_MESSAGE_MARKER,2)
+    elif case.helper==PLAYER:
+        change(EXIT_MESSAGE_PENDING,0,2)
+        if case.orphan:
+            change(0x7E0DD5,0); change(0x7E0E35,0)
+            for address in (0x7E02E4,0x7E0FFC,0x7E0FC1): change(address,0)
     elif case.helper==PENDING:
         expected_p=case.p|1
         # Real Underworld_FlagRoomData_Quadrants: layout index0 -> visited08;
@@ -144,6 +153,12 @@ def verify(case,before,request,result):
                 require(value==want,f"{label}: ${address:06X}={value:02X}, expected {want:02X}")
     writes={physical(w["address"]) for w in result.get("writes",[])}
     require(writes<=allowed,f"{label}: undeclared writes {sorted(writes-allowed)}")
+    if case.helper==EXIT:
+        for address in (EXIT_MESSAGE_PENDING,EXIT_MESSAGE_PENDING+1):
+            stores=[w["value"] for w in result.get("writes",[])
+                    if physical(w["address"])==address]
+            require(stores and stores[0]==0,
+                    f"{label}: stale exit message was not cleared before the transaction")
     for base,data in expected.items():
         for offset,value in enumerate(data):
             if value!=before[base][offset]:
