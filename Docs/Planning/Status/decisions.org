@@ -646,9 +646,9 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   2. Should the $11D basement (2 heart pieces) be reachable from the Mayor's House?
      -> DECIDED 2026-10-19: yes, one heart piece (only one chest is placed); see the entry below.
   3. Take the $81 pit-damage hunk? (Rec: yes, it only prevents a fall into Origins.)
-     -> DECIDED 2026-10-19: yes; see the entry below.
+     -> DECIDED 2026-10-19: no; the $81 pit is decoration and Link cannot fall in (see below).
   Answer: all three ruled 2026-10-19 in separate entries at the end of this file (S3 gets $00;
-  the $11D basement keeps one heart piece; $81 joins the pit-damage table).
+  the $11D basement keeps one heart piece; $81 stays out: its pit is decoration).
 
 * DECIDED Room budget step 1: the Sky tower gets the adjacent free block
   :PROPERTIES:
@@ -2268,7 +2268,8 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: leaving S3 on the shared ID $09.
   Answer: "Yes, give S3 its own dungeon ID $00 so keys and maps stop leaking." (scawful, 2026-10-19)
 
-* DECIDED D3 room $81 joins the pit-damage table (2026-10-19)
+* SUPERSEDED D3 room $81 joins the pit-damage table (2026-10-19)
+  SUPERSEDED the same day: the $81 pit is decoration; see "D3 room $81 stays out" below.
   :PROPERTIES:
   :ASKED_BY: Claude, story board session (OPEN "Room census follow-ups", question 3)
   :END:
@@ -2283,3 +2284,15 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   on pit damage so might need to expand that table" (2026-10-19). Expand it with the cheap option
   in Docs/Technical/Dungeon_Tables_Expansion.md section 5: after the vanilla loop misses, a JSL at
   $07:94B2 checks an Oracle-owned room list (about 15 bytes; yaze and ZScream keep working).
+
+* DECIDED D3 room $81 stays out of the pit-damage table: its pit is decoration (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (follow-up to the $81 pit-damage entry)
+  :END:
+  Supersedes "D3 room $81 joins the pit-damage table" (same day). The black pit area around the
+  platform in $81 is decoration: Link cannot fall into it, so there is no fall into Origins $05 to
+  fix and $81 is not added. The census finding came from static data (holewarp + pit art), not a
+  fall in game. The pit-damage table still has only two spare slots; expand it (JSL extension list,
+  Dungeon_Tables_Expansion.md section 5) when a new pit room needs a slot.
+  Answer: "ok no dont put the pit in there, you cant even fall in that's just decoration"
+  (scawful, 2026-10-19)
