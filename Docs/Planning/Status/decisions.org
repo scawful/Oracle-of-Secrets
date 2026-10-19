@@ -2482,3 +2482,20 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Answer: "Go with Option A: one wide map at $30/$31 for the Kalyxo Docks and intro, Dragon
   Ship on a wide map at $38/$39. it'd be cool to show off the wide map early on so let's do
   wide style" (scawful, 2026-10-19)
+
+* DECIDED Kydreeok fight: three stages, one attacker at a time, cooldowns and punish windows (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Kydreeok dragon session (scawful: the fight "feels just a bit too random, a bit chaotic")
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/kydreeok_stages_2026-10-19/PLAN.md]]; method: ~/.context/knowledge/hobby/oracle-boss-pacing.md
+  :END:
+  1. Bite (sword): both heads take turns biting; a bitten head stays stuck on
+     the floor, harmless to touch. The body stands at home.
+  2. Fire (spacing, arrows and rods): starts when the first head dies. The last
+     head breathes fire lines, then pants out of sword reach; an arrow or rod
+     hit knocks it down for the sword. The body steps between 3 spots.
+  3. Sky (both): the dragon form, both heads regrow. Head turns, then a flight
+     and dive; after the dive both heads are stuck on the floor. A dead head
+     regrows only here, on a fixed 20 s timer with a warning.
+  Every attack has a telegraph, a punish window and its own cooldown; rests
+  come after each turn. The method is meant for the other bosses too.
+  Answer: "Yes, build Kydreeok with the 3-stage plan as written." (scawful, 2026-10-19)
