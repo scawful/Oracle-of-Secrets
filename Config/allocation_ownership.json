@@ -10,7 +10,7 @@
     "shared:Sprites/Objects/minecart.asm": {
       "source_set": "shared",
       "path": "Sprites/Objects/minecart.asm",
-      "sha256": "bfd3a9f0c867ef03f3bbd6d4858a2bfb91a29ae1458bd0af738d540023b0ee7d"
+      "sha256": "20fcd53970f37fa744be4e9fd0839b6c8a2e5159794b9c026ba71cabd8fc8544"
     },
     "shared:Masks/all_masks.asm": {
       "source_set": "shared",
@@ -45,7 +45,7 @@
     "shared:Core/sram.asm": {
       "source_set": "shared",
       "path": "Core/sram.asm",
-      "sha256": "14bb6d7fcd3b10c15a22f373052ed4391f4ba35a8c8ed820b1dc7eb0baac3cbf"
+      "sha256": "4d792e549540aacd9181062ef7e7675acfac0566865d37281380c3f5fd4b8f32"
     },
     "shared:Items/magic_rings.asm": {
       "source_set": "shared",
@@ -85,12 +85,12 @@
     "shared:Util/macros.asm": {
       "source_set": "shared",
       "path": "Util/macros.asm",
-      "sha256": "18dc5895f8d970af82adfa5bff074d9ad9200fa469d42689e939a3518377cb97"
+      "sha256": "ab6bac6b91005f904ed79d145439220354ad07b186c31182b157f53539b2c368"
     },
     "shared:Config/feature_flags.asm": {
       "source_set": "shared",
       "path": "Config/feature_flags.asm",
-      "sha256": "b8d00e97a5f2b9bc53fa317ccf6a077c93aabc0e0be02c78bfe09f47d5c7c772"
+      "sha256": "7034ab46b0e2584ec8ee68d25945a482cacc02478bff3d84ae2d2d8c875e0adf"
     },
     "shared:Config/module_flags.asm": {
       "source_set": "shared",
@@ -125,12 +125,12 @@
     "shared:Overworld/overworld.asm": {
       "source_set": "shared",
       "path": "Overworld/overworld.asm",
-      "sha256": "7383609a52da4913b80cf4bc6e90d7a9eecd21db885e14fd914e83ccc6e902d5"
+      "sha256": "8aeb91bae68c28de6506d744dbecfc098c6692310f6765e82c93f4fab65f25d8"
     },
     "shared:Menu/menu_hud.asm": {
       "source_set": "shared",
       "path": "Menu/menu_hud.asm",
-      "sha256": "ca3bed3f7a5cbfae980b74dac38fbf8e3a15328b24948fcfbe1d75c2350b1544"
+      "sha256": "b2e6650afa31168089a25f31e52c534500ca259d8eba6d731d6229fffb4f1a88"
     },
     "shared:Core/Cutscene/experiment.asm": {
       "source_set": "shared",
@@ -161,6 +161,11 @@
       "source_set": "vanilla",
       "path": "bank_0C.asm",
       "sha256": "79c87d4ceba2be3613c790c984f21fa4adbacf89f32712c330315f030e0fdd54"
+    },
+    "shared:Core/symbols.asm": {
+      "source_set": "shared",
+      "path": "Core/symbols.asm",
+      "sha256": "4c0dbcc572d26ae32505c57c6cd37f4b2fc3b399f2d73f9d3cda0248d5cddf37"
     }
   },
   "claims": [
@@ -316,6 +321,28 @@
         "source": "shared:Sprites/Objects/minecart.asm",
         "symbol": "!MinecartCurrent",
         "bank00_mirror": true
+      }
+    },
+    {
+      "id": "symbols_wram_block",
+      "owner": "Core/symbols.asm WRAM block (MenuScrollLevelV..SongTintColor)",
+      "space": "wram",
+      "base": 8265328,
+      "size": 24,
+      "status": "shared",
+      "condition": {},
+      "lifetime": "Volatile gameplay state: menu scroll/spoof, MusicNoteValue, GoldstarOrHookshot, Kydreeok necks/offspring, FishingOrPortalRod, song tint.",
+      "reset": "No block-wide reset is claimed. Not in ResetTrackVars' arrays since PR 211 moved it from $7E0730 (inside cart_room) to vanilla-free $7E1E70.",
+      "save": "Volatile WRAM; not saved.",
+      "provenance": [
+        "shared:Core/symbols.asm"
+      ],
+      "aliases": [],
+      "anchors": [],
+      "binding": {
+        "source": "shared:Core/symbols.asm",
+        "symbol": "MenuScrollLevelV",
+        "base_block": true
       }
     },
     {
