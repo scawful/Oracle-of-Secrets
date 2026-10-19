@@ -3,7 +3,7 @@
 ; =========================================================
 
 !SPRID              = Sprite_KydrogBoss
-!NbrTiles           = 11  ; Number of tiles used in a frame
+!NbrTiles           = 14  ; Most OAM pieces in a frame, minus one (reserves 15)
 !Harmless           = 00  ; 00 = Sprite is Harmful,  01 = Sprite is Harmless
 !HVelocity          = 00  ; Is your sprite going super fast? put 01 if it is
 !Health             = 00  ; Number of Health the sprite have
@@ -633,7 +633,9 @@ GetNumberSpawnStalfos:
 Sprite_KydrogBoss_Draw:
 {
     JSL Sprite_PrepOamCoord
-    JSL Sprite_OAM_AllocateDeferToPlayer
+    ; No Sprite_OAM_AllocateDeferToPlayer: its near-Link regions B/C hold 12
+    ; entries and frame 10 draws 15. Sprite_TimersAndOAM ($0683F2) already
+    ; reserved !NbrTiles+1 entries in region A/D (Codex review, PR 192).
     ; JSL OAM_AllocateFromRegionE
 
     LDA $0DC0, X : CLC : ADC $0D90, X : ASL : TAY ; Animation Frame
@@ -724,21 +726,21 @@ Sprite_KydrogBoss_Draw:
     dw -20, -20, -4, 4, 4, 12, 4, 12, 4, 12, -4
     dw -19, -19, 4, 4, 4, 12, -4, -4, -3, -3
     dw -20, -20, 4, 4, 4, 12, -4, -4, -4, -4
-    dw -20, -4, -4, -4, 4, 4, 12, -20
-    dw -20, -4, 4, -4, 4, -20
-    dw -20, -20, -4, -4, 4, 4, 12, -4
-    dw -20, -20, -4, -4, -4, -12, 4, 4
-    dw -20, -20, -4, -4, 4, 0
-    dw -20, -20, -4, -4, 4, 0, 8, -12, -4
-    dw -20, -20, -12, 0, -4, -4, -8, 0, 8, 0, -8
-    dw -20, -20, -12, -4, -4, 0, 8, 0, 8, 0, 8, -8, 0, 8, -8
-    dw -20, -20, -12, 0, -4, -4, -8, 0, 8, 0, -8
-    dw -24, -8, -24, -8, -8, 0, 0, 8, 8
-    dw -8, -24, -24, -8, -8, 0, 8, 8, 0, 0, 0, 8, -8
-    dw -16, -16, -16, -8, -8, 0, 0, 0, -24, -24
-    dw 0, 0, -16, -24, -16, -24, -16, -16
-    dw 0, 0, -8, -8, -24, -24, -8, -8
-    dw -4, -4, -20, -20, 12, 12, 12
+    dw -18, -2, -2, -2, 6, 6, 14, -18
+    dw -18, -2, 6, -2, 6, -18
+    dw -18, -18, -2, -2, 6, 6, 14, -2
+    dw -18, -18, -2, -2, -2, -10, 6, 6
+    dw -18, -18, -2, -2, 6, 2
+    dw -18, -18, -2, -2, 6, 2, 10, -10, -2
+    dw -16, -16, -8, 4, 0, 0, -4, 4, 12, 4, -4
+    dw -16, -16, -8, 0, 0, 4, 12, 4, 12, 4, 12, -4, 4, 12, -4
+    dw -16, -16, -8, 4, 0, 0, -4, 4, 12, 4, -4
+    dw -20, -4, -20, -4, -4, 4, 4, 12, 12
+    dw -4, -20, -20, -4, -4, 4, 12, 12, 4, 4, 4, 12, -4
+    dw -12, -12, -12, -4, -4, 4, 4, 4, -20, -20
+    dw 4, 4, -12, -20, -12, -20, -12, -12
+    dw 4, 4, -4, -4, -20, -20, -4, -4
+    dw -2, -2, -18, -18, 14, 14, 14
   .chr
     db $87, $87, $A7, $80, $81, $A4, $93, $A3, $96, $A6, $A7
     db $87, $87, $B3, $80, $92, $A2, $83, $83, $A8, $A8
