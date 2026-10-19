@@ -268,7 +268,8 @@ endif
   RockSirloin:
   {
     JSL Sprite_Move
-    LDA.l $7EF354 : BEQ .do_you_even_lift_bro
+    ; Titan's Mitt only (decisions.org: Rock Meat needs the Mitt).
+    LDA.l $7EF354 : CMP.b #$02 : BCC .do_you_even_lift_bro
       JSL Sprite_CheckDamageToPlayer : BCC +
         JSL ThrownSprite_TileAndSpriteInteraction_long
         LDA.l RockMeat : INC A : STA.l RockMeat
