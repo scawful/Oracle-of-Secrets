@@ -79,8 +79,14 @@ Sprite_Kydreeok_Prep:
 
   JSR ApplyPalette
 
-  ; Final Boss theme 1F
-  LDA #$1F : STA $012C
+  ; Final Boss theme 1F. Song $1F only exists in the underworld song bank;
+  ; with another bank loaded its pointer runs into other song data and the
+  ; SPC driver crashes (then module $19 hangs at $008891 waiting for $BBAA).
+  ; $0136 is nonzero once Underworld_LoadSongBankIfNeeded has loaded that
+  ; bank. Entrance $7B (song $15) loads it; if not, keep the current song.
+  LDA.w $0136 : BEQ .keep_song
+    LDA #$1F : STA $012C
+  .keep_song
 
   PLB
   RTL
