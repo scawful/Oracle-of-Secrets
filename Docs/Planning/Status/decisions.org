@@ -2311,3 +2311,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   gets the Pegasus Boots. This is what Sprites/NPCs/bug_net_kid.asm already does, so no code
   change. Replaces an older review note that said the Magic Powder wakes him.
   Answer: "Song of Healing: keep the code as it is." (scawful, 2026-10-19)
+
+* DECIDED Picking up Rock Meat needs the Titan's Mitt (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (forge gloves risk 3)
+  :END:
+  The Power Glove now comes after D2, so the old any-Glove check let Link carry Rock Meat long
+  before the Shrine of Power. The Rock Meat pickup (Sprites/Objects/collectible.asm, RockSirloin,
+  reads Gloves $7EF354) changes to need the Titan's Mitt (value 2). This holds the order even before
+  the black-rock map work on the Goron / Rock Meat paths lands. ASM change goes to a code lane.
+  Answer: "Require the Mitt: change the Rock Meat pickup check from any Glove to the Titan's Mitt."
+  (scawful, 2026-10-19)
