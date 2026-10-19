@@ -227,6 +227,10 @@ CustomObjectHandler2:
   LDA $02 : PHA
   ; $00 Will be used for tile count and tile to skip
   LDA $B2 : ASL #2 : ORA $B4
+if !ENABLE_D3_PRISON_SEQUENCE == 1
+  ; Only the five declared family-$32 subtypes have asset pointers.
+  CMP.w #$0005 : BCS .Done
+endif
 
   ;get the offset for the object data based on the object height
   ASL : TAX
@@ -273,6 +277,12 @@ CustomObjectHandler2:
     dw .IceFurnace-.ObjData       ; 00
     dw .Firewood-.ObjData         ; 01
     dw .IceChair-.ObjData         ; 02
+if !ENABLE_D3_PRISON_SEQUENCE == 1
+    dw .MinishStump-.ObjData      ; 03
+    dw .MinishWallHole-.ObjData   ; 04
+  .ObjOffsetEnd
+  assert .ObjOffsetEnd-.ObjOffset == $000A
+endif
 
   .ObjData
     .IceFurnace
@@ -281,6 +291,13 @@ CustomObjectHandler2:
       incbin Data/firewood.bin
     .IceChair
       incbin Data/ice_chair.bin
+if !ENABLE_D3_PRISON_SEQUENCE == 1
+    ; Dedicated prison BG art: slot6 sheet$6F via room blockset$4F.
+    .MinishStump
+      incbin Data/minish_stump.bin
+    .MinishWallHole
+      incbin Data/minish_wall_hole.bin
+endif
 }
 
 pushpc

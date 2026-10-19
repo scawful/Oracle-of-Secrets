@@ -22,7 +22,7 @@ RESTART = "D3Prison_RestartEscape"
 REGIONS = ((0x7E0000, 0x2000), (0x7EC000, 0x200), (0x7EF300, 0x100))
 
 # Reviewed diagnostic room-$65 profile, independent of compiled instructions.
-# User-saved layout7 places Link at tile26,43 (world $0AD0,$0D58).
+# Shifted layout7 places Link at tile26,35 (world $0AD0,$0D18).
 # This literal contract must not be derived from the candidate under test.
 CELL_BYTES = {
     0x7E002F: 0x00, 0x7E0AA1: 0x02, 0x7E0132: 0x10, 0x7E00A4: 0x00,
@@ -31,10 +31,10 @@ CELL_BYTES = {
 }
 CELL_WORDS = {
     0x7E010E: 0x0032, 0x7E00A0: 0x0065, 0x7E048E: 0x0065,
-    0x7E00E8: 0x0D10, 0x7E00E6: 0x0D10, 0x7E0122: 0x0D10, 0x7E0124: 0x0D10,
+    0x7E00E8: 0x0CD0, 0x7E00E6: 0x0CD0, 0x7E0122: 0x0CD0, 0x7E0124: 0x0CD0,
     0x7E00E2: 0x0A58, 0x7E00E0: 0x0A58, 0x7E011E: 0x0A58, 0x7E0120: 0x0A58,
-    0x7E0020: 0x0D58, 0x7E0022: 0x0AD0,
-    0x7E0618: 0x0187, 0x7E061A: 0x0189, 0x7E061C: 0x00D7, 0x7E061E: 0x00D9,
+    0x7E0020: 0x0D18, 0x7E0022: 0x0AD0,
+    0x7E0618: 0x0147, 0x7E061A: 0x0149, 0x7E061C: 0x00D7, 0x7E061E: 0x00D9,
     0x7E00EC: 0x01F8, 0x7E0696: 0x1DEE, 0x7E0698: 0x0000,
     0x7E0610: 0x0000, 0x7E0612: 0x0110, 0x7E0614: 0x0000, 0x7E0616: 0x0100,
     0x7E0600: 0x0D00, 0x7E0602: 0x0C00, 0x7E0604: 0x0D10, 0x7E0606: 0x0D10,
@@ -51,12 +51,25 @@ def camera_projection():
     require((CELL_WORDS[0x7E061C] - local_scroll,
              CELL_WORDS[0x7E061E] - local_scroll) == (0x7F, 0x81),
             "Horizontal triggers must move with the scroll")
+    wake_y, scroll_y = CELL_WORDS[0x7E0020], CELL_WORDS[0x7E00E8]
+    require(wake_y - scroll_y == 72, "Wake must remain below the HUD")
+    require((CELL_WORDS[0x7E0618] - (scroll_y & 0x1FF),
+             CELL_WORDS[0x7E061A] - (scroll_y & 0x1FF)) == (0x77, 0x79),
+            "Vertical triggers must move with Y scroll, not the X trigger pair")
+    require(CELL_WORDS[0x7E0602] <= scroll_y <= CELL_WORDS[0x7E0606],
+            "Wake scroll must remain inside unchanged full-room Y bounds")
+    for link_y in range(0xCF0, 0xCF9):
+        camera_y = scroll_y + link_y - wake_y
+        require(CELL_WORDS[0x7E0602] <= camera_y <= CELL_WORDS[0x7E0606],
+                "Talk approach must remain inside native vertical bounds")
+        require(32 <= 0xCE0 - camera_y <= 208,
+                "Thief body must stay below the HUD at the talk approach")
     projected = []
-    for link_x in range(0xAE0, 0xAE9):
+    for link_x in range(0xB58, 0xB69):
         camera_x = scroll + link_x - wake
         require(CELL_WORDS[0x7E060A] <= camera_x <= CELL_WORDS[0x7E060E],
                 "Talk approach must remain inside native horizontal bounds")
-        thief_screen_x = 0xB50 - camera_x
+        thief_screen_x = 0xB60 - camera_x
         require(0 <= thief_screen_x <= 240, "Thief body must fit the screen at approach")
         projected.append(dict(link_x=link_x, camera_x=camera_x,
                               thief_screen_x=thief_screen_x))

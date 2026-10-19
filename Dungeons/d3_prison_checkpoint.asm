@@ -82,20 +82,21 @@ D3Prison_ApplyCellProfile:
   REP #$20
   LDA.w #$0032 : STA.l $7E010E ; runtime exit bookkeeping, not saved SpawnPoint
   LDA.w #$0065 : STA.l $7E00A0 : STA.l $7E048E
-  LDA.w #$0D10
+  LDA.w #$0CD0
   STA.l $7E00E8 : STA.l $7E00E6 : STA.l $7E0122 : STA.l $7E0124
   ; Keep Link at screenX120 while exposing the neighboring cell to the east.
   LDA.w #$0A58
   STA.l $7E00E2 : STA.l $7E00E0 : STA.l $7E011E : STA.l $7E0120
   LDA.w #$0A00 ; room bounds stay fixed while the current scroll moves
   STA.l $7E0608 : STA.l $7E060A : STA.l $7E060C
-  ; Saved room65 layout: tile26,43, inside the west cell.
-  LDA.w #$0D58 : STA.l $7E0020
+  ; Shifted room65 layout: tile26,35, inside the shared cell.
+  LDA.w #$0D18 : STA.l $7E0020
   LDA.w #$0AD0 : STA.l $7E0022
   ; Native triggers are room-local, but track current scroll pixel-for-pixel.
-  ; Shift the horizontal pair +0058 with the scroll, not with the room origin.
-  LDA.w #$0187 : STA.l $7E0618
-  LDA.w #$0189 : STA.l $7E061A
+  ; $0618/A are vertical: shift -0040 with Y scroll.
+  ; $061C/E are horizontal: retain their values because X scroll is unchanged.
+  LDA.w #$0147 : STA.l $7E0618
+  LDA.w #$0149 : STA.l $7E061A
   LDA.w #$00D7 : STA.l $7E061C
   LDA.w #$00D9 : STA.l $7E061E
   LDA.w #$01F8 : STA.l $7E00EC
@@ -115,8 +116,9 @@ D3Prison_ApplyCellProfile:
   STA.l $7E00EE : STA.l $7E0476
   STA.l $7E00A9
   ; Cell65 layout7 is wide and tall; Module05 does not recalculate this.
-  LDA.b #$02 : STA.l $7E00A6 : STA.l $7E00A7
-  STA.l $7E0AA1 : STA.l $7E00AA
+  LDA.b #$02 : STA.l $7E00A6 : STA.l $7E00A7 : STA.l $7E00AA
+  ; Oracle main02 matches the vanilla Zelda cell sheets (vanilla main04).
+  LDA.b #$02 : STA.l $7E0AA1
   LDA.b #$10 : STA.l $7E0132 : STA.l $7E040C
   PLP
   LDA.b #$80 : STA.b $45

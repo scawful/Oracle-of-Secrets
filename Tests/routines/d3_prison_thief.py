@@ -64,21 +64,21 @@ def cases():
 
     for name, changes, allowed in (
         ("near-center", {}, 1),
-        ("left-bound", word(0x22, 0xAE0), 1),
-        ("left-outside", word(0x22, 0xADF), 0),
-        ("right-bound", word(0x22, 0xAE8), 1),
-        ("right-outside", word(0x22, 0xAE9), 0),
-        ("north-bound", word(0x20, 0xD48), 1),
-        ("north-outside", word(0x20, 0xD47), 0),
-        ("south-bound", word(0x20, 0xD58), 1),
-        ("south-outside", word(0x20, 0xD59), 0),
+        ("left-bound", word(0x22, 0xB58), 1),
+        ("left-outside", word(0x22, 0xB57), 0),
+        ("right-bound", word(0x22, 0xB68), 1),
+        ("right-outside", word(0x22, 0xB69), 0),
+        ("north-bound", word(0x20, 0xCF0), 1),
+        ("north-outside", word(0x20, 0xCEF), 0),
+        ("south-bound", word(0x20, 0xCF8), 1),
+        ("south-outside", word(0x20, 0xCF9), 0),
         ("wrong-x-page", word(0x22, 0xBE4), 0),
         ("wrong-y-page", word(0x20, 0xE50), 0),
         ("old-talk-position", {**word(0x22, 0xAA8), **word(0x20, 0xD78)}, 0),
-        ("wake-position", {**word(0x22, 0xAD0), **word(0x20, 0xD58)}, 0),
-        ("south-bars", word(0x20, 0xD68), 0),
-        ("thief-cell", {**word(0x22, 0xB50), **word(0x20, 0xD58)}, 0),
-        ("face-up", {0x2F: 0}, 0),
+        ("wake-position", {**word(0x22, 0xAD0), **word(0x20, 0xD18)}, 0),
+        ("south-bars", word(0x20, 0xD48), 0),
+        ("thief-cell", {**word(0x22, 0xB50), **word(0x20, 0xCE0)}, 0),
+        ("face-right", {0x2F: 6}, 0),
         ("face-left", {0x2F: 4}, 0),
         ("different-floor", {0xEE: 1}, 0),
         ("minish", {0x2B2: 5}, 0),
@@ -137,8 +137,8 @@ def fixture(case, entry, native=False):
               for base, size in REGIONS}
     defaults = {0x10: 7, 0x11: 0, 0x1B: 1, 0x40C: 0x10,
                 **word(0xA0, 0x65), **word(0x48E, 0x65),
-                **word(0x22, 0xAE4), **word(0x20, 0xD50),
-                0xEE: 0, 0x2F: 6, 0x2B2: 0, 0x5D: 0, 0xF6: 0x80,
+                **word(0x22, 0xB60), **word(0x20, 0xCF4),
+                0xEE: 0, 0x2F: 0, 0x2B2: 0, 0x5D: 0, 0xF6: 0x80,
                 0x2E4: 0, 0xFFC: 0, 0xFC1: 0,
                 0x4D: 0, 0x2DA: 0, 0x308: 0, FLAGS: 0x21, SWORD: 0}
     defaults.update({0xC4A+i: 0 for i in range(5)})
@@ -204,9 +204,9 @@ def verify(case, before, request, result, native=None):
         require(native_writes <= allowed | prep_allowed,
                 f"{label}: unexpected native prep writes {sorted(native_writes-allowed-prep_allowed)}")
         fields = {0xE20: 0xC4, 0xDD0: 9, 0xE30: 0xD3, 0xDA0: 0x65,
-                  0xD10: 0x50, 0xD30: 0x0B, 0xD00: 0x58, 0xD20: 0x0D,
+                  0xD10: 0x60, 0xD30: 0x0B, 0xD00: 0xE0, 0xD20: 0x0C,
                   0xF20: 0, 0xF60: 0x40, 0xBA0: 1, 0xBC0: 0xFF,
-                  0xCBA: 0, 0xF50: 0x0F, 0xDC0: 2, 0xEB0: 1, 0xDE0: 1,
+                  0xCBA: 0, 0xF50: 0x0F, 0xDC0: 2, 0xEB0: 2, 0xDE0: 2,
                   0xD40: 0, 0xD50: 0}
         for offset, value in fields.items():
             store(expected, offset+slot, value)

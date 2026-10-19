@@ -1,4 +1,4 @@
-; The approved cellmate uses the vanilla thief art, standing in the next cell.
+; The approved cellmate uses the vanilla thief art, standing beside the recessed bench.
 ; Only this staged C4 actor speaks the hint; ordinary thieves keep their AI.
 ; The paired room65 header selects group28 (runtime68), with thief sheet0E
 ; in slot0. No shared sheet data or palette loader is changed here.
@@ -6,8 +6,8 @@ if !ENABLE_D3_PRISON_SEQUENCE == 1 && !DISABLE_SPRITES == 0
 
 !D3Prison_ThiefMarker = $D3
 !D3Prison_ThiefMarker2 = $65
-!D3Prison_ThiefX = $0B50 ; saved room65 tile42,43, inside the east cell
-!D3Prison_ThiefY = $0D58
+!D3Prison_ThiefX = $0B60 ; private room65 bench recess, tile44,28
+!D3Prison_ThiefY = $0CE0
 
 ; End-of-list room loader, native M8/X8, DP0. Preserve full A/X/Y, DB and P,
 ; and the room-list allocator's next-free slot in $02. Highest free slot wins.
@@ -53,8 +53,8 @@ D3Prison_ThiefStage:
   STZ.w SprDrop, X
   LDA.b #$0F : STA.w $0F50, X    ; native friendly thief palette7/page1
   LDA.b #$02 : STA.w SprGfx, X   ; native standing body
-  LDA.b #$01
-  STA.w SprMiscE, X             ; head left, toward Link's cell
+  LDA.b #$02
+  STA.w SprMiscE, X             ; face down toward the shared cell
   STA.w SprMiscC, X
   STZ.w SprXSpeed, X : STZ.w SprYSpeed, X
   .done
@@ -142,12 +142,10 @@ D3Prison_ThiefMain:
   RTL
 }
 
-; The separate cells prevent native contact solicitation. This scripted call
-; reaches the thief 104..112px east of Link, only from the west cell's east
-; floor0 strip while human Link faces right. Full coordinates prevent wrap.
-; The rightward probes (X+15, Y+8/16/23) stay in floor tiles28..30,42..45;
-; the south bars start at row46, so Link's Y must not exceed $0D58.
-; Calls the real native busy predicate; no memory or sprite fields are written.
+; Speak from immediately below the bench while human Link faces up.
+; Full coordinates prevent room-page wrap. The approach stays on shared-cell
+; floor below the bench, clear of the closed front gate.
+; Calls the native busy predicate; no memory or sprite fields are written.
 D3Prison_ThiefCanTalk:
 {
   PHP : PHB
@@ -158,7 +156,7 @@ D3Prison_ThiefCanTalk:
   LDA.w $02E4 : ORA.w $0FFC : ORA.w $0FC1 : BNE .early_no
   LDA.b $F6 : AND.b #$80 : BEQ .early_no
   LDA.b $EE : BNE .early_no
-  LDA.b $2F : CMP.b #$06 : BNE .early_no
+  LDA.b $2F : CMP.b #$00 : BNE .early_no
   LDA.b $5D : BNE .early_no
   LDA.w $02B2 : BNE .early_no
   JSL $07F4D0 : BCS .early_no ; native CheckIfLinkIsBusy, preserves X
@@ -167,10 +165,10 @@ D3Prison_ThiefCanTalk:
   PLB : PLP : CLC : RTL
   .position
   REP #$20
-  LDA.b $22 : CMP.w #$0AE0 : BCC .no
-  CMP.w #$0AE9 : BCS .no
-  LDA.b $20 : CMP.w #$0D48 : BCC .no
-  CMP.w #$0D59 : BCS .no
+  LDA.b $22 : CMP.w #$0B58 : BCC .no
+  CMP.w #$0B69 : BCS .no
+  LDA.b $20 : CMP.w #$0CF0 : BCC .no
+  CMP.w #$0CF9 : BCS .no
   SEP #$20
   PLB : PLP : SEC : RTL
   .no
