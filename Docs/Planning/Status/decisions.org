@@ -2126,3 +2126,13 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: "The guards never check walls. / See the crack in your cell? / Get small and slip through."
   Answer: "Use the hint wording: Psst, kid. That crack in your wall? Little folk use cracks like
   that. Bet you would fit." (scawful, 2026-10-19)
+
+* DECIDED Prison capture: one guard taunt line in $1CC before the fade (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison message stubs)
+  :END:
+  When the garrison guards catch Link in the $56 entry hall, one taunt line shows in message $1CC
+  (!Msg_GuardCaptureTaunt), then the screen fades to the cell. Wording is drafted separately for
+  scawful's approval.
+  Rejected: a silent capture with the thief's line as the only prison text.
+  Answer: "One taunt line at the capture, in $1CC, before the fade to the cell." (scawful, 2026-10-19)
