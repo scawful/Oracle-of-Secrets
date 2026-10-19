@@ -70,6 +70,17 @@ jobs:
           printf '\x30\x02' | dd of=test.sfc bs=1 seek=$((0x4863E)) conv=notrunc 2>/dev/null  # $09863E AncillaAdd_ItemReceipt operand $0230 (vanilla)
           printf '\x28' | dd of=test.sfc bs=1 seek=$((0x6B205)) conv=notrunc 2>/dev/null  # $0DB205 King Dodongo health (vanilla $28)
 
+          # Maple room-profile guards: exact overwritten instructions and a
+          # minimal relocated header chain. Keep production assertions enabled.
+          printf '\xB9\x80\xCF\x85\xCA' | dd of=test.sfc bs=1 seek=$((0x0678F)) conv=notrunc 2>/dev/null  # $00E78F BG source-bank load
+          printf '\xA9\x1B\x00\x85\x02' | dd of=test.sfc bs=1 seek=$((0xDEF51)) conv=notrunc 2>/dev/null  # $1BEF51 palette source-bank load
+          printf '\x0F\x00' | dd of=test.sfc bs=1 seek=$((0x780D0)) conv=notrunc 2>/dev/null  # entrance $68 -> room $00F
+          printf '\x03' | dd of=test.sfc bs=1 seek=$((0x79668)) conv=notrunc 2>/dev/null  # entrance main group3
+          printf '\x00\x80\x22' | dd of=test.sfc bs=1 seek=$((0x0B5DD)) conv=notrunc 2>/dev/null  # header table $228000
+          printf '\x22' | dd of=test.sfc bs=1 seek=$((0x0B5E7)) conv=notrunc 2>/dev/null  # header bank $22
+          printf '\x00\x90' | dd of=test.sfc bs=1 seek=$((0x11001E)) conv=notrunc 2>/dev/null  # room $00F header -> $229000
+          printf '\x03' | dd of=test.sfc bs=1 seek=$((0x111002)) conv=notrunc 2>/dev/null  # room secondary group3
+
           # Original instructions guarded by Overworld/music_cache.asm. These
           # are explicit headerless LoROM PC offsets, not relocated cache bytes.
           # LDA.l $7F5B00,X at SNES $00F401, $02AE73, $02B117, $02B126,
