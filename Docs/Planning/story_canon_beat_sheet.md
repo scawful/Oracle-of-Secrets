@@ -166,7 +166,7 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
 | 28 | **Kydreeok finale**: sever all heads simultaneously (they regrow) → **Song of Healing finisher** → Kydrog restored | `[DECIDED]`; `[TO-BUILD]` | `kydreeok.asm` exists, zero messages. Post-healing form: human `[DECIDED 2026-09-26]` |
 | 29 | **Ganon breaks out** — alternates Ganondorf (energy-ball volleys) and the beast; Farore aids | `[DECIDED 2026-09-26]`, `[TO-BUILD]` | Villain chain (`Docs/Planning/Status/decisions.org`). Per msg `0x15B`; vanilla Ganon parts may be reused |
 | 30 | **Ending**: seal restored; the Abyss begins to heal; credits | `[TO-BUILD]` | Credits hook stubbed in `Overworld/overworld.asm`; no ending text exists. GameState 3 finally gets readers. |
-| 31 | **Post-game**: Kydrog Mask in the save | `[DECIDED]` | Parting gift; post-game only (menu space) |
+| 31 | **Post-game**: Kydrog Mask in the save | `[CUT 2026-10-18]` | Cut; the Garo mask from the Garo desert replaces it |
 
 ## Side content with story weight
 

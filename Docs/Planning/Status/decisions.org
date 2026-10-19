@@ -1854,7 +1854,8 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   :END:
   Beat 31 is cut. The Kydrog Mask does not ship; the Garo mask takes its place, and the post-game
   gets no new mask. Overrides beat sheet beat 31 ("Post-game: Kydrog Mask in the save",
-  [DECIDED], parting gift). The beat sheet row needs scawful's edit.
+  [DECIDED], parting gift). Row 31 edited 2026-10-19 with scawful's OK: "Yes: change row 31
+  to \"Cut; the Garo mask from the Garo desert replaces it\" and push to master."
   Answer (scawful picked this option, 2026-10-18): "Cut the Kydrog Mask; the Garo mask takes its
   place and the post-game gets no new mask."
 
