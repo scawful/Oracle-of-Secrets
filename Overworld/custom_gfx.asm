@@ -1,6 +1,10 @@
+; Boat sheets for wide $38/$39 (Dragon Ship) and wide $30/$31 (Kalyxo Docks,
+; which held the ship before the 2026-10-19 split). $8A = parent area.
 CheckForChangeGraphicsNormalLoadBoat:
 {
-  LDA $8A : CMP.b #$30 : BNE .boat_area
+  LDA $8A : CMP.b #$38 : BEQ .load
+  CMP.b #$30 : BNE .boat_area
+  .load
     PHB : PHK : PLB
     JSR ApplyGraphics1
     JSR ApplyGraphics2

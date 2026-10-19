@@ -444,8 +444,8 @@ MapIconDraw:
     LDA.b #$00 : STA.l $7EC10B
     LDA.b #$F4 : STA.l $7EC10A
     ; Y position
-    LDA.b #$0D : STA.l $7EC109
-    LDA.b #$0E : STA.l $7EC108
+    LDA.b #$0E : STA.l $7EC109 ; ship moved +352 px to wide $38 (2026-10-19)
+    LDA.b #$6E : STA.l $7EC108
 
     LDA.b #$64 : STA.b $0D
     LDA.b #$32 : STA.b $0C ; Tile GFX
