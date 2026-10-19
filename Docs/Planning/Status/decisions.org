@@ -2467,3 +2467,18 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   One room: Kydreeok, then Ganon rises in the same arena. Least room work;
   both fights share one arena.
   Answer:
+
+* DECIDED Kalyxo Docks: wide $30/$31 for the docks and intro, Dragon Ship moves to wide $38/$39 (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Kalyxo docks session (Parallel Worlds docks as reference)
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/kalyxo_docks_2026-10-19/README.md]]
+  :END:
+  The large area $30 ($30/$31/$38/$39, south of Toadstool Woods, west of Loom Beach) splits
+  into two wide maps. Top, $30/$31: new Kalyxo Docks plus the intro scene. Bottom, $38/$39:
+  the D7 Dragon Ship, moved south. Parallel Worlds' docks (its LW $30) and gigaleak art are
+  references for the dock art. Pictures: mock_A_wide.png and mock_B_two_small.png in the doc
+  folder. The East Kalyxo ruling "There is no dock for the Dragon Ship" still holds: these
+  are the island's docks, not a berth for the ship.
+  Answer: "Go with Option A: one wide map at $30/$31 for the Kalyxo Docks and intro, Dragon
+  Ship on a wide map at $38/$39. it'd be cool to show off the wide map early on so let's do
+  wide style" (scawful, 2026-10-19)
