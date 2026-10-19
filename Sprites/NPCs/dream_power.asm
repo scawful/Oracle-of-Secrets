@@ -565,6 +565,7 @@ DreamWake_TuckIntoBed:
   LDA.b $22 : SEC : SBC.w #$0008
   SEP #$20
   STA.w $0C04 : XBA : STA.w $0C18
+  JSR Blanket_UseBedColors                ; maple.asm: bed greys, not green
   RTS
 }
 endif
