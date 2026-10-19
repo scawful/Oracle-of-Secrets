@@ -1988,3 +1988,12 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: stealth lasting until Link leaves through the $55 door.
   Answer: "No: stealth ends at the blade table; Link fights his way out through the prison door."
   (scawful, 2026-10-19)
+
+* DECIDED Prison escape: the thief cellmate slips away and does not return (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  The thief in the next cell shows Link the way out, slips away during the escape and is not
+  seen again. No return visit at the thieves' cave and no reward.
+  Rejected: a return visit at the thieves' cave on the way to Mushroom Grotto.
+  Answer: "No: the thief slips away during the escape and is not seen again." (scawful, 2026-10-19)
