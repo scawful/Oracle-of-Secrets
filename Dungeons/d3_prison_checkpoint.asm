@@ -1,7 +1,7 @@
 ; Captured death/continue returns to cell65 (scawful, 2026-10-19).
 ; Diagnostic-only while the cell puzzle and capture actors are being authored.
-; No SRAM writes: a reclaimed blade stays reclaimed, and normal spawn data stays
-; intact. The cold file load cannot depend on the previous room or $1B.
+; Restart the unfinished escape unarmed; retain the backed-up blade for its
+; table actor. The cold file load cannot depend on the previous room or $1B.
 if !ENABLE_D3_PRISON_SEQUENCE == 1
 
 ; C=1 for captured or reclaimed, but not escaped/pending/malformed states.
@@ -26,6 +26,43 @@ D3Prison_ShouldResumeCell:
   RTL
 }
 
+; Restart only a valid unfinished escape. Keep the backed-up sword and bit80;
+; do not recapture (which would replace the backup with the current sword).
+; Idempotent for already-unarmed Link. Eligibility remains read-only above.
+; Native mode, DP=0; preserve P except C, X/Y/DB/SP. A is scratch.
+D3Prison_RestartEscape:
+{
+  PHP
+  SEP #$20
+  JSL D3Prison_ShouldResumeCell : BCC .no
+  LDA.l CastleAmbushFlags : AND.b #$F7
+  STA.l CastleAmbushFlags
+  LDA.b #$00 : STA.l Sword
+  PLP
+  SEC
+  RTL
+  .no
+  PLP
+  CLC
+  RTL
+}
+
+; Accepted Game Over choice / Module17 Save & Quit, before SaveGameFile.
+; Fairy revival and cancel never reach this seam. Replay native cleanup first:
+; its STA $005E consumes incoming A. Preserve its full A and returned P.
+D3Prison_RestartBeforeSave:
+{
+  JSL $0BFFBF ; ResetSomeThingsAfterDeath
+  PHP
+  REP #$20
+  PHA
+  JSL D3Prison_RestartEscape
+  REP #$20
+  PLA
+  PLP
+  RTL
+}
+
 ; Common regular/spawn entrance join, before drawing/header/sprite loading.
 ; Native M8/X16, DB02, DP0. Replace LDA80/STA45 and return with exactly that
 ; A/N/Z result; the next native STA44 still runs. No scratch or index writes.
@@ -41,6 +78,7 @@ D3Prison_ApplyCellProfile:
   LDA.b #$80 : STA.b $45
   RTL
   .apply
+  JSL D3Prison_RestartEscape ; also repair older reclaimed saves on cold load
   REP #$20
   LDA.w #$0032 : STA.l $7E010E ; runtime exit bookkeeping, not saved SpawnPoint
   LDA.w #$0065 : STA.l $7E00A0 : STA.l $7E048E
@@ -81,6 +119,9 @@ D3Prison_ApplyCellProfile:
 }
 
 pushpc
+org $09F540 ; @hook module=Dungeons name=D3Prison_RestartBeforeSave kind=jsl target=D3Prison_RestartBeforeSave expected_m=8 expected_x=8
+  JSL D3Prison_RestartBeforeSave
+assert pc() == $09F544
 org $02DADB ; @hook module=Dungeons name=D3Prison_ApplyCellProfile kind=jsl target=D3Prison_ApplyCellProfile expected_m=8 expected_x=16
   JSL D3Prison_ApplyCellProfile
 assert pc() == $02DADF

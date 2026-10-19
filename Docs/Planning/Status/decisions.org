@@ -1941,6 +1941,9 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   :PROPERTIES:
   :ASKED_BY: Codex, D3 capture and escape implementation
   :END:
+  Superseded clarification (2026-10-19): the newer "Death or continue while
+  captured" ruling below restarts the escape unarmed, including save/reopen.
+  The earlier retained-blade interpretation below is historical, not current.
   Death or loading a saved game while captured returns Link to cell $65.
   The checkpoint also applies after reclaiming the blade and before completing
   the escape. Retain the reclaimed blade; returning to the cell does not repeat

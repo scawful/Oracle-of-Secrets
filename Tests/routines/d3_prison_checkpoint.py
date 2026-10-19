@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Execute D3 cell-resume helpers on an existing 65816 CPU runner.
 
-Only compiled CPU/ABI behavior is checked. The entrance profile remains a
-diagnostic fixture; this does not qualify cell geometry or native save/reopen.
+Only compiled CPU/ABI and saved-transaction behavior is checked. The entrance
+profile remains a diagnostic fixture; this does not qualify cell geometry or
+native death/continue, save/reopen, or blade-table reclaim.
 """
 from __future__ import annotations
 
@@ -17,6 +18,7 @@ from d3_prison_state import FLAGS, SWORD, SP, digest, physical, require, symbol
 
 PREDICATE = "D3Prison_ShouldResumeCell"
 PROFILE = "D3Prison_ApplyCellProfile"
+RESTART = "D3Prison_RestartEscape"
 REGIONS = ((0x7E0000, 0x2000), (0x7EC000, 0x200), (0x7EF300, 0x100))
 
 # Reviewed diagnostic room-$65 profile, independent of compiled instructions.
@@ -51,6 +53,7 @@ class Case:
     module: int = 0
     p: int = 0xF5
     db: int = 0x35
+    saved_after: tuple[int, int] | None = None
 
 
 def cases():
@@ -70,8 +73,8 @@ def cases():
         Case("current-sword-out-of-range", PREDICATE, 0xA1, 5, False),
         Case("smith-sentinel", PREDICATE, 0xA9, 0xFF, False),
         Case("file-load-cell-profile", PROFILE, 0xA1, 0, True, module=5, p=0xE5, db=2),
-        Case("file-load-reclaimed-keeps-sword", PROFILE, 0xA9, 4, True,
-             module=5, p=0x24, db=2),
+        Case("file-load-reclaimed-restarts-unarmed", PROFILE, 0xA9, 4, True,
+             module=5, p=0x24, db=2, saved_after=(0xA1, 0)),
         Case("ordinary-module06-entrance", PROFILE, 0xA1, 0, False,
              module=6, p=0xE5, db=2),
         Case("ordinary-module07-entrance", PROFILE, 0xA1, 0, False,
@@ -84,6 +87,46 @@ def cases():
              module=5, p=0x27, db=0x0F),
         Case("alternate-db-ordinary-entrance", PROFILE, 0xA1, 0, False,
              module=6, p=0x27, db=0x0F),
+        # The transaction is independently callable for future guard resets.
+        # Explicit expected bytes protect the backed-up sword and unrelated
+        # bit $80. All four native M/X combinations must preserve caller ABI.
+        Case("restart-reclaimed-m16-x16", RESTART, 0xA9, 2, True,
+             p=0xC5, saved_after=(0xA1, 0)),
+        Case("restart-reclaimed-m16-x8", RESTART, 0x19, 1, True,
+             p=0xD4, saved_after=(0x11, 0)),
+        Case("restart-reclaimed-m8-x16", RESTART, 0xB9, 3, True,
+             p=0xE5, saved_after=(0xB1, 0)),
+        Case("restart-reclaimed-m8-x8", RESTART, 0x49, 4, True,
+             p=0xF4, saved_after=(0x41, 0)),
+        # Already-reset values are the fixed point of a repeated restart.
+        Case("restart-unreclaimed-idempotent", RESTART, 0x21, 0, True,
+             p=0x04, saved_after=(0x21, 0)),
+        Case("restart-unrelated-bit-idempotent", RESTART, 0xA1, 0, True,
+             p=0xF5, saved_after=(0xA1, 0)),
+        Case("restart-unreclaimed-held-sword", RESTART, 0x41, 1, True,
+             p=0x14, saved_after=(0x41, 0)),
+        Case("restart-reclaimed-already-unarmed", RESTART, 0xA9, 0, True,
+             p=0x24, saved_after=(0xA1, 0)),
+        Case("restart-ordinary", RESTART, 0x80, 2, False, p=0x05),
+        Case("restart-backup-without-capture", RESTART, 0xA0, 2, False, p=0x15),
+        Case("restart-pending", RESTART, 0xA4, 2, False, p=0x25),
+        Case("restart-captured-pending", RESTART, 0xA5, 0, False, p=0x35),
+        Case("restart-reclaimed-pending", RESTART, 0xAD, 2, False, p=0x05),
+        Case("restart-escaped", RESTART, 0xAB, 2, False, p=0x15),
+        Case("restart-reclaimed-without-capture", RESTART, 0xA8, 2, False, p=0x25),
+        Case("restart-missing-backup", RESTART, 0x89, 2, False, p=0x35),
+        Case("restart-backup-out-of-range", RESTART, 0xD9, 2, False, p=0x05),
+        Case("restart-current-sword-out-of-range", RESTART, 0xA9, 5, False, p=0x15),
+        Case("restart-smith-sentinel", RESTART, 0xA9, 0xFF, False, p=0x25),
+        # Ordinary room loading must not restart an active reclaimed escape.
+        Case("module06-reclaimed-not-restarted", PROFILE, 0xA9, 2, False,
+             module=6, p=0xE5, db=2),
+        Case("module07-reclaimed-not-restarted", PROFILE, 0xA9, 2, False,
+             module=7, p=0x24, db=2),
+        Case("file-load-pending-not-restarted", PROFILE, 0xA4, 2, False,
+             module=5, p=0xE5, db=2),
+        Case("file-load-smith-not-restarted", PROFILE, 0xA9, 0xFF, False,
+             module=5, p=0x24, db=2),
     )
 
 
@@ -124,7 +167,7 @@ def verify(case, before, request, result):
     expected = {base: bytearray(data) for base, data in before.items()}
     allowed = set(range(0x7E0000 + SP - 0x30, 0x7E0000 + SP + 1))
     allowed.update(range(0x7F8000, 0x7F8004))  # Runner's real JSL trampoline.
-    if case.helper == PREDICATE:
+    if case.helper in (PREDICATE, RESTART):
         require(regs["p"] & 0xFE == case.p & 0xFE, f"{label}: changed caller status/width")
         require(regs["p"] & 1 == int(case.applies), f"{label}: wrong eligibility Carry")
     else:
@@ -139,6 +182,14 @@ def verify(case, before, request, result):
                 for address, value in values.items():
                     put(expected, address, value, width)
                     allowed.update(range(address, address + width))
+
+    if case.saved_after is not None:
+        require(case.applies and case.helper != PREDICATE,
+                f"{label}: invalid mutating saved-state expectation")
+        put(expected, FLAGS, case.saved_after[0])
+        put(expected, SWORD, case.saved_after[1])
+    if case.applies and case.helper in (RESTART, PROFILE):
+        allowed.update((FLAGS, SWORD))
 
     reads = result["reads"]
     require(len(reads) == len(REGIONS), f"{label}: missing canary region")
@@ -157,7 +208,9 @@ def verify(case, before, request, result):
             if value != before[base][offset]:
                 require(base + offset in writes, f"{label}: missing traced write ${base + offset:06X}")
     return dict(name=label, passed=True, helper=case.helper, applies=case.applies,
-                flags=case.flags, sword=case.sword, module=case.module,
+                flags_before=case.flags, sword_before=case.sword,
+                flags_after=expected[0x7EF300][FLAGS - 0x7EF300],
+                sword_after=expected[0x7EF300][SWORD - 0x7EF300], module=case.module,
                 steps=result["steps"], registers=regs)
 
 
@@ -172,7 +225,7 @@ def main():
     require(0 < len(rom) <= 0x400000 and len(rom) % 0x8000 != 0x200,
             "Expected headerless LoROM <=4 MiB")
     require(CELL_BYTES and CELL_WORDS, "Cell profile expectations have not been supplied")
-    entries = {name: symbol(symbols, name) for name in (PREDICATE, PROFILE)}
+    entries = {name: symbol(symbols, name) for name in (PREDICATE, PROFILE, RESTART)}
     hook = 2 * 0x8000 + (0xDADB & 0x7FFF)
     require(rom[hook:hook + 4] == b"\x22" + entries[PROFILE].to_bytes(3, "little"),
             "Native entrance hook does not dispatch to tested cell profile")
@@ -198,8 +251,9 @@ def main():
                           script_sha256=digest(Path(__file__).read_bytes()),
                           imported_helpers_sha256=digest(Path(__file__).with_name("d3_prison_state.py").read_bytes()),
                           runner_copy_padding_bytes=padding, source_inputs_unchanged=True, stubs=[],
-                          claim="Compiled cell eligibility/entrance-profile CPU proof only; "
-                                "no native save/reopen, geometry, or gameplay acceptance."), indent=2) + "\n"
+                          claim="Compiled cell eligibility, escape-restart transaction and entrance-profile CPU proof only; "
+                                "no native death/continue, save/reopen, blade-table reclaim, "
+                                "geometry, or gameplay acceptance."), indent=2) + "\n"
     if args.output:
         args.output.write_text(text)
     print(text, end="")
