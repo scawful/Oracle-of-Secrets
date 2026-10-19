@@ -1,11 +1,16 @@
 ; =========================================================
-; Switch Hook prototype: exchange with a stationary ice block.
+; Switch Hook prototype: exchange with a stationary ice block or statue.
 ; Ordinary Hookshot/Goldstar retain their existing collision path.
 ;
-; Target contract: live $D5, grounded, stopped, same dungeon/layer,
-; within 128px, visible landing, and safe floor under both footprints.
+; Target contract: live $D5 ice block or native $1C movable statue,
+; grounded, stopped, same dungeon/layer, within 128px, visible landing,
+; and safe floor under both footprints. The Elegy of Stone echo ($1C with
+; SprFrame=!Stone_Marker) is not pushable and is never a target.
+; Ruling 2026-10-19: "Ice blocks + statues" (no pots, no enemies).
 ; This prototype intentionally has no outdoor or enemy exchange.
 ; Link's feet occupy sprite Y+8..15, so Link Y = block Y-8.
+; Both actors recompute $0642 from their own position every active frame,
+; after Ancilla_Main, so a moved statue presses or releases a plate itself.
 ;
 ; $07F8       : active-shot tag ($A5, zero otherwise)
 ; $07F9-$07FA : launch dungeon room
@@ -25,6 +30,7 @@ pullpc
 !SwitchHookLayer  = $07FB
 !SwitchHookMode   = $07FC
 !SwitchHookTag    = $A5
+!SwitchHookStatue = $1C               ; usdasm Sprite_1C_Statue ($06C0E8)
 
 assert !SwitchHookMode < $0800, "Switch Hook exceeds its WRAM reservation"
 
@@ -264,10 +270,17 @@ SwitchHook_ContextValid:
 }
 
 ; Y=sprite, X=ancilla. Read-only validation until TryExchange commits.
+; $08 = hit height above the 16x16 base: 0 for ice, 8 for the statue head.
+; Statue SprFrame is its 0/1 grab flag; its own reset path clears it.
 SwitchHook_TargetValid:
 {
   LDA.w SprState,Y : CMP.b #$09 : BNE .no
-  LDA.w SprType,Y : CMP.b #Sprite_IceBlock : BNE .no
+  STZ.b $08 : STZ.b $09
+  LDA.w SprType,Y : CMP.b #Sprite_IceBlock : BEQ .kind
+  CMP.b #!SwitchHookStatue : BNE .no
+  LDA.w SprFrame,Y : CMP.b #!Stone_Marker : BEQ .no
+  LDA.b #$08 : STA.b $08
+  .kind
   LDA.w SprFloor,Y : CMP.b $EE : BNE .no
   LDA.w SprY,Y : STA.b $0A
   LDA.w SprYH,Y : STA.b $0B
@@ -306,8 +319,9 @@ SwitchHook_TargetValid:
   CLC : RTS
 }
 
-; Head is an 8x8 box; target is 16x16. Unsigned wrapped differences
-; reject all non-overlap, including false low-byte matches across pages.
+; Head is an 8x8 box; target is 16 wide and 16+$08 tall (top = Y-$08).
+; Unsigned wrapped differences reject all non-overlap, including false
+; low-byte matches across pages. With $08=0 this is the ice-block test.
 SwitchHook_HeadOverlaps:
 {
   LDA.w $0C04,X : STA.b $06
@@ -320,10 +334,13 @@ SwitchHook_HeadOverlaps:
   LDA.w $0BFA,X : STA.b $06
   LDA.w $0C0E,X : STA.b $07
   %a16()
-  LDA.b $06 : SEC : SBC.b $0A : CLC : ADC.w #$0007
-  CMP.w #$0017
+  LDA.b $06 : SEC : SBC.b $0A : CLC : ADC.b $08
+  CLC : ADC.w #$0007 : STA.b $06
+  LDA.w #$0017 : CLC : ADC.b $08
+  CMP.b $06                   ; carry set: limit >= distance
   %a8()
-  BCS .no
+  BEQ .no
+  BCC .no
   SEC : RTS
   .no
   CLC : RTS
