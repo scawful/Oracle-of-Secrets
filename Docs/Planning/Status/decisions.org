@@ -1936,3 +1936,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   basement route ?").
   Answer: "Yes: keep the Big Key in the basement, put the Compass in the garden, and keep the
   prison wing shut until the escape." (scawful, 2026-10-19)
+
+* DECIDED D3 captured death and continue return to the cell (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Codex, D3 capture and escape implementation
+  :END:
+  Death or loading a saved game while captured returns Link to cell $65.
+  The checkpoint also applies after reclaiming the blade and before completing
+  the escape. Retain the reclaimed blade; returning to the cell does not repeat
+  the confiscation. After escape, ordinary checkpoint behavior resumes.
+  This leaves the basement route and Mad Batter intact.
+  Answer: "Return to the cell" (scawful, 2026-10-19).

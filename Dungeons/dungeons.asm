@@ -166,6 +166,7 @@ WaterGate_SelectOverlayPointer:
 
 ; D3 persistent state stays in the dungeon bank; no cell/actor activation yet.
 incsrc "Dungeons/d3_prison_state.asm"
+incsrc "Dungeons/d3_prison_checkpoint.asm"
 
 ; Water collision system - placed in Bank $2C after main dungeon code
 incsrc "Collision/water_collision.asm"
