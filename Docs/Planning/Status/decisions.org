@@ -1966,3 +1966,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   prison cell ($65). No chase. Same reset as death or continue while captured.
   Rejected: a chase where the guard attacks and Link fights or runs.
   Answer: "Caught: the screen fades and Link is back in the cell." (scawful, 2026-10-19)
+
+* DECIDED Captured Link loses every sword until he takes the Meadow Blade back (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan)
+  :END:
+  At the capture the guards take every sword, not only the Meadow Blade. Link escapes unarmed
+  through the cell, the crawl and the next hall, and is armed again only when he takes the
+  Meadow Blade back from the table in $54. Fits the no-chase guard rule.
+  Rejected: Link keeps his first sword and only the Meadow Blade is taken.
+  Answer: "No: the guards take every sword; Link escapes unarmed until he takes the Meadow Blade
+  back from the table." (scawful, 2026-10-19)
