@@ -24,7 +24,7 @@ Oracle of Secrets contains **7 dungeons** plus the Fortress of Secrets (final du
 |---|--------|--------|-------|
 | S1 | Shrine of Wisdom | **Beta** | 7 rooms in dungeons.json (0x7A-0xCA); pendant chest item 0x38 = Pendant of Wisdom (correct, Core/patches.asm:13) |
 | S2 | Shrine of Power | **Beta** | 8 rooms in `dungeons.json` (0x73-0x76, 0x83-0x86); no boss by design; pendant chest item 0x39 = Pendant of Power (correct, Core/patches.asm:9); lava collision issue |
-| S3 | Shrine of Courage | **Stub** | 7 rooms in `dungeons.json` (0x07/0x17/0x32/0x33/0x43/0x53/0x63, census 2026-09-26); no Vaati boss or reward path; odd dungeon ID 0x09 (see ShrineofCourage.md) |
+| S3 | Shrine of Courage | **Stub** | 7 rooms in `dungeons.json` (0x07/0x17/0x32/0x33/0x43/0x53/0x63, census 2026-09-26); no Vaati boss or reward path; own dungeon ID 0x00 since 2026-09-27 (decisions.org 2026-10-19; see ShrineofCourage.md) |
 
 > **Note (2026-02-13):** Previous "Complete" statuses were incorrect. Assessment revealed pendant items are wrong in all three shrines, S3 is still incomplete, and shrine ownership data needed cleanup across docs/JSON. Update 2026-10: Core/patches.asm now sets the Power (0x39) and Wisdom (0x38) pendant chests; S3 Courage is chest item 0x37 in room 0x07.
 

@@ -1,7 +1,7 @@
 # Shrine of Courage
 
 **Type:** Shrine
-**Entrance ID(s):** 0x0C -> room 0x53, dungeon ID 0x09 (ZScream entrance table, bank $0F; checked 2026-09-26). Not shared: Fortress of Secrets is entrance 0x37 -> room 0x0C.
+**Entrance ID(s):** 0x0C -> room 0x53, dungeon ID 0x00 (ZScream entrance table $0F:980C; was 0x09 until the 2026-09-27 base-ROM patch `Data/rom_patches/s3_dungeon_id_2026-09-27.json`; DECIDED in decisions.org 2026-10-19). Not shared: Fortress of Secrets is entrance 0x37 -> room 0x0C.
 **Overworld Location:** OW 0x50
 **Reward:** Pendant of Courage (item 0x37)
 **Boss:** Vaati (designed as Vitreous reskin — NOT IMPLEMENTED)
@@ -13,7 +13,7 @@
 
 Shadow/temporal themed shrine in the Eon Abyss. Awards the Pendant of Courage, one of three pendants needed to forge the Master Sword.
 
-**Status:** Stub — 7 rooms in dungeons.json (2026-09-26), no boss code, odd dungeon ID 0x09 (see Known Issues 1).
+**Status:** Stub — 7 rooms in dungeons.json (2026-09-26), no boss code. Dungeon ID 0x00 (Known Issues 1 is fixed).
 
 ## Rooms (7, ROM connectivity 2026-09-26)
 
@@ -33,7 +33,7 @@ All seven rooms use blockset 7, palette 15 (same as D1). Rooms 0x16/0x26 are Zor
 
 ## Known Issues (2026-02-13)
 
-1. **Dungeon ID 0x09 is odd** (every other dungeon ID is even). Runtime check on b28 (2026-09-26, headless Mesen2):
+1. **FIXED: dungeon ID 0x09 was odd.** S3 uses its own ID 0x00 (small-key slot `$7EF37C`, DungeonMask `$8000`) since the 2026-09-27 base-ROM patch; scawful confirmed $00 on 2026-10-19 (decisions.org). Runtime check 2026-10-19 (headless Mesen2, master build 841d2bb1): an S3 key saved by Save and Quit lands in `$7EF37C`; the same build with `$09` puts it in `$7EF380` (AFS `handoffs/s3_dungeon_id_2026-10-19/WORK.md`). The pause-map grid issue below still applies to ID 0x00. Original finding, runtime check on b28 (2026-09-26, headless Mesen2):
    - Small keys: slot = ID/2 = 4 (`$7EF380`), the same slot as dungeon ID 0x08 (entrance 0x24, Final Boss Route, room 0x15). Two keys taken in S3 showed as 2 keys in the Final Boss Route; one spent there left 1 key in S3.
    - Compass / big key / map bits: `DungeonMask` is read at byte offset 9, giving `$0008`, which is Dragon Ship's bit (ID 0x18). The 0x17 chest set `$7EF364 = $0008`. A D7 big key therefore opens S3 big-key doors (0x53, 0x17) and the reverse.
    - The pause-map room grids have no slot for an odd ID; rooms 0x33/0x43/0x53/0x63 sit in the Shrine of Power (0x06) grid.
