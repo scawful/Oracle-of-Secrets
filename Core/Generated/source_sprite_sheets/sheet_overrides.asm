@@ -3,6 +3,9 @@
 pushpc
 org $40D000
 SourceSpriteSheet_64: incbin "sheets/spr64.bin"
+SourceSpriteSheet_40: incbin "sheets/spr40.bin"
+SourceSpriteSheet_43: incbin "sheets/spr43.bin"
+SourceSpriteSheet_47: incbin "sheets/spr47.bin"
 assert pc() <= $410000 || pc() == $418000, "Source sprite sheets crossed bank $40"
 ; Sprite $64, global $D7: Identity override: Impa follower sheet; no pixel or palette change.
 org $00D057 ; @hook module=Core kind=data protected_size=1
@@ -11,4 +14,25 @@ org $00D136 ; @hook module=Core kind=data protected_size=1
   db $D0
 org $00D215 ; @hook module=Core kind=data protected_size=1
   db $00
+; Sprite $40, global $B3: Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; room $A4 only.
+org $00D033 ; @hook module=Core kind=data protected_size=1
+  db $C0
+org $00D112 ; @hook module=Core kind=data protected_size=1
+  db $D2
+org $00D1F1 ; @hook module=Core kind=data protected_size=1
+  db $75
+; Sprite $43, global $B6: Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; tile $39 kept (not Kydrog).
+org $00D036 ; @hook module=Core kind=data protected_size=1
+  db $C0
+org $00D115 ; @hook module=Core kind=data protected_size=1
+  db $D6
+org $00D1F4 ; @hook module=Core kind=data protected_size=1
+  db $79
+; Sprite $47, global $BA: Kydrog boss, old pirate art (scawful 2026-10-19): dark outline around the collar and neck; room $A4 only.
+org $00D03A ; @hook module=Core kind=data protected_size=1
+  db $C0
+org $00D119 ; @hook module=Core kind=data protected_size=1
+  db $DA
+org $00D1F8 ; @hook module=Core kind=data protected_size=1
+  db $70
 pullpc
