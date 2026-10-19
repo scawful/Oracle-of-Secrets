@@ -642,6 +642,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   1. Give S3 and the Master Sword Cave / Final Boss Route rooms their own even
      dungeon IDs? (Rec: yes; keyed IDs free: $00, $04 -- $04 is proposed for the tower.)
   2. Should the $11D basement (2 heart pieces) be reachable from the Mayor's House?
+     -> DECIDED 2026-10-19: yes, one heart piece (only one chest is placed); see the entry below.
   3. Take the $81 pit-damage hunk? (Rec: yes, it only prevents a fall into Origins.)
   Answer:
 
@@ -2239,3 +2240,15 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   block staging the build.
   Rejected: only sprites changed since the last staged build; a hard must-pass gate.
   Answer: "it's a not a must, but we should do checks on all custom sprites" (scawful, 2026-10-19)
+
+* DECIDED Mayor's House basement ($11D) keeps one heart piece (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (OPEN "Room census follow-ups", question 2)
+  :END:
+  The basement under the Mayor's House ($119 stairs -> $11D) stays reachable and gives one
+  heart piece. Checked 2026-10-19 on the base ROM (yaze-editor, read only): $11D has one placed
+  chest object (0xF99 at 32,8), so the game hands out only the first chest-table entry (Piece of
+  Heart). The table still lists 6 entries for $11D (2 Piece of Heart, 4 x 20 Rupees, left over
+  from vanilla Blind's hideout); the census counted the table, not the placed chests. Optional
+  cleanup: trim the 5 unused $11D table entries so item counts stop showing a second heart piece.
+  Answer: "it has two heart pieces ? it should only have 1" (scawful, 2026-10-19)
