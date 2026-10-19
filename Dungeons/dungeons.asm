@@ -173,6 +173,7 @@ incsrc "Dungeons/d3_prison_pending_exit.asm"
 incsrc "Dungeons/d3_prison_wing.asm"
 incsrc "Dungeons/d3_prison_boss_gate.asm"
 incsrc "Dungeons/d3_prison_patrol.asm"
+incsrc "Dungeons/d3_prison_thief.asm"
 
 ; Water collision system - placed in Bank $2C after main dungeon code
 incsrc "Collision/water_collision.asm"

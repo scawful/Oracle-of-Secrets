@@ -117,6 +117,7 @@ Part00_RoomSprites:
   endif
   if !ENABLE_D3_PRISON_SEQUENCE == 1 && !DISABLE_SPRITES == 0
     JSL D3Prison_BladeStage               ; D3 prison; any GameState
+    JSL D3Prison_ThiefStage               ; neighboring-cell hint actor
   endif
   LDA.l GameState : BNE .done             ; Part00 only
   if !ENABLE_PART00_CHECKPOINT == 1
