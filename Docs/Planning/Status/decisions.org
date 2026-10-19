@@ -2302,3 +2302,12 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Dungeon_Tables_Expansion.md section 5) when a new pit room needs a slot.
   Answer: "ok no dont put the pit in there, you cant even fall in that's just decoration"
   (scawful, 2026-10-19)
+
+* DECIDED The Song of Healing wakes the Sick Kid for the Pegasus Boots (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (Sick Kid trigger check)
+  :END:
+  Link plays the Song of Healing at the Sick Kid's bed in the village (room $102, beat 12) and
+  gets the Pegasus Boots. This is what Sprites/NPCs/bug_net_kid.asm already does, so no code
+  change. Replaces an older review note that said the Magic Powder wakes him.
+  Answer: "Song of Healing: keep the code as it is." (scawful, 2026-10-19)
