@@ -84,16 +84,20 @@ D3Prison_ApplyCellProfile:
   LDA.w #$0065 : STA.l $7E00A0 : STA.l $7E048E
   LDA.w #$0D10
   STA.l $7E00E8 : STA.l $7E00E6 : STA.l $7E0122 : STA.l $7E0124
-  LDA.w #$0A00
+  ; Keep Link at screenX120 while exposing the neighboring cell to the east.
+  LDA.w #$0A58
   STA.l $7E00E2 : STA.l $7E00E0 : STA.l $7E011E : STA.l $7E0120
+  LDA.w #$0A00 ; room bounds stay fixed while the current scroll moves
   STA.l $7E0608 : STA.l $7E060A : STA.l $7E060C
-  LDA.w #$0D78 : STA.l $7E0020
-  LDA.w #$0A78 : STA.l $7E0022
-  ; Native camera triggers are LOCAL within a room; do not translate these.
+  ; Saved room65 layout: tile26,43, inside the west cell.
+  LDA.w #$0D58 : STA.l $7E0020
+  LDA.w #$0AD0 : STA.l $7E0022
+  ; Native triggers are room-local, but track current scroll pixel-for-pixel.
+  ; Shift the horizontal pair +0058 with the scroll, not with the room origin.
   LDA.w #$0187 : STA.l $7E0618
   LDA.w #$0189 : STA.l $7E061A
-  LDA.w #$007F : STA.l $7E061C
-  LDA.w #$0081 : STA.l $7E061E
+  LDA.w #$00D7 : STA.l $7E061C
+  LDA.w #$00D9 : STA.l $7E061E
   LDA.w #$01F8 : STA.l $7E00EC
   LDA.w #$1DEE : STA.l $7E0696
   LDA.w #$0000
@@ -109,9 +113,10 @@ D3Prison_ApplyCellProfile:
   LDA.b #$00
   STA.l $7E002F : STA.l $7E00A4 : STA.l $7E006C
   STA.l $7E00EE : STA.l $7E0476
-  STA.l $7E00A7 : STA.l $7E00A9
-  ; Cell65 layout5 has a wide lower half; Module05 does not recalculate this.
-  LDA.b #$02 : STA.l $7E00A6 : STA.l $7E0AA1 : STA.l $7E00AA
+  STA.l $7E00A9
+  ; Cell65 layout7 is wide and tall; Module05 does not recalculate this.
+  LDA.b #$02 : STA.l $7E00A6 : STA.l $7E00A7
+  STA.l $7E0AA1 : STA.l $7E00AA
   LDA.b #$10 : STA.l $7E0132 : STA.l $7E040C
   PLP
   LDA.b #$80 : STA.b $45

@@ -6,8 +6,8 @@ if !ENABLE_D3_PRISON_SEQUENCE == 1 && !DISABLE_SPRITES == 0
 
 !D3Prison_ThiefMarker = $D3
 !D3Prison_ThiefMarker2 = $65
-!D3Prison_ThiefX = $0AE0
-!D3Prison_ThiefY = $0D78
+!D3Prison_ThiefX = $0B50 ; saved room65 tile42,43, inside the east cell
+!D3Prison_ThiefY = $0D58
 
 ; End-of-list room loader, native M8/X8, DP0. Preserve full A/X/Y, DB and P,
 ; and the room-list allocator's next-free slot in $02. Highest free slot wins.
@@ -142,9 +142,11 @@ D3Prison_ThiefMain:
   RTL
 }
 
-; The solid cell partition deliberately prevents native contact solicitation.
-; A talks across its authored east edge only from this bounded floor0 strip,
-; while human Link faces right. Full coordinates prevent low-byte wrap.
+; The separate cells prevent native contact solicitation. This scripted call
+; reaches the thief 104..112px east of Link, only from the west cell's east
+; floor0 strip while human Link faces right. Full coordinates prevent wrap.
+; The rightward probes (X+15, Y+8/16/23) stay in floor tiles28..30,42..45;
+; the south bars start at row46, so Link's Y must not exceed $0D58.
 ; Calls the real native busy predicate; no memory or sprite fields are written.
 D3Prison_ThiefCanTalk:
 {
@@ -165,10 +167,10 @@ D3Prison_ThiefCanTalk:
   PLB : PLP : CLC : RTL
   .position
   REP #$20
-  LDA.b $22 : CMP.w #$0AA0 : BCC .no
-  CMP.w #$0AB1 : BCS .no
-  LDA.b $20 : CMP.w #$0D68 : BCC .no
-  CMP.w #$0D89 : BCS .no
+  LDA.b $22 : CMP.w #$0AE0 : BCC .no
+  CMP.w #$0AE9 : BCS .no
+  LDA.b $20 : CMP.w #$0D48 : BCC .no
+  CMP.w #$0D59 : BCS .no
   SEP #$20
   PLB : PLP : SEC : RTL
   .no

@@ -22,25 +22,45 @@ RESTART = "D3Prison_RestartEscape"
 REGIONS = ((0x7E0000, 0x2000), (0x7EC000, 0x200), (0x7EF300, 0x100))
 
 # Reviewed diagnostic room-$65 profile, independent of compiled instructions.
-# Geometry scout corrected Y to $0D78; $0DD8 was the south wall. This literal
-# contract must not be derived from the candidate it is intended to verify.
+# User-saved layout7 places Link at tile26,43 (world $0AD0,$0D58).
+# This literal contract must not be derived from the candidate under test.
 CELL_BYTES = {
     0x7E002F: 0x00, 0x7E0AA1: 0x02, 0x7E0132: 0x10, 0x7E00A4: 0x00,
     0x7E040C: 0x10, 0x7E006C: 0x00, 0x7E00EE: 0x00, 0x7E0476: 0x00,
-    0x7E00A6: 0x02, 0x7E00A7: 0x00, 0x7E00A9: 0x00, 0x7E00AA: 0x02,
+    0x7E00A6: 0x02, 0x7E00A7: 0x02, 0x7E00A9: 0x00, 0x7E00AA: 0x02,
 }
 CELL_WORDS = {
     0x7E010E: 0x0032, 0x7E00A0: 0x0065, 0x7E048E: 0x0065,
     0x7E00E8: 0x0D10, 0x7E00E6: 0x0D10, 0x7E0122: 0x0D10, 0x7E0124: 0x0D10,
-    0x7E00E2: 0x0A00, 0x7E00E0: 0x0A00, 0x7E011E: 0x0A00, 0x7E0120: 0x0A00,
-    0x7E0020: 0x0D78, 0x7E0022: 0x0A78,
-    0x7E0618: 0x0187, 0x7E061A: 0x0189, 0x7E061C: 0x007F, 0x7E061E: 0x0081,
+    0x7E00E2: 0x0A58, 0x7E00E0: 0x0A58, 0x7E011E: 0x0A58, 0x7E0120: 0x0A58,
+    0x7E0020: 0x0D58, 0x7E0022: 0x0AD0,
+    0x7E0618: 0x0187, 0x7E061A: 0x0189, 0x7E061C: 0x00D7, 0x7E061E: 0x00D9,
     0x7E00EC: 0x01F8, 0x7E0696: 0x1DEE, 0x7E0698: 0x0000,
     0x7E0610: 0x0000, 0x7E0612: 0x0110, 0x7E0614: 0x0000, 0x7E0616: 0x0100,
     0x7E0600: 0x0D00, 0x7E0602: 0x0C00, 0x7E0604: 0x0D10, 0x7E0606: 0x0D10,
     0x7E0608: 0x0A00, 0x7E060A: 0x0A00, 0x7E060C: 0x0A00, 0x7E060E: 0x0B00,
     0x7E04AA: 0x0000,
 }
+
+
+def camera_projection():
+    """Static profile geometry only; native camera execution is a later check."""
+    wake, scroll = CELL_WORDS[0x7E0022], CELL_WORDS[0x7E00E2]
+    require(wake - scroll == 120, "Wake must preserve the centered Link anchor")
+    local_scroll = scroll & 0x1FF
+    require((CELL_WORDS[0x7E061C] - local_scroll,
+             CELL_WORDS[0x7E061E] - local_scroll) == (0x7F, 0x81),
+            "Horizontal triggers must move with the scroll")
+    projected = []
+    for link_x in range(0xAE0, 0xAE9):
+        camera_x = scroll + link_x - wake
+        require(CELL_WORDS[0x7E060A] <= camera_x <= CELL_WORDS[0x7E060E],
+                "Talk approach must remain inside native horizontal bounds")
+        thief_screen_x = 0xB50 - camera_x
+        require(0 <= thief_screen_x <= 240, "Thief body must fit the screen at approach")
+        projected.append(dict(link_x=link_x, camera_x=camera_x,
+                              thief_screen_x=thief_screen_x))
+    return projected
 
 
 @dataclass(frozen=True)
@@ -225,6 +245,7 @@ def main():
     require(0 < len(rom) <= 0x400000 and len(rom) % 0x8000 != 0x200,
             "Expected headerless LoROM <=4 MiB")
     require(CELL_BYTES and CELL_WORDS, "Cell profile expectations have not been supplied")
+    projection = camera_projection()
     entries = {name: symbol(symbols, name) for name in (PREDICATE, PROFILE, RESTART)}
     hook = 2 * 0x8000 + (0xDADB & 0x7FFF)
     require(rom[hook:hook + 4] == b"\x22" + entries[PROFILE].to_bytes(3, "little"),
@@ -251,6 +272,7 @@ def main():
                           script_sha256=digest(Path(__file__).read_bytes()),
                           imported_helpers_sha256=digest(Path(__file__).with_name("d3_prison_state.py").read_bytes()),
                           runner_copy_padding_bytes=padding, source_inputs_unchanged=True, stubs=[],
+                          static_camera_projection=projection,
                           claim="Compiled cell eligibility, escape-restart transaction and entrance-profile CPU proof only; "
                                 "no native death/continue, save/reopen, blade-table reclaim, "
                                 "geometry, or gameplay acceptance."), indent=2) + "\n"
