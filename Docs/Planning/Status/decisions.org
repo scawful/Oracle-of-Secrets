@@ -2222,3 +2222,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   scripts are now approved.
   Rejected: hinted wording ("I remember a song that heals...").
   Answer: "Use the plain wording for the Captain's three lines." (scawful, 2026-10-19)
+
+* DECIDED Sprite QA: check all custom sprites; not a build gate (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (queue item: sprite QA bar before a playtest build)
+  :END:
+  Before a playtest build, agents run the sprite QA checks (hit flash, death poof, OAM while
+  carried, reload after opening the map, wall collision) on all custom sprites, not only the
+  ones changed since the last build. A failed check is reported with the build; it does not
+  block staging the build.
+  Rejected: only sprites changed since the last staged build; a hard must-pass gate.
+  Answer: "it's a not a must, but we should do checks on all custom sprites" (scawful, 2026-10-19)
