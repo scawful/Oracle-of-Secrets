@@ -17,6 +17,15 @@ if !ENABLE_D3_PRISON_SEQUENCE == 1
     STZ.w $04AB
     JML $028208 ; LoadUnderworldRoomRebuildHUD -> Module06 loader
   .not_captured
+  JSL D3Prison_ShouldResumeHall : BCC .not_pending
+    ; A death/load with the blade but before arrest resumes in the hall.
+    ; Entrance28 is room56's normal south entrance; retain the blade/pending
+    ; flag so the same hall scene runs, never silently confiscate on load.
+    LDA.b #$01 : STA.w $010A
+    LDA.b #$28 : STA.w $010E
+    STZ.w $010F : STZ.w $04AA : STZ.w $04AB
+    JML $028208
+  .not_pending
 endif
   LDA.l SpawnPoint : CMP.b #!Spawn_GoronCheckpoint : BNE .legacy
     ; Consume even a malformed marker before the seven-record spawn arrays.

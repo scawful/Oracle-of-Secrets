@@ -29,8 +29,8 @@ D3Prison_ShouldResumeCell:
 ; Common regular/spawn entrance join, before drawing/header/sprite loading.
 ; Native M8/X16, DB02, DP0. Replace LDA80/STA45 and return with exactly that
 ; A/N/Z result; the next native STA44 still runs. No scratch or index writes.
-; Room65 is not yet authored: this interior floor position is a diagnostic
-; fixture. The south-door position from entrance32 would be inside its wall.
+; The paired room65 recipe supplies the cell and Minish passage at this
+; interior position. Entrance32's south-door position would be inside its wall.
 D3Prison_ApplyCellProfile:
 {
   PHP

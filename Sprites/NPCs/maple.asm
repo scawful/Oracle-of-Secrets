@@ -396,6 +396,9 @@ pullpc
 DreamReturn_PlayerControl:
 {
   JSL $078000 ; Link_Main (replaced instruction)
+  if !ENABLE_D3_PRISON_SEQUENCE == 1
+    JSL D3Prison_PlayerControl
+  endif
   PHP
   SEP #$30
   LDA.w DreamReturnTimer : BEQ .done

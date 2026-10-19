@@ -75,11 +75,21 @@ endif
 LinkState_CheckMinishTile:
 {
   LDA $02B2 : BEQ .blocked ; no form
-    CMP.w #$0007 : BEQ .allowed  ; moosh can fly over
+  if !ENABLE_D3_PRISON_SEQUENCE == 1
+    CMP.w #$0007 : BEQ .moosh   ; moosh can fly over ordinary gaps
+  else
+    CMP.w #$0007 : BEQ .allowed ; moosh can fly over
+  endif
       CMP.w #$0005 : BNE .blocked  ; not minish
       .allowed
         LDA $0A : TSB $0343
         RTS
+
+  if !ENABLE_D3_PRISON_SEQUENCE == 1
+  .moosh
+    JSL D3Prison_IsTinyPrisonGap : BCS .blocked
+  BRA .allowed
+  endif
 
   .blocked
   LDA $0A : TSB $0E ; Blocked
