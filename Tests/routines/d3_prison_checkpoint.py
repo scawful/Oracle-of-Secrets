@@ -247,16 +247,134 @@ def verify(case, before, request, result):
                 steps=result["steps"], registers=regs)
 
 
+def check_key_lock(rom, symbols, runner):
+    """Six actual OpenChestForItem calls, using native exits and synthetic WRAM.
+
+    No callee stubs or control-ROM patching. Covers the guarded cell and the
+    ordinary small-key path, including native room flag/collision updates.
+    """
+    gate = symbol(symbols, "D3Prison_CellKeyBlockGate")
+    offset = 0x8000 + (0xEB8C & 0x7FFF)
+    require(rom[offset:offset + 4] == b"\x5C" + gate.to_bytes(3, "little"),
+            "Object_KeyBlock does not dispatch to the tested guard")
+    rows = (
+        ("captured-cell-keeps-small-keys", 0x65, 0xA1, 0, 3, False),
+        ("reclaimed-unfinished-cell-stays-locked", 0x65, 0xA9, 2, 3, False),
+        ("other-room-keeps-normal-unlock", 0x64, 0xA1, 0, 3, True),
+        ("escaped-cell-keeps-normal-unlock", 0x65, 0xAB, 2, 3, True),
+        ("captured-big-key-only-stays-locked", 0x65, 0xA1, 0, 0, False),
+        ("ordinary-big-key-only-stays-locked", 0x64, 0x80, 2, 0, False),
+    )
+    plans = []
+    # F98 at tile35,46. The object list holds its BG tilemap byte offset.
+    tile = 46 * 64 + 35
+    for name, room, flags, sword, keys, opens in rows:
+        regions = {base: bytearray((n * 37 + 11) & 255 for n in range(size))
+                   for base, size in ((0x7E0000, 0x2000), (0x7E2000, 0x2000),
+                                      (0x7EF000, 0x400), (0x7F2000, 0x1000))}
+        for address, value, width in (
+            (0x7E001B, 1, 1), (0x7E00A0, room, 2), (0x7E040C, 0x10, 2),
+            (FLAGS, flags, 1), (SWORD, sword, 1), (0x7EF36F, keys, 1),
+            (0x7EF366, 0xFFFF, 2), (0x7E0400, 0, 2), (0x7E0402, 0, 2),
+            (0x7E0408, 0, 2), (0x7E1000, 0, 2), (0x7E046A, 0x52, 2),
+            (0x7E06E0, 0x8000 | (tile * 2), 2),
+        ):
+            put(regions, address, value, width)
+        for address in (0x7E00A6, 0x7E00A7, 0x7E00A9, 0x7E00AA):
+            put(regions, address, 0)
+        for delta in (0, 1, 64, 65):
+            put(regions, 0x7F2000 + tile + delta, 0x58)
+        request = dict(entry=0x01EB66, reset_ram=True,
+                       registers=dict(a=0x58, x=0x47, y=0x5A, p=0x34,
+                                      db=0x35, d=0, sp=SP),
+                       writes=[dict(address=b, bytes=list(v)) for b, v in regions.items()],
+                       reads=[dict(address=b, length=len(v)) for b, v in regions.items()],
+                       trace_writes=True, max_steps=600)
+        plans.append((name, room, keys, opens, regions, request))
+    with tempfile.TemporaryDirectory(prefix="d3-key-lock-") as folder:
+        copy = Path(folder) / "candidate.sfc"
+        copy.write_bytes(rom + b"\xFF" * ((-len(rom)) % 0x8000))
+        run = subprocess.run([str(runner), str(copy)],
+                             input="".join(json.dumps(p[-1]) + "\n" for p in plans),
+                             capture_output=True, text=True, timeout=30, check=True)
+    lines = run.stdout.splitlines()
+    require(len(lines) == len(plans), "Wrong number of key-lock CPU results")
+    results = []
+    stack = set(range(0x7E0000 + SP - 0x40, 0x7E0000 + SP + 1))
+    trampoline = set(range(0x7F8000, 0x7F8004))
+    for (name, room, keys, opens, before, request), line in zip(plans, lines):
+        result = json.loads(line)
+        require(result.get("returned"), f"{name}: {result.get('error')}")
+        require(not result.get("stub_calls") and not result.get("mmio_writes"),
+                f"{name}: unexpected stub or device access")
+        regs = result["registers"]
+        for key in ("db", "d", "sp"):
+            require(regs[key] == request["registers"][key], f"{name}: native ABI {key}")
+        require(regs["e"] == 0 and regs["p"] & 0x31 == 0x30 | int(opens),
+                f"{name}: wrong native return widths or carry")
+        reads = result["reads"]
+        require(len(reads) == len(before), f"{name}: missing canary read")
+        after = {}
+        for (base, data), read in zip(before.items(), reads):
+            require(len(read["bytes"]) == len(data), f"{name}: truncated canary read")
+            after[base] = bytes(read["bytes"])
+        save = after[0x7EF000]
+        require(save[0x36F] == keys - int(opens), f"{name}: incorrect small-key count")
+        for n in range(0x300, 0x400):
+            if n != 0x36F:
+                require(save[n] == before[0x7EF000][n],
+                        f"{name}: inventory/progression changed at ${0x7EF000+n:06X}")
+        require(int.from_bytes(after[0x7E0000][0x402:0x404], "little") ==
+                (0x100 if opens else 0), f"{name}: incorrect opened-room flag")
+        collision = bytearray(before[0x7F2000])
+        if opens:
+            for delta in (0, 1, 64, 65):
+                collision[tile + delta] = 0
+        require(after[0x7F2000] == collision, f"{name}: unexpected lock collision writes")
+        writes = {physical(w["address"]) for w in result.get("writes", [])}
+        allowed = stack | trampoline | {0x7E000E, 0x7E000F}
+        if opens:
+            allowed |= {0x7E0000+n for n in (*range(12), 0x14, 0x72, 0x73,
+                         0x12E, 0x12F, 0x402, 0x403, 0x408, *range(0x1000, 0x101C))}
+            allowed |= {0x7EF36F, 0x7EF370, 0x7EF000+2*room, 0x7EF001+2*room}
+            for delta in (0, 1, 64, 65):
+                allowed.add(0x7F2000 + tile + delta)
+                allowed.update((0x7E2000+2*(tile+delta), 0x7E2001+2*(tile+delta)))
+        require(writes <= allowed, f"{name}: unexpected writes {sorted(writes-allowed)}")
+        results.append(dict(name=name, passed=True, opens=opens, keys_before=keys,
+                            keys_after=save[0x36F], steps=result["steps"], registers=regs))
+    return dict(passed=True, case_count=len(results), cases=results,
+                entry="01EB66", guard=f"{gate:06X}", stubs=[],
+                claim="Compiled native key-lock entry/exits with synthetic WRAM only; "
+                      "no native movement, room geometry, or gameplay acceptance.")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("rom", "symbols", "cpu-runner"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--key-lock-only", action="store_true",
+                        help="Run only six prison-lock/native-exit cases")
     args = parser.parse_args()
     inputs = {p: p.read_bytes() for p in (args.rom, args.symbols, args.cpu_runner)}
     rom, symbols = inputs[args.rom], inputs[args.symbols].decode()
     require(0 < len(rom) <= 0x400000 and len(rom) % 0x8000 != 0x200,
             "Expected headerless LoROM <=4 MiB")
+    if args.key_lock_only:
+        if args.output:
+            require(args.output.resolve() not in {p.resolve() for p in inputs},
+                    "Output must not overwrite an input")
+        result = check_key_lock(rom, symbols, args.cpu_runner)
+        require(all(p.read_bytes() == b for p, b in inputs.items()),
+                "Input changed during key-lock test")
+        result["input_sha256"] = {str(p): digest(b) for p, b in inputs.items()}
+        result["script_sha256"] = digest(Path(__file__).read_bytes())
+        text = json.dumps(result, indent=2) + "\n"
+        if args.output:
+            args.output.write_text(text)
+        print(text, end="")
+        return
     require(CELL_BYTES and CELL_WORDS, "Cell profile expectations have not been supplied")
     projection = camera_projection()
     entries = {name: symbol(symbols, name) for name in (PREDICATE, PROFILE, RESTART)}

@@ -26,6 +26,28 @@ D3Prison_ShouldResumeCell:
   RTL
 }
 
+; Object_KeyBlock enters inside OpenItemChest with M16/X16, DP0 and its
+; PHB/PHA/PHY still on the stack. Preserve X/Y/DB and return through the native
+; exits that unwind that stack; never RTL from this long-jump replacement.
+; Only cell65 in D3 is sealed for a valid unfinished captured transaction.
+; The ordinary path retains Oracle's small-key behavior, including the adjacent
+; high byte of the 16-bit SRAM access. Big Key inventory is never consulted.
+D3Prison_CellKeyBlockGate:
+{
+  LDA.l $7E00A0 : CMP.w #$0065 : BNE .ordinary
+  LDA.l $7E001B : AND.w #$00FF : CMP.w #$0001 : BNE .ordinary
+  LDA.l $7E040C : AND.w #$00FF : CMP.w #$0010 : BNE .ordinary
+  JSL D3Prison_ShouldResumeCell : BCS .denied
+  .ordinary
+  LDA.l $7EF36F : AND.w #$00FF : BEQ .denied
+  LDA.l $7EF36F
+  DEC A
+  STA.l $7EF36F
+  JML $01EBA6 ; .open_big_key_lock: set room flag and redraw
+  .denied
+  JML $01EBE1 ; .cannot_open_big_key_lock: unwind and return Carry clear
+}
+
 ; Restart only a valid unfinished escape. Keep the backed-up sword and bit80;
 ; do not recapture (which would replace the backup with the current sword).
 ; Idempotent for already-unarmed Link. Eligibility remains read-only above.
