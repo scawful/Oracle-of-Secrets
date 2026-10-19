@@ -68,6 +68,8 @@ endif
 
 ; BossKit (Sprites/Bosses/boss_kit.asm) uses WRAM $7FF380-$7FF384 in the same
 ; vanilla-free UNUSED_7FF180 block: the boss frame load meter and earthquake.
+; BossDirector (Sprites/Bosses/boss_director.asm) uses $7FF388-$7FF39D after
+; it: the boss attack token, rest, hit grace, cooldowns and 8 boss bytes.
 
 ; Current Song
 CurrentSong    = $030F

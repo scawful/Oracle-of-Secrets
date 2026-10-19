@@ -279,6 +279,9 @@ org $328000
 incsrc "Sprites/Bosses/boss_kit.asm"
 %log_end("boss_kit", !LOG_SPRITES)
 
+; Boss pacing (its code is in bank $3A; only labels land here).
+incsrc "Sprites/Bosses/boss_director.asm"
+
 %log_start("twinrova", !LOG_SPRITES)
 incsrc "Sprites/Bosses/twinrova.asm"
 %log_end("twinrova", !LOG_SPRITES)

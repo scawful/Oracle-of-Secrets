@@ -10,11 +10,18 @@
 ; for the two heads.
 ;
 ; OAM: 2-4 head tiles + 4 neck links = 8 entries at most (!NbrTiles 07).
-; RAM: SprMiscA = animation step, SprMiscC = sway phase,
+; Attacks: the body (Kydreeok_TakeTurn, kydreeok.asm) gives one head at a
+; time the attack token and starts it in a telegraph (Bite, Breath, Spit).
+; Each attack ends in a punish window, harmless to touch: Stuck on the
+; floor after a bite, Pant up high after a breath (a shot knocks it into
+; Stunned), then Recover hands the token back (Kydreeok_HeadDone).
+;
+; RAM: SprMiscA = animation step, SprMiscB = health when the pant began,
+;      SprMiscC = sway phase, SprMiscD = turn code (!KydTurn_*),
 ;      SprMiscE/F = attack vector (lunge target or breath step),
-;      SprMiscG = breath flames laid, SprTimerA = state time,
-;      SprTimerB = animation, SprTimerD = breath pacing,
-;      SprTimerE = attack cooldown.
+;      SprMiscG = telegraph cue played, then breath flames laid,
+;      SprTimerA = state time, SprTimerB = animation,
+;      SprTimerD = breath pacing.
 ; =========================================================
 
 !SPRID              = Sprite_KydreeokHead
@@ -77,7 +84,6 @@ Sprite_KydreeokHead_Prep:
   STZ.w SprMiscF, X
   STZ.w SprMiscG, X
   LDA.b #$28 : STA.w SprTimerA, X ; grow out of the shoulder
-  LDA.b #$40 : STA.w SprTimerE, X ; no attack right after rising
   ; The two heads sway half a cycle apart.
   LDA.w SprSubtype, X : BEQ .left
     LDA.b #$40
@@ -105,6 +111,12 @@ Sprite_KydreeokHead_Main:
   LDA.w SprAction, X : BEQ .no_contact
     PHX
     JSL Sprite_CheckDamageFromPlayer
+    PLX
+    ; Recover, Stuck, Pant and Stunned are punish windows: no touch damage.
+    LDA.w SprAction, X : CMP.b #!KydHead_Recover : BCC .touch
+    CMP.b #!KydHead_Spit : BCC .no_contact
+    .touch
+    PHX
     JSL Sprite_CheckDamageToPlayer
     PLX
   .no_contact
@@ -116,7 +128,11 @@ Sprite_KydreeokHead_Main:
                    KydreeokHead_LungeStrike,
                    KydreeokHead_BreathWindup,
                    KydreeokHead_BreathFire,
-                   KydreeokHead_Recover)
+                   KydreeokHead_Recover,
+                   KydreeokHead_Stuck,
+                   KydreeokHead_Pant,
+                   KydreeokHead_Stunned,
+                   KydreeokHead_Spit)
 
   ; 0x00
   KydreeokHead_Rise:
@@ -132,30 +148,33 @@ Sprite_KydreeokHead_Main:
     RTS
   }
 
-  ; 0x01
+  ; 0x01 - wait for a turn from the body
   KydreeokHead_Idle:
   {
-    JSR KydreeokHead_IdleMove
-    JMP KydreeokHead_MaybeAttack
+    JMP KydreeokHead_IdleMove
   }
 
-  ; 0x02 - rear up (the draw shakes the head), then commit to a target
+  ; 0x02 - bite telegraph: rear up (the draw shakes the head). The target
+  ; is where the player stood on the first frame, so a step aside dodges.
   KydreeokHead_LungeWindup:
   {
+    JSR KydreeokHead_Cue : BCC .locked
+      JSR KydreeokHead_Anchor
+      JSR KydreeokHead_AimAtPlayer
+    .locked
     JSR KydreeokHead_Anchor
     LDY.w SprSubtype, X
     LDA.w KydreeokHead_RestX, Y : STA.b $08
     LDA.b #-48 : STA.b $09
     LDA.b #$02 : JSR KydreeokHead_SeekOffset
     LDA.w SprTimerA, X : BNE .winding
-      JSR KydreeokHead_AimAtPlayer
       LDA.b #$0C : STA.w SprTimerA, X
-      %GotoAction(3)
+      %GotoAction(!KydHead_Strike)
     .winding
     RTS
   }
 
-  ; 0x03 - snap to where the player stood when the windup ended
+  ; 0x03 - snap to the locked target, then lie stuck on the floor
   KydreeokHead_LungeStrike:
   {
     JSR KydreeokHead_Anchor
@@ -163,29 +182,33 @@ Sprite_KydreeokHead_Main:
     LDA.w SprMiscF, X : STA.b $09
     LDA.b #$01 : JSR KydreeokHead_SeekOffset
     LDA.w SprTimerA, X : BNE .striking
-      LDA.b #$14 : STA.w SprTimerA, X
-      %GotoAction(6)
+      LDA.b #!KydKnob_Stuck : JSL Kydreeok_Knob : STA.w SprTimerA, X
+      LDA.b #$06 : STA.l BossKit_Quake
+      %GotoAction(!KydHead_Stuck)
     .striking
     RTS
   }
 
-  ; 0x04 - rear back while the fire charges (the draw glows), then aim
+  ; 0x04 - breath telegraph: rear back while the fire charges (the draw
+  ; glows). The aim locks on the first frame.
   KydreeokHead_BreathWindup:
   {
+    JSR KydreeokHead_Cue : BCC .locked
+      ; One 12 px step toward the player, kept for the whole breath.
+      LDA.b #$0C : JSL Sprite_ProjectSpeedTowardsPlayer
+      LDA.b $01 : STA.w SprMiscE, X
+      LDA.b $00 : STA.w SprMiscF, X
+    .locked
     JSR KydreeokHead_Anchor
     LDY.w SprSubtype, X
     LDA.w KydreeokHead_RestX, Y : CMP.b #$80 : ROR A : STA.b $08
     LDA.b #-52 : STA.b $09
     LDA.b #$02 : JSR KydreeokHead_SeekOffset
     LDA.w SprTimerA, X : BNE .charging
-      ; One 12 px step toward the player, kept for the whole breath.
-      LDA.b #$0C : JSL Sprite_ProjectSpeedTowardsPlayer
-      LDA.b $01 : STA.w SprMiscE, X
-      LDA.b $00 : STA.w SprMiscF, X
       STZ.w SprMiscG, X
       STZ.w SprTimerD, X
       LDA.b #$2A : JSL Sound_SetSfx2PanLong
-      %GotoAction(5)
+      %GotoAction(!KydHead_Fire)
     .charging
     RTS
   }
@@ -217,21 +240,112 @@ Sprite_KydreeokHead_Main:
       LDA.b #$06 : STA.b $09
       LDA.b #$10 : JSL BossKit_FxAtOffset
       LDA.w SprMiscG, X : CMP.b #$06 : BCC .wait
-        LDA.b #$18 : STA.w SprTimerA, X
-        %GotoAction(6)
+        LDA.b #!KydKnob_Pant : JSL Kydreeok_Knob : STA.w SprTimerA, X
+        LDA.w SprHealth, X : STA.w SprMiscB, X
+        %GotoAction(!KydHead_Pant)
     .wait
     RTS
   }
 
-  ; 0x06
+  ; 0x06 - ease back to rest, then hand the token back
   KydreeokHead_Recover:
   {
     JSR KydreeokHead_IdleMove
     LDA.w SprTimerA, X : BNE .recovering
-      %GotoAction(1)
+      JSL Kydreeok_HeadDone
+      %GotoAction(!KydHead_Idle)
     .recovering
     RTS
   }
+
+  ; 0x07 - after a bite (or a dive landing) the head lies on the floor:
+  ; the sword window.
+  KydreeokHead_Stuck:
+  {
+    JSR KydreeokHead_Anchor
+    LDA.w SprMiscE, X : STA.b $08
+    LDA.w SprMiscF, X : BMI .lift
+    CMP.b #16 : BCS .low
+    .lift
+      LDA.b #16
+    .low
+    STA.b $09
+    LDA.b #$01 : JSR KydreeokHead_SeekOffset
+    JMP KydreeokHead_EndWindow
+  }
+
+  ; 0x08 - after the breath the head pants up high, out of sword reach
+  ; (the draw pulses). A shot that hurts it knocks it down.
+  KydreeokHead_Pant:
+  {
+    JSR KydreeokHead_Anchor
+    LDY.w SprSubtype, X
+    LDA.w KydreeokHead_RestX, Y : CMP.b #$80 : ROR A : STA.b $08
+    LDA.b #-52 : STA.b $09
+    LDA.b #$02 : JSR KydreeokHead_SeekOffset
+    LDA.w SprHealth, X : CMP.w SprMiscB, X : BCS .no_hit
+      LDA.b #!KydKnob_Stun : JSL Kydreeok_Knob : STA.w SprTimerA, X
+      %GotoAction(!KydHead_Stunned)
+      RTS
+    .no_hit
+    JMP KydreeokHead_EndWindow
+  }
+
+  ; 0x09 - knocked down by a shot: on the floor for the sword
+  KydreeokHead_Stunned:
+  {
+    JSR KydreeokHead_Anchor
+    LDY.w SprSubtype, X
+    LDA.w KydreeokHead_RestX, Y : STA.b $08
+    LDA.b #36 : STA.b $09
+    LDA.b #$01 : JSR KydreeokHead_SeekOffset
+    JMP KydreeokHead_EndWindow
+  }
+
+  ; 0x0A - fireball telegraph: rear back and glow, then spit one fireball
+  ; at the player (a 3-ball spread in stage 3)
+  KydreeokHead_Spit:
+  {
+    JSR KydreeokHead_Cue
+    JSR KydreeokHead_Anchor
+    LDY.w SprSubtype, X
+    LDA.w KydreeokHead_RestX, Y : STA.b $08
+    LDA.b #-40 : STA.b $09
+    LDA.b #$02 : JSR KydreeokHead_SeekOffset
+    LDA.w SprTimerA, X : BNE .charging
+      LDA.b #$10 : STA.w SprTimerA, X
+      %GotoAction(!KydHead_Recover)
+      LDA.l BossDir_Stage : CMP.b #$03 : BNE .one
+        JMP KydreeokHead_SpawnFireballSpread
+      .one
+      JMP KydreeokHead_SpawnFireballTargeted
+    .charging
+    RTS
+  }
+}
+
+; Carry set on the first telegraph frame (SprMiscG = 0, set by
+; Kydreeok_TakeTurn); plays the cue once.
+KydreeokHead_Cue:
+{
+  LDA.w SprMiscG, X : BNE .later
+    INC.w SprMiscG, X
+    LDA.b #$35 : JSL Sound_SetSfx2PanLong ; placeholder cue: the rumble
+    SEC
+    RTS
+  .later
+  CLC
+  RTS
+}
+
+; A punish window ends: Recover.
+KydreeokHead_EndWindow:
+{
+  LDA.w SprTimerA, X : BNE .open
+    LDA.b #$10 : STA.w SprTimerA, X
+    %GotoAction(!KydHead_Recover)
+  .open
+  RTS
 }
 
 ; ---------------------------------------------------------
@@ -429,80 +543,6 @@ KydreeokHead_Animate:
 ; ---------------------------------------------------------
 ; Attacks
 
-; Idle only. A new attack needs the cooldown, a 1/32 roll and frame
-; budget (BossKit_CanSpend).
-KydreeokHead_MaybeAttack:
-{
-  LDA.w SprTimerE, X : BNE .no_attack
-  JSL GetRandomInt : AND.b #$1F : BNE .no_attack
-  JSL BossKit_CanSpend : BCC .no_attack
-  JSL GetRandomInt : AND.b #$07
-  CMP.b #$03 : BCC .fireball
-  CMP.b #$05 : BCC .lunge
-  CMP.b #$07 : BCC .breath
-  .no_attack
-  RTS
-
-  .fireball
-    PHA
-    LDA.b #$30 : JSR KydreeokHead_SetCooldown
-    PLA : BNE .targeted
-    JSR KydreeokHead_IsPhaseTwo : BCC .targeted
-      JMP KydreeokHead_SpawnFireballSpread
-    .targeted
-    JMP KydreeokHead_SpawnFireballTargeted
-
-  .lunge
-    LDA.b #$50 : JSR KydreeokHead_SetCooldown
-    LDA.b #$12 : STA.w SprTimerA, X
-    %GotoAction(2)
-    RTS
-
-  .breath
-    JSR KydreeokHead_OtherHeadBreathing : BCS .no_attack
-    LDA.b #$70 : JSR KydreeokHead_SetCooldown
-    LDA.b #$18 : STA.w SprTimerA, X
-    %GotoAction(4)
-    RTS
-}
-
-; A = cooldown in frames; phase two waits 3/4 of it.
-KydreeokHead_SetCooldown:
-{
-  STA.b $00
-  JSR KydreeokHead_IsPhaseTwo : BCC .store
-    LDA.b $00 : LSR A : LSR A : STA.b $01
-    LDA.b $00 : SEC : SBC.b $01 : STA.b $00
-  .store
-  LDA.b $00 : STA.w SprTimerE, X
-  RTS
-}
-
-; Carry set in phase two.
-KydreeokHead_IsPhaseTwo:
-{
-  LDY.w Kydreeok_Id
-  LDA.w SprMiscD, Y : CMP.b #$02
-  RTS
-}
-
-; Carry set while the other head winds up or breathes fire.
-KydreeokHead_OtherHeadBreathing:
-{
-  LDY.w Offspring2_Id
-  LDA.w SprSubtype, X : BEQ .check
-    LDY.w Offspring1_Id
-  .check
-  JSR Kydreeok_HeadAlive : BCC .no
-  LDA.w SprAction, Y : CMP.b #$04 : BCC .no
-  CMP.b #$06 : BCS .no
-    SEC
-    RTS
-  .no
-  CLC
-  RTS
-}
-
 KydreeokHead_PrepFireballCoords:
 {
   LDA.w SprX, X : STA $00
@@ -604,10 +644,17 @@ KydreeokHead_SpawnFireballSpread:
 ; ---------------------------------------------------------
 ; Draw
 
-; A = palette flash bits: the damage flash, plus a glow while charging fire.
+; A = palette flash bits: the damage flash, plus a glow while charging
+; fire or a fireball, and a slow pulse while panting (the arrow target).
 KydreeokHead_FlashBits:
 {
-  LDA.w SprAction, X : CMP.b #$04 : BNE .damage
+  LDA.w SprAction, X : CMP.b #!KydHead_Breath : BEQ .glow
+  CMP.b #!KydHead_Spit : BEQ .glow
+  CMP.b #!KydHead_Pant : BNE .damage
+    LDA.b $1A : AND.b #$10 : LSR A : LSR A : LSR A
+    ORA.w SprFlash, X
+    RTS
+  .glow
     LDA.b $1A : AND.b #$06 : ORA.w SprFlash, X
     RTS
   .damage
