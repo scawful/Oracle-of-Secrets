@@ -56,8 +56,13 @@ Sprite_Darknut_Prep:
   +
   TAY
   LDA.w .health, Y : STA.w SprHealth, X
+if !DISABLE_MASKS == 0
+  ; Subtype 1 = armored (Masks/garo_mask.asm); subtype 0 is unchanged.
+  JSL Darknut_PrepDefense
+else
   LDA.b #$80 : STA.w SprDefl, X
   LDA.b #%01100000 : STA.w SprTileDie, X
+endif
   PLB
   RTL
 
@@ -86,7 +91,11 @@ Sprite_Darknut_Main:
   JSL Sprite_CheckIfRecoiling
 
   ; Taking damage triggers alert
+if !DISABLE_MASKS == 0
+  JSL Darknut_CheckDamage : BCC .no_dano ; armored: Garo counter only
+else
   JSL Sprite_CheckDamageFromPlayer : BCC .no_dano
+endif
     LDA.b #$FF : STA.w SprTimerD, X
   .no_dano
 
@@ -193,7 +202,11 @@ Sprite_Darknut_Draw:
 
   LDA.w SprGfx, X : CLC : ADC $0D90, X : TAY;Animation Frame
   LDA .start_index, Y : STA $06
+if !DISABLE_MASKS == 0
+  JSL Darknut_DrawFlash ; armored subtype uses a darker palette
+else
   LDA.w SprFlash, X : STA $08
+endif
 
   PHX
   LDX .nbr_of_tiles, Y ;amount of tiles -1
