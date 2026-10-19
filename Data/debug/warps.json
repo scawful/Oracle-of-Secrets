@@ -950,17 +950,17 @@
       "room": "0x00D6",
       "exit": "table",
       "source": "Overworld/entrances.asm:352",
-      "area": "0x30",
+      "area": "0x38",
       "area_name": "Dragon Ship",
       "doors": [
         {
-          "area": "0x30",
-          "tile": "0x0D30",
+          "area": "0x38",
+          "tile": "0x0830",
           "x": 384,
-          "y": 416
+          "y": 256
         }
       ],
-      "comment_area": "0x30"
+      "comment_area": "0x38"
     },
     {
       "id": "0x37",
@@ -1845,13 +1845,13 @@
       "landing": "outside D2 Tail Palace"
     },
     {
-      "area": "0x30",
+      "area": "0x38",
       "name": "Dragon Ship",
       "world": "kalyxo",
       "via_room": "0x00D6",
       "exit_index": "0x0A",
       "x": "0x0188",
-      "y": "0x0D98",
+      "y": "0x0EF8",
       "landing": "outside D7 Dragon Ship"
     },
     {

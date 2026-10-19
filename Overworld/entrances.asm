@@ -350,7 +350,7 @@ pullpc
 ; 0x32 - OW 0B - Kalyxo Castle Prison Entrance
 ; 0x33 - OW 63 - Shrine of Wisdom
 ; 0x34 - OW 06 - Glacia Estate
-; 0x35 - OW 30 - Dragon Ship
+; 0x35 - OW 38 - Dragon Ship
 ; 0x36 - OW
 ; 0x37 - OW 5E - Fortress of Secrets
 ; 0x38 - OW 11 - Healing Fairy Cave (Exit)
