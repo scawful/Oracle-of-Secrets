@@ -2322,3 +2322,17 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   the black-rock map work on the Goron / Rock Meat paths lands. ASM change goes to a code lane.
   Answer: "Require the Mitt: change the Rock Meat pickup check from any Glove to the Titan's Mitt."
   (scawful, 2026-10-19)
+
+* DECIDED Forge-gloves text: the ember seed and the smith's lines (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (forge gloves draft lines)
+  :END:
+  Approved wording; line breaks for the 30-character box are the code lane's job.
+  1. Deku Princess, after D2 (added to message $1BA, which already marks the castle on the map):
+     "Take this ember seed. A Deku fire never goes out. The smith west of the village has had a
+     cold forge since the soldiers took his coal."
+  2. Swordsmith, when Link relights the forge (new text on his partner-missing branch, near $DF),
+     then he gives the Power Glove:
+     "My forge, burning again! My partner went to the mines and never came back, so I cannot
+     temper anything yet. Take my old forge gloves. They lift what your hands cannot."
+  Answer: "Use both forge-gloves lines as written." (scawful, 2026-10-19)
