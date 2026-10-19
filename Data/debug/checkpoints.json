@@ -938,18 +938,17 @@
     },
     {
       "id": "kydreeok-fight",
-      "label": "Kydreeok fight: outside the room $00 hole (walk left 8 tiles, then up)",
+      "label": "Kydreeok fight: room $00, fight starts on landing (hole entrance $7B)",
       "beat": 27,
       "after": "d8-entrance",
       "location": {
-        "area": "0x57"
+        "entrance": "0x7B"
       },
       "expect": {
         "modules": [
-          "0x09",
-          "0x0E"
+          "0x07"
         ],
-        "area": "0x57"
+        "room": "0x0000"
       },
       "writes": [
         {
@@ -960,7 +959,7 @@
           "why": "full health for the boss test"
         }
       ],
-      "notes": "The area warp lands outside the D8 Final Boss Route door at ($0F70,$04F0) (Data/debug/warps.json area 0x57). The room $00 hole is about 120 px left and 10 px up; from ($0EF8,$04E8) holding up drops Link into room $00, where Kydreeok (sprite $7A) starts (b45 run, AFS handoffs/kydreeok_dragon_2026-10-19/evidence/log.txt). The hole and the room $00 layout are placeholders (the finale room plan is open)."
+      "notes": "Entrance $7B is the area $57 hole into room $00 (ROM hole table $1B:B800: four positions on area $57 -> entrance $7B; entrance room table $02:C813 = $0000). The warp reloads through the entrance (Module05 -> Module06), so room $00 loads its sprite list: Kydreeok (sprite $7A) in slot 0 at ($0180,$0050), heads ($CF) in slots 14/15, fight running (kyd2-0a873de0, AFS handoffs/kydreeok_oneclick_2026-10-19). Jump again during the fight to restart it. Known difference from the natural fall: the warp resolves room $00 to the light world, so SavedWorld/$0FFF = 0 and Link keeps his normal sprite; the natural fall from area $57 has world $40 and GBC Link ($BC = $3B). The hole and the room $00 layout are placeholders (the finale room plan is open)."
     }
   ],
   "todo": [
