@@ -113,63 +113,13 @@ endif
 
 print  "End of house_tag.asm              ", pc
 
-; =========================================================
-; Prison Escape Tag — D3 Kalyxo Castle
-;
-; Called when Link enters the escape exit room after the
-; prison capture. Sets the HasEscaped flag and restores
-; SpawnPoint so death/continue no longer returns to prison.
-;
-; Activation conditions (all must be true):
-;   1. HasBeenCaptured is set (player was captured)
-;   2. HasEscaped is NOT set (haven't already escaped)
-;
-; This is designed to be called from a room tag handler.
-; The calling room tag determines WHICH room triggers escape.
-; Currently wired into RoomTag_MinishShutterDoor below
-; (both the Minish shutter and the escape flag can coexist
-; on the same room tag since the escape room needs Minish
-; doors anyway).
-
-if !ENABLE_D3_PRISON_SEQUENCE == 1
-PrisonEscape_CheckAndComplete:
-{
-  ; Skip if player was never captured
-  LDA.l CastleAmbushFlags : AND.b #!CastleAmbush_HasBeenCaptured
-  BEQ .done
-
-  ; Skip if already escaped (don't re-trigger)
-  LDA.l CastleAmbushFlags : AND.b #!CastleAmbush_HasEscaped
-  BNE .done
-
-  ; Check room ID — only trigger in the designated escape room
-  ; TODO: Replace $00FF with actual escape room ID from yaze
-  ; LDA.b RoomIndex : CMP.b #$FF : BNE .done
-
-  ; --- Escape complete ---
-  ; Set HasEscaped flag (this prevents re-triggering on subsequent frames)
-  LDA.l CastleAmbushFlags : ORA.b #!CastleAmbush_HasEscaped
-  STA.l CastleAmbushFlags
-
-  ; Restore spawn point to Sanctuary (normal D3 respawn)
-  LDA.b #!Spawn_Sanctuary
-  STA.l SpawnPoint
-
-  .done
-  RTS
-}
-endif
+; D3 completion belongs to the confirmed outward exit, never a generic tag.
 
 ; ========================================================
 ; Room tag to open shutter door when player is minish
 
 RoomTag_MinishShutterDoor:
 {
-if !ENABLE_D3_PRISON_SEQUENCE == 1
-  ; Check for prison escape on rooms with Minish shutter tag
-  JSR PrisonEscape_CheckAndComplete
-endif
-
   LDA.w $02B2 : CMP.b #$05 : BNE .no_minish
 if !ENABLE_ORIGINS_MINISH_PUZZLE == 1
     ; Shrine of Origins (room $05): open the west shutter only once Minish
