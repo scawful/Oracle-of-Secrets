@@ -329,8 +329,8 @@
         "ENABLE_MINISH_AUTO_PORTAL": 1,
         "DISABLE_MASKS": 0
       },
-      "lifetime": "Volatile Minish portal visit/charge; never saved. Preserved independently of parked-cart/reset state.",
-      "reset": "Boot InitializeMemoryAndSRAM clears this word. MinishPortal_Tick clears charge on movement, incompatible form or a nonconsecutive visit; preserves toggled latch until movement. Cart reset does not own this state after relocation.",
+      "lifetime": "Volatile Minish portal contact latch/frame guard; never saved. Preserved independently of parked-cart/reset state.",
+      "reset": "Boot InitializeMemoryAndSRAM clears this word. MinishPortal_Tick latches eligible tile contact once per frame. MinishPortal_Maintain rearms after four eligible frames without contact; menus and action states freeze the latch. Cart reset does not own this state.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
         "shared:Masks/all_masks.asm",
@@ -355,8 +355,8 @@
         "ENABLE_MINISH_AUTO_PORTAL": 1,
         "DISABLE_MASKS": 0
       },
-      "lifetime": "Volatile Minish portal visit/charge; never saved. Preserved independently of parked-cart/reset state.",
-      "reset": "Boot InitializeMemoryAndSRAM clears this word. MinishPortal_Tick clears charge on movement, incompatible form or a nonconsecutive visit; preserves toggled latch until movement. Cart reset does not own this state after relocation.",
+      "lifetime": "Volatile Minish portal contact latch/frame guard; never saved. Preserved independently of parked-cart/reset state.",
+      "reset": "Boot InitializeMemoryAndSRAM clears this word. MinishPortal_Tick latches eligible tile contact once per frame. MinishPortal_Maintain rearms after four eligible frames without contact; menus and action states freeze the latch. Cart reset does not own this state.",
       "save": "Volatile WRAM; not saved.",
       "provenance": [
         "shared:Masks/all_masks.asm",

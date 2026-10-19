@@ -10,6 +10,7 @@
 ; 05 = Minish Form
 ; 06 = GBC Form
 ; 07 = Moosh Form
+; 08 = Garo Master
 !CurrentMask  = $02B2
 
 ; Indexed by the bank number
@@ -27,9 +28,10 @@ DekuHover      = $71
 
 if !ENABLE_MINISH_AUTO_PORTAL == 1
 ; Volatile portal state after the cart arrays/cache and its 16-bit slot word.
-; Boot clears this pair at $0087CE. MinishPortal_Tick owns visit cleanup;
+; Boot clears this pair at $0087CE. The always-included Link_Main frame hook
+; calls MinishPortal_Maintain; collision $64 refreshes contact in Tick.
 ; ResetTrackVars must not clear it. All portal accesses remain 8-bit absolute.
-MinishPortalTimer = $7E07EC ; 0 = idle, 1-59 charging, $FF = toggled, wait for movement
+MinishPortalTimer = $7E07EC ; 0 = armed; $80 = contact, $81-$83 = missing samples
 MinishPortalFrame = $7E07ED ; $1A of the last frame the portal was handled
 assert MinishPortalFrame == MinishPortalTimer+1
 assert MinishPortalTimer >= $7E0718
@@ -49,6 +51,14 @@ AddTransformationCloud = $09912C
 Link_CheckNewY_ButtonPress = $07B073
 LinkItem_EvaluateMagicCost = $07B0AB
 Player_DoSfx2 = $078028
+
+; Prototype state follows the Minish portal pair and ends before OAM at $0800.
+; StartupMasks clears the shared prototype range $07EE-$07FF.
+GaroGuardTimer = $07EE
+GaroCounterTimer = $07EF
+GaroCooldown = $07F0
+assert GaroGuardTimer == $07EE
+assert GaroCooldown < $0800
 
 incsrc "Masks/mask_routines.asm"
 
@@ -84,3 +94,12 @@ org $3B8000
 org $338000
   incbin gfx/moosh.4bpp
   incsrc "Masks/moosh.asm"
+
+; First complete bank after the two world maps ($40/$41). The player sheet
+; uses the existing $BC bank-select loader; no source/base-ROM data is replaced.
+org $428000
+GaroMasterGraphics:
+  incbin "gfx/garo_master.4bpp"
+assert pc() == $42F000, "Garo Master must use the complete $7000-byte Link sheet"
+  incsrc "Masks/garo_mask.asm"
+assert pc() <= $430000, "Garo Master exceeded its graphics/behavior bank"
