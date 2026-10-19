@@ -1570,3 +1570,82 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   T13 ($D7) and T16 ($D8).
   Answer: "Safe rails first: fix the 313 derail tiles in the 7 rooms, no
   layout change." (scawful, 2026-10-18).
+
+* DECIDED D8 Portal Rod rooms: 5C is the only required rod gate; optional rooms hold the Map, two heart pieces and the Red Mail
+  :PROPERTIES:
+  :ASKED_BY: Claude (D8 Fortress design review)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_fortress_design_2026-10-18/README.md
+  :END:
+  1. P1, room 5C (NW treasure room): the big chest holds the Portal Rod. The
+     south shutter stays closed until Link uses the rod to reach its floor
+     switch; magic pots sit nearby. This is D8's only required rod gate.
+  2. P5, room 1D south shrine: optional; the path to Dark Link does not need
+     it. Its chest holds the Red Mail in place of the spare small key.
+  3. P2, room 9B = D8 Map. P3, room 8B SW = heart piece. P4, room 8B SE =
+     heart piece.
+  4. The Mad Batter (room $E3) stays the Half Magic source. This replaces
+     the first P2 answer (Half Magic in the 9B chest).
+  Puzzle layouts, barrier widths, receipts and build order stay proposals in
+  the doc (README sections 3-4, REWARDS_inventory.md).
+  Answers: "Yes: the 5C shutter stays closed until you use the Portal Rod to
+  reach its floor switch, with magic pots nearby."; "P5 is optional: the
+  shrine holds a reward, and the path to Dark Link does not need it."; "Red
+  Mail goes in the P5 shrine chest in 1D south, replacing the spare small
+  key. The optional shrine is the Red Mail reward."; "Keep the Mad Batter as
+  the Half Magic source; P2 gets a different reward, chosen from the data.";
+  "Yes: P2 = D8 Map, P3 = heart piece, P4 = heart piece." (scawful,
+  2026-10-18).
+
+* DECIDED D8 room 0D is the Dark Link fight only; Kydrog becomes Kydreeok at the volcano before room 00
+  :PROPERTIES:
+  :ASKED_BY: Claude (D8 Fortress design review)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_fortress_design_2026-10-18/BRIDGE_fortress_to_volcano.md
+  :END:
+  1. Room 0D stays the Dark Link boss room only. D8 ends with Dark Link.
+  2. Kydrog's transformation into Kydreeok happens at the volcano, right
+     before the room 00 Kydreeok fight. It is not in D8.
+  3. This supersedes beat 27's wording "at the heart Kydrog assumes his Abyss
+     form — Kydreeok" (story_canon_beat_sheet.md); the Abyss form scene moves
+     out of D8.
+  The transformation room (its own room or room 00's entry), who sends Link
+  north, and all lines and staging stay PROPOSED.
+  Answers: "no this is just meant to be the dark link boss fight room,
+  kydreeok reveal likely will need to happen in another room where the
+  player is warped if we want to do it in the fortress, though then we need
+  a story beat for how the prison and the volcanic region to the north is
+  even relevant"; "The transformation happens at the volcano, right before
+  the room 00 fight. D8 ends with Dark Link. Draft a story beat that sends
+  Link from the Fortress to the volcano." (scawful, 2026-10-18).
+
+* DECIDED Maku Seed ending: Farore's seal is built from the essences; D8 holds a secret 8th; Link plants the seed after Ganon
+  :PROPERTIES:
+  :ASKED_BY: Claude (D8 Fortress design review)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/d8_fortress_design_2026-10-18/MAKU_SEED_ending.md
+  :END:
+  1. The essences are older than the seal: they were hidden on Kalyxo long
+     ago. Farore built the prison seal from them and kept a secret 8th
+     essence inside the prison.
+  2. D8's prize is that 8th essence.
+  3. After D8, Link returns to the Maku Tree with all 8 essences and receives
+     the Maku Seed there, as in the Oracle games.
+  4. The seed opens the volcano crater (the prison's mouth); the transformation
+     and the room 00 fight follow (previous entry). This is Option 2 in
+     ENDING_alternatives.md as chosen: the crater opens from the seed, not
+     directly when Dark Link falls.
+  5. After Ganon, Link plants the seed in a scripted item-raise moment; the
+     credits show a sapling growing in the Abyss.
+  Builds on "Villain chain" and "Seal geography". Adds the 8th essence to
+  beat 27 and gives beat 30 ("seal restored; the Abyss begins to heal") its
+  cause. Flags, the SRAM bit, menu display and all dialogue (including a
+  rewrite of message 0x138) stay PROPOSED in the doc.
+  Answers: "oh good point about the maku tree, we should prob go in the maku
+  seed direction to keep consistent with oracle and maybe even figure out
+  how to make the essences story relevant rather than focusing on dark link
+  and kydrog"; "Yes: the Fortress holds a secret 8th essence that Farore
+  kept inside the prison, and with all 8 the Maku Tree grows the seed."; "The
+  essences are older: they were hidden on Kalyxo long ago, and Farore built
+  the prison seal from them, keeping the 8th inside the prison."; "Yes: after
+  D8 Link returns to the Maku Tree with all 8 essences and receives the seed
+  there, as in the Oracle games."; "Link plants the seed in a scripted moment
+  after Ganon (item-raise pose); the credits show a sapling growing in the
+  Abyss." (scawful, 2026-10-18).
