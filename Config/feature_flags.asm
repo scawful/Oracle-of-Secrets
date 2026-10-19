@@ -10,6 +10,7 @@
 !ENABLE_D3_PRISON_SEQUENCE            = 0
 !ENABLE_D7_FARORE_RESCUE_SEQUENCE     = 0
 !ENABLE_DREAM_BED_WAKE                = 1
+!ENABLE_DREAM_ENTRY_FX                = 1
 !ENABLE_DREAM_POWER_SCENE             = 1
 !ENABLE_DREAM_RETURN                  = 1
 !ENABLE_DREAM_ROOM_SHEETS             = 1

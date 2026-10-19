@@ -292,6 +292,14 @@ This section tracks known conflicts between systems and outstanding bugs.
     - Fix (branch =claude/dream-bugs-pal-link=): =Link_WarpToRoom= hides Link (=$4B= = $0C); =Part00_RoomSprites= shows him again on the dream room load (=DreamReturn_IsDreaming=); the Wisdom and Power scenes hide him again as before.
     - T2 (headless, 2026-10-18): samples with Link on screen from the warp to the room load: control =07b5652c= Wisdom 88/88, Power 87/87, Courage 92/93; fix =1d475f7c= 0 in all three. Courage (pendant poke, no checkpoint) still shows Link in the fade-in and in play, as before. Evidence: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dream_bugs_2026-10-18/WORK.md=.
     - [ ] scawful: confirm in a playtest build.
+*** TODO [#C] Dream entry effect before the warp (DREAM-FX) :dream:fx:
+    :PROPERTIES:
+    :ID: dream-fx-2026-10-18
+    :END:
+    - Ask (scawful, 2026-10-18): "generally it could use a more trippy undertale vibe ... maybe showing off the pendant that triggered it and some like medallion style fx". Mock approved ("Good job continue").
+    - Built (branch =claude/dream-entry-fx=, stacked on =claude/dream-bugs-pal-link=): =Sprites/NPCs/dream_entry_fx.asm=, flag =!ENABLE_DREAM_ENTRY_FX=. For 189 frames before =Link_HandleDreams=: the dream's pendant rises from Link with four sparkles, three flashes in its colour play with the Ether sound, HDMA sways BG1/BG2, the colours cycle, mosaic grows, and the screen goes white. The warp then fades to black as before. =Part00_RoomSprites= restores the hut's colour math before the dream scenes stage.
+    - T2 (headless, 2026-10-18, Wisdom and Power vs PR 195 head =03a76fb8=): FX ROM =00b18510= (=7043d3a5=) runs the effect for 189 frames in both, with the menu locked. The pendant is drawn in 104/107 (Wisdom, red gem) and 108/112 (Power, blue gem) samples. Flash =$9C-$9E= peaks: Wisdom =3C 47 87= (red), Power =25 45 96= (blue). HDMA channels 5/6 are on during the effect and off for the warp. Link stays hidden in the warp, as in PR 195. After each dream room loads, =$99/$9A/$9C-$9E= match the control (Wisdom =02/20/20 40 80=, Power =02/70/20 40 80=), and the Wisdom scene's own two white flashes still happen. Both flows reach the wake line with the same messages as the control. Evidence: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dream_entry_fx_2026-10-18/WORK.md=.
+    - [ ] scawful: watch it in a playtest build (look, sound, length).
 
 *** DONE [#A] Fix Ice Block Collision and Push Mechanics
 CLOSED: [2025-12-09 Mon]

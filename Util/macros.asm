@@ -129,6 +129,11 @@
 ; the dream's line; off, the line plays at the hut door. Needs
 ; DREAM_POWER_SCENE. Diagnostic opt-out.
 !ENABLE_DREAM_BED_WAKE              = 1
+; Dream entry effect (scawful 2026-10-18): before the warp, the dream's
+; pendant rises from Link, three medallion flashes, the hut sways (HDMA),
+; colours cycle, mosaic, white (Sprites/NPCs/dream_entry_fx.asm). Off, the
+; warp starts right after the sleep. Diagnostic opt-out.
+!ENABLE_DREAM_ENTRY_FX              = 1
 ; Sword warp home (decisions.org "Intro Abyss exit: the sword cuts Link
 ; home"): taking the Forest of Dreams sword (DW $58) plays a spin, sword-up
 ; and white flash, then reloads Link onto the Maku Tree area ($2A) with
