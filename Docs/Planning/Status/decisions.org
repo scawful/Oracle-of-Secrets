@@ -2150,3 +2150,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: "Halt! Drop that blade, boy. / You will cool your heels in / the cells for this."
   Answer: "Use the thief wording: Another thief in the castle? Throw him in the cells with the
   other one!" (scawful, 2026-10-19)
+
+* DECIDED Prison cell: no text on waking; $1CD and $1CE unused (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison message stubs)
+  :END:
+  No text shows when Link wakes up in the cell, on the first capture or after being caught
+  during the sneak. The fade ends in the cell and the player looks around. Messages $1CD
+  (!Msg_PrisonWakeUp) and $1CE (!Msg_PrisonCellDesc) stay unused.
+  Rejected: a short wake-up line in $1CD as the fade ends.
+  Answer: "No text on waking: the fade ends in the cell; $1CD and $1CE stay unused."
+  (scawful, 2026-10-19)
