@@ -1612,6 +1612,8 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   the Half Magic source; P2 gets a different reward, chosen from the data.";
   "Yes: P2 = D8 Map, P3 = heart piece, P4 = heart piece." (scawful,
   2026-10-18).
+  Reopened 2026-10-19: room roles are subject to change in the Fortress
+  redesign. See "Fortress redesign: replace boss refights with puzzles".
 
 * DECIDED D8 room 0D is the Dark Link fight only; Kydrog becomes Kydreeok at the volcano before room 00
   :PROPERTIES:
@@ -2577,3 +2579,32 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
      only exists in the Abyss because it is their proof of life.
   Question: "Adopt the east Goron route and the Lupo/Fortress swap?"
   Answer:
+
+* DECIDED Fortress redesign: replace boss refights with Portal Rod and other puzzles (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Cursor (dungeon size analysis)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dungeon_size_analysis_2026-10-19/DUNGEON_FIXES.md
+  :END:
+  1. The Fortress room roles from "D8 Portal Rod rooms" (2026-10-18) are reopened:
+     5C rod gate, 9B Map, 8B heart pieces and 1D Red Mail may move in the redesign.
+  2. Direction: remove the boss-refight rooms (today Armos 1C, Manhandla 5D and 8C,
+     Lanmolas 6C, Moldorm 4D) and use those rooms for Portal Rod and other item puzzles.
+  3. Still open: room count, which rooms stay, reward placement, key budget.
+  Answer: "some of those fortress room decisions i was kinda of mindlessly approving and
+  i think with the redesign they are subject to change. though prob it'd be smart to
+  remove boss gauntlet rehashes and replace them with clever portal rod and other
+  puzzles" (scawful, 2026-10-19).
+
+* DECIDED Early-game balance: keep the Wizzrobe and Sluggula damage cuts for now (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Cursor (dungeon size analysis)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/dungeon_size_analysis_2026-10-19/DUNGEON_FIXES.md
+  :END:
+  Finding: Core/early_game_balance.asm labels these cuts "D1", but Wizzrobes and
+  Sluggulas are placed only in Dragon Ship, the Shrine of Courage and the Fortress,
+  so the cuts soften late enemies. The 24-HP Stalfos Knight row hits room $33
+  (Shrine of Courage), not D1.
+  Ruling: keep the softer values. Revisit only if playtesters report late areas
+  as too easy.
+  Answer: "i guess keep them softer for now unless we get reports it's too easy i
+  dont want it to be too hard instead" (scawful, 2026-10-19).
