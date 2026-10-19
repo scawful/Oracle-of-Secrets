@@ -2079,3 +2079,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: small Link is too small to notice and the sneak happens only in $54.
   Answer: "Yes: the two soldiers in the crawl room patrol and can spot small Link; the crawl is
   the sneak." (scawful, 2026-10-19)
+
+* DECIDED Prison escape: the blade-table hall has no guard (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: guard patrols)
+  :END:
+  The hall with the blade table ($54) gets no guard. It keeps only the rats, ropes and keese
+  already placed there. After the crawl, Link grows back at the second portal and crosses the
+  hall as a breather on the way to the table.
+  Rejected: one guard in the hall, facing away from the portal.
+  Answer: "No guard: the hall keeps only its rats, ropes and keese, a breather after the crawl."
+  (scawful, 2026-10-19)
