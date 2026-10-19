@@ -2374,3 +2374,20 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Exact spot to be picked from map images.
   Answer: "Outside D6: behind Mitt rubble near the mines, an optional side trip after the Shrine
   of Power." (scawful, 2026-10-19)
+
+* DECIDED The smith's partner is on the Abyss desert beach; the trip opens after the Hammer (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: scawful's idea, confirmed in the story board session (smith visit 2 spot)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/design_review_2026-10-18/partner_maps/beach_partner.png
+  :END:
+  Refines the entry above. The partner is on the Abyss desert beach (the Abyss side of the Garo
+  Desert, $76-$7F), behind rubble that needs the Titan's Mitt. The beach is already an optional
+  chunk reached by the LW $37 pad behind Hammer pegs; the Hammer is D6's midway item, so the trip
+  opens after the Hammer, and the tempered Meadow Blade (L3) lands between D6 and D7. Once freed,
+  the partner walks home on his own. The Fortress Master Sword barrier stays; the rubble can also
+  block the beach's paths up toward the Fortress side. Which spot on the beach: open.
+  scawful: "right now i was thinking the smith partner would be on the eon abyss beach, parallel to
+  the garo desert map wdyt of that ? is it a bad spot bc it's far from the village and close to
+  the fortress ?"
+  Answer: "Yes: the partner is on the Abyss desert beach behind Mitt rubble, and the trip opens
+  after the Hammer from D6." (scawful, 2026-10-19)
