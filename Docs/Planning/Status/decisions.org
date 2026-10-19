@@ -1947,3 +1947,203 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   the confiscation. After escape, ordinary checkpoint behavior resumes.
   This leaves the basement route and Mad Batter intact.
   Answer: "Return to the cell" (scawful, 2026-10-19).
+
+* DECIDED Death or continue while captured: Link wakes in the cell (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item 1)
+  :END:
+  If Link dies, or the player continues, between the capture and the end of the escape, Link
+  wakes back in the prison cell ($65) and the escape restarts. The Meadow Blade stays taken.
+  Same rule as save and quit, which also cannot skip the capture.
+  Rejected: waking at a D3 entrance without the blade.
+  Answer: "Back in the cell: the escape restarts." (scawful, 2026-10-19)
+
+* DECIDED Prison escape: Minish portal in a cell-wall crack, grow back in the next hall (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  A crack in the wall of the prison cell ($65) holds a Minish portal. Link shrinks there,
+  crawls through $64, and grows back at a second Minish portal in the next hall ($54). Uses the
+  existing Minish portals.
+  Rejected: staying small until the prison door ($55).
+  Answer: "A crack in the cell wall holds a Minish portal; Link grows back at a second portal in
+  the next hall." (scawful, 2026-10-19)
+
+* DECIDED Prison escape: a guard who sees Link sends him back to the cell (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  During the escape, if a patrolling guard sees Link, the screen fades and Link is back in the
+  prison cell ($65). No chase. Same reset as death or continue while captured.
+  Rejected: a chase where the guard attacks and Link fights or runs.
+  Answer: "Caught: the screen fades and Link is back in the cell." (scawful, 2026-10-19)
+
+* DECIDED Captured Link loses every sword until he takes the Meadow Blade back (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan)
+  :END:
+  At the capture the guards take every sword, not only the Meadow Blade. Link escapes unarmed
+  through the cell, the crawl and the next hall, and is armed again only when he takes the
+  Meadow Blade back from the table in $54. Fits the no-chase guard rule.
+  Rejected: Link keeps his first sword and only the Meadow Blade is taken.
+  Answer: "No: the guards take every sword; Link escapes unarmed until he takes the Meadow Blade
+  back from the table." (scawful, 2026-10-19)
+
+* DECIDED Prison escape: stealth ends at the blade table (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan)
+  :END:
+  The caught-means-cell rule lasts only until Link takes the Meadow Blade back from the table in
+  $54. After that, guards fight normally and Link fights his way out through the prison door
+  ($55), as planned on 2026-10-18.
+  Rejected: stealth lasting until Link leaves through the $55 door.
+  Answer: "No: stealth ends at the blade table; Link fights his way out through the prison door."
+  (scawful, 2026-10-19)
+
+* DECIDED Prison escape: the thief cellmate slips away and does not return (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  The thief in the next cell shows Link the way out, slips away during the escape and is not
+  seen again. No return visit at the thieves' cave and no reward.
+  Rejected: a return visit at the thieves' cave on the way to Mushroom Grotto.
+  Answer: "No: the thief slips away during the escape and is not seen again." (scawful, 2026-10-19)
+
+* DECIDED Prison thief uses the vanilla thief sprite as a still NPC (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  The thief cellmate is the vanilla thief sprite, standing still as an NPC in the cell next to
+  Link's ($65). No new art.
+  Rejected: new art for a named character.
+  Answer: "The vanilla thief sprite, standing still as an NPC in the next cell." (scawful, 2026-10-19)
+
+* DECIDED Kalyxo Castle prison break (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude prison break session 2026-10-18
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/design_review_2026-10-18/WORK.md
+  :END:
+  1. Capture spot: the entry hall of the Meadow Blade room, on the way back from the
+     chest. Guards run in from the east door (the throne hall side). The south door of
+     that hall is one of Kalyxo Castle's alternate entrances, not an exit. Save and quit,
+     the Magic Mirror and other warps must not let the player skip the capture.
+     Fallback idea: guards run in as Link lifts the blade from the chest.
+     Answer: "B is probably good since the guards can come from the right door in that
+     room, but we'd have to prevent the player from save and exit or warping out if they
+     have the mirror, stuff like that. otherwise i was just gonna have the guards run into
+     the room as link pulls it from the chest. this isnt so much of an exit as it is one of
+     the alternate entrances into kalyxo castle and its multi-entrance dungeon system"
+     (scawful, 2026-10-18).
+  2. The castle is held by the Hylian garrison; its soldiers make the arrest. Kydrog's
+     pirates are at war with the thieves and the Hylian guards, have taken little ground,
+     and cause mischief across the island, driving people away (the reason for the low
+     NPC count).
+     Answer: "i think hylian garrison guards, since a lot of the enemies are like soldiers
+     in the kalyxo castle. kydrogs pirates are at war with the thieves as well as hylian
+     guards so i dont think they've taken much ground, just cause a lot of mischief across
+     the island more or less and driving people away hence the lower NPC count in canon"
+     (scawful, 2026-10-18).
+  3. Rooms: the prison sequence uses rooms $54, $55, $64 and $65 (already allocated by
+     scawful; the block directly west of the blade room $56).
+     Answer: "i think i already allocated some rooms for this sequence"; "54, 55, 64, 65"
+     (scawful, 2026-10-18).
+  4. Route: Link's cell is built in $65. The Minish route leads from the cell into $64,
+     up into $54, and $55 is the exit to the Kalyxo Castle overworld map.
+     Answer: "yeah $65 is where we can build his cell and the minish route can feed into 64 and up into 54 where 55 is the exit to the kalyxo castle map" (scawful, 2026-10-18).
+  5. SUPERSEDED 2026-10-19 by "Captured Link loses every sword until he takes the Meadow
+     Blade back": the guards take every sword. Original ruling: the guards confiscate only the Meadow Blade. It lies on a table along the escape
+     route, drawn as the sword sprite, and Link takes it back there. (scawful's first
+     idea was to take all items and make the cell the new-game start point until the
+     puzzle is solved; set aside because the escape is only a few rooms.)
+     Answer: "my thought was originally C, where it becomes a new game start point until you figure out the puzzle but considering it's not many rooms it's prob best to do B and then you get the blade back and it'd be cool to see the sword sprite out on the table" (scawful, 2026-10-18).
+  6. The blade table is in $54, in the chamber with the block. Link takes the blade back
+     midway, then fights out through $55 with it.
+     Answer: "A" (scawful, 2026-10-18, choosing "$54, the chamber with the block" over
+     "$55, the upper walkway by the exit").
+  7. A thief is locked in the next cell and shows Link the Minish way out. The thieves
+     already have a cave on the way to Mushroom Grotto; this thief is a member of that
+     faction.
+     Answer: "the thieves are established in a cave on the way to mushroom grotto already, but yeah a thief in the next cell would be a fun addition here" (scawful, 2026-10-18).
+  8. Farore's first callout stays at the chest: the vanilla Master Sword telepathy fires
+     when the blade comes out of the D3 chest, and Farore uses the Zelda sprite slot, so
+     the voice is hers. Taking the blade back from the table is silent (item-get pose, no
+     dialogue). Context: the Lv2 blade had no natural home among 7 dungeons and 3 shrines,
+     which is why the prison sequence exists.
+     Answer: "she being farore but farore took the zelda sprite slot btw"; "and yes that's fine at the chest can stay"
+     (scawful, 2026-10-18).
+  9. The Meadow Blade is required. The gate before the D3 boss opens only after the
+     escape, so the Stone Mask cannot skip the blade, the capture or the prison.
+     Answer: "yeah good idea" (scawful, 2026-10-18, to: make the blade required so the
+     Stone Mask cannot skip it).
+  Later rulings (2026-10-19, separate entries): D3 garden holds the Compass; death or continue
+  while captured returns Link to the cell; Minish portal in a cell-wall crack, grow back in
+  $54; a guard who sees Link sends him to the cell; every sword is taken; stealth ends at the
+  blade table; the thief slips away and does not return; the thief is the vanilla sprite.
+
+* DECIDED Prison escape: the crawl room is the sneak; its soldiers can spot small Link (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: guard patrols)
+  :END:
+  The two Blue Soldiers already placed in the crawl room ($64) walk a patrol and can spot Link
+  while he is Minish-sized. Being spotted sends him back to the cell (2026-10-19 sight rule).
+  The crawl through $64 is the main sneak of the escape.
+  Rejected: small Link is too small to notice and the sneak happens only in $54.
+  Answer: "Yes: the two soldiers in the crawl room patrol and can spot small Link; the crawl is
+  the sneak." (scawful, 2026-10-19)
+
+* DECIDED Prison escape: the blade-table hall has no guard (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: guard patrols)
+  :END:
+  The hall with the blade table ($54) gets no guard. It keeps only the rats, ropes and keese
+  already placed there. After the crawl, Link grows back at the second portal and crosses the
+  hall as a breather on the way to the table.
+  Rejected: one guard in the hall, facing away from the portal.
+  Answer: "No guard: the hall keeps only its rats, ropes and keese, a breather after the crawl."
+  (scawful, 2026-10-19)
+
+* DECIDED Prison escape: crawl-room soldiers walk fixed back-and-forth routes (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: guard patrols)
+  :END:
+  The two Blue Soldiers in the crawl room ($64) walk fixed back-and-forth routes that cross the
+  crawl path. Link watches their timing and slips through the gap. Every attempt plays the same,
+  so a retry after being sent back to the cell is fair.
+  Rejected: vanilla soldier walking (turning at walls and corners, varying per attempt).
+  Answer: "Fixed back-and-forth routes that cross the crawl path; Link times the gap and every
+  attempt plays the same." (scawful, 2026-10-19)
+
+* DECIDED Prison thief says one short message pointing at the crack (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: thief's lines)
+  :END:
+  The thief cellmate has one short message. It points Link at the crack in his cell wall
+  (the Minish portal). No longer exchange. The text goes in one of the prison stubs $1CC-$1D1
+  after scawful approves the wording.
+  Rejected: a two-part exchange (who caught them both, then the crack).
+  Answer: "One short message that points Link at the crack in the cell wall." (scawful, 2026-10-19)
+
+* DECIDED Prison thief message text, approved for $1CF (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: thief's lines)
+  :END:
+  Approved text for message $1CF (!Msg_CellmateHint1), three lines, 32-character box:
+  #+begin_example
+  Psst, kid. That crack in your
+  wall? Little folk use cracks
+  like that. Bet you would fit.
+  #+end_example
+  $1D0 (!Msg_CellmateHint2) is not used by the thief.
+  Rejected: "The guards never check walls. / See the crack in your cell? / Get small and slip through."
+  Answer: "Use the hint wording: Psst, kid. That crack in your wall? Little folk use cracks like
+  that. Bet you would fit." (scawful, 2026-10-19)
+
+* DECIDED Prison capture: one guard taunt line in $1CC before the fade (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison message stubs)
+  :END:
+  When the garrison guards catch Link in the $56 entry hall, one taunt line shows in message $1CC
+  (!Msg_GuardCaptureTaunt), then the screen fades to the cell. Wording is drafted separately for
+  scawful's approval.
+  Rejected: a silent capture with the thief's line as the only prison text.
+  Answer: "One taunt line at the capture, in $1CC, before the fade to the cell." (scawful, 2026-10-19)
