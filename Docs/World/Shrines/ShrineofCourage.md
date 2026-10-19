@@ -37,7 +37,9 @@ All seven rooms use blockset 7, palette 15 (same as D1). Rooms 0x16/0x26 are Zor
    - Small keys: slot = ID/2 = 4 (`$7EF380`), the same slot as dungeon ID 0x08 (entrance 0x24, Final Boss Route, room 0x15). Two keys taken in S3 showed as 2 keys in the Final Boss Route; one spent there left 1 key in S3.
    - Compass / big key / map bits: `DungeonMask` is read at byte offset 9, giving `$0008`, which is Dragon Ship's bit (ID 0x18). The 0x17 chest set `$7EF364 = $0008`. A D7 big key therefore opens S3 big-key doors (0x53, 0x17) and the reverse.
    - The pause-map room grids have no slot for an odd ID; rooms 0x33/0x43/0x53/0x63 sit in the Shrine of Power (0x06) grid.
-   Needs a dungeon ID decision (not assigned here). The old note "entrance 0x0C shared with Fortress of Secrets" was a room/entrance mix-up: room 0x0C is the Fortress entrance room, entered by entrance 0x37.
+   Resolved 2026-10-19: S3 uses dungeon ID 0x00 (decisions.org). The pause map for 0x00 is still the vanilla Sewers
+   grid (native check 2026-10-19). Drafted fix, not applied (base-ROM write): `Data/rom_patches/s3_pause_map_2026-10-19.json`
+   gives 0x00 three floors: 1F 0x43 over 0x53; B1 0x07 over 0x17, 0x33 beside; B2 0x63 and 0x32. The old note "entrance 0x0C shared with Fortress of Secrets" was a room/entrance mix-up: room 0x0C is the Fortress entrance room, entered by entrance 0x37.
 2. **No Vaati boss implementation** — design docs describe Vitreous reskin but no ASM exists.
 3. **Lanmolas in room 0x33 is a vanilla leftover** — not the intended S3 boss.
 4. **Vaati reward path not implemented** — S3 Courage reward should come from Vaati boss clear, not a chest; Courage (item 0x37, receipt sets $7EF374 bit $04) is currently an ordinary big chest in room 0x07; room 0x7A (S1) correctly holds 0x38 = Pendant of Wisdom (Core/patches.asm:13).
