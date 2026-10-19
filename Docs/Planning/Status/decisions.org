@@ -130,7 +130,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   would drain it. A hit already makes the other player throw what they carry.
   Answer: keep knockback only (scawful, in the dual-swords session, 2026-09-26).
 
-* OPEN ROM expansion to 4 MB?
+* DECIDED ROM expansion to 4 MB: later
   :PROPERTIES:
   :ASKED_BY: Yaze graphics editor prompts (via Oracle RC Leader)
   :DOC:      [[file:~/src/hobby/yaze-practice/graphics-evidence/2026-09-26/rom-expansion-4mb-plan.md]]
@@ -141,7 +141,9 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   claude/emulator-integration; snes9x uses the byte for its SRAM window; the
   SNES Classic stock emulator is unknown (test on device). Bank $23 (32 KB)
   already covers near-term graphics growth, so this is not urgent.
-  Answer: go now / later / no.
+  Answer: later. "Later: bank $23 covers near-term growth; test the SNES
+  Classic first." (scawful, 2026-10-19). Keep the 2.05 MB file for now; run a
+  4 MB test file on the SNES Classic before any expansion.
 
 * DECIDED Beat sheet crux 5: shrines gate dungeons (verified by scawful)
   :PROPERTIES:
