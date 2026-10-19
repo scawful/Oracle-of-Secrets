@@ -2347,3 +2347,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Answer: "oh ember seed is for the swordsmith to give you the gloves ? i think that's fine i
   just dont know where in the menu it would go, maybe we add a new quest item to the quest
   status screen but we are running low on 2bpp icons" (scawful, 2026-10-19)
+
+* DECIDED The ember seed shows in the Quest screen's Glove slot (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (ember seed menu placement)
+  :END:
+  The Quest screen GEAR row's Power Glove slot (Menu/menu_quest.asm) is empty until Link has a
+  Glove. While the ember seed flag is set and Gloves = 0, that slot shows the seed; when the smith
+  takes it, the Power Glove replaces it. No new menu slot. Icon: one 16x16 (four 2bpp tiles), or a
+  recolor of existing art if no tiles are free.
+  Answer: "Glove slot: the seed shows in the empty Glove slot until the smith swaps it for the
+  gloves." (scawful, 2026-10-19)
