@@ -1997,3 +1997,12 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   seen again. No return visit at the thieves' cave and no reward.
   Rejected: a return visit at the thieves' cave on the way to Mushroom Grotto.
   Answer: "No: the thief slips away during the escape and is not seen again." (scawful, 2026-10-19)
+
+* DECIDED Prison thief uses the vanilla thief sprite as a still NPC (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  The thief cellmate is the vanilla thief sprite, standing still as an NPC in the cell next to
+  Link's ($65). No new art.
+  Rejected: new art for a named character.
+  Answer: "The vanilla thief sprite, standing still as an NPC in the next cell." (scawful, 2026-10-19)
