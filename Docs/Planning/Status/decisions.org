@@ -2201,3 +2201,24 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: Farore as the dream speaker (the 2026-10-15 draft).
   Answer: "The Captain himself, the knight trapped inside, speaks in the Courage dream."
   (scawful, 2026-10-19)
+
+* DECIDED Courage dream text approved: the Captain's three plain lines (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (review of "Approve Courage dream scene")
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/DRAFT.md
+  :END:
+  Approved text for Dream 3 "The Healing Revelation", spoken by the Captain (the knight trapped
+  inside Kydreeok). Each line fits the dialogue box; message IDs are assigned at implementation.
+  #+begin_example
+  C1  I am still in here. The / prison only wears my shape.
+  C2  Bring both heads down at once. / When I stop fighting, lower / your sword.
+  C3  Then play the Song of Healing. / Let me hear it.
+  Maple, after waking (unchanged from the 2026-10-15 draft):
+      You were humming! Better than snoring. That's a start.
+  #+end_example
+  Staging stays as drafted (DRAFT.md D3): the Captain's outline behind Kydreeok, the heads fall,
+  Link lowers his blade, a still Ocarina image; no auto-played song, no boss event, no item.
+  This closes "Approve Courage dream scene" (the 2026-10-18 entry kept it open). All three dream
+  scripts are now approved.
+  Rejected: hinted wording ("I remember a song that heals...").
+  Answer: "Use the plain wording for the Captain's three lines." (scawful, 2026-10-19)
