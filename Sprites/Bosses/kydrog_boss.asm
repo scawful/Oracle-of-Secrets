@@ -206,7 +206,7 @@ Sprite_KydrogBoss_Main:
     ;     RTS
     ; .not_absconding
 
-    LDA #$50 : STA $09, X
+    LDA #$50 : STA.b $09
     JSL Sprite_DirectionToFacePlayer
     TYA : CMP.b #$02 : BCC .WalkRight
     .WalkForward
