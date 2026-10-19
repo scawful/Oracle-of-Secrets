@@ -44,6 +44,9 @@ Sprite_Manhandla_Long:
   .continue
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_Manhandla_Main
+    ; The body directs the fight: one BossKit load sample per frame.
+    LDA.w SprSubtype, X : BNE .SpriteIsNotActive
+      JSL BossKit_FrameEnd
   .SpriteIsNotActive
   PLB
   RTL
@@ -59,6 +62,7 @@ Sprite_Manhandla_Prep:
 {
   %BossPrep_DefeatedRemnant()
   PHB : PHK : PLB
+  JSL BossKit_Reset
   LDA.b #$04 : STA $36          ; Stores initial movement speeds
   LDA.b #$06 : STA $0428        ; Allows BG1 to move
   LDA.b #$80 : STA.w SprDefl, X
@@ -100,8 +104,9 @@ Sprite_Manhandla_CheckForNextPhaseOrDeath:
       LDA.b #$01 : STA.w SprMiscD, X
       LDA.b #$40 : STA.w SprTimerA, X
       LDA.b #$40 : STA.w SprHealth, X ; Refill the health
-      LDA.b #$08 : STA.w SprNbrOAM, X ; Give more OAM
+      LDA.b #$0A : STA.w SprNbrOAM, X ; emerge frame 11 draws 10 tiles
       LDA.b #$07 : STA.w SprAction, X ; Chuchu Emerge
+      LDA.b #$20 : JSL BossKit_StartQuake
       LDA.b #$0A : STA.w $36
     .not_dead
     RTS
@@ -118,30 +123,6 @@ Sprite_Manhandla_CheckForNextPhaseOrDeath:
 
   RTS
 }
-
-SetLeftHeadPos:
-  REP #$20
-  LDA.w SprCachedX : SEC : SBC.w #$0016
-  SEP #$20
-  STA.w SprX, Y : XBA : STA.w SprXH, Y
-
-  REP #$20
-  LDA.w SprCachedY : SEC : SBC.w #$000F
-  SEP #$20
-  STA.w SprY, Y : XBA : STA.w SprYH, Y
-  RTS
-
-SetRightHeadPos:
-  REP #$20
-  LDA.w SprCachedX : CLC : ADC.w #$0016
-  SEP #$20
-  STA.w SprX, Y : XBA : STA.w SprXH, Y
-
-  REP #$20
-  LDA.w SprCachedY : SEC : SBC.w #$000F
-  SEP #$20
-  STA.w SprY, Y : XBA : STA.w SprYH, Y
-  RTS
 
 SetCenterHeadPos:
   REP #$20
@@ -176,9 +157,7 @@ Sprite_Manhandla_Main:
   {
     LDA.w SprSubtype, X : BNE .not_main
       LDA.w SprX, X : SEC : SBC.b #$04 : STA.w SprX, X
-      JSR SpawnLeftManhandlaHead
-      JSR SpawnRightManhandlaHead
-      JSR SpawnCenterMandhandlaHead
+      JSL Manhandla_SpawnHeads
       LDA.b #$06 : STA.w SprFrame, X
       %GotoAction(6) ; Manhandla_Body
       RTS
@@ -239,10 +218,14 @@ Sprite_Manhandla_Main:
       RTS
     +
 
+    ; Blasts: at most 3 alive, and none starts on a heavy frame.
     JSL GetRandomInt : AND.b #$3F : BNE ++
-      JSR Chuchu_SpawnBlast
-      ; JSR Mothula_SpawnBeams
+      JSL BossKit_CanSpend : BCC ++
+      LDA.b #$88 : LDY.b #$0A : JSL BossKit_CountLive
+      CMP.b #$03 : BCS ++
+        JSR Chuchu_SpawnBlast
     ++
+    JSL BigChuchu_Hop_Long
 
     PHX
     JSR Sprite_Manhandla_Move
@@ -256,6 +239,7 @@ Sprite_Manhandla_Main:
     LDA.w SprType, Y : CMP.b #$88 : BNE .not_head3
     LDA.w SprState, Y : BEQ .offspring3_dead
       JSR SetCenterHeadPos
+      LDA.w SprHeight, X : STA.w SprHeight, Y ; the flower rides the hop
       .offspring3_dead
     .not_head3
 
@@ -288,7 +272,7 @@ Sprite_Manhandla_Main:
         LDA.b #$08 : STA.w SprSubtype, Y
         STA.w SprAction, Y
         LDA.b #$20 : STA.w SprHealth, Y
-        LDA.b #$07 : STA.w SprNbrOAM, Y
+        LDA.b #$08 : STA.w SprNbrOAM, Y ; the flower frame draws 8 tiles
         LDA.w SprY, Y : CLC : ADC.b #$20 : STA.w SprY, Y
         LDA.b #$10 : STA.w SprTimerC, Y
         TYX
@@ -308,34 +292,18 @@ Sprite_Manhandla_Main:
     JSR Sprite_Manhandla_Move
     JSL Sprite_DamageFlash_Long
 
+    ; Beams: rare, one volley alive at a time, none on a heavy frame.
     JSL GetRandomInt : AND.b #$7F : BNE +
       JSL GetRandomInt : AND.b #$04 : BNE +
-      JSR Mothula_SpawnBeams
+      JSL BossKit_CanSpend : BCC +
+      LDA.b #$89 : LDY.b #$FF : JSL BossKit_CountLive : BNE +
+        JSR Mothula_SpawnBeams
     +
 
     JSL Sprite_CheckDamageFromPlayer
     %DoDamageToPlayerSameLayerOnContact()
 
-    LDY.w Offspring1_Id
-    LDA.w SprType, Y : CMP.b #$88 : BNE .not_head
-      LDA.w SprState, Y : BEQ .offspring1_dead
-        JSR SetLeftHeadPos
-      .offspring1_dead
-    .not_head
-
-    LDY.w Offspring2_Id
-    LDA.w SprType, Y : CMP.b #$88 : BNE .not_head2
-      LDA.w SprState, Y : BEQ .offspring2_dead
-        JSR SetRightHeadPos
-      .offspring2_dead
-    .not_head2
-
-    LDY.w Offspring3_Id
-    LDA.w SprType, Y : CMP.b #$88 : BNE .not_head3
-      LDA.w SprState, Y : BEQ .offspring3_dead
-        JSR SetCenterHeadPos
-      .offspring3_dead
-    .not_head3
+    JSL Manhandla_MoveHeads
     PLX
     RTS
   }
@@ -364,6 +332,8 @@ Sprite_Manhandla_Main:
 
   BigChuchu_Dead:
   {
+    JSL BossKit_StopQuake
+    STZ.w SprHeight, X
     LDA.b #$FF
     STA.w $0BC0, X
     LDA.b #$04 : STA.w SprState, X
@@ -559,7 +529,11 @@ Sprite_Manhandla_Draw:
   PLX : DEX : BPL .nextTile
 
   PLX
-
+  ; Heads (subtypes 1-3) draw their neck behind the head tiles.
+  LDA.w SprSubtype, X : BEQ .no_neck
+  CMP.b #$04 : BCS .no_neck
+    JSL Manhandla_DrawNeck
+  .no_neck
   RTS
 
   .start_index
@@ -799,66 +773,6 @@ Mothula_SpawnBeams:
   db  24,  32,  24
 }
 
-SpawnLeftManhandlaHead:
-{
-  LDA #$88
-  JSL Sprite_SpawnDynamically : BMI .return
-    TYA : STA.w Offspring1_Id
-    PHX
-    JSR SetLeftHeadPos
-    LDA.b #$03 : STA.w SprSubtype, Y
-    STA.w SprAction, Y
-    LDA.b #$14 : STA.w SprHealth, Y
-    LDA.b #$90 : STA.w SprTileDie, Y
-    LDA.w SprGfxProps : ORA.b #$80 : STA.w SprGfxProps, Y
-    TYX
-    STZ.w SprYRound, X
-    STZ.w SprXRound, X
-    PLX
-  .return
-  RTS
-}
-
-SpawnRightManhandlaHead:
-{
-  LDA #$88
-  JSL Sprite_SpawnDynamically : BMI .return
-    TYA : STA.w Offspring2_Id
-    PHX
-    JSR SetRightHeadPos
-    LDA.b #$02
-    STA.w SprSubtype, Y
-    LDA.b #$14 : STA.w SprHealth, Y
-    LDA.b #$90 : STA.w SprTileDie, Y
-    LDA.w SprGfxProps : AND.b #$80 : STA.w SprGfxProps, Y
-    TYX
-    STZ.w SprYRound, X
-    STZ.w SprXRound, X
-    PLX
-  .return
-  RTS
-}
-
-SpawnCenterMandhandlaHead:
-{
-  LDA #$88
-  JSL Sprite_SpawnDynamically : BMI .return
-    TYA : STA.w Offspring3_Id
-    PHX
-    JSR SetCenterHeadPos
-    LDA.b #$01
-    STA.w SprSubtype, Y
-    LDA.b #$14 : STA.w SprHealth, Y
-    LDA.b #$90 : STA.w SprTileDie, Y
-    LDA.w SprGfxProps : AND.b #$80 : STA.w SprGfxProps, Y
-    TYX
-    STZ.w SprYRound, X
-    STZ.w SprXRound, X
-    PLX
-  .return
-  RTS
-}
-
 ApplyManhandlaPalette:
 {
   REP #$20 ;Set A in 16bit mode
@@ -905,3 +819,263 @@ ApplyManhandlaGraphics:
   ManhandlaGraphics:
     incbin manhandla.bin
 }
+
+
+; =========================================================
+; Bank $3A: free run $3A8DC8-$3AB7FF (after the mask routines, before
+; Part00 at $3AB800). This block uses $3AA000-$3AA7FF.
+pushpc
+org $3AA000
+; ---------------------------------------------------------
+; Heads on necks (BossKit). Each frame the body places every live head at
+; its rest spot plus a sway and its lunge offset, and stores the vector
+; from the head back to its root on the bulb; the head draws its neck
+; along that vector (BossKit_DrawChain, bead tile $6A).
+; Head RAM: SprMiscB/C = root minus head (signed X/Y), SprMiscE/F = lunge
+;           vector (signed X/Y), SprTimerD = lunge time.
+; Body RAM: SprTimerE = lunge cooldown, SprTimerD = Big ChuChu hop time.
+; Head index (Offspring1_Id + n): 0 = left, 1 = right, 2 = center.
+; Bank $30 is full, so this code lives in its own org in bank $3A and the
+; body calls it with JSL.
+
+!Manhandla_LungeTime  = $30
+!Manhandla_LungeReach = $18 ; pixels at full reach
+
+; X = body. Every frame of the three-headed phase: maybe start a lunge,
+; then place the heads.
+Manhandla_MoveHeads:
+{
+  PHB : PHK : PLB
+  JSR Manhandla_StartLunge
+  JSR Manhandla_PlaceHeads
+  PLB
+  RTL
+}
+
+; X = body. Spawns the left, right and center heads and puts each on its neck.
+Manhandla_SpawnHeads:
+{
+  PHB : PHK : PLB
+  LDA.b #$00
+  .next
+    PHA
+    LDA.b #$88
+    JSL Sprite_SpawnDynamically : BMI .no_slot
+      PLA : PHA : STA.b $0E
+      PHX
+      TAX
+      TYA : STA.w Offspring1_Id, X
+      LDA.w .subtype, X : STA.w SprSubtype, Y : STA.w SprAction, Y
+      LDA.w SprGfxProps : AND.w .props_keep, X : ORA.w .props_set, X
+      STA.w SprGfxProps, Y
+      PLX
+      LDA.b #$14 : STA.w SprHealth, Y
+      LDA.b #$90 : STA.w SprTileDie, Y
+      ; 4 head tiles plus 4 neck beads
+      LDA.w SprNbrOAM, Y : AND.b #$E0 : ORA.b #$08 : STA.w SprNbrOAM, Y
+      LDA.b #$00
+      STA.w SprYRound, Y : STA.w SprXRound, Y
+      STA.w SprTimerD, Y : STA.w SprMiscE, Y : STA.w SprMiscF, Y
+      JSR Manhandla_PlaceHead
+    .no_slot
+    PLA : INC A : CMP.b #$03 : BCC .next
+  PLB
+  RTL
+
+  .subtype
+    db $03, $02, $01
+  ; The left head keeps the body's props and sets bit 7; the others keep
+  ; only bit 7 (as the three old spawn routines did).
+  .props_keep
+    db $FF, $80, $80
+  .props_set
+    db $80, $00, $00
+}
+
+Manhandla_PlaceHeads:
+{
+  LDY.b #$02
+  .next
+    PHY
+    STY.b $0E
+    LDA.w Offspring1_Id, Y : TAY
+    JSR Manhandla_IsHead : BCC .skip
+      JSR Manhandla_PlaceHead
+    .skip
+    PLY
+  DEY : BPL .next
+  RTS
+}
+
+; Y = sprite slot. Carry set if it holds a live Manhandla head (subtype 1-3).
+Manhandla_IsHead:
+{
+  LDA.w SprState, Y : BEQ .no
+  LDA.w SprType, Y : CMP.b #$88 : BNE .no
+  LDA.w SprSubtype, Y : BEQ .no
+  CMP.b #$04 : BCS .no
+    SEC
+    RTS
+  .no
+  CLC
+  RTS
+}
+
+; X = body, Y = head, $0E = head index.
+Manhandla_PlaceHead:
+{
+  PHX
+  ; Lunge: the lunge vector times a level in quarters (wind up, strike, return).
+  LDA.w SprTimerD, Y : LSR A : LSR A : TAX
+  LDA.w .lunge_level, X : STA.b $0F
+  LDA.w SprMiscE, Y : JSR Manhandla_ScaleQuarter : STA.b $0C
+  LDA.w SprMiscF, Y : JSR Manhandla_ScaleQuarter : STA.b $0D
+
+  ; Sway: a small ellipse, a different phase for each head.
+  LDX.b $0E
+  LDA.b $1A : LSR A : CLC : ADC.w .phase, X : AND.b #$1F : TAX
+  LDA.l BossKit_Sine32, X : CLC : ADC.b $0C : STA.b $0C
+  TXA : CLC : ADC.b #$08 : AND.b #$1F : TAX
+  LDA.l BossKit_Sine32, X : CMP.b #$80 : ROR A : CLC : ADC.b $0D : STA.b $0D
+
+  ; Head = body + rest + offset. Neck vector = root - (rest + offset).
+  LDX.b $0E
+  LDA.w .rest_x, X : CLC : ADC.b $0C : STA.b $0C
+  LDA.w .rest_y, X : CLC : ADC.b $0D : STA.b $0D
+  LDA.w .root_x, X : SEC : SBC.b $0C : STA.w SprMiscB, Y
+  LDA.w .root_y, X : SEC : SBC.b $0D : STA.w SprMiscC, Y
+
+  REP #$20
+  LDA.b $0C : AND.w #$00FF : EOR.w #$0080 : SEC : SBC.w #$0080
+  CLC : ADC.w SprCachedX
+  SEP #$20
+  STA.w SprX, Y : XBA : STA.w SprXH, Y
+  REP #$20
+  LDA.b $0D : AND.w #$00FF : EOR.w #$0080 : SEC : SBC.w #$0080
+  CLC : ADC.w SprCachedY
+  SEP #$20
+  STA.w SprY, Y : XBA : STA.w SprYH, Y
+  PLX
+  RTS
+
+  ; Index = SprTimerD / 4 (12 = the frame the lunge starts).
+  .lunge_level
+    db 0, 1, 1, 2, 3, 4, 4, 4, 2, -1, -1, -1, -1
+  .phase
+    db 0, 16, 8
+  ; Offsets from the body (top-left of the first head tile / neck link).
+  .rest_x
+    db -22, 22, 0
+  .rest_y
+    db -15, -15, 0
+  .root_x
+    db -8, 8, 0
+  .root_y
+    db -10, -10, -12
+}
+
+; A = signed vector component, $0F = level in quarters (-1 to 4).
+; Out: A = component * level / 4. Scratch $0A/$0B.
+Manhandla_ScaleQuarter:
+{
+  CMP.b #$80 : ROR A : CMP.b #$80 : ROR A : STA.b $0A
+  LDA.b $0F : BMI .back : BEQ .zero
+    STA.b $0B
+    LDA.b #$00
+    .add
+      CLC : ADC.b $0A
+    DEC.b $0B : BNE .add
+    RTS
+  .back
+  LDA.b $0A : EOR.b #$FF : INC A
+  .zero
+  RTS
+}
+
+; Every 1-2 seconds one head lunges at the player. One lunge at a time,
+; and none starts on a heavy frame. X = body.
+Manhandla_StartLunge:
+{
+  LDA.w SprTimerE, X : BNE .done
+  JSL BossKit_CanSpend : BCC .done
+  LDY.b #$02
+  .busy
+    PHY
+    LDA.w Offspring1_Id, Y : TAY
+    JSR Manhandla_IsHead : BCC .free
+    LDA.w SprTimerD, Y : BEQ .free
+      PLY
+      RTS
+    .free
+    PLY
+  DEY : BPL .busy
+
+  ; Random head; the center head goes twice as often.
+  JSL GetRandomInt : AND.b #$03 : CMP.b #$03 : BCC .pick
+    LDA.b #$02
+  .pick
+  TAY
+  LDA.w Offspring1_Id, Y : TAY
+  JSR Manhandla_IsHead : BCC .done
+    PHX
+    TYX
+    LDA.b #!Manhandla_LungeReach : JSL Sprite_ProjectSpeedTowardsPlayer
+    LDA.b $01 : STA.w SprMiscE, X
+    LDA.b $00 : STA.w SprMiscF, X
+    LDA.b #!Manhandla_LungeTime : STA.w SprTimerD, X
+    PLX
+    JSL GetRandomInt : AND.b #$3F : CLC : ADC.b #$40 : STA.w SprTimerE, X
+  .done
+  RTS
+}
+
+; Head: the neck runs from behind the head tiles to its root on the bulb.
+; Y = the next OAM entry; $00/$02 = head screen position.
+Manhandla_DrawNeck:
+{
+  LDA.w SprMiscB, X : STA.b $04
+  LDA.w SprMiscC, X : STA.b $05
+  LDA.b #$6A : STA.b $06
+  LDA.w SprFlash, X : ORA.b #$33 : STA.b $07
+  STZ.b $0C
+  LDA.b #$02 : STA.b $0D ; sag 2 px
+  JSL BossKit_DrawChain
+  RTL
+}
+
+; Big ChuChu bounces: a 32-frame hop that lands with a short earthquake.
+; Only starts on a light frame. X = body.
+BigChuchu_Hop_Long:
+{
+  PHB : PHK : PLB
+  JSR BigChuchu_Hop
+  PLB
+  RTL
+}
+
+BigChuchu_Hop:
+{
+  LDA.w SprTimerD, X : BNE .airborne
+    LDA.w SprHeight, X : BEQ .grounded
+      STZ.w SprHeight, X
+      LDA.b #$10 : JSL BossKit_StartQuake
+      LDA.b #$0C : JSL Sound_SetSfx2PanLong
+    .grounded
+    JSL GetRandomInt : AND.b #$7F : BNE .done
+      JSL BossKit_CanSpend : BCC .done
+        LDA.b #$20 : STA.w SprTimerD, X
+    .done
+    RTS
+  .airborne
+  TAY
+  LDA.w .height, Y : STA.w SprHeight, X
+  RTS
+
+  .height
+    db 0, 1, 2, 3, 5, 6, 7, 8, 8, 9, 10, 11, 11, 11, 12, 12
+    db 12, 12, 12, 11, 11, 11, 10, 9, 8, 8, 7, 6, 5, 3, 2, 1
+}
+
+print "End of Manhandla necks            ", pc
+assert pc() <= $3AA800, "Manhandla neck block crossed $3AA800"
+pullpc

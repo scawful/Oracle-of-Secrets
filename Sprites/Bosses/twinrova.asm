@@ -46,6 +46,7 @@ Sprite_Twinrova_Long:
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     JSR Sprite_Twinrova_CheckIfDead
     JSR Sprite_Twinrova_Main
+    JSL BossKit_FrameEnd ; Twinrova directs her fight's load meter
   .SpriteIsNotActive
   PLB
   RTL
@@ -108,6 +109,52 @@ Twinrova_Initialize:
   LDA.b #$07 : STA.w SprGfx, X
   STZ.w $0B69
 
+  JSL BossKit_Reset
+  JSR Twinrova_RodDamageDefault
+  RTS
+}
+
+; ---------------------------------------------------------
+; Rod damage for sprite $CE, row $7F6CE0 of the enemy damage table
+; ($7F6000 + type * 16 + damage class; the game fills it once at file
+; load). Values are DamageSubclassValue indices: 0 = no damage, 1 = 8.
+; Phase 2 flips the weakness with the witch: Koume (fire) takes only the
+; Ice Rod, Kotake (ice) takes only the Fire Rod.
+!Twinrova_FireRodDamage = $7F6CEB ; damage class $0B, Fire Rod
+!Twinrova_IceRodDamage  = $7F6CEC ; damage class $0C, Ice Rod
+; The loaded row (EnemyDamageCompressed $03E800, 2026-10-19 build) gives
+; both rods 0, so phase 1 and the refight start immune to them.
+!Twinrova_FireRodLoaded = $00
+!Twinrova_IceRodLoaded  = $00
+
+Twinrova_RodDamageDefault:
+{
+  LDA.b #!Twinrova_FireRodLoaded : STA.l !Twinrova_FireRodDamage
+  LDA.b #!Twinrova_IceRodLoaded  : STA.l !Twinrova_IceRodDamage
+  RTS
+}
+
+Twinrova_RodDamageKoume:
+{
+  LDA.b #$00 : STA.l !Twinrova_FireRodDamage
+  LDA.b #$01 : STA.l !Twinrova_IceRodDamage
+  RTS
+}
+
+Twinrova_RodDamageKotake:
+{
+  LDA.b #$01 : STA.l !Twinrova_FireRodDamage
+  LDA.b #$00 : STA.l !Twinrova_IceRodDamage
+  RTS
+}
+
+; A = hover height: 14 px plus a slow 4 px bob (128-frame period).
+Twinrova_HoverHeight:
+{
+  PHX
+  LDA.b $1A : LSR A : LSR A : AND.b #$1F : TAX
+  LDA.l BossKit_Sine32, X : CLC : ADC.b #$0E
+  PLX
   RTS
 }
 
@@ -223,10 +270,10 @@ Sprite_Twinrova_Main:
     .phase_1
 
 
-    LDA.b #$11 : STA.b $00
-    JSL Sprite_CountActiveById
-    LDA.b $02 : CMP.b #$03 : BCS +
-      %ProbCheck($3F, +)
+    LDA.b #$11 : LDY.b #$FF : JSL BossKit_CountLive
+    CMP.b #$03 : BCS +
+    JSL BossKit_CanSpend : BCC +
+      %ProbCheck($7F, +)
         %ProbCheck2($0F, ++)
           JSL Sprite_SpawnFireKeese
           LDA.b #$01 : STA.w SprMiscB, Y
@@ -278,8 +325,8 @@ Sprite_Twinrova_Main:
   Twinrova_MoveForwards:
   {
     %Twinrova_Front()
+    JSR Twinrova_HoverHeight : TAY
     LDA #$10 ; speed
-    LDY #$10 ; height
     JSL Sprite_FloatTowardPlayer
     JSL Sprite_CheckTileCollision
     %GotoAction(1)
@@ -290,7 +337,8 @@ Sprite_Twinrova_Main:
   Twinrova_MoveBackwards:
   {
     %Twinrova_Back()
-    LDA #$20 : LDY #$10
+    JSR Twinrova_HoverHeight : TAY
+    LDA #$20
     JSL Sprite_FloatTowardPlayer
     JSL Sprite_CheckTileCollision
     %GotoAction(1)
@@ -326,8 +374,9 @@ Sprite_Twinrova_Main:
     JSR Twinrova_RestoreFloorTile
     LDA.b #$08 : JSL BossKit_FireTrail ; at most 8 live flames
 
-    ; Random chance to release fireball
+    ; Random chance to release fireball (at most 4 alive, light frames only)
     JSL GetRandomInt : AND.b #$3F : BNE ++
+      JSR Twinrova_FireballRoom : BCC ++
       JSR ReleaseFireballs
     ++
 
@@ -399,14 +448,17 @@ Sprite_Twinrova_Main:
   {
     %StartOnFrame(8)
     %Show_Koume()
+    JSR Twinrova_RodDamageKoume
 
     JSL GetRandomInt : AND.b #$3F : BNE ++
+      JSL BossKit_CanSpend : BCC ++
       JSR AddPitHazard
       JSR Ganon_SpawnFallingTilesOverlord
     ++
 
-    ; Random chance to release fireball
+    ; Random chance to release fireball (at most 4 alive, light frames only)
     JSL GetRandomInt : AND.b #$3F : BNE +++
+      JSR Twinrova_FireballRoom : BCC +++
       JSL Sprite_SpawnFireball
     +++
 
@@ -424,9 +476,11 @@ Sprite_Twinrova_Main:
   {
     %StartOnFrame(9)
     %Show_Kotake()
+    JSR Twinrova_RodDamageKotake
 
     JSL Sprite_IsBelowPlayer : CPY #$01 : BEQ .not_below
       JSL GetRandomInt : AND.b #$3F : BNE ++
+      JSL BossKit_CanSpend : BCC ++
         JSL $1DE612 ; Sprite_SpawnLightning
         LDA #$30
         JSL Sprite_ProjectSpeedTowardsPlayer
@@ -445,6 +499,7 @@ Sprite_Twinrova_Main:
   Twinrova_Dead:
   {
     %StartOnFrame(11)
+    JSR Twinrova_RodDamageDefault
     JSL Sprite_KillFriends
     %Twinrova_Hurt()
     RTS
@@ -498,7 +553,6 @@ RageModeMove:
   ; Predictive movement towards player with altitude increase
   JSL Sprite_DirectionToFacePlayer
   JSL Sprite_ApplySpeedTowardsPlayer
-  LDA.b #$10 : STA.w SprHeight, X ; Set height
   BRA .UpdatePosition
 
   .RandomStrafe
@@ -511,14 +565,12 @@ RageModeMove:
   LDA VelocityOffsets+4, Y : STA.w SprXSpeed, X
   INY
   LDA VelocityOffsets, Y : STA.w SprYSpeed, X
-  LDA.b #$10 : STA.w SprHeight, X ; Set height
   BRA .UpdatePosition
 
   .StayInPlace
   ; Stay in place to prepare for attack or other action
   STZ.w SprXSpeed, X
   STZ.w SprYSpeed, X
-  LDA.b #$10 : STA.w SprHeight, X ; Set height
   BRA .UpdatePosition
 
   .Evasive
@@ -527,16 +579,11 @@ RageModeMove:
   LDA VelocityOffsets, Y : EOR #$FF : INC : STA.w SprXSpeed, X
   INY
   LDA VelocityOffsets+4, Y : EOR #$FF : INC : STA.w SprYSpeed, X
-  LDA.b #$10 : STA.w SprHeight, X ; Set height
   BRA .UpdatePosition
 
   .UpdatePosition
-  ; Handle floaty movement with controlled altitude
-  LDA.w SprHeight, X : CMP #$10 : BNE .CheckGrounded
-    DEC.w SprHeight, X
-    DEC.w SprHeightS, X
-
-  .CheckGrounded
+  ; Float with a slow bob (the old code flickered between 16 and 15 px).
+  JSR Twinrova_HoverHeight : STA.w SprHeight, X
   JSL Sprite_Move
   JSL Sprite_BounceFromTileCollision
   RTS
@@ -549,7 +596,7 @@ DoRandomStrafe:
   LDA VelocityOffsets, Y : STA.w SprXSpeed, X
   INY
   LDA VelocityOffsets+4, Y : STA.w SprYSpeed, X
-  LDA.b #$10 : STA.w SprHeight, X ; Set height
+  JSR Twinrova_HoverHeight : STA.w SprHeight, X
   RTS
 }
 
@@ -817,6 +864,18 @@ ApplyTwinrovaGraphics:
   LDA.w SprDefl, Y : ORA.b #$08 : STA.w SprDefl, Y
   LDA.b #$04 : STA.w SprBump, Y
   .exit
+  RTS
+}
+
+; Carry set: a fireball may spawn (fewer than 4 alive, light frame).
+Twinrova_FireballRoom:
+{
+  LDA.b #$55 : LDY.b #$FF : JSL BossKit_CountLive
+  CMP.b #$04 : BCS .no
+    JSL BossKit_CanSpend
+    RTS
+  .no
+  CLC
   RTS
 }
 

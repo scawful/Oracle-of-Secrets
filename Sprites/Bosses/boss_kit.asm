@@ -2,8 +2,9 @@
 ; BossKit: shared boss code
 ;
 ; A frame load meter, garnish FX that never steal a live slot, a drifting
-; trail attack, a 4-link chain draw (necks, tails) and an earthquake.
-; Twinrova, Kydreeok, the vampire bat and fire keese use it.
+; trail attack, a 4-link chain draw (necks, tails), an earthquake and a
+; live-sprite count for spawn caps.
+; Twinrova, Kydreeok, Manhandla, the vampire bat and fire keese use it.
 ; Replaces the Trinexx-derived helpers that used to live in
 ; Core/sprite_functions.asm (Sprite_Twinrova_FireAttack/IceAttack,
 ; AddFireGarnish, AddIceGarnishV2, TrinexxBreath_AltEntry).
@@ -323,3 +324,54 @@ BossKit_DrawChain:
   PLX
   RTL
 }
+
+; ---------------------------------------------------------
+; Spawn caps, earthquake control and a shared sine.
+
+; A = sprite type, Y = subtype ($FF = any subtype).
+; Out: A = live sprites of that type (Z set when none). X kept.
+; Scratch $00/$01. Replaces Sprite_CountActiveById, which counts dead
+; slots too and leaves X = 0.
+BossKit_CountLive:
+{
+  STA.b $00 : STY.b $01
+  PHX
+  LDY.b #$00
+  LDX.b #$0F
+  .next
+    LDA.w SprState, X : BEQ .skip
+    LDA.w SprType, X : CMP.b $00 : BNE .skip
+    LDA.b $01 : CMP.b #$FF : BEQ .count
+    CMP.w SprSubtype, X : BNE .skip
+    .count
+    INY
+  .skip
+  DEX : BPL .next
+  PLX
+  TYA
+  RTL
+}
+
+; A = earthquake length in frames. BossKit_FrameEnd runs it.
+BossKit_StartQuake:
+{
+  STA.l BossKit_Quake
+  RTL
+}
+
+; Ends an earthquake now. Call when the director dies or stops calling
+; BossKit_FrameEnd, so the screen offset does not stay.
+BossKit_StopQuake:
+{
+  LDA.b #$00 : STA.l BossKit_Quake
+  REP #$20
+  STZ.w $011A : STZ.w $011C
+  SEP #$20
+  RTL
+}
+
+; 32-step sine, amplitude 4. Read with LDA.l BossKit_Sine32, X
+; (X = phase AND $1F).
+BossKit_Sine32:
+  db 0, 1, 2, 2, 3, 3, 4, 4, 4, 4, 4, 3, 3, 2, 2, 1
+  db 0, -1, -2, -2, -3, -3, -4, -4, -4, -4, -4, -3, -3, -2, -2, -1
