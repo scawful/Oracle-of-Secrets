@@ -2336,3 +2336,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
      "My forge, burning again! My partner went to the mines and never came back, so I cannot
      temper anything yet. Take my old forge gloves. They lift what your hands cannot."
   Answer: "Use both forge-gloves lines as written." (scawful, 2026-10-19)
+
+* DECIDED The ember seed stays: the smith's reason to give the gloves (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (provenance check on the forge-gloves entry)
+  :END:
+  The ember seed was Claude's invention (idea 1 of glove_maps/README.md); the 10-18 "answer"
+  on the forge-gloves entry is a button Claude wrote. scawful confirmed it in their own words
+  after it was explained. Menu placement is still open (Quest screen icon space is tight).
+  Answer: "oh ember seed is for the swordsmith to give you the gloves ? i think that's fine i
+  just dont know where in the menu it would go, maybe we add a new quest item to the quest
+  status screen but we are running low on 2bpp icons" (scawful, 2026-10-19)
