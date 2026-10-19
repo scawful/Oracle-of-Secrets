@@ -107,6 +107,19 @@ LinkItem_FirePortal:
   .continue
 
   PHX
+  ; A room change can leave the last color selected after every portal is gone.
+  ; Start an empty pair with blue; only accepted live portals preserve the turn.
+  ; The allocator clears the new slot's subtype, so this scan excludes it.
+  LDX.b #$0F
+  .find_live_portal
+    LDA.w SprState, X : CMP.b #$09 : BNE .next_portal
+    LDA.w SprType, X : CMP.b #$03 : BNE .next_portal
+    LDA.w SprSubtype, X : CMP.b #$01 : BEQ .toggle_color
+                         CMP.b #$02 : BEQ .toggle_color
+  .next_portal
+    DEX : BPL .find_live_portal
+  STZ.w $0FA6
+  .toggle_color
   LDA   $7E0FA6 : BEQ .spawn_blue
     STZ.w $0FA6
     JMP   .check_direction
