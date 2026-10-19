@@ -2101,3 +2101,13 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: vanilla soldier walking (turning at walls and corners, varying per attempt).
   Answer: "Fixed back-and-forth routes that cross the crawl path; Link times the gap and every
   attempt plays the same." (scawful, 2026-10-19)
+
+* DECIDED Prison thief says one short message pointing at the crack (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: thief's lines)
+  :END:
+  The thief cellmate has one short message. It points Link at the crack in his cell wall
+  (the Minish portal). No longer exchange. The text goes in one of the prison stubs $1CC-$1D1
+  after scawful approves the wording.
+  Rejected: a two-part exchange (who caught them both, then the crack).
+  Answer: "One short message that points Link at the crack in the cell wall." (scawful, 2026-10-19)
