@@ -2006,3 +2006,65 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Link's ($65). No new art.
   Rejected: new art for a named character.
   Answer: "The vanilla thief sprite, standing still as an NPC in the next cell." (scawful, 2026-10-19)
+
+* DECIDED Kalyxo Castle prison break (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude prison break session 2026-10-18
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/design_review_2026-10-18/WORK.md
+  :END:
+  1. Capture spot: the entry hall of the Meadow Blade room, on the way back from the
+     chest. Guards run in from the east door (the throne hall side). The south door of
+     that hall is one of Kalyxo Castle's alternate entrances, not an exit. Save and quit,
+     the Magic Mirror and other warps must not let the player skip the capture.
+     Fallback idea: guards run in as Link lifts the blade from the chest.
+     Answer: "B is probably good since the guards can come from the right door in that
+     room, but we'd have to prevent the player from save and exit or warping out if they
+     have the mirror, stuff like that. otherwise i was just gonna have the guards run into
+     the room as link pulls it from the chest. this isnt so much of an exit as it is one of
+     the alternate entrances into kalyxo castle and its multi-entrance dungeon system"
+     (scawful, 2026-10-18).
+  2. The castle is held by the Hylian garrison; its soldiers make the arrest. Kydrog's
+     pirates are at war with the thieves and the Hylian guards, have taken little ground,
+     and cause mischief across the island, driving people away (the reason for the low
+     NPC count).
+     Answer: "i think hylian garrison guards, since a lot of the enemies are like soldiers
+     in the kalyxo castle. kydrogs pirates are at war with the thieves as well as hylian
+     guards so i dont think they've taken much ground, just cause a lot of mischief across
+     the island more or less and driving people away hence the lower NPC count in canon"
+     (scawful, 2026-10-18).
+  3. Rooms: the prison sequence uses rooms $54, $55, $64 and $65 (already allocated by
+     scawful; the block directly west of the blade room $56).
+     Answer: "i think i already allocated some rooms for this sequence"; "54, 55, 64, 65"
+     (scawful, 2026-10-18).
+  4. Route: Link's cell is built in $65. The Minish route leads from the cell into $64,
+     up into $54, and $55 is the exit to the Kalyxo Castle overworld map.
+     Answer: "yeah $65 is where we can build his cell and the minish route can feed into 64 and up into 54 where 55 is the exit to the kalyxo castle map" (scawful, 2026-10-18).
+  5. SUPERSEDED 2026-10-19 by "Captured Link loses every sword until he takes the Meadow
+     Blade back": the guards take every sword. Original ruling: the guards confiscate only the Meadow Blade. It lies on a table along the escape
+     route, drawn as the sword sprite, and Link takes it back there. (scawful's first
+     idea was to take all items and make the cell the new-game start point until the
+     puzzle is solved; set aside because the escape is only a few rooms.)
+     Answer: "my thought was originally C, where it becomes a new game start point until you figure out the puzzle but considering it's not many rooms it's prob best to do B and then you get the blade back and it'd be cool to see the sword sprite out on the table" (scawful, 2026-10-18).
+  6. The blade table is in $54, in the chamber with the block. Link takes the blade back
+     midway, then fights out through $55 with it.
+     Answer: "A" (scawful, 2026-10-18, choosing "$54, the chamber with the block" over
+     "$55, the upper walkway by the exit").
+  7. A thief is locked in the next cell and shows Link the Minish way out. The thieves
+     already have a cave on the way to Mushroom Grotto; this thief is a member of that
+     faction.
+     Answer: "the thieves are established in a cave on the way to mushroom grotto already, but yeah a thief in the next cell would be a fun addition here" (scawful, 2026-10-18).
+  8. Farore's first callout stays at the chest: the vanilla Master Sword telepathy fires
+     when the blade comes out of the D3 chest, and Farore uses the Zelda sprite slot, so
+     the voice is hers. Taking the blade back from the table is silent (item-get pose, no
+     dialogue). Context: the Lv2 blade had no natural home among 7 dungeons and 3 shrines,
+     which is why the prison sequence exists.
+     Answer: "she being farore but farore took the zelda sprite slot btw"; "and yes that's fine at the chest can stay"
+     (scawful, 2026-10-18).
+  9. The Meadow Blade is required. The gate before the D3 boss opens only after the
+     escape, so the Stone Mask cannot skip the blade, the capture or the prison.
+     Answer: "yeah good idea" (scawful, 2026-10-18, to: make the blade required so the
+     Stone Mask cannot skip it).
+  Later rulings (2026-10-19, separate entries): D3 garden holds the Compass; death or continue
+  while captured returns Link to the cell; Minish portal in a cell-wall crack, grow back in
+  $54; a guard who sees Link sends him to the cell; every sword is taken; stealth ends at the
+  blade table; the thief slips away and does not return; the thief is the vanilla sprite.
