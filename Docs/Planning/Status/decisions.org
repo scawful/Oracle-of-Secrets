@@ -1957,3 +1957,12 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: staying small until the prison door ($55).
   Answer: "A crack in the cell wall holds a Minish portal; Link grows back at a second portal in
   the next hall." (scawful, 2026-10-19)
+
+* DECIDED Prison escape: a guard who sees Link sends him back to the cell (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  During the escape, if a patrolling guard sees Link, the screen fades and Link is back in the
+  prison cell ($65). No chase. Same reset as death or continue while captured.
+  Rejected: a chase where the guard attacks and Link fights or runs.
+  Answer: "Caught: the screen fades and Link is back in the cell." (scawful, 2026-10-19)
