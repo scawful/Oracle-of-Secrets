@@ -2161,3 +2161,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: a short wake-up line in $1CD as the fade ends.
   Answer: "No text on waking: the fade ends in the cell; $1CD and $1CE stay unused."
   (scawful, 2026-10-19)
+
+* DECIDED Prison exit: one line in $1D1 points back to the open gate (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison message stubs)
+  :END:
+  As Link exits the prison through $55, one short line shows in message $1D1
+  (!Msg_PostEscapeFlavor). It points him back to the gate before the D3 boss, which the escape
+  has opened. Wording is drafted separately for scawful's approval.
+  Rejected: no exit text, leaving the player to find the open gate alone.
+  Answer: "One short line in $1D1 as Link exits through $55, pointing him back to the now-open gate
+  before the boss." (scawful, 2026-10-19)
