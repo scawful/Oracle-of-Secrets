@@ -2499,3 +2499,81 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Every attack has a telegraph, a punish window and its own cooldown; rests
   come after each turn. The method is meant for the other bosses too.
   Answer: "Yes, build Kydreeok with the 3-stage plan as written." (scawful, 2026-10-19)
+
+* DECIDED Pendant shrines move to Lyra Sea islands in 1.0; the Abyss becomes the GBC story world (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Kalyxo docks session; Cursor, item-route session
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/shrines_to_lyra_sea_2026-10-19/DISCUSSION.md]]
+  :END:
+  1. The three pendant shrines (built by guest hackers, designed independently of
+     their surroundings) move as they are to islands in the Lyra Sea, the 32-map
+     ZSCustomOverworld expansion beside East Kalyxo. Their rooms stay; only their
+     door and exit records move. Each still ends in its pendant, no free item.
+  2. Scope: all three shrines in 1.0.
+  3. Flippers: a Sea Zora gift. The Sea Zora live in the structure already built
+     on the Zora Sanctuary map (below the Maku Tree; D4's map). The sea opens to
+     the east from there; the Sea Zora temple sits northeast of D4. This replaces
+     the ferry idea. The Flippers still come before D4.
+  4. The Shrine of Power sits east of the Goron Mines, on an island or nearby.
+     The Shrine of Courage's structure in the Abyss can be removed.
+  5. The Abyss keeps the story, restyled to the Game Boy look: dreams, songs,
+     Byrna, bonus items, the Master Sword and the finale. Mount Snowpeak still
+     needs portals. The Garo Mask stays with its Kalyxo desert NPC.
+  6. Macro structure: the Sky Islands become the late-game plot element; the
+     Lyra Sea and East Kalyxo are the midgame.
+  Reopens (each needs a new answer): beat sheet crux 5 "Shrine of Power (meet the
+  Eon Gorons)" (scawful: no Eon Gorons in that shrine; beat sheet lines 95 and
+  152 still say so); "Rock Meat route" Option B; "Abyss chunk layout and warp
+  pads"; the Glove/Mitt rock tiers around the shrines; the $C1 sign (Shrine of
+  Wisdom area, Ice Rod riddle); "Sky Islands timing and the Watchers".
+  Open: what keeps the Power island closed until D5 once Link can swim; whether
+  Link reaches the Sea Zora on D4's map without swimming; whether each pendant
+  dream still wakes Link in the Abyss hut; the Mirror must be refused on sea maps
+  (they have no Abyss counterpart); whether the Abyss interiors run on a separate
+  room engine. Technical: the door/exit records can hold sea map IDs; the normal
+  door path into sea maps is not in normal builds yet (Codex, codex-lyra).
+  Answers: "Yes, that matches: pendants on sea islands, Abyss keeps the story in
+  GBC style."; "this makes the sky islands the late game plot element and the
+  lyra sea and east kalyxo midgame"; chose "Move all three shrines to Lyra Sea
+  islands in 1.0"; "it's not hard, shrine of courage placement is completely
+  arbitrary and wisdom while close is still kinda forced relationship with the
+  zora falls stuff, versus having an east connection to the lyra sea and the sea
+  zora temple to the northeast of D4 ... the structure where shrine of courage is
+  at could be removed entirely without much issue ... there's a thematic sea zora
+  gift or some kind of way we get the flippers which ties in better"; "the songs,
+  dreams, byrna, etc definitely can come from there and stuff like mount snowpeak
+  still requires portals for traversal"; "let's log this idea" (scawful,
+  2026-10-19).
+
+* OPEN Goron route through the east, and swap Lupo Mountain with the Fortress of Secrets? (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: scawful's idea, Cursor item-route session
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/shrines_to_lyra_sea_2026-10-19/DISCUSSION.md]]
+  :END:
+  Idea: "meet kalyxo goron -> journey east volcanic cliffside east area, shrine of
+  power on an island or nearby, titans mitt, portal to eon abyss back at the
+  desert, then moving north from the bottom right to the top middle for lupo
+  mountain ? maybe we move lupo mountain and reposition the fortress of secrets
+  to where it is to mirror kalyxo castle ?" (scawful, 2026-10-19).
+  1. Route: the Goron in the Kalyxo desert asks for Rock Meat; the east cliffside
+     leads to the Shrine of Power and the Titan's Mitt; Mitt rocks guard the desert
+     portal to the Abyss beach (beach Mitt rubble on the right climb is already
+     planned); Link walks north up the east side to Lupo for the Rock Meat, then
+     back to the Goron and D6.
+  2. Swap: the Fortress of Secrets moves to Abyss $4B, the mirror of Kalyxo Castle
+     (Lupo today), so D3 and D8 reflect each other; Kydrog served in that castle's
+     garrison, and the Master Sword (Pyramid $40) is next door. Lupo moves to the
+     Fortress's large area $5E, beside the volcano's Eon Goron camps. Both are 2x2
+     large areas.
+  3. Reopens: the 2026-09-26 Fortress placement ("the mirrored map to the zora
+     river large map to the east"); Abyss audit rulings 17, 20 and 22-25 (ridge as
+     Fortress outworks, Master Sword barrier on the ridge stairs, Lupo art keyed to
+     $4B/$4D/$54/$55; parked with Codex, not painted); chunks 3 and 5; Rock Meat
+     Option B and the Lupo pad gate (no longer needed).
+  4. Still needed: a D5 lock on the east cliff path.
+  5. Story proposal for the Eon Gorons (needs approval): the Mirror breakthrough
+     used Goron crystals; a Goron crew went through and the Abyss reshaped them
+     into the Eon Gorons. The Rock Meat request is news of lost kin, and Rock Meat
+     only exists in the Abyss because it is their proof of life.
+  Question: "Adopt the east Goron route and the Lupo/Fortress swap?"
+  Answer:
