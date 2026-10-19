@@ -628,7 +628,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   lore purpose and potentially could add items"; then "yes both" (scawful,
   2026-09-26).
 
-* OPEN Room census follow-ups (runtime-checked on b28, 2026-09-26)
+* DECIDED Room census follow-ups (runtime-checked on b28, 2026-09-26; ruled 2026-10-19)
   :PROPERTIES:
   :ASKED_BY: Claude RC test handoff (room census agent)
   :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/room_census_2026-09-26/room_census.md]]
@@ -646,7 +646,9 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   2. Should the $11D basement (2 heart pieces) be reachable from the Mayor's House?
      -> DECIDED 2026-10-19: yes, one heart piece (only one chest is placed); see the entry below.
   3. Take the $81 pit-damage hunk? (Rec: yes, it only prevents a fall into Origins.)
-  Answer:
+     -> DECIDED 2026-10-19: yes; see the entry below.
+  Answer: all three ruled 2026-10-19 in separate entries at the end of this file (S3 gets $00;
+  the $11D basement keeps one heart piece; $81 joins the pit-damage table).
 
 * DECIDED Room budget step 1: the Sky tower gets the adjacent free block
   :PROPERTIES:
@@ -2265,3 +2267,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   S3's key doors and chests at runtime afterward.
   Rejected: leaving S3 on the shared ID $09.
   Answer: "Yes, give S3 its own dungeon ID $00 so keys and maps stop leaking." (scawful, 2026-10-19)
+
+* DECIDED D3 room $81 joins the pit-damage table (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (OPEN "Room census follow-ups", question 3)
+  :END:
+  Add D3 room $81 to the pit-damage table. A fall into its pit ring costs one heart and respawns
+  Link in $81, like the other pit-damage rooms, instead of dropping him into the walled-off
+  Origins room $05. Code-lane work: the one-line table addition from the census.
+  Rejected: keeping the drop into $05 and opening a way out later.
+  Answer: "Yes, add $81 to the pit-damage table: a fall costs one heart and respawns Link in $81."
+  (scawful, 2026-10-19)
