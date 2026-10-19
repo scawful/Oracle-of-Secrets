@@ -1918,3 +1918,21 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   the way to the blade shrine), so the Glove is required to finish D3. Which step: open.
   Answer (scawful picked this option, 2026-10-18): "Yes: the inner garden path leads to a step D3
   needs, such as the Big Key or the way to the blade shrine, so the Glove is required to finish D3."
+
+* DECIDED D3 garden holds the Compass; Big Key stays in the basement; prison wing shut until the escape (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (D3 and prison analysis)
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/design_review_2026-10-18/d3_analysis/README.md
+  :END:
+  Settles "Which step: open" in "The D3 inner garden path leads to a step D3 needs".
+  1. The Big Key stays in the basement cell ($80). The basement route (stairs, Boots dash wall,
+     library, tavern, two key doors) keeps its purpose.
+  2. The garden behind the gray rocks holds the Compass, so the Glove is required for the big
+     chest (Meadow Blade). The $66 Compass chest gets another item.
+  3. The prison wing ($55) stays shut until the escape: the $80 <-> $55 warp tile is off and the
+     $55 overworld door is closed from outside until then.
+  Order: Big Key (basement, Boots) -> Compass (garden, Glove) -> blade -> capture.
+  Rejected: moving the Big Key to the garden (scawful: "wouldnt that defeat the purpose of the
+  basement route ?").
+  Answer: "Yes: keep the Big Key in the basement, put the Compass in the garden, and keep the
+  prison wing shut until the escape." (scawful, 2026-10-19)
