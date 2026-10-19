@@ -700,7 +700,7 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   (each floor further back in time; Hyrule only used what it understood).
   Answer: "A yes this sounds cool" (scawful, 2026-09-27).
 
-* OPEN Glove/Mitt swap: Power Glove early, Shrine of Power gives the Titan's Mitt
+* DECIDED Glove/Mitt swap: Power Glove early, Shrine of Power gives the Titan's Mitt
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion (idea by scawful, 2026-09-27)
   :END:
@@ -711,7 +711,8 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Power's lifting puzzles at the Mitt. Dungeon order and the S2 -> D6 gate stay.
   Waiting on the item-progression and overworld-region analyses before
   choosing the Glove's source (scawful: "C").
-  Answer:
+  Answer: "A yeah power glove earlier" (scawful, 2026-10-18). Adopted; see "DECIDED Glove/Mitt
+  swap: adopt (2026-10-18)" and the Power Glove entries below.
 
 * DECIDED Menu direction: declutter the item grid, add a Masks & Rings page
   :PROPERTIES:
@@ -1649,3 +1650,271 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   there, as in the Oracle games."; "Link plants the seed in a scripted moment
   after Ganon (item-raise pose); the credits show a sapling growing in the
   Abyss." (scawful, 2026-10-18).
+
+* DECIDED Glove/Mitt swap: adopt (2026-10-18)
+  # Closes decisions.org "OPEN Glove/Mitt swap: Power Glove early, Shrine of Power gives the Titan's Mitt".
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/design_review_2026-10-18/REVIEW.md
+  :END:
+  Open since 2026-09-27. It now touches the D6 redesign, Shrine of Power puzzles, the
+  East Kalyxo Mitts gate and the Lyra Goron cliff route, all active lanes.
+  A. Adopt: Power Glove from a place already on the required route before D4; the
+     Shrine of Power gives the Titan's Mitt; light rocks before D4 become heavy rocks.
+  B. Drop: keep the Glove at the Shrine of Power; the Mitt stays where it is.
+  Ruled A. The Glove's early source is still to choose.
+  Answer: "A yeah power glove earlier" (scawful, 2026-10-18).
+
+* DECIDED New items in playtest builds: include them, gate few puzzles on them (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :END:
+  A new item, mask or song ships in a 1.0 playtest only with one signature room and one
+  overworld secret that need it; otherwise it is labeled v1.1. Applies retroactively to
+  Bombchu, Switch Hook, Garo, Byrna, Secrets and Stone.
+  Ruled differently: new items go into playtest builds, but only a few puzzles gate on a
+  new item until it has been tested in the wild. Too many puzzles gated on untested items
+  can break an RC beta test.
+  Answer: "not sure i get this but yes i like to include new items in the playtest but not
+  overuse them til theyve gotten some testing in the wild otherwise gating too many puzzles
+  with them can break an RC beta test" (scawful, 2026-10-18).
+
+* DECIDED The 1.0 route stays non-linear (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :END:
+  Crystal bits stay in their non-linear order as data, but hints, MapIcon and maiden text
+  may assume D1 -> D7 order for 1.0. Non-linear play is a v1.1 question.
+  Ruled the other way: non-linear is better. Hints, MapIcon and maiden text stay
+  order-agnostic (no "next dungeon" assumptions beyond the decided gates).
+  Answer: "I think non-linear is better" (scawful, 2026-10-18).
+
+* DECIDED Maiden text: ship as is, collect playtest feedback, rewrite later (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18 (corrected same day)
+  :END:
+  The attract flag is already on and $1C0-$1C3 are canon; $132, $135 and $137 carry
+  their approved rewrites in the base ROM. Remaining debt: one reviewed batch that
+  rewrites $133 (D2) and $134 (D3) to one fact + one feeling + one pointer in at most
+  three boxes, fixes the $136 tense, applies the approved $137 opener, and writes the
+  approved beat 10 Ranch chain drafts ($147, $177, $17D). Drafts come to Emacs via
+  emacs-agent diff before any ROM write.
+  Ruled: no rewrite batch now. The current maiden text ships in playtest builds as is;
+  rewrites come later, informed by playtest feedback.
+  Answer: "idk i guess we can look back over maiden text or approve what we got and get
+  feedback actually sure"; then, asked whether to ship as is or rewrite first: "ship the current maiden text as is and collect playtest feedback, rewrite later"
+  (scawful, 2026-10-18).
+
+* DECIDED Item homes: Byrna, Switch Hook, Garo (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/design_review_2026-10-18/DIRECTION.md
+  :END:
+  1. Cane of Byrna is the reward of the Eon Abyss underwater shrine. It is not an early
+     item; the D4 waterfall room already exists and holds the Blue Mail.
+  2. The Switch Hook belongs to the Sea Zora temple (Lyra Sea), not the main D4.
+  3. The Garo mask comes from the Garo NPC in the Garo desert, not from Goron Mines.
+  Answer: "that room currently exists and has the blue mail, cane of byrna that early is
+  broken it should prob be reward of eon abyss underwater shrine"; "switch hook would prob
+  be better in sea zora temple rather than the main D4"; "there is a garo outside in the
+  garo desert so it's going to be that instead" (scawful, 2026-10-18).
+
+* DECIDED Lost Woods bypass: Deku hover gap into Mushroom Grotto (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :END:
+  A Deku Mask hover gap from the fairy pond screen ($11) into the grotto screen ($10) lets
+  a revisit skip the N, W, S, W combo. The combo stays the first-time route.
+  Answer: "deku hover bypass is smart" (scawful, 2026-10-18).
+
+* DECIDED Dragon Ship stays offshore on its own map; Kalyxo Docks beside it (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18
+  :END:
+  The LW $30 large map splits into Kalyxo Docks (wide, $30/$31) and the Dragon Ship (wide,
+  $38/$39). The ship is never drawn at the docks; its proximity carries the story.
+  Answer: "the ship has to stay offshore bc it's a large complex graphical marvel hence why it
+  needs a solo map but the proximity to the ports gives the story the umph it needs yes"
+  (scawful, 2026-10-18).
+
+* DECIDED Stone Mask is a weaker Magic Cape (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude prison break session 2026-10-18
+  :END:
+  The Stone Mask occupies the Magic Cape's slot and becomes a slightly less powerful
+  version of it: enemies still ignore Link, but it does not phase through barriers such
+  as the laser beam gate. Phasing is reserved for the Cane of Byrna and late-game items.
+  Answer: "yeah good idea we should make the stone mask a slightly less powerful version of the magic cape it's inhabiting so no phasing through the laser beam thing, prob better that stuff is only for the cane of byrna and late game bs" (scawful, 2026-10-18).
+
+* DECIDED Wisdom and Power dream scripts approved; Courage needs another review (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude design review 2026-10-18 (board Decisions tab, item 2)
+  :DOC:      ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/REVIEW.md
+  :END:
+  Closes decisions.org "OPEN Approve Wisdom dream scene" and "OPEN Approve Power dream
+  scene" (approved as drafted there). "OPEN Approve Courage dream scene" stays OPEN for
+  another review.
+  Answer: "I've seen power and wisdom and they're good but prob need to review courage
+  again" (scawful, 2026-10-18).
+
+* DECIDED Act I and Act II beat changes (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: scawful, reviewing the Story Board route meter
+  :END:
+  Changes the canon beat sheet (rev 4) once applied:
+  1. Beat 2 (falling arrival, Impa's voice, bed wake-up) is largely built; it needs refinement.
+  2. The Kalyxo Docks and stalfos content joins the beat 5 village sneak segment, or the beat 6
+     Forest Glade sequence.
+  3. New beat before D5: through the Mount Snowpeak portal into the Abyss volcanic area, escort
+     the old man, get the Goldstar, Mirror back to Mount Snowpeak. Glacia Estate is tied to it.
+     Mount Snowpeak needs work. Existing parts: old man follower, Goldstar, message $54, and
+     "Old Man Mountain Quest" in Docs/World/Guides/QuestFlow.md.
+  4. New beat after D5: a segue to the Abyss Lupo Mountain, the Gorons, the Garo desert and the
+     mines, before East Kalyxo, Sea Zora, the Sky tower and the Lyra Sea. Not designed yet.
+  CONFLICT (open): "Abyss chunk layout and warp pads" (2026-09-27) keeps the volcano chunk
+  sealed until the Master Sword pull and removes the Snowpeak pads $03->$43 and $07->$47.
+  Item 3 needs one corner of it open before D5. RESOLVED 2026-10-18: the Snowpeak portal opens
+  only the old man's corner of the Lava Lands before D5; the prison mouth stays sealed until
+  the eruption. This amends the 09-27 pad list (one Snowpeak pad stays live into that corner).
+  Answer (scawful picked this option, 2026-10-18): "Yes: the Snowpeak portal opens only the old
+  man's corner of the Lava Lands before D5; the prison mouth stays sealed until the eruption."
+  Geography (scawful, 2026-10-18): "yeah there's a strip of maps horizontally mirroring the
+  snowpeak areas which is distinct from the main open areas mirroring the
+  mountains/cliffs/graveyard/hall of secrets where the prison is". Board map
+  segue_maps/abyss_north.png marks the strip as $43-$47 and the prison mouth as
+  $4E/$4F/$55-$57 (Claude's reading of the map; confirm the exact edge when building).
+  Timing (scawful, 2026-10-18): "it's pre D5 as Link ascends the mountain there is a portal on
+  snowpeak". Art (same message): "both these maps could use some improvements to the actual
+  tilesets and the overlay and animations and stuff so it feels like a cooler volcano/ice
+  mountain ya know".
+  Answer: "beat 2 is largely built just needs refinement, the docks and stalfos stuff needs to
+  be added to the village sneak segment beat imo, or like farore at forest glade and all that.
+  the glacia estate should be tied to a story beat with the old man and the gold star in the
+  volcanic areas of eon abysss, mirror to the mount snowpeak which also needs some work. then
+  we need some way to segue from that to the eon abyss lupo mountain goron and the desert and
+  mines before the east kalyxo, sea zora, sky tower, lyra sea, etc" (scawful, 2026-10-18).
+
+* DECIDED After D5, a path opens from the Snowpeak strip into Lupo Mountain (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (new beat 18a)
+  :END:
+  After Glacia Estate (D5), Link walks from the Abyss Snowpeak strip ($43-$45) down into Lupo
+  Mountain ($4B-$4D), then on to the Eon Gorons, the Garo desert and the mines. No new portal.
+  The gate that opens after D5 is still to choose. Amends the 09-27 "Abyss chunk layout and
+  warp pads" entry (chunk 3 also opens from the strip).
+  Answer (scawful picked this option, 2026-10-18): "A: after D5 a path opens from the Snowpeak
+  strip down into Lupo Mountain."
+  Gate (leaning, 2026-10-18): Twinrova's fall crusts the lava into an ice path; the nearby warp
+  stays a fallback. The mountain maps need a redesign. Answer: "i think there is a warp nearby
+  but ice crust could work but we have to redesign the map of the mountains forsure i think"
+  (scawful, 2026-10-18).
+
+* DECIDED Item homes: Bombchu in D6, Portal Rod in D8 (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (HANDOFF section 6 item 2)
+  :END:
+  1. Bombchu is introduced early in the Goron Mines, as part of the D6 redesign.
+  2. The Portal Rod is the D8 item. D8 today is mostly Ganon's Tower rooms plus connective
+     tissue, with a few experimental puzzles; it is the most open dungeon for new rooms and
+     puzzles, and agents can help design them.
+  Answer: "bombchu can prob be introduced earlier in the mines during this redesign im thinking
+  and then portal rod is the D8 item yes there's a few experimental puzzles but largely D8 is
+  just ganons tower rooms and some connective tissue but it's the most open for new room and
+  puzzle designs which i think agents can help with" (scawful, 2026-10-18).
+
+* DECIDED The Lyra Sea tells Twinrova's origin (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (Lyra Sea story job)
+  :END:
+  The Lyra Sea's story job is Twinrova's origin: lava in the west for Koume, the glacier in the
+  east for Kotake. This matches the 09-29 art ruling. The Sea stays v1.1 and optional. Replaces
+  the rejected proposal "the garrison's recent past".
+  Answer (scawful picked this option, 2026-10-18): "The Lyra Sea tells Twinrova's origin: lava in
+  the west for Koume, the glacier in the east for Kotake."
+
+* DECIDED Cut the Kydrog Mask (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (beat 31)
+  :END:
+  Beat 31 is cut. The Kydrog Mask does not ship; the Garo mask takes its place, and the post-game
+  gets no new mask. Overrides beat sheet beat 31 ("Post-game: Kydrog Mask in the save",
+  [DECIDED], parting gift). The beat sheet row needs scawful's edit.
+  Answer (scawful picked this option, 2026-10-18): "Cut the Kydrog Mask; the Garo mask takes its
+  place and the post-game gets no new mask."
+
+* DECIDED Docks and the stalfos patrol join the village sneak (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (beat 5)
+  :END:
+  Beat 5 is one sneak segment in this order: Loom Beach, Kalyxo Docks (with the stalfos patrol),
+  then Wayward Village. A checkpoint sits before the village hole. Settles the 10-18 "village
+  sneak or Forest Glade" choice; beat 6 (Farore at the Forest Glade) is unchanged.
+  Answer (scawful picked this option, 2026-10-18): "The docks and stalfos patrol go inside the
+  village sneak (beat 5): beach, docks, then Wayward Village, with a checkpoint before the
+  village hole."
+
+* DECIDED Power Glove's early source: the swordsmith's forge gloves (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (Glove/Mitt follow-up)
+  :END:
+  Not a ruling yet. scawful's two ideas: a Deku reward after Tail Palace (D2), or a step of the
+  quest that leads into the Book of Secrets, D3 and the castle bridge.
+  Facts: the Book of Secrets lowers the castle bridge on OW $1B (Items/book_of_secrets.asm sets
+  overlay $04C6 = 02); the Book comes from the library dash knockdown (beat 12). The Deku Butler
+  ($2E) and Princess ($2F) already have post-D2 peacetime states (Sprites/NPCs/deku_scrub.asm
+  states 7 and 8), but their messages $1B9/$1BA are not in the base ROM yet.
+  Proposal: the Deku Princess gives the Glove as D2 thanks, and a light rock on the way to the
+  library needs it, so the Glove leads into the Book, the bridge and D3.
+  Dropped 10-18: the library is in the village, across the moat from the drawbridge, so there
+  is no road for a rock gate. New subquest ideas: handoffs/design_review_2026-10-18/glove_maps/README.md
+  scawful: "the library is literally in the village so not sure how well this would work exactly"
+  Answer: "maybe a reward from the deku after tail palace ? or some sort of other aspect of the
+  quest that leads into the book and D3 and the castle bridge i guess" (scawful, 2026-10-18).
+  Ruled 10-18 (idea 1 of glove_maps/README.md): after D2 the Deku Princess gives Link an ember
+  seed; Link relights the swordsmith's cold forge; the smith gives his old forge gloves (the
+  Power Glove). Design: glove_maps/forge_gloves_subquest.md.
+  Answer (scawful picked this option, 2026-10-18): "Develop idea 1: the Deku Princess gives an
+  ember seed after D2, Link relights the swordsmith's cold forge, and the smith gives his old
+  forge gloves (Power Glove)."
+
+* DECIDED The Power Glove gates the inner garden path in D3 (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (forge gloves follow-up)
+  :END:
+  Gray rocks in Kalyxo Castle's walled inner garden ($0B, top) guard a D3 door (the Secret
+  Courtyard, entrance $0A), so the Glove from the swordsmith is required to reach D3. The garden
+  needs a map edit to give it a way in. Gray rocks in the Abyss that must stay late become black
+  rocks (Mitt).
+  Answer (scawful picked this option, 2026-10-18): "Yes: gray rocks in the castle's walled inner
+  garden guard a D3 door, so the Glove is required to reach D3."
+  Correction (scawful, 2026-10-18): the inner garden is not an outside way in. It is a path in the
+  middle of D3 that leads to a heart piece today, and it could be made more important. So the
+  Glove gates a mid-dungeon path, not the entrance. Open: what the garden path leads to.
+  Answer: "the inner garden isnt the only way, it's actually really just a path in the middle of
+  the dungeon to get to a heart piece right now, though it could be made more important".
+
+* DECIDED Abyss rock tiers after the early Glove (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (forge gloves follow-up)
+  :END:
+  1. Gray rocks (Glove) can open the Shrine of Wisdom side of the Abyss: the intro chunk exits
+     ($51, $61) toward Yesterwind and S1 (Flippers still needed for S1 itself). Fits the order
+     D3 -> S1 (beat 14).
+  2. Rock paths on the Goron / Rock Meat side are upgraded to black rocks (Titan's Mitt).
+  Constraint (Claude, not a ruling): the Mitt comes from S2, at the end of the Rock Meat route
+  (Option B: pad -> B1 -> S2 front door; Glove rocks B2 at the $5B gap and B3 at the $52 ladder).
+  Rocks on the way to S2's front door must stay Glove rocks or the route softlocks. Mitt rocks
+  fit paths after S2: Lupo heights ($4D), the Shrine of Courage door ($50, beat 24), the
+  smith partner's mine rubble. The 18a ruling (path from the Snowpeak strip after D5) already
+  times the Lupo side.
+  Answer: "yes we can always upgrade rock paths in the abyss for titans mitt with the goron meat
+  paths, whereas the lv1 rocks can now give access to shrine of wisdom stuff ?" (scawful, 2026-10-18).
+
+* DECIDED The D3 inner garden path leads to a step D3 needs (2026-10-18)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (forge gloves follow-up)
+  :END:
+  The Glove's gray rocks in the inner garden open a path to a required D3 step (the Big Key or
+  the way to the blade shrine), so the Glove is required to finish D3. Which step: open.
+  Answer (scawful picked this option, 2026-10-18): "Yes: the inner garden path leads to a step D3
+  needs, such as the Big Key or the way to the blade shrine, so the Glove is required to finish D3."
