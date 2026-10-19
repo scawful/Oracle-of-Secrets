@@ -1946,3 +1946,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Same rule as save and quit, which also cannot skip the capture.
   Rejected: waking at a D3 entrance without the blade.
   Answer: "Back in the cell: the escape restarts." (scawful, 2026-10-19)
+
+* DECIDED Prison escape: Minish portal in a cell-wall crack, grow back in the next hall (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item)
+  :END:
+  A crack in the wall of the prison cell ($65) holds a Minish portal. Link shrinks there,
+  crawls through $64, and grows back at a second Minish portal in the next hall ($54). Uses the
+  existing Minish portals.
+  Rejected: staying small until the prison door ($55).
+  Answer: "A crack in the cell wall holds a Minish portal; Link grows back at a second portal in
+  the next hall." (scawful, 2026-10-19)
