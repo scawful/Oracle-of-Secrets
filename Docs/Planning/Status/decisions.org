@@ -2363,3 +2363,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   recolor of existing art if no tiles are free.
   Answer: "Glove slot: the seed shows in the empty Glove slot until the smith swaps it for the
   gloves." (scawful, 2026-10-19)
+
+* DECIDED The smith's partner waits behind Mitt rubble near the Goron Mines, an optional trip (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (smith visit 2 placement)
+  :END:
+  Smith visit 2 (scawful, 2026-10-18): Link rescues the missing partner in the Eon Abyss and the
+  smiths temper the Meadow Blade (L3). Placement: outside D6, behind rubble that needs the Titan's
+  Mitt, near the mines. Optional; open any time after the Shrine of Power (which gives the Mitt).
+  Exact spot to be picked from map images.
+  Answer: "Outside D6: behind Mitt rubble near the mines, an optional side trip after the Shrine
+  of Power." (scawful, 2026-10-19)
