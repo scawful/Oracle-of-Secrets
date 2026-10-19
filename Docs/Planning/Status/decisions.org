@@ -2090,3 +2090,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Rejected: one guard in the hall, facing away from the portal.
   Answer: "No guard: the hall keeps only its rats, ropes and keese, a breather after the crawl."
   (scawful, 2026-10-19)
+
+* DECIDED Prison escape: crawl-room soldiers walk fixed back-and-forth routes (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (prison plan open item: guard patrols)
+  :END:
+  The two Blue Soldiers in the crawl room ($64) walk fixed back-and-forth routes that cross the
+  crawl path. Link watches their timing and slips through the gap. Every attempt plays the same,
+  so a retry after being sent back to the cell is fair.
+  Rejected: vanilla soldier walking (turning at walls and corners, varying per attempt).
+  Answer: "Fixed back-and-forth routes that cross the crawl path; Link times the gap and every
+  attempt plays the same." (scawful, 2026-10-19)
