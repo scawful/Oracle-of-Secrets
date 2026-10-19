@@ -2452,3 +2452,18 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   Yes: apply Data/rom_patches/s3_pause_map_2026-10-19.json to the shared base (hash and
   rollback copy kept). No: S3 keeps the Sewers map for now.
   Answer:
+
+* OPEN Finale: Kydreeok and Ganon in one room or two? (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, Kydreeok dragon session (scawful's voice note about the recovery room)
+  :DOC:      [[file:~/.context/projects/oracle-of-secrets/scratchpad/handoffs/kydreeok_dragon_2026-10-19/finale_rooms/FINALE_ROOMS.md]]
+  :END:
+  Both options start the same way: the volcano hole drops Link into the vanilla
+  Ganon "recovery room" as the lead-up (Kydrog can transform there), and a new
+  way up leads to the fights. Picture: finale_rooms.png in the doc folder.
+  Two rooms (recommended): Kydreeok in his own room, then walk on to Ganon in
+  the current arena with the Triforce door behind him. The ending exit works
+  as is. Needs a new Kydreeok arena room.
+  One room: Kydreeok, then Ganon rises in the same arena. Least room work;
+  both fights share one arena.
+  Answer:
