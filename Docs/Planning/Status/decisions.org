@@ -641,6 +641,8 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   (Final Boss Route, entrance $24) and D7's compass/big key/map bits.
   1. Give S3 and the Master Sword Cave / Final Boss Route rooms their own even
      dungeon IDs? (Rec: yes; keyed IDs free: $00, $04 -- $04 is proposed for the tower.)
+     -> DECIDED 2026-10-19: yes for S3, which gets $00; the Final Boss Route keeps $08. See the
+        entry below.
   2. Should the $11D basement (2 heart pieces) be reachable from the Mayor's House?
      -> DECIDED 2026-10-19: yes, one heart piece (only one chest is placed); see the entry below.
   3. Take the $81 pit-damage hunk? (Rec: yes, it only prevents a fall into Origins.)
@@ -2252,3 +2254,14 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   from vanilla Blind's hideout); the census counted the table, not the placed chests. Optional
   cleanup: trim the 5 unused $11D table entries so item counts stop showing a second heart piece.
   Answer: "it has two heart pieces ? it should only have 1" (scawful, 2026-10-19)
+
+* DECIDED S3 gets its own dungeon ID $00 (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Claude, story board session (OPEN "Room census follow-ups", question 1)
+  :END:
+  S3 (entrance $0C) moves from dungeon ID $09 to the free ID $00, so it stops sharing small keys
+  with the Final Boss Route ($08, entrance $24) and the compass, big key and map bits with D7.
+  $04 stays reserved for the tower. Code-lane work: change entrance $0C's dungeon ID and check
+  S3's key doors and chests at runtime afterward.
+  Rejected: leaving S3 on the shared ID $09.
+  Answer: "Yes, give S3 its own dungeon ID $00 so keys and maps stop leaking." (scawful, 2026-10-19)
