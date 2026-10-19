@@ -1762,6 +1762,53 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   as the laser beam gate. Phasing is reserved for the Cane of Byrna and late-game items.
   Answer: "yeah good idea we should make the stone mask a slightly less powerful version of the magic cape it's inhabiting so no phasing through the laser beam thing, prob better that stuff is only for the cane of byrna and late game bs" (scawful, 2026-10-18).
 
+* DECIDED Approve Wisdom dream scene: Captain, seal key and promise to restore his men
+  :PROPERTIES:
+  :ASKED_BY: Codex Christmas RC content (2026-10-15)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/REVIEW.md
+  :END:
+  Draft words; no production source, IDs, flags or ROM changes.
+  Narration: "...a dream of long ago..."
+  Farore: "Keep the seal, Captain. This blade is its key."
+  The prison — unidentified voice: "Your king forgot you. We have not."
+  The prison — unidentified voice: "The Golden Power can bring your men back."
+  Maple, after waking: "Bad dream? You were talking in your sleep... about a sword."
+  Approve the complete Wisdom script and minimal staging, including the new line about bringing his men back? Captain, dream purpose and light Maple tone are already decided.
+  Answer: "I've seen power and wisdom and they're good but prob need to review courage
+  again" (scawful, 2026-10-18).
+  Closed by "DECIDED Wisdom and Power dream scripts approved" (2026-10-18).
+
+* DECIDED Approve Power dream scene: Farore's appeal and the king's garrison reply
+  :PROPERTIES:
+  :ASKED_BY: Codex Christmas RC content (2026-10-15)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/REVIEW.md
+  :END:
+  Draft words; no production source, IDs, flags or ROM changes.
+  Farore: "My king... I warned our scholars. They would not turn back."
+  Farore: "Beyond their Mirror lies a prison. Will Hyrule help us keep it sealed?"
+  Hyrule's king: "We will send a garrison. The Golden Power must be protected."
+  Farore: "Then send guards, my king. Keep it sealed."
+  Farore's remembered voice: "I thought I could keep Kalyxo safe."
+  Maple, after waking: "A king? Tell him naps cost extra."
+  Approve the complete Power script and minimal staging, including Farore's regret and the king's reply? Her disclosure and the resulting garrison are already decided.
+  Answer: "I've seen power and wisdom and they're good but prob need to review courage
+  again" (scawful, 2026-10-18).
+  Closed by "DECIDED Wisdom and Power dream scripts approved" (2026-10-18).
+
+* SUPERSEDED Approve Courage dream scene: Farore's image and the player-performed Healing cue
+  :PROPERTIES:
+  :ASKED_BY: Codex Christmas RC content (2026-10-15)
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/christmas_delivery_2026-10-15/dream-scenes/REVIEW.md
+  :END:
+  Draft words; no production source, IDs, flags or ROM changes.
+  Farore's dream image — proposed speaker: "Look closely. The prison changed his shape. The knight is still within."
+  Farore's dream image — proposed speaker: "Bring down the heads together. When he can fight no more, lower your sword."
+  Farore's dream image — proposed speaker: "Play the Song of Healing. Let him hear it."
+  Maple, after waking: "You were humming! Better than snoring. That's a start."
+  Approve the complete Courage script and minimal staging, using Farore's dream image as speaker and an explicit heads-together/Song of Healing cue? The player retains the actual finale song action.
+  Superseded by "DECIDED Courage dream speaker: the Captain" and "DECIDED Courage
+  dream text approved" (2026-10-19): the Captain speaks, not Farore.
+
 * DECIDED Wisdom and Power dream scripts approved; Courage needs another review (2026-10-18)
   :PROPERTIES:
   :ASKED_BY: Claude design review 2026-10-18 (board Decisions tab, item 2)
