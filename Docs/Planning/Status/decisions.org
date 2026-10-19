@@ -473,14 +473,20 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   $1C4) is the unlock. Not played; confirm the $25 pad is reachable pre-D4.
   Answer: "record it" (scawful, 2026-09-26).
 
-* OPEN $63 sign $C1: Ice Rod riddle vs. Flippers gate
+* DECIDED $63 sign $C1: keep the Ice Rod riddle for an optional stilt-village shortcut (2026-10-19)
   :PROPERTIES:
   :ASKED_BY: Claude story/design discussion
   :END:
   $63's area sign reads "A chilling spell from the rod must flow, to bridge
   the gap where waters flow." The Shrine of Wisdom gate is Flippers. Leftover,
   or an optional second route? Settle when the swamp chunk is designed.
-  Answer:
+  Ruling: the Flippers stay the Shrine of Wisdom gate. The $C1 riddle is kept for an optional
+  Ice Rod shortcut in the stilt village, placed when scawful reworks the swamp. $63's own area
+  sign still moves to 0x0AF (Village of Yesterwind, 2026-09-26), so $C1 needs a new sign spot
+  then.
+  Rejected: dropping the riddle.
+  Answer: "Keep the Ice Rod riddle for an optional shortcut in the stilt village, placed when
+  the swamp is reworked." (scawful, 2026-10-19)
 
 * DECIDED Yesterwind: the realm's true name and its central village
   :PROPERTIES:
