@@ -386,7 +386,7 @@ class SomariaRoomWidePressureProbe(unittest.TestCase):
         self.assertEqual(self.rom[offset(PROBE_HOOK):offset(PROBE_HOOK) + 4], bytes.fromhex("5c72fc2c"))
         guards = ((PROBE_FALLBACK, "38e5e8c9e000"), (PROBE_KEEP, "a51bd010"),
                   (0x088A56, "bd7c0c227be806"), (0x08E75C, "9c46069edb03a006"),
-                  (0x08E793, "20268a689d80037a"), (0x08E7AE, "fedb03888810af"),
+                  (0x08E793, "20268a689d80027a"), (0x08E7AE, "fedb03888810af"),
                   (0x08E7B5, "bddb03c904d00218603860"))
         for address, raw in guards:
             expected = bytes.fromhex(raw)
