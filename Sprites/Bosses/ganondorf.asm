@@ -11,7 +11,8 @@
 ;   Link hits the ball with the Master Sword (sword level >= 2) -> it flies back
 ;   Ganondorf returns it 1-3 times (random), faster each time
 ;   he varies his glide during rallies, with a short return stroke
-;   the last return hits him -> stunned -> 3 sword hits -> he teleports
+;   the last return hits him -> stunned -> 3 sword hits -> he casts a bat
+;   the independent bat flies at Link while he recovers and changes perch
 ;   between rallies he rises and stomps, dropping the four outer floor edges
 ;   9 sword hits in total -> he dies -> GanondorfFight = 2 -> door opens
 ;
@@ -30,6 +31,8 @@ Ganon_SetupActionHitbox = $06F57E ; SetupActionHitbox_long (Link's weapon box ->
 !Ganon_BallSpeedEnd = $18
 !Ganon_BallSpeedMax = $30
 !Ganon_GlideSpeed   = $08
+!Ganon_BatSpeed     = $18
+!Ganon_BatLifetime  = $60
 
 !Ganon_FrameIdle     = 0
 !Ganon_FrameCast     = 1
@@ -139,7 +142,7 @@ Ganondorf_Main:
                    Ganondorf_Cast,
                    Ganondorf_WaitBall,
                    Ganondorf_Stunned,
-                   Ganondorf_Teleport,
+                   Ganondorf_CastBat,
                    Ganondorf_Dead,
                    Ganondorf_Stomp)
 
@@ -203,6 +206,7 @@ Ganondorf_Main:
     JSR Ganondorf_CheckCastSpacing : BCC .cancel
     JSR Ganondorf_SpawnBall
     .ball_spawned
+    BCC .cancel
     LDA.b #!Ganon_FrameRelease : STA.w SprFrame, X
     ; Enter rally immediately so a close reflection can already stun him.
     %GotoAction(3)
@@ -261,11 +265,11 @@ Ganondorf_Main:
     STZ.w SprHeight, X
     JSL Sprite_CheckDamageFromPlayer : BCC .no_hit
       DEC.w SprMiscF, X : BEQ .die
-      DEC.w SprMiscA, X : BEQ .teleport
+      DEC.w SprMiscA, X : BEQ .cast_bat
     .no_hit
     LDA.w SprTimerA, X : BNE .exit
-    .teleport
-    JSR Ganondorf_StartTeleport
+    .cast_bat
+    JSR Ganondorf_StartBatCast
     .exit
     RTS
 
@@ -277,20 +281,37 @@ Ganondorf_Main:
     RTS
   }
 
-  ; 5: the small bat flaps between volleys, then reforms at another perch
-  Ganondorf_Teleport:
+  ; 5: remain human, telegraph a cast, then release an independent bat.
+  ; Relocation happens only after the cast has finished, outside a live rally.
+  Ganondorf_CastBat:
   {
-    LDA.b $1A : LSR #2 : AND.b #$03 : TAY
-    LDA.w .bat_frames, Y : STA.w SprFrame, X
-    LDA.w SprTimerA, X : CMP.b #$18 : BNE .no_move
+    JSR Ganondorf_Bob
+    LDA.w SprTimerA, X : BEQ .recover
+    CMP.b #$25 : BCS .ready
+    CMP.b #$19 : BCS .windup
+    CMP.b #$18 : BNE .released
+      JSR Ganondorf_SpawnBat
+    .bat_spawned
+    .released
+    LDA.w SprTimerA, X : CMP.b #$11 : BCS .release
+    CMP.b #$09 : BCS .follow
+      LDA.b #!Ganon_FrameRecover : BRA .pose
+    .ready
+      LDA.b #!Ganon_FrameReady : BRA .pose
+    .windup
+      LDA.b #!Ganon_FrameWindup : BRA .pose
+    .release
+      LDA.b #!Ganon_FrameRelease : BRA .pose
+    .follow
+      LDA.b #!Ganon_FrameFollow
+    .pose
+    STA.w SprFrame, X
+    RTS
+    .recover
       JSR Ganondorf_Relocate
-    .no_move
-    LDA.w SprTimerA, X : BNE .exit
       LDA.b #$10 : STA.w SprHeight, X
       JSR Ganondorf_StartStomp
-    .exit
     RTS
-    .bat_frames : db 19, 20, 21, 20
   }
 
   ; 6: flicker out, then let the door open
@@ -305,12 +326,15 @@ Ganondorf_Main:
   }
 }
 
-Ganondorf_StartTeleport:
+Ganondorf_StartBatCast:
 {
   %GotoAction(5)
   LDA.b #$30 : STA.w SprTimerA, X
   LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X
-  LDA.b #!Ganon_FrameBat : STA.w SprFrame, X
+  STZ.w SprMiscB, X
+  STZ.w SprXSpeed, X
+  STZ.w SprYSpeed, X
+  LDA.b #!Ganon_FrameReady : STA.w SprFrame, X
   LDA.b #$10 : STA.w SprHeight, X
   RTS
 }
@@ -666,9 +690,11 @@ Ganondorf_SpawnBall:
     LDA.w SprMiscE, X : JSL Sprite_ApplySpeedTowardsPlayer
     PLX
     LDA.b #$29 : JSL SpriteSFX_QueueSFX3WithPan
+    SEC
     RTS
   .no_slot
   LDA.b #$FF : STA.w SprMiscD, X
+  CLC
   RTS
 }
 
@@ -679,7 +705,6 @@ Ganondorf_Draw:
     LDA.b $1A : AND.b #$02 : BEQ .skip
   .draw
   JSR Ganon_DrawFrame
-  LDA.w SprAction, X : CMP.b #$05 : BEQ .skip
   JSL Sprite_DrawShadow
   .skip
   RTS
@@ -913,6 +938,7 @@ Sprite_GanonBall_Prep:
 }
 
 incsrc "ganondorf_ball_effects.asm"
+incsrc "ganondorf_bat.asm"
 
 ; Carry set = Link's Master Sword (or better) hit the ball this frame.
 ; Guards match vanilla Sprite_CheckDamageFromLink for the Agahnim ball ($7B).

@@ -1,5 +1,5 @@
 ; Included in Ganondorf's bank $2A. Local calls inherit M=8, X/Y=8, DB=$2A.
-; SprAction: 0=rally ball, 1=independent shard, 2=harmless dissipation.
+; SprAction: 0=rally ball, 1=independent shard, 2=harmless dissipation, 3=bat.
 ; Shards keep the ball's 16px origin; the visible 8px quarter is centered +4,+4.
 
 GanonBall_Main:
@@ -8,8 +8,11 @@ GanonBall_Main:
   CMP.b #$01 : BNE .not_shard
     JMP GanonBall_ShardMain
   .not_shard
-  CMP.b #$02 : BNE .kill_now
+  CMP.b #$02 : BNE .not_dissipation
     JMP GanonBall_DissipateMain
+  .not_dissipation
+  CMP.b #$03 : BNE .kill_now
+    JMP GanonBat_Main
 
   .rally
   ; Validate the slot before any indexed parent access.
@@ -270,6 +273,13 @@ GanonBall_StartDissipation:
   LDA.b #$02 : STA.w SprAction, X
   LDA.b #$10 : STA.w SprTimerA, X
   LDA.b #$FF : STA.w SprMiscD, X
+  ; Bats accept native weapon hits. Cancel their delayed damage before the
+  ; engine can replace this harmless puff with a vanilla death/stun module.
+  STZ.w SprDeath, X
+  STZ.w SprDmgTaken, X
+  STZ.w SprRecoil, X
+  STZ.w SprFlash, X
+  LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X
   STZ.w SprXSpeed, X
   STZ.w SprYSpeed, X
   STZ.w SprXRound, X
@@ -336,6 +346,9 @@ GanonBall_SpawnShard:
 ; ticks, 4 blinking small ticks. All phases use palette6 and resident tiles.
 GanonBall_Draw:
 {
+  LDA.w SprAction, X : CMP.b #$03 : BNE .orb
+    JMP GanonBat_Draw
+  .orb
   ; The two authored orb poses pulse faster as the exchange accelerates.
   LDA.w SprMiscE, X : CMP.b #$20 : BCC .slow_pulse
     LDA.b $1A : LSR #2 : BRA .pulse

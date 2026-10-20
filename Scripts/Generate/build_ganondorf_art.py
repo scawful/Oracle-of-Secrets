@@ -221,7 +221,7 @@ def runtime_maps(maps):
     for name in ('cast_a', 'cast_second'):
         frames[name].append(dict(maps['ball_a'][0],x=0,y=-32))
     for name in ('bat_up', 'bat_mid', 'bat_down'):
-        frames[name]=[dict(maps[name][0],x=0,y=-8)]
+        frames[name]=[dict(maps[name][0],x=0,y=0)]
     if any(len(frames[name])>6 for name in RUNTIME_IDS if name not in HELD_BALL_FRAMES):
         raise ValueError('ordinary frame exceeds6 pieces')
     if any(len(frames[name])>7 for name in HELD_BALL_FRAMES):
@@ -309,7 +309,7 @@ def expected_runtime(name,images,palette):
         paste_visible(canvas,images[name],VIEW_ORIGIN)
     else:
         source='cast_b' if name.startswith('charge_') else BODY_ALIASES.get(name,name)
-        offset=(0,-8) if name.startswith('bat_') else (-8,-16)
+        offset=(0,0) if name.startswith('bat_') else (-8,-16)
         paste_visible(canvas,images[source],(VIEW_ORIGIN[0]+offset[0],VIEW_ORIGIN[1]+offset[1]))
         if name in HELD_BALL_FRAMES:
             ball='ball_'+name[-1] if name.startswith('charge_') else 'ball_a'
