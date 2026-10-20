@@ -6,6 +6,7 @@ read or written; file-guard cases use temporary directories only.
 """
 from contextlib import redirect_stdout
 import copy
+import errno
 import hashlib
 import importlib.util
 import io
@@ -16,6 +17,7 @@ import stat
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
@@ -108,6 +110,7 @@ def build_rom():
             pc = 0x00DDE7
         put(rom, W.POT_TABLE_PC + room * 2, (pc & 0x7FFF | 0x8000).to_bytes(2, "little"))
     put(rom, 0x00E6A9, hx("0bffff0b641c0bffff"))
+    put(rom, W.POT_PAD_SLOTS[0], hx("b0e6") * 23)
 
     for index in range(168):
         word = 0x0092 if index == 57 else CHEST_ROOMS[index % len(CHEST_ROOMS)]
@@ -195,7 +198,12 @@ class PlanTests(Fixture):
         self.assertEqual(out[0x148338:0x148338 + 77], hx(
             W.PINNED_RECIPE_FIELDS[[p for p, _ in W.PINNED_RECIPE_FIELDS].index(
                 ("rooms", "0x91", "object_stream", "after_hex"))][1]))
-        self.assertEqual(out[0x0F81B3:0x0F81B6], hx("388329"))
+        self.assertEqual(out[0x0F81B3:0x0F81B6], hx("3883a9"))
+        doors = {r: out[W.DOOR_TABLE_PC + r * 3:W.DOOR_TABLE_PC + r * 3 + 3].hex()
+                 for r in W.TARGET_ROOMS}
+        self.assertEqual(doors, {0x90: "b1808a", 0x91: "7983a9", 0x92: "108a8a"})
+        self.assertEqual(out[0x148338 + 0x3F:0x148338 + 0x41], hx("f0ff"))
+        self.assertEqual(out[0x00E6B0:0x00E6B2], hx("ffff"))
         self.assertEqual(out[0x078050:0x078056], hx("aaaa9000bbbb"))
         self.assertEqual(out[0x078E50:0x078E56], hx("1111d8132222"))
         self.assertEqual(out[0x078C50:0x078C56], hx("333310134444"))
@@ -313,10 +321,83 @@ class AliasAndAllocationTests(Fixture):
         put(rom, 0x00E6A7, hx("2000"))
         self.refused("pot stream of 0x005 overlaps", rom=rom)
 
+    def test_padded_pot_pointer_must_target_sentinel(self):
+        rom = bytearray(self.base)
+        put(rom, W.POT_PAD_SLOTS[0] + 10, hx("aae6"))
+        self.refused("padded pot pointer words", rom=rom)
+
     def test_room_92_needs_exactly_one_chest_record(self):
         rom = bytearray(self.base)
         put(rom, W.CHEST_TABLE_PC + 100 * 3, hx("920005"))
         self.refused("exactly the one Mitts chest", rom=rom)
+
+
+class PublishTests(unittest.TestCase):
+    DATA = bytes(range(64))
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        self.final = self.dir / "final.bin"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def leftovers(self):
+        return sorted(p.name for p in self.dir.iterdir() if p.name != self.final.name)
+
+    def test_success_publishes_only_complete_bytes(self):
+        W.publish_exclusive(self.final, self.DATA, 0o444)
+        info = os.lstat(self.final)
+        self.assertEqual(self.final.read_bytes(), self.DATA)
+        self.assertEqual((stat.S_IMODE(info.st_mode), info.st_nlink), (0o444, 1))
+        self.assertEqual(self.leftovers(), [])
+
+    def test_partial_write_failure_leaves_final_absent(self):
+        real_write, calls = os.write, []
+
+        def partial(fd, data):
+            calls.append(fd)
+            if len(calls) > 1:
+                raise OSError(errno.EIO, "injected write failure")
+            return real_write(fd, bytes(data[:4]))
+
+        with mock.patch.object(W.os, "write", partial), self.assertRaises(OSError):
+            W.publish_exclusive(self.final, self.DATA, 0o644)
+        self.assertFalse(os.path.lexists(self.final))
+        self.assertEqual(self.leftovers(), [])
+
+    def test_fsync_failure_leaves_final_absent(self):
+        with mock.patch.object(W.os, "fsync", side_effect=OSError(errno.EIO, "injected")), \
+                self.assertRaises(OSError):
+            W.publish_exclusive(self.final, self.DATA, 0o644)
+        self.assertFalse(os.path.lexists(self.final))
+        self.assertEqual(self.leftovers(), [])
+
+    def test_destination_appearing_before_publish_is_not_clobbered(self):
+        real_fsync = os.fsync
+
+        def intrude(fd):
+            if not self.final.exists():
+                self.final.write_bytes(b"intruder")
+            real_fsync(fd)
+
+        with mock.patch.object(W.os, "fsync", intrude), self.assertRaises(FileExistsError):
+            W.publish_exclusive(self.final, self.DATA, 0o644)
+        self.assertEqual(self.final.read_bytes(), b"intruder")
+        self.assertEqual(self.leftovers(), [])
+
+    def test_only_owned_temp_is_removed(self):
+        def swap_then_fail(src, dst):
+            os.unlink(src)
+            Path(src).write_bytes(b"foreign")
+            raise OSError(errno.EIO, "injected link failure")
+
+        with mock.patch.object(W.os, "link", swap_then_fail), self.assertRaises(OSError):
+            W.publish_exclusive(self.final, self.DATA, 0o644)
+        self.assertFalse(os.path.lexists(self.final))
+        [foreign] = self.leftovers()
+        self.assertEqual((self.dir / foreign).read_bytes(), b"foreign")
 
 
 class FileGuardTests(Fixture):
@@ -404,6 +485,25 @@ class FileGuardTests(Fixture):
         same = self.dir / "same.sfc"
         self.assert_refused("aliases", "--write", "--output", same, "--rollback", same)
         self.assert_refused("already exists", "--report", self.recipe_path.with_suffix(".json"))
+
+    def test_output_publish_failure_keeps_complete_rollback_only(self):
+        out, rollback = self.dir / "out.sfc", self.dir / "rollback.sfc"
+        real_link, calls = os.link, []
+
+        def fail_second(src, dst):
+            calls.append(dst)
+            if len(calls) > 1:
+                raise OSError(errno.EIO, "injected output publish failure")
+            return real_link(src, dst)
+
+        with mock.patch.object(W.os, "link", fail_second):
+            code, report = self.run_main("--write", "--output", out, "--rollback", rollback)
+        self.assertEqual((code, report["status"]), (1, "refused"))
+        self.assertFalse(os.path.lexists(out))
+        self.assertEqual(rollback.read_bytes(), self.base)
+        self.assertFalse(os.stat(rollback).st_mode & stat.S_IWUSR)
+        self.assertEqual(self.rom.read_bytes(), self.base)
+        self.assertEqual([p for p in self.dir.iterdir() if p.name.endswith(".tmp")], [])
 
     def test_report_file_is_created_once(self):
         path = self.dir / "report.json"

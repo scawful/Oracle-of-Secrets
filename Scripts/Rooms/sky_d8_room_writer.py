@@ -25,6 +25,7 @@ import json
 import os
 import stat
 import sys
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Sequence
@@ -67,6 +68,10 @@ DOOR_ROOT_OPERANDS = ((0x00B6CC, "c0831f"), (0x00B7FE, "c0831f"))
 SPRITE_ROOT_PC, SPRITE_ROOT = 0x04C298, "b2d2"
 SPRITE_TABLE_PC, SPRITE_BANK = 0x04D2B2, 0x09
 POT_TABLE_PC, POT_BANK = 0x00DB69, 0x01
+# Pointer words 296-318 pad the pot table up to its data and all point at an FFFF
+# sentinel inside the 9-byte gap; the new $91 stream must leave it intact.
+POT_PAD_SLOTS = (POT_TABLE_PC + ROOM_COUNT * 2, 0x00DDE7)
+POT_PAD_TARGET = 0x00E6B0
 
 OBJECT_DATA_REGIONS = ((0x050000, 0x053730), (0x0F878A, 0x100000), (0x01EB90, 0x020000),
                        (0x138000, 0x140000), (0x148000, 0x150000))
@@ -103,11 +108,12 @@ OBJECT_STREAMS = {  # room: (pc, object pointer, door pointer, full old stream)
            "fffffffff0ff600082008000ffff"),
 }
 EXPECTED_ALLOC_PC = 0x148338
-EXPECTED_POINTERS_AFTER = {  # room: (object pointer, door pointer)
+EXPECTED_POINTERS_AFTER = {  # room: (object pointer, door pointer); FastROM mirror kept
     0x90: ("91808a", "b1808a"),
-    0x91: ("388329", "798329"),
+    0x91: ("3883a9", "7983a9"),
     0x92: ("bd898a", "108a8a"),
 }
+EXPECTED_DOOR_OFFSET_91 = 0x41
 
 # --- Pinned recipe fields (exact JSON values the tool reads) -----------------
 
@@ -704,6 +710,7 @@ def build_plan(rom: bytes, recipe_bytes: bytes, manifest: dict,
     reserved = list(regions["forbidden"]) + list(regions["editor"])
     alloc_pc, allocation = allocate_object_stream(inv, len(new_streams[0x91][0]), reserved)
     expect_bytes(rom, alloc_pc, bytes(len(new_streams[0x91][0])), "object allocation")
+    expect(new_streams[0x91][1] == EXPECTED_DOOR_OFFSET_91, "room 0x91 door-list offset differs")
 
     for room in TARGET_ROOMS:
         stream, door_offset = new_streams[room]
@@ -711,8 +718,8 @@ def build_plan(rom: bytes, recipe_bytes: bytes, manifest: dict,
         old_bytes = bytes(rom[old.pc:old.end])
         slot = DOOR_TABLE_PC + room * 3
         if room == 0x91:
-            obj_ptr = encode_long(alloc_pc)
-            door_ptr = encode_long(alloc_pc + door_offset)
+            obj_ptr = encode_long(alloc_pc, mirror_from=inv.obj_ptr[room])
+            door_ptr = encode_long(alloc_pc + door_offset, mirror_from=inv.door_ptr[room])
             writes.append(Write("object_stream_91_new", alloc_pc, bytes(len(stream)), stream))
             writes.append(Write("object_pointer_91", OBJECT_TABLE_PC + room * 3,
                                 inv.obj_ptr[room], obj_ptr))
@@ -747,6 +754,13 @@ def build_plan(rom: bytes, recipe_bytes: bytes, manifest: dict,
         expect(not overlaps(inv.pot_span[room], pot_span), f"pot stream of 0x{room:03X} overlaps")
         expect(not pot_span[0] <= inv.pot_span[room][0] < pot_span[1],
                f"pot pointer of 0x{room:03X} targets the new pot space")
+    pad_words = [bytes(rom[pc:pc + 2]) for pc in range(*POT_PAD_SLOTS, 2)]
+    expect(len(pad_words) == 23 and all(bank16_ptr(w, POT_BANK) == POT_PAD_TARGET for w in pad_words),
+           "padded pot pointer words do not all target the 0xE6B0 sentinel")
+    sentinel = POT_PAD_TARGET - pot_pc
+    expect(pot_old[sentinel:sentinel + 2] == b"\xff\xff"
+           and (pot_new + pot_old[len(pot_new):])[sentinel:sentinel + 2] == b"\xff\xff",
+           "pot write would change the 0xE6B0 FFFF sentinel")
     items = [(pot_new[i] | pot_new[i + 1] << 8, pot_new[i + 2]) for i in range(0, 6, 3)]
     expect(items == [(54 * 0x80 + 12 * 2, 0x0C), (54 * 0x80 + 18 * 2, 0x0C)]
            and pot_new[6:] == b"\xff\xff", "pot records do not match the pot objects")
@@ -818,7 +832,16 @@ def build_plan(rom: bytes, recipe_bytes: bytes, manifest: dict,
         "allocations": {"object_stream_91": allocation,
                         "pot_stream_91": {"region": [hex(POT_REGION[0]), hex(POT_REGION[1])],
                                           "chosen": hex(pot_pc), "size": len(pot_new),
-                                          "pot_streams_audited": ROOM_COUNT}},
+                                          "pot_streams_audited": ROOM_COUNT,
+                                          "padded_pointer_words": {
+                                              "slots": [hex(POT_PAD_SLOTS[0]),
+                                                        hex(POT_PAD_SLOTS[1])],
+                                              "count": len(pad_words),
+                                              "target": hex(POT_PAD_TARGET),
+                                              "sentinel_before_after": "ffff/ffff",
+                                              "note": "the 9-byte gap is referenced by padding"
+                                                      " words beyond room 295; the new stream"
+                                                      " keeps their FFFF target"}}},
         "pointers_after": {f"0x{r:02X}": {"object": EXPECTED_POINTERS_AFTER[r][0],
                                           "door": EXPECTED_POINTERS_AFTER[r][1]}
                            for r in TARGET_ROOMS},
@@ -899,6 +922,8 @@ def verify_after(src: bytes, out: bytes, inv: Inventory, after: Inventory,
     spr = after.spr_span[0x91]
     expect(bytes(out[spr[0]:spr[1]]) == spr_new, "room 0x91 still has sprites")
     expect(after.pot_span[0x91] == (pot_pc, pot_pc + len(pot_new)), "room 0x91 pots differ")
+    expect(out[POT_PAD_TARGET:POT_PAD_TARGET + 2] == src[POT_PAD_TARGET:POT_PAD_TARGET + 2]
+           == b"\xff\xff", "0xE6B0 pot sentinel changed")
 
     before_chests, after_chests = chest_lists(inv.chests), chest_lists(after.chests)
     expect(after.chest_size == inv.chest_size - 3, "chest count did not drop by one")
@@ -946,16 +971,35 @@ def check_new_target(path: Path, label: str, protected: Sequence[Path],
     return target
 
 
-def create_exclusive(path: Path, data: bytes, mode: int) -> None:
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
-    fd = os.open(path, flags, mode)
+def publish_exclusive(path: Path, data: bytes, mode: int) -> None:
+    """Write a private temp in path's directory, fsync and verify it, then hardlink it to
+    path, which fails if path exists. Only the temp this call created is ever unlinked."""
+    fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    temp = Path(temp_name)
+    owned = os.fstat(fd)
     try:
-        view = memoryview(data)
-        while view:
-            view = view[os.write(fd, view):]
-        os.fsync(fd)
+        try:
+            view = memoryview(data)
+            while view:
+                view = view[os.write(fd, view):]
+            os.fchmod(fd, mode)
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        expect(sha256(temp.read_bytes()) == sha256(data), f"temporary {temp} readback differs")
+        os.link(temp, path)
+        dir_fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(dir_fd)
+        finally:
+            os.close(dir_fd)
     finally:
-        os.close(fd)
+        try:
+            now = os.lstat(temp)
+        except FileNotFoundError:
+            now = None
+        if now is not None and (now.st_dev, now.st_ino) == (owned.st_dev, owned.st_ino):
+            os.unlink(temp)
 
 
 def readback(path: Path, want_sha: str, label: str, input_path: Path) -> None:
@@ -1012,9 +1056,9 @@ def main(argv: Sequence[str] | None = None, pins: Pins = DEFAULT_PINS,
         report["source"]["path"] = str(input_path)
 
         if args.write:
-            create_exclusive(rollback, rom, 0o444)
+            publish_exclusive(rollback, rom, 0o444)
             readback(rollback, input_sha, "rollback", input_path)
-            create_exclusive(output, out, 0o644)
+            publish_exclusive(output, out, 0o644)
             readback(output, plan["output_sha256"], "output", input_path)
             report["written"] = {"output": str(output), "rollback": str(rollback),
                                  "output_readback_sha256": plan["output_sha256"],
@@ -1031,9 +1075,14 @@ def main(argv: Sequence[str] | None = None, pins: Pins = DEFAULT_PINS,
 
     text = json.dumps(report, indent=2) + "\n"
     if report_path is not None and code == 0:
-        create_exclusive(report_path, text.encode(), 0o644)
-    else:
-        sys.stdout.write(text)
+        try:
+            publish_exclusive(report_path, text.encode(), 0o644)
+            return code
+        except (PlanError, OSError) as exc:
+            report["report_error"] = str(exc)
+            text = json.dumps(report, indent=2) + "\n"
+            code = 1
+    sys.stdout.write(text)
     return code
 
 
