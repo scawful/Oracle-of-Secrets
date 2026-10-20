@@ -249,7 +249,6 @@ SelectReactionMessage:
 ;
 ; Clobbers: B (high byte of A)
 ; Stack: 5 bytes (PHP + 16-bit PHX + 16-bit PHY)
-; Cycles: ~70 worst case (8 iterations)
 ; =========================================================
 GetEssenceCount:
 {
