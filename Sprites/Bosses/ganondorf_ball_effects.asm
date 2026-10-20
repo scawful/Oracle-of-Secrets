@@ -1,5 +1,5 @@
 ; Included in Ganondorf's bank $2A. Local calls inherit M=8, X/Y=8, DB=$2A.
-; SprAction: 0=rally ball, 1=independent shard, 2=harmless dissipation, 3=bat.
+; SprAction: 0=rally ball, 1=shard, 2=dissipation, 3=bat, 4=wake, 5=afterimage.
 ; Shards keep the ball's 16px origin; the visible 8px quarter is centered +4,+4.
 
 GanonBall_Main:
@@ -11,8 +11,13 @@ GanonBall_Main:
   CMP.b #$02 : BNE .not_dissipation
     JMP GanonBall_DissipateMain
   .not_dissipation
-  CMP.b #$03 : BNE .kill_now
+  CMP.b #$03 : BNE .not_bat
     JMP GanonBat_Main
+  .not_bat
+  CMP.b #$04 : BEQ .magic
+  CMP.b #$05 : BNE .kill_now
+  .magic
+    JMP GanonMagic_Main
 
   .rally
   ; Validate the slot before any indexed parent access.
@@ -346,6 +351,12 @@ GanonBall_SpawnShard:
 ; ticks, 4 blinking small ticks. All phases use palette6 and resident tiles.
 GanonBall_Draw:
 {
+  LDA.w SprAction, X : CMP.b #$04 : BNE .not_wake
+    JMP GanonMagic_DrawWake
+  .not_wake
+  CMP.b #$05 : BNE .not_afterimage
+    JMP GanonMagic_DrawAfterimage
+  .not_afterimage
   LDA.w SprAction, X : CMP.b #$03 : BNE .orb
     JMP GanonBat_Draw
   .orb

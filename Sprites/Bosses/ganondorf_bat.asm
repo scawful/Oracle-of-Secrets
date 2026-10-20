@@ -71,7 +71,9 @@ GanonBat_Main:
   JSL Sprite_Move
   JSR GanonBall_CheckBackground : BNE .dissipate
   JSL Sprite_CheckDamageFromPlayer : BCS .weapon_hit
-  JSL Sprite_CheckDamageToPlayerSameLayer : BCC .exit
+  JSL Sprite_CheckDamageToPlayerSameLayer : BCS .dissipate
+  JSR GanonMagic_TryBatEffects
+  BRA .exit
   .dissipate
   JMP GanonBall_StartDissipation
   .weapon_hit

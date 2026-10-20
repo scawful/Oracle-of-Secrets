@@ -611,6 +611,7 @@ Ganondorf_Weave:
 ; Carry set when clamping blocked the movement; Float can choose an escape.
 Ganondorf_MoveClamped:
 {
+  JSR GanonMagic_TryAfterimage
   JSL Sprite_Move
   REP #$20
   STZ.b $08
@@ -939,6 +940,7 @@ Sprite_GanonBall_Prep:
 
 incsrc "ganondorf_ball_effects.asm"
 incsrc "ganondorf_bat.asm"
+incsrc "ganondorf_magic.asm"
 
 ; Carry set = Link's Master Sword (or better) hit the ball this frame.
 ; Guards match vanilla Sprite_CheckDamageFromLink for the Agahnim ball ($7B).
