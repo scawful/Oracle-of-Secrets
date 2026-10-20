@@ -12,7 +12,7 @@
 ; native room transitions may retain the main group and zero auxiliary slots.
 ;
 ; Storage: new bank $45, $458000-$45BFFF (PC $228000-$22BFFF), outside the
-; two-MiB editable base and current source emissions. Bank $42 belongs to Lyra.
+; two-MiB editable base and current source emissions. Bank $42 contains Garo; $43 menu icons; $44 docks.
 ; The full reserved input must be absent/zero; the composed base uses zero padding.
 ; @source usdasm/bank_00.asm Decompress_background_arbitrary $00E78F
 ; @source usdasm/bank_1B.asm Palettes_LoadMultiple $1BEF51
