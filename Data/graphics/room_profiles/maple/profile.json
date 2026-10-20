@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "id": "maple_gbc_simple",
+  "base_sha256": "5689b1d383331b383670bdbb2d8470443d9431e22678e90d184ca5f8fad85b62",
+  "context": {
+    "room": 15,
+    "entrance": 104,
+    "main_blockset": 3,
+    "room_blockset": 3,
+    "bg_sheets": [
+      97,
+      1,
+      19,
+      7,
+      14,
+      35,
+      28,
+      15
+    ]
+  },
+  "palette_rows": [
+    {
+      "row": 2,
+      "colors": [
+        5221,
+        6347,
+        6515,
+        8762,
+        13021,
+        26262,
+        22463,
+        32767,
+        5221,
+        6347,
+        6515,
+        8762,
+        13021,
+        23098,
+        27423
+      ]
+    },
+    {
+      "row": 3,
+      "colors": [
+        6342,
+        11627,
+        21140,
+        30653,
+        9519,
+        6842,
+        10741,
+        32767,
+        5221,
+        5557,
+        22463,
+        12029,
+        6515,
+        13021,
+        22463
+      ]
+    },
+    {
+      "row": 4,
+      "colors": [
+        5287,
+        6415,
+        9652,
+        13880,
+        16027,
+        29567,
+        24282,
+        32767,
+        4228,
+        4263,
+        5320,
+        6377,
+        4262,
+        9480,
+        6438
+      ]
+    },
+    {
+      "row": 5,
+      "colors": [
+        5221,
+        6347,
+        6515,
+        22463,
+        26262,
+        18798,
+        22463,
+        32767,
+        18798,
+        26262,
+        26262,
+        26262,
+        18798,
+        26262,
+        22463
+      ]
+    },
+    {
+      "row": 6,
+      "colors": [
+        6342,
+        8464,
+        13752,
+        29596,
+        16648,
+        5851,
+        25005,
+        32767,
+        4228,
+        5413,
+        6534,
+        12680,
+        6534,
+        21140,
+        29596
+      ]
+    },
+    {
+      "row": 7,
+      "colors": [
+        5221,
+        6347,
+        18798,
+        26262,
+        26262,
+        26262,
+        22463,
+        32767,
+        5221,
+        6347,
+        6515,
+        8762,
+        13021,
+        23098,
+        27423
+      ]
+    }
+  ],
+  "sheets": [
+    {
+      "slot": 0,
+      "source": "slot_0.txt",
+      "base_sha256": "725a9440f106534dabaabff774f3902df776eb27335dca3dcb1f3dc0a60ca159"
+    },
+    {
+      "slot": 1,
+      "source": "slot_1.txt",
+      "base_sha256": "de19f0ff868a4f880e77d4e06f79bc2554d11b93b2e646723c00ed42b9798f2c"
+    },
+    {
+      "slot": 2,
+      "source": "slot_2.txt",
+      "base_sha256": "3d4b5ec7b07d1535a900f3fe06495ee1ad7ebfc867beccc4dd64d3344b90934e"
+    },
+    {
+      "slot": 3,
+      "source": "slot_3.txt",
+      "base_sha256": "dfa7696e40bbe870571acb22ed796460f97488f1a7645c1d35b286eb57289544"
+    },
+    {
+      "slot": 4,
+      "source": "slot_4.txt",
+      "base_sha256": "300ee8ec1e23f35a6b08788fa4d3c1615de9a03e9706fd561adfe98526d2f87d"
+    },
+    {
+      "slot": 5,
+      "source": "slot_5.txt",
+      "base_sha256": "9c7156c011ba0dfae33d8f073343dd6625a367425eb8ad665a43330bba119f84"
+    },
+    {
+      "slot": 6,
+      "source": "slot_6.txt",
+      "base_sha256": "c792aad1bc32c3e3d702c3e60a8776ebd4dc9ac03affcc8e46bf4f4f87042e3d"
+    },
+    {
+      "slot": 7,
+      "source": "slot_7.txt",
+      "base_sha256": "4eb7abcfe0eb3e77412aaa60670ff03945b3ff86db4b8cc0b4b2e09cf4d20ac6"
+    }
+  ],
+  "patterns": [
+    {
+      "id": "bed",
+      "kind": "object",
+      "collision": "preserve_existing",
+      "states": [
+        {
+          "name": "default",
+          "rows": [
+            [
+              "0x158C",
+              "0x158D",
+              "0x558D",
+              "0x558C"
+            ],
+            [
+              "0x159C",
+              "0x159D",
+              "0x559D",
+              "0x559C"
+            ],
+            [
+              "0x159C",
+              "0x159D",
+              "0x559D",
+              "0x559C"
+            ],
+            [
+              "0x159C",
+              "0x159D",
+              "0x559D",
+              "0x559C"
+            ],
+            [
+              "0x158B",
+              "0x159B",
+              "0x559B",
+              "0x558B"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stand",
+      "kind": "object",
+      "collision": "preserve_existing",
+      "states": [
+        {
+          "name": "default",
+          "rows": [
+            [
+              "0x28E7",
+              "0x68E7"
+            ],
+            [
+              "0x28F7",
+              "0x68F7"
+            ],
+            [
+              "0x28E6",
+              "0x68E6"
+            ],
+            [
+              "0x08F6",
+              "0x48F6"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bookshelf",
+      "kind": "object",
+      "collision": "preserve_existing",
+      "states": [
+        {
+          "name": "default",
+          "rows": [
+            [
+              "0x094E",
+              "0x094F",
+              "0x094F",
+              "0x094F",
+              "0x094F",
+              "0x494E"
+            ],
+            [
+              "0x095E",
+              "0x095F",
+              "0x095F",
+              "0x095F",
+              "0x095F",
+              "0x495E"
+            ],
+            [
+              "0x096E",
+              "0x096F",
+              "0x096F",
+              "0x496F",
+              "0x096F",
+              "0x496E"
+            ],
+            [
+              "0x09AE",
+              "0x09AF",
+              "0x09AF",
+              "0x09AF",
+              "0x09AF",
+              "0x49AE"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,366 @@
+{
+  "schema": 1,
+  "image": "canonical.png",
+  "frame_grid": [
+    32,
+    48
+  ],
+  "columns": 8,
+  "palette": [
+    "#000000",
+    "#191021",
+    "#29213A",
+    "#635263",
+    "#425229",
+    "#ADBD6B",
+    "#AD4231",
+    "#E67342",
+    "#CE9C42",
+    "#EFD684",
+    "#42314A",
+    "#738442",
+    "#632931",
+    "#8C6329",
+    "#F79C31",
+    "#FFF7AD"
+  ],
+  "frames": [
+    {
+      "id": "idle",
+      "kind": "body",
+      "cell": [
+        0,
+        0
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "0dcb4f9ed4260bdafd5419a3c9ae50c2cb36d3cf3b9883e1fdc34945f1bd1b21",
+      "approved_input_sha256": "14fbf7e55c1efdcd224c0c46d7ba83ed9b578bb1697d8fab1813fb0adc01b29f"
+    },
+    {
+      "id": "cast",
+      "kind": "body",
+      "cell": [
+        1,
+        0
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "3f8c102a4dba29bec6802b810400b5d325752074aa5d338f577e8a4306b2e069",
+      "approved_input_sha256": "dd5ecd5fae66e4c3173c6efcc5bbede0b1d93fa38c9c107da0561c94cf8d4ac3"
+    },
+    {
+      "id": "release",
+      "kind": "body",
+      "cell": [
+        2,
+        0
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "f766878d74e161deb9c4f84f6d5ef21c575f4efafe9327c3434a03b775ac0421",
+      "approved_input_sha256": "66fe9372f2ce2f8279de5cd9f7253c5eb6ed5a13b9fb9ccc5161dc0223af84d5"
+    },
+    {
+      "id": "hurt",
+      "kind": "body",
+      "cell": [
+        3,
+        0
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "5724e1976d4675968f560b7f1e436f6fe024c9873447626420771fe1d9d67170",
+      "approved_input_sha256": "d7ff1b684da557539844962f3657423c5fcf247354c6c498bc09a7eb417b61c8"
+    },
+    {
+      "id": "side",
+      "kind": "body",
+      "cell": [
+        4,
+        0
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "3837072a5beca64d2f08b087967bbead6c446a74edb42e1e275f6b0a96e3b6e4",
+      "approved_input_sha256": "2616afd72cf5b49911cc17968c22c4b7572f8514f40c50cd158d9c43091f3303"
+    },
+    {
+      "id": "back_a",
+      "kind": "body",
+      "cell": [
+        5,
+        0
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "b997428d7dba39fced7ca5c330bb8db559f2d60bfe6b923c29babc12b02283c8",
+      "approved_input_sha256": "bcb4b3a271dc0bcd37c0c74181ecb5712c5ca7536831719906d18bfd2c5add35"
+    },
+    {
+      "id": "back_b",
+      "kind": "body",
+      "cell": [
+        6,
+        0
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "c356d411caf066519780289a73aa9361b69ca983dfcdfc95c060927198ed73f9",
+      "approved_input_sha256": "69d75064619d8d63a0adfcc6326e77f652a1ab53d9750aad318235b270968a86"
+    },
+    {
+      "id": "ball_a",
+      "kind": "effect",
+      "cell": [
+        7,
+        0
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "pixel_sha256": "d232d489befa92467aca312fabaefce35709ae8300e1e6bfe774f1275e71926a",
+      "approved_input_sha256": "66629dded646833def44445f496647b7ce76a511757d795f995e4c29a4f41b2d"
+    },
+    {
+      "id": "ball_b",
+      "kind": "effect",
+      "cell": [
+        0,
+        1
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "pixel_sha256": "cb6c640b66bfb12db018d7494261af2d3c2360817504dacd7b323a1b145bb750",
+      "approved_input_sha256": "ac7f32277d4d07ed66c929a43136f21accec7b9753c058af7bccb35aa3e5b8c7"
+    },
+    {
+      "id": "cast_ready",
+      "kind": "body",
+      "cell": [
+        1,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "cd9dc9ae719d613244887647d22060901ed255111dd3596be8055f1ddd785a3c",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "cast_half",
+      "kind": "body",
+      "cell": [
+        2,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "9b31518c0b737eecda315e56285a41384c91d0fe522c2be76e68741a20be1612",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "cast_a",
+      "kind": "body",
+      "cell": [
+        3,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "dda46ca8ccff44f2f369eaaba05c7e91def2be860bacd1a6247c976e026cd6a2",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "cast_second",
+      "kind": "body",
+      "cell": [
+        4,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "3ffd18cc1a96defbce6f2b8d0f72ddd70400284b6912a656d93890f8e7ce79f4",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "cast_b",
+      "kind": "body",
+      "cell": [
+        5,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "ae90d29380f4aee37c3403c60b18ddd70fc1b27e4f53927c35ad2d84285b4f07",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "throw_windup",
+      "kind": "body",
+      "cell": [
+        6,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "aabb96e3ee0889caad4d6493b7f99b5fcfe28491572cd767c1913e493b6bdc77",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "throw",
+      "kind": "body",
+      "cell": [
+        7,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "ebc875ca749a599b086ee99b8c6a6a43281731e06ec832f302d328ebb3ce7bb4",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "throw_follow",
+      "kind": "body",
+      "cell": [
+        0,
+        2
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "9521a92e3821273ace5b973825f74d0265f31a450b7738f0b950d85c03701a32",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "recover_half",
+      "kind": "body",
+      "cell": [
+        1,
+        2
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "40dfac1957ed181159077d920144225de1758cbc75d8ebb41370537248e99dde",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "bat_up",
+      "kind": "effect",
+      "cell": [
+        2,
+        2
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "pixel_sha256": "e99f9f655533c6255863a6cb137478b1b8badbccabfc52eb3bf0b3cc299bb616",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "bat_mid",
+      "kind": "effect",
+      "cell": [
+        3,
+        2
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "pixel_sha256": "b1c12fd3b8e50c72cbadcd1cc26ae512f7b5291ad74d65656afe927372712b52",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "bat_down",
+      "kind": "effect",
+      "cell": [
+        4,
+        2
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "pixel_sha256": "2e731323840f80b0a24f23d6cc072e09ea89d2b41f1729d52dd812d917f85c3f",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    }
+  ],
+  "runtime": {
+    "frame_ids": [
+      "idle",
+      "cast",
+      "hurt",
+      "ball_a",
+      "ball_b",
+      "release",
+      "right",
+      "left",
+      "back_a",
+      "back_b",
+      "charge_a",
+      "charge_b",
+      "cast_ready",
+      "cast_half",
+      "cast_a",
+      "cast_second",
+      "throw_windup",
+      "throw_follow",
+      "recover_half",
+      "bat_up",
+      "bat_mid",
+      "bat_down"
+    ],
+    "body_offset": [
+      -8,
+      -16
+    ],
+    "ball_offset": [
+      0,
+      0
+    ],
+    "charge_ball_offset": [
+      0,
+      -32
+    ],
+    "properties": 61,
+    "sheet_bytes": 6144,
+    "max_cells": 48
+  },
+  "source_note": "Exact authored indexed pixels. Legacy cast/release/side retained as dormant source; resident art uses the nine-pose volley and three-pose bat. Bat is cropped from (8,16)-(24,32); balls remain (8,12)-(24,28).",
+  "approved_manifest_sha256": "454c5f5ada46942600b0a2e7f39f59c4976f67a4a006d22cdb3a0d2ef268c410"
+}

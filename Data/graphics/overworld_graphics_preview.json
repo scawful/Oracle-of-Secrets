@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "areas": [
+    {
+      "parent_map": 48,
+      "bg_character_base_word": 8192,
+      "transfers": [
+        {
+          "path": "../../Overworld/gfx/kalyxo_docks_bg.bin",
+          "format": "snes4bpp",
+          "byte_count": 8192,
+          "vram_word_address": 11264
+        }
+      ]
+    },
+    {
+      "parent_map": 50,
+      "bg_character_base_word": 8192,
+      "transfers": [
+        {
+          "path": "../../Overworld/gfx/kalyxo_docks_slot3.bin",
+          "format": "snes4bpp",
+          "byte_count": 2048,
+          "vram_word_address": 11264
+        }
+      ]
+    },
+    {
+      "parent_map": 56,
+      "bg_character_base_word": 8192,
+      "transfers": [
+        {
+          "path": "../../Overworld/gfx/boat.bin",
+          "format": "snes4bpp",
+          "byte_count": 8192,
+          "vram_word_address": 11264
+        },
+        {
+          "path": "../../Overworld/gfx/boat2.bin",
+          "format": "snes4bpp",
+          "byte_count": 8192,
+          "vram_word_address": 20480
+        }
+      ]
+    }
+  ]
+}

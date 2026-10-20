@@ -1,0 +1,334 @@
+{
+  "schema_version": 1,
+  "id": "maple_gbc_simple",
+  "base_sha256": "5689b1d383331b383670bdbb2d8470443d9431e22678e90d184ca5f8fad85b62",
+  "profile_sha256": "597351625f288baf2e1d31ea5e526b047e51fc8e3fe7c3498730919a84b7c476",
+  "context": {
+    "room": 15,
+    "entrance": 104,
+    "main_blockset": 3,
+    "room_blockset": 3,
+    "bg_sheets": [
+      97,
+      1,
+      19,
+      7,
+      14,
+      35,
+      28,
+      15
+    ]
+  },
+  "stage": "compiled_assets_unbound",
+  "runtime_installed": false,
+  "palette_dependencies": [
+    "BG rows 2..7 share one room palette",
+    "first seven dungeon colors also feed OBJ environment half-row",
+    "native high/low expansion depends on main blockset and destination slot",
+    "palette animation consumers must be checked before runtime binding"
+  ],
+  "palette_rows": [
+    {
+      "row": 2,
+      "first_color": 1,
+      "file": "palettes/row_2.bin"
+    },
+    {
+      "row": 3,
+      "first_color": 1,
+      "file": "palettes/row_3.bin"
+    },
+    {
+      "row": 4,
+      "first_color": 1,
+      "file": "palettes/row_4.bin"
+    },
+    {
+      "row": 5,
+      "first_color": 1,
+      "file": "palettes/row_5.bin"
+    },
+    {
+      "row": 6,
+      "first_color": 1,
+      "file": "palettes/row_6.bin"
+    },
+    {
+      "row": 7,
+      "first_color": 1,
+      "file": "palettes/row_7.bin"
+    }
+  ],
+  "sheets": [
+    {
+      "slot": 0,
+      "base_sheet": 97,
+      "first_tile": 0,
+      "source_sha256": "a095fd0ded94e4d4dfb6cff09cb3fb9c56c7580052682f0c2ebf938b2183eeba",
+      "raw": "sheets/slot_0.3bpp",
+      "compressed": "sheets/slot_0.lz2",
+      "vram": "sheets/slot_0.vram4bpp",
+      "palette_half": "high",
+      "identity": false
+    },
+    {
+      "slot": 1,
+      "base_sheet": 1,
+      "first_tile": 64,
+      "source_sha256": "3db21fd3f6523d76c08a38a38d3c6a11190cc542a6ed46b14027bb4de4352904",
+      "raw": "sheets/slot_1.3bpp",
+      "compressed": "sheets/slot_1.lz2",
+      "vram": "sheets/slot_1.vram4bpp",
+      "palette_half": "high",
+      "identity": true
+    },
+    {
+      "slot": 2,
+      "base_sheet": 19,
+      "first_tile": 128,
+      "source_sha256": "45d65f0f7946b148f493156ad8daf97b3814a1d6aa3726c688d01ff9fa8f3398",
+      "raw": "sheets/slot_2.3bpp",
+      "compressed": "sheets/slot_2.lz2",
+      "vram": "sheets/slot_2.vram4bpp",
+      "palette_half": "high",
+      "identity": false
+    },
+    {
+      "slot": 3,
+      "base_sheet": 7,
+      "first_tile": 192,
+      "source_sha256": "7d3d24da40ac9d0396e069f81574f9135940eaac9a27dff2448753b0454cc046",
+      "raw": "sheets/slot_3.3bpp",
+      "compressed": "sheets/slot_3.lz2",
+      "vram": "sheets/slot_3.vram4bpp",
+      "palette_half": "high",
+      "identity": false
+    },
+    {
+      "slot": 4,
+      "base_sheet": 14,
+      "first_tile": 256,
+      "source_sha256": "447575c2df8fdcf30f37b8fafcf0aa394b27e3bed4ebdd67493e51f32f867659",
+      "raw": "sheets/slot_4.3bpp",
+      "compressed": "sheets/slot_4.lz2",
+      "vram": "sheets/slot_4.vram4bpp",
+      "palette_half": "low",
+      "identity": true
+    },
+    {
+      "slot": 5,
+      "base_sheet": 35,
+      "first_tile": 320,
+      "source_sha256": "a826fea301df607c934a4f6eec6316b010c84fdfb8409dc8c61c1e826dd5cc95",
+      "raw": "sheets/slot_5.3bpp",
+      "compressed": "sheets/slot_5.lz2",
+      "vram": "sheets/slot_5.vram4bpp",
+      "palette_half": "low",
+      "identity": false
+    },
+    {
+      "slot": 6,
+      "base_sheet": 28,
+      "first_tile": 384,
+      "source_sha256": "b34f1f28a8278f1c26de5473a90ab9bce5bd4def0fd81f87be2029e078be355f",
+      "raw": "sheets/slot_6.3bpp",
+      "compressed": "sheets/slot_6.lz2",
+      "vram": "sheets/slot_6.vram4bpp",
+      "palette_half": "low",
+      "identity": false
+    },
+    {
+      "slot": 7,
+      "base_sheet": 15,
+      "first_tile": 448,
+      "source_sha256": "6f7b025a3931660bd539073634dd167eaec96b853176abe70fe9cb9d0fcb1635",
+      "raw": "sheets/slot_7.3bpp",
+      "compressed": "sheets/slot_7.lz2",
+      "vram": "sheets/slot_7.vram4bpp",
+      "palette_half": "low",
+      "identity": true
+    }
+  ],
+  "patterns": [
+    {
+      "id": "bed",
+      "kind": "object",
+      "collision": "preserve_existing",
+      "width": 4,
+      "height": 5,
+      "states": [
+        {
+          "name": "default",
+          "file": "patterns/bed/default.bin"
+        }
+      ],
+      "runtime_binding_required": true
+    },
+    {
+      "id": "stand",
+      "kind": "object",
+      "collision": "preserve_existing",
+      "width": 2,
+      "height": 4,
+      "states": [
+        {
+          "name": "default",
+          "file": "patterns/stand/default.bin"
+        }
+      ],
+      "runtime_binding_required": true
+    },
+    {
+      "id": "bookshelf",
+      "kind": "object",
+      "collision": "preserve_existing",
+      "width": 6,
+      "height": 4,
+      "states": [
+        {
+          "name": "default",
+          "file": "patterns/bookshelf/default.bin"
+        }
+      ],
+      "runtime_binding_required": true
+    }
+  ],
+  "files": {
+    "palettes/row_2.bin": {
+      "bytes": 30,
+      "sha256": "a32755aa468c8574b9a014241a35e70a69fe111766291f54fcd10e194f086ec6"
+    },
+    "palettes/row_3.bin": {
+      "bytes": 30,
+      "sha256": "8e0a2a3081d2ab656f9a43d1b84ed3ecde4ef7914afc34cfe725a3cd526a1285"
+    },
+    "palettes/row_4.bin": {
+      "bytes": 30,
+      "sha256": "255abaebb05a9ef92f57e153bcd39768a83b41315e9608cdc1459755ff1f16e6"
+    },
+    "palettes/row_5.bin": {
+      "bytes": 30,
+      "sha256": "6dec2ce21be5786ed4f26a0302c78eb42e8e20759b06a363e1aad85107aa5411"
+    },
+    "palettes/row_6.bin": {
+      "bytes": 30,
+      "sha256": "4372f326a0e304adae473f36304ff3473e119be60e381d0debd87322c3dafb15"
+    },
+    "palettes/row_7.bin": {
+      "bytes": 30,
+      "sha256": "7d08dc3c491a705fba0955b7925f3fc077da464d9648835702bce8c805f4beee"
+    },
+    "palettes/dungeon_main.bin": {
+      "bytes": 180,
+      "sha256": "ac8a346a4d2420d6fef8856b06caebcbb30260125591365d9b61a37fa170ffe3"
+    },
+    "sheets/slot_0.3bpp": {
+      "bytes": 1536,
+      "sha256": "ea36aa53e60226e6575e85f7de2efea401070714501d24baaf1a29604cbf65f0"
+    },
+    "sheets/slot_0.lz2": {
+      "bytes": 1200,
+      "sha256": "3232cdc95244146f71e85b1facc2f3502ce3673bfd5a8324fa745ca65cb07b4e"
+    },
+    "sheets/slot_0.vram4bpp": {
+      "bytes": 2048,
+      "sha256": "6084a45f4bb06bdcce9c748e44c0388754df8555f59a9ffa0f773018bbc5d714"
+    },
+    "sheets/slot_1.3bpp": {
+      "bytes": 1536,
+      "sha256": "de19f0ff868a4f880e77d4e06f79bc2554d11b93b2e646723c00ed42b9798f2c"
+    },
+    "sheets/slot_1.lz2": {
+      "bytes": 1099,
+      "sha256": "3d7068271a29732d4fbe4b00d0c64faabbf78ba42e86182e659c070ebbdbb268"
+    },
+    "sheets/slot_1.vram4bpp": {
+      "bytes": 2048,
+      "sha256": "555f71bc80aa546ae56d22ac18bb07375469deda29ce850bf839c5798a202fc9"
+    },
+    "sheets/slot_2.3bpp": {
+      "bytes": 1536,
+      "sha256": "483ec43c99dff4e7f5d3c8e50b52d3564180be83d92f24444f18f9d256d9b8b5"
+    },
+    "sheets/slot_2.lz2": {
+      "bytes": 1113,
+      "sha256": "cdc7ded9ccb5824018cc3fb266f1c6f5bbf1b4da5d16a4f0fc15c879b39bbc18"
+    },
+    "sheets/slot_2.vram4bpp": {
+      "bytes": 2048,
+      "sha256": "900b3b0a88f298aa393d2f6d45660bb16097ffe31589d4777e0bee7dc9186387"
+    },
+    "sheets/slot_3.3bpp": {
+      "bytes": 1536,
+      "sha256": "afc7f255a9ee1dc4508098f0bc2207f00c2d690a428b266eee68cc42d2d72ff4"
+    },
+    "sheets/slot_3.lz2": {
+      "bytes": 616,
+      "sha256": "7a087e157cebf03326e5ce0daa854c29b28a28807055f2a153d1b8a8461144ea"
+    },
+    "sheets/slot_3.vram4bpp": {
+      "bytes": 2048,
+      "sha256": "2ec40230be04e620f9139d8e45fd920f43ad0d944c842c5e0c4a39d65431fb8e"
+    },
+    "sheets/slot_4.3bpp": {
+      "bytes": 1536,
+      "sha256": "300ee8ec1e23f35a6b08788fa4d3c1615de9a03e9706fd561adfe98526d2f87d"
+    },
+    "sheets/slot_4.lz2": {
+      "bytes": 1256,
+      "sha256": "8fe3690834fed52c110f668dfa2e3e9be5e0b6a40946ee0ca2499e1e58c2d5b5"
+    },
+    "sheets/slot_4.vram4bpp": {
+      "bytes": 2048,
+      "sha256": "c84ca4cd08923fbe6de190e4efc98e5b76f337db8f90693f8a7d2ffe4647de00"
+    },
+    "sheets/slot_5.3bpp": {
+      "bytes": 1536,
+      "sha256": "58f9746ed071b7d473040d29e9b0ccb0b0e47b3637356d17f593afe54647a815"
+    },
+    "sheets/slot_5.lz2": {
+      "bytes": 1104,
+      "sha256": "387b7416d9dc7ca8caf0c5ed7df6ee9d584e52daaf677a3e57f9abf5777c5f64"
+    },
+    "sheets/slot_5.vram4bpp": {
+      "bytes": 2048,
+      "sha256": "4aa21e2b9576c805f002a367d80ab817261384623ff46af72bf00cd068ea028f"
+    },
+    "sheets/slot_6.3bpp": {
+      "bytes": 1536,
+      "sha256": "db3040e8c4289b4f583b5592961d9689ccbaa2252ecf1fcecf30655edfe1918d"
+    },
+    "sheets/slot_6.lz2": {
+      "bytes": 878,
+      "sha256": "2fc895215e89d73363027b912870f97fd609a354138b9358cfe08f9bfcecd9b5"
+    },
+    "sheets/slot_6.vram4bpp": {
+      "bytes": 2048,
+      "sha256": "dcf09cac1d99bea9b93823036936776ced9b97fa21fb117b1b2d961152fc4b94"
+    },
+    "sheets/slot_7.3bpp": {
+      "bytes": 1536,
+      "sha256": "4eb7abcfe0eb3e77412aaa60670ff03945b3ff86db4b8cc0b4b2e09cf4d20ac6"
+    },
+    "sheets/slot_7.lz2": {
+      "bytes": 808,
+      "sha256": "387b56295f95fe335d92c049a8e74e119aa487c9e5eed794d648e721b2578089"
+    },
+    "sheets/slot_7.vram4bpp": {
+      "bytes": 2048,
+      "sha256": "334082ff71fd42323db6cdde67d9475f3e982897b3810ca3ea151fc848f2fb7a"
+    },
+    "patterns/bed/default.bin": {
+      "bytes": 52,
+      "sha256": "ba18760e2b7775a4906b56bd9aa64ad13a1c4e0182916c9addbbdfffcda97c59"
+    },
+    "patterns/stand/default.bin": {
+      "bytes": 26,
+      "sha256": "43c6c5eb567b92381600d6bf8df50a7d305ee48dd974ee26b29323ddf13882bb"
+    },
+    "patterns/bookshelf/default.bin": {
+      "bytes": 58,
+      "sha256": "38839dbd87f26c3df88af51878235af69d3b19a2cab153ed7f8752a70205e76c"
+    }
+  }
+}

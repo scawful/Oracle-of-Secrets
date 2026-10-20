@@ -31,6 +31,10 @@ print  "End of enemy_damage.asm           ", pc
 
 incsrc "Dungeons/house_walls.asm"
 
+if !ENABLE_MAPLE_ROOM_GRAPHICS == 1
+  incsrc "Dungeons/room_graphics.asm"
+endif
+
 ; Use of Bank 0x2C begins
 incsrc "Dungeons/Objects/object_handler.asm"
 print  "End of object_handler.asm         ", pc
