@@ -174,6 +174,25 @@ class RoomTagMappingTest(unittest.TestCase):
              ("0x39", "0x01CC18"), ("0x3A", "0x01CC1C")],
         )
 
+    def test_source_only_maps_holes2_gateway_to_tag_24(self):
+        tags = self.tags(
+            "org $01CC89 : JML Socket ; @hook name=Socket\n"
+            "org $01CC8D : JML NotAGateway\n"
+        )
+        self.assertEqual(
+            [(tag["tag_id"], tag["address"], tag["name"]) for tag in tags],
+            [("0x24", "0x01CC89", "Socket")],
+        )
+
+    def test_rom_vector_maps_holes2_gateway_only_when_vector_names_it(self):
+        source = "org $01CC89 : JML Socket ; @hook name=Socket\n"
+        data = bytearray(0xC2FD)
+        data[0xC2C5:0xC2C7] = bytes.fromhex("89cc")
+        self.assertEqual([tag["tag_id"] for tag in
+                          self.tags(source, rom_data=bytes(data))], ["0x24"])
+        data[0xC2C5:0xC2C7] = bytes.fromhex("8acc")
+        self.assertEqual(self.tags(source, rom_data=bytes(data)), [])
+
     def test_bare_disabled_flag_is_not_advertised_as_active(self):
         tags = self.tags(
             "if !ENABLE_CART\norg $01CC14 : JML Cart ; @hook name=Cart\nendif\n",
@@ -233,6 +252,10 @@ class RoomTagMappingTest(unittest.TestCase):
         self.assertEqual(tags["dispatch_table_end"], "0x01C2FD")
         self.assertEqual(tags["dispatch_source"], "vanilla_us_reference")
         self.assertEqual(tags["routine_hooks_end"], "0x01CC20")
+        self.assertEqual(tags["routine_hook_ranges"], [
+            {"start": "0x01CC00", "end": "0x01CC20"},
+            {"start": "0x01CC89", "end": "0x01CC8D"},
+        ])
         self.assertEqual(tags["available_slots"], [])
         self.assertEqual(tags["tags"][0]["tag_id"], "0x34")
 

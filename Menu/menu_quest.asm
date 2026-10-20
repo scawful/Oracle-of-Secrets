@@ -226,7 +226,7 @@ Menu_Quest_Progress:
   STA.w $1040,X : INC : STA.w $1042,X
   SEP #$30
   PLY
-  INY : CPY.b #$07 : BCC .essences
+  INY : CPY.b #$08 : BCC .essences
   LDY.b #$00
 .pendants
   PHY
@@ -252,9 +252,12 @@ Menu_Quest_Progress:
 .crystal_bits
   db !Crystal_D1_MushroomGrotto,!Crystal_D2_TailPalace,!Crystal_D3_KalyxoCastle
   db !Crystal_D4_ZoraTemple,!Crystal_D5_GlaciaEstate,!Crystal_D6_GoronMines,!Crystal_D7_DragonShip
+  db !Crystal_D8_Sky
+; Draft layout for review: clockwise D1..D8 octagon, mirror-symmetric about
+; the pendant column; Tests/test_quest_essence_layout.py guards the footprint.
 .crystal_pos
-  dw menu_offset(12,10),menu_offset(13,14),menu_offset(16,15),menu_offset(20,12)
-  dw menu_offset(20,8),menu_offset(16,5),menu_offset(13,6)
+  dw menu_offset(11,12),menu_offset(14,15),menu_offset(17,15),menu_offset(20,12)
+  dw menu_offset(20,8),menu_offset(17,5),menu_offset(14,5),menu_offset(11,8)
 .pendant_bits
   db !Pendant_Wisdom,!Pendant_Power,!Pendant_Courage
 .pendant_pos

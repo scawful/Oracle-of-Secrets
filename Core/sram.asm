@@ -121,6 +121,13 @@ endmacro
 !Crystal_D2_TailPalace     = $10  ; bit 4 - Swamp Palace slot
 !Crystal_D4_ZoraTemple     = $20  ; bit 5 - Thieves' Town slot
 !Crystal_D3_KalyxoCastle   = $40  ; bit 6 - Skull Woods slot
+; bit 7 - D8 Sky essence. No RoomTagPrizeChecks entry (IDs $00-$18) is $80;
+;   ID $1A reads past the table ($02A1B1 = $AD, includes $80), so it needs a
+;   real entry before any crystal award there. Legacy readers mask it out (#$7F) or test
+;   single bits, except Sprites/NPCs/eon_owl.asm, which compares the whole byte
+;   (CMP.b #$77); migrate it before enabling any D8 award. GetCrystalCount
+;   counts bits 0-6 only. Count all eight with GetEssenceCount (Core/progression.asm).
+!Crystal_D8_Sky            = $80  ; bit 7 - no vanilla slot
 
 ; ---------------------------------------------------------
 ; SideQuestProgress Bits ($7EF3D7)

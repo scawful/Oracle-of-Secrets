@@ -16,6 +16,15 @@ if !ENABLE_D3_PRISON_SEQUENCE == 1
 org $01CC04 : JML RoomTag_MinishSwitch ; @hook module=Dungeons name=RoomTag_MinishSwitch kind=jml target=RoomTag_MinishSwitch
 endif
 
+; Only the first four bytes of the twelve-byte RoomTag_Holes2 body change.
+assert read2($01C2C5) == $CC89, "Tag $24 vector no longer names RoomTag_Holes2"
+assert read4($01CC89) == $CC2030C2, "RoomTag_Holes2 body moved"
+assert read4($01CC8D) == $A0F690CD, "RoomTag_Holes2 body moved"
+assert read4($01CC91) == $D9800005, "RoomTag_Holes2 body moved"
+; RoomTag_Holes2 (tag $24) — Somaria socket door
+org $01CC89 : JML RoomTag_SomariaSocketDoor ; @hook module=Dungeons name=RoomTag_SomariaSocketDoor kind=jml target=RoomTag_SomariaSocketDoor expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
+assert pc() == $01CC8D
+
 pullpc
 CustomTag:
 {
@@ -266,5 +275,98 @@ RoomTag_MinishSwitch:
   JML RoomTag_Return
 }
 endif
+
+; =========================================================
+; Somaria Socket Door — hold door held only by a Somaria block
+;
+; Dispatcher-connected as room tag $24 through the RoomTag_Holes2 gateway
+; ($01CC89). No audited base room header assigns tag $24.
+;
+; Reversible like RoomTag_SwitchTrigger_HoldDoor ($01C541): open while a
+; live Somaria block rests on a pressure switch, closed otherwise. Its other
+; inputs are not read: $0642 (sprites, ice block, followers), the push-block
+; switch latch ($0500 state 5 / $0466) and Link's floor test.
+;
+; Entry contract: JML from the $01CC89 gateway, reached by
+; Underworld_HandleRoomTags ($01C2FD) through JSR (.vectors, X):
+;   M=8 X=8 (re-asserted here), D=$0000, DBR with WRAM $0000-$1FFF mirrored
+;   (bank $00-$3F/$80-$BF), $11=$00, $0E = tag slot (0=$AE, 1=$AF).
+;   Stack top is the JSR return into bank $01; this routine pushes nothing.
+; Exit: JML RoomTag_Return ($01CC5A, a bare RTS) with M=8 X=8, stack as on
+; entry. A, X and P are clobbered; Y, $0E, $AE and $AF are untouched.
+; Writes happen only when the door state changes: $0468 (16-bit, 0=open
+; 1=closed), $068E and $0690 (16-bit zero), $012F=$25 when opening only,
+; $11=$05.
+;
+; A block qualifies only when the Ancilla2C_SomariaBlock .run_trigger gates
+; ($08E3A3) held and SomariaBlock_CheckForSwitch ($08E75C) found all four
+; probe points on switch tiles at its last update:
+;   $1B!=0, $0646!=0, $0308 bit7 clear, $03F4==0, and for a slot X in 0-4:
+;   $0C4A,X==$2C, $0394,X==0 (spawn delay over), $03C5,X==0, $0380,X==0,
+;   $03DB,X==4, $029E,X in {$00,$FF}.
+; $0646 alone is not trusted: pit deletion ($08E5D8) frees the slot without
+; clearing it, and .bouncing only clears it for the $02EC slot. Ancillae run
+; in Sprite_Main after room tags, so the state is one frame old, as in vanilla.
+; Rooms with Somaria transit lines ($03F4) never open, and the door closes
+; while Link carries anything ($0308 bit7) because no switch check runs then.
+;
+; Room contract: the block's switch probe reads its own floor ($0C7C,X at
+; $088A56), and the tag acts room-wide like the vanilla hold door. Before a
+; header assigns tag $24, the room needs exactly one accepted pressure plate
+; across all layers, one owner of the shutter state, and no transit lines.
+; The caller must keep the vanilla once-per-frame, $11==$00 room-tag cadence.
+;
+; Allocation: fixed bank $2C tail $2CFD00-$2CFDFF, so the bank $2C
+; continuation used by the code before and after this file is unchanged.
+; Neighbors: main bank $2C stream below (ended at $2CE113 in the control
+; build), CustomRoomCollision at $2CFE00-$2CFEFF, JumpTableLocal_Guard at
+; $2CFF00. This org places code only; the $01CC89 gateway is its only entry.
+
+pushpc
+org $2CFD00
+RoomTag_SomariaSocketDoor:
+{
+  SEP #$30
+  LDA.b $1B : BEQ .closed
+  LDA.w $0646 : BEQ .closed
+  BIT.w $0308 : BMI .closed
+  LDA.w $03F4 : BNE .closed
+
+  LDX.b #$04
+  .next_slot
+    LDA.w $0C4A, X : CMP.b #$2C : BNE .skip_slot
+    LDA.w $0394, X : BNE .skip_slot
+    LDA.w $03C5, X : BNE .skip_slot
+    LDA.w $0380, X : BNE .skip_slot
+    LDA.w $03DB, X : CMP.b #$04 : BNE .skip_slot
+    LDA.w $029E, X : BEQ .held
+    CMP.b #$FF : BEQ .held
+  .skip_slot
+    DEX : BPL .next_slot
+
+  .closed
+  REP #$30
+  LDX.w #$0001
+  BRA .update
+
+  .held
+  REP #$30
+  LDX.w #$0000
+
+  .update
+  CPX.w $0468 : BEQ .exit
+    STX.w $0468
+    STZ.w $068E : STZ.w $0690
+    SEP #$30
+    CPX.b #$00 : BNE .no_sfx
+      LDA.b #$25 : STA.w $012F
+    .no_sfx
+    LDA.b #$05 : STA.b $11
+  .exit
+  SEP #$30
+  JML RoomTag_Return
+}
+assert pc() <= $2CFE00 ; do not overlap CustomRoomCollision
+pullpc
 
 pushpc

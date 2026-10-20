@@ -20,8 +20,9 @@
 ;   First consumer: Maku Tree (maku_tree.asm). Next: Zora NPC.
 ;
 ; DESIGN DECISIONS:
-;   - GetCrystalCount uses shift-and-count (popcount) since
-;     the crystal bitfield has only 7 bits. A lookup table
+;   - GetCrystalCount uses shift-and-count (popcount) over the
+;     seven legacy crystal bits; GetEssenceCount counts all eight
+;     (bit 7 = !Crystal_D8_Sky). A lookup table
 ;     would be faster but unnecessary for NPC dialogue triggers
 ;     that run once per interaction (~40 cycles is negligible).
 ;
@@ -49,8 +50,8 @@ org $2FFE00
 ; crystal bitfield at $7EF37A). Counts set bits among bits
 ; 0-6, which map to D1-D7 in non-linear order:
 ;
-;   Bit 0 ($01) = D1 Mushroom Grotto
-;   Bit 1 ($02) = D6 Goron Mines
+;   Bit 0 ($01) = D6 Goron Mines
+;   Bit 1 ($02) = D1 Mushroom Grotto
 ;   Bit 2 ($04) = D5 Glacia Estate
 ;   Bit 3 ($08) = D7 Dragon Ship
 ;   Bit 4 ($10) = D2 Tail Palace
@@ -224,6 +225,58 @@ SelectReactionMessage:
     PLP                ; Restore caller's M/X flags
     ; A = msg low, Y = msg high — ready for Sprite_Show* JSLs
     RTL
+}
+
+; =========================================================
+; GetEssenceCount
+;
+; Returns the number of essences: popcount of all eight bits
+; of $7EF37A, i.e. the seven legacy crystal bits plus bit 7
+; ($80, !Crystal_D8_Sky). Assembled after the legacy helpers
+; so their addresses do not move. No caller yet: legacy
+; consumers (UpdateMapIcon, SelectReactionMessage, NPC
+; reaction tables) stay on GetCrystalCount (0-7). Count + 1
+; can reach 9, which is !MapIcon_TailPond, so do not feed
+; this count into MapIcon unchanged.
+;
+; Entry: Any M/X state. Reads Crystals only (no DBR/D use).
+; Exit:
+;   A = essence count (0–8); high byte (B) = $00
+;   P = entry P (PLP): M/X widths and N/Z/C are the caller's,
+;     so CMP before branching on the count
+;   X, Y preserved in full (saved as 16-bit before SEP #$30
+;     zeroes their high bytes)
+;
+; Clobbers: B (high byte of A)
+; Stack: 5 bytes (PHP + 16-bit PHX + 16-bit PHY)
+; =========================================================
+GetEssenceCount:
+{
+  PHP                ; Save caller's P
+  REP #$30           ; 16-bit index so PHX/PHY save full X/Y
+  PHX
+  PHY
+  SEP #$30           ; 8-bit A and X for the count
+
+  LDA.l Crystals     ; Load $7EF37A (24-bit, DBR-safe), all 8 bits
+  LDX #$00           ; Bit counter
+
+  .loop
+    LSR              ; Shift lowest bit into carry
+    BCC .no_bit
+      INX            ; Count this set bit
+    .no_bit
+    CMP #$00         ; Any bits remaining?
+    BNE .loop
+
+  TXA                ; A = count (low byte from 8-bit X)
+  REP #$30           ; 16-bit A and index
+  AND #$00FF         ; Clear high byte (B accumulator)
+  PLY                ; 16-bit pulls match the 16-bit pushes
+  PLX
+
+  PLP                ; Restore caller's P
+  RTL
 }
 
 ; =========================================================
