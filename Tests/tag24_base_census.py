@@ -49,13 +49,11 @@ def census(data, state="base"):
     report = {"state": state, "room_count": 0, "tag24_users": [], "errors": []}
     errors = report["errors"]
     try:
-        if len(data) % 0x8000:
-            raise CensusError(f"ROM size 0x{len(data):X} is not headerless LoROM")
         if (span(data, HEADER_POINTER_OPCODE_PC, 1, "header pointer opcode")[0] != 0xBF
                 or span(data, HEADER_BANK_OPCODE_PC, 1, "header bank opcode")[0] != 0xA9):
             raise CensusError("LoadRoomHeader resolver opcodes moved")
         table = int.from_bytes(span(data, HEADER_POINTER_OPCODE_PC + 1, 3, "header table"), "little")
-        bank = data[HEADER_BANK_OPCODE_PC + 1]
+        bank = span(data, HEADER_BANK_OPCODE_PC + 1, 1, "header bank")[0]
         table_pc = lorom_pc(table)
         report.update(header_table_snes=f"0x{table:06X}", header_table_pc=f"0x{table_pc:06X}",
                       header_bank=f"0x{bank:02X}")

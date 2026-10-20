@@ -385,6 +385,7 @@ class SomariaSocketDoorModel(unittest.TestCase):
                 data[pc] = value
                 self.assertTrue(census.census(bytes(data))["errors"])
         for name, data in {"copier header": bytes(0x200) + bytes(census_rom()),
+                           "truncated bank operand": bytes(census_rom())[:0xB5E7],
                            "truncated header bank": bytes(census_rom())[:0x110000]}.items():
             with self.subTest(name=name):
                 self.assertTrue(census.census(data)["errors"])
@@ -394,6 +395,13 @@ class SomariaSocketDoorModel(unittest.TestCase):
         self.assertEqual(census.census(bytes(patched), "patched")["errors"], [])
         self.assertTrue(census.census(bytes(patched))["errors"])
         self.assertTrue(census.census(bytes(census_rom()), "patched")["errors"])
+        extended = bytes(patched) + bytes(2_150_714 - len(patched))
+        self.assertNotEqual(len(extended) % 0x8000, 0)
+        self.assertEqual(extended[0xC2C5:0xC2C7], bytes.fromhex("89cc"))
+        self.assertEqual(extended[0xCC89:0xCC95], census.GATEWAY + census.HOLES2_BODY[4:])
+        report = census.census(extended, "patched")
+        self.assertEqual(report["errors"], [])
+        self.assertEqual((report["room_count"], report["tag24_users"]), (296, []))
         for index in range(len(census.HOLES2_BODY)):
             with self.subTest(index=index):
                 data = bytearray(patched)
