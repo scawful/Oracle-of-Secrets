@@ -388,7 +388,7 @@ GanonBall_Draw:
 GanonBall_DrawSmall:
 {
   JSL Sprite_PrepOamCoord
-  JSL Sprite_OAM_AllocateDeferToPlayer
+  JSR Ganon_AllocateOam
   LDY.b #$00
   REP #$20
   LDA.b $00 : CLC : ADC.w #$0004 : STA.b ($90), Y

@@ -108,15 +108,11 @@ GanonMagic_Spawn:
   .afterimage
     LDA.b #$0C : STA.w SprTimerA, Y
     LDA.b #$40 : STA.w SprHitbox, Y
-    ; Reserve eight pieces for any held-ball body snapshot, two for a bat.
-    LDA.b #$87
-    PHA
-    LDA.w SprSubtype, Y : BEQ .body
-      PLA
-      LDA.b #$81
-      BRA .oam
-    .body
-      PLA
+    ; Moving body poses use six pieces; the bat uses one. Both are harmless.
+    LDA.w SprSubtype, Y : BNE .bat
+      LDA.b #$85 : BRA .oam
+    .bat
+      LDA.b #$80
     .oam
     STA.w SprNbrOAM, Y
   .done
