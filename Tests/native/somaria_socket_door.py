@@ -407,6 +407,11 @@ class SomariaDoorFixture(native.Fixture):
 
     def cleanup(self):
         errors = self.result["cleanup_errors"]
+        try:
+            self.check_owner()
+        except BaseException as error:
+            errors.append("Ownership check refused cleanup: " + repr(error))
+            return
         for step in (self.b.pause, lambda: self.input("")):
             try:
                 require(step() is not False, "Owned cleanup action rejected")
@@ -442,7 +447,7 @@ def parse_args(argv=None):
     parser.add_argument("--describe", action="store_true", help="print the source-only plan and exit")
     parser.add_argument("--validate-candidate", action="store_true",
                         help="offline ROM/symbol identity check only; no socket")
-    for name in ("socket", "rom-sha256", "symbols-sha256", "owner"):
+    for name in ("socket", "rom-sha256", "rom-sha1", "symbols-sha256", "owner"):
         parser.add_argument("--" + name)
     for name in ("owned-rom", "symbols", "client-root", "status-file", "owner-file", "output"):
         parser.add_argument("--" + name, type=Path)
@@ -475,8 +480,11 @@ def main(argv=None):
     rom, symbols = args.owned_rom.read_bytes(), args.symbols.read_bytes()
     require(digest(rom) == args.rom_sha256.lower(), "Private ROM SHA256 mismatch")
     require(digest(symbols) == args.symbols_sha256.lower(), "Symbols SHA256 mismatch")
+    rom_sha1 = digest(rom, "sha1")
+    if args.rom_sha1:
+        require(rom_sha1 == args.rom_sha1.lower(), "Private ROM SHA1 mismatch")
     code = validate_candidate(rom, symbols.decode())
-    args.rom_sha1 = digest(rom, "sha1")
+    args.rom_sha1 = rom_sha1
     command = subprocess.check_output(["ps", "-o", "command=", "-p", str(args.pid)], text=True)
     require("--headless" in command and str(args.owned_rom) in command,
             "PID is not the explicit headless private ROM process")

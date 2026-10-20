@@ -200,6 +200,19 @@ class SomariaNativeFixtureControls(unittest.TestCase):
         self.assertEqual([(w["addr"], w["value"]) for w in writes[2:]], [(0x7E0C4A, 0x07), (0x7E0646, 0x00)])
         self.assertEqual(fixture.dirty, {})
 
+    def test_cleanup_refuses_mutation_when_ownership_is_lost(self):
+        fixture, bridge = self.make_fixture(door.HOOK)
+        fixture.dirty[0x0646] = 0
+
+        def lost_owner():
+            raise RuntimeError("resource owner changed")
+
+        fixture.check_owner = lost_owner
+        fixture.cleanup()
+        self.assertEqual(bridge.calls, [])
+        self.assertEqual(fixture.dirty, {0x0646: 0})
+        self.assertIn("resource owner changed", fixture.result["cleanup_errors"][0])
+
     def test_source_never_uses_forbidden_runtime_controls(self):
         code = PATH.read_text()
         for token in ("SET_PC", "EXEC_LUA", "execute_lua", "load_state", "LOADSTATE", "save_state",
@@ -248,6 +261,8 @@ class SomariaNativeFixtureControls(unittest.TestCase):
                     "--symbols-sha256", door.digest(sym.read_bytes())]
             with self.assertRaisesRegex(RuntimeError, "ROM SHA256 mismatch"):
                 door.main(base + ["--rom-sha256", "0" * 64])
+            with self.assertRaisesRegex(RuntimeError, "ROM SHA1 mismatch"):
+                door.main(base + ["--rom-sha256", door.digest(rom.read_bytes()), "--rom-sha1", "0" * 40])
             bad = list(base)
             bad[bad.index("--socket") + 1] = "/tmp/mesen2-oos-rc-play.sock"
             with self.assertRaisesRegex(RuntimeError, "task-owned private socket"):
