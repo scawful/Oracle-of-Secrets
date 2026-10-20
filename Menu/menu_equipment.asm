@@ -157,7 +157,7 @@ Menu_Equipment_Select:
   STA.l SavedOcarinaSong              ; survives save/reload ($030F does not)
   LDA.b #$0D : STA.w $0202            ; normal Y item, independent of mask
 .sound
-  LDA.b #$22 : STA.w $012F
+  LDA.b #$20 : STA.w $012F
   LDA.b #$20 : STA.w $0207
 .done
   RTS
