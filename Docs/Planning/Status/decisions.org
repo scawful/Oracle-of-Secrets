@@ -2648,3 +2648,18 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   room playable (recommended), or a crystal ceremony followed by automatic
   dungeon exit? Both leave the revised Maku Seed scene for a separate decision.
   Answer: "Crystal ceremony; exit the dungeon" (scawful, 2026-10-20).
+
+* DECIDED Dark Link and Kydreeok are both Kydrog (2026-10-20)
+  :PROPERTIES:
+  :ASKED_BY: Claude (Ridoyie plot comparison)
+  :END:
+  1. The Fortress Dark Link fight is Kydrog: his soul's shadow form in the
+     Abyss. Kydreeok in the prison is his next form. Fight order stays
+     Dark Link (Fortress) -> Kydreeok (prison) -> Ganondorf (prison).
+  2. Changing forms fits the game's themes and its masks.
+  3. Kydrog stays the garrison Captain. "Shadow Link was what he originally
+     was" (Ridoyie, Discord 2026-10-20) is not adopted; Gleeok-as-Ganon's-guard
+     is not adopted. Dark Link's lines and look stay PROPOSED.
+  Answer: "yeah let's leave them both as kydrog for now, having him change
+  forms is inline with themes of the game and the masks themselves"
+  (scawful, 2026-10-20).
