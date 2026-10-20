@@ -5,7 +5,8 @@ Caller supplies a paused, owned headless session and an arrival state created by
 that exact candidate ROM. This script never launches/stops Mesen, writes CPU/PC,
 changes ROM bytes, saves SRAM, or attaches to the user's visible fight. Logged
 RAM inputs select charge/return conditions, warp eligibility and floor phase.
-Native routines perform charge, return, orbit, warp, stomp and pit replacement.
+Native routines perform charge, return, three glide modes, warp, stomp and pit replacement.
+Four-way ball aim/recoil remains independent of front/rear-only active body art.
 The hidden-warp contact check includes a visible-contact positive control.
 """
 from __future__ import annotations
@@ -26,9 +27,16 @@ TABLES = {"y": 0x0D00, "x": 0x0D10, "yh": 0x0D20, "xh": 0x0D30,
           "timer_a": 0x0DF0, "timer_b": 0x0E00, "timer_c": 0x0E10,
           "timer_d": 0x0EE0, "kind": 0x0E20, "subtype": 0x0E30,
           "d": 0x0E90, "e": 0x0EB0, "f": 0x0EC0, "state": 0x0DD0,
-          "g": 0x0ED0, "height": 0x0F70, "flash": 0x0B89}
-DIRECTIONS = (("front", 0, 0, 64, 1, 5), ("right", 1, 64, 0, 6, 6),
-              ("left", 2, -64, 0, 7, 7), ("rear", 3, 0, -64, 8, 9))
+          "g": 0x0ED0, "height": 0x0F70, "flash": 0x0B89,
+          "custom": 0x1CC0}
+# SprMiscC keeps its four-way recoil meaning. SprCustom bit7 independently
+# freezes front/rear body art for the stroke; its low two bits select a glide.
+DIRECTIONS = (("front", 0, 0, 64, 1, 5), ("right", 1, 64, 0, 1, 5),
+              ("left", 2, -64, 0, 1, 5), ("rear", 3, 0, -96, 8, 9),
+              ("upper-right", 1, 64, -64, 8, 9),
+              ("upper-left", 2, -64, -64, 8, 9),
+              ("upper-horizontal", 1, 96, -8, 8, 9))
+MOVEMENT_MODES = ((0, "clockwise"), (1, "counterclockwise"), (2, "weave"))
 
 
 def require(ok, message):
@@ -65,7 +73,7 @@ def symbols(text):
     priority = {}
     used_code = {"GanondorfPalette", "Ganon_DrawFrame", "Ganondorf_Draw_skip",
                  "Sprite_GanonBall_Long", "GanonBall_Main", "GanonBall_CheckSwordReflect",
-                 "GanonBall_SetReturnFacing", "Ganondorf_WaitBall", "Ganondorf_Stunned",
+                 "GanonBall_SetReturnFacing", "Ganondorf_Float", "Ganondorf_WaitBall", "Ganondorf_Stunned",
                  "Ganondorf_VolleyMove", "Ganondorf_StartStomp", "Ganondorf_Stomp",
                  "Ganondorf_Stomp_done", "Ganondorf_SpawnFloorCollapse",
                  "Ganondorf_WaitBall_contact_done"}
@@ -385,45 +393,124 @@ class Fixture:
         call = b"\x20" + (target & 0xFFFF).to_bytes(2, "little")
         require(code.count(call) == 1, "Missing/ambiguous native return-facing JSR")
         after_facing = entry + code.index(call) + 3
-        for name, facing, dx, dy, windup, follow in DIRECTIONS:
+        for index, (name, facing, dx, dy, windup, follow) in enumerate(DIRECTIONS):
             parent, ball, _ = self.spawn(9, dx, dy)
             x, y = self.position(parent)
             height = self.field("height", parent)
+            mode = index % 3
+            self.set("custom", parent, mode, "return-facing flag must preserve the selected glide mode")
             for key, value in (("x", x & 255), ("xh", x >> 8),
                                ("y", (y-height) & 255), ("yh", ((y-height) & 0xFFFF) >> 8),
                                ("height", 0), ("b", 1), ("c", 1), ("d", parent), ("e", 0x10)):
                 self.set(key, ball, value, "controlled reflected ball near its parent's hitbox")
             self.set("c", parent, (facing + 1) % 4, "stale chase facing must be replaced by native outgoing aim")
             self.run_to(after_facing, f"x == {ball}")
-            state = {key: self.field(key, parent) for key in ("b", "c", "timer_c", "frame")}
-            require(state == dict(b=1, c=facing, timer_c=16, frame=windup),
+            state = {key: self.field(key, parent) for key in ("b", "c", "timer_c", "frame", "custom")}
+            frozen = 0x80 if dy < 0 else 0
+            require(state == dict(b=1, c=facing, timer_c=16, frame=windup, custom=mode | frozen),
                     f"Native return state differs for {name}: {state}")
+            aim = {key: self.field(key, ball) for key in ("xspeed", "yspeed")}
+            if dx:
+                require(aim["xspeed"] != 0 and bool(aim["xspeed"] & 0x80) == (dx < 0),
+                        f"Native ball aim reversed its horizontal direction for {name}")
+            else:
+                require(aim["yspeed"] != 0 and bool(aim["yspeed"] & 0x80) == (dy < 0),
+                        f"Native ball aim reversed its vertical direction for {name}")
             first = self.draw(parent, (windup,), "[$0E10+x] >= 11", "return-" + name + "-windup")
+            crossed_y = None
+            if name == "upper-horizontal":
+                crossed_y = (self.position(parent)[1] + 48) & 0xFFFF
+                self.write16(0x7E0020, crossed_y,
+                             "Link crosses below the boss; return art must retain its frozen rear facing")
             second = self.draw(parent, (follow,), "[$0E10+x] >= 1 && [$0E10+x] <= 6",
                                "return-" + name + "-follow")
             require(first["kick"] == tuple(-v for v in second["kick"]),
                     "Return recoil did not reverse between windup and follow through")
-            if facing == 3:
+            if frozen:
                 require(first["frame"] == 8 and second["frame"] == 9,
                         "Rear return displayed a front pose")
+            require(self.field("custom", parent) == (mode | frozen),
+                    "Native stroke changed its frozen facing or glide mode")
             self.result["cases"].append(dict(name="return-" + name, passed=True,
-                                              native_contact=state, windup=first, follow=second))
+                                              native_contact=state, ball_aim=aim,
+                                              crossed_link_y=crossed_y, windup=first, follow=second))
 
     def rally_mobility(self):
-        parent, ball, _ = self.spawn(9, 0, 64)
-        self.set("timer_c", parent, 0, "finished initial stroke permits native rally orbit")
-        self.set("b", parent, 0, "orbit case has no pending return/warp")
-        start = self.position(parent)
-        positions = [start]
-        for _ in range(8):
+        after_move = self.after_jsr("Ganondorf_WaitBall", "Ganondorf_Stunned", "Ganondorf_VolleyMove")
+        deltas = []
+        for mode, name in MOVEMENT_MODES:
+            parent = self.restore()
+            x, y = self.position(parent)
+            self.write16(0x7E0022, x + 64, "Link to the right for a native Float direction check")
+            self.write16(0x7E0020, y - 32, "Link above selects rear Float art independently of glide direction")
+            for key, value in (("custom", mode), ("action", 1), ("timer_a", 0xFF),
+                               ("frame", 0), ("b", 0), ("timer_c", 0), ("timer_d", 0)):
+                self.set(key, parent, value, "controlled native Float in one of three glide modes")
+            hover = []
+            for _ in range(8):
+                self.frames(1)
+                frame = self.field("frame", parent)
+                require(self.field("action", parent) == 1 and frame in (8, 9),
+                        f"Float selected side/front art with Link above in mode{mode}: frame{frame}")
+                self.arena_bounds(parent)
+                hover.append(dict(position=self.position(parent), frame=frame))
+            self.write16(0x7E0020, self.position(parent)[1] + 48,
+                         "Link below selects front Float art without changing glide mode")
             self.frames(1)
-            require(self.field("action", parent) == 3 and self.field("state", ball)
-                    and self.field("kind", ball) == 0x46, "Orbit interrupted the active native volley")
-            positions.append(self.position(parent))
-        require(any(position != start for position in positions[1:]), "Rally orbit did not change world position")
-        require(self.field("f", parent) == 9, "Orbit changed remaining-hit count")
-        self.result["cases"].append(dict(name="rally-native-orbit", passed=True,
-                                          parent=parent, ball=ball, positions=positions))
+            require(self.field("action", parent) == 1 and self.field("frame", parent) == 0,
+                    f"Float did not return to front art with Link below in mode{mode}")
+
+            parent, ball, _ = self.spawn(9, 0, 64)
+            for key, value in (("custom", mode), ("timer_c", 0), ("b", 0)):
+                self.set(key, parent, value, "finished initial stroke permits one native rally glide mode")
+            start = self.position(parent)
+            positions = [start]
+            for _ in range(8):
+                self.frames(1)
+                require(self.field("action", parent) == 3 and self.field("state", ball)
+                        and self.field("kind", ball) == 0x46,
+                        f"Glide mode{mode} interrupted the active native volley")
+                require(self.field("frame", parent) in (0, 1, 5, 8, 9),
+                        f"WaitBall selected side art in mode{mode}")
+                self.arena_bounds(parent)
+                positions.append(self.position(parent))
+            require(any(position != start for position in positions[1:]),
+                    f"Rally glide mode{mode} did not change world position")
+            require(self.field("f", parent) == 9, "Rally glide changed remaining-hit count")
+            delta = tuple(end - begin for begin, end in zip(start, positions[-1]))
+            deltas.append(delta)
+
+            self.set("b", parent, 1, "a native return stroke keeps the current world position")
+            self.set("timer_c", parent, 0x10, "observe four uninterrupted native stroke ticks")
+            stroke_start = self.position(parent)
+            for _ in range(4):
+                self.frames(1)
+                require(self.position(parent) == stroke_start and self.field("timer_c", parent) > 0,
+                        f"Glide mode{mode} moved during the protected return stroke")
+                require(self.field("frame", parent) in (1, 5, 8, 9),
+                        f"WaitBall stroke selected side art in mode{mode}")
+            self.set("timer_c", parent, 0, "resume native glide for full16-bit clamp probes")
+            clamps = []
+            origin_x = self.r(0x7E0023) << 8
+            origin_y = self.r(0x7E0021) << 8
+            # Deliberately cross quadrant high bytes. Low-byte-only clamps
+            # would accept these positions and leave the boss off screen.
+            for px, py in ((origin_x - 1, origin_y - 1),
+                           (origin_x + 0x100, origin_y + 0x100)):
+                self.set("x", parent, px & 255, "out-of-quadrant X for native full16-bit arena clamp")
+                self.set("xh", parent, (px & 0xFFFF) >> 8, "out-of-quadrant X high byte")
+                self.set("y", parent, py & 255, "out-of-quadrant Y for native full16-bit arena clamp")
+                self.set("yh", parent, (py & 0xFFFF) >> 8, "out-of-quadrant Y high byte")
+                self.run_to(after_move, f"x == {parent}")
+                self.arena_bounds(parent)
+                require(self.field("custom", parent) & 3 == mode,
+                        "Arena clamp changed the selected glide mode")
+                clamps.append(dict(before=[px & 0xFFFF, py & 0xFFFF], after=self.position(parent)))
+            self.result["cases"].append(dict(name="rally-native-" + name, passed=True,
+                                              mode=mode, parent=parent, ball=ball, float_draws=hover,
+                                              positions=positions, delta=delta,
+                                              protected_stroke_position=stroke_start, clamps=clamps))
+        require(len(set(deltas)) == 3, f"Three rally modes produced identical short paths: {deltas}")
 
         parent, ball, _ = self.spawn(9, 0, 64)
         # A nonanchor position makes even a repeated random anchor observable.
@@ -431,7 +518,6 @@ class Fixture:
                            ("b", 1), ("timer_b", 0), ("timer_d", 0)):
             self.set(key, parent, value, "eligible between-stroke native rally warp")
         self.set("b", ball, 0, "native ball remains heading toward Link during warp")
-        after_move = self.after_jsr("Ganondorf_WaitBall", "Ganondorf_Stunned", "Ganondorf_VolleyMove")
         self.run_to(after_move, f"x == {parent} && [$0EE0+x] == 16")
         start = self.position(parent)
         require(self.field("action", parent) == 3 and self.field("timer_b", parent) == 0xC0,
@@ -449,6 +535,14 @@ class Fixture:
                                           action=3, vanish_timer=16, relocate_timer=8,
                                           cooldown=self.field("timer_b", parent),
                                           before=start, relocated=relocated, after=self.position(parent)))
+
+    def arena_bounds(self, parent):
+        x, y = self.position(parent)
+        origin_x = self.r(0x7E0023) << 8
+        origin_y = self.r(0x7E0021) << 8
+        require(origin_x + 0x38 <= x <= origin_x + 0xA8
+                and origin_y + 0x58 <= y <= origin_y + 0xB8,
+                f"Native glide left its full16-bit quadrant bounds: ({x:04X},{y:04X})")
 
     def overlords(self):
         return [dict(slot=slot, kind=self.r(0x7E0B00 + slot),
@@ -521,6 +615,9 @@ class Fixture:
             require(not self.overlords(), "Fresh arrival unexpectedly contains an active overlord")
             self.set("state", ball, 0, "lost ball starts native WaitBall -> StartStomp path")
             self.set("subtype", parent, phase, "controlled independent floor-collapse phase")
+            mode = phase % 3
+            self.set("custom", parent, mode | 0x80,
+                     "stomp recovery must advance the glide mode and clear the prior rear flag")
             self.run_to(after_start, f"x == {parent}")
             require(self.field("action", parent) == 7 and self.field("g", parent) == 0
                     and self.field("timer_a", parent) == 0x18,
@@ -551,6 +648,12 @@ class Fixture:
             if phase == 0:
                 row["peak_height"] = peak
                 row["native_garnish_and_pit"] = self.native_floor_garnish(spawned[0])
+            self.run_to(self.labels["Ganondorf_Float"], f"x == {parent} && [$0D80+x] == 1")
+            next_mode = self.field("custom", parent)
+            require(next_mode == (mode + 1) % 3,
+                    "Stomp recovery did not cycle glide mode and clear the frozen rear flag")
+            row["movement_mode_before"] = mode
+            row["movement_mode_after_recovery"] = next_mode
             self.result["cases"].append(row)
 
 

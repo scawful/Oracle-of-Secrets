@@ -10,7 +10,7 @@
 ;   float -> cast one energy ball ($46) at Link
 ;   Link hits the ball with the Master Sword (sword level >= 2) -> it flies back
 ;   Ganondorf returns it 1-3 times (random), faster each time
-;   he orbits during rallies, with a short return stroke and occasional warps
+;   he varies his glide during rallies, with a short return stroke and occasional warps
 ;   the last return hits him -> stunned -> 3 sword hits -> he teleports
 ;   between rallies he rises and stomps, dropping the four outer floor edges
 ;   9 sword hits in total -> he dies -> GanondorfFight = 2 -> door opens
@@ -35,8 +35,7 @@ Ganon_SetupActionHitbox = $06F57E ; SetupActionHitbox_long (Link's weapon box ->
 !Ganon_FrameCast     = 1
 !Ganon_FrameHurt     = 2
 !Ganon_FrameRelease  = 5
-!Ganon_FrameRight    = 6
-!Ganon_FrameLeft     = 7
+; Frames 6/7 remain in the source sheet for future side-art revisions.
 !Ganon_FrameBackA    = 8
 !Ganon_FrameChargeA  = 10
 
@@ -106,11 +105,14 @@ Sprite_Ganondorf_Prep:
   STZ.w SprFrame, X
   STZ.w SprMiscB, X ; no return stroke during the initial front-facing cast
   STZ.w SprMiscG, X
+  ; SprCustom ($1CC0,X): bits 0-1 = movement mode, bit 7 = frozen rear return.
+  ; The existing per-sprite array is otherwise unused; no shared RAM is added.
+  STZ.w SprCustom, X ; 0 clockwise/pursuit, 1 counterclockwise/glide, 2 weave
   STZ.w SprSubtype, X ; four falling-floor edges, independent of the hit counter
   STZ.w SprTimerD, X
   LDA.b #$C0 : STA.w SprTimerB, X ; give the opening rally room before a warp
   STZ.w SprMiscE, X
-  STZ.w SprMiscC, X ; chase facing: 0 front, 1 right, 2 left, 3 back
+  STZ.w SprMiscC, X ; logical return: 0 front, 1 right, 2 left, 3 back
   LDA.b #$40 : STA.w SprTimerA, X
   JSL ApplyGanondorfGraphics
   JSL ApplyGanondorfPalette
@@ -281,40 +283,110 @@ Ganondorf_Bob:
   RTS
 }
 
-; Slow chase only between volleys. Choose a pose from the actual velocity;
-; the cast always faces front and projectile aim remains independent.
+; Between volleys, alternate pursuit, a side glide, and a horizontal weave.
+; Body art faces Link vertically; projectile direction remains independent.
 Ganondorf_Chase:
 {
   LDA.b #!Ganon_GlideSpeed : JSL Sprite_ApplySpeedTowardsPlayer
-  JSL Sprite_Move
-
-  LDA.w SprXSpeed, X : BPL .x_positive
-    EOR.b #$FF : INC A
-  .x_positive
-  STA.b $00
-  LDA.w SprYSpeed, X : BPL .y_positive
-    EOR.b #$FF : INC A
-  .y_positive
-  CMP.b $00 : BCS .vertical
-
-  LDA.w SprXSpeed, X : BMI .left
-    LDA.b #$01 : STA.w SprMiscC, X
-    LDA.b #!Ganon_FrameRight : STA.w SprFrame, X
-    RTS
-  .left
-    LDA.b #$02 : STA.w SprMiscC, X
-    LDA.b #!Ganon_FrameLeft : STA.w SprFrame, X
-    RTS
-  .vertical
-  LDA.w SprYSpeed, X : BMI .back
-    STZ.w SprMiscC, X
+  LDA.w SprCustom, X : AND.b #$03 : BEQ .move
+    CMP.b #$01 : BNE .weave
+      JSR Ganondorf_TurnCounterclockwise
+      BRA .move
+    .weave
+    JSR Ganondorf_Weave
+  .move
+  JSR Ganondorf_MoveClamped
+  JSR Ganondorf_CompareLinkY : BCC .back
     STZ.w SprFrame, X
     RTS
   .back
-    LDA.b #$03 : STA.w SprMiscC, X
     LDA.b $1A : LSR #3 : AND.b #$01
     CLC : ADC.b #!Ganon_FrameBackA : STA.w SprFrame, X
     RTS
+}
+
+; Carry clear when Link is above the boss's ground position, set otherwise.
+; Compare full coordinates without changing the 8-bit sprite index.
+Ganondorf_CompareLinkY:
+{
+  LDA.w SprY, X : STA.b $00
+  LDA.w SprYH, X : STA.b $01
+  REP #$20
+  LDA.b $20 : CMP.b $00
+  SEP #$20
+  RTS
+}
+
+Ganondorf_FreezeReturnPose:
+{
+  LDA.w SprCustom, X : AND.b #$03 : STA.w SprCustom, X
+  JSR Ganondorf_CompareLinkY : BCS .done
+    LDA.w SprCustom, X : ORA.b #$80 : STA.w SprCustom, X
+  .done
+  RTS
+}
+
+Ganondorf_TurnClockwise:
+{
+  LDA.w SprXSpeed, X : PHA
+  LDA.w SprYSpeed, X : EOR.b #$FF : INC A : STA.w SprXSpeed, X
+  PLA : STA.w SprYSpeed, X
+  RTS
+}
+
+Ganondorf_TurnCounterclockwise:
+{
+  LDA.w SprXSpeed, X : PHA
+  LDA.w SprYSpeed, X : STA.w SprXSpeed, X
+  PLA : EOR.b #$FF : INC A : STA.w SprYSpeed, X
+  RTS
+}
+
+; Change horizontal direction every 64 frames; keep the slow vertical pursuit.
+Ganondorf_Weave:
+{
+  LDA.b $1A : AND.b #$40 : BNE .left
+    LDA.b #!Ganon_GlideSpeed
+    BRA .set
+  .left
+    LDA.b #!Ganon_GlideSpeed : EOR.b #$FF : INC A
+  .set
+  STA.w SprXSpeed, X
+  RTS
+}
+
+; Keep every movement mode inside the existing north-arena anchors. Construct
+; full positions so a low-byte underflow cannot wrap to the opposite edge.
+Ganondorf_MoveClamped:
+{
+  JSL Sprite_Move
+  LDA.w SprX, X : STA.b $00
+  LDA.w SprXH, X : STA.b $01
+  REP #$20
+  LDA.b $22 : AND.w #$FF00 : ORA.w #$0038 : STA.b $02
+  LDA.b $00 : CMP.b $02 : BCS .x_max
+    LDA.b $02 : STA.b $00
+  .x_max
+  LDA.b $02 : CLC : ADC.w #$0070 : CMP.b $00 : BCS .x_store
+    STA.b $00
+  .x_store
+  SEP #$20
+  LDA.b $00 : STA.w SprX, X
+  LDA.b $01 : STA.w SprXH, X
+  LDA.w SprY, X : STA.b $00
+  LDA.w SprYH, X : STA.b $01
+  REP #$20
+  LDA.b $20 : AND.w #$FF00 : ORA.w #$0058 : STA.b $02
+  LDA.b $00 : CMP.b $02 : BCS .y_max
+    LDA.b $02 : STA.b $00
+  .y_max
+  LDA.b $02 : CLC : ADC.w #$0060 : CMP.b $00 : BCS .y_store
+    STA.b $00
+  .y_store
+  SEP #$20
+  LDA.b $00 : STA.w SprY, X
+  LDA.b $01 : STA.w SprYH, X
+  RTS
 }
 
 Ganondorf_SpawnBall:
@@ -377,7 +449,7 @@ Ganondorf_Draw:
   .flicker : db 0, 0, 0, 0, 0, 1, 1, 0
 }
 
-; Orbit inside the existing north-arena anchors while the ball is active.
+; Vary the glide inside the existing north-arena anchors while the ball is active.
 ; Returns get an uninterrupted stroke; a warp never replaces rally action3.
 Ganondorf_VolleyMove:
 {
@@ -398,21 +470,17 @@ Ganondorf_VolleyMove:
     RTS
   .orbit
   LDA.b #!Ganon_GlideSpeed : JSL Sprite_ApplySpeedTowardsPlayer
-  LDA.w SprXSpeed, X : PHA
-  LDA.w SprYSpeed, X : EOR.b #$FF : INC A : STA.w SprXSpeed, X
-  PLA : STA.w SprYSpeed, X
-  JSL Sprite_Move
-  LDA.w SprX, X : CMP.b #$38 : BCS .x_max
-    LDA.b #$38 : STA.w SprX, X
-  .x_max
-  CMP.b #$A9 : BCC .y_min
-    LDA.b #$A8 : STA.w SprX, X
-  .y_min
-  LDA.w SprY, X : CMP.b #$58 : BCS .y_max
-    LDA.b #$58 : STA.w SprY, X
-  .y_max
-  CMP.b #$B9 : BCC .done
-    LDA.b #$B8 : STA.w SprY, X
+  LDA.w SprCustom, X : AND.b #$03 : BEQ .clockwise
+    CMP.b #$01 : BEQ .counterclockwise
+      JSR Ganondorf_Weave
+      BRA .move
+  .clockwise
+  JSR Ganondorf_TurnClockwise
+  BRA .move
+  .counterclockwise
+  JSR Ganondorf_TurnCounterclockwise
+  .move
+  JSR Ganondorf_MoveClamped
   RTS
 }
 
@@ -482,6 +550,12 @@ Ganondorf_Stomp:
   STZ.w $011C
   STZ.w $011D
   LDA.b #$10 : STA.w SprHeight, X
+  ; Guarantee a different movement pattern for the next rally. Clear the
+  ; completed return's rear-art flag without sharing the stomp substate.
+  LDA.w SprCustom, X : AND.b #$03 : INC A : CMP.b #$03 : BCC .mode_ready
+    LDA.b #$00
+  .mode_ready
+  STA.w SprCustom, X
   %GotoAction(1)
   LDA.b #$50 : STA.w SprTimerA, X
   RTS
@@ -519,11 +593,15 @@ Ganondorf_SpawnFloorCollapse:
   .y    : db $28, $28, $D8, $D8
 }
 
-; Two return poses plus a draw-only recoil. The initial cast does not use this.
-; Facing: front, right, left, rear. Rear never flashes a front-facing frame.
+; Two return poses plus a draw-only recoil. Freeze front/rear for the entire
+; stroke; SprMiscC retains all four logical directions for aiming and recoil.
+; Side frames remain dormant in the source art. The first cast stays front.
 Ganondorf_SetVolleyPose:
 {
-  LDY.w SprMiscC, X
+  LDY.b #$00
+  LDA.w SprCustom, X : BPL .facing_ready
+    INY
+  .facing_ready
   LDA.w .rest, Y : STA.w SprFrame, X
   LDA.w SprTimerC, X : BEQ .done
     CMP.b #$09 : BCC .follow
@@ -536,9 +614,9 @@ Ganondorf_SetVolleyPose:
   .done
   RTS
 
-  .rest          : db 0, 6, 7, 8
-  .windup        : db 1, 6, 7, 8
-  .followthrough : db 5, 6, 7, 9
+  .rest          : db 0, 8
+  .windup        : db 1, 8
+  .followthrough : db 5, 9
 }
 
 ; =========================================================
@@ -713,6 +791,7 @@ GanonBall_SetReturnFacing:
   LDA.b #$10 : STA.w SprTimerC, Y
   PHX
   TYX
+  JSR Ganondorf_FreezeReturnPose
   JSR Ganondorf_SetVolleyPose
   PLX
   RTS
