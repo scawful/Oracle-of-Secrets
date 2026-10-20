@@ -16,6 +16,15 @@ if !ENABLE_D3_PRISON_SEQUENCE == 1
 org $01CC04 : JML RoomTag_MinishSwitch ; @hook module=Dungeons name=RoomTag_MinishSwitch kind=jml target=RoomTag_MinishSwitch
 endif
 
+; Only the first four bytes of the twelve-byte RoomTag_Holes2 body change.
+assert read2($01C2C5) == $CC89, "Tag $24 vector no longer names RoomTag_Holes2"
+assert read4($01CC89) == $CC2030C2, "RoomTag_Holes2 body moved"
+assert read4($01CC8D) == $A0F690CD, "RoomTag_Holes2 body moved"
+assert read4($01CC91) == $D9800005, "RoomTag_Holes2 body moved"
+; RoomTag_Holes2 (tag $24) — Somaria socket door
+org $01CC89 : JML RoomTag_SomariaSocketDoor ; @hook module=Dungeons name=RoomTag_SomariaSocketDoor kind=jml target=RoomTag_SomariaSocketDoor expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
+assert pc() == $01CC8D
+
 pullpc
 CustomTag:
 {
@@ -270,20 +279,19 @@ endif
 ; =========================================================
 ; Somaria Socket Door — hold door held only by a Somaria block
 ;
-; LATENT: no vanilla-address hook, dispatch slot or room header reaches this.
+; Dispatcher-connected as room tag $24 through the RoomTag_Holes2 gateway
+; ($01CC89). No audited base room header assigns tag $24.
 ;
 ; Reversible like RoomTag_SwitchTrigger_HoldDoor ($01C541): open while a
 ; live Somaria block rests on a pressure switch, closed otherwise. Its other
 ; inputs are not read: $0642 (sprites, ice block, followers), the push-block
 ; switch latch ($0500 state 5 / $0466) and Link's floor test.
 ;
-; Entry contract (future hook): JML from a replaced RoomTag_* body reached by
+; Entry contract: JML from the $01CC89 gateway, reached by
 ; Underworld_HandleRoomTags ($01C2FD) through JSR (.vectors, X):
 ;   M=8 X=8 (re-asserted here), D=$0000, DBR with WRAM $0000-$1FFF mirrored
 ;   (bank $00-$3F/$80-$BF), $11=$00, $0E = tag slot (0=$AE, 1=$AF).
 ;   Stack top is the JSR return into bank $01; this routine pushes nothing.
-;   The hook author must confirm no room header uses the chosen tag and that
-;   nothing else branches into the replaced bytes.
 ; Exit: JML RoomTag_Return ($01CC5A, a bare RTS) with M=8 X=8, stack as on
 ; entry. A, X and P are clobbered; Y, $0E, $AE and $AF are untouched.
 ; Writes happen only when the door state changes: $0468 (16-bit, 0=open
@@ -302,17 +310,17 @@ endif
 ; Rooms with Somaria transit lines ($03F4) never open, and the door closes
 ; while Link carries anything ($0308 bit7) because no switch check runs then.
 ;
-; Future room contract: the block's switch probe reads its own floor ($0C7C,X
-; at $088A56), and the tag acts room-wide like the vanilla hold door. Before
-; activation the room needs exactly one accepted pressure plate across all
-; layers, one owner of the shutter state, and no transit lines. The caller
-; must keep the vanilla once-per-frame, $11==$00 room-tag cadence.
+; Room contract: the block's switch probe reads its own floor ($0C7C,X at
+; $088A56), and the tag acts room-wide like the vanilla hold door. Before a
+; header assigns tag $24, the room needs exactly one accepted pressure plate
+; across all layers, one owner of the shutter state, and no transit lines.
+; The caller must keep the vanilla once-per-frame, $11==$00 room-tag cadence.
 ;
 ; Allocation: fixed bank $2C tail $2CFD00-$2CFDFF, so the bank $2C
 ; continuation used by the code before and after this file is unchanged.
 ; Neighbors: main bank $2C stream below (ended at $2CE113 in the control
 ; build), CustomRoomCollision at $2CFE00-$2CFEFF, JumpTableLocal_Guard at
-; $2CFF00. This org places code only; it patches no vanilla address.
+; $2CFF00. This org places code only; the $01CC89 gateway is its only entry.
 
 pushpc
 org $2CFD00

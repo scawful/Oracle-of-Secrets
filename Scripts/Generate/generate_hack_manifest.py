@@ -88,6 +88,8 @@ ROOM_TAG_RE = re.compile(r"^\s*org\s+\$01CC([0-9A-Fa-f]{2})\b")
 
 # USDASM Underworld_HandleRoomTags.vectors ($01C27D..$01C2FC).
 # Holes0/1 occur earlier than Holes3..8; routine spacing is not tag-ID order.
+# Holes2 ($01CC89) follows the shared chest-hole bodies; only its first four
+# bytes are a hook, so $01CC20-$01CC88 is not a routine hook range.
 ROOM_TAG_VECTOR_PC = 0xC27D
 ROOM_TAG_COUNT = 0x40
 VANILLA_HOLE_TAG_IDS = {
@@ -99,7 +101,9 @@ VANILLA_HOLE_TAG_IDS = {
     0x01CC14: (0x37,),
     0x01CC18: (0x39,),
     0x01CC1C: (0x3A,),
+    0x01CC89: (0x24,),
 }
+ROOM_TAG_ROUTINE_HOOK_RANGES = ((0x01CC00, 0x01CC20), (0x01CC89, 0x01CC8D))
 
 # Feature flag pattern: !ENABLE_xxx = N
 FEATURE_FLAG_RE = re.compile(
@@ -2348,12 +2352,16 @@ def generate_manifest(
         root, defines, asm_sources, rom_data=dispatch_rom_data
     )
     manifest["room_tags"] = {
-        "description": "Custom hole-routine hooks in bank $01, mapped to room-header tag IDs through the 64-word dispatch table. ROM vectors are authoritative when supplied; source-only inspection uses the documented ALTTP US mapping. End addresses are exclusive. No hook slot is declared free without a usage audit.",
+        "description": "Custom hole-routine hooks in bank $01, mapped to room-header tag IDs through the 64-word dispatch table. ROM vectors are authoritative when supplied; source-only inspection uses the documented ALTTP US mapping. End addresses are exclusive. routine_hooks_start/end covers the contiguous Holes0/1/3-8 entry block; routine_hook_ranges also lists the four-byte Holes2 gateway and excludes the shared native bodies between them. No hook slot is declared free without a usage audit.",
         "dispatch_table_start": "0x01C27D",
         "dispatch_table_end": "0x01C2FD",
         "dispatch_source": dispatch_source,
         "routine_hooks_start": "0x01CC00",
         "routine_hooks_end": "0x01CC20",
+        "routine_hook_ranges": [
+            {"start": f"0x{start:06X}", "end": f"0x{end:06X}"}
+            for start, end in ROOM_TAG_ROUTINE_HOOK_RANGES
+        ],
         "return_address": "0x01CC5A",
         "available_slots": [],
         "tags": room_tags,

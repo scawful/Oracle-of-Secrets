@@ -1,18 +1,35 @@
-"""Source-model controls for the latent RoomTag_SomariaSocketDoor routine.
+"""Source-model controls for RoomTag_SomariaSocketDoor (room tag $24).
 
 A minimal 65816-subset interpreter executes the routine text from
 Dungeons/custom_tag.asm against a WRAM model. It checks the source contract
-only; it is not CPU or native emulator proof, and the routine is not hooked.
+only; it is not CPU or native emulator proof. The tag $24 base-ROM census is
+exercised on synthetic fixtures; run Tests/tag24_base_census.py for a real ROM.
 """
+from contextlib import redirect_stdout
+import hashlib
+import importlib.util
+import io
 from pathlib import Path
 import json
 import re
+import sys
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "Dungeons" / "custom_tag.asm"
 ROUTINE = "RoomTag_SomariaSocketDoor"
 RETURN_ADDRESS = 0x01CC5A
+
+CENSUS_PATH = Path(__file__).parent / "tag24_base_census.py"
+CENSUS_SPEC = importlib.util.spec_from_file_location("tag24_base_census", CENSUS_PATH)
+census = importlib.util.module_from_spec(CENSUS_SPEC)
+CENSUS_SPEC.loader.exec_module(census)
+
+sys.path.insert(0, str(ROOT / "Scripts" / "Generate"))
+from asm_source import _load_global_defines  # noqa: E402
+from generate_hack_manifest import scan_room_tags  # noqa: E402
+from generate_hooks_json import scan_hooks  # noqa: E402
 
 M_FLAG = 0x20
 X_FLAG = 0x10
@@ -27,6 +44,10 @@ ALLOCATION_END = 0x2CFE00
 LEGACY_HOOK_ORGS = ["org $01CC18 : JML CustomTag",
                     "org $01CC10 : JML RoomTag_MinishShutterDoor",
                     "org $01CC04 : JML RoomTag_MinishSwitch"]
+GATEWAY_ADDRESS = 0x01CC89
+GATEWAY_ORG = f"org ${GATEWAY_ADDRESS:06X} : JML {ROUTINE}"
+GATEWAY_BOUND = "assert pc() == $01CC8D"
+TAG24_VECTOR = 0x01C27D + 0x24 * 2
 
 
 def code_lines(text):
@@ -232,6 +253,25 @@ def with_block(memory, slot=0, **slot_overrides):
     return memory
 
 
+def census_rom(tags=None, state="base"):
+    """Headerless LoROM fixture: header table at $22:8000, headers at $22:8300.
+
+    Every header byte other than tag1/tag2 is $24, so a wrong offset reports users.
+    """
+    data = bytearray(0x118000)
+    data[0xB5DC:0xB5E0] = bytes.fromhex("bf008022")
+    data[0xB5E6:0xB5E8] = bytes.fromhex("a922")
+    for room in range(census.ROOM_COUNT):
+        header = 0x8300 + room * 14
+        data[0x110000 + room * 2:0x110002 + room * 2] = header.to_bytes(2, "little")
+        pc = 0x110000 + header - 0x8000
+        data[pc:pc + 14] = bytes([0x24]) * 14
+        data[pc + 5], data[pc + 6] = (tags or {}).get(room, (0x00, 0x00))
+    data[0xC2C5:0xC2C7] = bytes.fromhex("89cc")
+    data[0xCC89:0xCC95] = census.EXPECTED_BODY[state]
+    return data
+
+
 class SomariaSocketDoorModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -254,19 +294,128 @@ class SomariaSocketDoorModel(unittest.TestCase):
         self.assertEqual(machine.writes, {0x0468: 1, 0x0469: 0, 0x068E: 0, 0x068F: 0,
                                           0x0690: 0, 0x0691: 0, 0x0011: 0x05})
 
-    def test_return_constant_and_latent_wiring(self):
+    def test_return_constant_and_single_dispatcher_gateway(self):
         text = SOURCE.read_text()
         self.assertRegex(text, r"(?m)^RoomTag_Return = \$01CC5A$")
         self.assertEqual(RETURN_ADDRESS, 0x01CC5A)
         users = []
         for path in ROOT.rglob("*.asm"):
-            for number, line in enumerate(path.read_text(errors="replace").splitlines(), 1):
-                if ROUTINE in line.split(";", 1)[0]:
-                    users.append((path.relative_to(ROOT).as_posix(), number, line.strip()))
-        self.assertEqual([(path, line) for path, _, line in users],
-                         [("Dungeons/custom_tag.asm", f"{ROUTINE}:")])
+            for line in path.read_text(errors="replace").splitlines():
+                code = line.split(";", 1)[0].strip()
+                if ROUTINE in code:
+                    users.append((path.relative_to(ROOT).as_posix(), code))
+        self.assertEqual(users, [("Dungeons/custom_tag.asm", GATEWAY_ORG),
+                                 ("Dungeons/custom_tag.asm", f"{ROUTINE}:")])
         for path in ROOT.rglob("hooks.json"):
-            self.assertEqual(handler_entry_hooks(json.loads(path.read_text())), [], str(path))
+            entries = handler_entry_hooks(json.loads(path.read_text()))
+            self.assertLessEqual(len(entries), 1, str(path))
+            for entry in entries:
+                self.assertEqual(int(entry["address"], 0), GATEWAY_ADDRESS, str(path))
+
+    def test_gateway_guards_vector_and_whole_native_body(self):
+        lines = code_lines(SOURCE.read_text())
+        org = lines.index(GATEWAY_ORG)
+        self.assertEqual(lines[org + 1], GATEWAY_BOUND)
+        self.assertEqual(GATEWAY_ADDRESS + 4, int(GATEWAY_BOUND.rsplit("$", 1)[1], 16))
+        guards = {}
+        for index, line in enumerate(lines):
+            match = re.fullmatch(r'assert read([124])\(\$([0-9A-F]{6})\) == \$([0-9A-F]+), ".+"',
+                                 line)
+            if match:
+                self.assertLess(index, org, line)
+                guards[int(match.group(2), 16)] = (int(match.group(1)), int(match.group(3), 16))
+        self.assertEqual(TAG24_VECTOR, 0x01C2C5)
+        body = census.HOLES2_BODY
+        self.assertEqual(body, bytes.fromhex("c23020cccd90f6a0050080d9"))
+        expected = {TAG24_VECTOR: (2, census.HOLES2_VECTOR)}
+        for offset in range(0, len(body), 4):
+            expected[GATEWAY_ADDRESS + offset] = (4, int.from_bytes(body[offset:offset + 4],
+                                                                    "little"))
+        self.assertEqual(guards, expected)
+        self.assertEqual(census.GATEWAY, b"\x5C" + ALLOCATION_START.to_bytes(3, "little"))
+
+    def test_generators_register_exactly_one_tag24_gateway(self):
+        hooks = [{"address": f"0x{entry.address:06X}", "name": entry.name, "kind": entry.kind,
+                  "target": entry.target, "module": entry.module,
+                  "expected_m": entry.expected_m, "expected_x": entry.expected_x,
+                  "expected_exit_m": entry.expected_exit_m,
+                  "expected_exit_x": entry.expected_exit_x,
+                  "protected_size": entry.protected_size}
+                 for entry in scan_hooks(ROOT)]
+        self.assertEqual(handler_entry_hooks({"hooks": hooks}), [{
+            "address": "0x01CC89", "name": ROUTINE, "kind": "jml", "target": ROUTINE,
+            "module": "Dungeons", "expected_m": 8, "expected_x": 8,
+            "expected_exit_m": 8, "expected_exit_x": 8, "protected_size": 4}])
+        defines = _load_global_defines(ROOT)
+        vectors = bytearray(0xC2FD)
+        vectors[0xC2C5:0xC2C7] = bytes.fromhex("89cc")
+        for rom_data in (None, bytes(vectors)):
+            with self.subTest(source_only=rom_data is None):
+                tags = [tag for tag in scan_room_tags(ROOT, defines, rom_data=rom_data)
+                        if tag["tag_id"] == "0x24" or tag["address"] == "0x01CC89"]
+                self.assertEqual([(tag["tag_id"], tag["address"], tag["name"], tag["enabled"])
+                                  for tag in tags], [("0x24", "0x01CC89", ROUTINE, True)])
+        vectors[0xC2C5:0xC2C7] = bytes.fromhex("8acc")
+        self.assertFalse([tag for tag in scan_room_tags(ROOT, defines, rom_data=bytes(vectors))
+                          if tag["address"] == "0x01CC89"])
+
+    def test_census_resolves_relocated_headers_with_no_tag24_users(self):
+        report = census.census(bytes(census_rom()))
+        self.assertEqual(report["errors"], [])
+        self.assertEqual((report["room_count"], report["tag24_users"]), (296, []))
+        self.assertEqual((report["header_table_snes"], report["header_table_pc"],
+                          report["header_bank"]), ("0x228000", "0x110000", "0x22"))
+        self.assertEqual((report["vector"], report["holes2_bytes"]),
+                         ("0xCC89", "c23020cccd90f6a0050080d9"))
+
+    def test_census_reports_tag24_in_either_header_slot(self):
+        report = census.census(bytes(census_rom({0x091: (0x24, 0x00), 0x127: (0x16, 0x24)})))
+        self.assertEqual(report["tag24_users"], [{"room": "0x091", "slot": "tag1"},
+                                                 {"room": "0x127", "slot": "tag2"}])
+        self.assertEqual(report["room_count"], 296)
+        self.assertEqual(len(report["errors"]), 1)
+
+    def test_census_rejects_changed_vector_body_or_resolver(self):
+        cases = {"vector": (0xC2C5, 0x8A), "resolver opcode": (0xB5DC, 0xAF)}
+        cases.update({f"body byte {index}": (0xCC89 + index, census.HOLES2_BODY[index] ^ 0xFF)
+                      for index in range(len(census.HOLES2_BODY))})
+        for name, (pc, value) in cases.items():
+            with self.subTest(name=name):
+                data = census_rom()
+                data[pc] = value
+                self.assertTrue(census.census(bytes(data))["errors"])
+        for name, data in {"copier header": bytes(0x200) + bytes(census_rom()),
+                           "truncated header bank": bytes(census_rom())[:0x110000]}.items():
+            with self.subTest(name=name):
+                self.assertTrue(census.census(data)["errors"])
+
+    def test_census_patched_state_requires_gateway_and_untouched_tail(self):
+        patched = census_rom(state="patched")
+        self.assertEqual(census.census(bytes(patched), "patched")["errors"], [])
+        self.assertTrue(census.census(bytes(patched))["errors"])
+        self.assertTrue(census.census(bytes(census_rom()), "patched")["errors"])
+        for index in range(len(census.HOLES2_BODY)):
+            with self.subTest(index=index):
+                data = bytearray(patched)
+                data[0xCC89 + index] ^= 0xFF
+                self.assertTrue(census.census(bytes(data), "patched")["errors"])
+
+    def test_census_file_audit_records_hashes_and_never_writes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            rom = Path(temporary) / "base.sfc"
+            rom.write_bytes(bytes(census_rom()))
+            digest = hashlib.sha256(rom.read_bytes()).hexdigest()
+            report = census.audit_file(rom, digest.upper())
+            self.assertTrue(report["ok"], report["errors"])
+            self.assertEqual((report["sha256_before"], report["sha256_after"]), (digest, digest))
+            wrong = census.audit_file(rom, "0" * 64)
+            self.assertFalse(wrong["ok"])
+            self.assertIn("ROM SHA-256 does not match --expected-sha256", wrong["errors"])
+            with redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(census.main(["--rom", str(rom), "--expected-sha256", digest]), 0)
+                self.assertEqual(census.main(["--rom", str(rom), "--state", "patched"]), 1)
+            self.assertIn('"ok": true', output.getvalue())
+            self.assertEqual(hashlib.sha256(rom.read_bytes()).hexdigest(), digest)
 
     def test_manifest_allocation_is_allowed_but_handler_branches_are_not(self):
         allocation = {"address": "0x2CFD00", "name": ROUTINE, "kind": "patch"}
@@ -282,7 +431,7 @@ class SomariaSocketDoorModel(unittest.TestCase):
         label = lines.index(f"{ROUTINE}:")
         self.assertEqual(lines[label - 2:label], ["pushpc", f"org ${ALLOCATION_START:06X}"])
         orgs = [line for line in lines if line.startswith("org ")]
-        self.assertEqual(orgs, LEGACY_HOOK_ORGS + [f"org ${ALLOCATION_START:06X}"])
+        self.assertEqual(orgs, LEGACY_HOOK_ORGS + [GATEWAY_ORG, f"org ${ALLOCATION_START:06X}"])
         self.assertEqual(ALLOCATION_START >> 16, 0x2C)
         collision = (ROOT / "Dungeons" / "Collision" / "custom_collision.asm").read_text()
         guard = (ROOT / "Core" / "patches.asm").read_text()
