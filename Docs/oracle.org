@@ -453,7 +453,7 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [ ] Audit: list the dungeon blocksets and palettes that mix the two styles, with one screenshot per case.
     - [ ] Decide per case: redraw the tiles to fit the ALTTP object layout, or change the objects to fit the art.
     - [ ] Fix in yaze (sheet edits need the graphics write-back work; see =gfx-freespace-manifest=).
-*** TODO [#A] Add Dungeon Maps [0/11] :assets:map:
+*** TODO [#A] Add Dungeon Maps [0/12] :assets:map:
     :PROPERTIES:
     :ID: content-dungeon-maps
     :END:
@@ -465,7 +465,8 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [ ] D5: Glacia Estate
     - [ ] D6: Goron Mines
     - [ ] D7: Dragon Ship
-    - [ ] D8: Fortress of Secrets
+    - [ ] D8: Sky tower and islands
+    - [ ] Fortress of Secrets (separate shorter late-game location)
     - [ ] S1: Shrine of Wisdom
     - [ ] S2: Shrine of Power
     - [ ] S3: Shrine of Courage
@@ -493,6 +494,17 @@ CLOSED: [2025-12-08 Mon 22:34]
     :ID: content-dragon-ship
     :END:
     - [ ] Flesh out ideas for an extended section.
+
+*** TODO [#A] Sky D8: required Somaria route and eighth essence [0/4] :design:progression:
+    :PROPERTIES:
+    :ID: content-sky-d8
+    :END:
+    - *Ruling (scawful, 2026-10-19):* Dragon Ship stays D7; Sky becomes D8 and requires the Ship's Somaria. Preserve Courage / Dream 3 / Master Sword before Sky, and earlier Song of Soaring usefulness.
+    - [ ] Author a required Somaria teaching, mastery and recovery sequence in the reserved tower / island rooms.
+    - [ ] Integrate the eighth essence without changing the Ship's existing save identity or Soaring acquisition.
+    - [ ] Add the eighth Quest essence icon and review its placement.
+    - [ ] Choose the dungeon item and boss; Roc's Cape and Heliarch remain concepts.
+    - *Plan:* =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/sky_d8_implementation_2026-10-20/PLAN.md=.
 
 *** TODO [#C] Shrine of Wisdom Swamp Overworld Improvements :planning:
     :PROPERTIES:
@@ -831,7 +843,7 @@ CLOSED: [2025-12-08 Mon 22:34]
     :PROPERTIES:
     :ID: idea-sky-area
     :END:
-    - *Goal:* Design puzzles for a cloud-based area accessed with the Song of Soaring.
+    - *Current ruling (2026-10-19):* Sky is required D8 after Dragon Ship D7, with required Somaria. The tower is the first entrance; Song of Soaring remains useful for later travel. The ideas below are unconfirmed mechanics, not access rules.
     - *Ideas:*
       - *Weather Puzzles:* Use the Ocarina to switch between sun and rain. Rain creates new cloud platforms by filling them with water. Sunshine makes electric clouds safe to walk on.
       - *Form-Based Puzzles:* Some clouds are thin and require Minish Form to not fall through. Others have strong winds that blow Minish Link away but not normal Link.

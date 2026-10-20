@@ -2608,3 +2608,30 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   as too easy.
   Answer: "i guess keep them softer for now unless we get reports it's too easy i
   dont want it to be too hard instead" (scawful, 2026-10-19).
+
+
+* DECIDED Dragon Ship stays D7; Sky becomes D8 and requires Somaria (2026-10-19)
+  :PROPERTIES:
+  :ASKED_BY: Codex, Sky dungeon and Heliarch concept review
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/sky_d8_implementation_2026-10-20/PLAN.md
+  :END:
+  1. Dragon Ship stays D7. The Sky tower and islands become the required D8,
+     after the Ship. This supersedes the earlier Sky D7 / Ship D8 direction
+     recorded in the current-design handoff.
+  2. Somaria remains the Ship's reward and is required to progress through Sky.
+     Preserve the Ship -> Shrine of Courage / Dream 3 -> Master Sword sequence
+     before Sky. There are eight main dungeons, then the separate shorter
+     Fortress and the volcano finale.
+  3. Preserve the earlier Song of Soaring acquisition and its usefulness across
+     the longer late game and later revisits. This does not approve a new
+     post-game save mode or bypass the tower's first-entry requirement.
+  4. Record the ruling and begin the implementation plan with bounded Cursor CLI
+     workers. Roc's Cape, Heliarch, exact Somaria puzzles and the revised Maku
+     Seed / eighth-essence narrative remain design work.
+  Implementation note: story numbering does not renumber the Ship's existing
+  dungeon ID, crystal bit or Farore-rescue readers. The Sky boss-room ruling
+  remains $96; the tower/island reservations are unchanged by this order choice.
+  Answer: "yeah sure let's do sky on D8, gives the player song of soaring for
+  longer in the post game too and yeah require somaria. make sure to update docs
+  and start working on the plan and using cursor CLI subagents aggressively to
+  help implement these ideas" (scawful, 2026-10-19).

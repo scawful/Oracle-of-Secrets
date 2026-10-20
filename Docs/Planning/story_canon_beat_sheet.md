@@ -1,6 +1,6 @@
 # Story Canon Beat Sheet
 
-Date: 2026-09-27 (revision 4)
+Date: 2026-10-19 (revision 5; Sky D8 order and Somaria requirement)
 Authority: scawful's rulings, normalized from the decision log and story reviews.
 This sheet supersedes conflicting claims in older narrative documents.
 
@@ -97,13 +97,16 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
    Enterable early ≠ fully explorable; exact in-ROM gating `[TO-VERIFY]` with
    yaze. Maku Tree 7-crystal "seek Shrines" hint (`maku_tree.asm:29`) must be
    re-aimed at the Shrine of Courage specifically `[TO-BUILD]`.
-6. **Sky Islands: optional post-D6 route through the East Kalyxo tower**
-   `[DECIDED 2026-09-26/27]`. The tower is the only entrance; Song of Soaring
-   does not bypass it. The Watchers built the original tower and sky structures;
-   Hyrule's garrison later reused the lower floors and abandoned them. The Sky
-   provides optional lore and upgrades. Remove the Korok Cove test bridge.
-   Sky traversal uses `cloud_bridge.asm` platform sprites, not
-   weather-conditional map collision.
+6. **Sky tower and islands are the required D8, after D7 Dragon Ship**
+   `[DECIDED 2026-10-19]`. Somaria remains the Ship's reward and is required in
+   Sky. Preserve Ship -> Shrine of Courage / Dream 3 -> Master Sword before
+   Sky, then the shorter Fortress and volcano finale. The tower is the only
+   first entrance; Song of Soaring does not bypass it. Preserve the earlier
+   Soaring acquisition and its usefulness throughout the longer late game and
+   later revisits. The Watchers built the tower and sky structures; Hyrule's
+   garrison later reused the lower floors and abandoned them. Remove the Korok
+   Cove test bridge. `cloud_bridge.asm` is existing traversal support; new Sky
+   puzzles, item and boss remain `[TO-BUILD]` / `[OPEN]`.
 7. **The Ranch Girl is a required Ocarina-path witness; D5 ends her curse
    automatically** `[DECIDED 2026-09-02]`.
    The inherited ALTTP Magic-Powder-on-a-Cucco Easter egg can remain as a
@@ -151,7 +154,7 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
 | 18 | Defeating Twinrova permanently breaks the Ranch Girl's Cucco curse | `[DECIDED]`, `[TO-BUILD]` | Automatic D5 world-state consequence. No Song of Healing and no instructed return trip. If the player revisits naturally, short reactive dialogue may confirm the change. The obsolete `$1FA` Lost Voice quest and Ranch Girl dream are `[CUT]`. Current `ranch_girl.asm` has no D5 branch, and the D5 crystal setter still needs runtime tracing. |
 | 19 | **Shrine of Power** (meet the **Eon Gorons**) → **Pendant of Power** | `[DECIDED gate]` | Required for D6. The former Ranch Girl Dream 2 attached here is `[CUT 2026-09-02]`. |
 | 20 | **D6 Goron Mines**: Rock Meat trust, minecarts → essence 6 | built (carts WIP) | Requires Shrine of Power `[DECIDED]`. Maiden msg `0x137` |
-| 21 | East Kalyxo opens (Hammer); River Zora reconciliation; optional **Sky tower and islands** | WIP; sky route `[DECIDED]`, `[TO-BUILD]` | The tower east of Korok Cove is the only Sky entrance. Lower floors are Hylian garrison ruins; upper floors expose Watcher construction. |
+| 21 | East Kalyxo opens (Hammer); River Zora reconciliation; approach to the **Sky tower** | WIP; Sky D8 order `[DECIDED 2026-10-19]`, `[TO-BUILD]` | The tower east of Korok Cove is the only first Sky entrance. Required Sky progression follows the Ship and needs Somaria. Lower floors are Hylian garrison ruins; upper floors expose Watcher construction. |
 
 ## Act III — The Endgame
 
@@ -161,8 +164,8 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
 | 23 | **D7 Dragon Ship**: pirate-Kydrog fight → **Farore fully freed here** `[DECIDED per review]`; his spirit flees to the Abyss; Somaria Rod | `[TO-BUILD]` | No dragonification here. Finish `kydrog_boss.asm:335-382` scaffold (gated OFF): crystal 7, GameState→3, real rescue scene (replace temp `0x138`). Farore NPC active from here; her POWER remains in the Blade until beat 25 |
 | 24 | **Shrine of Courage** (needs Somaria Rod) → **Pendant of Courage** → **Dream 3: the healing revelation** | `[DECIDED gate]`; dream in RC scope `[DECIDED]`, content `[PROPOSED]` | Post-D7 by construction. Dream 3 reveals the Abyss-form can be REVERSED — the Song of Healing is the key to saving Kydrog |
 | 25 | **Master Sword pulled from the pedestal** (post-D7, pre-D8) — **the transfer scene** | mechanics `[IMPLEMENTED-vanilla]`; scene `[PROPOSED]` | Not forged — pulled. Meadow Blade caps at L3; the pull grants L4. Proposed reconciliation: Farore, present and freed, releases her power from the Meadow Blade into the Master Sword as Link draws it — the engine's sword swap becomes the story beat. Also explains why Kydrog lured Link to the ship: the power he needs has been in Link's hand since D3 |
-| 26 | Optional **Sky Islands** content remains available | `[DECIDED post-D6]`, `[TO-BUILD]` | Not a required endgame beat. The one- or two-room Watchers temple holds lore and an optional item; no Observatory is planned. |
-| 27 | **D8 Fortress of Secrets**: Voice; Dark Link; at the heart Kydrog assumes his **Abyss form — Kydreeok** | Dark Link `[IMPLEMENTED]`; rest `[TO-BUILD]` | `dark_link.asm:962-975`. `[PROPOSED]` the Voice = the half-revived Ganon's hunger (villain chain) — fragments and wants, not sentences |
+| 26 | **D8 Sky tower and islands** -> eighth main-dungeon essence | `[DECIDED 2026-10-19]`, `[TO-BUILD]` | Somaria is required. Earlier Soaring remains useful through this longer late game and later revisits. Exact puzzles, item and boss remain open; the separate one- or two-room Watchers building is not automatically the boss arena. |
+| 27 | **Shorter Fortress of Secrets**, after the eight main dungeons: Dark Link | Dark Link `[IMPLEMENTED]`; redesign `[TO-BUILD]` | The Fortress is a separate late-game location. Kydrog becomes Kydreeok at the volcano before room `$00`, not in the Fortress (`decisions.org`, "D8 room 0D is the Dark Link fight only"). Fortress purpose and Maku Seed timing must be reconciled with Sky supplying the eighth main-dungeon essence. |
 | 28 | **Kydreeok finale**: sever all heads simultaneously (they regrow) → **Song of Healing finisher** → Kydrog restored | `[DECIDED]`; `[TO-BUILD]` | `kydreeok.asm` exists, zero messages. Post-healing form: human `[DECIDED 2026-09-26]` |
 | 29 | **Ganon breaks out** — alternates Ganondorf (energy-ball volleys) and the beast; Farore aids | `[DECIDED 2026-09-26]`, `[TO-BUILD]` | Villain chain (`Docs/Planning/Status/decisions.org`). Per msg `0x15B`; vanilla Ganon parts may be reused |
 | 30 | **Ending**: seal restored; the Abyss begins to heal; credits | `[TO-BUILD]` | Credits hook stubbed in `Overworld/overworld.asm`; no ending text exists. GameState 3 finally gets readers. |
@@ -199,3 +202,5 @@ Question numbers remain stable because other planning documents refer to them.
 6. `[RESOLVED 2026-09-26]` The inhabitants call the Abyss and its central
    village Yesterwind.
 7. `[RESOLVED 2026-09-26]` Kydrog's post-healing form: his living human self (villain chain, `Docs/Planning/Status/decisions.org`).
+
+Late-route open work (2026-10-19): implement the eighth essence award/display/readers; author the required Sky Somaria route; settle the shorter Fortress's purpose and Maku Seed timing. Roc's Cape and Heliarch remain unconfirmed concepts.
