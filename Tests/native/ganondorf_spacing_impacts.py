@@ -21,7 +21,7 @@ class SpacingImpactFixture(core.Fixture):
         return (super().allowed_write(address) or address == 0x7E0FA1
                 or address in self.collision_writes)
 
-    def actors(self, action=None):
+    def actors(self, action=0):
         return [i for i in range(16) if self.field("state", i)
                 and self.field("kind", i) == 0x46
                 and (action is None or self.field("action", i) == action)]
