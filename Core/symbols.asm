@@ -25,8 +25,15 @@ FishingOrPortalRod:       skip 1
 SongTintTimer:            skip 1  ; Frames remaining for song color tint
 SongTintColor:            skip 1  ; Color value to apply to $9A during tint
 GanondorfFight:           skip 1  ; $7E0748 finale: 0 none, 1 Ganondorf spawned, 2 defeated
+BossReinject:             skip 1  ; $7E0749 fairy revive in room $00: bosses re-inject their graphics next frame, then clear it
+FinaleBeat:               skip 1  ; $7E074A 0 Kydreeok not dead yet, N>1 placeholder beat counting down, 1 Ganondorf may spawn
 }
 base off
+
+; PLACEHOLDER for the Song of Healing beat between Kydreeok and Ganondorf (decisions.org canon
+; order: Kydreeok, Song frees Kydrog, Ganon). Until that scene exists, Ganondorf waits this many
+; door-gate frames (3 s) after the Kydreeok body is dismissed. Replace with the real beat's flag.
+!FinaleBeat_Frames = $B4
 
 ; =========================================================
 
