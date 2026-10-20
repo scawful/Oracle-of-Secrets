@@ -4,6 +4,7 @@ CI: python3 -m unittest discover -s Tests -p test_kalyxo_docks_bind.py -v
 Local: set OOS_TEST_BASE_ROM to the pinned, read-only unpatched base.
 """
 import contextlib
+import copy
 import hashlib
 import io
 import json
@@ -118,6 +119,24 @@ class BindingAdmissionTests(unittest.TestCase):
         self.assertLessEqual(len(requirements["walk"]), 18)
         self.assertLessEqual(len(requirements["solid"]), 11)
 
+    def test_native_passage_stays_in_existing_graphics_areas(self):
+        layout = json.loads((ROOT / "Data/overworld/kalyxo_docks.json").read_text())
+        seen = set()
+        for item in layout["native_placements"]:
+            key = (item["screen"], item["x"], item["y"])
+            self.assertNotIn(key, seen)
+            seen.add(key)
+            self.assertIn(item["screen"], (0x32, 0x33))
+            self.assertIn(item["x"], range(32))
+            self.assertIn(item["y"], range(32))
+            self.assertIn(item["tile16"], range(0xF80))
+            self.assertIn(item["old_tile16"], range(4096))
+        self.assertEqual({p[0] for p in seen}, {0x32, 0x33})
+        self.assertEqual(writer.MAPS, (0x30, 0x31, 0x32, 0x33))
+        self.assertEqual(writer.PROFILE_MAPS, (0x30, 0x31, 0x32))
+        preview = json.loads((ROOT / "Data/graphics/overworld_graphics_preview.json").read_text())
+        self.assertNotIn(0x33, {area["parent_map"] for area in preview["areas"]})
+
 
 @unittest.skipUnless(os.environ.get("OOS_TEST_BASE_ROM"),
                      "set OOS_TEST_BASE_ROM for optional exact-base checks")
@@ -128,9 +147,9 @@ class PinnedBaseTests(unittest.TestCase):
         cls.base = cls.path.read_bytes()
         if hashlib.sha256(cls.base).hexdigest() != writer.BASE_SHA:
             raise AssertionError("OOS_TEST_BASE_ROM is not the pinned audited base")
-        layout = json.loads((ROOT / "Data/overworld/kalyxo_docks.json").read_text())
+        cls.layout = json.loads((ROOT / "Data/overworld/kalyxo_docks.json").read_text())
         # compile_native returns bytes in memory; no ROM or asset output path.
-        cls.output, cls.bg, cls.binding, cls.receipt = writer.compile_native(cls.base, layout)
+        cls.output, cls.bg, cls.binding, cls.receipt = writer.compile_native(cls.base, cls.layout)
         cls.before_defs, cls.after_defs = map(writer.definitions32, (cls.base, cls.output))
         cls.before_maps, cls.after_maps = map(writer.maps32, (cls.base, cls.output))
 
@@ -139,11 +158,15 @@ class PinnedBaseTests(unittest.TestCase):
         if cls.path.read_bytes() != cls.base:
             raise AssertionError("read-only base changed during focused checks")
 
-    def test_all_160_maps_only_change_at_declared_dock_placements(self):
+    def test_all_160_maps_only_change_at_declared_dock_and_native_placements(self):
         changed = set()
-        placements = {screen: {} for screen in (0x30, 0x31, 0x32)}
+        placements = {screen: {} for screen in (0x30, 0x31, 0x32, 0x33)}
         for p in self.receipt["placements"]:
             placements[0x30 + p["x"] // 32][p["x"] % 32, p["y"]] = p["tile16"]
+        self.assertEqual(self.receipt["native_placements"], self.layout["native_placements"])
+        for p in self.layout["native_placements"]:
+            self.assertNotIn((p["x"], p["y"]), placements[p["screen"]])
+            placements[p["screen"]][p["x"], p["y"]] = p["tile16"]
         for screen in range(160):
             before = writer.expand(self.before_maps[screen], self.before_defs)
             actual = writer.expand(self.after_maps[screen], self.after_defs)
@@ -153,7 +176,56 @@ class PinnedBaseTests(unittest.TestCase):
             for (x, y), tile in placements.get(screen, {}).items():
                 expected[y][x] = tile
             self.assertEqual(actual, expected, f"screen {screen:02X}")
-        self.assertEqual(changed, {0x30, 0x31, 0x32})
+        self.assertEqual(changed, {0x30, 0x31, 0x32, 0x33})
+        self.assertEqual(160 - len(changed), 156)
+
+    def test_loom_passage_reuses_native_donors_and_preserves_their_attributes(self):
+        old_ids = {tile for tile32 in self.before_maps[0x33]
+                   for tile in self.before_defs[tile32]}
+        new_ids = {tile for tile32 in self.after_maps[0x33]
+                   for tile in self.after_defs[tile32]}
+        self.assertTrue(new_ids <= old_ids)
+        for tile in new_ids:
+            p = 0x1E8000 + tile * 8
+            self.assertEqual(self.output[p:p + 8], self.base[p:p + 8])
+        for item in self.layout["native_placements"]:
+            before = writer.expand(self.before_maps[item["screen"]], self.before_defs)
+            self.assertEqual(before[item["y"]][item["x"]], item["old_tile16"])
+            if item["kind"] == "walk_core":
+                p = 0x1E8000 + item["tile16"] * 8
+                words = [int.from_bytes(self.output[p + q:p + q + 2], "little")
+                         for q in (0, 2, 4, 6)]
+                # Native grass $034 uses DiggableGround ($48), not the dock's
+                # plain-floor $00. Preserve that deliberate donor behavior.
+                self.assertEqual([self.output[0x71459 + (word & 511)] for word in words],
+                                 [0x48, 0x48, 0x48, 0x48])
+
+    def test_native_passage_refuses_stale_unsafe_and_ambiguous_edits(self):
+        changes = [("screen", 0x34, "outside"), ("x", 32, "outside"),
+                   ("y", -1, "outside"), ("tile16", 0xF80, "outside"),
+                   ("x", True, "outside"),
+                   ("old_tile16", self.layout["native_placements"][0]["old_tile16"] ^ 1,
+                    "source cell changed")]
+        for key, value, message in changes:
+            layout = copy.deepcopy(self.layout)
+            layout["native_placements"][0][key] = value
+            with self.subTest(key=key, value=value), self.assertRaisesRegex(ValueError, message):
+                writer.compile_native(self.base, layout)
+        layout = copy.deepcopy(self.layout)
+        layout["native_placements"].append(layout["native_placements"][0].copy())
+        with self.assertRaisesRegex(ValueError, "duplicate or overlapping"):
+            writer.compile_native(self.base, layout)
+        layout = copy.deepcopy(self.layout)
+        layout["native_placements"][0].update(screen=0x32, x=0, y=12)
+        with self.assertRaisesRegex(ValueError, "duplicate or overlapping"):
+            writer.compile_native(self.base, layout)
+        original_ids = {tile for tile32 in self.before_maps[0x32]
+                        for tile in self.before_defs[tile32]}
+        layout = copy.deepcopy(self.layout)
+        layout["native_placements"][0]["tile16"] = next(i for i in range(0xF80)
+                                                       if i not in original_ids)
+        with self.assertRaisesRegex(ValueError, "donor is not used by its area"):
+            writer.compile_native(self.base, layout)
 
     def test_collision_transition_tables_ship_and_input_are_preserved(self):
         # Yaze overworld.h and ZSCustomOverworld.asm Pool addresses, independent

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Bind the native dock library and write a pinned, private three-screen recipe.
+"""Bind the native dock library and write a pinned, private four-screen recipe.
 
-Only new Map16/Map32 definitions, 30/31/32 map pointers, bank44C000 streams
+Only new Map16/Map32 definitions, 30/31/32/33 map pointers, bank44C000 streams
 and ROM size/checksum metadata change. All other maps, collision, entrances,
 wide-map transitions and Dragon Ship data must remain byte-identical.
 
@@ -22,7 +22,8 @@ ROOT = Path(__file__).resolve().parents[2]
 BASE_SHA = "5689b1d383331b383670bdbb2d8470443d9431e22678e90d184ca5f8fad85b62"
 QUADRANTS = (0x18000, 0x20000, 0x1F0000, 0x1F8000)
 COUNT32 = 0x67E0 // 6 * 4
-MAPS = (0x30, 0x31, 0x32)
+MAPS = (0x30, 0x31, 0x32, 0x33)
+PROFILE_MAPS = (0x30, 0x31, 0x32)
 FIRST16 = 0xF80
 STREAM_PC = 0x224000  # SNES $44C000, after profile assets/helpers.
 
@@ -128,7 +129,7 @@ def compile_native(base, layout):
     if set(range(FIRST16, FIRST16 + 64)) & all16:
         raise ValueError("reserved Map16 range is referenced")
     attrs = [struct.unpack_from("<4H", base, 0x1E8000 + i * 8) for i in range(4096)]
-    used = {w & 1023 for m in (*MAPS, 0x9F) for t in maps[m] for v in defs[t] for w in attrs[v]}
+    used = {w & 1023 for m in (*PROFILE_MAPS, 0x9F) for t in maps[m] for v in defs[t] for w in attrs[v]}
     if used & set(range(0xC0, 0x100)):
         raise ValueError("slot3 is not unused by docks, beach and overlay")
     collision = base[0x71459:0x71659]
@@ -210,6 +211,24 @@ def compile_native(base, layout):
             rows[y + 1][x] = tile_bindings[name]["tile16"]
             placements[(x, y + 1)] = name
 
+    # Existing grass/tree donors keep Loom on its native graphics profile.
+    native_placements = layout.get("native_placements", [])
+    seen = set()
+    for item in native_placements:
+        screen, x, y, tile = (item[k] for k in ("screen", "x", "y", "tile16"))
+        if any(type(v) is not int for v in (screen, x, y, tile)) or screen not in (0x32, 0x33) or not 0 <= x < 32 or not 0 <= y < 32 or not 0 <= tile < FIRST16:
+            raise ValueError("native passage placement is outside its audited range")
+        position = (screen, x, y)
+        gx = (screen - 0x30) * 32 + x
+        if position in seen or (gx, y) in placements:
+            raise ValueError("duplicate or overlapping native passage placement")
+        seen.add(position)
+        if rows[y][gx] != item["old_tile16"]:
+            raise ValueError("native passage source cell changed")
+        if tile not in {v for row in expand(maps[screen], defs) for v in row}:
+            raise ValueError("native passage donor is not used by its area")
+        rows[y][gx] = tile
+
     used32 = {t for m in maps for t in m}
     free32 = iter(i for i in range(COUNT32) if i not in used32)
     lookup = {d:i for i,d in enumerate(defs) if i in used32}
@@ -268,7 +287,8 @@ def compile_native(base, layout):
                    expanded_size=len(out), maps_changed=list(MAPS), map16_count=len(tile_bindings),
                    map32_allocated={f"{k:04X}":list(v) for k,v in new32.items()}, stream_pc_start=STREAM_PC, stream_pc_end=stream,
                    placements=[dict(x=x,y=y,tile=name,tile16=tile_bindings[name]["tile16"]) for (x,y),name in sorted(placements.items())],
-                   checks={"all_160_maps_roundtrip":True,"157_other_maps_identical":True,"collision_identical":True,"explicit_byte_allowlist":True},
+                   native_placements=native_placements,
+                   checks={"all_160_maps_roundtrip":True,"156_other_maps_identical":True,"collision_identical":True,"explicit_byte_allowlist":True},
                    assets={"kalyxo_docks_bg.bin":sha(bg),"kalyxo_docks_slot3.bin":sha(bg[:2048]),"boat.bin":sha(boat),"boat2.bin":sha((ROOT/"Overworld/gfx/boat2.bin").read_bytes())})
     return out, bytes(bg), binding, receipt
 
@@ -293,7 +313,7 @@ def main():
         f.write(out)
     args.receipt.parent.mkdir(parents=True, exist_ok=True)
     args.receipt.write_text(json.dumps(receipt, indent=2) + "\n")
-    print(json.dumps({k:v for k,v in receipt.items() if k not in ("placements","map32_allocated")}, indent=2))
+    print(json.dumps({k:v for k,v in receipt.items() if k not in ("placements","native_placements","map32_allocated")}, indent=2))
 
 
 if __name__ == "__main__":
