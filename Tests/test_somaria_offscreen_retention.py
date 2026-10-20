@@ -156,7 +156,7 @@ class SomariaOffscreenRetention(unittest.TestCase):
         self.assertEqual(self.rom[start], 0x5C)
         self.assertEqual(self.rom[start + 4:start + 6], b"\xEA\xEA")
         helper = int.from_bytes(self.rom[start + 1:start + 4], "little")
-        self.assertTrue(0x2CFD6D <= helper < 0x2CFE00)
+        self.assertEqual(helper, 0x2CFD6F)
         self.assertEqual(self.rom[offset(FALLBACK):offset(KEEP) + 1], EXIT_BYTES)
 
     def test_qualifying_slots_tags_ground_altitudes_and_all_status_flags(self):
