@@ -311,8 +311,8 @@ class SkyEighth:
             crystals = PRE_AWARD | SKY_BIT
         else:
             index = base["dungeon"] >> 1
-            self.check("legacy room, valid 040C index, dark world flag",
-                       [base["room"] != SKY_ROOM, base["dungeon"] & 1, index <= 0x0C, base["world"] != 0],
+            self.check("legacy room, valid 040C index, crystal-ownership world 00",
+                       [base["room"] != SKY_ROOM, base["dungeon"] & 1, index <= 0x0C, base["world"] == 0],
                        [True, 0, True, True])
             crystals = self.r(PRIZE_CHECKS + index)
             self.result["prize_mask"] = dict(index=index, mask=crystals)
