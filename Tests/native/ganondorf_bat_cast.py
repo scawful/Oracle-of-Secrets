@@ -263,7 +263,9 @@ class BatCastFixture(SpacingImpactFixture):
             else:
                 x, y = self.position(bat)
                 self.locate(bat, x ^ 0x200, y, "bat outside the current512px room must die before tile lookup wraps")
-            self.run_to(self.labels["GanonBat_Main_kill"], f"x == {bat}")
+            if fault != "outside-room":
+                self.run_to(self.labels["GanonBat_Main_kill"], f"x == {bat}")
+            # Native OAM preparation may remove an offscreen child before Main.
             self.run_to(self.labels["Sprite_GanonBall_Long_not_active"], f"x == {bat}")
             core.require(self.field("state", bat) == 0 and not self.actors(1),
                          f"Native {fault} child survived or created fragments")
