@@ -74,6 +74,10 @@ jobs:
           printf '\x89\xCC' | dd of=test.sfc bs=1 seek=$((0xC2C5)) conv=notrunc 2>/dev/null  # $01C2C5 vector -> $01CC89
           printf '\xC2\x30\x20\xCC\xCD\x90\xF6\xA0\x05\x00\x80\xD9' | dd of=test.sfc bs=1 seek=$((0xCC89)) conv=notrunc 2>/dev/null  # $01CC89 RoomTag_Holes2
 
+          # Original Somaria offscreen deletion pair, continuation and draw RTS.
+          printf '\x9C\x46\x06\x9E\x4A\x0C\x8A' | dd of=test.sfc bs=1 seek=$((0x46731)) conv=notrunc 2>/dev/null
+          printf '\x60' | dd of=test.sfc bs=1 seek=$((0x4674B)) conv=notrunc 2>/dev/null
+
           # Original desert-statue contact/prep instructions inspected by Garo's guards.
           printf '\x22\x29\xF1\x06' | dd of=test.sfc bs=1 seek=$((0x29573)) conv=notrunc 2>/dev/null  # $059573 JSL $06F129
           printf '\xAD\x6A\x0B\x9D\x90\x0D' | dd of=test.sfc bs=1 seek=$((0x30F4D)) conv=notrunc 2>/dev/null  # $068F4D LDA $0B6A : STA $0D90,X

@@ -25,6 +25,17 @@ assert read4($01CC91) == $D9800005, "RoomTag_Holes2 body moved"
 org $01CC89 : JML RoomTag_SomariaSocketDoor ; @hook module=Dungeons name=RoomTag_SomariaSocketDoor kind=jml target=RoomTag_SomariaSocketDoor expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8
 assert pc() == $01CC8D
 
+; Vanilla draw culling must not delete a grounded cube holding a tag $24 plate.
+; Keep the six-byte deletion pair together; $08E724 is another branch target.
+assert read3($08E731) == $06469C, "Somaria culled pressure clear moved"
+assert read3($08E734) == $0C4A9E, "Somaria culled actor clear moved"
+assert read1($08E737) == $8A, "Somaria culled cleanup continuation moved"
+assert read1($08E74B) == $60, "Somaria draw return moved"
+org $08E731 ; @hook module=Dungeons name=SomariaSocket_CulledBlock kind=jml target=SomariaSocket_CulledBlock expected_m=8 expected_x=8 expected_exit_m=8 expected_exit_x=8 protected_size=6
+  JML SomariaSocket_CulledBlock
+  NOP #2
+assert pc() == $08E737
+
 pullpc
 CustomTag:
 {
@@ -365,6 +376,37 @@ RoomTag_SomariaSocketDoor:
   .exit
   SEP #$30
   JML RoomTag_Return
+}
+
+; JML entry from $08E731: M/X=8, DBR=$08, X=original ancilla slot.
+; The draw routine has already restored X; its inherited JSR return stays put.
+; Preserve A/P, X/Y, DBR and D. All absolute data accesses use the WRAM mirror.
+; Only the original cull/delete path changes: lift, split, pit and room unload
+; still remove the block normally. Fizz shares the draw routine, so require $2C.
+SomariaSocket_CulledBlock:
+{
+  PHP : PHA
+  CPX.b #$05 : BCS .vanilla
+  LDA.w $001B : BEQ .vanilla
+  LDA.w $00AE : CMP.b #$24 : BEQ .tag24
+  LDA.w $00AF : CMP.b #$24 : BNE .vanilla
+  .tag24
+  LDA.w $0C4A,X : CMP.b #$2C : BNE .vanilla
+  LDA.w $0646 : BEQ .vanilla
+  BIT.w $0308 : BMI .vanilla
+  LDA.w $03F4 : BNE .vanilla
+  LDA.w $0394,X : ORA.w $03C5,X : ORA.w $0380,X : BNE .vanilla
+  LDA.w $03DB,X : CMP.b #$04 : BNE .vanilla
+  LDA.w $029E,X : BEQ .keep
+  CMP.b #$FF : BNE .vanilla
+  .keep
+  PLA : PLP
+  JML $08E74B
+  .vanilla
+  PLA : PLP
+  STZ.w $0646
+  STZ.w $0C4A,X
+  JML $08E737
 }
 assert pc() <= $2CFE00 ; do not overlap CustomRoomCollision
 pullpc
