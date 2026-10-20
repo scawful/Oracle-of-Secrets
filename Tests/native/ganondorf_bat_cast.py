@@ -196,7 +196,7 @@ class BatCastFixture(SpacingImpactFixture):
         self.hold_parent(parent)
         self.frames(20)
         core.require(self.field("state", bat) == 0 and not self.actors(1),
-                     "Sword-hit puff re-entered a delayed native death/stun module or emitted a drop/shard actor")
+                     "Sword-hit puff retained a delayed native death/stun module or emitted a shard actor")
         sword["expired_without_delayed_death"] = True
         self.result["cases"].append(dict(name="bat-contact-and-native-sword", passed=True,
                                           contact=contact, sword=sword))
@@ -262,6 +262,7 @@ class BatCastFixture(SpacingImpactFixture):
 
     def slot_exhaustion_recovery(self):
         parent = self.prepare_bat()
+        self.run_to(self.labels["Ganondorf_SpawnBat"], f"x == {parent}")
         occupied = self.occupy_slots(parent)
         self.run_to(self.labels["Ganondorf_CastBat_bat_spawned"], f"x == {parent}")
         core.require(not self.actors(3) and self.field("d", parent) == 0xFF,
@@ -272,6 +273,7 @@ class BatCastFixture(SpacingImpactFixture):
 
         parent = self.prepare()
         self.charge(parent)
+        self.run_to(self.labels["Ganondorf_SpawnBall"], f"x == {parent}")
         occupied = self.occupy_slots(parent)
         self.run_to(self.labels["Ganondorf_Cast_cancel"], f"x == {parent}")
         self.run_to(self.labels["Ganondorf_Main"], f"x == {parent}")
