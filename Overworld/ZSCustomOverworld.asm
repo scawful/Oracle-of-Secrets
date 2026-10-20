@@ -3109,6 +3109,14 @@ BlockGFXCheck:
         LDA.l Pool_OWGFXGroupTable_sheet0, X : STA.b $00
         SEP #$10
 
+        ; A custom profile marks its underlying native slots for restoration.
+        ; Resolve only those $FF entries; all other keep-prior entries still skip.
+        PHX
+        LDX.b $02
+        JSL Oracle_ResolveCustomGraphicsTransitionSheet
+        PLX
+        STA.b $00
+
         ; Check if it is #$FF.
         CMP.b #$FF : BEQ .dontLoadThisSheet
             ; Get the sheet that is currently loaded and check if the sheets
@@ -3300,8 +3308,8 @@ CheckForChangeGraphicsTransitionLoad:
     ; that way the BG overlays have a chance to hide the cracks.
     ;INC.b $15
 
-    ; PLACE CUSTOM GFX LOAD HERE!
-    JSL Oracle_CheckForChangeGraphicsNormalLoadBoat
+    ; Custom graphics are selected by the NMI slot uploads below. Direct DMA
+    ; here ran only for mosaics and was overwritten by later transition loads.
 
     CheckForChangeGraphicsTransitionLoadRetrun:
 
@@ -4023,6 +4031,15 @@ org $008C8A ; $000C8A ; @hook module=Overworld
 
 assert pc() <= $008C8C ; $000C8C
 
+; Keep the ship's extended BG art through the later incremental OBJ uploads.
+; Same 512-byte NMI chunks; only the source changes for outdoor parent $38.
+; Original $008C0E..$008C12: A9 7F 8D 04 43 (LDA #$7F : STA $4304).
+assert read4($008C0E) == $048D7FA9 && read1($008C12) == $43
+org $008C0E ; @hook module=Overworld name=ShipIncrementalGraphicsSource kind=jsl target=Oracle_SelectShipIncrementalGraphicsSource expected_m=8 expected_x=16 expected_exit_m=8 expected_exit_x=16
+    JSL Oracle_SelectShipIncrementalGraphicsSource
+    NOP
+assert pc() == $008C13
+
 org $02ABB4 ; $012BB4 ; @hook module=Overworld
     JSL.l NewPrepTransAuxGFX
 
@@ -4112,6 +4129,9 @@ NewLoadTransAuxGFX:
 
     .notNormalLoad
 
+    ; The target profile must upload even when its native sheet ID is unchanged.
+    JSL Oracle_InvalidateCustomGraphicsCache
+
     ; Setup the decompression buffer address.
     ; $00[3] = $7E6000
                  STZ.b $00
@@ -4127,7 +4147,11 @@ NewLoadTransAuxGFX:
 
     ; Sheet 3 (variable 0)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet3, X : CMP.b #$FF : BEQ .noBgGfxChange3
+    LDA.w Pool_OWGFXGroupTable_sheet3, X
+    PHX : SEP #$10
+    LDX.b #$03 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    REP #$10 : PLX
+    CMP.b #$FF : BEQ .noBgGfxChange3
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+3 : BEQ .noBgGfxChange3
             TAY
@@ -4145,7 +4169,11 @@ NewLoadTransAuxGFX:
 
     ; Sheet 4 (variable 1)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet4, X : CMP.b #$FF : BEQ .noBgGfxChange4
+    LDA.w Pool_OWGFXGroupTable_sheet4, X
+    PHX : SEP #$10
+    LDX.b #$04 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    REP #$10 : PLX
+    CMP.b #$FF : BEQ .noBgGfxChange4
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+4 : BEQ .noBgGfxChange4
             TAY
@@ -4163,7 +4191,11 @@ NewLoadTransAuxGFX:
 
     ; Sheet 5 (variable 2)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet5, X : CMP.b #$FF : BEQ .noBgGfxChange5
+    LDA.w Pool_OWGFXGroupTable_sheet5, X
+    PHX : SEP #$10
+    LDX.b #$05 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    REP #$10 : PLX
+    CMP.b #$FF : BEQ .noBgGfxChange5
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+5 : BEQ .noBgGfxChange5
             TAY
@@ -4181,7 +4213,11 @@ NewLoadTransAuxGFX:
 
     ; Sheet 6 (variable 3)
     LDX.b $0E
-    LDA.w Pool_OWGFXGroupTable_sheet6, X : CMP.b #$FF : BEQ .noBgGfxChange6
+    LDA.w Pool_OWGFXGroupTable_sheet6, X
+    PHX : SEP #$10
+    LDX.b #$06 : JSL Oracle_ResolveCustomGraphicsTransitionSheet
+    REP #$10 : PLX
+    CMP.b #$FF : BEQ .noBgGfxChange6
         SEP #$10
         CMP.w TransGFXModule_PriorSheets+6 : BEQ .noBgGfxChange6
             TAY
@@ -4226,6 +4262,9 @@ NMI_UpdateChr_Bg2HalfAndAnimatedLONG:
         ; Source address
         LDA.w NewNMISource1 : STA.w DMA.0_SourceAddrOffsetLow
         LDY.b #$7F          : STY.w DMA.0_SourceAddrBank
+
+        LDA.w NewNMITarget1
+        JSL Oracle_SelectCustomGraphicsTransitionSource
         
         ; Write count
         LDA.w NewNMICount1 : STA.w DMA.0_TransferSizeLow
@@ -4243,6 +4282,9 @@ NMI_UpdateChr_Bg2HalfAndAnimatedLONG:
         ; Source address
         LDA.w NewNMISource2 : STA.w DMA.0_SourceAddrOffsetLow
         LDY.b #$7F          : STY.w DMA.0_SourceAddrBank
+
+        LDA.w NewNMITarget2
+        JSL Oracle_SelectCustomGraphicsTransitionSource
         
         ; Write count
         LDA.w NewNMICount2 : STA.w DMA.0_TransferSizeLow
@@ -4253,6 +4295,8 @@ NMI_UpdateChr_Bg2HalfAndAnimatedLONG:
     .skipSecond
     
     SEP #$20
+
+    JSL Oracle_InvalidateCustomGraphicsCache
     
     STZ.w $0710
 
