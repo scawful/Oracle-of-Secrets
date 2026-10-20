@@ -270,7 +270,7 @@ endif
 ; =========================================================
 ; Somaria Socket Door — hold door held only by a Somaria block
 ;
-; LATENT: no org hook, dispatch slot or room header reaches this yet.
+; LATENT: no vanilla-address hook, dispatch slot or room header reaches this.
 ;
 ; Reversible like RoomTag_SwitchTrigger_HoldDoor ($01C541): open while a
 ; live Somaria block rests on a pressure switch, closed otherwise. Its other
@@ -301,7 +301,21 @@ endif
 ; in Sprite_Main after room tags, so the state is one frame old, as in vanilla.
 ; Rooms with Somaria transit lines ($03F4) never open, and the door closes
 ; while Link carries anything ($0308 bit7) because no switch check runs then.
+;
+; Future room contract: the block's switch probe reads its own floor ($0C7C,X
+; at $088A56), and the tag acts room-wide like the vanilla hold door. Before
+; activation the room needs exactly one accepted pressure plate across all
+; layers, one owner of the shutter state, and no transit lines. The caller
+; must keep the vanilla once-per-frame, $11==$00 room-tag cadence.
+;
+; Allocation: fixed bank $2C tail $2CFD00-$2CFDFF, so the bank $2C
+; continuation used by the code before and after this file is unchanged.
+; Neighbors: main bank $2C stream below (ended at $2CE113 in the control
+; build), CustomRoomCollision at $2CFE00-$2CFEFF, JumpTableLocal_Guard at
+; $2CFF00. This org places code only; it patches no vanilla address.
 
+pushpc
+org $2CFD00
 RoomTag_SomariaSocketDoor:
 {
   SEP #$30
@@ -344,5 +358,7 @@ RoomTag_SomariaSocketDoor:
   SEP #$30
   JML RoomTag_Return
 }
+assert pc() <= $2CFE00 ; do not overlap CustomRoomCollision
+pullpc
 
 pushpc

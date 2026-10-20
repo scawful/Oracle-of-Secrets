@@ -21,6 +21,31 @@ QUALIFYING_SLOT = {0x0C4A: 0x2C, 0x0394: 0x00, 0x03C5: 0x00, 0x0380: 0x00,
 DOOR_WRITES = {0x0468, 0x0469, 0x068E, 0x068F, 0x0690, 0x0691, 0x0011}
 ALLOWED_OPERANDS = {0x001B, 0x0646, 0x0308, 0x03F4, 0x0C4A, 0x0394, 0x03C5,
                     0x0380, 0x03DB, 0x029E, 0x0468, 0x068E, 0x0690, 0x012F, 0x0011}
+ALLOCATION_START = 0x2CFD00
+ALLOCATION_END = 0x2CFE00
+LEGACY_HOOK_ORGS = ["org $01CC18 : JML CustomTag",
+                    "org $01CC10 : JML RoomTag_MinishShutterDoor",
+                    "org $01CC04 : JML RoomTag_MinishSwitch"]
+
+
+def code_lines(text):
+    return [line.split(";", 1)[0].strip() for line in text.splitlines()]
+
+
+def assembled_size(program):
+    size = 0
+    for mnemonic, suffix, operand in program:
+        if mnemonic in ("SEP", "REP"):
+            size += 2
+        elif mnemonic == "DEX":
+            size += 1
+        elif mnemonic in ("BEQ", "BNE", "BMI", "BPL", "BRA"):
+            size += 2
+        elif mnemonic == "JML":
+            size += 4
+        else:
+            size += 1 + {"b": 1, "w": 2}[suffix]
+    return size
 
 
 def routine_lines():
@@ -226,6 +251,31 @@ class SomariaSocketDoorModel(unittest.TestCase):
                          [("Dungeons/custom_tag.asm", f"{ROUTINE}:")])
         for path in ROOT.rglob("hooks.json"):
             self.assertNotIn(ROUTINE, path.read_text(errors="replace"))
+
+    def test_fixed_tail_allocation_is_not_a_hook(self):
+        lines = code_lines(SOURCE.read_text())
+        label = lines.index(f"{ROUTINE}:")
+        self.assertEqual(lines[label - 2:label], ["pushpc", f"org ${ALLOCATION_START:06X}"])
+        orgs = [line for line in lines if line.startswith("org ")]
+        self.assertEqual(orgs, LEGACY_HOOK_ORGS + [f"org ${ALLOCATION_START:06X}"])
+        self.assertEqual(ALLOCATION_START >> 16, 0x2C)
+        collision = (ROOT / "Dungeons" / "Collision" / "custom_collision.asm").read_text()
+        guard = (ROOT / "Core" / "patches.asm").read_text()
+        self.assertIn(f"org ${ALLOCATION_END:06X}", code_lines(collision))
+        self.assertIn("org $2CFF00", code_lines(guard))
+
+    def test_pc_stack_balance_and_end_bound(self):
+        lines = [line for line in code_lines(SOURCE.read_text()) if line]
+        directives = [line for line in lines if line in ("pushpc", "pullpc")]
+        self.assertEqual(directives, ["pullpc", "pushpc", "pullpc", "pushpc"])
+        self.assertEqual(lines[-1], "pushpc")
+        start = lines.index(f"{ROUTINE}:")
+        close = lines.index("}", start)
+        self.assertEqual(lines[close + 1:close + 3],
+                         [f"assert pc() <= ${ALLOCATION_END:06X}", "pullpc"])
+        size = assembled_size(self.program)
+        self.assertEqual(size, 111)
+        self.assertLessEqual(ALLOCATION_START + size, ALLOCATION_END)
 
     def test_routine_has_no_stack_or_subroutine_instructions(self):
         mnemonics = {mnemonic for mnemonic, _, _ in self.program}
