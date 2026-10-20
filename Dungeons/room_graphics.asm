@@ -11,17 +11,17 @@
 ; A new interior door/stair connection into/out of Maple needs its own proof:
 ; native room transitions may retain the main group and zero auxiliary slots.
 ;
-; Storage: new bank $43, $438000-$43BFFF (PC $218000-$21BFFF), outside the
+; Storage: new bank $45, $458000-$45BFFF (PC $228000-$22BFFF), outside the
 ; two-MiB editable base and current source emissions. Bank $42 belongs to Lyra.
-; The full reserved input must be absent/$FF; never overwrite an expanded owner.
+; The full reserved input must be absent/zero; the composed base uses zero padding.
 ; @source usdasm/bank_00.asm Decompress_background_arbitrary $00E78F
 ; @source usdasm/bank_1B.asm Palettes_LoadMultiple $1BEF51
 
 pushpc
 
-!MapleGraphicsAllocation = $438000
-while !MapleGraphicsAllocation < $43C000
-  assert read1(!MapleGraphicsAllocation, $FF) == $FF, "Maple graphics bank $43 allocation is occupied"
+!MapleGraphicsAllocation = $458000
+while !MapleGraphicsAllocation < $45C000
+  assert read1(!MapleGraphicsAllocation, $00) == $00, "Maple graphics bank $45 allocation is occupied"
   !MapleGraphicsAllocation #= !MapleGraphicsAllocation+1
 endwhile
 
@@ -46,7 +46,7 @@ org $1BEF51 ; @hook module=Dungeons name=RoomGraphics_PaletteSource kind=jsl tar
   NOP
 assert pc() == $1BEF56
 
-org $438000
+org $458000
 
 RoomGraphics_BackgroundSource:
 {
@@ -103,7 +103,7 @@ RoomGraphics_PaletteSource:
 }
 
 ; M=16, any DB; A and carry are output/clobbered, X/Y/D/DB unchanged.
-; Absolute-long RAM reads are required: code bank $43 has no low-WRAM mirror.
+; Absolute-long RAM reads are required: code bank $45 has no low-WRAM mirror.
 RoomGraphics_IsMaple:
 {
   LDA.l $7E001B : AND.w #$00FF : CMP.w #$0001 : BNE .no
@@ -149,6 +149,6 @@ RoomGraphics_MaplePalette:
   incbin "../Data/graphics/room_profiles/maple/generated/palettes/dungeon_main.bin"
 RoomGraphics_MaplePaletteEnd:
 assert RoomGraphics_MaplePaletteEnd-RoomGraphics_MaplePalette == 180, "Maple palette must contain 90 BGR555 words"
-assert pc() <= $43C000, "Maple room graphics exceed bank $43 reservation"
+assert pc() <= $45C000, "Maple room graphics exceed bank $45 reservation"
 
 pullpc
