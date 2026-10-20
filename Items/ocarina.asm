@@ -7,6 +7,8 @@
 ; 02 - Song of Storms
 ; 03 - Song of Soaring
 ; 04 - Song of Time
+; 05 - Song of Secrets
+; 06 - Elegy of Stone
 
 ; SFX2_Accomp
 ; SFX2 13 (Previous $3E)
@@ -107,7 +109,22 @@ Song_of_Time:
 
   db End
 }
+; These two short original motifs occupy only the unused tail of the Time
+; replacement. No additional SPC upload or occupied SFX stream is overwritten.
+Song_of_Secrets:
+  %SetInstrument($0D)
+  db $18, $46, D4, A3, D4, F4, E4, D4, End
+Elegy_of_Stone:
+  %SetInstrument($0D)
+  db $18, $46, A3, G3, D3, A3, G3, D3, End
 assert pc() <= $1A922B
+
+; SFX1 $19/$1B were unused/duplicate requests. Disable their paired voices;
+; the original Flute Boy's $0B/$0C pointers and every active SFX stay intact.
+org $1A8BA0 : dw Song_of_Secrets-$1A73B0
+org $1A8BA4 : dw Elegy_of_Stone-$1A73B0
+org $1A8BC8 : db $00
+org $1A8BCA : db $00
 
 ; =========================================================
 
@@ -157,6 +174,14 @@ endif
                   CMP.b #$02 : BEQ .song_of_storms
                   CMP.b #$03 : BEQ .song_of_soaring
                   CMP.b #$04 : BEQ .song_of_time
+                  CMP.b #$05 : BNE +
+                    JSL OcarinaEffect_Secrets
+                    RTS
+                  +
+                  CMP.b #$06 : BNE +
+                    JSL OcarinaEffect_Stone
+                    RTS
+                  +
                   JMP .song_of_healing
     .song_of_time
     LDA.b #$27 : JSR $802F ; Player_DoSfx3
@@ -269,6 +294,8 @@ Link_HandleCardinalCollision_Long:
   RTL
 }
 
+; The restored cane uses vanilla bank-$07 JSR helpers and the shared rod action.
+incsrc "Items/byrna.asm"
 print "Bank07 Free Space: ", pc
 
 org $2B8000
@@ -444,6 +471,8 @@ ResetOcarinaFlag:
 ; 03 - 2 songs (Healing, Storms)
 ; 04 - 3 songs (Healing, Storms, Soaring)
 ; 05 - 4 songs (Healing, Storms, Soaring, Time)
+; 06 - 5 songs (+ Secrets)
+; 07 - 6 songs (+ Stone)
 UpdateFluteSong_Long:
 {
 if !ENABLE_EQUIPMENT_MENU == 1
@@ -452,8 +481,8 @@ if !ENABLE_EQUIPMENT_MENU == 1
   ; choice across save/reload. Restore from it when $030F is 0, validate
   ; against the learned count (garbage or unlearned -> song 1), then sync.
   LDA.l $7EF34C : CMP.b #$02 : BCC .equipment_none
-  CMP.b #$06 : BCC .equipment_count
-  LDA.b #$05
+  CMP.b #$08 : BCC .equipment_count
+  LDA.b #$07
 .equipment_count
   DEC : PHA
   LDA.w CurrentSong : BNE .equipment_check
@@ -473,76 +502,36 @@ if !ENABLE_EQUIPMENT_MENU == 1
   LDA.b #$00 : STA.l SavedOcarinaSong
   RTL
 else
-  LDA $7EF34C : CMP.b #$02 : BCS +
-    JMP .no_songs
+  ; Highest song = min(Flute - 1, 6); keeps the diagnostic legacy selector
+  ; compatible with the same saved learned-count contract as Equipment.
+  LDA.l $7EF34C : CMP.b #$02 : BCC .no_songs
+  CMP.b #$08 : BCC +
+    LDA.b #$07
   +
-    LDA $030F : BNE .song_exists
-      ; if this code is running, we have the flute song 1
-      LDA #$01 : STA $030F
-    .song_exists
-    LDA.b $F6
-    BIT.b #$20 : BNE .left  ; pressed left
-    BIT.b #$10 : BNE .right ; pressed right
-      RTL
-
-    .left ; L Button Pressed - Decrement song
-    ; LDA.b #$13 : JSR Player_DoSfx2
-    DEC $030F
-    LDA $030F : CMP #$00 : BEQ .wrap_to_max
-      BRA .update_song
-
-    .right ; R Button Pressed - Increment song
-    INC $030F
-    LDA $7EF34C : CMP.b #$02 : BEQ .max_1
-                  CMP.b #$03 : BEQ .max_2
-                  CMP.b #$04 : BEQ .max_3
-                  CMP.b #$05 : BEQ .max_4
-      LDA $030F : CMP.b #$05 : BCS .wrap_to_min
-      RTL
-    .max_1
-    LDA $030F : CMP.b #$02 : BCS .wrap_to_min
-      RTL
-    .max_2
-    LDA $030F : CMP.b #$03 : BCS .wrap_to_min
-      RTL
-    .max_3
-    LDA $030F : CMP.b #$04 : BCS .wrap_to_min
-      RTL
-    .max_4
-    LDA $030F : CMP.b #$05 : BCS .wrap_to_min
-    .update_song
-      RTL
-
-    .wrap_to_max
-    LDA $7EF34C : CMP.b #$02 : BEQ .set_max_to_1
-                  CMP.b #$03 : BEQ .set_max_to_2
-                  CMP.b #$04 : BEQ .set_max_to_3
-                  CMP.b #$05 : BEQ .set_max_to_4
-      LDA #$04 : STA $030F : RTL
-
-    .set_max_to_3
-    LDA #$03 : STA $030F : RTL
-
-    .set_max_to_2
-    LDA #$02 : STA $030F : RTL
-
-    .set_max_to_1
-    LDA #$01 : STA $030F : RTL
-
-    .set_max_to_4
-    LDA #$04 : STA $030F : RTL
-
-    .wrap_to_min
-    LDA #$01 : STA $030F
-
-  .not_pressed
+  DEC : STA.b $00
+  LDA.w CurrentSong : BEQ .first_song
+  CMP.b $00 : BCC .input
+  BEQ .input
+.first_song
+  LDA.b #$01 : STA.w CurrentSong
+.input
+  LDA.b $F6 : BIT.b #$20 : BNE .left
+  BIT.b #$10 : BEQ .done
+  INC.w CurrentSong
+  LDA.b $00 : CMP.w CurrentSong : BCS .done
+  LDA.b #$01 : STA.w CurrentSong
   RTL
-
-  .no_songs
-  STZ $030F
+.left
+  DEC.w CurrentSong : BNE .done
+  LDA.b $00 : STA.w CurrentSong
+.done
+  RTL
+.no_songs
+  STZ.w CurrentSong
   RTL
 endif
 }
+incsrc "Items/song_secrets_stone.asm"
 %log_end("Items/ocarina.asm", !LOG_ITEMS)
 
 pushpc ; Bank2B freespace

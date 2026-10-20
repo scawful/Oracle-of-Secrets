@@ -39,7 +39,8 @@ class BuildPipelineReceiptTest(unittest.TestCase):
         self.write('Oracle_main.asm', 'incsrc "Util/macros.asm"\n'
                    'incsrc "Config/feature_flags.asm"\norg $028000 ; @hook module=Core\nRTL\n')
         self.write('Roms/oos999.sfc', 'disposable fixture bytes')
-        for name in ('sheet_overrides.py', 'validate_custom_collision_source.py',
+        for name in ('sheet_overrides.py', 'menu_icon_overrides.py',
+                     'validate_custom_collision_source.py',
                      'validate_expanded_message_source.py'):
             self.write(f'Scripts/Generate/{name}', 'import os,sys\nsys.exit(int(os.getenv("FIXTURE_SOURCE_EXIT", "0")))\n')
         self.write('Scripts/Generate/generate_hack_manifest.py',
@@ -96,6 +97,8 @@ sys.exit(int(os.getenv('FIXTURE_ANALYSIS_EXIT','0')))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.check('source_sprite_sheets')['status'], 'passed')
         self.assertTrue(self.check('source_sprite_sheets')['required'])
+        self.assertEqual(self.check('menu_icon_sheets')['status'], 'passed')
+        self.assertTrue(self.check('menu_icon_sheets')['required'])
         self.assertEqual(self.receipt['state'], 'completed_with_gaps')
         self.assertEqual(self.check('smoke')['status'], 'unavailable')
         hooks = json.loads((self.root / 'Roms/hooks.json').read_text())

@@ -192,6 +192,9 @@ MagicRing_CheckForArmor:
   LDA.b #!RingID_Armor : JSR MagicRing_IsEquipped : BCC .done
     LDA.w $0373 : LSR : STA.w $0373
   .done
+if !DISABLE_MASKS == 0
+  JSL GaroMask_ParryContact
+endif
   RTL
 }
 else
@@ -206,6 +209,9 @@ MagicRing_CheckForArmor:
     LDA $0373 : BEQ +
       LSR : STA $0373
   +
+if !DISABLE_MASKS == 0
+  JSL GaroMask_ParryContact
+endif
   RTL
 }
 endif

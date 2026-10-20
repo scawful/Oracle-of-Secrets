@@ -51,6 +51,7 @@ LinkState_GameboyInDungeonEntrance:
 if !ENABLE_MASK_R_BINDING == 1
   ; Cosmetic GBC transitions must not replace an active mask form.
   LDA.w !CurrentMask : BEQ +
+  CMP.b #$08 : BEQ .return
   CMP.b #$05 : BCC .return
   +
 endif
@@ -71,6 +72,7 @@ LoadOverworld_CheckForGbcLink:
 if !ENABLE_MASK_R_BINDING == 1
   ; Cosmetic GBC transitions must not replace an active mask form.
   LDA.w !CurrentMask : BEQ +
+  CMP.b #$08 : BEQ .return
   CMP.b #$05 : BCC .return
   +
 endif
@@ -94,6 +96,7 @@ OverworldTransition_CheckForGbcLink:
 if !ENABLE_MASK_R_BINDING == 1
   ; Cosmetic GBC transitions must not replace an active mask form.
   LDA.w !CurrentMask : BEQ +
+  CMP.b #$08 : BEQ .return
   CMP.b #$05 : BCC .return
   +
 endif
@@ -123,6 +126,10 @@ pullpc
 LinkState_GameboyForm:
 {
   SEP #$30
+if !ENABLE_MASK_R_BINDING == 1
+  ; A cosmetic world transition must not replace the active Garo form.
+  LDA.w !CurrentMask : CMP.b #$08 : BEQ .return
+endif
   LDA $02B2 : CMP.b #$06 : BEQ .already_gbc
     LDA $0FFF : BEQ .return ; not in dark world
       .transform
