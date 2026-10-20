@@ -2635,3 +2635,16 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   longer in the post game too and yeah require somaria. make sure to update docs
   and start working on the plan and using cursor CLI subagents aggressively to
   help implement these ideas" (scawful, 2026-10-19).
+
+* DECIDED Sky eighth-essence receipt: crystal ceremony and dungeon exit
+  :PROPERTIES:
+  :ASKED_BY: Codex, eighth-essence technical contract
+  :DOC: ~/.context/projects/oracle-of-secrets/scratchpad/handoffs/sky_d8_award_contract_2026-10-20/PLAN.md
+  :END:
+  Room $96 awards Sky's bit $80. The existing crystal ceremony cannot be
+  reused unchanged: its room searches omit $96 and its maiden dialogue is
+  indexed by the shared dungeon ID.
+  Question: should completion use a brief essence pickup that keeps the boss
+  room playable (recommended), or a crystal ceremony followed by automatic
+  dungeon exit? Both leave the revised Maku Seed scene for a separate decision.
+  Answer: "Crystal ceremony; exit the dungeon" (scawful, 2026-10-20).
