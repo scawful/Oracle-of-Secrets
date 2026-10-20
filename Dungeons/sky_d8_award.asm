@@ -183,10 +183,13 @@ SkyD8_CrystalCollector:
 }
 
 ; Entry $029897, M=16 X=8. CrystalBossRooms has no $0096 entry, so Sky
-; does not search it. The 8x8-tile crystal block goes to the center of
+; does not search it. The offset is a source-backed candidate: in the
+; 64x64 BG1 tilemap it places the 8x8-tile crystal block at the center of
 ; Link's quadrant ($21/$23 bit 0), the quadrant CrystalCutscene_SpawnMaiden
 ; uses for the maiden: $0618 + $0040 (right) + $1000 (bottom). Native
-; entries $0658/$1618/$1658 are members of this family.
+; entries $0658/$1618/$1658 are members of this family. That is tilemap
+; layout only; how the crystal actually appears in room $0096 is not
+; natively qualified until root screenshots it in all four quadrants.
 ; Exit: $0298A7 (STA $08) or $02989B (legacy, X=$0E, A=$A0).
 SkyD8_CrystalTilemap:
 {
