@@ -10,10 +10,12 @@
 ;   float -> cast one energy ball ($46) at Link
 ;   Link hits the ball with the Master Sword (sword level >= 2) -> it flies back
 ;   Ganondorf returns it 1-3 times (random), faster each time
+;   he orbits during rallies, with a short return stroke and occasional warps
 ;   the last return hits him -> stunned -> 3 sword hits -> he teleports
+;   between rallies he rises and stomps, dropping the four outer floor edges
 ;   9 sword hits in total -> he dies -> GanondorfFight = 2 -> door opens
 ;
-; Original 32x40 art with trimmed cape edges, shared 16x16 tiles, one $1000 sheet.
+; Original 32x40 art: one $1000 sheet, plus the vanilla $800 falling-floor slot.
 ; Source art and generated OAM tables: Data/graphics/ganondorf/ and
 ; Scripts/Generate/build_ganondorf_art.py.
 ; Lives in free bank $2A, so it costs no bank $30-$32 bytes.
@@ -23,7 +25,9 @@ Ganon_SetupActionHitbox = $06F57E ; SetupActionHitbox_long (Link's weapon box ->
 
 !Ganon_HitsPerStun  = 3
 !Ganon_TotalHits    = 9
-!Ganon_BallSpeed    = $18
+!Ganon_BallSpeed    = $10
+!Ganon_BallSpeedMid = $14
+!Ganon_BallSpeedEnd = $18
 !Ganon_BallSpeedMax = $30
 !Ganon_GlideSpeed   = $08
 
@@ -100,11 +104,17 @@ Sprite_Ganondorf_Prep:
   LDA.b #$FF : STA.w SprMiscD, X ; no ball yet
   STZ.w SprAction, X
   STZ.w SprFrame, X
+  STZ.w SprMiscB, X ; no return stroke during the initial front-facing cast
+  STZ.w SprMiscG, X
+  STZ.w SprSubtype, X ; four falling-floor edges, independent of the hit counter
+  STZ.w SprTimerD, X
+  LDA.b #$C0 : STA.w SprTimerB, X ; give the opening rally room before a warp
   STZ.w SprMiscE, X
   STZ.w SprMiscC, X ; chase facing: 0 front, 1 right, 2 left, 3 back
   LDA.b #$40 : STA.w SprTimerA, X
   JSL ApplyGanondorfGraphics
   JSL ApplyGanondorfPalette
+  LDA.b #$1F : STA.w $012C ; final-boss theme, independent of Kydreeok's death fanfare
   STZ.w BossReinject
   PLB
   RTL
@@ -119,7 +129,8 @@ Ganondorf_Main:
                    Ganondorf_WaitBall,
                    Ganondorf_Stunned,
                    Ganondorf_Teleport,
-                   Ganondorf_Dead)
+                   Ganondorf_Dead,
+                   Ganondorf_Stomp)
 
   ; 0: appear (flicker)
   Ganondorf_Intro:
@@ -140,6 +151,7 @@ Ganondorf_Main:
     JSL Sprite_CheckDamageToPlayer
     LDA.w SprTimerA, X : BNE .wait
       %GotoAction(2)
+      STZ.w SprMiscB, X
       STZ.w SprXSpeed, X
       STZ.w SprYSpeed, X
       LDA.b #!Ganon_FrameChargeA : STA.w SprFrame, X
@@ -170,21 +182,27 @@ Ganondorf_Main:
   Ganondorf_WaitBall:
   {
     JSR Ganondorf_Bob
+    JSR Ganondorf_VolleyMove
+    LDA.w SprTimerD, X : BNE .contact_done
     JSL Sprite_CheckDamageToPlayer
-    ; Swing pose for a moment after each return (SprTimerC set by the ball)
+    .contact_done
+    ; The first cast stays front-facing; later returns face the outgoing ball.
+    LDA.w SprMiscB, X : BEQ .first_cast
+      JSR Ganondorf_SetVolleyPose
+      BRA .check_ball
+    .first_cast
     LDA.w SprTimerC, X : BEQ .pose
       LDA.b #!Ganon_FrameRelease
     .pose
     STA.w SprFrame, X
-
+    .check_ball
     LDY.w SprMiscD, X : BMI .ball_gone
     LDA.w SprState, Y : BEQ .ball_gone
     LDA.w SprType, Y : CMP.b #Sprite_GanonBall : BNE .ball_gone
       RTS
     .ball_gone
     LDA.b #$FF : STA.w SprMiscD, X
-    %GotoAction(1)
-    LDA.b #$40 : STA.w SprTimerA, X
+    JSR Ganondorf_StartStomp
     RTS
   }
 
@@ -215,22 +233,14 @@ Ganondorf_Main:
   Ganondorf_Teleport:
   {
     LDA.w SprTimerA, X : CMP.b #$18 : BNE .no_move
-      JSL GetRandomInt : AND.b #$03 : TAY
-      LDA.w .pos_x_lo, Y : STA.w SprX, X
-      LDA.b $23 : STA.w SprXH, X ; same room quadrant as Link
-      LDA.w .pos_y_lo, Y : STA.w SprY, X
-      LDA.b $21 : STA.w SprYH, X
+      JSR Ganondorf_Relocate
     .no_move
     LDA.w SprTimerA, X : BNE .exit
       LDA.b #$10 : STA.w SprHeight, X
-      %GotoAction(1)
-      LDA.b #$40 : STA.w SprTimerA, X
+      JSR Ganondorf_StartStomp
     .exit
     RTS
 
-    ; Room $00 north arena (absolute coords; room $00 starts at $0000,$0000)
-    .pos_x_lo : db $70, $48, $98, $70
-    .pos_y_lo : db $78, $90, $90, $A8
   }
 
   ; 6: flicker out, then let the door open
@@ -309,7 +319,9 @@ Ganondorf_Chase:
 
 Ganondorf_SpawnBall:
 {
-  LDA.b #Sprite_GanonBall : JSL Sprite_SpawnDynamically : BMI .no_slot
+  LDA.b #Sprite_GanonBall : JSL Sprite_SpawnDynamically : BPL .spawned
+    BRL .no_slot
+  .spawned
     ; Body center is x+8. A 16px ball at x has the same center.
     LDA.w SprX, X : STA.w SprX, Y
     LDA.w SprXH, X : STA.w SprXH, Y
@@ -324,7 +336,13 @@ Ganondorf_SpawnBall:
     STA.w SprAction, Y
     STA.w SprMiscA, Y   ; rally count (Link's returns)
     STA.w SprMiscB, Y   ; 0 = heading to Link, 1 = heading to Ganondorf
+    ; Open slowly; restore the original launch speed for the last three hits.
     LDA.b #!Ganon_BallSpeed : STA.w SprMiscE, Y
+    LDA.w SprMiscF, X : CMP.b #$07 : BCS .speed_ready
+      LDA.b #!Ganon_BallSpeedMid : STA.w SprMiscE, Y
+      LDA.w SprMiscF, X : CMP.b #$04 : BCS .speed_ready
+        LDA.b #!Ganon_BallSpeedEnd : STA.w SprMiscE, Y
+    .speed_ready
     TXA : STA.w SprMiscD, Y ; parent slot
     JSL GetRandomInt : AND.b #$03 : BNE .returns
       INC A
@@ -333,7 +351,7 @@ Ganondorf_SpawnBall:
     TYA : STA.w SprMiscD, X
     PHX
     TYX
-    LDA.b #!Ganon_BallSpeed : JSL Sprite_ApplySpeedTowardsPlayer
+    LDA.w SprMiscE, X : JSL Sprite_ApplySpeedTowardsPlayer
     PLX
     LDA.b #$29 : JSL SpriteSFX_QueueSFX3WithPan
     RTS
@@ -344,6 +362,9 @@ Ganondorf_SpawnBall:
 
 Ganondorf_Draw:
 {
+  LDA.w SprAction, X : CMP.b #$03 : BNE .phase_visibility
+    LDA.w SprTimerD, X : BNE .skip ; one clean vanish around a rally warp
+  .phase_visibility
   LDY.w SprAction, X
   LDA.w .flicker, Y : BEQ .draw
     LDA.b $1A : AND.b #$02 : BEQ .skip
@@ -353,7 +374,171 @@ Ganondorf_Draw:
   .skip
   RTS
 
-  .flicker : db 1, 0, 0, 0, 0, 1, 1
+  .flicker : db 0, 0, 0, 0, 0, 1, 1, 0
+}
+
+; Orbit inside the existing north-arena anchors while the ball is active.
+; Returns get an uninterrupted stroke; a warp never replaces rally action3.
+Ganondorf_VolleyMove:
+{
+  LDA.w SprTimerD, X : BEQ .normal
+    CMP.b #$08 : BNE .done
+      JSR Ganondorf_Relocate
+    .done
+    RTS
+  .normal
+  LDA.w SprTimerC, X : BNE .done
+  LDA.w SprMiscB, X : BEQ .orbit
+  LDA.w SprTimerB, X : BNE .orbit
+  LDY.w SprMiscD, X : BMI .orbit
+  LDA.w SprState, Y : BEQ .orbit
+  LDA.w SprMiscB, Y : BNE .orbit ; only warp while the ball is going to Link
+    LDA.b #$10 : STA.w SprTimerD, X
+    LDA.b #$C0 : STA.w SprTimerB, X
+    RTS
+  .orbit
+  LDA.b #!Ganon_GlideSpeed : JSL Sprite_ApplySpeedTowardsPlayer
+  LDA.w SprXSpeed, X : PHA
+  LDA.w SprYSpeed, X : EOR.b #$FF : INC A : STA.w SprXSpeed, X
+  PLA : STA.w SprYSpeed, X
+  JSL Sprite_Move
+  LDA.w SprX, X : CMP.b #$38 : BCS .x_max
+    LDA.b #$38 : STA.w SprX, X
+  .x_max
+  CMP.b #$A9 : BCC .y_min
+    LDA.b #$A8 : STA.w SprX, X
+  .y_min
+  LDA.w SprY, X : CMP.b #$58 : BCS .y_max
+    LDA.b #$58 : STA.w SprY, X
+  .y_max
+  CMP.b #$B9 : BCC .done
+    LDA.b #$B8 : STA.w SprY, X
+  RTS
+}
+
+Ganondorf_Relocate:
+{
+  JSL GetRandomInt : AND.b #$03 : TAY
+  LDA.w .x, Y : STA.w SprX, X
+  LDA.b $23 : STA.w SprXH, X
+  LDA.w .y, Y : STA.w SprY, X
+  LDA.b $21 : STA.w SprYH, X
+  STZ.w $0D70, X ; X subpixel
+  STZ.w $0D60, X ; Y subpixel
+  RTS
+
+  .x : db $70, $48, $98, $70
+  .y : db $78, $90, $90, $A8
+}
+
+Ganondorf_StartStomp:
+{
+  %GotoAction(7)
+  STZ.w SprMiscG, X
+  STZ.w SprMiscB, X
+  STZ.w SprTimerD, X
+  LDA.b #$18 : STA.w SprTimerA, X
+  LDA.b #!Ganon_FrameCast : STA.w SprFrame, X
+  LDA.w SprGfxProps, X : ORA.b #$40 : STA.w SprGfxProps, X
+  RTS
+}
+
+; Rise, slam, then recover. Floor changes are the native falling-tile overlords.
+Ganondorf_Stomp:
+{
+  LDA.w SprMiscG, X : CMP.b #$02 : BEQ .recover
+  CMP.b #$01 : BEQ .descend
+    LDA.b #!Ganon_FrameCast : STA.w SprFrame, X
+    LDA.w SprHeight, X : CMP.b #$28 : BCS .at_top
+      INC.w SprHeight, X
+    .at_top
+    LDA.w SprTimerA, X : BNE .done
+      INC.w SprMiscG, X
+      LDA.b #!Ganon_FrameRelease : STA.w SprFrame, X
+    .done
+    RTS
+  .descend
+  LDA.w SprHeight, X : SEC : SBC.b #$04 : BCC .impact
+    STA.w SprHeight, X
+    BNE .done
+  .impact
+  STZ.w SprHeight, X
+  LDA.b #$02 : STA.w SprMiscG, X
+  LDA.b #$18 : STA.w SprTimerA, X
+  LDA.b #!Ganon_FrameHurt : STA.w SprFrame, X
+  LDA.b #$07 : STA.w $012D ; vanilla Ganon landing thud
+  LDA.b #$0C : JSL SpriteSFX_QueueSFX2WithPan
+  JSR Ganondorf_SpawnFloorCollapse
+  RTS
+  .recover
+  JSL Sprite_CheckDamageToPlayer
+  LDA.w SprTimerA, X : BEQ .rise_again
+    AND.b #$01 : ASL A : TAY
+    REP #$20
+    LDA.w .shake, Y : STA.w $011C
+    SEP #$20
+    RTS
+  .rise_again
+  STZ.w $011C
+  STZ.w $011D
+  LDA.b #$10 : STA.w SprHeight, X
+  %GotoAction(1)
+  LDA.b #$50 : STA.w SprTimerA, X
+  RTS
+
+  .shake : dw 1, -1
+}
+
+Ganondorf_SpawnFloorCollapse:
+{
+  LDA.w SprSubtype, X : CMP.b #$04 : BCS .done
+  LDY.b #$07
+  .next
+  LDA.w OverlordId, Y : BEQ .free
+    DEY : BPL .next
+    RTS
+  .free
+  LDA.w SprSubtype, X : INC.w SprSubtype, X
+  PHX
+  TAX
+  LDA.w .type, X : STA.w OverlordId, Y
+  LDA.w .x, X : STA.w OverlordX, Y
+  LDA.b $23 : STA.w OverlordXH, Y
+  LDA.w .y, X : STA.w OverlordY, Y
+  LDA.b $21 : STA.w OverlordYH, Y
+  LDA.b #$00
+  STA.w OverlordTimerA, Y
+  STA.w OverlordTimerB, Y
+  STA.w OverlordTimerC, Y
+  PLX
+  .done
+  RTS
+
+  .type : db $0C, $0D, $0E, $0F
+  .x    : db $18, $D8, $D8, $18
+  .y    : db $28, $28, $D8, $D8
+}
+
+; Two return poses plus a draw-only recoil. The initial cast does not use this.
+; Facing: front, right, left, rear. Rear never flashes a front-facing frame.
+Ganondorf_SetVolleyPose:
+{
+  LDY.w SprMiscC, X
+  LDA.w .rest, Y : STA.w SprFrame, X
+  LDA.w SprTimerC, X : BEQ .done
+    CMP.b #$09 : BCC .follow
+      LDA.w .windup, Y
+      BRA .set
+    .follow
+    LDA.w .followthrough, Y
+    .set
+    STA.w SprFrame, X
+  .done
+  RTS
+
+  .rest          : db 0, 6, 7, 8
+  .windup        : db 1, 6, 7, 8
+  .followthrough : db 5, 6, 7, 9
 }
 
 ; =========================================================
@@ -443,8 +628,7 @@ GanonBall_Main:
     STZ.w SprMiscB, X
     JSR GanonBall_SpeedUp
     LDA.w SprMiscE, X : JSL Sprite_ApplySpeedTowardsPlayer
-    LDY.w SprMiscD, X
-    LDA.b #$10 : STA.w SprTimerC, Y
+    JSR GanonBall_SetReturnFacing
     LDA.b #$05 : JSL SpriteSFX_QueueSFX2WithPan
     LDA.b #$29 : JSL SpriteSFX_QueueSFX3WithPan
     RTS
@@ -498,6 +682,42 @@ GanonBall_SpeedUp:
   RTS
 }
 
+; X = ball. Its velocity has just been aimed toward Link. Freeze the parent's
+; return direction here, rather than reusing a chase direction from before casting.
+GanonBall_SetReturnFacing:
+{
+  LDA.w SprXSpeed, X : BPL .x_positive
+    EOR.b #$FF : INC A
+  .x_positive
+  STA.b $00
+  LDA.w SprYSpeed, X : BPL .y_positive
+    EOR.b #$FF : INC A
+  .y_positive
+  CMP.b $00 : BCS .vertical
+  LDA.w SprXSpeed, X : BMI .left
+    LDA.b #$01
+    BRA .set
+  .left
+    LDA.b #$02
+    BRA .set
+  .vertical
+  LDA.w SprYSpeed, X : BMI .back
+    LDA.b #$00
+    BRA .set
+  .back
+    LDA.b #$03
+  .set
+  LDY.w SprMiscD, X
+  STA.w SprMiscC, Y
+  LDA.b #$01 : STA.w SprMiscB, Y
+  LDA.b #$10 : STA.w SprTimerC, Y
+  PHX
+  TYX
+  JSR Ganondorf_SetVolleyPose
+  PLX
+  RTS
+}
+
 ; Point the ball at Ganondorf's body center (x+8, y-height).
 GanonBall_AimAtGanondorf:
 {
@@ -520,6 +740,12 @@ GanonBall_AimAtGanondorf:
 Ganon_DrawFrame:
 {
   JSL Sprite_PrepOamCoord
+  ; Keep world coordinates, hitboxes and the ground shadow fixed during recoil.
+  REP #$20
+  LDA.b $00 : PHA
+  LDA.b $02 : PHA
+  SEP #$20
+  JSR Ganon_ApplyReturnKick
   JSL Sprite_OAM_AllocateDeferToPlayer
 
   LDY.w SprFrame, X
@@ -561,9 +787,35 @@ Ganon_DrawFrame:
   PLX : DEX : BPL .next_tile
 
   PLX
+  REP #$20
+  PLA : STA.b $02
+  PLA : STA.b $00
+  SEP #$20
   RTS
 
   incsrc "ganondorf_frames.asm"
+}
+
+Ganon_ApplyReturnKick:
+{
+  LDA.w SprType, X : CMP.b #Sprite_Ganondorf : BNE .done
+  LDA.w SprAction, X : CMP.b #$03 : BNE .done
+  LDA.w SprMiscB, X : BEQ .done
+  LDA.w SprTimerC, X : BEQ .done
+  LDY.w SprMiscC, X
+  CMP.b #$09 : BCC .follow
+    TYA : CLC : ADC.b #$04 : TAY
+  .follow
+  TYA : ASL A : TAY
+  REP #$20
+  LDA.b $00 : CLC : ADC.w .x_offsets, Y : STA.b $00
+  LDA.b $02 : CLC : ADC.w .y_offsets, Y : STA.b $02
+  SEP #$20
+  .done
+  RTS
+
+  .x_offsets : dw 0, 2, -2, 0, 0, -2, 2, 0
+  .y_offsets : dw 2, 0, 0, -2, -2, 0, 0, 2
 }
 
 ; =========================================================
@@ -656,13 +908,21 @@ ApplyGanondorfGraphics:
   LDX.b #GanondorfGraphics>>16 : STX.w $4304
   LDA.w #$1000 : STA.w $4305
   LDX.b #$01 : STX.w $420B
+  ; Kydreeok replaced both OBJ pages. Restore vanilla falling-floor sheet $33
+  ; in the upper slot before the native falling-tile garnishes need it.
+  LDA.w #$5C00 : STA.w $2116
+  LDA.w #GanondorfFloorGraphics : STA.w $4302
+  LDX.b #GanondorfFloorGraphics>>16 : STX.w $4304
+  LDA.w #$0800 : STA.w $4305
+  LDX.b #$01 : STX.w $420B
   LDX.b #$0F : STX.w $2100
   SEP #$30
   PLX
   RTL
 }
 
-; OBJ palette 4, colors 1-15. Update both live and fade-target buffers;
+; OBJ palette 6, colors 1-15. Palette 4 belongs to the vanilla shadows.
+; Update both live and fade-target buffers;
 ; NMI performs the CGRAM upload. Color 0 remains transparent.
 ApplyGanondorfPalette:
 {
@@ -670,8 +930,8 @@ ApplyGanondorfPalette:
   LDX.w #$001C
   .color
     LDA.l GanondorfPalette+2, X
-    STA.l $7EC682, X
-    STA.l $7EC482, X
+    STA.l $7EC6C2, X
+    STA.l $7EC4C2, X
     DEX : DEX : BPL .color
   SEP #$20
   LDA.b #$01 : STA.b $15
@@ -684,6 +944,9 @@ GanondorfPalette:
 
 GanondorfGraphics:
   incbin ganondorf.bin
+
+GanondorfFloorGraphics:
+  incbin ganondorf_floor.bin
 
 print "End of Ganondorf (bank $2A)        ", pc
 assert pc() <= $2B0000, "Ganondorf code left bank $2A"
