@@ -15,3 +15,10 @@ evidence, debugging guides, status reports) lives in the private AFS context
 | `World/` | Dungeon, overworld, lore, NPC and quest references |
 | `Dev/Planning/*.json` | yaze project registry data (labels, rooms, story events) |
 | `schemas/` | JSON schema for dungeon annotations |
+
+Current private plot and writer handoff (2026-10-20):
+`~/.context/projects/oracle-of-secrets/scratchpad/handoffs/ridoyie_messages_2026-10-20/`.
+Start with `CURRENT_PLOT.md`, then `RIDOYIE_WRITER_PACKET.md` and
+`YAZE_DIALOGUE_GUIDE.md`. These reconcile Lyra Sea shrines, Sky D8, the Abyss
+story role, fixed Farore meetings and the planned Lupo/Fortress swap. World
+registry/map snapshots remain implementation references, not relocation proof.

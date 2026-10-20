@@ -4,7 +4,13 @@ This document details the various systems and enhancements for dungeons and othe
 
 ## Dungeon Maps
 
-Oracle of Secrets contains **7 dungeons** plus the Fortress of Secrets (final dungeon).
+**Current design (2026-10-20):** eight main dungeons. Dragon Ship stays D7;
+Sky tower and islands are required D8. Ship Somaria -> late Courage / Dream 3
+-> Master Sword -> Sky's eighth essence -> Maku Tree / Maku Seed -> the
+separate, shorter Fortress. The Seed clears its visible entrance obstruction.
+
+The recorded entrance and room rows below predate the Sky/sea relocation
+work. Their IDs are snapshots, not proof that the new route is implemented.
 
 | # | Dungeon | Entrance ID | OW | Map | Tracks | Status |
 |---|---------|-------------|-----|-----|--------|--------|
@@ -14,11 +20,20 @@ Oracle of Secrets contains **7 dungeons** plus the Fortress of Secrets (final du
 | D4 | Zora Temple | 0x25 | 0x1E | [Map](ZoraTemple_Map.md) | - | Stub |
 | D5 | Glacia Estate | 0x34 | 0x06 | [Map](GlaciaEstate_Map.md) | - | Stub |
 | D6 | **Goron Mines** | 0x27 | 0x36 | [Map](GoronMines_Map.md) | [Tracks](GoronMines_Tracks.md) | **In Progress** — 4/17 tracks placed (0-3), B1/B2 unfinished |
-| D7 | Dragon Ship | 0x35 | 0x30 | [Map](DragonShip_Map.md) | - | Stub |
+| D7 | Dragon Ship | 0x35 | 0x30 | [Map](DragonShip_Map.md) | - | Recorded location; Somaria and Farore rescue/reveal are current design |
+| D8 | Sky tower and islands | TBD | TBD | [Current route](../Guides/QuestFlow.md) | - | Required Somaria route and eighth essence; scene/layout work pending |
 
-**Final Dungeon:** [Fortress of Secrets](../SpecialAreas/FortressOfSecrets.md) (entrance 0x37) — rooms allocated and connected but skeletal structure; Portal Rod item has bugs
+**Post-Seed Fortress:** [Fortress of Secrets](../SpecialAreas/FortressOfSecrets.md)
+(recorded entrance `0x37`); planned at `$4B` with Lupo moved toward `$5E`.
+The older room/Portal Rod implementation notes are not a current layout audit.
 
 ### Shrine Dungeons
+
+The pendant shrines move to Lyra Sea islands and retain their guest
+interiors. Each pendant dream returns to Maple's Abyss hut. The room IDs
+and implementation notes below are historical census observations; verify
+them before editing. Shrine rewards and the Flippers gift follow the
+[current route](../Guides/QuestFlow.md).
 
 | # | Shrine | Status | Notes |
 |---|--------|--------|-------|

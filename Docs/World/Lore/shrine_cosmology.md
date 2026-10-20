@@ -1,5 +1,16 @@
 # Shrine Cosmology & Side Content Expansion
 
+> **Historical design reference — superseded for current narrative (2026-10-20).**
+> The body below preserves an earlier draft and its proposals; labels such as
+> "Active Development," "Current," and "Design Document" describe that draft.
+> Use [the current beat sheet](../../Planning/story_canon_beat_sheet.md),
+> [the decision log](../../Planning/Status/decisions.org), and
+> [the quest flow](../Guides/QuestFlow.md) for current story and geography.
+> In particular, the Lyra Sea pendant shrines, required Sky D8, post-Sky
+> Maku Seed/Fortress gate, and revised Farore/Meadow Blade timing supersede
+> conflicting passages below. Unapproved Ganon origins, shrine-anchor rules,
+> sword-forging explanations, and elaborate finale proposals are not rulings.
+
 **Status:** Design Document
 **Date:** 2026-01-22
 **Related:** story_bible.md, zora_conflict_plan.md

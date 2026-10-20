@@ -1,13 +1,25 @@
 # Oracle of Secrets - Location Registry
 
-Master index of all indoor locations with entrance IDs.
+**Entrance snapshot:** generated 2026-02-04; not remeasured during the
+2026-10-20 narrative alignment. Tables retain the recorded IDs, map numbers,
+and counts. They are reference observations, not the current story route.
+
+## Current design overlay (2026-10-20)
+
+- **Eight main dungeons:** Dragon Ship remains D7 with Somaria; required Sky is D8.
+- **Late route:** Ship -> late Courage / Dream 3 -> Master Sword -> Sky's eighth essence -> Maku Tree / Maku Seed -> Fortress. The Seed clears its entrance obstruction.
+- **Pendant shrines:** move Wisdom, Power, and Courage to Lyra Sea islands. Their old Abyss map numbers below are not the planned island destinations.
+- **Planned swap:** Fortress to `$4B`, Lupo Mountain toward `$5E`. The table's Fortress `$5E` row remains a snapshot until the relocation is implemented and verified.
+- **Abyss:** retains the Origins tutorial, GBC interior direction, Maple/dream returns, exploration, and volcano finale. See [the current beat sheet](../Planning/story_canon_beat_sheet.md) for narrative authority.
+
+Master index of recorded indoor locations with entrance IDs.
 
 **Source:** `Overworld/entrances.asm` (lines 293-421)
 **Total Entrance Points:** 130+
 
 ---
 
-## Location Summary
+## Historical Location Summary (2026-02-04)
 
 | Category | Count | Documentation |
 |----------|-------|---------------|
@@ -20,7 +32,7 @@ Master index of all indoor locations with entrance IDs.
 
 ---
 
-## Dungeons (7)
+## Recorded Dungeons (7; Sky not yet represented)
 
 | ID | Name | OW Screen | Boss | Documentation |
 |----|------|-----------|------|---------------|
@@ -165,7 +177,7 @@ Master index of all indoor locations with entrance IDs.
 | 0x02 | Hall of Secrets | 0x0E | Farore's Sanctuary |
 | 0x12 | Hall of Secrets Pyramid Route | 0x02 | Secret path |
 | 0x24 | Final Boss Route | 0x46 | Endgame path |
-| 0x37 | Fortress of Secrets | 0x5E | Final dungeon |
+| 0x37 | Fortress of Secrets | 0x5E | Recorded old placement; planned post-Seed Fortress moves to $4B |
 | 0x4E | Zora Temple Waterfall | 0x1E | Temple entrance |
 | 0x59 | Archery Minigame | 0x1A | Minigame |
 
@@ -186,7 +198,8 @@ These are OW screens with special handling (from `special_areas.asm`):
 
 ## Available Entrance IDs
 
-The following IDs appear unused in `entrances.asm`:
+The following IDs appeared unused in the 2026-02-04 `entrances.asm` snapshot.
+This is not a current allocation list; recheck source and ROM before use:
 
 ```
 0x04, 0x08, 0x0F, 0x10, 0x1D, 0x29, 0x36, 0x39, 0x3C, 0x3D,
@@ -210,7 +223,8 @@ The following IDs appear unused in `entrances.asm`:
 
 **Generated from:** `Overworld/entrances.asm`
 **Date:** 2026-02-04
-**Last Updated:** 2026-02-04
+**Snapshot date:** 2026-02-04
+**Narrative overlay added:** 2026-10-20
 
 ### Data Source
 

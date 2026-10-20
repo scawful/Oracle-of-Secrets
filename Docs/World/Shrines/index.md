@@ -1,10 +1,18 @@
 # Shrines
 
-Oracle of Secrets contains 6 shrines - smaller dungeon-like areas that grant Pendants or Essences.
+**Current design (2026-10-20):** three required pendant shrines move to
+Lyra Sea islands, reusing their guest interiors. Wisdom and the Sea Zora
+Flippers gift precede D4; Power precedes D6; Courage requires Ship Somaria
+and remains after D7. Each pendant dream returns Link to Maple's Abyss hut.
+
+The six-entry directory below is an older location snapshot. Its Abyss map
+IDs are not planned sea destinations, and its Sky/Sea entries do not establish
+three additional required essence shrines. The required Sky tower/islands
+are main dungeon D8; Origins remains the early Abyss tutorial.
 
 ---
 
-## Shrine Overview
+## Historical Location Overview (not a relocation receipt)
 
 | Shrine | Entrance ID(s) | OW Screen | Reward | Boss |
 |--------|----------------|-----------|--------|------|
@@ -23,36 +31,39 @@ Shrines differ from full dungeons in several ways:
 
 1. **Size:** Typically 1-3 rooms
 2. **Complexity:** Simpler puzzles focused on a single mechanic
-3. **Rewards:** Pendants (early game) or Essences (late game)
+3. **Rewards:** the three required guest shrines give pendants; the island move does not add new essence rewards.
 4. **Prerequisites:** Often require specific items or story progress to access
 
 ---
 
-## Pendant Shrines (Early Game)
+## Pendant Shrines (distributed through the main route)
 
 The three Pendant Shrines must be completed to obtain the Master Sword:
 
 ### Shrine of Power
-- **Multiple Entrances:** Has 4 entrance points from OW 0x4B
+- **Recorded entrances:** 4 entrance points from old OW 0x4B; island doors remain to be assigned
 - **Boss:** None (intentional shrine design)
 - **Reward:** Pendant of Power
 
 ### Shrine of Courage
-- **Single Entrance:** OW 0x50
+- **Recorded entrance:** old OW 0x50; planned Lyra Sea island
 - **Challenge:** Puzzle-based
 - **Boss:** Vaati (planned, not implemented)
 - **Reward:** Pendant of Courage
 
 ### Shrine of Wisdom
-- **Single Entrance:** OW 0x63
+- **Recorded entrance:** old OW 0x63; planned Lyra Sea island
 - **Challenge:** Puzzle-based
 - **Reward:** Pendant of Wisdom
 
 ---
 
-## Essence Shrines (Late Game)
+## Other Shrine References (historical categories)
 
-The remaining three shrines contain Essences needed for late-game progression:
+These old categories are not an additional required essence quest.
+Origins gives the Moon Pearl during the opening Abyss tutorial. Sky's
+required eighth essence belongs to D8, and the underwater Abyss shrine
+has its own separately scoped design.
 
 ### Shrine of Origins
 *Details TBD*

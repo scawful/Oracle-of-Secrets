@@ -34,6 +34,7 @@ This section provides a high-level overview of the major development efforts (Ep
 
 ** Handoff Notes
 *** Latest Handoff (Lore + Infra Planning)
+    - *Current plot / Ridoyie writing (2026-10-20):* =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/ridoyie_messages_2026-10-20/CURRENT_PLOT.md=; =RIDOYIE_WRITER_PACKET.md=; =YAZE_DIALOGUE_GUIDE.md=.
     - See: =~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Status/handoff_lore_infra_planning_2026-01-24.md=
 
 * Technical Debt & Refactoring
@@ -489,11 +490,12 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [ ] Fix collision of lava pit corner tiles.
     - *RC status (2026-10-06, Claude):* code in RC: tiles $055/$07C become pit type $20 (=Core/patches.asm:33-42=, unflagged). Code only: the original report was never reproduced and no walk/Feather test exists. Needs a Mesen2 check in rooms $73-$76/$83-$86 before ticking. Report: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/tracker_reconciliation_2026-10-06/=.
 
-*** TODO [#C] Dragon Ship Tasks [0/1] :design:
+*** TODO [#A] Dragon Ship D7 rescue and reveal [0/2] :design:story:
     :PROPERTIES:
     :ID: content-dragon-ship
     :END:
-    - [ ] Flesh out ideas for an extended section.
+    - [ ] Stage Farore helping Link during D7; the intervention reveals her power in the Meadow Blade to Kydrog.
+    - [ ] Complete the rescue/Somaria aftermath and selected Farore meetings. No continuous post-D7 follower is required.
 
 *** TODO [#A] Sky D8: required Somaria route and eighth essence [0/4] :design:progression:
     :PROPERTIES:
@@ -504,13 +506,15 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [ ] Integrate the eighth essence without changing the Ship's existing save identity or Soaring acquisition.
     - [ ] Add the eighth Quest essence icon and review its placement.
     - [ ] Choose the dungeon item and boss; Roc's Cape and Heliarch remain concepts.
+    - *2026-10-20 route:* Farore reclaims her power and keeps the Meadow Blade at the pedestal; Link draws the Master Sword. Sky yields essence eight; return to the Tree for the Seed, which opens the shorter Fortress. Farore appears at fixed story encounters; exact Sky interaction remains design work.
     - *Plan:* =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/sky_d8_implementation_2026-10-20/PLAN.md=.
 
-*** TODO [#C] Shrine of Wisdom Swamp Overworld Improvements :planning:
+*** CANCELED [#C] Shrine of Wisdom Swamp Overworld Improvements :planning:
     :PROPERTIES:
     :ID: content-shrine-wisdom
     :END:
-    - *Goal:* Make the swamp area less frustrating and more rewarding to explore.
+    - *Superseded (2026-10-19/20):* all three guest pendant shrines move to Lyra Sea islands. Flippers are a Sea Zora gift; the home is on the first island, with initial pre-Flippers access still open. Retain the old swamp ideas below as historical options, not the current shrine route.
+    - *Historical goal:* Make the swamp area less frustrating and more rewarding to explore.
     - *Ideas:*
       - [ ] Add warp zones that return the player to the start of a section if they fall.
       - [ ] Place shrubs or enemies that drop magic vials to support item usage.
@@ -544,8 +548,8 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [ ] Villager reveal line $200: wire to a Yesterwind villager (registered, not wired to an NPC yet). Source: decisions.org 77c6e8e8..89d8513c; scawful reworks the swamp map into the village.
     - [X] Dialogue audit batch, vanilla write: 9 messages applied 2026-09-26 (decisions.org "Dialogue batch vanilla write"; base SHA-1 517f43a9 -> a5de4a36).
     - [ ] Dialogue audit batch A/B/D, rest (hold C): confirm the expanded diff and the names Toto Ranch / Rock Meat / Pegasus Shoes in the ROM text (Toto Ranch is in Data/dialogue/expanded_messages.json; Pegasus Shoes is not).
-    - [ ] AFTER stable RC (b29): Abyss chunk layout + warp pads DECIDED (decisions.org "Abyss chunk layout and warp pads", 5d2c75bf; grid ~/.context/projects/oracle-of-secrets/scratchpad/archive/repo-slim-2026-10-06/repo/Docs/Planning/Reviews/audit_2026-09-26/overworld_grid.png): block Yesterwind -> Fortress / volcano / Lupo Mountain walking routes (Glove rocks); Fortress barrier with a Master Sword check; seal the volcano until the eruption; remove extra volcano pads, keep the graveyard pad as the finale entry. Bundle with the Glove/Mitt swap (same overworld rocks). Tools: z3ed overworld-render/get-tile/set-tile/sprite edits (dry-run default).
-    - [ ] Chunks: Abyss opens one chunk per return trip (intro; Flippers/Wisdom via LW $25 pad -> $65 -> $63, verify; whirlpool; volcano). Scan warp tiles/crossings before gating.
+    - [ ] Reconcile Abyss approaches for the planned Fortress $4B / Lupo $5E swap. The Seed opens the Fortress; sea islands hold the pendant shrines. Replace the old Master Sword barrier and Abyss-Wisdom/Flippers route before applying chunk/warp edits. Preserve measured entrance/warp snapshots as historical evidence.
+    - [ ] Keep recurring Abyss story visits: intro, each pendant dream/Maple return, songs/bonus discoveries, Master Sword and finale. Check that the Goron/Lupo trip is reachable before D6 without requiring D6's Hammer; exact sea/portal gates remain design work.
 *** TODO [#B] Attract/title history: rewrite text and fix scenes :cutscene:story:
     :PROPERTIES:
     :ID: attract-text-revision
@@ -712,6 +716,7 @@ CLOSED: [2025-12-08 Mon 22:34]
     :END:
     - [X] Collectible Goron Rock Meat from Lupo Mountain.
     - [X] Kalyxian Goron NPC in the desert asks for five sirloins to open the mines.
+    - *Planning update (2026-10-20):* current source uses five Rock Meat, but the route/Mitt delivery is reopened by sea shrines and Lupo's move to old Fortress $5E. No Eon Gorons inside the guest Shrine of Power. Resolve the pre-D6 approach before writing new directions.
     - [ ] Implement Garo NPC. This will be a dialogue-heavy NPC with mysterious warping behavior. (Depends on [[infra-dialogue-docs]]).
     - [ ] Add Gossip Stones that provide hints related to the Shrines or other world lore.
 
@@ -722,17 +727,17 @@ CLOSED: [2025-12-08 Mon 22:34]
     - [X] Deku NPCs inhabit Tail Palace OW after dungeon completion.
     - [ ] Modify the Kiki follower logic to require Bananas instead of Rupees to open the palace.
 
-*** TODO [#B] Implement Dream Sequences [0/6] :sequence:
+*** TODO [#B] Implement the three pendant dreams [0/4] :sequence:
     :PROPERTIES:
     :ID: content-dream-sequences
     :END:
-    - [ ] Deku Business Scrub Dream
-    - [X] Cut Twinrova Ranch Girl Dream (canon ruling 2026-09-02)
-    - [ ] Implement automatic Ranch Girl curse resolution after D5
-    - [ ] Hyrule Castle Dream (Song of Time)
-    - [ ] River Zora King Dream
-    - [ ] Kydrog Sealing Dream
-    - [ ] Mine Collapse Dream
+    - [ ] Wisdom: Captain's guardianship and temptation; revise $205 for the later hiding of Farore's power.
+    - [ ] Power: Farore's appeal to Hyrule and the king's garrison reply ($206-$20B).
+    - [ ] Courage: the Captain's approved healing cue; player performs the actual Song in the finale.
+    - [ ] Each Lyra pendant dream returns Link to Maple's Abyss hut; verify physical wake/return for all three.
+    - *Separate consequence:* Twinrova's D5 defeat permanently lifts the Ranch Girl curse; no return quest or Ranch Girl dream. Its implementation still needs checking.
+    - *Historical dream ideas, not 1.0 requirements:* Deku Business Scrub, Hyrule Castle/Song of Time, River Zora King and Mine Collapse.
+    - *Dated implementation receipts below remain historical; they are not current scene-completion claims.*
     - *RC status (2026-10-06, Claude):* this list is out of date. The RC has three pendant dreams instead (decisions.org dream entries): =Dream_Wisdom=, =Dream_Power=, =Dream_Courage= in Maple's dispatch (=Sprites/NPCs/maple.asm:155-176=). They warp to placeholder rooms ($61/$00/$31) with the timed return on (=!ENABLE_DREAM_RETURN=). No dream scenes yet; the Ranch Girl curse lifting after D5 is only a comment (=ranch_girl.asm:6=). Needs a rewrite of this list by scawful. Report: =~/.context/projects/oracle-of-secrets/scratchpad/handoffs/tracker_reconciliation_2026-10-06/=.
     - *RC status (2026-10-17, Claude):* Wisdom shots 1-2 are staged in the great hall (room $51, PR #167, open); shots 3-6 are not built. Power ($00) and Courage ($31) still land in empty rooms; draft PR #171 loads their own BG sheets. scawful (2026-10-17): "not the best room to spawn into but the fading stuff kinda works". Room choice for Power and Courage is open (the 2026-10-16 ruling kept $00 for 1.0); Courage composition and D7 Farore dialogue need scawful.
 

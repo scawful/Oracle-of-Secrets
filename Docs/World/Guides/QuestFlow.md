@@ -1,146 +1,165 @@
 # Quest & Event Flow
 
-This document outlines the progression of the main story and major side-quests. It details the flags and conditions that control the game's narrative flow, making it easier to understand how events are triggered.
+**Narrative alignment:** 2026-10-20. The current design is eight main dungeons,
+three pendant shrines, a shorter Fortress, and the volcano finale. This guide
+summarizes [the beat sheet](../../Planning/story_canon_beat_sheet.md) and
+[the decision log](../../Planning/Status/decisions.org); it does not establish
+that the scenes, relocations, or new gates are implemented.
 
 ## 1. Main Quest Progression
 
-*This section provides a step-by-step guide to the main story, detailing the sequence of events, required items, and the flags that are set at each milestone.*
+### Opening: the island, Farore, and the Abyss
 
-### Chapter 0: A Hero is Born
+1. The Mirror breakthrough draws Hyrule to Kalyxo. Farore's disclosure of the
+   prison helps cause the occupation. She appoints Kydrog as its guardian;
+   his fall and his lost crew are revealed later.
+2. The later Mirror experiment precedes the goddesses summoning Link. Impa
+   finds him after his arrival; he wakes in a villager's house on Loom Beach.
+3. Link meets Impa, passes the village blockade, and meets Farore in the
+   western forest. Kydrog ambushes them, takes Farore, and banishes Link.
+4. Link reaches the Abyss pyramid area, follows the guidance to the **Shrine
+   of Origins**, uses Minish form, and obtains the **Moon Pearl** there.
+5. The Eon Owl directs him toward the **Forest of Dreams** sword and shield.
+   The approved exit is a scripted return to Kalyxo, followed by the Maku
+   Tree's briefing and the route to Mushroom Grotto.
 
-1.  **Trigger:** The game begins.
-2.  **Events:**
-    *   The Farore intro sequence plays, explaining the backstory of the Triforce and the sealing of the Sacred Realm.
-    *   Link is shipwrecked and awakens in the Eon Abyss.
-    *   The Kydrog intro sequence plays, showing the game's antagonist.
-    *   Link is transported to the Temporal Pyramid.
-3.  **Player Actions:**
-    *   Navigate the Temporal Pyramid to find the **Moon Pearl**.
-    *   Exit the pyramid to arrive in the Forest of Dreams.
-    *   Obtain the **Lv1 Sword and Shield**.
-4.  **Progression Flags:**
+The Pearl is not obtained inside the Temporal Pyramid. The Abyss interior
+art direction is GBC style; pendant shrines move to the 16-bit Lyra Sea.
 
-| Flag       | Address  | Value/Bit      | Notes                               |
-|------------|----------|----------------|-------------------------------------|
-| `GameState`| `$7EF3C5`| `0x02`         | Set after the Farore intro.         |
-| `OosProg2` | `$7EF3C6`| `bit $04` set  | Set after the Kydrog intro.         |
+### D1: Mushroom Grotto -> Ocarina and Song of Healing
 
-### Chapter 1: The Maku Tree Awakens
+1. Link completes the first dungeon and claims the first essence.
+2. Post-D1 guidance connects Twinrova's essence search to the missing Ranch
+   Girl. The Mushroom/Powder chain explains that powder reveals magically
+   transformed creatures and points to the strange Cucco at Toto Ranch.
+3. Revealing the Ranch Girl temporarily grants the **Ocarina**. Her next
+   destination is the Mask Salesman at Tail Pond; set that objective after
+   the Ocarina receipt.
+4. The Mask Salesman teaches the **Song of Healing**. Freeing the withered
+   Deku Scrub's soul gives the **Deku Mask**.
 
-1.  **Trigger:** Player talks to the Maku Tree for the first time (`Sprites/NPCs/maku_tree.asm`).
-2.  **Events:** The Maku Tree speaks to Link, explaining the plight of the land.
-3.  **Reward:** A Heart Container is given to the player (`Link_ReceiveItem` with Y=`$3E`).
-4.  **Note:** Impa grants the **Mirror of Time** in the Hall of Secrets (planned; setter TBD).
-4.  **Progression Flags & Consequences:**
+### D2: Tail Palace -> library and Kalyxo Castle
 
-| Flag            | Address  | Value/Bit     | Consequence                                                              |
-|-----------------|----------|---------------|--------------------------------------------------------------------------|
-| `MakuTreeQuest` | `$7EF3D4`| `0x01`        | The Maku Tree will now use a different dialogue branch on subsequent talks. |
-| `MapIcon`       | `$7EF3C7`| `0x01`        | A red 'X' appears on the map over the Mushroom Grotto.                   |
-| `OOSPROG`       | `$7EF3D6`| `bit $02` set | A major story flag indicating the quest has officially begun.            |
+Link completes Tail Palace, then follows the Pegasus Shoes/library route
+for the **Book of Secrets** and access to Kalyxo Castle. The Ranch Girl and
+Mask Salesman beats belong before D2, rather than becoming a second Ocarina
+quest here. Item receipts and the deferred Journal need source-level review;
+this narrative update does not change them.
 
-### Chapter 2: The Mushroom Grotto (D1)
+### D3: Kalyxo Castle -> Meadow Blade
 
-1.  **Trigger:** Player enters the Mushroom Grotto, west of Wayward Village.
-2.  **Events:** Player navigates the dungeon, facing the Vampire Bat miniboss and the Mothra boss.
-3.  **Reward:** **Bow**.
+Link claims the third essence and the **Meadow Blade**. Kydrog abandoned this
+sword before Farore hid her power in it. She chose it because its former
+use as the guardian's sword left a connection to the prison. The timing
+must remain clear in the dreams: Farore's power was not already in the
+blade when she first appointed the Captain.
 
-### Chapter 2.5: Tail Pond and the Withered Deku Scrub (Main Quest Beat)
+Farore's callouts begin here. Kydrog does not discover where she concealed
+her power until her intervention during D7.
 
-1.  **Trigger:** After completing D1 and obtaining the Mushroom.
-2.  **Player Actions:**
-    *   Trade the Mushroom to the witches east of the castle to obtain **Magic Powder** / collectible bag.
-    *   Follow the post-D1 report that the Ranch Girl vanished after a witch questioned her about the essences.
-    *   Learn that Magic Powder reveals creatures hidden by transformation magic, and that a strange Cucco appeared at **Toto Ranch (OW 0x00)** when the girl vanished.
-    *   Use the Magic Powder on that Cucco. The Ranch Girl appears temporarily and gives Link the **Ocarina**.
-    *   Follow the Ranch Girl's direction to the Mask Salesman; this is when the Tail Pond map marker should be set.
-    *   Visit **Tail Pond (OW 0x2D)** and speak with the Happy Mask Salesman.
-    *   Learn the **Song of Healing** and use it on the withered Deku Scrub outside the shop.
-3.  **Reward:** **Deku Mask** (progression item).
+### Shrine of Wisdom -> D4 Zora Temple
 
-### Chapter 3: The Tail Palace (D2)
+The Sea Zora's **Flippers** gift precedes the Lyra Sea **Shrine of Wisdom**.
+The shrine gives the **Pendant of Wisdom**, followed by Dream 1 about the
+Captain's guardianship and temptation. Link wakes in Maple's Abyss hut.
+Wisdom and Flippers are required before **Zora Temple**. The shrine's old
+Abyss-swamp placement and its former Flippers reward are superseded plans.
+The Sea Zora approach and the island gate still need level review.
 
-1.  **Trigger:** Player enters Tail Palace.
-2.  **Events:** Player defeats the boss, a vanilla-style Big Moldorm.
-3.  **Reward:** **Roc's Feather**.
-4.  **World State Changes:** After completion, Deku NPCs will appear in the overworld area near Tail Palace.
+D4 develops the Zora conflict and awards the fourth essence. The Zora Mask
+and post-D4 Song of Storms/whirlpool route remain part of this middle game.
 
-### Chapter 4: The Path to the Castle
+### D5 Glacia Estate -> Shrine of Power -> D6 Goron Mines
 
-1.  **Trigger:** This is a multi-part quest chain required to access Kalyxo Castle.
-2.  **Player Actions:**
-    *   **Ocarina:** Complete the required Ranch Girl/Ocarina quest at Toto Ranch.
-    *   **Song of Healing:** Learn the Song of Healing from the Happy Mask Salesman (Tail Pond).
-    *   **Pegasus Shoes:** Play the Song of Healing for the sick child in Wayward Village to receive the Pegasus Shoes.
-    *   **Book of Secrets:** Use the Pegasus Shoes to get the Book of Secrets from the village library.
-3.  **Consequence:** The Book of Secrets is required to open the gates to Kalyxo Castle.
+1. Link defeats Twinrova in Glacia Estate and claims the fifth essence.
+   Their defeat permanently breaks the Ranch Girl's curse automatically;
+   it creates no required return trip or additional healing quest.
+2. The Lyra Sea **Shrine of Power** gives the **Pendant of Power** before D6.
+   Dream 2 shows Farore's appeal to Hyrule; Link wakes in Maple's Abyss hut.
+   The reused guest shrine has no Eon Gorons inside it.
+3. The Goron/Rock Meat route leads to **Goron Mines** and its sixth essence.
+   The shrine-island gate and revised lifting-item route need level review.
+4. Hammer opens the later East Kalyxo route. The River Zora reconciliation
+   and Sky approach give the region middle-game story weight.
 
-### Chapter 5: Kalyxo Castle (D3)
+**Geography direction:** move the Fortress to the central Kalyxo Castle
+mirror at `$4B`, and move Lupo Mountain toward the former Fortress area at
+`$5E`. This is a plan, not a verified entrance or terrain change. Keep the
+Eon Goron/Rock Meat story separate from the relocated guest shrine.
 
-1.  **Trigger:** Player enters Kalyxo Castle.
-2.  **Required Items:** Book of Secrets.
-3.  **Events:** Player defeats the Armos Knights boss.
-4.  **Reward:** **Meadow Blade (Lv2 Sword)**.
+### D7: Dragon Ship -> Farore rescued and Somaria
 
-### Chapter 6: The Shrine of Wisdom (S1)
+Farore helps Link during the ship encounter, exposing the power hidden in
+the Meadow Blade. Kydrog learns its location through that intervention.
+Link defeats pirate Kydrog, rescues Farore, and obtains the **Somaria Rod**
+and seventh essence. Kydrog retreats to the Abyss; his next plan needs design.
 
-1.  **Trigger:** Player enters the Shrine of Wisdom.
-2.  **Events:** Player must navigate a swampy overworld area.
-3.  **Reward:** **Zora Flippers**.
+The rescue starts a playable partnership. Express it through selected NPC
+placements and useful encounters using Farore's available sprite. Exact
+stops and interactions remain design work; no continuous follower is required.
+Her power remains in the blade until the pedestal scene.
 
-### Chapter 7: Zora Temple (D4)
+### Late Courage -> Dream 3 -> Master Sword
 
-1.  **Trigger:** Player enters the Zora Temple.
-2.  **Required Items:** Zora Flippers.
-3.  **Events:** Player defeats an advanced variant of the Arrghus boss.
-4.  **Reward:** **Hookshot**, **Zora Mask** (via side-quest within the dungeon).
+1. The Lyra Sea **Shrine of Courage** requires Somaria, so it remains after
+   D7. Its story reward is the **Pendant of Courage**.
+2. Dream 3 teaches the healing action through the Captain's voice. Link
+   wakes in Maple's Abyss hut, as after the other pendant dreams.
+3. At the pedestal, Farore takes her power back into herself and keeps the
+   **Meadow Blade**. Link draws the **Master Sword**. The sword is pulled,
+   not forged; Farore's power does not move into the Master Sword.
 
-### Chapter 8: Glacia Estate (D5)
+### D8: Sky tower and islands
 
-1.  **Trigger:** Player enters Glacia Estate.
-2.  **Note:** **Goldstar** is an optional upgrade from the "Old Man Mountain Quest" (Lava Lands) and is not required for entry.
-3.  **Events:** Player navigates ice puzzles and defeats the Twinrova boss.
-4.  **Reward:** **Fire Rod**.
+Sky is the eighth required main dungeon. The tower is the first entrance,
+Somaria is required, and the previously learned Song of Soaring retains its
+travel use. The lower tower reuses Hylian garrison structures; the upper
+structures expose their Watcher origins. Farore participates through selected
+encounters. Exact puzzles, encounters, dungeon item, and boss remain open.
+Sky awards the **eighth essence**.
 
-### Chapter 9: The Shrine of Power (S2)
+### Maku Tree -> Maku Seed -> Fortress of Secrets
 
-1.  **Trigger:** Player enters the Shrine of Power.
-2.  **Reward:** **Power Glove**.
+Return to the Maku Tree after Sky with all eight essences. The **Maku Seed**
+clears the visible obstruction at the Fortress entrance. This replaces the
+old Master Sword-only entrance barrier. The Fortress is a shorter, separate
+late-game location, not D8. Its Dark Link encounter belongs to Kydrog's arc.
+The route from the Fortress to the volcano prison still needs design.
 
-### Chapter 10: Goron Mines (D6)
+### Volcano finale and ending
 
-1.  **Trigger:** Player enters the Goron Mines.
-2.  **Required Items:** **Power Glove**, Completion of the "Goron Mines Quest".
-3.  **Events:** Player defeats the Lanmolas and the King Dodongo (Helmasaur variant) boss.
-4.  **Reward:** **Hammer**.
-5.  **Post-Dungeon Reward:** **Titan's Mitt** (desert area unlocked after D6).
+The established elements are the **Kydreeok encounter**, the player's
+**Song of Healing** finisher, and the **Ganon battle**. The detailed restored
+Kydrog choice, Farore's binding action, Ganon's origin and breakout mechanism,
+and final Seed/renewal staging need reconciliation. Neither rescuing Farore
+nor playing the song should be assigned an unapproved prison-opening effect.
+No additional multi-NPC combat system is implied by this route.
 
-### Chapter 11: Dragon Ship (D7)
+## Historical implementation notes
 
-1.  **Trigger:** Player enters the Dragon Ship.
-2.  **Reward:** **Somaria Rod**.
+The following addresses and observations were carried by the older guide.
+They were not retraced or runtime-tested during the 2026-10-20 narrative edit.
+Use `Data/planning/Story_Event_Graph.md` and current source for implementation
+work; a changed plot does not establish a changed flag setter.
 
-### Chapter 12: The Shrine of Courage (S3)
+| Flag | Address | Recorded value/bit | Older guide observation |
+|------|---------|--------------------|-------------------------|
+| `GameState` | `$7EF3C5` | `0x02` | Older description: set after the Farore intro; exact scene/setter needs source review. |
+| `OosProg2` | `$7EF3C6` | `bit $04` | Older description: set after the Kydrog intro. |
+| `MakuTreeQuest` | `$7EF3D4` | `0x01` | Maku Tree dialogue branch changes. |
+| `MapIcon` | `$7EF3C7` | `0x01` | Mushroom Grotto objective. |
+| `OOSPROG` | `$7EF3D6` | `bit $02` | Older guide identifies this as the quest-start flag. |
 
-1.  **Trigger:** Player enters the Shrine of Courage.
-2.  **Events:** Player defeats the boss Vaati (Vitreous variant).
-3.  **Reward:** **Mirror Shield**.
-
-### Chapter 13: Fortress of Secrets (D8)
-
-1.  **Trigger:** Player enters the Fortress of Secrets.
-2.  **Events:** Player defeats Dark Link.
-3.  **Reward:** **Portal Rod**.
-
-### Chapter 14: The Eon Core (Endgame)
-
-1.  **Trigger:** Player enters the final dungeon.
-2.  **Events:** Player faces the final bosses: Kydreeok and Ganon.
-3.  **Reward:** **The Triforce**.
+The older guide records `Link_ReceiveItem` with `Y=$3E` for the first Maku
+Tree Heart Container, and a planned Impa Mirror grant in the Hall of Secrets
+with its setter untraced. These are implementation notes, not new story rulings.
 
 ---
 
-## 2. Major Side-Quests
+## 2. Quest Reference
+
+These existing item/flag notes were not runtime-refreshed for this narrative edit.
+The Ranch Girl and Mask Salesman chain is required main-path progression.
 
 ### The Lost Ranch Girl (Ocarina Quest)
 
@@ -184,11 +203,14 @@ automatically and does not create a return quest.
 ### Goron Mines Quest
 
 1.  **Trigger:** Player needs to open the Goron Mines.
-2.  **Required Item:** Power Glove.
+2.  **Required Item:** Lifting-item access; reconcile the Glove/Mitt route with the current level plan.
 3.  **Action:**
     *   Collect five pieces of Goron Rock Meat from Lupo Mountain.
     *   Give the five pieces to the Kalyxian Goron NPC in the desert.
 4.  **Consequence:** The Goron NPC opens the entrance to the Goron Mines.
+
+The planned Lupo relocation is `$5E`; the old `$4B` location is a map snapshot,
+not the intended location of the relocated Shrine of Power.
 
 ### The Magic Bean
 

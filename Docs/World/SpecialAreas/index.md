@@ -1,6 +1,12 @@
 # Special Areas
 
-Oracle of Secrets contains several unique locations that don't fit standard categories.
+Oracle of Secrets contains several unique locations that do not fit standard categories.
+
+**Narrative alignment (2026-10-20):** the Fortress follows required Sky D8 and
+the Maku Tree/Seed return. The Seed clears its visible entrance obstruction.
+The planned geography moves the Fortress to `$4B` and Lupo Mountain toward
+`$5E`. The directory retains old recorded map IDs until implementation is
+verified; it does not certify a completed relocation.
 
 ---
 
@@ -11,7 +17,7 @@ Oracle of Secrets contains several unique locations that don't fit standard cate
 | 0x02 | Hall of Secrets | 0x0E | Farore's Sanctuary |
 | 0x12 | Hall of Secrets (Pyramid Route) | 0x02 | Secret path |
 | 0x24 | Final Boss Route | 0x46 | Endgame path |
-| 0x37 | Fortress of Secrets | 0x5E | Final dungeon |
+| 0x37 | Fortress of Secrets | 0x5E | Historical placement; planned post-Seed Fortress at $4B |
 | 0x59 | Archery Minigame | 0x1A | Minigame |
 
 ---
@@ -37,15 +43,17 @@ The Hall of Secrets serves as the game's central narrative hub where Farore prov
 
 ### Fortress of Secrets (0x37)
 
-**Location:** OW 0x5E
-**Purpose:** Final dungeon
+**Recorded location:** OW `$5E`; planned move to `$4B`.
+**Purpose:** Shorter post-Sky, post-Seed location with Dark Link in Kydrog's arc.
 
-The Fortress of Secrets is the climactic dungeon where the final confrontation takes place.
+The Fortress leads toward the volcano finale. Exact interior changes and
+the route to the prison remain design work; a final boss at the top of a
+multi-floor fortress is not established. See [the Fortress guide](FortressOfSecrets.md).
 
-**Features:**
-- Multi-floor dungeon structure
-- Final boss encounter
-- Requires all story items to enter
+**Current route:**
+- Complete Sky D8 and obtain the eighth essence.
+- Return to the Maku Tree for the Maku Seed.
+- Use the Seed to clear the visible Fortress entrance obstruction.
 
 ---
 

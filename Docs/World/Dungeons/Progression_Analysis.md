@@ -1,5 +1,10 @@
 # Oracle of Secrets - Progression Analysis
 
+**Narrative alignment:** 2026-10-20. The design has eight main dungeons;
+Sky is D8 and the Fortress follows the Maku Seed return. The room/floor
+figures below remain the 2026-09-26 census, not a fresh ROM measurement.
+See [the beat sheet](../../Planning/story_canon_beat_sheet.md) for current intent.
+
 ## Dungeon Progression
 
 | # | Dungeon | Theme | Rooms | Floors | Enemy | Puzzles | Required Items |
@@ -7,12 +12,16 @@
 | 1 | Mushroom Grotto | forest | 15 | 1 | low | simple | - |
 | 2 | Tail Palace | palace | 16 | 1 | low | moderate | - |
 | 3 | Kalyxo Castle | castle | 22 | 2 | moderate | moderate | - |
-| 4 | Zora Temple | water | 16 | 1 | moderate | high | Zora Flippers (Shrine of Wisdom) |
+| 4 | Zora Temple | water | 16 | 1 | moderate | high | Sea Zora Flippers gift + Shrine of Wisdom |
 | 5 | Glacia Estate | ice | 19 | 1 | high | high | - |
-| 6 | Goron Mines | fire/mine | 19 | 3 | high | moderate | Shrine of Power (Eon Gorons) |
-| 7 | Dragon Ship | naval/ship | 22 | 1 | very_high | high | - |
+| 6 | Goron Mines | fire/mine | 19 | 3 | high | moderate | Shrine of Power + Goron/Rock Meat route |
+| 7 | Dragon Ship | naval/ship | 22 | 1 | very_high | high | Earlier Song of Soaring route |
+| 8 | Sky tower and islands | sky / Watcher structures | TBD | TBD | TBD | TBD | Ship Somaria; late Courage / Dream 3 / Master Sword first |
 
-Rooms: from `Docs/Dev/Planning/dungeons.json`, census 2026-09-26. Required Items: per `Docs/Planning/story_canon_beat_sheet.md` beats 15, 20 and `Docs/Planning/Status/decisions.org:151`.
+Rooms: from `Docs/Dev/Planning/dungeons.json`, census 2026-09-26. The D8
+row is planned progression and is excluded from that measured total. Item
+and gate descriptions follow the current beat sheet; exact island access
+and lifting-item routes still need level review.
 
 ## Bosses and Dungeon Items
 
@@ -24,9 +33,16 @@ Rooms: from `Docs/Dev/Planning/dungeons.json`, census 2026-09-26. Required Items
 | Zora Temple | Arrghus (advanced variant) | - | TBD |
 | Glacia Estate | Twinrova (Sprites/Bosses/twinrova.asm) | - | TBD |
 | Goron Mines | King Dodongo | Lanmolas | Hammer, Fire Shield |
-| Dragon Ship | Kydrog, pirate form (Sprites/Bosses/kydrog_boss.asm; fight to-build per beat 23) | - | TBD |
+| Dragon Ship | Kydrog, pirate form (`Sprites/Bosses/kydrog_boss.asm`; rescue/reveal staging to build) | - | Somaria Rod |
+| Sky D8 | Open | Open | Open |
 
 ## Shrines
+
+The three pendant shrines move to **Lyra Sea islands**, reusing their guest
+interiors. Wisdom and the Sea Zora Flippers gift precede D4; Power precedes
+D6; Courage requires Ship Somaria and stays after D7. Each pendant dream
+returns Link to Maple's Abyss hut. These are design changes, not a report
+that entrance and exit records have been moved.
 
 | Shrine | Rooms | Theme |
 |--------|-------|-------|
@@ -34,9 +50,17 @@ Rooms: from `Docs/Dev/Planning/dungeons.json`, census 2026-09-26. Required Items
 | Shrine of Power | 8 | ancient |
 | Shrine of Wisdom | 7 | ancient |
 
-## Summary
+## Late route and geography
 
-- **Total Dungeons:** 7
-- **Total Dungeon Rooms:** 129 (from Docs/Dev/Planning/dungeons.json, census 2026-09-26)
-- **Total Shrines:** 6 (3 pendant shrines tabled above, 3 essence shrines TBD; Shrines/index.md)
-- **Total Caves:** 33 (Caves/index.md)
+Farore's D7 intervention reveals the blade's hidden power to Kydrog before
+her rescue. At the pedestal, Farore reclaims her power and keeps the Meadow
+Blade; Link draws the Master Sword. Their partnership uses selected NPC
+placements, not continuous following. After Sky's eighth essence, the Maku
+Seed clears the Fortress entrance. The planned Fortress `$4B` / Lupo `$5E`
+swap remains separate from verified ROM placement.
+
+## Counts and evidence
+
+- **Current design:** 8 main dungeons, 3 pendant shrines, and a separate shorter Fortress.
+- **Historical dungeon-room census:** 129 rooms across D1-D7 (`Docs/Dev/Planning/dungeons.json`, 2026-09-26); Sky is not counted.
+- **Historical location categories:** 6 shrine entries and 33 caves in the older directories. Those categories do not establish three additional required essence shrines.

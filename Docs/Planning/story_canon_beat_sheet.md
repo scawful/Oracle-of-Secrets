@@ -1,6 +1,6 @@
 # Story Canon Beat Sheet
 
-Date: 2026-10-19 (revision 5; Sky D8 order and Somaria requirement)
+Date: 2026-10-20 (revision 12; reconciled Lyra, Abyss, Sky and Lupo/Fortress planning)
 Authority: scawful's rulings, normalized from the decision log and story reviews.
 This sheet supersedes conflicting claims in older narrative documents.
 
@@ -51,13 +51,21 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
 
 ## Core rulings (the seven cruxes)
 
-1. **Farore is the Oracle bound to the Meadow Blade** `[DECIDED]`.
-   Kydrog's abandoned knight-sword became her power's vessel; he kidnapped her
-   body to force its release. Matches implemented msg `0x70`. Her callouts to
-   Link (starting at D3) are deliberately ambiguous — the player assumes
-   ship-telepathy; the reveal recontextualizes them as the blade `[DECIDED —
-   confirmed working, keep callouts location-vague]`. Body rescued at D7;
-   power released at the Master Sword pedestal (beat 25).
+1. **Farore hides her power in the Meadow Blade until the pedestal scene** `[DECIDED]`.
+   `[DECIDED 2026-10-20]` Kydrog abandons his guardian sword first; Farore
+   subsequently hides her power inside it. She chooses it because it retains
+   a connection to the prison from Kydrog's guardianship `[DECIDED 2026-10-20]`.
+   He kidnapped her
+   body to force its release. The D3 callout exists, but the older `0x70`
+   inventory explicitly identifies the blade as her vessel; intended ambiguity
+   needs live-text verification and revision. Keep the earlier callouts
+   location-vague so D7 can reveal their source `[DECIDED framing;
+   TO-VERIFY / TO-REVISE text]`. `[DECIDED 2026-10-20]`
+   Farore reveals the blade's hidden power by helping Link during D7;
+   Kydrog learns where it is through that intervention. Body rescued at D7;
+   `[DECIDED 2026-10-20]` At the Master Sword pedestal (beat 25), Farore takes
+   her power back into herself and keeps the Meadow Blade while Link draws
+   the Master Sword. This replaces the power-into-Master-Sword proposal.
 2. **The Eon Abyss is the prison** `[DECIDED, partial adoption]`.
    **Villain chain** `[DECIDED 2026-09-26, `Docs/Planning/Status/decisions.org` "Villain chain";
    replaces the earlier "Ganon residue" / garrison reading]`:
@@ -65,10 +73,11 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
       garrison "to guard the Golden Power" (islanders see an invasion; msg
       `0x112` stands). D3 Kalyxo Castle's occupation lore and the seal story
       are one history.
-   2. Farore makes Kydrog, a garrison knight, the prison's guardian and binds
-      her power into his sword as the seal's key.
+   2. Farore makes Kydrog, a garrison knight, the prison's guardian.
    3. The prison corrupts him; he dies and rises as the Stalfos Pirate King;
       his dead men are his crew. He abandons the sword (the Meadow Blade).
+      Farore subsequently hides her power inside it `[DECIDED 2026-10-20]`;
+      this replaces the earlier binding-at-appointment account.
    4. The prison holds the half-revived beast Ganon from the Oracle games'
       failed revival (msg `0x136`). Twinrova hunt essences to finish it and
       die in D5; Kydrog carries the revival on and kidnaps Farore's body to
@@ -76,37 +85,61 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
    5. Kydrog's motive is tragic: the prison promises the Golden Power can
       bring his men back. His pirate-skeleton humor is a coping mechanism for
       his death and his men's deaths.
-3. **Kydreeok is Kydrog's Abyss form** `[DECIDED — supersedes the TotK
-   dragonification framing]`. The Golden Power reshapes you to your heart
-   (msg `0x15B`); in Kalyxo he is the Stalfos Pirate King, in the Eon Abyss
-   his true corrupted shape is a giant skeletal Gleeok. No dragon-tear
-   mechanic — this is the hack's dark-world-transformation logic.
-4. **Kydreeok finale; Song of Healing finisher; Ganon breakout** `[DECIDED]`.
+   Present limitation selected in the 2026-10-20 review: Ganon needs
+   Kydrog's guardian access and Farore's Oracle authority to alter his
+   imprisonment. `[OPEN]` The exact mechanism and Ganon's failed-revival /
+   surviving-consciousness history remain under review; the September 26
+   account above is not a mandate for new exposition before that choice.
+3. **Dark Link and Kydreeok are both Kydrog's Abyss forms**
+   `[DECIDED 2026-10-20]`. Encounter order: Dark Link in the Fortress,
+   Kydreeok in the prison, then Ganon. The Golden Power reshapes forms
+   (msg `0x15B`); the shadow-Link origin proposal and exact dialogue remain
+   open. No TotK dragon-tear mechanic is implied.
+4. **Kydreeok finale; player-performed Song of Healing; Ganon confrontation**.
    Fight first, redemption second: sever the heads, they regrow — all heads
    must be down simultaneously to win `[DECIDED mechanics]`. Then the Song of
    Healing frees the knight: Kydreeok is the prison's corruption of him, not
    his heart. Post-healing form: human `[DECIDED 2026-09-26, villain chain]`.
-   Then **Ganon breaks out** and alternates between Ganondorf (energy-ball
-   volleys) and the beast, per msg `0x15B` "reshapes you to your heart";
-   vanilla Ganon parts may be reused `[DECIDED 2026-09-26, `Docs/Planning/Status/decisions.org`;
-   replaces the earlier wordless custom-beast coda]`.
-5. **Shrines are hybrid with concrete dungeon gates** `[DECIDED per review]`:
-   - **Shrine of Wisdom** + Flippers → required for **D4 Zora Temple**.
-   - **Shrine of Power** (meet the Eon Gorons) → required for **D6 Goron Mines**.
+   Ganon's Ganondorf / beast phases remain the established fight direction.
+   `[OPEN 2026-10-20]` Reconcile the older literal-breakout staging with his
+   need for Farore; healing Kydrog alone is not an established release
+   mechanism. Kydrog's voluntary response, biological/spirit status and
+   Farore's exact final scene remain open. Multi-character combat
+   choreography is not a requirement; fixed NPC transition scenes are the
+   bounded proposal.
+5. **The three pendant shrines move to Lyra Sea islands; their dreams return
+   Link to Maple's Abyss hut** `[DECIDED 2026-10-19]`:
+   - **Shrine of Wisdom** + the Sea Zora's Flippers gift → before **D4 Zora Temple**.
+   - **Shrine of Power** → before **D6 Goron Mines**. The guest shrine does
+     not contain the Eon Gorons; their story and Rock Meat route are separate.
    - **Shrine of Courage** requires the Somaria Rod (D7 item) → post-D7 only.
-   Enterable early ≠ fully explorable; exact in-ROM gating `[TO-VERIFY]` with
-   yaze. Maku Tree 7-crystal "seek Shrines" hint (`maku_tree.asm:29`) must be
-   re-aimed at the Shrine of Courage specifically `[TO-BUILD]`.
+   Reuse the guest interiors; each ends in its pendant, with no free item.
+   Exact island gates and the revised Goron route remain `[OPEN]`; physical
+   relocation and gating require verification. Maku Tree's seven-essence
+   direction must distinguish late Courage from Sky's eighth essence.
 6. **Sky tower and islands are the required D8, after D7 Dragon Ship**
    `[DECIDED 2026-10-19]`. Somaria remains the Ship's reward and is required in
    Sky. Preserve Ship -> Shrine of Courage / Dream 3 -> Master Sword before
-   Sky, then the shorter Fortress and volcano finale. The tower is the only
+   Sky, then the shorter Fortress and volcano finale.
+   `[DECIDED 2026-10-20]` Rescuing Farore on the Ship begins
+   a playable partnership through Sky D8, giving her time to provide context
+   and helping the Sky islands feel distinct. `[DECIDED 2026-10-20]` Express
+   this through selected NPC placements using her available sprite; a
+   continuous follower system is not required. Exact placements, useful
+   interactions and dialogue remain to be designed. `[DECIDED 2026-10-20]` After Sky, return
+   to the Maku Tree with all eight essences; the Maku Seed opens the visible
+   obstruction at the Fortress entrance. Plan the Fortress at Abyss `$4B`,
+   Kalyxo Castle's counterpart, and Lupo at former Fortress `$5E`.
+   This is planning direction, not a claim of changed ROM terrain or exits.
+   Exact approaches remain open. The tower is the only
    first entrance; Song of Soaring does not bypass it. Preserve the earlier
    Soaring acquisition and its usefulness throughout the longer late game and
    later revisits. The Watchers built the tower and sky structures; Hyrule's
    garrison later reused the lower floors and abandoned them. Remove the Korok
    Cove test bridge. `cloud_bridge.asm` is existing traversal support; new Sky
    puzzles, item and boss remain `[TO-BUILD]` / `[OPEN]`.
+   Resolve the pre-Flippers Sea Zora approach and revised pre-D6 Rock Meat
+   route before writing directions; do not require D6's Hammer to enter D6.
 7. **The Ranch Girl is a required Ocarina-path witness; D5 ends her curse
    automatically** `[DECIDED 2026-09-02]`.
    The inherited ALTTP Magic-Powder-on-a-Cucco Easter egg can remain as a
@@ -138,21 +171,21 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
 | 7 | Abyss tutorial: changed form → Minish → Moon Pearl (Origins reward); Eon Owl; "Golden Power reshapes you" | `[IMPLEMENTED]` partial | msgs `0x35/0x36`, `0xE6`, `0x15B`. Order `[DECIDED 2026-09-26]`: Minish first, Pearl as the Origins reward, as built (decisions.org; "a bit confusing" note: revisit after the timed Abyss playtest). `$35` (Impa telepathy): Kydrog spared her as a messenger to Zelda; approved text in `Reviews/approved_dialogue_rewrites_2026-09-26.md`. `[DECIDED 2026-09-26]`: `$36` landmark rewrite, Owl twice, respawn lock until escape, Origins not extended (decisions.org) |
 | 8 | Portal home → Maku Tree briefing; Hall of Secrets | `[IMPLEMENTED]` | msg `0x20`; `maku_tree.asm:132-175` |
 | 9 | **D1 Mushroom Grotto** → essence 1 | built | maiden msg `0x132` (dedup opener — Text debt) |
-| 10 | Guided Ocarina chain: D1 Mushroom → witches / Magic Powder → investigate missing Ranch Girl at Toto Ranch → reveal the strange Cucco temporarily → Ocarina → Mask Salesman at Tail Pond → Song of Healing → Deku Mask | mechanics `[IMPLEMENTED]`; guidance `[DECIDED]`, `[TO-BUILD]` | Required hint facts: Twinrova sought essences; Ranch Girl vanished; a strange Cucco appeared; Magic Powder reveals transformed creatures. Reuse the guaranteed D1 aftermath plus Village Elder `0x177` as reinforcement. Ranch Girl `0x17D` must point forward to the Mask Salesman. Current Elder `0x177` sends Link to the mask shop and immediately writes `MapIcon_TailPond`; both are `[TO-CHANGE]` because they skip the ranch objective. Maku `0x1C5` is a generic one-crystal reaction in the current expanded source; its Tail Pond description in `Core/messages.org` is stale. Do not rely on knowledge of the ALTTP Easter egg. |
+| 10 | Guided Ocarina chain: D1 Mushroom → witches / Magic Powder → investigate missing Ranch Girl at Toto Ranch → reveal the strange Cucco temporarily → Ocarina → Mask Salesman at Tail Pond → Song of Healing → Deku Mask | source wiring present; guidance `[DECIDED]`; rendered/player flow `[TO-VERIFY]` | Required hint facts: Twinrova sought essences; Ranch Girl vanished; a strange Cucco appeared; Magic Powder reveals transformed creatures. Current source uses Elder `0x1CB` and Ranch Girl `0x1BE`, replacing the older `0x177`/`0x17D` text. Ranch source sets the Tail Pond objective after the Ocarina receipt. Review the chain for missing Cucco/Powder guidance rather than rewriting connections already present. Maku `0x1C5` is a generic one-crystal reaction; `Core/messages.org` is a review snapshot. |
 | 11 | **D2 Tail Palace** → essence 2 | built | maiden msg `0x133` |
-| 12 | **Book of Secrets**: library dash knockdown → **unlocks the Journal** | `[DECIDED]`, `[TO-BUILD]` | Item code exists (`Items/book_of_secrets.asm`); journal exists (`Menu/menu_journal.asm`). Review ruling: reading the Book grants the journal ability; shift journal entries to unlock from this point; backstory/lore (incl. Kydrog's fall, Librarian deep lore `0x199–0x19F`) can be delivered/collected via the journal system. Wire `Story2_BookOfSecrets` setter on pickup |
-| 13 | **D3 Kalyxo Castle** → **Meadow Blade** + essence 3; **Farore's voice calls out** | built; framing `[DECIDED]` | maiden msg `0x134`. Canon name "Meadow Blade". The callout misdirects toward the ship — works as dramatic irony (see ruling 1); keep her lines location-vague |
+| 12 | **Book of Secrets**: library dash knockdown; preserve its gameplay function | item code exists; Journal `[DEFERRED 2026-09-29]` | `Items/book_of_secrets.asm`. The later Journal ruling supersedes the earlier Book-unlocks-Journal plan: remove X:LOG and suspend Journal menu entry points. No replacement Journal access or new pickup setter is selected. Deliver required lore through NPCs, dreams and the environment; Librarian lore `0x199–0x19F` remains material for review. |
+| 13 | **D3 Kalyxo Castle** → **Meadow Blade** + essence 3; **Farore's voice calls out** | built; framing `[DECIDED]`; callout text `[TO-VERIFY / TO-REVISE]` | maiden msg `0x134`. Canon name "Meadow Blade". Keep callouts location-vague until Farore helps Link during D7; the older `0x70` inventory currently discloses the vessel (see ruling 1). |
 
 ## Act II — The Conspiracy Unravels
 
 | # | Beat | Status | Evidence / notes |
 |---|------|--------|------------------|
-| 14 | **Shrine of Wisdom** (+ Flippers) → **Pendant of Wisdom** → **Dream 1: The Sealing War** | `[DECIDED gate]`; dreams in RC scope `[DECIDED 2026-09-26]` | Maple's Dream Hut is on `$5D` in the Yesterwind chunk. Entrance `$68` loads Maple's `$0F` (runtime-checked 2026-09-28 on b31; the old `$11A` reading used the vanilla `$02` entrance table, but the game uses ZScream's bank `$0F` table). Dream 1 reveals Kydrog's fall and former guardianship; early sympathy seed. |
+| 14 | **Lyra Sea / Sea Zora Flippers gift → Shrine of Wisdom → Pendant of Wisdom → Dream 1** | sea relocation `[DECIDED 2026-10-19]`; staging `[TO-BUILD]` | Guest shrine interior is reused. Dream 1 reveals the Captain's guardianship and temptation; revise the appointment text so Farore's power is not already in his sword. Each pendant dream returns Link to Maple's Abyss hut; the current hut entrance is `$68` to `$0F` on `$5D`. Exact sea approach and island gates need level review. |
 | 15 | **D4 Zora Temple** → Zora Mask; Zora conspiracy reveal | built | Requires Shrine of Wisdom + Flippers `[DECIDED]`. Msg `0x135` |
 | 16 | Post-D4: Song of Storms; whirlpool dive-warps between worlds | `[IMPLEMENTED]` | `Sprites/Objects/deku_leaf.asm:85-118` → vanilla mirror-warp. `[PROPOSED]` one NPC line: whirlpools = cracks in the weakening seal |
 | 17 | **D5 Glacia Estate**: Twinrova — "HE will rise" | `[IMPLEMENTED]` | msgs `0x123`, `0x136` |
-| 18 | Defeating Twinrova permanently breaks the Ranch Girl's Cucco curse | `[DECIDED]`, `[TO-BUILD]` | Automatic D5 world-state consequence. No Song of Healing and no instructed return trip. If the player revisits naturally, short reactive dialogue may confirm the change. The obsolete `$1FA` Lost Voice quest and Ranch Girl dream are `[CUT]`. Current `ranch_girl.asm` has no D5 branch, and the D5 crystal setter still needs runtime tracing. |
-| 19 | **Shrine of Power** (meet the **Eon Gorons**) → **Pendant of Power** | `[DECIDED gate]` | Required for D6. The former Ranch Girl Dream 2 attached here is `[CUT 2026-09-02]`. |
+| 18 | Defeating Twinrova permanently breaks the Ranch Girl's Cucco curse | `[DECIDED]`, `[TO-BUILD]` | Automatic D5 world-state consequence. No Song of Healing and no instructed return trip. If the player revisits naturally, short reactive dialogue may confirm the change. The former Lost Voice quest and Ranch Girl dream are `[CUT]`; `$1FA` is now allocated to the Eon Owl arrival line. D5 reaction and world-state behavior still need implementation review. |
+| 19 | **Lyra Sea Shrine of Power → Pendant of Power → Dream 2: Farore's appeal to Hyrule** | relocation and dream `[DECIDED]`; island gate `[OPEN]` | Required before D6. No Eon Gorons inside the guest shrine. Dream 2 uses Farore, the king and the garrison reply (`0x206–0x20B`); the removed Ranch Girl dream does not remove this pendant dream. |
 | 20 | **D6 Goron Mines**: Rock Meat trust, minecarts → essence 6 | built (carts WIP) | Requires Shrine of Power `[DECIDED]`. Maiden msg `0x137` |
 | 21 | East Kalyxo opens (Hammer); River Zora reconciliation; approach to the **Sky tower** | WIP; Sky D8 order `[DECIDED 2026-10-19]`, `[TO-BUILD]` | The tower east of Korok Cove is the only first Sky entrance. Required Sky progression follows the Ship and needs Somaria. Lower floors are Hylian garrison ruins; upper floors expose Watcher construction. |
 
@@ -161,13 +194,13 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
 | # | Beat | Status | Evidence / notes |
 |---|------|--------|------------------|
 | 22 | Kaepora → **Song of Soaring** → the Dragon Ship | `[IMPLEMENTED]` | msg `0x146`; `Items/ocarina.asm` song 03 |
-| 23 | **D7 Dragon Ship**: pirate-Kydrog fight → **Farore fully freed here** `[DECIDED per review]`; his spirit flees to the Abyss; Somaria Rod | `[TO-BUILD]` | No dragonification here. Finish `kydrog_boss.asm:335-382` scaffold (gated OFF): crystal 7, GameState→3, real rescue scene (replace temp `0x138`). Farore NPC active from here; her POWER remains in the Blade until beat 25 |
-| 24 | **Shrine of Courage** (needs Somaria Rod) → **Pendant of Courage** → **Dream 3: the healing revelation** | `[DECIDED gate]`; dream in RC scope `[DECIDED]`, content `[PROPOSED]` | Post-D7 by construction. Dream 3 reveals the Abyss-form can be REVERSED — the Song of Healing is the key to saving Kydrog |
-| 25 | **Master Sword pulled from the pedestal** (post-D7, pre-D8) — **the transfer scene** | mechanics `[IMPLEMENTED-vanilla]`; scene `[PROPOSED]` | Not forged — pulled. Meadow Blade caps at L3; the pull grants L4. Proposed reconciliation: Farore, present and freed, releases her power from the Meadow Blade into the Master Sword as Link draws it — the engine's sword swap becomes the story beat. Also explains why Kydrog lured Link to the ship: the power he needs has been in Link's hand since D3 |
-| 26 | **D8 Sky tower and islands** -> eighth main-dungeon essence | `[DECIDED 2026-10-19]`, `[TO-BUILD]` | Somaria is required. Earlier Soaring remains useful through this longer late game and later revisits. Exact puzzles, item and boss remain open; the separate one- or two-room Watchers building is not automatically the boss arena. |
-| 27 | **Shorter Fortress of Secrets**, after the eight main dungeons: Dark Link | Dark Link `[IMPLEMENTED]`; redesign `[TO-BUILD]` | The Fortress is a separate late-game location. Kydrog becomes Kydreeok at the volcano before room `$00`, not in the Fortress (`decisions.org`, "D8 room 0D is the Dark Link fight only"). Fortress purpose and Maku Seed timing must be reconciled with Sky supplying the eighth main-dungeon essence. |
+| 23 | **D7 Dragon Ship**: Farore helps Link and reveals the blade's hidden power to Kydrog → pirate-Kydrog defeated → **Farore freed**; his spirit flees to the Abyss; Somaria Rod | reveal and partnership `[DECIDED 2026-10-20]`; `[TO-BUILD]` | No dragonification here. Finish `kydrog_boss.asm:335-382` scaffold (gated OFF): crystal 7, GameState→3, real rescue scene (replace temp `0x138`). Rescue begins Farore's playable partnership through Sky D8. Her POWER remains in the Blade until beat 25. Exact intervention and Kydrog's revised plan need design. |
+| 24 | **Lyra Sea Shrine of Courage** (needs Somaria Rod) → **Pendant of Courage** → **Dream 3: the healing revelation** | late gate `[DECIDED]`; Captain speaker/text `[DECIDED 2026-10-19]` | Post-D7. The Captain himself speaks; the dream teaches Link that Kydrog can be reached through the Song of Healing. Each pendant dream returns to Maple's Abyss hut. |
+| 25 | **Farore reclaims her power and keeps the Meadow Blade; Link draws the Master Sword** (post-D7, pre-D8) | handoff `[DECIDED 2026-10-20]`, `[TO-BUILD]`; sword pull `[IMPLEMENTED-vanilla]` | Not forged — pulled. Meadow Blade caps at L3; the pull grants L4. Farore's power returns to herself, replacing the earlier transfer-into-Master-Sword proposal. Exact staging and the blade's later role remain design work. The old explanation that Kydrog knowingly lured the blade to D7 is superseded by his learning its contents during her D7 intervention. |
+| 26 | **D8 Sky tower and islands** -> eighth main-dungeon essence; **Farore participates at selected encounters** | `[DECIDED 2026-10-19/20]`, `[TO-BUILD]` | Somaria is required. Farore uses fixed scene placements rather than continuous following; exact stops and a useful interaction remain design work. Earlier Soaring remains useful through this longer late game and later revisits. Exact puzzles, item and boss remain open; the separate one- or two-room Watchers building is not automatically the boss arena. |
+| 27 | **Maku Tree → Maku Seed → shorter Fortress of Secrets**: the Seed clears its visible entrance obstruction; Dark Link is Kydrog | Seed entry and identity `[DECIDED 2026-10-20]`; redesign `[TO-BUILD]` | Return to the Tree after Sky's eighth essence. The Seed replaces the old Master Sword entrance barrier. Plan the Fortress on Abyss `$4B`, mirroring Kalyxo Castle; Lupo moves to old Fortress `$5E`. Exact approaches and physical relocation remain to build/verify. Kydrog becomes Kydreeok at the volcano before room `$00`. The route from Fortress to prison remains design work. |
 | 28 | **Kydreeok finale**: sever all heads simultaneously (they regrow) → **Song of Healing finisher** → Kydrog restored | `[DECIDED]`; `[TO-BUILD]` | `kydreeok.asm` exists, zero messages. Post-healing form: human `[DECIDED 2026-09-26]` |
-| 29 | **Ganon breaks out** — alternates Ganondorf (energy-ball volleys) and the beast; Farore aids | `[DECIDED 2026-09-26]`, `[TO-BUILD]` | Villain chain (`Docs/Planning/Status/decisions.org`). Per msg `0x15B`; vanilla Ganon parts may be reused |
+| 29 | **Ganon confrontation** — Ganondorf / beast; Farore's role staged separately | fight direction `[DECIDED]`; transition/binding `[OPEN]`, `[TO-BUILD]` | The older breakout wording needs a cause consistent with Ganon needing others to change his confinement. A short NPC transition and solo fight are the current bounded proposal; simultaneous Farore/Kydrog combat mechanics were not approved. |
 | 30 | **Ending**: seal restored; the Abyss begins to heal; credits | `[TO-BUILD]` | Credits hook stubbed in `Overworld/overworld.asm`; no ending text exists. GameState 3 finally gets readers. |
 | 31 | **Post-game**: Kydrog Mask in the save | `[CUT 2026-10-18]` | Cut; the Garo mask from the Garo desert replaces it |
 
@@ -181,11 +214,20 @@ Implementation order and storyboard: [Opening and RC development plan](Plans/ope
 
 ## Text debt (not yet reviewed by scawful)
 
-1. Merge orphaned maiden rewrite (`Data/dialogue/maiden_upgrades_dialogue.json`)
-   + dedupe the four copy-pasted maiden openers.
+1. Review the maiden voices and essence objective. The orphaned
+   `Data/dialogue/maiden_upgrades_dialogue.json` is a draft reference, not the
+   authoritative current dialogue.
 2. Use the generated dialogue inventory for `0x1CC–0x1F9`; do not copy expanded source into the non-authoritative `messages.org` snapshot.
-3. Fill D3 prison (`0x1CC–0x1D1`) + Gossip Stone (`0x1D2–0x1D4`) TODO stubs.
+3. Review D3 prison (`0x1CC–0x1D1`) and Gossip Stone (`0x1D2–0x1D4`) stubs.
+   Check D3 callout `$070`: the older inventory snapshot explicitly names the
+   blade as Farore's vessel, which conflicts with a player-facing D7 reveal.
+   Verify the live vanilla text before writing its replacement.
 4. Undocumented Twinrova library msg `$1D` (`twinrova.asm:1105`).
+5. Review Wisdom dream `$205` ("Keep the seal, Captain. This blade is its key.")
+   and appointment staging against the 2026-10-20 timing ruling: Farore hides
+   her power after Kydrog abandons the sword. The appointment must not imply
+   her power is already inside it. scawful permits cutscene changes to align
+   with the plot synthesis; replacement dialogue remains to be written.
 
 ## Open and resolved review questions
 
@@ -201,6 +243,6 @@ Question numbers remain stable because other planning documents refer to them.
    keyless mini-dungeon.
 6. `[RESOLVED 2026-09-26]` The inhabitants call the Abyss and its central
    village Yesterwind.
-7. `[RESOLVED 2026-09-26]` Kydrog's post-healing form: his living human self (villain chain, `Docs/Planning/Status/decisions.org`).
+7. `[REVIEW OPEN 2026-10-20]` Kydrog's restored human appearance remains the established direction; the older "living human self" wording needs a ruling on biological life versus a spirit's Abyss form. Do not infer a general resurrection power or his crew's restoration.
 
-Late-route open work (2026-10-19): implement the eighth essence award/display/readers; author the required Sky Somaria route; settle the shorter Fortress's purpose and Maku Seed timing. Roc's Cape and Heliarch remain unconfirmed concepts.
+Late-route open work (2026-10-20): implement the eighth essence award/display/readers, Seed receipt/entry and pedestal handoff scenes; author the required Sky Somaria route; settle Kydrog's post-D7 plan and post-healing choice, the Meadow Blade's later role, relocation approaches and Fortress-to-prison transition. Resolve the early Sea Zora and pre-D6 Goron route dependencies before writing directions. Roc's Cape and Heliarch remain unconfirmed concepts. Current plot and Ridoyie/Yaze writer packet: `~/.context/projects/oracle-of-secrets/scratchpad/handoffs/ridoyie_messages_2026-10-20/`.
