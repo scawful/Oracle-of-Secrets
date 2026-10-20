@@ -28,7 +28,7 @@ TABLE_NAMES = ('start_index', 'nbr_of_tiles', 'x_offsets', 'y_offsets',
                'chr', 'properties', 'sizes')
 SHEET_SIZE = (128, 64)
 SHEET_BYTES = 0x1000
-BASE_PROPERTIES = 0x39
+BASE_PROPERTIES = 0x3D  # OBJ palette6; palette4 is reserved for vanilla shadows.
 VIEW_ORIGIN = (16, 40)
 VIEW_SIZE = (64, 80)
 
@@ -371,7 +371,7 @@ def export_review(out,selected,rendered,frames,tables,validation,palette):
     lines=['# Ganondorf runtime tile map','',f'Selected `{selected["name"]}` layout: **{selected["cells"]}/32** unique16x16 cells; exact `$1000` raw4bpp sheet.',
            '', 'Body source is32x40. Local draw offsets are `x=source_x-8`, `y=source_y-16`; left uses `x=8-source_x` and toggles HFLIP.',
            'Ball source is the unchanged centered16x16 crop `(8,12)-(24,28)`, drawn at `(0,0)`. Charge reuses cast plus ball at `(0,-32)`.',
-           'Each16x16 tile uses `N,N+1,N+$10,N+$11`. Base properties are `$39`; H/V flip add `$40/$80`. Shadow owns OAM index7.', '',
+           'Each16x16 tile uses `N,N+1,N+$10,N+$11`. Base properties are `$3D` (OBJ palette6); H/V flip add `$40/$80`. Shadow owns OAM index7.', '',
            '|ID|Frame|Start|Pieces|CHR / runtime x,y / flip|','|---:|---|---:|---:|---|']
     for index,name in enumerate(RUNTIME_IDS):
         detail='; '.join(f'${p["tile"]:02X} ({p["x"]},{p["y"]}) {"H" if p["hflip"] else ""}{"V" if p["vflip"] else ""}' for p in frames[name])
