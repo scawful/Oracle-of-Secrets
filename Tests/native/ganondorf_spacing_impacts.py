@@ -176,7 +176,17 @@ class SpacingImpactFixture(core.Fixture):
 
     def no_warp_and_bat(self):
         self.active_volley_no_warp()
+        self.result["cases"][-1]["between_volley_bat_frames"] = self.bat_control()
+
+    def bat_only(self):
+        self.result["cases"].append(dict(name="between-volley-bat", passed=True,
+                                          frames=self.bat_control()))
+
+    def bat_control(self):
         parent, ball, _ = self.spawn(9)
+        # FRAME can stop after the next action has already dispatched. Use
+        # the native Main boundary before selecting the independent action.
+        self.run_to(self.labels["Ganondorf_Main"], f"x == {parent}")
         self.set("state", ball, 0, "declared gone ball permits between-volley bat control")
         for key, value in (("d", 0xFF), ("action", 5), ("timer_a", 48)):
             self.set(key, parent, value, "declared between-volley teleport state; no active ball")
@@ -187,7 +197,7 @@ class SpacingImpactFixture(core.Fixture):
             core.require(self.field("action", parent) == 5 and not self.actors(0),
                          "Bat control left its between-volley teleport state")
         core.require(set(poses) == {19, 20, 21}, "Native bat animation did not select all three authored frames")
-        self.result["cases"][-1]["between_volley_bat_frames"] = poses
+        return poses
 
     def collision_map(self, ball):
         floor = self.r(0x7E0F20 + ball)
@@ -199,9 +209,11 @@ class SpacingImpactFixture(core.Fixture):
         table = self.raw(0x0DB971, 256)
         def solid(value):
             return value not in (0, 0x1C, 0x20, 0x21, 0x22) and value not in range(0x10, 0x14) and table[value] not in (0, 4)
+        def clear(value):
+            return value not in range(0x10, 0x14) and value not in range(0xC0, 0xD0) and not solid(value)
         candidates = [i for i, value in enumerate(cells)
-                      if 34 <= i % 64 <= 59 and 5 <= i // 64 <= 25
-                      and cells[i-1] in (0, 0x1C) and cells[i-2] in (0, 0x1C)
+                      if 34 <= i % 64 <= 62 and 5 <= i // 64 <= 25
+                      and clear(cells[i-1]) and clear(cells[i-2])
                       and (value == attr if attr is not None else solid(value))]
         injected = False
         if not candidates:
