@@ -35,7 +35,14 @@
 Sprite_Kydreeok_Long:
 {
   PHB : PHK : PLB
+  ; The OAM parts follow the BG2 body: they blink with it while it heals
+  ; and are gone once it is.
+  LDA.w SprAction, X : CMP.b #$09 : BCS .no_draw
+  CMP.b #$08 : BNE .draw
+  LDA.w SprTimerA, X : AND.b #$01 : BNE .no_draw
+  .draw
   JSR Sprite_Kydreeok_Draw
+  .no_draw
   JSL Sprite_CheckActive : BCC .SpriteIsNotActive
     LDA.w BossReinject : BEQ .no_reinject
       JSR Kydreeok_Reinject
@@ -93,6 +100,9 @@ Sprite_Kydreeok_Prep:
 
 Sprite_Kydreeok_CheckIfDead:
 {
+  ; Only while fighting: actions 5 and 7-10 are the end of the fight.
+  LDA.w SprAction, X : CMP.b #$05 : BEQ .not_dead
+  CMP.b #$07 : BCS .not_dead
   LDA.w Offspring1_Id : TAY
   LDA.w SprState, Y : BEQ .offspring1_dead
     JMP .not_dead
@@ -111,9 +121,11 @@ Sprite_Kydreeok_CheckIfDead:
     JSR SpawnRightHead
     RTS
   .dead
-    LDA.b #$60 : STA.w SprTimerA, X
-    LDA.b #$05 : STA.w SprAction, X
-    LDA.b #$13 : STA $012C
+    ; Both phase-2 heads down: Kydreeok stops fighting and waits, wounded,
+    ; for the Song of Healing (decisions.org "Kydreeok healing").
+    STZ.w SprXSpeed, X : STZ.w SprYSpeed, X : STZ.w SprHeight, X
+    LDA.b #$07 : STA.w SprAction, X
+    LDA.b #$F1 : STA $012C ; fade the music out: the silence is the cue
   .not_dead
   RTS
 }
@@ -121,8 +133,9 @@ Sprite_Kydreeok_CheckIfDead:
 ; Head may respawn if the other isn't killed in time
 MaybeRespawnHead:
 {
-  ; No new heads once the body is dying (Kydreeok_Dead, action 5).
+  ; No new heads once the fight is over (action 5, or 7 and up).
   LDA.w SprAction, X : CMP.b #$05 : BEQ .done
+  CMP.b #$07 : BCS .done
   LDA.w Offspring1_Id : TAY
   LDA.w SprState, Y : BNE .offspring1_alive
       JSL GetRandomInt : AND.b #$7F : BNE .offspring1_alive
@@ -145,7 +158,11 @@ Sprite_Kydreeok_Main:
                   Kydreeok_MoveXorY,
                   Kydreeok_KeepWalking,
                   Kydreeok_Dead,
-                  Kydreeok_Flying)
+                  Kydreeok_Flying,
+                  Kydreeok_Wounded,
+                  Kydreeok_Healing,
+                  Kydreeok_Freed,
+                  Kydreeok_Gone)
 
   ; -------------------------------------------------------
   ; 0x00
@@ -283,6 +300,7 @@ Sprite_Kydreeok_Main:
     RTS
   }
 
+  ; 0x05 Old explosion death. Unused since the Healing beat (action 7); kept for isolation.
   Kydreeok_Dead:
   {
     LDA $1C : ORA.b #$01 : STA $1C ;turn on BG2 (Body)
@@ -334,6 +352,65 @@ Sprite_Kydreeok_Main:
       STZ.w SprHeight, X
       %GotoAction(2)
     .continue
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x07 Both heads are down. The body stays on screen, still and harmless,
+  ; and dims for a moment every second until the Song of Healing is played.
+  ; Other songs keep their normal effects and are left alone.
+  Kydreeok_Wounded:
+  {
+    JSL Sprite_PlayerCantPassThrough
+    LDA $1C : ORA.b #$01 : STA $1C ; body (BG2) on
+    LDA.b $1A : AND.b #$38 : BNE .shown
+      LDA $1A : AND.b #$02 : BEQ .shown
+        LDA $1C : AND.b #$FE : STA $1C
+    .shown
+
+    LDA.b SongFlag : CMP.b #$01 : BNE .no_song
+      STZ.b SongFlag
+      LDA.b #$80 : STA.w SprTimerA, X
+      %GotoAction(8)
+    .no_song
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x08 The song lands: the body fades out the way the old death did,
+  ; without the explosions.
+  Kydreeok_Healing:
+  {
+    LDA $1C : ORA.b #$01 : STA $1C
+    LDA.w SprTimerA, X : AND.b #$01 : BEQ .shown
+      LDA $1C : AND.b #$FE : STA $1C
+    .shown
+
+    LDA.w SprTimerA, X : BNE .continue
+      STZ.w $0422
+      STZ.w $0424
+      LDA $1C : AND.b #$FE : STA $1C ;dismiss the body (BG2) for good: Ganondorf reuses its VRAM
+      %ShowUnconditionalMessage($20F)
+      %GotoAction(9)
+    .continue
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x09 Runs once the first message box closes.
+  Kydreeok_Freed:
+  {
+    %ShowUnconditionalMessage($210)
+    %GotoAction(10)
+    RTS
+  }
+
+  ; -------------------------------------------------------
+  ; 0x0A Second box closed: hand over to Ganondorf_DoorGate after a short pause.
+  Kydreeok_Gone:
+  {
+    LDA.b #$40 : STA.w FinaleBeat
+    STZ.w SprState, X
     RTS
   }
 
@@ -607,6 +684,7 @@ Kydreeok_Reinject:
   SEP #$30
   PLX
   LDA.w SprAction, X : CMP.b #$05 : BEQ .dead ; the dying body manages BG2 itself
+  CMP.b #$07 : BCS .dead ; so do the wounded and healing bodies; after that it is gone
     LDA.b $1C : ORA.b #$01 : STA.b $1C
   .dead
   RTS
