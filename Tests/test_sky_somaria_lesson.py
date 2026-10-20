@@ -207,6 +207,13 @@ class SkySomariaLessonControls(unittest.TestCase):
         route.shot = lambda name: None
         return route, low
 
+    def test_default_corridor_is_376_and_384_remains_an_override(self):
+        self.assertEqual(lesson.route_plan({})["corridor_y"], 376)
+        self.assertEqual(lesson.describe()["route"]["corridor_y"], 376)
+        self.assertEqual(lesson.ROUTE_BOUNDS["corridor_y"], (376, 392))
+        override = lesson.route_plan({"corridor_y": 384})
+        self.assertEqual(override, {**lesson.DEFAULT_ROUTE, "corridor_y": 384})
+
     def test_run_reads_the_starting_state_before_the_first_phase(self):
         route, _ = self.start(0)
         route.run("preconditions")

@@ -77,7 +77,7 @@ MAGIC_SMALL, CAST_COST = 0x10, 0x08
 # Room-local pixels. Link's floor probe is ($22+8, $20+16) (Dungeons/floor_puzzle.asm);
 # the plate covers tiles x52-53, y53-54. The block spawns at Link + (8, 31) facing south.
 PLATE_PX = (416, 431, 424, 439)
-DEFAULT_ROUTE = {"cast_x": 416, "cast_y": 400, "corridor_y": 384}
+DEFAULT_ROUTE = {"cast_x": 416, "cast_y": 400, "corridor_y": 376}
 ROUTE_BOUNDS = {"cast_x": (408, 423), "cast_y": (392, 408), "corridor_y": (376, 392)}
 PLATE_STAND_Y = 416
 POT_LINK_X = (144, 96)       # pots (18,54) then (12,54); Link stands above, facing south
