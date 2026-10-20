@@ -591,7 +591,7 @@ class LessonRoute(native.Fixture):
     def lift_pot(self, link_x):
         self.approach("y", self.route["corridor_y"], tol=2)
         self.approach("x", link_x)
-        self.hold_until("Down", lambda s: False, 60, blocked_ok=True)
+        self.hold_until("Down", lambda s: s["ly"] >= 408, 60, fine=lambda s: s["ly"] >= 402)
         before = self.last
         self.check("pressed against the pot facing south", before["dir"] == FACING["Down"]
                    and abs(before["lx"] - link_x) <= 1 and 392 <= before["ly"] <= 424, where(before))
