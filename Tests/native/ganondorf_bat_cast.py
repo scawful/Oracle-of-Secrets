@@ -45,7 +45,7 @@ class BatCastFixture(SpacingImpactFixture):
                      f"Native bat state differs: {state}")
         properties = {"health": self.r(0x7E0E50 + bat), "damage": self.r(0x7E0CD2 + bat),
                       "gfx": self.r(0x7E0E60 + bat), "deflection": self.r(0x7E0CAA + bat)}
-        core.require(properties == dict(health=1, damage=2, gfx=0x80, deflection=0x40),
+        core.require(properties == dict(health=1, damage=1, gfx=0x80, deflection=0x40),
                      f"Native bat weapon/damage properties differ: {properties}")
         velocity = (self.field("xspeed", bat), self.field("yspeed", bat))
         signed = tuple(value - 256 if value & 0x80 else value for value in velocity)
@@ -118,6 +118,7 @@ class BatCastFixture(SpacingImpactFixture):
                      "Human cast or independent flap sequence did not cover all authored frames")
         core.require(len(set(positions)) > 1 and len(set(velocities)) == 1,
                      "Independent bat did not move on a fixed launch velocity")
+        (self.a.out / "cast-bat.png").write_bytes(self.b.screenshot())
         before = self.position(parent)
         self.run_to(self.labels["Ganondorf_Stomp"], f"x == {parent}")
         core.require(self.field("action", parent) == 7 and self.position(parent) != before
@@ -170,10 +171,26 @@ class BatCastFixture(SpacingImpactFixture):
         self.locate(parent, x + 64, y + 64, "move human body away to isolate child contact damage")
         self.link(x, y - 8, "declared player overlap with the cast bat's ordinary native damage box")
         self.run_to(self.labels["GanonBat_Main_dissipate"], f"x == {bat}")
+        queued_damage = self.r(0x7E0373)
+        core.require(queued_damage > 0, "Bat contact queued a zero-damage native class")
+        contact = self.assert_puff(parent, bat, "Bat contact")
+        self.frames(2)
         damage = self.r(0x7EF36D)
         core.require(0 < damage < hp, "Independent cast bat did not cause ordinary native contact damage")
-        contact = self.assert_puff(parent, bat, "Bat contact")
-        contact.update(hp_before=hp, hp_after=damage, birth=birth)
+        contact.update(hp_before=hp, hp_after=damage, queued_damage=queued_damage, birth=birth)
+
+        parent, ball, _ = self.spawn(9)
+        hp = self.r(0x7EF36D)
+        x, y = self.position(ball)
+        self.locate(parent, x + 64, y + 64, "human body away from ordinary volley contact control")
+        self.link(x, y - 8, "declared player overlap with the outgoing rally ball")
+        self.run_to(self.labels["GanonBall_StartDissipation"], f"x == {ball}")
+        queued_damage = self.r(0x7E0373)
+        core.require(queued_damage > 0, "Outgoing volley queued a zero-damage native class")
+        rally = self.assert_puff(parent, ball, "Outgoing volley contact")
+        self.frames(2)
+        core.require(0 < self.r(0x7EF36D) < hp, "Outgoing volley contact did not reduce actual health")
+        rally.update(hp_before=hp, hp_after=self.r(0x7EF36D), queued_damage=queued_damage)
 
         parent, bat, birth = self.spawn_bat()
         core.require(self.r(0x7EF359) >= 2, "Native sword control needs the checkpoint's Master Sword")
@@ -199,7 +216,7 @@ class BatCastFixture(SpacingImpactFixture):
                      "Sword-hit puff retained a delayed native death/stun module or emitted a shard actor")
         sword["expired_without_delayed_death"] = True
         self.result["cases"].append(dict(name="bat-contact-and-native-sword", passed=True,
-                                          contact=contact, sword=sword))
+                                          contact=contact, rally_contact=rally, sword=sword))
 
     def walls_torches_and_lifetime(self):
         rows = []

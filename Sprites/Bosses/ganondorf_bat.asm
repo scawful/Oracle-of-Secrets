@@ -43,7 +43,7 @@ Ganondorf_SpawnBat:
   LDA.b #!Ganon_BatLifetime : STA.w SprTimerA, Y
   ; Keep the room-tag exemption, but clear the orb's weapon immunity.
   LDA.b #$01 : STA.w SprHealth, Y
-  LDA.b #$02 : STA.w SprBump, Y
+  LDA.b #$01 : STA.w SprBump, Y
   LDA.b #$80 : STA.w SprGfxProps, Y
   LDA.b #$40 : STA.w SprDefl, Y
   STA.w SprHitbox, Y ; hitbox 0 plus the attack's room-tag exemption
