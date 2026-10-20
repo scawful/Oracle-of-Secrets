@@ -973,33 +973,37 @@ def check_new_target(path: Path, label: str, protected: Sequence[Path],
 
 def publish_exclusive(path: Path, data: bytes, mode: int) -> None:
     """Write a private temp in path's directory, fsync and verify it, then hardlink it to
-    path, which fails if path exists. Only the temp this call created is ever unlinked."""
+    path, which fails if path exists. Only the temp this call created is ever unlinked.
+
+    The temp's descriptor stays open until cleanup is done: while it is open the inode
+    cannot be freed, so a replacement file at the temp name can never reuse its
+    (st_dev, st_ino) and be mistaken for the owned temp."""
     fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     temp = Path(temp_name)
-    owned = os.fstat(fd)
     try:
+        owned = os.fstat(fd)
         try:
             view = memoryview(data)
             while view:
                 view = view[os.write(fd, view):]
             os.fchmod(fd, mode)
             os.fsync(fd)
+            expect(sha256(temp.read_bytes()) == sha256(data), f"temporary {temp} readback differs")
+            os.link(temp, path)
+            dir_fd = os.open(path.parent, os.O_RDONLY)
+            try:
+                os.fsync(dir_fd)
+            finally:
+                os.close(dir_fd)
         finally:
-            os.close(fd)
-        expect(sha256(temp.read_bytes()) == sha256(data), f"temporary {temp} readback differs")
-        os.link(temp, path)
-        dir_fd = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(dir_fd)
-        finally:
-            os.close(dir_fd)
+            try:
+                now = os.lstat(temp)
+            except FileNotFoundError:
+                now = None
+            if now is not None and (now.st_dev, now.st_ino) == (owned.st_dev, owned.st_ino):
+                os.unlink(temp)
     finally:
-        try:
-            now = os.lstat(temp)
-        except FileNotFoundError:
-            now = None
-        if now is not None and (now.st_dev, now.st_ino) == (owned.st_dev, owned.st_ino):
-            os.unlink(temp)
+        os.close(fd)
 
 
 def readback(path: Path, want_sha: str, label: str, input_path: Path) -> None:

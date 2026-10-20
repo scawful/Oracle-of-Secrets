@@ -387,6 +387,44 @@ class PublishTests(unittest.TestCase):
         self.assertEqual(self.final.read_bytes(), b"intruder")
         self.assertEqual(self.leftovers(), [])
 
+    def track_temp_fd(self):
+        real_mkstemp, seen = tempfile.mkstemp, {}
+
+        def spy(*args, **kwargs):
+            seen["fd"], name = real_mkstemp(*args, **kwargs)
+            return seen["fd"], name
+
+        return seen, mock.patch.object(W.tempfile, "mkstemp", spy)
+
+    @staticmethod
+    def fd_open(fd):
+        try:
+            os.fstat(fd)
+            return True
+        except OSError:
+            return False
+
+    def test_temp_descriptor_held_through_cleanup_then_closed(self):
+        seen, spy = self.track_temp_fd()
+        real_unlink, open_at_unlink = os.unlink, []
+
+        def unlink(target, *args, **kwargs):
+            open_at_unlink.append(self.fd_open(seen["fd"]))
+            return real_unlink(target, *args, **kwargs)
+
+        with spy, mock.patch.object(W.os, "unlink", unlink):
+            W.publish_exclusive(self.final, self.DATA, 0o644)
+        self.assertEqual(open_at_unlink, [True])
+        self.assertFalse(self.fd_open(seen["fd"]))
+        self.assertEqual(self.final.read_bytes(), self.DATA)
+
+    def test_temp_descriptor_closed_when_cleanup_fails(self):
+        seen, spy = self.track_temp_fd()
+        with spy, mock.patch.object(W.os, "unlink", side_effect=OSError(errno.EIO, "injected")), \
+                self.assertRaises(OSError):
+            W.publish_exclusive(self.final, self.DATA, 0o644)
+        self.assertFalse(self.fd_open(seen["fd"]))
+
     def test_only_owned_temp_is_removed(self):
         def swap_then_fail(src, dst):
             os.unlink(src)
