@@ -150,6 +150,174 @@
       ],
       "pixel_sha256": "cb6c640b66bfb12db018d7494261af2d3c2360817504dacd7b323a1b145bb750",
       "approved_input_sha256": "ac7f32277d4d07ed66c929a43136f21accec7b9753c058af7bccb35aa3e5b8c7"
+    },
+    {
+      "id": "cast_ready",
+      "kind": "body",
+      "cell": [
+        1,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "cd9dc9ae719d613244887647d22060901ed255111dd3596be8055f1ddd785a3c",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "cast_half",
+      "kind": "body",
+      "cell": [
+        2,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "9b31518c0b737eecda315e56285a41384c91d0fe522c2be76e68741a20be1612",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "cast_a",
+      "kind": "body",
+      "cell": [
+        3,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "dda46ca8ccff44f2f369eaaba05c7e91def2be860bacd1a6247c976e026cd6a2",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "cast_second",
+      "kind": "body",
+      "cell": [
+        4,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "3ffd18cc1a96defbce6f2b8d0f72ddd70400284b6912a656d93890f8e7ce79f4",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "cast_b",
+      "kind": "body",
+      "cell": [
+        5,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "ae90d29380f4aee37c3403c60b18ddd70fc1b27e4f53927c35ad2d84285b4f07",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "throw_windup",
+      "kind": "body",
+      "cell": [
+        6,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "aabb96e3ee0889caad4d6493b7f99b5fcfe28491572cd767c1913e493b6bdc77",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "throw",
+      "kind": "body",
+      "cell": [
+        7,
+        1
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "ebc875ca749a599b086ee99b8c6a6a43281731e06ec832f302d328ebb3ce7bb4",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "throw_follow",
+      "kind": "body",
+      "cell": [
+        0,
+        2
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "9521a92e3821273ace5b973825f74d0265f31a450b7738f0b950d85c03701a32",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "recover_half",
+      "kind": "body",
+      "cell": [
+        1,
+        2
+      ],
+      "size": [
+        32,
+        40
+      ],
+      "pixel_sha256": "40dfac1957ed181159077d920144225de1758cbc75d8ebb41370537248e99dde",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "bat_up",
+      "kind": "effect",
+      "cell": [
+        2,
+        2
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "pixel_sha256": "e99f9f655533c6255863a6cb137478b1b8badbccabfc52eb3bf0b3cc299bb616",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "bat_mid",
+      "kind": "effect",
+      "cell": [
+        3,
+        2
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "pixel_sha256": "b1c12fd3b8e50c72cbadcd1cc26ae512f7b5291ad74d65656afe927372712b52",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
+    },
+    {
+      "id": "bat_down",
+      "kind": "effect",
+      "cell": [
+        4,
+        2
+      ],
+      "size": [
+        16,
+        16
+      ],
+      "pixel_sha256": "2e731323840f80b0a24f23d6cc072e09ea89d2b41f1729d52dd812d917f85c3f",
+      "approved_input_sha256": "3b2325d60a7eda60eb9a321bc0bf3891b78b12e59e2af27b8b5b44fc7e2b1065"
     }
   ],
   "runtime": {
@@ -165,7 +333,17 @@
       "back_a",
       "back_b",
       "charge_a",
-      "charge_b"
+      "charge_b",
+      "cast_ready",
+      "cast_half",
+      "cast_a",
+      "cast_second",
+      "throw_windup",
+      "throw_follow",
+      "recover_half",
+      "bat_up",
+      "bat_mid",
+      "bat_down"
     ],
     "body_offset": [
       -8,
@@ -179,10 +357,10 @@
       0,
       -32
     ],
-    "properties": 57,
-    "sheet_bytes": 4096,
-    "max_cells": 32
+    "properties": 61,
+    "sheet_bytes": 6144,
+    "max_cells": 48
   },
-  "source_note": "User-approved original32x40 character art with outer cape-edge trims only. Body pixels are authoritative; exporter must never resample or regenerate them. Ball cells contain the unchanged centered16x16 crop (8,12)-(24,28).",
+  "source_note": "Exact authored indexed pixels. Legacy cast/release/side retained as dormant source; resident art uses the nine-pose volley and three-pose bat. Bat is cropped from (8,16)-(24,32); balls remain (8,12)-(24,28).",
   "approved_manifest_sha256": "454c5f5ada46942600b0a2e7f39f59c4976f67a4a006d22cdb3a0d2ef268c410"
 }
