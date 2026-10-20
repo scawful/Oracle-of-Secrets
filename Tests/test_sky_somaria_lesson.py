@@ -191,26 +191,52 @@ class SkySomariaLessonControls(unittest.TestCase):
             with self.subTest(name=name), self.assertRaisesRegex(RuntimeError, "outside"):
                 lesson.route_plan({name: high + 1})
 
-    def test_run_reads_the_starting_state_before_the_first_phase(self):
+    def start(self, doorway):
         low, save = bytearray(0x700), bytearray(0x90)
-        low[0x10], low[0x1B], low[0xA0] = 0x07, 0x01, 0x90
-        low[0x20:0x22], low[0x22:0x24] = (0x13D8).to_bytes(2, "little"), (0x0100).to_bytes(2, "little")
+        low[0x10], low[0x1B], low[0xA0], low[0x6C] = 0x07, 0x01, 0x90, doorway
+        low[0x20:0x22], low[0x22:0x24] = (0x13D8).to_bytes(2, "little"), (0x0178).to_bytes(2, "little")
         low[0x202], low[0x303] = 0x0F, 0x12
         save[0x10], save[0x2D] = 0x01, 0x48
-        memory = {0x7E0000: bytes(low), 0x7E0BF0: bytes(0x1F0), 0x7EF340: bytes(save), lesson.POTLIFT: b"\0\0"}
-        with tempfile.TemporaryDirectory() as temporary:
-            args = Args()
-            args.output = Path(temporary)
-            route = lesson.LessonRoute(args, object(), lesson.route_plan({}))
-            route.block = lambda address, size: memory[address][:size]
-            shots = []
-            route.shot = shots.append
-            route.run("preconditions")
+        memory = {0x7E0000: low, 0x7E0BF0: bytes(0x1F0), 0x7EF340: bytes(save), lesson.POTLIFT: b"\0\0"}
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        args = Args()
+        args.output = Path(temporary.name)
+        route = lesson.LessonRoute(args, object(), lesson.route_plan({}))
+        route.block = lambda address, size: bytes(memory[address][:size])
+        route.shot = lambda name: None
+        return route, low
+
+    def test_run_reads_the_starting_state_before_the_first_phase(self):
+        route, _ = self.start(0)
+        route.run("preconditions")
         self.assertTrue(route.result["runtime_checks_passed"])
         self.assertEqual(route.result["completed_through"], "preconditions")
-        self.assertIn("room 0090 area 00 local (256,472)", route.result["phases"][0]["start"])
-        self.assertEqual(shots, ["start-room90"])
+        self.assertIn("room 0090 area 00 local (376,472)", route.result["phases"][0]["start"])
+        self.assertEqual(route.result["observations"]["preconditions"]["landing"]["x"], 0x0178)
         self.assertEqual(route.result["writes"], [])
+
+    def test_doorway_landing_clears_by_controller_up_and_doorway_2_is_refused(self):
+        route, low = self.start(1)
+        steps = []
+
+        def advance(buttons, count):
+            steps.append((buttons, count))
+            if buttons == "Up":
+                y = int.from_bytes(low[0x20:0x22], "little") - 1
+                low[0x20:0x22] = y.to_bytes(2, "little")
+                low[0x6C] = int(y > 0x13D5)
+            return route.snap()
+        route.advance = advance
+        route.run("preconditions")
+        self.assertEqual(steps, [("Up", 1)] * 3 + [("", 1)])
+        observed = route.result["observations"]["preconditions"]
+        self.assertEqual((observed["landing"]["y"], observed["landing"]["doorway"]), (0x13D8, 1))
+        self.assertEqual(observed["entry"]["y"], 0x13D5)
+        self.assertEqual(route.entry, (0x178, 472))
+        route, _ = self.start(2)
+        with self.assertRaisesRegex(RuntimeError, "landing doorway 0 or 1"):
+            route.run("preconditions")
 
     def test_describe_is_source_only_and_default_refuses(self):
         out = io.StringIO()

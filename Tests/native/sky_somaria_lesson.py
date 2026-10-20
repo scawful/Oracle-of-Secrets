@@ -46,7 +46,7 @@ EXPANDED_ENTRANCE = {"room": (0x0F8052, bytes.fromhex("9000")),
                      "ypos": (0x0F8E52, bytes.fromhex("d813")),
                      "yscroll": (0x0F8C52, bytes.fromhex("1013")),
                      "edges": (0x0F8348, bytes.fromhex("1312131301000101"))}
-ENTRANCE_Y = 0x13D8
+ENTRANCE_Y, LANDING_X = 0x13D8, 0x0178
 LEGACY_ROOM_TABLE = 0x02C813
 HEADER_POINTER_PC, HEADER_BANK_PC = 0xB5DD, 0xB5E7
 OBJECT_POINTERS_PC = 0x0F8000
@@ -317,7 +317,8 @@ def describe(route=None):
                       "plate_stand_y": PLATE_STAND_Y, "pot_link_x": list(POT_LINK_X),
                       "west_clear_x": WEST_CLEAR_X, "east_clear_x": EAST_CLEAR_X},
         "pass_requires": [
-            "start: room $0090 $20=$13D8, cane 1, $0303=$12, magic 0, refill 0, POTLIFT clear",
+            "start: room $0090 landing $22=$0178 $20=$13D8, doorway 0/1 (1: hold Up <=120 frames until clear), "
+            "cane 1, $0303=$12, magic 0, refill 0, POTLIFT clear",
             "closed shutter stops Link inside $91",
             "Link's floor probe inside the plate for 60 frames: $0468 closed, $0646 clear",
             "pot 1 at magic 0: one POTLIFT bit, magic 00->10",
@@ -536,8 +537,10 @@ class LessonRoute(native.Fixture):
         s = self.snap()
         self.check("start room $0090 normal play", (s["module"], s["submodule"], s["indoors"], s["room"])
                    == (0x07, 0x00, 0x01, ENTRY_ROOM), where(s))
-        self.check("expanded entrance $29 landing y", s["y"] == ENTRANCE_Y, f"$20={s['y']:04X}")
-        self.check("no doorway, recoil or lock", (s["doorway"], s["recoil"], s["lock"]) == (0, 0, 0), where(s))
+        self.check("native entrance $29 landing", (s["x"], s["y"]) == (LANDING_X, ENTRANCE_Y),
+                   f"$22={s['x']:04X} $20={s['y']:04X}")
+        self.check("landing doorway 0 or 1, no recoil or lock", s["doorway"] in (0, 1)
+                   and (s["recoil"], s["lock"]) == (0, 0), where(s))
         self.check("bootstrap cane equipped", (s["somaria"], s["yitem"]) == (1, SOMARIA_Y_ITEM),
                    f"$7EF350={s['somaria']:02X} $0303={s['yitem']:02X}")
         self.check("magic 0, no pending refill, cost 8", (s["magic"], s["refill"], self.cost(s)) == (0, 0, CAST_COST),
@@ -545,8 +548,15 @@ class LessonRoute(native.Fixture):
         self.check("$91 POTLIFT clear", s["potlift"] & 3 == 0, f"{s['potlift']:04X}")
         self.check("no block before the first cast", block_slot(s) is None, str(s["slots"]))
         self.entry = (s["lx"], s["ly"])
-        self.note("entry", {"lx": s["lx"], "ly": s["ly"], "x": s["x"], "y": s["y"], "hp": s["hp"]})
+        self.note("landing", {"lx": s["lx"], "ly": s["ly"], "x": s["x"], "y": s["y"], "doorway": s["doorway"],
+                              "hp": s["hp"]})
         self.shot("start-room90")
+        if s["doorway"]:
+            self.hold_until("Up", lambda st: st["doorway"] == 0, 120, every_frame=True)
+        c = self.last
+        self.check("clear of the south doorway in $0090", (c["module"], c["submodule"], c["indoors"], c["room"],
+                   c["doorway"], c["recoil"], c["lock"]) == (0x07, 0x00, 0x01, ENTRY_ROOM, 0, 0, 0), where(c))
+        self.note("entry", {"lx": c["lx"], "ly": c["ly"], "x": c["x"], "y": c["y"]})
 
     def cost(self, s):
         return SOMARIA_COSTS[1][min(s["usage"], 2)]
