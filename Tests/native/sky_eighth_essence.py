@@ -43,6 +43,7 @@ MAIDEN_FOLLOWER_PCS, PRIZE_CHECKS, FALL_OFFSET = (0x1ECD9D, 0x1ECDA9), 0x02A1A4,
 EXIT_MODE, EXIT_AREA, VICTORY_MODULE, CRYSTAL_SUB = (0x09, 0x00), 0x7A, 0x16, (0x07, 0x18)
 STEP, SPAWN_STEPS, WALK_STEPS, STALL_STEPS, SETTLE = 2, 30, 240, 12, 16
 CEREMONY_FRAMES, CONTROL_FRAMES, FRAME_BUDGET, DEADLINE_SECONDS = 2400, 60, 3600, 300
+CEREMONY_STEP = 8  # Observe transitions without spending the deadline on socket round trips.
 CASES = ("sky", "owned", "legacy-owned")
 
 
@@ -284,7 +285,7 @@ class SkyEighth:
                 self.snap("receipt")
             if mode == list(EXIT_MODE) and any(m[0] == VICTORY_MODULE for m in seen):
                 break
-            self.step(STEP)
+            self.step(CEREMONY_STEP)
         else:
             raise Failure(f"No overworld exit within {CEREMONY_FRAMES} frames; modules {self.result['modules']}")
         self.step(SETTLE)
