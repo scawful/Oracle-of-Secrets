@@ -267,4 +267,82 @@ RoomTag_MinishSwitch:
 }
 endif
 
+; =========================================================
+; Somaria Socket Door — hold door held only by a Somaria block
+;
+; LATENT: no org hook, dispatch slot or room header reaches this yet.
+;
+; Reversible like RoomTag_SwitchTrigger_HoldDoor ($01C541): open while a
+; live Somaria block rests on a pressure switch, closed otherwise. Its other
+; inputs are not read: $0642 (sprites, ice block, followers), the push-block
+; switch latch ($0500 state 5 / $0466) and Link's floor test.
+;
+; Entry contract (future hook): JML from a replaced RoomTag_* body reached by
+; Underworld_HandleRoomTags ($01C2FD) through JSR (.vectors, X):
+;   M=8 X=8 (re-asserted here), D=$0000, DBR with WRAM $0000-$1FFF mirrored
+;   (bank $00-$3F/$80-$BF), $11=$00, $0E = tag slot (0=$AE, 1=$AF).
+;   Stack top is the JSR return into bank $01; this routine pushes nothing.
+;   The hook author must confirm no room header uses the chosen tag and that
+;   nothing else branches into the replaced bytes.
+; Exit: JML RoomTag_Return ($01CC5A, a bare RTS) with M=8 X=8, stack as on
+; entry. A, X and P are clobbered; Y, $0E, $AE and $AF are untouched.
+; Writes happen only when the door state changes: $0468 (16-bit, 0=open
+; 1=closed), $068E and $0690 (16-bit zero), $012F=$25 when opening only,
+; $11=$05.
+;
+; A block qualifies only when the Ancilla2C_SomariaBlock .run_trigger gates
+; ($08E3A3) held and SomariaBlock_CheckForSwitch ($08E75C) found all four
+; probe points on switch tiles at its last update:
+;   $1B!=0, $0646!=0, $0308 bit7 clear, $03F4==0, and for a slot X in 0-4:
+;   $0C4A,X==$2C, $0394,X==0 (spawn delay over), $03C5,X==0, $0380,X==0,
+;   $03DB,X==4, $029E,X in {$00,$FF}.
+; $0646 alone is not trusted: pit deletion ($08E5D8) frees the slot without
+; clearing it, and .bouncing only clears it for the $02EC slot. Ancillae run
+; in Sprite_Main after room tags, so the state is one frame old, as in vanilla.
+; Rooms with Somaria transit lines ($03F4) never open, and the door closes
+; while Link carries anything ($0308 bit7) because no switch check runs then.
+
+RoomTag_SomariaSocketDoor:
+{
+  SEP #$30
+  LDA.b $1B : BEQ .closed
+  LDA.w $0646 : BEQ .closed
+  BIT.w $0308 : BMI .closed
+  LDA.w $03F4 : BNE .closed
+
+  LDX.b #$04
+  .next_slot
+    LDA.w $0C4A, X : CMP.b #$2C : BNE .skip_slot
+    LDA.w $0394, X : BNE .skip_slot
+    LDA.w $03C5, X : BNE .skip_slot
+    LDA.w $0380, X : BNE .skip_slot
+    LDA.w $03DB, X : CMP.b #$04 : BNE .skip_slot
+    LDA.w $029E, X : BEQ .held
+    CMP.b #$FF : BEQ .held
+  .skip_slot
+    DEX : BPL .next_slot
+
+  .closed
+  REP #$30
+  LDX.w #$0001
+  BRA .update
+
+  .held
+  REP #$30
+  LDX.w #$0000
+
+  .update
+  CPX.w $0468 : BEQ .exit
+    STX.w $0468
+    STZ.w $068E : STZ.w $0690
+    SEP #$30
+    CPX.b #$00 : BNE .no_sfx
+      LDA.b #$25 : STA.w $012F
+    .no_sfx
+    LDA.b #$05 : STA.b $11
+  .exit
+  SEP #$30
+  JML RoomTag_Return
+}
+
 pushpc
