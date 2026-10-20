@@ -270,6 +270,15 @@ class SkyEighth:
                 self.result["modules"].append([self.frames] + mode)
                 seen.append(mode)
                 last = mode
+                if mode[0] == VICTORY_MODULE and "victory_entry" not in self.result:
+                    self.result["victory_entry"] = self.frames
+                    self.snap("module-16-entry")
+            if "crystal_grown" not in self.result:
+                kinds, stages = self.rb(0x7E0E20, 16), self.rb(0x7E0D80, 16)
+                grown = [i for i in range(16) if kinds[i] == 0xAB and stages[i] == 4]
+                if grown:
+                    self.result["crystal_grown"] = dict(frame=self.frames, slot=grown[0])
+                    self.snap("crystal-grown")
             if "rising" not in self.result and RISING in self.types():
                 self.result["rising"] = dict(self.ancilla(self.types().index(RISING)), frame=self.frames)
                 self.snap("receipt")
