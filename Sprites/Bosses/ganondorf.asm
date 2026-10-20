@@ -895,7 +895,7 @@ Ganondorf_SetVolleyPose:
 !Harmless           = 00
 !HVelocity          = 01
 !Health             = 00
-!Damage             = 02
+!Damage             = 01  ; native class1: half-heart; class2 is zero damage
 !DeathAnimation     = 01
 !ImperviousAll      = 01  ; only the reflect check below touches the sword
 !SmallShadow        = 00
