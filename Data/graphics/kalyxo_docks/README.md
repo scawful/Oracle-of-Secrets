@@ -12,7 +12,11 @@ The generated manifest records each8×8 quadrant, its flip, and its collision in
 
 ## Grid source
 
-The layout recipe uses a **96×32 grid of16×16 cells**: docks screen`$30` at x0–31, `$31` at x32–63, and Secret Beach screen`$32` at x64–95. Secret Beach is the western approach to Loom Beach; the existing route continues east to Loom Beach and Link's house on`$33`. y0 is the top. `deck_rectangles` use inclusive `[left, top, right, bottom]` coordinates; the binder derives the outside rims and south-facing supports. `cargo` places named library cells on the deck. Change this recipe to widen, shorten or move the fingers; do not edit generated Map16/Map32 data by hand.
+The recipe writes four physical maps: docks`$30/$31`, Secret Beach`$32`, and Loom Beach`$33`. Dock placement still uses a **96×32 grid of16×16 cells**: `$30` at x0–31, `$31` at x32–63, and `$32` at x64–95. y0 is the top. `deck_rectangles` use inclusive `[left, top, right, bottom]` coordinates; the binder derives the outside rims and south-facing supports. `cargo` places named library cells on the deck. Change these fields to widen, shorten or move the fingers; do not edit generated Map16/Map32 data by hand.
+
+The `native_placements` entries use **physical screen-local coordinates**, with x/y0–31 on `$32` or `$33`. They open a three-cell-wide grass core at y13–15, from Secret Beach x18–31 through Loom Beach x0–8, meeting the existing path at Loom x9–10. A grass margin at y16 and native tree caps at y17 keep the lower forest intact. The103 guarded replacements reuse existing grass and forest-edge Tile16 definitions; they add no CHR artwork. Each placement retains `old_tile16` so the binder refuses a changed source cell. Physical `$33` is the upper-left quadrant of the larger Loom Beach area, which contains the existing route to Link's house.
+
+This describes the implemented recipe. Native traversal and transition acceptance are tracked separately from the editable grid.
 
 [kalyxo_docks_binding.json](../../overworld/kalyxo_docks_binding.json) is generated output documenting the actual Map16 IDs, CHR slots and palette row. The recipe does not create boats, house entrances, doors or warps. Future facades need their own art, collision-compatible slots and explicit entrance placement.
 

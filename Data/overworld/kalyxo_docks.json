@@ -1,17 +1,902 @@
 {
   "schema_version": 1,
   "grid_pixels": 16,
-  "coordinates": "A single 96 x 32 Tile16 grid: screens 30, 31, 32 from west to east. Rectangles are inclusive.",
-  "deck_rectangles": [[3,11,70,14], [7,15,10,22], [23,15,26,23], [21,20,32,24], [47,15,50,24]],
+  "coordinates": "Dock rectangles use a 96 x 32 Tile16 grid (screens 30/31/32). Native passage placements use physical screen-local x/y on 32/33. Rectangles are inclusive.",
+  "deck_rectangles": [
+    [
+      3,
+      11,
+      70,
+      14
+    ],
+    [
+      7,
+      15,
+      10,
+      22
+    ],
+    [
+      23,
+      15,
+      26,
+      23
+    ],
+    [
+      21,
+      20,
+      32,
+      24
+    ],
+    [
+      47,
+      15,
+      50,
+      24
+    ]
+  ],
   "cargo": [
-    {"x":5,"y":12,"tile":"crate"},
-    {"x":13,"y":12,"tile":"barrel"},
-    {"x":22,"y":21,"tile":"crate"},
-    {"x":23,"y":21,"tile":"crate"},
-    {"x":30,"y":23,"tile":"barrel"},
-    {"x":48,"y":21,"tile":"rope_coil"},
-    {"x":55,"y":12,"tile":"crate"}
+    {
+      "x": 5,
+      "y": 12,
+      "tile": "crate"
+    },
+    {
+      "x": 13,
+      "y": 12,
+      "tile": "barrel"
+    },
+    {
+      "x": 22,
+      "y": 21,
+      "tile": "crate"
+    },
+    {
+      "x": 23,
+      "y": 21,
+      "tile": "crate"
+    },
+    {
+      "x": 30,
+      "y": 23,
+      "tile": "barrel"
+    },
+    {
+      "x": 48,
+      "y": 21,
+      "tile": "rope_coil"
+    },
+    {
+      "x": 55,
+      "y": 12,
+      "tile": "crate"
+    }
   ],
   "future_entries": "The broad central platform and eastern finger reserve space for modular boat/house fronts. This recipe adds no entrances, doors, warps or ship movement.",
-  "ship": "Preserve the already landed wide 38/39 Dragon Ship and its entrance, exit and Soaring data."
+  "ship": "Preserve the already landed wide 38/39 Dragon Ship and its entrance, exit and Soaring data.",
+  "native_placements": [
+    {
+      "screen": 50,
+      "x": 18,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 3207,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 22,
+      "y": 12,
+      "tile16": 154,
+      "old_tile16": 137,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 50,
+      "x": 22,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 241,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 22,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 174,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 22,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 137,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 22,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 241,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 22,
+      "y": 17,
+      "tile16": 52,
+      "old_tile16": 154,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 23,
+      "y": 12,
+      "tile16": 155,
+      "old_tile16": 28,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 50,
+      "x": 23,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 78,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 23,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 182,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 23,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 28,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 23,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 78,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 23,
+      "y": 17,
+      "tile16": 52,
+      "old_tile16": 155,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 24,
+      "y": 12,
+      "tile16": 156,
+      "old_tile16": 29,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 50,
+      "x": 24,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 79,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 24,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 175,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 24,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 29,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 24,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 79,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 24,
+      "y": 17,
+      "tile16": 52,
+      "old_tile16": 156,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 25,
+      "y": 12,
+      "tile16": 157,
+      "old_tile16": 30,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 50,
+      "x": 25,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 214,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 25,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 113,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 25,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 30,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 25,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 214,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 25,
+      "y": 17,
+      "tile16": 176,
+      "old_tile16": 125,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 50,
+      "x": 26,
+      "y": 12,
+      "tile16": 155,
+      "old_tile16": 28,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 50,
+      "x": 26,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 78,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 26,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 182,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 26,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 28,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 26,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 78,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 26,
+      "y": 17,
+      "tile16": 20,
+      "old_tile16": 182,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 50,
+      "x": 27,
+      "y": 12,
+      "tile16": 156,
+      "old_tile16": 29,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 50,
+      "x": 27,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 79,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 27,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 175,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 27,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 29,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 27,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 79,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 27,
+      "y": 17,
+      "tile16": 21,
+      "old_tile16": 175,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 50,
+      "x": 28,
+      "y": 12,
+      "tile16": 157,
+      "old_tile16": 30,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 50,
+      "x": 28,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 214,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 28,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 113,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 28,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 30,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 28,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 214,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 28,
+      "y": 17,
+      "tile16": 22,
+      "old_tile16": 113,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 50,
+      "x": 29,
+      "y": 12,
+      "tile16": 155,
+      "old_tile16": 28,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 50,
+      "x": 29,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 78,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 29,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 182,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 29,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 28,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 29,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 78,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 29,
+      "y": 17,
+      "tile16": 20,
+      "old_tile16": 182,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 50,
+      "x": 30,
+      "y": 12,
+      "tile16": 156,
+      "old_tile16": 29,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 50,
+      "x": 30,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 79,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 30,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 175,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 30,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 29,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 30,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 79,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 30,
+      "y": 17,
+      "tile16": 21,
+      "old_tile16": 175,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 50,
+      "x": 31,
+      "y": 12,
+      "tile16": 157,
+      "old_tile16": 30,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 50,
+      "x": 31,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 214,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 31,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 113,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 31,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 30,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 50,
+      "x": 31,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 214,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 50,
+      "x": 31,
+      "y": 17,
+      "tile16": 22,
+      "old_tile16": 113,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 51,
+      "x": 0,
+      "y": 12,
+      "tile16": 155,
+      "old_tile16": 28,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 51,
+      "x": 0,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 78,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 0,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 182,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 0,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 28,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 0,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 78,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 51,
+      "x": 0,
+      "y": 17,
+      "tile16": 20,
+      "old_tile16": 182,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 51,
+      "x": 1,
+      "y": 12,
+      "tile16": 156,
+      "old_tile16": 29,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 51,
+      "x": 1,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 79,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 1,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 175,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 1,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 29,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 1,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 79,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 51,
+      "x": 1,
+      "y": 17,
+      "tile16": 21,
+      "old_tile16": 175,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 51,
+      "x": 2,
+      "y": 12,
+      "tile16": 157,
+      "old_tile16": 30,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 51,
+      "x": 2,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 214,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 2,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 113,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 2,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 30,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 2,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 214,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 51,
+      "x": 2,
+      "y": 17,
+      "tile16": 22,
+      "old_tile16": 113,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 51,
+      "x": 3,
+      "y": 12,
+      "tile16": 155,
+      "old_tile16": 28,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 51,
+      "x": 3,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 78,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 3,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 182,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 3,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 28,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 3,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 78,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 51,
+      "x": 3,
+      "y": 17,
+      "tile16": 20,
+      "old_tile16": 182,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 51,
+      "x": 4,
+      "y": 12,
+      "tile16": 156,
+      "old_tile16": 29,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 51,
+      "x": 4,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 79,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 4,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 175,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 4,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 29,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 4,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 79,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 51,
+      "x": 4,
+      "y": 17,
+      "tile16": 21,
+      "old_tile16": 175,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 51,
+      "x": 5,
+      "y": 12,
+      "tile16": 149,
+      "old_tile16": 118,
+      "kind": "north_tree_trim"
+    },
+    {
+      "screen": 51,
+      "x": 5,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 217,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 5,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 185,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 5,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 118,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 5,
+      "y": 16,
+      "tile16": 52,
+      "old_tile16": 217,
+      "kind": "grass_margin"
+    },
+    {
+      "screen": 51,
+      "x": 5,
+      "y": 17,
+      "tile16": 168,
+      "old_tile16": 185,
+      "kind": "south_tree_cap"
+    },
+    {
+      "screen": 51,
+      "x": 6,
+      "y": 13,
+      "tile16": 52,
+      "old_tile16": 577,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 6,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 225,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 6,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 226,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 7,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 225,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 7,
+      "y": 15,
+      "tile16": 52,
+      "old_tile16": 226,
+      "kind": "walk_core"
+    },
+    {
+      "screen": 51,
+      "x": 8,
+      "y": 14,
+      "tile16": 52,
+      "old_tile16": 3211,
+      "kind": "walk_core"
+    }
+  ]
 }
