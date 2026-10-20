@@ -176,28 +176,40 @@ class SpacingImpactFixture(core.Fixture):
 
     def no_warp_and_bat(self):
         self.active_volley_no_warp()
-        self.result["cases"][-1]["between_volley_bat_frames"] = self.bat_control()
+        self.result["cases"][-1]["between_volley_bat_cast"] = self.bat_control()
 
     def bat_only(self):
         self.result["cases"].append(dict(name="between-volley-bat", passed=True,
-                                          frames=self.bat_control()))
+                                          cast=self.bat_control()))
 
     def bat_control(self):
-        parent, ball, _ = self.spawn(9)
+        parent = self.prepare()
         # FRAME can stop after the next action has already dispatched. Use
         # the native Main boundary before selecting the independent action.
         self.run_to(self.labels["Ganondorf_Main"], f"x == {parent}")
-        self.set("state", ball, 0, "declared gone ball permits between-volley bat control")
-        for key, value in (("d", 0xFF), ("action", 5), ("timer_a", 48)):
-            self.set(key, parent, value, "declared between-volley teleport state; no active ball")
-        poses = []
-        for _ in range(16):
+        for key, value in (("d", 0xFF), ("action", 5), ("timer_a", 48), ("frame", 12)):
+            self.set(key, parent, value, "declared between-volley bat cast; no active rally ball")
+        poses, flaps, children = [], [], set()
+        for _ in range(50):
             self.frames(1)
+            action = self.field("action", parent)
+            if action == 7:
+                break
+            core.require(action == 5 and not self.actors(0) and self.field("d", parent) == 0xFF,
+                         "Human bat cast entered a rally or changed its rally-ball pointer")
             poses.append(self.field("frame", parent))
-            core.require(self.field("action", parent) == 5 and not self.actors(0),
-                         "Bat control left its between-volley teleport state")
-        core.require(set(poses) == {19, 20, 21}, "Native bat animation did not select all three authored frames")
-        return poses
+            bats = self.actors(3)
+            core.require(len(bats) <= 1, "One human bat cast allocated multiple independent children")
+            for child in bats:
+                children.add(child)
+                core.require(self.field("d", child) == parent,
+                             "Cast bat does not retain its independent parent reference")
+                flaps.append(self.field("frame", child))
+        core.require(action == 7 and set(poses) == {12, 16, 5, 17, 18},
+                     "Human bat cast did not complete its five authored poses before stomp recovery")
+        core.require(len(children) == 1 and set(flaps) == {19, 20, 21},
+                     "Independent bat did not animate all three authored flap frames")
+        return dict(parent=parent, children=sorted(children), human_frames=poses, bat_frames=flaps)
 
     def collision_map(self, ball):
         floor = self.r(0x7E0F20 + ball)
