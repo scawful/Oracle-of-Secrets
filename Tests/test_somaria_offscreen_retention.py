@@ -22,11 +22,12 @@ def offset(address):
 class CPU:
     """Decode actual ROM opcodes; unsupported instructions fail closed."""
     def __init__(self, rom, memory, slot=4, p=0xF3, y=0x11, a=0xBEEF,
-                 pc=HOOK, dbr=0x08):
+                 pc=HOOK, dbr=0x08, return_address=0xABCD):
         self.rom, self.memory = rom, dict(memory)
         self.a, self.x, self.y, self.p = a, slot, y, p
         self.sp, self.dbr, self.d, self.pc = 0x01F0, dbr, 0, pc
-        self.memory.update({self.sp + 1: 0xCD, self.sp + 2: 0xAB})
+        self.memory.update({self.sp + 1: return_address & 0xFF,
+                            self.sp + 2: return_address >> 8})
         self.writes, self.stack_writes = [], []
 
     def fetch(self, size=1):
@@ -51,12 +52,13 @@ class CPU:
         self.sp += 1
         return self.read(self.sp)
 
-    def nz(self, value):
-        self.p = (self.p & ~0x82) | (value & 0x80) | (2 if value == 0 else 0)
+    def nz(self, value, bits=8):
+        self.p = (self.p & ~0x82) | (0x80 if value & (1 << (bits - 1)) else 0) | (2 if value == 0 else 0)
 
     def load(self, value):
-        self.a = (self.a & 0xFF00) | value
-        self.nz(value)
+        mask = 0xFF if self.p & 0x20 else 0xFFFF
+        self.a = (self.a & ~mask) | (value & mask)
+        self.nz(value & mask, 8 if self.p & 0x20 else 16)
 
     def compare(self, left, right):
         self.p = (self.p & ~1) | int(left >= right)
@@ -66,9 +68,11 @@ class CPU:
         return self.a, self.x, self.y, self.p, self.sp, self.dbr, self.d
 
     def step(self):
-        if self.p & 0x30 != 0x30:
-            raise AssertionError("hook leaked M/X width")
+        if not self.p & 0x10:
+            raise AssertionError("hook leaked X width")
         address, op = self.pc, self.fetch()
+        if not self.p & 0x20 and op not in (0xA5, 0xAD, 0xBD, 0x5C):
+            raise AssertionError("M=16 outside admitted native fallback load")
         if op == 0x08:  # PHP
             self.push(self.p)
         elif op == 0x48:  # PHA, M=8; hidden B stays intact
@@ -79,9 +83,16 @@ class CPU:
             self.p = self.pull()
         elif op == 0x5C:
             self.pc = self.fetch(3)
+        elif op == 0xC2:  # REP; only the original probe-entry fallback uses M=16.
+            self.p &= ~self.fetch()
         elif op in (0xA5, 0xAD, 0xBD):
-            self.load(self.read(self.fetch(1 if op == 0xA5 else 2)
-                                + (self.x if op == 0xBD else 0)))
+            src = self.fetch(1 if op == 0xA5 else 2) + (self.x if op == 0xBD else 0)
+            value = self.read(src)
+            if not self.p & 0x20:
+                value |= self.read(src + 1) << 8
+            self.load(value)
+        elif op == 0xA3:  # LDA stack-relative, M=8; stack is in bank00.
+            self.load(self.memory.get((self.sp + self.fetch()) & 0xFFFF, 0))
         elif op == 0xA2:
             self.x = self.fetch()
             self.nz(self.x)
@@ -332,6 +343,95 @@ class SomariaInternalLandingRetention(unittest.TestCase):
     def test_mutation_internal_missing_status_pop_is_rejected(self):
         mutant = bytearray(self.rom)
         restore = mutant.find(bytes.fromhex("68285ca9ac09"), offset(0x2CFC00), offset(0x2CFD00))
+        self.assertNotEqual(restore, -1)
+        mutant[restore + 1] = 0xEA
+        with self.assertRaises(AssertionError):
+            self.execute(self.fixture(), True, rom=bytes(mutant))
+
+
+PROBE_HOOK, PROBE_KEEP, PROBE_FALLBACK = 0x088A26, 0x088A42, 0x088A2A
+
+
+@unittest.skipUnless(os.environ.get("OOS_SOMARIA_ROM"), "set OOS_SOMARIA_ROM to compiled candidate")
+class SomariaRoomWidePressureProbe(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.rom = Path(os.environ["OOS_SOMARIA_ROM"]).read_bytes()
+
+    @staticmethod
+    def fixture(slot=4):
+        memory = SomariaInternalLandingRetention.fixture(slot)
+        memory.update({0: 0xAC, 1: 0x13, 2: 0xB8, 3: 0x06, 0x646: 0,
+                       0x3DB + slot: 0})  # Native switch checker clears these before probing.
+        return memory
+
+    def execute(self, memory, keep, *, rom=None, slot=4, p=0xF3, a=0xBE00,
+                y=6, return_address=0xE795):
+        cpu = CPU(self.rom if rom is None else rom, memory, slot=slot, p=p, a=a, y=y,
+                  pc=PROBE_HOOK, return_address=return_address)
+        before, initial = cpu.registers(), dict(cpu.memory)
+        self.assertEqual(cpu.boundary((PROBE_KEEP, PROBE_FALLBACK)),
+                         PROBE_KEEP if keep else PROBE_FALLBACK)
+        expected = list(before)
+        if not keep:
+            value = memory.get(0, 0) | memory.get(1, 0) << 8
+            expected[0] = value
+            expected[3] = (p & ~0xA2) | (0x80 if value & 0x8000 else 0) | (2 if value == 0 else 0)
+        self.assertEqual(cpu.registers(), tuple(expected), "probe entry/replayed M16 load ABI differs")
+        self.assertEqual(cpu.writes, [], "probe gateway must not synthesize pressure or tile data")
+        self.assertEqual({k: v for k, v in cpu.memory.items() if k not in cpu.stack_writes},
+                         {k: v for k, v in initial.items() if k not in cpu.stack_writes})
+
+    def test_probe_gateway_and_actual_native_lookup_and_four_probe_caller(self):
+        self.assertEqual(self.rom[offset(PROBE_HOOK):offset(PROBE_HOOK) + 4], bytes.fromhex("5c72fc2c"))
+        guards = ((PROBE_FALLBACK, "38e5e8c9e000"), (PROBE_KEEP, "a51bd010"),
+                  (0x088A56, "bd7c0c227be806"), (0x08E75C, "9c46069edb03a006"),
+                  (0x08E793, "20268a689d80037a"), (0x08E7AE, "fedb03888810af"),
+                  (0x08E7B5, "bddb03c904d00218603860"))
+        for address, raw in guards:
+            expected = bytes.fromhex(raw)
+            self.assertEqual(self.rom[offset(address):offset(address) + len(expected)], expected)
+
+    def test_real_probe_without_cached_signal_preserves_all_m8_entry_flags(self):
+        for slot in range(5):
+            for tags in ((0x24, 0), (0, 0x24)):
+                for submodule in (0, 1, 5):
+                    for altitude in (0, 0xFF):
+                        memory = self.fixture(slot)
+                        memory.update({0xAE: tags[0], 0xAF: tags[1], 0x11: submodule,
+                                       0x29E + slot: altitude, 0xC7C + slot: slot & 1})
+                        for p in range(256):
+                            if p & 0x30 == 0x30:
+                                self.execute(memory, True, slot=slot, p=p)
+
+    def test_foreign_callers_and_unqualified_states_replay_complete_native_entry(self):
+        cases = ({0x10: 9}, {0x48E: 0x92}, {0x48F: 1}, {0x1B: 0}, {0xAE: 0, 0xAF: 0},
+                 {0xC4E: 0}, {0xC4E: 7}, {0xC4E: 0x2D}, {0xC4E: 0x2E}, {0x308: 0x80},
+                 {0x3F4: 1}, {0x398: 1}, {0x3C9: 1}, {0x384: 1}, {0x2A2: 1}, {0x2A2: 0xFE})
+        for changes in cases:
+            for word in (0, 0x7FFF, 0x8000, 0xFFFF):
+                memory = self.fixture()
+                memory.update(changes)
+                memory[0], memory[1] = word & 0xFF, word >> 8
+                self.execute(memory, False)
+        for caller in (0xE1C9, 0xE403, 0xE4F9, 0xE794, 0xE195):
+            self.execute(self.fixture(), False, return_address=caller)
+        self.execute(self.fixture(5), False, slot=5)
+
+    def test_mutation_unconditional_viewport_bypass_is_rejected(self):
+        mutant = bytearray(self.rom)
+        mutant[offset(PROBE_HOOK):offset(PROBE_HOOK) + 4] = bytes.fromhex("5c428a08")
+        self.execute(self.fixture(), True, rom=bytes(mutant))
+        with self.assertRaises(AssertionError):
+            self.execute(self.fixture(), False, rom=bytes(mutant), return_address=0xE403)
+        memory = self.fixture()
+        memory.update({0xAE: 0, 0xAF: 0})
+        with self.assertRaises(AssertionError):
+            self.execute(memory, False, rom=bytes(mutant))
+
+    def test_mutation_probe_missing_status_pop_is_rejected(self):
+        mutant = bytearray(self.rom)
+        restore = mutant.find(bytes.fromhex("68285c428a08"), offset(0x2CFC72), offset(0x2CFD00))
         self.assertNotEqual(restore, -1)
         mutant[restore + 1] = 0xEA
         with self.assertRaises(AssertionError):

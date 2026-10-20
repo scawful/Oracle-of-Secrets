@@ -439,7 +439,7 @@ class SomariaSocketDoorModel(unittest.TestCase):
         label = lines.index(f"{ROUTINE}:")
         self.assertEqual(lines[label - 2:label], ["pushpc", f"org ${ALLOCATION_START:06X}"])
         orgs = [line for line in lines if line.startswith("org ")]
-        self.assertEqual(orgs, LEGACY_HOOK_ORGS + [GATEWAY_ORG, "org $08E731", "org $09AC81", "org $2CFC00",
+        self.assertEqual(orgs, LEGACY_HOOK_ORGS + [GATEWAY_ORG, "org $08E731", "org $09AC81", "org $088A26", "org $2CFC00",
                                                 f"org ${ALLOCATION_START:06X}"])
         self.assertEqual(ALLOCATION_START >> 16, 0x2C)
         collision = (ROOT / "Dungeons" / "Collision" / "custom_collision.asm").read_text()
