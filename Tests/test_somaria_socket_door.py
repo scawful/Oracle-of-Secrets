@@ -5,6 +5,7 @@ Dungeons/custom_tag.asm against a WRAM model. It checks the source contract
 only; it is not CPU or native emulator proof, and the routine is not hooked.
 """
 from pathlib import Path
+import json
 import re
 import unittest
 
@@ -30,6 +31,21 @@ LEGACY_HOOK_ORGS = ["org $01CC18 : JML CustomTag",
 
 def code_lines(text):
     return [line.split(";", 1)[0].strip() for line in text.splitlines()]
+
+
+def handler_entry_hooks(manifest):
+    """Fixed-allocation metadata is allowed; an entry branch is activation."""
+    entries = []
+    for hook in manifest.get("hooks", []):
+        target = (hook.get("target") or "").removeprefix("Oracle_")
+        try:
+            address = int(target.replace("$", "0x"), 0)
+        except ValueError:
+            address = None
+        if (hook.get("kind", "").lower() in {"jmp", "jml", "jsr", "jsl"}
+                and (target == ROUTINE or address == ALLOCATION_START)):
+            entries.append(hook)
+    return entries
 
 
 def assembled_size(program):
@@ -250,7 +266,16 @@ class SomariaSocketDoorModel(unittest.TestCase):
         self.assertEqual([(path, line) for path, _, line in users],
                          [("Dungeons/custom_tag.asm", f"{ROUTINE}:")])
         for path in ROOT.rglob("hooks.json"):
-            self.assertNotIn(ROUTINE, path.read_text(errors="replace"))
+            self.assertEqual(handler_entry_hooks(json.loads(path.read_text())), [], str(path))
+
+    def test_manifest_allocation_is_allowed_but_handler_branches_are_not(self):
+        allocation = {"address": "0x2CFD00", "name": ROUTINE, "kind": "patch"}
+        self.assertEqual(handler_entry_hooks({"hooks": [allocation]}), [])
+        for kind in ("jmp", "jml", "jsr", "jsl"):
+            for target in (ROUTINE, "Oracle_" + ROUTINE, "$2CFD00", "0x2CFD00"):
+                with self.subTest(kind=kind, target=target):
+                    entry = {"address": "0x01CC89", "kind": kind, "target": target}
+                    self.assertEqual(handler_entry_hooks({"hooks": [allocation, entry]}), [entry])
 
     def test_fixed_tail_allocation_is_not_a_hook(self):
         lines = code_lines(SOURCE.read_text())
