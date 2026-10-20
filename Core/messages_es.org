@@ -4,6 +4,7 @@
 > Vanilla truth is `Roms/oos168.sfc`; expanded truth is
 > `Data/dialogue/expanded_messages.json`. See
 > `Docs/Analysis/dialogue_inventory.md` for the generated comparison.
+> Minish tutorials `$038/$15B/$15C` are overridden by `Core/minish_tutorials.asm`.
 
 ** 0F
 Presiona L o R en tu menú para
@@ -255,8 +256,8 @@ Shrine of Origins
 [2]
 [3][K]
 [V]The True Hero will reveal the
-[V]path forward by pressing the
-[V]R Button on the magical pot.
+[V]path forward by stepping onto
+[V]the magical pot.
 
 ** 39
 [W:02]    Milk and Egg Storage
@@ -1113,7 +1114,7 @@ Oh? Who are you, stranger?
 [V]I am always changing my mind,
 [V]so I turned into a ball.[...]
 [V]But if you find a magic stump,[K]
-[V]use the R button to shrink
+[V]step onto it to shrink
 [V]and navigate through small
 [V]spaces in this dark world.[K]
 
@@ -1121,8 +1122,8 @@ Oh? Who are you, stranger?
 You didn't change your shape?
 [2]Well, don't forget, if you want
 [3]to get through tight spaces, [K]
-[V]stand on a stump and press
-[V]the R button!
+[V]step onto a magic stump!
+[V]Step off and back on to grow.
 
 ** 15D
 What do you want?!

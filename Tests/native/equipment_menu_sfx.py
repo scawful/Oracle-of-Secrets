@@ -7,7 +7,8 @@ stationary ring A unwear, song Y and START close. Each tap is one window with
 its own write watch on 7E012F (SFX3 queue); the watch log keeps every write
 and its PC, so NMI's later clear of the port cannot hide the queued ID.
 expected_sound is 0x20 (candidate) or 0x22 (control build). Unwear and cursor
-movement must queue 0x20 in both builds.
+movement must queue 0x20 in both builds. Layout is b45: masks 0-5, rings 6-11,
+songs 12-17, supplies 18-23.
 
 `active` is the caller's admitted, already paused cold House (room 0104)
 session: .b (MesenBridge), .step(frames, buttons=''), optional .snap(label),
@@ -41,8 +42,8 @@ Y_ITEM, CURRENT_SONG, HP, MAGIC = 0x7E0202, 0x7E030F, 0x7EF36D, 0x7EF36E
 DEKU, OCARINA, MAGICRINGS = 0x7EF349, 0x7EF34C, 0x7EF3A2
 RING_SLOT1, BOUND_MASK, SAVED_SONG = 0x7EF3A3, 0x7EF3A8, 0x7EF3AB
 HOUSE_ROOM, POWER_BIT, POWER_ID = 0x0104, 0x20, 2
-SLOT_DEKU, SLOT_POWER, SLOT_SONG1 = 0, 5, 11
-ROW_STARTS = (0, 5, 11, 15, 21)          # masks, rings, songs, supplies
+SLOT_DEKU, SLOT_POWER, SLOT_SONG1 = 0, 6, 12
+ROW_STARTS = (0, 6, 12, 18, 24)          # masks, rings, songs, supplies
 TAP_HOLD, TAP_SETTLE, SCREEN_STEP = 2, 4, 4
 SCREEN_WAITS, NAV_TAPS, FRAME_BUDGET, DEADLINE_SECONDS = 60, 10, 1800, 240
 FIXTURE_ADDRESSES = (DEKU, MAGICRINGS, OCARINA)
@@ -55,14 +56,15 @@ def describe():
         "fixture": "equipment_menu_sfx",
         "callable": "run(active, output_path, expected_sound) -> JSON-serializable dict; "
                     "output_path is the receipt file (e.g. out/'RESULT.json')",
-        "expected_sound": {"0x20": "candidate 9886005996ab", "0x22": "control 4ff0efc02c70"},
+        "expected_sound": {"0x20": "candidate b45 + three $22->$20 immediates",
+                           "0x22": "control b45 836cee2f79c6"},
         "route": ["START -> Items (module 0E, 0200=04)",
                   "L -> Equipment (0200=06, MenuScrollLevelH 7E0731 != 0)",
                   "D-pad to slot 0 Deku; A: BoundMask 7EF3A8=1, expected_sound",
-                  "DOWN movement control 0 -> 5 Power ring: 0x20",
+                  "DOWN movement control 0 -> 6 Power ring: 0x20",
                   "if RingSlot1 7EF3A3 already 2: setup A unwear (0x20)",
                   "A wear: 7EF3A3=2, expected_sound; stationary A unwear: 7EF3A3=0, 0x20",
-                  "D-pad to slot 11 song 1; Y: 030F=1, 7EF3AB=1, 0202=0D, expected_sound",
+                  "D-pad to slot 12 song 1; Y: 030F=1, 7EF3AB=1, 0202=0D, expected_sound",
                   "START close -> House: module 07, submodule 0, room 0104"],
         "proof": "MEM_WATCH_WRITES 7E012F depth 512 per tap window; raw writes and PCs kept; "
                  "each action window needs exactly one nonzero write whose PC is its symbol-derived store",
@@ -322,7 +324,7 @@ class EquipmentSfx:
         self.check("mask bound without transform", [self.r(BOUND_MASK), self.r(FORM)], [1, 0])
         self.snap("equipment-mask")
 
-        control = self.move("movement control DOWN 0 -> 5", "DOWN")
+        control = self.move("movement control DOWN 0 -> 6", "DOWN")
         self.check("movement control cursor", [control["cursor_before"], control["cursor_after"]],
                    [SLOT_DEKU, SLOT_POWER])
 

@@ -850,6 +850,21 @@ until the next canon revision. Keep entries short; linked docs hold the detail.
   "could you still have a dedicated Y button ability in the mask mode ? Would we
   like change the item icon slot to the mask when form enabled ?"
 
+* DECIDED Minish interactions use walking; new Minish areas are separate from Lyra
+  :PROPERTIES:
+  :ASKED_BY: Codex playtest follow-up
+  :END:
+  Minish portals should shrink/grow Link on contact, without a Y or R press
+  or a stand-still delay. Leave the portal before another transformation.
+  Tiny passages and house entrances should also use movement while small.
+  This supersedes point 5's stand-still behavior in the older mask ruling.
+  Answer: "Both" (scawful, 2026-10-18), when asked whether the awkward Y
+  interaction meant shrinking/growing or entering a tiny house/passage.
+  Future Minish houses should lead to oversized-object areas separate from
+  special overworld maps and Lyra Sea. Reuse Link handlers where practical;
+  provide Minish folk behavior/animation and a more animated village cat.
+  These future areas and actors are requested work, not implemented content.
+
 * DECIDED Masks stay Y items; Y transforms, R toggles; Minish is automatic
   :PROPERTIES:
   :ASKED_BY: Oracle RC Leader (M1 playtest follow-up)

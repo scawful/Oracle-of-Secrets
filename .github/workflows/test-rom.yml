@@ -74,6 +74,60 @@ jobs:
           printf '\x89\xCC' | dd of=test.sfc bs=1 seek=$((0xC2C5)) conv=notrunc 2>/dev/null  # $01C2C5 vector -> $01CC89
           printf '\xC2\x30\x20\xCC\xCD\x90\xF6\xA0\x05\x00\x80\xD9' | dd of=test.sfc bs=1 seek=$((0xCC89)) conv=notrunc 2>/dev/null  # $01CC89 RoomTag_Holes2
 
+          # Original Somaria offscreen deletion pair, continuation and draw RTS.
+          printf '\x9C\x46\x06\x9E\x4A\x0C\x8A' | dd of=test.sfc bs=1 seek=$((0x46731)) conv=notrunc 2>/dev/null
+          printf '\x60' | dd of=test.sfc bs=1 seek=$((0x4674B)) conv=notrunc 2>/dev/null
+
+          # Native per-slot Somaria cleanup prologue, branch and continuations.
+          printf '\x8B\x4B\xAB\xA2' | dd of=test.sfc bs=1 seek=$((0x4AC6B)) conv=notrunc 2>/dev/null
+          printf '\xBD\x4A\x0C\xC9\x2C\xD0\x0D\x9C\x46\x06\xA5\x48\x29\x80' | dd of=test.sfc bs=1 seek=$((0x4AC7A)) conv=notrunc 2>/dev/null
+          printf '\xCA' | dd of=test.sfc bs=1 seek=$((0x4ACA9)) conv=notrunc 2>/dev/null
+
+          # Original desert-statue contact/prep instructions inspected by Garo's guards.
+          printf '\x22\x29\xF1\x06' | dd of=test.sfc bs=1 seek=$((0x29573)) conv=notrunc 2>/dev/null  # $059573 JSL $06F129
+          printf '\xAD\x6A\x0B\x9D\x90\x0D' | dd of=test.sfc bs=1 seek=$((0x30F4D)) conv=notrunc 2>/dev/null  # $068F4D LDA $0B6A : STA $0D90,X
+
+          # Native NMI joypad call and unused trampoline bytes for Time's note.
+          printf '\x20\xE0\x89\x20\xD1\x83' | dd of=test.sfc bs=1 seek=$((0x13E)) conv=notrunc 2>/dev/null
+          printf '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' | dd of=test.sfc bs=1 seek=$((0x9C2)) conv=notrunc 2>/dev/null
+
+          # Original NMI and bomb draw instructions inspected by Bombchu's guards.
+          printf '\xAE\x34\x01\x8E\x16\x21' | dd of=test.sfc bs=1 seek=$((0xB56)) conv=notrunc 2>/dev/null
+          printf '\xBD\x10\x9D' | dd of=test.sfc bs=1 seek=$((0x427D7)) conv=notrunc 2>/dev/null
+          printf '\xBD\x11\x9D' | dd of=test.sfc bs=1 seek=$((0x427DD)) conv=notrunc 2>/dev/null
+
+          # Original ammunition and pickup instructions guarded by Bombchu supply.
+          printf '\xAF\x43\xF3\x7E' | dd of=test.sfc bs=1 seek=$((0x48127)) conv=notrunc 2>/dev/null  # $098127 LDA.l $7EF343
+          printf '\x8F\x43\xF3\x7E' | dd of=test.sfc bs=1 seek=$((0x48133)) conv=notrunc 2>/dev/null  # $098133 STA.l $7EF343
+          printf '\xBC\x20\x0E\xB9\xF9\xD0' | dd of=test.sfc bs=1 seek=$((0x351D8)) conv=notrunc 2>/dev/null  # $06D1D8 LDY $0E20,X : LDA $D0F9,Y
+          printf '\xBC\x20\x0E\xB9\x44\xD1' | dd of=test.sfc bs=1 seek=$((0x35257)) conv=notrunc 2>/dev/null  # $06D257 LDY $0E20,X : LDA $D144,Y
+
+          # Original message-pointer epilogue guarded by the Minish tutorials.
+          printf '\xE2\x30\xAB\x6B' | dd of=test.sfc bs=1 seek=$((0x75447)) conv=notrunc 2>/dev/null  # $0ED447 SEP #$30 : PLB : RTL
+
+          # Original room-tag, hidden-chest and statue instructions guarded by
+          # Song of Secrets / Elegy of Stone; headerless LoROM PC offsets.
+          printf '\xA9\x08\x80\x0E' | dd of=test.sfc bs=1 seek=$((0xCC0C)) conv=notrunc 2>/dev/null  # $01CC0C tag $35 hole handler
+          for secrets_tag_a_pc in 0x9905 0x996D 0xBCC2; do
+            printf '\xA5\xAE\x29\xFF\x00' | dd of=test.sfc bs=1 seek=$((secrets_tag_a_pc)) conv=notrunc 2>/dev/null  # LDA $AE : AND #$00FF
+          done
+          for secrets_tag_b_pc in 0x9923 0x998B 0xBCE0; do
+            printf '\xA5\xAF\x29\xFF\x00' | dd of=test.sfc bs=1 seek=$((secrets_tag_b_pc)) conv=notrunc 2>/dev/null  # LDA $AF : AND #$00FF
+          done
+          printf '\xBD\xE0\x0D\xF0\x07' | dd of=test.sfc bs=1 seek=$((0x340E8)) conv=notrunc 2>/dev/null  # $06C0E8 native statue dispatch
+          printf '\xAD\x42\x06\x29\xFF\x00' | dd of=test.sfc bs=1 seek=$((0xC568)) conv=notrunc 2>/dev/null  # $01C568 held-switch flag
+
+          # Original Hookshot instructions inspected by Switch Hook's guards.
+          printf '\xA5\x11' | dd of=test.sfc bs=1 seek=$((0x43D74)) conv=notrunc 2>/dev/null  # $08BD74 LDA $11
+          printf '\x20\x68\x8D' | dd of=test.sfc bs=1 seek=$((0x43DD7)) conv=notrunc 2>/dev/null  # $08BDD7 JSR $8D68
+          printf '\xBD\x5E\x0C' | dd of=test.sfc bs=1 seek=$((0x43ECA)) conv=notrunc 2>/dev/null  # $08BECA LDA $0C5E,X
+
+          # Base HUD sheet pointers for $69/$6A/$6B, split across the three
+          # pointer tables: $98A967/$98AF1A/$98B3F8. Preserve all nine guards.
+          printf '\x98\x98\x98' | dd of=test.sfc bs=1 seek=$((0x505C)) conv=notrunc 2>/dev/null  # $00D05C-$00D05E banks
+          printf '\xA9\xAF\xB3' | dd of=test.sfc bs=1 seek=$((0x513B)) conv=notrunc 2>/dev/null  # $00D13B-$00D13D high bytes
+          printf '\x67\x1A\xF8' | dd of=test.sfc bs=1 seek=$((0x521A)) conv=notrunc 2>/dev/null  # $00D21A-$00D21C low bytes
+
           # Original instructions guarded by Overworld/music_cache.asm. These
           # are explicit headerless LoROM PC offsets, not relocated cache bytes.
           # LDA.l $7F5B00,X at SNES $00F401, $02AE73, $02B117, $02B126,
