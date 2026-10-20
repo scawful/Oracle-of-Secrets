@@ -42,3 +42,5 @@ Sprite_EonOwl,$0A,Sprites/NPCs/eon_owl.asm,eon_owl,,1
 Sprite_KaeporaGaebora,$0A,Sprites/NPCs/eon_owl.asm,eon_owl,,1
 Sprite_ZoraPrincess,$B8,Sprites/NPCs/eon_zora.asm;Sprites/NPCs/eon_zora_elder.asm;Sprites/NPCs/zora.asm;Sprites/NPCs/zora_princess.asm,zora_princess,,
 Sprite_VampireBat,$11,Sprites/Bosses/vampire_bat.asm,vampire_bat,Keese subtype 02 miniboss,
+Sprite_Ganondorf,$D3,Sprites/Bosses/ganondorf.asm,ganondorf,Finale phase 1 (code spawn in room $00),
+Sprite_GanonBall,$46,Sprites/Bosses/ganondorf.asm,ganondorf,Ganondorf energy ball (volley),
